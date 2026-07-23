@@ -1,0 +1,78 @@
+{
+  "footer": {
+    "links": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "risk": "Risk disclosure",
+      "help": "Help center"
+    },
+    "copyright": "© 2026 Pool Party. All rights reserved. Investing involves risk, including the possible loss of principal.",
+    "developedBy": "Developed by Pool Party Labs"
+  },
+  "rewards": {
+    "ariaLabel": "{count} Quacks, open Rubber Rush rewards",
+    "tooltip": "You earn <quack>1 Quack</quack> per day for every <deposit>$1 deposited</deposit> on Pool Party. Boost your Quacks by inviting friends with your referral."
+  },
+  "dev": {
+    "button": "Dev mode",
+    "temp": "TEMP",
+    "title": "Dev mode",
+    "subtitle": "Implementation tools, removed before launch.",
+    "managerMode": "Manager mode",
+    "managerModeSub": "Show the Manager section in the sidebar",
+    "testModalStates": "Test modal states",
+    "testModalStatesSub": "Open the shared modal in this state, on any page.",
+    "states": {
+      "confirm": "Confirm",
+      "loading": "Loading",
+      "pending": "Pending",
+      "success": "Success",
+      "warning": "Warning",
+      "error": "Error"
+    }
+  },
+  "status": {
+    "confirm": {
+      "title": "Please confirm",
+      "body": "Review the details, then confirm to continue."
+    },
+    "loading": {
+      "title": "Loading…",
+      "body": "Hang tight while we get things ready."
+    },
+    "pending": {
+      "title": "Pending",
+      "body": "Your request is processing. This can take a moment."
+    },
+    "success": {
+      "title": "All done",
+      "body": "That completed successfully."
+    },
+    "warning": {
+      "title": "Heads up",
+      "body": "Please review this before continuing."
+    },
+    "error": {
+      "title": "Something went wrong",
+      "body": "We couldn't complete that. Please try again."
+    },
+    "dismiss": "Got it"
+  },
+  "nav": {
+    "home": "Home",
+    "invest": "Invest",
+    "portfolio": "Portfolio",
+    "strategies": "Strategies",
+    "cards": "Cards",
+    "deposit": "Deposit",
+    "profile": "Profile",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "rubberRush": "Rubber Rush",
+    "managerIncentive": "Manager Incentive Program"
+  },
+  "locale": {
+    "changeLanguage": "Change language",
+    "title": "Language"
+  }
+}

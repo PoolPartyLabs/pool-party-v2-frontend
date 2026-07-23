@@ -1,0 +1,179 @@
+{
+  "rubberRush": {
+    "title": "Rubber Rush",
+    "subtitle": "赚取 Quacks，进阶等级，解锁加成",
+    "back": "返回",
+    "yourQuacks": "您的 Quacks",
+    "quacksUnit": "Quacks",
+    "topPercent": "前 {percent}%",
+    "managerIncentiveProgramDashboard": "Manager Incentive Program",
+    "sayQuack": "说 Quack",
+    "playDuckShoot": "玩 Duck Shoot",
+    "claimRoles": "领取身份",
+    "quacksEarnedToday": "今日已赚取 +{count} Quacks",
+    "tierProgression": "等级进阶",
+    "you": "您",
+    "tiers": {
+      "paddler": "Paddler",
+      "swimmer": "Swimmer",
+      "diver": "Diver",
+      "waveRider": "Wave Rider",
+      "partyCaptain": "Party Captain"
+    },
+    "stats": {
+      "totalReferrals": "推荐总数",
+      "dailyBoost": "每日加成",
+      "quacksToday": "今日 Quacks",
+      "streak": "连续天数"
+    },
+    "streakProgress": "{days} / {target} 天",
+    "dailyStreakBoost": "每日连续加成",
+    "dailyStreakBody": "每日 Quack 以提升您的加成。连续每一天都会叠加倍数。7 天及以上达到最高加成。",
+    "dayShort": "第{n}天",
+    "duckShootTitle": "Duck Shoot 的玩法",
+    "duckShootBody": "每一次协议交易（存入、提现、领取）都会为您赢得一次 Duck Shoot 机会。每一击都会将您今日赚取的 Quacks 翻倍成为额外奖励。",
+    "referral": {
+      "title": "您的推荐",
+      "code": "推荐码",
+      "link": "推荐链接",
+      "invitedBy": "邀请人",
+      "none": "-",
+      "copyCode": "复制推荐码",
+      "copyLink": "复制推荐链接",
+      "copied": "已复制",
+      "emptyBody": "创建你的邀请码，开始赚取奖励。",
+      "emptyCta": "创建邀请码"
+    },
+    "referralRewards": {
+      "title": "推荐奖励",
+      "progressLabel": "进度",
+      "nextTier": "下一等级",
+      "body1": "分享您的推荐码，为被推荐人提供 <hl>Quacks 10% 加成</hl>。",
+      "body2": "当被推荐用户的累计存入达到 <hl>50 USDC</hl> 时，您将为自己的 Quacks 解锁 <hl>终身 5% 加成</hl>。(此加成仅限一次，不可叠加。)",
+      "body3": "您还可以赚取 <hl>被推荐用户所产生 Quacks 的 10%</hl>。",
+      "body4": "再邀请 <hl>5 位好友</hl>，即可为您的每日 Quacks 获得倍数加成！",
+      "progress": "{count} / {target} 位好友",
+      "multiplier": "{value} 倍乘数"
+    },
+    "signing": "签名中…",
+    "quackedToday": "今日已 Quack！🦆",
+    "duckShoot": {
+      "title": "Duck Shoot",
+      "triesThisWeek": "本周 {count} 次机会",
+      "tapHelper": "点击鸭子射击。每一击都会将今日的 Quacks 翻倍。",
+      "shoot": "射击",
+      "lockedTitle": "在协议中进行交易即可参与。本周您有 0 次机会。",
+      "makeDeposit": "进行一次存入",
+      "won": "+{percent}%",
+      "boostApplied": "加成已生效：今日 +{count} Quacks！",
+      "shootAgain": "再射一次 · 剩余 {count} 次",
+      "close": "完成",
+      "start": "开始",
+      "instruction": "点击任意位置射击！",
+      "playAgain": "再玩一次",
+      "jackpot": "大奖！",
+      "boostResult": "你获得了 {percent}% 的加成！",
+      "oddsItem": "{percent}%（概率 {weight}%）",
+      "noTries": "在协议中进行交易即可游玩。本周你还可以玩 {count, plural, other {# 次}}。"
+    }
+  },
+  "managerIncentiveProgram": {
+    "title": "Manager Incentive Program",
+    "subtitle": "创建或推广策略，增长 TVL，赚取额外手续费",
+    "back": "返回",
+    "label": "Manager Incentive Program · {name}",
+    "revenueThisMonth": "本月收入",
+    "since": "自 {date} 起加入该计划",
+    "stats": {
+      "strategiesCreated": "已创建策略",
+      "strategiesCreatedSub": "您创建的策略",
+      "managedTvl": "管理的 TVL",
+      "managedTvlSub": "创建 + 引入的 TVL",
+      "referrals": "推荐",
+      "referralsSub": "使用了您的邀请码",
+      "bonusFees": "额外手续费",
+      "bonusFeesSub": "在正常手续费之上"
+    },
+    "tokens": {
+      "title": "{count} 个代币待分发",
+      "body": "{count} 个代币将根据业绩发放给该计划中的管理者。你的等级、你管理的 TVL（自行创建或带动的），以及你的策略所产生的费用，共同决定你的份额。"
+    },
+    "tierCard": {
+      "title": "你是 {tier} 级会员",
+      "range": "{from} – {to}",
+      "body": "管理的 TVL 达到 {target}，即可在您正常赚取的收益之上开始赚取额外手续费。",
+      "managed": "已管理 {amount}",
+      "nextTier": "{delta} → {tier}"
+    },
+    "tierTable": {
+      "tier": "等级",
+      "minTvl": "最低 TVL",
+      "bonusFees": "额外手续费",
+      "rowName": "{n} 级"
+    },
+    "tierFootnote": "每当有任何变动（一次领取、一个新持仓、一次 TVL 变动），您的等级都会重新计算。仪表盘数据反映每次手续费事件发生时的等级。",
+    "revenue": {
+      "title": "收入",
+      "paidEndOfMonth": "月末支付",
+      "estimatedAccrued": "本月预计累计",
+      "feesThisMonth": "本月产生的手续费",
+      "totalFees": "累计产生的手续费",
+      "estimatedAccruedInfo": "本月按您当前等级累计的奖励手续费，月末支付。",
+      "feesThisMonthInfo": "您的策略本月产生的手续费（计算奖励份额之前）。",
+      "totalFeesInfo": "你加入该计划以来，你的策略所产生的全部费用。"
+    },
+    "goals": {
+      "title": "首月目标",
+      "onboarding": "启动目标",
+      "referrals": "{target} 个推荐",
+      "posts": "至少 {count} 篇帖子",
+      "communityPool": "已创建带社区 TVL 的策略",
+      "progress": "{current}/{target}",
+      "trackedExternally": "外部跟踪"
+    }
+  },
+  "referral": {
+    "invitedByLabel": "由 {code} 邀请",
+    "title": "邀请赚奖励",
+    "subtitle": "我的 · 推荐",
+    "back": "返回",
+    "heroTitle": "邀请好友，赚取 quacks",
+    "heroBody": "给好友提供 10% 的 quacks 加成，并赚取他们产生的 quacks 的 10%。",
+    "code": "您的推荐码",
+    "link": "邀请链接",
+    "copyCode": "复制推荐码",
+    "copyLink": "复制邀请链接",
+    "copied": "已复制",
+    "share": "分享邀请链接",
+    "shared": "链接已复制",
+    "stats": {
+      "friendsJoined": "已加入的好友"
+    },
+    "howItWorks": "运作方式",
+    "steps": {
+      "shareTitle": "分享您的链接",
+      "shareBody": "将您的邀请链接发送给好友。",
+      "investTitle": "他们加入并投资",
+      "investBody": "您的好友注册并开始投资。",
+      "earnTitle": "你们双方都赚取 quacks",
+      "earnBody": "好友获得 10% 的加成，您赚取他们 quacks 的 10%。"
+    },
+    "invites": "您的邀请",
+    "investedAmount": "已投资 ${amount}",
+    "signedUp": "已注册",
+    "status": {
+      "earned": "已奖励",
+      "invested": "投资中",
+      "pending": "待处理"
+    },
+    "create": {
+      "label": "选择你的邀请码",
+      "placeholder": "YOURCODE",
+      "warning": "请谨慎选择。邀请码创建后无法更改。",
+      "cta": "创建邀请码",
+      "invalid": "请使用 6 到 10 位字母或数字。",
+      "unavailable": "该邀请码不可用，请尝试其他邀请码。"
+    },
+    "noInvites": "还没有邀请好友。"
+  }
+}

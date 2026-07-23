@@ -1,0 +1,179 @@
+{
+  "rubberRush": {
+    "title": "Rubber Rush",
+    "subtitle": "Verdienen Sie Quacks, steigen Sie in Stufen auf, schalten Sie Boosts frei",
+    "back": "Zurück",
+    "yourQuacks": "Ihre Quacks",
+    "quacksUnit": "Quacks",
+    "topPercent": "Top {percent} %",
+    "managerIncentiveProgramDashboard": "Manager Incentive Program",
+    "sayQuack": "Quack sagen",
+    "playDuckShoot": "Duck Shoot spielen",
+    "claimRoles": "Rollen beanspruchen",
+    "quacksEarnedToday": "+{count} Quacks heute verdient",
+    "tierProgression": "Stufenaufstieg",
+    "you": "Sie",
+    "tiers": {
+      "paddler": "Paddler",
+      "swimmer": "Swimmer",
+      "diver": "Diver",
+      "waveRider": "Wave Rider",
+      "partyCaptain": "Party Captain"
+    },
+    "stats": {
+      "totalReferrals": "Empfehlungen insgesamt",
+      "dailyBoost": "Täglicher Boost",
+      "quacksToday": "Quacks heute",
+      "streak": "Serie"
+    },
+    "streakProgress": "{days} / {target} Tage",
+    "dailyStreakBoost": "Täglicher Serien-Boost",
+    "dailyStreakBody": "Quacken Sie täglich, um Ihren Boost zu steigern. Jeder aufeinanderfolgende Tag erhöht einen Multiplikator. Maximaler Boost ab 7 Tagen.",
+    "dayShort": "T{n}",
+    "duckShootTitle": "So funktioniert Duck Shoot",
+    "duckShootBody": "Jede Protokolltransaktion (Einzahlung, Auszahlung, Einsammeln) bringt Ihnen einen Duck-Shoot-Versuch. Jeder Schuss vervielfacht die heute verdienten Quacks zu einer Bonusprämie.",
+    "referral": {
+      "title": "Ihre Empfehlung",
+      "code": "Empfehlungscode",
+      "link": "Empfehlungslink",
+      "invitedBy": "Eingeladen von",
+      "none": "-",
+      "copyCode": "Empfehlungscode kopieren",
+      "copyLink": "Empfehlungslink kopieren",
+      "copied": "Kopiert",
+      "emptyBody": "Erstelle deinen Einladungscode, um Prämien zu verdienen.",
+      "emptyCta": "Code erstellen"
+    },
+    "referralRewards": {
+      "title": "Empfehlungsprämien",
+      "progressLabel": "Fortschritt",
+      "nextTier": "Nächste Stufe",
+      "body1": "Teilen Sie Ihren Empfehlungscode und geben Sie Ihren Geworbenen einen <hl>Quacks-Boost von 10 %</hl>.",
+      "body2": "Wenn ein geworbener Nutzer mindestens <hl>50 USDC an kumulierten Einzahlungen</hl> erreicht, schalten Sie einen <hl>lebenslangen Boost von 5 %</hl> auf Ihre Quacks frei. (Dieser Boost ist einmalig und nicht kumulierbar.)",
+      "body3": "Sie verdienen außerdem <hl>10 % der Quacks, die Ihre Geworbenen generieren</hl>.",
+      "body4": "Laden Sie <hl>5 weitere Freunde</hl> ein, um einen Multiplikator auf Ihre täglichen Quacks zu erhalten!",
+      "progress": "{count} / {target} Freunde",
+      "multiplier": "{value}-facher Multiplikator"
+    },
+    "signing": "Wird signiert…",
+    "quackedToday": "Heute gequackt! 🦆",
+    "duckShoot": {
+      "title": "Duck Shoot",
+      "triesThisWeek": "{count} Versuche diese Woche",
+      "tapHelper": "Tippen Sie auf eine Ente, um zu schießen. Jeder Schuss vervielfacht die heutigen Quacks.",
+      "shoot": "Schießen",
+      "lockedTitle": "Tätigen Sie Transaktionen im Protokoll, um zu spielen. Sie haben diese Woche 0 Versuche.",
+      "makeDeposit": "Einzahlung tätigen",
+      "won": "+{percent} %",
+      "boostApplied": "Boost angewendet: +{count} Quacks heute!",
+      "shootAgain": "Erneut schießen · {count} übrig",
+      "close": "Fertig",
+      "start": "Starten",
+      "instruction": "Klicke irgendwo, um zu schießen!",
+      "playAgain": "Nochmal spielen",
+      "jackpot": "Jackpot!",
+      "boostResult": "Du hast einen Boost von {percent}% bekommen!",
+      "oddsItem": "{percent}% ({weight}% Chance)",
+      "noTries": "Mach Transaktionen im Protokoll, um zu spielen. Du hast diese Woche noch {count, plural, one {# Versuch} other {# Versuche}}."
+    }
+  },
+  "managerIncentiveProgram": {
+    "title": "Manager Incentive Program",
+    "subtitle": "Strategien erstellen oder bewerben, TVL vergrößern, Bonusgebühren verdienen",
+    "back": "Zurück",
+    "label": "Manager Incentive Program · {name}",
+    "revenueThisMonth": "Umsatz diesen Monat",
+    "since": "Im Programm seit {date}",
+    "stats": {
+      "strategiesCreated": "Erstellte Strategien",
+      "strategiesCreatedSub": "Von Ihnen erstellte Strategien",
+      "managedTvl": "Verwalteter TVL",
+      "managedTvlSub": "Erstelltes + eingebrachtes TVL",
+      "referrals": "Empfehlungen",
+      "referralsSub": "Haben Ihren Code verwendet",
+      "bonusFees": "Bonusgebühren",
+      "bonusFeesSub": "Zusätzlich zu den normalen Gebühren"
+    },
+    "tokens": {
+      "title": "{count} Token werden verteilt",
+      "body": "{count} Tokens gehen leistungsabhängig an die Manager im Programm. Ihre Stufe, Ihr verwaltetes TVL (selbst erstellt oder gefördert) und die Gebühren, die Ihre Strategien generieren, bestimmen Ihren Anteil."
+    },
+    "tierCard": {
+      "title": "Sie sind ein Tier-{tier}-Mitglied",
+      "range": "{from} – {to}",
+      "body": "Erreichen Sie {target} an verwaltetem TVL, um zusätzliche Gebühren zu verdienen. Zusätzlich zu dem, was Sie bereits normal verdienen.",
+      "managed": "{amount} verwaltet",
+      "nextTier": "{delta} → {tier}"
+    },
+    "tierTable": {
+      "tier": "Stufe",
+      "minTvl": "Min. TVL",
+      "bonusFees": "Bonusgebühren",
+      "rowName": "Stufe {n}"
+    },
+    "tierFootnote": "Ihre Stufe wird bei jeder Änderung neu berechnet (ein Einsammeln, eine neue Position, eine TVL-Bewegung). Die Dashboard-Zahlen spiegeln die Stufe zum Zeitpunkt jedes Gebührenereignisses wider.",
+    "revenue": {
+      "title": "Umsatz",
+      "paidEndOfMonth": "Zahlung zum Monatsende",
+      "estimatedAccrued": "Geschätzt diesen Monat aufgelaufen",
+      "feesThisMonth": "Diesen Monat generierte Gebühren",
+      "totalFees": "Insgesamt generierte Gebühren",
+      "estimatedAccruedInfo": "In diesem Monat auf Ihrer aktuellen Stufe aufgelaufene Bonusgebühren. Auszahlung am Monatsende.",
+      "feesThisMonthInfo": "Gebühren, die Ihre Strategien diesen Monat generiert haben, vor Ihrem Bonusanteil.",
+      "totalFeesInfo": "Alle Gebühren, die Ihre Strategien seit Ihrem Beitritt zum Programm generiert haben."
+    },
+    "goals": {
+      "title": "Ziele des ersten Monats",
+      "onboarding": "Onboarding-Ziele",
+      "referrals": "{target} Empfehlungen",
+      "posts": "Mindestens {count} Beiträge",
+      "communityPool": "Strategie mit Community-TVL erstellt",
+      "progress": "{current}/{target}",
+      "trackedExternally": "extern erfasst"
+    }
+  },
+  "referral": {
+    "invitedByLabel": "Eingeladen von {code}",
+    "title": "Einladen & verdienen",
+    "subtitle": "Profil · Empfehlungen",
+    "back": "Zurück",
+    "heroTitle": "Freunde einladen, Quacks verdienen",
+    "heroBody": "Gib deinen Freunden einen 10%-Quacks-Boost und verdiene 10 % der Quacks, die sie generieren.",
+    "code": "Ihr Empfehlungscode",
+    "link": "Einladungslink",
+    "copyCode": "Empfehlungscode kopieren",
+    "copyLink": "Einladungslink kopieren",
+    "copied": "Kopiert",
+    "share": "Einladungslink teilen",
+    "shared": "Link kopiert",
+    "stats": {
+      "friendsJoined": "Freunde beigetreten"
+    },
+    "howItWorks": "So funktioniert es",
+    "steps": {
+      "shareTitle": "Teilen Sie Ihren Link",
+      "shareBody": "Senden Sie Ihren Einladungslink an Freunde.",
+      "investTitle": "Sie treten bei und investieren",
+      "investBody": "Ihr Freund meldet sich an und beginnt zu investieren.",
+      "earnTitle": "Ihr verdient beide Quacks",
+      "earnBody": "Dein Freund erhält einen 10%-Boost, und du verdienst 10 % seiner Quacks."
+    },
+    "invites": "Ihre Einladungen",
+    "investedAmount": "${amount} investiert",
+    "signedUp": "Angemeldet",
+    "status": {
+      "earned": "Belohnt",
+      "invested": "Investiert",
+      "pending": "Ausstehend"
+    },
+    "create": {
+      "label": "Wähle deinen Code",
+      "placeholder": "DEINCODE",
+      "warning": "Wähle sorgfältig. Der Code kann später nicht geändert werden.",
+      "cta": "Code erstellen",
+      "invalid": "Verwende 6 bis 10 Buchstaben oder Zahlen.",
+      "unavailable": "Dieser Code ist nicht verfügbar. Versuche einen anderen."
+    },
+    "noInvites": "Noch keine Freunde eingeladen."
+  }
+}

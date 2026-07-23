@@ -1,0 +1,74 @@
+{
+  "hideValues": "Ocultar valores",
+  "portfolioValue": "Valor do portfólio",
+  "estimatedTooltip": "Estimado. O gráfico não é atualizado em tempo real, apenas algumas vezes ao dia.",
+  "earnedToday": "{amount} hoje",
+  "invested": "Investido",
+  "totalYield": "Rendimento total",
+  "thisMonth": "Últimos 30 dias",
+  "avgApy": "APR médio",
+  "periods": {
+    "day": "1D",
+    "week": "1W",
+    "month": "1M",
+    "sixMonth": "6M",
+    "all": "Tudo"
+  },
+  "yourPositions": "Suas posições",
+  "availableInvestments": "Investimentos disponíveis",
+  "discover": "Descobrir estratégias",
+  "seeAll": "Ver tudo",
+  "exploreMore": "Ver tudo",
+  "manage": "Gerenciar",
+  "allocationByRisk": "Alocação por risco",
+  "referral": {
+    "title": "Convide e ganhe",
+    "body": "Convide amigos e ganhe quacks juntos.",
+    "stat": "{count} amigos entraram",
+    "copy": "Copiar código",
+    "copyLink": "Copiar link de convite",
+    "copied": "Copiado!",
+    "share": "Compartilhar convite",
+    "createCta": "Criar seu código de indicação"
+  },
+  "referralWelcome": {
+    "title": "Bem-vindo ao Pool Party! 🎉",
+    "body": "Você entrou pelo convite de um amigo. Comece a investir para ganhar quacks juntos.",
+    "dismiss": "Dispensar"
+  },
+  "columns": {
+    "strategy": "Estratégia",
+    "risk": "Risco",
+    "invested": "Investido",
+    "value": "Valor atual",
+    "yield": "Rendimento",
+    "rate": "Taxa"
+  },
+  "empty": {
+    "zero": {
+      "eyebrow": "Vamos começar",
+      "title": "Faça seu dinheiro render",
+      "subtitle": "Coloque seu dinheiro para trabalhar em poucos passos.",
+      "cta": "Adicionar fundos para começar",
+      "secondary": "Explorar estratégias primeiro"
+    },
+    "funded": {
+      "available": "Disponível para investir",
+      "availableHint": "Pronto para trabalhar",
+      "title": "Você está pronto para investir",
+      "subtitle": "Escolha uma estratégia e comece a ganhar.",
+      "stepDone": "Pronto · {amount} adicionado",
+      "cta": "Escolher uma estratégia",
+      "secondary": "Ver como funciona"
+    },
+    "path": {
+      "heading": "Seu caminho para ganhar",
+      "step1": { "title": "Adicionar fundos", "body": "Comece com apenas US$ 10" },
+      "step2": {
+        "title": "Escolher uma estratégia",
+        "body": "Curadas e classificadas por risco para você"
+      },
+      "step3": { "title": "Ganhar", "body": "Acompanhe seu rendimento todo dia" }
+    }
+  }
+}

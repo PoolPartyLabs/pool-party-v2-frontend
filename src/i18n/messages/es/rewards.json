@@ -1,0 +1,179 @@
+{
+  "rubberRush": {
+    "title": "Rubber Rush",
+    "subtitle": "Gana Quacks, sube de tier, desbloquea boosts",
+    "back": "Atrás",
+    "yourQuacks": "Tus Quacks",
+    "quacksUnit": "Quacks",
+    "topPercent": "Top {percent}%",
+    "managerIncentiveProgramDashboard": "Manager Incentive Program",
+    "sayQuack": "Say Quack",
+    "playDuckShoot": "Play Duck Shoot",
+    "claimRoles": "Reclamar roles",
+    "quacksEarnedToday": "+{count} Quacks ganados hoy",
+    "tierProgression": "Progresión de tiers",
+    "you": "Tú",
+    "tiers": {
+      "paddler": "Paddler",
+      "swimmer": "Swimmer",
+      "diver": "Diver",
+      "waveRider": "Wave Rider",
+      "partyCaptain": "Party Captain"
+    },
+    "stats": {
+      "totalReferrals": "Referidos totales",
+      "dailyBoost": "Boost diario",
+      "quacksToday": "Quacks hoy",
+      "streak": "Racha"
+    },
+    "streakProgress": "{days} / {target} días",
+    "dailyStreakBoost": "Boost de racha diaria",
+    "dailyStreakBody": "Haz quack a diario para aumentar tu boost. Cada día consecutivo suma un multiplicador. Boost máximo a los 7+ días.",
+    "dayShort": "D{n}",
+    "duckShootTitle": "Cómo funciona Duck Shoot",
+    "duckShootBody": "Cada transacción del protocolo (depósito, retiro, cobro) te da un intento de Duck Shoot. Cada disparo multiplica los Quacks que ganaste hoy en una recompensa extra.",
+    "referral": {
+      "title": "Tu referido",
+      "code": "Código de referido",
+      "link": "Enlace de referido",
+      "invitedBy": "Invitado por",
+      "none": "-",
+      "copyCode": "Copiar código de referido",
+      "copyLink": "Copiar enlace de referido",
+      "copied": "Copiado",
+      "emptyBody": "Crea tu código de invitación para empezar a ganar recompensas.",
+      "emptyCta": "Crear tu código"
+    },
+    "referralRewards": {
+      "title": "Recompensas por referidos",
+      "progressLabel": "Progreso",
+      "nextTier": "Siguiente tier",
+      "body1": "Comparte tu código de referido y dale a tus referidos un <hl>boost del 10% en Quacks</hl>.",
+      "body2": "Cuando un usuario referido alcance al menos <hl>50 USDC en depósitos acumulados</hl>, desbloqueas un <hl>boost de por vida del 5%</hl> en tus Quacks. (Este boost es único y no acumulable.)",
+      "body3": "También ganas <hl>el 10% de los Quacks generados por tus referidos</hl>.",
+      "body4": "¡Invita a <hl>5 amigos más</hl> para obtener un multiplicador en tus Quacks diarios!",
+      "progress": "{count} / {target} amigos",
+      "multiplier": "Multiplicador de {value}x"
+    },
+    "signing": "Firmando…",
+    "quackedToday": "¡Quack de hoy! 🦆",
+    "duckShoot": {
+      "title": "Duck Shoot",
+      "triesThisWeek": "{count} intentos esta semana",
+      "tapHelper": "Toca un pato para disparar. Cada disparo multiplica los Quacks de hoy.",
+      "shoot": "Disparar",
+      "lockedTitle": "Haz transacciones en el protocolo para jugar. Tienes 0 intentos esta semana.",
+      "makeDeposit": "Hacer un depósito",
+      "won": "+{percent}%",
+      "boostApplied": "¡Boost aplicado: +{count} Quacks hoy!",
+      "shootAgain": "Disparar de nuevo · {count} restantes",
+      "close": "Listo",
+      "start": "Empezar",
+      "instruction": "¡Haz clic en cualquier lugar para disparar!",
+      "playAgain": "Jugar de nuevo",
+      "jackpot": "¡Jackpot!",
+      "boostResult": "¡Conseguiste un boost del {percent}%!",
+      "oddsItem": "{percent}% ({weight}% de probabilidad)",
+      "noTries": "Haz transacciones en el protocolo para jugar. Tienes {count, plural, one {# intento} other {# intentos}} esta semana."
+    }
+  },
+  "managerIncentiveProgram": {
+    "title": "Manager Incentive Program",
+    "subtitle": "Crea o promociona estrategias, aumenta el TVL, gana comisiones extra",
+    "back": "Atrás",
+    "label": "Manager Incentive Program · {name}",
+    "revenueThisMonth": "Ingresos de este mes",
+    "since": "En el programa desde {date}",
+    "stats": {
+      "strategiesCreated": "Estrategias creadas",
+      "strategiesCreatedSub": "Estrategias que creaste",
+      "managedTvl": "TVL gestionado",
+      "managedTvlSub": "TVL creado + atraído",
+      "referrals": "Referidos",
+      "referralsSub": "Usaron tu código",
+      "bonusFees": "Comisiones extra",
+      "bonusFeesSub": "Además de las comisiones normales"
+    },
+    "tokens": {
+      "title": "{count} tokens por distribuir",
+      "body": "{count} tokens se reparten entre los managers del programa según su desempeño. Tu nivel, el TVL gestionado (creado o impulsado) y las comisiones que generan tus estrategias determinan tu participación."
+    },
+    "tierCard": {
+      "title": "Eres miembro de Nivel {tier}",
+      "range": "{from} – {to}",
+      "body": "Alcanza {target} en TVL gestionado para empezar a ganar comisiones extra además de lo que ya ganas normalmente.",
+      "managed": "{amount} gestionados",
+      "nextTier": "{delta} → {tier}"
+    },
+    "tierTable": {
+      "tier": "Tier",
+      "minTvl": "TVL mín.",
+      "bonusFees": "Comisiones extra",
+      "rowName": "Tier {n}"
+    },
+    "tierFootnote": "Tu tier se recalcula cada vez que algo cambia (un cobro, una nueva posición, un cambio de TVL). Los números del panel reflejan el tier en el momento de cada evento de comisión.",
+    "revenue": {
+      "title": "Ingresos",
+      "paidEndOfMonth": "Pagado a fin de mes",
+      "estimatedAccrued": "Estimado acumulado este mes",
+      "feesThisMonth": "Comisiones generadas este mes",
+      "totalFees": "Total de comisiones generadas",
+      "estimatedAccruedInfo": "Comisiones extra acumuladas este mes en tu tier actual. Se pagan a fin de mes.",
+      "feesThisMonthInfo": "Comisiones que tus estrategias generaron este mes, antes de tu parte extra.",
+      "totalFeesInfo": "Todas las comisiones que tus estrategias han generado desde que entraste al programa."
+    },
+    "goals": {
+      "title": "Metas del primer mes",
+      "onboarding": "Metas de inicio",
+      "referrals": "{target} referidos",
+      "posts": "Al menos {count} publicaciones",
+      "communityPool": "Estrategia creada con TVL de la comunidad",
+      "progress": "{current}/{target}",
+      "trackedExternally": "seguimiento externo"
+    }
+  },
+  "referral": {
+    "invitedByLabel": "Invitado por {code}",
+    "title": "Invita y gana",
+    "subtitle": "Perfil · Referidos",
+    "back": "Atrás",
+    "heroTitle": "Invita amigos, gana quacks",
+    "heroBody": "Dale a tus amigos un boost del 10% en quacks y gana el 10% de los quacks que ellos generen.",
+    "code": "Tu código de referido",
+    "link": "Enlace de invitación",
+    "copyCode": "Copiar código de referido",
+    "copyLink": "Copiar enlace de invitación",
+    "copied": "Copiado",
+    "share": "Compartir enlace de invitación",
+    "shared": "Enlace copiado",
+    "stats": {
+      "friendsJoined": "Amigos unidos"
+    },
+    "howItWorks": "Cómo funciona",
+    "steps": {
+      "shareTitle": "Comparte tu enlace",
+      "shareBody": "Envía tu enlace de invitación a amigos.",
+      "investTitle": "Se unen e invierten",
+      "investBody": "Tu amigo se registra y empieza a invertir.",
+      "earnTitle": "Ambos ganan quacks",
+      "earnBody": "Tu amigo recibe un boost del 10% y tú ganas el 10% de sus quacks."
+    },
+    "invites": "Tus invitados",
+    "investedAmount": "Invirtió ${amount}",
+    "signedUp": "Registrado",
+    "status": {
+      "earned": "Recompensado",
+      "invested": "Invirtiendo",
+      "pending": "Pendiente"
+    },
+    "create": {
+      "label": "Elige tu código",
+      "placeholder": "TUCODIGO",
+      "warning": "Elige con cuidado: el código no se podrá cambiar después.",
+      "cta": "Crear código",
+      "invalid": "Usa entre 6 y 10 letras o números.",
+      "unavailable": "Este código no está disponible. Prueba con otro."
+    },
+    "noInvites": "Aún no has invitado a nadie."
+  }
+}

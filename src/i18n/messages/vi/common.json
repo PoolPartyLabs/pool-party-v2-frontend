@@ -1,0 +1,38 @@
+{
+  "appName": "Pool Party",
+  "tagline": "Đầu tư thông minh, thật đơn giản.",
+  "loading": "Đang tải…",
+  "stillLoading": "Vẫn đang tải, vui lòng chờ…",
+  "updating": "Đang cập nhật…",
+  "unavailable": "Chưa có sẵn",
+  "retry": "Thử lại",
+  "connectWallet": "Kết nối ví",
+  "disconnect": "Ngắt kết nối",
+  "save": "Lưu",
+  "cancel": "Hủy",
+  "confirm": "Xác nhận",
+  "close": "Đóng",
+  "viewOnExplorer": "Xem trên explorer",
+  "error": {
+    "tryAgain": "Thử lại"
+  },
+  "greeting": {
+    "morning": "Chào buổi sáng, {name}",
+    "afternoon": "Chào buổi chiều, {name}",
+    "evening": "Chào buổi tối, {name}"
+  },
+  "aprTooltip": "Tỷ lệ phần trăm hàng năm",
+  "apyTooltip": "Lợi suất phần trăm hàng năm",
+  "avgAprTooltip": "Tỷ lệ phần trăm trung bình hàng năm",
+  "netAprTooltip": "Tỷ lệ phần trăm hàng năm ròng",
+  "validation": {
+    "imageTooLargeOrType": "Sử dụng tệp PNG hoặc JPG dưới 10 MB."
+  },
+  "unsavedChanges": {
+    "title": "Thay đổi chưa lưu",
+    "body": "Bạn có thay đổi chưa lưu. Rời đi mà không lưu?",
+    "leave": "Rời đi",
+    "stay": "Tiếp tục chỉnh sửa"
+  },
+  "opensInNewTab": "Mở trong tab mới"
+}

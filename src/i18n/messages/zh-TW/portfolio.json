@@ -1,0 +1,44 @@
+{
+  "hideValues": "隱藏數值",
+  "portfolioValue": "投資組合總額",
+  "allTimeEarned": "{amount} 未領取費用",
+  "allocationByRisk": "依風險配置",
+  "invested": "已投資",
+  "currentValue": "目前價值",
+  "totalYield": "總收益",
+  "avgApy": "平均 APR",
+  "loadMore": "載入更多",
+  "loadingMore": "載入中",
+  "yourPositions": "您的持倉",
+  "activeCount": "{count} 項使用中",
+  "rate": "報酬率",
+  "status": {
+    "active": "使用中",
+    "paused": "已暫停",
+    "closed": "已關閉"
+  },
+  "columns": {
+    "strategy": "策略",
+    "risk": "風險",
+    "invested": "已投資",
+    "value": "當前價值",
+    "yield": "收益",
+    "rate": "報酬率"
+  },
+  "putToWork": {
+    "title": "讓您的資金運作",
+    "body": "加值資金或探索策略，讓您的投資組合持續成長。",
+    "deposit": "存入資金",
+    "explore": "探索策略"
+  },
+  "empty": {
+    "title": "開始讓資金成長",
+    "body": "進行首次存入，再投入策略讓資金運作。",
+    "deposit": "存入資金",
+    "explore": "探索策略"
+  },
+  "closedStrategies": {
+    "title": "已關閉的策略",
+    "empty": "尚無已關閉的策略"
+  }
+}

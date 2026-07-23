@@ -1,0 +1,91 @@
+{
+  "title": "Nạp tiền",
+  "addLabel": "Bạn đang thêm",
+  "receiveEstimate": "≈ {amount} USDC",
+  "securedByPaybis": "Được bảo mật bởi Paybis",
+  "continue": "Tiếp tục",
+  "minHint": "Số tiền nạp tối thiểu là {min}",
+  "maxHint": "Số tiền nạp tối đa là {max}",
+  "cryptoPill": "Nạp crypto",
+  "investContext": "Đầu tư vào {name} · thêm {amount}",
+  "investContextGeneric": "Thêm {amount} để hoàn tất khoản đầu tư này",
+  "cryptoAside": {
+    "title": "Đã có crypto?",
+    "body": "Chuyển USDC trực tiếp, không mất phí."
+  },
+  "howItWorks": {
+    "title": "Cách hoạt động",
+    "step1": "Nhập số tiền và chọn cách thanh toán.",
+    "step2": "Thanh toán theo cách của bạn: Apple Pay, Google Pay, thẻ, chuyển khoản hoặc thanh toán nội địa tức thì tại hơn 80 quốc gia.",
+    "step3": "USDC của bạn vào tài khoản, sẵn sàng để đầu tư."
+  },
+  "method": {
+    "title": "Phương thức thanh toán",
+    "continue": "Tiếp tục",
+    "pix": {
+      "name": "Pix",
+      "meta": "Tức thì"
+    },
+    "card": {
+      "name": "Thẻ",
+      "meta": "Visa, Mastercard"
+    },
+    "applePay": {
+      "name": "Apple Pay",
+      "meta": "Tức thì"
+    },
+    "bank": {
+      "name": "Chuyển khoản ngân hàng",
+      "meta": "1–2 ngày làm việc"
+    }
+  },
+  "review": {
+    "title": "Xem lại",
+    "youReceive": "Bạn sẽ nhận",
+    "youPay": "Bạn trả",
+    "fee": "Phí Paybis",
+    "feeNote": "{method} · {pct}",
+    "belowNeed": "Bạn cần ít nhất {amount} để hoàn tất khoản đầu tư này.",
+    "exchangeRate": "Tỷ giá",
+    "rateValue": "1 USDC ≈ $1.00",
+    "payingWith": "Thanh toán bằng {method}",
+    "change": "Thay đổi",
+    "confirm": "Xác nhận & thanh toán bằng {method}",
+    "poweredBy": "Cung cấp bởi Paybis"
+  },
+  "success": {
+    "title": "Đã xác nhận nạp tiền",
+    "subtitle": "Tiền của bạn đã sẵn sàng để đầu tư",
+    "amount": "Số tiền",
+    "received": "Đã nhận",
+    "method": "Phương thức",
+    "date": "Ngày",
+    "investNow": "Đầu tư ngay",
+    "backHome": "Về trang chủ"
+  },
+  "crypto": {
+    "title": "Nạp crypto",
+    "scanToDeposit": "Quét để nạp",
+    "addressLabel": "Địa chỉ USDC của bạn",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép",
+    "share": "Chia sẻ địa chỉ",
+    "asset": "USD Coin · USDC",
+    "sent": "Tôi đã gửi tiền",
+    "waitingTitle": "Đang chờ tiền nạp của bạn",
+    "waitingBody": "Chúng tôi sẽ tự động phát hiện. Bạn không cần làm gì cả.",
+    "viewAddress": "Xem địa chỉ & QR",
+    "receivedTitle": "Đã nhận tiền nạp",
+    "added": "Đã thêm {amount} USDC",
+    "source": "Nguồn",
+    "sourceValue": "Ví bên ngoài",
+    "received": "Đã nhận",
+    "date": "Ngày",
+    "noWallet": "Kết nối wallet của bạn để xem địa chỉ nạp tiền.",
+    "networkTitle": "Chọn mạng lưới",
+    "networkSubtitle": "Chỉ gửi USDC trên mạng lưới bạn chọn ở đây. Gửi trên bất kỳ mạng lưới nào khác có thể làm mất vĩnh viễn tiền của bạn.",
+    "networkContinue": "Tiếp tục",
+    "changeNetwork": "Đổi mạng lưới",
+    "networkWarning": "Chỉ gửi USDC trên mạng lưới {network}. Gửi trên mạng lưới khác có thể dẫn đến mất vĩnh viễn."
+  }
+}

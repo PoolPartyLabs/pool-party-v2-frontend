@@ -1,0 +1,25 @@
+{
+  "somethingWentWrong": "Something went wrong",
+  "networkError": "Network error",
+  "validationFailed": "Validation failed",
+  "description": "An unexpected error occurred. Please try again.",
+  "retry": "Try again",
+  "dashboard": {
+    "title": "Couldn't load your dashboard",
+    "body": "Something went wrong on our end. Check your connection and try again.",
+    "support": "Contact support"
+  },
+  "auth": {
+    "networkFailure": "Connection failed. Please check your internet and try again.",
+    "unsupportedChain": "This network is not supported. Please switch to Arbitrum, Base, or Polygon."
+  },
+  "api": {
+    "networkError": "We couldn't reach our servers. Please check your connection and try again.",
+    "notConfigured": "This feature isn't available right now. Please try again later.",
+    "upstreamUnavailable": "Our service is temporarily unavailable. Please try again in a moment.",
+    "rateLimited": "You're going a bit too fast. Please wait a moment and try again.",
+    "unauthorized": "You don't have permission to do that. Please sign in again.",
+    "notFound": "We couldn't find what you were looking for.",
+    "unknown": "Something went wrong on our end. Please try again."
+  }
+}

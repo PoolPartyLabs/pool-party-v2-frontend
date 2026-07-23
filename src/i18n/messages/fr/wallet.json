@@ -1,0 +1,35 @@
+{
+  "title": "Portefeuille",
+  "openWallet": "Ouvrir le portefeuille",
+  "refresh": "Actualiser le solde",
+  "connect": "Connecter le portefeuille",
+  "close": "Fermer",
+  "kind": {
+    "embedded": "Intégré",
+    "external": "Externe"
+  },
+  "copyAddress": "Copier l'adresse",
+  "copied": "Copié",
+  "totalBalance": "SOLDE TOTAL",
+  "dayChange": "{usd} · {pct} aujourd'hui",
+  "addFunds": "Ajoutez des fonds pour commencer",
+  "actions": {
+    "buy": "Acheter",
+    "swap": "Échanger",
+    "send": "Envoyer",
+    "receive": "Recevoir"
+  },
+  "networks": {
+    "all": "Tous"
+  },
+  "noAssetsOnNetwork": "Aucun actif sur ce réseau",
+  "emptyTitle": "Aucun actif pour l'instant",
+  "emptyBody": "Achetez ou recevez des cryptos et vos soldes apparaîtront ici, sur tous les réseaux.",
+  "manage": "Gérer le portefeuille",
+  "disconnect": "Déconnecter",
+  "comingSoon": {
+    "title": "Bientôt disponible",
+    "send": "L'envoi de jetons arrive bientôt. Pour l'instant, vous pouvez acheter ou recevoir des cryptos.",
+    "back": "Compris"
+  }
+}

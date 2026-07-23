@@ -1,0 +1,44 @@
+{
+  "hideValues": "Ẩn giá trị",
+  "portfolioValue": "Tổng danh mục",
+  "allTimeEarned": "{amount} phí chưa nhận",
+  "allocationByRisk": "Phân bổ theo rủi ro",
+  "invested": "Đã đầu tư",
+  "currentValue": "Giá trị hiện tại",
+  "totalYield": "Tổng lợi nhuận",
+  "avgApy": "APR trung bình",
+  "loadMore": "Tải thêm",
+  "loadingMore": "Đang tải",
+  "yourPositions": "Vị thế của bạn",
+  "activeCount": "{count} đang hoạt động",
+  "rate": "Tỷ suất",
+  "status": {
+    "active": "Đang hoạt động",
+    "paused": "Tạm dừng",
+    "closed": "Đã đóng"
+  },
+  "columns": {
+    "strategy": "Chiến lược",
+    "risk": "Rủi ro",
+    "invested": "Đã đầu tư",
+    "value": "Giá trị hiện tại",
+    "yield": "Lợi nhuận",
+    "rate": "Tỷ suất"
+  },
+  "putToWork": {
+    "title": "Đưa tiền của bạn vào hoạt động",
+    "body": "Thêm tiền hoặc khám phá chiến lược để danh mục của bạn tiếp tục tăng trưởng.",
+    "deposit": "Nạp tiền",
+    "explore": "Khám phá chiến lược"
+  },
+  "empty": {
+    "title": "Bắt đầu gia tăng tiền của bạn",
+    "body": "Thực hiện khoản nạp đầu tiên, rồi đưa nó vào hoạt động trong một chiến lược.",
+    "deposit": "Nạp tiền",
+    "explore": "Khám phá chiến lược"
+  },
+  "closedStrategies": {
+    "title": "Chiến lược đã đóng",
+    "empty": "Chưa có chiến lược đã đóng"
+  }
+}

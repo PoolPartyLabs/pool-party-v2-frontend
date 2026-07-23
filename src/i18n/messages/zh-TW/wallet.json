@@ -1,0 +1,35 @@
+{
+  "title": "錢包",
+  "openWallet": "開啟錢包",
+  "refresh": "重新整理餘額",
+  "connect": "連接錢包",
+  "close": "關閉",
+  "kind": {
+    "embedded": "內建",
+    "external": "外部"
+  },
+  "copyAddress": "複製地址",
+  "copied": "已複製",
+  "totalBalance": "總餘額",
+  "dayChange": "{usd} · {pct} 今日",
+  "addFunds": "新增資金以開始",
+  "actions": {
+    "buy": "購買",
+    "swap": "兌換",
+    "send": "傳送",
+    "receive": "接收"
+  },
+  "networks": {
+    "all": "全部"
+  },
+  "noAssetsOnNetwork": "此網路上沒有資產",
+  "emptyTitle": "尚無資產",
+  "emptyBody": "購買或接收加密貨幣，你在所有網路的餘額都會顯示在這裡。",
+  "manage": "管理錢包",
+  "disconnect": "中斷連線",
+  "comingSoon": {
+    "title": "即將推出",
+    "send": "代幣傳送即將上線。目前你可以購買或接收加密貨幣。",
+    "back": "知道了"
+  }
+}

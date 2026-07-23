@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # JS dependencies (pnpm uses the npm ecosystem).
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    groups:
+      # Batch low-risk dev/tooling bumps into a single PR to reduce noise.
+      dev-tooling:
+        dependency-type: development
+
+  # GitHub Actions (keeps the SHA pins in ci.yml current).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - ci

@@ -1,0 +1,488 @@
+{
+  "sign": {
+    "continueInWallet": "ウォレットで続行してください",
+    "stepOf": "ステップ {current} / {total}",
+    "whyTitle": "何に署名するのですか？",
+    "whyBody": "署名はこの操作を承認したことを証明します。署名はウォレット内で行われ、それ自体で資金が移動することはありません。",
+    "steps": {
+      "approve": "{token} を承認",
+      "sign": "ウォレットでメッセージに署名",
+      "confirmInvest": "入金を確認",
+      "confirmWithdraw": "出金を確認",
+      "confirmCollect": "受け取りを確認",
+      "confirmCompound": "再投資を確認",
+      "permit": "ウォレットで許可に署名",
+      "confirmAddLiquidity": "流動性の追加を確認",
+      "confirmRemoveLiquidity": "引き出しを確認",
+      "confirmMoveRange": "リバランスを確認",
+      "confirmClosePosition": "クローズを確認",
+      "build": "トランザクションを準備中",
+      "skipped": "承認済み"
+    },
+    "explain": {
+      "approve": {
+        "name": "トークンの承認",
+        "body": "この取引のために Pool Party があなたの {token} を移動できるようにします。承認そのものが資金を動かすことはありません。実際の取引は次のステップで行われます。"
+      },
+      "permit": {
+        "name": "Permit2 の署名",
+        "body": "この移転を承認する gas のかからない署名です。これは取引ではなくメッセージなので、ネットワーク手数料はかからず、あなたが確認するまで何も動きません。"
+      },
+      "confirm": {
+        "name": "最終確認",
+        "body": "最後のステップです。ネットワーク上で実行され、実際に取引が処理されます。少額のネットワーク手数料がかかる可能性があるのは、このステップだけです。"
+      },
+      "build": {
+        "name": "トランザクションを準備中",
+        "body": "Pool Party がこのトランザクションの金額とネットワーク手数料を計算しています。まだ何も署名も送信もされていません。"
+      }
+    }
+  },
+  "card": {
+    "by": "{manager}による",
+    "min": "最低額",
+    "estReturn": "想定リターン",
+    "viewDetails": "詳細を見る",
+    "invest": "投資する"
+  },
+  "risk": {
+    "level1": "非常に保守的",
+    "level2": "保守的",
+    "level3": "中程度",
+    "level4": "積極的",
+    "level5": "非常に積極的"
+  },
+  "explore": {
+    "title": "戦略",
+    "subtitle": "投資できる運用戦略",
+    "searchPlaceholder": "名前、マネージャー、トークン、アドレスで検索",
+    "browseByRisk": "リスクで探す",
+    "allRisks": "すべて",
+    "browseByType": "タイプで探す",
+    "allTypes": "すべて",
+    "types": {
+      "yield": "利回り",
+      "trading": "トレーディング",
+      "index": "インデックス",
+      "marketNeutral": "マーケットニュートラル"
+    },
+    "browseByCategory": "カテゴリーで探す",
+    "allCategories": "すべて",
+    "categorySelected": "{count}件選択中",
+    "categories": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme coins"
+    },
+    "count": "{count, plural, =0 {戦略なし} other {# 件の戦略}}",
+    "owned": "運用中",
+    "invested": "投資済み",
+    "noResults": "検索に一致する戦略はありません。",
+    "clearFilters": "フィルターをクリア",
+    "sortLabel": "並び替え",
+    "sortDir": {
+      "asc": "昇順",
+      "desc": "降順"
+    },
+    "loadMore": "さらに読み込む",
+    "loadingMore": "読み込み中",
+    "empty": {
+      "title": "戦略はまだありません",
+      "body": "戦略が利用可能になると、こちらに表示されます。"
+    },
+    "columns": {
+      "strategy": "戦略",
+      "risk": "リスク",
+      "min": "最低額",
+      "tvl": "TVL",
+      "investors": "投資家",
+      "return": "想定リターン",
+      "action": "操作"
+    }
+  },
+  "detail": {
+    "back": "戻る",
+    "performance": "プール価値",
+    "periods": {
+      "week": "1W",
+      "month": "1M",
+      "quarter": "3M",
+      "year": "1Y",
+      "all": "全期間"
+    },
+    "chart": {
+      "noHistoryTitle": "履歴はまだありません",
+      "noHistoryBody": "この戦略の価値履歴は、運用開始から数日後に表示されます。"
+    },
+    "metrics": {
+      "min": "最低額",
+      "tvl": "TVL",
+      "lockup": "ロックアップ",
+      "performanceFee": "パフォーマンス手数料"
+    },
+    "lockup": {
+      "none": "なし",
+      "days": "{days, plural, other {# 日}}"
+    },
+    "about": "概要",
+    "composition": "構成",
+    "mandate": {
+      "title": "投資マンデート",
+      "assets": "資産ごとの最大エクスポージャー",
+      "protocols": "プロトコルごとの最大エクスポージャー",
+      "networks": "ネットワーク"
+    },
+    "riskLimits": {
+      "title": "リスク制限と条件",
+      "maxDrawdown": "最大ドローダウン",
+      "leverage": "レバレッジ",
+      "rebalancing": "リバランス",
+      "liquidity": "流動性",
+      "strategyType": "戦略タイプ",
+      "benchmark": "ベンチマーク",
+      "custody": "カストディ"
+    },
+    "fees": {
+      "title": "手数料",
+      "management": "運用",
+      "performance": "パフォーマンス",
+      "none": "手数料なし"
+    },
+    "managerVerified": "認証済みマネージャー",
+    "yourPosition": {
+      "title": "あなたのポジション",
+      "active": "アクティブ",
+      "paused": "停止中",
+      "invested": "投資額",
+      "currentValue": "現在の評価額",
+      "totalYield": "累計利回り",
+      "available": "コレクト可能額",
+      "closed": "終了",
+      "finalValue": "最終評価額",
+      "totalYieldRealized": "累計利回り（確定）",
+      "availableToWithdraw": "出金可能額"
+    },
+    "actions": {
+      "invest": "投資する",
+      "investMore": "追加投資する",
+      "collectAmount": "{amount}をコレクト",
+      "compound": "複利運用",
+      "compoundComingSoon": "複利運用は近日提供予定です。利回りのコレクトは引き続き可能です。",
+      "withdraw": "引き出す",
+      "share": "シェア"
+    },
+    "paused": {
+      "title": "{name}は停止中です",
+      "body": "この戦略は現在、新規投資を受け付けていません。あなたのポジションは安全で、収益を得続けます。コレクトや引き出しは引き続き可能です。",
+      "notify": "再開時に通知する",
+      "notified": "お知らせします",
+      "viewOthers": "他の戦略を見る"
+    },
+    "closed": {
+      "title": "戦略終了",
+      "body": "{manager}がこの戦略を終了しました。資金はすぐに出金できます。"
+    },
+    "viewProfile": "View profile",
+    "managerRole": "Manager",
+    "managerAllocation": "マネージャーの配分",
+    "liquidityPool": "流動性プール",
+    "noData": "まだありません"
+  },
+  "invest": {
+    "title": "投資する",
+    "amountLabel": "投資する金額",
+    "balance": "残高 {amount}",
+    "max": "最大",
+    "belowMin": "最低投資額は{min}です",
+    "needMore": "あと{amount}必要です",
+    "cta": {
+      "invest": "投資する",
+      "deposit": "入金して投資"
+    },
+    "confirm": {
+      "title": "確認して署名",
+      "youInvest": "投資額",
+      "approxUsd": "≈ {usd}",
+      "estYield": "想定年間利回り",
+      "fee": "推定手数料",
+      "deployAtLeast": "最低でもこの金額が投資されます",
+      "approxValue": "{amount} ({usd})",
+      "lockup": "ロックアップ",
+      "cta": "確認して署名",
+      "zapNote": "USDCはプールの2つのトークン（{token0}/{token1}）に自動変換されます。出金時にはUSDCに戻ります。",
+      "back": "戻る"
+    },
+    "review": {
+      "title": "確認",
+      "cta": "投資を確定する"
+    },
+    "success": {
+      "title": "投資が完了しました",
+      "body": "{amount}が{name}に投資されました。",
+      "partial": "一部投資が完了しました。ご依頼の{requested}のうち{deployed}を追加しました。残りは市場の変動とスリッページにより追加できず、ウォレットに残りました。"
+    },
+    "settings": {
+      "title": "取引設定",
+      "slippageLabel": "最大スリッページ",
+      "slippageHint": "確定前に価格がこの値を超えて変動した場合、取引をキャンセルします。",
+      "slippageHigh": "スリッページが高い",
+      "slippageVeryHigh": "スリッページが非常に高い",
+      "slippageWarningBody": "不利な取引になる可能性があります。スリッページ設定を下げてみてください。",
+      "custom": "カスタム",
+      "deadlineLabel": "取引の有効期限",
+      "deadlineHint": "カスタム期限は近日対応予定です。現在、取引は標準の期限を使用します。",
+      "deadlineUnit": "分",
+      "receiveAsLabel": "受け取る資産",
+      "receiveAsHint": "受け取る資産です。デフォルトはUSDCですが、現在戦略に含まれるトークンを選択することもできます。",
+      "receiveAsFixedHint": "受け取る資産です。このトランザクションでは固定されています。",
+      "done": "完了"
+    },
+    "receipt": {
+      "amountInvested": "投資額"
+    }
+  },
+  "collect": {
+    "title": "利回りをコレクト",
+    "available": "コレクト可能額",
+    "destination": "USDC残高に入金されます",
+    "destinationPair": "{token0}と{token1}としてウォレットに送られます",
+    "amount": "リクエスト金額",
+    "youReceive": "受け取り",
+    "fee": "推定手数料",
+    "cta": "{amount}をコレクト",
+    "success": {
+      "title": "利回りをコレクトしました"
+    },
+    "receipt": {
+      "amountReceived": "受取額"
+    },
+    "minNotice": "回収の最低額は{amount}です。"
+  },
+  "compound": {
+    "title": "利回りを複利運用",
+    "available": "複利運用可能額",
+    "approxUsd": "≈ {usd}",
+    "approxValue": "{amount} ({usd})",
+    "fee": "推定手数料",
+    "feesTooltip": {
+      "dex": "DEX手数料",
+      "protocol": "プロトコル手数料",
+      "network": "推定gas (ネットワーク手数料)",
+      "total": "合計"
+    },
+    "atLeast": "最低でもこの金額が複利運用されます",
+    "note": "複利運用は獲得した利回りを戦略に再投資するため、それも収益を生み始めます。",
+    "cta": "{amount}を複利運用",
+    "success": {
+      "title": "利回りを複利運用しました",
+      "body": "{amount}が{name}に再投資されました。"
+    }
+  },
+  "withdraw": {
+    "title": "引き出す",
+    "amountLabel": "引き出す金額",
+    "invested": "投資額 {amount}",
+    "max": "最大",
+    "chooseMethod": "どのように引き出しますか？",
+    "regular": {
+      "title": "通常の出金",
+      "desc": "約2営業日で到着します",
+      "fee": "手数料なし"
+    },
+    "instant": {
+      "title": "即時出金",
+      "desc": "すぐに到着します",
+      "fee": "{fee}の手数料"
+    },
+    "lockedNote": "即時出金は利用できません。この戦略には{days}日間のロックアップがあります。",
+    "continue": "続ける",
+    "unitToggle": "金額の単位",
+    "confirm": {
+      "stillEarning": "残りの残高は収益を得続けます。"
+    },
+    "review": {
+      "title": "確認",
+      "back": "戻る",
+      "amountRequested": "申請金額",
+      "feesAvailable": "回収可能な手数料",
+      "estFees": "推定手数料",
+      "footerLocked": "≈ {amount} · {days, plural, other {# 日}}以内に到着 · 戦略のロックアップに基づく",
+      "footerRegular": "≈ {amount} · 約2営業日で到着",
+      "cta": "出金を確定する"
+    },
+    "success": {
+      "title": "出金を開始しました",
+      "body": "{amount}が残高へ向かっています。",
+      "completeTitle": "出金が成功しました",
+      "completeBody": "{amount}が残高に送金されました。",
+      "completeBodyPair": "{amount}が{token0}と{token1}としてウォレットに送金されました。"
+    },
+    "closed": {
+      "fullBalance": "全残高を出金します",
+      "instant": "即時",
+      "equals": "= {amount}",
+      "date": "日時",
+      "sentInstant": "{amount}をアカウントに送金しました · 即時",
+      "completeTitle": "出金が完了しました"
+    },
+    "dustAlert": "この金額を引き出すと残高が{floor}未満になるため、全額が引き出されます。",
+    "ownedCloseAlert": "残高をすべて引き出すとこの戦略は終了し、累積したfeeを回収します。",
+    "receipt": {
+      "amountReceived": "受取額",
+      "feesCollected": "回収済み手数料",
+      "feesCollectedIncluded": "回収済み手数料（込み）",
+      "totalReceived": "受取合計"
+    }
+  },
+  "flow": {
+    "processing": "処理中…",
+    "processingBody": "通常、数秒で完了します。",
+    "done": "完了",
+    "viewPosition": "ポジションを見る",
+    "error": {
+      "title": "問題が発生しました",
+      "body": "取引は完了せず、資金は移動していません。",
+      "retry": "再試行",
+      "help": "Discordでサポートを受ける",
+      "copy": "エラーをコピー",
+      "details": "エラー詳細",
+      "codeLabel": "コード",
+      "browserLabel": "ブラウザ",
+      "walletLabel": "ウォレット",
+      "osLabel": "OS",
+      "languageLabel": "言語",
+      "walletEmbedded": "Privy · 内蔵",
+      "walletExternal": "外部ウォレット",
+      "copied": "コピーしました",
+      "kinds": {
+        "slippage": "トランザクションが確定する前に、価格が最大スリッページを超えて変動しました。設定で最大スリッページを上げるか、後でもう一度お試しください。",
+        "deadlineExpired": "トランザクションは期限内に確定しなかったためキャンセルされました。もう一度お試しください。",
+        "insufficientFunds": "ウォレットの残高がこのトランザクションとネットワーク手数料をまかなうのに不足しています。",
+        "userRejected": "ウォレットでリクエストが拒否されました。資金は移動していません。",
+        "unauthorized": "このウォレットにはこの操作を実行する権限がありません。"
+      }
+    },
+    "slippage": {
+      "retryNotice": "価格が最大スリッページ（{value}%）を超えました。現在の価格で再試行しています。",
+      "errorTitle": "価格の変動が大きすぎます",
+      "errorBody": "価格が再び最大スリッページ（{value}%）を超えました。設定で引き上げるか、後でもう一度お試しください。"
+    },
+    "receipt": {
+      "strategy": "戦略",
+      "amount": "金額",
+      "date": "日付",
+      "transaction": "トランザクション",
+      "fee": "手数料",
+      "slippage": "スリッページ"
+    },
+    "review": {
+      "refreshIn": "{seconds}秒後に更新",
+      "quoteStale": "レートが古い可能性があります。自動的に更新されます。",
+      "priceImpact": "価格インパクト",
+      "caption": "手数料および最大{rate}%のスリッページ後",
+      "footerInstant": "≈ {amount} · 即時到着",
+      "showMore": "さらに表示",
+      "showLess": "少なく表示",
+      "maxSlippage": "最大スリッページ",
+      "slippageAuto": "自動"
+    },
+    "priceImpactGate": {
+      "title": "高い価格インパクト: 資金が損失するリスクがあります",
+      "body": "このルートは流動性が低いため、投入した価値より約{pct}少ない金額しか受け取れません。この損失は即時に発生し、取り消すことはできません。",
+      "ack": "資金の約{pct}を失う可能性があることを理解しました"
+    },
+    "feesTooltip": {
+      "dex": "DEX手数料",
+      "network": "推定gas (ネットワーク手数料)",
+      "protocol": "プロトコル手数料",
+      "performance": "パフォーマンス手数料",
+      "bridge": "ブリッジ手数料",
+      "comingSoon": "近日公開",
+      "total": "合計"
+    }
+  },
+  "share": {
+    "title": "パフォーマンスをシェア",
+    "close": "閉じる",
+    "periodGroup": "収益期間",
+    "periods": {
+      "24h": "24時間",
+      "7d": "7日",
+      "30d": "30日"
+    },
+    "card": {
+      "kicker": "Yield Receipt",
+      "earnedIn": "手数料とyieldの収益",
+      "strategyLabel": "戦略",
+      "periodLabel": "期間",
+      "period24h": "過去24時間",
+      "period7d": "過去7日間",
+      "period30d": "過去30日間",
+      "invite": "一緒に投資しましょう"
+    },
+    "save": "保存",
+    "copyCta": "紹介リンクをコピー",
+    "copied": "リンクをコピーしました",
+    "exportError": "共有画像を作成できませんでした。もう一度お試しください。",
+    "message": "Pool Partyの{strategy}で手数料とyieldを{amount}獲得。一緒に投資しましょう："
+  },
+  "provisioning": {
+    "poweredByPaybis": "Powered by Paybis",
+    "gas": {
+      "title": "ネットワーク手数料が不足しています",
+      "subtitle": "この取引を確認するには、少額のネットワーク手数料が必要です。以下で補充してください。",
+      "selectorLabel": "手数料の金額",
+      "custom": "カスタム",
+      "customPlaceholder": "金額",
+      "customAria": "カスタム手数料の金額",
+      "conversionNote": "お持ちのUSDCで支払われ、自動的にネットワーク手数料に変換されます。",
+      "cta": "{amount} の手数料を追加",
+      "dismiss": "後で",
+      "signStep": "手数料を補充",
+      "error": {
+        "belowMin": "最低 {amount}",
+        "overMax": "最大 {amount}"
+      },
+      "success": {
+        "title": "手数料を補充しました",
+        "body": "ウォレットが準備完了です。"
+      }
+    },
+    "plan": {
+      "title": "もう少しです",
+      "titleGasOnly": "あと一ステップ",
+      "subtitle": "必要なことをすべて計算しました。ここで各ステップを順に処理してから、お客様の取引を実行します。入金ページへの移動は不要です。",
+      "cta": "確認して次へ",
+      "cancel": "キャンセル"
+    },
+    "steps": {
+      "buyUsdc": "USDCを購入",
+      "bridge": "{network}へ移動",
+      "swapGas": "手数料を補充",
+      "swapToken": "{token}に交換",
+      "op": "お客様の取引"
+    },
+    "captions": {
+      "buyUsdc": "カードまたは現地決済",
+      "bridge": "正しいネットワークに資金を移動",
+      "swapGas": "金額を選択し、USDCから支払い",
+      "op": "元の操作"
+    },
+    "exec": {
+      "title": "資金を準備しています",
+      "subtitle": "購入・ルーティング・補充を自動で行います。完了後すぐに取引が実行されます。",
+      "done": "完了",
+      "pending": "処理中"
+    },
+    "opLabel": {
+      "invest": "{strategy}に投資",
+      "withdraw": "{strategy}から引き出す",
+      "collect": "{strategy}から回収",
+      "compound": "{strategy}に再投資",
+      "moveRange": "{strategy}の範囲を移動",
+      "close": "{strategy}をクローズ"
+    }
+  }
+}

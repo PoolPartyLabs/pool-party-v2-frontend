@@ -1,0 +1,25 @@
+{
+  "somethingWentWrong": "Etwas ist schiefgelaufen",
+  "networkError": "Netzwerkfehler",
+  "validationFailed": "Validierung fehlgeschlagen",
+  "description": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+  "retry": "Erneut versuchen",
+  "dashboard": {
+    "title": "Dein Dashboard konnte nicht geladen werden",
+    "body": "Bei uns ist etwas schiefgelaufen. Überprüfe deine Verbindung und versuche es erneut.",
+    "support": "Support kontaktieren"
+  },
+  "auth": {
+    "networkFailure": "Verbindung fehlgeschlagen. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+    "unsupportedChain": "Dieses Netzwerk wird nicht unterstützt. Bitte wechseln Sie zu Arbitrum, Base oder Polygon."
+  },
+  "api": {
+    "networkError": "Wir konnten unsere Server nicht erreichen. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "notConfigured": "Diese Funktion ist derzeit nicht verfügbar. Bitte versuchen Sie es später erneut.",
+    "upstreamUnavailable": "Unser Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es in Kürze erneut.",
+    "rateLimited": "Sie sind etwas zu schnell. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
+    "unauthorized": "Sie haben dazu keine Berechtigung. Bitte melden Sie sich erneut an.",
+    "notFound": "Wir konnten nicht finden, wonach Sie gesucht haben.",
+    "unknown": "Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es erneut."
+  }
+}

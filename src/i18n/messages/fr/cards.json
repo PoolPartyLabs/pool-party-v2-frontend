@@ -1,0 +1,76 @@
+{
+  "title": "Cartes",
+  "comingSoon": "Dépensez votre solde avec une carte Pool Party. Cette fonctionnalité arrive bientôt.",
+  "tabs": {
+    "explore": "Découvrir",
+    "myCards": "Mes cartes"
+  },
+  "explore": {
+    "title": "Cartes disponibles",
+    "subtitle": "Dépensez vos cryptos partout",
+    "partnerCount": "{count, plural, =1 {# partenaire} other {# partenaires}}",
+    "cta": {
+      "request": "Demander une carte",
+      "activating": "Activation…",
+      "manage": "Gérer la carte"
+    },
+    "badge": {
+      "popular": "Populaire",
+      "requested": "Demandée",
+      "active": "Active"
+    },
+    "perks": {
+      "cashbackEth3": "Jusqu'à 3 % de cashback en ETH",
+      "noAnnualFee": "Aucuns frais annuels",
+      "spendStablesEth": "Dépensez en USDC, USDT ou ETH",
+      "spendFromWallet": "Dépensez depuis votre portefeuille",
+      "eurUsdAccounts": "Comptes EUR et USD",
+      "selfCustodial": "On-chain, auto-conservation",
+      "spendMetamask": "Dépensez depuis votre solde MetaMask",
+      "cryptoRewards": "Récompenses en crypto",
+      "globalMastercard": "Mastercard mondiale",
+      "cashback1inch": "Cashback en 1INCH",
+      "noFxFees": "Aucuns frais de change",
+      "worksWorldwide": "Fonctionne dans le monde entier",
+      "spendEarnRewards": "Dépensez vos cryptos, gagnez des récompenses",
+      "visaDebitGlobal": "Visa débit, mondiale",
+      "cashbackCro5": "Jusqu'à 5 % de cashback en CRO",
+      "loungeAccess": "Accès aux salons d'aéroport"
+    }
+  },
+  "myCards": {
+    "title": "Vos cartes",
+    "subtitle": "Gérez vos cartes",
+    "addCard": "Ajouter une carte",
+    "balance": "Solde",
+    "debit": "Débit",
+    "viewDetails": "Voir les détails",
+    "actions": {
+      "topUp": "Recharger",
+      "lock": "Verrouiller la carte",
+      "freeze": "Geler",
+      "settings": "Paramètres"
+    },
+    "transactions": {
+      "title": "Transactions",
+      "seeAll": "Tout voir",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier"
+    },
+    "empty": {
+      "title": "Aucune carte pour l'instant",
+      "body": "Demandez une carte à un partenaire pour commencer à dépenser vos cryptos.",
+      "cta": "Découvrir les cartes"
+    }
+  },
+  "topUp": {
+    "title": "Recharger",
+    "subtitle": "Ajoutez des fonds au solde de votre carte",
+    "source": {
+      "wallet": "Portefeuille",
+      "portfolio": "Portefeuille d'investissement"
+    },
+    "cta": "Recharger",
+    "success": "Le solde de votre carte a été rechargé."
+  }
+}

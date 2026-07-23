@@ -1,0 +1,76 @@
+{
+  "title": "Cartões",
+  "comingSoon": "Gaste seu saldo com um cartão Pool Party. Em breve.",
+  "tabs": {
+    "explore": "Explorar",
+    "myCards": "Meus cartões"
+  },
+  "explore": {
+    "title": "Cartões disponíveis",
+    "subtitle": "Gaste sua cripto em qualquer lugar",
+    "partnerCount": "{count, plural, =1 {# parceiro} other {# parceiros}}",
+    "cta": {
+      "request": "Solicitar cartão",
+      "activating": "Ativando…",
+      "manage": "Gerenciar cartão"
+    },
+    "badge": {
+      "popular": "Popular",
+      "requested": "Solicitado",
+      "active": "Ativo"
+    },
+    "perks": {
+      "cashbackEth3": "Até 3% de cashback em ETH",
+      "noAnnualFee": "Sem anuidade",
+      "spendStablesEth": "Gaste USDC, USDT ou ETH",
+      "spendFromWallet": "Gaste direto da sua carteira",
+      "eurUsdAccounts": "Contas em EUR e USD",
+      "selfCustodial": "On-chain, auto-custódia",
+      "spendMetamask": "Gaste com o saldo da MetaMask",
+      "cryptoRewards": "Recompensas em cripto",
+      "globalMastercard": "Mastercard global",
+      "cashback1inch": "Cashback em 1INCH",
+      "noFxFees": "Sem taxas de câmbio",
+      "worksWorldwide": "Funciona no mundo todo",
+      "spendEarnRewards": "Gaste cripto e ganhe recompensas",
+      "visaDebitGlobal": "Visa débito, global",
+      "cashbackCro5": "Até 5% de cashback em CRO",
+      "loungeAccess": "Acesso a salas VIP de aeroporto"
+    }
+  },
+  "myCards": {
+    "title": "Seus cartões",
+    "subtitle": "Gerencie seus cartões",
+    "addCard": "Adicionar cartão",
+    "balance": "Saldo",
+    "debit": "Débito",
+    "viewDetails": "Ver detalhes",
+    "actions": {
+      "topUp": "Adicionar saldo",
+      "lock": "Bloquear cartão",
+      "freeze": "Congelar",
+      "settings": "Configurações"
+    },
+    "transactions": {
+      "title": "Transações",
+      "seeAll": "Ver tudo",
+      "today": "Hoje",
+      "yesterday": "Ontem"
+    },
+    "empty": {
+      "title": "Nenhum cartão ainda",
+      "body": "Solicite um cartão de um parceiro para começar a gastar sua cripto.",
+      "cta": "Explorar cartões"
+    }
+  },
+  "topUp": {
+    "title": "Adicionar saldo",
+    "subtitle": "Adicione fundos ao saldo do seu cartão",
+    "source": {
+      "wallet": "Carteira",
+      "portfolio": "Portfólio"
+    },
+    "cta": "Adicionar saldo",
+    "success": "O saldo do seu cartão foi recarregado."
+  }
+}

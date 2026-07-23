@@ -1,0 +1,191 @@
+{
+  "title": "プロフィール",
+  "settings": "設定",
+  "backToProfile": "プロフィールに戻る",
+  "save": "保存",
+  "saved": "保存しました",
+  "cancel": "キャンセル",
+  "connect": "接続",
+  "connected": "接続済み",
+  "referral": {
+    "title": "招待して特典をゲット",
+    "body": "友達を招待して、一緒にquacksを稼ごう。",
+    "stat": "{count}人の友達が参加",
+    "code": "あなたのコード",
+    "share": "招待リンクを共有",
+    "createCta": "紹介コードを作成"
+  },
+  "groups": {
+    "rewards": "リワード",
+    "account": "アカウント",
+    "preferences": "設定",
+    "support": "サポート",
+    "manager": "マネージャー"
+  },
+  "rows": {
+    "rubberRush": "Rubber Rush",
+    "rubberRushSub": "Quacksを獲得",
+    "managerIncentiveProgram": "Manager Incentive Program",
+    "managerProfile": "マネージャープロフィール",
+    "personalInfo": "個人情報",
+    "linkedSocial": "連携済みソーシャルアカウント",
+    "security": "セキュリティとログイン",
+    "alerts": "アラートと通知",
+    "appSettings": "アプリ設定",
+    "help": "ヘルプセンター",
+    "logout": "ログアウト",
+    "managerProfileSub": "公開マネージャーページ"
+  },
+  "personal": {
+    "title": "個人情報",
+    "changePhoto": "写真を変更",
+    "sectionPersonal": "個人",
+    "sectionContact": "連絡先",
+    "fullName": "名前",
+    "nameHelper": "公開されません。連絡のためだけに使用します。任意。",
+    "nameInvalid": "名前は{min}文字以上で入力してください。",
+    "displayName": "Handle",
+    "displayNameHelper": "プロフィールに公開される、あなたの公開ハンドルです。任意。",
+    "displayNameInvalid": "ハンドルは{min}文字以上で入力してください。",
+    "country": "国",
+    "countrySearch": "国を検索",
+    "countryNoResults": "該当なし",
+    "email": "メールアドレス",
+    "emailHelper": "任意。アカウントの通知に使用します。",
+    "emailInvalid": "有効なメールアドレスを入力してください。",
+    "avatarUploadFailed": "写真をアップロードできませんでした。もう一度お試しください。",
+    "saveFailed": "変更を保存できませんでした。もう一度お試しください。",
+    "saving": "保存中…",
+    "phone": "電話番号",
+    "phoneCountry": "国番号",
+    "phoneInvalid": "有効な電話番号を入力してください。",
+    "verified": "確認済み",
+    "optional": "(任意)"
+  },
+  "social": {
+    "title": "連携済みソーシャルアカウント",
+    "intro": "アカウントを連携すると、ポイントやロール、マルチプライヤーなどを獲得でき、通知も受け取れます。",
+    "telegram": {
+      "name": "Telegram",
+      "notifOff": "通知オフ",
+      "body": "Telegramを連携すると、入金・利回り・価格の通知を受け取れます。",
+      "connect": "Telegramを連携"
+    },
+    "others": "その他のアカウント",
+    "x": "X",
+    "google": "Google",
+    "discord": "Discord"
+  },
+  "security": {
+    "title": "セキュリティとログイン",
+    "signIn": "サインイン",
+    "changePassword": "パスワードを変更",
+    "faceId": "Face ID",
+    "appLock": "アプリロック",
+    "twoFactor": "二段階認証",
+    "wallet": "ウォレット",
+    "exportKey": "秘密鍵をエクスポート",
+    "exportWarning": "秘密鍵は絶対に共有しないでください。鍵を知る者は誰でもあなたの資金を管理できます。",
+    "devices": "デバイスとアクティビティ",
+    "trustedDevices": "信頼済みデバイス",
+    "trustedDevicesValue": "{count}台のデバイス",
+    "activeSessions": "アクティブなセッション",
+    "loginAlerts": "ログインアラート",
+    "comingSoon": "近日公開",
+    "deleteAccount": "アカウントを削除",
+    "deleteConfirm": {
+      "title": "アカウントを削除しますか？",
+      "body": "アカウントが完全に削除され、元に戻すことはできません。先に資金を引き出してください。",
+      "confirm": "アカウントを削除"
+    },
+    "deleteBlocked": {
+      "title": "先に資金を引き出してください",
+      "body": "アカウントにはまだ資金が残っています。すべて引き出してから、アカウントを削除できます。この操作は元に戻せません。",
+      "confirm": "ポートフォリオを見る"
+    },
+    "exportConfirm": {
+      "title": "秘密鍵を表示しますか？",
+      "body": "秘密鍵を知る者は誰でもあなたの資金を持ち出せます。他人に見られない場所でのみ表示し、絶対に共有しないでください。",
+      "hold": "長押しで表示"
+    },
+    "exportReveal": {
+      "title": "あなたの秘密鍵",
+      "warning": "絶対に共有しないでください。鍵を知る者は誰でもあなたの資金を管理できます。",
+      "copy": "鍵をコピー",
+      "copied": "クリップボードにコピーしました",
+      "done": "完了"
+    },
+    "exportError": "秘密鍵をエクスポートできませんでした。もう一度お試しください。"
+  },
+  "alerts": {
+    "title": "アラートと通知",
+    "delivery": "配信方法",
+    "push": "プッシュ通知",
+    "email": "メール",
+    "telegram": "Telegram",
+    "investing": "投資",
+    "yield": "利回り獲得",
+    "priceAlerts": "価格アラート",
+    "strategyUpdates": "戦略の更新",
+    "money": "資金",
+    "deposits": "入金",
+    "withdrawalReady": "出金準備完了",
+    "fromPoolParty": "Pool Partyから",
+    "rubberRush": "Rubber Rush",
+    "tips": "ヒントとガイド",
+    "productNews": "プロダクトニュース"
+  },
+  "appSettings": {
+    "title": "アプリ設定",
+    "general": "一般",
+    "language": "言語",
+    "currency": "通貨表示",
+    "currencyValue": "USD ($)",
+    "appearance": "外観",
+    "appearanceValue": "ダーク",
+    "privacy": "プライバシー",
+    "shareAnalytics": "分析データを共有",
+    "about": "アプリについて",
+    "version": "アプリバージョン",
+    "versionValue": "2.4.0",
+    "terms": "利用規約",
+    "privacyPolicy": "プライバシーポリシー"
+  },
+  "help": {
+    "title": "ヘルプセンター",
+    "searchPlaceholder": "ヘルプ記事を検索",
+    "noResults": "検索に一致するヘルプ記事はありません。",
+    "discord": {
+      "title": "Discordに参加",
+      "fastest": "最速",
+      "body": "チームとコミュニティから回答を得られます。",
+      "open": "Discordを開く"
+    },
+    "docs": {
+      "title": "ドキュメント",
+      "body": "ガイドと使い方"
+    },
+    "contact": {
+      "title": "サポートに問い合わせ",
+      "body": "support@pool-party.xyz"
+    },
+    "faqTitle": "よくある質問",
+    "faq": {
+      "q1": "入金はどのように行いますか？",
+      "a1": "Pix・カード・銀行振込で入金するとUSDCに変換されます。または暗号資産を直接送金することもできます。資金はすぐに投資できます。",
+      "q2": "いつ引き出せますか？",
+      "a2": "いつでも引き出せます。通常の出金は約2営業日で手数料なしで到着します。即時出金は1%の手数料ですぐに到着します。",
+      "q3": "手数料はかかりますか？",
+      "a3": "各戦略には運用手数料とパフォーマンス手数料が記載され、確認前に再度表示されます。入金手数料は確認画面で表示されます。"
+    }
+  },
+  "logout": {
+    "title": "ログアウトしますか？",
+    "body": "アカウントにアクセスするには、再度サインインが必要です。",
+    "confirm": "ログアウト"
+  },
+  "identity": {
+    "quacks": "{count, number} Quacks",
+    "editProfile": "プロフィールを編集"
+  }
+}

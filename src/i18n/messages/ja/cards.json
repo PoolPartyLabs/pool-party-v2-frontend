@@ -1,0 +1,76 @@
+{
+  "title": "カード",
+  "comingSoon": "Pool Partyカードで残高を使えます。この機能は近日公開予定です。",
+  "tabs": {
+    "explore": "探す",
+    "myCards": "マイカード"
+  },
+  "explore": {
+    "title": "利用可能なカード",
+    "subtitle": "暗号資産をどこでも使う",
+    "partnerCount": "{count, plural, other {# 社のパートナー}}",
+    "cta": {
+      "request": "カードを申請",
+      "activating": "有効化中…",
+      "manage": "カードを管理"
+    },
+    "badge": {
+      "popular": "人気",
+      "requested": "申請済み",
+      "active": "有効"
+    },
+    "perks": {
+      "cashbackEth3": "最大3%のキャッシュバックをETHで",
+      "noAnnualFee": "年会費無料",
+      "spendStablesEth": "USDC・USDT・ETHで支払い",
+      "spendFromWallet": "ウォレットから支払い",
+      "eurUsdAccounts": "EUR・USD口座",
+      "selfCustodial": "オンチェーン・自己管理型",
+      "spendMetamask": "MetaMask残高から支払い",
+      "cryptoRewards": "暗号資産リワード",
+      "globalMastercard": "グローバルMastercard",
+      "cashback1inch": "1INCHでキャッシュバック",
+      "noFxFees": "為替手数料なし",
+      "worksWorldwide": "世界中で利用可能",
+      "spendEarnRewards": "暗号資産で支払い、リワードを獲得",
+      "visaDebitGlobal": "Visaデビット、グローバル対応",
+      "cashbackCro5": "最大5%のキャッシュバックをCROで",
+      "loungeAccess": "空港ラウンジ利用"
+    }
+  },
+  "myCards": {
+    "title": "マイカード",
+    "subtitle": "カードを管理",
+    "addCard": "カードを追加",
+    "balance": "残高",
+    "debit": "デビット",
+    "viewDetails": "詳細を見る",
+    "actions": {
+      "topUp": "チャージ",
+      "lock": "カードをロック",
+      "freeze": "凍結",
+      "settings": "設定"
+    },
+    "transactions": {
+      "title": "取引履歴",
+      "seeAll": "すべて見る",
+      "today": "今日",
+      "yesterday": "昨日"
+    },
+    "empty": {
+      "title": "カードはまだありません",
+      "body": "パートナーからカードを申請して、暗号資産での支払いを始めましょう。",
+      "cta": "カードを探す"
+    }
+  },
+  "topUp": {
+    "title": "チャージ",
+    "subtitle": "カード残高に資金を追加",
+    "source": {
+      "wallet": "ウォレット",
+      "portfolio": "ポートフォリオ"
+    },
+    "cta": "チャージ",
+    "success": "カード残高にチャージしました。"
+  }
+}

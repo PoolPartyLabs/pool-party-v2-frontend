@@ -1,0 +1,488 @@
+{
+  "sign": {
+    "continueInWallet": "Continuez dans votre portefeuille",
+    "stepOf": "Étape {current} sur {total}",
+    "whyTitle": "Que vais-je signer ?",
+    "whyBody": "Les signatures prouvent que vous autorisez cette action. Elles ont lieu dans votre portefeuille et ne déplacent jamais vos fonds à elles seules.",
+    "steps": {
+      "approve": "Approuver {token}",
+      "sign": "Signez le message dans votre portefeuille",
+      "confirmInvest": "Confirmer le dépôt",
+      "confirmWithdraw": "Confirmer le retrait",
+      "confirmCollect": "Confirmer la collecte",
+      "confirmCompound": "Confirmer le réinvestissement",
+      "permit": "Signez l'autorisation dans votre portefeuille",
+      "confirmAddLiquidity": "Confirmer l'ajout de liquidité",
+      "confirmRemoveLiquidity": "Confirmer le retrait",
+      "confirmMoveRange": "Confirmer le rééquilibrage",
+      "confirmClosePosition": "Confirmer la clôture",
+      "build": "Préparation de la transaction",
+      "skipped": "Déjà approuvé"
+    },
+    "explain": {
+      "approve": {
+        "name": "Approbation du token",
+        "body": "Autorise Pool Party à déplacer vos {token} pour cette transaction. Une approbation ne déplace jamais de fonds par elle-même. La transaction réelle a lieu lors d'une étape ultérieure."
+      },
+      "permit": {
+        "name": "Signature Permit2",
+        "body": "Une signature sans gas qui autorise ce transfert. C'est un message, pas une transaction. Elle ne coûte donc aucun frais de réseau et rien ne se déplace tant que vous ne confirmez pas."
+      },
+      "confirm": {
+        "name": "Confirmation finale",
+        "body": "La dernière étape. Elle s'exécute sur le réseau et réalise effectivement la transaction. C'est la seule étape susceptible de coûter de légers frais de réseau."
+      },
+      "build": {
+        "name": "Préparation de la transaction",
+        "body": "Pool Party calcule les montants et les frais de réseau pour cette transaction. Rien n'est encore signé ni envoyé."
+      }
+    }
+  },
+  "card": {
+    "by": "par {manager}",
+    "min": "Min.",
+    "estReturn": "Rendement est.",
+    "viewDetails": "Voir les détails",
+    "invest": "Investir"
+  },
+  "risk": {
+    "level1": "Très prudent",
+    "level2": "Prudent",
+    "level3": "Modéré",
+    "level4": "Agressif",
+    "level5": "Très agressif"
+  },
+  "explore": {
+    "title": "Stratégies",
+    "subtitle": "Stratégies gérées dans lesquelles vous pouvez investir",
+    "searchPlaceholder": "Rechercher par nom, gestionnaire, token ou adresse",
+    "browseByRisk": "Parcourir par risque",
+    "allRisks": "Tous",
+    "browseByType": "Parcourir par type",
+    "allTypes": "Tous",
+    "types": {
+      "yield": "Rendement",
+      "trading": "Trading",
+      "index": "Indice",
+      "marketNeutral": "Neutre au marché"
+    },
+    "browseByCategory": "Parcourir par catégorie",
+    "allCategories": "Tous",
+    "categorySelected": "{count} sélectionnées",
+    "categories": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme coins"
+    },
+    "count": "{count, plural, =0 {Aucune stratégie} =1 {# stratégie} other {# stratégies}}",
+    "owned": "Gérée",
+    "invested": "Investi",
+    "noResults": "Aucune stratégie ne correspond à votre recherche.",
+    "clearFilters": "Effacer les filtres",
+    "sortLabel": "Trier par",
+    "sortDir": {
+      "asc": "Croissant",
+      "desc": "Décroissant"
+    },
+    "loadMore": "Charger plus",
+    "loadingMore": "Chargement",
+    "empty": {
+      "title": "Aucune stratégie pour l'instant",
+      "body": "Les stratégies apparaîtront ici dès qu'elles seront disponibles."
+    },
+    "columns": {
+      "strategy": "Stratégie",
+      "risk": "Risque",
+      "min": "Min.",
+      "tvl": "TVL",
+      "investors": "Investisseurs",
+      "return": "Rendement est.",
+      "action": "Action"
+    }
+  },
+  "detail": {
+    "back": "Retour",
+    "performance": "Valeur du pool",
+    "periods": {
+      "week": "1W",
+      "month": "1M",
+      "quarter": "3M",
+      "year": "1Y",
+      "all": "Tout"
+    },
+    "chart": {
+      "noHistoryTitle": "Pas encore d'historique",
+      "noHistoryBody": "L'historique de valeur de cette stratégie apparaîtra après ses premiers jours d'activité."
+    },
+    "metrics": {
+      "min": "Minimum",
+      "tvl": "TVL",
+      "lockup": "Blocage",
+      "performanceFee": "Frais de performance"
+    },
+    "lockup": {
+      "none": "Aucun",
+      "days": "{days, plural, =1 {# jour} other {# jours}}"
+    },
+    "about": "À propos",
+    "composition": "Composition",
+    "mandate": {
+      "title": "Mandat d'investissement",
+      "assets": "Exposition max. par actif",
+      "protocols": "Exposition max. par protocole",
+      "networks": "Réseaux"
+    },
+    "riskLimits": {
+      "title": "Limites de risque et conditions",
+      "maxDrawdown": "Perte maximale",
+      "leverage": "Effet de levier",
+      "rebalancing": "Rééquilibrage",
+      "liquidity": "Liquidité",
+      "strategyType": "Type de stratégie",
+      "benchmark": "Indice de référence",
+      "custody": "Conservation"
+    },
+    "fees": {
+      "title": "Frais",
+      "management": "Gestion",
+      "performance": "Performance",
+      "none": "Sans frais"
+    },
+    "managerVerified": "Gestionnaire vérifié",
+    "yourPosition": {
+      "title": "Votre position",
+      "active": "Active",
+      "paused": "En pause",
+      "invested": "Investi",
+      "currentValue": "Valeur actuelle",
+      "totalYield": "Rendement total",
+      "available": "Disponible à la collecte",
+      "closed": "Clôturée",
+      "finalValue": "Valeur finale",
+      "totalYieldRealized": "Rendement total (réalisé)",
+      "availableToWithdraw": "Disponible au retrait"
+    },
+    "actions": {
+      "invest": "Investir",
+      "investMore": "Investir davantage",
+      "collectAmount": "Collecter {amount}",
+      "compound": "Capitaliser",
+      "compoundComingSoon": "La capitalisation arrive bientôt. Vous pouvez toujours collecter votre rendement.",
+      "withdraw": "Retirer",
+      "share": "Partager"
+    },
+    "paused": {
+      "title": "{name} est en pause",
+      "body": "Cette stratégie n'accepte pas de nouveaux investissements pour le moment. Votre position est en sécurité et continue de générer des revenus. Vous pouvez toujours collecter ou retirer.",
+      "notify": "M'avertir à sa réouverture",
+      "notified": "Nous vous tiendrons informé",
+      "viewOthers": "Voir d'autres stratégies"
+    },
+    "closed": {
+      "title": "Stratégie clôturée",
+      "body": "{manager} a clôturé cette stratégie. Vos fonds sont prêts à être retirés."
+    },
+    "viewProfile": "View profile",
+    "managerRole": "Manager",
+    "managerAllocation": "Allocation du gérant",
+    "liquidityPool": "Pool de liquidité",
+    "noData": "Pas encore disponible"
+  },
+  "invest": {
+    "title": "Investir",
+    "amountLabel": "Montant à investir",
+    "balance": "Solde {amount}",
+    "max": "Max",
+    "belowMin": "L'investissement minimum est de {min}",
+    "needMore": "Il vous faut {amount} de plus",
+    "cta": {
+      "invest": "Investir",
+      "deposit": "Déposer et investir"
+    },
+    "confirm": {
+      "title": "Confirmer et signer",
+      "youInvest": "Vous investissez",
+      "approxUsd": "≈ {usd}",
+      "estYield": "Rendement annuel est.",
+      "fee": "Frais est.",
+      "deployAtLeast": "Vous investirez au moins",
+      "approxValue": "{amount} ({usd})",
+      "lockup": "Blocage",
+      "cta": "Confirmer et signer",
+      "zapNote": "Vos USDC sont automatiquement convertis dans les deux tokens de la pool ({token0}/{token1}). Lors du retrait, ils sont reconvertis en USDC.",
+      "back": "Retour"
+    },
+    "review": {
+      "title": "Récapitulatif",
+      "cta": "Confirmer l'investissement"
+    },
+    "success": {
+      "title": "Investissement confirmé",
+      "body": "{amount} sont désormais investis dans {name}.",
+      "partial": "Investissement partiel. Nous avons ajouté {deployed} de vos {requested}. Le reste n'a pas pu être ajouté en raison des mouvements du marché et du slippage, et est resté dans votre portefeuille."
+    },
+    "settings": {
+      "title": "Paramètres de transaction",
+      "slippageLabel": "Slippage max.",
+      "slippageHint": "Annule la transaction si le prix varie au-delà de cette valeur avant la confirmation.",
+      "slippageHigh": "Slippage élevé",
+      "slippageVeryHigh": "Slippage très élevé",
+      "slippageWarningBody": "Cela peut entraîner une transaction défavorable. Essayez de réduire votre paramètre de slippage.",
+      "custom": "Personnalisé",
+      "deadlineLabel": "Délai de transaction",
+      "deadlineHint": "Les délais personnalisés arrivent bientôt. Pour l'instant, les transactions utilisent un délai standard.",
+      "deadlineUnit": "min",
+      "receiveAsLabel": "Recevoir en",
+      "receiveAsHint": "L'actif que vous recevrez. USDC par défaut ; vous pouvez choisir les tokens actuellement dans la stratégie.",
+      "receiveAsFixedHint": "L'actif que vous recevrez. Fixe pour cette transaction.",
+      "done": "Terminé"
+    },
+    "receipt": {
+      "amountInvested": "Montant investi"
+    }
+  },
+  "collect": {
+    "title": "Collecter le rendement",
+    "available": "Disponible à la collecte",
+    "destination": "Versé sur votre solde USDC",
+    "destinationPair": "Envoyé vers votre portefeuille en {token0} et {token1}",
+    "amount": "Montant demandé",
+    "youReceive": "Vous recevez",
+    "fee": "Frais est.",
+    "cta": "Collecter {amount}",
+    "success": {
+      "title": "Rendement collecté"
+    },
+    "receipt": {
+      "amountReceived": "Montant reçu"
+    },
+    "minNotice": "Le minimum à collecter est de {amount}."
+  },
+  "compound": {
+    "title": "Capitaliser le rendement",
+    "available": "Disponible à la capitalisation",
+    "approxUsd": "≈ {usd}",
+    "approxValue": "{amount} ({usd})",
+    "fee": "Frais est.",
+    "feesTooltip": {
+      "dex": "Frais DEX",
+      "protocol": "Frais de protocole",
+      "network": "Gas estimé (frais de réseau)",
+      "total": "Total"
+    },
+    "atLeast": "Vous capitaliserez au moins",
+    "note": "La capitalisation réinvestit votre rendement gagné dans la stratégie, afin qu'il commence aussi à générer des revenus.",
+    "cta": "Capitaliser {amount}",
+    "success": {
+      "title": "Rendement capitalisé",
+      "body": "{amount} ont été réinvestis dans {name}."
+    }
+  },
+  "withdraw": {
+    "title": "Retrait",
+    "amountLabel": "Montant à retirer",
+    "invested": "Investi {amount}",
+    "max": "Max",
+    "chooseMethod": "Comment souhaitez-vous retirer ?",
+    "regular": {
+      "title": "Retrait standard",
+      "desc": "Arrive en environ 2 jours ouvrés",
+      "fee": "Sans frais"
+    },
+    "instant": {
+      "title": "Retrait instantané",
+      "desc": "Arrive immédiatement",
+      "fee": "Frais de {fee}"
+    },
+    "lockedNote": "Le retrait instantané n'est pas disponible. Cette stratégie a un blocage de {days} jours.",
+    "continue": "Continuer",
+    "unitToggle": "Unité du montant",
+    "confirm": {
+      "stillEarning": "Votre solde restant continue de générer des revenus."
+    },
+    "review": {
+      "title": "Récapitulatif",
+      "back": "Retour",
+      "amountRequested": "Montant demandé",
+      "feesAvailable": "Frais disponibles à percevoir",
+      "estFees": "Frais est.",
+      "footerLocked": "≈ {amount} · Arrive en {days, plural, one {# jour} other {# jours}} · selon le blocage de la stratégie",
+      "footerRegular": "≈ {amount} · Arrive en environ 2 jours ouvrés",
+      "cta": "Confirmer le retrait"
+    },
+    "success": {
+      "title": "Retrait initié",
+      "body": "{amount} sont en route vers votre solde.",
+      "completeTitle": "Retrait réussi",
+      "completeBody": "{amount} a été envoyé à votre solde.",
+      "completeBodyPair": "{amount} a été envoyé vers votre portefeuille en {token0} et {token1}."
+    },
+    "closed": {
+      "fullBalance": "Retrait de tout votre solde",
+      "instant": "Instantané",
+      "equals": "= {amount}",
+      "date": "Date",
+      "sentInstant": "{amount} envoyé sur votre compte · instantané",
+      "completeTitle": "Retrait effectué"
+    },
+    "dustAlert": "Retirer ce montant laisserait moins de {floor}, donc la totalité de votre solde sera retirée.",
+    "ownedCloseAlert": "Retirer la totalité de votre solde clôture cette stratégie et collecte les fees accumulés.",
+    "receipt": {
+      "amountReceived": "Montant reçu",
+      "feesCollected": "Frais collectés",
+      "feesCollectedIncluded": "Frais collectés (inclus)",
+      "totalReceived": "Total reçu"
+    }
+  },
+  "flow": {
+    "processing": "Traitement…",
+    "processingBody": "Cela prend généralement quelques secondes.",
+    "done": "Terminé",
+    "viewPosition": "Voir la position",
+    "error": {
+      "title": "Une erreur est survenue",
+      "body": "Votre transaction n'a pas abouti et aucun fonds n'a été déplacé.",
+      "retry": "Réessayer",
+      "help": "Obtenir de l'aide sur Discord",
+      "copy": "Copier l'erreur",
+      "details": "Détails de l'erreur",
+      "codeLabel": "Code",
+      "browserLabel": "Navigateur",
+      "walletLabel": "Portefeuille",
+      "osLabel": "Système",
+      "languageLabel": "Langue",
+      "walletEmbedded": "Privy · Intégré",
+      "walletExternal": "Portefeuille externe",
+      "copied": "Copié",
+      "kinds": {
+        "slippage": "Le prix a dépassé votre slippage maximal avant la confirmation de la transaction. Augmentez le slippage maximal dans les paramètres ou réessayez plus tard.",
+        "deadlineExpired": "La transaction n'a pas été confirmée dans le délai imparti et a été annulée. Réessayez.",
+        "insufficientFunds": "Votre portefeuille n'a pas assez de fonds pour couvrir cette transaction et ses frais de réseau.",
+        "userRejected": "Vous avez refusé la demande dans votre portefeuille. Aucun fonds n'a été déplacé.",
+        "unauthorized": "Ce portefeuille n'est pas autorisé à effectuer cette opération."
+      }
+    },
+    "slippage": {
+      "retryNotice": "Le prix a dépassé votre slippage maximum ({value}%). Nouvel essai au prix actuel.",
+      "errorTitle": "Le prix a trop bougé",
+      "errorBody": "Le prix a de nouveau dépassé votre slippage maximum ({value}%). Augmentez-le dans les paramètres ou réessayez plus tard."
+    },
+    "receipt": {
+      "strategy": "Stratégie",
+      "amount": "Montant",
+      "date": "Date",
+      "transaction": "Transaction",
+      "fee": "Frais",
+      "slippage": "Slippage"
+    },
+    "review": {
+      "refreshIn": "Actualisation dans {seconds}s",
+      "quoteStale": "Le devis est peut-être obsolète. Actualisation automatique.",
+      "priceImpact": "Impact sur le prix",
+      "caption": "après frais et max. {rate}% de slippage",
+      "footerInstant": "≈ {amount} · Arrive immédiatement",
+      "showMore": "Afficher plus",
+      "showLess": "Afficher moins",
+      "maxSlippage": "Slippage max.",
+      "slippageAuto": "Auto"
+    },
+    "priceImpactGate": {
+      "title": "Impact sur le prix élevé : vos fonds sont en danger",
+      "body": "En raison de la faible liquidité sur cette route, vous recevriez environ {pct} de moins que la valeur investie. Cette perte est immédiate et irréversible.",
+      "ack": "Je comprends que je peux perdre environ {pct} de mes fonds"
+    },
+    "feesTooltip": {
+      "dex": "Frais DEX",
+      "network": "Gas estimé (frais de réseau)",
+      "protocol": "Frais de protocole",
+      "performance": "Frais de performance",
+      "bridge": "Frais de bridge",
+      "comingSoon": "Bientôt disponible",
+      "total": "Total"
+    }
+  },
+  "share": {
+    "title": "Partager la performance",
+    "close": "Fermer",
+    "periodGroup": "Période des gains",
+    "periods": {
+      "24h": "24H",
+      "7d": "7J",
+      "30d": "30J"
+    },
+    "card": {
+      "kicker": "Yield Receipt",
+      "earnedIn": "en frais et yield",
+      "strategyLabel": "Stratégie",
+      "periodLabel": "Période",
+      "period24h": "Dernières 24 heures",
+      "period7d": "7 derniers jours",
+      "period30d": "30 derniers jours",
+      "invite": "Investissez avec moi"
+    },
+    "save": "Enregistrer",
+    "copyCta": "Copier le lien de parrainage",
+    "copied": "Lien copié",
+    "exportError": "Impossible de créer l'image de partage. Veuillez réessayer.",
+    "message": "{amount} en frais et yield avec {strategy} sur Pool Party. Investissez avec moi :"
+  },
+  "provisioning": {
+    "poweredByPaybis": "Propulsé par Paybis",
+    "gas": {
+      "title": "Frais de réseau insuffisants",
+      "subtitle": "Vous avez besoin d'un peu de frais de réseau pour confirmer cette transaction. Rechargez ci-dessous.",
+      "selectorLabel": "Montant des frais",
+      "custom": "Personnalisé",
+      "customPlaceholder": "Montant",
+      "customAria": "Montant de frais personnalisé",
+      "conversionNote": "Payé avec votre USDC et converti automatiquement en frais de réseau.",
+      "cta": "Ajouter {amount} de frais",
+      "dismiss": "Pas maintenant",
+      "signStep": "Recharger les frais",
+      "error": {
+        "belowMin": "Minimum {amount}",
+        "overMax": "Maximum {amount}"
+      },
+      "success": {
+        "title": "Frais ajoutés",
+        "body": "Votre portefeuille est rechargé et prêt."
+      }
+    },
+    "plan": {
+      "title": "Presque là",
+      "titleGasOnly": "Une étape rapide",
+      "subtitle": "Nous avons calculé exactement ce qu'il faut. Nous gérons chaque étape ici même, puis exécutons votre transaction. Pas de détour vers Dépôt.",
+      "cta": "Confirmer et continuer",
+      "cancel": "Annuler"
+    },
+    "steps": {
+      "buyUsdc": "Acheter des USDC",
+      "bridge": "Déplacer vers {network}",
+      "swapGas": "Ajouter des frais de réseau",
+      "swapToken": "Échanger en {token}",
+      "op": "Votre transaction"
+    },
+    "captions": {
+      "buyUsdc": "Carte ou virement local",
+      "bridge": "Déplacer les fonds vers le bon réseau",
+      "swapGas": "Vous choisissez le montant, payé en USDC",
+      "op": "Votre action initiale"
+    },
+    "exec": {
+      "title": "Préparation de vos fonds",
+      "subtitle": "Nous achetons, acheminons et complètons automatiquement. Votre transaction s'exécute juste après.",
+      "done": "Terminé",
+      "pending": "En attente"
+    },
+    "opLabel": {
+      "invest": "Investir dans {strategy}",
+      "withdraw": "Retirer de {strategy}",
+      "collect": "Percevoir de {strategy}",
+      "compound": "Réinvestir dans {strategy}",
+      "moveRange": "Déplacer la plage dans {strategy}",
+      "close": "Fermer {strategy}"
+    }
+  }
+}

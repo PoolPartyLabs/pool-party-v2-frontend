@@ -1,0 +1,76 @@
+{
+  "title": "Cards",
+  "comingSoon": "Spend your balance with a Pool Party card. This feature is coming soon.",
+  "tabs": {
+    "explore": "Explore",
+    "myCards": "My cards"
+  },
+  "explore": {
+    "title": "Available cards",
+    "subtitle": "Spend your crypto anywhere",
+    "partnerCount": "{count, plural, =1 {# partner} other {# partners}}",
+    "cta": {
+      "request": "Request card",
+      "activating": "Activating…",
+      "manage": "Manage card"
+    },
+    "badge": {
+      "popular": "Popular",
+      "requested": "Requested",
+      "active": "Active"
+    },
+    "perks": {
+      "cashbackEth3": "Up to 3% cashback in ETH",
+      "noAnnualFee": "No annual fee",
+      "spendStablesEth": "Spend USDC, USDT or ETH",
+      "spendFromWallet": "Spend from your wallet",
+      "eurUsdAccounts": "EUR & USD accounts",
+      "selfCustodial": "On-chain, self-custodial",
+      "spendMetamask": "Spend from MetaMask balance",
+      "cryptoRewards": "Crypto rewards",
+      "globalMastercard": "Global Mastercard",
+      "cashback1inch": "Cashback in 1INCH",
+      "noFxFees": "No FX fees",
+      "worksWorldwide": "Works worldwide",
+      "spendEarnRewards": "Spend crypto, earn rewards",
+      "visaDebitGlobal": "Visa debit, global",
+      "cashbackCro5": "Up to 5% cashback in CRO",
+      "loungeAccess": "Airport lounge access"
+    }
+  },
+  "myCards": {
+    "title": "Your cards",
+    "subtitle": "Manage your cards",
+    "addCard": "Add card",
+    "balance": "Balance",
+    "debit": "Debit",
+    "viewDetails": "View details",
+    "actions": {
+      "topUp": "Top up",
+      "lock": "Lock card",
+      "freeze": "Freeze",
+      "settings": "Settings"
+    },
+    "transactions": {
+      "title": "Transactions",
+      "seeAll": "See all",
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
+    "empty": {
+      "title": "No cards yet",
+      "body": "Request a card from a partner to start spending your crypto.",
+      "cta": "Explore cards"
+    }
+  },
+  "topUp": {
+    "title": "Top up",
+    "subtitle": "Add funds to your card balance",
+    "source": {
+      "wallet": "Wallet",
+      "portfolio": "Portfolio"
+    },
+    "cta": "Top up",
+    "success": "Your card balance was topped up."
+  }
+}

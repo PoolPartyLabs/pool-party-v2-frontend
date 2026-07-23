@@ -1,0 +1,488 @@
+{
+  "sign": {
+    "continueInWallet": "请在你的钱包中继续",
+    "stepOf": "第 {current} 步，共 {total} 步",
+    "whyTitle": "我在签署什么？",
+    "whyBody": "签名用于证明你授权此操作。签名在你的钱包中完成，本身不会转移你的资金。",
+    "steps": {
+      "approve": "授权 {token}",
+      "sign": "在钱包中签署消息",
+      "confirmInvest": "确认存入",
+      "confirmWithdraw": "确认提取",
+      "confirmCollect": "确认领取",
+      "confirmCompound": "确认再投资",
+      "permit": "在钱包中签署授权",
+      "confirmAddLiquidity": "确认添加流动性",
+      "confirmRemoveLiquidity": "确认提现",
+      "confirmMoveRange": "确认再平衡",
+      "confirmClosePosition": "确认关闭",
+      "build": "正在准备交易",
+      "skipped": "已授权"
+    },
+    "explain": {
+      "approve": {
+        "name": "代币授权",
+        "body": "允许 Pool Party 在本次交易中动用您的 {token}。授权本身绝不会转移资金，实际交易将在后续步骤中进行。"
+      },
+      "permit": {
+        "name": "Permit2 签名",
+        "body": "一条用于授权本次转账的免 gas 签名。它是一条消息，并非交易，因此不收取任何网络费，在您确认之前不会发生任何转移。"
+      },
+      "confirm": {
+        "name": "最终确认",
+        "body": "最后一步。它在网络上运行并实际执行交易，这是唯一可能产生少量网络费的步骤。"
+      },
+      "build": {
+        "name": "正在准备交易",
+        "body": "Pool Party 正在计算本次交易的金额和网络费用。目前尚未签署或发送任何内容。"
+      }
+    }
+  },
+  "card": {
+    "by": "由 {manager} 管理",
+    "min": "最低",
+    "estReturn": "预计回报",
+    "viewDetails": "查看详情",
+    "invest": "投资"
+  },
+  "risk": {
+    "level1": "极度保守",
+    "level2": "保守",
+    "level3": "稳健",
+    "level4": "激进",
+    "level5": "极度激进"
+  },
+  "explore": {
+    "title": "策略",
+    "subtitle": "您可投资的受管理策略",
+    "searchPlaceholder": "按名称、管理人、代币或地址搜索",
+    "browseByRisk": "按风险浏览",
+    "allRisks": "全部",
+    "browseByType": "按类型浏览",
+    "allTypes": "全部",
+    "types": {
+      "yield": "收益",
+      "trading": "交易",
+      "index": "指数",
+      "marketNeutral": "市场中性"
+    },
+    "browseByCategory": "按类别浏览",
+    "allCategories": "全部",
+    "categorySelected": "已选 {count} 个",
+    "categories": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme coins"
+    },
+    "count": "{count, plural, =0 {暂无策略} other {# 个策略}}",
+    "owned": "管理中",
+    "invested": "已投资",
+    "noResults": "没有符合搜索条件的策略。",
+    "clearFilters": "清除筛选",
+    "sortLabel": "排序方式",
+    "sortDir": {
+      "asc": "升序",
+      "desc": "降序"
+    },
+    "loadMore": "加载更多",
+    "loadingMore": "加载中",
+    "empty": {
+      "title": "暂无策略",
+      "body": "策略一旦可用将显示于此。"
+    },
+    "columns": {
+      "strategy": "策略",
+      "risk": "风险",
+      "min": "最低",
+      "tvl": "TVL",
+      "investors": "投资者",
+      "return": "预计回报",
+      "action": "操作"
+    }
+  },
+  "detail": {
+    "back": "返回",
+    "performance": "资金池价值",
+    "periods": {
+      "week": "1W",
+      "month": "1M",
+      "quarter": "3M",
+      "year": "1Y",
+      "all": "全部"
+    },
+    "chart": {
+      "noHistoryTitle": "暂无历史数据",
+      "noHistoryBody": "该策略的价值历史将在其运行数天后显示。"
+    },
+    "metrics": {
+      "min": "最低金额",
+      "tvl": "TVL",
+      "lockup": "锁定期",
+      "performanceFee": "业绩手续费"
+    },
+    "lockup": {
+      "none": "无",
+      "days": "{days, plural, other {# 天}}"
+    },
+    "about": "关于",
+    "composition": "构成",
+    "mandate": {
+      "title": "投资授权范围",
+      "assets": "单一资产最大敞口",
+      "protocols": "单一协议最大敞口",
+      "networks": "网络"
+    },
+    "riskLimits": {
+      "title": "风险限制与条款",
+      "maxDrawdown": "最大回撤",
+      "leverage": "杠杆",
+      "rebalancing": "再平衡",
+      "liquidity": "流动性",
+      "strategyType": "策略类型",
+      "benchmark": "基准",
+      "custody": "托管"
+    },
+    "fees": {
+      "title": "手续费",
+      "management": "管理费",
+      "performance": "业绩费",
+      "none": "免手续费"
+    },
+    "managerVerified": "已验证的管理人",
+    "yourPosition": {
+      "title": "您的持仓",
+      "active": "活跃",
+      "paused": "已暂停",
+      "invested": "已投资",
+      "currentValue": "当前价值",
+      "totalYield": "总收益",
+      "available": "可领取",
+      "closed": "已关闭",
+      "finalValue": "最终价值",
+      "totalYieldRealized": "总收益（已实现）",
+      "availableToWithdraw": "可提取金额"
+    },
+    "actions": {
+      "invest": "投资",
+      "investMore": "追加投资",
+      "collectAmount": "领取 {amount}",
+      "compound": "复投",
+      "compoundComingSoon": "复投功能即将推出。您仍可领取收益。",
+      "withdraw": "提现",
+      "share": "分享"
+    },
+    "paused": {
+      "title": "{name} 已暂停",
+      "body": "此策略目前不接受新投资。您的持仓安全无虞并持续产生收益。您仍可领取或提现。",
+      "notify": "重新开放时通知我",
+      "notified": "我们会通知您",
+      "viewOthers": "查看其他策略"
+    },
+    "closed": {
+      "title": "策略已关闭",
+      "body": "{manager}关闭了该策略。你的资金随时可提取。"
+    },
+    "viewProfile": "View profile",
+    "managerRole": "Manager",
+    "managerAllocation": "管理人配置",
+    "liquidityPool": "流动性池",
+    "noData": "暂无数据"
+  },
+  "invest": {
+    "title": "投资",
+    "amountLabel": "投资金额",
+    "balance": "余额 {amount}",
+    "max": "最大",
+    "belowMin": "最低投资金额为 {min}",
+    "needMore": "您还需要 {amount}",
+    "cta": {
+      "invest": "投资",
+      "deposit": "存入并投资"
+    },
+    "confirm": {
+      "title": "确认并签名",
+      "youInvest": "您投资",
+      "approxUsd": "≈ {usd}",
+      "estYield": "预计年化收益",
+      "fee": "预估费用",
+      "deployAtLeast": "您将至少投入",
+      "approxValue": "{amount} ({usd})",
+      "lockup": "锁定期",
+      "cta": "确认并签名",
+      "zapNote": "你的 USDC 会自动转换为池子的两种代币（{token0}/{token1}）。提取时会自动换回 USDC。",
+      "back": "返回"
+    },
+    "review": {
+      "title": "确认详情",
+      "cta": "确认投资"
+    },
+    "success": {
+      "title": "投资已确认",
+      "body": "{amount} 现已投资于 {name}。",
+      "partial": "部分投资成功。我们已将您 {requested} 中的 {deployed} 添加进去。其余部分因市场波动和滑点无法添加，已保留在您的钱包中。"
+    },
+    "settings": {
+      "title": "交易设置",
+      "slippageLabel": "最大滑点",
+      "slippageHint": "若价格在交易确认前的波动超过此值，则取消交易。",
+      "slippageHigh": "滑点偏高",
+      "slippageVeryHigh": "滑点非常高",
+      "slippageWarningBody": "这可能导致不利的交易结果。请尝试降低您的滑点设置。",
+      "custom": "自定义",
+      "deadlineLabel": "交易截止时间",
+      "deadlineHint": "自定义期限即将推出。目前交易使用标准期限。",
+      "deadlineUnit": "分钟",
+      "receiveAsLabel": "接收为",
+      "receiveAsHint": "您将收到的资产。默认为 USDC；您可以选择策略中当前持有的代币。",
+      "receiveAsFixedHint": "您将收到的资产。本次交易中为固定。",
+      "done": "完成"
+    },
+    "receipt": {
+      "amountInvested": "已投入金额"
+    }
+  },
+  "collect": {
+    "title": "领取收益",
+    "available": "可领取",
+    "destination": "转入您的 USDC 余额",
+    "destinationPair": "以{token0}和{token1}形式进入您的钱包",
+    "amount": "请求金额",
+    "youReceive": "您将收到",
+    "fee": "预估费用",
+    "cta": "领取 {amount}",
+    "success": {
+      "title": "收益已领取"
+    },
+    "receipt": {
+      "amountReceived": "已收到金额"
+    },
+    "minNotice": "最低收取金额为 {amount}。"
+  },
+  "compound": {
+    "title": "复投收益",
+    "available": "可复投",
+    "approxUsd": "≈ {usd}",
+    "approxValue": "{amount} ({usd})",
+    "fee": "预估费用",
+    "feesTooltip": {
+      "dex": "DEX 手续费",
+      "protocol": "协议手续费",
+      "network": "预估 gas (网络手续费)",
+      "total": "合计"
+    },
+    "atLeast": "您将至少复投",
+    "note": "复投会将您已获得的收益重新投入策略，使其也开始产生收益。",
+    "cta": "复投 {amount}",
+    "success": {
+      "title": "收益已复投",
+      "body": "{amount} 已再投资到 {name}。"
+    }
+  },
+  "withdraw": {
+    "title": "提现",
+    "amountLabel": "提现金额",
+    "invested": "已投资 {amount}",
+    "max": "最大",
+    "chooseMethod": "您希望如何提现？",
+    "regular": {
+      "title": "普通提现",
+      "desc": "约 2 个工作日到账",
+      "fee": "免手续费"
+    },
+    "instant": {
+      "title": "即时提现",
+      "desc": "立即到账",
+      "fee": "{fee} 手续费"
+    },
+    "lockedNote": "即时提现不可用。此策略有 {days} 天锁定期。",
+    "continue": "继续",
+    "unitToggle": "金额单位",
+    "confirm": {
+      "stillEarning": "您的剩余余额持续产生收益。"
+    },
+    "review": {
+      "title": "确认详情",
+      "back": "返回",
+      "amountRequested": "申请金额",
+      "feesAvailable": "可领取的手续费",
+      "estFees": "预估费用",
+      "footerLocked": "≈ {amount} · {days, plural, other {# 天}}内到账 · 依策略锁定期",
+      "footerRegular": "≈ {amount} · 约 2 个工作日到账",
+      "cta": "确认提现"
+    },
+    "success": {
+      "title": "提现已发起",
+      "body": "{amount} 正在转入您的余额。",
+      "completeTitle": "提现成功",
+      "completeBody": "{amount} 已发送至您的余额。",
+      "completeBodyPair": "{amount}已以{token0}和{token1}形式发送到您的钱包。"
+    },
+    "closed": {
+      "fullBalance": "提取你的全部余额",
+      "instant": "即时",
+      "equals": "= {amount}",
+      "date": "日期",
+      "sentInstant": "{amount}已发送到你的账户 · 即时",
+      "completeTitle": "提取完成"
+    },
+    "dustAlert": "提取这么多会使余额低于 {floor}，因此将提取你的全部余额。",
+    "ownedCloseAlert": "提取全部余额将关闭该策略并领取累计的 fee。",
+    "receipt": {
+      "amountReceived": "已收到金额",
+      "feesCollected": "已收取手续费",
+      "feesCollectedIncluded": "已收取手续费（已包含）",
+      "totalReceived": "合计收到"
+    }
+  },
+  "flow": {
+    "processing": "处理中…",
+    "processingBody": "这通常需要几秒钟。",
+    "done": "完成",
+    "viewPosition": "查看持仓",
+    "error": {
+      "title": "出了点问题",
+      "body": "您的交易未能完成，没有资金被转移。",
+      "retry": "重试",
+      "help": "在 Discord 上获取帮助",
+      "copy": "复制错误",
+      "details": "错误详情",
+      "codeLabel": "代码",
+      "browserLabel": "浏览器",
+      "walletLabel": "钱包",
+      "osLabel": "系统",
+      "languageLabel": "语言",
+      "walletEmbedded": "Privy · 内置",
+      "walletExternal": "外部钱包",
+      "copied": "已复制",
+      "kinds": {
+        "slippage": "在交易确认前，价格波动超出了你的最大滑点。请在设置中提高最大滑点，或稍后再试。",
+        "deadlineExpired": "交易未能在截止时间内确认，已被取消。请重试。",
+        "insufficientFunds": "你的钱包余额不足以支付本次交易及网络费用。",
+        "userRejected": "你在钱包中拒绝了该请求。资金未发生变动。",
+        "unauthorized": "此钱包无权执行该操作。"
+      }
+    },
+    "slippage": {
+      "retryNotice": "价格已超出你的最大滑点（{value}%）。正在按当前价格重试。",
+      "errorTitle": "价格波动过大",
+      "errorBody": "价格再次超出你的最大滑点（{value}%）。请在设置中调高，或稍后再试。"
+    },
+    "receipt": {
+      "strategy": "策略",
+      "amount": "金额",
+      "date": "日期",
+      "transaction": "交易",
+      "fee": "手续费",
+      "slippage": "滑点"
+    },
+    "review": {
+      "refreshIn": "{seconds}秒后刷新",
+      "quoteStale": "报价可能已过期，正在自动刷新。",
+      "priceImpact": "价格影响",
+      "caption": "扣除手续费及最高 {rate}% 滑点后",
+      "footerInstant": "≈ {amount} · 即时到账",
+      "showMore": "显示更多",
+      "showLess": "收起",
+      "maxSlippage": "最大滑点",
+      "slippageAuto": "自动"
+    },
+    "priceImpactGate": {
+      "title": "价格影响过高: 您的资金面临风险",
+      "body": "由于该路径流动性不足，您将收到比投入价值少约{pct}的金额。此损失立即发生且无法撤销。",
+      "ack": "我了解我可能损失约{pct}的资金"
+    },
+    "feesTooltip": {
+      "dex": "DEX 手续费",
+      "network": "预估 gas (网络手续费)",
+      "protocol": "协议手续费",
+      "performance": "业绩手续费",
+      "bridge": "跨链桥手续费",
+      "comingSoon": "即将推出",
+      "total": "合计"
+    }
+  },
+  "share": {
+    "title": "分享收益表现",
+    "close": "关闭",
+    "periodGroup": "收益周期",
+    "periods": {
+      "24h": "24小时",
+      "7d": "7天",
+      "30d": "30天"
+    },
+    "card": {
+      "kicker": "Yield Receipt",
+      "earnedIn": "手续费与 yield 收益",
+      "strategyLabel": "策略",
+      "periodLabel": "周期",
+      "period24h": "过去 24 小时",
+      "period7d": "过去 7 天",
+      "period30d": "过去 30 天",
+      "invite": "和我一起投资"
+    },
+    "save": "保存",
+    "copyCta": "复制推荐链接",
+    "copied": "链接已复制",
+    "exportError": "无法生成分享图片。请重试。",
+    "message": "在 Pool Party 的 {strategy} 中赚取了 {amount}（手续费与 yield）。和我一起投资："
+  },
+  "provisioning": {
+    "poweredByPaybis": "由 Paybis 提供支持",
+    "gas": {
+      "title": "网络费用不足",
+      "subtitle": "您需要少量网络费用才能确认此交易。请在下方充值。",
+      "selectorLabel": "费用金额",
+      "custom": "自定义",
+      "customPlaceholder": "金额",
+      "customAria": "自定义费用金额",
+      "conversionNote": "从您的 USDC 中扣除，并自动转换为网络费用。",
+      "cta": "添加 {amount} 费用",
+      "dismiss": "暂不",
+      "signStep": "充值网络费用",
+      "error": {
+        "belowMin": "最低 {amount}",
+        "overMax": "最高 {amount}"
+      },
+      "success": {
+        "title": "费用已充值",
+        "body": "您的钱包已准备就绪。"
+      }
+    },
+    "plan": {
+      "title": "马上就好",
+      "titleGasOnly": "只需一步",
+      "subtitle": "我们已精确计算所需内容。所有步骤在此完成，然后执行您的交易，无需跳转到充值页面。",
+      "cta": "确认并继续",
+      "cancel": "取消"
+    },
+    "steps": {
+      "buyUsdc": "购买 USDC",
+      "bridge": "转移到 {network}",
+      "swapGas": "充值网络费用",
+      "swapToken": "兑换为 {token}",
+      "op": "您的交易"
+    },
+    "captions": {
+      "buyUsdc": "银行卡或本地支付",
+      "bridge": "将资金转移到正确的网络",
+      "swapGas": "您选择金额，从 USDC 中支付",
+      "op": "您的原始操作"
+    },
+    "exec": {
+      "title": "正在准备您的资金",
+      "subtitle": "我们将自动完成购买、路由和充值。您的交易随后立即执行。",
+      "done": "完成",
+      "pending": "处理中"
+    },
+    "opLabel": {
+      "invest": "投资 {strategy}",
+      "withdraw": "从 {strategy} 提取",
+      "collect": "从 {strategy} 领取",
+      "compound": "复投 {strategy}",
+      "moveRange": "调整 {strategy} 的区间",
+      "close": "关闭 {strategy}"
+    }
+  }
+}

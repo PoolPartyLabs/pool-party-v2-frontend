@@ -1,0 +1,44 @@
+{
+  "hideValues": "Ocultar valores",
+  "portfolioValue": "Portafolio total",
+  "allTimeEarned": "{amount} en comisiones por reclamar",
+  "allocationByRisk": "Asignación por riesgo",
+  "invested": "Invertido",
+  "currentValue": "Valor actual",
+  "totalYield": "Rendimiento total",
+  "avgApy": "APR medio",
+  "loadMore": "Cargar más",
+  "loadingMore": "Cargando",
+  "yourPositions": "Tus posiciones",
+  "activeCount": "{count} activas",
+  "rate": "Tasa",
+  "status": {
+    "active": "Activo",
+    "paused": "Pausado",
+    "closed": "Cerrada"
+  },
+  "columns": {
+    "strategy": "Estrategia",
+    "risk": "Riesgo",
+    "invested": "Invertido",
+    "value": "Valor actual",
+    "yield": "Rendimiento",
+    "rate": "Tasa"
+  },
+  "putToWork": {
+    "title": "Pon tu dinero a trabajar",
+    "body": "Agrega fondos o explora estrategias para que tu portafolio siga creciendo.",
+    "deposit": "Depositar",
+    "explore": "Explorar estrategias"
+  },
+  "empty": {
+    "title": "Empieza a hacer crecer tu dinero",
+    "body": "Haz tu primer depósito y ponlo a trabajar en una estrategia.",
+    "deposit": "Depositar",
+    "explore": "Explorar estrategias"
+  },
+  "closedStrategies": {
+    "title": "Estrategias cerradas",
+    "empty": "Aún no hay estrategias cerradas"
+  }
+}

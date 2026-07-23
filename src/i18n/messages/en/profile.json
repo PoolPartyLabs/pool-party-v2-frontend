@@ -1,0 +1,191 @@
+{
+  "title": "Profile",
+  "settings": "Settings",
+  "backToProfile": "Back to profile",
+  "save": "Save",
+  "saved": "Saved",
+  "cancel": "Cancel",
+  "connect": "Connect",
+  "connected": "Connected",
+  "referral": {
+    "title": "Invite & earn",
+    "body": "Invite friends and earn quacks together.",
+    "stat": "{count} friends joined",
+    "code": "Your code",
+    "share": "Share invite link",
+    "createCta": "Create your referral code"
+  },
+  "groups": {
+    "rewards": "Rewards",
+    "account": "Account",
+    "preferences": "Preferences",
+    "support": "Support",
+    "manager": "Manager"
+  },
+  "rows": {
+    "rubberRush": "Rubber Rush",
+    "rubberRushSub": "Earn Quacks",
+    "managerIncentiveProgram": "Manager Incentive Program",
+    "managerProfile": "Manager profile",
+    "personalInfo": "Personal information",
+    "linkedSocial": "Linked social accounts",
+    "security": "Security & login",
+    "alerts": "Alerts & notifications",
+    "appSettings": "App settings",
+    "help": "Help center",
+    "logout": "Log out",
+    "managerProfileSub": "Your public manager page"
+  },
+  "personal": {
+    "title": "Personal information",
+    "changePhoto": "Change photo",
+    "sectionPersonal": "Personal",
+    "sectionContact": "Contact",
+    "fullName": "Name",
+    "nameHelper": "Not shown publicly. Used only for communication. Optional.",
+    "nameInvalid": "Name must be at least {min} characters.",
+    "displayName": "Handle",
+    "displayNameHelper": "Your public handle, shown on your profile. Optional.",
+    "displayNameInvalid": "Handle must be at least {min} characters.",
+    "country": "Country",
+    "countrySearch": "Search country",
+    "countryNoResults": "No match",
+    "email": "Email",
+    "emailHelper": "Optional. Used for account notices.",
+    "emailInvalid": "Enter a valid email.",
+    "avatarUploadFailed": "Couldn't upload your photo. Try again.",
+    "saveFailed": "Couldn't save your changes. Try again.",
+    "saving": "Saving…",
+    "phone": "Phone",
+    "phoneCountry": "Phone country code",
+    "phoneInvalid": "Enter a valid phone number.",
+    "verified": "Verified",
+    "optional": "(optional)"
+  },
+  "social": {
+    "title": "Linked social accounts",
+    "intro": "Connect your accounts to earn points, roles, multipliers and more, and to get notifications.",
+    "telegram": {
+      "name": "Telegram",
+      "notifOff": "Notifications off",
+      "body": "Connect Telegram to receive deposit, yield and price notifications.",
+      "connect": "Connect Telegram"
+    },
+    "others": "Other accounts",
+    "x": "X",
+    "google": "Google",
+    "discord": "Discord"
+  },
+  "security": {
+    "title": "Security & login",
+    "signIn": "Sign-in",
+    "changePassword": "Change password",
+    "faceId": "Face ID",
+    "appLock": "App lock",
+    "twoFactor": "Two-factor authentication",
+    "wallet": "Wallet",
+    "exportKey": "Export private key",
+    "exportWarning": "Never share your private key. Anyone with it controls your funds.",
+    "devices": "Devices & activity",
+    "trustedDevices": "Trusted devices",
+    "trustedDevicesValue": "{count} devices",
+    "activeSessions": "Active sessions",
+    "loginAlerts": "Login alerts",
+    "comingSoon": "Coming soon",
+    "deleteAccount": "Delete account",
+    "deleteConfirm": {
+      "title": "Delete account?",
+      "body": "This permanently deletes your account and cannot be undone. Withdraw your funds first.",
+      "confirm": "Delete account"
+    },
+    "deleteBlocked": {
+      "title": "Withdraw your funds first",
+      "body": "Your account still holds funds. Withdraw everything, then you can delete your account. This can't be undone.",
+      "confirm": "View portfolio"
+    },
+    "exportConfirm": {
+      "title": "Reveal private key?",
+      "body": "Anyone with your private key can take your funds. Only reveal it somewhere private, and never share it.",
+      "hold": "Hold to reveal"
+    },
+    "exportReveal": {
+      "title": "Your private key",
+      "warning": "Never share this. Anyone with it controls your funds.",
+      "copy": "Copy key",
+      "copied": "Copied to clipboard",
+      "done": "Done"
+    },
+    "exportError": "Could not export your private key. Please try again."
+  },
+  "alerts": {
+    "title": "Alerts & notifications",
+    "delivery": "Delivery",
+    "push": "Push notifications",
+    "email": "Email",
+    "telegram": "Telegram",
+    "investing": "Investing",
+    "yield": "Yield earned",
+    "priceAlerts": "Price alerts",
+    "strategyUpdates": "Strategy updates",
+    "money": "Money",
+    "deposits": "Deposits",
+    "withdrawalReady": "Withdrawal ready",
+    "fromPoolParty": "From Pool Party",
+    "rubberRush": "Rubber Rush",
+    "tips": "Tips & guides",
+    "productNews": "Product news"
+  },
+  "appSettings": {
+    "title": "App settings",
+    "general": "General",
+    "language": "Language",
+    "currency": "Currency display",
+    "currencyValue": "USD ($)",
+    "appearance": "Appearance",
+    "appearanceValue": "Dark",
+    "privacy": "Privacy",
+    "shareAnalytics": "Share analytics",
+    "about": "About",
+    "version": "App version",
+    "versionValue": "2.4.0",
+    "terms": "Terms of Service",
+    "privacyPolicy": "Privacy Policy"
+  },
+  "help": {
+    "title": "Help center",
+    "searchPlaceholder": "Search help articles",
+    "noResults": "No help articles match your search.",
+    "discord": {
+      "title": "Join our Discord",
+      "fastest": "Fastest",
+      "body": "Get answers from the team and community.",
+      "open": "Open Discord"
+    },
+    "docs": {
+      "title": "Documentation",
+      "body": "Guides and how-tos"
+    },
+    "contact": {
+      "title": "Contact support",
+      "body": "support@pool-party.xyz"
+    },
+    "faqTitle": "Popular questions",
+    "faq": {
+      "q1": "How do deposits work?",
+      "a1": "Add money with Pix, card or bank transfer and it's converted to USDC, or transfer crypto directly. Funds are ready to invest right away.",
+      "q2": "When can I withdraw?",
+      "a2": "Anytime. Regular withdrawals arrive in about 2 business days with no fee; instant withdrawals arrive right away for a 1% fee.",
+      "q3": "Are there fees?",
+      "a3": "Each strategy lists its management and performance fees, shown again before you confirm. Deposit fees appear at review."
+    }
+  },
+  "logout": {
+    "title": "Log out?",
+    "body": "You'll need to sign in again to access your account.",
+    "confirm": "Log out"
+  },
+  "identity": {
+    "quacks": "{count, number} Quacks",
+    "editProfile": "Edit profile"
+  }
+}

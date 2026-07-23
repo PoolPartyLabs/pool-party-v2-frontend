@@ -1,0 +1,44 @@
+{
+  "hideValues": "値を非表示にする",
+  "portfolioValue": "ポートフォリオ合計",
+  "allTimeEarned": "未請求の手数料 {amount}",
+  "allocationByRisk": "リスク別配分",
+  "invested": "投資額",
+  "currentValue": "現在の評価額",
+  "totalYield": "累計利回り",
+  "avgApy": "平均APR",
+  "loadMore": "さらに読み込む",
+  "loadingMore": "読み込み中",
+  "yourPositions": "保有ポジション",
+  "activeCount": "{count}件がアクティブ",
+  "rate": "利率",
+  "status": {
+    "active": "アクティブ",
+    "paused": "停止中",
+    "closed": "終了"
+  },
+  "columns": {
+    "strategy": "戦略",
+    "risk": "リスク",
+    "invested": "投資額",
+    "value": "現在の評価額",
+    "yield": "利回り",
+    "rate": "利率"
+  },
+  "putToWork": {
+    "title": "資金を運用に回す",
+    "body": "資金を追加するか戦略を探して、ポートフォリオを成長させ続けましょう。",
+    "deposit": "資金を入金",
+    "explore": "戦略を探す"
+  },
+  "empty": {
+    "title": "資産運用を始めましょう",
+    "body": "最初の入金をして、戦略で運用を始めましょう。",
+    "deposit": "資金を入金",
+    "explore": "戦略を探す"
+  },
+  "closedStrategies": {
+    "title": "終了した戦略",
+    "empty": "終了した戦略はまだありません"
+  }
+}

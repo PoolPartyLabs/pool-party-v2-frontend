@@ -1,0 +1,76 @@
+{
+  "title": "Thẻ",
+  "comingSoon": "Chi tiêu số dư của bạn bằng thẻ Pool Party. Tính năng này sắp ra mắt.",
+  "tabs": {
+    "explore": "Khám phá",
+    "myCards": "Thẻ của tôi"
+  },
+  "explore": {
+    "title": "Thẻ khả dụng",
+    "subtitle": "Chi tiêu crypto của bạn ở mọi nơi",
+    "partnerCount": "{count, plural, =1 {# đối tác} other {# đối tác}}",
+    "cta": {
+      "request": "Yêu cầu thẻ",
+      "activating": "Đang kích hoạt…",
+      "manage": "Quản lý thẻ"
+    },
+    "badge": {
+      "popular": "Phổ biến",
+      "requested": "Đã yêu cầu",
+      "active": "Đang hoạt động"
+    },
+    "perks": {
+      "cashbackEth3": "Hoàn tiền lên đến 3% bằng ETH",
+      "noAnnualFee": "Không phí thường niên",
+      "spendStablesEth": "Chi tiêu USDC, USDT hoặc ETH",
+      "spendFromWallet": "Chi tiêu từ ví của bạn",
+      "eurUsdAccounts": "Tài khoản EUR & USD",
+      "selfCustodial": "On-chain, tự lưu ký",
+      "spendMetamask": "Chi tiêu từ số dư MetaMask",
+      "cryptoRewards": "Phần thưởng crypto",
+      "globalMastercard": "Mastercard toàn cầu",
+      "cashback1inch": "Hoàn tiền bằng 1INCH",
+      "noFxFees": "Không phí ngoại hối",
+      "worksWorldwide": "Hoạt động trên toàn thế giới",
+      "spendEarnRewards": "Chi tiêu crypto, nhận phần thưởng",
+      "visaDebitGlobal": "Thẻ ghi nợ Visa, toàn cầu",
+      "cashbackCro5": "Hoàn tiền lên đến 5% bằng CRO",
+      "loungeAccess": "Vào phòng chờ sân bay"
+    }
+  },
+  "myCards": {
+    "title": "Thẻ của bạn",
+    "subtitle": "Quản lý thẻ của bạn",
+    "addCard": "Thêm thẻ",
+    "balance": "Số dư",
+    "debit": "Ghi nợ",
+    "viewDetails": "Xem chi tiết",
+    "actions": {
+      "topUp": "Nạp thêm",
+      "lock": "Khóa thẻ",
+      "freeze": "Tạm khóa",
+      "settings": "Cài đặt"
+    },
+    "transactions": {
+      "title": "Giao dịch",
+      "seeAll": "Xem tất cả",
+      "today": "Hôm nay",
+      "yesterday": "Hôm qua"
+    },
+    "empty": {
+      "title": "Chưa có thẻ nào",
+      "body": "Yêu cầu thẻ từ một đối tác để bắt đầu chi tiêu crypto của bạn.",
+      "cta": "Khám phá thẻ"
+    }
+  },
+  "topUp": {
+    "title": "Nạp thêm",
+    "subtitle": "Thêm tiền vào số dư thẻ của bạn",
+    "source": {
+      "wallet": "Ví",
+      "portfolio": "Danh mục"
+    },
+    "cta": "Nạp thêm",
+    "success": "Số dư thẻ của bạn đã được nạp thêm."
+  }
+}

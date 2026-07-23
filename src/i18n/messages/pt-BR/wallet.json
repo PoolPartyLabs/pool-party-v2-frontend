@@ -1,0 +1,35 @@
+{
+  "title": "Carteira",
+  "openWallet": "Abrir carteira",
+  "refresh": "Atualizar saldo",
+  "connect": "Conectar carteira",
+  "close": "Fechar",
+  "kind": {
+    "embedded": "Integrada",
+    "external": "Externa"
+  },
+  "copyAddress": "Copiar endereço",
+  "copied": "Copiado",
+  "totalBalance": "SALDO TOTAL",
+  "dayChange": "{usd} · {pct} hoje",
+  "addFunds": "Adicione fundos para começar",
+  "actions": {
+    "buy": "Comprar",
+    "swap": "Trocar",
+    "send": "Enviar",
+    "receive": "Receber"
+  },
+  "networks": {
+    "all": "Todas"
+  },
+  "noAssetsOnNetwork": "Nenhum ativo nesta rede",
+  "emptyTitle": "Nenhum ativo ainda",
+  "emptyBody": "Compre ou receba cripto e seus saldos vão aparecer aqui, em todas as redes.",
+  "manage": "Gerenciar carteira",
+  "disconnect": "Desconectar",
+  "comingSoon": {
+    "title": "Em breve",
+    "send": "O envio de tokens está chegando. Por enquanto, você pode Comprar ou Receber cripto.",
+    "back": "Entendi"
+  }
+}

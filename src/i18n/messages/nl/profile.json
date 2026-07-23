@@ -1,0 +1,191 @@
+{
+  "title": "Profiel",
+  "settings": "Instellingen",
+  "backToProfile": "Terug naar profiel",
+  "save": "Opslaan",
+  "saved": "Opgeslagen",
+  "cancel": "Annuleren",
+  "connect": "Verbinden",
+  "connected": "Verbonden",
+  "referral": {
+    "title": "Uitnodigen & verdienen",
+    "body": "Nodig vrienden uit en verdien samen quacks.",
+    "stat": "{count} vrienden aangesloten",
+    "code": "Uw code",
+    "share": "Uitnodigingslink delen",
+    "createCta": "Maak je verwijzingscode aan"
+  },
+  "groups": {
+    "rewards": "Beloningen",
+    "account": "Account",
+    "preferences": "Voorkeuren",
+    "support": "Ondersteuning",
+    "manager": "Beheerder"
+  },
+  "rows": {
+    "rubberRush": "Rubber Rush",
+    "rubberRushSub": "Verdien Quacks",
+    "managerIncentiveProgram": "Manager Incentive Program",
+    "managerProfile": "Beheerdersprofiel",
+    "personalInfo": "Persoonlijke gegevens",
+    "linkedSocial": "Gekoppelde social accounts",
+    "security": "Beveiliging & inloggen",
+    "alerts": "Meldingen & notificaties",
+    "appSettings": "App-instellingen",
+    "help": "Helpcentrum",
+    "logout": "Uitloggen",
+    "managerProfileSub": "Uw openbare beheerderspagina"
+  },
+  "personal": {
+    "title": "Persoonlijke gegevens",
+    "changePhoto": "Foto wijzigen",
+    "sectionPersonal": "Persoonlijk",
+    "sectionContact": "Contact",
+    "fullName": "Naam",
+    "nameHelper": "Niet openbaar zichtbaar. Alleen voor communicatie. Optioneel.",
+    "nameInvalid": "De naam moet minimaal {min} tekens bevatten.",
+    "displayName": "Handle",
+    "displayNameHelper": "Je openbare handle, zichtbaar op je profiel. Optioneel.",
+    "displayNameInvalid": "De handle moet minimaal {min} tekens bevatten.",
+    "country": "Land",
+    "countrySearch": "Land zoeken",
+    "countryNoResults": "Geen resultaten",
+    "email": "E-mail",
+    "emailHelper": "Optioneel. Gebruikt voor accountmeldingen.",
+    "emailInvalid": "Voer een geldig e-mailadres in.",
+    "avatarUploadFailed": "Kan je foto niet uploaden. Probeer het opnieuw.",
+    "saveFailed": "Kan je wijzigingen niet opslaan. Probeer het opnieuw.",
+    "saving": "Opslaan…",
+    "phone": "Telefoon",
+    "phoneCountry": "Landcode",
+    "phoneInvalid": "Voer een geldig telefoonnummer in.",
+    "verified": "Geverifieerd",
+    "optional": "(optioneel)"
+  },
+  "social": {
+    "title": "Gekoppelde social accounts",
+    "intro": "Koppel uw accounts om punten, rollen, multipliers en meer te verdienen en notificaties te ontvangen.",
+    "telegram": {
+      "name": "Telegram",
+      "notifOff": "Notificaties uit",
+      "body": "Koppel Telegram om notificaties over stortingen, rendement en prijzen te ontvangen.",
+      "connect": "Telegram koppelen"
+    },
+    "others": "Andere accounts",
+    "x": "X",
+    "google": "Google",
+    "discord": "Discord"
+  },
+  "security": {
+    "title": "Beveiliging & inloggen",
+    "signIn": "Inloggen",
+    "changePassword": "Wachtwoord wijzigen",
+    "faceId": "Face ID",
+    "appLock": "App-vergrendeling",
+    "twoFactor": "Tweefactorauthenticatie",
+    "wallet": "Wallet",
+    "exportKey": "Privésleutel exporteren",
+    "exportWarning": "Deel uw privésleutel nooit. Iedereen die deze heeft, beheert uw geld.",
+    "devices": "Apparaten & activiteit",
+    "trustedDevices": "Vertrouwde apparaten",
+    "trustedDevicesValue": "{count} apparaten",
+    "activeSessions": "Actieve sessies",
+    "loginAlerts": "Inlogmeldingen",
+    "comingSoon": "Binnenkort beschikbaar",
+    "deleteAccount": "Account verwijderen",
+    "deleteConfirm": {
+      "title": "Account verwijderen?",
+      "body": "Hiermee wordt uw account permanent verwijderd en dit kan niet ongedaan worden gemaakt. Neem eerst uw geld op.",
+      "confirm": "Account verwijderen"
+    },
+    "deleteBlocked": {
+      "title": "Neem eerst uw geld op",
+      "body": "Uw account bevat nog geld. Neem alles op, daarna kunt u uw account verwijderen. Dit kan niet ongedaan worden gemaakt.",
+      "confirm": "Portefeuille bekijken"
+    },
+    "exportConfirm": {
+      "title": "Privésleutel onthullen?",
+      "body": "Iedereen met uw privésleutel kan uw geld wegnemen. Onthul deze alleen op een privéplek en deel deze nooit.",
+      "hold": "Ingedrukt houden om te tonen"
+    },
+    "exportReveal": {
+      "title": "Uw privésleutel",
+      "warning": "Deel deze nooit. Iedereen die deze heeft, beheert uw geld.",
+      "copy": "Sleutel kopiëren",
+      "copied": "Naar klembord gekopieerd",
+      "done": "Klaar"
+    },
+    "exportError": "Kan je privésleutel niet exporteren. Probeer het opnieuw."
+  },
+  "alerts": {
+    "title": "Meldingen & notificaties",
+    "delivery": "Bezorging",
+    "push": "Pushnotificaties",
+    "email": "E-mail",
+    "telegram": "Telegram",
+    "investing": "Beleggen",
+    "yield": "Rendement verdiend",
+    "priceAlerts": "Prijsmeldingen",
+    "strategyUpdates": "Strategie-updates",
+    "money": "Geld",
+    "deposits": "Stortingen",
+    "withdrawalReady": "Opname klaar",
+    "fromPoolParty": "Van Pool Party",
+    "rubberRush": "Rubber Rush",
+    "tips": "Tips & gidsen",
+    "productNews": "Productnieuws"
+  },
+  "appSettings": {
+    "title": "App-instellingen",
+    "general": "Algemeen",
+    "language": "Taal",
+    "currency": "Valutaweergave",
+    "currencyValue": "USD ($)",
+    "appearance": "Weergave",
+    "appearanceValue": "Donker",
+    "privacy": "Privacy",
+    "shareAnalytics": "Analytics delen",
+    "about": "Over",
+    "version": "App-versie",
+    "versionValue": "2.4.0",
+    "terms": "Servicevoorwaarden",
+    "privacyPolicy": "Privacybeleid"
+  },
+  "help": {
+    "title": "Helpcentrum",
+    "searchPlaceholder": "Zoek in helpartikelen",
+    "noResults": "Geen helpartikelen komen overeen met uw zoekopdracht.",
+    "discord": {
+      "title": "Word lid van onze Discord",
+      "fastest": "Snelst",
+      "body": "Krijg antwoorden van het team en de community.",
+      "open": "Discord openen"
+    },
+    "docs": {
+      "title": "Documentatie",
+      "body": "Gidsen en handleidingen"
+    },
+    "contact": {
+      "title": "Contact opnemen met ondersteuning",
+      "body": "support@pool-party.xyz"
+    },
+    "faqTitle": "Populaire vragen",
+    "faq": {
+      "q1": "Hoe werken stortingen?",
+      "a1": "Voeg geld toe met Pix, kaart of bankoverschrijving en het wordt omgezet naar USDC, of maak crypto rechtstreeks over. Het geld is meteen klaar om te beleggen.",
+      "q2": "Wanneer kan ik opnemen?",
+      "a2": "Op elk moment. Reguliere opnames komen in ongeveer 2 werkdagen binnen zonder kosten; directe opnames komen meteen binnen tegen 1% kosten.",
+      "q3": "Zijn er kosten?",
+      "a3": "Elke strategie vermeldt zijn beheer- en prestatiekosten, die nogmaals worden getoond voordat u bevestigt. Stortingskosten verschijnen bij het controleren."
+    }
+  },
+  "logout": {
+    "title": "Uitloggen?",
+    "body": "U moet opnieuw inloggen om toegang te krijgen tot uw account.",
+    "confirm": "Uitloggen"
+  },
+  "identity": {
+    "quacks": "{count, number} Quacks",
+    "editProfile": "Profiel bewerken"
+  }
+}

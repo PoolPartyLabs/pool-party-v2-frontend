@@ -1,0 +1,38 @@
+{
+  "appName": "Pool Party",
+  "tagline": "Invertir de forma simple e inteligente.",
+  "loading": "Cargando…",
+  "stillLoading": "Aún cargando, un momento…",
+  "updating": "Actualizando…",
+  "unavailable": "Aún no disponible",
+  "retry": "Intentar de nuevo",
+  "connectWallet": "Conectar billetera",
+  "disconnect": "Desconectar",
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "confirm": "Confirmar",
+  "close": "Cerrar",
+  "viewOnExplorer": "Ver en el explorer",
+  "error": {
+    "tryAgain": "Intentar de nuevo"
+  },
+  "greeting": {
+    "morning": "Buenos días, {name}",
+    "afternoon": "Buenas tardes, {name}",
+    "evening": "Buenas noches, {name}"
+  },
+  "aprTooltip": "Tasa Porcentual Anual",
+  "apyTooltip": "Rendimiento Porcentual Anual",
+  "avgAprTooltip": "Tasa Porcentual Anual Media",
+  "netAprTooltip": "Tasa Porcentual Anual Neta",
+  "validation": {
+    "imageTooLargeOrType": "Usa un PNG o JPG de menos de 10 MB."
+  },
+  "unsavedChanges": {
+    "title": "Cambios sin guardar",
+    "body": "Tienes cambios sin guardar. ¿Salir sin guardar?",
+    "leave": "Salir",
+    "stay": "Seguir editando"
+  },
+  "opensInNewTab": "Se abre en una pestaña nueva"
+}

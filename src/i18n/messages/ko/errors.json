@@ -1,0 +1,25 @@
+{
+  "somethingWentWrong": "문제가 발생했습니다",
+  "networkError": "네트워크 오류",
+  "validationFailed": "유효성 검사 실패",
+  "description": "예기치 않은 오류가 발생했습니다. 다시 시도해 주세요.",
+  "retry": "다시 시도",
+  "dashboard": {
+    "title": "대시보드를 불러올 수 없습니다",
+    "body": "저희 쪽에서 문제가 발생했습니다. 연결을 확인하고 다시 시도해 주세요.",
+    "support": "고객센터 문의"
+  },
+  "auth": {
+    "networkFailure": "연결에 실패했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.",
+    "unsupportedChain": "이 네트워크는 지원되지 않습니다. Arbitrum, Base 또는 Polygon으로 전환해 주세요."
+  },
+  "api": {
+    "networkError": "서버에 연결할 수 없습니다. 연결을 확인하고 다시 시도해 주세요.",
+    "notConfigured": "이 기능은 현재 사용할 수 없습니다. 나중에 다시 시도해 주세요.",
+    "upstreamUnavailable": "서비스를 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+    "rateLimited": "너무 빠르게 진행하고 있습니다. 잠시 기다린 후 다시 시도해 주세요.",
+    "unauthorized": "이 작업을 수행할 권한이 없습니다. 다시 로그인해 주세요.",
+    "notFound": "찾으시는 항목을 찾을 수 없습니다.",
+    "unknown": "저희 쪽에서 문제가 발생했습니다. 다시 시도해 주세요."
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "hideValues": "Masquer les valeurs",
+  "portfolioValue": "Portefeuille total",
+  "allTimeEarned": "{amount} de frais non réclamés",
+  "allocationByRisk": "Répartition par risque",
+  "invested": "Investi",
+  "currentValue": "Valeur actuelle",
+  "totalYield": "Rendement total",
+  "avgApy": "APR moyen",
+  "loadMore": "Charger plus",
+  "loadingMore": "Chargement",
+  "yourPositions": "Vos positions",
+  "activeCount": "{count} actives",
+  "rate": "Taux",
+  "status": {
+    "active": "Active",
+    "paused": "En pause",
+    "closed": "Clôturée"
+  },
+  "columns": {
+    "strategy": "Stratégie",
+    "risk": "Risque",
+    "invested": "Investi",
+    "value": "Valeur actuelle",
+    "yield": "Rendement",
+    "rate": "Taux"
+  },
+  "putToWork": {
+    "title": "Mettez votre argent au travail",
+    "body": "Ajoutez des fonds ou explorez des stratégies pour continuer à faire croître votre portefeuille.",
+    "deposit": "Déposer des fonds",
+    "explore": "Explorer les stratégies"
+  },
+  "empty": {
+    "title": "Commencez à faire fructifier votre argent",
+    "body": "Effectuez votre premier dépôt, puis mettez-le au travail dans une stratégie.",
+    "deposit": "Déposer des fonds",
+    "explore": "Explorer les stratégies"
+  },
+  "closedStrategies": {
+    "title": "Stratégies clôturées",
+    "empty": "Aucune stratégie clôturée pour le moment"
+  }
+}

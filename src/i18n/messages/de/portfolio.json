@@ -1,0 +1,44 @@
+{
+  "hideValues": "Werte ausblenden",
+  "portfolioValue": "Gesamtportfolio",
+  "allTimeEarned": "{amount} nicht beanspruchte Gebühren",
+  "allocationByRisk": "Allokation nach Risiko",
+  "invested": "Investiert",
+  "currentValue": "Aktueller Wert",
+  "totalYield": "Gesamtrendite",
+  "avgApy": "Durchschn. APR",
+  "loadMore": "Mehr laden",
+  "loadingMore": "Wird geladen",
+  "yourPositions": "Ihre Positionen",
+  "activeCount": "{count} aktiv",
+  "rate": "Rate",
+  "status": {
+    "active": "Aktiv",
+    "paused": "Pausiert",
+    "closed": "Geschlossen"
+  },
+  "columns": {
+    "strategy": "Strategie",
+    "risk": "Risiko",
+    "invested": "Investiert",
+    "value": "Aktueller Wert",
+    "yield": "Rendite",
+    "rate": "Rate"
+  },
+  "putToWork": {
+    "title": "Lassen Sie Ihr Geld arbeiten",
+    "body": "Fügen Sie Geld hinzu oder entdecken Sie Strategien, damit Ihr Portfolio weiter wächst.",
+    "deposit": "Geld einzahlen",
+    "explore": "Strategien entdecken"
+  },
+  "empty": {
+    "title": "Lassen Sie Ihr Geld wachsen",
+    "body": "Tätigen Sie Ihre erste Einzahlung und lassen Sie sie dann in einer Strategie arbeiten.",
+    "deposit": "Geld einzahlen",
+    "explore": "Strategien entdecken"
+  },
+  "closedStrategies": {
+    "title": "Geschlossene Strategien",
+    "empty": "Noch keine geschlossenen Strategien"
+  }
+}

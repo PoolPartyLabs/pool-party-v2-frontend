@@ -1,0 +1,38 @@
+{
+  "appName": "Pool Party",
+  "tagline": "스마트한 투자를 간편하게.",
+  "loading": "불러오는 중…",
+  "stillLoading": "아직 불러오는 중입니다. 잠시만 기다려 주세요…",
+  "updating": "업데이트 중…",
+  "unavailable": "아직 사용할 수 없음",
+  "retry": "다시 시도",
+  "connectWallet": "지갑 연결",
+  "disconnect": "연결 해제",
+  "save": "저장",
+  "cancel": "취소",
+  "confirm": "확인",
+  "close": "닫기",
+  "viewOnExplorer": "익스플로러에서 보기",
+  "error": {
+    "tryAgain": "다시 시도"
+  },
+  "greeting": {
+    "morning": "좋은 아침입니다, {name}님",
+    "afternoon": "좋은 오후입니다, {name}님",
+    "evening": "좋은 저녁입니다, {name}님"
+  },
+  "aprTooltip": "연간 백분율",
+  "apyTooltip": "연간 수익률",
+  "avgAprTooltip": "평균 연간 백분율",
+  "netAprTooltip": "순 연간 백분율",
+  "validation": {
+    "imageTooLargeOrType": "10 MB 미만의 PNG 또는 JPG를 사용하세요."
+  },
+  "unsavedChanges": {
+    "title": "저장되지 않은 변경사항",
+    "body": "저장되지 않은 변경사항이 있습니다. 저장하지 않고 나가시겠어요?",
+    "leave": "나가기",
+    "stay": "계속 편집"
+  },
+  "opensInNewTab": "새 탭에서 열림"
+}

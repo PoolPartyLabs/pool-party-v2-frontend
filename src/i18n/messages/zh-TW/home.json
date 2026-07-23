@@ -1,0 +1,71 @@
+{
+  "hideValues": "隱藏數值",
+  "portfolioValue": "投資組合價值",
+  "estimatedTooltip": "預估值。圖表並非即時更新，每天僅更新幾次。",
+  "earnedToday": "今日賺取 {amount}",
+  "invested": "已投資",
+  "totalYield": "總收益",
+  "thisMonth": "過去 30 天",
+  "avgApy": "平均 APR",
+  "periods": {
+    "day": "1D",
+    "week": "1W",
+    "month": "1M",
+    "sixMonth": "6M",
+    "all": "全部"
+  },
+  "yourPositions": "您的持倉",
+  "availableInvestments": "可投資項目",
+  "discover": "探索策略",
+  "seeAll": "查看全部",
+  "exploreMore": "查看全部",
+  "manage": "管理",
+  "allocationByRisk": "依風險配置",
+  "referral": {
+    "title": "邀請好友享獎勵",
+    "body": "邀請好友，一起賺取 quacks。",
+    "stat": "{count} 位好友已加入",
+    "copy": "複製邀請碼",
+    "copyLink": "複製邀請連結",
+    "copied": "已複製！",
+    "share": "分享邀請連結",
+    "createCta": "建立你的推薦碼"
+  },
+  "referralWelcome": {
+    "title": "歡迎來到 Pool Party！🎉",
+    "body": "你透過朋友的邀請加入了。開始投資，一起賺取 quacks。",
+    "dismiss": "關閉"
+  },
+  "columns": {
+    "strategy": "策略",
+    "risk": "風險",
+    "invested": "已投資",
+    "value": "當前價值",
+    "yield": "收益",
+    "rate": "報酬率"
+  },
+  "empty": {
+    "zero": {
+      "eyebrow": "立即開始",
+      "title": "讓你的錢為你工作",
+      "subtitle": "只需幾個簡單步驟，輕鬆開始資產增值。",
+      "cta": "新增資金開始",
+      "secondary": "先瀏覽策略"
+    },
+    "funded": {
+      "available": "可投資金額",
+      "availableHint": "隨時可以開始運作",
+      "title": "你已準備好投資",
+      "subtitle": "選擇一個策略，開始獲取收益。",
+      "stepDone": "完成 · 已新增 {amount}",
+      "cta": "選擇策略",
+      "secondary": "了解使用方式"
+    },
+    "path": {
+      "heading": "你的獲益之路",
+      "step1": { "title": "新增資金", "body": "最低 $10 即可開始" },
+      "step2": { "title": "選擇策略", "body": "為你精選並依風險評級" },
+      "step3": { "title": "獲取收益", "body": "每天追蹤你的收益" }
+    }
+  }
+}

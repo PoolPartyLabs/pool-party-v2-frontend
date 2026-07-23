@@ -1,0 +1,488 @@
+{
+  "sign": {
+    "continueInWallet": "Tiếp tục trong ví của bạn",
+    "stepOf": "Bước {current} trên {total}",
+    "whyTitle": "Bạn đang ký gì?",
+    "whyBody": "Chữ ký chứng minh bạn cho phép hành động này. Chúng diễn ra trong ví của bạn và tự thân không bao giờ di chuyển tiền của bạn.",
+    "steps": {
+      "approve": "Phê duyệt {token}",
+      "sign": "Ký tin nhắn trong ví của bạn",
+      "confirmInvest": "Xác nhận nạp",
+      "confirmWithdraw": "Xác nhận rút",
+      "confirmCollect": "Xác nhận nhận",
+      "confirmCompound": "Xác nhận tái đầu tư",
+      "permit": "Ký quyền trong ví của bạn",
+      "confirmAddLiquidity": "Xác nhận thêm thanh khoản",
+      "confirmRemoveLiquidity": "Xác nhận rút tiền",
+      "confirmMoveRange": "Xác nhận tái cân bằng",
+      "confirmClosePosition": "Xác nhận đóng vị thế",
+      "build": "Đang chuẩn bị giao dịch",
+      "skipped": "Đã phê duyệt"
+    },
+    "explain": {
+      "approve": {
+        "name": "Phê duyệt token",
+        "body": "Cho phép Pool Party di chuyển {token} của bạn cho giao dịch này. Việc phê duyệt không bao giờ tự di chuyển tiền. Giao dịch thực tế sẽ diễn ra ở bước sau."
+      },
+      "permit": {
+        "name": "Chữ ký Permit2",
+        "body": "Một chữ ký không tốn gas, cho phép việc chuyển tiền này. Đây là một thông điệp, không phải giao dịch, nên không mất phí mạng và không có gì di chuyển cho đến khi bạn xác nhận."
+      },
+      "confirm": {
+        "name": "Xác nhận cuối cùng",
+        "body": "Bước cuối cùng. Bước này chạy trên mạng và thực sự thực thi giao dịch. Đây là bước duy nhất có thể mất một khoản phí mạng nhỏ."
+      },
+      "build": {
+        "name": "Đang chuẩn bị giao dịch",
+        "body": "Pool Party đang tính toán các khoản tiền và phí mạng cho giao dịch này. Chưa có gì được ký hoặc gửi đi."
+      }
+    }
+  },
+  "card": {
+    "by": "bởi {manager}",
+    "min": "Tối thiểu.",
+    "estReturn": "Lợi nhuận ước tính",
+    "viewDetails": "Xem chi tiết",
+    "invest": "Đầu tư"
+  },
+  "risk": {
+    "level1": "Rất thận trọng",
+    "level2": "Thận trọng",
+    "level3": "Vừa phải",
+    "level4": "Mạo hiểm",
+    "level5": "Rất mạo hiểm"
+  },
+  "explore": {
+    "title": "Chiến lược",
+    "subtitle": "Các chiến lược được quản lý mà bạn có thể đầu tư",
+    "searchPlaceholder": "Tìm theo tên, người quản lý, token hoặc địa chỉ",
+    "browseByRisk": "Duyệt theo rủi ro",
+    "allRisks": "Tất cả",
+    "browseByType": "Duyệt theo loại",
+    "allTypes": "Tất cả",
+    "types": {
+      "yield": "Lợi suất",
+      "trading": "Giao dịch",
+      "index": "Chỉ số",
+      "marketNeutral": "Trung lập thị trường"
+    },
+    "browseByCategory": "Duyệt theo danh mục",
+    "allCategories": "Tất cả",
+    "categorySelected": "Đã chọn {count}",
+    "categories": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme coins"
+    },
+    "count": "{count, plural, =0 {Không có chiến lược} =1 {# chiến lược} other {# chiến lược}}",
+    "owned": "Đang quản lý",
+    "invested": "Đã đầu tư",
+    "noResults": "Không có chiến lược nào khớp với tìm kiếm của bạn.",
+    "clearFilters": "Xóa bộ lọc",
+    "sortLabel": "Sắp xếp theo",
+    "sortDir": {
+      "asc": "Tăng dần",
+      "desc": "Giảm dần"
+    },
+    "loadMore": "Tải thêm",
+    "loadingMore": "Đang tải",
+    "empty": {
+      "title": "Chưa có chiến lược nào",
+      "body": "Các chiến lược sẽ xuất hiện tại đây khi chúng khả dụng."
+    },
+    "columns": {
+      "strategy": "Chiến lược",
+      "risk": "Rủi ro",
+      "min": "Tối thiểu.",
+      "tvl": "TVL",
+      "investors": "Nhà đầu tư",
+      "return": "Lợi nhuận ước tính",
+      "action": "Hành động"
+    }
+  },
+  "detail": {
+    "back": "Quay lại",
+    "performance": "Giá trị pool",
+    "periods": {
+      "week": "1W",
+      "month": "1M",
+      "quarter": "3M",
+      "year": "1Y",
+      "all": "Tất cả"
+    },
+    "chart": {
+      "noHistoryTitle": "Chưa có lịch sử",
+      "noHistoryBody": "Lịch sử giá trị của chiến lược này sẽ xuất hiện sau vài ngày hoạt động đầu tiên."
+    },
+    "metrics": {
+      "min": "Tối thiểu",
+      "tvl": "TVL",
+      "lockup": "Khóa vốn",
+      "performanceFee": "Phí hiệu suất"
+    },
+    "lockup": {
+      "none": "Không có",
+      "days": "{days, plural, =1 {# ngày} other {# ngày}}"
+    },
+    "about": "Giới thiệu",
+    "composition": "Thành phần",
+    "mandate": {
+      "title": "Nhiệm vụ đầu tư",
+      "assets": "Mức tiếp xúc tối đa mỗi tài sản",
+      "protocols": "Mức tiếp xúc tối đa mỗi giao thức",
+      "networks": "Mạng"
+    },
+    "riskLimits": {
+      "title": "Giới hạn rủi ro & điều khoản",
+      "maxDrawdown": "Sụt giảm tối đa",
+      "leverage": "Đòn bẩy",
+      "rebalancing": "Tái cân bằng",
+      "liquidity": "Thanh khoản",
+      "strategyType": "Loại chiến lược",
+      "benchmark": "Chuẩn so sánh",
+      "custody": "Lưu ký"
+    },
+    "fees": {
+      "title": "Phí",
+      "management": "Quản lý",
+      "performance": "Hiệu suất",
+      "none": "Không phí"
+    },
+    "managerVerified": "Người quản lý đã xác minh",
+    "yourPosition": {
+      "title": "Vị thế của bạn",
+      "active": "Đang hoạt động",
+      "paused": "Tạm dừng",
+      "invested": "Đã đầu tư",
+      "currentValue": "Giá trị hiện tại",
+      "totalYield": "Tổng lợi nhuận",
+      "available": "Có thể thu",
+      "closed": "Đã đóng",
+      "finalValue": "Giá trị cuối",
+      "totalYieldRealized": "Tổng lợi nhuận (đã chốt)",
+      "availableToWithdraw": "Có thể rút"
+    },
+    "actions": {
+      "invest": "Đầu tư",
+      "investMore": "Đầu tư thêm",
+      "collectAmount": "Thu {amount}",
+      "compound": "Cộng dồn",
+      "compoundComingSoon": "Tính năng cộng dồn sắp ra mắt. Bạn vẫn có thể thu lợi nhuận của mình.",
+      "withdraw": "Rút tiền",
+      "share": "Chia sẻ"
+    },
+    "paused": {
+      "title": "{name} đang tạm dừng",
+      "body": "Chiến lược này hiện không nhận khoản đầu tư mới. Vị thế của bạn vẫn an toàn và tiếp tục sinh lời. Bạn vẫn có thể thu hoặc rút tiền.",
+      "notify": "Thông báo cho tôi khi mở lại",
+      "notified": "Chúng tôi sẽ cho bạn biết",
+      "viewOthers": "Xem các chiến lược khác"
+    },
+    "closed": {
+      "title": "Chiến lược đã đóng",
+      "body": "{manager} đã đóng chiến lược này. Tiền của bạn sẵn sàng để rút."
+    },
+    "viewProfile": "View profile",
+    "managerRole": "Manager",
+    "managerAllocation": "Phân bổ của người quản lý",
+    "liquidityPool": "Bể thanh khoản",
+    "noData": "Chưa có"
+  },
+  "invest": {
+    "title": "Đầu tư",
+    "amountLabel": "Số tiền đầu tư",
+    "balance": "Số dư {amount}",
+    "max": "Tối đa",
+    "belowMin": "Khoản đầu tư tối thiểu là {min}",
+    "needMore": "Bạn cần thêm {amount}",
+    "cta": {
+      "invest": "Đầu tư",
+      "deposit": "Nạp tiền & đầu tư"
+    },
+    "confirm": {
+      "title": "Xác nhận & ký",
+      "youInvest": "Bạn đầu tư",
+      "approxUsd": "≈ {usd}",
+      "estYield": "Lợi nhuận hằng năm ước tính",
+      "fee": "Phí ước tính",
+      "deployAtLeast": "Bạn sẽ đầu tư ít nhất",
+      "approxValue": "{amount} ({usd})",
+      "lockup": "Khóa vốn",
+      "cta": "Xác nhận & ký",
+      "zapNote": "USDC của bạn được tự động chuyển đổi thành hai token của pool ({token0}/{token1}). Khi rút, chúng được chuyển đổi lại thành USDC.",
+      "back": "Quay lại"
+    },
+    "review": {
+      "title": "Xem lại",
+      "cta": "Xác nhận đầu tư"
+    },
+    "success": {
+      "title": "Đã xác nhận đầu tư",
+      "body": "{amount} hiện đã được đầu tư vào {name}.",
+      "partial": "Đầu tư một phần. Chúng tôi đã thêm {deployed} trong số {requested} của bạn. Phần còn lại không thể thêm do biến động thị trường và trượt giá, và vẫn còn trong ví của bạn."
+    },
+    "settings": {
+      "title": "Cài đặt giao dịch",
+      "slippageLabel": "Trượt giá tối đa",
+      "slippageHint": "Hủy giao dịch nếu giá biến động nhiều hơn mức này trước khi giao dịch được xác nhận.",
+      "slippageHigh": "Slippage cao",
+      "slippageVeryHigh": "Slippage rất cao",
+      "slippageWarningBody": "Điều này có thể dẫn đến một giao dịch bất lợi. Hãy thử giảm cài đặt slippage của bạn.",
+      "custom": "Tùy chỉnh",
+      "deadlineLabel": "Thời hạn giao dịch",
+      "deadlineHint": "Thời hạn tùy chỉnh sắp ra mắt. Hiện tại, các giao dịch sử dụng thời hạn tiêu chuẩn.",
+      "deadlineUnit": "phút",
+      "receiveAsLabel": "Nhận dưới dạng",
+      "receiveAsHint": "Tài sản bạn sẽ nhận. Mặc định là USDC; bạn có thể chọn các token hiện có trong chiến lược.",
+      "receiveAsFixedHint": "Tài sản bạn sẽ nhận. Cố định cho giao dịch này.",
+      "done": "Xong"
+    },
+    "receipt": {
+      "amountInvested": "Số tiền đã đầu tư"
+    }
+  },
+  "collect": {
+    "title": "Thu lợi nhuận",
+    "available": "Có thể thu",
+    "destination": "Vào số dư USDC của bạn",
+    "destinationPair": "Chuyển vào ví của bạn dưới dạng {token0} và {token1}",
+    "amount": "Số tiền yêu cầu",
+    "youReceive": "Bạn nhận được",
+    "fee": "Phí ước tính",
+    "cta": "Thu {amount}",
+    "success": {
+      "title": "Đã thu lợi nhuận"
+    },
+    "receipt": {
+      "amountReceived": "Số tiền đã nhận"
+    },
+    "minNotice": "Mức tối thiểu để thu là {amount}."
+  },
+  "compound": {
+    "title": "Cộng dồn lợi nhuận",
+    "available": "Có thể cộng dồn",
+    "approxUsd": "≈ {usd}",
+    "approxValue": "{amount} ({usd})",
+    "fee": "Phí ước tính",
+    "feesTooltip": {
+      "dex": "Phí DEX",
+      "protocol": "Phí giao thức",
+      "network": "Gas ước tính (phí mạng)",
+      "total": "Tổng"
+    },
+    "atLeast": "Bạn sẽ cộng dồn ít nhất",
+    "note": "Việc cộng dồn tái đầu tư lợi nhuận bạn đã kiếm trở lại vào chiến lược, để nó cũng bắt đầu sinh lời.",
+    "cta": "Cộng dồn {amount}",
+    "success": {
+      "title": "Đã cộng dồn lợi nhuận",
+      "body": "{amount} đã được tái đầu tư vào {name}."
+    }
+  },
+  "withdraw": {
+    "title": "Rút tiền",
+    "amountLabel": "Số tiền rút",
+    "invested": "Đã đầu tư {amount}",
+    "max": "Tối đa",
+    "chooseMethod": "Bạn muốn rút tiền như thế nào?",
+    "regular": {
+      "title": "Rút tiền thông thường",
+      "desc": "Đến trong khoảng 2 ngày làm việc",
+      "fee": "Không phí"
+    },
+    "instant": {
+      "title": "Rút tiền tức thì",
+      "desc": "Đến ngay lập tức",
+      "fee": "Phí {fee}"
+    },
+    "lockedNote": "Rút tiền tức thì không khả dụng. Chiến lược này có thời gian khóa vốn {days} ngày.",
+    "continue": "Tiếp tục",
+    "unitToggle": "Đơn vị số tiền",
+    "confirm": {
+      "stillEarning": "Số dư còn lại của bạn vẫn tiếp tục sinh lời."
+    },
+    "review": {
+      "title": "Xem lại",
+      "back": "Quay lại",
+      "amountRequested": "Số tiền yêu cầu",
+      "feesAvailable": "Phí có thể thu",
+      "estFees": "Phí ước tính",
+      "footerLocked": "≈ {amount} · Đến trong {days, plural, other {# ngày}} · theo thời gian khóa vốn của chiến lược",
+      "footerRegular": "≈ {amount} · Đến trong khoảng 2 ngày làm việc",
+      "cta": "Xác nhận rút tiền"
+    },
+    "success": {
+      "title": "Đã bắt đầu rút tiền",
+      "body": "{amount} đang trên đường đến số dư của bạn.",
+      "completeTitle": "Rút tiền thành công",
+      "completeBody": "{amount} đã được gửi vào số dư của bạn.",
+      "completeBodyPair": "{amount} đã được gửi vào ví của bạn dưới dạng {token0} và {token1}."
+    },
+    "closed": {
+      "fullBalance": "Rút toàn bộ số dư của bạn",
+      "instant": "Ngay lập tức",
+      "equals": "= {amount}",
+      "date": "Ngày",
+      "sentInstant": "Đã gửi {amount} vào tài khoản của bạn · ngay lập tức",
+      "completeTitle": "Rút tiền hoàn tất"
+    },
+    "dustAlert": "Rút mức này sẽ để lại dưới {floor}, nên toàn bộ số dư của bạn sẽ được rút.",
+    "ownedCloseAlert": "Rút toàn bộ số dư sẽ đóng chiến lược này và thu các fee đã tích lũy.",
+    "receipt": {
+      "amountReceived": "Số tiền đã nhận",
+      "feesCollected": "Phí đã thu",
+      "feesCollectedIncluded": "Phí đã thu (đã bao gồm)",
+      "totalReceived": "Tổng nhận được"
+    }
+  },
+  "flow": {
+    "processing": "Đang xử lý…",
+    "processingBody": "Việc này thường mất vài giây.",
+    "done": "Xong",
+    "viewPosition": "Xem vị thế",
+    "error": {
+      "title": "Đã xảy ra lỗi",
+      "body": "Giao dịch của bạn không thành công và không có khoản tiền nào bị chuyển.",
+      "retry": "Thử lại",
+      "help": "Nhận trợ giúp trên Discord",
+      "copy": "Sao chép lỗi",
+      "details": "Chi tiết lỗi",
+      "codeLabel": "Mã",
+      "browserLabel": "Trình duyệt",
+      "walletLabel": "Ví",
+      "osLabel": "Hệ điều hành",
+      "languageLabel": "Ngôn ngữ",
+      "walletEmbedded": "Privy · Tích hợp",
+      "walletExternal": "Ví bên ngoài",
+      "copied": "Đã sao chép",
+      "kinds": {
+        "slippage": "Giá đã vượt quá mức trượt giá tối đa của bạn trước khi giao dịch được xác nhận. Hãy tăng mức trượt giá tối đa trong cài đặt hoặc thử lại sau.",
+        "deadlineExpired": "Giao dịch không được xác nhận trong thời hạn nên đã bị hủy. Hãy thử lại.",
+        "insufficientFunds": "Ví của bạn không đủ số dư để chi trả giao dịch này và phí mạng.",
+        "userRejected": "Bạn đã từ chối yêu cầu trong ví của mình. Không có khoản tiền nào bị di chuyển.",
+        "unauthorized": "Ví này không được phép thực hiện thao tác này."
+      }
+    },
+    "slippage": {
+      "retryNotice": "Giá đã vượt quá slippage tối đa của bạn ({value}%). Đang thử lại theo giá hiện tại.",
+      "errorTitle": "Giá biến động quá nhiều",
+      "errorBody": "Giá lại vượt quá slippage tối đa của bạn ({value}%). Hãy tăng trong phần cài đặt hoặc thử lại sau."
+    },
+    "receipt": {
+      "strategy": "Chiến lược",
+      "amount": "Số tiền",
+      "date": "Ngày",
+      "transaction": "Giao dịch",
+      "fee": "Phí",
+      "slippage": "Slippage"
+    },
+    "review": {
+      "refreshIn": "Làm mới sau {seconds}s",
+      "quoteStale": "Báo giá có thể đã cũ. Đang tự động làm mới.",
+      "priceImpact": "Tác động giá",
+      "caption": "sau phí và tối đa {rate}% slippage",
+      "footerInstant": "≈ {amount} · Đến ngay lập tức",
+      "showMore": "Xem thêm",
+      "showLess": "Thu gọn",
+      "maxSlippage": "Slippage tối đa",
+      "slippageAuto": "Tự động"
+    },
+    "priceImpactGate": {
+      "title": "Tác động giá cao: tiền của bạn đang gặp rủi ro",
+      "body": "Do thanh khoản thấp trên tuyến này, bạn sẽ nhận được ít hơn khoảng {pct} so với giá trị bạn bỏ vào. Khoản lỗ này xảy ra ngay lập tức và không thể hoàn tác.",
+      "ack": "Tôi hiểu rằng tôi có thể mất khoảng {pct} số tiền của mình"
+    },
+    "feesTooltip": {
+      "dex": "Phí DEX",
+      "network": "Gas ước tính (phí mạng)",
+      "protocol": "Phí giao thức",
+      "performance": "Phí hiệu suất",
+      "bridge": "Phí bridge",
+      "comingSoon": "Sắp ra mắt",
+      "total": "Tổng"
+    }
+  },
+  "share": {
+    "title": "Chia sẻ hiệu suất",
+    "close": "Đóng",
+    "periodGroup": "Kỳ thu nhập",
+    "periods": {
+      "24h": "24G",
+      "7d": "7N",
+      "30d": "30N"
+    },
+    "card": {
+      "kicker": "Yield Receipt",
+      "earnedIn": "từ phí và yield",
+      "strategyLabel": "Chiến lược",
+      "periodLabel": "Kỳ hạn",
+      "period24h": "24 giờ qua",
+      "period7d": "7 ngày qua",
+      "period30d": "30 ngày qua",
+      "invite": "Đầu tư cùng tôi"
+    },
+    "save": "Lưu",
+    "copyCta": "Sao chép liên kết giới thiệu",
+    "copied": "Đã sao chép liên kết",
+    "exportError": "Không thể tạo hình ảnh chia sẻ. Vui lòng thử lại.",
+    "message": "{amount} từ phí và yield với {strategy} trên Pool Party. Đầu tư cùng tôi:"
+  },
+  "provisioning": {
+    "poweredByPaybis": "Được hỗ trợ bởi Paybis",
+    "gas": {
+      "title": "Phí mạng không đủ",
+      "subtitle": "Bạn cần một ít phí mạng để xác nhận giao dịch này. Nạp thêm bên dưới.",
+      "selectorLabel": "Số tiền phí mạng",
+      "custom": "Tùy chỉnh",
+      "customPlaceholder": "Số tiền",
+      "customAria": "Số tiền phí mạng tùy chỉnh",
+      "conversionNote": "Thanh toán bằng USDC của bạn và tự động chuyển đổi thành phí mạng.",
+      "cta": "Thêm {amount} phí mạng",
+      "dismiss": "Lúc khác",
+      "signStep": "Nạp phí mạng",
+      "error": {
+        "belowMin": "Tối thiểu {amount}",
+        "overMax": "Tối đa {amount}"
+      },
+      "success": {
+        "title": "Đã nạp phí mạng",
+        "body": "Ví của bạn đã sẵn sàng."
+      }
+    },
+    "plan": {
+      "title": "Gần xong rồi",
+      "titleGasOnly": "Một bước nhanh",
+      "subtitle": "Chúng tôi đã tính toán chính xác những gì cần thiết. Chúng tôi xử lý từng bước ngay tại đây, rồi thực hiện giao dịch của bạn. Không cần chuyển sang trang Nạp tiền.",
+      "cta": "Xác nhận & tiếp tục",
+      "cancel": "Hủy"
+    },
+    "steps": {
+      "buyUsdc": "Mua USDC",
+      "bridge": "Chuyển sang {network}",
+      "swapGas": "Nạp phí mạng",
+      "swapToken": "Đổi sang {token}",
+      "op": "Giao dịch của bạn"
+    },
+    "captions": {
+      "buyUsdc": "Thẻ hoặc Pix",
+      "bridge": "Chuyển tiền sang đúng mạng",
+      "swapGas": "Bạn chọn số tiền, thanh toán bằng USDC",
+      "op": "Hành động ban đầu của bạn"
+    },
+    "exec": {
+      "title": "Đang chuẩn bị tiền của bạn",
+      "subtitle": "Chúng tôi tự động mua, định tuyến và nạp đủ. Giao dịch của bạn chạy ngay sau đó.",
+      "done": "Hoàn tất",
+      "pending": "Đang chờ"
+    },
+    "opLabel": {
+      "invest": "Đầu tư vào {strategy}",
+      "withdraw": "Rút từ {strategy}",
+      "collect": "Thu từ {strategy}",
+      "compound": "Tái đầu tư vào {strategy}",
+      "moveRange": "Di chuyển khoảng trong {strategy}",
+      "close": "Đóng {strategy}"
+    }
+  }
+}

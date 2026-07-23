@@ -1,0 +1,488 @@
+{
+  "sign": {
+    "continueInWallet": "請在你的錢包中繼續",
+    "stepOf": "第 {current} 步，共 {total} 步",
+    "whyTitle": "我在簽署什麼？",
+    "whyBody": "簽名用於證明你授權此操作。簽名在你的錢包中完成，本身不會轉移你的資金。",
+    "steps": {
+      "approve": "授權 {token}",
+      "sign": "在錢包中簽署訊息",
+      "confirmInvest": "確認存入",
+      "confirmWithdraw": "確認提取",
+      "confirmCollect": "確認領取",
+      "confirmCompound": "確認再投資",
+      "permit": "在錢包中簽署授權",
+      "confirmAddLiquidity": "確認新增流動性",
+      "confirmRemoveLiquidity": "確認提領",
+      "confirmMoveRange": "確認再平衡",
+      "confirmClosePosition": "確認關閉",
+      "build": "正在準備交易",
+      "skipped": "已授權"
+    },
+    "explain": {
+      "approve": {
+        "name": "代幣授權",
+        "body": "允許 Pool Party 在這筆交易中動用您的 {token}。授權本身不會轉移任何資金，實際的交易會在後續步驟中進行。"
+      },
+      "permit": {
+        "name": "Permit2 簽章",
+        "body": "一筆免 gas 的簽章，用來授權這次轉移。它是一則訊息，不是交易，因此不會產生任何網路手續費，在您確認之前也不會有任何資金變動。"
+      },
+      "confirm": {
+        "name": "最終確認",
+        "body": "最後一步。它會在網路上執行，真正完成這筆交易。這是唯一可能產生少量網路手續費的步驟。"
+      },
+      "build": {
+        "name": "正在準備交易",
+        "body": "Pool Party 正在計算這筆交易的金額與網路手續費。目前尚未簽署或送出任何內容。"
+      }
+    }
+  },
+  "card": {
+    "by": "由 {manager} 管理",
+    "min": "最低",
+    "estReturn": "預估報酬",
+    "viewDetails": "查看詳情",
+    "invest": "投資"
+  },
+  "risk": {
+    "level1": "極保守",
+    "level2": "保守",
+    "level3": "穩健",
+    "level4": "積極",
+    "level5": "極積極"
+  },
+  "explore": {
+    "title": "策略",
+    "subtitle": "您可投資的管理型策略",
+    "searchPlaceholder": "依名稱、管理人、代幣或地址搜尋",
+    "browseByRisk": "依風險瀏覽",
+    "allRisks": "全部",
+    "browseByType": "依類型瀏覽",
+    "allTypes": "全部",
+    "types": {
+      "yield": "收益",
+      "trading": "交易",
+      "index": "指數",
+      "marketNeutral": "市場中立"
+    },
+    "browseByCategory": "依類別瀏覽",
+    "allCategories": "全部",
+    "categorySelected": "已選 {count} 個",
+    "categories": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme coins"
+    },
+    "count": "{count, plural, =0 {無策略} other {# 個策略}}",
+    "owned": "管理中",
+    "invested": "已投資",
+    "noResults": "沒有符合您搜尋的策略。",
+    "clearFilters": "清除篩選",
+    "sortLabel": "排序方式",
+    "sortDir": {
+      "asc": "升序",
+      "desc": "降序"
+    },
+    "loadMore": "載入更多",
+    "loadingMore": "載入中",
+    "empty": {
+      "title": "尚無策略",
+      "body": "策略一旦推出即會顯示於此。"
+    },
+    "columns": {
+      "strategy": "策略",
+      "risk": "風險",
+      "min": "最低",
+      "tvl": "TVL",
+      "investors": "投資人",
+      "return": "預估報酬",
+      "action": "操作"
+    }
+  },
+  "detail": {
+    "back": "返回",
+    "performance": "資金池價值",
+    "periods": {
+      "week": "1W",
+      "month": "1M",
+      "quarter": "3M",
+      "year": "1Y",
+      "all": "全部"
+    },
+    "chart": {
+      "noHistoryTitle": "尚無歷史資料",
+      "noHistoryBody": "該策略的價值歷史將在其運作數天後顯示。"
+    },
+    "metrics": {
+      "min": "最低金額",
+      "tvl": "TVL",
+      "lockup": "鎖倉期",
+      "performanceFee": "績效手續費"
+    },
+    "lockup": {
+      "none": "無",
+      "days": "{days, plural, other {# 天}}"
+    },
+    "about": "關於",
+    "composition": "組成",
+    "mandate": {
+      "title": "投資授權範圍",
+      "assets": "單一資產最大曝險",
+      "protocols": "單一協議最大曝險",
+      "networks": "網路"
+    },
+    "riskLimits": {
+      "title": "風險限制與條款",
+      "maxDrawdown": "最大回撤",
+      "leverage": "槓桿",
+      "rebalancing": "再平衡",
+      "liquidity": "流動性",
+      "strategyType": "策略類型",
+      "benchmark": "基準指標",
+      "custody": "託管"
+    },
+    "fees": {
+      "title": "手續費",
+      "management": "管理費",
+      "performance": "績效費",
+      "none": "免手續費"
+    },
+    "managerVerified": "已驗證管理人",
+    "yourPosition": {
+      "title": "您的持倉",
+      "active": "使用中",
+      "paused": "已暫停",
+      "invested": "已投資",
+      "currentValue": "目前價值",
+      "totalYield": "總收益",
+      "available": "可領取金額",
+      "closed": "已關閉",
+      "finalValue": "最終價值",
+      "totalYieldRealized": "總收益（已實現）",
+      "availableToWithdraw": "可提領金額"
+    },
+    "actions": {
+      "invest": "投資",
+      "investMore": "追加投資",
+      "collectAmount": "領取 {amount}",
+      "compound": "複利",
+      "compoundComingSoon": "複利功能即將推出。您仍可領取收益。",
+      "withdraw": "提領",
+      "share": "分享"
+    },
+    "paused": {
+      "title": "{name} 已暫停",
+      "body": "此策略目前不接受新的投資。您的持倉安全無虞並持續賺取收益。您仍可領取或提領。",
+      "notify": "重新開放時通知我",
+      "notified": "我們會通知您",
+      "viewOthers": "查看其他策略"
+    },
+    "closed": {
+      "title": "策略已關閉",
+      "body": "{manager}關閉了該策略。你的資金隨時可提領。"
+    },
+    "viewProfile": "View profile",
+    "managerRole": "Manager",
+    "managerAllocation": "管理人配置",
+    "liquidityPool": "流動性池",
+    "noData": "暫無資料"
+  },
+  "invest": {
+    "title": "投資",
+    "amountLabel": "投資金額",
+    "balance": "餘額 {amount}",
+    "max": "全部",
+    "belowMin": "最低投資金額為 {min}",
+    "needMore": "您還需要 {amount}",
+    "cta": {
+      "invest": "投資",
+      "deposit": "存入並投資"
+    },
+    "confirm": {
+      "title": "確認並簽署",
+      "youInvest": "您投資",
+      "approxUsd": "≈ {usd}",
+      "estYield": "預估年化收益",
+      "fee": "預估費用",
+      "deployAtLeast": "您將至少投入",
+      "approxValue": "{amount} ({usd})",
+      "lockup": "鎖倉期",
+      "cta": "確認並簽署",
+      "zapNote": "你的 USDC 會自動轉換為池子的兩種代幣（{token0}/{token1}）。提領時會自動換回 USDC。",
+      "back": "返回"
+    },
+    "review": {
+      "title": "確認詳情",
+      "cta": "確認投資"
+    },
+    "success": {
+      "title": "投資已確認",
+      "body": "{amount} 現已投資於 {name}。",
+      "partial": "部分投資成功。我們已將您 {requested} 中的 {deployed} 加入。其餘部分因市場波動及滑點無法加入，已保留在您的錢包中。"
+    },
+    "settings": {
+      "title": "交易設定",
+      "slippageLabel": "最大滑點",
+      "slippageHint": "若價格在確認前的變動超過此值，將取消交易。",
+      "slippageHigh": "滑點偏高",
+      "slippageVeryHigh": "滑點非常高",
+      "slippageWarningBody": "這可能導致不利的交易結果。請嘗試降低您的滑點設定。",
+      "custom": "自訂",
+      "deadlineLabel": "交易期限",
+      "deadlineHint": "自訂期限即將推出。目前交易使用標準期限。",
+      "deadlineUnit": "分鐘",
+      "receiveAsLabel": "收取方式",
+      "receiveAsHint": "您將收到的資產。預設為 USDC；您可以選擇目前策略中持有的代幣。",
+      "receiveAsFixedHint": "您將收到的資產。本次交易中為固定。",
+      "done": "完成"
+    },
+    "receipt": {
+      "amountInvested": "已投入金額"
+    }
+  },
+  "collect": {
+    "title": "領取收益",
+    "available": "可領取金額",
+    "destination": "將存入您的 USDC 餘額",
+    "destinationPair": "以{token0}和{token1}形式進入您的錢包",
+    "amount": "請求金額",
+    "youReceive": "您將收到",
+    "fee": "預估費用",
+    "cta": "領取 {amount}",
+    "success": {
+      "title": "收益已領取"
+    },
+    "receipt": {
+      "amountReceived": "已收到金額"
+    },
+    "minNotice": "最低收取金額為 {amount}。"
+  },
+  "compound": {
+    "title": "複利收益",
+    "available": "可複利金額",
+    "approxUsd": "≈ {usd}",
+    "approxValue": "{amount} ({usd})",
+    "fee": "預估費用",
+    "feesTooltip": {
+      "dex": "DEX 手續費",
+      "protocol": "協議手續費",
+      "network": "預估 gas (網路手續費)",
+      "total": "合計"
+    },
+    "atLeast": "您將至少複利",
+    "note": "複利會將您已賺取的收益再投資回策略，使其也開始賺取收益。",
+    "cta": "複利 {amount}",
+    "success": {
+      "title": "收益已複利",
+      "body": "{amount} 已再投資至 {name}。"
+    }
+  },
+  "withdraw": {
+    "title": "提領",
+    "amountLabel": "提領金額",
+    "invested": "已投資 {amount}",
+    "max": "全部",
+    "chooseMethod": "您想如何提領？",
+    "regular": {
+      "title": "一般提領",
+      "desc": "約於 2 個工作天內到帳",
+      "fee": "免手續費"
+    },
+    "instant": {
+      "title": "即時提領",
+      "desc": "立即到帳",
+      "fee": "{fee} 手續費"
+    },
+    "lockedNote": "即時提領無法使用。此策略有 {days} 天的鎖倉期。",
+    "continue": "繼續",
+    "unitToggle": "金額單位",
+    "confirm": {
+      "stillEarning": "您的剩餘餘額將持續賺取收益。"
+    },
+    "review": {
+      "title": "確認詳情",
+      "back": "返回",
+      "amountRequested": "申請金額",
+      "feesAvailable": "可領取的手續費",
+      "estFees": "預估費用",
+      "footerLocked": "≈ {amount} · {days, plural, other {# 天}}內到帳 · 依策略鎖倉期",
+      "footerRegular": "≈ {amount} · 約於 2 個工作天內到帳",
+      "cta": "確認提領"
+    },
+    "success": {
+      "title": "提領已啟動",
+      "body": "{amount} 正在前往您的餘額。",
+      "completeTitle": "提領成功",
+      "completeBody": "{amount} 已發送至您的餘額。",
+      "completeBodyPair": "{amount}已以{token0}和{token1}形式發送到您的錢包。"
+    },
+    "closed": {
+      "fullBalance": "提領你的全部餘額",
+      "instant": "即時",
+      "equals": "= {amount}",
+      "date": "日期",
+      "sentInstant": "{amount}已發送到你的帳戶 · 即時",
+      "completeTitle": "提領完成"
+    },
+    "dustAlert": "提取這麼多會使餘額低於 {floor}，因此將提取你的全部餘額。",
+    "ownedCloseAlert": "提領全部餘額將關閉此策略並領取累計的 fee。",
+    "receipt": {
+      "amountReceived": "已收到金額",
+      "feesCollected": "已收取手續費",
+      "feesCollectedIncluded": "已收取手續費（已包含）",
+      "totalReceived": "總計收到"
+    }
+  },
+  "flow": {
+    "processing": "處理中…",
+    "processingBody": "這通常只需幾秒鐘。",
+    "done": "完成",
+    "viewPosition": "查看持倉",
+    "error": {
+      "title": "發生錯誤",
+      "body": "您的交易未能完成，且未移動任何資金。",
+      "retry": "再試一次",
+      "help": "在 Discord 上取得協助",
+      "copy": "複製錯誤",
+      "details": "錯誤詳情",
+      "codeLabel": "代碼",
+      "browserLabel": "瀏覽器",
+      "walletLabel": "錢包",
+      "osLabel": "系統",
+      "languageLabel": "語言",
+      "walletEmbedded": "Privy · 內建",
+      "walletExternal": "外部錢包",
+      "copied": "已複製",
+      "kinds": {
+        "slippage": "在交易確認前，價格波動超出了你的最大滑點。請在設定中提高最大滑點，或稍後再試。",
+        "deadlineExpired": "交易未能在期限內確認，已被取消。請重試。",
+        "insufficientFunds": "你的錢包餘額不足以支付本次交易及網路費用。",
+        "userRejected": "你在錢包中拒絕了該請求。資金未發生變動。",
+        "unauthorized": "此錢包無權執行該操作。"
+      }
+    },
+    "slippage": {
+      "retryNotice": "價格已超出你的最大滑點（{value}%）。正在以目前價格重試。",
+      "errorTitle": "價格波動過大",
+      "errorBody": "價格再次超出你的最大滑點（{value}%）。請在設定中調高，或稍後再試。"
+    },
+    "receipt": {
+      "strategy": "策略",
+      "amount": "金額",
+      "date": "日期",
+      "transaction": "交易",
+      "fee": "手續費",
+      "slippage": "滑點"
+    },
+    "review": {
+      "refreshIn": "{seconds}秒後重新整理",
+      "quoteStale": "報價可能已過期，正在自動重新整理。",
+      "priceImpact": "價格影響",
+      "caption": "扣除手續費及最高 {rate}% 滑點後",
+      "footerInstant": "≈ {amount} · 即時到帳",
+      "showMore": "顯示更多",
+      "showLess": "收起",
+      "maxSlippage": "最大滑點",
+      "slippageAuto": "自動"
+    },
+    "priceImpactGate": {
+      "title": "價格影響過高: 您的資金面臨風險",
+      "body": "由於該路徑流動性不足，您將收到比投入價值少約{pct}的金額。此損失立即發生且無法復原。",
+      "ack": "我了解我可能損失約{pct}的資金"
+    },
+    "feesTooltip": {
+      "dex": "DEX 手續費",
+      "network": "預估 gas (網路手續費)",
+      "protocol": "協議手續費",
+      "performance": "績效手續費",
+      "bridge": "跨鏈橋手續費",
+      "comingSoon": "即將推出",
+      "total": "合計"
+    }
+  },
+  "share": {
+    "title": "分享收益表現",
+    "close": "關閉",
+    "periodGroup": "收益週期",
+    "periods": {
+      "24h": "24小時",
+      "7d": "7天",
+      "30d": "30天"
+    },
+    "card": {
+      "kicker": "Yield Receipt",
+      "earnedIn": "手續費與 yield 收益",
+      "strategyLabel": "策略",
+      "periodLabel": "週期",
+      "period24h": "過去 24 小時",
+      "period7d": "過去 7 天",
+      "period30d": "過去 30 天",
+      "invite": "和我一起投資"
+    },
+    "save": "儲存",
+    "copyCta": "複製推薦連結",
+    "copied": "連結已複製",
+    "exportError": "無法產生分享圖片。請再試一次。",
+    "message": "在 Pool Party 的 {strategy} 中賺取了 {amount}（手續費與 yield）。和我一起投資："
+  },
+  "provisioning": {
+    "poweredByPaybis": "由 Paybis 提供支援",
+    "gas": {
+      "title": "網路費用不足",
+      "subtitle": "您需要少量網路費用才能確認此交易。請在下方儲值。",
+      "selectorLabel": "費用金額",
+      "custom": "自訂",
+      "customPlaceholder": "金額",
+      "customAria": "自訂費用金額",
+      "conversionNote": "從您的 USDC 中扣除，並自動轉換為網路費用。",
+      "cta": "新增 {amount} 費用",
+      "dismiss": "暫不",
+      "signStep": "儲值網路費用",
+      "error": {
+        "belowMin": "最低 {amount}",
+        "overMax": "最高 {amount}"
+      },
+      "success": {
+        "title": "費用已儲值",
+        "body": "您的錢包已準備就緒。"
+      }
+    },
+    "plan": {
+      "title": "快好了",
+      "titleGasOnly": "僅需一個步驟",
+      "subtitle": "我們已精確計算所需內容。所有步驟在此完成後執行您的交易，無需跳轉至儲值頁面。",
+      "cta": "確認並繼續",
+      "cancel": "取消"
+    },
+    "steps": {
+      "buyUsdc": "購買 USDC",
+      "bridge": "轉移至 {network}",
+      "swapGas": "儲值網路費用",
+      "swapToken": "兌換為 {token}",
+      "op": "您的交易"
+    },
+    "captions": {
+      "buyUsdc": "信用卡或本地支付",
+      "bridge": "將資金轉移到正確的網路",
+      "swapGas": "您選擇金額，從 USDC 中支付",
+      "op": "您的原始操作"
+    },
+    "exec": {
+      "title": "正在準備您的資金",
+      "subtitle": "我們將自動完成購買、路由及儲值。您的交易隨後立即執行。",
+      "done": "完成",
+      "pending": "處理中"
+    },
+    "opLabel": {
+      "invest": "投資 {strategy}",
+      "withdraw": "從 {strategy} 提領",
+      "collect": "從 {strategy} 領取",
+      "compound": "複投 {strategy}",
+      "moveRange": "調整 {strategy} 的區間",
+      "close": "關閉 {strategy}"
+    }
+  }
+}

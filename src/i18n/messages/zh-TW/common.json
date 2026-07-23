@@ -1,0 +1,38 @@
+{
+  "appName": "Pool Party",
+  "tagline": "聰明投資，輕鬆上手。",
+  "loading": "載入中…",
+  "stillLoading": "仍在載入，請稍候…",
+  "updating": "更新中…",
+  "unavailable": "尚未提供",
+  "retry": "再試一次",
+  "connectWallet": "連結錢包",
+  "disconnect": "中斷連結",
+  "save": "儲存",
+  "cancel": "取消",
+  "confirm": "確認",
+  "close": "關閉",
+  "viewOnExplorer": "在區塊瀏覽器查看",
+  "error": {
+    "tryAgain": "再試一次"
+  },
+  "greeting": {
+    "morning": "早安，{name}",
+    "afternoon": "午安，{name}",
+    "evening": "晚安，{name}"
+  },
+  "aprTooltip": "年化利率",
+  "apyTooltip": "年化收益率",
+  "avgAprTooltip": "平均年化利率",
+  "netAprTooltip": "淨年化利率",
+  "validation": {
+    "imageTooLargeOrType": "請使用小於 10 MB 的 PNG 或 JPG 檔案。"
+  },
+  "unsavedChanges": {
+    "title": "未儲存的變更",
+    "body": "您有未儲存的變更。要不儲存就離開嗎？",
+    "leave": "離開",
+    "stay": "繼續編輯"
+  },
+  "opensInNewTab": "在新分頁中開啟"
+}

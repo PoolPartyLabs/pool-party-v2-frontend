@@ -1,0 +1,78 @@
+{
+  "footer": {
+    "links": {
+      "terms": "Términos del servicio",
+      "privacy": "Política de privacidad",
+      "risk": "Aviso de riesgo",
+      "help": "Centro de ayuda"
+    },
+    "copyright": "© 2026 Pool Party. Todos los derechos reservados. Invertir implica riesgos, incluida la posible pérdida del capital.",
+    "developedBy": "Desarrollado por Pool Party Labs"
+  },
+  "rewards": {
+    "ariaLabel": "{count} Quacks, abrir recompensas Rubber Rush",
+    "tooltip": "Ganas <quack>1 Quack</quack> al día por cada <deposit>$1 depositado</deposit> en Pool Party. Aumenta tus Quacks invitando a amigos con tu enlace de referido."
+  },
+  "dev": {
+    "button": "Dev mode",
+    "temp": "TEMP",
+    "title": "Dev mode",
+    "subtitle": "Herramientas de implementación, se quitan antes del lanzamiento.",
+    "managerMode": "Manager mode",
+    "managerModeSub": "Muestra la sección Manager en la barra lateral",
+    "testModalStates": "Probar estados del modal",
+    "testModalStatesSub": "Abre el modal compartido en este estado, en cualquier página.",
+    "states": {
+      "confirm": "Confirm",
+      "loading": "Loading",
+      "pending": "Pending",
+      "success": "Success",
+      "warning": "Warning",
+      "error": "Error"
+    }
+  },
+  "status": {
+    "confirm": {
+      "title": "Confirma, por favor",
+      "body": "Revisa los detalles y confirma para continuar."
+    },
+    "loading": {
+      "title": "Cargando…",
+      "body": "Espera un momento mientras lo preparamos todo."
+    },
+    "pending": {
+      "title": "Pendiente",
+      "body": "Tu solicitud se está procesando. Puede tardar un momento."
+    },
+    "success": {
+      "title": "Listo",
+      "body": "La acción se completó correctamente."
+    },
+    "warning": {
+      "title": "Atención",
+      "body": "Revisa esto antes de continuar."
+    },
+    "error": {
+      "title": "Algo salió mal",
+      "body": "No pudimos completarlo. Inténtalo de nuevo."
+    },
+    "dismiss": "Entendido"
+  },
+  "nav": {
+    "home": "Inicio",
+    "invest": "Invertir",
+    "portfolio": "Portafolio",
+    "strategies": "Estrategias",
+    "cards": "Tarjetas",
+    "deposit": "Depositar",
+    "profile": "Perfil",
+    "collapse": "Contraer",
+    "expand": "Expandir",
+    "rubberRush": "Rubber Rush",
+    "managerIncentive": "Manager Incentive Program"
+  },
+  "locale": {
+    "changeLanguage": "Cambiar idioma",
+    "title": "Idioma"
+  }
+}

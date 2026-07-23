@@ -1,0 +1,78 @@
+{
+  "footer": {
+    "links": {
+      "terms": "服务条款",
+      "privacy": "隐私政策",
+      "risk": "风险披露",
+      "help": "帮助中心"
+    },
+    "copyright": "© 2026 Pool Party。保留所有权利。投资有风险，可能损失本金。",
+    "developedBy": "由 Pool Party Labs 开发"
+  },
+  "rewards": {
+    "ariaLabel": "{count} Quacks，打开 Rubber Rush 奖励",
+    "tooltip": "在 Pool Party 每存入 <deposit>$1</deposit>，每天可赚取 <quack>1 个 Quack</quack>。通过邀请好友使用你的推荐链接来提升你的 Quacks。"
+  },
+  "dev": {
+    "button": "开发者模式",
+    "temp": "临时",
+    "title": "开发者模式",
+    "subtitle": "实现工具，上线前移除。",
+    "managerMode": "管理人模式",
+    "managerModeSub": "在侧边栏中显示管理人板块",
+    "testModalStates": "测试弹窗状态",
+    "testModalStatesSub": "在任意页面以此状态打开共享弹窗。",
+    "states": {
+      "confirm": "确认",
+      "loading": "加载中",
+      "pending": "处理中",
+      "success": "成功",
+      "warning": "警告",
+      "error": "错误"
+    }
+  },
+  "status": {
+    "confirm": {
+      "title": "请确认",
+      "body": "核对详情，然后确认以继续。"
+    },
+    "loading": {
+      "title": "加载中…",
+      "body": "请稍候，我们正在准备。"
+    },
+    "pending": {
+      "title": "处理中",
+      "body": "您的请求正在处理。这可能需要一点时间。"
+    },
+    "success": {
+      "title": "全部完成",
+      "body": "操作已成功完成。"
+    },
+    "warning": {
+      "title": "请注意",
+      "body": "继续之前请核对此项。"
+    },
+    "error": {
+      "title": "出了点问题",
+      "body": "我们无法完成该操作。请重试。"
+    },
+    "dismiss": "知道了"
+  },
+  "nav": {
+    "home": "首页",
+    "invest": "投资",
+    "portfolio": "投资组合",
+    "strategies": "策略",
+    "cards": "卡片",
+    "deposit": "充值",
+    "profile": "个人资料",
+    "collapse": "收起",
+    "expand": "展开",
+    "rubberRush": "Rubber Rush",
+    "managerIncentive": "Manager Incentive Program"
+  },
+  "locale": {
+    "changeLanguage": "更改语言",
+    "title": "语言"
+  }
+}

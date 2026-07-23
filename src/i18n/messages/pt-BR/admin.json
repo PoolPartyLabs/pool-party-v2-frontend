@@ -1,0 +1,86 @@
+{
+  "loadMore": "Carregar mais",
+  "brand": "Pool Party",
+  "badge": "Admin",
+  "nav": {
+    "overview": "Visão geral",
+    "managers": "Gestores",
+    "images": "Imagens",
+    "roles": "Funções"
+  },
+  "roles": {
+    "operator": "Operador",
+    "admin": "Admin",
+    "master": "Master"
+  },
+  "rolesPage": {
+    "title": "Funções e permissões",
+    "subtitle": "Atribua capacidades a cada função. O master sempre tem todas.",
+    "colCapability": "Capacidade",
+    "masterNote": "O master tem todas as capacidades e não pode ser alterado."
+  },
+  "userRow": {
+    "signedInAs": "Conectado como"
+  },
+  "signIn": {
+    "title": "Acesso do admin",
+    "subtitle": "Entre com sua conta Google da Pool Party. O segundo fator é obrigatório.",
+    "google": "Continuar com o Google",
+    "comingSoon": "O login com Google e o segundo fator estão sendo integrados."
+  },
+  "twoFactor": {
+    "title": "Autenticação em duas etapas",
+    "subtitle": "Digite o código de 6 dígitos do seu aplicativo autenticador.",
+    "comingSoon": "O cadastro e a verificação do autenticador estão sendo integrados."
+  },
+  "overview": {
+    "title": "Visão geral",
+    "subtitle": "Retrato operacional da plataforma.",
+    "pendingVerifications": "Verificações pendentes",
+    "pendingImages": "Imagens para revisar",
+    "verifiedManagers": "Gestores verificados",
+    "activeStrategies": "Estratégias ativas",
+    "users": "Usuários",
+    "placeholder": "Os cartões de métricas serão ligados aos dados reais em seguida."
+  },
+  "managers": {
+    "title": "Gestores",
+    "subtitle": "Aprove as solicitações de verificação de gestores."
+  },
+  "verificationQueue": {
+    "empty": "Nenhuma solicitação de verificação para revisar.",
+    "colManager": "Gestor",
+    "colSubmitted": "Solicitado",
+    "colAum": "AUM",
+    "colStrategies": "Estratégias",
+    "colActions": "Ações",
+    "approve": "Aprovar",
+    "reject": "Rejeitar",
+    "cancel": "Cancelar",
+    "approveTitle": "Aprovar verificação?",
+    "approveBody": "{name} receberá o selo de verificado exibido aos investidores.",
+    "rejectTitle": "Rejeitar verificação?",
+    "rejectBody": "A solicitação de {name} será rejeitada. Ela pode solicitar de novo depois."
+  },
+  "moderation": {
+    "title": "Moderação de imagens",
+    "subtitle": "Revise imagens de estratégia, perfil e banner."
+  },
+  "imageModeration": {
+    "empty": "Nenhuma imagem para revisar.",
+    "listLabel": "Imagens pendentes",
+    "kindStrategy": "Imagem da estratégia",
+    "kindAvatar": "Foto de perfil",
+    "kindBanner": "Banner",
+    "approve": "Aprovar",
+    "remove": "Remover",
+    "cancel": "Cancelar",
+    "approveTitle": "Aprovar imagem?",
+    "approveBody": "Manter a imagem de {subject} na plataforma.",
+    "thumbAlt": "Imagem enviada por {subject}",
+    "removeTitle": "Remover imagem?",
+    "removeBody": "A imagem de {subject} será ocultada da plataforma. Isso é reversível.",
+    "reasonLabel": "Motivo (opcional)",
+    "reasonPlaceholder": "Por que está sendo removida?"
+  }
+}

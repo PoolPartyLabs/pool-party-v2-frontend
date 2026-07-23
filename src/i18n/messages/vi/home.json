@@ -1,0 +1,71 @@
+{
+  "hideValues": "Ẩn giá trị",
+  "portfolioValue": "Giá trị danh mục",
+  "estimatedTooltip": "Ước tính. Biểu đồ không được cập nhật theo thời gian thực, chỉ vài lần mỗi ngày.",
+  "earnedToday": "Đã kiếm được {amount} hôm nay",
+  "invested": "Đã đầu tư",
+  "totalYield": "Tổng lợi nhuận",
+  "thisMonth": "30 ngày qua",
+  "avgApy": "APR trung bình",
+  "periods": {
+    "day": "1D",
+    "week": "1W",
+    "month": "1M",
+    "sixMonth": "6M",
+    "all": "Tất cả"
+  },
+  "yourPositions": "Vị thế của bạn",
+  "availableInvestments": "Khoản đầu tư khả dụng",
+  "discover": "Khám phá chiến lược",
+  "seeAll": "Xem tất cả",
+  "exploreMore": "Xem tất cả",
+  "manage": "Quản lý",
+  "allocationByRisk": "Phân bổ theo rủi ro",
+  "referral": {
+    "title": "Mời bạn bè & nhận thưởng",
+    "body": "Mời bạn bè và cùng kiếm quacks.",
+    "stat": "{count} bạn bè đã tham gia",
+    "copy": "Sao chép mã",
+    "copyLink": "Sao chép liên kết mời",
+    "copied": "Đã sao chép!",
+    "share": "Chia sẻ liên kết mời",
+    "createCta": "Tạo mã giới thiệu của bạn"
+  },
+  "referralWelcome": {
+    "title": "Chào mừng đến với Pool Party! 🎉",
+    "body": "Bạn đã tham gia qua lời mời của một người bạn. Bắt đầu đầu tư để cùng nhau kiếm quacks.",
+    "dismiss": "Bỏ qua"
+  },
+  "columns": {
+    "strategy": "Chiến lược",
+    "risk": "Rủi ro",
+    "invested": "Đã đầu tư",
+    "value": "Giá trị hiện tại",
+    "yield": "Lợi nhuận",
+    "rate": "Tỷ suất"
+  },
+  "empty": {
+    "zero": {
+      "eyebrow": "Bắt đầu ngay",
+      "title": "Để tiền của bạn sinh lời",
+      "subtitle": "Bắt đầu sinh lời chỉ với vài bước đơn giản.",
+      "cta": "Nạp tiền để bắt đầu",
+      "secondary": "Xem chiến lược trước"
+    },
+    "funded": {
+      "available": "Sẵn sàng để đầu tư",
+      "availableHint": "Sẵn sàng hoạt động",
+      "title": "Bạn đã sẵn sàng đầu tư",
+      "subtitle": "Chọn một chiến lược và bắt đầu sinh lời.",
+      "stepDone": "Xong · Đã nạp {amount}",
+      "cta": "Chọn chiến lược",
+      "secondary": "Xem cách hoạt động"
+    },
+    "path": {
+      "heading": "Con đường sinh lời của bạn",
+      "step1": { "title": "Nạp tiền", "body": "Bắt đầu với chỉ $10" },
+      "step2": { "title": "Chọn chiến lược", "body": "Được tuyển chọn và đánh giá rủi ro cho bạn" },
+      "step3": { "title": "Sinh lời", "body": "Theo dõi lợi nhuận mỗi ngày" }
+    }
+  }
+}

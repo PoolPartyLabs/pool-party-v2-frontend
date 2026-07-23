@@ -1,0 +1,76 @@
+{
+  "title": "카드",
+  "comingSoon": "Pool Party 카드로 잔액을 사용하세요. 이 기능은 곧 제공될 예정입니다.",
+  "tabs": {
+    "explore": "둘러보기",
+    "myCards": "내 카드"
+  },
+  "explore": {
+    "title": "이용 가능한 카드",
+    "subtitle": "어디서나 암호화폐로 결제하세요",
+    "partnerCount": "{count, plural, =1 {파트너 #곳} other {파트너 #곳}}",
+    "cta": {
+      "request": "카드 신청",
+      "activating": "활성화 중…",
+      "manage": "카드 관리"
+    },
+    "badge": {
+      "popular": "인기",
+      "requested": "신청됨",
+      "active": "활성"
+    },
+    "perks": {
+      "cashbackEth3": "최대 3% ETH 캐시백",
+      "noAnnualFee": "연회비 없음",
+      "spendStablesEth": "USDC, USDT 또는 ETH 사용",
+      "spendFromWallet": "지갑에서 바로 결제",
+      "eurUsdAccounts": "EUR 및 USD 계좌",
+      "selfCustodial": "온체인, 자기 수탁형",
+      "spendMetamask": "MetaMask 잔액으로 결제",
+      "cryptoRewards": "암호화폐 리워드",
+      "globalMastercard": "글로벌 Mastercard",
+      "cashback1inch": "1INCH 캐시백",
+      "noFxFees": "환전 수수료 없음",
+      "worksWorldwide": "전 세계에서 사용 가능",
+      "spendEarnRewards": "암호화폐 결제로 리워드 적립",
+      "visaDebitGlobal": "글로벌 Visa 직불",
+      "cashbackCro5": "최대 5% CRO 캐시백",
+      "loungeAccess": "공항 라운지 이용"
+    }
+  },
+  "myCards": {
+    "title": "내 카드",
+    "subtitle": "카드를 관리하세요",
+    "addCard": "카드 추가",
+    "balance": "잔액",
+    "debit": "직불",
+    "viewDetails": "상세 보기",
+    "actions": {
+      "topUp": "충전",
+      "lock": "카드 잠금",
+      "freeze": "정지",
+      "settings": "설정"
+    },
+    "transactions": {
+      "title": "거래 내역",
+      "seeAll": "전체 보기",
+      "today": "오늘",
+      "yesterday": "어제"
+    },
+    "empty": {
+      "title": "아직 카드가 없습니다",
+      "body": "파트너 카드를 신청하여 암호화폐 결제를 시작하세요.",
+      "cta": "카드 둘러보기"
+    }
+  },
+  "topUp": {
+    "title": "충전",
+    "subtitle": "카드 잔액에 자금을 추가하세요",
+    "source": {
+      "wallet": "지갑",
+      "portfolio": "포트폴리오"
+    },
+    "cta": "충전",
+    "success": "카드 잔액이 충전되었습니다."
+  }
+}

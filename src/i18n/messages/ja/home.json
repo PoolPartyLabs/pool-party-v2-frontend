@@ -1,0 +1,71 @@
+{
+  "hideValues": "値を非表示にする",
+  "portfolioValue": "ポートフォリオ評価額",
+  "estimatedTooltip": "推定値です。グラフはリアルタイムでは更新されず、1日に数回のみ更新されます。",
+  "earnedToday": "本日{amount}の収益",
+  "invested": "投資額",
+  "totalYield": "累計利回り",
+  "thisMonth": "過去30日間",
+  "avgApy": "平均APR",
+  "periods": {
+    "day": "1D",
+    "week": "1W",
+    "month": "1M",
+    "sixMonth": "6M",
+    "all": "全期間"
+  },
+  "yourPositions": "保有ポジション",
+  "availableInvestments": "利用可能な投資先",
+  "discover": "戦略を見つける",
+  "seeAll": "すべて見る",
+  "exploreMore": "すべて見る",
+  "manage": "管理",
+  "allocationByRisk": "リスク別配分",
+  "referral": {
+    "title": "招待して特典をゲット",
+    "body": "友達を招待して、一緒にquacksを稼ごう。",
+    "stat": "{count}人の友達が参加",
+    "copy": "コードをコピー",
+    "copyLink": "招待リンクをコピー",
+    "copied": "コピーしました！",
+    "share": "招待リンクを共有",
+    "createCta": "紹介コードを作成"
+  },
+  "referralWelcome": {
+    "title": "Pool Party へようこそ！🎉",
+    "body": "友だちの招待から参加しました。一緒に quacks を貯めるために投資を始めましょう。",
+    "dismiss": "閉じる"
+  },
+  "columns": {
+    "strategy": "戦略",
+    "risk": "リスク",
+    "invested": "投資額",
+    "value": "現在の評価額",
+    "yield": "利回り",
+    "rate": "利率"
+  },
+  "empty": {
+    "zero": {
+      "eyebrow": "はじめよう",
+      "title": "お金を働かせましょう",
+      "subtitle": "かんたんな手順で資産運用をスタート。",
+      "cta": "資金を追加して始める",
+      "secondary": "まず戦略を見てみる"
+    },
+    "funded": {
+      "available": "投資可能額",
+      "availableHint": "いつでも運用できます",
+      "title": "投資の準備ができました",
+      "subtitle": "戦略を選んで利回りを得ましょう。",
+      "stepDone": "完了 · {amount} 追加済み",
+      "cta": "戦略を選ぶ",
+      "secondary": "仕組みを見る"
+    },
+    "path": {
+      "heading": "収益への3ステップ",
+      "step1": { "title": "資金を追加", "body": "わずか $10 から始められます" },
+      "step2": { "title": "戦略を選ぶ", "body": "リスク評価済みのおすすめ戦略" },
+      "step3": { "title": "利回りを得る", "body": "毎日の収益をリアルタイムで確認" }
+    }
+  }
+}

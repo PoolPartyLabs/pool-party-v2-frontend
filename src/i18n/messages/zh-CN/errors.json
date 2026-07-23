@@ -1,0 +1,25 @@
+{
+  "somethingWentWrong": "出了点问题",
+  "networkError": "网络错误",
+  "validationFailed": "校验失败",
+  "description": "发生了意外错误。请重试。",
+  "retry": "重试",
+  "dashboard": {
+    "title": "无法加载您的控制台",
+    "body": "我们这边出了点问题。请检查您的网络连接后重试。",
+    "support": "联系客服"
+  },
+  "auth": {
+    "networkFailure": "连接失败。请检查您的网络连接后重试。",
+    "unsupportedChain": "不支持此网络。请切换到 Arbitrum、Base 或 Polygon。"
+  },
+  "api": {
+    "networkError": "无法连接到我们的服务器。请检查您的网络连接后重试。",
+    "notConfigured": "此功能暂时不可用。请稍后再试。",
+    "upstreamUnavailable": "我们的服务暂时不可用。请稍后重试。",
+    "rateLimited": "您的操作有点太快了。请稍候片刻后重试。",
+    "unauthorized": "您没有执行此操作的权限。请重新登录。",
+    "notFound": "未找到您要查找的内容。",
+    "unknown": "我们这边出了点问题。请重试。"
+  }
+}

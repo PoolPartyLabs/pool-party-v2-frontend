@@ -1,0 +1,25 @@
+{
+  "somethingWentWrong": "Đã xảy ra lỗi",
+  "networkError": "Lỗi mạng",
+  "validationFailed": "Xác thực thất bại",
+  "description": "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
+  "retry": "Thử lại",
+  "dashboard": {
+    "title": "Không thể tải bảng điều khiển của bạn",
+    "body": "Đã xảy ra lỗi từ phía chúng tôi. Vui lòng kiểm tra kết nối và thử lại.",
+    "support": "Liên hệ hỗ trợ"
+  },
+  "auth": {
+    "networkFailure": "Kết nối thất bại. Vui lòng kiểm tra kết nối internet và thử lại.",
+    "unsupportedChain": "Mạng này không được hỗ trợ. Vui lòng chuyển sang Arbitrum, Base hoặc Polygon."
+  },
+  "api": {
+    "networkError": "Chúng tôi không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.",
+    "notConfigured": "Tính năng này hiện chưa khả dụng. Vui lòng thử lại sau.",
+    "upstreamUnavailable": "Dịch vụ của chúng tôi tạm thời không khả dụng. Vui lòng thử lại sau giây lát.",
+    "rateLimited": "Bạn đang thao tác hơi nhanh. Vui lòng đợi một lát và thử lại.",
+    "unauthorized": "Bạn không có quyền thực hiện việc đó. Vui lòng đăng nhập lại.",
+    "notFound": "Chúng tôi không tìm thấy thứ bạn đang tìm.",
+    "unknown": "Đã xảy ra lỗi từ phía chúng tôi. Vui lòng thử lại."
+  }
+}

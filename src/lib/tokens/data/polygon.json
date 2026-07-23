@@ -1,0 +1,72 @@
+{
+  "0x3c499c542cef5e3811e1192ce70d8cc03d5c3359": {
+    "name": "USD Coin",
+    "ticker": "USDC",
+    "iconUrl": "https://polygonscan.com/token/images/centre-usdc_32.png"
+  },
+  "0xc2132d05d31c914a87c6611c10748aeb04b58e8f": {
+    "name": "Tether USD",
+    "ticker": "USDT",
+    "iconUrl": "https://polygonscan.com/token/images/tether_32.png"
+  },
+  "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270": {
+    "name": "Wrapped POL",
+    "ticker": "WPOL",
+    "iconUrl": "https://polygonscan.com/token/images/wMatic_32.png"
+  },
+  "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619": {
+    "name": "Wrapped Ether",
+    "ticker": "WETH",
+    "iconUrl": "https://polygonscan.com/token/images/wETH_32.png"
+  },
+  "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6": {
+    "name": "Wrapped BTC",
+    "ticker": "WBTC",
+    "iconUrl": "https://coin-images.coingecko.com/coins/images/7598/large/wrapped_bitcoin_wbtc.png"
+  },
+  "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063": {
+    "name": "Dai Stablecoin",
+    "ticker": "DAI",
+    "iconUrl": "https://polygonscan.com/token/images/mcdDai_32.png"
+  },
+  "0xd6df932a45c0f255f85145f286ea0b292b21c90b": {
+    "name": "Aave",
+    "ticker": "AAVE",
+    "iconUrl": "https://polygonscan.com/token/images/aave_32.png"
+  },
+  "0x53e0bca35ec356bd5dddfebbd1fc0fd03fabad39": {
+    "name": "ChainLink Token",
+    "ticker": "LINK",
+    "iconUrl": "https://polygonscan.com/token/images/chainlinktoken_32.png"
+  },
+  "0x553d3d295e0f695b9228246232edf400ed3560b5": {
+    "name": "PAX Gold",
+    "ticker": "PAXG",
+    "iconUrl": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/assets/0x553d3D295e0f695B9228246232eDF400ed3560B5/logo.png"
+  },
+  "0x2791bca1f2de4661ed88a30c99a7a9449aa84174": {
+    "name": "USD Coin (Legacy)",
+    "ticker": "USDC.e",
+    "iconUrl": "https://polygonscan.com/token/images/centre-usdc_32.png"
+  },
+  "0x18ec0a6e18e5bc3784fdd3a3634b31245ab704f6": {
+    "name": "Monerium EUR emoney",
+    "ticker": "EURe",
+    "iconUrl": "https://coin-images.coingecko.com/coins/images/23354/large/eur.png"
+  },
+  "0xf50d05a1402d0adafa880d36050736f9f6ee7dee": {
+    "name": "Fluid",
+    "ticker": "FLUID",
+    "iconUrl": "https://polygonscan.com/token/images/instadappfluid_32.png"
+  },
+  "0x4ed141110f6eeeaba9a1df36d8c26f684d2475dc": {
+    "name": "BRZ Token",
+    "ticker": "BRZ",
+    "iconUrl": "https://coin-images.coingecko.com/coins/images/8472/large/MicrosoftTeams-image_%286%29.png?1696508657"
+  },
+  "0xe6a537a407488807f0bbeb0038b79004f19dddfb": {
+    "name": "BRLA Token",
+    "ticker": "BRLA",
+    "iconUrl": "https://coin-images.coingecko.com/coins/images/40062/large/IconGreen400.png?1725459580"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "hideValues": "Ocultar valores",
+  "portfolioValue": "Portfólio total",
+  "allTimeEarned": "{amount} em taxas a resgatar",
+  "allocationByRisk": "Alocação por risco",
+  "invested": "Investido",
+  "currentValue": "Valor atual",
+  "totalYield": "Rendimento total",
+  "avgApy": "APR médio",
+  "loadMore": "Carregar mais",
+  "loadingMore": "Carregando",
+  "yourPositions": "Suas posições",
+  "activeCount": "{count} ativas",
+  "rate": "Taxa",
+  "status": {
+    "active": "Ativo",
+    "paused": "Pausado",
+    "closed": "Encerrada"
+  },
+  "columns": {
+    "strategy": "Estratégia",
+    "risk": "Risco",
+    "invested": "Investido",
+    "value": "Valor atual",
+    "yield": "Rendimento",
+    "rate": "Taxa"
+  },
+  "putToWork": {
+    "title": "Coloque seu dinheiro para trabalhar",
+    "body": "Adicione fundos ou explore estratégias para seu portfólio continuar crescendo.",
+    "deposit": "Depositar",
+    "explore": "Explorar estratégias"
+  },
+  "empty": {
+    "title": "Comece a fazer seu dinheiro render",
+    "body": "Faça seu primeiro depósito e coloque-o para trabalhar numa estratégia.",
+    "deposit": "Depositar",
+    "explore": "Explorar estratégias"
+  },
+  "closedStrategies": {
+    "title": "Estratégias fechadas",
+    "empty": "Nenhuma estratégia fechada ainda"
+  }
+}

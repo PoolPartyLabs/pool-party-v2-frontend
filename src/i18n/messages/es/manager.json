@@ -1,0 +1,611 @@
+{
+  "entry": {
+    "become": "Conviértete en manager",
+    "manager": "Manager Console"
+  },
+  "loadMore": "Cargar más",
+  "cta": {
+    "createFirst": "Crea tu primera estrategia"
+  },
+  "missing": {
+    "title": "Complete para continuar:"
+  },
+  "become": {
+    "title": "Conviértete en manager",
+    "subtitle": "Crea tus propias estrategias on-chain, haz crecer el TVL y gana fees de quienes invierten contigo.",
+    "note": "Abierto a cualquiera. Sin solicitud ni aprobación.",
+    "how": {
+      "title": "Cómo funciona",
+      "step1": {
+        "title": "Crea una estrategia",
+        "body": "Elige una pool de Uniswap v3, define su rango de precio y tus fees."
+      },
+      "step2": {
+        "title": "La gente invierte",
+        "body": "Los inversores depositan USDC contigo. La posición se agrupa y se gestiona en conjunto."
+      },
+      "step3": {
+        "title": "Ganas fees",
+        "body": "Gana una parte de las fees de trading que genera tu estrategia, más las fees que definas."
+      }
+    }
+  },
+  "empty": {
+    "title": "Aún no hay estrategias",
+    "subtitle": "Crea tu primera estrategia en Uniswap v3 para empezar a ganar fees de quienes invierten contigo."
+  },
+  "builder": {
+    "title": "Crear nueva estrategia",
+    "back": "Volver a la consola",
+    "steps": {
+      "mandate": "Mandato",
+      "review": "Revisión",
+      "build": "Montaje"
+    },
+    "next": "Siguiente: Revisión",
+    "nextBuild": "Siguiente: Montar estrategia",
+    "nextReview": "Siguiente: Revisión"
+  },
+  "tabs": {
+    "overview": "Resumen",
+    "strategies": "Mis estrategias",
+    "investors": "Inversores",
+    "earnings": "Ganancias",
+    "activity": "Actividad",
+    "profile": "Perfil del gestor"
+  },
+  "dashboard": {
+    "subtitle": "Mira cómo van tus estrategias",
+    "createNew": "Crear nueva estrategia",
+    "hideValues": "Ocultar valores",
+    "totalAum": "AUM total",
+    "netInflows": "{amount} de entradas netas · 30d",
+    "chartLabel": "AUM en los últimos 30 días",
+    "yourStrategies": "Tus estrategias",
+    "kpi": {
+      "yield": "Yield generado",
+      "activeInvestors": "Inversores activos",
+      "totalInvestorsAllTime": "Total de inversores",
+      "apy": "APR medio",
+      "activeWoW": "{delta} vs semana pasada",
+      "referrals": "Referrals",
+      "referralsSub": "por tu enlace de invitación"
+    },
+    "columns": {
+      "strategy": "Estrategia",
+      "aum": "AUM",
+      "investors": "Inversores",
+      "flows": "Flujos · 30d",
+      "apy": "APR"
+    },
+    "share": {
+      "title": "Comparte tus estrategias",
+      "body": "Invita a personas a invertir contigo.",
+      "cta": "Compartir enlace del perfil"
+    },
+    "earnings": {
+      "title": "Fees ganadas",
+      "allTime": "Histórico total",
+      "performance": "Performance fees",
+      "entry": "Entry fees",
+      "exit": "Exit fees"
+    },
+    "manage": "Gestionar"
+  },
+  "mandate": {
+    "title": "Mandato",
+    "subtitle": "El mandato es el alcance fijo de tu estrategia: la red y el pool de Uniswap v3 en el que opera. Una vez que la lanzas, es permanente y no se puede cambiar.",
+    "identityLabel": "Identidad de la estrategia",
+    "nameLabel": "Nombre de la estrategia",
+    "namePlaceholder": "p. ej. Stable Yield",
+    "logoAdd": "Añadir logo",
+    "logoChange": "Cambiar",
+    "logoRemove": "Quitar",
+    "logoCropTitle": "Ajustar el logo",
+    "logoUploading": "El logo aún se está subiendo",
+    "networkLabel": "Red",
+    "poolLabel": "Pool",
+    "tokensLabel": "Tokens",
+    "poolsLabel": "Pools",
+    "secondTokenSearch": "Agregar un segundo token (opcional)",
+    "showMore": "Mostrar más pools",
+    "poolSearch": "Busca por par, token o dirección de la pool",
+    "poolEmpty": "Ninguna pool coincide con la búsqueda.",
+    "poolTvl": "TVL",
+    "poolApr": "APR",
+    "tierShare": "{pct}% seleccionado",
+    "rangeFull": "Total",
+    "rangeMin": "Precio mín",
+    "rangeMax": "Precio máx",
+    "rangeMinDecrease": "Bajar precio mín",
+    "rangeMinIncrease": "Subir precio mín",
+    "rangeMaxDecrease": "Bajar precio máx",
+    "rangeMaxIncrease": "Subir precio máx",
+    "rangeCurrent": "Actual {price}",
+    "rangeFullNote": "Rango total: gana en todos los precios, nunca necesita Move Range.",
+    "derivedLabel": "Calculado automáticamente",
+    "derivedNote": "No defines esto. Pool Party lo deriva de tu pool y rango.",
+    "riskLabel": "Riesgo",
+    "categoryLabel": "Categoría",
+    "categoryStable": "Yield de stablecoin",
+    "categoryBlueChip": "LP blue-chip",
+    "categoryVolatile": "LP volátil",
+    "risk": {
+      "veryConservative": "Muy conservador",
+      "conservative": "Conservador",
+      "moderate": "Moderado",
+      "aggressive": "Agresivo",
+      "veryAggressive": "Muy agresivo"
+    },
+    "descriptionLabel": "Descripción",
+    "descriptionOptional": "(opcional)",
+    "descriptionPlaceholder": "Describe la tesis de la estrategia: qué hace y para quién es.",
+    "rangeStatusIn": "En rango",
+    "tokenHint": "Elige un token para ver sus pools disponibles.",
+    "poolsLoading": "Cargando pools…",
+    "rangeStatusOut": "Fuera de rango",
+    "objectiveLabel": "Objetivo",
+    "assetLabel": "Activos",
+    "objective": {
+      "income": "Ingresos",
+      "gradualBuy": "Compra gradual (DCA)",
+      "gradualSell": "Venta gradual"
+    },
+    "asset": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme"
+    }
+  },
+  "review": {
+    "title": "Revisión y lanzamiento",
+    "nameLabel": "Nombre de la estrategia",
+    "namePlaceholder": "p. ej. Stable Yield",
+    "summary": {
+      "title": "Resumen",
+      "pool": "Pool",
+      "network": "Red",
+      "protocol": "Protocolo",
+      "range": "Rango",
+      "rangeFull": "Rango total",
+      "risk": "Riesgo",
+      "category": "Categoría",
+      "feeTier": "Nivel de comisión"
+    },
+    "fees": {
+      "title": "Tus fees",
+      "subtitle": "Configura tu fee de rendimiento: una parte de las fees de LP que genera tu estrategia. Entrada, salida y gestión próximamente.",
+      "entry": "Fee de entrada (%)",
+      "exit": "Fee de salida (%)",
+      "management": "Fee de gestión (%/año)",
+      "performance": "Fee de rendimiento (%)",
+      "performanceHint": "{min}–{max}% de las fees de LP generadas · sin high-water mark",
+      "performanceError": "La fee de rendimiento debe estar entre {min}% y {max}%.",
+      "entryInfo": "Una fee única cobrada en cada depósito en la estrategia.",
+      "exitInfo": "Una fee única cobrada cuando un inversor retira fondos.",
+      "managementInfo": "Una fee anual sobre los activos bajo gestión, acumulada continuamente.",
+      "performanceInfo": "Una parte de las fees de LP que genera la estrategia (10–90% en la v1). Sin high-water mark."
+    },
+    "access": {
+      "title": "Acceso",
+      "public": "Público",
+      "publicNote": "Cualquiera puede descubrir e invertir.",
+      "privateSoon": "El acceso por allowlist, NFT y contraseña llega pronto."
+    },
+    "preview": {
+      "title": "Vista del inversor",
+      "est": "Retorno est.",
+      "yourStrategy": "Tu estrategia"
+    },
+    "saveDraft": "Guardar borrador",
+    "launch": "Lanzar estrategia",
+    "verifying": "Verificando tu estrategia…",
+    "verifyingNote": "Comprobando que la pool existe y que los parámetros son válidos.",
+    "live": {
+      "title": "Tu estrategia está activa",
+      "body": "{name} pasó la verificación y ya está listada para inversores.",
+      "cta": "Ir a la consola",
+      "bodyChain": "{name} ya está activa on-chain y listada para inversores."
+    },
+    "draft": {
+      "title": "Borrador guardado",
+      "body": "{name} se guardó como borrador. Lánzala cuando quieras desde tu consola.",
+      "cta": "Ir a la consola"
+    },
+    "failed": {
+      "title": "La verificación falló",
+      "body": "No pudimos verificar esta estrategia. Revisa la pool y los parámetros e inténtalo de nuevo.",
+      "cta": "Volver a la revisión",
+      "bodyChain": "La transacción falló o fue rechazada. No se movieron fondos. Revisa tus saldos e inténtalo de nuevo."
+    },
+    "seed": {
+      "title": "Liquidez inicial",
+      "subtitle": "Deposita la primera liquidez en tu pool. Aportas ambos tokens.",
+      "subtitleSingle": "Este rango solo necesita {symbol}, deposítalo para iniciar tu pool.",
+      "balance": "Saldo {amount}",
+      "max": "Máx",
+      "fundWith": "Financiar con",
+      "insufficient": "Saldo insuficiente",
+      "loading": "Cargando tus saldos…",
+      "error": "No se pudieron cargar tus saldos. Actualiza e inténtalo de nuevo.",
+      "minUsd": "El mínimo para crear una estrategia es {amount}",
+      "zeroBalance": {
+        "title": "Necesitas {token}",
+        "body": "Tu billetera no tiene {token}. Agrega un poco para aportar la liquidez inicial y vuelve para lanzar.",
+        "deposit": "Depositar",
+        "swap": "Swap"
+      }
+    },
+    "creating": "Creando tu estrategia…",
+    "creatingNote": "Confirma las transacciones en tu billetera. Esto deposita tu liquidez inicial y crea el pool on-chain.",
+    "nameLengthError": "El nombre debe tener entre 10 y 50 caracteres.",
+    "pending": {
+      "badge": "Confirmación pendiente"
+    },
+    "metadata": {
+      "failed": "Tu pool está activo on-chain, pero no se pudieron guardar los detalles.",
+      "retry": "Reintentar guardar los detalles",
+      "createFailed": "No se pudieron guardar los detalles de la estrategia. Inténtalo de nuevo."
+    }
+  },
+  "profile": {
+    "verifiedManager": "Manager verificado",
+    "website": "Sitio web",
+    "strategiesBy": "Estrategias de {name}",
+    "empty": "Aún no hay estrategias públicas.",
+    "stats": {
+      "aum": "AUM",
+      "investors": "Inversores",
+      "strategies": "Estrategias",
+      "avgApy": "APR medio"
+    },
+    "edit": "Editar perfil",
+    "share": "Compartir perfil",
+    "shareCopied": "Enlace copiado",
+    "externalLink": {
+      "title": "Estás saliendo de Pool Party",
+      "body": "Este enlace lleva a {domain}, un sitio externo que no hemos verificado. ¿Continuar?",
+      "continue": "Continuar",
+      "cancel": "Cancelar"
+    }
+  },
+  "operate": {
+    "title": "Posición en vivo",
+    "feeTier": "Nivel de fee {pct}",
+    "inRange": "En rango",
+    "outOfRange": "Fuera de rango",
+    "outOfRangeNote": "Esta posición está fuera de rango y no genera fees. Mueve el rango para reanudar.",
+    "range": "Rango",
+    "currentPrice": "Precio actual",
+    "currentRange": "Rango actual",
+    "liquidity": "Liquidez",
+    "feeApr": "APR de fees",
+    "uncollected": "Fees sin cobrar",
+    "gasNote": "Tú pagas el gas de red de estas acciones (~{amount}).",
+    "collect": "Cobrar fees",
+    "compound": "Reinvertir",
+    "moveRange": "Mover rango",
+    "comingSoon": "Próximamente",
+    "compounded": "Reinvertiste {amount} en la posición.",
+    "error": "Algo salió mal. No se movieron fondos.",
+    "empty": "Aún no hay posición en vivo para esta estrategia.",
+    "back": "Volver a la consola",
+    "moveRangeDesc": "Define un nuevo rango de precio para la posición.",
+    "recenter": "Recentrar en el precio actual",
+    "slippageHint": "Cancela el rebalanceo si el precio se mueve más que esto.",
+    "settings": "Configuración",
+    "applying": "Moviendo el rango…",
+    "moved": "Rango movido a {min} – {max}.",
+    "movedFull": "Rango movido a full range.",
+    "cancel": "Cancelar",
+    "rangeNew": "Nuevo rango",
+    "invert": "Invertir orientación de precio ({pair})",
+    "estimatedBalance": "Saldo estimado",
+    "currentBalance": "Saldo actual",
+    "fee": "Comisión",
+    "networkFee": "Gas estimado (comisión de red)",
+    "feesTooltip": {
+      "network": "Gas estimado (comisión de red)",
+      "total": "Total"
+    },
+    "estTime": "Tiempo est.",
+    "reviewTitle": "Revisión",
+    "reviewConfirm": "Confirmar y mover rango",
+    "reviewBack": "Volver",
+    "reviewAssurance": "La posición se mueve sin que los inversores necesiten tocar los fondos de la estrategia."
+  },
+  "status": {
+    "active": "Activa",
+    "paused": "Pausada",
+    "closed": "Cerrada",
+    "draft": "Borrador"
+  },
+  "strategies": {
+    "title": "Estrategias gestionadas",
+    "subtitle": "Todas tus estrategias en un solo lugar. Filtra por estado y gestiona cada una.",
+    "filterLabel": "Filtrar estrategias por estado",
+    "filters": {
+      "all": "Todas",
+      "active": "Activa",
+      "paused": "Pausada",
+      "closed": "Cerrada",
+      "drafts": "Borradores"
+    },
+    "rebalance": "Rebalance sugerido",
+    "sortLabel": "Ordenar por",
+    "sortDir": {
+      "asc": "Ascendente",
+      "desc": "Descendente"
+    },
+    "card": {
+      "aum": "AUM",
+      "investors": "Inversores",
+      "netApy": "Net APR",
+      "fees30d": "Fees · 30d",
+      "manage": "Gestionar",
+      "view": "Ver"
+    },
+    "empty": {
+      "all": "Todavía no creaste ninguna estrategia.",
+      "active": "No hay estrategias activas.",
+      "paused": "No hay estrategias pausadas.",
+      "closed": "No hay estrategias cerradas.",
+      "drafts": "No hay borradores. Guarda uno desde el builder de estrategias."
+    }
+  },
+  "manage": {
+    "back": "Todas las estrategias",
+    "share": "Copiar enlace para compartir",
+    "viewOnUniswap": "Ver en Uniswap",
+    "shareCopied": "Enlace copiado",
+    "notFound": "No pudimos cargar esa estrategia. Intenta de nuevo.",
+    "performance": {
+      "title": "AUM",
+      "netApy": "Net APR",
+      "yield": "Yield generado",
+      "fees": "Tus fees · total",
+      "fees30d": "Tus fees · 30d",
+      "chartLabel": "AUM del período seleccionado",
+      "noHistoryTitle": "Aún sin historial",
+      "noHistoryBody": "El historial de AUM aparecerá tras los primeros días de actividad de esta estrategia.",
+      "snapshotNote": "El AUM mostrado es el valor actual del pool; el gráfico sigue el snapshot diario, por lo que ambos pueden diferir un poco.",
+      "periods": {
+        "7d": "7D",
+        "30d": "30D",
+        "90d": "90D",
+        "all": "Todo"
+      }
+    },
+    "range": {
+      "min": "Precio mín.",
+      "max": "Precio máx.",
+      "full": "Full range",
+      "earning": "generando fees",
+      "notEarning": "sin generar fees",
+      "outNote": "El precio salió de tu range y la posición dejó de generar fees. Mueve el range para volver a ganar."
+    },
+    "activity": {
+      "title": "Actividad reciente",
+      "empty": "Sin actividad todavía.",
+      "comingSoon": "Próximamente.",
+      "types": {
+        "deposit": "Depósito",
+        "withdraw": "Retiro",
+        "collect": "Fees cobradas",
+        "compound": "Compound",
+        "move_range": "Range movido"
+      }
+    },
+    "operations": {
+      "title": "Operaciones",
+      "showInExplore": "Mostrar en la lista de Estrategias",
+      "showInExploreNote": "Muestra esta estrategia en la página pública de Estrategias. Apagado = solo por enlace.",
+      "pause": "Pausar depósitos",
+      "resume": "Reanudar depósitos",
+      "pauseConfirmTitle": "¿Pausar depósitos?",
+      "pauseConfirmBody": "Los depósitos nuevos se detienen. La posición sigue corriendo y los inversores aún pueden retirar.",
+      "resumeConfirmTitle": "¿Reanudar depósitos?",
+      "resumeConfirmBody": "Los inversores podrán volver a depositar en esta estrategia.",
+      "collect": "Cobrar fees",
+      "close": "Cerrar estrategia",
+      "closedNote": "Esta estrategia está cerrada. Depósitos congelados; los inversores pueden retirar cuando quieran, al instante y sin fee.",
+      "confirm": "Confirmar",
+      "cancel": "Cancelar",
+      "removeLiquidity": "Retirar",
+      "addLiquidity": "Añadir liquidez"
+    },
+    "investors": {
+      "title": "Inversores",
+      "total": "Total",
+      "active": "Activos",
+      "allocated": "Tu aporte"
+    },
+    "draft": {
+      "title": "Esta estrategia es un borrador",
+      "body": "Termina de configurarla en el builder para lanzarla a los inversores.",
+      "cta": "Continuar configuración"
+    },
+    "remove": {
+      "title": "Retirar",
+      "desc": "Elige cuánto retirar de tu estrategia.",
+      "amountLabel": "Importe a retirar",
+      "unitToggle": "Unidad del monto",
+      "newAmount": "Nuevo valor de la posición",
+      "closeAlert": "Retirar más del 50% cierra esta estrategia, retira toda tu liquidez y cobra los fees acumulados.",
+      "dustAlert": "Esto dejaría menos de 5 USD, así que la estrategia se cerrará.",
+      "remove": "Retirar",
+      "close": "Cerrar estrategia",
+      "busyRemove": "Retirando…",
+      "busyClose": "Cerrando…",
+      "removeValue": "Vas a retirar",
+      "closeFeesNote": "Retira toda tu liquidez y cobra los fees acumulados.",
+      "investorsNote": "La liquidez de todos los inversores se retira y queda disponible para retirar en cualquier momento.",
+      "confirmTitle": "¿Cerrar esta estrategia?",
+      "confirmBody": "Esta estrategia se cerrará y la liquidez de todos los inversores se retirará y quedará disponible para retirar en cualquier momento. ¿Continuar?",
+      "confirmContinue": "Continuar",
+      "confirmKeep": "Mantener la estrategia",
+      "poolContents": "Saldo de la estrategia",
+      "liquidity": "Liquidity",
+      "fees": "Fees"
+    },
+    "close": {
+      "reviewTitle": "Revisión",
+      "back": "Volver",
+      "receiveAs": "Recibir como",
+      "receiveTokens": "Par de tokens",
+      "feesTooltip": {
+        "total": "Total"
+      },
+      "footerLocked": "≈ {amount} · Llega en {days, plural, one {# día} other {# días}} · según el bloqueo de la estrategia",
+      "cta": "Cerrar estrategia",
+      "successTitle": "Estrategia cerrada",
+      "successBody": "≈ {amount} en camino",
+      "done": "Listo"
+    },
+    "allocation": {
+      "title": "Asignación de la Estrategia",
+      "protocols": "Protocols",
+      "tokens": "Tokens"
+    },
+    "comments": {
+      "title": "Comments",
+      "empty": "No comments yet.",
+      "private": "Private · Investor & you",
+      "new": "{count} new",
+      "viewAll": "View all ({count})",
+      "invested": "invested {amount}",
+      "managerBadge": "Manager"
+    },
+    "about": "Acerca de esta estrategia",
+    "availableToCollect": "Disponible para cobrar"
+  },
+  "confirm": {
+    "working": "Confirmando…",
+    "done": "Listo",
+    "compoundTitle": "¿Capitalizar comisiones?",
+    "compoundBody": "Reinvierte las comisiones sin cobrar de esta posición de vuelta en la posición, para seguir generando.",
+    "pauseTitle": "¿Pausar depósitos?",
+    "pauseBody": "Bloquea nuevas inversiones en esta estrategia hasta que la reanudes. Los inversores actuales conservan su posición y los retiros siguen abiertos.",
+    "closeTitle": "¿Cerrar esta estrategia?",
+    "closeBody": "Deshace la posición y termina la estrategia. Los inversores conservan sus fondos y retiran al instante, sin comisión. No se puede deshacer.",
+    "launchTitle": "¿Lanzar estrategia?",
+    "launchBody": "Verificamos la pool y tus parámetros y listamos la estrategia públicamente. Tú firmas la transacción y pagas el gas de la red.",
+    "launchPool": "Pool",
+    "launchPerf": "Comisión de rendimiento",
+    "feePending": "Estimado al firmar"
+  },
+  "profileTab": {
+    "instagram": {
+      "comingSoon": "Próximamente",
+      "hint": "Los enlaces de Instagram estarán disponibles próximamente."
+    },
+    "tiktok": {
+      "comingSoon": "Próximamente",
+      "hint": "Los enlaces de TikTok estarán disponibles próximamente."
+    },
+    "linkedin": {
+      "comingSoon": "Próximamente",
+      "hint": "Los enlaces de LinkedIn estarán disponibles próximamente."
+    },
+    "banner": {
+      "label": "Banner",
+      "change": "Cambiar banner",
+      "help": "Recomendado 2048×1152 (16:9). Mantén el contenido clave en el área segura central; los bordes se recortan en pantallas pequeñas."
+    },
+    "photo": {
+      "change": "Cambiar foto",
+      "help": "Cuadrada, mínimo 400×400. Abre la herramienta de recorte."
+    },
+    "fields": {
+      "name": "Nombre visible",
+      "handle": "Handle",
+      "bio": "Descripción",
+      "socials": "Redes sociales"
+    },
+    "autoList": "Tus estrategias públicas aparecen en el perfil automáticamente.",
+    "save": "Guardar cambios",
+    "saved": "Perfil guardado",
+    "mediaUploadFailed": "No se pudo subir la imagen. Inténtalo de nuevo.",
+    "saveFailed": "No se pudieron guardar los cambios. Inténtalo de nuevo.",
+    "saving": "Guardando…",
+    "viewPublic": "Ver perfil público",
+    "handleLockWarning": "Tu identificador es permanente. No podrás cambiarlo después de guardar.",
+    "crop": {
+      "titleAvatar": "Ajustar tu foto",
+      "titleBanner": "Ajustar tu banner",
+      "help": "Arrastra para reposicionar. Mantén el contenido clave dentro del área segura.",
+      "safeArea": "Área segura",
+      "zoom": "Zoom",
+      "apply": "Aplicar",
+      "cancel": "Cancelar"
+    },
+    "validation": {
+      "nameMin": "El nombre visible debe tener al menos {min} caracteres.",
+      "handleInvalid": "Elige un identificador con 3 a 30 letras, números o guiones.",
+      "handleTaken": "Ese identificador ya está en uso.",
+      "linkInvalidFor": "Ingresa un enlace de {network} válido, p. ej. {example}",
+      "linkWrongNetwork": "Ese enlace no es válido para {network}. Añade tu usuario de {network}."
+    },
+    "verify": {
+      "request": "Solicitar verificación",
+      "missingTitle": "Para solicitar la verificación",
+      "missingSocial": "Añade tu enlace de X",
+      "pending": "Verificación en revisión",
+      "pendingHelp": "Estamos revisando tu solicitud. Suele tardar unos días.",
+      "verified": "Verificado",
+      "pendingValidation": "Validación pendiente",
+      "modal": {
+        "title": "Verificación solicitada",
+        "body": "Nuestro equipo evaluará tu verificación. Envía un mensaje desde tu red social registrada al perfil oficial de Pool Party con el siguiente código: {code}.",
+        "codeLabel": "Tu código de verificación",
+        "copy": "Copiar código",
+        "copied": "Copiado"
+      },
+      "reshowError": "No se pudo cargar tu código. Inténtalo de nuevo."
+    }
+  },
+  "build": {
+    "title": "Monta tu estrategia",
+    "subtitle": "Monta tu posición de liquidez Uniswap v3. Selecciona un nodo para configurarlo.",
+    "paletteMandate": "De tu mandato",
+    "paletteBlocks": "Bloques de montaje",
+    "paletteNote": "La V1 usa un flujo fijo con un pool por estrategia. Más bloques se desbloquearán después.",
+    "blocks": {
+      "deposit": "Depósito",
+      "swap": "Swap",
+      "pool": "Proveer LP",
+      "collect": "Cobrar comisiones"
+    },
+    "nodes": {
+      "depositSub": "USDC · entrada",
+      "swapSub": "USDC → {tokens}",
+      "poolSub": "Posición LP",
+      "collectSub": "Reclamar comisiones generadas"
+    },
+    "config": {
+      "title": "Configurar nodo",
+      "pool": "Pool",
+      "feeTier": "Fee tier",
+      "feeTierNote": "Fijado por el pool elegido.",
+      "allocation": "Asignación",
+      "allocationNote": "100% del capital de la estrategia. Un pool por estrategia en V1.",
+      "range": "Rango de precio",
+      "invert": "Invertir la orientación del precio",
+      "composition": "Saldo estimado",
+      "tickNote": "Los límites se ajustan al espaciado de tick del pool.",
+      "rangeError": "El máximo debe estar al menos 2 ticks por encima del mínimo.",
+      "monoAssetWarning": "Cerca del precio actual. Un pequeño movimiento puede requerir ambos tokens para el seed.",
+      "autoMove": "Mover rango automáticamente",
+      "autoMoveNote": "Reposiciona la posición cuando el precio sale del rango.",
+      "apply": "Aplicar cambios",
+      "removeNode": "Eliminar nodo",
+      "removeNote": "Las estrategias V1 tienen exactamente un pool, así que este nodo no puede eliminarse.",
+      "depositBody": "Los inversores entran con USDC. Los depósitos se convierten automáticamente en los tokens del pool.",
+      "swapBody": "El USDC se intercambia por {tokens} para igualar la composición del pool.",
+      "collectBody": "Las comisiones de trading se acumulan en la posición. Cóbralas a tu saldo o recompónlas en la posición. Tú pagas el gas."
+    }
+  },
+  "window30d": "30d"
+}

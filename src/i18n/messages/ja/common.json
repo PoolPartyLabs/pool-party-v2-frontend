@@ -1,0 +1,38 @@
+{
+  "appName": "Pool Party",
+  "tagline": "スマートな投資を、シンプルに。",
+  "loading": "読み込み中…",
+  "stillLoading": "読み込み中です。少々お待ちください…",
+  "updating": "更新中…",
+  "unavailable": "まだ利用できません",
+  "retry": "再試行",
+  "connectWallet": "ウォレットを接続",
+  "disconnect": "切断",
+  "save": "保存",
+  "cancel": "キャンセル",
+  "confirm": "確認",
+  "close": "閉じる",
+  "viewOnExplorer": "エクスプローラーで見る",
+  "error": {
+    "tryAgain": "再試行"
+  },
+  "greeting": {
+    "morning": "おはようございます、{name}さん",
+    "afternoon": "こんにちは、{name}さん",
+    "evening": "こんばんは、{name}さん"
+  },
+  "aprTooltip": "年間パーセンテージ率",
+  "apyTooltip": "年間利回り",
+  "avgAprTooltip": "平均年間パーセンテージ率",
+  "netAprTooltip": "正味年間パーセンテージ率",
+  "validation": {
+    "imageTooLargeOrType": "10 MB未満のPNGまたはJPGを使用してください。"
+  },
+  "unsavedChanges": {
+    "title": "未保存の変更",
+    "body": "未保存の変更があります。保存せずに移動しますか？",
+    "leave": "移動する",
+    "stay": "編集を続ける"
+  },
+  "opensInNewTab": "新しいタブで開きます"
+}

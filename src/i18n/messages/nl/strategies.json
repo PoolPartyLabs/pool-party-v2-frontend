@@ -1,0 +1,488 @@
+{
+  "sign": {
+    "continueInWallet": "Ga verder in je wallet",
+    "stepOf": "Stap {current} van {total}",
+    "whyTitle": "Wat onderteken ik?",
+    "whyBody": "Handtekeningen bewijzen dat je deze actie autoriseert. Ze gebeuren in je wallet en verplaatsen je geld nooit vanzelf.",
+    "steps": {
+      "approve": "{token} goedkeuren",
+      "sign": "Onderteken het bericht in je wallet",
+      "confirmInvest": "Storting bevestigen",
+      "confirmWithdraw": "Opname bevestigen",
+      "confirmCollect": "Inning bevestigen",
+      "confirmCompound": "Herinvestering bevestigen",
+      "permit": "Onderteken de toestemming in je wallet",
+      "confirmAddLiquidity": "Liquiditeit toevoegen bevestigen",
+      "confirmRemoveLiquidity": "Opname bevestigen",
+      "confirmMoveRange": "Herbalancering bevestigen",
+      "confirmClosePosition": "Sluiting bevestigen",
+      "build": "Transactie wordt voorbereid",
+      "skipped": "Al goedgekeurd"
+    },
+    "explain": {
+      "approve": {
+        "name": "Tokengoedkeuring",
+        "body": "Hiermee mag Pool Party uw {token} verplaatsen voor deze transactie. Een goedkeuring verplaatst zelf nooit geld. De daadwerkelijke transactie vindt plaats in een latere stap."
+      },
+      "permit": {
+        "name": "Permit2-handtekening",
+        "body": "Een gasvrije handtekening die deze overdracht autoriseert. Het is een bericht, geen transactie, dus het kost geen netwerkkosten en er beweegt niets totdat u bevestigt."
+      },
+      "confirm": {
+        "name": "Definitieve bevestiging",
+        "body": "De laatste stap. Deze draait op het netwerk en voert de transactie daadwerkelijk uit. Dit is de enige stap die mogelijk kleine netwerkkosten met zich meebrengt."
+      },
+      "build": {
+        "name": "Transactie wordt voorbereid",
+        "body": "Pool Party berekent de bedragen en de netwerkkosten voor deze transactie. Er wordt nog niets ondertekend of verzonden."
+      }
+    }
+  },
+  "card": {
+    "by": "door {manager}",
+    "min": "Min.",
+    "estReturn": "Verw. rendement",
+    "viewDetails": "Details bekijken",
+    "invest": "Beleggen"
+  },
+  "risk": {
+    "level1": "Zeer behoudend",
+    "level2": "Behoudend",
+    "level3": "Gematigd",
+    "level4": "Agressief",
+    "level5": "Zeer agressief"
+  },
+  "explore": {
+    "title": "Strategieën",
+    "subtitle": "Beheerde strategieën waarin u kunt beleggen",
+    "searchPlaceholder": "Zoek op naam, beheerder, token of adres",
+    "browseByRisk": "Bladeren op risico",
+    "allRisks": "Alle",
+    "browseByType": "Bladeren op type",
+    "allTypes": "Alle",
+    "types": {
+      "yield": "Rendement",
+      "trading": "Handel",
+      "index": "Index",
+      "marketNeutral": "Marktneutraal"
+    },
+    "browseByCategory": "Bladeren op categorie",
+    "allCategories": "Alle",
+    "categorySelected": "{count} geselecteerd",
+    "categories": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme coins"
+    },
+    "count": "{count, plural, =0 {Geen strategieën} =1 {# strategie} other {# strategieën}}",
+    "owned": "Beheerd",
+    "invested": "Belegd",
+    "noResults": "Geen strategieën komen overeen met uw zoekopdracht.",
+    "clearFilters": "Filters wissen",
+    "sortLabel": "Sorteren op",
+    "sortDir": {
+      "asc": "Oplopend",
+      "desc": "Aflopend"
+    },
+    "loadMore": "Meer laden",
+    "loadingMore": "Laden",
+    "empty": {
+      "title": "Nog geen strategieën",
+      "body": "Strategieën verschijnen hier zodra ze beschikbaar zijn."
+    },
+    "columns": {
+      "strategy": "Strategie",
+      "risk": "Risico",
+      "min": "Min.",
+      "tvl": "TVL",
+      "investors": "Beleggers",
+      "return": "Verw. rendement",
+      "action": "Actie"
+    }
+  },
+  "detail": {
+    "back": "Terug",
+    "performance": "Poolwaarde",
+    "periods": {
+      "week": "1W",
+      "month": "1M",
+      "quarter": "3M",
+      "year": "1Y",
+      "all": "Alle"
+    },
+    "chart": {
+      "noHistoryTitle": "Nog geen historie",
+      "noHistoryBody": "De waardehistorie van deze strategie verschijnt na de eerste dagen van activiteit."
+    },
+    "metrics": {
+      "min": "Minimum",
+      "tvl": "TVL",
+      "lockup": "Lock-up",
+      "performanceFee": "Prestatiekosten"
+    },
+    "lockup": {
+      "none": "Geen",
+      "days": "{days, plural, =1 {# dag} other {# dagen}}"
+    },
+    "about": "Over",
+    "composition": "Samenstelling",
+    "mandate": {
+      "title": "Beleggingsmandaat",
+      "assets": "Max. blootstelling per asset",
+      "protocols": "Max. blootstelling per protocol",
+      "networks": "Netwerken"
+    },
+    "riskLimits": {
+      "title": "Risicolimieten & voorwaarden",
+      "maxDrawdown": "Max. drawdown",
+      "leverage": "Hefboom",
+      "rebalancing": "Herbalancering",
+      "liquidity": "Liquiditeit",
+      "strategyType": "Strategietype",
+      "benchmark": "Benchmark",
+      "custody": "Bewaring"
+    },
+    "fees": {
+      "title": "Kosten",
+      "management": "Beheer",
+      "performance": "Prestatie",
+      "none": "Geen kosten"
+    },
+    "managerVerified": "Geverifieerde beheerder",
+    "yourPosition": {
+      "title": "Uw positie",
+      "active": "Actief",
+      "paused": "Gepauzeerd",
+      "invested": "Belegd",
+      "currentValue": "Huidige waarde",
+      "totalYield": "Totaalrendement",
+      "available": "Beschikbaar om te innen",
+      "closed": "Gesloten",
+      "finalValue": "Eindwaarde",
+      "totalYieldRealized": "Totaal rendement (gerealiseerd)",
+      "availableToWithdraw": "Beschikbaar voor opname"
+    },
+    "actions": {
+      "invest": "Beleggen",
+      "investMore": "Meer beleggen",
+      "collectAmount": "{amount} innen",
+      "compound": "Compounden",
+      "compoundComingSoon": "Compounden komt binnenkort. U kunt uw rendement nog steeds innen.",
+      "withdraw": "Opnemen",
+      "share": "Delen"
+    },
+    "paused": {
+      "title": "{name} is gepauzeerd",
+      "body": "Deze strategie accepteert op dit moment geen nieuwe beleggingen. Uw positie is veilig en blijft verdienen. U kunt nog steeds innen of opnemen.",
+      "notify": "Stel mij op de hoogte wanneer deze heropent",
+      "notified": "We laten het u weten",
+      "viewOthers": "Andere strategieën bekijken"
+    },
+    "closed": {
+      "title": "Strategie gesloten",
+      "body": "{manager} heeft deze strategie gesloten. Je fondsen staan klaar om op te nemen."
+    },
+    "viewProfile": "View profile",
+    "managerRole": "Manager",
+    "managerAllocation": "Allocatie van de beheerder",
+    "liquidityPool": "Liquiditeitspool",
+    "noData": "Nog niet beschikbaar"
+  },
+  "invest": {
+    "title": "Beleggen",
+    "amountLabel": "Bedrag om te beleggen",
+    "balance": "Saldo {amount}",
+    "max": "Max",
+    "belowMin": "De minimale belegging is {min}",
+    "needMore": "U heeft {amount} meer nodig",
+    "cta": {
+      "invest": "Beleggen",
+      "deposit": "Storten & beleggen"
+    },
+    "confirm": {
+      "title": "Bevestigen & ondertekenen",
+      "youInvest": "U belegt",
+      "approxUsd": "≈ {usd}",
+      "estYield": "Verw. jaarrendement",
+      "fee": "Gesch. kosten",
+      "deployAtLeast": "U belegt minimaal",
+      "approxValue": "{amount} ({usd})",
+      "lockup": "Lock-up",
+      "cta": "Bevestigen & ondertekenen",
+      "zapNote": "Je USDC wordt automatisch omgezet in de twee pooltokens ({token0}/{token1}). Bij opname worden ze weer omgezet naar USDC.",
+      "back": "Terug"
+    },
+    "review": {
+      "title": "Overzicht",
+      "cta": "Belegging bevestigen"
+    },
+    "success": {
+      "title": "Belegging bevestigd",
+      "body": "{amount} is nu belegd in {name}.",
+      "partial": "Gedeeltelijke belegging. We hebben {deployed} van uw {requested} toegevoegd. De rest kon niet worden toegevoegd vanwege marktbeweging en slippage, en bleef in uw wallet."
+    },
+    "settings": {
+      "title": "Transactie-instellingen",
+      "slippageLabel": "Max. slippage",
+      "slippageHint": "Annuleert de transactie als de prijs meer dan dit beweegt voordat deze wordt bevestigd.",
+      "slippageHigh": "Hoge slippage",
+      "slippageVeryHigh": "Zeer hoge slippage",
+      "slippageWarningBody": "Dit kan resulteren in een ongunstige transactie. Probeer uw slippage-instelling te verlagen.",
+      "custom": "Aangepast",
+      "deadlineLabel": "Transactiedeadline",
+      "deadlineHint": "Aangepaste deadlines komen binnenkort. Voorlopig gebruiken transacties een standaarddeadline.",
+      "deadlineUnit": "min",
+      "receiveAsLabel": "Ontvangen als",
+      "receiveAsHint": "Het asset dat u ontvangt. Standaard USDC; u kunt de tokens kiezen die momenteel in de strategie zitten.",
+      "receiveAsFixedHint": "Het asset dat u ontvangt. Vast voor deze transactie.",
+      "done": "Klaar"
+    },
+    "receipt": {
+      "amountInvested": "Belegd bedrag"
+    }
+  },
+  "collect": {
+    "title": "Rendement innen",
+    "available": "Beschikbaar om te innen",
+    "destination": "Gaat naar uw USDC-saldo",
+    "destinationPair": "Gaat naar je wallet als {token0} en {token1}",
+    "amount": "Gevraagd bedrag",
+    "youReceive": "Je ontvangt",
+    "fee": "Gesch. kosten",
+    "cta": "{amount} innen",
+    "success": {
+      "title": "Rendement geïnd"
+    },
+    "receipt": {
+      "amountReceived": "Ontvangen bedrag"
+    },
+    "minNotice": "Het minimum om te innen is {amount}."
+  },
+  "compound": {
+    "title": "Rendement compounden",
+    "available": "Beschikbaar om te compounden",
+    "approxUsd": "≈ {usd}",
+    "approxValue": "{amount} ({usd})",
+    "fee": "Gesch. kosten",
+    "feesTooltip": {
+      "dex": "DEX-kosten",
+      "protocol": "Protocolkosten",
+      "network": "Geschat gas (netwerkkosten)",
+      "total": "Totaal"
+    },
+    "atLeast": "U compoundt minimaal",
+    "note": "Bij compounden wordt uw verdiende rendement terug in de strategie belegd, zodat het ook gaat verdienen.",
+    "cta": "{amount} compounden",
+    "success": {
+      "title": "Rendement gecompound",
+      "body": "{amount} is herbelegd in {name}."
+    }
+  },
+  "withdraw": {
+    "title": "Opnemen",
+    "amountLabel": "Bedrag om op te nemen",
+    "invested": "Belegd {amount}",
+    "max": "Max",
+    "chooseMethod": "Hoe wilt u opnemen?",
+    "regular": {
+      "title": "Reguliere opname",
+      "desc": "Komt in ongeveer 2 werkdagen binnen",
+      "fee": "Geen kosten"
+    },
+    "instant": {
+      "title": "Directe opname",
+      "desc": "Komt meteen binnen",
+      "fee": "{fee} kosten"
+    },
+    "lockedNote": "Directe opname is niet beschikbaar. Deze strategie heeft een lock-up van {days} dagen.",
+    "continue": "Doorgaan",
+    "unitToggle": "Bedragseenheid",
+    "confirm": {
+      "stillEarning": "Uw resterende saldo blijft verdienen."
+    },
+    "review": {
+      "title": "Overzicht",
+      "back": "Terug",
+      "amountRequested": "Gevraagd bedrag",
+      "feesAvailable": "Vergoedingen beschikbaar om te innen",
+      "estFees": "Gesch. kosten",
+      "footerLocked": "≈ {amount} · Arriveert in {days, plural, one {# dag} other {# dagen}} · per lock-up van de strategie",
+      "footerRegular": "≈ {amount} · Komt in ongeveer 2 werkdagen binnen",
+      "cta": "Opname bevestigen"
+    },
+    "success": {
+      "title": "Opname gestart",
+      "body": "{amount} is onderweg naar uw saldo.",
+      "completeTitle": "Opname geslaagd",
+      "completeBody": "{amount} is naar uw saldo gestuurd.",
+      "completeBodyPair": "{amount} is naar je wallet gestuurd als {token0} en {token1}."
+    },
+    "closed": {
+      "fullBalance": "Je volledige saldo opnemen",
+      "instant": "Direct",
+      "equals": "= {amount}",
+      "date": "Datum",
+      "sentInstant": "{amount} naar je account gestuurd · direct",
+      "completeTitle": "Opname voltooid"
+    },
+    "dustAlert": "Dit bedrag laat minder dan {floor} over, dus je volledige saldo wordt opgenomen.",
+    "ownedCloseAlert": "Je volledige saldo opnemen sluit deze strategie en int opgebouwde fees.",
+    "receipt": {
+      "amountReceived": "Ontvangen bedrag",
+      "feesCollected": "Geïnde kosten",
+      "feesCollectedIncluded": "Geïnde kosten (inbegrepen)",
+      "totalReceived": "Totaal ontvangen"
+    }
+  },
+  "flow": {
+    "processing": "Verwerken…",
+    "processingBody": "Dit duurt meestal een paar seconden.",
+    "done": "Klaar",
+    "viewPosition": "Positie bekijken",
+    "error": {
+      "title": "Er is iets misgegaan",
+      "body": "Uw transactie is niet doorgegaan en er is geen geld verplaatst.",
+      "retry": "Opnieuw proberen",
+      "help": "Krijg hulp op Discord",
+      "copy": "Fout kopiëren",
+      "details": "Foutdetails",
+      "codeLabel": "Code",
+      "browserLabel": "Browser",
+      "walletLabel": "Wallet",
+      "osLabel": "Systeem",
+      "languageLabel": "Taal",
+      "walletEmbedded": "Privy · Ingebouwd",
+      "walletExternal": "Externe wallet",
+      "copied": "Gekopieerd",
+      "kinds": {
+        "slippage": "De prijs bewoog voorbij je maximale slippage voordat de transactie kon bevestigen. Verhoog je maximale slippage in de instellingen of probeer het later opnieuw.",
+        "deadlineExpired": "De transactie werd niet binnen de deadline bevestigd en is geannuleerd. Probeer het opnieuw.",
+        "insufficientFunds": "Je wallet heeft niet genoeg saldo om deze transactie en de netwerkkosten te dekken.",
+        "userRejected": "Je hebt het verzoek in je wallet geweigerd. Er zijn geen middelen verplaatst.",
+        "unauthorized": "Deze wallet mag deze bewerking niet uitvoeren."
+      }
+    },
+    "slippage": {
+      "retryNotice": "De prijs ging voorbij uw maximale slippage ({value}%). Nieuwe poging tegen de huidige prijs.",
+      "errorTitle": "De prijs bewoog te veel",
+      "errorBody": "De prijs ging opnieuw voorbij uw maximale slippage ({value}%). Verhoog het in de instellingen of probeer het later opnieuw."
+    },
+    "receipt": {
+      "strategy": "Strategie",
+      "amount": "Bedrag",
+      "date": "Datum",
+      "transaction": "Transactie",
+      "fee": "Kosten",
+      "slippage": "Slippage"
+    },
+    "review": {
+      "refreshIn": "Vernieuwt over {seconds}s",
+      "quoteStale": "De koers is mogelijk verouderd. Wordt automatisch vernieuwd.",
+      "priceImpact": "Prijsimpact",
+      "caption": "na kosten & max. {rate}% slippage",
+      "footerInstant": "≈ {amount} · Arriveert direct",
+      "showMore": "Meer tonen",
+      "showLess": "Minder tonen",
+      "maxSlippage": "Max. slippage",
+      "slippageAuto": "Auto"
+    },
+    "priceImpactGate": {
+      "title": "Hoge prijsimpact: uw geld loopt risico",
+      "body": "Door lage liquiditeit op deze route zou u ongeveer {pct} minder ontvangen dan de waarde die u inlegt. Dit verlies is onmiddellijk en kan niet ongedaan worden gemaakt.",
+      "ack": "Ik begrijp dat ik ongeveer {pct} van mijn geld kan verliezen"
+    },
+    "feesTooltip": {
+      "dex": "DEX-kosten",
+      "network": "Geschat gas (netwerkkosten)",
+      "protocol": "Protocolkosten",
+      "performance": "Prestatiekosten",
+      "bridge": "Bridge-kosten",
+      "comingSoon": "Binnenkort beschikbaar",
+      "total": "Totaal"
+    }
+  },
+  "share": {
+    "title": "Prestaties delen",
+    "close": "Sluiten",
+    "periodGroup": "Periode van verdiensten",
+    "periods": {
+      "24h": "24U",
+      "7d": "7D",
+      "30d": "30D"
+    },
+    "card": {
+      "kicker": "Yield Receipt",
+      "earnedIn": "aan fees en yield",
+      "strategyLabel": "Strategie",
+      "periodLabel": "Periode",
+      "period24h": "Afgelopen 24 uur",
+      "period7d": "Afgelopen 7 dagen",
+      "period30d": "Afgelopen 30 dagen",
+      "invite": "Investeer met mij"
+    },
+    "save": "Opslaan",
+    "copyCta": "Verwijzingslink kopiëren",
+    "copied": "Link gekopieerd",
+    "exportError": "Kon de deelafbeelding niet maken. Probeer het opnieuw.",
+    "message": "{amount} aan fees en yield met {strategy} op Pool Party. Investeer met mij:"
+  },
+  "provisioning": {
+    "poweredByPaybis": "Mogelijk gemaakt door Paybis",
+    "gas": {
+      "title": "Onvoldoende netwerkkosten",
+      "subtitle": "Je hebt een klein beetje netwerkkosten nodig om deze transactie te bevestigen. Laad hieronder op.",
+      "selectorLabel": "Bedrag aan netwerkkosten",
+      "custom": "Aangepast",
+      "customPlaceholder": "Bedrag",
+      "customAria": "Aangepast bedrag aan netwerkkosten",
+      "conversionNote": "Betaald met je USDC en automatisch omgezet in netwerkkosten.",
+      "cta": "{amount} netwerkkosten toevoegen",
+      "dismiss": "Niet nu",
+      "signStep": "Netwerkkosten opladen",
+      "error": {
+        "belowMin": "Minimum {amount}",
+        "overMax": "Maximum {amount}"
+      },
+      "success": {
+        "title": "Kosten opgeladen",
+        "body": "Je wallet is opgeladen en klaar."
+      }
+    },
+    "plan": {
+      "title": "Bijna klaar",
+      "titleGasOnly": "Eén snelle stap",
+      "subtitle": "We hebben precies uitgerekend wat nodig is. We regelen elke stap hier en voeren dan uw transactie uit. Geen omweg via Storten.",
+      "cta": "Bevestigen & doorgaan",
+      "cancel": "Annuleren"
+    },
+    "steps": {
+      "buyUsdc": "USDC kopen",
+      "bridge": "Overzetten naar {network}",
+      "swapGas": "Netwerkkosten opladen",
+      "swapToken": "Omzetten naar {token}",
+      "op": "Uw transactie"
+    },
+    "captions": {
+      "buyUsdc": "Kaart of lokale overboeking",
+      "bridge": "Geld naar het juiste netwerk verplaatsen",
+      "swapGas": "U kiest het bedrag, betaald met USDC",
+      "op": "Uw oorspronkelijke actie"
+    },
+    "exec": {
+      "title": "Uw geld wordt klaargezet",
+      "subtitle": "We kopen, routeren en vullen automatisch aan. Uw transactie wordt meteen daarna uitgevoerd.",
+      "done": "Klaar",
+      "pending": "In behandeling"
+    },
+    "opLabel": {
+      "invest": "Investeren in {strategy}",
+      "withdraw": "Opnemen uit {strategy}",
+      "collect": "Innen uit {strategy}",
+      "compound": "Herinvesteren in {strategy}",
+      "moveRange": "Bereik verplaatsen in {strategy}",
+      "close": "{strategy} sluiten"
+    }
+  }
+}

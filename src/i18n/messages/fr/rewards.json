@@ -1,0 +1,179 @@
+{
+  "rubberRush": {
+    "title": "Rubber Rush",
+    "subtitle": "Gagnez des Quacks, montez en paliers, débloquez des boosts",
+    "back": "Retour",
+    "yourQuacks": "Vos Quacks",
+    "quacksUnit": "Quacks",
+    "topPercent": "Top {percent} %",
+    "managerIncentiveProgramDashboard": "Manager Incentive Program",
+    "sayQuack": "Dire Quack",
+    "playDuckShoot": "Jouer à Duck Shoot",
+    "claimRoles": "Réclamer des rôles",
+    "quacksEarnedToday": "+{count} Quacks gagnés aujourd'hui",
+    "tierProgression": "Progression des paliers",
+    "you": "Vous",
+    "tiers": {
+      "paddler": "Paddler",
+      "swimmer": "Swimmer",
+      "diver": "Diver",
+      "waveRider": "Wave Rider",
+      "partyCaptain": "Party Captain"
+    },
+    "stats": {
+      "totalReferrals": "Total des parrainages",
+      "dailyBoost": "Boost quotidien",
+      "quacksToday": "Quacks aujourd'hui",
+      "streak": "Série"
+    },
+    "streakProgress": "{days} / {target} jours",
+    "dailyStreakBoost": "Boost de série quotidienne",
+    "dailyStreakBody": "Faites Quack chaque jour pour augmenter votre boost. Chaque jour consécutif ajoute un multiplicateur. Boost maximal à partir de 7 jours.",
+    "dayShort": "J{n}",
+    "duckShootTitle": "Comment fonctionne Duck Shoot",
+    "duckShootBody": "Chaque transaction du protocole (dépôt, retrait, collecte) vous donne un essai à Duck Shoot. Chaque tir multiplie les Quacks que vous avez gagnés aujourd'hui en une récompense bonus.",
+    "referral": {
+      "title": "Votre parrainage",
+      "code": "Code de parrainage",
+      "link": "Lien de parrainage",
+      "invitedBy": "Invité par",
+      "none": "-",
+      "copyCode": "Copier le code de parrainage",
+      "copyLink": "Copier le lien de parrainage",
+      "copied": "Copié",
+      "emptyBody": "Créez votre code d'invitation pour commencer à gagner des récompenses.",
+      "emptyCta": "Créer votre code"
+    },
+    "referralRewards": {
+      "title": "Récompenses de parrainage",
+      "progressLabel": "Progression",
+      "nextTier": "Palier suivant",
+      "body1": "Partagez votre code de parrainage et offrez à vos filleuls un <hl>boost de 10 % en Quacks</hl>.",
+      "body2": "Lorsqu'un utilisateur parrainé atteint au moins <hl>50 USDC en dépôts cumulés</hl>, vous débloquez un <hl>boost à vie de 5 %</hl> sur vos Quacks. (Ce boost est unique et non cumulable.)",
+      "body3": "Vous gagnez également <hl>10 % des Quacks générés par vos filleuls</hl>.",
+      "body4": "Invitez <hl>5 amis supplémentaires</hl> pour obtenir un multiplicateur sur vos Quacks quotidiens !",
+      "progress": "{count} / {target} amis",
+      "multiplier": "Multiplicateur {value}x"
+    },
+    "signing": "Signature…",
+    "quackedToday": "Quack effectué aujourd'hui ! 🦆",
+    "duckShoot": {
+      "title": "Duck Shoot",
+      "triesThisWeek": "{count} essais cette semaine",
+      "tapHelper": "Touchez un canard pour tirer. Chaque tir multiplie les Quacks d'aujourd'hui.",
+      "shoot": "Tirer",
+      "lockedTitle": "Effectuez des transactions dans le protocole pour jouer. Vous avez 0 essai cette semaine.",
+      "makeDeposit": "Effectuer un dépôt",
+      "won": "+{percent} %",
+      "boostApplied": "Boost appliqué: +{count} Quacks aujourd'hui !",
+      "shootAgain": "Tirer à nouveau · {count} restants",
+      "close": "Terminé",
+      "start": "Commencer",
+      "instruction": "Cliquez n'importe où pour tirer !",
+      "playAgain": "Rejouer",
+      "jackpot": "Jackpot !",
+      "boostResult": "Vous avez obtenu un bonus de {percent}% !",
+      "oddsItem": "{percent}% ({weight}% de chance)",
+      "noTries": "Effectuez des transactions dans le protocole pour jouer. Il vous reste {count, plural, one {# essai} other {# essais}} cette semaine."
+    }
+  },
+  "managerIncentiveProgram": {
+    "title": "Manager Incentive Program",
+    "subtitle": "Créez ou promouvez des stratégies, augmentez la TVL, gagnez des frais bonus",
+    "back": "Retour",
+    "label": "Manager Incentive Program · {name}",
+    "revenueThisMonth": "Revenus ce mois-ci",
+    "since": "Membre du programme depuis {date}",
+    "stats": {
+      "strategiesCreated": "Stratégies créées",
+      "strategiesCreatedSub": "Stratégies que vous avez créées",
+      "managedTvl": "TVL gérée",
+      "managedTvlSub": "TVL créée + apportée",
+      "referrals": "Parrainages",
+      "referralsSub": "Ont utilisé votre code",
+      "bonusFees": "Frais bonus",
+      "bonusFeesSub": "En plus des frais normaux"
+    },
+    "tokens": {
+      "title": "{count} jetons à distribuer",
+      "body": "{count} tokens sont attribués aux managers du programme en fonction de leur performance. Votre niveau, la TVL gérée (créée ou apportée) et les frais que génèrent vos stratégies déterminent votre part."
+    },
+    "tierCard": {
+      "title": "Vous avez atteint le niveau {tier}",
+      "range": "{from} – {to}",
+      "body": "Atteignez {target} de TVL gérée pour commencer à gagner des frais supplémentaires en plus de ce que vous gagnez déjà normalement.",
+      "managed": "{amount} gérés",
+      "nextTier": "{delta} → {tier}"
+    },
+    "tierTable": {
+      "tier": "Palier",
+      "minTvl": "TVL min.",
+      "bonusFees": "Frais bonus",
+      "rowName": "Palier {n}"
+    },
+    "tierFootnote": "Votre palier est recalculé à chaque changement (une collecte, une nouvelle position, un mouvement de TVL). Les chiffres du tableau de bord reflètent le palier au moment de chaque événement de frais.",
+    "revenue": {
+      "title": "Revenus",
+      "paidEndOfMonth": "Payés en fin de mois",
+      "estimatedAccrued": "Estimation accumulée ce mois-ci",
+      "feesThisMonth": "Frais générés ce mois-ci",
+      "totalFees": "Total des frais générés",
+      "estimatedAccruedInfo": "Frais bonus accumulés ce mois-ci à votre palier actuel. Versés en fin de mois.",
+      "feesThisMonthInfo": "Frais générés par vos stratégies ce mois-ci, avant votre part bonus.",
+      "totalFeesInfo": "Tous les frais générés par vos stratégies depuis votre adhésion au programme."
+    },
+    "goals": {
+      "title": "Objectifs du premier mois",
+      "onboarding": "Objectifs d'intégration",
+      "referrals": "{target} parrainages",
+      "posts": "Au moins {count} publications",
+      "communityPool": "Stratégie créée avec une TVL communautaire",
+      "progress": "{current}/{target}",
+      "trackedExternally": "suivi en externe"
+    }
+  },
+  "referral": {
+    "invitedByLabel": "Invité par {code}",
+    "title": "Parrainez et gagnez",
+    "subtitle": "Profil · Parrainages",
+    "back": "Retour",
+    "heroTitle": "Invitez des amis, gagnez des quacks",
+    "heroBody": "Offrez à vos amis un boost de 10 % en quacks et gagnez 10 % des quacks qu'ils génèrent.",
+    "code": "Votre code de parrainage",
+    "link": "Lien d'invitation",
+    "copyCode": "Copier le code de parrainage",
+    "copyLink": "Copier le lien d'invitation",
+    "copied": "Copié",
+    "share": "Partager le lien d'invitation",
+    "shared": "Lien copié",
+    "stats": {
+      "friendsJoined": "Amis inscrits"
+    },
+    "howItWorks": "Comment ça marche",
+    "steps": {
+      "shareTitle": "Partagez votre lien",
+      "shareBody": "Envoyez votre lien d'invitation à vos amis.",
+      "investTitle": "Ils rejoignent et investissent",
+      "investBody": "Votre ami s'inscrit et commence à investir.",
+      "earnTitle": "Vous gagnez tous les deux des quacks",
+      "earnBody": "Votre ami obtient un boost de 10 % et vous gagnez 10 % de ses quacks."
+    },
+    "invites": "Vos invitations",
+    "investedAmount": "A investi {amount} $",
+    "signedUp": "Inscrit",
+    "status": {
+      "earned": "Récompensé",
+      "invested": "Investit",
+      "pending": "En attente"
+    },
+    "create": {
+      "label": "Choisissez votre code",
+      "placeholder": "VOTRECODE",
+      "warning": "Choisissez bien. Le code ne pourra plus être modifié.",
+      "cta": "Créer le code",
+      "invalid": "Utilisez entre 6 et 10 lettres ou chiffres.",
+      "unavailable": "Ce code n'est pas disponible. Essayez-en un autre."
+    },
+    "noInvites": "Aucun ami invité pour l'instant."
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "hideValues": "Waarden verbergen",
+  "portfolioValue": "Totale portefeuille",
+  "allTimeEarned": "{amount} aan niet-geclaimde vergoedingen",
+  "allocationByRisk": "Verdeling op risico",
+  "invested": "Belegd",
+  "currentValue": "Huidige waarde",
+  "totalYield": "Totaalrendement",
+  "avgApy": "Gem. APR",
+  "loadMore": "Meer laden",
+  "loadingMore": "Laden",
+  "yourPositions": "Uw posities",
+  "activeCount": "{count} actief",
+  "rate": "Koers",
+  "status": {
+    "active": "Actief",
+    "paused": "Gepauzeerd",
+    "closed": "Gesloten"
+  },
+  "columns": {
+    "strategy": "Strategie",
+    "risk": "Risico",
+    "invested": "Belegd",
+    "value": "Huidige waarde",
+    "yield": "Rendement",
+    "rate": "Koers"
+  },
+  "putToWork": {
+    "title": "Zet uw geld aan het werk",
+    "body": "Voeg geld toe of ontdek strategieën om uw portefeuille te laten groeien.",
+    "deposit": "Geld storten",
+    "explore": "Strategieën ontdekken"
+  },
+  "empty": {
+    "title": "Laat uw geld groeien",
+    "body": "Doe uw eerste storting en zet het daarna aan het werk in een strategie.",
+    "deposit": "Geld storten",
+    "explore": "Strategieën ontdekken"
+  },
+  "closedStrategies": {
+    "title": "Gesloten strategieën",
+    "empty": "Nog geen gesloten strategieën"
+  }
+}

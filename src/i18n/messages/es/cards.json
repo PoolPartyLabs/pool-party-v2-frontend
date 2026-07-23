@@ -1,0 +1,76 @@
+{
+  "title": "Tarjetas",
+  "comingSoon": "Gasta tu saldo con una tarjeta Pool Party. Muy pronto.",
+  "tabs": {
+    "explore": "Explorar",
+    "myCards": "Mis tarjetas"
+  },
+  "explore": {
+    "title": "Tarjetas disponibles",
+    "subtitle": "Gasta tu cripto donde quieras",
+    "partnerCount": "{count, plural, =1 {# socio} other {# socios}}",
+    "cta": {
+      "request": "Solicitar tarjeta",
+      "activating": "Activando…",
+      "manage": "Gestionar tarjeta"
+    },
+    "badge": {
+      "popular": "Popular",
+      "requested": "Solicitada",
+      "active": "Activa"
+    },
+    "perks": {
+      "cashbackEth3": "Hasta 3% de cashback en ETH",
+      "noAnnualFee": "Sin cuota anual",
+      "spendStablesEth": "Gasta USDC, USDT o ETH",
+      "spendFromWallet": "Gasta desde tu cartera",
+      "eurUsdAccounts": "Cuentas en EUR y USD",
+      "selfCustodial": "On-chain, autocustodia",
+      "spendMetamask": "Gasta con el saldo de MetaMask",
+      "cryptoRewards": "Recompensas en cripto",
+      "globalMastercard": "Mastercard global",
+      "cashback1inch": "Cashback en 1INCH",
+      "noFxFees": "Sin comisiones de cambio",
+      "worksWorldwide": "Funciona en todo el mundo",
+      "spendEarnRewards": "Gasta cripto y gana recompensas",
+      "visaDebitGlobal": "Visa débito, global",
+      "cashbackCro5": "Hasta 5% de cashback en CRO",
+      "loungeAccess": "Acceso a salas VIP de aeropuerto"
+    }
+  },
+  "myCards": {
+    "title": "Tus tarjetas",
+    "subtitle": "Gestiona tus tarjetas",
+    "addCard": "Añadir tarjeta",
+    "balance": "Saldo",
+    "debit": "Débito",
+    "viewDetails": "Ver detalles",
+    "actions": {
+      "topUp": "Recargar",
+      "lock": "Bloquear tarjeta",
+      "freeze": "Congelar",
+      "settings": "Ajustes"
+    },
+    "transactions": {
+      "title": "Transacciones",
+      "seeAll": "Ver todo",
+      "today": "Hoy",
+      "yesterday": "Ayer"
+    },
+    "empty": {
+      "title": "Aún no tienes tarjetas",
+      "body": "Solicita una tarjeta de un socio para empezar a gastar tu cripto.",
+      "cta": "Explorar tarjetas"
+    }
+  },
+  "topUp": {
+    "title": "Recargar",
+    "subtitle": "Añade fondos al saldo de tu tarjeta",
+    "source": {
+      "wallet": "Cartera",
+      "portfolio": "Portafolio"
+    },
+    "cta": "Recargar",
+    "success": "Se recargó el saldo de tu tarjeta."
+  }
+}

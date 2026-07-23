@@ -1,0 +1,35 @@
+{
+  "title": "Wallet",
+  "openWallet": "Open wallet",
+  "refresh": "Refresh balance",
+  "connect": "Connect wallet",
+  "close": "Close",
+  "kind": {
+    "embedded": "Embedded",
+    "external": "External"
+  },
+  "copyAddress": "Copy address",
+  "copied": "Copied",
+  "totalBalance": "TOTAL BALANCE",
+  "dayChange": "{usd} · {pct} today",
+  "addFunds": "Add funds to get started",
+  "actions": {
+    "buy": "Buy",
+    "swap": "Swap",
+    "send": "Send",
+    "receive": "Receive"
+  },
+  "networks": {
+    "all": "All"
+  },
+  "noAssetsOnNetwork": "No assets on this network",
+  "emptyTitle": "No assets yet",
+  "emptyBody": "Buy or receive crypto and your balances will show up here, across all networks.",
+  "manage": "Manage wallet",
+  "disconnect": "Disconnect",
+  "comingSoon": {
+    "title": "Coming soon",
+    "send": "Sending tokens is on the way. For now you can Buy or Receive crypto.",
+    "back": "Got it"
+  }
+}

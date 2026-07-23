@@ -1,0 +1,125 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/*
+ * Pool Party design tokens, Tailwind 4 CSS-first (PP-CORE-STY-001 / PP-CORE-STY-002).
+ * Dark-only for now. Mirrors src/design-system/tokens/. Generated from the Figma
+ * "Foundations · Tokens · Dark Mode" frame; do not edit by hand, re-sync from Figma.
+ * Defining --color-* here makes utilities (bg-primary, text-foreground, border-border,
+ * bg-risk-3, text-success, ...) resolve, and exposes the values as CSS custom properties.
+ */
+@theme {
+  /* Semantic (shadcn-compatible), dark theme */
+  --color-background: #171717;
+  --color-foreground: #efefef;
+  --color-card: #1f1f1f;
+  --color-card-foreground: #efefef;
+  --color-popover: #1f1f1f;
+  --color-popover-foreground: #efefef;
+  --color-primary: #f7ce02;
+  --color-primary-foreground: #171717;
+  --color-secondary: #2a2a2a;
+  --color-secondary-foreground: #efefef;
+  --color-muted: #1f1f1f;
+  --color-muted-foreground: #a3a3a3;
+  --color-accent: #2a2a2a;
+  --color-accent-foreground: #efefef;
+  --color-destructive: #fc3c25;
+  --color-destructive-foreground: #efefef;
+  --color-border: #333333;
+  --color-input: #404040;
+  --color-ring: #3b82f6;
+
+  /* Brand palette */
+  --color-brand-foam: #efefef;
+  --color-brand-gold: #f7ce02;
+  --color-brand-grape: #c5139f;
+  --color-brand-grape-foreground: #ffffff;
+  --color-brand-lagoon: #171717;
+  --color-brand-mango: #fc8b2d;
+  --color-brand-tangerine: #e57e0b;
+  --color-brand-flame: #fc3c25;
+  --color-brand-pink: #fc0065;
+
+  /* Neutral surfaces */
+  --color-surface: #1f1f1f;
+  --color-surface-raised: #2a2a2a;
+
+  /* Status */
+  --color-success: #22c55e;
+  --color-warning: #f7ce02;
+  --color-info: #3b82f6;
+  /* Error-detail box tints (PP-CORE-MOD-002 v2, POO-279 R4) */
+  --color-error-surface: #231414;
+  --color-error-border: #3a2020;
+
+  /* Risk levels 1 (very conservative) to 5 (very aggressive) */
+  --color-risk-1: #22c55e;
+  --color-risk-2: #84cc16;
+  --color-risk-3: #f7ce02;
+  --color-risk-4: #fc8b2d;
+  --color-risk-5: #fc3c25;
+
+  /* Corner radius */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+}
+
+/*
+ * Fonts use `inline` so the utilities reference the runtime next/font variables set in the layout.
+ * Poppins is the brand face (loaded in the locale layout); Geist Mono backs monospace contexts.
+ */
+@theme inline {
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/*
+ * Duck Shoot mini-game (PP-REW-MOD-001): the prize track scrolls the doubled duck
+ * row left by half its width for a seamless loop. Ported from the reference game.
+ */
+@keyframes duck-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-duck-scroll {
+  animation: duck-scroll 10s linear infinite;
+}
+
+/*
+ * Dark, thin scrollbar for scrollable fields on the dark-only theme (e.g. the manager-profile
+ * description textarea, whose default UA scrollbar renders white). Opt-in via the `scrollbar-dark`
+ * class so there is no global blast radius. Covers Firefox (scrollbar-*) and WebKit.
+ */
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+.scrollbar-dark::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 9999px;
+}
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-muted-foreground);
+}

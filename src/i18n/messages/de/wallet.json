@@ -1,0 +1,35 @@
+{
+  "title": "Wallet",
+  "openWallet": "Wallet öffnen",
+  "refresh": "Guthaben aktualisieren",
+  "connect": "Wallet verbinden",
+  "close": "Schließen",
+  "kind": {
+    "embedded": "Integriert",
+    "external": "Extern"
+  },
+  "copyAddress": "Adresse kopieren",
+  "copied": "Kopiert",
+  "totalBalance": "GESAMTGUTHABEN",
+  "dayChange": "{usd} · {pct} heute",
+  "addFunds": "Füge Guthaben hinzu, um zu starten",
+  "actions": {
+    "buy": "Kaufen",
+    "swap": "Tauschen",
+    "send": "Senden",
+    "receive": "Empfangen"
+  },
+  "networks": {
+    "all": "Alle"
+  },
+  "noAssetsOnNetwork": "Keine Vermögenswerte in diesem Netzwerk",
+  "emptyTitle": "Noch keine Vermögenswerte",
+  "emptyBody": "Kaufe oder empfange Krypto und deine Guthaben erscheinen hier, über alle Netzwerke hinweg.",
+  "manage": "Wallet verwalten",
+  "disconnect": "Trennen",
+  "comingSoon": {
+    "title": "Demnächst",
+    "send": "Das Senden von Token kommt bald. Vorerst kannst du Krypto kaufen oder empfangen.",
+    "back": "Verstanden"
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "title": "Deposit",
+  "addLabel": "You're adding",
+  "receiveEstimate": "≈ {amount} USDC",
+  "securedByPaybis": "Secured by Paybis",
+  "continue": "Continue",
+  "minHint": "Minimum deposit is {min}",
+  "maxHint": "Maximum deposit is {max}",
+  "cryptoPill": "Deposit crypto",
+  "investContext": "Investing in {name} · add {amount}",
+  "investContextGeneric": "Add {amount} to fund this investment",
+  "cryptoAside": {
+    "title": "Already have crypto?",
+    "body": "Transfer USDC directly with no fees."
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "step1": "Enter an amount and choose how to pay.",
+    "step2": "Pay your way: Apple Pay, Google Pay, cards, bank transfers, or instant local payments in 80+ countries.",
+    "step3": "Your USDC lands in your account, ready to invest."
+  },
+  "method": {
+    "title": "Payment method",
+    "continue": "Continue",
+    "pix": {
+      "name": "Pix",
+      "meta": "Instant"
+    },
+    "card": {
+      "name": "Card",
+      "meta": "Visa, Mastercard"
+    },
+    "applePay": {
+      "name": "Apple Pay",
+      "meta": "Instant"
+    },
+    "bank": {
+      "name": "Bank transfer",
+      "meta": "1–2 business days"
+    }
+  },
+  "review": {
+    "title": "Review",
+    "youReceive": "You'll receive",
+    "youPay": "You pay",
+    "fee": "Paybis fee",
+    "feeNote": "{method} · {pct}",
+    "belowNeed": "You need at least {amount} to fund this investment.",
+    "exchangeRate": "Exchange rate",
+    "rateValue": "1 USDC ≈ $1.00",
+    "payingWith": "Paying with {method}",
+    "change": "Change",
+    "confirm": "Confirm & pay with {method}",
+    "poweredBy": "Powered by Paybis"
+  },
+  "success": {
+    "title": "Deposit confirmed",
+    "subtitle": "Your money is ready to invest",
+    "amount": "Amount",
+    "received": "Received",
+    "method": "Method",
+    "date": "Date",
+    "investNow": "Invest now",
+    "backHome": "Back to home"
+  },
+  "crypto": {
+    "title": "Deposit crypto",
+    "scanToDeposit": "Scan to deposit",
+    "addressLabel": "Your USDC address",
+    "copy": "Copy",
+    "copied": "Copied",
+    "share": "Share address",
+    "asset": "USD Coin · USDC",
+    "sent": "I've sent the funds",
+    "waitingTitle": "Waiting for your deposit",
+    "waitingBody": "We'll detect it automatically. No need to do anything.",
+    "viewAddress": "View address & QR",
+    "receivedTitle": "Deposit received",
+    "added": "{amount} USDC added",
+    "source": "Source",
+    "sourceValue": "External wallet",
+    "received": "Received",
+    "date": "Date",
+    "noWallet": "Connect your wallet to see your deposit address.",
+    "networkTitle": "Choose a network",
+    "networkSubtitle": "Send USDC only on the network you pick here. Sending on any other network can permanently lose your funds.",
+    "networkContinue": "Continue",
+    "changeNetwork": "Change network",
+    "networkWarning": "Send USDC on {network} only. Sending on another network may result in permanent loss."
+  }
+}

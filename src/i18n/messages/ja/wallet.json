@@ -1,0 +1,35 @@
+{
+  "title": "ウォレット",
+  "openWallet": "ウォレットを開く",
+  "refresh": "残高を更新",
+  "connect": "ウォレットを接続",
+  "close": "閉じる",
+  "kind": {
+    "embedded": "内蔵",
+    "external": "外部"
+  },
+  "copyAddress": "アドレスをコピー",
+  "copied": "コピーしました",
+  "totalBalance": "合計残高",
+  "dayChange": "{usd} · {pct} 今日",
+  "addFunds": "開始するには資金を追加してください",
+  "actions": {
+    "buy": "購入",
+    "swap": "スワップ",
+    "send": "送信",
+    "receive": "受け取る"
+  },
+  "networks": {
+    "all": "すべて"
+  },
+  "noAssetsOnNetwork": "このネットワークに資産はありません",
+  "emptyTitle": "まだ資産がありません",
+  "emptyBody": "暗号資産を購入または受け取ると、すべてのネットワークの残高がここに表示されます。",
+  "manage": "ウォレットを管理",
+  "disconnect": "切断",
+  "comingSoon": {
+    "title": "近日公開",
+    "send": "トークンの送信は近日対応予定です。今は暗号資産の購入や受け取りができます。",
+    "back": "了解"
+  }
+}

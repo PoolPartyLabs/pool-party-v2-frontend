@@ -1,0 +1,191 @@
+{
+  "title": "Profil",
+  "settings": "Einstellungen",
+  "backToProfile": "Zurück zum Profil",
+  "save": "Speichern",
+  "saved": "Gespeichert",
+  "cancel": "Abbrechen",
+  "connect": "Verbinden",
+  "connected": "Verbunden",
+  "referral": {
+    "title": "Einladen & verdienen",
+    "body": "Lade Freunde ein und verdiene gemeinsam Quacks.",
+    "stat": "{count} Freunde beigetreten",
+    "code": "Ihr Code",
+    "share": "Einladungslink teilen",
+    "createCta": "Erstelle deinen Empfehlungscode"
+  },
+  "groups": {
+    "rewards": "Prämien",
+    "account": "Konto",
+    "preferences": "Einstellungen",
+    "support": "Support",
+    "manager": "Manager"
+  },
+  "rows": {
+    "rubberRush": "Rubber Rush",
+    "rubberRushSub": "Quacks verdienen",
+    "managerIncentiveProgram": "Manager Incentive Program",
+    "managerProfile": "Manager-Profil",
+    "personalInfo": "Persönliche Informationen",
+    "linkedSocial": "Verknüpfte Social-Media-Konten",
+    "security": "Sicherheit & Anmeldung",
+    "alerts": "Hinweise & Benachrichtigungen",
+    "appSettings": "App-Einstellungen",
+    "help": "Hilfe-Center",
+    "logout": "Abmelden",
+    "managerProfileSub": "Ihre öffentliche Manager-Seite"
+  },
+  "personal": {
+    "title": "Persönliche Informationen",
+    "changePhoto": "Foto ändern",
+    "sectionPersonal": "Persönlich",
+    "sectionContact": "Kontakt",
+    "fullName": "Name",
+    "nameHelper": "Nicht öffentlich sichtbar. Nur für die Kommunikation. Optional.",
+    "nameInvalid": "Der Name muss mindestens {min} Zeichen lang sein.",
+    "displayName": "Handle",
+    "displayNameHelper": "Dein öffentliches Handle, sichtbar in deinem Profil. Optional.",
+    "displayNameInvalid": "Das Handle muss mindestens {min} Zeichen lang sein.",
+    "country": "Land",
+    "countrySearch": "Land suchen",
+    "countryNoResults": "Keine Treffer",
+    "email": "E-Mail",
+    "emailHelper": "Optional. Wird für Kontobenachrichtigungen verwendet.",
+    "emailInvalid": "Gib eine gültige E-Mail-Adresse ein.",
+    "avatarUploadFailed": "Foto konnte nicht hochgeladen werden. Bitte erneut versuchen.",
+    "saveFailed": "Änderungen konnten nicht gespeichert werden. Bitte erneut versuchen.",
+    "saving": "Wird gespeichert…",
+    "phone": "Telefon",
+    "phoneCountry": "Ländervorwahl",
+    "phoneInvalid": "Gib eine gültige Telefonnummer ein.",
+    "verified": "Verifiziert",
+    "optional": "(optional)"
+  },
+  "social": {
+    "title": "Verknüpfte Social-Media-Konten",
+    "intro": "Verbinden Sie Ihre Konten, um Punkte, Rollen, Multiplikatoren und mehr zu verdienen und Benachrichtigungen zu erhalten.",
+    "telegram": {
+      "name": "Telegram",
+      "notifOff": "Benachrichtigungen aus",
+      "body": "Verbinden Sie Telegram, um Benachrichtigungen zu Einzahlungen, Renditen und Preisen zu erhalten.",
+      "connect": "Telegram verbinden"
+    },
+    "others": "Andere Konten",
+    "x": "X",
+    "google": "Google",
+    "discord": "Discord"
+  },
+  "security": {
+    "title": "Sicherheit & Anmeldung",
+    "signIn": "Anmeldung",
+    "changePassword": "Passwort ändern",
+    "faceId": "Face ID",
+    "appLock": "App-Sperre",
+    "twoFactor": "Zwei-Faktor-Authentifizierung",
+    "wallet": "Wallet",
+    "exportKey": "Privaten Schlüssel exportieren",
+    "exportWarning": "Geben Sie Ihren privaten Schlüssel niemals weiter. Wer ihn besitzt, kontrolliert Ihr Guthaben.",
+    "devices": "Geräte & Aktivität",
+    "trustedDevices": "Vertrauenswürdige Geräte",
+    "trustedDevicesValue": "{count} Geräte",
+    "activeSessions": "Aktive Sitzungen",
+    "loginAlerts": "Anmeldehinweise",
+    "comingSoon": "Bald verfügbar",
+    "deleteAccount": "Konto löschen",
+    "deleteConfirm": {
+      "title": "Konto löschen?",
+      "body": "Dadurch wird Ihr Konto dauerhaft gelöscht und kann nicht rückgängig gemacht werden. Zahlen Sie zuerst Ihr Guthaben aus.",
+      "confirm": "Konto löschen"
+    },
+    "deleteBlocked": {
+      "title": "Zahlen Sie zuerst Ihr Guthaben aus",
+      "body": "Ihr Konto enthält noch Guthaben. Zahlen Sie alles aus, danach können Sie Ihr Konto löschen. Dies kann nicht rückgängig gemacht werden.",
+      "confirm": "Portfolio ansehen"
+    },
+    "exportConfirm": {
+      "title": "Privaten Schlüssel anzeigen?",
+      "body": "Wer Ihren privaten Schlüssel besitzt, kann Ihr Guthaben entnehmen. Zeigen Sie ihn nur an einem privaten Ort an und geben Sie ihn niemals weiter.",
+      "hold": "Zum Anzeigen gedrückt halten"
+    },
+    "exportReveal": {
+      "title": "Ihr privater Schlüssel",
+      "warning": "Geben Sie diesen niemals weiter. Wer ihn besitzt, kontrolliert Ihr Guthaben.",
+      "copy": "Schlüssel kopieren",
+      "copied": "In die Zwischenablage kopiert",
+      "done": "Fertig"
+    },
+    "exportError": "Ihr privater Schlüssel konnte nicht exportiert werden. Bitte versuchen Sie es erneut."
+  },
+  "alerts": {
+    "title": "Hinweise & Benachrichtigungen",
+    "delivery": "Zustellung",
+    "push": "Push-Benachrichtigungen",
+    "email": "E-Mail",
+    "telegram": "Telegram",
+    "investing": "Investieren",
+    "yield": "Rendite verdient",
+    "priceAlerts": "Preishinweise",
+    "strategyUpdates": "Strategie-Updates",
+    "money": "Geld",
+    "deposits": "Einzahlungen",
+    "withdrawalReady": "Auszahlung bereit",
+    "fromPoolParty": "Von Pool Party",
+    "rubberRush": "Rubber Rush",
+    "tips": "Tipps & Anleitungen",
+    "productNews": "Produktneuigkeiten"
+  },
+  "appSettings": {
+    "title": "App-Einstellungen",
+    "general": "Allgemein",
+    "language": "Sprache",
+    "currency": "Währungsanzeige",
+    "currencyValue": "USD ($)",
+    "appearance": "Erscheinungsbild",
+    "appearanceValue": "Dunkel",
+    "privacy": "Privatsphäre",
+    "shareAnalytics": "Analysedaten teilen",
+    "about": "Über",
+    "version": "App-Version",
+    "versionValue": "2.4.0",
+    "terms": "Nutzungsbedingungen",
+    "privacyPolicy": "Datenschutzerklärung"
+  },
+  "help": {
+    "title": "Hilfe-Center",
+    "searchPlaceholder": "Hilfeartikel durchsuchen",
+    "noResults": "Keine Hilfeartikel entsprechen Ihrer Suche.",
+    "discord": {
+      "title": "Treten Sie unserem Discord bei",
+      "fastest": "Am schnellsten",
+      "body": "Erhalten Sie Antworten vom Team und der Community.",
+      "open": "Discord öffnen"
+    },
+    "docs": {
+      "title": "Dokumentation",
+      "body": "Anleitungen und How-tos"
+    },
+    "contact": {
+      "title": "Support kontaktieren",
+      "body": "support@pool-party.xyz"
+    },
+    "faqTitle": "Häufige Fragen",
+    "faq": {
+      "q1": "Wie funktionieren Einzahlungen?",
+      "a1": "Fügen Sie Geld per Pix, Karte oder Banküberweisung hinzu, und es wird in USDC umgewandelt, oder übertragen Sie Kryptowährung direkt. Das Guthaben ist sofort zum Investieren bereit.",
+      "q2": "Wann kann ich auszahlen?",
+      "a2": "Jederzeit. Reguläre Auszahlungen treffen in etwa 2 Werktagen ohne Gebühr ein; Sofortauszahlungen treffen sofort gegen eine Gebühr von 1 % ein.",
+      "q3": "Fallen Gebühren an?",
+      "a3": "Jede Strategie weist ihre Verwaltungs- und Performance-Gebühren aus, die vor der Bestätigung erneut angezeigt werden. Einzahlungsgebühren erscheinen bei der Überprüfung."
+    }
+  },
+  "logout": {
+    "title": "Abmelden?",
+    "body": "Sie müssen sich erneut anmelden, um auf Ihr Konto zuzugreifen.",
+    "confirm": "Abmelden"
+  },
+  "identity": {
+    "quacks": "{count, number} Quacks",
+    "editProfile": "Profil bearbeiten"
+  }
+}

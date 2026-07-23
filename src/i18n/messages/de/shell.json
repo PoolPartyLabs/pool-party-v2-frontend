@@ -1,0 +1,78 @@
+{
+  "footer": {
+    "links": {
+      "terms": "Nutzungsbedingungen",
+      "privacy": "Datenschutzerklärung",
+      "risk": "Risikohinweis",
+      "help": "Hilfe-Center"
+    },
+    "copyright": "© 2026 Pool Party. Alle Rechte vorbehalten. Investitionen bergen Risiken, einschließlich des möglichen Verlusts des eingesetzten Kapitals.",
+    "developedBy": "Entwickelt von Pool Party Labs"
+  },
+  "rewards": {
+    "ariaLabel": "{count} Quacks, Rubber Rush-Prämien öffnen",
+    "tooltip": "Du erhältst <quack>1 Quack</quack> pro Tag für jeden auf Pool Party <deposit>eingezahlten 1 $</deposit>. Steigere deine Quacks, indem du Freunde mit deinem Empfehlungslink einlädst."
+  },
+  "dev": {
+    "button": "Dev-Modus",
+    "temp": "TEMP",
+    "title": "Dev-Modus",
+    "subtitle": "Implementierungstools, vor dem Start entfernt.",
+    "managerMode": "Manager-Modus",
+    "managerModeSub": "Den Manager-Bereich in der Seitenleiste anzeigen",
+    "testModalStates": "Modal-Zustände testen",
+    "testModalStatesSub": "Das gemeinsame Modal in diesem Zustand auf jeder Seite öffnen.",
+    "states": {
+      "confirm": "Bestätigen",
+      "loading": "Wird geladen",
+      "pending": "Ausstehend",
+      "success": "Erfolg",
+      "warning": "Warnung",
+      "error": "Fehler"
+    }
+  },
+  "status": {
+    "confirm": {
+      "title": "Bitte bestätigen",
+      "body": "Überprüfen Sie die Details und bestätigen Sie dann, um fortzufahren."
+    },
+    "loading": {
+      "title": "Wird geladen…",
+      "body": "Einen Moment Geduld, während wir alles vorbereiten."
+    },
+    "pending": {
+      "title": "Ausstehend",
+      "body": "Ihre Anfrage wird verarbeitet. Dies kann einen Moment dauern."
+    },
+    "success": {
+      "title": "Fertig",
+      "body": "Das wurde erfolgreich abgeschlossen."
+    },
+    "warning": {
+      "title": "Achtung",
+      "body": "Bitte überprüfen Sie dies, bevor Sie fortfahren."
+    },
+    "error": {
+      "title": "Etwas ist schiefgelaufen",
+      "body": "Wir konnten das nicht abschließen. Bitte versuchen Sie es erneut."
+    },
+    "dismiss": "Verstanden"
+  },
+  "nav": {
+    "home": "Start",
+    "invest": "Investieren",
+    "portfolio": "Portfolio",
+    "strategies": "Strategien",
+    "cards": "Karten",
+    "deposit": "Einzahlen",
+    "profile": "Profil",
+    "collapse": "Einklappen",
+    "expand": "Ausklappen",
+    "rubberRush": "Rubber Rush",
+    "managerIncentive": "Manager Incentive Program"
+  },
+  "locale": {
+    "changeLanguage": "Sprache ändern",
+    "title": "Sprache"
+  }
+}

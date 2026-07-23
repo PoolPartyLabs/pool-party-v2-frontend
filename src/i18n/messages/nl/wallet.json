@@ -1,0 +1,35 @@
+{
+  "title": "Portemonnee",
+  "openWallet": "Portemonnee openen",
+  "refresh": "Saldo vernieuwen",
+  "connect": "Portemonnee verbinden",
+  "close": "Sluiten",
+  "kind": {
+    "embedded": "Ingebouwd",
+    "external": "Extern"
+  },
+  "copyAddress": "Adres kopiëren",
+  "copied": "Gekopieerd",
+  "totalBalance": "TOTAAL SALDO",
+  "dayChange": "{usd} · {pct} vandaag",
+  "addFunds": "Voeg geld toe om te beginnen",
+  "actions": {
+    "buy": "Kopen",
+    "swap": "Wisselen",
+    "send": "Verzenden",
+    "receive": "Ontvangen"
+  },
+  "networks": {
+    "all": "Alle"
+  },
+  "noAssetsOnNetwork": "Geen tegoeden op dit netwerk",
+  "emptyTitle": "Nog geen tegoeden",
+  "emptyBody": "Koop of ontvang crypto en je saldo's verschijnen hier, op alle netwerken.",
+  "manage": "Portemonnee beheren",
+  "disconnect": "Verbinding verbreken",
+  "comingSoon": {
+    "title": "Binnenkort",
+    "send": "Het verzenden van tokens komt eraan. Voorlopig kun je crypto kopen of ontvangen.",
+    "back": "Begrepen"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "somethingWentWrong": "Algo deu errado",
+  "networkError": "Erro de rede",
+  "validationFailed": "Falha na validação",
+  "description": "Ocorreu um erro inesperado. Tente novamente.",
+  "retry": "Tentar novamente",
+  "dashboard": {
+    "title": "Não foi possível carregar o seu painel",
+    "body": "Algo deu errado do nosso lado. Verifique sua conexão e tente novamente.",
+    "support": "Falar com o suporte"
+  },
+  "auth": {
+    "networkFailure": "Falha na conexão. Verifique sua internet e tente novamente.",
+    "unsupportedChain": "Esta rede não é suportada. Mude para Arbitrum, Base ou Polygon."
+  },
+  "api": {
+    "networkError": "Não conseguimos acessar nossos servidores. Verifique sua conexão e tente novamente.",
+    "notConfigured": "Este recurso não está disponível no momento. Tente novamente mais tarde.",
+    "upstreamUnavailable": "Nosso serviço está temporariamente indisponível. Tente novamente em instantes.",
+    "rateLimited": "Você está indo rápido demais. Aguarde um momento e tente novamente.",
+    "unauthorized": "Você não tem permissão para isso. Entre novamente na sua conta.",
+    "notFound": "Não encontramos o que você procurava.",
+    "unknown": "Algo deu errado do nosso lado. Tente novamente."
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "footer": {
+    "links": {
+      "terms": "Conditions d'utilisation",
+      "privacy": "Politique de confidentialité",
+      "risk": "Avertissement sur les risques",
+      "help": "Centre d'aide"
+    },
+    "copyright": "© 2026 Pool Party. Tous droits réservés. Investir comporte des risques, y compris la perte possible du capital.",
+    "developedBy": "Développé par Pool Party Labs"
+  },
+  "rewards": {
+    "ariaLabel": "{count} Quacks, ouvrir les récompenses Rubber Rush",
+    "tooltip": "Vous gagnez <quack>1 Quack</quack> par jour pour chaque <deposit>1 $ déposé</deposit> sur Pool Party. Augmentez vos Quacks en invitant des amis avec votre lien de parrainage."
+  },
+  "dev": {
+    "button": "Mode développeur",
+    "temp": "TEMP",
+    "title": "Mode développeur",
+    "subtitle": "Outils d'implémentation, retirés avant le lancement.",
+    "managerMode": "Mode gestionnaire",
+    "managerModeSub": "Afficher la section Gestionnaire dans la barre latérale",
+    "testModalStates": "Tester les états des fenêtres",
+    "testModalStatesSub": "Ouvrir la fenêtre partagée dans cet état, sur n'importe quelle page.",
+    "states": {
+      "confirm": "Confirmer",
+      "loading": "Chargement",
+      "pending": "En attente",
+      "success": "Succès",
+      "warning": "Avertissement",
+      "error": "Erreur"
+    }
+  },
+  "status": {
+    "confirm": {
+      "title": "Veuillez confirmer",
+      "body": "Vérifiez les détails, puis confirmez pour continuer."
+    },
+    "loading": {
+      "title": "Chargement…",
+      "body": "Patientez pendant que nous préparons tout."
+    },
+    "pending": {
+      "title": "En attente",
+      "body": "Votre demande est en cours de traitement. Cela peut prendre un instant."
+    },
+    "success": {
+      "title": "Terminé",
+      "body": "L'opération s'est déroulée avec succès."
+    },
+    "warning": {
+      "title": "Attention",
+      "body": "Veuillez vérifier ceci avant de continuer."
+    },
+    "error": {
+      "title": "Une erreur est survenue",
+      "body": "Nous n'avons pas pu effectuer cette opération. Veuillez réessayer."
+    },
+    "dismiss": "Compris"
+  },
+  "nav": {
+    "home": "Accueil",
+    "invest": "Investir",
+    "portfolio": "Portefeuille",
+    "strategies": "Stratégies",
+    "cards": "Cartes",
+    "deposit": "Déposer",
+    "profile": "Profil",
+    "collapse": "Réduire",
+    "expand": "Développer",
+    "rubberRush": "Rubber Rush",
+    "managerIncentive": "Manager Incentive Program"
+  },
+  "locale": {
+    "changeLanguage": "Changer de langue",
+    "title": "Langue"
+  }
+}

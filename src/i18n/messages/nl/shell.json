@@ -1,0 +1,78 @@
+{
+  "footer": {
+    "links": {
+      "terms": "Servicevoorwaarden",
+      "privacy": "Privacybeleid",
+      "risk": "Risicomelding",
+      "help": "Helpcentrum"
+    },
+    "copyright": "© 2026 Pool Party. Alle rechten voorbehouden. Beleggen brengt risico met zich mee, waaronder het mogelijke verlies van de hoofdsom.",
+    "developedBy": "Ontwikkeld door Pool Party Labs"
+  },
+  "rewards": {
+    "ariaLabel": "{count} Quacks, open Rubber Rush-beloningen",
+    "tooltip": "Je verdient <quack>1 Quack</quack> per dag voor elke <deposit>$1</deposit> die je op Pool Party stort. Verhoog je Quacks door vrienden uit te nodigen met je verwijzingslink."
+  },
+  "dev": {
+    "button": "Dev-modus",
+    "temp": "TEMP",
+    "title": "Dev-modus",
+    "subtitle": "Implementatiehulpmiddelen, verwijderd vóór de lancering.",
+    "managerMode": "Beheerdersmodus",
+    "managerModeSub": "Toon de sectie Beheerder in de zijbalk",
+    "testModalStates": "Modaalstatussen testen",
+    "testModalStatesSub": "Open de gedeelde modal in deze status, op elke pagina.",
+    "states": {
+      "confirm": "Bevestigen",
+      "loading": "Laden",
+      "pending": "In behandeling",
+      "success": "Geslaagd",
+      "warning": "Waarschuwing",
+      "error": "Fout"
+    }
+  },
+  "status": {
+    "confirm": {
+      "title": "Bevestig",
+      "body": "Controleer de gegevens en bevestig om door te gaan."
+    },
+    "loading": {
+      "title": "Laden…",
+      "body": "Een ogenblik geduld terwijl we alles klaarzetten."
+    },
+    "pending": {
+      "title": "In behandeling",
+      "body": "Uw verzoek wordt verwerkt. Dit kan even duren."
+    },
+    "success": {
+      "title": "Helemaal klaar",
+      "body": "Dat is succesvol voltooid."
+    },
+    "warning": {
+      "title": "Let op",
+      "body": "Controleer dit voordat u doorgaat."
+    },
+    "error": {
+      "title": "Er is iets misgegaan",
+      "body": "We konden dat niet voltooien. Probeer het opnieuw."
+    },
+    "dismiss": "Begrepen"
+  },
+  "nav": {
+    "home": "Home",
+    "invest": "Beleggen",
+    "portfolio": "Portfolio",
+    "strategies": "Strategieën",
+    "cards": "Kaarten",
+    "deposit": "Storten",
+    "profile": "Profiel",
+    "collapse": "Inklappen",
+    "expand": "Uitklappen",
+    "rubberRush": "Rubber Rush",
+    "managerIncentive": "Manager Incentive Program"
+  },
+  "locale": {
+    "changeLanguage": "Taal wijzigen",
+    "title": "Taal"
+  }
+}

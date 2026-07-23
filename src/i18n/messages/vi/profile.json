@@ -1,0 +1,191 @@
+{
+  "title": "Hồ sơ",
+  "settings": "Cài đặt",
+  "backToProfile": "Quay lại hồ sơ",
+  "save": "Lưu",
+  "saved": "Đã lưu",
+  "cancel": "Hủy",
+  "connect": "Kết nối",
+  "connected": "Đã kết nối",
+  "referral": {
+    "title": "Mời bạn bè & nhận thưởng",
+    "body": "Mời bạn bè và cùng kiếm quacks.",
+    "stat": "{count} bạn bè đã tham gia",
+    "code": "Mã của bạn",
+    "share": "Chia sẻ liên kết mời",
+    "createCta": "Tạo mã giới thiệu của bạn"
+  },
+  "groups": {
+    "rewards": "Phần thưởng",
+    "account": "Tài khoản",
+    "preferences": "Tùy chọn",
+    "support": "Hỗ trợ",
+    "manager": "Người quản lý"
+  },
+  "rows": {
+    "rubberRush": "Rubber Rush",
+    "rubberRushSub": "Kiếm Quacks",
+    "managerIncentiveProgram": "Manager Incentive Program",
+    "managerProfile": "Hồ sơ người quản lý",
+    "personalInfo": "Thông tin cá nhân",
+    "linkedSocial": "Tài khoản mạng xã hội đã liên kết",
+    "security": "Bảo mật & đăng nhập",
+    "alerts": "Cảnh báo & thông báo",
+    "appSettings": "Cài đặt ứng dụng",
+    "help": "Trung tâm trợ giúp",
+    "logout": "Đăng xuất",
+    "managerProfileSub": "Trang người quản lý công khai của bạn"
+  },
+  "personal": {
+    "title": "Thông tin cá nhân",
+    "changePhoto": "Đổi ảnh",
+    "sectionPersonal": "Cá nhân",
+    "sectionContact": "Liên hệ",
+    "fullName": "Tên",
+    "nameHelper": "Không hiển thị công khai. Chỉ dùng để liên lạc. Tùy chọn.",
+    "nameInvalid": "Tên phải có ít nhất {min} ký tự.",
+    "displayName": "Handle",
+    "displayNameHelper": "Handle công khai của bạn, hiển thị trên hồ sơ. Tùy chọn.",
+    "displayNameInvalid": "Handle phải có ít nhất {min} ký tự.",
+    "country": "Quốc gia",
+    "countrySearch": "Tìm quốc gia",
+    "countryNoResults": "Không có kết quả",
+    "email": "Email",
+    "emailHelper": "Tùy chọn. Dùng cho thông báo tài khoản.",
+    "emailInvalid": "Nhập một email hợp lệ.",
+    "avatarUploadFailed": "Không thể tải ảnh lên. Vui lòng thử lại.",
+    "saveFailed": "Không thể lưu thay đổi của bạn. Vui lòng thử lại.",
+    "saving": "Đang lưu…",
+    "phone": "Điện thoại",
+    "phoneCountry": "Mã quốc gia",
+    "phoneInvalid": "Nhập số điện thoại hợp lệ.",
+    "verified": "Đã xác minh",
+    "optional": "(tùy chọn)"
+  },
+  "social": {
+    "title": "Tài khoản mạng xã hội đã liên kết",
+    "intro": "Kết nối các tài khoản của bạn để nhận điểm, vai trò, hệ số nhân và nhiều hơn nữa, cùng nhận thông báo.",
+    "telegram": {
+      "name": "Telegram",
+      "notifOff": "Thông báo đã tắt",
+      "body": "Kết nối Telegram để nhận thông báo về nạp tiền, lợi nhuận và giá.",
+      "connect": "Kết nối Telegram"
+    },
+    "others": "Tài khoản khác",
+    "x": "X",
+    "google": "Google",
+    "discord": "Discord"
+  },
+  "security": {
+    "title": "Bảo mật & đăng nhập",
+    "signIn": "Đăng nhập",
+    "changePassword": "Đổi mật khẩu",
+    "faceId": "Face ID",
+    "appLock": "Khóa ứng dụng",
+    "twoFactor": "Xác thực hai yếu tố",
+    "wallet": "Ví",
+    "exportKey": "Xuất khóa riêng tư",
+    "exportWarning": "Không bao giờ chia sẻ khóa riêng tư của bạn. Bất kỳ ai có nó đều kiểm soát được tiền của bạn.",
+    "devices": "Thiết bị & hoạt động",
+    "trustedDevices": "Thiết bị tin cậy",
+    "trustedDevicesValue": "{count} thiết bị",
+    "activeSessions": "Phiên đang hoạt động",
+    "loginAlerts": "Cảnh báo đăng nhập",
+    "comingSoon": "Sắp ra mắt",
+    "deleteAccount": "Xóa tài khoản",
+    "deleteConfirm": {
+      "title": "Xóa tài khoản?",
+      "body": "Thao tác này sẽ xóa vĩnh viễn tài khoản của bạn và không thể hoàn tác. Hãy rút tiền của bạn trước.",
+      "confirm": "Xóa tài khoản"
+    },
+    "deleteBlocked": {
+      "title": "Hãy rút tiền của bạn trước",
+      "body": "Tài khoản của bạn vẫn còn tiền. Rút hết, rồi bạn có thể xóa tài khoản. Thao tác này không thể hoàn tác.",
+      "confirm": "Xem danh mục"
+    },
+    "exportConfirm": {
+      "title": "Tiết lộ khóa riêng tư?",
+      "body": "Bất kỳ ai có khóa riêng tư của bạn đều có thể lấy tiền của bạn. Chỉ tiết lộ nó ở nơi riêng tư, và không bao giờ chia sẻ nó.",
+      "hold": "Giữ để hiển thị"
+    },
+    "exportReveal": {
+      "title": "Khóa riêng tư của bạn",
+      "warning": "Không bao giờ chia sẻ điều này. Bất kỳ ai có nó đều kiểm soát được tiền của bạn.",
+      "copy": "Sao chép khóa",
+      "copied": "Đã sao chép vào bộ nhớ tạm",
+      "done": "Xong"
+    },
+    "exportError": "Không thể xuất khóa riêng tư của bạn. Vui lòng thử lại."
+  },
+  "alerts": {
+    "title": "Cảnh báo & thông báo",
+    "delivery": "Gửi đến",
+    "push": "Thông báo đẩy",
+    "email": "Email",
+    "telegram": "Telegram",
+    "investing": "Đầu tư",
+    "yield": "Lợi nhuận đã kiếm",
+    "priceAlerts": "Cảnh báo giá",
+    "strategyUpdates": "Cập nhật chiến lược",
+    "money": "Tiền",
+    "deposits": "Nạp tiền",
+    "withdrawalReady": "Rút tiền đã sẵn sàng",
+    "fromPoolParty": "Từ Pool Party",
+    "rubberRush": "Rubber Rush",
+    "tips": "Mẹo & hướng dẫn",
+    "productNews": "Tin tức sản phẩm"
+  },
+  "appSettings": {
+    "title": "Cài đặt ứng dụng",
+    "general": "Chung",
+    "language": "Ngôn ngữ",
+    "currency": "Hiển thị tiền tệ",
+    "currencyValue": "USD ($)",
+    "appearance": "Giao diện",
+    "appearanceValue": "Tối",
+    "privacy": "Quyền riêng tư",
+    "shareAnalytics": "Chia sẻ phân tích",
+    "about": "Giới thiệu",
+    "version": "Phiên bản ứng dụng",
+    "versionValue": "2.4.0",
+    "terms": "Điều khoản Dịch vụ",
+    "privacyPolicy": "Chính sách Bảo mật"
+  },
+  "help": {
+    "title": "Trung tâm trợ giúp",
+    "searchPlaceholder": "Tìm bài viết trợ giúp",
+    "noResults": "Không có bài viết trợ giúp nào khớp với tìm kiếm của bạn.",
+    "discord": {
+      "title": "Tham gia Discord của chúng tôi",
+      "fastest": "Nhanh nhất",
+      "body": "Nhận câu trả lời từ đội ngũ và cộng đồng.",
+      "open": "Mở Discord"
+    },
+    "docs": {
+      "title": "Tài liệu",
+      "body": "Hướng dẫn và cách thực hiện"
+    },
+    "contact": {
+      "title": "Liên hệ hỗ trợ",
+      "body": "support@pool-party.xyz"
+    },
+    "faqTitle": "Câu hỏi phổ biến",
+    "faq": {
+      "q1": "Nạp tiền hoạt động như thế nào?",
+      "a1": "Thêm tiền bằng Pix, thẻ hoặc chuyển khoản ngân hàng và nó được chuyển đổi thành USDC, hoặc chuyển crypto trực tiếp. Tiền sẵn sàng để đầu tư ngay lập tức.",
+      "q2": "Khi nào tôi có thể rút tiền?",
+      "a2": "Bất cứ lúc nào. Rút tiền thông thường đến trong khoảng 2 ngày làm việc và không mất phí; rút tiền tức thì đến ngay lập tức với phí 1%.",
+      "q3": "Có phí không?",
+      "a3": "Mỗi chiến lược liệt kê phí quản lý và phí hiệu suất của nó, được hiển thị lại trước khi bạn xác nhận. Phí nạp tiền xuất hiện ở phần xem lại."
+    }
+  },
+  "logout": {
+    "title": "Đăng xuất?",
+    "body": "Bạn sẽ cần đăng nhập lại để truy cập tài khoản của mình.",
+    "confirm": "Đăng xuất"
+  },
+  "identity": {
+    "quacks": "{count, number} Quacks",
+    "editProfile": "Chỉnh sửa hồ sơ"
+  }
+}

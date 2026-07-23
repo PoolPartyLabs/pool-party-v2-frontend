@@ -1,0 +1,78 @@
+{
+  "footer": {
+    "links": {
+      "terms": "服務條款",
+      "privacy": "隱私權政策",
+      "risk": "風險揭露",
+      "help": "說明中心"
+    },
+    "copyright": "© 2026 Pool Party。保留所有權利。投資涉及風險，包括可能損失本金。",
+    "developedBy": "由 Pool Party Labs 開發"
+  },
+  "rewards": {
+    "ariaLabel": "{count} Quacks，開啟 Rubber Rush 獎勵",
+    "tooltip": "在 Pool Party 每存入 <deposit>$1</deposit>，每天可賺取 <quack>1 個 Quack</quack>。透過邀請好友使用你的推薦連結來提升你的 Quacks。"
+  },
+  "dev": {
+    "button": "開發者模式",
+    "temp": "暫時",
+    "title": "開發者模式",
+    "subtitle": "實作工具，上線前將移除。",
+    "managerMode": "管理人模式",
+    "managerModeSub": "在側邊欄顯示管理人區塊",
+    "testModalStates": "測試彈窗狀態",
+    "testModalStatesSub": "在任何頁面以此狀態開啟共用彈窗。",
+    "states": {
+      "confirm": "確認",
+      "loading": "載入中",
+      "pending": "處理中",
+      "success": "成功",
+      "warning": "警告",
+      "error": "錯誤"
+    }
+  },
+  "status": {
+    "confirm": {
+      "title": "請確認",
+      "body": "檢視詳情後，確認以繼續。"
+    },
+    "loading": {
+      "title": "載入中…",
+      "body": "請稍候，我們正在準備中。"
+    },
+    "pending": {
+      "title": "處理中",
+      "body": "您的請求正在處理中。這可能需要一點時間。"
+    },
+    "success": {
+      "title": "全部完成",
+      "body": "已成功完成。"
+    },
+    "warning": {
+      "title": "請注意",
+      "body": "繼續前請先檢視此項。"
+    },
+    "error": {
+      "title": "發生錯誤",
+      "body": "我們無法完成該操作，請再試一次。"
+    },
+    "dismiss": "我知道了"
+  },
+  "nav": {
+    "home": "首頁",
+    "invest": "投資",
+    "portfolio": "投資組合",
+    "strategies": "策略",
+    "cards": "卡片",
+    "deposit": "儲值",
+    "profile": "個人資料",
+    "collapse": "收合",
+    "expand": "展開",
+    "rubberRush": "Rubber Rush",
+    "managerIncentive": "Manager Incentive Program"
+  },
+  "locale": {
+    "changeLanguage": "變更語言",
+    "title": "語言"
+  }
+}

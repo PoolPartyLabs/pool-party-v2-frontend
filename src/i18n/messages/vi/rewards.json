@@ -1,0 +1,179 @@
+{
+  "rubberRush": {
+    "title": "Rubber Rush",
+    "subtitle": "Kiếm Quacks, leo hạng, mở khóa boost",
+    "back": "Quay lại",
+    "yourQuacks": "Quacks của bạn",
+    "quacksUnit": "Quacks",
+    "topPercent": "Top {percent}%",
+    "managerIncentiveProgramDashboard": "Manager Incentive Program",
+    "sayQuack": "Nói Quack",
+    "playDuckShoot": "Chơi Duck Shoot",
+    "claimRoles": "Nhận vai trò",
+    "quacksEarnedToday": "+{count} Quacks đã kiếm hôm nay",
+    "tierProgression": "Tiến trình hạng",
+    "you": "Bạn",
+    "tiers": {
+      "paddler": "Paddler",
+      "swimmer": "Swimmer",
+      "diver": "Diver",
+      "waveRider": "Wave Rider",
+      "partyCaptain": "Party Captain"
+    },
+    "stats": {
+      "totalReferrals": "Tổng lượt giới thiệu",
+      "dailyBoost": "Boost hằng ngày",
+      "quacksToday": "Quacks hôm nay",
+      "streak": "Chuỗi ngày"
+    },
+    "streakProgress": "{days} / {target} ngày",
+    "dailyStreakBoost": "Boost chuỗi ngày",
+    "dailyStreakBody": "Quack mỗi ngày để tăng boost của bạn. Mỗi ngày liên tiếp cộng dồn một hệ số nhân. Boost tối đa ở 7+ ngày.",
+    "dayShort": "D{n}",
+    "duckShootTitle": "Cách Duck Shoot hoạt động",
+    "duckShootBody": "Mỗi giao dịch trên giao thức (nạp, rút, thu) mang lại cho bạn một lượt thử Duck Shoot. Mỗi phát bắn nhân số Quacks bạn kiếm được hôm nay thành phần thưởng thêm.",
+    "referral": {
+      "title": "Lượt giới thiệu của bạn",
+      "code": "Mã giới thiệu",
+      "link": "Liên kết giới thiệu",
+      "invitedBy": "Được mời bởi",
+      "none": "-",
+      "copyCode": "Sao chép mã giới thiệu",
+      "copyLink": "Sao chép liên kết giới thiệu",
+      "copied": "Đã sao chép",
+      "emptyBody": "Tạo mã mời để bắt đầu nhận thưởng.",
+      "emptyCta": "Tạo mã của bạn"
+    },
+    "referralRewards": {
+      "title": "Phần thưởng giới thiệu",
+      "progressLabel": "Tiến độ",
+      "nextTier": "Hạng tiếp theo",
+      "body1": "Chia sẻ mã giới thiệu và tặng người được giới thiệu <hl>boost Quacks 10%</hl>.",
+      "body2": "Khi người dùng được giới thiệu đạt ít nhất <hl>50 USDC tổng nạp tích lũy</hl>, bạn mở khóa <hl>boost trọn đời 5%</hl> cho Quacks của mình. (Boost này chỉ áp dụng một lần và không cộng dồn.)",
+      "body3": "Bạn cũng kiếm được <hl>10% Quacks do người được giới thiệu tạo ra</hl>.",
+      "body4": "Mời <hl>thêm 5 người bạn</hl> để nhận hệ số nhân cho Quacks hằng ngày!",
+      "progress": "{count} / {target} bạn bè",
+      "multiplier": "Hệ số nhân {value}x"
+    },
+    "signing": "Đang ký…",
+    "quackedToday": "Đã Quack hôm nay! 🦆",
+    "duckShoot": {
+      "title": "Duck Shoot",
+      "triesThisWeek": "{count} lượt thử tuần này",
+      "tapHelper": "Chạm vào một con vịt để bắn. Mỗi phát bắn nhân số Quacks hôm nay.",
+      "shoot": "Bắn",
+      "lockedTitle": "Thực hiện giao dịch trong giao thức để chơi. Bạn có 0 lượt thử tuần này.",
+      "makeDeposit": "Nạp tiền",
+      "won": "+{percent}%",
+      "boostApplied": "Đã áp dụng boost: +{count} Quacks hôm nay!",
+      "shootAgain": "Bắn lần nữa · còn {count}",
+      "close": "Xong",
+      "start": "Bắt đầu",
+      "instruction": "Nhấp vào bất kỳ đâu để bắn!",
+      "playAgain": "Chơi lại",
+      "jackpot": "Jackpot!",
+      "boostResult": "Bạn nhận được boost {percent}%!",
+      "oddsItem": "{percent}% (tỉ lệ {weight}%)",
+      "noTries": "Thực hiện giao dịch trong giao thức để chơi. Bạn còn {count, plural, other {# lượt}} trong tuần này."
+    }
+  },
+  "managerIncentiveProgram": {
+    "title": "Manager Incentive Program",
+    "subtitle": "Tạo hoặc quảng bá chiến lược, tăng trưởng TVL, kiếm phí thưởng",
+    "back": "Quay lại",
+    "label": "Manager Incentive Program · {name}",
+    "revenueThisMonth": "Doanh thu tháng này",
+    "since": "Tham gia chương trình từ {date}",
+    "stats": {
+      "strategiesCreated": "Chiến lược đã tạo",
+      "strategiesCreatedSub": "Chiến lược bạn đã tạo",
+      "managedTvl": "TVL được quản lý",
+      "managedTvlSub": "TVL đã tạo + thu hút",
+      "referrals": "Lượt giới thiệu",
+      "referralsSub": "Đã dùng mã của bạn",
+      "bonusFees": "Phí thưởng",
+      "bonusFeesSub": "Trên mức phí thông thường"
+    },
+    "tokens": {
+      "title": "{count} token sẽ được phân phối",
+      "body": "{count} token sẽ được phân bổ cho các nhà quản lý trong chương trình dựa trên hiệu suất. Hạng của bạn, TVL do bạn quản lý (do bạn tạo ra hoặc thúc đẩy) và phí mà các chiến lược của bạn tạo ra sẽ quyết định phần bạn nhận được."
+    },
+    "tierCard": {
+      "title": "Bạn là thành viên Hạng {tier}",
+      "range": "{from} – {to}",
+      "body": "Đạt {target} TVL được quản lý để bắt đầu kiếm phí thêm trên mức bạn đã kiếm thông thường.",
+      "managed": "{amount} được quản lý",
+      "nextTier": "{delta} → {tier}"
+    },
+    "tierTable": {
+      "tier": "Hạng",
+      "minTvl": "TVL tối thiểu",
+      "bonusFees": "Phí thưởng",
+      "rowName": "Hạng {n}"
+    },
+    "tierFootnote": "Hạng của bạn được tính lại mỗi khi có thay đổi (một lần thu, một vị thế mới, một thay đổi TVL). Các con số trên bảng điều khiển phản ánh hạng tại thời điểm của mỗi sự kiện phí.",
+    "revenue": {
+      "title": "Doanh thu",
+      "paidEndOfMonth": "Trả vào cuối tháng",
+      "estimatedAccrued": "Ước tính tích lũy tháng này",
+      "feesThisMonth": "Phí tạo ra tháng này",
+      "totalFees": "Tổng phí tạo ra",
+      "estimatedAccruedInfo": "Phí thưởng tích lũy trong tháng này theo hạng hiện tại của bạn. Thanh toán vào cuối tháng.",
+      "feesThisMonthInfo": "Phí mà các chiến lược của bạn tạo ra trong tháng này, trước phần thưởng của bạn.",
+      "totalFeesInfo": "Toàn bộ phí mà các chiến lược của bạn đã tạo ra kể từ khi bạn tham gia chương trình."
+    },
+    "goals": {
+      "title": "Mục tiêu tháng đầu tiên",
+      "onboarding": "Mục tiêu khởi đầu",
+      "referrals": "{target} lượt giới thiệu",
+      "posts": "Ít nhất {count} bài đăng",
+      "communityPool": "Chiến lược được tạo với TVL cộng đồng",
+      "progress": "{current}/{target}",
+      "trackedExternally": "theo dõi bên ngoài"
+    }
+  },
+  "referral": {
+    "invitedByLabel": "Được mời bởi {code}",
+    "title": "Mời bạn bè & nhận thưởng",
+    "subtitle": "Hồ sơ · Giới thiệu",
+    "back": "Quay lại",
+    "heroTitle": "Mời bạn bè, kiếm quacks",
+    "heroBody": "Tặng bạn bè boost quacks 10% và kiếm 10% quacks mà họ tạo ra.",
+    "code": "Mã giới thiệu của bạn",
+    "link": "Liên kết mời",
+    "copyCode": "Sao chép mã giới thiệu",
+    "copyLink": "Sao chép liên kết mời",
+    "copied": "Đã sao chép",
+    "share": "Chia sẻ liên kết mời",
+    "shared": "Đã sao chép liên kết",
+    "stats": {
+      "friendsJoined": "Bạn bè đã tham gia"
+    },
+    "howItWorks": "Cách hoạt động",
+    "steps": {
+      "shareTitle": "Chia sẻ liên kết của bạn",
+      "shareBody": "Gửi liên kết mời của bạn cho bạn bè.",
+      "investTitle": "Họ tham gia và đầu tư",
+      "investBody": "Bạn của bạn đăng ký và bắt đầu đầu tư.",
+      "earnTitle": "Cả hai cùng kiếm quacks",
+      "earnBody": "Bạn bè nhận boost 10% và bạn kiếm 10% quacks của họ."
+    },
+    "invites": "Lời mời của bạn",
+    "investedAmount": "Đã đầu tư ${amount}",
+    "signedUp": "Đã đăng ký",
+    "status": {
+      "earned": "Đã được thưởng",
+      "invested": "Đang đầu tư",
+      "pending": "Đang chờ"
+    },
+    "create": {
+      "label": "Chọn mã của bạn",
+      "placeholder": "YOURCODE",
+      "warning": "Hãy chọn kỹ. Mã không thể thay đổi sau này.",
+      "cta": "Tạo mã",
+      "invalid": "Dùng từ 6 đến 10 chữ cái hoặc chữ số.",
+      "unavailable": "Mã này không có sẵn. Hãy thử mã khác."
+    },
+    "noInvites": "Chưa mời người bạn nào."
+  }
+}

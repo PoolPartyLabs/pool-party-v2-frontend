@@ -1,0 +1,488 @@
+{
+  "sign": {
+    "continueInWallet": "Continue in your wallet",
+    "stepOf": "Step {current} of {total}",
+    "whyTitle": "What am I signing?",
+    "whyBody": "Signatures prove you authorize this action. They happen in your wallet and never move your funds on their own.",
+    "steps": {
+      "approve": "Approve {token}",
+      "sign": "Sign message in your wallet",
+      "confirmInvest": "Confirm deposit",
+      "confirmWithdraw": "Confirm withdrawal",
+      "confirmCollect": "Confirm collection",
+      "confirmCompound": "Confirm compound",
+      "permit": "Sign permit in your wallet",
+      "confirmAddLiquidity": "Confirm add liquidity",
+      "confirmRemoveLiquidity": "Confirm withdraw",
+      "confirmMoveRange": "Confirm rebalance",
+      "confirmClosePosition": "Confirm close",
+      "build": "Preparing transaction",
+      "skipped": "Already approved"
+    },
+    "explain": {
+      "approve": {
+        "name": "Token approval",
+        "body": "Lets Pool Party move your {token} for this transaction. An approval never moves funds by itself. The actual transaction happens in a later step."
+      },
+      "permit": {
+        "name": "Permit2 signature",
+        "body": "A gasless signature that authorizes this transfer. It is a message, not a transaction, so it costs no network fee and nothing moves until you confirm."
+      },
+      "confirm": {
+        "name": "Final confirmation",
+        "body": "The last step. It runs on the network and actually executes the transaction. This is the only step that may cost a small network fee."
+      },
+      "build": {
+        "name": "Preparing transaction",
+        "body": "Pool Party is computing the amounts and the network fee for this transaction. Nothing is signed or sent yet."
+      }
+    }
+  },
+  "card": {
+    "by": "by {manager}",
+    "min": "Min.",
+    "estReturn": "Est. return",
+    "viewDetails": "View details",
+    "invest": "Invest"
+  },
+  "risk": {
+    "level1": "Very conservative",
+    "level2": "Conservative",
+    "level3": "Moderate",
+    "level4": "Aggressive",
+    "level5": "Very aggressive"
+  },
+  "explore": {
+    "title": "Strategies",
+    "subtitle": "Managed strategies you can invest in",
+    "searchPlaceholder": "Search by name, manager, token or address",
+    "browseByRisk": "Browse by risk",
+    "allRisks": "All",
+    "browseByType": "Browse by type",
+    "allTypes": "All",
+    "types": {
+      "yield": "Yield",
+      "trading": "Trading",
+      "index": "Index",
+      "marketNeutral": "Market-neutral"
+    },
+    "browseByCategory": "Browse by category",
+    "allCategories": "All",
+    "categorySelected": "{count} selected",
+    "categories": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme coins"
+    },
+    "count": "{count, plural, =0 {No strategies} =1 {# strategy} other {# strategies}}",
+    "owned": "Managed",
+    "invested": "Invested",
+    "noResults": "No strategies match your search.",
+    "clearFilters": "Clear filters",
+    "sortLabel": "Sort by",
+    "sortDir": {
+      "asc": "Ascending",
+      "desc": "Descending"
+    },
+    "loadMore": "Load more",
+    "loadingMore": "Loading",
+    "empty": {
+      "title": "No strategies yet",
+      "body": "Strategies will appear here once they are available."
+    },
+    "columns": {
+      "strategy": "Strategy",
+      "risk": "Risk",
+      "min": "Min.",
+      "tvl": "TVL",
+      "investors": "Investors",
+      "return": "Est. return",
+      "action": "Action"
+    }
+  },
+  "detail": {
+    "back": "Back",
+    "performance": "Pool value",
+    "periods": {
+      "week": "1W",
+      "month": "1M",
+      "quarter": "3M",
+      "year": "1Y",
+      "all": "All"
+    },
+    "chart": {
+      "noHistoryTitle": "No history yet",
+      "noHistoryBody": "This strategy's value history will appear after its first days of activity."
+    },
+    "metrics": {
+      "min": "Minimum",
+      "tvl": "TVL",
+      "lockup": "Lock-up",
+      "performanceFee": "Performance fee"
+    },
+    "lockup": {
+      "none": "None",
+      "days": "{days, plural, =1 {# day} other {# days}}"
+    },
+    "about": "About",
+    "composition": "Composition",
+    "mandate": {
+      "title": "Investment mandate",
+      "assets": "Max exposure per asset",
+      "protocols": "Max exposure per protocol",
+      "networks": "Networks"
+    },
+    "riskLimits": {
+      "title": "Risk limits & terms",
+      "maxDrawdown": "Max drawdown",
+      "leverage": "Leverage",
+      "rebalancing": "Rebalancing",
+      "liquidity": "Liquidity",
+      "strategyType": "Strategy type",
+      "benchmark": "Benchmark",
+      "custody": "Custody"
+    },
+    "fees": {
+      "title": "Fees",
+      "management": "Management",
+      "performance": "Performance",
+      "none": "No fee"
+    },
+    "managerVerified": "Verified manager",
+    "yourPosition": {
+      "title": "Your position",
+      "active": "Active",
+      "paused": "Paused",
+      "invested": "Invested",
+      "currentValue": "Current value",
+      "totalYield": "Total yield",
+      "available": "Available to collect",
+      "closed": "Closed",
+      "finalValue": "Final value",
+      "totalYieldRealized": "Total yield (realized)",
+      "availableToWithdraw": "Available to withdraw"
+    },
+    "actions": {
+      "invest": "Invest",
+      "investMore": "Invest more",
+      "collectAmount": "Collect {amount}",
+      "compound": "Compound",
+      "compoundComingSoon": "Compounding is coming soon. You can still collect your yield.",
+      "withdraw": "Withdraw",
+      "share": "Share"
+    },
+    "paused": {
+      "title": "{name} is paused",
+      "body": "This strategy isn't accepting new investments right now. Your position is safe and keeps earning. You can still collect or withdraw.",
+      "notify": "Notify me when it reopens",
+      "notified": "We'll let you know",
+      "viewOthers": "View other strategies"
+    },
+    "closed": {
+      "title": "Strategy closed",
+      "body": "{manager} closed this strategy. Your funds are ready to withdraw."
+    },
+    "viewProfile": "View profile",
+    "managerRole": "Manager",
+    "managerAllocation": "Manager allocation",
+    "liquidityPool": "Liquidity pool",
+    "noData": "Not available yet"
+  },
+  "invest": {
+    "title": "Invest",
+    "amountLabel": "Amount to invest",
+    "balance": "Balance {amount}",
+    "max": "Max",
+    "belowMin": "Minimum investment is {min}",
+    "needMore": "You need {amount} more",
+    "cta": {
+      "invest": "Invest",
+      "deposit": "Deposit & invest"
+    },
+    "confirm": {
+      "title": "Confirm & sign",
+      "youInvest": "You invest",
+      "approxUsd": "≈ {usd}",
+      "estYield": "Est. annual yield",
+      "fee": "Est. fee",
+      "deployAtLeast": "You will invest at least",
+      "approxValue": "{amount} ({usd})",
+      "lockup": "Lock-up",
+      "cta": "Confirm & sign",
+      "zapNote": "Your USDC is automatically converted into the pool's two tokens ({token0}/{token1}). When you withdraw, they convert back to USDC.",
+      "back": "Back"
+    },
+    "review": {
+      "title": "Review",
+      "cta": "Confirm investment"
+    },
+    "success": {
+      "title": "Investment confirmed",
+      "body": "{amount} is now invested in {name}.",
+      "partial": "Partial investment. We added {deployed} of your {requested}. The rest couldn't be added due to market movement and slippage, and stayed in your wallet."
+    },
+    "settings": {
+      "title": "Transaction settings",
+      "slippageLabel": "Max slippage",
+      "slippageHint": "Cancels the transaction if the price moves more than this before it confirms.",
+      "slippageHigh": "High slippage",
+      "slippageVeryHigh": "Very high slippage",
+      "slippageWarningBody": "This may result in an unfavorable trade. Try lowering your slippage setting.",
+      "custom": "Custom",
+      "deadlineLabel": "Transaction deadline",
+      "deadlineHint": "Custom deadlines are coming soon. Transactions currently use a standard deadline.",
+      "deadlineUnit": "min",
+      "receiveAsLabel": "Receive as",
+      "receiveAsHint": "The asset you'll receive. USDC by default; you can choose the tokens currently in the strategy.",
+      "receiveAsFixedHint": "The asset you'll receive. Fixed for this transaction.",
+      "done": "Done"
+    },
+    "receipt": {
+      "amountInvested": "Amount Invested"
+    }
+  },
+  "collect": {
+    "title": "Collect yield",
+    "available": "Available to collect",
+    "destination": "Goes to your USDC balance",
+    "destinationPair": "Goes to your wallet as {token0} and {token1}",
+    "amount": "Amount requested",
+    "youReceive": "You receive",
+    "fee": "Est. fee",
+    "cta": "Collect {amount}",
+    "success": {
+      "title": "Yield collected"
+    },
+    "receipt": {
+      "amountReceived": "Amount Received"
+    },
+    "minNotice": "Minimum collect is {amount}."
+  },
+  "compound": {
+    "title": "Compound yield",
+    "available": "Available to compound",
+    "approxUsd": "≈ {usd}",
+    "approxValue": "{amount} ({usd})",
+    "fee": "Est. fee",
+    "feesTooltip": {
+      "dex": "DEX fee",
+      "protocol": "Protocol fee",
+      "network": "Estimated gas (network fee)",
+      "total": "Total"
+    },
+    "atLeast": "You will compound at least",
+    "note": "Compounding reinvests your earned yield back into the strategy, so it starts earning too.",
+    "cta": "Compound {amount}",
+    "success": {
+      "title": "Yield compounded",
+      "body": "{amount} was reinvested into {name}."
+    }
+  },
+  "withdraw": {
+    "title": "Withdraw",
+    "amountLabel": "Amount to withdraw",
+    "invested": "Invested {amount}",
+    "max": "Max",
+    "chooseMethod": "How would you like to withdraw?",
+    "regular": {
+      "title": "Regular withdrawal",
+      "desc": "Arrives in about 2 business days",
+      "fee": "No fee"
+    },
+    "instant": {
+      "title": "Instant withdrawal",
+      "desc": "Arrives right away",
+      "fee": "{fee} fee"
+    },
+    "lockedNote": "Instant withdrawal isn't available. This strategy has a {days}-day lock-up.",
+    "continue": "Continue",
+    "unitToggle": "Amount unit",
+    "confirm": {
+      "stillEarning": "Your remaining balance keeps earning."
+    },
+    "review": {
+      "title": "Review",
+      "back": "Back",
+      "amountRequested": "Amount requested",
+      "feesAvailable": "Fees available to collect",
+      "estFees": "Est. fee",
+      "footerLocked": "≈ {amount} · Arrives in {days, plural, one {# day} other {# days}} · per strategy lock-up",
+      "footerRegular": "≈ {amount} · Arrives in about 2 business days",
+      "cta": "Confirm withdrawal"
+    },
+    "success": {
+      "title": "Withdrawal started",
+      "body": "{amount} is on its way to your balance.",
+      "completeTitle": "Withdrawal successful",
+      "completeBody": "{amount} has been sent to your balance.",
+      "completeBodyPair": "{amount} has been sent to your wallet as {token0} and {token1}."
+    },
+    "closed": {
+      "fullBalance": "Withdrawing your full balance",
+      "instant": "Instant",
+      "equals": "= {amount}",
+      "date": "Date",
+      "sentInstant": "{amount} sent to your account · instant",
+      "completeTitle": "Withdrawal complete"
+    },
+    "dustAlert": "Withdrawing this much leaves less than {floor}, so your full balance will be withdrawn.",
+    "ownedCloseAlert": "Withdrawing your full balance closes this strategy and collects its accrued fees.",
+    "receipt": {
+      "amountReceived": "Amount Received",
+      "feesCollected": "Fees collected",
+      "feesCollectedIncluded": "Fees collected (included)",
+      "totalReceived": "Total received"
+    }
+  },
+  "flow": {
+    "processing": "Processing…",
+    "processingBody": "This usually takes a few seconds.",
+    "done": "Done",
+    "viewPosition": "View position",
+    "error": {
+      "title": "Something went wrong",
+      "body": "Your transaction didn't go through and no funds were moved.",
+      "retry": "Try again",
+      "help": "Get help on Discord",
+      "copy": "Copy error",
+      "details": "Error details",
+      "codeLabel": "Code",
+      "browserLabel": "Browser",
+      "walletLabel": "Wallet",
+      "osLabel": "OS",
+      "languageLabel": "Language",
+      "walletEmbedded": "Privy · Embedded",
+      "walletExternal": "External wallet",
+      "copied": "Copied",
+      "kinds": {
+        "slippage": "The price moved beyond your max slippage before the transaction could confirm. Raise your max slippage in the settings or try again later.",
+        "deadlineExpired": "The transaction didn't confirm within its deadline, so it was cancelled. Try again.",
+        "insufficientFunds": "Your wallet doesn't have enough to cover this transaction and its network fee.",
+        "userRejected": "You declined the request in your wallet. No funds were moved.",
+        "unauthorized": "This wallet isn't allowed to perform this operation."
+      }
+    },
+    "slippage": {
+      "retryNotice": "The price moved beyond your max slippage ({value}%). Retrying at the current price.",
+      "errorTitle": "Price moved too much",
+      "errorBody": "The price moved beyond your max slippage ({value}%) again. Raise it in the settings or try again later."
+    },
+    "receipt": {
+      "strategy": "Strategy",
+      "amount": "Amount",
+      "date": "Date",
+      "transaction": "Transaction",
+      "fee": "Fee",
+      "slippage": "Slippage"
+    },
+    "review": {
+      "refreshIn": "Refreshes in {seconds}s",
+      "quoteStale": "Quote may be outdated. Refreshing automatically.",
+      "priceImpact": "Price impact",
+      "caption": "after fees & max. {rate}% slippage",
+      "footerInstant": "≈ {amount} · Arrives instantly",
+      "showMore": "Show more",
+      "showLess": "Show less",
+      "maxSlippage": "Max. slippage",
+      "slippageAuto": "Auto"
+    },
+    "priceImpactGate": {
+      "title": "High price impact: your funds are at risk",
+      "body": "Because of low liquidity on this route, you would receive about {pct} less than the value you put in. This loss is immediate and cannot be undone.",
+      "ack": "I understand I may lose about {pct} of my funds"
+    },
+    "feesTooltip": {
+      "dex": "DEX fee",
+      "network": "Estimated gas (network fee)",
+      "protocol": "Protocol fee",
+      "performance": "Performance fee",
+      "bridge": "Bridge fee",
+      "comingSoon": "Coming soon",
+      "total": "Total"
+    }
+  },
+  "share": {
+    "title": "Share performance",
+    "close": "Close",
+    "periodGroup": "Earnings period",
+    "periods": {
+      "24h": "24H",
+      "7d": "7D",
+      "30d": "30D"
+    },
+    "card": {
+      "kicker": "Yield Receipt",
+      "earnedIn": "in fees & yield",
+      "strategyLabel": "Strategy",
+      "periodLabel": "Period",
+      "period24h": "Last 24 hours",
+      "period7d": "Last 7 days",
+      "period30d": "Last 30 days",
+      "invite": "Invest with me"
+    },
+    "save": "Save",
+    "copyCta": "Copy referral link",
+    "copied": "Link copied",
+    "exportError": "Couldn't create the share image. Please try again.",
+    "message": "{amount} in fees & yield with {strategy} on Pool Party. Invest with me:"
+  },
+  "provisioning": {
+    "poweredByPaybis": "Powered by Paybis",
+    "gas": {
+      "title": "Not enough gas",
+      "subtitle": "You need a little network gas to confirm this transaction. Top up below.",
+      "selectorLabel": "Gas amount",
+      "custom": "Custom",
+      "customPlaceholder": "Amount",
+      "customAria": "Custom gas amount",
+      "conversionNote": "Paid with your USDC and converted to network gas automatically.",
+      "cta": "Add {amount} gas",
+      "dismiss": "Not now",
+      "signStep": "Top up gas",
+      "error": {
+        "belowMin": "Minimum {amount}",
+        "overMax": "Maximum {amount}"
+      },
+      "success": {
+        "title": "Gas added",
+        "body": "Your wallet is topped up and ready."
+      }
+    },
+    "plan": {
+      "title": "Almost there",
+      "titleGasOnly": "One quick step",
+      "subtitle": "We worked out exactly what this needs. We'll handle each step right here, then run your transaction. No detour to Deposit.",
+      "cta": "Confirm & continue",
+      "cancel": "Cancel"
+    },
+    "steps": {
+      "buyUsdc": "Buy USDC",
+      "bridge": "Move to {network}",
+      "swapGas": "Add gas",
+      "swapToken": "Swap to {token}",
+      "op": "Your transaction"
+    },
+    "captions": {
+      "buyUsdc": "Card or Pix",
+      "bridge": "Move funds to the right network",
+      "swapGas": "You choose the amount, paid from USDC",
+      "op": "Your original action"
+    },
+    "exec": {
+      "title": "Setting up your funds",
+      "subtitle": "We'll buy, route and top up automatically. Your transaction runs right after.",
+      "done": "Done",
+      "pending": "Pending"
+    },
+    "opLabel": {
+      "invest": "Invest in {strategy}",
+      "withdraw": "Withdraw from {strategy}",
+      "collect": "Collect from {strategy}",
+      "compound": "Compound in {strategy}",
+      "moveRange": "Move range in {strategy}",
+      "close": "Close {strategy}"
+    }
+  }
+}

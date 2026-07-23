@@ -1,0 +1,76 @@
+{
+  "title": "卡片",
+  "comingSoon": "使用 Pool Party 卡片花用您的餘額。此功能即將推出。",
+  "tabs": {
+    "explore": "探索",
+    "myCards": "我的卡片"
+  },
+  "explore": {
+    "title": "可用卡片",
+    "subtitle": "隨處花用您的加密貨幣",
+    "partnerCount": "{count, plural, other {# 個合作夥伴}}",
+    "cta": {
+      "request": "申請卡片",
+      "activating": "啟用中…",
+      "manage": "管理卡片"
+    },
+    "badge": {
+      "popular": "熱門",
+      "requested": "已申請",
+      "active": "使用中"
+    },
+    "perks": {
+      "cashbackEth3": "最高 3% ETH 回饋",
+      "noAnnualFee": "免年費",
+      "spendStablesEth": "花用 USDC、USDT 或 ETH",
+      "spendFromWallet": "從您的錢包花用",
+      "eurUsdAccounts": "EUR 與 USD 帳戶",
+      "selfCustodial": "鏈上自我託管",
+      "spendMetamask": "從 MetaMask 餘額花用",
+      "cryptoRewards": "加密貨幣獎勵",
+      "globalMastercard": "全球 Mastercard",
+      "cashback1inch": "1INCH 回饋",
+      "noFxFees": "免外幣手續費",
+      "worksWorldwide": "全球通用",
+      "spendEarnRewards": "花用加密貨幣，賺取獎勵",
+      "visaDebitGlobal": "Visa 簽帳卡，全球通用",
+      "cashbackCro5": "最高 5% CRO 回饋",
+      "loungeAccess": "機場貴賓室使用權"
+    }
+  },
+  "myCards": {
+    "title": "您的卡片",
+    "subtitle": "管理您的卡片",
+    "addCard": "新增卡片",
+    "balance": "餘額",
+    "debit": "簽帳",
+    "viewDetails": "查看詳情",
+    "actions": {
+      "topUp": "儲值",
+      "lock": "鎖定卡片",
+      "freeze": "凍結",
+      "settings": "設定"
+    },
+    "transactions": {
+      "title": "交易紀錄",
+      "seeAll": "查看全部",
+      "today": "今天",
+      "yesterday": "昨天"
+    },
+    "empty": {
+      "title": "尚無卡片",
+      "body": "向合作夥伴申請一張卡片，開始花用您的加密貨幣。",
+      "cta": "探索卡片"
+    }
+  },
+  "topUp": {
+    "title": "儲值",
+    "subtitle": "為您的卡片餘額加值",
+    "source": {
+      "wallet": "錢包",
+      "portfolio": "投資組合"
+    },
+    "cta": "儲值",
+    "success": "您的卡片餘額已儲值完成。"
+  }
+}

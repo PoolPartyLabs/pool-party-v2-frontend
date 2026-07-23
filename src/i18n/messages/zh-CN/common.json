@@ -1,0 +1,38 @@
+{
+  "appName": "Pool Party",
+  "tagline": "智能投资，化繁为简。",
+  "loading": "加载中…",
+  "stillLoading": "仍在加载，请稍候…",
+  "updating": "更新中…",
+  "unavailable": "暂不可用",
+  "retry": "重试",
+  "connectWallet": "连接钱包",
+  "disconnect": "断开连接",
+  "save": "保存",
+  "cancel": "取消",
+  "confirm": "确认",
+  "close": "关闭",
+  "viewOnExplorer": "在区块浏览器查看",
+  "error": {
+    "tryAgain": "重试"
+  },
+  "greeting": {
+    "morning": "早上好，{name}",
+    "afternoon": "下午好，{name}",
+    "evening": "晚上好，{name}"
+  },
+  "aprTooltip": "年化利率",
+  "apyTooltip": "年化收益率",
+  "avgAprTooltip": "平均年化利率",
+  "netAprTooltip": "净年化利率",
+  "validation": {
+    "imageTooLargeOrType": "请使用小于 10 MB 的 PNG 或 JPG 文件。"
+  },
+  "unsavedChanges": {
+    "title": "未保存的更改",
+    "body": "您有未保存的更改。要不保存就离开吗？",
+    "leave": "离开",
+    "stay": "继续编辑"
+  },
+  "opensInNewTab": "在新标签页中打开"
+}

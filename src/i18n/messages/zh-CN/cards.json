@@ -1,0 +1,76 @@
+{
+  "title": "卡片",
+  "comingSoon": "用 Pool Party 卡片消费您的余额。此功能即将推出。",
+  "tabs": {
+    "explore": "探索",
+    "myCards": "我的卡片"
+  },
+  "explore": {
+    "title": "可用卡片",
+    "subtitle": "随时随地消费您的加密货币",
+    "partnerCount": "{count, plural, other {# 个合作伙伴}}",
+    "cta": {
+      "request": "申请卡片",
+      "activating": "激活中…",
+      "manage": "管理卡片"
+    },
+    "badge": {
+      "popular": "热门",
+      "requested": "已申请",
+      "active": "已激活"
+    },
+    "perks": {
+      "cashbackEth3": "最高 3% 的 ETH 返现",
+      "noAnnualFee": "无年费",
+      "spendStablesEth": "可消费 USDC、USDT 或 ETH",
+      "spendFromWallet": "从您的钱包消费",
+      "eurUsdAccounts": "EUR 和 USD 账户",
+      "selfCustodial": "链上自托管",
+      "spendMetamask": "从 MetaMask 余额消费",
+      "cryptoRewards": "加密货币奖励",
+      "globalMastercard": "全球 Mastercard",
+      "cashback1inch": "1INCH 返现",
+      "noFxFees": "无外汇手续费",
+      "worksWorldwide": "全球通用",
+      "spendEarnRewards": "消费加密货币，赚取奖励",
+      "visaDebitGlobal": "Visa 借记卡，全球通用",
+      "cashbackCro5": "最高 5% 的 CRO 返现",
+      "loungeAccess": "机场贵宾室权益"
+    }
+  },
+  "myCards": {
+    "title": "您的卡片",
+    "subtitle": "管理您的卡片",
+    "addCard": "添加卡片",
+    "balance": "余额",
+    "debit": "借记卡",
+    "viewDetails": "查看详情",
+    "actions": {
+      "topUp": "充值",
+      "lock": "锁定卡片",
+      "freeze": "冻结",
+      "settings": "设置"
+    },
+    "transactions": {
+      "title": "交易记录",
+      "seeAll": "查看全部",
+      "today": "今天",
+      "yesterday": "昨天"
+    },
+    "empty": {
+      "title": "暂无卡片",
+      "body": "向合作伙伴申请卡片，开始消费您的加密货币。",
+      "cta": "探索卡片"
+    }
+  },
+  "topUp": {
+    "title": "充值",
+    "subtitle": "向您的卡片余额添加资金",
+    "source": {
+      "wallet": "钱包",
+      "portfolio": "投资组合"
+    },
+    "cta": "充值",
+    "success": "您的卡片余额已充值。"
+  }
+}

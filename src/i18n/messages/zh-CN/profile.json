@@ -1,0 +1,191 @@
+{
+  "title": "我的",
+  "settings": "设置",
+  "backToProfile": "返回个人中心",
+  "save": "保存",
+  "saved": "已保存",
+  "cancel": "取消",
+  "connect": "连接",
+  "connected": "已连接",
+  "referral": {
+    "title": "邀请赚奖励",
+    "body": "邀请好友，一起赚取 quacks。",
+    "stat": "{count} 位好友已加入",
+    "code": "您的邀请码",
+    "share": "分享邀请链接",
+    "createCta": "创建你的推荐码"
+  },
+  "groups": {
+    "rewards": "奖励",
+    "account": "账户",
+    "preferences": "偏好设置",
+    "support": "支持",
+    "manager": "管理人"
+  },
+  "rows": {
+    "rubberRush": "Rubber Rush",
+    "rubberRushSub": "赚取 Quacks",
+    "managerIncentiveProgram": "Manager Incentive Program",
+    "managerProfile": "管理人资料",
+    "personalInfo": "个人信息",
+    "linkedSocial": "已关联社交账户",
+    "security": "安全与登录",
+    "alerts": "提醒与通知",
+    "appSettings": "应用设置",
+    "help": "帮助中心",
+    "logout": "退出登录",
+    "managerProfileSub": "您的公开管理人主页"
+  },
+  "personal": {
+    "title": "个人信息",
+    "changePhoto": "更换头像",
+    "sectionPersonal": "个人",
+    "sectionContact": "联系方式",
+    "fullName": "名称",
+    "nameHelper": "不会公开显示，仅用于沟通。可选。",
+    "nameInvalid": "名称至少需要 {min} 个字符。",
+    "displayName": "Handle",
+    "displayNameHelper": "您的公开 Handle，会显示在个人资料中。可选。",
+    "displayNameInvalid": "Handle 至少需要 {min} 个字符。",
+    "country": "国家/地区",
+    "countrySearch": "搜索国家",
+    "countryNoResults": "无结果",
+    "email": "电子邮箱",
+    "emailHelper": "可选。用于账户通知。",
+    "emailInvalid": "请输入有效的电子邮箱。",
+    "avatarUploadFailed": "无法上传照片，请重试。",
+    "saveFailed": "无法保存更改，请重试。",
+    "saving": "保存中…",
+    "phone": "电话",
+    "phoneCountry": "国家/地区代码",
+    "phoneInvalid": "请输入有效的电话号码。",
+    "verified": "已验证",
+    "optional": "（选填）"
+  },
+  "social": {
+    "title": "已关联社交账户",
+    "intro": "关联您的账户即可获得积分、身份、倍数等奖励并接收通知。",
+    "telegram": {
+      "name": "Telegram",
+      "notifOff": "通知已关闭",
+      "body": "关联 Telegram 以接收存入、收益和价格通知。",
+      "connect": "关联 Telegram"
+    },
+    "others": "其他账户",
+    "x": "X",
+    "google": "Google",
+    "discord": "Discord"
+  },
+  "security": {
+    "title": "安全与登录",
+    "signIn": "登录",
+    "changePassword": "更改密码",
+    "faceId": "Face ID",
+    "appLock": "应用锁",
+    "twoFactor": "双重验证",
+    "wallet": "钱包",
+    "exportKey": "导出私钥",
+    "exportWarning": "切勿分享您的私钥。任何拥有它的人都能控制您的资金。",
+    "devices": "设备与活动",
+    "trustedDevices": "受信任的设备",
+    "trustedDevicesValue": "{count} 台设备",
+    "activeSessions": "活跃会话",
+    "loginAlerts": "登录提醒",
+    "comingSoon": "即将推出",
+    "deleteAccount": "删除账户",
+    "deleteConfirm": {
+      "title": "删除账户？",
+      "body": "此操作将永久删除您的账户且无法撤销。请先提现您的资金。",
+      "confirm": "删除账户"
+    },
+    "deleteBlocked": {
+      "title": "请先提现您的资金",
+      "body": "您的账户中仍有资金。请先全部提现，然后才能删除您的账户。此操作无法撤销。",
+      "confirm": "查看投资组合"
+    },
+    "exportConfirm": {
+      "title": "显示私钥？",
+      "body": "任何拥有您私钥的人都能取走您的资金。请仅在私密场所显示它，并且切勿分享。",
+      "hold": "长按以显示"
+    },
+    "exportReveal": {
+      "title": "您的私钥",
+      "warning": "切勿分享。任何拥有它的人都能控制您的资金。",
+      "copy": "复制私钥",
+      "copied": "已复制到剪贴板",
+      "done": "完成"
+    },
+    "exportError": "无法导出您的私钥。请重试。"
+  },
+  "alerts": {
+    "title": "提醒与通知",
+    "delivery": "推送方式",
+    "push": "推送通知",
+    "email": "电子邮件",
+    "telegram": "Telegram",
+    "investing": "投资",
+    "yield": "已获收益",
+    "priceAlerts": "价格提醒",
+    "strategyUpdates": "策略更新",
+    "money": "资金",
+    "deposits": "存入",
+    "withdrawalReady": "提现已就绪",
+    "fromPoolParty": "来自 Pool Party",
+    "rubberRush": "Rubber Rush",
+    "tips": "技巧与指南",
+    "productNews": "产品资讯"
+  },
+  "appSettings": {
+    "title": "应用设置",
+    "general": "通用",
+    "language": "语言",
+    "currency": "货币显示",
+    "currencyValue": "USD ($)",
+    "appearance": "外观",
+    "appearanceValue": "深色",
+    "privacy": "隐私",
+    "shareAnalytics": "共享分析数据",
+    "about": "关于",
+    "version": "应用版本",
+    "versionValue": "2.4.0",
+    "terms": "服务条款",
+    "privacyPolicy": "隐私政策"
+  },
+  "help": {
+    "title": "帮助中心",
+    "searchPlaceholder": "搜索帮助文章",
+    "noResults": "没有符合搜索条件的帮助文章。",
+    "discord": {
+      "title": "加入我们的 Discord",
+      "fastest": "最快",
+      "body": "从团队和社区获取解答。",
+      "open": "打开 Discord"
+    },
+    "docs": {
+      "title": "文档",
+      "body": "指南与操作教程"
+    },
+    "contact": {
+      "title": "联系支持",
+      "body": "support@pool-party.xyz"
+    },
+    "faqTitle": "热门问题",
+    "faq": {
+      "q1": "存入如何运作？",
+      "a1": "用 Pix、银行卡或银行转账充值，资金会转换为 USDC，或直接转入加密货币。资金可立即用于投资。",
+      "q2": "我何时可以提现？",
+      "a2": "随时都可以。普通提现约 2 个工作日到账，免手续费；即时提现立即到账，收取 1% 手续费。",
+      "q3": "有手续费吗？",
+      "a3": "每个策略都会列出其管理费和业绩费，并在您确认前再次显示。存入手续费会在核对时显示。"
+    }
+  },
+  "logout": {
+    "title": "退出登录？",
+    "body": "您需要重新登录才能访问您的账户。",
+    "confirm": "退出登录"
+  },
+  "identity": {
+    "quacks": "{count, number} Quacks",
+    "editProfile": "编辑资料"
+  }
+}

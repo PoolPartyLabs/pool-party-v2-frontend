@@ -1,0 +1,179 @@
+{
+  "rubberRush": {
+    "title": "Rubber Rush",
+    "subtitle": "Verdien Quacks, klim in niveaus, ontgrendel boosts",
+    "back": "Terug",
+    "yourQuacks": "Uw Quacks",
+    "quacksUnit": "Quacks",
+    "topPercent": "Top {percent}%",
+    "managerIncentiveProgramDashboard": "Manager Incentive Program",
+    "sayQuack": "Zeg Quack",
+    "playDuckShoot": "Speel Duck Shoot",
+    "claimRoles": "Rollen claimen",
+    "quacksEarnedToday": "+{count} Quacks vandaag verdiend",
+    "tierProgression": "Niveauvoortgang",
+    "you": "U",
+    "tiers": {
+      "paddler": "Paddler",
+      "swimmer": "Swimmer",
+      "diver": "Diver",
+      "waveRider": "Wave Rider",
+      "partyCaptain": "Party Captain"
+    },
+    "stats": {
+      "totalReferrals": "Totaal aantal verwijzingen",
+      "dailyBoost": "Dagelijkse boost",
+      "quacksToday": "Quacks vandaag",
+      "streak": "Reeks"
+    },
+    "streakProgress": "{days} / {target} dagen",
+    "dailyStreakBoost": "Dagelijkse reeks-boost",
+    "dailyStreakBody": "Quack dagelijks om uw boost te laten groeien. Elke opeenvolgende dag stapelt een vermenigvuldiger. Maximale boost bij 7+ dagen.",
+    "dayShort": "D{n}",
+    "duckShootTitle": "Hoe Duck Shoot werkt",
+    "duckShootBody": "Elke protocoltransactie (storten, opnemen, innen) levert u een Duck Shoot-poging op. Elk schot vermenigvuldigt de Quacks die u vandaag heeft verdiend tot een bonusbeloning.",
+    "referral": {
+      "title": "Uw verwijzing",
+      "code": "Verwijzingscode",
+      "link": "Verwijzingslink",
+      "invitedBy": "Uitgenodigd door",
+      "none": "-",
+      "copyCode": "Verwijzingscode kopiëren",
+      "copyLink": "Verwijzingslink kopiëren",
+      "copied": "Gekopieerd",
+      "emptyBody": "Maak je uitnodigingscode aan om beloningen te verdienen.",
+      "emptyCta": "Code aanmaken"
+    },
+    "referralRewards": {
+      "title": "Verwijzingsbeloningen",
+      "progressLabel": "Voortgang",
+      "nextTier": "Volgend niveau",
+      "body1": "Deel uw verwijzingscode en geef uw doorverwezen gebruikers een <hl>Quacks-boost van 10%</hl>.",
+      "body2": "Wanneer een doorverwezen gebruiker minimaal <hl>50 USDC aan cumulatieve stortingen</hl> bereikt, ontgrendelt u een <hl>levenslange boost van 5%</hl> op uw Quacks. (Deze boost is eenmalig en niet cumulatief.)",
+      "body3": "U verdient ook <hl>10% van de Quacks die uw doorverwezen gebruikers genereren</hl>.",
+      "body4": "Nodig <hl>nog 5 vrienden</hl> uit om een vermenigvuldiger op uw dagelijkse Quacks te ontvangen!",
+      "progress": "{count} / {target} vrienden",
+      "multiplier": "{value}x vermenigvuldiger"
+    },
+    "signing": "Ondertekenen…",
+    "quackedToday": "Vandaag een Quack gedaan! 🦆",
+    "duckShoot": {
+      "title": "Duck Shoot",
+      "triesThisWeek": "{count} pogingen deze week",
+      "tapHelper": "Tik op een eend om te schieten. Elk schot vermenigvuldigt de Quacks van vandaag.",
+      "shoot": "Schieten",
+      "lockedTitle": "Voer transacties uit in het protocol om te spelen. U heeft 0 pogingen deze week.",
+      "makeDeposit": "Doe een storting",
+      "won": "+{percent}%",
+      "boostApplied": "Boost toegepast: +{count} Quacks vandaag!",
+      "shootAgain": "Schiet opnieuw · {count} over",
+      "close": "Klaar",
+      "start": "Starten",
+      "instruction": "Klik ergens om te schieten!",
+      "playAgain": "Opnieuw spelen",
+      "jackpot": "Jackpot!",
+      "boostResult": "Je hebt een boost van {percent}% gekregen!",
+      "oddsItem": "{percent}% ({weight}% kans)",
+      "noTries": "Doe transacties in het protocol om te spelen. Je hebt deze week nog {count, plural, one {# poging} other {# pogingen}}."
+    }
+  },
+  "managerIncentiveProgram": {
+    "title": "Manager Incentive Program",
+    "subtitle": "Maak of promoot strategieën, laat TVL groeien, verdien bonuskosten",
+    "back": "Terug",
+    "label": "Manager Incentive Program · {name}",
+    "revenueThisMonth": "Omzet deze maand",
+    "since": "In het programma sinds {date}",
+    "stats": {
+      "strategiesCreated": "Strategieën gemaakt",
+      "strategiesCreatedSub": "Strategieën die u heeft gemaakt",
+      "managedTvl": "Beheerde TVL",
+      "managedTvlSub": "Gecreëerde + aangebrachte TVL",
+      "referrals": "Verwijzingen",
+      "referralsSub": "Hebben uw code gebruikt",
+      "bonusFees": "Bonuskosten",
+      "bonusFeesSub": "Bovenop de normale kosten"
+    },
+    "tokens": {
+      "title": "{count} tokens worden uitgekeerd",
+      "body": "{count} tokens gaan naar managers in het programma op basis van prestaties. Uw tier, het beheerde TVL (zelf gecreeerd of binnengehaald) en de fees die uw strategieen genereren, bepalen uw aandeel."
+    },
+    "tierCard": {
+      "title": "U bent een Tier {tier}-lid",
+      "range": "{from} – {to}",
+      "body": "Bereik {target} aan beheerde TVL om extra kosten te gaan verdienen bovenop wat u al normaal verdient.",
+      "managed": "{amount} beheerd",
+      "nextTier": "{delta} → {tier}"
+    },
+    "tierTable": {
+      "tier": "Niveau",
+      "minTvl": "Min. TVL",
+      "bonusFees": "Bonuskosten",
+      "rowName": "Tier {n}"
+    },
+    "tierFootnote": "Uw niveau wordt opnieuw berekend telkens wanneer er iets verandert (een inning, een nieuwe positie, een TVL-verschuiving). De dashboardcijfers weerspiegelen het niveau op het moment van elke kostengebeurtenis.",
+    "revenue": {
+      "title": "Omzet",
+      "paidEndOfMonth": "Betaald aan het einde van de maand",
+      "estimatedAccrued": "Geschat opgebouwd deze maand",
+      "feesThisMonth": "Gegenereerde kosten deze maand",
+      "totalFees": "Totaal gegenereerde kosten",
+      "estimatedAccruedInfo": "Bonuskosten die deze maand op uw huidige niveau zijn opgebouwd. Uitbetaald aan het einde van de maand.",
+      "feesThisMonthInfo": "Kosten die uw strategieën deze maand hebben gegenereerd, vóór uw bonusaandeel.",
+      "totalFeesInfo": "Alle fees die uw strategieen sinds uw deelname aan het programma hebben gegenereerd."
+    },
+    "goals": {
+      "title": "Doelen voor de eerste maand",
+      "onboarding": "Onboarding-doelen",
+      "referrals": "{target} verwijzingen",
+      "posts": "Minstens {count} posts",
+      "communityPool": "Strategie gemaakt met community-TVL",
+      "progress": "{current}/{target}",
+      "trackedExternally": "extern bijgehouden"
+    }
+  },
+  "referral": {
+    "invitedByLabel": "Uitgenodigd door {code}",
+    "title": "Uitnodigen & verdienen",
+    "subtitle": "Profiel · Verwijzingen",
+    "back": "Terug",
+    "heroTitle": "Nodig vrienden uit, verdien quacks",
+    "heroBody": "Geef je vrienden een quacks-boost van 10% en verdien 10% van de quacks die zij genereren.",
+    "code": "Uw verwijzingscode",
+    "link": "Uitnodigingslink",
+    "copyCode": "Verwijzingscode kopiëren",
+    "copyLink": "Uitnodigingslink kopiëren",
+    "copied": "Gekopieerd",
+    "share": "Uitnodigingslink delen",
+    "shared": "Link gekopieerd",
+    "stats": {
+      "friendsJoined": "Vrienden aangesloten"
+    },
+    "howItWorks": "Hoe het werkt",
+    "steps": {
+      "shareTitle": "Deel uw link",
+      "shareBody": "Stuur uw uitnodigingslink naar vrienden.",
+      "investTitle": "Ze sluiten zich aan en beleggen",
+      "investBody": "Uw vriend meldt zich aan en begint te beleggen.",
+      "earnTitle": "Jullie verdienen allebei quacks",
+      "earnBody": "Je vriend ontvangt een boost van 10% en jij verdient 10% van hun quacks."
+    },
+    "invites": "Uw uitnodigingen",
+    "investedAmount": "${amount} belegd",
+    "signedUp": "Aangemeld",
+    "status": {
+      "earned": "Beloond",
+      "invested": "Aan het beleggen",
+      "pending": "In behandeling"
+    },
+    "create": {
+      "label": "Kies je code",
+      "placeholder": "JOUWCODE",
+      "warning": "Kies zorgvuldig. De code kan later niet worden gewijzigd.",
+      "cta": "Code aanmaken",
+      "invalid": "Gebruik 6 tot 10 letters of cijfers.",
+      "unavailable": "Deze code is niet beschikbaar. Probeer een andere."
+    },
+    "noInvites": "Nog geen vrienden uitgenodigd."
+  }
+}

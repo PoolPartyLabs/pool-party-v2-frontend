@@ -1,0 +1,611 @@
+{
+  "entry": {
+    "become": "Word beheerder",
+    "manager": "Manager Console"
+  },
+  "loadMore": "Meer laden",
+  "cta": {
+    "createFirst": "Maak uw eerste strategie"
+  },
+  "missing": {
+    "title": "Vul in om door te gaan:"
+  },
+  "become": {
+    "title": "Word beheerder",
+    "subtitle": "Maak uw eigen on-chain strategieën, laat TVL groeien en verdien kosten van de mensen die naast u beleggen.",
+    "note": "Open voor iedereen. Geen aanvraag of goedkeuring nodig.",
+    "how": {
+      "title": "Hoe het werkt",
+      "step1": {
+        "title": "Bouw een strategie",
+        "body": "Kies een Uniswap v3-pool, stel het prijsbereik in en bepaal uw kosten."
+      },
+      "step2": {
+        "title": "Mensen beleggen",
+        "body": "Beleggers storten USDC naast u. De positie wordt samengevoegd en gezamenlijk beheerd."
+      },
+      "step3": {
+        "title": "U verdient kosten",
+        "body": "Verdien een deel van de handelskosten die uw strategie genereert, plus de kosten die u instelt."
+      }
+    }
+  },
+  "empty": {
+    "title": "Nog geen strategieën",
+    "subtitle": "Maak uw eerste Uniswap v3-strategie om kosten te gaan verdienen van de mensen die naast u beleggen."
+  },
+  "builder": {
+    "title": "Nieuwe strategie maken",
+    "back": "Terug naar console",
+    "steps": {
+      "mandate": "Mandaat",
+      "review": "Controleren",
+      "build": "Bouw"
+    },
+    "next": "Volgende: Controleren",
+    "nextBuild": "Volgende: Strategie bouwen",
+    "nextReview": "Volgende: Controleren"
+  },
+  "tabs": {
+    "overview": "Overzicht",
+    "strategies": "Mijn strategieën",
+    "investors": "Beleggers",
+    "earnings": "Inkomsten",
+    "activity": "Activiteit",
+    "profile": "Beheerdersprofiel"
+  },
+  "dashboard": {
+    "subtitle": "Zo presteren uw strategieën",
+    "createNew": "Nieuwe strategie maken",
+    "hideValues": "Waarden verbergen",
+    "totalAum": "Totale AUM",
+    "netInflows": "{amount} netto-instroom · 30d",
+    "chartLabel": "AUM over de afgelopen 30 dagen",
+    "yourStrategies": "Uw strategieën",
+    "kpi": {
+      "yield": "Gegenereerd rendement",
+      "activeInvestors": "Actieve investeerders",
+      "totalInvestorsAllTime": "Totaal aantal beleggers",
+      "apy": "Gem. APR",
+      "activeWoW": "{delta} t.o.v. vorige week",
+      "referrals": "Referrals",
+      "referralsSub": "via uw uitnodigingslink"
+    },
+    "columns": {
+      "strategy": "Strategie",
+      "aum": "AUM",
+      "investors": "Beleggers",
+      "flows": "Stromen · 30d",
+      "apy": "APR"
+    },
+    "share": {
+      "title": "Deel uw strategieën",
+      "body": "Nodig mensen uit om naast u te beleggen.",
+      "cta": "Profiellink delen"
+    },
+    "earnings": {
+      "title": "Verdiende fees",
+      "allTime": "Totaal",
+      "performance": "Performance fees",
+      "entry": "Entry fees",
+      "exit": "Exit fees"
+    },
+    "manage": "Beheren"
+  },
+  "mandate": {
+    "title": "Mandaat",
+    "subtitle": "Het mandaat is de vaste reikwijdte van je strategie: het netwerk en de Uniswap v3-pool waarop deze draait. Zodra je lanceert, is het permanent en kan het niet meer worden gewijzigd.",
+    "identityLabel": "Strategie-identiteit",
+    "nameLabel": "Naam van de strategie",
+    "namePlaceholder": "bijv. Stable Yield",
+    "logoAdd": "Logo toevoegen",
+    "logoChange": "Wijzigen",
+    "logoRemove": "Verwijderen",
+    "logoCropTitle": "Logo aanpassen",
+    "logoUploading": "Logo wordt nog geüpload",
+    "networkLabel": "Netwerk",
+    "poolLabel": "Pool",
+    "tokensLabel": "Tokens",
+    "poolsLabel": "Pools",
+    "secondTokenSearch": "Een tweede token toevoegen (optioneel)",
+    "showMore": "Meer pools tonen",
+    "poolSearch": "Zoek op paar, token of pooladres",
+    "poolEmpty": "Geen pools komen overeen met uw zoekopdracht.",
+    "poolTvl": "TVL",
+    "poolApr": "APR",
+    "tierShare": "{pct}% geselecteerd",
+    "rangeFull": "Volledig",
+    "rangeMin": "Min. prijs",
+    "rangeMax": "Max. prijs",
+    "rangeMinDecrease": "Min. prijs verlagen",
+    "rangeMinIncrease": "Min. prijs verhogen",
+    "rangeMaxDecrease": "Max. prijs verlagen",
+    "rangeMaxIncrease": "Max. prijs verhogen",
+    "rangeCurrent": "Huidig {price}",
+    "rangeFullNote": "Volledig bereik: verdient bij alle prijzen, heeft nooit een Move Range nodig.",
+    "derivedLabel": "Automatisch berekend",
+    "derivedNote": "U stelt deze niet in. Pool Party leidt ze af uit uw pool en bereik.",
+    "riskLabel": "Risico",
+    "categoryLabel": "Categorie",
+    "categoryStable": "Stablecoin-rendement",
+    "categoryBlueChip": "Blue-chip LP",
+    "categoryVolatile": "Volatiele LP",
+    "risk": {
+      "veryConservative": "Zeer behoudend",
+      "conservative": "Behoudend",
+      "moderate": "Gematigd",
+      "aggressive": "Agressief",
+      "veryAggressive": "Zeer agressief"
+    },
+    "descriptionLabel": "Beschrijving",
+    "descriptionOptional": "(optioneel)",
+    "descriptionPlaceholder": "Beschrijf de these van de strategie: wat ze doet en voor wie ze is.",
+    "rangeStatusIn": "In bereik",
+    "tokenHint": "Kies een token om de beschikbare pools te zien.",
+    "poolsLoading": "Pools laden…",
+    "rangeStatusOut": "Buiten bereik",
+    "objectiveLabel": "Doel",
+    "assetLabel": "Activa",
+    "objective": {
+      "income": "Inkomen",
+      "gradualBuy": "Geleidelijk kopen (DCA)",
+      "gradualSell": "Geleidelijk verkopen"
+    },
+    "asset": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme"
+    }
+  },
+  "review": {
+    "title": "Controleren & lanceren",
+    "nameLabel": "Naam van de strategie",
+    "namePlaceholder": "bijv. Stable Yield",
+    "summary": {
+      "title": "Samenvatting",
+      "pool": "Pool",
+      "network": "Netwerk",
+      "protocol": "Protocol",
+      "range": "Bereik",
+      "rangeFull": "Volledig bereik",
+      "risk": "Risico",
+      "category": "Categorie",
+      "feeTier": "Kostenniveau"
+    },
+    "fees": {
+      "title": "Uw kosten",
+      "subtitle": "Voor instap, uitstap en beheer geldt geen limiet. Prestatie is een deel van de LP-kosten die uw strategie genereert.",
+      "entry": "Instapkosten (%)",
+      "exit": "Uitstapkosten (%)",
+      "management": "Beheerkosten (%/jaar)",
+      "performance": "Prestatiekosten (%)",
+      "performanceHint": "{min}–{max}% van de gegenereerde LP-kosten · geen high-water mark",
+      "performanceError": "Prestatiekosten moeten tussen {min}% en {max}% liggen.",
+      "entryInfo": "Eenmalige kosten die bij elke storting in de strategie in rekening worden gebracht.",
+      "exitInfo": "Eenmalige kosten die in rekening worden gebracht wanneer een belegger geld opneemt.",
+      "managementInfo": "Jaarlijkse kosten over het beheerd vermogen, die doorlopend worden opgebouwd.",
+      "performanceInfo": "Een deel van de LP-kosten die de strategie genereert (10–90% in v1). Geen high-water mark."
+    },
+    "access": {
+      "title": "Toegang",
+      "public": "Openbaar",
+      "publicNote": "Iedereen kan ontdekken en beleggen.",
+      "privateSoon": "Toegang via allowlist, NFT en wachtwoord komt binnenkort."
+    },
+    "preview": {
+      "title": "Voorbeeld voor belegger",
+      "est": "Verw. rendement",
+      "yourStrategy": "Uw strategie"
+    },
+    "saveDraft": "Opslaan als concept",
+    "launch": "Strategie lanceren",
+    "verifying": "Uw strategie verifiëren…",
+    "verifyingNote": "Controleren of de pool bestaat en uw parameters geldig zijn.",
+    "live": {
+      "title": "Uw strategie is live",
+      "body": "{name} is geverifieerd en staat nu vermeld voor beleggers.",
+      "cta": "Naar console",
+      "bodyChain": "{name} is nu live on-chain en vermeld voor investeerders."
+    },
+    "draft": {
+      "title": "Concept opgeslagen",
+      "body": "{name} is opgeslagen als concept. Lanceer het op elk moment vanuit uw console.",
+      "cta": "Naar console"
+    },
+    "failed": {
+      "title": "Verificatie mislukt",
+      "body": "We konden deze strategie niet verifiëren. Controleer de pool en parameters en probeer het opnieuw.",
+      "cta": "Terug naar controleren",
+      "bodyChain": "De transactie is mislukt of geweigerd. Er zijn geen fondsen verplaatst. Controleer je saldi en probeer opnieuw."
+    },
+    "seed": {
+      "title": "Startliquiditeit",
+      "subtitle": "Stort de eerste liquiditeit in je pool. Je levert beide tokens.",
+      "subtitleSingle": "Dit bereik heeft alleen {symbol} nodig, stort het om uw pool te starten.",
+      "balance": "Saldo {amount}",
+      "max": "Max",
+      "fundWith": "Financieren met",
+      "insufficient": "Onvoldoende saldo",
+      "loading": "Je saldi worden geladen…",
+      "error": "Kon je saldi niet laden. Vernieuw en probeer opnieuw.",
+      "minUsd": "Het minimum om een strategie te maken is {amount}",
+      "zeroBalance": {
+        "title": "U hebt {token} nodig",
+        "body": "Uw wallet bevat geen {token}. Voeg wat toe om de eerste liquiditeit te leveren en kom terug om te starten.",
+        "deposit": "Storten",
+        "swap": "Swap"
+      }
+    },
+    "creating": "Je strategie wordt aangemaakt…",
+    "creatingNote": "Bevestig de transacties in je wallet. Dit stort je startliquiditeit en maakt de pool on-chain aan.",
+    "nameLengthError": "De naam moet 10–50 tekens bevatten.",
+    "pending": {
+      "badge": "Bevestiging in behandeling"
+    },
+    "metadata": {
+      "failed": "Je pool is on-chain actief, maar de details konden niet worden opgeslagen.",
+      "retry": "Details opnieuw opslaan",
+      "createFailed": "We konden de strategiedetails niet opslaan. Probeer het opnieuw."
+    }
+  },
+  "profile": {
+    "verifiedManager": "Geverifieerde manager",
+    "website": "Website",
+    "strategiesBy": "Strategieën van {name}",
+    "empty": "Nog geen openbare strategieën.",
+    "stats": {
+      "aum": "AUM",
+      "investors": "Investeerders",
+      "strategies": "Strategieën",
+      "avgApy": "Gem. APR"
+    },
+    "edit": "Profiel bewerken",
+    "share": "Profiel delen",
+    "shareCopied": "Link gekopieerd",
+    "externalLink": {
+      "title": "Je verlaat Pool Party",
+      "body": "Deze link gaat naar {domain}, een externe site die we niet hebben geverifieerd. Doorgaan?",
+      "continue": "Doorgaan",
+      "cancel": "Annuleren"
+    }
+  },
+  "operate": {
+    "title": "Live-positie",
+    "feeTier": "{pct} fee-tier",
+    "inRange": "In bereik",
+    "outOfRange": "Buiten bereik",
+    "outOfRangeNote": "Deze positie is buiten bereik en verdient geen fees. Verplaats het bereik om te hervatten.",
+    "range": "Bereik",
+    "currentPrice": "Huidige prijs",
+    "currentRange": "Huidig bereik",
+    "liquidity": "Liquiditeit",
+    "feeApr": "Fee-APR",
+    "uncollected": "Niet-geïnde fees",
+    "gasNote": "U betaalt de netwerk-gas voor deze acties (~{amount}).",
+    "collect": "Fees innen",
+    "compound": "Herbeleggen",
+    "moveRange": "Bereik verplaatsen",
+    "comingSoon": "Binnenkort beschikbaar",
+    "compounded": "{amount} terug in de positie herbelegd.",
+    "error": "Er ging iets mis. Er zijn geen middelen verplaatst.",
+    "empty": "Nog geen live-positie voor deze strategie.",
+    "back": "Terug naar console",
+    "moveRangeDesc": "Stel een nieuw prijsbereik voor de positie in.",
+    "recenter": "Centreren op huidige prijs",
+    "slippageHint": "Annuleert de herbalancering als de prijs meer beweegt dan dit.",
+    "settings": "Instellingen",
+    "applying": "Bereik verplaatsen…",
+    "moved": "Bereik verplaatst naar {min} – {max}.",
+    "movedFull": "Bereik verplaatst naar full range.",
+    "cancel": "Annuleren",
+    "rangeNew": "Nieuw bereik",
+    "invert": "Prijsrichting omkeren ({pair})",
+    "estimatedBalance": "Geschat saldo",
+    "currentBalance": "Huidig saldo",
+    "fee": "Kosten",
+    "networkFee": "Geschat gas (netwerkkosten)",
+    "feesTooltip": {
+      "network": "Geschat gas (netwerkkosten)",
+      "total": "Totaal"
+    },
+    "estTime": "Gesch. tijd",
+    "reviewTitle": "Bevestiging",
+    "reviewConfirm": "Bevestigen en bereik verplaatsen",
+    "reviewBack": "Terug",
+    "reviewAssurance": "De positie wordt verplaatst zonder dat investeerders de fondsen van de strategie hoeven aan te raken."
+  },
+  "status": {
+    "active": "Actief",
+    "paused": "Gepauzeerd",
+    "closed": "Gesloten",
+    "draft": "Concept"
+  },
+  "strategies": {
+    "title": "Beheerde strategieën",
+    "subtitle": "Al je strategieën op één plek. Filter op status en beheer ze stuk voor stuk.",
+    "filterLabel": "Strategieën filteren op status",
+    "filters": {
+      "all": "Alle",
+      "active": "Actief",
+      "paused": "Gepauzeerd",
+      "closed": "Gesloten",
+      "drafts": "Concepten"
+    },
+    "rebalance": "Rebalance aangeraden",
+    "sortLabel": "Sorteren op",
+    "sortDir": {
+      "asc": "Oplopend",
+      "desc": "Aflopend"
+    },
+    "card": {
+      "aum": "AUM",
+      "investors": "Investeerders",
+      "netApy": "Net APR",
+      "fees30d": "Fees · 30 d",
+      "manage": "Beheren",
+      "view": "Bekijken"
+    },
+    "empty": {
+      "all": "Je hebt nog geen strategieën gemaakt.",
+      "active": "Geen actieve strategieën.",
+      "paused": "Geen gepauzeerde strategieën.",
+      "closed": "Geen gesloten strategieën.",
+      "drafts": "Geen concepten. Sla er een op via de strategy builder."
+    }
+  },
+  "manage": {
+    "back": "Alle strategieën",
+    "share": "Deellink kopiëren",
+    "viewOnUniswap": "Bekijken op Uniswap",
+    "shareCopied": "Link gekopieerd",
+    "notFound": "We konden die strategie niet laden. Probeer opnieuw.",
+    "performance": {
+      "title": "AUM",
+      "netApy": "Net APR",
+      "yield": "Gegenereerde yield",
+      "fees": "Jouw fees · totaal",
+      "fees30d": "Jouw fees · 30 d",
+      "chartLabel": "AUM in de gekozen periode",
+      "noHistoryTitle": "Nog geen historie",
+      "noHistoryBody": "De AUM-historie verschijnt na de eerste dagen van activiteit van deze strategie.",
+      "snapshotNote": "De getoonde AUM is de actuele poolwaarde; de grafiek volgt de dagelijkse snapshot, dus beide kunnen iets verschillen.",
+      "periods": {
+        "7d": "7D",
+        "30d": "30D",
+        "90d": "90D",
+        "all": "Alles"
+      }
+    },
+    "range": {
+      "min": "Min. prijs",
+      "max": "Max. prijs",
+      "full": "Full range",
+      "earning": "verdient fees",
+      "notEarning": "verdient geen fees",
+      "outNote": "De prijs is buiten je range geraakt, dus de positie verdient geen fees meer. Verplaats de range om weer te verdienen."
+    },
+    "activity": {
+      "title": "Recente activiteit",
+      "empty": "Nog geen activiteit.",
+      "comingSoon": "Binnenkort beschikbaar.",
+      "types": {
+        "deposit": "Storting",
+        "withdraw": "Opname",
+        "collect": "Fees geïnd",
+        "compound": "Compound",
+        "move_range": "Range verplaatst"
+      }
+    },
+    "operations": {
+      "title": "Operaties",
+      "showInExplore": "Tonen in Strategieënlijst",
+      "showInExploreNote": "Zet deze strategie op de openbare Strategieënpagina. Uit = alleen via link.",
+      "pause": "Stortingen pauzeren",
+      "resume": "Stortingen hervatten",
+      "pauseConfirmTitle": "Stortingen pauzeren?",
+      "pauseConfirmBody": "Nieuwe stortingen stoppen. De positie loopt door en investeerders kunnen nog steeds opnemen.",
+      "resumeConfirmTitle": "Stortingen hervatten?",
+      "resumeConfirmBody": "Investeerders kunnen weer in deze strategie storten.",
+      "collect": "Fees innen",
+      "close": "Strategie sluiten",
+      "closedNote": "Deze strategie is gesloten. Stortingen bevroren; investeerders kunnen altijd opnemen, direct en zonder fee.",
+      "confirm": "Bevestigen",
+      "cancel": "Annuleren",
+      "removeLiquidity": "Opnemen",
+      "addLiquidity": "Liquiditeit toevoegen"
+    },
+    "investors": {
+      "title": "Investeerders",
+      "total": "Totaal",
+      "active": "Actief",
+      "allocated": "Jouw inleg"
+    },
+    "draft": {
+      "title": "Deze strategie is een concept",
+      "body": "Maak de configuratie af in de builder om hem te lanceren voor investeerders.",
+      "cta": "Verder met instellen"
+    },
+    "remove": {
+      "title": "Opnemen",
+      "desc": "Kies hoeveel je uit je strategie wilt opnemen.",
+      "amountLabel": "Bedrag om op te nemen",
+      "unitToggle": "Bedragseenheid",
+      "newAmount": "Nieuw positiebedrag",
+      "closeAlert": "Meer dan 50% opnemen sluit deze strategie, neemt al je liquiditeit op en int opgebouwde fees.",
+      "dustAlert": "Dit zou minder dan $5 overlaten, dus de strategie wordt gesloten.",
+      "remove": "Opnemen",
+      "close": "Strategie sluiten",
+      "busyRemove": "Opnemen…",
+      "busyClose": "Sluiten…",
+      "removeValue": "Je neemt op",
+      "closeFeesNote": "Neemt al je liquiditeit op en int opgebouwde fees.",
+      "investorsNote": "De liquiditeit van alle investeerders wordt opgenomen en is op elk moment beschikbaar om op te nemen.",
+      "confirmTitle": "Deze strategie sluiten?",
+      "confirmBody": "Deze strategie wordt gesloten en de liquiditeit van alle investeerders wordt opgenomen en is op elk moment beschikbaar om op te nemen. Doorgaan?",
+      "confirmContinue": "Doorgaan",
+      "confirmKeep": "Strategie behouden",
+      "poolContents": "Saldo van de strategie",
+      "liquidity": "Liquidity",
+      "fees": "Fees"
+    },
+    "close": {
+      "reviewTitle": "Beoordeling",
+      "back": "Terug",
+      "receiveAs": "Ontvangen als",
+      "receiveTokens": "Tokenpaar",
+      "feesTooltip": {
+        "total": "Totaal"
+      },
+      "footerLocked": "≈ {amount} · Arriveert in {days, plural, one {# dag} other {# dagen}} · per lock-up van de strategie",
+      "cta": "Strategie sluiten",
+      "successTitle": "Strategie gesloten",
+      "successBody": "≈ {amount} onderweg",
+      "done": "Klaar"
+    },
+    "allocation": {
+      "title": "Strategie-allocatie",
+      "protocols": "Protocols",
+      "tokens": "Tokens"
+    },
+    "comments": {
+      "title": "Comments",
+      "empty": "No comments yet.",
+      "private": "Private · Investor & you",
+      "new": "{count} new",
+      "viewAll": "View all ({count})",
+      "invested": "invested {amount}",
+      "managerBadge": "Manager"
+    },
+    "about": "Over deze strategie",
+    "availableToCollect": "Beschikbaar om te innen"
+  },
+  "confirm": {
+    "working": "Bevestigen…",
+    "done": "Klaar",
+    "compoundTitle": "Fees herbeleggen?",
+    "compoundBody": "Herbelegt de niet-geïnde fees van deze positie terug in de positie, zodat die blijft verdienen.",
+    "pauseTitle": "Stortingen pauzeren?",
+    "pauseBody": "Blokkeert nieuwe investeringen in deze strategie tot je hervat. Huidige investeerders behouden hun positie en opnames blijven open.",
+    "closeTitle": "Deze strategie sluiten?",
+    "closeBody": "Wikkelt de positie af en beëindigt de strategie. Investeerders behouden hun fondsen en nemen direct en gratis op. Dit kan niet ongedaan worden gemaakt.",
+    "launchTitle": "Strategie lanceren?",
+    "launchBody": "We verifiëren de pool en je parameters en plaatsen de strategie openbaar. Jij ondertekent de transactie en betaalt de netwerkgas.",
+    "launchPool": "Pool",
+    "launchPerf": "Performancefee",
+    "feePending": "Geschat bij ondertekening"
+  },
+  "profileTab": {
+    "instagram": {
+      "comingSoon": "Binnenkort beschikbaar",
+      "hint": "Instagram-links zijn binnenkort beschikbaar."
+    },
+    "tiktok": {
+      "comingSoon": "Binnenkort beschikbaar",
+      "hint": "TikTok-links zijn binnenkort beschikbaar."
+    },
+    "linkedin": {
+      "comingSoon": "Binnenkort beschikbaar",
+      "hint": "LinkedIn-links zijn binnenkort beschikbaar."
+    },
+    "banner": {
+      "label": "Banner",
+      "change": "Banner wijzigen",
+      "help": "Aanbevolen 2048×1152 (16:9). Houd belangrijke content in de centrale veilige zone. Randen worden bijgesneden op kleinere schermen."
+    },
+    "photo": {
+      "change": "Foto wijzigen",
+      "help": "Vierkant, minimaal 400×400. Opent de bijsnijdtool."
+    },
+    "fields": {
+      "name": "Weergavenaam",
+      "handle": "Handle",
+      "bio": "Beschrijving",
+      "socials": "Sociale links"
+    },
+    "autoList": "Uw openbare strategieën verschijnen automatisch op het profiel.",
+    "save": "Wijzigingen opslaan",
+    "saved": "Profiel opgeslagen",
+    "mediaUploadFailed": "Kan de afbeelding niet uploaden. Probeer het opnieuw.",
+    "saveFailed": "Kan je wijzigingen niet opslaan. Probeer het opnieuw.",
+    "saving": "Opslaan…",
+    "viewPublic": "Openbaar profiel bekijken",
+    "handleLockWarning": "Your handle is permanent. You can't change it after saving.",
+    "crop": {
+      "titleAvatar": "Foto aanpassen",
+      "titleBanner": "Banner aanpassen",
+      "help": "Sleep om te verplaatsen. Houd belangrijke content binnen de veilige zone.",
+      "safeArea": "Veilige zone",
+      "zoom": "Zoom",
+      "apply": "Toepassen",
+      "cancel": "Annuleren"
+    },
+    "validation": {
+      "nameMin": "Display name must be at least {min} characters.",
+      "handleInvalid": "Choose a handle with 3-30 letters, numbers or hyphens.",
+      "handleTaken": "That handle is already taken.",
+      "linkInvalidFor": "Voer een geldige {network}-link in, bijv. {example}",
+      "linkWrongNetwork": "Dat is geen geldige {network}-link. Voeg je {network}-gebruikersnaam toe."
+    },
+    "verify": {
+      "request": "Request verification",
+      "missingTitle": "To request verification",
+      "missingSocial": "Add your X link",
+      "pending": "Verification pending",
+      "pendingHelp": "We're reviewing your request. This usually takes a few days.",
+      "verified": "Verified",
+      "pendingValidation": "Pending validation",
+      "modal": {
+        "title": "Verification requested",
+        "body": "Your verification will be evaluated by our staff. Please send us a message through your registered social media to the Pool Party official profile containing the following code: {code}.",
+        "codeLabel": "Your verification code",
+        "copy": "Copy code",
+        "copied": "Copied"
+      },
+      "reshowError": "Couldn't load your code. Try again."
+    }
+  },
+  "build": {
+    "title": "Bouw je strategie",
+    "subtitle": "Stel je Uniswap v3-liquiditeitspositie samen. Selecteer een node om te configureren.",
+    "paletteMandate": "Uit je mandaat",
+    "paletteBlocks": "Bouwblokken",
+    "paletteNote": "V1 gebruikt een vaste flow met één pool per strategie. Meer blokken volgen later.",
+    "blocks": {
+      "deposit": "Storting",
+      "swap": "Swap",
+      "pool": "LP leveren",
+      "collect": "Fees innen"
+    },
+    "nodes": {
+      "depositSub": "USDC · instap",
+      "swapSub": "USDC → {tokens}",
+      "poolSub": "LP-positie",
+      "collectSub": "Verdiende fees claimen"
+    },
+    "config": {
+      "title": "Node configureren",
+      "pool": "Pool",
+      "feeTier": "Fee tier",
+      "feeTierNote": "Vastgelegd door de gekozen pool.",
+      "allocation": "Allocatie",
+      "allocationNote": "100% van het strategiekapitaal. Één pool per strategie in V1.",
+      "range": "Prijsbereik",
+      "invert": "Prijsrichting omkeren",
+      "composition": "Geschat saldo",
+      "tickNote": "Grenzen sluiten aan op de tick-afstand van de pool.",
+      "rangeError": "Max moet minstens 2 ticks boven min liggen.",
+      "monoAssetWarning": "Dicht bij de huidige prijs. Een kleine beweging kan beide tokens vereisen om te seeden.",
+      "autoMove": "Bereik automatisch verplaatsen",
+      "autoMoveNote": "Herpositioneert wanneer de prijs buiten het bereik komt.",
+      "apply": "Wijzigingen toepassen",
+      "removeNode": "Node verwijderen",
+      "removeNote": "V1-strategieën hebben precies één pool, dus deze node kan niet worden verwijderd.",
+      "depositBody": "Investeerders stappen in met USDC. Stortingen worden automatisch omgezet naar de pool-tokens.",
+      "swapBody": "USDC wordt geswapt naar {tokens} om de samenstelling van de pool te volgen.",
+      "collectBody": "Handelsfees bouwen op in de positie. In ze naar je saldo of herinvesteer ze. Jij betaalt de gas."
+    }
+  },
+  "window30d": "30d"
+}

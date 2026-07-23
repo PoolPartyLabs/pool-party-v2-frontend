@@ -1,0 +1,191 @@
+{
+  "title": "個人檔案",
+  "settings": "設定",
+  "backToProfile": "返回個人檔案",
+  "save": "儲存",
+  "saved": "已儲存",
+  "cancel": "取消",
+  "connect": "連結",
+  "connected": "已連結",
+  "referral": {
+    "title": "邀請好友享獎勵",
+    "body": "邀請好友，一起賺取 quacks。",
+    "stat": "{count} 位好友已加入",
+    "code": "您的邀請碼",
+    "share": "分享邀請連結",
+    "createCta": "建立你的推薦碼"
+  },
+  "groups": {
+    "rewards": "獎勵",
+    "account": "帳戶",
+    "preferences": "偏好設定",
+    "support": "支援",
+    "manager": "管理人"
+  },
+  "rows": {
+    "rubberRush": "Rubber Rush",
+    "rubberRushSub": "賺取 Quacks",
+    "managerIncentiveProgram": "Manager Incentive Program",
+    "managerProfile": "管理人檔案",
+    "personalInfo": "個人資訊",
+    "linkedSocial": "已連結的社群帳戶",
+    "security": "安全與登入",
+    "alerts": "提醒與通知",
+    "appSettings": "應用程式設定",
+    "help": "說明中心",
+    "logout": "登出",
+    "managerProfileSub": "您的公開管理人頁面"
+  },
+  "personal": {
+    "title": "個人資訊",
+    "changePhoto": "變更照片",
+    "sectionPersonal": "個人",
+    "sectionContact": "聯絡方式",
+    "fullName": "名稱",
+    "nameHelper": "不會公開顯示，僅用於溝通。選填。",
+    "nameInvalid": "名稱至少需要 {min} 個字元。",
+    "displayName": "Handle",
+    "displayNameHelper": "您的公開 Handle，會顯示在個人檔案中。選填。",
+    "displayNameInvalid": "Handle 至少需要 {min} 個字元。",
+    "country": "國家／地區",
+    "countrySearch": "搜尋國家",
+    "countryNoResults": "無結果",
+    "email": "電子郵件",
+    "emailHelper": "選填。用於帳戶通知。",
+    "emailInvalid": "請輸入有效的電子郵件。",
+    "avatarUploadFailed": "無法上傳相片，請重試。",
+    "saveFailed": "無法儲存變更，請重試。",
+    "saving": "儲存中…",
+    "phone": "電話",
+    "phoneCountry": "國家/地區代碼",
+    "phoneInvalid": "請輸入有效的電話號碼。",
+    "verified": "已驗證",
+    "optional": "（選填）"
+  },
+  "social": {
+    "title": "已連結的社群帳戶",
+    "intro": "連結您的帳戶即可獲得積分、身分、倍數等獎勵並接收通知。",
+    "telegram": {
+      "name": "Telegram",
+      "notifOff": "通知已關閉",
+      "body": "連結 Telegram 以接收存入、收益與價格通知。",
+      "connect": "連結 Telegram"
+    },
+    "others": "其他帳戶",
+    "x": "X",
+    "google": "Google",
+    "discord": "Discord"
+  },
+  "security": {
+    "title": "安全與登入",
+    "signIn": "登入",
+    "changePassword": "變更密碼",
+    "faceId": "Face ID",
+    "appLock": "應用程式鎖定",
+    "twoFactor": "雙重驗證",
+    "wallet": "錢包",
+    "exportKey": "匯出私鑰",
+    "exportWarning": "絕不分享您的私鑰。任何持有者皆能掌控您的資金。",
+    "devices": "裝置與活動",
+    "trustedDevices": "信任的裝置",
+    "trustedDevicesValue": "{count} 部裝置",
+    "activeSessions": "使用中的工作階段",
+    "loginAlerts": "登入提醒",
+    "comingSoon": "即將推出",
+    "deleteAccount": "刪除帳戶",
+    "deleteConfirm": {
+      "title": "刪除帳戶？",
+      "body": "此操作將永久刪除您的帳戶且無法復原。請先提領您的資金。",
+      "confirm": "刪除帳戶"
+    },
+    "deleteBlocked": {
+      "title": "請先提領您的資金",
+      "body": "您的帳戶仍持有資金。請先全數提領，之後即可刪除帳戶。此操作無法復原。",
+      "confirm": "查看投資組合"
+    },
+    "exportConfirm": {
+      "title": "顯示私鑰？",
+      "body": "任何持有您私鑰的人皆能取走您的資金。請僅在私密處顯示，且絕不分享。",
+      "hold": "長按以顯示"
+    },
+    "exportReveal": {
+      "title": "您的私鑰",
+      "warning": "絕不分享此私鑰。任何持有者皆能掌控您的資金。",
+      "copy": "複製私鑰",
+      "copied": "已複製到剪貼簿",
+      "done": "完成"
+    },
+    "exportError": "無法匯出您的私鑰。請再試一次。"
+  },
+  "alerts": {
+    "title": "提醒與通知",
+    "delivery": "傳送方式",
+    "push": "推播通知",
+    "email": "電子郵件",
+    "telegram": "Telegram",
+    "investing": "投資",
+    "yield": "賺取收益",
+    "priceAlerts": "價格提醒",
+    "strategyUpdates": "策略更新",
+    "money": "資金",
+    "deposits": "存入",
+    "withdrawalReady": "提領已就緒",
+    "fromPoolParty": "來自 Pool Party",
+    "rubberRush": "Rubber Rush",
+    "tips": "秘訣與指南",
+    "productNews": "產品消息"
+  },
+  "appSettings": {
+    "title": "應用程式設定",
+    "general": "一般",
+    "language": "語言",
+    "currency": "幣別顯示",
+    "currencyValue": "USD（$）",
+    "appearance": "外觀",
+    "appearanceValue": "深色",
+    "privacy": "隱私",
+    "shareAnalytics": "分享分析資料",
+    "about": "關於",
+    "version": "應用程式版本",
+    "versionValue": "2.4.0",
+    "terms": "服務條款",
+    "privacyPolicy": "隱私權政策"
+  },
+  "help": {
+    "title": "說明中心",
+    "searchPlaceholder": "搜尋說明文章",
+    "noResults": "沒有符合您搜尋的說明文章。",
+    "discord": {
+      "title": "加入我們的 Discord",
+      "fastest": "最快速",
+      "body": "從團隊與社群獲得解答。",
+      "open": "開啟 Discord"
+    },
+    "docs": {
+      "title": "說明文件",
+      "body": "指南與操作教學"
+    },
+    "contact": {
+      "title": "聯絡客服",
+      "body": "support@pool-party.xyz"
+    },
+    "faqTitle": "熱門問題",
+    "faq": {
+      "q1": "存入如何運作？",
+      "a1": "使用 Pix、信用卡或銀行轉帳加值資金，即會轉換為 USDC，或直接轉入加密貨幣。資金可立即用於投資。",
+      "q2": "我何時可以提領？",
+      "a2": "隨時皆可。一般提領約於 2 個工作天內到帳且免手續費；即時提領可立即到帳，需收取 1% 手續費。",
+      "q3": "是否有手續費？",
+      "a3": "每項策略皆會列出其管理費與績效費，並於您確認前再次顯示。存入手續費會於確認頁顯示。"
+    }
+  },
+  "logout": {
+    "title": "登出？",
+    "body": "您需要再次登入才能存取您的帳戶。",
+    "confirm": "登出"
+  },
+  "identity": {
+    "quacks": "{count, number} Quacks",
+    "editProfile": "編輯個人檔案"
+  }
+}

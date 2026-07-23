@@ -1,0 +1,71 @@
+{
+  "hideValues": "값 숨기기",
+  "portfolioValue": "포트폴리오 가치",
+  "estimatedTooltip": "추정치입니다. 그래프는 실시간으로 업데이트되지 않으며 하루에 몇 번만 업데이트됩니다.",
+  "earnedToday": "오늘 {amount} 수익",
+  "invested": "투자액",
+  "totalYield": "총 수익",
+  "thisMonth": "지난 30일",
+  "avgApy": "평균 APR",
+  "periods": {
+    "day": "1D",
+    "week": "1W",
+    "month": "1M",
+    "sixMonth": "6M",
+    "all": "전체"
+  },
+  "yourPositions": "내 포지션",
+  "availableInvestments": "투자 가능 상품",
+  "discover": "전략 둘러보기",
+  "seeAll": "전체 보기",
+  "exploreMore": "전체 보기",
+  "manage": "관리",
+  "allocationByRisk": "위험별 자산 배분",
+  "referral": {
+    "title": "초대하고 보상받기",
+    "body": "친구를 초대하고 함께 quacks를 받으세요.",
+    "stat": "친구 {count}명 가입",
+    "copy": "코드 복사",
+    "copyLink": "초대 링크 복사",
+    "copied": "복사됨!",
+    "share": "초대 링크 공유",
+    "createCta": "추천 코드 만들기"
+  },
+  "referralWelcome": {
+    "title": "Pool Party에 오신 것을 환영합니다! 🎉",
+    "body": "친구의 초대로 참여했습니다. 함께 quacks를 모으려면 투자를 시작하세요.",
+    "dismiss": "닫기"
+  },
+  "columns": {
+    "strategy": "전략",
+    "risk": "위험",
+    "invested": "투자액",
+    "value": "현재 가치",
+    "yield": "수익",
+    "rate": "수익률"
+  },
+  "empty": {
+    "zero": {
+      "eyebrow": "시작하기",
+      "title": "내 돈을 일하게 하세요",
+      "subtitle": "간단한 몇 단계로 자산을 운용해 보세요.",
+      "cta": "자금 추가하고 시작하기",
+      "secondary": "전략 먼저 둘러보기"
+    },
+    "funded": {
+      "available": "투자 가능 금액",
+      "availableHint": "바로 운용할 수 있어요",
+      "title": "투자할 준비가 됐어요",
+      "subtitle": "전략을 선택하고 수익을 시작하세요.",
+      "stepDone": "완료 · {amount} 추가됨",
+      "cta": "전략 선택하기",
+      "secondary": "이용 방법 보기"
+    },
+    "path": {
+      "heading": "수익을 향한 나의 여정",
+      "step1": { "title": "자금 추가", "body": "$10부터 시작할 수 있어요" },
+      "step2": { "title": "전략 선택", "body": "위험도별로 선별된 전략" },
+      "step3": { "title": "수익 창출", "body": "매일 수익을 추적하세요" }
+    }
+  }
+}

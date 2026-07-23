@@ -1,0 +1,488 @@
+{
+  "sign": {
+    "continueInWallet": "Continúa en tu billetera",
+    "stepOf": "Paso {current} de {total}",
+    "whyTitle": "¿Qué estoy firmando?",
+    "whyBody": "Las firmas prueban que autorizas esta acción. Ocurren en tu billetera y por sí solas nunca mueven tus fondos.",
+    "steps": {
+      "approve": "Aprobar {token}",
+      "sign": "Firma el mensaje en tu billetera",
+      "confirmInvest": "Confirmar depósito",
+      "confirmWithdraw": "Confirmar retiro",
+      "confirmCollect": "Confirmar cobro",
+      "confirmCompound": "Confirmar reinversión",
+      "permit": "Firma el permiso en tu billetera",
+      "confirmAddLiquidity": "Confirmar añadir liquidez",
+      "confirmRemoveLiquidity": "Confirmar retiro",
+      "confirmMoveRange": "Confirmar rebalanceo",
+      "confirmClosePosition": "Confirmar cierre",
+      "build": "Preparando transacción",
+      "skipped": "Ya aprobado"
+    },
+    "explain": {
+      "approve": {
+        "name": "Aprobación del token",
+        "body": "Permite que Pool Party mueva tu {token} para esta transacción. Una aprobación nunca mueve fondos por sí sola. La transacción real ocurre en un paso posterior."
+      },
+      "permit": {
+        "name": "Firma Permit2",
+        "body": "Una firma sin gas que autoriza esta transferencia. Es un mensaje, no una transacción, así que no tiene costo de red y nada se mueve hasta que confirmes."
+      },
+      "confirm": {
+        "name": "Confirmación final",
+        "body": "El último paso. Se ejecuta en la red y realmente lleva a cabo la transacción. Este es el único paso que puede tener un pequeño costo de red."
+      },
+      "build": {
+        "name": "Preparando transacción",
+        "body": "Pool Party está calculando los importes y el costo de red para esta transacción. Aún no se firma ni se envía nada."
+      }
+    }
+  },
+  "card": {
+    "by": "por {manager}",
+    "min": "Mín.",
+    "estReturn": "Rendimiento est.",
+    "viewDetails": "Ver detalles",
+    "invest": "Invertir"
+  },
+  "risk": {
+    "level1": "Muy conservador",
+    "level2": "Conservador",
+    "level3": "Moderado",
+    "level4": "Agresivo",
+    "level5": "Muy agresivo"
+  },
+  "explore": {
+    "title": "Estrategias",
+    "subtitle": "Estrategias gestionadas para invertir",
+    "searchPlaceholder": "Buscar por nombre, gestor, token o dirección",
+    "browseByRisk": "Explorar por riesgo",
+    "allRisks": "Todas",
+    "browseByType": "Explorar por tipo",
+    "allTypes": "Todos",
+    "types": {
+      "yield": "Rendimiento",
+      "trading": "Trading",
+      "index": "Índice",
+      "marketNeutral": "Neutral al mercado"
+    },
+    "browseByCategory": "Explorar por categoría",
+    "allCategories": "Todos",
+    "categorySelected": "{count} seleccionadas",
+    "categories": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme coins"
+    },
+    "count": "{count, plural, =0 {Sin estrategias} =1 {# estrategia} other {# estrategias}}",
+    "owned": "Gestionada",
+    "invested": "Invertida",
+    "noResults": "Ninguna estrategia coincide con tu búsqueda.",
+    "clearFilters": "Borrar filtros",
+    "sortLabel": "Ordenar por",
+    "sortDir": {
+      "asc": "Ascendente",
+      "desc": "Descendente"
+    },
+    "loadMore": "Cargar más",
+    "loadingMore": "Cargando",
+    "empty": {
+      "title": "Aún no hay estrategias",
+      "body": "Las estrategias aparecerán aquí cuando estén disponibles."
+    },
+    "columns": {
+      "strategy": "Estrategia",
+      "risk": "Riesgo",
+      "min": "Mín.",
+      "tvl": "TVL",
+      "investors": "Inversores",
+      "return": "Rendimiento est.",
+      "action": "Acción"
+    }
+  },
+  "detail": {
+    "back": "Volver",
+    "performance": "Valor del pool",
+    "periods": {
+      "week": "1S",
+      "month": "1M",
+      "quarter": "3M",
+      "year": "1A",
+      "all": "Todo"
+    },
+    "chart": {
+      "noHistoryTitle": "Aún sin historial",
+      "noHistoryBody": "El historial de valor de esta estrategia aparecerá tras sus primeros días de actividad."
+    },
+    "metrics": {
+      "min": "Mínimo",
+      "tvl": "TVL",
+      "lockup": "Bloqueo",
+      "performanceFee": "Comisión de rendimiento"
+    },
+    "lockup": {
+      "none": "Ninguno",
+      "days": "{days, plural, =1 {# día} other {# días}}"
+    },
+    "about": "Acerca de",
+    "composition": "Composición",
+    "mandate": {
+      "title": "Mandato de inversión",
+      "assets": "Exposición máx. por activo",
+      "protocols": "Exposición máx. por protocolo",
+      "networks": "Redes"
+    },
+    "riskLimits": {
+      "title": "Límites de riesgo y términos",
+      "maxDrawdown": "Caída máxima",
+      "leverage": "Apalancamiento",
+      "rebalancing": "Rebalanceo",
+      "liquidity": "Liquidez",
+      "strategyType": "Tipo de estrategia",
+      "benchmark": "Referencia",
+      "custody": "Custodia"
+    },
+    "fees": {
+      "title": "Comisiones",
+      "management": "Gestión",
+      "performance": "Rendimiento",
+      "none": "Sin comisión"
+    },
+    "managerVerified": "Gestor verificado",
+    "yourPosition": {
+      "title": "Tu posición",
+      "active": "Activa",
+      "paused": "Pausada",
+      "invested": "Invertido",
+      "currentValue": "Valor actual",
+      "totalYield": "Rendimiento total",
+      "available": "Disponible para cobrar",
+      "closed": "Cerrada",
+      "finalValue": "Valor final",
+      "totalYieldRealized": "Rendimiento total (realizado)",
+      "availableToWithdraw": "Disponible para retirar"
+    },
+    "actions": {
+      "invest": "Invertir",
+      "investMore": "Invertir más",
+      "collectAmount": "Cobrar {amount}",
+      "compound": "Reinvertir",
+      "compoundComingSoon": "La reinversión llegará pronto. Aún puedes cobrar tu rendimiento.",
+      "withdraw": "Retirar",
+      "share": "Compartir"
+    },
+    "paused": {
+      "title": "{name} está pausada",
+      "body": "Esta estrategia no acepta nuevas inversiones por ahora. Tu posición está segura y sigue generando. Aún puedes cobrar o retirar.",
+      "notify": "Avísame cuando reabra",
+      "notified": "Te avisaremos",
+      "viewOthers": "Ver otras estrategias"
+    },
+    "closed": {
+      "title": "Estrategia cerrada",
+      "body": "{manager} cerró esta estrategia. Tus fondos están listos para retirar."
+    },
+    "viewProfile": "View profile",
+    "managerRole": "Manager",
+    "managerAllocation": "Asignación del gestor",
+    "liquidityPool": "Pool de liquidez",
+    "noData": "Aún no disponible"
+  },
+  "invest": {
+    "title": "Invertir",
+    "amountLabel": "Importe a invertir",
+    "balance": "Saldo {amount}",
+    "max": "Máx",
+    "belowMin": "La inversión mínima es {min}",
+    "needMore": "Necesitas {amount} más",
+    "cta": {
+      "invest": "Invertir",
+      "deposit": "Depositar e invertir"
+    },
+    "confirm": {
+      "title": "Confirmar y firmar",
+      "youInvest": "Inviertes",
+      "approxUsd": "≈ {usd}",
+      "estYield": "Rendimiento anual est.",
+      "fee": "Tarifa est.",
+      "deployAtLeast": "Invertirá al menos",
+      "approxValue": "{amount} ({usd})",
+      "lockup": "Bloqueo",
+      "cta": "Confirmar y firmar",
+      "zapNote": "Tu USDC se convierte automáticamente en los dos tokens de la pool ({token0}/{token1}). Al retirar, se convierten de vuelta a USDC.",
+      "back": "Volver"
+    },
+    "review": {
+      "title": "Revisar",
+      "cta": "Confirmar inversión"
+    },
+    "success": {
+      "title": "Inversión confirmada",
+      "body": "{amount} ahora está invertido en {name}.",
+      "partial": "Inversión parcial. Agregamos {deployed} de su {requested}. El resto no pudo añadirse debido al movimiento del mercado y al slippage, y quedó en su billetera."
+    },
+    "settings": {
+      "title": "Ajustes de la transacción",
+      "slippageLabel": "Slippage máximo",
+      "slippageHint": "Cancela la transacción si el precio varía más que esto antes de confirmar.",
+      "slippageHigh": "Slippage alto",
+      "slippageVeryHigh": "Slippage muy alto",
+      "slippageWarningBody": "Esto puede resultar en una operación desfavorable. Intente reducir el slippage en la configuración.",
+      "custom": "Personalizado",
+      "deadlineLabel": "Plazo de la transacción",
+      "deadlineHint": "Los plazos personalizados llegarán pronto. Por ahora, las transacciones usan un plazo estándar.",
+      "deadlineUnit": "min",
+      "receiveAsLabel": "Recibir como",
+      "receiveAsHint": "El activo que recibirá. USDC por defecto; puede elegir los tokens actualmente en la estrategia.",
+      "receiveAsFixedHint": "El activo que recibirá. Fijo para esta transacción.",
+      "done": "Hecho"
+    },
+    "receipt": {
+      "amountInvested": "Importe invertido"
+    }
+  },
+  "collect": {
+    "title": "Cobrar rendimiento",
+    "available": "Disponible para cobrar",
+    "destination": "Va a tu saldo en USDC",
+    "destinationPair": "Va a tu billetera como {token0} y {token1}",
+    "amount": "Importe solicitado",
+    "youReceive": "Recibes",
+    "fee": "Tarifa est.",
+    "cta": "Cobrar {amount}",
+    "success": {
+      "title": "Rendimiento cobrado"
+    },
+    "receipt": {
+      "amountReceived": "Importe recibido"
+    },
+    "minNotice": "El mínimo para recolectar es {amount}."
+  },
+  "compound": {
+    "title": "Reinvertir rendimiento",
+    "available": "Disponible para reinvertir",
+    "approxUsd": "≈ {usd}",
+    "approxValue": "{amount} ({usd})",
+    "fee": "Tarifa est.",
+    "feesTooltip": {
+      "dex": "Comisión DEX",
+      "protocol": "Comisión del protocolo",
+      "network": "Gas estimado (comisión de red)",
+      "total": "Total"
+    },
+    "atLeast": "Reinvertirá al menos",
+    "note": "Reinvertir aplica tu rendimiento de vuelta en la estrategia, para que también empiece a generar.",
+    "cta": "Reinvertir {amount}",
+    "success": {
+      "title": "Rendimiento reinvertido",
+      "body": "{amount} se reinvirtió en {name}."
+    }
+  },
+  "withdraw": {
+    "title": "Retirar",
+    "amountLabel": "Importe a retirar",
+    "invested": "Invertido {amount}",
+    "max": "Máx",
+    "chooseMethod": "¿Cómo quieres retirar?",
+    "regular": {
+      "title": "Retiro normal",
+      "desc": "Llega en unos 2 días hábiles",
+      "fee": "Sin comisión"
+    },
+    "instant": {
+      "title": "Retiro instantáneo",
+      "desc": "Llega al instante",
+      "fee": "Comisión de {fee}"
+    },
+    "lockedNote": "Retiro instantáneo no disponible. Esta estrategia tiene un bloqueo de {days} días.",
+    "continue": "Continuar",
+    "unitToggle": "Unidad del importe",
+    "confirm": {
+      "stillEarning": "Tu saldo restante sigue generando."
+    },
+    "review": {
+      "title": "Revisar",
+      "back": "Volver",
+      "amountRequested": "Importe solicitado",
+      "feesAvailable": "Comisiones disponibles para cobrar",
+      "estFees": "Tarifa est.",
+      "footerLocked": "≈ {amount} · Llega en {days, plural, one {# día} other {# días}} · según el bloqueo de la estrategia",
+      "footerRegular": "≈ {amount} · Llega en unos 2 días hábiles",
+      "cta": "Confirmar retiro"
+    },
+    "success": {
+      "title": "Retiro iniciado",
+      "body": "{amount} va en camino a tu saldo.",
+      "completeTitle": "Retiro exitoso",
+      "completeBody": "{amount} ha sido enviado a su saldo.",
+      "completeBodyPair": "{amount} se envió a tu billetera como {token0} y {token1}."
+    },
+    "closed": {
+      "fullBalance": "Retirando todo tu saldo",
+      "instant": "Al instante",
+      "equals": "= {amount}",
+      "date": "Fecha",
+      "sentInstant": "{amount} enviado a tu cuenta · al instante",
+      "completeTitle": "Retiro completado"
+    },
+    "dustAlert": "Retirar esta cantidad dejaría menos de {floor}, así que se retirará todo tu saldo.",
+    "ownedCloseAlert": "Retirar todo tu saldo cierra esta estrategia y cobra los fees acumulados.",
+    "receipt": {
+      "amountReceived": "Importe recibido",
+      "feesCollected": "Comisiones recolectadas",
+      "feesCollectedIncluded": "Comisiones recolectadas (incluidas)",
+      "totalReceived": "Total recibido"
+    }
+  },
+  "flow": {
+    "processing": "Procesando…",
+    "processingBody": "Esto suele tardar unos segundos.",
+    "done": "Listo",
+    "viewPosition": "Ver posición",
+    "error": {
+      "title": "Algo salió mal",
+      "body": "Tu transacción no se completó y no se movió ningún fondo.",
+      "retry": "Intentar de nuevo",
+      "help": "Obtener ayuda en Discord",
+      "copy": "Copiar error",
+      "details": "Detalles del error",
+      "codeLabel": "Código",
+      "browserLabel": "Navegador",
+      "walletLabel": "Wallet",
+      "osLabel": "Sistema",
+      "languageLabel": "Idioma",
+      "walletEmbedded": "Privy · Integrada",
+      "walletExternal": "Wallet externa",
+      "copied": "Copiado",
+      "kinds": {
+        "slippage": "El precio se movió más allá de tu slippage máximo antes de que la transacción confirmara. Aumenta el slippage máximo en la configuración o inténtalo de nuevo más tarde.",
+        "deadlineExpired": "La transacción no se confirmó dentro del plazo y fue cancelada. Inténtalo de nuevo.",
+        "insufficientFunds": "Tu billetera no tiene fondos suficientes para cubrir esta transacción y la tarifa de red.",
+        "userRejected": "Rechazaste la solicitud en tu billetera. No se movieron fondos.",
+        "unauthorized": "Esta billetera no tiene permiso para realizar esta operación."
+      }
+    },
+    "slippage": {
+      "retryNotice": "El precio superó tu slippage máximo ({value}%). Reintentando al precio actual.",
+      "errorTitle": "El precio se movió demasiado",
+      "errorBody": "El precio superó tu slippage máximo ({value}%) otra vez. Súbelo en los ajustes o inténtalo más tarde."
+    },
+    "receipt": {
+      "strategy": "Estrategia",
+      "amount": "Importe",
+      "date": "Fecha",
+      "transaction": "Transacción",
+      "fee": "Comisión",
+      "slippage": "Slippage"
+    },
+    "review": {
+      "refreshIn": "Se actualiza en {seconds}s",
+      "quoteStale": "La cotización puede estar desactualizada. Se actualizará automáticamente.",
+      "priceImpact": "Impacto en el precio",
+      "caption": "después de comisiones y máx. {rate}% de slippage",
+      "footerInstant": "≈ {amount} · Llega al instante",
+      "showMore": "Mostrar más",
+      "showLess": "Mostrar menos",
+      "maxSlippage": "Slippage máximo",
+      "slippageAuto": "Auto"
+    },
+    "priceImpactGate": {
+      "title": "Impacto de precio alto: tus fondos están en riesgo",
+      "body": "Debido a la baja liquidez en esta ruta, recibirías aproximadamente {pct} menos que el valor que aportas. Esta pérdida es inmediata y no se puede deshacer.",
+      "ack": "Entiendo que puedo perder aproximadamente {pct} de mis fondos"
+    },
+    "feesTooltip": {
+      "dex": "Comisión DEX",
+      "network": "Gas estimado (comisión de red)",
+      "protocol": "Comisión del protocolo",
+      "performance": "Comisión de rendimiento",
+      "bridge": "Comisión de bridge",
+      "comingSoon": "Próximamente",
+      "total": "Total"
+    }
+  },
+  "share": {
+    "title": "Compartir rendimiento",
+    "close": "Cerrar",
+    "periodGroup": "Período de ganancias",
+    "periods": {
+      "24h": "24H",
+      "7d": "7D",
+      "30d": "30D"
+    },
+    "card": {
+      "kicker": "Yield Receipt",
+      "earnedIn": "en comisiones y yield",
+      "strategyLabel": "Estrategia",
+      "periodLabel": "Período",
+      "period24h": "Últimas 24 horas",
+      "period7d": "Últimos 7 días",
+      "period30d": "Últimos 30 días",
+      "invite": "Invierte conmigo"
+    },
+    "save": "Guardar",
+    "copyCta": "Copiar enlace de referido",
+    "copied": "Enlace copiado",
+    "exportError": "No se pudo crear la imagen para compartir. Inténtalo de nuevo.",
+    "message": "{amount} en comisiones y yield con {strategy} en Pool Party. Invierte conmigo:"
+  },
+  "provisioning": {
+    "poweredByPaybis": "Desarrollado por Paybis",
+    "gas": {
+      "title": "Gas insuficiente",
+      "subtitle": "Necesitas un poco de gas de red para confirmar esta transacción. Recargue a continuación.",
+      "selectorLabel": "Cantidad de gas",
+      "custom": "Personalizado",
+      "customPlaceholder": "Importe",
+      "customAria": "Cantidad de gas personalizada",
+      "conversionNote": "Se paga con su USDC y se convierte automáticamente en gas de red.",
+      "cta": "Agregar {amount} de gas",
+      "dismiss": "Ahora no",
+      "signStep": "Recargar gas",
+      "error": {
+        "belowMin": "Mínimo {amount}",
+        "overMax": "Máximo {amount}"
+      },
+      "success": {
+        "title": "Gas agregado",
+        "body": "Su billetera está recargada y lista."
+      }
+    },
+    "plan": {
+      "title": "Ya casi",
+      "titleGasOnly": "Un paso rápido",
+      "subtitle": "Calculamos exactamente lo que se necesita. Nos encargamos de cada paso aquí mismo y luego ejecutamos su transacción. Sin desvíos a Depósito.",
+      "cta": "Confirmar y continuar",
+      "cancel": "Cancelar"
+    },
+    "steps": {
+      "buyUsdc": "Comprar USDC",
+      "bridge": "Mover a {network}",
+      "swapGas": "Agregar gas",
+      "swapToken": "Cambiar a {token}",
+      "op": "Su transacción"
+    },
+    "captions": {
+      "buyUsdc": "Tarjeta o transferencia local",
+      "bridge": "Mover fondos a la red correcta",
+      "swapGas": "Usted elige el importe, pagado con USDC",
+      "op": "Su acción original"
+    },
+    "exec": {
+      "title": "Preparando sus fondos",
+      "subtitle": "Compramos, enrutamos y completamos automáticamente. Su transacción se ejecuta justo después.",
+      "done": "Listo",
+      "pending": "Pendiente"
+    },
+    "opLabel": {
+      "invest": "Invertir en {strategy}",
+      "withdraw": "Retirar de {strategy}",
+      "collect": "Cobrar de {strategy}",
+      "compound": "Reinvertir en {strategy}",
+      "moveRange": "Mover rango en {strategy}",
+      "close": "Cerrar {strategy}"
+    }
+  }
+}

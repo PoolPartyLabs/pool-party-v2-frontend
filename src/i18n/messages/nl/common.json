@@ -1,0 +1,38 @@
+{
+  "appName": "Pool Party",
+  "tagline": "Slim beleggen, eenvoudig gemaakt.",
+  "loading": "Laden…",
+  "stillLoading": "Nog aan het laden, momentje…",
+  "updating": "Bijwerken…",
+  "unavailable": "Nog niet beschikbaar",
+  "retry": "Opnieuw proberen",
+  "connectWallet": "Wallet verbinden",
+  "disconnect": "Verbinding verbreken",
+  "save": "Opslaan",
+  "cancel": "Annuleren",
+  "confirm": "Bevestigen",
+  "close": "Sluiten",
+  "viewOnExplorer": "Bekijk in explorer",
+  "error": {
+    "tryAgain": "Opnieuw proberen"
+  },
+  "greeting": {
+    "morning": "Goedemorgen, {name}",
+    "afternoon": "Goedemiddag, {name}",
+    "evening": "Goedenavond, {name}"
+  },
+  "aprTooltip": "Jaarlijks percentage",
+  "apyTooltip": "Jaarlijks rendementspercentage",
+  "avgAprTooltip": "Gemiddeld jaarlijks percentage",
+  "netAprTooltip": "Netto jaarlijks percentage",
+  "validation": {
+    "imageTooLargeOrType": "Gebruik een PNG of JPG kleiner dan 10 MB."
+  },
+  "unsavedChanges": {
+    "title": "Niet-opgeslagen wijzigingen",
+    "body": "Je hebt niet-opgeslagen wijzigingen. Weggaan zonder op te slaan?",
+    "leave": "Weggaan",
+    "stay": "Blijven bewerken"
+  },
+  "opensInNewTab": "Opent in een nieuw tabblad"
+}

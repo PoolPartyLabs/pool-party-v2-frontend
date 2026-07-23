@@ -1,0 +1,91 @@
+{
+  "title": "存入",
+  "addLabel": "您正在加值",
+  "receiveEstimate": "≈ {amount} USDC",
+  "securedByPaybis": "由 Paybis 保護",
+  "continue": "繼續",
+  "minHint": "最低存入金額為 {min}",
+  "maxHint": "最高存入金額為 {max}",
+  "cryptoPill": "存入加密貨幣",
+  "investContext": "投資 {name} · 加值 {amount}",
+  "investContextGeneric": "新增{amount}以完成本次投資",
+  "cryptoAside": {
+    "title": "已經持有加密貨幣？",
+    "body": "直接轉入 USDC，免手續費。"
+  },
+  "howItWorks": {
+    "title": "運作方式",
+    "step1": "輸入金額並選擇付款方式。",
+    "step2": "隨心支付：Apple Pay、Google Pay、銀行卡、轉帳，或 80 多個國家的即時本地支付。",
+    "step3": "您的 USDC 將入帳，隨時可供投資。"
+  },
+  "method": {
+    "title": "付款方式",
+    "continue": "繼續",
+    "pix": {
+      "name": "Pix",
+      "meta": "即時"
+    },
+    "card": {
+      "name": "信用卡",
+      "meta": "Visa、Mastercard"
+    },
+    "applePay": {
+      "name": "Apple Pay",
+      "meta": "即時"
+    },
+    "bank": {
+      "name": "銀行轉帳",
+      "meta": "1–2 個工作天"
+    }
+  },
+  "review": {
+    "title": "確認",
+    "youReceive": "您將收到",
+    "youPay": "您支付",
+    "fee": "Paybis 手續費",
+    "feeNote": "{method} · {pct}",
+    "belowNeed": "本次投資至少需要{amount}。",
+    "exchangeRate": "匯率",
+    "rateValue": "1 USDC ≈ $1.00",
+    "payingWith": "以 {method} 付款",
+    "change": "變更",
+    "confirm": "確認並以 {method} 付款",
+    "poweredBy": "技術支援：Paybis"
+  },
+  "success": {
+    "title": "存入已確認",
+    "subtitle": "您的資金已可供投資",
+    "amount": "金額",
+    "received": "已收到",
+    "method": "方式",
+    "date": "日期",
+    "investNow": "立即投資",
+    "backHome": "返回首頁"
+  },
+  "crypto": {
+    "title": "存入加密貨幣",
+    "scanToDeposit": "掃描以存入",
+    "addressLabel": "您的 USDC 地址",
+    "copy": "複製",
+    "copied": "已複製",
+    "share": "分享地址",
+    "asset": "USD Coin · USDC",
+    "sent": "我已傳送資金",
+    "waitingTitle": "等待您的存入",
+    "waitingBody": "我們會自動偵測。您無需執行任何操作。",
+    "viewAddress": "查看地址與 QR 碼",
+    "receivedTitle": "已收到存入",
+    "added": "已加入 {amount} USDC",
+    "source": "來源",
+    "sourceValue": "外部錢包",
+    "received": "已收到",
+    "date": "日期",
+    "noWallet": "連接您的錢包以查看您的存入地址。",
+    "networkTitle": "選擇網路",
+    "networkSubtitle": "僅在此處選擇的網路上發送 USDC。在其他任何網路上發送可能導致資金永久遺失。",
+    "networkContinue": "繼續",
+    "changeNetwork": "變更網路",
+    "networkWarning": "僅在 {network} 網路上發送 USDC。在其他網路上發送可能導致永久遺失。"
+  }
+}

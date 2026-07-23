@@ -1,0 +1,78 @@
+{
+  "footer": {
+    "links": {
+      "terms": "서비스 이용약관",
+      "privacy": "개인정보 처리방침",
+      "risk": "위험 고지",
+      "help": "고객 센터"
+    },
+    "copyright": "© 2026 Pool Party. All rights reserved. 투자에는 원금 손실 가능성을 포함한 위험이 따릅니다.",
+    "developedBy": "Developed by Pool Party Labs"
+  },
+  "rewards": {
+    "ariaLabel": "{count} Quacks, Rubber Rush 리워드 열기",
+    "tooltip": "Pool Party에 <deposit>$1</deposit>을 입금할 때마다 하루에 <quack>1 Quack</quack>을 획득합니다. 추천 링크로 친구를 초대하여 Quacks를 늘려보세요."
+  },
+  "dev": {
+    "button": "개발자 모드",
+    "temp": "TEMP",
+    "title": "개발자 모드",
+    "subtitle": "구현 도구, 출시 전에 제거됩니다.",
+    "managerMode": "운용자 모드",
+    "managerModeSub": "사이드바에 운용자 섹션 표시",
+    "testModalStates": "모달 상태 테스트",
+    "testModalStatesSub": "모든 페이지에서 이 상태로 공유 모달을 엽니다.",
+    "states": {
+      "confirm": "확인",
+      "loading": "로딩",
+      "pending": "대기",
+      "success": "성공",
+      "warning": "경고",
+      "error": "오류"
+    }
+  },
+  "status": {
+    "confirm": {
+      "title": "확인해 주세요",
+      "body": "내용을 검토한 뒤 확인을 눌러 계속하세요."
+    },
+    "loading": {
+      "title": "불러오는 중…",
+      "body": "준비하는 동안 잠시 기다려 주세요."
+    },
+    "pending": {
+      "title": "대기 중",
+      "body": "요청을 처리하고 있습니다. 잠시 걸릴 수 있습니다."
+    },
+    "success": {
+      "title": "완료되었습니다",
+      "body": "성공적으로 완료되었습니다."
+    },
+    "warning": {
+      "title": "주의하세요",
+      "body": "계속하기 전에 이 내용을 검토해 주세요."
+    },
+    "error": {
+      "title": "문제가 발생했습니다",
+      "body": "작업을 완료하지 못했습니다. 다시 시도해 주세요."
+    },
+    "dismiss": "확인"
+  },
+  "nav": {
+    "home": "홈",
+    "invest": "투자",
+    "portfolio": "포트폴리오",
+    "strategies": "전략",
+    "cards": "카드",
+    "deposit": "입금",
+    "profile": "프로필",
+    "collapse": "접기",
+    "expand": "펼치기",
+    "rubberRush": "Rubber Rush",
+    "managerIncentive": "Manager Incentive Program"
+  },
+  "locale": {
+    "changeLanguage": "언어 변경",
+    "title": "언어"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "hideValues": "Werte ausblenden",
+  "portfolioValue": "Portfoliowert",
+  "estimatedTooltip": "Geschätzt. Das Diagramm wird nicht in Echtzeit aktualisiert, sondern nur einige Male am Tag.",
+  "earnedToday": "{amount} heute verdient",
+  "invested": "Investiert",
+  "totalYield": "Gesamtrendite",
+  "thisMonth": "Letzte 30 Tage",
+  "avgApy": "Durchschn. APR",
+  "periods": {
+    "day": "1D",
+    "week": "1W",
+    "month": "1M",
+    "sixMonth": "6M",
+    "all": "Alle"
+  },
+  "yourPositions": "Ihre Positionen",
+  "availableInvestments": "Verfügbare Investitionen",
+  "discover": "Strategien entdecken",
+  "seeAll": "Alle anzeigen",
+  "exploreMore": "Alle anzeigen",
+  "manage": "Verwalten",
+  "allocationByRisk": "Allokation nach Risiko",
+  "referral": {
+    "title": "Einladen & verdienen",
+    "body": "Lade Freunde ein und verdiene gemeinsam Quacks.",
+    "stat": "{count} Freunde beigetreten",
+    "copy": "Code kopieren",
+    "copyLink": "Einladungslink kopieren",
+    "copied": "Kopiert!",
+    "share": "Einladungslink teilen",
+    "createCta": "Erstelle deinen Empfehlungscode"
+  },
+  "referralWelcome": {
+    "title": "Willkommen bei Pool Party! 🎉",
+    "body": "Du bist über die Einladung eines Freundes beigetreten. Fang an zu investieren, um gemeinsam quacks zu verdienen.",
+    "dismiss": "Schließen"
+  },
+  "columns": {
+    "strategy": "Strategie",
+    "risk": "Risiko",
+    "invested": "Investiert",
+    "value": "Aktueller Wert",
+    "yield": "Rendite",
+    "rate": "Rate"
+  },
+  "empty": {
+    "zero": {
+      "eyebrow": "Loslegen",
+      "title": "Lass dein Geld für dich arbeiten",
+      "subtitle": "Lege dein Geld in wenigen einfachen Schritten an.",
+      "cta": "Geld einzahlen und starten",
+      "secondary": "Zuerst Strategien erkunden"
+    },
+    "funded": {
+      "available": "Verfügbar zum Investieren",
+      "availableHint": "Bereit zum Einsatz",
+      "title": "Du kannst jetzt investieren",
+      "subtitle": "Wähle eine Strategie und fang an zu verdienen.",
+      "stepDone": "Fertig · {amount} eingezahlt",
+      "cta": "Strategie auswählen",
+      "secondary": "So funktioniert es"
+    },
+    "path": {
+      "heading": "Dein Weg zum Verdienen",
+      "step1": { "title": "Geld einzahlen", "body": "Starte mit nur 10 $" },
+      "step2": {
+        "title": "Strategie auswählen",
+        "body": "Kuratiert und nach Risiko bewertet für dich"
+      },
+      "step3": { "title": "Verdienen", "body": "Verfolge deine Rendite jeden Tag" }
+    }
+  }
+}

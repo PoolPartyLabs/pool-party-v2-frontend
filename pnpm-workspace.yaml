@@ -1,0 +1,10 @@
+allowBuilds:
+  sharp: true
+  "@parcel/watcher": true
+  "@swc/core": true
+  esbuild: true
+  '@reown/appkit': true
+  bufferutil: true
+  keccak: true
+  utf-8-validate: true
+verifyDepsBeforeRun: false

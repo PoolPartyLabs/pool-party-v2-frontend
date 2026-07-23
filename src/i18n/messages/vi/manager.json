@@ -1,0 +1,611 @@
+{
+  "entry": {
+    "become": "Trở thành người quản lý",
+    "manager": "Manager Console"
+  },
+  "loadMore": "Tải thêm",
+  "cta": {
+    "createFirst": "Tạo chiến lược đầu tiên của bạn"
+  },
+  "missing": {
+    "title": "Hoàn tất để tiếp tục:"
+  },
+  "become": {
+    "title": "Trở thành người quản lý",
+    "subtitle": "Tạo chiến lược on-chain của riêng bạn, tăng trưởng TVL và kiếm phí từ những người đầu tư cùng bạn.",
+    "note": "Mở cho tất cả mọi người. Không cần đăng ký hay phê duyệt.",
+    "how": {
+      "title": "Cách hoạt động",
+      "step1": {
+        "title": "Xây dựng chiến lược",
+        "body": "Chọn một pool Uniswap v3, đặt khoảng giá và xác định phí của bạn."
+      },
+      "step2": {
+        "title": "Mọi người đầu tư",
+        "body": "Nhà đầu tư nạp USDC cùng bạn. Vị thế được gộp chung và quản lý cùng nhau."
+      },
+      "step3": {
+        "title": "Bạn kiếm phí",
+        "body": "Kiếm một phần phí giao dịch mà chiến lược của bạn tạo ra, cộng với phí bạn đặt."
+      }
+    }
+  },
+  "empty": {
+    "title": "Chưa có chiến lược nào",
+    "subtitle": "Tạo chiến lược Uniswap v3 đầu tiên của bạn để bắt đầu kiếm phí từ những người đầu tư cùng bạn."
+  },
+  "builder": {
+    "title": "Tạo chiến lược mới",
+    "back": "Quay lại bảng điều khiển",
+    "steps": {
+      "mandate": "Nhiệm vụ",
+      "review": "Xem lại",
+      "build": "Lắp ráp"
+    },
+    "next": "Tiếp theo: Xem lại",
+    "nextBuild": "Tiếp theo: Lắp ráp chiến lược",
+    "nextReview": "Tiếp theo: Xem lại"
+  },
+  "tabs": {
+    "overview": "Tổng quan",
+    "strategies": "Chiến lược của tôi",
+    "investors": "Nhà đầu tư",
+    "earnings": "Thu nhập",
+    "activity": "Hoạt động",
+    "profile": "Hồ sơ quản lý"
+  },
+  "dashboard": {
+    "subtitle": "Đây là tình hình các chiến lược của bạn",
+    "createNew": "Tạo chiến lược mới",
+    "hideValues": "Ẩn giá trị",
+    "totalAum": "Tổng AUM",
+    "netInflows": "{amount} dòng vốn ròng · 30 ngày",
+    "chartLabel": "AUM trong 30 ngày qua",
+    "yourStrategies": "Chiến lược của bạn",
+    "kpi": {
+      "yield": "Lợi nhuận tạo ra",
+      "activeInvestors": "Nhà đầu tư đang hoạt động",
+      "totalInvestorsAllTime": "Tổng nhà đầu tư",
+      "apy": "APR trung bình",
+      "activeWoW": "{delta} so với tuần trước",
+      "referrals": "Referral",
+      "referralsSub": "qua liên kết mời của bạn"
+    },
+    "columns": {
+      "strategy": "Chiến lược",
+      "aum": "AUM",
+      "investors": "Nhà đầu tư",
+      "flows": "Dòng vốn · 30 ngày",
+      "apy": "APR"
+    },
+    "share": {
+      "title": "Chia sẻ chiến lược của bạn",
+      "body": "Mời mọi người đầu tư cùng bạn.",
+      "cta": "Chia sẻ liên kết hồ sơ"
+    },
+    "earnings": {
+      "title": "Phí đã kiếm",
+      "allTime": "Tổng cộng",
+      "performance": "Phí hiệu suất",
+      "entry": "Phí vào",
+      "exit": "Phí ra"
+    },
+    "manage": "Quản lý"
+  },
+  "mandate": {
+    "title": "Nhiệm vụ",
+    "subtitle": "Ủy nhiệm là phạm vi cố định của chiến lược: mạng lưới và pool Uniswap v3 mà chiến lược hoạt động. Sau khi ra mắt, nó là vĩnh viễn và không thể thay đổi.",
+    "identityLabel": "Định danh chiến lược",
+    "nameLabel": "Tên chiến lược",
+    "namePlaceholder": "ví dụ: Lợi suất ổn định",
+    "logoAdd": "Thêm logo",
+    "logoChange": "Thay đổi",
+    "logoRemove": "Xóa",
+    "logoCropTitle": "Điều chỉnh logo",
+    "logoUploading": "Logo vẫn đang được tải lên",
+    "networkLabel": "Mạng",
+    "poolLabel": "Pool",
+    "tokensLabel": "Tokens",
+    "poolsLabel": "Pools",
+    "secondTokenSearch": "Thêm token thứ hai (tùy chọn)",
+    "showMore": "Xem thêm pool",
+    "poolSearch": "Tìm theo cặp, token hoặc địa chỉ pool",
+    "poolEmpty": "Không có pool nào khớp với tìm kiếm của bạn.",
+    "poolTvl": "TVL",
+    "poolApr": "APR",
+    "tierShare": "Đã chọn {pct}%",
+    "rangeFull": "Toàn dải",
+    "rangeMin": "Giá tối thiểu",
+    "rangeMax": "Giá tối đa",
+    "rangeMinDecrease": "Giảm giá tối thiểu",
+    "rangeMinIncrease": "Tăng giá tối thiểu",
+    "rangeMaxDecrease": "Giảm giá tối đa",
+    "rangeMaxIncrease": "Tăng giá tối đa",
+    "rangeCurrent": "Hiện tại {price}",
+    "rangeFullNote": "Toàn dải: kiếm lợi nhuận ở mọi mức giá, không bao giờ cần Dời Khoảng.",
+    "derivedLabel": "Được tính toán tự động",
+    "derivedNote": "Bạn không đặt những giá trị này. Pool Party suy ra chúng từ pool và khoảng giá của bạn.",
+    "riskLabel": "Rủi ro",
+    "categoryLabel": "Danh mục",
+    "categoryStable": "Lợi suất stablecoin",
+    "categoryBlueChip": "LP blue-chip",
+    "categoryVolatile": "LP biến động",
+    "risk": {
+      "veryConservative": "Rất thận trọng",
+      "conservative": "Thận trọng",
+      "moderate": "Vừa phải",
+      "aggressive": "Mạo hiểm",
+      "veryAggressive": "Rất mạo hiểm"
+    },
+    "descriptionLabel": "Mô tả",
+    "descriptionOptional": "(không bắt buộc)",
+    "descriptionPlaceholder": "Mô tả luận điểm của chiến lược: nó làm gì và dành cho ai.",
+    "rangeStatusIn": "Trong khoảng",
+    "tokenHint": "Chọn một token để xem các pool khả dụng.",
+    "poolsLoading": "Đang tải pool…",
+    "rangeStatusOut": "Ngoài khoảng",
+    "objectiveLabel": "Mục tiêu",
+    "assetLabel": "Tài sản",
+    "objective": {
+      "income": "Thu nhập",
+      "gradualBuy": "Mua dần (DCA)",
+      "gradualSell": "Bán dần"
+    },
+    "asset": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme"
+    }
+  },
+  "review": {
+    "title": "Xem lại & ra mắt",
+    "nameLabel": "Tên chiến lược",
+    "namePlaceholder": "ví dụ: Lợi suất ổn định",
+    "summary": {
+      "title": "Tóm tắt",
+      "pool": "Pool",
+      "network": "Mạng",
+      "protocol": "Giao thức",
+      "range": "Khoảng giá",
+      "rangeFull": "Toàn dải",
+      "risk": "Rủi ro",
+      "category": "Danh mục",
+      "feeTier": "Bậc phí"
+    },
+    "fees": {
+      "title": "Phí của bạn",
+      "subtitle": "Phí vào, phí ra và phí quản lý không có giới hạn. Phí hiệu suất là một phần phí LP mà chiến lược của bạn tạo ra.",
+      "entry": "Phí vào (%)",
+      "exit": "Phí ra (%)",
+      "management": "Phí quản lý (%/năm)",
+      "performance": "Phí hiệu suất (%)",
+      "performanceHint": "{min}–{max}% phí LP tạo ra · không có mốc nước cao nhất",
+      "performanceError": "Phí hiệu suất phải nằm trong khoảng {min}% đến {max}%.",
+      "entryInfo": "Phí một lần thu trên mỗi lần nạp vào chiến lược.",
+      "exitInfo": "Phí một lần thu khi nhà đầu tư rút tiền.",
+      "managementInfo": "Phí hằng năm tính trên tài sản đang quản lý, tích lũy liên tục.",
+      "performanceInfo": "Một phần phí LP mà chiến lược tạo ra (10–90% ở v1). Không có mốc nước cao nhất."
+    },
+    "access": {
+      "title": "Quyền truy cập",
+      "public": "Công khai",
+      "publicNote": "Bất kỳ ai cũng có thể khám phá và đầu tư.",
+      "privateSoon": "Quyền truy cập bằng danh sách cho phép, NFT và mật khẩu sắp ra mắt."
+    },
+    "preview": {
+      "title": "Xem trước cho nhà đầu tư",
+      "est": "Lợi nhuận ước tính",
+      "yourStrategy": "Chiến lược của bạn"
+    },
+    "saveDraft": "Lưu làm bản nháp",
+    "launch": "Ra mắt chiến lược",
+    "verifying": "Đang xác minh chiến lược của bạn…",
+    "verifyingNote": "Đang kiểm tra pool tồn tại và các tham số của bạn hợp lệ.",
+    "live": {
+      "title": "Chiến lược của bạn đã hoạt động",
+      "body": "{name} đã vượt qua xác minh và hiện được liệt kê cho nhà đầu tư.",
+      "cta": "Đến bảng điều khiển",
+      "bodyChain": "{name} hiện đã hoạt động on-chain và được niêm yết cho nhà đầu tư."
+    },
+    "draft": {
+      "title": "Đã lưu bản nháp",
+      "body": "{name} đã được lưu làm bản nháp. Ra mắt nó bất cứ lúc nào từ bảng điều khiển của bạn.",
+      "cta": "Đến bảng điều khiển"
+    },
+    "failed": {
+      "title": "Xác minh thất bại",
+      "body": "Chúng tôi không thể xác minh chiến lược này. Kiểm tra pool và các tham số, rồi thử lại.",
+      "cta": "Quay lại xem lại",
+      "bodyChain": "Giao dịch thất bại hoặc bị từ chối. Không có khoản tiền nào bị di chuyển. Hãy kiểm tra số dư và thử lại."
+    },
+    "seed": {
+      "title": "Thanh khoản ban đầu",
+      "subtitle": "Nạp khoản thanh khoản đầu tiên vào pool của bạn. Bạn cung cấp cả hai token.",
+      "subtitleSingle": "Khoảng này chỉ cần {symbol}, nạp vào để khởi động pool của bạn.",
+      "balance": "Số dư {amount}",
+      "max": "Tối đa",
+      "fundWith": "Nạp bằng",
+      "insufficient": "Số dư không đủ",
+      "loading": "Đang tải số dư của bạn…",
+      "error": "Không thể tải số dư của bạn. Hãy làm mới và thử lại.",
+      "minUsd": "Số tiền tối thiểu để tạo chiến lược là {amount}",
+      "zeroBalance": {
+        "title": "Bạn cần {token}",
+        "body": "Ví của bạn không có {token}. Hãy thêm một ít để cung cấp thanh khoản ban đầu, rồi quay lại để khởi chạy.",
+        "deposit": "Nạp tiền",
+        "swap": "Swap"
+      }
+    },
+    "creating": "Đang tạo chiến lược của bạn…",
+    "creatingNote": "Xác nhận các giao dịch trong ví của bạn. Thao tác này nạp thanh khoản ban đầu và tạo pool on-chain.",
+    "nameLengthError": "Tên phải có từ 10 đến 50 ký tự.",
+    "pending": {
+      "badge": "Đang chờ xác nhận"
+    },
+    "metadata": {
+      "failed": "Pool của bạn đã hoạt động on-chain, nhưng không lưu được chi tiết.",
+      "retry": "Thử lưu lại chi tiết",
+      "createFailed": "Không thể lưu chi tiết chiến lược. Vui lòng thử lại."
+    }
+  },
+  "profile": {
+    "verifiedManager": "Người quản lý đã xác minh",
+    "website": "Trang web",
+    "strategiesBy": "Chiến lược của {name}",
+    "empty": "Chưa có chiến lược công khai nào.",
+    "stats": {
+      "aum": "AUM",
+      "investors": "Nhà đầu tư",
+      "strategies": "Chiến lược",
+      "avgApy": "APR trung bình"
+    },
+    "edit": "Chỉnh sửa hồ sơ",
+    "share": "Chia sẻ hồ sơ",
+    "shareCopied": "Đã sao chép liên kết",
+    "externalLink": {
+      "title": "Bạn đang rời khỏi Pool Party",
+      "body": "Liên kết này dẫn đến {domain}, một trang web bên ngoài mà chúng tôi chưa xác minh. Tiếp tục?",
+      "continue": "Tiếp tục",
+      "cancel": "Hủy"
+    }
+  },
+  "operate": {
+    "title": "Vị thế trực tiếp",
+    "feeTier": "Bậc phí {pct}",
+    "inRange": "Trong khoảng",
+    "outOfRange": "Ngoài khoảng",
+    "outOfRangeNote": "Vị thế này nằm ngoài khoảng và không tạo phí. Di chuyển khoảng để tiếp tục.",
+    "range": "Khoảng",
+    "currentPrice": "Giá hiện tại",
+    "currentRange": "Khoảng hiện tại",
+    "liquidity": "Thanh khoản",
+    "feeApr": "APR phí",
+    "uncollected": "Phí chưa thu",
+    "gasNote": "Bạn trả phí gas mạng cho các thao tác này (~{amount}).",
+    "collect": "Thu phí",
+    "compound": "Tái đầu tư",
+    "moveRange": "Di chuyển khoảng",
+    "comingSoon": "Sắp ra mắt",
+    "compounded": "Đã tái đầu tư {amount} vào vị thế.",
+    "error": "Đã xảy ra lỗi. Không có khoản tiền nào được chuyển.",
+    "empty": "Chưa có vị thế trực tiếp cho chiến lược này.",
+    "back": "Quay lại bảng điều khiển",
+    "moveRangeDesc": "Đặt khoảng giá mới cho vị thế.",
+    "recenter": "Căn giữa theo giá hiện tại",
+    "slippageHint": "Hủy việc tái cân bằng nếu giá biến động vượt mức này.",
+    "settings": "Cài đặt",
+    "applying": "Đang di chuyển khoảng…",
+    "moved": "Đã di chuyển khoảng sang {min} – {max}.",
+    "movedFull": "Đã di chuyển khoảng sang full range.",
+    "cancel": "Hủy",
+    "rangeNew": "Khoảng mới",
+    "invert": "Đảo hướng giá ({pair})",
+    "estimatedBalance": "Số dư ước tính",
+    "currentBalance": "Số dư hiện tại",
+    "fee": "Phí",
+    "networkFee": "Gas ước tính (phí mạng)",
+    "feesTooltip": {
+      "network": "Gas ước tính (phí mạng)",
+      "total": "Tổng"
+    },
+    "estTime": "Thời gian ước tính",
+    "reviewTitle": "Xem lại",
+    "reviewConfirm": "Xác nhận và di chuyển khoảng",
+    "reviewBack": "Quay lại",
+    "reviewAssurance": "Vị thế được di chuyển mà không cần nhà đầu tư đụng đến vốn của chiến lược."
+  },
+  "status": {
+    "active": "Đang chạy",
+    "paused": "Tạm dừng",
+    "closed": "Đã đóng",
+    "draft": "Bản nháp"
+  },
+  "strategies": {
+    "title": "Chiến lược được quản lý",
+    "subtitle": "Tất cả chiến lược của bạn ở một nơi. Lọc theo trạng thái và quản lý từng cái.",
+    "filterLabel": "Lọc chiến lược theo trạng thái",
+    "filters": {
+      "all": "Tất cả",
+      "active": "Đang chạy",
+      "paused": "Tạm dừng",
+      "closed": "Đã đóng",
+      "drafts": "Bản nháp"
+    },
+    "rebalance": "Nên rebalance",
+    "sortLabel": "Sắp xếp theo",
+    "sortDir": {
+      "asc": "Tăng dần",
+      "desc": "Giảm dần"
+    },
+    "card": {
+      "aum": "AUM",
+      "investors": "Nhà đầu tư",
+      "netApy": "Net APR",
+      "fees30d": "Fees · 30 ngày",
+      "manage": "Quản lý",
+      "view": "Xem"
+    },
+    "empty": {
+      "all": "Bạn chưa tạo chiến lược nào.",
+      "active": "Không có chiến lược đang chạy.",
+      "paused": "Không có chiến lược tạm dừng.",
+      "closed": "Không có chiến lược đã đóng.",
+      "drafts": "Chưa có bản nháp. Lưu một bản từ trình tạo chiến lược."
+    }
+  },
+  "manage": {
+    "back": "Tất cả chiến lược",
+    "share": "Sao chép liên kết chia sẻ",
+    "viewOnUniswap": "Xem trên Uniswap",
+    "shareCopied": "Đã sao chép liên kết",
+    "notFound": "Không tải được chiến lược này. Thử lại nhé.",
+    "performance": {
+      "title": "AUM",
+      "netApy": "Net APR",
+      "yield": "Yield đã tạo",
+      "fees": "Fees của bạn · tổng",
+      "fees30d": "Fees của bạn · 30 ngày",
+      "chartLabel": "AUM trong kỳ đã chọn",
+      "noHistoryTitle": "Chưa có lịch sử",
+      "noHistoryBody": "Lịch sử AUM sẽ xuất hiện sau vài ngày hoạt động đầu tiên của chiến lược này.",
+      "snapshotNote": "AUM hiển thị là giá trị pool hiện tại; biểu đồ theo ảnh chụp hằng ngày, nên hai giá trị có thể chênh lệch đôi chút.",
+      "periods": {
+        "7d": "7N",
+        "30d": "30N",
+        "90d": "90N",
+        "all": "Tất cả"
+      }
+    },
+    "range": {
+      "min": "Giá tối thiểu",
+      "max": "Giá tối đa",
+      "full": "Full range",
+      "earning": "đang tạo fees",
+      "notEarning": "không tạo fees",
+      "outNote": "Giá đã rời khỏi range của bạn nên vị thế ngừng tạo fees. Di chuyển range để tiếp tục."
+    },
+    "activity": {
+      "title": "Hoạt động gần đây",
+      "empty": "Chưa có hoạt động.",
+      "comingSoon": "Sắp ra mắt.",
+      "types": {
+        "deposit": "Nạp",
+        "withdraw": "Rút",
+        "collect": "Đã thu fees",
+        "compound": "Compound",
+        "move_range": "Đã dời range"
+      }
+    },
+    "operations": {
+      "title": "Vận hành",
+      "showInExplore": "Hiển thị trong danh sách Chiến lược",
+      "showInExploreNote": "Liệt kê chiến lược này trên trang Chiến lược công khai. Tắt = chỉ qua liên kết.",
+      "pause": "Tạm dừng nạp",
+      "resume": "Mở lại nạp",
+      "pauseConfirmTitle": "Tạm dừng nạp?",
+      "pauseConfirmBody": "Các khoản nạp mới sẽ dừng. Vị thế vẫn chạy và nhà đầu tư vẫn rút được.",
+      "resumeConfirmTitle": "Mở lại nạp?",
+      "resumeConfirmBody": "Nhà đầu tư sẽ nạp được vào chiến lược này trở lại.",
+      "collect": "Thu fees",
+      "close": "Đóng chiến lược",
+      "closedNote": "Chiến lược này đã đóng. Nạp tiền bị đóng băng; nhà đầu tư có thể rút bất cứ lúc nào, ngay lập tức và không mất fee.",
+      "confirm": "Xác nhận",
+      "cancel": "Hủy",
+      "removeLiquidity": "Rút tiền",
+      "addLiquidity": "Thêm thanh khoản"
+    },
+    "investors": {
+      "title": "Nhà đầu tư",
+      "total": "Tổng",
+      "active": "Đang hoạt động",
+      "allocated": "Phân bổ của bạn"
+    },
+    "draft": {
+      "title": "Chiến lược này là bản nháp",
+      "body": "Hoàn tất thiết lập trong builder để ra mắt cho nhà đầu tư.",
+      "cta": "Tiếp tục thiết lập"
+    },
+    "remove": {
+      "title": "Rút tiền",
+      "desc": "Chọn mức rút khỏi chiến lược của bạn.",
+      "amountLabel": "Số tiền rút",
+      "unitToggle": "Đơn vị số tiền",
+      "newAmount": "Giá trị vị thế sau khi rút",
+      "closeAlert": "Rút hơn 50% sẽ đóng chiến lược này, rút toàn bộ thanh khoản của bạn và thu các fee đã tích lũy.",
+      "dustAlert": "Việc này sẽ để lại dưới 5 USD, nên chiến lược sẽ đóng.",
+      "remove": "Rút",
+      "close": "Đóng chiến lược",
+      "busyRemove": "Đang rút…",
+      "busyClose": "Đang đóng…",
+      "removeValue": "Bạn sẽ rút",
+      "closeFeesNote": "Rút toàn bộ thanh khoản của bạn và thu các fee đã tích lũy.",
+      "investorsNote": "Thanh khoản của tất cả nhà đầu tư sẽ bị gỡ bỏ và có thể rút bất cứ lúc nào.",
+      "confirmTitle": "Đóng chiến lược này?",
+      "confirmBody": "Chiến lược này sẽ đóng và thanh khoản của tất cả nhà đầu tư sẽ bị gỡ bỏ và có thể rút bất cứ lúc nào. Tiếp tục?",
+      "confirmContinue": "Tiếp tục",
+      "confirmKeep": "Giữ chiến lược",
+      "poolContents": "Số dư chiến lược",
+      "liquidity": "Liquidity",
+      "fees": "Fees"
+    },
+    "close": {
+      "reviewTitle": "Xem lại",
+      "back": "Quay lại",
+      "receiveAs": "Nhận dưới dạng",
+      "receiveTokens": "Cặp token",
+      "feesTooltip": {
+        "total": "Tổng"
+      },
+      "footerLocked": "≈ {amount} · Đến trong {days, plural, other {# ngày}} · theo thời gian khóa vốn của chiến lược",
+      "cta": "Đóng chiến lược",
+      "successTitle": "Chiến lược đã đóng",
+      "successBody": "≈ {amount} đang chuyển",
+      "done": "Xong"
+    },
+    "allocation": {
+      "title": "Phân bổ chiến lược",
+      "protocols": "Protocols",
+      "tokens": "Tokens"
+    },
+    "comments": {
+      "title": "Comments",
+      "empty": "No comments yet.",
+      "private": "Private · Investor & you",
+      "new": "{count} new",
+      "viewAll": "View all ({count})",
+      "invested": "invested {amount}",
+      "managerBadge": "Manager"
+    },
+    "about": "Giới thiệu về chiến lược này",
+    "availableToCollect": "Có thể thu"
+  },
+  "confirm": {
+    "working": "Đang xác nhận…",
+    "done": "Xong",
+    "compoundTitle": "Tái đầu tư phí?",
+    "compoundBody": "Tái đầu tư phí chưa thu của vị thế này trở lại vị thế để tiếp tục sinh lời.",
+    "pauseTitle": "Tạm dừng nạp tiền?",
+    "pauseBody": "Chặn các khoản đầu tư mới vào chiến lược này cho đến khi bạn tiếp tục. Nhà đầu tư hiện tại giữ vị thế và việc rút tiền vẫn mở.",
+    "closeTitle": "Đóng chiến lược này?",
+    "closeBody": "Tháo gỡ vị thế và kết thúc chiến lược. Nhà đầu tư giữ tiền của mình và rút ngay lập tức, không mất phí. Không thể hoàn tác.",
+    "launchTitle": "Khởi chạy chiến lược?",
+    "launchBody": "Chúng tôi xác minh pool và các tham số của bạn, sau đó niêm yết chiến lược công khai. Bạn ký giao dịch và trả phí gas mạng.",
+    "launchPool": "Pool",
+    "launchPerf": "Phí hiệu suất",
+    "feePending": "Ước tính khi ký"
+  },
+  "profileTab": {
+    "instagram": {
+      "comingSoon": "Sắp ra mắt",
+      "hint": "Liên kết Instagram sắp ra mắt."
+    },
+    "tiktok": {
+      "comingSoon": "Sắp ra mắt",
+      "hint": "Liên kết TikTok sắp ra mắt."
+    },
+    "linkedin": {
+      "comingSoon": "Sắp ra mắt",
+      "hint": "Liên kết LinkedIn sắp ra mắt."
+    },
+    "banner": {
+      "label": "Ảnh bìa",
+      "change": "Đổi ảnh bìa",
+      "help": "Khuyến nghị 2048×1152 (16:9). Giữ nội dung chính trong vùng an toàn ở giữa. Viền sẽ bị cắt trên màn hình nhỏ."
+    },
+    "photo": {
+      "change": "Đổi ảnh",
+      "help": "Hình vuông, tối thiểu 400×400. Sẽ mở công cụ cắt ảnh."
+    },
+    "fields": {
+      "name": "Tên hiển thị",
+      "handle": "Handle",
+      "bio": "Mô tả",
+      "socials": "Liên kết mạng xã hội"
+    },
+    "autoList": "Các chiến lược công khai của bạn sẽ tự động hiển thị trên hồ sơ.",
+    "save": "Lưu thay đổi",
+    "saved": "Đã lưu hồ sơ",
+    "mediaUploadFailed": "Không thể tải ảnh lên. Vui lòng thử lại.",
+    "saveFailed": "Không thể lưu thay đổi của bạn. Vui lòng thử lại.",
+    "saving": "Đang lưu…",
+    "viewPublic": "Xem hồ sơ công khai",
+    "handleLockWarning": "Your handle is permanent. You can't change it after saving.",
+    "crop": {
+      "titleAvatar": "Chỉnh ảnh đại diện",
+      "titleBanner": "Chỉnh ảnh bìa",
+      "help": "Kéo để định vị lại. Giữ nội dung chính trong vùng an toàn.",
+      "safeArea": "Vùng an toàn",
+      "zoom": "Thu phóng",
+      "apply": "Áp dụng",
+      "cancel": "Hủy"
+    },
+    "validation": {
+      "nameMin": "Display name must be at least {min} characters.",
+      "handleInvalid": "Choose a handle with 3-30 letters, numbers or hyphens.",
+      "handleTaken": "That handle is already taken.",
+      "linkInvalidFor": "Nhập liên kết {network} hợp lệ, ví dụ: {example}",
+      "linkWrongNetwork": "Đây không phải là liên kết {network} hợp lệ. Hãy thêm tên người dùng {network} của bạn."
+    },
+    "verify": {
+      "request": "Request verification",
+      "missingTitle": "To request verification",
+      "missingSocial": "Add your X link",
+      "pending": "Verification pending",
+      "pendingHelp": "We're reviewing your request. This usually takes a few days.",
+      "verified": "Verified",
+      "pendingValidation": "Pending validation",
+      "modal": {
+        "title": "Verification requested",
+        "body": "Your verification will be evaluated by our staff. Please send us a message through your registered social media to the Pool Party official profile containing the following code: {code}.",
+        "codeLabel": "Your verification code",
+        "copy": "Copy code",
+        "copied": "Copied"
+      },
+      "reshowError": "Couldn't load your code. Try again."
+    }
+  },
+  "build": {
+    "title": "Lắp ráp chiến lược của bạn",
+    "subtitle": "Lắp ráp vị thế thanh khoản Uniswap v3 của bạn. Chọn một nút để cấu hình.",
+    "paletteMandate": "Từ nhiệm vụ của bạn",
+    "paletteBlocks": "Khối lắp ráp",
+    "paletteNote": "V1 dùng luồng cố định với một pool mỗi chiến lược. Các khối khác sẽ mở sau.",
+    "blocks": {
+      "deposit": "Nạp tiền",
+      "swap": "Hoán đổi",
+      "pool": "Cung cấp LP",
+      "collect": "Thu phí"
+    },
+    "nodes": {
+      "depositSub": "USDC · vào lệnh",
+      "swapSub": "USDC → {tokens}",
+      "poolSub": "Vị thế LP",
+      "collectSub": "Nhận phí đã kiếm được"
+    },
+    "config": {
+      "title": "Cấu hình nút",
+      "pool": "Pool",
+      "feeTier": "Fee tier",
+      "feeTierNote": "Cố định theo pool đã chọn.",
+      "allocation": "Phân bổ",
+      "allocationNote": "100% vốn chiến lược. Một pool mỗi chiến lược ở V1.",
+      "range": "Khoảng giá",
+      "invert": "Đảo hướng giá",
+      "composition": "Số dư ước tính",
+      "tickNote": "Biên giới khớp với khoảng tick của pool.",
+      "rangeError": "Giá tối đa phải cao hơn giá tối thiểu ít nhất 2 tick.",
+      "monoAssetWarning": "Gần với giá hiện tại. Một biến động nhỏ có thể cần cả hai token để seed.",
+      "autoMove": "Tự động dời khoảng",
+      "autoMoveNote": "Tái định vị khi giá rời khỏi khoảng.",
+      "apply": "Áp dụng thay đổi",
+      "removeNode": "Xóa nút",
+      "removeNote": "Chiến lược V1 chỉ giữ đúng một pool nên không thể xóa nút này.",
+      "depositBody": "Nhà đầu tư tham gia bằng USDC. Tiền nạp được tự động chuyển thành token của pool.",
+      "swapBody": "USDC được hoán đổi thành {tokens} theo cấu trúc của pool.",
+      "collectBody": "Phí giao dịch tích lũy trong vị thế. Nhận về số dư hoặc tái đầu tư vào vị thế. Bạn trả gas."
+    }
+  },
+  "window30d": "30 ngày"
+}

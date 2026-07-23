@@ -1,0 +1,2412 @@
+{
+  "0x688AEe022AA544f150678B8E5720b6b96a9E9a2F": {
+    "name": "Syrup Token",
+    "ticker": "SYRUP",
+    "iconUrl": "https://basescan.org/token/images/syrupfitoken_32.png"
+  },
+  "0xebde02166cf5e9ce2dbf27895aff3ffd0055b873": {
+    "name": "Tbh Creature Yippee",
+    "ticker": "TBH",
+    "iconUrl": "https://basescan.org/token/images/tbhcoinbase_32.png"
+  },
+  "0x0E53e0bF9e20cA7042dbE627812276B1E49D4127": {
+    "name": "Tellus",
+    "ticker": "TLXG",
+    "iconUrl": "https://basescan.org/token/images/2284token_32.png"
+  },
+  "0x99367d4464bc5e7e5acbc6581da363fbe8a8142d": {
+    "name": "Tuebor",
+    "ticker": "TBR",
+    "iconUrl": "https://basescan.org/token/images/tueborcoin_64.png"
+  },
+  "0x07da070d3f44477261792857648e808835026c17": {
+    "name": "TurboUSD Unstablecoin",
+    "ticker": "\u20b8USD",
+    "iconUrl": "https://basescan.org/token/images/turbousdtusd_32.png"
+  },
+  "0x3903e796e500d5e2693B9cAedd4a02f81eB19a10": {
+    "name": "Turtlellini",
+    "ticker": "LINI",
+    "iconUrl": "https://basescan.org/token/images/turtlellini_32.png"
+  },
+  "0xdbcae648ebea8c950b616e10e28da09d1ab4a06d": {
+    "name": "UNCHAINED ELEPHANTS 404 $ELiZ",
+    "ticker": "ELIZ",
+    "iconUrl": "https://basescan.org/token/images/eliz_32.png"
+  },
+  "0xfb3cb973b2a9e2e09746393c59e7fb0d5189d290": {
+    "name": "Uniswap (Universal)",
+    "ticker": "uUNI",
+    "iconUrl": "https://basescan.org/token/images/uuni_32.png"
+  },
+  "0xfe26e72431Bd82c285655e897F25104E547c4c07": {
+    "name": "USD II",
+    "ticker": "USD2",
+    "iconUrl": "https://basescan.org/token/images/burnerprousd2_32.png"
+  },
+  "0x1A6B3A62391ECcaaa992ade44cd4AFe6bEC8CfF1": {
+    "name": "UXLINK Token",
+    "ticker": "UXLINK",
+    "iconUrl": "https://basescan.org/token/images/uxlink2_32.png"
+  },
+  "0xA2b9436D567A740357ca432b35582E93191e6a2F": {
+    "name": "V Are Money",
+    "ticker": "V",
+    "iconUrl": "https://basescan.org/token/images/varemoney_32.png"
+  },
+  "0x63b9877618e27081181a59f9ca52040ada1332fc": {
+    "name": "Volatile AMM - WETH/XCAD",
+    "ticker": "vAMM-WETH/XCAD",
+    "iconUrl": "https://basescan.org/token/images/xcadnetwork_32.png"
+  },
+  "0x8a98ecdab17efba1d1ace96f0aba57d82ba63dfa": {
+    "name": "VOVO Token",
+    "ticker": "VOVO",
+    "iconUrl": "https://basescan.org/token/images/vovo_32.png"
+  },
+  "0x39c5c62a0b098de643f20a6514ca5ef012fc4a94": {
+    "name": "WarpBeam",
+    "ticker": "WPLAY",
+    "iconUrl": "https://basescan.org/token/images/warpbeam_32.png"
+  },
+  "0x753edb340af380d60b837c118defa06b4625e66c": {
+    "name": "wATRON",
+    "ticker": "wATRON",
+    "iconUrl": "https://basescan.org/token/images/watron_32.png"
+  },
+  "0x4398c398e5ac747e6d51bf1db1dac346ca90fee0": {
+    "name": "WODS - Wolf of Dumb Street",
+    "ticker": "WODS",
+    "iconUrl": "https://basescan.org/token/images/wods_32.png"
+  },
+  "0x8c3ed1f4D142965D19e0DB48Ae189dd9448Ad95A": {
+    "name": "World Of Trump",
+    "ticker": "WOT",
+    "iconUrl": "https://basescan.org/token/images/worldoftrump_32.png"
+  },
+  "0x9132A1598b277555d8029b59F638c48B9194a342": {
+    "name": "Wrapped Pepe Trump",
+    "ticker": "WKEKS",
+    "iconUrl": "https://basescan.org/token/images/pepetrumpkeks_32.png"
+  },
+  "0x1EaE7Ca39192a2B6E3EA2E852A0D4D20bCe89d14": {
+    "name": "Wrapped xUSD",
+    "ticker": "wxUSD",
+    "iconUrl": "https://basescan.org/token/images/wrappedusdx_32.png"
+  },
+  "0x750cF88d9E0c2BCedEEC31d5FaAd6eD6E3F1abC6": {
+    "name": "XCAD Token",
+    "ticker": "XCAD",
+    "iconUrl": "https://basescan.org/token/images/xcadnetwork_32.png"
+  },
+  "0x000000000000629d5f7ce20b868d0ac1739104b9": {
+    "name": "xNANI",
+    "ticker": "xNANI",
+    "iconUrl": "https://basescan.org/token/images/xnani_32.png"
+  },
+  "0x2615a94df961278dcbc41fb0a54fec5f10a693ae": {
+    "name": "XRP (Universal)",
+    "ticker": "uXRP",
+    "iconUrl": "https://basescan.org/token/images/uxrp_32.png"
+  },
+  "0x0D5d2450F19Ffa71B16a95b3fAbef52786238828": {
+    "name": "XtremeGPT",
+    "ticker": "XTGPT",
+    "iconUrl": "https://basescan.org/token/images/xtreme_32.png"
+  },
+  "0xb950dab6a9fe20619de93cfceddbf4a4d5315f7a": {
+    "name": "XU INU",
+    "ticker": "XUNU",
+    "iconUrl": "https://basescan.org/token/images/xuinu_32.png"
+  },
+  "0xd34c975a973e8fcadaa45628b446ddd2b48bfdac": {
+    "name": "YETI on Base",
+    "ticker": "YETI",
+    "iconUrl": "https://basescan.org/token/images/yetionbase_32.png"
+  },
+  "0x38a60b9f2c6e8cca5797d1af45ea4254778b16f6": {
+    "name": "Yield Bearing BTC",
+    "ticker": "yBTC",
+    "iconUrl": "https://basescan.org/token/images/umojaybtc_32.png"
+  },
+  "0xf9da8f69d518d7f6488179014f475e843ee2defd": {
+    "name": "YT Coinbase Wrapped Staked ETH 25DEC2025",
+    "ticker": "YT-cbETH-25DEC2025",
+    "iconUrl": "https://basescan.org/token/images/ytcbeth_32.svg"
+  },
+  "0x5fd84c3dd5c00ab9e04bd94685b55e8dd0c1e3fd": {
+    "name": "YT Lombard LBTC 29MAY2025",
+    "ticker": "YT-LBTC-29MAY2025",
+    "iconUrl": "https://basescan.org/token/images/ytlbtc_32.svg"
+  },
+  "0xa3a2cdd230f9b3ff6e01a01534a3ed3cbf049815": {
+    "name": "zkRace",
+    "ticker": "ZERC",
+    "iconUrl": "https://basescan.org/token/images/zkrace_base_32.png"
+  },
+  "0xf398ad894521999be0f3d302c87ca6b470d84899": {
+    "name": "ZOMBASED",
+    "ticker": "ZOMB",
+    "iconUrl": "https://basescan.org/token/images/zombased_32.png"
+  },
+  "0x685168a3a8e33f6377543468151b8f4ee7060c29": {
+    "name": "Nutz",
+    "ticker": "NUTZ",
+    "iconUrl": "https://basescan.org/token/images/nutzo_32.png"
+  },
+  "0xca73ed1815e5915489570014e024b7ebe65de679": {
+    "name": "Odos Token",
+    "ticker": "ODOS",
+    "iconUrl": "https://basescan.org/token/images/odos_32.svg"
+  },
+  "0x060cb087a9730E13aa191f31A6d86bFF8DfcdCC0": {
+    "name": "Olympus",
+    "ticker": "OHM",
+    "iconUrl": "https://basescan.org/token/images/olympusdao2_32.png"
+  },
+  "0xE881f1FB21b4Add26940b771b32878AAFD6a582c": {
+    "name": "OomerBot",
+    "ticker": "OOM",
+    "iconUrl": "https://basescan.org/token/images/oomerbot_32.png"
+  },
+  "0xAcB5b33ce55ba7729E38b2b59677E71c0112f0D9": {
+    "name": "OpenSocial",
+    "ticker": "OSP",
+    "iconUrl": "https://basescan.org/token/images/opensocial_32.png"
+  },
+  "0xD1D7aa941c71Fd95E9d31bBd81937B3E71Bd6231": {
+    "name": "Oracle",
+    "ticker": "ORCL",
+    "iconUrl": "https://basescan.org/token/images/oracleaibase_64.png"
+  },
+  "0x66e28d8693c07fdfd3fcb3f83e590f8bb482c3af": {
+    "name": "Pablo on Base",
+    "ticker": "PABLOB",
+    "iconUrl": "https://basescan.org/token/images/pabloonbase_32.png"
+  },
+  "0x894aaf956c95c16210a917bbdcf32763ef7475b7": {
+    "name": "Paper",
+    "ticker": "Paper",
+    "iconUrl": "https://basescan.org/token/images/paperonbase_32.png"
+  },
+  "0x206571b68c66e1d112b74d65695043ad2b5f95d5": {
+    "name": "parallel",
+    "ticker": "LL",
+    "iconUrl": "https://basescan.org/token/images/parallel_32.png"
+  },
+  "0xc2eeca228ebac45c339cc5e522dd3a10638155f1": {
+    "name": "Peace Token",
+    "ticker": "$PEACE",
+    "iconUrl": "https://basescan.org/token/images/peacepal_32.png"
+  },
+  "0x483f2e223c58a5ef19c4b32fbc6de57709749cb3": {
+    "name": "Pendle Market",
+    "ticker": "PENDLE-LPT",
+    "iconUrl": "https://basescan.org/token/images/ptcbethlpt_32.svg"
+  },
+  "0x727cebacfb10ffd353fc221d06a862b437ec1735": {
+    "name": "Pendle Market",
+    "ticker": "PENDLE-LPT",
+    "iconUrl": "https://basescan.org/token/images/ptlbtclpt_32.svg"
+  },
+  "0x7422f030958edf9884ce9c46a211029e03ef6da7": {
+    "name": "Pepe\u2019s Dog",
+    "ticker": "POPO",
+    "iconUrl": "https://basescan.org/token/images/pepedog_32.png"
+  },
+  "0x5a8f95b20f986e31dda904bc2059b21d5ad8a66c": {
+    "name": "PittyCoin",
+    "ticker": "PITTY",
+    "iconUrl": "https://basescan.org/token/images/pittycoin_32.png"
+  },
+  "0x0f813f4785b2360009f9ac9bf6121a85f109efc6": {
+    "name": "Polkadot (Universal)",
+    "ticker": "uDOT",
+    "iconUrl": "https://basescan.org/token/images/udot_32.png"
+  },
+  "0xa0820613976b441e2c6a90e4877e2fb5f7d72552": {
+    "name": "Polter.Finance Protocol Token",
+    "ticker": "POLTER",
+    "iconUrl": "https://basescan.org/token/images/polter_32.png"
+  },
+  "0x85d0e1bde4e71aede97e0f0412c6e4b3d1e59a97": {
+    "name": "PsyDAO Token",
+    "ticker": "PSY",
+    "iconUrl": "https://basescan.org/token/images/psydao_64.png"
+  },
+  "0xe46c8ba948f8071b425a1f7ba45c0a65cbacea2e": {
+    "name": "PT Coinbase Wrapped Staked ETH 25DEC2025",
+    "ticker": "PT-cbETH-25DEC2025",
+    "iconUrl": "https://basescan.org/token/images/ptcbeth_32.svg"
+  },
+  "0x5d746848005507da0b1717c137a10c30ad9ee307": {
+    "name": "PT Lombard LBTC 29MAY2025",
+    "ticker": "PT-LBTC-29MAY2025",
+    "iconUrl": "https://basescan.org/token/images/ptlbtc_32.svg"
+  },
+  "0x085d4444bbd7c1df34b0baf1982df8c1f0fc49ff": {
+    "name": "Recordian Music",
+    "ticker": "RMUSIC",
+    "iconUrl": "https://basescan.org/token/images/recordianmusic_32.png"
+  },
+  "0xb3e3c89b8d9c88b1fe96856e382959ee6291ebba": {
+    "name": "Rekt",
+    "ticker": "REKT",
+    "iconUrl": "https://basescan.org/token/images/rektcoin_32.png"
+  },
+  "0xa260ba5fd9ff3fae55ac4930165a9c33519de694": {
+    "name": "Render (Universal)",
+    "ticker": "uRNDR",
+    "iconUrl": "https://basescan.org/token/images/urndr_32.png"
+  },
+  "0x3c57210e88eae000d0023554b94d614af2060f61": {
+    "name": "Reward Moo Beefy Aero USDC-cbBTC",
+    "ticker": "rmooBeefyAeroUSDC-cbBTC",
+    "iconUrl": "https://basescan.org/assets/base/images/svg/empty-token.svg?v=25.1.3.0"
+  },
+  "0x6653dd4b92a0e5bf8ae570a98906d9d6fd2eec09": {
+    "name": "RocketSwap",
+    "ticker": "RCKT",
+    "iconUrl": "https://basescan.org/token/images/rocketswap_32.png"
+  },
+  "0x2222d69eff9ad88755a65c6cdccad1871c4a7c9d": {
+    "name": "Ruby Corp",
+    "ticker": "RUBY",
+    "iconUrl": "https://basescan.org/token/images/ruby_32.png"
+  },
+  "0x84032e7e2f65200c47f4f1d1e1f6dd7fa147d66c": {
+    "name": "Satoshi Dog",
+    "ticker": "SATOSHI",
+    "iconUrl": "https://basescan.org/token/images/satoshibase_32.png"
+  },
+  "0x646a737b9b6024e49f5908762b3ff73e65b5160c": {
+    "name": "Savings crvUSD",
+    "ticker": "scrvUSD",
+    "iconUrl": "https://basescan.org/token/images/scrvusdcurve_ofc_32.png"
+  },
+  "0x5875eee11cf8398102fdad704c9e96607675467a": {
+    "name": "Savings USDS",
+    "ticker": "sUSDS",
+    "iconUrl": "https://basescan.org/token/images/skysusds_32.svg"
+  },
+  "0x33c4aa7df434f0f83e0a8f746d0da17d851594ec": {
+    "name": "Saylor Moon",
+    "ticker": "SMOON",
+    "iconUrl": "https://basescan.org/token/images/smoon_32.png"
+  },
+  "0x71a67215a2025f501f386a49858a9ced2fc0249d": {
+    "name": "Sei (Universal)",
+    "ticker": "uSEI",
+    "iconUrl": "https://basescan.org/token/images/usei_32.png"
+  },
+  "0x239b9c1f24f3423062b0d364796e07ee905e9fce": {
+    "name": "Shiba Inu (Universal)",
+    "ticker": "uSHIB",
+    "iconUrl": "https://basescan.org/token/images/ushib_32.png"
+  },
+  "0x7475fa4c36344f1d633964f02564f37162299194": {
+    "name": "Shibussy",
+    "ticker": "SHIBUSSY",
+    "iconUrl": "https://basescan.org/token/images/shibussy_32.png"
+  },
+  "0xEDCF612674fC27252F1ad3f26313D079E5C41e7a": {
+    "name": "SIMBA The Sloth",
+    "ticker": "SIMBA",
+    "iconUrl": "https://basescan.org/token/images/simbasloth_32.png"
+  },
+  "0xdbb2e40d67c1c5c3119f69282f425d3e7764d6db": {
+    "name": "Ski Mask Apu",
+    "ticker": "SAPU",
+    "iconUrl": "https://basescan.org/token/images/skimaskapu_32.png"
+  },
+  "0xddff00f9636583de5dc2469f61e00e8a3d103e7a": {
+    "name": "Ski Mask Peanut",
+    "ticker": "SKIMP",
+    "iconUrl": "https://basescan.org/token/images/skimaskpeanut_32.png"
+  },
+  "0x67407040bc14f1e6e375f160330fcf8af98513d1": {
+    "name": "SmartBTC",
+    "ticker": "SBTC",
+    "iconUrl": "https://basescan.org/token/images/smartbtcbase_32.png"
+  },
+  "0x04d1963c76eb1bec59d0eeb249ed86f736b82993": {
+    "name": "SoftDAO",
+    "ticker": "SOFT",
+    "iconUrl": "https://basescan.org/token/images/softdao_base_32.png"
+  },
+  "0x9b8df6e244526ab5f6e6400d331db28c8fdddb55": {
+    "name": "Solana (Universal)",
+    "ticker": "uSOL",
+    "iconUrl": "https://basescan.org/token/images/usol_32.png"
+  },
+  "0x6Ce4DbA6B54d4995654C94bD48ea3b94836EA144": {
+    "name": "spixfi",
+    "ticker": "SPIX",
+    "iconUrl": "https://basescan.org/token/images/spixfi_32.png"
+  },
+  "0x4b92ea5a2602fba275150db4201a6047056f6913": {
+    "name": "Stacks (Universal)",
+    "ticker": "uSTX",
+    "iconUrl": "https://basescan.org/token/images/ustx_32.png"
+  },
+  "0x4626c0d31c52991573ddd4df8f2bb1bc5101284f": {
+    "name": "staked Defi.Money Stablecoin",
+    "ticker": "sMONEY",
+    "iconUrl": "https://basescan.org/token/images/smoney_32.png"
+  },
+  "0xE3B53AF74a4BF62Ae5511055290838050bf764Df": {
+    "name": "StargateToken",
+    "ticker": "STG",
+    "iconUrl": "https://basescan.org/token/images/Stargate_32.svg"
+  },
+  "0x16A004065dfb11276DcB29Dc03fb8A85f9A43C6e": {
+    "name": "Static Aave Base cbETH",
+    "ticker": "stataBascbETH",
+    "iconUrl": "https://basescan.org/token/images/statacbeth_32.png"
+  },
+  "0x6fce2756794128b1771324caa860965801dcbcdb": {
+    "name": "Static Aave Base USDbC",
+    "ticker": "stataBasUSDbC",
+    "iconUrl": "https://basescan.org/token/images/statausdbc_32.png"
+  },
+  "0x4EA71A20e655794051D1eE8b6e4A3269B13ccaCc": {
+    "name": "Static Aave Base USDC",
+    "ticker": "stataBasUSDC",
+    "iconUrl": "https://basescan.org/token/images/statausdc_32.png"
+  },
+  "0x468973e3264f2aeba0417a8f2cd0ec397e738898": {
+    "name": "Static Aave Base WETH",
+    "ticker": "stataBasWETH",
+    "iconUrl": "https://basescan.org/token/images/stataweth_32.png"
+  },
+  "0x6A781A8A7DCBc99223F130EbaA4dec6e93C5C130": {
+    "name": "Sustainable Bitcoin Certificate",
+    "ticker": "SBC",
+    "iconUrl": "https://basescan.org/token/images/sustainablebtc_32.png"
+  },
+  "0x75372f72ec752a761e96cbcb3395f4b9586d9afd": {
+    "name": "SY Coinbase Wrapped Staked ETH",
+    "ticker": "SY-cbETH",
+    "iconUrl": "https://basescan.org/token/images/sycbeth_32.svg"
+  },
+  "0xb261266cb30c255cb9c73ebf4a3ead9398d23ab4": {
+    "name": "SY Lombard LBTC",
+    "ticker": "SY-LBTC",
+    "iconUrl": "https://basescan.org/token/images/sylbtc_32.svg"
+  },
+  "0x2c24497d4086490e7ead87cc12597fb50c2e6ed6": {
+    "name": "SynFutures",
+    "ticker": "F",
+    "iconUrl": "https://basescan.org/token/images/synfutures_32.png"
+  },
+  "0x80ed79ef851782af54d7e06e6a62026233349010": {
+    "name": "Hanu Yokia",
+    "ticker": "HANU",
+    "iconUrl": "https://basescan.org/token/images/gojicrypto_32.png"
+  },
+  "0xa9b631abcc4fd0bc766d7c0c8fcbf866e2bb0445": {
+    "name": "HASH Coin",
+    "ticker": "HASH",
+    "iconUrl": "https://basescan.org/token/images/hashcoin_32.png"
+  },
+  "0x6eeee476ff3707d4a0e9b056061ea9e3b47bc0f3": {
+    "name": "HEIST COIN",
+    "ticker": "HEIST",
+    "iconUrl": "https://basescan.org/token/images/heistvr_32.png"
+  },
+  "0x42b08e7a9211482d3643a126a7df1895448d3509": {
+    "name": "HenjinAI Token",
+    "ticker": "HENAI",
+    "iconUrl": "https://basescan.org/token/images/henjin_32.png"
+  },
+  "0xF53BB16B1eDdE5bc75fA586309265fd58f308C00": {
+    "name": "Heroes of memes",
+    "ticker": "HOMS",
+    "iconUrl": "https://basescan.org/token/images/homs_32.png"
+  },
+  "0x91da780bc7f4b7cf19abe90411a2a296ec5ff787": {
+    "name": "Hive Intelligence",
+    "ticker": "HINT",
+    "iconUrl": "https://basescan.org/token/images/hiveintelligence_32.png"
+  },
+  "0x8C0878f2Ee94c9dB70351DAe964B2193ed1455FB": {
+    "name": "HoodieChicken",
+    "ticker": "HCT",
+    "iconUrl": "https://basescan.org/token/images/hoodiechicken_32.png"
+  },
+  "0x2da1f02de055cebe51c6f6526ed67ad0dc86f431": {
+    "name": "I Just Need (with Lyrah)",
+    "ticker": "IJN",
+    "iconUrl": "https://basescan.org/token/images/ijn_32.png"
+  },
+  "0xc884646e6c88d9b172a23051b38b0732cc3e35a6": {
+    "name": "Index Coop Ethereum 2x Index",
+    "ticker": "ETH2X",
+    "iconUrl": "https://basescan.org/token/images/indexcoopeth3x_32.png"
+  },
+  "0x329f6656792c7d34d0fbb9762fa9a8f852272acb": {
+    "name": "Index Coop Ethereum 3x Index",
+    "ticker": "ETH3X",
+    "iconUrl": "https://basescan.org/token/images/ethereum3xIndex_32.png"
+  },
+  "0x93ac8f81e799c3b76112a649715dd86cea655bdf": {
+    "name": "JACKIE CHAIN",
+    "ticker": "JC",
+    "iconUrl": "https://basescan.org/token/images/jackiechain_32.png"
+  },
+  "0x777b2839832982b35213063d850848369390ee16": {
+    "name": "JARVIS",
+    "ticker": "JARVIS",
+    "iconUrl": "https://basescan.org/token/images/jarvisnew_32.png"
+  },
+  "0xcb0be8cd9b720fd1ba4624275b2606beffe5dd03": {
+    "name": "Jessica",
+    "ticker": "JESS",
+    "iconUrl": "https://basescan.org/token/images/basedjess_40.png"
+  },
+  "0x533be27691bd398f3c15f7afe50ac7764f8be8d5": {
+    "name": "JKL MADDIE",
+    "ticker": "JKLM",
+    "iconUrl": "https://basescan.org/token/images/jklm_32.png"
+  },
+  "0x100ce3e3391c00b6a52911313a4ea8d23c8a38d8": {
+    "name": "JOOCE",
+    "ticker": "JOOCE",
+    "iconUrl": "https://basescan.org/token/images/joocememe_64.png"
+  },
+  "0xaf1f7e0633ce0d334cfdf859da45c6fb4504332c": {
+    "name": "Just Four Characters",
+    "ticker": "BOOP",
+    "iconUrl": "https://basescan.org/token/images/boopbase_32.png"
+  },
+  "0xe27aba30966f53a1dc672338b7355960648d7f74": {
+    "name": "KANOI",
+    "ticker": "KNI",
+    "iconUrl": "https://basescan.org/token/images/kanoi_32.png"
+  },
+  "0xf9a25e6a9247a2ff620dd751a7087ef4b77a3364": {
+    "name": "Kediz",
+    "ticker": "KEDIZ",
+    "iconUrl": "https://basescan.org/token/images/kediz_32.png"
+  },
+  "0xd461a534af11ef58e9f9add73129a1f45485a8dc": {
+    "name": "Kevin",
+    "ticker": "KEVIN",
+    "iconUrl": "https://basescan.org/token/images/kevin_32.png"
+  },
+  "0xc849418f46a25d302f55d25c40a82c99404e5245": {
+    "name": "Kiki Flaminki",
+    "ticker": "KIKI",
+    "iconUrl": "https://basescan.org/token/images/kikitheflaminki_32.png"
+  },
+  "0xebb7ba693556a5435f9ebff39eb9b722cdf16926": {
+    "name": "Kill Chill",
+    "ticker": "kchill",
+    "iconUrl": "https://basescan.org/token/images/killchill_32.png"
+  },
+  "0x9e5189a77f698305ef76510aff1c528cff48779c": {
+    "name": "KILT",
+    "ticker": "KILT",
+    "iconUrl": "https://basescan.org/token/images/kiltprotocol_32.png"
+  },
+  "0x8a4d5fea4a82918d237386754454b5d484b90ff4": {
+    "name": "Kubera",
+    "ticker": "KUBER",
+    "iconUrl": "https://basescan.org/token/images/newbear_32.png"
+  },
+  "0x5d5642476bd6ac9eb674cc9a4104d1b789ea7acc": {
+    "name": "LadyGo",
+    "ticker": "LGO",
+    "iconUrl": "https://basescan.org/token/images/ladygo_32.png"
+  },
+  "0x3b60690d3990e57a94e5f2aa8cbf5539b8c28027": {
+    "name": "Lank",
+    "ticker": "Lank",
+    "iconUrl": "https://basescan.org/token/images/lank_32.png"
+  },
+  "0x6f03b3Df22F0C57A4477EEAc3a49c2Bc4EAe2206": {
+    "name": "Lions",
+    "ticker": "Lions",
+    "iconUrl": "https://basescan.org/token/images/lionsclub_32.png"
+  },
+  "0x3eb097375fc2fc361e4a472f5e7067238c547c52": {
+    "name": "Litecoin (Universal)",
+    "ticker": "uLTC",
+    "iconUrl": "https://basescan.org/token/images/ultc_32.png"
+  },
+  "0xc734635CD30E882037C3f3De1EbCCF9fA9D27D9F": {
+    "name": "LyvelyToken",
+    "ticker": "LVLY",
+    "iconUrl": "https://basescan.org/token/images/lyvelytoken_32.png"
+  },
+  "0x30f16e3273ab6e4584b79b76fd944e577e49a5c8": {
+    "name": "Maker (Universal)",
+    "ticker": "uMKR",
+    "iconUrl": "https://basescan.org/token/images/umkr_32.png"
+  },
+  "0xe868c3d83ec287c01bcb533a33d197d9bfa79dad": {
+    "name": "Matic (Universal)",
+    "ticker": "uMATIC",
+    "iconUrl": "https://basescan.org/token/images/umatic_32.png"
+  },
+  "0x1e83c53ffcccc9b4060a9edb9795c6dffcf8e2d2": {
+    "name": "Meme in Black",
+    "ticker": "MIIB",
+    "iconUrl": "https://basescan.org/token/images/miibcoin_32.png"
+  },
+  "0xEA8954dE7607b90F5ec81A5e2e673D0f60BB7596": {
+    "name": "Metaverse Index",
+    "ticker": "MVI",
+    "iconUrl": "https://basescan.org/token/images/mviindexcoop_32.png"
+  },
+  "0x2b1a955b2c8b49579d197eaaa7dce7dbc7b4da23": {
+    "name": "MikeTangoBravo18",
+    "ticker": "MTB18",
+    "iconUrl": "https://basescan.org/token/images/mtb18_32.svg"
+  },
+  "0xd9fc98e7ed79fb67ab5f36013d958abd85ff28ff": {
+    "name": "MikeTangoBravo19",
+    "ticker": "MTB19",
+    "iconUrl": "https://basescan.org/token/images/openvino_32.png"
+  },
+  "0x3d98e5829a1bae7423cf3874662c2f3a0c72123f": {
+    "name": "MikeTangoBravo20",
+    "ticker": "MTB20",
+    "iconUrl": "https://basescan.org/token/images/mtb20_32.svg"
+  },
+  "0x9a7df7ed3c536c1940dd98786f3eefb7810e2f8f": {
+    "name": "MikeTangoBravo21",
+    "ticker": "MTB21",
+    "iconUrl": "https://basescan.org/token/images/mtb21_32.svg"
+  },
+  "0xa4A6bFC841acBC83Bf439c302685bEf4a6969831": {
+    "name": "Mocking Kitten Coin",
+    "ticker": "MOKIT",
+    "iconUrl": "https://basescan.org/token/images/mokitmemecoin_32.png"
+  },
+  "0x9b4a58fddc209c66cef30f786c6fe3b8189c6c04": {
+    "name": "Moo Beefy Aero USDC-cbBTC",
+    "ticker": "mooBeefyAeroUSDC-cbBTC",
+    "iconUrl": "https://basescan.org/token/images/beefy_32.png"
+  },
+  "0x663ca4a6608ba72b07badc02148e1e55f7cdb51a": {
+    "name": "MOON Credits",
+    "ticker": "MOON",
+    "iconUrl": "https://basescan.org/token/images/mooncredits_32.png"
+  },
+  "0xEdc817A28E8B93B03976FBd4a3dDBc9f7D176c22": {
+    "name": "Moonwell USDC",
+    "ticker": "mUSDC",
+    "iconUrl": "https://basescan.org/assets/base/images/svg/empty-token.svg?v=25.1.3.0"
+  },
+  "0x31b28012f61fc3600e1c076bafc9fd997fb2da90": {
+    "name": "Mrs Miggles",
+    "ticker": "MRSMIGGLES",
+    "iconUrl": "https://basescan.org/token/images/mrsmiggles_32.png"
+  },
+  "0xdb1c6c3df2929f52c7b0975ad0b641584a15ffdd": {
+    "name": "Muggles",
+    "ticker": "muggles",
+    "iconUrl": "https://basescan.org/token/images/mugglesonbase_32.png"
+  },
+  "0x000307575269863b6cb67916b9e7fc3c6235c000": {
+    "name": "myEva",
+    "ticker": "MYEVA",
+    "iconUrl": "https://basescan.org/token/images/myeva_32.png"
+  },
+  "0x00000000000007c8612ba63df8ddefd9e6077c97": {
+    "name": "NANI",
+    "ticker": "\u2318",
+    "iconUrl": "https://basescan.org/token/images/nani_32.png"
+  },
+  "0x5ed25e305e08f58afd7995eac72563e6be65a617": {
+    "name": "NEAR (Universal)",
+    "ticker": "uNEAR",
+    "iconUrl": "https://basescan.org/token/images/unear_32.png"
+  },
+  "0xa816eE97b1d7aE50fB0c68672a56f45334b90aA7": {
+    "name": "Neiro",
+    "ticker": "NEIRO",
+    "iconUrl": "https://basescan.org/token/images/neirobase_32.png"
+  },
+  "0xd229162371011f1dcb2ad3c0b0f14d3a11b3bb6c": {
+    "name": "Nelson Mandollar",
+    "ticker": "Mandollar",
+    "iconUrl": "https://basescan.org/token/images/nelsonmandollar_32.png"
+  },
+  "0xf7f2e79071acd3fd1a6652984dc87df7b9935e30": {
+    "name": "NeverFadeAI",
+    "ticker": "NFAI",
+    "iconUrl": "https://basescan.org/token/images/nfai_32.png"
+  },
+  "0x04cdc466354576cb79242d508ac73b5dd3cd7c44": {
+    "name": "Ninja Base",
+    "ticker": "NINJA",
+    "iconUrl": "https://basescan.org/token/images/ninjabase_32.png"
+  },
+  "0x0c30E2BE66EB6F5D5827A5b8a51d94107786589c": {
+    "name": "Nolana",
+    "ticker": "NOL",
+    "iconUrl": "https://basescan.org/token/images/nolana_32.png"
+  },
+  "0xb2a778e4f589d3a95ea9c44acd3d005074171d75": {
+    "name": "CEEK on Base",
+    "ticker": "CEEK",
+    "iconUrl": "https://basescan.org/token/images/ceekonbase_32.png"
+  },
+  "0xd403d1624daef243fbcbd4a80d8a6f36affe32b2": {
+    "name": "Chainlink (Universal)",
+    "ticker": "uLINK",
+    "iconUrl": "https://basescan.org/token/images/ulink_32.png"
+  },
+  "0x0cbd6fadcf8096cc9a43d90b45f65826102e3ece": {
+    "name": "CheckDot",
+    "ticker": "CDT",
+    "iconUrl": "https://basescan.org/token/images/checkdot_ofc_32.png"
+  },
+  "0x91E821856F2D47b6a4EFf03415E9b5dBE72B6d5c": {
+    "name": "CHEMO COIN",
+    "ticker": "CHEMO",
+    "iconUrl": "https://basescan.org/token/images/chemocoin_32.png"
+  },
+  "0x6Bd593530f19119649A7eefC79E147CF0d4bFD49": {
+    "name": "CHILLY Bit Doge",
+    "ticker": "CHILLY",
+    "iconUrl": "https://basescan.org/token/images/chillybitdoge_32.png"
+  },
+  "0x72b423d98d98d509e66e9c565873c3e63ee4c7ab": {
+    "name": "Choice Coin",
+    "ticker": "Choice",
+    "iconUrl": "https://basescan.org/token/images/choice_32.png"
+  },
+  "0xb58372a5bb18e10229e680d8bcc4201ca3c98301": {
+    "name": "Chrystal - The Days (NOTION Remix)",
+    "ticker": "DAYS",
+    "iconUrl": "https://basescan.org/token/images/days_32.png"
+  },
+  "0x96a0cc3c0fc5d07818e763e1b25bc78ab4170d1b": {
+    "name": "Coin Prediction Tool On Base",
+    "ticker": "CPXTB",
+    "iconUrl": "https://basescan.org/token/images/coinpredictiontool_32.png"
+  },
+  "0xc04c38860091510e1c73556714031386b8748e3b": {
+    "name": "COINCHANCE",
+    "ticker": "CHN",
+    "iconUrl": "https://basescan.org/token/images/coinchance_32.png"
+  },
+  "0x36bbf3c6f2b107fc6a225d3269a9c6c7d1c1b4a9": {
+    "name": "Content Engagement Token",
+    "ticker": "CET",
+    "iconUrl": "https://basescan.org/token/images/contentengagementtoken_32.png"
+  },
+  "0xc8e51fefd7d595c217c7ab641513faa4ad522b26": {
+    "name": "CrappyBird",
+    "ticker": "CRAPPY",
+    "iconUrl": "https://basescan.org/token/images/crappybird_40.png"
+  },
+  "0x577d9cff907c392825c63e6ebf3e0abe883f670e": {
+    "name": "Crypto Factory",
+    "ticker": "CFT",
+    "iconUrl": "https://basescan.org/token/images/cfbase_32.png"
+  },
+  "0x9cf3d1b3b9ffc0373dec9ddd8a76bd4705d4a3c0": {
+    "name": "Cybercentry",
+    "ticker": "CENTRY",
+    "iconUrl": "https://basescan.org/token/images/Cybercentry_32.png"
+  },
+  "0xdc3793eab4681e57b2755783403b3dcc573f220b": {
+    "name": "Dark Pepe Pope",
+    "ticker": "DarkPepePope",
+    "iconUrl": "https://basescan.org/token/images/darkpepepope_32.png"
+  },
+  "0x6a4e0F83D7882BcACFF89aaF6f60D24E13191E9F": {
+    "name": "Decentral Bros",
+    "ticker": "DBRO",
+    "iconUrl": "https://basescan.org/token/images/decentralbros_32.png"
+  },
+  "0x06D998a2C64CAf9feB2cAf3Ca8872740EF013122": {
+    "name": "Decubate Token",
+    "ticker": "DCB",
+    "iconUrl": "https://basescan.org/token/images/decubate_32.png"
+  },
+  "0x473995e934c5e871af24d6a1dabcbb0c7e89a896": {
+    "name": "DEFI LAUNCH",
+    "ticker": "DEFI",
+    "iconUrl": "https://basescan.org/token/images/defilaunch_32.png"
+  },
+  "0x69420f9e38a4e60a62224c489be4bf7a94402496": {
+    "name": "Defi.Money Stablecoin",
+    "ticker": "MONEY",
+    "iconUrl": "https://basescan.org/token/images/smoney_32.png"
+  },
+  "0xc6955B85b622369a54Cc8C6DBeCb8e03c0885BD8": {
+    "name": "DefiPulse Index",
+    "ticker": "DPI",
+    "iconUrl": "https://basescan.org/token/images/dpi_32.png"
+  },
+  "0x88a7fb82815348b40694c7dc1041cc95868b8314": {
+    "name": "Degen Express",
+    "ticker": "Degex",
+    "iconUrl": "https://basescan.org/token/images/degen1_32.png"
+  },
+  "0x9d0e8f5b25384c7310cb8c6ae32c8fbeb645d083": {
+    "name": "Derive",
+    "ticker": "DRV",
+    "iconUrl": "https://basescan.org/token/images/derive_64.svg"
+  },
+  "0xb1e0e28944dbb52a493efbc2751513ad969deeba": {
+    "name": "Digiko",
+    "ticker": "DGKO",
+    "iconUrl": "https://basescan.org/token/images/digiko_32.png"
+  },
+  "0x37E7C051Dc5A24313cEEC581222882648ba537aa": {
+    "name": "Diversified Staked ETH Index",
+    "ticker": "dsETH",
+    "iconUrl": "https://basescan.org/assets/base/images/svg/empty-token.svg?v=25.1.3.0"
+  },
+  "0x62E0B9034fCF427F4D1687AA2316581b00D0789c": {
+    "name": "DIXIECOIN",
+    "ticker": "DIXIE",
+    "iconUrl": "https://basescan.org/token/images/dixiecoin_32.png"
+  },
+  "0x1FCe49E1C5d1f2f477b25744A060e85921968e70": {
+    "name": "DOB on Base",
+    "ticker": "DOB",
+    "iconUrl": "https://basescan.org/token/images/digitalfinance_32.png"
+  },
+  "0x12e96c2bfea6e835cf8dd38a5834fa61cf723736": {
+    "name": "Dogecoin (Universal)",
+    "ticker": "uDOGE",
+    "iconUrl": "https://basescan.org/token/images/udoge_32.png"
+  },
+  "0xaf46bb1c985a811669b9b37e52ce5dc110f3aa01": {
+    "name": "Donald J Chump",
+    "ticker": "CHUMP",
+    "iconUrl": "https://basescan.org/token/images/djchump_32.png"
+  },
+  "0x6651306945823de404Cf6c1057e934D0fC411b42": {
+    "name": "DONG",
+    "ticker": "$DONG",
+    "iconUrl": "https://basescan.org/token/images/dongtoken_32.png"
+  },
+  "0x37d3d61a304695619433bc05ef841e889f69debf": {
+    "name": "DONNIE",
+    "ticker": "DONNIE",
+    "iconUrl": "https://basescan.org/token/images/donnie_32.png"
+  },
+  "0x86806b6a11192FdE4a77E9a6B2a3ba548d7da9DD": {
+    "name": "Dreaming Giant",
+    "ticker": "$ZZZZ",
+    "iconUrl": "https://basescan.org/token/images/dreaminggiant_32.png"
+  },
+  "0x93bab753ae5dc2ad7d9863ff583b1f50d4ea1862": {
+    "name": "Early Primex Token",
+    "ticker": "ePMX",
+    "iconUrl": "https://basescan.org/token/images/primexfinance_32.png"
+  },
+  "0xd444507526bbee962db37e4d52f369a17c6819fe": {
+    "name": "EcoFrog",
+    "ticker": "ECO",
+    "iconUrl": "https://basescan.org/token/images/froggo_32.png"
+  },
+  "0x1c24ad7c14e4c2e9b3e95190beca923a490a5d76": {
+    "name": "EEBOSS",
+    "ticker": "EEBOSS",
+    "iconUrl": "https://basescan.org/token/images/eeboss_32.png"
+  },
+  "0x475047b17aefe93ba9aef423cf336253e1929208": {
+    "name": "EmpaFee",
+    "ticker": "EPF",
+    "iconUrl": "https://basescan.org/token/images/empafeebase_32.png"
+  },
+  "0x1cff25b095cf6595afabe35dd7e5348666e57c11": {
+    "name": "Ethereum (Universal)",
+    "ticker": "uETH",
+    "iconUrl": "https://basescan.org/token/images/ueth_32.png"
+  },
+  "0x2D6B201bDcB497bB13f2a29F80912879f7aFA72d": {
+    "name": "Ethereum Is Good",
+    "ticker": "EBULL",
+    "iconUrl": "https://basescan.org/token/images/ethbull_32.png"
+  },
+  "0x421a4ACaF1E6B2B8392429BB9b24401566858Ae1": {
+    "name": "EverBased Coin",
+    "ticker": "EBC",
+    "iconUrl": "https://basescan.org/token/images/everbased_32.png"
+  },
+  "0x2a9c30589c35a18b3d0031a22296b7edbb44acd4": {
+    "name": "feesh",
+    "ticker": "feesh",
+    "iconUrl": "https://basescan.org/token/images/feesh_32.png"
+  },
+  "0xb0592e971fb37820faab9f00c163f2466df4d6d1": {
+    "name": "Finch Coin",
+    "ticker": "FINCH",
+    "iconUrl": "https://basescan.org/token/images/finchcoin_32.png?=v3"
+  },
+  "0x384C9c33737121c4499C85D815eA57D1291875Ab": {
+    "name": "Flux YANG",
+    "ticker": "YANG",
+    "iconUrl": "https://basescan.org/token/images/fluxonbase_32.png"
+  },
+  "0x88e9822965e39882839098eef2e972e2dd9ce56d": {
+    "name": "Gameme-Fi",
+    "ticker": "GmmF",
+    "iconUrl": "https://basescan.org/token/images/gmmf_32.png"
+  },
+  "0xc876e9cdd16acd38c57200084345d76a673cac9a": {
+    "name": "GAMER",
+    "ticker": "GMR",
+    "iconUrl": "https://basescan.org/assets/base/images/svg/empty-token.svg?v=25.1.3.0"
+  },
+  "0x5812fb91b48467dbbe3394d6d3ef7be9707dcddf": {
+    "name": "Goldfish",
+    "ticker": "FISH",
+    "iconUrl": "https://basescan.org/token/images/goldfishbase_32.png"
+  },
+  "0x0c1dc73159e30c4b06170f2593d3118968a0dca5": {
+    "name": "GoPlus Security",
+    "ticker": "GPS",
+    "iconUrl": "https://basescan.org/token/images/gopluslabs_32.png"
+  },
+  "0xd3e76788de3faf6b834b87cbab9845a08fb07b6e": {
+    "name": "Gora Coin",
+    "ticker": "$GORA",
+    "iconUrl": "https://basescan.org/token/images/goracoin_32.png"
+  },
+  "0x19b50C63d3d7F7a22308CB0fC8D41B66fF9C318a": {
+    "name": "Grabpenny Token",
+    "ticker": "GPX",
+    "iconUrl": "https://basescan.org/token/images/grabpenny2_32.png"
+  },
+  "0x856D602E73545deAA1491a3726cF628d49f74F51": {
+    "name": "GRAM Token",
+    "ticker": "GRAM",
+    "iconUrl": "https://basescan.org/token/images/gramvoyage_32.png"
+  },
+  "0xaf7e334ded7ddae963a6c1b649a94bdc7a5a63d8": {
+    "name": "Guardians of Amazonia",
+    "ticker": "GOA",
+    "iconUrl": "https://basescan.org/token/images/goa_32.png"
+  },
+  "0xd8c3590204d9442a5746f45f3d1e2befea147da0": {
+    "name": "gurmy",
+    "ticker": "GURMY",
+    "iconUrl": "https://basescan.org/token/images/gurmy_32.png"
+  },
+  "0xca5d8f8a8d49439357d3cf46ca2e720702f132b8": {
+    "name": "Gyro Dollar",
+    "ticker": "GYD",
+    "iconUrl": "https://basescan.org/token/images/gyd_32.png"
+  },
+  "0x4e65fe4dba92790696d040ac24aa414708f5c0ab": {
+    "name": "Aave Base USDC",
+    "ticker": "aBasUSDC",
+    "iconUrl": "https://basescan.org/assets/base/images/svg/empty-token.svg?v=25.1.3.0"
+  },
+  "0x7c307e128efa31f540f2e2d976c995e0b65f51f6": {
+    "name": "Aave Base weETH",
+    "ticker": "aBasweETH",
+    "iconUrl": "https://basescan.org/assets/base/images/svg/empty-token.svg?v=25.1.3.0"
+  },
+  "0x99cbc45ea5bb7ef3a5bc08fb1b7e56bb2442ef0d": {
+    "name": "Aave Base wstETH",
+    "ticker": "aBaswstETH",
+    "iconUrl": "https://basescan.org/assets/base/images/svg/empty-token.svg?v=25.1.3.0"
+  },
+  "0xfe0c0b15798b8c9107cd4aa556a87eb031263e8b": {
+    "name": "AetherX",
+    "ticker": "AETX",
+    "iconUrl": "https://basescan.org/token/images/aetx_32.png"
+  },
+  "0x45aAB2f68c70A75f21BCB77b5893F913bBEd696F": {
+    "name": "Agatech",
+    "ticker": "AGATA",
+    "iconUrl": "https://basescan.org/token/images/agatech_new_32.png"
+  },
+  "0xF5Bc3439f53A45607cCaD667AbC7DAF5A583633F": {
+    "name": "AgentLayer",
+    "ticker": "AGENT",
+    "iconUrl": "https://basescan.org/token/images/agentlayer_32.png"
+  },
+  "0xfbecd19292b1effeaa7b2e61f5101ddb6744a1fb": {
+    "name": "aiPump",
+    "ticker": "AIPUMP",
+    "iconUrl": "https://basescan.org/token/images/aipump_64.png"
+  },
+  "0x0c387c8a6fb6a8e5eaa30d2043272fa7ea366d2b": {
+    "name": "Akira The Red Panda",
+    "ticker": "AKIRA",
+    "iconUrl": "https://basescan.org/token/images/akira_32.png"
+  },
+  "0x3a51f2a377ea8b55faf3c671138a00503b031af3": {
+    "name": "Algorand (Universal)",
+    "ticker": "uALGO",
+    "iconUrl": "https://basescan.org/token/images/ualgo_32.png"
+  },
+  "0x5872841a3207dc145ce0348a334178cc9ee188ae": {
+    "name": "Amber Tokenized Points",
+    "ticker": "AMBER",
+    "iconUrl": "https://basescan.org/token/images/nablafinance_32.png"
+  },
+  "0x42c72268af41cb5f6f2bf0d2e0e56b654eb29e26": {
+    "name": "AmongX",
+    "ticker": "AMONGX",
+    "iconUrl": "https://basescan.org/token/images/amongx_32.png"
+  },
+  "0x9c0e042d65a2e1ff31ac83f404e5cb79f452c337": {
+    "name": "Aptos (Universal)",
+    "ticker": "uAPT",
+    "iconUrl": "https://basescan.org/token/images/uapt_32.png"
+  },
+  "0xaec9e50e3397f9ddc635c6c429c8c7eca418a143": {
+    "name": "arcUSD",
+    "ticker": "arcUSD",
+    "iconUrl": "https://basescan.org/token/images/arcusdtoken_32.png"
+  },
+  "0x1509706a6c66ca549ff0cb464de88231ddbe213b": {
+    "name": "Aura",
+    "ticker": "AURA",
+    "iconUrl": "https://basescan.org/token/images/aurafinance_32.png"
+  },
+  "0xd89d90d26b48940fa8f58385fe84625d468e057a": {
+    "name": "Avail (Wormhole)",
+    "ticker": "AVAIL",
+    "iconUrl": "https://basescan.org/token/images/avail_32.png"
+  },
+  "0xd6a34b430c05ac78c24985f8abee2616bc1788cb": {
+    "name": "Avalanche (Universal)",
+    "ticker": "uAVAX",
+    "iconUrl": "https://basescan.org/token/images/uavax_32.png"
+  },
+  "0x262a9f4e84efa2816d87a68606bb4c1ea3874bf1": {
+    "name": "Bangkit",
+    "ticker": "BKIT",
+    "iconUrl": "https://basescan.org/token/images/bangkit_32.png"
+  },
+  "0x32E0f9d26D1e33625742A52620cC76C1130efde6": {
+    "name": "BASED",
+    "ticker": "BASED",
+    "iconUrl": "https://basescan.org/token/images/basedtoken_32.png"
+  },
+  "0x113e67720a24ec1ae8fcb5f7c18a0c3b27abf1a6": {
+    "name": "Based BabyTurbo",
+    "ticker": "BTURB",
+    "iconUrl": "https://basescan.org/token/images/babyturbo_32.png"
+  },
+  "0x9cad4C14277A5f8757a50766dab93810B8a7ac60": {
+    "name": "Based Cats Coin",
+    "ticker": "MIAO",
+    "iconUrl": "https://basescan.org/token/images/basedcatcoin_32.png"
+  },
+  "0x0d8cf8a15f4bb3e3aaf2190e062167e05879f6c1": {
+    "name": "BASED FOX",
+    "ticker": "FOX",
+    "iconUrl": "https://basescan.org/token/images/basedfox_32.png"
+  },
+  "0x4366c1568fd6167eee67d25ef6980da38e3421bc": {
+    "name": "Based Hoppy",
+    "ticker": "HOPPY",
+    "iconUrl": "https://basescan.org/token/images/Hoppy_32.png"
+  },
+  "0x0B4D676eEBf9bf99a70dA085E1D2381190F7D3bb": {
+    "name": "Based Sharon",
+    "ticker": "Share",
+    "iconUrl": "https://basescan.org/token/images/basedsharon_32.png"
+  },
+  "0x569ee67891ad140fd443f8b6b506d9d5ada19f3b": {
+    "name": "Based.ai",
+    "ticker": "BAI",
+    "iconUrl": "https://basescan.org/token/images/basedai_32.png"
+  },
+  "0x83764F62B9Fd5ae2dE43904dE7E45Ff47476e2B5": {
+    "name": "BaseDoodleCat",
+    "ticker": "$DOCAT",
+    "iconUrl": "https://basescan.org/token/images/basedoodlecat_32.png"
+  },
+  "0xa812753252cAe6A48970FD761A7225c2F3819A85": {
+    "name": "BaseHaven",
+    "ticker": "$Haven",
+    "iconUrl": "https://basescan.org/token/images/basehaven_32.png"
+  },
+  "0x315b8c9a1123c10228d469551033440441b41f0b": {
+    "name": "BEATS on BASE",
+    "ticker": "BEATS",
+    "iconUrl": "https://basescan.org/token/images/beatsonbase_32.png"
+  },
+  "0x20895e16d5ae9d6e0ca127ed093a7cbe65dcb018": {
+    "name": "BHUSKY",
+    "ticker": "BHUSKY",
+    "iconUrl": "https://basescan.org/token/images/basedhusky_32.png"
+  },
+  "0x66e09ec17629574A0CC8abc480b0c2572fcd6985": {
+    "name": "Biswap",
+    "ticker": "BSW",
+    "iconUrl": "https://basescan.org/token/images/biswap_32.png"
+  },
+  "0x8b15cbb7ecd9b8fff38da8ead55a20490b99ad11": {
+    "name": "BitBall",
+    "ticker": "BALL",
+    "iconUrl": "https://basescan.org/token/images/bitball_40.png"
+  },
+  "0x252D223D0550BC6c137B003D90bc74F5341A2818": {
+    "name": "Bitbot",
+    "ticker": "BITBOT",
+    "iconUrl": "https://basescan.org/token/images/bitbot_32.png"
+  },
+  "0xf1143f3a8d76f1ca740d29d5671d365f66c44ed1": {
+    "name": "Bitcoin (Universal)",
+    "ticker": "uBTC",
+    "iconUrl": "https://basescan.org/token/images/ubtc_32.png"
+  },
+  "0x7be0cc2cadcd4a8f9901b4a66244dcdd9bd02e0f": {
+    "name": "Bitcoin Cash (Universal)",
+    "ticker": "uBCH",
+    "iconUrl": "https://basescan.org/token/images/ubch_32.png"
+  },
+  "0xc2566c8f599b8b4579f494513e8f84393dad02a8": {
+    "name": "Bitcoin to 200K",
+    "ticker": "BTC200K",
+    "iconUrl": "https://basescan.org/token/images/bitcoin200k_32.png"
+  },
+  "0xe132fef618ec9f47a7578ed1b9db77b50243a7e5": {
+    "name": "BitcoinBR on Base",
+    "ticker": "BTCBR",
+    "iconUrl": "https://basescan.org/token/images/BTCBR_32.png"
+  },
+  "0x306fd3e7b169aa4ee19412323e1a5995b8c1a1f4": {
+    "name": "Black Agnus",
+    "ticker": "FTW",
+    "iconUrl": "https://basescan.org/token/images/blackagnus_32.png"
+  },
+  "0xEE2b218A35CB6E922b5E329C2825e24Db644b289": {
+    "name": "Blaze The Husky",
+    "ticker": "BLAZE",
+    "iconUrl": "https://basescan.org/token/images/blazethehusky_32.png"
+  },
+  "0x80b3455e1db60b4cba46aba12e8b1e256dd64979": {
+    "name": "Blue-Footed Booby",
+    "ticker": "BOOBY",
+    "iconUrl": "https://basescan.org/token/images/basedboobynew_32.png"
+  },
+  "0x89dd7f451478a1cdd5af0ba59a1bb91a8d4b6c24": {
+    "name": "Blueballs",
+    "ticker": "BLUEBALLS",
+    "iconUrl": "https://basescan.org/token/images/blueballsbase_32.png"
+  },
+  "0x03a58fbc6d8301a69545bf2f0b711785b18e100a": {
+    "name": "BLUEY",
+    "ticker": "BLUEY",
+    "iconUrl": "https://basescan.org/token/images/blueybase_32.png?=v2"
+  },
+  "0x69Be585D8885c509100CFC88E87864737600018F": {
+    "name": "Blum Dogs",
+    "ticker": "BLUM",
+    "iconUrl": "https://basescan.org/token/images/blumdog_32.png"
+  },
+  "0x502c725b37d5085ca4a329da4feb0ad1e73e4ff0": {
+    "name": "bowtiedog",
+    "ticker": "TIE",
+    "iconUrl": "https://basescan.org/token/images/bowtiedog_32.png"
+  },
+  "0x73b7F22618E06F7D15Ff5Bf11B506016cD3758dA": {
+    "name": "Brewlabs",
+    "ticker": "BREW",
+    "iconUrl": "https://basescan.org/token/images/brewlabs_new2_32.png"
+  },
+  "0xa0a6fcf9d17c0f8b130cf1702250d1bb814e0b29": {
+    "name": "BRIAN AI",
+    "ticker": "BRIANAI",
+    "iconUrl": "https://basescan.org/token/images/brianai_32.png"
+  },
+  "0xd91d2346cb5bd209bccdcc11a7c794ef14da4753": {
+    "name": "CANTALF",
+    "ticker": "CTFL",
+    "iconUrl": "https://basescan.org/token/images/cantalf_32.png"
+  },
+  "0x8346de47ef1542cba86570fbd78471ee6e803e11": {
+    "name": "Caramell Dansen",
+    "ticker": "DANSEN",
+    "iconUrl": "https://basescan.org/token/images/caramell_32.png"
+  },
+  "0x3d8725d2bb9a67875f60b952a2417f604d945602": {
+    "name": "Card \ud83c\udccf",
+    "ticker": "CARD \ud83c\udccf",
+    "iconUrl": "https://basescan.org/token/images/card_32.png"
+  },
+  "0xa3a34a0d9a08ccddb6ed422ac0a28a06731335aa": {
+    "name": "Cardano (Universal)",
+    "ticker": "uADA",
+    "iconUrl": "https://basescan.org/token/images/uada_32.png"
+  },
+  "0xc08Cd26474722cE93F4D0c34D16201461c10AA8C": {
+    "name": "CARV",
+    "ticker": "CARV",
+    "iconUrl": "https://basescan.org/token/images/carv_32.png"
+  },
+  "0x9be20ec4c8adba90f914e5cc2ecb93e13eb44034": {
+    "name": "Cats Rule Everything Around Me",
+    "ticker": "CREAM",
+    "iconUrl": "https://basescan.org/token/images/cream_32.png"
+  },
+  "0x23da5f2d509cb43a59d43c108a43edf34510eff1": {
+    "name": "xPufETH",
+    "ticker": "xPufETH",
+    "iconUrl": "https://basescan.org/token/images/xpufeth_base_32.png"
+  },
+  "0xd4a0e0b9149bcee3c920d2e00b5de09138fd8bb7": {
+    "name": "Aave Base WETH",
+    "ticker": "aBasWETH",
+    "iconUrl": "https://basescan.org/token/images/aave_weth.png"
+  },
+  "0x24CB2B89844604C57350776D81e14765D03b91dE": {
+    "name": "Zunami Omni ETH",
+    "ticker": "zunETH",
+    "iconUrl": "https://basescan.org/token/images/zunamieth_32.png"
+  },
+  "0xc55e93c62874d8100dbd2dfe307edc1036ad5434": {
+    "name": "Moo BIFI",
+    "ticker": "mooBIFI",
+    "iconUrl": "https://basescan.org/token/images/beefy_moobifi_32.png"
+  },
+  "0x20b048fA035D5763685D695e66aDF62c5D9F5055": {
+    "name": "Biochar",
+    "ticker": "CHAR",
+    "iconUrl": "https://basescan.org/token/images/toucanbiochar_32.png"
+  },
+  "0x2C8C89C442436CC6C0a77943E09c8Daf49Da3161": {
+    "name": "ZEEBU",
+    "ticker": "ZBU",
+    "iconUrl": "https://basescan.org/token/images/zeebu_32.png"
+  },
+  "0xad20523A7dC37bAbc1CC74897E4977232b3D02e5": {
+    "name": "Gains Network USDC",
+    "ticker": "gUSDC",
+    "iconUrl": "https://basescan.org/token/images/gainsgusdc_32.png"
+  },
+  "0x211Cc4DD073734dA055fbF44a2b4667d5E5fE5d2": {
+    "name": "Staked USDe",
+    "ticker": "sUSDe",
+    "iconUrl": "https://basescan.org/token/images/stakedusde_32.png"
+  },
+  "0x69000dFD5025E82f48Eb28325A2B88a241182CEd": {
+    "name": "ZAI Stablecoin",
+    "ticker": "ZAI",
+    "iconUrl": "https://basescan.org/token/images/mahazaistablecoin_32.png"
+  },
+  "0xD5B9dDB04f20eA773C9b56607250149B26049B1F": {
+    "name": "Zunami Omni USD",
+    "ticker": "zunUSD",
+    "iconUrl": "https://basescan.org/token/images/zunamizunusd_32.png"
+  },
+  "0xdca716b7360b76383e8f7b82aefcbe632fc381af": {
+    "name": "SmokingDuck",
+    "ticker": "DUCK",
+    "iconUrl": "https://basescan.org/token/images/smokingduck_32.png"
+  },
+  "0x3e31966d4f81C72D2a55310A6365A56A4393E98D": {
+    "name": "WorldMobileToken",
+    "ticker": "WMTX",
+    "iconUrl": "https://basescan.org/token/images/worldmobiletoken2_32.png"
+  },
+  "0x6797B6244fA75F2e78cDFfC3a4eb169332b730cc": {
+    "name": "Eagle AI",
+    "ticker": "EAI",
+    "iconUrl": "https://basescan.org/token/images/eagleai_32.png"
+  },
+  "0x8d285df5be4570097e84241090fca8034ab18547": {
+    "name": "ETHEREUM ON BASE",
+    "ticker": "ETHB",
+    "iconUrl": "https://basescan.org/token/images/ethereumonbase_32.png"
+  },
+  "0x0645bC5cDff2376089323Ac20Df4119e48e4BCc4": {
+    "name": "JOJO",
+    "ticker": "JOJO",
+    "iconUrl": "https://basescan.org/token/images/jojoexchange_32.png"
+  },
+  "0x12c26138b666360AB2B7A1B149dF9Cf6642CDfBf": {
+    "name": "Ironclad Token",
+    "ticker": "ICL",
+    "iconUrl": "https://basescan.org/token/images/ironcladicl_32.png"
+  },
+  "0x0963a1abaf36ca88c21032b82e479353126a1c4b": {
+    "name": "leetswap.finance",
+    "ticker": "LEET",
+    "iconUrl": "https://basescan.org/token/images/leetswap_32.png"
+  },
+  "0xc745a386605213139192d33b40e3f953941117cd": {
+    "name": "FRGX",
+    "ticker": "FRGX",
+    "iconUrl": "https://basescan.org/token/images/frgx_32.png"
+  },
+  "0x4b556f3a476b58be7F35DF77EdD68FbE5076F706": {
+    "name": "MintStakeShare",
+    "ticker": "MSS",
+    "iconUrl": "https://basescan.org/token/images/mintstakeshare_32.png"
+  },
+  "0xe13e40e8fdb815fbc4a1e2133ab5588c33bac45d": {
+    "name": "Tribal",
+    "ticker": "TRIBAL",
+    "iconUrl": "https://basescan.org/token/images/tribal_32.png"
+  },
+  "0xdbe125089d0752ef458c0685436ace93a7f1f8ca": {
+    "name": "Aqualibre",
+    "ticker": "AQLA",
+    "iconUrl": "https://basescan.org/token/images/aqualibre_32.png"
+  },
+  "0x8f4e4221ba88d4e9bb76ecfb91d7c5ce08d7d5b9": {
+    "name": "FUMoney",
+    "ticker": "FU",
+    "iconUrl": "https://basescan.org/token/images/fumoney_32.png"
+  },
+  "0x357655df177Fb0229DC8acA977114a420bf81799": {
+    "name": "ROYAL FINANCE COIN",
+    "ticker": "RFC",
+    "iconUrl": "https://basescan.org/token/images/rfc_32.png"
+  },
+  "0x0f1cfd0bb452db90a3bfc0848349463010419ab2": {
+    "name": "GURU Token",
+    "ticker": "GURU",
+    "iconUrl": "https://basescan.org/token/images/gurunetwork_32.png"
+  },
+  "0x431c248257c1d3897fea3b99eb8e2e4de008cbdf": {
+    "name": "Parifi",
+    "ticker": "PRF",
+    "iconUrl": "https://basescan.org/token/images/prfarb_32.png"
+  },
+  "0x3e62fED35c97145e6B445704B8CE74B2544776A9": {
+    "name": "EARNM",
+    "ticker": "EARNM",
+    "iconUrl": "https://basescan.org/token/images/earnm_32.png"
+  },
+  "0x000096630066820566162c94874a776532705231": {
+    "name": "IDRISS",
+    "ticker": "IDRISS",
+    "iconUrl": "https://basescan.org/token/images/idriss_32.png"
+  },
+  "0xe2c86869216aC578bd62a4b8313770d9EE359A05": {
+    "name": "EMAIL Token",
+    "ticker": "EMT",
+    "iconUrl": "https://basescan.org/token/images/emailtoken_32.png"
+  },
+  "0xb3ce4ce692e035720b25880f678871cfc5a863ca": {
+    "name": "BaseTools",
+    "ticker": "BASE",
+    "iconUrl": "https://basescan.org/token/images/basetools_32.png"
+  },
+  "0x60D01EC2D5E98Ac51C8B4cF84DfCCE98D527c747": {
+    "name": "izumi Token",
+    "ticker": "iZi",
+    "iconUrl": "https://basescan.org/token/images/izumifinance_32.png"
+  },
+  "0x2dc90Fa3a0f178ba4beE16CAc5D6c9A5a7B4C6cB": {
+    "name": "DRINK",
+    "ticker": "DRINK",
+    "iconUrl": "https://basescan.org/token/images/degendistillery_32.png"
+  },
+  "0x2496a9AF81A87eD0b17F6edEaf4Ac57671d24f38": {
+    "name": "Truffi",
+    "ticker": "TRUFFI",
+    "iconUrl": "https://basescan.org/token/images/truffi_32.png"
+  },
+  "0xcA5c7a459bECAAC1f2b5eE28bB8A29875B1a37A6": {
+    "name": "Birb",
+    "ticker": "BIRB",
+    "iconUrl": "https://basescan.org/token/images/birb2_base_23.png"
+  },
+  "0xAfb89a09D82FBDE58f18Ac6437B3fC81724e4dF6": {
+    "name": "The Doge NFT",
+    "ticker": "DOG",
+    "iconUrl": "https://basescan.org/token/images/dogetokenbase_32.png"
+  },
+  "0x5d559ea7bb2dae4b694a079cb8328a2145fd32f6": {
+    "name": "SoMon",
+    "ticker": "OwO",
+    "iconUrl": "https://basescan.org/token/images/socialmonster_32.png"
+  },
+  "0x0265C6971037564f2A1382F63Fe9d707342891F2": {
+    "name": "Triumph of MAGA",
+    "ticker": "MAGA",
+    "iconUrl": "https://basescan.org/token/images/triumphofmaga_32.png"
+  },
+  "0x8d3419b9a18651f3926a205ee0b1acea1e7192de": {
+    "name": "Law of Attraction",
+    "ticker": "LOA",
+    "iconUrl": "https://basescan.org/token/images/thelawofattractioncoin_32.png"
+  },
+  "0x09579452bc3872727A5D105f342645792BB8a82b": {
+    "name": "Aardvark",
+    "ticker": "VARK",
+    "iconUrl": "https://basescan.org/token/images/aardvarkcoinbase_32.png"
+  },
+  "0xD20ab1015f6a2De4a6FdDEbAB270113F689c2F7c": {
+    "name": "DeHub",
+    "ticker": "DHB",
+    "iconUrl": "https://basescan.org/token/images/dehub_32.png"
+  },
+  "0x314da69dE85145FDd5b7580971e9DB0388A2cDc4": {
+    "name": "BasedSwap",
+    "ticker": "BSW",
+    "iconUrl": "https://basescan.org/token/images/basedswap_32.png"
+  },
+  "0xe388A9a5bFD958106ADeB79df10084a8b1D9a5aB": {
+    "name": "Lordy",
+    "ticker": "LORDY",
+    "iconUrl": "https://basescan.org/token/images/lordy_32.png"
+  },
+  "0xeA6f7e7e0F46A9E0F4e2048Eb129D879f609d632": {
+    "name": "Percy",
+    "ticker": "PERCY",
+    "iconUrl": "https://basescan.org/token/images/basedpercy_32.png"
+  },
+  "0x2953ca1174b41b28439ef1155235fa699d7b75ba": {
+    "name": "Liberty world financial",
+    "ticker": "LWFI",
+    "iconUrl": "https://basescan.org/token/images/lwfi_32.png"
+  },
+  "0xe0f96f025ebb27950718ebd787b69c325cf045c0": {
+    "name": "Bandit on Base",
+    "ticker": "BANDIT",
+    "iconUrl": "https://basescan.org/token/images/banditonbase_32.png"
+  },
+  "0xd429a52a56c712ab8ba11eacd8bf178e7c3b4d80": {
+    "name": "PO\u039e",
+    "ticker": "PO\u039e",
+    "iconUrl": "https://basescan.org/token/images/poeonbase_32.png"
+  },
+  "0xd968196fa6977c4e58f2af5ac01c655ea8332d22": {
+    "name": "The Nation Token",
+    "ticker": "NATO",
+    "iconUrl": "https://basescan.org/token/images/nato_32.png"
+  },
+  "0xA23dD9379F2E12D9ce76eC738b9f5e520d1D861c": {
+    "name": "USDEBT",
+    "ticker": "USDEBT",
+    "iconUrl": "https://basescan.org/token/images/usdebt_32.png"
+  },
+  "0x72499bdDb67F4CA150E1f522Ca82c87bc9fB18c8": {
+    "name": "Bonk",
+    "ticker": "BONK",
+    "iconUrl": "https://basescan.org/token/images/bonkonbase_32.png"
+  },
+  "0xbdb9300b7cde636d9cd4aff00f6f009ffbbc8ee6": {
+    "name": "Aave Base cbBTC",
+    "ticker": "aBascbBTC",
+    "iconUrl": "https://basescan.org/token/images/aavecbbtc_32.png"
+  },
+  "0x0a1d576f3efef75b330424287a95a366e8281d54": {
+    "name": "Aave Base USDbC",
+    "ticker": "aBasUSDbC",
+    "iconUrl": "https://basescan.org/token/images/aave_usdbc1.png?v=2"
+  },
+  "0x6f35720b272bf23832852b13ae9888c706e1a379": {
+    "name": "BASED APU",
+    "ticker": "APU",
+    "iconUrl": "https://basescan.org/token/images/basedapu_64.png"
+  },
+  "0x78a087d713be963bf307b18f2ff8122ef9a63ae9": {
+    "name": "Baseswap Token",
+    "ticker": "BSWAP",
+    "iconUrl": "https://basescan.org/token/images/baseswaptoken_32.png"
+  },
+  "0xbdb0e1c40a76c5113a023d685b419b90b01e3d61": {
+    "name": "AI Voice Agents",
+    "ticker": "AIVA",
+    "iconUrl": "https://basescan.org/token/images/aiva_32.png"
+  },
+  "0xafb2820316e7bc5ef78d295ab9b8bb2257534576": {
+    "name": "R Stablecoin",
+    "ticker": "R",
+    "iconUrl": "https://basescan.org/token/images/raftfir_32.png"
+  },
+  "0x434769c82fB928150B87C4Ae6320Bf71F92dCCa5": {
+    "name": "ECO",
+    "ticker": "ECO",
+    "iconUrl": "https://basescan.org/token/images/ecoorg_32.png"
+  },
+  "0xe3cf8dbcbdc9b220ddead0bd6342e245daff934d": {
+    "name": "PIGGY",
+    "ticker": "PIGGY",
+    "iconUrl": "https://basescan.org/token/images/piggyvision_32.png"
+  },
+  "0xd9541b08b375d58ae104ec247d7443d2d7235d64": {
+    "name": "Wombat Token",
+    "ticker": "WOM",
+    "iconUrl": "https://basescan.org/token/images/wombatexchange_32.png"
+  },
+  "0x13f4196cc779275888440b3000ae533bbbbc3166": {
+    "name": "Alongside Crypto Market Index",
+    "ticker": "AMKT",
+    "iconUrl": "https://basescan.org/token/images/amkt_32.png"
+  },
+  "0xB3a9bd4861454bA94931ebFF410c3D828525dCe2": {
+    "name": "WoofWork.io",
+    "ticker": "WOOF",
+    "iconUrl": "https://basescan.org/token/images/woofworkbase_32.png"
+  },
+  "0x94025780a1ab58868d9b2dbbb775f44b32e8e6e5": {
+    "name": "BetSwirl v2",
+    "ticker": "BETS",
+    "iconUrl": "https://basescan.org/token/images/betswirl_32.png"
+  },
+  "0x92dc4ab92eb16e781559e612f349916988013d5a": {
+    "name": "Agent Zero",
+    "ticker": "WSB",
+    "iconUrl": "https://basescan.org/token/images/zerotech_32.png"
+  },
+  "0xf31e6d62bfc485857af2186eb3d8ee94b4379fed": {
+    "name": "Chinese Doge Wow",
+    "ticker": "CHIDO",
+    "iconUrl": "https://basescan.org/token/images/chidoonbase_32.png"
+  },
+  "0x01ed85d73645523b0d62c7a8e35d03601cfd679b": {
+    "name": "Nabla",
+    "ticker": "NABLA",
+    "iconUrl": "https://basescan.org/token/images/nabla_64.png"
+  },
+  "0x895e15020c3f52ddd4d8e9514eb83c39f53b1579": {
+    "name": "YieldFi yToken",
+    "ticker": "yUSD",
+    "iconUrl": "https://basescan.org/token/images/yield_32.png"
+  },
+  "0x2dabffed5584dab0ca3f9a56ba849f97a08cad9a": {
+    "name": "Chia Warped DBX",
+    "ticker": "wDBX",
+    "iconUrl": "https://basescan.org/token/images/dexie_32.png"
+  },
+  "0x48c6740bcf807d6c47c864faeea15ed4da3910ab": {
+    "name": "Nounspace",
+    "ticker": "SPACE",
+    "iconUrl": "https://basescan.org/token/images/space_32.png"
+  },
+  "0x73326b4d0225c429bed050c11c4422d91470aaf4": {
+    "name": "DACKIE Superchain",
+    "ticker": "DACKIE",
+    "iconUrl": "https://basescan.org/token/images/dackieswap_32.png?=v4"
+  },
+  "0x009E97a080BC7B603257C461598275Dc49B8cd0c": {
+    "name": "Umoja Token",
+    "ticker": "UMJA",
+    "iconUrl": "https://basescan.org/token/images/umoja_32.png"
+  },
+  "0x6059d0ed9368c36941514d2864fd114a84853d5a": {
+    "name": "FOAM Token",
+    "ticker": "FOAM",
+    "iconUrl": "https://basescan.org/token/images/foamspace_32.png"
+  },
+  "0x09188484e1ab980daef53a9755241d759c5b7d60": {
+    "name": "Rigo Token",
+    "ticker": "GRG",
+    "iconUrl": "https://basescan.org/token/images/rigoblock_32.png"
+  },
+  "0xf5c83ea805e5aeff5de24c7da23ef246c2bf8ec7": {
+    "name": "Based Monsta",
+    "ticker": "MONSTA",
+    "iconUrl": "https://basescan.org/token/images/monstacorp_32.png"
+  },
+  "0x8b52F46A52D86C131222EE14167Da6a847bdB84a": {
+    "name": "Wrapped ETHO",
+    "ticker": "ETHO",
+    "iconUrl": "https://basescan.org/token/images/ethoprotocol_new_32.png"
+  },
+  "0x1287a235474e0331c0975e373bdd066444d1bd35": {
+    "name": "TAIKAI Token",
+    "ticker": "TKAI",
+    "iconUrl": "https://basescan.org/token/images/taikaitkai_32.png"
+  },
+  "0x1db0Fc8933f545648b54A9eE4326209a9A259643": {
+    "name": "Zunami Token",
+    "ticker": "ZUN",
+    "iconUrl": "https://basescan.org/token/images/zunamitoken_32.png"
+  },
+  "0x6009e7cd237087e6d7570990e8bdac09c3e182b0": {
+    "name": "TaskBunny Token",
+    "ticker": "BNY",
+    "iconUrl": "https://basescan.org/token/images/taskbunny_32.png"
+  },
+  "0xC2fE011C3885277c7F0e7ffd45Ff90cADc8ECD12": {
+    "name": "Poncho",
+    "ticker": "PONCHO",
+    "iconUrl": "https://basescan.org/token/images/ponchobase_32.png"
+  },
+  "0x28e29ec91db66733a94ee8e3b86a6199117baf99": {
+    "name": "Basedmilio",
+    "ticker": "BASED",
+    "iconUrl": "https://basescan.org/token/images/basedmilio_32.png"
+  },
+  "0x4e0da40b9063dc48364c1c0ffb4ae9d091fc2270": {
+    "name": "Edgeware",
+    "ticker": "EDG",
+    "iconUrl": "https://basescan.org/token/images/edgewaredao_32.png"
+  },
+  "0xd88611a629265c9af294ffdd2e7fa4546612273e": {
+    "name": "MPRO",
+    "ticker": "MPRO",
+    "iconUrl": "https://basescan.org/token/images/mprolab_32.png"
+  },
+  "0x72e72193ea14ac3b469f881989d18a2ba021b4c6": {
+    "name": "Dollar",
+    "ticker": "DOLLAR",
+    "iconUrl": "https://basescan.org/token/images/dollar_32.png"
+  },
+  "0x1d4731111bd2a50ab3dd5178574e6f3698270ffc": {
+    "name": "Degens With Attitude",
+    "ticker": "DWA",
+    "iconUrl": "https://basescan.org/token/images/degenwithattitude_32.png"
+  },
+  "0x076Bf099C7aaBd0BC9bC37930113428906F51d89": {
+    "name": "DEFLI",
+    "ticker": "FLI",
+    "iconUrl": "https://basescan.org/token/images/deflinetwork_32.png"
+  },
+  "0x420FcA0121DC28039145009570975747295f2329": {
+    "name": "COQINU",
+    "ticker": "COQ",
+    "iconUrl": "https://basescan.org/token/images/coqinu_32.png"
+  },
+  "0x7466de7bb8b5e41ee572f4167de6be782a7fa75d": {
+    "name": "WAGMI",
+    "ticker": "WAGMI",
+    "iconUrl": "https://basescan.org/token/images/wagmibest_32.png"
+  },
+  "0x7f65323e468939073ef3b5287c73f13951b0ff5b": {
+    "name": "BLUE",
+    "ticker": "BLUE",
+    "iconUrl": "https://basescan.org/token/images/bluebase_32.png"
+  },
+  "0x7480527815ccAE421400Da01E052b120Cc4255E9": {
+    "name": "Workie",
+    "ticker": "WORKIE",
+    "iconUrl": "https://basescan.org/token/images/workie_32.png?=v5"
+  },
+  "0x3933012dcf9beb0d63778725345e04dcc0c69c7e": {
+    "name": "UNLUCKY",
+    "ticker": "UNLUCKY",
+    "iconUrl": "https://basescan.org/token/images/unluckycoin_32.png"
+  },
+  "0xEA1D649dDC8e2A6E6EE40b89b2997518476caFa5": {
+    "name": "Moby",
+    "ticker": "MOBY",
+    "iconUrl": "https://basescan.org/token/images/mobyonbase_32.png"
+  },
+  "0x4b61e2f1bbdee6d746209a693156952936f1702c": {
+    "name": "Lambow",
+    "ticker": "LAMBOW",
+    "iconUrl": "https://basescan.org/token/images/lambow_32.png"
+  },
+  "0xb757977bc882a14db86b048f2abb2f2a14d33184": {
+    "name": "DogLibre",
+    "ticker": "DOGL",
+    "iconUrl": "https://basescan.org/token/images/doglibre_32.png"
+  },
+  "0x3b54eb78fc8103462f86976b06916fa46078b124": {
+    "name": "Wrapped Power",
+    "ticker": "wPWR",
+    "iconUrl": "https://basescan.org/token/images/maxxwrappedpower_32.png"
+  },
+  "0x6ce7c23B917284E21D55cEa20Acaeb2bC58594bE": {
+    "name": "Rizz",
+    "ticker": "RIZZ",
+    "iconUrl": "https://basescan.org/token/images/rizzlife_32.png"
+  },
+  "0x01CC6b33c63CeE896521D63451896C14D42D05Ea": {
+    "name": "Synth escrowed token",
+    "ticker": "xSYNTH",
+    "iconUrl": "https://basescan.org/token/images/xsynthswap_32.png"
+  },
+  "0xbd2DBb8eceA9743CA5B16423b4eAa26bDcfE5eD2": {
+    "name": "Synth Token",
+    "ticker": "SYNTH",
+    "iconUrl": "https://basescan.org/token/images/synthswap_32.png"
+  },
+  "0x421e3bb01642c3ebbc88a82dbb713145f30993d6": {
+    "name": "PengyOS",
+    "ticker": "POS",
+    "iconUrl": "https://basescan.org/token/images/pos_32.png"
+  },
+  "0x55027a5b06f4340cC4C82DCC74C90cA93dcb173E": {
+    "name": "Tadpole",
+    "ticker": "TAD",
+    "iconUrl": "https://basescan.org/token/images/tad_32.png"
+  },
+  "0xcd1b51b87a8a7137d6421ba5a976225187a26777": {
+    "name": "LSD",
+    "ticker": "LSD",
+    "iconUrl": "https://basescan.org/token/images/l7finance2_32.png"
+  },
+  "0xC73e76Aa9F14C1837CDB49bd028E8Ff5a0a71dAD": {
+    "name": "High Yield ETH Index",
+    "ticker": "hyETH",
+    "iconUrl": "https://basescan.org/token/images/indexcoophyeth_32.png"
+  },
+  "0xcf3d55c10db69f28fd1a75bd73f3d8a2d9c595ad": {
+    "name": "Aave Base cbETH",
+    "ticker": "aBascbETH",
+    "iconUrl": "https://basescan.org/token/images/aave_cbeth.png"
+  },
+  "0x7FcD174E80f264448ebeE8c88a7C4476AAF58Ea6": {
+    "name": "Wrapped Super OETH",
+    "ticker": "wsuperOETHb",
+    "iconUrl": "https://basescan.org/token/images/originwsuperoethb_32.png"
+  },
+  "0x0c03ce270b4826ec62e7dd007f0b716068639f7b": {
+    "name": "The Innovation Game",
+    "ticker": "TIG",
+    "iconUrl": "https://basescan.org/token/images/tigfoundation_32.png"
+  },
+  "0x968bE3F7bfeF0F8eDc3c1aD90232EbB0DA0867aA": {
+    "name": "Seedworld",
+    "ticker": "SWORLD",
+    "iconUrl": "https://basescan.org/token/images/seedworld_32.png"
+  },
+  "0xe2b1dc2d4a3b4e59fdf0c47b71a7a86391a8b35a": {
+    "name": "RWA Inc",
+    "ticker": "RWA",
+    "iconUrl": "https://basescan.org/token/images/rwainc_32.png?=v2"
+  },
+  "0x8f019931375454Fe4EE353427eB94E2E0C9e0a8C": {
+    "name": "KOMPETE Token",
+    "ticker": "KOMPETE",
+    "iconUrl": "https://basescan.org/token/images/kompetegames2_32.png"
+  },
+  "0x8fbd0648971d56f1f2c35fa075ff5bc75fb0e39d": {
+    "name": "MBS",
+    "ticker": "MBS",
+    "iconUrl": "https://basescan.org/token/images/unkjd_32.png"
+  },
+  "0x15ac90165f8b45a80534228bdcb124a011f62fee": {
+    "name": "donotfomoew",
+    "ticker": "MOEW",
+    "iconUrl": "https://basescan.org/token/images/donotfomeownew_32.png"
+  },
+  "0x858c50C3AF1913b0E849aFDB74617388a1a5340d": {
+    "name": "SubQueryToken",
+    "ticker": "SQT",
+    "iconUrl": "https://basescan.org/token/images/subquerynetwork2_32.png"
+  },
+  "0xf8b1b47aa748f5c7b5d0e80c726a843913eb573a": {
+    "name": "Libertai",
+    "ticker": "LTAI",
+    "iconUrl": "https://basescan.org/token/images/libertai_32.png"
+  },
+  "0x01facC69EC7360640AA5898E852326752801674A": {
+    "name": "Fuse Token",
+    "ticker": "FUSE",
+    "iconUrl": "https://basescan.org/token/images/fusebase_32.png"
+  },
+  "0x2D57C47BC5D2432FEEEdf2c9150162A9862D3cCf": {
+    "name": "Dickbutt",
+    "ticker": "DICKBUTT",
+    "iconUrl": "https://basescan.org/token/images/dickbutt_32.png"
+  },
+  "0xB59c8912c83157a955f9D715E556257F432C35D7": {
+    "name": "Truflation",
+    "ticker": "TRUF",
+    "iconUrl": "https://basescan.org/token/images/truflation_arb_32.png"
+  },
+  "0xcacf1ca03983ce6c7e235fb20c70acc70ed13509": {
+    "name": "AstroPepeX",
+    "ticker": "APX",
+    "iconUrl": "https://basescan.org/token/images/astropepe_32.png"
+  },
+  "0x0c41f1fc9022feb69af6dc666abfe73c9ffda7ce": {
+    "name": "Bitcoin on Base",
+    "ticker": "BTCB",
+    "iconUrl": "https://basescan.org/token/images/btcb_64.png"
+  },
+  "0xbdf317f9c153246c429f23f4093087164b145390": {
+    "name": "AI Agent Layer",
+    "ticker": "AIFUN",
+    "iconUrl": "https://basescan.org/token/images/aiagentlayer_32.png"
+  },
+  "0x38F9bf9dCe51833Ec7f03C9dC218197999999999": {
+    "name": "Nya",
+    "ticker": "NYA",
+    "iconUrl": "https://basescan.org/token/images/nya_32.png"
+  },
+  "0x4b12507e171970b3acd48edfeb5bd1c676e61280": {
+    "name": "ivault Token",
+    "ticker": "IVT",
+    "iconUrl": "https://basescan.org/token/images/ivt_32.png"
+  },
+  "0x8761155c814c807cD3CcD15B256D69D3C10f198C": {
+    "name": "JoystreamERC20",
+    "ticker": "JOY",
+    "iconUrl": "https://basescan.org/token/images/joystream_32.png"
+  },
+  "0x26d3c0d9f4cc4c130097b6afdebe4f5e497e6bdf": {
+    "name": "Mynth",
+    "ticker": "MNT",
+    "iconUrl": "https://basescan.org/token/images/mynth_32.png"
+  },
+  "0x7d27187eb33a7b1d99258ff222633670f84fa342": {
+    "name": "IntentX Token",
+    "ticker": "INTX",
+    "iconUrl": "https://basescan.org/token/images/intentx_32.png"
+  },
+  "0xbd4e5c2f8de5065993d29a9794e2b7cefc41437a": {
+    "name": "IPOR Token",
+    "ticker": "IPOR",
+    "iconUrl": "https://basescan.org/token/images/iporio_base_32.png"
+  },
+  "0x3816dd4bd44c8830c2fa020a5605bac72fa3de7a": {
+    "name": "Presearch",
+    "ticker": "PRE",
+    "iconUrl": "https://basescan.org/token/images/presearch_base_32.png"
+  },
+  "0x703d57164ca270b0b330a87fd159cfef1490c0a5": {
+    "name": "Rai.Finance",
+    "ticker": "SOFI",
+    "iconUrl": "https://basescan.org/token/images/RaiFinance_32.PNG"
+  },
+  "0xf1095aa7DC127ed45441aCfb742694d6a0261b00": {
+    "name": "BEPRO Token",
+    "ticker": "BEPRO",
+    "iconUrl": "https://basescan.org/token/images/bepronetwork_32.png"
+  },
+  "0xb0505e5a99abd03d94a1169e638b78edfed26ea4": {
+    "name": "Sui (Universal)",
+    "ticker": "uSUI",
+    "iconUrl": "https://basescan.org/token/images/usui_32.png"
+  },
+  "0x6E51B3a19F114013E5Dc09D0477a536c7E4e0207": {
+    "name": "Media Token",
+    "ticker": "MEDIA",
+    "iconUrl": "https://basescan.org/token/images/mediafdn_32.png"
+  },
+  "0x12418783e860997eb99e8aCf682DF952F721cF62": {
+    "name": "iBTC",
+    "ticker": "IBTC",
+    "iconUrl": "https://basescan.org/token/images/dlcbtc_32.png"
+  },
+  "0x0c5142bc58f9a61ab8c3d2085dd2f4e550c5ce0b": {
+    "name": "RUSSELL",
+    "ticker": "RUSSELL",
+    "iconUrl": "https://basescan.org/token/images/russellbase_32.png?=v3"
+  },
+  "0x45d9c101a3870ca5024582fd788f4e1e8f7971c3": {
+    "name": "MASQ",
+    "ticker": "MASQ",
+    "iconUrl": "https://basescan.org/token/images/masqbrowser_32.png"
+  },
+  "0x3203856eac03d343f9d5245ba2f39861838a7b36": {
+    "name": "Aviator",
+    "ticker": "AVI",
+    "iconUrl": "https://basescan.org/token/images/aviator_32.png"
+  },
+  "0x554bba833518793056CF105E66aBEA330672c0dE": {
+    "name": "MAHA.xyz",
+    "ticker": "MAHA",
+    "iconUrl": "https://basescan.org/token/images/mahaxyz_32.png"
+  },
+  "0x6d3B8C76c5396642960243Febf736C6BE8b60562": {
+    "name": "SKOP Token",
+    "ticker": "SKOP",
+    "iconUrl": "https://basescan.org/token/images/skopmeme_32.png"
+  },
+  "0x74cb668d23E6e54524e2E1e4d1c392F5fd611783": {
+    "name": "Staked Avail (Wormhole)",
+    "ticker": "stAVAIL",
+    "iconUrl": "https://basescan.org/token/images/deq_32.png"
+  },
+  "0xe7399151b688a265f347693d358821a5a8c213ec": {
+    "name": "SKAI",
+    "ticker": "SKAI",
+    "iconUrl": "https://basescan.org/token/images/skillfulai_32.png"
+  },
+  "0x9a2270cc7d21be4225d2c5c588e86c24395f77c1": {
+    "name": "FREE GUAC",
+    "ticker": "GUAC",
+    "iconUrl": "https://basescan.org/token/images/guac_32.png"
+  },
+  "0x623cD3a3EdF080057892aaF8D773Bbb7A5C9b6e9": {
+    "name": "Sekuya",
+    "ticker": "SKYA",
+    "iconUrl": "https://basescan.org/token/images/sekuya2_32.png"
+  },
+  "0xb755506531786C8aC63B756BaB1ac387bACB0C04": {
+    "name": "ZARP Stablecoin",
+    "ticker": "ZARP",
+    "iconUrl": "https://basescan.org/token/images/zarpcash2_32.png"
+  },
+  "0x949185D3BE66775Ea648F4a306740EA9eFF9C567": {
+    "name": "YELToken",
+    "ticker": "YEL",
+    "iconUrl": "https://basescan.org/token/images/yelfinance_32.png"
+  },
+  "0x82B0E1A2374EA0198f62A48B14FFaB53DB6C1E36": {
+    "name": "PokPok Golden Egg",
+    "ticker": "PEGG",
+    "iconUrl": "https://basescan.org/token/images/pokpokegg_32.png"
+  },
+  "0x917F39Bb33B2483Dd19546b1E8D2f09ce481ee44": {
+    "name": "PKT",
+    "ticker": "PKT",
+    "iconUrl": "https://basescan.org/token/images/pktcash_32.png"
+  },
+  "0x3d1d651761d535df881740ab50ba4bd8a2ec2c00": {
+    "name": "Synthesizer Dog",
+    "ticker": "SYNDOG",
+    "iconUrl": "https://basescan.org/token/images/syndog_32.png"
+  },
+  "0xaC27fa800955849d6D17cC8952Ba9dD6EAA66187": {
+    "name": "UnlockProtocolToken",
+    "ticker": "UP",
+    "iconUrl": "https://basescan.org/token/images/up_32.png"
+  },
+  "0xde5ed76e7c05ec5e4572cfc88d1acea165109e44": {
+    "name": "DEUS",
+    "ticker": "DEUS",
+    "iconUrl": "https://basescan.org/token/images/deusfinance_new_32.png"
+  },
+  "0x814fe70e85025bec87d4ad3f3b713bdcaac0579b": {
+    "name": "Based Mario",
+    "ticker": "BARIO",
+    "iconUrl": "https://basescan.org/token/images/basedmario_32.png"
+  },
+  "0xb4e1b230dd0476238fc64c99ff9d6ccdfdb2258d": {
+    "name": "Florence Finance Medici",
+    "ticker": "FFM",
+    "iconUrl": "https://basescan.org/token/images/florencemedici_32.png"
+  },
+  "0xd1e6f3f0a7f40d5412f7471875879381441bf722": {
+    "name": "ARI",
+    "ticker": "ARI",
+    "iconUrl": "https://basescan.org/token/images/ari_32.png"
+  },
+  "0x76734b57dfe834f102fb61e1ebf844adf8dd931e": {
+    "name": "weirdo",
+    "ticker": "weirdo",
+    "iconUrl": "https://basescan.org/token/images/weirdo_32.png?=v3"
+  },
+  "0x41e0fe1317bd6e8944b037cd59b22d428c1434c2": {
+    "name": "Virtu by Virtuals",
+    "ticker": "VIRTU",
+    "iconUrl": "https://basescan.org/token/images/virtu_32.png"
+  },
+  "0x3ecced5b416e58664f04a39dd18935eb71d33b15": {
+    "name": "Brian",
+    "ticker": "BRIAN",
+    "iconUrl": "https://basescan.org/token/images/brianarmbase2_32.png"
+  },
+  "0xe0023E73aab4fE9a22f059a9d27E857E027eE3dc": {
+    "name": "Rwax Token",
+    "ticker": "RWAX",
+    "iconUrl": "https://basescan.org/token/images/therwax_32.png"
+  },
+  "0x4dd9077269dd08899f2a9e73507125962b5bc87f": {
+    "name": "Crash",
+    "ticker": "Crash",
+    "iconUrl": "https://basescan.org/token/images/crashonbase3_32.png"
+  },
+  "0x7002458B1DF59EccB57387bC79fFc7C29E22e6f7": {
+    "name": "OriginToken",
+    "ticker": "OGN",
+    "iconUrl": "https://basescan.org/token/images/originprotocologn_32.png"
+  },
+  "0x55cd6469f597452b5a7536e2cd98fde4c1247ee4": {
+    "name": "Luna by Virtuals",
+    "ticker": "LUNA",
+    "iconUrl": "https://basescan.org/token/images/luna_32.png"
+  },
+  "0xe997017e0cb0ceb503565f181e9ea922cd979c35": {
+    "name": "LimeWire Token",
+    "ticker": "LMWR",
+    "iconUrl": "https://basescan.org/token/images/limewiretoken_32.png"
+  },
+  "0xd722E55C1d9D9fA0021A5215Cbb904b92B3dC5d4": {
+    "name": "Radiant",
+    "ticker": "RDNT",
+    "iconUrl": "https://basescan.org/token/images/radiantcapital_32.png"
+  },
+  "0x4A3A6Dd60A34bB2Aba60D73B4C88315E9CeB6A3D": {
+    "name": "Magic Internet Money",
+    "ticker": "MIM",
+    "iconUrl": "https://basescan.org/token/images/mim_32.png"
+  },
+  "0x2f6c17fa9f9bc3600346ab4e48c0701e1d5962ae": {
+    "name": "Based Fartcoin",
+    "ticker": "Fartcoin",
+    "iconUrl": "https://basescan.org/token/images/fartcoin_64.png"
+  },
+  "0xFB1Aaba03c31EA98A3eEC7591808AcB1947ee7Ac": {
+    "name": "Gains Network",
+    "ticker": "GNS",
+    "iconUrl": "https://basescan.org/token/images/gns_32.png"
+  },
+  "0xda3de145054ed30ee937865d31b500505c4bdfe7": {
+    "name": "Curve.fi Factory Plain Pool: Overnight/Curve",
+    "ticker": "USD+crvUSD-f",
+    "iconUrl": "https://basescan.org/token/images/overnightcurve_32.png"
+  },
+  "0xb79dd08ea68a908a97220c76d19a6aa9cbde4376": {
+    "name": "USD+",
+    "ticker": "USD+",
+    "iconUrl": "https://basescan.org/token/images/usdplus_32.png"
+  },
+  "0xab1e131c6984cc149ef45931073d11ae35497191": {
+    "name": "Masa Token",
+    "ticker": "MASA",
+    "iconUrl": "https://basescan.org/token/images/masafinance_32.png"
+  },
+  "0x23a96680ccde03bd4bdd9a3e9a0cb56a5d27f7c9": {
+    "name": "henlo",
+    "ticker": "HENLO",
+    "iconUrl": "https://basescan.org/token/images/henlokart_32.png"
+  },
+  "0xc48823ec67720a04a9dfd8c7d109b2c3d6622094": {
+    "name": "Metacade",
+    "ticker": "MCADE",
+    "iconUrl": "https://basescan.org/token/images/metacade_32.png"
+  },
+  "0x764A726d9ceD0433A8D7643335919dEb03a9a935": {
+    "name": "Pocket Network",
+    "ticker": "POKT",
+    "iconUrl": "https://basescan.org/token/images/poktnetwork_32.png"
+  },
+  "0xcd2f22236dd9dfe2356d7c543161d4d260fd9bcb": {
+    "name": "Aavegotchi GHST Token",
+    "ticker": "GHST",
+    "iconUrl": "https://basescan.org/token/images/aaveghstsmol_32.png"
+  },
+  "0xeb6d78148f001f3aa2f588997c5e102e489ad341": {
+    "name": "Super Champs",
+    "ticker": "CHAMP",
+    "iconUrl": "https://basescan.org/token/images/superchamps_32.png"
+  },
+  "0x73E2A6320314883ff8Cc08b53F1460a5f4c47f2c": {
+    "name": "HackenAI",
+    "ticker": "HAI",
+    "iconUrl": "https://basescan.org/token/images/hai_32.png"
+  },
+  "0x9e81f6495ba29a6b4d48bddd042c0598fa8abc9f": {
+    "name": "MATH Token",
+    "ticker": "MATH",
+    "iconUrl": "https://basescan.org/token/images/mathwallet_base_32.png"
+  },
+  "0x5eAA326fB2fc97fAcCe6A79A304876daD0F2e96c": {
+    "name": "Dimo",
+    "ticker": "DIMO",
+    "iconUrl": "https://basescan.org/token/images/dimoorg_32.png"
+  },
+  "0x54330d28ca3357f294334bdc454a032e7f353416": {
+    "name": "Autonolas",
+    "ticker": "OLAS",
+    "iconUrl": "https://basescan.org/token/images/autonolas_32.png"
+  },
+  "0x26cf750abaf38af7109effdbdf79ba50d2ee09a1": {
+    "name": "UCASH",
+    "ticker": "UCASH",
+    "iconUrl": "https://basescan.org/token/images/ucash_32.png"
+  },
+  "0xca4569949699d56e1834efe9f58747ca0f151b01": {
+    "name": "Token Metrics AI",
+    "ticker": "TMAI",
+    "iconUrl": "https://basescan.org/token/images/tokenmetrics_32.png"
+  },
+  "0x7a5f5ccd46ebd7ac30615836d988ca3bd57412b3": {
+    "name": "TAOCat by Virtuals",
+    "ticker": "TAOCAT",
+    "iconUrl": "https://basescan.org/token/images/taocat_32.png"
+  },
+  "0x655A51e6803faF50D4acE80fa501af2F29C856cF": {
+    "name": "PAID Network",
+    "ticker": "PAID",
+    "iconUrl": "https://basescan.org/token/images/paidnetwork_32.png"
+  },
+  "0x0a953dd9fc813fefaf6015b804c9dfa0624690c0": {
+    "name": "Cornucopias",
+    "ticker": "COPI",
+    "iconUrl": "https://basescan.org/token/images/cornucopias_32.png"
+  },
+  "0x1c7a460413dd4e964f96d8dfc56e7223ce88cd85": {
+    "name": "Seamless",
+    "ticker": "SEAM",
+    "iconUrl": "https://basescan.org/token/images/seamless_32.png"
+  },
+  "0x61ca70b867a48265e553a7fbb81bfe44fada7ae6": {
+    "name": "ARC",
+    "ticker": "ARC",
+    "iconUrl": "https://basescan.org/token/images/arcai_32.png"
+  },
+  "0x24fcFC492C1393274B6bcd568ac9e225BEc93584": {
+    "name": "Heroes of Mavia",
+    "ticker": "MAVIA",
+    "iconUrl": "https://basescan.org/token/images/mavianft_32.png"
+  },
+  "0xecc312CBDC0884C41FE1579ea33686DdAcc90c42": {
+    "name": "MaviaMarketPool",
+    "ticker": "MMP",
+    "iconUrl": "https://basescan.org/token/images/mmp_32.png"
+  },
+  "0x767a739d1a152639e9ea1d8c1bd55fdc5b217d7f": {
+    "name": "VEIL Token",
+    "ticker": "VEIL",
+    "iconUrl": "https://basescan.org/token/images/veilcash_64.png"
+  },
+  "0x53ae20d42e16626dc41c7842d9ce876358082370": {
+    "name": "INT OS",
+    "ticker": "AIOS",
+    "iconUrl": "https://basescan.org/token/images/intos_64.png"
+  },
+  "0xD6Aaf4D477999Fa50c5A1Aa35f708862113A73cC": {
+    "name": "Propbase",
+    "ticker": "PROPS",
+    "iconUrl": "https://basescan.org/token/images/propsbase_32.png"
+  },
+  "0x75e6b648c91d222b2f6318e8ceeed4b691d5323f": {
+    "name": "AnonFi",
+    "ticker": "ANON",
+    "iconUrl": "https://basescan.org/token/images/anonfi_32.png"
+  },
+  "0x166e70941262ae7cbf9df5c8897a6242c546457d": {
+    "name": "Wrapped IRON",
+    "ticker": "wIRON",
+    "iconUrl": "https://basescan.org/token/images/wironfish_32.png"
+  },
+  "0x5a7a2bf9ffae199f088b25837dcd7e115cf8e1bb": {
+    "name": "IMO",
+    "ticker": "IMO",
+    "iconUrl": "https://basescan.org/token/images/imo_32.png"
+  },
+  "0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca": {
+    "name": "USD Base Coin",
+    "ticker": "USDbC",
+    "iconUrl": "https://basescan.org/token/images/usdbc_ofc_32.png"
+  },
+  "0xa61beb4a3d02decb01039e378237032b351125b4": {
+    "name": "agEUR",
+    "ticker": "agEUR",
+    "iconUrl": "https://basescan.org/token/images/ageur_32.png"
+  },
+  "0x8923947EAfaf4aD68F1f0C9eb5463eC876D79058": {
+    "name": "Liquid Mercury",
+    "ticker": "MERC",
+    "iconUrl": "https://basescan.org/token/images/liquidmercury_32.png"
+  },
+  "0xf2d3d488626a117984fda70f8106abc0049018d3": {
+    "name": "Miracleplay Token",
+    "ticker": "MPT",
+    "iconUrl": "https://basescan.org/token/images/miracleplay_32.png"
+  },
+  "0x2dad3a13ef0c6366220f989157009e501e7938f8": {
+    "name": "Extra Finance",
+    "ticker": "EXTRA",
+    "iconUrl": "https://basescan.org/token/images/extrafinance_32.png"
+  },
+  "0xcf67815cce72e682eb4429eca46843bed81ca739": {
+    "name": "GAM3S.GG",
+    "ticker": "G3",
+    "iconUrl": "https://basescan.org/token/images/gam3sg3_32.png"
+  },
+  "0xd0d1e44fc9adaeb732f73ffc2429cd1db9cd4529": {
+    "name": "Sipher Token",
+    "ticker": "SIPHER",
+    "iconUrl": "https://basescan.org/token/images/playsipher_32.png"
+  },
+  "0xbb22ff867f8ca3d5f2251b4084f6ec86d4666e14": {
+    "name": "Cryptex",
+    "ticker": "CTX",
+    "iconUrl": "https://basescan.org/token/images/cryptex_32.png"
+  },
+  "0x800822d361335b4d5F352Dac293cA4128b5B605f": {
+    "name": "Symmio",
+    "ticker": "SYMM",
+    "iconUrl": "https://basescan.org/token/images/symmio2_base_32.png"
+  },
+  "0x27e3bc3a66e24cad043ac3d93a12a8070e3897ba": {
+    "name": "OVR",
+    "ticker": "OVR",
+    "iconUrl": "https://basescan.org/token/images/ovrai_32.png"
+  },
+  "0x157a6df6B74F4E5E45af4E4615FDe7B49225a662": {
+    "name": "ISLAND",
+    "ticker": "ISLAND",
+    "iconUrl": "https://basescan.org/token/images/niftyisland_32.png"
+  },
+  "0xeff2A458E464b07088bDB441C21A42AB4b61e07E": {
+    "name": "Paragons DAO Token",
+    "ticker": "PDT",
+    "iconUrl": "https://basescan.org/token/images/paragonsdao_32.png"
+  },
+  "0xACAd1d3107808577022387C07512E7828694B2a2": {
+    "name": "Ethix",
+    "ticker": "ETHIX",
+    "iconUrl": "https://basescan.org/token/images/ethixhub_32.png"
+  },
+  "0xf544251d25f3d243a36b07e7e7962a678f952691": {
+    "name": "Tarot",
+    "ticker": "TAROT",
+    "iconUrl": "https://basescan.org/token/images/tarot_32.png"
+  },
+  "0x0578d8a44db98b23bf096a382e016e29a5ce0ffe": {
+    "name": "higher",
+    "ticker": "HIGHER",
+    "iconUrl": "https://basescan.org/token/images/higher_32.png"
+  },
+  "0x74aa9bB52B36a378a6E641B86d7acb76Dc9b3940": {
+    "name": "TRVL",
+    "ticker": "TRVL",
+    "iconUrl": "https://basescan.org/token/images/trvl_32.png"
+  },
+  "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913": {
+    "name": "USDC",
+    "ticker": "USDC",
+    "iconUrl": "https://basescan.org/token/images/centre-usdc_28.png"
+  },
+  "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2": {
+    "name": "Tether USD",
+    "ticker": "USDT",
+    "iconUrl": "https://basescan.org/token/images/bridgedusdt2_ofc_64.png"
+  },
+  "0x102d758f688a4C1C5a80b116bD945d4455460282": {
+    "name": "Stargate Bridged USDT0",
+    "ticker": "USD₮0",
+    "iconUrl": "https://assets.coingecko.com/coins/images/69528/standard/usdt0.jpg?1758873945"
+  },
+  "0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452": {
+    "name": "Wrapped liquid staked Ether 2.0",
+    "ticker": "wstETH",
+    "iconUrl": "https://basescan.org/token/images/wsteth3_32.png"
+  },
+  "0x4200000000000000000000000000000000000006": {
+    "name": "Wrapped Ether",
+    "ticker": "WETH",
+    "iconUrl": "https://basescan.org/token/images/weth_28.png"
+  },
+  "0x820c137fa70c8691f0e44dc420a5e53c168921dc": {
+    "name": "USDS Stablecoin",
+    "ticker": "USDS",
+    "iconUrl": "https://basescan.org/token/images/skyusds_32.svg"
+  },
+  "0x04c0599ae5a44757c0af6f9ec3b93da8976c150a": {
+    "name": "Wrapped eETH",
+    "ticker": "weETH.base",
+    "iconUrl": "https://basescan.org/token/images/etherfiweeth_32.png"
+  },
+  "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34": {
+    "name": "USDe",
+    "ticker": "USDe",
+    "iconUrl": "https://basescan.org/token/images/ethenausde_32.png"
+  },
+  "0x50c5725949a6f0c72e6c4a641f24049a917db0cb": {
+    "name": "Dai Stablecoin",
+    "ticker": "DAI",
+    "iconUrl": "https://basescan.org/token/images/daistablecoin_32.png"
+  },
+  "0x3992b27da26848c2b19cea6fd25ad5568b68ab98": {
+    "name": "MANTRA",
+    "ticker": "OM",
+    "iconUrl": "https://basescan.org/token/images/mantradao_base_32.png"
+  },
+  "0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b": {
+    "name": "Virtual Protocol",
+    "ticker": "VIRTUAL",
+    "iconUrl": "https://basescan.org/token/images/virtualprotocol_32.png"
+  },
+  "0x58538e6A46E07434d7E7375Bc268D3cb839C0133": {
+    "name": "ENA",
+    "ticker": "ENA",
+    "iconUrl": "https://basescan.org/token/images/ethena_32.png"
+  },
+  "0xcbb7c0000ab88b473b1f5afd9ef808440eed33bf": {
+    "name": "Coinbase Wrapped BTC",
+    "ticker": "cbBTC",
+    "iconUrl": "https://basescan.org/token/images/cbbtc_32.png"
+  },
+  "0xecac9c5f704e954931349da37f60e39f515c11c1": {
+    "name": "Lombard Staked BTC",
+    "ticker": "LBTC",
+    "iconUrl": "https://basescan.org/token/images/lombardlbtc_32.png"
+  },
+  "0xb6fe221fe9eef5aba221c348ba20a1bf5e73624c": {
+    "name": "Rocket Pool ETH",
+    "ticker": "rETH",
+    "iconUrl": "https://basescan.org/token/images/rocketpooleth_32.png"
+  },
+  "0x4c5d8A75F3762c1561D96f177694f67378705E98": {
+    "name": "Pyth Network",
+    "ticker": "PYTH",
+    "iconUrl": "https://basescan.org/token/images/pythnetwork_32.png"
+  },
+  "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415": {
+    "name": "Curve DAO Token",
+    "ticker": "CRV",
+    "iconUrl": "https://basescan.org/token/images/crv_32.png"
+  },
+  "0x2416092f143378750bb29b79ed961ab195cceea5": {
+    "name": "Renzo Restaked ETH",
+    "ticker": "ezETH",
+    "iconUrl": "https://basescan.org/token/images/ezETHv2_32.png?=v2"
+  },
+  "0x940181a94a35a4569e4529a3cdfb74e38fd98631": {
+    "name": "Aerodrome",
+    "ticker": "AERO",
+    "iconUrl": "https://basescan.org/token/images/aerodrome_32.png"
+  },
+  "0xBAa5CC21fd487B8Fcc2F632f3F4E8D37262a0842": {
+    "name": "Morpho Token",
+    "ticker": "MORPHO",
+    "iconUrl": "https://basescan.org/token/images/morphoorg_new_32.png"
+  },
+  "0xB0fFa8000886e57F86dd5264b9582b2Ad87b2b91": {
+    "name": "Wormhole Token",
+    "ticker": "W",
+    "iconUrl": "https://basescan.org/token/images/w_32.png"
+  },
+  "0xfA980cEd6895AC314E7dE34Ef1bFAE90a5AdD21b": {
+    "name": "Prime",
+    "ticker": "PRIME",
+    "iconUrl": "https://basescan.org/token/images/echelonprime2_32.png"
+  },
+  "0xa99f6e6785da0f5d6fb42495fe424bce029eeb3e": {
+    "name": "Pendle",
+    "ticker": "PENDLE",
+    "iconUrl": "https://basescan.org/token/images/pendlefin_32.png"
+  },
+  "0x22e6966b799c4d5b13be962e1d117b56327fda66": {
+    "name": "Synthetix Network Token",
+    "ticker": "SNX",
+    "iconUrl": "https://basescan.org/token/images/synthetixsnx_32.png"
+  },
+  "0x2ae3f1ec7f1f5012cfeab0185bfc7aa3cf0dec22": {
+    "name": "Coinbase Wrapped Staked ETH",
+    "ticker": "cbETH",
+    "iconUrl": "https://basescan.org/token/images/coinbasecbeth_32.png"
+  },
+  "0xb33ff54b9f7242ef1593d2c9bcd8f9df46c77935": {
+    "name": "FAI",
+    "ticker": "FAI",
+    "iconUrl": "https://basescan.org/token/images/freysaai_32.png"
+  },
+  "0xc5fecC3a29Fb57B5024eEc8a2239d4621e111CBE": {
+    "name": "1INCH Token",
+    "ticker": "1INCH",
+    "iconUrl": "https://basescan.org/token/images/1inch_ofc_32.png"
+  },
+  "0x6985884C4392D348587B19cb9eAAf157F13271cd": {
+    "name": "LayerZero",
+    "ticker": "ZRO",
+    "iconUrl": "https://basescan.org/token/images/zro_32.png"
+  },
+  "0xdbfefd2e8460a6ee4955a68582f85708baea60a3": {
+    "name": "Super OETH",
+    "ticker": "superOETHb",
+    "iconUrl": "https://basescan.org/token/images/superoeth_base_32.png"
+  },
+  "0x6c240dda6b5c336df09a4d011139beaaa1ea2aa2": {
+    "name": "ether.fi governance token",
+    "ticker": "ETHFI",
+    "iconUrl": "https://basescan.org/token/images/ethfi_32.png"
+  },
+  "0x9eaf8c1e34f05a589eda6bafdf391cf6ad3cb239": {
+    "name": "yearn.finance",
+    "ticker": "YFI",
+    "iconUrl": "https://basescan.org/token/images/yfi_32.png"
+  },
+  "0x336c9297afb7798c292e9f80d8e566b947f291f0": {
+    "name": "Phala",
+    "ticker": "PHA",
+    "iconUrl": "https://basescan.org/token/images/phalanetwork_base_32.png"
+  },
+  "0xc694a91e6b071bf030a18bd3053a7fe09b6dae69": {
+    "name": "CoW Protocol Token",
+    "ticker": "COW",
+    "iconUrl": "https://basescan.org/token/images/cowprotocolv2new_32.png"
+  },
+  "0x2a06a17cbc6d0032cac2c6696da90f29d39a1a29": {
+    "name": "HarryPotterObamaSonic10Inu",
+    "ticker": "BITCOIN",
+    "iconUrl": "https://basescan.org/token/images/hpos10ibase_32.png"
+  },
+  "0xfd4330b0312fdeec6d4225075b82e00493ff2e3f": {
+    "name": "SmarDex Token",
+    "ticker": "SDEX",
+    "iconUrl": "https://basescan.org/token/images/smardextoken_32.png"
+  },
+  "0x2b51E2Ec9551F9B87B321f63b805871f1c81ba97": {
+    "name": "Centrifuge",
+    "ticker": "CFG",
+    "iconUrl": "https://basescan.org/token/images/wrappedcentrifuge_32.png"
+  },
+  "0x4ed4e862860bed51a9570b96d89af5e1b0efefed": {
+    "name": "Degen",
+    "ticker": "DEGEN",
+    "iconUrl": "https://basescan.org/token/images/degentips_32.png"
+  },
+  "0xc0041ef357b183448b235a8ea73ce4e4ec8c265f": {
+    "name": "Cookie DAO",
+    "ticker": "COOKIE",
+    "iconUrl": "https://basescan.org/token/images/cookiedaocomm_32.png"
+  },
+  "0xa87c9808c0ebe20a1427b5c769623c77201f6f4d": {
+    "name": "Anzen USDz Bond",
+    "ticker": "AnzBond",
+    "iconUrl": "https://basescan.org/token/images/anzenbase_32.png"
+  },
+  "0x04D5ddf5f3a8939889F11E97f8c4BB48317F1938": {
+    "name": "USDz",
+    "ticker": "USDz",
+    "iconUrl": "https://basescan.org/token/images/anzen_32.png"
+  },
+  "0x96419929d7949d6a801a6909c145c8eef6a40431": {
+    "name": "Spectral Token",
+    "ticker": "SPEC",
+    "iconUrl": "https://basescan.org/token/images/spectral_32.png"
+  },
+  "0x4621b7a9c75199271f773ebd9a499dbd165c3191": {
+    "name": "Dola USD Stablecoin",
+    "ticker": "DOLA",
+    "iconUrl": "https://basescan.org/token/images/inversedola2_32.png"
+  },
+  "0x28fe69ff6864c1c218878bdca01482d36b9d57b1": {
+    "name": "Kyber Network Crystal v2",
+    "ticker": "KNC",
+    "iconUrl": "https://basescan.org/token/images/kybernetwork2_32.png"
+  },
+  "0x60a3e35cc302bfa44cb288bc5a4f316fdb1adb42": {
+    "name": "EURC",
+    "ticker": "EURC",
+    "iconUrl": "https://basescan.org/token/images/circleeurc_32.png"
+  },
+  "0x4b361e60cf256b926ba15f157d69cac9cd037426": {
+    "name": "Clustr",
+    "ticker": "CLUSTR",
+    "iconUrl": "https://basescan.org/token/images/clustr_32.png"
+  },
+  "0xbFd5206962267c7b4b4A8B3D76AC2E1b2A5c4d5e": {
+    "name": "Osaka Protocol",
+    "ticker": "OSAK",
+    "iconUrl": "https://basescan.org/token/images/osakaprotocol_32.png"
+  },
+  "0xa7d68d155d17cb30e311367c2ef1e82ab6022b67": {
+    "name": "BTRST",
+    "ticker": "BTRST",
+    "iconUrl": "https://basescan.org/token/images/braintrust_32.png"
+  },
+  "0x64b88c73a5dfa78d1713fe1b4c69a22d7e0faaa7": {
+    "name": "Maverick Token",
+    "ticker": "MAV",
+    "iconUrl": "https://basescan.org/token/images/maverick_32.png"
+  },
+  "0x6b2504a03ca4d43d0d73776f6ad46dab2f2a4cfd": {
+    "name": "REI",
+    "ticker": "REI",
+    "iconUrl": "https://basescan.org/token/images/reinetwork_64.png"
+  },
+  "0xF9569cFb8FD265e91aa478d86ae8c78b8AF55Df4": {
+    "name": "Auki Token",
+    "ticker": "AUKI",
+    "iconUrl": "https://basescan.org/token/images/aukilabs_32.png"
+  },
+  "0x4e200fe2f3efb977d5fd9c430a41531fb04d97b8": {
+    "name": "Orderly Network",
+    "ticker": "ORDER",
+    "iconUrl": "https://basescan.org/token/images/orderlytoken_32.svg"
+  },
+  "0x4f9fd6be4a90f2620860d680c0d4d5fb53d1a825": {
+    "name": "aixbt by Virtuals",
+    "ticker": "AIXBT",
+    "iconUrl": "https://basescan.org/token/images/aixbtbyvirtuals_32.png"
+  }
+}

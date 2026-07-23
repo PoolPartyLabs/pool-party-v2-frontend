@@ -1,0 +1,31 @@
+# Build context excludes — keep the image lean and keep secrets out.
+
+# Dependencies + build output (reinstalled / rebuilt in the image).
+node_modules
+.next
+!.next/standalone
+!.next/static
+
+# VCS + tooling + local junk.
+.git
+.github
+.vscode
+.idea
+.DS_Store
+*.log
+
+# Tests, stories, coverage — not needed at runtime/build.
+coverage
+storybook-static
+
+# Docker + compose files themselves.
+Dockerfile
+Dockerfile*
+.dockerignore
+docker-compose*
+
+# Env files: never ship secrets into the image. Only the generated build-only
+# .env.production (NEXT_PUBLIC_* from scripts/push_image.sh) is allowed in the build context.
+.env
+.env.*
+!.env.production

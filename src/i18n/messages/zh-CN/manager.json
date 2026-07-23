@@ -1,0 +1,611 @@
+{
+  "entry": {
+    "become": "成为管理人",
+    "manager": "Manager Console"
+  },
+  "loadMore": "加载更多",
+  "cta": {
+    "createFirst": "创建您的首个策略"
+  },
+  "missing": {
+    "title": "填写完成后继续："
+  },
+  "become": {
+    "title": "成为管理人",
+    "subtitle": "创建您自己的链上策略，增长 TVL，并从与您一同投资的人那里赚取手续费。",
+    "note": "人人皆可参与。无需申请或审批。",
+    "how": {
+      "title": "运作方式",
+      "step1": {
+        "title": "构建策略",
+        "body": "选择一个 Uniswap v3 资金池，设定其价格区间，并定义您的手续费。"
+      },
+      "step2": {
+        "title": "他人投资",
+        "body": "投资者与您一同存入 USDC。持仓被汇集并共同管理。"
+      },
+      "step3": {
+        "title": "您赚取手续费",
+        "body": "赚取您的策略所产生交易手续费的分成，以及您设定的手续费。"
+      }
+    }
+  },
+  "empty": {
+    "title": "暂无策略",
+    "subtitle": "创建您的首个 Uniswap v3 策略，开始从与您一同投资的人那里赚取手续费。"
+  },
+  "builder": {
+    "title": "创建新策略",
+    "back": "返回控制台",
+    "steps": {
+      "mandate": "授权范围",
+      "review": "核对",
+      "build": "搭建"
+    },
+    "next": "下一步：核对",
+    "nextBuild": "下一步：搭建策略",
+    "nextReview": "下一步：核对"
+  },
+  "tabs": {
+    "overview": "概览",
+    "strategies": "我的策略",
+    "investors": "投资者",
+    "earnings": "收益",
+    "activity": "动态",
+    "profile": "管理人资料"
+  },
+  "dashboard": {
+    "subtitle": "看看您的策略表现如何",
+    "createNew": "创建新策略",
+    "hideValues": "隐藏数值",
+    "totalAum": "总 AUM",
+    "netInflows": "净流入 {amount} · 30 天",
+    "chartLabel": "过去 30 天的 AUM",
+    "yourStrategies": "您的策略",
+    "kpi": {
+      "yield": "已产生收益",
+      "activeInvestors": "活跃投资者",
+      "totalInvestorsAllTime": "投资者总数",
+      "apy": "平均 APR",
+      "activeWoW": "较上周 {delta}",
+      "referrals": "推荐",
+      "referralsSub": "来自您的邀请链接"
+    },
+    "columns": {
+      "strategy": "策略",
+      "aum": "AUM",
+      "investors": "投资者",
+      "flows": "资金流 · 30 天",
+      "apy": "APR"
+    },
+    "share": {
+      "title": "分享您的策略",
+      "body": "邀请他人与您一同投资。",
+      "cta": "分享个人主页链接"
+    },
+    "earnings": {
+      "title": "已赚取手续费",
+      "allTime": "累计",
+      "performance": "业绩手续费",
+      "entry": "入场手续费",
+      "exit": "退出手续费"
+    },
+    "manage": "管理"
+  },
+  "mandate": {
+    "title": "授权范围",
+    "subtitle": "授权范围是您策略的固定范围：策略所运行的网络和 Uniswap v3 资金池。一经启动即为永久，无法更改。",
+    "identityLabel": "策略标识",
+    "nameLabel": "策略名称",
+    "namePlaceholder": "例如：稳定收益",
+    "logoAdd": "添加图标",
+    "logoChange": "更改",
+    "logoRemove": "移除",
+    "logoCropTitle": "调整标志",
+    "logoUploading": "标志仍在上传中",
+    "networkLabel": "网络",
+    "poolLabel": "资金池",
+    "tokensLabel": "Tokens",
+    "poolsLabel": "Pools",
+    "secondTokenSearch": "添加第二个代币（可选）",
+    "showMore": "显示更多资金池",
+    "poolSearch": "按交易对、代币或资金池地址搜索",
+    "poolEmpty": "没有符合搜索条件的资金池。",
+    "poolTvl": "TVL",
+    "poolApr": "APR",
+    "tierShare": "已选 {pct}%",
+    "rangeFull": "全区间",
+    "rangeMin": "最低价格",
+    "rangeMax": "最高价格",
+    "rangeMinDecrease": "降低最低价格",
+    "rangeMinIncrease": "提高最低价格",
+    "rangeMaxDecrease": "降低最高价格",
+    "rangeMaxIncrease": "提高最高价格",
+    "rangeCurrent": "当前 {price}",
+    "rangeFullNote": "全区间：在所有价格上均可赚取收益，永不需要移动区间。",
+    "derivedLabel": "自动计算",
+    "derivedNote": "这些无需您设定。Pool Party 会根据您的资金池和区间推导得出。",
+    "riskLabel": "风险",
+    "categoryLabel": "类别",
+    "categoryStable": "稳定币收益",
+    "categoryBlueChip": "蓝筹 LP",
+    "categoryVolatile": "波动型 LP",
+    "risk": {
+      "veryConservative": "极度保守",
+      "conservative": "保守",
+      "moderate": "稳健",
+      "aggressive": "激进",
+      "veryAggressive": "极度激进"
+    },
+    "descriptionLabel": "描述",
+    "descriptionOptional": "（可选）",
+    "descriptionPlaceholder": "描述策略的思路：它做什么、适合谁。",
+    "rangeStatusIn": "在区间内",
+    "tokenHint": "选择一个代币以查看其可用的资金池。",
+    "poolsLoading": "正在加载资金池…",
+    "rangeStatusOut": "超出区间",
+    "objectiveLabel": "目标",
+    "assetLabel": "资产",
+    "objective": {
+      "income": "收益",
+      "gradualBuy": "逐步买入（DCA）",
+      "gradualSell": "逐步卖出"
+    },
+    "asset": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme"
+    }
+  },
+  "review": {
+    "title": "核对并发布",
+    "nameLabel": "策略名称",
+    "namePlaceholder": "例如：稳定收益",
+    "summary": {
+      "title": "摘要",
+      "pool": "资金池",
+      "network": "网络",
+      "protocol": "协议",
+      "range": "区间",
+      "rangeFull": "全区间",
+      "risk": "风险",
+      "category": "类别",
+      "feeTier": "费率档位"
+    },
+    "fees": {
+      "title": "您的手续费",
+      "subtitle": "申购、赎回和管理费没有上限。业绩费是您的策略所产生 LP 手续费的分成。",
+      "entry": "申购费（%）",
+      "exit": "赎回费（%）",
+      "management": "管理费（%/年）",
+      "performance": "业绩费（%）",
+      "performanceHint": "所产生 LP 手续费的 {min}–{max}% · 无高水位线",
+      "performanceError": "业绩费必须介于 {min}% 和 {max}% 之间。",
+      "entryInfo": "每次向策略存入资金时收取的一次性费用。",
+      "exitInfo": "投资者赎回时收取的一次性费用。",
+      "managementInfo": "对管理资产按年收取、持续累计的费用。",
+      "performanceInfo": "您的策略所产生 LP 手续费的分成（v1 中为 10–90%）。无高水位线。"
+    },
+    "access": {
+      "title": "访问权限",
+      "public": "公开",
+      "publicNote": "任何人都可发现并投资。",
+      "privateSoon": "白名单、NFT 和密码访问即将推出。"
+    },
+    "preview": {
+      "title": "投资者预览",
+      "est": "预计回报",
+      "yourStrategy": "您的策略"
+    },
+    "saveDraft": "存为草稿",
+    "launch": "发布策略",
+    "verifying": "正在验证您的策略…",
+    "verifyingNote": "正在检查资金池是否存在以及您的参数是否有效。",
+    "live": {
+      "title": "您的策略已上线",
+      "body": "{name} 已通过验证，现已向投资者展示。",
+      "cta": "前往控制台",
+      "bodyChain": "{name} 现已在链上上线并向投资者展示。"
+    },
+    "draft": {
+      "title": "草稿已保存",
+      "body": "{name} 已存为草稿。您可随时从控制台发布它。",
+      "cta": "前往控制台"
+    },
+    "failed": {
+      "title": "验证失败",
+      "body": "我们无法验证此策略。请检查资金池和参数，然后重试。",
+      "cta": "返回核对",
+      "bodyChain": "交易失败或被拒绝。没有资金被转移。请检查您的余额后重试。"
+    },
+    "seed": {
+      "title": "初始流动性",
+      "subtitle": "向您的资金池存入第一笔流动性。您需要提供两种代币。",
+      "subtitleSingle": "此区间只需要 {symbol}，存入以启动您的资金池。",
+      "balance": "余额 {amount}",
+      "max": "最大",
+      "fundWith": "资金来源",
+      "insufficient": "余额不足",
+      "loading": "正在加载您的余额…",
+      "error": "无法加载您的余额。请刷新后重试。",
+      "minUsd": "创建策略的最低金额为 {amount}",
+      "zeroBalance": {
+        "title": "您需要 {token}",
+        "body": "您的钱包没有 {token}。请先添加一些以提供初始流动性，然后返回启动。",
+        "deposit": "存入",
+        "swap": "Swap"
+      }
+    },
+    "creating": "正在创建您的策略…",
+    "creatingNote": "请在钱包中确认交易。这将存入您的初始流动性并在链上创建资金池。",
+    "nameLengthError": "名称必须为 10–50 个字符。",
+    "pending": {
+      "badge": "确认中"
+    },
+    "metadata": {
+      "failed": "您的池已在链上上线，但详情保存失败。",
+      "retry": "重新保存详情",
+      "createFailed": "无法保存策略详情，请重试。"
+    }
+  },
+  "profile": {
+    "verifiedManager": "已认证管理人",
+    "website": "网站",
+    "strategiesBy": "{name}的策略",
+    "empty": "暂无公开策略。",
+    "stats": {
+      "aum": "AUM",
+      "investors": "投资者",
+      "strategies": "策略",
+      "avgApy": "平均 APR"
+    },
+    "edit": "编辑资料",
+    "share": "分享个人主页",
+    "shareCopied": "链接已复制",
+    "externalLink": {
+      "title": "您正在离开 Pool Party",
+      "body": "此链接将前往 {domain}，一个我们尚未验证的外部网站。是否继续？",
+      "continue": "继续",
+      "cancel": "取消"
+    }
+  },
+  "operate": {
+    "title": "实时仓位",
+    "feeTier": "{pct} 费率档",
+    "inRange": "在区间内",
+    "outOfRange": "超出区间",
+    "outOfRangeNote": "该仓位已超出区间，未在赚取手续费。移动区间以恢复。",
+    "range": "区间",
+    "currentPrice": "当前价格",
+    "currentRange": "当前区间",
+    "liquidity": "流动性",
+    "feeApr": "手续费 APR",
+    "uncollected": "未领取手续费",
+    "gasNote": "这些操作的网络 gas 由你支付（约 {amount}）。",
+    "collect": "领取手续费",
+    "compound": "复投",
+    "moveRange": "移动区间",
+    "comingSoon": "即将推出",
+    "compounded": "已将 {amount} 复投回仓位。",
+    "error": "出了点问题。没有资金被转移。",
+    "empty": "该策略暂无实时仓位。",
+    "back": "返回控制台",
+    "moveRangeDesc": "为该仓位设置新的价格区间。",
+    "recenter": "以当前价格为中心重置",
+    "slippageHint": "若再平衡期间价格波动超过此值则取消。",
+    "settings": "设置",
+    "applying": "正在移动区间…",
+    "moved": "区间已移动至 {min} – {max}。",
+    "movedFull": "区间已移动至 Full range。",
+    "cancel": "取消",
+    "rangeNew": "新区间",
+    "invert": "反转价格方向 ({pair})",
+    "estimatedBalance": "预计余额",
+    "currentBalance": "当前余额",
+    "fee": "手续费",
+    "networkFee": "预估 gas (网络手续费)",
+    "feesTooltip": {
+      "network": "预估 gas (网络手续费)",
+      "total": "合计"
+    },
+    "estTime": "预计时间",
+    "reviewTitle": "确认",
+    "reviewConfirm": "确认并移动区间",
+    "reviewBack": "返回",
+    "reviewAssurance": "仓位的移动无需投资者触碰策略资金。"
+  },
+  "status": {
+    "active": "运行中",
+    "paused": "已暂停",
+    "closed": "已关闭",
+    "draft": "草稿"
+  },
+  "strategies": {
+    "title": "所管理的策略",
+    "subtitle": "所有策略集中在一处。按状态筛选并逐一管理。",
+    "filterLabel": "按状态筛选策略",
+    "filters": {
+      "all": "全部",
+      "active": "运行中",
+      "paused": "已暂停",
+      "closed": "已关闭",
+      "drafts": "草稿"
+    },
+    "rebalance": "建议 Rebalance",
+    "sortLabel": "排序方式",
+    "sortDir": {
+      "asc": "升序",
+      "desc": "降序"
+    },
+    "card": {
+      "aum": "AUM",
+      "investors": "投资者",
+      "netApy": "Net APR",
+      "fees30d": "Fees · 30天",
+      "manage": "管理",
+      "view": "查看"
+    },
+    "empty": {
+      "all": "你还没有创建任何策略。",
+      "active": "暂无运行中的策略。",
+      "paused": "暂无已暂停的策略。",
+      "closed": "暂无已关闭的策略。",
+      "drafts": "暂无草稿。可在策略构建器中保存。"
+    }
+  },
+  "manage": {
+    "back": "全部策略",
+    "share": "复制分享链接",
+    "viewOnUniswap": "在Uniswap上查看",
+    "shareCopied": "链接已复制",
+    "notFound": "无法加载该策略，请重试。",
+    "performance": {
+      "title": "AUM",
+      "netApy": "Net APR",
+      "yield": "已产生 yield",
+      "fees": "你的 fees · 累计",
+      "fees30d": "你的 fees · 30天",
+      "chartLabel": "所选周期的 AUM",
+      "noHistoryTitle": "暂无历史数据",
+      "noHistoryBody": "AUM 历史将在该策略运行数天后显示。",
+      "snapshotNote": "显示的 AUM 为当前资金池价值；图表跟踪每日快照，因此两者可能略有差异。",
+      "periods": {
+        "7d": "7天",
+        "30d": "30天",
+        "90d": "90天",
+        "all": "全部"
+      }
+    },
+    "range": {
+      "min": "最低价",
+      "max": "最高价",
+      "full": "Full range",
+      "earning": "正在赚取 fees",
+      "notEarning": "未在赚取 fees",
+      "outNote": "价格已离开你的 range，该仓位不再赚取 fees。移动 range 即可恢复。"
+    },
+    "activity": {
+      "title": "近期活动",
+      "empty": "暂无活动。",
+      "comingSoon": "即将推出。",
+      "types": {
+        "deposit": "存入",
+        "withdraw": "提取",
+        "collect": "已收取 fees",
+        "compound": "Compound",
+        "move_range": "已移动 range"
+      }
+    },
+    "operations": {
+      "title": "操作",
+      "showInExplore": "在策略列表中显示",
+      "showInExploreNote": "将该策略列入公开的策略页面。关闭后仅可通过链接访问。",
+      "pause": "暂停存入",
+      "resume": "恢复存入",
+      "pauseConfirmTitle": "暂停存入？",
+      "pauseConfirmBody": "新的存入将停止。仓位继续运行，投资者仍可提取。",
+      "resumeConfirmTitle": "恢复存入？",
+      "resumeConfirmBody": "投资者将可以再次向该策略存入。",
+      "collect": "收取 fees",
+      "close": "关闭策略",
+      "closedNote": "该策略已关闭。存入已冻结；投资者可随时提取，即时且免手续费。",
+      "confirm": "确认",
+      "cancel": "取消",
+      "removeLiquidity": "提现",
+      "addLiquidity": "添加流动性"
+    },
+    "investors": {
+      "title": "投资者",
+      "total": "总数",
+      "active": "活跃",
+      "allocated": "您的投入"
+    },
+    "draft": {
+      "title": "该策略是草稿",
+      "body": "在构建器中完成设置后即可面向投资者发布。",
+      "cta": "继续设置"
+    },
+    "remove": {
+      "title": "提现",
+      "desc": "选择要从你的策略中提取多少。",
+      "amountLabel": "提现金额",
+      "unitToggle": "金额单位",
+      "newAmount": "移除后的仓位金额",
+      "closeAlert": "提现超过 50% 将关闭该策略，提取您的全部流动性并领取累计的 fee。",
+      "dustAlert": "这将使剩余金额低于 5 美元，因此该策略将关闭。",
+      "remove": "提现",
+      "close": "关闭策略",
+      "busyRemove": "正在提现…",
+      "busyClose": "正在关闭…",
+      "removeValue": "您将提现",
+      "closeFeesNote": "提取您的全部流动性并领取累计的 fee。",
+      "investorsNote": "所有投资者的流动性将被移除，并可随时提取。",
+      "confirmTitle": "关闭该策略？",
+      "confirmBody": "该策略将关闭，所有投资者的流动性将被移除，并可随时提取。继续？",
+      "confirmContinue": "继续",
+      "confirmKeep": "保留该策略",
+      "poolContents": "策略余额",
+      "liquidity": "Liquidity",
+      "fees": "Fees"
+    },
+    "close": {
+      "reviewTitle": "确认",
+      "back": "返回",
+      "receiveAs": "接收方式",
+      "receiveTokens": "代币对",
+      "feesTooltip": {
+        "total": "合计"
+      },
+      "footerLocked": "≈ {amount} · {days, plural, other {# 天}}内到账 · 依策略锁定期",
+      "cta": "关闭策略",
+      "successTitle": "策略已关闭",
+      "successBody": "≈ {amount} 正在转账",
+      "done": "完成"
+    },
+    "allocation": {
+      "title": "策略配置",
+      "protocols": "Protocols",
+      "tokens": "Tokens"
+    },
+    "comments": {
+      "title": "Comments",
+      "empty": "No comments yet.",
+      "private": "Private · Investor & you",
+      "new": "{count} new",
+      "viewAll": "View all ({count})",
+      "invested": "invested {amount}",
+      "managerBadge": "Manager"
+    },
+    "about": "关于此策略",
+    "availableToCollect": "可领取"
+  },
+  "confirm": {
+    "working": "确认中…",
+    "done": "完成",
+    "compoundTitle": "复投费用？",
+    "compoundBody": "将该仓位未收取的费用重新投入仓位，继续产生收益。",
+    "pauseTitle": "暂停入金？",
+    "pauseBody": "在你恢复之前，阻止对该策略的新投资。现有投资者保留仓位，提现保持开放。",
+    "closeTitle": "关闭该策略？",
+    "closeBody": "解除仓位并终止策略。投资者保留资金，可立即免费提现。此操作不可撤销。",
+    "launchTitle": "启动策略？",
+    "launchBody": "我们会验证池子和你的参数，然后公开上架该策略。你需要签署交易并支付网络 gas 费。",
+    "launchPool": "池子",
+    "launchPerf": "业绩费",
+    "feePending": "签名时估算"
+  },
+  "profileTab": {
+    "instagram": {
+      "comingSoon": "即将推出",
+      "hint": "Instagram 链接即将推出。"
+    },
+    "tiktok": {
+      "comingSoon": "即将推出",
+      "hint": "TikTok 链接即将推出。"
+    },
+    "linkedin": {
+      "comingSoon": "即将推出",
+      "hint": "LinkedIn 链接即将推出。"
+    },
+    "banner": {
+      "label": "横幅",
+      "change": "更换横幅",
+      "help": "建议 2048×1152（16:9）。请将关键内容置于中央安全区域，小屏幕会裁切边缘。"
+    },
+    "photo": {
+      "change": "更换照片",
+      "help": "正方形，至少 400×400。将打开裁剪工具。"
+    },
+    "fields": {
+      "name": "显示名称",
+      "handle": "标识",
+      "bio": "简介",
+      "socials": "社交链接"
+    },
+    "autoList": "您的公开策略会自动显示在资料页上。",
+    "save": "保存更改",
+    "saved": "资料已保存",
+    "mediaUploadFailed": "无法上传图片。请重试。",
+    "saveFailed": "无法保存更改，请重试。",
+    "saving": "保存中…",
+    "viewPublic": "查看公开资料",
+    "handleLockWarning": "Your handle is permanent. You can't change it after saving.",
+    "crop": {
+      "titleAvatar": "调整照片",
+      "titleBanner": "调整横幅",
+      "help": "拖动以重新定位。请将关键内容保持在安全区域内。",
+      "safeArea": "安全区域",
+      "zoom": "缩放",
+      "apply": "应用",
+      "cancel": "取消"
+    },
+    "validation": {
+      "nameMin": "Display name must be at least {min} characters.",
+      "handleInvalid": "Choose a handle with 3-30 letters, numbers or hyphens.",
+      "handleTaken": "That handle is already taken.",
+      "linkInvalidFor": "请输入有效的{network}链接，例如 {example}",
+      "linkWrongNetwork": "这不是有效的{network}链接。请填写你的{network}用户名。"
+    },
+    "verify": {
+      "request": "Request verification",
+      "missingTitle": "To request verification",
+      "missingSocial": "Add your X link",
+      "pending": "Verification pending",
+      "pendingHelp": "We're reviewing your request. This usually takes a few days.",
+      "verified": "Verified",
+      "pendingValidation": "Pending validation",
+      "modal": {
+        "title": "Verification requested",
+        "body": "Your verification will be evaluated by our staff. Please send us a message through your registered social media to the Pool Party official profile containing the following code: {code}.",
+        "codeLabel": "Your verification code",
+        "copy": "Copy code",
+        "copied": "Copied"
+      },
+      "reshowError": "Couldn't load your code. Try again."
+    }
+  },
+  "build": {
+    "title": "搭建你的策略",
+    "subtitle": "搭建你的 Uniswap v3 流动性头寸。选择节点进行配置。",
+    "paletteMandate": "来自你的授权范围",
+    "paletteBlocks": "构建模块",
+    "paletteNote": "V1 采用固定流程，每个策略一个池。更多模块将陆续开放。",
+    "blocks": {
+      "deposit": "存入",
+      "swap": "兑换",
+      "pool": "提供 LP",
+      "collect": "收取费用"
+    },
+    "nodes": {
+      "depositSub": "USDC · 入口",
+      "swapSub": "USDC → {tokens}",
+      "poolSub": "LP 头寸",
+      "collectSub": "领取已赚取的费用"
+    },
+    "config": {
+      "title": "配置节点",
+      "pool": "池",
+      "feeTier": "Fee tier",
+      "feeTierNote": "由所选池决定。",
+      "allocation": "分配",
+      "allocationNote": "策略资金的 100%。V1 每个策略一个池。",
+      "range": "价格区间",
+      "invert": "反转价格方向",
+      "composition": "预计余额",
+      "tickNote": "边界将对齐到资金池的 tick 间距。",
+      "rangeError": "最大值必须比最小值至少高 2 个 tick。",
+      "monoAssetWarning": "接近当前价格。小幅波动可能需要两种代币来注入。",
+      "autoMove": "自动移动区间",
+      "autoMoveNote": "价格超出区间时重新调整头寸。",
+      "apply": "应用更改",
+      "removeNode": "移除节点",
+      "removeNote": "V1 策略只持有一个池，因此无法移除此节点。",
+      "depositBody": "投资者以 USDC 进入。存款会自动转换为池中的代币。",
+      "swapBody": "USDC 将按池的构成兑换为 {tokens}。",
+      "collectBody": "交易费用会在头寸中累积。可领取到余额或复投回头寸。gas 费由你承担。"
+    }
+  },
+  "window30d": "30 天"
+}

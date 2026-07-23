@@ -1,0 +1,611 @@
+{
+  "entry": {
+    "become": "운용자 되기",
+    "manager": "Manager Console"
+  },
+  "loadMore": "더 보기",
+  "cta": {
+    "createFirst": "첫 전략 만들기"
+  },
+  "missing": {
+    "title": "계속하려면 입력을 완료하세요:"
+  },
+  "become": {
+    "title": "운용자 되기",
+    "subtitle": "직접 온체인 전략을 만들어 TVL을 키우고, 함께 투자하는 사람들로부터 수수료를 받으세요.",
+    "note": "누구에게나 열려 있습니다. 신청이나 승인이 필요 없습니다.",
+    "how": {
+      "title": "이용 방법",
+      "step1": {
+        "title": "전략 구성",
+        "body": "Uniswap v3 풀을 선택하고 가격 범위를 설정한 뒤 수수료를 정하세요."
+      },
+      "step2": {
+        "title": "투자자 유치",
+        "body": "투자자가 여러분과 함께 USDC를 입금합니다. 포지션은 풀로 모여 함께 운용됩니다."
+      },
+      "step3": {
+        "title": "수수료 수익",
+        "body": "전략이 창출하는 거래 수수료의 일부와 직접 설정한 수수료를 받으세요."
+      }
+    }
+  },
+  "empty": {
+    "title": "아직 전략이 없습니다",
+    "subtitle": "첫 Uniswap v3 전략을 만들어 함께 투자하는 사람들로부터 수수료를 받기 시작하세요."
+  },
+  "builder": {
+    "title": "새 전략 만들기",
+    "back": "콘솔로 돌아가기",
+    "steps": {
+      "mandate": "운용 방침",
+      "review": "검토",
+      "build": "빌드"
+    },
+    "next": "다음: 검토",
+    "nextBuild": "다음: 전략 구성",
+    "nextReview": "다음: 검토"
+  },
+  "tabs": {
+    "overview": "개요",
+    "strategies": "내 전략",
+    "investors": "투자자",
+    "earnings": "수익",
+    "activity": "활동",
+    "profile": "매니저 프로필"
+  },
+  "dashboard": {
+    "subtitle": "전략 현황을 확인하세요",
+    "createNew": "새 전략 만들기",
+    "hideValues": "값 숨기기",
+    "totalAum": "총 운용자산",
+    "netInflows": "{amount} 순유입 · 30일",
+    "chartLabel": "지난 30일간 운용자산",
+    "yourStrategies": "내 전략",
+    "kpi": {
+      "yield": "창출된 수익",
+      "activeInvestors": "활성 투자자",
+      "totalInvestorsAllTime": "총 투자자",
+      "apy": "평균 APR",
+      "activeWoW": "지난주 대비 {delta}",
+      "referrals": "리퍼럴",
+      "referralsSub": "내 초대 링크 경유"
+    },
+    "columns": {
+      "strategy": "전략",
+      "aum": "운용자산",
+      "investors": "투자자",
+      "flows": "유출입 · 30일",
+      "apy": "APR"
+    },
+    "share": {
+      "title": "전략 공유하기",
+      "body": "함께 투자할 사람들을 초대하세요.",
+      "cta": "프로필 링크 공유"
+    },
+    "earnings": {
+      "title": "획득한 수수료",
+      "allTime": "누적",
+      "performance": "성과 수수료",
+      "entry": "진입 수수료",
+      "exit": "청산 수수료"
+    },
+    "manage": "관리"
+  },
+  "mandate": {
+    "title": "운용 방침",
+    "subtitle": "맨데이트는 전략의 고정된 범위로, 전략이 실행되는 네트워크와 Uniswap v3 풀을 의미합니다. 출시하면 영구적이며 변경할 수 없습니다.",
+    "identityLabel": "전략 정보",
+    "nameLabel": "전략 이름",
+    "namePlaceholder": "예: Stable Yield",
+    "logoAdd": "로고 추가",
+    "logoChange": "변경",
+    "logoRemove": "제거",
+    "logoCropTitle": "로고 조정",
+    "logoUploading": "로고를 업로드하는 중입니다",
+    "networkLabel": "네트워크",
+    "poolLabel": "풀",
+    "tokensLabel": "Tokens",
+    "poolsLabel": "Pools",
+    "secondTokenSearch": "두 번째 토큰 추가 (선택)",
+    "showMore": "풀 더 보기",
+    "poolSearch": "페어, 토큰 또는 풀 주소로 검색",
+    "poolEmpty": "검색 결과에 해당하는 풀이 없습니다.",
+    "poolTvl": "TVL",
+    "poolApr": "APR",
+    "tierShare": "{pct}% 선택됨",
+    "rangeFull": "전체",
+    "rangeMin": "최저 가격",
+    "rangeMax": "최고 가격",
+    "rangeMinDecrease": "최저 가격 낮추기",
+    "rangeMinIncrease": "최저 가격 높이기",
+    "rangeMaxDecrease": "최고 가격 낮추기",
+    "rangeMaxIncrease": "최고 가격 높이기",
+    "rangeCurrent": "현재 {price}",
+    "rangeFullNote": "전체 범위: 모든 가격대에서 수익을 내며, Move Range가 필요 없습니다.",
+    "derivedLabel": "자동 계산됨",
+    "derivedNote": "직접 설정하지 않습니다. Pool Party가 풀과 범위를 바탕으로 산출합니다.",
+    "riskLabel": "위험",
+    "categoryLabel": "카테고리",
+    "categoryStable": "스테이블코인 수익",
+    "categoryBlueChip": "블루칩 LP",
+    "categoryVolatile": "변동성 LP",
+    "risk": {
+      "veryConservative": "매우 보수적",
+      "conservative": "보수적",
+      "moderate": "중간",
+      "aggressive": "공격적",
+      "veryAggressive": "매우 공격적"
+    },
+    "descriptionLabel": "설명",
+    "descriptionOptional": "(선택)",
+    "descriptionPlaceholder": "전략의 핵심을 설명하세요: 무엇을 하는 전략이고 누구를 위한 것인지.",
+    "rangeStatusIn": "범위 내",
+    "tokenHint": "토큰을 선택하면 사용 가능한 풀이 표시됩니다.",
+    "poolsLoading": "풀 불러오는 중…",
+    "rangeStatusOut": "범위 밖",
+    "objectiveLabel": "목표",
+    "assetLabel": "자산",
+    "objective": {
+      "income": "인컴",
+      "gradualBuy": "점진적 매수 (DCA)",
+      "gradualSell": "점진적 매도"
+    },
+    "asset": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme"
+    }
+  },
+  "review": {
+    "title": "검토 및 출시",
+    "nameLabel": "전략 이름",
+    "namePlaceholder": "예: Stable Yield",
+    "summary": {
+      "title": "요약",
+      "pool": "풀",
+      "network": "네트워크",
+      "protocol": "프로토콜",
+      "range": "범위",
+      "rangeFull": "전체 범위",
+      "risk": "위험",
+      "category": "카테고리",
+      "feeTier": "수수료 티어"
+    },
+    "fees": {
+      "title": "수수료 설정",
+      "subtitle": "가입, 출금, 운용 수수료에는 상한이 없습니다. 성과 수수료는 전략이 창출하는 LP 수수료의 일부입니다.",
+      "entry": "가입 수수료 (%)",
+      "exit": "출금 수수료 (%)",
+      "management": "운용 수수료 (%/년)",
+      "performance": "성과 수수료 (%)",
+      "performanceHint": "창출된 LP 수수료의 {min}~{max}% · 하이워터마크 없음",
+      "performanceError": "성과 수수료는 {min}%에서 {max}% 사이여야 합니다.",
+      "entryInfo": "전략에 입금할 때마다 한 번씩 부과되는 수수료입니다.",
+      "exitInfo": "투자자가 출금할 때 한 번 부과되는 수수료입니다.",
+      "managementInfo": "운용 자산에 대해 연 단위로 부과되며 지속적으로 적립되는 수수료입니다.",
+      "performanceInfo": "전략이 창출하는 LP 수수료의 일부입니다(v1에서 10~90%). 하이워터마크는 없습니다."
+    },
+    "access": {
+      "title": "접근 권한",
+      "public": "공개",
+      "publicNote": "누구나 발견하고 투자할 수 있습니다.",
+      "privateSoon": "허용 목록, NFT, 비밀번호 접근은 곧 제공될 예정입니다."
+    },
+    "preview": {
+      "title": "투자자 미리보기",
+      "est": "예상 수익",
+      "yourStrategy": "내 전략"
+    },
+    "saveDraft": "초안으로 저장",
+    "launch": "전략 출시",
+    "verifying": "전략을 검증하는 중…",
+    "verifyingNote": "풀의 존재 여부와 파라미터의 유효성을 확인하고 있습니다.",
+    "live": {
+      "title": "전략이 활성화되었습니다",
+      "body": "{name} 전략이 검증을 통과하여 이제 투자자에게 공개되었습니다.",
+      "cta": "콘솔로 이동",
+      "bodyChain": "{name}이(가) 이제 온체인에 게시되어 투자자에게 노출됩니다."
+    },
+    "draft": {
+      "title": "초안 저장됨",
+      "body": "{name} 전략이 초안으로 저장되었습니다. 콘솔에서 언제든지 출시할 수 있습니다.",
+      "cta": "콘솔로 이동"
+    },
+    "failed": {
+      "title": "검증 실패",
+      "body": "이 전략을 검증할 수 없습니다. 풀과 파라미터를 확인한 뒤 다시 시도하세요.",
+      "cta": "검토로 돌아가기",
+      "bodyChain": "트랜잭션이 실패했거나 거부되었습니다. 자금은 이동되지 않았습니다. 잔액을 확인하고 다시 시도하세요."
+    },
+    "seed": {
+      "title": "초기 유동성",
+      "subtitle": "풀에 첫 유동성을 입금합니다. 두 토큰을 모두 제공합니다.",
+      "subtitleSingle": "이 범위는 {symbol}만 필요합니다. 입금하여 풀을 시작하세요.",
+      "balance": "잔액 {amount}",
+      "max": "최대",
+      "fundWith": "자금 출처",
+      "insufficient": "잔액 부족",
+      "loading": "잔액을 불러오는 중…",
+      "error": "잔액을 불러올 수 없습니다. 새로고침 후 다시 시도하세요.",
+      "minUsd": "전략을 생성하기 위한 최소 금액은 {amount}입니다",
+      "zeroBalance": {
+        "title": "{token}이(가) 필요해요",
+        "body": "지갑에 {token}이(가) 없어요. 초기 유동성을 공급할 만큼 추가한 뒤 돌아와서 시작하세요.",
+        "deposit": "입금",
+        "swap": "Swap"
+      }
+    },
+    "creating": "전략을 생성하는 중…",
+    "creatingNote": "지갑에서 트랜잭션을 승인하세요. 초기 유동성을 입금하고 온체인에 풀을 생성합니다.",
+    "nameLengthError": "이름은 10~50자여야 합니다.",
+    "pending": {
+      "badge": "확인 대기 중"
+    },
+    "metadata": {
+      "failed": "풀은 온체인에서 활성 상태이지만 세부 정보를 저장하지 못했습니다.",
+      "retry": "세부 정보 다시 저장",
+      "createFailed": "전략 세부 정보를 저장하지 못했습니다. 다시 시도해 주세요."
+    }
+  },
+  "profile": {
+    "verifiedManager": "인증된 매니저",
+    "website": "웹사이트",
+    "strategiesBy": "{name}의 전략",
+    "empty": "아직 공개 전략이 없습니다.",
+    "stats": {
+      "aum": "AUM",
+      "investors": "투자자",
+      "strategies": "전략",
+      "avgApy": "평균 APR"
+    },
+    "edit": "프로필 수정",
+    "share": "프로필 공유",
+    "shareCopied": "링크 복사됨",
+    "externalLink": {
+      "title": "Pool Party를 떠납니다",
+      "body": "이 링크는 저희가 확인하지 않은 외부 사이트 {domain}(으)로 이동합니다. 계속하시겠습니까?",
+      "continue": "계속",
+      "cancel": "취소"
+    }
+  },
+  "operate": {
+    "title": "라이브 포지션",
+    "feeTier": "{pct} 수수료 등급",
+    "inRange": "범위 내",
+    "outOfRange": "범위 밖",
+    "outOfRangeNote": "이 포지션은 범위를 벗어나 수수료가 발생하지 않습니다. 범위를 이동하면 다시 시작됩니다.",
+    "range": "범위",
+    "currentPrice": "현재 가격",
+    "currentRange": "현재 범위",
+    "liquidity": "유동성",
+    "feeApr": "수수료 APR",
+    "uncollected": "미수령 수수료",
+    "gasNote": "이 작업의 네트워크 가스비는 본인이 부담합니다 (~{amount}).",
+    "collect": "수수료 수령",
+    "compound": "복리 적용",
+    "moveRange": "범위 이동",
+    "comingSoon": "출시 예정",
+    "compounded": "{amount}을(를) 포지션에 재투자했습니다.",
+    "error": "문제가 발생했습니다. 자금이 이동되지 않았습니다.",
+    "empty": "이 전략의 라이브 포지션이 아직 없습니다.",
+    "back": "콘솔로 돌아가기",
+    "moveRangeDesc": "포지션의 새 가격 범위를 설정합니다.",
+    "recenter": "현재 가격 기준으로 재설정",
+    "slippageHint": "리밸런싱 중 가격이 이보다 많이 움직이면 취소됩니다.",
+    "settings": "설정",
+    "applying": "범위 이동 중…",
+    "moved": "범위를 {min} – {max}(으)로 이동했습니다.",
+    "movedFull": "범위를 Full range로 이동했습니다.",
+    "cancel": "취소",
+    "rangeNew": "새 범위",
+    "invert": "가격 방향 반전 ({pair})",
+    "estimatedBalance": "예상 잔액",
+    "currentBalance": "현재 잔액",
+    "fee": "수수료",
+    "networkFee": "예상 gas (네트워크 수수료)",
+    "feesTooltip": {
+      "network": "예상 gas (네트워크 수수료)",
+      "total": "합계"
+    },
+    "estTime": "예상 시간",
+    "reviewTitle": "검토",
+    "reviewConfirm": "확인 및 범위 이동",
+    "reviewBack": "뒤로",
+    "reviewAssurance": "투자자가 전략 자금에 관여하지 않아도 포지션이 이동됩니다."
+  },
+  "status": {
+    "active": "운용 중",
+    "paused": "일시중지",
+    "closed": "종료됨",
+    "draft": "임시저장"
+  },
+  "strategies": {
+    "title": "관리 중인 전략",
+    "subtitle": "모든 전략을 한곳에서. 상태별로 필터링하고 개별적으로 관리하세요.",
+    "filterLabel": "상태별 전략 필터",
+    "filters": {
+      "all": "전체",
+      "active": "운용 중",
+      "paused": "일시중지",
+      "closed": "종료됨",
+      "drafts": "임시저장"
+    },
+    "rebalance": "리밸런스 권장",
+    "sortLabel": "정렬 기준",
+    "sortDir": {
+      "asc": "오름차순",
+      "desc": "내림차순"
+    },
+    "card": {
+      "aum": "AUM",
+      "investors": "투자자",
+      "netApy": "Net APR",
+      "fees30d": "Fees · 30일",
+      "manage": "관리",
+      "view": "보기"
+    },
+    "empty": {
+      "all": "아직 만든 전략이 없습니다.",
+      "active": "운용 중인 전략이 없습니다.",
+      "paused": "일시중지된 전략이 없습니다.",
+      "closed": "종료된 전략이 없습니다.",
+      "drafts": "임시저장이 없습니다. 전략 빌더에서 저장해 보세요."
+    }
+  },
+  "manage": {
+    "back": "모든 전략",
+    "share": "공유 링크 복사",
+    "viewOnUniswap": "Uniswap에서 보기",
+    "shareCopied": "링크 복사됨",
+    "notFound": "전략을 불러오지 못했습니다. 다시 시도해 주세요.",
+    "performance": {
+      "title": "AUM",
+      "netApy": "Net APR",
+      "yield": "생성된 yield",
+      "fees": "내 fees · 누적",
+      "fees30d": "내 fees · 30일",
+      "chartLabel": "선택 기간의 AUM",
+      "noHistoryTitle": "아직 기록이 없습니다",
+      "noHistoryBody": "AUM 기록은 이 전략의 운용 시작 후 며칠 뒤에 표시됩니다.",
+      "snapshotNote": "표시된 AUM은 현재 풀 가치이며, 차트는 일일 스냅샷을 따르므로 두 값이 약간 다를 수 있습니다.",
+      "periods": {
+        "7d": "7일",
+        "30d": "30일",
+        "90d": "90일",
+        "all": "전체"
+      }
+    },
+    "range": {
+      "min": "최저 가격",
+      "max": "최고 가격",
+      "full": "Full range",
+      "earning": "fees 발생 중",
+      "notEarning": "fees 발생 없음",
+      "outNote": "가격이 range를 벗어나 포지션이 fees를 벌지 못하고 있습니다. range를 옮겨 다시 시작하세요."
+    },
+    "activity": {
+      "title": "최근 활동",
+      "empty": "아직 활동이 없습니다.",
+      "comingSoon": "곧 제공될 예정입니다.",
+      "types": {
+        "deposit": "입금",
+        "withdraw": "출금",
+        "collect": "fees 수령",
+        "compound": "Compound",
+        "move_range": "range 이동"
+      }
+    },
+    "operations": {
+      "title": "운영",
+      "showInExplore": "전략 목록에 표시",
+      "showInExploreNote": "이 전략을 공개 전략 페이지에 노출합니다. 끄면 링크로만 공유됩니다.",
+      "pause": "입금 일시중지",
+      "resume": "입금 재개",
+      "pauseConfirmTitle": "입금을 일시중지할까요?",
+      "pauseConfirmBody": "신규 입금이 중단됩니다. 포지션은 계속 운용되고 투자자는 계속 출금할 수 있습니다.",
+      "resumeConfirmTitle": "입금을 재개할까요?",
+      "resumeConfirmBody": "투자자가 이 전략에 다시 입금할 수 있게 됩니다.",
+      "collect": "fees 수령",
+      "close": "전략 종료",
+      "closedNote": "이 전략은 종료되었습니다. 입금 동결; 투자자는 언제든 즉시, 수수료 없이 출금할 수 있습니다.",
+      "confirm": "확인",
+      "cancel": "취소",
+      "removeLiquidity": "출금",
+      "addLiquidity": "유동성 추가"
+    },
+    "investors": {
+      "title": "투자자",
+      "total": "합계",
+      "active": "활성",
+      "allocated": "내 배분"
+    },
+    "draft": {
+      "title": "이 전략은 임시저장 상태입니다",
+      "body": "빌더에서 설정을 마치고 투자자에게 공개하세요.",
+      "cta": "설정 계속하기"
+    },
+    "remove": {
+      "title": "출금",
+      "desc": "전략에서 얼마를 출금할지 선택하세요.",
+      "amountLabel": "출금 금액",
+      "unitToggle": "금액 단위",
+      "newAmount": "제거 후 포지션 금액",
+      "closeAlert": "50%를 초과해 출금하면 이 전략이 종료되며, 모든 유동성을 출금하고 누적된 fee를 수령합니다.",
+      "dustAlert": "남는 금액이 5달러 미만이 되어 전략이 종료됩니다.",
+      "remove": "출금",
+      "close": "전략 종료",
+      "busyRemove": "출금 중…",
+      "busyClose": "종료 중…",
+      "removeValue": "출금 금액",
+      "closeFeesNote": "모든 유동성을 출금하고 누적된 fee를 수령합니다.",
+      "investorsNote": "모든 투자자의 유동성이 인출되어 언제든지 출금할 수 있게 됩니다.",
+      "confirmTitle": "이 전략을 종료할까요?",
+      "confirmBody": "이 전략이 종료되고 모든 투자자의 유동성이 인출되어 언제든지 출금할 수 있게 됩니다. 계속할까요?",
+      "confirmContinue": "계속",
+      "confirmKeep": "전략 유지",
+      "poolContents": "전략 잔액",
+      "liquidity": "Liquidity",
+      "fees": "Fees"
+    },
+    "close": {
+      "reviewTitle": "검토",
+      "back": "뒤로",
+      "receiveAs": "수령 방식",
+      "receiveTokens": "토큰 페어",
+      "feesTooltip": {
+        "total": "합계"
+      },
+      "footerLocked": "≈ {amount} · {days, plural, other {#일}} 이내 도착 · 전략 락업에 따라",
+      "cta": "전략 종료",
+      "successTitle": "전략이 종료되었습니다",
+      "successBody": "≈ {amount} 전송 중",
+      "done": "완료"
+    },
+    "allocation": {
+      "title": "전략 배분",
+      "protocols": "Protocols",
+      "tokens": "Tokens"
+    },
+    "comments": {
+      "title": "Comments",
+      "empty": "No comments yet.",
+      "private": "Private · Investor & you",
+      "new": "{count} new",
+      "viewAll": "View all ({count})",
+      "invested": "invested {amount}",
+      "managerBadge": "Manager"
+    },
+    "about": "이 전략 소개",
+    "availableToCollect": "수령 가능"
+  },
+  "confirm": {
+    "working": "확인 중…",
+    "done": "완료",
+    "compoundTitle": "수수료를 복리 운용할까요?",
+    "compoundBody": "이 포지션의 미수령 수수료를 포지션에 재투자해 계속 수익을 냅니다.",
+    "pauseTitle": "입금을 일시중지할까요?",
+    "pauseBody": "재개할 때까지 이 전략에 대한 신규 투자를 차단합니다. 기존 투자자의 포지션은 유지되며 출금은 계속 가능합니다.",
+    "closeTitle": "이 전략을 종료할까요?",
+    "closeBody": "포지션을 청산하고 전략을 종료합니다. 투자자는 자금을 보유하며 수수료 없이 즉시 출금할 수 있습니다. 되돌릴 수 없습니다.",
+    "launchTitle": "전략을 출시할까요?",
+    "launchBody": "풀과 파라미터를 검증한 뒤 전략을 공개 리스트에 올립니다. 트랜잭션 서명과 네트워크 가스비는 본인 부담입니다.",
+    "launchPool": "풀",
+    "launchPerf": "성과 수수료",
+    "feePending": "서명 시 추정"
+  },
+  "profileTab": {
+    "instagram": {
+      "comingSoon": "출시 예정",
+      "hint": "Instagram 링크는 곧 제공될 예정입니다."
+    },
+    "tiktok": {
+      "comingSoon": "출시 예정",
+      "hint": "TikTok 링크는 곧 제공될 예정입니다."
+    },
+    "linkedin": {
+      "comingSoon": "출시 예정",
+      "hint": "LinkedIn 링크는 곧 제공될 예정입니다."
+    },
+    "banner": {
+      "label": "배너",
+      "change": "배너 변경",
+      "help": "권장 2048×1152(16:9). 핵심 내용은 중앙 안전 영역에 배치하세요. 작은 화면에서는 가장자리가 잘립니다."
+    },
+    "photo": {
+      "change": "사진 변경",
+      "help": "정사각형, 최소 400×400. 자르기 도구가 열립니다."
+    },
+    "fields": {
+      "name": "표시 이름",
+      "handle": "핸들",
+      "bio": "소개",
+      "socials": "소셜 링크"
+    },
+    "autoList": "공개 전략은 프로필에 자동으로 표시됩니다.",
+    "save": "변경 사항 저장",
+    "saved": "프로필이 저장되었습니다",
+    "mediaUploadFailed": "이미지를 업로드하지 못했습니다. 다시 시도하세요.",
+    "saveFailed": "변경 사항을 저장하지 못했습니다. 다시 시도해 주세요.",
+    "saving": "저장 중…",
+    "viewPublic": "공개 프로필 보기",
+    "handleLockWarning": "Your handle is permanent. You can't change it after saving.",
+    "crop": {
+      "titleAvatar": "사진 조정",
+      "titleBanner": "배너 조정",
+      "help": "드래그하여 위치를 조정하세요. 핵심 내용은 안전 영역 안에 두세요.",
+      "safeArea": "안전 영역",
+      "zoom": "확대/축소",
+      "apply": "적용",
+      "cancel": "취소"
+    },
+    "validation": {
+      "nameMin": "Display name must be at least {min} characters.",
+      "handleInvalid": "Choose a handle with 3-30 letters, numbers or hyphens.",
+      "handleTaken": "That handle is already taken.",
+      "linkInvalidFor": "유효한 {network} 링크를 입력하세요. 예: {example}",
+      "linkWrongNetwork": "유효한 {network} 링크가 아닙니다. {network} 사용자명을 입력하세요."
+    },
+    "verify": {
+      "request": "Request verification",
+      "missingTitle": "To request verification",
+      "missingSocial": "Add your X link",
+      "pending": "Verification pending",
+      "pendingHelp": "We're reviewing your request. This usually takes a few days.",
+      "verified": "Verified",
+      "pendingValidation": "Pending validation",
+      "modal": {
+        "title": "Verification requested",
+        "body": "Your verification will be evaluated by our staff. Please send us a message through your registered social media to the Pool Party official profile containing the following code: {code}.",
+        "codeLabel": "Your verification code",
+        "copy": "Copy code",
+        "copied": "Copied"
+      },
+      "reshowError": "Couldn't load your code. Try again."
+    }
+  },
+  "build": {
+    "title": "전략 구성하기",
+    "subtitle": "Uniswap v3 유동성 포지션을 구성하세요. 노드를 선택해 설정합니다.",
+    "paletteMandate": "운용 방침에서",
+    "paletteBlocks": "빌딩 블록",
+    "paletteNote": "V1은 전략당 풀 1개의 고정 플로우를 사용합니다. 추가 블록은 이후 제공됩니다.",
+    "blocks": {
+      "deposit": "입금",
+      "swap": "스왑",
+      "pool": "LP 공급",
+      "collect": "수수료 수령"
+    },
+    "nodes": {
+      "depositSub": "USDC · 진입",
+      "swapSub": "USDC → {tokens}",
+      "poolSub": "LP 포지션",
+      "collectSub": "획득한 수수료 수령"
+    },
+    "config": {
+      "title": "노드 설정",
+      "pool": "풀",
+      "feeTier": "Fee tier",
+      "feeTierNote": "선택한 풀에 따라 고정됩니다.",
+      "allocation": "배분",
+      "allocationNote": "전략 자금의 100%. V1에서는 전략당 풀 1개.",
+      "range": "가격 범위",
+      "invert": "가격 방향 반전",
+      "composition": "예상 잔액",
+      "tickNote": "경계는 풀의 틱 간격에 맞춰 조정됩니다.",
+      "rangeError": "최댓값은 최솟값보다 최소 2틱 위여야 합니다.",
+      "monoAssetWarning": "현재 가격에 가깝습니다. 작은 변동으로 두 토큰이 모두 필요할 수 있습니다.",
+      "autoMove": "범위 자동 이동",
+      "autoMoveNote": "가격이 범위를 벗어나면 포지션을 재배치합니다.",
+      "apply": "변경 적용",
+      "removeNode": "노드 제거",
+      "removeNote": "V1 전략은 풀을 정확히 1개 보유하므로 이 노드는 제거할 수 없습니다.",
+      "depositBody": "투자자는 USDC로 참여합니다. 입금은 자동으로 풀의 토큰으로 전환됩니다.",
+      "swapBody": "USDC는 풀 구성에 맞춰 {tokens}(으)로 스왑됩니다.",
+      "collectBody": "거래 수수료가 포지션에 쌓입니다. 잔액으로 수령하거나 포지션에 재투자하세요. 가스비는 본인 부담입니다."
+    }
+  },
+  "window30d": "30일"
+}

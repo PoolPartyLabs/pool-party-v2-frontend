@@ -1,0 +1,179 @@
+{
+  "rubberRush": {
+    "title": "Rubber Rush",
+    "subtitle": "Quacksを獲得し、ティアを上げ、ブーストを解放",
+    "back": "戻る",
+    "yourQuacks": "あなたのQuacks",
+    "quacksUnit": "Quacks",
+    "topPercent": "上位{percent}%",
+    "managerIncentiveProgramDashboard": "Manager Incentive Program",
+    "sayQuack": "Quackと言う",
+    "playDuckShoot": "Duck Shootをプレイ",
+    "claimRoles": "ロールを受け取る",
+    "quacksEarnedToday": "本日+{count} Quacks獲得",
+    "tierProgression": "ティアの進行",
+    "you": "あなた",
+    "tiers": {
+      "paddler": "Paddler",
+      "swimmer": "Swimmer",
+      "diver": "Diver",
+      "waveRider": "Wave Rider",
+      "partyCaptain": "Party Captain"
+    },
+    "stats": {
+      "totalReferrals": "総紹介数",
+      "dailyBoost": "デイリーブースト",
+      "quacksToday": "本日のQuacks",
+      "streak": "連続記録"
+    },
+    "streakProgress": "{days} / {target}日",
+    "dailyStreakBoost": "デイリーストリークブースト",
+    "dailyStreakBody": "毎日Quackしてブーストを伸ばしましょう。連続日数ごとに倍率が積み上がり、7日以上で最大ブーストになります。",
+    "dayShort": "D{n}",
+    "duckShootTitle": "Duck Shootの仕組み",
+    "duckShootBody": "入金・出金・コレクトなど、プロトコルでの取引のたびにDuck Shootのチャンスを獲得できます。各ショットは本日獲得したQuacksを倍増させ、ボーナス報酬になります。",
+    "referral": {
+      "title": "あなたの紹介",
+      "code": "紹介コード",
+      "link": "紹介リンク",
+      "invitedBy": "招待者",
+      "none": "-",
+      "copyCode": "紹介コードをコピー",
+      "copyLink": "紹介リンクをコピー",
+      "copied": "コピーしました",
+      "emptyBody": "招待コードを作成して報酬を獲得しましょう。",
+      "emptyCta": "コードを作成"
+    },
+    "referralRewards": {
+      "title": "紹介リワード",
+      "progressLabel": "進捗",
+      "nextTier": "次のティア",
+      "body1": "紹介コードをシェアして、紹介した方に<hl>Quacks 10%ブースト</hl>をプレゼントしましょう。",
+      "body2": "紹介されたユーザーが<hl>累計50 USDCの入金</hl>に達すると、あなたのQuacksに<hl>生涯5%ブースト</hl>が解放されます。(このブーストは一回限りで累積しません。)",
+      "body3": "さらに<hl>紹介ユーザーが獲得したQuacksの10%</hl>もあなたに入ります。",
+      "body4": "<hl>あと5人の友達</hl>を招待して、毎日のQuacksに倍率をゲットしよう！",
+      "progress": "{count} / {target}人の友達",
+      "multiplier": "{value}倍の倍率"
+    },
+    "signing": "署名中…",
+    "quackedToday": "本日Quack済み！🦆",
+    "duckShoot": {
+      "title": "Duck Shoot",
+      "triesThisWeek": "今週{count}回のチャンス",
+      "tapHelper": "アヒルをタップして撃つと、本日のQuacksが倍増します。",
+      "shoot": "撃つ",
+      "lockedTitle": "プレイするにはプロトコルで取引してください。今週のチャンスは0回です。",
+      "makeDeposit": "入金する",
+      "won": "+{percent}%",
+      "boostApplied": "ブースト適用：本日+{count} Quacks！",
+      "shootAgain": "もう一度撃つ · 残り{count}回",
+      "close": "完了",
+      "start": "スタート",
+      "instruction": "どこでもクリックして撃とう！",
+      "playAgain": "もう一度プレイ",
+      "jackpot": "ジャックポット！",
+      "boostResult": "{percent}%のブーストを獲得しました！",
+      "oddsItem": "{percent}%（確率{weight}%）",
+      "noTries": "プロトコルで取引してプレイしましょう。今週はあと{count, plural, other {#回}}プレイできます。"
+    }
+  },
+  "managerIncentiveProgram": {
+    "title": "Manager Incentive Program",
+    "subtitle": "戦略を作成・紹介し、TVLを伸ばし、ボーナス手数料を獲得",
+    "back": "戻る",
+    "label": "Manager Incentive Program · {name}",
+    "revenueThisMonth": "今月の収益",
+    "since": "{date}からプログラムに参加しています",
+    "stats": {
+      "strategiesCreated": "作成した戦略数",
+      "strategiesCreatedSub": "あなたが作成した戦略",
+      "managedTvl": "運用TVL",
+      "managedTvlSub": "作成+紹介によるTVL",
+      "referrals": "紹介",
+      "referralsSub": "あなたのコードを使用",
+      "bonusFees": "ボーナス手数料",
+      "bonusFeesSub": "通常手数料に上乗せ"
+    },
+    "tokens": {
+      "title": "{count}トークンが配布されます",
+      "body": "{count}個のトークンが、パフォーマンスに応じてプログラムに参加しているマネージャーに配布されます。あなたのティア、運用するTVL(自ら創出または獲得したもの)、およびあなたの戦略が生み出す手数料によって、配分が決まります。"
+    },
+    "tierCard": {
+      "title": "あなたはTier {tier}のメンバーです",
+      "range": "{from} – {to}",
+      "body": "運用TVLが{target}に達すると、通常の手数料に加えて追加手数料を獲得し始められます。",
+      "managed": "{amount}を運用",
+      "nextTier": "{delta} → {tier}"
+    },
+    "tierTable": {
+      "tier": "ティア",
+      "minTvl": "最低TVL",
+      "bonusFees": "ボーナス手数料",
+      "rowName": "ティア{n}"
+    },
+    "tierFootnote": "ティアは何か変更があるたびに（コレクト、新規ポジション、TVLの変動）再計算されます。ダッシュボードの数値は、各手数料イベント時点のティアを反映しています。",
+    "revenue": {
+      "title": "収益",
+      "paidEndOfMonth": "月末に支払い",
+      "estimatedAccrued": "今月の発生額（見込み）",
+      "feesThisMonth": "今月生成された手数料",
+      "totalFees": "生成された手数料の合計",
+      "estimatedAccruedInfo": "今月、現在のティアで発生したボーナス手数料。月末に支払われます。",
+      "feesThisMonthInfo": "今月、あなたの戦略が生み出した手数料（ボーナス分配前）。",
+      "totalFeesInfo": "プログラムに参加して以降、あなたの戦略が生み出したすべての手数料です。"
+    },
+    "goals": {
+      "title": "初月の目標",
+      "onboarding": "オンボーディング目標",
+      "referrals": "{target}件の紹介",
+      "posts": "{count}件以上の投稿",
+      "communityPool": "コミュニティのTVLで戦略を作成",
+      "progress": "{current}/{target}",
+      "trackedExternally": "外部で追跡"
+    }
+  },
+  "referral": {
+    "invitedByLabel": "{code} さんからの招待",
+    "title": "招待して特典をゲット",
+    "subtitle": "プロフィール · 紹介",
+    "back": "戻る",
+    "heroTitle": "友達を招待して、quacksを稼ごう",
+    "heroBody": "友達にquacksを10%ブーストしてあげて、友達が生み出したquacksの10%を獲得しましょう。",
+    "code": "あなたの紹介コード",
+    "link": "招待リンク",
+    "copyCode": "紹介コードをコピー",
+    "copyLink": "招待リンクをコピー",
+    "copied": "コピーしました",
+    "share": "招待リンクを共有",
+    "shared": "リンクをコピーしました",
+    "stats": {
+      "friendsJoined": "参加した友達"
+    },
+    "howItWorks": "仕組み",
+    "steps": {
+      "shareTitle": "リンクを共有",
+      "shareBody": "友達に招待リンクを送りましょう。",
+      "investTitle": "友達が参加して投資",
+      "investBody": "友達が登録して、投資を始めます。",
+      "earnTitle": "二人ともquacksを獲得",
+      "earnBody": "友達が10%のブーストを受け取り、あなたは友達のquacksの10%を獲得します。"
+    },
+    "invites": "あなたの招待",
+    "investedAmount": "${amount}を投資",
+    "signedUp": "登録済み",
+    "status": {
+      "earned": "報酬済み",
+      "invested": "投資中",
+      "pending": "保留中"
+    },
+    "create": {
+      "label": "コードを選択",
+      "placeholder": "YOURCODE",
+      "warning": "慎重に選んでください。コードは後から変更できません。",
+      "cta": "コードを作成",
+      "invalid": "6〜10文字の英数字を使用してください。",
+      "unavailable": "このコードは使用できません。別のコードをお試しください。"
+    },
+    "noInvites": "まだ友達を招待していません。"
+  }
+}

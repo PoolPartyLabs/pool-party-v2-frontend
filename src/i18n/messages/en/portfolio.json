@@ -1,0 +1,44 @@
+{
+  "hideValues": "Hide values",
+  "portfolioValue": "Total portfolio",
+  "allTimeEarned": "{amount} unclaimed fees",
+  "allocationByRisk": "Allocation by risk",
+  "invested": "Invested",
+  "currentValue": "Current value",
+  "totalYield": "Total yield",
+  "avgApy": "Avg. APR",
+  "loadMore": "Load more",
+  "loadingMore": "Loading",
+  "yourPositions": "Your positions",
+  "activeCount": "{count} active",
+  "rate": "Rate",
+  "status": {
+    "active": "Active",
+    "paused": "Paused",
+    "closed": "Closed"
+  },
+  "columns": {
+    "strategy": "Strategy",
+    "risk": "Risk",
+    "invested": "Invested",
+    "value": "Current Value",
+    "yield": "Yield",
+    "rate": "Rate"
+  },
+  "putToWork": {
+    "title": "Put your money to work",
+    "body": "Add funds or browse strategies to keep your portfolio growing.",
+    "deposit": "Deposit funds",
+    "explore": "Browse strategies"
+  },
+  "empty": {
+    "title": "Start growing your money",
+    "body": "Make your first deposit, then put it to work in a strategy.",
+    "deposit": "Deposit funds",
+    "explore": "Browse strategies"
+  },
+  "closedStrategies": {
+    "title": "Closed strategies",
+    "empty": "No closed strategies yet"
+  }
+}

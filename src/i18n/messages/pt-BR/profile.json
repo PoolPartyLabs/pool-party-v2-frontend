@@ -1,0 +1,191 @@
+{
+  "title": "Perfil",
+  "settings": "Configurações",
+  "backToProfile": "Voltar ao perfil",
+  "save": "Salvar",
+  "saved": "Salvo",
+  "cancel": "Cancelar",
+  "connect": "Conectar",
+  "connected": "Conectado",
+  "referral": {
+    "title": "Convide e ganhe",
+    "body": "Convide amigos e ganhe quacks juntos.",
+    "stat": "{count} amigos entraram",
+    "code": "Seu código",
+    "share": "Compartilhar link",
+    "createCta": "Criar seu código de indicação"
+  },
+  "groups": {
+    "rewards": "Recompensas",
+    "account": "Conta",
+    "preferences": "Preferências",
+    "support": "Suporte",
+    "manager": "Gestor"
+  },
+  "rows": {
+    "rubberRush": "Rubber Rush",
+    "rubberRushSub": "Ganhe Quacks",
+    "managerIncentiveProgram": "Manager Incentive Program",
+    "managerProfile": "Perfil de gestor",
+    "personalInfo": "Informações pessoais",
+    "linkedSocial": "Contas sociais conectadas",
+    "security": "Segurança e login",
+    "alerts": "Alertas e notificações",
+    "appSettings": "Configurações do app",
+    "help": "Central de ajuda",
+    "logout": "Sair",
+    "managerProfileSub": "Sua página pública de gestor"
+  },
+  "personal": {
+    "title": "Informações pessoais",
+    "changePhoto": "Alterar foto",
+    "sectionPersonal": "Pessoal",
+    "sectionContact": "Contato",
+    "fullName": "Nome",
+    "nameHelper": "Não é exibido publicamente. Usado apenas para comunicação. Opcional.",
+    "nameInvalid": "O nome deve ter pelo menos {min} caracteres.",
+    "displayName": "Handle",
+    "displayNameHelper": "Seu handle público, exibido no seu perfil. Opcional.",
+    "displayNameInvalid": "O handle deve ter pelo menos {min} caracteres.",
+    "country": "País",
+    "countrySearch": "Buscar país",
+    "countryNoResults": "Nenhum resultado",
+    "email": "Email",
+    "emailHelper": "Opcional. Usado para avisos da conta.",
+    "emailInvalid": "Insira um email válido.",
+    "avatarUploadFailed": "Não foi possível enviar sua foto. Tente novamente.",
+    "saveFailed": "Não foi possível salvar suas alterações. Tente novamente.",
+    "saving": "Salvando…",
+    "phone": "Telefone",
+    "phoneCountry": "Código do país",
+    "phoneInvalid": "Insira um número de telefone válido.",
+    "verified": "Verificado",
+    "optional": "(opcional)"
+  },
+  "social": {
+    "title": "Contas sociais conectadas",
+    "intro": "Conecte suas contas para receber pontos, cargos, multiplicadores e muito mais, e receber notificações.",
+    "telegram": {
+      "name": "Telegram",
+      "notifOff": "Notificações desligadas",
+      "body": "Conecte o Telegram para receber notificações de depósito, rendimento e preço.",
+      "connect": "Conectar Telegram"
+    },
+    "others": "Outras contas",
+    "x": "X",
+    "google": "Google",
+    "discord": "Discord"
+  },
+  "security": {
+    "title": "Segurança e login",
+    "signIn": "Acesso",
+    "changePassword": "Alterar senha",
+    "faceId": "Face ID",
+    "appLock": "Bloqueio do app",
+    "twoFactor": "Autenticação de dois fatores",
+    "wallet": "Carteira",
+    "exportKey": "Exportar chave privada",
+    "exportWarning": "Nunca compartilhe sua chave privada. Quem a tiver controla seus fundos.",
+    "devices": "Dispositivos e atividade",
+    "trustedDevices": "Dispositivos confiáveis",
+    "trustedDevicesValue": "{count} dispositivos",
+    "activeSessions": "Sessões ativas",
+    "loginAlerts": "Alertas de login",
+    "comingSoon": "Em breve",
+    "deleteAccount": "Excluir conta",
+    "deleteConfirm": {
+      "title": "Excluir conta?",
+      "body": "Isso exclui sua conta permanentemente e não pode ser desfeito. Retire seus fundos primeiro.",
+      "confirm": "Excluir conta"
+    },
+    "deleteBlocked": {
+      "title": "Resgate seus fundos primeiro",
+      "body": "Sua conta ainda tem fundos. Retire tudo e então você poderá excluir a conta. Isso não pode ser desfeito.",
+      "confirm": "Ver portfólio"
+    },
+    "exportConfirm": {
+      "title": "Revelar chave privada?",
+      "body": "Qualquer um com sua chave privada pode levar seus fundos. Só revele em um lugar privado e nunca a compartilhe.",
+      "hold": "Segure para revelar"
+    },
+    "exportReveal": {
+      "title": "Sua chave privada",
+      "warning": "Nunca compartilhe isto. Quem tiver controla seus fundos.",
+      "copy": "Copiar chave",
+      "copied": "Copiado para a área de transferência",
+      "done": "Concluir"
+    },
+    "exportError": "Não foi possível exportar sua chave privada. Tente novamente."
+  },
+  "alerts": {
+    "title": "Alertas e notificações",
+    "delivery": "Entrega",
+    "push": "Notificações push",
+    "email": "Email",
+    "telegram": "Telegram",
+    "investing": "Investimentos",
+    "yield": "Rendimento recebido",
+    "priceAlerts": "Alertas de preço",
+    "strategyUpdates": "Atualizações de estratégia",
+    "money": "Dinheiro",
+    "deposits": "Depósitos",
+    "withdrawalReady": "Resgate pronto",
+    "fromPoolParty": "Da Pool Party",
+    "rubberRush": "Rubber Rush",
+    "tips": "Dicas e guias",
+    "productNews": "Novidades do produto"
+  },
+  "appSettings": {
+    "title": "Configurações do app",
+    "general": "Geral",
+    "language": "Idioma",
+    "currency": "Exibição de moeda",
+    "currencyValue": "USD ($)",
+    "appearance": "Aparência",
+    "appearanceValue": "Escuro",
+    "privacy": "Privacidade",
+    "shareAnalytics": "Compartilhar análises",
+    "about": "Sobre",
+    "version": "Versão do app",
+    "versionValue": "2.4.0",
+    "terms": "Termos de Serviço",
+    "privacyPolicy": "Política de Privacidade"
+  },
+  "help": {
+    "title": "Central de ajuda",
+    "searchPlaceholder": "Buscar artigos de ajuda",
+    "noResults": "Nenhum artigo corresponde à sua busca.",
+    "discord": {
+      "title": "Entre no nosso Discord",
+      "fastest": "Mais rápido",
+      "body": "Tire dúvidas com o time e a comunidade.",
+      "open": "Abrir Discord"
+    },
+    "docs": {
+      "title": "Documentação",
+      "body": "Guias e tutoriais"
+    },
+    "contact": {
+      "title": "Falar com o suporte",
+      "body": "support@pool-party.xyz"
+    },
+    "faqTitle": "Perguntas frequentes",
+    "faq": {
+      "q1": "Como funcionam os depósitos?",
+      "a1": "Adicione dinheiro com Pix, cartão ou transferência e ele é convertido em USDC, ou transfira cripto diretamente. Os fundos ficam prontos para investir na hora.",
+      "q2": "Quando posso resgatar?",
+      "a2": "A qualquer momento. Resgates normais chegam em cerca de 2 dias úteis sem taxa; resgates instantâneos chegam na hora por uma taxa de 1%.",
+      "q3": "Existem taxas?",
+      "a3": "Cada estratégia lista suas taxas de gestão e performance, mostradas novamente antes de você confirmar. As taxas de depósito aparecem na revisão."
+    }
+  },
+  "logout": {
+    "title": "Sair?",
+    "body": "Você precisará entrar novamente para acessar sua conta.",
+    "confirm": "Sair"
+  },
+  "identity": {
+    "quacks": "{count, number} Quacks",
+    "editProfile": "Editar perfil"
+  }
+}

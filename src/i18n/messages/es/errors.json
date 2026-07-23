@@ -1,0 +1,25 @@
+{
+  "somethingWentWrong": "Algo salió mal",
+  "networkError": "Error de red",
+  "validationFailed": "Error de validación",
+  "description": "Se produjo un error inesperado. Inténtalo de nuevo.",
+  "retry": "Reintentar",
+  "dashboard": {
+    "title": "No se pudo cargar su panel",
+    "body": "Algo salió mal de nuestro lado. Revise su conexión e inténtelo de nuevo.",
+    "support": "Contactar con soporte"
+  },
+  "auth": {
+    "networkFailure": "Error de conexión. Revisa tu internet e inténtalo de nuevo.",
+    "unsupportedChain": "Esta red no es compatible. Cambia a Arbitrum, Base o Polygon."
+  },
+  "api": {
+    "networkError": "No pudimos conectar con nuestros servidores. Revisa tu conexión e inténtalo de nuevo.",
+    "notConfigured": "Esta función no está disponible ahora mismo. Inténtalo más tarde.",
+    "upstreamUnavailable": "Nuestro servicio no está disponible temporalmente. Inténtalo de nuevo en un momento.",
+    "rateLimited": "Vas un poco demasiado rápido. Espera un momento e inténtalo de nuevo.",
+    "unauthorized": "No tienes permiso para hacer eso. Vuelve a iniciar sesión.",
+    "notFound": "No encontramos lo que buscabas.",
+    "unknown": "Algo salió mal de nuestro lado. Inténtalo de nuevo."
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "somethingWentWrong": "Er is iets misgegaan",
+  "networkError": "Netwerkfout",
+  "validationFailed": "Validatie mislukt",
+  "description": "Er is een onverwachte fout opgetreden. Probeer het opnieuw.",
+  "retry": "Opnieuw proberen",
+  "dashboard": {
+    "title": "Uw dashboard kon niet worden geladen",
+    "body": "Er is iets misgegaan aan onze kant. Controleer uw verbinding en probeer het opnieuw.",
+    "support": "Contact opnemen met support"
+  },
+  "auth": {
+    "networkFailure": "Verbinding mislukt. Controleer uw internetverbinding en probeer het opnieuw.",
+    "unsupportedChain": "Dit netwerk wordt niet ondersteund. Schakel over naar Arbitrum, Base of Polygon."
+  },
+  "api": {
+    "networkError": "We konden onze servers niet bereiken. Controleer uw verbinding en probeer het opnieuw.",
+    "notConfigured": "Deze functie is op dit moment niet beschikbaar. Probeer het later opnieuw.",
+    "upstreamUnavailable": "Onze service is tijdelijk niet beschikbaar. Probeer het zo opnieuw.",
+    "rateLimited": "U gaat een beetje te snel. Wacht even en probeer het opnieuw.",
+    "unauthorized": "U hebt geen toestemming om dat te doen. Meld u opnieuw aan.",
+    "notFound": "We konden niet vinden wat u zocht.",
+    "unknown": "Er is iets misgegaan aan onze kant. Probeer het opnieuw."
+  }
+}

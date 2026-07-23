@@ -1,0 +1,44 @@
+{
+  "hideValues": "값 숨기기",
+  "portfolioValue": "총 포트폴리오",
+  "allTimeEarned": "{amount} 미청구 수수료",
+  "allocationByRisk": "위험별 자산 배분",
+  "invested": "투자액",
+  "currentValue": "현재 가치",
+  "totalYield": "총 수익",
+  "avgApy": "평균 APR",
+  "loadMore": "더 보기",
+  "loadingMore": "불러오는 중",
+  "yourPositions": "내 포지션",
+  "activeCount": "{count}개 활성",
+  "rate": "수익률",
+  "status": {
+    "active": "활성",
+    "paused": "일시 중지",
+    "closed": "종료됨"
+  },
+  "columns": {
+    "strategy": "전략",
+    "risk": "위험",
+    "invested": "투자액",
+    "value": "현재 가치",
+    "yield": "수익",
+    "rate": "수익률"
+  },
+  "putToWork": {
+    "title": "자금을 운용하세요",
+    "body": "자금을 추가하거나 전략을 둘러보며 포트폴리오를 계속 키우세요.",
+    "deposit": "자금 입금",
+    "explore": "전략 둘러보기"
+  },
+  "empty": {
+    "title": "자산을 불려보세요",
+    "body": "첫 입금을 한 뒤 전략에 투자하여 자금을 운용하세요.",
+    "deposit": "자금 입금",
+    "explore": "전략 둘러보기"
+  },
+  "closedStrategies": {
+    "title": "종료된 전략",
+    "empty": "아직 종료된 전략이 없습니다"
+  }
+}

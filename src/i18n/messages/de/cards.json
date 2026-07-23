@@ -1,0 +1,76 @@
+{
+  "title": "Karten",
+  "comingSoon": "Geben Sie Ihr Guthaben mit einer Pool Party-Karte aus. Diese Funktion ist bald verfügbar.",
+  "tabs": {
+    "explore": "Entdecken",
+    "myCards": "Meine Karten"
+  },
+  "explore": {
+    "title": "Verfügbare Karten",
+    "subtitle": "Geben Sie Ihre Kryptowährung überall aus",
+    "partnerCount": "{count, plural, =1 {# Partner} other {# Partner}}",
+    "cta": {
+      "request": "Karte beantragen",
+      "activating": "Wird aktiviert…",
+      "manage": "Karte verwalten"
+    },
+    "badge": {
+      "popular": "Beliebt",
+      "requested": "Beantragt",
+      "active": "Aktiv"
+    },
+    "perks": {
+      "cashbackEth3": "Bis zu 3 % Cashback in ETH",
+      "noAnnualFee": "Keine Jahresgebühr",
+      "spendStablesEth": "USDC, USDT oder ETH ausgeben",
+      "spendFromWallet": "Aus Ihrer Wallet ausgeben",
+      "eurUsdAccounts": "EUR- & USD-Konten",
+      "selfCustodial": "On-Chain, selbstverwahrt",
+      "spendMetamask": "Aus MetaMask-Guthaben ausgeben",
+      "cryptoRewards": "Krypto-Prämien",
+      "globalMastercard": "Globale Mastercard",
+      "cashback1inch": "Cashback in 1INCH",
+      "noFxFees": "Keine Wechselkursgebühren",
+      "worksWorldwide": "Funktioniert weltweit",
+      "spendEarnRewards": "Krypto ausgeben, Prämien verdienen",
+      "visaDebitGlobal": "Visa-Debit, weltweit",
+      "cashbackCro5": "Bis zu 5 % Cashback in CRO",
+      "loungeAccess": "Zugang zu Flughafen-Lounges"
+    }
+  },
+  "myCards": {
+    "title": "Ihre Karten",
+    "subtitle": "Verwalten Sie Ihre Karten",
+    "addCard": "Karte hinzufügen",
+    "balance": "Guthaben",
+    "debit": "Debit",
+    "viewDetails": "Details ansehen",
+    "actions": {
+      "topUp": "Aufladen",
+      "lock": "Karte sperren",
+      "freeze": "Einfrieren",
+      "settings": "Einstellungen"
+    },
+    "transactions": {
+      "title": "Transaktionen",
+      "seeAll": "Alle anzeigen",
+      "today": "Heute",
+      "yesterday": "Gestern"
+    },
+    "empty": {
+      "title": "Noch keine Karten",
+      "body": "Beantragen Sie eine Karte bei einem Partner, um Ihre Kryptowährung auszugeben.",
+      "cta": "Karten entdecken"
+    }
+  },
+  "topUp": {
+    "title": "Aufladen",
+    "subtitle": "Fügen Sie Ihrem Kartenguthaben Geld hinzu",
+    "source": {
+      "wallet": "Wallet",
+      "portfolio": "Portfolio"
+    },
+    "cta": "Aufladen",
+    "success": "Ihr Kartenguthaben wurde aufgeladen."
+  }
+}

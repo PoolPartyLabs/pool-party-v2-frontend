@@ -1,0 +1,91 @@
+{
+  "title": "Depositar",
+  "addLabel": "Você está adicionando",
+  "receiveEstimate": "≈ {amount} USDC",
+  "securedByPaybis": "Protegido pela Paybis",
+  "continue": "Continuar",
+  "minHint": "Depósito mínimo é {min}",
+  "maxHint": "Depósito máximo é {max}",
+  "cryptoPill": "Depositar cripto",
+  "investContext": "Investindo em {name} · adicione {amount}",
+  "investContextGeneric": "Adicione {amount} para completar este investimento",
+  "cryptoAside": {
+    "title": "Já tem cripto?",
+    "body": "Transfira USDC direto, sem taxas."
+  },
+  "howItWorks": {
+    "title": "Como funciona",
+    "step1": "Escolha um valor e como pagar.",
+    "step2": "Pague do seu jeito: Apple Pay, Google Pay, cartões, transferências ou pagamentos locais instantâneos em mais de 80 países.",
+    "step3": "Seu USDC chega na sua conta, pronto para investir."
+  },
+  "method": {
+    "title": "Forma de pagamento",
+    "continue": "Continuar",
+    "pix": {
+      "name": "Pix",
+      "meta": "Instantâneo"
+    },
+    "card": {
+      "name": "Cartão",
+      "meta": "Visa, Mastercard"
+    },
+    "applePay": {
+      "name": "Apple Pay",
+      "meta": "Instantâneo"
+    },
+    "bank": {
+      "name": "Transferência bancária",
+      "meta": "1–2 dias úteis"
+    }
+  },
+  "review": {
+    "title": "Revisar",
+    "youReceive": "Você vai receber",
+    "youPay": "Você paga",
+    "fee": "Taxa Paybis",
+    "feeNote": "{method} · {pct}",
+    "belowNeed": "Você precisa de pelo menos {amount} para completar este investimento.",
+    "exchangeRate": "Câmbio",
+    "rateValue": "1 USDC ≈ $1.00",
+    "payingWith": "Pagando com {method}",
+    "change": "Alterar",
+    "confirm": "Confirmar e pagar com {method}",
+    "poweredBy": "Powered by Paybis"
+  },
+  "success": {
+    "title": "Depósito confirmado",
+    "subtitle": "Seu dinheiro está pronto para investir",
+    "amount": "Valor",
+    "received": "Recebido",
+    "method": "Método",
+    "date": "Data",
+    "investNow": "Investir agora",
+    "backHome": "Voltar ao início"
+  },
+  "crypto": {
+    "title": "Depositar cripto",
+    "scanToDeposit": "Escaneie para depositar",
+    "addressLabel": "Seu endereço USDC",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "share": "Compartilhar endereço",
+    "asset": "USD Coin · USDC",
+    "sent": "Já enviei os fundos",
+    "waitingTitle": "Aguardando seu depósito",
+    "waitingBody": "Vamos detectar automaticamente. Você não precisa fazer nada.",
+    "viewAddress": "Ver endereço e QR",
+    "receivedTitle": "Depósito recebido",
+    "added": "{amount} USDC adicionados",
+    "source": "Origem",
+    "sourceValue": "Carteira externa",
+    "received": "Recebido",
+    "date": "Data",
+    "noWallet": "Conecte sua wallet para ver seu endereço de depósito.",
+    "networkTitle": "Escolha uma rede",
+    "networkSubtitle": "Envie USDC apenas na rede que você escolher aqui. Enviar em qualquer outra rede pode causar a perda permanente dos seus fundos.",
+    "networkContinue": "Continuar",
+    "changeNetwork": "Trocar rede",
+    "networkWarning": "Envie USDC apenas na rede {network}. Enviar em outra rede pode resultar em perda permanente."
+  }
+}

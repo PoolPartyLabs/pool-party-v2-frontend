@@ -1,0 +1,25 @@
+{
+  "somethingWentWrong": "發生錯誤",
+  "networkError": "網路錯誤",
+  "validationFailed": "驗證失敗",
+  "description": "發生非預期的錯誤，請再試一次。",
+  "retry": "再試一次",
+  "dashboard": {
+    "title": "無法載入您的主控台",
+    "body": "我們這邊發生了問題。請檢查您的網路連線後再試一次。",
+    "support": "聯絡客服"
+  },
+  "auth": {
+    "networkFailure": "連線失敗。請檢查您的網路連線後再試一次。",
+    "unsupportedChain": "不支援此網路。請切換至 Arbitrum、Base 或 Polygon。"
+  },
+  "api": {
+    "networkError": "無法連線到我們的伺服器。請檢查您的網路連線後再試一次。",
+    "notConfigured": "此功能目前無法使用。請稍後再試。",
+    "upstreamUnavailable": "我們的服務暫時無法使用。請稍後再試一次。",
+    "rateLimited": "您的操作有點太快了。請稍候片刻後再試一次。",
+    "unauthorized": "您沒有執行此操作的權限。請重新登入。",
+    "notFound": "找不到您要尋找的內容。",
+    "unknown": "我們這邊發生了問題。請再試一次。"
+  }
+}

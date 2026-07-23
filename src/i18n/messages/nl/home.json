@@ -1,0 +1,74 @@
+{
+  "hideValues": "Waarden verbergen",
+  "portfolioValue": "Portefeuillewaarde",
+  "estimatedTooltip": "Geschat. De grafiek wordt niet in realtime bijgewerkt, slechts enkele keren per dag.",
+  "earnedToday": "{amount} vandaag verdiend",
+  "invested": "Belegd",
+  "totalYield": "Totaalrendement",
+  "thisMonth": "Afgelopen 30 dagen",
+  "avgApy": "Gem. APR",
+  "periods": {
+    "day": "1D",
+    "week": "1W",
+    "month": "1M",
+    "sixMonth": "6M",
+    "all": "Alle"
+  },
+  "yourPositions": "Uw posities",
+  "availableInvestments": "Beschikbare beleggingen",
+  "discover": "Strategieën ontdekken",
+  "seeAll": "Alles bekijken",
+  "exploreMore": "Alles bekijken",
+  "manage": "Beheren",
+  "allocationByRisk": "Verdeling op risico",
+  "referral": {
+    "title": "Uitnodigen & verdienen",
+    "body": "Nodig vrienden uit en verdien samen quacks.",
+    "stat": "{count} vrienden aangesloten",
+    "copy": "Code kopiëren",
+    "copyLink": "Uitnodigingslink kopiëren",
+    "copied": "Gekopieerd!",
+    "share": "Uitnodigingslink delen",
+    "createCta": "Maak je verwijzingscode aan"
+  },
+  "referralWelcome": {
+    "title": "Welkom bij Pool Party! 🎉",
+    "body": "Je bent lid geworden via de uitnodiging van een vriend. Begin met investeren om samen quacks te verdienen.",
+    "dismiss": "Sluiten"
+  },
+  "columns": {
+    "strategy": "Strategie",
+    "risk": "Risico",
+    "invested": "Belegd",
+    "value": "Huidige waarde",
+    "yield": "Rendement",
+    "rate": "Koers"
+  },
+  "empty": {
+    "zero": {
+      "eyebrow": "Aan de slag",
+      "title": "Laat je geld voor je werken",
+      "subtitle": "Zet je geld aan het werk in een paar eenvoudige stappen.",
+      "cta": "Geld toevoegen om te starten",
+      "secondary": "Eerst strategieën verkennen"
+    },
+    "funded": {
+      "available": "Beschikbaar om te beleggen",
+      "availableHint": "Klaar om aan het werk te gaan",
+      "title": "Je bent klaar om te beleggen",
+      "subtitle": "Kies een strategie en begin met verdienen.",
+      "stepDone": "Klaar · {amount} toegevoegd",
+      "cta": "Strategie kiezen",
+      "secondary": "Bekijk hoe het werkt"
+    },
+    "path": {
+      "heading": "Jouw pad naar verdienen",
+      "step1": { "title": "Geld toevoegen", "body": "Begin met slechts $10" },
+      "step2": {
+        "title": "Strategie kiezen",
+        "body": "Geselecteerd en beoordeeld op risico voor jou"
+      },
+      "step3": { "title": "Verdienen", "body": "Volg je rendement elke dag" }
+    }
+  }
+}

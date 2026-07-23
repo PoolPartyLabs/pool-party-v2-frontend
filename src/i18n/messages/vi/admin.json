@@ -1,0 +1,86 @@
+{
+  "loadMore": "Tải thêm",
+  "brand": "Pool Party",
+  "badge": "Admin",
+  "nav": {
+    "overview": "Overview",
+    "managers": "Managers",
+    "images": "Images",
+    "roles": "Roles"
+  },
+  "roles": {
+    "operator": "Operator",
+    "admin": "Admin",
+    "master": "Master"
+  },
+  "rolesPage": {
+    "title": "Roles & permissions",
+    "subtitle": "Assign capabilities to each role. Master always has all of them.",
+    "colCapability": "Capability",
+    "masterNote": "Master holds every capability and cannot be changed."
+  },
+  "userRow": {
+    "signedInAs": "Signed in as"
+  },
+  "signIn": {
+    "title": "Admin sign-in",
+    "subtitle": "Sign in with your Pool Party Google account. Two-factor is required.",
+    "google": "Continue with Google",
+    "comingSoon": "Google sign-in and two-factor are being wired up."
+  },
+  "twoFactor": {
+    "title": "Two-factor authentication",
+    "subtitle": "Enter the 6-digit code from your authenticator app.",
+    "comingSoon": "Authenticator enrollment and verification are being wired up."
+  },
+  "overview": {
+    "title": "Overview",
+    "subtitle": "Operational snapshot of the platform.",
+    "pendingVerifications": "Pending verifications",
+    "pendingImages": "Images to review",
+    "verifiedManagers": "Verified managers",
+    "activeStrategies": "Active strategies",
+    "users": "Users",
+    "placeholder": "Metric tiles are wired to real data next."
+  },
+  "managers": {
+    "title": "Managers",
+    "subtitle": "Approve manager verification requests."
+  },
+  "verificationQueue": {
+    "empty": "No verification requests to review.",
+    "colManager": "Manager",
+    "colSubmitted": "Requested",
+    "colAum": "AUM",
+    "colStrategies": "Strategies",
+    "colActions": "Actions",
+    "approve": "Approve",
+    "reject": "Reject",
+    "cancel": "Cancel",
+    "approveTitle": "Approve verification?",
+    "approveBody": "{name} will get the verified badge shown to investors.",
+    "rejectTitle": "Reject verification?",
+    "rejectBody": "{name}'s request will be rejected. They can request again later."
+  },
+  "moderation": {
+    "title": "Image moderation",
+    "subtitle": "Review strategy, profile, and banner images."
+  },
+  "imageModeration": {
+    "empty": "No images to review.",
+    "listLabel": "Hình ảnh đang chờ",
+    "kindStrategy": "Strategy image",
+    "kindAvatar": "Profile photo",
+    "kindBanner": "Banner",
+    "approve": "Approve",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "approveTitle": "Approve image?",
+    "approveBody": "Keep {subject}'s image on the platform.",
+    "thumbAlt": "{subject}’s uploaded image",
+    "removeTitle": "Remove image?",
+    "removeBody": "{subject}'s image will be hidden from the platform. This is reversible.",
+    "reasonLabel": "Reason (optional)",
+    "reasonPlaceholder": "Why is this being removed?"
+  }
+}

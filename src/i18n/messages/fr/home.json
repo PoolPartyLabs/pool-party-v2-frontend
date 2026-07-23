@@ -1,0 +1,74 @@
+{
+  "hideValues": "Masquer les valeurs",
+  "portfolioValue": "Valeur du portefeuille",
+  "estimatedTooltip": "Estimé. Le graphique n'est pas mis à jour en temps réel, seulement quelques fois par jour.",
+  "earnedToday": "{amount} gagnés aujourd'hui",
+  "invested": "Investi",
+  "totalYield": "Rendement total",
+  "thisMonth": "30 derniers jours",
+  "avgApy": "APR moyen",
+  "periods": {
+    "day": "1J",
+    "week": "1W",
+    "month": "1M",
+    "sixMonth": "6M",
+    "all": "Tout"
+  },
+  "yourPositions": "Vos positions",
+  "availableInvestments": "Investissements disponibles",
+  "discover": "Découvrir des stratégies",
+  "seeAll": "Tout voir",
+  "exploreMore": "Tout voir",
+  "manage": "Gérer",
+  "allocationByRisk": "Répartition par risque",
+  "referral": {
+    "title": "Parrainez et gagnez",
+    "body": "Invitez des amis et gagnez des quacks ensemble.",
+    "stat": "{count} amis inscrits",
+    "copy": "Copier le code",
+    "copyLink": "Copier le lien d'invitation",
+    "copied": "Copié !",
+    "share": "Partager le lien de parrainage",
+    "createCta": "Créez votre code de parrainage"
+  },
+  "referralWelcome": {
+    "title": "Bienvenue sur Pool Party ! 🎉",
+    "body": "Vous avez rejoint grâce à l'invitation d'un ami. Commencez à investir pour gagner des quacks ensemble.",
+    "dismiss": "Ignorer"
+  },
+  "columns": {
+    "strategy": "Stratégie",
+    "risk": "Risque",
+    "invested": "Investi",
+    "value": "Valeur actuelle",
+    "yield": "Rendement",
+    "rate": "Taux"
+  },
+  "empty": {
+    "zero": {
+      "eyebrow": "Commencer",
+      "title": "Faites fructifier votre argent",
+      "subtitle": "Mettez votre argent au travail en quelques étapes simples.",
+      "cta": "Ajouter des fonds pour commencer",
+      "secondary": "Explorer les stratégies d'abord"
+    },
+    "funded": {
+      "available": "Disponible à investir",
+      "availableHint": "Prêt à être mis au travail",
+      "title": "Vous êtes prêt à investir",
+      "subtitle": "Choisissez une stratégie pour commencer à gagner.",
+      "stepDone": "Fait · {amount} ajouté",
+      "cta": "Choisir une stratégie",
+      "secondary": "Voir comment ça fonctionne"
+    },
+    "path": {
+      "heading": "Votre chemin vers les gains",
+      "step1": { "title": "Ajouter des fonds", "body": "Commencez avec seulement 10 $" },
+      "step2": {
+        "title": "Choisir une stratégie",
+        "body": "Sélectionnées et évaluées par risque pour vous"
+      },
+      "step3": { "title": "Gagner", "body": "Suivez votre rendement chaque jour" }
+    }
+  }
+}

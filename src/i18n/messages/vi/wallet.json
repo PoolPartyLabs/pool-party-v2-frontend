@@ -1,0 +1,35 @@
+{
+  "title": "Ví",
+  "openWallet": "Mở ví",
+  "refresh": "Làm mới số dư",
+  "connect": "Kết nối ví",
+  "close": "Đóng",
+  "kind": {
+    "embedded": "Tích hợp",
+    "external": "Bên ngoài"
+  },
+  "copyAddress": "Sao chép địa chỉ",
+  "copied": "Đã sao chép",
+  "totalBalance": "TỔNG SỐ DƯ",
+  "dayChange": "{usd} · {pct} hôm nay",
+  "addFunds": "Thêm tiền để bắt đầu",
+  "actions": {
+    "buy": "Mua",
+    "swap": "Hoán đổi",
+    "send": "Gửi",
+    "receive": "Nhận"
+  },
+  "networks": {
+    "all": "Tất cả"
+  },
+  "noAssetsOnNetwork": "Không có tài sản trên mạng này",
+  "emptyTitle": "Chưa có tài sản",
+  "emptyBody": "Mua hoặc nhận tiền mã hóa và số dư của bạn sẽ hiển thị ở đây, trên tất cả các mạng.",
+  "manage": "Quản lý ví",
+  "disconnect": "Ngắt kết nối",
+  "comingSoon": {
+    "title": "Sắp ra mắt",
+    "send": "Tính năng gửi token sắp ra mắt. Hiện tại bạn có thể Mua hoặc Nhận tiền mã hóa.",
+    "back": "Đã hiểu"
+  }
+}

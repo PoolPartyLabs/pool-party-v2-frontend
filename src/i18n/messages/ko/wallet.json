@@ -1,0 +1,35 @@
+{
+  "title": "지갑",
+  "openWallet": "지갑 열기",
+  "refresh": "잔액 새로고침",
+  "connect": "지갑 연결",
+  "close": "닫기",
+  "kind": {
+    "embedded": "내장형",
+    "external": "외부"
+  },
+  "copyAddress": "주소 복사",
+  "copied": "복사됨",
+  "totalBalance": "총 잔액",
+  "dayChange": "{usd} · {pct} 오늘",
+  "addFunds": "시작하려면 자금을 추가하세요",
+  "actions": {
+    "buy": "구매",
+    "swap": "스왑",
+    "send": "보내기",
+    "receive": "받기"
+  },
+  "networks": {
+    "all": "전체"
+  },
+  "noAssetsOnNetwork": "이 네트워크에 자산이 없습니다",
+  "emptyTitle": "아직 자산이 없습니다",
+  "emptyBody": "암호화폐를 구매하거나 받으면 모든 네트워크의 잔액이 여기에 표시됩니다.",
+  "manage": "지갑 관리",
+  "disconnect": "연결 해제",
+  "comingSoon": {
+    "title": "출시 예정",
+    "send": "토큰 보내기 기능이 곧 제공됩니다. 지금은 암호화폐를 구매하거나 받을 수 있습니다.",
+    "back": "확인"
+  }
+}

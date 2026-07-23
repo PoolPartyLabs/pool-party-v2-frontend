@@ -1,0 +1,91 @@
+{
+  "title": "入金",
+  "addLabel": "入金額",
+  "receiveEstimate": "≈ {amount} USDC",
+  "securedByPaybis": "Paybisにより保護",
+  "continue": "続ける",
+  "minHint": "最低入金額は{min}です",
+  "maxHint": "最高入金額は{max}です",
+  "cryptoPill": "暗号資産を入金",
+  "investContext": "{name}に投資 · {amount}を追加",
+  "investContextGeneric": "この投資に必要な{amount}を追加してください",
+  "cryptoAside": {
+    "title": "すでに暗号資産をお持ちですか？",
+    "body": "USDCを直接送金。手数料はかかりません。"
+  },
+  "howItWorks": {
+    "title": "仕組み",
+    "step1": "金額を入力し、支払い方法を選択します。",
+    "step2": "お好きな方法で支払い：Apple Pay、Google Pay、カード、銀行振込、または80か国以上での即時ローカル決済。",
+    "step3": "USDCがアカウントに入り、すぐに投資できます。"
+  },
+  "method": {
+    "title": "支払い方法",
+    "continue": "続ける",
+    "pix": {
+      "name": "Pix",
+      "meta": "即時"
+    },
+    "card": {
+      "name": "カード",
+      "meta": "Visa・Mastercard"
+    },
+    "applePay": {
+      "name": "Apple Pay",
+      "meta": "即時"
+    },
+    "bank": {
+      "name": "銀行振込",
+      "meta": "1〜2営業日"
+    }
+  },
+  "review": {
+    "title": "確認",
+    "youReceive": "受取額",
+    "youPay": "支払額",
+    "fee": "Paybis手数料",
+    "feeNote": "{method} · {pct}",
+    "belowNeed": "この投資には最低{amount}が必要です。",
+    "exchangeRate": "為替レート",
+    "rateValue": "1 USDC ≈ $1.00",
+    "payingWith": "{method}で支払い",
+    "change": "変更",
+    "confirm": "{method}で確認して支払う",
+    "poweredBy": "Powered by Paybis"
+  },
+  "success": {
+    "title": "入金が完了しました",
+    "subtitle": "資金の投資準備が整いました",
+    "amount": "金額",
+    "received": "受取額",
+    "method": "方法",
+    "date": "日付",
+    "investNow": "今すぐ投資",
+    "backHome": "ホームに戻る"
+  },
+  "crypto": {
+    "title": "暗号資産を入金",
+    "scanToDeposit": "スキャンして入金",
+    "addressLabel": "あなたのUSDCアドレス",
+    "copy": "コピー",
+    "copied": "コピーしました",
+    "share": "アドレスを共有",
+    "asset": "USD Coin · USDC",
+    "sent": "資金を送りました",
+    "waitingTitle": "入金を待っています",
+    "waitingBody": "自動的に検出します。特に操作は必要ありません。",
+    "viewAddress": "アドレスとQRを表示",
+    "receivedTitle": "入金を受け取りました",
+    "added": "{amount} USDCを追加しました",
+    "source": "送金元",
+    "sourceValue": "外部ウォレット",
+    "received": "受取額",
+    "date": "日付",
+    "noWallet": "入金アドレスを表示するにはウォレットを接続してください。",
+    "networkTitle": "ネットワークを選択",
+    "networkSubtitle": "ここで選択したネットワークでのみ USDC を送金してください。他のネットワークで送金すると資金を永久に失う可能性があります。",
+    "networkContinue": "続行",
+    "changeNetwork": "ネットワークを変更",
+    "networkWarning": "USDC は {network} ネットワークでのみ送金してください。他のネットワークで送金すると永久に失う可能性があります。"
+  }
+}

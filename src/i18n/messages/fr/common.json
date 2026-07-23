@@ -1,0 +1,38 @@
+{
+  "appName": "Pool Party",
+  "tagline": "L'investissement intelligent, en toute simplicité.",
+  "loading": "Chargement…",
+  "stillLoading": "Chargement en cours, un instant…",
+  "updating": "Mise à jour…",
+  "unavailable": "Pas encore disponible",
+  "retry": "Réessayer",
+  "connectWallet": "Connecter un portefeuille",
+  "disconnect": "Déconnecter",
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "confirm": "Confirmer",
+  "close": "Fermer",
+  "viewOnExplorer": "Voir sur l'explorer",
+  "error": {
+    "tryAgain": "Réessayer"
+  },
+  "greeting": {
+    "morning": "Bonjour, {name}",
+    "afternoon": "Bon après-midi, {name}",
+    "evening": "Bonsoir, {name}"
+  },
+  "aprTooltip": "Taux annuel en pourcentage",
+  "apyTooltip": "Rendement annuel en pourcentage",
+  "avgAprTooltip": "Taux annuel moyen en pourcentage",
+  "netAprTooltip": "Taux annuel net en pourcentage",
+  "validation": {
+    "imageTooLargeOrType": "Utilisez un PNG ou un JPG de moins de 10 Mo."
+  },
+  "unsavedChanges": {
+    "title": "Modifications non enregistrées",
+    "body": "Vous avez des modifications non enregistrées. Quitter sans enregistrer ?",
+    "leave": "Quitter",
+    "stay": "Continuer les modifications"
+  },
+  "opensInNewTab": "Ouvre dans un nouvel onglet"
+}

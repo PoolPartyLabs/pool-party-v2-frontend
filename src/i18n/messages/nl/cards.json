@@ -1,0 +1,76 @@
+{
+  "title": "Cards",
+  "comingSoon": "Geef uw saldo uit met een Pool Party-card. Deze functie komt binnenkort beschikbaar.",
+  "tabs": {
+    "explore": "Ontdekken",
+    "myCards": "Mijn cards"
+  },
+  "explore": {
+    "title": "Beschikbare cards",
+    "subtitle": "Geef uw crypto overal uit",
+    "partnerCount": "{count, plural, =1 {# partner} other {# partners}}",
+    "cta": {
+      "request": "Card aanvragen",
+      "activating": "Activeren…",
+      "manage": "Card beheren"
+    },
+    "badge": {
+      "popular": "Populair",
+      "requested": "Aangevraagd",
+      "active": "Actief"
+    },
+    "perks": {
+      "cashbackEth3": "Tot 3% cashback in ETH",
+      "noAnnualFee": "Geen jaarlijkse kosten",
+      "spendStablesEth": "Geef USDC, USDT of ETH uit",
+      "spendFromWallet": "Geef uit vanuit uw wallet",
+      "eurUsdAccounts": "EUR- & USD-rekeningen",
+      "selfCustodial": "On-chain, zelfbeheerd",
+      "spendMetamask": "Geef uit vanuit MetaMask-saldo",
+      "cryptoRewards": "Crypto-beloningen",
+      "globalMastercard": "Wereldwijde Mastercard",
+      "cashback1inch": "Cashback in 1INCH",
+      "noFxFees": "Geen wisselkoerskosten",
+      "worksWorldwide": "Werkt wereldwijd",
+      "spendEarnRewards": "Geef crypto uit, verdien beloningen",
+      "visaDebitGlobal": "Visa debit, wereldwijd",
+      "cashbackCro5": "Tot 5% cashback in CRO",
+      "loungeAccess": "Toegang tot luchthavenlounges"
+    }
+  },
+  "myCards": {
+    "title": "Uw cards",
+    "subtitle": "Beheer uw cards",
+    "addCard": "Card toevoegen",
+    "balance": "Saldo",
+    "debit": "Debit",
+    "viewDetails": "Details bekijken",
+    "actions": {
+      "topUp": "Opwaarderen",
+      "lock": "Card vergrendelen",
+      "freeze": "Blokkeren",
+      "settings": "Instellingen"
+    },
+    "transactions": {
+      "title": "Transacties",
+      "seeAll": "Alles bekijken",
+      "today": "Vandaag",
+      "yesterday": "Gisteren"
+    },
+    "empty": {
+      "title": "Nog geen cards",
+      "body": "Vraag een card aan bij een partner om uw crypto uit te geven.",
+      "cta": "Cards ontdekken"
+    }
+  },
+  "topUp": {
+    "title": "Opwaarderen",
+    "subtitle": "Voeg geld toe aan uw cardsaldo",
+    "source": {
+      "wallet": "Wallet",
+      "portfolio": "Portefeuille"
+    },
+    "cta": "Opwaarderen",
+    "success": "Uw cardsaldo is opgewaardeerd."
+  }
+}

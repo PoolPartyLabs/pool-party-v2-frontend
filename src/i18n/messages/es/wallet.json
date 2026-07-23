@@ -1,0 +1,35 @@
+{
+  "title": "Billetera",
+  "openWallet": "Abrir billetera",
+  "refresh": "Actualizar saldo",
+  "connect": "Conectar billetera",
+  "close": "Cerrar",
+  "kind": {
+    "embedded": "Integrada",
+    "external": "Externa"
+  },
+  "copyAddress": "Copiar dirección",
+  "copied": "Copiado",
+  "totalBalance": "SALDO TOTAL",
+  "dayChange": "{usd} · {pct} hoy",
+  "addFunds": "Agrega fondos para empezar",
+  "actions": {
+    "buy": "Comprar",
+    "swap": "Intercambiar",
+    "send": "Enviar",
+    "receive": "Recibir"
+  },
+  "networks": {
+    "all": "Todas"
+  },
+  "noAssetsOnNetwork": "Sin activos en esta red",
+  "emptyTitle": "Aún no tienes activos",
+  "emptyBody": "Compra o recibe cripto y tus saldos aparecerán aquí, en todas las redes.",
+  "manage": "Administrar billetera",
+  "disconnect": "Desconectar",
+  "comingSoon": {
+    "title": "Próximamente",
+    "send": "El envío de tokens está en camino. Por ahora puedes Comprar o Recibir cripto.",
+    "back": "Entendido"
+  }
+}

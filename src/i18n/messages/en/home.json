@@ -1,0 +1,71 @@
+{
+  "hideValues": "Hide values",
+  "portfolioValue": "Portfolio value",
+  "estimatedTooltip": "Estimated. The graph is not updated in real time, only a few times a day.",
+  "earnedToday": "{amount} earned today",
+  "invested": "Invested",
+  "totalYield": "Total yield",
+  "thisMonth": "Last 30 days",
+  "avgApy": "Avg. APR",
+  "periods": {
+    "day": "1D",
+    "week": "1W",
+    "month": "1M",
+    "sixMonth": "6M",
+    "all": "All"
+  },
+  "yourPositions": "Your positions",
+  "availableInvestments": "Available investments",
+  "discover": "Discover strategies",
+  "seeAll": "See all",
+  "exploreMore": "See all",
+  "manage": "Manage",
+  "allocationByRisk": "Allocation by risk",
+  "referral": {
+    "title": "Invite & earn",
+    "body": "Invite friends and earn quacks together.",
+    "stat": "{count} friends joined",
+    "copy": "Copy code",
+    "copyLink": "Copy invite link",
+    "copied": "Copied!",
+    "share": "Share invite link",
+    "createCta": "Create your referral code"
+  },
+  "referralWelcome": {
+    "title": "Welcome to Pool Party! 🎉",
+    "body": "You joined through a friend's invite. Start investing to earn quacks together.",
+    "dismiss": "Dismiss"
+  },
+  "columns": {
+    "strategy": "Strategy",
+    "risk": "Risk",
+    "invested": "Invested",
+    "value": "Current Value",
+    "yield": "Yield",
+    "rate": "Rate"
+  },
+  "empty": {
+    "zero": {
+      "eyebrow": "Get started",
+      "title": "Earn yield on your dollars",
+      "subtitle": "Put your money to work in a few simple steps.",
+      "cta": "Add funds to start",
+      "secondary": "Explore strategies first"
+    },
+    "funded": {
+      "available": "Available to invest",
+      "availableHint": "Ready to put to work",
+      "title": "You're ready to invest",
+      "subtitle": "Pick a strategy to start earning.",
+      "stepDone": "Done · {amount} added",
+      "cta": "Pick a strategy",
+      "secondary": "See how it works"
+    },
+    "path": {
+      "heading": "Your path to earning",
+      "step1": { "title": "Add funds", "body": "Start with as little as $10" },
+      "step2": { "title": "Pick a strategy", "body": "Curated and risk-rated for you" },
+      "step3": { "title": "Earn", "body": "Track your yield every day" }
+    }
+  }
+}

@@ -1,0 +1,611 @@
+{
+  "entry": {
+    "become": "マネージャーになる",
+    "manager": "Manager Console"
+  },
+  "loadMore": "さらに読み込む",
+  "cta": {
+    "createFirst": "最初の戦略を作成"
+  },
+  "missing": {
+    "title": "入力を完了して続けてください："
+  },
+  "become": {
+    "title": "マネージャーになる",
+    "subtitle": "自分だけのオンチェーン戦略を作成し、TVLを伸ばし、共に投資する人々から手数料を得ましょう。",
+    "note": "誰でも参加可能。申請も承認も不要です。",
+    "how": {
+      "title": "仕組み",
+      "step1": {
+        "title": "戦略を構築",
+        "body": "Uniswap v3プールを選び、価格レンジを設定し、手数料を決めます。"
+      },
+      "step2": {
+        "title": "人々が投資",
+        "body": "投資家があなたと共にUSDCを入金。ポジションはプールされ、共同で運用されます。"
+      },
+      "step3": {
+        "title": "手数料を獲得",
+        "body": "戦略が生み出す取引手数料の一部に加えて、自分で設定した手数料を獲得できます。"
+      }
+    }
+  },
+  "empty": {
+    "title": "戦略はまだありません",
+    "subtitle": "最初のUniswap v3戦略を作成して、共に投資する人々から手数料を得ましょう。"
+  },
+  "builder": {
+    "title": "新しい戦略を作成",
+    "back": "コンソールに戻る",
+    "steps": {
+      "mandate": "マンデート",
+      "review": "確認",
+      "build": "ビルド"
+    },
+    "next": "次へ：確認",
+    "nextBuild": "次へ：戦略を組み立てる",
+    "nextReview": "次へ：確認"
+  },
+  "tabs": {
+    "overview": "概要",
+    "strategies": "自分の戦略",
+    "investors": "投資家",
+    "earnings": "収益",
+    "activity": "アクティビティ",
+    "profile": "マネージャープロフィール"
+  },
+  "dashboard": {
+    "subtitle": "あなたの戦略の状況です",
+    "createNew": "新しい戦略を作成",
+    "hideValues": "値を非表示にする",
+    "totalAum": "総運用資産（AUM）",
+    "netInflows": "{amount}の純流入 · 30日",
+    "chartLabel": "過去30日間のAUM推移",
+    "yourStrategies": "あなたの戦略",
+    "kpi": {
+      "yield": "生成された利回り",
+      "activeInvestors": "アクティブな投資家",
+      "totalInvestorsAllTime": "総投資家数",
+      "apy": "平均APR",
+      "activeWoW": "先週比 {delta}",
+      "referrals": "リファラル",
+      "referralsSub": "招待リンク経由"
+    },
+    "columns": {
+      "strategy": "戦略",
+      "aum": "AUM",
+      "investors": "投資家",
+      "flows": "流入額 · 30日",
+      "apy": "APR"
+    },
+    "share": {
+      "title": "戦略を共有",
+      "body": "共に投資する人々を招待しましょう。",
+      "cta": "プロフィールリンクを共有"
+    },
+    "earnings": {
+      "title": "獲得した手数料",
+      "allTime": "累計",
+      "performance": "パフォーマンス手数料",
+      "entry": "エントリー手数料",
+      "exit": "エグジット手数料"
+    },
+    "manage": "管理"
+  },
+  "mandate": {
+    "title": "マンデート",
+    "subtitle": "マンデートは戦略の固定された範囲であり、戦略が稼働するネットワークと Uniswap v3 プールを指します。ローンチすると永続的になり、変更できません。",
+    "identityLabel": "戦略の識別情報",
+    "nameLabel": "戦略名",
+    "namePlaceholder": "例：Stable Yield",
+    "logoAdd": "ロゴを追加",
+    "logoChange": "変更",
+    "logoRemove": "削除",
+    "logoCropTitle": "ロゴを調整",
+    "logoUploading": "ロゴをアップロード中です",
+    "networkLabel": "ネットワーク",
+    "poolLabel": "プール",
+    "tokensLabel": "Tokens",
+    "poolsLabel": "Pools",
+    "secondTokenSearch": "2つ目のトークンを追加（任意）",
+    "showMore": "さらにプールを表示",
+    "poolSearch": "ペア・トークン・プールアドレスで検索",
+    "poolEmpty": "検索に一致するプールはありません。",
+    "poolTvl": "TVL",
+    "poolApr": "APR",
+    "tierShare": "{pct}% 選択済み",
+    "rangeFull": "フル",
+    "rangeMin": "最低価格",
+    "rangeMax": "最高価格",
+    "rangeMinDecrease": "最低価格を下げる",
+    "rangeMinIncrease": "最低価格を上げる",
+    "rangeMaxDecrease": "最高価格を下げる",
+    "rangeMaxIncrease": "最高価格を上げる",
+    "rangeCurrent": "現在 {price}",
+    "rangeFullNote": "フルレンジ。すべての価格帯で収益を得られ、レンジ移動は不要です。",
+    "derivedLabel": "自動で算出",
+    "derivedNote": "これらは設定不要です。Pool Partyがプールとレンジから算出します。",
+    "riskLabel": "リスク",
+    "categoryLabel": "カテゴリー",
+    "categoryStable": "ステーブルコイン利回り",
+    "categoryBlueChip": "ブルーチップLP",
+    "categoryVolatile": "ボラタイルLP",
+    "risk": {
+      "veryConservative": "非常に保守的",
+      "conservative": "保守的",
+      "moderate": "中程度",
+      "aggressive": "積極的",
+      "veryAggressive": "非常に積極的"
+    },
+    "descriptionLabel": "説明",
+    "descriptionOptional": "（任意）",
+    "descriptionPlaceholder": "戦略のテーマを説明してください：何をする戦略で、誰のためのものか。",
+    "rangeStatusIn": "レンジ内",
+    "tokenHint": "トークンを選択して利用可能なプールを表示します。",
+    "poolsLoading": "プールを読み込み中…",
+    "rangeStatusOut": "レンジ外",
+    "objectiveLabel": "目的",
+    "assetLabel": "資産",
+    "objective": {
+      "income": "インカム",
+      "gradualBuy": "段階的購入（DCA）",
+      "gradualSell": "段階的売却"
+    },
+    "asset": {
+      "bitcoin": "Bitcoin",
+      "ethereum": "Ethereum",
+      "stablecoins": "Stablecoins",
+      "altcoins": "Altcoins",
+      "meme": "Meme"
+    }
+  },
+  "review": {
+    "title": "確認して開始",
+    "nameLabel": "戦略名",
+    "namePlaceholder": "例：Stable Yield",
+    "summary": {
+      "title": "概要",
+      "pool": "プール",
+      "network": "ネットワーク",
+      "protocol": "プロトコル",
+      "range": "レンジ",
+      "rangeFull": "フルレンジ",
+      "risk": "リスク",
+      "category": "カテゴリー",
+      "feeTier": "手数料ティア"
+    },
+    "fees": {
+      "title": "あなたの手数料",
+      "subtitle": "入金・出金・運用手数料に上限はありません。パフォーマンス手数料は戦略が生み出すLP手数料の一部です。",
+      "entry": "入金手数料（%）",
+      "exit": "出金手数料（%）",
+      "management": "運用手数料（%/年）",
+      "performance": "パフォーマンス手数料（%）",
+      "performanceHint": "生成されたLP手数料の{min}〜{max}% · ハイウォーターマークなし",
+      "performanceError": "パフォーマンス手数料は{min}%から{max}%の間で設定してください。",
+      "entryInfo": "戦略への各入金時に一度だけ課される手数料です。",
+      "exitInfo": "投資家が出金する際に一度だけ課される手数料です。",
+      "managementInfo": "運用資産に対して年率で課され、継続的に発生する手数料です。",
+      "performanceInfo": "戦略が生み出すLP手数料の一部です（v1では10〜90%）。ハイウォーターマークはありません。"
+    },
+    "access": {
+      "title": "アクセス",
+      "public": "公開",
+      "publicNote": "誰でも発見・投資できます。",
+      "privateSoon": "許可リスト・NFT・パスワードによるアクセスは近日対応予定です。"
+    },
+    "preview": {
+      "title": "投資家向けプレビュー",
+      "est": "想定リターン",
+      "yourStrategy": "あなたの戦略"
+    },
+    "saveDraft": "下書きとして保存",
+    "launch": "戦略を開始",
+    "verifying": "戦略を検証中…",
+    "verifyingNote": "プールの存在とパラメーターの有効性を確認しています。",
+    "live": {
+      "title": "戦略が公開されました",
+      "body": "{name}は検証を通過し、投資家向けに掲載されました。",
+      "cta": "コンソールへ",
+      "bodyChain": "{name} はオンチェーンで公開され、投資家向けに掲載されました。"
+    },
+    "draft": {
+      "title": "下書きを保存しました",
+      "body": "{name}を下書きとして保存しました。コンソールからいつでも開始できます。",
+      "cta": "コンソールへ"
+    },
+    "failed": {
+      "title": "検証に失敗しました",
+      "body": "この戦略を検証できませんでした。プールとパラメーターを確認して、もう一度お試しください。",
+      "cta": "確認に戻る",
+      "bodyChain": "トランザクションが失敗または拒否されました。資金は移動していません。残高を確認して再試行してください。"
+    },
+    "seed": {
+      "title": "初期流動性",
+      "subtitle": "プールに最初の流動性を入金します。両方のトークンを提供します。",
+      "subtitleSingle": "このレンジは {symbol} のみ必要です。入金してプールを開始してください。",
+      "balance": "残高 {amount}",
+      "max": "最大",
+      "fundWith": "資金源",
+      "insufficient": "残高が不足しています",
+      "loading": "残高を読み込み中…",
+      "error": "残高を読み込めませんでした。更新して再試行してください。",
+      "minUsd": "戦略を作成するための最低額は {amount} です",
+      "zeroBalance": {
+        "title": "{token} が必要です",
+        "body": "ウォレットに {token} がありません。初期流動性を用意するために追加してから、戻って開始してください。",
+        "deposit": "入金",
+        "swap": "Swap"
+      }
+    },
+    "creating": "戦略を作成中…",
+    "creatingNote": "ウォレットでトランザクションを承認してください。初期流動性を入金し、オンチェーンでプールを作成します。",
+    "nameLengthError": "名前は10〜50文字で入力してください。",
+    "pending": {
+      "badge": "確認待ち"
+    },
+    "metadata": {
+      "failed": "プールはオンチェーンで有効ですが、詳細の保存に失敗しました。",
+      "retry": "詳細を再保存",
+      "createFailed": "ストラテジーの詳細を保存できませんでした。もう一度お試しください。"
+    }
+  },
+  "profile": {
+    "verifiedManager": "認証済みマネージャー",
+    "website": "ウェブサイト",
+    "strategiesBy": "{name}の戦略",
+    "empty": "公開戦略はまだありません。",
+    "stats": {
+      "aum": "AUM",
+      "investors": "投資家",
+      "strategies": "戦略",
+      "avgApy": "平均APR"
+    },
+    "edit": "プロフィールを編集",
+    "share": "プロフィールを共有",
+    "shareCopied": "リンクをコピーしました",
+    "externalLink": {
+      "title": "Pool Party を離れます",
+      "body": "このリンクは、当社が未確認の外部サイト {domain} に移動します。続行しますか？",
+      "continue": "続行",
+      "cancel": "キャンセル"
+    }
+  },
+  "operate": {
+    "title": "ライブポジション",
+    "feeTier": "{pct} の手数料ティア",
+    "inRange": "レンジ内",
+    "outOfRange": "レンジ外",
+    "outOfRangeNote": "このポジションはレンジ外のため手数料が発生していません。再開するにはレンジを移動してください。",
+    "range": "レンジ",
+    "currentPrice": "現在価格",
+    "currentRange": "現在のレンジ",
+    "liquidity": "流動性",
+    "feeApr": "手数料APR",
+    "uncollected": "未回収の手数料",
+    "gasNote": "これらの操作のネットワークガス代がかかります（約{amount}）。",
+    "collect": "手数料を回収",
+    "compound": "複利運用",
+    "moveRange": "レンジを移動",
+    "comingSoon": "近日公開",
+    "compounded": "{amount} をポジションに再投資しました。",
+    "error": "問題が発生しました。資金は移動していません。",
+    "empty": "この戦略のライブポジションはまだありません。",
+    "back": "コンソールに戻る",
+    "moveRangeDesc": "ポジションの新しい価格レンジを設定します。",
+    "recenter": "現在価格を中心に再設定",
+    "slippageHint": "リバランス中に価格がこれ以上動いた場合はキャンセルします。",
+    "settings": "設定",
+    "applying": "レンジを移動中…",
+    "moved": "レンジを {min} – {max} に移動しました。",
+    "movedFull": "レンジを Full range に移動しました。",
+    "cancel": "キャンセル",
+    "rangeNew": "新しいレンジ",
+    "invert": "価格の向きを反転 ({pair})",
+    "estimatedBalance": "推定残高",
+    "currentBalance": "現在の残高",
+    "fee": "手数料",
+    "networkFee": "推定gas (ネットワーク手数料)",
+    "feesTooltip": {
+      "network": "推定gas (ネットワーク手数料)",
+      "total": "合計"
+    },
+    "estTime": "予想時間",
+    "reviewTitle": "確認",
+    "reviewConfirm": "確認してレンジを移動",
+    "reviewBack": "戻る",
+    "reviewAssurance": "ポジションは投資家が戦略の資金に手を触れることなく移動されます。"
+  },
+  "status": {
+    "active": "稼働中",
+    "paused": "一時停止",
+    "closed": "終了",
+    "draft": "下書き"
+  },
+  "strategies": {
+    "title": "運用中のストラテジー",
+    "subtitle": "すべてのストラテジーをひとつの場所で。ステータスで絞り込んで個別に管理できます。",
+    "filterLabel": "ステータスでストラテジーを絞り込む",
+    "filters": {
+      "all": "すべて",
+      "active": "稼働中",
+      "paused": "一時停止",
+      "closed": "終了",
+      "drafts": "下書き"
+    },
+    "rebalance": "リバランス推奨",
+    "sortLabel": "並び替え",
+    "sortDir": {
+      "asc": "昇順",
+      "desc": "降順"
+    },
+    "card": {
+      "aum": "AUM",
+      "investors": "投資家",
+      "netApy": "Net APR",
+      "fees30d": "Fees · 30日",
+      "manage": "管理",
+      "view": "表示"
+    },
+    "empty": {
+      "all": "まだストラテジーがありません。",
+      "active": "稼働中のストラテジーはありません。",
+      "paused": "一時停止中のストラテジーはありません。",
+      "closed": "終了したストラテジーはありません。",
+      "drafts": "下書きはありません。ストラテジービルダーから保存できます。"
+    }
+  },
+  "manage": {
+    "back": "すべてのストラテジー",
+    "share": "共有リンクをコピー",
+    "viewOnUniswap": "Uniswapで見る",
+    "shareCopied": "リンクをコピーしました",
+    "notFound": "このストラテジーを読み込めませんでした。もう一度お試しください。",
+    "performance": {
+      "title": "AUM",
+      "netApy": "Net APR",
+      "yield": "生成されたyield",
+      "fees": "あなたのfees · 累計",
+      "fees30d": "あなたのfees · 30日",
+      "chartLabel": "選択期間のAUM",
+      "noHistoryTitle": "履歴はまだありません",
+      "noHistoryBody": "AUMの履歴は、この戦略の運用開始から数日後に表示されます。",
+      "snapshotNote": "表示されるAUMは現在のプール価値です。チャートは日次スナップショットを追うため、両者はわずかに異なる場合があります。",
+      "periods": {
+        "7d": "7日",
+        "30d": "30日",
+        "90d": "90日",
+        "all": "全期間"
+      }
+    },
+    "range": {
+      "min": "下限価格",
+      "max": "上限価格",
+      "full": "Full range",
+      "earning": "feesを獲得中",
+      "notEarning": "feesを獲得していません",
+      "outNote": "価格がrangeの外に出たため、このポジションはfeesを獲得していません。rangeを動かして再開しましょう。"
+    },
+    "activity": {
+      "title": "最近のアクティビティ",
+      "empty": "まだアクティビティがありません。",
+      "comingSoon": "近日公開。",
+      "types": {
+        "deposit": "入金",
+        "withdraw": "出金",
+        "collect": "fees回収",
+        "compound": "Compound",
+        "move_range": "range変更"
+      }
+    },
+    "operations": {
+      "title": "オペレーション",
+      "showInExplore": "戦略リストに表示",
+      "showInExploreNote": "この戦略を公開の戦略ページに掲載します。オフ = リンク共有のみ。",
+      "pause": "入金を一時停止",
+      "resume": "入金を再開",
+      "pauseConfirmTitle": "入金を一時停止しますか？",
+      "pauseConfirmBody": "新規入金が停止します。ポジションは継続し、投資家は引き続き出金できます。",
+      "resumeConfirmTitle": "入金を再開しますか？",
+      "resumeConfirmBody": "投資家がこのストラテジーに再び入金できるようになります。",
+      "collect": "feesを回収",
+      "close": "ストラテジーを終了",
+      "closedNote": "このストラテジーは終了済みです。入金は凍結。投資家はいつでも即時・無手数料で出金できます。",
+      "confirm": "確認",
+      "cancel": "キャンセル",
+      "removeLiquidity": "引き出す",
+      "addLiquidity": "流動性を追加"
+    },
+    "investors": {
+      "title": "投資家",
+      "total": "合計",
+      "active": "アクティブ",
+      "allocated": "あなたの配分"
+    },
+    "draft": {
+      "title": "このストラテジーは下書きです",
+      "body": "ビルダーで設定を完了して、投資家向けに公開しましょう。",
+      "cta": "設定を続ける"
+    },
+    "remove": {
+      "title": "引き出す",
+      "desc": "戦略からどれだけ引き出すかを選びます。",
+      "amountLabel": "引き出す金額",
+      "unitToggle": "金額の単位",
+      "newAmount": "引き出し後のポジション額",
+      "closeAlert": "50%を超えて引き出すとこの戦略は終了し、すべての流動性を引き出して累積したfeeを回収します。",
+      "dustAlert": "残高が5ドル未満になるため、戦略は終了します。",
+      "remove": "引き出す",
+      "close": "戦略を終了",
+      "busyRemove": "引き出し中…",
+      "busyClose": "終了処理中…",
+      "removeValue": "引き出す金額",
+      "closeFeesNote": "すべての流動性を引き出し、累積したfeeを回収します。",
+      "investorsNote": "すべての投資家の流動性が引き出され、いつでも出金できるようになります。",
+      "confirmTitle": "この戦略を終了しますか？",
+      "confirmBody": "この戦略は終了し、すべての投資家の流動性が引き出され、いつでも出金できるようになります。続行しますか？",
+      "confirmContinue": "続行",
+      "confirmKeep": "戦略を維持",
+      "poolContents": "ストラテジー残高",
+      "liquidity": "Liquidity",
+      "fees": "Fees"
+    },
+    "close": {
+      "reviewTitle": "確認",
+      "back": "戻る",
+      "receiveAs": "受取形式",
+      "receiveTokens": "トークンペア",
+      "feesTooltip": {
+        "total": "合計"
+      },
+      "footerLocked": "≈ {amount} · {days, plural, other {# 日}}以内に到着 · 戦略のロックアップに基づく",
+      "cta": "ストラテジーを終了",
+      "successTitle": "ストラテジーを終了しました",
+      "successBody": "≈ {amount} 送金中",
+      "done": "完了"
+    },
+    "allocation": {
+      "title": "戦略配分",
+      "protocols": "Protocols",
+      "tokens": "Tokens"
+    },
+    "comments": {
+      "title": "Comments",
+      "empty": "No comments yet.",
+      "private": "Private · Investor & you",
+      "new": "{count} new",
+      "viewAll": "View all ({count})",
+      "invested": "invested {amount}",
+      "managerBadge": "Manager"
+    },
+    "about": "この戦略について",
+    "availableToCollect": "回収可能"
+  },
+  "confirm": {
+    "working": "確認中…",
+    "done": "完了",
+    "compoundTitle": "手数料を複利運用しますか？",
+    "compoundBody": "このポジションの未回収手数料をポジションに再投資し、運用を続けます。",
+    "pauseTitle": "入金を一時停止しますか？",
+    "pauseBody": "再開するまで、この戦略への新規投資をブロックします。既存の投資家のポジションは維持され、出金は引き続き可能です。",
+    "closeTitle": "この戦略を終了しますか？",
+    "closeBody": "ポジションを解消し、戦略を終了します。投資家は資金を保持し、手数料なしで即時に出金できます。元に戻せません。",
+    "launchTitle": "戦略をローンチしますか？",
+    "launchBody": "プールとパラメータを検証し、戦略を公開リストに掲載します。あなたがトランザクションに署名し、ネットワークガス代を支払います。",
+    "launchPool": "プール",
+    "launchPerf": "パフォーマンス手数料",
+    "feePending": "署名時に見積もり"
+  },
+  "profileTab": {
+    "instagram": {
+      "comingSoon": "近日公開",
+      "hint": "Instagramのリンクは近日公開予定です。"
+    },
+    "tiktok": {
+      "comingSoon": "近日公開",
+      "hint": "TikTokのリンクは近日公開予定です。"
+    },
+    "linkedin": {
+      "comingSoon": "近日公開",
+      "hint": "LinkedInのリンクは近日公開予定です。"
+    },
+    "banner": {
+      "label": "バナー",
+      "change": "バナーを変更",
+      "help": "推奨 2048×1152（16:9）。重要な内容は中央のセーフエリアに収めてください。小さい画面では端が切り取られます。"
+    },
+    "photo": {
+      "change": "写真を変更",
+      "help": "正方形、400×400以上。クロップツールが開きます。"
+    },
+    "fields": {
+      "name": "表示名",
+      "handle": "ハンドル",
+      "bio": "紹介文",
+      "socials": "ソーシャルリンク"
+    },
+    "autoList": "公開中の戦略は自動的にプロフィールへ表示されます。",
+    "save": "変更を保存",
+    "saved": "プロフィールを保存しました",
+    "mediaUploadFailed": "画像をアップロードできませんでした。もう一度お試しください。",
+    "saveFailed": "変更を保存できませんでした。もう一度お試しください。",
+    "saving": "保存中…",
+    "viewPublic": "公開プロフィールを見る",
+    "handleLockWarning": "Your handle is permanent. You can't change it after saving.",
+    "crop": {
+      "titleAvatar": "写真を調整",
+      "titleBanner": "バナーを調整",
+      "help": "ドラッグで位置を調整。重要な内容はセーフエリア内に収めてください。",
+      "safeArea": "セーフエリア",
+      "zoom": "ズーム",
+      "apply": "適用",
+      "cancel": "キャンセル"
+    },
+    "validation": {
+      "nameMin": "Display name must be at least {min} characters.",
+      "handleInvalid": "Choose a handle with 3-30 letters, numbers or hyphens.",
+      "handleTaken": "That handle is already taken.",
+      "linkInvalidFor": "有効な{network}リンクを入力してください。例: {example}",
+      "linkWrongNetwork": "有効な{network}リンクではありません。{network}のユーザー名を入力してください。"
+    },
+    "verify": {
+      "request": "Request verification",
+      "missingTitle": "To request verification",
+      "missingSocial": "Add your X link",
+      "pending": "Verification pending",
+      "pendingHelp": "We're reviewing your request. This usually takes a few days.",
+      "verified": "Verified",
+      "pendingValidation": "Pending validation",
+      "modal": {
+        "title": "Verification requested",
+        "body": "Your verification will be evaluated by our staff. Please send us a message through your registered social media to the Pool Party official profile containing the following code: {code}.",
+        "codeLabel": "Your verification code",
+        "copy": "Copy code",
+        "copied": "Copied"
+      },
+      "reshowError": "Couldn't load your code. Try again."
+    }
+  },
+  "build": {
+    "title": "戦略を組み立てる",
+    "subtitle": "Uniswap v3の流動性ポジションを組み立てます。ノードを選択して設定してください。",
+    "paletteMandate": "マンデートから",
+    "paletteBlocks": "ビルディングブロック",
+    "paletteNote": "V1は1戦略につき1プールの固定フローです。追加のブロックは今後解放されます。",
+    "blocks": {
+      "deposit": "入金",
+      "swap": "スワップ",
+      "pool": "LP提供",
+      "collect": "手数料回収"
+    },
+    "nodes": {
+      "depositSub": "USDC · エントリー",
+      "swapSub": "USDC → {tokens}",
+      "poolSub": "LPポジション",
+      "collectSub": "獲得した手数料を受け取る"
+    },
+    "config": {
+      "title": "ノードを設定",
+      "pool": "プール",
+      "feeTier": "Fee tier",
+      "feeTierNote": "選択したプールで固定されます。",
+      "allocation": "配分",
+      "allocationNote": "戦略資金の100%。V1では1戦略につき1プール。",
+      "range": "価格レンジ",
+      "invert": "価格の向きを反転",
+      "composition": "推定残高",
+      "tickNote": "上下限はプールのティック間隔に合わせて調整されます。",
+      "rangeError": "上限は下限より少なくとも2ティック上に設定してください。",
+      "monoAssetWarning": "現在価格に近いです。わずかな変動で両方のトークンが必要になる場合があります。",
+      "autoMove": "レンジを自動移動",
+      "autoMoveNote": "価格がレンジを外れたらポジションを再配置します。",
+      "apply": "変更を適用",
+      "removeNode": "ノードを削除",
+      "removeNote": "V1の戦略はプールを1つだけ保有するため、このノードは削除できません。",
+      "depositBody": "投資家はUSDCで参加します。入金は自動的にプールのトークンに変換されます。",
+      "swapBody": "USDCはプールの構成に合わせて{tokens}にスワップされます。",
+      "collectBody": "取引手数料はポジションに蓄積されます。残高に回収するか、ポジションに複利投入できます。ガス代はあなたの負担です。"
+    }
+  },
+  "window30d": "30日"
+}

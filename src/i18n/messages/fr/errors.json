@@ -1,0 +1,25 @@
+{
+  "somethingWentWrong": "Une erreur est survenue",
+  "networkError": "Erreur réseau",
+  "validationFailed": "Échec de la validation",
+  "description": "Une erreur inattendue est survenue. Veuillez réessayer.",
+  "retry": "Réessayer",
+  "dashboard": {
+    "title": "Impossible de charger votre tableau de bord",
+    "body": "Une erreur est survenue de notre côté. Vérifiez votre connexion et réessayez.",
+    "support": "Contacter le support"
+  },
+  "auth": {
+    "networkFailure": "La connexion a échoué. Veuillez vérifier votre connexion internet et réessayer.",
+    "unsupportedChain": "Ce réseau n'est pas pris en charge. Veuillez passer à Arbitrum, Base ou Polygon."
+  },
+  "api": {
+    "networkError": "Nous n'avons pas pu joindre nos serveurs. Veuillez vérifier votre connexion et réessayer.",
+    "notConfigured": "Cette fonctionnalité n'est pas disponible pour le moment. Veuillez réessayer plus tard.",
+    "upstreamUnavailable": "Notre service est temporairement indisponible. Veuillez réessayer dans un instant.",
+    "rateLimited": "Vous allez un peu trop vite. Veuillez patienter un instant et réessayer.",
+    "unauthorized": "Vous n'avez pas la permission de faire cela. Veuillez vous reconnecter.",
+    "notFound": "Nous n'avons pas trouvé ce que vous cherchiez.",
+    "unknown": "Une erreur est survenue de notre côté. Veuillez réessayer."
+  }
+}

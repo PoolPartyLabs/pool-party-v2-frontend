@@ -1,0 +1,179 @@
+{
+  "rubberRush": {
+    "title": "Rubber Rush",
+    "subtitle": "Quacks 적립, 등급 상승, 부스트 잠금 해제",
+    "back": "뒤로",
+    "yourQuacks": "내 Quacks",
+    "quacksUnit": "Quacks",
+    "topPercent": "상위 {percent}%",
+    "managerIncentiveProgramDashboard": "Manager Incentive Program",
+    "sayQuack": "Quack 하기",
+    "playDuckShoot": "Duck Shoot 플레이",
+    "claimRoles": "역할 받기",
+    "quacksEarnedToday": "오늘 +{count} Quacks 적립",
+    "tierProgression": "등급 진행",
+    "you": "나",
+    "tiers": {
+      "paddler": "Paddler",
+      "swimmer": "Swimmer",
+      "diver": "Diver",
+      "waveRider": "Wave Rider",
+      "partyCaptain": "Party Captain"
+    },
+    "stats": {
+      "totalReferrals": "총 추천",
+      "dailyBoost": "일일 부스트",
+      "quacksToday": "오늘 Quacks",
+      "streak": "연속 기록"
+    },
+    "streakProgress": "{days} / {target}일",
+    "dailyStreakBoost": "일일 연속 부스트",
+    "dailyStreakBody": "매일 Quack 하여 부스트를 키우세요. 연속으로 참여할 때마다 배수가 쌓이며, 7일 이상이면 최대 부스트에 도달합니다.",
+    "dayShort": "D{n}",
+    "duckShootTitle": "Duck Shoot 이용 방법",
+    "duckShootBody": "프로토콜 거래(입금, 출금, 수령)마다 Duck Shoot 기회를 얻습니다. 한 발 쏠 때마다 오늘 적립한 Quacks가 보너스 보상으로 배가됩니다.",
+    "referral": {
+      "title": "내 추천",
+      "code": "추천 코드",
+      "link": "추천 링크",
+      "invitedBy": "초대한 사람",
+      "none": "-",
+      "copyCode": "추천 코드 복사",
+      "copyLink": "추천 링크 복사",
+      "copied": "복사됨",
+      "emptyBody": "초대 코드를 만들어 보상을 받아보세요.",
+      "emptyCta": "코드 만들기"
+    },
+    "referralRewards": {
+      "title": "추천 보상",
+      "progressLabel": "진행 현황",
+      "nextTier": "다음 등급",
+      "body1": "추천 코드를 공유하고 피추천인에게 <hl>Quacks 10% 부스트</hl>를 선물하세요.",
+      "body2": "피추천인이 <hl>누적 입금액 50 USDC</hl>에 도달하면, 당신의 Quacks에 <hl>평생 5% 부스트</hl>가 해제됩니다. (이 부스트는 1회 한정이며 중복 적용되지 않습니다.)",
+      "body3": "또한 <hl>피추천인이 생성한 Quacks의 10%</hl>도 받게 됩니다.",
+      "body4": "<hl>친구 5명을 더</hl> 초대하여 일일 Quacks에 배수를 받으세요!",
+      "progress": "친구 {count} / {target}명",
+      "multiplier": "{value}배 배수"
+    },
+    "signing": "서명 중…",
+    "quackedToday": "오늘 Quack 완료! 🦆",
+    "duckShoot": {
+      "title": "Duck Shoot",
+      "triesThisWeek": "이번 주 {count}회 기회",
+      "tapHelper": "오리를 탭하여 쏘세요. 한 발마다 오늘의 Quacks가 배가됩니다.",
+      "shoot": "발사",
+      "lockedTitle": "플레이하려면 프로토콜에서 거래하세요. 이번 주 기회가 0회 남았습니다.",
+      "makeDeposit": "입금하기",
+      "won": "+{percent}%",
+      "boostApplied": "부스트 적용됨: 오늘 +{count} Quacks!",
+      "shootAgain": "다시 쏘기 · {count}회 남음",
+      "close": "완료",
+      "start": "시작",
+      "instruction": "아무 곳이나 클릭해서 쏘세요!",
+      "playAgain": "다시 플레이",
+      "jackpot": "잭팟!",
+      "boostResult": "{percent}% 부스트를 획득했습니다!",
+      "oddsItem": "{percent}% (확률 {weight}%)",
+      "noTries": "프로토콜에서 거래하고 플레이하세요. 이번 주에 {count, plural, other {#번}} 더 플레이할 수 있습니다."
+    }
+  },
+  "managerIncentiveProgram": {
+    "title": "Manager Incentive Program",
+    "subtitle": "전략 생성 또는 홍보, TVL 성장, 보너스 수수료 적립",
+    "back": "뒤로",
+    "label": "Manager Incentive Program · {name}",
+    "revenueThisMonth": "이번 달 수익",
+    "since": "{date}부터 프로그램에 참여하고 있어요",
+    "stats": {
+      "strategiesCreated": "생성한 전략",
+      "strategiesCreatedSub": "직접 생성한 전략",
+      "managedTvl": "운용 TVL",
+      "managedTvlSub": "직접 만들거나 유치한 TVL",
+      "referrals": "추천",
+      "referralsSub": "내 코드 사용",
+      "bonusFees": "보너스 수수료",
+      "bonusFeesSub": "일반 수수료에 추가"
+    },
+    "tokens": {
+      "title": "{count}개 토큰 배포 예정",
+      "body": "프로그램에 참여한 매니저에게 성과에 따라 {count}개의 토큰이 지급돼요. 회원님의 tier, managed TVL(직접 생성하거나 유치한 금액), 그리고 전략이 발생시킨 수수료에 따라 받을 몫이 정해져요."
+    },
+    "tierCard": {
+      "title": "회원님은 Tier {tier} 멤버예요",
+      "range": "{from} – {to}",
+      "body": "운용 TVL이 {target}에 도달하면 기존에 받던 수수료에 더해 추가 수수료를 받기 시작합니다.",
+      "managed": "{amount} 운용",
+      "nextTier": "{delta} → {tier}"
+    },
+    "tierTable": {
+      "tier": "등급",
+      "minTvl": "최소 TVL",
+      "bonusFees": "보너스 수수료",
+      "rowName": "Tier {n}"
+    },
+    "tierFootnote": "등급은 변동이 있을 때마다(수령, 신규 포지션, TVL 이동) 다시 계산됩니다. 대시보드 수치는 각 수수료 이벤트 시점의 등급을 반영합니다.",
+    "revenue": {
+      "title": "수익",
+      "paidEndOfMonth": "월말에 지급",
+      "estimatedAccrued": "이번 달 예상 적립액",
+      "feesThisMonth": "이번 달 창출 수수료",
+      "totalFees": "총 창출 수수료",
+      "estimatedAccruedInfo": "이번 달 현재 등급으로 누적된 보너스 수수료입니다. 월말에 지급됩니다.",
+      "feesThisMonthInfo": "이번 달 전략이 창출한 수수료(보너스 몫 차감 전)입니다.",
+      "totalFeesInfo": "프로그램에 참여한 이후 회원님의 전략이 발생시킨 모든 수수료예요."
+    },
+    "goals": {
+      "title": "첫 달 목표",
+      "onboarding": "온보딩 목표",
+      "referrals": "추천 {target}건",
+      "posts": "최소 {count}개 게시물",
+      "communityPool": "커뮤니티 TVL로 전략 생성",
+      "progress": "{current}/{target}",
+      "trackedExternally": "외부에서 추적됨"
+    }
+  },
+  "referral": {
+    "invitedByLabel": "{code}님의 초대",
+    "title": "초대하고 보상받기",
+    "subtitle": "프로필 · 추천",
+    "back": "뒤로",
+    "heroTitle": "친구를 초대하고 quacks를 받으세요",
+    "heroBody": "친구에게 quacks 10% 부스트를 선물하고, 친구가 얻는 quacks의 10%를 받으세요.",
+    "code": "내 추천 코드",
+    "link": "초대 링크",
+    "copyCode": "추천 코드 복사",
+    "copyLink": "초대 링크 복사",
+    "copied": "복사됨",
+    "share": "초대 링크 공유",
+    "shared": "링크 복사됨",
+    "stats": {
+      "friendsJoined": "가입한 친구"
+    },
+    "howItWorks": "이용 방법",
+    "steps": {
+      "shareTitle": "링크 공유",
+      "shareBody": "친구에게 초대 링크를 보내세요.",
+      "investTitle": "친구가 가입하고 투자",
+      "investBody": "친구가 가입하고 투자를 시작합니다.",
+      "earnTitle": "둘 다 quacks 적립",
+      "earnBody": "친구는 10% 부스트를 받고, 나는 친구의 quacks 10%를 받습니다."
+    },
+    "invites": "내 초대",
+    "investedAmount": "${amount} 투자",
+    "signedUp": "가입함",
+    "status": {
+      "earned": "보상 완료",
+      "invested": "투자 중",
+      "pending": "대기 중"
+    },
+    "create": {
+      "label": "코드 선택",
+      "placeholder": "YOURCODE",
+      "warning": "신중히 선택하세요. 코드는 나중에 변경할 수 없습니다.",
+      "cta": "코드 만들기",
+      "invalid": "6자에서 10자 사이의 영문자 또는 숫자를 사용하세요.",
+      "unavailable": "이 코드는 사용할 수 없습니다. 다른 코드를 시도해 보세요."
+    },
+    "noInvites": "아직 초대한 친구가 없습니다."
+  }
+}

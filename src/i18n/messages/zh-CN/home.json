@@ -1,0 +1,71 @@
+{
+  "hideValues": "隐藏数值",
+  "portfolioValue": "投资组合价值",
+  "estimatedTooltip": "预估值。图表并非实时更新，每天仅更新几次。",
+  "earnedToday": "今日收益 {amount}",
+  "invested": "已投资",
+  "totalYield": "总收益",
+  "thisMonth": "过去 30 天",
+  "avgApy": "平均 APR",
+  "periods": {
+    "day": "1D",
+    "week": "1W",
+    "month": "1M",
+    "sixMonth": "6M",
+    "all": "全部"
+  },
+  "yourPositions": "您的持仓",
+  "availableInvestments": "可投资项目",
+  "discover": "发现策略",
+  "seeAll": "查看全部",
+  "exploreMore": "查看全部",
+  "manage": "管理",
+  "allocationByRisk": "按风险分配",
+  "referral": {
+    "title": "邀请赚奖励",
+    "body": "邀请好友，一起赚取 quacks。",
+    "stat": "{count} 位好友已加入",
+    "copy": "复制邀请码",
+    "copyLink": "复制邀请链接",
+    "copied": "已复制！",
+    "share": "分享邀请链接",
+    "createCta": "创建你的推荐码"
+  },
+  "referralWelcome": {
+    "title": "欢迎来到 Pool Party！🎉",
+    "body": "你通过朋友的邀请加入了。开始投资，一起赚取 quacks。",
+    "dismiss": "关闭"
+  },
+  "columns": {
+    "strategy": "策略",
+    "risk": "风险",
+    "invested": "已投资",
+    "value": "当前价值",
+    "yield": "收益",
+    "rate": "收益率"
+  },
+  "empty": {
+    "zero": {
+      "eyebrow": "立即开始",
+      "title": "让你的钱为你工作",
+      "subtitle": "只需几步，轻松开启资产增值之旅。",
+      "cta": "添加资金开始",
+      "secondary": "先浏览策略"
+    },
+    "funded": {
+      "available": "可投资金额",
+      "availableHint": "随时可以开始运作",
+      "title": "你已准备好投资",
+      "subtitle": "选择一个策略，开始获取收益。",
+      "stepDone": "完成 · 已添加 {amount}",
+      "cta": "选择策略",
+      "secondary": "了解操作方式"
+    },
+    "path": {
+      "heading": "你的获益之路",
+      "step1": { "title": "添加资金", "body": "最低 $10 即可开始" },
+      "step2": { "title": "选择策略", "body": "为你精选并按风险评级" },
+      "step3": { "title": "获取收益", "body": "每天追踪你的收益" }
+    }
+  }
+}
