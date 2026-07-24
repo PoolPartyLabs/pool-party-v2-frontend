@@ -26,6 +26,16 @@ The live frontend skill set for this repo. Claude Code discovers a skill by its 
 | `consistency-checker/` | Cross-consistency audit, docs vs code | `documentation-keeper` |
 | `adr/` | Record an immutable architecture decision (frontend) | all contributors |
 
+## Vendored (third-party)
+
+Skills copied in from an external source rather than written here. Each carries a provenance block at
+the top of its `SKILL.md` (upstream repo, pinned commit, and every local edit) plus the upstream
+licence as `LICENSE.upstream`. Refresh by re-pulling upstream and re-applying the listed edits.
+
+| Skill | Purpose | Upstream | Scope limits |
+|---|---|---|---|
+| `swap-integration/` | Uniswap Trading API `/quote` + `/swap`, Permit2 field rules per routing type, pre-broadcast validation, Universal Router, UniswapX | [`Uniswap/uniswap-ai`](https://github.com/Uniswap/uniswap-ai) @ `3ddd8a9d` (MIT) | **Same-chain only.** Does not cover Chained Actions (`POST /plan`, `PATCH`/`GET /plan/:id`), which is how we bridge cross-chain: `docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` is the authority there. Its React examples call the Trading API from the client; here the key is server-only and every call goes through a Server Action, so `server-data-access`, `wallet-operation-flow` and `frontend-security` win on conflict. |
+
 ## Not loaded
 
 - **Protocol/chain skills** (EVM/Solana, oracle/MEV, governance, release, audit, risk, cross-chain, etc.): quarantined in `.claude/_protocol/skills/`. Re-promote into `.claude/skills/<name>/` only if frontend work genuinely needs one.
