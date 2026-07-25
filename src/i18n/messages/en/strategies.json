@@ -442,6 +442,26 @@
         "buyCrypto": "Buy crypto"
       }
     },
+    "fundingSources": {
+      "title": "What would you like to spend?",
+      "subtitle": "Pick anything you hold. We'll work out how to get it where it needs to go.",
+      "listLabel": "Your funds",
+      "rowLabel": "{symbol} on {network}, {amount}, worth {usd}",
+      "selected": "Selected: {amount}",
+      "required": "Needed: {amount}",
+      "remaining": "{amount} still to go",
+      "surplus": "{amount} more than needed",
+      "exact": "Exactly covered",
+      "empty": "There's nothing here we can spend yet.",
+      "cta": "Continue",
+      "step": "Step {index}",
+      "unblock": "To use this money:",
+      "badge": {
+        "ok": "Ready",
+        "topUp": "Needs a top up",
+        "blocked": "Can't be used yet"
+      }
+    },
     "gas": {
       "title": "Not enough gas",
       "subtitle": "You need a little network gas to confirm this transaction. Top up below.",

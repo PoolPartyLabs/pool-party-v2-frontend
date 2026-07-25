@@ -442,6 +442,26 @@
         "buyCrypto": "暗号資産を購入"
       }
     },
+    "fundingSources": {
+      "title": "何を使いますか？",
+      "subtitle": "お持ちのものを選んでください。適切な場所へ移す方法はこちらで用意します。",
+      "listLabel": "あなたの資金",
+      "rowLabel": "{network} の {symbol}、{amount}、{usd} 相当",
+      "selected": "選択中: {amount}",
+      "required": "必要額: {amount}",
+      "remaining": "あと {amount} 必要です",
+      "surplus": "必要額より {amount} 多いです",
+      "exact": "ちょうど足りています",
+      "empty": "ここにはまだ使えるものがありません。",
+      "cta": "続ける",
+      "step": "ステップ {index}",
+      "unblock": "この資金を使うには:",
+      "badge": {
+        "ok": "利用可能",
+        "topUp": "補充が必要",
+        "blocked": "まだ使えません"
+      }
+    },
     "gas": {
       "title": "ネットワーク手数料が不足しています",
       "subtitle": "この取引を確認するには、少額のネットワーク手数料が必要です。以下で補充してください。",

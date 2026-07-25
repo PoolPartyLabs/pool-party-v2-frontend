@@ -442,6 +442,26 @@
         "buyCrypto": "Crypto kopen"
       }
     },
+    "fundingSources": {
+      "title": "Wat wilt u gebruiken?",
+      "subtitle": "Kies wat u heeft. Wij regelen hoe het op de juiste plek komt.",
+      "listLabel": "Uw tegoed",
+      "rowLabel": "{symbol} op {network}, {amount}, waard {usd}",
+      "selected": "Geselecteerd: {amount}",
+      "required": "Nodig: {amount}",
+      "remaining": "Nog {amount} te gaan",
+      "surplus": "{amount} meer dan nodig",
+      "exact": "Precies gedekt",
+      "empty": "Er is hier nog niets dat we kunnen gebruiken.",
+      "cta": "Doorgaan",
+      "step": "Stap {index}",
+      "unblock": "Om dit geld te gebruiken:",
+      "badge": {
+        "ok": "Klaar",
+        "topUp": "Heeft een aanvulling nodig",
+        "blocked": "Nog niet bruikbaar"
+      }
+    },
     "gas": {
       "title": "Onvoldoende netwerkkosten",
       "subtitle": "Je hebt een klein beetje netwerkkosten nodig om deze transactie te bevestigen. Laad hieronder op.",
