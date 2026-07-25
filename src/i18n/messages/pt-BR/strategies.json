@@ -361,7 +361,9 @@
         "deadlineExpired": "A transação não confirmou dentro do prazo e foi cancelada. Tente novamente.",
         "insufficientFunds": "Sua carteira não tem saldo suficiente para cobrir esta transação e a taxa de rede.",
         "userRejected": "Você recusou a solicitação na sua carteira. Nenhum valor foi movido.",
-        "unauthorized": "Esta carteira não tem permissão para executar esta operação."
+        "unauthorized": "Esta carteira não tem permissão para executar esta operação.",
+        "wrongChain": "Sua carteira está em outra rede. Mude para {network} e tente novamente.",
+        "wrongChainUnknown": "Sua carteira está em outra rede. Mude de rede na sua carteira e tente novamente."
       }
     },
     "slippage": {

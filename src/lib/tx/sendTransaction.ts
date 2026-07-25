@@ -69,6 +69,16 @@ export const WRONG_CHAIN_CODE = "WRONG_CHAIN";
 export const WRONG_ACCOUNT_CODE = "WRONG_ACCOUNT";
 
 /**
+ * Stable machine code for a build-vs-target discrepancy (POO-824 R4, split out in POO-1026): the
+ * API built the calldata for one chain and the flow targets another. Deliberately NOT
+ * {@link WRONG_CHAIN_CODE} — the wallet may well be sitting on the correct chain, so this is a
+ * server/client build bug, not a user-recoverable wallet state. It is kept OUT of the diagnostics
+ * catalog on purpose so it classifies as `"unknown"` and renders the generic copy: telling the user
+ * to switch networks here would send them to fix something that is not broken on their side.
+ */
+export const BUILD_TARGET_MISMATCH_CODE = "BUILD_TARGET_MISMATCH";
+
+/**
  * Pick the connected wallet handle matching the ACTIVE address (POO-892 R5, the established
  * lookup from useUpdateProfile): after a wallet switch, `wallets[0]` can be the stale handle.
  * Falls back to `wallets[0]` when the active address is unknown or nothing matches (the
@@ -145,14 +155,15 @@ async function assertProviderOnChain(
   } catch (error) {
     throw new TransactionError(
       `Wallet is on chain ${actual} but this transaction targets chain ${targetChainId}`,
-      { code: WRONG_CHAIN_CODE, cause: error },
+      // POO-1026 [R2]: carry the target chain so the error copy can name the network.
+      { code: WRONG_CHAIN_CODE, targetChainId, cause: error },
     );
   }
   const switched = await readProviderChainId(provider);
   if (switched !== targetChainId) {
     throw new TransactionError(
       `Wallet stayed on chain ${switched} after switching; this transaction targets chain ${targetChainId}`,
-      { code: WRONG_CHAIN_CODE },
+      { code: WRONG_CHAIN_CODE, targetChainId },
     );
   }
 }
@@ -169,11 +180,13 @@ export async function sendBuiltTransaction(
   targetChainId: number,
 ): Promise<`0x${string}`> {
   // POO-824 [R4]: a build that declares its chain must agree with the flow's target — a mismatch
-  // is a build/target bug and is never sendable, on any chain.
+  // is a build/target bug and is never sendable, on any chain. POO-1026: typed
+  // BUILD_TARGET_MISMATCH, not WRONG_CHAIN, and worded to avoid the "targets chain <id>" phrasing
+  // the wrongChain message pattern keys on, so this never renders "switch networks in your wallet".
   if (built.chainId != null && built.chainId !== targetChainId) {
     throw new TransactionError(
-      `Transaction was built for chain ${built.chainId} but targets chain ${targetChainId}`,
-      { code: WRONG_CHAIN_CODE },
+      `Transaction was built for chain ${built.chainId} but this flow expects chain ${targetChainId}`,
+      { code: BUILD_TARGET_MISMATCH_CODE },
     );
   }
   // POO-892 [R5]: assert the EFFECTIVE from (the build's pinned from when present, else the

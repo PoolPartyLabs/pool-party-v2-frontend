@@ -1,7 +1,8 @@
 /**
  * @id PP-CORE-LIB-012
  * @name tx diagnostics
- * @implements-rules-version v1
+ * @implements-rules-version v1 · v1 (POO-1026 rules v1)
+ * @hackathon POO-1022 (Universal Funding)
  *
  * Client-environment diagnostics for the transaction error-details box (PP-CORE-MOD-002 v2,
  * POO-279 R1/R2): browser, OS, wallet kind and active app language, plus the full "Copy error"
@@ -21,6 +22,12 @@ export type TxErrorKind =
   | "insufficientFunds"
   | "userRejected"
   | "unauthorized"
+  /**
+   * POO-1026: the wallet is on a different chain than the transaction targets. Thrown by the single
+   * broadcast choke point (`sendTransaction.ts`) after its one corrective switch fails. Load-bearing
+   * for cross-chain provisioning, where a plan legitimately switches networks between legs.
+   */
+  | "wrongChain"
   | "unknown";
 
 /**
@@ -36,6 +43,8 @@ const BACKEND_CODE_KINDS: Record<string, TxErrorKind> = {
   USER_REJECTED: "userRejected",
   NOT_AUTHORIZED: "unauthorized",
   UNAUTHORIZED: "unauthorized",
+  // POO-1026: emitted by assertProviderOnChain, not by the API.
+  WRONG_CHAIN: "wrongChain",
 };
 
 /**
@@ -54,6 +63,13 @@ const MESSAGE_PATTERN_KINDS: [RegExp, TxErrorKind][] = [
   [/deadline|transaction too old|signature has expired/i, "deadlineExpired"],
   [/insufficient funds|exceeds the balance|insufficient balance/i, "insufficientFunds"],
   [/unauthorized|not authorized|only pool manager/i, "unauthorized"],
+  // POO-1026: a wallet-side mismatch that carries no stable code. Deliberately LAST so a message
+  // that ALSO reads as a rejection ("user rejected the network switch") keeps `userRejected`.
+  // This ordering does NOT govern the choke point's declined-switch path: `assertProviderOnChain`
+  // catches the wallet's 4001 and re-throws with the WRONG_CHAIN code, which is resolved above,
+  // before any message pattern runs — so a declined corrective switch classifies as `wrongChain`
+  // on purpose ("switch to Arbitrum" is that user's remedy). See `wrongChain.test.ts`.
+  [/chain mismatch|wrong network|targets chain \d+|unrecognized chain/i, "wrongChain"],
 ];
 
 /** EIP-1193 provider error codes → kind (POO-461 R2c). */
@@ -130,6 +146,13 @@ export interface TxError {
    * slippage auto-retry. Optional so legacy hand-built errors stay valid; absent reads as unknown.
    */
   kind?: TxErrorKind;
+  /**
+   * POO-1026 [R2]: the chain the transaction targets, when the failure is a chain mismatch. Carried
+   * explicitly by the thrower rather than parsed out of the message, so the copy layer can name the
+   * network ("Switch to Arbitrum") instead of showing a generic failure. Absent on every other kind,
+   * and legitimately absent on a hand-built wrongChain error [R4].
+   */
+  targetChainId?: number;
 }
 
 /**
@@ -142,10 +165,20 @@ export interface TxError {
 export function toTxError(error: unknown, fallbackCode = "TX_FAILED"): TxError {
   const kind = classifyTxError(error);
   if (error instanceof Error) {
-    const causeCode = (error.cause as { code?: string | number } | undefined)?.code;
+    const cause = error.cause as { code?: string | number; targetChainId?: number } | undefined;
+    const causeCode = cause?.code;
     const ownCode = (error as { code?: string | number }).code;
     const code = causeCode ?? ownCode;
-    return { code: code != null ? String(code) : fallbackCode, message: error.message, kind };
+    // POO-1026 [R2]: read the target chain from the cause first (where the choke point attaches it),
+    // then the error itself. Left undefined when neither carries it [R4].
+    const targetChainId =
+      cause?.targetChainId ?? (error as { targetChainId?: number }).targetChainId;
+    return {
+      code: code != null ? String(code) : fallbackCode,
+      message: error.message,
+      kind,
+      ...(targetChainId != null ? { targetChainId } : {}),
+    };
   }
   return { code: fallbackCode, message: String(error), kind };
 }

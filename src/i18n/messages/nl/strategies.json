@@ -361,7 +361,9 @@
         "deadlineExpired": "De transactie werd niet binnen de deadline bevestigd en is geannuleerd. Probeer het opnieuw.",
         "insufficientFunds": "Je wallet heeft niet genoeg saldo om deze transactie en de netwerkkosten te dekken.",
         "userRejected": "Je hebt het verzoek in je wallet geweigerd. Er zijn geen middelen verplaatst.",
-        "unauthorized": "Deze wallet mag deze bewerking niet uitvoeren."
+        "unauthorized": "Deze wallet mag deze bewerking niet uitvoeren.",
+        "wrongChain": "Je wallet staat op een ander netwerk. Schakel over naar {network} en probeer het opnieuw.",
+        "wrongChainUnknown": "Je wallet staat op een ander netwerk. Wissel van netwerk in je wallet en probeer het opnieuw."
       }
     },
     "slippage": {

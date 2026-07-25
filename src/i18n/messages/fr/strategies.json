@@ -361,7 +361,9 @@
         "deadlineExpired": "La transaction n'a pas été confirmée dans le délai imparti et a été annulée. Réessayez.",
         "insufficientFunds": "Votre portefeuille n'a pas assez de fonds pour couvrir cette transaction et ses frais de réseau.",
         "userRejected": "Vous avez refusé la demande dans votre portefeuille. Aucun fonds n'a été déplacé.",
-        "unauthorized": "Ce portefeuille n'est pas autorisé à effectuer cette opération."
+        "unauthorized": "Ce portefeuille n'est pas autorisé à effectuer cette opération.",
+        "wrongChain": "Votre portefeuille est sur un autre réseau. Basculez-le sur {network} et réessayez.",
+        "wrongChainUnknown": "Votre portefeuille est sur un autre réseau. Changez de réseau dans votre portefeuille et réessayez."
       }
     },
     "slippage": {

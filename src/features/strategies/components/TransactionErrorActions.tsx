@@ -22,6 +22,7 @@ import { Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { getChainById } from "@/lib/chains/config";
 import { DISCORD_INVITE_URL } from "@/lib/constants/links";
 import { buildErrorReport, type TxError } from "@/lib/tx/diagnostics";
 import { useTxDiagnostics } from "@/lib/tx/useTxDiagnostics";
@@ -53,6 +54,15 @@ export function useTxErrorBody(error: TxError | null | undefined): string {
       return t("flow.error.kinds.userRejected");
     case "unauthorized":
       return t("flow.error.kinds.unauthorized");
+    // POO-1026 [R3]: name the target network so the copy is actionable ("Switch to Arbitrum"). The
+    // name derives from the single chain config, never a local literal. [R4]: an unknown or
+    // unsupported chain id degrades to the network-less variant, never "Switch to undefined".
+    case "wrongChain": {
+      const network = error.targetChainId ? getChainById(error.targetChainId)?.name : undefined;
+      return network
+        ? t("flow.error.kinds.wrongChain", { network })
+        : t("flow.error.kinds.wrongChainUnknown");
+    }
     default:
       return t("flow.error.body");
   }

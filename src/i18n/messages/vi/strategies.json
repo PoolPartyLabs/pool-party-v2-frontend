@@ -361,7 +361,9 @@
         "deadlineExpired": "Giao dịch không được xác nhận trong thời hạn nên đã bị hủy. Hãy thử lại.",
         "insufficientFunds": "Ví của bạn không đủ số dư để chi trả giao dịch này và phí mạng.",
         "userRejected": "Bạn đã từ chối yêu cầu trong ví của mình. Không có khoản tiền nào bị di chuyển.",
-        "unauthorized": "Ví này không được phép thực hiện thao tác này."
+        "unauthorized": "Ví này không được phép thực hiện thao tác này.",
+        "wrongChain": "Ví của bạn đang ở mạng khác. Hãy chuyển sang {network} rồi thử lại.",
+        "wrongChainUnknown": "Ví của bạn đang ở mạng khác. Hãy chuyển mạng trong ví của bạn rồi thử lại."
       }
     },
     "slippage": {

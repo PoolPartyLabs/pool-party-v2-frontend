@@ -361,7 +361,9 @@
         "deadlineExpired": "Die Transaktion wurde nicht innerhalb der Frist bestätigt und wurde abgebrochen. Versuchen Sie es erneut.",
         "insufficientFunds": "Ihre Wallet hat nicht genug Guthaben, um diese Transaktion und die Netzwerkgebühr zu decken.",
         "userRejected": "Sie haben die Anfrage in Ihrer Wallet abgelehnt. Es wurden keine Gelder bewegt.",
-        "unauthorized": "Diese Wallet ist nicht berechtigt, diese Operation auszuführen."
+        "unauthorized": "Diese Wallet ist nicht berechtigt, diese Operation auszuführen.",
+        "wrongChain": "Ihre Wallet ist in einem anderen Netzwerk. Wechseln Sie zu {network} und versuchen Sie es erneut.",
+        "wrongChainUnknown": "Ihre Wallet ist in einem anderen Netzwerk. Wechseln Sie das Netzwerk in Ihrer Wallet und versuchen Sie es erneut."
       }
     },
     "slippage": {
