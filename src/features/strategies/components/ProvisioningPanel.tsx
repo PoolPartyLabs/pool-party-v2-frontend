@@ -1,7 +1,8 @@
 /**
  * @id PP-CORE-CMP-046
  * @name ProvisioningPanel
- * @implements-rules-version v2 (POO-807 rules v1)
+ * @implements-rules-version v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
+ * @hackathon POO-1022 (Universal Funding)
  *
  * The INLINE pre-flight provisioning body (epic POO-411, POO-418/POO-419). When an op is short on
  * gas / USDC / the right network, its modal swaps its confirm view for this panel (integration model
@@ -14,9 +15,13 @@
  * Surface-less by design (no Sheet/Dialog): the op modal owns the chrome. It reports `onLockChange`
  * so the host can lock dismissal while provisioning is in flight.
  *
- * PP-INTEGRATION-POINT: the plan is the deterministic mock (POO-420); real mode passes the plan from
- * `computePlan(input, gasChoice)` (POO-413) and runs the real rail via `buildPlanSteps` (POO-414).
- * Wallet balances that feed `input` + the real planner/rail are wired in POO-432.
+ * POO-1023: the plan now resolves through the ONE mock/real seam via {@link useProvisioningPlan},
+ * so whichever planner the toggle selects is the one that runs. It previously called
+ * `mockComputePlan` directly, which meant the real planner could be wired and never called.
+ *
+ * PP-INTEGRATION-POINT: the planner behind the seam is still the deterministic mock (POO-420); the
+ * real one lands in POO-1034 and `buildPlanSteps` runs the real rail in POO-1036. Wallet balances
+ * that feed `input` are wired in POO-1042.
  */
 "use client";
 
@@ -24,9 +29,10 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { MockBadge } from "@/components/ui/MockBadge";
+import { Skeleton } from "@/components/ui/Skeleton";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "@/lib/provisioning";
-import { mockComputePlan } from "@/lib/provisioning";
 import type { TxError } from "@/lib/tx/diagnostics";
+import { useProvisioningPlan } from "../hooks/useProvisioningPlan";
 import { type FlowStep, useWalletSignFlow } from "../hooks/useWalletSignFlow";
 import { GasAmountSelector } from "./provisioning/GasAmountSelector";
 import { selectPreset, validateGas } from "./provisioning/gasSelection";
@@ -69,6 +75,7 @@ export function ProvisioningPanel({
   onLockChange,
 }: ProvisioningPanelProps) {
   const t = useTranslations("strategies");
+  const tCommon = useTranslations("common");
   const [phase, setPhase] = useState<Phase>("plan");
   const [gasChoice, setGasChoice] = useState<GasChoice | null>(null);
   const [txError, setTxError] = useState<TxError | null>(null);
@@ -85,13 +92,13 @@ export function ProvisioningPanel({
   const displayGas = gasChoice ?? selectPreset(10);
   const gasValidity = validateGas(displayGas, input.usdcBalanceUsd);
   const effectiveGas = gasChoice && gasValidity.ok ? gasChoice : undefined;
-  // PP-INTEGRATION-POINT: real plan via computePlan(input, effectiveGas) (POO-413).
-  // PP-FIXME(POO-432): ProvisioningPanel calls mockComputePlan directly, bypassing the computePlan(isMockMode) seam in planner.ts; route through computePlan when the real planner is wired.
-  const plan = useMemo(() => mockComputePlan(input, { gas: effectiveGas }), [input, effectiveGas]);
-  const view = useMemo(() => buildPlanView(plan), [plan]);
-  const hasGasStep = plan.steps.some((step) => step.type === "swap-gas");
+  // POO-1023: the plan resolves through the ONE mock/real seam (computePlan), never mockComputePlan.
+  // The seam is async, so the hook owns the pending/error lifecycle and the re-plan race guard.
+  const { plan, error: planError } = useProvisioningPlan(input, effectiveGas);
+  const view = useMemo(() => (plan ? buildPlanView(plan) : null), [plan]);
+  const hasGasStep = plan?.steps.some((step) => step.type === "swap-gas") ?? false;
 
-  const execRows = view.rows.filter((row) => !row.isOp);
+  const execRows = view?.rows.filter((row) => !row.isOp) ?? [];
   const execLabels = execRows.map((row) => ({
     key: row.key,
     label: t(row.labelKey, row.networkName ? { network: row.networkName } : undefined),
@@ -99,6 +106,7 @@ export function ProvisioningPanel({
   }));
 
   const flowSteps = useMemo<FlowStep<PlanCtx>[]>(() => {
+    if (!plan) return [];
     const buildReal = buildPlanStepsRef.current;
     if (buildReal) return buildReal(plan);
     // PP-MOCK: settle each provisioning step after a beat (always success in mock mode).
@@ -172,6 +180,35 @@ export function ProvisioningPanel({
           error={txError ?? undefined}
         />
       </TransactionStatus>
+    );
+  }
+
+  // POO-1023 [R3]: the seam is async, so surface a planner failure as a recoverable error rather than
+  // a plan card that never fills.
+  if (planError) {
+    return (
+      <TransactionStatus phase="error" title={t("flow.error.title")} body={errorBody}>
+        <TransactionErrorActions onRetry={onCancel} />
+      </TransactionStatus>
+    );
+  }
+
+  // Gate on `!view` ONLY, never on the hook's `loading`. `view` is null until the FIRST plan resolves,
+  // so the skeleton still covers first load; but a re-plan (the user edits the inline gas amount) keeps
+  // the PREVIOUS plan mounted while the new one resolves in the background. Gating on `loading` would
+  // unmount the plan subtree on every keystroke that changes `effectiveGas`, wiping the
+  // {@link GasAmountSelector} Custom field's local text and its focus, which makes multi-digit amounts
+  // ($25, $100) impossible to type. {@link ProvisioningWizardModal} gates on `!view` for this reason.
+  if (!view) {
+    return (
+      <div className="flex flex-col gap-4" role="status" aria-label={tCommon("loading")}>
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-11 w-full" />
+      </div>
     );
   }
 

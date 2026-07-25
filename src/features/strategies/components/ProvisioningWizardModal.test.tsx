@@ -26,7 +26,7 @@ vi.mock("./settle", () => ({
 function noop() {}
 
 describe("ProvisioningWizardModal", () => {
-  it("renders the assembled plan with the op label, the steps, and the inline gas selector", () => {
+  it("renders the assembled plan with the op label, the steps, and the inline gas selector", async () => {
     renderWithProviders(
       <ProvisioningWizardModal
         open
@@ -35,7 +35,7 @@ describe("ProvisioningWizardModal", () => {
         opLabel="Invest in Stable Yield"
       />,
     );
-    expect(screen.getByRole("heading", { name: "Almost there" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Almost there" })).toBeInTheDocument();
     expect(screen.getByText("Buy USDC")).toBeInTheDocument();
     expect(screen.getByText("Move to Arbitrum")).toBeInTheDocument();
     expect(screen.getByText("Invest in Stable Yield")).toBeInTheDocument();
@@ -44,7 +44,7 @@ describe("ProvisioningWizardModal", () => {
     expect(screen.getByRole("button", { name: "Confirm & continue" })).toBeEnabled();
   });
 
-  it("keeps the gas step + disables the CTA when the custom gas is cleared (no silent drop)", () => {
+  it("keeps the gas step + disables the CTA when the custom gas is cleared (no silent drop)", async () => {
     renderWithProviders(
       <ProvisioningWizardModal
         open
@@ -55,12 +55,12 @@ describe("ProvisioningWizardModal", () => {
     );
     // Switch to Custom with an empty amount (invalid): the gas step must NOT drop and the CTA must
     // disable, instead of silently losing the top-up (regression caught in review).
-    fireEvent.click(screen.getByRole("button", { name: "Custom" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Custom" }));
     expect(screen.getByLabelText("Custom gas amount")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Confirm & continue" })).toBeDisabled();
   });
 
-  it("enters the execution handoff when the CTA is clicked", () => {
+  it("enters the execution handoff when the CTA is clicked", async () => {
     renderWithProviders(
       <ProvisioningWizardModal
         open
@@ -69,7 +69,7 @@ describe("ProvisioningWizardModal", () => {
         opLabel="Invest in Stable Yield"
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Confirm & continue" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirm & continue" }));
     expect(screen.getByText("Continue in your wallet")).toBeInTheDocument();
     expect(screen.getByText("Setting up your funds")).toBeInTheDocument();
   });
@@ -92,14 +92,14 @@ describe("ProvisioningWizardModal", () => {
         onDone={onDone}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Confirm & continue" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirm & continue" }));
     await waitFor(() => expect(onDone).toHaveBeenCalled());
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   // @rule POO-523 R1 — the gear opens the shared settings with Max slippage (0.5/1/2) defaulting
   // to 2%; deadline renders whatever the shared dialog on main renders (standard props).
-  it("renders the settings gear and opens the dialog with the 2% default highlighted", () => {
+  it("renders the settings gear and opens the dialog with the 2% default highlighted", async () => {
     renderWithProviders(
       <ProvisioningWizardModal
         open
@@ -108,7 +108,7 @@ describe("ProvisioningWizardModal", () => {
         opLabel="Invest in Stable Yield"
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Transaction settings" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Transaction settings" }));
     expect(screen.getByText("Max slippage")).toBeInTheDocument();
     expect(screen.getByText("Transaction deadline")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "2%" })).toHaveClass("border-primary");
@@ -117,7 +117,7 @@ describe("ProvisioningWizardModal", () => {
 
   // @rule POO-523 R2 — the chosen slippage threads into the plan input, so the plan handed to the
   // build seam (buildPlanSteps / the POO-414 rail) carries it.
-  it("threads the chosen slippage into the plan passed to the build seam", () => {
+  it("threads the chosen slippage into the plan passed to the build seam", async () => {
     const seen: Array<number | undefined> = [];
     const buildPlanSteps = (plan: ProvisioningPlan) => {
       seen.push(plan.slippagePct);
@@ -134,12 +134,12 @@ describe("ProvisioningWizardModal", () => {
         buildPlanSteps={buildPlanSteps}
       />,
     );
-    // The default rides along from the first plan.
-    expect(seen.at(-1)).toBe(2);
-    fireEvent.click(screen.getByRole("button", { name: "Transaction settings" }));
+    // The default rides along from the first plan (POO-1023: awaited, the seam is async).
+    await waitFor(() => expect(seen.at(-1)).toBe(2));
+    fireEvent.click(await screen.findByRole("button", { name: "Transaction settings" }));
     fireEvent.click(screen.getByRole("button", { name: "0.5%" }));
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
-    expect(seen.at(-1)).toBe(0.5);
+    await waitFor(() => expect(seen.at(-1)).toBe(0.5));
   });
 
   // @rule POO-523 R3 — closing the sheet resets the slippage to the 2% default (POO-513 policy).
@@ -152,7 +152,7 @@ describe("ProvisioningWizardModal", () => {
         opLabel="Invest in Stable Yield"
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Transaction settings" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Transaction settings" }));
     fireEvent.click(screen.getByRole("button", { name: "0.5%" }));
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
