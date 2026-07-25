@@ -86,8 +86,17 @@ export type FundingOperationKind =
   | "move-range"
   | "close";
 
-/** What a journaled transaction does. `approve` is journaled too: it is a broadcast like any other. */
-export type FundingLegKind = "approve" | "swap-token" | "swap-gas" | "bridge";
+/**
+ * What a journaled transaction does. `approve` is journaled too: it is a broadcast like any other.
+ *
+ * `bridge-gas` carries native coin to a chain that could not otherwise pay for a transaction
+ * (POO-1075). It is journaled like every other leg, and it especially must be: it is the one leg
+ * whose funds land somewhere the user cannot yet act, so a lost record is money that looks missing.
+ *
+ * Widening this union widens the persisted schema below. Widening is the safe direction: records
+ * written by an older build still parse. The reverse is not true, which is a rollback concern.
+ */
+export type FundingLegKind = "approve" | "swap-token" | "swap-gas" | "bridge" | "bridge-gas";
 
 /**
  * A leg's lifecycle. `unknown` is the honest verdict for the residual window of §3.9 (the wallet
@@ -115,7 +124,7 @@ const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/, "an address is 20 hex by
 const fundingLegSchema = z.object({
   /** Position in the route, which is execution order. */
   index: z.number().int().nonnegative(),
-  kind: z.enum(["approve", "swap-token", "swap-gas", "bridge"]),
+  kind: z.enum(["approve", "swap-token", "swap-gas", "bridge", "bridge-gas"]),
   /** The chain this transaction is broadcast on. For a bridge that is its ORIGIN. */
   chainId: z.number().int().positive(),
   tokenIn: address,

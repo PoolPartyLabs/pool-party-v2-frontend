@@ -192,7 +192,7 @@ export interface AnalyticsParams {
   /** Executable legs in the plan, never counting the `op` display anchor. */
   leg_count?: number;
   /** Mirrors `ProvisioningStepType` minus its `op` anchor (PP-CORE-LIB-016). */
-  leg_kind?: "buy-usdc" | "bridge" | "swap-gas" | "swap-token";
+  leg_kind?: "buy-usdc" | "bridge" | "bridge-gas" | "swap-gas" | "swap-token";
   /** The leg's position in the route, 0-based. Which leg users lose money and patience on. */
   leg_index?: number;
   /** Funding sources listed or selected. Zero listed is the signal a funded wallet found nothing. */

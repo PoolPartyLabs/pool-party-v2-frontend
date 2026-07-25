@@ -55,10 +55,24 @@ import type { UniswapRouting, UniswapStepMethod } from "@/lib/uniswap/schemas";
 export const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 /** The kind of a provisioning step. The plan always ends with an `"op"` display anchor. */
-export type ProvisioningStepType = "buy-usdc" | "bridge" | "swap-gas" | "swap-token" | "op";
+export type ProvisioningStepType =
+  | "buy-usdc"
+  | "bridge"
+  | "bridge-gas"
+  | "swap-gas"
+  | "swap-token"
+  | "op";
 
-/** The route kinds the planner (POO-1034) can emit. The `op` anchor and `buy-usdc` are not legs. */
-export type ProvisioningLegKind = "swap-token" | "bridge" | "swap-gas";
+/**
+ * The route kinds the planner (POO-1034) can emit. The `op` anchor and `buy-usdc` are not legs.
+ *
+ * `"bridge-gas"` is a bridge like `"bridge"` is, but it carries the chain's NATIVE coin rather than
+ * the operation's asset, and it exists to make the target chain transactable at all (POO-1075). It
+ * is kept a distinct kind rather than folded into `"bridge"` because three things treat it
+ * differently: it never needs an ERC-20 approval, it is not funding and so must not count toward the
+ * requirement, and it carries an ordering constraint the funding legs do not ([R4]).
+ */
+export type ProvisioningLegKind = "swap-token" | "bridge" | "swap-gas" | "bridge-gas";
 
 /** One end of a leg, identified precisely enough to quote, approve and broadcast against. */
 export interface ProvisioningLegToken {

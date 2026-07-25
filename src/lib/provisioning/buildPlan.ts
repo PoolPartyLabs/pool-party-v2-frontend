@@ -124,6 +124,7 @@ const DEFAULT_SLIPPAGE_PCT = 2;
 /** i18n keys for each step label (resolved by the FE across all 11 locales). */
 const LABEL_KEYS: Record<ProvisioningLegKind | "op", string> = {
   bridge: "provisioning.steps.bridge",
+  "bridge-gas": "provisioning.steps.bridgeGas",
   "swap-gas": "provisioning.steps.swapGas",
   "swap-token": "provisioning.steps.swapToken",
   op: "provisioning.steps.op",
