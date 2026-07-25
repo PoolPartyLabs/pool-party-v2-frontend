@@ -38,6 +38,7 @@ describe("mapHolding", () => {
       symbol: "USDC",
       name: "USD Coin",
       amount: 340.5,
+      amountExact: "340.5",
       decimals: 6,
       usd: 340.5,
       chainId: ARBITRUM,
@@ -45,6 +46,22 @@ describe("mapHolding", () => {
       address: "0xabc",
       isNative: false,
     });
+  });
+
+  // POO-1031 [R2]: `amount` is a float and loses the tail of an 18-decimal balance, which is fine
+  // for display and fatal for sizing a transaction — a rounded-UP balance builds a swap the wallet
+  // cannot cover. The backend's exact decimal string rides along untouched for that consumer.
+  it("carries the backend's exact decimal balance, unrounded by the float", () => {
+    const mapped = mapHolding(
+      row({ decimals: 18, formattedBalance: "1.234567890123456789" }),
+      ARBITRUM,
+    );
+
+    expect(mapped?.amountExact).toBe("1.234567890123456789");
+    // The float rendering has already lost the last digits; that is exactly why both exist. Written
+    // through `Number()` rather than as a literal, which is itself the point: the literal cannot be
+    // spelled without losing precision (biome's noPrecisionLoss rejects it).
+    expect(String(mapped?.amount)).not.toBe(mapped?.amountExact);
   });
 
   it("drops a row with a null price", () => {

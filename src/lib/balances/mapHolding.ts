@@ -11,6 +11,9 @@
  * via CoinGecko keeping only unit prices > $0.01 — so unpriced tokens arrive with `priceUSD` absent
  * and `formattedBalanceInUSD: "NaN"`. We pass symbol/name straight through (the backend is
  * authoritative) and drop the unpriced rows.
+ *
+ * POO-1031 [R2]: the row's exact decimal balance rides along as `amountExact` beside the float, for
+ * the funding inventory, which converts it to base units and must not overstate what the wallet holds.
  */
 import type { TokenBalance } from "./types";
 import type { WalletHolding } from "./walletHoldingsSchema";
@@ -28,6 +31,9 @@ export function mapHolding(row: WalletHolding, chainId: number): TokenBalance | 
     symbol: row.symbol,
     name: row.name,
     amount: Number.isFinite(amount) ? amount : 0,
+    // The float above is the display value; this is the same balance unrounded, for whoever has to
+    // size a transaction from it (POO-1031 [R2]). Passed through verbatim, never re-serialized.
+    amountExact: row.formattedBalance,
     decimals: row.decimals,
     usd: Number.isFinite(usd) ? usd : 0,
     chainId,
