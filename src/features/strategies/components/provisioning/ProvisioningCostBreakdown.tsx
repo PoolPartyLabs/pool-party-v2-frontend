@@ -101,7 +101,11 @@ export interface ProvisioningCostBreakdownProps {
    * The component cannot do this itself - the planner is server-only (ADR 0003).
    */
   onRequote: () => void;
-  /** True while the host's re-quote is in flight, so the card can say the price is being refreshed. */
+  /**
+   * True while the host's re-quote is in flight, so the card can say the price is being refreshed.
+   * It also PAUSES the countdown: a window that kept running could elapse a second time against a
+   * request already out, re-quoting on top of a re-quote.
+   */
   requoting?: boolean;
   /**
    * False pauses the countdown. The host sets it while the plan is not on screen, or the instant a
@@ -395,7 +399,12 @@ export function ProvisioningCostBreakdown({
           <QuoteStatus
             key={plan.quote.quotedAt}
             ttlMs={plan.quote.ttlMs}
-            active={active}
+            // An in-flight re-quote pauses the window. Left running, a host slower than one TTL would
+            // be asked for a second quote while the first is still out, and each expiry would ask
+            // again - the timer hammering a request that is already on its way. Nothing is lost by
+            // pausing: whichever way the re-quote ends, a full window follows. A fresh `quotedAt`
+            // remounts this via its key; an unchanged one re-arms the hook when `active` goes true.
+            active={active && !requoting}
             requoting={requoting}
             onRequote={onRequote}
           />

@@ -356,6 +356,42 @@ describe("the quote TTL [R4]", () => {
     expect(screen.getByTestId("provisioning-cost-breakdown")).toHaveAttribute("aria-busy", "false");
   });
 
+  it("does not re-quote again while a re-quote is still in flight", () => {
+    vi.useFakeTimers();
+    const onRequote = vi.fn();
+    const { rerender } = renderWithProviders(
+      <ProvisioningCostBreakdown plan={CROSS_CHAIN_PLAN} onRequote={onRequote} />,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(FIXTURE_TTL_MS);
+    });
+    expect(onRequote).toHaveBeenCalledTimes(1);
+
+    // The host is slow: it is still fetching, so the plan (and its `quotedAt`) has not changed and
+    // nothing remounts. Several windows' worth of time passes with the request still out.
+    rerender(
+      <ProvisioningCostBreakdown plan={CROSS_CHAIN_PLAN} onRequote={onRequote} requoting={true} />,
+    );
+    act(() => {
+      vi.advanceTimersByTime(FIXTURE_TTL_MS * 3);
+    });
+    expect(onRequote).toHaveBeenCalledTimes(1);
+
+    // It finally comes back with a fresh quote: a full window, and the loop carries on from there.
+    const requoted: ProvisioningPlan = {
+      ...CROSS_CHAIN_PLAN,
+      quote: { ...CROSS_CHAIN_PLAN.quote, quotedAt: "2026-07-24T12:00:45.000Z" },
+    };
+    rerender(<ProvisioningCostBreakdown plan={requoted} onRequote={onRequote} />);
+    expect(screen.getByText("Refreshes in 15s")).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(FIXTURE_TTL_MS);
+    });
+    expect(onRequote).toHaveBeenCalledTimes(2);
+  });
+
   it("does not re-quote while paused", () => {
     vi.useFakeTimers();
     const onRequote = vi.fn();
