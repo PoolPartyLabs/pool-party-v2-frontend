@@ -535,7 +535,10 @@ through the funding path — which is precisely how an earlier incident turned $
   merged with `--merge`, never `--squash`. All non-hackathon work keeps squash-merging.
 - **Gates before every PR:** `pnpm typecheck && pnpm lint && pnpm test && pnpm i18n:check`, plus
   `pnpm build` for anything touching the server/client boundary — that is the only gate which catches
-  a `server-only` module leaking into a client bundle.
+  a `server-only` module leaking into a client bundle. Anything touching the Uniswap layer also runs
+  `pnpm secrets:check` **after** that build (POO-1050 [R1]): it greps the build output for the value
+  of every server-only secret and for any `NEXT_PUBLIC_` twin of one, which is the single failure the
+  other five gates all pass straight through.
 - Every seam carries `// PP-INTEGRATION-POINT: <description>`; every new file carries the standard
   header with `@implements-rules-version` and a `@hackathon` tag.
 
