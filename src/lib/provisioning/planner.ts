@@ -18,6 +18,7 @@
  * offline, and keeps the deterministic fixtures out of a network round trip.
  */
 import { isMockMode } from "@/lib/services";
+import { TransactionError } from "@/lib/tx/sendTransaction";
 import { mockComputePlan } from "./mockPlanner";
 import { computePlanAction } from "./planActions";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "./types";
@@ -28,8 +29,9 @@ import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "./types
  * POO-523 R2: `input.slippagePct` (the settings gear's Max slippage) rides along, so the planner sizes
  * swap buffers with it and echoes it on the plan for the rail.
  *
- * Rejects with a typed `Error` when the real planner reports a failure, so callers (the
- * `useProvisioningPlan` hook) can surface it as a recoverable error state.
+ * Rejects with a `TransactionError` carrying the failure code on `error.cause.code` when the real
+ * planner reports a failure, so callers (the `useProvisioningPlan` hook) can surface it as a
+ * recoverable error state and `classifyTxError` can act on the code.
  */
 export async function computePlan(
   input: ProvisioningNeedInput,
@@ -41,7 +43,13 @@ export async function computePlan(
     // RSC boundary; we convert a failure into a rejection here, which is what the hook expects.
     const result = await computePlanAction(input, gasChoice);
     if (!result.ok) {
-      throw Object.assign(new Error(result.message), { code: result.code });
+      // The house error contract (POO-475 [R3], documented in `@/lib/tx/actionResult`): a typed
+      // action failure is rethrown as a `TransactionError` carrying the code on `error.cause.code`,
+      // which is where `toTxError` reads it first (`causeCode ?? ownCode`) and what
+      // `collectErrorFacets` / `classifyTxError` (`@/lib/tx/diagnostics`) walk. Identical conversion
+      // to useInvest / useWithdraw / useCollectFees, so a provisioning failure classifies and renders
+      // exactly like every other build-action failure instead of being a second, private shape.
+      throw new TransactionError(result.message, { code: result.code });
     }
     return result.plan;
   }
