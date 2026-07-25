@@ -52,12 +52,18 @@ export async function loginWithEmbeddedWallet(
   const locale = opts.locale ?? "en";
   await page.goto(`/${locale}`);
 
-  // The app's own entry point; Privy's modal is what it opens.
-  const connect = page.getByRole("button", { name: /connect|sign in|log in/i }).first();
+  // The app's own entry point. NOT "Connect a wallet": that opens Privy's EXTERNAL wallet list
+  // (MetaMask, Rabby, ...), which is the injected path this spec exists to avoid.
+  const connect = page.getByRole("button", { name: /connect a wallet/i }).first();
   await connect.waitFor({ state: "visible", timeout: 30_000 });
   await connect.click();
 
-  const emailField = page.getByPlaceholder(/email/i).first();
+  // Privy's modal puts the email field on the same sheet as the wallet list when `email` is an
+  // enabled login method (non-production only, see `providers.tsx`).
+  const emailField = page
+    .getByPlaceholder(/email/i)
+    .or(page.locator('input[type="email"]'))
+    .first();
   await emailField.waitFor({ state: "visible", timeout: 30_000 });
   await emailField.fill(credentials.email);
   await page.keyboard.press("Enter");

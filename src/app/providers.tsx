@@ -81,7 +81,15 @@ export function Providers({ children }: { children: ReactNode }) {
       config={{
         defaultChain,
         supportedChains,
-        loginMethods: ["google", "wallet"],
+        // Email is enabled OUTSIDE production only, so a Privy TEST ACCOUNT
+        // (`test-XXXX@privy.io` + fixed OTP) can log in and give automation a REAL EMBEDDED wallet.
+        // Six wallet defects reached users because the e2e harness injects a viem wallet that Privy
+        // treats as external, so no embedded behaviour was ever reproducible in CI (POO-1081).
+        // Production keeps exactly the shipped methods; the ternary is a build-time constant.
+        loginMethods:
+          process.env.NEXT_PUBLIC_APP_ENV === "production"
+            ? ["google", "wallet"]
+            : ["google", "wallet", "email"],
         embeddedWallets: {
           ethereum: { createOnLogin: "users-without-wallets" },
         },
