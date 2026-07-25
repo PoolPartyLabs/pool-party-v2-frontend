@@ -1,0 +1,28 @@
+{
+  "title": "Move funds",
+  "subtitle": "Pick a network and how much you want available there. We work out the rest.",
+  "destination": {
+    "label": "Network"
+  },
+  "amount": {
+    "label": "How much do you want available on {network}?",
+    "placeholder": "0.00",
+    "available": "You have {amount} on {network} right now. We only move what is missing."
+  },
+  "continue": "Continue",
+  "routingNote": "We find the cheapest way to get your funds to {network}, whether they need converting, moving, or both.",
+  "walletUnavailable": "We could not read your balances just now. Check your connection and try again.",
+  "plan": {
+    "subtitle": "Making {amount} available on {network}."
+  },
+  "opLabel": "{amount} available on {network}",
+  "done": {
+    "title": "Your funds are on {network}",
+    "body": "Everything landed. You can invest with them now.",
+    "cta": "Move more funds"
+  },
+  "notFound": {
+    "title": "Not available yet",
+    "body": "Moving funds between networks is not switched on for your account yet."
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "title": "Guthaben verschieben",
+  "subtitle": "Wählen Sie ein Netzwerk und wie viel Sie dort verfügbar haben möchten. Um den Rest kümmern wir uns.",
+  "destination": {
+    "label": "Netzwerk"
+  },
+  "amount": {
+    "label": "Wie viel möchten Sie auf {network} verfügbar haben?",
+    "placeholder": "0,00",
+    "available": "Sie haben derzeit {amount} auf {network}. Wir verschieben nur, was fehlt."
+  },
+  "continue": "Weiter",
+  "routingNote": "Wir finden den günstigsten Weg, Ihr Guthaben auf {network} zu bringen, ob es umgetauscht, verschoben oder beides werden muss.",
+  "walletUnavailable": "Wir konnten Ihre Guthaben gerade nicht auslesen. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+  "plan": {
+    "subtitle": "{amount} werden auf {network} verfügbar gemacht."
+  },
+  "opLabel": "{amount} verfügbar auf {network}",
+  "done": {
+    "title": "Ihr Guthaben ist auf {network}",
+    "body": "Alles ist angekommen. Sie können jetzt damit investieren.",
+    "cta": "Weiteres Guthaben verschieben"
+  },
+  "notFound": {
+    "title": "Noch nicht verfügbar",
+    "body": "Das Verschieben von Guthaben zwischen Netzwerken ist für Ihr Konto noch nicht freigeschaltet."
+  }
+}

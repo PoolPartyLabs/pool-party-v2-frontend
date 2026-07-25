@@ -1,0 +1,28 @@
+{
+  "title": "Déplacer des fonds",
+  "subtitle": "Choisissez un réseau et le montant que vous voulez y avoir. Nous nous occupons du reste.",
+  "destination": {
+    "label": "Réseau"
+  },
+  "amount": {
+    "label": "Combien voulez-vous avoir sur {network} ?",
+    "placeholder": "0,00",
+    "available": "Vous avez {amount} sur {network} en ce moment. Nous déplaçons seulement ce qui manque."
+  },
+  "continue": "Continuer",
+  "routingNote": "Nous cherchons le moyen le moins cher d'amener vos fonds sur {network}, qu'il faille les convertir, les déplacer ou les deux.",
+  "walletUnavailable": "Nous n'avons pas pu lire vos soldes pour le moment. Vérifiez votre connexion et réessayez.",
+  "plan": {
+    "subtitle": "Mise à disposition de {amount} sur {network}."
+  },
+  "opLabel": "{amount} disponible sur {network}",
+  "done": {
+    "title": "Vos fonds sont sur {network}",
+    "body": "Tout est arrivé. Vous pouvez investir avec dès maintenant.",
+    "cta": "Déplacer d'autres fonds"
+  },
+  "notFound": {
+    "title": "Pas encore disponible",
+    "body": "Le déplacement de fonds entre réseaux n'est pas encore activé pour votre compte."
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "title": "資金を移動",
+  "subtitle": "ネットワークと、そこで使えるようにしたい金額を選んでください。あとはこちらで対応します。",
+  "destination": {
+    "label": "ネットワーク"
+  },
+  "amount": {
+    "label": "{network} でいくら使えるようにしますか？",
+    "placeholder": "0.00",
+    "available": "現在 {network} に {amount} あります。不足分だけを移動します。"
+  },
+  "continue": "続ける",
+  "routingNote": "交換、移動、またはその両方を含めて、資金を {network} に届ける最も安い方法を探します。",
+  "walletUnavailable": "残高を読み込めませんでした。接続を確認して、もう一度お試しください。",
+  "plan": {
+    "subtitle": "{network} で {amount} を使えるようにします。"
+  },
+  "opLabel": "{network} で {amount} が使える状態",
+  "done": {
+    "title": "資金が {network} に届きました",
+    "body": "すべて到着しました。今すぐ投資に使えます。",
+    "cta": "さらに資金を移動"
+  },
+  "notFound": {
+    "title": "まだ利用できません",
+    "body": "ネットワーク間の資金移動は、まだこのアカウントで有効になっていません。"
+  }
+}
