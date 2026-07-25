@@ -25,6 +25,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FundingSource } from "@/lib/balances/fundingInventory";
 import type { UniswapQuoteResponse, UniswapRouting } from "@/lib/uniswap/schemas";
+import { planCostBreakdown } from "./costBreakdown";
 import { quoteFixture } from "./fixtures/uniswapQuotes";
 import type { GasFeasibility, GasTopUpPlan } from "./gasFeasibility";
 import type { ProvisioningLeg, ProvisioningStepType } from "./types";
@@ -620,6 +621,61 @@ describe("buildPlan: gas feasibility", () => {
     expect(gasStep?.type).toBe("swap-gas");
     // 0.004 WETH taken off a 1 WETH / $2,500 holding.
     expect(gasStep?.amountUsd).toBe(10);
+  });
+
+  /** 0.02 WETH ≈ $50 on Polygon: enough for part of a 100 USDC requirement, not for all of it. */
+  const SMALL_WETH_ON_POLYGON = source({
+    address: WETH_POLYGON,
+    chainId: POLYGON,
+    symbol: "WETH",
+    decimals: 18,
+    amount: "20000000000000000",
+    usd: 50,
+  });
+
+  // UF-13 (POO-1035) [R1]/[R2]: the planner's quote and the cost table are the same numbers, so the
+  // table is derived from the plan the planner emitted and must reproduce its figures exactly. This
+  // is the hardest shape to get right: two sources, a gas top-up, a swap and two bridges.
+  it("emits a quote the cost model reproduces from the plan's own steps", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [SMALL_WETH_ON_POLYGON, USDC_ON_BASE],
+        gasByChain: {
+          [POLYGON]: verdict(POLYGON, { verdict: "TOP_UP", shortfallUsd: 10, topUp: topUp() }),
+          [BASE]: verdict(BASE),
+          [ARBITRUM]: verdict(ARBITRUM),
+        },
+        slippagePct: 2,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual([
+      "swap-gas",
+      "swap-token",
+      "bridge",
+      "bridge",
+      "op",
+    ]);
+
+    const model = planCostBreakdown(result.plan);
+    const { shortfallUsd, bufferUsd, feesUsd, totalPayUsd } = result.plan.quote;
+    expect(model.quote).toEqual({ shortfallUsd, bufferUsd, feesUsd, totalPayUsd });
+    // [R2] in whole cents: adding the exposed figures back up in floats is not an identity check.
+    const cents = (usd: number) => Math.round(usd * 100);
+    expect(cents(totalPayUsd)).toBe(cents(shortfallUsd) + cents(bufferUsd) + cents(feesUsd));
+
+    // [R1] Two sources, with the Polygon gas top-up charged to the WETH holding that buys it.
+    expect(model.sources.map((entry) => entry.symbol)).toEqual(["WETH", "USDC"]);
+    expect(model.sources[0]?.stepKeys).toEqual(["swap-gas-0", "swap-token-1", "bridge-2"]);
+    // [R3] Both bridges are priced, and neither carries a slippage allowance.
+    expect(model.totals.bridgeFeeUsd).toBeGreaterThan(0);
+    expect(model.sources[1]?.lines.slippageUsd).toBe(0);
   });
 
   // @rule R3 — a BLOCKED chain cannot originate ANY transaction, so it is not a funding source and
