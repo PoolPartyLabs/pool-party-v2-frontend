@@ -558,6 +558,21 @@
       }
     },
     "recovery": {
+      "title": "您有一筆資金正在轉移中",
+      "progress": "第 {index} 步，共 {total} 步",
+      "checking": "正在確認您的資金進行到哪一步",
+      "recheck": "重新檢查",
+      "resume": "從中斷的地方繼續",
+      "abandon": "不再顯示",
+      "viewAccount": "查看錢包活動",
+      "op": {
+        "invest": "向策略中投入資金",
+        "withdraw": "從策略中取出資金",
+        "collect": "領取收益",
+        "compound": "複投收益",
+        "moveRange": "調整策略",
+        "close": "關閉倉位"
+      },
       "leg": {
         "settled": "已完成。",
         "pending": "已送出，正在等待入帳，不會重複送出。",

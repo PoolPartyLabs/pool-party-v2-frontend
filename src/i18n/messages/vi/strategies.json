@@ -558,6 +558,21 @@
       }
     },
     "recovery": {
+      "title": "Bạn có một khoản tiền đang được chuyển",
+      "progress": "Bước {index} trên {total}",
+      "checking": "Đang kiểm tra tiền của bạn đã đi tới đâu",
+      "recheck": "Kiểm tra lại",
+      "resume": "Tiếp tục từ chỗ đang dở",
+      "abandon": "Không hiển thị nữa",
+      "viewAccount": "Xem hoạt động ví của bạn",
+      "op": {
+        "invest": "Thêm tiền vào một chiến lược",
+        "withdraw": "Rút tiền khỏi một chiến lược",
+        "collect": "Nhận lợi nhuận của bạn",
+        "compound": "Tái đầu tư lợi nhuận",
+        "moveRange": "Điều chỉnh một chiến lược",
+        "close": "Đóng vị thế của bạn"
+      },
       "leg": {
         "settled": "Đã xong.",
         "pending": "Đã gửi. Chúng tôi đang chờ giao dịch hoàn tất và sẽ không gửi lại.",

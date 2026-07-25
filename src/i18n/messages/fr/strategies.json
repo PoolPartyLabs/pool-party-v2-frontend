@@ -558,6 +558,21 @@
       }
     },
     "recovery": {
+      "title": "Un transfert de fonds est en cours",
+      "progress": "Étape {index} sur {total}",
+      "checking": "Vérification de l'état de vos fonds",
+      "recheck": "Vérifier à nouveau",
+      "resume": "Reprendre là où vous en étiez",
+      "abandon": "Ne plus afficher",
+      "viewAccount": "Voir l'activité de votre portefeuille",
+      "op": {
+        "invest": "Placement dans une stratégie",
+        "withdraw": "Retrait d'une stratégie",
+        "collect": "Récupération de vos gains",
+        "compound": "Réinvestissement de vos gains",
+        "moveRange": "Ajustement d'une stratégie",
+        "close": "Fermeture de votre position"
+      },
       "leg": {
         "settled": "Terminé.",
         "pending": "Envoyé. Nous attendons la confirmation et nous ne l'enverrons pas une seconde fois.",

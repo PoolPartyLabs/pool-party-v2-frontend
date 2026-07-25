@@ -558,6 +558,21 @@
       }
     },
     "recovery": {
+      "title": "Tienes fondos en camino",
+      "progress": "Paso {index} de {total}",
+      "checking": "Comprobando dónde quedaron tus fondos",
+      "recheck": "Comprobar de nuevo",
+      "resume": "Retomar donde lo dejaste",
+      "abandon": "Dejar de mostrar esto",
+      "viewAccount": "Ver la actividad de tu billetera",
+      "op": {
+        "invest": "Invirtiendo en una estrategia",
+        "withdraw": "Retirando de una estrategia",
+        "collect": "Cobrando tus ganancias",
+        "compound": "Reinvirtiendo tus ganancias",
+        "moveRange": "Ajustando una estrategia",
+        "close": "Cerrando tu posición"
+      },
       "leg": {
         "settled": "Listo.",
         "pending": "Enviado. Estamos esperando la confirmación y no lo enviaremos otra vez.",
