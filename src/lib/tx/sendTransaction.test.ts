@@ -29,6 +29,8 @@ const built: BuiltTx = { tx: { to: "0xcontract", data: "0xcalldata", value: "0" 
 const BASE = 8453;
 const BASE_HEX = "0x2105";
 const ARBITRUM_HEX = "0xa4b1";
+/** Polygon: the chain the live POO-1077 report was stuck on. */
+const POLYGON_HEX = "0x89";
 
 function provider(handlers: Record<string, (params?: unknown[]) => unknown>): Eip1193Provider {
   return { request: async ({ method, params }) => handlers[method]?.(params) };
@@ -99,6 +101,33 @@ describe("sendBuiltTransaction — chain assertion (POO-824)", () => {
     await expect(sendBuiltTransaction(p, built, "0xW", BASE)).resolves.toBe("0xhash");
     // The switch targets the flow's chain as an EIP-3326 hex id.
     expect(switchChain).toHaveBeenCalledExactlyOnceWith([{ chainId: BASE_HEX }]);
+    expect(send).toHaveBeenCalledOnce();
+  });
+
+  // POO-1077, reported live on a Privy EMBEDDED wallet: "Wallet stayed on chain 137 after
+  // switching; this transaction targets chain 8453". `wallet_switchEthereumChain` RESOLVING means
+  // the wallet accepted the request, not that it finished applying it. An injected wallet updates
+  // before it resolves, which is why one immediate re-read shipped and worked; an embedded wallet
+  // keeps reporting the old chain for a moment and was failed for it.
+  it("[R1] waits for a wallet that applies the switch asynchronously, then sends", async () => {
+    let current = POLYGON_HEX;
+    let reads = 0;
+    const send = vi.fn(() => "0xhash");
+    // Accepts immediately, lands two reads later. Exactly the embedded-wallet shape.
+    const switchChain = vi.fn();
+    const p = provider({
+      eth_chainId: () => {
+        reads += 1;
+        if (reads > 2) current = BASE_HEX;
+        return current;
+      },
+      wallet_switchEthereumChain: switchChain,
+      eth_sendTransaction: send,
+    });
+
+    await expect(sendBuiltTransaction(p, built, "0xW", BASE)).resolves.toBe("0xhash");
+    expect(switchChain).toHaveBeenCalledExactlyOnceWith([{ chainId: BASE_HEX }]);
+    // Still ONE switch: waiting must not turn into re-prompting the user (POO-824 [R1]).
     expect(send).toHaveBeenCalledOnce();
   });
 
