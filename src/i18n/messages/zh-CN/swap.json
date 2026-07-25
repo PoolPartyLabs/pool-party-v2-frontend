@@ -6,7 +6,6 @@
   },
   "amount": {
     "label": "你希望在 {network} 上有多少可用资金？",
-    "placeholder": "0.00",
     "available": "你现在在 {network} 上有 {amount}。我们只转移缺少的部分。"
   },
   "continue": "继续",

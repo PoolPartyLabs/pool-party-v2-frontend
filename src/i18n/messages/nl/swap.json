@@ -6,7 +6,6 @@
   },
   "amount": {
     "label": "Hoeveel wil je beschikbaar hebben op {network}?",
-    "placeholder": "0,00",
     "available": "Je hebt nu {amount} op {network}. We verplaatsen alleen wat ontbreekt."
   },
   "continue": "Doorgaan",

@@ -6,7 +6,6 @@
   },
   "amount": {
     "label": "{network} でいくら使えるようにしますか？",
-    "placeholder": "0.00",
     "available": "現在 {network} に {amount} あります。不足分だけを移動します。"
   },
   "continue": "続ける",

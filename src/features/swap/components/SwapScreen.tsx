@@ -61,6 +61,7 @@ import { getProvisioningContextAction } from "@/lib/provisioning/planActions";
 import { isMockMode } from "@/lib/services";
 import { cn } from "@/lib/utils/cn";
 import { formatUsd } from "@/lib/utils/format";
+import { sanitizeNumericInput } from "@/lib/utils/numericInput";
 import {
   buildSwapInput,
   parseSwapAmountUsd,
@@ -225,8 +226,17 @@ export function SwapScreen() {
             type="text"
             inputMode="decimal"
             value={amountText}
-            onChange={(event) => setAmountText(event.target.value.replace(/[^0-9.]/g, ""))}
-            placeholder={t("amount.placeholder")}
+            // The app's single numeric-input helper, not a local regex: cents-bounded, one
+            // separator, everything else stripped (number-formatting skill §5). `maxDecimals: 2`
+            // matches what `parseSwapAmountUsd` rounds to, so the field cannot hold precision the
+            // approved figure will not carry. The placeholder is a bare "0" for the same reason
+            // AmountField and DepositScreen use one: the field is canonically dot-separated, and a
+            // localized "0,00" would invite a comma the sanitizer reads as grouping, turning
+            // "12,34" into 1234.
+            onChange={(event) =>
+              setAmountText(sanitizeNumericInput(event.target.value, { maxDecimals: 2 }))
+            }
+            placeholder="0"
             className="w-full bg-transparent font-semibold text-foreground text-lg outline-none placeholder:text-muted-foreground/60"
           />
         </div>

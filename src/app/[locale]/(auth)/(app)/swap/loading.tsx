@@ -3,6 +3,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 /**
  * @id PP-CORE-SCR-010 (POO-1046)
  * @name SwapLoading
+ * @implements-rules-version v1
+ *
  * Loading skeleton for `/swap`: the destination row, the amount field and the CTA, in the shape the
  * screen resolves into, so the layout does not jump when it lands.
  */

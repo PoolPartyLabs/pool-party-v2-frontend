@@ -6,7 +6,6 @@
   },
   "amount": {
     "label": "{network}에서 얼마를 사용할 수 있게 할까요?",
-    "placeholder": "0.00",
     "available": "지금 {network}에 {amount}이 있습니다. 부족한 금액만 이동합니다."
   },
   "continue": "계속",

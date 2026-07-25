@@ -6,7 +6,6 @@
   },
   "amount": {
     "label": "How much do you want available on {network}?",
-    "placeholder": "0.00",
     "available": "You have {amount} on {network} right now. We only move what is missing."
   },
   "continue": "Continue",

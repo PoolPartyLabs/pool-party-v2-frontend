@@ -6,7 +6,6 @@
   },
   "amount": {
     "label": "Bạn muốn có sẵn bao nhiêu trên {network}?",
-    "placeholder": "0,00",
     "available": "Bạn đang có {amount} trên {network}. Chúng tôi chỉ chuyển phần còn thiếu."
   },
   "continue": "Tiếp tục",

@@ -205,6 +205,34 @@ describe("SwapScreen (POO-1046)", () => {
     expect(await screen.findByText(/Your funds are on/)).toBeInTheDocument();
   });
 
+  /**
+   * The amount field routes through the app's shared `sanitizeNumericInput` rather than a local
+   * regex. Two things follow, and both are about the user approving the number they can read.
+   */
+  describe("amount input safety", () => {
+    it("bounds the typed figure to cents, so the amount planned is the amount shown", async () => {
+      const user = setup();
+      await settleWalletRead();
+      await user.type(screen.getByRole("textbox"), "12.3456");
+
+      // The field itself refuses the sub-cent digits, rather than showing them and planning for a
+      // rounded figure the user never read.
+      expect(screen.getByRole("textbox")).toHaveValue("12.34");
+
+      await user.click(screen.getByRole("button", { name: "Continue" }));
+      expect(lastPanelProps().input.opRequiredUsdc).toBe(12.34);
+    });
+
+    it("does not advertise a decimal separator the field reads as grouping", async () => {
+      setup();
+      await settleWalletRead();
+
+      // A localized "0,00" placeholder in the comma locales invited a comma the sanitizer strips as
+      // a thousands separator, so "12,34" became 1234: a silent 100x on the target balance.
+      expect(screen.getByRole("textbox")).toHaveAttribute("placeholder", "0");
+    });
+  });
+
   it("[R3] never renders the panel before there is an amount to plan for", async () => {
     setup();
     await settleWalletRead();
