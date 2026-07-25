@@ -5,7 +5,10 @@ history. The hackathon entry is a specific, self-contained capability built on t
 **Universal Funding** — pay for any Pool Party operation with any token you hold, on any supported chain.
 
 This document draws the line, at file level, so evaluators can verify the claim rather than take it on
-trust. It is updated as the epic lands; every row cites a real path.
+trust. **Part 1 is verifiable in full today.** Part 2 is the delivery surface, so every row there
+carries a `Status`: `landed` means the path is in the tree and in the diff right now, `planned` means
+the issue is filed and the path does not exist yet. Rows flip as their PRs merge, which keeps the
+document honest at every point in the epic rather than only at the end.
 
 - **Repository:** `pool-party-v2-frontend`
 - **Hackathon epic:** POO-1022, issues POO-1023 … POO-1051
@@ -28,6 +31,10 @@ git grep -l "@hackathon" -- src docs .claude
 Every source file created for this epic carries `@hackathon` in its standard file header, alongside
 the repository's usual `@id` / `@name` / `@implements-rules-version` fields. Nothing pre-existing was
 retro-tagged.
+
+The grep returns what is tagged **so far**, not the finished set. Its output grows as Part 2 rows flip
+from `planned` to `landed`, and `git grep -l "@hackathon" -- src` returns nothing for as long as every
+`src` row is still `planned`. Compare it against the Part 2 statuses below: the two must agree.
 
 ---
 
@@ -80,62 +87,70 @@ including naming the two `PP-FIXME` seam bypasses, the dead invest branch, and t
 
 ## Part 2 — Built during the hackathon
 
-Everything below is new work for this event.
+Everything below is new work for this event. The `Status` column is the honest part: `landed` is in
+the tree and in `git diff 21a2c289..HEAD` today, `planned` is filed and not yet written. As of this
+commit only the documentation and the vendored skill have landed; every `src` row is still `planned`.
 
 ### New modules
 
-| Path | What it does | Issue |
-|---|---|---|
-| `src/lib/uniswap/client.ts` | Server-only `uniswapFetch`: `x-api-key`, Zod, bounded retry, timeout budget | POO-1027 |
-| `src/lib/uniswap/schemas.ts` | Zod contracts for all eight endpoints, every `routing` variant | POO-1028 |
-| `src/lib/uniswap/actions.ts` | The `"use server"` boundary — the key never leaves the server | POO-1029 |
-| `src/lib/uniswap/errors.ts` | Typed `UniswapApiError` | POO-1027 |
-| `src/lib/provisioning/buildPlan.ts` | **The engine.** Same-chain `CLASSIC`, cross-chain `CHAINED` | POO-1034 |
-| `src/lib/provisioning/gasFeasibility.ts` | The OK / TOP-UP / BLOCKED classifier per source chain | POO-1032 |
-| `src/lib/provisioning/costBreakdown.ts` | Fees, gas, impact, slippage → `ProvisioningQuote` | POO-1035 |
-| `src/lib/provisioning/planActions.ts` | The server boundary for the planner | POO-1024 |
-| `src/features/strategies/lib/buildPlanSteps.ts` | **The adapter.** Uniswap plan → `FlowStep[]` | POO-1036 |
-| `FundingSourceSelector.tsx` | Multi-select across chains, running total, gas badges | POO-1039 |
-| `ProvisioningCostBreakdown.tsx` | The cost table + the buy-crypto alternative | POO-1040 |
-| `src/app/[locale]/swap/` | Standalone swap + bridge screen, flagged | POO-1046 |
+| Path | What it does | Issue | Status |
+|---|---|---|---|
+| `src/lib/uniswap/client.ts` | Server-only `uniswapFetch`: `x-api-key`, Zod, bounded retry, timeout budget | POO-1027 | planned |
+| `src/lib/uniswap/schemas.ts` | Zod contracts for all eight endpoints, every `routing` variant | POO-1028 | planned |
+| `src/lib/uniswap/actions.ts` | The `"use server"` boundary — the key never leaves the server | POO-1029 | planned |
+| `src/lib/uniswap/errors.ts` | Typed `UniswapApiError` | POO-1027 | planned |
+| `src/lib/provisioning/buildPlan.ts` | **The engine.** Same-chain `CLASSIC`, cross-chain `CHAINED` | POO-1034 | planned |
+| `src/lib/provisioning/gasFeasibility.ts` | The OK / TOP-UP / BLOCKED classifier per source chain | POO-1032 | planned |
+| `src/lib/provisioning/costBreakdown.ts` | Fees, gas, impact, slippage → `ProvisioningQuote` | POO-1035 | planned |
+| `src/lib/provisioning/planActions.ts` | The server boundary for the planner | POO-1024 | planned |
+| `src/features/strategies/lib/buildPlanSteps.ts` | **The adapter.** Uniswap plan → `FlowStep[]` | POO-1036 | planned |
+| `FundingSourceSelector.tsx` | Multi-select across chains, running total, gas badges | POO-1039 | planned |
+| `ProvisioningCostBreakdown.tsx` | The cost table + the buy-crypto alternative | POO-1040 | planned |
+| `src/app/[locale]/swap/` | Standalone swap + bridge screen, flagged | POO-1046 | planned |
+
+`src/lib/uniswap/` already exists and holds pre-existing pool math (`tick.ts`, `price.ts`, `range.ts`,
+`amount.ts`, `positionSplit.ts`). The four rows above are new files in that folder, not the folder.
 
 ### Modified pre-existing files
 
-| Path | Change | Issue |
-|---|---|---|
-| `src/lib/provisioning/types.ts` | Contract v2 → v3: `planId`, `stepIndex`, `method`, `payload`, `chainId`, `etaSeconds`. Additive | POO-1030 |
-| `src/lib/provisioning/planner.ts` | The `throw` becomes the real planner | POO-1034 |
-| `src/lib/provisioning/computeNeed.ts` | Scalar wallet model → per-chain map; `needsBridge` no longer requires `opRequiredUsdc > 0` | POO-1033 |
-| `ProvisioningPanel.tsx`, `ProvisioningWizardModal.tsx` | Route through the `computePlan` seam; both `PP-FIXME`s deleted | POO-1023 |
-| `buildProvisioningInput.ts` | The hard-disable stub becomes live balance reads | POO-1042 |
-| `InvestModal.tsx` | The `needsDeposit` deep-link early return yields to the gate | POO-1025 |
-| `src/lib/tx/diagnostics.ts` | `wrongChain` error kind with target-network copy | POO-1026 |
-| `src/lib/features/registry.ts` | `swapScreen` flag; `provisioning` baseline becomes a flat boolean | POO-1042, POO-1046 |
-| `provisioningView.ts` | Real-step rendering; local network-name literal replaced by the shared chain config | POO-1041 |
-| `src/i18n/messages/*/strategies.json` | All new copy, 11 locales | POO-1049 |
+Every path below is currently **byte-identical to `main`** — the changes are specified and filed, not
+yet applied.
+
+| Path | Change | Issue | Status |
+|---|---|---|---|
+| `src/lib/provisioning/types.ts` | Contract v2 → v3: `planId`, `stepIndex`, `method`, `payload`, `chainId`, `etaSeconds`. Additive | POO-1030 | planned |
+| `src/lib/provisioning/planner.ts` | The `throw` becomes the real planner | POO-1034 | planned |
+| `src/lib/provisioning/computeNeed.ts` | Scalar wallet model → per-chain map; `needsBridge` no longer requires `opRequiredUsdc > 0` | POO-1033 | planned |
+| `ProvisioningPanel.tsx`, `ProvisioningWizardModal.tsx` | Route through the `computePlan` seam; both `PP-FIXME`s deleted | POO-1023 | planned |
+| `buildProvisioningInput.ts` | The hard-disable stub becomes live balance reads | POO-1042 | planned |
+| `InvestModal.tsx` | The `needsDeposit` deep-link early return yields to the gate | POO-1025 | planned |
+| `src/lib/tx/diagnostics.ts` | `wrongChain` error kind with target-network copy | POO-1026 | planned |
+| `src/lib/features/registry.ts` | `swapScreen` flag; `provisioning` baseline becomes a flat boolean | POO-1042, POO-1046 | planned |
+| `provisioningView.ts` | Real-step rendering; local network-name literal replaced by the shared chain config | POO-1041 | planned |
+| `src/i18n/messages/*/strategies.json` | All new copy, 11 locales | POO-1049 | planned |
 
 ### Deleted
 
-| Path | Why |
-|---|---|
-| `src/lib/provisioning/mockPlanner.ts` (+ test) | Real-only decision. Its scenarios moved to test fixtures so the suite still runs offline. Deleting it also removed a hardcoded fee model (~1% with a $0.99 floor) that contradicted the deposit screen's own copy (1.49% + $2 minimum) |
+| Path | Why | Issue | Status |
+|---|---|---|---|
+| `src/lib/provisioning/mockPlanner.ts` (+ test) | Real-only decision. Its scenarios moved to test fixtures so the suite still runs offline. Deleting it also removed a hardcoded fee model (~1% with a $0.99 floor) that contradicted the deposit screen's own copy (1.49% + $2 minimum) | POO-1030 | planned — the file is still present |
 
 ### Documentation and tooling
 
-| Path | What |
-|---|---|
-| `docs/_hackathon/00_IMPLEMENTATION_PLAN.md` | The plan of record, mirroring every tracker issue |
-| `docs/_hackathon/01_UNISWAP_INTEGRATION.md` | Endpoint-by-endpoint reference |
-| `docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` | The cross-chain step machine and its failure modes |
-| `docs/_hackathon/03_PRE_EXISTING_VS_NEW.md` | This file |
-| `docs/adr/0002-…` , `docs/adr/0003-…` | The two architecture decisions |
-| `.claude/skills/swap-integration/` | **Vendored third-party**, not written by us: Uniswap's official `swap-integration` skill (MIT, `Uniswap/uniswap-ai@3ddd8a9d`). Provenance and every local edit are recorded in its header |
+| Path | What | Issue | Status |
+|---|---|---|---|
+| `docs/_hackathon/00_IMPLEMENTATION_PLAN.md` | The plan of record, mirroring every tracker issue | POO-1051 | landed |
+| `docs/_hackathon/01_UNISWAP_INTEGRATION.md` | Endpoint-by-endpoint reference | POO-1051 | landed |
+| `docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` | The cross-chain step machine and its failure modes | POO-1051 | landed |
+| `docs/_hackathon/03_PRE_EXISTING_VS_NEW.md` | This file | POO-1051 | landed |
+| `docs/adr/0002-…` , `docs/adr/0003-…` | The two architecture decisions | POO-1051 | landed |
+| `.claude/skills/swap-integration/` | **Vendored third-party**, not written by us: Uniswap's official `swap-integration` skill (MIT, `Uniswap/uniswap-ai@3ddd8a9d`). Provenance and every local edit are recorded in its header | POO-1022 | landed |
 
 ---
 
 ## Part 3 — What the hackathon work actually contributes
 
-Stated plainly, so the claim can be checked against the diff:
+Stated plainly, so each claim can be checked against the diff as the Part 2 rows behind it land:
 
 1. **A working cross-chain funding rail** where there was a typed prop and a 900 ms fake.
 2. **A third architectural option** the prior audit had not considered — calling the Uniswap Trading
