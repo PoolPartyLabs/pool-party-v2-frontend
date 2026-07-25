@@ -560,6 +560,21 @@
       }
     },
     "recovery": {
+      "title": "Eine Überweisung ist noch unterwegs",
+      "progress": "Schritt {index} von {total}",
+      "checking": "Wir prüfen, wo Ihr Guthaben gerade ist",
+      "recheck": "Erneut prüfen",
+      "resume": "Dort weitermachen, wo es aufgehört hat",
+      "abandon": "Nicht mehr anzeigen",
+      "viewAccount": "Wallet-Aktivität ansehen",
+      "op": {
+        "invest": "Anlage in eine Strategie",
+        "withdraw": "Auszahlung aus einer Strategie",
+        "collect": "Erträge abholen",
+        "compound": "Erträge wieder anlegen",
+        "moveRange": "Anpassung einer Strategie",
+        "close": "Position schließen"
+      },
       "leg": {
         "settled": "Fertig.",
         "pending": "Gesendet. Wir warten auf die Bestätigung und senden es nicht erneut.",

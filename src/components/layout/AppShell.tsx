@@ -44,6 +44,7 @@ import { LocaleSwitcher } from "@/components/ui/LocaleSwitcher";
 import { MobileLocaleSheet } from "@/components/ui/MobileLocaleSheet";
 import { ManagerEntry } from "@/features/manager/components/ManagerEntry";
 import { useQuacksBalance } from "@/features/rewards/hooks/useQuacksBalance";
+import { FundingRecoveryBanner } from "@/features/strategies/components/provisioning/FundingRecoveryBanner";
 import { WalletMenu } from "@/features/wallet";
 import { usePathname } from "@/i18n/navigation";
 import { useIsManager } from "@/lib/account/useIsManager";
@@ -388,7 +389,15 @@ export function AppShell({ children, className }: AppShellProps) {
 
         {/* Content is capped + centered so it never stretches on large monitors. */}
         <main className="min-w-0 flex-1">
-          <div className={cn(CONTENT_WIDTH, "p-4 lg:p-6")}>{children}</div>
+          <div className={cn(CONTENT_WIDTH, "p-4 lg:p-6")}>
+            {/* POO-1055 (hackathon POO-1022): a funding route interrupted mid-flight. Mounted on the
+                shell rather than on any one screen because a bridge takes minutes and the user comes
+                back wherever they like, including to a screen that has nothing to do with the
+                operation. Renders nothing unless the connected wallet actually has a route in
+                flight, which is every load but a handful. */}
+            <FundingRecoveryBanner />
+            {children}
+          </div>
         </main>
 
         {/* Footer is full-bleed (chrome is never width-capped) and carries the mobile tab-bar clearance. */}

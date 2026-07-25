@@ -560,6 +560,21 @@
       }
     },
     "recovery": {
+      "title": "送金がまだ進行中です",
+      "progress": "ステップ {index} / {total}",
+      "checking": "資金の状況を確認しています",
+      "recheck": "もう一度確認",
+      "resume": "続きから再開する",
+      "abandon": "今後は表示しない",
+      "viewAccount": "ウォレットの履歴を見る",
+      "op": {
+        "invest": "戦略への入金",
+        "withdraw": "戦略からの出金",
+        "collect": "収益の受け取り",
+        "compound": "収益の再投資",
+        "moveRange": "戦略の調整",
+        "close": "ポジションのクローズ"
+      },
       "leg": {
         "settled": "完了しました。",
         "pending": "送信済みです。着金を待っています。再送信はしません。",

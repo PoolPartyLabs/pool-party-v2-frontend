@@ -223,6 +223,51 @@ describe("useProvisioningGate (real mode, POO-1042)", () => {
     expect(getProvisioningContextAction).not.toHaveBeenCalled();
   });
 
+  it("[POO-1048 R1] reports the gate firing, with the operation, its chain and the shortfall", async () => {
+    window.dataLayer = [];
+    const { result } = renderHook(() =>
+      useProvisioningGate({ op: "invest", network: "arbitrum", enabled: true }),
+    );
+    await waitFor(() => expect(result.current.context).not.toBeNull());
+    act(() => {
+      result.current.evaluate(100);
+    });
+
+    const gated = (window.dataLayer ?? []).filter(
+      (entry) => entry.event === "funding_gate_triggered",
+    );
+    expect(gated).toHaveLength(1);
+    expect(gated[0]).toMatchObject({ flow: "invest", chain_id: ARBITRUM, currency: "USD" });
+    // The magnitude is what is MISSING, not what the operation is worth: the wallet holds $800 on
+    // Polygon and the operation needs $100 on Arbitrum, so the gap is the $100 plus the gas.
+    expect(Number(gated[0]?.value)).toBeGreaterThan(0);
+  });
+
+  it("[POO-1048 R1] stays silent when the gate decides the operation can just sign", async () => {
+    // A funnel that records entries nobody made is worse than no funnel: `evaluate` returning false
+    // is the operation proceeding untouched, and it must look like that in the data too.
+    window.dataLayer = [];
+    getProvisioningContextAction.mockResolvedValue({
+      ok: true,
+      context: {
+        ...LIVE_CONTEXT,
+        // Funded on the operation's own chain: gas covered, USDC covered, nothing to provision.
+        balancesByChain: { [ARBITRUM]: { nativeUsd: 20, tokenUsd: 500 } },
+      },
+    });
+    const { result } = renderHook(() =>
+      useProvisioningGate({ op: "invest", network: "arbitrum", enabled: true }),
+    );
+    await waitFor(() => expect(result.current.context).not.toBeNull());
+    act(() => {
+      result.current.evaluate(100);
+    });
+
+    expect((window.dataLayer ?? []).filter((e) => e.event === "funding_gate_triggered")).toEqual(
+      [],
+    );
+  });
+
   it("[R10] binds no wallet: the gate decides, the panel signs", () => {
     // The gate mounts in all six op modals, always. Binding a wallet here would make every one of
     // them need Privy + wagmi context just to decide whether to gate, and this suite renders the

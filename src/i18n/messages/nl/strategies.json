@@ -560,6 +560,21 @@
       }
     },
     "recovery": {
+      "title": "Er is nog geld onderweg",
+      "progress": "Stap {index} van {total}",
+      "checking": "We kijken waar je geld is gebleven",
+      "recheck": "Opnieuw controleren",
+      "resume": "Verdergaan waar je gebleven was",
+      "abandon": "Dit niet meer tonen",
+      "viewAccount": "Bekijk je wallet-activiteit",
+      "op": {
+        "invest": "Geld toevoegen aan een strategie",
+        "withdraw": "Geld uit een strategie halen",
+        "collect": "Je opbrengsten ophalen",
+        "compound": "Je opbrengsten herinvesteren",
+        "moveRange": "Een strategie aanpassen",
+        "close": "Je positie sluiten"
+      },
       "leg": {
         "settled": "Klaar.",
         "pending": "Verzonden. We wachten op de bevestiging en sturen het niet nog een keer.",

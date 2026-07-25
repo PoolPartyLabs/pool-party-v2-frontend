@@ -560,6 +560,21 @@
       }
     },
     "recovery": {
+      "title": "자금 이동이 진행 중입니다",
+      "progress": "{total}단계 중 {index}단계",
+      "checking": "자금이 어디까지 갔는지 확인하고 있습니다",
+      "recheck": "다시 확인",
+      "resume": "중단된 곳부터 이어서 하기",
+      "abandon": "다시 표시하지 않기",
+      "viewAccount": "지갑 활동 보기",
+      "op": {
+        "invest": "전략에 자금 추가",
+        "withdraw": "전략에서 자금 인출",
+        "collect": "수익 받기",
+        "compound": "수익 재투자",
+        "moveRange": "전략 조정",
+        "close": "포지션 종료"
+      },
       "leg": {
         "settled": "완료되었습니다.",
         "pending": "전송했습니다. 도착을 기다리는 중이며 다시 보내지 않습니다.",

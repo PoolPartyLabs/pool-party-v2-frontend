@@ -560,6 +560,21 @@
       }
     },
     "recovery": {
+      "title": "您有一笔资金正在转移中",
+      "progress": "第 {index} 步，共 {total} 步",
+      "checking": "正在确认您的资金进行到哪一步",
+      "recheck": "重新检查",
+      "resume": "从中断的地方继续",
+      "abandon": "不再显示",
+      "viewAccount": "查看钱包活动",
+      "op": {
+        "invest": "向策略中投入资金",
+        "withdraw": "从策略中取出资金",
+        "collect": "领取收益",
+        "compound": "复投收益",
+        "moveRange": "调整策略",
+        "close": "关闭仓位"
+      },
       "leg": {
         "settled": "已完成。",
         "pending": "已发送，正在等待到账，不会重复发送。",

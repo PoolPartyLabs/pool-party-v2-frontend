@@ -165,3 +165,37 @@ export async function readTransactionCount(owner: `0x${string}`, chainId: number
     throw new RpcError(`Failed to read the transaction count on chain ${chainId}`, chainId, err);
   }
 }
+
+/**
+ * Read a transaction's receipt status on `chainId`, or `null` when the node has none yet.
+ *
+ * POO-1055: the recovery surface reconciles a funding journal against the chain
+ * (`docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` §3.5), and the difference between "no receipt yet"
+ * and "the read failed" decides between waiting and treating the leg as ambiguous. So the raw
+ * `eth_getTransactionReceipt` is used rather than viem's `getTransactionReceipt`, which throws
+ * `TransactionReceiptNotFoundError` for the pending case and would collapse the two into one.
+ *
+ * Per-chain like {@link readTransactionCount} and for the same reason: a funding route spans chains,
+ * and the wallet provider only ever answers for the one it is currently on.
+ *
+ * @throws {RpcError} On network failure, which the reconciler reads as a degraded read, never as
+ *   evidence that a transaction did or did not happen.
+ */
+export async function readTransactionReceiptStatus(
+  hash: `0x${string}`,
+  chainId: number,
+): Promise<{ status: "success" | "reverted" } | null> {
+  const client = clientFor(chainId);
+  try {
+    const receipt = await client.request({
+      method: "eth_getTransactionReceipt",
+      params: [hash],
+    });
+    // A receipt with no status is a pre-Byzantium shape we can draw no conclusion from; treat it as
+    // "not answered yet" rather than inventing a verdict.
+    if (!receipt?.status) return null;
+    return { status: receipt.status === "0x1" ? "success" : "reverted" };
+  } catch (err) {
+    throw new RpcError(`Failed to read the receipt for ${hash} on chain ${chainId}`, chainId, err);
+  }
+}
