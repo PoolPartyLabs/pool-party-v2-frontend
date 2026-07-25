@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-016 (POO-416, POO-1030, POO-1033)
+ * @id PP-CORE-LIB-016 (POO-416, POO-1030, POO-1033, POO-1034)
  * @name provisioning contract types
- * @implements-rules-version v4
+ * @implements-rules-version v5
  * @hackathon POO-1022 (Universal Funding)
  *
  * The canonical FE↔BE contract for pre-flight provisioning (epic POO-411). When an on-chain op
@@ -22,6 +22,12 @@
  * slippage, percent, investor default 2) so the planner sizes swap buffers with it and the rail
  * (POO-414) executes with it. Mirror this field into the POO-413 contract comment.
  *
+ * v5 (POO-1034, hackathon POO-1022): a step may carry {@link ProvisioningLeg}, the execution-grade
+ * detail of the route leg behind it (token ADDRESSES, base-unit amounts, the route class, the quoted
+ * gas). The display fields describe the leg to a human; the leg describes it to a machine, and the
+ * rail (POO-1036) and the recovery journal (POO-1038) both need the machine version. Additive and
+ * optional: a mock plan carries no legs and is still a valid v5 plan.
+ *
  * v4 (POO-1033, hackathon POO-1022): {@link ProvisioningNeedInput} gains {@link ChainBalancesUsd}
  * per chain and the scalar `nativeBalanceUsd` / `usdcBalanceUsd` pair becomes optional. A wallet is
  * not one balance on one chain; modelling it that way is what made "can this be funded by bridging"
@@ -36,10 +42,70 @@
  * unchanged, and a v2-shaped plan is still a valid v3 plan. Mirror these into POO-413 too.
  */
 
-import type { UniswapStepMethod } from "@/lib/uniswap/schemas";
+import type { UniswapRouting, UniswapStepMethod } from "@/lib/uniswap/schemas";
 
 /** The kind of a provisioning step. The plan always ends with an `"op"` display anchor. */
 export type ProvisioningStepType = "buy-usdc" | "bridge" | "swap-gas" | "swap-token" | "op";
+
+/** The route kinds the planner (POO-1034) can emit. The `op` anchor and `buy-usdc` are not legs. */
+export type ProvisioningLegKind = "swap-token" | "bridge" | "swap-gas";
+
+/** One end of a leg, identified precisely enough to quote, approve and broadcast against. */
+export interface ProvisioningLegToken {
+  /** Contract address. {@link NATIVE_TOKEN_ADDRESS} (`0x0…0`) for the chain's native coin. */
+  address: string;
+  symbol: string;
+  decimals: number;
+  chainId: number;
+}
+
+/**
+ * The executable half of a provisioning step (v5, POO-1034).
+ *
+ * {@link ProvisioningStep}'s display fields carry SYMBOLS and USD, which is what a person needs.
+ * Executing needs addresses, base units and a route class, and so does the recovery journal
+ * (`02_BRIDGE_ARCHITECTURE.md` §3.3), which records intent per leg before a broadcast.
+ *
+ * **Deliberately carries no quote object and no calldata.** Every leg is RE-quoted at execution time
+ * from the balance the previous leg actually produced ([R8]), so a stored quote is at best dead
+ * weight and at worst something a future author broadcasts. §3.3 pins the same rule for the journal.
+ */
+export interface ProvisioningLeg {
+  /** Position in the route, which is execution order. */
+  index: number;
+  kind: ProvisioningLegKind;
+  /** The chain this leg BROADCASTS on. For a bridge that is its origin, not its destination. */
+  chainId: number;
+  tokenIn: ProvisioningLegToken;
+  /** For a bridge leg, `tokenOut.chainId` is the destination chain. */
+  tokenOut: ProvisioningLegToken;
+  /** Base units in, decimal STRING. Exact for the first leg of a route; an estimate after that. */
+  amountIn: string;
+  /** Base units out AS QUOTED, decimal string. Always an estimate: prices and fills move. */
+  amountOutQuoted: string;
+  /**
+   * The floor the leg must deliver, base units, decimal string. AMM legs shave the slippage
+   * allowance off {@link amountOutQuoted}; a bridge leg does NOT, because Across quotes it and
+   * slippage does not govern it (`02_BRIDGE_ARCHITECTURE.md` §1.4). Also the arrival test for a
+   * bridge (§3.6): destination balance delta ≥ this.
+   */
+  minAmountOut: string;
+  /** How Uniswap classified the route. `CLASSIC` same-chain, `BRIDGE` cross-chain same-token. */
+  routing: UniswapRouting;
+  /** This leg's own gas, USD, FROM THE QUOTE ([R5]). Zero when the API returned no figure. */
+  gasUsd: number;
+  /** AMM price impact, percent, when the quote reported one. Absent on a bridge leg. */
+  priceImpactPct?: number;
+  /** Bridge legs: `quote.estimatedFillTimeMs`, in seconds. Never an invented constant. */
+  etaSeconds?: number;
+  /**
+   * TRUE when {@link amountIn} came from the PREVIOUS leg's quoted output rather than from a balance
+   * that already exists ([R8]). Such a leg must be re-sized at execution time from the real
+   * post-settlement balance: a bridge never delivers exactly its quoted amount, and a quote expires
+   * long before one settles anyway.
+   */
+  requoteAtExecution: boolean;
+}
 
 /** What is unmet — drives copy and the gas-modal vs wizard routing. */
 export type ProvisioningReason = "gas" | "usdc" | "network";
@@ -127,6 +193,13 @@ export interface ProvisioningStep {
    * and gets a tab closed mid-route.
    */
   etaSeconds?: number;
+
+  // --- v5, POO-1034: the executable half of the step ---------------------------------------------
+  /**
+   * The route leg this step executes (v5). Present on every step the real planner emits except the
+   * trailing `op` anchor, which is a display marker and not a leg. Absent on a mock plan.
+   */
+  leg?: ProvisioningLeg;
 }
 
 /** The cost breakdown the FE shows at the top of the Plan ("You pay" = {@link totalPayUsd}). */

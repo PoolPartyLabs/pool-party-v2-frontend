@@ -1,17 +1,21 @@
 /**
- * @id PP-CORE-LIB-051 (POO-1028)
+ * @id PP-CORE-LIB-051 (POO-1028, POO-1034)
  * @name Uniswap schema tests
- * @implements-rules-version v1
+ * @implements-rules-version v2
  * @hackathon POO-1022 (Universal Funding)
  *
  * Rules under test (POO-1028 rules v1):
  *   [R1] `routing` is a closed set; an unrecognized value fails loudly
  *   [R2] `TransactionRequest.data` must be non-empty hex
  *   [R3] a chained quote's `permitData` is null, and parses as such
- *   [R4] cross-chain quotes are EXACT_INPUT only
  *   [R5] plan steps carry `method` and `stepIndex`
  *   [R6] token-native amounts are decimal strings
  *   [R7] display-only blocks are tolerant: malformed degrades, never rejects
+ *
+ * RETIRED by POO-1034 [R6]: POO-1028 [R4] ("cross-chain quotes are EXACT_INPUT only"). A live probe
+ * returns `200` with `routing: "BRIDGE"` for a cross-chain EXACT_OUTPUT pair, so the guard was
+ * rejecting requests the API accepts. It was lifted from the Chained Actions documentation POO-1054
+ * retired. The replacement assertion below pins the corrected behaviour so the guard cannot return.
  */
 import { describe, expect, it } from "vitest";
 import {
@@ -87,8 +91,14 @@ describe("Uniswap schemas (POO-1028)", () => {
     expect(parsed.success && parsed.data.permitData).toBeFalsy();
   });
 
-  // [R4] Enforced before the request leaves us, not discovered as an upstream 400.
-  it("rejects a cross-chain EXACT_OUTPUT quote request", () => {
+  // POO-1034 [R6] — the regression lock on a guard that was simply WRONG.
+  //
+  // `quoteRequestSchema` used to reject a cross-chain EXACT_OUTPUT before it left us. A live probe
+  // of that exact request answers `200` with `routing: "BRIDGE"`, so the guard was refusing a route
+  // the API serves. It mattered: provisioning is inherently exact-output shaped ("land exactly $X on
+  // the target chain"), and the planner sizes a decomposed route by asking backwards from the amount
+  // that has to arrive. Under the old guard that question could not be asked at all.
+  it("accepts a cross-chain EXACT_OUTPUT quote request (POO-1034 R6)", () => {
     const base = {
       tokenIn: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       tokenOut: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
@@ -98,10 +108,10 @@ describe("Uniswap schemas (POO-1028)", () => {
     const crossChain = { ...base, tokenInChainId: 137, tokenOutChainId: 42161 };
 
     expect(quoteRequestSchema.safeParse({ ...crossChain, type: "EXACT_OUTPUT" }).success).toBe(
-      false,
+      true,
     );
     expect(quoteRequestSchema.safeParse({ ...crossChain, type: "EXACT_INPUT" }).success).toBe(true);
-    // Same-chain keeps both directions.
+    // Same-chain kept both directions all along, and still does.
     expect(
       quoteRequestSchema.safeParse({
         ...base,
@@ -110,6 +120,42 @@ describe("Uniswap schemas (POO-1028)", () => {
         type: "EXACT_OUTPUT",
       }).success,
     ).toBe(true);
+  });
+
+  // The one thing `type` must still do: be a closed set. Dropping the cross-chain refine must not
+  // be read as dropping validation on the field it guarded.
+  it("still rejects an unrecognized trade type", () => {
+    expect(
+      quoteRequestSchema.safeParse({
+        tokenIn: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        tokenOut: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+        tokenInChainId: 137,
+        tokenOutChainId: 42161,
+        amount: "1000000",
+        type: "EXACT_MIDDLE",
+        swapper: "0x3e5E7b5565331B5B891fE4293B4bc6164687B705",
+      }).success,
+    ).toBe(false);
+  });
+
+  // POO-1034 [R5]/[R1]: the two quote fields the planner reads off a BRIDGE route are declared
+  // rather than left to `passthrough`, so a shape change fails a test instead of a plan.
+  it("types the bridge ETA and the gas figure the planner reads", () => {
+    const parsed = quoteResponseSchema.safeParse({
+      routing: "BRIDGE",
+      quote: {
+        tokenInChainId: 8453,
+        tokenOutChainId: 42161,
+        input: { token: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", amount: "1000000" },
+        output: { token: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", amount: "998500" },
+        estimatedFillTimeMs: 1000,
+        gasFeeUSD: "0.0123",
+      },
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.success && parsed.data.quote.estimatedFillTimeMs).toBe(1000);
+    expect(parsed.success && parsed.data.quote.gasFeeUSD).toBe("0.0123");
   });
 
   // [R5] The plan's shape is what the rail executes against.

@@ -35,9 +35,10 @@
  *   the throwables are Uniswap's, not pool-party-api's; making `buildTxFailure` aware of them would
  *   point `@/lib/tx` at this module for no gain.
  *
- * Requests are validated on the way OUT as well as in: `quoteRequestSchema` carries the cross-chain
- * EXACT_INPUT-only constraint (UF-06 R4), so an impossible request fails here with a message that
- * says why, instead of as a puzzling upstream 400.
+ * Requests are validated on the way OUT as well as in, so a malformed body fails here with a message
+ * that says why instead of as a puzzling upstream 400. POO-1034 [R6] removed one of those checks:
+ * `quoteRequestSchema` used to reject a cross-chain EXACT_OUTPUT, which a live probe answers `200`
+ * to. Validating a request against a rule we never measured is not caution, it is a defect.
  *
  * Money convention (pinned by `src/lib/provisioning/types.ts`): token-native amounts are decimal
  * STRINGS, USD figures are display-grade numbers. Nothing in this file does arithmetic on either.
@@ -132,9 +133,9 @@ export interface QuoteSwapInput {
   /** Token-native amount of the input token, decimal string. */
   amount: string;
   /**
-   * Defaults to EXACT_INPUT. Cross-chain is still pinned to EXACT_INPUT by `quoteRequestSchema`;
-   * whether a BRIDGE route accepts EXACT_OUTPUT is an open question the probe did not settle (see
-   * that schema's PP-TODO).
+   * Defaults to EXACT_INPUT. **Both directions work cross-chain** (POO-1034 [R6]): a BRIDGE route
+   * accepts EXACT_OUTPUT, which is how the planner sizes a decomposed route backwards from the
+   * amount that has to land on the target chain.
    */
   type?: "EXACT_INPUT" | "EXACT_OUTPUT";
   /**
@@ -179,7 +180,6 @@ export async function quoteSwap(
     ...(sameChain ? { routingPreference: "CLASSIC" } : {}),
   };
 
-  // UF-06 [R4] lives in this schema: a cross-chain EXACT_OUTPUT is rejected before it leaves us.
   const parsed = quoteRequestSchema.safeParse(request);
   if (!parsed.success) {
     return invalidRequest(parsed.error.issues.map((issue) => issue.message).join("; "));

@@ -265,7 +265,7 @@ non-retrying 4xx; a test asserting the key never appears in any thrown or return
 - **[R1]** Additive optional fields: `planId` (**also the idempotency key**), `stepIndex`, `method`, `payload`, `chainId`, `etaSeconds`.
 - **[R2]** Existing fields keep their exact meaning — the view mapper and plan card must render unchanged, with no code edits.
 - **[R3]** The money convention is unchanged.
-- **[R4]** `mockPlanner.ts` and its test are **deleted**; its scenarios move to test fixtures so the suite still runs offline.
+- **[R4]** `mockPlanner.ts` and its test are **deleted**; its scenarios move to test fixtures so the suite still runs offline. *(Amended by POO-1034: the module moved to `fixtures/mockPlan.ts` and kept its suite, rather than being deleted outright. `buildPlan` is `server-only` and `planner.ts` ships to the browser, so mock mode — the repo default, and the only mode that runs without a session or an API key — still needs a client-side fixture. Deleting a suite that covers the default path would have been a coverage regression, not a cleanup.)*
 - **[R5]** This also deletes its hardcoded fee model (~1% with a $0.99 floor), which contradicts the deposit screen's own copy (1.49% + $2 minimum). Real quotes become the single source of truth for provisioning fees.
 - **[R6]** `@implements-rules-version` goes to v3.
 
@@ -313,14 +313,32 @@ that could buy gas are on another chain.
 
 The engine. Replaces the `throw` at `planner.ts:29`.
 
-- **[R1]** Same-chain uses `/quote` → `/swap`; cross-chain uses `/quote` → `POST /plan`.
+> **Rules v1, restated after POO-1054.** The rules originally written here assumed Chained Actions:
+> `[R1]` routed cross-chain through `POST /plan`, and `[R6]` required every step to carry a `planId`
+> and a `stepIndex`. The live probe established that `routing: "CHAINED"` is never returned to us, so
+> `/plan` is unreachable and neither rule can be satisfied by any real route. They are replaced below
+> rather than quietly reinterpreted. See [`02_BRIDGE_ARCHITECTURE.md`](02_BRIDGE_ARCHITECTURE.md) §1.
+
+- **[R1]** A requirement decomposes into ordered legs of **supported routes only**. Same-chain
+  different-token is one `CLASSIC` swap; cross-chain same-token is one `BRIDGE` leg; cross-chain
+  different-token is **not routable** (`404`) and becomes swap-to-the-source-chain's-USDC then bridge.
+  The flagship WETH (Polygon) → USDC (Arbitrum) is therefore two legs, and the single cross-chain
+  different-asset quote is never requested.
 - **[R2]** Steps are ordered and only-what-is-needed; the last step is always the `op` anchor.
 - **[R3]** A BLOCKED chain is never planned from; a TOP-UP chain gets its gas step first.
 - **[R4]** Selection order is route order — what the user chose is what executes.
 - **[R5]** `gasEstimateUsd` comes from the quote, not a constant.
-- **[R6]** Each step carries `planId`, `stepIndex`, `method`, `payload`, `chainId`.
+- **[R6]** *(replaces the `planId` / `stepIndex` rule)* Fix the real defect the retired design left
+  behind: `quoteRequestSchema` rejects a cross-chain `EXACT_OUTPUT`, which the live API answers `200`
+  to. Provisioning is exact-output shaped, so the guard blocks the natural way to size a route.
 - **[R7]** The quote's real TTL is honored, not the mock's hardcoded 60 s.
-- **[R8]** Runs server-side behind the UF-02 boundary.
+- **[R8]** Each leg is quoted **at execution time** from the balance the previous leg actually
+  produced, never pre-committed from an estimate.
+- **[R9]** *(was R8)* Runs server-side behind the UF-02 boundary.
+
+*Retires:* `mockPlanner.ts` stops being the planner. It moves to `fixtures/mockPlan.ts` and keeps
+backing mock mode, because `buildPlan` is `server-only` and `planner.ts` ships to the browser: mock
+mode must stay offline, key-free and session-free.
 
 #### POO-1035 · [UF-13] Cost breakdown model
 

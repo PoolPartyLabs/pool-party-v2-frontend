@@ -1,25 +1,29 @@
 /**
- * @id PP-CORE-LIB-016 (POO-416)
+ * @id PP-CORE-LIB-016 (POO-416, POO-1034)
  * @name computePlan (provisioning planner seam)
  * @implements-rules-version v3 (POO-1024 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
- * The single entry every provisioning surface calls to learn what to provision. Mock mode delegates
- * to the deterministic {@link mockComputePlan}, which runs locally in the client bundle. Real mode
- * delegates across the server boundary to {@link computePlanAction}. Both branches return the same
- * {@link ProvisioningPlan}, so flipping the toggle changes nothing downstream.
+ * The single entry every provisioning surface calls to learn what to provision. Real mode crosses
+ * the server boundary to {@link computePlanAction}, behind which the real planner (`buildPlan.ts`,
+ * POO-1034) prices every leg against the live Uniswap Trading API. Mock mode resolves locally from
+ * the deterministic fixture. Both branches return the same {@link ProvisioningPlan}, so flipping the
+ * toggle changes nothing downstream.
  *
  * POO-1024: the real branch used to `throw` inline here. It cannot simply be filled in, because this
  * module is reachable from `"use client"` components through the package barrel, and the real planner
  * reads `UNISWAP_API_KEY` (server-only, ADR 0003). The work therefore lives behind a `"use server"`
  * module; this file keeps only the toggle. See `planActions.ts` and `serverBoundary.test.ts`.
  *
- * The mock branch deliberately does NOT cross the boundary: a local call keeps mock mode fast and
- * offline, and keeps the deterministic fixtures out of a network round trip.
+ * POO-1034 retired the mock planner as a PLANNER but kept it as the mock branch's fixture, for that
+ * same boundary reason: `buildPlan` is `server-only`, so a mock branch that called it would ship the
+ * server graph into the browser, and routing mock mode through the action instead would demand a
+ * SIWE session and a live API key from a mode that exists to need neither. See
+ * `fixtures/mockPlan.ts`.
  */
 import { isMockMode } from "@/lib/services";
 import { TransactionError } from "@/lib/tx/sendTransaction";
-import { mockComputePlan } from "./mockPlanner";
+import { mockComputePlan } from "./fixtures/mockPlan";
 import { computePlanAction } from "./planActions";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "./types";
 
@@ -53,8 +57,8 @@ export async function computePlan(
     }
     return result.plan;
   }
-  // PP-MOCK: deterministic local planner (POO-420). It is retired in the SAME commit that lands the
-  // real planner (POO-1034), not before: mock mode is the repo default, so deleting it while this
-  // branch still calls it would leave every provisioning surface without a planner.
+  // PP-MOCK: deterministic local fixture (POO-420, retired as a planner by POO-1034 and moved to
+  // `fixtures/`). It stays because mock mode must run offline, in the client bundle, with no session
+  // and no API key — see this file's header and `fixtures/mockPlan.ts`.
   return mockComputePlan(input, { gas: gasChoice });
 }

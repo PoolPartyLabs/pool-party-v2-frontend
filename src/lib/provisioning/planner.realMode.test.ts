@@ -15,7 +15,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TransactionError } from "@/lib/tx/sendTransaction";
-import { mockComputePlan, SCENARIOS } from "./mockPlanner";
+import { mockComputePlan, SCENARIOS } from "./fixtures/mockPlan";
 import type { ProvisioningPlanResult } from "./planActions";
 import { computePlan } from "./planner";
 
@@ -37,13 +37,15 @@ describe("computePlan (real mode)", () => {
     computePlanAction.mockResolvedValue({
       ok: false,
       code: "PROVISIONING_PLANNER_UNAVAILABLE",
-      message: "The provisioning planner is not wired yet (POO-1034).",
+      message: "The provisioning planner is not wired to live balances yet (POO-1042).",
     });
 
     const error = await computePlan(SCENARIOS.usdcOnly).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(TransactionError);
-    expect((error as Error).message).toBe("The provisioning planner is not wired yet (POO-1034).");
+    expect((error as Error).message).toBe(
+      "The provisioning planner is not wired to live balances yet (POO-1042).",
+    );
     expect((error as Error).cause).toEqual({ code: "PROVISIONING_PLANNER_UNAVAILABLE" });
   });
 

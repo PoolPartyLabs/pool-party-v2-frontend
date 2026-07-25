@@ -1,19 +1,32 @@
 /**
- * @id PP-CORE-LIB-016 (POO-416)
- * @name mock provisioning planner
+ * @id PP-CORE-LIB-016 (POO-416, POO-1034)
+ * @name mock-mode provisioning plan fixture
  * @implements-rules-version v2
+ * @hackathon POO-1022 (Universal Funding)
  *
- * Phase-0 deterministic mock of the BE provisioning planner (POO-413). Given op context + wallet
- * state (USD), it assembles the ordered {@link ProvisioningPlan} — buy-usdc → bridge → swap-gas → op,
- * including only the steps that are needed — with a realistic {@link ProvisioningQuote}. It returns
- * the EXACT shape the real planner will, so the FE (gate POO-418, modals POO-331/POO-409) builds
- * against it and flips to real at the `// PP-INTEGRATION-POINT` in {@link computePlan} with no shape
- * change.
+ * **Retired as "the planner" by POO-1034.** The real one is `../buildPlan.ts`, which prices every
+ * leg against the live Uniswap Trading API. This file kept its behaviour but lost its job title: it
+ * is now a deterministic FIXTURE, and it lives under `fixtures/` so nobody mistakes it for the
+ * engine again.
+ *
+ * It still exists, and still backs the mock branch of {@link computePlan}, for one structural
+ * reason: `buildPlan` is `server-only` (it reaches the key-bearing Uniswap layer, ADR 0003) while
+ * `planner.ts` is reachable from `"use client"` components through the module barrel. Pointing the
+ * mock branch at `buildPlan` would either break the client bundle (`serverBoundary.test.ts`, and
+ * `pnpm build` after it) or route mock mode through `computePlanAction`, which needs a SIWE session
+ * and a real `UNISWAP_API_KEY` — and mock mode is the repo default precisely so that design and
+ * component work runs offline, key-free and deterministic. A fixture is what mock mode wants.
+ *
+ * Given op context + wallet state (USD) it assembles the ordered {@link ProvisioningPlan} —
+ * buy-usdc → bridge → swap-gas → op, only the steps that are needed — with a plausible
+ * {@link ProvisioningQuote}, in the SAME shape `buildPlan` returns. It emits no
+ * {@link ProvisioningStep.leg}: a fixture has no real route behind it, and inventing addresses and
+ * base-unit amounts would be a plan that looks executable and is not.
  *
  * PP-MOCK: amounts, fees, and buffers here are plausible placeholders (Paybis ~1%, bridge ~$0.40,
- * swap ~0.25%, `input.slippagePct` (default 2%) slippage buffer, $0.15/on-chain-step gas). The real
- * planner replaces them. POO-523 R2: the gear's Max slippage rides the input, sizes the buffer, and
- * echoes on the plan for the rail (POO-414).
+ * swap ~0.25%, `input.slippagePct` (default 2%) slippage buffer, $0.15/on-chain-step gas). Real mode
+ * reads all of them off live quotes instead. POO-523 R2: the gear's Max slippage rides the input,
+ * sizes the buffer, and echoes on the plan for the rail (POO-414).
  */
 import {
   computeProvisioningNeed,
@@ -21,14 +34,14 @@ import {
   ONRAMP_CHAIN_ID,
   sizeOnRampUsd,
   spendableTokenUsd,
-} from "./computeNeed";
+} from "../computeNeed";
 import type {
   GasChoice,
   ProvisioningNeedInput,
   ProvisioningPlan,
   ProvisioningQuote,
   ProvisioningStep,
-} from "./types";
+} from "../types";
 
 /** Mock quote validity window. */
 const QUOTE_TTL_MS = 60_000;
