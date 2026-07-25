@@ -74,6 +74,22 @@ const sameChainQuote = {
   permitData: null,
 } as unknown as UniswapQuoteResponse;
 
+/**
+ * A cross-chain BRIDGE quote, shaped after the live P2 probe (`01_UNISWAP_INTEGRATION.md` §1.1):
+ * same token, two chains, a real fill-time estimate, and no permit.
+ */
+const crossChainQuote = {
+  requestId: "req-2",
+  routing: "BRIDGE",
+  quote: {
+    tokenInChainId: 137,
+    tokenOutChainId: 42161,
+    input: { token: WETH_POLYGON, amount: "1000000000000000000" },
+    output: { token: USDC_ARBITRUM, amount: "1000000" },
+    estimatedFillTimeMs: 1000,
+  },
+} as unknown as UniswapQuoteResponse;
+
 const swapResponse = {
   swap: {
     to: "0x3333333333333333333333333333333333333333",
@@ -321,16 +337,18 @@ describe("transport replay", () => {
 });
 
 describe("request shaping and pre-flight rejection", () => {
-  // UF-06 [R4] pins cross-chain to EXACT_INPUT. The constraint was taken from the Chained Actions
-  // documentation, which POO-1054 retired; whether the BRIDGE route that actually serves cross-chain
-  // accepts EXACT_OUTPUT is an open question the probe did not settle, so the guard stands until it
-  // is measured. Rejecting before the request leaves us turns a puzzling upstream 400 into a message
-  // that says what is wrong. See the PP-TODO on `quoteRequestSchema`.
-  it("rejects a cross-chain EXACT_OUTPUT quote without calling the API", async () => {
+  // POO-1034 [R6] — the measurement the PP-TODO was waiting on came back: a live cross-chain
+  // EXACT_OUTPUT quote answers `200` with `routing: "BRIDGE"`. The guard was refusing a route the
+  // API serves, so it is gone, and this asserts the request now reaches the network with the type
+  // the caller asked for. The planner depends on it: it sizes a decomposed route backwards from the
+  // amount that has to LAND, which is an exact-output question by construction.
+  it("forwards a cross-chain EXACT_OUTPUT quote instead of refusing it", async () => {
+    mocks.uniswapFetch.mockResolvedValue(crossChainQuote);
+
     const result = await quoteSwap({ ...quoteInput, type: "EXACT_OUTPUT" });
 
-    expect(result).toMatchObject({ ok: false, code: "UNISWAP_INVALID_REQUEST" });
-    expect(mocks.uniswapFetch).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ ok: true });
+    expect(fetchBody().type).toBe("EXACT_OUTPUT");
   });
 
   it("defaults a quote to EXACT_INPUT", async () => {
