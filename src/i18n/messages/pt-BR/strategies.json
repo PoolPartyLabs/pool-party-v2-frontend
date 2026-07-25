@@ -432,6 +432,16 @@
   },
   "provisioning": {
     "poweredByPaybis": "Desenvolvido por Paybis",
+    "gasVerdict": {
+      "ok": "Pronto para usar",
+      "topUp": "Vamos converter um pouco de {token} em {symbol} para cobrir os custos de rede.",
+      "noNative": "Você não tem {symbol} na rede {network}. Toda transação lá precisa de um pouco de {symbol} para cobrir os custos de rede, então esses fundos ainda não podem sair.",
+      "shortNoSource": "Não há {symbol} suficiente na rede {network} para cobrir os custos de rede, e não há nada aqui que possamos converter.",
+      "escape": {
+        "bridgeNative": "Traga um pouco de {symbol} de outra rede",
+        "buyCrypto": "Comprar cripto"
+      }
+    },
     "gas": {
       "title": "Gas insuficiente",
       "subtitle": "Você precisa de um pouco de gas de rede para confirmar esta transação. Adicione abaixo.",

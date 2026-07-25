@@ -432,6 +432,16 @@
   },
   "provisioning": {
     "poweredByPaybis": "由 Paybis 提供支援",
+    "gasVerdict": {
+      "ok": "可以使用",
+      "topUp": "我們會將少量 {token} 兌換為 {symbol}，用於支付網路費用。",
+      "noNative": "您在 {network} 上沒有 {symbol}。{network} 上的每筆交易都需要少量 {symbol} 支付網路費用，因此這筆資金暫時無法轉出。",
+      "shortNoSource": "{network} 上的 {symbol} 不足以支付網路費用，這裡也沒有可以兌換的資產。",
+      "escape": {
+        "bridgeNative": "從其他網路轉入少量 {symbol}",
+        "buyCrypto": "購買加密貨幣"
+      }
+    },
     "gas": {
       "title": "網路費用不足",
       "subtitle": "您需要少量網路費用才能確認此交易。請在下方儲值。",

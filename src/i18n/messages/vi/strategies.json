@@ -432,6 +432,16 @@
   },
   "provisioning": {
     "poweredByPaybis": "Được hỗ trợ bởi Paybis",
+    "gasVerdict": {
+      "ok": "Sẵn sàng sử dụng",
+      "topUp": "Chúng tôi sẽ đổi một ít {token} sang {symbol} để trả phí mạng.",
+      "noNative": "Bạn không có {symbol} trên {network}. Mọi giao dịch ở đó đều cần một ít {symbol} để trả phí mạng, nên số tiền này chưa thể chuyển đi.",
+      "shortNoSource": "Không đủ {symbol} trên {network} để trả phí mạng, và ở đây cũng không có gì để đổi.",
+      "escape": {
+        "bridgeNative": "Gửi một ít {symbol} từ mạng khác",
+        "buyCrypto": "Mua tiền mã hóa"
+      }
+    },
     "gas": {
       "title": "Phí mạng không đủ",
       "subtitle": "Bạn cần một ít phí mạng để xác nhận giao dịch này. Nạp thêm bên dưới.",

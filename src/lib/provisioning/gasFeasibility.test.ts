@@ -282,7 +282,7 @@ describe("the TOP_UP plan [R5]", () => {
     const result = classifyOne({ nativeBalanceUsd: 0.05, sources: [weth], gas: SAME_CHAIN_GAS });
 
     const amountRaw = BigInt(result.topUp?.amountRaw ?? "0");
-    expect(amountRaw).toBeGreaterThan(0n);
+    expect(amountRaw).toBeGreaterThan(BigInt(0));
     expect(amountRaw).toBeLessThan(BigInt(weth.balanceRaw));
     // The slice must be exactly representable as an integer, not a rounded float.
     expect(result.topUp?.amountRaw).toMatch(/^\d+$/);
@@ -297,12 +297,24 @@ describe("the TOP_UP plan [R5]", () => {
     expect(result.topUp?.token.symbol).toBe("USDC");
   });
 
-  it("spends the whole holding when the requirement exceeds it, and never more", () => {
+  // Spending a holding that STILL leaves the wallet unable to transact costs the user the holding
+  // and fixes nothing. Refusing is the honest verdict (UF-22 [R3], never present an impossible plan).
+  it("blocks when the largest holding could not cover the requirement even entirely", () => {
     const tiny = usdcSource({ balanceRaw: "100000", balanceUsd: 0.1 });
     const result = classifyOne({ nativeBalanceUsd: 0.01, sources: [tiny], gas: CROSS_CHAIN_GAS });
 
-    expect(result.topUp?.amountRaw).toBe("100000");
-    expect(result.topUp?.amountUsd).toBe(0.1);
+    expect(result.verdict).toBe("BLOCKED");
+    expect(result.reasonKey).toBe(GAS_VERDICT_REASON_KEYS.shortNoSource);
+    expect(result.topUp).toBeUndefined();
+  });
+
+  it("spends a holding down to its last base unit when that exactly covers the requirement", () => {
+    // required(same-chain) 0.20 - 0.05 native = 0.15 needed, and the holding is worth exactly that.
+    const exact = usdcSource({ balanceRaw: "150000", balanceUsd: 0.15 });
+    const result = classifyOne({ nativeBalanceUsd: 0.05, sources: [exact], gas: SAME_CHAIN_GAS });
+
+    expect(result.verdict).toBe("TOP_UP");
+    expect(result.topUp?.amountRaw).toBe("150000");
   });
 
   // A source that cannot produce even one base unit is not a source. Falling through to BLOCKED is

@@ -432,6 +432,16 @@
   },
   "provisioning": {
     "poweredByPaybis": "Powered by Paybis",
+    "gasVerdict": {
+      "ok": "利用できます",
+      "topUp": "ネットワーク費用をまかなうため、{token}の一部を{symbol}に交換します。",
+      "noNative": "{network}に{symbol}がありません。{network}での取引にはネットワーク費用として少額の{symbol}が必要なため、この資金はまだ動かせません。",
+      "shortNoSource": "{network}のネットワーク費用をまかなう{symbol}が足りず、ここに交換できる資産もありません。",
+      "escape": {
+        "bridgeNative": "他のネットワークから{symbol}を少し送る",
+        "buyCrypto": "暗号資産を購入"
+      }
+    },
     "gas": {
       "title": "ネットワーク手数料が不足しています",
       "subtitle": "この取引を確認するには、少額のネットワーク手数料が必要です。以下で補充してください。",

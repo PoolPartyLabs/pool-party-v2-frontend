@@ -432,6 +432,16 @@
   },
   "provisioning": {
     "poweredByPaybis": "Unterstützt von Paybis",
+    "gasVerdict": {
+      "ok": "Bereit zur Nutzung",
+      "topUp": "Wir wandeln etwas {token} in {symbol} um, damit die Netzwerkkosten gedeckt sind.",
+      "noNative": "Sie haben kein {symbol} auf {network}. Jede Transaktion dort benötigt etwas {symbol} für die Netzwerkkosten, deshalb kann dieses Guthaben noch nicht bewegt werden.",
+      "shortNoSource": "Auf {network} ist nicht genug {symbol} für die Netzwerkkosten vorhanden, und hier gibt es nichts, was wir umwandeln können.",
+      "escape": {
+        "bridgeNative": "Senden Sie etwas {symbol} aus einem anderen Netzwerk",
+        "buyCrypto": "Krypto kaufen"
+      }
+    },
     "gas": {
       "title": "Netzwerkgebühr zu niedrig",
       "subtitle": "Sie benötigen eine kleine Netzwerkgebühr, um diese Transaktion zu bestätigen. Laden Sie unten auf.",

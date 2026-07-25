@@ -432,6 +432,16 @@
   },
   "provisioning": {
     "poweredByPaybis": "Mogelijk gemaakt door Paybis",
+    "gasVerdict": {
+      "ok": "Klaar voor gebruik",
+      "topUp": "We zetten een klein deel {token} om in {symbol} om de netwerkkosten te dekken.",
+      "noNative": "Je hebt geen {symbol} op {network}. Elke transactie daar heeft wat {symbol} nodig voor de netwerkkosten, dus dit geld kan nog niet weg.",
+      "shortNoSource": "Er is niet genoeg {symbol} op {network} voor de netwerkkosten, en er is hier niets dat we kunnen omzetten.",
+      "escape": {
+        "bridgeNative": "Stuur wat {symbol} vanaf een ander netwerk",
+        "buyCrypto": "Crypto kopen"
+      }
+    },
     "gas": {
       "title": "Onvoldoende netwerkkosten",
       "subtitle": "Je hebt een klein beetje netwerkkosten nodig om deze transactie te bevestigen. Laad hieronder op.",
