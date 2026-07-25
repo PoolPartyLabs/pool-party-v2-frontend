@@ -260,6 +260,20 @@ describe("listSwappableTokens — cache (POO-1029 [R3])", () => {
     expect(fetchOptions().body).toBeUndefined();
     expect(fetchOptions().query).toBeUndefined();
   });
+
+  // POO-1031 [R1]: the funding inventory asks what ONE held token can reach, which is a property of
+  // the token, not of the wallet — so the scoped read stays as shareable as the unscoped one.
+  it("scopes the allowlist to a single token when asked, and stays cached", async () => {
+    mocks.uniswapFetch.mockResolvedValue({ tokens: [{ address: USDC_ARBITRUM, chainId: 42161 }] });
+
+    await listSwappableTokens({ tokenIn: WETH_POLYGON, tokenInChainId: 137 });
+
+    expect(fetchOptions().query).toEqual({ tokenIn: WETH_POLYGON, tokenInChainId: 137 });
+    expect(fetchOptions().next).toEqual({
+      revalidate: 3600,
+      tags: ["uniswap-swappable-tokens"],
+    });
+  });
 });
 
 describe("advancePlan — idempotency (POO-1029 [R4])", () => {
