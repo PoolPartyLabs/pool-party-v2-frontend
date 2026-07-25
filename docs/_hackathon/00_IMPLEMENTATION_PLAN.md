@@ -54,8 +54,25 @@ So: a fully-built chassis with no drivetrain. **This epic builds the drivetrain.
 **Pay for any Pool Party operation with any token you hold, on any supported chain.**
 
 - Same-chain funding: Uniswap `/quote` → `/swap`.
-- Cross-chain funding: Uniswap **Chained Actions** — `/quote` (routing `CHAINED`) → `POST /plan` →
-  `PATCH /plan/:id` per step → `GET /plan/:id` to poll. Bridge legs are quoted through Across.
+- Cross-chain funding: Uniswap `/quote` → `/swap`, once per leg. A same-token pair across two chains
+  quotes as routing `BRIDGE` and settles as one transaction; a different-token pair is decomposed by
+  our planner into a source-chain swap to USDC followed by a same-token USDC bridge. Bridge legs are
+  quoted through Across.
+
+> **Correction, 2026-07-25 (POO-1054).** The two bullets above originally read "Cross-chain funding:
+> Uniswap **Chained Actions** (`POST /plan` → `PATCH /plan/:id` → `GET /plan/:id`)". A read-only probe
+> of the live Trading API established that we cannot obtain a `CHAINED` quote at all, and `/plan`
+> requires one, so those three endpoints are unreachable for our key. Cross-chain still works, through
+> the two calls above. What moved is the multi-step orchestration, into our planner, and with it the
+> recovery design: `planId` was to be the idempotency key, and is replaced by a client-persisted leg
+> journal reconciled against on-chain receipts. Evidence table and reproduction:
+> [`01_UNISWAP_INTEGRATION.md` §1](01_UNISWAP_INTEGRATION.md#1-probe-evidence). Replacement design:
+> [`02_BRIDGE_ARCHITECTURE.md` §3](02_BRIDGE_ARCHITECTURE.md#3-recovery-without-a-server-held-plan).
+> Decision record: the [ADR 0002 addendum](../adr/0002-uniswap-trading-api-as-the-provisioning-rail.md#addendum-2026-07-25--live-api-evidence-forces-decomposition-in-our-planner-poo-1054).
+>
+> The issue bodies in §8 below mirror the tracker and are **not** retro-edited, so the rules that
+> mention `/plan` (POO-1028 R3/R4, POO-1029 R4/R5, POO-1036 R3, POO-1037 R1, POO-1038 R1/R2/R4) read
+> as they were written. Where they conflict with this notice, this notice and POO-1054 win.
 
 Supported chains: **Arbitrum 42161 · Base 8453 · Polygon 137**. All three are Uniswap-supported and
 Across-bridgeable.
@@ -99,8 +116,8 @@ Recorded as ADR [`0002`](../adr/0002-uniswap-trading-api-as-the-provisioning-rai
 | Pre-existing defect | The Uniswap capability that answers it |
 |---|---|
 | `gasEstimateUsd` is fiction before the build: hardcoded `0.5` at `mapManagerStrategyDetail.ts:180`, while the only real figure (`estimatedGasInUsd`) exists *after* the build — but the gate runs *before* it | `/quote` returns gas info **at quote time** |
-| No idempotency key on a provisioning step, while `flow.retry()` re-invokes the failed step verbatim (`useWalletSignFlow.ts:350-361`) — so a retry after an ambiguous failure could **double-bridge real money** | `planId` **is** the idempotency key; steps advance only via `PATCH /plan/:id` with proof, and a re-submitted proof is a no-op |
-| No partial-completion recovery — *"step 2 of 4 fails with the money already spent and the app has no state for it"* | `GET /plan/:planId` returns `currentStepIndex`: a canonical, server-side resume point that survives a reload |
+| No idempotency key on a provisioning step, while `flow.retry()` re-invokes the failed step verbatim (`useWalletSignFlow.ts:350-361`) — so a retry after an ambiguous failure could **double-bridge real money** | A plan is a pure function of current on-chain holdings, so **re-deriving it from fresh balances cannot repeat a settled leg**; a leg journal covers the only remaining gap, a transaction broadcast but not yet reflected in a balance (corrected 2026-07-25, POO-1054) |
+| No partial-completion recovery — *"step 2 of 4 fails with the money already spent and the app has no state for it"* | Reconciliation against on-chain receipts and a destination-chain balance delta, from a journal persisted before each broadcast: a resume point that survives a reload and does not depend on a third party being up (corrected 2026-07-25, POO-1054) |
 
 ## 5. Architecture
 
@@ -512,9 +529,12 @@ through the funding path — which is precisely how an earlier incident turned $
    against real pairs on all three chains and assert every schema parses live responses. No signing.
 3. **Same-chain live.** A small swap-to-native on Base through the real rail: confirm the mined hash,
    the per-step statuses, and that the original operation resumes with its original parameters.
-4. **Cross-chain live.** The flagship: fund an Arbitrum strategy from a Polygon token. Verify the plan
-   advances approval → source swap → bridge → destination swap, that chain switching happens between
-   legs, and that polling survives the multi-minute bridge.
-5. **Failure paths.** Reject a signature mid-plan; let a quote expire; force a BLOCKED gas chain; kill
+4. **Cross-chain live.** The flagship: fund an Arbitrum strategy from a Polygon token. Verify the
+   decomposed route advances approval → source swap → bridge approval → bridge, that each leg is
+   re-quoted from the balance the previous one actually produced, that chain switching happens between
+   legs, and that arrival is detected on the destination chain rather than assumed from the source
+   receipt.
+5. **Failure paths.** Reject a signature mid-route; let a quote expire; force a BLOCKED gas chain; kill
    the tab mid-bridge and reload. Each must produce a legible, recoverable state — the reload case is
-   the partial-completion regression test and must resume from server-held plan state.
+   the partial-completion regression test and must reconcile the leg journal against on-chain state
+   (`02_BRIDGE_ARCHITECTURE.md` §3.5) without re-broadcasting anything.

@@ -14,6 +14,16 @@ export interface TokenBalance {
   name: string;
   /** Human-readable token amount held (already scaled by `decimals`). */
   amount: number;
+  /**
+   * The SAME amount as the exact decimal string the backend returned, unrounded (POO-1031 [R2]).
+   *
+   * {@link amount} is a float, which is fine for display and wrong for sizing a transaction: an
+   * 18-decimal balance loses its tail past ~17 significant digits and can round UP, so a swap sized
+   * from it asks for more than the wallet holds and reverts. Anything converting a balance to base
+   * units must read this; anything rendering it can keep reading `amount`. Absent on the degraded
+   * USDC-only path, where the balance is a number to begin with.
+   */
+  amountExact?: string;
   /** Token decimals (for precision/formatting). */
   decimals: number;
   /** USD value of the holding at read time (price-at-time). */

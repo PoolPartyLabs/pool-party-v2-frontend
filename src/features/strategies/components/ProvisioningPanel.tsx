@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/Button";
 import { MockBadge } from "@/components/ui/MockBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "@/lib/provisioning";
+import { spendableTokenUsd } from "@/lib/provisioning";
 import type { TxError } from "@/lib/tx/diagnostics";
 import { useProvisioningPlan } from "../hooks/useProvisioningPlan";
 import { type FlowStep, useWalletSignFlow } from "../hooks/useWalletSignFlow";
@@ -90,7 +91,7 @@ export function ProvisioningPanel({
   // The gas being edited (or the $10 default); only a VALID explicit choice resizes the plan, so an
   // empty/invalid Custom never drops the swap-gas step or re-enables the CTA (review POO-409).
   const displayGas = gasChoice ?? selectPreset(10);
-  const gasValidity = validateGas(displayGas, input.usdcBalanceUsd);
+  const gasValidity = validateGas(displayGas, spendableTokenUsd(input));
   const effectiveGas = gasChoice && gasValidity.ok ? gasChoice : undefined;
   // POO-1023: the plan resolves through the ONE mock/real seam (computePlan), never mockComputePlan.
   // The seam is async, so the hook owns the pending/error lifecycle and the re-plan race guard.
@@ -148,7 +149,7 @@ export function ProvisioningPanel({
     <GasAmountSelector
       value={displayGas}
       onChange={setGasChoice}
-      balanceUsd={input.usdcBalanceUsd}
+      balanceUsd={spendableTokenUsd(input)}
     />
   ) : undefined;
 

@@ -34,6 +34,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/Sh
 import { Skeleton } from "@/components/ui/Skeleton";
 import { TransactionModalHeader } from "@/components/ui/TransactionModalHeader";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "@/lib/provisioning";
+import { spendableTokenUsd } from "@/lib/provisioning";
 import type { TxError } from "@/lib/tx/diagnostics";
 import { useProvisioningPlan } from "../hooks/useProvisioningPlan";
 import { type FlowStep, useWalletSignFlow } from "../hooks/useWalletSignFlow";
@@ -98,7 +99,7 @@ export function ProvisioningWizardModal({
 
   // The gas the user is editing (or the $10 default); validated for the CTA + the inline selector.
   const displayGas = gasChoice ?? selectPreset(10);
-  const gasValidity = validateGas(displayGas, input.usdcBalanceUsd);
+  const gasValidity = validateGas(displayGas, spendableTokenUsd(input));
   // Only a VALID explicit choice resizes the plan; an empty/invalid Custom keeps the default-sized gas
   // step so it never silently drops and the inline selector stays mounted mid-edit (review POO-409).
   const effectiveGas = gasChoice && gasValidity.ok ? gasChoice : undefined;
@@ -176,7 +177,7 @@ export function ProvisioningWizardModal({
     <GasAmountSelector
       value={displayGas}
       onChange={setGasChoice}
-      balanceUsd={input.usdcBalanceUsd}
+      balanceUsd={spendableTokenUsd(input)}
     />
   ) : undefined;
 

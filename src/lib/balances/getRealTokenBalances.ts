@@ -50,5 +50,9 @@ export async function getRealTokenBalances(address: `0x${string}`): Promise<Toke
       usd: amount,
       chainId: meta.chain.id,
       logoUrl: USDC_LOGO,
+      // The contract this balance was read from (POO-1031 [R4]): on the degraded path this is still
+      // a spendable funding source, and a source with no token address cannot be quoted or routed.
+      address: meta.usdc.address,
+      isNative: false,
     }));
 }

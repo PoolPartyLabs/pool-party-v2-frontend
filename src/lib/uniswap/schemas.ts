@@ -1,12 +1,17 @@
 /**
- * @id PP-CORE-LIB-051 (POO-1028)
+ * @id PP-CORE-LIB-051 (POO-1028, POO-1054)
  * @name Uniswap Trading API schemas
- * @implements-rules-version v1
+ * @implements-rules-version v2
  * @hackathon POO-1022 (Universal Funding)
  *
  * Zod contracts for every Trading API endpoint we call. Nothing from Uniswap reaches application
  * code without passing through here first: provider responses are untrusted input, and one of them
  * ends up as calldata a user signs.
+ *
+ * v2 (POO-1054): annotated against a read-only probe of the LIVE API on 2026-07-25. The shapes are
+ * unchanged; several of the comments describing them were wrong, which is worse than a missing
+ * comment because it is load-bearing for the next author. The chained-plan block is now flagged
+ * UNREACHABLE at its boundary rather than reading as a supported path.
  *
  * Two opposing pressures shape the strictness, and the split between them is deliberate:
  *
@@ -50,7 +55,11 @@ export const routingSchema = z.enum([
   "CLASSIC",
   "WRAP",
   "UNWRAP",
+  // The cross-chain route we ACTUALLY get (POO-1054): a same-token pair across two chains quotes as
+  // BRIDGE and settles as ONE transaction through `POST /swap`, not as a multi-step plan.
   "BRIDGE",
+  // Documented but never observed live. Kept so a CHAINED quote parses rather than failing the
+  // unknown-routing guard, should the API start returning one.
   "CHAINED",
   "DUTCH_V2",
   "DUTCH_V3",
@@ -76,6 +85,12 @@ export const transactionRequestSchema = z.object({
   to: address,
   from: address.optional(),
   data: calldata,
+  /**
+   * The ONE amount on the wire that is NOT a decimal string: the live API returns HEX
+   * (`"0x00"`, POO-1054), which is why this is a bare `z.string()` and not the `amount` regex.
+   * Anything that does arithmetic on it, or hands it to a signer expecting decimals, must normalize
+   * first. `BigInt()` accepts both forms, so `BigInt(value)` is the safe read.
+   */
   value: z.string(),
   chainId: z.number().int().positive(),
   gasLimit: z.string().optional(),
@@ -169,18 +184,28 @@ export const quoteResponseSchema = z.object({
   routing: routingSchema,
   quote: quoteBodySchema,
   /**
-   * [R3] `null` on a chained quote, and the API REJECTS an explicit `null` on the way back into
-   * `/swap`. Modelled as nullish so both `null` and an absent field parse, and callers strip rather
-   * than forward it.
+   * [R3] Present on a live same-chain CLASSIC quote (POO-1054 probe), and the API REJECTS an
+   * explicit `null` on the way back into `/swap`. Modelled as nullish so both `null` and an absent
+   * field parse, and callers strip rather than forward it. The original rule ("always null on a
+   * chained quote") described a route we never receive; treat presence as the thing to branch on,
+   * not the routing value.
    */
   permitData: permitDataSchema.nullish(),
 });
 export type UniswapQuoteResponse = z.infer<typeof quoteResponseSchema>;
 
-/** `POST /check_approval` response. Empty object means no approval is required. */
+/**
+ * `POST /check_approval` response. The live shape is `{ requestId, approval, cancel }` with
+ * `approval: null` when none is required (POO-1054), which the nullish fields already covered.
+ *
+ * PP-SECURITY: this endpoint only covers the **Permit2** allowance. A BRIDGE route's `to` address is
+ * the bridge contract, and it needs its own ERC-20 allowance, which `/check_approval` does not
+ * report. Broadcasting a bridge without it reverts with "transfer amount exceeds allowance". The
+ * rail (POO-1036) must read `allowance(owner, swap.to)` on-chain before a bridge leg.
+ */
 export const checkApprovalResponseSchema = z.object({
   requestId: z.string().optional(),
-  /** Present ONLY when an approval is actually needed; absent means the allowance already covers it. */
+  /** Present ONLY when an approval is actually needed; `null` means the allowance already covers it. */
   approval: transactionRequestSchema.nullish(),
   cancel: transactionRequestSchema.nullish(),
 });
@@ -194,7 +219,20 @@ export const swapResponseSchema = z.object({
 });
 export type UniswapSwapResponse = z.infer<typeof swapResponseSchema>;
 
-/** How a chained-plan step is executed ([R5]). */
+// --- Chained Actions: CURRENTLY UNREACHABLE (POO-1054) --------------------------------------------
+//
+// Everything from here to `swappableTokenSchema` models the Chained Actions plan lifecycle
+// (`POST /plan`, `PATCH /plan/:id`, `GET /plan/:id`). A read-only probe of the live Trading API on
+// 2026-07-25 never returned `routing: "CHAINED"` on any pair we can fund from, and `/plan` takes a
+// chained quote as its body, so there is no way to reach these endpoints today. The three server
+// actions that called them were deleted. These schemas are KEPT deliberately: they cost nothing at
+// runtime, they document the shape precisely if Chained Actions is ever enabled for our key, and
+// `stepMethodSchema` is the wire contract `ProvisioningStep.method` is typed off
+// (`src/lib/provisioning/types.ts`), which the decomposed rail still uses to distinguish a broadcast
+// from a signature. Nothing below is referenced by a network call. See
+// `docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` §1 for what replaced them.
+
+/** How a plan step is executed ([R5]). Still the source of truth for `ProvisioningStep.method`. */
 export const stepMethodSchema = z.enum(["SEND_TX", "SIGN_MSG", "SEND_CALLS"]);
 export type UniswapStepMethod = z.infer<typeof stepMethodSchema>;
 
@@ -209,9 +247,10 @@ export const stepStatusSchema = z.enum([
 export type UniswapStepStatus = z.infer<typeof stepStatusSchema>;
 
 /**
- * One step of a chained plan. The payload is narrowed per method at the rail (POO-1036) rather than
- * here: the API nests it differently per method, and a mis-shaped payload for a step we have not
- * reached yet must not invalidate the whole plan we are mid-way through executing.
+ * One step of a chained plan. UNREACHABLE (see the block comment above). The payload is narrowed per
+ * method at the rail rather than here: the API nests it differently per method, and a mis-shaped
+ * payload for a step we have not reached yet must not invalidate the whole plan we are mid-way
+ * through executing.
  */
 export const planStepSchema = z
   .object({
@@ -226,16 +265,21 @@ export const planStepSchema = z
   .passthrough();
 export type UniswapPlanStep = z.infer<typeof planStepSchema>;
 
-/** `POST /plan` and `GET /plan/:planId` response. */
+/**
+ * `POST /plan` and `GET /plan/:planId` response. UNREACHABLE (POO-1054): there is no server-held
+ * plan, so `currentStepIndex` is not available as a resume point. POO-1038 recovers from a
+ * client-persisted leg journal reconciled against on-chain receipts instead.
+ */
 export const planResponseSchema = z.object({
   requestId: z.string().optional(),
   planId: z.string(),
-  /** The server's authoritative resume point. Never infer this client-side (POO-1038). */
   currentStepIndex: z.number().int().nonnegative(),
   steps: z.array(planStepSchema),
   status: z.string().optional(),
 });
 export type UniswapPlanResponse = z.infer<typeof planResponseSchema>;
+
+// --- End of the unreachable block -----------------------------------------------------------------
 
 /** One token in the swappable/bridgeable set. */
 export const swappableTokenSchema = z
@@ -276,9 +320,16 @@ export const tradeTypeSchema = z.enum(["EXACT_INPUT", "EXACT_OUTPUT"]);
 /**
  * `POST /quote` request ([R4]).
  *
- * **Chained Actions support `EXACT_INPUT` only.** Enforced here rather than discovered at runtime:
- * a cross-chain pair (`tokenInChainId !== tokenOutChainId`) with `EXACT_OUTPUT` is rejected before
+ * A cross-chain pair (`tokenInChainId !== tokenOutChainId`) with `EXACT_OUTPUT` is rejected before
  * the request leaves us, with a message that says why.
+ *
+ * PP-TODO (POO-1034): the constraint was lifted from the Chained Actions documentation, and POO-1054
+ * established that Chained Actions is unreachable for us. Cross-chain is served by the BRIDGE route,
+ * and Uniswap's own vendored flow (`.claude/skills/swap-integration/references/trading-api-flows.md`
+ * §4B-2) quotes a bridge with `type: "EXACT_OUTPUT"`. Provisioning is inherently exact-output ("land
+ * exactly $X on the target chain"), so this guard may be costing us the natural request shape. It
+ * stands until a live probe settles it: relaxing it on the strength of a document is how the
+ * unreachable `/plan` rail got built in the first place.
  */
 export const quoteRequestSchema = z
   .object({
@@ -309,7 +360,12 @@ export const checkApprovalRequestSchema = z.object({
   tokenOutChainId: z.number().int().positive().optional(),
 });
 
-/** True when a quote crosses chains, and therefore needs the `/plan` rail rather than `/swap`. */
+/**
+ * True when a quote crosses chains. It still goes to `POST /swap` (POO-1054): a BRIDGE route settles
+ * as one transaction. What it changes is everything AFTER the broadcast: the source receipt only
+ * proves the funds left, so settlement has to be observed on the destination chain, and the leg can
+ * take minutes rather than seconds.
+ */
 export function isCrossChainQuote(quote: UniswapQuoteResponse): boolean {
   const inChain = quote.quote.tokenInChainId;
   const outChain = quote.quote.tokenOutChainId;

@@ -16,8 +16,10 @@ export {
   GAS_CUSTOM_MIN_USD,
   GAS_DEFAULT_USD,
   GAS_PRESETS_USD,
+  ONRAMP_CHAIN_ID,
   PAYBIS_MIN_USD,
   sizeOnRampUsd,
+  spendableTokenUsd,
 } from "./computeNeed";
 export type {
   GasCandidateChain,
@@ -41,6 +43,7 @@ export {
 export { mockComputePlan, SCENARIOS } from "./mockPlanner";
 export { computePlan } from "./planner";
 export type {
+  ChainBalancesUsd,
   GasChoice,
   ProvisioningNeed,
   ProvisioningNeedInput,
