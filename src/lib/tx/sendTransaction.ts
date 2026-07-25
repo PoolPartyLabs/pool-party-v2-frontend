@@ -183,11 +183,10 @@ async function assertProviderOnChain(
 ): Promise<void> {
   const actual = await readProviderChainId(provider);
   if (actual === targetChainId) return;
-  // Recoveries must be visible in logs, not just failures (POO-824 R5).
-  console.warn("[PP] wallet on the wrong chain at broadcast; switching", {
-    actual,
-    target: targetChainId,
-  });
+  // POO-824 R5 asked for recoveries to be visible in logs. That was written when a wrong chain was
+  // an ANOMALY. Since the funding rail, a plan legitimately changes chain between legs, so this
+  // fired on every cross-chain broadcast and became noise in a console the user needs for real
+  // signals. The typed WRONG_CHAIN failure below is still loud; the ordinary path is now quiet.
   try {
     await provider.request({
       method: "wallet_switchEthereumChain",

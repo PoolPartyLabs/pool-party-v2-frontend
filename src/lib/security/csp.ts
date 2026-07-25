@@ -34,6 +34,15 @@ const directives: Record<string, string[]> = {
     SELF,
     // SHA-256 of src/lib/analytics/consentSnippet.ts; drift-guarded by csp.test.ts. Recompute on change.
     "'sha256-jVw1eGdHL8e1Srej/DxWoUXoh/E2Or7t5QPTxhUdseE='",
+    // PP-SECURITY: Privy's EMBEDDED wallet compiles a WebAssembly module to sign, and CSP gates that
+    // under script-src. Without this the browser reports "Compiling or instantiating a WebAssembly
+    // module violates ... 'unsafe-eval' is not an allowed source" and, once the policy is ENFORCED
+    // rather than report-only, social-login wallets would stop being able to sign at all.
+    //
+    // `'wasm-unsafe-eval'` is the narrow grant for exactly this: it permits WebAssembly compilation
+    // and NOTHING else. It is not `'unsafe-eval'`, which would re-open `eval()` and `new Function()`
+    // for ordinary JavaScript and is the thing this policy exists to forbid.
+    "'wasm-unsafe-eval'",
     "https://www.googletagmanager.com",
     "https://*.tradingview.com",
   ],
