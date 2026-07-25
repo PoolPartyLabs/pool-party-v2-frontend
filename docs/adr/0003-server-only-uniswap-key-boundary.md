@@ -105,9 +105,47 @@ remains open. It would centralize the credential for every client (including the
 APIs), but it reintroduces the cross-repo dependency ADR 0002 exists to avoid. Because the boundary is
 already an action, moving the transport later does not change any caller.
 
+## Addendum, 2026-07-25 — the boundary held, and is now enforced by a committed check (POO-1050, POO-1051)
+
+Written at the end of the epic, checking this ADR against the tree rather than against intent. The
+decision is unchanged; three things about it are worth recording.
+
+**1. It held.** Every claim above was re-verified:
+
+| Claim | Verified |
+|---|---|
+| The key is read only behind `import "server-only"` | `src/lib/uniswap/client.ts` opens with it, mirroring `src/lib/api/client.ts:38` |
+| No `NEXT_PUBLIC_` twin exists | Asserted by `tests/bundle-secrets-check.ts` and by the build-output grep below |
+| No CSP entry for `trade-api.gateway.uniswap.org` | `src/lib/security/csp.ts` has none. Asserted by `src/lib/security/fundingRailBoundary.test.ts` [R2] and by `tests/hackathonDocs.test.ts` [R6] |
+| The wallet comes from the session | Asserted per action by `fundingRailBoundary.test.ts` [R5]: the parameter does not exist, so there is no check to loosen later |
+
+**2. Decision point 3 was too narrow, and the epic outgrew it.** It said the only public surface is
+`src/lib/uniswap/actions.ts`. There are now **three** `"use server"` modules in the rail:
+`src/lib/uniswap/actions.ts`, `src/lib/provisioning/planActions.ts` and
+`src/lib/balances/fundingInventoryActions.ts`. That is a growth in surface, not a loosening of the
+boundary — each is a public, callable RPC endpoint, each returns a typed result, and each derives its
+wallet from the session. The invariant is *"the key never leaves the server"*, not *"there is exactly
+one action file"*. The correct reading of point 3 is the former, and the three modules are enumerated
+in `fundingRailBoundary.test.ts` so a fourth cannot be added without a reviewer meeting the list.
+
+**3. Point 8 stopped being an aspiration.** It promised "a build-output grep asserting the key is
+absent from the client bundle". That grep is now committed, as `scripts/bundle-secrets-check.ts`
+behind `pnpm secrets:check`, with its own unit tests against a synthetic `.next/` tree. It scans the
+client-reachable build output for the *value* of every server-only secret and for any `NEXT_PUBLIC_`
+twin of one. This matters more than a normal test because of the asymmetry the Context section names:
+`typecheck`, `lint`, `test` and `i18n:check` all pass happily while a key ships to every browser, and
+a `NEXT_PUBLIC_` key works flawlessly in every test. It runs **after** `pnpm build`, because before a
+build there is no output to scan; a check that silently skipped when `.next/` was absent would report
+green on every machine that had not built, which is worse than no check.
+
+The boundary is therefore no longer a convention a reviewer has to remember. It is a gate, and the
+list of things it protects grows by editing a committed array rather than by hoping.
+
 ## References
 
 - ADR 0002 — Uniswap Trading API as the provisioning rail
 - `docs/10_SECURITY.md` and the `frontend-security` skill — the server-only secret boundary
 - `src/lib/api/client.ts` — the pattern being mirrored
 - `docs/_hackathon/01_UNISWAP_INTEGRATION.md` — endpoint reference
+- `scripts/bundle-secrets-check.ts` + `tests/bundle-secrets-check.test.ts` — the committed enforcement
+- `src/lib/security/fundingRailBoundary.test.ts` — the CSP-absence and session-wallet invariants
