@@ -481,7 +481,7 @@
       "buyUsdc": "Acheter des USDC",
       "bridge": "Déplacer vers {network}",
       "swapGas": "Ajouter des frais de réseau",
-      "swapToken": "Échanger en {token}",
+      "swapToken": "Convertir en {token}",
       "op": "Votre transaction"
     },
     "captions": {

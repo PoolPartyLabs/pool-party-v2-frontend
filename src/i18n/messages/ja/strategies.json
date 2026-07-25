@@ -480,14 +480,14 @@
     "steps": {
       "buyUsdc": "USDCを購入",
       "bridge": "{network}へ移動",
-      "swapGas": "手数料を補充",
+      "swapGas": "費用を補充",
       "swapToken": "{token}に交換",
       "op": "お客様の取引"
     },
     "captions": {
       "buyUsdc": "カードまたは現地決済",
       "bridge": "正しいネットワークに資金を移動",
-      "swapGas": "保有資産のごく一部を、ネットワーク費用に変換します",
+      "swapGas": "保有資産のごく一部を、ネットワーク費用に交換します",
       "op": "元の操作",
       "approve": "1回だけの許可です。まだ資金は動きません。"
     },

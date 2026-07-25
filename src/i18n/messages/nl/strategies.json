@@ -519,7 +519,7 @@
       "fee": "Kosten",
       "priceBuffer": "Prijsbuffer",
       "priceBufferHint": "Apart gezet voor het geval de prijs beweegt terwijl uw geld onderweg is. Wat overblijft, blijft van u.",
-      "conversionCost": "Omwisselkosten",
+      "conversionCost": "Omzettingskosten",
       "conversionCostHint": "Zit al in het bedrag dat u kreeg aangeboden en komt er dus niet bovenop.",
       "gasByStep": "Netwerkkosten per stap",
       "gasByStepHint": "Wat elke stap kost op zijn eigen netwerk, met volledige precisie. Een specificatie, geen optelsom: het netwerkbedrag hierboven is afgerond op centen.",
@@ -528,7 +528,7 @@
       "fromSource": "Van {symbol} op {network}",
       "updating": "Prijzen worden bijgewerkt",
       "leg": {
-        "swapToken": "Omwisselen op {network}",
+        "swapToken": "Omzetten op {network}",
         "swapGas": "Netwerkkosten dekken op {network}",
         "bridge": "Verplaatsen vanaf {network}"
       },

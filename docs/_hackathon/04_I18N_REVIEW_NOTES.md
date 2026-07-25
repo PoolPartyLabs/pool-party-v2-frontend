@@ -77,6 +77,19 @@ have to sit beside:
 | crypto | crypto | `vi` **crypto** | `tiền mã hóa` (1 among 9 `crypto`) |
 | payment card | card | `zh-TW` **銀行卡** | 金融卡 (2; means debit card specifically) |
 | first person plural | we | `pt-BR` **nós / vamos** | `a gente` (2, colloquial) |
+| to convert | convert | `de` **umwandeln** | `tauschen`, `umtauschen` (3) |
+| to convert | convert | `nl` **omzetten** | `omwisselen` (2) |
+| to convert | convert | `fr` **convertir** | `échanger` (1) |
+| to convert | convert | `ja` **交換** | 変換 (1) |
+| to convert | convert | `ko` **전환** | 바꾸다 (2) |
+| to convert | convert | `zh-CN` / `zh-TW` **兑换 / 兌換** | 转换 / 轉換 (2 each) |
+
+The conversion-verb row is the one the sweep found last, when the two POO-411 `steps.*` titles
+joined the owned set: the step title and the itemized cost line beneath it named the same leg with
+two different verbs in six locales.
+
+`de` keeps **Gebühr** for the cost-breakdown `Fee` line and `ja` keeps **手数料** for the same,
+because that is a different concept from the network running cost and `en` distinguishes them too.
 
 ---
 
@@ -136,6 +149,8 @@ rewritten**. These are open questions for a native speaker (POO-231), not defect
 | `de` | `strategies.provisioning.costs.priceBuffer` | Preispuffer | PP-I18N: compound is grammatical but may read as jargon; "Preisreserve" is the likelier product word. |
 | `nl` | `strategies.provisioning.costs.priceBuffer` | Prijsbuffer | PP-I18N: same question as `de`. |
 | `fr` | `strategies.provisioning.gasVerdict.escape.bridgeNative` | "Envoyez ... depuis" | PP-I18N: `en` says "Move ... over from another network"; the French says "send from", which reads as an instruction to use another app rather than an action this one offers. |
+| `vi` | `strategies.provisioning.costs.conversionCost` | đổi / quy đổi / chuyển đổi | PP-I18N: three verbs for one action, left unresolved. "đổi" is plain, "quy đổi" formal, "chuyển đổi" literal; picking one changes the register of the whole funding flow and is not a call to make without a native speaker. Every other locale was normalised to one verb. |
+| `nl` | `strategies.provisioning.costs.conversionCost` | Omzettingskosten | PP-I18N: derived from the standardised verb "omzetten" rather than kept as the more common "Omwisselkosten", for consistency with the action label. A native speaker should confirm the compound is idiomatic. |
 
 ---
 

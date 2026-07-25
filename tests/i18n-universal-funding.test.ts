@@ -203,8 +203,11 @@ describe("Universal Funding copy, 11 locales (POO-1049)", () => {
       ["es", /\bcoste|céntimo|\bimporte/i],
       ["pt-BR", /a gente|\bpasso\b/i],
       ["vi", /tiền mã hóa|tiền điện tử/i],
-      ["de", /\bMittel\b|\bGeld\b/],
-      ["nl", /\btegoed\b/i],
+      // Funds are Guthaben, network cost is Netzwerkkosten, converting is umwandeln. "Gebühr" on
+      // its own stays: it is the cost-breakdown Fee line, a different concept.
+      ["de", /\bMittel\b|\bGeld\b|Netzwerkgebühr|tausch/i],
+      ["nl", /\btegoed\b|omwissel/i],
+      ["fr", /échang/i],
       ["zh-TW", /金融卡/],
     ];
 

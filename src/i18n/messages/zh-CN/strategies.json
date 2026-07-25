@@ -451,7 +451,7 @@
       "custom": "自定义",
       "customPlaceholder": "金额",
       "customAria": "自定义费用金额",
-      "conversionNote": "我们会把您已持有资产的一小部分转换为网络费用，无需银行卡。",
+      "conversionNote": "我们会把您已持有资产的一小部分兑换为网络费用，无需银行卡。",
       "cta": "添加 {amount} 费用",
       "dismiss": "暂不",
       "signStep": "充值网络费用",
@@ -487,7 +487,7 @@
     "captions": {
       "buyUsdc": "银行卡或本地支付",
       "bridge": "将资金转移到正确的网络",
-      "swapGas": "将您持有资产的一小部分转换为网络费用",
+      "swapGas": "将您持有资产的一小部分兑换为网络费用",
       "op": "您的原始操作",
       "approve": "一次性授权。资金尚未转移。"
     },

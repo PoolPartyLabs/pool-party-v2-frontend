@@ -9,7 +9,7 @@
     "available": "Sie haben derzeit {amount} auf {network}. Wir verschieben nur, was fehlt."
   },
   "continue": "Weiter",
-  "routingNote": "Wir finden den günstigsten Weg, Ihr Guthaben auf {network} zu bringen, ob es umgetauscht, verschoben oder beides werden muss.",
+  "routingNote": "Wir finden den günstigsten Weg, Ihr Guthaben auf {network} zu bringen, ob es umgewandelt, verschoben oder beides werden muss.",
   "walletUnavailable": "Wir konnten Ihr Guthaben gerade nicht auslesen. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
   "plan": {
     "subtitle": "{amount} werden auf {network} verfügbar gemacht."

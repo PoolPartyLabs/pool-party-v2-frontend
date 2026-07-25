@@ -480,8 +480,8 @@
     "steps": {
       "buyUsdc": "USDC kaufen",
       "bridge": "Zum {network} übertragen",
-      "swapGas": "Netzwerkgebühr aufladen",
-      "swapToken": "Zu {token} tauschen",
+      "swapGas": "Netzwerkkosten decken",
+      "swapToken": "In {token} umwandeln",
       "op": "Ihre Transaktion"
     },
     "captions": {
@@ -519,7 +519,7 @@
       "fee": "Gebühr",
       "priceBuffer": "Preispuffer",
       "priceBufferHint": "Zurückgelegt, falls sich der Preis ändert, während Ihr Guthaben unterwegs ist. Was übrig bleibt, gehört Ihnen.",
-      "conversionCost": "Umtauschkosten",
+      "conversionCost": "Umwandlungskosten",
       "conversionCostHint": "Bereits im angebotenen Betrag enthalten und wird nicht zusätzlich berechnet.",
       "gasByStep": "Netzwerkkosten pro Schritt",
       "gasByStepHint": "Was jeder Schritt in seinem Netzwerk kostet, in voller Genauigkeit. Eine Auflistung, keine Summe: der Netzwerkbetrag oben ist auf Cent gerundet.",
