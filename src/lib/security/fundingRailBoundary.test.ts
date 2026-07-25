@@ -34,6 +34,38 @@ import {
 const ROOT = resolve(__dirname, "..", "..", "..");
 const read = (relative: string): string => readFileSync(join(ROOT, relative), "utf8");
 
+/**
+ * The argument text of every `console.*` call in `source`, one entry per call.
+ *
+ * A balanced-paren scan rather than a regex, deliberately: any pattern that stops at a punctuation
+ * character stops inside string literals too, and a log message is exactly where punctuation lives.
+ * Quotes (including template literals) and escapes are tracked, so only a `)` that really closes the
+ * call ends a capture. A call the scan cannot see is a call [R7] does not check, and that reads as a
+ * pass, which is the one failure mode a source-text guard must not have.
+ */
+function consoleCallArguments(source: string): string[] {
+  const calls: string[] = [];
+  for (const match of source.matchAll(/console\.\w+\(/g)) {
+    const start = (match.index ?? 0) + match[0].length;
+    let depth = 1;
+    let quote: string | undefined;
+    let cursor = start;
+    for (; cursor < source.length && depth > 0; cursor++) {
+      const char = source[cursor];
+      if (quote !== undefined) {
+        if (char === "\\") cursor++;
+        else if (char === quote) quote = undefined;
+        continue;
+      }
+      if (char === '"' || char === "'" || char === "`") quote = char;
+      else if (char === "(") depth++;
+      else if (char === ")") depth--;
+    }
+    calls.push(source.slice(start, cursor - 1));
+  }
+  return calls;
+}
+
 /** Every `"use server"` module the epic added. Each one is a public, callable RPC endpoint. */
 const EPIC_SERVER_ACTIONS = [
   "src/lib/uniswap/actions.ts",
@@ -126,13 +158,21 @@ describe("[R6] a provider response cannot reach a transaction unvalidated", () =
 
 describe("[R7] nothing sensitive is logged", () => {
   it.each(RAIL_MODULES)("%s logs no secret, signature or address", (file) => {
-    const source = read(file);
-    const logs = [...source.matchAll(/console\.\w+\(([^;]*)\)/g)].map(([, args]) => args);
-    for (const args of logs) {
+    for (const args of consoleCallArguments(read(file))) {
       expect(args).not.toMatch(
         /\b(signature|apiKey|api_key|permitData|owner|wallet|address|txHash)\b/,
       );
     }
+  });
+
+  it("reads a log whose MESSAGE contains a semicolon, which an earlier scan skipped entirely", () => {
+    // The regression this locks: the scan used to capture arguments with `[^;]*`, so a `;` inside a
+    // message string ended the match and the whole call went uninspected. `buildPlanSteps` has
+    // exactly one log and its message has exactly that semicolon, so the module the invariant most
+    // needed to read was the one it silently skipped, while still reporting green.
+    expect(
+      consoleCallArguments('console.warn("journal write failed; the leg continues", signature);'),
+    ).toEqual(['"journal write failed; the leg continues", signature']);
   });
 
   it("the transport never interpolates the key, not even into an error it throws", () => {

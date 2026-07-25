@@ -39,15 +39,20 @@ const ROOT = cwd();
 const BUILD_DIR = join(ROOT, ".next");
 
 /**
- * The server-only credentials this repository holds. Every one of them is read behind
- * `import "server-only"` and none may ever appear in a client bundle.
+ * The server-only credentials this repository holds, and only those: each one is documented in
+ * `.env.example` under a "NEVER prefix with NEXT_PUBLIC" heading and read from server-only code, so
+ * none may ever appear in a client bundle.
+ *
+ * The list is the guard's coverage, so it has to stay exhaustive: a name that is missing here is a
+ * secret nobody is scanning for, while a name that is set in no environment simply costs nothing.
+ * Add every new server-only credential in the same PR that introduces it. Speculative names are
+ * deliberately absent, because a list padded with credentials this repo does not hold reads as
+ * exhaustive without being it, which is exactly how a real omission goes unnoticed.
  */
 export const SERVER_ONLY_SECRET_NAMES = [
   "UNISWAP_API_KEY",
   "PP_API_KEY",
-  "ADMIN_API_KEY",
-  "PRIVY_APP_SECRET",
-  "SESSION_JWT_SECRET",
+  "PP_ANALYTICS_USER_ID_SECRET",
 ] as const;
 
 /**
