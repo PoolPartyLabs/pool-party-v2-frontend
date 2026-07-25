@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-CMP-046
  * @name ProvisioningPanel
- * @implements-rules-version v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
+ * @implements-rules-version v4 (POO-1041 rules v1) · v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The INLINE pre-flight provisioning body (epic POO-411, POO-418/POO-419). When an op is short on
@@ -26,6 +26,14 @@
  * success, and deliberately WITHOUT a retry, because `flow.retry()` re-invokes the failed step
  * verbatim and a bridge already in flight would be broadcast a second time [R3].
  *
+ * POO-1041 (hackathon POO-1022): the panel renders the REAL rail. Two things were quietly wrong for
+ * a real plan, and both are fixed here. The stepper's labels came from `plan.steps` while its
+ * statuses and hashes came from the rail, and the rail expands one plan step into an approval PLUS
+ * the leg, so the two lists were not the same length and never had been aligned [R6]; everything is
+ * matched by KEY now, through the one view model. And a bridge leg's hash exists minutes before its
+ * step returns, so a running transfer had no link on screen at all: `onLegBroadcast` is consumed
+ * here, the instant the hash exists, and the row is verifiable while it is still moving [R2].
+ *
  * PP-INTEGRATION-POINT: the planner behind the seam is still the deterministic mock (POO-420); the
  * real one lands in POO-1034 and `buildPlanSteps` runs the real rail in POO-1036. Wallet balances
  * that feed `input` are wired in POO-1042.
@@ -33,7 +41,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ExplorerTxLink } from "@/components/ui/ExplorerTxLink";
 import { MockBadge } from "@/components/ui/MockBadge";
@@ -45,13 +53,15 @@ import type { TxError } from "@/lib/tx/diagnostics";
 import { useProvisioningPlan } from "../hooks/useProvisioningPlan";
 import { type FlowStep, useWalletSignFlow } from "../hooks/useWalletSignFlow";
 import { BRIDGE_PENDING_CODE } from "../lib/awaitBridgeSettlement";
+import { type PlanRailDeps, planRailSteps } from "../lib/buildPlanSteps";
 import { GasAmountSelector } from "./provisioning/GasAmountSelector";
 import { selectPreset, validateGas } from "./provisioning/gasSelection";
-import { ProvisioningPlanCard } from "./provisioning/ProvisioningPlanCard";
-import { bridgeEtaCopy, buildPlanView } from "./provisioning/provisioningView";
+import { labelValues, ProvisioningPlanCard } from "./provisioning/ProvisioningPlanCard";
+import { buildPlanView } from "./provisioning/provisioningView";
 import { settleOutcome, settleTxError, settleTxHash } from "./settle";
 import { TransactionErrorActions, useTxErrorBody } from "./TransactionErrorActions";
 import { TransactionStatus } from "./TransactionStatus";
+import type { WalletStepStatus } from "./WalletSteps";
 import { WalletSteps } from "./WalletSteps";
 
 /**
@@ -64,6 +74,18 @@ type Phase = "plan" | "pending" | "settling" | "error";
 /** Accumulating context is unused (each step settles independently); kept generic for the runner. */
 type PlanCtx = Record<string, unknown>;
 
+/**
+ * What the panel hands the rail builder, so the rail can report what the flow structurally cannot.
+ *
+ * `useWalletSignFlow` only records a hash a step RETURNS, and a bridge leg does not return for
+ * minutes after it broadcasts. The host owns the rail's dependencies (POO-1042) while the panel owns
+ * what is on screen, so the reporter travels down with the plan rather than up through a prop.
+ */
+export interface PlanRailReporters {
+  /** POO-1037's {@link PlanRailDeps.onLegBroadcast}, called the instant a leg has a hash. */
+  onLegBroadcast: NonNullable<PlanRailDeps["onLegBroadcast"]>;
+}
+
 /** Public props for {@link ProvisioningPanel}. */
 export interface ProvisioningPanelProps {
   /** Op + wallet requirement context (USD) that drives the plan. */
@@ -74,8 +96,12 @@ export interface ProvisioningPanelProps {
   onDone: () => void;
   /** The user backed out → the host returns to its confirm view. */
   onCancel: () => void;
-  /** Real-mode execution steps for the plan; absent → the mock settle runs (mock mode). */
-  buildPlanSteps?: (plan: ProvisioningPlan) => FlowStep<PlanCtx>[];
+  /**
+   * Real-mode execution steps for the plan; absent → the mock settle runs (mock mode). Bind the
+   * rail's deps in a closure and forward `rail` into them:
+   * `buildPlanSteps={(plan, rail) => buildPlanSteps(plan, { ...deps, ...rail })}`.
+   */
+  buildPlanSteps?: (plan: ProvisioningPlan, rail: PlanRailReporters) => FlowStep<PlanCtx>[];
   /** Reports whether provisioning is in flight, so the host can lock dismissal. */
   onLockChange?: (locked: boolean) => void;
 }
@@ -94,6 +120,9 @@ export function ProvisioningPanel({
   const [phase, setPhase] = useState<Phase>("plan");
   const [gasChoice, setGasChoice] = useState<GasChoice | null>(null);
   const [txError, setTxError] = useState<TxError | null>(null);
+  // [R2] Hashes of legs that have broadcast but not settled, keyed by rail step key. The flow cannot
+  // hold these: it records a hash a step RETURNS, and a bridge leg returns minutes later.
+  const [legHashes, setLegHashes] = useState<Record<string, string>>({});
 
   const buildPlanStepsRef = useRef(buildPlanSteps);
   buildPlanStepsRef.current = buildPlanSteps;
@@ -110,20 +139,31 @@ export function ProvisioningPanel({
   // POO-1023: the plan resolves through the ONE mock/real seam (computePlan), never mockComputePlan.
   // The seam is async, so the hook owns the pending/error lifecycle and the re-plan race guard.
   const { plan, error: planError } = useProvisioningPlan(input, effectiveGas);
-  const view = useMemo(() => (plan ? buildPlanView(plan) : null), [plan]);
   const hasGasStep = plan?.steps.some((step) => step.type === "swap-gas") ?? false;
 
-  const execRows = view?.rows.filter((row) => !row.isOp) ?? [];
-  const execLabels = execRows.map((row) => ({
-    key: row.key,
-    label: t(row.labelKey, row.networkName ? { network: row.networkName } : undefined),
-    why: { name: t("sign.explain.confirm.name"), body: t("sign.explain.confirm.body") },
-  }));
+  // [R6] What the rail will REALLY run: one approval per ERC-20 leg, then the leg. Only in real mode
+  // — the mock settle runs the plan's own steps, and a fixture plan carries no legs to approve.
+  const railSteps = useMemo(
+    () => (plan && buildPlanStepsRef.current ? planRailSteps(plan) : undefined),
+    [plan],
+  );
+  const railStepsRef = useRef(railSteps);
+  railStepsRef.current = railSteps;
+
+  // [R2] The journal seam's display half. Identity, not position: a leg's `index` is stable across
+  // the plan, while its position in the rail shifts with every approval that precedes it.
+  const onLegBroadcast = useCallback<PlanRailReporters["onLegBroadcast"]>((event) => {
+    const key = railStepsRef.current?.find(
+      (step) => step.kind === "leg" && step.leg?.index === event.leg.index,
+    )?.key;
+    if (!key) return;
+    setLegHashes((prev) => (prev[key] === event.txHash ? prev : { ...prev, [key]: event.txHash }));
+  }, []);
 
   const flowSteps = useMemo<FlowStep<PlanCtx>[]>(() => {
     if (!plan) return [];
     const buildReal = buildPlanStepsRef.current;
-    if (buildReal) return buildReal(plan);
+    if (buildReal) return buildReal(plan, { onLegBroadcast });
     // PP-MOCK: settle each provisioning step after a beat (always success in mock mode).
     return plan.steps
       .filter((step) => step.type !== "op")
@@ -138,8 +178,50 @@ export function ProvisioningPanel({
           return { txHash: settleTxHash() };
         },
       }));
-  }, [plan]);
+  }, [plan, onLegBroadcast]);
   const flow = useWalletSignFlow<PlanCtx>(flowSteps, { fallbackErrorCode: "PROVISIONING_FAILED" });
+
+  // [R1]/[R6] The flow reports status and hashes positionally against `flowSteps`, which is the RAIL
+  // order. Re-key them here, once, so every surface below reads them by step key and the two lists
+  // can never drift apart again.
+  const statusByKey = useMemo(() => {
+    const byKey: Record<string, WalletStepStatus> = {};
+    flowSteps.forEach((step, index) => {
+      byKey[step.key] = flow.statuses[index] ?? "idle";
+    });
+    return byKey;
+  }, [flowSteps, flow.statuses]);
+
+  const txHashByKey = useMemo(() => {
+    // The in-flight hashes first, so a settled step's own hash supersedes its broadcast record.
+    const byKey: Record<string, string | undefined> = { ...legHashes };
+    flowSteps.forEach((step, index) => {
+      const hash = flow.txHashes[index];
+      if (hash) byKey[step.key] = hash;
+    });
+    return byKey;
+  }, [flowSteps, flow.txHashes, legHashes]);
+
+  const view = useMemo(
+    () => (plan ? buildPlanView(plan, { railSteps, statusByKey, txHashByKey }) : null),
+    [plan, railSteps, statusByKey, txHashByKey],
+  );
+
+  const execRows = view?.rows.filter((row) => !row.isOp) ?? [];
+  const execLabels = execRows.map((row) => ({
+    key: row.key,
+    label: t(row.labelKey, labelValues(row)),
+    // An allowance and a transfer authorize very different things, and the disclosure is where a
+    // user finds out which one they are being asked for (UF-28 [R4], clear-vs-blind signing).
+    why:
+      row.isApproval && row.tokenSymbol
+        ? {
+            name: t("sign.explain.approve.name"),
+            body: t("sign.explain.approve.body", { token: row.tokenSymbol }),
+          }
+        : { name: t("sign.explain.confirm.name"), body: t("sign.explain.confirm.body") },
+  }));
+  const activeRow = execRows.find((row) => row.status === "active");
   // POO-461 R3: kind-aware error body (generic copy when the failure didn't classify).
   const errorBody = useTxErrorBody(txError);
 
@@ -167,7 +249,6 @@ export function ProvisioningPanel({
   // step into an approval step plus the leg itself, so the two lists are not index-aligned.
   const activeStepKey = flowSteps[flow.activeStep]?.key;
   const activePlanStep = plan?.steps.find((step) => step.key === activeStepKey);
-  const bridgeStep = activePlanStep?.type === "bridge" ? activePlanStep : undefined;
 
   const ctaDisabled = hasGasStep && !gasValidity.ok;
   const gasSelector = hasGasStep ? (
@@ -179,28 +260,35 @@ export function ProvisioningPanel({
   ) : undefined;
 
   if (phase === "pending") {
-    // [R2] The bridge row is the one step measured in minutes, so it says so while it runs. The
-    // figure is the quote's own `estimatedFillTimeMs`; with no estimate we admit that instead of
-    // inventing one.
-    const eta = bridgeStep
-      ? bridgeEtaCopy(bridgeStep.leg?.etaSeconds ?? bridgeStep.etaSeconds)
-      : null;
     return (
       <div className="flex flex-col gap-4">
         <div>
           <h3 className="font-semibold text-foreground text-lg">{t("provisioning.exec.title")}</h3>
           <p className="mt-1 text-muted-foreground text-sm">{t("provisioning.exec.subtitle")}</p>
         </div>
+        {/* [R6] Labels, statuses and hashes all come off the SAME key-matched rows, so the stepper
+            cannot light up a different step than the one the rail is running. */}
         <WalletSteps
           steps={execLabels}
-          activeStep={flow.activeStep}
-          statuses={flow.statuses}
-          txHashes={flow.txHashes}
+          activeStep={Math.max(
+            execRows.findIndex((row) => row.status === "active"),
+            0,
+          )}
+          statuses={execRows.map((row) => row.status)}
+          txHashes={execRows.map((row) => row.txHash)}
         />
-        {eta ? (
+        {/* [R2] The bridge row is the one step measured in minutes, so it says so while it runs. The
+            figure is the quote's own `estimatedFillTimeMs`; with no estimate we admit that instead
+            of inventing one. */}
+        {activeRow?.eta ? (
           <p className="text-center text-muted-foreground text-sm" aria-live="polite">
-            {t(eta.key, eta.values)}
+            {t(activeRow.eta.key, activeRow.eta.values)}
           </p>
+        ) : null}
+        {/* [R2] And it is verifiable WHILE it runs, not only once we have given up on it. Before
+            this, the only link a bridge ever got was in the degraded `settling` state. */}
+        {activeRow?.explorerNetwork && activeRow.txHash ? (
+          <ExplorerTxLink network={activeRow.explorerNetwork} hash={activeRow.txHash} />
         ) : null}
       </div>
     );

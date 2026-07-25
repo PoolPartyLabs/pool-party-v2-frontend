@@ -480,7 +480,8 @@
       "buyUsdc": "Cartão ou Pix",
       "bridge": "Mover fundos para a rede certa",
       "swapGas": "Você escolhe o valor, pago com USDC",
-      "op": "Sua ação original"
+      "op": "Sua ação original",
+      "approve": "Uma permissão única. Nada é movido ainda."
     },
     "exec": {
       "title": "Preparando seus fundos",

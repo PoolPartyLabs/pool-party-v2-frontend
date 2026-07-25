@@ -480,7 +480,8 @@
       "buyUsdc": "Karte oder lokale Überweisung",
       "bridge": "Guthaben ins richtige Netzwerk verschieben",
       "swapGas": "Sie wählen den Betrag, bezahlt mit USDC",
-      "op": "Ihre ursprüngliche Aktion"
+      "op": "Ihre ursprüngliche Aktion",
+      "approve": "Eine einmalige Freigabe. Es wird noch nichts bewegt."
     },
     "exec": {
       "title": "Ihr Guthaben wird vorbereitet",

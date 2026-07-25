@@ -480,7 +480,8 @@
       "buyUsdc": "Carte ou virement local",
       "bridge": "Déplacer les fonds vers le bon réseau",
       "swapGas": "Vous choisissez le montant, payé en USDC",
-      "op": "Votre action initiale"
+      "op": "Votre action initiale",
+      "approve": "Une autorisation unique. Rien ne bouge encore."
     },
     "exec": {
       "title": "Préparation de vos fonds",
