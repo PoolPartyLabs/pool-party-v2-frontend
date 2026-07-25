@@ -480,7 +480,8 @@
       "buyUsdc": "Tarjeta o transferencia local",
       "bridge": "Mover fondos a la red correcta",
       "swapGas": "Usted elige el importe, pagado con USDC",
-      "op": "Su acción original"
+      "op": "Su acción original",
+      "approve": "Un permiso único. Todavía no se mueve nada."
     },
     "exec": {
       "title": "Preparando sus fondos",
@@ -526,6 +527,41 @@
       "buyCrypto": {
         "cta": "Comprar cripto",
         "hint": "Paga con tarjeta o Pix y evita mover fondos entre redes."
+      }
+    },
+    "fundingSources": {
+      "title": "¿Qué quieres usar?",
+      "subtitle": "Elige lo que tengas. Nosotros resolvemos cómo llevarlo al lugar correcto.",
+      "listLabel": "Tus fondos",
+      "rowLabel": "{symbol} en {network}, {amount}, vale {usd}",
+      "selected": "Seleccionado: {amount}",
+      "required": "Necesario: {amount}",
+      "remaining": "Faltan {amount}",
+      "surplus": "{amount} más de lo necesario",
+      "exact": "Cubierto exactamente",
+      "empty": "Todavía no hay nada aquí que podamos usar.",
+      "cta": "Continuar",
+      "step": "Paso {index}",
+      "unblock": "Para usar este dinero:",
+      "badge": {
+        "ok": "Listo",
+        "topUp": "Necesita una recarga",
+        "blocked": "Aún no se puede usar"
+      }
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Listo.",
+        "pending": "Enviado. Estamos esperando la confirmación y no lo enviaremos otra vez.",
+        "reverted": "Este paso no se completó, así que tu dinero sigue donde estaba.",
+        "absent": "No se envió nada, así que es seguro volver a empezar este paso.",
+        "unknown": "No podemos saber si este paso se completó, así que no lo enviaremos otra vez. Revisa la actividad de tu billetera antes de continuar."
+      },
+      "status": {
+        "complete": "Todo salió bien. Puedes continuar.",
+        "wait": "Tus fondos están en camino. Esto puede tardar unos minutos.",
+        "rederive": "Podemos retomar desde donde se detuvo.",
+        "ask": "Necesitamos que revises una cosa antes de continuar."
       }
     }
   }

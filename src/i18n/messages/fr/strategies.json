@@ -480,7 +480,8 @@
       "buyUsdc": "Carte ou virement local",
       "bridge": "Déplacer les fonds vers le bon réseau",
       "swapGas": "Vous choisissez le montant, payé en USDC",
-      "op": "Votre action initiale"
+      "op": "Votre action initiale",
+      "approve": "Une autorisation unique. Rien ne bouge encore."
     },
     "exec": {
       "title": "Préparation de vos fonds",
@@ -526,6 +527,41 @@
       "buyCrypto": {
         "cta": "Acheter des cryptos",
         "hint": "Payez par carte ou Pix, sans déplacer de fonds entre réseaux."
+      }
+    },
+    "fundingSources": {
+      "title": "Que souhaitez-vous utiliser ?",
+      "subtitle": "Choisissez ce que vous détenez. Nous nous occupons de l'acheminer au bon endroit.",
+      "listLabel": "Vos fonds",
+      "rowLabel": "{symbol} sur {network}, {amount}, vaut {usd}",
+      "selected": "Sélectionné : {amount}",
+      "required": "Nécessaire : {amount}",
+      "remaining": "Il manque {amount}",
+      "surplus": "{amount} de plus que nécessaire",
+      "exact": "Couvert exactement",
+      "empty": "Il n'y a encore rien ici que nous puissions utiliser.",
+      "cta": "Continuer",
+      "step": "Étape {index}",
+      "unblock": "Pour utiliser cet argent :",
+      "badge": {
+        "ok": "Prêt",
+        "topUp": "Besoin d'une recharge",
+        "blocked": "Pas encore utilisable"
+      }
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Terminé.",
+        "pending": "Envoyé. Nous attendons la confirmation et nous ne l'enverrons pas une seconde fois.",
+        "reverted": "Cette étape n'a pas abouti, votre argent est resté où il était.",
+        "absent": "Rien n'a été envoyé, vous pouvez relancer cette étape en toute sécurité.",
+        "unknown": "Nous ne pouvons pas savoir si cette étape a abouti, nous ne l'enverrons donc pas une seconde fois. Vérifiez l'activité de votre portefeuille avant de continuer."
+      },
+      "status": {
+        "complete": "Tout est passé. Vous pouvez continuer.",
+        "wait": "Vos fonds sont en route. Cela peut prendre quelques minutes.",
+        "rederive": "Nous pouvons reprendre là où cela s'est arrêté.",
+        "ask": "Nous avons besoin que vous vérifiiez un point avant de continuer."
       }
     }
   }

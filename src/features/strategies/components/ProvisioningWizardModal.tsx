@@ -38,16 +38,17 @@ import { spendableTokenUsd } from "@/lib/provisioning";
 import type { TxError } from "@/lib/tx/diagnostics";
 import { useProvisioningPlan } from "../hooks/useProvisioningPlan";
 import { type FlowStep, useWalletSignFlow } from "../hooks/useWalletSignFlow";
+import { planRailSteps } from "../lib/buildPlanSteps";
 import { DEFAULT_SLIPPAGE_PCT } from "../lib/slippage";
 import { GasAmountSelector } from "./provisioning/GasAmountSelector";
 import { selectPreset, validateGas } from "./provisioning/gasSelection";
-import { ProvisioningPlanCard } from "./provisioning/ProvisioningPlanCard";
+import { labelValues, ProvisioningPlanCard } from "./provisioning/ProvisioningPlanCard";
 import { buildPlanView } from "./provisioning/provisioningView";
 import { settleOutcome, settleTxError, settleTxHash } from "./settle";
 import { TransactionErrorActions, useTxErrorBody } from "./TransactionErrorActions";
 import { TransactionSettingsDialog } from "./TransactionSettingsDialog";
 import { TransactionStatus } from "./TransactionStatus";
-import { WalletSteps } from "./WalletSteps";
+import { type WalletStepStatus, WalletSteps } from "./WalletSteps";
 
 /** Flow phases for the wizard (success closes + resumes the op; there is no in-wizard success view). */
 type Phase = "plan" | "pending" | "error";
@@ -107,16 +108,14 @@ export function ProvisioningWizardModal({
   // gear's Max slippage rides input.slippagePct into the planner and onto the plan (POO-523 R2).
   const planInput = useMemo(() => ({ ...input, slippagePct: slippage }), [input, slippage]);
   const { plan, error: planError } = useProvisioningPlan(planInput, effectiveGas);
-  const view = useMemo(() => (plan ? buildPlanView(plan) : null), [plan]);
   const hasGasStep = plan?.steps.some((step) => step.type === "swap-gas") ?? false;
 
-  // The provisioning steps (everything but the op anchor) → WalletSteps labels + the flow runners.
-  const execRows = view?.rows.filter((row) => !row.isOp) ?? [];
-  const execLabels = execRows.map((row) => ({
-    key: row.key,
-    label: t(row.labelKey, row.networkName ? { network: row.networkName } : undefined),
-    why: { name: t("sign.explain.confirm.name"), body: t("sign.explain.confirm.body") },
-  }));
+  // POO-1041 [R6]: the rail expands one plan step into an approval PLUS the leg, so the rows the
+  // stepper renders have to be the rail's, not the plan's.
+  const railSteps = useMemo(
+    () => (plan && buildPlanStepsRef.current ? planRailSteps(plan) : undefined),
+    [plan],
+  );
 
   const flowSteps = useMemo<FlowStep<PlanCtx>[]>(() => {
     if (!plan) return [];
@@ -140,6 +139,43 @@ export function ProvisioningWizardModal({
   const flow = useWalletSignFlow<PlanCtx>(flowSteps, { fallbackErrorCode: "PROVISIONING_FAILED" });
   // POO-461 R3: kind-aware error body (generic copy when the failure didn't classify).
   const errorBody = useTxErrorBody(txError);
+
+  // POO-1041 [R1]/[R6]: the flow reports positionally against `flowSteps` (rail order); re-key it so
+  // every surface below reads by step key and the two lists cannot drift apart.
+  const statusByKey = useMemo(() => {
+    const byKey: Record<string, WalletStepStatus> = {};
+    flowSteps.forEach((step, index) => {
+      byKey[step.key] = flow.statuses[index] ?? "idle";
+    });
+    return byKey;
+  }, [flowSteps, flow.statuses]);
+
+  const txHashByKey = useMemo(() => {
+    const byKey: Record<string, string | undefined> = {};
+    flowSteps.forEach((step, index) => {
+      byKey[step.key] = flow.txHashes[index];
+    });
+    return byKey;
+  }, [flowSteps, flow.txHashes]);
+
+  const view = useMemo(
+    () => (plan ? buildPlanView(plan, { railSteps, statusByKey, txHashByKey }) : null),
+    [plan, railSteps, statusByKey, txHashByKey],
+  );
+
+  // The provisioning steps (everything but the op anchor) → WalletSteps labels + the flow runners.
+  const execRows = view?.rows.filter((row) => !row.isOp) ?? [];
+  const execLabels = execRows.map((row) => ({
+    key: row.key,
+    label: t(row.labelKey, labelValues(row)),
+    why:
+      row.isApproval && row.tokenSymbol
+        ? {
+            name: t("sign.explain.approve.name"),
+            body: t("sign.explain.approve.body", { token: row.tokenSymbol }),
+          }
+        : { name: t("sign.explain.confirm.name"), body: t("sign.explain.confirm.body") },
+  }));
 
   // On provisioning success, hand back to the host to resume the original op; on failure, show retry.
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally driven only by flow/phase transitions; handleOpenChange is stable for this purpose.
@@ -251,11 +287,15 @@ export function ProvisioningWizardModal({
               <SheetTitle>{t("provisioning.exec.title")}</SheetTitle>
             </SheetHeader>
             <p className="text-muted-foreground text-sm">{t("provisioning.exec.subtitle")}</p>
+            {/* POO-1041 [R6]: labels, statuses and hashes all come off the same key-matched rows. */}
             <WalletSteps
               steps={execLabels}
-              activeStep={flow.activeStep}
-              statuses={flow.statuses}
-              txHashes={flow.txHashes}
+              activeStep={Math.max(
+                execRows.findIndex((row) => row.status === "active"),
+                0,
+              )}
+              statuses={execRows.map((row) => row.status)}
+              txHashes={execRows.map((row) => row.txHash)}
             />
           </>
         ) : null}

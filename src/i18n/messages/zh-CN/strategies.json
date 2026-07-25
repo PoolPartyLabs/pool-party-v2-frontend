@@ -480,7 +480,8 @@
       "buyUsdc": "银行卡或本地支付",
       "bridge": "将资金转移到正确的网络",
       "swapGas": "您选择金额，从 USDC 中支付",
-      "op": "您的原始操作"
+      "op": "您的原始操作",
+      "approve": "一次性授权。资金尚未转移。"
     },
     "exec": {
       "title": "正在准备您的资金",
@@ -526,6 +527,41 @@
       "buyCrypto": {
         "cta": "改为购买加密货币",
         "hint": "用银行卡或 Pix 支付，无需在网络之间转移资金。"
+      }
+    },
+    "fundingSources": {
+      "title": "您想使用什么？",
+      "subtitle": "选择您持有的任意资产，我们来安排如何把它送到需要的地方。",
+      "listLabel": "您的资金",
+      "rowLabel": "{network} 上的 {symbol}，{amount}，价值 {usd}",
+      "selected": "已选择：{amount}",
+      "required": "所需：{amount}",
+      "remaining": "还差 {amount}",
+      "surplus": "比所需多 {amount}",
+      "exact": "刚好够用",
+      "empty": "这里暂时没有可以使用的资产。",
+      "cta": "继续",
+      "step": "第 {index} 步",
+      "unblock": "要使用这笔资金：",
+      "badge": {
+        "ok": "可用",
+        "topUp": "需要补充",
+        "blocked": "暂时无法使用"
+      }
+    },
+    "recovery": {
+      "leg": {
+        "settled": "已完成。",
+        "pending": "已发送，正在等待到账，不会重复发送。",
+        "reverted": "这一步没有完成，你的资金仍在原处。",
+        "absent": "没有发送任何内容，可以安全地重新开始这一步。",
+        "unknown": "我们无法确认这一步是否完成，因此不会重复发送。继续之前请查看钱包记录。"
+      },
+      "status": {
+        "complete": "全部完成，可以继续了。",
+        "wait": "资金正在转移中，可能需要几分钟。",
+        "rederive": "我们可以从中断的地方继续。",
+        "ask": "继续之前需要你确认一件事。"
       }
     }
   }

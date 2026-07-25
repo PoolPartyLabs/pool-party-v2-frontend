@@ -480,7 +480,8 @@
       "buyUsdc": "Card or Pix",
       "bridge": "Move funds to the right network",
       "swapGas": "You choose the amount, paid from USDC",
-      "op": "Your original action"
+      "op": "Your original action",
+      "approve": "A one-time permission. Nothing moves yet."
     },
     "exec": {
       "title": "Setting up your funds",
@@ -526,6 +527,41 @@
       "buyCrypto": {
         "cta": "Buy crypto instead",
         "hint": "Pay with a card or Pix and skip moving funds between networks."
+      }
+    },
+    "fundingSources": {
+      "title": "What would you like to spend?",
+      "subtitle": "Pick anything you hold. We'll work out how to get it where it needs to go.",
+      "listLabel": "Your funds",
+      "rowLabel": "{symbol} on {network}, {amount}, worth {usd}",
+      "selected": "Selected: {amount}",
+      "required": "Needed: {amount}",
+      "remaining": "{amount} still to go",
+      "surplus": "{amount} more than needed",
+      "exact": "Exactly covered",
+      "empty": "There's nothing here we can spend yet.",
+      "cta": "Continue",
+      "step": "Step {index}",
+      "unblock": "To use this money:",
+      "badge": {
+        "ok": "Ready",
+        "topUp": "Needs a top up",
+        "blocked": "Can't be used yet"
+      }
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Done.",
+        "pending": "Sent. We are waiting for it to land, and we will not send it again.",
+        "reverted": "This step did not go through, so your money stayed where it was.",
+        "absent": "Nothing was sent, so it is safe to start this step again.",
+        "unknown": "We cannot tell whether this step went through, so we will not send it again. Check your wallet activity before you continue."
+      },
+      "status": {
+        "complete": "Everything went through. You are ready to continue.",
+        "wait": "Your funds are on the way. This can take a few minutes.",
+        "rederive": "We can pick this up from where it stopped.",
+        "ask": "We need you to check one thing before we continue."
       }
     }
   }

@@ -480,7 +480,8 @@
       "buyUsdc": "Kaart of lokale overboeking",
       "bridge": "Geld naar het juiste netwerk verplaatsen",
       "swapGas": "U kiest het bedrag, betaald met USDC",
-      "op": "Uw oorspronkelijke actie"
+      "op": "Uw oorspronkelijke actie",
+      "approve": "Een eenmalige toestemming. Er wordt nog niets verplaatst."
     },
     "exec": {
       "title": "Uw geld wordt klaargezet",
@@ -526,6 +527,41 @@
       "buyCrypto": {
         "cta": "Koop liever crypto",
         "hint": "Betaal met kaart of Pix en verplaats geen geld tussen netwerken."
+      }
+    },
+    "fundingSources": {
+      "title": "Wat wilt u gebruiken?",
+      "subtitle": "Kies wat u heeft. Wij regelen hoe het op de juiste plek komt.",
+      "listLabel": "Uw tegoed",
+      "rowLabel": "{symbol} op {network}, {amount}, waard {usd}",
+      "selected": "Geselecteerd: {amount}",
+      "required": "Nodig: {amount}",
+      "remaining": "Nog {amount} te gaan",
+      "surplus": "{amount} meer dan nodig",
+      "exact": "Precies gedekt",
+      "empty": "Er is hier nog niets dat we kunnen gebruiken.",
+      "cta": "Doorgaan",
+      "step": "Stap {index}",
+      "unblock": "Om dit geld te gebruiken:",
+      "badge": {
+        "ok": "Klaar",
+        "topUp": "Heeft een aanvulling nodig",
+        "blocked": "Nog niet bruikbaar"
+      }
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Klaar.",
+        "pending": "Verzonden. We wachten op de bevestiging en sturen het niet nog een keer.",
+        "reverted": "Deze stap is niet doorgegaan, je geld is gebleven waar het was.",
+        "absent": "Er is niets verzonden, je kunt deze stap veilig opnieuw starten.",
+        "unknown": "We kunnen niet vaststellen of deze stap is doorgegaan, dus we sturen hem niet nog een keer. Controleer de activiteit van je wallet voordat je verdergaat."
+      },
+      "status": {
+        "complete": "Alles is gelukt. Je kunt verder.",
+        "wait": "Je geld is onderweg. Dit kan een paar minuten duren.",
+        "rederive": "We kunnen verder waar het gestopt is.",
+        "ask": "We willen dat je eerst iets controleert voordat we verdergaan."
       }
     }
   }

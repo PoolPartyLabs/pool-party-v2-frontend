@@ -480,7 +480,8 @@
       "buyUsdc": "Cartão ou Pix",
       "bridge": "Mover fundos para a rede certa",
       "swapGas": "Você escolhe o valor, pago com USDC",
-      "op": "Sua ação original"
+      "op": "Sua ação original",
+      "approve": "Uma permissão única. Nada é movido ainda."
     },
     "exec": {
       "title": "Preparando seus fundos",
@@ -526,6 +527,41 @@
       "buyCrypto": {
         "cta": "Comprar cripto",
         "hint": "Pague com cartão ou Pix e não precise mover fundos entre redes."
+      }
+    },
+    "fundingSources": {
+      "title": "O que você quer usar?",
+      "subtitle": "Escolha qualquer coisa que você tenha. A gente resolve como levar até o lugar certo.",
+      "listLabel": "Seus fundos",
+      "rowLabel": "{symbol} na {network}, {amount}, vale {usd}",
+      "selected": "Selecionado: {amount}",
+      "required": "Necessário: {amount}",
+      "remaining": "Faltam {amount}",
+      "surplus": "{amount} a mais do que o necessário",
+      "exact": "Coberto exatamente",
+      "empty": "Ainda não há nada aqui que a gente possa usar.",
+      "cta": "Continuar",
+      "step": "Passo {index}",
+      "unblock": "Para usar este dinheiro:",
+      "badge": {
+        "ok": "Pronto",
+        "topUp": "Precisa de uma recarga",
+        "blocked": "Ainda não dá para usar"
+      }
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Pronto.",
+        "pending": "Enviado. Estamos aguardando a confirmação e não vamos enviar de novo.",
+        "reverted": "Esta etapa não foi concluída, então seu dinheiro continua onde estava.",
+        "absent": "Nada foi enviado, então é seguro começar esta etapa de novo.",
+        "unknown": "Não conseguimos saber se esta etapa foi concluída, então não vamos enviar de novo. Confira a atividade da sua carteira antes de continuar."
+      },
+      "status": {
+        "complete": "Tudo certo. Você pode continuar.",
+        "wait": "Seus fundos estão a caminho. Isso pode levar alguns minutos.",
+        "rederive": "Podemos retomar de onde parou.",
+        "ask": "Precisamos que você confira uma coisa antes de continuarmos."
       }
     }
   }

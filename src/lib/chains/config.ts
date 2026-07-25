@@ -23,6 +23,17 @@ export interface ChainMeta {
   /** pool-party-api network slug, e.g. "arbitrum" (the single source for slug↔chainId). */
   apiNetworkId: string;
   /**
+   * The network's name AS THE PRODUCT SAYS IT (POO-1041 [R3]).
+   *
+   * Deliberately not `chain.name`: viem calls 42161 "Arbitrum One", while every other surface in
+   * this app (the deposit network picker, the manager pool maps, the mock catalog) says "Arbitrum".
+   * A funding plan that offers to "Move to Arbitrum One" next to a deposit screen listing "Arbitrum"
+   * reads as two different networks to someone who does not already know they are the same.
+   *
+   * This is the field the remaining per-feature name maps should collapse into.
+   */
+  displayName: string;
+  /**
    * Legacy (v0.8.0) network: hits the legacy pool-party-api backend (PP_API_URL_LEGACY) and omits
    * the Universal-Router `poolPartyPositionAddress`. Ported from the interface (Arbitrum + Base).
    */
@@ -50,6 +61,7 @@ export const supportedChainMetas: readonly ChainMeta[] = [
   {
     chain: arbitrum,
     apiNetworkId: "arbitrum",
+    displayName: "Arbitrum",
     isLegacy: true,
     rpcUrl: "https://arb1.arbitrum.io/rpc",
     usdc: { address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", decimals: 6 },
@@ -58,6 +70,7 @@ export const supportedChainMetas: readonly ChainMeta[] = [
   {
     chain: base,
     apiNetworkId: "base",
+    displayName: "Base",
     isLegacy: true,
     rpcUrl: "https://mainnet.base.org",
     usdc: { address: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", decimals: 6 },
@@ -66,6 +79,7 @@ export const supportedChainMetas: readonly ChainMeta[] = [
   {
     chain: polygon,
     apiNetworkId: "polygon",
+    displayName: "Polygon",
     isLegacy: false,
     // PP-NOTE: the former public endpoint (polygon-rpc.com) was retired (HTTP 401 "tenant
     // disabled"), which broke server-side reads like readUsdcBalance. publicnode is a keyless,
@@ -149,6 +163,17 @@ export function nativeSymbol(apiNetworkId: string | null | undefined): string {
  */
 export function wrappedNativeSymbol(apiNetworkId: string | null | undefined): string {
   return `W${nativeSymbol(apiNetworkId)}`;
+}
+
+/**
+ * The product's display name for a chain id (POO-1041 [R3]), or undefined if unsupported.
+ *
+ * Undefined rather than a fallback string on purpose: a caller interpolating an unresolved name
+ * ships "Move to undefined", so the absence has to be visible enough to branch on.
+ */
+export function chainDisplayName(chainId: number | null | undefined): string | undefined {
+  if (chainId == null) return undefined;
+  return supportedChainMetas.find((m) => m.chain.id === chainId)?.displayName;
 }
 
 /** Resolve a chain id to its API network slug, or undefined if unsupported. */

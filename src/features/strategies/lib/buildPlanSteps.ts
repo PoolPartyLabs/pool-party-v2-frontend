@@ -1,5 +1,5 @@
 /**
- * @id PP-STR-LIB-017 (POO-1036)
+ * @id PP-STR-LIB-017 (POO-1036, POO-1037, POO-1038)
  * @name buildPlanSteps (provisioning execution rail)
  * @implements-rules-version v1
  * @hackathon POO-1022 (Universal Funding)
@@ -53,11 +53,44 @@
  * broadcast hash, and the panel degrades to "still settling" rather than offering a retry that would
  * re-broadcast money already in flight.
  *
+ * ## Recovery and idempotency (POO-1038)
+ *
+ * Two obligations were added here, both from `02_BRIDGE_ARCHITECTURE.md` §3, and both are about
+ * never spending a user's money twice:
+ *
+ * - **The journal write ordering (§3.4).** Every value-moving leg is recorded as `planned` (with the
+ *   account nonce and, for a bridge, the destination baseline) BEFORE the wallet is prompted, and its
+ *   hash is written **synchronously the instant the node returns it**, before the receipt is awaited.
+ *   That is why the broadcast helper below is `sendBuiltTransaction` + `waitForReceipt` rather than
+ *   the combined `executeBuiltTransaction`: the combined form resolves only after the receipt, which
+ *   is exactly the window a closed tab falls into.
+ * - **The re-quote gate ([R5]).** A leg is re-quoted at execution time by construction, so the price
+ *   CAN move between approval and signature. A materially worse one is re-approved by the user before
+ *   anything is signed ({@link isRequoteMateriallyWorse}); with nobody to ask, it refuses.
+ *
+ * **Approvals are deliberately not journaled.** An approval moves no funds, so re-running one cannot
+ * spend money twice, and each leg reads its own `nonceBefore` immediately before its own prompt, so
+ * an approval's nonce consumption is already accounted for by the leg that follows it. Journaling
+ * approvals under the leg's index would be worse than useless: a settled approval would make the leg
+ * look done when its swap had never run.
+ *
+ * ## How the wait and the journal compose on a bridge leg
+ *
+ * The two designs above are the same story told from the live tab and from the reload, and they meet
+ * inside one `run()`. In order: the leg is journaled `planned` with its nonce and its destination
+ * baseline, the split send returns a hash that is journaled `broadcast` **synchronously**, that same
+ * hash is handed to {@link PlanRailDeps.onLegBroadcast}, the SOURCE receipt is awaited, and only then
+ * does {@link awaitBridgeSettlement} hold the step open until the destination balance clears the
+ * floor. So a bridge is waited for INLINE on the good path, and the record is durable the whole time.
+ *
+ * That is why a bridge leg is never marked `settled` from here even when the inline wait observes it
+ * land: the journal's arrival verdict has exactly one author, `reconcileFundingJournal` (§3.6), which
+ * re-derives it from the chain. Any other path (the poll ceiling, a closed tab, a dead RPC) leaves
+ * the leg `broadcast` with its hash recorded, which is precisely what makes the ceiling recoverable
+ * rather than a lost transfer.
+ *
  * ## Deliberately NOT here
  *
- * - **The recovery journal (POO-1038).** The rail carries in-flight facts forward through the flow
- *   context and reports each broadcast through {@link PlanRailDeps.onLegBroadcast}; persisting them
- *   to `localStorage` and reconciling on reload is that issue.
  * - **The bridge-spender ERC-20 allowance.** `02_BRIDGE_ARCHITECTURE.md` §1.2 claims `/check_approval`
  *   reports only the Permit2 allowance, so a BRIDGE route's own spender may need a separate approval.
  *   The action's cross-chain form (`tokenOut` + `tokenOutChainId`) is passed here, which is the shape
@@ -72,8 +105,9 @@ import { NATIVE_TOKEN_ADDRESS } from "@/lib/provisioning";
 import type { BuiltTx } from "@/lib/tx/builtTxSchema";
 import {
   type Eip1193Provider,
-  executeBuiltTransaction,
+  sendBuiltTransaction,
   TransactionError,
+  waitForReceipt,
 } from "@/lib/tx/sendTransaction";
 import type { UniswapQuoteResponse, UniswapTransactionRequest } from "@/lib/uniswap/schemas";
 import type { FlowStep, FlowStepResult } from "../hooks/useWalletSignFlow";
@@ -82,6 +116,7 @@ import {
   BRIDGE_PENDING_CODE,
   type BridgeSettlement,
 } from "./awaitBridgeSettlement";
+import type { FundingJournalRecorder } from "./fundingJournal";
 
 /**
  * The accumulating context, typed as the panel types it. `ProvisioningPanel` runs the rail with
@@ -173,17 +208,55 @@ export interface PlanRailDeps {
   /** Max slippage in percent. Falls back to the plan's own echoed figure. AMM legs only. */
   slippagePct?: number;
   /**
-   * Called the INSTANT a leg's broadcast returns a hash, before anything is awaited.
+   * The recovery journal for THIS plan (POO-1038 [R2]), bound to the journal minted when the user
+   * approved the cost breakdown. Optional: a rail with no journal executes identically and simply
+   * has no in-flight record to recover from, which is the pre-POO-1038 behaviour.
+   */
+  journal?: FundingJournalRecorder;
+  /**
+   * Ask the user to approve a materially worse re-quote before it is signed ([R5]). Resolving
+   * `false` aborts the leg without broadcasting. With no confirmer wired the rail REFUSES a worse
+   * price rather than signing it silently: there is nobody to approve it, and a user must never sign
+   * a materially different price than the one they agreed to.
+   */
+  confirmRequote?: (change: RequoteChange) => Promise<boolean>;
+  /**
+   * Called the INSTANT a leg's broadcast returns a hash, before anything is awaited, from the same
+   * synchronous point as the journal's own `broadcast` write.
    *
-   * PP-INTEGRATION-POINT (POO-1038): this is the recovery journal's `status: "broadcast"` write, and
-   * the write ordering IS the safety property (`02_BRIDGE_ARCHITECTURE.md` §3.4): a transaction that
-   * has been sent but not settled is invisible to a balance read, so a hash the app never recorded is
-   * indistinguishable from nothing having happened, and that is how a user bridges twice. Also the
-   * channel a long-running bridge step's explorer link comes from, since the flow only records a
-   * hash a step RETURNS and a bridge leg does not return for minutes.
+   * Since POO-1038 the DURABLE record is {@link journal}, so this is no longer the journal seam
+   * itself; it is the live-tab channel beside it. The ordering is still the safety property
+   * (`02_BRIDGE_ARCHITECTURE.md` §3.4): a transaction that has been sent but not settled is invisible
+   * to a balance read, so a hash the app never recorded is indistinguishable from nothing having
+   * happened, and that is how a user bridges twice. It is also where a long-running bridge step's
+   * explorer link comes from, since the flow only records a hash a step RETURNS and a bridge leg does
+   * not return until its funds land on the destination chain.
    */
   onLegBroadcast?: (event: { leg: ProvisioningLeg; txHash: string; at: number }) => void;
 }
+
+/** What moved between the price the user approved and the price about to be signed ([R5]). */
+export interface RequoteChange {
+  /** The route leg's index, so the surface can name the step. */
+  legIndex: number;
+  /** Base units in, as this leg is REALLY sized at execution time. */
+  amountIn: string;
+  /** Base units out at the price the user approved, scaled to nothing: the planner's own figure. */
+  approvedAmountOut: string;
+  /** Base units out the fresh quote offers for {@link amountIn}. */
+  quotedAmountOut: string;
+  /** How much worse the RATE got, in basis points. Always positive when this is raised. */
+  worseBps: number;
+}
+
+/**
+ * How far a re-quote may drift against the user before it has to be re-approved: 100 bps (1%).
+ *
+ * A quote for a leg expires in about a minute and a bridge settles in minutes, so a re-quote is
+ * normal rather than exceptional (§4.4). Re-prompting on every basis point would train users to
+ * click through the prompt, which is worse than not having it.
+ */
+export const REQUOTE_MATERIAL_BPS = 100;
 
 /** Whether a rail step grants an allowance or executes the route leg itself. */
 export type PlanRailStepKind = "approve" | "leg";
@@ -327,6 +400,54 @@ async function runApprovalStep(
 }
 
 /**
+ * Has the price moved materially against the user since they approved it ([R5])?
+ *
+ * Compares RATES, not amounts, because a leg is re-sized at execution time from the balance the
+ * previous one really produced: half the input for half the output is the same price and must not
+ * read as a worsening. Cross-multiplied in `BigInt` so no float touches a money comparison.
+ *
+ *   worse ⟺  quotedOut · approvedIn · 10000  <  approvedOut · quotedIn · (10000 − tolerance)
+ *
+ * A quote carrying no output amount (the field is optional on the wire) cannot be compared at all.
+ * That answers `false`: refusing every leg whose quote omits an optional field would break the rail
+ * for a shape the API is allowed to send, and the leg still has its own slippage floor on-chain.
+ */
+export function isRequoteMateriallyWorse(
+  approved: { amountIn: string; amountOut: string },
+  quoted: { amountIn: string; amountOut: string },
+  toleranceBps: number = REQUOTE_MATERIAL_BPS,
+): boolean {
+  const worse = requoteWorseBps(approved, quoted);
+  return worse !== null && worse > toleranceBps;
+}
+
+/** How much worse the rate got, in bps; negative when better, null when it cannot be compared. */
+function requoteWorseBps(
+  approved: { amountIn: string; amountOut: string },
+  quoted: { amountIn: string; amountOut: string },
+): number | null {
+  let approvedIn: bigint;
+  let approvedOut: bigint;
+  let quotedIn: bigint;
+  let quotedOut: bigint;
+  try {
+    approvedIn = BigInt(approved.amountIn);
+    approvedOut = BigInt(approved.amountOut);
+    quotedIn = BigInt(quoted.amountIn);
+    quotedOut = BigInt(quoted.amountOut);
+  } catch {
+    return null;
+  }
+  if (approvedIn <= BigInt(0) || quotedIn <= BigInt(0) || approvedOut <= BigInt(0)) return null;
+
+  const approvedScaled = approvedOut * quotedIn;
+  const quotedScaled = quotedOut * approvedIn;
+  // Integer bps of the shortfall against the approved rate. Truncation rounds toward "not worse",
+  // which only ever matters within a single basis point of the threshold.
+  return Number(((approvedScaled - quotedScaled) * BigInt(10_000)) / approvedScaled);
+}
+
+/**
  * Execute one route leg: re-quote, record the destination baseline, sign any permit, build, broadcast.
  *
  * The baseline read sits before ANY wallet prompt on purpose (`02_BRIDGE_ARCHITECTURE.md` §3.4): it is
@@ -358,9 +479,15 @@ async function runLegStep(
   });
   if (!quoted.ok) throw actionError(quoted);
 
-  // PP-INTEGRATION-POINT (POO-1037/POO-1038): the pre-broadcast destination balance, which is the
-  // "before" side of the arrival test below. Read here, before ANY wallet prompt, because it is not
-  // measurable once the transaction is in flight.
+  // [R5] Before any signature: is this still the price the user approved?
+  const quotedOut = quoted.quote.quote.output?.amount;
+  await gateRequote(leg, amount, quotedOut, deps);
+
+  // PP-INTEGRATION-POINT (POO-1037/POO-1038): the pre-broadcast destination balance, the "before"
+  // side of the arrival test below (a bridge settles when `balanceOf(tokenOut) - this >= minAmountOut`
+  // on the destination chain, §3.6). Read here, before ANY wallet prompt, because it is not
+  // measurable once the transaction is in flight, and it is the same figure the journal persists so
+  // a second session can re-run that test without this one.
   const baseline = await deps.readTokenBalance({
     chainId: leg.tokenOut.chainId,
     token: leg.tokenOut.address,
@@ -370,6 +497,23 @@ async function runLegStep(
     ...state,
     outBaselines: { ...state.outBaselines, [leg.index]: baseline },
   };
+
+  // [R2] §3.4 steps 1 and 2: the intent, the account nonce and the destination baseline are all in
+  // the record BEFORE the wallet is prompted. The arrival threshold is the FRESH quote's output, not
+  // the planner's: this leg may have been re-sized, and a threshold sized for an amount we are no
+  // longer sending would leave a perfectly good bridge reading as unarrived forever.
+  await deps.journal?.beginLeg({
+    index: leg.index,
+    kind: leg.kind,
+    chainId: leg.chainId,
+    tokenIn: leg.tokenIn.address,
+    tokenOut: leg.tokenOut.address,
+    amountIn: amount,
+    minAmountOut: quotedOut ?? leg.minAmountOut,
+    ...(leg.tokenOut.chainId === leg.chainId
+      ? {}
+      : { destChainId: leg.tokenOut.chainId, destBalanceBefore: baseline }),
+  });
 
   // [R3] A quote that carries `permitData` needs it signed before `/swap` will build anything.
   const permitData = quoted.quote.permitData;
@@ -385,8 +529,9 @@ async function runLegStep(
 
   // [R1] The single broadcast choke point: chain assertion (one corrective switch, then re-verify)
   // and account assertion, inherited rather than re-implemented.
-  const txHash = await broadcast(built.swap, leg.chainId, deps);
-  reportBroadcast(leg, txHash, deps);
+  // Passing the leg is what makes this broadcast journaled: the hash is written, and reported, the
+  // instant the node returns it and before the receipt is awaited (§3.4 step 4).
+  const txHash = await broadcast(built.swap, leg.chainId, deps, leg);
   // POO-1037: for a bridge leg this hash proves only that the funds LEFT the source chain. Arrival is
   // a destination-chain observation, minutes later, and the step is not done until it happens.
   if (leg.tokenOut.chainId !== leg.chainId) {
@@ -401,8 +546,16 @@ async function runLegStep(
       },
       { readTokenBalance: deps.readTokenBalance },
     );
+    // At the ceiling the leg stays `broadcast` in the journal WITH its hash, which is the whole
+    // reason this throw is recoverable rather than a lost transfer (§3.6).
     if (!settlement.settled) throw bridgeStillSettling(leg, txHash, settlement);
   }
+  // §3.6: a bridge is never called settled from here, not even by the inline wait above. The journal's
+  // arrival verdict has one author, `reconcileFundingJournal`, which re-derives it from the chain; a
+  // rail that wrote it too would be the "fakes success" failure by another name. Everything else is
+  // done the moment its receipt is in, and this sits AFTER the wait so a cross-chain leg can never be
+  // recorded settled on a source receipt whatever its `kind` says.
+  if (leg.kind !== "bridge") deps.journal?.recordSettled(leg.index);
   return {
     [PLAN_RAIL_STATE_KEY]: {
       ...withBaseline,
@@ -484,12 +637,14 @@ async function sizeFromRealBalance(
 }
 
 /**
- * Hand the fresh hash to the journal seam, and never let that fail the leg.
+ * Hand the fresh hash to the live-tab seam, and never let that fail the leg.
  *
  * The money has already moved by the time this runs. A callback that throws (a full `localStorage`,
  * a host bug) must not turn a successful broadcast into a flow error, because the flow's `retry()`
  * re-invokes the failed step verbatim, which for a bridge is a second deposit of the same funds.
- * Losing the journal write degrades RECOVERY; failing here would risk the money itself.
+ * Losing the write degrades RECOVERY; failing here would risk the money itself. The durable journal
+ * beside it needs no such wrapper: `fundingJournal` already swallows an unwritable store internally,
+ * for the same reason.
  */
 function reportBroadcast(leg: ProvisioningLeg, txHash: string, deps: PlanRailDeps): void {
   try {
@@ -525,17 +680,70 @@ function bridgeStillSettling(
   );
 }
 
-/** Send a provider-built transaction through the shipped choke point and wait for its receipt. */
-function broadcast(
+/**
+ * Send a provider-built transaction through the shipped choke point and wait for its receipt.
+ *
+ * Deliberately NOT `executeBuiltTransaction`, which is the same two calls in one: it resolves only
+ * after the receipt, and both records of the hash have to happen in between ([R2], §3.4 step 4).
+ * `sendBuiltTransaction` resolves the moment the node accepts the transaction, and that resolution
+ * point is where the hash is written to the journal and reported to the live tab, synchronously,
+ * before anything is awaited. A hash learned and then lost to a closed tab is the failure this
+ * ordering exists to prevent, and for a bridge that loss is a second deposit of the same money.
+ *
+ * `leg` is absent for an approval step, which is exactly why an approval is neither journaled nor
+ * reported: it moves no funds, so re-running one cannot spend money twice.
+ */
+async function broadcast(
   request: UniswapTransactionRequest,
   targetChainId: number,
   deps: PlanRailDeps,
+  leg?: ProvisioningLeg,
 ): Promise<`0x${string}`> {
-  return executeBuiltTransaction(
+  const hash = await sendBuiltTransaction(
     deps.provider,
     toBuiltTx(request, deps.owner),
     deps.owner,
     targetChainId,
+  );
+  if (leg) {
+    deps.journal?.recordBroadcast(leg.index, hash);
+    reportBroadcast(leg, hash, deps);
+  }
+  await waitForReceipt(deps.provider, hash);
+  return hash;
+}
+
+/**
+ * Hold the leg if the fresh quote is materially worse than the price the user approved ([R5]).
+ *
+ * Runs BEFORE the permit signature and therefore before anything the user could mistake for consent.
+ * With no confirmer wired this refuses rather than proceeding: silently signing a refreshed quote is
+ * the failure mode that turns a good integration into a support incident (§4.4).
+ */
+async function gateRequote(
+  leg: ProvisioningLeg,
+  amountIn: string,
+  quotedOut: string | undefined,
+  deps: PlanRailDeps,
+): Promise<void> {
+  if (quotedOut === undefined) return;
+  const approved = { amountIn: leg.amountIn, amountOut: leg.amountOutQuoted };
+  const quoted = { amountIn, amountOut: quotedOut };
+  if (!isRequoteMateriallyWorse(approved, quoted)) return;
+
+  const change: RequoteChange = {
+    legIndex: leg.index,
+    amountIn,
+    approvedAmountOut: leg.amountOutQuoted,
+    quotedAmountOut: quotedOut,
+    worseBps: requoteWorseBps(approved, quoted) ?? 0,
+  };
+  if (deps.confirmRequote && (await deps.confirmRequote(change))) return;
+  throw new TransactionError(
+    deps.confirmRequote
+      ? "The new price was not approved, so nothing was sent"
+      : "The price for this step moved against you and could not be re-approved",
+    { code: deps.confirmRequote ? "PROVISIONING_REQUOTE_REJECTED" : "PROVISIONING_REQUOTE_WORSE" },
   );
 }
 

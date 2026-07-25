@@ -480,7 +480,8 @@
       "buyUsdc": "Karte oder lokale Überweisung",
       "bridge": "Guthaben ins richtige Netzwerk verschieben",
       "swapGas": "Sie wählen den Betrag, bezahlt mit USDC",
-      "op": "Ihre ursprüngliche Aktion"
+      "op": "Ihre ursprüngliche Aktion",
+      "approve": "Eine einmalige Freigabe. Es wird noch nichts bewegt."
     },
     "exec": {
       "title": "Ihr Guthaben wird vorbereitet",
@@ -526,6 +527,41 @@
       "buyCrypto": {
         "cta": "Stattdessen Krypto kaufen",
         "hint": "Zahle per Karte oder Pix, ohne Mittel zwischen Netzwerken zu bewegen."
+      }
+    },
+    "fundingSources": {
+      "title": "Was möchten Sie einsetzen?",
+      "subtitle": "Wählen Sie, was Sie halten. Wir kümmern uns darum, es an die richtige Stelle zu bringen.",
+      "listLabel": "Ihr Guthaben",
+      "rowLabel": "{symbol} auf {network}, {amount}, wert {usd}",
+      "selected": "Ausgewählt: {amount}",
+      "required": "Benötigt: {amount}",
+      "remaining": "Es fehlen noch {amount}",
+      "surplus": "{amount} mehr als nötig",
+      "exact": "Genau gedeckt",
+      "empty": "Hier gibt es noch nichts, was wir einsetzen können.",
+      "cta": "Weiter",
+      "step": "Schritt {index}",
+      "unblock": "Um dieses Guthaben zu nutzen:",
+      "badge": {
+        "ok": "Bereit",
+        "topUp": "Braucht eine Aufladung",
+        "blocked": "Noch nicht nutzbar"
+      }
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Fertig.",
+        "pending": "Gesendet. Wir warten auf die Bestätigung und senden es nicht erneut.",
+        "reverted": "Dieser Schritt wurde nicht ausgeführt, Ihr Geld ist geblieben, wo es war.",
+        "absent": "Es wurde nichts gesendet, Sie können diesen Schritt gefahrlos erneut starten.",
+        "unknown": "Wir können nicht feststellen, ob dieser Schritt ausgeführt wurde, deshalb senden wir ihn nicht erneut. Prüfen Sie die Aktivität Ihrer Wallet, bevor Sie fortfahren."
+      },
+      "status": {
+        "complete": "Alles ist durchgelaufen. Sie können fortfahren.",
+        "wait": "Ihr Guthaben ist unterwegs. Das kann einige Minuten dauern.",
+        "rederive": "Wir können dort weitermachen, wo es stehen geblieben ist.",
+        "ask": "Bitte prüfen Sie eine Sache, bevor wir fortfahren."
       }
     }
   }
