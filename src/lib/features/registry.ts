@@ -31,6 +31,7 @@ export type FeatureKey =
   | "perps"
   | "adminConsole"
   | "provisioning"
+  | "swapScreen"
   | "virtualize"
   | "strategyCategoryFilter";
 
@@ -180,6 +181,26 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
     envVar: "NEXT_PUBLIC_FEATURE_PROVISIONING",
     description:
       "Pre-flight provisioning gate embedded in the op modals (invest/withdraw/collect/compound/move-range/close). Wired to live balances + the Uniswap funding rail (POO-1042). Not a route, so it is never route-guarded.",
+  },
+  swapScreen: {
+    key: "swapScreen",
+    area: "Swap & bridge",
+    // POO-1046, hackathon POO-1022. Dark-launched (premise 10) on a flat baseline: `/swap` 404s
+    // until an environment turns it on, and the wallet modal's Swap action stays exactly the inert
+    // "coming soon" it has been since POO-240.
+    //
+    // Distinct from `provisioning`, deliberately. That flag gates the pre-flight gate EMBEDDED in
+    // the six operation modals; this one gates a standalone ROUTE. They share the whole rail below
+    // them, and they are still two independent launch decisions: the funding gate can ship inside
+    // invest long before a user-facing "move my money" screen does, or the other way round.
+    defaultEnabled: false,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_SWAP_SCREEN",
+    // The description ships to the browser (this registry is client-imported), so it deliberately
+    // does NOT name the server-only Uniswap key env var: UF-28 [R1] proves the boundary with a grep
+    // over the build output, and a mention here would be a false positive in that gate.
+    description:
+      "Standalone swap + bridge screen at `/swap`, and the wallet modal's Swap action that routes to it. Runs on the shipped provisioning rail (ProvisioningPanel → buildPlanSteps), so a live route also needs real mode and the server-side Uniswap credentials. Route-guarded (404 while off).",
   },
   virtualize: {
     key: "virtualize",

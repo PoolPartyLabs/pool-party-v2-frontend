@@ -105,7 +105,7 @@ function setup() {
 
 /** Type an amount and open the plan, waiting for the wallet read the CTA gates on. */
 async function continueWith(user: ReturnType<typeof userEvent.setup>, amount: string) {
-  await user.type(screen.getByLabelText("Amount in US dollars"), amount);
+  await user.type(screen.getByRole("textbox"), amount);
   const cta = screen.getByRole("button", { name: "Continue" });
   await waitFor(() => expect(cta).toBeEnabled());
   await user.click(cta);
@@ -136,11 +136,11 @@ describe("SwapScreen (POO-1046)", () => {
     const cta = screen.getByRole("button", { name: "Continue" });
     expect(cta).toBeDisabled();
 
-    await user.type(screen.getByLabelText("Amount in US dollars"), "0");
+    await user.type(screen.getByRole("textbox"), "0");
     expect(cta).toBeDisabled();
 
-    await user.clear(screen.getByLabelText("Amount in US dollars"));
-    await user.type(screen.getByLabelText("Amount in US dollars"), "120");
+    await user.clear(screen.getByRole("textbox"));
+    await user.type(screen.getByRole("textbox"), "120");
     expect(cta).toBeEnabled();
   });
 
@@ -184,7 +184,7 @@ describe("SwapScreen (POO-1046)", () => {
     await user.click(screen.getByRole("button", { name: "panel-cancel" }));
 
     expect(screen.queryByTestId("provisioning-panel")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Amount in US dollars")).toHaveValue("120");
+    expect(screen.getByRole("textbox")).toHaveValue("120");
   });
 
   it("confirms the funds landed once the rail reports success", async () => {
