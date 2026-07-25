@@ -540,9 +540,11 @@
       "surplus": "{amount} más de lo necesario",
       "exact": "Cubierto exactamente",
       "empty": "Todavía no hay nada aquí que podamos usar.",
+      "repriced": "El precio final subió un poco. Elige otra fuente para cubrir {amount}.",
       "cta": "Continuar",
       "step": "Paso {index}",
       "unblock": "Para usar este dinero:",
+      "unreachable": "Todavía no podemos llevar {symbol} a esta red, así que no se puede usar aquí.",
       "badge": {
         "ok": "Listo",
         "topUp": "Necesita una recarga",

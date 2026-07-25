@@ -83,6 +83,59 @@ export function isSelectableVerdict(verdict: GasVerdict | undefined): boolean {
 }
 
 /**
+ * Can this holding reach the operation's chain? (POO-1042 [R8])
+ *
+ * `reachableChainIds` has been on the inventory since POO-1031 and nothing consulted it, because the
+ * SELECTOR does not know which chain the operation runs on. The gate host does, so the check belongs
+ * at that layer, and it belongs BEFORE the pick: a token Uniswap routes nowhere near the target
+ * produces a 404 at quote time, after the user chose it and read a running total that counted it.
+ *
+ * An empty set means the routability lookup degraded, not that the money is stranded. Same-chain is
+ * still offered in that case: it executes with no bridge at all, so the one fact we would have
+ * needed the lookup for does not apply, and hiding a funded row on missing information is exactly
+ * the failure [R6] forbids. Cross-chain is not offered, because there the missing fact is the whole
+ * question.
+ */
+export function reachesChain(
+  source: Pick<FundingSource, "chainId" | "reachableChainIds">,
+  targetChainId: number,
+): boolean {
+  const reachable = source.reachableChainIds ?? [];
+  if (reachable.length === 0) return source.chainId === targetChainId;
+  return reachable.includes(targetChainId);
+}
+
+/**
+ * Proportional headroom over the bare shortfall when seeding the picker's requirement ([R7]).
+ *
+ * 5% covers the three things that can only be priced after a route exists: the investor default max
+ * slippage (2%), Uniswap's own fee (at most 1% on the pairs this rail routes) and Across's bridge
+ * fee (a fraction of a percent). Over-asking is the deliberate direction, because [R7]'s hard
+ * constraint is that the CTA must never flip from enabled to disabled underneath the user, and it
+ * costs nothing: any headroom the quoted plan does not consume stays in the wallet.
+ */
+export const SEED_BUFFER_RATE = 0.05;
+
+/**
+ * What to ask the picker to cover BEFORE a route has been quoted ([R7]).
+ *
+ * The circularity this resolves: the honest requirement is the plan's own `totalPayUsd`, which is
+ * only known after `buildPlan` prices a route, which depends on which sources were picked. So the
+ * picker is seeded conservatively here, and the QUOTED plan is re-checked against the selection
+ * before the user commits (`ProvisioningPanel`) — the seed opens the CTA, the quote is the final
+ * word.
+ *
+ * Rounds UP to the cent, for the same reason the running total rounds a shortfall up: a sub-cent
+ * gap must never read as covered. A broken reading contributes nothing rather than NaN, which would
+ * propagate into the CTA's comparison and silently open it.
+ */
+export function seedRequiredUsd(shortfallUsd: number, gasUsd = 0): number {
+  const shortfall = toMicros(shortfallUsd);
+  const gas = toMicros(gasUsd);
+  return ceilToUsd(Math.round(shortfall * (1 + SEED_BUFFER_RATE)) + gas);
+}
+
+/**
  * Toggle a source in the selection, preserving pick order [R4].
  *
  * Selection order IS route order: `buildPlan` consumes the sources in the order it receives them, so

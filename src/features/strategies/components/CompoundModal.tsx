@@ -96,7 +96,9 @@ export function CompoundModal({
   const format = useFormatter();
   const [phase, setPhase] = useState<Phase>("confirm");
   // POO-419: pre-flight gate (dark-launched flag) — decides confirm → provision → pending.
-  const gate = useProvisioningGate();
+  // POO-1042 [R2]: the compound runs on the STRATEGY's chain. It reinvests yield the position already
+  // holds, so it asks the wallet for no USDC ([R3]) and only ever needs gas there.
+  const gate = useProvisioningGate({ op: "compound", network: strategy.network, enabled: open });
   const [txError, setTxError] = useState<TxError | null>(null);
   // POO-514: the flow hash shown on the receipt (today always the mock settle hash — the compound
   // executor is mock-only until POO-511 wires the real one).
@@ -281,7 +283,7 @@ export function CompoundModal({
               onClick={() => {
                 // POO-419: gas-only pre-flight (no amount arg). If the wallet is short on gas or on
                 // the wrong network, provision first, then resume this compound.
-                if (gate.evaluate("compound", strategy)) {
+                if (gate.evaluate()) {
                   setPhase("provision");
                   return;
                 }
@@ -304,6 +306,7 @@ export function CompoundModal({
                 onDone mirrors the confirm CTA's setPhase("pending") + flow.run() transition exactly). */}
             <ProvisioningPanel
               input={gate.input}
+              context={gate.context}
               opLabel={t(provisioningOpLabelKey("compound"), { strategy: strategy.name })}
               onDone={() => {
                 gate.setLocked(false);

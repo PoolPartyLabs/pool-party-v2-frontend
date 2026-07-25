@@ -47,11 +47,26 @@ export interface ProvisioningPlanState {
  * `gasChoice` is the user's explicit gas top-up from the inline selector. Pass `undefined` while the
  * choice is absent or invalid: the callers deliberately do NOT re-plan on an empty or invalid Custom
  * amount, so the swap-gas step never silently drops mid-edit (review POO-409).
+ *
+ * `options` (POO-1042):
+ *
+ *   `selection` is the funding sources the user picked, in PICK ORDER, as inventory keys. The real
+ *   planner resolves them server-side against a fresh inventory and treats their order as route
+ *   order, so the plan the user reviewed is the plan that executes. Changing it re-plans, exactly
+ *   as changing the gas amount does. Absent in mock mode, which has no inventory.
+ *
+ *   `enabled` (default true) suspends planning entirely. The real planner reads the wallet and takes
+ *   a live quote per candidate chain, so planning before the user has chosen anything is a fan-out
+ *   of upstream calls against a rate-limited API for a route nobody asked for. `plan` stays null and
+ *   `loading` stays true while suspended, which is exactly what a surface that has not asked yet
+ *   should render: nothing.
  */
 export function useProvisioningPlan(
   input: ProvisioningNeedInput,
   gasChoice?: GasChoice,
+  options: { selection?: readonly string[]; enabled?: boolean } = {},
 ): ProvisioningPlanState {
+  const { selection, enabled = true } = options;
   const [state, setState] = useState<ProvisioningPlanState>({
     plan: null,
     loading: true,
@@ -66,10 +81,13 @@ export function useProvisioningPlan(
   // live objects from refs, so a re-plan happens when the planner's inputs actually changed.
   const inputKey = JSON.stringify(input);
   const gasKey = JSON.stringify(gasChoice ?? null);
+  const selectionKey = JSON.stringify(selection ?? null);
   const inputRef = useRef(input);
   inputRef.current = input;
   const gasRef = useRef(gasChoice);
   gasRef.current = gasChoice;
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
 
   // The deps are the serialized KEYS, while the effect body reads the live objects from refs. Biome
   // sees that as two extra dependencies; removing them is exactly the bug (the plan would never
@@ -78,9 +96,12 @@ export function useProvisioningPlan(
   useEffect(() => {
     const runId = ++runIdRef.current;
     setState((prev) => ({ ...prev, loading: true, error: null }));
+    // Suspended: the caller has not asked for a plan yet. Bumping the run id above is what makes an
+    // in-flight plan from a previous run unable to land after the surface moved on.
+    if (!enabled) return;
 
     // PP-INTEGRATION-POINT: the mock/real provisioning planner seam (POO-1034 wires the real one).
-    computePlan(inputRef.current, gasRef.current)
+    computePlan(inputRef.current, gasRef.current, selectionRef.current)
       .then((plan) => {
         if (runIdRef.current !== runId) return; // superseded
         setState({ plan, loading: false, error: null });
@@ -90,7 +111,7 @@ export function useProvisioningPlan(
         const error = caught instanceof Error ? caught : new Error(String(caught));
         setState({ plan: null, loading: false, error });
       });
-  }, [inputKey, gasKey]);
+  }, [inputKey, gasKey, selectionKey, enabled]);
 
   return state;
 }

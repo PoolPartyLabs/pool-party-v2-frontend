@@ -3,6 +3,8 @@
  * @name feature registry — tests
  * Behavior: the catalog is internally consistent and encodes the v1 launch matrix.
  */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FEATURE_KEYS, FEATURES } from "./registry";
 
@@ -61,6 +63,21 @@ describe("feature registry", () => {
     expect(FEATURES.strategyCategoryFilter.envVar).toBe(
       "NEXT_PUBLIC_FEATURE_STRATEGY_CATEGORY_FILTER",
     );
+  });
+
+  it("the provisioning flag ships off, on a FLAT baseline (POO-1042 [R5])", () => {
+    // The baseline used to be `process.env.NODE_ENV === "development"`, so what production did
+    // depended on how it was built rather than on a decision anyone made. Now it is a literal, and
+    // the go-live switch is the env var like every other flag.
+    expect(FEATURES.provisioning.defaultEnabled).toBe(false);
+    expect(FEATURES.provisioning.envVar).toBe("NEXT_PUBLIC_FEATURE_PROVISIONING");
+  });
+
+  it("no flag's baseline is computed from NODE_ENV (POO-1042 [R5])", () => {
+    // A registry read at import time under a different NODE_ENV must produce the same matrix. This
+    // is the drift guard: the source, not the value, is what the rule is about.
+    const source = readFileSync(join(__dirname, "registry.ts"), "utf8");
+    expect(source).not.toMatch(/defaultEnabled:\s*process\.env\.NODE_ENV/);
   });
 
   it("does NOT register a financialsV2 flag (PP-CORE-LIB-048 removed it)", () => {

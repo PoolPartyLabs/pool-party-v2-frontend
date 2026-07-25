@@ -40,12 +40,19 @@ import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "./types
 export async function computePlan(
   input: ProvisioningNeedInput,
   gasChoice?: GasChoice,
+  selection?: readonly string[],
 ): Promise<ProvisioningPlan> {
   if (!isMockMode) {
-    // PP-INTEGRATION-POINT: the real planner runs server-side (POO-1034) so the Uniswap API key
-    // never reaches the browser. The action returns a typed result rather than throwing across the
-    // RSC boundary; we convert a failure into a rejection here, which is what the hook expects.
-    const result = await computePlanAction(input, gasChoice);
+    // PP-INTEGRATION-POINT: the real planner runs server-side (POO-1034/POO-1042) so the Uniswap
+    // API key never reaches the browser. The action returns a typed result rather than throwing
+    // across the RSC boundary; we convert a failure into a rejection here, which is what the hook
+    // expects.
+    //
+    // `gasChoice` is NOT forwarded: in real mode the gas top-up is sized by the classifier from a
+    // live quote, so there is nothing for a typed amount to attach to (see `planActions.ts`, and
+    // PP-TODO(POO-1044) which owns the real gas selector). The panel hides the selector in real
+    // mode accordingly, so nothing on screen implies a control that would do nothing.
+    const result = await computePlanAction(input, selection);
     if (!result.ok) {
       // The house error contract (POO-475 [R3], documented in `@/lib/tx/actionResult`): a typed
       // action failure is rethrown as a `TransactionError` carrying the code on `error.cause.code`,

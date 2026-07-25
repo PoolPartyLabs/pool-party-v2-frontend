@@ -377,8 +377,6 @@ export function WithdrawModal({
   // POO-853 [R6]: log a referred wallet's remove-liquidity to the referral operation feed (real-only,
   // deduped, fire-and-forget); no-ops for non-referred wallets and in mock mode.
   const logReferralOp = useReferralOperationLog();
-  // POO-419: pre-flight gate (dark-launched flag) — decides review → provision → pending.
-  const gate = useProvisioningGate();
   // Closed position: the manager already unwound it, so the whole flow collapses to one step.
   const isClosedPosition = position.status === "closed";
   const initialPhase: Phase = isClosedPosition ? "closed" : "method";
@@ -403,6 +401,15 @@ export function WithdrawModal({
   const [unit, setUnit] = useState<"usd" | "pct">("usd");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [slippage, setSlippage] = useState<number>(DEFAULT_SLIPPAGE_PCT);
+  // POO-419: pre-flight gate (dark-launched flag) — decides review → provision → pending.
+  // POO-1042 [R2]: the withdraw runs on the STRATEGY's chain, so the gate reads live balances there.
+  // A withdraw spends no USDC, so it never carries an amount ([R3]).
+  const gate = useProvisioningGate({
+    op: "withdraw",
+    network: strategy.network,
+    enabled: open,
+    slippagePct: slippage,
+  });
   const [deadlineMins, setDeadlineMins] = useState(30);
   // POO-481 R1 (supersedes the POO-403 R4 N-way picker): binary receive-as, USDC (default) or the
   // pool token pair, resolved from data the modal already holds in BOTH modes
@@ -1094,7 +1101,7 @@ export function WithdrawModal({
                 });
                 // POO-419: if the wallet is short on gas / the right network, provision first, then
                 // resume this withdraw. Gas-only op (a withdraw spends no USDC) → no amount arg.
-                if (gate.evaluate("withdraw", strategy)) {
+                if (gate.evaluate()) {
                   setPhase("provision");
                   return;
                 }
@@ -1121,6 +1128,7 @@ export function WithdrawModal({
             <StrategyMiniHeader strategy={strategy} />
             <ProvisioningPanel
               input={gate.input}
+              context={gate.context}
               opLabel={t(provisioningOpLabelKey("withdraw"), { strategy: strategy.name })}
               onDone={() => {
                 gate.setLocked(false);

@@ -58,6 +58,7 @@ import {
   fundingProgress,
   fundingSourceKey,
   isSelectableVerdict,
+  reachesChain,
   toggleFundingSource,
 } from "./fundingSelection";
 
@@ -84,6 +85,14 @@ export interface FundingSourceSelectorProps {
    * user will actually be charged [R5].
    */
   requiredUsd: number;
+  /**
+   * The chain the operation runs on (POO-1042 [R8]). When set, a holding whose
+   * {@link FundingSource.reachableChainIds} does not include it is rendered greyed and explained
+   * rather than dropped, for the same reason a BLOCKED row is: the user's own money must not look
+   * like it does not exist. Omitted, every row is routable as far as this component knows, which is
+   * the POO-1039 behavior.
+   */
+  targetChainId?: number;
   /** The selected source keys, in pick order, which is route order [R4]. Controlled. */
   selected: readonly string[];
   /** Called with the next selection on every toggle. */
@@ -112,6 +121,7 @@ export function FundingSourceSelector({
   sources,
   gasByChainId,
   requiredUsd,
+  targetChainId,
   selected,
   onSelectedChange,
   onConfirm,
@@ -188,6 +198,9 @@ export function FundingSourceSelector({
                 key={key}
                 source={source}
                 feasibility={gasByChainId[source.chainId]}
+                // [R8] Routability is a property of the token AND the destination, so it can only be
+                // judged with the operation's chain in hand.
+                unreachable={targetChainId !== undefined && !reachesChain(source, targetChainId)}
                 position={position}
                 onToggle={() => onSelectedChange(toggleFundingSource(selected, key))}
               />
@@ -222,11 +235,14 @@ export function FundingSourceSelector({
 function SourceRow({
   source,
   feasibility,
+  unreachable,
   position,
   onToggle,
 }: {
   source: FundingSource;
   feasibility: GasFeasibility | undefined;
+  /** POO-1042 [R8]: this holding cannot be routed to the operation's chain. */
+  unreachable?: boolean;
   /** Index in the selection, or `-1` when unselected. Its 1-based form is the route step [R4]. */
   position: number;
   onToggle: () => void;
@@ -234,7 +250,9 @@ function SourceRow({
   const t = useTranslations("strategies");
   const rowId = useId();
   const verdict = feasibility?.verdict;
-  const selectable = isSelectableVerdict(verdict);
+  // Two independent reasons a row cannot be spent from: the chain cannot pay its own gas, or the
+  // token cannot reach the destination. Both grey the row; each states its own cause.
+  const selectable = isSelectableVerdict(verdict) && !unreachable;
   const isSelected = position >= 0;
 
   const slug = networkSlug(source.chainId);
@@ -251,15 +269,18 @@ function SourceRow({
   // The verdict copy is interpolated with the chain's native symbol and, for a top-up, the holding
   // the gas slice comes from. Both come from the shared chain config, never a local literal.
   const native = nativeSymbol(apiNetworkForChain(source.chainId));
-  const reason =
-    verdict === "TOP_UP" || verdict === "BLOCKED"
+  // [R8] Unreachability wins the explanation: a chain's gas verdict is irrelevant to a holding that
+  // cannot get to the destination at all.
+  const reason = unreachable
+    ? t("provisioning.fundingSources.unreachable", { symbol: source.symbol })
+    : verdict === "TOP_UP" || verdict === "BLOCKED"
       ? t(feasibility?.reasonKey ?? "", {
           symbol: native,
           network,
           token: feasibility?.topUp?.token.symbol ?? "",
         })
       : null;
-  const escapes = verdict === "BLOCKED" ? (feasibility?.escapes ?? []) : [];
+  const escapes = !unreachable && verdict === "BLOCKED" ? (feasibility?.escapes ?? []) : [];
 
   const badgeId = `${rowId}-badge`;
   const reasonId = `${rowId}-reason`;

@@ -540,9 +540,11 @@
       "surplus": "Nhiều hơn mức cần {amount}",
       "exact": "Vừa đủ",
       "empty": "Ở đây chưa có gì chúng tôi có thể dùng.",
+      "repriced": "Giá cuối cùng cao hơn một chút. Hãy chọn thêm một nguồn để bù {amount}.",
       "cta": "Tiếp tục",
       "step": "Bước {index}",
       "unblock": "Để dùng số tiền này:",
+      "unreachable": "Hiện chưa thể chuyển {symbol} sang mạng này, nên không dùng được ở đây.",
       "badge": {
         "ok": "Sẵn sàng",
         "topUp": "Cần nạp thêm",

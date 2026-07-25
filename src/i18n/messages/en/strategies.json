@@ -540,9 +540,11 @@
       "surplus": "{amount} more than needed",
       "exact": "Exactly covered",
       "empty": "There's nothing here we can spend yet.",
+      "repriced": "The final price came in a little higher. Pick one more source to cover {amount}.",
       "cta": "Continue",
       "step": "Step {index}",
       "unblock": "To use this money:",
+      "unreachable": "We can't move {symbol} to this network yet, so it can't be used here.",
       "badge": {
         "ok": "Ready",
         "topUp": "Needs a top up",
