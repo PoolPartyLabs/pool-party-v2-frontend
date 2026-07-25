@@ -480,6 +480,7 @@
     "steps": {
       "buyUsdc": "Mua USDC",
       "bridge": "Chuyển sang {network}",
+      "bridgeGas": "Gửi phí sang {network}",
       "swapGas": "Nạp phí mạng",
       "swapToken": "Đổi sang {token}",
       "op": "Giao dịch của bạn"
@@ -530,7 +531,8 @@
       "leg": {
         "swapToken": "Quy đổi trên {network}",
         "swapGas": "Chuẩn bị phí trên {network}",
-        "bridge": "Chuyển từ {network}"
+        "bridge": "Chuyển từ {network}",
+        "bridgeGas": "Gửi phí từ {network}"
       },
       "buyCrypto": {
         "cta": "Mua crypto thay thế",
