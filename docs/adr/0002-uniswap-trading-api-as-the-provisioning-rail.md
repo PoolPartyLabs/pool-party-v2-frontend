@@ -141,10 +141,116 @@ product that does not go through the server-builds-calldata pattern.
 **Do nothing / keep the mock.** Rejected. The chassis has been mock-only since it was designed, and the
 product ships a screen that tells users with money on the wrong chain to go buy more.
 
+## Addendum, 2026-07-25 — live API evidence forces decomposition in our planner (POO-1054)
+
+- Status: Accepted (the decision above is **not** reversed; its mechanism is corrected)
+- Linear: POO-1054
+- ADRs are immutable. Everything above stands as written on 2026-07-24. This section records what
+  changed and why, rather than rewriting the record.
+
+### What we learned
+
+The decision above was made from the public Trading API documentation, before we held a key. On
+2026-07-25 the live API was probed read-only with the real key. Three results contradict the
+"Decision" section:
+
+1. `POST /quote` for a cross-chain pair with **different** tokens (WETH on Polygon → USDC on Arbitrum,
+   the flagship case) answers **`404 ResourceNotFound`**. It is not routable in one call.
+2. **`routing: "CHAINED"` was never returned** on any pair we can fund from. Since `POST /plan` takes
+   a chained quote as its body, `POST /plan`, `PATCH /plan/:id` and `GET /plan/:id` are unreachable
+   for our key.
+3. Cross-chain with the **same** token quotes as `routing: "BRIDGE"` and settles as **one**
+   transaction through `POST /swap`, carrying a real `estimatedFillTimeMs`.
+
+Uniswap's own vendored skill corroborates the boundary independently: it decomposes into
+swap-then-bridge rather than using Chained Actions, and records that a direct cross-chain swap
+returned "No quotes available" as of March 2026. The full evidence table, with a reproducible curl, is
+in `docs/_hackathon/01_UNISWAP_INTEGRATION.md` §1.
+
+### What is unchanged
+
+The **decision** stands in full. We still integrate the Uniswap Trading API directly from the Next.js
+server layer via Server Actions. Rules 1, 2, 5, 6, 7 and 8 of the Decision section are unaffected, and
+so is every consequence and every rejected alternative: Option A still costs six endpoints in another
+repository, Option B still moves credentials into the browser, and ADR 0003's secret boundary is
+untouched (nothing about this correction adds a client-side call or a CSP entry).
+
+What changed is **where the multi-step orchestration lives**: in our planner rather than in Uniswap's.
+That is a mechanism, not a decision, which is precisely why this is an addendum and not a superseding
+ADR.
+
+### What is corrected
+
+**The Decision paragraph.** "Cross-chain funding uses Chained Actions (`POST /plan`, `PATCH /plan/:id`,
+`GET /plan/:id`)" is wrong. Cross-chain funding uses `/quote` + `/swap`, exactly like same-chain, once
+per leg. A same-token cross-chain pair is one leg; a different-token pair is decomposed by our planner
+into a source-chain swap to USDC followed by a same-token USDC bridge. USDC exists on all three
+supported chains and is the Across bridge asset, so the middle leg is always routable.
+
+**Rule 3, `planId` is the idempotency key.** Void: there is no `planId`. This is the load-bearing loss,
+because rule 3 was the answer to a real pre-existing defect (a provisioning step carried no idempotency
+key while `flow.retry()` re-invokes the failed step verbatim, so an ambiguous failure could double-
+bridge).
+
+The replacement is a **client-persisted leg journal reconciled against on-chain receipts**, specified
+in `docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` §3 for POO-1038. Its logic:
+
+- A plan is a pure function of current on-chain holdings, so **re-deriving it from fresh balances is
+  inherently idempotent**. A settled leg cannot be repeated, because it has already changed the input
+  the derivation reads. This closes the settled case with no bookkeeping at all.
+- The only gap left is a transaction that is broadcast but not yet reflected in a balance. The journal
+  covers exactly that gap: it records each leg's intent, its `nonceBefore`, and its `txHash` written
+  synchronously the instant the wallet returns it, before any await.
+- Recovery is then a read: `getTransactionReceipt` when we hold a hash, `getTransactionCount` when we
+  do not, and a destination-chain balance delta for bridge arrival. An ambiguous state is never
+  resolved by broadcasting.
+
+**Rule 4, ambiguous broadcasts resolve by reading, never by re-sending.** Unchanged in substance, but
+the thing being read is the chain rather than `GET /plan/:planId`.
+
+### Consequences of the correction
+
+**Positive.**
+
+- We stopped depending on a third party for our own safety property. The chain is the authority on
+  whether a transaction happened, and it is the authority we can always reach.
+- One less failure class: there is no proof to `PATCH`, so a proof submission cannot fail *after* the
+  money moved.
+- Recovery survives Uniswap being down. A server-held plan would not have.
+- The rail collapses to two endpoints, `/quote` and `/swap`, for every route shape.
+
+**Negative, accepted.**
+
+- **We own the orchestration**, including per-leg re-quoting, bridge-arrival detection and the journal.
+  That is real code we would not have written, and it is the honest cost of the correction.
+- **`/check_approval` covers Permit2 only.** A bridge leg's spender needs its own on-chain allowance
+  check, which the abstracted plan would have handled for us.
+- **A residual ambiguity window remains**: the wallet broadcast and the app never learned the hash. It
+  is one synchronous statement wide, it fails toward asking the user rather than toward spending, and
+  it is documented rather than hidden (`02_BRIDGE_ARCHITECTURE.md` §3.9).
+
+### Code retired by this addendum
+
+`createPlan`, `advancePlan` and `getPlan` were deleted from `src/lib/uniswap/actions.ts` along with
+their tests, and POO-1029 rules [R4], [R5] and [R7] retire with them (that file goes to rules v2). The
+plan Zod schemas are kept in `src/lib/uniswap/schemas.ts` under an `UNREACHABLE` block comment: they
+cost nothing, they document the shape should Chained Actions ever be enabled for our key, and
+`stepMethodSchema` is still the wire contract `ProvisioningStep.method` is typed off.
+
+### Open question
+
+`quoteRequestSchema` rejects a cross-chain `EXACT_OUTPUT`. That constraint was taken from the Chained
+Actions documentation this addendum retires, and the vendored skill quotes a **bridge** with
+`EXACT_OUTPUT`. Provisioning is inherently exact-output shaped ("land exactly $X on the target
+chain"), so the guard may be costing us the natural request shape. It stands until a live probe
+settles it, tracked as a `PP-TODO` on that schema and flagged to POO-1034. Relaxing it on the strength
+of a document is the mistake this addendum exists to correct.
+
 ## References
 
 - `docs/_hackathon/00_IMPLEMENTATION_PLAN.md` — the plan of record
-- `docs/_hackathon/01_UNISWAP_INTEGRATION.md` — endpoint-by-endpoint reference
-- `docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` — the cross-chain step machine and failure modes
+- `docs/_hackathon/01_UNISWAP_INTEGRATION.md` — endpoint-by-endpoint reference, and the probe evidence
+- `docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` — the decomposed route, its failure modes, and the leg journal
 - ADR 0003 — the server-only key boundary
-- `.claude/skills/swap-integration/` — Uniswap's official skill, vendored (MIT); same-chain only
+- `.claude/skills/swap-integration/` — Uniswap's official skill, vendored (MIT); same-chain swapping
+  plus a decomposed swap-then-bridge flow, and the closest published precedent for what we build

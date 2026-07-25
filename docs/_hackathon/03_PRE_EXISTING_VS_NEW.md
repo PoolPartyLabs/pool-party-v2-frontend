@@ -99,11 +99,12 @@ commit only the documentation and the vendored skill have landed; every `src` ro
 | `src/lib/uniswap/schemas.ts` | Zod contracts for all eight endpoints, every `routing` variant | POO-1028 | planned |
 | `src/lib/uniswap/actions.ts` | The `"use server"` boundary — the key never leaves the server | POO-1029 | planned |
 | `src/lib/uniswap/errors.ts` | Typed `UniswapApiError` | POO-1027 | planned |
-| `src/lib/provisioning/buildPlan.ts` | **The engine.** Same-chain `CLASSIC`, cross-chain `CHAINED` | POO-1034 | planned |
+| `src/lib/provisioning/buildPlan.ts` | **The engine.** Same-chain `CLASSIC`, cross-chain `BRIDGE`, different-token cross-chain decomposed into swap-then-bridge legs (corrected by POO-1054) | POO-1034 | planned |
 | `src/lib/provisioning/gasFeasibility.ts` | The OK / TOP-UP / BLOCKED classifier per source chain | POO-1032 | planned |
 | `src/lib/provisioning/costBreakdown.ts` | Fees, gas, impact, slippage → `ProvisioningQuote` | POO-1035 | planned |
 | `src/lib/provisioning/planActions.ts` | The server boundary for the planner | POO-1024 | planned |
-| `src/features/strategies/lib/buildPlanSteps.ts` | **The adapter.** Uniswap plan → `FlowStep[]` | POO-1036 | planned |
+| `src/features/strategies/lib/buildPlanSteps.ts` | **The adapter.** Funding legs → `FlowStep[]` | POO-1036 | planned |
+| `src/lib/provisioning/legJournal.ts` | **The recovery primitive.** Client-persisted leg journal reconciled against on-chain receipts; replaces the server-held `planId` that POO-1054 established we cannot obtain | POO-1038 | planned |
 | `FundingSourceSelector.tsx` | Multi-select across chains, running total, gas badges | POO-1039 | planned |
 | `ProvisioningCostBreakdown.tsx` | The cost table + the buy-crypto alternative | POO-1040 | planned |
 | `src/app/[locale]/swap/` | Standalone swap + bridge screen, flagged | POO-1046 | planned |
