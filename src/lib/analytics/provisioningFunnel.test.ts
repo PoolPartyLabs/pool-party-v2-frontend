@@ -40,6 +40,13 @@ const BRIDGE_ONLY_PLAN: ProvisioningPlan = {
   steps: CROSS_CHAIN_PLAN.steps.filter((step) => step.type === "op" || step.leg?.kind === "bridge"),
 };
 
+/** The key of the fixture's Nth step, so a fixture that loses a step fails loudly, not silently. */
+function stepKey(plan: ProvisioningPlan, index: number): string {
+  const key = plan.steps[index]?.key;
+  if (!key) throw new Error(`fixture plan has no step at ${index}`);
+  return key;
+}
+
 /** Every event pushed so far, in order. */
 function pushed(): Record<string, unknown>[] {
   return (window.dataLayer ?? []) as Record<string, unknown>[];
@@ -105,7 +112,7 @@ describe("provisioning funnel analytics (POO-1048)", () => {
         result.current.sourcesSelected({ count: 2, usd: 140 });
         result.current.planQuoted(CROSS_CHAIN_PLAN);
         result.current.planStarted(CROSS_CHAIN_PLAN);
-        result.current.legSettled(CROSS_CHAIN_PLAN, CROSS_CHAIN_PLAN.steps[0].key);
+        result.current.legSettled(CROSS_CHAIN_PLAN, stepKey(CROSS_CHAIN_PLAN, 0));
         result.current.planCompleted(CROSS_CHAIN_PLAN);
       });
 
@@ -136,7 +143,7 @@ describe("provisioning funnel analytics (POO-1048)", () => {
     it("identifies the settled leg by kind and position", () => {
       const { result } = renderHook(() => useProvisioningFunnel({}));
       act(() => {
-        result.current.legSettled(CROSS_CHAIN_PLAN, CROSS_CHAIN_PLAN.steps[1].key);
+        result.current.legSettled(CROSS_CHAIN_PLAN, stepKey(CROSS_CHAIN_PLAN, 1));
       });
       expect(eventsNamed("funding_leg_settled")[0]).toMatchObject({
         leg_kind: "bridge",
@@ -158,11 +165,11 @@ describe("provisioning funnel analytics (POO-1048)", () => {
     it("reports each leg once however many times it is observed settled", () => {
       // The panel reads step statuses out of a render, so the same "done" is seen on every re-render.
       const { result } = renderHook(() => useProvisioningFunnel({}));
-      const key = CROSS_CHAIN_PLAN.steps[0].key;
+      const key = stepKey(CROSS_CHAIN_PLAN, 0);
       act(() => {
         result.current.legSettled(CROSS_CHAIN_PLAN, key);
         result.current.legSettled(CROSS_CHAIN_PLAN, key);
-        result.current.legSettled(CROSS_CHAIN_PLAN, CROSS_CHAIN_PLAN.steps[1].key);
+        result.current.legSettled(CROSS_CHAIN_PLAN, stepKey(CROSS_CHAIN_PLAN, 1));
       });
       expect(eventsNamed("funding_leg_settled")).toHaveLength(2);
     });
@@ -233,7 +240,7 @@ describe("provisioning funnel analytics (POO-1048)", () => {
       act(() => {
         result.current.planFailed(CROSS_CHAIN_PLAN, {
           errorCode: "WRONG_CHAIN",
-          stepKey: CROSS_CHAIN_PLAN.steps[1].key,
+          stepKey: stepKey(CROSS_CHAIN_PLAN, 1),
         });
       });
       expect(eventsNamed("funding_plan_failed")[0]).toMatchObject({
