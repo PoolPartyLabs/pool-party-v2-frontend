@@ -560,6 +560,21 @@
       }
     },
     "recovery": {
+      "title": "Você tem um envio de fundos em andamento",
+      "progress": "Etapa {index} de {total}",
+      "checking": "Verificando onde seus fundos pararam",
+      "recheck": "Verificar de novo",
+      "resume": "Continuar de onde parou",
+      "abandon": "Parar de mostrar isto",
+      "viewAccount": "Ver a atividade da sua carteira",
+      "op": {
+        "invest": "Aplicando em uma estratégia",
+        "withdraw": "Retirando de uma estratégia",
+        "collect": "Recebendo seus ganhos",
+        "compound": "Reinvestindo seus ganhos",
+        "moveRange": "Ajustando uma estratégia",
+        "close": "Encerrando sua posição"
+      },
       "leg": {
         "settled": "Pronto.",
         "pending": "Enviado. Estamos aguardando a confirmação e não vamos enviar de novo.",

@@ -1,7 +1,7 @@
 /**
- * @id PP-STR-LIB-020 (POO-1038)
+ * @id PP-STR-LIB-020 (POO-1038, POO-1055)
  * @name funding journal reconciliation
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1055 rules v1) · v1 (POO-1038 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * Reconciles a {@link FundingJournal} against the chain, which is the only actual authority on
@@ -169,8 +169,20 @@ async function verdictFor(
     return await nonceVerdict(leg, wallet, chain, "absent");
   }
 
-  // `planned`, no hash: the residual window of §3.9. The wallet may have broadcast before the tab
-  // died, and we would never have learned the hash.
+  // `planned`, no hash. Two very different situations share this shape, and POO-1055 [R3] is the
+  // one that was being conflated.
+  //
+  // With NO `nonceBefore` the leg was never begun. `createJournal` writes every leg of the approved
+  // route `planned` and empty; the baseline only appears in `beginLeg`, which §3.4 places strictly
+  // BEFORE the wallet is prompted. So a missing baseline means the prompt never happened and nothing
+  // could have been broadcast for this leg. That is the ordinary shape of a route that failed early
+  // (a `/check_approval` error on the first leg, say), and reading it as ambiguous asked the user
+  // about a transaction that never existed.
+  //
+  // With a baseline it is the genuine residual window of §3.9: the wallet may have broadcast before
+  // the tab died and we would never have learned the hash, so the account nonce is the only evidence
+  // left.
+  if (leg.nonceBefore === undefined) return "absent";
   return await nonceVerdict(leg, wallet, chain, "absent");
 }
 
@@ -179,8 +191,12 @@ async function verdictFor(
  *
  * Unmoved means nothing of ours is on-chain, so `safe` (re-derive and execute) is correct. Moved is
  * genuinely ambiguous, because we cannot tell our leg from something the user did in another app,
- * and it therefore fails toward asking rather than toward spending. A leg with no recorded
- * `nonceBefore` has no baseline to compare against and is ambiguous for the same reason.
+ * and it therefore fails toward asking rather than toward spending.
+ *
+ * A leg with no recorded `nonceBefore` has no baseline to compare against. This function answers
+ * `unknown` for it, which is right for its one remaining caller: a leg that reached `broadcast` WAS
+ * prompted, so a missing baseline there is a real gap in what we know. The never-begun case is
+ * decided in {@link verdictFor} before it can reach here (POO-1055 [R3]).
  */
 async function nonceVerdict(
   leg: FundingLeg,

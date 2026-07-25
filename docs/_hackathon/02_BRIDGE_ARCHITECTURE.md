@@ -304,8 +304,19 @@ against the chain **before offering to do anything**. Per leg, in order:
 | `broadcast`, has `txHash` | no receipt yet | still pending | **wait**, poll with backoff. Never re-broadcast |
 | `broadcast`, has `txHash` | no receipt at the ceiling, and `getTransactionCount(latest) > nonceBefore` | ambiguous: something from this account mined | mark `unknown`, [§3.9](#39-the-residual-window-stated-honestly) |
 | `broadcast`, has `txHash` | no receipt at the ceiling, and `getTransactionCount(latest) === nonceBefore` | dropped from the mempool | safe: re-derive the plan from fresh balances |
+| `planned`, no `txHash`, **no `nonceBefore`** | (none needed) | the leg was never begun: the baseline is written before the wallet is prompted, so no prompt happened | safe: re-derive and execute |
 | `planned`, no `txHash` | `getTransactionCount(latest) === nonceBefore` | nothing was ever mined from this account | safe: re-derive and execute |
 | `planned`, no `txHash` | `getTransactionCount(latest) > nonceBefore` | ambiguous | mark `unknown`, [§3.9](#39-the-residual-window-stated-honestly) |
+
+That first row is POO-1055 [R3], and it is worth stating why it is a fact rather than an optimism.
+`createJournal` writes every leg of the approved route `planned` and empty; the baseline only appears
+in `beginLeg`, which [§3.4](#34-write-ordering-is-the-safety-property) places strictly **before** the
+wallet is prompted. A leg still carrying no baseline is therefore a leg the wallet was never asked
+about, and nothing could have been broadcast for it. Reading it as ambiguous, which is what the table
+originally said, meant asking the user to go and check their wallet for a route that failed before
+its first leg ever started, which is the ordinary shape of an early `/check_approval` failure. The
+neighbouring case is unchanged: a leg that reached `broadcast` **was** prompted, so a missing baseline
+there is a genuine unknown.
 
 Three rules bind the whole table:
 
@@ -499,7 +510,7 @@ directly from an existing bug elsewhere in this codebase where a deposit "succee
 | Reviewing cost | `ProvisioningCostBreakdown` — swap fee, bridge fee, per-step gas, price impact, slippage, "You pay", plus a *buy crypto instead* alternative |
 | Executing | `ProvisioningPlanCard` + `WalletSteps` — numbered steps, live status, bridge ETA, per-leg explorer links |
 | Bridging | The long step: ETA from `estimatedFillTimeMs`, explorer link, and a dismissal lock so the modal cannot be closed mid-route |
-| Interrupted | On next load, "you have funding in progress", reconciled per §3.5, with an explicit Resume |
+| Interrupted | On next load, "you have funding in progress", reconciled per §3.5, with an explicit Resume. `FundingRecoveryBanner` (PP-STR-CMP-025) over `useFundingRecovery` (PP-STR-HOK-021), mounted on the app shell so it is reached wherever the user comes back. Resume is a link back to the operation, never a re-send: the plan is derived afresh from current balances |
 | Done | The original operation resumes with its original parameters |
 
 The framing throughout is **"what do you want to spend"**, never "configure a bridge". The user picks

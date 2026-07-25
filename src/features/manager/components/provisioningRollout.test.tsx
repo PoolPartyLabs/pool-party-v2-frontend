@@ -52,6 +52,8 @@ vi.mock("@/lib/services", () => ({
 
 // `Link` as well as `useRouter`, for the same reason as the investor-side sibling: the panel's plan
 // phase mounts POO-1043 [R9]'s cost breakdown, whose buy-crypto peer option is a locale-aware Link.
+// A factory mock replaces the module wholesale, so an absent export is a hard error rather than a
+// fallback. Stubbed to a plain anchor, the repository's standing convention for it.
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
   Link: ({

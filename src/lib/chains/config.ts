@@ -206,3 +206,24 @@ export function getExplorerTxUrl(
   if (!base) return undefined;
   return `${base.replace(/\/+$/, "")}/tx/${hash}`;
 }
+
+/**
+ * Absolute explorer URL for an ACCOUNT on a supported network, same contract as
+ * {@link getExplorerTxUrl}: undefined for an unknown network or a missing address, never an
+ * explorer home page.
+ *
+ * POO-1055: the funding recovery surface needs this for the one case it cannot resolve by reading
+ * (`docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` §3.9) — the wallet broadcast and the app never
+ * learned the hash. With no hash there is no transaction to link to, and the user's own account
+ * activity is the only place the answer exists.
+ */
+export function getExplorerAddressUrl(
+  apiNetworkId: string | null | undefined,
+  address: string | null | undefined,
+): string | undefined {
+  if (!apiNetworkId || !address) return undefined;
+  const base = supportedChainMetas.find((m) => m.apiNetworkId === apiNetworkId)?.chain
+    .blockExplorers?.default?.url;
+  if (!base) return undefined;
+  return `${base.replace(/\/+$/, "")}/address/${address}`;
+}
