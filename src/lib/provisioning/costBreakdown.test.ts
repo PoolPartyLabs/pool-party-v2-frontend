@@ -14,10 +14,20 @@
  *   [R6] no float money math where precision matters
  *   [R7] price impact comes from the live quote; absent on a bridge leg is correct
  *
+ * POO-1047 rules v1 (the price-impact gate reads this model):
+ *   [R3] a missing or malformed impact figure yields NO figure, so the gate cannot fail closed
+ *   [R4] one figure per PLAN: the worst AMM leg, which is what the user acknowledges
+ *   [R5] a bridge leg's impact is EXCLUDED rather than counted or read as 0%
+ *
  * Pure and injectable: every case is a hand-built plan. No network, no clock, no mocks.
  */
 import { describe, expect, it } from "vitest";
-import { bridgeFeeTooltipInput, buildCostBreakdown, planCostBreakdown } from "./costBreakdown";
+import {
+  bridgeFeeTooltipInput,
+  buildCostBreakdown,
+  planCostBreakdown,
+  planPriceImpactPct,
+} from "./costBreakdown";
 import type { ProvisioningLeg, ProvisioningPlan, ProvisioningStep } from "./types";
 
 const ARBITRUM = 42161;
@@ -566,5 +576,89 @@ describe("planCostBreakdown", () => {
     };
 
     expect(planCostBreakdown(plan)).toEqual(model);
+  });
+});
+
+// --- POO-1047 [R3]/[R5]: the figure the price-impact gate judges ----------------------------------
+
+describe("planPriceImpactPct (POO-1047)", () => {
+  /** A plan over the given steps. Only the steps matter here; the quote is inert. */
+  const planOf = (steps: ProvisioningStep[]): ProvisioningPlan => ({
+    needed: true,
+    reason: ["usdc"],
+    variant: "multi",
+    steps,
+    quote: {
+      shortfallUsd: 100,
+      bufferUsd: 2,
+      feesUsd: 1,
+      totalPayUsd: 103,
+      quotedAt: "2026-07-25T12:00:00.000Z",
+      ttlMs: 30_000,
+    },
+    slippagePct: 2,
+  });
+
+  it("[R4] is the WORST impact across the plan's AMM legs, so one figure gates the whole route", () => {
+    expect(planPriceImpactPct(planOf(GAS_TOP_UP))).toBe(0.05);
+    expect(planPriceImpactPct(planOf(MULTI_SOURCE))).toBe(0.3);
+  });
+
+  it("[R3] is absent when no leg reported one, which must read as NO gate rather than as 0%", () => {
+    expect(planPriceImpactPct(planOf([MULTI_SOURCE[2] as ProvisioningStep, opStep(40)]))).toBe(
+      undefined,
+    );
+    // A mock-mode plan carries no legs at all.
+    expect(planPriceImpactPct(planOf([opStep(100)]))).toBe(undefined);
+  });
+
+  it("[R3] ignores a malformed figure rather than failing closed on it", () => {
+    const malformed = step({
+      index: 0,
+      kind: "swap-token",
+      tokenIn: weth(POLYGON, WETH_POLYGON),
+      tokenOut: usdc(POLYGON, USDC_POLYGON),
+      amountIn: "40000000000000000",
+      amountOutQuoted: "100000000",
+      amountUsd: 100,
+      priceImpactPct: Number.NaN,
+    });
+
+    expect(planPriceImpactPct(planOf([malformed, opStep(100)]))).toBe(undefined);
+  });
+
+  it("[R5] EXCLUDES a bridge leg's figure: Across quotes the leg, so an AMM impact on it is not one", () => {
+    // The planner copies whatever the quote reports onto the leg, so a stray figure here is possible
+    // and must neither gate a bridge-only route nor be read as this route's worst impact.
+    const bridge = step({
+      index: 0,
+      kind: "bridge",
+      tokenIn: usdc(POLYGON, USDC_POLYGON),
+      tokenOut: usdc(ARBITRUM, USDC_ARBITRUM),
+      amountIn: "100000000",
+      amountOutQuoted: "99900000",
+      amountUsd: 100,
+      priceImpactPct: 92.41,
+    });
+    const swap = step({
+      index: 1,
+      kind: "swap-token",
+      tokenIn: weth(POLYGON, WETH_POLYGON),
+      tokenOut: usdc(POLYGON, USDC_POLYGON),
+      amountIn: "40000000000000000",
+      amountOutQuoted: "100000000",
+      amountUsd: 100,
+      priceImpactPct: 1.5,
+    });
+
+    expect(planPriceImpactPct(planOf([bridge, opStep(100)]))).toBe(undefined);
+    expect(planPriceImpactPct(planOf([bridge, swap, opStep(100)]))).toBe(1.5);
+  });
+
+  it("[R5] is exactly the figure the cost table displays, so the gate and the receipt agree", () => {
+    // Two derivations of one number is how a user ends up gated on a percent the breakdown never
+    // showed them. There is only one, and this pins it.
+    const plan = planOf(GAS_TOP_UP);
+    expect(planPriceImpactPct(plan)).toBe(planCostBreakdown(plan).totals.priceImpactPct);
   });
 });
