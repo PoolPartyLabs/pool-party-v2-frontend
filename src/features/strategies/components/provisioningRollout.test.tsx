@@ -75,7 +75,9 @@ vi.mock("@/lib/portfolio/revalidatePositions", () => ({
 }));
 // `Link` as well as `useRouter`: the panel's plan phase mounts POO-1043 [R9]'s cost breakdown, whose
 // buy-crypto peer option is a locale-aware Link, and POO-1044 [R3]'s blocked state renders one too. A
-// stub that omits it throws inside the component the moment the plan lands, which is every test here.
+// factory mock replaces the module wholesale, so an absent export is a hard error rather than a
+// fallback: a stub that omits it throws inside the component the moment the plan lands, which is
+// every test here. Stubbed to a plain anchor, the repository's standing convention for it.
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
   Link: ({

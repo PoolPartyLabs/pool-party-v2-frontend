@@ -314,6 +314,28 @@ proportions bar ([R2]). State is per-visit component state, never persisted ([R3
 `aria-expanded` header button carries the a11y semantics ([R4]). The other prospectus sections
 (About, Risk limits & terms, Fees) stay plain, always-open cards.
 
+## Funding recovery surface (POO-1055, rules v1, hackathon POO-1022)
+
+A cross-chain funding route takes minutes and users close tabs. The rail already wrote a durable
+record of what it put on a chain (`lib/fundingJournal.ts`, `PP-STR-LIB-019`) and already knew how to
+reconcile that record against the chain (`lib/reconcileFundingJournal.ts`, `PP-STR-LIB-020`); neither
+reader had a production caller, so an interrupted route left a correct journal nobody ever looked at.
+
+- **`hooks/useFundingRecovery.ts`** (`PP-STR-HOK-021`) finds the in-flight route for the connected
+  wallet on session entry, runs the §3.5 decision table against three per-chain RPC reads, and
+  persists the corrections. It is a read from end to end: the `ChainReader` type has no way to send
+  anything, so nothing can auto-broadcast on load.
+- **`components/provisioning/FundingRecoveryBanner.tsx`** (`PP-STR-CMP-025`) renders it, mounted on
+  the `AppShell` so it is reached wherever the user comes back. Resume is a **link back to the
+  operation**, never a re-send: the plan is a pure function of current holdings, so re-deriving it
+  cannot repeat a leg that already settled.
+
+Two behaviours are deliberate and easy to "fix" wrongly. While money is in flight there is no
+dismiss, because deleting the record of a broadcast transaction is how the next session fails to
+recognise it and sends a second one. An ambiguous leg is shown the account on the explorer rather
+than a retry, because with no hash there is nothing safe to re-send. Design:
+`docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` §3.
+
 ## Analytics
 
 `strategy_*` events per `docs/ANALYTICS_EVENTS.md`, including the share funnel:

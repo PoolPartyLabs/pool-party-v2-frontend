@@ -560,6 +560,21 @@
       }
     },
     "recovery": {
+      "title": "You have funding in progress",
+      "progress": "Step {index} of {total}",
+      "checking": "Checking where your funds got to",
+      "recheck": "Check again",
+      "resume": "Pick up where this left off",
+      "abandon": "Stop showing this",
+      "viewAccount": "See your wallet activity",
+      "op": {
+        "invest": "Adding money to a strategy",
+        "withdraw": "Taking money out of a strategy",
+        "collect": "Collecting your earnings",
+        "compound": "Reinvesting your earnings",
+        "moveRange": "Adjusting a strategy",
+        "close": "Closing your position"
+      },
       "leg": {
         "settled": "Done.",
         "pending": "Sent. We are waiting for it to land, and we will not send it again.",
