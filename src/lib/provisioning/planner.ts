@@ -53,6 +53,8 @@ export async function computePlan(
     }
     return result.plan;
   }
-  // PP-MOCK: deterministic local planner (POO-420), retired when the real planner lands (POO-1030).
+  // PP-MOCK: deterministic local planner (POO-420). It is retired in the SAME commit that lands the
+  // real planner (POO-1034), not before: mock mode is the repo default, so deleting it while this
+  // branch still calls it would leave every provisioning surface without a planner.
   return mockComputePlan(input, { gas: gasChoice });
 }
