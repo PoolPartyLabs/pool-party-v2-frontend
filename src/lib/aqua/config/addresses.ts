@@ -1,0 +1,69 @@
+import "server-only";
+
+/**
+ * Canonical Arbitrum addresses for the Active Reserve build.
+ *
+ * MIRROR of `docs/VERIFIED.md` in the pool-party-aqua repo, which is the source of truth and
+ * carries the evidence for every value here. Per POO-1058 R2 this is the single place the app
+ * learns an address; nothing else hardcodes one.
+ *
+ * Gen 1 is a dead parallel deployment (43 ships, last activity ~2026-04) and must never be
+ * used. It is listed only so guards can assert against it.
+ */
+
+export const CHAIN_ID_ARBITRUM = 42161;
+
+/** Gen 2: the live Aqua registry + AquaSwapVMRouter pair. Verified: router.AQUA() == registry. */
+export const AQUA_REGISTRY = "0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a" as const;
+export const AQUA_SWAP_VM_ROUTER = "0x1111113Db0e0ef9D0E3A50d5f094a3a57a26C0DE" as const;
+
+/** Gen 1: DEAD. Present so `assertNotDeadGeneration` can refuse it. */
+export const DEAD_GEN1_REGISTRY = "0x499943e74fb0ce105688beee8ef2abec5d936d31" as const;
+export const DEAD_GEN1_ROUTER = "0x8fdd04dbf6111437b44bbca99c28882434e0958f" as const;
+
+export const TOKENS = {
+  /** Native Arbitrum USDC, not USDC.e. */
+  USDC: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+  WETH: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+} as const;
+
+export const DECIMALS = {
+  USDC: 6,
+  WETH: 18,
+} as const;
+
+/** Chainlink ETH/USD, 8 decimals. Measured over 24h: 360 updates, median gap 121s, max 29.5 min. */
+export const CHAINLINK_ETH_USD = "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612" as const;
+
+/** Aave v3 on Arbitrum: the carry leg. */
+export const AAVE_V3_POOL = "0x794a61358D6845594F94dc1DB02A252b5b4814aD" as const;
+export const AAVE_A_USDC = "0x724dc807b04555b71ed48a6896b6F41593b8C637" as const;
+
+/**
+ * The maker hook the deployed router actually calls (VLT-R9 v2).
+ *
+ * MEASURED twice, independently: Track B captured the raw calldata the live router sends to a
+ * maker contract and matched the selector; Track A derived the same signature from
+ * `swap-vm` v1.0.1 `IMakerHooks.sol`. `forge inspect PartyVault methodIdentifiers` confirms
+ * the deployed vault exposes it. It is NOT in the published SwapVM ABI.
+ *
+ * The selector is asserted against the signature in `serverOnly.test.ts` rather than trusted,
+ * so the pair cannot drift if the signature is ever edited.
+ */
+export const MAKER_HOOK_SIGNATURE =
+  "preTransferOut(address,address,address,address,uint256,uint256,bytes32,bytes,bytes)" as const;
+export const MAKER_HOOK_SELECTOR = "0x5a394f80" as const;
+
+const DEAD_ADDRESSES = new Set<string>([
+  DEAD_GEN1_REGISTRY.toLowerCase(),
+  DEAD_GEN1_ROUTER.toLowerCase(),
+]);
+
+/** Refuse the dead generation loudly rather than producing a strategy nobody can fill. */
+export function assertNotDeadGeneration(address: string): void {
+  if (DEAD_ADDRESSES.has(address.toLowerCase())) {
+    throw new Error(
+      `${address} belongs to the dead gen-1 Aqua deployment. Use the gen-2 pair from VERIFIED.md.`,
+    );
+  }
+}

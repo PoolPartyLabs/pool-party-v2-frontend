@@ -53,6 +53,11 @@ export const SERVER_ONLY_SECRET_NAMES = [
   "UNISWAP_API_KEY",
   "PP_API_KEY",
   "PP_ANALYTICS_USER_ID_SECRET",
+  // Aqua / Active Reserve (POO-1057 hackathon branch). AQUA_DATABASE_URL is a connection
+  // string to a MIRROR of production data, and TAKER_BOT_PRIVATE_KEY signs real mainnet
+  // transactions, so both belong with the credentials above rather than below them.
+  "AQUA_DATABASE_URL",
+  "TAKER_BOT_PRIVATE_KEY",
 ] as const;
 
 /**
