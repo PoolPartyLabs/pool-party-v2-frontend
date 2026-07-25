@@ -194,9 +194,15 @@ const sleep = (ms: number): Promise<void> =>
     setTimeout(resolve, ms);
   });
 
-/** Parse a base-unit amount, decimal or hex. Throws on anything else. */
+/**
+ * Parse a base-unit amount, decimal or hex. Throws on anything else, including the empty string:
+ * `BigInt("")` is `0n`, so without this guard an empty RPC body would read as a real zero balance
+ * (a claim about the user's money) instead of the failed observation it is.
+ */
 function parseAmount(value: string): bigint {
-  const parsed = BigInt(value.trim());
+  const trimmed = value.trim();
+  if (trimmed === "") throw new Error("empty amount");
+  const parsed = BigInt(trimmed);
   if (parsed < BigInt(0)) throw new Error(`negative amount: ${value}`);
   return parsed;
 }

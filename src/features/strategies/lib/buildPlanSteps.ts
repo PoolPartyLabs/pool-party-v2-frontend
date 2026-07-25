@@ -507,6 +507,10 @@ function reportBroadcast(leg: ProvisioningLeg, txHash: string, deps: PlanRailDep
  * panel branches on to render "still settling, we'll update you" instead of a failure, and with the
  * hash so the user can verify the transfer independently. It is deliberately NOT in the diagnostics
  * catalog: this is not a transaction failure and must never reach a retry affordance.
+ *
+ * The cause carries only what `toTxError` actually reads (`code`, `txHash`). The destination chain
+ * stays in the message: the panel's explorer link needs the SOURCE chain, which is where the hash
+ * exists, so a `destChainId` on the cause would be a field nothing could correctly consume.
  */
 function bridgeStillSettling(
   leg: ProvisioningLeg,
@@ -517,7 +521,7 @@ function bridgeStillSettling(
     `Bridged funds have not arrived on chain ${leg.tokenOut.chainId} after ${Math.round(
       settlement.waitedMs / 1000,
     )}s (${settlement.polls} checks, last observed delta ${settlement.delta})`,
-    { code: BRIDGE_PENDING_CODE, txHash, destChainId: leg.tokenOut.chainId },
+    { code: BRIDGE_PENDING_CODE, txHash },
   );
 }
 

@@ -221,5 +221,19 @@ describe("awaitBridgeSettlement", () => {
       expect(result.settled).toBe(true);
       expect(result.polls).toBe(3);
     });
+
+    it("treats an EMPTY balance body as a failed observation, not as zero", async () => {
+      // `BigInt("")` is `0n`, so an empty body is the one junk response that could silently pass for
+      // a real balance and rewrite a partial arrival into "the money went backwards". It must land
+      // on the failure path like any other unparseable read.
+      const partial = "1500000000";
+      const { readTokenBalance } = reader([partial, ""]);
+
+      const result = await runToCompletion(awaitBridgeSettlement(arrival(), { readTokenBalance }));
+
+      expect(result.settled).toBe(false);
+      expect(result.delta).toBe("1499000000");
+      expect(result).toMatchObject({ lastError: expect.stringContaining("empty") });
+    });
   });
 });
