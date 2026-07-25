@@ -54,22 +54,20 @@ const mocks = vi.hoisted(() => ({
   sent: [] as string[],
   /** Journal snapshots taken the instant the provider is asked for a receipt (the §3.4 probe). */
   journalAtReceipt: [] as (FundingJournal | undefined)[],
+  /**
+   * The wallets `useWallets()` currently returns.
+   *
+   * A mutable array on purpose: Privy hands out a NEW `ConnectedWallet` array whenever its state
+   * moves, which is the fact POO-1080 turns on. Reassigning this models that, so a spec can prove
+   * the rail reads the live handle at execution time rather than the one it captured.
+   */
+  wallets: [] as unknown[],
 }));
 
 vi.mock("@/lib/services", () => ({ isMockMode: false }));
 
 vi.mock("@privy-io/react-auth", () => ({
-  useWallets: () => ({
-    wallets: [
-      {
-        address: OWNER,
-        getEthereumProvider: async (): Promise<Eip1193Provider> => provider,
-        // Privy's own chain switch (POO-1078). The rail calls this before every broadcast, because
-        // an embedded wallet ignores the provider's raw `wallet_switchEthereumChain`.
-        switchChain: mocks.switchChain,
-      },
-    ],
-  }),
+  useWallets: () => ({ wallets: mocks.wallets }),
   useSignTypedData: () => ({ signTypedData: async () => ({ signature: "0xsignature" }) }),
 }));
 vi.mock("@/lib/auth/useAuth", () => ({ useAuth: () => ({ address: mocks.activeAddress }) }));
@@ -215,6 +213,14 @@ beforeEach(() => {
   mocks.nonce = 7;
   mocks.sent = [];
   mocks.journalAtReceipt = [];
+  // The default wallet: an EXTERNAL one, whose provider is live regardless of which object holds it.
+  mocks.wallets = [
+    {
+      address: OWNER,
+      getEthereumProvider: async (): Promise<Eip1193Provider> => provider,
+      switchChain: mocks.switchChain,
+    },
+  ];
   mocks.switchChain.mockClear();
   mocks.switchChainAsync.mockClear();
   mocks.switchChainAsync.mockImplementation(async () => {});
