@@ -117,7 +117,13 @@ function answerQuote(call: QuoteCall) {
   }
 
   const requested = BigInt(call.amount);
-  const exactOutput = call.type === "EXACT_OUTPUT";
+  // BRIDGE routing IGNORES EXACT_OUTPUT (POO-1074, probed live 2026-07-25): it pins the INPUT to the
+  // requested amount and lets the output come back short by the bridge fee, identically to
+  // EXACT_INPUT. CLASSIC honours it properly (probed: WETH→USDC EXACT_OUTPUT pins the output).
+  // Modelling the difference is the point of this harness: a mock more capable than the API hides
+  // exactly the defect the harness exists to catch.
+  const isBridge = call.tokenInChainId !== call.tokenOutChainId;
+  const exactOutput = call.type === "EXACT_OUTPUT" && !isBridge;
   // EXACT_OUTPUT asks the inverse question, and rounds UP so the input is never a hair short.
   const amountIn = exactOutput
     ? (requested * spec.rateDen + spec.rateNum - BigInt(1)) / spec.rateNum
