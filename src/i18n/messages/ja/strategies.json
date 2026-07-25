@@ -442,26 +442,6 @@
         "buyCrypto": "暗号資産を購入"
       }
     },
-    "fundingSources": {
-      "title": "何を使いますか？",
-      "subtitle": "お持ちのものを選んでください。適切な場所へ移す方法はこちらで用意します。",
-      "listLabel": "あなたの資金",
-      "rowLabel": "{network} の {symbol}、{amount}、{usd} 相当",
-      "selected": "選択中: {amount}",
-      "required": "必要額: {amount}",
-      "remaining": "あと {amount} 必要です",
-      "surplus": "必要額より {amount} 多いです",
-      "exact": "ちょうど足りています",
-      "empty": "ここにはまだ使えるものがありません。",
-      "cta": "続ける",
-      "step": "ステップ {index}",
-      "unblock": "この資金を使うには:",
-      "badge": {
-        "ok": "利用可能",
-        "topUp": "補充が必要",
-        "blocked": "まだ使えません"
-      }
-    },
     "gas": {
       "title": "ネットワーク手数料が不足しています",
       "subtitle": "この取引を確認するには、少額のネットワーク手数料が必要です。以下で補充してください。",
@@ -524,6 +504,50 @@
       "compound": "{strategy}に再投資",
       "moveRange": "{strategy}の範囲を移動",
       "close": "{strategy}をクローズ"
+    },
+    "costs": {
+      "youPay": "お支払い額",
+      "amountNeeded": "必要な金額",
+      "fee": "手数料",
+      "priceBuffer": "価格バッファー",
+      "priceBufferHint": "資金の移動中に価格が動いた場合に備えて確保します。使われなかった分はそのままお客様のものです。",
+      "conversionCost": "交換コスト",
+      "conversionCostHint": "提示された金額にすでに含まれているため、上乗せされることはありません。",
+      "gasByStep": "ステップごとのネットワーク費用",
+      "gasByStepHint": "各ステップがそのネットワークで必要とする費用を、フル桁で表示しています。合計ではなく内訳です。上のネットワーク費用はセント単位に丸められています。",
+      "itemized": "内訳",
+      "gasStep": "ステップ {index}: {label}",
+      "fromSource": "{network} の {symbol} から",
+      "updating": "価格を更新しています",
+      "leg": {
+        "swapToken": "{network} で交換",
+        "swapGas": "{network} でガスを追加",
+        "bridge": "{network} から移動"
+      },
+      "buyCrypto": {
+        "cta": "代わりに暗号資産を購入",
+        "hint": "カードまたは Pix で支払えば、ネットワーク間で資金を移す必要はありません。"
+      }
+    },
+    "fundingSources": {
+      "title": "何を使いますか？",
+      "subtitle": "お持ちのものを選んでください。適切な場所へ移す方法はこちらで用意します。",
+      "listLabel": "あなたの資金",
+      "rowLabel": "{network} の {symbol}、{amount}、{usd} 相当",
+      "selected": "選択中: {amount}",
+      "required": "必要額: {amount}",
+      "remaining": "あと {amount} 必要です",
+      "surplus": "必要額より {amount} 多いです",
+      "exact": "ちょうど足りています",
+      "empty": "ここにはまだ使えるものがありません。",
+      "cta": "続ける",
+      "step": "ステップ {index}",
+      "unblock": "この資金を使うには:",
+      "badge": {
+        "ok": "利用可能",
+        "topUp": "補充が必要",
+        "blocked": "まだ使えません"
+      }
     },
     "recovery": {
       "leg": {

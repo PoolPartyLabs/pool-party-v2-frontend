@@ -442,26 +442,6 @@
         "buyCrypto": "Krypto kaufen"
       }
     },
-    "fundingSources": {
-      "title": "Was möchten Sie einsetzen?",
-      "subtitle": "Wählen Sie, was Sie halten. Wir kümmern uns darum, es an die richtige Stelle zu bringen.",
-      "listLabel": "Ihr Guthaben",
-      "rowLabel": "{symbol} auf {network}, {amount}, wert {usd}",
-      "selected": "Ausgewählt: {amount}",
-      "required": "Benötigt: {amount}",
-      "remaining": "Es fehlen noch {amount}",
-      "surplus": "{amount} mehr als nötig",
-      "exact": "Genau gedeckt",
-      "empty": "Hier gibt es noch nichts, was wir einsetzen können.",
-      "cta": "Weiter",
-      "step": "Schritt {index}",
-      "unblock": "Um dieses Guthaben zu nutzen:",
-      "badge": {
-        "ok": "Bereit",
-        "topUp": "Braucht eine Aufladung",
-        "blocked": "Noch nicht nutzbar"
-      }
-    },
     "gas": {
       "title": "Netzwerkgebühr zu niedrig",
       "subtitle": "Sie benötigen eine kleine Netzwerkgebühr, um diese Transaktion zu bestätigen. Laden Sie unten auf.",
@@ -524,6 +504,50 @@
       "compound": "In {strategy} reinvestieren",
       "moveRange": "Bereich in {strategy} verschieben",
       "close": "{strategy} schließen"
+    },
+    "costs": {
+      "youPay": "Du zahlst",
+      "amountNeeded": "Benötigter Betrag",
+      "fee": "Gebühr",
+      "priceBuffer": "Preispuffer",
+      "priceBufferHint": "Zurückgelegt, falls sich der Preis ändert, während deine Mittel unterwegs sind. Was übrig bleibt, gehört dir.",
+      "conversionCost": "Umtauschkosten",
+      "conversionCostHint": "Bereits im angebotenen Betrag enthalten und wird nicht zusätzlich berechnet.",
+      "gasByStep": "Netzwerkkosten pro Schritt",
+      "gasByStepHint": "Was jeder Schritt in seinem Netzwerk kostet, in voller Genauigkeit. Eine Auflistung, keine Summe: der Netzwerkbetrag oben ist auf Cent gerundet.",
+      "itemized": "Aufgeschlüsselt",
+      "gasStep": "Schritt {index}: {label}",
+      "fromSource": "Von {symbol} auf {network}",
+      "updating": "Preise werden aktualisiert",
+      "leg": {
+        "swapToken": "Auf {network} umwandeln",
+        "swapGas": "Gas auf {network} hinzufügen",
+        "bridge": "Von {network} übertragen"
+      },
+      "buyCrypto": {
+        "cta": "Stattdessen Krypto kaufen",
+        "hint": "Zahle per Karte oder Pix, ohne Mittel zwischen Netzwerken zu bewegen."
+      }
+    },
+    "fundingSources": {
+      "title": "Was möchten Sie einsetzen?",
+      "subtitle": "Wählen Sie, was Sie halten. Wir kümmern uns darum, es an die richtige Stelle zu bringen.",
+      "listLabel": "Ihr Guthaben",
+      "rowLabel": "{symbol} auf {network}, {amount}, wert {usd}",
+      "selected": "Ausgewählt: {amount}",
+      "required": "Benötigt: {amount}",
+      "remaining": "Es fehlen noch {amount}",
+      "surplus": "{amount} mehr als nötig",
+      "exact": "Genau gedeckt",
+      "empty": "Hier gibt es noch nichts, was wir einsetzen können.",
+      "cta": "Weiter",
+      "step": "Schritt {index}",
+      "unblock": "Um dieses Guthaben zu nutzen:",
+      "badge": {
+        "ok": "Bereit",
+        "topUp": "Braucht eine Aufladung",
+        "blocked": "Noch nicht nutzbar"
+      }
     },
     "recovery": {
       "leg": {

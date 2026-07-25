@@ -442,26 +442,6 @@
         "buyCrypto": "암호화폐 구매"
       }
     },
-    "fundingSources": {
-      "title": "무엇을 사용하시겠어요?",
-      "subtitle": "보유한 자산을 선택하세요. 알맞은 곳으로 옮기는 방법은 저희가 처리합니다.",
-      "listLabel": "내 자금",
-      "rowLabel": "{network}의 {symbol}, {amount}, {usd} 상당",
-      "selected": "선택함: {amount}",
-      "required": "필요액: {amount}",
-      "remaining": "{amount} 더 필요합니다",
-      "surplus": "필요액보다 {amount} 많습니다",
-      "exact": "정확히 충족되었습니다",
-      "empty": "아직 여기에서 사용할 수 있는 자산이 없습니다.",
-      "cta": "계속",
-      "step": "{index}단계",
-      "unblock": "이 자금을 사용하려면:",
-      "badge": {
-        "ok": "사용 가능",
-        "topUp": "충전이 필요함",
-        "blocked": "아직 사용할 수 없음"
-      }
-    },
     "gas": {
       "title": "네트워크 수수료가 부족합니다",
       "subtitle": "이 거래를 확인하려면 소액의 네트워크 수수료가 필요합니다. 아래에서 충전하세요.",
@@ -524,6 +504,50 @@
       "compound": "{strategy}에 재투자",
       "moveRange": "{strategy}의 범위 이동",
       "close": "{strategy} 종료"
+    },
+    "costs": {
+      "youPay": "결제 금액",
+      "amountNeeded": "필요한 금액",
+      "fee": "수수료",
+      "priceBuffer": "가격 버퍼",
+      "priceBufferHint": "자금이 이동하는 동안 가격이 변할 경우를 대비해 남겨 둡니다. 남은 금액은 그대로 회원님의 것입니다.",
+      "conversionCost": "전환 비용",
+      "conversionCostHint": "안내된 금액에 이미 포함되어 있어 추가로 청구되지 않습니다.",
+      "gasByStep": "단계별 네트워크 비용",
+      "gasByStepHint": "각 단계가 해당 네트워크에서 쓰는 비용을 전체 자릿수로 보여 줍니다. 합계가 아니라 항목별 내역이며, 위의 네트워크 금액은 센트 단위로 반올림됩니다.",
+      "itemized": "항목별",
+      "gasStep": "{index}단계: {label}",
+      "fromSource": "{network}의 {symbol}에서",
+      "updating": "가격을 업데이트하는 중",
+      "leg": {
+        "swapToken": "{network}에서 전환",
+        "swapGas": "{network}에서 가스 추가",
+        "bridge": "{network}에서 이동"
+      },
+      "buyCrypto": {
+        "cta": "대신 암호화폐 구매",
+        "hint": "카드나 Pix로 결제하면 네트워크 간에 자금을 옮길 필요가 없습니다."
+      }
+    },
+    "fundingSources": {
+      "title": "무엇을 사용하시겠어요?",
+      "subtitle": "보유한 자산을 선택하세요. 알맞은 곳으로 옮기는 방법은 저희가 처리합니다.",
+      "listLabel": "내 자금",
+      "rowLabel": "{network}의 {symbol}, {amount}, {usd} 상당",
+      "selected": "선택함: {amount}",
+      "required": "필요액: {amount}",
+      "remaining": "{amount} 더 필요합니다",
+      "surplus": "필요액보다 {amount} 많습니다",
+      "exact": "정확히 충족되었습니다",
+      "empty": "아직 여기에서 사용할 수 있는 자산이 없습니다.",
+      "cta": "계속",
+      "step": "{index}단계",
+      "unblock": "이 자금을 사용하려면:",
+      "badge": {
+        "ok": "사용 가능",
+        "topUp": "충전이 필요함",
+        "blocked": "아직 사용할 수 없음"
+      }
     },
     "recovery": {
       "leg": {

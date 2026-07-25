@@ -442,26 +442,6 @@
         "buyCrypto": "Crypto kopen"
       }
     },
-    "fundingSources": {
-      "title": "Wat wilt u gebruiken?",
-      "subtitle": "Kies wat u heeft. Wij regelen hoe het op de juiste plek komt.",
-      "listLabel": "Uw tegoed",
-      "rowLabel": "{symbol} op {network}, {amount}, waard {usd}",
-      "selected": "Geselecteerd: {amount}",
-      "required": "Nodig: {amount}",
-      "remaining": "Nog {amount} te gaan",
-      "surplus": "{amount} meer dan nodig",
-      "exact": "Precies gedekt",
-      "empty": "Er is hier nog niets dat we kunnen gebruiken.",
-      "cta": "Doorgaan",
-      "step": "Stap {index}",
-      "unblock": "Om dit geld te gebruiken:",
-      "badge": {
-        "ok": "Klaar",
-        "topUp": "Heeft een aanvulling nodig",
-        "blocked": "Nog niet bruikbaar"
-      }
-    },
     "gas": {
       "title": "Onvoldoende netwerkkosten",
       "subtitle": "Je hebt een klein beetje netwerkkosten nodig om deze transactie te bevestigen. Laad hieronder op.",
@@ -524,6 +504,50 @@
       "compound": "Herinvesteren in {strategy}",
       "moveRange": "Bereik verplaatsen in {strategy}",
       "close": "{strategy} sluiten"
+    },
+    "costs": {
+      "youPay": "Je betaalt",
+      "amountNeeded": "Benodigd bedrag",
+      "fee": "Kosten",
+      "priceBuffer": "Prijsbuffer",
+      "priceBufferHint": "Apart gezet voor het geval de prijs beweegt terwijl je geld onderweg is. Wat overblijft, blijft van jou.",
+      "conversionCost": "Omwisselkosten",
+      "conversionCostHint": "Zit al in het bedrag dat je kreeg aangeboden en komt er dus niet bovenop.",
+      "gasByStep": "Netwerkkosten per stap",
+      "gasByStepHint": "Wat elke stap kost op zijn eigen netwerk, met volledige precisie. Een specificatie, geen optelsom: het netwerkbedrag hierboven is afgerond op centen.",
+      "itemized": "Gespecificeerd",
+      "gasStep": "Stap {index}: {label}",
+      "fromSource": "Van {symbol} op {network}",
+      "updating": "Prijzen worden bijgewerkt",
+      "leg": {
+        "swapToken": "Omwisselen op {network}",
+        "swapGas": "Gas toevoegen op {network}",
+        "bridge": "Verplaatsen vanaf {network}"
+      },
+      "buyCrypto": {
+        "cta": "Koop liever crypto",
+        "hint": "Betaal met kaart of Pix en verplaats geen geld tussen netwerken."
+      }
+    },
+    "fundingSources": {
+      "title": "Wat wilt u gebruiken?",
+      "subtitle": "Kies wat u heeft. Wij regelen hoe het op de juiste plek komt.",
+      "listLabel": "Uw tegoed",
+      "rowLabel": "{symbol} op {network}, {amount}, waard {usd}",
+      "selected": "Geselecteerd: {amount}",
+      "required": "Nodig: {amount}",
+      "remaining": "Nog {amount} te gaan",
+      "surplus": "{amount} meer dan nodig",
+      "exact": "Precies gedekt",
+      "empty": "Er is hier nog niets dat we kunnen gebruiken.",
+      "cta": "Doorgaan",
+      "step": "Stap {index}",
+      "unblock": "Om dit geld te gebruiken:",
+      "badge": {
+        "ok": "Klaar",
+        "topUp": "Heeft een aanvulling nodig",
+        "blocked": "Nog niet bruikbaar"
+      }
     },
     "recovery": {
       "leg": {

@@ -442,26 +442,6 @@
         "buyCrypto": "Comprar cripto"
       }
     },
-    "fundingSources": {
-      "title": "O que você quer usar?",
-      "subtitle": "Escolha qualquer coisa que você tenha. A gente resolve como levar até o lugar certo.",
-      "listLabel": "Seus fundos",
-      "rowLabel": "{symbol} na {network}, {amount}, vale {usd}",
-      "selected": "Selecionado: {amount}",
-      "required": "Necessário: {amount}",
-      "remaining": "Faltam {amount}",
-      "surplus": "{amount} a mais do que o necessário",
-      "exact": "Coberto exatamente",
-      "empty": "Ainda não há nada aqui que a gente possa usar.",
-      "cta": "Continuar",
-      "step": "Passo {index}",
-      "unblock": "Para usar este dinheiro:",
-      "badge": {
-        "ok": "Pronto",
-        "topUp": "Precisa de uma recarga",
-        "blocked": "Ainda não dá para usar"
-      }
-    },
     "gas": {
       "title": "Gas insuficiente",
       "subtitle": "Você precisa de um pouco de gas de rede para confirmar esta transação. Adicione abaixo.",
@@ -524,6 +504,50 @@
       "compound": "Reinvestir em {strategy}",
       "moveRange": "Mover faixa em {strategy}",
       "close": "Encerrar {strategy}"
+    },
+    "costs": {
+      "youPay": "Você paga",
+      "amountNeeded": "Valor necessário",
+      "fee": "Taxa",
+      "priceBuffer": "Reserva de preço",
+      "priceBufferHint": "Reservado caso o preço mude enquanto seus fundos estão a caminho. O que sobrar continua sendo seu.",
+      "conversionCost": "Custo de conversão",
+      "conversionCostHint": "Já incluído no valor cotado, então não é somado por cima.",
+      "gasByStep": "Custo de rede por etapa",
+      "gasByStepHint": "Quanto cada etapa custa para rodar na rede dela, com precisão total. É uma lista detalhada, não uma soma: o valor de rede acima é arredondado para centavos.",
+      "itemized": "Detalhado",
+      "gasStep": "Etapa {index}: {label}",
+      "fromSource": "De {symbol} na {network}",
+      "updating": "Atualizando preços",
+      "leg": {
+        "swapToken": "Converter na {network}",
+        "swapGas": "Adicionar gas na {network}",
+        "bridge": "Mover da {network}"
+      },
+      "buyCrypto": {
+        "cta": "Comprar cripto",
+        "hint": "Pague com cartão ou Pix e não precise mover fundos entre redes."
+      }
+    },
+    "fundingSources": {
+      "title": "O que você quer usar?",
+      "subtitle": "Escolha qualquer coisa que você tenha. A gente resolve como levar até o lugar certo.",
+      "listLabel": "Seus fundos",
+      "rowLabel": "{symbol} na {network}, {amount}, vale {usd}",
+      "selected": "Selecionado: {amount}",
+      "required": "Necessário: {amount}",
+      "remaining": "Faltam {amount}",
+      "surplus": "{amount} a mais do que o necessário",
+      "exact": "Coberto exatamente",
+      "empty": "Ainda não há nada aqui que a gente possa usar.",
+      "cta": "Continuar",
+      "step": "Passo {index}",
+      "unblock": "Para usar este dinheiro:",
+      "badge": {
+        "ok": "Pronto",
+        "topUp": "Precisa de uma recarga",
+        "blocked": "Ainda não dá para usar"
+      }
     },
     "recovery": {
       "leg": {

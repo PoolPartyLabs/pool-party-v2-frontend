@@ -442,26 +442,6 @@
         "buyCrypto": "購買加密貨幣"
       }
     },
-    "fundingSources": {
-      "title": "您想使用什麼？",
-      "subtitle": "選擇您持有的任何資產，我們來安排如何把它送到需要的地方。",
-      "listLabel": "您的資金",
-      "rowLabel": "{network} 上的 {symbol}，{amount}，價值 {usd}",
-      "selected": "已選擇：{amount}",
-      "required": "所需：{amount}",
-      "remaining": "還差 {amount}",
-      "surplus": "比所需多 {amount}",
-      "exact": "剛好夠用",
-      "empty": "這裡暫時沒有可以使用的資產。",
-      "cta": "繼續",
-      "step": "第 {index} 步",
-      "unblock": "要使用這筆資金：",
-      "badge": {
-        "ok": "可用",
-        "topUp": "需要補充",
-        "blocked": "暫時無法使用"
-      }
-    },
     "gas": {
       "title": "網路費用不足",
       "subtitle": "您需要少量網路費用才能確認此交易。請在下方儲值。",
@@ -524,6 +504,50 @@
       "compound": "複投 {strategy}",
       "moveRange": "調整 {strategy} 的區間",
       "close": "關閉 {strategy}"
+    },
+    "costs": {
+      "youPay": "你需支付",
+      "amountNeeded": "所需金額",
+      "fee": "費用",
+      "priceBuffer": "價格緩衝",
+      "priceBufferHint": "為資金轉移途中價格波動預留。用不到的部分仍歸你所有。",
+      "conversionCost": "兌換成本",
+      "conversionCostHint": "已包含在報價金額中，不會另行收取。",
+      "gasByStep": "各步驟的網路費用",
+      "gasByStepHint": "每個步驟在各自網路上的花費，以完整精度顯示。這是明細清單而非合計：上方的網路費用已四捨五入到分。",
+      "itemized": "明細",
+      "gasStep": "第 {index} 步：{label}",
+      "fromSource": "來自 {network} 上的 {symbol}",
+      "updating": "正在更新價格",
+      "leg": {
+        "swapToken": "在 {network} 兌換",
+        "swapGas": "在 {network} 加入 gas",
+        "bridge": "從 {network} 轉移"
+      },
+      "buyCrypto": {
+        "cta": "改為購買加密貨幣",
+        "hint": "用金融卡或 Pix 付款，不必在網路之間轉移資金。"
+      }
+    },
+    "fundingSources": {
+      "title": "您想使用什麼？",
+      "subtitle": "選擇您持有的任何資產，我們來安排如何把它送到需要的地方。",
+      "listLabel": "您的資金",
+      "rowLabel": "{network} 上的 {symbol}，{amount}，價值 {usd}",
+      "selected": "已選擇：{amount}",
+      "required": "所需：{amount}",
+      "remaining": "還差 {amount}",
+      "surplus": "比所需多 {amount}",
+      "exact": "剛好夠用",
+      "empty": "這裡暫時沒有可以使用的資產。",
+      "cta": "繼續",
+      "step": "第 {index} 步",
+      "unblock": "要使用這筆資金：",
+      "badge": {
+        "ok": "可用",
+        "topUp": "需要補充",
+        "blocked": "暫時無法使用"
+      }
     },
     "recovery": {
       "leg": {
