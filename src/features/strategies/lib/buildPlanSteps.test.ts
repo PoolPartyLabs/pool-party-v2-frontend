@@ -930,6 +930,31 @@ describe("buildPlanSteps — POO-1075 a gas bridge settles before anything depen
   // A gas bridge lands NATIVE on the TARGET chain while the funding leg spends a different token on
   // a SOURCE chain, so they must not be linked: sizing the funding leg from the gas delta would
   // spend the wrong amount entirely.
+  // §3.6 gives the arrival verdict ONE author, `reconcileFundingJournal`, which re-derives it from
+  // the chain. The rail writing `settled` for a cross-chain leg would be the "fakes success" failure
+  // by another name. The guard read `leg.kind !== "bridge"` while its own comment promised "whatever
+  // its kind says", so a gas bridge slipped through it.
+  it("[R4] never records the gas bridge settled: that verdict has one author", async () => {
+    const h = harness({
+      balances: {
+        [nativeKey(POLYGON)]: ["1000000000000000000"],
+        [nativeKey(ARBITRUM)]: ["0", "295000000000000"],
+      },
+    });
+    echoQuotes(h);
+    const recordSettled = vi.fn();
+    h.deps.journal = {
+      beginLeg: vi.fn(async () => {}),
+      recordBroadcast: vi.fn(),
+      recordSettled,
+      recordFailed: vi.fn(),
+    };
+
+    await runRail(buildPlanSteps(planOf([gasBridgeLeg()]), h.deps));
+
+    expect(recordSettled).not.toHaveBeenCalled();
+  });
+
   it("[R4] is never mistaken for the funding leg's feeder", async () => {
     const h = harness({
       balances: {

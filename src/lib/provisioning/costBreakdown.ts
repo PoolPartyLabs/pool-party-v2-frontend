@@ -59,6 +59,7 @@ import type {
   ProvisioningQuote,
   ProvisioningStep,
 } from "./types";
+import { isBridgeLegKind } from "./types";
 
 /** The four contract figures, kept tied to the contract rather than re-declared ([R2]). */
 export type ProvisioningQuoteFigures = Pick<
@@ -276,7 +277,9 @@ function priceStep(step: ProvisioningStep, leg: ProvisioningLeg, slippagePct: nu
   // is signed, not broadcast, cannot spend any.
   line.gas = step.method === "SIGN_MSG" ? 0 : toMicros(leg.gasUsd);
 
-  if (leg.kind === "bridge") {
+  // Both bridge kinds, never the literal: a gas bridge charged an AMM slippage line would
+  // over-state the total the user approves and drop its real spread from the fees (POO-1075).
+  if (isBridgeLegKind(leg.kind)) {
     line.bridgeFee = bridgeFeeMicros(leg, notionalMicros);
   } else {
     // [R3] AMM legs alone carry the allowance.
@@ -298,7 +301,7 @@ function priceStep(step: ProvisioningStep, leg: ProvisioningLeg, slippagePct: nu
   // rather than assumed upstream: this figure is now what the price-impact gate judges, and a stray
   // reading would block a route that carries no AMM risk at all.
   if (
-    leg.kind !== "bridge" &&
+    !isBridgeLegKind(leg.kind) &&
     typeof leg.priceImpactPct === "number" &&
     Number.isFinite(leg.priceImpactPct)
   ) {
@@ -427,7 +430,9 @@ export function buildCostBreakdown(input: CostBreakdownInput): ProvisioningCostM
     sources,
     gas: grouped.gas,
     totals,
-    crossChain: input.steps.some((step) => step.leg?.kind === "bridge"),
+    crossChain: input.steps.some(
+      (step) => step.leg !== undefined && isBridgeLegKind(step.leg.kind),
+    ),
     quote: {
       shortfallUsd,
       bufferUsd,

@@ -1331,6 +1331,59 @@ describe("buildPlan: bridging gas into a BLOCKED target chain [R1]", () => {
     expect(result.plan.gas?.amountUsd ?? 0).toBeGreaterThan(0);
   });
 
+  // The gas bridge spends the donor's native. When that SAME holding is also the funding source,
+  // failing to earmark it plans the balance twice: the bridge lands (irreversibly), then the funding
+  // leg reverts for insufficient native and the user is stranded having paid to bridge gas. The
+  // other tests here hide it by funding from USDC and donating from a separate ETH holding.
+  it("[R2] never plans the donor's native twice when it also funds the operation", async () => {
+    // 1 ETH at $2,500, the rate the routing table already uses, so the arithmetic is exact.
+    const ETH_FUNDS_EVERYTHING = source({
+      address: NATIVE_TOKEN_ADDRESS,
+      chainId: BASE,
+      symbol: "ETH",
+      decimals: 18,
+      amount: ONE_ETH.toString(),
+      usd: 2_500,
+    });
+    route(NATIVE_TOKEN_ADDRESS, BASE, USDC_BASE, BASE, {
+      routing: "CLASSIC",
+      ...ETH_TO_USDC,
+      gasFeeUSD: "0.02",
+    });
+
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        // Exactly what the WHOLE balance yields: 1 ETH buys 2,500 USDC, the bridge takes 0.1%. So
+        // the funding route alone needs every last wei, and any amount the gas bridge also spends
+        // has to come out of the same holding.
+        requiredAmount: "2497500000",
+        requiredUsd: 2_497.5,
+        sources: [ETH_FUNDS_EVERYTHING],
+        gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: blocked(ARBITRUM) },
+      },
+      { nowIso: NOW },
+    );
+
+    if (result.ok) {
+      const drawn = legsOf(result.plan)
+        .filter(
+          (leg) =>
+            leg.chainId === BASE &&
+            leg.tokenIn.address.toLowerCase() === NATIVE_TOKEN_ADDRESS.toLowerCase(),
+        )
+        .reduce((total, leg) => total + BigInt(leg.amountIn), BigInt(0));
+      // Uncommitted, the gas bridge and the funding swap each plan the full balance and this lands
+      // over 100%: the bridge settles, the swap reverts for insufficient native, and the user has
+      // paid to bridge gas and is stranded (UF-22 [R3]).
+      expect(drawn).toBeLessThanOrEqual(BigInt(ETH_FUNDS_EVERYTHING.amount));
+    } else {
+      // Refusing is the other honest answer: earmarking the gas leaves the route genuinely short,
+      // and "you are short" is a state the user can act on. Stranding them is not.
+      expect(result.code).toBe("PROVISIONING_INSUFFICIENT_FUNDS");
+    }
+  });
+
   it("keeps refusing when no chain holds native at all", async () => {
     const result = await buildPlan(
       {

@@ -74,6 +74,23 @@ export type ProvisioningStepType =
  */
 export type ProvisioningLegKind = "swap-token" | "bridge" | "swap-gas" | "bridge-gas";
 
+/**
+ * Whether a leg kind crosses chains. BOTH bridge kinds do; neither swap kind ever does.
+ *
+ * It exists because `bridge-gas` was added by widening the union, and widening a union only makes
+ * the compiler speak up at sites typed as an exhaustive `Record` or `switch`. Six sites instead
+ * compared the runtime string (`leg.kind === "bridge"`), which `tsc` cannot see, and every one of
+ * them silently mishandled the new kind: the cost model charged it a fictional slippage line, the
+ * recovery reconciler marked it settled without checking it arrived, the plan card failed to render
+ * its row, and the rail wrote a settlement it had not verified.
+ *
+ * So: never compare a leg kind to `"bridge"` directly. Ask this, or ask the leg itself whether its
+ * `tokenOut.chainId` differs from its `chainId`, which is the same question about a concrete leg.
+ */
+export function isBridgeLegKind(kind: ProvisioningLegKind): boolean {
+  return kind === "bridge" || kind === "bridge-gas";
+}
+
 /** One end of a leg, identified precisely enough to quote, approve and broadcast against. */
 export interface ProvisioningLegToken {
   /** Contract address. {@link NATIVE_TOKEN_ADDRESS} (`0x0…0`) for the chain's native coin. */

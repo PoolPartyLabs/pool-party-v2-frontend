@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-055 (POO-1034, POO-1044)
+ * @id PP-CORE-LIB-055 (POO-1034, POO-1044, POO-1074, POO-1075)
  * @name buildPlan (real provisioning planner)
- * @implements-rules-version v2 (POO-1044 rules v1) · v1 (POO-1034 rules v1)
+ * @implements-rules-version v3 (POO-1075 rules v1) · v2 (POO-1044 rules v1) · v1 (POO-1034 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The engine. It turns "this operation needs N USDC on chain X, and the wallet holds these things
@@ -754,6 +754,16 @@ export async function buildPlan(
   const committed = new Map<string, bigint>();
   let topUpUsd = 0;
 
+  const commitKey = (chainId: number, address: string) => `${chainId}:${address.toLowerCase()}`;
+  const committedOf = (chainId: number, address: string) =>
+    committed.get(commitKey(chainId, address)) ?? BigInt(0);
+  const commit = (chainId: number, address: string, amount: bigint) => {
+    committed.set(commitKey(chainId, address), committedOf(chainId, address) + amount);
+  };
+  const setCommitted = (chainId: number, address: string, amount: bigint) => {
+    committed.set(commitKey(chainId, address), amount);
+  };
+
   // [R4] Seeded BEFORE any funding leg, so it is leg 0 and every later `legs.length` index follows
   // it. Position is necessary but not sufficient: the rail additionally waits for a bridge to SETTLE
   // before advancing, which is what actually stops a target-chain broadcast the gas has not arrived
@@ -770,17 +780,15 @@ export async function buildPlan(
     // Counted into the same figure a TOP_UP swap feeds, so the plan's `gas` amount is what the user
     // actually spends on being able to transact, by whichever route it was obtained ([R6]).
     topUpUsd += amountUsd(gasBridge.leg.amountIn, gasBridge.leg.tokenIn, donor);
+    // The donor's native is spent by THIS leg, so the funding loop must not plan it a second time.
+    // Without this the same balance funds both, and when the donor's native is also the funding
+    // source the plan draws over 100% of it: the gas bridge lands (irreversibly), then the funding
+    // leg reverts for insufficient native and the user is stranded having paid to bridge gas. That
+    // is exactly the "never hand back a plan that strands halfway" invariant (UF-22 [R3]).
+    //
+    // Seeded AFTER the commit helpers for that reason; they used to be declared below this block.
+    commit(gasBridge.leg.chainId, NATIVE_TOKEN_ADDRESS, toBigInt(gasBridge.leg.amountIn));
   }
-
-  const commitKey = (chainId: number, address: string) => `${chainId}:${address.toLowerCase()}`;
-  const committedOf = (chainId: number, address: string) =>
-    committed.get(commitKey(chainId, address)) ?? BigInt(0);
-  const commit = (chainId: number, address: string, amount: bigint) => {
-    committed.set(commitKey(chainId, address), committedOf(chainId, address) + amount);
-  };
-  const setCommitted = (chainId: number, address: string, amount: bigint) => {
-    committed.set(commitKey(chainId, address), amount);
-  };
 
   /**
    * [R3] The gas swap for a TOP_UP chain, emitted BEFORE the first leg that spends from that chain.
