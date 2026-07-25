@@ -195,6 +195,12 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
             return provider.request(args);
           },
         },
+        // Privy's own API, not the provider's `wallet_switchEthereumChain`. An EMBEDDED wallet
+        // ignores the raw RPC and keeps reporting its old chain, which surfaced as WRONG_CHAIN
+        // ("stayed on chain 137") mid-route. Every other operation here already switches this way.
+        switchChain: async (chainId) => {
+          await wallet.switchChain(chainId);
+        },
         signTypedData: async (data) => {
           const { signature } = await signTypedData(data as Parameters<typeof signTypedData>[0], {
             address: owner,
