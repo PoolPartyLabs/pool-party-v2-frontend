@@ -193,8 +193,22 @@ export interface RailTypedData {
 export interface PlanRailDeps {
   /** The wallet address the plan was priced for. Derived from the SIWE session by the caller. */
   owner: string;
-  /** The connected wallet's provider. Chain switching is the choke point's job, not the caller's. */
+  /** The connected wallet's provider. The choke point still asserts the chain on every broadcast. */
   provider: Eip1193Provider;
+  /**
+   * Put the WALLET on `chainId` before a leg runs, through the wallet SDK rather than the provider.
+   *
+   * Every other operation in this app already does this (`useInvest`, `useWithdraw`,
+   * `useCollectFees`, `useCreatePool`, `useMoveRange`, the manager hooks) with the note that signing
+   * and sends otherwise fail with "chainId should be same as current chainId" (-32602). The rail was
+   * the one path that skipped it and relied on the choke point's raw
+   * `wallet_switchEthereumChain`, which a Privy EMBEDDED wallet does not honour: it is not slow to
+   * switch, it does not switch at all, so no amount of waiting helps (POO-1078).
+   *
+   * Optional so a test rail runs unchanged. `assertProviderOnChain` remains the guarantee; this is
+   * what makes the guarantee satisfiable on an embedded wallet.
+   */
+  switchChain?: (chainId: number) => Promise<void>;
   /** Sign EIP-712 typed data (Privy's `useSignTypedData`), resolving with the signature. */
   signTypedData: (data: RailTypedData) => Promise<string>;
   /** Base-unit balance of `token` for `owner` on `chainId`, as a decimal string. */
@@ -419,6 +433,10 @@ async function runApprovalStep(
   deps: PlanRailDeps,
 ): Promise<FlowStepResult<PlanRailCtx>> {
   const { leg } = railStep;
+  // An approval is a broadcast like any other, so it needs the wallet on this leg's chain too
+  // (POO-1078). It runs BEFORE the leg step, so relying on that step's switch would approve on
+  // whichever chain the wallet happened to be left on.
+  await deps.switchChain?.(leg.chainId);
   const { amount, state } = await resolveAmountIn(leg, railStep.previousLeg, ctx, deps);
   const crossChain = leg.tokenIn.chainId !== leg.tokenOut.chainId;
 
@@ -518,6 +536,11 @@ async function runLegStep(
   const { planStep, leg } = railStep;
   if (!leg) throw unsupportedStep(planStep, "carries no executable route leg");
   if (!isExecutable(planStep)) throw unsupportedStep(planStep, `uses ${planStep.method}`);
+
+  // Before ANY of it: the quote, the approval, the permit signature and the broadcast all have to
+  // happen with the wallet on this leg's chain. A cross-chain plan changes chain between legs, which
+  // is why the rail feels this and the single-chain operations never did.
+  await deps.switchChain?.(leg.chainId);
 
   const { amount, state } = await resolveAmountIn(leg, railStep.previousLeg, ctx, deps);
 

@@ -44,6 +44,8 @@ const USDC_POLYGON = {
 
 const mocks = vi.hoisted(() => ({
   activeAddress: "0xC3673ADc0000000000000000000000000000BEEF" as string | undefined,
+  /** Privy's chain switch, recorded so a spec can assert the rail asked for the leg's chain. */
+  switchChain: vi.fn(async (_chainId: number) => {}),
   /** Base-unit output the fresh `/quote` offers. Worsened per-test to trip the re-quote gate. */
   quotedOut: "3000000000",
   nonce: 7,
@@ -60,6 +62,9 @@ vi.mock("@privy-io/react-auth", () => ({
       {
         address: OWNER,
         getEthereumProvider: async (): Promise<Eip1193Provider> => provider,
+        // Privy's own chain switch (POO-1078). The rail calls this before every broadcast, because
+        // an embedded wallet ignores the provider's raw `wallet_switchEthereumChain`.
+        switchChain: mocks.switchChain,
       },
     ],
   }),
@@ -206,10 +211,30 @@ beforeEach(() => {
   mocks.nonce = 7;
   mocks.sent = [];
   mocks.journalAtReceipt = [];
+  mocks.switchChain.mockClear();
 });
 
 afterEach(() => {
   vi.useRealTimers();
+});
+
+// POO-1078 — a Privy EMBEDDED wallet ignores the provider's raw `wallet_switchEthereumChain`, so it
+// never lands on the target chain and the broadcast choke point refuses with WRONG_CHAIN ("stayed on
+// chain 137"). Every other operation in this app switches through the wallet SDK first; the rail was
+// the one path that did not, and a cross-chain plan is the one that changes chain mid-flow.
+describe("useProvisioningRail — chain switching goes through the wallet SDK [R1]", () => {
+  it("wires Privy's switchChain into the rail rather than leaving it to the provider", async () => {
+    const rail = mountRail({ operation: OPERATION });
+    const steps = rail.current.buildSteps?.(plan(), { onLegBroadcast: () => {} });
+
+    expect(steps).toBeDefined();
+    await steps?.[0]?.run?.({});
+
+    // The leg's own chain, asked for through the SDK: the provider RPC alone is what an embedded
+    // wallet ignores.
+    expect(mocks.switchChain).toHaveBeenCalled();
+    for (const [chainId] of mocks.switchChain.mock.calls) expect(chainId).toBe(POLYGON);
+  });
 });
 
 describe("useProvisioningRail — the recovery journal [R7]", () => {

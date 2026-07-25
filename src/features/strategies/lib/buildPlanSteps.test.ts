@@ -862,6 +862,60 @@ describe("buildPlanSteps — [R7] run() never mutates the accumulating context",
 // must treat it exactly like any other bridge and hold the step open until the funds LAND, because
 // every later step depends on that chain being transactable. Nothing in the rail keys on the leg's
 // kind: settlement is decided by whether the leg crosses chains, which is the property that matters.
+// POO-1078, reported live: "Wallet stayed on chain 137 after switching; this transaction targets
+// chain 8453" on a Privy EMBEDDED wallet, and it persisted after the settle-window fix, because an
+// embedded wallet does not switch LATE on the raw `wallet_switchEthereumChain`, it does not switch
+// at all. Every other operation in this app calls the wallet SDK's own switchChain first; the rail
+// was the one path that did not, and a cross-chain plan is the one that changes chain mid-flow.
+describe("buildPlanSteps — POO-1078 the wallet is switched through the SDK, per leg", () => {
+  it("switches to each leg's chain before that leg runs", async () => {
+    const h = harness({
+      balances: {
+        [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["1000000", "2951000000"],
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: bridgeArrives(),
+      },
+    });
+    const switchChain = vi.fn(async (_chainId: number) => {});
+    h.deps.switchChain = switchChain;
+
+    await runRail(buildPlanSteps(planOf([swapLeg(), bridgeLeg()]), h.deps));
+
+    // Every rail step asks for its own leg's chain before running, approvals included: the rail must
+    // not assume the wallet stayed where the previous step left it.
+    expect(switchChain.mock.calls.length).toBeGreaterThanOrEqual(2);
+    for (const [chainId] of switchChain.mock.calls) expect(chainId).toBe(POLYGON);
+  });
+
+  it("switches BEFORE the quote, not just before the broadcast", async () => {
+    const order: string[] = [];
+    const h = harness({
+      balances: { [`${POLYGON}:${WETH_POLYGON.address.toLowerCase()}`]: ["1000000000000000000"] },
+    });
+    h.deps.switchChain = vi.fn(async () => {
+      order.push("switch");
+    });
+    const realQuote = h.deps.quoteSwap;
+    h.deps.quoteSwap = vi.fn(async (input) => {
+      order.push("quote");
+      return realQuote(input);
+    }) as typeof h.deps.quoteSwap;
+
+    await runRail(buildPlanSteps(planOf([swapLeg()]), h.deps));
+
+    // The permit signature and the /swap build are chain-bound too, so switching only at broadcast
+    // would still sign on the wrong chain.
+    expect(order.indexOf("switch")).toBeLessThan(order.indexOf("quote"));
+  });
+
+  it("runs unchanged when no switcher is wired", async () => {
+    const h = harness({
+      balances: { [`${POLYGON}:${WETH_POLYGON.address.toLowerCase()}`]: ["1000000000000000000"] },
+    });
+    const { outcomes } = await runRail(buildPlanSteps(planOf([swapLeg()]), h.deps));
+    expect(outcomes.at(-1)).toMatchObject({ txHash: "0xhash1" });
+  });
+});
+
 describe("buildPlanSteps — POO-1075 a gas bridge settles before anything depends on it", () => {
   const NATIVE_ARBITRUM = {
     address: "0x0000000000000000000000000000000000000000",
