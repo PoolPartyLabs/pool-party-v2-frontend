@@ -28,7 +28,7 @@ git log --oneline 21a2c289..HEAD
 git diff --stat 21a2c289..HEAD           # 180 files, +32821 / -451
 
 # Only the epic's own artifacts (they all carry a @hackathon header tag)
-git grep -l "@hackathon" -- src scripts   # 102 files
+git grep -l "@hackathon" -- src scripts   # 103 files
 ```
 
 Every source file created for this epic carries `@hackathon` in its standard file header, alongside
@@ -110,6 +110,7 @@ Paths are repo-relative and resolvable. A row naming a directory covers the file
 | `src/lib/uniswap/errors.ts` | Typed `UniswapApiError` / `UniswapParseError`, so callers never regex-match a message | POO-1027 | landed |
 | `src/lib/uniswap/schemas.ts` | Zod contracts for every endpoint we call. Strict where a value can influence a transaction, tolerant on display-only blocks | POO-1028 | landed |
 | `src/lib/uniswap/actions.ts` | The `"use server"` boundary: `quoteSwap` · `checkApproval` · `buildSwapTx` · `listSwappableTokens`. The key never leaves the server | POO-1029 | landed |
+| `src/lib/auth/WalletChainProbe.tsx` | NON-PRODUCTION diagnostic: reports which lever actually moves a Privy EMBEDDED wallet's chain. Signs nothing, spends nothing, and is dropped from a prod bundle by a build-time constant | POO-1081 | landed |
 
 **Planner** — turning "this operation needs N USDC on chain X" into executable legs.
 

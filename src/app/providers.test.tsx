@@ -18,6 +18,8 @@ import { describe, expect, it, vi } from "vitest";
 const renderLog: string[] = [];
 
 vi.mock("@privy-io/react-auth", () => ({
+  // The non-production WalletChainProbe (POO-1081) reads the connected wallets.
+  useWallets: () => ({ wallets: [] }),
   PrivyProvider: ({ children }: { children: React.ReactNode }) => {
     renderLog.push("PrivyProvider");
     return <div data-testid="privy-provider">{children}</div>;

@@ -18,6 +18,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { EmbeddedWalletActivator } from "@/lib/auth/EmbeddedWalletActivator";
 import { SiweSessionProvider } from "@/lib/auth/useSiweSession";
+import { WalletChainProbe } from "@/lib/auth/WalletChainProbe";
 import { WalletSwitchGuard } from "@/lib/auth/WalletSwitchGuard";
 import { defaultChain, supportedChains, transportMap } from "@/lib/chains/config";
 import { OwnerProfileSessionProvider } from "@/lib/profile/useOwnerProfileSession";
@@ -111,6 +112,8 @@ export function Providers({ children }: { children: ReactNode }) {
               embedded wallet from connecting, so the app hangs on skeleton loading forever. Inside
               WagmiProvider (needs the wagmi + Privy context); external-only sessions are untouched. */}
           <EmbeddedWalletActivator />
+          {/* Non-production only, and dropped from a prod bundle by a build-time constant. */}
+          <WalletChainProbe />
           <SiweSessionProvider>
             {/* Wallet switch guard (POO-892): on a genuine A-to-B account flip it clears the stale
                 SIWE session and resets to home; on a rejected re-SIWE it forces logout. Inside
