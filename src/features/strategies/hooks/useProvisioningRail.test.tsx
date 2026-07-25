@@ -44,8 +44,10 @@ const USDC_POLYGON = {
 
 const mocks = vi.hoisted(() => ({
   activeAddress: "0xC3673ADc0000000000000000000000000000BEEF" as string | undefined,
-  /** Privy's chain switch, recorded so a spec can assert the rail asked for the leg's chain. */
+  /** Privy's wallet-SDK chain switch: the FALLBACK path. */
   switchChain: vi.fn(async (_chainId: number) => {}),
+  /** wagmi's connector-level switch: what the rail tries first (POO-1079). */
+  switchChainAsync: vi.fn(async (_args: { chainId: number }) => {}),
   /** Base-unit output the fresh `/quote` offers. Worsened per-test to trip the re-quote gate. */
   quotedOut: "3000000000",
   nonce: 7,
@@ -71,6 +73,8 @@ vi.mock("@privy-io/react-auth", () => ({
   useSignTypedData: () => ({ signTypedData: async () => ({ signature: "0xsignature" }) }),
 }));
 vi.mock("@/lib/auth/useAuth", () => ({ useAuth: () => ({ address: mocks.activeAddress }) }));
+// The CONNECTOR-level switch the rail prefers (POO-1079). Privy's wallet SDK is the fallback.
+vi.mock("wagmi", () => ({ useSwitchChain: () => ({ switchChainAsync: mocks.switchChainAsync }) }));
 
 // PP-INTEGRATION-POINT (ADR 0003): the three Uniswap calls are `"use server"` actions. The rail
 // injects them, so the suite replaces functions rather than a transport, and no key is involved.
@@ -212,6 +216,8 @@ beforeEach(() => {
   mocks.sent = [];
   mocks.journalAtReceipt = [];
   mocks.switchChain.mockClear();
+  mocks.switchChainAsync.mockClear();
+  mocks.switchChainAsync.mockImplementation(async () => {});
 });
 
 afterEach(() => {
@@ -230,8 +236,22 @@ describe("useProvisioningRail — chain switching goes through the wallet SDK [R
     expect(steps).toBeDefined();
     await steps?.[0]?.run?.({});
 
-    // The leg's own chain, asked for through the SDK: the provider RPC alone is what an embedded
-    // wallet ignores.
+    // The CONNECTOR switch, which is what the provider actually follows.
+    expect(mocks.switchChainAsync).toHaveBeenCalled();
+    for (const [args] of mocks.switchChainAsync.mock.calls) expect(args.chainId).toBe(POLYGON);
+    // And not also the SDK: on an external wallet each path prompts, so asking twice for one
+    // switch would be its own bug.
+    expect(mocks.switchChain).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the wallet SDK when the connector switch is unavailable", async () => {
+    mocks.switchChainAsync.mockImplementation(async () => {
+      throw new Error("connector cannot switch");
+    });
+    const rail = mountRail({ operation: OPERATION });
+    const steps = rail.current.buildSteps?.(plan(), { onLegBroadcast: () => {} });
+    await steps?.[0]?.run?.({});
+
     expect(mocks.switchChain).toHaveBeenCalled();
     for (const [chainId] of mocks.switchChain.mock.calls) expect(chainId).toBe(POLYGON);
   });
