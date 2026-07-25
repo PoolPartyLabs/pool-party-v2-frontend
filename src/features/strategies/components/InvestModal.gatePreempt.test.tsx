@@ -16,6 +16,10 @@
  *   [R4] `strategy_invest_submitted` fires exactly once when an invest actually starts, and NOT on
  *        the deposit bailout (which starts no invest)
  *   [R5] cancelling provisioning returns to the amount step, not to /deposit
+ *
+ * [R2]/[R3] are pinned under BOTH of the independent guards that keep the fallback alive: the flag
+ * being off, and real mode being inert. They are not the same test. The flag is on in local dev, so
+ * only the real-mode case speaks to what production does today.
  */
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -31,12 +35,26 @@ const push = vi.hoisted(() => vi.fn());
 const track = vi.hoisted(() => vi.fn());
 /** Flag state is per-test: the gate is only consulted when `provisioning` is on. */
 const flagOn = vi.hoisted(() => ({ value: true }));
+/**
+ * Mock-vs-real is per-test too, and INDEPENDENT of the flag. `buildProvisioningInput` reads
+ * `isMockMode` at call time, so overriding it with a getter (the `TransactionStatus.test.tsx`
+ * precedent) flips the gate's data source mid-file. Spread the real barrel rather than replacing it:
+ * the rest of `@/lib/services` stays intact for everything else the modal tree touches.
+ */
+const mockMode = vi.hoisted(() => ({ value: true }));
 
 vi.mock("@/lib/features/useFeatureFlags", () => ({
   useFeatureFlags: () => ({
     isEnabled: (key: string) => key === "provisioning" && flagOn.value,
     flags: {},
   }),
+}));
+
+vi.mock("@/lib/services", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/services")>()),
+  get isMockMode() {
+    return mockMode.value;
+  },
 }));
 
 vi.mock("@/lib/analytics/useAnalytics", () => ({
@@ -95,6 +113,7 @@ afterEach(() => {
   push.mockReset();
   track.mockReset();
   flagOn.value = true;
+  mockMode.value = true;
 });
 
 describe("InvestModal — gate preempts the deposit deep link (POO-1025)", () => {
@@ -118,6 +137,29 @@ describe("InvestModal — gate preempts the deposit deep link (POO-1025)", () =>
 
     expect(push).toHaveBeenCalledTimes(1);
     expect(push).toHaveBeenCalledWith("/deposit?strategy=s1&amount=150&invest=200");
+  });
+
+  /**
+   * [R2] + [R3] in the condition that actually ships. This test exists to pin the production-safety
+   * claim of POO-1025 DIRECTLY, rather than transitively through the flag-off case above.
+   *
+   * "Real mode is inert" is the entire argument that this behavior change is safe to merge: the flag
+   * is ON in local dev, so the flag-off test proves nothing about production. The load-bearing part
+   * is `realProvisioningInput`'s non-triggering stub, which keeps `computeProvisioningNeed().needed`
+   * false and sends a short wallet down the unchanged /deposit path even with the gate switched on.
+   * Those are two independent guards, and only this test covers the second one. When POO-1042 wires
+   * live per-chain balances into that stub, THIS is the test that must be revisited deliberately.
+   */
+  it("keeps the deposit deep link in REAL mode even with the provisioning flag on", () => {
+    mockMode.value = false; // flagOn stays true: the gate is consulted and declines on its own.
+    enterAmount(200, 50);
+
+    fireEvent.click(screen.getByRole("button", { name: "Deposit & invest" }));
+
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(push).toHaveBeenCalledWith("/deposit?strategy=s1&amount=150&invest=200");
+    // Never the provision phase: its op anchor is what the [R1] test waits on.
+    expect(screen.queryByText("Invest in Stable Yield")).not.toBeInTheDocument();
   });
 
   // [R4] The bailout starts no invest, so it must not report one.
