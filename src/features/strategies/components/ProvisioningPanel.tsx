@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-CMP-046
  * @name ProvisioningPanel
- * @implements-rules-version v7 (POO-1044 rules v1) · v6 (POO-1043 rules v1) · v5 (POO-1042 rules v1) · v4 (POO-1041 rules v1) · v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
+ * @implements-rules-version v8 (POO-1047 rules v1) · v7 (POO-1044 rules v1) · v6 (POO-1043 rules v1) · v5 (POO-1042 rules v1) · v4 (POO-1041 rules v1) · v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The INLINE pre-flight provisioning body (epic POO-411, POO-418/POO-419). When an op is short on
@@ -45,8 +45,8 @@
  *
  * POO-1043 (hackathon POO-1022): three pieces of finished work that no production caller reached are
  * mounted here, which is the difference between having built them and having shipped them. Its rule
- * numbers collide with POO-1042's and POO-1044's, so every POO-1043 marker below is written out in
- * full.
+ * numbers collide with POO-1042's, POO-1044's and POO-1047's, so every POO-1043 marker below is
+ * written out in full.
  * POO-1043 [R9] {@link ProvisioningCostBreakdown} sits above the confirm, so the itemised price is
  * read before it is agreed to, and its TTL re-quotes through the same plan seam, never a second path.
  * POO-1043 [R7] the recovery journal is minted at the confirm and retired when the route completes,
@@ -66,8 +66,18 @@
  * [R6]/[R7], because in real mode the classifier sizes the top-up from a live quote and the
  * selector's fiat-minimum bounds have nothing to attach to.
  *
+ * POO-1047 (hackathon POO-1022): the shipped `PriceImpactGate` (PP-STR-CMP-022) now stands between
+ * this plan and its confirm. A funding route reaches the same AMMs an operation swap does, so
+ * without it the funding path was the way AROUND the gate that POO-1011 put there after a poisoned
+ * thin-pool route turned $40 into $3. One gate per PLAN, on the cost model's worst-AMM-leg figure,
+ * with bridge legs excluded and a missing figure meaning no gate. Reused, not re-implemented: a
+ * second copy of a money-safety threshold is a second thing that can be relaxed by accident. It is
+ * independent of POO-1044's gas-only branch above and deliberately so: that branch opens straight on
+ * the plan phase, so a swap-gas leg's price impact is gated exactly like any other AMM leg's.
+ *
  * Mock mode passes no context and is byte-identical to before: it opens on the plan and settles it
- * with the local mock rail, inline gas selector included [R6]/[R7].
+ * with the local mock rail, inline gas selector included [R6]/[R7]. A fixture plan carries no price
+ * impact, so the gate is absent there [R3].
  *
  * PP-INTEGRATION-POINT: `context` is the live wallet read (PP-CORE-LIB-057) and `buildPlanSteps` is
  * the live Uniswap rail (PP-STR-LIB-017), both bound by `useProvisioningGate` and both absent in
@@ -84,7 +94,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Link } from "@/i18n/navigation";
 import { apiNetworkForChain } from "@/lib/chains/config";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "@/lib/provisioning";
-import { computeProvisioningNeed, spendableTokenUsd } from "@/lib/provisioning";
+import { computeProvisioningNeed, planPriceImpactPct, spendableTokenUsd } from "@/lib/provisioning";
 // Type-only, therefore erased: `gateContext.ts` is `server-only` and this is a client component.
 // The value crosses as data through `getProvisioningContextAction` (ADR 0003).
 import type { ProvisioningGateContext } from "@/lib/provisioning/gateContext";
@@ -97,6 +107,7 @@ import { useProvisioningRail } from "../hooks/useProvisioningRail";
 import { type FlowStep, useWalletSignFlow } from "../hooks/useWalletSignFlow";
 import { BRIDGE_PENDING_CODE } from "../lib/awaitBridgeSettlement";
 import { type PlanRailDeps, planRailSteps, type RequoteChange } from "../lib/buildPlanSteps";
+import { PriceImpactGate, usePriceImpactGate } from "./PriceImpactGate";
 import { FundingSourceSelector } from "./provisioning/FundingSourceSelector";
 import { fundingProgress, reachesChain, seedRequiredUsd } from "./provisioning/fundingSelection";
 import { GasAmountSelector } from "./provisioning/GasAmountSelector";
@@ -318,6 +329,27 @@ export function ProvisioningPanel({
       ? fundingProgress(spendableSources, confirmedSelection, plan.quote.totalPayUsd).remainingUsd
       : 0;
   const quotedPlanFallsShort = quotedShortfallUsd > 0;
+  // What the early return below actually renders: the picker, not the plan. Named once so the gate's
+  // "is the route on screen" flag cannot drift away from what is on screen. POO-1044 [R1]'s gas-only
+  // skip is part of the SAME expression for that reason: a gas-only plan never shows the picker, so
+  // it is on the plan from open and its swap-gas leg is gated like any other AMM leg.
+  const pickingSources =
+    context != null && !gasOnly && (phase === "sources" || quotedPlanFallsShort);
+
+  /**
+   * POO-1047 [R1]/[R4]: a funding route is a swap, so it is gated like one. The SAME `>=10%`
+   * acknowledgement the operation modals have shown since POO-1011 (a poisoned thin-pool route that
+   * turned $40 into $3) stands between this plan and its confirm, because the funding path reaches
+   * the same AMMs and would otherwise be the way around it.
+   *
+   * Per PLAN, not per leg [R4]: the user acknowledges the route they are approving. The figure is the
+   * cost model's own worst-AMM-leg aggregate, which is the number the breakdown above prints as
+   * "Price impact", so the percent they are asked about is the percent they were shown. Bridge legs
+   * contribute nothing to it [R5] and an absent or malformed figure means NO gate [R3] rather than a
+   * blocked route.
+   */
+  const priceImpactPct = useMemo(() => (plan ? planPriceImpactPct(plan) : undefined), [plan]);
+  const impactGate = usePriceImpactGate(priceImpactPct, phase === "plan" && !pickingSources);
 
   // [R6] What the rail will REALLY run: one approval per ERC-20 leg, then the leg. Only in real mode
   // — the mock settle runs the plan's own steps, and a fixture plan carries no legs to approve.
@@ -503,7 +535,7 @@ export function ProvisioningPanel({
    * gate context guarantees it), which is what makes POO-1039's "no verdict, still selectable"
    * fallback unreachable here rather than load-bearing.
    */
-  if (context && !gasOnly && (phase === "sources" || quotedPlanFallsShort)) {
+  if (pickingSources) {
     return (
       <div className="flex flex-col gap-4">
         {quotedPlanFallsShort ? (
@@ -724,11 +756,18 @@ export function ProvisioningPanel({
           requoting={planLoading}
         />
       ) : null}
+      {/* POO-1047 [R1]: the funds-at-risk gate, ABOVE the confirm and outside the cost card's
+          collapsible details, which is where the POO-1010 incident's 92.41% was hidden. */}
+      <PriceImpactGate
+        priceImpactPct={priceImpactPct}
+        acknowledged={impactGate.acknowledged}
+        onAcknowledgedChange={impactGate.setAcknowledged}
+      />
       <div className="flex flex-col gap-2">
         <Button
           className="w-full"
           size="lg"
-          disabled={ctaDisabled}
+          disabled={ctaDisabled || impactGate.blocked}
           onClick={() => {
             // POO-1043 [R7] §3.7: the journal is minted when the user APPROVES the route, never when it is
             // quoted. A plan nobody accepted has no in-flight transactions to track, and a record of

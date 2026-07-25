@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-056 (POO-1035)
+ * @id PP-CORE-LIB-056 (POO-1035, POO-1047)
  * @name provisioning cost model
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1047 rules v1) · v1 (POO-1035 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * What a funding plan costs, itemized per source and in aggregate, and the four `ProvisioningQuote`
@@ -34,7 +34,8 @@
  *     it by receiving less, not by paying more; adding a line for it would charge it twice. This is
  *     the double count POO-1034 refused to introduce, and it stays refused.
  *   - **price impact** is the quote's own figure ([R7]), never derived. Its absence on a bridge leg
- *     is correct, not a gap.
+ *     is correct, not a gap. POO-1047 makes that absence STRUCTURAL rather than incidental, because
+ *     the same figure now gates the plan: see {@link planPriceImpactPct}.
  *
  * ## Money
  *
@@ -289,8 +290,18 @@ function priceStep(step: ProvisioningStep, leg: ProvisioningLeg, slippagePct: nu
     }
   }
 
-  // [R7] Straight from the quote, never derived.
-  if (typeof leg.priceImpactPct === "number" && Number.isFinite(leg.priceImpactPct)) {
+  // [R7] Straight from the quote, never derived, and only off an AMM leg.
+  //
+  // POO-1047 [R5]: a bridge leg is quoted by Across and `quote.priceImpact` is an AMM figure, so a
+  // figure that rides along on one describes nothing. `buildPlan` copies whatever the quote reports
+  // onto the leg regardless of kind, which is exactly why the exclusion has to be enforced HERE
+  // rather than assumed upstream: this figure is now what the price-impact gate judges, and a stray
+  // reading would block a route that carries no AMM risk at all.
+  if (
+    leg.kind !== "bridge" &&
+    typeof leg.priceImpactPct === "number" &&
+    Number.isFinite(leg.priceImpactPct)
+  ) {
     line.priceImpactPct = leg.priceImpactPct;
   }
   return line;
@@ -438,6 +449,23 @@ export function planCostBreakdown(plan: ProvisioningPlan): ProvisioningCostModel
     shortfallUsd: plan.quote.shortfallUsd,
     ...(plan.slippagePct === undefined ? {} : { slippagePct: plan.slippagePct }),
   });
+}
+
+/**
+ * The one price-impact figure a funding plan is gated on (POO-1047).
+ *
+ * The WORST AMM leg on the route, in percent, or `undefined` when no leg reported one. Deliberately
+ * the cost model's own aggregate rather than a second walk over the legs: the user is shown this
+ * number as the breakdown's "Price impact" row and is asked to acknowledge that same number, and two
+ * derivations is how those come apart. Bridge legs are excluded at the source ({@link priceStep},
+ * POO-1047 [R5]) and a malformed reading yields nothing, which the gate reads as NO gate rather than
+ * as 0% ([R3]): a display figure we could not obtain must never block a legitimate route.
+ *
+ * Per PLAN, not per step ([R4]). The user acknowledges the route they are approving; asking again
+ * per leg, mid-execution, would be asking about a decision already made.
+ */
+export function planPriceImpactPct(plan: ProvisioningPlan): number | undefined {
+  return planCostBreakdown(plan).totals.priceImpactPct;
 }
 
 /** What the canonical fee tooltip needs to render its Bridge line ([R5]). */
