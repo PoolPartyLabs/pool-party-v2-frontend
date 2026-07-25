@@ -1,7 +1,7 @@
 /**
- * @id PP-STR-LIB-017 (POO-1036, POO-1037, POO-1038)
+ * @id PP-STR-LIB-017 (POO-1036, POO-1037, POO-1038, POO-1043)
  * @name buildPlanSteps (provisioning execution rail)
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1043 rules v1) · v1 (POO-1036 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The seam the Universal Funding epic converges on: it turns a priced {@link ProvisioningPlan} into
@@ -116,7 +116,7 @@ import {
   BRIDGE_PENDING_CODE,
   type BridgeSettlement,
 } from "./awaitBridgeSettlement";
-import type { FundingJournalRecorder } from "./fundingJournal";
+import type { FundingJournalRecorder, PlannedLegInput } from "./fundingJournal";
 
 /**
  * The accumulating context, typed as the panel types it. `ProvisioningPanel` runs the rail with
@@ -334,6 +334,41 @@ export function planRailSteps(plan: ProvisioningPlan): PlanRailStep[] {
     previousLeg = leg;
   }
   return rail;
+}
+
+/**
+ * The plan's route legs as journal entries, in route order (POO-1043 [R7]).
+ *
+ * The translation from "what we priced" to "what we are about to put on a chain" belongs here, with
+ * the rest of the plan-to-rail mapping, rather than in the journal module: the journal knows about
+ * transactions, not about provisioning plans, and keeping it that way is what lets it stay the
+ * untrusted-input boundary it is.
+ *
+ * Approvals are deliberately absent, for the reason the header states: an approval moves no funds, so
+ * re-running one cannot spend money twice, and recording it under the leg's index would make a leg
+ * whose swap never ran look done.
+ */
+export function planJournalLegs(plan: ProvisioningPlan): PlannedLegInput[] {
+  return planRailSteps(plan).flatMap((railStep) =>
+    railStep.kind === "leg" && railStep.leg
+      ? [
+          {
+            index: railStep.leg.index,
+            kind: railStep.leg.kind,
+            chainId: railStep.leg.chainId,
+            tokenIn: railStep.leg.tokenIn.address,
+            tokenOut: railStep.leg.tokenOut.address,
+            amountIn: railStep.leg.amountIn,
+            minAmountOut: railStep.leg.minAmountOut,
+            // A leg whose output lands on another chain is a bridge, and only a bridge has a
+            // destination-side arrival test to run (§3.6).
+            ...(railStep.leg.tokenOut.chainId === railStep.leg.chainId
+              ? {}
+              : { destChainId: railStep.leg.tokenOut.chainId }),
+          },
+        ]
+      : [],
+  );
 }
 
 /**

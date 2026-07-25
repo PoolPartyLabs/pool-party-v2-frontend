@@ -142,3 +142,26 @@ export async function readNativeBalance(owner: `0x${string}`, chainId: number): 
     throw new RpcError(`Failed to read native balance on chain ${chainId}`, chainId, err);
   }
 }
+
+/**
+ * Read `owner`'s confirmed transaction count on `chainId`, i.e. `eth_getTransactionCount(…, "latest")`.
+ *
+ * POO-1043 [R7]: the funding recovery journal records this immediately BEFORE a leg prompts the
+ * wallet (`docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` §3.4 step 1). On a later session it is the only
+ * evidence that distinguishes "the wallet broadcast and we never learned the hash" from "nothing was
+ * ever sent", and the two resolve to opposite actions.
+ *
+ * Deliberately NOT read through the wallet provider: a route spans chains and the provider answers
+ * for whichever one it is currently on, so a leg's baseline would silently be another chain's nonce.
+ * Sits beside {@link readNativeBalance}, which is the same shape of chain read for the same reason.
+ *
+ * @throws {RpcError} On network failure.
+ */
+export async function readTransactionCount(owner: `0x${string}`, chainId: number): Promise<number> {
+  const client = clientFor(chainId);
+  try {
+    return await client.getTransactionCount({ address: owner, blockTag: "latest" });
+  } catch (err) {
+    throw new RpcError(`Failed to read the transaction count on chain ${chainId}`, chainId, err);
+  }
+}

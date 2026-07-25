@@ -469,6 +469,12 @@
       "cta": "Bevestigen & doorgaan",
       "cancel": "Annuleren"
     },
+    "requote": {
+      "title": "De prijs is veranderd",
+      "body": "Deze stap levert nu ongeveer {percent} minder op dan de prijs die je hebt goedgekeurd. Er is nog niets verstuurd, dus je kunt de nieuwe prijs accepteren of hier stoppen.",
+      "accept": "Nieuwe prijs accepteren",
+      "decline": "Hier stoppen"
+    },
     "steps": {
       "buyUsdc": "USDC kopen",
       "bridge": "Overzetten naar {network}",

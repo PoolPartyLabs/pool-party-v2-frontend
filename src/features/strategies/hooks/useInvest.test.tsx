@@ -21,6 +21,9 @@ const mocks = vi.hoisted(() => ({
     switchChain: (chainId: number) => Promise<void>;
   }>,
   signTypedData: vi.fn(async () => ({ signature: "0xsig" })),
+  // POO-1043 [R3]: every `buildPermitSingle(token, spender, amount, nonce)` call, so the signed
+  // amount can be asserted.
+  buildPermitSingleCalls: [] as unknown[][],
   allowance: BigInt(0),
   approveTx: vi.fn(() => ({ tx: { to: "0xusdc", data: "0xapprove" } })),
   build: vi.fn(),
@@ -45,7 +48,12 @@ vi.mock("@/lib/tx/permit2", () => ({
   readPermit2TokenAllowance: async () => mocks.allowance,
   readPermit2Nonce: async () => 0,
   buildPermit2ApproveTx: mocks.approveTx,
-  buildPermitSingle: (token: unknown, spender: unknown) => ({ token, spender }),
+  // POO-1043 [R3]: the AMOUNT rides through, so a test can assert what the Permit2 signature is
+  // sized against.
+  buildPermitSingle: (...args: unknown[]) => {
+    mocks.buildPermitSingleCalls.push(args);
+    return { token: args[0], spender: args[1], amount: args[2] };
+  },
   permitTypedData: () => ({}),
   serializePermit: () => ({ details: {}, spender: "0xpool", sigDeadline: "0" }),
 }));
@@ -81,6 +89,7 @@ describe("useInvest (real mode)", () => {
     mocks.allowance = BigInt(0);
     mocks.approveTx.mockClear();
     mocks.signTypedData.mockClear();
+    mocks.buildPermitSingleCalls = [];
     // POO-475: the build action returns typed data ({ ok: true, tx } | { ok: false, code, message }).
     mocks.build.mockReset().mockResolvedValue({ ok: true, tx: { to: "0xc", data: "0xd" } });
     mocks.execute.mockReset().mockResolvedValue("0xhash"); // approve send (hash only)
@@ -218,6 +227,34 @@ describe("useInvest (real mode)", () => {
     mocks.wallets = [];
     const { result } = renderHook(() => useInvest());
     await expect(result.current.execute(strategy(), 100)).rejects.toThrow(/Wallet not connected/);
+  });
+
+  /**
+   * @rule POO-1043 [R3] — Permit2 is sized against the balance ON THE TARGET CHAIN after provisioning
+   * settles, never against a cross-chain total. This is the POO-303 constraint that caused the whole
+   * single-chain design, and provisioning is precisely the feature that could regress it: after a
+   * bridge the wallet holds funds on several chains, and signing a permit for the SUM would authorise
+   * a spend the target chain cannot honour.
+   */
+  describe("[POO-1043 R3] Permit2 sizing", () => {
+    it("signs for the entered amount, on the strategy's own chain", async () => {
+      const wallet = {
+        address: "0xWALLET",
+        getEthereumProvider: async () => ({ request: vi.fn() }),
+        switchChain: vi.fn(async () => {}),
+      };
+      mocks.wallets = [wallet];
+      mocks.allowance = parseUnits("1000000", 6);
+      const { result } = renderHook(() => useInvest());
+      await result.current.execute(strategy("polygon"), 100);
+
+      // The amount the user entered, in USDC base units. Not a wallet balance, and not a sum over
+      // chains: the permit authorises exactly the invest.
+      expect(mocks.signTypedData).toHaveBeenCalledTimes(1);
+      expect(mocks.buildPermitSingleCalls.at(-1)?.[2]).toBe(parseUnits("100", 6));
+      // And the wallet is on the strategy's chain before anything is signed there.
+      expect(wallet.switchChain).toHaveBeenCalledWith(137);
+    });
   });
 
   // Each step also guards its own required context, so the modal (which runs steps individually and

@@ -10,6 +10,7 @@
  * degrade at the poll ceiling into a recoverable "still settling" state that offers NO retry [R3] —
  * a retry would re-invoke the step verbatim and re-broadcast a bridge that is already in flight.
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { SCENARIOS } from "@/lib/provisioning";
 import { TransactionError } from "@/lib/tx/sendTransaction";
@@ -21,6 +22,21 @@ import {
 } from "../../../../tests/utils/renderWithProviders";
 import { BRIDGE_PENDING_CODE } from "../lib/awaitBridgeSettlement";
 import { ProvisioningPanel } from "./ProvisioningPanel";
+
+// POO-1043 [R9]: the plan phase now mounts ProvisioningCostBreakdown, whose buy-crypto peer option is
+// a locale-aware Link. The repository's standing test convention (88 files) is to stub it, because
+// next-intl's navigation factory reaches for `next/navigation` at import time.
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
 
 function noop() {}
 
