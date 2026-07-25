@@ -89,7 +89,7 @@ function continuityRows(markdown: string): Row[] {
     const cells = line.split("|").map((cell) => cell.trim());
     const status = cells.at(-2) ?? "";
     const paths = [...(cells[1] ?? "").matchAll(/`([^`]+)`/g)]
-      .map((match) => match[1])
+      .map((match) => match[1] ?? "")
       .filter((token) => token.includes("/"));
     rows.push({ section, paths, status, line });
   }
@@ -231,7 +231,7 @@ describe("[R4] the integration docs know the funding rail exists", () => {
 
 describe("[R5] the registry covers what the epic added", () => {
   const registry = read(REGISTRY);
-  const rowIds = [...registry.matchAll(/^\| `(PP-[A-Z0-9-]+)`/gm)].map((match) => match[1]);
+  const rowIds = [...registry.matchAll(/^\| `(PP-[A-Z0-9-]+)`/gm)].map((match) => match[1] ?? "");
 
   it("has a row for every @id the epic's modules declare", () => {
     const declared = new Set<string>();
