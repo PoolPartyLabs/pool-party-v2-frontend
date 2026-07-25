@@ -2,6 +2,7 @@
  * @id PP-CORE-MOD-011
  * @name ProvisioningWizardModal
  * @implements-rules-version v2
+ * @hackathon POO-1022 (Universal Funding)
  *
  * The inline provisioning wizard (POO-409): when an op needs more than gas (USDC for the op, a bridge
  * to the right network, plus optional gas), this assembles the steps and runs them here, then resumes
@@ -19,9 +20,9 @@
  * echoes on the plan for `buildPlanSteps` (R2), and resets to the 2% default on close (R3, the
  * POO-513 policy). Fees stay abstracted (2026-06-30 decision).
  *
- * PP-INTEGRATION-POINT: the plan is derived from the deterministic mock planner (POO-420) for now; the
- * gate (POO-418) will pass the real plan from `computePlan(input, gasChoice)` (POO-413), and
- * `buildPlanSteps` will run the real rail (POO-414). On success the host resumes the original op via
+ * PP-INTEGRATION-POINT: the plan now resolves through the `computePlan` seam (POO-1023), so whichever
+ * planner the toggle selects is the one that runs; the real planner lands behind it in POO-1034 and
+ * `buildPlanSteps` runs the real rail in POO-1036. On success the host resumes the original op via
  * `onDone` with its original parameters (POO-419).
  */
 "use client";
@@ -30,10 +31,11 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/Sheet";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { TransactionModalHeader } from "@/components/ui/TransactionModalHeader";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "@/lib/provisioning";
-import { mockComputePlan } from "@/lib/provisioning";
 import type { TxError } from "@/lib/tx/diagnostics";
+import { useProvisioningPlan } from "../hooks/useProvisioningPlan";
 import { type FlowStep, useWalletSignFlow } from "../hooks/useWalletSignFlow";
 import { DEFAULT_SLIPPAGE_PCT } from "../lib/slippage";
 import { GasAmountSelector } from "./provisioning/GasAmountSelector";
@@ -80,6 +82,7 @@ export function ProvisioningWizardModal({
   className,
 }: ProvisioningWizardModalProps) {
   const t = useTranslations("strategies");
+  const tCommon = useTranslations("common");
   const [phase, setPhase] = useState<Phase>("plan");
   const [gasChoice, setGasChoice] = useState<GasChoice | null>(null);
   const [txError, setTxError] = useState<TxError | null>(null);
@@ -99,18 +102,15 @@ export function ProvisioningWizardModal({
   // Only a VALID explicit choice resizes the plan; an empty/invalid Custom keeps the default-sized gas
   // step so it never silently drops and the inline selector stays mounted mid-edit (review POO-409).
   const effectiveGas = gasChoice && gasValidity.ok ? gasChoice : undefined;
-  // PP-INTEGRATION-POINT: real plan via computePlan(input, effectiveGas) (POO-413); the gear's Max
-  // slippage rides input.slippagePct into the planner and onto the plan (POO-523 R2).
-  // PP-FIXME(POO-418): wizard calls mockComputePlan directly, bypassing the isMockMode computePlan seam (planner.ts). Accept an external plan / route through computePlan when the real planner is wired. OK now: component is unmounted, no real call site.
-  const plan = useMemo(
-    () => mockComputePlan({ ...input, slippagePct: slippage }, { gas: effectiveGas }),
-    [input, effectiveGas, slippage],
-  );
-  const view = useMemo(() => buildPlanView(plan), [plan]);
-  const hasGasStep = plan.steps.some((step) => step.type === "swap-gas");
+  // POO-1023: resolved through the ONE mock/real seam (computePlan), never mockComputePlan. The
+  // gear's Max slippage rides input.slippagePct into the planner and onto the plan (POO-523 R2).
+  const planInput = useMemo(() => ({ ...input, slippagePct: slippage }), [input, slippage]);
+  const { plan, error: planError } = useProvisioningPlan(planInput, effectiveGas);
+  const view = useMemo(() => (plan ? buildPlanView(plan) : null), [plan]);
+  const hasGasStep = plan?.steps.some((step) => step.type === "swap-gas") ?? false;
 
   // The provisioning steps (everything but the op anchor) → WalletSteps labels + the flow runners.
-  const execRows = view.rows.filter((row) => !row.isOp);
+  const execRows = view?.rows.filter((row) => !row.isOp) ?? [];
   const execLabels = execRows.map((row) => ({
     key: row.key,
     label: t(row.labelKey, row.networkName ? { network: row.networkName } : undefined),
@@ -118,6 +118,7 @@ export function ProvisioningWizardModal({
   }));
 
   const flowSteps = useMemo<FlowStep<PlanCtx>[]>(() => {
+    if (!plan) return [];
     const buildReal = buildPlanStepsRef.current;
     if (buildReal) return buildReal(plan);
     // PP-MOCK: settle each provisioning step after a beat (always success in mock mode).
@@ -193,7 +194,20 @@ export function ProvisioningWizardModal({
           if (locked) event.preventDefault();
         }}
       >
-        {phase === "plan" ? (
+        {phase === "plan" && !view ? (
+          // POO-1023 [R3]: the seam is async. Hold a skeleton rather than flashing an empty plan
+          // card; a planner failure shows the recoverable error body instead of spinning forever.
+          <div className="flex flex-col gap-4" role="status" aria-label={tCommon("loading")}>
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-40 w-full" />
+            {planError ? (
+              <p className="text-muted-foreground text-sm">{errorBody}</p>
+            ) : (
+              <Skeleton className="h-11 w-full" />
+            )}
+          </div>
+        ) : phase === "plan" && view ? (
           <>
             {/* POO-523 R1: the shared header carries the settings gear (left of the X). */}
             <TransactionModalHeader
