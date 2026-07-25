@@ -503,6 +503,30 @@
       "compound": "{strategy}に再投資",
       "moveRange": "{strategy}の範囲を移動",
       "close": "{strategy}をクローズ"
+    },
+    "costs": {
+      "youPay": "お支払い額",
+      "amountNeeded": "必要な金額",
+      "fee": "手数料",
+      "priceBuffer": "価格バッファー",
+      "priceBufferHint": "資金の移動中に価格が動いた場合に備えて確保します。使われなかった分はそのままお客様のものです。",
+      "conversionCost": "交換コスト",
+      "conversionCostHint": "提示された金額にすでに含まれているため、上乗せされることはありません。",
+      "gasByStep": "ステップごとのネットワーク費用",
+      "gasByStepHint": "各ステップがそのネットワークで必要とする費用を、フル桁で表示しています。合計ではなく内訳です。上のネットワーク費用はセント単位に丸められています。",
+      "itemized": "内訳",
+      "gasStep": "ステップ {index}: {label}",
+      "fromSource": "{network} の {symbol} から",
+      "updating": "価格を更新しています",
+      "leg": {
+        "swapToken": "{network} で交換",
+        "swapGas": "{network} でガスを追加",
+        "bridge": "{network} から移動"
+      },
+      "buyCrypto": {
+        "cta": "代わりに暗号資産を購入",
+        "hint": "カードまたは Pix で支払えば、ネットワーク間で資金を移す必要はありません。"
+      }
     }
   }
 }

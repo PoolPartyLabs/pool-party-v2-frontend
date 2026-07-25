@@ -503,6 +503,30 @@
       "compound": "Compound in {strategy}",
       "moveRange": "Move range in {strategy}",
       "close": "Close {strategy}"
+    },
+    "costs": {
+      "youPay": "You pay",
+      "amountNeeded": "Amount needed",
+      "fee": "Fee",
+      "priceBuffer": "Price buffer",
+      "priceBufferHint": "Set aside in case the price moves while your funds are on the way. Whatever is left over stays yours.",
+      "conversionCost": "Conversion cost",
+      "conversionCostHint": "Already included in the amount you were quoted, so it is not added on top.",
+      "gasByStep": "Network cost by step",
+      "gasByStepHint": "What each step costs to run on its network, at full precision. This is an itemized list, not a sum: the network figure above is rounded to cents.",
+      "itemized": "Itemized",
+      "gasStep": "Step {index}: {label}",
+      "fromSource": "From {symbol} on {network}",
+      "updating": "Updating prices",
+      "leg": {
+        "swapToken": "Convert on {network}",
+        "swapGas": "Add gas on {network}",
+        "bridge": "Move from {network}"
+      },
+      "buyCrypto": {
+        "cta": "Buy crypto instead",
+        "hint": "Pay with a card or Pix and skip moving funds between networks."
+      }
     }
   }
 }

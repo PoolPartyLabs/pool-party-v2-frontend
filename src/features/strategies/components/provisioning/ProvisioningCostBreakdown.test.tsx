@@ -197,7 +197,8 @@ describe("the bridge fee [R1][R5]", () => {
     render(SAME_CHAIN_PLAN);
     await showMore(user);
 
-    expect(rowDetail("Fee")).not.toContain("Bridge");
+    // Asserted positively too, so "no bridge line" cannot pass by the tooltip being absent.
+    expect(rowDetail("Fee")).toBe("Estimated gas (network fee) $0.02");
     expect(screen.queryByText("Coming soon")).not.toBeInTheDocument();
   });
 

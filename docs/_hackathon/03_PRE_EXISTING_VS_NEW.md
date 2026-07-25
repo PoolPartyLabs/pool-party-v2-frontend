@@ -106,7 +106,8 @@ commit only the documentation and the vendored skill have landed; every `src` ro
 | `src/features/strategies/lib/buildPlanSteps.ts` | **The adapter.** Funding legs → `FlowStep[]` | POO-1036 | planned |
 | `src/lib/provisioning/legJournal.ts` | **The recovery primitive.** Client-persisted leg journal reconciled against on-chain receipts; replaces the server-held `planId` that POO-1054 established we cannot obtain | POO-1038 | planned |
 | `FundingSourceSelector.tsx` | Multi-select across chains, running total, gas badges | POO-1039 | planned |
-| `ProvisioningCostBreakdown.tsx` | The cost table + the buy-crypto alternative | POO-1040 | planned |
+| `ProvisioningCostBreakdown.tsx` | The cost table + the buy-crypto alternative | POO-1040 | done |
+| `src/lib/provisioning/fixtures/pricedPlans.ts` | Priced-plan fixtures (same-chain / cross-chain / gas top-up) for the cost table's tests + stories | POO-1040 | done |
 | `src/app/[locale]/swap/` | Standalone swap + bridge screen, flagged | POO-1046 | planned |
 
 `src/lib/uniswap/` already exists and holds pre-existing pool math (`tick.ts`, `price.ts`, `range.ts`,

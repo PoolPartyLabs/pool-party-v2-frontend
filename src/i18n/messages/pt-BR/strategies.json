@@ -503,6 +503,30 @@
       "compound": "Reinvestir em {strategy}",
       "moveRange": "Mover faixa em {strategy}",
       "close": "Encerrar {strategy}"
+    },
+    "costs": {
+      "youPay": "Você paga",
+      "amountNeeded": "Valor necessário",
+      "fee": "Taxa",
+      "priceBuffer": "Reserva de preço",
+      "priceBufferHint": "Reservado caso o preço mude enquanto seus fundos estão a caminho. O que sobrar continua sendo seu.",
+      "conversionCost": "Custo de conversão",
+      "conversionCostHint": "Já incluído no valor cotado, então não é somado por cima.",
+      "gasByStep": "Custo de rede por etapa",
+      "gasByStepHint": "Quanto cada etapa custa para rodar na rede dela, com precisão total. É uma lista detalhada, não uma soma: o valor de rede acima é arredondado para centavos.",
+      "itemized": "Detalhado",
+      "gasStep": "Etapa {index}: {label}",
+      "fromSource": "De {symbol} na {network}",
+      "updating": "Atualizando preços",
+      "leg": {
+        "swapToken": "Converter na {network}",
+        "swapGas": "Adicionar gas na {network}",
+        "bridge": "Mover da {network}"
+      },
+      "buyCrypto": {
+        "cta": "Comprar cripto",
+        "hint": "Pague com cartão ou Pix e não precise mover fundos entre redes."
+      }
     }
   }
 }

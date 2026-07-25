@@ -503,6 +503,30 @@
       "compound": "Herinvesteren in {strategy}",
       "moveRange": "Bereik verplaatsen in {strategy}",
       "close": "{strategy} sluiten"
+    },
+    "costs": {
+      "youPay": "Je betaalt",
+      "amountNeeded": "Benodigd bedrag",
+      "fee": "Kosten",
+      "priceBuffer": "Prijsbuffer",
+      "priceBufferHint": "Apart gezet voor het geval de prijs beweegt terwijl je geld onderweg is. Wat overblijft, blijft van jou.",
+      "conversionCost": "Omwisselkosten",
+      "conversionCostHint": "Zit al in het bedrag dat je kreeg aangeboden en komt er dus niet bovenop.",
+      "gasByStep": "Netwerkkosten per stap",
+      "gasByStepHint": "Wat elke stap kost op zijn eigen netwerk, met volledige precisie. Een specificatie, geen optelsom: het netwerkbedrag hierboven is afgerond op centen.",
+      "itemized": "Gespecificeerd",
+      "gasStep": "Stap {index}: {label}",
+      "fromSource": "Van {symbol} op {network}",
+      "updating": "Prijzen worden bijgewerkt",
+      "leg": {
+        "swapToken": "Omwisselen op {network}",
+        "swapGas": "Gas toevoegen op {network}",
+        "bridge": "Verplaatsen vanaf {network}"
+      },
+      "buyCrypto": {
+        "cta": "Koop liever crypto",
+        "hint": "Betaal met kaart of Pix en verplaats geen geld tussen netwerken."
+      }
     }
   }
 }

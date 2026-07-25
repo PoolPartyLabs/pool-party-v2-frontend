@@ -503,6 +503,30 @@
       "compound": "Tái đầu tư vào {strategy}",
       "moveRange": "Di chuyển khoảng trong {strategy}",
       "close": "Đóng {strategy}"
+    },
+    "costs": {
+      "youPay": "Bạn trả",
+      "amountNeeded": "Số tiền cần thiết",
+      "fee": "Phí",
+      "priceBuffer": "Khoản dự phòng giá",
+      "priceBufferHint": "Được giữ lại phòng khi giá thay đổi trong lúc tiền của bạn đang di chuyển. Phần không dùng đến vẫn là của bạn.",
+      "conversionCost": "Chi phí quy đổi",
+      "conversionCostHint": "Đã nằm trong số tiền được báo giá nên không bị cộng thêm.",
+      "gasByStep": "Chi phí mạng theo từng bước",
+      "gasByStepHint": "Chi phí của mỗi bước trên mạng của nó, hiển thị đầy đủ số lẻ. Đây là danh sách chi tiết, không phải phép cộng: số chi phí mạng ở trên đã làm tròn tới xu.",
+      "itemized": "Chi tiết",
+      "gasStep": "Bước {index}: {label}",
+      "fromSource": "Từ {symbol} trên {network}",
+      "updating": "Đang cập nhật giá",
+      "leg": {
+        "swapToken": "Quy đổi trên {network}",
+        "swapGas": "Thêm gas trên {network}",
+        "bridge": "Chuyển từ {network}"
+      },
+      "buyCrypto": {
+        "cta": "Mua crypto thay thế",
+        "hint": "Thanh toán bằng thẻ hoặc Pix mà không cần chuyển tiền giữa các mạng."
+      }
     }
   }
 }

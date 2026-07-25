@@ -503,6 +503,30 @@
       "compound": "复投 {strategy}",
       "moveRange": "调整 {strategy} 的区间",
       "close": "关闭 {strategy}"
+    },
+    "costs": {
+      "youPay": "你需支付",
+      "amountNeeded": "所需金额",
+      "fee": "费用",
+      "priceBuffer": "价格缓冲",
+      "priceBufferHint": "为资金转移途中价格波动预留。用不到的部分仍归你所有。",
+      "conversionCost": "兑换成本",
+      "conversionCostHint": "已包含在报价金额中，不会另行收取。",
+      "gasByStep": "各步骤的网络费用",
+      "gasByStepHint": "每个步骤在各自网络上的花费，按完整精度显示。这是明细列表而非合计：上方的网络费用已四舍五入到分。",
+      "itemized": "明细",
+      "gasStep": "第 {index} 步：{label}",
+      "fromSource": "来自 {network} 上的 {symbol}",
+      "updating": "正在更新价格",
+      "leg": {
+        "swapToken": "在 {network} 兑换",
+        "swapGas": "在 {network} 添加 gas",
+        "bridge": "从 {network} 转移"
+      },
+      "buyCrypto": {
+        "cta": "改为购买加密货币",
+        "hint": "用银行卡或 Pix 支付，无需在网络之间转移资金。"
+      }
     }
   }
 }
