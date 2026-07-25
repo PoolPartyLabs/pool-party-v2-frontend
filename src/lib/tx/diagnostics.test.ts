@@ -200,6 +200,23 @@ describe("toTxError kind (POO-461 R1)", () => {
   it("leaves txHash absent for every failure that never reached a chain", () => {
     expect(toTxError(new Error("boom"), "INVEST_FAILED").txHash).toBeUndefined();
   });
+
+  // POO-1044 [R3]: a chain with no native coin cannot originate a transaction, so the planner
+  // refuses to produce a route at all. It has to classify, or the one failure the user can actually
+  // act on ("you need a little ETH on Arbitrum") renders as "something went wrong".
+  it("classifies a blocked funding chain, carrying the chain the operation needs gas on", () => {
+    const txError = toTxError(
+      new Error("Chain 42161 cannot pay for its own transactions.", {
+        cause: { code: "PROVISIONING_GAS_BLOCKED", targetChainId: 42161 },
+      }),
+      "PROVISIONING_FAILED",
+    );
+    expect(txError).toMatchObject({
+      code: "PROVISIONING_GAS_BLOCKED",
+      kind: "gasBlocked",
+      targetChainId: 42161,
+    });
+  });
 });
 
 describe("collectUserAgentInfo", () => {
