@@ -44,6 +44,16 @@
 
 import type { UniswapRouting, UniswapStepMethod } from "@/lib/uniswap/schemas";
 
+/**
+ * How a chain's native coin is addressed, by the Trading API, by the funding inventory and by the
+ * planner alike.
+ *
+ * It lives on the CONTRACT rather than beside the planner because both sides of the boundary compare
+ * against it: `buildPlan` (server-only) to build a native leg, and the execution rail (client) to know
+ * a leg needs no ERC-20 approval. A second copy of a magic address is how the two drift apart.
+ */
+export const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
+
 /** The kind of a provisioning step. The plan always ends with an `"op"` display anchor. */
 export type ProvisioningStepType = "buy-usdc" | "bridge" | "swap-gas" | "swap-token" | "op";
 
