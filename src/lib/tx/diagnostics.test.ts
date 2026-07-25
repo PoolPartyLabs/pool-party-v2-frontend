@@ -181,6 +181,25 @@ describe("toTxError kind (POO-461 R1)", () => {
     const txError = toTxError(new Error("boom"), "INVEST_FAILED");
     expect(txError.kind).toBe("unknown");
   });
+
+  // POO-1037: a bridge leg that broadcast and has not arrived yet is the one failure that already
+  // put a transaction on a chain. The hash has to survive the mapping or the user is told their
+  // money is moving with no way to check.
+  it("carries a broadcast hash the thrower attached to the cause", () => {
+    const txError = toTxError(
+      new Error("Bridged funds have not arrived on chain 42161 after 600s", {
+        cause: { code: "PROVISIONING_BRIDGE_PENDING", txHash: "0xfeed" },
+      }),
+      "PROVISIONING_FAILED",
+    );
+    expect(txError).toMatchObject({ code: "PROVISIONING_BRIDGE_PENDING", txHash: "0xfeed" });
+    // Not a transaction failure, so it must stay uncatalogued and keep the generic classification.
+    expect(txError.kind).toBe("unknown");
+  });
+
+  it("leaves txHash absent for every failure that never reached a chain", () => {
+    expect(toTxError(new Error("boom"), "INVEST_FAILED").txHash).toBeUndefined();
+  });
 });
 
 describe("collectUserAgentInfo", () => {

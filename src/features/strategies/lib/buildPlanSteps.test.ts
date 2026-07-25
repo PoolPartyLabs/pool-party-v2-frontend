@@ -85,7 +85,7 @@ function swapLeg(overrides: Partial<ProvisioningLeg> = {}): ProvisioningLeg {
  * (POO-1037 [R1] reads it BEFORE the broadcast), then the floor delivered on the first observation.
  * A queue of `["0"]` would be a bridge that never arrives, which the leg now waits for on purpose.
  */
-const BRIDGE_ARRIVES = ["0", "2996000000"];
+const bridgeArrives = () => ["0", "2996000000"];
 
 /** A bridge leg fed by the swap above, so it is re-sized at execution time ([R6]). */
 function bridgeLeg(overrides: Partial<ProvisioningLeg> = {}): ProvisioningLeg {
@@ -585,7 +585,7 @@ describe("buildPlanSteps — [R6] a requoteAtExecution leg is sized from what ac
       balances: {
         // Pre-existing dust, then dust + the 2_950_000_000 the swap really produced.
         [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["1000000", "2951000000"],
-        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: bridgeArrives(),
       },
     });
     await runRail(buildPlanSteps(planOf([swapLeg(), bridgeLeg()]), h.deps));
@@ -603,7 +603,7 @@ describe("buildPlanSteps — [R6] a requoteAtExecution leg is sized from what ac
     const h = harness({
       balances: {
         [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["1000000", "2951000000"],
-        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: bridgeArrives(),
       },
       approval: { approval: txRequest({ data: "0x095ea7b3aaaa" }) },
     });
@@ -624,7 +624,7 @@ describe("buildPlanSteps — [R6] a requoteAtExecution leg is sized from what ac
     const h = harness({
       balances: {
         [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["1000000", "1000000"],
-        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: bridgeArrives(),
       },
     });
     const steps = buildPlanSteps(planOf([swapLeg(), bridgeLeg()]), h.deps);
@@ -713,12 +713,16 @@ describe("buildPlanSteps — POO-1037 a bridge leg settles on the DESTINATION ch
     const h = harness({
       balances: {
         [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["3000000000"],
-        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: bridgeArrives(),
       },
     });
     h.readTokenBalance.mockImplementation(async ({ chainId }: { chainId: number }) => {
       order.push(`read:${chainId}`);
-      return chainId === ARBITRUM ? (order.includes("broadcast") ? "2996000000" : "0") : "3000000000";
+      return chainId === ARBITRUM
+        ? order.includes("broadcast")
+          ? "2996000000"
+          : "0"
+        : "3000000000";
     });
     h.deps.onLegBroadcast = vi.fn(() => {
       order.push("broadcast");
@@ -744,7 +748,7 @@ describe("buildPlanSteps — POO-1037 a bridge leg settles on the DESTINATION ch
     const h = harness({
       balances: {
         [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["3000000000"],
-        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: bridgeArrives(),
       },
     });
     h.deps.onLegBroadcast = vi.fn(() => {
@@ -761,7 +765,7 @@ describe("buildPlanSteps — [R7] run() never mutates the accumulating context",
     const h = harness({
       balances: {
         [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["1000000", "2951000000"],
-        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: bridgeArrives(),
       },
     });
     // runRail deep-freezes the context before every run(), so any in-place write throws here.

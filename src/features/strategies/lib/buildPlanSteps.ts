@@ -44,13 +44,20 @@
  * field the live API returns as HEX (`"0x00"`), so it is normalised through `BigInt()` before it
  * reaches anything that reads it as decimal ([R5]).
  *
+ * ## A bridge leg is not done when its transaction mines (POO-1037)
+ *
+ * A source receipt proves only that the funds LEFT. Arrival is a separate observation on the
+ * destination chain, minutes later, so a bridge leg's `run()` stays open until
+ * {@link awaitBridgeSettlement} sees the destination balance clear the leg's floor. At the poll
+ * ceiling the leg is neither failed nor succeeded: it throws {@link BRIDGE_PENDING_CODE} carrying the
+ * broadcast hash, and the panel degrades to "still settling" rather than offering a retry that would
+ * re-broadcast money already in flight.
+ *
  * ## Deliberately NOT here
  *
- * - **Bridge settlement (POO-1037).** A source receipt proves only that the funds LEFT. Arrival is a
- *   separate observation on the destination chain, minutes later. The baseline this rail records is
- *   exactly the `destBalanceBefore` that test needs; the polling itself is the next issue.
  * - **The recovery journal (POO-1038).** The rail carries in-flight facts forward through the flow
- *   context; persisting them to `localStorage` and reconciling on reload is that issue.
+ *   context and reports each broadcast through {@link PlanRailDeps.onLegBroadcast}; persisting them
+ *   to `localStorage` and reconciling on reload is that issue.
  * - **The bridge-spender ERC-20 allowance.** `02_BRIDGE_ARCHITECTURE.md` §1.2 claims `/check_approval`
  *   reports only the Permit2 allowance, so a BRIDGE route's own spender may need a separate approval.
  *   The action's cross-chain form (`tokenOut` + `tokenOutChainId`) is passed here, which is the shape
@@ -70,6 +77,11 @@ import {
 } from "@/lib/tx/sendTransaction";
 import type { UniswapQuoteResponse, UniswapTransactionRequest } from "@/lib/uniswap/schemas";
 import type { FlowStep, FlowStepResult } from "../hooks/useWalletSignFlow";
+import {
+  awaitBridgeSettlement,
+  BRIDGE_PENDING_CODE,
+  type BridgeSettlement,
+} from "./awaitBridgeSettlement";
 
 /**
  * The accumulating context, typed as the panel types it. `ProvisioningPanel` runs the rail with
@@ -160,6 +172,17 @@ export interface PlanRailDeps {
   }) => Promise<RailActionResult<{ swap: UniswapTransactionRequest }>>;
   /** Max slippage in percent. Falls back to the plan's own echoed figure. AMM legs only. */
   slippagePct?: number;
+  /**
+   * Called the INSTANT a leg's broadcast returns a hash, before anything is awaited.
+   *
+   * PP-INTEGRATION-POINT (POO-1038): this is the recovery journal's `status: "broadcast"` write, and
+   * the write ordering IS the safety property (`02_BRIDGE_ARCHITECTURE.md` §3.4): a transaction that
+   * has been sent but not settled is invisible to a balance read, so a hash the app never recorded is
+   * indistinguishable from nothing having happened, and that is how a user bridges twice. Also the
+   * channel a long-running bridge step's explorer link comes from, since the flow only records a
+   * hash a step RETURNS and a bridge leg does not return for minutes.
+   */
+  onLegBroadcast?: (event: { leg: ProvisioningLeg; txHash: string; at: number }) => void;
 }
 
 /** Whether a rail step grants an allowance or executes the route leg itself. */
@@ -335,9 +358,9 @@ async function runLegStep(
   });
   if (!quoted.ok) throw actionError(quoted);
 
-  // PP-INTEGRATION-POINT (POO-1037/POO-1038): the pre-broadcast destination balance. A bridge settles
-  // when `balanceOf(tokenOut) - this >= minAmountOut` on the destination chain, which is an
-  // observation this rail records but does not yet poll for.
+  // PP-INTEGRATION-POINT (POO-1037/POO-1038): the pre-broadcast destination balance, which is the
+  // "before" side of the arrival test below. Read here, before ANY wallet prompt, because it is not
+  // measurable once the transaction is in flight.
   const baseline = await deps.readTokenBalance({
     chainId: leg.tokenOut.chainId,
     token: leg.tokenOut.address,
@@ -363,8 +386,23 @@ async function runLegStep(
   // [R1] The single broadcast choke point: chain assertion (one corrective switch, then re-verify)
   // and account assertion, inherited rather than re-implemented.
   const txHash = await broadcast(built.swap, leg.chainId, deps);
-  // PP-TODO(POO-1037): for a bridge leg this hash proves only that the funds LEFT the source chain.
-  // Arrival is a destination-chain observation, minutes later, and is that issue's polling loop.
+  reportBroadcast(leg, txHash, deps);
+  // POO-1037: for a bridge leg this hash proves only that the funds LEFT the source chain. Arrival is
+  // a destination-chain observation, minutes later, and the step is not done until it happens.
+  if (leg.tokenOut.chainId !== leg.chainId) {
+    const settlement = await awaitBridgeSettlement(
+      {
+        chainId: leg.tokenOut.chainId,
+        token: leg.tokenOut.address,
+        owner: deps.owner,
+        baseline,
+        minAmountOut: leg.minAmountOut,
+        ...(leg.etaSeconds === undefined ? {} : { etaMs: leg.etaSeconds * 1000 }),
+      },
+      { readTokenBalance: deps.readTokenBalance },
+    );
+    if (!settlement.settled) throw bridgeStillSettling(leg, txHash, settlement);
+  }
   return {
     [PLAN_RAIL_STATE_KEY]: {
       ...withBaseline,
@@ -443,6 +481,44 @@ async function sizeFromRealBalance(
     });
   }
   return amount.toString();
+}
+
+/**
+ * Hand the fresh hash to the journal seam, and never let that fail the leg.
+ *
+ * The money has already moved by the time this runs. A callback that throws (a full `localStorage`,
+ * a host bug) must not turn a successful broadcast into a flow error, because the flow's `retry()`
+ * re-invokes the failed step verbatim, which for a bridge is a second deposit of the same funds.
+ * Losing the journal write degrades RECOVERY; failing here would risk the money itself.
+ */
+function reportBroadcast(leg: ProvisioningLeg, txHash: string, deps: PlanRailDeps): void {
+  try {
+    deps.onLegBroadcast?.({ leg, txHash, at: Date.now() });
+  } catch (error) {
+    console.warn("[PP] funding journal write failed; the leg continues", error);
+  }
+}
+
+/**
+ * The poll ceiling, expressed as a throw ([R3]).
+ *
+ * The rail has exactly two channels back to `useWalletSignFlow` (return or throw) and returning would
+ * advance the plan onto money that has not arrived. So a still-settling bridge throws, with a code the
+ * panel branches on to render "still settling, we'll update you" instead of a failure, and with the
+ * hash so the user can verify the transfer independently. It is deliberately NOT in the diagnostics
+ * catalog: this is not a transaction failure and must never reach a retry affordance.
+ */
+function bridgeStillSettling(
+  leg: ProvisioningLeg,
+  txHash: string,
+  settlement: Extract<BridgeSettlement, { settled: false }>,
+): TransactionError {
+  return new TransactionError(
+    `Bridged funds have not arrived on chain ${leg.tokenOut.chainId} after ${Math.round(
+      settlement.waitedMs / 1000,
+    )}s (${settlement.polls} checks, last observed delta ${settlement.delta})`,
+    { code: BRIDGE_PENDING_CODE, txHash, destChainId: leg.tokenOut.chainId },
+  );
 }
 
 /** Send a provider-built transaction through the shipped choke point and wait for its receipt. */
