@@ -90,10 +90,16 @@ import { NATIVE_TOKEN_ADDRESS } from "./types";
  * needs the same comparison from the CLIENT side (a native leg has no ERC-20 allowance to grant) and
  * this module is `server-only`.
  *
- * PP-INTEGRATION-POINT: the vendored Uniswap skill quotes native ETH under the WETH address
- * instead. Our probe did not cover a native leg, so this is the repo-internal convention until a
- * gas-swap leg is exercised live (POO-1043). Getting it wrong fails at quote time with a 404, which
- * is a loud failure rather than a wrong route.
+ * VERIFIED LIVE (2026-07-25, all three chains). The zero address is correct and the vendored Uniswap
+ * skill's WETH convention would be silently WRONG here:
+ *
+ *   tokenOut = 0x0000...0000  -> 200, output.token = 0x0000...  (native ETH / POL: PAYS GAS)
+ *   tokenOut = WETH / WPOL    -> 200, output.token = the wrapped token (CANNOT pay gas)
+ *
+ * Both return 200 with an identical output AMOUNT, so this is not a loud failure: following the
+ * skill would have produced a gas top-up that leaves the wallet exactly as unable to transact as
+ * before, with nothing in the response to say so. That is why the constant is pinned here rather
+ * than taken from the skill.
  */
 export { NATIVE_TOKEN_ADDRESS } from "./types";
 
