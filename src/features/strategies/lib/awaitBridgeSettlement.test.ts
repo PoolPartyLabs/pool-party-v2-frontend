@@ -11,10 +11,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   awaitBridgeSettlement,
-  type BridgeArrival,
   BRIDGE_POLL_MAX_DELAY_MS,
   BRIDGE_POLL_MIN_DELAY_MS,
   BRIDGE_SETTLE_CEILING_MS,
+  type BridgeArrival,
 } from "./awaitBridgeSettlement";
 
 const ARBITRUM = 42161;
@@ -85,9 +85,7 @@ describe("awaitBridgeSettlement", () => {
     it("settles once the delta reaches the leg's floor, on the third observation", async () => {
       const { readTokenBalance } = reader([BASELINE, BASELINE, ARRIVED]);
 
-      const result = await runToCompletion(
-        awaitBridgeSettlement(arrival(), { readTokenBalance }),
-      );
+      const result = await runToCompletion(awaitBridgeSettlement(arrival(), { readTokenBalance }));
 
       expect(result.settled).toBe(true);
       expect(result.polls).toBe(3);
@@ -170,9 +168,7 @@ describe("awaitBridgeSettlement", () => {
     it("degrades to unsettled at the ceiling instead of spinning forever", async () => {
       const { readTokenBalance } = reader([BASELINE]);
 
-      const result = await runToCompletion(
-        awaitBridgeSettlement(arrival(), { readTokenBalance }),
-      );
+      const result = await runToCompletion(awaitBridgeSettlement(arrival(), { readTokenBalance }));
 
       expect(result).toMatchObject({ settled: false, reason: "ceiling" });
       expect(result.waitedMs).toBeGreaterThanOrEqual(BRIDGE_SETTLE_CEILING_MS);
@@ -199,9 +195,7 @@ describe("awaitBridgeSettlement", () => {
     it("retries in the next window and still settles", async () => {
       const { readTokenBalance } = reader(["!RPC 503", BASELINE, ARRIVED]);
 
-      const result = await runToCompletion(
-        awaitBridgeSettlement(arrival(), { readTokenBalance }),
-      );
+      const result = await runToCompletion(awaitBridgeSettlement(arrival(), { readTokenBalance }));
 
       expect(result.settled).toBe(true);
       expect(result.polls).toBe(3);
@@ -211,9 +205,7 @@ describe("awaitBridgeSettlement", () => {
       const partial = "1500000000";
       const { readTokenBalance } = reader([partial, "!RPC 503"]);
 
-      const result = await runToCompletion(
-        awaitBridgeSettlement(arrival(), { readTokenBalance }),
-      );
+      const result = await runToCompletion(awaitBridgeSettlement(arrival(), { readTokenBalance }));
 
       expect(result.settled).toBe(false);
       // The last SUCCESSFUL observation stands; a failed read overwrites nothing.
@@ -224,9 +216,7 @@ describe("awaitBridgeSettlement", () => {
     it("treats an unparseable balance as a failed observation, not as zero", async () => {
       const { readTokenBalance } = reader(["<html>gateway timeout</html>", BASELINE, ARRIVED]);
 
-      const result = await runToCompletion(
-        awaitBridgeSettlement(arrival(), { readTokenBalance }),
-      );
+      const result = await runToCompletion(awaitBridgeSettlement(arrival(), { readTokenBalance }));
 
       expect(result.settled).toBe(true);
       expect(result.polls).toBe(3);
