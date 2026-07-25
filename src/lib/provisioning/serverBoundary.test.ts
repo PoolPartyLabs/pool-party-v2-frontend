@@ -190,7 +190,11 @@ describe("provisioning server boundary (POO-1024)", () => {
   });
 
   // [R1] The pure layer must stay pure: no viem, no React, no fetch.
-  it.each(["types.ts", "computeNeed.ts"])("%s is pure (no viem, React or I/O)", (name) => {
+  it.each([
+    "types.ts",
+    "computeNeed.ts",
+    "gasFeasibility.ts",
+  ])("%s is pure (no viem, React or I/O)", (name) => {
     const source = readFileSync(join(PROVISIONING, name), "utf8");
     expect(source).not.toMatch(/from\s+"viem/);
     expect(source).not.toMatch(/from\s+"react"/);

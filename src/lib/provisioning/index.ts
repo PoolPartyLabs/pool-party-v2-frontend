@@ -21,6 +21,25 @@ export {
   sizeOnRampUsd,
   spendableTokenUsd,
 } from "./computeNeed";
+export type {
+  GasCandidateChain,
+  GasEscape,
+  GasEscapeKind,
+  GasFeasibility,
+  GasSourceToken,
+  GasTopUpPlan,
+  GasVerdict,
+  RouteGasQuote,
+} from "./gasFeasibility";
+export {
+  classifyGasFeasibility,
+  GAS_ESCAPE_LABEL_KEYS,
+  GAS_HEADROOM_MIN_USD,
+  GAS_HEADROOM_RATE,
+  GAS_VERDICT_REASON_KEYS,
+  quoteGasUsd,
+  withGasHeadroom,
+} from "./gasFeasibility";
 export { mockComputePlan, SCENARIOS } from "./mockPlanner";
 export { computePlan } from "./planner";
 export type {

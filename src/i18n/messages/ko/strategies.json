@@ -432,6 +432,16 @@
   },
   "provisioning": {
     "poweredByPaybis": "Powered by Paybis",
+    "gasVerdict": {
+      "ok": "사용 가능",
+      "topUp": "네트워크 비용을 충당하기 위해 {token} 일부를 {symbol}(으)로 바꿉니다.",
+      "noNative": "{network}에 {symbol}이(가) 없습니다. {network}의 모든 거래에는 네트워크 비용으로 소량의 {symbol}이(가) 필요하므로 이 자금은 아직 옮길 수 없습니다.",
+      "shortNoSource": "{network}의 네트워크 비용을 낼 {symbol}이(가) 부족하고, 여기에 바꿀 수 있는 자산도 없습니다.",
+      "escape": {
+        "bridgeNative": "다른 네트워크에서 {symbol}을 조금 보내기",
+        "buyCrypto": "암호화폐 구매"
+      }
+    },
     "gas": {
       "title": "네트워크 수수료가 부족합니다",
       "subtitle": "이 거래를 확인하려면 소액의 네트워크 수수료가 필요합니다. 아래에서 충전하세요.",
