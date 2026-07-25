@@ -1,17 +1,18 @@
 /**
- * @id PP-CORE-LIB-052 (POO-1029)
+ * @id PP-CORE-LIB-052 (POO-1029, POO-1054)
  * @name Uniswap server-action layer tests
- * @implements-rules-version v1
+ * @implements-rules-version v2
  * @hackathon POO-1022 (Universal Funding)
  *
- * Rules under test (POO-1029 rules v1):
+ * Rules under test (POO-1029 rules v2, as amended by POO-1054 [R3]):
  *   [R1] the wallet comes from the SIWE session; a body-supplied address is IGNORED, not validated
  *   [R2] no action throws across the RSC boundary; each returns a typed discriminated result
  *   [R3] `listSwappableTokens` is cache-tagged and must not re-fetch per keystroke
- *   [R4] `advancePlan` is idempotent: a proof for an already-advanced step returns current state
- *   [R5] `getPlan` exposes `forceRefresh` but never force-refreshes implicitly
  *   [R6] slippage rides through to the quote; bridge legs are Across-quoted and ignore it
- *   [R7] `createPlan` is NOT idempotent: an ambiguous timeout must never be replayed
+ *
+ * RETIRED by POO-1054 [R3], with the actions they governed: [R4] `advancePlan` idempotency,
+ * [R5] `getPlan` forceRefresh, [R7] `createPlan` non-idempotence. The live Trading API never returns
+ * `routing: "CHAINED"`, so the `/plan` lifecycle those rules described is unreachable.
  *
  * `uniswapFetch` and `getSessionWallet` are mocked: this suite is about the action contract (session
  * derivation, request shaping, failure mapping, cache options), not about transport, which has its
@@ -21,7 +22,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UniswapApiError, UniswapParseError } from "./errors";
 import {
   checkApprovalResponseSchema,
-  planResponseSchema,
   quoteResponseSchema,
   swappableTokensResponseSchema,
   swapResponseSchema,
@@ -36,15 +36,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("./client", () => ({ uniswapFetch: mocks.uniswapFetch }));
 vi.mock("@/lib/auth/session", () => ({ getSessionWallet: async () => mocks.wallet }));
 
-import {
-  advancePlan,
-  buildSwapTx,
-  checkApproval,
-  createPlan,
-  getPlan,
-  listSwappableTokens,
-  quoteSwap,
-} from "./actions";
+import { buildSwapTx, checkApproval, listSwappableTokens, quoteSwap } from "./actions";
 
 /** The address the SIWE session vouches for. Lowercased, as `walletFromToken` returns it. */
 const SESSION_WALLET = "0x1111111111111111111111111111111111111111";
@@ -91,15 +83,6 @@ const swapResponse = {
   },
 };
 
-const planResponse = {
-  planId: "plan-1",
-  currentStepIndex: 1,
-  steps: [
-    { stepIndex: 0, method: "SEND_TX", status: "COMPLETE" },
-    { stepIndex: 1, method: "SEND_TX", status: "AWAITING_ACTION" },
-  ],
-};
-
 const quoteInput = {
   tokenIn: WETH_POLYGON,
   tokenOut: USDC_ARBITRUM,
@@ -111,6 +94,25 @@ const quoteInput = {
 beforeEach(() => {
   mocks.uniswapFetch.mockReset();
   mocks.wallet = SESSION_WALLET;
+});
+
+// POO-1054 [R3]. A read-only probe of the live Trading API on 2026-07-25 never returned
+// `routing: "CHAINED"` on any pair, and `POST /plan` requires a chained quote as its body. The three
+// plan-lifecycle actions were therefore unreachable: not "untested", but impossible to call with a
+// payload the API would accept. Locking the export surface is what keeps them from coming back,
+// because an unreachable action is worse than an absent one — it reads to the next author as a
+// capability the rail has.
+describe("action surface (POO-1054 [R3])", () => {
+  it("exports only the actions the live API can serve", async () => {
+    const actions = await import("./actions");
+
+    expect(Object.keys(actions).sort()).toEqual([
+      "buildSwapTx",
+      "checkApproval",
+      "listSwappableTokens",
+      "quoteSwap",
+    ]);
+  });
 });
 
 describe("uniswap actions — session derivation (POO-1029 [R1])", () => {
@@ -144,16 +146,13 @@ describe("uniswap actions — session derivation (POO-1029 [R1])", () => {
     expect(JSON.stringify(fetchBody())).not.toContain(ATTACKER_WALLET);
   });
 
-  // Every action is gated, including the two that do not send the wallet upstream (`getPlan`,
-  // `listSwappableTokens`): without the gate an anonymous visitor could spend our rate-limited,
-  // key-authenticated upstream quota through our own server.
+  // Every action is gated, including `listSwappableTokens`, which does not send the wallet upstream
+  // at all: without the gate an anonymous visitor could spend our rate-limited, key-authenticated
+  // upstream quota through our own server.
   it.each([
     ["quoteSwap", () => quoteSwap(quoteInput)],
     ["checkApproval", () => checkApproval({ token: WETH_POLYGON, amount: "1", chainId: 137 })],
     ["buildSwapTx", () => buildSwapTx({ quote: sameChainQuote })],
-    ["createPlan", () => createPlan({ quote: sameChainQuote })],
-    ["advancePlan", () => advancePlan({ planId: "p", stepIndex: 0, proof: "0xhash" })],
-    ["getPlan", () => getPlan({ planId: "p" })],
     ["listSwappableTokens", () => listSwappableTokens()],
   ])("%s returns SESSION_MISSING without an upstream call when not signed in", async (_, run) => {
     mocks.wallet = null;
@@ -218,14 +217,11 @@ describe("uniswap actions — typed results (POO-1029 [R2])", () => {
       checkApprovalResponseSchema,
     ],
     ["buildSwapTx", () => buildSwapTx({ quote: sameChainQuote }), swapResponseSchema],
-    ["createPlan", () => createPlan({ quote: sameChainQuote }), planResponseSchema],
-    ["getPlan", () => getPlan({ planId: "p" }), planResponseSchema],
     ["listSwappableTokens", () => listSwappableTokens(), swappableTokensResponseSchema],
   ])("%s validates its response against its schema", async (_, run, schema) => {
     mocks.uniswapFetch.mockResolvedValue({
       ...sameChainQuote,
       ...swapResponse,
-      ...planResponse,
       tokens: [],
       approval: null,
     });
@@ -276,114 +272,6 @@ describe("listSwappableTokens — cache (POO-1029 [R3])", () => {
   });
 });
 
-describe("advancePlan — idempotency (POO-1029 [R4])", () => {
-  const advanceInput = { planId: "plan-1", stepIndex: 0, proof: "0xhash" };
-
-  it("submits the proof for the step and returns the plan", async () => {
-    mocks.uniswapFetch.mockResolvedValue(planResponse);
-
-    await expect(advancePlan(advanceInput)).resolves.toEqual({ ok: true, plan: planResponse });
-
-    expect(fetchPath()).toBe("plan/plan-1");
-    expect(fetchOptions().method).toBe("PATCH");
-    expect(fetchBody()).toEqual({ stepIndex: 0, proof: "0xhash" });
-    // The happy path costs exactly one call: the reconciling read is a failure-path affordance.
-    expect(mocks.uniswapFetch).toHaveBeenCalledTimes(1);
-  });
-
-  // THE rule POO-1038 depends on. Re-submitting a proof for a step the server already advanced past
-  // must return current state, never an error, or a safe retry would look like a hard failure and
-  // push the rail towards re-broadcasting money that already moved.
-  it("returns current plan state when the step was already advanced", async () => {
-    mocks.uniswapFetch
-      .mockRejectedValueOnce(new UniswapApiError(409, "STEP_ALREADY_ADVANCED", "already done"))
-      .mockResolvedValueOnce(planResponse);
-
-    await expect(advancePlan(advanceInput)).resolves.toEqual({ ok: true, plan: planResponse });
-
-    // Resolution is a READ of authoritative server state, never a re-broadcast.
-    expect(fetchOptions(1).method ?? "GET").toBe("GET");
-  });
-
-  // The plan's last step leaves `currentStepIndex` pinned at that index, so the index alone cannot
-  // decide the terminal case: the step's own COMPLETE status does.
-  it("returns current plan state when the step itself is already COMPLETE", async () => {
-    mocks.uniswapFetch
-      .mockRejectedValueOnce(new UniswapApiError(409, "NOPE", "no"))
-      .mockResolvedValueOnce({
-        planId: "plan-1",
-        currentStepIndex: 1,
-        steps: [{ stepIndex: 1, method: "SEND_TX", status: "COMPLETE" }],
-      });
-
-    const result = await advancePlan({ ...advanceInput, stepIndex: 1 });
-
-    expect(result).toMatchObject({ ok: true });
-  });
-
-  // Idempotency must not become blanket error-swallowing: when the server says the step has NOT
-  // advanced, the original failure is the truth and the caller has to see it.
-  it("surfaces the original failure when the server shows the step still pending", async () => {
-    mocks.uniswapFetch
-      .mockRejectedValueOnce(new UniswapApiError(400, "BAD_PROOF", "malformed proof"))
-      .mockResolvedValueOnce(planResponse);
-
-    await expect(advancePlan({ ...advanceInput, stepIndex: 1 })).resolves.toEqual({
-      ok: false,
-      code: "BAD_PROOF",
-      message: "malformed proof",
-    });
-  });
-
-  it("surfaces the original failure when the reconciling read also fails", async () => {
-    mocks.uniswapFetch
-      .mockRejectedValueOnce(new UniswapApiError(500, "UNISWAP_UPSTREAM_ERROR", "patch failed"))
-      .mockRejectedValueOnce(new UniswapApiError(503, "UNISWAP_UPSTREAM_ERROR", "read failed"));
-
-    await expect(advancePlan(advanceInput)).resolves.toEqual({
-      ok: false,
-      code: "UNISWAP_UPSTREAM_ERROR",
-      message: "patch failed",
-    });
-  });
-});
-
-describe("getPlan — explicit refresh only (POO-1029 [R5])", () => {
-  it("does not force a refresh implicitly", async () => {
-    mocks.uniswapFetch.mockResolvedValue(planResponse);
-
-    await expect(getPlan({ planId: "plan-1" })).resolves.toEqual({ ok: true, plan: planResponse });
-
-    expect(fetchPath()).toBe("plan/plan-1");
-    expect(fetchOptions().query).toBeUndefined();
-  });
-
-  it("forces a refresh only when the caller asks", async () => {
-    mocks.uniswapFetch.mockResolvedValue(planResponse);
-
-    await getPlan({ planId: "plan-1", forceRefresh: true });
-
-    expect(fetchOptions().query).toEqual({ forceRefresh: true });
-  });
-
-  it("passes forceRefresh:false through as no query at all", async () => {
-    mocks.uniswapFetch.mockResolvedValue(planResponse);
-
-    await getPlan({ planId: "plan-1", forceRefresh: false });
-
-    expect(fetchOptions().query).toBeUndefined();
-  });
-
-  // Plan state is the recovery primitive: a cached read would resume from a stale step index.
-  it("never caches plan state", async () => {
-    mocks.uniswapFetch.mockResolvedValue(planResponse);
-
-    await getPlan({ planId: "plan-1" });
-
-    expect(fetchOptions().next).toBeUndefined();
-  });
-});
-
 describe("slippage (POO-1029 [R6])", () => {
   it("rides the caller's slippage tolerance through to the quote", async () => {
     mocks.uniswapFetch.mockResolvedValue(sameChainQuote);
@@ -401,49 +289,30 @@ describe("slippage (POO-1029 [R6])", () => {
     expect(fetchBody()).not.toHaveProperty("slippageTolerance");
   });
 
-  // Bridge legs are quoted by Across, which does not take our tolerance. Sending one to `/plan`
-  // would imply an allowance we cannot enforce, and the cost breakdown (UF-13 R3) would then be
-  // presenting a number that governs nothing.
-  it("never sends a slippage tolerance to the plan endpoint", async () => {
-    mocks.uniswapFetch.mockResolvedValue(planResponse);
-
-    await createPlan({ quote: sameChainQuote });
-
-    expect(fetchBody()).not.toHaveProperty("slippageTolerance");
-  });
+  // A bridge leg is quoted by Across, which does not take our tolerance, so a tolerance sent with a
+  // cross-chain quote governs nothing on that leg. There is no longer a second endpoint to withhold
+  // it from (POO-1054 [R3] retired `/plan`), so the rule now lives where it can actually be
+  // asserted: the cost breakdown (UF-13 R3) excludes bridge legs from the slippage line.
 });
 
-describe("createPlan — non-idempotent (POO-1029 [R7])", () => {
-  it("opts out of the transport's ambiguous-failure replay", async () => {
-    mocks.uniswapFetch.mockResolvedValue(planResponse);
-
-    await expect(createPlan({ quote: sameChainQuote })).resolves.toEqual({
-      ok: true,
-      plan: planResponse,
-    });
-
-    expect(fetchPath()).toBe("plan");
-    expect(fetchOptions().method).toBe("POST");
-    // POST /plan creates server-side state: a replayed timeout could create a SECOND plan.
-    expect(fetchOptions().idempotent).toBe(false);
-  });
-
-  it("sends the routing and quote the plan is created from", async () => {
-    mocks.uniswapFetch.mockResolvedValue(planResponse);
-
-    await createPlan({ quote: sameChainQuote });
-
-    expect(fetchBody()).toEqual({ routing: "CLASSIC", quote: sameChainQuote.quote });
-  });
-
-  // Everything else in this module is a read or a pure computation, so it keeps the transport's
-  // default replay. Locking the contrast keeps the opt-out meaningful rather than incidental.
+// `POST /plan` was the only call in this module that created state upstream, and it opted out of the
+// transport's ambiguous-failure replay for that reason. With it gone (POO-1054 [R3]) every remaining
+// call is a read or a pure build, so all of them keep the default replay. Asserting that keeps the
+// transport's `idempotent: false` affordance honest: the day something here creates state again, the
+// opt-out has to be a deliberate diff against this test rather than an omission nobody notices.
+describe("transport replay", () => {
   it.each([
     ["quoteSwap", () => quoteSwap(quoteInput)],
+    ["checkApproval", () => checkApproval({ token: WETH_POLYGON, amount: "1", chainId: 137 })],
     ["buildSwapTx", () => buildSwapTx({ quote: sameChainQuote })],
-    ["advancePlan", () => advancePlan({ planId: "p", stepIndex: 0, proof: "0x1" })],
+    ["listSwappableTokens", () => listSwappableTokens()],
   ])("%s keeps the default replay behaviour", async (_, run) => {
-    mocks.uniswapFetch.mockResolvedValue({ ...sameChainQuote, ...swapResponse, ...planResponse });
+    mocks.uniswapFetch.mockResolvedValue({
+      ...sameChainQuote,
+      ...swapResponse,
+      tokens: [],
+      approval: null,
+    });
 
     await run();
 
@@ -452,8 +321,11 @@ describe("createPlan — non-idempotent (POO-1029 [R7])", () => {
 });
 
 describe("request shaping and pre-flight rejection", () => {
-  // UF-06 [R4]: Chained Actions are EXACT_INPUT only. Rejecting before the request leaves us turns
-  // a puzzling upstream 400 into a message that says what is wrong.
+  // UF-06 [R4] pins cross-chain to EXACT_INPUT. The constraint was taken from the Chained Actions
+  // documentation, which POO-1054 retired; whether the BRIDGE route that actually serves cross-chain
+  // accepts EXACT_OUTPUT is an open question the probe did not settle, so the guard stands until it
+  // is measured. Rejecting before the request leaves us turns a puzzling upstream 400 into a message
+  // that says what is wrong. See the PP-TODO on `quoteRequestSchema`.
   it("rejects a cross-chain EXACT_OUTPUT quote without calling the API", async () => {
     const result = await quoteSwap({ ...quoteInput, type: "EXACT_OUTPUT" });
 
@@ -479,8 +351,8 @@ describe("request shaping and pre-flight rejection", () => {
     expect(fetchBody().routingPreference).toBe("CLASSIC");
   });
 
-  // …but never cross-chain, where pinning the classic AMM path would exclude the BRIDGE and CHAINED
-  // routes the whole cross-chain rail depends on.
+  // …but never cross-chain, where pinning the classic AMM path would exclude the BRIDGE route the
+  // whole cross-chain rail depends on.
   it("does not pin a routing preference on a cross-chain quote", async () => {
     mocks.uniswapFetch.mockResolvedValue(sameChainQuote);
 

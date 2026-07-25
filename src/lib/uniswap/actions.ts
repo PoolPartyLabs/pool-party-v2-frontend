@@ -1,8 +1,18 @@
 /**
- * @id PP-CORE-LIB-052 (POO-1029)
+ * @id PP-CORE-LIB-052 (POO-1029, POO-1054)
  * @name Uniswap server-action layer
- * @implements-rules-version v1
+ * @implements-rules-version v2
  * @hackathon POO-1022 (Universal Funding)
+ *
+ * v2 (POO-1054 [R3]): the chained-plan lifecycle is GONE. A read-only probe of the live Trading API
+ * on 2026-07-25 never returned `routing: "CHAINED"`, and `POST /plan` takes a chained quote as its
+ * body, so `createPlan` / `advancePlan` / `getPlan` could not be called with anything the API
+ * accepts. POO-1029 [R4] (advancePlan idempotency), [R5] (getPlan forceRefresh) and [R7] (createPlan
+ * opts out of replay) are retired with them. Cross-chain now runs on the same two calls as
+ * same-chain: a same-token cross-chain pair quotes as `routing: "BRIDGE"` and settles as ONE
+ * transaction through `POST /swap`. A different-token cross-chain pair is not routable in one call
+ * (404 `ResourceNotFound`) and is decomposed by our own planner into swap-then-bridge legs. See
+ * `docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` and the ADR 0002 addendum.
  *
  * The ONLY public surface of the Uniswap Trading API integration (ADR 0003 §3). `client.ts`
  * (`uniswapFetch`) and `schemas.ts` are server-only; this module is the `"use server"` boundary the
@@ -44,12 +54,10 @@ import {
   checkApprovalRequestSchema,
   checkApprovalResponseSchema,
   isUniswapXRouting,
-  planResponseSchema,
   quoteRequestSchema,
   quoteResponseSchema,
   swappableTokensResponseSchema,
   swapResponseSchema,
-  type UniswapPlanResponse,
   type UniswapQuoteResponse,
   type UniswapSwappableTokens,
   type UniswapTransactionRequest,
@@ -123,7 +131,11 @@ export interface QuoteSwapInput {
   tokenOutChainId: number;
   /** Token-native amount of the input token, decimal string. */
   amount: string;
-  /** Defaults to EXACT_INPUT, the only direction a cross-chain (chained) route supports. */
+  /**
+   * Defaults to EXACT_INPUT. Cross-chain is still pinned to EXACT_INPUT by `quoteRequestSchema`;
+   * whether a BRIDGE route accepts EXACT_OUTPUT is an open question the probe did not settle (see
+   * that schema's PP-TODO).
+   */
   type?: "EXACT_INPUT" | "EXACT_OUTPUT";
   /**
    * Max slippage in percent, from the settings gear ([R6]). It governs the AMM legs of the route.
@@ -134,8 +146,12 @@ export interface QuoteSwapInput {
 }
 
 /**
- * Price a route ([R6]). Same-chain returns a CLASSIC-family quote for `/swap`; cross-chain returns a
- * chained quote for `POST /plan`.
+ * Price a route ([R6]). Same-chain returns `routing: "CLASSIC"` (with `permitData` present);
+ * cross-chain SAME-token returns `routing: "BRIDGE"`. Both go on to `POST /swap`.
+ *
+ * A cross-chain DIFFERENT-token pair is NOT routable in one call: the live API answers 404
+ * `ResourceNotFound` (POO-1054). The planner decomposes that case into a same-chain swap to the
+ * bridge asset followed by a same-token bridge, and quotes each leg separately.
  *
  * PP-INTEGRATION-POINT: pricing, gas info and route classification ← Uniswap `POST /quote`.
  */
@@ -247,11 +263,15 @@ export interface BuildSwapTxInput {
 }
 
 /**
- * Turn a same-chain quote into an unsigned transaction the wallet will sign and broadcast.
+ * Turn a quote into an unsigned transaction the wallet will sign and broadcast. Handles both
+ * `CLASSIC` (same-chain) and `BRIDGE` (cross-chain, same token) quotes: the live API settles a
+ * bridge as ONE transaction through this endpoint, which is why there is no separate bridge path.
  *
  * The body is the quote response SPREAD, not wrapped in a `quote` field, which is why the schemas
- * are passthrough at every level. Two things about `permitData` are easy to get wrong and are
- * enforced here rather than discovered as an upstream 400:
+ * are passthrough at every level. The probe confirmed the API accepts BOTH shapes and returns
+ * identical calldata for each, so the spread is a free choice rather than a requirement; it stays
+ * because it is what the schemas and their tests are built around. Two things about `permitData` are
+ * easy to get wrong and are enforced here rather than discovered as an upstream 400:
  *
  *   - the API rejects an explicit `permitData: null`, so it is stripped rather than forwarded;
  *   - `signature` and `permitData` travel together or not at all. A permit that was returned but not
@@ -291,144 +311,6 @@ export async function buildSwapTx(
       swap: response.swap,
       ...(response.gasFee ? { gasFee: response.gasFee } : {}),
     };
-  } catch (error) {
-    return toFailure(error);
-  }
-}
-
-/** Input for {@link createPlan}. */
-export interface CreatePlanInput {
-  /** A cross-chain (chained) quote, returned verbatim from {@link quoteSwap}. */
-  quote: UniswapQuoteResponse;
-}
-
-/**
- * Create the server-held chained plan for a cross-chain route ([R7]).
- *
- * This is the one call in the module that creates state upstream, so it opts OUT of the transport's
- * ambiguous-failure replay (`idempotent: false`). A timeout or network drop tells us nothing about
- * whether the plan was created; replaying it could create a second plan, and duplicate plans are the
- * double-execution class this epic exists to prevent. The returned `planId` is the idempotency key
- * everything downstream (UF-16) resumes from, so losing track of one is worse than failing loudly.
- *
- * No `slippageTolerance` is sent ([R6]): the bridge leg is quoted by Across, which does not take it,
- * and the AMM legs were already priced with it at quote time.
- *
- * PP-INTEGRATION-POINT: chained execution plan ← Uniswap `POST /plan`, body `{ routing, quote }`
- * (assumed contract, per docs/_hackathon/02_BRIDGE_ARCHITECTURE.md; verify against the live API).
- */
-export async function createPlan(
-  input: CreatePlanInput,
-): Promise<UniswapActionResult<{ plan: UniswapPlanResponse }>> {
-  const wallet = await getSessionWallet();
-  if (!wallet) return sessionMissing();
-
-  try {
-    const plan = await uniswapFetch("plan", {
-      method: "POST",
-      body: { routing: input.quote.routing, quote: input.quote.quote },
-      schema: planResponseSchema,
-      idempotent: false,
-    });
-    return { ok: true, plan };
-  } catch (error) {
-    return toFailure(error);
-  }
-}
-
-/** Read plan state. Shared by {@link getPlan} and `advancePlan`'s reconciling read. */
-function readPlan(planId: string, forceRefresh?: boolean): Promise<UniswapPlanResponse> {
-  return uniswapFetch(`plan/${encodeURIComponent(planId)}`, {
-    schema: planResponseSchema,
-    // [R5] The parameter is present only when a caller explicitly asked for it.
-    ...(forceRefresh === true ? { query: { forceRefresh: true } } : {}),
-  });
-}
-
-/** True when the server itself shows `stepIndex` as already advanced past or completed. */
-function isStepAdvanced(plan: UniswapPlanResponse, stepIndex: number): boolean {
-  // A completed plan leaves `currentStepIndex` pinned at its last step, so the index alone cannot
-  // decide the terminal case; the step's own status does.
-  if (plan.currentStepIndex > stepIndex) return true;
-  return plan.steps.find((step) => step.stepIndex === stepIndex)?.status === "COMPLETE";
-}
-
-/** Input for {@link advancePlan}. */
-export interface AdvancePlanInput {
-  planId: string;
-  /** The step the proof belongs to. The server, not the client, decides what runs next. */
-  stepIndex: number;
-  /** The step's proof: a transaction hash for `SEND_TX`, a signature for `SIGN_MSG`. */
-  proof: string;
-}
-
-/**
- * Submit a step's proof so the plan advances ([R4]).
- *
- * **Idempotent by construction, which is what makes retry safe (UF-16).** Re-submitting a proof for
- * a step the server already advanced past returns current plan state, never an error. A failure here
- * is resolved by READING authoritative state, never by re-broadcasting: a re-broadcast is how a user
- * pays twice, and after an ambiguous PATCH the proof may well have landed.
- *
- * The reconciling read runs on ANY failure rather than on a guessed set of "already advanced" error
- * codes, because the server's own view of the plan is a stronger signal than a string we matched.
- * It converts to success ONLY when the server confirms the step advanced, so a genuine failure (a
- * malformed proof, a wrong step) still surfaces with its own code intact.
- *
- * PP-INTEGRATION-POINT: step advance ← Uniswap `PATCH /plan/:planId`, body `{ stepIndex, proof }`
- * (assumed contract, per docs/_hackathon/02_BRIDGE_ARCHITECTURE.md; verify against the live API).
- */
-export async function advancePlan(
-  input: AdvancePlanInput,
-): Promise<UniswapActionResult<{ plan: UniswapPlanResponse }>> {
-  const wallet = await getSessionWallet();
-  if (!wallet) return sessionMissing();
-
-  try {
-    const plan = await uniswapFetch(`plan/${encodeURIComponent(input.planId)}`, {
-      method: "PATCH",
-      body: { stepIndex: input.stepIndex, proof: input.proof },
-      schema: planResponseSchema,
-    });
-    return { ok: true, plan };
-  } catch (error) {
-    const reconciled = await readPlan(input.planId).catch(() => null);
-    if (reconciled && isStepAdvanced(reconciled, input.stepIndex)) {
-      return { ok: true, plan: reconciled };
-    }
-    return toFailure(error);
-  }
-}
-
-/** Input for {@link getPlan}. */
-export interface GetPlanInput {
-  planId: string;
-  /**
-   * Re-quote the remaining steps ([R5]). Opt-in only: a plain GET already re-quotes while the active
-   * step is in progress, so forcing implicitly would be both wasteful and surprising. Use it when a
-   * quote expired mid-plan and the user is about to be re-prompted with a fresh price (UF-16 R5).
-   */
-  forceRefresh?: boolean;
-}
-
-/**
- * Read plan state: the recovery primitive ([R5]). `currentStepIndex` is the server's authoritative
- * resume point and survives a reload, a killed tab and an ambiguous broadcast. Never cached, for the
- * same reason: a cached read would resume from a step the plan has already left behind.
- *
- * Not free, either. A plain GET re-quotes remaining steps when the active step is in progress, so
- * pollers (UF-15) must back off rather than spin.
- *
- * PP-INTEGRATION-POINT: plan state ← Uniswap `GET /plan/:planId`.
- */
-export async function getPlan(
-  input: GetPlanInput,
-): Promise<UniswapActionResult<{ plan: UniswapPlanResponse }>> {
-  const wallet = await getSessionWallet();
-  if (!wallet) return sessionMissing();
-
-  try {
-    return { ok: true, plan: await readPlan(input.planId, input.forceRefresh) };
   } catch (error) {
     return toFailure(error);
   }
