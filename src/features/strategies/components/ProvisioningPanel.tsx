@@ -94,7 +94,7 @@ export function ProvisioningPanel({
   const effectiveGas = gasChoice && gasValidity.ok ? gasChoice : undefined;
   // POO-1023: the plan resolves through the ONE mock/real seam (computePlan), never mockComputePlan.
   // The seam is async, so the hook owns the pending/error lifecycle and the re-plan race guard.
-  const { plan, loading: planLoading, error: planError } = useProvisioningPlan(input, effectiveGas);
+  const { plan, error: planError } = useProvisioningPlan(input, effectiveGas);
   const view = useMemo(() => (plan ? buildPlanView(plan) : null), [plan]);
   const hasGasStep = plan?.steps.some((step) => step.type === "swap-gas") ?? false;
 
@@ -183,8 +183,8 @@ export function ProvisioningPanel({
     );
   }
 
-  // POO-1023 [R3]: the seam is async. Hold a skeleton rather than flashing an empty plan card, and
-  // surface a planner failure as a recoverable error rather than a card that never fills.
+  // POO-1023 [R3]: the seam is async, so surface a planner failure as a recoverable error rather than
+  // a plan card that never fills.
   if (planError) {
     return (
       <TransactionStatus phase="error" title={t("flow.error.title")} body={errorBody}>
@@ -193,7 +193,13 @@ export function ProvisioningPanel({
     );
   }
 
-  if (planLoading || !view) {
+  // Gate on `!view` ONLY, never on the hook's `loading`. `view` is null until the FIRST plan resolves,
+  // so the skeleton still covers first load; but a re-plan (the user edits the inline gas amount) keeps
+  // the PREVIOUS plan mounted while the new one resolves in the background. Gating on `loading` would
+  // unmount the plan subtree on every keystroke that changes `effectiveGas`, wiping the
+  // {@link GasAmountSelector} Custom field's local text and its focus, which makes multi-digit amounts
+  // ($25, $100) impossible to type. {@link ProvisioningWizardModal} gates on `!view` for this reason.
+  if (!view) {
     return (
       <div className="flex flex-col gap-4" role="status" aria-label={tCommon("loading")}>
         <div className="flex flex-col gap-2">

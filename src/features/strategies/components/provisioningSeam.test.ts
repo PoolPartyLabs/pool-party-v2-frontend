@@ -34,8 +34,13 @@ function read(relativePath: string): string {
 
 /**
  * Strip comments before asserting. The prose in these files legitimately NAMES `mockComputePlan`
- * while explaining why it must not be called; a bare substring check would flag that as a violation
- * and push contributors to delete the explanation. What matters is the import and the call.
+ * while explaining why it must not be called; the multiline `import ... from` regex would match that
+ * prose across an unrelated `import` line, so it runs against the stripped source.
+ *
+ * The CALL-SITE check does NOT use this: stripping is heuristic (a `//` inside a string literal
+ * truncates the rest of that line) and could hide a genuine `mockComputePlan(` next to it. The prose
+ * only ever writes the bare name, never the paren form, so `mockComputePlan(` is safe to assert
+ * against the RAW source and is the stricter check.
  */
 function code(relativePath: string): string {
   return read(relativePath)
@@ -46,9 +51,8 @@ function code(relativePath: string): string {
 describe("provisioning seam (POO-1023)", () => {
   // [R1] Neither surface may import or call the mock planner.
   it.each(SURFACES)("%s does not import or call mockComputePlan", (path) => {
-    const source = code(path);
-    expect(source).not.toMatch(/import[\s\S]*?mockComputePlan[\s\S]*?from/);
-    expect(source).not.toContain("mockComputePlan(");
+    expect(code(path)).not.toMatch(/import[\s\S]*?mockComputePlan[\s\S]*?from/);
+    expect(read(path)).not.toContain("mockComputePlan(");
   });
 
   // [R1] Both must resolve through the seam, via the shared hook.
@@ -65,9 +69,9 @@ describe("provisioning seam (POO-1023)", () => {
 
   // [R1] The hook itself must go through the seam, or it would just move the bypass one file over.
   it("useProvisioningPlan calls computePlan and not the mock planner", () => {
-    const source = code("src/features/strategies/hooks/useProvisioningPlan.ts");
-    expect(source).toMatch(/import\s*\{\s*computePlan\s*\}\s*from\s*"@\/lib\/provisioning"/);
-    expect(source).toMatch(/\bcomputePlan\(/);
-    expect(source).not.toContain("mockComputePlan(");
+    const path = "src/features/strategies/hooks/useProvisioningPlan.ts";
+    expect(code(path)).toMatch(/import\s*\{\s*computePlan\s*\}\s*from\s*"@\/lib\/provisioning"/);
+    expect(code(path)).toMatch(/\bcomputePlan\(/);
+    expect(read(path)).not.toContain("mockComputePlan(");
   });
 });

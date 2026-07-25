@@ -194,18 +194,26 @@ export function ProvisioningWizardModal({
           if (locked) event.preventDefault();
         }}
       >
-        {phase === "plan" && !view ? (
-          // POO-1023 [R3]: the seam is async. Hold a skeleton rather than flashing an empty plan
-          // card; a planner failure shows the recoverable error body instead of spinning forever.
+        {phase === "plan" && !view && planError ? (
+          // POO-1023 [R3]: a planner failure is an ERROR, not loading. It renders outside the
+          // role="status" skeleton (which would announce "loading" to a screen reader while the
+          // planner is dead) and carries a retry affordance, same as ProvisioningPanel.
+          <>
+            <SheetHeader className="sr-only">
+              <SheetTitle>{t("flow.error.title")}</SheetTitle>
+            </SheetHeader>
+            <TransactionStatus phase="error" title={t("flow.error.title")} body={errorBody}>
+              <TransactionErrorActions onRetry={() => handleOpenChange(false)} />
+            </TransactionStatus>
+          </>
+        ) : phase === "plan" && !view ? (
+          // POO-1023 [R3]: the seam is async. Hold a skeleton rather than flashing an empty plan card
+          // on FIRST load; a re-plan keeps the previous view mounted, so this never interrupts an edit.
           <div className="flex flex-col gap-4" role="status" aria-label={tCommon("loading")}>
             <Skeleton className="h-6 w-40" />
             <Skeleton className="h-4 w-64" />
             <Skeleton className="h-40 w-full" />
-            {planError ? (
-              <p className="text-muted-foreground text-sm">{errorBody}</p>
-            ) : (
-              <Skeleton className="h-11 w-full" />
-            )}
+            <Skeleton className="h-11 w-full" />
           </div>
         ) : phase === "plan" && view ? (
           <>
