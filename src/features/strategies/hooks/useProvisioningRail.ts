@@ -43,7 +43,7 @@
 "use client";
 
 import { useSignTypedData, useWallets } from "@privy-io/react-auth";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useSwitchChain } from "wagmi";
 import { useAuth } from "@/lib/auth/useAuth";
 import type { ProvisioningPlan } from "@/lib/provisioning";
@@ -142,6 +142,25 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
   // SDK call returned cleanly and the provider kept reporting the old chain (POO-1079).
   // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
   const { switchChainAsync } = useSwitchChain();
+  /**
+   * The CURRENT wallets, read at execution time rather than captured when the steps were built.
+   *
+   * `buildSteps` runs when the plan resolves; its steps then execute for MINUTES afterwards, across
+   * re-renders and at least one chain switch. Privy hands out a new `ConnectedWallet` array whenever
+   * that state moves, so a step closure holding the build-time object is holding a detached handle.
+   *
+   * On an EXTERNAL wallet that is harmless: `getEthereumProvider()` returns the live injected
+   * provider, which reports the real chain whoever asks. An EMBEDDED wallet carries its own chain
+   * state, so the stale object keeps handing back a provider pinned to the chain it was built on,
+   * and no switch of any kind can move it (POO-1080). `useInvest` never hit this because it resolves
+   * its wallet INSIDE the run, which is what this restores.
+   */
+  // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
+  const walletsRef = useRef(wallets);
+  // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
+  useEffect(() => {
+    walletsRef.current = wallets;
+  }, [wallets]);
   // POO-892 [R5]: the ACTIVE address drives the wallet lookup — `wallets[0]` can be the stale handle
   // after a wallet switch, and a plan priced for one wallet must never be signed by another.
   // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
@@ -199,7 +218,9 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
         // and the choke point (`executeBuiltTransaction`) is what asserts the chain on it.
         provider: {
           request: async (args) => {
-            const provider = await wallet.getEthereumProvider();
+            // Re-resolved per request, never the build-time handle (POO-1080).
+            const live = findWalletForAddress(walletsRef.current, activeAddress) ?? wallet;
+            const provider = await live.getEthereumProvider();
             return provider.request(args);
           },
         },
@@ -220,7 +241,9 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
               error,
             });
           }
-          await wallet.switchChain(chainId);
+          // Same rule: the SDK fallback has to act on the LIVE handle, not the captured one.
+          const live = findWalletForAddress(walletsRef.current, activeAddress) ?? wallet;
+          await live.switchChain(chainId);
         },
         signTypedData: async (data) => {
           const { signature } = await signTypedData(data as Parameters<typeof signTypedData>[0], {
