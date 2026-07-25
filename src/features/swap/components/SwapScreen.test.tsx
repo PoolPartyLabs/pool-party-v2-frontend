@@ -103,6 +103,15 @@ function setup() {
   return userEvent.setup();
 }
 
+/**
+ * Wait for the wallet read to land. The screen reads balances on mount, so a test that asserts and
+ * returns before it resolves updates state outside `act` and, worse, asserts against a screen the
+ * user never sees.
+ */
+async function settleWalletRead() {
+  await screen.findByText(/right now/);
+}
+
 /** Type an amount and open the plan, waiting for the wallet read the CTA gates on. */
 async function continueWith(user: ReturnType<typeof userEvent.setup>, amount: string) {
   await user.type(screen.getByRole("textbox"), amount);
@@ -123,6 +132,7 @@ function lastPanelProps() {
 describe("SwapScreen (POO-1046)", () => {
   it("[R2] offers every supported network as a destination, and no swap-or-bridge choice", async () => {
     setup();
+    await settleWalletRead();
 
     expect(screen.getByRole("button", { name: "Arbitrum" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Base" })).toBeInTheDocument();
@@ -197,6 +207,7 @@ describe("SwapScreen (POO-1046)", () => {
 
   it("[R3] never renders the panel before there is an amount to plan for", async () => {
     setup();
+    await settleWalletRead();
     expect(screen.queryByTestId("provisioning-panel")).not.toBeInTheDocument();
   });
 });
