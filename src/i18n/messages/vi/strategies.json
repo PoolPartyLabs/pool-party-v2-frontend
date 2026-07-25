@@ -441,7 +441,7 @@
       "shortNoSource": "Không đủ {symbol} trên {network} để trả phí mạng, và ở đây cũng không có gì để đổi.",
       "escape": {
         "bridgeNative": "Gửi một ít {symbol} từ mạng khác",
-        "buyCrypto": "Mua tiền mã hóa"
+        "buyCrypto": "Mua crypto"
       }
     },
     "gas": {
@@ -451,7 +451,7 @@
       "custom": "Tùy chỉnh",
       "customPlaceholder": "Số tiền",
       "customAria": "Số tiền phí mạng tùy chỉnh",
-      "conversionNote": "Chúng tôi chuyển đổi một phần nhỏ tài sản bạn đang có thành phí mạng. Không cần thẻ.",
+      "conversionNote": "Chúng tôi đổi một phần nhỏ tài sản bạn đang có để trả phí mạng. Không cần thẻ.",
       "cta": "Thêm {amount} phí mạng",
       "dismiss": "Lúc khác",
       "signStep": "Nạp phí mạng",
@@ -529,7 +529,7 @@
       "updating": "Đang cập nhật giá",
       "leg": {
         "swapToken": "Quy đổi trên {network}",
-        "swapGas": "Thêm gas trên {network}",
+        "swapGas": "Chuẩn bị phí trên {network}",
         "bridge": "Chuyển từ {network}"
       },
       "buyCrypto": {
@@ -552,7 +552,7 @@
       "cta": "Tiếp tục",
       "step": "Bước {index}",
       "unblock": "Để dùng số tiền này:",
-      "unreachable": "Hiện chưa thể chuyển {symbol} sang mạng này, nên không dùng được ở đây.",
+      "unreachable": "Hiện chưa thể chuyển {symbol} sang mạng này. Hãy chọn nguồn khác trong danh sách.",
       "badge": {
         "ok": "Sẵn sàng",
         "topUp": "Cần nạp thêm",

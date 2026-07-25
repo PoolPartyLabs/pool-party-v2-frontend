@@ -104,7 +104,7 @@ describe("ProvisioningPanel — real steps (POO-1041)", () => {
     );
 
     expect(await screen.findByText("Approve WETH")).toBeInTheDocument();
-    expect(screen.getByText("Swap to USDC")).toBeInTheDocument();
+    expect(screen.getByText("Convert to USDC")).toBeInTheDocument();
     expect(screen.getByText("Move to Arbitrum")).toBeInTheDocument();
   });
 

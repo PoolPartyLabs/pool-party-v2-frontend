@@ -451,7 +451,7 @@
       "custom": "Personalizado",
       "customPlaceholder": "Valor",
       "customAria": "Valor de gas personalizado",
-      "conversionNote": "Convertemos uma pequena parte do que você já tem em gas de rede. Sem cartão.",
+      "conversionNote": "Convertemos uma pequena parte do que você já tem para cobrir os custos de rede. Sem cartão.",
       "cta": "Adicionar {amount} de gas",
       "dismiss": "Agora não",
       "signStep": "Adicionar gas",
@@ -480,7 +480,7 @@
     "steps": {
       "buyUsdc": "Comprar USDC",
       "bridge": "Mover para {network}",
-      "swapGas": "Adicionar gas",
+      "swapGas": "Cobrir as taxas",
       "swapToken": "Converter para {token}",
       "op": "Sua transação"
     },
@@ -529,7 +529,7 @@
       "updating": "Atualizando preços",
       "leg": {
         "swapToken": "Converter na {network}",
-        "swapGas": "Adicionar gas na {network}",
+        "swapGas": "Cobrir as taxas na {network}",
         "bridge": "Mover da {network}"
       },
       "buyCrypto": {
@@ -539,7 +539,7 @@
     },
     "fundingSources": {
       "title": "O que você quer usar?",
-      "subtitle": "Escolha qualquer coisa que você tenha. A gente resolve como levar até o lugar certo.",
+      "subtitle": "Escolha qualquer coisa que você tenha. Nós cuidamos de levar até o lugar certo.",
       "listLabel": "Seus fundos",
       "rowLabel": "{symbol} na {network}, {amount}, vale {usd}",
       "selected": "Selecionado: {amount}",
@@ -547,12 +547,12 @@
       "remaining": "Faltam {amount}",
       "surplus": "{amount} a mais do que o necessário",
       "exact": "Coberto exatamente",
-      "empty": "Ainda não há nada aqui que a gente possa usar.",
+      "empty": "Ainda não há nada aqui que possamos usar.",
       "repriced": "O preço final ficou um pouco maior. Escolha mais uma origem para cobrir {amount}.",
       "cta": "Continuar",
-      "step": "Passo {index}",
+      "step": "Etapa {index}",
       "unblock": "Para usar este dinheiro:",
-      "unreachable": "Ainda não conseguimos levar {symbol} para esta rede, então não dá para usar aqui.",
+      "unreachable": "Ainda não conseguimos levar {symbol} para esta rede. Escolha outra opção da lista.",
       "badge": {
         "ok": "Pronto",
         "topUp": "Precisa de uma recarga",

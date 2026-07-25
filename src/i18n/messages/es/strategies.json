@@ -451,7 +451,7 @@
       "custom": "Personalizado",
       "customPlaceholder": "Importe",
       "customAria": "Cantidad de gas personalizada",
-      "conversionNote": "Convertimos una pequeña parte de lo que ya tienes en gas de red. Sin tarjeta.",
+      "conversionNote": "Convertimos una pequeña parte de lo que ya tienes para cubrir los costos de red. Sin tarjeta.",
       "cta": "Agregar {amount} de gas",
       "dismiss": "Ahora no",
       "signStep": "Recargar gas",
@@ -480,8 +480,8 @@
     "steps": {
       "buyUsdc": "Comprar USDC",
       "bridge": "Mover a {network}",
-      "swapGas": "Agregar gas",
-      "swapToken": "Cambiar a {token}",
+      "swapGas": "Cubrir las comisiones",
+      "swapToken": "Convertir a {token}",
       "op": "Su transacción"
     },
     "captions": {
@@ -515,21 +515,21 @@
     },
     "costs": {
       "youPay": "Pagas",
-      "amountNeeded": "Importe necesario",
+      "amountNeeded": "Monto necesario",
       "fee": "Comisión",
       "priceBuffer": "Reserva de precio",
       "priceBufferHint": "Se reserva por si el precio cambia mientras tus fondos están en camino. Lo que sobre sigue siendo tuyo.",
-      "conversionCost": "Coste de conversión",
-      "conversionCostHint": "Ya está incluido en el importe que se te cotizó, así que no se suma aparte.",
-      "gasByStep": "Coste de red por paso",
-      "gasByStepHint": "Lo que cuesta cada paso en su red, con precisión completa. Es una lista detallada, no una suma: el importe de red de arriba se redondea a céntimos.",
+      "conversionCost": "Costo de conversión",
+      "conversionCostHint": "Ya está incluido en el monto que se te cotizó, así que no se suma aparte.",
+      "gasByStep": "Costo de red por paso",
+      "gasByStepHint": "Lo que cuesta cada paso en su red, con precisión completa. Es una lista detallada, no una suma: el monto de red de arriba se redondea a centavos.",
       "itemized": "Detallado",
       "gasStep": "Paso {index}: {label}",
       "fromSource": "De {symbol} en {network}",
       "updating": "Actualizando precios",
       "leg": {
         "swapToken": "Convertir en {network}",
-        "swapGas": "Añadir gas en {network}",
+        "swapGas": "Cubrir las comisiones en {network}",
         "bridge": "Mover desde {network}"
       },
       "buyCrypto": {
@@ -552,7 +552,7 @@
       "cta": "Continuar",
       "step": "Paso {index}",
       "unblock": "Para usar este dinero:",
-      "unreachable": "Todavía no podemos llevar {symbol} a esta red, así que no se puede usar aquí.",
+      "unreachable": "Todavía no podemos llevar {symbol} a esta red. Elige otra opción de la lista.",
       "badge": {
         "ok": "Listo",
         "topUp": "Necesita una recarga",

@@ -362,8 +362,8 @@
         "insufficientFunds": "你的錢包餘額不足以支付本次交易及網路費用。",
         "userRejected": "你在錢包中拒絕了該請求。資金未發生變動。",
         "unauthorized": "此錢包無權執行該操作。",
-        "wrongChain": "你的錢包目前處於其他網路。請切換到 {network} 後重試。",
-        "wrongChainUnknown": "你的錢包目前處於其他網路。請在錢包中切換網路後重試。",
+        "wrongChain": "您的錢包目前處於其他網路。請切換到 {network} 後重試。",
+        "wrongChainUnknown": "您的錢包目前處於其他網路。請在錢包中切換網路後重試。",
         "gasBlocked": "{network} 上沒有可用於支付網路費用的資產，因此暫時無法執行。請在 {network} 上購買少量加密貨幣，或從其他網路轉入一些。",
         "gasBlockedUnknown": "該網路上沒有可用於支付網路費用的資產，因此暫時無法執行。請在該網路上購買少量加密貨幣，或從其他網路轉入一些。"
       }
@@ -451,7 +451,7 @@
       "custom": "自訂",
       "customPlaceholder": "金額",
       "customAria": "自訂費用金額",
-      "conversionNote": "我們會把您已持有資產的一小部分轉換為網路費用，不需要金融卡。",
+      "conversionNote": "我們會把您已持有資產的一小部分兌換為網路費用，不需要銀行卡。",
       "cta": "新增 {amount} 費用",
       "dismiss": "暫不",
       "signStep": "儲值網路費用",
@@ -473,7 +473,7 @@
     },
     "requote": {
       "title": "價格已變動",
-      "body": "這一步現在的收益比你確認的價格約少 {percent}。目前尚未送出任何內容，你可以接受新價格，也可以就此停止。",
+      "body": "這一步現在的收益比您確認的價格約少 {percent}。目前尚未送出任何內容，您可以接受新價格，也可以就此停止。",
       "accept": "接受新價格",
       "decline": "就此停止"
     },
@@ -487,7 +487,7 @@
     "captions": {
       "buyUsdc": "信用卡或本地支付",
       "bridge": "將資金轉移到正確的網路",
-      "swapGas": "將您持有資產的一小部分轉換為網路費用",
+      "swapGas": "將您持有資產的一小部分兌換為網路費用",
       "op": "您的原始操作",
       "approve": "一次性授權。資金尚未轉移。"
     },
@@ -502,7 +502,7 @@
       "etaMinutes": "通常約需 {minutes, plural, other {# 分鐘}}。資金到帳後我們會立即繼續。",
       "etaUnknown": "這一步比其他步驟更久。資金到帳後我們會立即繼續。",
       "settlingTitle": "仍在路上",
-      "settlingBody": "你的資金仍在網路之間轉移。沒有任何損失。你可以關閉此頁面並查看轉帳進度，我們會從中斷的地方繼續。",
+      "settlingBody": "您的資金仍在網路之間轉移。沒有任何損失。您可以關閉此頁面並查看轉帳進度，我們會從中斷的地方繼續。",
       "settlingClose": "關閉"
     },
     "opLabel": {
@@ -514,11 +514,11 @@
       "close": "關閉 {strategy}"
     },
     "costs": {
-      "youPay": "你需支付",
+      "youPay": "您需支付",
       "amountNeeded": "所需金額",
       "fee": "費用",
       "priceBuffer": "價格緩衝",
-      "priceBufferHint": "為資金轉移途中價格波動預留。用不到的部分仍歸你所有。",
+      "priceBufferHint": "為資金轉移途中價格波動預留。用不到的部分仍歸您所有。",
       "conversionCost": "兌換成本",
       "conversionCostHint": "已包含在報價金額中，不會另行收取。",
       "gasByStep": "各步驟的網路費用",
@@ -529,12 +529,12 @@
       "updating": "正在更新價格",
       "leg": {
         "swapToken": "在 {network} 兌換",
-        "swapGas": "在 {network} 加入 gas",
+        "swapGas": "準備 {network} 的費用",
         "bridge": "從 {network} 轉移"
       },
       "buyCrypto": {
         "cta": "改為購買加密貨幣",
-        "hint": "用金融卡或 Pix 付款，不必在網路之間轉移資金。"
+        "hint": "用銀行卡或 Pix 付款，不必在網路之間轉移資金。"
       }
     },
     "fundingSources": {
@@ -552,7 +552,7 @@
       "cta": "繼續",
       "step": "第 {index} 步",
       "unblock": "要使用這筆資金：",
-      "unreachable": "我們暫時無法把 {symbol} 轉到這個網路，所以這裡用不了。",
+      "unreachable": "我們暫時無法把 {symbol} 轉到這個網路。請從清單中另選一項。",
       "badge": {
         "ok": "可用",
         "topUp": "需要補充",
@@ -578,7 +578,7 @@
       "leg": {
         "settled": "已完成。",
         "pending": "已送出，正在等待入帳，不會重複送出。",
-        "reverted": "這一步沒有完成，你的資金仍在原處。",
+        "reverted": "這一步沒有完成，您的資金仍在原處。",
         "absent": "沒有送出任何內容，可以安全地重新開始這一步。",
         "unknown": "我們無法確認這一步是否完成，因此不會重複送出。繼續之前請查看錢包紀錄。"
       },
@@ -586,7 +586,7 @@
         "complete": "全部完成，可以繼續了。",
         "wait": "資金正在轉移中，可能需要幾分鐘。",
         "rederive": "我們可以從中斷的地方繼續。",
-        "ask": "繼續之前需要你確認一件事。"
+        "ask": "繼續之前需要您確認一件事。"
       }
     }
   }

@@ -451,7 +451,7 @@
       "custom": "Personnalisé",
       "customPlaceholder": "Montant",
       "customAria": "Montant de frais personnalisé",
-      "conversionNote": "Nous convertissons une petite partie de ce que vous détenez déjà en frais de réseau. Sans carte.",
+      "conversionNote": "Nous convertissons une petite partie de ce que vous détenez déjà pour couvrir les frais de réseau. Sans carte.",
       "cta": "Ajouter {amount} de frais",
       "dismiss": "Pas maintenant",
       "signStep": "Recharger les frais",
@@ -481,7 +481,7 @@
       "buyUsdc": "Acheter des USDC",
       "bridge": "Déplacer vers {network}",
       "swapGas": "Ajouter des frais de réseau",
-      "swapToken": "Échanger en {token}",
+      "swapToken": "Convertir en {token}",
       "op": "Votre transaction"
     },
     "captions": {
@@ -529,7 +529,7 @@
       "updating": "Mise à jour des prix",
       "leg": {
         "swapToken": "Convertir sur {network}",
-        "swapGas": "Ajouter du gas sur {network}",
+        "swapGas": "Couvrir les frais sur {network}",
         "bridge": "Déplacer depuis {network}"
       },
       "buyCrypto": {
@@ -552,7 +552,7 @@
       "cta": "Continuer",
       "step": "Étape {index}",
       "unblock": "Pour utiliser cet argent :",
-      "unreachable": "Nous ne pouvons pas encore acheminer {symbol} vers ce réseau, il ne peut donc pas servir ici.",
+      "unreachable": "Nous ne pouvons pas encore acheminer {symbol} vers ce réseau. Choisissez autre chose dans la liste.",
       "badge": {
         "ok": "Prêt",
         "topUp": "Besoin d'une recharge",

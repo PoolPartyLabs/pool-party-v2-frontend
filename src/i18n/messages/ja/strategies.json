@@ -451,7 +451,7 @@
       "custom": "カスタム",
       "customPlaceholder": "金額",
       "customAria": "カスタム手数料の金額",
-      "conversionNote": "すでにお持ちの資産のごく一部をネットワーク手数料に変換します。カードは不要です。",
+      "conversionNote": "ネットワーク費用をまかなうため、すでにお持ちの資産のごく一部を交換します。カードは不要です。",
       "cta": "{amount} の手数料を追加",
       "dismiss": "後で",
       "signStep": "手数料を補充",
@@ -480,14 +480,14 @@
     "steps": {
       "buyUsdc": "USDCを購入",
       "bridge": "{network}へ移動",
-      "swapGas": "手数料を補充",
+      "swapGas": "費用を補充",
       "swapToken": "{token}に交換",
       "op": "お客様の取引"
     },
     "captions": {
       "buyUsdc": "カードまたは現地決済",
       "bridge": "正しいネットワークに資金を移動",
-      "swapGas": "保有資産のごく一部を、ネットワーク費用に変換します",
+      "swapGas": "保有資産のごく一部を、ネットワーク費用に交換します",
       "op": "元の操作",
       "approve": "1回だけの許可です。まだ資金は動きません。"
     },
@@ -529,7 +529,7 @@
       "updating": "価格を更新しています",
       "leg": {
         "swapToken": "{network} で交換",
-        "swapGas": "{network} でガスを追加",
+        "swapGas": "{network} の費用を用意",
         "bridge": "{network} から移動"
       },
       "buyCrypto": {
@@ -552,7 +552,7 @@
       "cta": "続ける",
       "step": "ステップ {index}",
       "unblock": "この資金を使うには:",
-      "unreachable": "{symbol} はまだこのネットワークへ移せないため、ここでは使えません。",
+      "unreachable": "{symbol} はまだこのネットワークへ移せません。一覧から別のものを選んでください。",
       "badge": {
         "ok": "利用可能",
         "topUp": "補充が必要",

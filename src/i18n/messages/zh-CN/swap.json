@@ -1,27 +1,27 @@
 {
   "title": "转移资金",
-  "subtitle": "选择一个网络，以及你希望在该网络上可用的金额。剩下的交给我们。",
+  "subtitle": "选择一个网络，以及您希望在该网络上可用的金额。剩下的交给我们。",
   "destination": {
     "label": "网络"
   },
   "amount": {
-    "label": "你希望在 {network} 上有多少可用资金？",
-    "available": "你现在在 {network} 上有 {amount}。我们只转移缺少的部分。"
+    "label": "您希望在 {network} 上有多少可用资金？",
+    "available": "您现在在 {network} 上有 {amount}。我们只转移缺少的部分。"
   },
   "continue": "继续",
   "routingNote": "无论需要兑换、转移还是两者兼有，我们都会找到把资金送到 {network} 的最省钱方式。",
-  "walletUnavailable": "暂时无法读取你的余额。请检查网络连接后重试。",
+  "walletUnavailable": "暂时无法读取您的余额。请检查网络连接后重试。",
   "plan": {
     "subtitle": "正在让 {amount} 在 {network} 上可用。"
   },
   "opLabel": "{network} 上可用 {amount}",
   "done": {
-    "title": "你的资金已到达 {network}",
-    "body": "全部到账。你现在就可以用它们投资。",
+    "title": "您的资金已到达 {network}",
+    "body": "全部到账。您现在就可以用它们投资。",
     "cta": "继续转移资金"
   },
   "notFound": {
     "title": "尚未开放",
-    "body": "跨网络转移资金还未对你的账户开放。"
+    "body": "跨网络转移资金还未对您的账户开放。"
   }
 }

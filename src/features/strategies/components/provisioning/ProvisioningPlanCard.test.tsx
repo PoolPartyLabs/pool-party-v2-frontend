@@ -35,7 +35,7 @@ describe("ProvisioningPlanCard — real steps (POO-1041)", () => {
     expect(screen.getByText("Approve WETH")).toBeInTheDocument();
     // The swap label interpolates its destination token; before POO-1041 the mapper passed no
     // value and this row rendered the raw i18n key.
-    expect(screen.getByText("Swap to USDC")).toBeInTheDocument();
+    expect(screen.getByText("Convert to USDC")).toBeInTheDocument();
     expect(screen.getByText("Move to Arbitrum")).toBeInTheDocument();
     expect(screen.getByText("Invest in Stable Yield")).toBeInTheDocument();
   });

@@ -77,7 +77,7 @@ export interface PlanRow {
   isApproval: boolean;
   /** Network name for the `{network}` interpolation, from the chain config ([R3]). */
   networkName?: string;
-  /** Token symbol for the `{token}` interpolation (`Swap to USDC`, `Approve WETH`). */
+  /** Token symbol for the `{token}` interpolation (`Convert to USDC`, `Approve WETH`). */
   tokenSymbol?: string;
   /** Execution status from the rail; `idle` until the rail says otherwise ([R1]). */
   status: ProvisioningStepStatus;
@@ -176,7 +176,7 @@ function stepRow(step: ProvisioningStep, index: number, options: PlanViewOptions
     isApproval: false,
     // The DESTINATION for a bridge ("Move to Arbitrum"); `leg.chainId` would be its origin.
     ...(isBridge ? nameOf(chainDisplayName(step.toChainId)) : {}),
-    // `Swap to {token}` names what the user ends up holding.
+    // `Convert to {token}` names what the user ends up holding.
     ...(step.toToken === undefined ? {} : { tokenSymbol: step.toToken }),
     ...(isBridge ? { eta: bridgeEtaCopy(leg?.etaSeconds ?? step.etaSeconds) } : {}),
     ...execution(step.key, leg?.chainId ?? step.chainId ?? step.fromChainId, options),

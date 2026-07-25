@@ -451,7 +451,7 @@
       "custom": "Custom",
       "customPlaceholder": "Amount",
       "customAria": "Custom gas amount",
-      "conversionNote": "We convert a small part of what you already hold into network gas. No card needed.",
+      "conversionNote": "We convert a small part of what you already hold to cover network costs. No card needed.",
       "cta": "Add {amount} gas",
       "dismiss": "Not now",
       "signStep": "Top up gas",
@@ -480,8 +480,8 @@
     "steps": {
       "buyUsdc": "Buy USDC",
       "bridge": "Move to {network}",
-      "swapGas": "Add gas",
-      "swapToken": "Swap to {token}",
+      "swapGas": "Cover fees",
+      "swapToken": "Convert to {token}",
       "op": "Your transaction"
     },
     "captions": {
@@ -529,7 +529,7 @@
       "updating": "Updating prices",
       "leg": {
         "swapToken": "Convert on {network}",
-        "swapGas": "Add gas on {network}",
+        "swapGas": "Cover fees on {network}",
         "bridge": "Move from {network}"
       },
       "buyCrypto": {
@@ -552,7 +552,7 @@
       "cta": "Continue",
       "step": "Step {index}",
       "unblock": "To use this money:",
-      "unreachable": "We can't move {symbol} to this network yet, so it can't be used here.",
+      "unreachable": "We can't move {symbol} to this network yet. Pick something else from the list.",
       "badge": {
         "ok": "Ready",
         "topUp": "Needs a top up",
