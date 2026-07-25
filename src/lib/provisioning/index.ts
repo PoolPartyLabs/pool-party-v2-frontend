@@ -61,3 +61,6 @@ export type {
   ProvisioningStepType,
   ProvisioningVariant,
 } from "./types";
+// The one runtime value on the contract: both sides of the server boundary compare a leg's token
+// against it (POO-1036), so it cannot live in the `server-only` planner.
+export { NATIVE_TOKEN_ADDRESS } from "./types";

@@ -395,6 +395,16 @@ describe("buildPlanSteps — [R1] every leg broadcasts through executeBuiltTrans
     await expect(runRail(steps)).rejects.toThrow(/SEND_CALLS/);
   });
 
+  it("keeps a leg-less plan step and fails on it, rather than silently running fewer steps", async () => {
+    const plan = planOf([swapLeg()]);
+    const { leg: _dropped, ...legless } = plan.steps[0] as ProvisioningStep;
+    plan.steps[0] = legless;
+    const h = harness();
+    const steps = buildPlanSteps(plan, h.deps);
+    expect(steps.map((step) => step.key)).toEqual(["swap-token-0"]);
+    await expect(runRail(steps)).rejects.toThrow(/no executable route leg/);
+  });
+
   it("surfaces a failed server action as a typed TransactionError carrying its code", async () => {
     const h = harness();
     h.quoteSwap.mockResolvedValueOnce({
@@ -434,6 +444,15 @@ describe("buildPlanSteps — [R2] approval", () => {
     });
     await runRail(buildPlanSteps(planOf([swapLeg()]), h.deps));
     expect(h.sent.slice(0, 2).map((tx) => tx.data)).toEqual(["0x095ea7b3bbbb", "0x095ea7b3aaaa"]);
+  });
+
+  it("never spends gas zeroing an allowance when there is no approval to follow it", async () => {
+    const h = harness({
+      approval: { approval: null, cancel: txRequest({ data: "0x095ea7b3bbbb" }) },
+    });
+    const { outcomes } = await runRail(buildPlanSteps(planOf([swapLeg()]), h.deps));
+    expect(outcomes[0]).toEqual({ key: "approve:swap-token-0", skipped: true });
+    expect(h.sent.map((tx) => tx.data)).not.toContain("0x095ea7b3bbbb");
   });
 
   it("sizes the approval to the leg's amount, never unbounded", async () => {

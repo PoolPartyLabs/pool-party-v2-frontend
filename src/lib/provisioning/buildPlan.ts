@@ -79,17 +79,22 @@ import type {
   ProvisioningReason,
   ProvisioningStep,
 } from "./types";
+import { NATIVE_TOKEN_ADDRESS } from "./types";
 
 /**
  * How the Trading API addresses a chain's native coin, and the convention the funding inventory
  * already uses for it (`FundingSource.address`).
+ *
+ * Moved onto the contract (`./types`) by POO-1036 and re-exported here, because the execution rail
+ * needs the same comparison from the CLIENT side (a native leg has no ERC-20 allowance to grant) and
+ * this module is `server-only`.
  *
  * PP-INTEGRATION-POINT: the vendored Uniswap skill quotes native ETH under the WETH address
  * instead. Our probe did not cover a native leg, so this is the repo-internal convention until a
  * gas-swap leg is exercised live (POO-1043). Getting it wrong fails at quote time with a 404, which
  * is a loud failure rather than a wrong route.
  */
-export const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
+export { NATIVE_TOKEN_ADDRESS } from "./types";
 
 /**
  * How long a plan's pricing is good for ([R7]).
