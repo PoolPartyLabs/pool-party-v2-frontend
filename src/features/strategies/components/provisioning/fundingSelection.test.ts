@@ -13,6 +13,8 @@ import {
   fundingProgress,
   fundingSourceKey,
   isSelectableVerdict,
+  reachesChain,
+  seedRequiredUsd,
   toggleFundingSource,
 } from "./fundingSelection";
 
@@ -164,5 +166,46 @@ describe("fundingProgress", () => {
   it("treats a zero or malformed requirement as already covered", () => {
     expect(fundingProgress(sources, [], 0).covered).toBe(true);
     expect(fundingProgress(sources, [], Number.NaN).covered).toBe(true);
+  });
+});
+
+/**
+ * POO-1042 (UF-20) additions: the two facts the SELECTOR cannot know but the gate host can — whether
+ * a source can route to the operation's chain [R8], and how much to ask for before a route has been
+ * quoted [R7].
+ */
+describe("reachesChain (POO-1042 [R8])", () => {
+  it("is true when the target chain is on the source's reachable set", () => {
+    expect(reachesChain({ chainId: 137, reachableChainIds: [137, 42161] }, 42161)).toBe(true);
+  });
+
+  it("is false when the target chain is absent — the plan would 404 at quote time", () => {
+    expect(reachesChain({ chainId: 137, reachableChainIds: [137] }, 42161)).toBe(false);
+  });
+
+  it("falls back to same-chain when reachability is unknown, never hiding a funded row", () => {
+    // An empty/absent set means the routability lookup degraded, not that the token is stranded.
+    // Same-chain still executes with no bridge at all, so it must stay offerable [R6].
+    expect(reachesChain({ chainId: 8453, reachableChainIds: [] }, 8453)).toBe(true);
+    expect(reachesChain({ chainId: 8453, reachableChainIds: [] }, 42161)).toBe(false);
+  });
+});
+
+describe("seedRequiredUsd (POO-1042 [R7])", () => {
+  it("asks for MORE than the bare shortfall, so the quoted plan lands under the seed", () => {
+    expect(seedRequiredUsd(100, 0)).toBeGreaterThan(100);
+  });
+
+  it("adds the quoted gas on top of the proportional buffer", () => {
+    expect(seedRequiredUsd(100, 0.5)).toBeCloseTo(105.5, 2);
+  });
+
+  it("is zero for a zero shortfall with no gas — a gas-only op with gas in hand needs nothing", () => {
+    expect(seedRequiredUsd(0, 0)).toBe(0);
+  });
+
+  it("never returns NaN or a negative for a broken reading", () => {
+    expect(seedRequiredUsd(Number.NaN, Number.NaN)).toBe(0);
+    expect(seedRequiredUsd(-5, -1)).toBe(0);
   });
 });
