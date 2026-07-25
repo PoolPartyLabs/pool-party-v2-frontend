@@ -24,7 +24,7 @@ const immediateSteps = (plan: { steps: { type: string; key: string }[] }) =>
     .map((s) => ({ key: s.key, run: async () => ({ txHash: `0x${s.key}` }) }));
 
 describe("ProvisioningPanel", () => {
-  it("renders the multi plan (op label + steps + inline gas selector)", () => {
+  it("renders the multi plan (op label + steps + inline gas selector)", async () => {
     renderWithProviders(
       <ProvisioningPanel
         input={SCENARIOS.usdcBridgeGas}
@@ -33,7 +33,7 @@ describe("ProvisioningPanel", () => {
         onCancel={noop}
       />,
     );
-    expect(screen.getByRole("heading", { name: "Almost there" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Almost there" })).toBeInTheDocument();
     expect(screen.getByText("Move to Arbitrum")).toBeInTheDocument();
     expect(screen.getByText("Invest in Stable Yield")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "$10.00" })).toBeInTheDocument();
@@ -41,7 +41,7 @@ describe("ProvisioningPanel", () => {
     expect(screen.getByTestId("mock-badge")).toHaveTextContent("MOCK");
   });
 
-  it("is variant-agnostic: renders a gas-only plan too", () => {
+  it("is variant-agnostic: renders a gas-only plan too", async () => {
     renderWithProviders(
       <ProvisioningPanel
         input={SCENARIOS.gasOnly}
@@ -50,7 +50,7 @@ describe("ProvisioningPanel", () => {
         onCancel={noop}
       />,
     );
-    expect(screen.getByRole("heading", { name: "One quick step" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "One quick step" })).toBeInTheDocument();
     expect(screen.getByText("Add gas")).toBeInTheDocument();
   });
 
@@ -65,12 +65,12 @@ describe("ProvisioningPanel", () => {
         buildPlanSteps={immediateSteps}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Confirm & continue" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirm & continue" }));
     expect(screen.getByText("Setting up your funds")).toBeInTheDocument();
     await waitFor(() => expect(onDone).toHaveBeenCalled());
   });
 
-  it("returns to the host (onCancel) when cancelled", () => {
+  it("returns to the host (onCancel) when cancelled", async () => {
     const onCancel = vi.fn();
     renderWithProviders(
       <ProvisioningPanel
@@ -80,11 +80,11 @@ describe("ProvisioningPanel", () => {
         onCancel={onCancel}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalled();
   });
 
-  it("keeps the gas step + disables the CTA when the custom gas is cleared", () => {
+  it("keeps the gas step + disables the CTA when the custom gas is cleared", async () => {
     renderWithProviders(
       <ProvisioningPanel
         input={SCENARIOS.usdcBridgeGas}
@@ -93,12 +93,12 @@ describe("ProvisioningPanel", () => {
         onCancel={noop}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Custom" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Custom" }));
     expect(screen.getByLabelText("Custom gas amount")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Confirm & continue" })).toBeDisabled();
   });
 
-  it("reports the in-flight lock while provisioning runs", () => {
+  it("reports the in-flight lock while provisioning runs", async () => {
     const onLockChange = vi.fn();
     renderWithProviders(
       <ProvisioningPanel
@@ -110,7 +110,7 @@ describe("ProvisioningPanel", () => {
         buildPlanSteps={immediateSteps}
       />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "Confirm & continue" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirm & continue" }));
     expect(onLockChange).toHaveBeenCalledWith(true);
   });
 });

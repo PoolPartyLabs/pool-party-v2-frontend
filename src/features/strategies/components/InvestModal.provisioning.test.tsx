@@ -75,22 +75,24 @@ function enterAmount() {
 }
 
 describe("InvestModal — provisioning gate", () => {
-  it("routes the Invest CTA → provision when the wallet is short (flag on)", () => {
+  it("routes the Invest CTA → provision when the wallet is short (flag on)", async () => {
     enterAmount();
     // POO-598 R7: the "Invest" CTA intercepts to the pre-flight plan instead of starting the build.
     fireEvent.click(screen.getByRole("button", { name: "Invest" }));
 
     // The op anchor + the plan CTA are unique to the provisioning plan view.
-    expect(screen.getByText("Invest in Stable Yield")).toBeInTheDocument();
+    // POO-1023: the plan resolves through the async computePlan seam, so await its arrival.
+    expect(await screen.findByText("Invest in Stable Yield")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Confirm & continue" })).toBeInTheDocument();
     // The build/sign has NOT started yet (no Review reached).
     expect(screen.queryByRole("button", { name: "Confirm investment" })).not.toBeInTheDocument();
   });
 
-  it("cancel from the plan returns to the amount step with the op untouched", () => {
+  it("cancel from the plan returns to the amount step with the op untouched", async () => {
     enterAmount();
     fireEvent.click(screen.getByRole("button", { name: "Invest" }));
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    // POO-1023: wait for the async plan before acting on it.
+    fireEvent.click(await screen.findByRole("button", { name: "Cancel" }));
 
     // Back on the amount step: the Invest CTA is present again, the plan is gone.
     expect(screen.getByRole("button", { name: "Invest" })).toBeInTheDocument();
