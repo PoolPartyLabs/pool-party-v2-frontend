@@ -117,7 +117,13 @@ function answerQuote(call: QuoteCall) {
   }
 
   const requested = BigInt(call.amount);
-  const exactOutput = call.type === "EXACT_OUTPUT";
+  // BRIDGE routing IGNORES EXACT_OUTPUT (POO-1074, probed live 2026-07-25): it pins the INPUT to the
+  // requested amount and lets the output come back short by the bridge fee, identically to
+  // EXACT_INPUT. CLASSIC honours it properly (probed: WETH→USDC EXACT_OUTPUT pins the output).
+  // Modelling the difference is the point of this harness: a mock more capable than the API hides
+  // exactly the defect the harness exists to catch.
+  const isBridge = call.tokenInChainId !== call.tokenOutChainId;
+  const exactOutput = call.type === "EXACT_OUTPUT" && !isBridge;
   // EXACT_OUTPUT asks the inverse question, and rounds UP so the input is never a hair short.
   const amountIn = exactOutput
     ? (requested * spec.rateDen + spec.rateNum - BigInt(1)) / spec.rateNum
@@ -537,8 +543,89 @@ describe("buildPlan: the flagship decomposition", () => {
         `${call.type}:${call.tokenIn}@${call.tokenInChainId}>${call.tokenOut}@${call.tokenOutChainId}:${call.amount}`,
     );
     expect(new Set(asked).size).toBe(asked.length);
-    // Backward bridge (sizes the swap), the swap itself, then the bridge from the swap's output.
+    // Two to size the bridge (the first is short because BRIDGE ignores EXACT_OUTPUT, the second
+    // inverts the observed rate), then the swap. The forward bridge asks nothing: the swap is sized
+    // to land exactly on the amount round two solved for, so its answer is already held.
     expect(asked).toHaveLength(3);
+  });
+});
+
+// @rule R1 / R2 (POO-1074) — BRIDGE routing ignores EXACT_OUTPUT and pins the INPUT instead, so a
+// route sized from its `amountIn` delivers short by the bridge fee. Small in relative terms, but an
+// operation with a hard on-chain minimum takes the money, pays the fees, lands under the minimum and
+// fails at the last step.
+describe("buildPlan: a bridge leg must not under-deliver [R2]", () => {
+  beforeEach(() => {
+    route(USDC_BASE, BASE, USDC_ARBITRUM, ARBITRUM, {
+      routing: "BRIDGE",
+      ...BRIDGE_RATE,
+      gasFeeUSD: "0.01",
+      estimatedFillTimeMs: 1_000,
+    });
+    route(WETH_POLYGON, POLYGON, USDC_POLYGON, POLYGON, { routing: "CLASSIC", ...ETH_TO_USDC });
+    route(USDC_POLYGON, POLYGON, USDC_ARBITRUM, ARBITRUM, {
+      routing: "BRIDGE",
+      ...BRIDGE_RATE,
+      estimatedFillTimeMs: 1_000,
+    });
+  });
+
+  it("pins the API behaviour this guards against: EXACT_OUTPUT on a bridge returns the input", () => {
+    const answer = answerQuote({
+      tokenIn: USDC_BASE,
+      tokenInChainId: BASE,
+      tokenOut: USDC_ARBITRUM,
+      tokenOutChainId: ARBITRUM,
+      amount: HUNDRED_USDC,
+      type: "EXACT_OUTPUT",
+    });
+    expect(answer.ok).toBe(true);
+    if (!answer.ok) return;
+    // Input pinned to what was requested as OUTPUT, and the output short by the fee. If a future API
+    // version starts honouring EXACT_OUTPUT this fails, which is the point: the correction below
+    // becomes unnecessary and should be revisited rather than silently kept forever.
+    expect(answer.quote.quote.input?.amount).toBe(HUNDRED_USDC);
+    expect(BigInt(answer.quote.quote.output?.amount ?? "0")).toBeLessThan(BigInt(HUNDRED_USDC));
+  });
+
+  it("delivers AT LEAST the requirement on a single bridge leg", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [USDC_ON_BASE],
+        gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: verdict(ARBITRUM) },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const [leg] = legsOf(result.plan);
+    // The whole defect in one assertion.
+    expect(BigInt(leg?.amountOutQuoted ?? "0")).toBeGreaterThanOrEqual(BigInt(HUNDRED_USDC));
+    // And it is paid for by sending MORE in, not by wishing the fee away.
+    expect(BigInt(leg?.amountIn ?? "0")).toBeGreaterThan(BigInt(HUNDRED_USDC));
+  });
+
+  it("delivers AT LEAST the requirement through the swap-then-bridge decomposition", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [WETH_ON_POLYGON],
+        gasByChain: { [POLYGON]: verdict(POLYGON), [ARBITRUM]: verdict(ARBITRUM) },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const legs = legsOf(result.plan);
+    const bridge = legs.find((leg) => leg.kind === "bridge");
+    expect(BigInt(bridge?.amountOutQuoted ?? "0")).toBeGreaterThanOrEqual(BigInt(HUNDRED_USDC));
   });
 });
 

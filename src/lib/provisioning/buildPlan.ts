@@ -295,6 +295,71 @@ async function priceLeg(args: {
 }
 
 /**
+ * How many rounds {@link sizeBridgeInput} may spend converging. Rate inversion lands in one for a
+ * linear fee and one more for a nonlinear one; a third exists only so an adversarial curve cannot
+ * spin the loop. `/quote` is rate-limited on a shared key, so this is a real budget, not a formality.
+ */
+const MAX_BRIDGE_SIZING_ROUNDS = 3;
+
+/**
+ * Price the bridge leg that DELIVERS at least `required` on the far chain ([R1], [R2], POO-1074).
+ *
+ * `BRIDGE` routing ignores `EXACT_OUTPUT`. Probed live 2026-07-25: asking for exactly 100 USDC out
+ * returns `in=100000000, out=99981280`, which is the EXACT_INPUT answer wearing the other name, and
+ * the input is pinned rather than grossed up. Sizing a route from that `amountIn` under-delivers by
+ * the bridge fee every single time. `CLASSIC` was probed alongside it and DOES honour EXACT_OUTPUT,
+ * so this correction is deliberately scoped to bridge legs.
+ *
+ * The shortfall is small (~0.019% on USDC) but the failure it causes is not proportional to it: an
+ * operation with a hard on-chain minimum takes the money, pays swap and bridge fees, lands a hair
+ * under the minimum and fails at the last step, leaving the user mid-route and out of pocket.
+ *
+ * Convergence inverts the observed rate instead of adding the shortfall back. Additive gross-up pays
+ * a fee on the fee each round and approaches the answer without arriving; inversion asks "at this
+ * rate, what input yields `required`?" and lands in one round whenever the fee is linear. The live
+ * fee is closer to flat, which inversion over-shoots slightly, and over-delivery is safe: the caller
+ * caps `delivered` at what was asked ([R2] permits over-delivery, never under-delivery).
+ */
+async function sizeBridgeInput(args: {
+  index: number;
+  tokenIn: ProvisioningLegToken;
+  tokenOut: ProvisioningLegToken;
+  required: bigint;
+  slippagePct: number;
+}): Promise<PricedLeg | null> {
+  let attempt = args.required;
+
+  for (let round = 0; round < MAX_BRIDGE_SIZING_ROUNDS; round += 1) {
+    const priced = await priceLeg({
+      index: args.index,
+      kind: "bridge",
+      tokenIn: args.tokenIn,
+      tokenOut: args.tokenOut,
+      amount: attempt.toString(),
+      type: "EXACT_INPUT",
+      slippagePct: args.slippagePct,
+      // The amount is one this planner chose, not one a previous leg produced, so it is exact.
+      requoteAtExecution: false,
+    });
+    if (!priced) return null;
+
+    const out = toBigInt(priced.leg.amountOutQuoted);
+    if (out >= args.required) return priced;
+    // A leg that returns nothing cannot be inverted, and a route that eats the whole amount is not
+    // one to plan around.
+    if (out <= BigInt(0)) return null;
+
+    // Ceil, so the answer is never a hair short of the requirement it was derived from.
+    const next = (args.required * attempt + out - BigInt(1)) / out;
+    // No forward progress means the curve is not invertible here. Refuse rather than re-ask.
+    if (next <= attempt) return null;
+    attempt = next;
+  }
+
+  return null;
+}
+
+/**
  * The quoted output less the slippage allowance, in base units.
  *
  * Basis points keep the whole computation in BigInt: a percentage applied as a float to an 18-decimal
@@ -377,21 +442,21 @@ async function planSource(args: {
   // --- backward pass: what has to go IN so that `remaining` comes out on the target chain --------
   //
   // Each backward quote is KEPT, not just measured. When the source covers the whole requirement the
-  // forward pass asks the identical question (same pair, same amount, same EXACT_OUTPUT), and the
-  // upstream `/quote` is rate-limited on a shared API key: re-asking would double the calls on the
-  // primary happy path for an answer we are already holding.
+  // forward pass asks the identical question, and the upstream `/quote` is rate-limited on a shared
+  // API key: re-asking would double the calls on the primary happy path for an answer we hold.
+  //
+  // The bridge leg cannot use an EXACT_OUTPUT question at all, because BRIDGE routing ignores it
+  // (POO-1074). `sizeBridgeInput` converges on the input by inverting the observed rate instead, and
+  // returns the quote that actually satisfies the requirement.
   let bridgeIn: bigint | null = null;
   let backwardBridge: PricedLeg | null = null;
   if (needsBridge) {
-    backwardBridge = await priceLeg({
+    backwardBridge = await sizeBridgeInput({
       index: 0,
-      kind: "bridge",
       tokenIn: bridgeAsset,
       tokenOut: targetUsdc,
-      amount: remaining.toString(),
-      type: "EXACT_OUTPUT",
+      required: remaining,
       slippagePct,
-      requoteAtExecution: false,
     });
     if (!backwardBridge) return null;
     bridgeIn = toBigInt(backwardBridge.leg.amountIn);
@@ -457,8 +522,16 @@ async function planSource(args: {
     // EXACT_INPUT question and an estimate ([R8]). Unfed and fully covered, it keeps the backward
     // question, which the backward pass already answered for exactly this amount.
     const fedByLeg = needsSwap || !exactOutput;
+    // The swap was sized EXACT_OUTPUT to land precisely on the amount `sizeBridgeInput` solved for,
+    // so on the fully-covered path the forward question is one the backward pass already asked and
+    // answered. `/quote` is rate-limited on a shared key ([R5]), so re-asking is a real cost for an
+    // answer already in hand. Compared on the amount rather than assumed: a drained source lands
+    // somewhere else entirely and must genuinely re-ask.
+    const alreadyPriced =
+      backwardBridge && toBigInt(backwardBridge.leg.amountIn) === carried ? backwardBridge : null;
     const priced = fedByLeg
-      ? await priceLeg({
+      ? (alreadyPriced ??
+        (await priceLeg({
           index,
           kind: "bridge",
           tokenIn: bridgeAsset,
@@ -467,10 +540,13 @@ async function planSource(args: {
           type: "EXACT_INPUT",
           slippagePct,
           requoteAtExecution: needsSwap,
-        })
+        })))
       : backwardBridge;
     if (!priced) return null;
-    legs.push({ ...priced.leg, index });
+    // Set here rather than inherited: a reused backward quote carries `false`, but a leg a swap
+    // feeds is an estimate until that swap lands ([R8]). `needsSwap` is false whenever the leg is
+    // unfed, so this is the right flag on every path.
+    legs.push({ ...priced.leg, index, requoteAtExecution: needsSwap });
     if (priced.deadlineMs !== undefined) deadlines.push(priced.deadlineMs);
     carried = toBigInt(priced.leg.amountOutQuoted);
   }
