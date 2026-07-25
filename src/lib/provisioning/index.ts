@@ -21,6 +21,19 @@ export {
   sizeOnRampUsd,
   spendableTokenUsd,
 } from "./computeNeed";
+export type {
+  BridgeFeeTooltipInput,
+  CostBreakdownInput,
+  ProvisioningCostGasLine,
+  ProvisioningCostLines,
+  ProvisioningCostModel,
+  ProvisioningCostSource,
+  ProvisioningQuoteFigures,
+} from "./costBreakdown";
+// The cost model is pure and client-importable BY DESIGN: the planner runs it server-side to fill
+// the plan's quote, and the cost table (POO-1040) runs the same function over the same steps to
+// render it, so the total a user approves cannot disagree with the breakdown they read.
+export { bridgeFeeTooltipInput, buildCostBreakdown, planCostBreakdown } from "./costBreakdown";
 // PP-MOCK: the deterministic mock-mode fixture, retired as "the planner" by POO-1034. The real one
 // is `buildPlan.ts` and is `server-only`, so it is deliberately NOT re-exported here: this barrel is
 // the client surface (`serverBoundary.test.ts`), and a plan reaches a browser through `computePlan`.

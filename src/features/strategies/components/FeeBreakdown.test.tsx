@@ -192,6 +192,35 @@ describe("buildCanonicalFeeLines (POO-800 R2/R3)", () => {
     expect(bridge?.display).toBe("Coming soon");
     expect(bridge?.usd).toBe(0);
   });
+
+  // UF-13 (POO-1035) [R5] — the placeholder was only ever a placeholder because no caller could
+  // produce a figure. Universal Funding's cost model can (`bridgeFeeTooltipInput`), so a real fee
+  // renders as a real line and counts toward the Total like every other fee.
+  it("shows a real Bridge figure once the cost model supplies one", () => {
+    const lines = buildCanonicalFeeLines({
+      labels: CANONICAL_LABELS,
+      networkUsd: 0.3,
+      crossChain: true,
+      bridgeUsd: 0.12,
+    });
+
+    const bridge = lines.find((line) => line.key === "bridge");
+    expect(bridge?.usd).toBe(0.12);
+    expect(bridge?.display).toBeUndefined();
+    expect(buildFeeRow({ label: "Fee", lines, totalLabel: "Total" }).value).toBe("$0.42");
+  });
+
+  // A figure with no bridge in the flow is not a bridge fee. The line stays off the same-chain
+  // tooltip whatever is passed alongside it.
+  it("never shows the Bridge line on a same-chain flow", () => {
+    const lines = buildCanonicalFeeLines({
+      labels: CANONICAL_LABELS,
+      networkUsd: 0.3,
+      bridgeUsd: 0.12,
+    });
+
+    expect(lines.some((line) => line.key === "bridge")).toBe(false);
+  });
 });
 
 describe("buildMaxSlippageRow (POO-800 R1, epic decision #7)", () => {

@@ -68,6 +68,7 @@ import { apiNetworkForChain, getUsdcAddress, nativeSymbol } from "@/lib/chains/c
 // action layer (PP-CORE-LIB-052). `POST /quote` is the only upstream call the planner makes.
 import { quoteSwap } from "@/lib/uniswap/actions";
 import type { UniswapQuoteResponse } from "@/lib/uniswap/schemas";
+import { buildCostBreakdown } from "./costBreakdown";
 import type { GasFeasibility } from "./gasFeasibility";
 import { quoteGasUsd } from "./gasFeasibility";
 import type {
@@ -751,7 +752,13 @@ function assemblePlan(args: {
     // is the wizard. Same vocabulary the six op modals already branch on (POO-1033 [R3]).
     variant: hasFundingLeg ? "multi" : "gas-only",
     steps,
-    quote: buildQuote({ ...args, steps }),
+    quote: buildQuote({
+      steps,
+      deadlines: args.deadlines,
+      quotedAt,
+      slippagePct,
+      requiredUsd,
+    }),
     ...(hasGasLeg ? { gas: { presetUsd: null, amountUsd: round2(args.topUpUsd) } } : {}),
     slippagePct,
   };
@@ -760,6 +767,10 @@ function assemblePlan(args: {
 /**
  * The cost breakdown, to the contract's own definition:
  * `totalPayUsd = shortfallUsd + bufferUsd + feesUsd`.
+ *
+ * The arithmetic itself lives in the cost model (PP-CORE-LIB-056), which is pure, client-importable
+ * and itemizes the same figures per source for the cost table (POO-1040). Both run the SAME function
+ * over the SAME steps, so the total a user approves and the breakdown they read cannot disagree.
  *
  * Three deliberate choices, all of which UF-13 (POO-1035) itemizes further:
  *
@@ -770,36 +781,20 @@ function assemblePlan(args: {
  *     `amountIn − amountOut` IS the fee, with no reference price required.
  *   - a **swap** fee is not added, because it is already inside the quote: the output amount the
  *     route is sized against is net of it. Adding a line for it would double-count.
+ *
+ * The TTL stays here: it is a property of the QUOTES, which only the planner holds (a permit deadline
+ * never reaches the plan), not of what the plan costs.
  */
 function buildQuote(args: {
-  legs: ProvisioningLeg[];
-  legSources: Map<number, FundingSource>;
   steps: ProvisioningStep[];
   deadlines: number[];
   quotedAt: string;
   slippagePct: number;
   requiredUsd: number;
 }): ProvisioningQuote {
-  const { legs, steps, quotedAt, slippagePct, requiredUsd } = args;
+  const { steps, quotedAt, slippagePct, requiredUsd } = args;
 
-  const shortfallUsd = round2(requiredUsd);
-  const gasUsd = legs.reduce((total, leg) => total + leg.gasUsd, 0);
-
-  const ammNotionalUsd = legs.reduce((total, leg, index) => {
-    if (leg.kind === "bridge") return total;
-    return total + (steps[index]?.amountUsd ?? 0);
-  }, 0);
-  const bufferUsd = round2(gasUsd + ammNotionalUsd * (slippagePct / 100));
-
-  const feesUsd = round2(
-    legs.reduce((total, leg) => {
-      if (leg.kind !== "bridge") return total;
-      const spread = toBigInt(leg.amountIn) - toBigInt(leg.amountOutQuoted);
-      return spread > BigInt(0)
-        ? total + Number(formatUnits(spread, leg.tokenOut.decimals))
-        : total;
-    }, 0),
-  );
+  const { quote } = buildCostBreakdown({ steps, shortfallUsd: requiredUsd, slippagePct });
 
   // [R7] The quote's window, tightened by any permit that expires sooner. Never below zero: an
   // already-expired plan re-quotes immediately, which is the correct behaviour, not an error.
@@ -807,12 +802,5 @@ function buildQuote(args: {
   const permitTtl = args.deadlines.map((deadline) => deadline - quotedAtMs);
   const ttlMs = Math.max(0, Math.min(UNISWAP_QUOTE_TTL_MS, ...permitTtl));
 
-  return {
-    shortfallUsd,
-    bufferUsd,
-    feesUsd,
-    totalPayUsd: round2(shortfallUsd + bufferUsd + feesUsd),
-    quotedAt,
-    ttlMs,
-  };
+  return { ...quote, quotedAt, ttlMs };
 }

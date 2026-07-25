@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-CMP-018
  * @name FeeBreakdown
- * @implements-rules-version v2 (POO-800 rules v1)
+ * @implements-rules-version v3 (POO-800 rules v1, POO-1035 rules v1)
  *
  * The shared "Fee" line breakdown used by the transactional-modal receipts. The app standardizes on
  * a single "Fee" row (never "Network fee" / "Est. fees" split across rows); this renders that row's
@@ -15,9 +15,14 @@
  * across the modals. The Move Range protocol fee (ETH-denominated) is the one fee that stays on its
  * own separate row and does not go through this helper.
  *
+ * POO-1035 (UF-13 R5, hackathon POO-1022): the Bridge line accepts a REAL figure. It was a "coming
+ * soon" placeholder only because nothing could price a bridge; the Universal Funding cost model
+ * (`bridgeFeeTooltipInput`, PP-CORE-LIB-056) now can, from the live bridge quote. Passing no figure
+ * still renders the placeholder, so every existing caller is unchanged.
+ *
  * POO-800 R2/R3 (0710 modals overhaul): {@link buildCanonicalFeeLines} assembles the ONE canonical
- * tooltip — DEX · Network · Protocol · Performance (Collect only) · Bridge (cross-chain only,
- * "coming soon") — hiding any line without a real figure, never fabricating one. A {@link FeeLine}
+ * tooltip — DEX · Network · Protocol · Performance (Collect only) · Bridge (cross-chain only) —
+ * hiding any line without a real figure, never fabricating one. A {@link FeeLine}
  * may be display-only (`display`), rendering text instead of a USD figure and staying out of the
  * Total sum. {@link buildMaxSlippageRow} renders the gear slippage detail row with an "Auto" badge
  * when the default applies (epic decision #7).
@@ -144,6 +149,7 @@ export function buildCanonicalFeeLines({
   protocolUsd,
   performanceUsd,
   crossChain = false,
+  bridgeUsd,
 }: {
   labels: CanonicalFeeLabels;
   /**
@@ -165,8 +171,15 @@ export function buildCanonicalFeeLines({
    * (POO-811). Collect receipts only (POO-799 decision #3).
    */
   performanceUsd?: number;
-  /** Bridge placeholder renders on cross-chain flows only (POO-799 decision #2). */
+  /** The Bridge line renders on cross-chain flows only (POO-799 decision #2). */
   crossChain?: boolean;
+  /**
+   * The bridge's own fee in USD, from the provisioning cost model (`bridgeFeeTooltipInput`,
+   * PP-CORE-LIB-056, UF-13 [R5]). Present: a real line that counts toward the Total, like every
+   * other fee. Absent: the "Coming soon" placeholder stands, which is what a cross-chain flow with
+   * no quoted spread must show. Never pass a fallback here (POO-799 global directive #1).
+   */
+  bridgeUsd?: number;
 }): FeeLine[] {
   return [
     ...(dexUsd != null ? [{ key: "dex", label: labels.dex, usd: dexUsd }] : []),
@@ -175,9 +188,14 @@ export function buildCanonicalFeeLines({
     ...(performanceUsd != null
       ? [{ key: "performance", label: labels.performance, usd: performanceUsd }]
       : []),
-    // R3: display-only placeholder — no fabricated figure, excluded from the Total sum.
+    // R3 / UF-13 R5: a real quoted fee when the cost model has one, else the display-only
+    // placeholder. Never a fabricated figure, and the placeholder never joins the Total sum.
     ...(crossChain
-      ? [{ key: "bridge", label: labels.bridge, usd: 0, display: labels.comingSoon }]
+      ? [
+          bridgeUsd != null
+            ? { key: "bridge", label: labels.bridge, usd: bridgeUsd }
+            : { key: "bridge", label: labels.bridge, usd: 0, display: labels.comingSoon },
+        ]
       : []),
   ];
 }
