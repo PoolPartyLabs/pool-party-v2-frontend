@@ -1,18 +1,27 @@
 /**
- * @id PP-STR-LIB-017 (POO-1036)
+ * @id PP-STR-LIB-017 (POO-1036) · PP-STR-LIB-018 (POO-1037)
  * @name buildPlanSteps tests
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1037 rules v1) · v1 (POO-1036 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The rail adapter's spec, one describe per business rule. Everything is stubbed: the wallet is an
  * EIP-1193 handler map (so the SHIPPED chain/account assertions in `executeBuiltTransaction` really
  * run, rather than being mocked away), and the three Uniswap server actions are injected. No network.
+ *
+ * POO-1037 adds the settlement half: a bridge leg's source receipt proves only that the funds LEFT,
+ * so the leg step now stays open until the DESTINATION balance clears the leg's floor. Every bridge
+ * fixture here therefore has to deliver on the destination chain, or the leg legitimately waits.
  */
 import { describe, expect, it, vi } from "vitest";
 import type { ProvisioningLeg, ProvisioningPlan, ProvisioningStep } from "@/lib/provisioning";
 import type { Eip1193Provider } from "@/lib/tx/sendTransaction";
 import type { UniswapQuoteResponse, UniswapTransactionRequest } from "@/lib/uniswap/schemas";
 import type { FlowStep } from "../hooks/useWalletSignFlow";
+import {
+  BRIDGE_PENDING_CODE,
+  BRIDGE_POLL_MAX_DELAY_MS,
+  BRIDGE_SETTLE_CEILING_MS,
+} from "./awaitBridgeSettlement";
 import {
   buildPlanSteps,
   PLAN_RAIL_STATE_KEY,
@@ -70,6 +79,13 @@ function swapLeg(overrides: Partial<ProvisioningLeg> = {}): ProvisioningLeg {
     ...overrides,
   };
 }
+
+/**
+ * The destination-chain balance queue of a bridge that lands: nothing when the baseline is taken
+ * (POO-1037 [R1] reads it BEFORE the broadcast), then the floor delivered on the first observation.
+ * A queue of `["0"]` would be a bridge that never arrives, which the leg now waits for on purpose.
+ */
+const BRIDGE_ARRIVES = ["0", "2996000000"];
 
 /** A bridge leg fed by the swap above, so it is re-sized at execution time ([R6]). */
 function bridgeLeg(overrides: Partial<ProvisioningLeg> = {}): ProvisioningLeg {
@@ -569,7 +585,7 @@ describe("buildPlanSteps — [R6] a requoteAtExecution leg is sized from what ac
       balances: {
         // Pre-existing dust, then dust + the 2_950_000_000 the swap really produced.
         [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["1000000", "2951000000"],
-        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: ["0"],
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
       },
     });
     await runRail(buildPlanSteps(planOf([swapLeg(), bridgeLeg()]), h.deps));
@@ -587,7 +603,7 @@ describe("buildPlanSteps — [R6] a requoteAtExecution leg is sized from what ac
     const h = harness({
       balances: {
         [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["1000000", "2951000000"],
-        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: ["0"],
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
       },
       approval: { approval: txRequest({ data: "0x095ea7b3aaaa" }) },
     });
@@ -608,11 +624,135 @@ describe("buildPlanSteps — [R6] a requoteAtExecution leg is sized from what ac
     const h = harness({
       balances: {
         [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["1000000", "1000000"],
-        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: ["0"],
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
       },
     });
     const steps = buildPlanSteps(planOf([swapLeg(), bridgeLeg()]), h.deps);
     await expect(runRail(steps)).rejects.toThrow(/delivered nothing/i);
+  });
+});
+
+describe("buildPlanSteps — POO-1037 a bridge leg settles on the DESTINATION chain", () => {
+  /** The bridge-only plan, sized from its planned amount so no previous leg has to run first. */
+  const bridgeOnly = () => planOf([bridgeLeg({ index: 0, requoteAtExecution: false })]);
+
+  it("[R1] holds the step open after the source receipt until the funds actually land", async () => {
+    vi.useFakeTimers();
+    try {
+      const h = harness({
+        balances: {
+          [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["3000000000"],
+          // Baseline, one observation with nothing there, then the arrival.
+          [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: ["0", "0", "2996000000"],
+        },
+      });
+      const steps = buildPlanSteps(bridgeOnly(), h.deps);
+      let settled = false;
+      const running = (steps.at(-1) as FlowStep<PlanRailCtx>).run({}).then((result) => {
+        settled = true;
+        return result;
+      });
+
+      await vi.advanceTimersByTimeAsync(1);
+      // The source transaction has mined and the step is STILL open: a source receipt proves only
+      // that the money left.
+      expect(h.sent).toHaveLength(1);
+      expect(settled).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(BRIDGE_POLL_MAX_DELAY_MS);
+      expect(await running).toMatchObject({ txHash: "0xhash1" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("[R1] measures arrival against the baseline recorded BEFORE the broadcast", async () => {
+    const h = harness({
+      balances: {
+        [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["3000000000"],
+        // The user already holds 500 USDC on the destination chain. An absolute test would call
+        // this bridge settled before it started.
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: ["500000000", "3496000000"],
+      },
+    });
+    await runRail(buildPlanSteps(bridgeOnly(), h.deps));
+    const destinationReads = h.readTokenBalance.mock.calls.filter(
+      ([args]) => (args as { chainId: number }).chainId === ARBITRUM,
+    );
+    // Baseline + at least one settlement observation, both on the destination chain.
+    expect(destinationReads.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("[R3] degrades at the ceiling with a typed pending error, and never re-broadcasts", async () => {
+    vi.useFakeTimers();
+    try {
+      const h = harness({
+        balances: {
+          [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["3000000000"],
+          [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: ["0"],
+        },
+      });
+      const steps = buildPlanSteps(bridgeOnly(), h.deps);
+      const caught = (steps.at(-1) as FlowStep<PlanRailCtx>).run({}).catch((error) => error);
+      await vi.advanceTimersByTimeAsync(BRIDGE_SETTLE_CEILING_MS + BRIDGE_POLL_MAX_DELAY_MS);
+
+      const error = await caught;
+      // Not a failure and not a success: the money is still moving, so the hash travels with the
+      // error and the UI can keep the transfer verifiable.
+      expect(error).toMatchObject({
+        cause: { code: BRIDGE_PENDING_CODE, txHash: "0xhash1" },
+      });
+      expect(h.sent).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("[R1] reports the broadcast hash BEFORE it starts waiting (the POO-1038 journal write)", async () => {
+    const order: string[] = [];
+    const h = harness({
+      balances: {
+        [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["3000000000"],
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
+      },
+    });
+    h.readTokenBalance.mockImplementation(async ({ chainId }: { chainId: number }) => {
+      order.push(`read:${chainId}`);
+      return chainId === ARBITRUM ? (order.includes("broadcast") ? "2996000000" : "0") : "3000000000";
+    });
+    h.deps.onLegBroadcast = vi.fn(() => {
+      order.push("broadcast");
+    });
+
+    await runRail(buildPlanSteps(bridgeOnly(), h.deps));
+
+    expect(h.deps.onLegBroadcast).toHaveBeenCalledWith(
+      expect.objectContaining({ txHash: "0xhash1" }),
+    );
+    // `02_BRIDGE_ARCHITECTURE.md` §3.4: the hash is recorded the instant it exists, before ANY await.
+    expect(order.indexOf("broadcast")).toBeLessThan(order.lastIndexOf(`read:${ARBITRUM}`));
+  });
+
+  it("[R1] a same-chain leg settles on its receipt and never polls for arrival", async () => {
+    const h = harness();
+    await runRail(buildPlanSteps(planOf([swapLeg()]), h.deps));
+    // One balance read: the destination baseline. A same-chain swap has nothing to wait for.
+    expect(h.calls.filter((call) => call === "readBalance")).toHaveLength(1);
+  });
+
+  it("[R4] a journal callback that throws never fails a leg whose money already moved", async () => {
+    const h = harness({
+      balances: {
+        [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["3000000000"],
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
+      },
+    });
+    h.deps.onLegBroadcast = vi.fn(() => {
+      throw new Error("QuotaExceededError: localStorage is full");
+    });
+    const { outcomes } = await runRail(buildPlanSteps(bridgeOnly(), h.deps));
+    // Failing here would route the flow to an error whose retry re-broadcasts an in-flight bridge.
+    expect(outcomes.at(-1)).toMatchObject({ txHash: "0xhash1" });
   });
 });
 
@@ -621,7 +761,7 @@ describe("buildPlanSteps — [R7] run() never mutates the accumulating context",
     const h = harness({
       balances: {
         [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["1000000", "2951000000"],
-        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: ["0"],
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: BRIDGE_ARRIVES,
       },
     });
     // runRail deep-freezes the context before every run(), so any in-place write throws here.
