@@ -135,6 +135,50 @@ describe("uniswapFetch (POO-1027)", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  // [R3][R4] A non-idempotent call (POST /plan creates a plan) must NOT be replayed after a
+  // timeout: the request may have landed and only the response been lost, so a retry could create
+  // a duplicate plan. Exactly one attempt, and the timeout propagates.
+  it("does not retry a timeout when the call is not idempotent", async () => {
+    fetchMock.mockImplementation(async () => {
+      throw Object.assign(new Error("aborted"), { name: "AbortError" });
+    });
+    const { uniswapFetch, UniswapApiError } = await loadClient();
+
+    await expect(
+      uniswapFetch("plan", { method: "POST", body: { a: 1 }, schema, idempotent: false }),
+    ).rejects.toBeInstanceOf(UniswapApiError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // [R3] The asymmetry that makes the rule above safe rather than blunt: a 429 is the upstream
+  // REFUSING the request, so nothing was created and replaying it cannot duplicate anything. A
+  // non-idempotent call keeps that free recovery.
+  it("still retries a 429 when the call is not idempotent", async () => {
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse({ message: "slow down" }, 429))
+      .mockResolvedValueOnce(jsonResponse({ routing: "CLASSIC" }));
+    const { uniswapFetch } = await loadClient();
+
+    await expect(
+      uniswapFetch("plan", { method: "POST", body: { a: 1 }, schema, idempotent: false }),
+    ).resolves.toEqual({ routing: "CLASSIC" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  // [R3][R4] The default is unchanged: omitting the option keeps the timeout retry every existing
+  // caller relies on. Locks the opt-OUT shape, so the safety valve can never silently become opt-in.
+  it("retries a timeout by default when idempotent is not passed", async () => {
+    fetchMock
+      .mockRejectedValueOnce(Object.assign(new Error("aborted"), { name: "AbortError" }))
+      .mockResolvedValueOnce(jsonResponse({ routing: "CLASSIC" }));
+    const { uniswapFetch } = await loadClient();
+
+    await expect(uniswapFetch("plan", { method: "POST", body: { a: 1 }, schema })).resolves.toEqual(
+      { routing: "CLASSIC" },
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   // [R4] Every attempt carries an abort signal, or a stuck upstream would hang the render.
   it("passes an abort signal on every attempt", async () => {
     fetchMock.mockResolvedValue(jsonResponse({ routing: "CLASSIC" }));

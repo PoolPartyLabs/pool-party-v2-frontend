@@ -7,7 +7,9 @@
  * Typed fetch wrapper for the Uniswap Trading API. **Server-only**: used by Server Actions, never
  * imported by the browser. Deliberately mirrors `@/lib/api/client` (`apiFetch`) so this repo has one
  * resilience story for both upstreams: injected key, Zod-validated responses, a bounded retry on the
- * transient class only, and an `AbortController` budget across attempts.
+ * transient class only, and an `AbortController` budget across attempts. It diverges on ONE axis:
+ * `apiFetch` gates retries on `method === "GET"`, while here safety is per-endpoint rather than
+ * per-method, so callers that create server-side state opt out via `idempotent: false`.
  *
  * **The secret boundary is the point of this file** (ADR 0003). `UNISWAP_API_KEY` has no
  * `NEXT_PUBLIC_` prefix and is read only here. Because nothing is fetched from the browser, no CSP
@@ -92,6 +94,25 @@ export interface UniswapFetchOptions<T> {
   schema: ZodType<T>;
   /** Next.js cache options, e.g. `{ revalidate: 3600, tags: ["uniswap-tokens"] }`. */
   next?: { revalidate?: number; tags?: string[] };
+  /**
+   * Whether replaying this exact request is harmless. **Defaults to `true`**, and it governs one
+   * thing only: whether an AMBIGUOUS failure (our timeout, or a network error, where the request may
+   * or may not have reached the upstream) may be re-sent. See {@link uniswapFetch}.
+   *
+   * The default is `true` because almost the entire Trading API is pure computation or a read:
+   * `POST /quote`, `POST /swap`, `POST /check_approval`, `GET /swappable_tokens`, `GET /swaps`,
+   * `GET /plan/:id`. Note `POST /swap` is a POST but still safe: it BUILDS calldata for the caller
+   * to sign, it never broadcasts anything. `PATCH /plan/:id` is safe too, because re-submitting the
+   * same proof is a documented no-op. So the method is the wrong signal here; the endpoint is the
+   * signal, which is why this is an explicit per-call option rather than `method === "GET"` (the
+   * gate used by the mirrored `@/lib/api/client`, where method and effect DO line up).
+   *
+   * **Set this to `false` on any call that creates server-side state.** Today that is `POST /plan`,
+   * which creates a chained plan: if the request timed out, the plan may already exist upstream, and
+   * a replay would create a SECOND one. Duplicate plans are the double-execution class of bug this
+   * whole epic exists to prevent, so when in doubt about a new endpoint, pass `false`.
+   */
+  idempotent?: boolean;
 }
 
 /** Read the server-only key, failing with a typed configuration error rather than a mystery 401. */
@@ -141,11 +162,13 @@ async function readJson(response: Response): Promise<unknown> {
  * Call the Uniswap Trading API with server-side credentials.
  *
  * @param path Path without the base, e.g. `"quote"`, `"plan/abc-123"`.
+ * @param options.idempotent Pass `false` when the call creates server-side state (`POST /plan`), so
+ *   an ambiguous timeout is never replayed. See {@link UniswapFetchOptions.idempotent}.
  * @throws {UniswapApiError} On an HTTP or network failure, after exhausting transient retries.
  * @throws {UniswapParseError} When the response does not match `schema`.
  */
 export async function uniswapFetch<T>(path: string, options: UniswapFetchOptions<T>): Promise<T> {
-  const { method = "GET", body, query, schema, next } = options;
+  const { method = "GET", body, query, schema, next, idempotent = true } = options;
   const apiKey = readApiKey();
   const url = buildUrl(path, query);
   const startedAt = Date.now();
@@ -181,6 +204,21 @@ export async function uniswapFetch<T>(path: string, options: UniswapFetchOptions
           : `Uniswap request to "${path}" failed to reach the network.`,
       );
       clearTimeout(timeoutId);
+
+      // THE AMBIGUOUS CASE, and the only one a non-idempotent call must never replay. A timeout or
+      // a network error tells us nothing about whether the upstream processed the request: the
+      // request may have landed and the RESPONSE may be what got lost. For `POST /plan` that means
+      // a replay can create a second plan we do not know about. Since we cannot distinguish
+      // "never arrived" from "arrived and we lost the answer", the safe read is the pessimistic
+      // one, so we surface the timeout and let the caller decide (typically: reconcile, then act).
+      //
+      // Deliberately asymmetric with the HTTP-status retry below, which STAYS enabled for
+      // non-idempotent calls: a 429 or a 503 is the server telling us it refused the request, so
+      // nothing was created and a retry cannot duplicate anything. Do not "simplify" this into a
+      // single `if (!idempotent) canRetry = false` gate. That would trade away a free recovery
+      // from rate limiting to guard against a risk that provably does not exist on that path.
+      if (!idempotent) throw lastError;
+
       const delay = nextRetryDelayMs(attempt, null);
       if (
         attempt === MAX_RETRIES ||
@@ -199,7 +237,10 @@ export async function uniswapFetch<T>(path: string, options: UniswapFetchOptions
       const parsed = parseUniswapErrorBody(response.status, await readJson(response));
       lastError = new UniswapApiError(response.status, parsed.code, parsed.message);
 
-      // Only the transient class is worth another attempt.
+      // Only the transient class is worth another attempt. Intentionally NOT gated on `idempotent`:
+      // an HTTP status is proof the upstream answered and refused (429 throttled, 503 unavailable),
+      // so it created nothing and a retry cannot duplicate state. Contrast the status-0 branch
+      // above, where no answer arrived and the outcome is unknowable.
       if (!RETRYABLE_STATUS.has(response.status)) throw lastError;
 
       const delay = nextRetryDelayMs(
