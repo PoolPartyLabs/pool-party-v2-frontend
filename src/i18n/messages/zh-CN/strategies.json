@@ -442,6 +442,26 @@
         "buyCrypto": "购买加密货币"
       }
     },
+    "fundingSources": {
+      "title": "您想使用什么？",
+      "subtitle": "选择您持有的任意资产，我们来安排如何把它送到需要的地方。",
+      "listLabel": "您的资金",
+      "rowLabel": "{network} 上的 {symbol}，{amount}，价值 {usd}",
+      "selected": "已选择：{amount}",
+      "required": "所需：{amount}",
+      "remaining": "还差 {amount}",
+      "surplus": "比所需多 {amount}",
+      "exact": "刚好够用",
+      "empty": "这里暂时没有可以使用的资产。",
+      "cta": "继续",
+      "step": "第 {index} 步",
+      "unblock": "要使用这笔资金：",
+      "badge": {
+        "ok": "可用",
+        "topUp": "需要补充",
+        "blocked": "暂时无法使用"
+      }
+    },
     "gas": {
       "title": "网络费用不足",
       "subtitle": "您需要少量网络费用才能确认此交易。请在下方充值。",

@@ -442,6 +442,26 @@
         "buyCrypto": "Comprar cripto"
       }
     },
+    "fundingSources": {
+      "title": "O que você quer usar?",
+      "subtitle": "Escolha qualquer coisa que você tenha. A gente resolve como levar até o lugar certo.",
+      "listLabel": "Seus fundos",
+      "rowLabel": "{symbol} na {network}, {amount}, vale {usd}",
+      "selected": "Selecionado: {amount}",
+      "required": "Necessário: {amount}",
+      "remaining": "Faltam {amount}",
+      "surplus": "{amount} a mais do que o necessário",
+      "exact": "Coberto exatamente",
+      "empty": "Ainda não há nada aqui que a gente possa usar.",
+      "cta": "Continuar",
+      "step": "Passo {index}",
+      "unblock": "Para usar este dinheiro:",
+      "badge": {
+        "ok": "Pronto",
+        "topUp": "Precisa de uma recarga",
+        "blocked": "Ainda não dá para usar"
+      }
+    },
     "gas": {
       "title": "Gas insuficiente",
       "subtitle": "Você precisa de um pouco de gas de rede para confirmar esta transação. Adicione abaixo.",
