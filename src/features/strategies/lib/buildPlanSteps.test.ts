@@ -857,3 +857,124 @@ describe("buildPlanSteps — [R7] run() never mutates the accumulating context",
     expect(state.legAmountsIn["1"]).toBe("2950000000");
   });
 });
+
+// POO-1075 [R4] — a gas bridge carries native coin into a chain that cannot yet broadcast. The rail
+// must treat it exactly like any other bridge and hold the step open until the funds LAND, because
+// every later step depends on that chain being transactable. Nothing in the rail keys on the leg's
+// kind: settlement is decided by whether the leg crosses chains, which is the property that matters.
+describe("buildPlanSteps — POO-1075 a gas bridge settles before anything depends on it", () => {
+  const NATIVE_ARBITRUM = {
+    address: "0x0000000000000000000000000000000000000000",
+    symbol: "ETH",
+    decimals: 18,
+    chainId: ARBITRUM,
+  };
+
+  /** Native POL on Polygon into native ETH on Arbitrum. Both ends native: that is the whole point. */
+  const gasBridgeLeg = (overrides: Partial<ProvisioningLeg> = {}): ProvisioningLeg => ({
+    index: 0,
+    kind: "bridge-gas",
+    chainId: POLYGON,
+    tokenIn: NATIVE_POLYGON,
+    tokenOut: NATIVE_ARBITRUM,
+    amountIn: "300000000000000",
+    amountOutQuoted: "295000000000000",
+    minAmountOut: "295000000000000",
+    routing: "BRIDGE",
+    gasUsd: 0.01,
+    etaSeconds: 2,
+    requoteAtExecution: false,
+    ...overrides,
+  });
+
+  const nativeKey = (chainId: number) => `${chainId}:0x0000000000000000000000000000000000000000`;
+
+  /**
+   * The shared harness answers every pair with one USDC-scaled quote, which a native-scale leg reads
+   * as a catastrophic adverse move and the re-quote gate rightly rejects. These tests are about
+   * settlement ordering, not pricing, so the quote echoes whatever pair it was asked about.
+   */
+  const echoQuotes = (h: Harness) => {
+    h.deps.quoteSwap = vi.fn(
+      async (input: { tokenIn: string; tokenOut: string; amount: string }) => ({
+        ok: true as const,
+        quote: quoteResponse({
+          routing: "BRIDGE",
+          quote: {
+            input: { amount: input.amount, token: input.tokenIn },
+            output: { amount: input.amount, token: input.tokenOut },
+          },
+        }),
+      }),
+    ) as typeof h.deps.quoteSwap;
+  };
+
+  it("[R4] waits for the native coin to arrive, exactly as a funding bridge does", async () => {
+    const h = harness({
+      balances: {
+        [nativeKey(POLYGON)]: ["1000000000000000000"],
+        // Baseline, then nothing, then the arrival: the leg must not settle on the middle read.
+        [nativeKey(ARBITRUM)]: ["0", "0", "295000000000000"],
+      },
+    });
+    echoQuotes(h);
+
+    const { outcomes } = await runRail(buildPlanSteps(planOf([gasBridgeLeg()]), h.deps));
+
+    expect(outcomes.at(-1)).toMatchObject({ txHash: "0xhash1" });
+    // More than the single baseline read a same-chain leg makes: it genuinely polled the far side.
+    expect(h.calls.filter((call) => call === "readBalance").length).toBeGreaterThan(1);
+  });
+
+  // The rail re-sizes a leg from the previous one's realised output when the two actually connect.
+  // A gas bridge lands NATIVE on the TARGET chain while the funding leg spends a different token on
+  // a SOURCE chain, so they must not be linked: sizing the funding leg from the gas delta would
+  // spend the wrong amount entirely.
+  // §3.6 gives the arrival verdict ONE author, `reconcileFundingJournal`, which re-derives it from
+  // the chain. The rail writing `settled` for a cross-chain leg would be the "fakes success" failure
+  // by another name. The guard read `leg.kind !== "bridge"` while its own comment promised "whatever
+  // its kind says", so a gas bridge slipped through it.
+  it("[R4] never records the gas bridge settled: that verdict has one author", async () => {
+    const h = harness({
+      balances: {
+        [nativeKey(POLYGON)]: ["1000000000000000000"],
+        [nativeKey(ARBITRUM)]: ["0", "295000000000000"],
+      },
+    });
+    echoQuotes(h);
+    const recordSettled = vi.fn();
+    h.deps.journal = {
+      beginLeg: vi.fn(async () => {}),
+      recordBroadcast: vi.fn(),
+      recordSettled,
+      recordFailed: vi.fn(),
+    };
+
+    await runRail(buildPlanSteps(planOf([gasBridgeLeg()]), h.deps));
+
+    expect(recordSettled).not.toHaveBeenCalled();
+  });
+
+  it("[R4] is never mistaken for the funding leg's feeder", async () => {
+    const h = harness({
+      balances: {
+        [nativeKey(POLYGON)]: ["1000000000000000000"],
+        [nativeKey(ARBITRUM)]: ["0", "295000000000000"],
+        [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["3000000000"],
+        [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: bridgeArrives(),
+      },
+    });
+    echoQuotes(h);
+
+    const { ctx } = await runRail(
+      buildPlanSteps(
+        planOf([gasBridgeLeg(), bridgeLeg({ index: 1, requoteAtExecution: false })]),
+        h.deps,
+      ),
+    );
+
+    const state = ctx[PLAN_RAIL_STATE_KEY] as PlanRailState;
+    // The funding leg spent its own planned amount, NOT the gas bridge's 0.000295 ETH delta.
+    expect(state.legAmountsIn["1"]).toBe("3000000000");
+  });
+});

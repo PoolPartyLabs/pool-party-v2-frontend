@@ -162,7 +162,12 @@ async function verdictFor(
     if (receipt === "error") return "pending"; // A degraded read is not evidence of anything.
     if (receipt?.status === "reverted") return "reverted";
     if (receipt?.status === "success") {
-      return leg.kind === "bridge" ? await arrivalVerdict(leg, wallet, chain) : "settled";
+      // `destChainId` is written only for a leg whose funds land on ANOTHER chain, so it is the
+      // durable record of "this one has to be checked for arrival". Asking the kind instead let a
+      // `bridge-gas` leg be reconciled settled off the source receipt (POO-1075), which would let
+      // the flow resume and broadcast on a chain whose gas had not landed: the very dead end this
+      // rail removes, reintroduced on the recovery path.
+      return leg.destChainId !== undefined ? await arrivalVerdict(leg, wallet, chain) : "settled";
     }
     // No receipt. Under the ceiling that is normal; at it, the nonce is the only evidence left.
     if (!pastCeiling(leg, now)) return "pending";

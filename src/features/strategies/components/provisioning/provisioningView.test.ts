@@ -305,3 +305,40 @@ describe("buildPlanView — network names come from the chain config (POO-1041 [
     expect(bridgeRow?.networkName).toBeUndefined();
   });
 });
+
+// POO-1075 — the gas-bridge row's label is "Send fees to {network}". next-intl REJECTS a message
+// whose placeholder has no value, and `labelValues` omits `network` entirely when the row carries no
+// `networkName`, so a row that fails to set it does not render blank: it throws. The row was keyed
+// off `step.type === "bridge"`, which `bridge-gas` fails, so the feature's own step broke the card.
+describe("buildPlanView — a gas-bridge row (POO-1075)", () => {
+  const GAS_BRIDGE_STEP = {
+    type: "bridge-gas" as const,
+    key: "bridge-gas-0",
+    labelKey: "provisioning.steps.bridgeGas",
+    fromToken: "ETH",
+    toToken: "ETH",
+    fromChainId: 8453,
+    toChainId: 42161,
+    chainId: 8453,
+    amountUsd: 1.05,
+    amountToken: "0.0003",
+    method: "SEND_TX" as const,
+    etaSeconds: 2,
+  };
+
+  it("resolves the destination network its label interpolates", () => {
+    const plan = realProvisioningPlan({ steps: [GAS_BRIDGE_STEP, ...REAL_STEPS] });
+    const row = buildPlanView(plan).rows.find((candidate) => candidate.type === "bridge-gas");
+
+    // The DESTINATION, like any bridge row: `chainId` would name where it departs from.
+    expect(row?.networkName).toBe(chainDisplayName(42161));
+    expect(row?.networkName).toBe("Arbitrum");
+  });
+
+  it("carries the bridge ETA, since the user waits on it like any other bridge", () => {
+    const plan = realProvisioningPlan({ steps: [GAS_BRIDGE_STEP, ...REAL_STEPS] });
+    const row = buildPlanView(plan).rows.find((candidate) => candidate.type === "bridge-gas");
+
+    expect(row?.eta).toBeDefined();
+  });
+});

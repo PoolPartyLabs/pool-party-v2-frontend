@@ -55,10 +55,41 @@ import type { UniswapRouting, UniswapStepMethod } from "@/lib/uniswap/schemas";
 export const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 /** The kind of a provisioning step. The plan always ends with an `"op"` display anchor. */
-export type ProvisioningStepType = "buy-usdc" | "bridge" | "swap-gas" | "swap-token" | "op";
+export type ProvisioningStepType =
+  | "buy-usdc"
+  | "bridge"
+  | "bridge-gas"
+  | "swap-gas"
+  | "swap-token"
+  | "op";
 
-/** The route kinds the planner (POO-1034) can emit. The `op` anchor and `buy-usdc` are not legs. */
-export type ProvisioningLegKind = "swap-token" | "bridge" | "swap-gas";
+/**
+ * The route kinds the planner (POO-1034) can emit. The `op` anchor and `buy-usdc` are not legs.
+ *
+ * `"bridge-gas"` is a bridge like `"bridge"` is, but it carries the chain's NATIVE coin rather than
+ * the operation's asset, and it exists to make the target chain transactable at all (POO-1075). It
+ * is kept a distinct kind rather than folded into `"bridge"` because three things treat it
+ * differently: it never needs an ERC-20 approval, it is not funding and so must not count toward the
+ * requirement, and it carries an ordering constraint the funding legs do not ([R4]).
+ */
+export type ProvisioningLegKind = "swap-token" | "bridge" | "swap-gas" | "bridge-gas";
+
+/**
+ * Whether a leg kind crosses chains. BOTH bridge kinds do; neither swap kind ever does.
+ *
+ * It exists because `bridge-gas` was added by widening the union, and widening a union only makes
+ * the compiler speak up at sites typed as an exhaustive `Record` or `switch`. Six sites instead
+ * compared the runtime string (`leg.kind === "bridge"`), which `tsc` cannot see, and every one of
+ * them silently mishandled the new kind: the cost model charged it a fictional slippage line, the
+ * recovery reconciler marked it settled without checking it arrived, the plan card failed to render
+ * its row, and the rail wrote a settlement it had not verified.
+ *
+ * So: never compare a leg kind to `"bridge"` directly. Ask this, or ask the leg itself whether its
+ * `tokenOut.chainId` differs from its `chainId`, which is the same question about a concrete leg.
+ */
+export function isBridgeLegKind(kind: ProvisioningLegKind): boolean {
+  return kind === "bridge" || kind === "bridge-gas";
+}
 
 /** One end of a leg, identified precisely enough to quote, approve and broadcast against. */
 export interface ProvisioningLegToken {

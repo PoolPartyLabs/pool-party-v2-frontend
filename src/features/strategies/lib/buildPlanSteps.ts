@@ -625,7 +625,10 @@ async function runLegStep(
   // rail that wrote it too would be the "fakes success" failure by another name. Everything else is
   // done the moment its receipt is in, and this sits AFTER the wait so a cross-chain leg can never be
   // recorded settled on a source receipt whatever its `kind` says.
-  if (leg.kind !== "bridge") deps.journal?.recordSettled(leg.index);
+  // Chain-crossing, NOT kind: the sentence above promised "whatever its `kind` says" while the
+  // code asked the kind, so a `bridge-gas` leg was recorded settled on its source receipt alone
+  // (POO-1075). This is the same predicate the inline wait uses, which is the point.
+  if (leg.tokenOut.chainId === leg.chainId) deps.journal?.recordSettled(leg.index);
   return {
     [PLAN_RAIL_STATE_KEY]: {
       ...withBaseline,

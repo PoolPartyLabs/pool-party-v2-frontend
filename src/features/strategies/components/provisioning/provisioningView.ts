@@ -157,7 +157,9 @@ function approvalRow(
 
 /** One of the plan's own steps. */
 function stepRow(step: ProvisioningStep, index: number, options: PlanViewOptions): PlanRow {
-  const isBridge = step.type === "bridge";
+  // Both bridge kinds. `bridge-gas` labels read "Send fees to {network}", and next-intl THROWS on
+  // a placeholder with no value, so missing this made the feature's own row fail to render.
+  const isBridge = step.type === "bridge" || step.type === "bridge-gas";
   const leg = step.leg;
   // Amount display follows Figma: shown only when meaningful — hidden on a step whose USD value is 0
   // (the op anchor for collect / withdraw / close), and on a bridge row that no real quote priced.
