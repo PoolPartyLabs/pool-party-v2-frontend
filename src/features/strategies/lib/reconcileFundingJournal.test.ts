@@ -213,13 +213,36 @@ describe("[R3] §3.5 the decision table, row by row", () => {
     expect(result.action).toBe("ask");
   });
 
-  it("cannot resolve a planned leg that never recorded a nonce, so it asks", async () => {
+  // POO-1055 [R3]: this used to answer `unknown`, which asked the user about a route that never
+  // started. `createJournal` writes EVERY leg `planned` with no `nonceBefore` the moment the user
+  // approves the plan; the rail fills the baseline in `beginLeg`, and §3.4 puts that write strictly
+  // BEFORE the wallet is prompted. So a leg still carrying no baseline is a leg whose `beginLeg`
+  // never ran, which means the wallet was never prompted and nothing could have been broadcast for
+  // it. The first leg failing before its own `beginLeg` (a `/check_approval` error, say) is exactly
+  // that shape, and it is the common case, not an exotic one.
+  it("clears a planned leg that never recorded a nonce: beginLeg never ran, so nothing was sent", async () => {
     const journal = journalWith([{ status: "planned" }]);
     const chain = reader();
 
     const result = await reconcileJournal(journal, chain);
 
+    expect(result.legs[0]?.verdict).toBe("absent");
+    expect(result.action).toBe("rederive");
+    // Nothing to compare a nonce against, so there is nothing worth reading either.
+    expect(chain.calls).toEqual([]);
+  });
+
+  // The distinction is narrow on purpose: a leg that reached `broadcast` WAS prompted, so a missing
+  // baseline there is a genuine unknown and must still fail toward asking.
+  it("keeps a broadcast leg with no nonce baseline ambiguous at the ceiling", async () => {
+    const journal = journalWith([{ status: "broadcast", txHash: SWAP_HASH, broadcastAt: T0 }]);
+    const chain = reader({ receipts: { [SWAP_HASH]: null } });
+
+    vi.setSystemTime(T0 + JOURNAL_POLL_CEILING_MS);
+    const result = await reconcileJournal(journal, chain);
+
     expect(result.legs[0]?.verdict).toBe("unknown");
+    expect(result.action).toBe("ask");
   });
 
   it("ranks ask over wait over rederive when legs disagree", async () => {
