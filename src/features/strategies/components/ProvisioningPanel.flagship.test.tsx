@@ -212,6 +212,14 @@ describe("[R8] a materially worse re-quote is put to the user", () => {
     expect(screen.getByRole("alertdialog")).toHaveTextContent("10.30%");
   });
 
+  it("takes focus when it appears, so it is announced rather than silently waiting", async () => {
+    await reachRequotePrompt();
+
+    // Nothing the user did put this on screen, so nothing would move focus to it either. Focus lands
+    // on the dialog itself, not on its accept button, so the label and body are read out first.
+    await waitFor(() => expect(screen.getByRole("alertdialog")).toHaveFocus());
+  });
+
   it("accepting lets the leg continue", async () => {
     const decision = await reachRequotePrompt();
 

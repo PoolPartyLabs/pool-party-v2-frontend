@@ -203,6 +203,7 @@ export function ProvisioningPanel({
     change: RequoteChange;
     decide: (approved: boolean) => void;
   } | null>(null);
+  const requoteRef = useRef<HTMLDivElement>(null);
 
   // [R10] The real rail, bound to the connected wallet. Bound HERE rather than in the gate hook: this
   // panel is the only thing that signs, and it mounts only when provisioning actually runs, so an op
@@ -382,6 +383,15 @@ export function ProvisioningPanel({
   // POO-461 R3: kind-aware error body (generic copy when the failure didn't classify).
   const errorBody = useTxErrorBody(txError);
 
+  // POO-1043 [R8] The prompt interrupts a running route: nothing the user did put it on screen, so
+  // nothing moves focus to it either, and a decision nobody is told about is not a decision. Focus
+  // goes to the dialog itself rather than to its accept button, so the label and the body are
+  // announced BEFORE either answer is reachable. Same shape as the consent banner
+  // (`ConsentBanner.tsx`), which is this codebase's one other interrupting dialog.
+  useEffect(() => {
+    if (requote) requoteRef.current?.focus();
+  }, [requote]);
+
   // Report the in-flight lock to the host (no dismissal while provisioning runs). POO-1037 [R5]: a
   // bridge leg keeps the flow in `pending` for the WHOLE settlement wait, so the lock holds for it
   // with no extra state; the ceiling moves to `settling`, which releases it precisely because the
@@ -486,10 +496,12 @@ export function ProvisioningPanel({
             answers are safe, and the leg is held until one of them arrives. */}
         {requote ? (
           <div
+            ref={requoteRef}
             role="alertdialog"
             aria-labelledby="provisioning-requote-title"
             aria-describedby="provisioning-requote-body"
-            className="flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3"
+            tabIndex={-1}
+            className="flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 focus-visible:outline-none"
           >
             <p id="provisioning-requote-title" className="font-semibold text-sm text-warning">
               {t("provisioning.requote.title")}
