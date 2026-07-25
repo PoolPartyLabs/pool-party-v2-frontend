@@ -48,7 +48,7 @@ import "server-only";
 
 import { fetchWalletHoldings } from "@/lib/balances/fetchWalletHoldings";
 import type { FundingSource } from "@/lib/balances/fundingInventory";
-import { getFundingInventory } from "@/lib/balances/fundingInventory";
+import { getFundingInventory, toBaseUnits } from "@/lib/balances/fundingInventory";
 import type { TokenBalance } from "@/lib/balances/types";
 import { getUsdcAddress } from "@/lib/chains/config";
 // PP-INTEGRATION-POINT: per-chain gas pricing ← Uniswap `POST /quote`, through the server-action
@@ -93,6 +93,22 @@ export interface ProvisioningGateContext {
    * can transact here" and a gate that fires on a funded wallet.
    */
   balancesByChain: Record<number, ChainBalancesUsd>;
+  /**
+   * Every NATIVE holding, straight from the raw balances and NOT dust-filtered (POO-1076).
+   *
+   * The same reasoning {@link balancesByChain} already states, applied one step further. The
+   * inventory drops sub-$1 rows because dust cannot be usefully SPENT, but a gas bridge is not a
+   * spend: at ~$1,900/ETH its 0.0003 ETH floor is about $0.56, so a holding that can genuinely
+   * donate gas sits below a threshold that was never about donating. Sourcing donors from the
+   * filtered list made a funded wallet read as having nothing to send.
+   *
+   * Routability is deliberately not consulted: the gas leg is quoted directly, native to native, so
+   * a `/swappable_tokens` round trip per chain would buy nothing.
+   *
+   * Optional so a fixture need not restate it; absent degrades to the filtered list, which is the
+   * behaviour before this field existed. The real builder always populates it.
+   */
+  nativeHoldings?: FundingSource[];
   /**
    * What the operation's own transaction needs on {@link targetChainId}, in USD, from a live quote
    * plus the classifier's headroom ([R4]).
@@ -221,6 +237,27 @@ export async function buildProvisioningGateContext(
     })),
   );
 
+  // Unfiltered, so a native balance under the picker's dust threshold can still donate gas.
+  const nativeHoldings: FundingSource[] = holdings.flatMap((holding) => {
+    if (!holding.isNative || !holding.address) return [];
+    const amount = toBaseUnits(holding);
+    if (amount === null) return [];
+    return [
+      {
+        address: holding.address,
+        chainId: holding.chainId,
+        symbol: holding.symbol,
+        decimals: holding.decimals,
+        amount,
+        usd: holding.usd,
+        // Never used for gas donation, and an empty list must not read as "reaches everywhere".
+        reachableChainIds: [],
+        isNative: true,
+        logoUrl: holding.logoUrl,
+      },
+    ];
+  });
+
   const gasByChain: Record<number, GasFeasibility> = {};
   for (const verdict of classifyGasFeasibility(candidates)) {
     gasByChain[verdict.chainId] = verdict;
@@ -229,6 +266,7 @@ export async function buildProvisioningGateContext(
   return {
     targetChainId,
     sources,
+    nativeHoldings,
     gasByChain,
     balancesByChain: balances,
     // [R4] What the operation's chain must hold for the operation to run: quoted, plus headroom,

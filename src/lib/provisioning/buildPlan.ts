@@ -402,6 +402,19 @@ async function sizeBridgeInput(args: {
 const MIN_GAS_BRIDGE_WEI = BigInt("300000000000000");
 
 /**
+ * What {@link planGasBridge} concluded: a priced leg, or the reason there is none.
+ *
+ * The reason is carried rather than discarded because the five ways this refuses are not
+ * interchangeable to the user. "No network holds spare ETH" means go get some; "Base holds ETH but
+ * less than the bridge will carry" means the money is already there and nearly enough. Collapsing
+ * both into "buy a little crypto, or move some over" sent a user to do the wrong thing, and left us
+ * with nothing to debug from when it happened.
+ */
+type GasBridgeOutcome =
+  | { priced: PricedLeg; refusal?: undefined }
+  | { priced?: undefined; refusal: string };
+
+/**
  * Carry native coin INTO the operation's chain when that chain cannot pay for its own transaction
  * ([R1], POO-1075).
  *
@@ -428,8 +441,13 @@ async function planGasBridge(args: {
   gasByChain: Readonly<Record<number, GasFeasibility>>;
   sources: readonly FundingSource[];
   slippagePct: number;
-}): Promise<PricedLeg | null> {
+}): Promise<GasBridgeOutcome> {
   const target = nativeToken(args.targetChainId);
+  // Why each donor was passed over, in order. A single catch-all message for five different
+  // situations ("no chain holds spare ETH" vs "Base has ETH but under the bridge minimum") sends the
+  // user off to do the wrong thing, and gave us nothing to debug from when this went wrong in the
+  // wild. Collected here, surfaced on the failure, never thrown away.
+  const notes: string[] = [];
 
   // `classifyGasFeasibility` already decided which chains hold native to spare, and deliberately
   // excludes a chain that is only just OK ([R2]: a donor must not strand itself). The only condition
@@ -444,6 +462,20 @@ async function planGasBridge(args: {
     )
     .sort((a, b) => b.surplusUsd - a.surplusUsd || a.chainId - b.chainId);
 
+  if (donors.length === 0) {
+    const sameAsset = Object.values(args.gasByChain).filter(
+      (gas) =>
+        gas.chainId !== args.targetChainId && nativeToken(gas.chainId).symbol === target.symbol,
+    );
+    notes.push(
+      sameAsset.length === 0
+        ? `no other network uses ${target.symbol}, and a different native asset is not routable`
+        : `no ${target.symbol} network has gas to spare (${sameAsset
+            .map((g) => `chain ${g.chainId}: ${g.verdict}, spare $${g.surplusUsd.toFixed(4)}`)
+            .join("; ")})`,
+    );
+  }
+
   for (const donor of donors) {
     // The inventory is the authority on what is actually spendable. A donor whose native holding is
     // not in it cannot be drawn on, whatever the classifier thinks it is worth.
@@ -451,11 +483,22 @@ async function planGasBridge(args: {
       (source) =>
         source.chainId === donor.chainId && sameAddress(source.address, NATIVE_TOKEN_ADDRESS),
     );
-    if (!held) continue;
+    if (!held) {
+      // The likeliest cause is the funding inventory's sub-$1 dust filter, which exists for the
+      // PICKER and has no business gating gas: at $1,900/ETH the bridge floor is about $0.56, so a
+      // holding that can donate is hidden below a threshold that was never about donating.
+      notes.push(
+        `chain ${donor.chainId} has $${donor.surplusUsd.toFixed(4)} spare by the classifier, but no native holding reached the planner (dust filter?)`,
+      );
+      continue;
+    }
 
     const balance = toBigInt(held.amount);
     const balanceMicros = BigInt(Math.round(Math.max(0, held.usd) * 1e6));
-    if (balance <= BigInt(0) || balanceMicros <= BigInt(0)) continue;
+    if (balance <= BigInt(0) || balanceMicros <= BigInt(0)) {
+      notes.push(`chain ${donor.chainId} native holding is unpriced or empty`);
+      continue;
+    }
 
     // USD to base units off the REAL holding, never a constant ([R4] of POO-1032 applies here too):
     // the ratio comes from a balance the inventory priced, so no second price source can disagree
@@ -468,7 +511,12 @@ async function planGasBridge(args: {
     const spendable = toBaseUnits(donor.surplusUsd);
     const wanted = toBaseUnits(args.targetGas.requiredGasUsd);
     const required = wanted < MIN_GAS_BRIDGE_WEI ? MIN_GAS_BRIDGE_WEI : wanted;
-    if (required > spendable) continue;
+    if (required > spendable) {
+      notes.push(
+        `chain ${donor.chainId} can spare ${spendable} wei but the bridge needs ${required} (floor ${MIN_GAS_BRIDGE_WEI})`,
+      );
+      continue;
+    }
 
     const priced = await sizeBridgeInput({
       index: 0,
@@ -479,17 +527,25 @@ async function planGasBridge(args: {
       slippagePct: args.slippagePct,
     });
     // A 404 is this pair declining the amount, not an outage: try the next donor.
-    if (!priced) continue;
+    if (!priced) {
+      notes.push(`chain ${donor.chainId} to ${args.targetChainId}: no quote for ${required} wei`);
+      continue;
+    }
 
     // Sizing grosses the INPUT up past `required` to cover the bridge fee, so the surplus test has
     // to be re-run against what actually leaves the donor. Checking only the output would let a leg
     // through that strands the very chain it was drawn from.
-    if (toBigInt(priced.leg.amountIn) > spendable) continue;
+    if (toBigInt(priced.leg.amountIn) > spendable) {
+      notes.push(
+        `chain ${donor.chainId} needs ${priced.leg.amountIn} wei in once fees are covered, over its ${spendable} spare`,
+      );
+      continue;
+    }
 
-    return priced;
+    return { priced };
   }
 
-  return null;
+  return { refusal: notes.join(" | ") || "no donor chain was considered" };
 }
 
 /**
@@ -741,7 +797,7 @@ export async function buildPlan(
   const targetGas = request.gasByChain[request.targetChainId];
   let gasBridge: PricedLeg | null = null;
   if (targetGas?.verdict === "BLOCKED") {
-    gasBridge = await planGasBridge({
+    const outcome = await planGasBridge({
       targetChainId: request.targetChainId,
       targetGas,
       gasByChain: request.gasByChain,
@@ -749,13 +805,17 @@ export async function buildPlan(
       sources: request.inventory ?? request.sources,
       slippagePct,
     });
-    if (!gasBridge) {
+    if (!outcome.priced) {
       return {
         ok: false,
         code: "PROVISIONING_GAS_BLOCKED",
-        message: `Chain ${request.targetChainId} holds no native coin to pay for the operation's own transaction, and no other network holds spare ${nativeToken(request.targetChainId).symbol} to send over.`,
+        // The reason rides on the message so a failure in the wild is diagnosable from the response
+        // alone, without a repro. The UI still shows its own copy; this is for the log and the bug
+        // report, which is exactly what was missing when this first went wrong.
+        message: `Chain ${request.targetChainId} holds no native coin to pay for the operation's own transaction, and no other network could send ${nativeToken(request.targetChainId).symbol} over. ${outcome.refusal}`,
       };
     }
+    gasBridge = outcome.priced;
   }
 
   const required = toBigInt(request.requiredAmount);

@@ -190,7 +190,10 @@ export async function computePlanAction(
       // and ETH on Base, funding an Arbitrum strategy from the USDC, still has ETH to send over for
       // Arbitrum's gas, and should not have to select it to make that happen (POO-1075 [R1]). Same
       // inventory the gas TOP-UP classifier already draws from.
-      inventory: context.sources,
+      // Both lists: the routable inventory, plus every native holding unfiltered. The gas donor
+      // must not be gated by the picker's sub-$1 dust rule, which is about what can be SPENT
+      // (POO-1076). Dedup is not needed, the donor lookup takes the first match.
+      inventory: [...(context.nativeHoldings ?? []), ...context.sources],
       gasByChain: context.gasByChain,
       ...(input.slippagePct === undefined ? {} : { slippagePct: input.slippagePct }),
     });
