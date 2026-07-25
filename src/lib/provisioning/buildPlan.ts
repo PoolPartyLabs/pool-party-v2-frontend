@@ -363,9 +363,15 @@ async function planSource(args: {
   const needsBridge = !sameChain;
 
   // --- backward pass: what has to go IN so that `remaining` comes out on the target chain --------
+  //
+  // Each backward quote is KEPT, not just measured. When the source covers the whole requirement the
+  // forward pass asks the identical question (same pair, same amount, same EXACT_OUTPUT), and the
+  // upstream `/quote` is rate-limited on a shared API key: re-asking would double the calls on the
+  // primary happy path for an answer we are already holding.
   let bridgeIn: bigint | null = null;
+  let backwardBridge: PricedLeg | null = null;
   if (needsBridge) {
-    const priced = await priceLeg({
+    backwardBridge = await priceLeg({
       index: 0,
       kind: "bridge",
       tokenIn: bridgeAsset,
@@ -375,16 +381,17 @@ async function planSource(args: {
       slippagePct,
       requoteAtExecution: false,
     });
-    if (!priced) return null;
-    bridgeIn = toBigInt(priced.leg.amountIn);
+    if (!backwardBridge) return null;
+    bridgeIn = toBigInt(backwardBridge.leg.amountIn);
   }
 
   /** How much of the bridge asset the route must produce on the source chain. */
   const swapTarget = needsBridge ? (bridgeIn ?? remaining) : remaining;
 
   let exactInputAmount: bigint | null = null;
+  let backwardSwap: PricedLeg | null = null;
   if (needsSwap) {
-    const priced = await priceLeg({
+    backwardSwap = await priceLeg({
       index: 0,
       kind: "swap-token",
       tokenIn: from,
@@ -394,9 +401,9 @@ async function planSource(args: {
       slippagePct,
       requoteAtExecution: false,
     });
-    if (!priced) return null;
+    if (!backwardSwap) return null;
     // The source cannot buy the whole requirement, so drain it forwards instead.
-    if (toBigInt(priced.leg.amountIn) > usableBalance) exactInputAmount = usableBalance;
+    if (toBigInt(backwardSwap.leg.amountIn) > usableBalance) exactInputAmount = usableBalance;
   } else if (swapTarget > usableBalance) {
     exactInputAmount = usableBalance;
   }
@@ -411,19 +418,23 @@ async function planSource(args: {
   const exactOutput = exactInputAmount === null;
 
   if (needsSwap) {
-    const priced = await priceLeg({
-      index,
-      kind: "swap-token",
-      tokenIn: from,
-      tokenOut: bridgeAsset,
-      amount: exactOutput ? swapTarget.toString() : carried.toString(),
-      type: exactOutput ? "EXACT_OUTPUT" : "EXACT_INPUT",
-      slippagePct,
-      // The first leg of a route spends a balance that already exists, so it is exact.
-      requoteAtExecution: false,
-    });
+    // Fully covered, the question is unchanged from the backward pass, so its answer stands. Only a
+    // drained source changes it (EXACT_INPUT over the whole holding), and that one has to be asked.
+    const priced = exactOutput
+      ? backwardSwap
+      : await priceLeg({
+          index,
+          kind: "swap-token",
+          tokenIn: from,
+          tokenOut: bridgeAsset,
+          amount: carried.toString(),
+          type: "EXACT_INPUT",
+          slippagePct,
+          // The first leg of a route spends a balance that already exists, so it is exact.
+          requoteAtExecution: false,
+        });
     if (!priced) return null;
-    legs.push(priced.leg);
+    legs.push({ ...priced.leg, index });
     if (priced.deadlineMs !== undefined) deadlines.push(priced.deadlineMs);
     index += 1;
     carried = toBigInt(priced.leg.amountOutQuoted);
@@ -432,20 +443,22 @@ async function planSource(args: {
   if (needsBridge) {
     // Once a swap feeds it, the bridge is sized from that swap's realized OUTPUT, which makes it an
     // EXACT_INPUT question and an estimate ([R8]). Unfed and fully covered, it keeps the backward
-    // question and is quoted for the amount that has to LAND, not for the amount that goes in.
+    // question, which the backward pass already answered for exactly this amount.
     const fedByLeg = needsSwap || !exactOutput;
-    const priced = await priceLeg({
-      index,
-      kind: "bridge",
-      tokenIn: bridgeAsset,
-      tokenOut: targetUsdc,
-      amount: fedByLeg ? carried.toString() : remaining.toString(),
-      type: fedByLeg ? "EXACT_INPUT" : "EXACT_OUTPUT",
-      slippagePct,
-      requoteAtExecution: needsSwap,
-    });
+    const priced = fedByLeg
+      ? await priceLeg({
+          index,
+          kind: "bridge",
+          tokenIn: bridgeAsset,
+          tokenOut: targetUsdc,
+          amount: carried.toString(),
+          type: "EXACT_INPUT",
+          slippagePct,
+          requoteAtExecution: needsSwap,
+        })
+      : backwardBridge;
     if (!priced) return null;
-    legs.push(priced.leg);
+    legs.push({ ...priced.leg, index });
     if (priced.deadlineMs !== undefined) deadlines.push(priced.deadlineMs);
     carried = toBigInt(priced.leg.amountOutQuoted);
   }
@@ -504,6 +517,9 @@ export async function buildPlan(
   const commit = (chainId: number, address: string, amount: bigint) => {
     committed.set(commitKey(chainId, address), committedOf(chainId, address) + amount);
   };
+  const setCommitted = (chainId: number, address: string, amount: bigint) => {
+    committed.set(commitKey(chainId, address), amount);
+  };
 
   /**
    * [R3] The gas swap for a TOP_UP chain, emitted BEFORE the first leg that spends from that chain.
@@ -536,6 +552,20 @@ export async function buildPlan(
     });
     if (!priced) return false;
 
+    // The gas slice comes off a real holding the classifier already read, so the step's USD is
+    // derived the same way every other leg's is. Without it a non-USDC top-up renders as $0.00 and
+    // its slippage silently drops out of `bufferUsd`.
+    legSources.set(legs.length, {
+      address: token.address,
+      chainId: verdict.chainId,
+      symbol: token.symbol,
+      decimals: token.decimals,
+      amount: token.balanceRaw,
+      usd: token.balanceUsd,
+      reachableChainIds: [verdict.chainId],
+      isNative: sameAddress(token.address, NATIVE_TOKEN_ADDRESS),
+      logoUrl: "",
+    });
     legs.push(priced.leg);
     if (priced.deadlineMs !== undefined) deadlines.push(priced.deadlineMs);
     commit(verdict.chainId, token.address, toBigInt(verdict.topUp.amountRaw));
@@ -554,14 +584,44 @@ export async function buildPlan(
     // rather than fine. Neither is quoted: asking costs an upstream call for a route we will not use.
     if (!verdict || verdict.verdict === "BLOCKED") continue;
 
+    // Everything `ensureGas` can mutate, snapshotted: the gas leg is speculative until the source it
+    // was added for proves routable, and rolling back only the leg leaves the plan quoting a top-up
+    // for a chain it never touches.
     const before = legs.length;
-    if (!(await ensureGas(verdict))) {
+    const deadlinesBefore = deadlines.length;
+    const topUpUsdBefore = topUpUsd;
+    const gasToken = verdict.topUp?.token;
+    const gasCommittedBefore = gasToken
+      ? committedOf(verdict.chainId, gasToken.address)
+      : BigInt(0);
+
+    /**
+     * Undo this iteration's gas leg, whole. `legs.length > before` is what makes it "this
+     * iteration's": a chain an earlier source already topped up returned early from `ensureGas`, and
+     * its leg is not ours to undo.
+     */
+    const rollbackGas = () => {
+      if (legs.length <= before) return;
       legs.length = before;
+      legSources.delete(before);
+      deadlines.length = deadlinesBefore;
+      topUpUsd = topUpUsdBefore;
+      // Restored, not deleted: an earlier source may have committed against the same holding.
+      if (gasToken) setCommitted(verdict.chainId, gasToken.address, gasCommittedBefore);
+      toppedUpChains.delete(verdict.chainId);
+    };
+
+    if (!(await ensureGas(verdict))) {
+      rollbackGas();
       continue;
     }
 
     const usableBalance = toBigInt(source.amount) - committedOf(source.chainId, source.address);
-    if (usableBalance <= BigInt(0)) continue;
+    // Nothing left to spend: the source funds nothing, so its gas leg has nothing to pay for.
+    if (usableBalance <= BigInt(0)) {
+      rollbackGas();
+      continue;
+    }
 
     const route = await planSource({
       source,
@@ -572,13 +632,10 @@ export async function buildPlan(
       slippagePct,
       nextIndex: legs.length,
     });
-    // The source is unusable (not routable, or nothing left to spend). Roll back the gas leg we
-    // speculatively added for it, so the plan never carries a top-up for a chain it never touches.
+    // The source is not routable. Roll back the gas leg we speculatively added for it, so the plan
+    // never carries a top-up for a chain it never touches.
     if (!route) {
-      if (legs.length > before) {
-        legs.length = before;
-        toppedUpChains.delete(source.chainId);
-      }
+      rollbackGas();
       continue;
     }
 

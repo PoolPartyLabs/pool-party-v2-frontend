@@ -515,6 +515,30 @@ describe("buildPlan: the flagship decomposition", () => {
     // Leg 1's quoted output is exactly what leg 2 is sized from, and it is an estimate.
     expect(legs[1]?.amountIn).toBe(legs[0]?.amountOutQuoted);
   });
+
+  // The backward and the forward pass ask the SAME question whenever the source covers the whole
+  // requirement, and `/quote` is rate-limited on one shared API key. Asking it twice is a wasted
+  // call on the primary happy path, not a second opinion.
+  it("never asks the same quote question twice on the fully-covered path", async () => {
+    await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [WETH_ON_POLYGON],
+        gasByChain: { [POLYGON]: verdict(POLYGON), [ARBITRUM]: verdict(ARBITRUM) },
+      },
+      { nowIso: NOW },
+    );
+
+    const asked = quoteCalls().map(
+      (call) =>
+        `${call.type}:${call.tokenIn}@${call.tokenInChainId}>${call.tokenOut}@${call.tokenOutChainId}:${call.amount}`,
+    );
+    expect(new Set(asked).size).toBe(asked.length);
+    // Backward bridge (sizes the swap), the swap itself, then the bridge from the swap's output.
+    expect(asked).toHaveLength(3);
+  });
 });
 
 describe("buildPlan: gas feasibility", () => {
@@ -572,6 +596,32 @@ describe("buildPlan: gas feasibility", () => {
     expect(result.plan.gas?.amountUsd).toBe(10);
   });
 
+  // The gas step's own USD comes off the holding the slice was taken from, exactly as every other
+  // leg's does. Left unpriced, a non-USDC top-up renders $0.00 beside a real token amount and its
+  // slippage silently drops out of `bufferUsd`.
+  it("prices the gas step's USD off the holding the slice came from", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [WETH_ON_POLYGON],
+        gasByChain: {
+          [POLYGON]: verdict(POLYGON, { verdict: "TOP_UP", shortfallUsd: 10, topUp: topUp() }),
+          [ARBITRUM]: verdict(ARBITRUM),
+        },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const [gasStep] = result.plan.steps;
+    expect(gasStep?.type).toBe("swap-gas");
+    // 0.004 WETH taken off a 1 WETH / $2,500 holding.
+    expect(gasStep?.amountUsd).toBe(10);
+  });
+
   // @rule R3 — a BLOCKED chain cannot originate ANY transaction, so it is not a funding source and
   // must not even be quoted. Planning from it produces a route that dies on its first broadcast.
   it("never plans from, or quotes, a BLOCKED chain", async () => {
@@ -616,6 +666,113 @@ describe("buildPlan: gas feasibility", () => {
     );
 
     expect(result.ok && stepTypes(result.plan.steps)).toEqual(["bridge", "op"]);
+  });
+});
+
+describe("buildPlan: gas rollback for an unusable source", () => {
+  /** A Polygon holding whose GAS route quotes but whose funding route is not offered (404). */
+  const XYZ_POLYGON = "0x2222222222222222222222222222222222222222";
+  const XYZ_ON_POLYGON = source({
+    address: XYZ_POLYGON,
+    chainId: POLYGON,
+    symbol: "XYZ",
+    decimals: 18,
+    amount: ONE_ETH.toString(),
+    usd: 900,
+  });
+
+  beforeEach(() => {
+    // Polygon: the gas swap is routable…
+    route(XYZ_POLYGON, POLYGON, NATIVE_TOKEN_ADDRESS, POLYGON, {
+      routing: "CLASSIC",
+      ...PARITY,
+      gasFeeUSD: "0.03",
+      permitDeadline: Math.floor(Date.parse(NOW) / 1000) + 8,
+    });
+    // …and the bridge out of Polygon is too, but XYZ → USDC on Polygon is NOT, so the funding route
+    // dies in decomposition after the gas leg was already priced and pushed.
+    route(USDC_POLYGON, POLYGON, USDC_ARBITRUM, ARBITRUM, {
+      routing: "BRIDGE",
+      ...BRIDGE_RATE,
+      gasFeeUSD: "0.02",
+    });
+    route(WETH_ARBITRUM, ARBITRUM, NATIVE_TOKEN_ADDRESS, ARBITRUM, {
+      routing: "CLASSIC",
+      ...PARITY,
+      gasFeeUSD: "0.02",
+    });
+    route(WETH_ARBITRUM, ARBITRUM, USDC_ARBITRUM, ARBITRUM, {
+      routing: "CLASSIC",
+      ...ETH_TO_USDC,
+      gasFeeUSD: "0.02",
+    });
+  });
+
+  const arbitrumTopUp = topUp({
+    token: {
+      symbol: "WETH",
+      address: WETH_ARBITRUM,
+      decimals: 18,
+      balanceRaw: ONE_ETH.toString(),
+      balanceUsd: 2_500,
+    },
+    // 0.002 WETH ≈ $5 at the table's $2,500 rate.
+    amountRaw: "2000000000000000",
+    amountUsd: 5,
+    buyNativeUsd: 4,
+  });
+
+  const polygonTopUp = topUp({
+    token: {
+      symbol: "XYZ",
+      address: XYZ_POLYGON,
+      decimals: 18,
+      balanceRaw: ONE_ETH.toString(),
+      balanceUsd: 900,
+    },
+    amountRaw: "4000000000000000",
+    amountUsd: 3.6,
+    buyNativeUsd: 10,
+  });
+
+  // @rule R3 — a gas leg is speculative until the source it was priced for proves routable. Rolling
+  // back only the leg leaves its money and its permit behind: the buy-gas figure the user is shown
+  // would include a top-up for a chain the plan never touches, and the plan's TTL would be governed
+  // by a permit nobody signs.
+  it("rolls back the whole gas leg when the source's funding route is unusable", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [XYZ_ON_POLYGON, WETH_ON_ARBITRUM],
+        gasByChain: {
+          [POLYGON]: verdict(POLYGON, {
+            verdict: "TOP_UP",
+            shortfallUsd: 10,
+            topUp: polygonTopUp,
+          }),
+          [ARBITRUM]: verdict(ARBITRUM, {
+            verdict: "TOP_UP",
+            shortfallUsd: 4,
+            topUp: arbitrumTopUp,
+          }),
+        },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // Polygon contributes nothing, so only Arbitrum's gas leg survives.
+    expect(stepTypes(result.plan.steps)).toEqual(["swap-gas", "swap-token", "op"]);
+    expect(legsOf(result.plan).every((leg) => leg.chainId === ARBITRUM)).toBe(true);
+    // The buy-gas preset is Arbitrum's alone; the dropped Polygon top-up must not inflate it.
+    expect(result.plan.gas?.amountUsd).toBe(4);
+    // …nor may its permit deadline keep tightening a window it no longer belongs to.
+    expect(result.plan.quote.ttlMs).toBe(UNISWAP_QUOTE_TTL_MS);
+    // 0.002 WETH off a 1 WETH / $2,500 holding.
+    expect(result.plan.steps[0]?.amountUsd).toBe(5);
   });
 });
 
