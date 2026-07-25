@@ -16,6 +16,7 @@
  *   [R4] each operation's op-anchor label and cancel destination are unchanged
  *   [R5] the dismissal lock holds while the funding route executes
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_BUILT_TX_AGE_MS } from "@/features/strategies/hooks/useWalletSignFlow";
 import { managerPosition } from "@/mocks/data/manager";
@@ -49,8 +50,20 @@ vi.mock("@/lib/services", () => ({
   accountService: { getWalletKind: vi.fn(async () => "embedded") },
 }));
 
+// `Link` is part of this stub, not only `useRouter`: the plan phase mounts ProvisioningCostBreakdown
+// (POO-1043 [R9]), whose buy-crypto peer option is a locale-aware Link, and a stub missing an export
+// the tree renders throws at that node rather than falling back to the real module.
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 const removeTarget: RemoveLiquidityTarget = {
