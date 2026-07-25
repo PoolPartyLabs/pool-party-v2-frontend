@@ -25,6 +25,7 @@
  * `Date.now` is frozen so [R2] can move it. The freshness window is real wall-clock in
  * `useWalletSignFlow`, and a test that actually waited four minutes would not be a test.
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Position, Strategy } from "@/lib/schemas";
 import {
@@ -72,8 +73,21 @@ vi.mock("@/lib/strategies/revalidateStrategies", () => ({
 vi.mock("@/lib/portfolio/revalidatePositions", () => ({
   revalidatePositionsAction: vi.fn(async () => {}),
 }));
+// POO-1055: `Link` was missing here and the whole suite was red on main. The plan phase renders
+// `ProvisioningCostBreakdown`, whose "Buy crypto instead" peer option is a locale-aware Link, and a
+// factory mock replaces the module wholesale, so an absent export is a hard error rather than a
+// fallback. Stubbed to a plain anchor, which is the repository's standing convention for it.
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 const strategy: Strategy = {
