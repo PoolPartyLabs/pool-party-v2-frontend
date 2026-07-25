@@ -16,7 +16,7 @@ copy inherits the constraints rather than the sentences.
 
 ## 1. The scope
 
-96 keys, in two namespaces:
+98 keys, in two namespaces:
 
 | Block | Surface |
 |---|---|
