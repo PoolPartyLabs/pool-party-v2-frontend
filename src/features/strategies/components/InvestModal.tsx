@@ -1,11 +1,15 @@
 /**
  * @id PP-STR-MOD-001
  * @name InvestModal (amount → building → review → sign)
- * @implements-rules-version v10 (POO-801 rules v1) · v1 (POO-819: top-level lockupDays source) · v1 (POO-842 rules v1) · v1 (POO-905: served-rate protocol fee estimate)
+ * @implements-rules-version v10 (POO-801 rules v1) · v1 (POO-819: top-level lockupDays source) · v1 (POO-842 rules v1) · v1 (POO-905: served-rate protocol fee estimate) · v1 (POO-1025 rules v1)
+ * @hackathon POO-1022 (Universal Funding)
  *
  * The invest flow as a single dialog: enter an amount → confirm & sign → pending → success.
  * Amount step branches on the spendable balance: funded (balance ≥ amount) keeps the gold "Invest"
- * CTA; needs-deposit (balance < amount) shows the shortfall and flips the CTA to "Deposit & invest";
+ * CTA; needs-deposit (balance < amount) shows the shortfall and flips the CTA to "Deposit & invest"
+ * (POO-1025: that CTA now consults the provisioning gate FIRST, so a wallet holding funds on another
+ * chain funds the invest from what it already has instead of being sent to buy more fiat; the deposit
+ * deep link remains the fallback when there is nothing to provision from);
  * below-minimum disables the CTA with a hint. The effective minimum is the platform's $10 floor or
  * the manager's, whichever is higher (POO-184 R1). Costs (network fee, lock-up) appear only on
  * the confirm step (per the fees-at-confirmation rule); single-pool strategies also show the zap
@@ -586,12 +590,36 @@ export function InvestModal({
     }
   }
 
+  /**
+   * POO-598 R1/R5/R7: fired once at the flow-start CTA (NOT the Review approve), because
+   * approve/permit run before the review. POO-1025 R4: an invest is only "submitted" when one
+   * actually starts, so the deposit bailout below does not fire it.
+   */
+  function trackInvestSubmitted() {
+    track("strategy_invest_submitted", {
+      strategy_id: strategy.id,
+      value: amount,
+      currency: "USD",
+    });
+  }
+
   function handlePrimary() {
+    // POO-1025 R1: when the wallet is short on this chain, consult the provisioning gate BEFORE the
+    // deposit round trip. Previously this early-returned to /deposit and the gate at the bottom of
+    // this function was never reached for a short wallet, so the invest USDC/network branch was dead
+    // code: a user holding funds on another chain was told to go buy more fiat instead of being
+    // offered the money they already have.
     if (needsDeposit) {
-      // Carry the shortfall (prefill) + the CHOSEN amount into the Deposit top-up flow, so the
-      // post-payment "Invest now" returns to the invest flow with the full amount (POO-281 R2/R3).
-      // POO-520 R1: a manager-console launch also carries its origin, so the resume returns to the
-      // console manage view; the investor URL stays origin-free (R2).
+      if (gate.evaluate("invest", strategy, amount)) {
+        trackInvestSubmitted();
+        setPhase("provision");
+        return;
+      }
+      // POO-1025 R2/R3: nothing to provision from, so the deposit deep link stays the fallback, with
+      // its query contract untouched. Carry the shortfall (prefill) + the CHOSEN amount so the
+      // post-payment "Invest now" returns with the full amount (POO-281 R2/R3). POO-520 R1: a
+      // manager-console launch carries its origin so the resume returns to the console manage view;
+      // the investor URL stays origin-free (R2).
       handleOpenChange(false);
       const originParam = depositOrigin === "manager" ? "&origin=manager" : "";
       router.push(
@@ -599,17 +627,10 @@ export function InvestModal({
       );
       return;
     }
-    // POO-598 R1: "Invest" now starts the handshake — it fires the submitted event once and kicks off
-    // approve → Permit2 → build (which pauses at the Review). POO-598 R5/R7: the event + the gate live
-    // HERE (the flow-start CTA), NOT on the Review approve — approve/permit run before the review, so
-    // gas must be ensured before them (unlike Withdraw, whose build needs no signature).
-    track("strategy_invest_submitted", {
-      strategy_id: strategy.id,
-      value: amount,
-      currency: "USD",
-    });
-    // POO-419: if the wallet is short on gas / USDC / the right network, provision first, then run the
-    // invest with its original amount + slippage (params preserved, R2).
+    trackInvestSubmitted();
+    // POO-419: the wallet holds enough USDC here, but may still be short on gas or on the wrong
+    // network. Provision first, then run the invest with its original amount + slippage (params
+    // preserved, R2).
     if (gate.evaluate("invest", strategy, amount)) {
       setPhase("provision");
       return;
