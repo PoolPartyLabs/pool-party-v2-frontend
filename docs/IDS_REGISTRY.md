@@ -7,7 +7,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 253 artifacts. IDs never recycled; removed ones become `Removed` with history.
+Totals: 254 artifacts. IDs never recycled; removed ones become `Removed` with history.
 
 
 ## CORE · Design system, primitives, generic reusable components and modals
