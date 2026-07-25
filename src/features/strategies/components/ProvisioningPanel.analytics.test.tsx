@@ -173,8 +173,10 @@ describe("ProvisioningPanel — funding funnel (POO-1048)", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Confirm & continue" }));
     await waitFor(() => expect(onDone).toHaveBeenCalled());
 
-    // The bridge and the gas swap both settle; the op anchor is a label and settles nothing.
+    // Every executable step reports, in execution order. The `op` anchor is a label for the
+    // operation the route funds, settles nothing, and must not appear.
     expect(funnelEvents("funding_leg_settled").map((entry) => entry.leg_kind)).toEqual([
+      "buy-usdc",
       "bridge",
       "swap-gas",
     ]);
