@@ -204,9 +204,7 @@ describe("ProvisioningPanel", () => {
       );
       fireEvent.click(await screen.findByRole("button", { name: "Confirm & continue" }));
       // Mount reports unlocked, Confirm locks, the ceiling unlocks. Exactly once, in that order.
-      await waitFor(() =>
-        expect(onLockChange.mock.calls).toEqual([[false], [true], [false]]),
-      );
+      await waitFor(() => expect(onLockChange.mock.calls).toEqual([[false], [true], [false]]));
     });
 
     it("[R3] degrades to the still-settling state at the ceiling, with the transfer verifiable", async () => {

@@ -1,13 +1,14 @@
 /**
  * @id PP-CORE-LIB-018
  * @name provisioningView — tests
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1037 rules v1) · v1
  * Plan → view mapping across the canonical scenarios: ordered rows, 1-based badges, amount visibility
- * (bridge + zero-amount omitted), the gas + op + paybis flags, and the title key per variant.
+ * (bridge + zero-amount omitted), the gas + op + paybis flags, and the title key per variant. Plus
+ * POO-1037 [R2]: the bridge leg's ETA copy, which comes from the quote or says nothing at all.
  */
 import { describe, expect, it } from "vitest";
 import { mockComputePlan, SCENARIOS } from "@/lib/provisioning";
-import { buildPlanView } from "./provisioningView";
+import { bridgeEtaCopy, buildPlanView } from "./provisioningView";
 
 const NOW = "2026-06-30T12:00:00.000Z";
 const view = (
@@ -70,5 +71,39 @@ describe("buildPlanView", () => {
   it("reflects the user-chosen gas amount on the swap-gas row", () => {
     const v = view("gasOnly", { presetUsd: 25, amountUsd: 25 });
     expect(v.rows.find((r) => r.type === "swap-gas")?.amountUsd).toBe(25);
+  });
+});
+
+describe("bridgeEtaCopy — [R2] the bridge ETA comes from the quote, never from a constant", () => {
+  it("reads a sub-90s fill in seconds (Base to Arbitrum USDC measured ~1s live)", () => {
+    expect(bridgeEtaCopy(1)).toEqual({
+      key: "provisioning.bridge.etaSeconds",
+      values: { seconds: 1 },
+    });
+    expect(bridgeEtaCopy(45)).toEqual({
+      key: "provisioning.bridge.etaSeconds",
+      values: { seconds: 45 },
+    });
+  });
+
+  it("switches to minutes once seconds stop reading naturally", () => {
+    expect(bridgeEtaCopy(120)).toEqual({
+      key: "provisioning.bridge.etaMinutes",
+      values: { minutes: 2 },
+    });
+  });
+
+  it("says nothing numeric when the quote gave no estimate", () => {
+    // An invented "about 30 seconds" we cannot keep is worse than admitting we do not know.
+    expect(bridgeEtaCopy(undefined)).toEqual({ key: "provisioning.bridge.etaUnknown" });
+    expect(bridgeEtaCopy(0)).toEqual({ key: "provisioning.bridge.etaUnknown" });
+    expect(bridgeEtaCopy(Number.NaN)).toEqual({ key: "provisioning.bridge.etaUnknown" });
+  });
+
+  it("never rounds a real wait down to zero", () => {
+    expect(bridgeEtaCopy(0.4)).toEqual({
+      key: "provisioning.bridge.etaSeconds",
+      values: { seconds: 1 },
+    });
   });
 });

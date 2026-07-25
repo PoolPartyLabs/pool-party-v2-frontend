@@ -488,6 +488,14 @@
       "done": "Listo",
       "pending": "Pendiente"
     },
+    "bridge": {
+      "etaSeconds": "Esto suele tardar unos {seconds, plural, one {# segundo} other {# segundos}}. Continuaremos en cuanto lleguen tus fondos.",
+      "etaMinutes": "Esto suele tardar unos {minutes, plural, one {# minuto} other {# minutos}}. Continuaremos en cuanto lleguen tus fondos.",
+      "etaUnknown": "Este paso tarda más que los demás. Continuaremos en cuanto lleguen tus fondos.",
+      "settlingTitle": "Todavía en camino",
+      "settlingBody": "Tus fondos siguen moviéndose entre redes. No se ha perdido nada. Puedes cerrar esto y revisar la transferencia, y retomaremos justo donde se quedó.",
+      "settlingClose": "Cerrar"
+    },
     "opLabel": {
       "invest": "Invertir en {strategy}",
       "withdraw": "Retirar de {strategy}",

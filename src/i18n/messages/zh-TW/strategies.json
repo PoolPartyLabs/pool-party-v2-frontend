@@ -488,6 +488,14 @@
       "done": "完成",
       "pending": "處理中"
     },
+    "bridge": {
+      "etaSeconds": "通常約需 {seconds, plural, other {# 秒}}。資金到帳後我們會立即繼續。",
+      "etaMinutes": "通常約需 {minutes, plural, other {# 分鐘}}。資金到帳後我們會立即繼續。",
+      "etaUnknown": "這一步比其他步驟更久。資金到帳後我們會立即繼續。",
+      "settlingTitle": "仍在路上",
+      "settlingBody": "你的資金仍在網路之間轉移。沒有任何損失。你可以關閉此頁面並查看轉帳進度，我們會從中斷的地方繼續。",
+      "settlingClose": "關閉"
+    },
     "opLabel": {
       "invest": "投資 {strategy}",
       "withdraw": "從 {strategy} 提領",
