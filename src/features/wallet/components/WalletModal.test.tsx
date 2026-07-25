@@ -97,6 +97,22 @@ describe("WalletModal", () => {
     expect(screen.getByText("TOTAL BALANCE")).toBeInTheDocument();
   });
 
+  // POO-1046 [R4]: with the standalone swap screen available the host passes `onSwap`, and the same
+  // button becomes a live action. The coming-soon hint has to go WITH it — a live control that still
+  // says "coming soon" is worse than either state on its own.
+  it("[R4] routes Swap to its handler, with no coming-soon hint, when the screen is available", async () => {
+    const user = userEvent.setup();
+    const onSwap = vi.fn();
+    setup({ onSwap });
+
+    const swap = screen.getByRole("button", { name: "Swap" });
+    expect(swap).not.toHaveAttribute("aria-disabled");
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+
+    await user.click(swap);
+    expect(onSwap).toHaveBeenCalledTimes(1);
+  });
+
   it("lists holdings across every network with no network switcher (POO-239)", () => {
     setup();
     // The chain-agnostic wallet shows all networks' holdings together...

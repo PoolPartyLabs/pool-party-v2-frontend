@@ -1,0 +1,27 @@
+{
+  "title": "Mover fondos",
+  "subtitle": "Elige una red y cuánto quieres tener disponible en ella. Nosotros nos encargamos del resto.",
+  "destination": {
+    "label": "Red"
+  },
+  "amount": {
+    "label": "¿Cuánto quieres tener disponible en {network}?",
+    "available": "Ahora tienes {amount} en {network}. Solo movemos lo que falta."
+  },
+  "continue": "Continuar",
+  "routingNote": "Buscamos la forma más barata de llevar tus fondos a {network}, ya sea convirtiéndolos, moviéndolos o ambas cosas.",
+  "walletUnavailable": "No pudimos leer tus saldos ahora mismo. Revisa tu conexión e inténtalo de nuevo.",
+  "plan": {
+    "subtitle": "Dejando {amount} disponible en {network}."
+  },
+  "opLabel": "{amount} disponible en {network}",
+  "done": {
+    "title": "Tus fondos están en {network}",
+    "body": "Todo ha llegado. Ya puedes invertir con ellos.",
+    "cta": "Mover más fondos"
+  },
+  "notFound": {
+    "title": "Aún no disponible",
+    "body": "Mover fondos entre redes todavía no está activado para tu cuenta."
+  }
+}

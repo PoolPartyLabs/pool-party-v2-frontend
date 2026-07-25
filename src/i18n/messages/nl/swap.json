@@ -1,0 +1,27 @@
+{
+  "title": "Geld verplaatsen",
+  "subtitle": "Kies een netwerk en hoeveel je daar beschikbaar wilt hebben. Wij regelen de rest.",
+  "destination": {
+    "label": "Netwerk"
+  },
+  "amount": {
+    "label": "Hoeveel wil je beschikbaar hebben op {network}?",
+    "available": "Je hebt nu {amount} op {network}. We verplaatsen alleen wat ontbreekt."
+  },
+  "continue": "Doorgaan",
+  "routingNote": "We zoeken de goedkoopste manier om je geld naar {network} te krijgen, of het nu omgezet, verplaatst of allebei moet worden.",
+  "walletUnavailable": "We konden je saldo nu niet uitlezen. Controleer je verbinding en probeer het opnieuw.",
+  "plan": {
+    "subtitle": "{amount} beschikbaar maken op {network}."
+  },
+  "opLabel": "{amount} beschikbaar op {network}",
+  "done": {
+    "title": "Je geld staat op {network}",
+    "body": "Alles is aangekomen. Je kunt er nu mee investeren.",
+    "cta": "Meer geld verplaatsen"
+  },
+  "notFound": {
+    "title": "Nog niet beschikbaar",
+    "body": "Geld verplaatsen tussen netwerken is nog niet ingeschakeld voor jouw account."
+  }
+}

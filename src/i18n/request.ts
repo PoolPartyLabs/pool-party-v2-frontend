@@ -23,6 +23,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
     manager,
     wallet,
     admin,
+    swap,
   ] = await Promise.all([
     import(`./messages/${locale}/common.json`),
     import(`./messages/${locale}/consent.json`),
@@ -39,6 +40,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
     import(`./messages/${locale}/manager.json`),
     import(`./messages/${locale}/wallet.json`),
     import(`./messages/${locale}/admin.json`),
+    import(`./messages/${locale}/swap.json`),
   ]);
 
   return {
@@ -59,6 +61,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
       manager: manager.default,
       wallet: wallet.default,
       admin: admin.default,
+      swap: swap.default,
     },
   };
 });

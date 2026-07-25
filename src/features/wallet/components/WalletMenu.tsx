@@ -23,6 +23,7 @@ import { useRouter } from "@/i18n/navigation";
 import { useAccountService } from "@/lib/account/useAccountService";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useTokenBalances } from "@/lib/balances";
+import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { isMockMode } from "@/lib/services";
 import { formatUsd } from "@/lib/utils/format";
 import { WalletModal } from "./WalletModal";
@@ -71,6 +72,7 @@ function ConnectedWallet({ address, onLogout }: { address: string; onLogout: () 
   const t = useTranslations("wallet");
   const router = useRouter();
   const account = useAccountService();
+  const { isEnabled } = useFeatureFlags();
   const { balances, totalUsd, dayChangeUsd, dayChangePct, isLoading, isRefreshing, refresh } =
     useTokenBalances();
   const [open, setOpen] = useState(false);
@@ -132,6 +134,10 @@ function ConnectedWallet({ address, onLogout }: { address: string; onLogout: () 
         onRefresh={refresh}
         onBuy={() => go("/deposit")}
         onReceive={() => go("/deposit?mode=receive")}
+        // POO-1046 [R4]: the flag decides whether Swap is an action at all. Passing the handler
+        // conditionally (rather than passing one that no-ops) is what keeps the modal's disabled
+        // "coming soon" state exactly as it shipped while the screen is dark-launched.
+        {...(isEnabled("swapScreen") ? { onSwap: () => go("/swap") } : {})}
         onManage={() => go("/profile/security")}
         onDisconnect={async () => {
           setOpen(false);

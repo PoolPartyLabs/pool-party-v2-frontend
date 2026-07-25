@@ -108,7 +108,7 @@ commit only the documentation and the vendored skill have landed; every `src` ro
 | `FundingSourceSelector.tsx` | Multi-select across chains, running total, gas badges | POO-1039 | planned |
 | `ProvisioningCostBreakdown.tsx` | The cost table + the buy-crypto alternative | POO-1040 | done |
 | `src/lib/provisioning/fixtures/pricedPlans.ts` | Priced-plan fixtures (same-chain / cross-chain / gas top-up) for the cost table's tests + stories | POO-1040 | done |
-| `src/app/[locale]/swap/` | Standalone swap + bridge screen, flagged | POO-1046 | planned |
+| `src/app/[locale]/(auth)/(app)/swap/` + `src/features/swap/` | Standalone swap + bridge screen, flagged behind `swapScreen`. Destination + amount, then the shipped `ProvisioningPanel`: no second planner, no second rail | POO-1046 | landed |
 
 `src/lib/uniswap/` already exists and holds pre-existing pool math (`tick.ts`, `price.ts`, `range.ts`,
 `amount.ts`, `positionSplit.ts`). The four rows above are new files in that folder, not the folder.
@@ -127,7 +127,8 @@ yet applied.
 | `buildProvisioningInput.ts` | The hard-disable stub becomes live balance reads | POO-1042 | planned |
 | `InvestModal.tsx` | The `needsDeposit` deep-link early return yields to the gate | POO-1025 | planned |
 | `src/lib/tx/diagnostics.ts` | `wrongChain` error kind with target-network copy | POO-1026 | planned |
-| `src/lib/features/registry.ts` | `swapScreen` flag; `provisioning` baseline becomes a flat boolean | POO-1042, POO-1046 | planned |
+| `src/lib/features/registry.ts` | `swapScreen` flag; `provisioning` baseline becomes a flat boolean | POO-1042, POO-1046 | landed |
+| `WalletModal.tsx`, `WalletMenu.tsx` | The Swap action gets a destination: an optional `onSwap`, passed only when `swapScreen` is on. Off, the modal is byte-identical to POO-240 | POO-1046 | landed |
 | `provisioningView.ts` | Real-step rendering; local network-name literal replaced by the shared chain config | POO-1041 | planned |
 | `src/i18n/messages/*/strategies.json` | All new copy, 11 locales | POO-1049 | planned |
 

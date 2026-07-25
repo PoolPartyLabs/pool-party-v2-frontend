@@ -72,6 +72,8 @@ function envOverride(key: FeatureKey): string | undefined {
       return process.env.NEXT_PUBLIC_FEATURE_ADMIN_CONSOLE;
     case "provisioning":
       return process.env.NEXT_PUBLIC_FEATURE_PROVISIONING;
+    case "swapScreen":
+      return process.env.NEXT_PUBLIC_FEATURE_SWAP_SCREEN;
     case "virtualize":
       return process.env.NEXT_PUBLIC_FEATURE_VIRTUALIZE;
     case "strategyCategoryFilter":
