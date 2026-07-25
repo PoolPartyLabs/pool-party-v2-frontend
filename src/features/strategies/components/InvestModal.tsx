@@ -228,6 +228,18 @@ function mockInvestSteps(
 }
 
 /** Public props for {@link InvestModal}. */
+/**
+ * Do these two USD figures render as the same amount?
+ *
+ * The partial-investment banner names both, so it must not appear when they are indistinguishable.
+ * A real fill left 0.0002 USDC behind, two hundredths of a cent, and a strict `<` produced
+ * "We added $1.00 of your $1.00. The rest couldn't be added", which reads as a broken product rather
+ * than as the dust it describes. Compared in whole cents, which is the precision the user is shown.
+ */
+function sameToTheCent(a: number, b: number): boolean {
+  return Math.round(a * 100) === Math.round(b * 100);
+}
+
 export interface InvestModalProps {
   /** Whether the dialog is open. */
   open: boolean;
@@ -904,8 +916,16 @@ export function InvestModal({
               })}
             >
               {/* POO-383 R9: partial-investment banner when less than the requested amount deployed
-                  (market movement + slippage left a remainder in the wallet). */}
-              {deployedUsd != null && deployedUsd < amount ? (
+                  (market movement + slippage left a remainder in the wallet).
+
+                  POO-1083: and only when the shortfall SURVIVES rounding to the figures shown. A
+                  real fill left 0.0002 USDC behind, two hundredths of a cent, so a strict `<`
+                  rendered "We added $1.00 of your $1.00. The rest couldn't be added", which reads as
+                  a bug in the product rather than as the dust it describes. A message that names two
+                  amounts must not be shown when both amounts are the same amount. */}
+              {deployedUsd != null &&
+              deployedUsd < amount &&
+              !sameToTheCent(deployedUsd, amount) ? (
                 <p className="rounded-md bg-warning/10 px-3 py-2 text-warning text-sm">
                   {t("invest.success.partial", {
                     deployed: formatUsd(deployedUsd),

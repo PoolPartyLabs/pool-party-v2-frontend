@@ -1208,6 +1208,22 @@ describe("InvestModal", () => {
     expect(screen.getByText(/We added \$150\.00 of your \$200\.00/)).toBeInTheDocument();
   });
 
+  // POO-1083, from a real fill: 0.0002 USDC stayed behind, two hundredths of a cent, and the strict
+  // `deployed < amount` rendered "We added $1.00 of your $1.00. The rest couldn't be added", which
+  // reads as a broken product rather than as the dust it describes. A message that names two amounts
+  // must not appear when both amounts render the same.
+  it("(R9) shows no partial banner when the remainder is smaller than a cent", async () => {
+    // $199.9998 of $200: a real sub-cent remainder, invisible at the precision the user is shown.
+    vi.mocked(settleDeployedUsd).mockReturnValueOnce(199.9998);
+    renderWithProviders(
+      <InvestModal open onOpenChange={vi.fn()} strategy={strategy} balance={500} />,
+    );
+    await reachReview("200");
+    fireEvent.click(screen.getByRole("button", { name: "Confirm investment" }));
+    await screen.findAllByText("Investment confirmed", undefined, { timeout: 3000 });
+    expect(screen.queryByText(/Partial investment\./)).not.toBeInTheDocument();
+  });
+
   // @rule R9 (POO-383) — no partial banner on a full fill.
   it("(R9) shows no partial banner on a full fill", async () => {
     renderWithProviders(

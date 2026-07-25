@@ -254,11 +254,9 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
           try {
             await switchChainAsync({ chainId });
             return;
-          } catch (error) {
-            console.warn("[PP] connector chain switch failed; using the SDK fallback", {
-              chainId,
-              error,
-            });
+          } catch {
+            // Falling back to the wallet SDK is an ordinary outcome for a wallet that does not drive
+            // the connector, not an incident, so it is not logged.
           }
           // Same rule: the SDK fallback has to act on the LIVE handle, not the captured one.
           await liveWallet().switchChain(chainId);
