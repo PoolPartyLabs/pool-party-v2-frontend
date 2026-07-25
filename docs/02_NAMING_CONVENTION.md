@@ -61,6 +61,7 @@ Taxonomy reflects the actual Pool Party V2 product surfaces (managed-investing f
 | SCR | Screen, full page | `PP-DASH-SCR-001` Home |
 | MOD | Modal/Dialog/Drawer/Sheet | `PP-STR-MOD-002` Invest confirm |
 | CMP | Reusable component | `PP-CORE-CMP-010` Button |
+| DOC | Durable document set (a reference doc or ADR that is itself the artifact) | `PP-CORE-DOC-001` Universal Funding live-API correction |
 | LAY | Layout / app chrome | `PP-CORE-LAY-001` AppShell |
 | FLW | Flow (multi-screen sequence) | `PP-DEP-FLW-001` Deposit flow |
 | HOK | Custom hook | `PP-DASH-HOK-001` usePortfolioStats |
