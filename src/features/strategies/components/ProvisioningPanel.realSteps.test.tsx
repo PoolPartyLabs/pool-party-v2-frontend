@@ -32,6 +32,22 @@ import {
 import { planRailSteps } from "../lib/buildPlanSteps";
 import { ProvisioningPanel } from "./ProvisioningPanel";
 
+// Two mounted surfaces render the locale-aware Link: POO-1043 [R9]'s cost breakdown in the plan phase
+// (its buy-crypto peer option) and POO-1044 [R3]'s buy-crypto escape on the blocked error branch. It
+// resolves Next's app-router navigation, which does not exist under jsdom, so it is stood in for, as
+// in every other suite in this folder that mounts a navigating component.
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 const TX_HASH = "0x9f2c1d4a6b8e0f3c5a7d9e1b2c4f6a8d0e2b4c6f8a0d2e4b6c8f0a2d4e6b8c0f";
 
 // The plan seam is async and resolves the MOCK planner in tests; this replaces it with the shape the
@@ -46,20 +62,6 @@ vi.mock("../hooks/useProvisioningPlan", () => ({
     error: null,
     refresh: () => {},
   }),
-}));
-
-// POO-1043 [R9]: the plan phase mounts the cost breakdown, whose buy-crypto peer option is a
-// locale-aware Link. Stubbed per the repository's standing test convention.
-vi.mock("@/i18n/navigation", () => ({
-  Link: ({
-    href,
-    children,
-    ...props
-  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
-  ),
 }));
 
 function noop() {}

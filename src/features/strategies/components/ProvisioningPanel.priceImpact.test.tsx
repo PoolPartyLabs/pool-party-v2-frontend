@@ -18,15 +18,24 @@
  * Kept apart from `ProvisioningPanel.test.tsx` deliberately: these cases need the plan seam stubbed
  * with hand-built REAL plans (a mock-mode fixture plan carries no legs, so it can never gate), and a
  * module mock is file-scoped.
+ *
+ * The last two cases cover the branch this gate shares with POO-1044's gas-only skip, which landed
+ * on a separate branch: a gas-only requirement reaches its confirm with NO funding picker, so it is
+ * the one real-mode route that never passes through `phase === "sources"`, and its `swap-gas` leg is
+ * a CLASSIC swap that has to be gated like any other.
  */
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { FundingSource } from "@/lib/balances/fundingInventory";
 import type {
+  GasFeasibility,
   ProvisioningLeg,
   ProvisioningNeedInput,
   ProvisioningPlan,
   ProvisioningStep,
 } from "@/lib/provisioning";
+import { NATIVE_TOKEN_ADDRESS } from "@/lib/provisioning";
+import type { ProvisioningGateContext } from "@/lib/provisioning/gateContext";
 import {
   fireEvent,
   renderWithProviders,
@@ -194,6 +203,116 @@ function renderPanel(input: ProvisioningNeedInput = INPUT) {
 
 const confirmCta = () => screen.getByRole("button", { name: "Confirm & continue" });
 
+/* ---- the real-mode gas-only branch (POO-1044 [R1]), which skips the picker ---- */
+
+const WETH_ARBITRUM = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1";
+
+/** A gas-only requirement on the operation's own chain: token in hand, native coin missing. */
+const GAS_ONLY_INPUT: ProvisioningNeedInput = {
+  balancesByChain: { [ARBITRUM]: { nativeUsd: 0.01, tokenUsd: 1_200 } },
+  currentChainId: ARBITRUM,
+  targetChainId: ARBITRUM,
+  opRequiredUsdc: 0,
+  gasEstimateUsd: 0.075,
+};
+
+function gasOnlyContext(): ProvisioningGateContext {
+  const source: FundingSource = {
+    address: WETH_ARBITRUM,
+    symbol: "WETH",
+    decimals: 18,
+    amount: "400000000000000000",
+    usd: 1_200,
+    reachableChainIds: [ARBITRUM],
+    isNative: false,
+    logoUrl: "",
+    chainId: ARBITRUM,
+  };
+  const gas: GasFeasibility = {
+    chainId: ARBITRUM,
+    verdict: "TOP_UP",
+    quotedGasUsd: 0.02,
+    requiredGasUsd: 0.075,
+    shortfallUsd: 0.065,
+    surplusUsd: 0,
+    reasonKey: "provisioning.gasVerdict.topUp",
+  };
+  return {
+    targetChainId: ARBITRUM,
+    sources: [source],
+    gasByChain: { [ARBITRUM]: gas },
+    balancesByChain: { [ARBITRUM]: { nativeUsd: 0.01, tokenUsd: 1_200 } },
+    gasEstimateUsd: 0.075,
+  };
+}
+
+/**
+ * The one-step plan the real planner returns for {@link GAS_ONLY_INPUT}: a slice of the wallet's
+ * WETH swapped into the chain's native coin. `swap-gas` is a CLASSIC leg on the same AMMs as any
+ * other, so the quote reports an impact for it and the cost model counts it.
+ */
+function gasOnlyPlanWithImpact(impactPct: number | undefined): ProvisioningPlan {
+  const leg: ProvisioningLeg = {
+    index: 0,
+    kind: "swap-gas",
+    chainId: ARBITRUM,
+    tokenIn: weth(ARBITRUM, WETH_ARBITRUM),
+    tokenOut: { address: NATIVE_TOKEN_ADDRESS, symbol: "ETH", decimals: 18, chainId: ARBITRUM },
+    amountIn: "32000000000000",
+    amountOutQuoted: "32000000000000",
+    minAmountOut: "31360000000000",
+    routing: "CLASSIC",
+    gasUsd: 0.02,
+    ...(impactPct === undefined ? {} : { priceImpactPct: impactPct }),
+    requoteAtExecution: false,
+  };
+  return {
+    needed: true,
+    reason: ["gas"],
+    variant: "gas-only",
+    steps: [
+      {
+        type: "swap-gas",
+        key: "swap-gas-0",
+        labelKey: "provisioning.steps.swapGas",
+        fromToken: "WETH",
+        toToken: "ETH",
+        fromChainId: ARBITRUM,
+        toChainId: ARBITRUM,
+        chainId: ARBITRUM,
+        amountUsd: 0.08,
+        amountToken: "0.000032",
+        method: "SEND_TX",
+        leg,
+      },
+      { type: "op", key: "op", labelKey: "provisioning.steps.op", amountUsd: 0 },
+    ],
+    quote: {
+      shortfallUsd: 0,
+      bufferUsd: 0.08,
+      feesUsd: 0,
+      totalPayUsd: 0.08,
+      quotedAt: "2026-07-25T12:00:00.000Z",
+      ttlMs: 600_000,
+    },
+    gas: { presetUsd: null, amountUsd: 0.08 },
+    slippagePct: 2,
+  };
+}
+
+function renderRealModePanel() {
+  return renderWithProviders(
+    <ProvisioningPanel
+      input={GAS_ONLY_INPUT}
+      context={gasOnlyContext()}
+      opLabel="Collect fees"
+      onDone={noop}
+      onCancel={noop}
+      buildPlanSteps={() => []}
+    />,
+  );
+}
+
 afterEach(() => {
   computePlan.mockReset();
 });
@@ -265,6 +384,38 @@ describe("ProvisioningPanel — the price-impact gate (POO-1047)", () => {
   it("[R5] a bridge-only plan is not gated by a figure Across never quoted", async () => {
     computePlan.mockResolvedValue(planOf([bridgeStep(92.41)]));
     renderPanel();
+
+    await waitFor(() => expect(confirmCta()).toBeEnabled());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  /**
+   * The one branch where this gate and POO-1044's gas-only skip meet.
+   *
+   * POO-1044 [R1] sends a gas-only requirement STRAIGHT to the plan with no funding picker, which is
+   * the only real-mode path that reaches the confirm without passing through `phase === "sources"`.
+   * The two landed on separate branches, so this is the case neither one's own suite could cover: a
+   * gas top-up is a CLASSIC swap on the same AMMs as any other leg, and if the picker skip had taken
+   * the gate's "is the route on screen" flag with it, the one funding route that needs no
+   * acknowledgement to reach its confirm would be a swap.
+   */
+  it("[R1] gates the gas-only real-mode plan, which reaches the confirm with no picker", async () => {
+    computePlan.mockResolvedValue(gasOnlyPlanWithImpact(12));
+    renderRealModePanel();
+
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("12.00%");
+    // The picker really was skipped: this is the plan phase, reached directly.
+    expect(screen.queryByRole("listbox", { name: /your funds/i })).not.toBeInTheDocument();
+    expect(confirmCta()).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(confirmCta()).toBeEnabled();
+  });
+
+  it("[R3] leaves the gas-only real-mode plan ungated when its quote reported no impact", async () => {
+    computePlan.mockResolvedValue(gasOnlyPlanWithImpact(undefined));
+    renderRealModePanel();
 
     await waitFor(() => expect(confirmCta()).toBeEnabled());
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();

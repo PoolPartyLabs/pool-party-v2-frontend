@@ -63,6 +63,15 @@ export function useTxErrorBody(error: TxError | null | undefined): string {
         ? t("flow.error.kinds.wrongChain", { network })
         : t("flow.error.kinds.wrongChainUnknown");
     }
+    // POO-1044 [R3]: the operation's chain cannot pay for its own transaction. Same network-naming
+    // treatment and the same degradation as wrongChain, because the remedy is chain-specific and
+    // "you need gas somewhere" is not something anyone can act on.
+    case "gasBlocked": {
+      const network = error.targetChainId ? getChainById(error.targetChainId)?.name : undefined;
+      return network
+        ? t("flow.error.kinds.gasBlocked", { network })
+        : t("flow.error.kinds.gasBlockedUnknown");
+    }
     default:
       return t("flow.error.body");
   }

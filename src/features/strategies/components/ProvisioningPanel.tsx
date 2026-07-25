@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-CMP-046
  * @name ProvisioningPanel
- * @implements-rules-version v7 (POO-1047 rules v1) · v6 (POO-1043 rules v1) · v5 (POO-1042 rules v1) · v4 (POO-1041 rules v1) · v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
+ * @implements-rules-version v8 (POO-1047 rules v1) · v7 (POO-1044 rules v1) · v6 (POO-1043 rules v1) · v5 (POO-1042 rules v1) · v4 (POO-1041 rules v1) · v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The INLINE pre-flight provisioning body (epic POO-411, POO-418/POO-419). When an op is short on
@@ -43,12 +43,10 @@
  * the only figure that is really what the user will pay. A plan that comes back short returns to the
  * picker with the real number, so the CTA never flips from enabled to disabled underneath anyone.
  *
- * Mock mode passes no context and is byte-identical to before: it opens on the plan and settles it
- * with the local mock rail.
- *
  * POO-1043 (hackathon POO-1022): three pieces of finished work that no production caller reached are
  * mounted here, which is the difference between having built them and having shipped them. Its rule
- * numbers collide with POO-1042's, so every POO-1043 marker below is written out in full.
+ * numbers collide with POO-1042's, POO-1044's and POO-1047's, so every POO-1043 marker below is
+ * written out in full.
  * POO-1043 [R9] {@link ProvisioningCostBreakdown} sits above the confirm, so the itemised price is
  * read before it is agreed to, and its TTL re-quotes through the same plan seam, never a second path.
  * POO-1043 [R7] the recovery journal is minted at the confirm and retired when the route completes,
@@ -56,12 +54,30 @@
  * POO-1043 [R8] a materially worse re-quote is put to the user instead of aborting the leg: the
  * rail's refusal is the right default with nobody to ask, and a dead end once there is somebody.
  *
+ * POO-1044 (hackathon POO-1022): the gas branch, made honest at both ends. A GAS-ONLY requirement
+ * skips the funding picker [R1]: the gas swap is sized by the classifier and sliced off a holding
+ * already on the operation's chain, so a picker would ask the user to choose between things that do
+ * not change the plan. And a plan the operation cannot run is no longer offered [R3]: a chain with
+ * no native coin fails the planner outright, and the panel says which network needs what, with the
+ * buy-crypto escape instead of a retry that would reach the same verdict. That branch also stopped
+ * discarding the planner's own error: it was rendering the FLOW's error (always null there), so
+ * every planner failure showed the generic body regardless of the code the planner typed. POO-1044
+ * also settles the inline gas selector, which POO-1042 left open: it stays a mock-mode-only control
+ * [R6]/[R7], because in real mode the classifier sizes the top-up from a live quote and the
+ * selector's fiat-minimum bounds have nothing to attach to.
+ *
  * POO-1047 (hackathon POO-1022): the shipped `PriceImpactGate` (PP-STR-CMP-022) now stands between
  * this plan and its confirm. A funding route reaches the same AMMs an operation swap does, so
  * without it the funding path was the way AROUND the gate that POO-1011 put there after a poisoned
  * thin-pool route turned $40 into $3. One gate per PLAN, on the cost model's worst-AMM-leg figure,
  * with bridge legs excluded and a missing figure meaning no gate. Reused, not re-implemented: a
- * second copy of a money-safety threshold is a second thing that can be relaxed by accident.
+ * second copy of a money-safety threshold is a second thing that can be relaxed by accident. It is
+ * independent of POO-1044's gas-only branch above and deliberately so: that branch opens straight on
+ * the plan phase, so a swap-gas leg's price impact is gated exactly like any other AMM leg's.
+ *
+ * Mock mode passes no context and is byte-identical to before: it opens on the plan and settles it
+ * with the local mock rail, inline gas selector included [R6]/[R7]. A fixture plan carries no price
+ * impact, so the gate is absent there [R3].
  *
  * PP-INTEGRATION-POINT: `context` is the live wallet read (PP-CORE-LIB-057) and `buildPlanSteps` is
  * the live Uniswap rail (PP-STR-LIB-017), both bound by `useProvisioningGate` and both absent in
@@ -75,6 +91,7 @@ import { Button } from "@/components/ui/Button";
 import { ExplorerTxLink } from "@/components/ui/ExplorerTxLink";
 import { MockBadge } from "@/components/ui/MockBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { Link } from "@/i18n/navigation";
 import { apiNetworkForChain } from "@/lib/chains/config";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "@/lib/provisioning";
 import { computeProvisioningNeed, planPriceImpactPct, spendableTokenUsd } from "@/lib/provisioning";
@@ -82,6 +99,7 @@ import { computeProvisioningNeed, planPriceImpactPct, spendableTokenUsd } from "
 // The value crosses as data through `getProvisioningContextAction` (ADR 0003).
 import type { ProvisioningGateContext } from "@/lib/provisioning/gateContext";
 import type { TxError } from "@/lib/tx/diagnostics";
+import { toTxError } from "@/lib/tx/diagnostics";
 import { formatPercent, formatUsd } from "@/lib/utils/format";
 import { useProvisioningPlan } from "../hooks/useProvisioningPlan";
 import type { ProvisioningRailOperation } from "../hooks/useProvisioningRail";
@@ -116,6 +134,12 @@ type Phase = "sources" | "plan" | "pending" | "settling" | "error";
 
 /** Accumulating context is unused (each step settles independently); kept generic for the runner. */
 type PlanCtx = Record<string, unknown>;
+
+/**
+ * Where the buy-crypto escape hands off when a chain cannot pay for its own gas (POO-1044 [R3]).
+ * The launched deposit surface, and the same destination the cost breakdown's peer option uses.
+ */
+const BUY_CRYPTO_HREF = "/deposit";
 
 /**
  * What the panel hands the rail builder, so the rail can report what the flow structurally cannot.
@@ -192,9 +216,29 @@ export function ProvisioningPanel({
 }: ProvisioningPanelProps) {
   const t = useTranslations("strategies");
   const tCommon = useTranslations("common");
-  // [R7] Real mode opens on the picker: the funding IS the user's own holdings, and a plan they were
-  // never asked about is a route they cannot have reviewed.
-  const [phase, setPhase] = useState<Phase>(context ? "sources" : "plan");
+
+  // [R7] What to ask for BEFORE a route exists: the bare shortfall plus a conservative buffer. The
+  // quoted plan is the final word (see `quotedShortfallUsd` below); this only decides when the CTA
+  // may open, and it deliberately over-asks so it can never close again.
+  const need = useMemo(() => computeProvisioningNeed(input), [input]);
+
+  /**
+   * POO-1044 [R1]: a gas-only requirement has nothing to pick.
+   *
+   * The gas swap is sized by the classifier and taken from the largest routable holding ALREADY on
+   * the operation's chain, so the funding picker would be asking the user to choose between things
+   * that do not change the plan, to cover a requirement of a few cents. Skipping it puts the
+   * one-step "One quick step" plan on screen directly, which is the flow POO-411 designed for this
+   * case and the one the six op modals already branch on.
+   *
+   * The verdict is `computeProvisioningNeed`'s, so it is the same pure calculator the gate used to
+   * decide to open at all: the panel cannot disagree with its host about which branch this is.
+   */
+  const gasOnly = context !== null && context !== undefined && need.variant === "gas-only";
+
+  // [R7] Real mode otherwise opens on the picker: the funding IS the user's own holdings, and a plan
+  // they were never asked about is a route they cannot have reviewed.
+  const [phase, setPhase] = useState<Phase>(context && !gasOnly ? "sources" : "plan");
   const [gasChoice, setGasChoice] = useState<GasChoice | null>(null);
   const [txError, setTxError] = useState<TxError | null>(null);
   // [R2] Hashes of legs that have broadcast but not settled, keyed by rail step key. The flow cannot
@@ -244,10 +288,6 @@ export function ProvisioningPanel({
     [context],
   );
 
-  // [R7] What to ask for BEFORE a route exists: the bare shortfall plus a conservative buffer. The
-  // quoted plan is the final word (see `quotedShortfallUsd` below); this only decides when the CTA
-  // may open, and it deliberately over-asks so it can never close again.
-  const need = useMemo(() => computeProvisioningNeed(input), [input]);
   const seededRequiredUsd = seedRequiredUsd(
     need.usdcShortfallUsd || input.opRequiredUsdc,
     context?.gasEstimateUsd ?? 0,
@@ -262,6 +302,10 @@ export function ProvisioningPanel({
   // The seam is async, so the hook owns the pending/error lifecycle and the re-plan race guard.
   // POO-1042: in real mode it is suspended until the user has confirmed a selection, so the planner's
   // per-chain quote fan-out never runs for a route nobody asked for.
+  // POO-1044 [R1]: a gas-only plan is not suspended on a selection, because there is no selection to
+  // wait for. Everything else still is.
+  // POO-1043 [R9]: `refresh` is the cost breakdown's TTL re-quote, and `loading` is what tells it a
+  // re-quote is running, so the itemised price re-resolves through this same seam and no other.
   const {
     plan,
     loading: planLoading,
@@ -269,7 +313,7 @@ export function ProvisioningPanel({
     refresh: requotePlan,
   } = useProvisioningPlan(input, effectiveGas, {
     ...(confirmedSelection ? { selection: confirmedSelection } : {}),
-    enabled: !context || confirmedSelection !== null,
+    enabled: !context || gasOnly || confirmedSelection !== null,
   });
   const hasGasStep = plan?.steps.some((step) => step.type === "swap-gas") ?? false;
 
@@ -286,8 +330,11 @@ export function ProvisioningPanel({
       : 0;
   const quotedPlanFallsShort = quotedShortfallUsd > 0;
   // What the early return below actually renders: the picker, not the plan. Named once so the gate's
-  // "is the route on screen" flag cannot drift away from what is on screen.
-  const pickingSources = context != null && (phase === "sources" || quotedPlanFallsShort);
+  // "is the route on screen" flag cannot drift away from what is on screen. POO-1044 [R1]'s gas-only
+  // skip is part of the SAME expression for that reason: a gas-only plan never shows the picker, so
+  // it is on the plan from open and its swap-gas leg is gated like any other AMM leg.
+  const pickingSources =
+    context != null && !gasOnly && (phase === "sources" || quotedPlanFallsShort);
 
   /**
    * POO-1047 [R1]/[R4]: a funding route is a swap, so it is gated like one. The SAME `>=10%`
@@ -406,8 +453,19 @@ export function ProvisioningPanel({
         : { name: t("sign.explain.confirm.name"), body: t("sign.explain.confirm.body") },
   }));
   const activeRow = execRows.find((row) => row.status === "active");
-  // POO-461 R3: kind-aware error body (generic copy when the failure didn't classify).
-  const errorBody = useTxErrorBody(txError);
+  /**
+   * POO-1044 [R3]: the planner's failure, classified.
+   *
+   * `useProvisioningPlan` hands back a raw `Error`, and this panel used to render the planner branch
+   * with the FLOW's `txError` (null there, always), so every planner failure showed the generic
+   * "didn't go through" body and the code the planner went to the trouble of typing was discarded.
+   * A blocked gas chain is exactly the failure that copy is useless for.
+   */
+  const planTxError = planError ? toTxError(planError, "PROVISIONING_FAILED") : null;
+  // POO-461 R3: kind-aware error body (generic copy when the failure didn't classify). The flow's
+  // error wins when there is one: the two branches are mutually exclusive, and a failure that
+  // reached the wallet is the more specific of the two.
+  const errorBody = useTxErrorBody(txError ?? planTxError);
 
   // POO-1043 [R8] The prompt interrupts a running route: nothing the user did put it on screen, so
   // nothing moves focus to it either, and a decision nobody is told about is not a decision. Focus
@@ -448,10 +506,17 @@ export function ProvisioningPanel({
   const activeStepKey = flowSteps[flow.activeStep]?.key;
   const activePlanStep = plan?.steps.find((step) => step.key === activeStepKey);
 
-  // The inline gas selector is a MOCK-mode affordance. In real mode the gas top-up is sized by the
-  // classifier from a live quote and the planner ignores an explicit amount (see `planActions.ts`),
-  // so rendering the control would offer a knob that turns nothing.
-  // PP-TODO(POO-1044): UF-22 re-introduces an explicit gas choice against the real classifier.
+  /**
+   * The inline gas selector is a MOCK-mode affordance, permanently (POO-1044 [R6]).
+   *
+   * In real mode the top-up is sized by the gas classifier from a live quote: the chain's own
+   * shortfall, plus headroom, plus the top-up transaction's cost. The control's [$10, $200] bounds
+   * are the PAYBIS FIAT MINIMUM, which a token swap does not have, so honouring a typed amount would
+   * spend $10 of the user's holding to buy native on a chain that needs six cents of it. There is no
+   * amount for the user to choose that is better than the one the quote produces, so there is no
+   * control. The bounds and presets are untouched where the control does survive ([R7]): mock mode
+   * here, and the standalone buy-gas modal.
+   */
   const showGasSelector = hasGasStep && !context;
   const ctaDisabled = showGasSelector && !gasValidity.ok;
   const gasSelector = showGasSelector ? (
@@ -617,10 +682,33 @@ export function ProvisioningPanel({
 
   // POO-1023 [R3]: the seam is async, so surface a planner failure as a recoverable error rather than
   // a plan card that never fills.
-  if (planError) {
+  if (planTxError) {
+    // POO-1044 [R3]: a chain with no native coin is not a transient failure, so it does not get the
+    // retry that every other failure gets. Re-planning would ask the same classifier the same
+    // question and reach the same verdict, so offering it would be theatre. What the user can
+    // actually do is buy crypto, which is the second of the two escapes UF-10 attaches to a BLOCKED
+    // verdict. The first, moving native in from another network, is the funding rail itself and is
+    // not reachable from a chain that cannot originate a transaction.
+    const blocked = planTxError.kind === "gasBlocked";
     return (
       <TransactionStatus phase="error" title={t("flow.error.title")} body={errorBody}>
-        <TransactionErrorActions onRetry={onCancel} />
+        {blocked ? (
+          <div className="flex w-full flex-col gap-2">
+            {/* This epic writes no on-ramp code: the CTA hands off to the launched /deposit
+                surface, exactly as the cost breakdown's peer option does (POO-1040 [R3]). */}
+            <Link
+              href={BUY_CRYPTO_HREF}
+              className="flex w-full items-center justify-center rounded-md bg-primary px-6 py-3 text-center font-medium text-base text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {t("provisioning.costs.buyCrypto.cta")}
+            </Link>
+            <Button variant="ghost" className="w-full" onClick={onCancel}>
+              {t("provisioning.plan.cancel")}
+            </Button>
+          </div>
+        ) : (
+          <TransactionErrorActions onRetry={onCancel} error={planTxError} />
+        )}
       </TransactionStatus>
     );
   }

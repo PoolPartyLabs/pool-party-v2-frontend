@@ -23,9 +23,11 @@ import {
 import { BRIDGE_PENDING_CODE } from "../lib/awaitBridgeSettlement";
 import { ProvisioningPanel } from "./ProvisioningPanel";
 
-// POO-1043 [R9]: the plan phase now mounts ProvisioningCostBreakdown, whose buy-crypto peer option is
-// a locale-aware Link. The repository's standing test convention (88 files) is to stub it, because
-// next-intl's navigation factory reaches for `next/navigation` at import time.
+// Two mounted surfaces now render the locale-aware Link: POO-1043 [R9]'s ProvisioningCostBreakdown in
+// the plan phase (its buy-crypto peer option) and POO-1044 [R3]'s buy-crypto escape on the blocked
+// error branch. next-intl's navigation factory reaches for `next/navigation` at import time and
+// app-router navigation does not exist under jsdom, so it is stubbed, which is the repository's
+// standing test convention (88 files).
 vi.mock("@/i18n/navigation", () => ({
   Link: ({
     href,
