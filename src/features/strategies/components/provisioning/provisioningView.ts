@@ -79,3 +79,34 @@ export function buildPlanView(plan: ProvisioningPlan): PlanView {
 
   return { titleKey, rows };
 }
+
+/** A resolved copy key plus its interpolation values. No `t` call, per this module's contract. */
+export interface BridgeEtaCopy {
+  key: string;
+  values?: Record<string, number>;
+}
+
+/**
+ * How long the bridge leg says it will take (POO-1037 [R2]).
+ *
+ * The figure is the quote's own `estimatedFillTimeMs` (carried as {@link ProvisioningLeg.etaSeconds}),
+ * never an invented constant: a step that looks stuck for three minutes with no ETA reads as a
+ * failure and gets a tab closed mid-route. When the quote gave no estimate we say so rather than
+ * guessing, because a promise of "about 30 seconds" that we cannot keep is worse than no number.
+ */
+export function bridgeEtaCopy(etaSeconds: number | undefined): BridgeEtaCopy {
+  if (etaSeconds === undefined || !Number.isFinite(etaSeconds) || etaSeconds <= 0) {
+    return { key: "provisioning.bridge.etaUnknown" };
+  }
+  // Under 90s reads naturally in seconds; above it, "about 2 minutes" beats "about 118 seconds".
+  if (etaSeconds < 90) {
+    return {
+      key: "provisioning.bridge.etaSeconds",
+      values: { seconds: Math.max(1, Math.round(etaSeconds)) },
+    };
+  }
+  return {
+    key: "provisioning.bridge.etaMinutes",
+    values: { minutes: Math.max(1, Math.round(etaSeconds / 60)) },
+  };
+}

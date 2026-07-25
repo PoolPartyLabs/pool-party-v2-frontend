@@ -153,6 +153,16 @@ export interface TxError {
    * and legitimately absent on a hand-built wrongChain error [R4].
    */
   targetChainId?: number;
+  /**
+   * POO-1037: the hash of a transaction that WAS broadcast before this error was raised.
+   *
+   * Almost every failure in this app happens before anything reaches a chain, and for those it is
+   * absent. It exists for the one case where it is not: a bridge leg whose source transaction mined
+   * and whose funds have not arrived on the destination chain yet. `useWalletSignFlow` only records
+   * a hash a step RETURNS, so without this the user would be told their transfer is in flight and
+   * given no way to verify it. Carried by the thrower on `cause`, exactly like {@link targetChainId}.
+   */
+  txHash?: string;
 }
 
 /**
@@ -165,7 +175,9 @@ export interface TxError {
 export function toTxError(error: unknown, fallbackCode = "TX_FAILED"): TxError {
   const kind = classifyTxError(error);
   if (error instanceof Error) {
-    const cause = error.cause as { code?: string | number; targetChainId?: number } | undefined;
+    const cause = error.cause as
+      | { code?: string | number; targetChainId?: number; txHash?: string }
+      | undefined;
     const causeCode = cause?.code;
     const ownCode = (error as { code?: string | number }).code;
     const code = causeCode ?? ownCode;
@@ -173,11 +185,14 @@ export function toTxError(error: unknown, fallbackCode = "TX_FAILED"): TxError {
     // then the error itself. Left undefined when neither carries it [R4].
     const targetChainId =
       cause?.targetChainId ?? (error as { targetChainId?: number }).targetChainId;
+    // POO-1037: same lookup for a hash that already reached a chain (a bridge still settling).
+    const txHash = cause?.txHash ?? (error as { txHash?: string }).txHash;
     return {
       code: code != null ? String(code) : fallbackCode,
       message: error.message,
       kind,
       ...(targetChainId != null ? { targetChainId } : {}),
+      ...(txHash != null ? { txHash } : {}),
     };
   }
   return { code: fallbackCode, message: String(error), kind };
