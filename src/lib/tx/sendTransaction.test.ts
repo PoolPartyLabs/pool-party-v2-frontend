@@ -59,6 +59,23 @@ describe("sendBuiltTransaction", () => {
     expect(params[0]).toMatchObject({ to: "0xc", from: "0xWALLET", value: "0xf4240" }); // 1_000_000
   });
 
+  // POO-1082, from a live console: the broadcast omitted `chainId`, so a Privy EMBEDDED wallet
+  // routed a Base transaction to `polygon-mainnet.rpc.privy.systems` and failed for "insufficient
+  // funds" against a POL balance, seconds after reporting the chain switch as successful. An
+  // injected wallet ignores the field, which is why this shipped and worked for a year.
+  it("[R1] states the target chain on the request, not just on the wallet", async () => {
+    const send = vi.fn((_params?: unknown) => "0xhash");
+    await sendBuiltTransaction(
+      provider(onTargetChain({ eth_sendTransaction: send })),
+      built,
+      "0xWALLET",
+      BASE,
+    );
+    const params = send.mock.calls[0]?.[0] as unknown as Array<{ chainId?: string }>;
+    // EIP-3326 hex, the same form `wallet_switchEthereumChain` takes.
+    expect(params[0]?.chainId).toBe(BASE_HEX);
+  });
+
   it("wraps a provider failure in a TransactionError", async () => {
     const p = provider(
       onTargetChain({

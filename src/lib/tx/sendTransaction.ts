@@ -8,8 +8,12 @@
  * pool-party-interface send path. The API builds the calldata; the client only signs + sends.
  *
  * POO-824 [R1/R3]: this is the single choke point every broadcast passes through, so the target
- * chain is asserted HERE — eth_sendTransaction carries no chainId (EIP-1193), the wallet always
- * broadcasts on its current chain, and an earlier `wallet.switchChain` can no-op or be undone
+ * chain is asserted HERE. POO-1082 corrects the original reasoning: EIP-1193 does not REQUIRE a
+ * chainId on `eth_sendTransaction`, but a wallet may honour one, and a Privy embedded wallet routes
+ * by it. Omitting it sent a Base transaction to Polygon's RPC while the switch reported success.
+ * The request now states the target chain AND the assertion still runs, because an injected wallet
+ * ignores the field and broadcasts on whatever chain it is pointed at. An earlier
+ * `wallet.switchChain` can also no-op or be undone
  * mid-flow (POO-350). The assertion reads the wallet's actual chain, attempts ONE corrective
  * switch on mismatch, re-verifies, and otherwise fails typed (WRONG_CHAIN) — never a silent
  * wrong-chain send. Every flow (and every future wired one) inherits this via the required
@@ -240,6 +244,14 @@ export async function sendBuiltTransaction(
           from: built.tx.from ?? from,
           data: built.tx.data,
           value: toHexValue(built.tx.value),
+          // POO-1082: the target chain, stated on the REQUEST rather than left to the wallet's
+          // current one. An injected wallet ignores this and broadcasts wherever it is pointed,
+          // which is why the header above assumed it was unnecessary. A Privy EMBEDDED wallet
+          // ROUTES BY IT: absent, it estimates and sends against its own configured RPC, so a
+          // Base transaction went to `polygon-mainnet.rpc.privy.systems` and failed for
+          // "insufficient funds" against a POL balance, having reported the chain switch as
+          // successful moments earlier. Stating it costs nothing and removes the ambiguity.
+          chainId: `0x${targetChainId.toString(16)}`,
         },
       ],
     });
