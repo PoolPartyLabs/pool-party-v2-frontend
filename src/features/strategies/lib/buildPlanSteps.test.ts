@@ -30,6 +30,7 @@ import {
   type PlanRailState,
   planRailSteps,
 } from "./buildPlanSteps";
+import { decodeErc20Approval, encodeErc20Approval } from "./fundingAuthorisation";
 
 const OWNER = "0xC3673ADc0000000000000000000000000000BEEF";
 const POLYGON = 137;
@@ -166,13 +167,25 @@ function quoteResponse(overrides: Partial<UniswapQuoteResponse> = {}): UniswapQu
   } as UniswapQuoteResponse;
 }
 
+/** The canonical Permit2 deployment, the spender an ERC-20 approval on this rail grants. */
+const PERMIT2 = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
+
+/**
+ * Uniswap's own permit windows: a 30-day allowance expiration and a 30-minute signature deadline,
+ * relative to now. Absolute timestamps would drift out of the authorisation guard's 90-day ceiling
+ * (PP-CORE-SEC-001) as the clock advances, which is exactly the bound a real permit has to respect.
+ */
+const NOW_S = Math.floor(Date.now() / 1000);
+const PERMIT_EXPIRATION = NOW_S + 30 * 24 * 60 * 60;
+const PERMIT_SIG_DEADLINE = NOW_S + 30 * 60;
+
 /** Permit2 typed data as the API returns it, with one uint deliberately a native bigint ([R3]). */
 function permitData(): NonNullable<UniswapQuoteResponse["permitData"]> {
   return {
     domain: {
       name: "Permit2",
       chainId: POLYGON,
-      verifyingContract: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+      verifyingContract: PERMIT2,
     },
     types: {
       PermitDetails: [
@@ -192,11 +205,11 @@ function permitData(): NonNullable<UniswapQuoteResponse["permitData"]> {
         token: WETH_POLYGON.address,
         // The exact shape POO-1001 shipped a fix for: a native bigint that JSON.stringify throws on.
         amount: BigInt("1461501637330902918203684832716283019655932542975"),
-        expiration: 1_800_000_000,
+        expiration: PERMIT_EXPIRATION,
         nonce: 0,
       },
       spender: "0x66a9893cC07D91D95644AEDD05D03f95e1dBA8Af",
-      sigDeadline: BigInt(1_800_000_000),
+      sigDeadline: BigInt(PERMIT_SIG_DEADLINE),
     },
   } as NonNullable<UniswapQuoteResponse["permitData"]>;
 }
@@ -218,9 +231,15 @@ interface HarnessOptions {
   balances?: Record<string, string[]>;
   /** The wallet's starting chain, as an eth_chainId hex quantity. */
   startChainHex?: string;
+  /**
+   * `true` synthesises the transaction the LIVE endpoint returns: an `approve` call on the token the
+   * request named, sized to the requested amount (or to zero, for a cancel). An explicit request is
+   * for the pathological fixtures. Realistic by default matters here because the rail now DECODES
+   * this calldata before broadcasting it, so a hand-waved `0x095ea7b3aaaa` is not a transaction.
+   */
   approval?: {
-    approval: UniswapTransactionRequest | null;
-    cancel?: UniswapTransactionRequest | null;
+    approval: UniswapTransactionRequest | null | true;
+    cancel?: UniswapTransactionRequest | null | true;
   };
   quote?: UniswapQuoteResponse;
   swap?: UniswapTransactionRequest;
@@ -263,12 +282,24 @@ function harness(options: HarnessOptions = {}): Harness {
     calls.push("quote");
     return { ok: true as const, quote: options.quote ?? quoteResponse() };
   });
-  const checkApproval = vi.fn(async () => {
+  /** `true` → the live shape: `approve(Permit2, amount)` on the token the request named. */
+  const asApproval = (
+    fixture: UniswapTransactionRequest | null | true | undefined,
+    input: { token: string; amount: string },
+    amount: bigint,
+  ): UniswapTransactionRequest | null =>
+    fixture === true
+      ? txRequest({ to: input.token, data: encodeErc20Approval(PERMIT2, amount) })
+      : (fixture ?? null);
+
+  const checkApproval = vi.fn(async (input: { token: string; amount: string }) => {
     calls.push("checkApproval");
     return {
       ok: true as const,
-      approval: options.approval ? options.approval.approval : null,
-      cancel: options.approval?.cancel ?? null,
+      approval: options.approval
+        ? asApproval(options.approval.approval, input, BigInt(input.amount))
+        : null,
+      cancel: asApproval(options.approval?.cancel, input, BigInt(0)),
     };
   });
   const buildSwapTx = vi.fn(async () => {
@@ -438,10 +469,14 @@ describe("buildPlanSteps — [R1] every leg broadcasts through executeBuiltTrans
 
 describe("buildPlanSteps — [R2] approval", () => {
   it("broadcasts the approval when /check_approval returns calldata", async () => {
-    const h = harness({ approval: { approval: txRequest({ data: "0x095ea7b3aaaa" }) } });
+    const h = harness({ approval: { approval: true } });
     const { outcomes } = await runRail(buildPlanSteps(planOf([swapLeg()]), h.deps));
     expect(outcomes[0]).toMatchObject({ key: "approve:swap-token-0", skipped: false });
-    expect(h.sent[0]?.data).toBe("0x095ea7b3aaaa");
+    expect(h.sent[0]?.to).toBe(WETH_POLYGON.address);
+    expect(decodeErc20Approval(h.sent[0]?.data as string)).toEqual({
+      spender: PERMIT2.toLowerCase(),
+      amount: BigInt("1000000000000000000"),
+    });
   });
 
   it("emits { skipped: true } and broadcasts nothing when the allowance already covers it", async () => {
@@ -452,23 +487,19 @@ describe("buildPlanSteps — [R2] approval", () => {
   });
 
   it("zeroes a USDT-class allowance first when the API returns a cancel transaction", async () => {
-    const h = harness({
-      approval: {
-        approval: txRequest({ data: "0x095ea7b3aaaa" }),
-        cancel: txRequest({ data: "0x095ea7b3bbbb" }),
-      },
-    });
+    const h = harness({ approval: { approval: true, cancel: true } });
     await runRail(buildPlanSteps(planOf([swapLeg()]), h.deps));
-    expect(h.sent.slice(0, 2).map((tx) => tx.data)).toEqual(["0x095ea7b3bbbb", "0x095ea7b3aaaa"]);
+    expect(h.sent.slice(0, 2).map((tx) => decodeErc20Approval(tx.data)?.amount)).toEqual([
+      BigInt(0),
+      BigInt("1000000000000000000"),
+    ]);
   });
 
   it("never spends gas zeroing an allowance when there is no approval to follow it", async () => {
-    const h = harness({
-      approval: { approval: null, cancel: txRequest({ data: "0x095ea7b3bbbb" }) },
-    });
+    const h = harness({ approval: { approval: null, cancel: true } });
     const { outcomes } = await runRail(buildPlanSteps(planOf([swapLeg()]), h.deps));
     expect(outcomes[0]).toEqual({ key: "approve:swap-token-0", skipped: true });
-    expect(h.sent.map((tx) => tx.data)).not.toContain("0x095ea7b3bbbb");
+    expect(h.sent.map((tx) => decodeErc20Approval(tx.data)?.amount)).not.toContain(BigInt(0));
   });
 
   it("sizes the approval to the leg's amount, never unbounded", async () => {
@@ -477,6 +508,53 @@ describe("buildPlanSteps — [R2] approval", () => {
     expect(h.checkApproval).toHaveBeenCalledWith(
       expect.objectContaining({ amount: "1000000000000000000", chainId: POLYGON }),
     );
+  });
+
+  // PP-CORE-SEC-001 (POO-1050 [R3]). Asking for a sized amount says nothing about what comes back:
+  // Uniswap's documented flow is a one-time INFINITE approval to Permit2, so this is the response the
+  // rail actually gets, not a hypothetical. The cap is what bounds the whole authorisation chain,
+  // since Permit2 can only move what the token's allowance to Permit2 permits.
+  it("[UF-28 R3] caps an unbounded approval to the plan before broadcasting it", async () => {
+    const unbounded = (BigInt(1) << BigInt(256)) - BigInt(1);
+    const h = harness({
+      approval: {
+        approval: txRequest({
+          to: WETH_POLYGON.address,
+          data: encodeErc20Approval(PERMIT2, unbounded),
+        }),
+      },
+    });
+    await runRail(buildPlanSteps(planOf([swapLeg()]), h.deps));
+    expect(decodeErc20Approval(h.sent[0]?.data as string)).toEqual({
+      spender: PERMIT2.toLowerCase(),
+      amount: BigInt("1000000000000000000"),
+    });
+  });
+
+  it("[UF-28 R3] refuses an approval aimed at a contract that is not the token being spent", async () => {
+    const h = harness({
+      approval: {
+        approval: txRequest({ data: encodeErc20Approval(PERMIT2, BigInt(1)) }), // `to` = the router
+      },
+    });
+    const steps = buildPlanSteps(planOf([swapLeg()]), h.deps);
+    await expect(runRail(steps)).rejects.toThrow(/not the token/i);
+    expect(h.sent).toHaveLength(0);
+  });
+
+  it("[UF-28 R3] refuses a 'cancel' that grants an allowance, before spending gas on it", async () => {
+    const h = harness({
+      approval: {
+        approval: true,
+        cancel: txRequest({
+          to: WETH_POLYGON.address,
+          data: encodeErc20Approval(PERMIT2, BigInt("999999999999999999999")),
+        }),
+      },
+    });
+    const steps = buildPlanSteps(planOf([swapLeg()]), h.deps);
+    await expect(runRail(steps)).rejects.toThrow(/zero/i);
+    expect(h.sent).toHaveLength(0);
   });
 });
 
@@ -512,7 +590,7 @@ describe("buildPlanSteps — [R3] Permit2 signature", () => {
     expect(bigintPaths(payload)).toEqual([]);
     const message = payload.message as { details: { amount: unknown }; sigDeadline: unknown };
     expect(message.details.amount).toBe("1461501637330902918203684832716283019655932542975");
-    expect(message.sigDeadline).toBe("1800000000");
+    expect(message.sigDeadline).toBe(String(PERMIT_SIG_DEADLINE));
   });
 
   it("resolves the primary type from the typed-data graph and keeps chainId numeric", async () => {
@@ -550,7 +628,9 @@ describe("buildPlanSteps — [R4] calldata is asserted before the broadcast", ()
   });
 
   it("refuses an approval whose calldata is empty", async () => {
-    const h = harness({ approval: { approval: txRequest({ data: "0x" }) } });
+    const h = harness({
+      approval: { approval: txRequest({ to: WETH_POLYGON.address, data: "0x" }) },
+    });
     const steps = buildPlanSteps(planOf([swapLeg()]), h.deps);
     await expect(runRail(steps)).rejects.toThrow(/calldata/i);
     expect(h.sent).toHaveLength(0);
@@ -605,7 +685,7 @@ describe("buildPlanSteps — [R6] a requoteAtExecution leg is sized from what ac
         [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["1000000", "2951000000"],
         [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: bridgeArrives(),
       },
-      approval: { approval: txRequest({ data: "0x095ea7b3aaaa" }) },
+      approval: { approval: true },
     });
     await runRail(buildPlanSteps(planOf([swapLeg(), bridgeLeg()]), h.deps));
     expect(h.checkApproval.mock.calls[1]?.[0]).toMatchObject({
