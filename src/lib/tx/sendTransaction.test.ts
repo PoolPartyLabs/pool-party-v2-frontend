@@ -10,6 +10,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { BuiltTx } from "./builtTxSchema";
 import {
+  BUILD_TARGET_MISMATCH_CODE,
   type Eip1193Provider,
   executeBuiltTransaction,
   executeBuiltTransactionWithLogs,
@@ -130,13 +131,15 @@ describe("sendBuiltTransaction — chain assertion (POO-824)", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  // POO-1026: typed BUILD_TARGET_MISMATCH, not WRONG_CHAIN — the wallet here is on the RIGHT chain,
+  // so this is a server/client build bug and must not render "switch networks in your wallet".
   it("[R4] refuses a tx built for a different chain than the flow's target, before any wallet call", async () => {
     const send = vi.fn(() => "0xhash");
     const chainRead = vi.fn(() => BASE_HEX);
     const p = provider({ eth_chainId: chainRead, eth_sendTransaction: send });
     const wrongBuild: BuiltTx = { ...built, chainId: 42161 };
     const error = await sendBuiltTransaction(p, wrongBuild, "0xW", BASE).catch((e) => e);
-    expect(error).toMatchObject({ cause: { code: WRONG_CHAIN_CODE } });
+    expect(error).toMatchObject({ cause: { code: BUILD_TARGET_MISMATCH_CODE } });
     expect(chainRead).not.toHaveBeenCalled();
     expect(send).not.toHaveBeenCalled();
   });

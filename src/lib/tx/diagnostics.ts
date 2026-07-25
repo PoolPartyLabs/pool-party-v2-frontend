@@ -63,9 +63,12 @@ const MESSAGE_PATTERN_KINDS: [RegExp, TxErrorKind][] = [
   [/deadline|transaction too old|signature has expired/i, "deadlineExpired"],
   [/insufficient funds|exceeds the balance|insufficient balance/i, "insufficientFunds"],
   [/unauthorized|not authorized|only pool manager/i, "unauthorized"],
-  // POO-1026: a wallet-side mismatch that carries no stable code. Deliberately LAST, so a declined
-  // switch prompt (which reads as a user rejection) keeps its own kind: the corrective switch is a
-  // wallet dialog, so that overlap is the common real-world case.
+  // POO-1026: a wallet-side mismatch that carries no stable code. Deliberately LAST so a message
+  // that ALSO reads as a rejection ("user rejected the network switch") keeps `userRejected`.
+  // This ordering does NOT govern the choke point's declined-switch path: `assertProviderOnChain`
+  // catches the wallet's 4001 and re-throws with the WRONG_CHAIN code, which is resolved above,
+  // before any message pattern runs — so a declined corrective switch classifies as `wrongChain`
+  // on purpose ("switch to Arbitrum" is that user's remedy). See `wrongChain.test.ts`.
   [/chain mismatch|wrong network|targets chain \d+|unrecognized chain/i, "wrongChain"],
 ];
 
