@@ -112,6 +112,21 @@ export const ANALYTICS_EVENTS = [
   "deposit_failed",
   "deposit_crypto_started",
   "deposit_crypto_completed",
+  // Universal Funding (epic POO-1022, POO-1048). The pre-flight provisioning funnel: can a user who
+  // holds the money somewhere else actually find it, choose it, and land it on the operation's chain.
+  // Emitted by PP-CORE-LIB-058; the ONE place the whole funnel is defined.
+  "funding_gate_triggered",
+  "funding_sources_listed",
+  "funding_sources_selected",
+  "funding_plan_quoted",
+  "funding_plan_started",
+  // POO-1048 [R3]: fired when a leg SETTLES, never when it broadcasts. A bridge leg has a hash
+  // minutes before it has arrived, and reporting the hash as the outcome is the same lie as firing a
+  // completion on a click.
+  "funding_leg_settled",
+  "funding_plan_completed",
+  "funding_plan_failed",
+  "funding_plan_abandoned",
   // Rewards
   "reward_program_viewed",
   "reward_referral_shared",
@@ -160,6 +175,30 @@ export interface AnalyticsParams {
   share_target?: "x" | "telegram" | "whatsapp" | "instagram" | "save";
   deposit_method?: "pix" | "card" | "applePay" | "bank" | "crypto";
   chain_id?: number;
+
+  // --- Universal Funding funnel (POO-1048 [R2]) --------------------------------------------------
+  // What a funding route IS, in the three dimensions the funnel is analysed on: its shape, its
+  // length and its size. Deliberately no wallet, no token address and no transaction hash: the
+  // question these answer is "do users complete cross-chain funding", not "who funded what".
+  /**
+   * The route's shape. `same-chain` a swap where the operation lives · `cross-chain` one bridge of
+   * an asset the user already holds · `decomposed` a swap feeding a bridge, which is what a
+   * different-token cross-chain pair becomes because the Trading API does not route it directly.
+   *
+   * First knowable at `funding_plan_quoted`: before a route is quoted there is no shape, and
+   * guessing one at the gate would report an intention as a fact.
+   */
+  route_shape?: "same-chain" | "cross-chain" | "decomposed";
+  /** Executable legs in the plan, never counting the `op` display anchor. */
+  leg_count?: number;
+  /** Mirrors `ProvisioningStepType` minus its `op` anchor (PP-CORE-LIB-016). */
+  leg_kind?: "buy-usdc" | "bridge" | "swap-gas" | "swap-token";
+  /** The leg's position in the route, 0-based. Which leg users lose money and patience on. */
+  leg_index?: number;
+  /** Funding sources listed or selected. Zero listed is the signal a funded wallet found nothing. */
+  source_count?: number;
+  /** Where a `funding_plan_abandoned` session was when the user left it. */
+  funding_exit?: "sources" | "plan" | "pending" | "settling" | "error";
   /** SHA-256 hash of the wallet address. PP-SECURITY: never the raw address. */
   user_id?: string;
   // App / navigation params.

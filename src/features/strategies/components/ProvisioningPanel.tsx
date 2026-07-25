@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-CMP-046
  * @name ProvisioningPanel
- * @implements-rules-version v8 (POO-1047 rules v1) · v7 (POO-1044 rules v1) · v6 (POO-1043 rules v1) · v5 (POO-1042 rules v1) · v4 (POO-1041 rules v1) · v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
+ * @implements-rules-version v9 (POO-1048 rules v1) · v8 (POO-1047 rules v1) · v7 (POO-1044 rules v1) · v6 (POO-1043 rules v1) · v5 (POO-1042 rules v1) · v4 (POO-1041 rules v1) · v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The INLINE pre-flight provisioning body (epic POO-411, POO-418/POO-419). When an op is short on
@@ -79,6 +79,16 @@
  * with the local mock rail, inline gas selector included [R6]/[R7]. A fixture plan carries no price
  * impact, so the gate is absent there [R3].
  *
+ * POO-1048 (hackathon POO-1022): the funnel. This panel IS the funding session, so it owns every
+ * event after the gate: sources listed and selected, the route quoted and started, each leg as it
+ * settles, and exactly one terminal outcome. The two emission rules are answers to defects this
+ * repository has already shipped. [R3] the completion comes from the flow-status effect, which runs
+ * only once every leg's `run()` has resolved, and never from the confirm click, which is what
+ * `deposit_completed` does and why the deposit funnel counts intent as revenue. [R4] every terminal
+ * failure emits, and a session that concluded neither way emits an abandonment on unmount, so the
+ * funnel arithmetic closes instead of leaving `deposit_failed`-shaped holes. A bridge still in flight
+ * at the poll ceiling is deliberately neither: the money is moving, we simply stopped watching.
+ *
  * PP-INTEGRATION-POINT: `context` is the live wallet read (PP-CORE-LIB-057) and `buildPlanSteps` is
  * the live Uniswap rail (PP-STR-LIB-017), both bound by `useProvisioningGate` and both absent in
  * mock mode.
@@ -92,6 +102,8 @@ import { ExplorerTxLink } from "@/components/ui/ExplorerTxLink";
 import { MockBadge } from "@/components/ui/MockBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Link } from "@/i18n/navigation";
+import type { FundingExit } from "@/lib/analytics/provisioningFunnel";
+import { useProvisioningFunnel } from "@/lib/analytics/provisioningFunnel";
 import { apiNetworkForChain } from "@/lib/chains/config";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "@/lib/provisioning";
 import { computeProvisioningNeed, planPriceImpactPct, spendableTokenUsd } from "@/lib/provisioning";
@@ -109,7 +121,12 @@ import { BRIDGE_PENDING_CODE } from "../lib/awaitBridgeSettlement";
 import { type PlanRailDeps, planRailSteps, type RequoteChange } from "../lib/buildPlanSteps";
 import { PriceImpactGate, usePriceImpactGate } from "./PriceImpactGate";
 import { FundingSourceSelector } from "./provisioning/FundingSourceSelector";
-import { fundingProgress, reachesChain, seedRequiredUsd } from "./provisioning/fundingSelection";
+import {
+  fundingProgress,
+  fundingSourceKey,
+  reachesChain,
+  seedRequiredUsd,
+} from "./provisioning/fundingSelection";
 import { GasAmountSelector } from "./provisioning/GasAmountSelector";
 import { selectPreset, validateGas } from "./provisioning/gasSelection";
 import { ProvisioningCostBreakdown } from "./provisioning/ProvisioningCostBreakdown";
@@ -256,6 +273,24 @@ export function ProvisioningPanel({
     decide: (approved: boolean) => void;
   } | null>(null);
   const requoteRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * POO-1048: the funding funnel. This panel is the session — it mounts only when a route is
+   * actually being funded — so it is the surface that arms the abandonment guard, and every terminal
+   * outcome below reports through it.
+   *
+   * `flow` comes from the journal's operation because that is the only description of the operation
+   * the panel is given. Five of the six modals do not thread `operation` yet (only `InvestModal`
+   * does), so those sessions report without it; `funding_gate_triggered` names the operation for all
+   * six regardless, since the gate hook always knows it.
+   */
+  const exitPhaseRef = useRef<FundingExit>(phase);
+  const funnel = useProvisioningFunnel({
+    ...(operation?.kind ? { flow: operation.kind } : {}),
+    chainId: input.targetChainId,
+    ...(operation?.strategyId ? { strategyId: operation.strategyId } : {}),
+    abandonExit: () => exitPhaseRef.current,
+  });
 
   // [R10] The real rail, bound to the connected wallet. Bound HERE rather than in the gate hook: this
   // panel is the only thing that signs, and it mounts only when provisioning actually runs, so an op
@@ -467,6 +502,17 @@ export function ProvisioningPanel({
   // reached the wallet is the more specific of the two.
   const errorBody = useTxErrorBody(txError ?? planTxError);
 
+  // POO-1048: what the user is actually looking at, for the abandonment report. Not simply `phase`,
+  // because two branches below render something else: a plan that came back short returns to the
+  // picker, and a planner failure renders the error state while the phase is still `plan`.
+  exitPhaseRef.current = planTxError ? "error" : quotedPlanFallsShort ? "sources" : phase;
+
+  // Read inside effects that must not re-run when they change: the plan changes on every re-quote
+  // and the active step on every leg, and neither is a reason to re-report an outcome.
+  const planRef = useRef(plan);
+  planRef.current = plan;
+  const activeKeyRef = useRef<string | undefined>(undefined);
+
   // POO-1043 [R8] The prompt interrupts a running route: nothing the user did put it on screen, so
   // nothing moves focus to it either, and a decision nobody is told about is not a decision. Focus
   // goes to the dialog itself rather than to its accept button, so the label and the body are
@@ -494,16 +540,69 @@ export function ProvisioningPanel({
       // would read as "you have funding in progress" for a route that finished. Deliberately not
       // done on the failure or `settling` branches below: that is exactly when the record is needed.
       railRef.current.closeJournal();
+      // POO-1048 [R3] The completion, from the only place that knows the route really landed: the
+      // flow reaches `success` when every step's `run()` has resolved. Never from the confirm click,
+      // which is where `deposit_completed` fires and why that funnel counts intent as revenue.
+      if (planRef.current) funnel.planCompleted(planRef.current);
       onDoneRef.current();
     } else if (flow.status === "error") {
       setTxError(flow.error);
-      setPhase(flow.error?.code === BRIDGE_PENDING_CODE ? "settling" : "error");
+      const stillSettling = flow.error?.code === BRIDGE_PENDING_CODE;
+      // POO-1048 [R4]: every terminal failure is reported, and a bridge still in flight at the poll
+      // ceiling is NOT one. Booking it as a failure would be the same category error as booking a
+      // click as a completion: the money is moving, we simply stopped watching, and the session is
+      // reported as abandoned-at-`settling` on the way out instead.
+      if (!stillSettling) {
+        funnel.planFailed(planRef.current, {
+          ...(flow.error?.code ? { errorCode: flow.error.code } : {}),
+          ...(activeKeyRef.current ? { stepKey: activeKeyRef.current } : {}),
+        });
+      }
+      setPhase(stillSettling ? "settling" : "error");
     }
-  }, [flow.status, flow.error, phase]);
+  }, [flow.status, flow.error, phase, funnel]);
+
+  // POO-1048 [R1] What the user was offered. The count and the total are the SPENDABLE ones, not the
+  // rendered rows: "we listed six tokens and none of them could reach the operation's chain" has to
+  // read as zero, because that is what the user experienced.
+  useEffect(() => {
+    if (!context || gasOnly) return;
+    funnel.sourcesListed({
+      count: spendableSources.length,
+      usd: fundingProgress(spendableSources, spendableSources.map(fundingSourceKey), 0).selectedUsd,
+    });
+  }, [context, gasOnly, spendableSources, funnel]);
+
+  // POO-1048 [R1] A quoted route, reported once per quote (a TTL re-quote is a new price, and the
+  // emitter keys on the quote's own timestamp).
+  useEffect(() => {
+    if (plan) funnel.planQuoted(plan);
+  }, [plan, funnel]);
+
+  // POO-1048 [R4] The planner itself failed, so no route was ever priced. Keyed on the raw error
+  // rather than on its classification: `toTxError` builds a new object every render, and an effect
+  // keyed on that would report the same failure on every one of them.
+  useEffect(() => {
+    if (!planError) return;
+    funnel.planFailed(planRef.current, {
+      errorCode: toTxError(planError, "PROVISIONING_FAILED").code,
+    });
+  }, [planError, funnel]);
+
+  // POO-1048 [R1]/[R3] A leg is reported when it is DONE, which the flow sets only after that step's
+  // `run()` has resolved — for a bridge leg, after arrival was detected on the destination chain.
+  // Not on broadcast: a hash exists minutes before the money does.
+  useEffect(() => {
+    if (!plan) return;
+    for (const [key, status] of Object.entries(statusByKey)) {
+      if (status === "done") funnel.legSettled(plan, key);
+    }
+  }, [plan, statusByKey, funnel]);
 
   // The plan step the flow is on, matched by KEY and never by index: the real rail expands one plan
   // step into an approval step plus the leg itself, so the two lists are not index-aligned.
   const activeStepKey = flowSteps[flow.activeStep]?.key;
+  activeKeyRef.current = activeStepKey;
   const activePlanStep = plan?.steps.find((step) => step.key === activeStepKey);
 
   /**
@@ -563,6 +662,12 @@ export function ProvisioningPanel({
             setPhase("sources");
           }}
           onConfirm={() => {
+            // POO-1048 [R1] What the user committed to, in count and in USD. The totals come from
+            // the same micro-dollar helper the CTA gates on, so the funnel and the screen agree.
+            funnel.sourcesSelected({
+              count: selected.length,
+              usd: fundingProgress(spendableSources, selected, 0).selectedUsd,
+            });
             setConfirmedSelection(selected);
             setPhase("plan");
           }}
@@ -772,7 +877,12 @@ export function ProvisioningPanel({
             // POO-1043 [R7] §3.7: the journal is minted when the user APPROVES the route, never when it is
             // quoted. A plan nobody accepted has no in-flight transactions to track, and a record of
             // one would surface as "you have funding in progress" for a route that never started.
-            if (plan) railRef.current.openJournal(plan);
+            // POO-1048 [R1]/[R3] The route STARTED. Deliberately the only funnel event this click
+            // emits: what happens next is settlement's to report.
+            if (plan) {
+              funnel.planStarted(plan);
+              railRef.current.openJournal(plan);
+            }
             setPhase("pending");
             void flow.run();
           }}

@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-HOK-017 (POO-419, POO-1042)
+ * @id PP-CORE-HOK-017 (POO-419, POO-1042, POO-1048)
  * @name useProvisioningGate
- * @implements-rules-version v2 (POO-1042 rules v1)
+ * @implements-rules-version v3 (POO-1048 rules v1) · v2 (POO-1042 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The host side of the pre-flight provisioning gate (epic POO-411, POO-419). Every op modal calls
@@ -50,6 +50,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useProvisioningFunnel } from "@/lib/analytics/provisioningFunnel";
 import { networkToChainId } from "@/lib/chains/config";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import type { ProvisioningNeedInput } from "@/lib/provisioning";
@@ -114,6 +115,13 @@ export function useProvisioningGate(options: ProvisioningGateOptions): Provision
 
   const flagOn = isEnabled("provisioning");
   const targetChainId = network ? networkToChainId(network) : undefined;
+  // POO-1048 [R1]: the gate is the funnel's first step, and this hook is the only place all six
+  // operations agree on. No `abandonExit`: this instance reports the gate firing and nothing else,
+  // so its unmount (every modal close, gated or not) can never invent an abandoned route.
+  const funnel = useProvisioningFunnel({
+    flow: op,
+    ...(targetChainId === undefined ? {} : { chainId: targetChainId }),
+  });
   // `evaluate` runs inside a click handler, so it must read the CURRENT context without being
   // re-created (and re-bound by every caller) each time one lands.
   const contextRef = useRef(context);
@@ -153,7 +161,11 @@ export function useProvisioningGate(options: ProvisioningGateOptions): Provision
       amount,
       slippagePct,
     });
-    if (!computeProvisioningNeed(next).needed) return false;
+    const need = computeProvisioningNeed(next);
+    if (!need.needed) return false;
+    // [R1] Reported here rather than in the panel: this is the moment the decision is MADE, and it
+    // is the only one that also covers an operation whose panel the user never sees.
+    funnel.gateTriggered(need.usdcShortfallUsd + need.gasShortfallUsd);
     setInput(next);
     return true;
   }

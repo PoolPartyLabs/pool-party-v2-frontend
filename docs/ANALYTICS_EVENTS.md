@@ -138,6 +138,28 @@ Convention: `<area>_<object>_<action>`, snake_case, max 40 chars. Transactional 
 | `deposit_crypto_started` | Crypto-transfer path opened | | PP-DEP-* |
 | `deposit_crypto_completed` | Crypto deposit credited | `token_symbol`, `token_amount`, `usd_value_at_time` | PP-DEP-* |
 
+## Universal Funding (provisioning funnel)
+
+Epic POO-1022 · issue POO-1048. Pay for any Pool Party operation with any token on any supported chain: the funnel measures whether a user who holds the money somewhere else can find it, choose it, and land it on the operation's chain. Every event is emitted by **PP-CORE-LIB-058** (`src/lib/analytics/provisioningFunnel.ts`), the single definition of the funnel; the gate hook and `ProvisioningPanel` only call it.
+
+**Shared params.** `flow` (the operation: invest / withdraw / collect / compound / move-range / close), `chain_id` (the chain the operation runs on), `strategy_id` where there is one. `route_shape` ∈ `same-chain` (a swap where the operation lives) · `cross-chain` (one bridge of an asset already held) · `decomposed` (a swap feeding a bridge, which is what a different-token cross-chain pair becomes, since the Trading API answers `404` to it). `leg_count` counts executable steps and never the `op` display anchor. `value` is USD with `currency: "USD"`.
+
+**Never in a payload:** a wallet address, a token address, or a transaction hash. `user_id` (server-HMAC, consent-gated) rides along exactly as on every other event.
+
+| Event | When it fires | Key params | Emitting artifact |
+|-------|---------------|-----------|-------------------|
+| `funding_gate_triggered` | The pre-flight gate decided the operation cannot proceed unfunded. Fired from the gate hook, so all six operations are covered even if the user never reaches the panel. `value` = what is MISSING (USDC + gas shortfall), not what the operation is worth. No `route_shape`: before a route is quoted there is no shape, and guessing one would report an intention as a fact. | `flow`, `chain_id`, `value` | PP-CORE-HOK-017 |
+| `funding_sources_listed` | The funding-source picker rendered. `source_count` / `value` are the SPENDABLE sources (routable to the operation's chain), so "six tokens listed, none of them can get there" reads as zero. Once per session. | `source_count`, `value` | PP-CORE-CMP-046 |
+| `funding_sources_selected` | The user committed to a selection. Totals come from the same micro-dollar helper the CTA gates on. | `source_count`, `value` | PP-CORE-CMP-046 |
+| `funding_plan_quoted` | A priced plan came back. Once per quote, keyed on the quote's own `quotedAt`, so a TTL re-quote is reported (it is a new price the user then approves) and a re-render is not. | `route_shape`, `leg_count`, `value` | PP-CORE-CMP-046 |
+| `funding_plan_started` | The user approved the route and execution began. **The only funnel event the confirm click emits.** | `route_shape`, `leg_count`, `value` | PP-CORE-CMP-046 |
+| `funding_leg_settled` | One leg SETTLED, i.e. its `run()` resolved, which for a bridge means arrival was detected on the destination chain. Never on broadcast: a hash exists minutes before the money does. Once per leg however many renders observe it. | `leg_kind`, `leg_index`, `route_shape`, `value` | PP-CORE-CMP-046 |
+| `funding_plan_completed` | Every leg settled. **[R3]** Fired from the flow-status effect, never from a click, and at most once per session. Still fires for a route that failed, was retried, and landed. | `route_shape`, `leg_count`, `value` | PP-CORE-CMP-046 |
+| `funding_plan_failed` | A terminal failure: a rejected or reverted leg, or a planner failure (a BLOCKED gas chain) that priced no route at all. **[R4]** Fires on EVERY terminal failure, so a retry that fails again is a second event. A bridge still in flight at the poll ceiling is deliberately NOT one. Typed `error_code` only, never error text. | `error_code`, `route_shape`, `leg_kind`, `leg_index` | PP-CORE-CMP-046 |
+| `funding_plan_abandoned` | The session ended with no outcome recorded: the user cancelled, closed the modal, or left a bridge still settling. Emitted on unmount, so `started = completed + failed + abandoned`. | `funding_exit` (`sources`/`plan`/`pending`/`settling`/`error`) | PP-CORE-CMP-046 |
+
+**Known baseline shift (POO-1025, documented here because it moves an existing funnel).** `strategy_invest_submitted` now fires for cross-chain-funded invests that previously early-returned to `/deposit` and never entered the invest funnel at all. The `started → submitted → completed` conversion baseline steps up and a cohort is reclassified from deposit-intent to invest-start. Inherent to the feature working; anything trending against the old baseline will show a discontinuity at the flag flip.
+
 ## Rewards
 
 | Event | When it fires | Key params | Emitting artifact |
