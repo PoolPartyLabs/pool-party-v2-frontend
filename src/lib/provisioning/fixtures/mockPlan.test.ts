@@ -1,16 +1,20 @@
 /**
- * @id PP-CORE-LIB-016 (POO-416)
- * @name mock provisioning planner tests
+ * @id PP-CORE-LIB-016 (POO-416, POO-1034)
+ * @name mock-mode plan fixture tests
  * @implements-rules-version v2
+ * @hackathon POO-1022 (Universal Funding)
  *
- * The deterministic mock planner returns a {@link ProvisioningPlan} with the exact same shape the BE
- * planner (POO-413) will return, so the FE builds against it in Phase 0. Covers the four canonical
- * scenarios (gas-only, usdc-only, usdc+bridge, usdc+bridge+gas) + the satisfied no-op, and the
- * slippage threading (POO-523 R2).
+ * Kept, and moved with the fixture it covers (POO-1034). The module is no longer "the planner", but
+ * it still backs mock mode, which is the repo default — so it is still production behaviour on the
+ * default path, and deleting its suite would be a real coverage regression dressed up as cleanup.
+ *
+ * The fixture returns a {@link ProvisioningPlan} in the same shape `buildPlan` does, so every render
+ * surface builds against one contract. Covers the four canonical scenarios (gas-only, usdc-only,
+ * usdc+bridge, usdc+bridge+gas), the satisfied no-op, and the slippage threading (POO-523 R2).
  */
 import { describe, expect, it } from "vitest";
-import { mockComputePlan, SCENARIOS } from "./mockPlanner";
-import type { ProvisioningStepType } from "./types";
+import type { ProvisioningStepType } from "../types";
+import { mockComputePlan, SCENARIOS } from "./mockPlan";
 
 const NOW = "2026-06-30T12:00:00.000Z";
 

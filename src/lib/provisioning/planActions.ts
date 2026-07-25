@@ -22,10 +22,18 @@
  * boundary. It returns `{ ok: true, plan } | { ok: false, code, message }`, so a failure code lands
  * where callers can act on it instead of surfacing as an opaque rejection.
  *
- * PP-INTEGRATION-POINT (POO-1034): the real planner lands here. It reads the funding inventory
- * (POO-1031), classifies gas feasibility per source chain (POO-1032), quotes each leg through the
- * Uniswap Trading API (`/quote`, then `/swap` same-chain or `POST /plan` cross-chain), and returns a
- * `ProvisioningPlan` in the shape pinned by `./types`.
+ * PP-INTEGRATION-POINT (POO-1042): the real planner EXISTS — `./buildPlan.ts` (POO-1034) decomposes
+ * a requirement into ordered legs and prices each one through `POST /quote`. What is still missing
+ * is the assembly in front of it, and it is deliberately not built here:
+ *
+ *   `ProvisioningNeedInput` is USD-only. It carries no token addresses and no base-unit amounts, so
+ *   it cannot drive a real quote. `buildPlan` needs the funding inventory (POO-1031, read
+ *   server-side from the SIWE wallet, never from a client-supplied address) and the per-chain gas
+ *   verdicts (POO-1032). Assembling those is the live gate's job (POO-1042), which also owns the
+ *   selection order this action would otherwise have to invent.
+ *
+ * Filling this in with a guessed input would produce a plan priced against amounts nobody chose,
+ * which is worse than the honest failure below.
  */
 "use server";
 
@@ -39,7 +47,8 @@ export type ProvisioningPlanResult =
 /**
  * Compute a provisioning plan server-side.
  *
- * Not wired yet: the real planner lands in POO-1034. Until then this returns a typed failure rather
+ * Not wired yet: `buildPlan` exists (POO-1034) but the input it needs is assembled by the live gate
+ * (POO-1042), see the PP-INTEGRATION-POINT above. Until then this returns a typed failure rather
  * than throwing, so the seam is exercisable end to end and a caller sees a real error contract
  * instead of an unhandled rejection.
  */
@@ -50,6 +59,6 @@ export async function computePlanAction(
   return {
     ok: false,
     code: "PROVISIONING_PLANNER_UNAVAILABLE",
-    message: "The provisioning planner is not wired yet (POO-1034).",
+    message: "The provisioning planner is not wired to live balances yet (POO-1042).",
   };
 }

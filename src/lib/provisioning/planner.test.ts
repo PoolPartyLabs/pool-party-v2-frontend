@@ -7,7 +7,7 @@
  * planner's output. The real branch (POO-413) is exercised by the integration wiring, not here.
  */
 import { describe, expect, it } from "vitest";
-import { SCENARIOS } from "./mockPlanner";
+import { SCENARIOS } from "./fixtures/mockPlan";
 import { computePlan } from "./planner";
 
 describe("computePlan (mock mode)", () => {

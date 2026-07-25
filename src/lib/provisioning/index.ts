@@ -21,6 +21,10 @@ export {
   sizeOnRampUsd,
   spendableTokenUsd,
 } from "./computeNeed";
+// PP-MOCK: the deterministic mock-mode fixture, retired as "the planner" by POO-1034. The real one
+// is `buildPlan.ts` and is `server-only`, so it is deliberately NOT re-exported here: this barrel is
+// the client surface (`serverBoundary.test.ts`), and a plan reaches a browser through `computePlan`.
+export { mockComputePlan, SCENARIOS } from "./fixtures/mockPlan";
 export type {
   GasCandidateChain,
   GasEscape,
@@ -40,11 +44,13 @@ export {
   quoteGasUsd,
   withGasHeadroom,
 } from "./gasFeasibility";
-export { mockComputePlan, SCENARIOS } from "./mockPlanner";
 export { computePlan } from "./planner";
 export type {
   ChainBalancesUsd,
   GasChoice,
+  ProvisioningLeg,
+  ProvisioningLegKind,
+  ProvisioningLegToken,
   ProvisioningNeed,
   ProvisioningNeedInput,
   ProvisioningPlan,
