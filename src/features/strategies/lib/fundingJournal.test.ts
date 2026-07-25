@@ -174,7 +174,7 @@ describe("[R2] write ordering: the record lands before the wallet is ever prompt
 });
 
 describe("[R3] the store is untrusted input", () => {
-  it("discards the WHOLE store on a parse failure rather than salvaging part of it", () => {
+  it("keeps nothing when nothing in the store parses", () => {
     window.localStorage.setItem(FUNDING_JOURNAL_KEY, "{not json at all");
     expect(readJournals()).toEqual([]);
 
@@ -346,5 +346,72 @@ describe("[R7] two tabs, one journal: a lease, not a lock", () => {
     releaseLease(journal.journalId, "tab-b");
 
     expect(claimLease(journal.journalId, "tab-b")).toBe(false);
+  });
+});
+
+// POO-1075 — the store used to validate as ONE object, so a single unreadable journal discarded
+// every sibling, including live in-flight ones belonging to other operations. The concrete way it
+// bites: the leg-kind schema widened, then the frontend rolls back, and the older build cannot read
+// the newer record. Losing a journal does not lose money (the transactions are on-chain either way),
+// it loses the app's memory of which bridge is still in flight, leaving the user to reconcile by
+// hand from an explorer. §3.7's "no partial trust" is preserved: a journal is still validated whole
+// or dropped whole; only the blast radius is contained.
+describe("[R3] one unreadable journal does not take its siblings down", () => {
+  const goodJournal = (journalId: string) => ({
+    journalId,
+    wallet: WALLET.toLowerCase(),
+    createdAt: T0,
+    updatedAt: T0,
+    operation: { kind: "invest", targetChainId: ARBITRUM },
+    legs: [
+      {
+        index: 0,
+        kind: "bridge",
+        chainId: POLYGON,
+        tokenIn: USDC_POLYGON,
+        tokenOut: USDC_ARBITRUM,
+        destChainId: ARBITRUM,
+        amountIn: "3000000000",
+        minAmountOut: "2996000000",
+        status: "broadcast",
+      },
+    ],
+  });
+
+  it("salvages the readable journals and drops only the bad one", () => {
+    window.localStorage.setItem(
+      FUNDING_JOURNAL_KEY,
+      JSON.stringify({
+        version: 1,
+        journals: [
+          goodJournal("keeps-me"),
+          // A leg kind this build's enum does not contain. `bridge-gas` would NOT do here: it is
+          // valid in this build, which is the whole asymmetry. This stands in for what a rolled-back
+          // build sees when a newer one has written a kind it never knew.
+          {
+            ...goodJournal("unreadable"),
+            legs: [{ ...goodJournal("x").legs[0], kind: "kind-from-a-newer-build" }],
+          },
+          goodJournal("keeps-me-too"),
+        ],
+      }),
+    );
+
+    expect(readJournals().map((journal) => journal.journalId)).toEqual([
+      "keeps-me",
+      "keeps-me-too",
+    ]);
+  });
+
+  it("still refuses a whole store written by a FUTURE version, salvage included", () => {
+    // Salvage applies within a version, never across one: a future build may mean something else by
+    // the same fields, and a record that happens to satisfy today's schema is not thereby one today's
+    // build understands.
+    window.localStorage.setItem(
+      FUNDING_JOURNAL_KEY,
+      JSON.stringify({ version: 2, journals: [goodJournal("from-the-future")] }),
+    );
+
+    expect(readJournals()).toEqual([]);
   });
 });

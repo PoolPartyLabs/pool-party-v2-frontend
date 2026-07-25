@@ -195,13 +195,49 @@ function storage(): Storage | null {
   }
 }
 
-/** Read + validate the raw store. Any failure yields an empty store (§3.7): no partial trust. */
+/**
+ * Read + validate the raw store, salvaging per journal.
+ *
+ * §3.7's "no partial trust" is about a RECORD: a journal that does not fully validate is never
+ * half-believed, because a half-read recovery record is worse than none. That still holds below,
+ * every journal is validated whole or dropped whole.
+ *
+ * What changed is the blast radius. Validating the store as one object meant a single unreadable
+ * journal discarded EVERY sibling, including live in-flight ones belonging to other operations. That
+ * is not more trustworthy, only lossier: the sibling records were never in question. The concrete
+ * way it bites is a schema that widened (POO-1075 added `bridge-gas`) followed by a frontend
+ * rollback, where the older build cannot read the newer record and would take every concurrent
+ * operation's recovery data down with it.
+ *
+ * Losing a journal does not lose money, the transactions are on-chain either way. It loses the app's
+ * MEMORY of them: which bridge is still in flight, what has already been broadcast, what may resume.
+ * The user is left reconciling by hand from an explorer, which is exactly the state POO-1055 exists
+ * to prevent, so containing it to the one bad record is worth the few lines.
+ */
 function loadStore(): FundingJournal[] {
   const raw = storage()?.getItem(FUNDING_JOURNAL_KEY);
   if (!raw) return [];
   try {
-    const parsed = fundingJournalStoreSchema.safeParse(JSON.parse(raw));
-    return parsed.success ? parsed.data.journals : [];
+    const decoded: unknown = JSON.parse(raw);
+    const whole = fundingJournalStoreSchema.safeParse(decoded);
+    // The overwhelmingly common path: everything parses, nothing to salvage.
+    if (whole.success) return whole.data.journals;
+
+    // Something in there does not fit the schema. Keep the journals that do.
+    if (typeof decoded !== "object" || decoded === null) return [];
+    const envelope = decoded as { version?: unknown; journals?: unknown };
+    // The version gate is NOT salvageable. A store written by a future build may mean something
+    // different by the same fields, and a record that merely happens to satisfy today's schema is
+    // not thereby a record today's build understands. Salvage applies WITHIN a version, never across
+    // one: without this check, per-entry rescue would silently start honouring future records that
+    // the all-or-nothing read correctly refused.
+    if (envelope.version !== FUNDING_JOURNAL_VERSION) return [];
+    const journals = envelope.journals;
+    if (!Array.isArray(journals)) return [];
+    return journals.flatMap((entry) => {
+      const one = fundingJournalSchema.safeParse(entry);
+      return one.success ? [one.data] : [];
+    });
   } catch {
     return [];
   }
