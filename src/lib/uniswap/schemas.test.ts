@@ -177,6 +177,31 @@ describe("Uniswap schemas (POO-1028)", () => {
     });
   });
 
+  // Top-level passthrough is not enough. The quote is forwarded VERBATIM, so a nested object that is
+  // not passthrough is just as much a hole: an unknown key on quote.input would be stripped here and
+  // surface as a confusing upstream 400 from /swap that looks like our bug.
+  it("preserves unknown NESTED quote fields for verbatim forwarding", () => {
+    const parsed = quoteResponseSchema.safeParse({
+      routing: "CLASSIC",
+      quote: {
+        input: {
+          amount: "1000000",
+          token: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+          futureSideField: { nested: true },
+        },
+        output: { amount: "999000", token: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831" },
+        gasInfo: { gasFee: "210000", futureGasField: "keep-me" },
+      },
+      permitData: null,
+    });
+    expect(parsed.success).toBe(true);
+    const quote = parsed.success ? (parsed.data.quote as Record<string, unknown>) : {};
+    expect((quote.input as Record<string, unknown>).futureSideField).toEqual({ nested: true });
+    // The known siblings still parse, so this is preservation and not a dropped validation.
+    expect((quote.input as Record<string, unknown>).amount).toBe("1000000");
+    expect((quote.gasInfo as Record<string, unknown>).futureGasField).toBe("keep-me");
+  });
+
   // No approval calldata means the allowance already covers it, which is a success not a failure.
   it("parses a check_approval response with no approval required", () => {
     const parsed = checkApprovalResponseSchema.safeParse({ requestId: "r1" });

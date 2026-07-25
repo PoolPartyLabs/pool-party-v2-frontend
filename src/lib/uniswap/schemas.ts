@@ -87,7 +87,12 @@ export type UniswapTransactionRequest = z.infer<typeof transactionRequestSchema>
 
 /**
  * Gas information off a quote. Display-only and therefore TOLERANT ([R7]): a malformed block
- * degrades to `undefined` and hides a row rather than rejecting a perfectly good quote.
+ * degrades to `{}` and hides a row rather than rejecting a perfectly good quote.
+ *
+ * `passthrough` for the forwarding reason documented on {@link quoteBodySchema}: this block rides
+ * INSIDE the quote object we hand straight back to `/swap` and `/plan`, so its unknown keys have to
+ * survive too. (Note the `catch` still replaces the whole block when it is not object-shaped at all,
+ * which is the deliberate [R7] tolerance, not a stripping bug.)
  *
  * This is what finally gives the provisioning gate a real pre-build gas figure. It previously used a
  * hardcoded `0.5` (`mapManagerStrategyDetail.ts`), because the only genuine number existed *after* a
@@ -100,18 +105,32 @@ export const gasInfoSchema = z
     gasUseEstimate: z.string().optional(),
   })
   .partial()
+  .passthrough()
   .catch({});
 
-/** One side of a quote. */
-const quoteSideSchema = z.object({
-  amount: amount,
-  token: z.string(),
-});
+/**
+ * One side of a quote. `passthrough` for the same forwarding reason as {@link quoteBodySchema}: this
+ * object is nested inside the quote we forward VERBATIM, so stripping its unknown keys drops them
+ * from the payload just as surely as stripping a top-level one.
+ */
+const quoteSideSchema = z
+  .object({
+    amount: amount,
+    token: z.string(),
+  })
+  .passthrough();
 
 /**
  * The quote body. Kept `passthrough` on purpose: `/swap` and `/plan` take the quote object back
  * VERBATIM, so stripping unknown keys would silently drop fields the API needs and produce a
  * confusing upstream 400. We validate what we read and forward the rest untouched.
+ *
+ * **This applies to every NESTED object reachable from the quote too**, not just its top level.
+ * `uniswapFetch` returns `parsed.data`, so any object in here that is not `passthrough` is a hole
+ * the forwarded payload leaks through: `input`, `output` and `gasInfo` are therefore passthrough as
+ * well. The one place we deliberately do NOT do this is {@link transactionRequestSchema}, which is
+ * broadcast rather than forwarded, and where an unknown key riding into something the user signs is
+ * the risk we are guarding against.
  */
 export const quoteBodySchema = z
   .object({
@@ -129,7 +148,13 @@ export const quoteBodySchema = z
   })
   .passthrough();
 
-/** EIP-712 permit data returned alongside a quote. Forwarded verbatim to `/swap`. */
+/**
+ * EIP-712 permit data returned alongside a quote. Forwarded verbatim to `/swap`, and already leak
+ * proof under the nested rule above: `passthrough` covers its own unknown keys, and `domain`,
+ * `types` and `values` are open records rather than fixed objects, so everything inside them
+ * survives untouched. That matters more here than anywhere else, since these are the exact bytes the
+ * user signs.
+ */
 export const permitDataSchema = z
   .object({
     domain: z.record(z.unknown()),
