@@ -157,6 +157,21 @@ export interface BuildPlanRequest {
    */
   sources: readonly FundingSource[];
   /**
+   * EVERY holding the wallet has, not just the chosen ones. Used ONLY to source gas ([R1]).
+   *
+   * Gas is a precondition, not funding. `sources` is what the user elected to SPEND on the
+   * operation, and making a gas donor conditional on that selection asks them to pick something the
+   * rail exists to decide: a user who selects their USDC and leaves their ETH alone has not declined
+   * to pay for transactions, they have said which money funds the position.
+   *
+   * This is the same split the gas TOP-UP already uses. `classifyGasFeasibility` slices a `swap-gas`
+   * leg out of a holding it picks from the full inventory (`gateContext.gasSources`), never from the
+   * selection, so the gas bridge reading the selection was the odd one out.
+   *
+   * Falls back to {@link sources} when absent, which keeps every existing caller and fixture honest.
+   */
+  inventory?: readonly FundingSource[];
+  /**
    * POO-1032's verdict per candidate source chain, keyed by chain id ([R3]). A chain with no entry
    * is treated as unusable: a missing classification is missing information, and assuming OK is how
    * a plan's first broadcast fails for want of gas.
@@ -730,7 +745,8 @@ export async function buildPlan(
       targetChainId: request.targetChainId,
       targetGas,
       gasByChain: request.gasByChain,
-      sources: request.sources,
+      // The FULL inventory: a donor the user did not elect to spend is still a donor ([R1]).
+      sources: request.inventory ?? request.sources,
       slippagePct,
     });
     if (!gasBridge) {
@@ -769,7 +785,7 @@ export async function buildPlan(
   // before advancing, which is what actually stops a target-chain broadcast the gas has not arrived
   // for. Its USD is derived from the donor's real holding like every other leg's.
   if (gasBridge) {
-    const donor = request.sources.find(
+    const donor = (request.inventory ?? request.sources).find(
       (source) =>
         source.chainId === gasBridge.leg.chainId &&
         sameAddress(source.address, NATIVE_TOKEN_ADDRESS),

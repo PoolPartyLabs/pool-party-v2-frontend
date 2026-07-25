@@ -1384,6 +1384,39 @@ describe("buildPlan: bridging gas into a BLOCKED target chain [R1]", () => {
     }
   });
 
+  // The real report: USDC and ETH on Base, investing in an Arbitrum strategy with zero of either
+  // there. The user selects their USDC to fund the position and leaves the ETH alone, which is the
+  // obvious thing to do, and the gas bridge then found no donor because it searched the SELECTION.
+  // Gas is a precondition, not a spend choice: choosing which money funds the position is not
+  // declining to pay for transactions. The gas TOP-UP already drew from the full inventory.
+  it("[R1] finds a donor the user did not select to spend", async () => {
+    route(USDC_BASE, BASE, USDC_ARBITRUM, ARBITRUM, {
+      routing: "BRIDGE",
+      ...BRIDGE_RATE,
+      gasFeeUSD: "0.01",
+      estimatedFillTimeMs: 1_000,
+    });
+
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        // Only the USDC was elected to fund the position...
+        sources: [USDC_ON_BASE],
+        // ...but the wallet also holds ETH on Base, and the rail can see it.
+        inventory: [USDC_ON_BASE, ETH_ON_BASE],
+        gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: blocked(ARBITRUM) },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // Bridge the gas, then bridge the USDC, then run the operation.
+    expect(stepTypes(result.plan.steps)).toEqual(["bridge-gas", "bridge", "op"]);
+  });
+
   it("keeps refusing when no chain holds native at all", async () => {
     const result = await buildPlan(
       {
