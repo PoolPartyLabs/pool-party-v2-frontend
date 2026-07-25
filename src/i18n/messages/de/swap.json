@@ -10,7 +10,7 @@
   },
   "continue": "Weiter",
   "routingNote": "Wir finden den günstigsten Weg, Ihr Guthaben auf {network} zu bringen, ob es umgetauscht, verschoben oder beides werden muss.",
-  "walletUnavailable": "Wir konnten Ihre Guthaben gerade nicht auslesen. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+  "walletUnavailable": "Wir konnten Ihr Guthaben gerade nicht auslesen. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
   "plan": {
     "subtitle": "{amount} werden auf {network} verfügbar gemacht."
   },

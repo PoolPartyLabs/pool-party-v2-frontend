@@ -107,7 +107,7 @@ describe("ProvisioningPanel", () => {
       />,
     );
     expect(await screen.findByRole("heading", { name: "One quick step" })).toBeInTheDocument();
-    expect(screen.getByText("Add gas")).toBeInTheDocument();
+    expect(screen.getByText("Cover fees")).toBeInTheDocument();
   });
 
   it("runs the execution then resumes the op (onDone) on success", async () => {

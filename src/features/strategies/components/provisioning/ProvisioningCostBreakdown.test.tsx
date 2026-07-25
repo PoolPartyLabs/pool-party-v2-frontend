@@ -257,7 +257,7 @@ describe("per-leg gas [R1][R8]", () => {
     render(GAS_TOP_UP_PLAN);
     await showMore(user);
 
-    expect(rowValue("Step 1: Add gas on Polygon")).toBe("$0.0042");
+    expect(rowValue("Step 1: Cover fees on Polygon")).toBe("$0.0042");
   });
 });
 

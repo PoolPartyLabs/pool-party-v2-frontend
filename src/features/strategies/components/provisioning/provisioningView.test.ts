@@ -275,7 +275,7 @@ describe("buildPlanView — real steps (POO-1041)", () => {
     expect(mockBridge?.amountUsd).toBeUndefined();
   });
 
-  // [R3] The `swapToken` label reads "Swap to {token}" and the mapper never supplied the value, so
+  // [R3] The `swapToken` label reads "Convert to {token}" and the mapper never supplied the value, so
   // a real swap step rendered its raw key. The row carries the interpolation value now.
   it("[R5] carries the swap row's token as an interpolation value, not resolved copy", () => {
     const swapRow = buildPlanView(plan).rows.find((row) => row.type === "swap-token");

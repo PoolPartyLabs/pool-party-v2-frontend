@@ -362,8 +362,8 @@
         "insufficientFunds": "Je wallet heeft niet genoeg saldo om deze transactie en de netwerkkosten te dekken.",
         "userRejected": "Je hebt het verzoek in je wallet geweigerd. Er zijn geen middelen verplaatst.",
         "unauthorized": "Deze wallet mag deze bewerking niet uitvoeren.",
-        "wrongChain": "Je wallet staat op een ander netwerk. Schakel over naar {network} en probeer het opnieuw.",
-        "wrongChainUnknown": "Je wallet staat op een ander netwerk. Wissel van netwerk in je wallet en probeer het opnieuw.",
+        "wrongChain": "Uw wallet staat op een ander netwerk. Schakel over naar {network} en probeer het opnieuw.",
+        "wrongChainUnknown": "Uw wallet staat op een ander netwerk. Wissel van netwerk in uw wallet en probeer het opnieuw.",
         "gasBlocked": "Er staat niets op {network} om de netwerkkosten te dekken, dus dit kan nog niet. Koop wat crypto op {network} of haal wat over uit een ander netwerk.",
         "gasBlockedUnknown": "Er staat niets op dit netwerk om de netwerkkosten te dekken, dus dit kan nog niet. Koop daar wat crypto of haal wat over uit een ander netwerk."
       }
@@ -437,7 +437,7 @@
     "gasVerdict": {
       "ok": "Klaar voor gebruik",
       "topUp": "We zetten een klein deel {token} om in {symbol} om de netwerkkosten te dekken.",
-      "noNative": "Je hebt geen {symbol} op {network}. Elke transactie daar heeft wat {symbol} nodig voor de netwerkkosten, dus dit geld kan nog niet weg.",
+      "noNative": "U hebt geen {symbol} op {network}. Elke transactie daar heeft wat {symbol} nodig voor de netwerkkosten, dus dit geld kan nog niet weg.",
       "shortNoSource": "Er is niet genoeg {symbol} op {network} voor de netwerkkosten, en er is hier niets dat we kunnen omzetten.",
       "escape": {
         "bridgeNative": "Stuur wat {symbol} vanaf een ander netwerk",
@@ -451,7 +451,7 @@
       "custom": "Aangepast",
       "customPlaceholder": "Bedrag",
       "customAria": "Aangepast bedrag aan netwerkkosten",
-      "conversionNote": "We zetten een klein deel van wat je al hebt om in netwerkkosten. Geen kaart nodig.",
+      "conversionNote": "We zetten een klein deel van wat u al hebt om, zodat de netwerkkosten gedekt zijn. Geen kaart nodig.",
       "cta": "{amount} netwerkkosten toevoegen",
       "dismiss": "Niet nu",
       "signStep": "Netwerkkosten opladen",
@@ -473,7 +473,7 @@
     },
     "requote": {
       "title": "De prijs is veranderd",
-      "body": "Deze stap levert nu ongeveer {percent} minder op dan de prijs die je hebt goedgekeurd. Er is nog niets verstuurd, dus je kunt de nieuwe prijs accepteren of hier stoppen.",
+      "body": "Deze stap levert nu ongeveer {percent} minder op dan de prijs die u hebt goedgekeurd. Er is nog niets verstuurd, dus u kunt de nieuwe prijs accepteren of hier stoppen.",
       "accept": "Nieuwe prijs accepteren",
       "decline": "Hier stoppen"
     },
@@ -487,7 +487,7 @@
     "captions": {
       "buyUsdc": "Kaart of lokale overboeking",
       "bridge": "Geld naar het juiste netwerk verplaatsen",
-      "swapGas": "Een klein deel van wat je hebt, omgezet om de netwerkkosten te dekken",
+      "swapGas": "Een klein deel van wat u hebt, omgezet om de netwerkkosten te dekken",
       "op": "Uw oorspronkelijke actie",
       "approve": "Een eenmalige toestemming. Er wordt nog niets verplaatst."
     },
@@ -498,11 +498,11 @@
       "pending": "In behandeling"
     },
     "bridge": {
-      "etaSeconds": "Dit duurt meestal ongeveer {seconds, plural, one {# seconde} other {# seconden}}. We gaan verder zodra je geld binnen is.",
-      "etaMinutes": "Dit duurt meestal ongeveer {minutes, plural, one {# minuut} other {# minuten}}. We gaan verder zodra je geld binnen is.",
-      "etaUnknown": "Deze stap duurt langer dan de andere. We gaan verder zodra je geld binnen is.",
+      "etaSeconds": "Dit duurt meestal ongeveer {seconds, plural, one {# seconde} other {# seconden}}. We gaan verder zodra uw geld binnen is.",
+      "etaMinutes": "Dit duurt meestal ongeveer {minutes, plural, one {# minuut} other {# minuten}}. We gaan verder zodra uw geld binnen is.",
+      "etaUnknown": "Deze stap duurt langer dan de andere. We gaan verder zodra uw geld binnen is.",
       "settlingTitle": "Nog onderweg",
-      "settlingBody": "Je geld is nog onderweg tussen netwerken. Er gaat niets verloren. Je kunt dit sluiten en de overboeking bekijken, en we pakken het op waar het gebleven was.",
+      "settlingBody": "Uw geld is nog onderweg tussen netwerken. Er gaat niets verloren. U kunt dit sluiten en de overboeking bekijken, en we pakken het op waar het gebleven was.",
       "settlingClose": "Sluiten"
     },
     "opLabel": {
@@ -514,13 +514,13 @@
       "close": "{strategy} sluiten"
     },
     "costs": {
-      "youPay": "Je betaalt",
+      "youPay": "U betaalt",
       "amountNeeded": "Benodigd bedrag",
       "fee": "Kosten",
       "priceBuffer": "Prijsbuffer",
-      "priceBufferHint": "Apart gezet voor het geval de prijs beweegt terwijl je geld onderweg is. Wat overblijft, blijft van jou.",
+      "priceBufferHint": "Apart gezet voor het geval de prijs beweegt terwijl uw geld onderweg is. Wat overblijft, blijft van u.",
       "conversionCost": "Omwisselkosten",
-      "conversionCostHint": "Zit al in het bedrag dat je kreeg aangeboden en komt er dus niet bovenop.",
+      "conversionCostHint": "Zit al in het bedrag dat u kreeg aangeboden en komt er dus niet bovenop.",
       "gasByStep": "Netwerkkosten per stap",
       "gasByStepHint": "Wat elke stap kost op zijn eigen netwerk, met volledige precisie. Een specificatie, geen optelsom: het netwerkbedrag hierboven is afgerond op centen.",
       "itemized": "Gespecificeerd",
@@ -529,7 +529,7 @@
       "updating": "Prijzen worden bijgewerkt",
       "leg": {
         "swapToken": "Omwisselen op {network}",
-        "swapGas": "Gas toevoegen op {network}",
+        "swapGas": "Netwerkkosten dekken op {network}",
         "bridge": "Verplaatsen vanaf {network}"
       },
       "buyCrypto": {
@@ -540,7 +540,7 @@
     "fundingSources": {
       "title": "Wat wilt u gebruiken?",
       "subtitle": "Kies wat u heeft. Wij regelen hoe het op de juiste plek komt.",
-      "listLabel": "Uw tegoed",
+      "listLabel": "Uw geld",
       "rowLabel": "{symbol} op {network}, {amount}, waard {usd}",
       "selected": "Geselecteerd: {amount}",
       "required": "Nodig: {amount}",
@@ -552,7 +552,7 @@
       "cta": "Doorgaan",
       "step": "Stap {index}",
       "unblock": "Om dit geld te gebruiken:",
-      "unreachable": "We kunnen {symbol} nog niet naar dit netwerk brengen, dus het is hier niet bruikbaar.",
+      "unreachable": "We kunnen {symbol} nog niet naar dit netwerk brengen. Kies iets anders uit de lijst.",
       "badge": {
         "ok": "Klaar",
         "topUp": "Heeft een aanvulling nodig",
@@ -562,31 +562,31 @@
     "recovery": {
       "title": "Er is nog geld onderweg",
       "progress": "Stap {index} van {total}",
-      "checking": "We kijken waar je geld is gebleven",
+      "checking": "We kijken waar uw geld is gebleven",
       "recheck": "Opnieuw controleren",
-      "resume": "Verdergaan waar je gebleven was",
+      "resume": "Verdergaan waar u gebleven was",
       "abandon": "Dit niet meer tonen",
-      "viewAccount": "Bekijk je wallet-activiteit",
+      "viewAccount": "Bekijk uw wallet-activiteit",
       "op": {
         "invest": "Geld toevoegen aan een strategie",
         "withdraw": "Geld uit een strategie halen",
-        "collect": "Je opbrengsten ophalen",
-        "compound": "Je opbrengsten herinvesteren",
+        "collect": "Uw opbrengsten ophalen",
+        "compound": "Uw opbrengsten herinvesteren",
         "moveRange": "Een strategie aanpassen",
-        "close": "Je positie sluiten"
+        "close": "Uw positie sluiten"
       },
       "leg": {
         "settled": "Klaar.",
         "pending": "Verzonden. We wachten op de bevestiging en sturen het niet nog een keer.",
-        "reverted": "Deze stap is niet doorgegaan, je geld is gebleven waar het was.",
-        "absent": "Er is niets verzonden, je kunt deze stap veilig opnieuw starten.",
-        "unknown": "We kunnen niet vaststellen of deze stap is doorgegaan, dus we sturen hem niet nog een keer. Controleer de activiteit van je wallet voordat je verdergaat."
+        "reverted": "Deze stap is niet doorgegaan, uw geld is gebleven waar het was.",
+        "absent": "Er is niets verzonden, u kunt deze stap veilig opnieuw starten.",
+        "unknown": "We kunnen niet vaststellen of deze stap is doorgegaan, dus we sturen hem niet nog een keer. Controleer de activiteit van uw wallet voordat u verdergaat."
       },
       "status": {
-        "complete": "Alles is gelukt. Je kunt verder.",
-        "wait": "Je geld is onderweg. Dit kan een paar minuten duren.",
+        "complete": "Alles is gelukt. U kunt verder.",
+        "wait": "Uw geld is onderweg. Dit kan een paar minuten duren.",
         "rederive": "We kunnen verder waar het gestopt is.",
-        "ask": "We willen dat je eerst iets controleert voordat we verdergaan."
+        "ask": "We willen dat u eerst iets controleert voordat we verdergaan."
       }
     }
   }

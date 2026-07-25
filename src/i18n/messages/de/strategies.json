@@ -451,7 +451,7 @@
       "custom": "Benutzerdefiniert",
       "customPlaceholder": "Betrag",
       "customAria": "Benutzerdefinierter Gebührenbetrag",
-      "conversionNote": "Wir wandeln einen kleinen Teil Ihres vorhandenen Guthabens in Netzwerkgebühren um. Ohne Karte.",
+      "conversionNote": "Wir wandeln einen kleinen Teil Ihres vorhandenen Guthabens um, damit die Netzwerkkosten gedeckt sind. Ohne Karte.",
       "cta": "{amount} Gebühr hinzufügen",
       "dismiss": "Nicht jetzt",
       "signStep": "Netzwerkgebühr aufladen",
@@ -498,11 +498,11 @@
       "pending": "Ausstehend"
     },
     "bridge": {
-      "etaSeconds": "Das dauert normalerweise etwa {seconds, plural, one {# Sekunde} other {# Sekunden}}. Wir machen weiter, sobald dein Geld ankommt.",
-      "etaMinutes": "Das dauert normalerweise etwa {minutes, plural, one {# Minute} other {# Minuten}}. Wir machen weiter, sobald dein Geld ankommt.",
-      "etaUnknown": "Dieser Schritt dauert länger als die anderen. Wir machen weiter, sobald dein Geld ankommt.",
+      "etaSeconds": "Das dauert normalerweise etwa {seconds, plural, one {# Sekunde} other {# Sekunden}}. Wir machen weiter, sobald Ihr Guthaben ankommt.",
+      "etaMinutes": "Das dauert normalerweise etwa {minutes, plural, one {# Minute} other {# Minuten}}. Wir machen weiter, sobald Ihr Guthaben ankommt.",
+      "etaUnknown": "Dieser Schritt dauert länger als die anderen. Wir machen weiter, sobald Ihr Guthaben ankommt.",
       "settlingTitle": "Noch unterwegs",
-      "settlingBody": "Dein Geld ist noch zwischen den Netzwerken unterwegs. Es geht nichts verloren. Du kannst das hier schließen und den Transfer prüfen, und wir machen genau dort weiter, wo es aufgehört hat.",
+      "settlingBody": "Ihr Guthaben ist noch zwischen den Netzwerken unterwegs. Es geht nichts verloren. Sie können das hier schließen und den Transfer prüfen, und wir machen genau dort weiter, wo es aufgehört hat.",
       "settlingClose": "Schließen"
     },
     "opLabel": {
@@ -514,11 +514,11 @@
       "close": "{strategy} schließen"
     },
     "costs": {
-      "youPay": "Du zahlst",
+      "youPay": "Sie zahlen",
       "amountNeeded": "Benötigter Betrag",
       "fee": "Gebühr",
       "priceBuffer": "Preispuffer",
-      "priceBufferHint": "Zurückgelegt, falls sich der Preis ändert, während deine Mittel unterwegs sind. Was übrig bleibt, gehört dir.",
+      "priceBufferHint": "Zurückgelegt, falls sich der Preis ändert, während Ihr Guthaben unterwegs ist. Was übrig bleibt, gehört Ihnen.",
       "conversionCost": "Umtauschkosten",
       "conversionCostHint": "Bereits im angebotenen Betrag enthalten und wird nicht zusätzlich berechnet.",
       "gasByStep": "Netzwerkkosten pro Schritt",
@@ -529,12 +529,12 @@
       "updating": "Preise werden aktualisiert",
       "leg": {
         "swapToken": "Auf {network} umwandeln",
-        "swapGas": "Gas auf {network} hinzufügen",
+        "swapGas": "Netzwerkkosten auf {network} decken",
         "bridge": "Von {network} übertragen"
       },
       "buyCrypto": {
         "cta": "Stattdessen Krypto kaufen",
-        "hint": "Zahle per Karte oder Pix, ohne Mittel zwischen Netzwerken zu bewegen."
+        "hint": "Zahlen Sie per Karte oder Pix, ohne Guthaben zwischen Netzwerken zu bewegen."
       }
     },
     "fundingSources": {
@@ -548,11 +548,11 @@
       "surplus": "{amount} mehr als nötig",
       "exact": "Genau gedeckt",
       "empty": "Hier gibt es noch nichts, was wir einsetzen können.",
-      "repriced": "Der Endpreis liegt etwas höher. Wähle eine weitere Quelle, um {amount} zu decken.",
+      "repriced": "Der Endpreis liegt etwas höher. Wählen Sie eine weitere Quelle, um {amount} zu decken.",
       "cta": "Weiter",
       "step": "Schritt {index}",
       "unblock": "Um dieses Guthaben zu nutzen:",
-      "unreachable": "Wir können {symbol} noch nicht auf dieses Netzwerk bringen, deshalb ist es hier nicht nutzbar.",
+      "unreachable": "Wir können {symbol} noch nicht auf dieses Netzwerk bringen. Wählen Sie etwas anderes aus der Liste.",
       "badge": {
         "ok": "Bereit",
         "topUp": "Braucht eine Aufladung",
@@ -578,7 +578,7 @@
       "leg": {
         "settled": "Fertig.",
         "pending": "Gesendet. Wir warten auf die Bestätigung und senden es nicht erneut.",
-        "reverted": "Dieser Schritt wurde nicht ausgeführt, Ihr Geld ist geblieben, wo es war.",
+        "reverted": "Dieser Schritt wurde nicht ausgeführt, Ihr Guthaben ist geblieben, wo es war.",
         "absent": "Es wurde nichts gesendet, Sie können diesen Schritt gefahrlos erneut starten.",
         "unknown": "Wir können nicht feststellen, ob dieser Schritt ausgeführt wurde, deshalb senden wir ihn nicht erneut. Prüfen Sie die Aktivität Ihrer Wallet, bevor Sie fortfahren."
       },

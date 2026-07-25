@@ -451,7 +451,7 @@
       "custom": "직접 입력",
       "customPlaceholder": "금액",
       "customAria": "직접 입력 수수료 금액",
-      "conversionNote": "이미 보유한 자산의 일부를 네트워크 수수료로 전환합니다. 카드는 필요하지 않습니다.",
+      "conversionNote": "네트워크 비용을 충당하기 위해 이미 보유한 자산의 일부를 바꿉니다. 카드는 필요하지 않습니다.",
       "cta": "{amount} 수수료 추가",
       "dismiss": "나중에",
       "signStep": "수수료 충전",
@@ -529,7 +529,7 @@
       "updating": "가격을 업데이트하는 중",
       "leg": {
         "swapToken": "{network}에서 전환",
-        "swapGas": "{network}에서 가스 추가",
+        "swapGas": "{network} 비용 준비",
         "bridge": "{network}에서 이동"
       },
       "buyCrypto": {
@@ -552,7 +552,7 @@
       "cta": "계속",
       "step": "{index}단계",
       "unblock": "이 자금을 사용하려면:",
-      "unreachable": "{symbol}은(는) 아직 이 네트워크로 옮길 수 없어서 여기서는 사용할 수 없습니다.",
+      "unreachable": "{symbol}은(는) 아직 이 네트워크로 옮길 수 없습니다. 목록에서 다른 자산을 선택해 주세요.",
       "badge": {
         "ok": "사용 가능",
         "topUp": "충전이 필요함",

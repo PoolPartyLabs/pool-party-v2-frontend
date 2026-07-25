@@ -4,7 +4,7 @@
  * @implements-rules-version v2
  *
  * The $10 / $25 / Custom gas-amount control for the buy-gas modal (PP-CORE-MOD-010) — also reused
- * inline by the provisioning wizard's "Add gas" step (POO-409). Presets are an allowlist; a Custom
+ * inline by the provisioning wizard's gas top-up step (POO-409). Presets are an allowlist; a Custom
  * amount is bound to [$10, $200] (the Paybis floor → max). Controlled: the parent owns the
  * {@link GasChoice}; the raw Custom text is local so typing stays smooth. Validation + parsing live in
  * the pure {@link validateGas} / {@link selectCustom} helpers.

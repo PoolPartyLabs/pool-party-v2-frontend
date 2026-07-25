@@ -35,9 +35,13 @@ const MACHINE_TRANSLATED = ["fr", "de", "nl", "ja", "ko", "zh-CN", "zh-TW", "vi"
 /**
  * The copy Universal Funding owns, by key prefix.
  *
- * Deliberately NOT all of `strategies.provisioning.*`: the `gas.*` sheet, `steps.*`, `plan.*` and
- * `exec.*` blocks pre-date the epic (POO-411) and are swept by their own issue. `gas.conversionNote`
- * is listed on its own because the epic rewrote that one value inside an otherwise pre-existing block.
+ * Deliberately NOT all of `strategies.provisioning.*`: the `gas.*` top-up sheet (BuyGasModal),
+ * `plan.*` and `exec.*` pre-date the epic (POO-411) and are swept by their own issue.
+ *
+ * Four keys are listed individually because they are pre-existing keys the epic pulled onto its own
+ * screens: `gas.conversionNote`, which the epic rewrote, and the two `steps.*` step titles that sit
+ * next to the epic's own itemized cost lines, where a jargon split between the two would be visible
+ * in a single glance.
  */
 const OWNED_PREFIXES = [
   "swap.",
@@ -45,6 +49,8 @@ const OWNED_PREFIXES = [
   "strategies.flow.error.kinds.gasBlocked",
   "strategies.provisioning.gasVerdict.",
   "strategies.provisioning.gas.conversionNote",
+  "strategies.provisioning.steps.swapGas",
+  "strategies.provisioning.steps.swapToken",
   "strategies.provisioning.requote.",
   "strategies.provisioning.captions.swapGas",
   "strategies.provisioning.captions.approve",
@@ -176,7 +182,7 @@ describe("Universal Funding copy, 11 locales (POO-1049)", () => {
     // informal. The skill mandates the same for de and nl.
     const REGISTER: Record<string, RegExp> = {
       de: /\b([Dd]u|[Dd]ein\w*|[Dd]ir|[Dd]ich)\b/,
-      nl: /\b(je|jouw|jij|jullie)\b/,
+      nl: /\b(je|jouw|jij|jullie)\b/i,
       "zh-CN": /你/,
       "zh-TW": /你/,
       es: /\busted\b/i,
@@ -214,8 +220,9 @@ describe("Universal Funding copy, 11 locales (POO-1049)", () => {
   describe("[R6] suspect machine translations are flagged, not silently fixed", () => {
     it("queues every PP-I18N flag against a real key and a machine-translated locale", () => {
       const notes = readFileSync(REVIEW_NOTES, "utf8");
-      // `| <locale> | <key> | ... | PP-I18N ...` rows in the review queue table.
-      const rows = [...notes.matchAll(/^\|\s*`([\w-]+)`\s*\|\s*`([^`]+)`\s*\|/gm)];
+      // `| <locale> | <key> | <term> | PP-I18N: ... |`. The PP-I18N anchor is what distinguishes a
+      // queue row from the glossary and register tables above it, which are shaped the same way.
+      const rows = [...notes.matchAll(/^\|\s*`([\w-]+)`\s*\|\s*`([^`]+)`\s*\|[^\n]*PP-I18N/gm)];
       expect(rows.length, "no PP-I18N flags recorded").toBeGreaterThan(0);
       for (const [, locale, key] of rows) {
         expect(MACHINE_TRANSLATED, `${locale} is not machine-translated`).toContain(locale);
