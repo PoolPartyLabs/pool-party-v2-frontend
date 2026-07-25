@@ -363,7 +363,9 @@
         "userRejected": "Vous avez refusé la demande dans votre portefeuille. Aucun fonds n'a été déplacé.",
         "unauthorized": "Ce portefeuille n'est pas autorisé à effectuer cette opération.",
         "wrongChain": "Votre portefeuille est sur un autre réseau. Basculez-le sur {network} et réessayez.",
-        "wrongChainUnknown": "Votre portefeuille est sur un autre réseau. Changez de réseau dans votre portefeuille et réessayez."
+        "wrongChainUnknown": "Votre portefeuille est sur un autre réseau. Changez de réseau dans votre portefeuille et réessayez.",
+        "gasBlocked": "Il n'y a rien sur {network} pour couvrir les frais de réseau, donc cela ne peut pas encore se faire. Achetez un peu de crypto sur {network}, ou transférez-en depuis un autre réseau.",
+        "gasBlockedUnknown": "Il n'y a rien sur ce réseau pour couvrir les frais de réseau, donc cela ne peut pas encore se faire. Achetez-y un peu de crypto, ou transférez-en depuis un autre réseau."
       }
     },
     "slippage": {
@@ -449,7 +451,7 @@
       "custom": "Personnalisé",
       "customPlaceholder": "Montant",
       "customAria": "Montant de frais personnalisé",
-      "conversionNote": "Payé avec votre USDC et converti automatiquement en frais de réseau.",
+      "conversionNote": "Nous convertissons une petite partie de ce que vous détenez déjà en frais de réseau. Sans carte.",
       "cta": "Ajouter {amount} de frais",
       "dismiss": "Pas maintenant",
       "signStep": "Recharger les frais",
@@ -479,7 +481,7 @@
     "captions": {
       "buyUsdc": "Carte ou virement local",
       "bridge": "Déplacer les fonds vers le bon réseau",
-      "swapGas": "Vous choisissez le montant, payé en USDC",
+      "swapGas": "Une petite partie de ce que vous détenez, convertie pour couvrir les frais de réseau",
       "op": "Votre action initiale",
       "approve": "Une autorisation unique. Rien ne bouge encore."
     },

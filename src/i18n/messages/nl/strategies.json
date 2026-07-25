@@ -363,7 +363,9 @@
         "userRejected": "Je hebt het verzoek in je wallet geweigerd. Er zijn geen middelen verplaatst.",
         "unauthorized": "Deze wallet mag deze bewerking niet uitvoeren.",
         "wrongChain": "Je wallet staat op een ander netwerk. Schakel over naar {network} en probeer het opnieuw.",
-        "wrongChainUnknown": "Je wallet staat op een ander netwerk. Wissel van netwerk in je wallet en probeer het opnieuw."
+        "wrongChainUnknown": "Je wallet staat op een ander netwerk. Wissel van netwerk in je wallet en probeer het opnieuw.",
+        "gasBlocked": "Er staat niets op {network} om de netwerkkosten te dekken, dus dit kan nog niet. Koop wat crypto op {network} of haal wat over uit een ander netwerk.",
+        "gasBlockedUnknown": "Er staat niets op dit netwerk om de netwerkkosten te dekken, dus dit kan nog niet. Koop daar wat crypto of haal wat over uit een ander netwerk."
       }
     },
     "slippage": {
@@ -449,7 +451,7 @@
       "custom": "Aangepast",
       "customPlaceholder": "Bedrag",
       "customAria": "Aangepast bedrag aan netwerkkosten",
-      "conversionNote": "Betaald met je USDC en automatisch omgezet in netwerkkosten.",
+      "conversionNote": "We zetten een klein deel van wat je al hebt om in netwerkkosten. Geen kaart nodig.",
       "cta": "{amount} netwerkkosten toevoegen",
       "dismiss": "Niet nu",
       "signStep": "Netwerkkosten opladen",
@@ -479,7 +481,7 @@
     "captions": {
       "buyUsdc": "Kaart of lokale overboeking",
       "bridge": "Geld naar het juiste netwerk verplaatsen",
-      "swapGas": "U kiest het bedrag, betaald met USDC",
+      "swapGas": "Een klein deel van wat je hebt, omgezet om de netwerkkosten te dekken",
       "op": "Uw oorspronkelijke actie",
       "approve": "Een eenmalige toestemming. Er wordt nog niets verplaatst."
     },

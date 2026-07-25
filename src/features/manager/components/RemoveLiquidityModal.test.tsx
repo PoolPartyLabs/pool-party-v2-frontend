@@ -21,6 +21,7 @@
  * value AND label (R4); the amount input caps decimals (6 in $, 1 in %) and clamps at the max (R7);
  * the console gas note left the form (R6).
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   renderWithProviders,
@@ -34,6 +35,21 @@ const mocks = vi.hoisted(() => ({
   mockMode: true,
   closeStrategy: vi.fn(async () => undefined),
   buildSteps: vi.fn(),
+}));
+
+// POO-1044 [R3]: the provisioning panel's buy-crypto escape renders the locale-aware Link, which
+// resolves Next's app-router navigation. It does not exist under jsdom, so it is stood in for, as
+// in every other suite that mounts a navigating component.
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("@/lib/services", () => ({

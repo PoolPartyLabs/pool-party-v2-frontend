@@ -363,7 +363,9 @@
         "userRejected": "你在錢包中拒絕了該請求。資金未發生變動。",
         "unauthorized": "此錢包無權執行該操作。",
         "wrongChain": "你的錢包目前處於其他網路。請切換到 {network} 後重試。",
-        "wrongChainUnknown": "你的錢包目前處於其他網路。請在錢包中切換網路後重試。"
+        "wrongChainUnknown": "你的錢包目前處於其他網路。請在錢包中切換網路後重試。",
+        "gasBlocked": "{network} 上沒有可用於支付網路費用的資產，因此暫時無法執行。請在 {network} 上購買少量加密貨幣，或從其他網路轉入一些。",
+        "gasBlockedUnknown": "該網路上沒有可用於支付網路費用的資產，因此暫時無法執行。請在該網路上購買少量加密貨幣，或從其他網路轉入一些。"
       }
     },
     "slippage": {
@@ -449,7 +451,7 @@
       "custom": "自訂",
       "customPlaceholder": "金額",
       "customAria": "自訂費用金額",
-      "conversionNote": "從您的 USDC 中扣除，並自動轉換為網路費用。",
+      "conversionNote": "我們會把您已持有資產的一小部分轉換為網路費用，不需要金融卡。",
       "cta": "新增 {amount} 費用",
       "dismiss": "暫不",
       "signStep": "儲值網路費用",
@@ -479,7 +481,7 @@
     "captions": {
       "buyUsdc": "信用卡或本地支付",
       "bridge": "將資金轉移到正確的網路",
-      "swapGas": "您選擇金額，從 USDC 中支付",
+      "swapGas": "將您持有資產的一小部分轉換為網路費用",
       "op": "您的原始操作",
       "approve": "一次性授權。資金尚未轉移。"
     },

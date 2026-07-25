@@ -18,15 +18,34 @@
  * The multi-source picker is asserted to still open for a funding shortfall, so this change cannot
  * quietly bypass POO-1042's whole flow.
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FundingSource } from "@/lib/balances/fundingInventory";
-import type { GasFeasibility, ProvisioningNeedInput, ProvisioningPlan } from "@/lib/provisioning";
-import { SCENARIOS } from "@/lib/provisioning";
+import type {
+  GasFeasibility,
+  ProvisioningLeg,
+  ProvisioningNeedInput,
+  ProvisioningPlan,
+} from "@/lib/provisioning";
+import { NATIVE_TOKEN_ADDRESS, SCENARIOS } from "@/lib/provisioning";
 import type { ProvisioningGateContext } from "@/lib/provisioning/gateContext";
 import { TransactionError } from "@/lib/tx/sendTransaction";
-import { realProvisioningPlan } from "../../../../tests/fixtures/realProvisioningPlan";
 import { renderWithProviders, screen } from "../../../../tests/utils/renderWithProviders";
 import { ProvisioningPanel } from "./ProvisioningPanel";
+
+// The locale-aware Link resolves Next's app-router navigation, which does not exist under jsdom.
+// Same stand-in the cost-breakdown suite uses; the assertion is on the href, which survives it.
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
 
 const POLYGON = 137;
 const ARBITRUM = 42161;
@@ -106,22 +125,68 @@ const GAS_ONLY_INPUT: ProvisioningNeedInput = {
   gasEstimateUsd: 0.075,
 };
 
-/** The one-step plan the real planner returns for {@link GAS_ONLY_INPUT}. */
+/**
+ * The one-step plan the real planner returns for {@link GAS_ONLY_INPUT}: a slice of the wallet's
+ * WETH swapped into the chain's native coin, then the operation.
+ *
+ * Shaped exactly as `buildPlan` assembles it, leg and all, because the panel's gas branch reads
+ * `step.type` and the plan card reads the leg. The native coin is the ZERO address, never WETH.
+ */
 function gasOnlyPlan(): ProvisioningPlan {
-  const full = realProvisioningPlan();
-  const gasStep = full.steps.find((step) => step.type === "swap-gas");
-  const opStep = full.steps.find((step) => step.type === "op");
-  if (!gasStep || !opStep) throw new Error("the real plan fixture lost its gas or op step");
+  const leg: ProvisioningLeg = {
+    index: 0,
+    kind: "swap-gas",
+    chainId: ARBITRUM,
+    tokenIn: {
+      address: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+      symbol: "WETH",
+      decimals: 18,
+      chainId: ARBITRUM,
+    },
+    tokenOut: { address: NATIVE_TOKEN_ADDRESS, symbol: "ETH", decimals: 18, chainId: ARBITRUM },
+    amountIn: "32000000000000",
+    amountOutQuoted: "32000000000000",
+    minAmountOut: "31360000000000",
+    routing: "CLASSIC",
+    gasUsd: 0.02,
+    requoteAtExecution: false,
+  };
   return {
-    ...full,
+    needed: true,
     reason: ["gas"],
     variant: "gas-only",
-    steps: [gasStep, opStep],
+    steps: [
+      {
+        type: "swap-gas",
+        key: "swap-gas-0",
+        labelKey: "provisioning.steps.swapGas",
+        fromToken: "WETH",
+        toToken: "ETH",
+        fromChainId: ARBITRUM,
+        toChainId: ARBITRUM,
+        chainId: ARBITRUM,
+        amountUsd: 0.08,
+        amountToken: "0.000032",
+        method: "SEND_TX",
+        leg,
+      },
+      { type: "op", key: "op", labelKey: "provisioning.steps.op", amountUsd: 0 },
+    ],
+    quote: {
+      shortfallUsd: 0,
+      bufferUsd: 0.08,
+      feesUsd: 0,
+      totalPayUsd: 0.08,
+      quotedAt: "2026-07-25T12:00:00.000Z",
+      ttlMs: 30_000,
+    },
+    gas: { presetUsd: null, amountUsd: 0.08 },
+    slippagePct: 2,
   };
 }
 
 beforeEach(() => {
-  planHolder.current = realProvisioningPlan();
+  planHolder.current = gasOnlyPlan();
   errorHolder.current = null;
   enabledHolder.current = null;
 });

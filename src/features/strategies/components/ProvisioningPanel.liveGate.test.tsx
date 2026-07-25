@@ -18,6 +18,7 @@
  * Mock mode is unaffected by construction: with no context prop the panel behaves exactly as it did
  * (`ProvisioningPanel.test.tsx` remains the proof of that).
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FundingSource } from "@/lib/balances/fundingInventory";
 import type { GasFeasibility, ProvisioningPlan } from "@/lib/provisioning";
@@ -31,6 +32,21 @@ import {
   waitFor,
 } from "../../../../tests/utils/renderWithProviders";
 import { ProvisioningPanel } from "./ProvisioningPanel";
+
+// POO-1044 [R3]: the panel's buy-crypto escape renders the locale-aware Link, which resolves Next's
+// app-router navigation. It does not exist under jsdom, so it is stood in for, as in every other
+// suite in this folder that mounts a navigating component.
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
 
 const POLYGON = 137;
 const ARBITRUM = 42161;

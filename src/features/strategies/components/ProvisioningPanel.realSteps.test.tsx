@@ -18,6 +18,7 @@
  *        statuses and hashes are matched by KEY. Matched by index, the bridge's status would land
  *        on a different row entirely.
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProvisioningPlan } from "@/lib/provisioning";
 import { SCENARIOS } from "@/lib/provisioning";
@@ -30,6 +31,21 @@ import {
 } from "../../../../tests/utils/renderWithProviders";
 import { planRailSteps } from "../lib/buildPlanSteps";
 import { ProvisioningPanel } from "./ProvisioningPanel";
+
+// POO-1044 [R3]: the panel's buy-crypto escape renders the locale-aware Link, which resolves Next's
+// app-router navigation. It does not exist under jsdom, so it is stood in for, as in every other
+// suite in this folder that mounts a navigating component.
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
 
 const TX_HASH = "0x9f2c1d4a6b8e0f3c5a7d9e1b2c4f6a8d0e2b4c6f8a0d2e4b6c8f0a2d4e6b8c0f";
 

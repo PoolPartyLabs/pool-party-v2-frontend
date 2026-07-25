@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-055 (POO-1034)
+ * @id PP-CORE-LIB-055 (POO-1034, POO-1044)
  * @name buildPlan (real provisioning planner)
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1044 rules v1) · v1 (POO-1034 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The engine. It turns "this operation needs N USDC on chain X, and the wallet holds these things
@@ -505,6 +505,26 @@ export async function buildPlan(
     };
   }
 
+  // UF-22 [R3] The operation's LAST step is a transaction on its own chain, so a chain that cannot
+  // pay for one cannot run the operation, however well-funded the route into it is. Checked before
+  // anything is quoted: there is no plan to price, and asking would spend upstream calls on a route
+  // that can never execute.
+  //
+  // Refusing here is the difference between a legible dead end and a silent one. Without it a
+  // gas-only requirement on a zero-native chain plans NO legs (the classifier emits a gas swap only
+  // for TOP_UP), which assembles as `needed: false` — a plan card whose confirm runs nothing,
+  // reports success, and hands the operation back to a wallet that still cannot broadcast. The code
+  // classifies as `gasBlocked` (`@/lib/tx/diagnostics`) so the panel can name the network and offer
+  // the escapes the verdict already carries, rather than "something went wrong".
+  const targetGas = request.gasByChain[request.targetChainId];
+  if (targetGas?.verdict === "BLOCKED") {
+    return {
+      ok: false,
+      code: "PROVISIONING_GAS_BLOCKED",
+      message: `Chain ${request.targetChainId} holds no native coin to pay for the operation's own transaction.`,
+    };
+  }
+
   const required = toBigInt(request.requiredAmount);
   let remaining = required;
 
@@ -655,9 +675,10 @@ export async function buildPlan(
   }
 
   // The operation's own chain needs gas even when it contributes nothing to funding: the operation
-  // itself is a transaction there. Appended last so it still precedes the `op` anchor.
-  const targetVerdict = request.gasByChain[request.targetChainId];
-  if (targetVerdict) await ensureGas(targetVerdict);
+  // itself is a transaction there. Appended last so it still precedes the `op` anchor. This is also
+  // the ONLY leg a gas-only requirement produces ([R1]): `remaining` is zero, so the loop above ran
+  // no iteration at all.
+  if (targetGas) await ensureGas(targetGas);
 
   if (remaining > BigInt(0)) {
     return {

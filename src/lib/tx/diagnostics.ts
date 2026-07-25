@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-LIB-012
  * @name tx diagnostics
- * @implements-rules-version v1 · v1 (POO-1026 rules v1)
+ * @implements-rules-version v1 · v1 (POO-1026 rules v1) · v1 (POO-1044 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * Client-environment diagnostics for the transaction error-details box (PP-CORE-MOD-002 v2,
@@ -28,6 +28,14 @@ export type TxErrorKind =
    * for cross-chain provisioning, where a plan legitimately switches networks between legs.
    */
   | "wrongChain"
+  /**
+   * POO-1044: the chain the operation runs on holds no native coin, so it cannot pay for a
+   * transaction and no route can be planned into it. Raised by the provisioning planner, never by a
+   * wallet: nothing was broadcast and nothing failed on-chain. It is catalogued because it is one of
+   * the few failures the user can actually resolve, and because the generic "something went wrong"
+   * body would tell them nothing about what to do.
+   */
+  | "gasBlocked"
   | "unknown";
 
 /**
@@ -45,6 +53,8 @@ const BACKEND_CODE_KINDS: Record<string, TxErrorKind> = {
   UNAUTHORIZED: "unauthorized",
   // POO-1026: emitted by assertProviderOnChain, not by the API.
   WRONG_CHAIN: "wrongChain",
+  // POO-1044: emitted by the provisioning planner (`buildPlan`) before anything is broadcast.
+  PROVISIONING_GAS_BLOCKED: "gasBlocked",
 };
 
 /**

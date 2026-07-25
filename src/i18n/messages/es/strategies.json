@@ -363,7 +363,9 @@
         "userRejected": "Rechazaste la solicitud en tu billetera. No se movieron fondos.",
         "unauthorized": "Esta billetera no tiene permiso para realizar esta operación.",
         "wrongChain": "Tu billetera está en otra red. Cámbiala a {network} e inténtalo de nuevo.",
-        "wrongChainUnknown": "Tu billetera está en otra red. Cambia de red en tu billetera e inténtalo de nuevo."
+        "wrongChainUnknown": "Tu billetera está en otra red. Cambia de red en tu billetera e inténtalo de nuevo.",
+        "gasBlocked": "No hay nada en {network} para cubrir los costos de red, así que esto todavía no puede ejecutarse. Compra un poco de cripto en {network} o trae un poco desde otra red.",
+        "gasBlockedUnknown": "No hay nada en esta red para cubrir los costos de red, así que esto todavía no puede ejecutarse. Compra un poco de cripto allí o trae un poco desde otra red."
       }
     },
     "slippage": {
@@ -449,7 +451,7 @@
       "custom": "Personalizado",
       "customPlaceholder": "Importe",
       "customAria": "Cantidad de gas personalizada",
-      "conversionNote": "Se paga con su USDC y se convierte automáticamente en gas de red.",
+      "conversionNote": "Convertimos una pequeña parte de lo que ya tienes en gas de red. Sin tarjeta.",
       "cta": "Agregar {amount} de gas",
       "dismiss": "Ahora no",
       "signStep": "Recargar gas",
@@ -479,7 +481,7 @@
     "captions": {
       "buyUsdc": "Tarjeta o transferencia local",
       "bridge": "Mover fondos a la red correcta",
-      "swapGas": "Usted elige el importe, pagado con USDC",
+      "swapGas": "Una pequeña parte de lo que tienes, convertida para cubrir los costos de red",
       "op": "Su acción original",
       "approve": "Un permiso único. Todavía no se mueve nada."
     },

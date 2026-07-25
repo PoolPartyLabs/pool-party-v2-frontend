@@ -12,6 +12,7 @@
  * (an async `building` step), so `goToReview` awaits the Review CTA. The fake-timer rebuild + real-gas
  * tests live in MoveRangeModalRealMode.test.tsx (real mode allows injecting the build figures).
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { settleSwapInfo } from "@/features/strategies/components/settle";
 import { fullRangeTicks } from "@/lib/manager/fullRangeTicks";
@@ -43,6 +44,21 @@ vi.mock("@/features/strategies/components/settle", async (importActual) => {
   const actual = await importActual<typeof import("@/features/strategies/components/settle")>();
   return { ...actual, settleSwapInfo: vi.fn(actual.settleSwapInfo) };
 });
+
+// POO-1044 [R3]: the provisioning panel's buy-crypto escape renders the locale-aware Link, which
+// resolves Next's app-router navigation. It does not exist under jsdom, so it is stood in for, as
+// in every other suite that mounts a navigating component.
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
 
 vi.mock("@/lib/services", () => ({
   isMockMode: true,

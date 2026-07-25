@@ -10,6 +10,7 @@
  * degrade at the poll ceiling into a recoverable "still settling" state that offers NO retry [R3] —
  * a retry would re-invoke the step verbatim and re-broadcast a bridge that is already in flight.
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { SCENARIOS } from "@/lib/provisioning";
 import { TransactionError } from "@/lib/tx/sendTransaction";
@@ -21,6 +22,21 @@ import {
 } from "../../../../tests/utils/renderWithProviders";
 import { BRIDGE_PENDING_CODE } from "../lib/awaitBridgeSettlement";
 import { ProvisioningPanel } from "./ProvisioningPanel";
+
+// POO-1044 [R3]: the panel's buy-crypto escape renders the locale-aware Link, which resolves Next's
+// app-router navigation. It does not exist under jsdom, so it is stood in for, as in every other
+// suite in this folder that mounts a navigating component.
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
 
 function noop() {}
 
