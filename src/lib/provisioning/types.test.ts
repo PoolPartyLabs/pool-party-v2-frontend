@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-016 (POO-1030)
- * @name provisioning contract v3 tests
- * @implements-rules-version v3
+ * @id PP-CORE-LIB-016 (POO-1030, POO-1033)
+ * @name provisioning contract tests
+ * @implements-rules-version v4
  * @hackathon POO-1022 (Universal Funding)
  *
  * The contract is types only, so most of it is proven at COMPILE time: `tsconfig.json` includes
@@ -19,7 +19,10 @@
  *   [R1] six additive OPTIONAL fields, `planId` documented as the idempotency key
  *   [R2] existing fields keep their meaning: a v2-shaped plan still type-checks and reads the same
  *   [R3] money convention unchanged: token-native = decimal STRING, USD = display-grade number
- *   [R6] `@implements-rules-version` is v3 and the pinned contract comment says what v3 added
+ *   [R6] `@implements-rules-version` is current and the pinned comment says what each revision added
+ *
+ * POO-1033 rules v1 took the contract to v4 (per-chain balances on {@link ProvisioningNeedInput});
+ * its own branch matrix lives in `computeNeed.test.ts`, and only the version pin moves here.
  */
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
@@ -159,9 +162,13 @@ describe("provisioning contract v3 (POO-1030)", () => {
     expect(TYPES_SOURCE).toMatch(/planId[\s\S]{0,600}idempotency key/i);
   });
 
-  // [R6] The version bump, in the header and in the pinned-contract comment.
-  it("declares rules version v3", () => {
-    expect(TYPES_SOURCE).toMatch(/@implements-rules-version:?\s*v3/);
+  // [R6] The version bump, in the header and in the pinned-contract comment. POO-1033 took the
+  // contract to v4 (per-chain balances on the input); the assertion moves with it and keeps
+  // requiring that BOTH revisions are still explained in the file, so the history is not rewritten
+  // away by the next bump.
+  it("declares the current rules version and keeps its revision history", () => {
+    expect(TYPES_SOURCE).toMatch(/@implements-rules-version:?\s*v4/);
     expect(TYPES_SOURCE).toMatch(/POO-1030/);
+    expect(TYPES_SOURCE).toMatch(/POO-1033/);
   });
 });

@@ -15,7 +15,13 @@
  * planner replaces them. POO-523 R2: the gear's Max slippage rides the input, sizes the buffer, and
  * echoes on the plan for the rail (POO-414).
  */
-import { computeProvisioningNeed, GAS_DEFAULT_USD, sizeOnRampUsd } from "./computeNeed";
+import {
+  computeProvisioningNeed,
+  GAS_DEFAULT_USD,
+  ONRAMP_CHAIN_ID,
+  sizeOnRampUsd,
+  spendableTokenUsd,
+} from "./computeNeed";
 import type {
   GasChoice,
   ProvisioningNeedInput,
@@ -24,8 +30,6 @@ import type {
   ProvisioningStep,
 } from "./types";
 
-/** Paybis always buys USDC on Base (epic POO-411 global rule). */
-const BASE_CHAIN_ID = 8453;
 /** Mock quote validity window. */
 const QUOTE_TTL_MS = 60_000;
 /**
@@ -87,7 +91,7 @@ export function mockComputePlan(
   const gasAmountUsd = need.needsGas ? (options.gas?.amountUsd ?? GAS_DEFAULT_USD) : 0;
 
   // How much USDC must be bought on-ramp: the op shortfall plus any gas funding the wallet can't cover.
-  const availableUsdcForGas = Math.max(0, input.usdcBalanceUsd - input.opRequiredUsdc);
+  const availableUsdcForGas = Math.max(0, spendableTokenUsd(input) - input.opRequiredUsdc);
   const gasFundingShortfall = need.needsGas ? Math.max(0, gasAmountUsd - availableUsdcForGas) : 0;
   const totalToBuyUsd = round2(need.usdcShortfallUsd + gasFundingShortfall);
   const needBuyUsdc = totalToBuyUsd > 0;
@@ -102,7 +106,7 @@ export function mockComputePlan(
       labelKey: LABEL_KEYS["buy-usdc"],
       fromToken: "USD",
       toToken: "USDC",
-      toChainId: BASE_CHAIN_ID,
+      toChainId: ONRAMP_CHAIN_ID,
       amountUsd: onRampUsd,
       amountToken: onRampUsd.toFixed(2),
       poweredBy: "paybis",
@@ -117,7 +121,7 @@ export function mockComputePlan(
       labelKey: LABEL_KEYS.bridge,
       fromToken: "USDC",
       toToken: "USDC",
-      fromChainId: needBuyUsdc ? BASE_CHAIN_ID : input.currentChainId,
+      fromChainId: needBuyUsdc ? ONRAMP_CHAIN_ID : input.currentChainId,
       toChainId: input.targetChainId,
       amountUsd: bridgedUsd,
       amountToken: bridgedUsd.toFixed(2),

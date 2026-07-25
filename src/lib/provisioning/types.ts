@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-016 (POO-416, POO-1030)
+ * @id PP-CORE-LIB-016 (POO-416, POO-1030, POO-1033)
  * @name provisioning contract types
- * @implements-rules-version v3
+ * @implements-rules-version v4
  * @hackathon POO-1022 (Universal Funding)
  *
  * The canonical FE↔BE contract for pre-flight provisioning (epic POO-411). When an on-chain op
@@ -21,6 +21,12 @@
  * POO-523 R2: the input and the plan carry an optional `slippagePct` (the settings gear's Max
  * slippage, percent, investor default 2) so the planner sizes swap buffers with it and the rail
  * (POO-414) executes with it. Mirror this field into the POO-413 contract comment.
+ *
+ * v4 (POO-1033, hackathon POO-1022): {@link ProvisioningNeedInput} gains {@link ChainBalancesUsd}
+ * per chain and the scalar `nativeBalanceUsd` / `usdcBalanceUsd` pair becomes optional. A wallet is
+ * not one balance on one chain; modelling it that way is what made "can this be funded by bridging"
+ * unanswerable for every operation that spends no USDC. Additive: a scalar-shaped input still
+ * type-checks and still computes the same verdict.
  *
  * v3 (POO-1030, hackathon POO-1022): the Universal Funding engine executes real Uniswap Chained
  * Actions, and a step therefore has to carry where it lives inside the SERVER-HELD plan, not just
@@ -163,16 +169,46 @@ export interface ProvisioningPlan {
 }
 
 /**
+ * What the wallet holds on ONE chain, in USD (v4, POO-1033). The split is not cosmetic: the native
+ * coin is the only asset that can pay for a transaction on its own chain, and no other chain's
+ * native coin can substitute for it. Everything else is inventory that a swap or a bridge can move.
+ */
+export interface ChainBalancesUsd {
+  /** USD value of this chain's NATIVE coin (ETH / POL). Pays gas here, and nowhere else. */
+  nativeUsd: number;
+  /**
+   * USD value of the routable non-native tokens held here (USDC and anything Uniswap can route,
+   * per POO-1031's inventory). This is what a swap turns into gas, or a bridge moves to the op's
+   * chain.
+   */
+  tokenUsd: number;
+}
+
+/**
  * Input to the FE requirement calculator ({@link computeProvisioningNeed}). All balances are passed
  * as USD numbers — the gate (POO-418) converts raw native/USDC balances to USD before calling, so the
  * calculator stays pure number-math with no viem/bigint dependency.
  */
 export interface ProvisioningNeedInput {
-  /** USD value of the native coin held on {@link currentChainId}. */
-  nativeBalanceUsd: number;
-  /** USD value of USDC held (treated as on {@link currentChainId}). */
-  usdcBalanceUsd: number;
-  /** Chain where the user's funds currently are. */
+  /**
+   * The wallet, chain by chain (v4, POO-1033). This is the authority when present: it is the only
+   * shape that can say WHERE the money is, which is what decides whether a shortfall is a buy, a
+   * local swap, or a bridge.
+   *
+   * PP-INTEGRATION-POINT: assembled by the live gate (POO-1042) from the funding inventory
+   * (POO-1031, `fetchWalletHoldings` ∩ `/swappable_tokens`). Absent, the calculator falls back to
+   * the legacy scalar pair below.
+   */
+  balancesByChain?: Readonly<Record<number, ChainBalancesUsd>>;
+  /**
+   * LEGACY (pre-POO-1033), superseded by {@link balancesByChain}: USD value of the native coin, with
+   * no chain attached. Optional so a migrated caller does not have to invent a scalar it no longer
+   * believes in.
+   */
+  nativeBalanceUsd?: number;
+  /** LEGACY (pre-POO-1033), superseded by {@link balancesByChain}: USD value of USDC held. */
+  usdcBalanceUsd?: number;
+  /** Chain the wallet is connected to. Only the legacy shape needs it to place its scalars. */
   currentChainId: number;
   /** The op's target network. */
   targetChainId: number;
@@ -194,12 +230,16 @@ export interface ProvisioningNeed {
   /** `false` → nothing missing; the op signs unchanged. */
   needed: boolean;
   needsGas: boolean;
-  /** `max(0, requiredGasUsd - nativeBalanceUsd)`. */
+  /** `max(0, requiredGasUsd - native held on the target chain)`. */
   gasShortfallUsd: number;
   needsUsdc: boolean;
-  /** `max(0, opRequiredUsdc - usdcBalanceUsd)`. */
+  /** `max(0, opRequiredUsdc - routable token value held anywhere)`: what has to be BOUGHT. */
   usdcShortfallUsd: number;
-  /** The op's funds are not on its target network. */
+  /**
+   * The requirement (USDC or gas) cannot be met on the target chain but can be met from another
+   * one, so the plan has to move value across chains (v4, POO-1033 R2 — no longer conditional on
+   * the op spending USDC).
+   */
   needsBridge: boolean;
   targetChainId: number;
   reason: ProvisioningReason[];
