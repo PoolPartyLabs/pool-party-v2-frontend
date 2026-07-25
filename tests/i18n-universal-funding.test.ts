@@ -24,7 +24,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { locales } from "@/i18n/config";
+import { type Locale, locales } from "@/i18n/config";
 
 const MESSAGES_DIR = join(process.cwd(), "src", "i18n", "messages");
 const REVIEW_NOTES = join(process.cwd(), "docs", "_hackathon", "04_I18N_REVIEW_NOTES.md");
@@ -180,39 +180,39 @@ describe("Universal Funding copy, 11 locales (POO-1049)", () => {
     // Measured against the namespaces this epic never touched, which is the house style these
     // surfaces have to sit beside: de 161/27 formal, nl 67/24 formal, zh 81/25 formal, es 100/8
     // informal. The skill mandates the same for de and nl.
-    const REGISTER: Record<string, RegExp> = {
-      de: /\b([Dd]u|[Dd]ein\w*|[Dd]ir|[Dd]ich)\b/,
-      nl: /\b(je|jouw|jij|jullie)\b/i,
-      "zh-CN": /你/,
-      "zh-TW": /你/,
-      es: /\busted\b/i,
-    };
+    const REGISTER: ReadonlyArray<readonly [Locale, RegExp]> = [
+      ["de", /\b([Dd]u|[Dd]ein\w*|[Dd]ir|[Dd]ich)\b/],
+      ["nl", /\b(je|jouw|jij|jullie)\b/i],
+      ["zh-CN", /你/],
+      ["zh-TW", /你/],
+      ["es", /\busted\b/i],
+    ];
 
     it("never flips second-person register between funding surfaces", () => {
-      for (const [locale, pattern] of Object.entries(REGISTER)) {
-        const messages = byLocale.get(locale);
-        expect(messages, locale).toBeDefined();
-        expect(offenders(pattern, messages ?? []), `${locale} mixes register`).toEqual([]);
+      for (const [locale, pattern] of REGISTER) {
+        const messages = byLocale.get(locale) ?? new Map<string, string>();
+        expect(messages.size, locale).toBeGreaterThan(0);
+        expect(offenders(pattern, messages), `${locale} mixes register`).toEqual([]);
       }
     });
 
     // One word per concept. Each entry is a variant that lost: the winner is either the house term
     // measured in the untouched namespaces, or the locale tier's own standard (es is neutral Latin
     // American, so Peninsular "coste"/"céntimo"/"importe" are out).
-    const GLOSSARY: Record<string, RegExp> = {
-      es: /\bcoste|céntimo|\bimporte/i,
-      "pt-BR": /a gente|\bpasso\b/i,
-      vi: /tiền mã hóa|tiền điện tử/i,
-      de: /\bMittel\b|\bGeld\b/,
-      nl: /\btegoed\b/i,
-      "zh-TW": /金融卡/,
-    };
+    const GLOSSARY: ReadonlyArray<readonly [Locale, RegExp]> = [
+      ["es", /\bcoste|céntimo|\bimporte/i],
+      ["pt-BR", /a gente|\bpasso\b/i],
+      ["vi", /tiền mã hóa|tiền điện tử/i],
+      ["de", /\bMittel\b|\bGeld\b/],
+      ["nl", /\btegoed\b/i],
+      ["zh-TW", /金融卡/],
+    ];
 
     it("uses one word per concept across the epic's surfaces", () => {
-      for (const [locale, pattern] of Object.entries(GLOSSARY)) {
-        const messages = byLocale.get(locale);
-        expect(messages, locale).toBeDefined();
-        expect(offenders(pattern, messages ?? []), `${locale} uses two words`).toEqual([]);
+      for (const [locale, pattern] of GLOSSARY) {
+        const messages = byLocale.get(locale) ?? new Map<string, string>();
+        expect(messages.size, locale).toBeGreaterThan(0);
+        expect(offenders(pattern, messages), `${locale} uses two words`).toEqual([]);
       }
     });
   });
