@@ -1,7 +1,8 @@
 /**
  * @id PP-STR-MOD-003
  * @name CollectModal
- * @implements-rules-version v11 (POO-827 rules v1; POO-923 R3: no "after fees" caption on the pair payout)
+ * @implements-rules-version v12 (POO-1045 rules v1) · v11 (POO-827 rules v1; POO-923 R3: no "after fees" caption on the pair payout)
+ * @hackathon POO-1022 (Universal Funding)
  *
  * Claim the available yield from an owned position: confirm → pending → success. Collect takes only
  * the earned yield and leaves the principal invested (made explicit in the copy), then routes the
@@ -84,6 +85,15 @@
  *
  * POO-853 [R6] (referral parity, rules v1): on a confirmed INVESTOR collect (never a manager collect),
  * logs COLLECT_FEES to the referral operation feed (`useReferralOperationLog`, real-only + deduped).
+ *
+ * POO-1045 [R3] (hackathon POO-1022): the MANAGER's collect is gated too. It was the one silent gap
+ * left in the pre-flight gate: `managed` carries no {@link Strategy}, and the gate used to be read
+ * off that object, so `strategy && gate.evaluate()` skipped the whole thing for the manager path.
+ * Nothing about the operation justified the exemption. A manager collecting pool fees signs a
+ * transaction on the pool's chain and pays its gas exactly as an investor does, so a manager with no
+ * native balance there hit an opaque wallet failure while the investor next to them was offered a
+ * route that fixes it. The gate reads the pool's own network (`managed.network`) instead, and where
+ * that is absent it stays inert exactly as it does for any operation whose chain we do not know.
  */
 "use client";
 
@@ -274,13 +284,13 @@ export function CollectModal({
   const logReferralOp = useReferralOperationLog();
   const [phase, setPhase] = useState<Phase>("confirm");
   // POO-419: pre-flight gate (dark-launched flag) — decides confirm → provision → pending.
-  // POO-1042 [R2]: the collect runs on the STRATEGY's chain and spends no USDC ([R3]). The manager
-  // path (`managed`) stays exempt exactly as it is today, which is why the network is the INVESTOR
-  // strategy's: gating it is POO-1045 [R3]'s call, not a change to make silently here.
+  // POO-1042 [R2]: the collect runs on the pool's chain and spends no USDC ([R3]).
+  // POO-1045 [R3]: BOTH roles are gated. The manager's pool is the chain the manager's collect runs
+  // on, so its network is the gate's target when there is no investor strategy behind the dialog.
   const gate = useProvisioningGate({
     op: "collect",
-    network: strategy?.network,
-    enabled: open && !managed,
+    network: managed?.network ?? strategy?.network,
+    enabled: open,
   });
   const [txError, setTxError] = useState<TxError | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -871,10 +881,13 @@ export function CollectModal({
                 // a zero-crossing in this same tick cannot race the send.
                 suspendCountdown();
                 // POO-419: the pre-flight gas top-up gate is evaluated HERE (build ungated → gate →
-                // resume). Managed mode has no Strategy, so it always signs directly (gate is
-                // investor-only). POO-615: the tx is already built (paused after build), so approving
-                // resumes into the wallet send step — the build is NOT re-run (flow.resume, not run).
-                if (strategy && gate.evaluate()) {
+                // resume). POO-1045 [R3]: for BOTH roles — the manager's collect used to be skipped
+                // here for having no Strategy, which is a fact about our data shape and not about
+                // what the operation needs. POO-615: the tx is already built (paused after build), so
+                // approving resumes into the wallet send step — the build is NOT re-run (resume, not
+                // run). POO-1045 [R2]: a funding route that outlives the build's freshness window
+                // makes `resume()` rebuild first, so a bridge can never leave a stale tx to sign.
+                if (gate.evaluate()) {
                   setPhase("provision");
                   return;
                 }

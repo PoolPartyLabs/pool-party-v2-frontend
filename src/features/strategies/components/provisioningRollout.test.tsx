@@ -110,7 +110,11 @@ const managed = {
   network: "base",
   availableUsd: 120,
   gasEstimateUsd: 0.4,
-  onCollect: vi.fn(async () => undefined),
+  // Takes a beat, like the console mutation it stands in for. Resolving synchronously would settle
+  // the whole flow inside one React batch and the wallet handoff would never render.
+  onCollect: vi.fn(
+    async () => new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 50)),
+  ),
 };
 
 /**
