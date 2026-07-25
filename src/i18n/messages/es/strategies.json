@@ -361,7 +361,9 @@
         "deadlineExpired": "La transacción no se confirmó dentro del plazo y fue cancelada. Inténtalo de nuevo.",
         "insufficientFunds": "Tu billetera no tiene fondos suficientes para cubrir esta transacción y la tarifa de red.",
         "userRejected": "Rechazaste la solicitud en tu billetera. No se movieron fondos.",
-        "unauthorized": "Esta billetera no tiene permiso para realizar esta operación."
+        "unauthorized": "Esta billetera no tiene permiso para realizar esta operación.",
+        "wrongChain": "Tu billetera está en otra red. Cámbiala a {network} e inténtalo de nuevo.",
+        "wrongChainUnknown": "Tu billetera está en otra red. Cambia de red en tu billetera e inténtalo de nuevo."
       }
     },
     "slippage": {

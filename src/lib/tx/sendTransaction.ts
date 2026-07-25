@@ -145,14 +145,15 @@ async function assertProviderOnChain(
   } catch (error) {
     throw new TransactionError(
       `Wallet is on chain ${actual} but this transaction targets chain ${targetChainId}`,
-      { code: WRONG_CHAIN_CODE, cause: error },
+      // POO-1026 [R2]: carry the target chain so the error copy can name the network.
+      { code: WRONG_CHAIN_CODE, targetChainId, cause: error },
     );
   }
   const switched = await readProviderChainId(provider);
   if (switched !== targetChainId) {
     throw new TransactionError(
       `Wallet stayed on chain ${switched} after switching; this transaction targets chain ${targetChainId}`,
-      { code: WRONG_CHAIN_CODE },
+      { code: WRONG_CHAIN_CODE, targetChainId },
     );
   }
 }

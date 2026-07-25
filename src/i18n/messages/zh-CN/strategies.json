@@ -361,7 +361,9 @@
         "deadlineExpired": "交易未能在截止时间内确认，已被取消。请重试。",
         "insufficientFunds": "你的钱包余额不足以支付本次交易及网络费用。",
         "userRejected": "你在钱包中拒绝了该请求。资金未发生变动。",
-        "unauthorized": "此钱包无权执行该操作。"
+        "unauthorized": "此钱包无权执行该操作。",
+        "wrongChain": "你的钱包当前处于其他网络。请切换到 {network} 后重试。",
+        "wrongChainUnknown": "你的钱包当前处于其他网络。请在钱包中切换网络后重试。"
       }
     },
     "slippage": {

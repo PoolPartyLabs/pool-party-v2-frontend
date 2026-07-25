@@ -361,7 +361,9 @@
         "deadlineExpired": "The transaction didn't confirm within its deadline, so it was cancelled. Try again.",
         "insufficientFunds": "Your wallet doesn't have enough to cover this transaction and its network fee.",
         "userRejected": "You declined the request in your wallet. No funds were moved.",
-        "unauthorized": "This wallet isn't allowed to perform this operation."
+        "unauthorized": "This wallet isn't allowed to perform this operation.",
+        "wrongChain": "Your wallet is on a different network. Switch it to {network} and try again.",
+        "wrongChainUnknown": "Your wallet is on a different network. Switch networks in your wallet and try again."
       }
     },
     "slippage": {
