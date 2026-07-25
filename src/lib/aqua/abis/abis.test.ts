@@ -30,22 +30,21 @@ const ours = PARTY_VAULT_VIEW_ABI as readonly AbiEntry[];
  * during the demo.
  */
 describe("PartyVault narrow ABI matches the published artifact", () => {
-  it.each(ours.map((entry) => entry.name))(
-    "%s exists in the artifact with a matching signature",
-    (name) => {
-      const mine = ours.find((entry) => entry.name === name);
-      const theirs = artifact.find((entry) => entry.type === "function" && entry.name === name);
+  it.each(
+    ours.map((entry) => entry.name),
+  )("%s exists in the artifact with a matching signature", (name) => {
+    const mine = ours.find((entry) => entry.name === name);
+    const theirs = artifact.find((entry) => entry.type === "function" && entry.name === name);
 
-      expect(theirs, `${name} is missing from PartyVault.json`).toBeDefined();
-      expect(theirs?.inputs?.map((i) => i.type) ?? []).toEqual(
-        mine?.inputs?.map((i) => i.type) ?? [],
-      );
-      expect(theirs?.outputs?.map((o) => o.type) ?? []).toEqual(
-        mine?.outputs?.map((o) => o.type) ?? [],
-      );
-      expect(theirs?.stateMutability).toBe(mine?.stateMutability);
-    },
-  );
+    expect(theirs, `${name} is missing from PartyVault.json`).toBeDefined();
+    expect(theirs?.inputs?.map((i) => i.type) ?? []).toEqual(
+      mine?.inputs?.map((i) => i.type) ?? [],
+    );
+    expect(theirs?.outputs?.map((o) => o.type) ?? []).toEqual(
+      mine?.outputs?.map((o) => o.type) ?? [],
+    );
+    expect(theirs?.stateMutability).toBe(mine?.stateMutability);
+  });
 
   it("only declares view functions, since this page never writes", () => {
     for (const entry of ours) {

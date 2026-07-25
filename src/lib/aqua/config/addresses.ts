@@ -54,6 +54,16 @@ export const MAKER_HOOK_SIGNATURE =
   "preTransferOut(address,address,address,address,uint256,uint256,bytes32,bytes,bytes)" as const;
 export const MAKER_HOOK_SELECTOR = "0x5a394f80" as const;
 
+/**
+ * Payload put in `MakerTraits.preTransferOutHook`. The vault ignores it; the router forwards
+ * it untouched as `makerHookData`. It exists only because the SDK's `Interaction` asserts
+ * non-empty hex bytes, so a hook cannot be declared with no data at all.
+ *
+ * Track A's launch payload builder uses the same single byte, which keeps the two program
+ * producers byte-identical for the same inputs.
+ */
+export const MAKER_HOOK_DATA = "0x01" as const;
+
 const DEAD_ADDRESSES = new Set<string>([
   DEAD_GEN1_REGISTRY.toLowerCase(),
   DEAD_GEN1_ROUTER.toLowerCase(),

@@ -1,9 +1,12 @@
 import "server-only";
 
 import { AquaProtocolContract } from "@1inch/aqua-sdk";
+// Interaction lives in sdk-core, pinned to the exact version swap-vm-sdk depends on so the
+// class identity the SDK checks against is the one we construct.
+import { Interaction } from "@1inch/sdk-core";
 import { Address, AquaProgramBuilder, HexString, MakerTraits, Order } from "@1inch/swap-vm-sdk";
 import { keccak256 } from "viem";
-import { AQUA_REGISTRY, assertNotDeadGeneration } from "../../config/addresses";
+import { AQUA_REGISTRY, assertNotDeadGeneration, MAKER_HOOK_DATA } from "../../config/addresses";
 import { BPS, bandFromSpot, concentrateArgsFor } from "./band";
 import type { CompileContext, CompileResult, Mandate, MandateName, ShipCallInfo } from "./types";
 
@@ -134,8 +137,17 @@ export function compile(
   assertNoTokenInPullingOpcode(program.toString());
 
   // Aqua mode: authenticated by the ship, not a signature. A custom receiver and WETH unwrap
-  // are both rejected upstream in Aqua mode, so the defaults are the only valid choice.
-  const traits = MakerTraits.default();
+  // are both rejected upstream in Aqua mode, so those defaults are the only valid choice.
+  //
+  // The preTransferOut hook is NOT optional for this product, and omitting it is silent: the
+  // ship succeeds, quotes look right, small fills settle from the hot buffer, and only a fill
+  // larger than the buffer fails, because without this flag the router never calls the vault
+  // and the vault never unparks from Aave. That is precisely the JIT path the product is
+  // built around. Target zero means "call the maker itself"; the SDK rejects empty data, and
+  // the router forwards this byte to the vault untouched (the vault ignores it).
+  const traits = MakerTraits.default().with({
+    preTransferOutHook: new Interaction(Address.ZERO_ADDRESS, new HexString(MAKER_HOOK_DATA)),
+  });
   const order = Order.new({
     maker: new Address(context.maker),
     traits,
