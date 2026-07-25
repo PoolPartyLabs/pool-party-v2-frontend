@@ -540,9 +540,11 @@
       "surplus": "{amount} meer dan nodig",
       "exact": "Precies gedekt",
       "empty": "Er is hier nog niets dat we kunnen gebruiken.",
+      "repriced": "De uiteindelijke prijs viel iets hoger uit. Kies nog een bron om {amount} te dekken.",
       "cta": "Doorgaan",
       "step": "Stap {index}",
       "unblock": "Om dit geld te gebruiken:",
+      "unreachable": "We kunnen {symbol} nog niet naar dit netwerk brengen, dus het is hier niet bruikbaar.",
       "badge": {
         "ok": "Klaar",
         "topUp": "Heeft een aanvulling nodig",

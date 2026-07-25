@@ -540,9 +540,11 @@
       "surplus": "比所需多 {amount}",
       "exact": "刚好够用",
       "empty": "这里暂时没有可以使用的资产。",
+      "repriced": "最终金额略高一些。请再选择一项来补足 {amount}。",
       "cta": "继续",
       "step": "第 {index} 步",
       "unblock": "要使用这笔资金：",
+      "unreachable": "我们暂时无法把 {symbol} 转到这个网络，所以这里用不了。",
       "badge": {
         "ok": "可用",
         "topUp": "需要补充",

@@ -38,12 +38,6 @@ vi.mock("@/lib/provisioning/planActions", () => ({
   computePlanAction: vi.fn(),
 }));
 
-// The rail binds Privy hooks in real mode; the gate only forwards what it returns.
-const buildPlanStepsForPlan = vi.fn();
-vi.mock("./useProvisioningRail", () => ({
-  useProvisioningRail: () => buildPlanStepsForPlan,
-}));
-
 const { useProvisioningGate } = await import("./useProvisioningGate");
 
 const ARBITRUM = 42161;
@@ -229,10 +223,14 @@ describe("useProvisioningGate (real mode, POO-1042)", () => {
     expect(getProvisioningContextAction).not.toHaveBeenCalled();
   });
 
-  it("[R10] exposes the real execution rail for the panel to run", () => {
+  it("[R10] binds no wallet: the gate decides, the panel signs", () => {
+    // The gate mounts in all six op modals, always. Binding a wallet here would make every one of
+    // them need Privy + wagmi context just to decide whether to gate, and this suite renders the
+    // hook bare. `ProvisioningPanel` binds the rail instead, and it mounts only when provisioning
+    // actually runs.
     const { result } = renderHook(() =>
       useProvisioningGate({ op: "invest", network: "arbitrum", enabled: true }),
     );
-    expect(result.current.buildPlanSteps).toBe(buildPlanStepsForPlan);
+    expect(result.current).not.toHaveProperty("buildPlanSteps");
   });
 });

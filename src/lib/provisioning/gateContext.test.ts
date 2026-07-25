@@ -113,8 +113,8 @@ describe("buildProvisioningGateContext", () => {
     expect(
       Object.keys(context?.gasByChain ?? {})
         .map(Number)
-        .sort(),
-    ).toEqual([ARBITRUM, POLYGON]);
+        .sort((a, b) => a - b),
+    ).toEqual([POLYGON, ARBITRUM]);
   });
 
   it("[R4] takes the gas estimate from a live quote, never the hardcoded 0.5", async () => {

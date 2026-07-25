@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-016 (POO-1024)
+ * @id PP-CORE-LIB-016 (POO-1024, POO-1042)
  * @name provisioning plan server actions
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1042 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The server side of the provisioning planner, and the only place plan computation may touch a
@@ -18,47 +18,177 @@
  * A `"use server"` module is a boundary rather than an edge: Next compiles it to an RPC stub on the
  * client, so a client component may import it freely and the implementation never reaches the bundle.
  *
- * Following the house action contract (`investActions.ts`): the action never throws across the RSC
- * boundary. It returns `{ ok: true, plan } | { ok: false, code, message }`, so a failure code lands
+ * Following the house action contract (`investActions.ts`): an action never throws across the RSC
+ * boundary. It returns `{ ok: true, … } | { ok: false, code, message }`, so a failure code lands
  * where callers can act on it instead of surfacing as an opaque rejection.
  *
- * PP-INTEGRATION-POINT (POO-1042): the real planner EXISTS — `./buildPlan.ts` (POO-1034) decomposes
- * a requirement into ordered legs and prices each one through `POST /quote`. What is still missing
- * is the assembly in front of it, and it is deliberately not built here:
+ * ## POO-1042: the planner is wired
  *
- *   `ProvisioningNeedInput` is USD-only. It carries no token addresses and no base-unit amounts, so
- *   it cannot drive a real quote. `buildPlan` needs the funding inventory (POO-1031, read
- *   server-side from the SIWE wallet, never from a client-supplied address) and the per-chain gas
- *   verdicts (POO-1032). Assembling those is the live gate's job (POO-1042), which also owns the
- *   selection order this action would otherwise have to invent.
+ * `computePlanAction` used to return a hard `PROVISIONING_PLANNER_UNAVAILABLE`, because
+ * `ProvisioningNeedInput` is USD-only: it carries no token addresses and no base-unit amounts, so it
+ * cannot drive a real quote. What was missing was the assembly in front of it, and that is what
+ * POO-1042 adds — the live inventory plus the per-chain gas verdicts, and the user's own selection
+ * order.
  *
- * Filling this in with a guessed input would produce a plan priced against amounts nobody chose,
- * which is worse than the honest failure below.
+ * **The client sends KEYS, never money.** A selection arrives as `chainId:address` strings and is
+ * resolved against an inventory this action reads server-side, from the SIWE wallet. So no amount,
+ * no USD figure and no wallet address a caller supplied can reach `buildPlan`: the fields simply do
+ * not exist on the wire. That is stronger than validating them, because there is no check to loosen
+ * later.
  */
 "use server";
 
-import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "./types";
+import { getSessionWallet } from "@/lib/auth/session";
+import type { FundingSource } from "@/lib/balances/fundingInventory";
+import { getUsdcAddress } from "@/lib/chains/config";
+import { buildPlan } from "./buildPlan";
+import type { ProvisioningGateContext } from "./gateContext";
+import { buildProvisioningGateContext } from "./gateContext";
+import type { ProvisioningNeedInput, ProvisioningPlan } from "./types";
 
-/** The action result. Mirrors `BuildTxResult` in `@/lib/tx/actionResult`. */
+/** The plan action's result. Mirrors `BuildTxResult` in `@/lib/tx/actionResult`. */
 export type ProvisioningPlanResult =
   | { ok: true; plan: ProvisioningPlan }
   | { ok: false; code: string; message: string };
 
+/** The context action's result, same contract. */
+export type ProvisioningContextResult =
+  | { ok: true; context: ProvisioningGateContext }
+  | { ok: false; code: string; message: string };
+
+/** USDC has 6 decimals everywhere this app operates, and is priced 1:1 with the dollar. */
+const USDC_DECIMALS = 6;
+
+/** Not signed in. Matches the shipped `SESSION_MISSING` contract in `investActions.ts`. */
+const sessionMissing = {
+  ok: false,
+  code: "SESSION_MISSING",
+  message: "Wallet session not established",
+} as const;
+
+/**
+ * Everything the pre-flight gate needs to know about the signed-in wallet, for an operation on
+ * `targetChainId`.
+ *
+ * The wallet is the session's, never the caller's — the parameter does not exist, so there is no
+ * path to someone else's holdings for a future change to open. A degraded read is reported as a
+ * typed failure and the gate treats it as "do not gate" ([R6]).
+ */
+export async function getProvisioningContextAction(
+  targetChainId: number,
+): Promise<ProvisioningContextResult> {
+  const wallet = await getSessionWallet();
+  if (!wallet) return sessionMissing;
+
+  try {
+    const context = await buildProvisioningGateContext(wallet, targetChainId);
+    if (!context) {
+      return {
+        ok: false,
+        code: "PROVISIONING_BALANCES_UNAVAILABLE",
+        message: "The wallet's balances could not be read.",
+      };
+    }
+    return { ok: true, context };
+  } catch (error) {
+    return { ok: false, code: "SYSTEM_INTERNAL", message: String(error) };
+  }
+}
+
+/**
+ * USD value of the target chain's USDC the wallet already holds.
+ *
+ * Derived from the inventory rather than from `balancesByChain.tokenUsd`, which counts every
+ * routable token on the chain: a WETH holding there is not USDC and still needs a swap, so counting
+ * it would under-size the requirement and produce a plan that lands short. Sub-$1 USDC dust is
+ * filtered out of the inventory and therefore under-counted here, which errs towards asking for
+ * slightly more than needed.
+ */
+function usdcHeldOnChain(sources: readonly FundingSource[], chainId: number): number {
+  const usdc = getUsdcAddress(chainId)?.toLowerCase();
+  if (!usdc) return 0;
+  return sources
+    .filter((source) => source.chainId === chainId && source.address.toLowerCase() === usdc)
+    .reduce((total, source) => total + (Number.isFinite(source.usd) ? source.usd : 0), 0);
+}
+
+/** A USD figure as USDC base units, truncated: never claim more than the dollar figure covers. */
+function toUsdcBaseUnits(amountUsd: number): string {
+  if (!Number.isFinite(amountUsd) || amountUsd <= 0) return "0";
+  return BigInt(Math.floor(amountUsd * 10 ** USDC_DECIMALS)).toString();
+}
+
 /**
  * Compute a provisioning plan server-side.
  *
- * Not wired yet: `buildPlan` exists (POO-1034) but the input it needs is assembled by the live gate
- * (POO-1042), see the PP-INTEGRATION-POINT above. Until then this returns a typed failure rather
- * than throwing, so the seam is exercisable end to end and a caller sees a real error contract
- * instead of an unhandled rejection.
+ * `selection` is the user's picks in PICK ORDER, which `buildPlan` treats as route order ([R4] of
+ * POO-1034): the plan the user reviewed is the plan that executes, so this must not sort. An empty
+ * selection is legitimate, not an error: a gas-only operation on a chain that must buy its own gas
+ * produces a one-step plan with no funding source at all.
+ *
+ * Sources that cannot route to the operation's chain are dropped here as well as in the UI ([R8]).
+ * The UI filter is what stops a user picking one; this is what stops a stale selection, or anything
+ * that bypassed the UI, reaching a quote that would 404.
+ *
+ * **No `gasChoice` parameter, deliberately.** In mock mode the inline gas selector resizes the plan
+ * through {@link computePlan}'s own mock branch; in real mode the gas top-up is sized by the
+ * classifier from a live quote, so an amount the user typed has nothing to attach to here without
+ * re-deriving the whole verdict. Taking the parameter and ignoring it would be worse than not taking
+ * it: the signature would promise something the plan does not honour.
+ * PP-TODO(POO-1044): UF-22 owns the gas selector across all six operations and re-introduces an
+ * explicit choice against the real classifier. The panel hides the selector in real mode until then.
  */
 export async function computePlanAction(
-  _input: ProvisioningNeedInput,
-  _gasChoice?: GasChoice,
+  input: ProvisioningNeedInput,
+  selection?: readonly string[],
 ): Promise<ProvisioningPlanResult> {
-  return {
-    ok: false,
-    code: "PROVISIONING_PLANNER_UNAVAILABLE",
-    message: "The provisioning planner is not wired to live balances yet (POO-1042).",
-  };
+  const wallet = await getSessionWallet();
+  if (!wallet) return sessionMissing;
+
+  try {
+    const context = await buildProvisioningGateContext(wallet, input.targetChainId);
+    if (!context) {
+      return {
+        ok: false,
+        code: "PROVISIONING_BALANCES_UNAVAILABLE",
+        message: "The wallet's balances could not be read.",
+      };
+    }
+
+    const byKey = new Map(
+      context.sources.map((source) => [
+        `${source.chainId}:${source.address.toLowerCase()}`,
+        source,
+      ]),
+    );
+    const picked: FundingSource[] = [];
+    for (const key of selection ?? []) {
+      const source = byKey.get(key);
+      // A key naming no current source is a selection that outlived its inventory (the holding was
+      // spent or moved). Dropping it is right: re-deriving the plan from fresh balances is what
+      // makes it safe to re-run at all.
+      if (!source || picked.includes(source)) continue;
+      if (!source.reachableChainIds.includes(context.targetChainId)) continue;
+      picked.push(source);
+    }
+
+    // What must LAND on the operation's chain: the operation's USDC requirement, less the USDC
+    // already sitting there. `gasChoice` does not enter here — a gas top-up is sized by the gas
+    // classifier and emitted as its own leg, not as part of the funding requirement.
+    const stillNeededUsd = Math.max(
+      0,
+      input.opRequiredUsdc - usdcHeldOnChain(context.sources, context.targetChainId),
+    );
+
+    return await buildPlan({
+      targetChainId: context.targetChainId,
+      requiredAmount: toUsdcBaseUnits(stillNeededUsd),
+      requiredUsd: stillNeededUsd,
+      sources: picked,
+      gasByChain: context.gasByChain,
+      ...(input.slippagePct === undefined ? {} : { slippagePct: input.slippagePct }),
+    });
+  } catch (error) {
+    return { ok: false, code: "SYSTEM_INTERNAL", message: String(error) };
+  }
 }

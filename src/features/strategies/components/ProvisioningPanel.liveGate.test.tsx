@@ -37,13 +37,18 @@ const ARBITRUM = 42161;
 
 // The plan seam is async and would resolve the mock planner; this pins what the planner returns so
 // the re-check after quoting [R7] is exercisable.
-const { planHolder, selectionHolder } = vi.hoisted(() => ({
+const { planHolder, quotedForHolder } = vi.hoisted(() => ({
   planHolder: { current: null as ProvisioningPlan | null },
-  selectionHolder: { current: [] as readonly string[] },
+  /** What the planner was actually asked for: null while it is suspended. */
+  quotedForHolder: { current: null as readonly string[] | null },
 }));
 vi.mock("../hooks/useProvisioningPlan", () => ({
-  useProvisioningPlan: (_input: unknown, _gas: unknown, selection?: readonly string[]) => {
-    selectionHolder.current = selection ?? [];
+  useProvisioningPlan: (
+    _input: unknown,
+    _gas: unknown,
+    options: { selection?: readonly string[]; enabled?: boolean } = {},
+  ) => {
+    quotedForHolder.current = options.enabled === false ? null : (options.selection ?? []);
     return { plan: planHolder.current, loading: false, error: null };
   },
 }));
@@ -93,7 +98,7 @@ function context(over: Partial<ProvisioningGateContext> = {}): ProvisioningGateC
 
 beforeEach(() => {
   planHolder.current = realProvisioningPlan();
-  selectionHolder.current = [];
+  quotedForHolder.current = null;
 });
 
 describe("ProvisioningPanel — live gate (POO-1042)", () => {
@@ -124,7 +129,9 @@ describe("ProvisioningPanel — live gate (POO-1042)", () => {
       />,
     );
 
-    expect(selectionHolder.current).toEqual([]);
+    // Null, not empty: the planner is SUSPENDED, so its per-chain quote fan-out never runs for a
+    // route nobody asked for. An empty selection would still be a request.
+    expect(quotedForHolder.current).toBeNull();
   });
 
   it("[R7] the picker's requirement exceeds the bare shortfall (a conservative seed)", () => {
@@ -199,7 +206,7 @@ describe("ProvisioningPanel — live gate (POO-1042)", () => {
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
     await waitFor(() =>
-      expect(selectionHolder.current).toEqual([
+      expect(quotedForHolder.current).toEqual([
         `${POLYGON}:0x7ceb23fd6bc0add59e62ac25578270cff1b9f619`,
       ]),
     );
@@ -233,13 +240,17 @@ describe("ProvisioningPanel — live gate (POO-1042)", () => {
     fireEvent.click(screen.getByRole("option"));
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
-    // Back on the picker, with the shortfall stated, rather than on a plan card whose CTA silently
-    // went dead under the user.
+    // Back on the picker, with the real number stated, rather than on a plan card whose confirm the
+    // user would be pressing against a route that strands. This IS the explicit "add another source"
+    // state the rule asks for: the CTA did not go dead under them on the screen they were on, they
+    // were moved to one that says what is missing.
     expect(await screen.findByRole("listbox", { name: /your funds/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /continue/i })).toBeEnabled();
+    expect(screen.getByRole("status")).toHaveTextContent(/pick one more source/i);
+    // And the requirement on screen is now the QUOTED total, not the seed it was opened with.
+    expect(screen.getByText(/needed:/i)).toHaveTextContent("5,000");
   });
 
-  it("[R10] runs the rail it was handed, not the mock settle", async () => {
+  it("[R10] runs the rail, not the 900 ms mock settle", async () => {
     const buildPlanSteps = vi.fn(() => [{ key: "swap-token-0", run: async () => ({}) }]);
 
     renderWithProviders(

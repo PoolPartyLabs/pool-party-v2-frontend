@@ -63,7 +63,7 @@ describe("useProvisioningPlan (POO-1023)", () => {
     const { result } = renderHook(() => useProvisioningPlan(INPUT));
 
     await waitFor(() => expect(result.current.plan).not.toBeNull());
-    expect(computePlan).toHaveBeenCalledWith(INPUT, undefined);
+    expect(computePlan).toHaveBeenCalledWith(INPUT, undefined, undefined);
     expect(result.current.plan?.steps[0]?.key).toBe("via-seam");
   });
 
@@ -100,13 +100,13 @@ describe("useProvisioningPlan (POO-1023)", () => {
     );
 
     await waitFor(() => expect(result.current.plan).not.toBeNull());
-    expect(computePlan).toHaveBeenLastCalledWith(INPUT, undefined);
+    expect(computePlan).toHaveBeenLastCalledWith(INPUT, undefined, undefined);
 
     computePlan.mockResolvedValue(planStub("regassed"));
     rerender({ gasChoice: gas });
 
     await waitFor(() => expect(result.current.plan?.steps[0]?.key).toBe("regassed"));
-    expect(computePlan).toHaveBeenLastCalledWith(INPUT, gas);
+    expect(computePlan).toHaveBeenLastCalledWith(INPUT, gas, undefined);
   });
 
   // [R3] A planner failure surfaces as an error rather than an empty plan card that never fills.

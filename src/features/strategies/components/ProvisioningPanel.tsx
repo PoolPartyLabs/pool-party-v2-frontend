@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-CMP-046
  * @name ProvisioningPanel
- * @implements-rules-version v4 (POO-1041 rules v1) · v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
+ * @implements-rules-version v5 (POO-1042 rules v1) · v4 (POO-1041 rules v1) · v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The INLINE pre-flight provisioning body (epic POO-411, POO-418/POO-419). When an op is short on
@@ -34,9 +34,21 @@
  * step returns, so a running transfer had no link on screen at all: `onLegBroadcast` is consumed
  * here, the instant the hash exists, and the row is verifiable while it is still moving [R2].
  *
- * PP-INTEGRATION-POINT: the planner behind the seam is still the deterministic mock (POO-420); the
- * real one lands in POO-1034 and `buildPlanSteps` runs the real rail in POO-1036. Wallet balances
- * that feed `input` are wired in POO-1042.
+ * POO-1042 (hackathon POO-1022): real mode is now a different, and honest, flow. With a live
+ * {@link ProvisioningGateContext} the panel opens on the funding-source picker, and only quotes a
+ * plan for what the user actually chose [R7]. Two things fall out of that, both of which the picker
+ * alone could not do: a holding Uniswap cannot route to the operation's chain is not offered [R8],
+ * and every chain on screen carries a gas verdict [R9]. And the CTA it opens is honest twice: the
+ * picker's requirement is seeded conservatively, then RE-CHECKED against the quoted plan, which is
+ * the only figure that is really what the user will pay. A plan that comes back short returns to the
+ * picker with the real number, so the CTA never flips from enabled to disabled underneath anyone.
+ *
+ * Mock mode passes no context and is byte-identical to before: it opens on the plan and settles it
+ * with the local mock rail.
+ *
+ * PP-INTEGRATION-POINT: `context` is the live wallet read (PP-CORE-LIB-057) and `buildPlanSteps` is
+ * the live Uniswap rail (PP-STR-LIB-017), both bound by `useProvisioningGate` and both absent in
+ * mock mode.
  */
 "use client";
 
@@ -48,12 +60,19 @@ import { MockBadge } from "@/components/ui/MockBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { apiNetworkForChain } from "@/lib/chains/config";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "@/lib/provisioning";
-import { spendableTokenUsd } from "@/lib/provisioning";
+import { computeProvisioningNeed, spendableTokenUsd } from "@/lib/provisioning";
+// Type-only, therefore erased: `gateContext.ts` is `server-only` and this is a client component.
+// The value crosses as data through `getProvisioningContextAction` (ADR 0003).
+import type { ProvisioningGateContext } from "@/lib/provisioning/gateContext";
 import type { TxError } from "@/lib/tx/diagnostics";
+import { formatUsd } from "@/lib/utils/format";
 import { useProvisioningPlan } from "../hooks/useProvisioningPlan";
+import { useProvisioningRail } from "../hooks/useProvisioningRail";
 import { type FlowStep, useWalletSignFlow } from "../hooks/useWalletSignFlow";
 import { BRIDGE_PENDING_CODE } from "../lib/awaitBridgeSettlement";
 import { type PlanRailDeps, planRailSteps } from "../lib/buildPlanSteps";
+import { FundingSourceSelector } from "./provisioning/FundingSourceSelector";
+import { fundingProgress, reachesChain, seedRequiredUsd } from "./provisioning/fundingSelection";
 import { GasAmountSelector } from "./provisioning/GasAmountSelector";
 import { selectPreset, validateGas } from "./provisioning/gasSelection";
 import { labelValues, ProvisioningPlanCard } from "./provisioning/ProvisioningPlanCard";
@@ -65,11 +84,15 @@ import type { WalletStepStatus } from "./WalletSteps";
 import { WalletSteps } from "./WalletSteps";
 
 /**
- * Panel phases: the assembled plan, its execution, a recoverable error, and `settling` — a bridge
- * that is still in flight at the rail's poll ceiling (POO-1037 [R3]). `settling` is terminal for this
- * panel but not for the money: the route is recoverable and the operation is never resumed off it.
+ * Panel phases: picking what to spend, the assembled plan, its execution, a recoverable error, and
+ * `settling` — a bridge that is still in flight at the rail's poll ceiling (POO-1037 [R3]).
+ * `settling` is terminal for this panel but not for the money: the route is recoverable and the
+ * operation is never resumed off it.
+ *
+ * `sources` (POO-1042) exists only in real mode, where the user's own holdings are the funding: mock
+ * mode has no inventory and opens on `plan`, exactly as it always has.
  */
-type Phase = "plan" | "pending" | "settling" | "error";
+type Phase = "sources" | "plan" | "pending" | "settling" | "error";
 
 /** Accumulating context is unused (each step settles independently); kept generic for the runner. */
 type PlanCtx = Record<string, unknown>;
@@ -90,6 +113,16 @@ export interface PlanRailReporters {
 export interface ProvisioningPanelProps {
   /** Op + wallet requirement context (USD) that drives the plan. */
   input: ProvisioningNeedInput;
+  /**
+   * The live wallet context behind the gate decision (POO-1042): what can be spent, from where, and
+   * whether each chain can pay its own gas. Present only in real mode, where it turns the panel into
+   * "pick what to spend, then review the route"; absent (mock mode) the panel opens on the plan and
+   * behaves exactly as it did.
+   *
+   * PP-INTEGRATION-POINT: read server-side by `getProvisioningContextAction` (PP-CORE-LIB-057) from
+   * the SIWE wallet. Type-only across the boundary — never a value import.
+   */
+  context?: ProvisioningGateContext | null;
   /** Op anchor title, e.g. "Invest in Stable Yield". */
   opLabel: string;
   /** Provisioning succeeded → the host resumes the original op. */
@@ -97,8 +130,12 @@ export interface ProvisioningPanelProps {
   /** The user backed out → the host returns to its confirm view. */
   onCancel: () => void;
   /**
-   * Real-mode execution steps for the plan; absent → the mock settle runs (mock mode). Bind the
-   * rail's deps in a closure and forward `rail` into them:
+   * Override for the execution rail. Left absent in production: the panel binds the SHIPPED rail
+   * itself (POO-1042 [R10], see {@link useProvisioningRail}), which is what finally retires the
+   * 900 ms mock settle that ran in its place for the whole epic.
+   *
+   * The prop stays because the rail is the one dependency a test or a story has to be able to
+   * replace: it signs and broadcasts. Bind the deps in a closure and forward `rail` into them:
    * `buildPlanSteps={(plan, rail) => buildPlanSteps(plan, { ...deps, ...rail })}`.
    */
   buildPlanSteps?: (plan: ProvisioningPlan, rail: PlanRailReporters) => FlowStep<PlanCtx>[];
@@ -109,6 +146,7 @@ export interface ProvisioningPanelProps {
 /** The inline provisioning body embedded by an op modal's provision phase. */
 export function ProvisioningPanel({
   input,
+  context,
   opLabel,
   onDone,
   onCancel,
@@ -117,19 +155,54 @@ export function ProvisioningPanel({
 }: ProvisioningPanelProps) {
   const t = useTranslations("strategies");
   const tCommon = useTranslations("common");
-  const [phase, setPhase] = useState<Phase>("plan");
+  // [R7] Real mode opens on the picker: the funding IS the user's own holdings, and a plan they were
+  // never asked about is a route they cannot have reviewed.
+  const [phase, setPhase] = useState<Phase>(context ? "sources" : "plan");
   const [gasChoice, setGasChoice] = useState<GasChoice | null>(null);
   const [txError, setTxError] = useState<TxError | null>(null);
   // [R2] Hashes of legs that have broadcast but not settled, keyed by rail step key. The flow cannot
   // hold these: it records a hash a step RETURNS, and a bridge leg returns minutes later.
   const [legHashes, setLegHashes] = useState<Record<string, string>>({});
+  // [R4]/[R7] The picks, in PICK ORDER, which the planner treats as ROUTE order. `selected` is what
+  // the user is building; `confirmedSelection` is what they committed to, and null until they do,
+  // which is what keeps the planner from quoting a route nobody asked for.
+  const [selected, setSelected] = useState<string[]>([]);
+  const [confirmedSelection, setConfirmedSelection] = useState<string[] | null>(null);
 
-  const buildPlanStepsRef = useRef(buildPlanSteps);
-  buildPlanStepsRef.current = buildPlanSteps;
+  // [R10] The real rail, bound to the connected wallet. Bound HERE rather than in the gate hook: this
+  // panel is the only thing that signs, and it mounts only when provisioning actually runs, so an op
+  // modal never needs wallet context just to decide whether to gate. Undefined in mock mode, which is
+  // what keeps the mock settle below as mock mode's behaviour.
+  const boundRail = useProvisioningRail(input.slippagePct);
+  const rail = buildPlanSteps ?? boundRail;
+
+  const buildPlanStepsRef = useRef(rail);
+  buildPlanStepsRef.current = rail;
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
   const onLockChangeRef = useRef(onLockChange);
   onLockChangeRef.current = onLockChange;
+
+  // [R8] What can actually be spent on this route. The SELECTOR is told the operation's chain (it
+  // cannot know it otherwise) so an unroutable holding is greyed and explained rather than hidden,
+  // exactly as a BLOCKED row is; this list is the same fact applied to the arithmetic, so the
+  // running total and the coverage test never count money that cannot get there.
+  const spendableSources = useMemo(
+    () =>
+      context
+        ? context.sources.filter((source) => reachesChain(source, context.targetChainId))
+        : [],
+    [context],
+  );
+
+  // [R7] What to ask for BEFORE a route exists: the bare shortfall plus a conservative buffer. The
+  // quoted plan is the final word (see `quotedShortfallUsd` below); this only decides when the CTA
+  // may open, and it deliberately over-asks so it can never close again.
+  const need = useMemo(() => computeProvisioningNeed(input), [input]);
+  const seededRequiredUsd = seedRequiredUsd(
+    need.usdcShortfallUsd || input.opRequiredUsdc,
+    context?.gasEstimateUsd ?? 0,
+  );
 
   // The gas being edited (or the $10 default); only a VALID explicit choice resizes the plan, so an
   // empty/invalid Custom never drops the swap-gas step or re-enables the CTA (review POO-409).
@@ -138,8 +211,26 @@ export function ProvisioningPanel({
   const effectiveGas = gasChoice && gasValidity.ok ? gasChoice : undefined;
   // POO-1023: the plan resolves through the ONE mock/real seam (computePlan), never mockComputePlan.
   // The seam is async, so the hook owns the pending/error lifecycle and the re-plan race guard.
-  const { plan, error: planError } = useProvisioningPlan(input, effectiveGas);
+  // POO-1042: in real mode it is suspended until the user has confirmed a selection, so the planner's
+  // per-chain quote fan-out never runs for a route nobody asked for.
+  const { plan, error: planError } = useProvisioningPlan(input, effectiveGas, {
+    ...(confirmedSelection ? { selection: confirmedSelection } : {}),
+    enabled: !context || confirmedSelection !== null,
+  });
   const hasGasStep = plan?.steps.some((step) => step.type === "swap-gas") ?? false;
+
+  /**
+   * [R7] The re-check. The picker's CTA opened against a SEEDED requirement; the honest figure is
+   * the quoted plan's own `totalPayUsd`, which only exists now. When the selection does not cover
+   * it, we go back to the picker with the real number rather than showing a plan whose confirm the
+   * user would be pressing on a route that strands. The CTA never flips under them: it is a
+   * different screen, with its own enabled CTA and an explicit reason.
+   */
+  const quotedShortfallUsd =
+    context && plan && confirmedSelection
+      ? fundingProgress(spendableSources, confirmedSelection, plan.quote.totalPayUsd).remainingUsd
+      : 0;
+  const quotedPlanFallsShort = quotedShortfallUsd > 0;
 
   // [R6] What the rail will REALLY run: one approval per ERC-20 leg, then the leg. Only in real mode
   // — the mock settle runs the plan's own steps, and a fixture plan carries no legs to approve.
@@ -250,14 +341,66 @@ export function ProvisioningPanel({
   const activeStepKey = flowSteps[flow.activeStep]?.key;
   const activePlanStep = plan?.steps.find((step) => step.key === activeStepKey);
 
-  const ctaDisabled = hasGasStep && !gasValidity.ok;
-  const gasSelector = hasGasStep ? (
+  // The inline gas selector is a MOCK-mode affordance. In real mode the gas top-up is sized by the
+  // classifier from a live quote and the planner ignores an explicit amount (see `planActions.ts`),
+  // so rendering the control would offer a knob that turns nothing.
+  // PP-TODO(POO-1044): UF-22 re-introduces an explicit gas choice against the real classifier.
+  const showGasSelector = hasGasStep && !context;
+  const ctaDisabled = showGasSelector && !gasValidity.ok;
+  const gasSelector = showGasSelector ? (
     <GasAmountSelector
       value={displayGas}
       onChange={setGasChoice}
       balanceUsd={spendableTokenUsd(input)}
     />
   ) : undefined;
+
+  /**
+   * [R7]/[R8]/[R9] Pick what to spend. Reached in real mode only, on open and again whenever the
+   * quoted plan turns out to cost more than the selection covers.
+   *
+   * The verdict map is passed through verbatim: it carries an entry for every source chain (the
+   * gate context guarantees it), which is what makes POO-1039's "no verdict, still selectable"
+   * fallback unreachable here rather than load-bearing.
+   */
+  if (context && (phase === "sources" || quotedPlanFallsShort)) {
+    return (
+      <div className="flex flex-col gap-4">
+        {quotedPlanFallsShort ? (
+          <p
+            className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning"
+            role="status"
+          >
+            {t("provisioning.fundingSources.repriced", {
+              amount: formatUsd(quotedShortfallUsd),
+            })}
+          </p>
+        ) : null}
+        <FundingSourceSelector
+          sources={context.sources}
+          gasByChainId={context.gasByChain}
+          targetChainId={context.targetChainId}
+          // While re-picking, the requirement is the QUOTED total: the honest figure now exists.
+          requiredUsd={quotedPlanFallsShort && plan ? plan.quote.totalPayUsd : seededRequiredUsd}
+          selected={selected}
+          onSelectedChange={(next) => {
+            setSelected(next);
+            // Back to picking: a changed selection invalidates the plan that was quoted for the old
+            // one, and leaving it mounted would show a route for money the user just deselected.
+            setConfirmedSelection(null);
+            setPhase("sources");
+          }}
+          onConfirm={() => {
+            setConfirmedSelection(selected);
+            setPhase("plan");
+          }}
+        />
+        <Button variant="ghost" className="w-full" onClick={onCancel}>
+          {t("provisioning.plan.cancel")}
+        </Button>
+      </div>
+    );
+  }
 
   if (phase === "pending") {
     return (

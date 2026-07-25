@@ -269,7 +269,10 @@ export function RemoveLiquidityModal({
   >("form");
   const [formError, setFormError] = useState<string | null>(null);
   // POO-419: pre-flight gate — decides review/form → provision → pending.
-  const gate = useProvisioningGate();
+  // POO-1042 [R2]: this modal used to pass NO op context at all, so its gate ran against a chain
+  // nobody chose. The target's own network is now the gate's target chain; without one the gate
+  // stays inert rather than guessing.
+  const gate = useProvisioningGate({ op: "close", network: target.network, enabled: open });
   // The mined tx hash for the partial receipt (POO-517 R1): the real hash from the run step in real
   // mode, the mock settle hash in mock mode (POO-505 R3 parity — the mock hash never leaks into
   // real mode because the mock steps only run there).
@@ -625,9 +628,10 @@ export function RemoveLiquidityModal({
    *
    * POO-419: the pre-flight gas top-up gate is evaluated HERE (not on the form CTA), mirroring
    * WithdrawModal's review-approve: if the wallet is short on gas / on the wrong network, provision
-   * first, then resume the already-built tx. The close is gas-only, so the op context (arg2) is
-   * omitted — the mock + real stub ignore it; POO-432 threads it. When the gate passes (flag off /
-   * nothing to provision) the send resumes immediately, identical to the pre-gate handshake.
+   * first, then resume the already-built tx. POO-1042 [R2]/[R3]: the op context now rides on the hook
+   * (the target's network); the close spends no USDC, so `evaluate` carries no amount. When the gate
+   * passes (flag off / nothing to provision) the send resumes immediately, identical to the pre-gate
+   * handshake.
    */
   function approve() {
     // POO-888 R3: suspend the re-quote countdown SYNCHRONOUSLY before anything else, so a
@@ -636,7 +640,7 @@ export function RemoveLiquidityModal({
     setFormError(null);
     // POO-803 R11: snapshot the accrued-fees figure for the receipt before the patch zeroes it.
     setReceiptFeesUsd(accruedFeesUsd);
-    if (gate.evaluate("close")) {
+    if (gate.evaluate()) {
       setPhase("provision");
       return;
     }
@@ -994,6 +998,7 @@ export function RemoveLiquidityModal({
             </DialogHeader>
             <ProvisioningPanel
               input={gate.input}
+              context={gate.context}
               // opLabel + plan.title come from the strategies namespace (tSign); the close is gas-only.
               // POO-841 R3: the plan card shows the strategy name, or a truncated id as the belt.
               opLabel={tSign(provisioningOpLabelKey("close"), {

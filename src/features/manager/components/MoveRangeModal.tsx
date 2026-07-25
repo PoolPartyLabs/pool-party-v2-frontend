@@ -329,7 +329,14 @@ export function MoveRangeModal({
   const moveRange = useMoveRange();
   // POO-419: pre-flight gate (dark-launched flag) — decides review → provision → pending. The
   // opLabel + plan title live in the strategies namespace, so reuse tSign (already scoped there).
-  const gate = useProvisioningGate();
+  // POO-1042 [R2]: this modal used to pass NO op context at all, so its gate ran against a chain
+  // nobody chose. The position's own network is now the gate's target chain; a position with no
+  // network (mock data) yields none, and the gate stays inert rather than guessing one.
+  const gate = useProvisioningGate({
+    op: "move-range",
+    network: position.network,
+    enabled: open,
+  });
   // The range is held as DISPLAYED text in the current orientation (so decimal entry is lossless);
   // canonical (token1 per token0) is derived at the edges below. Inversion is purely a display/input
   // transform (invertPrice.ts) — the on-chain path always consumes canonical bounds.
@@ -776,13 +783,13 @@ export function MoveRangeModal({
   /** Review approve CTA (POO-597 handshake + POO-419 gate): the tx is already built (we paused after
    *  the build), so approving resumes into the wallet send step — the build is not re-run here. POO-419:
    *  if the wallet is short on gas for the move-range (a gas-only op, no amount), provision first, then
-   *  resume from the provision panel's onDone. Op context (arg2) omitted — the mock + real stub ignore
-   *  it; POO-432 threads it. */
+   *  resume from the provision panel's onDone. POO-1042 [R2]/[R3]: the op context now rides on the
+   *  hook (the position's network); the move spends no USDC, so `evaluate` carries no amount. */
   function approve() {
     // POO-888 R3: suspend the re-quote countdown SYNCHRONOUSLY before anything else, so a
     // zero-crossing in this same tick cannot race the send.
     suspendCountdown();
-    if (gate.evaluate("move-range")) {
+    if (gate.evaluate()) {
       setPhase("provision");
       return;
     }
@@ -1179,6 +1186,7 @@ export function MoveRangeModal({
               </DialogHeader>
               <ProvisioningPanel
                 input={gate.input}
+                context={gate.context}
                 opLabel={tSign(provisioningOpLabelKey("move-range"), { strategy: pairLabel })}
                 onDone={() => {
                   gate.setLocked(false);

@@ -36,17 +36,15 @@ describe("computePlan (real mode)", () => {
   it("rejects with the action's code on error.cause.code when the action fails", async () => {
     computePlanAction.mockResolvedValue({
       ok: false,
-      code: "PROVISIONING_PLANNER_UNAVAILABLE",
-      message: "The provisioning planner is not wired to live balances yet (POO-1042).",
+      code: "PROVISIONING_BALANCES_UNAVAILABLE",
+      message: "The wallet's balances could not be read.",
     });
 
     const error = await computePlan(SCENARIOS.usdcOnly).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(TransactionError);
-    expect((error as Error).message).toBe(
-      "The provisioning planner is not wired to live balances yet (POO-1042).",
-    );
-    expect((error as Error).cause).toEqual({ code: "PROVISIONING_PLANNER_UNAVAILABLE" });
+    expect((error as Error).message).toBe("The wallet's balances could not be read.");
+    expect((error as Error).cause).toEqual({ code: "PROVISIONING_BALANCES_UNAVAILABLE" });
   });
 
   // @rule R5 — the happy path returns the action's plan unchanged (R4: the signature is untouched).
@@ -58,9 +56,23 @@ describe("computePlan (real mode)", () => {
     await expect(computePlan(SCENARIOS.usdcOnly, { presetUsd: null, amountUsd: 30 })).resolves.toBe(
       plan,
     );
-    expect(computePlanAction).toHaveBeenCalledWith(SCENARIOS.usdcOnly, {
-      presetUsd: null,
-      amountUsd: 30,
-    });
+    // POO-1042: `gasChoice` is deliberately NOT forwarded in real mode. The real gas top-up is sized
+    // by the classifier from a live quote, so a typed amount has nothing to attach to; taking it and
+    // ignoring it would promise something the plan does not honour, and the panel hides the selector
+    // in real mode for the same reason. PP-TODO(POO-1044) re-introduces an explicit choice.
+    expect(computePlanAction).toHaveBeenCalledWith(SCENARIOS.usdcOnly, undefined);
+  });
+
+  // @rule POO-1042 R7 — the SELECTION is what the real branch forwards, in PICK order, which the
+  // planner treats as ROUTE order. Reordering or sorting it here would execute a route the user
+  // never reviewed.
+  it("forwards the funding selection, in pick order", async () => {
+    const plan = mockComputePlan(SCENARIOS.usdcOnly);
+    computePlanAction.mockResolvedValue({ ok: true, plan });
+    const selection = ["137:0xaaa", "8453:0xbbb"];
+
+    await computePlan(SCENARIOS.usdcOnly, undefined, selection);
+
+    expect(computePlanAction).toHaveBeenCalledWith(SCENARIOS.usdcOnly, selection);
   });
 });

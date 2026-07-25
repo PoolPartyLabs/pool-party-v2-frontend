@@ -180,11 +180,19 @@ async function toFundingSource(holding: TokenBalance): Promise<FundingSource | n
  * Dust is filtered BEFORE the fan-out ([R5]): it can never be spent — bridging it costs more than it
  * moves — so it must not cost an upstream call either. The threshold is the shipped
  * {@link MIN_DISPLAY_USD}, so the funding selector and the wallet modal hide the same rows.
+ *
+ * `holdings` lets a caller that has ALREADY read them pass them in (POO-1042: the provisioning gate
+ * context needs the raw, unfiltered rows for its per-chain balances, and reading the same wallet
+ * twice in one action would double the load for nothing). Omitted, this reads them itself, exactly
+ * as before.
  */
-export async function getFundingInventory(address: `0x${string}`): Promise<FundingSource[]> {
+export async function getFundingInventory(
+  address: `0x${string}`,
+  holdings?: readonly TokenBalance[],
+): Promise<FundingSource[]> {
   if (!address) return [];
 
-  const spendable = (await readHoldings(address))
+  const spendable = (holdings ?? (await readHoldings(address)))
     .filter((holding) => holding.usd >= MIN_DISPLAY_USD)
     .sort((a, b) => b.usd - a.usd)
     .slice(0, MAX_ROUTABILITY_LOOKUPS);

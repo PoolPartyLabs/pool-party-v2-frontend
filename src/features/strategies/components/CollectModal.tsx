@@ -274,7 +274,14 @@ export function CollectModal({
   const logReferralOp = useReferralOperationLog();
   const [phase, setPhase] = useState<Phase>("confirm");
   // POO-419: pre-flight gate (dark-launched flag) — decides confirm → provision → pending.
-  const gate = useProvisioningGate();
+  // POO-1042 [R2]: the collect runs on the STRATEGY's chain and spends no USDC ([R3]). The manager
+  // path (`managed`) stays exempt exactly as it is today, which is why the network is the INVESTOR
+  // strategy's: gating it is POO-1045 [R3]'s call, not a change to make silently here.
+  const gate = useProvisioningGate({
+    op: "collect",
+    network: strategy?.network,
+    enabled: open && !managed,
+  });
   const [txError, setTxError] = useState<TxError | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // POO-384 R6: the ⚙ exposes Slippage + Deadline (a swap occurs whenever the proceeds are received
@@ -867,7 +874,7 @@ export function CollectModal({
                 // resume). Managed mode has no Strategy, so it always signs directly (gate is
                 // investor-only). POO-615: the tx is already built (paused after build), so approving
                 // resumes into the wallet send step — the build is NOT re-run (flow.resume, not run).
-                if (strategy && gate.evaluate("collect", strategy)) {
+                if (strategy && gate.evaluate()) {
                   setPhase("provision");
                   return;
                 }
@@ -893,6 +900,7 @@ export function CollectModal({
             ) : null}
             <ProvisioningPanel
               input={gate.input}
+              context={gate.context}
               opLabel={t(provisioningOpLabelKey("collect"), {
                 strategy: managed?.name ?? strategy?.name ?? "",
               })}

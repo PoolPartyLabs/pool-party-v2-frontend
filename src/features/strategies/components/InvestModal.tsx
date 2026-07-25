@@ -280,10 +280,17 @@ export function InvestModal({
   // deduped, fire-and-forget); no-ops for non-referred wallets and in mock mode.
   const logReferralOp = useReferralOperationLog();
   const [phase, setPhase] = useState<Phase>("amount");
-  // POO-419: pre-flight gate (dark-launched flag) — decides confirm → provision → pending.
-  const gate = useProvisioningGate();
   const [amountText, setAmountText] = useState("");
   const [slippage, setSlippage] = useState<number>(DEFAULT_SLIPPAGE_PCT);
+  // POO-419: pre-flight gate (dark-launched flag) — decides confirm → provision → pending.
+  // POO-1042 [R2]: the operation's own network rides in, so the gate reads live balances for THIS
+  // strategy's chain rather than a default. `enabled` keeps the read to while the sheet is open.
+  const gate = useProvisioningGate({
+    op: "invest",
+    network: strategy.network,
+    enabled: open,
+    slippagePct: slippage,
+  });
   const [deadlineMins, setDeadlineMins] = useState(30);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [txError, setTxError] = useState<TxError | null>(null);
@@ -610,7 +617,7 @@ export function InvestModal({
     // code: a user holding funds on another chain was told to go buy more fiat instead of being
     // offered the money they already have.
     if (needsDeposit) {
-      if (gate.evaluate("invest", strategy, amount)) {
+      if (gate.evaluate(amount)) {
         trackInvestSubmitted();
         setPhase("provision");
         return;
@@ -631,7 +638,7 @@ export function InvestModal({
     // POO-419: the wallet holds enough USDC here, but may still be short on gas or on the wrong
     // network. Provision first, then run the invest with its original amount + slippage (params
     // preserved, R2).
-    if (gate.evaluate("invest", strategy, amount)) {
+    if (gate.evaluate(amount)) {
       setPhase("provision");
       return;
     }
@@ -838,6 +845,7 @@ export function InvestModal({
             <StrategyMiniHeader strategy={strategy} />
             <ProvisioningPanel
               input={gate.input}
+              context={gate.context}
               opLabel={t(provisioningOpLabelKey("invest"), { strategy: strategy.name })}
               onDone={() => {
                 gate.setLocked(false);

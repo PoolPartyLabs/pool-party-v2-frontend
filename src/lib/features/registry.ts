@@ -165,18 +165,21 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
   provisioning: {
     key: "provisioning",
     area: "Provisioning (pre-flight gate)",
-    // Dark-launched (premise 10). Unlike the areas above, this gates INLINE modal behavior, not a
-    // route, so its baseline is computed, not a flat boolean: ON only in local dev
-    // (`NODE_ENV === "development"`) so the mock app demos the gate out of the box, while prod and the
-    // test env stay OFF (vitest sets `NODE_ENV === "test"`, so existing op happy-path tests are
-    // untouched). Real mode is non-triggering regardless (see buildProvisioningInput), so even an
-    // accidental prod "on" shows nothing until the real rail lands (POO-413/414/432). A per-env
-    // `NEXT_PUBLIC_FEATURE_PROVISIONING` override wins as usual.
-    defaultEnabled: process.env.NODE_ENV === "development",
+    // Dark-launched (premise 10), on a FLAT baseline like every other flag (POO-1042 [R5]).
+    //
+    // It used to be `process.env.NODE_ENV === "development"`, which was defensible only while the
+    // real branch was a hard-disable stub: the gate could not fire outside a local mock demo no
+    // matter what the flag said. POO-1042 wires it to live balances, so the same computed baseline
+    // would now mean production behavior depends on how the image was BUILT rather than on a
+    // decision anyone made. It ships off; go-live is `NEXT_PUBLIC_FEATURE_PROVISIONING=true`, per
+    // environment, like every other area.
+    //
+    // Turning it on locally is the same env var (see `.env.example`), not a build mode.
+    defaultEnabled: false,
     stage: "next",
     envVar: "NEXT_PUBLIC_FEATURE_PROVISIONING",
     description:
-      "Pre-flight provisioning gate embedded in the op modals (invest/withdraw/collect/compound/move-range/close). Demo-only in mock mode; real wiring in POO-432. Not a route, so it is never route-guarded.",
+      "Pre-flight provisioning gate embedded in the op modals (invest/withdraw/collect/compound/move-range/close). Wired to live balances + the Uniswap funding rail (POO-1042). Not a route, so it is never route-guarded.",
   },
   virtualize: {
     key: "virtualize",
