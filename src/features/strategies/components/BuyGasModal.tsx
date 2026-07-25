@@ -1,13 +1,20 @@
 /**
  * @id PP-CORE-MOD-010
  * @name BuyGasModal
- * @implements-rules-version v3
+ * @implements-rules-version v4 (POO-1044 rules v1) · v3 (POO-523 rules v1)
+ * @hackathon POO-1022 (Universal Funding)
  *
  * Standalone pre-flight gas top-up (POO-331). When an op is short on native gas, this captures the
- * amount ($10 / $25 / Custom) and tops up "paid with your USDC and converted to network gas
- * automatically", powered by Paybis. Phases: amount → pending (the {@link WalletSteps} handoff) →
- * success | error. No in-app confirm screen and no fees/total row — the Figma abstracts fees into the
- * conversion note (decided 2026-06-30). Mobile renders as a {@link Sheet} bottom sheet.
+ * amount ($10 / $25 / Custom) and tops it up. Phases: amount → pending (the {@link WalletSteps}
+ * handoff) → success | error. No in-app confirm screen and no fees/total row — the Figma abstracts
+ * fees into the conversion note (decided 2026-06-30). Mobile renders as a {@link Sheet} bottom sheet.
+ *
+ * POO-1044 [R5]: the "Powered by Paybis" attribution is gone, and the conversion note no longer
+ * says the top-up is paid from USDC. The step that Universal Funding actually implements is a
+ * `swap-gas` leg: an on-chain swap of a slice of what the wallet already holds into the chain's
+ * native coin, quoted and routed by Uniswap. No fiat rail is involved and no USDC is required, so
+ * both pieces of copy described a step that does not exist. The Paybis attribution stays where it is
+ * true, on the fiat `buy-usdc` step and the deposit screen.
  *
  * The gas-only branch of the pre-flight gate (POO-418) opens this; the multi-requirement case uses the
  * provisioning wizard (POO-409). On success it emits the chosen {@link GasChoice} via `onDone` so the
@@ -37,7 +44,6 @@ import { type FlowStep, useWalletSignFlow } from "../hooks/useWalletSignFlow";
 import { DEFAULT_SLIPPAGE_PCT } from "../lib/slippage";
 import { GasAmountSelector } from "./provisioning/GasAmountSelector";
 import { selectPreset, validateGas } from "./provisioning/gasSelection";
-import { PoweredByPaybis } from "./provisioning/PoweredByPaybis";
 import { settleOutcome, settleTxError, settleTxHash } from "./settle";
 import { TransactionErrorActions, useTxErrorBody } from "./TransactionErrorActions";
 import { TransactionSettingsDialog } from "./TransactionSettingsDialog";
@@ -216,7 +222,6 @@ export function BuyGasModal({
                 {t("provisioning.gas.dismiss")}
               </Button>
             </div>
-            <PoweredByPaybis />
           </>
         ) : null}
 

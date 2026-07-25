@@ -363,7 +363,9 @@
         "userRejected": "You declined the request in your wallet. No funds were moved.",
         "unauthorized": "This wallet isn't allowed to perform this operation.",
         "wrongChain": "Your wallet is on a different network. Switch it to {network} and try again.",
-        "wrongChainUnknown": "Your wallet is on a different network. Switch networks in your wallet and try again."
+        "wrongChainUnknown": "Your wallet is on a different network. Switch networks in your wallet and try again.",
+        "gasBlocked": "There is nothing on {network} to cover network costs, so this can't run yet. Buy a little crypto on {network}, or move some over from another network.",
+        "gasBlockedUnknown": "There is nothing on this network to cover network costs, so this can't run yet. Buy a little crypto there, or move some over from another network."
       }
     },
     "slippage": {
@@ -449,7 +451,7 @@
       "custom": "Custom",
       "customPlaceholder": "Amount",
       "customAria": "Custom gas amount",
-      "conversionNote": "Paid with your USDC and converted to network gas automatically.",
+      "conversionNote": "We convert a small part of what you already hold into network gas. No card needed.",
       "cta": "Add {amount} gas",
       "dismiss": "Not now",
       "signStep": "Top up gas",
@@ -485,7 +487,7 @@
     "captions": {
       "buyUsdc": "Card or Pix",
       "bridge": "Move funds to the right network",
-      "swapGas": "You choose the amount, paid from USDC",
+      "swapGas": "A small part of what you hold, converted to cover network costs",
       "op": "Your original action",
       "approve": "A one-time permission. Nothing moves yet."
     },

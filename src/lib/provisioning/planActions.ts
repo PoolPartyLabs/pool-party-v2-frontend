@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-016 (POO-1024, POO-1042)
+ * @id PP-CORE-LIB-016 (POO-1024, POO-1042, POO-1044)
  * @name provisioning plan server actions
- * @implements-rules-version v2 (POO-1042 rules v1)
+ * @implements-rules-version v3 (POO-1044 rules v1) · v2 (POO-1042 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The server side of the provisioning planner, and the only place plan computation may touch a
@@ -130,13 +130,14 @@ function toUsdcBaseUnits(amountUsd: number): string {
  * The UI filter is what stops a user picking one; this is what stops a stale selection, or anything
  * that bypassed the UI, reaching a quote that would 404.
  *
- * **No `gasChoice` parameter, deliberately.** In mock mode the inline gas selector resizes the plan
- * through {@link computePlan}'s own mock branch; in real mode the gas top-up is sized by the
- * classifier from a live quote, so an amount the user typed has nothing to attach to here without
- * re-deriving the whole verdict. Taking the parameter and ignoring it would be worse than not taking
- * it: the signature would promise something the plan does not honour.
- * PP-TODO(POO-1044): UF-22 owns the gas selector across all six operations and re-introduces an
- * explicit choice against the real classifier. The panel hides the selector in real mode until then.
+ * **No `gasChoice` parameter, and POO-1044 [R6] settled that there will not be one.** In mock mode
+ * the inline gas selector resizes the plan through {@link computePlan}'s own mock branch. In real
+ * mode the top-up is sized by the gas classifier from a live quote: the chain's shortfall, plus
+ * headroom, plus the top-up transaction's own cost. A typed amount cannot improve on that figure,
+ * and the selector's [$10, $200] bounds are the PAYBIS FIAT MINIMUM, which a token swap does not
+ * have. Honouring them would spend $10 of a user's holding buying native on a chain that needs six
+ * cents of it. Taking the parameter and ignoring it would be worse still: the signature would
+ * promise something the plan does not honour. The panel renders the selector in mock mode only.
  */
 export async function computePlanAction(
   input: ProvisioningNeedInput,

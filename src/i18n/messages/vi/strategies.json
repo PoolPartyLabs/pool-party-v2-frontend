@@ -363,7 +363,9 @@
         "userRejected": "Bạn đã từ chối yêu cầu trong ví của mình. Không có khoản tiền nào bị di chuyển.",
         "unauthorized": "Ví này không được phép thực hiện thao tác này.",
         "wrongChain": "Ví của bạn đang ở mạng khác. Hãy chuyển sang {network} rồi thử lại.",
-        "wrongChainUnknown": "Ví của bạn đang ở mạng khác. Hãy chuyển mạng trong ví của bạn rồi thử lại."
+        "wrongChainUnknown": "Ví của bạn đang ở mạng khác. Hãy chuyển mạng trong ví của bạn rồi thử lại.",
+        "gasBlocked": "Không có gì trên {network} để trả phí mạng, nên chưa thể thực hiện. Hãy mua một ít crypto trên {network}, hoặc chuyển sang từ mạng khác.",
+        "gasBlockedUnknown": "Không có gì trên mạng này để trả phí mạng, nên chưa thể thực hiện. Hãy mua một ít crypto ở đó, hoặc chuyển sang từ mạng khác."
       }
     },
     "slippage": {
@@ -449,7 +451,7 @@
       "custom": "Tùy chỉnh",
       "customPlaceholder": "Số tiền",
       "customAria": "Số tiền phí mạng tùy chỉnh",
-      "conversionNote": "Thanh toán bằng USDC của bạn và tự động chuyển đổi thành phí mạng.",
+      "conversionNote": "Chúng tôi chuyển đổi một phần nhỏ tài sản bạn đang có thành phí mạng. Không cần thẻ.",
       "cta": "Thêm {amount} phí mạng",
       "dismiss": "Lúc khác",
       "signStep": "Nạp phí mạng",
@@ -485,7 +487,7 @@
     "captions": {
       "buyUsdc": "Thẻ hoặc Pix",
       "bridge": "Chuyển tiền sang đúng mạng",
-      "swapGas": "Bạn chọn số tiền, thanh toán bằng USDC",
+      "swapGas": "Một phần nhỏ tài sản bạn đang có, được chuyển đổi để trả phí mạng",
       "op": "Hành động ban đầu của bạn",
       "approve": "Một quyền cấp phép duy nhất. Chưa có khoản nào được chuyển."
     },

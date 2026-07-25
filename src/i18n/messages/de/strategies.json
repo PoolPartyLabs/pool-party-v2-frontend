@@ -363,7 +363,9 @@
         "userRejected": "Sie haben die Anfrage in Ihrer Wallet abgelehnt. Es wurden keine Gelder bewegt.",
         "unauthorized": "Diese Wallet ist nicht berechtigt, diese Operation auszuführen.",
         "wrongChain": "Ihre Wallet ist in einem anderen Netzwerk. Wechseln Sie zu {network} und versuchen Sie es erneut.",
-        "wrongChainUnknown": "Ihre Wallet ist in einem anderen Netzwerk. Wechseln Sie das Netzwerk in Ihrer Wallet und versuchen Sie es erneut."
+        "wrongChainUnknown": "Ihre Wallet ist in einem anderen Netzwerk. Wechseln Sie das Netzwerk in Ihrer Wallet und versuchen Sie es erneut.",
+        "gasBlocked": "Auf {network} ist nichts vorhanden, um die Netzwerkkosten zu decken, deshalb geht das noch nicht. Kaufen Sie etwas Krypto auf {network} oder holen Sie etwas aus einem anderen Netzwerk.",
+        "gasBlockedUnknown": "In diesem Netzwerk ist nichts vorhanden, um die Netzwerkkosten zu decken, deshalb geht das noch nicht. Kaufen Sie dort etwas Krypto oder holen Sie etwas aus einem anderen Netzwerk."
       }
     },
     "slippage": {
@@ -449,7 +451,7 @@
       "custom": "Benutzerdefiniert",
       "customPlaceholder": "Betrag",
       "customAria": "Benutzerdefinierter Gebührenbetrag",
-      "conversionNote": "Wird mit Ihrem USDC bezahlt und automatisch in Netzwerkgebühren umgewandelt.",
+      "conversionNote": "Wir wandeln einen kleinen Teil Ihres vorhandenen Guthabens in Netzwerkgebühren um. Ohne Karte.",
       "cta": "{amount} Gebühr hinzufügen",
       "dismiss": "Nicht jetzt",
       "signStep": "Netzwerkgebühr aufladen",
@@ -485,7 +487,7 @@
     "captions": {
       "buyUsdc": "Karte oder lokale Überweisung",
       "bridge": "Guthaben ins richtige Netzwerk verschieben",
-      "swapGas": "Sie wählen den Betrag, bezahlt mit USDC",
+      "swapGas": "Ein kleiner Teil Ihres Guthabens, umgewandelt für die Netzwerkkosten",
       "op": "Ihre ursprüngliche Aktion",
       "approve": "Eine einmalige Freigabe. Es wird noch nichts bewegt."
     },

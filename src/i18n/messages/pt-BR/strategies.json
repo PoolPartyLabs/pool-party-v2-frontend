@@ -363,7 +363,9 @@
         "userRejected": "Você recusou a solicitação na sua carteira. Nenhum valor foi movido.",
         "unauthorized": "Esta carteira não tem permissão para executar esta operação.",
         "wrongChain": "Sua carteira está em outra rede. Mude para {network} e tente novamente.",
-        "wrongChainUnknown": "Sua carteira está em outra rede. Mude de rede na sua carteira e tente novamente."
+        "wrongChainUnknown": "Sua carteira está em outra rede. Mude de rede na sua carteira e tente novamente.",
+        "gasBlocked": "Não há nada na rede {network} para cobrir os custos de rede, então isso ainda não pode ser feito. Compre um pouco de cripto na {network} ou traga um pouco de outra rede.",
+        "gasBlockedUnknown": "Não há nada nesta rede para cobrir os custos de rede, então isso ainda não pode ser feito. Compre um pouco de cripto nela ou traga um pouco de outra rede."
       }
     },
     "slippage": {
@@ -449,7 +451,7 @@
       "custom": "Personalizado",
       "customPlaceholder": "Valor",
       "customAria": "Valor de gas personalizado",
-      "conversionNote": "Pago com o seu USDC e convertido automaticamente em gas de rede.",
+      "conversionNote": "Convertemos uma pequena parte do que você já tem em gas de rede. Sem cartão.",
       "cta": "Adicionar {amount} de gas",
       "dismiss": "Agora não",
       "signStep": "Adicionar gas",
@@ -485,7 +487,7 @@
     "captions": {
       "buyUsdc": "Cartão ou Pix",
       "bridge": "Mover fundos para a rede certa",
-      "swapGas": "Você escolhe o valor, pago com USDC",
+      "swapGas": "Uma pequena parte do que você tem, convertida para cobrir os custos de rede",
       "op": "Sua ação original",
       "approve": "Uma permissão única. Nada é movido ainda."
     },

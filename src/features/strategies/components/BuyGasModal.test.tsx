@@ -1,11 +1,15 @@
 /**
  * @id PP-CORE-MOD-010
  * @name BuyGasModal — tests
- * @implements-rules-version v3
- * Amount phase (default $10, CTA, Paybis), custom validation disabling the CTA, the pending handoff,
- * and a successful settle emitting the chosen gas. Uses fireEvent for the flow (see CollectModal.test).
+ * @implements-rules-version v4 (POO-1044 rules v1) · v3 (POO-523 rules v1)
+ * @hackathon POO-1022 (Universal Funding)
+ * Amount phase (default $10, CTA), custom validation disabling the CTA, the pending handoff, and a
+ * successful settle emitting the chosen gas. Uses fireEvent for the flow (see CollectModal.test).
  * POO-523: the settings gear (Max slippage 0.5/1/2 default 2% + deadline), slippage threading into
  * the gas build seam, and reset-on-close.
+ * POO-1044 [R5]: the surface carries NO fiat attribution. The step it drives is a `swap-gas` leg,
+ * an on-chain swap of what the wallet already holds, so naming a fiat provider described a step
+ * that does not exist. [R7]: the $10 / $25 / Custom bounds are untouched.
  */
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -25,12 +29,19 @@ vi.mock("./settle", () => ({
 function noop() {}
 
 describe("BuyGasModal", () => {
-  it("renders the amount phase with the $10 default, CTA, and Paybis footnote", () => {
+  it("renders the amount phase with the $10 default and its CTA", () => {
     renderWithProviders(<BuyGasModal open onOpenChange={noop} />);
     expect(screen.getByRole("heading", { name: "Not enough gas" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "$10.00" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "Add $10.00 gas" })).toBeEnabled();
-    expect(screen.getByText("Powered by Paybis")).toBeInTheDocument();
+  });
+
+  // POO-1044 [R5]: a gas top-up is an on-chain swap, quoted and routed by Uniswap. No fiat rail is
+  // involved, so no fiat provider is named and the note does not claim the cost comes out of USDC.
+  it("names no fiat provider, because the step it drives is a swap", () => {
+    renderWithProviders(<BuyGasModal open onOpenChange={noop} />);
+    expect(screen.queryByText(/Paybis/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/paid with your USDC/i)).not.toBeInTheDocument();
   });
 
   it("keeps the CTA disabled until a custom amount is valid", () => {
