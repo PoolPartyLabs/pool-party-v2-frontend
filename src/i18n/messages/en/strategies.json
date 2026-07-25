@@ -495,6 +495,21 @@
       "compound": "Compound in {strategy}",
       "moveRange": "Move range in {strategy}",
       "close": "Close {strategy}"
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Done.",
+        "pending": "Sent. We are waiting for it to land, and we will not send it again.",
+        "reverted": "This step did not go through, so your money stayed where it was.",
+        "absent": "Nothing was sent, so it is safe to start this step again.",
+        "unknown": "We cannot tell whether this step went through, so we will not send it again. Check your wallet activity before you continue."
+      },
+      "status": {
+        "complete": "Everything went through. You are ready to continue.",
+        "wait": "Your funds are on the way. This can take a few minutes.",
+        "rederive": "We can pick this up from where it stopped.",
+        "ask": "We need you to check one thing before we continue."
+      }
     }
   }
 }

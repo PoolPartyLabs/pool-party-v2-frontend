@@ -495,6 +495,21 @@
       "compound": "Herinvesteren in {strategy}",
       "moveRange": "Bereik verplaatsen in {strategy}",
       "close": "{strategy} sluiten"
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Klaar.",
+        "pending": "Verzonden. We wachten op de bevestiging en sturen het niet nog een keer.",
+        "reverted": "Deze stap is niet doorgegaan, je geld is gebleven waar het was.",
+        "absent": "Er is niets verzonden, je kunt deze stap veilig opnieuw starten.",
+        "unknown": "We kunnen niet vaststellen of deze stap is doorgegaan, dus we sturen hem niet nog een keer. Controleer de activiteit van je wallet voordat je verdergaat."
+      },
+      "status": {
+        "complete": "Alles is gelukt. Je kunt verder.",
+        "wait": "Je geld is onderweg. Dit kan een paar minuten duren.",
+        "rederive": "We kunnen verder waar het gestopt is.",
+        "ask": "We willen dat je eerst iets controleert voordat we verdergaan."
+      }
     }
   }
 }
