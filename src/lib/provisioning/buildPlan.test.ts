@@ -1149,3 +1149,203 @@ describe("buildPlan: plan contract", () => {
     expect(result.plan.reason).toEqual(["gas"]);
   });
 });
+
+// POO-1075 — a chain holding zero native cannot broadcast the operation's own transaction, however
+// well-funded the route into it is. Before this, the planner refused and the UI told the user to go
+// move native coin across by hand, which is the job the rail exists to do. A native-to-native quote
+// returns BRIDGE and delivers TRUE native, so no destination-side transaction is needed to make it
+// spendable, which is what breaks the deadlock.
+describe("buildPlan: bridging gas into a BLOCKED target chain [R1]", () => {
+  /** Native ETH held on Base, the donor side of the flagship case. */
+  const ETH_ON_BASE = source({
+    address: NATIVE_TOKEN_ADDRESS,
+    chainId: BASE,
+    symbol: "ETH",
+    decimals: 18,
+    amount: (ONE_ETH / BigInt(100)).toString(), // 0.01 ETH
+    usd: 36,
+  });
+  /** Native POL held on Polygon: real money, but the wrong coin for an ETH chain. */
+  const POL_ON_POLYGON = source({
+    address: NATIVE_TOKEN_ADDRESS,
+    chainId: POLYGON,
+    symbol: "POL",
+    decimals: 18,
+    amount: (ONE_ETH * BigInt(50)).toString(),
+    usd: 25,
+  });
+
+  /** The target chain: zero native, so nothing can be broadcast there. */
+  const blocked = (chainId: number, over: Partial<GasFeasibility> = {}) =>
+    verdict(chainId, {
+      verdict: "BLOCKED",
+      shortfallUsd: 0.075,
+      surplusUsd: 0,
+      reasonKey: "provisioning.gasVerdict.noNative",
+      ...over,
+    });
+
+  beforeEach(() => {
+    route(NATIVE_TOKEN_ADDRESS, BASE, NATIVE_TOKEN_ADDRESS, ARBITRUM, {
+      routing: "BRIDGE",
+      ...BRIDGE_RATE,
+      gasFeeUSD: "0.01",
+      estimatedFillTimeMs: 1_000,
+    });
+    route(USDC_BASE, BASE, USDC_ARBITRUM, ARBITRUM, {
+      routing: "BRIDGE",
+      ...BRIDGE_RATE,
+      gasFeeUSD: "0.01",
+      estimatedFillTimeMs: 1_000,
+    });
+  });
+
+  it("carries native in from a donor chain instead of refusing", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [USDC_ON_BASE, ETH_ON_BASE],
+        gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: blocked(ARBITRUM) },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // [R4] The gas arrives FIRST. Everything after it spends gas on a chain that now has some.
+    expect(stepTypes(result.plan.steps)).toEqual(["bridge-gas", "bridge", "op"]);
+
+    const [gas] = legsOf(result.plan);
+    expect(gas?.kind).toBe("bridge-gas");
+    expect(gas?.index).toBe(0);
+    expect(gas?.chainId).toBe(BASE);
+    // Native on BOTH ends: a route ending in a token would need gas on the far side to unwrap it,
+    // and would deadlock exactly where it started.
+    expect(gas?.tokenIn.address).toBe(NATIVE_TOKEN_ADDRESS);
+    expect(gas?.tokenOut.address).toBe(NATIVE_TOKEN_ADDRESS);
+    expect(gas?.tokenOut.chainId).toBe(ARBITRUM);
+  });
+
+  // @rule R3 — the API declines a bridge below ~0.0003 ETH (0.0002 returns 404), so a tiny gas need
+  // still has to send the floor. Over-delivery is the user's own money on a chain they are about to
+  // use, which is why it is allowed, but it must not be silently under-sent instead.
+  it("floors a tiny gas need at the minimum the network will carry", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [USDC_ON_BASE, ETH_ON_BASE],
+        gasByChain: {
+          [BASE]: verdict(BASE),
+          // A hundredth of a cent of gas: real, and far below the bridge floor.
+          [ARBITRUM]: blocked(ARBITRUM, { requiredGasUsd: 0.0001 }),
+        },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const [gas] = legsOf(result.plan);
+    expect(BigInt(gas?.amountOutQuoted ?? "0")).toBeGreaterThanOrEqual(BigInt("300000000000000"));
+  });
+
+  // @rule R2 — a donor that gives away what it needs for its OWN legs has simply moved the deadlock
+  // one chain over.
+  it("refuses a donor whose surplus cannot cover the bridge", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [USDC_ON_BASE, ETH_ON_BASE],
+        gasByChain: {
+          // Barely OK: nothing to give without stranding itself.
+          [BASE]: verdict(BASE, { surplusUsd: 0.0001 }),
+          [ARBITRUM]: blocked(ARBITRUM),
+        },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("PROVISIONING_GAS_BLOCKED");
+  });
+
+  // @rule R5 — Polygon's native is POL, so every Polygon pair is a cross-chain DIFFERENT-token quote
+  // and the API serves none. Probed in both directions, plus both escape hatches (POL->ETH, and
+  // WETH(Polygon)->ETH(Arbitrum)): all 404. This limit is the API's, not a policy choice.
+  it("does not treat a POL chain as a donor for an ETH chain", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [USDC_ON_BASE, POL_ON_POLYGON],
+        gasByChain: {
+          [POLYGON]: verdict(POLYGON, { surplusUsd: 25 }),
+          [ARBITRUM]: blocked(ARBITRUM),
+        },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("PROVISIONING_GAS_BLOCKED");
+    // Never quoted: the pair is known-unroutable, so asking would spend a rate-limited call to be
+    // told what the native symbols already say.
+    expect(
+      quoteCalls().some(
+        (call) => call.tokenInChainId === POLYGON && call.tokenOutChainId === ARBITRUM,
+      ),
+    ).toBe(false);
+  });
+
+  // A gas bridge is a GAS leg, not a funding one. Classifying it as funding sent an operation that
+  // needs no USDC at all (collect / withdraw / close) to the multi-step wizard instead of the simple
+  // gas modal, and dropped its cost out of the plan's gas figure entirely.
+  it("stays a gas-only plan when the operation needs no funding", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        // Collect / withdraw / close: nothing to fund, but the chain still cannot broadcast.
+        requiredAmount: "0",
+        requiredUsd: 0,
+        sources: [ETH_ON_BASE],
+        gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: blocked(ARBITRUM) },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["bridge-gas", "op"]);
+    expect(result.plan.variant).toBe("gas-only");
+    expect(result.plan.reason).toContain("gas");
+    // And the money spent on becoming able to transact is reported, not silently zero.
+    expect(result.plan.gas?.amountUsd ?? 0).toBeGreaterThan(0);
+  });
+
+  it("keeps refusing when no chain holds native at all", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        // USDC only: nothing native to send, on any chain.
+        sources: [USDC_ON_BASE],
+        gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: blocked(ARBITRUM) },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("PROVISIONING_GAS_BLOCKED");
+  });
+});

@@ -122,6 +122,16 @@ export const UNISWAP_QUOTE_TTL_MS = 30_000;
 const DEFAULT_SLIPPAGE_PCT = 2;
 
 /** i18n keys for each step label (resolved by the FE across all 11 locales). */
+/**
+ * Legs that exist to make a chain TRANSACTABLE rather than to fund the operation.
+ *
+ * One set rather than three inline predicates, because the three questions downstream ("is there a
+ * gas leg", "is there a funding leg", "which variant") must not be able to disagree about a kind.
+ * They did once: `bridge-gas` read as funding to a `kind !== "swap-gas"` test, which sent a gas-only
+ * route to the wizard and dropped its cost from the gas figure.
+ */
+const GAS_LEG_KINDS: ReadonlySet<ProvisioningLegKind> = new Set(["swap-gas", "bridge-gas"]);
+
 const LABEL_KEYS: Record<ProvisioningLegKind | "op", string> = {
   bridge: "provisioning.steps.bridge",
   "bridge-gas": "provisioning.steps.bridgeGas",
@@ -323,6 +333,8 @@ const MAX_BRIDGE_SIZING_ROUNDS = 3;
  */
 async function sizeBridgeInput(args: {
   index: number;
+  /** `"bridge"` carries the operation's asset; `"bridge-gas"` carries native coin (POO-1075). */
+  kind: "bridge" | "bridge-gas";
   tokenIn: ProvisioningLegToken;
   tokenOut: ProvisioningLegToken;
   required: bigint;
@@ -333,7 +345,7 @@ async function sizeBridgeInput(args: {
   for (let round = 0; round < MAX_BRIDGE_SIZING_ROUNDS; round += 1) {
     const priced = await priceLeg({
       index: args.index,
-      kind: "bridge",
+      kind: args.kind,
       tokenIn: args.tokenIn,
       tokenOut: args.tokenOut,
       amount: attempt.toString(),
@@ -355,6 +367,111 @@ async function sizeBridgeInput(args: {
     // No forward progress means the curve is not invertible here. Refuse rather than re-ask.
     if (next <= attempt) return null;
     attempt = next;
+  }
+
+  return null;
+}
+
+/**
+ * The smallest native amount a bridge will actually carry, in wei ([R3], POO-1075).
+ *
+ * Probed live 2026-07-25, Base to Arbitrum: 0.0002 ETH returns `404 ResourceNotFound`, 0.0003 quotes
+ * fine. The relayer fee is near-FLAT rather than proportional (~4.7e12 wei at both 0.0003 and 0.002
+ * ETH), so this floor is about economics, not precision: below it the fee approaches the amount and
+ * the network declines to carry it.
+ *
+ * A gas need under the floor therefore bridges MORE than it strictly requires. That excess is the
+ * user's own money landing on a chain they are about to use, which is why it is disclosed rather
+ * than hidden, but it is not free and the cost line has to say so.
+ */
+const MIN_GAS_BRIDGE_WEI = BigInt("300000000000000");
+
+/**
+ * Carry native coin INTO the operation's chain when that chain cannot pay for its own transaction
+ * ([R1], POO-1075).
+ *
+ * This is the last chicken-and-egg in the rail. Every other funding leg assumes the target chain can
+ * broadcast; a chain holding zero native cannot, however well-funded the route into it is. Before
+ * this existed the planner refused, and the UI told the user to go move native coin across by hand,
+ * which is precisely the job the rail exists to do.
+ *
+ * It works because a native-to-native cross-chain quote returns `routing: "BRIDGE"` and delivers
+ * TRUE native on the destination, so no destination-side transaction is needed to make it spendable.
+ * That is the whole trick: any route ending in a token would need gas on the far side to unwrap, and
+ * would deadlock exactly where it started.
+ *
+ * **Both chains must share a native asset** ([R5]). Probed across every ordered pair we operate on:
+ * Base and Arbitrum both quote (they are both ETH), and every pair involving Polygon 404s, because
+ * POL and ETH are different assets and the API serves no cross-chain different-token route. The two
+ * escape hatches were probed too and also 404: `POL -> ETH`, and `WETH(Polygon) -> ETH(Arbitrum)`.
+ * `WETH -> WETH` does bridge, but unwrapping on the far side needs gas there, which is the same
+ * deadlock. So Polygon is genuinely unreachable here and keeps its BLOCKED copy.
+ */
+async function planGasBridge(args: {
+  targetChainId: number;
+  targetGas: GasFeasibility;
+  gasByChain: Readonly<Record<number, GasFeasibility>>;
+  sources: readonly FundingSource[];
+  slippagePct: number;
+}): Promise<PricedLeg | null> {
+  const target = nativeToken(args.targetChainId);
+
+  // `classifyGasFeasibility` already decided which chains hold native to spare, and deliberately
+  // excludes a chain that is only just OK ([R2]: a donor must not strand itself). The only condition
+  // it cannot know is this one, because it never sees the target: the coin has to be the SAME coin.
+  const donors = Object.values(args.gasByChain)
+    .filter(
+      (gas) =>
+        gas.chainId !== args.targetChainId &&
+        gas.verdict === "OK" &&
+        gas.surplusUsd > 0 &&
+        nativeToken(gas.chainId).symbol === target.symbol,
+    )
+    .sort((a, b) => b.surplusUsd - a.surplusUsd || a.chainId - b.chainId);
+
+  for (const donor of donors) {
+    // The inventory is the authority on what is actually spendable. A donor whose native holding is
+    // not in it cannot be drawn on, whatever the classifier thinks it is worth.
+    const held = args.sources.find(
+      (source) =>
+        source.chainId === donor.chainId && sameAddress(source.address, NATIVE_TOKEN_ADDRESS),
+    );
+    if (!held) continue;
+
+    const balance = toBigInt(held.amount);
+    const balanceMicros = BigInt(Math.round(Math.max(0, held.usd) * 1e6));
+    if (balance <= BigInt(0) || balanceMicros <= BigInt(0)) continue;
+
+    // USD to base units off the REAL holding, never a constant ([R4] of POO-1032 applies here too):
+    // the ratio comes from a balance the inventory priced, so no second price source can disagree
+    // with the first. Micro-dollars keep the whole conversion in BigInt.
+    const toBaseUnits = (usd: number) =>
+      (balance * BigInt(Math.round(Math.max(0, usd) * 1e6))) / balanceMicros;
+
+    // [R2] What this donor can give WITHOUT stranding itself: its surplus, which the classifier
+    // already computed as native beyond its own requirement.
+    const spendable = toBaseUnits(donor.surplusUsd);
+    const wanted = toBaseUnits(args.targetGas.requiredGasUsd);
+    const required = wanted < MIN_GAS_BRIDGE_WEI ? MIN_GAS_BRIDGE_WEI : wanted;
+    if (required > spendable) continue;
+
+    const priced = await sizeBridgeInput({
+      index: 0,
+      kind: "bridge-gas",
+      tokenIn: nativeToken(donor.chainId),
+      tokenOut: target,
+      required,
+      slippagePct: args.slippagePct,
+    });
+    // A 404 is this pair declining the amount, not an outage: try the next donor.
+    if (!priced) continue;
+
+    // Sizing grosses the INPUT up past `required` to cover the bridge fee, so the surplus test has
+    // to be re-run against what actually leaves the donor. Checking only the output would let a leg
+    // through that strands the very chain it was drawn from.
+    if (toBigInt(priced.leg.amountIn) > spendable) continue;
+
+    return priced;
   }
 
   return null;
@@ -454,6 +571,7 @@ async function planSource(args: {
   if (needsBridge) {
     backwardBridge = await sizeBridgeInput({
       index: 0,
+      kind: "bridge",
       tokenIn: bridgeAsset,
       tokenOut: targetUsdc,
       required: remaining,
@@ -599,13 +717,29 @@ export async function buildPlan(
   // reports success, and hands the operation back to a wallet that still cannot broadcast. The code
   // classifies as `gasBlocked` (`@/lib/tx/diagnostics`) so the panel can name the network and offer
   // the escapes the verdict already carries, rather than "something went wrong".
+  //
+  // BLOCKED is no longer terminal (POO-1075). A donor chain holding the SAME native coin can carry
+  // gas in, and a native bridge delivers spendable native on the far side, so the deadlock is real
+  // but escapable. Only when no donor qualifies does the refusal above still stand, which is the
+  // case for Polygon in either direction: its native coin is not ETH and the API serves no
+  // cross-chain different-token route.
   const targetGas = request.gasByChain[request.targetChainId];
+  let gasBridge: PricedLeg | null = null;
   if (targetGas?.verdict === "BLOCKED") {
-    return {
-      ok: false,
-      code: "PROVISIONING_GAS_BLOCKED",
-      message: `Chain ${request.targetChainId} holds no native coin to pay for the operation's own transaction.`,
-    };
+    gasBridge = await planGasBridge({
+      targetChainId: request.targetChainId,
+      targetGas,
+      gasByChain: request.gasByChain,
+      sources: request.sources,
+      slippagePct,
+    });
+    if (!gasBridge) {
+      return {
+        ok: false,
+        code: "PROVISIONING_GAS_BLOCKED",
+        message: `Chain ${request.targetChainId} holds no native coin to pay for the operation's own transaction, and no other network holds spare ${nativeToken(request.targetChainId).symbol} to send over.`,
+      };
+    }
   }
 
   const required = toBigInt(request.requiredAmount);
@@ -619,6 +753,24 @@ export async function buildPlan(
   /** Base units already earmarked per (chain, token), so two legs cannot spend the same balance. */
   const committed = new Map<string, bigint>();
   let topUpUsd = 0;
+
+  // [R4] Seeded BEFORE any funding leg, so it is leg 0 and every later `legs.length` index follows
+  // it. Position is necessary but not sufficient: the rail additionally waits for a bridge to SETTLE
+  // before advancing, which is what actually stops a target-chain broadcast the gas has not arrived
+  // for. Its USD is derived from the donor's real holding like every other leg's.
+  if (gasBridge) {
+    const donor = request.sources.find(
+      (source) =>
+        source.chainId === gasBridge.leg.chainId &&
+        sameAddress(source.address, NATIVE_TOKEN_ADDRESS),
+    );
+    if (donor) legSources.set(legs.length, donor);
+    legs.push({ ...gasBridge.leg, index: legs.length });
+    if (gasBridge.deadlineMs !== undefined) deadlines.push(gasBridge.deadlineMs);
+    // Counted into the same figure a TOP_UP swap feeds, so the plan's `gas` amount is what the user
+    // actually spends on being able to transact, by whichever route it was obtained ([R6]).
+    topUpUsd += amountUsd(gasBridge.leg.amountIn, gasBridge.leg.tokenIn, donor);
+  }
 
   const commitKey = (chainId: number, address: string) => `${chainId}:${address.toLowerCase()}`;
   const committedOf = (chainId: number, address: string) =>
@@ -845,9 +997,11 @@ function assemblePlan(args: {
   }));
   steps.push(opStep);
 
-  const hasGasLeg = legs.some((leg) => leg.kind === "swap-gas");
-  const hasBridgeLeg = legs.some((leg) => leg.kind === "bridge");
-  const hasFundingLeg = legs.some((leg) => leg.kind !== "swap-gas");
+  const hasGasLeg = legs.some((leg) => GAS_LEG_KINDS.has(leg.kind));
+  // A gas bridge crosses a network too, and the reason line exists to tell the user why their money
+  // is moving between chains at all.
+  const hasBridgeLeg = legs.some((leg) => leg.kind === "bridge" || leg.kind === "bridge-gas");
+  const hasFundingLeg = legs.some((leg) => !GAS_LEG_KINDS.has(leg.kind));
 
   const reason: ProvisioningReason[] = [];
   if (hasGasLeg) reason.push("gas");
