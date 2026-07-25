@@ -116,6 +116,11 @@ import {
   BRIDGE_PENDING_CODE,
   type BridgeSettlement,
 } from "./awaitBridgeSettlement";
+import {
+  assertPermitAuthorisesLeg,
+  assertZeroingApproval,
+  boundApprovalToPlan,
+} from "./fundingAuthorisation";
 import type { FundingJournalRecorder, PlannedLegInput } from "./fundingJournal";
 
 /**
@@ -398,7 +403,15 @@ export function buildPlanSteps(
  *
  * The amount is resolved HERE and carried forward, so the approval and the leg cannot disagree about
  * what is being spent: an allowance sized to one figure and a swap sized to a larger one reverts.
- * Approvals are sized to the plan, never unbounded (UF-28 R3).
+ *
+ * **Approvals are sized to the plan, never unbounded (UF-28 R3), and that is enforced on the CALLDATA
+ * rather than on the request.** Asking `/check_approval` for `amount` says nothing about what comes
+ * back: Uniswap's documented flow is a one-time INFINITE approval to Permit2, so an unbounded
+ * response is the expected case, not a hypothetical. {@link boundApprovalToPlan} reads the calldata,
+ * refuses anything that is not an `approve` on this leg's own token, and caps the amount to what the
+ * plan spends. Capping the ERC-20 allowance is what bounds the whole authorisation chain, since
+ * Permit2 can only ever move what the token's allowance to Permit2 permits. The cost is one approval
+ * per leg instead of one per token forever, which is the trade the security baseline asks for.
  */
 async function runApprovalStep(
   railStep: Extract<PlanRailStep, { kind: "approve" }>,
@@ -428,10 +441,17 @@ async function runApprovalStep(
   // Checked BEFORE the cancel below: a zeroing transaction with no approval to follow it would spend
   // the user's gas to lower an allowance nothing asked us to change.
   if (!result.approval) return { ...carried, skipped: true };
+
+  // UF-28 R3/R6: read both transactions before either is broadcast. Doing it here rather than one at
+  // a time means an unsafe approval is refused BEFORE the cancel has already spent the user's gas.
+  const authorisation = { chainId: leg.chainId, token: leg.tokenIn.address, amount };
+  const bounded = boundApprovalToPlan(result.approval, authorisation);
+  if (result.cancel) assertZeroingApproval(result.cancel, authorisation);
+
   // Some tokens (USDT-class) reject a non-zero allowance being raised; the API returns the zeroing
   // transaction alongside, and skipping it makes the approval itself revert.
   if (result.cancel) await broadcast(result.cancel, leg.chainId, deps);
-  return { ...carried, txHash: await broadcast(result.approval, leg.chainId, deps) };
+  return { ...carried, txHash: await broadcast(bounded.request, leg.chainId, deps) };
 }
 
 /**
@@ -551,7 +571,22 @@ async function runLegStep(
   });
 
   // [R3] A quote that carries `permitData` needs it signed before `/swap` will build anything.
+  //
+  // UF-28 R4: a Permit2 signature is a money-moving authorisation with no gas prompt and no on-chain
+  // trace, so it is the one thing on this rail a user could approve without any wallet warning at
+  // all. Before it is signed, the struct is checked against the leg the user reviewed: verified by
+  // Permit2 on THIS chain (the domain separator is the only thing binding a signature to a network),
+  // for THIS token, with an expiration short enough to be a per-swap authorisation rather than a
+  // standing one. Its AMOUNT is reported rather than capped, because the ERC-20 approval above is
+  // already capped to the plan and Permit2 cannot move more than that allowance permits.
   const permitData = quoted.quote.permitData;
+  if (permitData) {
+    assertPermitAuthorisesLeg(permitData, {
+      chainId: leg.chainId,
+      token: leg.tokenIn.address,
+      amount,
+    });
+  }
   const signature = permitData
     ? await deps.signTypedData(toSignableTypedData(permitData))
     : undefined;

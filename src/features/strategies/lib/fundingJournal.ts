@@ -305,11 +305,17 @@ export function retireJournal(journalId: string): void {
 export function claimLease(journalId: string, tabId: string, now: number = Date.now()): boolean {
   const journal = getJournal(journalId, now);
   if (!journal) return false;
+  // UF-28: `heartbeatAt` falls back to `updatedAt`, never to "unheld". The two lease fields are only
+  // ever written together, so a holder with no heartbeat is not reachable through this API at all,
+  // which means the only way to produce one is a corrupt or hand-crafted store, and reading it as
+  // free would hand another tab a live route. `updatedAt` is the right fallback rather than a flat
+  // refusal: every write stamps it, so a live holder keeps it fresh and a dead one still goes stale
+  // within the TTL instead of deadlocking the journal forever.
+  const lastSeen = journal.heartbeatAt ?? journal.updatedAt;
   const heldByOther =
     journal.activeTabId !== undefined &&
     journal.activeTabId !== tabId &&
-    journal.heartbeatAt !== undefined &&
-    now - journal.heartbeatAt < LEASE_TTL_MS;
+    now - lastSeen < LEASE_TTL_MS;
   if (heldByOther) return false;
   writeJournal(journalId, now, (entry) => ({ ...entry, activeTabId: tabId, heartbeatAt: now }));
   return true;

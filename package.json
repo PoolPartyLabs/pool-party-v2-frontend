@@ -15,6 +15,7 @@
     "test:coverage": "vitest run --coverage",
     "i18n:check": "tsx scripts/i18n-check.ts",
     "config:check": "tsx scripts/config-check.ts",
+    "secrets:check": "tsx scripts/bundle-secrets-check.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

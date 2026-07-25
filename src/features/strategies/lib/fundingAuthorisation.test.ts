@@ -62,18 +62,17 @@ function permit(values: Record<string, unknown>, domain: Record<string, unknown>
   };
 }
 
-function permitSingle(overrides: Record<string, unknown> = {}) {
+function permitSingle(overrides: { details?: Record<string, unknown> } = {}) {
   return permit({
     details: {
       token: WETH,
       amount: "1000000000000000000",
       expiration: 1_800_000_000,
       nonce: 0,
-      ...(overrides.details as Record<string, unknown>),
+      ...overrides.details,
     },
     spender: ROUTER,
     sigDeadline: 1_799_000_000,
-    ...overrides,
   });
 }
 
