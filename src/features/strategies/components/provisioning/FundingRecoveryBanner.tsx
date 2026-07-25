@@ -47,12 +47,27 @@ import { ExplorerTxLink } from "@/components/ui/ExplorerTxLink";
 import { Link } from "@/i18n/navigation";
 import { apiNetworkForChain, chainDisplayName, getExplorerAddressUrl } from "@/lib/chains/config";
 import { useFundingRecovery } from "../../hooks/useFundingRecovery";
-import type { FundingLegKind, FundingOperationKind } from "../../lib/fundingJournal";
+import type {
+  FundingJournal,
+  FundingLegKind,
+  FundingOperationKind,
+} from "../../lib/fundingJournal";
 import type { JournalAction, LegVerdict } from "../../lib/reconcileFundingJournal";
 
-/** Where the user goes to have the route re-derived: the operation's own screen. */
-function resumeHref(strategyId: string | undefined): string {
-  return strategyId ? `/strategies/${strategyId}` : "/portfolio";
+/**
+ * Where the user goes to have the route re-derived: the operation's own screen.
+ *
+ * `move-range` and `close` only exist in the Manager Console, so they resume there. Everything else
+ * resumes on the investor detail, including `collect`, which exists on both paths and is not
+ * distinguishable from the record (the journal stores the operation kind, not the surface it was
+ * started from). The investor route is the right default for an ambiguous one: it is the far more
+ * common origin, and a manager who lands there can still reach their own view.
+ */
+function resumeHref(operation: FundingJournal["operation"]): string {
+  const { kind, strategyId } = operation;
+  if (!strategyId) return "/portfolio";
+  const managerOnly = kind === "move-range" || kind === "close";
+  return managerOnly ? `/manager/strategies/${strategyId}` : `/strategies/${strategyId}`;
 }
 
 /** The interrupted-funding notice. Renders nothing unless a route is actually in flight. */
@@ -153,7 +168,7 @@ export function FundingRecoveryBanner() {
       <div className="flex flex-col gap-2 sm:flex-row">
         {action === "rederive" || action === "ask" ? (
           <Link
-            href={resumeHref(journal.operation.strategyId)}
+            href={resumeHref(journal.operation)}
             className="inline-flex h-11 flex-1 items-center justify-center rounded-md bg-primary font-medium text-primary-foreground text-sm transition-colors hover:bg-primary/90"
           >
             {t("provisioning.recovery.resume")}

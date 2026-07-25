@@ -193,6 +193,33 @@ describe("[R2] the surface offers re-derivation, never a re-send", () => {
     );
   });
 
+  // move-range and close only exist in the Manager Console, so resuming an investor detail page
+  // would hand the manager a screen that cannot run the operation they were part-way through.
+  it("resumes a manager-only operation on the manager's own screen", async () => {
+    persistJournal([{ status: "planned", nonceBefore: 7 }], {
+      kind: "move-range",
+      strategyId: "strat-1",
+    });
+    mocks.nonces[POLYGON] = 7;
+
+    renderWithProviders(<FundingRecoveryBanner />);
+
+    expect(
+      await screen.findByRole("link", { name: "Pick up where this left off" }),
+    ).toHaveAttribute("href", "/manager/strategies/strat-1");
+  });
+
+  it("falls back to the portfolio when the route has no strategy to return to", async () => {
+    persistJournal([{ status: "planned", nonceBefore: 7 }], { kind: "invest" });
+    mocks.nonces[POLYGON] = 7;
+
+    renderWithProviders(<FundingRecoveryBanner />);
+
+    expect(
+      await screen.findByRole("link", { name: "Pick up where this left off" }),
+    ).toHaveAttribute("href", "/portfolio");
+  });
+
   it("shows an ambiguous leg the account it came from, and asks rather than acting", async () => {
     persistJournal([
       {
