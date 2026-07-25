@@ -113,6 +113,25 @@ beforeEach(() => {
   mocks.wallet = SESSION_WALLET;
 });
 
+// POO-1054 [R3]. A read-only probe of the live Trading API on 2026-07-25 never returned
+// `routing: "CHAINED"` on any pair, and `POST /plan` requires a chained quote as its body. The three
+// plan-lifecycle actions were therefore unreachable: not "untested", but impossible to call with a
+// payload the API would accept. Locking the export surface is what keeps them from coming back,
+// because an unreachable action is worse than an absent one — it reads to the next author as a
+// capability the rail has.
+describe("action surface (POO-1054 [R3])", () => {
+  it("exports only the actions the live API can serve", async () => {
+    const actions = await import("./actions");
+
+    expect(Object.keys(actions).sort()).toEqual([
+      "buildSwapTx",
+      "checkApproval",
+      "listSwappableTokens",
+      "quoteSwap",
+    ]);
+  });
+});
+
 describe("uniswap actions — session derivation (POO-1029 [R1])", () => {
   it("quotes with the session wallet as swapper", async () => {
     mocks.uniswapFetch.mockResolvedValue(sameChainQuote);
