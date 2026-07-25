@@ -25,7 +25,7 @@
  */
 import "server-only";
 
-import type { ZodType } from "zod";
+import type { ZodType, ZodTypeDef } from "zod";
 import { parseUniswapErrorBody, UniswapApiError, UniswapParseError } from "./errors";
 
 export { UniswapApiError, UniswapParseError };
@@ -90,8 +90,17 @@ export interface UniswapFetchOptions<T> {
   body?: unknown;
   /** Query parameters appended to the path. */
   query?: Record<string, string | number | boolean | undefined>;
-  /** Schema the response is validated against before it reaches the caller. Required by [R2]. */
-  schema: ZodType<T>;
+  /**
+   * Schema the response is validated against before it reaches the caller. Required by [R2].
+   *
+   * Typed on its OUTPUT with an `unknown` input, which is what actually happens here: the parsed
+   * body is `unknown` and the caller receives `parsed.data`. The narrower `ZodType<T>` (input pinned
+   * to the output, as in the mirrored `@/lib/api/client`) silently excludes every schema where the
+   * two differ, which is any schema carrying a `.catch()`, `.default()` or `.transform()`. The
+   * tolerant `gasInfo` block on the quote (POO-1028 [R7]) is exactly that, so the narrow form
+   * rejected the most important response in the integration.
+   */
+  schema: ZodType<T, ZodTypeDef, unknown>;
   /** Next.js cache options, e.g. `{ revalidate: 3600, tags: ["uniswap-tokens"] }`. */
   next?: { revalidate?: number; tags?: string[] };
   /**
