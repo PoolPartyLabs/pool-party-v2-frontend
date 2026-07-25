@@ -322,11 +322,10 @@ interface SourceGroup {
 function groupBySource(
   steps: readonly ProvisioningStep[],
   slippagePct: number,
-): { sources: SourceGroup[]; gas: ProvisioningCostGasLine[]; totals: Accumulator } {
+): { sources: SourceGroup[]; gas: ProvisioningCostGasLine[] } {
   const groups = new Map<string, SourceGroup>();
   const order: string[] = [];
   const gas: ProvisioningCostGasLine[] = [];
-  const totals = emptyAccumulator();
 
   let previousOut: ProvisioningLeg["tokenOut"] | undefined;
   let currentKey: string | undefined;
@@ -356,7 +355,6 @@ function groupBySource(
 
     const line = priceStep(step, leg, slippagePct);
     add(group.totals, line);
-    add(totals, line);
     group.stepKeys.push(step.key);
     // Only a leg that spends the holding itself is money the user hands over. A fed leg spends the
     // previous leg's proceeds, and counting it again would inflate the source's contribution.
@@ -367,7 +365,7 @@ function groupBySource(
     currentKey = key;
   }
 
-  return { sources: order.map((key) => groups.get(key) as SourceGroup), gas, totals };
+  return { sources: order.map((key) => groups.get(key) as SourceGroup), gas };
 }
 
 /**
