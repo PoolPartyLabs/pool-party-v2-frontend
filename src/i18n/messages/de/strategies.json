@@ -503,6 +503,21 @@
       "compound": "In {strategy} reinvestieren",
       "moveRange": "Bereich in {strategy} verschieben",
       "close": "{strategy} schließen"
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Fertig.",
+        "pending": "Gesendet. Wir warten auf die Bestätigung und senden es nicht erneut.",
+        "reverted": "Dieser Schritt wurde nicht ausgeführt, Ihr Geld ist geblieben, wo es war.",
+        "absent": "Es wurde nichts gesendet, Sie können diesen Schritt gefahrlos erneut starten.",
+        "unknown": "Wir können nicht feststellen, ob dieser Schritt ausgeführt wurde, deshalb senden wir ihn nicht erneut. Prüfen Sie die Aktivität Ihrer Wallet, bevor Sie fortfahren."
+      },
+      "status": {
+        "complete": "Alles ist durchgelaufen. Sie können fortfahren.",
+        "wait": "Ihr Guthaben ist unterwegs. Das kann einige Minuten dauern.",
+        "rederive": "Wir können dort weitermachen, wo es stehen geblieben ist.",
+        "ask": "Bitte prüfen Sie eine Sache, bevor wir fortfahren."
+      }
     }
   }
 }

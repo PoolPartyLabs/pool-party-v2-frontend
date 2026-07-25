@@ -503,6 +503,21 @@
       "compound": "Reinvertir en {strategy}",
       "moveRange": "Mover rango en {strategy}",
       "close": "Cerrar {strategy}"
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Listo.",
+        "pending": "Enviado. Estamos esperando la confirmación y no lo enviaremos otra vez.",
+        "reverted": "Este paso no se completó, así que tu dinero sigue donde estaba.",
+        "absent": "No se envió nada, así que es seguro volver a empezar este paso.",
+        "unknown": "No podemos saber si este paso se completó, así que no lo enviaremos otra vez. Revisa la actividad de tu billetera antes de continuar."
+      },
+      "status": {
+        "complete": "Todo salió bien. Puedes continuar.",
+        "wait": "Tus fondos están en camino. Esto puede tardar unos minutos.",
+        "rederive": "Podemos retomar desde donde se detuvo.",
+        "ask": "Necesitamos que revises una cosa antes de continuar."
+      }
     }
   }
 }

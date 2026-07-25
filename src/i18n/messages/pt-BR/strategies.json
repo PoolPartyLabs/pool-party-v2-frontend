@@ -503,6 +503,21 @@
       "compound": "Reinvestir em {strategy}",
       "moveRange": "Mover faixa em {strategy}",
       "close": "Encerrar {strategy}"
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Pronto.",
+        "pending": "Enviado. Estamos aguardando a confirmação e não vamos enviar de novo.",
+        "reverted": "Esta etapa não foi concluída, então seu dinheiro continua onde estava.",
+        "absent": "Nada foi enviado, então é seguro começar esta etapa de novo.",
+        "unknown": "Não conseguimos saber se esta etapa foi concluída, então não vamos enviar de novo. Confira a atividade da sua carteira antes de continuar."
+      },
+      "status": {
+        "complete": "Tudo certo. Você pode continuar.",
+        "wait": "Seus fundos estão a caminho. Isso pode levar alguns minutos.",
+        "rederive": "Podemos retomar de onde parou.",
+        "ask": "Precisamos que você confira uma coisa antes de continuarmos."
+      }
     }
   }
 }

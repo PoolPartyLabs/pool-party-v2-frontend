@@ -503,6 +503,21 @@
       "compound": "Réinvestir dans {strategy}",
       "moveRange": "Déplacer la plage dans {strategy}",
       "close": "Fermer {strategy}"
+    },
+    "recovery": {
+      "leg": {
+        "settled": "Terminé.",
+        "pending": "Envoyé. Nous attendons la confirmation et nous ne l'enverrons pas une seconde fois.",
+        "reverted": "Cette étape n'a pas abouti, votre argent est resté où il était.",
+        "absent": "Rien n'a été envoyé, vous pouvez relancer cette étape en toute sécurité.",
+        "unknown": "Nous ne pouvons pas savoir si cette étape a abouti, nous ne l'enverrons donc pas une seconde fois. Vérifiez l'activité de votre portefeuille avant de continuer."
+      },
+      "status": {
+        "complete": "Tout est passé. Vous pouvez continuer.",
+        "wait": "Vos fonds sont en route. Cela peut prendre quelques minutes.",
+        "rederive": "Nous pouvons reprendre là où cela s'est arrêté.",
+        "ask": "Nous avons besoin que vous vérifiiez un point avant de continuer."
+      }
     }
   }
 }
