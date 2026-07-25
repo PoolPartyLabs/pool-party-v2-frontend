@@ -8,6 +8,7 @@
  * deep link 404s until `swapScreen` is flipped on, and it is guarded SERVER-side rather than merely
  * hidden from the nav.
  */
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const { notFoundMock, setRequestLocaleMock } = vi.hoisted(() => ({
@@ -22,6 +23,21 @@ const { notFoundMock, setRequestLocaleMock } = vi.hoisted(() => ({
 
 vi.mock("next/navigation", () => ({ notFound: notFoundMock }));
 vi.mock("next-intl/server", () => ({ setRequestLocale: setRequestLocaleMock }));
+// The page's subtree reaches next-intl's CLIENT navigation factory, whose ESM imports the bare
+// specifier "next/navigation" and fails to resolve under vitest ("Did you mean next/navigation.js").
+// Stubbing "next/navigation" above does not prevent that: the mock serves OUR import graph, while
+// next-intl resolves its own through Node. Stubbing the app wrapper stops the factory loading at all,
+// which is why 88 other suites in this repo stub this module rather than the Next one.
+vi.mock("@/i18n/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => "/swap",
+  redirect: vi.fn(),
+  Link: ({ href, children, ...props }: { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
 
 import SwapPage from "./page";
 
