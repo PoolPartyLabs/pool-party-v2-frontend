@@ -19,7 +19,11 @@ const quoteSwap = vi.fn();
 vi.mock("@/lib/balances/fetchWalletHoldings", () => ({
   fetchWalletHoldings: (address: string) => fetchWalletHoldings(address),
 }));
-vi.mock("@/lib/balances/fundingInventory", () => ({
+// `getFundingInventory` is stubbed, but `toBaseUnits` is REAL: the unfiltered native holdings
+// (POO-1076) convert their balances with the same money parsing the inventory uses, and a stub of it
+// here would be a second implementation of the one rule this codebase is strictest about.
+vi.mock("@/lib/balances/fundingInventory", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/balances/fundingInventory")>()),
   getFundingInventory: (...args: unknown[]) => getFundingInventory(...args),
 }));
 vi.mock("@/lib/uniswap/actions", () => ({

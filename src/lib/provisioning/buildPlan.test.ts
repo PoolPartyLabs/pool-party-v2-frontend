@@ -1417,6 +1417,66 @@ describe("buildPlan: bridging gas into a BLOCKED target chain [R1]", () => {
     expect(stepTypes(result.plan.steps)).toEqual(["bridge-gas", "bridge", "op"]);
   });
 
+  // POO-1076 — the funding inventory drops sub-$1 rows because dust cannot usefully be SPENT. A gas
+  // bridge is not a spend: at the live ~$1,900/ETH its 0.0003 ETH floor is about $0.56, so a holding
+  // that can genuinely donate sits below a threshold that was never about donating. The gate now
+  // passes native holdings through unfiltered.
+  it("[R1] uses a native holding the picker's dust filter would have hidden", async () => {
+    const DUSTY_ETH = source({
+      address: NATIVE_TOKEN_ADDRESS,
+      chainId: BASE,
+      symbol: "ETH",
+      decimals: 18,
+      // $0.80 of ETH at ~$1,900: under the $1 picker threshold, over the ~$0.56 bridge floor.
+      amount: "421000000000000",
+      usd: 0.8,
+    });
+
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [USDC_ON_BASE],
+        inventory: [USDC_ON_BASE, DUSTY_ETH],
+        gasByChain: {
+          [BASE]: verdict(BASE, { surplusUsd: 0.7 }),
+          [ARBITRUM]: blocked(ARBITRUM),
+        },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["bridge-gas", "bridge", "op"]);
+  });
+
+  // A refusal has to say WHICH gate closed. One catch-all for five situations sent a user to buy
+  // crypto when the real answer was "your ETH is there, just under the bridge minimum", and left
+  // nothing to debug from when it happened in the wild.
+  it("[R1] names the reason it could not bridge gas", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [USDC_ON_BASE],
+        inventory: [USDC_ON_BASE],
+        gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: blocked(ARBITRUM) },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("PROVISIONING_GAS_BLOCKED");
+    // Not the generic sentence alone: it says the donor chain had spare gas by the classifier but no
+    // native holding reached the planner, which is the actual defect class.
+    expect(result.message).toContain(String(BASE));
+    expect(result.message.length).toBeGreaterThan(120);
+  });
+
   it("keeps refusing when no chain holds native at all", async () => {
     const result = await buildPlan(
       {

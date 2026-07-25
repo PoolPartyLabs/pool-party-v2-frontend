@@ -112,7 +112,7 @@ async function readHoldings(address: `0x${string}`): Promise<TokenBalance[]> {
  * with. `toFixed` there mirrors the shipped precedent in `seedAmounts.ts:110`; anything it cannot
  * render as a plain decimal (a value past 1e21, an infinity) is rejected rather than guessed at.
  */
-function toBaseUnits(holding: TokenBalance): string | null {
+export function toBaseUnits(holding: TokenBalance): string | null {
   const decimal = (holding.amountExact ?? holding.amount.toFixed(holding.decimals)).trim();
   if (!PLAIN_DECIMAL.test(decimal)) return null;
 
