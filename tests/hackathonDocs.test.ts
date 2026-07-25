@@ -180,8 +180,9 @@ describe("[R2] the plan of record matches the epic that actually ran", () => {
 describe("[R3] the bridge document carries the verified flagship evidence", () => {
   const bridge = read(BRIDGE);
 
-  it("records the probe that produced it", () => {
-    expect(bridge).toContain("Verified flagship route");
+  it("records the probe that produced it, under the anchor the plan links to", () => {
+    expect(bridge).toContain("### 1.6 The verified flagship route, live (2026-07-25)");
+    expect(read(PLAN)).toContain("#16-the-verified-flagship-route-live-2026-07-25");
   });
 
   it("keeps the real figures, which are the whole point of the section", () => {

@@ -45,7 +45,9 @@ Every funding route the planner produces is built from exactly two Trading API c
 
 The last row is the flagship demo case and the reason this section exists. `POST /quote` with
 WETH (Polygon) → USDC (Arbitrum) answers `404 ResourceNotFound`. The pair is not offered as a single
-route, so we build it out of two routes that are.
+route, so we build it out of two routes that are. That whole sentence is measured rather than
+asserted: [§1.6](#16-the-verified-flagship-route-live-2026-07-25) is the live probe, with the 404, both
+legs, their real amounts and the broadcastable calldata the second one produces.
 
 ### 1.2 The flagship route, decomposed
 
@@ -133,6 +135,41 @@ broadcast from a signature. The plan Zod schemas are kept in `src/lib/uniswap/sc
 `UNREACHABLE` block comment. The three server actions that called the endpoints were deleted, because
 an action that cannot be called with any payload the API accepts is worse than an absent one: the next
 author reads it as a capability the rail has.
+
+### 1.6 The verified flagship route, live (2026-07-25)
+
+Everything above is a design claim. This is the measurement behind it.
+
+Probed read-only against the live Trading API with the production key. No signing, no broadcast,
+nothing created upstream.
+
+| Step | Request | Result |
+|---|---|---|
+| Direct | `WETH(137) -> USDC(42161)`, EXACT_INPUT | **404 ResourceNotFound** |
+| Leg 1 | `WETH -> USDC` on Polygon (137) | 200, `routing: CLASSIC`, out `18552590` (18.5526 USDC) |
+| Leg 2 | `USDC 137 -> 42161`, amount = leg 1 output | 200, `routing: BRIDGE`, out `18542977`, `estimatedFillTimeMs: 1000` |
+| Leg 2 build | `POST /swap` with the bridge quote | 200, `to: 0x9295ee1d8C…`, 860-char calldata, `chainId: 137` |
+
+Net: **0.01 WETH -> 18.5526 USDC(Polygon) -> 18.5430 USDC(Arbitrum)**, bridge spread **0.0096 USDC**
+(~0.05%).
+
+The 404 on the first row is the whole reason the planner decomposes. The remaining rows are the route
+it produces instead, every leg on a fully supported Uniswap route, ending in broadcastable calldata.
+
+Three things this table settles that prose cannot:
+
+- **The decomposition is not a workaround for a rate limit or a bad request.** Row 1 and row 2 differ
+  only in that row 2 asks for a pair the API serves. The same key, the same swapper, the same
+  `EXACT_INPUT` shape.
+- **Leg 2 is priced from leg 1's actual output**, `18552590`, not from a round number. That is the
+  §1.3 rule executed rather than described.
+- **It ends in calldata, on chain 137.** The last row is a real `POST /swap` response: an address, a
+  value, and 860 characters of data that a wallet would broadcast. The bridge leg is signed on the
+  *source* chain, which is why leg-to-leg chain switching (§2) matters and why the destination-side
+  arrival test (§3.6) is a separate observation rather than a receipt read.
+
+The figures are a point-in-time quote and will not reproduce exactly; the shapes will. Reproduce them
+with the `curl` recipes in [`01_UNISWAP_INTEGRATION.md` §1.2](01_UNISWAP_INTEGRATION.md#12-reproducing-it).
 
 ---
 
