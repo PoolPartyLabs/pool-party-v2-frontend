@@ -23,6 +23,15 @@ const mocks = vi.hoisted(() => ({
     login: vi.fn(),
     logout: vi.fn(),
   },
+  /** POO-1046: the `swapScreen` flag, flipped per test. Dark-launched off, like production. */
+  swapScreen: false,
+}));
+
+vi.mock("@/lib/features/useFeatureFlags", () => ({
+  useFeatureFlags: () => ({
+    flags: { swapScreen: mocks.swapScreen },
+    isEnabled: (key: string) => (key === "swapScreen" ? mocks.swapScreen : false),
+  }),
 }));
 
 vi.mock("@/lib/services", () => ({ isMockMode: true }));
@@ -108,5 +117,36 @@ describe("WalletMenu", () => {
     await user.click(screen.getByRole("button", { name: "Open wallet" }));
     await user.click(screen.getByRole("button", { name: "Buy" }));
     expect(mocks.push).toHaveBeenCalledWith("/deposit");
+  });
+
+  // POO-1046 [R4]: the modal is EXACTLY as it is today while the screen is dark-launched, and the
+  // same button routes to it once the flag is on. Both halves are asserted, because "the flag does
+  // nothing" and "the flag does everything" fail the same test if only one is.
+  it("[R4] leaves Swap inert while the swapScreen flag is off", async () => {
+    mocks.auth.isAuthenticated = true;
+    mocks.auth.address = "0x1A2b3C4d5E6f7890a1B2c3D4e5F6789012345678";
+    mocks.swapScreen = false;
+    mocks.push.mockClear();
+    const user = userEvent.setup();
+    renderWithProviders(<WalletMenu />);
+    await user.click(screen.getByRole("button", { name: "Open wallet" }));
+
+    const swap = screen.getByRole("button", { name: /Swap/ });
+    expect(swap).toHaveAttribute("aria-disabled", "true");
+    await user.click(swap);
+    expect(mocks.push).not.toHaveBeenCalled();
+  });
+
+  it("[R4] routes Swap to /swap once the swapScreen flag is on", async () => {
+    mocks.auth.isAuthenticated = true;
+    mocks.auth.address = "0x1A2b3C4d5E6f7890a1B2c3D4e5F6789012345678";
+    mocks.swapScreen = true;
+    mocks.push.mockClear();
+    const user = userEvent.setup();
+    renderWithProviders(<WalletMenu />);
+    await user.click(screen.getByRole("button", { name: "Open wallet" }));
+    await user.click(screen.getByRole("button", { name: "Swap" }));
+
+    expect(mocks.push).toHaveBeenCalledWith("/swap");
   });
 });

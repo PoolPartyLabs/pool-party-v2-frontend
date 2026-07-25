@@ -33,9 +33,10 @@ import {
 } from "../../../../tests/utils/renderWithProviders";
 import { ProvisioningPanel } from "./ProvisioningPanel";
 
-// POO-1044 [R3]: the panel's buy-crypto escape renders the locale-aware Link, which resolves Next's
-// app-router navigation. It does not exist under jsdom, so it is stood in for, as in every other
-// suite in this folder that mounts a navigating component.
+// Two mounted surfaces render the locale-aware Link: POO-1043 [R9]'s cost breakdown in the plan phase
+// (its buy-crypto peer option) and POO-1044 [R3]'s buy-crypto escape on the blocked error branch. It
+// resolves Next's app-router navigation, which does not exist under jsdom, so it is stood in for, as
+// in every other suite in this folder that mounts a navigating component.
 vi.mock("@/i18n/navigation", () => ({
   Link: ({
     href,
@@ -65,7 +66,7 @@ vi.mock("../hooks/useProvisioningPlan", () => ({
     options: { selection?: readonly string[]; enabled?: boolean } = {},
   ) => {
     quotedForHolder.current = options.enabled === false ? null : (options.selection ?? []);
-    return { plan: planHolder.current, loading: false, error: null };
+    return { plan: planHolder.current, loading: false, error: null, refresh: () => {} };
   },
 }));
 

@@ -1,0 +1,27 @@
+{
+  "title": "Chuyển tiền",
+  "subtitle": "Chọn một mạng lưới và số tiền bạn muốn có sẵn ở đó. Phần còn lại để chúng tôi lo.",
+  "destination": {
+    "label": "Mạng lưới"
+  },
+  "amount": {
+    "label": "Bạn muốn có sẵn bao nhiêu trên {network}?",
+    "available": "Bạn đang có {amount} trên {network}. Chúng tôi chỉ chuyển phần còn thiếu."
+  },
+  "continue": "Tiếp tục",
+  "routingNote": "Chúng tôi tìm cách rẻ nhất để đưa tiền của bạn tới {network}, dù cần đổi, cần chuyển hay cả hai.",
+  "walletUnavailable": "Hiện chưa đọc được số dư của bạn. Hãy kiểm tra kết nối và thử lại.",
+  "plan": {
+    "subtitle": "Đang chuẩn bị {amount} khả dụng trên {network}."
+  },
+  "opLabel": "{amount} khả dụng trên {network}",
+  "done": {
+    "title": "Tiền của bạn đã ở trên {network}",
+    "body": "Mọi thứ đã tới nơi. Bạn có thể đầu tư ngay bây giờ.",
+    "cta": "Chuyển thêm tiền"
+  },
+  "notFound": {
+    "title": "Chưa khả dụng",
+    "body": "Việc chuyển tiền giữa các mạng lưới chưa được bật cho tài khoản của bạn."
+  }
+}

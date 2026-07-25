@@ -11,8 +11,12 @@
  * yet). Presentational: all data and side-effects (navigation, disconnect) come from props.
  *
  * Business rules: POO-238 [R1-R9], POO-285 [R2]. Buy and Receive navigate to the deposit on-ramp;
- * Swap is disabled with a "coming soon" tooltip (POO-240) and Send opens an in-modal "coming soon"
- * placeholder (POO-241).
+ * Send opens an in-modal "coming soon" placeholder (POO-241).
+ *
+ * POO-1046 [R4] (hackathon POO-1022): Swap is the "coming soon" it has been since POO-240 UNTIL the
+ * host passes {@link WalletModalProps.onSwap}, which it does only when the `swapScreen` flag is on.
+ * The prop is the whole switch, deliberately: this component stays presentational and knows nothing
+ * about flags, and with the flag off the modal is byte-identical to what shipped.
  */
 "use client";
 
@@ -73,6 +77,11 @@ export interface WalletModalProps {
   onBuy: () => void;
   /** Open the Receive (crypto deposit) screen (closes the modal + navigates). */
   onReceive: () => void;
+  /**
+   * Open the standalone swap + bridge screen (POO-1046 [R4]). Omitted while the `swapScreen` flag
+   * is off, which is what keeps Swap the inert "coming soon" it has been since POO-240.
+   */
+  onSwap?: () => void;
   /** Open account management (closes the modal + navigates). */
   onManage: () => void;
   /** Disconnect / log out the wallet. */
@@ -100,6 +109,7 @@ export function WalletModal({
   onRefresh,
   onBuy,
   onReceive,
+  onSwap,
   onManage,
   onDisconnect,
 }: WalletModalProps) {
@@ -252,10 +262,12 @@ export function WalletModal({
               {/* Quick actions. Always available, even at a zero balance (POO-480). */}
               <div className="flex items-stretch gap-2">
                 <ActionButton icon={Plus} label={t("actions.buy")} accent onClick={onBuy} />
+                {/* [R4] Live once the host hands it a destination; the inert original otherwise. */}
                 <ActionButton
                   icon={ArrowLeftRight}
                   label={t("actions.swap")}
-                  disabledHint={t("comingSoon.title")}
+                  onClick={onSwap}
+                  {...(onSwap ? {} : { disabledHint: t("comingSoon.title") })}
                 />
                 <ActionButton
                   icon={ArrowUpRight}

@@ -1,0 +1,27 @@
+{
+  "title": "轉移資金",
+  "subtitle": "選擇一個網路，以及你希望在該網路上可用的金額。其餘的交給我們。",
+  "destination": {
+    "label": "網路"
+  },
+  "amount": {
+    "label": "你希望在 {network} 上有多少可用資金？",
+    "available": "你現在在 {network} 上有 {amount}。我們只轉移缺少的部分。"
+  },
+  "continue": "繼續",
+  "routingNote": "無論需要兌換、轉移或兩者兼具，我們都會找出把資金送到 {network} 最省錢的方式。",
+  "walletUnavailable": "目前無法讀取你的餘額。請檢查網路連線後再試一次。",
+  "plan": {
+    "subtitle": "正在讓 {amount} 在 {network} 上可用。"
+  },
+  "opLabel": "{network} 上可用 {amount}",
+  "done": {
+    "title": "你的資金已抵達 {network}",
+    "body": "全部到帳。你現在就可以用它們投資。",
+    "cta": "繼續轉移資金"
+  },
+  "notFound": {
+    "title": "尚未開放",
+    "body": "跨網路轉移資金尚未對你的帳戶開放。"
+  }
+}

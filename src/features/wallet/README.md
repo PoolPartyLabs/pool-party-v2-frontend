@@ -25,7 +25,8 @@ mobile, centered dialog on desktop.
 |--------|----------|
 | Buy | Navigates to `/deposit` (Paybis on-ramp). **Live.** |
 | Receive | Navigates to `/deposit?mode=receive` (crypto-receive step). **Live.** |
-| Swap / Send | In-modal "Coming soon" placeholder. Full flows: **POO-240** / **POO-241**. |
+| Swap | Routes to `/swap` (`PP-CORE-SCR-010`, **POO-1046**) when the `swapScreen` flag is on. Off, it is the disabled "coming soon" it has been since **POO-240**. The switch is the optional `onSwap` prop: `WalletMenu` passes it only behind the flag, so `WalletModal` reads no flags itself. |
+| Send | In-modal "Coming soon" placeholder. Full flow: **POO-241**. |
 | Copy address | Copies the full checksummed address with an inline "Copied" confirm. |
 | Refresh balance | Manually re-reads the balance in place (**POO-808**). Received tokens don't change the address, so the balance never re-reads on its own; the control sits next to the total and spins while running, without blanking to the skeleton. No automatic polling. |
 | Manage wallet | Navigates to `/profile`. |

@@ -471,6 +471,12 @@
       "cta": "Xác nhận & tiếp tục",
       "cancel": "Hủy"
     },
+    "requote": {
+      "title": "Giá đã thay đổi",
+      "body": "Bước này hiện mang lại ít hơn khoảng {percent} so với mức giá bạn đã duyệt. Chưa có gì được gửi đi, nên bạn có thể chấp nhận mức giá mới hoặc dừng ở đây.",
+      "accept": "Chấp nhận giá mới",
+      "decline": "Dừng ở đây"
+    },
     "steps": {
       "buyUsdc": "Mua USDC",
       "bridge": "Chuyển sang {network}",

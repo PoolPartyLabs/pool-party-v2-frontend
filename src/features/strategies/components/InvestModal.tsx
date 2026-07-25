@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-MOD-001
  * @name InvestModal (amount → building → review → sign)
- * @implements-rules-version v10 (POO-801 rules v1) · v1 (POO-819: top-level lockupDays source) · v1 (POO-842 rules v1) · v1 (POO-905: served-rate protocol fee estimate) · v1 (POO-1025 rules v1)
+ * @implements-rules-version v11 (POO-1043 rules v1) · v10 (POO-801 rules v1) · v1 (POO-819: top-level lockupDays source) · v1 (POO-842 rules v1) · v1 (POO-905: served-rate protocol fee estimate) · v1 (POO-1025 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The invest flow as a single dialog: enter an amount → confirm & sign → pending → success.
@@ -846,11 +846,19 @@ export function InvestModal({
             <ProvisioningPanel
               input={gate.input}
               context={gate.context}
+              // POO-1043 [R7]: what the recovery journal records this funding route as, so a killed
+              // tab mid-bridge has an in-flight record that names the operation it was funding.
+              operation={{ kind: "invest", strategyId: strategy.id }}
               opLabel={t(provisioningOpLabelKey("invest"), { strategy: strategy.name })}
               onDone={() => {
                 gate.setLocked(false);
                 // POO-598 R7: build first (approve → permit → build), then pause at the Review — do
                 // NOT jump straight to signing the send.
+                // POO-1043 [R1]/[R2]/[R4]: `run()` and not `resume()`, which is what makes all three
+                // true at once. The steps are memoised on the ORIGINAL amount + slippage, so they
+                // resume unchanged [R1]; the send is the last step and only the Review's CTA reaches
+                // it [R2]; and a full run rebuilds, so a provisioning wait of any length (a bridge is
+                // minutes) can never leave a build older than MAX_BUILT_TX_AGE_MS to be signed [R4].
                 setPhase("building");
                 void flow.run();
               }}

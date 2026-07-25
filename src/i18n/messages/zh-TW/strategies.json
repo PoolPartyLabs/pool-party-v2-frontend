@@ -471,6 +471,12 @@
       "cta": "確認並繼續",
       "cancel": "取消"
     },
+    "requote": {
+      "title": "價格已變動",
+      "body": "這一步現在的收益比你確認的價格約少 {percent}。目前尚未送出任何內容，你可以接受新價格，也可以就此停止。",
+      "accept": "接受新價格",
+      "decline": "就此停止"
+    },
     "steps": {
       "buyUsdc": "購買 USDC",
       "bridge": "轉移至 {network}",
