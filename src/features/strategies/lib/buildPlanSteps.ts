@@ -1,5 +1,5 @@
 /**
- * @id PP-STR-LIB-017 (POO-1036, POO-1038)
+ * @id PP-STR-LIB-017 (POO-1036, POO-1037, POO-1038)
  * @name buildPlanSteps (provisioning execution rail)
  * @implements-rules-version v1
  * @hackathon POO-1022 (Universal Funding)
@@ -44,6 +44,15 @@
  * field the live API returns as HEX (`"0x00"`), so it is normalised through `BigInt()` before it
  * reaches anything that reads it as decimal ([R5]).
  *
+ * ## A bridge leg is not done when its transaction mines (POO-1037)
+ *
+ * A source receipt proves only that the funds LEFT. Arrival is a separate observation on the
+ * destination chain, minutes later, so a bridge leg's `run()` stays open until
+ * {@link awaitBridgeSettlement} sees the destination balance clear the leg's floor. At the poll
+ * ceiling the leg is neither failed nor succeeded: it throws {@link BRIDGE_PENDING_CODE} carrying the
+ * broadcast hash, and the panel degrades to "still settling" rather than offering a retry that would
+ * re-broadcast money already in flight.
+ *
  * ## Recovery and idempotency (POO-1038)
  *
  * Two obligations were added here, both from `02_BRIDGE_ARCHITECTURE.md` §3, and both are about
@@ -65,12 +74,23 @@
  * approvals under the leg's index would be worse than useless: a settled approval would make the leg
  * look done when its swap had never run.
  *
+ * ## How the wait and the journal compose on a bridge leg
+ *
+ * The two designs above are the same story told from the live tab and from the reload, and they meet
+ * inside one `run()`. In order: the leg is journaled `planned` with its nonce and its destination
+ * baseline, the split send returns a hash that is journaled `broadcast` **synchronously**, that same
+ * hash is handed to {@link PlanRailDeps.onLegBroadcast}, the SOURCE receipt is awaited, and only then
+ * does {@link awaitBridgeSettlement} hold the step open until the destination balance clears the
+ * floor. So a bridge is waited for INLINE on the good path, and the record is durable the whole time.
+ *
+ * That is why a bridge leg is never marked `settled` from here even when the inline wait observes it
+ * land: the journal's arrival verdict has exactly one author, `reconcileFundingJournal` (§3.6), which
+ * re-derives it from the chain. Any other path (the poll ceiling, a closed tab, a dead RPC) leaves
+ * the leg `broadcast` with its hash recorded, which is precisely what makes the ceiling recoverable
+ * rather than a lost transfer.
+ *
  * ## Deliberately NOT here
  *
- * - **Bridge settlement polling (POO-1037).** A source receipt proves only that the funds LEFT.
- *   Arrival is a separate observation on the destination chain, minutes later. This rail records the
- *   `destBalanceBefore` that test needs and leaves a bridge leg `broadcast`; the polling loop and the
- *   arrival verdict live in `reconcileFundingJournal` (§3.6) and POO-1037.
  * - **The bridge-spender ERC-20 allowance.** `02_BRIDGE_ARCHITECTURE.md` §1.2 claims `/check_approval`
  *   reports only the Permit2 allowance, so a BRIDGE route's own spender may need a separate approval.
  *   The action's cross-chain form (`tokenOut` + `tokenOutChainId`) is passed here, which is the shape
@@ -91,6 +111,11 @@ import {
 } from "@/lib/tx/sendTransaction";
 import type { UniswapQuoteResponse, UniswapTransactionRequest } from "@/lib/uniswap/schemas";
 import type { FlowStep, FlowStepResult } from "../hooks/useWalletSignFlow";
+import {
+  awaitBridgeSettlement,
+  BRIDGE_PENDING_CODE,
+  type BridgeSettlement,
+} from "./awaitBridgeSettlement";
 import type { FundingJournalRecorder } from "./fundingJournal";
 
 /**
@@ -195,6 +220,19 @@ export interface PlanRailDeps {
    * a materially different price than the one they agreed to.
    */
   confirmRequote?: (change: RequoteChange) => Promise<boolean>;
+  /**
+   * Called the INSTANT a leg's broadcast returns a hash, before anything is awaited, from the same
+   * synchronous point as the journal's own `broadcast` write.
+   *
+   * Since POO-1038 the DURABLE record is {@link journal}, so this is no longer the journal seam
+   * itself; it is the live-tab channel beside it. The ordering is still the safety property
+   * (`02_BRIDGE_ARCHITECTURE.md` §3.4): a transaction that has been sent but not settled is invisible
+   * to a balance read, so a hash the app never recorded is indistinguishable from nothing having
+   * happened, and that is how a user bridges twice. It is also where a long-running bridge step's
+   * explorer link comes from, since the flow only records a hash a step RETURNS and a bridge leg does
+   * not return until its funds land on the destination chain.
+   */
+  onLegBroadcast?: (event: { leg: ProvisioningLeg; txHash: string; at: number }) => void;
 }
 
 /** What moved between the price the user approved and the price about to be signed ([R5]). */
@@ -445,8 +483,11 @@ async function runLegStep(
   const quotedOut = quoted.quote.quote.output?.amount;
   await gateRequote(leg, amount, quotedOut, deps);
 
-  // PP-INTEGRATION-POINT (POO-1037/POO-1038): the pre-broadcast destination balance. A bridge settles
-  // when `balanceOf(tokenOut) - this >= minAmountOut` on the destination chain (§3.6).
+  // PP-INTEGRATION-POINT (POO-1037/POO-1038): the pre-broadcast destination balance, the "before"
+  // side of the arrival test below (a bridge settles when `balanceOf(tokenOut) - this >= minAmountOut`
+  // on the destination chain, §3.6). Read here, before ANY wallet prompt, because it is not
+  // measurable once the transaction is in flight, and it is the same figure the journal persists so
+  // a second session can re-run that test without this one.
   const baseline = await deps.readTokenBalance({
     chainId: leg.tokenOut.chainId,
     token: leg.tokenOut.address,
@@ -488,10 +529,32 @@ async function runLegStep(
 
   // [R1] The single broadcast choke point: chain assertion (one corrective switch, then re-verify)
   // and account assertion, inherited rather than re-implemented.
-  const txHash = await broadcast(built.swap, leg.chainId, deps, leg.index);
-  // §3.6: for a bridge this receipt proves only that the funds LEFT the source chain, so the leg
-  // stays `broadcast` and the destination-arrival test (POO-1037's poll, `reconcileFundingJournal`)
-  // is what settles it. Calling it settled here would be the "fakes success" failure by another name.
+  // Passing the leg is what makes this broadcast journaled: the hash is written, and reported, the
+  // instant the node returns it and before the receipt is awaited (§3.4 step 4).
+  const txHash = await broadcast(built.swap, leg.chainId, deps, leg);
+  // POO-1037: for a bridge leg this hash proves only that the funds LEFT the source chain. Arrival is
+  // a destination-chain observation, minutes later, and the step is not done until it happens.
+  if (leg.tokenOut.chainId !== leg.chainId) {
+    const settlement = await awaitBridgeSettlement(
+      {
+        chainId: leg.tokenOut.chainId,
+        token: leg.tokenOut.address,
+        owner: deps.owner,
+        baseline,
+        minAmountOut: leg.minAmountOut,
+        ...(leg.etaSeconds === undefined ? {} : { etaMs: leg.etaSeconds * 1000 }),
+      },
+      { readTokenBalance: deps.readTokenBalance },
+    );
+    // At the ceiling the leg stays `broadcast` in the journal WITH its hash, which is the whole
+    // reason this throw is recoverable rather than a lost transfer (§3.6).
+    if (!settlement.settled) throw bridgeStillSettling(leg, txHash, settlement);
+  }
+  // §3.6: a bridge is never called settled from here, not even by the inline wait above. The journal's
+  // arrival verdict has one author, `reconcileFundingJournal`, which re-derives it from the chain; a
+  // rail that wrote it too would be the "fakes success" failure by another name. Everything else is
+  // done the moment its receipt is in, and this sits AFTER the wait so a cross-chain leg can never be
+  // recorded settled on a source receipt whatever its `kind` says.
   if (leg.kind !== "bridge") deps.journal?.recordSettled(leg.index);
   return {
     [PLAN_RAIL_STATE_KEY]: {
@@ -574,19 +637,67 @@ async function sizeFromRealBalance(
 }
 
 /**
+ * Hand the fresh hash to the live-tab seam, and never let that fail the leg.
+ *
+ * The money has already moved by the time this runs. A callback that throws (a full `localStorage`,
+ * a host bug) must not turn a successful broadcast into a flow error, because the flow's `retry()`
+ * re-invokes the failed step verbatim, which for a bridge is a second deposit of the same funds.
+ * Losing the write degrades RECOVERY; failing here would risk the money itself. The durable journal
+ * beside it needs no such wrapper: `fundingJournal` already swallows an unwritable store internally,
+ * for the same reason.
+ */
+function reportBroadcast(leg: ProvisioningLeg, txHash: string, deps: PlanRailDeps): void {
+  try {
+    deps.onLegBroadcast?.({ leg, txHash, at: Date.now() });
+  } catch (error) {
+    console.warn("[PP] funding journal write failed; the leg continues", error);
+  }
+}
+
+/**
+ * The poll ceiling, expressed as a throw ([R3]).
+ *
+ * The rail has exactly two channels back to `useWalletSignFlow` (return or throw) and returning would
+ * advance the plan onto money that has not arrived. So a still-settling bridge throws, with a code the
+ * panel branches on to render "still settling, we'll update you" instead of a failure, and with the
+ * hash so the user can verify the transfer independently. It is deliberately NOT in the diagnostics
+ * catalog: this is not a transaction failure and must never reach a retry affordance.
+ *
+ * The cause carries only what `toTxError` actually reads (`code`, `txHash`). The destination chain
+ * stays in the message: the panel's explorer link needs the SOURCE chain, which is where the hash
+ * exists, so a `destChainId` on the cause would be a field nothing could correctly consume.
+ */
+function bridgeStillSettling(
+  leg: ProvisioningLeg,
+  txHash: string,
+  settlement: Extract<BridgeSettlement, { settled: false }>,
+): TransactionError {
+  return new TransactionError(
+    `Bridged funds have not arrived on chain ${leg.tokenOut.chainId} after ${Math.round(
+      settlement.waitedMs / 1000,
+    )}s (${settlement.polls} checks, last observed delta ${settlement.delta})`,
+    { code: BRIDGE_PENDING_CODE, txHash },
+  );
+}
+
+/**
  * Send a provider-built transaction through the shipped choke point and wait for its receipt.
  *
  * Deliberately NOT `executeBuiltTransaction`, which is the same two calls in one: it resolves only
- * after the receipt, and the journal write has to happen in between ([R2], §3.4 step 4).
+ * after the receipt, and both records of the hash have to happen in between ([R2], §3.4 step 4).
  * `sendBuiltTransaction` resolves the moment the node accepts the transaction, and that resolution
- * point is where the hash is recorded, synchronously, before anything is awaited. A hash learned and
- * then lost to a closed tab is the failure this ordering exists to prevent.
+ * point is where the hash is written to the journal and reported to the live tab, synchronously,
+ * before anything is awaited. A hash learned and then lost to a closed tab is the failure this
+ * ordering exists to prevent, and for a bridge that loss is a second deposit of the same money.
+ *
+ * `leg` is absent for an approval step, which is exactly why an approval is neither journaled nor
+ * reported: it moves no funds, so re-running one cannot spend money twice.
  */
 async function broadcast(
   request: UniswapTransactionRequest,
   targetChainId: number,
   deps: PlanRailDeps,
-  journalIndex?: number,
+  leg?: ProvisioningLeg,
 ): Promise<`0x${string}`> {
   const hash = await sendBuiltTransaction(
     deps.provider,
@@ -594,7 +705,10 @@ async function broadcast(
     deps.owner,
     targetChainId,
   );
-  if (journalIndex !== undefined) deps.journal?.recordBroadcast(journalIndex, hash);
+  if (leg) {
+    deps.journal?.recordBroadcast(leg.index, hash);
+    reportBroadcast(leg, hash, deps);
+  }
   await waitForReceipt(deps.provider, hash);
   return hash;
 }

@@ -488,6 +488,14 @@
       "done": "完了",
       "pending": "処理中"
     },
+    "bridge": {
+      "etaSeconds": "通常は約{seconds, plural, other {#秒}}かかります。資金が届き次第、続行します。",
+      "etaMinutes": "通常は約{minutes, plural, other {#分}}かかります。資金が届き次第、続行します。",
+      "etaUnknown": "このステップは他より時間がかかります。資金が届き次第、続行します。",
+      "settlingTitle": "まだ移動中です",
+      "settlingBody": "資金はまだネットワーク間を移動しています。失われたものはありません。ここを閉じて送金状況を確認でき、中断したところから再開します。",
+      "settlingClose": "閉じる"
+    },
     "opLabel": {
       "invest": "{strategy}に投資",
       "withdraw": "{strategy}から引き出す",

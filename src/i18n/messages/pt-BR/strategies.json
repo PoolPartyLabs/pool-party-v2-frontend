@@ -488,6 +488,14 @@
       "done": "Concluído",
       "pending": "Aguardando"
     },
+    "bridge": {
+      "etaSeconds": "Isso costuma levar cerca de {seconds, plural, one {# segundo} other {# segundos}}. Vamos continuar assim que seus fundos chegarem.",
+      "etaMinutes": "Isso costuma levar cerca de {minutes, plural, one {# minuto} other {# minutos}}. Vamos continuar assim que seus fundos chegarem.",
+      "etaUnknown": "Esta etapa demora mais que as outras. Vamos continuar assim que seus fundos chegarem.",
+      "settlingTitle": "Ainda a caminho",
+      "settlingBody": "Seus fundos ainda estão indo de uma rede para outra. Nada foi perdido. Você pode fechar e acompanhar a transferência, e retomamos exatamente de onde parou.",
+      "settlingClose": "Fechar"
+    },
     "opLabel": {
       "invest": "Investir em {strategy}",
       "withdraw": "Sacar de {strategy}",

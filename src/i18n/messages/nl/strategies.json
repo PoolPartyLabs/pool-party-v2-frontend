@@ -488,6 +488,14 @@
       "done": "Klaar",
       "pending": "In behandeling"
     },
+    "bridge": {
+      "etaSeconds": "Dit duurt meestal ongeveer {seconds, plural, one {# seconde} other {# seconden}}. We gaan verder zodra je geld binnen is.",
+      "etaMinutes": "Dit duurt meestal ongeveer {minutes, plural, one {# minuut} other {# minuten}}. We gaan verder zodra je geld binnen is.",
+      "etaUnknown": "Deze stap duurt langer dan de andere. We gaan verder zodra je geld binnen is.",
+      "settlingTitle": "Nog onderweg",
+      "settlingBody": "Je geld is nog onderweg tussen netwerken. Er gaat niets verloren. Je kunt dit sluiten en de overboeking bekijken, en we pakken het op waar het gebleven was.",
+      "settlingClose": "Sluiten"
+    },
     "opLabel": {
       "invest": "Investeren in {strategy}",
       "withdraw": "Opnemen uit {strategy}",

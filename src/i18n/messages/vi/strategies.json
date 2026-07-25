@@ -488,6 +488,14 @@
       "done": "Hoàn tất",
       "pending": "Đang chờ"
     },
+    "bridge": {
+      "etaSeconds": "Việc này thường mất khoảng {seconds, plural, other {# giây}}. Chúng tôi sẽ tiếp tục ngay khi tiền của bạn đến nơi.",
+      "etaMinutes": "Việc này thường mất khoảng {minutes, plural, other {# phút}}. Chúng tôi sẽ tiếp tục ngay khi tiền của bạn đến nơi.",
+      "etaUnknown": "Bước này lâu hơn các bước khác. Chúng tôi sẽ tiếp tục ngay khi tiền của bạn đến nơi.",
+      "settlingTitle": "Vẫn đang trên đường",
+      "settlingBody": "Tiền của bạn vẫn đang di chuyển giữa các mạng. Không có gì bị mất. Bạn có thể đóng cửa sổ này và kiểm tra giao dịch chuyển tiền, chúng tôi sẽ tiếp tục từ đúng chỗ đã dừng.",
+      "settlingClose": "Đóng"
+    },
     "opLabel": {
       "invest": "Đầu tư vào {strategy}",
       "withdraw": "Rút từ {strategy}",

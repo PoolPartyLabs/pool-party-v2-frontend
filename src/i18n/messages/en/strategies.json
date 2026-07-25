@@ -488,6 +488,14 @@
       "done": "Done",
       "pending": "Pending"
     },
+    "bridge": {
+      "etaSeconds": "This usually takes about {seconds, plural, one {# second} other {# seconds}}. We'll continue as soon as your funds arrive.",
+      "etaMinutes": "This usually takes about {minutes, plural, one {# minute} other {# minutes}}. We'll continue as soon as your funds arrive.",
+      "etaUnknown": "This step takes longer than the others. We'll continue as soon as your funds arrive.",
+      "settlingTitle": "Still on its way",
+      "settlingBody": "Your funds are still moving between networks. Nothing is lost. You can close this and check the transfer, and we'll pick up right where this left off.",
+      "settlingClose": "Close"
+    },
     "opLabel": {
       "invest": "Invest in {strategy}",
       "withdraw": "Withdraw from {strategy}",

@@ -89,6 +89,21 @@ function bridgeLeg(overrides: Partial<ProvisioningLeg> = {}): ProvisioningLeg {
   };
 }
 
+/**
+ * A destination-chain balance queue for a bridge that LANDS: the baseline the rail reads before it
+ * broadcasts, then the arrival, observed on the first settlement poll.
+ *
+ * POO-1037 made this load-bearing. A bridge leg's `run()` no longer returns on its source receipt, it
+ * stays open until `awaitBridgeSettlement` sees the destination balance clear `minAmountOut`, so a
+ * queue that never grows is a bridge that never arrives and the leg legitimately waits it out. These
+ * tests are about the JOURNAL rather than the wait, so every bridge fixture here delivers.
+ */
+const bridgeArrives = (baseline = "0"): string[] => [
+  baseline,
+  // The smallest delivery that clears the leg's own floor.
+  (BigInt(baseline) + BigInt(bridgeLeg().minAmountOut)).toString(),
+];
+
 function stepFor(leg: ProvisioningLeg): ProvisioningStep {
   return {
     type: leg.kind,
@@ -296,7 +311,7 @@ describe("[R2] write ordering: the hash lands before anything is awaited", () =>
     const journal = journalFor();
     const { deps } = harness({
       journalId: journal.journalId,
-      balances: { [`${ARBITRUM}:${USDC_ARBITRUM.address}`]: ["1000000"] },
+      balances: { [`${ARBITRUM}:${USDC_ARBITRUM.address}`]: bridgeArrives("1000000") },
     });
 
     await runRail(planOf([bridgeLeg({ requoteAtExecution: false })]), deps);
@@ -308,7 +323,12 @@ describe("[R2] write ordering: the hash lands before anything is awaited", () =>
 
   it("does not call a bridge settled on a source receipt: arrival is a separate observation", async () => {
     const journal = journalFor();
-    const { deps } = harness({ journalId: journal.journalId });
+    // The bridge lands, and the inline POO-1037 wait sees it land. The record STILL says `broadcast`:
+    // the arrival verdict is `reconcileFundingJournal`'s to write, from the chain, never the rail's.
+    const { deps } = harness({
+      journalId: journal.journalId,
+      balances: { [`${ARBITRUM}:${USDC_ARBITRUM.address}`]: bridgeArrives() },
+    });
 
     await runRail(planOf([bridgeLeg({ requoteAtExecution: false })]), deps);
 
@@ -382,7 +402,7 @@ describe("[R4] a reload or killed tab mid-bridge recovers and continues", () => 
       journalId: journal.journalId,
       balances: {
         [`${POLYGON}:${USDC_POLYGON.address}`]: ["0", "2980000000"],
-        [`${ARBITRUM}:${USDC_ARBITRUM.address}`]: ["1000000"],
+        [`${ARBITRUM}:${USDC_ARBITRUM.address}`]: bridgeArrives("1000000"),
       },
     });
 
@@ -412,7 +432,10 @@ describe("[R4] a reload or killed tab mid-bridge recovers and continues", () => 
     // the bridge. The swap is not in it, and therefore cannot be broadcast a second time.
     const second = harness({
       journalId: journal.journalId,
-      balances: { [`${POLYGON}:${USDC_POLYGON.address}`]: ["2980000000"] },
+      balances: {
+        [`${POLYGON}:${USDC_POLYGON.address}`]: ["2980000000"],
+        [`${ARBITRUM}:${USDC_ARBITRUM.address}`]: bridgeArrives(),
+      },
     });
     await runRail(planOf([bridgeLeg()]), second.deps);
 

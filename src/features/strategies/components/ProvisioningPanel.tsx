@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-CMP-046
  * @name ProvisioningPanel
- * @implements-rules-version v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
+ * @implements-rules-version v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The INLINE pre-flight provisioning body (epic POO-411, POO-418/POO-419). When an op is short on
@@ -19,6 +19,13 @@
  * so whichever planner the toggle selects is the one that runs. It previously called
  * `mockComputePlan` directly, which meant the real planner could be wired and never called.
  *
+ * POO-1037 (hackathon POO-1022): a bridge leg settles on ANOTHER chain, minutes after its source
+ * transaction mines, so this panel can no longer assume a step resolves in a beat. The running bridge
+ * row says how long it should take [R2], the dismissal lock holds for the whole wait [R5], and a wait
+ * that outlives the rail's poll ceiling lands in a fourth phase, `settling`: not a failure, not a
+ * success, and deliberately WITHOUT a retry, because `flow.retry()` re-invokes the failed step
+ * verbatim and a bridge already in flight would be broadcast a second time [R3].
+ *
  * PP-INTEGRATION-POINT: the planner behind the seam is still the deterministic mock (POO-420); the
  * real one lands in POO-1034 and `buildPlanSteps` runs the real rail in POO-1036. Wallet balances
  * that feed `input` are wired in POO-1042.
@@ -28,24 +35,31 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { ExplorerTxLink } from "@/components/ui/ExplorerTxLink";
 import { MockBadge } from "@/components/ui/MockBadge";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { apiNetworkForChain } from "@/lib/chains/config";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "@/lib/provisioning";
 import { spendableTokenUsd } from "@/lib/provisioning";
 import type { TxError } from "@/lib/tx/diagnostics";
 import { useProvisioningPlan } from "../hooks/useProvisioningPlan";
 import { type FlowStep, useWalletSignFlow } from "../hooks/useWalletSignFlow";
+import { BRIDGE_PENDING_CODE } from "../lib/awaitBridgeSettlement";
 import { GasAmountSelector } from "./provisioning/GasAmountSelector";
 import { selectPreset, validateGas } from "./provisioning/gasSelection";
 import { ProvisioningPlanCard } from "./provisioning/ProvisioningPlanCard";
-import { buildPlanView } from "./provisioning/provisioningView";
+import { bridgeEtaCopy, buildPlanView } from "./provisioning/provisioningView";
 import { settleOutcome, settleTxError, settleTxHash } from "./settle";
 import { TransactionErrorActions, useTxErrorBody } from "./TransactionErrorActions";
 import { TransactionStatus } from "./TransactionStatus";
 import { WalletSteps } from "./WalletSteps";
 
-/** Panel phases: the assembled plan, its execution, then a recoverable error. */
-type Phase = "plan" | "pending" | "error";
+/**
+ * Panel phases: the assembled plan, its execution, a recoverable error, and `settling` — a bridge
+ * that is still in flight at the rail's poll ceiling (POO-1037 [R3]). `settling` is terminal for this
+ * panel but not for the money: the route is recoverable and the operation is never resumed off it.
+ */
+type Phase = "plan" | "pending" | "settling" | "error";
 
 /** Accumulating context is unused (each step settles independently); kept generic for the runner. */
 type PlanCtx = Record<string, unknown>;
@@ -129,20 +143,31 @@ export function ProvisioningPanel({
   // POO-461 R3: kind-aware error body (generic copy when the failure didn't classify).
   const errorBody = useTxErrorBody(txError);
 
-  // Report the in-flight lock to the host (no dismissal while provisioning runs).
+  // Report the in-flight lock to the host (no dismissal while provisioning runs). POO-1037 [R5]: a
+  // bridge leg keeps the flow in `pending` for the WHOLE settlement wait, so the lock holds for it
+  // with no extra state; the ceiling moves to `settling`, which releases it precisely because the
+  // user is then free to leave and come back to a recoverable route.
   useEffect(() => {
     onLockChangeRef.current?.(phase === "pending");
   }, [phase]);
 
-  // On success → resume the op; on failure → the recoverable error state.
+  // On success → resume the op; on failure → the recoverable error state. POO-1037 [R3]: a bridge
+  // still in flight at the poll ceiling is NEITHER, so it branches before the error state ever
+  // renders — its copy, and above all its absent retry, are the whole point.
   useEffect(() => {
     if (phase !== "pending") return;
     if (flow.status === "success") onDoneRef.current();
     else if (flow.status === "error") {
       setTxError(flow.error);
-      setPhase("error");
+      setPhase(flow.error?.code === BRIDGE_PENDING_CODE ? "settling" : "error");
     }
   }, [flow.status, flow.error, phase]);
+
+  // The plan step the flow is on, matched by KEY and never by index: the real rail expands one plan
+  // step into an approval step plus the leg itself, so the two lists are not index-aligned.
+  const activeStepKey = flowSteps[flow.activeStep]?.key;
+  const activePlanStep = plan?.steps.find((step) => step.key === activeStepKey);
+  const bridgeStep = activePlanStep?.type === "bridge" ? activePlanStep : undefined;
 
   const ctaDisabled = hasGasStep && !gasValidity.ok;
   const gasSelector = hasGasStep ? (
@@ -154,6 +179,12 @@ export function ProvisioningPanel({
   ) : undefined;
 
   if (phase === "pending") {
+    // [R2] The bridge row is the one step measured in minutes, so it says so while it runs. The
+    // figure is the quote's own `estimatedFillTimeMs`; with no estimate we admit that instead of
+    // inventing one.
+    const eta = bridgeStep
+      ? bridgeEtaCopy(bridgeStep.leg?.etaSeconds ?? bridgeStep.etaSeconds)
+      : null;
     return (
       <div className="flex flex-col gap-4">
         <div>
@@ -166,7 +197,36 @@ export function ProvisioningPanel({
           statuses={flow.statuses}
           txHashes={flow.txHashes}
         />
+        {eta ? (
+          <p className="text-center text-muted-foreground text-sm" aria-live="polite">
+            {t(eta.key, eta.values)}
+          </p>
+        ) : null}
       </div>
+    );
+  }
+
+  // [R3] Still settling: the funds left, they have not landed, and we stopped watching. Never framed
+  // as a failure, never as a success, and never offering the retry that would re-broadcast it. The
+  // explorer link is the honest answer to "is my money actually moving": it points at the SOURCE
+  // chain, which is where the transaction we hold a hash for exists.
+  if (phase === "settling") {
+    const sourceChainId =
+      activePlanStep?.leg?.chainId ?? activePlanStep?.chainId ?? activePlanStep?.fromChainId;
+    return (
+      <TransactionStatus
+        phase="pending"
+        title={t("provisioning.bridge.settlingTitle")}
+        body={t("provisioning.bridge.settlingBody")}
+      >
+        <ExplorerTxLink
+          network={sourceChainId === undefined ? undefined : apiNetworkForChain(sourceChainId)}
+          hash={txError?.txHash}
+        />
+        <Button variant="ghost" className="w-full" onClick={onCancel}>
+          {t("provisioning.bridge.settlingClose")}
+        </Button>
+      </TransactionStatus>
     );
   }
 
