@@ -122,6 +122,43 @@ async function assertProviderAccount(provider: Eip1193Provider, owner: string): 
 }
 
 /** Read the wallet's ACTUAL active chain (eth_chainId hex quantity → number). */
+/**
+ * How long a wallet gets to actually LAND on the chain it just agreed to switch to (POO-1077).
+ *
+ * `wallet_switchEthereumChain` RESOLVING means the wallet accepted the request, not that it has
+ * finished applying it. An injected wallet updates its reported chain before resolving, so reading
+ * `eth_chainId` once immediately afterwards worked and shipped. A Privy EMBEDDED wallet applies the
+ * switch asynchronously and keeps reporting the OLD chain for a moment, so that single re-read
+ * failed a wallet that was about to be perfectly fine.
+ *
+ * Bounded deliberately: a wallet still on the wrong chain after this has genuinely not switched, and
+ * waiting longer would hold a prompt open against a quote that is going stale.
+ */
+export const CHAIN_SWITCH_SETTLE_MS = 4_000;
+/** How often to re-read while waiting. Short enough to feel instant when the switch is quick. */
+const CHAIN_SWITCH_POLL_MS = 120;
+
+/**
+ * Read the provider's chain until it reports `targetChainId`, or the budget runs out.
+ *
+ * Polls rather than listening for `chainChanged`: {@link Eip1193Provider} is deliberately narrowed
+ * to `request` alone, and a provider that does not emit the event would wait the full budget for
+ * nothing. Returns whatever the chain finally reads as, so the caller reports the REAL one.
+ */
+async function awaitProviderChain(
+  provider: Eip1193Provider,
+  targetChainId: number,
+  budgetMs: number,
+): Promise<number> {
+  const deadline = Date.now() + budgetMs;
+  let actual = await readProviderChainId(provider);
+  while (actual !== targetChainId && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, CHAIN_SWITCH_POLL_MS));
+    actual = await readProviderChainId(provider);
+  }
+  return actual;
+}
+
 async function readProviderChainId(provider: Eip1193Provider): Promise<number> {
   try {
     const hex = (await provider.request({ method: "eth_chainId" })) as string;
@@ -159,7 +196,8 @@ async function assertProviderOnChain(
       { code: WRONG_CHAIN_CODE, targetChainId, cause: error },
     );
   }
-  const switched = await readProviderChainId(provider);
+  // Not a single re-read: the switch is applied asynchronously by some wallets ([R2], POO-1077).
+  const switched = await awaitProviderChain(provider, targetChainId, CHAIN_SWITCH_SETTLE_MS);
   if (switched !== targetChainId) {
     throw new TransactionError(
       `Wallet stayed on chain ${switched} after switching; this transaction targets chain ${targetChainId}`,
