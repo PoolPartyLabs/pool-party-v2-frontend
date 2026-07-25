@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-CMP-018
  * @name FeeBreakdown
- * @implements-rules-version v2 (POO-800 rules v1)
+ * @implements-rules-version v3 (POO-800 rules v1, POO-1035 rules v1)
  *
  * The shared "Fee" line breakdown used by the transactional-modal receipts. The app standardizes on
  * a single "Fee" row (never "Network fee" / "Est. fees" split across rows); this renders that row's
