@@ -208,17 +208,33 @@ describe("provisioning server boundary (POO-1024)", () => {
     expect(source).toMatch(/^\s*(["'])use server\1/m);
   });
 
-  // [R1] Guard against the barrel quietly growing a client-hostile export in future.
-  it("every module in the provisioning folder is accounted for", () => {
+  // [R1]/[R3] Guard against the barrel quietly growing a client-hostile export in future.
+  //
+  // The rule is NOT "only planActions.ts may be server-only" — POO-1034 added `buildPlan.ts`, the
+  // real planner, which is server-only precisely because it prices legs through the key-bearing
+  // Uniswap layer ([R9]). The rule that actually protects the bundle is: a server-only module must
+  // not be REACHABLE from the client barrel. So every server-only module in the folder is checked
+  // against the client graph rather than against a name allowlist, which cannot rot.
+  it("no server-only module in the provisioning folder is client-reachable", () => {
+    const clientGraph = reachableFrom(join(PROVISIONING, "index.ts"));
     const files = readdirSync(PROVISIONING).filter(
       (f) => f.endsWith(".ts") && !f.endsWith(".test.ts"),
     );
-    // planActions is the deliberate server side; everything else must be client-safe.
+    // planActions is the deliberate `"use server"` boundary and must keep existing.
     expect(files).toContain("planActions.ts");
-    for (const file of files) {
-      if (file === "planActions.ts") continue;
-      const source = readFileSync(join(PROVISIONING, file), "utf8");
-      expect(source, `${file} must not be server-only`).not.toMatch(/^\s*import\s+"server-only"/m);
+
+    const serverOnly = files.filter((file) =>
+      /^\s*import\s+"server-only"/m.test(readFileSync(join(PROVISIONING, file), "utf8")),
+    );
+    // The real planner is server-only by design; asserting it is present keeps this test honest if
+    // the file is ever renamed away rather than silently losing its guard.
+    expect(serverOnly).toContain("buildPlan.ts");
+
+    for (const file of serverOnly) {
+      expect(
+        clientGraph.has(join(PROVISIONING, file)),
+        `${file} must not ship to the browser`,
+      ).toBe(false);
     }
   });
 });

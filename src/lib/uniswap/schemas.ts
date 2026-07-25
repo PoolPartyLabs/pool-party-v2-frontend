@@ -1,12 +1,16 @@
 /**
- * @id PP-CORE-LIB-051 (POO-1028, POO-1054)
+ * @id PP-CORE-LIB-051 (POO-1028, POO-1054, POO-1034)
  * @name Uniswap Trading API schemas
- * @implements-rules-version v2
+ * @implements-rules-version v3
  * @hackathon POO-1022 (Universal Funding)
  *
  * Zod contracts for every Trading API endpoint we call. Nothing from Uniswap reaches application
  * code without passing through here first: provider responses are untrusted input, and one of them
  * ends up as calldata a user signs.
+ *
+ * v3 (POO-1034 [R6]): the cross-chain EXACT_OUTPUT refine on {@link quoteRequestSchema} is REMOVED
+ * (it rejected a request the live API answers `200` to), and `quote.estimatedFillTimeMs` is declared
+ * because the planner reads it. See the comment on that schema for the evidence.
  *
  * v2 (POO-1054): annotated against a read-only probe of the LIVE API on 2026-07-25. The shapes are
  * unchanged; several of the comments describing them were wrong, which is worse than a missing
@@ -16,9 +20,10 @@
  * Two opposing pressures shape the strictness, and the split between them is deliberate:
  *
  *   STRICT on anything that can influence a transaction. `TransactionRequest.data` must be non-empty
- *   hex, `routing` must be a value we recognize, and a cross-chain request must be EXACT_INPUT. A
- *   permissive schema here does not prevent a failure, it just moves it to the point where the user
- *   has already signed.
+ *   hex and `routing` must be a value we recognize. A permissive schema here does not prevent a
+ *   failure, it just moves it to the point where the user has already signed. Strictness has to be
+ *   EARNED, though: a constraint that is merely believed rather than measured (v3's removed
+ *   cross-chain guard) refuses good requests and is a defect, not caution.
  *
  *   TOLERANT on display-only blocks (gas estimates, fee breakdowns). A malformed gas figure should
  *   hide a row, never reject the quote it rides on. This mirrors the shipped `swapInfoSchema`
@@ -159,6 +164,14 @@ export const quoteBodySchema = z
     priceImpact: z.number().optional(),
     gasFeeUSD: z.union([z.string(), z.number()]).optional(),
     gasInfo: gasInfoSchema.optional(),
+    /**
+     * Expected bridge fill time, in MILLISECONDS. Present on a `BRIDGE` route (live probe P2: Base
+     * to Arbitrum for USDC ≈ 1000 ms). Declared rather than left to `passthrough` because the
+     * planner reads it (POO-1034): the bridge step shows this instead of an invented "2 to 5
+     * minutes", and a shape change should fail a test rather than silently drop the ETA from a step
+     * that otherwise looks stuck. It is a quote-time ESTIMATE, never a settlement guarantee.
+     */
+    estimatedFillTimeMs: z.number().optional(),
     encodedOrder: z.string().optional(),
   })
   .passthrough();
@@ -318,36 +331,36 @@ export const swapStatusResponseSchema = z.object({
 export const tradeTypeSchema = z.enum(["EXACT_INPUT", "EXACT_OUTPUT"]);
 
 /**
- * `POST /quote` request ([R4]).
+ * `POST /quote` request.
  *
- * A cross-chain pair (`tokenInChainId !== tokenOutChainId`) with `EXACT_OUTPUT` is rejected before
- * the request leaves us, with a message that says why.
+ * **POO-1034 [R6] removed a guard that was wrong.** This schema used to `refine` a cross-chain
+ * `EXACT_OUTPUT` request into a rejection, on POO-1028 [R4] ("cross-chain quotes are EXACT_INPUT
+ * only"). That rule came from the Chained Actions documentation, which POO-1054 retired when the
+ * probe established Chained Actions is unreachable for our key. A live probe of the exact request the
+ * guard refused answers `200` with `routing: "BRIDGE"`, so we were declining a route the API serves.
  *
- * PP-TODO (POO-1034): the constraint was lifted from the Chained Actions documentation, and POO-1054
- * established that Chained Actions is unreachable for us. Cross-chain is served by the BRIDGE route,
- * and Uniswap's own vendored flow (`.claude/skills/swap-integration/references/trading-api-flows.md`
- * §4B-2) quotes a bridge with `type: "EXACT_OUTPUT"`. Provisioning is inherently exact-output ("land
- * exactly $X on the target chain"), so this guard may be costing us the natural request shape. It
- * stands until a live probe settles it: relaxing it on the strength of a document is how the
- * unreachable `/plan` rail got built in the first place.
+ * It was not a harmless over-strictness. Provisioning is exact-output shaped by nature: the question
+ * is "land exactly $X on the target chain", and the planner sizes a decomposed route by asking it
+ * backwards, leg by leg, from the amount that has to ARRIVE. Under the old guard the bridge leg of
+ * every cross-chain route could not be sized that way at all. Uniswap's own vendored flow
+ * (`.claude/skills/swap-integration/references/trading-api-flows.md` §4B-2) quotes its bridge with
+ * `type: "EXACT_OUTPUT"` for the same reason.
+ *
+ * `type` remains a closed enum: dropping the cross-chain constraint is not dropping validation of
+ * the field it was attached to.
  */
-export const quoteRequestSchema = z
-  .object({
-    tokenIn: z.string(),
-    tokenOut: z.string(),
-    tokenInChainId: z.number().int().positive(),
-    tokenOutChainId: z.number().int().positive(),
-    amount: amount,
-    type: tradeTypeSchema,
-    swapper: address,
-    slippageTolerance: z.number().min(0).max(100).optional(),
-    routingPreference: z.string().optional(),
-    urgency: z.string().optional(),
-  })
-  .refine(
-    (value) => value.tokenInChainId === value.tokenOutChainId || value.type === "EXACT_INPUT",
-    { message: "cross-chain (chained) quotes support EXACT_INPUT only", path: ["type"] },
-  );
+export const quoteRequestSchema = z.object({
+  tokenIn: z.string(),
+  tokenOut: z.string(),
+  tokenInChainId: z.number().int().positive(),
+  tokenOutChainId: z.number().int().positive(),
+  amount: amount,
+  type: tradeTypeSchema,
+  swapper: address,
+  slippageTolerance: z.number().min(0).max(100).optional(),
+  routingPreference: z.string().optional(),
+  urgency: z.string().optional(),
+});
 export type UniswapQuoteRequest = z.infer<typeof quoteRequestSchema>;
 
 /** `POST /check_approval` request. */

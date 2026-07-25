@@ -162,13 +162,27 @@ describe("provisioning contract v3 (POO-1030)", () => {
     expect(TYPES_SOURCE).toMatch(/planId[\s\S]{0,600}idempotency key/i);
   });
 
-  // [R6] The version bump, in the header and in the pinned-contract comment. POO-1033 took the
-  // contract to v4 (per-chain balances on the input); the assertion moves with it and keeps
-  // requiring that BOTH revisions are still explained in the file, so the history is not rewritten
-  // away by the next bump.
+  // [R6] The version bump, in the header and in the pinned-contract comment. POO-1034 took the
+  // contract to v5 (`ProvisioningStep.leg`, the executable half of a step); the assertion moves with
+  // it and keeps requiring that EVERY revision is still explained in the file, so the history is not
+  // rewritten away by the next bump.
   it("declares the current rules version and keeps its revision history", () => {
-    expect(TYPES_SOURCE).toMatch(/@implements-rules-version:?\s*v4/);
+    expect(TYPES_SOURCE).toMatch(/@implements-rules-version:?\s*v5/);
     expect(TYPES_SOURCE).toMatch(/POO-1030/);
     expect(TYPES_SOURCE).toMatch(/POO-1033/);
+    expect(TYPES_SOURCE).toMatch(/POO-1034/);
+  });
+
+  // v5 [R8] — the leg deliberately holds no quote and no calldata. Every leg is re-quoted at
+  // execution time, so a stored quote is at best dead weight and at worst something a future author
+  // broadcasts. The same rule binds the recovery journal (02_BRIDGE_ARCHITECTURE.md §3.3), and a
+  // comment alone would not survive the next author adding "just the quote, for convenience".
+  it("keeps quotes and calldata off ProvisioningLeg", () => {
+    const leg = TYPES_SOURCE.slice(
+      TYPES_SOURCE.indexOf("export interface ProvisioningLeg {"),
+      TYPES_SOURCE.indexOf("export interface ProvisioningQuote"),
+    );
+    expect(leg).not.toMatch(/^\s*quote[?]?:/m);
+    expect(leg).not.toMatch(/^\s*(calldata|data|permitData|signature)[?]?:/m);
   });
 });

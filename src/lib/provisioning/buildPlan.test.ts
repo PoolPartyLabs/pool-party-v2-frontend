@@ -47,7 +47,7 @@ const WETH_ARBITRUM = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1";
 const WETH_POLYGON = "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619";
 
 const NOW = "2026-07-25T12:00:00.000Z";
-const ONE_ETH = 10n ** 18n;
+const ONE_ETH = BigInt(10) ** BigInt(18);
 /** 100 USDC in base units. The requirement in most cases below. */
 const HUNDRED_USDC = "100000000";
 
@@ -95,13 +95,16 @@ function route(
 
 /** ETH → USDC at $2,500: 1e18 wei buys 2,500e6 USDC. */
 const ETH_TO_USDC: Pick<Route, "rateNum" | "rateDen"> = {
-  rateNum: 2_500n * 10n ** 6n,
+  rateNum: BigInt(2_500) * BigInt(10) ** BigInt(6),
   rateDen: ONE_ETH,
 };
 /** WETH → the chain's native coin: 1:1, which is what unwrapping is. */
-const PARITY: Pick<Route, "rateNum" | "rateDen"> = { rateNum: 1n, rateDen: 1n };
+const PARITY: Pick<Route, "rateNum" | "rateDen"> = { rateNum: BigInt(1), rateDen: BigInt(1) };
 /** Across takes 0.1% on a USDC bridge leg. */
-const BRIDGE_RATE: Pick<Route, "rateNum" | "rateDen"> = { rateNum: 999n, rateDen: 1000n };
+const BRIDGE_RATE: Pick<Route, "rateNum" | "rateDen"> = {
+  rateNum: BigInt(999),
+  rateDen: BigInt(1000),
+};
 
 /** The mocked `quoteSwap`: answers from {@link routes}, or a 404 when the pair is not in it. */
 function answerQuote(call: QuoteCall) {
@@ -116,7 +119,7 @@ function answerQuote(call: QuoteCall) {
   const exactOutput = call.type === "EXACT_OUTPUT";
   // EXACT_OUTPUT asks the inverse question, and rounds UP so the input is never a hair short.
   const amountIn = exactOutput
-    ? (requested * spec.rateDen + spec.rateNum - 1n) / spec.rateNum
+    ? (requested * spec.rateDen + spec.rateNum - BigInt(1)) / spec.rateNum
     : requested;
   const amountOut = exactOutput ? requested : (requested * spec.rateNum) / spec.rateDen;
 
@@ -222,6 +225,23 @@ function legsOf(plan: { steps: { leg?: ProvisioningLeg }[] }): ProvisioningLeg[]
 /** Every `quoteSwap` call, in order. */
 function quoteCalls(): QuoteCall[] {
   return mocks.quoteSwap.mock.calls.map((call) => call[0] as QuoteCall);
+}
+
+/**
+ * The ASSET behind an address. Cross-chain routability is a property of the asset, not of the
+ * address: USDC is a different contract on every chain, so an address comparison cannot express
+ * "same token, two chains".
+ */
+function assetOf(address: string): string {
+  const assets: Record<string, string> = {
+    [USDC_ARBITRUM.toLowerCase()]: "USDC",
+    [USDC_BASE.toLowerCase()]: "USDC",
+    [USDC_POLYGON.toLowerCase()]: "USDC",
+    [WETH_ARBITRUM.toLowerCase()]: "WETH",
+    [WETH_POLYGON.toLowerCase()]: "WETH",
+    [NATIVE_TOKEN_ADDRESS.toLowerCase()]: "NATIVE",
+  };
+  return assets[address.toLowerCase()] ?? address.toLowerCase();
 }
 
 beforeEach(() => {
@@ -450,8 +470,11 @@ describe("buildPlan: the flagship decomposition", () => {
   });
 
   // @rule R1 — the negative half, and the one that actually protects us: the planner must never ASK
-  // for the cross-chain different-token quote. Asking is a guaranteed 404 that strands the route.
-  it("never asks for a single cross-chain different-token quote", async () => {
+  // for the cross-chain different-ASSET quote. Asking is a guaranteed 404 that strands the route.
+  //
+  // "Same token" across chains means the same ASSET, never the same address: USDC has a different
+  // contract on every chain, so an address comparison would flag the one route that does work.
+  it("never asks for a single cross-chain different-asset quote", async () => {
     await buildPlan(
       {
         targetChainId: ARBITRUM,
@@ -463,12 +486,13 @@ describe("buildPlan: the flagship decomposition", () => {
       { nowIso: NOW },
     );
 
-    for (const call of quoteCalls()) {
-      const crossChain = call.tokenInChainId !== call.tokenOutChainId;
-      const differentToken = call.tokenIn.toLowerCase() !== call.tokenOut.toLowerCase();
-      expect(crossChain && differentToken).toBe(false);
+    const crossChainCalls = quoteCalls().filter(
+      (call) => call.tokenInChainId !== call.tokenOutChainId,
+    );
+    expect(crossChainCalls.length).toBeGreaterThan(0);
+    for (const call of crossChainCalls) {
+      expect([assetOf(call.tokenIn), assetOf(call.tokenOut)]).toEqual(["USDC", "USDC"]);
     }
-    expect(quoteCalls().length).toBeGreaterThan(0);
   });
 
   // @rule R8 — a bridge never delivers exactly its quoted amount, so leg 2's input is an ESTIMATE
