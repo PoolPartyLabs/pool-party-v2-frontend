@@ -1,11 +1,15 @@
-# Pool Party V2 Frontend, Architecture Ground Truth (2026-06-28)
+# Pool Party V2 Frontend, Architecture Ground Truth (2026-06-28, amended 2026-07-25)
 
 Built by a read-only agent swarm over `src/`. Anchors the CLAUDE.md + skills rebuild.
 This is the REAL state, which supersedes the "everything mocked, no API/RPC/wallet" narrative in the old CLAUDE.md.
 
+The body below is the 2026-06-28 snapshot, kept as written. **The Universal Funding rail (epic
+POO-1022) landed after it** and changed two of its conclusions: provisioning is no longer mock-only,
+and there is now a second server-only credential. See the amendment at the end.
+
 ## One-line summary
 Mock-first by default (`NEXT_PUBLIC_MOCK_MODE`), but auth, analytics, and web-security are already REAL;
-data services are fully wired behind a toggle and 151 `PP-INTEGRATION-POINT` seams.
+data services are fully wired behind a toggle and 151 `PP-INTEGRATION-POINT` seams (391 as of 2026-07-25).
 
 ## Integration status by surface
 
@@ -51,3 +55,36 @@ Three orthogonal gates: `isMockMode` (data source) · feature flag (is area laun
 2. CLAUDE.md claims 12 agents / 16 skills; disk has 19 agents / 42 skills (26 skills + 11 agents are EVM/Solana/protocol).
 3. `format.ts` ID 011 → 013 in number-formatting skill.
 4. INDEX.md "active subset" is fiction at runtime (all 42 surface every session) until protocol fleet is moved out of `.claude/skills/`.
+
+---
+
+# Amendment 2026-07-25 — Universal Funding (epic POO-1022)
+
+Pre-flight provisioning was a **complete chassis with no engine**: `planner.ts`'s real branch threw
+`"Provisioning planner is not wired yet"`, `realProvisioningInput` returned a hard-disable stub, and
+the execution-rail prop was typed and passed by no production caller. The epic built the engine.
+Narrative and evidence: `docs/_hackathon/`. Seam inventory:
+[`INTEGRATION_POINTS.md`](INTEGRATION_POINTS.md#universal-funding-rail-uniswap-trading-api).
+
+## What this changes above
+
+| Row above | Then | Now |
+|---|---|---|
+| Provisioning (not listed; it was mock-only) | mock planner + hardcoded fee model | **REAL** behind a dark-launched flag: live quotes from the Uniswap Trading API, plans executed on the shipped `useWalletSignFlow` |
+| Comment-tag census | `PP-INTEGRATION-POINT` 151 · `PP-FIXME` 1 | **`PP-INTEGRATION-POINT` 391 across 211 files.** `PP-FIXME` is 2 in production code: `StrategyManageView.tsx:263` (POO-314, unrelated) and `fixtures/mockPlan.ts:190` (POO-416, carried over with the renamed mock planner and mock-only). The two provisioning *seam bypasses* that made the mock/real toggle inert were deleted, not reworded (POO-1023 [R5], asserted by `provisioningSeam.test.ts`) |
+| Env vars (server-only) | `PP_API_URL`, `PP_API_KEY`, `PP_API_URL_LEGACY`, `ANALYTICS_API_URL`, `PP_ANALYTICS_USER_ID_SECRET` | **plus `UNISWAP_API_KEY`** |
+| Flags | launched: home, portfolio, strategies, deposit, profile, rewards · dark: cards, savings, buyTokens, predictions, perps | **plus dark: `provisioning`, `swapScreen`.** `provisioning`'s baseline is now a flat boolean, not `NODE_ENV === "development"`, so production behaviour no longer depends on how the image was built |
+
+## The one architectural fact worth carrying forward
+
+**`UNISWAP_API_KEY` is server-only, and no CSP entry exists for `trade-api.gateway.uniswap.org`.**
+Every Uniswap call is issued from a Server Action; the browser only signs and broadcasts, exactly as
+it already did for invest / withdraw / collect. The CSP absence is therefore a *test of the
+invariant*, not a config gap: a PR that needs `connect-src` widened has moved a call to the client and
+broken ADR [0003](adr/0003-server-only-uniswap-key-boundary.md). `pnpm secrets:check` greps the build
+output to prove it, because `typecheck` / `lint` / `test` / `i18n:check` all pass straight through a
+leaked key and a `NEXT_PUBLIC_` twin works flawlessly in every test.
+
+This also means the rail is the one real-data surface that does **not** funnel through
+`src/lib/services/index.ts`. `isMockMode` still governs it, but through `computePlan`'s own seam:
+mock mode resolves to a client-side fixture and issues no upstream call at all.

@@ -1,12 +1,18 @@
 # Universal Funding — swap + bridge every Pool Party operation via the Uniswap Trading API
 
-**The plan of record for the hackathon build.** Epic [POO-1022] · 29 issues [POO-1023 … POO-1051].
-Started 2026-07-24. Repository: `pool-party-v2-frontend`.
+**The plan of record for the hackathon build.** Epic [POO-1022] · **33 issues** (UF-01 … UF-33):
+[POO-1023 … POO-1052] and [POO-1054 … POO-1056]. Started 2026-07-24.
+Repository: `pool-party-v2-frontend`.
 
 > **For hackathon evaluators.** Our issue tracker (Linear) is private, so this file mirrors every
 > issue in the epic: title, business rules, and acceptance criteria. Nothing about the plan lives
 > only in the tracker. Read this file, then `03_PRE_EXISTING_VS_NEW.md` to see exactly which code
 > pre-dates the event and which was built during it.
+>
+> **The epic opened with 29 issues and finished with 33.** The four that were added mid-flight are in
+> [§8, phase P7](#p7--added-mid-flight), and the story of why is [§11](#11-how-the-plan-changed-under-contact-with-the-live-api).
+> It is a short story about a live API disagreeing with its own documentation, and it is the most
+> instructive thing in this file.
 
 ---
 
@@ -158,6 +164,10 @@ row and letting the user wonder where their money went — is a deliberate desig
 | **P4** | POO-1039 … POO-1042 | UI — funding selector, cost breakdown, real plan card, live gate |
 | **P5** | POO-1043 … POO-1046 | Reach — flagship invest, gas top-up, the other five operations, standalone screen |
 | **P6** | POO-1047 … POO-1051 | Hardening — price-impact gate, analytics, i18n, security, docs |
+| **P7** | POO-1052, POO-1054 … POO-1056 | Added mid-flight — the vendored skill, the live-API correction, the recovery surface, the deferred journal follow-up |
+
+P7 was not planned. It is what the epic learned while it ran, and [§11](#11-how-the-plan-changed-under-contact-with-the-live-api)
+is the explanation.
 
 ---
 
@@ -521,6 +531,66 @@ through the funding path — which is precisely how an earlier incident turned $
 - **[R5]** The merge-not-squash exception is recorded here, with its reason.
 - **[R6]** Every new `PP-INTEGRATION-POINT` is listed.
 
+### P7 — Added mid-flight
+
+Four issues that did not exist when the epic was planned. They are listed last because that is when
+they were filed, not because they matter least: POO-1054 changed the architecture.
+
+#### POO-1052 · [UF-30] Vendor the official Uniswap swap-integration skill, pinned and scope-fenced
+
+Uniswap ships eleven official Agent Skills. All were reviewed; exactly one is on-point, and it earns
+its place on hard-won detail we would otherwise have learned from failed transactions. It corrected
+one of our own draft rules before a line was written: the API **rejects** `permitData: null`, so it
+must be stripped from the spread and re-attached explicitly, and the rules differ per routing type.
+
+- **[R1]** Vendored, not installed: pinned at `Uniswap/uniswap-ai@3ddd8a9d`, `LICENSE.upstream` kept verbatim, a provenance block in the header listing every local edit.
+- **[R2]** Exactly two local edits, both recorded: drop the `swap-integration-expert` subagent from `allowed-tools` (it ships with the upstream plugin and does not exist here), and add the provenance block.
+- **[R3]** **Scope-fenced.** It covers same-chain swapping. For anything cross-chain the authority is `02_BRIDGE_ARCHITECTURE.md`.
+- **[R4]** **House skills win on conflict.** Its React examples call the Trading API from the client; here the key is server-only (ADR 0003).
+- **[R5]** `.claude/skills/INDEX.md` gains a "Vendored (third-party)" section, so a contributor can tell a carried skill from a house one and knows how to refresh it.
+
+#### POO-1054 · [UF-31] Correct the cross-chain architecture against the live Trading API
+
+**Live-API verification contradicted our docs. Correct them before the rail is built on a fiction.**
+The probe table and its reproduction are [`01_UNISWAP_INTEGRATION.md` §1](01_UNISWAP_INTEGRATION.md#1-probe-evidence);
+the two load-bearing findings are that cross-chain **different-token** is not routable in one call
+(`404`), and that `routing: "CHAINED"` is never returned, which makes `/plan` unreachable.
+
+- **[R1]** `01_UNISWAP_INTEGRATION.md` and `02_BRIDGE_ARCHITECTURE.md` describe the API as it actually behaves. Keep the Chained Actions material, clearly marked documented-but-unavailable, with the evidence. These docs are the submission's technical narrative; a confident description of a mechanism we never used would be the worst kind of inaccuracy.
+- **[R2]** ADR 0002 gains an addendum recording that live evidence forced decomposition into our planner. The decision is not reversed, only its mechanism.
+- **[R3]** The now-dead plan actions are removed. Prefer removal: dead code that cannot work is worse than absent code.
+- **[R4]** Contract v3's `planId` / `stepIndex` / `method` were modelled on the Uniswap plan. Keep what the leg-based design genuinely needs, drop the rest, say why in the header.
+- **[R5]** A regression test pins the decomposition rule: a cross-chain different-token requirement produces ≥ 2 legs, never a single cross-chain quote.
+
+*Acceptance:* no document describes `/plan` as the mechanism we use; an evaluator can reproduce the
+probe from the table; the commit history shows a deliberate course correction, not a silent retcon.
+
+#### POO-1055 · [UF-32] Mount the recovery surface: read the journal, not just write it
+
+**The epic was shipping a recovery journal that nothing read.** POO-1038 built the reconciler and the
+finder; POO-1043 bound the writer. Neither reader had a non-production caller, so a user whose tab
+died mid-bridge had a correct, durable record and no surface that ever showed it to them. That is the
+difference between designing for recovery and recovering.
+
+- **[R1]** Mount `findResumableJournal` on session entry, and surface an in-flight route with enough detail to be actionable: which operation, which leg, how far it got.
+- **[R2]** Mount `reconcileFundingJournal`, so the §3.5 decision table actually runs. An ambiguous broadcast resolves by reading chain state, never by re-broadcasting.
+- **[R3]** Fix the gap POO-1043 disclosed: a leg that never reached `beginLeg` has no `nonceBefore`, and reconciliation was reading that as ambiguous. A leg the wallet was never asked about cannot have broadcast anything, so it is safe, not unknown.
+- **[R4]** Resuming never re-broadcasts a settled leg. Prove it with a test.
+- **[R5]** A journal stale beyond its lifecycle window is cleaned up rather than nagging forever.
+
+#### POO-1056 · [UF-33] Journal lifecycle: surface a reverted route, and settle the amount question
+
+**Filed, not built.** Two gaps POO-1055's implementation disclosed, left open deliberately rather than
+fixed quietly inside another issue's rules version. This is the one issue of the epic that ships
+unimplemented, and it is listed here for that reason.
+
+- **[R1]** A route whose **last** leg reverts ends all-terminal, and `isRetired` prunes it on the next read, so it is corrected and then vanishes before the banner can say it reverted. Nothing is stranded (re-opening the operation re-derives from real balances) and the common mid-route revert *is* surfaced, because later legs stay `planned` and keep the record alive. But the user whose final leg failed is simply not told. Fixing it changes POO-1038's terminal-status lifecycle, which deserves its own rules version.
+- **[R2]** §3.9 says an ambiguous leg should show "the intended amount", and the journal cannot render one: it stores base units against token addresses, with no decimals anywhere. `3000000000` is worse than nothing and inferring decimals would be a guess about money. Either the journal schema gains `tokenOutDecimals` (a v2 key, per §3.7's versioning rule) or the document drops the claim. Decide, and make the doc and the code agree.
+
+Also folded in: approvals are not journaled at all, which is POO-1038's explicit choice and safe in
+practice (re-approving the same amount costs gas, not funds), and the journal is per-browser
+`localStorage`, which POO-1055 made user-visible and therefore raised the stakes on.
+
 ---
 
 ## 9. Working agreement
@@ -559,3 +629,88 @@ through the funding path — which is precisely how an earlier incident turned $
    the tab mid-bridge and reload. Each must produce a legible, recoverable state — the reload case is
    the partial-completion regression test and must reconcile the leg journal against on-chain state
    (`02_BRIDGE_ARCHITECTURE.md` §3.5) without re-broadcasting anything.
+
+---
+
+## 11. How the plan changed under contact with the live API
+
+The epic opened with 29 issues and finished with 33. The four additions are not scope creep; three of
+them are the plan being wrong and finding out. This section is here because the finding-out is the
+part worth reading.
+
+### The correction that mattered (POO-1054)
+
+The plan above was written from Uniswap's public documentation, before we held a key. It committed the
+whole cross-chain design to **Chained Actions**: `POST /plan` for a server-held route, `PATCH /plan/:id`
+to advance a step with its proof, `GET /plan/:id` to poll and recover. Two safety properties were
+borrowed from it, and both were load-bearing: `planId` was the idempotency key that made retry safe,
+and `currentStepIndex` was the resume point after an interruption.
+
+On 2026-07-25, with the key in hand, the API was probed read-only. Two of its answers invalidated that
+design:
+
+| What we assumed | What the live API does |
+|---|---|
+| A cross-chain different-token pair quotes in one call | `404 ResourceNotFound`. It is the flagship demo case |
+| `routing: "CHAINED"` is obtainable, so `/plan` is reachable | `CHAINED` is never returned on any pair we can fund from. `/plan` takes a chained quote as its body, so all three endpoints are unreachable for our key |
+
+The full table and a reproducible `curl` are [`01_UNISWAP_INTEGRATION.md` §1](01_UNISWAP_INTEGRATION.md#1-probe-evidence).
+Corroboration arrived from an independent direction: Uniswap's own vendored skill does not use Chained
+Actions either. It decomposes into swap-then-bridge, and records that a direct cross-chain swap
+returns "No quotes available".
+
+**What survived, and what moved.** The decision in ADR 0002 was not reversed: the Trading API is still
+the rail, every call is still server-side, and cross-chain still works, because a same-token pair
+quotes as `routing: "BRIDGE"` and settles through `POST /swap` like any other swap. What moved is
+*where the multi-step logic lives* — into our planner, which decomposes `WETH(Polygon) → USDC(Arbitrum)`
+into a `CLASSIC` swap on Polygon and a `BRIDGE` leg to Arbitrum. Both legs are routes the API actually
+serves. The verified route, with its real numbers, is
+[`02_BRIDGE_ARCHITECTURE.md` §1.6](02_BRIDGE_ARCHITECTURE.md#16-the-verified-flagship-route-live-2026-07-25).
+
+**What had to be replaced.** The two borrowed safety properties. That is the consequential part, and
+it turned out better than what it replaced. A plan is a pure function of current on-chain holdings, so
+re-deriving it from fresh balances *cannot* repeat a settled leg — the leg already changed the input
+the derivation reads. That closes the settled case completely, without a third party. The only
+remaining gap is a transaction broadcast but not yet reflected in a balance, and a client-persisted
+leg journal reconciled against on-chain receipts covers exactly that gap and nothing else. Depending
+on a vendor for a property we can establish ourselves, from the chain, was never the better design;
+we would just not have questioned it.
+
+### The rules that changed with it
+
+Four issues went to `rules:v2` after the probe, and their amendments are recorded in the artifacts
+they govern rather than being retro-edited into §8 above:
+
+| Issue | What the live API forced |
+|---|---|
+| POO-1028 (UF-06) | The plan schemas stay, under an `UNREACHABLE` block comment; `stepMethodSchema` survives as the wire contract `ProvisioningStep.method` is typed off. `quoteRequestSchema` had rejected a cross-chain `EXACT_OUTPUT` the live API answers `200` to, and provisioning is exact-output shaped |
+| POO-1029 (UF-07) | `createPlan` / `advancePlan` / `getPlan` deleted. `advancePlan`'s idempotency rule (R4) went with them, which is what made a replacement necessary rather than optional |
+| POO-1037 (UF-15) | Bridge progress cannot be polled from `GET /plan/:id`. Settlement is now a destination-chain balance delta against a baseline recorded before the broadcast, which is a stronger test anyway: a source receipt only proves the funds left |
+| POO-1039 (UF-17) | The selector's gas verdicts size against the **whole route's** gas, because a decomposed route pays on the source chain twice |
+
+**Known drift, disclosed rather than papered over.** Those four carry a `rules:v2` label whose
+amendment history was never appended to the issue body, and two of their artifacts still read
+`@implements-rules-version: v1` (`awaitBridgeSettlement.ts`, `FundingSourceSelector.tsx`) while
+`schemas.ts` reads `v3` because two later issues also amended it. The repository's convention wants
+those four places in sync. They are not, and this sentence is the record of it.
+
+### The other three additions
+
+- **POO-1052 (UF-30), the vendored skill.** Uniswap's official `swap-integration` skill was found and
+  vendored after the plan was written. It corrected a draft rule before any code was written (the API
+  rejects `permitData: null`), and it later corroborated the probe independently.
+- **POO-1055 (UF-32), the recovery surface.** A `git grep` during the security review found that
+  POO-1038's reconciler and finder had no non-test caller. The record was real; the resume was not.
+  This is the failure mode a plan cannot catch — every issue was Done and the capability did not
+  exist — and it is why "is anything actually calling this?" is worth asking on the way out.
+- **POO-1056 (UF-33), deferred on purpose.** Two lifecycle gaps POO-1055 disclosed. Both need a change
+  to POO-1038's terminal-status lifecycle or to the journal's stored shape, and both were left as a
+  filed issue with rules rather than folded quietly into a neighbouring PR. It is the one issue in the
+  epic that ships unimplemented, and saying so is cheaper than being caught not saying so.
+
+### What did not change
+
+Worth stating, because a correction notice can read louder than it should. The architecture in §4
+stands: zero new backend endpoints, zero CSP changes, the server builds calldata and the client signs.
+Every issue from P0 through P6 shipped against the rules written for it, except where the four
+amendments above say otherwise. The epic's estimate was wrong about a mechanism, not about a design.
