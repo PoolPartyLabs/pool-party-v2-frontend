@@ -124,7 +124,8 @@ describe("getFundingInventory (POO-1031)", () => {
       // Base units (wei), decimal string: exactly what `POST /quote` takes as `amount`.
       amount: "500000000000000000",
       usd: 1250,
-      reachableChainIds: [ARBITRUM, POLYGON],
+      // Ascending chain id, so the set is stable whatever order the API answers in.
+      reachableChainIds: [POLYGON, ARBITRUM],
       isNative: false,
       logoUrl: "https://logo/weth.png",
     });

@@ -435,6 +435,15 @@ export async function getPlan(
 }
 
 /**
+ * Scope for {@link listSwappableTokens}: what can THIS token, on THIS chain, be routed into? Omit it
+ * for the whole allowlist.
+ */
+export interface SwappableTokensScope {
+  tokenIn: string;
+  tokenInChainId: number;
+}
+
+/**
  * The tokens Uniswap can actually swap and bridge: the allowlist for the funding-source picker, so a
  * token we cannot route is never offered ([R3]).
  *
@@ -443,17 +452,25 @@ export async function getPlan(
  * rather than fragmenting the cache the tag exists to share. It is still session-gated: without that,
  * an anonymous visitor could spend our rate-limited, key-authenticated upstream quota at will.
  *
- * PP-INTEGRATION-POINT: routable-token allowlist ← Uniswap `GET /swappable_tokens`.
+ * The optional `scope` (POO-1031 [R1]) narrows the answer to one held token, which is how the funding
+ * inventory learns which chains that token can reach. It stays as cacheable as the unscoped read: the
+ * reach of a token is a property of the token, not of the wallet holding it, so sessions still share
+ * the entry. The parameter is absent from the request entirely when no scope is given, so the
+ * unscoped cache key is unchanged.
+ *
+ * PP-INTEGRATION-POINT: routable-token allowlist ← Uniswap `GET /swappable_tokens`, optionally
+ * scoped by `?tokenIn=&tokenInChainId=` (verify the scoped form against the live API).
  */
-export async function listSwappableTokens(): Promise<
-  UniswapActionResult<{ tokens: UniswapSwappableTokens["tokens"] }>
-> {
+export async function listSwappableTokens(
+  scope?: SwappableTokensScope,
+): Promise<UniswapActionResult<{ tokens: UniswapSwappableTokens["tokens"] }>> {
   const wallet = await getSessionWallet();
   if (!wallet) return sessionMissing();
 
   try {
     const response = await uniswapFetch("swappable_tokens", {
       schema: swappableTokensResponseSchema,
+      ...(scope ? { query: { tokenIn: scope.tokenIn, tokenInChainId: scope.tokenInChainId } } : {}),
       next: {
         revalidate: SWAPPABLE_TOKENS_REVALIDATE_SECONDS,
         tags: [SWAPPABLE_TOKENS_TAG],
