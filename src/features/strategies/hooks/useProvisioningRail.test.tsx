@@ -21,6 +21,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProvisioningLeg, ProvisioningPlan, ProvisioningStep } from "@/lib/provisioning";
 import type { Eip1193Provider } from "@/lib/tx/sendTransaction";
 import type { UniswapQuoteResponse } from "@/lib/uniswap/schemas";
+import type { RequoteChange } from "../lib/buildPlanSteps";
 import { FUNDING_JOURNAL_KEY, type FundingJournal } from "../lib/fundingJournal";
 
 const OWNER = "0xC3673ADc0000000000000000000000000000BEEF";
@@ -287,7 +288,7 @@ describe("useProvisioningRail — the re-quote confirmer [R8]", () => {
   it("asks the user before signing a materially worse price", async () => {
     // 10% worse than the 3,000,000,000 the plan was approved at, i.e. far past the 100 bps gate.
     mocks.quotedOut = "2700000000";
-    const confirmRequote = vi.fn(async () => true);
+    const confirmRequote = vi.fn(async (_change: RequoteChange) => true);
     const rail = mountRail({ operation: OPERATION });
 
     await runRail(
@@ -316,7 +317,7 @@ describe("useProvisioningRail — the re-quote confirmer [R8]", () => {
   });
 
   it("never prompts when the price did not move against the user", async () => {
-    const confirmRequote = vi.fn(async () => true);
+    const confirmRequote = vi.fn(async (_change: RequoteChange) => true);
     const rail = mountRail({ operation: OPERATION });
 
     await runRail(

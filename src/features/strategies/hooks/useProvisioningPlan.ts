@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-HOK-019 (POO-1023)
+ * @id PP-CORE-HOK-019 (POO-1023, POO-1043)
  * @name useProvisioningPlan
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1043 rules v1) · v1 (POO-1023 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * Resolves a {@link ProvisioningPlan} through the ONE seam that decides mock vs real:
@@ -27,7 +27,7 @@
  */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { GasChoice, ProvisioningNeedInput, ProvisioningPlan } from "@/lib/provisioning";
 import { computePlan } from "@/lib/provisioning";
 
@@ -39,6 +39,12 @@ export interface ProvisioningPlanState {
   loading: boolean;
   /** The planner failure, when the seam rejected. */
   error: Error | null;
+  /**
+   * Re-quote the SAME inputs (POO-1043 [R9]). A provisioning quote has a real TTL and the cost
+   * breakdown counts it down; on expiry the price has to be refreshed before the user commits to it.
+   * Nothing else re-plans, because every other trigger is an input CHANGE and is already keyed below.
+   */
+  refresh: () => void;
 }
 
 /**
@@ -67,11 +73,16 @@ export function useProvisioningPlan(
   options: { selection?: readonly string[]; enabled?: boolean } = {},
 ): ProvisioningPlanState {
   const { selection, enabled = true } = options;
-  const [state, setState] = useState<ProvisioningPlanState>({
+  const [state, setState] = useState<Omit<ProvisioningPlanState, "refresh">>({
     plan: null,
     loading: true,
     error: null,
   });
+  // [R9] A manual re-plan trigger, as an effect dependency rather than a second code path: a refresh
+  // that fetched on its own would need its own race guard and its own loading flag, and the two
+  // would drift.
+  const [refreshCount, setRefreshCount] = useState(0);
+  const refresh = useCallback(() => setRefreshCount((count) => count + 1), []);
 
   // Monotonic run id: only the newest run may write state (see the race guard above).
   const runIdRef = useRef(0);
@@ -111,7 +122,7 @@ export function useProvisioningPlan(
         const error = caught instanceof Error ? caught : new Error(String(caught));
         setState({ plan: null, loading: false, error });
       });
-  }, [inputKey, gasKey, selectionKey, enabled]);
+  }, [inputKey, gasKey, selectionKey, enabled, refreshCount]);
 
-  return state;
+  return { ...state, refresh };
 }

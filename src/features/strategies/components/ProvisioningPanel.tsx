@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-CMP-046
  * @name ProvisioningPanel
- * @implements-rules-version v5 (POO-1042 rules v1) · v4 (POO-1041 rules v1) · v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
+ * @implements-rules-version v6 (POO-1043 rules v1) · v5 (POO-1042 rules v1) · v4 (POO-1041 rules v1) · v3 (POO-1037 rules v1) · v2 (POO-807 rules v1) · v1 (POO-1023 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The INLINE pre-flight provisioning body (epic POO-411, POO-418/POO-419). When an op is short on
@@ -46,6 +46,16 @@
  * Mock mode passes no context and is byte-identical to before: it opens on the plan and settles it
  * with the local mock rail.
  *
+ * POO-1043 (hackathon POO-1022): three pieces of finished work that no production caller reached are
+ * mounted here, which is the difference between having built them and having shipped them. Its rule
+ * numbers collide with POO-1042's, so every POO-1043 marker below is written out in full.
+ * POO-1043 [R9] {@link ProvisioningCostBreakdown} sits above the confirm, so the itemised price is
+ * read before it is agreed to, and its TTL re-quotes through the same plan seam, never a second path.
+ * POO-1043 [R7] the recovery journal is minted at the confirm and retired when the route completes,
+ * never on a failure or at the bridge poll ceiling, where the record is exactly what recovery needs.
+ * POO-1043 [R8] a materially worse re-quote is put to the user instead of aborting the leg: the
+ * rail's refusal is the right default with nobody to ask, and a dead end once there is somebody.
+ *
  * PP-INTEGRATION-POINT: `context` is the live wallet read (PP-CORE-LIB-057) and `buildPlanSteps` is
  * the live Uniswap rail (PP-STR-LIB-017), both bound by `useProvisioningGate` and both absent in
  * mock mode.
@@ -65,16 +75,18 @@ import { computeProvisioningNeed, spendableTokenUsd } from "@/lib/provisioning";
 // The value crosses as data through `getProvisioningContextAction` (ADR 0003).
 import type { ProvisioningGateContext } from "@/lib/provisioning/gateContext";
 import type { TxError } from "@/lib/tx/diagnostics";
-import { formatUsd } from "@/lib/utils/format";
+import { formatPercent, formatUsd } from "@/lib/utils/format";
 import { useProvisioningPlan } from "../hooks/useProvisioningPlan";
+import type { ProvisioningRailOperation } from "../hooks/useProvisioningRail";
 import { useProvisioningRail } from "../hooks/useProvisioningRail";
 import { type FlowStep, useWalletSignFlow } from "../hooks/useWalletSignFlow";
 import { BRIDGE_PENDING_CODE } from "../lib/awaitBridgeSettlement";
-import { type PlanRailDeps, planRailSteps } from "../lib/buildPlanSteps";
+import { type PlanRailDeps, planRailSteps, type RequoteChange } from "../lib/buildPlanSteps";
 import { FundingSourceSelector } from "./provisioning/FundingSourceSelector";
 import { fundingProgress, reachesChain, seedRequiredUsd } from "./provisioning/fundingSelection";
 import { GasAmountSelector } from "./provisioning/GasAmountSelector";
 import { selectPreset, validateGas } from "./provisioning/gasSelection";
+import { ProvisioningCostBreakdown } from "./provisioning/ProvisioningCostBreakdown";
 import { labelValues, ProvisioningPlanCard } from "./provisioning/ProvisioningPlanCard";
 import { buildPlanView } from "./provisioning/provisioningView";
 import { settleOutcome, settleTxError, settleTxHash } from "./settle";
@@ -107,6 +119,12 @@ type PlanCtx = Record<string, unknown>;
 export interface PlanRailReporters {
   /** POO-1037's {@link PlanRailDeps.onLegBroadcast}, called the instant a leg has a hash. */
   onLegBroadcast: NonNullable<PlanRailDeps["onLegBroadcast"]>;
+  /**
+   * POO-1043 [R8]: the rail's {@link PlanRailDeps.confirmRequote}. It resolves when the user answers
+   * the prompt this panel renders, so it travels down with the plan for the same reason the reporter
+   * above does: the host owns the rail's dependencies, the panel owns what is on screen.
+   */
+  confirmRequote?: NonNullable<PlanRailDeps["confirmRequote"]>;
 }
 
 /** Public props for {@link ProvisioningPanel}. */
@@ -123,6 +141,16 @@ export interface ProvisioningPanelProps {
    * the SIWE wallet. Type-only across the boundary — never a value import.
    */
   context?: ProvisioningGateContext | null;
+  /**
+   * What the recovery journal records this route as (POO-1043 [R7]): the operation kind and, when
+   * there is one, the strategy it funds. The target chain is read off {@link input}, so a host cannot
+   * describe a route to a chain the gate did not evaluate.
+   *
+   * Absent, no journal is minted and the route executes exactly as it did before POO-1043. That is
+   * the honest default for a host that has not been threaded yet: a record nobody can attribute to an
+   * operation is a record nobody can reconcile.
+   */
+  operation?: Omit<ProvisioningRailOperation, "targetChainId">;
   /** Op anchor title, e.g. "Invest in Stable Yield". */
   opLabel: string;
   /** Provisioning succeeded → the host resumes the original op. */
@@ -147,6 +175,7 @@ export interface ProvisioningPanelProps {
 export function ProvisioningPanel({
   input,
   context,
+  operation,
   opLabel,
   onDone,
   onCancel,
@@ -168,16 +197,27 @@ export function ProvisioningPanel({
   // which is what keeps the planner from quoting a route nobody asked for.
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmedSelection, setConfirmedSelection] = useState<string[] | null>(null);
+  // POO-1043 [R8] The re-quote decision the rail is blocked on, with the resolver that unblocks it.
+  // Null whenever nothing is being asked, which is almost always.
+  const [requote, setRequote] = useState<{
+    change: RequoteChange;
+    decide: (approved: boolean) => void;
+  } | null>(null);
 
   // [R10] The real rail, bound to the connected wallet. Bound HERE rather than in the gate hook: this
   // panel is the only thing that signs, and it mounts only when provisioning actually runs, so an op
-  // modal never needs wallet context just to decide whether to gate. Undefined in mock mode, which is
+  // modal never needs wallet context just to decide whether to gate. Inert in mock mode, which is
   // what keeps the mock settle below as mock mode's behaviour.
-  const boundRail = useProvisioningRail(input.slippagePct);
-  const rail = buildPlanSteps ?? boundRail;
+  const boundRail = useProvisioningRail({
+    ...(input.slippagePct === undefined ? {} : { slippagePct: input.slippagePct }),
+    ...(operation ? { operation: { ...operation, targetChainId: input.targetChainId } } : {}),
+  });
+  const rail = buildPlanSteps ?? boundRail.buildSteps;
 
   const buildPlanStepsRef = useRef(rail);
   buildPlanStepsRef.current = rail;
+  const railRef = useRef(boundRail);
+  railRef.current = boundRail;
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
   const onLockChangeRef = useRef(onLockChange);
@@ -213,7 +253,12 @@ export function ProvisioningPanel({
   // The seam is async, so the hook owns the pending/error lifecycle and the re-plan race guard.
   // POO-1042: in real mode it is suspended until the user has confirmed a selection, so the planner's
   // per-chain quote fan-out never runs for a route nobody asked for.
-  const { plan, error: planError } = useProvisioningPlan(input, effectiveGas, {
+  const {
+    plan,
+    loading: planLoading,
+    error: planError,
+    refresh: requotePlan,
+  } = useProvisioningPlan(input, effectiveGas, {
     ...(confirmedSelection ? { selection: confirmedSelection } : {}),
     enabled: !context || confirmedSelection !== null,
   });
@@ -251,10 +296,31 @@ export function ProvisioningPanel({
     setLegHashes((prev) => (prev[key] === event.txHash ? prev : { ...prev, [key]: event.txHash }));
   }, []);
 
+  /**
+   * POO-1043 [R8] Hold the leg and ask. The rail calls this BEFORE any signature, so nothing the user could
+   * mistake for consent has happened yet; resolving `false` aborts the leg with nothing broadcast.
+   *
+   * The promise is resolved by the prompt's own buttons, which is why the resolver is held in state
+   * rather than a ref: the prompt has to RENDER for there to be an answer at all.
+   */
+  const confirmRequote = useCallback<NonNullable<PlanRailReporters["confirmRequote"]>>(
+    (change) =>
+      new Promise<boolean>((resolve) => {
+        setRequote({
+          change,
+          decide: (approved) => {
+            setRequote(null);
+            resolve(approved);
+          },
+        });
+      }),
+    [],
+  );
+
   const flowSteps = useMemo<FlowStep<PlanCtx>[]>(() => {
     if (!plan) return [];
     const buildReal = buildPlanStepsRef.current;
-    if (buildReal) return buildReal(plan, { onLegBroadcast });
+    if (buildReal) return buildReal(plan, { onLegBroadcast, confirmRequote });
     // PP-MOCK: settle each provisioning step after a beat (always success in mock mode).
     return plan.steps
       .filter((step) => step.type !== "op")
@@ -269,7 +335,7 @@ export function ProvisioningPanel({
           return { txHash: settleTxHash() };
         },
       }));
-  }, [plan, onLegBroadcast]);
+  }, [plan, onLegBroadcast, confirmRequote]);
   const flow = useWalletSignFlow<PlanCtx>(flowSteps, { fallbackErrorCode: "PROVISIONING_FAILED" });
 
   // [R1]/[R6] The flow reports status and hashes positionally against `flowSteps`, which is the RAIL
@@ -329,8 +395,13 @@ export function ProvisioningPanel({
   // renders — its copy, and above all its absent retry, are the whole point.
   useEffect(() => {
     if (phase !== "pending") return;
-    if (flow.status === "success") onDoneRef.current();
-    else if (flow.status === "error") {
+    if (flow.status === "success") {
+      // POO-1043 [R7] Every leg landed, so there is nothing in flight left to recover and a retained record
+      // would read as "you have funding in progress" for a route that finished. Deliberately not
+      // done on the failure or `settling` branches below: that is exactly when the record is needed.
+      railRef.current.closeJournal();
+      onDoneRef.current();
+    } else if (flow.status === "error") {
       setTxError(flow.error);
       setPhase(flow.error?.code === BRIDGE_PENDING_CODE ? "settling" : "error");
     }
@@ -409,6 +480,37 @@ export function ProvisioningPanel({
           <h3 className="font-semibold text-foreground text-lg">{t("provisioning.exec.title")}</h3>
           <p className="mt-1 text-muted-foreground text-sm">{t("provisioning.exec.subtitle")}</p>
         </div>
+        {/* POO-1043 [R8] The price moved against the user between approving the route and signing this leg,
+            which is STRUCTURAL here rather than exceptional: every leg is re-quoted at execution time
+            from the balance the previous one really produced. Nothing has been signed yet, so both
+            answers are safe, and the leg is held until one of them arrives. */}
+        {requote ? (
+          <div
+            role="alertdialog"
+            aria-labelledby="provisioning-requote-title"
+            aria-describedby="provisioning-requote-body"
+            className="flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3"
+          >
+            <p id="provisioning-requote-title" className="font-semibold text-sm text-warning">
+              {t("provisioning.requote.title")}
+            </p>
+            <p id="provisioning-requote-body" className="text-muted-foreground text-sm">
+              {/* Basis points are the rail's unit, not a person's: shown as the percentage they are
+                  being asked to accept. */}
+              {t("provisioning.requote.body", {
+                percent: formatPercent(requote.change.worseBps / 100, 2),
+              })}
+            </p>
+            <div className="flex flex-col gap-2">
+              <Button className="w-full" onClick={() => requote.decide(true)}>
+                {t("provisioning.requote.accept")}
+              </Button>
+              <Button variant="ghost" className="w-full" onClick={() => requote.decide(false)}>
+                {t("provisioning.requote.decline")}
+              </Button>
+            </div>
+          </div>
+        ) : null}
         {/* [R6] Labels, statuses and hashes all come off the SAME key-matched rows, so the stepper
             cannot light up a different step than the one the rail is running. */}
         <WalletSteps
@@ -515,12 +617,29 @@ export function ProvisioningPanel({
         <p className="mt-1 text-muted-foreground text-sm">{t("provisioning.plan.subtitle")}</p>
       </div>
       <ProvisioningPlanCard view={view} opLabel={opLabel} gasSelector={gasSelector} />
+      {/* POO-1043 [R9] What this route actually costs, itemised, ABOVE the confirm. POO-1040 built this and no
+          production caller rendered it, so until now the price a user approved was a plan card and a
+          CTA. The TTL countdown re-quotes through the SAME plan seam the card reads, so the figure
+          they confirm and the figure they were shown cannot come apart. */}
+      {plan ? (
+        <ProvisioningCostBreakdown
+          plan={plan}
+          onRequote={requotePlan}
+          // A re-plan with a plan already on screen IS a re-quote; the first resolve is the skeleton
+          // above, which never reaches here.
+          requoting={planLoading}
+        />
+      ) : null}
       <div className="flex flex-col gap-2">
         <Button
           className="w-full"
           size="lg"
           disabled={ctaDisabled}
           onClick={() => {
+            // POO-1043 [R7] §3.7: the journal is minted when the user APPROVES the route, never when it is
+            // quoted. A plan nobody accepted has no in-flight transactions to track, and a record of
+            // one would surface as "you have funding in progress" for a route that never started.
+            if (plan) railRef.current.openJournal(plan);
             setPhase("pending");
             void flow.run();
           }}

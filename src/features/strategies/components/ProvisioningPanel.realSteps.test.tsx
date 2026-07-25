@@ -18,6 +18,7 @@
  *        statuses and hashes are matched by KEY. Matched by index, the bridge's status would land
  *        on a different row entirely.
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProvisioningPlan } from "@/lib/provisioning";
 import { SCENARIOS } from "@/lib/provisioning";
@@ -39,7 +40,26 @@ const { planHolder } = vi.hoisted(() => ({
   planHolder: { current: null as ProvisioningPlan | null },
 }));
 vi.mock("../hooks/useProvisioningPlan", () => ({
-  useProvisioningPlan: () => ({ plan: planHolder.current, loading: false, error: null }),
+  useProvisioningPlan: () => ({
+    plan: planHolder.current,
+    loading: false,
+    error: null,
+    refresh: () => {},
+  }),
+}));
+
+// POO-1043 [R9]: the plan phase mounts the cost breakdown, whose buy-crypto peer option is a
+// locale-aware Link. Stubbed per the repository's standing test convention.
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 function noop() {}

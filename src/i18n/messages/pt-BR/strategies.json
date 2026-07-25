@@ -469,6 +469,12 @@
       "cta": "Confirmar e continuar",
       "cancel": "Cancelar"
     },
+    "requote": {
+      "title": "O preço mudou",
+      "body": "Esta etapa agora rende cerca de {percent} a menos que o preço que você aprovou. Nada foi enviado ainda, então você pode aceitar o novo preço ou parar por aqui.",
+      "accept": "Aceitar novo preço",
+      "decline": "Parar por aqui"
+    },
     "steps": {
       "buyUsdc": "Comprar USDC",
       "bridge": "Mover para {network}",

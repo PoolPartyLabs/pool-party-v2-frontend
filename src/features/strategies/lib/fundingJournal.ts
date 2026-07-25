@@ -1,7 +1,7 @@
 /**
- * @id PP-STR-LIB-019 (POO-1038)
+ * @id PP-STR-LIB-019 (POO-1038, POO-1043)
  * @name funding recovery journal
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1043 rules v1) · v1 (POO-1038 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The client-persisted record of funding transactions we have put on a chain that the chain has not
@@ -405,6 +405,39 @@ export function createJournalRecorder(
     recordFailed(index) {
       updateLeg(journalId, index, { status: "failed" }, clock());
     },
+  };
+}
+
+/**
+ * A recorder that resolves WHICH journal it writes to at the moment of each call (POO-1043 [R7]).
+ *
+ * The execution rail is bound to its dependencies when the plan is quoted, and the journal is minted
+ * when the user approves that plan (§3.7). Those two moments are a user decision apart, so a recorder
+ * bound to a fixed `journalId` cannot serve both: bind it early and it records a route nobody
+ * accepted, bind it late and the steps already hold a journal-less closure. Deferring the lookup is
+ * what lets the rail be built once and still write to the journal the confirm mints.
+ *
+ * With nothing bound every call is a silent no-op, which is exactly the pre-POO-1038 behaviour: the
+ * route executes identically and simply leaves no in-flight record. `recordBroadcast` stays
+ * SYNCHRONOUS for the reason {@link FundingJournalRecorder} states.
+ */
+export function createDeferredJournalRecorder(
+  resolveJournalId: () => string | null,
+  deps: JournalRecorderDeps,
+): FundingJournalRecorder {
+  const bound = (): FundingJournalRecorder | null => {
+    const journalId = resolveJournalId();
+    return journalId === null ? null : createJournalRecorder(journalId, deps);
+  };
+
+  return {
+    beginLeg: async (entry) => {
+      // Resolved BEFORE the nonce read, so an unbound recorder never spends an RPC call either.
+      await bound()?.beginLeg(entry);
+    },
+    recordBroadcast: (index, hash) => bound()?.recordBroadcast(index, hash),
+    recordSettled: (index) => bound()?.recordSettled(index),
+    recordFailed: (index) => bound()?.recordFailed(index),
   };
 }
 
