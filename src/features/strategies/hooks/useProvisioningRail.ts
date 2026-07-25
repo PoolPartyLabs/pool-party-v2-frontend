@@ -44,6 +44,7 @@
 
 import { useSignTypedData, useWallets } from "@privy-io/react-auth";
 import { useCallback, useMemo, useRef } from "react";
+import { useSwitchChain } from "wagmi";
 import { useAuth } from "@/lib/auth/useAuth";
 import type { ProvisioningPlan } from "@/lib/provisioning";
 import { NATIVE_TOKEN_ADDRESS } from "@/lib/provisioning";
@@ -134,6 +135,13 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
   const { wallets } = useWallets();
   // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
   const { signTypedData } = useSignTypedData();
+  // The CONNECTOR-level switch. This app builds its wagmi config with `@privy-io/wagmi`, and
+  // `EmbeddedWalletActivator` (POO-1003) makes the embedded wallet the active wagmi account, so the
+  // provider `getEthereumProvider()` hands back is bound to Privy's connector. `wallet.switchChain`
+  // moves the Privy wallet OBJECT and does not necessarily move that connector, which is why the
+  // SDK call returned cleanly and the provider kept reporting the old chain (POO-1079).
+  // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
+  const { switchChainAsync } = useSwitchChain();
   // POO-892 [R5]: the ACTIVE address drives the wallet lookup — `wallets[0]` can be the stale handle
   // after a wallet switch, and a plan priced for one wallet must never be signed by another.
   // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
@@ -199,6 +207,19 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
         // ignores the raw RPC and keeps reporting its old chain, which surfaced as WRONG_CHAIN
         // ("stayed on chain 137") mid-route. Every other operation here already switches this way.
         switchChain: async (chainId) => {
+          // wagmi FIRST, because the connector is what the provider follows. Only if that path is
+          // unavailable do we fall back to the wallet SDK, which is the right lever for a wallet
+          // that is not driving the connector. Never both: on an external wallet each one prompts,
+          // and asking twice for one switch is its own bug.
+          try {
+            await switchChainAsync({ chainId });
+            return;
+          } catch (error) {
+            console.warn("[PP] connector chain switch failed; using the SDK fallback", {
+              chainId,
+              error,
+            });
+          }
           await wallet.switchChain(chainId);
         },
         signTypedData: async (data) => {
@@ -236,7 +257,7 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
 
       return buildPlanSteps(plan, deps);
     },
-    [wallets, activeAddress, signTypedData, slippagePct],
+    [wallets, activeAddress, signTypedData, slippagePct, switchChainAsync],
   );
 
   // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
