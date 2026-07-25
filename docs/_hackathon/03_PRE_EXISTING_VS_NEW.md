@@ -127,6 +127,11 @@ yet applied.
 | `buildProvisioningInput.ts` | The hard-disable stub becomes live balance reads | POO-1042 | planned |
 | `InvestModal.tsx` | The `needsDeposit` deep-link early return yields to the gate | POO-1025 | planned |
 | `src/lib/tx/diagnostics.ts` | `wrongChain` error kind with target-network copy | POO-1026 | planned |
+| `src/lib/tx/diagnostics.ts` | `gasBlocked` error kind, mapped from the planner's `PROVISIONING_GAS_BLOCKED` | POO-1044 | done |
+| `src/lib/provisioning/buildPlan.ts` | A `BLOCKED` target chain fails the plan instead of assembling a no-op one | POO-1044 | done |
+| `ProvisioningPanel.tsx` | Gas-only skips the funding picker; the planner's error is classified before it renders; the blocked state offers buy-crypto and no retry | POO-1044 | done |
+| `BuyGasModal.tsx`, `PoweredByPaybis.tsx` | The gas surface stops naming a fiat provider: the implemented step is an on-chain swap | POO-1044 | done |
+| `TransactionErrorActions.tsx` | `gasBlocked` copy, network-named, with the same degradation as `wrongChain` | POO-1044 | done |
 | `src/lib/features/registry.ts` | `swapScreen` flag; `provisioning` baseline becomes a flat boolean | POO-1042, POO-1046 | planned |
 | `provisioningView.ts` | Real-step rendering; local network-name literal replaced by the shared chain config | POO-1041 | planned |
 | `src/i18n/messages/*/strategies.json` | All new copy, 11 locales | POO-1049 | planned |
