@@ -12,6 +12,7 @@
  * `await user.click("Move range")` already flushes it to the Review. Adds a fake-timer rebuild test
  * (the 10s re-quote) and a real-gas test (built `estimatedGasInUsd` drives the Review network line).
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fireEvent,
@@ -26,6 +27,21 @@ import type { MoveRangeTarget } from "./MoveRangeModal";
 const REVIEW_REFRESH_SECS = 10;
 
 const mocks = vi.hoisted(() => ({ buildSteps: vi.fn() }));
+
+// POO-1044 [R3]: the provisioning panel's buy-crypto escape renders the locale-aware Link, which
+// resolves Next's app-router navigation. It does not exist under jsdom, so it is stood in for, as
+// in every other suite that mounts a navigating component.
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
 
 vi.mock("@/lib/services", () => ({ isMockMode: false, managerService: {} }));
 vi.mock("../hooks/useMoveRange", () => ({

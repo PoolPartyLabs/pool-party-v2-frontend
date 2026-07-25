@@ -3,9 +3,14 @@
  * @name PoweredByPaybis
  * @implements-rules-version v1
  *
- * The "Powered by Paybis" attribution shown on a fiat on-ramp surface (the buy-gas modal footnote,
- * and the wizard's buy-USDC step caption). `footnote` centers it under the CTA; `inline` is the muted
- * caption used inside a plan step. "Paybis" is a brand name and stays untranslated across locales.
+ * The "Powered by Paybis" attribution shown on a FIAT ON-RAMP surface. `footnote` centers it under a
+ * CTA; `inline` is the muted caption used inside a plan step. "Paybis" is a brand name and stays
+ * untranslated across locales.
+ *
+ * POO-1044 [R5] removed it from the buy-gas modal. A gas top-up is an on-chain swap of what the
+ * wallet already holds (`swap-gas`), so the attribution named a provider with no part in the step.
+ * The remaining on-ramp surfaces are the plan card's `buy-usdc` caption, which renders the same key
+ * inline, and the deposit screen, which has its own.
  *
  * PP-INTEGRATION-POINT: the real Paybis ramp (CSP-ready stub, POO-87/POO-213) is wired with the rail
  * (POO-414); this is only the brand attribution.

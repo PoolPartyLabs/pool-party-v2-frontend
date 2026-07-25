@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-016 (POO-416, POO-1034)
+ * @id PP-CORE-LIB-016 (POO-416, POO-1034, POO-1044)
  * @name computePlan (provisioning planner seam)
- * @implements-rules-version v3 (POO-1024 rules v1)
+ * @implements-rules-version v4 (POO-1044 rules v1) · v3 (POO-1024 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The single entry every provisioning surface calls to learn what to provision. Real mode crosses
@@ -48,10 +48,13 @@ export async function computePlan(
     // across the RSC boundary; we convert a failure into a rejection here, which is what the hook
     // expects.
     //
-    // `gasChoice` is NOT forwarded: in real mode the gas top-up is sized by the classifier from a
-    // live quote, so there is nothing for a typed amount to attach to (see `planActions.ts`, and
-    // PP-TODO(POO-1044) which owns the real gas selector). The panel hides the selector in real
-    // mode accordingly, so nothing on screen implies a control that would do nothing.
+    // `gasChoice` is NOT forwarded, and POO-1044 settled that it never will be. In real mode the
+    // gas top-up is sized by the classifier from a live quote: the shortfall on that chain, plus
+    // headroom, plus the top-up transaction's own cost. A typed amount cannot improve on that, and
+    // the control's [$10, $200] bounds are a FIAT ON-RAMP floor (the Paybis minimum purchase), not
+    // a property of a swap. Honouring them here would convert $10 of a user's token into native on
+    // a chain where the requirement is six cents. The selector therefore stays a mock-mode
+    // affordance, and the panel renders it only there.
     const result = await computePlanAction(input, selection);
     if (!result.ok) {
       // The house error contract (POO-475 [R3], documented in `@/lib/tx/actionResult`): a typed
@@ -60,7 +63,15 @@ export async function computePlan(
       // `collectErrorFacets` / `classifyTxError` (`@/lib/tx/diagnostics`) walk. Identical conversion
       // to useInvest / useWithdraw / useCollectFees, so a provisioning failure classifies and renders
       // exactly like every other build-action failure instead of being a second, private shape.
-      throw new TransactionError(result.message, { code: result.code });
+      //
+      // POO-1044 [R3]: the operation's chain rides along on the cause, the same way the broadcast
+      // choke point attaches it to a `wrongChain` failure. `PROVISIONING_GAS_BLOCKED` is the one
+      // planner failure whose copy has to name a network ("you need a little ETH on Arbitrum"), and
+      // parsing it back out of the message would be a second, fragile contract.
+      throw new TransactionError(result.message, {
+        code: result.code,
+        targetChainId: input.targetChainId,
+      });
     }
     return result.plan;
   }

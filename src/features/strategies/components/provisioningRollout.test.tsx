@@ -25,6 +25,7 @@
  * `Date.now` is frozen so [R2] can move it. The freshness window is real wall-clock in
  * `useWalletSignFlow`, and a test that actually waited four minutes would not be a test.
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Position, Strategy } from "@/lib/schemas";
 import {
@@ -72,8 +73,20 @@ vi.mock("@/lib/strategies/revalidateStrategies", () => ({
 vi.mock("@/lib/portfolio/revalidatePositions", () => ({
   revalidatePositionsAction: vi.fn(async () => {}),
 }));
+// `Link` as well as `useRouter`: the panel's plan phase mounts POO-1043 [R9]'s cost breakdown, whose
+// buy-crypto peer option is a locale-aware Link, and POO-1044 [R3]'s blocked state renders one too. A
+// stub that omits it throws inside the component the moment the plan lands, which is every test here.
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 const strategy: Strategy = {

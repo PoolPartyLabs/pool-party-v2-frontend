@@ -44,7 +44,12 @@ describe("computePlan (real mode)", () => {
 
     expect(error).toBeInstanceOf(TransactionError);
     expect((error as Error).message).toBe("The wallet's balances could not be read.");
-    expect((error as Error).cause).toEqual({ code: "PROVISIONING_BALANCES_UNAVAILABLE" });
+    // POO-1044 [R3]: the operation's chain rides along, so a failure whose copy has to name a
+    // network (`PROVISIONING_GAS_BLOCKED`) can, without parsing it back out of the message.
+    expect((error as Error).cause).toEqual({
+      code: "PROVISIONING_BALANCES_UNAVAILABLE",
+      targetChainId: SCENARIOS.usdcOnly.targetChainId,
+    });
   });
 
   // @rule R5 — the happy path returns the action's plan unchanged (R4: the signature is untouched).
@@ -56,10 +61,10 @@ describe("computePlan (real mode)", () => {
     await expect(computePlan(SCENARIOS.usdcOnly, { presetUsd: null, amountUsd: 30 })).resolves.toBe(
       plan,
     );
-    // POO-1042: `gasChoice` is deliberately NOT forwarded in real mode. The real gas top-up is sized
-    // by the classifier from a live quote, so a typed amount has nothing to attach to; taking it and
-    // ignoring it would promise something the plan does not honour, and the panel hides the selector
-    // in real mode for the same reason. PP-TODO(POO-1044) re-introduces an explicit choice.
+    // POO-1042, settled by POO-1044 [R6]: `gasChoice` is deliberately NOT forwarded in real mode,
+    // and never will be. The real top-up is sized by the classifier from a live quote, and the
+    // control's [$10, $200] bounds are the Paybis FIAT minimum, which a token swap does not have.
+    // The panel renders the selector in mock mode only, so nothing on screen implies otherwise.
     expect(computePlanAction).toHaveBeenCalledWith(SCENARIOS.usdcOnly, undefined);
   });
 

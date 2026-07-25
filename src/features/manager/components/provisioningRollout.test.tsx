@@ -16,6 +16,7 @@
  *   [R4] each operation's op-anchor label and cancel destination are unchanged
  *   [R5] the dismissal lock holds while the funding route executes
  */
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_BUILT_TX_AGE_MS } from "@/features/strategies/hooks/useWalletSignFlow";
 import { managerPosition } from "@/mocks/data/manager";
@@ -49,8 +50,19 @@ vi.mock("@/lib/services", () => ({
   accountService: { getWalletKind: vi.fn(async () => "embedded") },
 }));
 
+// `Link` as well as `useRouter`, for the same reason as the investor-side sibling: the panel's plan
+// phase mounts POO-1043 [R9]'s cost breakdown, whose buy-crypto peer option is a locale-aware Link.
 vi.mock("@/i18n/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+  Link: ({
+    href,
+    children,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children: ReactNode }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 const removeTarget: RemoveLiquidityTarget = {
