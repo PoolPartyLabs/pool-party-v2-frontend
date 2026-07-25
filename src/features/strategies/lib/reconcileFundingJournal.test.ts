@@ -63,37 +63,46 @@ function reader(options: ReaderOptions = {}): ReaderHarness {
   };
 }
 
-/** A two-leg flagship route: swap WETH→USDC on Polygon, then bridge USDC to Arbitrum. */
-function journalWith(legs: Partial<FundingLeg>[]): FundingJournal {
+/** The flagship route: swap WETH→USDC on Polygon, then bridge USDC to Arbitrum. */
+const ROUTE = [
+  {
+    index: 0,
+    kind: "swap-token" as const,
+    chainId: POLYGON,
+    tokenIn: WETH_POLYGON,
+    tokenOut: USDC_POLYGON,
+    amountIn: "1000000000000000000",
+    minAmountOut: "2940000000",
+  },
+  {
+    index: 1,
+    kind: "bridge" as const,
+    chainId: POLYGON,
+    tokenIn: USDC_POLYGON,
+    tokenOut: USDC_ARBITRUM,
+    destChainId: ARBITRUM,
+    amountIn: "3000000000",
+    minAmountOut: "2996000000",
+  },
+];
+
+/**
+ * A persisted journal carrying one patched leg per entry in `patches`.
+ *
+ * The returned object is composed locally rather than read back, because a journal whose legs are
+ * all terminal is pruned on read by design: the reconciler has to be exercisable on exactly that
+ * shape.
+ */
+function journalWith(patches: Partial<FundingLeg>[]): FundingJournal {
   const journal = createJournal({
     wallet: WALLET,
     operation: { kind: "invest", targetChainId: ARBITRUM, strategyId: "strat-1" },
-    legs: [
-      {
-        index: 0,
-        kind: "swap-token",
-        chainId: POLYGON,
-        tokenIn: WETH_POLYGON,
-        tokenOut: USDC_POLYGON,
-        amountIn: "1000000000000000000",
-        minAmountOut: "2940000000",
-      },
-      {
-        index: 1,
-        kind: "bridge",
-        chainId: POLYGON,
-        tokenIn: USDC_POLYGON,
-        tokenOut: USDC_ARBITRUM,
-        destChainId: ARBITRUM,
-        amountIn: "3000000000",
-        minAmountOut: "2996000000",
-      },
-    ],
+    legs: ROUTE.slice(0, patches.length),
   });
-  legs.forEach((patch, index) => {
+  patches.forEach((patch, index) => {
     updateLeg(journal.journalId, index, patch);
   });
-  return getJournal(journal.journalId) as FundingJournal;
+  return { ...journal, legs: journal.legs.map((leg, index) => ({ ...leg, ...patches[index] })) };
 }
 
 beforeEach(() => {
@@ -129,7 +138,7 @@ describe("[R3] §3.5 the decision table, row by row", () => {
 
     const result = await reconcileJournal(journal, chain);
 
-    expect(result.legs[0].verdict).toBe("settled");
+    expect(result.legs[0]?.verdict).toBe("settled");
   });
 
   it("fails a broadcast leg whose receipt reverted, and asks for a re-derive", async () => {
@@ -140,7 +149,7 @@ describe("[R3] §3.5 the decision table, row by row", () => {
 
     const result = await reconcileJournal(journal, chain);
 
-    expect(result.legs[0].verdict).toBe("reverted");
+    expect(result.legs[0]?.verdict).toBe("reverted");
     expect(result.action).toBe("rederive");
   });
 
@@ -153,7 +162,7 @@ describe("[R3] §3.5 the decision table, row by row", () => {
     vi.setSystemTime(T0 + JOURNAL_POLL_CEILING_MS - 1);
     const result = await reconcileJournal(journal, chain);
 
-    expect(result.legs[0].verdict).toBe("pending");
+    expect(result.legs[0]?.verdict).toBe("pending");
     expect(result.action).toBe("wait");
     expect(chain.calls).not.toContain(`nonce:${POLYGON}`);
   });
@@ -167,7 +176,7 @@ describe("[R3] §3.5 the decision table, row by row", () => {
     vi.setSystemTime(T0 + JOURNAL_POLL_CEILING_MS);
     const result = await reconcileJournal(journal, chain);
 
-    expect(result.legs[0].verdict).toBe("unknown");
+    expect(result.legs[0]?.verdict).toBe("unknown");
     expect(result.action).toBe("ask");
   });
 
@@ -180,7 +189,7 @@ describe("[R3] §3.5 the decision table, row by row", () => {
     vi.setSystemTime(T0 + JOURNAL_POLL_CEILING_MS);
     const result = await reconcileJournal(journal, chain);
 
-    expect(result.legs[0].verdict).toBe("absent");
+    expect(result.legs[0]?.verdict).toBe("absent");
     expect(result.action).toBe("rederive");
   });
 
@@ -190,7 +199,7 @@ describe("[R3] §3.5 the decision table, row by row", () => {
 
     const result = await reconcileJournal(journal, chain);
 
-    expect(result.legs[0].verdict).toBe("absent");
+    expect(result.legs[0]?.verdict).toBe("absent");
     expect(result.action).toBe("rederive");
   });
 
@@ -200,7 +209,7 @@ describe("[R3] §3.5 the decision table, row by row", () => {
 
     const result = await reconcileJournal(journal, chain);
 
-    expect(result.legs[0].verdict).toBe("unknown");
+    expect(result.legs[0]?.verdict).toBe("unknown");
     expect(result.action).toBe("ask");
   });
 
@@ -210,7 +219,7 @@ describe("[R3] §3.5 the decision table, row by row", () => {
 
     const result = await reconcileJournal(journal, chain);
 
-    expect(result.legs[0].verdict).toBe("unknown");
+    expect(result.legs[0]?.verdict).toBe("unknown");
   });
 
   it("ranks ask over wait over rederive when legs disagree", async () => {
@@ -253,7 +262,7 @@ describe("[R3] §3.6 a bridge settles on the DESTINATION chain", () => {
 
     const result = await reconcileJournal(broadcastBridge(), chain);
 
-    expect(result.legs[1].verdict).toBe("pending");
+    expect(result.legs[1]?.verdict).toBe("pending");
     expect(result.action).toBe("wait");
   });
 
@@ -265,7 +274,7 @@ describe("[R3] §3.6 a bridge settles on the DESTINATION chain", () => {
 
     const result = await reconcileJournal(broadcastBridge(), chain);
 
-    expect(result.legs[1].verdict).toBe("settled");
+    expect(result.legs[1]?.verdict).toBe("settled");
     expect(result.action).toBe("complete");
   });
 
@@ -288,7 +297,7 @@ describe("[R3] §3.6 a bridge settles on the DESTINATION chain", () => {
 
     const result = await reconcileJournal(journal, chain);
 
-    expect(result.legs[1].verdict).toBe("pending");
+    expect(result.legs[1]?.verdict).toBe("pending");
   });
 
   it("stays pending at the poll ceiling: never failed, never faked, never re-broadcast", async () => {
@@ -300,7 +309,7 @@ describe("[R3] §3.6 a bridge settles on the DESTINATION chain", () => {
     vi.setSystemTime(T0 + JOURNAL_POLL_CEILING_MS + 60_000);
     const result = await reconcileJournal(broadcastBridge(), chain);
 
-    expect(result.legs[1].verdict).toBe("pending");
+    expect(result.legs[1]?.verdict).toBe("pending");
     expect(result.action).toBe("wait");
   });
 
@@ -313,7 +322,7 @@ describe("[R3] §3.6 a bridge settles on the DESTINATION chain", () => {
 
     const result = await reconcileJournal(journal, chain);
 
-    expect(result.legs[1].verdict).toBe("unknown");
+    expect(result.legs[1]?.verdict).toBe("unknown");
   });
 });
 
@@ -335,12 +344,15 @@ describe("[R6] the reconciled state is legible and it persists", () => {
   it("writes the corrected statuses back, so the chain always wins over the record", async () => {
     const journal = journalWith([
       { status: "broadcast", txHash: SWAP_HASH, broadcastAt: T0, nonceBefore: 7 },
+      // A second, still-planned leg: without it the journal would be fully terminal after the
+      // apply and would be pruned on the next read, which is the store's job, not this test's.
+      { status: "planned", nonceBefore: 8 },
     ]);
-    const chain = reader({ receipts: { [SWAP_HASH]: { status: "success" } } });
+    const chain = reader({ receipts: { [SWAP_HASH]: { status: "success" } }, nonces: { 137: 8 } });
 
     applyReconciliation(await reconcileJournal(journal, chain));
 
-    expect(getJournal(journal.journalId)?.legs[0].status).toBe("settled");
+    expect(getJournal(journal.journalId)?.legs[0]?.status).toBe("settled");
   });
 
   it("leaves a still-pending leg exactly as it was, so nothing is silently abandoned", async () => {
@@ -352,8 +364,8 @@ describe("[R6] the reconciled state is legible and it persists", () => {
     applyReconciliation(await reconcileJournal(journal, chain));
 
     const persisted = getJournal(journal.journalId);
-    expect(persisted?.legs[0].status).toBe("broadcast");
-    expect(persisted?.legs[0].txHash).toBe(SWAP_HASH);
+    expect(persisted?.legs[0]?.status).toBe("broadcast");
+    expect(persisted?.legs[0]?.txHash).toBe(SWAP_HASH);
   });
 
   it("re-reconciling a completed journal is a pure no-op", async () => {
@@ -385,7 +397,7 @@ describe("[R6] the reconciled state is legible and it persists", () => {
 
     const result = await reconcileJournal(journal, chain);
 
-    expect(result.legs[0].verdict).toBe("pending");
+    expect(result.legs[0]?.verdict).toBe("pending");
     expect(result.action).toBe("wait");
   });
 });

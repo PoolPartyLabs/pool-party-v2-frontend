@@ -164,12 +164,12 @@ describe("[R2] write ordering: the record lands before the wallet is ever prompt
 
     recorder.recordBroadcast(0, HASH);
     recorder.recordSettled(0);
-    expect(getJournal(journal.journalId)?.legs[0].status).toBe("settled");
-    expect(getJournal(journal.journalId)?.legs[0].settledAt).toBe(T0);
+    expect(getJournal(journal.journalId)?.legs[0]?.status).toBe("settled");
+    expect(getJournal(journal.journalId)?.legs[0]?.settledAt).toBe(T0);
 
     recorder.recordFailed(0);
-    expect(getJournal(journal.journalId)?.legs[0].status).toBe("failed");
-    expect(getJournal(journal.journalId)?.legs[0].txHash).toBe(HASH);
+    expect(getJournal(journal.journalId)?.legs[0]?.status).toBe("failed");
+    expect(getJournal(journal.journalId)?.legs[0]?.txHash).toBe(HASH);
   });
 });
 
@@ -264,8 +264,8 @@ describe("[R6] hygiene: bounded, pruned, and never silently abandoned", () => {
 
     const kept = readJournals().map((entry) => entry.journalId);
     expect(kept).toHaveLength(JOURNAL_MAX_RECORDS);
-    expect(kept).not.toContain(created[0].journalId);
-    expect(kept).toContain(created[created.length - 1].journalId);
+    expect(kept).not.toContain(created[0]?.journalId);
+    expect(kept).toContain(created[created.length - 1]?.journalId);
   });
 
   it("retires a journal on demand, deleting the record", () => {
