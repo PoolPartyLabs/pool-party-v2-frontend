@@ -500,7 +500,8 @@
       "buyUsdc": "Kaart of lokale overboeking",
       "bridge": "Geld naar het juiste netwerk verplaatsen",
       "swapGas": "U kiest het bedrag, betaald met USDC",
-      "op": "Uw oorspronkelijke actie"
+      "op": "Uw oorspronkelijke actie",
+      "approve": "Een eenmalige toestemming. Er wordt nog niets verplaatst."
     },
     "exec": {
       "title": "Uw geld wordt klaargezet",

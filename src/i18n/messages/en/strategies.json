@@ -500,7 +500,8 @@
       "buyUsdc": "Card or Pix",
       "bridge": "Move funds to the right network",
       "swapGas": "You choose the amount, paid from USDC",
-      "op": "Your original action"
+      "op": "Your original action",
+      "approve": "A one-time permission. Nothing moves yet."
     },
     "exec": {
       "title": "Setting up your funds",

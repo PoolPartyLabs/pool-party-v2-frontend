@@ -500,7 +500,8 @@
       "buyUsdc": "Thẻ hoặc Pix",
       "bridge": "Chuyển tiền sang đúng mạng",
       "swapGas": "Bạn chọn số tiền, thanh toán bằng USDC",
-      "op": "Hành động ban đầu của bạn"
+      "op": "Hành động ban đầu của bạn",
+      "approve": "Một quyền cấp phép duy nhất. Chưa có khoản nào được chuyển."
     },
     "exec": {
       "title": "Đang chuẩn bị tiền của bạn",

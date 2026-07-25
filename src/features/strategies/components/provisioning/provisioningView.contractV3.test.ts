@@ -14,7 +14,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { mockComputePlan, type ProvisioningPlan, SCENARIOS } from "@/lib/provisioning";
-import { buildPlanView } from "./provisioningView";
+import { buildPlanView, type PlanView } from "./provisioningView";
 
 const NOW = "2026-06-30T12:00:00.000Z";
 
@@ -37,6 +37,18 @@ function withV3Fields(plan: ProvisioningPlan): ProvisioningPlan {
   };
 }
 
+/**
+ * Drop the bridge ETA before comparing.
+ *
+ * POO-1041 [R2] deliberately made `etaSeconds` the ONE v3 field the mapper reads: a bridge row now
+ * says how long it takes, and the figure is the quote's own estimate. That is a rule supersession,
+ * not a regression, so the additivity assertion below is narrowed to everything else rather than
+ * dropped, and the ETA gets its own explicit assertion underneath.
+ */
+function withoutEta(view: PlanView): PlanView {
+  return { ...view, rows: view.rows.map(({ eta: _eta, ...row }) => row) };
+}
+
 describe("buildPlanView against contract v3 (POO-1030)", () => {
   // [R2] The whole rule in one assertion, over the worst-case four-step plan.
   it.each([
@@ -48,7 +60,19 @@ describe("buildPlanView against contract v3 (POO-1030)", () => {
   ] as const)("renders %s identically with and without the v3 fields", (scenario) => {
     const plan = mockComputePlan(SCENARIOS[scenario], { nowIso: NOW });
 
-    expect(buildPlanView(withV3Fields(plan))).toEqual(buildPlanView(plan));
+    expect(withoutEta(buildPlanView(withV3Fields(plan)))).toEqual(withoutEta(buildPlanView(plan)));
+  });
+
+  // POO-1041 [R2]: the exception, stated out loud. `etaSeconds` reaches the bridge row, and only it.
+  it("reads etaSeconds onto the bridge row, and nothing else off the v3 fields", () => {
+    const plan = mockComputePlan(SCENARIOS.usdcBridgeGas, { nowIso: NOW });
+    const rows = buildPlanView(withV3Fields(plan)).rows;
+
+    expect(rows.find((row) => row.type === "bridge")?.eta).toEqual({
+      key: "provisioning.bridge.etaMinutes",
+      values: { minutes: 3 },
+    });
+    expect(rows.filter((row) => row.eta !== undefined)).toHaveLength(1);
   });
 
   // [R2] And the mapper keeps reading `toChainId` for the bridge row's network name, rather than
