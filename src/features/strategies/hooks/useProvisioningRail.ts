@@ -50,6 +50,7 @@ import type { ProvisioningPlan } from "@/lib/provisioning";
 import { NATIVE_TOKEN_ADDRESS } from "@/lib/provisioning";
 import { isMockMode } from "@/lib/services";
 import { readErc20Balance, readNativeBalance, readTransactionCount } from "@/lib/tokens/readErc20";
+import type { Eip1193Provider } from "@/lib/tx/sendTransaction";
 import { findWalletForAddress, TransactionError } from "@/lib/tx/sendTransaction";
 // PP-INTEGRATION-POINT: the three Uniswap Trading API calls the rail issues, as `"use server"`
 // stubs. The key never reaches this module or any bundle it ships in (ADR 0003).
@@ -212,17 +213,33 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
       }
       const owner = activeAddress as `0x${string}`;
 
+      /**
+       * The provider for the chain we are CURRENTLY on, fetched once per switch and reused.
+       *
+       * `useInvest` switches, then takes a provider, then broadcasts with THAT object, and it works
+       * on an embedded wallet. The rail instead called `getEthereumProvider()` fresh on every single
+       * request, including the `eth_chainId` read inside the broadcast assertion. An embedded
+       * wallet's provider is initialised from the wallet's configured chain, so each fresh fetch
+       * answered with the app default (`NEXT_PUBLIC_CHAIN_ID`, Polygon on dev) no matter which
+       * switch had just succeeded. That is why the same 137 -> 8453 switch works for a direct invest
+       * and never worked here (POO-1081).
+       *
+       * Held per built-steps run, refreshed by `switchChain`, so the rail broadcasts through the
+       * same handle the switch produced.
+       */
+      let current: Eip1193Provider | null = null;
+      const liveWallet = () => findWalletForAddress(walletsRef.current, activeAddress) ?? wallet;
+      const providerForNow = async (): Promise<Eip1193Provider> => {
+        if (!current) current = await liveWallet().getEthereumProvider();
+        return current;
+      };
+
       const deps: PlanRailDeps = {
         owner,
         // Resolved per broadcast rather than held: `getEthereumProvider` is the wallet's own handle
         // and the choke point (`executeBuiltTransaction`) is what asserts the chain on it.
         provider: {
-          request: async (args) => {
-            // Re-resolved per request, never the build-time handle (POO-1080).
-            const live = findWalletForAddress(walletsRef.current, activeAddress) ?? wallet;
-            const provider = await live.getEthereumProvider();
-            return provider.request(args);
-          },
+          request: async (args) => (await providerForNow()).request(args),
         },
         // Privy's own API, not the provider's `wallet_switchEthereumChain`. An EMBEDDED wallet
         // ignores the raw RPC and keeps reporting its old chain, which surfaced as WRONG_CHAIN
@@ -232,6 +249,8 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
           // unavailable do we fall back to the wallet SDK, which is the right lever for a wallet
           // that is not driving the connector. Never both: on an external wallet each one prompts,
           // and asking twice for one switch is its own bug.
+          // Whichever lever moves it, the cached provider belongs to the OLD chain now.
+          current = null;
           try {
             await switchChainAsync({ chainId });
             return;
@@ -242,8 +261,7 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
             });
           }
           // Same rule: the SDK fallback has to act on the LIVE handle, not the captured one.
-          const live = findWalletForAddress(walletsRef.current, activeAddress) ?? wallet;
-          await live.switchChain(chainId);
+          await liveWallet().switchChain(chainId);
         },
         signTypedData: async (data) => {
           const { signature } = await signTypedData(data as Parameters<typeof signTypedData>[0], {
