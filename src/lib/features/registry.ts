@@ -32,6 +32,7 @@ export type FeatureKey =
   | "adminConsole"
   | "provisioning"
   | "swapScreen"
+  | "activeReserve"
   | "virtualize"
   | "strategyCategoryFilter";
 
@@ -201,6 +202,20 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
     // over the build output, and a mention here would be a false positive in that gate.
     description:
       "Standalone swap + bridge screen at `/swap`, and the wallet modal's Swap action that routes to it. Runs on the shipped provisioning rail (ProvisioningPanel → buildPlanSteps), so a live route also needs real mode and the server-side Uniswap credentials. Route-guarded (404 while off).",
+  },
+  activeReserve: {
+    key: "activeReserve",
+    area: "Active Reserve",
+    // POO-1067, hackathon POO-1057 (1inch Aqua). Dark-launched, and unlike every other flag here
+    // this one is expected to be REMOVED rather than promoted: the entry ships to dev for judging
+    // and does not go to production. The flag is therefore the removal seam. Turning it off must
+    // leave zero trace on any other surface, which is why exactly two places read it: the two
+    // routes (404 while off) and the promoted card at the top of the strategies list.
+    defaultEnabled: false,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_ACTIVE_RESERVE",
+    description:
+      "Active Reserve, an always-earning vault that buys ETH below market through a 1inch Aqua strategy. Reads Arbitrum directly rather than the Pool Party API, so it also needs NEXT_PUBLIC_AQUA_VAULT_ADDRESS pointed at a deployed PartyVault. Route-guarded (404 while off).",
   },
   virtualize: {
     key: "virtualize",
