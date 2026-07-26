@@ -2,6 +2,39 @@
 
 Front-end for **Pool Party v2**, an **On-Chain Asset Management System (OAMS)**: an open, multi-chain platform where asset managers, human or software, build and operate on-chain investment strategies, and where anyone can invest in them without giving up custody.
 
+---
+
+## Hackathon submission
+
+This repository is the **front-end and server half** of two hackathon tracks built on top of the Pool Party v2 investor app. The submission form accepts a single repository, so the companion smart-contract repository is linked below.
+
+### Companion repository (smart contracts)
+
+> **[github.com/0xmvercosa/pool-party-aqua](https://github.com/0xmvercosa/pool-party-aqua)** — the on-chain half of the Active Reserve track: contracts, deploy and ops scripts, the taker, and the judge package.
+
+### Track 1 — Universal Funding (Uniswap Trading API)
+
+Every money-moving operation in Pool Party has one precondition the app could not previously solve for the user: **you must already hold USDC on the exact chain the strategy lives on, plus native gas on that chain.** This track removes that precondition by swapping and bridging whatever the user already holds, across chains, through the Uniswap Trading API.
+
+- Epic POO-1022, 33 issues, started 2026-07-24.
+- **Docs: [`docs/_hackathon/`](docs/_hackathon/)** — [plan of record](docs/_hackathon/00_IMPLEMENTATION_PLAN.md) (mirrors every issue, its business rules, and its acceptance criteria), [Uniswap integration](docs/_hackathon/01_UNISWAP_INTEGRATION.md), [bridge architecture](docs/_hackathon/02_BRIDGE_ARCHITECTURE.md).
+- Code: `src/lib/uniswap/`, `src/lib/provisioning/`, `src/features/strategies/lib/buildPlanSteps.ts`.
+
+### Track 2 — Active Reserve (1inch Aqua and SwapVM)
+
+A managed USDC reserve on Arbitrum that never sits idle and buys ETH only when the market comes down to it: roughly 95% of the vault's USDC is lent on Aave v3 behind a 5% hot buffer, while a sleeve worth about 10% of TVL is registered with 1inch Aqua as virtual balance, priced by a program whose buy band sits entirely below spot.
+
+- Epic POO-1057.
+- **Docs: [`docs/_hackathon_aqua/`](docs/_hackathon_aqua/)** — start at the [package index](docs/_hackathon_aqua/README.md).
+- Code: `src/lib/aqua/` (server-only module), `src/features/aqua/` (Active Reserve investor page).
+- Contracts: **[github.com/0xmvercosa/pool-party-aqua](https://github.com/0xmvercosa/pool-party-aqua)**.
+
+### What was built during the event
+
+Both tracks build on a pre-existing production codebase. Each package states precisely which code pre-dates the event and which was written during it: [`_hackathon/03_PRE_EXISTING_VS_NEW.md`](docs/_hackathon/03_PRE_EXISTING_VS_NEW.md) and [`_hackathon_aqua/03_PRE_EXISTING_VS_NEW.md`](docs/_hackathon_aqua/03_PRE_EXISTING_VS_NEW.md). The commit history in this repository starts at the pre-hackathon baseline, so every commit after the root commit is hackathon work.
+
+---
+
 ## How it works
 
 The platform splits responsibilities into two layers:
@@ -42,7 +75,9 @@ V1 of the investor app is in active build, gated per area by a feature-flag regi
 - **In build**: Cards.
 - **Registered, not built yet**: Savings, Buy tokens, Predictions, Perps, Manager Console.
 
-The app runs entirely on mock data. There is no real backend, RPC, wallet, or contract integration yet; each one plugs in at an explicit, documented integration point (see [`docs/INTEGRATION_POINTS.md`](docs/INTEGRATION_POINTS.md)). UI copy ships in 11 languages.
+The app is **mock-by-default with real seams already wired**. Wallet and auth (Privy + wagmi/viem, SIWE), analytics, and the web-security layer are real. The platform data layer runs on fixtures behind a single toggle and plugs into the backend at explicit, documented integration points (see [`docs/INTEGRATION_POINTS.md`](docs/INTEGRATION_POINTS.md)). Both hackathon tracks call live third-party APIs. UI copy ships in 11 languages.
+
+> **All figures shown in the running app are synthetic mock data.** TVL, APY, balances, and portfolio values are generated fixtures, not real positions or real money.
 
 ## Quick start
 
@@ -118,4 +153,4 @@ Tracking lives in Linear (workspace `yeildbay`, team `Pool Party`), one project 
 
 ## Design source
 
-Designs are maintained in Figma (file key `jjOf5DL9uVEB7WBR9nGb4A`, investor app fully designed). The mapping of every design artifact to its ID and frames is in [`docs/IDS_REGISTRY.md`](docs/IDS_REGISTRY.md).
+Designs are maintained in Figma (investor app fully designed; the file is private to the team). The mapping of every design artifact to its ID and frames is in [`docs/IDS_REGISTRY.md`](docs/IDS_REGISTRY.md).

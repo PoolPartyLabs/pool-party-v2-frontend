@@ -27,9 +27,7 @@ describe("classifyUrl", () => {
   });
 
   it("is https for a hosted CDN url", () => {
-    expect(classifyUrl("https://cdn.example.test/managers/0x/avatar?v=1")).toBe(
-      "https",
-    );
+    expect(classifyUrl("https://cdn.example.test/managers/0x/avatar?v=1")).toBe("https");
   });
 });
 

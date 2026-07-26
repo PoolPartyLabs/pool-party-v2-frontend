@@ -58,3 +58,23 @@ next-env.d.ts
 
 # scratch (throwaway implementation .md; never committed, deleted after use - see CLAUDE.md)
 /_tmp/
+
+# Claude Code local runtime. These were previously protected only by .git/info/exclude
+# and a personal global gitignore, neither of which travels with the repo.
+.claude/worktrees/
+.claude/settings.local.json
+.claude/scheduled_tasks.json
+.claude/scheduled_tasks.lock
+.claude/routines/.state/
+.claude/checkpoints/
+.claude/mailbox/
+.claude/agent-registry.json
+.claude/agent-memory-local/
+.claude/first-run
+.claude/assistant-daemon-state.json
+
+# Internal analyses and integration notes: not for the public repository.
+/docs/_analysis/
+
+# Any log file. Session transcripts leaked into git history once already.
+*.log
