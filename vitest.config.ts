@@ -16,6 +16,15 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./tests/setup.ts"],
     include: ["src/**/*.{test,spec}.{ts,tsx}", "tests/**/*.{test,spec}.{ts,tsx}"],
+    server: {
+      deps: {
+        // The 1inch SDKs ship an ESM bundle with extensionless internal imports
+        // ("@1inch/byte-utils/dist/constants"), which Node's ESM resolver rejects. Inlining
+        // them routes those imports through Vite's resolver, which handles the omission.
+        // Next and tsx already tolerate it, so this is a Vitest-only accommodation.
+        inline: [/@1inch\//],
+      },
+    },
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],

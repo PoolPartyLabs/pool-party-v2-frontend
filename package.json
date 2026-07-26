@@ -17,9 +17,17 @@
     "config:check": "tsx scripts/config-check.ts",
     "secrets:check": "tsx scripts/bundle-secrets-check.ts",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "aqua:ship": "tsx --conditions=react-server scripts/aqua/strategy.ts ship",
+    "aqua:roll": "tsx --conditions=react-server scripts/aqua/strategy.ts roll",
+    "aqua:dock": "tsx --conditions=react-server scripts/aqua/strategy.ts dock",
+    "aqua:launch-payloads": "tsx --conditions=react-server scripts/aqua/strategy.ts launch-payloads",
+    "aqua:discover": "tsx --conditions=react-server scripts/aqua/discover.ts"
   },
   "dependencies": {
+    "@1inch/aqua-sdk": "0.2.0",
+    "@1inch/sdk-core": "0.1.2",
+    "@1inch/swap-vm-sdk": "0.3.0",
     "@next/third-parties": "^15.5.18",
     "@privy-io/react-auth": "^3.29.2",
     "@privy-io/wagmi": "^4.0.13",
@@ -44,6 +52,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-international-phone": "^4.8.0",
+    "server-only": "^0.0.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "uqr": "^0.1.3",

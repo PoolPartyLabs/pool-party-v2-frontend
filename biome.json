@@ -7,7 +7,16 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!.claude", "!docs", "!**/*.md", "!public", "!next-env.d.ts", "!**/*.css"]
+    "includes": [
+      "**",
+      "!.claude",
+      "!docs",
+      "!**/*.md",
+      "!public",
+      "!next-env.d.ts",
+      "!**/*.css",
+      "!drizzle"
+    ]
   },
   "formatter": {
     "enabled": true,
