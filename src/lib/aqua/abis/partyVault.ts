@@ -67,6 +67,54 @@ export const PARTY_VAULT_VIEW_ABI = [
     outputs: [{ type: "bool" }],
     stateMutability: "view",
   },
+  {
+    type: "function",
+    name: "sharesOf",
+    inputs: [{ name: "investor", type: "address" }],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  // IDX-R3: an investor's value comes from the vault's OWN conversion, never a share price we
+  // recompute here, so there is no second implementation to drift from the contract.
+  {
+    type: "function",
+    name: "convertToAssets",
+    inputs: [{ name: "shares", type: "uint256" }],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "convertToShares",
+    inputs: [{ name: "assets", type: "uint256" }],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+] as const;
+
+/**
+ * The two state-changing calls an investor makes.
+ *
+ * Deposits are USDC only (VLT-R1) and redeems pay out USDC only (VLT-R5). Both are plain
+ * contract calls with no Permit2 leg: the vault pulls with an ordinary `transferFrom` against a
+ * direct allowance, which is why the deposit flow is approve-then-deposit rather than the
+ * permit dance the Uniswap operations use.
+ */
+export const PARTY_VAULT_WRITE_ABI = [
+  {
+    type: "function",
+    name: "deposit",
+    inputs: [{ name: "assets", type: "uint256" }],
+    outputs: [{ name: "shares", type: "uint256" }],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "redeem",
+    inputs: [{ name: "shares", type: "uint256" }],
+    outputs: [{ name: "assets", type: "uint256" }],
+    stateMutability: "nonpayable",
+  },
 ] as const;
 
 /** ADP-R3: interest-inclusive aToken balance, so it grows every block. */

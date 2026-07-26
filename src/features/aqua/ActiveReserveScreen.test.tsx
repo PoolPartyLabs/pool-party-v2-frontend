@@ -41,6 +41,25 @@ function liveState(overrides: Partial<Extract<ActiveReserveState, { status: "liv
         active: true,
       },
     ],
+    mandate: {
+      assets: [
+        { label: "USDC", maxPct: 100 },
+        { label: "WETH", maxPct: 10 },
+      ],
+      protocols: [
+        { label: "Aave v3", maxPct: 90 },
+        { label: "1inch Aqua", maxPct: 10 },
+      ],
+      networks: ["Arbitrum"],
+    },
+    composition: [
+      { label: "Lent on Aave", weight: 16.5 },
+      { label: "Cash on hand", weight: 0.87 },
+      { label: "ETH bought", weight: 82.63 },
+    ],
+    maxTvlUsdc: "200000000",
+    seeded: true,
+    liquidUsdc: "190000000",
     fills: [
       {
         txHash: `0x${"dd".repeat(32)}`,

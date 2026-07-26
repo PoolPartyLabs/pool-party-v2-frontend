@@ -18,6 +18,7 @@ import {
 } from "../config/addresses";
 import { aquaDb } from "../db/client";
 import { aquaFills, aquaShips } from "../db/schema";
+import { type AquaMandateView, aquaMandate, compositionSlices } from "./mandate";
 
 /**
  * Everything the read-only investor page shows, assembled server-side.
@@ -74,7 +75,24 @@ export type ActiveReserveState =
       nav: { totalAssetsUsdc: string; wethValuedUsdc: string; totalShares: string };
       bands: BandView[];
       fills: FillView[];
+      /** Assets / protocols / networks, same shape the prospectus already renders. */
+      mandate: AquaMandateView;
+      /** Live composition slices, or null when the vault is empty (FE-R7). */
+      composition: Array<{ label: string; weight: number }> | null;
+      /** Manager-set ceiling on total deposits (VLT-R10). */
+      maxTvlUsdc: string;
+      /** VLT-R2: nobody may deposit until the manager has seeded. */
+      seeded: boolean;
+      /** USDC the vault can pay out right now: buffer plus what the adapter can unpark. */
+      liquidUsdc: string;
     };
+
+/** The connected investor's stake. Read separately so the page renders without a wallet. */
+export type AquaPosition = {
+  shares: string;
+  /** Current value of those shares in raw USDC, via the vault's own conversion. */
+  valueUsdc: string;
+};
 
 function envAddress(name: string): `0x${string}` | null {
   const raw = process.env[name];
@@ -114,36 +132,47 @@ export async function readActiveReserveState(): Promise<ActiveReserveState> {
     .readContract({ address: vault, abi: PARTY_VAULT_VIEW_ABI, functionName: "ADAPTER" })
     .catch(() => null)) as `0x${string}` | null;
 
-  const [hotBufferUsdc, acquiredWeth, totalAssets, totalShares, activeStrategies] =
-    await Promise.all([
-      client.readContract({
-        address: TOKENS.USDC,
-        abi: erc20Abi,
-        functionName: "balanceOf",
-        args: [vault],
-      }),
-      client.readContract({
-        address: TOKENS.WETH,
-        abi: erc20Abi,
-        functionName: "balanceOf",
-        args: [vault],
-      }),
-      client.readContract({
-        address: vault,
-        abi: PARTY_VAULT_VIEW_ABI,
-        functionName: "totalAssets",
-      }) as Promise<bigint>,
-      client.readContract({
-        address: vault,
-        abi: PARTY_VAULT_VIEW_ABI,
-        functionName: "totalShares",
-      }) as Promise<bigint>,
-      client.readContract({
-        address: vault,
-        abi: PARTY_VAULT_VIEW_ABI,
-        functionName: "activeStrategies",
-      }),
-    ]);
+  const [
+    hotBufferUsdc,
+    acquiredWeth,
+    totalAssets,
+    totalShares,
+    activeStrategies,
+    maxTvl,
+    seeded,
+    liquidUsdc,
+  ] = await Promise.all([
+    client.readContract({
+      address: TOKENS.USDC,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [vault],
+    }),
+    client.readContract({
+      address: TOKENS.WETH,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [vault],
+    }),
+    client.readContract({
+      address: vault,
+      abi: PARTY_VAULT_VIEW_ABI,
+      functionName: "totalAssets",
+    }) as Promise<bigint>,
+    client.readContract({
+      address: vault,
+      abi: PARTY_VAULT_VIEW_ABI,
+      functionName: "totalShares",
+    }) as Promise<bigint>,
+    client.readContract({
+      address: vault,
+      abi: PARTY_VAULT_VIEW_ABI,
+      functionName: "activeStrategies",
+    }),
+    client.readContract({ address: vault, abi: PARTY_VAULT_VIEW_ABI, functionName: "maxTvl" }),
+    client.readContract({ address: vault, abi: PARTY_VAULT_VIEW_ABI, functionName: "seeded" }),
+    client.readContract({ address: vault, abi: PARTY_VAULT_VIEW_ABI, functionName: "liquidUsdc" }),
+  ]);
 
   let parkedUsdc = BigInt(0);
   if (adapter && adapter !== "0x0000000000000000000000000000000000000000") {
@@ -181,7 +210,43 @@ export async function readActiveReserveState(): Promise<ActiveReserveState> {
     },
     bands,
     fills,
+    mandate: aquaMandate(),
+    composition: compositionSlices({
+      parkedUsdc,
+      hotBufferUsdc,
+      wethValuedUsdc: wethToUsdcRaw(acquiredWeth, ethUsdE8),
+    }),
+    maxTvlUsdc: maxTvl.toString(),
+    seeded,
+    liquidUsdc: liquidUsdc.toString(),
   };
+}
+
+/**
+ * The connected investor's stake, valued through the vault's OWN `convertToAssets` rather than
+ * a share-price we compute here. IDX-R3: any divergence from the on-chain conversion beyond
+ * rounding is a bug, so the safest thing is not to have a second implementation at all.
+ */
+export async function readAquaPosition(investor: `0x${string}`): Promise<AquaPosition | null> {
+  const vault = envAddress("AQUA_VAULT_ADDRESS");
+  if (!vault) return null;
+
+  const client = arbitrumPublicClient();
+  const shares = await client.readContract({
+    address: vault,
+    abi: PARTY_VAULT_VIEW_ABI,
+    functionName: "sharesOf",
+    args: [investor],
+  });
+  if (shares === BigInt(0)) return null;
+
+  const valueUsdc = await client.readContract({
+    address: vault,
+    abi: PARTY_VAULT_VIEW_ABI,
+    functionName: "convertToAssets",
+    args: [shares],
+  });
+  return { shares: shares.toString(), valueUsdc: valueUsdc.toString() };
 }
 
 /**
