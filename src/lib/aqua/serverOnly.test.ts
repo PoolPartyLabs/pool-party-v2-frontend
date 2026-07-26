@@ -16,25 +16,20 @@ import {
  * from a client component is a BUILD error in Next. That guarantee is only as good as our
  * discipline in putting the import on every file, so this test checks it mechanically.
  *
- * `db/schema.ts` is the one deliberate exception: drizzle-kit reads it from a plain Node
- * process to generate migrations, and it declares table shapes only, holding no secret and
- * opening no connection. The module that actually connects (`db/client.ts`) is guarded.
+ * `config/public.ts` is the one deliberate exception, and it is asserted inert below.
  */
 
 const AQUA_ROOT = join(process.cwd(), "src/lib/aqua");
 /**
- * The two deliberate exemptions, each for a reason that must keep holding:
- *
- * `db/schema.ts` is read by drizzle-kit from a plain Node process to generate migrations. It
- * declares table shapes only, holds no secret and opens no connection.
+ * The one deliberate exemption, for a reason that must keep holding:
  *
  * `config/public.ts` is imported by the browser on purpose: deployed contract addresses and a
  * chain id, needed to read a USDC allowance and to refuse the wrong chain. Public by
  * definition and verifiable on Arbiscan.
  *
- * Both are asserted inert below, so an exemption cannot quietly grow a secret.
+ * It is asserted inert below, so the exemption cannot quietly grow a secret.
  */
-const EXEMPT = new Set(["db/schema.ts", "config/public.ts"]);
+const EXEMPT = new Set(["config/public.ts"]);
 
 function moduleFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -64,13 +59,6 @@ describe("aqua module server-only guard", () => {
       return;
     }
     expect(source).toMatch(/^import "server-only";/m);
-  });
-
-  it("never reads AQUA_DATABASE_URL outside config/env.ts", () => {
-    const offenders = files
-      .filter((file) => relative(AQUA_ROOT, file) !== "config/env.ts")
-      .filter((file) => readFileSync(file, "utf8").includes("AQUA_DATABASE_URL"));
-    expect(offenders).toEqual([]);
   });
 });
 

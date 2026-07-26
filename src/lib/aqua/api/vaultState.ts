@@ -1,6 +1,5 @@
 import "server-only";
 
-import { desc, eq } from "drizzle-orm";
 import { erc20Abi } from "viem";
 import {
   AQUA_RAW_BALANCES_ABI,
@@ -16,8 +15,7 @@ import {
   DECIMALS,
   TOKENS,
 } from "../config/addresses";
-import { aquaDb } from "../db/client";
-import { aquaFills, aquaShips } from "../db/schema";
+import { fillsFor, shipMetadataFor } from "../data/managerMetadata";
 import { type AquaMandateView, aquaMandate, compositionSlices } from "./mandate";
 
 /**
@@ -94,18 +92,40 @@ export type AquaPosition = {
   valueUsdc: string;
 };
 
-function envAddress(name: string): `0x${string}` | null {
-  const raw = process.env[name];
-  if (!raw || !/^0x[0-9a-fA-F]{40}$/.test(raw)) return null;
-  return raw as `0x${string}`;
+function asAddress(raw: string | undefined): `0x${string}` | null {
+  if (!raw || !/^0x[0-9a-fA-F]{40}$/.test(raw.trim())) return null;
+  return raw.trim() as `0x${string}`;
+}
+
+/**
+ * The vault this page is about.
+ *
+ * `NEXT_PUBLIC_AQUA_VAULT_ADDRESS` is the source of truth, deliberately public: a deployed contract
+ * address is public by definition, the browser needs the same value to build a deposit, and one
+ * variable cannot drift from itself. It is baked at build time, so pointing a deployment at a newly
+ * launched vault is an env change plus a rebuild — which is the actual workflow when the current
+ * reserve is wound down and a fresh one is opened.
+ *
+ * `AQUA_VAULT_ADDRESS` stays honoured as a server-only override so an existing environment keeps
+ * working, and so a server can be pointed elsewhere without a rebuild.
+ *
+ * Both are read as STATIC `process.env.X` references. A computed lookup (`process.env[name]`) is
+ * replaced at build time only for literals, so the dynamic form silently yields `undefined` in any
+ * bundle Next inlines.
+ */
+function vaultAddress(): `0x${string}` | null {
+  return (
+    asAddress(process.env.NEXT_PUBLIC_AQUA_VAULT_ADDRESS) ??
+    asAddress(process.env.AQUA_VAULT_ADDRESS)
+  );
 }
 
 export async function readActiveReserveState(): Promise<ActiveReserveState> {
-  const vault = envAddress("AQUA_VAULT_ADDRESS");
+  const vault = vaultAddress();
   if (!vault) {
     return {
       status: "not-launched",
-      reason: "AQUA_VAULT_ADDRESS is not set. The vault has not been deployed yet.",
+      reason: "NEXT_PUBLIC_AQUA_VAULT_ADDRESS is not set. The vault has not been deployed yet.",
     };
   }
 
@@ -187,7 +207,7 @@ export async function readActiveReserveState(): Promise<ActiveReserveState> {
   }
 
   const bands = await readBands(vault, activeStrategies);
-  const fills = await readFills();
+  const fills = await readFills(activeStrategies);
 
   return {
     status: "live",
@@ -228,7 +248,7 @@ export async function readActiveReserveState(): Promise<ActiveReserveState> {
  * rounding is a bug, so the safest thing is not to have a second implementation at all.
  */
 export async function readAquaPosition(investor: `0x${string}`): Promise<AquaPosition | null> {
-  const vault = envAddress("AQUA_VAULT_ADDRESS");
+  const vault = vaultAddress();
   if (!vault) return null;
 
   const client = arbitrumPublicClient();
@@ -260,15 +280,12 @@ async function readBands(
   if (activeStrategies.length === 0) return [];
 
   const client = arbitrumPublicClient();
-  const rows = await aquaDb()
-    .select()
-    .from(aquaShips)
-    .where(eq(aquaShips.maker, vault.toLowerCase()));
-  const byHash = new Map(rows.map((row) => [row.strategyHash.toLowerCase(), row]));
 
   const bands: BandView[] = [];
   for (const strategyHash of activeStrategies) {
-    const record = byHash.get(strategyHash.toLowerCase());
+    // The manager's descriptive layer. Absent = an unlabelled launch, which still renders with its
+    // live money and no edges (FE-R7), exactly as an un-backfilled ship used to.
+    const record = shipMetadataFor(strategyHash);
     const [committedUsdc] = await client.readContract({
       address: AQUA_REGISTRY,
       abi: AQUA_RAW_BALANCES_ABI,
@@ -289,11 +306,11 @@ async function readBands(
       mandate: record?.mandate ?? "unknown",
       lowE8: record?.bandLowE8 ?? "",
       highE8: record?.bandHighE8 ?? "",
-      spotAtShipE8: record?.spotE8 ?? "",
+      spotAtShipE8: record?.spotAtShipE8 ?? "",
       committedUsdc: committedUsdc.toString(),
       acquiredWeth: acquiredWeth.toString(),
       epoch: record?.epoch ?? 0,
-      deadline: record?.deadline?.toString() ?? "",
+      deadline: record?.deadline ?? "",
       shipTxHash: record?.shipTxHash ?? null,
       active: true,
     });
@@ -301,23 +318,17 @@ async function readBands(
   return bands;
 }
 
-async function readFills(limit = 25): Promise<FillView[]> {
-  const rows = await aquaDb()
-    .select()
-    .from(aquaFills)
-    .orderBy(desc(aquaFills.blockTimestamp))
-    .limit(limit);
-
-  const ships = await aquaDb().select().from(aquaShips);
-  const mandateByHash = new Map(ships.map((s) => [s.strategyHash.toLowerCase(), s.mandate]));
-
-  return rows.map((row) => ({
-    txHash: row.txHash,
-    when: row.blockTimestamp.toISOString(),
-    mandate: mandateByHash.get(row.strategyHash.toLowerCase()) ?? "unknown",
-    amountIn: row.amountIn,
-    amountOut: row.amountOut,
-    jitUnparked: row.jitUnparked,
+async function readFills(
+  activeStrategies: readonly `0x${string}`[],
+  limit = 25,
+): Promise<FillView[]> {
+  return fillsFor(activeStrategies, limit).map((fill) => ({
+    txHash: fill.txHash,
+    when: fill.when,
+    mandate: shipMetadataFor(fill.strategyHash)?.mandate ?? "unknown",
+    amountIn: fill.amountIn,
+    amountOut: fill.amountOut,
+    jitUnparked: fill.jitUnparked,
   }));
 }
 
