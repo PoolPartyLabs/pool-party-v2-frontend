@@ -44,28 +44,35 @@ const USDC_POLYGON = {
 
 const mocks = vi.hoisted(() => ({
   activeAddress: "0xC3673ADc0000000000000000000000000000BEEF" as string | undefined,
+  /** Privy's wallet-SDK chain switch: the FALLBACK path. */
+  switchChain: vi.fn(async (_chainId: number) => {}),
+  /** wagmi's connector-level switch: what the rail tries first (POO-1079). */
+  switchChainAsync: vi.fn(async (_args: { chainId: number }) => {}),
   /** Base-unit output the fresh `/quote` offers. Worsened per-test to trip the re-quote gate. */
   quotedOut: "3000000000",
   nonce: 7,
   sent: [] as string[],
   /** Journal snapshots taken the instant the provider is asked for a receipt (the §3.4 probe). */
   journalAtReceipt: [] as (FundingJournal | undefined)[],
+  /**
+   * The wallets `useWallets()` currently returns.
+   *
+   * A mutable array on purpose: Privy hands out a NEW `ConnectedWallet` array whenever its state
+   * moves, which is the fact POO-1080 turns on. Reassigning this models that, so a spec can prove
+   * the rail reads the live handle at execution time rather than the one it captured.
+   */
+  wallets: [] as unknown[],
 }));
 
 vi.mock("@/lib/services", () => ({ isMockMode: false }));
 
 vi.mock("@privy-io/react-auth", () => ({
-  useWallets: () => ({
-    wallets: [
-      {
-        address: OWNER,
-        getEthereumProvider: async (): Promise<Eip1193Provider> => provider,
-      },
-    ],
-  }),
+  useWallets: () => ({ wallets: mocks.wallets }),
   useSignTypedData: () => ({ signTypedData: async () => ({ signature: "0xsignature" }) }),
 }));
 vi.mock("@/lib/auth/useAuth", () => ({ useAuth: () => ({ address: mocks.activeAddress }) }));
+// The CONNECTOR-level switch the rail prefers (POO-1079). Privy's wallet SDK is the fallback.
+vi.mock("wagmi", () => ({ useSwitchChain: () => ({ switchChainAsync: mocks.switchChainAsync }) }));
 
 // PP-INTEGRATION-POINT (ADR 0003): the three Uniswap calls are `"use server"` actions. The rail
 // injects them, so the suite replaces functions rather than a transport, and no key is involved.
@@ -206,10 +213,54 @@ beforeEach(() => {
   mocks.nonce = 7;
   mocks.sent = [];
   mocks.journalAtReceipt = [];
+  // The default wallet: an EXTERNAL one, whose provider is live regardless of which object holds it.
+  mocks.wallets = [
+    {
+      address: OWNER,
+      getEthereumProvider: async (): Promise<Eip1193Provider> => provider,
+      switchChain: mocks.switchChain,
+    },
+  ];
+  mocks.switchChain.mockClear();
+  mocks.switchChainAsync.mockClear();
+  mocks.switchChainAsync.mockImplementation(async () => {});
 });
 
 afterEach(() => {
   vi.useRealTimers();
+});
+
+// POO-1078 — a Privy EMBEDDED wallet ignores the provider's raw `wallet_switchEthereumChain`, so it
+// never lands on the target chain and the broadcast choke point refuses with WRONG_CHAIN ("stayed on
+// chain 137"). Every other operation in this app switches through the wallet SDK first; the rail was
+// the one path that did not, and a cross-chain plan is the one that changes chain mid-flow.
+describe("useProvisioningRail — chain switching goes through the wallet SDK [R1]", () => {
+  it("wires Privy's switchChain into the rail rather than leaving it to the provider", async () => {
+    const rail = mountRail({ operation: OPERATION });
+    const steps = rail.current.buildSteps?.(plan(), { onLegBroadcast: () => {} });
+
+    expect(steps).toBeDefined();
+    await steps?.[0]?.run?.({});
+
+    // The CONNECTOR switch, which is what the provider actually follows.
+    expect(mocks.switchChainAsync).toHaveBeenCalled();
+    for (const [args] of mocks.switchChainAsync.mock.calls) expect(args.chainId).toBe(POLYGON);
+    // And not also the SDK: on an external wallet each path prompts, so asking twice for one
+    // switch would be its own bug.
+    expect(mocks.switchChain).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the wallet SDK when the connector switch is unavailable", async () => {
+    mocks.switchChainAsync.mockImplementation(async () => {
+      throw new Error("connector cannot switch");
+    });
+    const rail = mountRail({ operation: OPERATION });
+    const steps = rail.current.buildSteps?.(plan(), { onLegBroadcast: () => {} });
+    await steps?.[0]?.run?.({});
+
+    expect(mocks.switchChain).toHaveBeenCalled();
+    for (const [chainId] of mocks.switchChain.mock.calls) expect(chainId).toBe(POLYGON);
+  });
 });
 
 describe("useProvisioningRail — the recovery journal [R7]", () => {

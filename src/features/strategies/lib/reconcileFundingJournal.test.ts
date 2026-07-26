@@ -424,3 +424,67 @@ describe("[R6] the reconciled state is legible and it persists", () => {
     expect(result.action).toBe("wait");
   });
 });
+
+// POO-1075 — the gas bridge carries native coin INTO a chain that cannot yet broadcast, so whether
+// it arrived is the precondition for everything after it. The reconciler used to ask `kind ===
+// "bridge"`, which a `bridge-gas` leg fails, so it was called settled off the SOURCE receipt alone.
+// That is worse than the dead end this rail removes: the flow would resume and broadcast on a chain
+// whose gas had not landed. The predicate is now `destChainId`, which is written for exactly the
+// legs whose funds land somewhere else.
+describe("[R4] POO-1075 a gas bridge settles on the DESTINATION chain too", () => {
+  const NATIVE = "0x0000000000000000000000000000000000000000";
+  const GAS_HASH = `0x${"33".repeat(32)}`;
+
+  const broadcastGasBridge = () => {
+    const journal = createJournal({
+      wallet: WALLET,
+      operation: { kind: "invest", targetChainId: ARBITRUM, strategyId: "strat-1" },
+      legs: [
+        {
+          index: 0,
+          kind: "bridge-gas" as const,
+          chainId: POLYGON,
+          tokenIn: NATIVE,
+          tokenOut: NATIVE,
+          destChainId: ARBITRUM,
+          amountIn: "300300300300301",
+          minAmountOut: "300000000000000",
+        },
+      ],
+    });
+    const patch = {
+      status: "broadcast" as const,
+      txHash: GAS_HASH,
+      broadcastAt: T0,
+      nonceBefore: 8,
+      destBalanceBefore: "0",
+    };
+    updateLeg(journal.journalId, 0, patch);
+    return { ...journal, legs: journal.legs.map((leg) => ({ ...leg, ...patch })) };
+  };
+
+  it("does NOT call it settled on a source receipt alone", async () => {
+    const chain = reader({
+      receipts: { [GAS_HASH]: { status: "success" } },
+      // The native left Polygon; nothing has landed on Arbitrum yet.
+      balances: { [`${ARBITRUM}:${NATIVE}`]: "0" },
+    });
+
+    const result = await reconcileJournal(broadcastGasBridge(), chain);
+
+    // Settling here would let the flow proceed and broadcast on a chain with zero native.
+    expect(result.legs[0]?.verdict).toBe("pending");
+    expect(result.action).toBe("wait");
+  });
+
+  it("settles it once the native actually lands on the target chain", async () => {
+    const chain = reader({
+      receipts: { [GAS_HASH]: { status: "success" } },
+      balances: { [`${ARBITRUM}:${NATIVE}`]: "300000000000000" },
+    });
+
+    const result = await reconcileJournal(broadcastGasBridge(), chain);
+
+    expect(result.legs[0]?.verdict).toBe("settled");
+  });
+});

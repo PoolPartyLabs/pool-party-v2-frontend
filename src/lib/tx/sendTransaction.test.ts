@@ -29,6 +29,8 @@ const built: BuiltTx = { tx: { to: "0xcontract", data: "0xcalldata", value: "0" 
 const BASE = 8453;
 const BASE_HEX = "0x2105";
 const ARBITRUM_HEX = "0xa4b1";
+/** Polygon: the chain the live POO-1077 report was stuck on. */
+const POLYGON_HEX = "0x89";
 
 function provider(handlers: Record<string, (params?: unknown[]) => unknown>): Eip1193Provider {
   return { request: async ({ method, params }) => handlers[method]?.(params) };
@@ -55,6 +57,23 @@ describe("sendBuiltTransaction", () => {
       value: string;
     }>;
     expect(params[0]).toMatchObject({ to: "0xc", from: "0xWALLET", value: "0xf4240" }); // 1_000_000
+  });
+
+  // POO-1082, from a live console: the broadcast omitted `chainId`, so a Privy EMBEDDED wallet
+  // routed a Base transaction to `polygon-mainnet.rpc.privy.systems` and failed for "insufficient
+  // funds" against a POL balance, seconds after reporting the chain switch as successful. An
+  // injected wallet ignores the field, which is why this shipped and worked for a year.
+  it("[R1] states the target chain on the request, not just on the wallet", async () => {
+    const send = vi.fn((_params?: unknown) => "0xhash");
+    await sendBuiltTransaction(
+      provider(onTargetChain({ eth_sendTransaction: send })),
+      built,
+      "0xWALLET",
+      BASE,
+    );
+    const params = send.mock.calls[0]?.[0] as unknown as Array<{ chainId?: string }>;
+    // EIP-3326 hex, the same form `wallet_switchEthereumChain` takes.
+    expect(params[0]?.chainId).toBe(BASE_HEX);
   });
 
   it("wraps a provider failure in a TransactionError", async () => {
@@ -99,6 +118,33 @@ describe("sendBuiltTransaction — chain assertion (POO-824)", () => {
     await expect(sendBuiltTransaction(p, built, "0xW", BASE)).resolves.toBe("0xhash");
     // The switch targets the flow's chain as an EIP-3326 hex id.
     expect(switchChain).toHaveBeenCalledExactlyOnceWith([{ chainId: BASE_HEX }]);
+    expect(send).toHaveBeenCalledOnce();
+  });
+
+  // POO-1077, reported live on a Privy EMBEDDED wallet: "Wallet stayed on chain 137 after
+  // switching; this transaction targets chain 8453". `wallet_switchEthereumChain` RESOLVING means
+  // the wallet accepted the request, not that it finished applying it. An injected wallet updates
+  // before it resolves, which is why one immediate re-read shipped and worked; an embedded wallet
+  // keeps reporting the old chain for a moment and was failed for it.
+  it("[R1] waits for a wallet that applies the switch asynchronously, then sends", async () => {
+    let current = POLYGON_HEX;
+    let reads = 0;
+    const send = vi.fn(() => "0xhash");
+    // Accepts immediately, lands two reads later. Exactly the embedded-wallet shape.
+    const switchChain = vi.fn();
+    const p = provider({
+      eth_chainId: () => {
+        reads += 1;
+        if (reads > 2) current = BASE_HEX;
+        return current;
+      },
+      wallet_switchEthereumChain: switchChain,
+      eth_sendTransaction: send,
+    });
+
+    await expect(sendBuiltTransaction(p, built, "0xW", BASE)).resolves.toBe("0xhash");
+    expect(switchChain).toHaveBeenCalledExactlyOnceWith([{ chainId: BASE_HEX }]);
+    // Still ONE switch: waiting must not turn into re-prompting the user (POO-824 [R1]).
     expect(send).toHaveBeenCalledOnce();
   });
 

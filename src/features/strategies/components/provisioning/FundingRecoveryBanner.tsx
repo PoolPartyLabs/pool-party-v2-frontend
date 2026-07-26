@@ -117,6 +117,10 @@ export function FundingRecoveryBanner() {
     "swap-token": t("provisioning.costs.leg.swapToken", { network }),
     "swap-gas": t("provisioning.costs.leg.swapGas", { network }),
     bridge: t("provisioning.costs.leg.bridge", { network }),
+    // [R7] Named distinctly on purpose. If a gas bridge is the leg that stalled, the funds are on
+    // the TARGET chain and perfectly safe, they are simply early. "Bridge" alone would read as the
+    // funding leg and send the user looking for their money in the wrong place.
+    "bridge-gas": t("provisioning.costs.leg.bridgeGas", { network }),
     approve: t("provisioning.captions.approve"),
   };
 

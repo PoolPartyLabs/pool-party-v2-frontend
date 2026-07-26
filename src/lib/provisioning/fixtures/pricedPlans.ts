@@ -20,7 +20,25 @@
  * Test/story-only. Nothing in the application imports it; mock MODE is served by `mockPlan.ts`.
  */
 import { buildCostBreakdown } from "../costBreakdown";
-import type { ProvisioningLeg, ProvisioningPlan, ProvisioningStep } from "../types";
+import type {
+  ProvisioningLeg,
+  ProvisioningLegKind,
+  ProvisioningPlan,
+  ProvisioningStep,
+} from "../types";
+import { isBridgeLegKind } from "../types";
+
+/**
+ * The i18n key segment for each leg kind. A `Record` rather than a ternary chain, so a kind added to
+ * the contract fails to compile here instead of silently falling through to the bridge label, which
+ * is what the ternary did to `bridge-gas`.
+ */
+const LABEL_SEGMENT: Record<ProvisioningLegKind, string> = {
+  "swap-token": "swapToken",
+  "swap-gas": "swapGas",
+  bridge: "bridge",
+  "bridge-gas": "bridgeGas",
+};
 
 const ARBITRUM = 42161;
 const BASE = 8453;
@@ -74,7 +92,7 @@ function step(
     amountIn: over.amountIn,
     amountOutQuoted: over.amountOutQuoted,
     minAmountOut: over.minAmountOut ?? over.amountOutQuoted,
-    routing: over.routing ?? (over.kind === "bridge" ? "BRIDGE" : "CLASSIC"),
+    routing: over.routing ?? (isBridgeLegKind(over.kind) ? "BRIDGE" : "CLASSIC"),
     gasUsd: over.gasUsd ?? 0,
     ...(over.priceImpactPct === undefined ? {} : { priceImpactPct: over.priceImpactPct }),
     ...(over.etaSeconds === undefined ? {} : { etaSeconds: over.etaSeconds }),
@@ -83,7 +101,7 @@ function step(
   return {
     type: leg.kind,
     key: `${leg.kind}-${over.index}`,
-    labelKey: `provisioning.steps.${leg.kind === "swap-token" ? "swapToken" : leg.kind === "swap-gas" ? "swapGas" : "bridge"}`,
+    labelKey: `provisioning.steps.${LABEL_SEGMENT[leg.kind]}`,
     fromToken: leg.tokenIn.symbol,
     toToken: leg.tokenOut.symbol,
     fromChainId: leg.tokenIn.chainId,

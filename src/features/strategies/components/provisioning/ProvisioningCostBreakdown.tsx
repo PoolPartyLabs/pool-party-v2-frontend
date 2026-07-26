@@ -90,6 +90,9 @@ const LEG_LABEL_KEY: Record<ProvisioningLegKind, string> = {
   "swap-token": "provisioning.costs.leg.swapToken",
   "swap-gas": "provisioning.costs.leg.swapGas",
   bridge: "provisioning.costs.leg.bridge",
+  // Its own line, never folded into `bridge` ([R6], POO-1075): the user is spending real money to
+  // become ABLE to spend money, and a cost they cannot see is one they cannot judge.
+  "bridge-gas": "provisioning.costs.leg.bridgeGas",
 };
 
 /** Public props for {@link ProvisioningCostBreakdown}. */

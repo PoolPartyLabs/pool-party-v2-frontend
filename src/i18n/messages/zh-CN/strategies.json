@@ -480,6 +480,7 @@
     "steps": {
       "buyUsdc": "购买 USDC",
       "bridge": "转移到 {network}",
+      "bridgeGas": "向 {network} 发送网络费用",
       "swapGas": "充值网络费用",
       "swapToken": "兑换为 {token}",
       "op": "您的交易"
@@ -530,7 +531,8 @@
       "leg": {
         "swapToken": "在 {network} 兑换",
         "swapGas": "准备 {network} 的费用",
-        "bridge": "从 {network} 转移"
+        "bridge": "从 {network} 转移",
+        "bridgeGas": "从 {network} 发送网络费用"
       },
       "buyCrypto": {
         "cta": "改为购买加密货币",

@@ -43,12 +43,14 @@
 "use client";
 
 import { useSignTypedData, useWallets } from "@privy-io/react-auth";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useSwitchChain } from "wagmi";
 import { useAuth } from "@/lib/auth/useAuth";
 import type { ProvisioningPlan } from "@/lib/provisioning";
 import { NATIVE_TOKEN_ADDRESS } from "@/lib/provisioning";
 import { isMockMode } from "@/lib/services";
 import { readErc20Balance, readNativeBalance, readTransactionCount } from "@/lib/tokens/readErc20";
+import type { Eip1193Provider } from "@/lib/tx/sendTransaction";
 import { findWalletForAddress, TransactionError } from "@/lib/tx/sendTransaction";
 // PP-INTEGRATION-POINT: the three Uniswap Trading API calls the rail issues, as `"use server"`
 // stubs. The key never reaches this module or any bundle it ships in (ADR 0003).
@@ -134,6 +136,32 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
   const { wallets } = useWallets();
   // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
   const { signTypedData } = useSignTypedData();
+  // The CONNECTOR-level switch. This app builds its wagmi config with `@privy-io/wagmi`, and
+  // `EmbeddedWalletActivator` (POO-1003) makes the embedded wallet the active wagmi account, so the
+  // provider `getEthereumProvider()` hands back is bound to Privy's connector. `wallet.switchChain`
+  // moves the Privy wallet OBJECT and does not necessarily move that connector, which is why the
+  // SDK call returned cleanly and the provider kept reporting the old chain (POO-1079).
+  // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
+  const { switchChainAsync } = useSwitchChain();
+  /**
+   * The CURRENT wallets, read at execution time rather than captured when the steps were built.
+   *
+   * `buildSteps` runs when the plan resolves; its steps then execute for MINUTES afterwards, across
+   * re-renders and at least one chain switch. Privy hands out a new `ConnectedWallet` array whenever
+   * that state moves, so a step closure holding the build-time object is holding a detached handle.
+   *
+   * On an EXTERNAL wallet that is harmless: `getEthereumProvider()` returns the live injected
+   * provider, which reports the real chain whoever asks. An EMBEDDED wallet carries its own chain
+   * state, so the stale object keeps handing back a provider pinned to the chain it was built on,
+   * and no switch of any kind can move it (POO-1080). `useInvest` never hit this because it resolves
+   * its wallet INSIDE the run, which is what this restores.
+   */
+  // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
+  const walletsRef = useRef(wallets);
+  // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
+  useEffect(() => {
+    walletsRef.current = wallets;
+  }, [wallets]);
   // POO-892 [R5]: the ACTIVE address drives the wallet lookup — `wallets[0]` can be the stale handle
   // after a wallet switch, and a plan priced for one wallet must never be signed by another.
   // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant
@@ -185,15 +213,53 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
       }
       const owner = activeAddress as `0x${string}`;
 
+      /**
+       * The provider for the chain we are CURRENTLY on, fetched once per switch and reused.
+       *
+       * `useInvest` switches, then takes a provider, then broadcasts with THAT object, and it works
+       * on an embedded wallet. The rail instead called `getEthereumProvider()` fresh on every single
+       * request, including the `eth_chainId` read inside the broadcast assertion. An embedded
+       * wallet's provider is initialised from the wallet's configured chain, so each fresh fetch
+       * answered with the app default (`NEXT_PUBLIC_CHAIN_ID`, Polygon on dev) no matter which
+       * switch had just succeeded. That is why the same 137 -> 8453 switch works for a direct invest
+       * and never worked here (POO-1081).
+       *
+       * Held per built-steps run, refreshed by `switchChain`, so the rail broadcasts through the
+       * same handle the switch produced.
+       */
+      let current: Eip1193Provider | null = null;
+      const liveWallet = () => findWalletForAddress(walletsRef.current, activeAddress) ?? wallet;
+      const providerForNow = async (): Promise<Eip1193Provider> => {
+        if (!current) current = await liveWallet().getEthereumProvider();
+        return current;
+      };
+
       const deps: PlanRailDeps = {
         owner,
         // Resolved per broadcast rather than held: `getEthereumProvider` is the wallet's own handle
         // and the choke point (`executeBuiltTransaction`) is what asserts the chain on it.
         provider: {
-          request: async (args) => {
-            const provider = await wallet.getEthereumProvider();
-            return provider.request(args);
-          },
+          request: async (args) => (await providerForNow()).request(args),
+        },
+        // Privy's own API, not the provider's `wallet_switchEthereumChain`. An EMBEDDED wallet
+        // ignores the raw RPC and keeps reporting its old chain, which surfaced as WRONG_CHAIN
+        // ("stayed on chain 137") mid-route. Every other operation here already switches this way.
+        switchChain: async (chainId) => {
+          // wagmi FIRST, because the connector is what the provider follows. Only if that path is
+          // unavailable do we fall back to the wallet SDK, which is the right lever for a wallet
+          // that is not driving the connector. Never both: on an external wallet each one prompts,
+          // and asking twice for one switch is its own bug.
+          // Whichever lever moves it, the cached provider belongs to the OLD chain now.
+          current = null;
+          try {
+            await switchChainAsync({ chainId });
+            return;
+          } catch {
+            // Falling back to the wallet SDK is an ordinary outcome for a wallet that does not drive
+            // the connector, not an incident, so it is not logged.
+          }
+          // Same rule: the SDK fallback has to act on the LIVE handle, not the captured one.
+          await liveWallet().switchChain(chainId);
         },
         signTypedData: async (data) => {
           const { signature } = await signTypedData(data as Parameters<typeof signTypedData>[0], {
@@ -230,7 +296,7 @@ export function useProvisioningRail(options: ProvisioningRailOptions = {}): Prov
 
       return buildPlanSteps(plan, deps);
     },
-    [wallets, activeAddress, signTypedData, slippagePct],
+    [wallets, activeAddress, signTypedData, slippagePct, switchChainAsync],
   );
 
   // biome-ignore lint/correctness/useHookAtTopLevel: isMockMode is a build-time constant

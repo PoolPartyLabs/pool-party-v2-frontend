@@ -18,6 +18,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { EmbeddedWalletActivator } from "@/lib/auth/EmbeddedWalletActivator";
 import { SiweSessionProvider } from "@/lib/auth/useSiweSession";
+import { WalletChainProbe } from "@/lib/auth/WalletChainProbe";
 import { WalletSwitchGuard } from "@/lib/auth/WalletSwitchGuard";
 import { defaultChain, supportedChains, transportMap } from "@/lib/chains/config";
 import { OwnerProfileSessionProvider } from "@/lib/profile/useOwnerProfileSession";
@@ -80,7 +81,15 @@ export function Providers({ children }: { children: ReactNode }) {
       config={{
         defaultChain,
         supportedChains,
-        loginMethods: ["google", "wallet"],
+        // Email is enabled OUTSIDE production only, so a Privy TEST ACCOUNT
+        // (`test-XXXX@privy.io` + fixed OTP) can log in and give automation a REAL EMBEDDED wallet.
+        // Six wallet defects reached users because the e2e harness injects a viem wallet that Privy
+        // treats as external, so no embedded behaviour was ever reproducible in CI (POO-1081).
+        // Production keeps exactly the shipped methods; the ternary is a build-time constant.
+        loginMethods:
+          process.env.NEXT_PUBLIC_APP_ENV === "production"
+            ? ["google", "wallet"]
+            : ["google", "wallet", "email"],
         embeddedWallets: {
           ethereum: { createOnLogin: "users-without-wallets" },
         },
@@ -111,6 +120,8 @@ export function Providers({ children }: { children: ReactNode }) {
               embedded wallet from connecting, so the app hangs on skeleton loading forever. Inside
               WagmiProvider (needs the wagmi + Privy context); external-only sessions are untouched. */}
           <EmbeddedWalletActivator />
+          {/* Non-production only, and dropped from a prod bundle by a build-time constant. */}
+          <WalletChainProbe />
           <SiweSessionProvider>
             {/* Wallet switch guard (POO-892): on a genuine A-to-B account flip it clears the stale
                 SIWE session and resets to home; on a rejected re-SIWE it forces logout. Inside

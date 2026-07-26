@@ -370,6 +370,65 @@ describe("buildCostBreakdown: bridge legs [R3]", () => {
 
 // --- [R4] a signature costs no gas ---------------------------------------------------------------
 
+// POO-1075 — a gas bridge is a bridge. It was added by widening the leg-kind union, which the
+// compiler only polices at exhaustive `Record`/`switch` sites; every `kind === "bridge"` string test
+// stayed silent and mishandled it. Here that meant a fictional slippage line on an Across-quoted
+// leg, its real spread dropped from the fees, and a cross-chain plan reporting itself same-chain.
+describe("buildCostBreakdown: a gas bridge is costed as a bridge [R3]", () => {
+  const GAS_BRIDGE: ProvisioningStep[] = [
+    step({
+      index: 0,
+      kind: "bridge-gas",
+      tokenIn: native(BASE),
+      tokenOut: native(ARBITRUM),
+      amountIn: "300300300300301",
+      amountOutQuoted: "300000000000000",
+      amountUsd: 1.05,
+      gasUsd: 0.01,
+      // A BRIDGE quote has no AMM impact to report, but `buildPlan` copies whatever the quote
+      // carries onto the leg regardless of kind, so a stray reading has to be excluded HERE.
+      priceImpactPct: 4.2,
+    }),
+    opStep(0),
+  ];
+
+  it("charges no slippage allowance on it, so the buffer is gas alone", () => {
+    const { totals, quote } = buildCostBreakdown({
+      steps: GAS_BRIDGE,
+      shortfallUsd: 0,
+      slippagePct: 2,
+    });
+
+    // Across quotes the leg, so a tolerance line is a fiction. Costed as an AMM leg this was 2% of
+    // the $1.05 notional, ~$0.02, flowing into bufferUsd and over-stating what the user approves.
+    expect(totals.slippageUsd).toBe(0);
+    expect(totals.gasUsd).toBe(0.01);
+    expect(quote.bufferUsd).toBe(0.01);
+    // Its spread IS taken as a fee rather than dropped, but a ~$1 bridge's 0.1% is sub-cent and
+    // rounds away at display precision, so the cent-level figure is legitimately 0.00 here.
+    expect(totals.bridgeFeeUsd).toBe(0);
+  });
+
+  it("keeps its price impact out of the figure the gate judges [R7]", () => {
+    const { totals, sources } = buildCostBreakdown({
+      steps: GAS_BRIDGE,
+      shortfallUsd: 0,
+      slippagePct: 2,
+    });
+
+    // PP-STR-CMP-022 hard-gates on >= 10%. Letting the leg's 4.2% through would block the very route
+    // that unblocks a stuck user, over AMM risk an Across-quoted leg does not carry.
+    expect(totals.priceImpactPct).toBeUndefined();
+    expect(sources.every((s) => s.lines.priceImpactPct === undefined)).toBe(true);
+  });
+
+  it("reports the plan as cross-chain so the fee tooltip has its bridge line [R5]", () => {
+    expect(
+      buildCostBreakdown({ steps: GAS_BRIDGE, shortfallUsd: 0, slippagePct: 2 }).crossChain,
+    ).toBe(true);
+  });
+});
+
 describe("buildCostBreakdown: gas lines [R4]", () => {
   it("contributes zero gas for a SIGN_MSG step", () => {
     const permit = step({

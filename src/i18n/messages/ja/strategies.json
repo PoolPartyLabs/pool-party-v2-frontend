@@ -480,6 +480,7 @@
     "steps": {
       "buyUsdc": "USDCを購入",
       "bridge": "{network}へ移動",
+      "bridgeGas": "{network} へ費用を送金",
       "swapGas": "費用を補充",
       "swapToken": "{token}に交換",
       "op": "お客様の取引"
@@ -530,7 +531,8 @@
       "leg": {
         "swapToken": "{network} で交換",
         "swapGas": "{network} の費用を用意",
-        "bridge": "{network} から移動"
+        "bridge": "{network} から移動",
+        "bridgeGas": "{network} から費用を送金"
       },
       "buyCrypto": {
         "cta": "代わりに暗号資産を購入",

@@ -480,6 +480,7 @@
     "steps": {
       "buyUsdc": "USDC kaufen",
       "bridge": "Zum {network} übertragen",
+      "bridgeGas": "Netzwerkkosten an {network} senden",
       "swapGas": "Netzwerkkosten decken",
       "swapToken": "In {token} umwandeln",
       "op": "Ihre Transaktion"
@@ -530,7 +531,8 @@
       "leg": {
         "swapToken": "Auf {network} umwandeln",
         "swapGas": "Netzwerkkosten auf {network} decken",
-        "bridge": "Von {network} übertragen"
+        "bridge": "Von {network} übertragen",
+        "bridgeGas": "Netzwerkkosten von {network} senden"
       },
       "buyCrypto": {
         "cta": "Stattdessen Krypto kaufen",

@@ -480,6 +480,7 @@
     "steps": {
       "buyUsdc": "購買 USDC",
       "bridge": "轉移至 {network}",
+      "bridgeGas": "向 {network} 傳送網路費用",
       "swapGas": "儲值網路費用",
       "swapToken": "兌換為 {token}",
       "op": "您的交易"
@@ -530,7 +531,8 @@
       "leg": {
         "swapToken": "在 {network} 兌換",
         "swapGas": "準備 {network} 的費用",
-        "bridge": "從 {network} 轉移"
+        "bridge": "從 {network} 轉移",
+        "bridgeGas": "從 {network} 傳送網路費用"
       },
       "buyCrypto": {
         "cta": "改為購買加密貨幣",

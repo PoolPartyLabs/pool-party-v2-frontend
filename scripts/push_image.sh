@@ -40,7 +40,10 @@ if [ "$ENVIRONMENT" = "dev" ]; then
 else
   ACCOUNT_ID=<aws-account-id-prod>
 fi
-AWS_PROFILE=pp-apps-admin-$ENVIRONMENT
+# Exported so a Docker credential helper (see the ECR login section) inherits it. The helper is
+# spawned by `docker push`, not by this script, so it resolves the DEFAULT AWS chain unless the
+# profile is in the environment.
+export AWS_PROFILE=pp-apps-admin-$ENVIRONMENT
 AWS_REGION=us-east-2
 ECR_REGISTRY=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 IMAGE_NAME=$ECR_REGISTRY/$ENVIRONMENT/pool-party-interface-v2
@@ -138,8 +141,17 @@ if [ "$ENVIRONMENT" = "prod" ]; then
 fi
 
 # --- ECR login ---------------------------------------------------------------
-aws ecr get-login-password --profile "$AWS_PROFILE" --region "$AWS_REGION" \
-  | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+# Skipped when ~/.docker/config.json maps this registry to a credential helper (e.g.
+# docker-credential-ecr-login): the helper mints a token per `docker push` from the AWS chain, so a
+# login is redundant AND fatal here, because its `store` verb answers `not implemented` and
+# `docker login` exits non-zero on it (which `set -e` turns into an abort).
+CRED_HELPER=$(node -e 'const fs=require("fs"),os=require("os");try{const d=JSON.parse(fs.readFileSync(os.homedir()+"/.docker/config.json","utf8"));process.stdout.write((d.credHelpers||{})[process.argv[1]]||"")}catch{}' "$ECR_REGISTRY" 2>/dev/null || true)
+if [ -n "$CRED_HELPER" ]; then
+  echo "  Auth:      docker-credential-$CRED_HELPER handles $ECR_REGISTRY (skipping docker login)"
+else
+  aws ecr get-login-password --profile "$AWS_PROFILE" --region "$AWS_REGION" \
+    | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+fi
 
 # --- build, tag, push --------------------------------------------------------
 docker build --platform "$PLATFORM" \

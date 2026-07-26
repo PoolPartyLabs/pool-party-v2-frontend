@@ -61,6 +61,9 @@ export type FundingExit = NonNullable<AnalyticsParams["funding_exit"]>;
 const LEG_KIND_BY_STEP_TYPE = {
   "buy-usdc": "buy-usdc",
   bridge: "bridge",
+  // Counted as a leg: it is a broadcast the user has to get through, and a funnel that omitted it
+  // would report a shorter route than the one they actually walked (POO-1075).
+  "bridge-gas": "bridge-gas",
   "swap-gas": "swap-gas",
   "swap-token": "swap-token",
   op: null,

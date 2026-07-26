@@ -8,8 +8,12 @@
  * pool-party-interface send path. The API builds the calldata; the client only signs + sends.
  *
  * POO-824 [R1/R3]: this is the single choke point every broadcast passes through, so the target
- * chain is asserted HERE — eth_sendTransaction carries no chainId (EIP-1193), the wallet always
- * broadcasts on its current chain, and an earlier `wallet.switchChain` can no-op or be undone
+ * chain is asserted HERE. POO-1082 corrects the original reasoning: EIP-1193 does not REQUIRE a
+ * chainId on `eth_sendTransaction`, but a wallet may honour one, and a Privy embedded wallet routes
+ * by it. Omitting it sent a Base transaction to Polygon's RPC while the switch reported success.
+ * The request now states the target chain AND the assertion still runs, because an injected wallet
+ * ignores the field and broadcasts on whatever chain it is pointed at. An earlier
+ * `wallet.switchChain` can also no-op or be undone
  * mid-flow (POO-350). The assertion reads the wallet's actual chain, attempts ONE corrective
  * switch on mismatch, re-verifies, and otherwise fails typed (WRONG_CHAIN) — never a silent
  * wrong-chain send. Every flow (and every future wired one) inherits this via the required
@@ -122,6 +126,43 @@ async function assertProviderAccount(provider: Eip1193Provider, owner: string): 
 }
 
 /** Read the wallet's ACTUAL active chain (eth_chainId hex quantity → number). */
+/**
+ * How long a wallet gets to actually LAND on the chain it just agreed to switch to (POO-1077).
+ *
+ * `wallet_switchEthereumChain` RESOLVING means the wallet accepted the request, not that it has
+ * finished applying it. An injected wallet updates its reported chain before resolving, so reading
+ * `eth_chainId` once immediately afterwards worked and shipped. A Privy EMBEDDED wallet applies the
+ * switch asynchronously and keeps reporting the OLD chain for a moment, so that single re-read
+ * failed a wallet that was about to be perfectly fine.
+ *
+ * Bounded deliberately: a wallet still on the wrong chain after this has genuinely not switched, and
+ * waiting longer would hold a prompt open against a quote that is going stale.
+ */
+export const CHAIN_SWITCH_SETTLE_MS = 4_000;
+/** How often to re-read while waiting. Short enough to feel instant when the switch is quick. */
+const CHAIN_SWITCH_POLL_MS = 120;
+
+/**
+ * Read the provider's chain until it reports `targetChainId`, or the budget runs out.
+ *
+ * Polls rather than listening for `chainChanged`: {@link Eip1193Provider} is deliberately narrowed
+ * to `request` alone, and a provider that does not emit the event would wait the full budget for
+ * nothing. Returns whatever the chain finally reads as, so the caller reports the REAL one.
+ */
+async function awaitProviderChain(
+  provider: Eip1193Provider,
+  targetChainId: number,
+  budgetMs: number,
+): Promise<number> {
+  const deadline = Date.now() + budgetMs;
+  let actual = await readProviderChainId(provider);
+  while (actual !== targetChainId && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, CHAIN_SWITCH_POLL_MS));
+    actual = await readProviderChainId(provider);
+  }
+  return actual;
+}
+
 async function readProviderChainId(provider: Eip1193Provider): Promise<number> {
   try {
     const hex = (await provider.request({ method: "eth_chainId" })) as string;
@@ -142,11 +183,10 @@ async function assertProviderOnChain(
 ): Promise<void> {
   const actual = await readProviderChainId(provider);
   if (actual === targetChainId) return;
-  // Recoveries must be visible in logs, not just failures (POO-824 R5).
-  console.warn("[PP] wallet on the wrong chain at broadcast; switching", {
-    actual,
-    target: targetChainId,
-  });
+  // POO-824 R5 asked for recoveries to be visible in logs. That was written when a wrong chain was
+  // an ANOMALY. Since the funding rail, a plan legitimately changes chain between legs, so this
+  // fired on every cross-chain broadcast and became noise in a console the user needs for real
+  // signals. The typed WRONG_CHAIN failure below is still loud; the ordinary path is now quiet.
   try {
     await provider.request({
       method: "wallet_switchEthereumChain",
@@ -159,7 +199,8 @@ async function assertProviderOnChain(
       { code: WRONG_CHAIN_CODE, targetChainId, cause: error },
     );
   }
-  const switched = await readProviderChainId(provider);
+  // Not a single re-read: the switch is applied asynchronously by some wallets ([R2], POO-1077).
+  const switched = await awaitProviderChain(provider, targetChainId, CHAIN_SWITCH_SETTLE_MS);
   if (switched !== targetChainId) {
     throw new TransactionError(
       `Wallet stayed on chain ${switched} after switching; this transaction targets chain ${targetChainId}`,
@@ -202,6 +243,14 @@ export async function sendBuiltTransaction(
           from: built.tx.from ?? from,
           data: built.tx.data,
           value: toHexValue(built.tx.value),
+          // POO-1082: the target chain, stated on the REQUEST rather than left to the wallet's
+          // current one. An injected wallet ignores this and broadcasts wherever it is pointed,
+          // which is why the header above assumed it was unnecessary. A Privy EMBEDDED wallet
+          // ROUTES BY IT: absent, it estimates and sends against its own configured RPC, so a
+          // Base transaction went to `polygon-mainnet.rpc.privy.systems` and failed for
+          // "insufficient funds" against a POL balance, having reported the chain switch as
+          // successful moments earlier. Stating it costs nothing and removes the ambiguity.
+          chainId: `0x${targetChainId.toString(16)}`,
         },
       ],
     });
