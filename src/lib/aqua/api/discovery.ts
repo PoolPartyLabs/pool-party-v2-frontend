@@ -62,7 +62,7 @@ export async function discoverVaults(): Promise<DiscoveredVault[]> {
   let from = SCAN_FLOOR_BLOCK;
   while (from <= head) {
     const to = from + CHUNK > head ? head : from + CHUNK;
-    const logs = await client.getLogs({ address: AQUA_REGISTRY, fromBlock: from, toBlock: to });
+    const logs = await getLogsWithRetry(from, to);
 
     for (const log of logs) {
       if (log.topics[0] !== SHIPPED_TOPIC) continue;
@@ -95,6 +95,28 @@ export async function discoverVaults(): Promise<DiscoveredVault[]> {
 
   // Newest deployment first: the strategy someone just launched is the one they want to see.
   return vaults.sort((a, b) => (a.firstSeenBlock < b.firstSeenBlock ? 1 : -1));
+}
+
+/**
+ * Public RPCs drop requests under load, and a dropped chunk here silently loses every vault
+ * in that block range: discovery would return fewer strategies with no error anywhere. Retry,
+ * then fail loudly, because a short list is indistinguishable from a correct one.
+ */
+async function getLogsWithRetry(from: bigint, to: bigint, attempts = 3) {
+  const client = arbitrumPublicClient();
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await client.getLogs({ address: AQUA_REGISTRY, fromBlock: from, toBlock: to });
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
+    }
+  }
+  throw new Error(
+    `Aqua registry log scan failed for blocks ${from}-${to} after ${attempts} attempts: ` +
+      `${(lastError as Error)?.message ?? "unknown"}. Refusing to return a partial vault list.`,
+  );
 }
 
 /**
