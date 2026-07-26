@@ -66,12 +66,8 @@ async function main(): Promise<void> {
   // usage error does not require a database connection first.
   const compiler = await import("../../src/lib/aqua/api/compiler/index");
   const context = await import("../../src/lib/aqua/api/compiler/context");
-  const { aquaDb, closeAquaDb } = await import("../../src/lib/aqua/db/client");
-  const { aquaShips } = await import("../../src/lib/aqua/db/schema");
   const { AQUA_SWAP_VM_ROUTER } = await import("../../src/lib/aqua/config/addresses");
-  const { eq } = await import("drizzle-orm");
-
-  const dryRun = args["dry-run"] === true;
+  const { decodeShipsFromChain } = await import("../../src/lib/aqua/api/backfill");
 
   async function buildOne(
     mandateName: "production" | "demo",
@@ -144,39 +140,21 @@ async function main(): Promise<void> {
     }
   }
 
-  async function persist(result: Awaited<ReturnType<typeof buildOne>>, vault: `0x${string}`) {
-    if (dryRun) {
-      console.log("\n  [dry-run] nothing written to the database");
-      return;
-    }
-    await aquaDb()
-      .insert(aquaShips)
-      .values({
-        id: randomUUID(),
-        strategyHash: result.strategyHash,
-        maker: vault.toLowerCase(),
-        app: AQUA_SWAP_VM_ROUTER.toLowerCase(),
-        mandate: result.mandate,
-        programHex: result.program,
-        orderBytes: result.orderBytes,
-        epoch: result.epoch,
-        salt: result.salt.toString(),
-        deadline: result.deadline,
-        spotE8: result.band.spotE8.toString(),
-        bandLowE8: result.band.lowE8.toString(),
-        bandHighE8: result.band.highE8.toString(),
-        shippedUsdc: result.shipped.quote.toString(),
-        shippedWeth: result.shipped.base.toString(),
-        // "pending" until the manager's tx lands; `aqua:confirm` flips it to active. An
-        // unconfirmed row must not count toward the coverage check.
-        status: "pending",
-        mandateSnapshot: JSON.parse(
-          JSON.stringify(compiler.mandateFor(result.mandate), (_k, v) =>
-            typeof v === "bigint" ? v.toString() : v,
-          ),
-        ),
-      });
-    console.log(`\n  recorded in aqua_ships as pending (${result.strategyHash})`);
+  /**
+   * Print what the compiler produced, for the record.
+   *
+   * Nothing is persisted, because nothing needs to be: once the ship transaction lands, the band
+   * geometry is decodable from the registry's own `Shipped` log (`api/backfill.ts`), which is what
+   * the page reads. This output exists so the operator can eyeball the band before broadcasting,
+   * and so a mismatch between what was compiled and what the chain later reports is visible.
+   */
+  function report(result: Awaited<ReturnType<typeof buildOne>>) {
+    console.log(`\n  strategyHash  ${result.strategyHash}`);
+    console.log(`  mandate       ${result.mandate}  (epoch ${result.epoch})`);
+    console.log(`  band          $${usd(result.band.lowE8)} .. $${usd(result.band.highE8)}`);
+    console.log(`  spot at ship  $${usd(result.band.spotE8)}`);
+    console.log(`  deadline      ${result.deadline}`);
+    console.log("  Verify after broadcast with: pnpm aqua:discover");
   }
 
   switch (command) {
@@ -185,7 +163,7 @@ async function main(): Promise<void> {
       const mandateName = requireString(args, "mandate") as "production" | "demo";
       const amount = args.amount ? usdcToRaw(String(args.amount)) : undefined;
       const result = await buildOne(mandateName, vault, amount);
-      await persist(result, vault);
+      report(result);
       break;
     }
 
@@ -222,8 +200,8 @@ async function main(): Promise<void> {
       console.log(`  demo hash:        ${demo.strategyHash}`);
       console.log("  Ship production FIRST, then demo. Order matters only for the epoch record.");
 
-      await persist(production, vault);
-      await persist(demo, vault);
+      report(production);
+      report(demo);
       break;
     }
 
@@ -232,12 +210,16 @@ async function main(): Promise<void> {
       const mandateName = requireString(args, "mandate") as "production" | "demo";
       const previousHash = requireString(args, "strategy") as `0x${string}`;
 
-      const [previous] = await aquaDb()
-        .select({ epoch: aquaShips.epoch })
-        .from(aquaShips)
-        .where(eq(aquaShips.strategyHash, previousHash));
+      // The predecessor's epoch comes from chain, decoded from its own `Shipped` log, so a roll
+      // cannot be built against an epoch nobody can verify.
+      const shipped = await decodeShipsFromChain(vault);
+      const previous = shipped.find(
+        (ship) => ship.strategyHash.toLowerCase() === previousHash.toLowerCase(),
+      );
       if (!previous)
-        throw new Error(`No aqua_ships row for ${previousHash}; cannot roll what we did not ship`);
+        throw new Error(
+          `No Shipped log on Arbitrum for ${previousHash}; cannot roll what this vault did not ship`,
+        );
 
       const mandate = compiler.mandateFor(mandateName);
       const spot = await context.readSpot();
@@ -247,7 +229,7 @@ async function main(): Promise<void> {
       const alreadyShipped = await context.readAlreadyShipped(vault);
 
       const rolled = compiler.buildRoll(
-        { strategyHash: previousHash, epoch: previous.epoch },
+        { strategyHash: previousHash, epoch: previous.epochIndex },
         mandateName,
         mandate,
         {
@@ -273,7 +255,7 @@ async function main(): Promise<void> {
       console.log(`    to   ${rolled.ship.shipCallInfo.to}`);
       console.log(`    data ${rolled.ship.shipCallInfo.data}`);
 
-      await persist(rolled.ship, vault);
+      report(rolled.ship);
       break;
     }
 
@@ -298,8 +280,6 @@ async function main(): Promise<void> {
       );
       process.exitCode = 1;
   }
-
-  await closeAquaDb();
 }
 
 main().catch((error) => {

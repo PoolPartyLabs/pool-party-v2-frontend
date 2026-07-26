@@ -1,4 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
+// POO-1067 (hackathon POO-1057). Self-gating: renders null unless the `activeReserve` flag is on
+// AND a live vault answers on Arbitrum. Removing the entry is this import plus the two JSX uses.
+import { ActiveReserveEntryCard } from "@/features/aqua/ActiveReserveEntryCard";
 import { ExplorePagedLoader } from "@/features/strategies/ExplorePagedLoader";
 import { StrategiesExploreScreen } from "@/features/strategies/StrategiesExploreScreen";
 import { isMockMode, positionService } from "@/lib/services";
@@ -14,7 +17,12 @@ export default async function StrategiesPage({ params }: { params: Promise<{ loc
   // from BOTH the rows and the total — the page is dense and the count honest (no phantom "Load more",
   // no empty page 0). The client loader marks the connected wallet's Owned/Invested badges (POO-299).
   if (!isMockMode) {
-    return <ExplorePagedLoader />;
+    return (
+      <div className="flex flex-col gap-6">
+        <ActiveReserveEntryCard />
+        <ExplorePagedLoader />
+      </div>
+    );
   }
 
   // Mock mode is unchanged: the full mock catalog is SSR'd and filtered/sorted client-side, including
@@ -24,10 +32,13 @@ export default async function StrategiesPage({ params }: { params: Promise<{ loc
   const ownedIds = positions.filter((p) => p.isPoolManager).map((p) => p.strategyId);
   const investedIds = positions.filter((p) => !p.isPoolManager).map((p) => p.strategyId);
   return (
-    <StrategiesExploreScreen
-      strategies={strategies}
-      ownedIds={ownedIds}
-      investedIds={investedIds}
-    />
+    <div className="flex flex-col gap-6">
+      <ActiveReserveEntryCard />
+      <StrategiesExploreScreen
+        strategies={strategies}
+        ownedIds={ownedIds}
+        investedIds={investedIds}
+      />
+    </div>
   );
 }

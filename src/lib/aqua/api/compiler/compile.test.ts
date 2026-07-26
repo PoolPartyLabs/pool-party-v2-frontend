@@ -3,13 +3,22 @@
 // The compiler is pure server code and the 1inch SDKs pull in Node builtins ("assert"), which
 // jsdom does not provide. Running this suite under node also matches where the code actually
 // executes: a server action or a CLI script, never a browser.
-import { AquaProgramBuilder, HexString, Order } from "@1inch/swap-vm-sdk";
+import { Interaction } from "@1inch/sdk-core";
+import {
+  Address,
+  AquaProgramBuilder,
+  HexString,
+  instructions,
+  MakerTraits,
+  Order,
+} from "@1inch/swap-vm-sdk";
 import { keccak256 } from "viem";
 import { describe, expect, it } from "vitest";
 import {
   AQUA_REGISTRY,
   AQUA_SWAP_VM_ROUTER,
   DEAD_GEN1_ROUTER,
+  MAKER_HOOK_DATA,
   TOKENS,
 } from "../../config/addresses";
 import { bandFromSpot, ethUsdToRawPriceX18, orderPair } from "./band";
@@ -176,6 +185,39 @@ describe("compile: output shape (PRG-R9)", () => {
     expect(result.strategyHash).not.toBe(keccak256(result.program));
   });
 
+  /**
+   * The JIT path lives or dies on this flag, and its absence is SILENT. Without the hook the
+   * ship still succeeds, quotes still look correct, and small fills still settle from the hot
+   * buffer. Only a fill larger than the buffer fails, because the router never calls the vault
+   * and the vault never unparks from Aave. That is the one trace the demo exists to show.
+   *
+   * This was a real defect: the compiler shipped with plain MakerTraits.default() and the
+   * first self-audit missed it, because the audit checked the four named rule items and the
+   * hook CONSTANTS, not whether the hook was actually wired into the order.
+   */
+  it("declares the preTransferOut hook, without which the JIT path is silently dead", () => {
+    const result = compile("production", MANDATES.production, ctx());
+    const decoded = Order.decode(new HexString(result.orderBytes));
+
+    expect(decoded.traits.preTransferOutHook).toBeDefined();
+    // Zero target means "call the maker itself", which is what the vault expects.
+    expect(decoded.traits.preTransferOutHook?.target.toString()).toBe(
+      "0x0000000000000000000000000000000000000000",
+    );
+    expect(decoded.traits.preTransferOutHook?.data.toString()).toBe(MAKER_HOOK_DATA);
+  });
+
+  it("keeps the Aqua-mode traits the router requires", () => {
+    const result = compile("production", MANDATES.production, ctx());
+    const decoded = Order.decode(new HexString(result.orderBytes));
+    // PRG-R10: Aqua mode enforces receiver == maker and forbids WETH unwrap. Setting either
+    // makes the ship revert with MakerTraitsCustomReceiverIsIncompatibleWithAqua /
+    // MakerTraitsUnwrapIsIncompatibleWithAqua.
+    expect(decoded.traits.useAquaInsteadOfSignature).toBe(true);
+    expect(decoded.traits.shouldUnwrap).toBe(false);
+    expect(decoded.traits.customReceiver).toBeUndefined();
+  });
+
   it("targets the Aqua registry with a ship CallInfo", () => {
     const result = compile("production", MANDATES.production, ctx());
     expect(result.shipCallInfo.to.toLowerCase()).toBe(AQUA_REGISTRY.toLowerCase());
@@ -191,6 +233,91 @@ describe("compile: output shape (PRG-R9)", () => {
     const data = result.shipCallInfo.data.toLowerCase();
     expect(data).toContain(TOKENS.USDC.slice(2).toLowerCase());
     expect(data).toContain(TOKENS.WETH.slice(2).toLowerCase());
+  });
+});
+
+/**
+ * There are TWO program producers in this project: this compiler, and
+ * `scripts/build-orders.ts` in pool-party-aqua, which is what Murilo actually runs to mint the
+ * launch payloads. They must agree byte for byte, or the strategy the vault ships is not the
+ * strategy this app describes.
+ *
+ * The reference below is built the way Track A's script builds it, deliberately from the raw
+ * SDK rather than by calling our own helpers, so this is a genuine second opinion and not a
+ * tautology. It is how the missing preTransferOut hook was caught.
+ */
+describe("cross-producer equivalence with the launch payload builder", () => {
+  function trackAReference(
+    lowBps: bigint,
+    highBps: bigint,
+    salt: bigint,
+    spotE8: bigint,
+    now: bigint,
+  ) {
+    const BPS_ = BigInt(10_000);
+    const lowE8 = (spotE8 * (BPS_ + lowBps)) / BPS_;
+    const highE8 = (spotE8 * (BPS_ + highBps)) / BPS_;
+    const toRawX18 = (e8: bigint) =>
+      (e8 * BigInt(10) ** BigInt(6) * BigInt(10) ** BigInt(18)) /
+      (BigInt(10) ** BigInt(8) * BigInt(10) ** BigInt(18));
+
+    const program = new AquaProgramBuilder()
+      .deadline({ deadline: now + BigInt(3) * BigInt(86_400) })
+      .concentrateGrowLiquidity2D(
+        instructions.concentrate.ConcentrateGrowLiquidity2DArgs.fromRawPrices(
+          toRawX18(lowE8),
+          toRawX18(highE8),
+        ),
+      )
+      .flatFeeAmountInXD({ fee: BigInt(8_000_000) })
+      .xycSwapXD()
+      .salt({ salt })
+      .build();
+
+    const traits = MakerTraits.default().with({
+      preTransferOutHook: new Interaction(Address.ZERO_ADDRESS, new HexString("0x01")),
+    });
+    return Order.new({ maker: new Address(VAULT), traits, program })
+      .encode()
+      .toString();
+  }
+
+  it("production band: order bytes are identical", () => {
+    const mine = compile("production", MANDATES.production, ctx({ epoch: 0 }));
+    expect(mine.orderBytes.toLowerCase()).toBe(
+      trackAReference(
+        BigInt(-1500),
+        BigInt(-500),
+        BigInt(0),
+        SPOT_E8,
+        BigInt(1_800_000_000),
+      ).toLowerCase(),
+    );
+  });
+
+  it("demo band: order bytes are identical", () => {
+    const mine = compile("demo", MANDATES.demo, ctx({ epoch: 1 }));
+    expect(mine.orderBytes.toLowerCase()).toBe(
+      trackAReference(
+        BigInt(-30),
+        BigInt(-10),
+        BigInt(1),
+        SPOT_E8,
+        BigInt(1_800_000_000),
+      ).toLowerCase(),
+    );
+  });
+
+  it("and therefore the same strategyHash, which is the identity Aqua stores", () => {
+    const mine = compile("production", MANDATES.production, ctx({ epoch: 0 }));
+    const reference = trackAReference(
+      BigInt(-1500),
+      BigInt(-500),
+      BigInt(0),
+      SPOT_E8,
+      BigInt(1_800_000_000),
+    );
+    expect(mine.strategyHash).toBe(keccak256(reference as `0x${string}`));
   });
 });
 

@@ -1,10 +1,13 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { AQUA_RAW_BALANCES_ABI, PARTY_VAULT_VIEW_ABI } from "../../abis/partyVault";
 import { arbitrumPublicClient } from "../../chain/clients";
-import { CHAINLINK_ETH_USD } from "../../config/addresses";
-import { aquaDb } from "../../db/client";
-import { aquaShips } from "../../db/schema";
+import {
+  AQUA_REGISTRY,
+  AQUA_SWAP_VM_ROUTER,
+  CHAINLINK_ETH_USD,
+  TOKENS,
+} from "../../config/addresses";
 
 /**
  * Assembles the live inputs a compile needs: Chainlink spot, the vault's assets, and what is
@@ -72,29 +75,47 @@ export async function readSpot(): Promise<SpotReading> {
   return { answerE8: answer, updatedAt, ageSeconds };
 }
 
-/** Raw quote units already committed to ACTIVE strategies for this maker (PRG-R6). */
+/**
+ * Raw quote units already committed to ACTIVE strategies for this maker (PRG-R6).
+ *
+ * Read from the Aqua registry rather than from a local ledger. The registry is what actually gates
+ * a ship, so asking it removes the class of bug where our bookkeeping and the chain disagree and
+ * the compiler sizes a band against money that is already spoken for.
+ */
 export async function readAlreadyShipped(maker: `0x${string}`): Promise<bigint> {
-  const rows = await aquaDb()
-    .select({
-      shippedUsdc: aquaShips.shippedUsdc,
-      status: aquaShips.status,
-      maker: aquaShips.maker,
-    })
-    .from(aquaShips)
-    .where(eq(aquaShips.maker, maker.toLowerCase()));
+  const client = arbitrumPublicClient();
+  const active = await client.readContract({
+    address: maker,
+    abi: PARTY_VAULT_VIEW_ABI,
+    functionName: "activeStrategies",
+  });
 
-  return rows
-    .filter((row) => row.status === "active")
-    .reduce((total, row) => total + BigInt(row.shippedUsdc), BigInt(0));
+  let total = BigInt(0);
+  for (const strategyHash of active) {
+    const [committed] = await client.readContract({
+      address: AQUA_REGISTRY,
+      abi: AQUA_RAW_BALANCES_ABI,
+      functionName: "rawBalances",
+      args: [maker, AQUA_SWAP_VM_ROUTER, strategyHash, TOKENS.USDC],
+    });
+    total += committed;
+  }
+  return total;
 }
 
-/** Next epoch id for a maker. Epochs are monotonic so a salt is never reused (PRG-R10). */
+/**
+ * Next epoch id for a maker. Epochs are monotonic so a salt is never reused (PRG-R10).
+ *
+ * Derived from how many strategies the vault currently has active. Without the ships ledger this
+ * cannot see epochs that were shipped and later docked, so it is a LOWER BOUND: pass `--epoch`
+ * explicitly when rolling a band whose predecessor has already been docked.
+ */
 export async function nextEpoch(maker: `0x${string}`): Promise<number> {
-  const rows = await aquaDb()
-    .select({ epoch: aquaShips.epoch })
-    .from(aquaShips)
-    .where(eq(aquaShips.maker, maker.toLowerCase()));
-
-  const highest = rows.reduce((max, row) => (row.epoch > max ? row.epoch : max), -1);
-  return highest + 1;
+  const client = arbitrumPublicClient();
+  const active = await client.readContract({
+    address: maker,
+    abi: PARTY_VAULT_VIEW_ABI,
+    functionName: "activeStrategies",
+  });
+  return active.length;
 }
