@@ -1,16 +1,5 @@
 import "server-only";
 
-/**
- * Server-only env access for the Aqua module (SRV-R4).
- *
- * Nothing here is ever `NEXT_PUBLIC_*`, and the `server-only` import above makes an
- * accidental client import a build error rather than a leaked key.
- *
- * SECURITY (SRV-R2): AQUA_DATABASE_URL points at a Neon mirror of production data. It lives
- * only in local `.env.local`, is never committed, never logged, and never surfaced in an
- * error message. Read it through `aquaDatabaseUrl()` and nowhere else.
- */
-
 function required(name: string): string {
   const value = process.env[name];
   if (!value) {
@@ -19,10 +8,6 @@ function required(name: string): string {
     );
   }
   return value;
-}
-
-export function aquaDatabaseUrl(): string {
-  return required("AQUA_DATABASE_URL");
 }
 
 export function arbitrumRpcUrl(): string {

@@ -1,6 +1,5 @@
 import "server-only";
 
-import { desc, eq } from "drizzle-orm";
 import { erc20Abi } from "viem";
 import {
   AQUA_RAW_BALANCES_ABI,
@@ -16,20 +15,21 @@ import {
   DECIMALS,
   TOKENS,
 } from "../config/addresses";
-import { aquaDb } from "../db/client";
-import { aquaFills, aquaShips } from "../db/schema";
+import { fillsFor } from "../data/managerMetadata";
+import { decodeShipsFromChain } from "./backfill";
 import { type AquaMandateView, aquaMandate, compositionSlices } from "./mandate";
 
 /**
  * Everything the read-only investor page shows, assembled server-side.
  *
- * Two rules shape this file. IDX-R2: money is read fresh from chain on every request, never
- * from a cache and never from our own database, so a number on the page is a number on
- * Arbitrum. FE-R7: when real data is missing the page hides the section rather than inventing
- * one, which is why this returns a discriminated state instead of zeros.
+ * Two rules shape this file. IDX-R2: money is read fresh from chain on every request, never from
+ * a cache and never from a stored copy, so a number on the page is a number on Arbitrum. FE-R7:
+ * when real data is missing the page hides the section rather than inventing one, which is why
+ * this returns a discriminated state instead of zeros.
  *
- * The database is used only for things chain cannot tell us cheaply: which mandate a
- * strategyHash belongs to, and the band it was built against at ship time.
+ * Everything here comes from chain, including the band geometry, which is decoded from the Aqua
+ * registry's own `Shipped` log rather than recovered from a record we kept. The one exception is
+ * the settled-purchase list; `readFills` says why, at the point it applies.
  */
 
 /** D9: 90 minutes. Beyond this the price is not trustworthy and the page says so. */
@@ -94,18 +94,40 @@ export type AquaPosition = {
   valueUsdc: string;
 };
 
-function envAddress(name: string): `0x${string}` | null {
-  const raw = process.env[name];
-  if (!raw || !/^0x[0-9a-fA-F]{40}$/.test(raw)) return null;
-  return raw as `0x${string}`;
+function asAddress(raw: string | undefined): `0x${string}` | null {
+  if (!raw || !/^0x[0-9a-fA-F]{40}$/.test(raw.trim())) return null;
+  return raw.trim() as `0x${string}`;
+}
+
+/**
+ * The vault this page is about.
+ *
+ * `NEXT_PUBLIC_AQUA_VAULT_ADDRESS` is the source of truth, deliberately public: a deployed contract
+ * address is public by definition, the browser needs the same value to build a deposit, and one
+ * variable cannot drift from itself. It is baked at build time, so pointing a deployment at a newly
+ * launched vault is an env change plus a rebuild — which is the actual workflow when the current
+ * reserve is wound down and a fresh one is opened.
+ *
+ * `AQUA_VAULT_ADDRESS` stays honoured as a server-only override so an existing environment keeps
+ * working, and so a server can be pointed elsewhere without a rebuild.
+ *
+ * Both are read as STATIC `process.env.X` references. A computed lookup (`process.env[name]`) is
+ * replaced at build time only for literals, so the dynamic form silently yields `undefined` in any
+ * bundle Next inlines.
+ */
+function vaultAddress(): `0x${string}` | null {
+  return (
+    asAddress(process.env.NEXT_PUBLIC_AQUA_VAULT_ADDRESS) ??
+    asAddress(process.env.AQUA_VAULT_ADDRESS)
+  );
 }
 
 export async function readActiveReserveState(): Promise<ActiveReserveState> {
-  const vault = envAddress("AQUA_VAULT_ADDRESS");
+  const vault = vaultAddress();
   if (!vault) {
     return {
       status: "not-launched",
-      reason: "AQUA_VAULT_ADDRESS is not set. The vault has not been deployed yet.",
+      reason: "NEXT_PUBLIC_AQUA_VAULT_ADDRESS is not set. The vault has not been deployed yet.",
     };
   }
 
@@ -187,7 +209,7 @@ export async function readActiveReserveState(): Promise<ActiveReserveState> {
   }
 
   const bands = await readBands(vault, activeStrategies);
-  const fills = await readFills();
+  const fills = readFills(bands);
 
   return {
     status: "live",
@@ -228,7 +250,7 @@ export async function readActiveReserveState(): Promise<ActiveReserveState> {
  * rounding is a bug, so the safest thing is not to have a second implementation at all.
  */
 export async function readAquaPosition(investor: `0x${string}`): Promise<AquaPosition | null> {
-  const vault = envAddress("AQUA_VAULT_ADDRESS");
+  const vault = vaultAddress();
   if (!vault) return null;
 
   const client = arbitrumPublicClient();
@@ -260,15 +282,29 @@ async function readBands(
   if (activeStrategies.length === 0) return [];
 
   const client = arbitrumPublicClient();
-  const rows = await aquaDb()
-    .select()
-    .from(aquaShips)
-    .where(eq(aquaShips.maker, vault.toLowerCase()));
-  const byHash = new Map(rows.map((row) => [row.strategyHash.toLowerCase(), row]));
+
+  // The band's geometry, decoded from the registry's own `Shipped` log (POO-1067, #677). This is
+  // the same data an earlier revision kept in a table and then in a committed fixture, and both
+  // were wrong for the same reason: it was recoverable from chain all along. The `Shipped` event
+  // carries the ABI-encoded Order, the program inside carries the deadline and concentrate bounds,
+  // and the band edges invert exactly out of that encoding. The mandate follows from the high/low
+  // ratio, which is distinct per mandate and needs no knowledge of the price at ship time.
+  //
+  // One read for the whole vault rather than one per strategy: the decode scans a log range, so
+  // asking it per band would rescan the same range once per band.
+  const decoded = new Map<string, Awaited<ReturnType<typeof decodeShipsFromChain>>[number]>();
+  try {
+    for (const ship of await decodeShipsFromChain(vault)) {
+      decoded.set(ship.strategyHash.toLowerCase(), ship);
+    }
+  } catch {
+    // FE-R7: a decode that fails must not take the page down. The money below is read separately
+    // and is still true, so the bands render without their edges rather than not at all.
+  }
 
   const bands: BandView[] = [];
   for (const strategyHash of activeStrategies) {
-    const record = byHash.get(strategyHash.toLowerCase());
+    const record = decoded.get(strategyHash.toLowerCase());
     const [committedUsdc] = await client.readContract({
       address: AQUA_REGISTRY,
       abi: AQUA_RAW_BALANCES_ABI,
@@ -282,8 +318,8 @@ async function readBands(
       args: [vault, AQUA_SWAP_VM_ROUTER, strategyHash, TOKENS.WETH],
     });
 
-    // FE-R7: a band we have no ship record for is still shown with its live money, but its
-    // edges are omitted rather than guessed.
+    // FE-R7: a band whose `Shipped` log we could not decode is still shown with its live money,
+    // but its edges are omitted rather than guessed, and its mandate stays "unknown".
     bands.push({
       strategyHash,
       mandate: record?.mandate ?? "unknown",
@@ -292,8 +328,8 @@ async function readBands(
       spotAtShipE8: record?.spotE8 ?? "",
       committedUsdc: committedUsdc.toString(),
       acquiredWeth: acquiredWeth.toString(),
-      epoch: record?.epoch ?? 0,
-      deadline: record?.deadline?.toString() ?? "",
+      epoch: record?.epochIndex ?? 0,
+      deadline: record ? record.deadline.toString() : "",
       shipTxHash: record?.shipTxHash ?? null,
       active: true,
     });
@@ -301,23 +337,28 @@ async function readBands(
   return bands;
 }
 
-async function readFills(limit = 25): Promise<FillView[]> {
-  const rows = await aquaDb()
-    .select()
-    .from(aquaFills)
-    .orderBy(desc(aquaFills.blockTimestamp))
-    .limit(limit);
-
-  const ships = await aquaDb().select().from(aquaShips);
-  const mandateByHash = new Map(ships.map((s) => [s.strategyHash.toLowerCase(), s.mandate]));
-
-  return rows.map((row) => ({
-    txHash: row.txHash,
-    when: row.blockTimestamp.toISOString(),
-    mandate: mandateByHash.get(row.strategyHash.toLowerCase()) ?? "unknown",
-    amountIn: row.amountIn,
-    amountOut: row.amountOut,
-    jitUnparked: row.jitUnparked,
+/**
+ * Settled purchases for the vault's active bands.
+ *
+ * The ONLY thing on this page not read from chain. Every row is a real Arbitrum transaction and
+ * links to Arbiscan, but they are a committed list rather than an indexed feed: decoding a fill
+ * means matching settlement logs across the router and the vault, and that indexer is named as
+ * not built (`docs/_hackathon_aqua/03_PRE_EXISTING_VS_NEW.md`). The mandate label comes from the
+ * band it belongs to, which IS decoded from chain, so a fill can never claim a mandate the band
+ * does not have.
+ */
+function readFills(bands: readonly BandView[], limit = 25): FillView[] {
+  const mandateOf = new Map(bands.map((band) => [band.strategyHash.toLowerCase(), band.mandate]));
+  return fillsFor(
+    bands.map((band) => band.strategyHash),
+    limit,
+  ).map((fill) => ({
+    txHash: fill.txHash,
+    when: fill.when,
+    mandate: mandateOf.get(fill.strategyHash.toLowerCase()) ?? "unknown",
+    amountIn: fill.amountIn,
+    amountOut: fill.amountOut,
+    jitUnparked: fill.jitUnparked,
   }));
 }
 

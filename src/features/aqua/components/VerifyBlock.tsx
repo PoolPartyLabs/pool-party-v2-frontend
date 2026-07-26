@@ -53,6 +53,19 @@ export function VerifyBlock({
             </dd>
           </div>
         ))}
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <dt className="text-muted-foreground">{COPY.verify.source}</dt>
+          <dd>
+            <a
+              className="underline"
+              href="https://github.com/0xmvercosa/pool-party-aqua"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {COPY.verify.sourceRepo}
+            </a>
+          </dd>
+        </div>
       </dl>
     </section>
   );

@@ -134,9 +134,6 @@ Aqua module was built to sit inside it rather than beside it. Versions from `pac
 | React | `19.1.0` | [react.dev](https://react.dev) | The page and its five cards. No client component in this feature. |
 | next-intl | `^4.13.0` | [next-intl.dev](https://next-intl.dev) | `setRequestLocale` on both routes. Active Reserve copy itself is English-only for the window, see [`README.md` §6](README.md#6-scope-stated-plainly). |
 | viem | `^2.52.2` | [viem.sh](https://viem.sh) | The Arbitrum public client, `keccak256` for the `strategyHash`, `erc20Abi`, and the taker signer. |
-| Drizzle ORM | `^0.45.2` | [orm.drizzle.team](https://orm.drizzle.team) | `aqua_ships` and `aqua_fills`. Money is `numeric(78,0)` and comes back as a string, never a JS number. |
-| drizzle-kit | `^0.31.10` | [orm.drizzle.team](https://orm.drizzle.team) | Migration generation, scoped by `tablesFilter: ["aqua_*"]` so it can never touch mirrored tables it did not create. |
-| postgres | `^3.4.9` | [github.com/porsager/postgres](https://github.com/porsager/postgres) | The driver under Drizzle. Connection opened in exactly one file. |
 | `server-only` | `^0.0.1` | [npmjs.com/package/server-only](https://www.npmjs.com/package/server-only) | Load-bearing. Every module in `src/lib/aqua/` imports it, so an accidental client import is a build error instead of a leaked database URL. |
 | Vitest | `^4.1.7` | [vitest.dev](https://vitest.dev) | Every suite listed in [`README.md` §5](README.md#5-how-to-run-what-is-here). |
 | tsx | `^4.22.3` | [tsx.is](https://tsx.is) | Runs the CLI scripts. They need `--conditions=react-server`, otherwise `server-only` resolves to the throwing build and the script dies on import. |

@@ -9,7 +9,8 @@ import "server-only";
  * by accident. Lifting it is a one-line change if the deposit flow later wants it.
  *
  * The full artifact is committed alongside this file as `PartyVault.json`, exported from the
- * pool-party-aqua repo by `contracts/script/export-abis.sh`. That JSON is a bare ABI array and
+ * contracts repo (https://github.com/0xmvercosa/pool-party-aqua) by
+ * `contracts/script/export-abis.sh`. That JSON is a bare ABI array and
  * gives viem nothing to infer from, so every read would need a cast and would silently return
  * `unknown`. Declaring the handful of views we actually call as a const gives full inference
  * and, more usefully, documents exactly which parts of the vault this page is coupled to.

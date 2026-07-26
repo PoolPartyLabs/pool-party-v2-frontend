@@ -33,7 +33,7 @@ and almost nothing else. Conflating them would misattribute work in both directi
 | Package | Entry | Tracker | What it integrates | Code |
 |---|---|---|---|---|
 | `docs/_hackathon/` | **Universal Funding**: pay for any Pool Party operation with any token on any supported chain | epic POO-1022 | Uniswap Trading API | `src/lib/uniswap/`, `src/lib/provisioning/`, `src/features/swap/`, provisioning surfaces under `src/features/strategies/` |
-| `docs/_hackathon_aqua/` | **Active Reserve**: an always-earning reserve that buys the dip (this package) | epic POO-1057 | 1inch Aqua and SwapVM, Aave v3, Chainlink | `src/lib/aqua/`, `src/features/aqua/`, `scripts/aqua/`, `drizzle/aqua/`, two routes |
+| `docs/_hackathon_aqua/` | **Active Reserve**: an always-earning reserve that buys the dip (this package) | epic POO-1057 | 1inch Aqua and SwapVM, Aave v3, Chainlink | `src/lib/aqua/`, `src/features/aqua/`, `scripts/aqua/`, two routes |
 
 They touch each other in exactly two places, both trivial and both listed in Part 2: `package.json`
 (each adds its own scripts and dependencies) and `scripts/bundle-secrets-check.ts` (each registers its
@@ -51,7 +51,7 @@ drawn by path and by commit instead, as below.
 
 ```bash
 # The four commits that carry this entry on the frontend side
-git log --oneline 1d0311aa~1..HEAD -- src/lib/aqua src/features/aqua scripts/aqua drizzle/aqua
+git log --oneline 1d0311aa~1..HEAD -- src/lib/aqua src/features/aqua scripts/aqua
 
 #   1d0311aa  server module scaffold + program compiler [POO-1071, POO-1061] (#664)
 #   fdf29729  Active Reserve read-only investor page [POO-1067]
@@ -59,9 +59,10 @@ git log --oneline 1d0311aa~1..HEAD -- src/lib/aqua src/features/aqua scripts/aqu
 #   3c5d630a  compiler was omitting the preTransferOut hook, killing the JIT path [POO-1061]
 
 # Everything this entry added to the frontend tree, by path
-find src/lib/aqua src/features/aqua scripts/aqua drizzle/aqua -type f | sort
-#   22 + 10 + 2 + 3 = 37 files (measured 2026-07-26), plus the two route files below
-ls "src/app/[locale]/active-reserve/page.tsx" "src/app/[locale]/dev/active-reserve/page.tsx"
+find src/lib/aqua src/features/aqua scripts/aqua -type f | sort
+#   26 + 18 + 2 = 46 files (measured 2026-07-26), plus the two route files below
+ls "src/app/[locale]/(auth)/(app)/active-reserve/page.tsx" \
+   "src/app/[locale]/(auth)/(app)/dev/active-reserve/page.tsx"
 
 # The tag recipe belongs to the OTHER entry, not this one
 git grep -l "@hackathon" -- src/lib/aqua src/features/aqua scripts/aqua   # no matches
@@ -135,12 +136,10 @@ Server-only throughout. An accidental client import is a build error, not a leak
 
 | Path | What it does | Issue | Status |
 |---|---|---|---|
-| `src/lib/aqua/index.ts` | The module barrel and its contract: this layer plays the role `pool-party-api` plays for the rest of the app, and nothing outside it touches Drizzle or viem for Aqua data | POO-1071 | landed |
+| `src/lib/aqua/index.ts` | The module barrel and its contract: this layer plays the role `pool-party-api` plays for the rest of the app, and nothing outside it touches viem for Aqua data | POO-1071 | landed |
 | `src/lib/aqua/config/addresses.ts` | The single place the app learns an address. Mirrors `docs/VERIFIED.md` in the on-chain repo: the gen-2 Aqua pair, native USDC and WETH, Chainlink, Aave, the measured maker-hook signature and selector, and a guard that refuses the dead gen-1 deployment | POO-1058, POO-1071 | landed |
 | `src/lib/aqua/config/env.ts` | The only place server env is read. No `NEXT_PUBLIC_` twin exists for any of it | POO-1071 | landed |
 | `src/lib/aqua/chain/clients.ts` | viem public client and the taker signer, kept separate so a read path cannot require a key | POO-1071 | landed |
-| `src/lib/aqua/db/schema.ts` | `aqua_ships` and `aqua_fills`, money as `numeric(78,0)` read back as strings | POO-1071 | landed |
-| `src/lib/aqua/db/client.ts` | The only place a database connection is opened | POO-1071 | landed |
 | `src/lib/aqua/api/compiler/compile.ts` | **The only producer of Aqua programs and ship calldata.** Enforces every platform guardrail, so an out-of-policy program cannot be built at all, and emits the program order measured against the deployed router | POO-1061 | landed |
 | `src/lib/aqua/api/compiler/band.ts` | Band math for `concentrateGrowLiquidity2D`: Chainlink 8-decimal spot to the sqrt-price fixed point the instruction wants, with the token ordering that trips everyone up | POO-1061 | landed |
 | `src/lib/aqua/api/compiler/mandates.ts` | The two mandates that shipped: production (15% to 5% below spot) and the approved demo band (0.3% to 0.1% below spot) | POO-1061 | landed |
@@ -158,25 +157,20 @@ Server-only throughout. An accidental client import is a build error, not a leak
 | Path | What it does | Issue | Status |
 |---|---|---|---|
 | `src/features/aqua/ActiveReserveScreen.tsx` | The read-only Active Reserve page: header, honest states, and the five blocks below | POO-1067 | landed |
-| `src/features/aqua/components/NavCard.tsx` | Total value and the three things it is made of | POO-1067 | landed |
 | `src/features/aqua/components/SleevesCard.tsx` | The measured split between capital lent on Aave and cash on hand, never a claimed ratio | POO-1067 | landed |
 | `src/features/aqua/components/BandCard.tsx` | One buy band drawn against live spot, with its countdown and its opening transaction | POO-1067 | landed |
 | `src/features/aqua/components/FillsFeed.tsx` | Every purchase, its Arbiscan link, the price actually paid, the just-in-time badge, and the self-directed disclosure above the list | POO-1067 | landed |
 | `src/features/aqua/components/VerifyBlock.tsx` | Our contracts next to the official 1inch registry and router, all linked | POO-1067 | landed |
 | `src/features/aqua/copy.ts` | All product copy in one file, including the description used verbatim in the submission | POO-1067 | landed |
 | `src/features/aqua/format.ts` | Raw integer units in, human strings out, with no JS `number` in the path and truncation rather than rounding | POO-1067 | landed |
-| `src/app/[locale]/active-reserve/page.tsx` | The route: server-rendered, `force-dynamic`, so no NAV is ever served from a cache | POO-1067 | landed |
-| `src/app/[locale]/dev/active-reserve/page.tsx` | A fixture-fed preview of the live layout that 404s in production, so the demo layout was reviewable before the vault existed | POO-1067 | landed |
+| `src/app/[locale]/(auth)/(app)/active-reserve/page.tsx` | The route: server-rendered, `force-dynamic`, so no NAV is ever served from a cache. Inside the authenticated app group, so it carries the same navigation chrome as every other page | POO-1067 | landed |
+| `src/app/[locale]/(auth)/(app)/dev/active-reserve/page.tsx` | A fixture-fed preview of the live layout that 404s in production, so the demo layout was reviewable before the vault existed | POO-1067 | landed |
 
 ### New: CLI, database and build configuration
 
 | Path | What it does | Issue | Status |
 |---|---|---|---|
 | `scripts/aqua/strategy.ts` | The manager CLI (ship, roll, dock, launch payloads). It signs nothing: it compiles, checks policy, records the intent and prints calldata for a human wallet | POO-1068 | landed |
-| `scripts/aqua/db-check.ts` | Verifies the extension tables exist and round-trip, without printing anything that could leak the mirror or its connection string | POO-1071 | landed |
-| `drizzle/aqua/0000_eminent_speed.sql` | The generated migration for the two tables | POO-1071 | landed |
-| `drizzle/aqua/meta/_journal.json` | Drizzle's migration journal | POO-1071 | landed |
-| `./drizzle.config.ts` | Drizzle scoped to `aqua_*` tables only. The target is a mirror of production, and without that filter drizzle-kit would generate DROP statements for the real schema | POO-1071 | landed |
 
 ### Tests written for this entry
 
@@ -192,8 +186,8 @@ Server-only throughout. An accidental client import is a build error, not a leak
 
 | Path | Change | Issue | Status |
 |---|---|---|---|
-| `./package.json` | Seven `aqua:*` scripts, and the exact-pinned `@1inch/swap-vm-sdk` 0.3.0, `@1inch/aqua-sdk` 0.2.0 and `@1inch/sdk-core` 0.1.2, plus drizzle and tsx | POO-1071 | landed |
-| `./.env.example` | Documents `AQUA_DATABASE_URL`, `TAKER_BOT_PRIVATE_KEY` and the Arbitrum RPC as commented, valueless entries. No secret is committed anywhere | POO-1071 | landed |
+| `./package.json` | Five `aqua:*` scripts, and the exact-pinned `@1inch/swap-vm-sdk` 0.3.0, `@1inch/aqua-sdk` 0.2.0 and `@1inch/sdk-core` 0.1.2, plus tsx | POO-1071 | landed |
+| `./.env.example` | Documents `NEXT_PUBLIC_AQUA_VAULT_ADDRESS`, `TAKER_BOT_PRIVATE_KEY` and the Arbitrum RPC as commented, valueless entries. No secret is committed anywhere | POO-1071 | landed |
 | `scripts/bundle-secrets-check.ts` | Registers the two Aqua secrets with the shared build-output grep, so a leak into client bundles fails a committed check | POO-1071 | landed |
 
 ### Documentation
@@ -219,7 +213,7 @@ Filed as capability, not written. The paths below are where each would land, and
 
 | Path | What it would be | Issue | Status |
 |---|---|---|---|
-| `src/lib/aqua/api/indexer.ts` | The in-repo fill indexer. `aqua_fills` is read by the page and written by nothing in this tree; rows come from the taker side in the on-chain repo | POO-1057 | planned |
+| `src/lib/aqua/api/indexer.ts` | The in-repo fill indexer. Fills are a committed fixture today; a live feed would replace `FILLS` in `data/managerMetadata.ts` without changing `FillView` | POO-1057 | planned |
 | `src/lib/aqua/api/deposit.ts` | Deposit and redeem calldata built server-side. Both run from the CLI in the on-chain repo today | POO-1057 | planned |
 | `src/features/aqua/components/DepositCard.tsx` | The investor write surface that would consume it | POO-1057 | planned |
 | `src/features/aqua/ActiveReserveScreen.stories.tsx` | Storybook coverage for the five new components, which the repository's own standard asks for | POO-1057 | planned |

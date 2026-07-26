@@ -92,22 +92,27 @@ integer **strings**; formatting is the view layer's job.
 | Which bands exist | `bands[].strategyHash` | `PartyVault.activeStrategies()` |
 | Reserved to buy | `bands[].committedUsdc` | `AquaRegistry.rawBalances(vault, router, strategyHash, USDC)` on `0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a` |
 | ETH bought, per band | `bands[].acquiredWeth` | same call with the WETH address |
-| Band edges, epoch, deadline, ship tx (`shipTxHash` is null on this branch: nothing writes it yet, see `01_AQUA_INTEGRATION.md` section 7) | `bands[].lowE8` / `highE8` / `epoch` / `deadline` / `shipTxHash` | the `aqua_ships` row for that `strategyHash`, written at ship time by `scripts/aqua/strategy.ts` |
-| Purchases | `fills[]` | the `aqua_fills` table, newest first, capped at 25 |
-| Vault, adapter, 1inch contracts | `vault`, `adapter`, constants | `AQUA_VAULT_ADDRESS` env plus `PartyVault.ADAPTER()`; the 1inch pair comes from `src/lib/aqua/config/addresses.ts` |
+| Band edges, mandate, epoch, deadline, ship tx | `bands[].lowE8` / `highE8` / `mandate` / `epoch` / `deadline` / `shipTxHash` | decoded from the Aqua registry's `Shipped` log by `api/backfill.ts`: the edges invert out of the concentrate encoding, the mandate from the high/low ratio |
+| Purchases | `fills[]` | **the one non-chain source on this page**: `src/lib/aqua/data/managerMetadata.ts`, newest first, capped at 25. Every row is a real Arbitrum transaction and links to Arbiscan |
+| Vault, adapter, 1inch contracts | `vault`, `adapter`, constants | `NEXT_PUBLIC_AQUA_VAULT_ADDRESS` plus `PartyVault.ADAPTER()`; the 1inch pair comes from `src/lib/aqua/config/addresses.ts` |
 
 Three things about that table are worth stating plainly.
 
-**Band edges cannot be read from chain.** They were computed against the Chainlink spot of the moment
-the strategy was compiled, and the registry stores the program, not the price it was built against. So
-the edges come from our own `aqua_ships` record. A band with no matching record still renders its live
-money, with the geometry omitted rather than guessed.
+**Everything except the purchase list is live.** Read the provenance column again: every row
+resolves to an Arbitrum call, including the band geometry. The mandate name and the price range are
+decoded from the registry's own `Shipped` log rather than stored, which is worth saying because two
+earlier revisions of this page stored them, first in Postgres and then in a committed fixture, on
+the belief that they were unrecoverable. They were recoverable, and the decode disagreed with the
+fixture by about $25 on spot.
 
-**Nothing on this branch writes `aqua_fills`.** `git grep -n "aquaFills" src scripts` returns the
-schema, the module barrel and the read in `vaultState.ts`, and no insert. Ship rows are written by
-`scripts/aqua/strategy.ts`; fill rows come from the taker and indexer side, which lives in the
-on-chain repository. An in-repo indexer is named as not built in
-[`03_PRE_EXISTING_VS_NEW.md`](03_PRE_EXISTING_VS_NEW.md).
+A band whose log will not decode still renders its live money, with the geometry omitted rather than
+guessed (FE-R7).
+
+
+**The fills are real and self-directed.** Every row is an Arbitrum transaction that resolves on
+Arbiscan, and each was executed by the project's own taker against its own strategy: they prove the
+machine settles, not that there was organic demand. The page says exactly that above the list
+(`COPY.fills.selfDirected`) before showing a single row.
 
 **Money is never read from a cache.** The route sets `export const dynamic = "force-dynamic"` for
 exactly this reason (IDX-R2): a NAV served out of an ISR cache is a number that is not true on chain.
@@ -125,14 +130,14 @@ flowchart TD
     C["Chainlink ETH/USD<br/>latestRoundData"]
   end
 
-  DB[("Neon: aqua_ships, aqua_fills<br/>band edges, epochs, fills")]
+  MD[("data/managerMetadata.ts<br/>committed: settled purchases only")]
 
   V --> S
   A --> S
   R --> S
   T --> S
   C --> S
-  DB --> S
+  MD --> S
 
   S["readActiveReserveState()<br/>src/lib/aqua/api/vaultState.ts<br/>server-only, raw units as strings"]
   P["/[locale]/active-reserve/page.tsx<br/>force-dynamic, now = new Date()"]

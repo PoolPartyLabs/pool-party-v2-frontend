@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { ActiveReserveScreen } from "@/features/aqua/ActiveReserveScreen";
 import type { ActiveReserveState } from "@/lib/aqua/api/vaultState";
+import { requireFeature } from "@/lib/features/requireFeature";
 
 /**
  * Dev-only preview of the Active Reserve page in its LIVE state (POO-1067).
@@ -105,6 +106,9 @@ export default async function ActiveReserveDevPage({
   if (process.env.NODE_ENV === "production") notFound();
   const { locale } = await params;
   setRequestLocale(locale);
+  // Dark-launched, and the removal seam: with `activeReserve` off this 404s rather than merely
+  // being unlinked, so taking the entry out of production is one env var, not a revert.
+  requireFeature("activeReserve");
 
   return (
     <>

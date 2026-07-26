@@ -55,6 +55,27 @@ describe("display helpers", () => {
     expect(formatWeth("510000000000000000")).toBe("0.51 ETH");
   });
 
+  /**
+   * A real fill of 0.00002 ETH rendered as "0 ETH": four fraction digits truncated the whole
+   * amount away, so the page showed a purchase that had definitely happened as nothing. On a
+   * page whose entire claim is that the numbers are real, that is the worst possible rounding
+   * direction. Small amounts now keep two significant digits instead of a fixed four places.
+   */
+  it("never truncates a non-zero ETH amount down to zero", () => {
+    expect(formatWeth("20000000000000")).toBe("0.00002 ETH"); // the observed fill
+    expect(formatWeth("300000000000000")).toBe("0.0003 ETH");
+    expect(formatWeth("1")).toBe("0.000000000000000001 ETH"); // one wei, the floor case
+    expect(formatWeth("0")).toBe("0 ETH");
+  });
+
+  it("keeps ordinary amounts at four places rather than growing a tail", () => {
+    // Precision is extended only when four places would show nothing. A normal balance is
+    // unchanged, so the column does not suddenly render 18 digits for everything.
+    expect(formatWeth("1234567890123456789")).toBe("1.2345 ETH");
+    expect(formatWeth("510000000000000000")).toBe("0.51 ETH");
+    expect(formatWeth("100000000000000")).toBe("0.0001 ETH");
+  });
+
   it("shortens hashes", () => {
     expect(shortHash("0x1234567890abcdef1234567890abcdef12345678")).toBe("0x123456...5678");
     expect(shortHash("0x1234")).toBe("0x1234");

@@ -19,7 +19,7 @@ import "server-only";
  *
  * Layout:
  *   config/     addresses (mirrors VERIFIED.md) and server-only env access
- *   db/         Drizzle schema and the single connection factory
+ *   data/       Manager-written metadata for the live reserve (see managerMetadata.ts)
  *   chain/      viem clients
  *   api/        domain services; the compiler lands here in POO-1061
  */
@@ -40,6 +40,3 @@ export {
   MAKER_HOOK_SIGNATURE,
   TOKENS,
 } from "./config/addresses";
-export { aquaDb, closeAquaDb } from "./db/client";
-export type { AquaFill, AquaShip, NewAquaFill, NewAquaShip } from "./db/schema";
-export { aquaFills, aquaShips } from "./db/schema";

@@ -28,9 +28,22 @@ const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 /** uint256 ceiling; a larger amount cannot be encoded and is a caller bug, not user input. */
 const MAX_UINT256 = BigInt(2) ** BigInt(256) - BigInt(1);
 
+/**
+ * The vault these builds target.
+ *
+ * MUST use the same resolution order as `lib/aqua/api/vaultState.ts` and the client-side allowance
+ * check in `useAquaLiquidity`, or the three disagree. That is not hypothetical: this function once
+ * read only `AQUA_VAULT_ADDRESS` while the page and the allowance check read
+ * `NEXT_PUBLIC_AQUA_VAULT_ADDRESS`, so an environment that set only the public variable rendered a
+ * healthy page with a working Max button and then failed every deposit with "not deployed yet".
+ *
+ * Static `process.env.X` references, never a computed lookup: Next inlines only literals.
+ */
 function vaultAddress(): `0x${string}` | null {
-  const raw = process.env.AQUA_VAULT_ADDRESS;
-  return raw && ADDRESS.test(raw) ? (raw as `0x${string}`) : null;
+  for (const raw of [process.env.NEXT_PUBLIC_AQUA_VAULT_ADDRESS, process.env.AQUA_VAULT_ADDRESS]) {
+    if (raw && ADDRESS.test(raw.trim())) return raw.trim() as `0x${string}`;
+  }
+  return null;
 }
 
 /** Amounts cross the boundary as decimal STRINGS: a JS number loses WETH-scale precision. */

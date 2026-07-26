@@ -1,9 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { MetricTile } from "@/components/data-display/MetricTile";
 import type { ActiveReserveState, AquaPosition } from "@/lib/aqua/api/vaultState";
+import { useAuth } from "@/lib/auth/useAuth";
 import { cn } from "@/lib/utils/cn";
 import { AquaLiquidityModal } from "./components/AquaLiquidityModal";
 import { BandCard } from "./components/BandCard";
@@ -48,7 +49,30 @@ export function ActiveReserveScreen({
   position?: AquaPosition | null;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { address } = useAuth();
   const [modal, setModal] = useState<"add" | "remove" | null>(null);
+
+  /**
+   * Carry the connected wallet into the URL so the server render can read its position.
+   *
+   * The position is read SERVER-side from `?investor=`, which keeps the page a single server read
+   * with no client waterfall, but leaves it blind to who is connected. Without this the investor
+   * deposits successfully and then sees no position and a permanently disabled "Remove liquidity",
+   * because `router.refresh()` re-runs the same parameterless request.
+   *
+   * `replace` rather than `push`, so the back button is not littered with address states, and the
+   * comparison is what stops it looping: the effect only fires when the URL disagrees with the
+   * wallet, which after one replace it no longer does.
+   */
+  const investorParam = searchParams.get("investor");
+  useEffect(() => {
+    if (!address) return;
+    if (investorParam?.toLowerCase() === address.toLowerCase()) return;
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("investor", address);
+    router.replace(`?${next.toString()}`, { scroll: false });
+  }, [address, investorParam, searchParams, router]);
 
   if (state.status === "not-launched") {
     return (
@@ -165,6 +189,7 @@ export function ActiveReserveScreen({
           ) : null}
 
           <FillsFeed fills={state.fills} />
+          <Provenance />
           <VerifyBlock vault={state.vault} adapter={state.adapter} />
           <Disclosure />
         </div>
@@ -233,6 +258,27 @@ function Hero({ price, protocols }: { price?: string; protocols?: Array<{ label:
         ) : null}
       </div>
       {protocols ? null : <p className="mt-4 text-sm leading-relaxed">{PRODUCT_DESCRIPTION}</p>}
+    </section>
+  );
+}
+
+/**
+ * FE-R11 v2: what is live and what is not, on the page itself.
+ *
+ * A submission that claims "everything is on-chain" and quietly ships one checked-in list is
+ * making the reader do the auditing. Saying it here costs a paragraph and removes the question.
+ */
+function Provenance() {
+  return (
+    <section
+      aria-labelledby="provenance-title"
+      className="rounded-xl border border-border bg-surface p-5"
+    >
+      <h2 id="provenance-title" className="font-semibold text-base text-foreground">
+        {COPY.provenance.title}
+      </h2>
+      <p className="mt-2 text-muted-foreground text-sm">{COPY.provenance.live}</p>
+      <p className="mt-2 text-muted-foreground text-sm">{COPY.provenance.fixed}</p>
     </section>
   );
 }

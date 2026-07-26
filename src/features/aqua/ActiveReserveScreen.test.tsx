@@ -5,6 +5,14 @@ import { describe, expect, it, vi } from "vitest";
 // exist. Only refresh is exercised here; the modal's own flow is covered by its unit tests.
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }),
+  // The screen syncs the connected wallet into `?investor=` so the SERVER render can read the
+  // position. These specs render with an explicit `position` prop and no wallet, so an empty
+  // param set is the honest stand-in: the effect short-circuits on a missing address.
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+vi.mock("@/lib/auth/useAuth", () => ({
+  useAuth: () => ({ address: null }),
 }));
 
 import type { ActiveReserveState } from "@/lib/aqua/api/vaultState";

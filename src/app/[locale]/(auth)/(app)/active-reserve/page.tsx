@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { ActiveReserveScreen } from "@/features/aqua/ActiveReserveScreen";
 import { PRODUCT_DESCRIPTION, PRODUCT_NAME } from "@/features/aqua/copy";
 import { readActiveReserveState, readAquaPosition } from "@/lib/aqua/api/vaultState";
+import { requireFeature } from "@/lib/features/requireFeature";
 
 /**
  * Active Reserve investor page (POO-1067).
@@ -27,6 +28,9 @@ export default async function ActiveReservePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  // Dark-launched, and the removal seam: with `activeReserve` off this 404s rather than merely
+  // being unlinked, so taking the entry out of production is one env var, not a revert.
+  requireFeature("activeReserve");
 
   const state = await readActiveReserveState();
   // The investor's stake is read separately and may be absent: the page renders fully for a
