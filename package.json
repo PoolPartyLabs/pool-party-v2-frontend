@@ -39,7 +39,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "3.14.5",
     "@uniswap/permit2-sdk": "^1.4.0",
-    "@uniswap/sdk-core": "^7.17.0",
+    "@uniswap/sdk-core": "^7.19.0",
     "@uniswap/v3-sdk": "^3.30.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
