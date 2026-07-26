@@ -21,7 +21,9 @@
     "aqua:ship": "tsx --conditions=react-server scripts/aqua/strategy.ts ship",
     "aqua:roll": "tsx --conditions=react-server scripts/aqua/strategy.ts roll",
     "aqua:dock": "tsx --conditions=react-server scripts/aqua/strategy.ts dock",
-    "aqua:launch-payloads": "tsx --conditions=react-server scripts/aqua/strategy.ts launch-payloads"
+    "aqua:launch-payloads": "tsx --conditions=react-server scripts/aqua/strategy.ts launch-payloads",
+    "aqua:discover": "tsx --conditions=react-server scripts/aqua/discover.ts",
+    "aqua:backfill": "tsx --conditions=react-server scripts/aqua/backfill.ts"
   },
   "dependencies": {
     "@1inch/aqua-sdk": "0.2.0",
