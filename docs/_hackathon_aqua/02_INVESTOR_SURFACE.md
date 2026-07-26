@@ -92,26 +92,22 @@ integer **strings**; formatting is the view layer's job.
 | Which bands exist | `bands[].strategyHash` | `PartyVault.activeStrategies()` |
 | Reserved to buy | `bands[].committedUsdc` | `AquaRegistry.rawBalances(vault, router, strategyHash, USDC)` on `0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a` |
 | ETH bought, per band | `bands[].acquiredWeth` | same call with the WETH address |
-| Band edges, epoch, deadline, ship tx (`shipTxHash` is null: no ship tx was recorded) | `bands[].lowE8` / `highE8` / `epoch` / `deadline` / `shipTxHash` | **the one non-chain source on this page**: `src/lib/aqua/data/managerMetadata.ts`, the manager's own labels, committed |
-| Purchases | `fills[]` | `src/lib/aqua/data/managerMetadata.ts`, newest first, capped at 25. Every row is a real Arbitrum transaction and links to Arbiscan |
+| Band edges, mandate, epoch, deadline, ship tx | `bands[].lowE8` / `highE8` / `mandate` / `epoch` / `deadline` / `shipTxHash` | decoded from the Aqua registry's `Shipped` log by `api/backfill.ts`: the edges invert out of the concentrate encoding, the mandate from the high/low ratio |
+| Purchases | `fills[]` | **the one non-chain source on this page**: `src/lib/aqua/data/managerMetadata.ts`, newest first, capped at 25. Every row is a real Arbitrum transaction and links to Arbiscan |
 | Vault, adapter, 1inch contracts | `vault`, `adapter`, constants | `NEXT_PUBLIC_AQUA_VAULT_ADDRESS` plus `PartyVault.ADAPTER()`; the 1inch pair comes from `src/lib/aqua/config/addresses.ts` |
 
 Three things about that table are worth stating plainly.
 
-**Every value is live. Two labels are not, and they are the only two.** Read the provenance column
-again: every row resolves to an Arbitrum call except the band edges and the mandate name. Those were
-computed against the Chainlink spot of the moment the strategy was compiled, and the registry stores
-the program, not the price it was built against, so they cannot be recovered from chain at a sane cost.
+**Everything except the purchase list is live.** Read the provenance column again: every row
+resolves to an Arbitrum call, including the band geometry. The mandate name and the price range are
+decoded from the registry's own `Shipped` log rather than stored, which is worth saying because two
+earlier revisions of this page stored them, first in Postgres and then in a committed fixture, on
+the belief that they were unrecoverable. They were recoverable, and the decode disagreed with the
+fixture by about $25 on spot.
 
-They come from `src/lib/aqua/data/managerMetadata.ts`, a committed fixture of what the strategy manager
-wrote at launch. On a normal Pool Party strategy that layer arrives from pool-party-api when the manager
-launches it, the same way `name` and `riskProfile` do. **This entry is built exclusively in the
-open-source repository and has no write path to that private API**, so for this one live, on-chain
-strategy the manager's values are committed to the codebase instead. The page states this itself, in the
-"What is live and what is not" block, rather than leaving it to this document.
-
-A band with no matching entry still renders its live money, with the geometry omitted rather than
+A band whose log will not decode still renders its live money, with the geometry omitted rather than
 guessed (FE-R7).
+
 
 **The fills are real and self-directed.** Every row is an Arbitrum transaction that resolves on
 Arbiscan, and each was executed by the project's own taker against its own strategy: they prove the
@@ -134,7 +130,7 @@ flowchart TD
     C["Chainlink ETH/USD<br/>latestRoundData"]
   end
 
-  MD[("data/managerMetadata.ts<br/>committed: band edges, mandate, fills")]
+  MD[("data/managerMetadata.ts<br/>committed: settled purchases only")]
 
   V --> S
   A --> S

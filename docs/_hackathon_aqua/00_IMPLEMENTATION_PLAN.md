@@ -371,18 +371,17 @@ connection string, a migration tool and a running Postgres to develop against, a
 somewhere no reviewer can read in the diff. They now live in `src/lib/aqua/data/managerMetadata.ts`,
 committed, with their provenance and their arithmetic in the header.
 
-### Why the labels are local at all
+### And then the labels stopped being local too
 
-On a normal Pool Party strategy this layer arrives from pool-party-api when the manager launches it,
-exactly the way `name`, `logo_url` and `riskProfile` reach a strategy card. That path is real and
-shipped; it is simply not reachable from here.
+The first version of this section argued that the mandate name and band edges had to be committed,
+because they were computed against a historical Chainlink spot and the registry stores the program
+rather than the price. That argument was wrong, and the code proved it: `api/backfill.ts` decodes
+both out of the registry's own `Shipped` log, and when it ran against the live vault it disagreed
+with the committed values by about $25 on spot. The chain was right and the fixture is gone.
 
-**This entry is built exclusively in the open-source repository**, which has no write path to that
-private API. Building a second metadata service nobody would keep, purely to satisfy the form of the
-thing, would have been worse than saying plainly what was done: for this one strategy, which is live and
-on-chain, the values a manager would have typed into our console are committed to the codebase instead.
-No rule is bent. The money is real and verifiable on Arbiscan; only the labels are local, and the page
-says so itself in `COPY.provenance` rather than leaving it to this document.
+What remains committed is the settled-purchase list, and only because the indexer that would read
+settlements off-chain is not built. That is recorded as a gap, not dressed up as a decision.
+
 
 The removal path is a file delete: `BandView` and `FillView` do not change shape, so when the console
 learns to write Aqua metadata the read swaps to `apiFetch` and nothing downstream moves.

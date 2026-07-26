@@ -189,6 +189,7 @@ export function ActiveReserveScreen({
           ) : null}
 
           <FillsFeed fills={state.fills} />
+          <Provenance />
           <VerifyBlock vault={state.vault} adapter={state.adapter} />
           <Disclosure />
         </div>
@@ -257,6 +258,27 @@ function Hero({ price, protocols }: { price?: string; protocols?: Array<{ label:
         ) : null}
       </div>
       {protocols ? null : <p className="mt-4 text-sm leading-relaxed">{PRODUCT_DESCRIPTION}</p>}
+    </section>
+  );
+}
+
+/**
+ * FE-R11 v2: what is live and what is not, on the page itself.
+ *
+ * A submission that claims "everything is on-chain" and quietly ships one checked-in list is
+ * making the reader do the auditing. Saying it here costs a paragraph and removes the question.
+ */
+function Provenance() {
+  return (
+    <section
+      aria-labelledby="provenance-title"
+      className="rounded-xl border border-border bg-surface p-5"
+    >
+      <h2 id="provenance-title" className="font-semibold text-base text-foreground">
+        {COPY.provenance.title}
+      </h2>
+      <p className="mt-2 text-muted-foreground text-sm">{COPY.provenance.live}</p>
+      <p className="mt-2 text-muted-foreground text-sm">{COPY.provenance.fixed}</p>
     </section>
   );
 }

@@ -734,12 +734,13 @@ describe("[R6] the reproduction instructions resolve", () => {
     expect(missing).toEqual([]);
   });
 
-  it("has the four `aqua:*` scripts the continuity table counts", () => {
-    // Was seven. The three `aqua:db:*` commands went with the database (see
-    // `src/lib/aqua/data/managerMetadata.ts` for why), leaving the four that build calldata.
+  it("has the five `aqua:*` scripts the continuity table counts", () => {
+    // Was seven. The three `aqua:db:*` commands went with the database, and `aqua:backfill` went
+    // with it too once the page decoded band geometry from chain instead of reading a table.
+    // What remains: four that build calldata, plus `aqua:discover`.
     const aquaScripts = Object.keys(manifest.scripts).filter((name) => name.startsWith("aqua:"));
-    expect(aquaScripts).toHaveLength(4);
-    expect(read(CONTINUITY)).toContain(`Four \`aqua:*\` scripts`);
+    expect(aquaScripts).toHaveLength(5);
+    expect(read(CONTINUITY)).toContain(`Five \`aqua:*\` scripts`);
     // Every command `01` documents in its CLI table is one of them.
     for (const script of aquaScripts) expect(read(INTEGRATION), script).toContain(`pnpm ${script}`);
   });
@@ -793,6 +794,10 @@ describe("[R6] the reproduction instructions resolve", () => {
     for (const file of ["src/lib/aqua/api/vaultState.ts", "scripts/aqua/strategy.ts"]) {
       expect(read(file), file).not.toMatch(/drizzle|aquaDb|aqua_ships/);
     }
-    expect(read("src/lib/aqua/data/managerMetadata.ts")).toContain("SHIP_METADATA");
+    // Band geometry is decoded from the registry's `Shipped` log, not stored. The only committed
+    // data left is the settled-purchase list, and its file must keep saying so.
+    expect(read("src/lib/aqua/api/vaultState.ts")).toContain("decodeShipsFromChain");
+    expect(read("src/lib/aqua/data/managerMetadata.ts")).toContain("FILLS");
+    expect(read("src/lib/aqua/data/managerMetadata.ts")).not.toContain("SHIP_METADATA");
   });
 });

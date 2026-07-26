@@ -47,7 +47,9 @@ the domain services, and nothing above it touches viem for Aqua data.
 | `api/compiler/compile.ts` | The only producer of Aqua programs and ship calldata. Every guardrail lives here. | `@1inch/swap-vm-sdk`, `@1inch/aqua-sdk`, `@1inch/sdk-core`, viem `keccak256` |
 | `api/compiler/roll.ts` | `buildDock` and `buildRoll`, and the salt-must-change refusal. | `@1inch/aqua-sdk` |
 | `api/compiler/context.ts` | Assembles the live inputs a compile needs: fresh Chainlink spot with a staleness gate, already-shipped total, next epoch. All three read from chain. | Arbitrum RPC |
-| `api/vaultState.ts` | Everything the investor page shows, assembled server side. Money from chain, manager labels from `data/managerMetadata.ts`. | Arbitrum RPC |
+| `api/discovery.ts` | Finds every PartyVault this manager owns, from the registry's `Shipped` log plus an `OWNER()` proof. A vault that never shipped does not appear, which is correct: it has no strategy to show. | Arbitrum RPC |
+| `api/backfill.ts` | Decodes every ship a vault has made: mandate, band edges, spot at ship, deadline, salt and the ship tx. Reads only. This is where the band geometry on the page comes from. | Arbitrum RPC, `@1inch/*` SDKs |
+| `api/vaultState.ts` | Everything the investor page shows, assembled server side. Every value and the band geometry from chain; only the settled-purchase list is committed. | Arbitrum RPC |
 
 ### 1.1 The server-only boundary, and the test that enforces it
 
@@ -408,29 +410,32 @@ Notes that matter when reading the numbers:
   price is a strategy at the wrong level. The bound has room: measured over 24 hours the feed
   updated 360 times, median gap 121 seconds, maximum gap 29.5 minutes.
 
-### 3.1 What does not come from chain, and why
+### 3.1 Where the band geometry comes from
 
-Two fields per band are not recoverable from Arbitrum at a sane cost: **which mandate** the manager
-picked, and **the band edges in USD**. The edges were computed against the Chainlink spot of the
-moment the strategy was built, and what the chain stores is the encoded sqrt price, not the dollar
-range a human agreed to. Re-deriving them means replaying the compiler against a historical price.
+The mandate name and the band edges in USD are not stored anywhere. They are **decoded from the Aqua
+registry's own `Shipped` log** by `api/backfill.ts`:
 
-Those two fields, and nothing else, come from `src/lib/aqua/data/managerMetadata.ts`: a committed
-fixture of what the strategy manager wrote at launch. **The money on each band is still read live**,
-from `rawBalances` on the Aqua registry, on every request.
+- `Shipped` carries the ABI-encoded Order; the program inside carries the deadline, the concentrate
+  bounds and the salt
+- the band edges invert exactly out of the concentrate encoding
+- the mandate is identified from the band's high/low ratio, which is distinct per mandate and needs
+  no knowledge of the price at ship time; the spot at ship then follows exactly from the high edge
 
-That file's header explains the choice in full. In short: on a normal Pool Party strategy this layer
-arrives from pool-party-api when the manager launches it, the same way `name` and `riskProfile` do.
-This entry is built exclusively in the open-source repository and has no write path to that private
-API, so for the one live strategy the labels are committed to the codebase instead. The page says so
-itself (`COPY.provenance`), rather than leaving it to a reader of this document.
+This is worth stating because two earlier revisions got it wrong in the same direction. The first
+kept the geometry in a Postgres table; the second, having deleted the table, kept it as a committed
+fixture and argued the values were unrecoverable. They were recoverable. When the decode landed it
+disagreed with the fixture's inferred spot by about $25, and the chain was right.
 
-FE-R7 applies to the lookup: a band with no metadata entry is still shown with its live balances,
-its edges come back as empty strings and its mandate as `"unknown"` rather than being guessed. That
-is the same degradation the database path had for an un-backfilled ship.
+An unrecognised band shape stays `unknown` rather than being forced into a mandate, and FE-R7
+applies: a band whose log will not decode still renders its live money with its edges omitted rather
+than guessed.
 
-The fills feed (`readFills`, most recent 25) is a read of the same file. Every row is a real Arbitrum
-transaction and links to Arbiscan; it is history, not money.
+The one thing still committed is the settled-purchase list (`data/managerMetadata.ts`). Decoding a
+fill means matching settlement logs across the router and the vault and attributing them to a band,
+and that indexer is named as not built rather than quietly skipped. Every row there is a real
+Arbitrum transaction that resolves on Arbiscan, and each is self-directed: executed by the project's
+own taker against its own strategy, so they prove the machine settles, not that there was organic
+demand. The page says exactly that above the list.
 
 
 ---
@@ -569,6 +574,7 @@ prints calldata for a wallet to sign plus the metadata block to commit.
 | `pnpm aqua:launch-payloads --vault 0x... --production 60 --demo 40` | `strategy.ts` | both bands at once, sized so the combined ship stays inside one sleeve |
 | `pnpm aqua:roll --strategy 0x... --vault 0x... --mandate <name>` | `strategy.ts` | `dock(old)` plus `ship(new)` with a fresh salt, printed as one manager action |
 | `pnpm aqua:dock --strategy 0x... --mandate <name>` | `strategy.ts` | the dock transaction alone |
+| `pnpm aqua:discover` | `discover.ts` | scans the Aqua registry's `Shipped` log for vaults this manager owns, and decodes every band each has shipped. The same code path the page uses, run standalone |
 
 Every script that imports module code runs `tsx --conditions=react-server`, for the reason in
 [section 1.1](#11-the-server-only-boundary-and-the-test-that-enforces-it), and loads `.env.local`

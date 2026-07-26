@@ -138,15 +138,23 @@ export const COPY = {
     help: "Every value on this page is read live from Arbitrum on each load. Check it yourself.",
     vault: "Vault contract",
     adapter: "Interest-earning adapter",
+    // The contracts are a separate public repository. Someone checking an address on Arbiscan is
+    // exactly the person who wants the source, so the link belongs here rather than in a doc.
+    source: "Contract source",
+    sourceRepo: "github.com/0xmvercosa/pool-party-aqua",
   },
 
   /**
-   * FE-R11: the live/fixed split, stated on the page rather than buried in a repository doc.
+   * FE-R11 v2: the live/committed split, stated on the page rather than buried in a repository doc.
+   *
+   * v1 said the band edges were manager-written and fixed in the build. They are not: they decode
+   * out of the Aqua registry's own `Shipped` log. Only the purchase list is committed, and the copy
+   * had to stop claiming otherwise the moment that stopped being true.
    */
   provenance: {
     title: "What is live and what is not",
-    live: "Live from Arbitrum, read fresh on every load: total value, the split between interest-earning, reserved and ETH bought, the deposit cap, your position, every purchase below, and the ETH price from Chainlink.",
+    live: "Read live from Arbitrum on every load: total value, the split between interest-earning, reserved and ETH bought, the deposit cap, your position, the ETH price from Chainlink, and each buy band including its mandate and its price range, decoded from the on-chain ship record.",
     fixed:
-      "Written by the strategy manager and fixed in this build: the mandate name and the buy-band edges. On a normal Pool Party strategy those arrive from our API when the manager launches it. This entry is built only in the open-source repository, which has no write path to that API, so for this one live strategy they are committed to the codebase instead. The money is real either way.",
+      "The purchase list below is the one exception. Every row is a real Arbitrum transaction and links to Arbiscan, but it is a checked-in list rather than a live feed: the indexer that would read settlements off-chain is not built, and we would rather say so than imply it is.",
   },
 } as const;

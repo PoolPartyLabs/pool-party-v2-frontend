@@ -3,7 +3,8 @@ import "server-only";
 /**
  * Canonical Arbitrum addresses for the Active Reserve build.
  *
- * MIRROR of `docs/VERIFIED.md` in the pool-party-aqua repo, which is the source of truth and
+ * MIRROR of `docs/VERIFIED.md` in the contracts repo (https://github.com/0xmvercosa/pool-party-aqua),
+ * which is the source of truth and
  * carries the evidence for every value here. Per POO-1058 R2 this is the single place the app
  * learns an address; nothing else hardcodes one.
  *

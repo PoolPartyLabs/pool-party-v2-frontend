@@ -67,7 +67,7 @@ async function main(): Promise<void> {
   const compiler = await import("../../src/lib/aqua/api/compiler/index");
   const context = await import("../../src/lib/aqua/api/compiler/context");
   const { AQUA_SWAP_VM_ROUTER } = await import("../../src/lib/aqua/config/addresses");
-  const { shipMetadataFor } = await import("../../src/lib/aqua/data/managerMetadata");
+  const { decodeShipsFromChain } = await import("../../src/lib/aqua/api/backfill");
 
   async function buildOne(
     mandateName: "production" | "demo",
@@ -141,24 +141,20 @@ async function main(): Promise<void> {
   }
 
   /**
-   * Print the metadata block for `src/lib/aqua/data/managerMetadata.ts`.
+   * Print what the compiler produced, for the record.
    *
-   * There is no database. The descriptive layer a manager writes is a committed fixture (see that
-   * file's header for why), so shipping is a two-step: broadcast the tx, then paste this block and
-   * commit it. Making the operator commit the record is what keeps the page's labels reviewable in
-   * git rather than living in a mutable table nobody can audit.
+   * Nothing is persisted, because nothing needs to be: once the ship transaction lands, the band
+   * geometry is decodable from the registry's own `Shipped` log (`api/backfill.ts`), which is what
+   * the page reads. This output exists so the operator can eyeball the band before broadcasting,
+   * and so a mismatch between what was compiled and what the chain later reports is visible.
    */
-  function emitMetadata(result: Awaited<ReturnType<typeof buildOne>>) {
-    console.log("\n  paste into src/lib/aqua/data/managerMetadata.ts -> SHIP_METADATA:\n");
-    console.log(`  "${result.strategyHash}": {`);
-    console.log(`    mandate: "${result.mandate}",`);
-    console.log(`    bandLowE8: "${result.band.lowE8}",`);
-    console.log(`    bandHighE8: "${result.band.highE8}",`);
-    console.log(`    spotAtShipE8: "${result.band.spotE8}",`);
-    console.log(`    epoch: ${result.epoch},`);
-    console.log(`    deadline: "${result.deadline}",`);
-    console.log("    shipTxHash: null,");
-    console.log("  },");
+  function report(result: Awaited<ReturnType<typeof buildOne>>) {
+    console.log(`\n  strategyHash  ${result.strategyHash}`);
+    console.log(`  mandate       ${result.mandate}  (epoch ${result.epoch})`);
+    console.log(`  band          $${usd(result.band.lowE8)} .. $${usd(result.band.highE8)}`);
+    console.log(`  spot at ship  $${usd(result.band.spotE8)}`);
+    console.log(`  deadline      ${result.deadline}`);
+    console.log("  Verify after broadcast with: pnpm aqua:discover");
   }
 
   switch (command) {
@@ -167,7 +163,7 @@ async function main(): Promise<void> {
       const mandateName = requireString(args, "mandate") as "production" | "demo";
       const amount = args.amount ? usdcToRaw(String(args.amount)) : undefined;
       const result = await buildOne(mandateName, vault, amount);
-      emitMetadata(result);
+      report(result);
       break;
     }
 
@@ -204,8 +200,8 @@ async function main(): Promise<void> {
       console.log(`  demo hash:        ${demo.strategyHash}`);
       console.log("  Ship production FIRST, then demo. Order matters only for the epoch record.");
 
-      emitMetadata(production);
-      emitMetadata(demo);
+      report(production);
+      report(demo);
       break;
     }
 
@@ -214,10 +210,15 @@ async function main(): Promise<void> {
       const mandateName = requireString(args, "mandate") as "production" | "demo";
       const previousHash = requireString(args, "strategy") as `0x${string}`;
 
-      const previous = shipMetadataFor(previousHash);
+      // The predecessor's epoch comes from chain, decoded from its own `Shipped` log, so a roll
+      // cannot be built against an epoch nobody can verify.
+      const shipped = await decodeShipsFromChain(vault);
+      const previous = shipped.find(
+        (ship) => ship.strategyHash.toLowerCase() === previousHash.toLowerCase(),
+      );
       if (!previous)
         throw new Error(
-          `No SHIP_METADATA entry for ${previousHash}; add it (or pass the hash you actually shipped) before rolling`,
+          `No Shipped log on Arbitrum for ${previousHash}; cannot roll what this vault did not ship`,
         );
 
       const mandate = compiler.mandateFor(mandateName);
@@ -228,7 +229,7 @@ async function main(): Promise<void> {
       const alreadyShipped = await context.readAlreadyShipped(vault);
 
       const rolled = compiler.buildRoll(
-        { strategyHash: previousHash, epoch: previous.epoch },
+        { strategyHash: previousHash, epoch: previous.epochIndex },
         mandateName,
         mandate,
         {
@@ -254,7 +255,7 @@ async function main(): Promise<void> {
       console.log(`    to   ${rolled.ship.shipCallInfo.to}`);
       console.log(`    data ${rolled.ship.shipCallInfo.data}`);
 
-      emitMetadata(rolled.ship);
+      report(rolled.ship);
       break;
     }
 

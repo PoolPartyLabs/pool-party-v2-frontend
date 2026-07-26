@@ -3,11 +3,17 @@
 Server-only internal API module for the Aqua strategy class. Per SRV-R1 v3 it plays the role
 pool-party-api plays for the rest of the app: it owns persistence, on-chain orchestration, and
 the domain services. Server actions above it stay thin (validation and auth only), and nothing
-outside this module touches Drizzle or viem for Aqua data.
+outside this module touches viem for Aqua data.
 
-Canonical rules: `docs/01_BUSINESS_RULES.md` in the pool-party-aqua repo. Canonical addresses
-and the measured on-chain facts: `docs/VERIFIED.md` there. `config/addresses.ts` mirrors that
-file and must be re-synced if it changes.
+**The contracts live in a separate public repository: [`0xmvercosa/pool-party-aqua`](https://github.com/0xmvercosa/pool-party-aqua).**
+PartyVault, the Aave v3 carry adapter, the deploy and ops scripts, the taker, and the judge package
+are all there. This module reads what those contracts wrote; it deploys nothing and owns no state.
+
+Canonical rules: [`docs/01_BUSINESS_RULES.md`](https://github.com/0xmvercosa/pool-party-aqua/blob/main/docs/01_BUSINESS_RULES.md) there.
+Canonical addresses and the measured on-chain facts:
+[`docs/VERIFIED.md`](https://github.com/0xmvercosa/pool-party-aqua/blob/main/docs/VERIFIED.md). `config/addresses.ts` mirrors that file and
+must be re-synced if it changes. The fills are cross-checked against
+[`docs/FILLS.md`](https://github.com/0xmvercosa/pool-party-aqua/blob/main/docs/FILLS.md).
 
 ## Layout
 
@@ -15,9 +21,9 @@ file and must be re-synced if it changes.
 |---|---|
 | `config/addresses.ts` | Gen-2 Aqua pair, tokens, Chainlink, Aave, and the measured maker-hook signature |
 | `config/env.ts` | The only place server env is read (SRV-R4) |
-| `data/managerMetadata.ts` | The manager-written labels for the live reserve, hardcoded |
+| `data/managerMetadata.ts` | The settled-purchase list, the only committed data left |
 | `chain/clients.ts` | viem public client and the taker signer |
-| `api/` | Domain services; the compiler lands here in POO-1061 |
+| `api/` | Domain services: vault state, the program compiler, vault discovery and the `Shipped` decode |
 
 ## The two things that will bite you
 
@@ -36,25 +42,22 @@ targets ES2017, so bigints are built with `BigInt(...)` rather than `0n` literal
 
 ## There is no database
 
-An earlier revision of this feature kept `aqua_ships` and `aqua_fills` in Postgres. That is gone,
-deliberately, and the reasoning is worth keeping because it is the same question a reviewer asks:
+An earlier revision kept `aqua_ships` and `aqua_fills` in Postgres. That is gone, and so is the
+committed fixture that briefly replaced it. The reasoning is worth keeping, because it is the same
+question a reviewer asks: *if the vault is on-chain, what was the database for?*
 
-*if the vault is on-chain, what was the database for?*
+Nothing the page displays as a **value**. NAV, the Aave carry, the hot buffer, the deposit cap, which
+strategies are active, how much USDC each band holds and the Chainlink price are read live from
+Arbitrum on every request. The table held the band **geometry**: mandate name and price range.
 
-Nothing that the page displays as a **value**. NAV, the Aave carry, the hot buffer, the deposit cap,
-which strategies are active, how much USDC each band holds and the Chainlink price are all read live
-from Arbitrum on every request. The table only ever held the **descriptive** layer a manager writes
-when they launch: which mandate they chose, and therefore what the band means in words.
+That turned out to be recoverable too. `api/backfill.ts` decodes it from the Aqua registry's own
+`Shipped` log, and when it first ran against the live vault it disagreed with the committed values by
+about $25 on spot. The chain was right. Both the table and the fixture were solving a problem that a
+decode solves better.
 
-For one live strategy in a hackathon window, a table is a worse fixture than a file: it needs a
-connection string, a migration tool, a running Postgres to develop against, and it puts the labels
-somewhere no reviewer can read in the diff. They now live in `data/managerMetadata.ts`, committed,
-with their provenance in the header.
+What is still committed is the settled-purchase list in `data/managerMetadata.ts`, and only because
+the indexer that would read settlements off-chain is not built. Every row there is a real Arbitrum
+transaction. That file's header says so at length, and so does the page.
 
-In the shipping product that layer arrives from the pool-party-api, the same way `name`, `logo_url`
-and `riskProfile` reach a normal strategy card. This entry is built exclusively in the open-source
-repo and has no write path to that private API, so the manager-console round trip was out of scope.
-See `data/managerMetadata.ts` for the full justification and for what replaces it later.
-
-`scripts/aqua/strategy.ts` prints the metadata block to paste into that file after a ship, so the
-record is made by a commit rather than by an `INSERT`.
+`scripts/aqua/strategy.ts` prints what it compiled so an operator can eyeball a band before
+broadcasting; `pnpm aqua:discover` reads back what the chain actually recorded.

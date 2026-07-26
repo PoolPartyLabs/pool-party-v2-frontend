@@ -60,7 +60,7 @@ git log --oneline 1d0311aa~1..HEAD -- src/lib/aqua src/features/aqua scripts/aqu
 
 # Everything this entry added to the frontend tree, by path
 find src/lib/aqua src/features/aqua scripts/aqua -type f | sort
-#   24 + 18 + 1 = 43 files (measured 2026-07-26), plus the two route files below
+#   26 + 18 + 2 = 46 files (measured 2026-07-26), plus the two route files below
 ls "src/app/[locale]/(auth)/(app)/active-reserve/page.tsx" \
    "src/app/[locale]/(auth)/(app)/dev/active-reserve/page.tsx"
 
@@ -186,7 +186,7 @@ Server-only throughout. An accidental client import is a build error, not a leak
 
 | Path | Change | Issue | Status |
 |---|---|---|---|
-| `./package.json` | Four `aqua:*` scripts, and the exact-pinned `@1inch/swap-vm-sdk` 0.3.0, `@1inch/aqua-sdk` 0.2.0 and `@1inch/sdk-core` 0.1.2, plus tsx | POO-1071 | landed |
+| `./package.json` | Five `aqua:*` scripts, and the exact-pinned `@1inch/swap-vm-sdk` 0.3.0, `@1inch/aqua-sdk` 0.2.0 and `@1inch/sdk-core` 0.1.2, plus tsx | POO-1071 | landed |
 | `./.env.example` | Documents `NEXT_PUBLIC_AQUA_VAULT_ADDRESS`, `TAKER_BOT_PRIVATE_KEY` and the Arbitrum RPC as commented, valueless entries. No secret is committed anywhere | POO-1071 | landed |
 | `scripts/bundle-secrets-check.ts` | Registers the two Aqua secrets with the shared build-output grep, so a leak into client bundles fails a committed check | POO-1071 | landed |
 

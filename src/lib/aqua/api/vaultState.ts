@@ -15,19 +15,21 @@ import {
   DECIMALS,
   TOKENS,
 } from "../config/addresses";
-import { fillsFor, shipMetadataFor } from "../data/managerMetadata";
+import { fillsFor } from "../data/managerMetadata";
+import { decodeShipsFromChain } from "./backfill";
 import { type AquaMandateView, aquaMandate, compositionSlices } from "./mandate";
 
 /**
  * Everything the read-only investor page shows, assembled server-side.
  *
- * Two rules shape this file. IDX-R2: money is read fresh from chain on every request, never
- * from a cache and never from our own database, so a number on the page is a number on
- * Arbitrum. FE-R7: when real data is missing the page hides the section rather than inventing
- * one, which is why this returns a discriminated state instead of zeros.
+ * Two rules shape this file. IDX-R2: money is read fresh from chain on every request, never from
+ * a cache and never from a stored copy, so a number on the page is a number on Arbitrum. FE-R7:
+ * when real data is missing the page hides the section rather than inventing one, which is why
+ * this returns a discriminated state instead of zeros.
  *
- * The database is used only for things chain cannot tell us cheaply: which mandate a
- * strategyHash belongs to, and the band it was built against at ship time.
+ * Everything here comes from chain, including the band geometry, which is decoded from the Aqua
+ * registry's own `Shipped` log rather than recovered from a record we kept. The one exception is
+ * the settled-purchase list; `readFills` says why, at the point it applies.
  */
 
 /** D9: 90 minutes. Beyond this the price is not trustworthy and the page says so. */
@@ -207,7 +209,7 @@ export async function readActiveReserveState(): Promise<ActiveReserveState> {
   }
 
   const bands = await readBands(vault, activeStrategies);
-  const fills = await readFills(activeStrategies);
+  const fills = readFills(bands);
 
   return {
     status: "live",
@@ -281,11 +283,28 @@ async function readBands(
 
   const client = arbitrumPublicClient();
 
+  // The band's geometry, decoded from the registry's own `Shipped` log (POO-1067, #677). This is
+  // the same data an earlier revision kept in a table and then in a committed fixture, and both
+  // were wrong for the same reason: it was recoverable from chain all along. The `Shipped` event
+  // carries the ABI-encoded Order, the program inside carries the deadline and concentrate bounds,
+  // and the band edges invert exactly out of that encoding. The mandate follows from the high/low
+  // ratio, which is distinct per mandate and needs no knowledge of the price at ship time.
+  //
+  // One read for the whole vault rather than one per strategy: the decode scans a log range, so
+  // asking it per band would rescan the same range once per band.
+  const decoded = new Map<string, Awaited<ReturnType<typeof decodeShipsFromChain>>[number]>();
+  try {
+    for (const ship of await decodeShipsFromChain(vault)) {
+      decoded.set(ship.strategyHash.toLowerCase(), ship);
+    }
+  } catch {
+    // FE-R7: a decode that fails must not take the page down. The money below is read separately
+    // and is still true, so the bands render without their edges rather than not at all.
+  }
+
   const bands: BandView[] = [];
   for (const strategyHash of activeStrategies) {
-    // The manager's descriptive layer. Absent = an unlabelled launch, which still renders with its
-    // live money and no edges (FE-R7), exactly as an un-backfilled ship used to.
-    const record = shipMetadataFor(strategyHash);
+    const record = decoded.get(strategyHash.toLowerCase());
     const [committedUsdc] = await client.readContract({
       address: AQUA_REGISTRY,
       abi: AQUA_RAW_BALANCES_ABI,
@@ -299,18 +318,18 @@ async function readBands(
       args: [vault, AQUA_SWAP_VM_ROUTER, strategyHash, TOKENS.WETH],
     });
 
-    // FE-R7: a band we have no ship record for is still shown with its live money, but its
-    // edges are omitted rather than guessed.
+    // FE-R7: a band whose `Shipped` log we could not decode is still shown with its live money,
+    // but its edges are omitted rather than guessed, and its mandate stays "unknown".
     bands.push({
       strategyHash,
       mandate: record?.mandate ?? "unknown",
       lowE8: record?.bandLowE8 ?? "",
       highE8: record?.bandHighE8 ?? "",
-      spotAtShipE8: record?.spotAtShipE8 ?? "",
+      spotAtShipE8: record?.spotE8 ?? "",
       committedUsdc: committedUsdc.toString(),
       acquiredWeth: acquiredWeth.toString(),
-      epoch: record?.epoch ?? 0,
-      deadline: record?.deadline ?? "",
+      epoch: record?.epochIndex ?? 0,
+      deadline: record ? record.deadline.toString() : "",
       shipTxHash: record?.shipTxHash ?? null,
       active: true,
     });
@@ -318,14 +337,25 @@ async function readBands(
   return bands;
 }
 
-async function readFills(
-  activeStrategies: readonly `0x${string}`[],
-  limit = 25,
-): Promise<FillView[]> {
-  return fillsFor(activeStrategies, limit).map((fill) => ({
+/**
+ * Settled purchases for the vault's active bands.
+ *
+ * The ONLY thing on this page not read from chain. Every row is a real Arbitrum transaction and
+ * links to Arbiscan, but they are a committed list rather than an indexed feed: decoding a fill
+ * means matching settlement logs across the router and the vault, and that indexer is named as
+ * not built (`docs/_hackathon_aqua/03_PRE_EXISTING_VS_NEW.md`). The mandate label comes from the
+ * band it belongs to, which IS decoded from chain, so a fill can never claim a mandate the band
+ * does not have.
+ */
+function readFills(bands: readonly BandView[], limit = 25): FillView[] {
+  const mandateOf = new Map(bands.map((band) => [band.strategyHash.toLowerCase(), band.mandate]));
+  return fillsFor(
+    bands.map((band) => band.strategyHash),
+    limit,
+  ).map((fill) => ({
     txHash: fill.txHash,
     when: fill.when,
-    mandate: shipMetadataFor(fill.strategyHash)?.mandate ?? "unknown",
+    mandate: mandateOf.get(fill.strategyHash.toLowerCase()) ?? "unknown",
     amountIn: fill.amountIn,
     amountOut: fill.amountOut,
     jitUnparked: fill.jitUnparked,
