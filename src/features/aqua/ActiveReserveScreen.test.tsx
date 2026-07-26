@@ -64,7 +64,7 @@ function liveState(overrides: Partial<Extract<ActiveReserveState, { status: "liv
       { label: "Cash on hand", weight: 0.87 },
       { label: "ETH bought", weight: 82.63 },
     ],
-    maxTvlUsdc: "200000000",
+    maxTvlUsdc: "5000000000",
     seeded: true,
     liquidUsdc: "190000000",
     fills: [
@@ -225,7 +225,66 @@ describe("ActiveReserveScreen: purchases", () => {
   });
 });
 
-describe("ActiveReserveScreen: on-chain verification (FE-R2)", () => {
+describe("ActiveReserveScreen: deposit availability", () => {
+  it("offers Add liquidity when the reserve is open", () => {
+    render(<ActiveReserveScreen state={liveState()} now={NOW} />);
+    expect(screen.getAllByRole("button", { name: /add liquidity/i })[0]).toBeEnabled();
+  });
+
+  /**
+   * A cap of zero means the manager wound the reserve down, not that it filled up. Saying
+   * "at its deposit cap" there would suggest waiting for room that is never coming.
+   */
+  it("says CLOSED, not full, when the cap has been set to zero", () => {
+    const closed = liveState({ maxTvlUsdc: "0" });
+    render(<ActiveReserveScreen state={closed} now={NOW} />);
+    expect(screen.getAllByText(/closed to new deposits/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/at its deposit cap/i)).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /add liquidity/i })[0]).toBeDisabled();
+  });
+
+  it("says the cap is reached when the reserve is genuinely full", () => {
+    const full = liveState({ maxTvlUsdc: "1151936433" });
+    render(<ActiveReserveScreen state={full} now={NOW} />);
+    expect(screen.getAllByText(/at its deposit cap/i).length).toBeGreaterThan(0);
+  });
+
+  it("blocks deposits before the manager has seeded (VLT-R2)", () => {
+    render(<ActiveReserveScreen state={liveState({ seeded: false })} now={NOW} />);
+    expect(screen.getAllByRole("button", { name: /add liquidity/i })[0]).toBeDisabled();
+    expect(screen.getAllByText(/not open for deposits yet/i).length).toBeGreaterThan(0);
+  });
+
+  it("shows Remove liquidity only to an investor who holds shares", () => {
+    render(<ActiveReserveScreen state={liveState()} now={NOW} />);
+    expect(screen.queryByRole("button", { name: /remove liquidity/i })).not.toBeInTheDocument();
+
+    render(
+      <ActiveReserveScreen
+        state={liveState()}
+        now={NOW}
+        position={{ shares: "1000000000", valueUsdc: "5000000" }}
+      />,
+    );
+    expect(screen.getAllByRole("button", { name: /remove liquidity/i })[0]).toBeInTheDocument();
+  });
+});
+
+describe("ActiveReserveScreen: the mandate (what this actually touches)", () => {
+  it("names Aave v3 and 1inch Aqua as the venues", () => {
+    render(<ActiveReserveScreen state={liveState()} now={NOW} />);
+    // Once as a hero badge, again inside the mandate card.
+    expect(screen.getAllByText("Aave v3").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("1inch Aqua").length).toBeGreaterThan(0);
+  });
+
+  it("shows the pair badge like the Uniswap hero does", () => {
+    render(<ActiveReserveScreen state={liveState()} now={NOW} />);
+    expect(screen.getByText("WETH / USDC")).toBeInTheDocument();
+  });
+});
+
+describe("ActiveReserveScreen: on-chain verification (FE-R2) ", () => {
   it("links the vault and both official 1inch contracts", () => {
     render(<ActiveReserveScreen state={liveState()} now={NOW} />);
     const verify = screen.getByRole("region", { name: /verify on-chain/i });

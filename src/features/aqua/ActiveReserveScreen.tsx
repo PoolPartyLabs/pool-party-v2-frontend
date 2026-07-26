@@ -72,6 +72,9 @@ export function ActiveReserveScreen({
   const held = BigInt(state.nav.totalAssetsUsdc);
   const roomUsdc = (cap > held ? cap - held : BigInt(0)).toString();
   const capReached = roomUsdc === "0";
+  // A cap of zero is not "full", it is closed: the manager has wound the reserve down. Saying
+  // "at its deposit cap" there would suggest waiting for room that is never coming.
+  const closedToDeposits = cap === BigInt(0);
 
   // One action group, rendered in the desktop rail and again in the mobile flow.
   const actions = (
@@ -88,6 +91,8 @@ export function ActiveReserveScreen({
       </button>
       {!state.seeded ? (
         <p className="text-center text-muted-foreground text-xs">{COPY.actions.notSeeded}</p>
+      ) : closedToDeposits ? (
+        <p className="text-center text-muted-foreground text-xs">{COPY.actions.closed}</p>
       ) : capReached ? (
         <p className="text-center text-muted-foreground text-xs">{COPY.actions.capReached}</p>
       ) : null}

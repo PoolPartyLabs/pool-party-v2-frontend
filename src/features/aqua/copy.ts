@@ -86,6 +86,7 @@ export const COPY = {
     connect: "Connect a wallet to invest",
     notSeeded: "This reserve is not open for deposits yet.",
     capReached: "This reserve is at its deposit cap.",
+    closed: "This reserve is closed to new deposits.",
     walletBalance: "Wallet balance",
     youReceive: "You receive",
     approving: "Approving USDC",
