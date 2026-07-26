@@ -49,8 +49,46 @@ export function formatUsdc(raw: string | bigint): string {
   return `$${formatUnits(raw, 6, 2, 2)}`;
 }
 
+/** Where a token amount stops being legible: four places, unless four places would show nothing. */
+const WETH_FRACTION_DIGITS = 4;
+/** How much of a small amount to keep once four places are not enough. */
+const WETH_SIGNIFICANT_DIGITS = 2;
+
+/**
+ * Token amounts, truncated but never truncated away.
+ *
+ * A real fill of 0.00002 ETH rendered as `0 ETH` at a fixed four places. Truncation is the right
+ * direction for a balance, since a displayed amount must never exceed the real one, but rounding a
+ * purchase that definitely happened down to nothing is a different error: it does not overstate,
+ * it denies. On a page whose whole claim is that the numbers are real, that is the worse failure.
+ *
+ * So the fraction width is fixed at four places for anything that HAS four places, and only grows
+ * when it would otherwise render as zero. Then it keeps two significant digits, capped at the
+ * token's own 18, which makes one wei the floor rather than a special case. Ordinary balances are
+ * untouched: the column does not start showing 18 digits for everything because one row is small.
+ */
 export function formatWeth(raw: string | bigint): string {
-  return `${formatUnits(raw, 18, 4)} ETH`;
+  const value = typeof raw === "bigint" ? raw : BigInt(raw || "0");
+  const abs = value < BigInt(0) ? -value : value;
+  return `${formatUnits(raw, 18, wethFractionDigits(abs))} ETH`;
+}
+
+/** Digits needed so `abs` is visible: the default, or first-significant-digit plus significance. */
+function wethFractionDigits(abs: bigint): number {
+  if (abs === BigInt(0)) return WETH_FRACTION_DIGITS;
+  const base = BigInt(10) ** BigInt(18);
+  // Anything with a whole part, or a fraction reaching the default width, already renders.
+  if (abs >= base / BigInt(10) ** BigInt(WETH_FRACTION_DIGITS)) return WETH_FRACTION_DIGITS;
+
+  // Count leading zeros in the fractional part by walking the scale down. Integer-only, because
+  // a log on a bigint this size goes through a float and loses the very precision at stake.
+  let leadingZeros = 0;
+  let scale = base / BigInt(10);
+  while (scale > BigInt(0) && abs < scale) {
+    leadingZeros += 1;
+    scale /= BigInt(10);
+  }
+  return Math.min(leadingZeros + WETH_SIGNIFICANT_DIGITS, 18);
 }
 
 /**
