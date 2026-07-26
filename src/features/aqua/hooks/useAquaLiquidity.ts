@@ -5,7 +5,7 @@ import { useCallback, useMemo } from "react";
 import { createPublicClient, erc20Abi, http } from "viem";
 import { arbitrum } from "viem/chains";
 import type { FlowStep } from "@/features/strategies/hooks/useWalletSignFlow";
-import { CHAIN_ID_ARBITRUM, TOKENS } from "@/lib/aqua/config/addresses";
+import { CHAIN_ID_ARBITRUM, TOKENS } from "@/lib/aqua/config/public";
 import { useAuth } from "@/lib/auth/useAuth";
 import {
   executeBuiltTransaction,

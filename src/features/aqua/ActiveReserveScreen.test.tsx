@@ -1,5 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// The screen calls router.refresh() after a confirmed transaction, so the app router has to
+// exist. Only refresh is exercised here; the modal's own flow is covered by its unit tests.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }),
+}));
+
 import type { ActiveReserveState } from "@/lib/aqua/api/vaultState";
 import { ActiveReserveScreen } from "./ActiveReserveScreen";
 import { PRODUCT_DESCRIPTION, PRODUCT_NAME } from "./copy";
@@ -147,13 +154,18 @@ describe("ActiveReserveScreen: honest empty states (FE-R7)", () => {
 });
 
 describe("ActiveReserveScreen: the numbers", () => {
-  it("shows NAV and its three parts", () => {
+  /** The metric tile grid replaced the standalone NAV card, matching the strategy detail layout. */
+  it("shows the headline numbers in the metric tiles", () => {
     render(<ActiveReserveScreen state={liveState()} now={NOW} />);
-    const nav = screen.getByRole("region", { name: /total value/i });
-    expect(within(nav).getByText("$1,151.93")).toBeInTheDocument();
-    expect(within(nav).getByText("$190.00")).toBeInTheDocument();
-    expect(within(nav).getByText("$10.00")).toBeInTheDocument();
-    expect(within(nav).getByText(/0\.51 ETH/)).toBeInTheDocument();
+    // getAllBy because the action rail repeats TVL alongside the tile.
+    expect(screen.getAllByText("$1,151.93").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("$190.00").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/0\.51 ETH/).length).toBeGreaterThan(0);
+  });
+
+  it("states the 80 bps premium the program actually carries", () => {
+    render(<ActiveReserveScreen state={liveState()} now={NOW} />);
+    expect(screen.getByText("0.80%")).toBeInTheDocument();
   });
 
   it("splits the sleeves by the MEASURED ratio, not a claimed 90/10", () => {

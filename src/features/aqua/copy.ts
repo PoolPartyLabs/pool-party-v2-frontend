@@ -53,6 +53,59 @@ export const COPY = {
       "During the demo window these purchases are settlement proofs executed by our own wallet, not third-party demand. The interest earned on Aave is the external, real yield.",
   },
 
+  composition: {
+    title: "Composition",
+    live: "Read live from Arbitrum, so this is where the money is right now, not a target split.",
+  },
+
+  mandate: {
+    title: "Investment mandate",
+    assets: "Assets",
+    protocols: "Protocols",
+    networks: "Networks",
+  },
+
+  position: {
+    title: "Your position",
+    active: "Active",
+    value: "Current value",
+    shares: "Your share",
+    deposited: "Deposited",
+    empty: "You have not invested in this reserve yet.",
+  },
+
+  actions: {
+    add: "Add liquidity",
+    remove: "Remove liquidity",
+    addTitle: "Add liquidity",
+    removeTitle: "Remove liquidity",
+    amount: "Amount",
+    max: "Max",
+    confirmAdd: "Confirm deposit",
+    confirmRemove: "Confirm withdrawal",
+    connect: "Connect a wallet to invest",
+    notSeeded: "This reserve is not open for deposits yet.",
+    capReached: "This reserve is at its deposit cap.",
+    walletBalance: "Wallet balance",
+    youReceive: "You receive",
+    approving: "Approving USDC",
+    depositing: "Depositing",
+    withdrawing: "Withdrawing",
+    done: "Done",
+    addHelp:
+      "Your USDC is lent on Aave immediately and stands ready to buy ETH if the market dips into the band.",
+    removeHelp:
+      "Withdrawals pay out in USDC. Anything committed to a live band becomes available when it settles or the manager closes it.",
+  },
+
+  metrics: {
+    tvl: "Total value locked",
+    cap: "Deposit cap",
+    carry: "Earning on Aave",
+    epoch: "Band epoch",
+    fee: "Premium per fill",
+  },
+
   nav: {
     title: "Total value",
     help: "Cash plus what is lent out plus the ETH bought, valued at the current market price.",

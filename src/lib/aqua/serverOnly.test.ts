@@ -22,7 +22,19 @@ import {
  */
 
 const AQUA_ROOT = join(process.cwd(), "src/lib/aqua");
-const EXEMPT = new Set(["db/schema.ts"]);
+/**
+ * The two deliberate exemptions, each for a reason that must keep holding:
+ *
+ * `db/schema.ts` is read by drizzle-kit from a plain Node process to generate migrations. It
+ * declares table shapes only, holds no secret and opens no connection.
+ *
+ * `config/public.ts` is imported by the browser on purpose: deployed contract addresses and a
+ * chain id, needed to read a USDC allowance and to refuse the wrong chain. Public by
+ * definition and verifiable on Arbiscan.
+ *
+ * Both are asserted inert below, so an exemption cannot quietly grow a secret.
+ */
+const EXEMPT = new Set(["db/schema.ts", "config/public.ts"]);
 
 function moduleFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -45,9 +57,10 @@ describe("aqua module server-only guard", () => {
     const key = relative(AQUA_ROOT, file);
     const source = readFileSync(file, "utf8");
     if (EXEMPT.has(key)) {
-      // The exemption is only safe while the file stays inert.
+      // An exemption is only safe while the file stays inert: no env, no connection, no key.
       expect(source).not.toMatch(/process\.env/);
       expect(source).not.toMatch(/postgres\(/);
+      expect(source).not.toMatch(/PRIVATE_KEY|DATABASE_URL|privateKeyTo/);
       return;
     }
     expect(source).toMatch(/^import "server-only";/m);

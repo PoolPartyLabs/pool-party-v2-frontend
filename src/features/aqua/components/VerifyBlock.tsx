@@ -1,4 +1,4 @@
-import { AQUA_REGISTRY, AQUA_SWAP_VM_ROUTER } from "@/lib/aqua/config/addresses";
+import { AQUA_REGISTRY, AQUA_SWAP_VM_ROUTER } from "@/lib/aqua/config/public";
 import { COPY } from "../copy";
 import { arbiscanAddress, shortHash } from "../format";
 

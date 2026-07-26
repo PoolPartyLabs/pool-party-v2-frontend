@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
 import { ActiveReserveScreen } from "@/features/aqua/ActiveReserveScreen";
 import { PRODUCT_DESCRIPTION, PRODUCT_NAME } from "@/features/aqua/copy";
-import { readActiveReserveState } from "@/lib/aqua/api/vaultState";
+import { readActiveReserveState, readAquaPosition } from "@/lib/aqua/api/vaultState";
 
 /**
  * Active Reserve investor page (POO-1067).
@@ -20,12 +20,22 @@ export const metadata: Metadata = {
 
 export default async function ActiveReservePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
 
   const state = await readActiveReserveState();
-  return <ActiveReserveScreen state={state} now={new Date()} />;
+  // The investor's stake is read separately and may be absent: the page renders fully for a
+  // visitor with no wallet, and the position card simply does not appear.
+  const investor = await searchParams.then((q) => q.investor);
+  const position =
+    typeof investor === "string" && /^0x[0-9a-fA-F]{40}$/.test(investor)
+      ? await readAquaPosition(investor as `0x${string}`)
+      : null;
+
+  return <ActiveReserveScreen state={state} now={new Date()} position={position} />;
 }

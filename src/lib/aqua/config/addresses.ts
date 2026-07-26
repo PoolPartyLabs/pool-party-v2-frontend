@@ -11,26 +11,22 @@ import "server-only";
  * used. It is listed only so guards can assert against it.
  */
 
-export const CHAIN_ID_ARBITRUM = 42161;
-
-/** Gen 2: the live Aqua registry + AquaSwapVMRouter pair. Verified: router.AQUA() == registry. */
-export const AQUA_REGISTRY = "0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a" as const;
-export const AQUA_SWAP_VM_ROUTER = "0x1111113Db0e0ef9D0E3A50d5f094a3a57a26C0DE" as const;
+/**
+ * The public constants live in `./public` (no `server-only`) because the browser genuinely
+ * needs them: a USDC allowance read and a wrong-chain guard. They are re-exported here so
+ * server code keeps one import site and there is still a single source of truth per address.
+ */
+export {
+  AQUA_REGISTRY,
+  AQUA_SWAP_VM_ROUTER,
+  CHAIN_ID_ARBITRUM,
+  DECIMALS,
+  TOKENS,
+} from "./public";
 
 /** Gen 1: DEAD. Present so `assertNotDeadGeneration` can refuse it. */
 export const DEAD_GEN1_REGISTRY = "0x499943e74fb0ce105688beee8ef2abec5d936d31" as const;
 export const DEAD_GEN1_ROUTER = "0x8fdd04dbf6111437b44bbca99c28882434e0958f" as const;
-
-export const TOKENS = {
-  /** Native Arbitrum USDC, not USDC.e. */
-  USDC: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-  WETH: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-} as const;
-
-export const DECIMALS = {
-  USDC: 6,
-  WETH: 18,
-} as const;
 
 /** Chainlink ETH/USD, 8 decimals. Measured over 24h: 360 updates, median gap 121s, max 29.5 min. */
 export const CHAINLINK_ETH_USD = "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612" as const;
