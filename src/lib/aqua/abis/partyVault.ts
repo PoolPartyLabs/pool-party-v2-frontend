@@ -48,6 +48,13 @@ export const PARTY_VAULT_VIEW_ABI = [
   },
   {
     type: "function",
+    name: "OWNER",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "ADAPTER",
     inputs: [],
     outputs: [{ type: "address" }],
