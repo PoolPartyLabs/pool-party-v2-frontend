@@ -92,22 +92,31 @@ integer **strings**; formatting is the view layer's job.
 | Which bands exist | `bands[].strategyHash` | `PartyVault.activeStrategies()` |
 | Reserved to buy | `bands[].committedUsdc` | `AquaRegistry.rawBalances(vault, router, strategyHash, USDC)` on `0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a` |
 | ETH bought, per band | `bands[].acquiredWeth` | same call with the WETH address |
-| Band edges, epoch, deadline, ship tx (`shipTxHash` is null on this branch: nothing writes it yet, see `01_AQUA_INTEGRATION.md` section 7) | `bands[].lowE8` / `highE8` / `epoch` / `deadline` / `shipTxHash` | the `aqua_ships` row for that `strategyHash`, written at ship time by `scripts/aqua/strategy.ts` |
-| Purchases | `fills[]` | the `aqua_fills` table, newest first, capped at 25 |
-| Vault, adapter, 1inch contracts | `vault`, `adapter`, constants | `AQUA_VAULT_ADDRESS` env plus `PartyVault.ADAPTER()`; the 1inch pair comes from `src/lib/aqua/config/addresses.ts` |
+| Band edges, epoch, deadline, ship tx (`shipTxHash` is null: no ship tx was recorded) | `bands[].lowE8` / `highE8` / `epoch` / `deadline` / `shipTxHash` | **the one non-chain source on this page**: `src/lib/aqua/data/managerMetadata.ts`, the manager's own labels, committed |
+| Purchases | `fills[]` | `src/lib/aqua/data/managerMetadata.ts`, newest first, capped at 25. Every row is a real Arbitrum transaction and links to Arbiscan |
+| Vault, adapter, 1inch contracts | `vault`, `adapter`, constants | `NEXT_PUBLIC_AQUA_VAULT_ADDRESS` plus `PartyVault.ADAPTER()`; the 1inch pair comes from `src/lib/aqua/config/addresses.ts` |
 
 Three things about that table are worth stating plainly.
 
-**Band edges cannot be read from chain.** They were computed against the Chainlink spot of the moment
-the strategy was compiled, and the registry stores the program, not the price it was built against. So
-the edges come from our own `aqua_ships` record. A band with no matching record still renders its live
-money, with the geometry omitted rather than guessed.
+**Every value is live. Two labels are not, and they are the only two.** Read the provenance column
+again: every row resolves to an Arbitrum call except the band edges and the mandate name. Those were
+computed against the Chainlink spot of the moment the strategy was compiled, and the registry stores
+the program, not the price it was built against, so they cannot be recovered from chain at a sane cost.
 
-**Nothing on this branch writes `aqua_fills`.** `git grep -n "aquaFills" src scripts` returns the
-schema, the module barrel and the read in `vaultState.ts`, and no insert. Ship rows are written by
-`scripts/aqua/strategy.ts`; fill rows come from the taker and indexer side, which lives in the
-on-chain repository. An in-repo indexer is named as not built in
-[`03_PRE_EXISTING_VS_NEW.md`](03_PRE_EXISTING_VS_NEW.md).
+They come from `src/lib/aqua/data/managerMetadata.ts`, a committed fixture of what the strategy manager
+wrote at launch. On a normal Pool Party strategy that layer arrives from pool-party-api when the manager
+launches it, the same way `name` and `riskProfile` do. **This entry is built exclusively in the
+open-source repository and has no write path to that private API**, so for this one live, on-chain
+strategy the manager's values are committed to the codebase instead. The page states this itself, in the
+"What is live and what is not" block, rather than leaving it to this document.
+
+A band with no matching entry still renders its live money, with the geometry omitted rather than
+guessed (FE-R7).
+
+**The fills are real and self-directed.** Every row is an Arbitrum transaction that resolves on
+Arbiscan, and each was executed by the project's own taker against its own strategy: they prove the
+machine settles, not that there was organic demand. The page says exactly that above the list
+(`COPY.fills.selfDirected`) before showing a single row.
 
 **Money is never read from a cache.** The route sets `export const dynamic = "force-dynamic"` for
 exactly this reason (IDX-R2): a NAV served out of an ISR cache is a number that is not true on chain.
@@ -125,14 +134,14 @@ flowchart TD
     C["Chainlink ETH/USD<br/>latestRoundData"]
   end
 
-  DB[("Neon: aqua_ships, aqua_fills<br/>band edges, epochs, fills")]
+  MD[("data/managerMetadata.ts<br/>committed: band edges, mandate, fills")]
 
   V --> S
   A --> S
   R --> S
   T --> S
   C --> S
-  DB --> S
+  MD --> S
 
   S["readActiveReserveState()<br/>src/lib/aqua/api/vaultState.ts<br/>server-only, raw units as strings"]
   P["/[locale]/active-reserve/page.tsx<br/>force-dynamic, now = new Date()"]

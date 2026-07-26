@@ -70,15 +70,16 @@ const DOCS = [INDEX, PLAN, INTEGRATION, SURFACE, CONTINUITY, REFERENCES];
 const OTHER_PACKAGE = "docs/_hackathon";
 
 const ADDRESSES = "src/lib/aqua/config/addresses.ts";
+const PUBLIC_ADDRESSES = "src/lib/aqua/config/public.ts";
 const COMPILER = "src/lib/aqua/api/compiler/compile.ts";
 const COMPILER_TEST = "src/lib/aqua/api/compiler/compile.test.ts";
 const COPY = "src/features/aqua/copy.ts";
 const SCREEN = "src/features/aqua/ActiveReserveScreen.tsx";
-const ROUTE = "src/app/[locale]/active-reserve/page.tsx";
-const DEV_ROUTE = "src/app/[locale]/dev/active-reserve/page.tsx";
+const ROUTE = "src/app/[locale]/(auth)/(app)/active-reserve/page.tsx";
+const DEV_ROUTE = "src/app/[locale]/(auth)/(app)/dev/active-reserve/page.tsx";
 
 /** The directories the entry added, which is how `03` draws its boundary (there is no tag). */
-const ENTRY_ROOTS = ["src/lib/aqua", "src/features/aqua", "scripts/aqua", "drizzle/aqua"];
+const ENTRY_ROOTS = ["src/lib/aqua", "src/features/aqua", "scripts/aqua"];
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(join(ROOT, dir))) {
@@ -93,7 +94,10 @@ function walk(dir: string, out: string[] = []): string[] {
 // The facts, read from the module rather than restated
 // ---------------------------------------------------------------------------------------------
 
-const addressesSource = read(ADDRESSES);
+// The public half of the address set lives in `config/public.ts` (no `server-only`, because the
+// browser needs it) and is re-exported by `addresses.ts`. Reading both keeps this suite indifferent
+// to which side of that split a constant sits on, which is what it broke on before.
+const addressesSource = `${read(ADDRESSES)}\n${read(PUBLIC_ADDRESSES)}`;
 
 function moduleConstant(name: string): string {
   const match = addressesSource.match(new RegExp(`${name}\\s*=\\s*"(0x[0-9a-fA-F]+)"`));
@@ -513,24 +517,22 @@ describe("[R4] the investor page is read-only, and the copy is verbatim", () => 
     .concat([ROUTE, DEV_ROUTE])
     .filter((path) => /\.(ts|tsx)$/.test(path) && !/\.test\.tsx?$/.test(path));
 
-  it("ships no write surface at all in the feature or its routes", () => {
-    // Runtime-asserting "there is no deposit button" is asserting an absence, so this is a source
-    // guard: no client boundary, no control, no signing path. Any of these appearing is the
-    // moment the documents stop being true.
-    const forbidden = [
-      "use client",
-      "<button",
-      "<form",
-      "onClick",
-      "useWalletSignFlow",
-      "writeContract",
-      "sendTransaction",
-      "useSendTransaction",
-    ];
+  it("keeps every write behind a server action and the shared broadcast choke point", () => {
+    // This assertion used to read "ships no write surface at all", and it was correct when the
+    // page was read-only. The page now deposits and redeems, so the honest guard is not absence
+    // but SHAPE: no component may encode its own calldata or talk to a provider directly. Calldata
+    // is built in `operations/aquaActions.ts` (`"use server"`) and broadcast through
+    // `executeBuiltTransaction`, which is where the chain and account assertions live.
+    const BUILDER = "src/features/aqua/operations/aquaActions.ts";
+    expect(read(BUILDER)).toContain('"use server"');
+    expect(read(BUILDER)).toContain("encodeFunctionData");
+
     const offenders: string[] = [];
     for (const path of featureFiles) {
+      if (path === BUILDER) continue;
       const source = read(path);
-      for (const token of forbidden) {
+      // `encodeFunctionData` in a component means calldata built outside the server boundary.
+      for (const token of ["encodeFunctionData", "writeContract", "eth_sendTransaction"]) {
         if (source.includes(token)) offenders.push(`${path}: ${token}`);
       }
     }
@@ -732,10 +734,12 @@ describe("[R6] the reproduction instructions resolve", () => {
     expect(missing).toEqual([]);
   });
 
-  it("has the seven `aqua:*` scripts the continuity table counts", () => {
+  it("has the four `aqua:*` scripts the continuity table counts", () => {
+    // Was seven. The three `aqua:db:*` commands went with the database (see
+    // `src/lib/aqua/data/managerMetadata.ts` for why), leaving the four that build calldata.
     const aquaScripts = Object.keys(manifest.scripts).filter((name) => name.startsWith("aqua:"));
-    expect(aquaScripts).toHaveLength(7);
-    expect(read(CONTINUITY)).toContain(`Seven \`aqua:*\` scripts`);
+    expect(aquaScripts).toHaveLength(4);
+    expect(read(CONTINUITY)).toContain(`Four \`aqua:*\` scripts`);
     // Every command `01` documents in its CLI table is one of them.
     for (const script of aquaScripts) expect(read(INTEGRATION), script).toContain(`pnpm ${script}`);
   });
@@ -762,30 +766,33 @@ describe("[R6] the reproduction instructions resolve", () => {
     expect(read(INTEGRATION)).toContain("compiler 40");
   });
 
-  it("registers both server-only secrets with the committed build-output grep", () => {
+  it("registers the server-only secret with the committed build-output grep", () => {
     const check = read("scripts/bundle-secrets-check.ts");
-    for (const secret of ["AQUA_DATABASE_URL", "TAKER_BOT_PRIVATE_KEY"]) {
+    for (const secret of ["TAKER_BOT_PRIVATE_KEY"]) {
       expect(check, secret).toContain(secret);
       expect(read(".env.example"), secret).toContain(secret);
     }
     expect(read(PLAN)).toContain("scripts/bundle-secrets-check.ts");
   });
 
-  it("is right that `AQUA_VAULT_ADDRESS` is the disclosed gap, not a documented variable", () => {
-    // Both `00` and `01` disclose this rather than hide it, so the disclosure is checked in both
-    // directions: the variable really is absent from `.env.example`, and really is read directly.
-    expect(read(".env.example")).not.toContain("AQUA_VAULT_ADDRESS");
-    expect(read("src/lib/aqua/api/vaultState.ts")).toContain("AQUA_VAULT_ADDRESS");
+  it("documents the vault address as a public build-time variable, not a secret", () => {
+    // It moved from an undisclosed direct read to a documented NEXT_PUBLIC_ variable. Public by
+    // definition (a deployed address on Arbiscan) and needed by the browser, so it belongs in
+    // `.env.example` and NOT behind the server-only env accessor.
+    expect(read(".env.example")).toContain("NEXT_PUBLIC_AQUA_VAULT_ADDRESS");
+    expect(read("src/lib/aqua/api/vaultState.ts")).toContain("NEXT_PUBLIC_AQUA_VAULT_ADDRESS");
     expect(read("src/lib/aqua/config/env.ts")).not.toContain("AQUA_VAULT_ADDRESS");
     for (const doc of [PLAN, INTEGRATION]) {
       expect(read(doc), doc).toContain("AQUA_VAULT_ADDRESS");
     }
   });
 
-  it("is right that the drizzle config is scoped to the tables this entry created", () => {
-    expect(read("drizzle.config.ts")).toContain('tablesFilter: ["aqua_*"]');
-    for (const doc of [PLAN, REFERENCES]) {
-      expect(read(doc), doc).toContain('tablesFilter: ["aqua_*"]');
+  it("keeps the no-database claim true in the code, not just in the docs", () => {
+    // The feature used to carry Postgres. The docs now say it does not, and a doc that says so
+    // while a connection quietly survives is worse than no doc at all.
+    for (const file of ["src/lib/aqua/api/vaultState.ts", "scripts/aqua/strategy.ts"]) {
+      expect(read(file), file).not.toMatch(/drizzle|aquaDb|aqua_ships/);
     }
+    expect(read("src/lib/aqua/data/managerMetadata.ts")).toContain("SHIP_METADATA");
   });
 });

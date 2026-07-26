@@ -46,7 +46,7 @@ everything that compiles, records and displays.**
 | Signing | manager wallet, taker bot | never signs: emits `BuiltTx` payloads for a human wallet (SRV-R5) |
 | Canonical facts | `docs/VERIFIED.md` (addresses, measured on-chain evidence) | `src/lib/aqua/config/addresses.ts` mirrors it |
 | Business rules | `docs/01_BUSINESS_RULES.md` | implements them, each refusal names its rule |
-| Persistence | none | `aqua_ships`, `aqua_fills` on Postgres via Drizzle |
+| Persistence | none | none. Money from chain, manager labels from a committed fixture |
 | Investor surface | none | `/[locale]/active-reserve`, server-rendered, read live |
 
 ### The addresses this half is pinned to
@@ -85,13 +85,13 @@ second, then a documentation census and a defect fix.
 
 | Issue / commit | What shipped | Commit |
 |---|---|---|
-| **POO-1071** | Aqua server module scaffold, Drizzle schema, migration, CLI plumbing | `1d0311aa` (PR #664) |
+| **POO-1071** | Aqua server module scaffold and CLI plumbing | `1d0311aa` (PR #664) |
 | **POO-1061** | The program compiler: the only producer of Aqua programs and ship calldata | `1d0311aa` (PR #664) |
 | **POO-1067** | Active Reserve read-only investor page, live chain reads, dev preview | `fdf29729` |
 | (census) | `PP-INTEGRATION-POINT` count re-synced, 392 to 393 | `6be96fec` |
 | **POO-1061** (fix) | The compiler was omitting the `preTransferOut` hook, killing the JIT path | `3c5d630a` |
 
-### POO-1071, the server module scaffold and the database
+### POO-1071, the server module scaffold
 
 The module lives at `src/lib/aqua/` and is server-only end to end.
 
@@ -100,23 +100,19 @@ The module lives at `src/lib/aqua/` and is server-only end to end.
 | `src/lib/aqua/config/addresses.ts` | The single place the app learns an address. Mirrors Track A's `VERIFIED.md`. Also carries the measured maker-hook signature and selector. |
 | `src/lib/aqua/config/env.ts` | The only place server env is read (SRV-R4). Nothing here is ever `NEXT_PUBLIC_*`. |
 | `src/lib/aqua/chain/clients.ts` | viem public client and the taker signer, kept separate so a read path cannot accidentally require a key. |
-| `src/lib/aqua/db/schema.ts` | `aqua_ships` and `aqua_fills`. |
-| `src/lib/aqua/db/client.ts` | The only place a database connection is opened. Lazy and memoised, `max: 1`. |
+| `src/lib/aqua/data/managerMetadata.ts` | The manager-written labels for the live reserve, and the argument for why they are a committed fixture rather than a table. |
 | `src/lib/aqua/index.ts` | The module surface. |
 | `src/lib/aqua/README.md` | Module-level documentation, including the two things that bite. |
 | `src/lib/aqua/serverOnly.test.ts` | Enforces the `server-only` discipline mechanically. |
-| `drizzle.config.ts`, `drizzle/aqua/0000_eminent_speed.sql` | Schema generation scoped to `aqua_*`, and the one migration. |
-| `scripts/aqua/db-check.ts` | Tables exist, a write round-trips, money decodes as a string. Prints nothing that could leak the mirror. |
 
-Four repo-level changes came with it, and each exists for a reason worth stating:
+Three repo-level changes came with it, and each exists for a reason worth stating:
 
-- `scripts/bundle-secrets-check.ts` gained `AQUA_DATABASE_URL` and `TAKER_BOT_PRIVATE_KEY`. That script
-  greps the built output for server-only secret names, so registering them is what makes a leak into the
+- `scripts/bundle-secrets-check.ts` gained `TAKER_BOT_PRIVATE_KEY`. That script
+  greps the built output for server-only secret names, so registering it is what makes a leak into the
   client bundle a failing check rather than a discovery.
 - `vitest.config.ts` inlines `/@1inch\//`. The 1inch SDKs ship an ESM bundle with extensionless internal
   imports (`@1inch/byte-utils/dist/constants`), which Node's ESM resolver rejects. Next and `tsx`
   tolerate it already, so this is a Vitest-only accommodation.
-- `biome.json` excludes `drizzle`, which holds generated SQL and snapshots.
 - `.env.example` gained a documented Aqua section, values blank.
 
 ### POO-1061, the program compiler
@@ -291,35 +287,37 @@ against the tree by a committed test, which is exactly what it is for.
 
 Thin server actions delegate to an **internal API module**, `src/lib/aqua/api/`, which plays the role
 the REST API plays elsewhere. It owns persistence, on-chain orchestration and the domain services. It
-is the **only** layer allowed to touch Drizzle or viem for Aqua data. That is SRV-R1 v3, and
+is the **only** layer allowed to touch viem for Aqua data. That is SRV-R1 v3, and
 [`src/lib/aqua/README.md`](../../src/lib/aqua/README.md) is its module-level statement.
 
 ```mermaid
 flowchart TD
-  R["/[locale]/active-reserve<br/>src/app/[locale]/active-reserve/page.tsx"]
+  R["/[locale]/active-reserve<br/>src/app/[locale]/(auth)/(app)/active-reserve/page.tsx"]
   S["ActiveReserveScreen + components<br/>src/features/aqua/"]
+  W["Deposit / redeem<br/>operations/aquaActions.ts (use server)"]
   CLI["Manager CLI<br/>scripts/aqua/strategy.ts"]
 
   subgraph API["src/lib/aqua/ (server-only, SRV-R1 v3)"]
     V["api/vaultState.ts"]
     C["api/compiler/"]
     CH["chain/clients.ts (viem)"]
-    DB["db/client.ts (Drizzle)"]
+    MD["data/managerMetadata.ts<br/>(committed fixture)"]
     CFG["config/addresses.ts + config/env.ts"]
   end
 
   ARB["Arbitrum One<br/>PartyVault, Aqua registry, Aave, Chainlink"]
-  PG["Postgres<br/>aqua_ships, aqua_fills"]
 
   R --> V
   R --> S
+  S --> W
+  W --> ARB
   CLI --> C
-  CLI --> DB
+  CLI --> MD
   V --> CH
-  V --> DB
+  V --> MD
   C --> CFG
+  C --> CH
   CH --> ARB
-  DB --> PG
 ```
 
 ### Why
@@ -341,14 +339,14 @@ Three secondary reasons, all of which mattered inside a 20-hour window:
 
 ### How the boundary is enforced, not just documented
 
-`server-only` is load-bearing. Every file in the module except `db/schema.ts` imports it, which makes an
-accidental client import a **build error** rather than a leaked database URL. `db/schema.ts` is exempt
-because drizzle-kit reads it from a plain Node process to generate migrations. It declares table shapes,
-holds no secret and opens no connection.
+`server-only` is load-bearing. Every file in the module except `config/public.ts` imports it, which makes
+an accidental client import a **build error** rather than a leaked taker key. `config/public.ts` is
+exempt because the browser genuinely needs deployed addresses and a chain id, to read a USDC allowance
+before a deposit and to refuse the wrong chain. Everything in it is verifiable on Arbiscan.
 
-`src/lib/aqua/serverOnly.test.ts` (22 tests) enforces both the rule and the exemption mechanically:
-every module file carries the import, the exempt file is asserted to stay inert (no `process.env`, no
-`postgres(`), and `AQUA_DATABASE_URL` is asserted to be read nowhere outside `config/env.ts`.
+`src/lib/aqua/serverOnly.test.ts` enforces both the rule and the exemption mechanically: every module
+file carries the import, and the exempt file is asserted to stay inert (no `process.env`, no key-shaped
+identifier).
 
 One consequence worth knowing: scripts run the same server modules, so they need
 `tsx --conditions=react-server`. Without it the `server-only` marker resolves to the throwing build and
@@ -356,85 +354,39 @@ the script dies on import. Every `aqua:*` script in `package.json` carries the f
 
 ---
 
-## 4. The database
+## 4. Persistence: there is none, and that is the point
 
-Two tables, both created by `drizzle/aqua/0000_eminent_speed.sql`.
+An earlier revision of this entry carried two Postgres tables, `aqua_ships` and `aqua_fills`, behind
+Drizzle. They are gone. The reasoning is worth recording, because it is the first question a reviewer
+asks of an on-chain product that ships a database.
 
-### `aqua_ships`
+**Nothing the page displays as a value was ever in them.** NAV, the Aave carry, the hot buffer, the
+deposit cap, which strategies are active, how much USDC each band holds, how much WETH it has acquired
+and the Chainlink price are all read from Arbitrum on every request, uncached (IDX-R2). The tables held
+only the **descriptive** layer a manager writes at launch: which mandate they chose, and therefore what
+the band means in words.
 
-One row per ship. A docked `strategyHash` is dead forever (PRG-R10), so rows are never reused: a roll
-writes a **new** row with a new salt and marks the old one docked.
+For one live strategy inside a hackathon window, a table is a worse fixture than a file. It needs a
+connection string, a migration tool and a running Postgres to develop against, and it puts the labels
+somewhere no reviewer can read in the diff. They now live in `src/lib/aqua/data/managerMetadata.ts`,
+committed, with their provenance and their arithmetic in the header.
 
-| Column group | Columns | Why |
-|---|---|---|
-| Identity | `strategy_hash` (unique), `maker`, `app`, `mandate` | `strategy_hash` is the identity Aqua stores. |
-| Program | `program_hex`, `order_bytes` | The bare SwapVM program and the ABI-encoded Order that wraps it. |
-| Epoch | `epoch`, `salt`, `deadline` | `salt == epoch id`. Every roll must change it. |
-| Band | `spot_e8`, `band_low_e8`, `band_high_e8` | The band as built, plus the Chainlink spot it was built against. Not recoverable from chain. |
-| Money | `shipped_usdc`, `shipped_weth` | The empty side is 0 but still registered (PRG-R2). |
-| Lifecycle | `status`, `ship_tx_hash`, `dock_tx_hash`, `shipped_at`, `docked_at` | |
-| Reproducibility | `mandate_snapshot` (jsonb) | The mandate the compiler was given, verbatim, so a ship can be rebuilt. |
+### Why the labels are local at all
 
-Indexes: unique on `strategy_hash`, composite on `(maker, status)`.
+On a normal Pool Party strategy this layer arrives from pool-party-api when the manager launches it,
+exactly the way `name`, `logo_url` and `riskProfile` reach a strategy card. That path is real and
+shipped; it is simply not reachable from here.
 
-### `aqua_fills`
+**This entry is built exclusively in the open-source repository**, which has no write path to that
+private API. Building a second metadata service nobody would keep, purely to satisfy the form of the
+thing, would have been worse than saying plainly what was done: for this one strategy, which is live and
+on-chain, the values a manager would have typed into our console are committed to the codebase instead.
+No rule is bent. The money is real and verifiable on Arbiscan; only the labels are local, and the page
+says so itself in `COPY.provenance` rather than leaving it to this document.
 
-One row per settled fill, keyed by `(tx_hash, log_index)` **unique**, so replaying a block range is
-idempotent and can never double-count a fill.
+The removal path is a file delete: `BandView` and `FillView` do not change shape, so when the console
+learns to write Aqua metadata the read swaps to `apiFetch` and nothing downstream moves.
 
-Beyond the obvious transfer columns it carries `mark_price_e8` (Chainlink at fill time, for attribution,
-IDX-R4) and the pair that matters most here: `jit_unparked` and `jit_amount`, true when settlement had
-to unpark from the carry adapter because the fill exceeded the hot buffer and the maker hook fired.
-`FillsFeed` renders that flag as its badge.
-
-### Money is a string, never a number
-
-Token amounts are raw integer units in `numeric(78,0)` columns (78 digits covers `uint256`) and Drizzle
-returns them as strings. Parse to `bigint`, do the arithmetic there, store the string back. A JS
-`number` anywhere in this path silently loses precision on any realistic WETH amount. The repo targets
-ES2017, so bigints are built with `BigInt(...)` rather than `0n` literals.
-
-### Why the schema is deliberately additive
-
-The target is a **Neon mirror of production**, which already carries the real `pool-party-api` schema.
-Two consequences:
-
-1. `drizzle.config.ts` sets `tablesFilter: ["aqua_*"]`. Without that filter drizzle-kit would read the
-   mirrored `pool-party-api` tables as "not in my schema" and generate `DROP` statements for them.
-   Scoped as it is, **a generated migration can only ever touch tables we created**.
-2. Nothing existing is altered. No column is added to a `pool-party-api` table, no type is widened, no
-   constraint is relaxed. The Aqua work is a strictly additive pair of `aqua_`-prefixed tables, which is
-   what makes it safe to run against a mirror and trivial to drop afterwards.
-
-Scope is deliberately **two** tables for the window. `aqua_mandates`, `aqua_nav_snapshots` and
-`aqua_keeper_log` are designed but deferred: the status script and the page read live state from chain
-rather than a stored series, so nothing in the demo needs them.
-
-### The security rule
-
-**The connection string never leaves a local env file.** `AQUA_DATABASE_URL` points at a mirror of
-production data, so it is treated as a production credential:
-
-- It lives only in `.env.local`, which is gitignored. `.env.example` documents it with a blank value.
-- It is read through `aquaDatabaseUrl()` in `src/lib/aqua/config/env.ts` and **nowhere else**, asserted
-  by `serverOnly.test.ts`.
-- It is never logged and never surfaced in an error message. `scripts/aqua/db-check.ts` prints table
-  names and a pass/fail, nothing that could leak the mirror's contents or its URL.
-- It is registered in `scripts/bundle-secrets-check.ts`, so `pnpm secrets:check` greps the built output
-  for it and fails the gate if it ever reaches the client bundle.
-- It is rotated after the event.
-
-`TAKER_BOT_PRIVATE_KEY` gets the same treatment. It is the taker bot's own wallet holding only its
-working capital, never the manager or keeper key (BOT-R4).
-
-Server env used by this half:
-
-| Variable | Required | Purpose |
-|---|---|---|
-| `AQUA_DATABASE_URL` | for any Aqua path | Postgres holding the `aqua_*` tables. Unset means every Aqua path throws on first use; the rest of the app is unaffected. |
-| `ARBITRUM_RPC_URL` | no | Defaults to the public Arbitrum endpoint. Fine for reads, rate-limited. Set a private one before running the taker. |
-| `TAKER_BOT_PRIVATE_KEY` | taker only | Unset means the taker refuses to run; read-only paths still work. |
-| `AQUA_VAULT_ADDRESS` | investor page | Unset means the page renders its honest "not deployed yet" state. Read in `src/lib/aqua/api/vaultState.ts`. **Not yet documented in `.env.example` and not yet routed through `config/env.ts`.** See §7. |
 
 ---
 
@@ -444,12 +396,11 @@ Server env used by this half:
 |---|---|---|---|
 | 1 | Mirror `VERIFIED.md` into `config/addresses.ts`, with the dead-gen-1 guard | POO-1071 | Every later step could name an address without re-deriving it, and could not accidentally target gen 1. |
 | 2 | `server-only` env access and viem clients | POO-1071 | Any chain read at all, with the secret boundary already closed rather than retrofitted. |
-| 3 | Drizzle schema, `tablesFilter`, migration, `aqua:db:check` | POO-1071 | A place to record a ship. Without it the compiler would have had nowhere to write, and coverage (PRG-R6) could not be computed across strategies. |
-| 4 | Register the two secrets in `bundle-secrets-check.ts` | POO-1071 | `pnpm secrets:check` became meaningful for this module from the first commit, not after the fact. |
-| 5 | Band math (`band.ts`), pinned against live ship #0 | POO-1061 | Correct decimals. Getting the pair ordering or the 1e18 conversion wrong produces a band nowhere near the market **and no error anywhere**, so this had to be right before anything was compiled. |
-| 6 | `compile()` with PRG-R1 v3 and every guardrail | POO-1061 | The launch payloads, and the byte-level pin against the measured opcode table. |
-| 7 | `roll.ts` (dock and roll) | POO-1061 | Epoch rotation without re-shipping a dead hash, which reverts with `StrategiesMustBeImmutable`. |
-| 8 | `context.ts` (spot with staleness gate, already-shipped, next epoch) | POO-1061 | The CLI could compile against live state. The compiler stayed pure and testable without a chain or a database. |
+| 3 | Register the taker secret in `bundle-secrets-check.ts` | POO-1071 | `pnpm secrets:check` became meaningful for this module from the first commit, not after the fact. |
+| 4 | Band math (`band.ts`), pinned against live ship #0 | POO-1061 | Correct decimals. Getting the pair ordering or the 1e18 conversion wrong produces a band nowhere near the market **and no error anywhere**, so this had to be right before anything was compiled. |
+| 5 | `compile()` with PRG-R1 v3 and every guardrail | POO-1061 | The launch payloads, and the byte-level pin against the measured opcode table. |
+| 6 | `roll.ts` (dock and roll) | POO-1061 | Epoch rotation without re-shipping a dead hash, which reverts with `StrategiesMustBeImmutable`. |
+| 7 | `context.ts` (spot with staleness gate, already-shipped, next epoch) | POO-1061 | The CLI could compile against live state. The compiler stayed pure and testable without a chain. |
 | 9 | `scripts/aqua/strategy.ts` (`ship`, `roll`, `dock`, `launch-payloads`) | POO-1061 | The manager surface for the window, and the S2 deliverable: both bands sized so the combined ship stays inside one sleeve. |
 | 10 | Commit ABI artifacts plus narrow `as const` slices | POO-1067 | Typed chain reads. Without the sync test a renamed view would still compile and only fail against mainnet, during the demo. |
 | 11 | `api/vaultState.ts` | POO-1067 | One server-side assembly of NAV, sleeves, bands and fills, returning a discriminated state instead of zeros. |
@@ -467,11 +418,11 @@ Stated plainly, because an undisclosed cut reads as an overclaim.
 
 | Cut | Why | What runs instead |
 |---|---|---|
-| **Manager UI** (POO-1068) | A console screen for ship/roll/dock is a multi-day surface, and none of the demo depends on a manager clicking rather than typing. The compiler and its guardrails are the part that had to be right. | `scripts/aqua/strategy.ts`, run as `pnpm aqua:ship`, `pnpm aqua:roll`, `pnpm aqua:dock`, `pnpm aqua:launch-payloads`. It compiles, checks policy, records the intent as `pending`, and prints calldata for a wallet to sign. It signs nothing (SRV-R5). |
+| **Manager UI** (POO-1068) | A console screen for ship/roll/dock is a multi-day surface, and none of the demo depends on a manager clicking rather than typing. The compiler and its guardrails are the part that had to be right. | `scripts/aqua/strategy.ts`, run as `pnpm aqua:ship`, `pnpm aqua:roll`, `pnpm aqua:dock`, `pnpm aqua:launch-payloads`. It compiles, checks policy, prints calldata for a wallet to sign, and prints the metadata block to commit. It signs nothing (SRV-R5). |
 | **`aquaStrategies` flag and main-catalogue integration** | Putting Active Reserve in the strategies list means a protocol discriminator across the catalogue, the detail route, the invest and withdraw flows and their mocks. That is a refactor of shared surfaces, and doing it in the window would have put the rest of the product at risk for no demo benefit. | A standalone route, `/[locale]/active-reserve`, ungated. The integration is explicitly post-hackathon, recorded in [`docs/_integration/06_aqua_strategies/README.md`](../_integration/06_aqua_strategies/README.md). |
-| **Keeper loop** (automatic epoch roll) | Epochs are 3 days. The demo window is shorter than one epoch, so an automated roller would never have fired, and an unfired scheduler is untested code carrying the authority to move money. | Manual `pnpm aqua:roll`, with PRG-R10 enforced twice: the epoch must advance, **and** the resulting hash must differ from the docked one. `aqua_keeper_log` is designed and deferred. |
-| **Deposit and redeem on the investor page** | Shipping a control that does not work is worse than shipping no control. | Read-only page. The write flows are the second cut and would ride the repo's existing pattern (server builds calldata, client signs) through `useWalletSignFlow`. |
-| **`aqua_mandates`, `aqua_nav_snapshots`, `aqua_keeper_log`** | The page and the status script read live state from chain, so a stored series buys nothing for the demo and a NAV table would invite serving a cached number, which IDX-R2 forbids. | Two tables. Chain is the source for money, the database only for what chain cannot tell us cheaply (which mandate a hash belongs to, and the band it was built against). |
+| **Keeper loop** (automatic epoch roll) | Epochs are 3 days. The demo window is shorter than one epoch, so an automated roller would never have fired, and an unfired scheduler is untested code carrying the authority to move money. | Manual `pnpm aqua:roll`, with PRG-R10 enforced twice: the epoch must advance, **and** the resulting hash must differ from the docked one. A keeper log is designed and deferred. |
+| **Deposit and redeem on the investor page** | Was cut, then landed. | SHIPPED. `operations/aquaActions.ts` builds the calldata in a `"use server"` action, `hooks/useAquaLiquidity.ts` runs approve-then-deposit as ordered steps, and `executeBuiltTransaction` broadcasts with the chain and account assertions every other operation uses. |
+| **Any persistence at all** | The page reads live state from chain, so a stored series buys nothing for the demo and a NAV table would invite serving a cached number, which IDX-R2 forbids. | No database. Chain is the source for money; the two fields chain cannot cheaply give us (mandate name and band edges in USD) are a committed fixture. See §4. |
 | **11-locale i18n** | The repo's standing rule is i18n from day zero across 11 locales. This surface is EN-only for the window, by explicit re-scope on POO-1067. | `src/features/aqua/copy.ts` holds every string in one module, so the port is a mechanical extraction rather than a component sweep. Flagged in §7 as an open gap, not as done. |
 | **In-vault oracle staleness gate** (VLT-R4) | Contract-side work, and out of this half's scope. | Off-chain checks on both paths: `context.readSpot()` refuses to build a band past 90 minutes (D9), and the page renders a stale-price warning instead of presenting the numbers as current. Measured max gap between Chainlink updates over 24h was 29.5 minutes, so the bound has room. |
 
@@ -484,7 +435,7 @@ Stated plainly, because an undisclosed cut reads as an overclaim.
 | Suite | Tests | What it locks |
 |---|---|---|
 | `src/lib/aqua/api/compiler/compile.test.ts` | 40 | Band math, PRG-R1 v3 byte order, the 80 bps encoding (`007a1200` at 1e9 scale), the `preTransferOut` hook and Aqua-mode traits, cross-producer equivalence with Track A, and one failing input per guardrail (PRG-R2/R3/R4/R5/R6/R9/R10). |
-| `src/lib/aqua/serverOnly.test.ts` | 22 | The `server-only` discipline, the `db/schema.ts` exemption staying inert, `AQUA_DATABASE_URL` read in one place, the gen-2 pair, the dead-gen-1 refusal, and the maker-hook selector derived from its signature. |
+| `src/lib/aqua/serverOnly.test.ts` | 21 | The `server-only` discipline, the `config/public.ts` exemption staying inert, the gen-2 pair, the dead-gen-1 refusal, and the maker-hook selector derived from its signature. |
 | `src/features/aqua/format.test.ts` | 20 | Exact bigint formatting, including a value one wei short of 1000 ETH, and truncation so a displayed balance never exceeds the real one. |
 | `src/features/aqua/ActiveReserveScreen.test.tsx` | 20 | FE-R10 verbatim copy and its 277 characters, FE-R6 vocabulary, FE-R7 empty states, the measured sleeve split, band placement below spot, the countdown, Arbiscan links, the JIT badge, and the self-directed disclosure. |
 | `src/lib/aqua/abis/abis.test.ts` | 9 | The narrow `as const` ABI matches the published artifact signature for signature, only view functions are declared, and the artifact carries the measured 9-argument `preTransferOut`. |
@@ -496,7 +447,7 @@ Stated plainly, because an undisclosed cut reads as an overclaim.
 
 ```bash
 pnpm install
-pnpm vitest run src/lib/aqua src/features/aqua   # 111 tests, 5 files, no network and no database
+pnpm vitest run src/lib/aqua src/features/aqua   # 157 tests, 8 files, no network and no database
 pnpm typecheck
 pnpm lint
 pnpm secrets:check                                # the server-only secret boundary
@@ -508,15 +459,16 @@ page tests render from fixtures. To see the page:
 ```bash
 pnpm dev
 # http://localhost:3000/en/dev/active-reserve   fixture preview of the live layout, 404s in production
-# http://localhost:3000/en/active-reserve       the real page; "not deployed yet" unless AQUA_VAULT_ADDRESS is set
+# http://localhost:3000/en/active-reserve       the real page; "not deployed yet" unless the vault is set
+#
+# Both need NEXT_PUBLIC_FEATURE_ACTIVE_RESERVE=true (dark-launched) and
+# NEXT_PUBLIC_AQUA_VAULT_ADDRESS=<a deployed PartyVault>. Off, they 404.
 ```
 
-The database and CLI paths need `.env.local`:
+The CLI needs `.env.local` (an RPC endpoint; no key, since it signs nothing):
 
 ```bash
-pnpm aqua:db:migrate
-pnpm aqua:db:check                                        # tables exist, a write round-trips, money decodes as a string
-pnpm aqua:ship --mandate demo --vault 0x... --dry-run     # compiles and prints calldata, writes nothing
+pnpm aqua:ship --mandate demo --vault 0x...   # compiles, prints calldata and the metadata block to commit
 ```
 
 Everything on chain is checkable without this repo. Both contracts are source-verified on Arbiscan, and

@@ -131,7 +131,7 @@ the other. The two folders even use the same file numbering (`00_IMPLEMENTATION_
 |---|---|
 | `README.md` (this file) | The facts, the repository split, and how to run what is here |
 | [`00_IMPLEMENTATION_PLAN.md`](00_IMPLEMENTATION_PLAN.md) | What was built on this branch, issue by issue, with the business rules each one implements |
-| [`01_AQUA_INTEGRATION.md`](01_AQUA_INTEGRATION.md) | The server module: which SDK calls are made, how the program compiler works and what it refuses, the chain reads, and the database |
+| [`01_AQUA_INTEGRATION.md`](01_AQUA_INTEGRATION.md) | The server module: which SDK calls are made, how the program compiler works and what it refuses, the chain reads, and where the manager labels come from |
 | [`02_INVESTOR_SURFACE.md`](02_INVESTOR_SURFACE.md) | The Active Reserve page: components, data flow from Arbitrum to pixels, and the copy rules that govern it |
 | [`03_PRE_EXISTING_VS_NEW.md`](03_PRE_EXISTING_VS_NEW.md) | Continuity: what pre-dates the hackathon and what was built during it, at file level |
 | [`04_REFERENCES.md`](04_REFERENCES.md) | Every reference, dependency and attribution, with links |
@@ -148,13 +148,13 @@ Worth opening alongside them:
 
 ## 5. How to run what is here
 
-Every command below runs offline. The test suites need no RPC endpoint, no database and no
+Every command below runs offline. The test suites need no RPC endpoint and no
 private key, because everything they assert is either pure computation or source text.
 
 | Command | What it proves |
 |---|---|
 | `pnpm test src/lib/aqua/api/compiler` | The compiler emits `[deadline][concentrate][flatFee][xycSwap][salt]` and nothing else, encodes 80 bps as the literal bytes `007a1200` at the 1e9 scale, declares the `preTransferOut` hook, ships both tokens with the base side at 0, and refuses every out-of-policy input (band at or above spot, ship above the sleeve or above `maxPerShip`, coverage below 1.0, a re-used epoch, the dead gen-1 registry). It also proves byte-identical output against the independent launch-payload builder, for both shipped bands, and therefore the same `strategyHash`. |
-| `pnpm test src/lib/aqua/serverOnly.test.ts` | Every module in `src/lib/aqua/` imports `server-only` (with the documented `db/schema.ts` exemption for drizzle-kit), `AQUA_DATABASE_URL` is read in exactly one file, the gen-2 pair is what the app uses, the dead gen-1 pair is refused case-insensitively, and the published maker-hook selector really is the keccak of the published 9-argument signature. |
+| `pnpm test src/lib/aqua/serverOnly.test.ts` | Every module in `src/lib/aqua/` imports `server-only` (with the documented `config/public.ts` exemption the browser needs, asserted inert), the gen-2 pair is what the app uses, the dead gen-1 pair is refused case-insensitively, and the published maker-hook selector really is the keccak of the published 9-argument signature. |
 | `pnpm test src/lib/aqua/abis` | The narrow ABI the page reads with matches the committed PartyVault artifact, declares view functions only, and carries the measured maker hook, so the vault we read is the vault Aqua calls. |
 | `pnpm test src/features/aqua` | The page renders the official name and the description verbatim at its 277 characters, keeps maker/taker/opcode vocabulary off an investor surface, hides a section rather than showing zeros when its data is missing, warns on a stale price feed, links every fill and every contract to Arbiscan, discloses that window fills are self-directed, and formats money through bigint arithmetic that truncates rather than rounds. |
 | `pnpm typecheck` | `tsc --noEmit` over the whole repository, including the module and the page. |
@@ -176,7 +176,7 @@ anyway: it renders the same component from clearly synthetic fixtures, prints a 
 and calls `notFound()` in production. Nothing there feeds the real page.
 
 The manager CLI (`scripts/aqua/strategy.ts`, exposed as `pnpm aqua:ship`, `aqua:roll`,
-`aqua:dock`, `aqua:launch-payloads`) and `pnpm aqua:db:check` do need server env, so they are not
+`aqua:dock`, `aqua:launch-payloads`) do need an RPC endpoint, so they are not
 part of the offline path. The CLI never signs: it compiles, checks policy, records the intent and
 prints calldata for a wallet to sign, which is why the manager key never reaches the process.
 
@@ -197,7 +197,7 @@ What this half is, and what it deliberately is not:
   user-facing string to go through `useTranslations`. Active Reserve copy is a plain module
   (`src/features/aqua/copy.ts`) for the hackathon window, and the locale port is post-event. This
   is a known, recorded deviation, not an oversight.
-- **The database scope is two tables.** `aqua_ships` and `aqua_fills`. The designed
+- **There is no database.** See `00_IMPLEMENTATION_PLAN.md` section 4. The designed
   `aqua_mandates`, `aqua_nav_snapshots` and `aqua_keeper_log` are deferred, because state is read
   live from chain rather than from a stored series.
 - **Fills during the demo window are self-directed.** They are settlement proofs executed by our

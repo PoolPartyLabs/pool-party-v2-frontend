@@ -19,9 +19,9 @@ that carries it.
 |---|---|
 | Chain | Arbitrum One (42161), mainnet only. There is no testnet path in this module. |
 | Transport | viem `createPublicClient` over `ARBITRUM_RPC_URL` (default `https://arb1.arbitrum.io/rpc`) |
-| Persistence | Drizzle over `postgres`, two `aqua_*` tables on a Neon mirror of production |
+| Persistence | none. Money from chain on every request; the manager's labels are a committed fixture (section 3.1) |
 | SDKs | `@1inch/swap-vm-sdk@0.3.0`, `@1inch/aqua-sdk@0.2.0`, `@1inch/sdk-core@0.1.2`, all pinned exact in `package.json` |
-| Boundary | every module file imports `server-only`; the browser never reaches Arbitrum, Aqua or the database |
+| Boundary | every module file imports `server-only`; the browser never reaches Arbitrum or Aqua |
 | Tests | 71 across 3 files, green: `pnpm test src/lib/aqua` (compiler 40, boundary and addresses 22, ABIs 9) |
 | Module docs | [`src/lib/aqua/README.md`](../../src/lib/aqua/README.md) |
 
@@ -31,16 +31,14 @@ that carries it.
 
 Fifteen non-test TypeScript files. The rule that shapes the layout is SRV-R1: this module plays the
 role `pool-party-api` plays for the rest of the app, so it owns persistence, chain orchestration and
-the domain services, and nothing above it touches Drizzle or viem for Aqua data.
+the domain services, and nothing above it touches viem for Aqua data.
 
 | File | What it does | What it may talk to |
 |---|---|---|
-| `index.ts` | The module's public surface: re-exports clients, address constants, the database handle and the two table types. Carries the `PP-INTEGRATION-POINT` marker for the whole module. | nothing directly |
+| `index.ts` | The module's public surface: re-exports clients and address constants. Carries the `PP-INTEGRATION-POINT` marker for the whole module. | nothing directly |
 | `config/addresses.ts` | Canonical Arbitrum addresses, decimals, the measured maker-hook signature and selector, the hook payload, and `assertNotDeadGeneration`. Mirrors `docs/VERIFIED.md` upstream. | nothing (pure constants) |
-| `config/env.ts` | The only place server env is read (SRV-R4): `aquaDatabaseUrl()`, `arbitrumRpcUrl()`, `takerPrivateKey()`, `hasTakerKey()`. | `process.env` |
+| `config/env.ts` | The only place server env is read (SRV-R4): `arbitrumRpcUrl()`, `takerPrivateKey()`, `hasTakerKey()`. | `process.env` |
 | `chain/clients.ts` | Memoised viem public client, plus a separate wallet client for the taker key so read paths cannot accidentally require a signer. | Arbitrum RPC |
-| `db/schema.ts` | Drizzle table shapes for `aqua_ships` and `aqua_fills`, plus their inferred row types. | nothing (declarations only) |
-| `db/client.ts` | The only place a database connection is opened. Lazy, memoised, `max: 1`, with an explicit `closeAquaDb()` for scripts. | Postgres (Neon mirror) |
 | `abis/partyVault.ts` | Narrow `as const` ABIs for the views the app actually calls: PartyVault, the carry adapter, Aqua `rawBalances`, the Chainlink feed. | nothing (declarations only) |
 | `abis/*.json` | Committed artifacts exported from the contracts repo: `PartyVault.json`, `AaveV3Adapter.json`, `ICarryAdapter.json`. | nothing |
 | `api/compiler/types.ts` | The frozen `Mandate`, `CompileContext` and `CompileResult` shapes. | nothing |
@@ -48,8 +46,8 @@ the domain services, and nothing above it touches Drizzle or viem for Aqua data.
 | `api/compiler/band.ts` | Band math: address ordering, the Chainlink-to-raw-price conversion, and the SDK's sqrt-price constructor. | `@1inch/swap-vm-sdk` |
 | `api/compiler/compile.ts` | The only producer of Aqua programs and ship calldata. Every guardrail lives here. | `@1inch/swap-vm-sdk`, `@1inch/aqua-sdk`, `@1inch/sdk-core`, viem `keccak256` |
 | `api/compiler/roll.ts` | `buildDock` and `buildRoll`, and the salt-must-change refusal. | `@1inch/aqua-sdk` |
-| `api/compiler/context.ts` | Assembles the live inputs a compile needs: fresh Chainlink spot with a staleness gate, already-shipped total, next epoch. | Arbitrum RPC, database |
-| `api/vaultState.ts` | Everything the read-only investor page shows, assembled server side. | Arbitrum RPC, database |
+| `api/compiler/context.ts` | Assembles the live inputs a compile needs: fresh Chainlink spot with a staleness gate, already-shipped total, next epoch. All three read from chain. | Arbitrum RPC |
+| `api/vaultState.ts` | Everything the investor page shows, assembled server side. Money from chain, manager labels from `data/managerMetadata.ts`. | Arbitrum RPC |
 
 ### 1.1 The server-only boundary, and the test that enforces it
 
@@ -59,13 +57,11 @@ putting the import on every file, so `src/lib/aqua/serverOnly.test.ts` checks it
 walks the module tree, and for each non-test `.ts` file asserts the source starts with
 `import "server-only";`.
 
-One file is exempt: `db/schema.ts`. drizzle-kit reads it from a plain Node process to generate
-migrations, so the guard would break the tooling. The exemption is not a hole, because the test
-enforces the conditions that make it safe: the exempt file must contain no `process.env` and no
-`postgres(` call. The module that actually opens a connection, `db/client.ts`, carries the guard.
-
-The same suite asserts that `AQUA_DATABASE_URL` appears in no file except `config/env.ts`, so the
-credential has exactly one reader.
+One file is exempt: `config/public.ts`. The browser genuinely needs the deployed Aqua addresses, the
+Arbitrum chain id and the USDC address, because it reads a USDC allowance before a deposit and
+refuses the wrong chain. The exemption is not a hole, because the test enforces the conditions that
+make it safe: the exempt file must contain no `process.env` and no key-shaped identifier. Everything
+public in it is verifiable on Arbiscan.
 
 The boundary has a practical consequence for tooling. Under `--conditions=react-server` the marker
 resolves to a no-op; without it, it resolves to the throwing build. Every `pnpm aqua:*` script that
@@ -82,9 +78,9 @@ into the exact bytes a manager signs. Every platform guardrail is enforced here 
 review, so an out-of-policy program cannot be built at all, and every refusal names the rule that
 caused it (`CompilerPolicyError`, which prefixes its message with `PRG-R3`, `PRG-R5` and so on).
 
-`compile()` is a pure function of its arguments. The chain reads and database reads it needs are in
+`compile()` is a pure function of its arguments. The chain reads it needs are in
 a separate file (`context.ts`) precisely so the compiler stays deterministic and testable without a
-node or a database, which is what makes the byte-level assertions in `compile.test.ts` possible.
+node, which is what makes the byte-level assertions in `compile.test.ts` possible.
 
 ### 2.1 The mandate
 
@@ -371,7 +367,7 @@ identical `strategyHash`. That test is how the missing `preTransferOut` hook was
 shape it:
 
 - **IDX-R2: money is always read fresh.** Every monetary number on the page comes from Arbitrum on
-  the request, never from a cache and never from our own database. The page is `force-dynamic` for
+  the request, never from a cache and never from a stored copy. The page is `force-dynamic` for
   the same reason.
 - **FE-R7: missing real data hides the section.** The function returns a discriminated state
   (`not-launched` or `live`) rather than zeros, so the page can never present an invented number as
@@ -412,19 +408,30 @@ Notes that matter when reading the numbers:
   price is a strategy at the wrong level. The bound has room: measured over 24 hours the feed
   updated 360 times, median gap 121 seconds, maximum gap 29.5 minutes.
 
-### 3.1 What comes from the database instead, and why
+### 3.1 What does not come from chain, and why
 
-The database is used only for what chain cannot tell us cheaply. Band edges were computed against
-the Chainlink spot of the moment the strategy was built and are not recoverable from the encoded
-sqrt prices without re-deriving them, so `readBands` joins the on-chain `activeStrategies` list
-against `aqua_ships` on `strategyHash` to recover `mandate`, `bandLowE8`, `bandHighE8`, `spotE8`,
-`epoch`, `deadline` and `shipTxHash`. **The money on each band is still read live.**
+Two fields per band are not recoverable from Arbitrum at a sane cost: **which mandate** the manager
+picked, and **the band edges in USD**. The edges were computed against the Chainlink spot of the
+moment the strategy was built, and what the chain stores is the encoded sqrt price, not the dollar
+range a human agreed to. Re-deriving them means replaying the compiler against a historical price.
 
-FE-R7 applies to the join too: a band with no ship record is still shown with its live balances, but
-its edges come back as empty strings and its mandate as `"unknown"` rather than being guessed.
+Those two fields, and nothing else, come from `src/lib/aqua/data/managerMetadata.ts`: a committed
+fixture of what the strategy manager wrote at launch. **The money on each band is still read live**,
+from `rawBalances` on the Aqua registry, on every request.
 
-The fills feed (`readFills`, most recent 25 by block timestamp) is entirely a database read, joined
-to `aqua_ships` for the mandate name. It is history, not money.
+That file's header explains the choice in full. In short: on a normal Pool Party strategy this layer
+arrives from pool-party-api when the manager launches it, the same way `name` and `riskProfile` do.
+This entry is built exclusively in the open-source repository and has no write path to that private
+API, so for the one live strategy the labels are committed to the codebase instead. The page says so
+itself (`COPY.provenance`), rather than leaving it to a reader of this document.
+
+FE-R7 applies to the lookup: a band with no metadata entry is still shown with its live balances,
+its edges come back as empty strings and its mandate as `"unknown"` rather than being guessed. That
+is the same degradation the database path had for an un-backfilled ship.
+
+The fills feed (`readFills`, most recent 25) is a read of the same file. Every row is a real Arbitrum
+transaction and links to Arbiscan; it is history, not money.
+
 
 ---
 
@@ -522,49 +529,43 @@ fails at the call site with a message naming the variable.
 
 | Variable | Required | Read by | Behaviour when unset |
 |---|---|---|---|
-| `AQUA_DATABASE_URL` | yes, for any database path | `aquaDatabaseUrl()` | throws `Missing required server env var AQUA_DATABASE_URL` |
 | `ARBITRUM_RPC_URL` | no | `arbitrumRpcUrl()` | falls back to `https://arb1.arbitrum.io/rpc`, fine for reads, rate-limited |
 | `TAKER_BOT_PRIVATE_KEY` | only to send transactions | `takerPrivateKey()`, `hasTakerKey()` | read-only paths are unaffected; signing refuses |
-| `AQUA_VAULT_ADDRESS` | yes, for the investor page | `api/vaultState.ts` directly | the page renders its honest `not-launched` state |
+| `NEXT_PUBLIC_AQUA_VAULT_ADDRESS` | yes, for the investor page | `api/vaultState.ts`, `operations/aquaActions.ts`, `hooks/useAquaLiquidity.ts` | the page renders its honest `not-launched` state |
 
-**None of these is `NEXT_PUBLIC_*`, and none can become one**, because every file that reads them
-carries `server-only`. All four are documented in `.env.example` with their unset behaviour, except
-`AQUA_VAULT_ADDRESS`, which is missing there.
+`ARBITRUM_RPC_URL` and `TAKER_BOT_PRIVATE_KEY` **cannot become `NEXT_PUBLIC_*`**, because every file
+that reads them carries `server-only`. The vault address is the deliberate opposite: a deployed
+contract address is public by definition and the browser needs it for the pre-deposit allowance
+check, so it is `NEXT_PUBLIC_` and the three readers share one resolution order. All three variables
+are documented in `.env.example` with their unset behaviour.
 
 Two boundary rules, both stated in code at the point they apply:
 
-- **SRV-R2, the database credential.** `AQUA_DATABASE_URL` points at a Neon **mirror of production
-  data**, so it is treated as a production credential: local `.env.local` only, never committed,
-  never logged, never surfaced in an error message. `scripts/aqua/db-check.ts` goes as far as
-  truncating and re-labelling its own error output, because a `postgres` connection error embeds the
-  URL verbatim.
+
 - **SRV-R5 and BOT-R4, the keys.** The manager key never reaches this process. Every manager
   transaction is emitted as calldata for a human wallet to sign. `TAKER_BOT_PRIVATE_KEY` is a
   separate wallet holding only the taker's working capital, and `chain/clients.ts` keeps the signing
   client in a different function from the public client so a read path cannot accidentally require
   a key.
 
-Two smaller divergences worth naming rather than hiding. `AQUA_VAULT_ADDRESS` is read directly with
-`process.env` in `vaultState.ts` instead of going through `config/env.ts`, which is the one place
-SRV-R4's "single reader" property does not hold; it is validated against `/^0x[0-9a-fA-F]{40}$/`
-there and holds no secret, but it belongs in `env.ts`. And `serverOnly.test.ts` enforces the single
-reader for `AQUA_DATABASE_URL` by name, not for `process.env` generally, which is why that
-divergence did not fail a test.
+One divergence worth naming rather than hiding. `NEXT_PUBLIC_AQUA_VAULT_ADDRESS` is read directly
+with `process.env` in three files rather than through `config/env.ts`, so SRV-R4's "single reader"
+property does not hold for it. That is deliberate and cannot be otherwise: `config/env.ts` carries
+`server-only`, and one of the three readers is the browser's pre-deposit allowance check. Each site
+validates against `/^0x[0-9a-fA-F]{40}$/` and they share one resolution order, which is the property
+that actually matters. It holds no secret: it is a deployed address, verifiable on Arbiscan.
 
 ---
 
 ## 7. The CLI entrypoints
 
 `scripts/aqua/`. These are the manager surface for the hackathon window: the console UI was cut
-(POO-1068), and **nothing here signs anything**. Each command compiles, checks policy, records the
-intent, and prints calldata for a wallet to sign.
+(POO-1068), and **nothing here signs anything**. Each command compiles, checks policy, and
+prints calldata for a wallet to sign plus the metadata block to commit.
 
 | Command | Script | What it does |
 |---|---|---|
-| `pnpm aqua:db:generate` | drizzle-kit | diffs `db/schema.ts` into a new migration under `drizzle/aqua/` |
-| `pnpm aqua:db:migrate` | drizzle-kit | applies pending migrations |
-| `pnpm aqua:db:check` | `db-check.ts` | asserts `aqua_fills` and `aqua_ships` exist, round-trips a probe row, and **verifies money columns decode as strings** |
-| `pnpm aqua:ship --mandate <name> --vault 0x... [--amount N] [--dry-run]` | `strategy.ts` | reads fresh spot, compiles one band, prints the ship transaction, records the row |
+| `pnpm aqua:ship --mandate <name> --vault 0x... [--amount N]` | `strategy.ts` | reads fresh spot, compiles one band, prints the ship transaction and the metadata block to commit |
 | `pnpm aqua:launch-payloads --vault 0x... --production 60 --demo 40` | `strategy.ts` | both bands at once, sized so the combined ship stays inside one sleeve |
 | `pnpm aqua:roll --strategy 0x... --vault 0x... --mandate <name>` | `strategy.ts` | `dock(old)` plus `ship(new)` with a fresh salt, printed as one manager action |
 | `pnpm aqua:dock --strategy 0x... --mandate <name>` | `strategy.ts` | the dock transaction alone |
@@ -605,11 +606,11 @@ Stated plainly, because a reference that only lists what works is not a referenc
 | Not built | What exists instead | Why |
 |---|---|---|
 | **Keeper loop** | the roll is a manual `pnpm aqua:roll` producing calldata a human signs | automating a roll means holding a key that can move strategies, which is a custody decision, not a hackathon one. `aqua_keeper_log` is designed and deferred. |
-| **Indexer persistence** | `aqua_fills` is created, typed, indexed and **read** by the investor page; nothing on this branch writes to it | the fill indexer lives on the contracts side for the window. The table is keyed `(tx_hash, log_index)` unique precisely so replaying a block range is idempotent when the writer lands. |
+| **Indexer** | fills are a committed fixture of real Arbitrum transactions, read by the investor page | the fill indexer lives on the contracts side for the window. `FillView` does not change shape, so a live feed swaps in without moving anything downstream. |
 | **Aggregator routing** | none. No 1inch aggregator, Fusion or quote endpoint is called anywhere in the module | the vault is a **maker**: it publishes a curve and waits to be filled. Routing is the taker's problem, and our taker lives in the contracts repo. |
 | **The taker, in this repo** | `takerWalletClient()` and `hasTakerKey()` exist and are exported, with no caller on this branch | the client is here so the surface is complete and the key boundary is expressed in one place; the loop that would use it is upstream. |
 | **Deposit and redeem** | the investor page is strictly read-only | shipping the read-only view first means the page can never show a control that does not work. `liquidUsdc`, `maxTvl` and `seeded` are already declared in the narrow ABI for it. |
-| **`aqua_mandates`, `aqua_nav_snapshots`, `aqua_keeper_log`** | two tables, `aqua_ships` and `aqua_fills` | the status path reads live state from chain rather than a stored series, so no NAV table is needed to ship. Scope was deliberately two tables. |
+| **Any persistence** | none at all | the status path and the page read live state from chain rather than a stored series, so no table is needed to ship, and a NAV table would invite serving a cached number (IDX-R2). |
 | **In-vault oracle staleness gate (VLT-R4)** | the off-chain 90-minute check in `context.ts`, which throws | deferred on the contract side for the window, which makes the off-chain check the only thing between a stale feed and a band built at the wrong level. Named here so nobody assumes the vault enforces it. |
 
 ---
@@ -618,11 +619,10 @@ Stated plainly, because a reference that only lists what works is not a referenc
 
 ```bash
 pnpm test src/lib/aqua     # 71 assertions: program bytes, order encoding, guardrails, ABI parity
-pnpm aqua:db:check         # tables, round trip, money-as-string  (needs AQUA_DATABASE_URL)
 pnpm aqua:ship --mandate demo --vault 0x... --total-assets 1000 --dry-run
 ```
 
-The first needs nothing but a checkout: no key, no RPC, no database. It is the one that pins the
+The first needs nothing but a checkout: no key and no RPC. It is the one that pins the
 program order, the fee scaling, the hook, the `strategyHash` definition and the cross-producer
 equivalence, which is most of what this document claims. The third still reads Chainlink over RPC
 and reads the epoch and coverage totals from the database; `--dry-run` only suppresses the write.
