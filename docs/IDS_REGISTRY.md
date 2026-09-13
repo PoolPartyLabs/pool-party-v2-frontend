@@ -7,7 +7,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 489 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 499 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -631,3 +631,22 @@ _Reserved. No artifacts yet._
 | `PP-ADM-SCR-006` | Admin 2FA challenge / enrollment (TOTP) | Screen | New | Backlog | POO-143 |  |
 
 > Code build kicked off 2026-07-05 (POO-143/144). **RBAC roles = operator / admin / master** (supersedes the Admin/Finance/Support/Read-only draft), with a **dynamic capability registry** the master edits in a Roles & Permissions page. `SCR-003` (manager review profile) and `CMP-011..013` (verification card, moderation card, confirm-remove dialog) reserved for the feature issues, not yet built.
+
+## TOOLS · Developer tooling (Uniswap v4 hook risk scan)
+
+> New area, opened 2026-09-13 for the hackathon Tools page. No Figma: this is a developer surface, specced from `hookrisk/docs/hackathon/DEMO_RUNBOOK.md` rather than from a design frame, so every row is `n/a (code)` on Design. Gated by the `hookTools` flag (`docs/FEATURE_FLAGS.md`), which is also the removal seam if the page never leaves the fork. `API` is a new type token: a Next route handler (see `02_NAMING_CONVENTION.md`).
+
+| ID | Title | Type | Design | Impl | Linear | Figma |
+|----|-------|------|--------|------|--------|-------|
+| `PP-TOOLS-SCR-001` | Tools page at `/tools` (flag-guarded route + loading skeleton) | Screen | n/a (code) | Done |  | (code-only) |
+| `PP-TOOLS-CMP-001` | HookRiskScreen (form, scan status, report; owns the `tools_hookrisk_*` funnel) | Component | n/a (code) | Done |  | (code-only) |
+| `PP-TOOLS-CMP-002` | MarkdownReport (renders `HOOK_RISK.md`, raw HTML off) | Component | n/a (code) | Done |  | (code-only) |
+| `PP-TOOLS-API-001` | `/api/tools/hookrisk` (POST starts a scan, GET polls it; Node runtime) | API route | n/a (code) | Done |  | (code-only) |
+| `PP-TOOLS-LIB-001` | hookrisk cache paths and TTL (cache key, hashed job dir, 24 h sweep) | Lib | n/a (code) | Done |  | (code-only) |
+| `PP-TOOLS-LIB-002` | Verified-source fetch (Etherscan V2 `getsourcecode`, three `SourceCode` shapes) | Lib | n/a (code) | Done |  | (code-only) |
+| `PP-TOOLS-LIB-003` | Foundry project materialisation (foundry.toml, remappings, path sanitisation) | Lib | n/a (code) | Done |  | (code-only) |
+| `PP-TOOLS-LIB-004` | hookrisk toolchain preflight and invocation (exit codes, `spawn` seam) | Lib | n/a (code) | Done |  | (code-only) |
+| `PP-TOOLS-LIB-005` | hookrisk scan jobs (in-memory registry, one job per cache key) | Lib | n/a (code) | Done |  | (code-only) |
+| `PP-TOOLS-LIB-006` | Scan contract shared by client and server (chains, job snapshot) | Lib | n/a (code) | Done |  | (code-only) |
+
+> **The scan runs the real toolchain or it fails loudly.** There is no mock branch: a fabricated risk report is worse than no page. Without `forge`, `slither`, a built `hookrisk/cli/dist/cli.js` or `ETHERSCAN_API_KEY`, the job fails fast naming exactly what is missing, and the screen prints that instead of a report.

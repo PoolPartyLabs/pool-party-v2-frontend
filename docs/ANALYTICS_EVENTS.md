@@ -177,6 +177,22 @@ Epic POO-1022 · issue POO-1048. Pay for any Pool Party operation with any token
 | `reward_referral_shared` | Referral link/code shared (share or copy) | | PP-REW-CMP-012/014 |
 | `reward_claimed` | Quacks claimed — Say Quack check-in / Duck Shoot boost | `value` | PP-REW-SCR-001 / PP-REW-MOD-001 |
 
+## Tools
+
+The Uniswap v4 hook risk scan at `/tools` (PP-TOOLS-SCR-001, hackathon). Every event is emitted by **PP-TOOLS-CMP-001** (`src/features/tools/HookRiskScreen.tsx`); nothing else in the feature tracks, and the API route (PP-TOOLS-API-001) deliberately does not, because a route handler has no consent context.
+
+**Shared params.** `chain_id` (the chain the hook is deployed on) and, on the two failure events, `error_code`.
+
+**Never in a payload: the hook address.** It is a raw EVM address, which `sanitizeParams` (PP-SECURITY [R3]) would strip anyway; it is also not a question these events answer. What is being measured is whether a scan that a user asked for ever produced a report.
+
+| Event | When it fires | Key params | Emitting artifact |
+|-------|---------------|-----------|-------------------|
+| `tools_hookrisk_viewed` | The Tools screen rendered. Once per mount, via `useTrackView`. | | PP-TOOLS-CMP-001 |
+| `tools_hookrisk_started` | The user pressed Analyze with a well-formed address, so a scan was requested. The only event the click emits. | `chain_id` | PP-TOOLS-CMP-001 |
+| `tools_hookrisk_completed` | **The report is in hand** and on screen, whether freshly scanned or served from the 24 h cache. Never on the click, and never when the scan merely started: a scan takes minutes and can fail, so a completion fired at the click would report a 100% success rate for a tool that has real failure modes. A FAILED GATE still completes here, because hookrisk exits 2 with a full report and that report is the output the user came for. | `chain_id` | PP-TOOLS-CMP-001 |
+| `tools_hookrisk_failed` | The scan could not finish, so there is no report: no verified source, the source did not compile, the host is missing part of the toolchain, a timeout, or the poll lost its job. `error_code` is the job's own code, never a message. | `chain_id`, `error_code` | PP-TOOLS-CMP-001 |
+| `tools_hookrisk_blocked` | **Blocked intent.** The user asked for a scan and the product said no before any work started: a malformed address, or a chain we do not read. Distinct from `failed`, which is a scan that was attempted. | `chain_id`, `error_code` | PP-TOOLS-CMP-001 |
+
 ## App and navigation
 
 | Event | When it fires | Key params | Emitting artifact |

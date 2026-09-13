@@ -6,7 +6,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 441 markers across 241 files (2026-09-13)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 444 markers across 244 files (2026-09-13)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -67,3 +67,15 @@ Epic POO-1022 (2026-07-24/25). **Pay for any Pool Party operation with any token
 | Buy-crypto alternative | `src/features/strategies/components/provisioning/PoweredByPaybis.tsx`, `BuyGasModal.tsx` (PP-CORE-MOD-010) | **A handoff, not an integration.** This epic wrote no on-ramp code. The gas surface stopped naming a fiat provider, because the step it actually implements is an on-chain swap; the fiat option survives as a CTA to the existing `/deposit` surface | **PP-INTEGRATION-POINT (POO-87/POO-213):** the real Paybis ramp is still a CSP-ready stub. See the [Fiat on-ramp](#fiat-on-ramp-paybis) section |
 
 
+
+## Tools: Uniswap v4 hook risk scan (hookrisk)
+
+Hackathon, 2026-09-13. The `/tools` page (PP-TOOLS-SCR-001) takes a chain and a deployed hook address and returns the hookrisk report for it. Behind the `hookTools` flag; full write-up in `docs/_hackathon_privy/04_TOOLS_PAGE.md`.
+
+**This surface has no mock branch, deliberately.** Everywhere else in this repo `isMockMode` decides whether data is real, and a mock is a legitimate placeholder. Here it would not be: the artifact is a *risk assessment of a contract someone may be about to trade against*, and a plausible-looking fabricated one is worse than an empty page. So when the toolchain or the key is missing, the job fails fast naming exactly what is absent and the screen prints that instead of a report. That is the same posture hookrisk itself takes (`hookrisk/CLAUDE.md`: a tool that reports nothing looks exactly like success).
+
+| Marker | File | Status today | Expected real call / remaining gap |
+|---|---|---|---|
+| Block explorer (verified source) | `src/lib/tools/hookrisk/explorer.ts` (PP-TOOLS-LIB-002) | **REAL.** `GET https://api.etherscan.io/v2/api?chainid=…&module=contract&action=getsourcecode`, one V2 endpoint covering all five chains. Server-only; the key is read at call time in `jobs.ts` (PP-TOOLS-LIB-005) so an unset key fails one job rather than the module | `ETHERSCAN_API_KEY`, server-only, no `NEXT_PUBLIC_` prefix ever. An unverified contract returns `NOT_VERIFIED`, a named result, not an empty source set |
+| hookrisk toolchain (`forge`, then the CLI) | `src/lib/tools/hookrisk/run.ts` (PP-TOOLS-LIB-004), driven by `jobs.ts` (PP-TOOLS-LIB-005) | **REAL.** A child process on the Node runtime: `forge build`, then `node $HOOKRISK_HOME/cli/dist/cli.js init` and `scan <File.sol>:<Contract> --out <job dir>`. `spawn` without a shell, so an explorer-supplied contract name can never become a shell metacharacter | Needs foundry, slither and a built `hookrisk/cli/dist/cli.js` on the host (`make setup` inside `hookrisk/`, or the `WITH_HOOKRISK=1` image). **Exit 2 is a RESULT** (gate failed, report written), 10+ means it could not run |
+| Job registry | `src/lib/tools/hookrisk/jobs.ts` (PP-TOOLS-LIB-005) | **REAL, and in process memory.** One running job per `(chainId, address)`; a second start joins it. Reports are cached on disk for 24 h under `$HOOKRISK_WORK_DIR/hookrisk/<sha256>/`, swept by each request rather than by a cron | **PP-INTEGRATION-POINT:** the registry is per replica and per restart, so a second instance does not see the first's running job. The disk cache is what actually survives, so the worst case is a wasted rerun. A durable queue replaces it if this leaves hackathon scope |
