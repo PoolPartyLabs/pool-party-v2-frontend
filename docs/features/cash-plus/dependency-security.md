@@ -38,7 +38,7 @@ Four older helper dependencies arrive through the Uniswap SDK's published contra
 
 These changes do not upgrade Hardhat or the Solidity compiler. Targeted compatibility smoke checks exercise the used ZIP, temporary-file, serialization and local HTTP request interfaces; they do not constitute an audit of those tools. The ordinary application, Aqua and Uniswap regression suites remain relevant after dependency updates.
 
-The ZIP, serializer and Undici smoke checks passed on the versions above. The temporary-file smoke initially passed on tmp 0.2.6, then a separate advisory affecting that version required the final 0.2.7 patch. The final lockfile includes 0.2.7. Synchronizing the local installation and repeating that small temporary-file check is deferred until the concurrent full test/build runs finish; do not replace dependencies beneath an active verification process.
+The ZIP, serializer, Undici and temporary-file smoke checks passed on the versions above. The final frozen-lockfile installation includes tmp 0.2.7; its `fileSync` creates the expected file and `removeCallback` removes it. The check used the same package resolution path as the existing solc caller.
 
 ## Remaining high advisories: image-size
 
