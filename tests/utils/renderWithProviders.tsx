@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement, ReactNode } from "react";
 import enAuth from "@/i18n/messages/en/auth.json";
 import enCards from "@/i18n/messages/en/cards.json";
+import enCashPlus from "@/i18n/messages/en/cashPlus.json";
 import enCommon from "@/i18n/messages/en/common.json";
 import enConsent from "@/i18n/messages/en/consent.json";
 import enDeposit from "@/i18n/messages/en/deposit.json";
@@ -33,6 +34,7 @@ function Providers({ children }: { children: ReactNode }) {
       locale="en"
       messages={{
         common: enCommon,
+        cashPlus: enCashPlus,
         consent: enConsent,
         errors: enErrors,
         auth: enAuth,

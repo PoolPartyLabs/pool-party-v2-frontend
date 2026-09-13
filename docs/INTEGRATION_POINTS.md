@@ -6,7 +6,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 444 markers across 244 files (2026-09-13)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 448 markers across 248 files (2026-09-13)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -68,6 +68,21 @@ Epic POO-1022 (2026-07-24/25). **Pay for any Pool Party operation with any token
 
 
 
+## Cash+ dedicated investment page
+
+Cash+ is independent of the service factory. `NEXT_PUBLIC_FEATURE_CASH_PLUS` gates the page and navigation. `NEXT_PUBLIC_CASH_PLUS_MODE` selects the current interactive mock preview or a separately configured fork/live manifest. `pnpm cash-plus:ui` explicitly selects preview and needs no RPC or wallet. No Cash+ HTTP endpoint, database, portfolio model or strategy-catalog entry is added.
+
+| Boundary | Files | Behavior |
+|---|---|---|
+| Demo ledger | `src/mocks/services/cashPlusDemo.ts`, `hooks/useCashPlusDemo.ts` | Explicitly simulated integer accounting and session storage. User-triggered day advancement; no RPC client, wallet request, fake hash or explorer URL. |
+| Deployment and RPC | `src/lib/cash-plus/config/`, `client.ts` | Chain ID, deployment block hash and code hashes bind reads to one deployment/run. Fork requires loopback RPC and chain31337; live requires42161 and HTTPS. |
+| Investor state | `readSnapshot.ts`, `history.ts` | Pinned contract reads; bounded event history with stable anchor/recent-block rechecks. Missing data stays unknown. Lending attribution excludes detectable unsolicited aToken receipts. |
+| Wallet | `CashPlusProvider.tsx`, `hooks/useCashPlus.ts` | Existing Privy wallet in live mode; injected EIP1193 wallet for local fork; no preview sends. Active account and chain are checked before every request. |
+| Transactions | `buildTransaction.ts`, `operations.ts`, `journal.ts` | Exact approval, fresh simulation, locally encoded calldata, explicit minimum outputs, receipts and account/run-scoped pending recovery. |
+| Automation | `scripts/cash-plus/` | Operator-only local fork CLI using unlocked test accounts. No signing material enters browser imports. Serial writes reconcile pending receipts before retry. |
+| Presentation | `src/features/cash-plus/components/` | Read-only render of controller state; independent annual assumptions never change observed balances. |
+
+See the [feature README](../src/features/cash-plus/README.md), [specifications](features/cash-plus/) and local rehearsal evidence for the exact addresses and source block used in a demonstration. Fork transactions have no public explorer URLs.
 ## Tools: Uniswap v4 hook risk scan (hookrisk)
 
 Hackathon, 2026-09-13. The `/tools` page (PP-TOOLS-SCR-001) takes a chain and a deployed hook address and returns the hookrisk report for it. Behind the `hookTools` flag; full write-up in `docs/_hackathon_hookrisk/04_TOOLS_PAGE.md`.

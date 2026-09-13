@@ -37,7 +37,10 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
+# pnpm-workspace.yaml travels with the lockfile: it holds the dependency `overrides` (security pins,
+# PR #14) and `allowBuilds`. Without it pnpm sees overrides recorded in the lockfile and none
+# configured, and refuses the frozen install (ERR_PNPM_LOCKFILE_CONFIG_MISMATCH).
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # --ignore-scripts: skip husky's `prepare` (no .git in the build) and other postinstall hooks.
 RUN pnpm install --frozen-lockfile --ignore-scripts
 

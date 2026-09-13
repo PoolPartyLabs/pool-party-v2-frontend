@@ -37,6 +37,7 @@ export type FeatureKey =
   | "onRampCapture"
   | "robinhoodChain"
   | "activeReserve"
+  | "cashPlus"
   | "virtualize"
   | "strategyCategoryFilter"
   | "hookTools";
@@ -221,6 +222,18 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
     envVar: "NEXT_PUBLIC_FEATURE_ACTIVE_RESERVE",
     description:
       "Active Reserve, an always-earning vault that buys ETH below market through a 1inch Aqua strategy. Reads Arbitrum directly rather than the Pool Party API, so it also needs NEXT_PUBLIC_AQUA_VAULT_ADDRESS pointed at a deployed PartyVault. Route-guarded (404 while off).",
+  },
+  cashPlus: {
+    key: "cashPlus",
+    area: "Cash+",
+    // HACKATHON (public repository, 2026-09): default ON, like `hookTools` and the on-ramp pair, so a
+    // fresh clone shows both products of the submission without an env file. `NEXT_PUBLIC_CASH_PLUS_MODE`
+    // still selects preview (simulated ledger) unless set otherwise; the env var wins per environment.
+    defaultEnabled: true,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_CASH_PLUS",
+    description:
+      "Dedicated Cash+ investment page and responsive navigation. Reads the selected chain directly; no catalog or portfolio integration.",
   },
   fiatOnRamp: {
     key: "fiatOnRamp",

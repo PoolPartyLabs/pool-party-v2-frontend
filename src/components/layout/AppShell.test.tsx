@@ -102,6 +102,43 @@ describe("AppShell", () => {
     __resetDevOverridesForTests();
   });
 
+  // @rule CP-UI01, CP-UI05: Cash+ is a separate destination in both responsive navs.
+  it("shows Cash+ after Strategies, marks it active, and preserves five mobile tabs", () => {
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_CASH_PLUS", "on");
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_CARDS", "on");
+    nav.pathname = "/cash-plus";
+    renderWithProviders(
+      <AppShell>
+        <div>cash</div>
+      </AppShell>,
+    );
+    const { sidebar, tabbar } = getNavs();
+    expect(within(sidebar).getByRole("link", { name: "Cash+" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    const links = within(sidebar).getAllByRole("link");
+    const strategyIndex = links.findIndex((link) => link.textContent === "Strategies");
+    expect(links[strategyIndex + 1]).toHaveTextContent("Cash+");
+    expect(within(tabbar).getByRole("link", { name: "Cash+" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(within(tabbar).getAllByRole("link")).toHaveLength(5);
+    expect(within(tabbar).queryByRole("link", { name: "Cards" })).toBeNull();
+  });
+
+  // @rule CP-UI02: disabled Cash+ leaves existing navigation intact.
+  it("hides Cash+ in both navs while the feature is off", () => {
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_CASH_PLUS", "off");
+    renderWithProviders(
+      <AppShell>
+        <div>cash</div>
+      </AppShell>,
+    );
+    expect(screen.queryByRole("link", { name: "Cash+" })).toBeNull();
+  });
+
   it("renders the desktop sidebar set (Home, Portfolio, Strategies, Deposit, Profile)", () => {
     renderWithProviders(
       <AppShell>
@@ -134,6 +171,9 @@ describe("AppShell", () => {
   });
 
   it("reveals the Cards tab in both navs when the cards flag is on", () => {
+    // Cash+ ships ON in this fork and CP-UI05 gives its tab the Cards slot on mobile; this case is
+    // about the cards flag alone, so Cash+ is switched off explicitly.
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_CASH_PLUS", "off");
     vi.stubEnv("NEXT_PUBLIC_FEATURE_CARDS", "on");
     renderWithProviders(
       <AppShell>

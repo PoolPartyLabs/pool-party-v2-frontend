@@ -84,6 +84,8 @@ function envOverride(key: FeatureKey): string | undefined {
       return process.env.NEXT_PUBLIC_FEATURE_ROBINHOOD_CHAIN;
     case "activeReserve":
       return process.env.NEXT_PUBLIC_FEATURE_ACTIVE_RESERVE;
+    case "cashPlus":
+      return process.env.NEXT_PUBLIC_FEATURE_CASH_PLUS;
     case "virtualize":
       return process.env.NEXT_PUBLIC_FEATURE_VIRTUALIZE;
     case "strategyCategoryFilter":

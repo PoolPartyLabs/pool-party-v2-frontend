@@ -7,7 +7,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 499 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 532 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -632,6 +632,46 @@ _Reserved. No artifacts yet._
 
 > Code build kicked off 2026-07-05 (POO-143/144). **RBAC roles = operator / admin / master** (supersedes the Admin/Finance/Support/Read-only draft), with a **dynamic capability registry** the master edits in a Roles & Permissions page. `SCR-003` (manager review profile) and `CMP-011..013` (verification card, moderation card, confirm-remove dialog) reserved for the feature issues, not yet built.
 
+## Cash+ (continuity investment strategy)
+
+Protocol design v1.1 and the current UI-only delivery are versioned in `docs/features/cash-plus/`. This authorized implementation has no invented Linear issue or Figma ID. Cash+ is isolated from the catalog and Portfolio.
+
+| ID | Title | Type | Implementation |
+|---|---|---|---|
+| `PP-CP-SCR-001` | Cash+ dedicated route and view | Screen | Implemented behind `cashPlus` flag |
+| `PP-CP-CMP-001` | Observed investment, normalized history, return sources and flow | Components | Implemented |
+| `PP-CP-CMP-002` | Exact investment and withdrawal form | Form | Implemented |
+| `PP-CP-MOD-001` | Review, wallet phases and receipt sheet | Modal | Implemented with Storybook states |
+| `PP-CP-CMP-003` | Isolated annual comparison | Calculator | Implemented |
+| `PP-CP-CMP-004` | Activity, composition, contract and liquidity details | Components | Implemented |
+| `PP-CP-PROV-001` | Cash+ scoped query and wallet providers | Provider | Preview, injected fork wallet and existing Privy live wallet |
+| `PP-CP-HOOK-001` | Investor operation controller | Hook | Direct reads, reviewed intents, signatures and pending recovery |
+| `PP-CP-LIB-001` | Snapshot, intent and controller types | Library | Implemented |
+| `PP-CP-LIB-002` | Exact amounts and share rounding | Library | Implemented |
+| `PP-CP-LIB-003` | Annual comparison arithmetic | Library | Implemented |
+| `PP-CP-LIB-004` | Deployment and mode binding | Library | Implemented |
+| `PP-CP-LIB-005` | Canonical transaction construction and validation | Library | Implemented |
+| `PP-CP-LIB-006` | Direct RPC and bytecode verification | Library | Implemented |
+| `PP-CP-LIB-007` | Safe error classification | Library | Implemented |
+| `PP-CP-LIB-008` | Block-pinned account snapshot | Library | Implemented |
+| `PP-CP-LIB-009` | Exact operation simulation and receipt decoding | Library | Implemented |
+| `PP-CP-LIB-010` | Identity-scoped pending journal | Library | Implemented |
+| `PP-CP-LIB-011` | Bounded event history and attribution | Library | Implemented |
+| `PP-CP-LIB-020` | Canonical SwapVM compiler and local-only guards | CLI library | Implemented |
+| `PP-CP-LIB-021` | Local operation transport and evidence journal | CLI library | Implemented |
+| `PP-CP-LIB-022` | Deployment, keeper, counterparty and rehearsal | CLI | Implemented |
+| `PP-CP-LIB-023` | Local signer locks and pending reconciliation | CLI library | Implemented |
+| `PP-CP-LIB-024` | Canonical encoding and operator safety rules | Tests | Implemented |
+| `PP-CP-LIB-025` | Receipt-block before/after evidence | CLI library | Implemented |
+| `PP-CP-E2E-001` | Real-fork browser investor journey | E2E | Investment, conversion/JIT, withdrawal, pending and responsive captures |
+| `PP-CP-E2E-002` | Locale and loading/read-failure presentation | E2E | Portuguese mobile calculator and explicit RPC failure states |
+| `PP-CP-LIB-026` | Fresh local fork startup | CLI library | New run on an unused local port; previous runs preserved |
+
+| `PP-CP-CMP-005` | Explicit demo controls and assumptions | Component | Simulated day, reset and component token balances |
+| `PP-CP-CMP-006` | Simulated wallet balance sheet | Component | Preview-only wallet presentation |
+| `PP-CP-HOOK-002` | Interactive preview controller | Hook | Local review/pending/success, session persistence, duplicate-confirm protection |
+| `PP-CP-MCK-002` | Demo share and cashflow ledger | Mock service | Exact integers, explicit elapsed time, partial/full/proportional exits |
+| `PP-CP-MCK-001` | Explicit initial pool and investor fixture | Mock data | Deterministic balances, share history and synthetic activity |
 ## TOOLS · Developer tooling (Uniswap v4 hook risk scan)
 
 > New area, opened 2026-09-13 for the hackathon Tools page. No Figma: this is a developer surface, specced from `hookrisk/docs/hackathon/DEMO_RUNBOOK.md` rather than from a design frame, so every row is `n/a (code)` on Design. Gated by the `hookTools` flag (`docs/FEATURE_FLAGS.md`), which is also the removal seam if the page never leaves the fork. `API` is a new type token: a Next route handler (see `02_NAMING_CONVENTION.md`).

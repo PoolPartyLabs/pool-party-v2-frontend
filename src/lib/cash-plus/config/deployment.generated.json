@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "id": "cash-plus-c029dc28-2532-48e5-9f48-32bdf9f2c601",
+  "runId": "c029dc28-2532-48e5-9f48-32bdf9f2c601",
+  "mode": "fork",
+  "chainId": 31337,
+  "networkName": "Local Arbitrum fork",
+  "rpcUrl": "http://127.0.0.1:8550",
+  "deploymentBlock": "504757373",
+  "deploymentBlockHash": "0x5631b879853401e6ecf0f46c3b692cb3552e50b430b5124516c60f29eb4f2194",
+  "vault": "0x99b3A1e4687414BF363eCE0382BBB9f44FFF8035",
+  "aqua": "0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a",
+  "router": "0x111111338c5091E8440b67B168bAe16a668AC0De",
+  "aavePool": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+  "usdc": {
+    "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+    "symbol": "USDC",
+    "decimals": 6
+  },
+  "secondary": {
+    "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+    "symbol": "USD₮0",
+    "decimals": 6
+  },
+  "usdcAdapter": "0x110113296D6a9aC2643A7594fd3062A08943071A",
+  "secondaryAdapter": "0x0A65242F442839017A48f184b2E65b8846c320bb",
+  "usdcAToken": "0x724dc807b04555b71ed48a6896b6F41593b8C637",
+  "secondaryAToken": "0x6ab707Aca953eDAeFBc4fD23bA73294241490620",
+  "pricing": "0x871148f43B9c55eBD3eADCf4477B8a1A69286C12",
+  "programFactory": "0x3E49d880cF0577C543c5Faa1d698f460e637C3cf",
+  "oracle": "0x355d7438B808E828e2c0c48c69201905475AF107",
+  "usdcFeed": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
+  "secondaryFeed": "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7",
+  "sequencerFeed": "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
+  "explorerUrl": null,
+  "codeHashes": [
+    {
+      "address": "0x99b3A1e4687414BF363eCE0382BBB9f44FFF8035",
+      "hash": "0xf0fdf13d40350f04652639d08299e79dbf0df0eab14bddfe38198c9c7d8541cb"
+    },
+    {
+      "address": "0xd75b7e29197ee6c71fe384896c2ff5799d3c8dfb",
+      "hash": "0x6070151bc74158784490d5ec3b8416cf15b576b45335c4ce307126a03f5ecb33"
+    },
+    {
+      "address": "0x110113296D6a9aC2643A7594fd3062A08943071A",
+      "hash": "0x7a04894536190bb0d44579d97c74e287e8b4ac6c0c788be8999f28c8145d1445"
+    },
+    {
+      "address": "0x0A65242F442839017A48f184b2E65b8846c320bb",
+      "hash": "0x77712abb1d7139bf0c19242d7fccec4787d6e6451bb03132a177e5e724c8a678"
+    },
+    {
+      "address": "0x871148f43B9c55eBD3eADCf4477B8a1A69286C12",
+      "hash": "0xb3c1caac9d760115b9ab948334f74f97c9266dde917557190bd16d2486168ffb"
+    },
+    {
+      "address": "0x3E49d880cF0577C543c5Faa1d698f460e637C3cf",
+      "hash": "0xc180236daf29fe9f7790f7c7aeb6cb417c1c4dc4541ddb82501cb23ae3945094"
+    },
+    {
+      "address": "0x355d7438B808E828e2c0c48c69201905475AF107",
+      "hash": "0x626963c982b27d6ad65ef36afee97351f8cb9c92eb045a6d5084c4e6fc6b1131"
+    },
+    {
+      "address": "0x8F7d6E49b54ACBa971cD7224DB693D13cB35B0a3",
+      "hash": "0xebd1c9295954ada0d6ba3523addb93dba88d2403a4bb8986d9ec1dd483f8368c"
+    },
+    {
+      "address": "0x1111113CCf1426A8E30e2bfF5E005d929bF6a90a",
+      "hash": "0x720bc02d220db318164dc3bade86eec1f3655bdc00fc1174de7d816a95c341f8"
+    },
+    {
+      "address": "0x111111338c5091E8440b67B168bAe16a668AC0De",
+      "hash": "0x7cb8785de84b35bced79fbecbbc6336f473623568cba28b7af3ed001b20d580e"
+    },
+    {
+      "address": "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+      "hash": "0xf168c2e9e4d04292c7d5d526a9a917175a44369ab63a2f9997537acf0ffaaf2e"
+    },
+    {
+      "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+      "hash": "0xad30d819dbc47814b7e6cb837fd7cc57fcb591479a38596ee93de4fc52e8c435"
+    },
+    {
+      "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+      "hash": "0xfc1ea81db44e2de921b958dc92da921a18968ff3f3465bd475fb86dd1af03986"
+    },
+    {
+      "address": "0x724dc807b04555b71ed48a6896b6F41593b8C637",
+      "hash": "0xc3aa4c3619e0f36aac996ce2308856466850ac4ef7033e5fef29a8807d2ae6e8"
+    },
+    {
+      "address": "0x6ab707Aca953eDAeFBc4fD23bA73294241490620",
+      "hash": "0x3ebcd59bd9d51bd49cafbb0419423ba025e8e477f34cefa1a71ea3c29b78fa1f"
+    },
+    {
+      "address": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
+      "hash": "0xbd6f524cdc4268b6bd1bb6f77a8821faeea9c52ee9e0afa0b6d948ce82c966c2"
+    },
+    {
+      "address": "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7",
+      "hash": "0xbd6f524cdc4268b6bd1bb6f77a8821faeea9c52ee9e0afa0b6d948ce82c966c2"
+    },
+    {
+      "address": "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
+      "hash": "0xbd6f524cdc4268b6bd1bb6f77a8821faeea9c52ee9e0afa0b6d948ce82c966c2"
+    }
+  ],
+  "source": {
+    "chainId": 42161,
+    "blockNumber": "504757365",
+    "swapVmCommit": "32c687c2b73101fc26549e48fa1ff8a4d73afbac"
+  }
+}

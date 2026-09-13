@@ -67,6 +67,12 @@ vi.mock("./components/PositionCard", () => ({
   ),
 }));
 
+// Keep desktop rate labels, but avoid mounting 600 Radix tooltip trees in the plain-map baseline.
+// Tooltip interaction is covered in AprTooltip.test.tsx; these tests retain the real table and rows.
+vi.mock("@/components/ui/AprTooltip", () => ({
+  AprTooltip: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+}));
+
 const STRATEGY: Strategy = {
   id: "s-base",
   name: "Stable Yield",
@@ -179,16 +185,19 @@ describe("PortfolioView virtualization — [R1] plain-map baseline (gate off / b
 
   it("falls back to plain map with the flag on and 600 rows but NO layout (hasLayout false)", () => {
     // No layout shim -> the gate's hasLayout stays false -> plain map even at 600 rows. This renders
-    // the full 600-row plain map (the heaviest baseline case).
+    // the full 600-row plain map (the heaviest baseline case). Allow coverage instrumentation and
+    // parallel CI workers time to mount both layouts; this is a correctness test, not a benchmark.
     setOverride("virtualize", true);
     renderWithProviders(<PortfolioView {...baseProps(makePositions(600))} />);
     // Each strategy name renders in both the mobile card AND the desktop table row (>=1 each).
     expect(screen.getAllByText("Strategy 0").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Strategy 599").length).toBeGreaterThanOrEqual(1);
+    expect(document.querySelectorAll("tbody > tr")).toHaveLength(600);
+    expect(screen.getAllByTestId("position-card")).toHaveLength(600);
     expect(document.querySelectorAll("tr[data-virtual-spacer]")).toHaveLength(0);
     expect(document.querySelector("tbody[data-virtualized]")).toBeNull();
     clearOverrides();
-  });
+  }, 15_000);
 
   it("[R4] activeCount stays positions.filter(status === 'active').length regardless of the flag", () => {
     const positions = makePositions(600);

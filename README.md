@@ -2,11 +2,9 @@
 
 Front-end for **Pool Party v2**, an **On-Chain Asset Management System (OAMS)**: an open, multi-chain platform where asset managers, human or software, build and operate on-chain investment strategies, and where anyone can invest in them without giving up custody.
 
----
-
 ## Hackathon submission (ETHGlobal, September 2026)
 
-> **Premise.** Pool Party is an on-chain asset management system: managers build strategies, investors allocate to them under mandates the chain enforces. Uniswap v4 puts arbitrary code, the **hook**, on the swap path of every pool a strategy might touch. A hook can skim more than its declared fee, trap liquidity, or expose a callback anyone can call, and the strategy manager cannot see any of that from a pool page. The Cork hook lost $11M in May 2025 to exactly such a callback. **This submission gives managers a way to measure a hook's risk before opening a position, without leaving the platform and without putting investor funds on the line.**
+> **Premise.** Pool Party is an on-chain asset management system: managers build strategies, investors allocate to them under mandates the chain enforces. Uniswap v4 puts arbitrary code, the **hook**, on the swap path of every pool a strategy might touch. A hook can skim more than its declared fee, trap liquidity, or expose a callback anyone can call, and the strategy manager cannot see any of that from a pool page. The Cork hook lost $11M in May 2025 to exactly such a callback. **This submission gives managers a way to measure a hook's risk before opening a position, without leaving the platform and without putting investor funds on the line.** It ships two products: **hookrisk with its Tools page**, so a manager can measure a hook before opening a position, and **Cash+**, a dedicated investment page for business dollar reserves that shows what a conservative, fully explained v4-era strategy looks like to the investor.
 
 ### What we built
 
@@ -17,6 +15,8 @@ Front-end for **Pool Party v2**, an **On-Chain Asset Management System (OAMS)**:
    - **Evidence:** before/after scans of 14 real hooks, including the archived Cork exploit hook, are under [`hookrisk/docs/hackathon/evidence/`](hookrisk/docs/hackathon/evidence/); the narrative is [`hookrisk/docs/hackathon/HACKATHON.md`](hookrisk/docs/hackathon/HACKATHON.md) and the demo is [`hookrisk/docs/hackathon/DEMO_RUNBOOK.md`](hookrisk/docs/hackathon/DEMO_RUNBOOK.md).
 2. **The Tools page in the investor app (`/tools`).** A manager pastes a hook address, picks the chain, and the platform fetches the verified source, builds it, runs hookrisk server-side and renders the report in place. Reports are cached for 24 hours per hook so a second look is instant. This is the seam through which, once v4 strategies land in the platform, the strategy builder will check a hook before a position is opened. Gated by the `hookTools` flag (on in this repository); docs in [`docs/_hackathon_hookrisk/`](docs/_hackathon_hookrisk/).
 
+3. **Cash+ (`/cash-plus`), a dedicated investment page for business dollar reserves.** The strategy combines Aave lending interest with stablecoin conversion spreads through **1inch Aqua and SwapVM**; the page shows the position, its composition and the two sources of return, and every operation is an explicit, exact accounting step. The delivery is an **interactive preview**: invest simulated USDC, advance one explicitly modeled day, inspect the result, withdraw a partial amount, all shares or proportional assets, reset. Receipts are labelled `simulated: true`, carry no transaction hash and trigger no wallet request; the assumptions behind the modeled day are stated on screen and are not a quoted APY. Gated by the `cashPlus` flag (on in this repository, mode `preview`). Docs: [demo guide](docs/features/cash-plus/cash-plus-ui-demo.md), [technical specification](docs/features/cash-plus/cash-plus-technical-spec.md), [contracts accounting](docs/features/cash-plus/cash-plus-contracts-accounting.md), [feature README](src/features/cash-plus/README.md); companion contracts at [pool-party-aqua `feat/cash-plus-demo`](https://github.com/0xmvercosa/pool-party-aqua/tree/feat/cash-plus-demo/contracts/src/cashplus) and the optional [local-fork tooling](scripts/cash-plus/README.md).
+
 ### What is new and what is reused (Continuity track)
 
 This repository is a pre-existing production codebase; the [commit history](https://github.com/PoolPartyLabs/pool-party-v2-frontend/commits/) on the hackathon branch is the record of what was built during the event, one theme per commit, never squashed.
@@ -25,6 +25,7 @@ This repository is a pre-existing production codebase; the [commit history](http
 |---|---|---|
 | hookrisk: detectors, harness, scoring, CLI, action, evidence | **New, built during the hackathon** | `hookrisk/` (copied from the team's development repository at `d256e91a`, provenance banner at the top of its README) |
 | Tools page, scan job runner, report rendering, `hookTools` flag | **New, built during the hackathon** | `src/app/[locale]/(auth)/(app)/tools/`, `src/lib/tools/hookrisk/`, `src/app/api/tools/hookrisk/` |
+| Cash+ page, preview ledger, exact share accounting, `cashPlus` flag, local-fork CLI | **New, built during the hackathon** | `src/features/cash-plus/`, `src/lib/cash-plus/`, `src/mocks/services/cashPlusDemo.ts`, `scripts/cash-plus/`, `docs/features/cash-plus/` |
 | Fiat on-ramp on the Privy rail (Google sign-in, embedded wallet, card checkout, buy leg in provisioning) | **Supporting work.** Ported onto this public baseline during the event so the demo account can be funded without leaving the app; the modules themselves come from the team's private repository | `src/lib/onramp/`, `src/features/deposit/`, `PrivyBuyStep`; continuity record in [`docs/_hackathon_privy/03_PRE_EXISTING_VS_NEW.md`](docs/_hackathon_privy/03_PRE_EXISTING_VS_NEW.md) |
 | The investor app itself (strategies, portfolio, provisioning rail, wallet, analytics, security) | **Pre-existing** | everything else under `src/` |
 | Earlier hackathon tracks (Universal Funding, Active Reserve) | **Pre-existing** (July 2026), kept for history | [`docs/_hackathon/`](docs/_hackathon/), [`docs/_hackathon_aqua/`](docs/_hackathon_aqua/) |
@@ -37,6 +38,7 @@ Claude Code was used throughout as a pair programmer, directed by the team throu
 
 - **How the app work is directed:** [`CLAUDE.md`](CLAUDE.md) (the project's operating rules: business rules before code, TDD, i18n, artifact IDs, analytics as definition of done) and the agent and skill definitions under [`.claude/`](.claude/).
 - **How hookrisk was directed:** [`hookrisk/CLAUDE.md`](hookrisk/CLAUDE.md), the per-workstream notes [`hookrisk/docs/hackathon/notes-A.md`](hookrisk/docs/hackathon/) through `notes-I.md`, and the resume file [`hookrisk/docs/hackathon/RESUME.md`](hookrisk/docs/hackathon/RESUME.md) with every decision and its reason.
+- **How Cash+ was directed:** the specification set under [`docs/features/cash-plus/`](docs/features/cash-plus/) (technical spec, contracts accounting, delivery acceptance, dependency security) written before and during the build, and the feature README.
 - **Where the AI wrote code:** every commit co-authored by the assistant carries a `Co-Authored-By` trailer; file headers carry the issue and rule version the code implements. The framework port, the detector logic, the invariant harness and the scoring rules were specified, reviewed and tested by the team; the assistant drafted implementations and documentation against those specs.
 
 ### Earlier tracks in this repository (July 2026)
@@ -106,6 +108,7 @@ No backend, RPC, or wallet is required (see [`docs/05_MOCK_STRATEGY.md`](docs/05
 | Command | Purpose |
 |---------|---------|
 | `pnpm dev` | Run the dev server at `http://localhost:3000`. |
+| `pnpm cash-plus:ui` | Run the interactive Cash+ mock at `http://localhost:3049/en/cash-plus`. |
 | `pnpm build` / `pnpm start` | Build for production / serve the build. |
 | `pnpm test` / `pnpm test:watch` / `pnpm test:coverage` | Run the Vitest suite (once, in watch mode, with coverage). |
 | `pnpm lint` / `pnpm format` | Check / format the codebase with Biome. |

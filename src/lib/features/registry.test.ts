@@ -9,6 +9,18 @@ import { describe, expect, it } from "vitest";
 import { FEATURE_KEYS, FEATURES } from "./registry";
 
 describe("feature registry", () => {
+  // @rule CP-UI02 asked for a dark launch; the hackathon fork (public repository, 2026-09) ships the
+  // area ON so a fresh clone shows both products of the submission. The env var still wins.
+  it("registers Cash+ as a dedicated area, ON for the hackathon demo fork", () => {
+    expect(FEATURES).toHaveProperty(
+      "cashPlus",
+      expect.objectContaining({
+        defaultEnabled: true,
+        stage: "next",
+        envVar: "NEXT_PUBLIC_FEATURE_CASH_PLUS",
+      }),
+    );
+  });
   it("each map key matches its entry's key", () => {
     for (const key of FEATURE_KEYS) {
       expect(FEATURES[key].key).toBe(key);
@@ -26,7 +38,7 @@ describe("feature registry", () => {
     expect(new Set(vars).size).toBe(vars.length);
   });
 
-  it("encodes the launch matrix — core areas + Rewards + the Privy fiat rail + the Tools page on, everything else off", () => {
+  it("encodes the launch matrix — core areas + Rewards + the Privy fiat rail + the Tools page + Cash+ on, everything else off", () => {
     // Hackathon fork (public repository, 2026-09): `fiatOnRamp` + `privyOnRamp` ship ON so a fresh
     // clone runs the Privy on-ramp without an env file. The test environment pins them back OFF in
     // `tests/setup.ts` for the ported on-ramp suites; this assertion reads the registry directly, so
@@ -34,6 +46,7 @@ describe("feature registry", () => {
     const enabled = FEATURE_KEYS.filter((key) => FEATURES[key].defaultEnabled).sort();
     expect(enabled).toEqual(
       [
+        "cashPlus",
         "deposit",
         "fiatOnRamp",
         "home",
