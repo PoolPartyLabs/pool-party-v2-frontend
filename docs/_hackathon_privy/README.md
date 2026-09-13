@@ -1,7 +1,8 @@
-# Institutional onboarding with Privy: fiat in, liquidity added, no wallet homework
+# Fiat on-ramp on the Privy rail: supporting work for the hackathon demo
 
-**Hackathon package index.** Third hackathon track built on the Pool Party v2 investor app, after
-Universal Funding (`docs/_hackathon/`) and Active Reserve (`docs/_hackathon_aqua/`).
+**Supporting package.** The submission's premise and main deliverables are the hook risk tool and
+the Tools page, documented in [`docs/_hackathon_hookrisk/`](../_hackathon_hookrisk/). This package
+records the on-ramp port that lets the demo account be funded without leaving the app.
 
 > **Narrative status: placeholder.** The thought process below is the working version recorded while
 > the code was ported (2026-09-13). The pitch, the event name and the evidence section are refined

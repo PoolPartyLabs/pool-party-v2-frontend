@@ -4,58 +4,44 @@ Front-end for **Pool Party v2**, an **On-Chain Asset Management System (OAMS)**:
 
 ---
 
-## Hackathon submission
+## Hackathon submission (ETHGlobal, September 2026)
 
-This repository is the **front-end and server half** of three hackathon tracks built on top of the Pool Party v2 investor app. The submission form accepts a single repository, so the companion smart-contract repository is linked below.
+> **Premise.** Pool Party is an on-chain asset management system: managers build strategies, investors allocate to them under mandates the chain enforces. Uniswap v4 puts arbitrary code, the **hook**, on the swap path of every pool a strategy might touch. A hook can skim more than its declared fee, trap liquidity, or expose a callback anyone can call, and the strategy manager cannot see any of that from a pool page. The Cork hook lost $11M in May 2025 to exactly such a callback. **This submission gives managers a way to measure a hook's risk before opening a position, without leaving the platform and without putting investor funds on the line.**
 
-### Companion repository (smart contracts)
+### What we built
 
-> **[github.com/0xmvercosa/pool-party-aqua](https://github.com/0xmvercosa/pool-party-aqua)** — the on-chain half of the Active Reserve track: contracts, deploy and ops scripts, the taker, and the judge package.
+1. **[`hookrisk/`](hookrisk/), the Uniswap Foundation's Hooks Security Framework made executable.** One command, `hookrisk scan src/MyHook.sol:MyHook`, and the output is a scored manifest, a full Markdown report, SARIF for CI and a meaningful exit code. It does three things a linter does not:
+   - **Reads the hook** with Slither detectors ([`hookrisk/detectors/`](hookrisk/detectors/)): an `IHooks` callback anyone can call (HS-01), declared permissions that disagree with the implemented callbacks (HS-02), the admin surface (HS-03), third-party calls on the swap path (HS-05), unbounded dynamic fees (HS-06), custom accounting as a classification (HS-07).
+   - **Executes the hook** in a twin-pool differential harness on real `v4-core` ([`hookrisk/harness/`](hookrisk/harness/)): two pools identical except for the hook, the same fuzzed sequence, three invariants (no token created or destroyed, no extraction beyond the declared fee, every position can be closed). A hook that documents a 1% fee and charges 3.5% is structurally flawless; only execution sees it.
+   - **Refuses to flatter.** Nine framework dimensions and seven triggers are scored, and a dimension is never scored zero unless a detector capable of finding something actually ran; a missing engine yields an *unmeasured* dimension and a tier **range**. BlockSec's HookScan runs as a second, attributed engine and agreeing findings merge at raised confidence.
+   - **Evidence:** before/after scans of 14 real hooks, including the archived Cork exploit hook, are under [`hookrisk/docs/hackathon/evidence/`](hookrisk/docs/hackathon/evidence/); the narrative is [`hookrisk/docs/hackathon/HACKATHON.md`](hookrisk/docs/hackathon/HACKATHON.md) and the demo is [`hookrisk/docs/hackathon/DEMO_RUNBOOK.md`](hookrisk/docs/hackathon/DEMO_RUNBOOK.md).
+2. **The Tools page in the investor app (`/tools`).** A manager pastes a hook address, picks the chain, and the platform fetches the verified source, builds it, runs hookrisk server-side and renders the report in place. Reports are cached for 24 hours per hook so a second look is instant. This is the seam through which, once v4 strategies land in the platform, the strategy builder will check a hook before a position is opened. Gated by the `hookTools` flag (on in this repository); docs in [`docs/_hackathon_hookrisk/`](docs/_hackathon_hookrisk/).
 
-### Track 1 — Universal Funding (Uniswap Trading API)
+### What is new and what is reused (Continuity track)
 
-Every money-moving operation in Pool Party has one precondition the app could not previously solve for the user: **you must already hold USDC on the exact chain the strategy lives on, plus native gas on that chain.** This track removes that precondition by swapping and bridging whatever the user already holds, across chains, through the Uniswap Trading API.
+This repository is a pre-existing production codebase; the [commit history](https://github.com/PoolPartyLabs/pool-party-v2-frontend/commits/) on the hackathon branch is the record of what was built during the event, one theme per commit, never squashed.
 
-- Epic POO-1022, 33 issues, started 2026-07-24.
-- **Docs: [`docs/_hackathon/`](docs/_hackathon/)** — [plan of record](docs/_hackathon/00_IMPLEMENTATION_PLAN.md) (mirrors every issue, its business rules, and its acceptance criteria), [Uniswap integration](docs/_hackathon/01_UNISWAP_INTEGRATION.md), [bridge architecture](docs/_hackathon/02_BRIDGE_ARCHITECTURE.md).
-- Code: `src/lib/uniswap/`, `src/lib/provisioning/`, `src/features/strategies/lib/buildPlanSteps.ts`.
+| | Status | Where |
+|---|---|---|
+| hookrisk: detectors, harness, scoring, CLI, action, evidence | **New, built during the hackathon** | `hookrisk/` (copied from the team's development repository at `d256e91a`, provenance banner at the top of its README) |
+| Tools page, scan job runner, report rendering, `hookTools` flag | **New, built during the hackathon** | `src/app/[locale]/(auth)/(app)/tools/`, `src/lib/tools/hookrisk/`, `src/app/api/tools/hookrisk/` |
+| Fiat on-ramp on the Privy rail (Google sign-in, embedded wallet, card checkout, buy leg in provisioning) | **Supporting work.** Ported onto this public baseline during the event so the demo account can be funded without leaving the app; the modules themselves come from the team's private repository | `src/lib/onramp/`, `src/features/deposit/`, `PrivyBuyStep`; continuity record in [`docs/_hackathon_privy/03_PRE_EXISTING_VS_NEW.md`](docs/_hackathon_privy/03_PRE_EXISTING_VS_NEW.md) |
+| The investor app itself (strategies, portfolio, provisioning rail, wallet, analytics, security) | **Pre-existing** | everything else under `src/` |
+| Earlier hackathon tracks (Universal Funding, Active Reserve) | **Pre-existing** (July 2026), kept for history | [`docs/_hackathon/`](docs/_hackathon/), [`docs/_hackathon_aqua/`](docs/_hackathon_aqua/) |
 
-### Track 2 — Active Reserve (1inch Aqua and SwapVM)
+Open-source components hookrisk stands on, credited rather than reframed: Slither, Foundry, Uniswap `v4-core` and `v4-periphery`, OpenZeppelin `uniswap-hooks`, BlockSec HookScan (run as a separate process, nothing redistributed). Full list and licences in [`hookrisk/docs/PRIOR_ART.md`](hookrisk/docs/PRIOR_ART.md) and [`hookrisk/NOTICE`](hookrisk/NOTICE) (MIT, except `hookrisk/detectors/` which is AGPL-3.0-only).
 
-A managed USDC reserve on Arbitrum that never sits idle and buys ETH only when the market comes down to it: roughly 95% of the vault's USDC is lent on Aave v3 behind a 5% hot buffer, while a sleeve worth about 10% of TVL is registered with 1inch Aqua as virtual balance, priced by a program whose buy band sits entirely below spot.
+### Use of AI tools
 
-- Epic POO-1057.
-- **Docs: [`docs/_hackathon_aqua/`](docs/_hackathon_aqua/)** — start at the [package index](docs/_hackathon_aqua/README.md).
-- Code: `src/lib/aqua/` (server-only module), `src/features/aqua/` (Active Reserve investor page).
-- Contracts: **[github.com/0xmvercosa/pool-party-aqua](https://github.com/0xmvercosa/pool-party-aqua)**.
+Claude Code was used throughout as a pair programmer, directed by the team through written specs, rules and reviews rather than left to generate the project. Everything the judges need to see how the AI was directed is in the repository:
 
-### Track 3 — Institutional onboarding with Privy (2026-09, event name TBD)
+- **How the app work is directed:** [`CLAUDE.md`](CLAUDE.md) (the project's operating rules: business rules before code, TDD, i18n, artifact IDs, analytics as definition of done) and the agent and skill definitions under [`.claude/`](.claude/).
+- **How hookrisk was directed:** [`hookrisk/CLAUDE.md`](hookrisk/CLAUDE.md), the per-workstream notes [`hookrisk/docs/hackathon/notes-A.md`](hookrisk/docs/hackathon/) through `notes-I.md`, and the resume file [`hookrisk/docs/hackathon/RESUME.md`](hookrisk/docs/hackathon/RESUME.md) with every decision and its reason.
+- **Where the AI wrote code:** every commit co-authored by the assistant carries a `Co-Authored-By` trailer; file headers carry the issue and rule version the code implements. The framework port, the detector logic, the invariant harness and the scoring rules were specified, reviewed and tested by the team; the assistant drafted implementations and documentation against those specs.
 
-> **Narrative placeholder.** The thought process is recorded in [`docs/_hackathon_privy/`](docs/_hackathon_privy/) and is refined before submission; every claim about the code below is checkable today.
+### Earlier tracks in this repository (July 2026)
 
-An institution's treasury team should be able to put company funds into an on-chain strategy the way they open any SaaS account: **sign in with Google, pay with the company card, done.** This track removes wallet setup, seed phrases, buying crypto on an exchange, bridging and gas from that path with Privy: a Google sign-in mints an embedded wallet, a fiat checkout funds it on Base, the provisioning gate turns that balance into exactly what the strategy needs, and the investment settles. Every receipt and every `completed` event fires on an **observed on-chain balance**, never on a provider callback or a click.
-
-- **Docs: [`docs/_hackathon_privy/`](docs/_hackathon_privy/)** — [goal and decisions](docs/_hackathon_privy/00_GOAL.md), [the flow module by module](docs/_hackathon_privy/01_PRIVY_ONRAMP_FLOW.md), [demo runbook](docs/_hackathon_privy/02_DEMO_RUNBOOK.md), [pre-existing vs new](docs/_hackathon_privy/03_PRE_EXISTING_VS_NEW.md).
-- Code: `src/lib/onramp/` (Privy adapter, outcome classifier, intent journal, settlement watcher, coverage probe), `src/features/deposit/` (the `/deposit` surface with `DepositPrivyCheckout`), `src/features/strategies/components/provisioning/PrivyBuyStep.tsx` (the buy leg inside the provisioning gate), `src/lib/features/registry.ts` (`fiatOnRamp` + `privyOnRamp`, **on by default in this repository**).
-- The rail runs in real mode against a Privy app and the Pool Party API; mock mode keeps its fixture path on purpose. Setup is in the runbook.
-
-### Companion tool — hookrisk: risk analysis and a full report for a Uniswap v4 hook
-
-[`hookrisk/`](hookrisk/) is the [Uniswap Foundation's Hooks Security Framework](https://github.com/uniswapfoundation/security-framework) made executable. It was developed during the hackathon in a private repository and is copied here, unchanged apart from a provenance banner, so it can be presented from the same public repository. It has **no link to the app**: nothing under `src/` imports it, and the app's lint, typecheck, tests and Docker build exclude the folder.
-
-What it does, from `hookrisk scan src/MyHook.sol:MyHook`:
-
-- **Reads the hook** with Slither detectors (`hookrisk/detectors/`): an `IHooks` callback anyone can call (HS-01), declared permissions that disagree with the implemented callbacks (HS-02), the admin surface, third-party calls on the swap path, unbounded dynamic fees, custom accounting as a classification.
-- **Executes the hook** in a twin-pool differential harness on real `v4-core` (`hookrisk/harness/`): two pools identical except for the hook, the same fuzzed sequence, and three invariants (no token created or destroyed, no undeclared extraction beyond the declared fee, every position can be closed). A hook that documents a 1% fee and charges 3.5% is structurally flawless; only execution sees it.
-- **Runs BlockSec's HookScan** as an isolated, attributed second engine and merges agreeing findings into one at raised confidence.
-- **Scores** the nine framework dimensions and seven triggers, and refuses to score a dimension zero unless a detector capable of finding something actually ran; a missing engine yields an *unmeasured* dimension and a tier **range**, never a flattering number.
-- **Emits the full report**: `HOOK_RISK.md` (the human report), `hook-risk.json` (a manifest bound to one exact `chainId`, `address` and `codehash`, validated against `hookrisk/schema/hook-risk.schema.json`), `hookrisk.sarif` (findings on the diff in CI), and a meaningful exit code (`0` passed, `2` gate failed, `10+` could not run).
-
-Start at [`hookrisk/README.md`](hookrisk/README.md); the hackathon record, the before/after scans of 14 real hooks (including the archived Cork exploit hook) and the demo runbook are under [`hookrisk/docs/hackathon/`](hookrisk/docs/hackathon/). Licensing is per directory: MIT, except `hookrisk/detectors/`, which is AGPL-3.0-only (see [`hookrisk/NOTICE`](hookrisk/NOTICE)).
-
-### What was built during the event
-
-All three tracks build on a pre-existing production codebase. Each package states precisely which code pre-dates the event and which was written during it: [`_hackathon/03_PRE_EXISTING_VS_NEW.md`](docs/_hackathon/03_PRE_EXISTING_VS_NEW.md), [`_hackathon_aqua/03_PRE_EXISTING_VS_NEW.md`](docs/_hackathon_aqua/03_PRE_EXISTING_VS_NEW.md) and [`_hackathon_privy/03_PRE_EXISTING_VS_NEW.md`](docs/_hackathon_privy/03_PRE_EXISTING_VS_NEW.md). The third package also states which of its code was ported from the team's private repository rather than written during the event. The commit history in this repository starts at the pre-hackathon baseline, so every commit after the root commit is hackathon work.
+Kept for history, and pre-existing for this event: **Universal Funding** (Uniswap Trading API; docs in [`docs/_hackathon/`](docs/_hackathon/), code in `src/lib/uniswap/`, `src/lib/provisioning/`) and **Active Reserve** (1inch Aqua and SwapVM; docs in [`docs/_hackathon_aqua/`](docs/_hackathon_aqua/), code in `src/lib/aqua/`, `src/features/aqua/`; contracts at [github.com/0xmvercosa/pool-party-aqua](https://github.com/0xmvercosa/pool-party-aqua)).
 
 ---
 
@@ -99,7 +85,7 @@ V1 of the investor app is in active build, gated per area by a feature-flag regi
 - **In build**: Cards.
 - **Registered, not built yet**: Savings, Buy tokens, Predictions, Perps, Manager Console.
 
-The app is **mock-by-default with real seams already wired**. Wallet and auth (Privy + wagmi/viem, SIWE), analytics, and the web-security layer are real. The platform data layer runs on fixtures behind a single toggle and plugs into the backend at explicit, documented integration points (see [`docs/INTEGRATION_POINTS.md`](docs/INTEGRATION_POINTS.md)). All three hackathon tracks call live third-party APIs (Uniswap Trading API, 1inch Aqua, Privy). The fiat on-ramp (Privy rail) is real in real mode and **on by default** in this repository. UI copy ships in 11 languages.
+The app is **mock-by-default with real seams already wired**. Wallet and auth (Privy + wagmi/viem, SIWE), analytics, and the web-security layer are real. The platform data layer runs on fixtures behind a single toggle and plugs into the backend at explicit, documented integration points (see [`docs/INTEGRATION_POINTS.md`](docs/INTEGRATION_POINTS.md)). The hackathon tracks call live third-party APIs (block explorers and hookrisk for the Tools page, Uniswap Trading API, 1inch Aqua, Privy). The fiat on-ramp (Privy rail) is real in real mode and **on by default** in this repository. UI copy ships in 11 languages.
 
 > **All figures shown in the running app are synthetic mock data.** TVL, APY, balances, and portfolio values are generated fixtures, not real positions or real money.
 

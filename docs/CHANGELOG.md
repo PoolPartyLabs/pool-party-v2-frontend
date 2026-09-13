@@ -9,7 +9,7 @@
 - **Dependencies.** `@privy-io/react-auth` 3.42.0, `@privy-io/wagmi` 4.0.17, `@sentry/nextjs` 10.73.0 as a library (never initialised; aliased to a stub in vitest).
 - **Docs synced.** 62 artifact rows in `IDS_REGISTRY.md` (Totals recomputed), 14 event rows in `ANALYTICS_EVENTS.md`, a Privy on-ramp section and a fresh marker census in `INTEGRATION_POINTS.md`, `ARCHITECTURE_STATE.md` rows, the `_hackathon/03_PRE_EXISTING_VS_NEW.md` continuity table (wizard modal moved to Deleted, two rows added, file count recomputed).
 - **Copy.** Every key the ported code uses in all 11 locales; the `deposit` namespace and the `strategies.provisioning` subtree follow the private values. `pt-PT` is not configured here.
-- **hookrisk.** The Uniswap v4 hook risk scanner developed during the hackathon lands at `hookrisk/` as a snapshot (`d256e91a`) with a provenance banner, excluded from biome, tsc and the Docker context. README gains the track 3 and hookrisk sections; `docs/_hackathon_privy/` holds the placeholder narrative, goal, flow, runbook and continuity record.
+- **hookrisk.** The Uniswap v4 hook risk scanner developed during the hackathon lands at `hookrisk/` as a snapshot (`d256e91a`) with a provenance banner, excluded from biome, tsc and the Docker context. README frames the submission around the hook risk tool and the Tools page (`docs/_hackathon_hookrisk/` is the package index); `docs/_hackathon_privy/` documents the on-ramp port as supporting work.
 
 ## v0.15, 2026-07-01
 
