@@ -1,0 +1,28 @@
+# The corpus is a separate Foundry project so a detector can be pointed at
+# nothing but fixtures, and so a false positive in the harness's own sources
+# cannot mask one here.
+#
+# `lib` is a symlink to ../harness/lib, created by `make deps`. It is NOT a
+# relative `libs = ["../harness/lib"]` entry, and that distinction is load
+# bearing: crytic-compile (which Slither uses to drive Foundry) fails to
+# normalise parent-relative library paths and aborts with the deeply unhelpful
+# `AssertionError: Contract IExttload not found`. See HR-E201 in
+# docs/TROUBLESHOOTING.md. Keep the symlink.
+[profile.default]
+src = "src"
+# `test` deliberately points at an empty directory rather than at "src".
+# crytic-compile builds with `forge build --build-info --skip ./<test>/** --force`,
+# so pointing `test` at the same directory as `src` makes Slither silently skip
+# every fixture and then report a clean scan. See HR-E202 in
+# docs/TROUBLESHOOTING.md. The corpus has no Foundry tests by design: fixtures
+# are inputs to the detectors, and their expectations live in
+# detectors/tests/test_corpus.py.
+test = "test"
+out = "out"
+libs = ["lib"]
+solc = "0.8.26"
+evm_version = "cancun"
+# Fixtures are read by detectors, never deployed. Optimising them would only
+# make the source-to-IR mapping harder to follow in a finding's evidence.
+optimizer = false
+via_ir = false
