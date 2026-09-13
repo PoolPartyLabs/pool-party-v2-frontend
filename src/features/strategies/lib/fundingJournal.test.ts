@@ -158,6 +158,73 @@ describe("[R2] write ordering: the record lands before the wallet is ever prompt
     expect(persisted?.legs.filter((leg) => leg.txHash === HASH)).toHaveLength(1);
   });
 
+  /**
+   * POO-1093 [R2]. The recorder was write-only: four methods, all writes. So nothing between a
+   * "Try again" click and `eth_sendTransaction` could know a hash had already come back for that
+   * leg, and the rail happily broadcast a second transaction for money already in flight.
+   */
+  it("[R2] reports a leg's recorded status, so a retry can refuse to re-broadcast", () => {
+    const journal = newJournal();
+    const recorder = createJournalRecorder(journal.journalId, { readNonce: async () => 7 });
+
+    // An index the journal has no leg for at all.
+    expect(recorder.legStatus(9)).toBeNull();
+    // A leg that exists but has not moved yet.
+    expect(recorder.legStatus(1)?.status).toBe("planned");
+    expect(recorder.legStatus(1)?.txHash).toBeUndefined();
+
+    recorder.recordBroadcast(1, HASH);
+    expect(recorder.legStatus(1)).toMatchObject({ status: "broadcast", txHash: HASH });
+  });
+
+  /**
+   * POO-1093 [R4]. `beginLeg` upserted with `{...existing, ...leg}` and `leg.status` is always
+   * `"planned"`, so re-running a leg REGRESSED a `broadcast` record. That destroyed the very
+   * evidence the guard depends on, and downstream it also cost `reconcileFundingJournal` its
+   * strongest test (status + hash) leaving only the weaker nonce comparison.
+   */
+  it("[R4] a re-run never regresses a broadcast leg back to planned", async () => {
+    const journal = newJournal();
+    const recorder = createJournalRecorder(journal.journalId, { readNonce: async () => 7 });
+
+    recorder.recordBroadcast(1, HASH);
+    // The same shape the rail re-submits on a re-run. `destChainId` matters: a bridge leg without
+    // it fails the store's own read validation and the whole journal is salvaged away, which would
+    // make this test pass for entirely the wrong reason.
+    await recorder.beginLeg({
+      index: 1,
+      kind: "bridge",
+      chainId: POLYGON,
+      tokenIn: USDC_POLYGON,
+      tokenOut: USDC_ARBITRUM,
+      destChainId: ARBITRUM,
+      amountIn: "3000000000",
+      minAmountOut: "2996000000",
+    });
+
+    const persisted = getJournal(journal.journalId)?.legs[1];
+    expect(persisted?.status).toBe("broadcast");
+    expect(persisted?.txHash).toBe(HASH);
+  });
+
+  /**
+   * POO-1093 [R5]. `recordBroadcast` overwrote `txHash`, so after a double broadcast the journal
+   * held only the SECOND hash and the first became invisible to the app forever. Recovery would
+   * reconcile the second, retire the journal, and the first transaction would never be accounted
+   * for by anything.
+   */
+  it("[R5] keeps the first hash when a second broadcast is recorded for the same leg", () => {
+    const journal = newJournal();
+    const recorder = createJournalRecorder(journal.journalId, { readNonce: async () => 7 });
+    const SECOND = "0xbbbb000000000000000000000000000000000000000000000000000000000000";
+
+    recorder.recordBroadcast(1, HASH);
+    recorder.recordBroadcast(1, SECOND);
+
+    const persisted = getJournal(journal.journalId)?.legs[1];
+    expect(persisted?.txHash).toBe(HASH);
+  });
+
   it("marks a leg settled, then failed, without ever losing its hash", async () => {
     const journal = newJournal();
     const recorder = createJournalRecorder(journal.journalId, { readNonce: async () => 7 });

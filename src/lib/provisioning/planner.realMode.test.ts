@@ -61,11 +61,22 @@ describe("computePlan (real mode)", () => {
     await expect(computePlan(SCENARIOS.usdcOnly, { presetUsd: null, amountUsd: 30 })).resolves.toBe(
       plan,
     );
-    // POO-1042, settled by POO-1044 [R6]: `gasChoice` is deliberately NOT forwarded in real mode,
-    // and never will be. The real top-up is sized by the classifier from a live quote, and the
-    // control's [$10, $200] bounds are the Paybis FIAT minimum, which a token swap does not have.
-    // The panel renders the selector in mock mode only, so nothing on screen implies otherwise.
-    expect(computePlanAction).toHaveBeenCalledWith(SCENARIOS.usdcOnly, undefined);
+    // @rule POO-1085 F2-R4 — the chosen AMOUNT is forwarded, reversing POO-1044 [R6]. It travels as
+    // a plain USD number, not the `GasChoice` object: `presetUsd` is a UI concern. The server treats
+    // it as a floor-respecting ceiling (`raiseTopUpToUsd`), which is what makes forwarding it safe
+    // where POO-1044 was right to refuse to let it SIZE the leg.
+    expect(computePlanAction).toHaveBeenCalledWith(SCENARIOS.usdcOnly, undefined, 30);
+  });
+
+  // @rule POO-1085 F2-R3 — no choice means the plan is exactly what it was before the parameter
+  // existed. `undefined` reaches the action rather than a substituted default.
+  it("forwards nothing when the user made no gas choice", async () => {
+    const plan = mockComputePlan(SCENARIOS.usdcOnly);
+    computePlanAction.mockResolvedValue({ ok: true, plan });
+
+    await computePlan(SCENARIOS.usdcOnly);
+
+    expect(computePlanAction).toHaveBeenCalledWith(SCENARIOS.usdcOnly, undefined, undefined);
   });
 
   // @rule POO-1042 R7 — the SELECTION is what the real branch forwards, in PICK order, which the
@@ -78,6 +89,6 @@ describe("computePlan (real mode)", () => {
 
     await computePlan(SCENARIOS.usdcOnly, undefined, selection);
 
-    expect(computePlanAction).toHaveBeenCalledWith(SCENARIOS.usdcOnly, selection);
+    expect(computePlanAction).toHaveBeenCalledWith(SCENARIOS.usdcOnly, selection, undefined);
   });
 });

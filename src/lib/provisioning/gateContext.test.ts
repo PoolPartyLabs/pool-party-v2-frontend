@@ -1,188 +1,317 @@
 /**
  * @id PP-CORE-LIB-057 (POO-1042)
  * @name provisioning gate context, tests
- * @implements-rules-version v1
+ * @implements-rules-version v2
  * @hackathon POO-1022 (Universal Funding)
  *
- * The server-side assembly that turns a wallet into everything the pre-flight gate needs:
- * per-chain balances [R1], a gas verdict for EVERY candidate chain [R9], and a REAL gas estimate
- * [R4]. The whole point of the file is the fail-safe posture [R6]: a degraded read must resolve to
- * "no context" (and therefore no gate) rather than to a wallet that looks empty.
+ * The read that turns a wallet into everything the pre-flight gate needs. Since POO-1098 the
+ * ASSEMBLY lives in pool-party-api and this module is the client of `GET /api/v1/funding/context`,
+ * so what is left to test here is the boundary, not the arithmetic: one request per build, and the
+ * fail-safe posture [R5] that a degraded or failed read must resolve to "no context" (and therefore
+ * no gate) rather than to a wallet that looks empty.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { TokenBalance } from "@/lib/balances/types";
+import { ApiError, ApiParseError } from "@/lib/api/errors";
 
-const fetchWalletHoldings = vi.fn<(address: string) => Promise<TokenBalance[]>>();
-const getFundingInventory = vi.fn();
-const quoteSwap = vi.fn();
+const apiFetch = vi.fn();
 
-vi.mock("@/lib/balances/fetchWalletHoldings", () => ({
-  fetchWalletHoldings: (address: string) => fetchWalletHoldings(address),
+vi.mock("@/lib/api/client", () => ({
+  apiFetch: (...args: unknown[]) => apiFetch(...args),
 }));
-// `getFundingInventory` is stubbed, but `toBaseUnits` is REAL: the unfiltered native holdings
-// (POO-1076) convert their balances with the same money parsing the inventory uses, and a stub of it
-// here would be a second implementation of the one rule this codebase is strictest about.
-vi.mock("@/lib/balances/fundingInventory", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/balances/fundingInventory")>()),
-  getFundingInventory: (...args: unknown[]) => getFundingInventory(...args),
-}));
-vi.mock("@/lib/uniswap/actions", () => ({
-  quoteSwap: (...args: unknown[]) => quoteSwap(...args),
+vi.mock("@/lib/auth/session", () => ({
+  getAuthHeader: async () => ({ Authorization: "Bearer t" }),
 }));
 
 const { buildProvisioningGateContext } = await import("./gateContext");
 
 const WALLET = "0x1111111111111111111111111111111111111111" as const;
-const BASE = 8453;
 const ARBITRUM = 42161;
-const POLYGON = 137;
-
-/** A backend holdings row, priced. */
-function holding(
-  over: Partial<TokenBalance> & Pick<TokenBalance, "chainId" | "usd">,
-): TokenBalance {
-  return {
-    symbol: "USDC",
-    name: "USD Coin",
-    amount: over.usd,
-    decimals: 6,
-    logoUrl: "",
-    address: "0x2222222222222222222222222222222222222222",
-    isNative: false,
-    ...over,
-  };
-}
-
-/** A funding source as the inventory returns it. */
-function source(chainId: number, over: Record<string, unknown> = {}) {
-  return {
-    address: "0x2222222222222222222222222222222222222222",
-    chainId,
-    symbol: "USDC",
-    decimals: 6,
-    amount: "1000000000",
-    usd: 1_000,
-    reachableChainIds: [BASE, ARBITRUM, POLYGON],
-    isNative: false,
-    logoUrl: "",
-    ...over,
-  };
-}
-
-/** A `/quote` response carrying a live gas figure. */
-function quoteWithGas(gasFeeUSD: string) {
-  return { ok: true, quote: { routing: "CLASSIC", quote: { gasFeeUSD } } };
-}
 
 beforeEach(() => {
   vi.clearAllMocks();
-  fetchWalletHoldings.mockResolvedValue([]);
-  getFundingInventory.mockResolvedValue([]);
-  quoteSwap.mockResolvedValue(quoteWithGas("0.02"));
+  // The fail-open paths log (see `observeGateContextFailure`); keep the suite output readable and
+  // assert the signal explicitly in the test that owns it.
+  vi.spyOn(console, "warn").mockImplementation(() => {});
 });
 
-describe("buildProvisioningGateContext", () => {
-  it("[R1] splits the live holdings into per-chain native and token USD", async () => {
-    fetchWalletHoldings.mockResolvedValue([
-      holding({ chainId: BASE, usd: 1_200 }),
-      holding({ chainId: BASE, usd: 3, symbol: "ETH", isNative: true, address: "0x0" }),
-      holding({ chainId: POLYGON, usd: 40, symbol: "WETH" }),
-    ]);
+/**
+ * POO-1098: the suite that used to live here is GONE, and that needs saying plainly.
+ *
+ * It tested the local fan-out (the holdings split, per-chain gas verdicts, the quote-once-per-chain
+ * property, the classifier floor). That assembly moved to pool-party-api, so those tests were
+ * asserting deleted code. The coverage MOVED, it was not dropped: `src/funding/
+ * funding-context.service.spec.ts` (23 cases) and `src/funding/gas-feasibility.spec.ts` own it now,
+ * and each deleted case has a named counterpart there. Two are strictly stronger: the sub-$1 native
+ * balance is now pinned as "kept out of sources but inside nativeHoldings", and the total-outage
+ * case additionally asserts the backend never falls back to a native-less balance source.
+ *
+ * One test survived the move by ACCIDENT and is worth recording, because it is the failure mode this
+ * repository keeps finding: "[R6] a total holdings-read failure yields NO context, so the gate
+ * cannot fire" mocked `fetchWalletHoldings` to reject, and after the move nothing here reads
+ * holdings. It still passed, but only because the unset `apiFetch` mock returned `undefined`, which
+ * this module maps to `null` anyway. It passed for a reason unrelated to what its name claimed. A
+ * test that passes vacuously is worse than no test, so it went with the rest, and its real property
+ * is covered per failure mode below.
+ *
+ * (Its sibling, "[R6] never throws across the boundary when the inventory read fails", was NOT
+ * vacuous: it asserted a concrete `sources`/`balancesByChain` shape and would have FAILED against
+ * the new implementation. It is gone because the behaviour it described is now the backend's, where
+ * `[R3] a routability outage empties sources but keeps the balances and verdicts` asserts it.)
+ */
 
-    const context = await buildProvisioningGateContext(WALLET, BASE);
+describe("buildProvisioningGateContext: served by pool-party-api (POO-1098)", () => {
+  const CONTEXT = {
+    targetChainId: ARBITRUM,
+    sources: [],
+    gasByChain: {},
+    balancesByChain: {},
+    nativeHoldings: [],
+    gasEstimateUsd: 0.5,
+    degraded: false,
+  };
 
-    expect(context?.balancesByChain[BASE]).toEqual({ nativeUsd: 3, tokenUsd: 1_200 });
-    expect(context?.balancesByChain[POLYGON]).toEqual({ nativeUsd: 0, tokenUsd: 40 });
+  it("[R1] costs ONE request, not a fan-out", async () => {
+    apiFetch.mockResolvedValue(CONTEXT);
+
+    const result = await buildProvisioningGateContext(WALLET, ARBITRUM);
+
+    expect(result).not.toBeNull();
+    expect(apiFetch).toHaveBeenCalledTimes(1);
+    const [path] = apiFetch.mock.calls[0] as [string];
+    expect(path).toContain("funding/context");
+    expect(path).toContain(`targetChainId=${ARBITRUM}`);
   });
 
-  it("[R1] counts a sub-dollar native balance the funding inventory would have filtered as dust", async () => {
-    // The inventory drops sub-$1 rows because they cannot be SPENT. Gas is measured in cents, so a
-    // $0.40 native balance is the difference between "you can transact" and a gate that fires on a
-    // funded wallet. The balances must come from the raw holdings, never from the filtered list.
-    fetchWalletHoldings.mockResolvedValue([
-      holding({ chainId: BASE, usd: 0.4, symbol: "ETH", isNative: true, address: "0x0" }),
-    ]);
+  it("re-keys the served chain records from wire strings to numeric chain ids", async () => {
+    apiFetch.mockResolvedValue({
+      ...CONTEXT,
+      gasByChain: {
+        [String(ARBITRUM)]: {
+          chainId: ARBITRUM,
+          verdict: "OK",
+          quotedGasUsd: 0.02,
+          requiredGasUsd: 0.07,
+          shortfallUsd: 0,
+          surplusUsd: 3,
+          reasonKey: "k",
+        },
+      },
+      balancesByChain: { [String(ARBITRUM)]: { nativeUsd: 3, tokenUsd: 1_200 } },
+    });
 
-    const context = await buildProvisioningGateContext(WALLET, BASE);
+    const result = await buildProvisioningGateContext(WALLET, ARBITRUM);
 
-    expect(context?.balancesByChain[BASE]?.nativeUsd).toBeCloseTo(0.4, 6);
+    // Numeric lookup, which is what every consumer does.
+    expect(result?.balancesByChain[ARBITRUM]).toEqual({ nativeUsd: 3, tokenUsd: 1_200 });
+    expect(result?.gasByChain[ARBITRUM]?.verdict).toBe("OK");
   });
 
-  it("[R9] returns a gas verdict for every source chain AND the operation's chain", async () => {
-    fetchWalletHoldings.mockResolvedValue([holding({ chainId: POLYGON, usd: 500 })]);
-    getFundingInventory.mockResolvedValue([source(POLYGON)]);
+  it("[R3] a degraded read is NO context, so the gate does not fire", async () => {
+    apiFetch.mockResolvedValue({ ...CONTEXT, degraded: true, degradedReason: "holdings" });
 
-    const context = await buildProvisioningGateContext(WALLET, ARBITRUM);
+    expect(await buildProvisioningGateContext(WALLET, ARBITRUM)).toBeNull();
+  });
+
+  it.each([
+    ["401 no session", 401, "SESSION_MISSING"],
+    ["400 bad chain", 400, "VALIDATION_ERROR"],
+    ["429 per-wallet quota", 429, "FUNDING_WALLET_RATE_LIMITED"],
+    ["429 global throttle", 429, "THROTTLER"],
+    ["408 timeout", 408, "SYSTEM_TIMEOUT"],
+    ["500 upstream", 500, "SYSTEM_INTERNAL"],
+  ])("[R5] fails OPEN on %s, never gating a funded wallet", async (_label, status, code) => {
+    apiFetch.mockRejectedValue(new ApiError(status, code, "nope"));
+
+    expect(await buildProvisioningGateContext(WALLET, ARBITRUM)).toBeNull();
+  });
+
+  it("[R5] fails open when the response does not match its schema", async () => {
+    apiFetch.mockRejectedValue(new ApiParseError("funding/context", []));
+
+    expect(await buildProvisioningGateContext(WALLET, ARBITRUM)).toBeNull();
+  });
+
+  it("[R5] fails open on an empty body rather than reading it as an empty wallet", async () => {
+    // A consumer that read `balancesByChain: {}` as "this wallet holds nothing" would tell a funded
+    // user they have no gas. Absence of an answer is not an answer.
+    apiFetch.mockResolvedValue(null);
+
+    expect(await buildProvisioningGateContext(WALLET, ARBITRUM)).toBeNull();
+  });
+
+  it("[R5] fails open when the session cookie read throws, before the request is made", async () => {
+    // `getAuthHeader()` is awaited as an ARGUMENT, so it must be inside the try. If it ever moves
+    // out, this is the test that fails rather than a funded wallet getting gated in production.
+    const session = await import("@/lib/auth/session");
+    vi.spyOn(session, "getAuthHeader").mockRejectedValueOnce(
+      new Error("cookies() outside request"),
+    );
+
+    expect(await buildProvisioningGateContext(WALLET, ARBITRUM)).toBeNull();
+    expect(apiFetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses a non-integer target chain instead of smuggling it into the query", async () => {
+    // Typed `number`, but it arrives from a `"use server"` argument that Next does not runtime-check.
+    apiFetch.mockResolvedValue(CONTEXT);
 
     expect(
-      Object.keys(context?.gasByChain ?? {})
-        .map(Number)
-        .sort((a, b) => a - b),
-    ).toEqual([POLYGON, ARBITRUM]);
+      await buildProvisioningGateContext(WALLET, "137&targetChainId=1" as unknown as number),
+    ).toBeNull();
+    expect(await buildProvisioningGateContext(WALLET, Number.NaN)).toBeNull();
+    expect(await buildProvisioningGateContext(WALLET, 0)).toBeNull();
+    expect(apiFetch).not.toHaveBeenCalled();
   });
 
-  it("[R4] takes the gas estimate from a live quote, never the hardcoded 0.5", async () => {
-    fetchWalletHoldings.mockResolvedValue([
-      holding({ chainId: BASE, usd: 9, symbol: "ETH", isNative: true, address: "0x0" }),
-    ]);
-    quoteSwap.mockResolvedValue(quoteWithGas("0.04"));
-
-    const context = await buildProvisioningGateContext(WALLET, BASE);
-
-    // Quoted 0.04, plus the classifier's headroom. The only thing under test is that it is derived
-    // from the quote: never 0.5, and it moves when the quote moves.
-    expect(context?.gasEstimateUsd).toBeGreaterThan(0.04);
-    expect(context?.gasEstimateUsd).toBeLessThan(0.2);
-    expect(context?.gasEstimateUsd).not.toBe(0.5);
-    expect(context?.gasByChain[BASE]?.quotedGasUsd).toBeCloseTo(0.04, 6);
-  });
-
-  it("[R4] a gas quote that fails degrades to the classifier's floor, not to an invented figure", async () => {
-    quoteSwap.mockResolvedValue({ ok: false, code: "SYSTEM_INTERNAL", message: "down" });
-
-    const context = await buildProvisioningGateContext(WALLET, BASE);
-
-    expect(context?.gasByChain[BASE]?.quotedGasUsd).toBe(0);
-    expect(context?.gasEstimateUsd).toBeGreaterThan(0);
-  });
-
-  it("[R6] a total holdings-read failure yields NO context, so the gate cannot fire", async () => {
-    fetchWalletHoldings.mockRejectedValue(new Error("every network failed"));
-
-    await expect(buildProvisioningGateContext(WALLET, BASE)).resolves.toBeNull();
-  });
-
-  it("[R6] never throws across the boundary when the inventory read fails", async () => {
-    getFundingInventory.mockRejectedValue(new Error("swappable_tokens down"));
-    fetchWalletHoldings.mockResolvedValue([holding({ chainId: BASE, usd: 100 })]);
-
-    const context = await buildProvisioningGateContext(WALLET, BASE);
-
-    // Balances are still known, so the gate can still judge gas; there is simply nothing to spend.
-    expect(context?.sources).toEqual([]);
-    expect(context?.balancesByChain[BASE]?.tokenUsd).toBe(100);
-  });
-
-  it("passes the already-read holdings to the inventory instead of reading them twice", async () => {
-    const holdings = [holding({ chainId: BASE, usd: 100 })];
-    fetchWalletHoldings.mockResolvedValue(holdings);
-
-    await buildProvisioningGateContext(WALLET, BASE);
-
-    expect(fetchWalletHoldings).toHaveBeenCalledTimes(1);
-    expect(getFundingInventory).toHaveBeenCalledWith(WALLET, holdings);
-  });
-
-  it("quotes gas once per candidate chain, not once per holding", async () => {
-    fetchWalletHoldings.mockResolvedValue([
-      holding({ chainId: BASE, usd: 100 }),
-      holding({ chainId: BASE, usd: 200, symbol: "WETH" }),
-      holding({ chainId: BASE, usd: 3, symbol: "ETH", isNative: true, address: "0x0" }),
-    ]);
-    getFundingInventory.mockResolvedValue([source(BASE), source(BASE, { symbol: "WETH" })]);
+  it("reports a silently-disabled gate instead of swallowing it", async () => {
+    // The catch is deliberately catch-all, so a schema drift or a plain programming error would
+    // disable the gate for EVERY user while every request still returns 200 to the browser. The
+    // fail-open answer is right; being unable to tell it happened is not.
+    apiFetch.mockRejectedValue(new ApiError(500, "SYSTEM_INTERNAL", "boom"));
 
     await buildProvisioningGateContext(WALLET, ARBITRUM);
 
-    expect(quoteSwap).toHaveBeenCalledTimes(2); // Base + Arbitrum
+    const spy = console.warn as unknown as { mock: { calls: unknown[][] } };
+    expect(JSON.parse(String(spy.mock.calls[0]?.[0]))).toMatchObject({
+      event: "provisioning.gate_context_unavailable",
+      status: 500,
+      code: "SYSTEM_INTERNAL",
+    });
+  });
+
+  /**
+   * Contract drift is the one failure this module cannot report usefully: a renamed or retyped
+   * backend field fails the schema, fails open, and looks exactly like an outage. The backend lives
+   * in another repo, so nothing else in CI would catch it. These run the REAL schema (pulled off the
+   * `apiFetch` options, so it stays module-private) against a payload shaped like the merged
+   * `FundingContext` contract at pool-party-api `25450aa`.
+   */
+  describe("servedFundingContextSchema, against the pool-party-api contract", () => {
+    /** Every field the backend's `FundingContext` declares, including the optional ones. */
+    const SERVED = {
+      targetChainId: 42161,
+      sources: [
+        {
+          address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+          chainId: 42161,
+          symbol: "USDC",
+          decimals: 6,
+          amount: "1000000000",
+          usd: 1000,
+          reachableChainIds: [137, 8453, 42161],
+          isNative: false,
+          logoUrl: "https://example.test/usdc.png",
+        },
+      ],
+      gasByChain: {
+        "42161": {
+          chainId: 42161,
+          verdict: "TOP_UP",
+          quotedGasUsd: 0.02,
+          requiredGasUsd: 0.075,
+          shortfallUsd: 0.055,
+          surplusUsd: 0,
+          reasonKey: "provisioning.gasVerdict.topUp",
+          topUp: {
+            token: {
+              symbol: "USDC",
+              address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+              decimals: 6,
+              balanceRaw: "1000000000",
+              balanceUsd: 1000,
+            },
+            amountRaw: "60000",
+            amountUsd: 0.06,
+            buyNativeUsd: 0.055,
+          },
+        },
+        "8453": {
+          chainId: 8453,
+          verdict: "BLOCKED",
+          quotedGasUsd: 0.01,
+          requiredGasUsd: 0.06,
+          shortfallUsd: 0.06,
+          surplusUsd: 0,
+          reasonKey: "provisioning.gasVerdict.noNative",
+          escapes: [
+            {
+              kind: "bridge-native",
+              labelKey: "provisioning.gasVerdict.escape.bridgeNative",
+              fromChainIds: [42161],
+            },
+            { kind: "buy-crypto", labelKey: "provisioning.gasVerdict.escape.buyCrypto" },
+          ],
+        },
+      },
+      balancesByChain: { "42161": { nativeUsd: 0.02, tokenUsd: 1000 } },
+      nativeHoldings: [
+        {
+          address: "0x0000000000000000000000000000000000000000",
+          chainId: 42161,
+          symbol: "ETH",
+          decimals: 18,
+          amount: "10000000000000",
+          usd: 0.02,
+          reachableChainIds: [],
+          isNative: true,
+          logoUrl: "https://example.test/eth.png",
+        },
+      ],
+      gasEstimateUsd: 0.075,
+      degraded: false,
+    } as const;
+
+    /** The schema this module actually hands to `apiFetch`, never re-declared here. */
+    async function servedSchema() {
+      apiFetch.mockResolvedValue(null);
+      await buildProvisioningGateContext(WALLET, ARBITRUM);
+      const [, options] = apiFetch.mock.calls[0] as [
+        string,
+        { schema: { safeParse(v: unknown): { success: boolean } } },
+      ];
+      return options.schema;
+    }
+
+    it("accepts a full served payload, optional topUp/escapes and all", async () => {
+      expect((await servedSchema()).safeParse(SERVED).success).toBe(true);
+    });
+
+    it("accepts the degraded payload the backend returns as a 200", async () => {
+      const degraded = {
+        targetChainId: 42161,
+        sources: [],
+        gasByChain: {},
+        balancesByChain: {},
+        nativeHoldings: [],
+        gasEstimateUsd: 0,
+        degraded: true,
+        degradedReason: "FUNDING_CONTEXT_HOLDINGS_UNAVAILABLE",
+      };
+
+      expect((await servedSchema()).safeParse(degraded).success).toBe(true);
+    });
+
+    it("tolerates a field the backend adds later, so an additive change cannot fail closed", async () => {
+      expect((await servedSchema()).safeParse({ ...SERVED, somethingNew: 1 }).success).toBe(true);
+    });
+
+    it.each([
+      ["gasEstimateUsd arrives as a string", { gasEstimateUsd: "0.075" }],
+      [
+        "a gas verdict is not one of the three",
+        { gasByChain: { "42161": { ...SERVED.gasByChain["42161"], verdict: "MAYBE" } } },
+      ],
+      [
+        "requiredGasUsd is missing",
+        { gasByChain: { "42161": { ...SERVED.gasByChain["42161"], requiredGasUsd: undefined } } },
+      ],
+      [
+        "a source amount arrives as a number",
+        { sources: [{ ...SERVED.sources[0], amount: 1000 }] },
+      ],
+      ["degraded is missing entirely", { degraded: undefined }],
+    ])("rejects drift: %s", async (_label, override) => {
+      expect((await servedSchema()).safeParse({ ...SERVED, ...override }).success).toBe(false);
+    });
   });
 });

@@ -9,16 +9,23 @@
  * (POO-413) / rail (POO-414) at the `// PP-INTEGRATION-POINT` in {@link computePlan}.
  */
 
+export type { RoutableHolding } from "./computeNeed";
 export {
   clampGasUsd,
   computeProvisioningNeed,
   GAS_CUSTOM_MAX_USD,
   GAS_CUSTOM_MIN_USD,
+  GAS_CUSTOM_MIN_USDC_USD,
   GAS_DEFAULT_USD,
   GAS_PRESETS_USD,
+  GAS_PRESETS_USDC_USD,
   ONRAMP_CHAIN_ID,
+  onRampRouteBuysGas,
   PAYBIS_MIN_USD,
   sizeOnRampUsd,
+  // POO-1559: the wallet projection both funding surfaces assemble their input with (native raw,
+  // tokens routable). Pure number-math over a structural holding shape, so it is client-safe.
+  spendableBalancesByChain,
   spendableTokenUsd,
 } from "./computeNeed";
 export type {
@@ -38,6 +45,7 @@ export {
   buildCostBreakdown,
   planCostBreakdown,
   planPriceImpactPct,
+  sameEndpoint,
 } from "./costBreakdown";
 // PP-MOCK: the deterministic mock-mode fixture, retired as "the planner" by POO-1034. The real one
 // is `buildPlan.ts` and is `server-only`, so it is deliberately NOT re-exported here: this barrel is
@@ -66,11 +74,14 @@ export { computePlan } from "./planner";
 export type {
   ChainBalancesUsd,
   GasChoice,
+  OnRampAttribution,
+  OnRampEthTarget,
   ProvisioningLeg,
   ProvisioningLegKind,
   ProvisioningLegToken,
   ProvisioningNeed,
   ProvisioningNeedInput,
+  ProvisioningOrder,
   ProvisioningPlan,
   ProvisioningQuote,
   ProvisioningReason,

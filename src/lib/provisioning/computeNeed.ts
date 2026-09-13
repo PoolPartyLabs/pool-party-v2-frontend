@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-016 (POO-416, POO-1033)
+ * @id PP-CORE-LIB-016 (POO-416, POO-1033, POO-1166, POO-1559, POO-1641)
  * @name computeProvisioningNeed
- * @implements-rules-version v2 (POO-1033 rules v1)
+ * @implements-rules-version v5 (POO-1641 rules v1) · v4 (POO-1559 rules v1) · v3 (POO-1166 / POO-1129 rules v3) · v2 (POO-1033 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * Pure FE requirement calculator for pre-flight provisioning (epic POO-411). Given wallet state
@@ -28,6 +28,22 @@
  *        only funds that could buy that gas were a chain away.
  * The verdict vocabulary is untouched ([R3]) and gas that can be sourced on the target chain still
  * routes to gas-only ([R4]), so the six op modals' branch handling is unchanged.
+ *
+ * v3 (POO-1166) gave the on-ramp fee ONE home (`ONRAMP_FEE_RATE`) and the gross-up that spent it
+ * (`grossUpForOnRampFee` / `onRampFeeUsd`), so the mock fixture and the real planner would size the
+ * same purchase.
+ *
+ * v5 (POO-1641) DELETES all three, and adds no verdict logic either. The gross-up rested entirely on
+ * "our 1% is taken out of what the purchase delivers". It is not: the cut is a partner-side
+ * configuration, already embedded in the price Paybis quotes, and it is not 1% any more either
+ * (Rafael, 2026-08-16). Nothing in `pool-party-api` collects it. So the delivered crypto arrives
+ * WHOLE and the gross-up was inflating every order by a percent for a deduction that never happens.
+ *
+ * Sizing is now the buffer and the floor, and nothing else. Do not reintroduce a rate here, or a
+ * `0.01` under any other name: a fee the frontend models is a figure the buyer pays that no one
+ * receives. If a Pool Party cut is ever genuinely collected client-side, it arrives as a QUOTED
+ * number from the rail, the way Paybis's own charge already does (POO-1139 received-fixed), not as a
+ * constant this module invents.
  */
 import type {
   ChainBalancesUsd,
@@ -36,14 +52,45 @@ import type {
   ProvisioningReason,
 } from "./types";
 
-/** Gas preset shortcuts shown in the buy-gas modal (USD). Both ≥ the Paybis $10 floor. */
+/**
+ * Gas preset shortcuts for gas bought with a CARD (USD). Both ≥ the Paybis $10 floor.
+ *
+ * POO-1084 [F1-R4]: this is the card-funded set, not the only one. See {@link GAS_PRESETS_USDC_USD}.
+ */
 export const GAS_PRESETS_USD = [10, 25] as const;
+/**
+ * Gas preset shortcuts for gas paid out of USDC the wallet already holds (USD).
+ *
+ * Lower than the card set on purpose: the `$10` floor is a fiat-purchase minimum imposed by Paybis,
+ * and a swap out of an existing holding is not a purchase. Forcing $10 there would spend ten dollars
+ * of someone's balance to buy a few cents of native coin.
+ */
+export const GAS_PRESETS_USDC_USD = [5, 10] as const;
 /** Default-selected gas amount (USD). */
 export const GAS_DEFAULT_USD = 10;
 /** Custom gas input bounds (USD) — locked with murilo 2026-06-30. */
 export const GAS_CUSTOM_MIN_USD = 10;
+/** Custom lower bound when the gas is paid out of USDC (POO-1084 [F1-R4]). */
+export const GAS_CUSTOM_MIN_USDC_USD = 5;
 export const GAS_CUSTOM_MAX_USD = 200;
-/** Paybis on-ramp minimum (USD) — POO-87. */
+/**
+ * Paybis on-ramp minimum (USD) — POO-87.
+ *
+ * **This number is KNOWN to be slightly below the vendor's own floor, and that is tracked, not
+ * overlooked.** Measured in production on 2026-08-17 (POO-1666): Paybis refused a 10-USDC order with
+ * "You have to buy or sell at least 10.003001 USDC per order", and the figure MOVED across four
+ * minutes of one capture (10.002, 10.002, 10.003001) because the vendor floor is a fiat amount
+ * (`minAmount: 8.63 EUR`) divided by a live rate.
+ *
+ * Raising it was attempted and REVERTED, deliberately: this app has FOUR independent $10 floors
+ * (`MIN_DEPOSIT` in `DepositScreen`, `GAS_PRESETS_USD[0]`, `GAS_CUSTOM_MIN_USD`, and this one) plus a
+ * hardcoded "as little as $10" in 12 locales, and moving this one alone opens a band where the screen
+ * states a minimum the app will not place. See POO-1670.
+ *
+ * What makes leaving it here SAFE is POO-1666's [R9]: a quote whose methods the vendor has refused no
+ * longer reaches the mint, so a below-floor order now degrades to a widget without a prefill instead
+ * of a 422. The floor is a UX nicety; the refusal check is the correctness boundary.
+ */
 export const PAYBIS_MIN_USD = 10;
 /** Mock slippage buffer applied over a shortfall before the on-ramp (real mode: from the quote). */
 export const MOCK_SLIPPAGE_BUFFER_RATE = 0.02;
@@ -54,12 +101,21 @@ export function clampGasUsd(usd: number): number {
 }
 
 /**
- * Mock heuristic for how much USDC to buy on-ramp to cover a `shortfallUsd`: add a slippage buffer
- * and `feesUsd`, round up to whole dollars, and enforce the Paybis $10 floor. Real mode uses the
- * authoritative `ProvisioningQuote` instead of this.
+ * Mock heuristic for how much USDC to buy on-ramp to cover a `shortfallUsd`: add a slippage buffer,
+ * round up to whole dollars, and enforce the Paybis $10 floor. Real mode uses the authoritative
+ * `ProvisioningQuote` instead of this.
+ *
+ * The floor is applied LAST, after the buffer, so a remainder too small to transact rounds UP to a
+ * size Paybis accepts rather than producing an order it would reject.
+ *
+ * POO-1641 removed the second `feesUsd` parameter along with the fee it existed to carry. There is no
+ * caller-supplied fee term any more, and there should not be one: the only fee on this rail is the
+ * vendor's, and the vendor quotes it (POO-1139 received-fixed). This stays a documented mock
+ * HEURISTIC either way, because {@link MOCK_SLIPPAGE_BUFFER_RATE} is a placeholder rather than a
+ * quoted allowance.
  */
-export function sizeOnRampUsd(shortfallUsd: number, feesUsd = 0): number {
-  const buffered = Math.ceil(shortfallUsd * (1 + MOCK_SLIPPAGE_BUFFER_RATE) + feesUsd);
+export function sizeOnRampUsd(shortfallUsd: number): number {
+  const buffered = Math.ceil(shortfallUsd * (1 + MOCK_SLIPPAGE_BUFFER_RATE));
   return Math.max(PAYBIS_MIN_USD, buffered);
 }
 
@@ -69,6 +125,51 @@ export function sizeOnRampUsd(shortfallUsd: number, feesUsd = 0): number {
  * anywhere else needs that money bridged, even when the wallet is empty everywhere.
  */
 export const ONRAMP_CHAIN_ID = 8453;
+
+/**
+ * Does a fiat purchase for this route have to BUY GAS as well as USDC? (POO-1542 [A]/[B])
+ *
+ * ## One predicate, because two opinions of this cost the screen its honesty
+ *
+ * `buildPlan` decides whether the order is `ETH-BASE` (gas-first) or `USDC`, and the "Where from" row
+ * decides whether to print the `$2` native reserve. Those are the same question, and they were being
+ * answered by two different expressions: the planner read **Base's** verdict while the panel read the
+ * **target chain's**, so the reachable case below rendered the one state built to have no gas on an
+ * operation that was about to buy gas.
+ *
+ * Target Arbitrum, ~$20 of ETH on Arbitrum (enough for gas, dust-filtered out of `sources`), nothing on
+ * Base: Arbitrum's verdict is `OK`, so the row printed `Buy $210.00` with no reserve and the screen
+ * rendered `1c` ("no gas needed"), while the planner saw no Base verdict at all, bought ETH and sized
+ * gas in. The row understated what the route sources, which is the direction [R10] exists to prevent.
+ *
+ * ## Why the absent verdict is a real term rather than defensive coding
+ *
+ * `gasByChain` carries a verdict for the SOURCE chains and for `targetChainId` (`gateContext.ts`), so a
+ * wallet holding nothing on Base has **no Base entry to read**. Treating that as "gas is fine" is
+ * exactly how the case above stayed invisible.
+ *
+ * ## The target term, and the one case it moves
+ *
+ * The planner still ORs `gasStillBlocked` into its decision (the target is `BLOCKED`, no crypto donor
+ * can unblock it, and the on-ramp can), but that term is redundant by construction: `gasStillBlocked`
+ * requires a `BLOCKED` target verdict, which the target term here already reads as not-OK. The plan's
+ * decision therefore IS this predicate, and the row matches it exactly: whenever the row discloses the
+ * `$2` reserve, the purchase does go ETH-first and holds it.
+ *
+ * The target term is a real behaviour change against the pre-POO-1542 planner (`gasStillBlocked ||
+ * Base not-OK`): Base `OK` with a target that is merely `TOP_UP` now buys ETH gas-first where it used
+ * to order plain USDC. That is the [R4] direction on purpose (any surplus stays in the wallet and
+ * never strands, so the cost is a few dollars more on the card, never an unbroadcastable route), and
+ * it is pinned in `buildPlan.test.ts` ("buys ETH gas-first when Base is OK but the TARGET chain is
+ * only TOP_UP").
+ */
+export function onRampRouteBuysGas(
+  gasByChainId: Readonly<Record<number, { verdict: string } | undefined>>,
+  targetChainId: number,
+): boolean {
+  const notOk = (chainId: number): boolean => gasByChainId[chainId]?.verdict !== "OK";
+  return notOk(ONRAMP_CHAIN_ID) || notOk(targetChainId);
+}
 
 /**
  * Tolerance on the USD comparisons introduced in v2. USD figures are display-grade floats by
@@ -135,6 +236,106 @@ function resolveFunding(input: ProvisioningNeedInput): FundingView {
 export function spendableTokenUsd(input: ProvisioningNeedInput): number {
   const funds = resolveFunding(input);
   return funds.targetTokenUsd + funds.offTargetTokenUsd;
+}
+
+/**
+ * A routable holding, as the funding inventory reports it (POO-1031): where it sits, what it is
+ * worth, and whether it is the chain's own coin.
+ *
+ * Structurally typed on purpose. `FundingSource` lives in `fundingInventory.ts`, which is
+ * `server-only`, and this module is re-exported by the client barrel, so even a type-only edge would
+ * trip `serverBoundary.test.ts`. Every `FundingSource` satisfies this shape.
+ */
+export interface RoutableHolding {
+  /** The chain the holding sits on. */
+  chainId: number;
+  /** Its USD value. */
+  usd: number;
+  /** The chain's own coin. It pays gas there, and is never counted as spendable token value. */
+  isNative: boolean;
+}
+
+/** A USD figure, or `0` when whatever produced it did not produce a number ([R6]). */
+function finiteUsd(value: number | undefined): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+/**
+ * The wallet as this calculator must SEE it: native RAW, tokens ROUTABLE only.
+ *
+ * POO-1149 rules v1, generalised here by POO-1559 rules v1 so the swap screen reads the same wallet
+ * as the six operation modals.
+ *
+ * ## The defect this closes, with the numbers it was reported on
+ *
+ * {@link computeProvisioningNeed} decides whether an operation needs provisioning at all, and both
+ * callers were handing it the gate context's `balancesByChain`, documented there as "per-chain native
+ * and token USD, from the RAW holdings". Raw means every token the wallet happens to hold, whether or
+ * not anything can convert it, while {@link ChainBalancesUsd.tokenUsd} has always claimed to be the
+ * routable half. The contract said one thing and the caller passed another.
+ *
+ * Reported 2026-08-11 (POO-1552), real mode: a $1 invest on a **Base** strategy sent the user to
+ * `/deposit` and its $10 fiat minimum while 3.05 USDC sat on Arbitrum. The wallet held 3.2263 VIRTUAL
+ * on Base, worth $1.78, and that is the whole story:
+ *
+ *   `unmetOnTargetUsd = 1 + 0 - 1.78 = -0.78`  -> not > epsilon    -> `needsBridge` false
+ *   `spendableUsd     = 1.78 + 3.05 = 4.83 >= 1`                   -> `needsUsdc`   false
+ *   `targetNativeUsd  = 3.25 (Base ETH) >= gas`                    -> `needsGas`    false
+ *                                                                  -> `needed`      FALSE
+ *
+ * The gate concluded the operation was already funded and stood aside. Nothing was logged, because
+ * standing aside IS its designed answer to "nothing is missing": a wrong input produced a confident
+ * wrong answer, and a funded user was told to go and buy fiat.
+ *
+ * ## Why the token half is the routable inventory and the native half is not
+ *
+ * The routable inventory is the wallet intersected with Uniswap's `swappable_tokens` allowlist and
+ * dust-filtered: it IS the answer to "what can pay for this". Summing it per chain is what makes
+ * `spendableUsd` mean what its name says.
+ *
+ * Native stays RAW, deliberately. Gas is chain-local and paid in the chain's own coin, so whether
+ * anything would route it is beside the point: what matters is whether it is there. {@link
+ * resolveFunding} already refuses to count another chain's native as fundable, for the reason
+ * recorded there.
+ *
+ * Non-native holdings only. A native holding can genuinely fund an operation by being swapped, so
+ * excluding it UNDER-counts and the gate fires slightly more often than strictly necessary. That is
+ * the safe direction and the same one `resolveFunding` chose: under-counting falls back to the
+ * on-ramp, over-counting would promise a route that cannot pay for itself. The panel still offers the
+ * native coin above the signing reserve (POO-1155).
+ *
+ * ## What the CALLER decides
+ *
+ * Which holdings are routable *for this operation*. The six operation modals offer the whole
+ * inventory (`buildProvisioningInput.ts`); the swap screen withholds the destination chain's own
+ * USDC, because it nets that out of the requirement instead and counting it on both sides would
+ * under-state the move (`swapRequest.ts`, POO-1559 [R3]). Passing the list rather than the context is
+ * what lets one rule serve both without either surface guessing at the other's accounting.
+ */
+export function spendableBalancesByChain(
+  balancesByChain: Readonly<Record<number, ChainBalancesUsd>>,
+  routable: readonly RoutableHolding[],
+): Record<number, ChainBalancesUsd> {
+  const routableTokenUsd: Record<number, number> = {};
+  for (const holding of routable) {
+    if (holding.isNative) continue;
+    routableTokenUsd[holding.chainId] =
+      (routableTokenUsd[holding.chainId] ?? 0) + finiteUsd(holding.usd);
+  }
+
+  const out: Record<number, ChainBalancesUsd> = {};
+  // Every chain either view knows about: a chain with native and no routable token still has to be
+  // able to report its gas, and a chain whose raw entry is missing but which carries a routable
+  // holding must not vanish from the off-target sum.
+  for (const key of new Set([...Object.keys(balancesByChain), ...Object.keys(routableTokenUsd)])) {
+    const chainId = Number(key);
+    if (!Number.isInteger(chainId)) continue;
+    out[chainId] = {
+      nativeUsd: finiteUsd(balancesByChain[chainId]?.nativeUsd),
+      tokenUsd: finiteUsd(routableTokenUsd[chainId]),
+    };
+  }
+  return out;
 }
 
 /** Compute what the op is missing and which provisioning branch to take. */

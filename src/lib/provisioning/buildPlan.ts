@@ -1,8 +1,19 @@
 /**
- * @id PP-CORE-LIB-055 (POO-1034, POO-1044, POO-1074, POO-1075)
+ * @id PP-CORE-LIB-055 (POO-1034, POO-1044, POO-1074, POO-1075, POO-1107, POO-1135, POO-1166, POO-1641, POO-1784, POO-1916, POO-1927)
  * @name buildPlan (real provisioning planner)
- * @implements-rules-version v3 (POO-1075 rules v1) · v2 (POO-1044 rules v1) · v1 (POO-1034 rules v1)
+ * @implements-rules-version v9 (POO-1916 rules v1) · v8 (POO-1927 rules v1) · v7 (POO-1641 rules v1) · v6 (POO-1166 / POO-1129 rules v3) · v5 (POO-1135 / POO-1129 rules v3) · v4 (POO-1107 rules v1) · v3 (POO-1075 rules v1) · v2 (POO-1044 rules v1) · v1 (POO-1034 rules v1)
  * @hackathon POO-1022 (Universal Funding)
+ *
+ * ## The fiat on-ramp leg (v5, POO-1135, epic POO-1129)
+ *
+ * When {@link BuildPlanRequest.onRampEnabled} is set and the wallet cannot cover the requirement (a
+ * shortfall the funding loop could not close, or a gas-blocked target chain with no crypto donor),
+ * the planner emits a fiat `buy` step instead of dead-ending. The purchase always lands on Base
+ * ([R2]); {@link sizeOnRampOrder} (POO-1133) picks ETH-BASE (gas-first, [R1]) vs USDC-BASE and the
+ * fiat amount. Its downstream swap/bridge are DISPLAY steps carrying no {@link ProvisioningLeg},
+ * because their real input is the observed settlement delta, which does not exist until the purchase
+ * clears ([R4]/[R8]); POO-1136 re-sizes and executes them from that delta. Absent the flag, the
+ * planner behaves exactly as it did before this field existed (the crypto-only cut).
  *
  * The engine. It turns "this operation needs N USDC on chain X, and the wallet holds these things
  * in this order" into an ordered list of legs that a wallet can actually execute.
@@ -14,14 +25,37 @@
  *
  *   same chain, different token   → `routing: "CLASSIC"`, one transaction
  *   different chain, same token   → `routing: "BRIDGE"`, one transaction, Across-backed
- *   different chain, DIFFERENT token → **`404 ResourceNotFound`. Not routable in one call.**
+ *   different chain, DIFFERENT token → **`404 ResourceNotFound` FOR THE PAIR PROBED.**
  *
  * That last row is the flagship demo case (WETH on Polygon funding a USDC strategy on Arbitrum), so
  * the planner's core job is to never ask that question. It decomposes: swap to the source chain's
- * USDC first, then bridge USDC to the target chain ([R1]). The intermediary is always USDC because
- * every supported chain has it and it is the bridge asset, so the bridge leg is always same-token
- * and therefore always routable. `routing: "CHAINED"` (`POST /plan`) is never returned to us and is
- * not used; see `02_BRIDGE_ARCHITECTURE.md` §1.5.
+ * stable first, then bridge that stable to the target chain ([R1]).
+ *
+ * ## The boundary is PAIR-SPECIFIC, and this header used to say otherwise (POO-1916)
+ *
+ * Until POO-1916 the paragraph above ended: *"The intermediary is always USDC because every supported
+ * chain has it and it is the bridge asset, so the bridge leg is always same-token and therefore
+ * always routable."* Both halves were wrong, and that sentence is the root cause of POO-1779 and
+ * POO-1784. Chain 4663 does not hold USDC in its stable slot; it holds USDG. And the 404 above was
+ * measured on ONE pair on 2026-07-25, weeks before 4663 was in our stack, then generalised into a
+ * rule about different-token routing as such. Re-probed live:
+ *
+ *   `WETH(137)  -> USDC(42161)` → `404 ResourceNotFound`   (2026-07-25, still 404 on 2026-09-12)
+ *   `USDC(8453) -> USDC(42161)` → `200`, `routing: "BRIDGE"` (same-token control)
+ *   `USDC(8453) -> USDG(4663)`  → `200`, `routing: "BRIDGE"` (2026-09-11: 10.000000 in, 9.952342 out)
+ *   `USDC(4663) -> USDG(4663)`  → `404 NoRouteFoundError`    (no same-chain pool: do NOT swap locally)
+ *
+ * So the real boundary is whichever pairs the aggregator serves, and stable-to-stable across chains
+ * is one of them. The intermediary is therefore the SOURCE chain's stable and the far side is the
+ * TARGET chain's stable, both read from `ChainMeta` ([R2]); `usdcToken` has done that since POO-1779.
+ * The fourth row is why there is no local-swap fallback: bridging to 4663 and swapping there fails at
+ * leg two. `routing: "CHAINED"` (`POST /plan`) is never returned to us and is not used; see
+ * `02_BRIDGE_ARCHITECTURE.md` §1.5.
+ *
+ * None of this is re-derivable from a chain id, and [R3] forbids trying: routability is a LIVE
+ * property. Every bridge leg is quoted before it is planned, and a 404 drops the route rather than
+ * offering one that dies at execution. That now includes the FIAT bridge, which used to be offered
+ * unquoted (see {@link buildOnRampSteps}).
  *
  * ## Sizing runs backwards, execution runs forwards
  *
@@ -63,15 +97,33 @@ import "server-only";
 
 import { formatUnits } from "viem";
 import type { FundingSource } from "@/lib/balances/fundingInventory";
-import { apiNetworkForChain, getUsdcAddress, nativeSymbol } from "@/lib/chains/config";
+import {
+  apiNetworkForChain,
+  getUsdcAddress,
+  isStableSymbol,
+  nativeSymbol,
+  stableSymbol,
+} from "@/lib/chains/config";
+// The stable-deliverability predicate the PLANNER and the panel's route picker share (POO-1784 [R1]).
+import { onRampCanDeliverStable } from "@/lib/onramp/destinations";
+// The pure on-ramp order sizer (POO-1133): it picks ETH-BASE vs USDC-BASE and the fiat amount, and its
+// `order` already matches a `ProvisioningOrder`, so a fiat step consumes it with no remap. Imported from
+// its own module rather than a barrel to keep this `server-only` graph tight; it is a pure function
+// (no I/O, no server-only import of its own), so it carries no secret into the plan.
+import { sizeOnRampOrder } from "@/lib/onramp/sizeOnRampOrder";
 // PP-INTEGRATION-POINT: every leg is priced by the live Uniswap Trading API through the server
 // action layer (PP-CORE-LIB-052). `POST /quote` is the only upstream call the planner makes.
 import { quoteSwap } from "@/lib/uniswap/actions";
+import { isTransientFailureCode } from "@/lib/uniswap/errors";
 import type { UniswapQuoteResponse } from "@/lib/uniswap/schemas";
+// `ONRAMP_CHAIN_ID` (8453): Paybis always sells on Base ([R2]). Imported from `computeNeed` (which
+// depends only on `./types`) rather than the barrel, so this file never pulls the client-facing barrel.
+import { ONRAMP_CHAIN_ID, onRampRouteBuysGas, PAYBIS_MIN_USD } from "./computeNeed";
 import { buildCostBreakdown } from "./costBreakdown";
 import type { GasFeasibility } from "./gasFeasibility";
-import { quoteGasUsd } from "./gasFeasibility";
+import { quoteGasUsd, raiseTopUpToUsd } from "./gasFeasibility";
 import type {
+  OnRampAttribution,
   ProvisioningLeg,
   ProvisioningLegKind,
   ProvisioningLegToken,
@@ -79,6 +131,7 @@ import type {
   ProvisioningQuote,
   ProvisioningReason,
   ProvisioningStep,
+  ProvisioningStepType,
 } from "./types";
 import { NATIVE_TOKEN_ADDRESS } from "./types";
 
@@ -121,7 +174,7 @@ export const UNISWAP_QUOTE_TTL_MS = 30_000;
  */
 const DEFAULT_SLIPPAGE_PCT = 2;
 
-/** i18n keys for each step label (resolved by the FE across all 11 locales). */
+/** i18n keys for each step label (resolved by the FE across all 12 locales). */
 /**
  * Legs that exist to make a chain TRANSACTABLE rather than to fund the operation.
  *
@@ -132,13 +185,21 @@ const DEFAULT_SLIPPAGE_PCT = 2;
  */
 const GAS_LEG_KINDS: ReadonlySet<ProvisioningLegKind> = new Set(["swap-gas", "bridge-gas"]);
 
-const LABEL_KEYS: Record<ProvisioningLegKind | "op", string> = {
+// POO-1131 decision: keyed by `ProvisioningLegKind | "op"`, so the `buy-usdc` → `buy` step-type
+// rename does NOT widen it. `buildPlan` emits no fiat leg today (there is no `buy` route class), so
+// there is nothing to label here; the `provisioning.steps.buy` label is carried by the fiat step the
+// on-ramp planner assembles, which lands with POO-1135. Do not add a `buy` entry pre-emptively.
+// `satisfies Record<ProvisioningStepType, ...>` so the fiat `buy` step (POO-1131) is a compile error to
+// omit: a missing label key is a runtime next-intl throw, not a type error, so the exhaustive Record is
+// what turns it into one. Widened from `ProvisioningLegKind | "op"` when POO-1135 began emitting `buy`.
+const LABEL_KEYS = {
+  buy: "provisioning.steps.buy",
   bridge: "provisioning.steps.bridge",
   "bridge-gas": "provisioning.steps.bridgeGas",
   "swap-gas": "provisioning.steps.swapGas",
   "swap-token": "provisioning.steps.swapToken",
   op: "provisioning.steps.op",
-};
+} satisfies Record<ProvisioningStepType, string>;
 
 /** What the planner needs to know. Everything is derived; nothing is read from the network here. */
 export interface BuildPlanRequest {
@@ -165,8 +226,9 @@ export interface BuildPlanRequest {
    * to pay for transactions, they have said which money funds the position.
    *
    * This is the same split the gas TOP-UP already uses. `classifyGasFeasibility` slices a `swap-gas`
-   * leg out of a holding it picks from the full inventory (`gateContext.gasSources`), never from the
-   * selection, so the gas bridge reading the selection was the odd one out.
+   * leg out of a holding it picks from the full inventory (the served context's per-chain gas
+   * sources, POO-1098), never from the selection, so the gas bridge reading the selection was the
+   * odd one out.
    *
    * Falls back to {@link sources} when absent, which keeps every existing caller and fixture honest.
    */
@@ -179,6 +241,48 @@ export interface BuildPlanRequest {
   gasByChain: Readonly<Record<number, GasFeasibility>>;
   /** Max slippage from the settings gear, percent (POO-523 R2). Governs AMM legs only. */
   slippagePct?: number;
+  /**
+   * How much native the user asked to end up holding, USD (POO-1085 [F2-R2]).
+   *
+   * A CEILING-RAISER, never a sizer: the gas leg is `max(what the classifier computed, this)`. The
+   * classifier's figure is what the route costs, and a leg below it reverts on-chain after the user
+   * has signed, so a smaller choice is ignored rather than honoured. Absent, the plan is exactly
+   * what it was before this field existed ([F2-R3]).
+   */
+  gasChoiceUsd?: number;
+  /**
+   * Whether the fiat on-ramp may fund a shortfall the wallet cannot cover (epic POO-1129 [R1]/[R2]).
+   *
+   * This is the ONE authority on whether a buy leg exists, threaded from the same source
+   * `resolveFundingRoutes` reads for its `onRampEnabled` (`computePlanAction` passes the feature flag).
+   * When `false` (the crypto-only cut, POO-1082 D3) the planner behaves exactly as before: a wallet
+   * that cannot cover the requirement fails with `PROVISIONING_INSUFFICIENT_FUNDS`, and a gas-blocked
+   * chain with no donor fails with `PROVISIONING_GAS_BLOCKED`. When `true`, both dead ends become a
+   * fiat-first plan instead: buy on Base ([R2]), then swap/bridge toward the operation's chain.
+   *
+   * ONE exception survives the flag: `PROVISIONING_GAS_BLOCKED` still stands on a chain the rail
+   * cannot deliver native for ({@link onRampCanUnblockGas}), because there the purchase would strand.
+   */
+  onRampEnabled?: boolean;
+  /**
+   * WHICH rail will serve the buy leg, for the step's display attribution (POO-1927 [R3]).
+   *
+   * Threaded from the flags by `computePlanAction` exactly as {@link onRampEnabled} above is, and
+   * for the same reason: the engine stays a pure function of its request, so the 80-odd cases in
+   * `buildPlan.test.ts` do not each become flag-dependent. The two cannot disagree, because
+   * `decideOnRampRail` returns `"none"` precisely when `fiatOnRamp` is off, which is the same
+   * condition that makes `onRampEnabled` false and emits no buy step at all.
+   *
+   * It sets `poweredBy` and NOTHING else. No leg, no sizing and no ordering reads it, which is what
+   * keeps [R3] clear of rejection 10 of the epic's handoff ("the provisioning engine is not
+   * touched"); the guard test for that claim is `buildPlan.test.ts` POO-1927 [R3], which asserts
+   * that flipping this field leaves every other field of every step byte-identical.
+   *
+   * Absent, the attribution is `"paybis"`: the pre-POO-1927 answer, so every existing caller and
+   * fixture keeps its exact meaning. The one production caller always supplies it
+   * (`planActions.test.ts` pins that), so the default can never become the shipped answer.
+   */
+  onRampRail?: OnRampAttribution;
 }
 
 /** Injectable clock, so the suite can assert a stable `quotedAt` / `ttlMs`. */
@@ -214,10 +318,45 @@ function nativeToken(chainId: number): ProvisioningLegToken {
   };
 }
 
-/** The chain's USDC as a leg endpoint, or `null` when the chain is not one we operate on. */
+/**
+ * Can a fiat purchase un-block this chain's gas? POO-1135 [R2]: the rail delivers ETH or USDC on
+ * BASE and nothing else, so the only native coin it can ever produce is ETH. Bridging that gas
+ * onwards has the same constraint {@link planGasBridge} already carries: a donor must hold the SAME
+ * native symbol, because there is no cross-chain different-token route to serve.
+ *
+ * So on a POL chain (Polygon) a purchase cannot become gas by any path. Falling through the refusal
+ * there would emit buy-ETH-on-Base -> swap -> bridge-USDC-to-Polygon and hand back a plan whose
+ * final op transaction can NEVER broadcast: the user pays fiat and the USDC lands on a chain where
+ * they hold zero native. That is exactly the "never hand back a plan that strands halfway" invariant
+ * (UF-22 [R3]), so the refusal stands for any chain this returns false for.
+ */
+function onRampCanUnblockGas(chainId: number): boolean {
+  return nativeToken(chainId).symbol === "ETH";
+}
+
+/*
+ * The stable question's counterpart to {@link onRampCanUnblockGas} is `onRampCanDeliverStable`, and
+ * since POO-1784 it is IMPORTED from `lib/onramp/destinations` rather than declared here. It used to
+ * be a private function of this module (POO-1779), which is exactly why the panel's route picker
+ * shipped without it and offered a `buy` route this planner then refused: one rule, two places, and
+ * only one of them had it.
+ *
+ * POO-1916 [R1]/[R3] narrowed what it answers. It is no longer `usdcDestination`'s boolean shadow
+ * (the ramp's delivery asset and the bridge's far side are different questions) and it no longer
+ * claims routability: it says only that the registry names a stable on that chain. The live half is
+ * asked HERE, in {@link buildOnRampSteps}, because only this module can ask `/quote`.
+ */
+
+/**
+ * The chain's STABLE as a leg endpoint, or `null` when the chain is not one we operate on.
+ *
+ * POO-1779 [R1]: the symbol is the chain's own ("USDG" on Robinhood), because it rides the leg all
+ * the way to the rail's row labels and to `ProvisioningStep.toToken`. The address was already
+ * per-chain; only the label was a constant.
+ */
 function usdcToken(chainId: number): ProvisioningLegToken | null {
   const address = getUsdcAddress(chainId);
-  return address ? { address, symbol: "USDC", decimals: 6, chainId } : null;
+  return address ? { address, symbol: stableSymbol(chainId), decimals: 6, chainId } : null;
 }
 
 /** A funding source as a leg endpoint. */
@@ -278,7 +417,15 @@ async function priceLeg(args: {
   });
   // A 404 here is a ROUTING BOUNDARY, not an outage (§4.7): this pair is simply not offered. The
   // caller drops the source and moves to the next one rather than failing the whole plan.
-  if (!result.ok) return null;
+  //
+  // POO-1107: an OUTAGE is not a routing verdict and must not be read as one. Dropping the source on
+  // a 429 told a funded user they had insufficient funds, which is both wrong and unactionable. This
+  // used to be safe because the old transport retried a throttled POST; that retry went with the
+  // move to pool-party-api (POO-1097), so the distinction has to be made here instead.
+  if (!result.ok) {
+    if (isTransientFailureCode(result.code)) throw new UpstreamUnavailableError(result.message);
+    return null;
+  }
 
   const quote = result.quote;
   const amountIn = quote.quote.input?.amount;
@@ -441,6 +588,14 @@ async function planGasBridge(args: {
   gasByChain: Readonly<Record<number, GasFeasibility>>;
   sources: readonly FundingSource[];
   slippagePct: number;
+  /**
+   * POO-1140: the user's gas headroom choice, USD. The escape leg honours it exactly like the swap
+   * top-up does (`ensureGas` → `raiseTopUpToUsd`), which it did not before: it sized from
+   * `targetGas.requiredGasUsd` alone, so a user who asked for headroom silently got none here. It is a
+   * ceiling raise clamped to the donor's surplus, and it may NEVER turn a donor that could cover the
+   * classifier's own figure into a skip: see the per-donor fallback below.
+   */
+  gasChoiceUsd?: number;
 }): Promise<GasBridgeOutcome> {
   const target = nativeToken(args.targetChainId);
   // Why each donor was passed over, in order. A single catch-all message for five different
@@ -509,36 +664,56 @@ async function planGasBridge(args: {
     // [R2] What this donor can give WITHOUT stranding itself: its surplus, which the classifier
     // already computed as native beyond its own requirement.
     const spendable = toBaseUnits(donor.surplusUsd);
-    const wanted = toBaseUnits(args.targetGas.requiredGasUsd);
-    const required = wanted < MIN_GAS_BRIDGE_WEI ? MIN_GAS_BRIDGE_WEI : wanted;
-    if (required > spendable) {
-      notes.push(
-        `chain ${donor.chainId} can spare ${spendable} wei but the bridge needs ${required} (floor ${MIN_GAS_BRIDGE_WEI})`,
-      );
-      continue;
+
+    // POO-1140: the delivered native, in USD. The classifier's figure is the inviolable FLOOR; the
+    // user's choice may only lift it, and only as far as this donor's surplus allows. Two candidates
+    // are tried in order — the raised target first, the classifier floor as a guaranteed fallback — so
+    // the raise can never turn a donor that could cover the floor into a skip (an oversized raise still
+    // yields a plan). `raiseTopUpToUsd` is the swap-side twin of this rule.
+    const floorUsd = args.targetGas.requiredGasUsd;
+    const raisedUsd = Math.min(Math.max(floorUsd, args.gasChoiceUsd ?? 0), donor.surplusUsd);
+    const attemptsUsd = raisedUsd > floorUsd ? [raisedUsd, floorUsd] : [floorUsd];
+
+    let priced: PricedLeg | null = null;
+    let lastNote = "";
+    for (const attemptUsd of attemptsUsd) {
+      const wanted = toBaseUnits(attemptUsd);
+      const required = wanted < MIN_GAS_BRIDGE_WEI ? MIN_GAS_BRIDGE_WEI : wanted;
+      if (required > spendable) {
+        lastNote = `chain ${donor.chainId} can spare ${spendable} wei but the bridge needs ${required} (floor ${MIN_GAS_BRIDGE_WEI})`;
+        continue;
+      }
+
+      // `/quote` is rate-limited on a shared key, so the fallback second call only happens when a
+      // raise was requested AND its size cannot be carried within the surplus — the rare, opt-in case.
+      const candidate = await sizeBridgeInput({
+        index: 0,
+        kind: "bridge-gas",
+        tokenIn: nativeToken(donor.chainId),
+        tokenOut: target,
+        required,
+        slippagePct: args.slippagePct,
+      });
+      // A 404 is this pair declining the amount, not an outage: try the floor, then the next donor.
+      if (!candidate) {
+        lastNote = `chain ${donor.chainId} to ${args.targetChainId}: no quote for ${required} wei`;
+        continue;
+      }
+
+      // Sizing grosses the INPUT up past `required` to cover the bridge fee, so the surplus test has
+      // to be re-run against what actually leaves the donor. Checking only the output would let a leg
+      // through that strands the very chain it was drawn from.
+      if (toBigInt(candidate.leg.amountIn) > spendable) {
+        lastNote = `chain ${donor.chainId} needs ${candidate.leg.amountIn} wei in once fees are covered, over its ${spendable} spare`;
+        continue;
+      }
+
+      priced = candidate;
+      break;
     }
 
-    const priced = await sizeBridgeInput({
-      index: 0,
-      kind: "bridge-gas",
-      tokenIn: nativeToken(donor.chainId),
-      tokenOut: target,
-      required,
-      slippagePct: args.slippagePct,
-    });
-    // A 404 is this pair declining the amount, not an outage: try the next donor.
     if (!priced) {
-      notes.push(`chain ${donor.chainId} to ${args.targetChainId}: no quote for ${required} wei`);
-      continue;
-    }
-
-    // Sizing grosses the INPUT up past `required` to cover the bridge fee, so the surplus test has
-    // to be re-run against what actually leaves the donor. Checking only the output would let a leg
-    // through that strands the very chain it was drawn from.
-    if (toBigInt(priced.leg.amountIn) > spendable) {
-      notes.push(
-        `chain ${donor.chainId} needs ${priced.leg.amountIn} wei in once fees are covered, over its ${spendable} spare`,
-      );
+      notes.push(lastNote);
       continue;
     }
 
@@ -569,7 +744,8 @@ function applySlippageFloor(amountOut: bigint, slippagePct: number): bigint {
  * rest of this codebase already does with it.
  */
 function amountUsd(amount: string, token: ProvisioningLegToken, source?: FundingSource): number {
-  if (token.symbol === "USDC") {
+  // POO-1779 [R1]: parity is a property of BEING the dollar, not of the string "USDC".
+  if (isStableSymbol(token.symbol)) {
     return round2(Number(formatUnits(toBigInt(amount), token.decimals)));
   }
   if (!source) return 0;
@@ -761,7 +937,38 @@ async function planSource(args: {
  * user told "you are $12 short" can act, a user handed a plan that strands halfway cannot
  * (UF-22 [R3]).
  */
+/**
+ * An upstream outage encountered while pricing. Thrown rather than returned so it cannot be mistaken
+ * for `null`, which every pricing caller already reads as "this source is not routable" (POO-1107).
+ */
+class UpstreamUnavailableError extends Error {
+  constructor(detail: string) {
+    super(detail);
+    this.name = "UpstreamUnavailableError";
+  }
+}
+
 export async function buildPlan(
+  request: BuildPlanRequest,
+  options: BuildPlanOptions = {},
+): Promise<BuildPlanResult> {
+  try {
+    return await buildPlanInner(request, options);
+  } catch (error) {
+    // POO-1107 [R2]: a retryable outage, reported as itself. Anything else keeps propagating: this
+    // catch exists to classify one condition, not to swallow bugs.
+    if (error instanceof UpstreamUnavailableError) {
+      return {
+        ok: false,
+        code: "PROVISIONING_UPSTREAM_UNAVAILABLE",
+        message: `Could not price a route just now: ${error.message}. This is temporary, please try again.`,
+      };
+    }
+    throw error;
+  }
+}
+
+async function buildPlanInner(
   request: BuildPlanRequest,
   options: BuildPlanOptions = {},
 ): Promise<BuildPlanResult> {
@@ -804,8 +1011,17 @@ export async function buildPlan(
       // The FULL inventory: a donor the user did not elect to spend is still a donor ([R1]).
       sources: request.inventory ?? request.sources,
       slippagePct,
+      ...(request.gasChoiceUsd === undefined ? {} : { gasChoiceUsd: request.gasChoiceUsd }),
     });
-    if (!outcome.priced) {
+    // POO-1135: a blocked target chain is no longer a dead end when the fiat on-ramp is enabled AND
+    // the rail can actually deliver this chain's native coin ({@link onRampCanUnblockGas}). The buy
+    // path below buys native ETH on Base ([R1] gas-first) and the target chain's gas is re-derived
+    // from the settled delta at execution (POO-1136), so we fall through rather than refusing here.
+    //
+    // For a POL chain the fall-through is NOT available: no rail asset and no donor can become gas
+    // there, so a bought balance would strand. With the on-ramp OFF, the refusal stands for every
+    // chain exactly as before.
+    if (!outcome.priced && !(request.onRampEnabled && onRampCanUnblockGas(request.targetChainId))) {
       return {
         ok: false,
         code: "PROVISIONING_GAS_BLOCKED",
@@ -815,7 +1031,7 @@ export async function buildPlan(
         message: `Chain ${request.targetChainId} holds no native coin to pay for the operation's own transaction, and no other network could send ${nativeToken(request.targetChainId).symbol} over. ${outcome.refusal}`,
       };
     }
-    gasBridge = outcome.priced;
+    gasBridge = outcome.priced ?? null;
   }
 
   const required = toBigInt(request.requiredAmount);
@@ -879,7 +1095,35 @@ export async function buildPlan(
     // than planning a route that cannot pay for itself.
     if (!verdict.topUp) return false;
 
-    const token = verdict.topUp.token;
+    // [F2-R2] The user's choice may only RAISE the slice, never shrink it below what the classifier
+    // priced. See `raiseTopUpToUsd` for why the two figures answer different questions.
+    //
+    // POO-1141: but the raise must not STARVE the operation. When the gas token is also a funding
+    // source the operation draws on, a large headroom choice can commit balance the operation needs,
+    // surfacing a plan-time `PROVISIONING_INSUFFICIENT_FUNDS` on a holding that would have covered
+    // both. Triage found that error unrecoverable in practice (the error branch returns before the
+    // plan card, so the selector unmounts, and "Try again" exits the flow), so the DISCRETIONARY raise
+    // is bounded to leave the operation's still-unmet requirement in the holding. The classifier's own
+    // figure is the floor and is never touched: an insufficiency at the floor is a genuine shortfall,
+    // not a raise-induced one, and is reported as `PROVISIONING_INSUFFICIENT_FUNDS` as before.
+    const gasToken = verdict.topUp.token;
+    const gasIsFundingSource = request.sources.some(
+      (source) =>
+        source.chainId === verdict.chainId && sameAddress(source.address, gasToken.address),
+    );
+    // `remaining` is the operation's still-unmet requirement in target-chain USDC base units, read at
+    // parity. When the gas holding is not a funding source there is nothing to starve, so no bound.
+    const opRemainingUsd = Number(remaining) / 1_000_000;
+    const raiseCeilingUsd = gasIsFundingSource
+      ? Math.max(0, gasToken.balanceUsd) - opRemainingUsd
+      : Number.POSITIVE_INFINITY;
+    const boundedChoiceUsd =
+      request.gasChoiceUsd === undefined
+        ? undefined
+        : Math.min(request.gasChoiceUsd, raiseCeilingUsd);
+    const topUp = raiseTopUpToUsd(verdict.topUp, boundedChoiceUsd);
+
+    const token = topUp.token;
     const priced = await priceLeg({
       index: legs.length,
       kind: "swap-gas",
@@ -890,7 +1134,7 @@ export async function buildPlan(
         chainId: verdict.chainId,
       },
       tokenOut: nativeToken(verdict.chainId),
-      amount: verdict.topUp.amountRaw,
+      amount: topUp.amountRaw,
       type: "EXACT_INPUT",
       slippagePct,
       requoteAtExecution: false,
@@ -913,9 +1157,9 @@ export async function buildPlan(
     });
     legs.push(priced.leg);
     if (priced.deadlineMs !== undefined) deadlines.push(priced.deadlineMs);
-    commit(verdict.chainId, token.address, toBigInt(verdict.topUp.amountRaw));
+    commit(verdict.chainId, token.address, toBigInt(topUp.amountRaw));
     toppedUpChains.add(verdict.chainId);
-    topUpUsd += verdict.topUp.buyNativeUsd;
+    topUpUsd += topUp.buyNativeUsd;
     return true;
   }
 
@@ -999,6 +1243,33 @@ export async function buildPlan(
   // no iteration at all.
   if (targetGas) await ensureGas(targetGas);
 
+  // POO-1135: the fiat on-ramp funds whatever the wallet could not. Reached when the on-ramp is
+  // enabled AND either the operation is still short (`remaining > 0`) or the target chain is still
+  // gas-blocked with no crypto donor to unblock it. The purchase always lands on Base ([R2]).
+  // The SAME rail-reachability condition the refusal above is gated on, restated locally so the
+  // gas-first buy can never be emitted for a chain the purchase could not un-block. Today the
+  // refusal makes that unreachable; keeping the condition here means a future change to the refusal
+  // cannot silently start emitting a stranding plan from 200 lines away.
+  const gasStillBlocked =
+    targetGas?.verdict === "BLOCKED" &&
+    gasBridge === null &&
+    onRampCanUnblockGas(request.targetChainId);
+  const onRampSteps: ProvisioningStep[] =
+    request.onRampEnabled && (remaining > BigInt(0) || gasStillBlocked)
+      ? await buildOnRampSteps({
+          shortfall: remaining,
+          targetChainId: request.targetChainId,
+          gasByChain: request.gasByChain,
+          gasStillBlocked,
+          slippagePct,
+          ...(request.gasChoiceUsd === undefined ? {} : { gasChoiceUsd: request.gasChoiceUsd }),
+          // POO-1927 [R3]: display attribution only, see `BuildPlanRequest.onRampRail`.
+          ...(request.onRampRail === undefined ? {} : { onRampRail: request.onRampRail }),
+        })
+      : [];
+  // The purchase (and its downstream legs) cover the rest, so nothing is left unfunded.
+  if (onRampSteps.length > 0) remaining = BigInt(0);
+
   if (remaining > BigInt(0)) {
     return {
       ok: false,
@@ -1018,8 +1289,211 @@ export async function buildPlan(
       requiredUsd: request.requiredUsd,
       hasRequirement: required > BigInt(0),
       topUpUsd,
+      onRampSteps,
     }),
   };
+}
+
+/**
+ * The fiat purchase path, as DISPLAY steps (POO-1135, epic [R1]/[R2]).
+ *
+ * `sizeOnRampOrder` (POO-1133) picks ETH-BASE vs USDC-BASE and the fiat amount; its `order` drops
+ * straight onto the `buy` step with no remap. It consumes `requiredUsd` AS-IS, and since POO-1641
+ * that IS the remainder: there is no fee headroom to add on this side. The purchase always lands on
+ * Base ([R2]), then:
+ *
+ *   - a bought-ETH plan swaps the op-funding slice to USDC on Base ([R1]) — SKIPPED when that slice is
+ *     zero (a pure gas top-up), despite `needsSwapToUsdc` mirroring the ETH choice, because there is
+ *     nothing to convert and a zero-value swap only charges the user gas (POO-1133 review carry);
+ *   - an off-Base target bridges the bought USDC to the operation's chain ([R2]).
+ *
+ * These steps carry NO {@link ProvisioningLeg}: their real input is the observed settlement delta,
+ * which does not exist until the purchase clears, so POO-1136 re-sizes and executes them from that
+ * delta at execution ([R4]/[R8]). They exist here for the plan the user reviews, and the cost model
+ * skips a legless step, so they contribute no fabricated Uniswap fee to the quote.
+ */
+async function buildOnRampSteps(args: {
+  /** Base units of the target chain's STABLE the on-ramp must cover (the op-funding shortfall). */
+  shortfall: bigint;
+  targetChainId: number;
+  gasByChain: Readonly<Record<number, GasFeasibility>>;
+  /** The target chain holds no native coin and no crypto donor could reach it ([R1] gas-first buy). */
+  gasStillBlocked: boolean;
+  gasChoiceUsd?: number;
+  /** Passed through to the routability probe only; the fiat steps themselves carry no quote. */
+  slippagePct: number;
+  /** POO-1927 [R3]: the rail credited on the buy step. Display only, see `BuildPlanRequest`. */
+  onRampRail?: OnRampAttribution;
+}): Promise<ProvisioningStep[]> {
+  const { shortfall, targetChainId, gasByChain, gasStillBlocked, gasChoiceUsd, slippagePct } = args;
+
+  // POO-1779: no purchase at all when this app cannot even name a stable on the target chain
+  // ({@link onRampCanDeliverStable}). The caller leaves `remaining` untouched for an empty array, so
+  // the shortfall dead-ends in `PROVISIONING_INSUFFICIENT_FUNDS` exactly as it does with the flag
+  // off, which the panel already renders as "you need <stable> on <chain>".
+  //
+  // Scoped to a shortfall on purpose: a gas-only purchase (`shortfall === 0`) buys ETH on Base and
+  // never touches a stable, so it stays available for every chain {@link onRampCanUnblockGas}
+  // already allows, Robinhood Chain included. Refusing it here would assemble a legless plan with
+  // `needed: false` (nothing else emits a leg for a BLOCKED chain) — a confirm that runs nothing and
+  // reports success, which is a worse dead end than the refusal it replaced.
+  if (shortfall > BigInt(0) && !onRampCanDeliverStable(targetChainId)) return [];
+
+  /*
+   * POO-1916 [R3]: and no purchase when the BRIDGE will not carry it there.
+   *
+   * The predicate above is static — it reads the registry, and since POO-1916 it deliberately says
+   * nothing about routing. This is the live half, and it exists because the fiat bridge is the one
+   * bridge in this planner that was never quoted: its steps are legless by design ([R4]/[R8]), sized
+   * at execution from the settled delta, so nothing in the plan ever asked whether the pair is
+   * served. POO-1784 papered over that with "the bridge is same-token, therefore always routable",
+   * which is the sentence this issue deletes.
+   *
+   * One `/quote` on a path that already makes several, and only when something actually crosses.
+   * It buys the difference between "we knew and did not offer it" and "the user paid a card and the
+   * money stranded on Base", which is the UF-22 invariant this module keeps citing. Its NUMBERS are
+   * discarded on purpose: the real input is the settlement delta, which does not exist yet.
+   *
+   * Sized at the amount that will really cross, never below the on-ramp floor: a sub-floor probe can
+   * 404 for economics rather than for the pair (`MIN_GAS_BRIDGE_WEI` documents that failure on the
+   * native side) and would suppress a route the floored purchase funds perfectly well.
+   *
+   * A 429 is NOT an answer here (POO-1107): `priceLeg` throws `UpstreamUnavailableError` on a
+   * transient code, so an outage fails the plan loudly instead of telling a funded user their chain
+   * cannot be reached.
+   */
+  if (shortfall > BigInt(0) && targetChainId !== ONRAMP_CHAIN_ID) {
+    const bought = usdcToken(ONRAMP_CHAIN_ID);
+    const lands = usdcToken(targetChainId);
+    if (!bought || !lands) return [];
+    const floor = BigInt(Math.round(PAYBIS_MIN_USD * 1_000_000));
+    const probed = await priceLeg({
+      index: 0,
+      kind: "bridge",
+      tokenIn: bought,
+      tokenOut: lands,
+      amount: (shortfall > floor ? shortfall : floor).toString(),
+      type: "EXACT_INPUT",
+      slippagePct,
+      requoteAtExecution: false,
+    });
+    if (!probed) return [];
+  }
+
+  const shortfallUsd = round2(Number(shortfall) / 1_000_000);
+
+  // POO-1641: the buy is sized to the bare remainder, because the bare remainder is what lands.
+  //
+  // POO-1166 grossed this up by 1% (`needed / (1 - rate)`) on the belief that a Pool Party cut came
+  // out of the delivery. It does not. The cut is a partner-side configuration, already embedded in
+  // the price Paybis quotes, and it is not 1% any more either (Rafael, 2026-08-16); nothing in
+  // `pool-party-api` collects it. So the gross-up was charging every buyer a percent that no one
+  // receives, and a headroom for a fee nobody collects is not a safety margin.
+  //
+  // Paybis's own cut stays unmodelled here for the reason it always did: POO-1139 made the quote
+  // received-fixed, so THEY compute the charge from the amount we ask them to deliver.
+  //
+  // The downstream swap/bridge display steps are on `shortfallUsd` too, and now trivially so: it is
+  // one figure end to end. PAYBIS_MIN_USD is still applied AFTER this, inside `sizeOnRampOrder`, so a
+  // tiny remainder floors up to an order Paybis will accept rather than one it would reject. That
+  // floor is what makes removing an upstream term safe: it clamps whatever it is handed.
+  //
+  // There is deliberately no `fundingUsd` local any more: the whole reason one existed was to name
+  // "the remainder, adjusted", and an alias for an unadjusted figure is an invitation to re-adjust it.
+
+  // The buy and its downstream swap/bridge ORIGIN transactions all run on Base, so the purchase has to
+  // include gas (buy ETH, [R1] gas-first) whenever the wallet cannot already pay for a Base
+  // transaction. Buying ETH and keeping a floor is the SAFE direction: a wallet that turns out to have
+  // had Base gas is merely left holding a little ETH, never stranded mid-route.
+  //
+  // A Base TOP_UP verdict therefore reads as "not OK" here and the buy goes ETH-first EVEN THOUGH
+  // `ensureGas` has already planned a Base swap-gas leg. That double-provisioning is DELIBERATE
+  // (POO-1135 review decision), not an oversight: the swap-gas leg is itself a Base transaction, so
+  // it cannot fund the very transactions it would have to run before it — the purchase's own swap and
+  // bridge origin transactions on Base. Buying ETH first is what makes those executable at all. Per
+  // [R4] any surplus simply stays in the wallet and never strands, so the cost is a few dollars more
+  // on the card, which is the side to err on when the alternative is an unbroadcastable route.
+  const baseGas = gasByChain[ONRAMP_CHAIN_ID];
+  /**
+   * POO-1542 [B]: the Base term is `onRampRouteBuysGas` now, shared with the "Where from" row.
+   *
+   * It used to be spelled out here while the panel spelled a DIFFERENT question (the target chain's
+   * verdict) for the same decision, so the row could print `Buy $210.00` with no reserve on a route
+   * that was about to buy ETH. The helper carries the reasoning; `gasStillBlocked` stays ORed in
+   * because it depends on state only this function has (whether a gas bridge leg was planned), but it
+   * requires a `BLOCKED` target verdict the helper's own target term already reads as not-OK, so the
+   * decision here IS the helper and the row matches it exactly.
+   */
+  const needsGasBuy = gasStillBlocked || onRampRouteBuysGas(gasByChain, targetChainId);
+
+  const { order, needsSwapToUsdc } = sizeOnRampOrder({
+    requiredUsd: shortfallUsd,
+    standalone: false,
+    gasFundedByOnRamp: needsGasBuy,
+    ...(baseGas?.shortfallUsd === undefined ? {} : { classifierGasUsd: baseGas.shortfallUsd }),
+    ...(gasChoiceUsd === undefined ? {} : { gasChoiceUsd }),
+  });
+  const buysEth = order.currencyCode === "ETH-BASE";
+  const steps: ProvisioningStep[] = [];
+
+  // [R2] The purchase, always leading, always on Base. `poweredBy` + `order` are the fiat counterpart
+  // of a leg's on-chain detail (POO-1131). Deliberately NO `fromChainId`: fiat has no chain, and the
+  // merged caption path (PR 707) must interpolate the row without a missing-placeholder throw.
+  steps.push({
+    type: "buy",
+    key: "buy",
+    labelKey: LABEL_KEYS.buy,
+    fromToken: "USD",
+    toToken: buysEth ? "ETH" : "USDC",
+    toChainId: ONRAMP_CHAIN_ID,
+    amountUsd: round2(Number(order.fiatAmount)),
+    amountToken: order.fiatAmount,
+    // POO-1927 [R3]: the rail that will actually serve, not the literal `"paybis"` this used to be
+    // on every fiat leg including one Privy brokers through Stripe or MoonPay. The fallback is the
+    // pre-POO-1927 answer for a caller that has not been taught the rail; see `BuildPlanRequest`.
+    poweredBy: args.onRampRail ?? "paybis",
+    order,
+  });
+
+  // [R1] Bought ETH for gas: convert the op-funding slice to USDC on Base. Skipped when the slice is
+  // zero (a gas-only requirement), despite `needsSwapToUsdc` — the carry above.
+  if (buysEth && needsSwapToUsdc && shortfall > BigInt(0)) {
+    steps.push({
+      type: "swap-token",
+      key: "buy-swap",
+      labelKey: LABEL_KEYS["swap-token"],
+      fromToken: "ETH",
+      toToken: "USDC",
+      fromChainId: ONRAMP_CHAIN_ID,
+      toChainId: ONRAMP_CHAIN_ID,
+      amountUsd: shortfallUsd,
+      amountToken: shortfallUsd.toFixed(2),
+    });
+  }
+
+  // [R2] Off-Base target: bridge the bought USDC from Base to the operation's chain, after settlement.
+  //
+  // POO-1916 [R2]: `toToken` is the TARGET chain's own stable, read through `stableSymbol`, not the
+  // literal the far side used to carry. `fromToken` stays "USDC" because that is genuinely what the
+  // rail sells and what leaves Base. The two differ on Robinhood Chain, and saying "USDC" on both
+  // sides would print a token the user will never hold on the row describing where their money goes —
+  // and the rail's `resolveFiatToken` resolves this symbol to an ADDRESS, so it is a money path, not
+  // just a label.
+  if (shortfall > BigInt(0) && targetChainId !== ONRAMP_CHAIN_ID) {
+    steps.push({
+      type: "bridge",
+      key: "buy-bridge",
+      labelKey: LABEL_KEYS.bridge,
+      fromToken: "USDC",
+      toToken: stableSymbol(targetChainId),
+      fromChainId: ONRAMP_CHAIN_ID,
+      toChainId: targetChainId,
+      amountUsd: shortfallUsd,
+      amountToken: shortfallUsd.toFixed(2),
+    });
+  }
+
+  return steps;
 }
 
 /** Turn the priced legs into the {@link ProvisioningPlan} every render surface already speaks. */
@@ -1032,8 +1506,14 @@ function assemblePlan(args: {
   requiredUsd: number;
   hasRequirement: boolean;
   topUpUsd: number;
+  /**
+   * POO-1135: the fiat purchase and its downstream DISPLAY steps, or empty. Not legs, so they are
+   * threaded in rather than derived from `legs`: `legs.map` below cannot see them, and both the
+   * nothing-needed early return and the reason/variant derivation must ([R1]/[R2]).
+   */
+  onRampSteps: ProvisioningStep[];
 }): ProvisioningPlan {
-  const { legs, legSources, quotedAt, slippagePct, requiredUsd } = args;
+  const { legs, legSources, quotedAt, slippagePct, requiredUsd, onRampSteps } = args;
 
   // [R2] The trailing display anchor, always last, never a leg.
   const opStep: ProvisioningStep = {
@@ -1043,7 +1523,9 @@ function assemblePlan(args: {
     amountUsd: round2(requiredUsd),
   };
 
-  if (legs.length === 0) {
+  // Nothing needed only when there is NEITHER a crypto leg NOR a fiat purchase. A fiat-only plan on
+  // Base (buy USDC, no leg) has `legs.length === 0` and must not report `needed: false`.
+  if (legs.length === 0 && onRampSteps.length === 0) {
     return {
       needed: false,
       reason: [],
@@ -1061,7 +1543,7 @@ function assemblePlan(args: {
     };
   }
 
-  const steps: ProvisioningStep[] = legs.map((leg, index) => ({
+  const legSteps: ProvisioningStep[] = legs.map((leg, index) => ({
     type: leg.kind,
     // `useWalletSignFlow` addresses a step by its key, so it carries the leg index: two swaps on
     // the same pair from two sources are different steps and must not collapse into one.
@@ -1079,7 +1561,9 @@ function assemblePlan(args: {
     ...(leg.etaSeconds === undefined ? {} : { etaSeconds: leg.etaSeconds }),
     leg,
   }));
-  steps.push(opStep);
+  // [R2] The fiat purchase LEADS: buy -> (swap) -> (bridge) -> crypto legs -> op. Its steps carry no
+  // leg, so the leg-indexed keys above never collide with them.
+  const steps: ProvisioningStep[] = [...onRampSteps, ...legSteps, opStep];
 
   const hasGasLeg = legs.some((leg) => GAS_LEG_KINDS.has(leg.kind));
   // A gas bridge crosses a network too, and the reason line exists to tell the user why their money
@@ -1087,17 +1571,25 @@ function assemblePlan(args: {
   const hasBridgeLeg = legs.some((leg) => leg.kind === "bridge" || leg.kind === "bridge-gas");
   const hasFundingLeg = legs.some((leg) => !GAS_LEG_KINDS.has(leg.kind));
 
+  // The fiat purchase's own contributions, read off the emitted steps: an ETH buy funds gas; a USDC
+  // buy or an ETH->USDC swap funds the operation; a fiat bridge crosses a network.
+  const buyStep = onRampSteps.find((step) => step.type === "buy");
+  const hasFiatGas = buyStep?.toToken === "ETH";
+  const hasFiatBridge = onRampSteps.some((step) => step.type === "bridge");
+  const hasFiatFunding =
+    buyStep?.toToken === "USDC" || onRampSteps.some((step) => step.type === "swap-token");
+
   const reason: ProvisioningReason[] = [];
-  if (hasGasLeg) reason.push("gas");
-  if (args.hasRequirement && hasFundingLeg) reason.push("usdc");
-  if (hasBridgeLeg) reason.push("network");
+  if (hasGasLeg || hasFiatGas) reason.push("gas");
+  if (args.hasRequirement && (hasFundingLeg || hasFiatFunding)) reason.push("usdc");
+  if (hasBridgeLeg || hasFiatBridge) reason.push("network");
 
   return {
     needed: true,
     reason,
     // Gas alone routes to the simpler buy-gas modal; anything that moves the operation's own funds
     // is the wizard. Same vocabulary the six op modals already branch on (POO-1033 [R3]).
-    variant: hasFundingLeg ? "multi" : "gas-only",
+    variant: hasFundingLeg || hasFiatFunding ? "multi" : "gas-only",
     steps,
     quote: buildQuote({
       steps,

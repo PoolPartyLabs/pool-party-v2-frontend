@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-016 (POO-416, POO-1030, POO-1033, POO-1034)
+ * @id PP-CORE-LIB-016 (POO-416, POO-1030, POO-1033, POO-1034, POO-1131, POO-1927)
  * @name provisioning contract types
- * @implements-rules-version v5
+ * @implements-rules-version v7 (POO-1927 rules v1) · v6 (POO-1131 / POO-1129 rules v3)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The canonical FE↔BE contract for pre-flight provisioning (epic POO-411). When an on-chain op
@@ -21,6 +21,21 @@
  * POO-523 R2: the input and the plan carry an optional `slippagePct` (the settings gear's Max
  * slippage, percent, investor default 2) so the planner sizes swap buffers with it and the rail
  * (POO-414) executes with it. Mirror this field into the POO-413 contract comment.
+ *
+ * v7 (POO-1927, epic POO-1793 Privy on-ramp): {@link ProvisioningStep.poweredBy} stops being typed
+ * `"paybis" | null` and carries {@link OnRampAttribution}, so it can name the rail that actually
+ * served. A field that cannot express its own answer is a field that is wrong again the next time a
+ * rail changes, and this one credited Paybis on every fiat leg including ones Privy brokers through
+ * Stripe or MoonPay. Widening, not replacing: `"paybis"` stays expressible, so every existing plan,
+ * fixture and builder is still valid. Mirror this into the POO-413 contract comment.
+ *
+ * v6 (POO-1131, epic POO-1129 Paybis on-ramp): the fiat step type `"buy-usdc"` becomes `"buy"`,
+ * carrying its delivered asset in `toToken` / `toChainId` like every other step, so [R1]'s ETH and
+ * USDC branches share one step shape rather than baking the asset into the type name. A step may also
+ * carry {@link ProvisioningOrder}, the fiat counterpart of {@link ProvisioningLeg}. Additive and
+ * optional; deliberately NO `requestId` and NO `quoteId` on the plan ([R8]): both are minted at
+ * execution time (a 5-minute signature window + a quote TTL), so a plan built minutes earlier must not
+ * embed one.
  *
  * v5 (POO-1034, hackathon POO-1022): a step may carry {@link ProvisioningLeg}, the execution-grade
  * detail of the route leg behind it (token ADDRESSES, base-unit amounts, the route class, the quoted
@@ -42,7 +57,24 @@
  * unchanged, and a v2-shaped plan is still a valid v3 plan. Mirror these into POO-413 too.
  */
 
+import type { OnRampRail } from "@/lib/onramp/onRampProvider";
 import type { UniswapRouting, UniswapStepMethod } from "@/lib/uniswap/schemas";
+
+/**
+ * Which rail served a fiat purchase, for DISPLAY ATTRIBUTION only (POO-1927 [R3]).
+ *
+ * Spelled as `Exclude<OnRampRail, "none">` rather than as a second literal union so it cannot drift
+ * from {@link OnRampRail}, the one decision table both halves of the app already resolve the rail
+ * from (`PP-CORE-LIB-105`). A field that cannot express the rail actually serving is a field that is
+ * wrong again the next time a rail changes, which is how this one came to credit Paybis for a charge
+ * Privy brokers through Stripe or MoonPay.
+ *
+ * `"none"` is excluded because it means fiat is not offered at all, and a plan with no fiat rail has
+ * no `buy` step to attribute. The import is type-only, so nothing about the flag registry reaches a
+ * consumer of this contract at runtime, and `onRampProvider.ts` is separately pinned client-loadable
+ * by `src/lib/onramp/serverBoundary.test.ts`.
+ */
+export type OnRampAttribution = Exclude<OnRampRail, "none">;
 
 /**
  * How a chain's native coin is addressed, by the Trading API, by the funding inventory and by the
@@ -54,9 +86,17 @@ import type { UniswapRouting, UniswapStepMethod } from "@/lib/uniswap/schemas";
  */
 export const NATIVE_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-/** The kind of a provisioning step. The plan always ends with an `"op"` display anchor. */
+/**
+ * The kind of a provisioning step. The plan always ends with an `"op"` display anchor.
+ *
+ * `"buy"` (v6, was `"buy-usdc"`) is a fiat on-ramp STEP the rail executes; the asset it delivers is
+ * data (`toToken` / `toChainId`), not part of the type name, which is what lets [R1]'s gas-first ETH
+ * buy and its USDC buy share one shape. Do not confuse it with `FundingRouteKind`'s `"buy"`
+ * (`fundingRoutes.ts`), which names a funding ROUTE the picker offers, not a plan step: different
+ * types, both real, kept separate on purpose (POO-1089 naming collision).
+ */
 export type ProvisioningStepType =
-  | "buy-usdc"
+  | "buy"
   | "bridge"
   | "bridge-gas"
   | "swap-gas"
@@ -64,7 +104,7 @@ export type ProvisioningStepType =
   | "op";
 
 /**
- * The route kinds the planner (POO-1034) can emit. The `op` anchor and `buy-usdc` are not legs.
+ * The route kinds the planner (POO-1034) can emit. The `op` anchor and the fiat `buy` are not legs.
  *
  * `"bridge-gas"` is a bridge like `"bridge"` is, but it carries the chain's NATIVE coin rather than
  * the operation's asset, and it exists to make the target chain transactable at all (POO-1075). It
@@ -165,7 +205,7 @@ export interface ProvisioningStep {
   type: ProvisioningStepType;
   /** Stable id; maps to the WalletSteps step + the rail's per-step status. */
   key: string;
-  /** i18n KEY (never raw copy) — the FE resolves it across all 11 locales. */
+  /** i18n KEY (never raw copy) — the FE resolves it across all 12 locales. */
   labelKey: string;
   /** Source asset, e.g. `"USD"` (fiat), `"USDC"`, or a token symbol. */
   fromToken?: string;
@@ -177,8 +217,14 @@ export interface ProvisioningStep {
   amountUsd: number;
   /** Token-native amount as a decimal STRING (no float). */
   amountToken?: string;
-  /** Provider attribution, e.g. `"paybis"` on the buy step. */
-  poweredBy?: "paybis" | null;
+  /**
+   * Which rail serves this step's fiat purchase, present on the `buy` step and nowhere else
+   * (POO-1927 [R3]).
+   *
+   * Its presence is what marks a leg as attributable at all; its VALUE says which rail. Derived
+   * from the flags by whoever builds the plan, never a literal: see {@link OnRampAttribution}.
+   */
+  poweredBy?: OnRampAttribution | null;
 
   // --- v3, POO-1030: the step's coordinates inside the server-held Uniswap plan ------------------
   // PP-INTEGRATION-POINT: populated by the real planner (POO-1034) from `POST /plan`, and consumed
@@ -187,14 +233,22 @@ export interface ProvisioningStep {
   // every one of them is optional rather than a breaking required field.
 
   /**
-   * The Uniswap chained-plan id this step belongs to, **and the idempotency key for executing it**.
+   * The Uniswap chained-plan id this step belongs to. **Never populated today.**
    *
-   * A bridge takes minutes and can fail ambiguously (sent, receipt unknown), while the rail's
-   * `retry()` re-invokes the failed step verbatim — which without a key is how a user bridges twice.
-   * The server-held plan, addressed by this id, is the authority on what has already happened: before
-   * any retry the rail re-reads `GET /plan/:planId` and resumes from the server's `currentStepIndex`,
-   * never from the client's local belief, and a `PATCH` for an already-advanced step is a no-op
-   * rather than a second execution. See `docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` §3.1.
+   * This field was designed around Chained Actions, where `planId` would be the idempotency key: the
+   * server-held plan would be the authority on what had already happened, and a `PATCH` for an
+   * already-advanced step would be a no-op rather than a second execution.
+   *
+   * POO-1093: that never shipped, and this comment used to describe it as though it had. `CHAINED`
+   * routing never returned live, so `POST /plan`, `GET /plan/:planId` and `PATCH /plan/:planId` were
+   * never built. `src/lib/uniswap/actions.ts` calls only `quote`, `check_approval`, `swap` and
+   * `swappable_tokens`. A reviewer trusting the old wording would have concluded the retry path was
+   * already protected, which is exactly the mistake that let the double-broadcast defect sit.
+   *
+   * What actually guards a retry is the CLIENT journal: `broadcast()` in `buildPlanSteps.ts` reads
+   * `journal.legStatus(index)` and refuses to send again for a leg already on chain. That is a
+   * weaker guarantee than a server-side plan (it is per-browser), and `POO-1100` tracks mirroring it
+   * server-side. See `docs/_hackathon/02_BRIDGE_ARCHITECTURE.md` §3.
    */
   planId?: string;
   /**
@@ -241,6 +295,69 @@ export interface ProvisioningStep {
    * trailing `op` anchor, which is a display marker and not a leg. Absent on a mock plan.
    */
   leg?: ProvisioningLeg;
+
+  // --- v6, POO-1131: the fiat half of a `buy` step -----------------------------------------------
+  /**
+   * The on-ramp order this step places (v6). The fiat counterpart of {@link leg}: `leg` describes an
+   * on-chain leg to the rail, `order` describes a fiat purchase to the Paybis widget. Present only on
+   * a `"buy"` step. Unlike {@link leg}, the mock plan DOES carry a plausible `order`, because an
+   * order holds no execution-grade material (no `requestId`, no `quoteId`, see
+   * {@link ProvisioningOrder}) and mock realism wants the widget pre-fill to look real; `leg` stays
+   * absent on mock plans.
+   */
+  order?: ProvisioningOrder;
+}
+
+/**
+ * The fiat half of a `"buy"` step (v6, POO-1131): what to pre-fill the Paybis widget with.
+ *
+ * **Deliberately carries no `requestId` and no `quoteId` ([R8]).** A `requestId` carries a 5-minute
+ * signature-replay window and a quote a TTL, both minted at EXECUTION time, so a plan assembled
+ * minutes earlier must not embed one, exactly as {@link ProvisioningLeg} holds no quote. The amount
+ * here only PRE-FILLS: the user can change it inside the widget, so the authoritative figure is the
+ * observed post-settlement balance delta ([R4]), never this number.
+ */
+export interface ProvisioningOrder {
+  /** Paybis crypto currency code, e.g. `"USDC-BASE"` / `"ETH-BASE"` (Paybis sells on Base only). */
+  currencyCode: string;
+  /** Fiat amount to pre-fill, decimal STRING (no float), in {@link fiatCurrency}. */
+  fiatAmount: string;
+  /** ISO-4217 fiat code, e.g. `"USD"`. */
+  fiatCurrency: string;
+  /**
+   * v7, POO-1573 [R1]: how to build the ETH-BASE leg's RECEIVED-FIXED target. Present only on an
+   * `"ETH-BASE"` order; a `"USDC-BASE"` order is already received-fixed against its own
+   * {@link fiatAmount} (USDC is ~1:1 with USD). See {@link OnRampEthTarget}.
+   */
+  ethTarget?: OnRampEthTarget;
+}
+
+/**
+ * The recipe for an `ETH-BASE` order's received-fixed target (v7, POO-1573 [R1]/[R3]).
+ *
+ * A recipe rather than an amount, for the same reason this type carries no `quoteId` ([R8]): the ETH
+ * figure needs an ETH PRICE, a price is perishable, and a plan executes for minutes. So the sizer
+ * emits what it has and the MINT solves `gasFloorEth + fundingUsd / ethUsd` seconds before the widget
+ * opens, with a price read server-side (`src/lib/onramp/ethTarget.ts`).
+ *
+ * The two halves are in DIFFERENT UNITS on purpose, and that is the fix: the standalone gas floor is
+ * natively an ETH quantity, and pricing it through the planner's balance ratio (`native.usd /
+ * native.amount`) yields exactly 0 for a wallet holding no ETH, i.e. the only wallet the gas-first
+ * leg ever serves. Keeping it in ETH removes the dependency instead of patching it.
+ *
+ * [R2]: every USD term (`PAYBIS_MIN_USD`, the classifier's gas) has already been applied to
+ * {@link fundingUsd}. Nothing downstream re-denominates a USD figure. POO-1641 removed one of the
+ * terms that used to be on this list, the caller's 1% fee gross-up, because we do not charge it.
+ */
+export interface OnRampEthTarget {
+  /**
+   * The ETH-denominated gas component, decimal STRING (up to 18dp, so never a float). `"0"` in-flow,
+   * where the classifier's gas figure is USD and therefore lives in {@link fundingUsd}.
+   */
+  gasFloorEth: string;
+  /** The USD half to convert at mint, decimal STRING, already floored (POO-1641 removed the
+   * gross-up: there is no Pool Party fee to cover, so nothing is added on top of the floor). */
+  fundingUsd: string;
 }
 
 /** The cost breakdown the FE shows at the top of the Plan ("You pay" = {@link totalPayUsd}). */
@@ -259,9 +376,16 @@ export interface ProvisioningQuote {
   ttlMs: number;
 }
 
-/** The user-chosen gas top-up (from the buy-gas modal). `presetUsd: null` = a custom amount. */
+/**
+ * The user-chosen gas top-up. `presetUsd: null` = a custom amount.
+ *
+ * POO-1084 [F1-R4] widened the preset allowlist to include `5`: the `$10` floor is the PAYBIS FIAT
+ * minimum, and gas paid by swapping USDC the wallet already holds is not a fiat purchase, so it does
+ * not inherit that floor. Which presets are OFFERED is decided per funding source by `gasPresets()`;
+ * this union is only the set of values that can legally appear.
+ */
 export interface GasChoice {
-  presetUsd: 10 | 25 | null;
+  presetUsd: 5 | 10 | 25 | null;
   amountUsd: number;
 }
 

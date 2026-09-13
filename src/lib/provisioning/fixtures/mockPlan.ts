@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-016 (POO-416, POO-1034)
+ * @id PP-CORE-LIB-016 (POO-416, POO-1034, POO-1166, POO-1641)
  * @name mock-mode provisioning plan fixture
- * @implements-rules-version v2
+ * @implements-rules-version v4 (POO-1641 rules v1) · v3 (POO-1166 / POO-1129 rules v3) · v2
  * @hackathon POO-1022 (Universal Funding)
  *
  * **Retired as "the planner" by POO-1034.** The real one is `../buildPlan.ts`, which prices every
@@ -18,16 +18,28 @@
  * component work runs offline, key-free and deterministic. A fixture is what mock mode wants.
  *
  * Given op context + wallet state (USD) it assembles the ordered {@link ProvisioningPlan} —
- * buy-usdc → bridge → swap-gas → op, only the steps that are needed — with a plausible
+ * buy → bridge → swap-gas → op, only the steps that are needed — with a plausible
  * {@link ProvisioningQuote}, in the SAME shape `buildPlan` returns. It emits no
  * {@link ProvisioningStep.leg}: a fixture has no real route behind it, and inventing addresses and
  * base-unit amounts would be a plan that looks executable and is not.
  *
- * PP-MOCK: amounts, fees, and buffers here are plausible placeholders (Paybis ~1%, bridge ~$0.40,
+ * PP-MOCK: amounts, fees, and buffers here are plausible placeholders (bridge ~$0.40,
  * swap ~0.25%, `input.slippagePct` (default 2%) slippage buffer, $0.15/on-chain-step gas). Real mode
  * reads all of them off live quotes instead. POO-523 R2: the gear's Max slippage rides the input,
  * sizes the buffer, and echoes on the plan for the rail (POO-414).
+ *
+ * POO-1641 removed the ONE exception that list used to carry. This fixture also rendered an on-ramp
+ * FEE line, `max($0.99, order x 1%)`, and it was not a placeholder like the others: it read the real
+ * `ONRAMP_FEE_RATE` and claimed parity with the real planner. That fee does not exist. It is a
+ * partner-side configuration already embedded in the price Paybis quotes (Rafael, 2026-08-16), and
+ * nothing in `pool-party-api` collects it.
+ *
+ * Deleting it here matters more than deleting it from the planner, because **every design and QA
+ * review of `ProvisioningCostBreakdown` happens in mock mode**: for as long as this line existed,
+ * anyone who approved "the fee looks right" was approving a number that never appeared in real mode
+ * either. The remaining fee terms (bridge, gas swap) are ordinary fixture placeholders again.
  */
+import { stableSymbol } from "@/lib/chains/config";
 import {
   computeProvisioningNeed,
   GAS_DEFAULT_USD,
@@ -51,9 +63,9 @@ const QUOTE_TTL_MS = 60_000;
  */
 const DEFAULT_SLIPPAGE_PCT = 2;
 
-/** i18n keys for each step label (resolved by the FE across all 11 locales). */
+/** i18n keys for each step label (resolved by the FE across all 12 locales). */
 const LABEL_KEYS = {
-  "buy-usdc": "provisioning.steps.buyUsdc",
+  buy: "provisioning.steps.buy",
   bridge: "provisioning.steps.bridge",
   "swap-gas": "provisioning.steps.swapGas",
   "swap-token": "provisioning.steps.swapToken",
@@ -108,21 +120,30 @@ export function mockComputePlan(
   const gasFundingShortfall = need.needsGas ? Math.max(0, gasAmountUsd - availableUsdcForGas) : 0;
   const totalToBuyUsd = round2(need.usdcShortfallUsd + gasFundingShortfall);
   const needBuyUsdc = totalToBuyUsd > 0;
+  // POO-1641: the buffer and the floor size the purchase, and nothing else. The fee term that used to
+  // ride along here is gone from both this fixture and the real planner, so the two still agree.
   const onRampUsd = needBuyUsdc ? sizeOnRampUsd(totalToBuyUsd) : 0;
 
   const steps: ProvisioningStep[] = [];
 
   if (needBuyUsdc) {
     steps.push({
-      type: "buy-usdc",
-      key: "buy-usdc",
-      labelKey: LABEL_KEYS["buy-usdc"],
+      type: "buy",
+      key: "buy",
+      labelKey: LABEL_KEYS.buy,
       fromToken: "USD",
       toToken: "USDC",
       toChainId: ONRAMP_CHAIN_ID,
       amountUsd: onRampUsd,
       amountToken: onRampUsd.toFixed(2),
       poweredBy: "paybis",
+      // PP-MOCK: the fiat counterpart of a leg (v6). Paybis sells on Base only, so a mock buy is
+      // always `USDC-BASE`; the fiat amount pre-fills the widget and the user can change it ([R4]).
+      order: {
+        currencyCode: "USDC-BASE",
+        fiatAmount: onRampUsd.toFixed(2),
+        fiatCurrency: "USD",
+      },
     });
   }
 
@@ -133,7 +154,10 @@ export function mockComputePlan(
       key: "bridge",
       labelKey: LABEL_KEYS.bridge,
       fromToken: "USDC",
-      toToken: "USDC",
+      // POO-1916 [R2]: the far side is the TARGET chain's own stable, the same thing the real
+      // planner now emits. A "USDC" literal here made the fixture disagree with the engine on
+      // Robinhood Chain (USDG), and the mock is what the panel renders in mock mode.
+      toToken: stableSymbol(input.targetChainId),
       fromChainId: needBuyUsdc ? ONRAMP_CHAIN_ID : input.currentChainId,
       toChainId: input.targetChainId,
       amountUsd: bridgedUsd,
@@ -161,14 +185,10 @@ export function mockComputePlan(
     reason: need.reason,
     variant: need.variant,
     steps,
-    quote: buildQuote({
-      need,
-      quotedAt,
-      gasAmountUsd,
-      needBuyUsdc,
-      onRampUsd,
-      slippagePct,
-    }),
+    // POO-1641: the buy's SIZE no longer reaches the quote at all. `needBuyUsdc` and `onRampUsd` were
+    // passed for one reason, the on-ramp fee line, and a fee that does not exist cannot be computed
+    // from an order amount. The quote is the shortfall, the buffer and the on-chain fees now.
+    quote: buildQuote({ need, quotedAt, gasAmountUsd, slippagePct }),
     gas: need.needsGas ? (options.gas ?? { presetUsd: 10, amountUsd: GAS_DEFAULT_USD }) : undefined,
     slippagePct,
   };
@@ -192,11 +212,9 @@ function buildQuote(args: {
   need: ReturnType<typeof computeProvisioningNeed>;
   quotedAt: string;
   gasAmountUsd: number;
-  needBuyUsdc: boolean;
-  onRampUsd: number;
   slippagePct: number;
 }): ProvisioningQuote {
-  const { need, quotedAt, gasAmountUsd, needBuyUsdc, onRampUsd, slippagePct } = args;
+  const { need, quotedAt, gasAmountUsd, slippagePct } = args;
 
   const shortfallUsd = round2(need.usdcShortfallUsd + need.gasShortfallUsd);
 
@@ -205,10 +223,15 @@ function buildQuote(args: {
   // POO-523 R2: the slippage buffer follows the gear's Max slippage (was a hardcoded 2%).
   const bufferUsd = round2(shortfallUsd * (slippagePct / 100) + provisioningGasUsd);
 
-  const paybisFee = needBuyUsdc ? round2(Math.max(0.99, onRampUsd * 0.01)) : 0;
+  // POO-1641: there is NO on-ramp fee line. It used to be `max($0.99, order x 1%)` here, sourced from
+  // a rate this app does not charge, and it is deleted rather than zeroed so it cannot come back as a
+  // constant somebody edits. Paybis's own cut is still not modelled in mock mode and never was: in
+  // real mode it arrives on the received-fixed quote (POO-1153), which is the only honest source for
+  // it. A buy-only plan therefore ends at `feesUsd === 0`, and `ProvisioningCostBreakdown` renders no
+  // fee row at all, which is the truth this screen should have been showing all along.
   const bridgeFee = need.needsBridge ? 0.4 : 0;
   const swapFee = need.needsGas ? round2(Math.max(0.2, gasAmountUsd * 0.0025)) : 0;
-  const feesUsd = round2(paybisFee + bridgeFee + swapFee);
+  const feesUsd = round2(bridgeFee + swapFee);
 
   return {
     shortfallUsd,

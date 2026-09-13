@@ -48,14 +48,15 @@ export async function computePlan(
     // across the RSC boundary; we convert a failure into a rejection here, which is what the hook
     // expects.
     //
-    // `gasChoice` is NOT forwarded, and POO-1044 settled that it never will be. In real mode the
-    // gas top-up is sized by the classifier from a live quote: the shortfall on that chain, plus
-    // headroom, plus the top-up transaction's own cost. A typed amount cannot improve on that, and
-    // the control's [$10, $200] bounds are a FIAT ON-RAMP floor (the Paybis minimum purchase), not
-    // a property of a swap. Honouring them here would convert $10 of a user's token into native on
-    // a chain where the requirement is six cents. The selector therefore stays a mock-mode
-    // affordance, and the panel renders it only there.
-    const result = await computePlanAction(input, selection);
+    // POO-1085 [F2-R4]: `gasChoice.amountUsd` IS forwarded now, reversing POO-1044 [R6]. That rule
+    // held that no typed amount could improve on the classifier's figure, which is true and is
+    // exactly why the amount is forwarded as a FLOOR-RESPECTING CEILING rather than as a size: the
+    // classifier says what the route costs, the user says how much native they want left over, and
+    // `raiseTopUpToUsd` takes the larger. The old objection (the control's `[$10, $200]` bounds are
+    // the Paybis FIAT minimum, not a property of a swap, so honouring $10 would convert ten dollars
+    // of a holding to buy six cents of gas) is answered by POO-1082 [R6] instead: the bounds are now
+    // per funding source, and the USDC path floors at $5 with $5/$10 presets.
+    const result = await computePlanAction(input, selection, gasChoice?.amountUsd);
     if (!result.ok) {
       // The house error contract (POO-475 [R3], documented in `@/lib/tx/actionResult`): a typed
       // action failure is rethrown as a `TransactionError` carrying the code on `error.cause.code`,
@@ -71,6 +72,8 @@ export async function computePlan(
       throw new TransactionError(result.message, {
         code: result.code,
         targetChainId: input.targetChainId,
+        // POO-1251 [R1]: and the backend's correlation id, the support handle the error dialog shows.
+        correlationId: result.correlationId,
       });
     }
     return result.plan;

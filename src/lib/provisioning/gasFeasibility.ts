@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-054 (POO-1032)
+ * @id PP-CORE-LIB-054 (POO-1032, POO-1085)
  * @name gas feasibility classifier
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1085 rules v1) · v1 (POO-1032 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The chicken-and-egg, modelled explicitly.
@@ -27,6 +27,31 @@
  *   and `NETWORK_FEE_USD = 0.3`, copy-pasted across five modals. `/quote` returns `gasFeeUSD` at
  *   quote time, which is exactly what the provisioning gate needs, because the gate runs BEFORE the
  *   build and the only genuine figure used to exist only after one.
+ *
+ *   WHAT [R4] FORBIDS IS SIZING GAS, not having a constant in the same postcode. The distinction is
+ *   load-bearing rather than pedantic, because a reader who takes it as "no constant may appear near
+ *   gas" reaches the wrong answer on a real question and either weakens this rule or refuses
+ *   legitimate work. `onramp/config.ts` already carries the test that decides it, and it is a test
+ *   about REACH, not about vocabulary: a constant is fine when it never sizes a top-up and never
+ *   reaches `classifyGasFeasibility` or `buildPlan`'s GAS path.
+ *
+ *   POO-1499 adds two constants that pass that test, recorded here so nobody re-derives it:
+ *
+ *     - `BUY_ROUTE_NATIVE_RESERVE_USD` (`components/provisioning/fundingTarget.ts`, [R52]) is USD of
+ *       ETH the buy route HOLDS BACK out of what it just bought, so the wallet can still sign. It is
+ *       the `PAYBIS_GAS_FLOOR_ETH` shape, with one honest difference: that floor is denominated in
+ *       ETH and this reserve in USD, so this one drifts against the thing it protects as the price
+ *       moves. Flagged for POO-1501 rather than waved through.
+ *     - the tokens route's figure is `GAS_CUSTOM_MIN_USDC_USD`, the lowest amount the USDC-funded gas
+ *       control accepts (`computeNeed.ts`, locked 2026-06-30). It is a UI input bound, and
+ *       deliberately NOT the Paybis floor: [R35] attaches that to the `$10 / $25` CARD set, because a
+ *       swap out of a holding is not a purchase and no rail imposes a minimum on it.
+ *
+ *   Neither is read here, and neither sizes anything: they are inputs to how much a route must
+ *   SOURCE, upstream of any gas decision. What a step actually spends on gas is still this function's
+ *   answer, from the quote, everywhere. And note what does NOT make a constant acceptable: calling it
+ *   something other than a cost. A reserve is still chosen by a belief about what gas costs. The
+ *   question to ask is always whether it can reach a sizing decision, and here it cannot.
  *
  * Pure ([R6]): no I/O, no React, no viem, no clock. Quotes and balances are injected, so the whole
  * verdict matrix is exhaustively unit-testable offline. Chain display names and native symbols are
@@ -330,6 +355,73 @@ function classifyOne(candidate: GasCandidateChain): GasFeasibility {
     surplusUsd: 0,
     reasonKey: GAS_VERDICT_REASON_KEYS.topUp,
     topUp,
+  };
+}
+
+/**
+ * Raise an already-sized gas top-up to a larger USD target (POO-1085 [F2-R2]).
+ *
+ * ## Why a floor rather than a free choice
+ *
+ * POO-1044 [R6] removed the gas selector from real mode with a good argument: the classifier sizes
+ * the top-up off a live quote, and the shipped `[$10, $200]` bounds are the PAYBIS FIAT minimum,
+ * which a token swap does not have. Honouring `$10` literally would spend ten dollars of someone's
+ * holding to buy six cents of native coin.
+ *
+ * The v2 design (POO-1082 D2) puts the control back, so both facts have to hold at once. They do,
+ * because they point in opposite directions: the classifier's figure is what the route COSTS, and
+ * the user's choice is how much headroom they want to keep afterwards. So the choice may only ever
+ * RAISE the slice. A target at or below {@link GasTopUpPlan.buyNativeUsd} is ignored, because
+ * honouring it would emit a leg that cannot pay for the transaction it exists to pay for, and that
+ * reverts on-chain after the user has already signed.
+ *
+ * ## Money
+ *
+ * The slice is re-derived from the one the classifier already computed, by the same ratio, entirely
+ * in BigInt over integer micro-dollars: an 18-decimal holding is far past `MAX_SAFE_INTEGER` and a
+ * float ratio here would silently round someone's balance. Rounded UP for the same reason
+ * {@link sliceForUsd} rounds up.
+ *
+ * Capped by the holding, and **the cap is reported honestly**: asking for $25 out of a $10 position
+ * returns $10, not $25. A figure the swap cannot deliver is exactly the fabricated number POO-799 #1
+ * forbids. A malformed slice is returned untouched rather than used to derive a new one.
+ */
+export function raiseTopUpToUsd(topUp: GasTopUpPlan, targetUsd: number | undefined): GasTopUpPlan {
+  const target = readUsd(targetUsd);
+  const base = readUsd(topUp.buyNativeUsd);
+  // No target, an unusable target, or one the classifier already meets: the floor stands.
+  if (target === undefined || base === undefined || base <= 0 || target <= base) return topUp;
+  if (!/^\d+$/.test(topUp.amountRaw) || !/^\d+$/.test(topUp.token.balanceRaw)) return topUp;
+
+  const amountRaw = BigInt(topUp.amountRaw);
+  const balanceRaw = BigInt(topUp.token.balanceRaw);
+  if (amountRaw <= BigInt(0) || balanceRaw <= BigInt(0)) return topUp;
+
+  const targetMicros = BigInt(Math.round(target * 1e6));
+  const baseMicros = BigInt(Math.round(base * 1e6));
+  if (baseMicros <= BigInt(0)) return topUp;
+
+  const scaled = amountRaw * targetMicros;
+  let raised = scaled / baseMicros;
+  if (raised * baseMicros < scaled) raised += BigInt(1); // round up, never under-buy
+
+  if (raised >= balanceRaw) {
+    // The whole holding, and the USD says so. `balanceUsd` is the classifier's own reading of this
+    // position, so no second price source can disagree with it.
+    const capped = readUsd(topUp.token.balanceUsd) ?? topUp.amountUsd;
+    return {
+      ...topUp,
+      amountRaw: balanceRaw.toString(),
+      amountUsd: roundUsd(capped),
+      buyNativeUsd: roundUsd(capped),
+    };
+  }
+
+  return {
+    ...topUp,
+    amountRaw: raised.toString(),
+    amountUsd: roundUsd(target),
+    buyNativeUsd: roundUsd(target),
   };
 }
 

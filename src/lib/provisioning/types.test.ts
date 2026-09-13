@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-LIB-016 (POO-1030, POO-1033)
+ * @id PP-CORE-LIB-016 (POO-1030, POO-1033, POO-1131)
  * @name provisioning contract tests
- * @implements-rules-version v4
+ * @implements-rules-version v6
  * @hackathon POO-1022 (Universal Funding)
  *
  * The contract is types only, so most of it is proven at COMPILE time: `tsconfig.json` includes
@@ -27,7 +27,13 @@
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, expectTypeOf, it } from "vitest";
-import type { ProvisioningPlan, ProvisioningStep } from "./types";
+import type { OnRampRail } from "@/lib/onramp/onRampProvider";
+import type {
+  OnRampAttribution,
+  ProvisioningOrder,
+  ProvisioningPlan,
+  ProvisioningStep,
+} from "./types";
 
 const TYPES_SOURCE = readFileSync(
   join(resolve(__dirname, "..", "..", ".."), "src", "lib", "provisioning", "types.ts"),
@@ -45,9 +51,9 @@ const V2_PLAN: ProvisioningPlan = {
   variant: "multi",
   steps: [
     {
-      type: "buy-usdc",
-      key: "buy-usdc",
-      labelKey: "provisioning.steps.buyUsdc",
+      type: "buy",
+      key: "buy",
+      labelKey: "provisioning.steps.buy",
       fromToken: "USD",
       toToken: "USDC",
       toChainId: 8453,
@@ -162,15 +168,17 @@ describe("provisioning contract v3 (POO-1030)", () => {
     expect(TYPES_SOURCE).toMatch(/planId[\s\S]{0,600}idempotency key/i);
   });
 
-  // [R6] The version bump, in the header and in the pinned-contract comment. POO-1034 took the
-  // contract to v5 (`ProvisioningStep.leg`, the executable half of a step); the assertion moves with
-  // it and keeps requiring that EVERY revision is still explained in the file, so the history is not
+  // [R6] The version bump, in the header and in the pinned-contract comment. POO-1927 took the
+  // contract to v7 (`poweredBy` widened off the `"paybis"` literal); the assertion moves with it and
+  // keeps requiring that EVERY revision is still explained in the file, so the history is not
   // rewritten away by the next bump.
   it("declares the current rules version and keeps its revision history", () => {
-    expect(TYPES_SOURCE).toMatch(/@implements-rules-version:?\s*v5/);
+    expect(TYPES_SOURCE).toMatch(/@implements-rules-version:?\s*v7/);
     expect(TYPES_SOURCE).toMatch(/POO-1030/);
     expect(TYPES_SOURCE).toMatch(/POO-1033/);
     expect(TYPES_SOURCE).toMatch(/POO-1034/);
+    expect(TYPES_SOURCE).toMatch(/POO-1131/);
+    expect(TYPES_SOURCE).toMatch(/POO-1927/);
   });
 
   // v5 [R8] — the leg deliberately holds no quote and no calldata. Every leg is re-quoted at
@@ -184,5 +192,70 @@ describe("provisioning contract v3 (POO-1030)", () => {
     );
     expect(leg).not.toMatch(/^\s*quote[?]?:/m);
     expect(leg).not.toMatch(/^\s*(calldata|data|permitData|signature)[?]?:/m);
+  });
+});
+
+describe("provisioning contract v6 (POO-1131)", () => {
+  // The delivered asset is DATA on the step, not baked into the type name: the whole point of the
+  // rename. `toEqualTypeOf` pins the union, so a re-rename or a dropped member fails here.
+  it("names the fiat step `buy` and carries its delivered asset as data", () => {
+    expectTypeOf<ProvisioningStep["type"]>().toEqualTypeOf<
+      "buy" | "bridge" | "bridge-gas" | "swap-gas" | "swap-token" | "op"
+    >();
+    const [buy] = V2_PLAN.steps;
+    expect(buy?.type).toBe("buy");
+    expect(buy?.labelKey).toBe("provisioning.steps.buy");
+    expect(buy?.toToken).toBe("USDC");
+    expect(buy?.toChainId).toBe(8453);
+  });
+
+  // The fiat counterpart of `leg`: optional, and the amount is a decimal STRING (no float).
+  it("carries an optional fiat `order`", () => {
+    expectTypeOf<ProvisioningStep["order"]>().toEqualTypeOf<ProvisioningOrder | undefined>();
+    expectTypeOf<ProvisioningOrder["fiatAmount"]>().toEqualTypeOf<string>();
+    const order: ProvisioningOrder = {
+      currencyCode: "USDC-BASE",
+      fiatAmount: "101.50",
+      fiatCurrency: "USD",
+    };
+    expect(order.currencyCode).toBe("USDC-BASE");
+    // A v5-shaped plan carries no order, and the field simply reads undefined.
+    for (const step of V2_PLAN.steps) expect(step.order).toBeUndefined();
+  });
+
+  // [R8] The requestId (5-minute signature window) and quoteId (a TTL) are minted at EXECUTION time,
+  // so a plan built earlier must embed neither. Same discipline the leg keeps for its quote.
+  it("keeps requestId and quoteId off the step and its order", () => {
+    const stepAndOrder = TYPES_SOURCE.slice(
+      TYPES_SOURCE.indexOf("export interface ProvisioningStep {"),
+      TYPES_SOURCE.indexOf("export interface ProvisioningQuote"),
+    );
+    expect(stepAndOrder).not.toMatch(/^\s*(requestId|quoteId)[?]?:/m);
+  });
+});
+
+/**
+ * POO-1927 [R3]: the contract can name the rail that actually served.
+ *
+ * `poweredBy` was `"paybis" | null`, so no other answer was expressible and every fiat leg credited
+ * Paybis, including ones Privy brokers through Stripe or MoonPay. These are TYPE assertions on
+ * purpose: the defect was in what the type admitted, not in a value, so a runtime check would have
+ * passed throughout.
+ */
+describe("provisioning contract v7 (POO-1927)", () => {
+  // @rule R3: the field carries the rail, and `"paybis"` is still one of the answers rather than
+  // the only one: widening keeps every existing plan, fixture and builder valid.
+  it("[R3] types poweredBy as the rail, not the Paybis literal", () => {
+    expectTypeOf<ProvisioningStep["poweredBy"]>().toEqualTypeOf<
+      "paybis" | "privy" | null | undefined
+    >();
+  });
+
+  // @rule R3: and it is spelled off the ONE rail decision table rather than as a second literal
+  // union, which is what keeps it from drifting the next time a rail is added or retired.
+  it("[R3] derives the attribution type from OnRampRail, minus the no-fiat case", () => {
+    expectTypeOf<OnRampAttribution>().toEqualTypeOf<Exclude<OnRampRail, "none">>();
+    // `"none"` means fiat is not offered, so there is no purchase to attribute.
+    expectTypeOf<OnRampAttribution>().not.toEqualTypeOf<OnRampRail>();
   });
 });
