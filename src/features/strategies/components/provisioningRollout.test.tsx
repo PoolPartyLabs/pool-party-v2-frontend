@@ -29,6 +29,7 @@ import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Position, Strategy } from "@/lib/schemas";
 import {
+  act,
   fireEvent,
   renderWithProviders,
   screen,
@@ -250,11 +251,18 @@ describe("CollectModal — the funding rail (POO-1045)", () => {
   });
 
   it("[R3] the manager's collect resumes its built transaction too", async () => {
-    await reachThePlan({ managed });
+    let finishCollect = () => {};
+    const collecting = new Promise<void>((resolve) => {
+      finishCollect = resolve;
+    });
+    // Keep the wallet handoff pending until it is observed; a 50ms timer can elapse before
+    // Testing Library resumes on a busy coverage worker.
+    await reachThePlan({ managed: { ...managed, onCollect: vi.fn(() => collecting) } });
     confirmPlan();
 
     expect(await screen.findByText(stepOf(2, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.queryByText(stepOf(1, 2))).not.toBeInTheDocument();
+    await act(async () => finishCollect());
   });
 
   it("[R4] anchors the plan on the collect and cancels back to the Review", async () => {

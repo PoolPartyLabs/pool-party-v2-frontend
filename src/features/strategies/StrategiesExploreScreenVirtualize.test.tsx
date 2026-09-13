@@ -45,6 +45,13 @@ vi.mock("@/i18n/navigation", () => ({
   ),
 }));
 
+// These fixtures verify row counts, sorting, focus and scroll preservation. Keep the real
+// cards/table/link structure without hundreds of unrelated Radix tooltip state machines.
+// AprTooltip.test.tsx separately exercises hover, focus and touch behavior.
+vi.mock("@/components/ui/AprTooltip", () => ({
+  AprTooltip: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+}));
+
 const base = {
   minInvestment: 100,
   tvl: 1_000_000,
