@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/0xmvercosa/hookrisk/schema/engine-metadata.schema.json",
+  "title": "hookrisk engine metadata",
+  "description": "The `hookrisk` block every hookrisk Slither detector attaches to its result (`results.detectors[].hookrisk`).\n\nThis is the contract between the Python plugin and the TypeScript CLI. The plugin writes it from `HookriskDetector._report`; the CLI validates every block against this schema before admitting a result, and drops — loudly — any result whose block does not conform. A detector that drifts from this shape therefore cannot put an unattributable row in the report, and the count of dropped results is recorded in the engine's row so the silence is visible.\n\n`version` is bumped when a consumer would have to change to keep reading the block correctly. Adding an optional field is not a bump; renaming or removing one is.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "ruleClass",
+    "informsDimensions",
+    "informsTriggers",
+    "isClassification"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1",
+      "description": "Contract version. The CLI rejects a block whose version it does not understand rather than guessing at the shape."
+    },
+    "ruleClass": {
+      "enum": [
+        "unprotected-hook-callback",
+        "unprotected-unlock-callback",
+        "flag-implementation-divergence",
+        "admin-surface",
+        "upgradeable-hook",
+        "selfdestruct",
+        "external-call-in-swap-path",
+        "unbounded-dynamic-fee",
+        "custom-accounting",
+        "rounding-direction",
+        "callback-intentionally-disabled",
+        "unsupported-hook-abi",
+        "hook-profile",
+        "unvalidated-pool-key",
+        "callback-selector-mismatch"
+      ],
+      "description": "Canonical taxonomy shared with `RuleClass` in cli/src/types.ts and with the manifest schema. `hook-profile` is the per-contract classification carrying `metrics`, `permissions` and `callbacks`: the engine's \"I looked at this contract\" signal. `unvalidated-pool-key` and `callback-selector-mismatch` are produced by the harness probes, not by a detector; they are listed so one enum names every class an engine may emit."
+    },
+    "informsDimensions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Framework scoring dimensions this finding informs (names from schema/framework-rubric.json)."
+    },
+    "informsTriggers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Framework feature triggers this finding can activate."
+    },
+    "isClassification": {
+      "type": "boolean",
+      "description": "True for a finding that describes the target rather than accusing it. Classifications are emitted at Informational, never fail a gate and never score by themselves."
+    },
+    "discriminator": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What tells this finding apart from others of the same class anchored on the same element: the permission field for HS-02, the callback name for HS-01, `partial` for a partially readable ABI."
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Measurements attached to a finding. Two shapes share the object: the `hook-profile` classification carries the per-contract profile (every profile metric, all required together — `dependentRequired` keys them off `callbacksImplemented`), and an `external-call-in-swap-path` finding carries the destination classification (`destination`, `isStatic`, `unhandled`, required together). The scoring layer derives complexity from the former and externalDependencies from the latter.",
+      "additionalProperties": false,
+      "dependentRequired": {
+        "callbacksImplemented": [
+          "callbacksDeclared",
+          "stateWritesInCallbacks",
+          "externalCallsInSwapPath",
+          "externalCallsInSwapPathThirdParty",
+          "internalFunctionsReachableFromCallbacks",
+          "usesReturnsDelta",
+          "hasOwnerOnlyFunctions"
+        ],
+        "destination": [
+          "isStatic",
+          "unhandled"
+        ]
+      },
+      "properties": {
+        "destination": {
+          "type": "string",
+          "minLength": 1,
+          "description": "HS-05: the third-party destination of a swap-path call, named by the variable it was read from (an oracle, another protocol, an arbitrary address). Never the PoolManager, a library or the pool's own currencies — those are excluded before a finding exists."
+        },
+        "isStatic": {
+          "type": "boolean",
+          "description": "HS-05: every call to this destination is a static read (a `view`/`pure` callee or `staticcall`)."
+        },
+        "unhandled": {
+          "type": "boolean",
+          "description": "HS-05: at least one call to this destination is not inside a `try`, so a revert there reverts the swap."
+        },
+        "externalCallsInSwapPathThirdParty": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Of `externalCallsInSwapPath`, the calls that leave the pool's trust boundary: not the PoolManager, not a library, not the pool's own currencies. The externalDependencies input. Always emitted by the profile (detectors/tests asserts it); not in `dependentRequired` yet so a consumer built against the seven original metrics keeps validating — tighten once every fixture carries it."
+        },
+        "callbacksImplemented": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "IHooks callbacks whose most-derived delegate does work (can return). A BaseHook stub or a deliberate revert-guard does not count."
+        },
+        "callbacksDeclared": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Callback permissions set to true in the resolved getHookPermissions(); returns-delta flags are not callbacks and are not counted here."
+        },
+        "stateWritesInCallbacks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "State-variable writes reachable from the implemented callbacks through internal calls and modifiers, after override resolution. Each (node, variable) pair counts once."
+        },
+        "externalCallsInSwapPath": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "High-level and low-level calls made from beforeSwap/afterSwap and everything they reach. Library calls are excluded."
+        },
+        "internalFunctionsReachableFromCallbacks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Distinct implemented functions (modifiers excluded) reachable from the implemented callbacks by internal call, after override resolution."
+        },
+        "usesReturnsDelta": {
+          "type": "boolean",
+          "description": "Any returns-delta permission is declared: the hook can alter settled amounts."
+        },
+        "hasOwnerOnlyFunctions": {
+          "type": "boolean",
+          "description": "Some external or public non-callback function compares msg.sender against an owner-like state variable, in its body, its modifiers or the internal functions it calls."
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "description": "The resolved getHookPermissions() set, inheritance followed: every field of Hooks.Permissions with the literal it is assigned. Absent when the contract declares none, which is itself meaningful (the hook relies on address bits alone).",
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "propertyNames": {
+        "enum": [
+          "beforeInitialize",
+          "afterInitialize",
+          "beforeAddLiquidity",
+          "afterAddLiquidity",
+          "beforeRemoveLiquidity",
+          "afterRemoveLiquidity",
+          "beforeSwap",
+          "afterSwap",
+          "beforeDonate",
+          "afterDonate",
+          "beforeSwapReturnDelta",
+          "afterSwapReturnDelta",
+          "afterAddLiquidityReturnDelta",
+          "afterRemoveLiquidityReturnDelta"
+        ]
+      }
+    },
+    "callbacks": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "Names of the IHooks callbacks the contract implements (does work in), sorted.",
+      "items": {
+        "enum": [
+          "beforeInitialize",
+          "afterInitialize",
+          "beforeAddLiquidity",
+          "afterAddLiquidity",
+          "beforeRemoveLiquidity",
+          "afterRemoveLiquidity",
+          "beforeSwap",
+          "afterSwap",
+          "beforeDonate",
+          "afterDonate"
+        ]
+      }
+    }
+  }
+}
