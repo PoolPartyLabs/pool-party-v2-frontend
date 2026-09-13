@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "slither-hookrisk"
+version = "0.1.0"
+description = "Slither detectors for Uniswap v4 hooks, scored against the Uniswap Foundation Hooks Security Framework"
+readme = "README.md"
+requires-python = ">=3.10"
+
+# AGPL-3.0, not MIT like the rest of hookrisk.
+#
+# This package imports `slither.detectors.abstract_detector` and subclasses it,
+# which makes it a derivative work of Slither (AGPL-3.0-only). The CLI, harness,
+# schema and action are MIT: they communicate with this package across a process
+# boundary and never link it. See NOTICE for the full breakdown.
+license = "AGPL-3.0-only"
+
+authors = [{ name = "hookrisk contributors" }]
+keywords = ["uniswap", "uniswap-v4", "slither", "security", "static-analysis"]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Security",
+]
+
+# Bounded on both sides, not just below.
+#
+# The CLI adapter parses Slither's JSON report and depends on its shape:
+# `results.detectors[].elements[].source_mapping.filename_relative`, and the
+# `hookrisk` metadata block our detectors inject. An unbounded upper bound means
+# a routine `pip install` can move that shape underneath us, and the failure mode
+# is a parse error at best and a silently empty finding list at worst.
+#
+# 0.11.5 and 0.11.6 are both verified against the corpus gates. Raise the ceiling
+# deliberately, after re-running `make test-corpus`.
+dependencies = [
+  "slither-analyzer>=0.11.5,<0.12",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.urls]
+Homepage = "https://github.com/0xmvercosa/hookrisk"
+Documentation = "https://github.com/0xmvercosa/hookrisk/blob/main/docs/DETECTORS.md"
+Issues = "https://github.com/0xmvercosa/hookrisk/issues"
+
+# How Slither finds these detectors. Without this entry point the package is on
+# disk but invisible to `slither`, which is error HR-E004.
+[project.entry-points."slither_analyzer.plugin"]
+hookrisk = "slither_hookrisk.plugin:make_plugin"
+
+[tool.setuptools.packages.find]
+include = ["slither_hookrisk*"]
+
+# No package data. The error catalogue (errors/catalog.json) is the CLI's:
+# the plugin reports findings and leaves failure classification to the
+# process that reads them, so nothing has to be copied in at build time.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
