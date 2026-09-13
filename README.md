@@ -2,9 +2,27 @@
 
 Front-end for **Pool Party v2**, an **On-Chain Asset Management System (OAMS)**: an open, multi-chain platform where asset managers, human or software, build and operate on-chain investment strategies, and where anyone can invest in them without giving up custody.
 
+## Cash+ continuity demo
+
+**Cash+** is a dedicated investment page for business dollar reserves. Its strategy combines Aave lending interest with stablecoin conversion spreads through **1inch Aqua and SwapVM**. The UI shows the balance, position composition, return sources, investment review and withdrawals within Pool Party's existing design.
+
+The current delivery is an **interactive mock**: invest simulated USDC, advance one explicitly modeled day, inspect the result and withdraw. The demo wallet, balances and returns are illustrative. Preview mode sends no wallet transactions or RPC requests, and Cash+ stays separate from Portfolio and the strategy catalog.
+
+```bash
+pnpm install --frozen-lockfile
+pnpm cash-plus:ui
+```
+
+Open `http://localhost:3049/en/cash-plus` (English) or `http://localhost:3049/pt-BR/cash-plus` (Portuguese). The command enables the required flags; no API key, connected wallet or deployed Cash+ contract is needed.
+
+- [Demo guide, assumptions and verification](docs/features/cash-plus/cash-plus-ui-demo.md)
+- [Frontend implementation](src/features/cash-plus/README.md)
+- [Technical specification](docs/features/cash-plus/cash-plus-technical-spec.md)
+- [Companion contracts](https://github.com/0xmvercosa/pool-party-aqua/tree/feat/cash-plus-demo/contracts/src/cashplus) and [optional local-fork tooling](scripts/cash-plus/README.md). Fork receipts are separate evidence, not transactions from the mock UI.
+
 ---
 
-## Hackathon submission
+## Earlier hackathon submission
 
 This repository is the **front-end and server half** of two hackathon tracks built on top of the Pool Party v2 investor app. The submission form accepts a single repository, so the companion smart-contract repository is linked below.
 
@@ -96,6 +114,7 @@ No backend, RPC, or wallet is required (see [`docs/05_MOCK_STRATEGY.md`](docs/05
 | Command | Purpose |
 |---------|---------|
 | `pnpm dev` | Run the dev server at `http://localhost:3000`. |
+| `pnpm cash-plus:ui` | Run the interactive Cash+ mock at `http://localhost:3049/en/cash-plus`. |
 | `pnpm build` / `pnpm start` | Build for production / serve the build. |
 | `pnpm test` / `pnpm test:watch` / `pnpm test:coverage` | Run the Vitest suite (once, in watch mode, with coverage). |
 | `pnpm lint` / `pnpm format` | Check / format the codebase with Biome. |

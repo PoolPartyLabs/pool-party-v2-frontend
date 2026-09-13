@@ -67,6 +67,12 @@ vi.mock("./components/PositionCard", () => ({
   ),
 }));
 
+// Keep desktop rate labels, but avoid mounting 600 Radix tooltip trees in the plain-map baseline.
+// Tooltip interaction is covered in AprTooltip.test.tsx; these tests retain the real table and rows.
+vi.mock("@/components/ui/AprTooltip", () => ({
+  AprTooltip: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+}));
+
 const STRATEGY: Strategy = {
   id: "s-base",
   name: "Stable Yield",
@@ -185,6 +191,8 @@ describe("PortfolioView virtualization — [R1] plain-map baseline (gate off / b
     // Each strategy name renders in both the mobile card AND the desktop table row (>=1 each).
     expect(screen.getAllByText("Strategy 0").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Strategy 599").length).toBeGreaterThanOrEqual(1);
+    expect(document.querySelectorAll("tbody > tr")).toHaveLength(600);
+    expect(screen.getAllByTestId("position-card")).toHaveLength(600);
     expect(document.querySelectorAll("tr[data-virtual-spacer]")).toHaveLength(0);
     expect(document.querySelector("tbody[data-virtualized]")).toBeNull();
     clearOverrides();

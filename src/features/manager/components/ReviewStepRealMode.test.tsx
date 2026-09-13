@@ -18,6 +18,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { managerFeePolicy } from "@/mocks/data/manager";
 import { uniswapPools } from "@/mocks/data/pools";
 import {
+  act,
   fireEvent,
   renderWithProviders,
   screen,
@@ -32,6 +33,7 @@ const cfg = vi.hoisted(() => ({
   amount0: BigInt(1000) as bigint | null,
   amount1: BigInt(2000) as bigint | null,
   buildSteps: vi.fn(),
+  buildWait: null as Promise<void> | null,
   // POO-496 R1: the exact SeedState the stubbed card reports up on mount. When null, the stub falls
   // back to a legacy amounts-only report (no decimals) so the existing full-range tests are unchanged.
   seedReport: null as {
@@ -168,8 +170,9 @@ beforeEach(() => {
   cfg.seedReport = null;
   cfg.tickProps = [];
   cfg.reportTwice = false;
-  // A resolving 5-step sequence (approve ×2 → permit → build → send); the build step holds briefly so
-  // the wallet-signing modal is observably up before the flow settles to success.
+  cfg.buildWait = null;
+  // A resolving 5-step sequence (approve ×2 → permit → build → send). Tests that inspect the
+  // intermediate signing view hold the build explicitly, independent of CI scheduling speed.
   cfg.buildSteps.mockReset().mockReturnValue([
     { key: "approve:token0", run: async () => ({ skipped: true }) },
     { key: "approve:token1", run: async () => ({ skipped: true }) },
@@ -177,7 +180,7 @@ beforeEach(() => {
     {
       key: "build",
       run: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 80));
+        await cfg.buildWait;
         return {};
       },
     },
@@ -281,6 +284,10 @@ describe("ReviewStep (real mode)", () => {
 
   it("launches on-chain via the wallet-sign runner and shows the on-chain live copy", async () => {
     const user = userEvent.setup();
+    let finishBuild = () => {};
+    cfg.buildWait = new Promise<void>((resolve) => {
+      finishBuild = resolve;
+    });
     if (!pool) throw new Error("expected a pool");
     renderWithProviders(
       <ReviewStep mandate={makeMandate()} feePolicy={managerFeePolicy} onBack={vi.fn()} />,
@@ -313,6 +320,7 @@ describe("ReviewStep (real mode)", () => {
     );
     // The multistep wallet-signing modal shows while the on-chain steps run.
     expect(await screen.findByText("Continue in your wallet")).toBeInTheDocument();
+    await act(async () => finishBuild());
     // POO-599: after the build settles, the flow pauses on the built-figures Review; approving sends.
     expect(
       await screen.findByText(/Refreshes in/, undefined, { timeout: 3000 }),
