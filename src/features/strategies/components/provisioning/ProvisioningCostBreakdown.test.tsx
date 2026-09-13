@@ -14,6 +14,11 @@
  *   [R6] hero figures visible, fee detail behind Show more
  *   [R8] per-leg gas renders at a precision that keeps it non-zero, itemized (never a sum)
  *
+ * POO-1380 rules v1 (the buy-crypto CTA names the amount):
+ *   [R1] a finite positive `buyAmountUsd` makes the CTA read "Buy {formatUsd(amount)}"
+ *   [R3] an unresolved amount (undefined / NaN / Infinity / zero / negative) degrades the CTA back
+ *        to the current wording, never "Buy undefined", "Buy $NaN", or a bare currency symbol
+ *
  * Presentational: every case is a hand-built plan, no network and no server action.
  */
 import type { AnchorHTMLAttributes, ReactNode } from "react";
@@ -303,6 +308,83 @@ describe("the buy-crypto alternative [R3]", () => {
   });
 });
 
+// --- POO-1380 [R1][R3] the buy-crypto CTA names the amount ---------------------------------------
+
+describe("the buy-crypto CTA amount [POO-1380 R1][R3]", () => {
+  /** The whole card's text, so a broken interpolation cannot hide behind a role query. */
+  function cardText(): string {
+    return screen.getByTestId("provisioning-cost-breakdown").textContent ?? "";
+  }
+
+  it("[R1] names the amount when a resolved buy amount is supplied", () => {
+    renderWithProviders(
+      <ProvisioningCostBreakdown
+        plan={CROSS_CHAIN_PLAN}
+        onRequote={() => {}}
+        buyAmountUsd={101.02}
+      />,
+    );
+
+    // The CTA reads "Buy $101.02" (the amount through `formatUsd`, never a raw number), and it is
+    // still the same peer link to the deposit surface.
+    const cta = screen.getByRole("link", { name: /Buy \$101\.02/ });
+    expect(cta).toHaveAttribute("href", "/deposit");
+    expect(cta).toBeVisible();
+    // The old wording is gone once a real amount is known.
+    expect(screen.queryByRole("link", { name: /Buy crypto instead/ })).not.toBeInTheDocument();
+  });
+
+  // @rule POO-1512 [R7]: the CTA prints the charge in the currency it is BILLED in, the same one the
+  // FundingRoutePicker buy row names for this same figure. Without it a German buyer saw the row say
+  // "208.00 EUR" and this CTA say "Buy $208.00" for the SAME charge.
+  it("[POO-1512 R7] names the amount in the charge's own currency", () => {
+    renderWithProviders(
+      <ProvisioningCostBreakdown
+        plan={CROSS_CHAIN_PLAN}
+        onRequote={() => {}}
+        buyAmountUsd={208}
+        buyAmountCurrency="EUR"
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: /Buy €208\.00/ })).toBeVisible();
+    expect(cardText()).not.toMatch(/\$208\.00/);
+  });
+
+  it("[R3] degrades to the current wording when the amount is undefined", () => {
+    // The live default: the crypto-only cut and mock mode never price the on-ramp quote, so the host
+    // passes nothing. The CTA must read the current wording, not a broken interpolation.
+    renderWithProviders(<ProvisioningCostBreakdown plan={CROSS_CHAIN_PLAN} onRequote={() => {}} />);
+
+    expect(screen.getByRole("link", { name: /Buy crypto instead/ })).toBeVisible();
+    expect(cardText()).not.toMatch(/Buy undefined/);
+    expect(cardText()).not.toMatch(/\$NaN/);
+    // No bare "Buy $" with nothing (or a non-digit) after it.
+    expect(cardText()).not.toMatch(/Buy \$(?!\d)/);
+  });
+
+  it.each([
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["zero", 0],
+    ["negative", -5],
+  ])("[R3] degrades to the current wording when the amount is %s", (_label, amount) => {
+    renderWithProviders(
+      <ProvisioningCostBreakdown
+        plan={CROSS_CHAIN_PLAN}
+        onRequote={() => {}}
+        buyAmountUsd={amount}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: /Buy crypto instead/ })).toBeVisible();
+    expect(cardText()).not.toMatch(/Buy undefined/);
+    expect(cardText()).not.toMatch(/\$NaN/);
+    expect(cardText()).not.toMatch(/Buy \$(?!\d)/);
+    expect(cardText()).not.toMatch(/Buy Infinity/);
+  });
+});
+
 // --- [R4] the TTL loop --------------------------------------------------------------------------
 
 describe("the quote TTL [R4]", () => {
@@ -403,5 +485,48 @@ describe("the quote TTL [R4]", () => {
       vi.advanceTimersByTime(FIXTURE_TTL_MS * 3);
     });
     expect(onRequote).not.toHaveBeenCalled();
+  });
+});
+
+// --- POO-1575 rules v1: the buy-crypto hint names the methods the buyer can actually use ---------
+
+describe("the buy-crypto hint's payment methods (POO-1575)", () => {
+  /** The whole card's text: the hint is a sub-line, not a role, so this is what it is read from. */
+  function breakdownText(): string {
+    return screen.getByTestId("provisioning-cost-breakdown").textContent ?? "";
+  }
+
+  function renderWithMethods(buyMethodNames?: readonly string[]) {
+    return renderWithProviders(
+      <ProvisioningCostBreakdown
+        plan={CROSS_CHAIN_PLAN}
+        onRequote={() => {}}
+        {...(buyMethodNames === undefined ? {} : { buyMethodNames })}
+      />,
+    );
+  }
+
+  it("[R1][R2] names the resolved methods instead of the shipped 'a card or Pix'", () => {
+    renderWithMethods(["Credit Card", "Pix"]);
+
+    expect(breakdownText()).toContain(
+      "Pay with Credit Card or Pix and skip moving funds between networks.",
+    );
+  });
+
+  it("[R1] a buyer whose currency offers no Pix is never told about Pix", () => {
+    renderWithMethods(["SEPA transfer"]);
+
+    expect(breakdownText()).toContain("Pay with SEPA transfer and skip moving funds");
+    expect(breakdownText()).not.toMatch(/Pix/);
+  });
+
+  it("[R3] promises nothing specific when no method resolved", () => {
+    // The live default: mock mode and the crypto-only cut never resolve a method list, so the host
+    // passes nothing. The hint must keep the true half of its claim and drop the invented half.
+    renderWithMethods();
+
+    expect(breakdownText()).toContain("Skip moving funds between networks.");
+    expect(breakdownText()).not.toMatch(/Pix|card/i);
   });
 });

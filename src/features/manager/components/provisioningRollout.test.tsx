@@ -24,6 +24,7 @@ import {
   fireEvent,
   renderWithProviders,
   screen,
+  waitFor,
 } from "../../../../tests/utils/renderWithProviders";
 import { MoveRangeModal } from "./MoveRangeModal";
 import { RemoveLiquidityModal, type RemoveLiquidityTarget } from "./RemoveLiquidityModal";
@@ -80,7 +81,7 @@ const removeTarget: RemoveLiquidityTarget = {
  * rail settles in under a second either way; the clock is what the flow reads.
  */
 function confirmPlan(settlesAt = T0): void {
-  fireEvent.click(screen.getByRole("button", { name: "Confirm & continue" }));
+  fireEvent.click(screen.getByTestId("gas-topup-confirm"));
   vi.spyOn(Date, "now").mockReturnValue(settlesAt);
 }
 
@@ -97,9 +98,23 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/**
+ * POO-1504 [R27]: the run no longer hands the operation back on its own.
+ *
+ * The bottom button IS the run's state, so once every leg has settled it reads `Done` and is ENABLED,
+ * and pressing it is what resumes the original operation. `onDone` used to fire the instant the last
+ * leg settled, which meant the "all done" screen was never seen. The completion EVENT is unmoved: it
+ * still fires on settlement (premise 11), and only the handoff waits for this press.
+ */
+async function pressDone(): Promise<void> {
+  const done = await screen.findByTestId("provisioning-exec-state", undefined, { timeout: 3000 });
+  await waitFor(() => expect(done).toBeEnabled(), { timeout: 3000 });
+  fireEvent.click(done);
+}
+
 describe("MoveRangeModal — the funding rail (POO-1045)", () => {
   /** Form → build → Review → the Review's approve, which is where the gate sits. */
-  async function reachThePlan(onOpenChange = vi.fn()) {
+  async function reachTheTopUp(onOpenChange = vi.fn()) {
     renderWithProviders(
       <MoveRangeModal
         open
@@ -116,36 +131,43 @@ describe("MoveRangeModal — the funding rail (POO-1045)", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Confirm & move range" }, { timeout: 3000 }),
     );
-    await screen.findByRole("button", { name: "Confirm & continue" }, { timeout: 3000 });
+    await screen.findByTestId("gas-topup-confirm", undefined, { timeout: 3000 });
     return onOpenChange;
   }
 
   it("[R1] resumes the built rebalance instead of rebuilding it", async () => {
-    await reachThePlan();
+    await reachTheTopUp();
     confirmPlan();
+    await pressDone();
 
     expect(await screen.findByText(stepOf(2, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.queryByText(stepOf(1, 2))).not.toBeInTheDocument();
   });
 
   it("[R2] rebuilds when the funding route outlived the built rebalance", async () => {
-    await reachThePlan();
+    await reachTheTopUp();
     confirmPlan(AFTER_A_BRIDGE);
+    await pressDone();
 
     expect(await screen.findByText(stepOf(1, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
     expect(await screen.findByText(stepOf(2, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
   });
 
-  it("[R4] anchors the plan on the pair and cancels back to the Review", async () => {
-    await reachThePlan();
-    expect(screen.getByText("Move range in ETH/USDC")).toBeInTheDocument();
+  // @rule POO-1509 R4 — the OP-ANCHOR half of POO-1045 [R4] does not survive the move, and the Figma
+  // frame is why: `6550:569` is title, subtitle, presets, note and two buttons, with no plan card and
+  // so no anchor row to print the pair on. A move-range spends no USDC, so it can only ever be
+  // gas-short and this is now its provisioning screen. The CANCEL-DESTINATION half is what [R4] still
+  // protects, and it is unchanged: the ghost hands the host back its own Review.
+  it("[R4] takes the gas top-up back to the Review", async () => {
+    await reachTheTopUp();
+    expect(screen.getByRole("heading", { name: "Not enough gas" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
     expect(screen.getByRole("button", { name: "Confirm & move range" })).toBeInTheDocument();
   });
 
   it("[R5] refuses to close while the funding route is executing", async () => {
-    const onOpenChange = await reachThePlan();
+    const onOpenChange = await reachTheTopUp();
     onOpenChange.mockClear();
 
     confirmPlan();
@@ -157,7 +179,7 @@ describe("MoveRangeModal — the funding rail (POO-1045)", () => {
 
 describe("RemoveLiquidityModal — the funding rail (POO-1045)", () => {
   /** Form → build → Review → the Review's approve, which is where the gate sits. */
-  async function reachThePlan(onOpenChange = vi.fn()) {
+  async function reachTheTopUp(onOpenChange = vi.fn()) {
     renderWithProviders(
       <RemoveLiquidityModal
         open
@@ -169,36 +191,39 @@ describe("RemoveLiquidityModal — the funding rail (POO-1045)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Withdraw" }));
     await screen.findByText("Amount requested", undefined, { timeout: 3000 });
     fireEvent.click(screen.getByRole("button", { name: "Withdraw" }));
-    await screen.findByRole("button", { name: "Confirm & continue" }, { timeout: 3000 });
+    await screen.findByTestId("gas-topup-confirm", undefined, { timeout: 3000 });
     return onOpenChange;
   }
 
   it("[R1] resumes the built withdrawal instead of rebuilding it", async () => {
-    await reachThePlan();
+    await reachTheTopUp();
     confirmPlan();
+    await pressDone();
 
     expect(await screen.findByText(stepOf(2, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.queryByText(stepOf(1, 2))).not.toBeInTheDocument();
   });
 
   it("[R2] rebuilds when the funding route outlived the built withdrawal", async () => {
-    await reachThePlan();
+    await reachTheTopUp();
     confirmPlan(AFTER_A_BRIDGE);
+    await pressDone();
 
     expect(await screen.findByText(stepOf(1, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
     expect(await screen.findByText(stepOf(2, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
   });
 
-  it("[R4] anchors the plan on the position and cancels back to the Review", async () => {
-    await reachThePlan();
-    expect(screen.getByText(/^Close /)).toBeInTheDocument();
+  // @rule POO-1509 R4 — same as move-range above. The destination is the withdrawal's own Review.
+  it("[R4] takes the gas top-up back to the Review", async () => {
+    await reachTheTopUp();
+    expect(screen.getByRole("heading", { name: "Not enough gas" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
     expect(screen.getByText("Amount requested")).toBeInTheDocument();
   });
 
   it("[R5] refuses to close while the funding route is executing", async () => {
-    const onOpenChange = await reachThePlan();
+    const onOpenChange = await reachTheTopUp();
     onOpenChange.mockClear();
 
     confirmPlan();

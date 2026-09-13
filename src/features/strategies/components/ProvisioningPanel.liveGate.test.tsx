@@ -47,6 +47,7 @@ vi.mock("@/i18n/navigation", () => ({
       {children}
     </a>
   ),
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 const POLYGON = 137;
@@ -134,7 +135,13 @@ describe("ProvisioningPanel — live gate (POO-1042)", () => {
     expect(screen.getByRole("listbox", { name: /your funds/i })).toBeInTheDocument();
   });
 
-  it("[R7] does not quote a plan until a source is picked", () => {
+  // @rule POO-1503 R18/R19 — OVERTURNS this test's mechanism, not its purpose. POO-1042 [R7]
+  // suspended the planner until a selection was CONFIRMED; step 2 now needs the plan while it is on
+  // screen, because [R18] itemises it behind `See details` and [R19] makes the CTA sign against it. So
+  // the quote follows the LIVE selection, which for a cross-chain wallet with nothing pre-selected is
+  // still empty: the fan-out has nothing to price and the substance of [R7] holds. It is `[]` rather
+  // than `null` because the hook is enabled once the route question is settled.
+  it("[R7] quotes for the live selection, which starts empty on a cross-chain wallet", () => {
     renderWithProviders(
       <ProvisioningPanel
         input={SCENARIOS.usdcBridge}
@@ -146,9 +153,7 @@ describe("ProvisioningPanel — live gate (POO-1042)", () => {
       />,
     );
 
-    // Null, not empty: the planner is SUSPENDED, so its per-chain quote fan-out never runs for a
-    // route nobody asked for. An empty selection would still be a request.
-    expect(quotedForHolder.current).toBeNull();
+    expect(quotedForHolder.current).toEqual([]);
   });
 
   it("[R7] the picker's requirement exceeds the bare shortfall (a conservative seed)", () => {
@@ -163,13 +168,19 @@ describe("ProvisioningPanel — live gate (POO-1042)", () => {
       />,
     );
 
-    // "Needed: $x" — seeded above the $100 shortfall so the quoted plan lands under it.
-    const needed = screen.getByText(/needed:/i).textContent ?? "";
-    const seeded = Number(needed.replace(/[^0-9.]/g, ""));
+    // The v2 meter reads "$0.00 of $x" (POO-1086 [F3-R3]); the requirement is the second figure,
+    // seeded above the $100 shortfall so the quoted plan lands under it.
+    const meter = screen.getByText(/ of \$/).textContent ?? "";
+    const seeded = Number((meter.split(" of ")[1] ?? "").replace(/[^0-9.]/g, ""));
     expect(seeded).toBeGreaterThan(100);
   });
 
-  it("[R8] a source that cannot reach the operation's chain is not selectable", () => {
+  // @rule POO-1502 [R11] — the [R8] question is unchanged (a holding that cannot reach the
+  // operation's chain must never fund it) and the ANSWER moved: the row used to render greyed and
+  // unselectable, and now it does not render at all. Asserted end-to-end through the panel because
+  // this is the pairing that matters: the gate still refuses the holding, and the screen no longer
+  // offers it. The trade, that the user is no longer told why, is recorded on POO-1502.
+  it("[R8]/[R11] a source that cannot reach the operation's chain is not offered at all", () => {
     renderWithProviders(
       <ProvisioningPanel
         input={SCENARIOS.usdcBridge}
@@ -183,11 +194,8 @@ describe("ProvisioningPanel — live gate (POO-1042)", () => {
       />,
     );
 
-    const row = screen.getByRole("option");
-    fireEvent.click(row);
-
-    expect(row).toHaveAttribute("aria-disabled", "true");
-    expect(row).toHaveAttribute("aria-selected", "false");
+    expect(screen.queryAllByRole("option")).toHaveLength(0);
+    expect(screen.getByText("There's nothing here we can spend yet.")).toBeInTheDocument();
   });
 
   it("[R8] a reachable source is selectable and becomes route step 1", () => {
@@ -220,7 +228,7 @@ describe("ProvisioningPanel — live gate (POO-1042)", () => {
     );
 
     fireEvent.click(screen.getByRole("option"));
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirm and start/i }));
 
     await waitFor(() =>
       expect(quotedForHolder.current).toEqual([
@@ -255,7 +263,7 @@ describe("ProvisioningPanel — live gate (POO-1042)", () => {
     );
 
     fireEvent.click(screen.getByRole("option"));
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirm and start/i }));
 
     // Back on the picker, with the real number stated, rather than on a plan card whose confirm the
     // user would be pressing against a route that strands. This IS the explicit "add another source"
@@ -264,7 +272,7 @@ describe("ProvisioningPanel — live gate (POO-1042)", () => {
     expect(await screen.findByRole("listbox", { name: /your funds/i })).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(/pick one more source/i);
     // And the requirement on screen is now the QUOTED total, not the seed it was opened with.
-    expect(screen.getByText(/needed:/i)).toHaveTextContent("5,000");
+    expect(screen.getByText(/ of \$/)).toHaveTextContent("5,000");
   });
 
   it("[R10] runs the rail, not the 900 ms mock settle", async () => {
@@ -282,7 +290,7 @@ describe("ProvisioningPanel — live gate (POO-1042)", () => {
     );
 
     fireEvent.click(screen.getByRole("option"));
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirm and start/i }));
 
     await waitFor(() => expect(buildPlanSteps).toHaveBeenCalled());
   });

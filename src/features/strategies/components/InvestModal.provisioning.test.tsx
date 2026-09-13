@@ -11,7 +11,7 @@
  * gate). The flag-OFF baseline is covered by InvestModal.test.tsx (unchanged).
  */
 import type { AnchorHTMLAttributes, ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Strategy } from "@/lib/schemas";
 import {
   fireEvent,
@@ -19,6 +19,8 @@ import {
   screen,
 } from "../../../../tests/utils/renderWithProviders";
 import { InvestModal } from "./InvestModal";
+// The mocked settle switch (factory below), so a case can drive the mock rail to a failure.
+import { settleOutcome } from "./settle";
 
 // Force the dark-launched flag ON for this file (the happy-path file leaves it OFF).
 vi.mock("@/lib/features/useFeatureFlags", () => ({
@@ -75,27 +77,37 @@ function enterAmount() {
 }
 
 describe("InvestModal — provisioning gate", () => {
+  // A previous test's auto-started mock rail can still have a 900 ms settle timer in flight when the
+  // next test begins, and that late call would consume a `mockReturnValueOnce`. Overrides are set
+  // durably per test and restored here instead.
+  afterEach(() => {
+    vi.mocked(settleOutcome).mockImplementation(() => "success");
+  });
+
   it("routes the Invest CTA → provision when the wallet is short (flag on)", async () => {
     enterAmount();
-    // POO-598 R7: the "Invest" CTA intercepts to the pre-flight plan instead of starting the build.
+    // POO-598 R7: the "Invest" CTA intercepts to the pre-flight gate instead of starting the build.
     fireEvent.click(screen.getByRole("button", { name: "Invest" }));
 
-    // The op anchor + the plan CTA are unique to the provisioning plan view.
-    // POO-1023: the plan resolves through the async computePlan seam, so await its arrival.
-    expect(await screen.findByText("Invest in Stable Yield")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Confirm & continue" })).toBeInTheDocument();
+    // POO-1503: the mock Confirm screen is deleted and the panel auto-starts once the async plan
+    // resolves, so the gate's tell is the provisioning EXECUTION surface with the op anchored on it.
+    expect(await screen.findByText("Working on it")).toBeInTheDocument();
+    expect(screen.getByText("Invest in Stable Yield")).toBeInTheDocument();
     // The build/sign has NOT started yet (no Review reached).
     expect(screen.queryByRole("button", { name: "Confirm investment" })).not.toBeInTheDocument();
   });
 
-  it("cancel from the plan returns to the amount step with the op untouched", async () => {
+  it("leaving the gate returns to the amount step with the op untouched", async () => {
+    // POO-1503: the mock Confirm (and its Cancel) is deleted and the panel auto-starts, so the
+    // mock-reachable way OUT of the gate is the failure screen's Back. What R2 pins is unchanged:
+    // leaving the gate lands back on the amount step with the invest flow untouched.
+    vi.mocked(settleOutcome).mockReturnValue("error");
     enterAmount();
     fireEvent.click(screen.getByRole("button", { name: "Invest" }));
-    // POO-1023: wait for the async plan before acting on it.
-    fireEvent.click(await screen.findByRole("button", { name: "Cancel" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Back" }, { timeout: 3000 }));
 
-    // Back on the amount step: the Invest CTA is present again, the plan is gone.
+    // Back on the amount step: the Invest CTA is present again, the gate is gone.
     expect(screen.getByRole("button", { name: "Invest" })).toBeInTheDocument();
-    expect(screen.queryByText("Almost there")).not.toBeInTheDocument();
+    expect(screen.queryByText("Working on it")).not.toBeInTheDocument();
   });
 });

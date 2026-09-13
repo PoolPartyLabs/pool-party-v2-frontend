@@ -42,6 +42,8 @@ const { railHolder } = vi.hoisted(() => {
     closeJournal: vi.fn(),
     /** Non-null while every provisioning leg is held, so a test owns how long the wait lasts. */
     gate: null as Promise<void> | null,
+    /** Non-null makes every provisioning leg FAIL with it, so [R6] can reach the failure exit. */
+    failWith: null as Error | null,
     hold() {
       holder.gate = new Promise<void>((resolve) => {
         open = resolve;
@@ -72,6 +74,7 @@ vi.mock("../hooks/useProvisioningRail", () => ({
           key: step.key,
           run: async () => {
             if (railHolder.gate) await railHolder.gate;
+            if (railHolder.failWith) throw railHolder.failWith;
             return { txHash: `0x${step.key}` };
           },
         })),
@@ -200,16 +203,38 @@ function renderShortWallet(recorder: Recorder, onInvested?: () => void) {
   fireEvent.change(screen.getByLabelText("Amount to invest"), { target: { value: "100" } });
 }
 
-/** Walk from the amount step through the provisioning plan and confirm it. */
-async function provision() {
+/**
+ * Walk from the amount step into the gate. POO-1503: the mock Confirm screen is deleted, so the
+ * seeded start runs provisioning on its own once the plan resolves.
+ */
+function startProvisioning() {
   fireEvent.click(screen.getByRole("button", { name: "Deposit & invest" }));
-  fireEvent.click(await screen.findByRole("button", { name: "Confirm & continue" }));
+}
+
+/**
+ * Press the state button, which is what resumes the operation once the run has settled.
+ *
+ * @rule POO-1504 R27 — the run no longer hands the operation back on its own. The bottom button IS the
+ * run's state: `Processing` while the rail works, `Done` and enabled once every leg has settled, and
+ * pressing it is the handoff. The completion EVENT is unmoved and still fires on settlement (premise
+ * 11); only the resume waits.
+ */
+async function pressDone() {
+  const done = await screen.findByTestId("provisioning-exec-state", undefined, { timeout: 3000 });
+  await waitFor(() => expect(done).toBeEnabled(), { timeout: 3000 });
+  fireEvent.click(done);
+}
+
+async function provision() {
+  startProvisioning();
+  await pressDone();
 }
 
 beforeEach(() => {
   railHolder.openJournal.mockClear();
   railHolder.closeJournal.mockClear();
   railHolder.gate = null;
+  railHolder.failWith = null;
   vi.spyOn(Date, "now").mockReturnValue(T0);
 });
 
@@ -219,12 +244,16 @@ afterEach(() => {
 
 describe("InvestModal — the flagship route (POO-1043)", () => {
   it("[R1] a short wallet reaches provisioning instead of a deep link to buy fiat", async () => {
+    // Hold the legs so the provisioning surface can be observed rather than raced: the mock Confirm
+    // screen is deleted (POO-1503) and the seeded start would otherwise finish in a microtask.
+    railHolder.hold();
     renderShortWallet(newRecorder());
     fireEvent.click(screen.getByRole("button", { name: "Deposit & invest" }));
 
-    expect(await screen.findByRole("heading", { name: "Almost there" })).toBeInTheDocument();
+    expect(await screen.findByText("Working on it")).toBeInTheDocument();
     // The route ends on the operation itself: provisioning is a prefix, never a replacement.
     expect(screen.getByText("Invest in Stable Yield")).toBeInTheDocument();
+    railHolder.release();
   });
 
   it("[R1] resumes the invest with the amount and slippage the user entered", async () => {
@@ -270,7 +299,10 @@ describe("InvestModal — the flagship route (POO-1043)", () => {
     const recorder = newRecorder();
     railHolder.hold();
     renderShortWallet(recorder);
-    await provision();
+    // Not `provision()`: with the rail HELD the run has not settled, so [R27]'s state button still
+    // reads `Processing` and there is nothing to press yet. The press comes after the release below,
+    // which is the ordering this rule is about.
+    startProvisioning();
 
     // The transfer took five minutes, which is past MAX_BUILT_TX_AGE_MS and past the server's own
     // 5-minute Permit2 sigDeadline. Nothing was built before this point.
@@ -278,6 +310,7 @@ describe("InvestModal — the flagship route (POO-1043)", () => {
     expect(recorder.builtAt).toEqual([]);
     vi.spyOn(Date, "now").mockReturnValue(late);
     railHolder.release();
+    await pressDone();
 
     fireEvent.click(await screen.findByRole("button", { name: "Confirm investment" }));
     await waitFor(() => expect(recorder.ran).toContain("confirm:invest"));
@@ -298,10 +331,14 @@ describe("InvestModal — the flagship route (POO-1043)", () => {
     await waitFor(() => expect(onInvested).toHaveBeenCalled());
   });
 
-  it("[R6] cancelling mid-provisioning keeps the amount the user entered", async () => {
+  it("[R6] leaving the gate mid-provisioning keeps the amount the user entered", async () => {
+    // POO-1503: the pre-run Cancel left with the mock Confirm screen, so the mock-reachable exit is
+    // the failure screen's Back. The rule is unchanged: leaving the gate lands back on the amount
+    // step with the entered figure intact and the invest untouched.
+    railHolder.failWith = new Error("the wallet rejected the request");
     renderShortWallet(newRecorder());
     fireEvent.click(screen.getByRole("button", { name: "Deposit & invest" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Cancel" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Back" }));
 
     expect(screen.getByLabelText("Amount to invest")).toHaveValue("100");
     expect(screen.getByRole("button", { name: "Deposit & invest" })).toBeInTheDocument();
