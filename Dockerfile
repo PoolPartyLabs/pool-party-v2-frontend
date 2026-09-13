@@ -124,6 +124,12 @@ RUN mkdir -p /opt/svm \
 # =============================================================================
 # Stage 3: production runner (lean standalone server)
 # =============================================================================
+# The runtime user `nextjs` has no home (`/nonexistent`), and slither writes its config under $HOME
+# before it does anything else, so every scan died with PermissionError before compiling a line.
+# /tmp is the one directory the job runner already relies on being writable. Set here, in the
+# hookrisk stage only, so the default alpine image keeps its environment byte for byte.
+ENV HOME=/tmp
+
 FROM runtime-${WITH_HOOKRISK} AS runner
 WORKDIR /app
 
