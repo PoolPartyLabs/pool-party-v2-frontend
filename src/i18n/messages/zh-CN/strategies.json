@@ -36,6 +36,13 @@
         "name": "正在准备交易",
         "body": "Pool Party 正在计算本次交易的金额和网络费用。目前尚未签署或发送任何内容。"
       }
+    },
+    "awaitingSignature": "等待签署",
+    "stepsRunning": {
+      "approve": "正在授权 {token}"
+    },
+    "stepsDone": {
+      "approve": "已授权 {token}"
     }
   },
   "card": {
@@ -74,7 +81,9 @@
       "ethereum": "Ethereum",
       "stablecoins": "Stablecoins",
       "altcoins": "Altcoins",
-      "meme": "Meme coins"
+      "meme": "Meme coins",
+      "equities": "Stock Tokens",
+      "rwa": "Real-world assets"
     },
     "count": "{count, plural, =0 {暂无策略} other {# 个策略}}",
     "owned": "管理中",
@@ -199,7 +208,8 @@
     "needMore": "您还需要 {amount}",
     "cta": {
       "invest": "投资",
-      "deposit": "存入并投资"
+      "deposit": "存入并投资",
+      "checking": "正在检查您的资金"
     },
     "confirm": {
       "title": "确认并签名",
@@ -241,6 +251,12 @@
     },
     "receipt": {
       "amountInvested": "已投入金额"
+    },
+    "sizing": {
+      "resizedNotice": "您的钱包余额为 {available}，因此将投资该金额，而不是您输入的 {requested}。",
+      "refusedTitle": "无法投资该金额",
+      "refusedBody": "您希望投资 {requested}。您的钱包余额为 {available}，而该策略的最低金额为 {minimum}。",
+      "refusedCta": "修改金额"
     }
   },
   "collect": {
@@ -365,13 +381,22 @@
         "wrongChain": "您的钱包当前处于其他网络。请切换到 {network} 后重试。",
         "wrongChainUnknown": "您的钱包当前处于其他网络。请在钱包中切换网络后重试。",
         "gasBlocked": "{network} 上没有可用于支付网络费用的资产，因此暂时无法执行。请在 {network} 上购买少量加密货币，或从其他网络转入一些。",
-        "gasBlockedUnknown": "该网络上没有可用于支付网络费用的资产，因此暂时无法执行。请在该网络上购买少量加密货币，或从其他网络转入一些。"
-      }
+        "gasBlockedUnknown": "该网络上没有可用于支付网络费用的资产，因此暂时无法执行。请在该网络上购买少量加密货币，或从其他网络转入一些。",
+        "transient": "网络或您的钱包未及时响应。没有任何资金被转移。请稍后再试。",
+        "confirmationTimeout": "您的交易已发送，但我们未能及时确认。再次尝试前请查看您钱包的近期活动，以防它已经完成。",
+        "chainUnavailable": "您的钱包未启用 {network}，因此无法签名。请在钱包应用中启用 {network}，然后在下方切换过去。",
+        "chainUnavailableUnknown": "您的钱包未启用该网络，因此无法签名。请在钱包应用中启用后重试。",
+        "alreadyBroadcast": "此步骤已发送，仍在跟踪中。请刷新页面以继续，不要重复发送。",
+        "upstreamUnavailable": "暂时无法获取报价。这是临时问题，请稍后再试。",
+        "rangeUnchanged": "这已经是该仓位的价格区间，无需移动。请选择其他上下限进行再平衡。"
+      },
+      "referenceLabel": "参考编号",
+      "paybisReferenceLabel": "Paybis 参考编号"
     },
     "slippage": {
       "retryNotice": "价格已超出你的最大滑点（{value}%）。正在按当前价格重试。",
       "errorTitle": "价格波动过大",
-      "errorBody": "价格再次超出你的最大滑点（{value}%）。请在设置中调高，或稍后再试。"
+      "errorBody": "价格再次超出你的最大滑点（{value}%）。这笔交易尚未发送。"
     },
     "receipt": {
       "strategy": "策略",
@@ -469,34 +494,85 @@
       "titleGasOnly": "只需一步",
       "subtitle": "我们已精确计算所需内容。所有步骤在此完成，然后执行您的交易，无需跳转到充值页面。",
       "cta": "确认并继续",
-      "cancel": "取消"
+      "cancel": "取消",
+      "feesIncluded": "已含手续费。",
+      "back": "返回",
+      "gasOnArrival": "到账时的 gas",
+      "showSteps": "显示步骤",
+      "hideSteps": "隐藏步骤"
     },
     "requote": {
-      "title": "价格已变动",
-      "body": "这一步现在的收益比您确认的价格约少 {percent}。目前尚未发送任何内容，您可以接受新价格，也可以就此停止。",
-      "accept": "接受新价格",
-      "decline": "就此停止"
+      "title": "执行期间价格发生了变动",
+      "body": "市场波动超过了预留的 {pct}%，因此未发送任何内容，您的资金也未发生变动。您可以按今天的价格重试，或等待几分钟让市场稳定下来。",
+      "accept": "重试",
+      "decline": "取消"
     },
     "steps": {
       "buyUsdc": "购买 USDC",
       "bridge": "转移到 {network}",
       "bridgeGas": "向 {network} 发送网络费用",
       "swapGas": "充值网络费用",
-      "swapToken": "兑换为 {token}",
-      "op": "您的交易"
+      "swapToken": "转换 {token}",
+      "op": "您的交易",
+      "buy": "购买 {token}"
     },
     "captions": {
       "buyUsdc": "银行卡或本地支付",
-      "bridge": "将资金转移到正确的网络",
-      "swapGas": "将您持有资产的一小部分兑换为网络费用",
+      "bridge": "来自 {network}",
+      "swapGas": "用您的 {stable} 支付",
       "op": "您的原始操作",
-      "approve": "一次性授权。资金尚未转移。"
+      "approve": "一次性授权。资金尚未转移。",
+      "buy": "支付方式将在结账时显示",
+      "buyMethods": "使用 {methods} 支付",
+      "onNetwork": "{network}"
     },
     "exec": {
-      "title": "正在准备您的资金",
+      "title": "处理中",
       "subtitle": "我们将自动完成购买、路由和充值。您的交易随后立即执行。",
       "done": "完成",
-      "pending": "处理中"
+      "pending": "处理中",
+      "takingLonger": "这比平常花的时间更长，可能需要几分钟。",
+      "status": {
+        "done": "已完成",
+        "active": "请在钱包中继续",
+        "waiting": "等待中",
+        "notStarted": "未开始",
+        "skipped": "已跳过",
+        "buying": "完成您的购买"
+      },
+      "failure": {
+        "slippage": "价格超出了你设定的 {pct}% 滑点",
+        "slippageNoPct": "这一步执行时价格发生了变化",
+        "deadlineExpired": "这一步耗时过长已过期",
+        "insufficientFunds": "余额不足以完成这一步",
+        "userRejected": "你在钱包中拒绝了这一步",
+        "unauthorized": "你的钱包没有执行这一步的权限",
+        "wrongChain": "你的钱包在另一个网络上",
+        "alreadyBroadcast": "此步骤已发送，仍在跟踪中",
+        "upstreamUnavailable": "暂时无法为此步骤获取报价",
+        "gasBlocked": "该网络上没有 gas 来执行这一步",
+        "unknown": "这一步没有完成",
+        "chainUnavailable": "您的钱包未启用该网络",
+        "transient": "网络未及时响应。请重试此步骤。",
+        "confirmationTimeout": "已发送，但未及时确认。重试前请查看您的钱包。"
+      },
+      "keepOpen": "请保持此页面打开。",
+      "failedTitle": "第 {index} 步失败了",
+      "tryAgain": "重试",
+      "settledSafe": "{amount} 已经完成并且安全。",
+      "settledSafeUnknown": "部分步骤已经完成并且安全。",
+      "stateProcessing": "处理中",
+      "stateDone": "完成",
+      "stop": {
+        "title": "要在此停止吗？",
+        "settled": "{amount} 已经完成并且安全。",
+        "body": "第 {index} 步（共 {total} 步）正在进行，会自行完成。{restCount, plural, other {第 {rest} 步不会开始}}，你的资金会留在原地。",
+        "bodyLastStep": "第 {index} 步（共 {total} 步）正在进行，会自行完成。你的资金会留在原地。",
+        "bodyNotSent": "第 {index} 步（共 {total} 步）尚未转移任何资金。如果你的钱包正在请求签名，请拒绝。{restCount, plural, other {第 {rest} 步不会开始}}，你的资金会留在原地。",
+        "bodyNotSentLastStep": "第 {index} 步（共 {total} 步）尚未转移任何资金。如果你的钱包正在请求签名，请拒绝。你的资金会留在原地。",
+        "keepGoing": "继续",
+        "stopAnyway": "仍然停止"
+      }
     },
     "bridge": {
       "etaSeconds": "通常约需 {seconds, plural, other {# 秒}}。资金到账后我们会立即继续。",
@@ -536,11 +612,13 @@
       },
       "buyCrypto": {
         "cta": "改为购买加密货币",
-        "hint": "用银行卡或 Pix 支付，无需在网络之间转移资金。"
+        "hint": "无需在网络之间转移资金。",
+        "ctaWithAmount": "购买 {amount}",
+        "hintWithMethods": "使用 {methods} 支付，无需在网络之间转移资金。"
       }
     },
     "fundingSources": {
-      "title": "您想使用什么？",
+      "title": "选择要兑换的代币",
       "subtitle": "选择您持有的任意资产，我们来安排如何把它送到需要的地方。",
       "listLabel": "您的资金",
       "rowLabel": "{network} 上的 {symbol}，{amount}，价值 {usd}",
@@ -551,7 +629,7 @@
       "exact": "刚好够用",
       "empty": "这里暂时没有可以使用的资产。",
       "repriced": "最终金额略高一些。请再选择一项来补足 {amount}。",
-      "cta": "继续",
+      "cta": "确认并开始",
       "step": "第 {index} 步",
       "unblock": "要使用这笔资金：",
       "unreachable": "我们暂时无法把 {symbol} 转到这个网络。请从列表中另选一项。",
@@ -559,7 +637,17 @@
         "ok": "可用",
         "topUp": "需要补充",
         "blocked": "暂时无法使用"
-      }
+      },
+      "settings": "交易设置",
+      "meter": "{selected} / {required}",
+      "enough": "够了",
+      "bufferNote": "已预留 {pct}% 以应对价格波动。剩余部分会退回您的钱包。",
+      "convertNeeded": "按需兑换",
+      "recommended": "推荐",
+      "hideDetails": "隐藏详情",
+      "seeDetails": "查看详情",
+      "cancel": "取消",
+      "back": "返回"
     },
     "recovery": {
       "title": "您有一笔资金正在转移中",
@@ -575,7 +663,8 @@
         "collect": "领取收益",
         "compound": "复投收益",
         "moveRange": "调整策略",
-        "close": "关闭仓位"
+        "close": "关闭仓位",
+        "deposit": "向余额中添加资金"
       },
       "leg": {
         "settled": "已完成。",
@@ -590,6 +679,109 @@
         "rederive": "我们可以从中断的地方继续。",
         "ask": "继续之前需要您确认一件事。"
       }
+    },
+    "routes": {
+      "need": "您需要 {amount}",
+      "breakdownLabel": "此金额的构成",
+      "breakdown": "交易 {amount} + gas {gas}",
+      "breakdownGasOnly": "{gas} 用于网络费用",
+      "gasMinimum": "这笔 gas 补充可用于多笔交易，不仅仅是这一笔。",
+      "bufferTooltip": "我们会多兑换 {pct}% 以应对处理过程中价格变动的情况。剩余部分会退回您的钱包。",
+      "listLabel": "如何支付",
+      "recommended": "推荐",
+      "buy": {
+        "subtitle": "使用 {method} 支付 {amount}",
+        "subtitlePending": "最终金额将在结账时显示",
+        "minimum": "{method} 最低 {amount}",
+        "disclosureLabel": "为什么是这个金额",
+        "disclosureMinimum": "我们下单的金额不会低于 {minimum}，因此即使本次交易需要的更少，您购买的也是这个金额。",
+        "disclosureBuffer": "这比本次交易所需的金额略多：其中 {pct}% 用于应对购买处理期间的价格变动，另外还包含可能产生的网络费用。",
+        "disclosureRemainder": "未使用的部分会留在您的钱包里，可以用于其他交易。",
+        "title": "购买 {amount}",
+        "preparing": "正在准备您的购买"
+      },
+      "cancel": "取消",
+      "tokens": {
+        "title": "使用您的 {amount}",
+        "subtitle": "可用 {amount}"
+      },
+      "tokensPlusBuy": {
+        "title": "使用 {available} + 购买 {shortfall}",
+        "subtitle": "代币 {available}，购买 {shortfall}"
+      },
+      "deposit": {
+        "title": "从外部钱包充值",
+        "subtitle": "从您的另一个钱包发送加密货币"
+      }
+    },
+    "onramp": {
+      "method": {
+        "blocked": "Paybis 要求至少 {amount}。",
+        "minimum": "最低 {amount}",
+        "title": "选择支付方式",
+        "currencyLabel": "货币",
+        "currencyNote": "支付方式会随货币变化。",
+        "listLabel": "支付方式",
+        "loading": "正在加载该货币可用的支付方式",
+        "unavailable": "服务商暂时没有返回任何支付方式。您可以继续，并在结账页面选择支付方式。",
+        "allBlocked": "目前没有支付方式接受低于 {amount} 的金额。请取消并修改金额。",
+        "minimumNotice": "{method} 不接受低于 {amount} 的金额。该下限来自服务商，而非我们，多出的部分会留在您的钱包里。",
+        "continue": "继续",
+        "cancel": "取消"
+      },
+      "title": "购买加密货币",
+      "exit": "关闭结账",
+      "uncovered": "目前没有支付服务商可以用 {currency} 向您出售。请尝试其他支付货币，或使用您已持有的钱包。",
+      "currencyUnsupported": "我们暂时无法受理以 {currency} 支付的银行卡付款。请使用您已持有的钱包，或在支持该货币后再回来。",
+      "nativeUnavailable": "此处暂时无法用现金购买 ETH。请从其他钱包或交易所转入 ETH 后再返回。",
+      "failedBody": "您的购买未完成，因此没有转移任何资金。您可以重试。",
+      "timedOut": "您的购买仍在结算中。资金不会丢失，资金到账后我们会继续。",
+      "reconciling": "正在确认您的购买。这可能需要一点时间。",
+      "enterAmount": "请在结账页面输入金额。此步骤大约需要 {amount}。",
+      "baselineUnavailable": "正在查询您的余额，请稍候。",
+      "openCheckout": "打开安全结账页面",
+      "connecting": "正在加载安全结账。",
+      "opening": "正在打开安全结账。",
+      "open": "请在上方的结账中完成购买。",
+      "settled": "购买已确认。",
+      "closed": "结账已关闭。您可以随时重新开始。",
+      "rejected": "购买被拒绝。",
+      "cancelled": "购买已取消。",
+      "error": "结账出现问题。请重试。",
+      "unavailable": "无法加载安全结账。请重试。",
+      "mockMode": "模拟模式下无法购买加密货币。",
+      "settlingTitle": "正在处理您的购买",
+      "ethUnpricedBody": "我们暂时无法获取 ETH 价格，因此无法开始购买，未产生任何扣款。您可以重试。",
+      "resume": {
+        "title": "您可能有一笔正在进行的购买",
+        "body": "您在 {minutes} 分钟前发起了一笔购买。如果您已付款，资金可能仍在途中。继续将等待其到账。重新开始会创建一笔新的购买，因此请仅在第一笔从未完成时选择。",
+        "resume": "继续那笔购买",
+        "startNew": "开始新的购买",
+        "paidTitle": "您购买的资金仍在到账途中",
+        "paidBody": "您在 {minutes} 分钟前已付款，但资金尚未到账。这可能需要一些时间，银行转账尤其如此。通常继续等待是正确的做法。只有在您确定第一笔永远不会到账时才开始新的购买，因为那意味着再付一次款。",
+        "keepWaiting": "继续等待"
+      }
+    },
+    "secureCheckout": "安全结账",
+    "slippage": {
+      "raiseCta": "提高到 {pct}% 并重试",
+      "customCta": "以 {pct}% 滑点重试",
+      "raiseCost": "提高上限后，剩余的所有转换（不只是此步骤）都可能以更差的价格完成。只有在你希望它们完成时才提高。",
+      "stop": "在此停止"
+    },
+    "stepsRunning": {
+      "buy": "正在购买 {token}",
+      "bridge": "正在转移至 {network}",
+      "bridgeGas": "正在向 {network} 发送手续费",
+      "swapGas": "正在准备手续费",
+      "swapToken": "正在兑换 {token}"
+    },
+    "stepsDone": {
+      "buy": "已购买 {token}",
+      "bridge": "已转移至 {network}",
+      "bridgeGas": "已向 {network} 发送手续费",
+      "swapGas": "已准备手续费",
+      "swapToken": "已兑换 {token}"
     }
   }
 }

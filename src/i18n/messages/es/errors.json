@@ -21,5 +21,10 @@
     "unauthorized": "No tienes permiso para hacer eso. Vuelve a iniciar sesión.",
     "notFound": "No encontramos lo que buscabas.",
     "unknown": "Algo salió mal de nuestro lado. Inténtalo de nuevo."
+  },
+  "reference": {
+    "label": "Referencia",
+    "copy": "Copiar",
+    "copied": "Copiado"
   }
 }

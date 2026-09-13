@@ -36,6 +36,13 @@
         "name": "正在準備交易",
         "body": "Pool Party 正在計算這筆交易的金額與網路手續費。目前尚未簽署或送出任何內容。"
       }
+    },
+    "awaitingSignature": "等待簽署",
+    "stepsRunning": {
+      "approve": "正在授權 {token}"
+    },
+    "stepsDone": {
+      "approve": "已授權 {token}"
     }
   },
   "card": {
@@ -74,7 +81,9 @@
       "ethereum": "Ethereum",
       "stablecoins": "Stablecoins",
       "altcoins": "Altcoins",
-      "meme": "Meme coins"
+      "meme": "Meme coins",
+      "equities": "Stock Tokens",
+      "rwa": "Real-world assets"
     },
     "count": "{count, plural, =0 {無策略} other {# 個策略}}",
     "owned": "管理中",
@@ -199,7 +208,8 @@
     "needMore": "您還需要 {amount}",
     "cta": {
       "invest": "投資",
-      "deposit": "存入並投資"
+      "deposit": "存入並投資",
+      "checking": "正在檢查您的資金"
     },
     "confirm": {
       "title": "確認並簽署",
@@ -241,6 +251,12 @@
     },
     "receipt": {
       "amountInvested": "已投入金額"
+    },
+    "sizing": {
+      "resizedNotice": "您的錢包餘額為 {available}，因此將投資該金額，而不是您輸入的 {requested}。",
+      "refusedTitle": "無法投資該金額",
+      "refusedBody": "您希望投資 {requested}。您的錢包餘額為 {available}，而該策略的最低金額為 {minimum}。",
+      "refusedCta": "修改金額"
     }
   },
   "collect": {
@@ -365,13 +381,22 @@
         "wrongChain": "您的錢包目前處於其他網路。請切換到 {network} 後重試。",
         "wrongChainUnknown": "您的錢包目前處於其他網路。請在錢包中切換網路後重試。",
         "gasBlocked": "{network} 上沒有可用於支付網路費用的資產，因此暫時無法執行。請在 {network} 上購買少量加密貨幣，或從其他網路轉入一些。",
-        "gasBlockedUnknown": "該網路上沒有可用於支付網路費用的資產，因此暫時無法執行。請在該網路上購買少量加密貨幣，或從其他網路轉入一些。"
-      }
+        "gasBlockedUnknown": "該網路上沒有可用於支付網路費用的資產，因此暫時無法執行。請在該網路上購買少量加密貨幣，或從其他網路轉入一些。",
+        "transient": "網路或您的錢包未及時回應。沒有任何資金被轉移。請稍後再試。",
+        "confirmationTimeout": "您的交易已送出，但我們未能及時確認。再次嘗試前請查看您錢包的近期活動，以防它已經完成。",
+        "chainUnavailable": "您的錢包未啟用 {network}，因此無法簽署。請在錢包應用程式中啟用 {network}，然後在下方切換過去。",
+        "chainUnavailableUnknown": "您的錢包未啟用該網路，因此無法簽署。請在錢包應用程式中啟用後再試一次。",
+        "alreadyBroadcast": "此步驟已送出，仍在追蹤中。請重新整理頁面以繼續，不要重複送出。",
+        "upstreamUnavailable": "暫時無法取得報價。這是暫時性問題，請稍後再試。",
+        "rangeUnchanged": "這已經是該倉位的價格區間，無需移動。請選擇其他上下限進行再平衡。"
+      },
+      "referenceLabel": "參考編號",
+      "paybisReferenceLabel": "Paybis 參考編號"
     },
     "slippage": {
       "retryNotice": "價格已超出你的最大滑點（{value}%）。正在以目前價格重試。",
       "errorTitle": "價格波動過大",
-      "errorBody": "價格再次超出你的最大滑點（{value}%）。請在設定中調高，或稍後再試。"
+      "errorBody": "價格再次超出你的最大滑點（{value}%）。這筆交易尚未送出。"
     },
     "receipt": {
       "strategy": "策略",
@@ -469,34 +494,85 @@
       "titleGasOnly": "僅需一個步驟",
       "subtitle": "我們已精確計算所需內容。所有步驟在此完成後執行您的交易，無需跳轉至儲值頁面。",
       "cta": "確認並繼續",
-      "cancel": "取消"
+      "cancel": "取消",
+      "feesIncluded": "已含手續費。",
+      "back": "返回",
+      "gasOnArrival": "到帳時的 gas",
+      "showSteps": "顯示步驟",
+      "hideSteps": "隱藏步驟"
     },
     "requote": {
-      "title": "價格已變動",
-      "body": "這一步現在的收益比您確認的價格約少 {percent}。目前尚未送出任何內容，您可以接受新價格，也可以就此停止。",
-      "accept": "接受新價格",
-      "decline": "就此停止"
+      "title": "執行期間價格發生了變動",
+      "body": "市場波動超過了預留的 {pct}%，因此未送出任何內容，您的資金也未發生變動。您可以按今天的價格重試，或等待幾分鐘讓市場穩定下來。",
+      "accept": "重試",
+      "decline": "取消"
     },
     "steps": {
       "buyUsdc": "購買 USDC",
       "bridge": "轉移至 {network}",
       "bridgeGas": "向 {network} 傳送網路費用",
       "swapGas": "儲值網路費用",
-      "swapToken": "兌換為 {token}",
-      "op": "您的交易"
+      "swapToken": "轉換 {token}",
+      "op": "您的交易",
+      "buy": "購買 {token}"
     },
     "captions": {
       "buyUsdc": "信用卡或本地支付",
-      "bridge": "將資金轉移到正確的網路",
-      "swapGas": "將您持有資產的一小部分兌換為網路費用",
+      "bridge": "來自 {network}",
+      "swapGas": "用您的 {stable} 支付",
       "op": "您的原始操作",
-      "approve": "一次性授權。資金尚未轉移。"
+      "approve": "一次性授權。資金尚未轉移。",
+      "buy": "付款方式將在結帳時顯示",
+      "buyMethods": "使用 {methods} 付款",
+      "onNetwork": "{network}"
     },
     "exec": {
-      "title": "正在準備您的資金",
+      "title": "處理中",
       "subtitle": "我們將自動完成購買、路由及儲值。您的交易隨後立即執行。",
       "done": "完成",
-      "pending": "處理中"
+      "pending": "處理中",
+      "takingLonger": "這比平常花的時間更長，可能需要幾分鐘。",
+      "status": {
+        "done": "已完成",
+        "active": "請在錢包中繼續",
+        "waiting": "等待中",
+        "notStarted": "未開始",
+        "skipped": "已略過",
+        "buying": "完成您的購買"
+      },
+      "failure": {
+        "slippage": "價格超出你設定的 {pct}% 滑點",
+        "slippageNoPct": "這一步執行時價格發生了變化",
+        "deadlineExpired": "這一步耗時過長已過期",
+        "insufficientFunds": "餘額不足以完成這一步",
+        "userRejected": "你在錢包中拒絕了這一步",
+        "unauthorized": "你的錢包沒有執行這一步的權限",
+        "wrongChain": "你的錢包在另一個網路上",
+        "alreadyBroadcast": "此步驟已送出，仍在追蹤中",
+        "upstreamUnavailable": "暫時無法為此步驟取得報價",
+        "gasBlocked": "這個網路上沒有 gas 來執行這一步",
+        "unknown": "這一步沒有完成",
+        "chainUnavailable": "您的錢包未啟用該網路",
+        "transient": "網路未及時回應。請重試此步驟。",
+        "confirmationTimeout": "已送出，但未及時確認。重試前請查看您的錢包。"
+      },
+      "keepOpen": "請保持此頁面開啟。",
+      "failedTitle": "第 {index} 步失敗了",
+      "tryAgain": "重試",
+      "settledSafe": "{amount} 已經完成並且安全。",
+      "settledSafeUnknown": "部分步驟已經完成並且安全。",
+      "stateProcessing": "處理中",
+      "stateDone": "完成",
+      "stop": {
+        "title": "要在此停止嗎？",
+        "settled": "{amount} 已經完成並且安全。",
+        "body": "第 {index} 步（共 {total} 步）正在進行，會自行完成。{restCount, plural, other {第 {rest} 步不會開始}}，你的資金會留在原地。",
+        "bodyLastStep": "第 {index} 步（共 {total} 步）正在進行，會自行完成。你的資金會留在原地。",
+        "bodyNotSent": "第 {index} 步（共 {total} 步）尚未轉移任何資金。如果你的錢包正在要求簽名，請拒絕。{restCount, plural, other {第 {rest} 步不會開始}}，你的資金會留在原地。",
+        "bodyNotSentLastStep": "第 {index} 步（共 {total} 步）尚未轉移任何資金。如果你的錢包正在要求簽名，請拒絕。你的資金會留在原地。",
+        "keepGoing": "繼續",
+        "stopAnyway": "仍然停止"
+      }
     },
     "bridge": {
       "etaSeconds": "通常約需 {seconds, plural, other {# 秒}}。資金到帳後我們會立即繼續。",
@@ -536,11 +612,13 @@
       },
       "buyCrypto": {
         "cta": "改為購買加密貨幣",
-        "hint": "用銀行卡或 Pix 付款，不必在網路之間轉移資金。"
+        "hint": "不必在網路之間轉移資金。",
+        "ctaWithAmount": "購買 {amount}",
+        "hintWithMethods": "使用 {methods} 付款，不必在網路之間轉移資金。"
       }
     },
     "fundingSources": {
-      "title": "您想使用什麼？",
+      "title": "選擇要兌換的代幣",
       "subtitle": "選擇您持有的任何資產，我們來安排如何把它送到需要的地方。",
       "listLabel": "您的資金",
       "rowLabel": "{network} 上的 {symbol}，{amount}，價值 {usd}",
@@ -551,7 +629,7 @@
       "exact": "剛好夠用",
       "empty": "這裡暫時沒有可以使用的資產。",
       "repriced": "最終金額略高一些。請再選擇一項來補足 {amount}。",
-      "cta": "繼續",
+      "cta": "確認並開始",
       "step": "第 {index} 步",
       "unblock": "要使用這筆資金：",
       "unreachable": "我們暫時無法把 {symbol} 轉到這個網路。請從清單中另選一項。",
@@ -559,7 +637,17 @@
         "ok": "可用",
         "topUp": "需要補充",
         "blocked": "暫時無法使用"
-      }
+      },
+      "settings": "交易設定",
+      "meter": "{selected} / {required}",
+      "enough": "夠了",
+      "bufferNote": "已預留 {pct}% 以因應價格波動。剩餘部分會退回您的錢包。",
+      "convertNeeded": "按需兌換",
+      "recommended": "推薦",
+      "hideDetails": "隱藏詳情",
+      "seeDetails": "查看詳情",
+      "cancel": "取消",
+      "back": "返回"
     },
     "recovery": {
       "title": "您有一筆資金正在轉移中",
@@ -575,7 +663,8 @@
         "collect": "領取收益",
         "compound": "複投收益",
         "moveRange": "調整策略",
-        "close": "關閉倉位"
+        "close": "關閉倉位",
+        "deposit": "向餘額中新增資金"
       },
       "leg": {
         "settled": "已完成。",
@@ -590,6 +679,109 @@
         "rederive": "我們可以從中斷的地方繼續。",
         "ask": "繼續之前需要您確認一件事。"
       }
+    },
+    "routes": {
+      "need": "您需要 {amount}",
+      "breakdownLabel": "此金額的組成",
+      "breakdown": "交易 {amount} + gas {gas}",
+      "breakdownGasOnly": "{gas} 用於網路費用",
+      "gasMinimum": "這筆 gas 補充可用於多筆交易，不僅僅是這一筆。",
+      "bufferTooltip": "我們會多兌換 {pct}% 以因應處理過程中價格變動的情況。剩餘部分會退回您的錢包。",
+      "listLabel": "如何支付",
+      "recommended": "推薦",
+      "buy": {
+        "subtitle": "使用 {method} 支付 {amount}",
+        "subtitlePending": "最終金額將在結帳時顯示",
+        "minimum": "{method} 最低 {amount}",
+        "disclosureLabel": "為什麼是這個金額",
+        "disclosureMinimum": "我們下單的金額不會低於 {minimum}，因此即使本次交易所需較少，您購買的仍是這個金額。",
+        "disclosureBuffer": "這比本次交易所需的金額略多：其中 {pct}% 用於因應購買處理期間的價格變動，另外也包含可能產生的網路費用。",
+        "disclosureRemainder": "未使用的部分會留在您的錢包中，可以用於其他交易。",
+        "title": "購買 {amount}",
+        "preparing": "正在準備您的購買"
+      },
+      "cancel": "取消",
+      "tokens": {
+        "title": "使用您的 {amount}",
+        "subtitle": "可用 {amount}"
+      },
+      "tokensPlusBuy": {
+        "title": "使用 {available} + 購買 {shortfall}",
+        "subtitle": "代幣 {available}，購買 {shortfall}"
+      },
+      "deposit": {
+        "title": "從外部錢包存入",
+        "subtitle": "從您的另一個錢包傳送加密貨幣"
+      }
+    },
+    "onramp": {
+      "method": {
+        "blocked": "Paybis 要求至少 {amount}。",
+        "minimum": "最低 {amount}",
+        "title": "選擇付款方式",
+        "currencyLabel": "貨幣",
+        "currencyNote": "付款方式會隨貨幣變動。",
+        "listLabel": "付款方式",
+        "loading": "正在載入此貨幣可用的付款方式",
+        "unavailable": "服務商目前沒有回傳任何付款方式。您可以繼續，並在結帳頁面選擇付款方式。",
+        "allBlocked": "目前沒有支付方式接受低於 {amount} 的金額。請取消並修改金額。",
+        "minimumNotice": "{method} 不接受低於 {amount} 的金額。這個下限來自服務商，而非我們，多出的部分會留在您的錢包裡。",
+        "continue": "繼續",
+        "cancel": "取消"
+      },
+      "title": "購買加密貨幣",
+      "exit": "關閉結帳",
+      "uncovered": "目前沒有支付服務商可以用 {currency} 向您出售。請嘗試其他支付貨幣，或使用您已持有的錢包。",
+      "currencyUnsupported": "我們暫時無法受理以 {currency} 支付的銀行卡付款。請使用您已持有的錢包，或在支援該貨幣後再回來。",
+      "nativeUnavailable": "此處暫時無法用現金購買 ETH。請從其他錢包或交易所轉入 ETH 後再返回。",
+      "failedBody": "您的購買未完成，因此沒有轉移任何資金。您可以重試。",
+      "timedOut": "您的購買仍在結算中。資金不會遺失，資金到帳後我們會繼續。",
+      "reconciling": "正在確認您的購買。這可能需要一點時間。",
+      "enterAmount": "請在結帳頁面輸入金額。此步驟大約需要 {amount}。",
+      "baselineUnavailable": "正在查詢您的餘額，請稍候。",
+      "openCheckout": "開啟安全結帳頁面",
+      "connecting": "正在載入安全結帳。",
+      "opening": "正在開啟安全結帳。",
+      "open": "請在上方的結帳中完成購買。",
+      "settled": "購買已確認。",
+      "closed": "結帳已關閉。您可以隨時重新開始。",
+      "rejected": "購買遭到拒絕。",
+      "cancelled": "購買已取消。",
+      "error": "結帳發生問題。請重試。",
+      "unavailable": "無法載入安全結帳。請重試。",
+      "mockMode": "模擬模式下無法購買加密貨幣。",
+      "settlingTitle": "正在處理您的購買",
+      "ethUnpricedBody": "我們暫時無法取得 ETH 價格，因此無法開始購買，未產生任何扣款。您可以重試。",
+      "resume": {
+        "title": "您可能有一筆正在進行的購買",
+        "body": "您在 {minutes} 分鐘前發起了一筆購買。如果您已付款，款項可能仍在途中。繼續將等待其到帳。重新開始會建立一筆新的購買，因此請僅在第一筆從未完成時選擇。",
+        "resume": "繼續那筆購買",
+        "startNew": "開始新的購買",
+        "paidTitle": "您購買的資金仍在到帳途中",
+        "paidBody": "您在 {minutes} 分鐘前已付款，但款項尚未到帳。這可能需要一些時間，銀行轉帳尤其如此。通常繼續等待是正確的做法。只有在您確定第一筆永遠不會到帳時才開始新的購買，因為那意味著再付一次款。",
+        "keepWaiting": "繼續等待"
+      }
+    },
+    "secureCheckout": "安全結帳",
+    "slippage": {
+      "raiseCta": "提高到 {pct}% 並重試",
+      "customCta": "以 {pct}% 滑點重試",
+      "raiseCost": "提高上限後，剩餘的所有轉換（不只是此步驟）都可能以較差的價格完成。只有在你希望它們完成時才提高。",
+      "stop": "在此停止"
+    },
+    "stepsRunning": {
+      "buy": "正在購買 {token}",
+      "bridge": "正在轉移至 {network}",
+      "bridgeGas": "正在向 {network} 傳送手續費",
+      "swapGas": "正在準備手續費",
+      "swapToken": "正在兌換 {token}"
+    },
+    "stepsDone": {
+      "buy": "已購買 {token}",
+      "bridge": "已轉移至 {network}",
+      "bridgeGas": "已向 {network} 傳送手續費",
+      "swapGas": "已準備手續費",
+      "swapToken": "已兌換 {token}"
     }
   }
 }

@@ -37,7 +37,13 @@
     "bank": {
       "name": "Chuyển khoản ngân hàng",
       "meta": "1–2 ngày làm việc"
-    }
+    },
+    "allBlocked": "Hãy tăng khoản nạp lên {amount}. Hiện tại không có phương thức thanh toán nào chấp nhận số tiền thấp hơn.",
+    "loading": "Đang tải các phương thức thanh toán cho loại tiền này",
+    "unavailable": "Paybis hiện không trả về phương thức thanh toán nào. Bạn có thể tiếp tục và chọn cách thanh toán trong trang thanh toán an toàn.",
+    "blocked": "Paybis yêu cầu tối thiểu {amount}.",
+    "minimum": "Tối thiểu {amount}",
+    "charge": "Bạn trả {amount}"
   },
   "review": {
     "title": "Xem lại",
@@ -51,7 +57,11 @@
     "payingWith": "Thanh toán bằng {method}",
     "change": "Thay đổi",
     "confirm": "Xác nhận & thanh toán bằng {method}",
-    "poweredBy": "Cung cấp bởi Paybis"
+    "poweredBy": "Cung cấp bởi Paybis",
+    "payAtCheckout": "Hiển thị khi thanh toán",
+    "choosePayment": "Chọn cách thanh toán",
+    "ethUnpriced": "Chúng tôi không thể bắt đầu giao dịch mua vì hiện chưa lấy được giá ETH. Vui lòng thử lại.",
+    "confirmGeneric": "Xác nhận & thanh toán"
   },
   "success": {
     "title": "Đã xác nhận nạp tiền",
@@ -61,7 +71,8 @@
     "method": "Phương thức",
     "date": "Ngày",
     "investNow": "Đầu tư ngay",
-    "backHome": "Về trang chủ"
+    "backHome": "Về trang chủ",
+    "viewWalletOnExplorer": "Xem ví trên explorer"
   },
   "crypto": {
     "title": "Nạp crypto",
@@ -72,8 +83,8 @@
     "share": "Chia sẻ địa chỉ",
     "asset": "USD Coin · USDC",
     "sent": "Tôi đã gửi tiền",
-    "waitingTitle": "Đang chờ tiền nạp của bạn",
-    "waitingBody": "Chúng tôi sẽ tự động phát hiện. Bạn không cần làm gì cả.",
+    "waitingTitle": "Hãy quay lại sau vài phút",
+    "waitingBody": "Chúng tôi không thể xác nhận các khoản chuyển từ ứng dụng hoặc sàn khác. Số dư của bạn sẽ tự cập nhật khi tiền về.",
     "viewAddress": "Xem địa chỉ & QR",
     "receivedTitle": "Đã nhận tiền nạp",
     "added": "Đã thêm {amount} USDC",
@@ -87,5 +98,48 @@
     "networkContinue": "Tiếp tục",
     "changeNetwork": "Đổi mạng lưới",
     "networkWarning": "Chỉ gửi USDC trên mạng lưới {network}. Gửi trên mạng lưới khác có thể dẫn đến mất vĩnh viễn."
+  },
+  "onramp": {
+    "checkout": {
+      "approx": "Bạn sẽ thấy số tiền cao hơn một chút ở trang thanh toán an toàn. Khoản chênh đó là phí chênh lệch của nhà cung cấp, nên khoảng {amount} USDC sẽ về ví của bạn.",
+      "approxNoPrefill": "Hãy nhập số tiền bạn muốn trả ở trang thanh toán an toàn. Khoảng {amount} USDC sẽ về ví của bạn.",
+      "baselineUnavailable": "Chúng tôi không đọc được số dư ví của bạn nên chưa thể bắt đầu giao dịch. Hãy kiểm tra kết nối và thử lại.",
+      "belowMinimum": "Số này thấp hơn mức tối thiểu {amount} để đầu tư. Tiền đang ở trong ví của bạn và bạn có thể nạp thêm bất cứ lúc nào.",
+      "uncoveredTitle": "Hiện chúng tôi chưa thể bán cho bạn",
+      "uncoveredBody": "Hôm nay không có nhà cung cấp nào bán crypto bằng {currency} ở mức tiền này. Hãy thử số tiền khác hoặc quay lại sau.",
+      "currencyUnsupportedBody": "Hiện chúng tôi chưa thể nhận thanh toán bằng đơn vị tiền tệ của bạn. Hãy thử lại sau giây lát hoặc quay lại sau.",
+      "unverifiedTitle": "Chúng tôi chưa xác nhận được khoản thanh toán của bạn",
+      "unverifiedBody": "Nếu bạn đã trả tiền, số tiền sẽ xuất hiện trong ví ngay khi thanh toán hoàn tất. Bạn có thể rời trang này; không mất gì cả.",
+      "openingTitle": "Đang mở trang thanh toán an toàn",
+      "openingBody": "Hãy hoàn tất giao dịch ở trang thanh toán an toàn. Giữ trang này mở."
+    },
+    "resume": {
+      "startNew": "Bắt đầu giao dịch mua mới",
+      "title": "Có thể bạn đang có một giao dịch mua dở dang",
+      "body": "Bạn đã bắt đầu một giao dịch mua {minutes} phút trước. Nếu đã thanh toán, tiền có thể vẫn đang trên đường về. Tiếp tục sẽ chờ khoản đó. Bắt đầu lại sẽ tạo giao dịch mua mới, vì vậy chỉ chọn khi giao dịch đầu tiên chưa từng hoàn tất.",
+      "resume": "Tiếp tục giao dịch đó",
+      "paidTitle": "Khoản mua của bạn vẫn đang về",
+      "paidBody": "Bạn đã thanh toán {minutes} phút trước và tiền vẫn chưa về. Việc này có thể mất thời gian, nhất là với chuyển khoản ngân hàng. Chờ thêm thường là lựa chọn đúng. Chỉ bắt đầu giao dịch mua mới nếu bạn chắc chắn khoản đầu tiên sẽ không bao giờ về, vì điều đó đồng nghĩa với việc thanh toán lần nữa.",
+      "keepWaiting": "Tiếp tục chờ"
+    },
+    "settlingTitle": "Đã nhận thanh toán",
+    "settlingBody": "Số dư của bạn sẽ được cập nhật ngay khi tiền được thanh toán. Việc này có thể mất vài phút.",
+    "tryAgain": "Thử lại",
+    "settledErrorTitle": "Giao dịch mua của bạn đã hoàn tất",
+    "errorTitle": "Giao dịch chưa hoàn tất",
+    "settledErrorBody": "Chúng tôi chưa hoàn tất việc chuyển đổi sang USDC. Tiền của bạn vẫn an toàn, đang được giữ dưới dạng ETH trên Base. Hãy thử lại để hoàn tất việc chuyển đổi.",
+    "errorBody": "Giao dịch chưa hoàn tất và không có khoản tiền nào được chuyển. Bạn có thể thử lại.",
+    "referenceLabel": "Mã tham chiếu",
+    "paybisReferenceLabel": "Mã tham chiếu Paybis",
+    "title": "Mua crypto",
+    "connecting": "Đang chuẩn bị giao dịch của bạn",
+    "swapping": "Đang chuyển đổi sang USDC"
+  },
+  "secureCheckout": "Thanh toán an toàn",
+  "currency": {
+    "title": "Loại tiền tệ",
+    "search": "Tìm trong {count} loại tiền tệ",
+    "noResults": "Không tìm thấy loại tiền tệ nào",
+    "footnote": "Phương thức thanh toán thay đổi theo loại tiền tệ."
   }
 }

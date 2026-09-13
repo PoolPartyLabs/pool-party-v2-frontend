@@ -34,5 +34,10 @@
     "leave": "Quitter",
     "stay": "Continuer les modifications"
   },
-  "opensInNewTab": "Ouvre dans un nouvel onglet"
+  "opensInNewTab": "Ouvre dans un nouvel onglet",
+  "chainSwitch": {
+    "pending": "Basculement vers {network}...",
+    "to": "Basculer vers {network}",
+    "failed": "Votre portefeuille n'a pas basculé vers {network}. Vérifiez que le réseau est activé dans votre portefeuille, puis réessayez."
+  }
 }

@@ -36,6 +36,13 @@
         "name": "Đang chuẩn bị giao dịch",
         "body": "Pool Party đang tính toán các khoản tiền và phí mạng cho giao dịch này. Chưa có gì được ký hoặc gửi đi."
       }
+    },
+    "awaitingSignature": "Đang chờ ký",
+    "stepsRunning": {
+      "approve": "Đang chấp thuận {token}"
+    },
+    "stepsDone": {
+      "approve": "Đã chấp thuận {token}"
     }
   },
   "card": {
@@ -74,7 +81,9 @@
       "ethereum": "Ethereum",
       "stablecoins": "Stablecoins",
       "altcoins": "Altcoins",
-      "meme": "Meme coins"
+      "meme": "Meme coins",
+      "equities": "Stock Tokens",
+      "rwa": "Real-world assets"
     },
     "count": "{count, plural, =0 {Không có chiến lược} =1 {# chiến lược} other {# chiến lược}}",
     "owned": "Đang quản lý",
@@ -199,7 +208,8 @@
     "needMore": "Bạn cần thêm {amount}",
     "cta": {
       "invest": "Đầu tư",
-      "deposit": "Nạp tiền & đầu tư"
+      "deposit": "Nạp tiền & đầu tư",
+      "checking": "Đang kiểm tra số dư của bạn"
     },
     "confirm": {
       "title": "Xác nhận & ký",
@@ -241,6 +251,12 @@
     },
     "receipt": {
       "amountInvested": "Số tiền đã đầu tư"
+    },
+    "sizing": {
+      "resizedNotice": "Ví của bạn có {available}, nên số tiền này sẽ được đầu tư thay vì {requested} bạn đã nhập.",
+      "refusedTitle": "Không thể đầu tư số tiền này",
+      "refusedBody": "Bạn muốn đầu tư {requested}. Ví của bạn có {available}, và mức tối thiểu của chiến lược này là {minimum}.",
+      "refusedCta": "Đổi số tiền"
     }
   },
   "collect": {
@@ -365,13 +381,22 @@
         "wrongChain": "Ví của bạn đang ở mạng khác. Hãy chuyển sang {network} rồi thử lại.",
         "wrongChainUnknown": "Ví của bạn đang ở mạng khác. Hãy chuyển mạng trong ví của bạn rồi thử lại.",
         "gasBlocked": "Không có gì trên {network} để trả phí mạng, nên chưa thể thực hiện. Hãy mua một ít crypto trên {network}, hoặc chuyển sang từ mạng khác.",
-        "gasBlockedUnknown": "Không có gì trên mạng này để trả phí mạng, nên chưa thể thực hiện. Hãy mua một ít crypto ở đó, hoặc chuyển sang từ mạng khác."
-      }
+        "gasBlockedUnknown": "Không có gì trên mạng này để trả phí mạng, nên chưa thể thực hiện. Hãy mua một ít crypto ở đó, hoặc chuyển sang từ mạng khác.",
+        "transient": "Mạng hoặc ví của bạn không phản hồi kịp thời. Không có tài sản nào bị di chuyển. Vui lòng thử lại sau giây lát.",
+        "confirmationTimeout": "Giao dịch của bạn đã được gửi, nhưng chúng tôi không thể xác nhận kịp thời. Hãy kiểm tra hoạt động gần đây của ví trước khi thử lại, phòng khi giao dịch đã hoàn tất.",
+        "chainUnavailable": "Ví của bạn chưa bật {network} nên không thể ký giao dịch này. Hãy bật {network} trong ứng dụng ví, rồi chuyển sang mạng đó ở bên dưới.",
+        "chainUnavailableUnknown": "Ví của bạn chưa bật mạng này nên không thể ký giao dịch. Hãy bật mạng đó trong ứng dụng ví rồi thử lại.",
+        "alreadyBroadcast": "Bước này đã được gửi và vẫn đang được theo dõi. Hãy tải lại trang để tiếp tục. Đừng gửi lại.",
+        "upstreamUnavailable": "Hiện chưa thể định giá giao dịch. Đây là sự cố tạm thời, vui lòng thử lại sau giây lát.",
+        "rangeUnchanged": "Đây đã là khoảng giá của vị thế nên không có gì để di chuyển. Hãy chọn giới hạn khác để tái cân bằng."
+      },
+      "referenceLabel": "Mã tham chiếu",
+      "paybisReferenceLabel": "Mã tham chiếu Paybis"
     },
     "slippage": {
       "retryNotice": "Giá đã vượt quá slippage tối đa của bạn ({value}%). Đang thử lại theo giá hiện tại.",
       "errorTitle": "Giá biến động quá nhiều",
-      "errorBody": "Giá lại vượt quá slippage tối đa của bạn ({value}%). Hãy tăng trong phần cài đặt hoặc thử lại sau."
+      "errorBody": "Giá lại vượt quá slippage tối đa của bạn ({value}%). Giao dịch chưa được gửi đi."
     },
     "receipt": {
       "strategy": "Chiến lược",
@@ -469,34 +494,85 @@
       "titleGasOnly": "Một bước nhanh",
       "subtitle": "Chúng tôi đã tính toán chính xác những gì cần thiết. Chúng tôi xử lý từng bước ngay tại đây, rồi thực hiện giao dịch của bạn. Không cần chuyển sang trang Nạp tiền.",
       "cta": "Xác nhận & tiếp tục",
-      "cancel": "Hủy"
+      "cancel": "Hủy",
+      "feesIncluded": "Đã bao gồm phí.",
+      "back": "Quay lại",
+      "gasOnArrival": "Gas khi tới nơi",
+      "showSteps": "Hiển thị các bước",
+      "hideSteps": "Ẩn các bước"
     },
     "requote": {
-      "title": "Giá đã thay đổi",
-      "body": "Bước này hiện mang lại ít hơn khoảng {percent} so với mức giá bạn đã duyệt. Chưa có gì được gửi đi, nên bạn có thể chấp nhận mức giá mới hoặc dừng ở đây.",
-      "accept": "Chấp nhận giá mới",
-      "decline": "Dừng ở đây"
+      "title": "Giá đã thay đổi trong khi thực hiện",
+      "body": "Thị trường đã biến động nhiều hơn mức {pct}% đã dự phòng, vì vậy không có gì được gửi đi và tiền của bạn không hề di chuyển. Hãy thử lại theo giá hôm nay, hoặc đợi vài phút để thị trường ổn định.",
+      "accept": "Thử lại",
+      "decline": "Hủy"
     },
     "steps": {
       "buyUsdc": "Mua USDC",
       "bridge": "Chuyển sang {network}",
       "bridgeGas": "Gửi phí sang {network}",
       "swapGas": "Nạp phí mạng",
-      "swapToken": "Đổi sang {token}",
-      "op": "Giao dịch của bạn"
+      "swapToken": "Chuyển đổi {token}",
+      "op": "Giao dịch của bạn",
+      "buy": "Mua {token}"
     },
     "captions": {
       "buyUsdc": "Thẻ hoặc Pix",
-      "bridge": "Chuyển tiền sang đúng mạng",
-      "swapGas": "Một phần nhỏ tài sản bạn đang có, được chuyển đổi để trả phí mạng",
+      "bridge": "Từ {network}",
+      "swapGas": "Trả bằng {stable} của bạn",
       "op": "Hành động ban đầu của bạn",
-      "approve": "Một quyền cấp phép duy nhất. Chưa có khoản nào được chuyển."
+      "approve": "Một quyền cấp phép duy nhất. Chưa có khoản nào được chuyển.",
+      "buy": "Phương thức thanh toán hiển thị khi thanh toán",
+      "buyMethods": "Thanh toán bằng {methods}",
+      "onNetwork": "{network}"
     },
     "exec": {
-      "title": "Đang chuẩn bị tiền của bạn",
+      "title": "Đang xử lý",
       "subtitle": "Chúng tôi tự động mua, định tuyến và nạp đủ. Giao dịch của bạn chạy ngay sau đó.",
       "done": "Hoàn tất",
-      "pending": "Đang chờ"
+      "pending": "Đang chờ",
+      "takingLonger": "Việc này lâu hơn bình thường. Có thể mất vài phút.",
+      "status": {
+        "done": "Xong",
+        "active": "Tiếp tục trong ví của bạn",
+        "waiting": "Đang chờ",
+        "notStarted": "Chưa bắt đầu",
+        "skipped": "Đã bỏ qua",
+        "buying": "Hoàn tất giao dịch mua của bạn"
+      },
+      "failure": {
+        "slippage": "Giá đã vượt mức trượt giá {pct}% của bạn",
+        "slippageNoPct": "Giá đã thay đổi khi bước này đang chạy",
+        "deadlineExpired": "Bước này mất quá nhiều thời gian và đã hết hạn",
+        "insufficientFunds": "Không còn đủ để trang trải bước này",
+        "userRejected": "Bạn đã từ chối bước này trong ví",
+        "unauthorized": "Ví của bạn không được phép thực hiện bước này",
+        "wrongChain": "Ví của bạn đang ở một mạng khác",
+        "alreadyBroadcast": "Bước này đã được gửi và vẫn đang được theo dõi",
+        "upstreamUnavailable": "Hiện chưa thể định giá bước này",
+        "gasBlocked": "Mạng này không có gas để chạy bước này",
+        "unknown": "Bước này chưa hoàn tất",
+        "chainUnavailable": "Mạng này chưa được bật trong ví của bạn",
+        "transient": "Mạng không phản hồi kịp thời. Hãy thử lại bước này.",
+        "confirmationTimeout": "Đã gửi nhưng chưa xác nhận kịp thời. Hãy kiểm tra ví trước khi thử lại."
+      },
+      "keepOpen": "Giữ màn hình này mở.",
+      "failedTitle": "Bước {index} đã thất bại",
+      "tryAgain": "Thử lại",
+      "settledSafe": "{amount} đã đi qua và an toàn.",
+      "settledSafeUnknown": "Một số bước đã đi qua và an toàn.",
+      "stateProcessing": "Đang xử lý",
+      "stateDone": "Xong",
+      "stop": {
+        "title": "Dừng ở đây?",
+        "settled": "{amount} đã đi qua và an toàn.",
+        "body": "Bước {index} trên {total} đang chạy và sẽ tự hoàn tất. {restCount, plural, other {Bước {rest} sẽ không bắt đầu}}, và tiền của bạn ở nguyên nơi nó đang ở.",
+        "bodyLastStep": "Bước {index} trên {total} đang chạy và sẽ tự hoàn tất. Tiền của bạn ở nguyên nơi nó đang ở.",
+        "bodyNotSent": "Bước {index} trên {total} chưa di chuyển khoản tiền nào. Nếu ví của bạn đang yêu cầu chữ ký, hãy từ chối. {restCount, plural, other {Bước {rest} sẽ không bắt đầu}}, và tiền của bạn ở nguyên nơi nó đang ở.",
+        "bodyNotSentLastStep": "Bước {index} trên {total} chưa di chuyển khoản tiền nào. Nếu ví của bạn đang yêu cầu chữ ký, hãy từ chối. Tiền của bạn ở nguyên nơi nó đang ở.",
+        "keepGoing": "Tiếp tục",
+        "stopAnyway": "Vẫn dừng"
+      }
     },
     "bridge": {
       "etaSeconds": "Việc này thường mất khoảng {seconds, plural, other {# giây}}. Chúng tôi sẽ tiếp tục ngay khi tiền của bạn đến nơi.",
@@ -536,11 +612,13 @@
       },
       "buyCrypto": {
         "cta": "Mua crypto thay thế",
-        "hint": "Thanh toán bằng thẻ hoặc Pix mà không cần chuyển tiền giữa các mạng."
+        "hint": "Không cần chuyển tiền giữa các mạng.",
+        "ctaWithAmount": "Mua {amount}",
+        "hintWithMethods": "Thanh toán bằng {methods} mà không cần chuyển tiền giữa các mạng."
       }
     },
     "fundingSources": {
-      "title": "Bạn muốn dùng gì?",
+      "title": "Chọn token để quy đổi",
       "subtitle": "Chọn bất kỳ tài sản nào bạn có. Chúng tôi sẽ lo cách đưa nó đến đúng nơi.",
       "listLabel": "Tiền của bạn",
       "rowLabel": "{symbol} trên {network}, {amount}, trị giá {usd}",
@@ -551,7 +629,7 @@
       "exact": "Vừa đủ",
       "empty": "Ở đây chưa có gì chúng tôi có thể dùng.",
       "repriced": "Giá cuối cùng cao hơn một chút. Hãy chọn thêm một nguồn để bù {amount}.",
-      "cta": "Tiếp tục",
+      "cta": "Xác nhận và bắt đầu",
       "step": "Bước {index}",
       "unblock": "Để dùng số tiền này:",
       "unreachable": "Hiện chưa thể chuyển {symbol} sang mạng này. Hãy chọn nguồn khác trong danh sách.",
@@ -559,7 +637,17 @@
         "ok": "Sẵn sàng",
         "topUp": "Cần nạp thêm",
         "blocked": "Chưa dùng được"
-      }
+      },
+      "settings": "Cài đặt giao dịch",
+      "meter": "{selected} trên {required}",
+      "enough": "Đủ rồi",
+      "bufferNote": "Đã dành riêng {pct}% cho biến động giá. Phần dư sẽ quay lại ví của bạn.",
+      "convertNeeded": "Quy đổi vừa đủ",
+      "recommended": "Được đề xuất",
+      "hideDetails": "Ẩn chi tiết",
+      "seeDetails": "Xem chi tiết",
+      "cancel": "Hủy",
+      "back": "Quay lại"
     },
     "recovery": {
       "title": "Bạn có một khoản tiền đang được chuyển",
@@ -575,7 +663,8 @@
         "collect": "Nhận lợi nhuận của bạn",
         "compound": "Tái đầu tư lợi nhuận",
         "moveRange": "Điều chỉnh một chiến lược",
-        "close": "Đóng vị thế của bạn"
+        "close": "Đóng vị thế của bạn",
+        "deposit": "Thêm tiền vào số dư của bạn"
       },
       "leg": {
         "settled": "Đã xong.",
@@ -590,6 +679,109 @@
         "rederive": "Chúng tôi có thể tiếp tục từ chỗ đã dừng.",
         "ask": "Chúng tôi cần bạn kiểm tra một điều trước khi tiếp tục."
       }
+    },
+    "routes": {
+      "need": "Bạn cần {amount}",
+      "breakdownLabel": "Thành phần của khoản này",
+      "breakdown": "{amount} cho giao dịch + {gas} gas",
+      "breakdownGasOnly": "{gas} để trả phí mạng",
+      "gasMinimum": "Khoản gas bổ sung này dùng cho nhiều giao dịch, không chỉ giao dịch này.",
+      "bufferTooltip": "Chúng tôi quy đổi thêm {pct}% để phòng trường hợp giá thay đổi trong lúc xử lý. Phần dư sẽ được hoàn lại vào ví của bạn.",
+      "listLabel": "Cách chi trả",
+      "recommended": "Được đề xuất",
+      "buy": {
+        "subtitle": "{amount} với {method}",
+        "subtitlePending": "Số tiền cuối cùng hiển thị khi thanh toán",
+        "minimum": "Tối thiểu {amount} với {method}",
+        "disclosureLabel": "Vì sao là số tiền này",
+        "disclosureMinimum": "Chúng tôi không bao giờ đặt lệnh dưới {minimum}, nên đây là số tiền bạn sẽ mua ngay cả khi giao dịch cần ít hơn.",
+        "disclosureBuffer": "Số tiền này nhiều hơn một chút so với mức giao dịch cần: {pct}% phòng khi giá thay đổi trong lúc giao dịch mua của bạn hoàn tất, cộng với phí mạng nếu có.",
+        "disclosureRemainder": "Phần bạn không dùng đến sẽ ở lại trong ví của bạn và có thể dùng cho các giao dịch khác.",
+        "title": "Mua {amount}",
+        "preparing": "Đang chuẩn bị giao dịch mua của bạn"
+      },
+      "cancel": "Hủy",
+      "tokens": {
+        "title": "Dùng {amount} của bạn",
+        "subtitle": "{amount} khả dụng"
+      },
+      "tokensPlusBuy": {
+        "title": "Dùng {available} + mua {shortfall}",
+        "subtitle": "{available} bằng token, mua {shortfall}"
+      },
+      "deposit": {
+        "title": "Nạp từ ví ngoài",
+        "subtitle": "Gửi crypto từ ví khác của bạn"
+      }
+    },
+    "onramp": {
+      "method": {
+        "blocked": "Paybis yêu cầu tối thiểu {amount}.",
+        "minimum": "Tối thiểu {amount}",
+        "title": "Chọn cách thanh toán",
+        "currencyLabel": "Tiền tệ",
+        "currencyNote": "Các phương thức thanh toán thay đổi theo loại tiền.",
+        "listLabel": "Phương thức thanh toán",
+        "loading": "Đang tải các phương thức thanh toán cho loại tiền này",
+        "unavailable": "Nhà cung cấp hiện không trả về phương thức thanh toán nào. Bạn vẫn có thể tiếp tục và chọn cách thanh toán ở bước thanh toán.",
+        "allBlocked": "Hiện không có phương thức thanh toán nào chấp nhận dưới {amount}. Hãy hủy để đổi số tiền.",
+        "minimumNotice": "{method} không chấp nhận số tiền dưới {amount}. Mức tối thiểu này là của nhà cung cấp, không phải của chúng tôi, và phần bạn không cần sẽ nằm lại trong ví.",
+        "continue": "Tiếp tục",
+        "cancel": "Hủy"
+      },
+      "title": "Mua crypto",
+      "exit": "Đóng thanh toán",
+      "uncovered": "Hiện không có nhà cung cấp thanh toán nào bán cho bạn bằng {currency}. Hãy thử loại tiền thanh toán khác hoặc dùng ví bạn đã có.",
+      "currencyUnsupported": "Chúng tôi chưa nhận thanh toán bằng thẻ với {currency}. Hãy dùng ví bạn đã có, hoặc quay lại khi loại tiền của bạn được hỗ trợ.",
+      "nativeUnavailable": "Bạn chưa thể mua ETH bằng tiền mặt ở đây. Hãy gửi ETH từ ví hoặc sàn khác rồi quay lại.",
+      "failedBody": "Giao dịch mua của bạn chưa hoàn tất nên không có khoản tiền nào được chuyển. Bạn có thể thử lại.",
+      "timedOut": "Giao dịch mua của bạn vẫn đang được xử lý. Không có gì bị mất, và chúng tôi sẽ tiếp tục ngay khi tiền của bạn về đến nơi.",
+      "reconciling": "Đang xác nhận giao dịch mua của bạn. Việc này có thể mất một chút thời gian.",
+      "enterAmount": "Nhập số tiền ở trang thanh toán. Bước này cần khoảng {amount}.",
+      "baselineUnavailable": "Đang kiểm tra số dư của bạn. Việc này mất một chút thời gian.",
+      "openCheckout": "Mở trang thanh toán an toàn",
+      "connecting": "Đang tải trang thanh toán an toàn.",
+      "opening": "Đang mở trang thanh toán an toàn.",
+      "open": "Hoàn tất giao dịch mua của bạn ở phần thanh toán phía trên.",
+      "settled": "Đã xác nhận giao dịch mua.",
+      "closed": "Đã đóng trang thanh toán. Bạn có thể bắt đầu lại khi sẵn sàng.",
+      "rejected": "Giao dịch mua đã bị từ chối.",
+      "cancelled": "Giao dịch mua đã bị hủy.",
+      "error": "Đã xảy ra sự cố với thanh toán. Vui lòng thử lại.",
+      "unavailable": "Chúng tôi không thể tải trang thanh toán an toàn. Vui lòng thử lại.",
+      "mockMode": "Không thể mua crypto ở chế độ mô phỏng.",
+      "settlingTitle": "Giao dịch mua của bạn đang được xử lý",
+      "ethUnpricedBody": "Chúng tôi không thể bắt đầu giao dịch mua vì hiện chưa lấy được giá ETH, nên chưa có khoản nào bị trừ. Bạn có thể thử lại.",
+      "resume": {
+        "title": "Có thể bạn đang có một giao dịch mua dở dang",
+        "body": "Bạn đã bắt đầu một giao dịch mua {minutes} phút trước. Nếu đã thanh toán, tiền có thể vẫn đang trên đường về. Tiếp tục sẽ chờ khoản đó. Bắt đầu lại sẽ tạo giao dịch mua mới, vì vậy chỉ chọn khi giao dịch đầu tiên chưa từng hoàn tất.",
+        "resume": "Tiếp tục giao dịch đó",
+        "startNew": "Bắt đầu giao dịch mua mới",
+        "paidTitle": "Khoản mua của bạn vẫn đang về",
+        "paidBody": "Bạn đã thanh toán {minutes} phút trước và tiền vẫn chưa về. Việc này có thể mất thời gian, nhất là với chuyển khoản ngân hàng. Chờ thêm thường là lựa chọn đúng. Chỉ bắt đầu giao dịch mua mới nếu bạn chắc chắn khoản đầu tiên sẽ không bao giờ về, vì điều đó đồng nghĩa với việc thanh toán lần nữa.",
+        "keepWaiting": "Tiếp tục chờ"
+      }
+    },
+    "secureCheckout": "Thanh toán an toàn",
+    "slippage": {
+      "raiseCta": "Tăng lên {pct}% và thử lại",
+      "customCta": "Thử lại với slippage {pct}%",
+      "raiseCost": "Giới hạn cao hơn áp dụng cho mọi lượt chuyển đổi còn lại, không chỉ bước này, và cho phép chúng hoàn tất với mức giá kém hơn. Chỉ tăng nếu bạn muốn chúng hoàn tất.",
+      "stop": "Dừng tại đây"
+    },
+    "stepsRunning": {
+      "buy": "Đang mua {token}",
+      "bridge": "Đang chuyển sang {network}",
+      "bridgeGas": "Đang gửi phí sang {network}",
+      "swapGas": "Đang chuẩn bị phí",
+      "swapToken": "Đang chuyển đổi {token}"
+    },
+    "stepsDone": {
+      "buy": "Đã mua {token}",
+      "bridge": "Đã chuyển sang {network}",
+      "bridgeGas": "Đã gửi phí sang {network}",
+      "swapGas": "Đã chuẩn bị phí",
+      "swapToken": "Đã chuyển đổi {token}"
     }
   }
 }

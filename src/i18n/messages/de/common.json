@@ -34,5 +34,10 @@
     "leave": "Verlassen",
     "stay": "Weiter bearbeiten"
   },
-  "opensInNewTab": "Wird in neuem Tab geöffnet"
+  "opensInNewTab": "Wird in neuem Tab geöffnet",
+  "chainSwitch": {
+    "pending": "Wechsel zu {network}...",
+    "to": "Zu {network} wechseln",
+    "failed": "Ihre Wallet ist nicht zu {network} gewechselt. Prüfen Sie, ob das Netzwerk in Ihrer Wallet aktiviert ist, und versuchen Sie es erneut."
+  }
 }

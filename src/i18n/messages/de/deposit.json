@@ -37,7 +37,13 @@
     "bank": {
       "name": "Banküberweisung",
       "meta": "1–2 Werktage"
-    }
+    },
+    "allBlocked": "Erhöhen Sie Ihre Einzahlung auf {amount}. Derzeit akzeptiert keine Zahlungsmethode weniger.",
+    "loading": "Zahlungsmethoden für diese Währung werden geladen",
+    "unavailable": "Paybis hat derzeit keine Zahlungsmethoden zurückgegeben. Sie können fortfahren und im sicheren Checkout wählen, wie Sie zahlen.",
+    "blocked": "Paybis verlangt mindestens {amount}.",
+    "minimum": "Minimum {amount}",
+    "charge": "Sie zahlen {amount}"
   },
   "review": {
     "title": "Überprüfung",
@@ -51,7 +57,11 @@
     "payingWith": "Zahlung mit {method}",
     "change": "Ändern",
     "confirm": "Bestätigen & mit {method} zahlen",
-    "poweredBy": "Bereitgestellt von Paybis"
+    "poweredBy": "Bereitgestellt von Paybis",
+    "payAtCheckout": "Wird im Checkout angezeigt",
+    "choosePayment": "Wählen Sie, wie Sie zahlen",
+    "ethUnpriced": "Wir konnten Ihren Kauf nicht starten, weil wir gerade keinen ETH-Preis abrufen konnten. Bitte versuchen Sie es erneut.",
+    "confirmGeneric": "Bestätigen & zahlen"
   },
   "success": {
     "title": "Einzahlung bestätigt",
@@ -61,7 +71,8 @@
     "method": "Methode",
     "date": "Datum",
     "investNow": "Jetzt investieren",
-    "backHome": "Zurück zur Startseite"
+    "backHome": "Zurück zur Startseite",
+    "viewWalletOnExplorer": "Wallet im Explorer ansehen"
   },
   "crypto": {
     "title": "Krypto einzahlen",
@@ -72,8 +83,8 @@
     "share": "Adresse teilen",
     "asset": "USD Coin · USDC",
     "sent": "Ich habe das Geld gesendet",
-    "waitingTitle": "Warten auf Ihre Einzahlung",
-    "waitingBody": "Wir erkennen sie automatisch. Sie müssen nichts weiter tun.",
+    "waitingTitle": "Schauen Sie in ein paar Minuten wieder vorbei",
+    "waitingBody": "Überweisungen aus einer anderen App oder von einer anderen Börse können wir nicht bestätigen. Ihr Guthaben aktualisiert sich von selbst, sobald das Geld ankommt.",
     "viewAddress": "Adresse & QR-Code ansehen",
     "receivedTitle": "Einzahlung erhalten",
     "added": "{amount} USDC hinzugefügt",
@@ -87,5 +98,48 @@
     "networkContinue": "Weiter",
     "changeNetwork": "Netzwerk ändern",
     "networkWarning": "Senden Sie USDC nur über das Netzwerk {network}. Ein Versand über ein anderes Netzwerk kann zu dauerhaftem Verlust führen."
+  },
+  "onramp": {
+    "checkout": {
+      "approx": "Im sicheren Checkout sehen Sie einen etwas höheren Betrag. Er deckt die Spanne des Anbieters, sodass etwa {amount} USDC in Ihrer Wallet ankommen.",
+      "approxNoPrefill": "Geben Sie im sicheren Checkout an, wie viel Sie zahlen möchten. Etwa {amount} USDC kommen in Ihrer Wallet an.",
+      "baselineUnavailable": "Wir konnten Ihr Wallet-Guthaben nicht lesen, daher kann der Kauf noch nicht starten. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "belowMinimum": "Das liegt unter dem Mindestbetrag von {amount} zum Investieren. Das Guthaben ist in Ihrer Wallet und Sie können jederzeit mehr hinzufügen.",
+      "uncoveredTitle": "Wir können Ihnen gerade nichts verkaufen",
+      "uncoveredBody": "Heute verkauft kein Anbieter Krypto in {currency} zu diesem Betrag. Versuchen Sie einen anderen Betrag oder kommen Sie später wieder.",
+      "currencyUnsupportedBody": "Wir können derzeit keine Zahlung in Ihrer Währung annehmen. Versuchen Sie es gleich noch einmal oder kommen Sie später wieder.",
+      "unverifiedTitle": "Wir konnten Ihre Zahlung noch nicht bestätigen",
+      "unverifiedBody": "Falls Sie bezahlt haben, erscheint das Guthaben in Ihrer Wallet, sobald die Zahlung abgewickelt ist. Sie können diese Seite verlassen; nichts geht verloren.",
+      "openingTitle": "Sicherer Checkout wird geöffnet",
+      "openingBody": "Schließen Sie Ihren Kauf im sicheren Checkout ab. Lassen Sie diese Seite geöffnet."
+    },
+    "resume": {
+      "startNew": "Neuen Kauf starten",
+      "title": "Möglicherweise läuft noch ein Kauf",
+      "body": "Sie haben vor {minutes} Minuten einen Kauf gestartet. Falls Sie bezahlt haben, ist Ihr Guthaben möglicherweise noch unterwegs. Fortsetzen wartet darauf. Neu beginnen erstellt einen neuen Kauf, also tun Sie das nur, wenn der erste nie zustande kam.",
+      "resume": "Diesen Kauf fortsetzen",
+      "paidTitle": "Ihr Kauf ist noch unterwegs",
+      "paidBody": "Sie haben vor {minutes} Minuten bezahlt und Ihr Guthaben ist noch nicht angekommen. Das kann dauern, besonders bei einer Banküberweisung. Warten ist meist richtig. Starten Sie nur dann einen neuen Kauf, wenn Sie sicher sind, dass der erste nie ankommt, denn das bedeutet, erneut zu bezahlen.",
+      "keepWaiting": "Weiter warten"
+    },
+    "settlingTitle": "Zahlung erhalten",
+    "settlingBody": "Ihr Guthaben wird aktualisiert, sobald die Mittel verbucht sind. Das kann einige Minuten dauern.",
+    "tryAgain": "Erneut versuchen",
+    "settledErrorTitle": "Ihr Kauf wurde ausgeführt",
+    "errorTitle": "Kauf nicht abgeschlossen",
+    "settledErrorBody": "Die Umwandlung in USDC konnte nicht abgeschlossen werden. Ihr Guthaben ist sicher und liegt als ETH auf Base. Versuchen Sie es erneut, um die Umwandlung abzuschließen.",
+    "errorBody": "Der Kauf wurde nicht abgeschlossen und es wurde kein Geld bewegt. Sie können es erneut versuchen.",
+    "referenceLabel": "Referenz",
+    "paybisReferenceLabel": "Paybis-Referenz",
+    "title": "Krypto kaufen",
+    "connecting": "Ihr Kauf wird vorbereitet",
+    "swapping": "Wird in USDC umgewandelt"
+  },
+  "secureCheckout": "Sicherer Checkout",
+  "currency": {
+    "title": "Währung",
+    "search": "{count} Währungen durchsuchen",
+    "noResults": "Keine Währungen gefunden",
+    "footnote": "Die Zahlungsmethoden ändern sich mit der Währung."
   }
 }

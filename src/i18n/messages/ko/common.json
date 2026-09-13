@@ -34,5 +34,10 @@
     "leave": "나가기",
     "stay": "계속 편집"
   },
-  "opensInNewTab": "새 탭에서 열림"
+  "opensInNewTab": "새 탭에서 열림",
+  "chainSwitch": {
+    "pending": "{network}로 전환 중...",
+    "to": "{network}로 전환",
+    "failed": "지갑이 {network}로 전환되지 않았습니다. 지갑에서 해당 네트워크가 활성화되어 있는지 확인한 뒤 다시 시도하세요."
+  }
 }

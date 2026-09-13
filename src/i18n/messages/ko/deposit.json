@@ -37,7 +37,13 @@
     "bank": {
       "name": "계좌 이체",
       "meta": "영업일 기준 1~2일"
-    }
+    },
+    "allBlocked": "입금액을 {amount}(으)로 늘려주세요. 지금은 이보다 적은 금액을 받는 결제 방법이 없습니다.",
+    "loading": "이 통화로 사용할 수 있는 결제 수단을 불러오는 중입니다",
+    "unavailable": "Paybis가 현재 결제 방법을 반환하지 않았습니다. 계속 진행하여 안전한 결제 화면에서 결제 방법을 선택할 수 있습니다.",
+    "blocked": "Paybis는 최소 {amount} 이상이 필요합니다.",
+    "minimum": "최소 {amount}",
+    "charge": "결제 금액 {amount}"
   },
   "review": {
     "title": "확인",
@@ -51,7 +57,11 @@
     "payingWith": "{method}(으)로 결제",
     "change": "변경",
     "confirm": "{method}(으)로 확인 및 결제",
-    "poweredBy": "Powered by Paybis"
+    "poweredBy": "Powered by Paybis",
+    "payAtCheckout": "결제 화면에서 표시",
+    "choosePayment": "결제 방법 선택",
+    "ethUnpriced": "지금 ETH 가격을 가져오지 못해 구매를 시작할 수 없습니다. 다시 시도해 주세요.",
+    "confirmGeneric": "확인 및 결제"
   },
   "success": {
     "title": "입금 완료",
@@ -61,7 +71,8 @@
     "method": "방법",
     "date": "날짜",
     "investNow": "지금 투자하기",
-    "backHome": "홈으로"
+    "backHome": "홈으로",
+    "viewWalletOnExplorer": "익스플로러에서 지갑 보기"
   },
   "crypto": {
     "title": "암호화폐 입금",
@@ -72,8 +83,8 @@
     "share": "주소 공유",
     "asset": "USD Coin · USDC",
     "sent": "자금을 전송했습니다",
-    "waitingTitle": "입금을 기다리는 중",
-    "waitingBody": "자동으로 감지되므로 별도로 하실 일은 없습니다.",
+    "waitingTitle": "몇 분 후에 다시 확인해 주세요",
+    "waitingBody": "다른 앱이나 거래소에서 보낸 송금은 확인할 수 없습니다. 자금이 도착하면 잔액은 자동으로 갱신됩니다.",
     "viewAddress": "주소 및 QR 보기",
     "receivedTitle": "입금 완료",
     "added": "{amount} USDC 추가됨",
@@ -87,5 +98,48 @@
     "networkContinue": "계속",
     "changeNetwork": "네트워크 변경",
     "networkWarning": "USDC는 {network} 네트워크로만 보내세요. 다른 네트워크로 보내면 영구적으로 손실될 수 있습니다."
+  },
+  "onramp": {
+    "checkout": {
+      "approx": "보안 결제 화면에는 조금 더 큰 금액이 표시됩니다. 제공업체의 스프레드를 포함한 금액이며, 지갑에는 약 {amount} USDC가 도착합니다.",
+      "approxNoPrefill": "보안 결제 화면에서 결제할 금액을 입력하세요. 지갑에는 약 {amount} USDC가 도착합니다.",
+      "baselineUnavailable": "지갑 잔액을 읽지 못해 아직 구매를 시작할 수 없습니다. 연결을 확인한 후 다시 시도해 주세요.",
+      "belowMinimum": "투자 최소 금액인 {amount}보다 적습니다. 돈은 지갑에 있으며 언제든지 더 추가할 수 있습니다.",
+      "uncoveredTitle": "지금은 판매할 수 없습니다",
+      "uncoveredBody": "오늘은 이 금액으로 {currency} 암호화폐를 판매하는 제공업체가 없습니다. 다른 금액을 시도하거나 나중에 다시 방문해 주세요.",
+      "currencyUnsupportedBody": "현재 고객님의 통화로는 결제를 받을 수 없습니다. 잠시 후 다시 시도하거나 나중에 다시 방문해 주세요.",
+      "unverifiedTitle": "아직 결제를 확인하지 못했습니다",
+      "unverifiedBody": "결제하셨다면 정산이 끝나는 대로 자금이 지갑에 표시됩니다. 이 페이지를 떠나도 되며, 사라지는 것은 없습니다.",
+      "openingTitle": "보안 결제 화면을 여는 중",
+      "openingBody": "보안 결제 화면에서 구매를 완료하세요. 이 페이지를 열어 두세요."
+    },
+    "resume": {
+      "startNew": "새 구매 시작하기",
+      "title": "진행 중인 구매가 있을 수 있습니다",
+      "body": "{minutes}분 전에 구매를 시작했습니다. 결제하셨다면 자금이 아직 이동 중일 수 있습니다. 이어서 진행하면 도착을 기다립니다. 새로 시작하면 새 구매가 생성되므로 첫 번째 구매가 완료되지 않은 경우에만 선택하세요.",
+      "resume": "해당 구매 이어하기",
+      "paidTitle": "구매하신 자금이 아직 도착하지 않았습니다",
+      "paidBody": "{minutes}분 전에 결제하셨지만 자금이 아직 도착하지 않았습니다. 특히 계좌 이체는 시간이 걸릴 수 있습니다. 대개는 기다리시는 것이 맞습니다. 첫 번째 구매가 절대 도착하지 않는다고 확신할 때만 새 구매를 시작하세요. 다시 결제하게 되기 때문입니다.",
+      "keepWaiting": "계속 기다리기"
+    },
+    "settlingTitle": "결제가 접수되었습니다",
+    "settlingBody": "자금이 정산되는 즉시 잔액이 업데이트됩니다. 몇 분 정도 걸릴 수 있습니다.",
+    "tryAgain": "다시 시도",
+    "settledErrorTitle": "구매가 완료되었습니다",
+    "errorTitle": "구매가 완료되지 않았습니다",
+    "settledErrorBody": "USDC로 변환을 마치지 못했습니다. 자금은 안전하며 Base의 ETH로 보관되어 있습니다. 다시 시도하면 변환을 완료할 수 있습니다.",
+    "errorBody": "구매가 완료되지 않았으며 자금이 이동되지 않았습니다. 다시 시도할 수 있습니다.",
+    "referenceLabel": "참조",
+    "paybisReferenceLabel": "Paybis 참조",
+    "title": "암호화폐 구매",
+    "connecting": "구매를 준비하는 중",
+    "swapping": "USDC로 변환하는 중"
+  },
+  "secureCheckout": "보안 결제",
+  "currency": {
+    "title": "통화",
+    "search": "통화 {count}개 검색",
+    "noResults": "일치하는 통화가 없습니다",
+    "footnote": "결제 방법은 통화에 따라 달라집니다."
   }
 }

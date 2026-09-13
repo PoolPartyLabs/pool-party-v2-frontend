@@ -21,5 +21,10 @@
     "unauthorized": "Vous n'avez pas la permission de faire cela. Veuillez vous reconnecter.",
     "notFound": "Nous n'avons pas trouvé ce que vous cherchiez.",
     "unknown": "Une erreur est survenue de notre côté. Veuillez réessayer."
+  },
+  "reference": {
+    "label": "Référence",
+    "copy": "Copier",
+    "copied": "Copié"
   }
 }

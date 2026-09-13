@@ -37,7 +37,13 @@
     "bank": {
       "name": "Bankoverschrijving",
       "meta": "1–2 werkdagen"
-    }
+    },
+    "allBlocked": "Verhoog uw storting naar {amount}. Op dit moment accepteert geen enkele betaalmethode minder.",
+    "loading": "Betaalmethoden voor deze valuta worden geladen",
+    "unavailable": "Paybis heeft op dit moment geen betaalmethoden teruggegeven. U kunt doorgaan en in de beveiligde checkout kiezen hoe u betaalt.",
+    "blocked": "Paybis vereist minstens {amount}.",
+    "minimum": "Minimum {amount}",
+    "charge": "U betaalt {amount}"
   },
   "review": {
     "title": "Controleren",
@@ -51,7 +57,11 @@
     "payingWith": "Betalen met {method}",
     "change": "Wijzigen",
     "confirm": "Bevestigen & betalen met {method}",
-    "poweredBy": "Mogelijk gemaakt door Paybis"
+    "poweredBy": "Mogelijk gemaakt door Paybis",
+    "payAtCheckout": "Wordt getoond bij checkout",
+    "choosePayment": "Kies hoe u betaalt",
+    "ethUnpriced": "We konden uw aankoop niet starten omdat we op dit moment geen ETH-koers konden ophalen. Probeer het opnieuw.",
+    "confirmGeneric": "Bevestigen & betalen"
   },
   "success": {
     "title": "Storting bevestigd",
@@ -61,7 +71,8 @@
     "method": "Methode",
     "date": "Datum",
     "investNow": "Nu beleggen",
-    "backHome": "Terug naar home"
+    "backHome": "Terug naar home",
+    "viewWalletOnExplorer": "Bekijk wallet in explorer"
   },
   "crypto": {
     "title": "Crypto storten",
@@ -72,8 +83,8 @@
     "share": "Adres delen",
     "asset": "USD Coin · USDC",
     "sent": "Ik heb het geld verstuurd",
-    "waitingTitle": "Wachten op uw storting",
-    "waitingBody": "We detecteren deze automatisch. U hoeft niets te doen.",
+    "waitingTitle": "Kom over een paar minuten terug",
+    "waitingBody": "We kunnen overboekingen vanuit een andere app of beurs niet bevestigen. Uw saldo wordt vanzelf bijgewerkt zodra het geld binnen is.",
     "viewAddress": "Adres & QR bekijken",
     "receivedTitle": "Storting ontvangen",
     "added": "{amount} USDC toegevoegd",
@@ -87,5 +98,48 @@
     "networkContinue": "Doorgaan",
     "changeNetwork": "Netwerk wijzigen",
     "networkWarning": "Verstuur USDC alleen via het {network}-netwerk. Versturen via een ander netwerk kan leiden tot permanent verlies."
+  },
+  "onramp": {
+    "checkout": {
+      "approx": "In de beveiligde checkout ziet u een iets hoger bedrag. Dat dekt de marge van de aanbieder, dus ongeveer {amount} USDC komt in uw wallet aan.",
+      "approxNoPrefill": "Geef in de beveiligde checkout aan hoeveel u wilt betalen. Ongeveer {amount} USDC komt in uw wallet aan.",
+      "baselineUnavailable": "We konden uw wallet-saldo niet lezen, dus de aankoop kan nog niet starten. Controleer uw verbinding en probeer het opnieuw.",
+      "belowMinimum": "Dit ligt onder het minimum van {amount} om te investeren. Het geld staat in uw wallet en u kunt altijd meer toevoegen.",
+      "uncoveredTitle": "We kunnen u nu niets verkopen",
+      "uncoveredBody": "Vandaag verkoopt geen enkele aanbieder crypto in {currency} voor dit bedrag. Probeer een ander bedrag of kom later terug.",
+      "currencyUnsupportedBody": "We kunnen op dit moment geen betaling in uw valuta aannemen. Probeer het zo opnieuw of kom later terug.",
+      "unverifiedTitle": "We konden uw betaling nog niet bevestigen",
+      "unverifiedBody": "Als u betaald hebt, verschijnen de middelen in uw wallet zodra de betaling is afgewikkeld. U kunt deze pagina verlaten; er gaat niets verloren.",
+      "openingTitle": "Beveiligde checkout wordt geopend",
+      "openingBody": "Rond uw aankoop af in de beveiligde checkout. Houd deze pagina open."
+    },
+    "resume": {
+      "startNew": "Nieuwe aankoop beginnen",
+      "title": "Mogelijk loopt er nog een aankoop",
+      "body": "U bent {minutes} minuten geleden een aankoop begonnen. Als u hebt betaald, is uw geld mogelijk nog onderweg. Hervatten wacht daarop. Opnieuw beginnen maakt een nieuwe aankoop, dus doe dat alleen als de eerste nooit is doorgegaan.",
+      "resume": "Die aankoop hervatten",
+      "paidTitle": "Uw aankoop is nog onderweg",
+      "paidBody": "U hebt {minutes} minuten geleden betaald en uw geld is nog niet binnen. Dit kan even duren, zeker bij een bankoverschrijving. Wachten is meestal juist. Begin alleen een nieuwe aankoop als u zeker weet dat de eerste nooit aankomt, want dat betekent opnieuw betalen.",
+      "keepWaiting": "Blijven wachten"
+    },
+    "settlingTitle": "Betaling ontvangen",
+    "settlingBody": "Uw saldo wordt bijgewerkt zodra het geld is verwerkt. Dit kan een paar minuten duren.",
+    "tryAgain": "Opnieuw proberen",
+    "settledErrorTitle": "Uw aankoop is gelukt",
+    "errorTitle": "Aankoop niet voltooid",
+    "settledErrorBody": "We konden het omzetten naar USDC niet afronden. Uw geld is veilig en staat als ETH op Base. Probeer het opnieuw om het omzetten af te ronden.",
+    "errorBody": "De aankoop is niet voltooid en er is geen geld verplaatst. U kunt het opnieuw proberen.",
+    "referenceLabel": "Referentie",
+    "paybisReferenceLabel": "Paybis-referentie",
+    "title": "Crypto kopen",
+    "connecting": "Uw aankoop wordt voorbereid",
+    "swapping": "Omzetten naar USDC"
+  },
+  "secureCheckout": "Beveiligde checkout",
+  "currency": {
+    "title": "Valuta",
+    "search": "Zoek in {count} valuta's",
+    "noResults": "Geen valuta gevonden",
+    "footnote": "Betaalmethoden veranderen met de valuta."
   }
 }

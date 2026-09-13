@@ -36,6 +36,13 @@
         "name": "Preparando transacción",
         "body": "Pool Party está calculando los importes y el costo de red para esta transacción. Aún no se firma ni se envía nada."
       }
+    },
+    "awaitingSignature": "Esperando la firma",
+    "stepsRunning": {
+      "approve": "Aprobando {token}"
+    },
+    "stepsDone": {
+      "approve": "{token} aprobado"
     }
   },
   "card": {
@@ -74,7 +81,9 @@
       "ethereum": "Ethereum",
       "stablecoins": "Stablecoins",
       "altcoins": "Altcoins",
-      "meme": "Meme coins"
+      "meme": "Meme coins",
+      "equities": "Stock Tokens",
+      "rwa": "Real-world assets"
     },
     "count": "{count, plural, =0 {Sin estrategias} =1 {# estrategia} other {# estrategias}}",
     "owned": "Gestionada",
@@ -199,7 +208,8 @@
     "needMore": "Necesitas {amount} más",
     "cta": {
       "invest": "Invertir",
-      "deposit": "Depositar e invertir"
+      "deposit": "Depositar e invertir",
+      "checking": "Comprobando tus fondos"
     },
     "confirm": {
       "title": "Confirmar y firmar",
@@ -241,6 +251,12 @@
     },
     "receipt": {
       "amountInvested": "Importe invertido"
+    },
+    "sizing": {
+      "resizedNotice": "Tu billetera tiene {available}, así que se invertirá ese importe y no los {requested} que indicaste.",
+      "refusedTitle": "No podemos invertir este importe",
+      "refusedBody": "Pediste invertir {requested}. Tu billetera tiene {available}, y el mínimo de esta estrategia es {minimum}.",
+      "refusedCta": "Cambiar el importe"
     }
   },
   "collect": {
@@ -365,13 +381,22 @@
         "wrongChain": "Tu billetera está en otra red. Cámbiala a {network} e inténtalo de nuevo.",
         "wrongChainUnknown": "Tu billetera está en otra red. Cambia de red en tu billetera e inténtalo de nuevo.",
         "gasBlocked": "No hay nada en {network} para cubrir los costos de red, así que esto todavía no puede ejecutarse. Compra un poco de cripto en {network} o trae un poco desde otra red.",
-        "gasBlockedUnknown": "No hay nada en esta red para cubrir los costos de red, así que esto todavía no puede ejecutarse. Compra un poco de cripto allí o trae un poco desde otra red."
-      }
+        "gasBlockedUnknown": "No hay nada en esta red para cubrir los costos de red, así que esto todavía no puede ejecutarse. Compra un poco de cripto allí o trae un poco desde otra red.",
+        "transient": "La red o tu billetera no respondieron a tiempo. No se movió nada. Inténtalo de nuevo en un momento.",
+        "confirmationTimeout": "Tu transacción se envió, pero no pudimos confirmarla a tiempo. Revisa la actividad reciente de tu billetera antes de volver a intentarlo, por si ya se completó.",
+        "chainUnavailable": "Tu billetera no tiene {network} habilitada, así que no puede firmar. Habilita {network} en la app de tu billetera y luego cambia a ella abajo.",
+        "chainUnavailableUnknown": "Tu billetera no tiene esta red habilitada, así que no puede firmar. Habilítala en la app de tu billetera e inténtalo de nuevo.",
+        "alreadyBroadcast": "Este paso ya se envió y aún se está siguiendo. Recarga la página para retomarlo. No lo envíes otra vez.",
+        "upstreamUnavailable": "No pudimos calcular una ruta ahora mismo. Es temporal, inténtalo de nuevo en un momento.",
+        "rangeUnchanged": "Este ya es el rango de la posición, así que no hay nada que mover. Elige otros límites para reequilibrar."
+      },
+      "referenceLabel": "Referencia",
+      "paybisReferenceLabel": "Referencia de Paybis"
     },
     "slippage": {
       "retryNotice": "El precio superó tu slippage máximo ({value}%). Reintentando al precio actual.",
       "errorTitle": "El precio se movió demasiado",
-      "errorBody": "El precio superó tu slippage máximo ({value}%) otra vez. Súbelo en los ajustes o inténtalo más tarde."
+      "errorBody": "El precio superó tu slippage máximo ({value}%) otra vez. La transacción no se envió."
     },
     "receipt": {
       "strategy": "Estrategia",
@@ -469,34 +494,85 @@
       "titleGasOnly": "Un paso rápido",
       "subtitle": "Calculamos exactamente lo que se necesita. Nos encargamos de cada paso aquí mismo y luego ejecutamos su transacción. Sin desvíos a Depósito.",
       "cta": "Confirmar y continuar",
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "feesIncluded": "Comisiones incluidas.",
+      "back": "Atrás",
+      "gasOnArrival": "Gas al llegar",
+      "showSteps": "Mostrar pasos",
+      "hideSteps": "Ocultar pasos"
     },
     "requote": {
-      "title": "El precio cambió",
-      "body": "Este paso ahora rinde alrededor de {percent} menos que el precio que aprobaste. Todavía no se envió nada, así que puedes aceptar el nuevo precio o detenerte aquí.",
-      "accept": "Aceptar nuevo precio",
-      "decline": "Detener aquí"
+      "title": "Los precios cambiaron mientras esto se ejecutaba",
+      "body": "El mercado se movió más del {pct}% que reservamos, así que no se envió nada y tu dinero no se movió. Inténtalo de nuevo a los precios de hoy, o espera unos minutos a que el mercado se estabilice.",
+      "accept": "Intentar de nuevo",
+      "decline": "Cancelar"
     },
     "steps": {
       "buyUsdc": "Comprar USDC",
       "bridge": "Mover a {network}",
       "bridgeGas": "Enviar comisiones a {network}",
       "swapGas": "Cubrir las comisiones",
-      "swapToken": "Convertir a {token}",
-      "op": "Su transacción"
+      "swapToken": "Convertir {token}",
+      "op": "Su transacción",
+      "buy": "Comprar {token}"
     },
     "captions": {
       "buyUsdc": "Tarjeta o transferencia local",
-      "bridge": "Mover fondos a la red correcta",
-      "swapGas": "Una pequeña parte de lo que tienes, convertida para cubrir los costos de red",
+      "bridge": "Desde {network}",
+      "swapGas": "Pagado con tu {stable}",
       "op": "Su acción original",
-      "approve": "Un permiso único. Todavía no se mueve nada."
+      "approve": "Un permiso único. Todavía no se mueve nada.",
+      "buy": "Métodos de pago disponibles al finalizar la compra",
+      "buyMethods": "Paga con {methods}",
+      "onNetwork": "{network}"
     },
     "exec": {
-      "title": "Preparando sus fondos",
+      "title": "Trabajando en ello",
       "subtitle": "Compramos, enrutamos y completamos automáticamente. Su transacción se ejecuta justo después.",
       "done": "Listo",
-      "pending": "Pendiente"
+      "pending": "Pendiente",
+      "takingLonger": "Está tardando más de lo normal. Puede llevar unos minutos.",
+      "status": {
+        "done": "Listo",
+        "active": "Continúa en tu billetera",
+        "waiting": "Esperando",
+        "notStarted": "Sin iniciar",
+        "skipped": "Omitido",
+        "buying": "Completa tu compra"
+      },
+      "failure": {
+        "slippage": "El precio superó tu límite del {pct}%",
+        "slippageNoPct": "El precio cambió mientras este paso se ejecutaba",
+        "deadlineExpired": "Este paso tardó demasiado y expiró",
+        "insufficientFunds": "No quedó suficiente para cubrir este paso",
+        "userRejected": "Rechazaste este paso en tu billetera",
+        "unauthorized": "Tu billetera no tenía permiso para este paso",
+        "wrongChain": "Tu billetera estaba en otra red",
+        "alreadyBroadcast": "Este paso ya se envió y aún se está siguiendo",
+        "upstreamUnavailable": "No pudimos calcular el precio de este paso ahora",
+        "gasBlocked": "No hay gas en esta red para ejecutar este paso",
+        "unknown": "Este paso no se completó",
+        "chainUnavailable": "Esta red no está habilitada en tu billetera",
+        "transient": "La red no respondió a tiempo. Vuelve a intentar este paso.",
+        "confirmationTimeout": "Enviado, pero no confirmado a tiempo. Revisa tu billetera antes de reintentar."
+      },
+      "keepOpen": "Mantén esta pantalla abierta.",
+      "failedTitle": "El paso {index} falló",
+      "tryAgain": "Intentar de nuevo",
+      "settledSafe": "{amount} ya pasaron y están seguros.",
+      "settledSafeUnknown": "Algunos pasos ya pasaron y están seguros.",
+      "stateProcessing": "Procesando",
+      "stateDone": "Listo",
+      "stop": {
+        "title": "¿Detener aquí?",
+        "settled": "{amount} ya pasaron y están seguros.",
+        "body": "El paso {index} de {total} está en curso y terminará solo. {restCount, plural, one {El paso {rest} no comenzará} other {Los pasos {rest} no comenzarán}}, y tu dinero se queda donde esté.",
+        "bodyLastStep": "El paso {index} de {total} está en curso y terminará solo. Tu dinero se queda donde esté.",
+        "bodyNotSent": "El paso {index} de {total} todavía no ha movido dinero. Si tu billetera te está pidiendo una firma, recházala. {restCount, plural, one {El paso {rest} no comenzará} other {Los pasos {rest} no comenzarán}}, y tu dinero se queda donde está.",
+        "bodyNotSentLastStep": "El paso {index} de {total} todavía no ha movido dinero. Si tu billetera te está pidiendo una firma, recházala. Tu dinero se queda donde está.",
+        "keepGoing": "Continuar",
+        "stopAnyway": "Detener de todas formas"
+      }
     },
     "bridge": {
       "etaSeconds": "Esto suele tardar unos {seconds, plural, one {# segundo} other {# segundos}}. Continuaremos en cuanto lleguen tus fondos.",
@@ -536,11 +612,13 @@
       },
       "buyCrypto": {
         "cta": "Comprar cripto",
-        "hint": "Paga con tarjeta o Pix y evita mover fondos entre redes."
+        "hint": "Sin mover fondos entre redes.",
+        "ctaWithAmount": "Comprar {amount}",
+        "hintWithMethods": "Paga con {methods} y evita mover fondos entre redes."
       }
     },
     "fundingSources": {
-      "title": "¿Qué quieres usar?",
+      "title": "Elige los tokens a convertir",
       "subtitle": "Elige lo que tengas. Nosotros resolvemos cómo llevarlo al lugar correcto.",
       "listLabel": "Tus fondos",
       "rowLabel": "{symbol} en {network}, {amount}, vale {usd}",
@@ -551,7 +629,7 @@
       "exact": "Cubierto exactamente",
       "empty": "Todavía no hay nada aquí que podamos usar.",
       "repriced": "El precio final subió un poco. Elige otra fuente para cubrir {amount}.",
-      "cta": "Continuar",
+      "cta": "Confirmar y empezar",
       "step": "Paso {index}",
       "unblock": "Para usar este dinero:",
       "unreachable": "Todavía no podemos llevar {symbol} a esta red. Elige otra opción de la lista.",
@@ -559,7 +637,17 @@
         "ok": "Listo",
         "topUp": "Necesita una recarga",
         "blocked": "Aún no se puede usar"
-      }
+      },
+      "settings": "Ajustes de la transacción",
+      "meter": "{selected} de {required}",
+      "enough": "Suficiente",
+      "bufferNote": "Incluye un {pct}% reservado para variaciones de precio. Lo que sobre vuelve a tu monedero.",
+      "convertNeeded": "Convertir lo necesario",
+      "recommended": "Recomendado",
+      "hideDetails": "Ocultar detalles",
+      "seeDetails": "Ver detalles",
+      "cancel": "Cancelar",
+      "back": "Atrás"
     },
     "recovery": {
       "title": "Tienes fondos en camino",
@@ -575,7 +663,8 @@
         "collect": "Cobrando tus ganancias",
         "compound": "Reinvirtiendo tus ganancias",
         "moveRange": "Ajustando una estrategia",
-        "close": "Cerrando tu posición"
+        "close": "Cerrando tu posición",
+        "deposit": "Añadiendo dinero a tu saldo"
       },
       "leg": {
         "settled": "Listo.",
@@ -590,6 +679,109 @@
         "rederive": "Podemos retomar desde donde se detuvo.",
         "ask": "Necesitamos que revises una cosa antes de continuar."
       }
+    },
+    "routes": {
+      "need": "Necesitas {amount}",
+      "breakdownLabel": "Qué compone este monto",
+      "breakdown": "{amount} para la transacción + {gas} de gas",
+      "breakdownGasOnly": "{gas} para cubrir las tarifas de red",
+      "gasMinimum": "Esta recarga de gas cubre muchas transacciones, no solo esta.",
+      "bufferTooltip": "Convertimos un {pct}% adicional por si los precios cambian mientras se procesa. Lo que sobra vuelve a tu billetera.",
+      "listLabel": "Cómo cubrirlo",
+      "recommended": "Recomendado",
+      "buy": {
+        "subtitle": "{amount} con {method}",
+        "subtitlePending": "El importe final se muestra al finalizar la compra",
+        "minimum": "Mínimo de {amount} con {method}",
+        "disclosureLabel": "Por qué este monto",
+        "disclosureMinimum": "Nunca hacemos un pedido por debajo de {minimum}, así que esto es lo que vas a comprar incluso cuando la transacción necesita menos.",
+        "disclosureBuffer": "Esto es un poco más de lo que necesita la transacción: un {pct}% por si los precios cambian mientras se completa tu compra, más las comisiones de red que correspondan.",
+        "disclosureRemainder": "Lo que no uses queda en tu billetera y lo puedes usar en otras transacciones.",
+        "title": "Comprar {amount}",
+        "preparing": "Preparando tu compra"
+      },
+      "cancel": "Cancelar",
+      "tokens": {
+        "title": "Usar tus {amount}",
+        "subtitle": "{amount} disponibles"
+      },
+      "tokensPlusBuy": {
+        "title": "Usar {available} + comprar {shortfall}",
+        "subtitle": "{available} en tokens, comprar {shortfall}"
+      },
+      "deposit": {
+        "title": "Depositar desde una billetera externa",
+        "subtitle": "Envía cripto desde otra billetera tuya"
+      }
+    },
+    "onramp": {
+      "method": {
+        "blocked": "Paybis exige al menos {amount}.",
+        "minimum": "Mín. {amount}",
+        "title": "Elige cómo pagar",
+        "currencyLabel": "Moneda",
+        "currencyNote": "Los métodos de pago cambian según la moneda.",
+        "listLabel": "Método de pago",
+        "loading": "Cargando los métodos de pago para esta moneda",
+        "unavailable": "El proveedor no devolvió ningún método de pago ahora mismo. Puedes continuar y elegir cómo pagar en el checkout.",
+        "allBlocked": "Ningún método de pago acepta menos de {amount} ahora mismo. Cancela para cambiar el monto.",
+        "minimumNotice": "{method} no acepta menos de {amount}. Ese mínimo es del proveedor, no nuestro, y lo que no necesites se queda en tu billetera.",
+        "continue": "Continuar",
+        "cancel": "Cancelar"
+      },
+      "title": "Comprar cripto",
+      "exit": "Cerrar el pago",
+      "uncovered": "Ningún proveedor de pago puede venderte ahora en {currency}. Prueba otra moneda de pago o usa una billetera que ya tengas.",
+      "currencyUnsupported": "Todavía no podemos aceptar pagos con tarjeta en {currency}. Usa una billetera que ya tengas o vuelve cuando tu moneda esté disponible.",
+      "nativeUnavailable": "Todavía no puedes comprar ETH con dinero aquí. Envía ETH desde otra billetera o exchange y vuelve.",
+      "failedBody": "Tu compra no se completó, así que no se movió ningún fondo. Puedes intentarlo de nuevo.",
+      "timedOut": "Tu compra aún se está procesando. No se ha perdido nada, y continuaremos en cuanto lleguen tus fondos.",
+      "reconciling": "Confirmando tu compra. Esto puede tardar un momento.",
+      "enterAmount": "Introduce el monto en el checkout. Este paso necesita unos {amount}.",
+      "baselineUnavailable": "Comprobando tu saldo. Tarda un momento.",
+      "openCheckout": "Abrir checkout seguro",
+      "connecting": "Cargando el pago seguro.",
+      "opening": "Abriendo el pago seguro.",
+      "open": "Completa tu compra en el pago de arriba.",
+      "settled": "Compra confirmada.",
+      "closed": "Pago cerrado. Puedes empezar de nuevo cuando quieras.",
+      "rejected": "La compra fue rechazada.",
+      "cancelled": "La compra fue cancelada.",
+      "error": "Algo salió mal en el pago. Inténtalo de nuevo.",
+      "unavailable": "No pudimos cargar el pago seguro. Inténtalo de nuevo.",
+      "mockMode": "La compra de cripto no está disponible en el modo de prueba.",
+      "settlingTitle": "Tu compra se está procesando",
+      "ethUnpricedBody": "No pudimos iniciar tu compra porque no conseguimos el precio de ETH en este momento, así que no se cobró nada. Puedes intentarlo de nuevo.",
+      "resume": {
+        "title": "Puede que tengas una compra en curso",
+        "body": "Iniciaste una compra hace {minutes} minutos. Si pagaste, el dinero puede seguir en camino. Reanudar espera a que llegue. Empezar de nuevo crea una compra nueva, así que hazlo solo si la primera nunca se completó.",
+        "resume": "Reanudar esa compra",
+        "startNew": "Empezar una compra nueva",
+        "paidTitle": "Tu compra aún está llegando",
+        "paidBody": "Pagaste hace {minutes} minutos y el dinero todavía no llega. Esto puede tardar, sobre todo en una transferencia bancaria. Esperar suele ser lo correcto. Empieza una compra nueva solo si estás seguro de que la primera nunca llegará, porque eso significa pagar otra vez.",
+        "keepWaiting": "Seguir esperando"
+      }
+    },
+    "secureCheckout": "Pago seguro",
+    "slippage": {
+      "raiseCta": "Subir a {pct}% y reintentar",
+      "customCta": "Reintentar con {pct}% de slippage",
+      "raiseCost": "Un límite más alto permite que todas las conversiones restantes, no solo este paso, se completen a un precio peor. Súbelo solo si quieres que se completen.",
+      "stop": "Detener aquí"
+    },
+    "stepsRunning": {
+      "buy": "Comprando {token}",
+      "bridge": "Moviendo a {network}",
+      "bridgeGas": "Enviando comisiones a {network}",
+      "swapGas": "Cubriendo las comisiones",
+      "swapToken": "Convirtiendo {token}"
+    },
+    "stepsDone": {
+      "buy": "{token} comprado",
+      "bridge": "Movido a {network}",
+      "bridgeGas": "Comisiones enviadas a {network}",
+      "swapGas": "Comisiones cubiertas",
+      "swapToken": "{token} convertido"
     }
   }
 }
