@@ -33,6 +33,7 @@ export type FeatureKey =
   | "provisioning"
   | "swapScreen"
   | "activeReserve"
+  | "cashPlus"
   | "virtualize"
   | "strategyCategoryFilter";
 
@@ -216,6 +217,15 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
     envVar: "NEXT_PUBLIC_FEATURE_ACTIVE_RESERVE",
     description:
       "Active Reserve, an always-earning vault that buys ETH below market through a 1inch Aqua strategy. Reads Arbitrum directly rather than the Pool Party API, so it also needs NEXT_PUBLIC_AQUA_VAULT_ADDRESS pointed at a deployed PartyVault. Route-guarded (404 while off).",
+  },
+  cashPlus: {
+    key: "cashPlus",
+    area: "Cash+",
+    defaultEnabled: false,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_CASH_PLUS",
+    description:
+      "Dedicated Cash+ investment page and responsive navigation. Reads the selected chain directly; no catalog or portfolio integration.",
   },
   virtualize: {
     key: "virtualize",

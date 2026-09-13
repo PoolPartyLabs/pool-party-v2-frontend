@@ -27,6 +27,7 @@
 import {
   ArrowDownToLine,
   Award,
+  CircleDollarSign,
   CreditCard,
   Gift,
   House,
@@ -74,6 +75,7 @@ type NavLabelKey =
   | "invest"
   | "portfolio"
   | "strategies"
+  | "cashPlus"
   | "cards"
   | "deposit"
   | "profile"
@@ -142,6 +144,7 @@ const DESKTOP_NAV_ITEMS: readonly NavItem[] = [
   { labelKey: "home", href: "/", icon: House, flag: "home" },
   { labelKey: "portfolio", href: "/portfolio", icon: PieChart, flag: "portfolio" },
   { labelKey: "strategies", href: "/strategies", icon: TrendingUp, flag: "strategies" },
+  { labelKey: "cashPlus", href: "/cash-plus", icon: CircleDollarSign, flag: "cashPlus" },
   { labelKey: "cards", href: "/cards", icon: CreditCard, flag: "cards", mockOnly: true },
   { labelKey: "deposit", href: "/deposit", icon: ArrowDownToLine, flag: "deposit" },
   { labelKey: "profile", href: "/profile", icon: User, flag: "profile" },
@@ -175,6 +178,7 @@ const MOBILE_NAV_ITEMS: readonly NavItem[] = [
     activeFor: ["portfolio"],
     flag: "strategies",
   },
+  { labelKey: "cashPlus", href: "/cash-plus", icon: CircleDollarSign, flag: "cashPlus" },
   { labelKey: "cards", href: "/cards", icon: CreditCard, flag: "cards", mockOnly: true },
   { labelKey: "deposit", href: "/deposit", icon: ArrowDownToLine, flag: "deposit" },
   { labelKey: "profile", href: "/profile", icon: Smile, flag: "profile" },
@@ -271,6 +275,7 @@ export function AppShell({ children, className }: AppShellProps) {
     invest: t("nav.invest"),
     portfolio: t("nav.portfolio"),
     strategies: t("nav.strategies"),
+    cashPlus: t("nav.cashPlus"),
     cards: t("nav.cards"),
     deposit: t("nav.deposit"),
     profile: t("nav.profile"),
@@ -284,7 +289,12 @@ export function AppShell({ children, className }: AppShellProps) {
   // develop against but never to real users until they ship.
   const navContext: NavVisibilityContext = { isEnabled, isManager, isMockMode };
   const desktopNav = DESKTOP_NAV_ITEMS.filter((item) => isNavItemVisible(item, navContext));
-  const mobileNav = MOBILE_NAV_ITEMS.filter((item) => isNavItemVisible(item, navContext));
+  const mobileNav = MOBILE_NAV_ITEMS.filter(
+    (item) =>
+      isNavItemVisible(item, navContext) &&
+      // CP-UI05: keep all live destinations and five comfortable mobile tabs in the demo.
+      !(item.labelKey === "cards" && item.mockOnly && isEnabled("cashPlus")),
+  );
 
   return (
     <div className={cn("min-h-screen bg-background text-foreground lg:flex", className)}>

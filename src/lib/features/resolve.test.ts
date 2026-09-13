@@ -33,6 +33,14 @@ describe("parseFlagValue", () => {
 });
 
 describe("resolveFeature precedence", () => {
+  // @rule CP-UI02: the explicit Cash+ environment setting controls the route gate.
+  it("resolves Cash+ off by default and honors the explicit environment switch", () => {
+    expect(resolveFeature("cashPlus")).toBe(false);
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_CASH_PLUS", "on");
+    expect(resolveFeature("cashPlus")).toBe(true);
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_CASH_PLUS", "off");
+    expect(resolveFeature("cashPlus")).toBe(false);
+  });
   it("falls back to the registry default when nothing overrides it", () => {
     expect(resolveFeature("rewards")).toBe(true); // default on
     expect(resolveFeature("cards")).toBe(false); // default off

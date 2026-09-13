@@ -9,6 +9,17 @@ import { describe, expect, it } from "vitest";
 import { FEATURE_KEYS, FEATURES } from "./registry";
 
 describe("feature registry", () => {
+  // @rule CP-UI02: the dedicated Cash+ area ships dark.
+  it("registers Cash+ as a dedicated area with a default-off launch gate", () => {
+    expect(FEATURES).toHaveProperty(
+      "cashPlus",
+      expect.objectContaining({
+        defaultEnabled: false,
+        stage: "next",
+        envVar: "NEXT_PUBLIC_FEATURE_CASH_PLUS",
+      }),
+    );
+  });
   it("each map key matches its entry's key", () => {
     for (const key of FEATURE_KEYS) {
       expect(FEATURES[key].key).toBe(key);

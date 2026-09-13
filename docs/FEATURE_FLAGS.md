@@ -126,3 +126,9 @@ The **Dev menu** (top bar, non-prod only — [`DevMenu.tsx`](../src/components/l
 ## Out of scope (future)
 
 - **Backend / remote flags** (per-user targeting, % rollout, live flips without a deploy) — POO-137; adopt via the service-factory seam. A 3rd-party (LaunchDarkly / PostHog / GrowthBook / Unleash) can plug in there if ever needed.
+
+## Cash+ dedicated-page demo
+
+`cashPlus` (`NEXT_PUBLIC_FEATURE_CASH_PLUS`) ships off, stage `next`. It gates `/cash-plus` and the Cash+ link after Strategies in both responsive navigation sets. No catalog, Home or Portfolio entry is added. When Cash+ and mock Cards are enabled together, mobile navigation hides the mock-only Cards tab to retain five destinations; the desktop Cards link remains available. Enable the environment switch before opening the server-gated route.
+
+Verification: `CP-UI01`, `CP-UI02` and `CP-UI05` in `AppShell.test.tsx`, the registry/resolver tests and the Cash+ route test.
