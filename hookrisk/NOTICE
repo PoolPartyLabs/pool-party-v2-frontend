@@ -1,0 +1,77 @@
+hookrisk
+Copyright (c) 2026 hookrisk contributors
+
+================================================================================
+Licensing, per directory
+================================================================================
+
+This repository is MIT licensed with one deliberate exception. Mixing licences
+within a project is worth avoiding when possible, but here it is the honest
+description of what the code actually does.
+
+  detectors/            AGPL-3.0-only        (see detectors/LICENSE)
+  everything else       MIT                  (see LICENSE)
+
+Why detectors/ is AGPL-3.0-only
+-------------------------------
+`slither-hookrisk` imports `slither.detectors.abstract_detector` and subclasses
+it. Slither is AGPL-3.0-only, and a plugin that links against it and depends on
+its internals is a derivative work. Publishing that subdirectory under a
+permissive licence would be a claim we cannot support.
+
+Why the rest is MIT
+-------------------
+The CLI, harness, schema, corpus and GitHub Action never link Slither. They
+invoke `slither` as a separate process and parse its JSON output. That is mere
+aggregation, so the AGPL does not propagate to them.
+
+================================================================================
+Third-party components
+================================================================================
+
+BlockSec HookScan — https://github.com/blocksecteam/hookscan
+  AGPL-3.0. Invoked as an isolated container process and never linked. **No
+  HookScan code is redistributed in this repository**; users obtain the image
+  themselves with `docker pull futuretech6/hookscan`, and the engine is opt-in.
+  Findings it produces are attributed to BlockSec in the report, the manifest and
+  the SARIF output.
+
+Slither — https://github.com/crytic/slither
+  AGPL-3.0. Runtime dependency of detectors/, installed by the user. Not vendored.
+
+Uniswap v4-core, v4-periphery — https://github.com/Uniswap
+  MIT. Fetched at pinned commits by `make deps`. Not vendored; see
+  harness/deps.lock.
+
+OpenZeppelin uniswap-hooks, openzeppelin-contracts — https://github.com/OpenZeppelin
+  MIT. Fetched at pinned commits. The production hooks are compiled into the
+  negative corpus as a false-positive gate.
+
+forge-std — https://github.com/foundry-rs/forge-std
+  MIT/Apache-2.0. Fetched at a pinned commit.
+
+solmate — https://github.com/transmissions11/solmate
+  AGPL-3.0. Test-only transitive dependency of v4-core; not linked by any
+  hookrisk component and not redistributed.
+
+ajv — https://github.com/ajv-validator/ajv
+  MIT. The CLI's only runtime dependency, used to validate the manifest against
+  its published schema.
+
+================================================================================
+Framework attribution
+================================================================================
+
+The scoring rubric in schema/framework-rubric.json is a port of the Uniswap Hooks
+Security Framework (https://github.com/uniswapfoundation/security-framework),
+pinned at commit e7e8da52fd5717b6eb4517ea779b766f63148c41.
+
+Where the framework is unambiguous, the port reproduces it. Where it is not, the
+port makes an interpretation and marks it `interpretation: true` with a pointer
+to the FEEDBACK.md item reporting the gap upstream. That distinction is
+load-bearing: a reader must be able to tell which values carry the Foundation's
+authority and which carry ours.
+
+The Uniswap Foundation does not review, audit, endorse or certify this tool, this
+port, or any score derived from either. Use of the framework is voluntary and
+self-directed, and scores are not security assurances.

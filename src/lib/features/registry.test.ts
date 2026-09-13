@@ -9,12 +9,13 @@ import { describe, expect, it } from "vitest";
 import { FEATURE_KEYS, FEATURES } from "./registry";
 
 describe("feature registry", () => {
-  // @rule CP-UI02: the dedicated Cash+ area ships dark.
-  it("registers Cash+ as a dedicated area with a default-off launch gate", () => {
+  // @rule CP-UI02 asked for a dark launch; the hackathon fork (public repository, 2026-09) ships the
+  // area ON so a fresh clone shows both products of the submission. The env var still wins.
+  it("registers Cash+ as a dedicated area, ON for the hackathon demo fork", () => {
     expect(FEATURES).toHaveProperty(
       "cashPlus",
       expect.objectContaining({
-        defaultEnabled: false,
+        defaultEnabled: true,
         stage: "next",
         envVar: "NEXT_PUBLIC_FEATURE_CASH_PLUS",
       }),
@@ -37,11 +38,53 @@ describe("feature registry", () => {
     expect(new Set(vars).size).toBe(vars.length);
   });
 
-  it("encodes the v1 launch matrix — core areas + Rewards on, everything else off", () => {
+  it("encodes the launch matrix — core areas + Rewards + the Privy fiat rail + the Tools page + Cash+ on, everything else off", () => {
+    // Hackathon fork (public repository, 2026-09): `fiatOnRamp` + `privyOnRamp` ship ON so a fresh
+    // clone runs the Privy on-ramp without an env file. The test environment pins them back OFF in
+    // `tests/setup.ts` for the ported on-ramp suites; this assertion reads the registry directly, so
+    // it sees the shipped default.
     const enabled = FEATURE_KEYS.filter((key) => FEATURES[key].defaultEnabled).sort();
     expect(enabled).toEqual(
-      ["deposit", "home", "portfolio", "profile", "rewards", "strategies"].sort(),
+      [
+        "cashPlus",
+        "deposit",
+        "fiatOnRamp",
+        "home",
+        "hookTools",
+        "portfolio",
+        "privyOnRamp",
+        "profile",
+        "rewards",
+        "strategies",
+      ].sort(),
     );
+  });
+
+  it("ships the Privy fiat rail on by default, as one pair (hackathon fork)", () => {
+    // Both halves of the decision table (`decideOnRampRail`) are on, so the baseline resolves to
+    // `privy`. Turning only one on would either offer nothing (`fiatOnRamp` off) or route to the
+    // dormant Paybis rail (`privyOnRamp` off), and neither is the demo.
+    expect(FEATURES.fiatOnRamp.defaultEnabled).toBe(true);
+    expect(FEATURES.privyOnRamp.defaultEnabled).toBe(true);
+    expect(FEATURES.fiatOnRamp.envVar).toBe("NEXT_PUBLIC_FEATURE_FIAT_ON_RAMP");
+    expect(FEATURES.privyOnRamp.envVar).toBe("NEXT_PUBLIC_FEATURE_PRIVY_ON_RAMP");
+    // The migration switch's end condition travels with the entry (POO-1800 [R2]).
+    const source = readFileSync(join(__dirname, "registry.ts"), "utf8");
+    const start = source.indexOf("  privyOnRamp: {");
+    const entry = source.slice(start, source.indexOf("\n  },", start));
+    expect(entry).toContain("deleted in the same PR that deletes the last Paybis module");
+  });
+
+  it("registers the two off-by-default switches the port carried (diagnostics + chain gate)", () => {
+    expect(FEATURES.onRampCapture.defaultEnabled).toBe(false);
+    expect(FEATURES.robinhoodChain.defaultEnabled).toBe(false);
+  });
+
+  it("registers the hookTools flag, ON for the hackathon demo fork", () => {
+    expect(FEATURE_KEYS).toContain("hookTools");
+    expect(FEATURES.hookTools.defaultEnabled).toBe(true);
+    expect(FEATURES.hookTools.stage).toBe("next");
+    expect(FEATURES.hookTools.envVar).toBe("NEXT_PUBLIC_FEATURE_HOOK_TOOLS");
   });
 
   it("core areas are stage 'core' and enabled (nav-level kill-switch only)", () => {

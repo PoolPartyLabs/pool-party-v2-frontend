@@ -1,0 +1,164 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Every job here defends a specific property. Where that property is not obvious
+# from the job name, it is stated in a comment — a CI file nobody can reason
+# about gets bypassed the first time it is inconvenient.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FOUNDRY_PROFILE: scan
+
+jobs:
+  # The generated files must match the pinned sources they were generated from.
+  # `hooks_spec.py` carries the flag bits and callback selectors the detectors
+  # key off; a stale one means detectors match nothing and report a clean scan,
+  # which looks exactly like success.
+  generated:
+    name: Generated files are current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: make deps
+      # Same target a contributor runs locally, so "green here, red there" is
+      # not a thing that can happen from CI holding the check differently.
+      - run: make check-generated
+
+  harness:
+    name: Harness (${{ matrix.suite }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The generated spec, cross-checked by solc rather than by the regex
+          # parser that produced it.
+          - suite: spec
+            filter: --match-path 'test/HooksSpec.t.sol'
+          # Proof the harness detects: planted-bug hooks must violate I2 and I3.
+          # If these stop failing in the right direction, the harness has gone
+          # blind — a worse regression than a false positive.
+          - suite: detection
+            filter: --match-path 'test/HarnessValidation.t.sol'
+          # A correct hook must satisfy all three invariants.
+          - suite: invariants
+            filter: --match-contract HonestFeeHookInvariants
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: make deps
+      - name: forge test
+        working-directory: harness
+        run: forge test ${{ matrix.filter }} -vv
+
+  cli:
+    name: CLI and scoring
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: cli/package-lock.json
+      - working-directory: cli
+        run: npm ci
+      - working-directory: cli
+        run: npm run typecheck
+      # `make test-cli`, not a hand-written `npm test`, so every new test file
+      # is picked up here the moment it is picked up locally — the runner globs
+      # dist/**/*.test.js rather than naming suites.
+      #
+      # Includes the framework's own four worked examples from section 5. If one
+      # fails, our reading of the framework is wrong, not the test.
+      - run: make test-cli
+
+  detectors:
+    name: Detectors (corpus gates)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # The virtualenv is not optional here. `make test-corpus` invokes Slither
+      # through `$(abspath $(SLITHER))`, and that only resolves to a real path
+      # when SLITHER is `.venv/bin/slither` — `abspath` on a bare `slither`
+      # found via PATH yields `$CURDIR/slither`, which does not exist. Building
+      # the same venv `make setup` builds keeps CI and a laptop on one code
+      # path. `install-detectors` also asserts the plugin registered (HR-E004),
+      # which is the failure that otherwise reads as a clean scan.
+      - run: make venv install-detectors deps
+
+      # `make test-corpus`, one target, rather than the two hand-rolled greps
+      # this job used to carry. Those had drifted: they named three detectors of
+      # the five that exist, never ran the legacy gate, never ran
+      # detectors/tests, and decided the outcome by grepping Slither's
+      # human-readable summary for "0 result(s) found" — which a compile failure
+      # also produces. CI was green on a scan that analysed nothing.
+      #
+      # The target gates on `.success` in Slither's JSON first, then on the
+      # finding counts, and finishes with the 17 finding-level tests. Its three
+      # gates are asymmetric on purpose (fire on bad, silent on good, admit
+      # legacy is unreadable); the reasoning is in the Makefile next to them.
+      - name: Corpus gates and detector tests
+        run: make test-corpus
+
+  end-to-end:
+    name: End-to-end scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: |
+          python -m pip install --quiet 'slither-analyzer>=0.11.5,<0.12' ./detectors
+          make deps
+          cd cli && npm ci --silent && npm run --silent build
+
+      # A correct hook: no findings, invariants hold, gate passes, exit 0.
+      - name: Clean hook passes
+        working-directory: corpus
+        run: |
+          set -euo pipefail
+          forge build
+          node ../cli/dist/cli.js scan src/good/CleanHook.sol:CleanHook --no-gate --verbose
+          test "$(jq -r '.findings | length' hook-risk.json)" = "0"
+          test "$(jq -r '[.invariants[] | select(.status == "failed")] | length' hook-risk.json)" = "0"
+
+      # The hook that documents 1% and charges 3.5%. Structurally flawless, so
+      # static analysis has nothing to say — only the differential harness can
+      # see it. Exit 2 is a gate failure, which is the expected outcome.
+      - name: Skimming hook fails the gate
+        working-directory: harness
+        run: |
+          set +e
+          forge build
+          node ../cli/dist/cli.js scan src/hooks/FeeHooks.sol:SkimmingFeeHook --skip-static --verbose
+          status=$?
+          set -e
+          test "$status" = "2" || { echo "::error::expected exit 2, got $status"; exit 1; }
+          jq -e '[.invariants[] | select(.id == "I2" and .status == "failed")] | length == 1' hook-risk.json
+          jq -e '.gate.passed == false' hook-risk.json
+
+      # The manifest is a published contract; it must satisfy its own schema.
+      - name: Manifest validates against the schema
+        working-directory: corpus
+        run: node ../cli/dist/cli.js scan src/good/CleanHook.sol:CleanHook --no-gate >/dev/null

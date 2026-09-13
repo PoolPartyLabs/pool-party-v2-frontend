@@ -28,7 +28,7 @@ git log --oneline 21a2c289..HEAD
 git diff --stat 21a2c289..HEAD           # 180 files, +32821 / -451
 
 # Only the epic's own artifacts (they all carry a @hackathon header tag)
-git grep -l "@hackathon" -- src scripts   # 103 files
+git grep -l "@hackathon" -- src scripts   # 117 files
 ```
 
 Every source file created for this epic carries `@hackathon` in its standard file header, alongside
@@ -144,6 +144,8 @@ Paths are repo-relative and resolvable. A row naming a directory covers the file
 | Path | What it does | Issue | Status |
 |---|---|---|---|
 | `src/features/strategies/components/provisioning/FundingSourceSelector.tsx`, `src/features/strategies/components/provisioning/fundingSelection.ts` | Multi-select across chains, running total, gas badges, blocked rows shown with their reason | POO-1039 | landed |
+| `src/features/strategies/components/provisioning/GasTopUpBody.tsx` | The body of `Not enough gas`, the auxiliary gas top-up screen, shared by `BuyGasModal` and the panel's gas-only branch so the two entry points cannot drift. Post-epic: extracted on the POO-411 chassis by POO-1509 (epic POO-1498), tagged because it is assembled from the epic's own halves | POO-1509 | landed |
+| `src/features/strategies/components/provisioning/ExecutionCarousel.tsx` | The execution surface: one step in a clipping window, the full list one tap away, the progress fraction counting the step in flight, and tense following state | POO-1504 | landed |
 | `src/features/strategies/components/provisioning/ProvisioningCostBreakdown.tsx` | The cost table and the buy-crypto alternative | POO-1040 | landed |
 | `src/features/strategies/components/provisioning/FundingRecoveryBanner.tsx` | "You have funding in progress", mounted on the app shell. Resume is a link back to the operation, never a re-send | POO-1055 | landed |
 | `src/app/[locale]/(auth)/(app)/swap/`, `src/features/swap/` | Standalone swap + bridge screen behind the `swapScreen` flag. Destination + amount, then the shipped `ProvisioningPanel`: no second planner, no second rail | POO-1046 | landed |
@@ -167,7 +169,6 @@ Paths are repo-relative and resolvable. A row naming a directory covers the file
 | `src/lib/provisioning/computeNeed.ts` | Scalar wallet model → per-chain map; `needsBridge` no longer requires `opRequiredUsdc > 0` | POO-1033 | landed |
 | `src/lib/provisioning/index.ts` | The client barrel stops re-exporting anything that transitively imports `server-only` | POO-1024 | landed |
 | `src/features/strategies/components/ProvisioningPanel.tsx` | Routes through the `computePlan` seam; mounts the real rail, the cost breakdown, the price-impact gate and the funnel; gas-only skips the picker; a blocked plan offers buy-crypto and no retry | POO-1023, POO-1043, POO-1044, POO-1047, POO-1048 | landed |
-| `src/features/strategies/components/ProvisioningWizardModal.tsx` | Routes through the same seam. Both `PP-FIXME`s deleted, not reworded | POO-1023 | landed |
 | `src/features/strategies/hooks/useProvisioningGate.ts` | The gate reads live context and reports the funnel's first event | POO-1042, POO-1048 | landed |
 | `src/features/strategies/lib/buildProvisioningInput.ts` | The hard-disable stub becomes live balance reads, failing safe: a degraded read means no gate, and the operation proceeds exactly as today | POO-1042 | landed |
 | `src/features/strategies/components/InvestModal.tsx` | The `needsDeposit` deep-link early return yields to the gate, and the flagship any-token any-chain invest resumes with its original parameters | POO-1025, POO-1043 | landed |
@@ -191,6 +192,7 @@ Paths are repo-relative and resolvable. A row naming a directory covers the file
 | Path | Why | Issue | Status |
 |---|---|---|---|
 | `src/lib/provisioning/mockPlanner.ts` | Real-only decision. Deleting it removed a hardcoded fee model (~1% with a $0.99 floor) that contradicted the deposit screen's own copy (1.49% + $2 minimum), so real quotes are now the single source of provisioning fees. Its scenarios did **not** move to throwaway fixtures: `buildPlan` is `server-only` and `planner.ts` ships to the browser, so mock mode still needs a client-side plan source. The module was renamed to `fixtures/mockPlan.ts` and kept its suite, because deleting a suite that covers the repository's default mode is a coverage regression, not a cleanup | POO-1030, POO-1034 | landed |
+| `src/features/strategies/components/ProvisioningWizardModal.tsx` (plus its test and story) | Dead code. No route ever mounted it: `ProvisioningPanel` (PP-CORE-CMP-046) is the production surface and the v2 redesign made it render Plan, Confirm and Execution as one card. The file was still calling two i18n keys POO-1087 and POO-1088 deleted (`provisioning.plan.subtitle`, `provisioning.exec.subtitle`), so its only surviving effect was a Storybook story rendering raw keys. PP-CORE-MOD-011 is `Removed` in the registry, its ID retired rather than recycled | POO-1146 | landed |
 
 `createPlan` / `advancePlan` / `getPlan` were also deleted, from inside `src/lib/uniswap/actions.ts`
 rather than as whole files (POO-1054 R3). They called endpoints that require a `CHAINED` quote the

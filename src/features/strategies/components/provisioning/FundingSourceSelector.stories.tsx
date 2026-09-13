@@ -1,16 +1,16 @@
 /**
- * @id PP-STR-CMP-023
+ * @id PP-STR-CMP-023 (POO-1155)
  * @name FundingSourceSelector, stories
- * @implements-rules-version v1
+ * @implements-rules-version v3 (POO-1155 / POO-1129 rules v3) · v2 (POO-1086 rules v1) · v1
  * @hackathon POO-1022 (Universal Funding)
  *
- * The five states worth looking at: one holding, a wallet spread across all three chains, a chain
- * that cannot pay its own gas (blocked, and shown anyway), a selection that does not reach the
- * requirement, and an exact cover. Interactive, so the running total and the CTA gate can be
- * exercised by hand.
+ * The states worth looking at: one holding, a wallet spread across all three chains, a chain that
+ * cannot pay its own gas (blocked, and shown anyway), a selection that does not reach the
+ * requirement, an exact cover, and one that overshoots. Interactive, so the coverage meter, the
+ * "Convert everything" shortcut and the CTA gate can all be exercised by hand.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { FundingSource } from "@/lib/balances/fundingInventory";
 import type { GasFeasibility } from "@/lib/provisioning";
 import { GAS_ESCAPE_LABEL_KEYS, GAS_VERDICT_REASON_KEYS } from "@/lib/provisioning";
@@ -53,6 +53,31 @@ const arbitrumUsdc: FundingSource = {
   usd: 212.9,
   reachableChainIds: [ARBITRUM, BASE, POLYGON],
   isNative: false,
+  logoUrl: "",
+};
+
+const NATIVE = "0x0000000000000000000000000000000000000000";
+
+/**
+ * POO-1155: a same-chain USDC holding as it really arrives from Uniswap — the routability list is
+ * bridge DESTINATIONS and OMITS the token's own chain (42161). It must still be selectable, since a
+ * same-chain holding needs no bridge at all.
+ */
+const arbitrumUsdcOwnChainOmitted: FundingSource = {
+  ...arbitrumUsdc,
+  reachableChainIds: [BASE, POLYGON],
+};
+
+/** POO-1155: the native coin below the signing reserve (0.0007 ETH < 0.001 floor): unselectable. */
+const arbitrumEthBelowReserve: FundingSource = {
+  address: NATIVE,
+  chainId: ARBITRUM,
+  symbol: "ETH",
+  decimals: 18,
+  amount: "700000000000000",
+  usd: 2.31,
+  reachableChainIds: [BASE],
+  isNative: true,
   logoUrl: "",
 };
 
@@ -114,6 +139,8 @@ const meta = {
     sources: [],
     gasByChainId: {},
     requiredUsd: 500,
+    // [R50] The buffer disclosure interpolates this, so every story states the rate it applies.
+    bufferPct: 5,
     selected: [],
     onSelectedChange: () => {},
     onConfirm: () => {},
@@ -128,11 +155,21 @@ function Interactive({
   gasByChainId,
   requiredUsd,
   initial = [],
+  targetChainId,
+  allowShortfall,
+  bufferPct = 5,
+  onOpenSettings,
+  details,
 }: {
   sources: FundingSource[];
   gasByChainId: Record<number, GasFeasibility>;
   requiredUsd: number;
   initial?: string[];
+  targetChainId?: number;
+  allowShortfall?: boolean;
+  bufferPct?: number;
+  onOpenSettings?: () => void;
+  details?: ReactNode;
 }) {
   const [selected, setSelected] = useState<string[]>(initial);
   return (
@@ -141,9 +178,14 @@ function Interactive({
         sources={sources}
         gasByChainId={gasByChainId}
         requiredUsd={requiredUsd}
+        bufferPct={bufferPct}
         selected={selected}
         onSelectedChange={setSelected}
         onConfirm={() => {}}
+        {...(onOpenSettings === undefined ? {} : { onOpenSettings })}
+        {...(details === undefined ? {} : { details })}
+        {...(targetChainId === undefined ? {} : { targetChainId })}
+        {...(allowShortfall === undefined ? {} : { allowShortfall })}
       />
     </div>
   );
@@ -171,8 +213,12 @@ export const MultipleSources: Story = {
   ),
 };
 
-/** A chain holding no native coin: the row stays, greyed, with its reason and its two escapes. */
-export const BlockedChain: Story = {
+/**
+ * A chain holding no native coin. POO-1502 [R11]: the row is NOT rendered, so this story shows one
+ * option where the wallet has two holdings. It deliberately reverses POO-1032 [R2]/[R3], and the
+ * cost is that the screen no longer says why the Arbitrum money cannot move.
+ */
+export const BlockedChainIsNotListed: Story = {
   render: () => (
     <Interactive
       sources={[baseUsdc, arbitrumUsdc]}
@@ -205,6 +251,69 @@ export const ExactCover: Story = {
       gasByChainId={{ [BASE]: ok(BASE), [POLYGON]: ok(POLYGON) }}
       requiredUsd={620.45}
       initial={[`${BASE}:${baseUsdc.address.toLowerCase()}`]}
+    />
+  ),
+};
+
+/**
+ * The overshoot, which is the visible consequence of POO-1082 D1.
+ *
+ * The Figma draws a per-token amount with a Max button, so its meter always lands on "Enough".
+ * Selection here is whole-source (the amount editor is deferred to POO-1090), so picking a $620.45
+ * holding to cover $210 really does commit all of it, and the meter says by how much. Naming the
+ * surplus is the honest version of that: a user who has just over-committed $410 needs to be told,
+ * not shown a green tick.
+ */
+export const Surplus: Story = {
+  render: () => (
+    <Interactive
+      sources={[baseUsdc, arbitrumUsdc]}
+      gasByChainId={{ [BASE]: ok(BASE), [ARBITRUM]: ok(ARBITRUM) }}
+      requiredUsd={210}
+      initial={[`${BASE}:${baseUsdc.address.toLowerCase()}`]}
+    />
+  ),
+};
+
+/**
+ * POO-1155, the reported wallet's shape, on an Arbitrum strategy. The same-chain USDC arrives with its
+ * OWN chain omitted from the routability list (bridge destinations only) and is still selectable and
+ * pre-selected via `initial`; the below-reserve native ETH is greyed with "Kept for network costs",
+ * not the misleading "Can't reach this network"; and `allowShortfall` keeps Continue live so the
+ * on-ramp can buy the remainder.
+ */
+export const SameChainAndNativeReserve: Story = {
+  render: () => (
+    <Interactive
+      sources={[arbitrumUsdcOwnChainOmitted, arbitrumEthBelowReserve]}
+      gasByChainId={{ [ARBITRUM]: ok(ARBITRUM) }}
+      requiredUsd={500}
+      targetChainId={ARBITRUM}
+      allowShortfall
+      initial={[`${ARBITRUM}:${arbitrumUsdcOwnChainOmitted.address.toLowerCase()}`]}
+    />
+  ),
+};
+
+/**
+ * POO-1502 `2c` (Figma `7354:766`): the gear ([R17]) and the step plan behind `See details` ([R18]).
+ *
+ * The detail is a slot, so this story stands in for what `ProvisioningPanel` composes there
+ * (`ProvisioningPlanCard` + `ProvisioningCostBreakdown`). What matters at this level is the rule:
+ * the *how* goes behind the disclosure and the coverage total above it never does.
+ */
+export const SettingsAndDetails: Story = {
+  render: () => (
+    <Interactive
+      sources={[baseUsdc, arbitrumUsdc]}
+      gasByChainId={{ [BASE]: ok(BASE), [ARBITRUM]: ok(ARBITRUM) }}
+      requiredUsd={700}
+      onOpenSettings={() => {}}
+      details={
+        <div className="rounded-xl bg-surface-raised p-4 text-foreground text-sm">
+          The step plan and the You pay block live here.
+        </div>
+      }
     />
   ),
 };

@@ -1,0 +1,4185 @@
+[
+  {
+    "sourceIndex": 3,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "100",
+      "directionChange": "to",
+      "isReceivedAmount": true
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-01-100usdc-all",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "100",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "100",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "90.26",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "86.42",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "3.83",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "3.84",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "4.431731",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "4.443302",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:51:07+00:00",
+          "expiresAt": "2026-08-17T15:51:07+00:00"
+        },
+        {
+          "id": "pool-party-apple-pay-credit-card",
+          "name": "Apple Pay",
+          "amountTo": {
+            "amount": "100",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "90.26",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "86.42",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "3.83",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "3.84",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "4.431731",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "4.443302",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:51:07+00:00",
+          "expiresAt": "2026-08-17T15:51:07+00:00"
+        },
+        {
+          "id": "pool-party-google-pay-credit-card",
+          "name": "Google Pay",
+          "amountTo": {
+            "amount": "100",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "90.26",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "86.42",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "3.83",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "3.84",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "4.431731",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "4.443302",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:51:07+00:00",
+          "expiresAt": "2026-08-17T15:51:07+00:00"
+        },
+        {
+          "id": "pool-party-manual-bank-transfer",
+          "name": "SEPA Bank Transfer",
+          "amountTo": {
+            "amount": "100",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "88.65",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "86.42",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.22",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.23",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.568784",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.580355",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:51:07+00:00",
+          "expiresAt": "2026-08-17T15:51:07+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_paypal",
+          "name": "PayPal",
+          "amountTo": {
+            "amount": "100",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "91.21",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "86.42",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "4.78",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "4.79",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "5.530986",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "5.542557",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:51:07+00:00",
+          "expiresAt": "2026-08-17T15:51:07+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_revolutpay",
+          "name": "Revolut Pay",
+          "amountTo": {
+            "amount": "100",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "88.86",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "86.42",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.43",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.44",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.811777",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.823348",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:51:07+00:00",
+          "expiresAt": "2026-08-17T15:51:07+00:00"
+        },
+        {
+          "id": "pool-party-bridgerpay_paysafe_apm",
+          "name": "Paysafe Card",
+          "amountTo": {
+            "amount": "100",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "97.37",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "86.42",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "10.94",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "10.95",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "12.658784",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "12.670355",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:51:07+00:00",
+          "expiresAt": "2026-08-17T15:51:07+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_astropay",
+          "name": "AstroPay",
+          "amountTo": {
+            "amount": "100",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "93.67",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "86.42",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "7.24",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "7.25",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "8.377477",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "8.389048",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:51:07+00:00",
+          "expiresAt": "2026-08-17T15:51:07+00:00"
+        },
+        {
+          "id": "pool-party_apm_bridgerpay_skrill",
+          "name": "Skrill",
+          "amountTo": {
+            "amount": "100",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "91.21",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "86.42",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "4.78",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "4.79",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "5.530986",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "5.542557",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:51:07+00:00",
+          "expiresAt": "2026-08-17T15:51:07+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_neteller",
+          "name": "Neteller",
+          "amountTo": {
+            "amount": "100",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "91.21",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "86.42",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "4.78",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "4.79",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "5.530986",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "5.542557",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:51:07+00:00",
+          "expiresAt": "2026-08-17T15:51:07+00:00"
+        }
+      ],
+      "paymentMethodErrors": [
+        {
+          "paymentMethod": "pool-party-manual-bank-transfer",
+          "error": {
+            "message": "You have to buy or sell at least 231.422011 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1572441341898636"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.86422203"
+      }
+    }
+  },
+  {
+    "sourceIndex": 4,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "9",
+      "directionChange": "to",
+      "isReceivedAmount": true
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-02-9usdc-all",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "9",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "9",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "9.66",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "7.78",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.87",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.163795",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.175366",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:21+00:00",
+          "expiresAt": "2026-08-17T15:52:21+00:00"
+        },
+        {
+          "id": "pool-party-apple-pay-credit-card",
+          "name": "Apple Pay",
+          "amountTo": {
+            "amount": "9",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "9.66",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "7.78",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.87",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.163795",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.175366",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:21+00:00",
+          "expiresAt": "2026-08-17T15:52:21+00:00"
+        },
+        {
+          "id": "pool-party-google-pay-credit-card",
+          "name": "Google Pay",
+          "amountTo": {
+            "amount": "9",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "9.66",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "7.78",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.87",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.163795",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.175366",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:21+00:00",
+          "expiresAt": "2026-08-17T15:52:21+00:00"
+        },
+        {
+          "id": "pool-party-manual-bank-transfer",
+          "name": "SEPA Bank Transfer",
+          "amountTo": {
+            "amount": "9",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "9.81",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "7.78",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.337362",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.348933",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:21+00:00",
+          "expiresAt": "2026-08-17T15:52:21+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_paypal",
+          "name": "PayPal",
+          "amountTo": {
+            "amount": "9",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "9.51",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "7.78",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.72",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.73",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "1.990229",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.0018",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:21+00:00",
+          "expiresAt": "2026-08-17T15:52:21+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_revolutpay",
+          "name": "Revolut Pay",
+          "amountTo": {
+            "amount": "9",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "9.51",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "7.78",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.72",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.73",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "1.990229",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.0018",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:21+00:00",
+          "expiresAt": "2026-08-17T15:52:21+00:00"
+        },
+        {
+          "id": "pool-party-bridgerpay_paysafe_apm",
+          "name": "Paysafe Card",
+          "amountTo": {
+            "amount": "9",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "9.51",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "7.78",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.72",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.73",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "1.990229",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.0018",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:21+00:00",
+          "expiresAt": "2026-08-17T15:52:21+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_astropay",
+          "name": "AstroPay",
+          "amountTo": {
+            "amount": "9",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "9.69",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "7.78",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.90",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.91",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.198509",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.21008",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:21+00:00",
+          "expiresAt": "2026-08-17T15:52:21+00:00"
+        },
+        {
+          "id": "pool-party_apm_bridgerpay_skrill",
+          "name": "Skrill",
+          "amountTo": {
+            "amount": "9",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "9.81",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "7.78",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.337362",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.348933",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:21+00:00",
+          "expiresAt": "2026-08-17T15:52:21+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_neteller",
+          "name": "Neteller",
+          "amountTo": {
+            "amount": "9",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "9.81",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "7.78",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.337362",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.348933",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:21+00:00",
+          "expiresAt": "2026-08-17T15:52:21+00:00"
+        }
+      ],
+      "paymentMethodErrors": [
+        {
+          "paymentMethod": "pool-party-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party-apple-pay-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party-google-pay-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party-manual-bank-transfer",
+          "error": {
+            "message": "You have to buy or sell at least 231.422011 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_paypal",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_revolutpay",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_astropay",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_apm_bridgerpay_skrill",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_neteller",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1572441341898636"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.86422203"
+      }
+    }
+  },
+  {
+    "sourceIndex": 5,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "5",
+      "directionChange": "to",
+      "isReceivedAmount": true
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-03-5usdc-all",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "5",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "5",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "6.20",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "4.32",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.87",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.163795",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.175366",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:28+00:00",
+          "expiresAt": "2026-08-17T15:52:28+00:00"
+        },
+        {
+          "id": "pool-party-apple-pay-credit-card",
+          "name": "Apple Pay",
+          "amountTo": {
+            "amount": "5",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "6.20",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "4.32",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.87",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.163795",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.175366",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:28+00:00",
+          "expiresAt": "2026-08-17T15:52:28+00:00"
+        },
+        {
+          "id": "pool-party-google-pay-credit-card",
+          "name": "Google Pay",
+          "amountTo": {
+            "amount": "5",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "6.20",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "4.32",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.87",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.163795",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.175366",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:28+00:00",
+          "expiresAt": "2026-08-17T15:52:28+00:00"
+        },
+        {
+          "id": "pool-party-manual-bank-transfer",
+          "name": "SEPA Bank Transfer",
+          "amountTo": {
+            "amount": "5",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "6.35",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "4.32",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.337362",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.348933",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:28+00:00",
+          "expiresAt": "2026-08-17T15:52:28+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_paypal",
+          "name": "PayPal",
+          "amountTo": {
+            "amount": "5",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "6.05",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "4.32",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.72",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.73",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "1.990229",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.0018",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:28+00:00",
+          "expiresAt": "2026-08-17T15:52:28+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_revolutpay",
+          "name": "Revolut Pay",
+          "amountTo": {
+            "amount": "5",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "6.05",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "4.32",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.72",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.73",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "1.990229",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.0018",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:28+00:00",
+          "expiresAt": "2026-08-17T15:52:28+00:00"
+        },
+        {
+          "id": "pool-party-bridgerpay_paysafe_apm",
+          "name": "Paysafe Card",
+          "amountTo": {
+            "amount": "5",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "6.05",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "4.32",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.72",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.73",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "1.990229",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.0018",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:28+00:00",
+          "expiresAt": "2026-08-17T15:52:28+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_astropay",
+          "name": "AstroPay",
+          "amountTo": {
+            "amount": "5",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "6.23",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "4.32",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.90",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.91",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.198509",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.21008",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:28+00:00",
+          "expiresAt": "2026-08-17T15:52:28+00:00"
+        },
+        {
+          "id": "pool-party_apm_bridgerpay_skrill",
+          "name": "Skrill",
+          "amountTo": {
+            "amount": "5",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "6.35",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "4.32",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.337362",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.348933",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:28+00:00",
+          "expiresAt": "2026-08-17T15:52:28+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_neteller",
+          "name": "Neteller",
+          "amountTo": {
+            "amount": "5",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "6.35",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "4.32",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.337362",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.348933",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:28+00:00",
+          "expiresAt": "2026-08-17T15:52:28+00:00"
+        }
+      ],
+      "paymentMethodErrors": [
+        {
+          "paymentMethod": "pool-party-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party-apple-pay-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party-google-pay-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party-manual-bank-transfer",
+          "error": {
+            "message": "You have to buy or sell at least 231.422011 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_paypal",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_revolutpay",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party-bridgerpay_paysafe_apm",
+          "error": {
+            "message": "You have to buy or sell at least 5.78555 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_astropay",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_apm_bridgerpay_skrill",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_neteller",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1572441341898636"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.86422203"
+      }
+    }
+  },
+  {
+    "sourceIndex": 6,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "105",
+      "directionChange": "to",
+      "isReceivedAmount": true
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-04-105usdc-all",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "105",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "105",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "94.76",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "90.73",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "4.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "4.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "4.65212",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "4.663693",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party-apple-pay-credit-card",
+          "name": "Apple Pay",
+          "amountTo": {
+            "amount": "105",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "94.76",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "90.73",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "4.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "4.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "4.65212",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "4.663693",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party-google-pay-credit-card",
+          "name": "Google Pay",
+          "amountTo": {
+            "amount": "105",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "94.76",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "90.73",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "4.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "4.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "4.65212",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "4.663693",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party-manual-bank-transfer",
+          "name": "SEPA Bank Transfer",
+          "amountTo": {
+            "amount": "105",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "92.97",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "90.73",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.23",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.24",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.580654",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.592226",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_paypal",
+          "name": "PayPal",
+          "amountTo": {
+            "amount": "105",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "95.76",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "90.73",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "5.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "5.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "5.809364",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "5.820937",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_revolutpay",
+          "name": "Revolut Pay",
+          "amountTo": {
+            "amount": "105",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "93.30",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "90.73",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.56",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.57",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.962544",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.974117",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party-bridgerpay_paysafe_apm",
+          "name": "Paysafe Card",
+          "amountTo": {
+            "amount": "105",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "102.23",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "90.73",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "11.49",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "11.50",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "13.296733",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "13.308306",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_astropay",
+          "name": "AstroPay",
+          "amountTo": {
+            "amount": "105",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "98.36",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "90.73",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "7.62",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "7.63",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "8.818199",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "8.829771",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party_apm_bridgerpay_skrill",
+          "name": "Skrill",
+          "amountTo": {
+            "amount": "105",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "95.76",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "90.73",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "5.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "5.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "5.809364",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "5.820937",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_neteller",
+          "name": "Neteller",
+          "amountTo": {
+            "amount": "105",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "95.76",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "90.73",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "5.02",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "5.03",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "5.809364",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "5.820937",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        }
+      ],
+      "paymentMethodErrors": [
+        {
+          "paymentMethod": "pool-party-manual-bank-transfer",
+          "error": {
+            "message": "You have to buy or sell at least 231.448827 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1572441341898636"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.8641219"
+      }
+    }
+  },
+  {
+    "sourceIndex": 7,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "205",
+      "directionChange": "to",
+      "isReceivedAmount": true
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-05-205usdc-all",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "205",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "205",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "184.99",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "177.14",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "7.84",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "7.85",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "9.072792",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "9.084365",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party-apple-pay-credit-card",
+          "name": "Apple Pay",
+          "amountTo": {
+            "amount": "205",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "184.99",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "177.14",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "7.84",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "7.85",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "9.072792",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "9.084365",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party-google-pay-credit-card",
+          "name": "Google Pay",
+          "amountTo": {
+            "amount": "205",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "184.99",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "177.14",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "7.84",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "7.85",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "9.072792",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "9.084365",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party-manual-bank-transfer",
+          "name": "SEPA Bank Transfer",
+          "amountTo": {
+            "amount": "205",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "180.29",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "177.14",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "3.14",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "3.15",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "3.633746",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "3.645318",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_paypal",
+          "name": "PayPal",
+          "amountTo": {
+            "amount": "205",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "186.95",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "177.14",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "9.80",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "9.81",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "11.340991",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "11.352563",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_revolutpay",
+          "name": "Revolut Pay",
+          "amountTo": {
+            "amount": "205",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "182.14",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "177.14",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "4.99",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "5.00",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "5.774647",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "5.78622",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party-bridgerpay_paysafe_apm",
+          "name": "Paysafe Card",
+          "amountTo": {
+            "amount": "205",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "199.58",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "177.14",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "22.43",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "22.44",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "25.956982",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "25.968555",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_astropay",
+          "name": "AstroPay",
+          "amountTo": {
+            "amount": "205",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "192.01",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "177.14",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "14.86",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "14.87",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "17.196645",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "17.208218",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party_apm_bridgerpay_skrill",
+          "name": "Skrill",
+          "amountTo": {
+            "amount": "205",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "186.95",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "177.14",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "9.80",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "9.81",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "11.340991",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "11.352563",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_neteller",
+          "name": "Neteller",
+          "amountTo": {
+            "amount": "205",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "186.95",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "177.14",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "9.80",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "9.81",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "11.340991",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "11.352563",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:52:54+00:00",
+          "expiresAt": "2026-08-17T15:52:54+00:00"
+        }
+      ],
+      "paymentMethodErrors": [
+        {
+          "paymentMethod": "pool-party-manual-bank-transfer",
+          "error": {
+            "message": "You have to buy or sell at least 231.448827 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1572441341898636"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.8641219"
+      }
+    }
+  },
+  {
+    "sourceIndex": 8,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "255",
+      "directionChange": "to",
+      "isReceivedAmount": true
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-06-255usdc-all",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "255",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "255",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "230.15",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "220.38",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "9.76",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "9.77",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "11.293394",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "11.304965",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:03+00:00",
+          "expiresAt": "2026-08-17T15:53:03+00:00"
+        },
+        {
+          "id": "pool-party-apple-pay-credit-card",
+          "name": "Apple Pay",
+          "amountTo": {
+            "amount": "255",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "230.15",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "220.38",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "9.76",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "9.77",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "11.293394",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "11.304965",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:03+00:00",
+          "expiresAt": "2026-08-17T15:53:03+00:00"
+        },
+        {
+          "id": "pool-party-google-pay-credit-card",
+          "name": "Google Pay",
+          "amountTo": {
+            "amount": "255",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "230.15",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "220.38",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "9.76",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "9.77",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "11.293394",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "11.304965",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:03+00:00",
+          "expiresAt": "2026-08-17T15:53:03+00:00"
+        },
+        {
+          "id": "pool-party-manual-bank-transfer",
+          "name": "SEPA Bank Transfer",
+          "amountTo": {
+            "amount": "255",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "224.29",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "220.38",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "3.90",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "3.91",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "4.512729",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "4.5243",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:03+00:00",
+          "expiresAt": "2026-08-17T15:53:03+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_paypal",
+          "name": "PayPal",
+          "amountTo": {
+            "amount": "255",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "232.58",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "220.38",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "12.19",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "12.20",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "14.105172",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "14.116743",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:03+00:00",
+          "expiresAt": "2026-08-17T15:53:03+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_revolutpay",
+          "name": "Revolut Pay",
+          "amountTo": {
+            "amount": "255",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "226.60",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "220.38",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "6.21",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "6.22",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "7.185653",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "7.197224",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:03+00:00",
+          "expiresAt": "2026-08-17T15:53:03+00:00"
+        },
+        {
+          "id": "pool-party-bridgerpay_paysafe_apm",
+          "name": "Paysafe Card",
+          "amountTo": {
+            "amount": "255",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "248.30",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "220.38",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "27.91",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "27.92",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "32.294942",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "32.306513",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:03+00:00",
+          "expiresAt": "2026-08-17T15:53:03+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_astropay",
+          "name": "AstroPay",
+          "amountTo": {
+            "amount": "255",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "238.88",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "220.38",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "18.49",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "18.50",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "21.394965",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "21.406536",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:03+00:00",
+          "expiresAt": "2026-08-17T15:53:03+00:00"
+        },
+        {
+          "id": "pool-party_apm_bridgerpay_skrill",
+          "name": "Skrill",
+          "amountTo": {
+            "amount": "255",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "232.58",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "220.38",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "12.19",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "12.20",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "14.105172",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "14.116743",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:03+00:00",
+          "expiresAt": "2026-08-17T15:53:03+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_neteller",
+          "name": "Neteller",
+          "amountTo": {
+            "amount": "255",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "232.58",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "220.38",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "12.19",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "12.20",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011571",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "14.105172",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "14.116743",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:03+00:00",
+          "expiresAt": "2026-08-17T15:53:03+00:00"
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1572441341898636"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.86422203"
+      }
+    }
+  },
+  {
+    "sourceIndex": 9,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "10",
+      "directionChange": "to",
+      "isReceivedAmount": true
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-07-10usdc-all",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "10",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.53",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.89",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.175618",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.187191",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:40+00:00",
+          "expiresAt": "2026-08-17T15:53:40+00:00"
+        },
+        {
+          "id": "pool-party-apple-pay-credit-card",
+          "name": "Apple Pay",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.53",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.89",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.175618",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.187191",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:40+00:00",
+          "expiresAt": "2026-08-17T15:53:40+00:00"
+        },
+        {
+          "id": "pool-party-google-pay-credit-card",
+          "name": "Google Pay",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.53",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.89",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.175618",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.187191",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:40+00:00",
+          "expiresAt": "2026-08-17T15:53:40+00:00"
+        },
+        {
+          "id": "pool-party-manual-bank-transfer",
+          "name": "SEPA Bank Transfer",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.68",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.03",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.04",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.349205",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.360777",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:40+00:00",
+          "expiresAt": "2026-08-17T15:53:40+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_paypal",
+          "name": "PayPal",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.38",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.73",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.74",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.002032",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.013604",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:40+00:00",
+          "expiresAt": "2026-08-17T15:53:40+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_revolutpay",
+          "name": "Revolut Pay",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.38",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.73",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.74",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.002032",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.013604",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:41+00:00",
+          "expiresAt": "2026-08-17T15:53:41+00:00"
+        },
+        {
+          "id": "pool-party-bridgerpay_paysafe_apm",
+          "name": "Paysafe Card",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.38",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.73",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.74",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.002032",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.013604",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:41+00:00",
+          "expiresAt": "2026-08-17T15:53:41+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_astropay",
+          "name": "AstroPay",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.56",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.91",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.92",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.210336",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.221908",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:41+00:00",
+          "expiresAt": "2026-08-17T15:53:41+00:00"
+        },
+        {
+          "id": "pool-party_apm_bridgerpay_skrill",
+          "name": "Skrill",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.68",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.03",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.04",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.349205",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.360777",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:41+00:00",
+          "expiresAt": "2026-08-17T15:53:41+00:00"
+        },
+        {
+          "id": "pool-party_bridgerpay_neteller",
+          "name": "Neteller",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.68",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "2.03",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "2.04",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011572",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.349205",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.360777",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:53:41+00:00",
+          "expiresAt": "2026-08-17T15:53:41+00:00"
+        }
+      ],
+      "paymentMethodErrors": [
+        {
+          "paymentMethod": "pool-party-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.003001 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party-apple-pay-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.003001 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party-google-pay-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.003001 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party-manual-bank-transfer",
+          "error": {
+            "message": "You have to buy or sell at least 231.448827 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_paypal",
+          "error": {
+            "message": "You have to buy or sell at least 10.003001 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_revolutpay",
+          "error": {
+            "message": "You have to buy or sell at least 10.003001 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_astropay",
+          "error": {
+            "message": "You have to buy or sell at least 10.003001 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_apm_bridgerpay_skrill",
+          "error": {
+            "message": "You have to buy or sell at least 10.003001 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        },
+        {
+          "paymentMethod": "pool-party_bridgerpay_neteller",
+          "error": {
+            "message": "You have to buy or sell at least 10.003001 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1572441341898636"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.8641219"
+      }
+    }
+  },
+  {
+    "sourceIndex": 10,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "10",
+      "directionChange": "to",
+      "isReceivedAmount": true,
+      "paymentMethod": "pool-party-google-pay-credit-card"
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-08-10usdc-googlepay",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "10",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-google-pay-credit-card",
+          "name": "Google Pay",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.53",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.89",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011573",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.17587",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.187444",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:56:33+00:00",
+          "expiresAt": "2026-08-17T15:56:33+00:00"
+        }
+      ],
+      "paymentMethodErrors": [
+        {
+          "paymentMethod": "pool-party-google-pay-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1573782452263905"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.86402177"
+      }
+    }
+  },
+  {
+    "sourceIndex": 11,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "10",
+      "directionChange": "to",
+      "isReceivedAmount": true,
+      "paymentMethod": "pool-party-credit-card"
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-09-10usdc-card-a",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "10",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.53",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.89",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011573",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.17587",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.187444",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:56:38+00:00",
+          "expiresAt": "2026-08-17T15:56:38+00:00"
+        }
+      ],
+      "paymentMethodErrors": [
+        {
+          "paymentMethod": "pool-party-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.003001 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1573782452263905"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.86402177"
+      }
+    }
+  },
+  {
+    "sourceIndex": 13,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "10",
+      "directionChange": "to",
+      "isReceivedAmount": true,
+      "paymentMethod": "pool-party-credit-card"
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-10-10usdc-card-b",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "10",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "10",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "10.53",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "8.64",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.89",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011575",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.176122",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.187697",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T15:56:47+00:00",
+          "expiresAt": "2026-08-17T15:56:47+00:00"
+        }
+      ],
+      "paymentMethodErrors": [
+        {
+          "paymentMethod": "pool-party-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.003001 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1575123873503157"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.86392164"
+      }
+    }
+  },
+  {
+    "sourceIndex": 15,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "1",
+      "directionChange": "to",
+      "isReceivedAmount": true,
+      "paymentMethod": "pool-party-credit-card"
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-11-1usdc-card",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "1",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "1",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "2.73",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "0.86",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.86",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.87",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011575",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.152972",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.164547",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T16:23:23+00:00",
+          "expiresAt": "2026-08-17T16:23:23+00:00"
+        }
+      ],
+      "paymentMethodErrors": [
+        {
+          "paymentMethod": "pool-party-credit-card",
+          "error": {
+            "message": "You have to buy or sell at least 10.002 USDC per order",
+            "code": "d20d4269-5e95-4234-9e4b-64e3279017b6"
+          }
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1575123873503157"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.86392164"
+      }
+    }
+  },
+  {
+    "sourceIndex": 16,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "11",
+      "directionChange": "to",
+      "isReceivedAmount": true,
+      "paymentMethod": "pool-party-credit-card"
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-12-11usdc-card-a",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "11",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "11",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "11.39",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "9.50",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.89",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011575",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.176122",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.187697",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T16:23:26+00:00",
+          "expiresAt": "2026-08-17T16:23:26+00:00"
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1575123873503157"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.86392164"
+      }
+    }
+  },
+  {
+    "sourceIndex": 17,
+    "requestBody": {
+      "currencyCodeFrom": "EUR",
+      "currencyCodeTo": "USDC-BASE",
+      "amount": "11",
+      "directionChange": "to",
+      "isReceivedAmount": true,
+      "paymentMethod": "pool-party-credit-card"
+    },
+    "responseBody": {
+      "id": "mock-poo1598-quote-13-11usdc-card-b",
+      "currencyCodeTo": "USDC-BASE",
+      "currencyCodeFrom": "EUR",
+      "requestedAmount": {
+        "amount": "11",
+        "currencyCode": "USDC"
+      },
+      "requestedAmountType": "to",
+      "paymentMethods": [
+        {
+          "id": "pool-party-credit-card",
+          "name": "Credit/Debit Card",
+          "amountTo": {
+            "amount": "11",
+            "currencyCode": "USDC"
+          },
+          "amountFrom": {
+            "amount": "11.39",
+            "currencyCode": "EUR"
+          },
+          "amountToEquivalent": {
+            "amount": "9.50",
+            "currencyCode": "EUR"
+          },
+          "fees": {
+            "networkFee": {
+              "amount": "0.01",
+              "currencyCode": "EUR"
+            },
+            "serviceFee": {
+              "amount": "1.88",
+              "currencyCode": "EUR"
+            },
+            "totalFee": {
+              "amount": "1.89",
+              "currencyCode": "EUR"
+            }
+          },
+          "feesInCrypto": {
+            "networkFee": {
+              "amount": "0.011573",
+              "currencyCode": "USDC"
+            },
+            "serviceFee": {
+              "amount": "2.17587",
+              "currencyCode": "USDC"
+            },
+            "totalFee": {
+              "amount": "2.187444",
+              "currencyCode": "USDC"
+            }
+          },
+          "expiration": "2026-08-17T16:23:36+00:00",
+          "expiresAt": "2026-08-17T16:23:36+00:00"
+        }
+      ],
+      "exchangeRate": {
+        "from": "EUR",
+        "to": "USDC",
+        "rate": "1.1573782452263905"
+      },
+      "exchangeRateCryptoToFiat": {
+        "from": "USDC",
+        "to": "EUR",
+        "rate": "0.86402177"
+      }
+    }
+  }
+]

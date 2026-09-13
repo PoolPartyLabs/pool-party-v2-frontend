@@ -52,6 +52,7 @@
  * server-side by the live Trading API and travel to the browser inside the plan.
  */
 
+import { isStableSymbol } from "@/lib/chains/config";
 import type {
   ProvisioningLeg,
   ProvisioningLegKind,
@@ -180,8 +181,14 @@ function microsFromBigInt(value: bigint): number {
   return Number.isSafeInteger(asNumber) && asNumber > 0 ? asNumber : 0;
 }
 
-/** Do two leg endpoints name the same token on the same chain? */
-function sameEndpoint(
+/**
+ * Do two leg endpoints name the same token on the same chain?
+ *
+ * Exported (POO-1131) so the view's settled-safe grouping asks the same question this cost model does
+ * about whether a leg CONTINUES the previous one (consumes its output) rather than starting a new
+ * source, instead of re-deriving the comparison and risking drift.
+ */
+export function sameEndpoint(
   a: ProvisioningLeg["tokenOut"] | undefined,
   b: ProvisioningLeg["tokenIn"],
 ): boolean {
@@ -209,9 +216,14 @@ function usdcMicros(amount: string, decimals: number): number {
   return microsFromBigInt((toBigInt(amount) * BigInt(MICROS)) / units);
 }
 
-/** Is this endpoint one we can price without a quote? */
-const isUsdc = (token: ProvisioningLeg["tokenIn"]): boolean =>
-  token.symbol.toUpperCase() === "USDC";
+/**
+ * Is this endpoint one we can price without a quote?
+ *
+ * POO-1779 [R1]: every configured stable, not the literal "USDC" — a USDG bridge leg's fee is exact
+ * for the same reason a USDC one's is (both sides are the same dollar), and reading it as
+ * unpriceable would pro-rate a figure that is known exactly.
+ */
+const isUsdc = (token: ProvisioningLeg["tokenIn"]): boolean => isStableSymbol(token.symbol);
 
 /**
  * The bridge's fee, in micro-dollars: what went in, less what the bridge quoted out ([R3]).

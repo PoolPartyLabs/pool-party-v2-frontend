@@ -1,0 +1,59 @@
+# Solidity dependencies are materialised by `make deps` from harness/deps.lock,
+# not committed. The lockfile pins exact commits, so this is reproducible without
+# carrying 62 MB of other people's history in our tree.
+harness/lib/
+corpus/lib
+
+# Upstream checkouts used for reading ground truth during development.
+.vendor/
+
+# Foundry
+out/
+cache/
+broadcast/
+*.gcda
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+# Build artefact of packaging the detectors: setuptools copies
+# errors/catalog.json in here so an installed wheel carries the catalogue. The
+# canonical file is the one under errors/; a copy in the tree would drift.
+detectors/slither_hookrisk/data/
+
+# hookrisk output
+hook-risk.json
+hook-risk.invalid.json
+HOOK_RISK.md
+hookrisk.sarif
+hookrisk-debug/
+.hookrisk-cache/
+
+# ...except under docs/hackathon/evidence, where those same filenames are the
+# point: they are the recorded before/after of scanning 14 real hooks, and the
+# claims in the write-up are only checkable against them. The patterns above are
+# filename-shaped, so every one of those manifests matched and had to be
+# `git add -f`ed, which is exactly how a piece of evidence goes missing.
+#
+# The negation works because no *directory* on the path is excluded — git cannot
+# re-include a file underneath an excluded directory, so this would silently do
+# nothing if `docs/` or `evidence/` were ever ignored.
+!docs/hackathon/evidence/**
+
+# Local environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db

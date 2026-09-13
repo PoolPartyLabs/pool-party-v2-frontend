@@ -1,16 +1,21 @@
 /**
- * @id PP-TX (POO-301 / POO-824)
+ * @id PP-TX (POO-301 / POO-824 / POO-1783)
  * @name sendTransaction tests
- * @implements-rules-version v1
+ * @implements-rules-version v4 (POO-1783 rules v1)
  *
  * Submits via eth_sendTransaction; polls the receipt; reverts and timeouts throw. POO-824: every
  * broadcast asserts the wallet's actual chain against the flow's target chain first — a mismatch
  * gets ONE corrective switch, then a typed WRONG_CHAIN failure; never a silent wrong-chain send.
+ * POO-1783 [R1]: a wallet that does not HAVE the chain is offered it (`wallet_addEthereumChain`)
+ * and the switch retried once; [R2] every other failure keeps the surface it already had.
  */
+
 import { describe, expect, it, vi } from "vitest";
+import { ROBINHOOD_CHAIN_ID } from "@/lib/chains/config";
 import type { BuiltTx } from "./builtTxSchema";
 import {
   BUILD_TARGET_MISMATCH_CODE,
+  CHAIN_UNAVAILABLE_CODE,
   type Eip1193Provider,
   executeBuiltTransaction,
   executeBuiltTransactionWithLogs,
@@ -59,7 +64,7 @@ describe("sendBuiltTransaction", () => {
     expect(params[0]).toMatchObject({ to: "0xc", from: "0xWALLET", value: "0xf4240" }); // 1_000_000
   });
 
-  // POO-1082, from a live console: the broadcast omitted `chainId`, so a Privy EMBEDDED wallet
+  // POO-1080, from a live console: the broadcast omitted `chainId`, so a Privy EMBEDDED wallet
   // routed a Base transaction to `polygon-mainnet.rpc.privy.systems` and failed for "insufficient
   // funds" against a POL balance, seconds after reporting the chain switch as successful. An
   // injected wallet ignores the field, which is why this shipped and worked for a year.
@@ -74,6 +79,55 @@ describe("sendBuiltTransaction", () => {
     const params = send.mock.calls[0]?.[0] as unknown as Array<{ chainId?: string }>;
     // EIP-3326 hex, the same form `wallet_switchEthereumChain` takes.
     expect(params[0]?.chainId).toBe(BASE_HEX);
+  });
+
+  // POO-1826, from the Robinhood move range `0x38b45a3e…c83f37b` (status 0, gasUsed 3,847,705 of a
+  // 4,150,329 limit, EMPTY revert data): a manager write is 13 call frames deep and EIP-150's 63/64
+  // rule strands ~7% of whatever limit it starts with, so a wallet that broadcasts at its own bare
+  // `eth_estimateGas` runs out of gas in the deepest frame. The API now advertises a padded limit
+  // (estimate x 1.25) and this choke point is where it has to reach the wallet.
+  // @rule R2
+  it("[POO-1826] forwards the build's advertised gas limit as a hex quantity", async () => {
+    const send = vi.fn((_params?: unknown) => "0xhash");
+    await sendBuiltTransaction(
+      provider(onTargetChain({ eth_sendTransaction: send })),
+      { tx: { ...built.tx, gas: "4150329" } },
+      "0xWALLET",
+      BASE,
+    );
+    const params = send.mock.calls[0]?.[0] as unknown as Array<{ gas?: string }>;
+    expect(params[0]?.gas).toBe("0x3f5439"); // 4_150_329, the limit the failing move range needed
+  });
+
+  // @rule R2
+  it("[POO-1826] sends NO gas key at all when the build advertises none (the wallet estimates)", async () => {
+    const send = vi.fn((_params?: unknown) => "0xhash");
+    await sendBuiltTransaction(
+      provider(onTargetChain({ eth_sendTransaction: send })),
+      built,
+      "0xWALLET",
+      BASE,
+    );
+    const params = send.mock.calls[0]?.[0] as unknown as Array<Record<string, unknown>>;
+    // Byte-identical to the pre-POO-1826 request: an explicit `undefined` would still serialise as a
+    // `gas` key for some wallets, so the key must be absent, not empty.
+    expect(params[0]).not.toHaveProperty("gas");
+  });
+
+  // @rule R2
+  it("[POO-1826] drops an unusable advertised limit rather than broadcasting a doomed 0x0", async () => {
+    const send = vi.fn((_params?: unknown) => "0xhash");
+    for (const gas of ["0", "not-a-number"]) {
+      send.mockClear();
+      await sendBuiltTransaction(
+        provider(onTargetChain({ eth_sendTransaction: send })),
+        { tx: { ...built.tx, gas } },
+        "0xWALLET",
+        BASE,
+      );
+      const params = send.mock.calls[0]?.[0] as unknown as Array<Record<string, unknown>>;
+      expect(params[0]).not.toHaveProperty("gas");
+    }
   });
 
   it("wraps a provider failure in a TransactionError", async () => {
@@ -290,6 +344,246 @@ describe("sendBuiltTransaction — chain assertion (POO-824)", () => {
   });
 });
 
+/**
+ * POO-1783: a wallet that has never had the target chain answers the corrective switch with
+ * EIP-3326's 4902 and the flow died there, so the Robinhood alpha (chain 4663) was unreachable from
+ * MetaMask, Rabby and Ledger Live. Privy embedded wallets carry every configured chain, which is why
+ * the alpha smoke never saw it.
+ */
+describe("sendBuiltTransaction — wallet_addEthereumChain fallback (POO-1783)", () => {
+  /** EIP-3326's "Unrecognized chain ID" rejection, the shape MetaMask actually throws. */
+  function unrecognizedChain() {
+    return Object.assign(new Error("Unrecognized chain ID. Try adding the chain first."), {
+      code: 4902,
+    });
+  }
+
+  /**
+   * A wallet that does not know `targetHex` until the chain is ADDED, then switches normally.
+   * Mirrors MetaMask: the add prompt lands the wallet on the new chain, and the retried switch is
+   * the confirmation.
+   */
+  function walletMissingChain(targetHex: string, switchError: unknown = unrecognizedChain()) {
+    let current = ARBITRUM_HEX;
+    let known = false;
+    const addChain = vi.fn(() => {
+      known = true;
+    });
+    const switchChain = vi.fn(() => {
+      if (!known) throw switchError;
+      current = targetHex;
+    });
+    const send = vi.fn(() => "0xhash");
+    const wallet = provider({
+      eth_chainId: () => current,
+      wallet_switchEthereumChain: switchChain,
+      wallet_addEthereumChain: addChain,
+      eth_sendTransaction: send,
+    });
+    return { wallet, addChain, switchChain, send };
+  }
+
+  /**
+   * @rule R1 — the reported failure: chain 4663 on an external wallet. One add prompt, one retried
+   * switch, then the transaction goes out. The add payload is the chain's own metadata, so the
+   * wallet writes the same name, RPC and explorer the rest of the product uses.
+   */
+  it("[R1] adds Robinhood Chain on 4902, retries the switch once, then sends", async () => {
+    const { wallet, addChain, switchChain, send } = walletMissingChain("0x1237");
+
+    await expect(sendBuiltTransaction(wallet, built, "0xW", ROBINHOOD_CHAIN_ID)).resolves.toBe(
+      "0xhash",
+    );
+
+    expect(addChain).toHaveBeenCalledExactlyOnceWith([
+      {
+        chainId: "0x1237",
+        chainName: "Robinhood Chain",
+        nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+        rpcUrls: ["https://rpc.mainnet.chain.robinhood.com"],
+        blockExplorerUrls: ["https://robinhoodchain.blockscout.com"],
+      },
+    ]);
+    // Retried ONCE: the first switch is the one that earned the 4902, the second is the retry.
+    expect(switchChain).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenCalledOnce();
+  });
+
+  /**
+   * @rule R1 — the same on a launch chain. The fallback is keyed on `supportedChainMetas`, not on
+   * Robinhood, so a wallet freshly installed against Base recovers identically.
+   */
+  it("[R1] adds a launch chain on 4902, retries the switch once, then sends", async () => {
+    const { wallet, addChain, switchChain, send } = walletMissingChain(BASE_HEX);
+
+    await expect(sendBuiltTransaction(wallet, built, "0xW", BASE)).resolves.toBe("0xhash");
+
+    expect(addChain).toHaveBeenCalledExactlyOnceWith([
+      expect.objectContaining({ chainId: BASE_HEX, chainName: "Base" }),
+    ]);
+    expect(switchChain).toHaveBeenCalledTimes(2);
+    expect(send).toHaveBeenCalledOnce();
+  });
+
+  /**
+   * @rule R1 — "or the equivalent unrecognized-chain error": not every wallet sets the numeric code,
+   * and a provider that only says so in words is the same condition with the same remedy.
+   */
+  it("[R1] adds the chain for an unrecognized-chain error that carries no 4902 code", async () => {
+    const { wallet, addChain, send } = walletMissingChain(
+      "0x1237",
+      new Error("Unrecognized chain ID 4663"),
+    );
+
+    await expect(sendBuiltTransaction(wallet, built, "0xW", ROBINHOOD_CHAIN_ID)).resolves.toBe(
+      "0xhash",
+    );
+    expect(addChain).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenCalledOnce();
+  });
+
+  /**
+   * @rule R2 — a DECLINED switch is a chain the wallet plainly has. Adding it would be a second
+   * prompt for a network already in the list, immediately after the user said no.
+   */
+  it("[R2] never adds when the user simply declines the switch, and keeps WRONG_CHAIN", async () => {
+    const addChain = vi.fn();
+    const p = provider({
+      eth_chainId: () => ARBITRUM_HEX,
+      wallet_switchEthereumChain: () => {
+        throw Object.assign(new Error("User rejected the request"), { code: 4001 });
+      },
+      wallet_addEthereumChain: addChain,
+      eth_sendTransaction: vi.fn(),
+    });
+
+    const error = await sendBuiltTransaction(p, built, "0xW", ROBINHOOD_CHAIN_ID).catch((e) => e);
+    expect(addChain).not.toHaveBeenCalled();
+    expect(error).toMatchObject({ cause: { code: WRONG_CHAIN_CODE } });
+  });
+
+  /**
+   * @rule R2 — a WalletConnect session whose approved namespace excludes the chain is "cannot
+   * reach", but it is not "unrecognized": the add would be dropped exactly the way the switch was,
+   * costing the user a second full timeout to reach the same answer.
+   */
+  it("[R2] never adds for a WalletConnect namespace rejection, and keeps CHAIN_UNAVAILABLE", async () => {
+    const addChain = vi.fn();
+    const p = provider({
+      eth_chainId: () => ARBITRUM_HEX,
+      wallet_switchEthereumChain: () => {
+        throw new Error("Non conforming namespaces. approve() namespaces chains don't satisfy");
+      },
+      wallet_addEthereumChain: addChain,
+      eth_sendTransaction: vi.fn(),
+    });
+
+    const error = await sendBuiltTransaction(p, built, "0xW", ROBINHOOD_CHAIN_ID).catch((e) => e);
+    expect(addChain).not.toHaveBeenCalled();
+    expect(error).toMatchObject({
+      cause: { code: CHAIN_UNAVAILABLE_CODE, targetChainId: ROBINHOOD_CHAIN_ID },
+    });
+  });
+
+  /**
+   * @rule R1/R2 — scoped to supported chains. Asking a wallet to add a network this app holds no
+   * definition of would mean inventing an RPC endpoint for the user to trust.
+   */
+  it("[R2] never adds a chain this app does not support, and keeps CHAIN_UNAVAILABLE", async () => {
+    const addChain = vi.fn();
+    const send = vi.fn();
+    const p = provider({
+      eth_chainId: () => ARBITRUM_HEX,
+      wallet_switchEthereumChain: () => {
+        throw unrecognizedChain();
+      },
+      wallet_addEthereumChain: addChain,
+      eth_sendTransaction: send,
+    });
+
+    const error = await sendBuiltTransaction(p, built, "0xW", 1).catch((e) => e);
+    expect(addChain).not.toHaveBeenCalled();
+    expect(error).toMatchObject({ cause: { code: CHAIN_UNAVAILABLE_CODE, targetChainId: 1 } });
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  /**
+   * @rule R2 — a declined ADD leaves the wallet exactly where the 4902 found it, so the surface
+   * stays the one that first answer earned: the wallet cannot reach this chain.
+   */
+  it("[R2] keeps CHAIN_UNAVAILABLE and never sends when the user declines the add", async () => {
+    const send = vi.fn();
+    const p = provider({
+      eth_chainId: () => ARBITRUM_HEX,
+      wallet_switchEthereumChain: () => {
+        throw unrecognizedChain();
+      },
+      wallet_addEthereumChain: () => {
+        throw Object.assign(new Error("User rejected the request"), { code: 4001 });
+      },
+      eth_sendTransaction: send,
+    });
+
+    const error = await sendBuiltTransaction(p, built, "0xW", ROBINHOOD_CHAIN_ID).catch((e) => e);
+    expect(error).toBeInstanceOf(TransactionError);
+    expect(error).toMatchObject({
+      cause: { code: CHAIN_UNAVAILABLE_CODE, targetChainId: ROBINHOOD_CHAIN_ID },
+    });
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  /**
+   * @rule R2 — once the add lands, the chain IS there, so a refused retry is an ordinary wrong-chain
+   * state with an ordinary remedy. Reporting CHAIN_UNAVAILABLE here would send the user hunting for
+   * a network their wallet just gained.
+   */
+  it("[R2] reports WRONG_CHAIN when the chain was added but the retried switch is declined", async () => {
+    const send = vi.fn();
+    let added = false;
+    const p = provider({
+      eth_chainId: () => ARBITRUM_HEX,
+      wallet_switchEthereumChain: () => {
+        if (!added) throw unrecognizedChain();
+        throw Object.assign(new Error("User rejected the request"), { code: 4001 });
+      },
+      wallet_addEthereumChain: () => {
+        added = true;
+      },
+      eth_sendTransaction: send,
+    });
+
+    const error = await sendBuiltTransaction(p, built, "0xW", ROBINHOOD_CHAIN_ID).catch((e) => e);
+    expect(error).toMatchObject({ cause: { code: WRONG_CHAIN_CODE } });
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  /**
+   * @rule R1 — the add is not a switch. A wallet that accepts the add but stays put still has to be
+   * proven onto the chain before anything is broadcast (POO-824 [R1], POO-1077).
+   */
+  it("[R1] still refuses to send when the chain was added but the wallet never lands on it", async () => {
+    const send = vi.fn();
+    let added = false;
+    const addChain = vi.fn(() => {
+      added = true;
+    });
+    const p = provider({
+      eth_chainId: () => ARBITRUM_HEX,
+      // Accepts the retried switch after the add, but the chain read never moves.
+      wallet_switchEthereumChain: () => {
+        if (!added) throw unrecognizedChain();
+      },
+      wallet_addEthereumChain: addChain,
+      eth_sendTransaction: send,
+    });
+
+    const error = await sendBuiltTransaction(p, built, "0xW", ROBINHOOD_CHAIN_ID).catch((e) => e);
+    expect(addChain).toHaveBeenCalledOnce();
+    expect(error).toMatchObject({ cause: { code: WRONG_CHAIN_CODE } });
+    expect(send).not.toHaveBeenCalled();
+  });
+});
+
 describe("waitForReceipt", () => {
   it("resolves with a null block once the receipt status is success but omits blockNumber", async () => {
     let calls = 0;
@@ -337,6 +631,59 @@ describe("waitForReceipt", () => {
   it("throws when the transaction reverted", async () => {
     const p = provider({ eth_getTransactionReceipt: () => ({ status: "0x0" }) });
     await expect(waitForReceipt(p, "0xhash", { pollMs: 1 })).rejects.toThrow(/reverted/);
+  });
+
+  /**
+   * POO-1093 [R1]. The poll had no try/catch, so ONE flaky `eth_getTransactionReceipt` failed the
+   * whole leg. That matters far beyond a retryable read: on the provisioning rail the failed leg
+   * arms an unconditional "Try again", and because the rail never consulted the journal, the retry
+   * re-broadcast a transaction that was already on chain. A dropped read is not evidence about
+   * where the money is, so it must not be treated as one.
+   *
+   * `awaitBridgeSettlement` and `reconcileFundingJournal` already take this position for their own
+   * reads; this brings the receipt poll in line with them.
+   */
+  it("[R1] survives a transient read failure and keeps polling to its deadline", async () => {
+    let calls = 0;
+    const p = provider({
+      eth_getTransactionReceipt: () => {
+        calls += 1;
+        if (calls <= 2) throw new Error("network error");
+        return { status: "0x1", blockNumber: "0x5" };
+      },
+    });
+
+    await expect(waitForReceipt(p, "0xhash", { pollMs: 1 })).resolves.toMatchObject({
+      blockNumber: 5,
+    });
+    expect(calls).toBe(3);
+  });
+
+  it("[R1] still times out when every read fails, rather than hanging", async () => {
+    const p = provider({
+      eth_getTransactionReceipt: () => {
+        throw new Error("network error");
+      },
+    });
+    // The last failure's reason rides along: "timed out" alone would send someone hunting a slow
+    // chain when the truth is that their RPC never answered.
+    await expect(waitForReceipt(p, "0xhash", { timeoutMs: 5, pollMs: 1 })).rejects.toThrow(
+      /timed out[\s\S]*network error/,
+    );
+  });
+
+  it("[R1] a REVERT is still terminal, never retried", async () => {
+    // The tolerance is for reads that say nothing. A receipt that says the transaction failed is a
+    // real answer and must fail the step immediately.
+    let calls = 0;
+    const p = provider({
+      eth_getTransactionReceipt: () => {
+        calls += 1;
+        return { status: "0x0" };
+      },
+    });
+    await expect(waitForReceipt(p, "0xhash", { pollMs: 1 })).rejects.toThrow(/reverted/);
+    expect(calls).toBe(1);
   });
 
   it("throws on confirmation timeout", async () => {

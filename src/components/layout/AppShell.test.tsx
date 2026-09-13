@@ -171,6 +171,9 @@ describe("AppShell", () => {
   });
 
   it("reveals the Cards tab in both navs when the cards flag is on", () => {
+    // Cash+ ships ON in this fork and CP-UI05 gives its tab the Cards slot on mobile; this case is
+    // about the cards flag alone, so Cash+ is switched off explicitly.
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_CASH_PLUS", "off");
     vi.stubEnv("NEXT_PUBLIC_FEATURE_CARDS", "on");
     renderWithProviders(
       <AppShell>

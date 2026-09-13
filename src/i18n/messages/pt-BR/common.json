@@ -34,5 +34,10 @@
     "leave": "Sair",
     "stay": "Continuar editando"
   },
-  "opensInNewTab": "Abre em nova aba"
+  "opensInNewTab": "Abre em nova aba",
+  "chainSwitch": {
+    "pending": "Mudando para {network}...",
+    "to": "Mudar para {network}",
+    "failed": "Sua carteira não mudou para {network}. Verifique se a rede está ativada na carteira e tente de novo."
+  }
 }

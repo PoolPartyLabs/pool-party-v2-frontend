@@ -1,0 +1,48 @@
+{
+  "422": {
+    "status": 422,
+    "requestBody": {
+      "partnerUserId": "[redacted:partner-user-id]",
+      "userIp": "[redacted:user-ip]",
+      "quoteId": "mock-poo1598-quote-10-10usdc-card-b",
+      "email": "[redacted:email]",
+      "locale": "en",
+      "cryptoWalletAddress": {
+        "address": "0x06d61c2e80ffdefc172ae8789b228b181c7d93ba",
+        "currencyCode": "USDC-BASE"
+      },
+      "paymentMethod": "pool-party-credit-card",
+      "passwordless": false
+    },
+    "responseBody": {
+      "message": "Request validation failed",
+      "code": "VALIDATION_ERROR",
+      "errors": [
+        {
+          "message": "There are no available payment/payout methods in Quote",
+          "code": "f25aff04-5f6f-43cc-9d39-92b3c2b4718c",
+          "property_path": "quoteId"
+        }
+      ]
+    }
+  },
+  "201": {
+    "status": 201,
+    "requestBody": {
+      "partnerUserId": "[redacted:partner-user-id]",
+      "userIp": "[redacted:user-ip]",
+      "quoteId": "mock-poo1598-quote-13-11usdc-card-b",
+      "email": "[redacted:email]",
+      "locale": "en",
+      "cryptoWalletAddress": {
+        "address": "0x06d61c2e80ffdefc172ae8789b228b181c7d93ba",
+        "currencyCode": "USDC-BASE"
+      },
+      "paymentMethod": "pool-party-credit-card",
+      "passwordless": false
+    },
+    "responseBody": {
+      "requestId": "mock-poo1598-request-11usdc-card-201"
+    }
+  }
+}

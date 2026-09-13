@@ -1,0 +1,858 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedBy": {
+    "tool": "hookrisk",
+    "version": "0.1.0",
+    "commandLine": "hookrisk scan src/CorkHook.sol:CorkHook"
+  },
+  "target": {
+    "mode": "source",
+    "contractName": "CorkHook",
+    "sourceFile": "src/CorkHook.sol",
+    "solcVersion": "0.8.26",
+    "artifactDir": "out",
+    "projectConfigSource": "forge-config"
+  },
+  "findings": [
+    {
+      "id": "2e0e994c6c1b74cb",
+      "ruleClass": "unprotected-hook-callback",
+      "title": "CorkHook.beforeInitialize(address,PoolKey,uint160) (src/CorkHook.sol#97-124) is an IHooks callback (0xdc98354e) that never compares msg.sender against …",
+      "description": "CorkHook.beforeInitialize(address,PoolKey,uint160) (src/CorkHook.sol#97-124) is an IHooks callback (0xdc98354e) that never compares msg.sender against poolManager. Anyone can call it with an arbitrary PoolKey and arbitrary hookData.",
+      "severity": "high",
+      "confidence": "high",
+      "location": {
+        "file": "src/CorkHook.sol",
+        "line": 97,
+        "endLine": 124
+      },
+      "function": {
+        "name": "beforeInitialize",
+        "selector": "0xdc98354e"
+      },
+      "discriminator": "beforeInitialize",
+      "evidence": [
+        "CorkHook.beforeInitialize(address,PoolKey,uint160) (src/CorkHook.sol#97-124) is an IHooks callback (0xdc98354e) that never compares msg.sender against poolManager. Anyone can call it with an arbitrary PoolKey and arbitrary hookData."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-unprotected-callback",
+          "severity": "high",
+          "confidence": "high"
+        }
+      ],
+      "informsDimensions": [
+        "complexity"
+      ]
+    },
+    {
+      "id": "09550562bddc4f49",
+      "ruleClass": "unprotected-hook-callback",
+      "title": "CorkHook.beforeSwap(address,PoolKey,IPoolManager.SwapParams,bytes) (src/CorkHook.sol#365-378) is an IHooks callback (0x575e24b4) that never compares …",
+      "description": "CorkHook.beforeSwap(address,PoolKey,IPoolManager.SwapParams,bytes) (src/CorkHook.sol#365-378) is an IHooks callback (0x575e24b4) that never compares msg.sender against poolManager. Anyone can call it with an arbitrary PoolKey and arbitrary hookData.",
+      "severity": "high",
+      "confidence": "high",
+      "location": {
+        "file": "src/CorkHook.sol",
+        "line": 365,
+        "endLine": 378
+      },
+      "function": {
+        "name": "beforeSwap",
+        "selector": "0x575e24b4"
+      },
+      "discriminator": "beforeSwap",
+      "evidence": [
+        "CorkHook.beforeSwap(address,PoolKey,IPoolManager.SwapParams,bytes) (src/CorkHook.sol#365-378) is an IHooks callback (0x575e24b4) that never compares msg.sender against poolManager. Anyone can call it with an arbitrary PoolKey and arbitrary hookData."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-unprotected-callback",
+          "severity": "high",
+          "confidence": "high"
+        }
+      ],
+      "informsDimensions": [
+        "complexity"
+      ]
+    },
+    {
+      "id": "61255d15e2fc9f9e",
+      "ruleClass": "flag-implementation-divergence",
+      "title": "CorkHook (src/CorkHook.sol#31-734) declares permission `beforeRemoveLiquidity` (bit 9, BEFORE_REMOVE_LIQUIDITY_FLAG) but provides no working …",
+      "description": "CorkHook (src/CorkHook.sol#31-734) declares permission `beforeRemoveLiquidity` (bit 9, BEFORE_REMOVE_LIQUIDITY_FLAG) but provides no working `beforeRemoveLiquidity` implementation. The PoolManager will call it on every matching pool operation and the call will revert, making the pool unusable for that operation.",
+      "severity": "high",
+      "confidence": "medium",
+      "location": {
+        "file": "src/CorkHook.sol",
+        "line": 31,
+        "endLine": 734
+      },
+      "discriminator": "beforeRemoveLiquidity",
+      "evidence": [
+        "CorkHook (src/CorkHook.sol#31-734) declares permission `beforeRemoveLiquidity` (bit 9, BEFORE_REMOVE_LIQUIDITY_FLAG) but provides no working `beforeRemoveLiquidity` implementation. The PoolManager will call it on every matching pool operation and the call will revert, making the pool unusable for that operation."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-flag-divergence",
+          "severity": "high",
+          "confidence": "medium"
+        }
+      ],
+      "informsDimensions": [
+        "complexity"
+      ]
+    },
+    {
+      "id": "c0ebd99ce3970b16",
+      "ruleClass": "admin-surface",
+      "title": "CorkHook.updateBaseFeePercentage(address,address,uint256) (src/CorkHook.sol#228-230) (updateBaseFeePercentage) is restricted to a privileged caller and …",
+      "description": "CorkHook.updateBaseFeePercentage(address,address,uint256) (src/CorkHook.sol#228-230) (updateBaseFeePercentage) is restricted to a privileged caller and writes `pool` which the callbacks read. That key can change the swap's economics after deployment: the framework's autonomous-parameter-updates concern.",
+      "severity": "medium",
+      "confidence": "medium",
+      "location": {
+        "file": "src/CorkHook.sol",
+        "line": 228,
+        "endLine": 230
+      },
+      "function": {
+        "name": "updateBaseFeePercentage"
+      },
+      "discriminator": "updateBaseFeePercentage",
+      "evidence": [
+        "CorkHook.updateBaseFeePercentage(address,address,uint256) (src/CorkHook.sol#228-230) (updateBaseFeePercentage) is restricted to a privileged caller and writes `pool` which the callbacks read. That key can change the swap's economics after deployment: the framework's autonomous-parameter-updates concern."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-admin-surface",
+          "severity": "medium",
+          "confidence": "medium"
+        }
+      ],
+      "informsDimensions": [
+        "autonomousParameterUpdates",
+        "complexity"
+      ]
+    },
+    {
+      "id": "6247abb86f3805b9",
+      "ruleClass": "admin-surface",
+      "title": "CorkHook.updateTreasurySplitPercentage(address,address,uint256) (src/CorkHook.sol#232-234) (updateTreasurySplitPercentage) is restricted to a privileged …",
+      "description": "CorkHook.updateTreasurySplitPercentage(address,address,uint256) (src/CorkHook.sol#232-234) (updateTreasurySplitPercentage) is restricted to a privileged caller and writes `pool` which the callbacks read. That key can change the swap's economics after deployment: the framework's autonomous-parameter-updates concern.",
+      "severity": "medium",
+      "confidence": "medium",
+      "location": {
+        "file": "src/CorkHook.sol",
+        "line": 232,
+        "endLine": 234
+      },
+      "function": {
+        "name": "updateTreasurySplitPercentage"
+      },
+      "discriminator": "updateTreasurySplitPercentage",
+      "evidence": [
+        "CorkHook.updateTreasurySplitPercentage(address,address,uint256) (src/CorkHook.sol#232-234) (updateTreasurySplitPercentage) is restricted to a privileged caller and writes `pool` which the callbacks read. That key can change the swap's economics after deployment: the framework's autonomous-parameter-updates concern."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-admin-surface",
+          "severity": "medium",
+          "confidence": "medium"
+        }
+      ],
+      "informsDimensions": [
+        "autonomousParameterUpdates",
+        "complexity"
+      ]
+    },
+    {
+      "id": "c0a996fd533affb8",
+      "ruleClass": "external-call-in-swap-path",
+      "title": "CorkHook._beforeSwap(PoolState,IPoolManager.SwapParams,bytes,address) (src/CorkHook.sol#385-471) makes a state-changing call to `forwarder` in the swap path …",
+      "description": "CorkHook._beforeSwap(PoolState,IPoolManager.SwapParams,bytes,address) (src/CorkHook.sol#385-471) makes a state-changing call to `forwarder` in the swap path (_beforeSwap:442, _beforeSwap:456, _executeFlashSwap:530), reached from beforeSwap. That address is a dependency the pool did not have: a revert or a pause there reverts every swap on every pool using this hook.",
+      "severity": "medium",
+      "confidence": "medium",
+      "location": {
+        "file": "src/CorkHook.sol",
+        "line": 385,
+        "endLine": 471
+      },
+      "function": {
+        "name": "_beforeSwap",
+        "selector": "0x575e24b4"
+      },
+      "discriminator": "forwarder",
+      "evidence": [
+        "CorkHook._beforeSwap(PoolState,IPoolManager.SwapParams,bytes,address) (src/CorkHook.sol#385-471) makes a state-changing call to `forwarder` in the swap path (_beforeSwap:442, _beforeSwap:456, _executeFlashSwap:530), reached from beforeSwap. That address is a dependency the pool did not have: a revert or a pause there reverts every swap on every pool using this hook."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-external-call-in-swap-path",
+          "severity": "medium",
+          "confidence": "medium"
+        }
+      ],
+      "informsDimensions": [
+        "externalDependencies",
+        "complexity"
+      ],
+      "metrics": {
+        "destination": "forwarder",
+        "isStatic": false,
+        "unhandled": true
+      }
+    },
+    {
+      "id": "bce44df4bb84d9f4",
+      "ruleClass": "external-call-in-swap-path",
+      "title": "CorkHook._splitFee(PoolState,uint256,Currency) (src/CorkHook.sol#473-489) makes a static read of `owner()` in the swap path (_splitFee:486), reached from …",
+      "description": "CorkHook._splitFee(PoolState,uint256,Currency) (src/CorkHook.sol#473-489) makes a static read of `owner()` in the swap path (_splitFee:486), reached from beforeSwap. That address is a dependency the pool did not have: a revert or a pause there reverts every swap on every pool using this hook.",
+      "severity": "medium",
+      "confidence": "medium",
+      "location": {
+        "file": "src/CorkHook.sol",
+        "line": 473,
+        "endLine": 489
+      },
+      "function": {
+        "name": "_splitFee"
+      },
+      "discriminator": "owner()",
+      "evidence": [
+        "CorkHook._splitFee(PoolState,uint256,Currency) (src/CorkHook.sol#473-489) makes a static read of `owner()` in the swap path (_splitFee:486), reached from beforeSwap. That address is a dependency the pool did not have: a revert or a pause there reverts every swap on every pool using this hook."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-external-call-in-swap-path",
+          "severity": "medium",
+          "confidence": "medium"
+        }
+      ],
+      "informsDimensions": [
+        "externalDependencies",
+        "complexity"
+      ],
+      "metrics": {
+        "destination": "owner()",
+        "isStatic": true,
+        "unhandled": true
+      }
+    },
+    {
+      "id": "6e49a14037283dc1",
+      "ruleClass": "external-call-in-swap-path",
+      "title": "CorkHook._executeFlashSwap(PoolState,bytes,Currency,Currency,uint256,uint256,address,bool) (src/CorkHook.sol#513-567) makes a state-changing call to `sender` …",
+      "description": "CorkHook._executeFlashSwap(PoolState,bytes,Currency,Currency,uint256,uint256,address,bool) (src/CorkHook.sol#513-567) makes a state-changing call to `sender` in the swap path (_executeFlashSwap:544), reached from beforeSwap. That address is a dependency the pool did not have: a revert or a pause there reverts every swap on every pool using this hook.",
+      "severity": "medium",
+      "confidence": "medium",
+      "location": {
+        "file": "src/CorkHook.sol",
+        "line": 513,
+        "endLine": 567
+      },
+      "function": {
+        "name": "_executeFlashSwap"
+      },
+      "discriminator": "sender",
+      "evidence": [
+        "CorkHook._executeFlashSwap(PoolState,bytes,Currency,Currency,uint256,uint256,address,bool) (src/CorkHook.sol#513-567) makes a state-changing call to `sender` in the swap path (_executeFlashSwap:544), reached from beforeSwap. That address is a dependency the pool did not have: a revert or a pause there reverts every swap on every pool using this hook."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-external-call-in-swap-path",
+          "severity": "medium",
+          "confidence": "medium"
+        }
+      ],
+      "informsDimensions": [
+        "externalDependencies",
+        "complexity"
+      ],
+      "metrics": {
+        "destination": "sender",
+        "isStatic": false,
+        "unhandled": true
+      }
+    },
+    {
+      "id": "ff71b22880bfed53",
+      "ruleClass": "custom-accounting",
+      "title": "CorkHook (src/CorkHook.sol#31-734) declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3)",
+      "description": "CorkHook (src/CorkHook.sol#31-734) declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3). The hook can alter settled amounts, which raises its risk tier under the framework's custom-math and price-impact triggers and means differential output comparison (invariant I2) does not apply — the harness substitutes price monotonicity.",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/CorkHook.sol",
+        "line": 31,
+        "endLine": 734
+      },
+      "evidence": [
+        "CorkHook (src/CorkHook.sol#31-734) declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3). The hook can alter settled amounts, which raises its risk tier under the framework's custom-math and price-impact triggers and means differential output comparison (invariant I2) does not apply — the harness substitutes price monotonicity."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-custom-accounting",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ],
+      "informsDimensions": [
+        "customMath",
+        "priceImpactingBehavior"
+      ],
+      "informsTriggers": [
+        "custom-math",
+        "price-impact"
+      ]
+    },
+    {
+      "id": "d5e3961d8debae91",
+      "ruleClass": "hook-profile",
+      "title": "CorkHook (src/CorkHook.sol#31-734) is a recognised v4 hook: implements beforeInitialize, beforeSwap; declares 4 callback permission(s); 4 state write(s) …",
+      "description": "CorkHook (src/CorkHook.sol#31-734) is a recognised v4 hook: implements beforeInitialize, beforeSwap; declares 4 callback permission(s); 4 state write(s) reachable from callbacks; 5 external call(s) in the swap path.",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/CorkHook.sol",
+        "line": 31,
+        "endLine": 734
+      },
+      "evidence": [
+        "CorkHook (src/CorkHook.sol#31-734) is a recognised v4 hook: implements beforeInitialize, beforeSwap; declares 4 callback permission(s); 4 state write(s) reachable from callbacks; 5 external call(s) in the swap path."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-hook-profile",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ],
+      "informsDimensions": [
+        "complexity"
+      ],
+      "metrics": {
+        "callbacksImplemented": 2,
+        "callbacksDeclared": 4,
+        "stateWritesInCallbacks": 4,
+        "externalCallsInSwapPath": 5,
+        "externalCallsInSwapPathThirdParty": 5,
+        "internalFunctionsReachableFromCallbacks": 19,
+        "usesReturnsDelta": true,
+        "hasOwnerOnlyFunctions": true
+      },
+      "permissions": {
+        "beforeInitialize": true,
+        "afterInitialize": false,
+        "beforeAddLiquidity": true,
+        "afterAddLiquidity": false,
+        "beforeRemoveLiquidity": true,
+        "afterRemoveLiquidity": false,
+        "beforeSwap": true,
+        "afterSwap": false,
+        "beforeDonate": false,
+        "afterDonate": false,
+        "beforeSwapReturnDelta": true,
+        "afterSwapReturnDelta": false,
+        "afterAddLiquidityReturnDelta": false,
+        "afterRemoveLiquidityReturnDelta": false
+      }
+    },
+    {
+      "id": "f769696cd69f724a",
+      "ruleClass": "callback-intentionally-disabled",
+      "title": "CorkHook.beforeAddLiquidity(address,PoolKey,IPoolManager.ModifyLiquidityParams,bytes) (src/CorkHook.sol#88-95) overrides `beforeAddLiquidity` with `revert …",
+      "description": "CorkHook.beforeAddLiquidity(address,PoolKey,IPoolManager.ModifyLiquidityParams,bytes) (src/CorkHook.sol#88-95) overrides `beforeAddLiquidity` with `revert DisableNativeLiquidityModification()`, so PoolManager-routed liquidity addition is disabled by design; the differential harness records such reverts when it runs. This is not the missing implementation HS-02 reports.",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/CorkHook.sol",
+        "line": 88,
+        "endLine": 95
+      },
+      "function": {
+        "name": "beforeAddLiquidity",
+        "selector": "0x259982e5"
+      },
+      "discriminator": "beforeAddLiquidity",
+      "evidence": [
+        "CorkHook.beforeAddLiquidity(address,PoolKey,IPoolManager.ModifyLiquidityParams,bytes) (src/CorkHook.sol#88-95) overrides `beforeAddLiquidity` with `revert DisableNativeLiquidityModification()`, so PoolManager-routed liquidity addition is disabled by design; the differential harness records such reverts when it runs. This is not the missing implementation HS-02 reports."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-disabled-callback",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ]
+    }
+  ],
+  "score": {
+    "total": 17,
+    "totalUpperBound": 23,
+    "tier": "medium",
+    "tierUpperBound": "high",
+    "inconclusive": true,
+    "rubric": {
+      "framework": "Uniswap Hooks Security Framework",
+      "revision": "e7e8da52fd5717b6eb4517ea779b766f63148c41",
+      "url": "https://github.com/uniswapfoundation/security-framework"
+    },
+    "dimensions": [
+      {
+        "id": "complexity",
+        "name": "Complexity",
+        "value": 5,
+        "max": 5,
+        "source": "measured",
+        "bracketLabel": "Returns a delta, external call in the swap path, and an owner-only surface",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "hook-profile metrics: callbacksImplemented=2, callbacksDeclared=4, stateWritesInCallbacks=4, externalCallsInSwapPath=5, externalCallsInSwapPathThirdParty=5, internalFunctionsReachableFromCallbacks=19, usesReturnsDelta=true, hasOwnerOnlyFunctions=true",
+          "Scored 5 by rule `usesReturnsDelta && externalCallsInSwapPath >= 1 && hasOwnerOnlyFunctions`: Custom settlement, a mid-swap dependency and a privileged surface together are every source of 'multi-step flows' and 'configuration patterns' the prose lists. (hookrisk’s interpretation; the framework publishes no brackets)",
+          "1 flag-implementation-divergence finding(s)",
+          "2 unprotected-hook-callback finding(s)",
+          "The hook implements callbacks with non-trivial structure. This establishes a floor only; the measured value comes from the hook-profile metrics when the engine profiled the target."
+        ]
+      },
+      {
+        "id": "customMath",
+        "name": "Custom math",
+        "value": 3,
+        "max": 5,
+        "source": "measured",
+        "bracketLabel": "A custom curve or invariant function",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "1 custom-accounting finding(s)",
+          "Custom accounting implies a custom curve or non-standard settlement arithmetic."
+        ]
+      },
+      {
+        "id": "externalDependencies",
+        "name": "External dependencies",
+        "value": 2,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "A dependency read inside the swap path, or more than one dependency",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "3 external-call-in-swap-path finding(s)",
+          "Scored 2 by rule `always` on forwarder (medium): The framework's 2 bracket verbatim: a dependency read inside the swap path. Unconditional, so a finding whose call kind the detector did not classify also scores 2 — the direction that does not understate risk. (hookrisk’s interpretation; the framework publishes no brackets)",
+          "An external call inside the swap path reopens the execution environment mid-swap."
+        ]
+      },
+      {
+        "id": "externalLiquidityExposure",
+        "name": "External liquidity exposure",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": []
+      },
+      {
+        "id": "tvlPotential",
+        "name": "TVL potential",
+        "value": 0,
+        "max": 5,
+        "source": "declared",
+        "bracketLabel": "Under $100K (experimental or personal project)",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure tvlPotential."
+        ]
+      },
+      {
+        "id": "teamMaturity",
+        "name": "Team maturity",
+        "value": 3,
+        "max": 3,
+        "source": "declared",
+        "bracketLabel": "Unproven: no prior production deployments, or deployments lacking audits and operational rigor; new, anonymous, or no public track record",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure teamMaturity."
+        ]
+      },
+      {
+        "id": "upgradeability",
+        "name": "Upgradeability",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "Not measured: no detector for upgradeable-hook (needs blocksec, which did not run); selfdestruct requires blocksec, which did not run."
+        ]
+      },
+      {
+        "id": "autonomousParameterUpdates",
+        "name": "Autonomous parameter updates",
+        "value": 1,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "Self-adjusting within hard-coded bounds and a rate limit",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "2 admin-surface finding(s)",
+          "Scored 1 by rule `severityRank >= 2` on updateBaseFeePercentage (medium): HS-03 at MEDIUM is an owner-only mutator (hook-profile.hasOwnerOnlyFunctions). The framework's 0 bracket describes exactly this shape, but scoring 0 would rank a hook whose owner can move the fee level with a hook that has no parameters at all, and source analysis cannot see the owner's guardrails — timelock, ceiling, multisig. 1 records the surface as a floor without asserting autonomy; a team that has a timelock should declare 0 in hookrisk.toml. (hookrisk’s interpretation; the framework publishes no brackets)",
+          "HS-03 found a state-changing external function on the hook. The framework grades this dimension by the guardrails on a parameter change (bounds, rate limit, gating); an admin surface is where those guardrails would have to live."
+        ]
+      },
+      {
+        "id": "priceImpactingBehavior",
+        "name": "Price impacting behavior",
+        "value": 3,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "Returns a swap delta (custom curve or NoOp), or adjusts fees without a ceiling",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "1 custom-accounting finding(s)",
+          "A returns-delta permission lets the hook alter settled amounts, which is the framework’s definition of price-impacting behaviour."
+        ]
+      }
+    ],
+    "triggers": [
+      {
+        "id": "custom-math",
+        "name": "Custom Curve or Non Standard Math",
+        "firedBy": [
+          "customMath >= 3 (is 3)",
+          "returns-delta-permission"
+        ],
+        "derivationIsInterpretation": true
+      },
+      {
+        "id": "external-dependencies",
+        "name": "External Protocol or Oracle Dependencies",
+        "firedBy": [
+          "externalDependencies >= 1 (is 2)",
+          "detector:external-call-in-swap-path"
+        ],
+        "derivationIsInterpretation": true
+      },
+      {
+        "id": "autonomous",
+        "name": "Autonomous Parameter Updates or Self-Tuning Hook",
+        "firedBy": [
+          "autonomousParameterUpdates >= 1 (is 1)"
+        ],
+        "derivationIsInterpretation": true
+      },
+      {
+        "id": "price-impact",
+        "name": "Price Impacting Behavior",
+        "firedBy": [
+          "priceImpactingBehavior >= 1 (is 3)",
+          "returns-delta-permission"
+        ],
+        "derivationIsInterpretation": true
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "adversarial-simulation",
+        "label": "Adversarial and economic simulation",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:price-impact",
+            "strength": "required",
+            "detail": "Auditors should simulate worst-case economic and adversarial price manipulation"
+          }
+        ]
+      },
+      {
+        "action": "audit",
+        "label": "Security audit",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "required",
+            "detail": "One full audit"
+          },
+          {
+            "from": "trigger:external-dependencies",
+            "strength": "required",
+            "detail": "Must review trust assumptions, failure modes and fallback logic"
+          }
+        ]
+      },
+      {
+        "action": "bug-bounty",
+        "label": "Bug bounty programme",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended"
+          },
+          {
+            "from": "trigger:external-dependencies",
+            "strength": "recommended"
+          },
+          {
+            "from": "trigger:price-impact",
+            "strength": "required"
+          }
+        ]
+      },
+      {
+        "action": "invariant-testing",
+        "label": "Invariant and stateful fuzz testing",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "recommended",
+            "detail": "Stateful fuzzing may significantly improve assurance"
+          },
+          {
+            "from": "trigger:autonomous",
+            "strength": "required",
+            "detail": "For state transitions"
+          }
+        ]
+      },
+      {
+        "action": "math-specialist-audit",
+        "label": "Audit by a math and invariants specialist",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "required",
+            "detail": "At least one audit including a math and invariants specialist"
+          },
+          {
+            "from": "trigger:price-impact",
+            "strength": "required",
+            "detail": "Auditor should specialize in math"
+          }
+        ]
+      },
+      {
+        "action": "recovery-procedures",
+        "label": "Documented debugging and recovery procedures",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:autonomous",
+            "strength": "required",
+            "detail": "Debugging and recovery procedures must be documented"
+          }
+        ]
+      },
+      {
+        "action": "scenario-testing",
+        "label": "Dependency-failure scenario testing",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:external-dependencies",
+            "strength": "required",
+            "detail": "For dependency failures"
+          }
+        ]
+      },
+      {
+        "action": "static-analysis",
+        "label": "Automated static analysis",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "required",
+            "detail": "AI static analysis tools"
+          }
+        ]
+      },
+      {
+        "action": "timelock-or-minimise-upgradeability",
+        "label": "Minimise or timelock upgradeability",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:autonomous",
+            "strength": "required",
+            "detail": "Upgradeability must be minimized or time-locked"
+          }
+        ]
+      },
+      {
+        "action": "unit-tests-boundaries",
+        "label": "Unit tests covering input-range boundaries",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "required",
+            "detail": "Validate intermediate steps, edge cases and input-range boundaries"
+          }
+        ]
+      },
+      {
+        "action": "monitoring",
+        "label": "Continuous monitoring with anomaly detection",
+        "strength": "strongly-recommended",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended",
+            "detail": "If external dependencies exist"
+          },
+          {
+            "from": "trigger:custom-math",
+            "strength": "recommended"
+          },
+          {
+            "from": "trigger:external-dependencies",
+            "strength": "strongly-recommended",
+            "detail": "Dependency health"
+          },
+          {
+            "from": "trigger:autonomous",
+            "strength": "strongly-recommended"
+          }
+        ]
+      },
+      {
+        "action": "extended-test-coverage",
+        "label": "Extended test coverage",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended",
+            "detail": "Where autonomy or parameter updates exist"
+          }
+        ]
+      },
+      {
+        "action": "formal-verification",
+        "label": "Formal verification",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "recommended"
+          },
+          {
+            "from": "trigger:price-impact",
+            "strength": "recommended"
+          }
+        ]
+      },
+      {
+        "action": "second-audit",
+        "label": "Second independent audit",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "optional",
+            "detail": "For math or complex components"
+          },
+          {
+            "from": "trigger:autonomous",
+            "strength": "recommended"
+          }
+        ]
+      }
+    ],
+    "warnings": [
+      "2 dimension(s) unmeasured: the tier is between Medium Risk and High Risk. Unmeasured dimensions are excluded from the total, never counted as zero.",
+      "trigger 'holds-liquidity' could not be evaluated: dimension 'externalLiquidityExposure' is unmeasured",
+      "trigger 'upgradeable' could not be evaluated: dimension 'upgradeability' is unmeasured"
+    ]
+  },
+  "engines": [
+    {
+      "engine": "hookrisk",
+      "displayName": "hookrisk Slither detectors",
+      "version": "0.11.6",
+      "status": "ok",
+      "findingCount": 11,
+      "durationMs": 4240
+    },
+    {
+      "engine": "harness",
+      "displayName": "Differential harness (Foundry)",
+      "version": "1.7.1",
+      "status": "skipped",
+      "reason": "CorkHook's constructor takes 3 argument(s) (address _poolManager, address _lpBase, address owner) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.",
+      "errorCode": "HR-E305",
+      "findingCount": 0,
+      "durationMs": 10
+    }
+  ],
+  "coverage": {
+    "corroboratedFindings": 0,
+    "uncoveredFunctions": [],
+    "staticAnalysisSkipped": false,
+    "dynamicAnalysisSkipped": true,
+    "harnessStatus": "skipped"
+  },
+  "permissions": {
+    "fromEngine": {
+      "beforeInitialize": true,
+      "afterInitialize": false,
+      "beforeAddLiquidity": true,
+      "afterAddLiquidity": false,
+      "beforeRemoveLiquidity": true,
+      "afterRemoveLiquidity": false,
+      "beforeSwap": true,
+      "afterSwap": false,
+      "beforeDonate": false,
+      "afterDonate": false,
+      "beforeSwapReturnDelta": true,
+      "afterSwapReturnDelta": false,
+      "afterAddLiquidityReturnDelta": false,
+      "afterRemoveLiquidityReturnDelta": false
+    }
+  },
+  "invariants": [
+    {
+      "id": "I1",
+      "name": "Conservation and solvency",
+      "status": "skipped",
+      "detail": "CorkHook's constructor takes 3 argument(s) (address _poolManager, address _lpBase, address owner) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305."
+    },
+    {
+      "id": "I2",
+      "name": "No undeclared extraction",
+      "status": "skipped",
+      "detail": "CorkHook's constructor takes 3 argument(s) (address _poolManager, address _lpBase, address owner) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305."
+    },
+    {
+      "id": "I3",
+      "name": "Exit liveness",
+      "status": "skipped",
+      "detail": "CorkHook's constructor takes 3 argument(s) (address _poolManager, address _lpBase, address owner) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305."
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "maxSeverity": "high",
+    "failOnInconclusive": false,
+    "failOnNotAnalysed": true,
+    "failures": [
+      "3 finding(s) at or above high: CorkHook.beforeInitialize(address,PoolKey,uint160) (src/CorkHook.sol#97-124) is an IHooks callback (0xdc98354e) that never compares msg.sender against …; CorkHook.beforeSwap(address,PoolKey,IPoolManager.SwapParams,bytes) (src/CorkHook.sol#365-378) is an IHooks callback (0x575e24b4) that never compares …; CorkHook (src/CorkHook.sol#31-734) declares permission `beforeRemoveLiquidity` (bit 9, BEFORE_REMOVE_LIQUIDITY_FLAG) but provides no working …"
+    ]
+  }
+}

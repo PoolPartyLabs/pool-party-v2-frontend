@@ -37,7 +37,13 @@
     "bank": {
       "name": "银行转账",
       "meta": "1–2 个工作日"
-    }
+    },
+    "allBlocked": "请将存款金额提高到 {amount}。目前没有支付方式接受更低的金额。",
+    "loading": "正在加载该货币可用的支付方式",
+    "unavailable": "Paybis 目前未返回任何支付方式。您可以继续，在安全结账页面选择支付方式。",
+    "blocked": "Paybis 要求至少 {amount}。",
+    "minimum": "最低 {amount}",
+    "charge": "您支付 {amount}"
   },
   "review": {
     "title": "核对",
@@ -51,7 +57,11 @@
     "payingWith": "使用 {method} 支付",
     "change": "更改",
     "confirm": "确认并用 {method} 支付",
-    "poweredBy": "技术支持：Paybis"
+    "poweredBy": "技术支持：Paybis",
+    "payAtCheckout": "结账时显示",
+    "choosePayment": "选择支付方式",
+    "ethUnpriced": "我们暂时无法获取 ETH 价格，因此无法开始购买。请重试。",
+    "confirmGeneric": "确认并支付"
   },
   "success": {
     "title": "存入已确认",
@@ -61,7 +71,8 @@
     "method": "方式",
     "date": "日期",
     "investNow": "立即投资",
-    "backHome": "返回首页"
+    "backHome": "返回首页",
+    "viewWalletOnExplorer": "在区块浏览器查看钱包"
   },
   "crypto": {
     "title": "存入加密货币",
@@ -72,8 +83,8 @@
     "share": "分享地址",
     "asset": "USD Coin · USDC",
     "sent": "我已发送资金",
-    "waitingTitle": "等待您的存入",
-    "waitingBody": "我们会自动检测。您无需进行任何操作。",
+    "waitingTitle": "请几分钟后再回来查看",
+    "waitingBody": "我们无法确认从其他应用或交易所发出的转账。资金到账后，您的余额会自动更新。",
     "viewAddress": "查看地址和二维码",
     "receivedTitle": "已收到存入",
     "added": "已添加 {amount} USDC",
@@ -87,5 +98,48 @@
     "networkContinue": "继续",
     "changeNetwork": "更改网络",
     "networkWarning": "仅在 {network} 网络上发送 USDC。在其他网络上发送可能导致永久损失。"
+  },
+  "onramp": {
+    "checkout": {
+      "approx": "在安全结账页面中，您会看到略高的金额。该金额包含服务商的价差，因此约 {amount} USDC 会到达您的钱包。",
+      "approxNoPrefill": "请在安全结账页面输入您要支付的金额。约 {amount} USDC 会到达您的钱包。",
+      "baselineUnavailable": "我们无法读取您的钱包余额，因此暂时无法开始购买。请检查网络连接后重试。",
+      "belowMinimum": "低于投资所需的最低金额 {amount}。这笔钱在您的钱包中，您可以随时再存入。",
+      "uncoveredTitle": "我们目前无法向您出售",
+      "uncoveredBody": "今天没有服务商以 {currency} 出售该金额的加密货币。请尝试其他金额，或稍后再来。",
+      "currencyUnsupportedBody": "我们目前无法接受以您的货币付款。请稍后再试，或稍后再来。",
+      "unverifiedTitle": "我们尚未确认您的付款",
+      "unverifiedBody": "如果您已付款，资金将在付款结算后出现在您的钱包中。您可以离开此页面，不会有任何损失。",
+      "openingTitle": "正在打开安全结账页面",
+      "openingBody": "请在安全结账页面完成购买。请保持此页面打开。"
+    },
+    "resume": {
+      "startNew": "开始新的购买",
+      "title": "您可能有一笔正在进行的购买",
+      "body": "您在 {minutes} 分钟前发起了一笔购买。如果您已付款，资金可能仍在途中。继续将等待其到账。重新开始会创建一笔新的购买，因此请仅在第一笔从未完成时选择。",
+      "resume": "继续那笔购买",
+      "paidTitle": "您购买的资金仍在到账途中",
+      "paidBody": "您在 {minutes} 分钟前已付款，但资金尚未到账。这可能需要一些时间，银行转账尤其如此。通常继续等待是正确的做法。只有在您确定第一笔永远不会到账时才开始新的购买，因为那意味着再付一次款。",
+      "keepWaiting": "继续等待"
+    },
+    "settlingTitle": "已收到付款",
+    "settlingBody": "资金结算后，您的余额将立即更新。这可能需要几分钟。",
+    "tryAgain": "重试",
+    "settledErrorTitle": "您的购买已完成",
+    "errorTitle": "购买未完成",
+    "settledErrorBody": "我们未能完成兑换为 USDC 的步骤。您的资金很安全，目前以 ETH 的形式存放在 Base 上。请重试以完成兑换。",
+    "errorBody": "购买未完成，未转移任何资金。您可以重试。",
+    "referenceLabel": "参考编号",
+    "paybisReferenceLabel": "Paybis 参考编号",
+    "title": "购买加密货币",
+    "connecting": "正在准备您的购买",
+    "swapping": "正在兑换为 USDC"
+  },
+  "secureCheckout": "安全结账",
+  "currency": {
+    "title": "货币",
+    "search": "搜索 {count} 种货币",
+    "noResults": "未找到匹配的货币",
+    "footnote": "支付方式会随货币而变化。"
   }
 }

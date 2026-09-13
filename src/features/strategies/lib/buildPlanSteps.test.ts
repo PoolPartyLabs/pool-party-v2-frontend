@@ -12,8 +12,13 @@
  * so the leg step now stays open until the DESTINATION balance clears the leg's floor. Every bridge
  * fixture here therefore has to deliver on the destination chain, or the leg legitimately waits.
  */
+import { parseUnits } from "viem";
 import { describe, expect, it, vi } from "vitest";
+import { getUsdcAddress } from "@/lib/chains/config";
 import type { ProvisioningLeg, ProvisioningPlan, ProvisioningStep } from "@/lib/provisioning";
+// POO-1154 Gap 2 / [R13]: the same native SIGNING RESERVE `reserveNativeFloor` / `belowGasFloor` read,
+// derived here so the spec tracks the config rather than a hard-coded base-unit literal.
+import { NATIVE_RESERVE_ETH } from "@/lib/provisioning/nativeReserve";
 import type { Eip1193Provider } from "@/lib/tx/sendTransaction";
 import type { UniswapQuoteResponse, UniswapTransactionRequest } from "@/lib/uniswap/schemas";
 import type { FlowStep } from "../hooks/useWalletSignFlow";
@@ -278,9 +283,34 @@ function harness(options: HarnessOptions = {}): Harness {
     },
   };
 
-  const quoteSwap = vi.fn(async () => {
+  /**
+   * The fresh execution-time quote.
+   *
+   * Answers the REQUEST rather than returning one constant. A single fixture for every leg meant a
+   * bridge leg's "fresh quote" was really the swap leg's, so the quoted output disagreed with what
+   * the destination balance fixtures actually delivered. Nothing depended on that while the arrival
+   * floor came from the planner; POO-1094 makes the floor come from this quote, at which point an
+   * inconsistent fixture is a mock that is more capable than reality.
+   *
+   * A cross-chain request answers with the bridge leg's own quoted output, i.e. the fresh quote
+   * agrees with the planner when the leg was not re-sized. A test that wants a RE-SIZED leg says so
+   * by passing `quote` explicitly.
+   */
+  const quoteSwap = vi.fn(async (input: { tokenInChainId: number; tokenOutChainId: number }) => {
     calls.push("quote");
-    return { ok: true as const, quote: options.quote ?? quoteResponse() };
+    if (options.quote) return { ok: true as const, quote: options.quote };
+    const crossChain = input.tokenInChainId !== input.tokenOutChainId;
+    return {
+      ok: true as const,
+      quote: crossChain
+        ? quoteResponse({
+            quote: {
+              input: { amount: "3000000000", token: USDC_POLYGON.address },
+              output: { amount: "2996000000", token: USDC_ARBITRUM.address },
+            },
+          } as Partial<UniswapQuoteResponse>)
+        : quoteResponse(),
+    };
   });
   /** `true` → the live shape: `approve(Permit2, amount)` on the token the request named. */
   const asApproval = (
@@ -746,6 +776,58 @@ describe("buildPlanSteps — POO-1037 a bridge leg settles on the DESTINATION ch
     }
   });
 
+  it("[R1] settles against the FRESH quote's output, not the planner's stale floor", async () => {
+    // POO-1094. A bridge leg carries ZERO slippage tolerance: `buildPlan` sets `minAmountOut` to the
+    // raw quoted output. On the flagship decomposed route the bridge is re-sized at execution from
+    // the previous swap's REALISED delta, so the amount actually sent is almost never the planner's
+    // figure. Comparing arrival against the planner's floor then makes a bridge that landed in full
+    // read as unarrived forever: the step burns the 10-minute ceiling, throws BRIDGE_PENDING, and
+    // `onDone()` never fires, so the operation the user came to do never runs.
+    //
+    // The journal already gets this right (`quotedOut ?? leg.minAmountOut`) and says why. This pins
+    // the same rule for the inline wait, which is the one that decides whether the step completes.
+    vi.useFakeTimers();
+    try {
+      const h = harness({
+        // The fresh quote comes back BELOW the planner's 2996000000 floor: an ordinary adverse move,
+        // well inside the 1% requote tolerance, so nothing prompts the user.
+        quote: quoteResponse({
+          quote: {
+            input: { amount: "3000000000", token: USDC_POLYGON.address },
+            output: { amount: "2970000000", token: USDC_ARBITRUM.address },
+          },
+        } as Partial<UniswapQuoteResponse>),
+        balances: {
+          [`${POLYGON}:${USDC_POLYGON.address.toLowerCase()}`]: ["3000000000"],
+          // Exactly the re-quoted amount lands. Against the fresh floor that is settled; against the
+          // planner's it is 26 USDC short and never settles.
+          [`${ARBITRUM}:${USDC_ARBITRUM.address.toLowerCase()}`]: ["0", "2970000000"],
+        },
+      });
+
+      const step = buildPlanSteps(bridgeOnly(), h.deps).at(-1) as FlowStep<PlanRailCtx>;
+      const running = step.run({});
+      // Settle or reject, but do not leave an unhandled rejection while the timers advance.
+      const outcome = running.then(
+        (value) => ({ ok: true as const, value }),
+        (error: unknown) => ({ ok: false as const, error }),
+      );
+
+      // Far enough to reach the ceiling, so the unfixed code REJECTS rather than hanging the
+      // suite. After the fix it settles on the first observation and the rest is inert.
+      await vi.advanceTimersByTimeAsync(BRIDGE_SETTLE_CEILING_MS + BRIDGE_POLL_MAX_DELAY_MS);
+      const settled = await outcome;
+      if (!settled.ok) {
+        throw new Error(
+          `bridge never settled: ${(settled.error as { code?: string }).code ?? String(settled.error)}`,
+        );
+      }
+      expect(settled.value).toMatchObject({ txHash: "0xhash1" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("[R1] measures arrival against the baseline recorded BEFORE the broadcast", async () => {
     const h = harness({
       balances: {
@@ -925,6 +1007,10 @@ describe("buildPlanSteps — POO-1075 a gas bridge settles before anything depen
   };
 
   /** Native POL on Polygon into native ETH on Arbitrum. Both ends native: that is the whole point. */
+  /** What each bridge delivers after its fee. The leg fixtures and `echoQuotes` share these. */
+  const GAS_BRIDGE_OUT = "295000000000000";
+  const USDC_BRIDGE_OUT = "2996000000";
+
   const gasBridgeLeg = (overrides: Partial<ProvisioningLeg> = {}): ProvisioningLeg => ({
     index: 0,
     kind: "bridge-gas",
@@ -932,8 +1018,8 @@ describe("buildPlanSteps — POO-1075 a gas bridge settles before anything depen
     tokenIn: NATIVE_POLYGON,
     tokenOut: NATIVE_ARBITRUM,
     amountIn: "300000000000000",
-    amountOutQuoted: "295000000000000",
-    minAmountOut: "295000000000000",
+    amountOutQuoted: GAS_BRIDGE_OUT,
+    minAmountOut: GAS_BRIDGE_OUT,
     routing: "BRIDGE",
     gasUsd: 0.01,
     etaSeconds: 2,
@@ -947,6 +1033,11 @@ describe("buildPlanSteps — POO-1075 a gas bridge settles before anything depen
    * The shared harness answers every pair with one USDC-scaled quote, which a native-scale leg reads
    * as a catastrophic adverse move and the re-quote gate rightly rejects. These tests are about
    * settlement ordering, not pricing, so the quote echoes whatever pair it was asked about.
+   *
+   * It echoes the pair but NOT the amount: a bridge that returns exactly what it was given does not
+   * exist, and each leg's fixture declares its own fee. Since POO-1094 the arrival floor comes from
+   * this quote, so an output equal to the input would be a floor no real bridge could ever clear.
+   * The output is therefore chosen per pair, matching what the destination balance fixtures deliver.
    */
   const echoQuotes = (h: Harness) => {
     h.deps.quoteSwap = vi.fn(
@@ -956,7 +1047,13 @@ describe("buildPlanSteps — POO-1075 a gas bridge settles before anything depen
           routing: "BRIDGE",
           quote: {
             input: { amount: input.amount, token: input.tokenIn },
-            output: { amount: input.amount, token: input.tokenOut },
+            output: {
+              amount:
+                input.tokenOut.toLowerCase() === NATIVE_ARBITRUM.address.toLowerCase()
+                  ? GAS_BRIDGE_OUT
+                  : USDC_BRIDGE_OUT,
+              token: input.tokenOut,
+            },
           },
         }),
       }),
@@ -1002,6 +1099,7 @@ describe("buildPlanSteps — POO-1075 a gas bridge settles before anything depen
       recordBroadcast: vi.fn(),
       recordSettled,
       recordFailed: vi.fn(),
+      legStatus: vi.fn(() => null),
     };
 
     await runRail(buildPlanSteps(planOf([gasBridgeLeg()]), h.deps));
@@ -1030,5 +1128,328 @@ describe("buildPlanSteps — POO-1075 a gas bridge settles before anything depen
     const state = ctx[PLAN_RAIL_STATE_KEY] as PlanRailState;
     // The funding leg spent its own planned amount, NOT the gas bridge's 0.000295 ETH delta.
     expect(state.legAmountsIn["1"]).toBe("3000000000");
+  });
+});
+
+// POO-1136: the fiat sub-route. Paybis sells ETH / USDC on Base (8453).
+const BASE = 8453;
+const USDC_BASE_ADDR = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+const ROBINHOOD = 4663;
+/** Read from the registry, never retyped (POO-1916 [R2]). */
+const USDG_ADDR = getUsdcAddress(ROBINHOOD) as string;
+const NATIVE_ADDR = "0x0000000000000000000000000000000000000000";
+
+// `string`, not the narrow union: `ProvisioningOrder.currencyCode` IS a string on the wire, and one
+// of these specs feeds an off-domain code deliberately.
+function order(currencyCode: string, fiatAmount = "120.00") {
+  return { currencyCode, fiatAmount, fiatCurrency: "USD" };
+}
+function buyStepOf(overrides: Partial<ProvisioningStep> = {}): ProvisioningStep {
+  return {
+    type: "buy",
+    key: "buy",
+    labelKey: "provisioning.steps.buy",
+    fromToken: "USD",
+    toToken: "USDC",
+    toChainId: BASE,
+    amountUsd: 120,
+    amountToken: "120.00",
+    poweredBy: "paybis",
+    order: order("USDC-BASE"),
+    ...overrides,
+  };
+}
+function buySwapStep(overrides: Partial<ProvisioningStep> = {}): ProvisioningStep {
+  return {
+    type: "swap-token",
+    key: "buy-swap",
+    labelKey: "provisioning.steps.swapToken",
+    fromToken: "ETH",
+    toToken: "USDC",
+    fromChainId: BASE,
+    toChainId: BASE,
+    amountUsd: 96,
+    amountToken: "96.00",
+    ...overrides,
+  };
+}
+function buyBridgeStep(overrides: Partial<ProvisioningStep> = {}): ProvisioningStep {
+  return {
+    type: "bridge",
+    key: "buy-bridge",
+    labelKey: "provisioning.steps.bridge",
+    fromToken: "USDC",
+    toToken: "USDC",
+    fromChainId: BASE,
+    toChainId: ARBITRUM,
+    amountUsd: 120,
+    amountToken: "120.00",
+    etaSeconds: 120,
+    ...overrides,
+  };
+}
+function fiatPlan(steps: ProvisioningStep[]): ProvisioningPlan {
+  return {
+    needed: true,
+    reason: ["usdc"],
+    variant: "multi",
+    steps: [...steps, { type: "op", key: "op", labelKey: "provisioning.steps.op", amountUsd: 120 }],
+    quote: {
+      shortfallUsd: 120,
+      bufferUsd: 4,
+      feesUsd: 4,
+      totalPayUsd: 128,
+      quotedAt: "2026-07-30T00:00:00.000Z",
+      ttlMs: 30_000,
+    },
+    slippagePct: 2,
+  };
+}
+
+describe("planRailSteps — the fiat sub-route is synthesized into legged steps (POO-1136)", () => {
+  it("a pure USDC buy is ONE buy rail step, with no approval and no leg", () => {
+    const rail = planRailSteps(fiatPlan([buyStepOf()]));
+    expect(rail.map((s) => s.key)).toEqual(["buy"]);
+    expect(rail[0]?.kind).toBe("buy");
+  });
+
+  it("buy USDC -> bridge synthesizes a legged USDC bridge WITH its approval", () => {
+    const rail = planRailSteps(fiatPlan([buyStepOf(), buyBridgeStep()]));
+    expect(rail.map((s) => s.key)).toEqual(["buy", "approve:buy-bridge", "buy-bridge"]);
+    const bridge = rail.find((s) => s.key === "buy-bridge");
+    expect(bridge?.kind).toBe("leg");
+    const leg = bridge?.kind === "leg" ? bridge.leg : undefined;
+    expect(leg?.kind).toBe("bridge");
+    expect(leg?.requoteAtExecution).toBe(true);
+    expect(leg?.tokenIn.address.toLowerCase()).toBe(USDC_BASE_ADDR.toLowerCase());
+    expect(leg?.tokenIn.chainId).toBe(BASE);
+    expect(leg?.tokenOut.chainId).toBe(ARBITRUM);
+  });
+
+  // @rule R2 (POO-1916): the far side of a fiat bridge is the TARGET chain's own stable, read from
+  // `ChainMeta`. Before this issue the materializer matched the literal "USDC" and nothing else, so
+  // a step that correctly said `toToken: "USDG"` resolved to `undefined` and the whole bridge row
+  // refused — the purchase would have been planned and then had nowhere to land.
+  it("[R2] synthesizes the USDG far side of a Robinhood fiat bridge from the registry", () => {
+    const rail = planRailSteps(
+      fiatPlan([buyStepOf(), buyBridgeStep({ toToken: "USDG", toChainId: ROBINHOOD })]),
+    );
+
+    expect(rail.map((s) => s.key)).toEqual(["buy", "approve:buy-bridge", "buy-bridge"]);
+    const bridge = rail.find((s) => s.key === "buy-bridge");
+    const leg = bridge?.kind === "leg" ? bridge.leg : undefined;
+    expect(leg?.kind).toBe("bridge");
+    expect(leg?.tokenIn.address.toLowerCase()).toBe(USDC_BASE_ADDR.toLowerCase());
+    expect(leg?.tokenOut.address.toLowerCase()).toBe(USDG_ADDR.toLowerCase());
+    expect(leg?.tokenOut.symbol).toBe("USDG");
+    expect(leg?.tokenOut.chainId).toBe(ROBINHOOD);
+  });
+
+  // @rule R2: strictness is the other half of the rule. Resolving by "whatever symbol arrives"
+  // would route a typo, so an asset that is not the chain's stable still refuses.
+  it("[R2] still refuses a far-side asset that is not the target chain's stable", () => {
+    const rail = planRailSteps(
+      fiatPlan([buyStepOf(), buyBridgeStep({ toToken: "USDG", toChainId: ARBITRUM })]),
+    );
+    const bridge = rail.find((s) => s.key === "buy-bridge");
+    expect(bridge?.kind === "leg" ? bridge.leg : undefined).toBeUndefined();
+  });
+
+  it("buy ETH -> swap synthesizes a native swap with NO approval, and reserves the gas share", () => {
+    const rail = planRailSteps(
+      fiatPlan([buyStepOf({ toToken: "ETH", order: order("ETH-BASE") }), buySwapStep()]),
+    );
+    // Native ETH input needs no ERC-20 approval, so no approve row.
+    expect(rail.map((s) => s.key)).toEqual(["buy", "buy-swap"]);
+    const swap = rail.find((s) => s.key === "buy-swap");
+    const leg = swap?.kind === "leg" ? swap.leg : undefined;
+    expect(leg?.tokenIn.address).toBe(NATIVE_ADDR);
+    expect(leg?.tokenOut.address.toLowerCase()).toBe(USDC_BASE_ADDR.toLowerCase());
+    // 96 funding of a 120 buy => convert 80% of the delta, reserve 20% as gas ([R1]).
+    expect(swap?.kind === "leg" ? swap.sizeFractionBps : undefined).toBe(8000);
+    // POO-1154 Gap 2: the proportional reserve already holds native back, so no signing floor is set —
+    // the floor is only for the full-delta case below. The normal case is unchanged.
+    expect(swap?.kind === "leg" ? swap.reserveNativeRaw : "unset").toBeUndefined();
+  });
+
+  // POO-1154 Gap 2 / [R13]: a native ETH buy-swap that spends the FULL delta (fraction undefined,
+  // because the funding share is not strictly below the buy total) would build a swap of 100% of the
+  // native balance, which the swap tx itself cannot gas. The rail marks it to retain the signing
+  // reserve instead. This is the [R13] second consumer (a floor of native KEPT to sign), never a gas
+  // COST, so `classifyGasFeasibility` and the quote-driven gas path are untouched.
+  it("marks a full-delta native buy-swap to retain the native signing reserve (POO-1154 Gap 2)", () => {
+    const rail = planRailSteps(
+      // funding (120) == buy total (120) => fiatSwapFractionBps returns undefined => spend the whole delta.
+      fiatPlan([
+        buyStepOf({ toToken: "ETH", order: order("ETH-BASE") }),
+        buySwapStep({ amountUsd: 120, amountToken: "120.00" }),
+      ]),
+    );
+    const swap = rail.find((s) => s.key === "buy-swap");
+    expect(swap?.kind === "leg" ? swap.sizeFractionBps : "fraction").toBeUndefined();
+    const expectedReserve = parseUnits(NATIVE_RESERVE_ETH.toFixed(18), 18).toString();
+    expect(swap?.kind === "leg" ? swap.reserveNativeRaw : undefined).toBe(expectedReserve);
+  });
+
+  it("does NOT set a signing reserve on a full-delta USDC buy-bridge (non-native, POO-1154 Gap 2)", () => {
+    // A USDC buy + bridge spends the whole (already-USDC) delta; USDC pays no native gas, so no reserve.
+    const rail = planRailSteps(fiatPlan([buyStepOf(), buyBridgeStep()]));
+    const bridge = rail.find((s) => s.key === "buy-bridge");
+    expect(bridge?.kind === "leg" ? bridge.sizeFractionBps : "fraction").toBeUndefined();
+    expect(bridge?.kind === "leg" ? bridge.reserveNativeRaw : "unset").toBeUndefined();
+  });
+
+  it("synthesized fiat legs never collide with the planner's crypto leg indices", () => {
+    // A mixed plan: a fiat buy + bridge for the remainder, then a crypto swap already on chain.
+    const rail = planRailSteps(fiatPlan([buyStepOf(), buyBridgeStep(), stepFor(swapLeg())]));
+    const indices = rail
+      .filter((s) => s.kind === "leg" && s.leg)
+      .map((s) => (s.kind === "leg" ? s.leg?.index : undefined));
+    expect(new Set(indices).size).toBe(indices.length);
+  });
+
+  it("still refuses a genuinely legless step that is NOT part of a fiat sub-route", () => {
+    const lonelyLegless: ProvisioningStep = {
+      type: "swap-token",
+      key: "swap-token-0",
+      labelKey: "provisioning.steps.swapToken",
+      fromToken: "WETH",
+      toToken: "USDC",
+      fromChainId: POLYGON,
+      toChainId: POLYGON,
+      amountUsd: 100,
+    };
+    const rail = planRailSteps(fiatPlan([lonelyLegless]));
+    const step = rail.find((s) => s.key === "swap-token-0");
+    expect(step?.kind === "leg" ? step.leg : "no-leg").toBeUndefined();
+  });
+});
+
+describe("buildPlanSteps — [R8]/[R4] the fiat buy step runs the on-ramp (POO-1136)", () => {
+  it("mints + settles through runOnRampBuy and returns terminal-good WITHOUT a tx hash", async () => {
+    const h = harness({ balances: { [`${BASE}:${USDC_BASE_ADDR.toLowerCase()}`]: ["5000000"] } });
+    const runOnRampBuy = vi.fn(async () => {});
+    const { outcomes } = await runRail(
+      buildPlanSteps(fiatPlan([buyStepOf()]), { ...h.deps, runOnRampBuy }),
+    );
+    // [R11] scoped to the token the order bought.
+    expect(runOnRampBuy).toHaveBeenCalledWith({
+      order: order("USDC-BASE"),
+      expectedToken: "USDC-BASE",
+    });
+    // A fiat buy mines no transaction: done, no hash, not skipped.
+    expect(outcomes).toEqual([{ key: "buy", skipped: false }]);
+  });
+
+  it("records the pre-purchase baseline of the delivered token", async () => {
+    const h = harness({ balances: { [`${BASE}:${USDC_BASE_ADDR.toLowerCase()}`]: ["5000000"] } });
+    const { ctx } = await runRail(
+      buildPlanSteps(fiatPlan([buyStepOf()]), { ...h.deps, runOnRampBuy: vi.fn(async () => {}) }),
+    );
+    const state = ctx[PLAN_RAIL_STATE_KEY] as PlanRailState;
+    // The synthetic buy leg's index is 0 (no crypto legs precede it).
+    expect(state.outBaselines["0"]).toBe("5000000");
+  });
+
+  it("propagates a terminal fiat failure so the flow fails legibly", async () => {
+    const h = harness();
+    const runOnRampBuy = vi.fn(async () => {
+      throw new Error("card declined");
+    });
+    const step = buildPlanSteps(fiatPlan([buyStepOf()]), { ...h.deps, runOnRampBuy })[0];
+    await expect(step?.run({})).rejects.toThrow("card declined");
+  });
+
+  it("refuses legibly when no on-ramp runner is wired (never silently skips a purchase)", async () => {
+    const h = harness();
+    const step = buildPlanSteps(fiatPlan([buyStepOf()]), h.deps)[0];
+    await expect(step?.run({})).rejects.toMatchObject({
+      cause: { code: "PROVISIONING_STEP_UNSUPPORTED" },
+    });
+  });
+
+  // @rule R11 — `ProvisioningOrder.currencyCode` is typed `string` (it crosses the planner boundary as
+  // data), so an unexpected code is a runtime possibility, not a type error. Unvalidated it reaches
+  // `selectPurchaseDeltas`, misses the scope map and throws a bare TypeError at SETTLEMENT time, i.e.
+  // after the card is charged. Refusing before the widget opens costs the user nothing.
+  it("refuses an unsupported currency code BEFORE opening the widget", async () => {
+    const h = harness();
+    const runOnRampBuy = vi.fn(async () => {});
+    const step = buildPlanSteps(fiatPlan([buyStepOf({ order: order("DOGE-BASE") })]), {
+      ...h.deps,
+      runOnRampBuy,
+    })[0];
+
+    await expect(step?.run({})).rejects.toMatchObject({
+      cause: { code: "PROVISIONING_STEP_UNSUPPORTED" },
+    });
+    // No purchase was ever started, which is the point of validating here rather than at settlement.
+    expect(runOnRampBuy).not.toHaveBeenCalled();
+  });
+
+  it("[R4] sizes the ETH->USDC swap from the settled delta, reserving the gas share", async () => {
+    // Baseline 0.1 ETH, 0.16 ETH after the purchase: a 0.06 ETH delta. The 80% funding share is
+    // 0.048 ETH swapped to USDC; the 20% (0.012 ETH) stays as gas.
+    const h = harness({
+      balances: { [`${BASE}:${NATIVE_ADDR}`]: ["100000000000000000", "160000000000000000"] },
+      swap: txRequest({ chainId: BASE }),
+    });
+    await runRail(
+      buildPlanSteps(
+        fiatPlan([buyStepOf({ toToken: "ETH", order: order("ETH-BASE") }), buySwapStep()]),
+        { ...h.deps, runOnRampBuy: vi.fn(async () => {}) },
+      ),
+    );
+    const swapQuote = h.quoteSwap.mock.calls
+      .map((c) => c[0])
+      .find((i) => i.tokenIn === NATIVE_ADDR);
+    expect(swapQuote?.amount).toBe("48000000000000000");
+  });
+
+  // POO-1154 Gap 2 / [R13]: a native ETH buy whose gas component is zero sizes the buy-swap to the FULL
+  // delta today, which swaps 100% of the native balance and leaves nothing to gas the swap. The rail
+  // now retains the signing reserve, so the swap converts `delta - reserve` and keeps enough ETH to
+  // broadcast. The reserve is native the user KEEPS to sign, not a fabricated gas cost ([R13]).
+  it("[R13] a full-delta native buy-swap retains the signing reserve rather than swapping 100%", async () => {
+    // Baseline 0.1 ETH, 0.16 ETH after the purchase: a 0.06 ETH delta. Funding (120) == buy total (120),
+    // so there is no proportional gas share; without the reserve the swap would take all 0.06 ETH.
+    const h = harness({
+      balances: { [`${BASE}:${NATIVE_ADDR}`]: ["100000000000000000", "160000000000000000"] },
+      swap: txRequest({ chainId: BASE }),
+    });
+    await runRail(
+      buildPlanSteps(
+        fiatPlan([
+          buyStepOf({ toToken: "ETH", order: order("ETH-BASE") }),
+          buySwapStep({ amountUsd: 120, amountToken: "120.00" }),
+        ]),
+        { ...h.deps, runOnRampBuy: vi.fn(async () => {}) },
+      ),
+    );
+    const swapQuote = h.quoteSwap.mock.calls
+      .map((c) => c[0])
+      .find((i) => i.tokenIn === NATIVE_ADDR);
+    const reserve = parseUnits(NATIVE_RESERVE_ETH.toFixed(18), 18);
+    // delta (0.06 ETH) minus the retained signing reserve.
+    expect(swapQuote?.amount).toBe((BigInt("60000000000000000") - reserve).toString());
+  });
+
+  // Mutation guard: the reserve must actually be SUBTRACTED. A delta at or below the reserve leaves
+  // nothing to swap, and the leg fails legibly (the shipped PROVISIONING_LEG_EMPTY path) rather than
+  // building a zero / negative swap.
+  it("[R13] a native buy-swap whose whole delta is the reserve fails legibly (POO-1154 Gap 2)", async () => {
+    // Baseline 0.1 ETH, +0.0005 ETH delta: below the 0.001 ETH signing reserve, so nothing remains.
+    const h = harness({
+      balances: { [`${BASE}:${NATIVE_ADDR}`]: ["100000000000000000", "100500000000000000"] },
+      swap: txRequest({ chainId: BASE }),
+    });
+    const steps = buildPlanSteps(
+      fiatPlan([
+        buyStepOf({ toToken: "ETH", order: order("ETH-BASE") }),
+        buySwapStep({ amountUsd: 120, amountToken: "120.00" }),
+      ]),
+      { ...h.deps, runOnRampBuy: vi.fn(async () => {}) },
+    );
+    await expect(runRail(steps)).rejects.toThrow(/delivered nothing/i);
   });
 });

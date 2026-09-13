@@ -1,0 +1,704 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedBy": {
+    "tool": "hookrisk",
+    "version": "0.1.0",
+    "commandLine": "hookrisk scan src/WETHHook.sol:WETHHook"
+  },
+  "target": {
+    "mode": "source",
+    "contractName": "WETHHook",
+    "sourceFile": "src/WETHHook.sol",
+    "solcVersion": "0.8.26",
+    "artifactDir": "foundry-out",
+    "projectConfigSource": "forge-config"
+  },
+  "findings": [
+    {
+      "id": "0b9dc8497a331008",
+      "ruleClass": "external-call-in-swap-path",
+      "title": "WETHHook._withdraw(uint256) (src/WETHHook.sol#43-50) makes a state-changing call to `weth` in the swap path (_withdraw:47), reached from beforeSwap",
+      "description": "WETHHook._withdraw(uint256) (src/WETHHook.sol#43-50) makes a state-changing call to `weth` in the swap path (_withdraw:47), reached from beforeSwap. That address is a dependency the pool did not have: a revert or a pause there reverts every swap on every pool using this hook.",
+      "severity": "medium",
+      "confidence": "medium",
+      "location": {
+        "file": "src/WETHHook.sol",
+        "line": 43,
+        "endLine": 50
+      },
+      "function": {
+        "name": "_withdraw"
+      },
+      "discriminator": "weth",
+      "evidence": [
+        "WETHHook._withdraw(uint256) (src/WETHHook.sol#43-50) makes a state-changing call to `weth` in the swap path (_withdraw:47), reached from beforeSwap. That address is a dependency the pool did not have: a revert or a pause there reverts every swap on every pool using this hook."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-external-call-in-swap-path",
+          "severity": "medium",
+          "confidence": "medium"
+        }
+      ],
+      "informsDimensions": [
+        "externalDependencies",
+        "complexity"
+      ],
+      "metrics": {
+        "destination": "weth",
+        "isStatic": false,
+        "unhandled": true
+      }
+    },
+    {
+      "id": "c996854d75650abe",
+      "ruleClass": "custom-accounting",
+      "title": "WETHHook (src/WETHHook.sol#12-54) declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3)",
+      "description": "WETHHook (src/WETHHook.sol#12-54) declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3). The hook can alter settled amounts, which raises its risk tier under the framework's custom-math and price-impact triggers and means differential output comparison (invariant I2) does not apply — the harness substitutes price monotonicity.",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/WETHHook.sol",
+        "line": 12,
+        "endLine": 54
+      },
+      "evidence": [
+        "WETHHook (src/WETHHook.sol#12-54) declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3). The hook can alter settled amounts, which raises its risk tier under the framework's custom-math and price-impact triggers and means differential output comparison (invariant I2) does not apply — the harness substitutes price monotonicity."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-custom-accounting",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ],
+      "informsDimensions": [
+        "customMath",
+        "priceImpactingBehavior"
+      ],
+      "informsTriggers": [
+        "custom-math",
+        "price-impact"
+      ]
+    },
+    {
+      "id": "565da8d49210a114",
+      "ruleClass": "callback-intentionally-disabled",
+      "title": "WETHHook (src/WETHHook.sol#12-54) overrides `beforeAddLiquidity` (inherited from BaseTokenWrapperHook._beforeAddLiquidity) with `revert …",
+      "description": "WETHHook (src/WETHHook.sol#12-54) overrides `beforeAddLiquidity` (inherited from BaseTokenWrapperHook._beforeAddLiquidity) with `revert LiquidityNotAllowed()`, so PoolManager-routed liquidity addition is disabled by design; the differential harness records such reverts when it runs. This is not the missing implementation HS-02 reports.",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/WETHHook.sol",
+        "line": 12,
+        "endLine": 54
+      },
+      "discriminator": "beforeAddLiquidity",
+      "evidence": [
+        "WETHHook (src/WETHHook.sol#12-54) overrides `beforeAddLiquidity` (inherited from BaseTokenWrapperHook._beforeAddLiquidity) with `revert LiquidityNotAllowed()`, so PoolManager-routed liquidity addition is disabled by design; the differential harness records such reverts when it runs. This is not the missing implementation HS-02 reports."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-disabled-callback",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "id": "b679a0a144e04534",
+      "ruleClass": "hook-profile",
+      "title": "WETHHook (src/WETHHook.sol#12-54) is a recognised v4 hook: implements beforeInitialize, beforeSwap; declares 3 callback permission(s); 0 state write(s) …",
+      "description": "WETHHook (src/WETHHook.sol#12-54) is a recognised v4 hook: implements beforeInitialize, beforeSwap; declares 3 callback permission(s); 0 state write(s) reachable from callbacks; 7 external call(s) in the swap path.",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/WETHHook.sol",
+        "line": 12,
+        "endLine": 54
+      },
+      "evidence": [
+        "WETHHook (src/WETHHook.sol#12-54) is a recognised v4 hook: implements beforeInitialize, beforeSwap; declares 3 callback permission(s); 0 state write(s) reachable from callbacks; 7 external call(s) in the swap path."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-hook-profile",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ],
+      "informsDimensions": [
+        "complexity"
+      ],
+      "metrics": {
+        "callbacksImplemented": 2,
+        "callbacksDeclared": 3,
+        "stateWritesInCallbacks": 0,
+        "externalCallsInSwapPath": 7,
+        "externalCallsInSwapPathThirdParty": 1,
+        "internalFunctionsReachableFromCallbacks": 13,
+        "usesReturnsDelta": true,
+        "hasOwnerOnlyFunctions": false
+      },
+      "permissions": {
+        "beforeInitialize": true,
+        "afterInitialize": false,
+        "beforeAddLiquidity": true,
+        "afterAddLiquidity": false,
+        "beforeRemoveLiquidity": false,
+        "afterRemoveLiquidity": false,
+        "beforeSwap": true,
+        "afterSwap": false,
+        "beforeDonate": false,
+        "afterDonate": false,
+        "beforeSwapReturnDelta": true,
+        "afterSwapReturnDelta": false,
+        "afterAddLiquidityReturnDelta": false,
+        "afterRemoveLiquidityReturnDelta": false
+      }
+    }
+  ],
+  "score": {
+    "total": 15,
+    "totalUpperBound": 21,
+    "tier": "medium",
+    "tierUpperBound": "high",
+    "inconclusive": true,
+    "rubric": {
+      "framework": "Uniswap Hooks Security Framework",
+      "revision": "e7e8da52fd5717b6eb4517ea779b766f63148c41",
+      "url": "https://github.com/uniswapfoundation/security-framework"
+    },
+    "dimensions": [
+      {
+        "id": "complexity",
+        "name": "Complexity",
+        "value": 4,
+        "max": 5,
+        "source": "measured",
+        "bracketLabel": "Returns a delta and makes an external call in the swap path",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "hook-profile metrics: callbacksImplemented=2, callbacksDeclared=3, stateWritesInCallbacks=0, externalCallsInSwapPath=7, externalCallsInSwapPathThirdParty=1, internalFunctionsReachableFromCallbacks=13, usesReturnsDelta=true, hasOwnerOnlyFunctions=false",
+          "Scored 4 by rule `usesReturnsDelta && externalCallsInSwapPath >= 1`: A hook that both alters settled amounts and leaves the swap path mid-flight has two interacting flows to reason about, not one. (hookrisk’s interpretation; the framework publishes no brackets)",
+          "The hook implements callbacks with non-trivial structure. This establishes a floor only; the measured value comes from the hook-profile metrics when the engine profiled the target."
+        ]
+      },
+      {
+        "id": "customMath",
+        "name": "Custom math",
+        "value": 3,
+        "max": 5,
+        "source": "measured",
+        "bracketLabel": "A custom curve or invariant function",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "1 custom-accounting finding(s)",
+          "Custom accounting implies a custom curve or non-standard settlement arithmetic."
+        ]
+      },
+      {
+        "id": "externalDependencies",
+        "name": "External dependencies",
+        "value": 2,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "A dependency read inside the swap path, or more than one dependency",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "1 external-call-in-swap-path finding(s)",
+          "Scored 2 by rule `always` on weth (medium): The framework's 2 bracket verbatim: a dependency read inside the swap path. Unconditional, so a finding whose call kind the detector did not classify also scores 2 — the direction that does not understate risk. (hookrisk’s interpretation; the framework publishes no brackets)",
+          "An external call inside the swap path reopens the execution environment mid-swap."
+        ]
+      },
+      {
+        "id": "externalLiquidityExposure",
+        "name": "External liquidity exposure",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": []
+      },
+      {
+        "id": "tvlPotential",
+        "name": "TVL potential",
+        "value": 0,
+        "max": 5,
+        "source": "declared",
+        "bracketLabel": "Under $100K (experimental or personal project)",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure tvlPotential."
+        ]
+      },
+      {
+        "id": "teamMaturity",
+        "name": "Team maturity",
+        "value": 3,
+        "max": 3,
+        "source": "declared",
+        "bracketLabel": "Unproven: no prior production deployments, or deployments lacking audits and operational rigor; new, anonymous, or no public track record",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure teamMaturity."
+        ]
+      },
+      {
+        "id": "upgradeability",
+        "name": "Upgradeability",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "Not measured: no detector for upgradeable-hook (needs blocksec, which did not run); selfdestruct requires blocksec, which did not run."
+        ]
+      },
+      {
+        "id": "autonomousParameterUpdates",
+        "name": "Autonomous parameter updates",
+        "value": 0,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "All parameters set by an explicit privileged call",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "No admin-surface findings, and every detector that could produce one ran.",
+          "Corroborated by the hook profile: no owner-only surface, and HS-03 found no unguarded mutator of callback-read state."
+        ]
+      },
+      {
+        "id": "priceImpactingBehavior",
+        "name": "Price impacting behavior",
+        "value": 3,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "Returns a swap delta (custom curve or NoOp), or adjusts fees without a ceiling",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "1 custom-accounting finding(s)",
+          "A returns-delta permission lets the hook alter settled amounts, which is the framework’s definition of price-impacting behaviour."
+        ]
+      }
+    ],
+    "triggers": [
+      {
+        "id": "custom-math",
+        "name": "Custom Curve or Non Standard Math",
+        "firedBy": [
+          "customMath >= 3 (is 3)",
+          "returns-delta-permission"
+        ],
+        "derivationIsInterpretation": true
+      },
+      {
+        "id": "external-dependencies",
+        "name": "External Protocol or Oracle Dependencies",
+        "firedBy": [
+          "externalDependencies >= 1 (is 2)",
+          "detector:external-call-in-swap-path"
+        ],
+        "derivationIsInterpretation": true
+      },
+      {
+        "id": "price-impact",
+        "name": "Price Impacting Behavior",
+        "firedBy": [
+          "priceImpactingBehavior >= 1 (is 3)",
+          "returns-delta-permission"
+        ],
+        "derivationIsInterpretation": true
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "adversarial-simulation",
+        "label": "Adversarial and economic simulation",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:price-impact",
+            "strength": "required",
+            "detail": "Auditors should simulate worst-case economic and adversarial price manipulation"
+          }
+        ]
+      },
+      {
+        "action": "audit",
+        "label": "Security audit",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "required",
+            "detail": "One full audit"
+          },
+          {
+            "from": "trigger:external-dependencies",
+            "strength": "required",
+            "detail": "Must review trust assumptions, failure modes and fallback logic"
+          }
+        ]
+      },
+      {
+        "action": "bug-bounty",
+        "label": "Bug bounty programme",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended"
+          },
+          {
+            "from": "trigger:external-dependencies",
+            "strength": "recommended"
+          },
+          {
+            "from": "trigger:price-impact",
+            "strength": "required"
+          }
+        ]
+      },
+      {
+        "action": "math-specialist-audit",
+        "label": "Audit by a math and invariants specialist",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "required",
+            "detail": "At least one audit including a math and invariants specialist"
+          },
+          {
+            "from": "trigger:price-impact",
+            "strength": "required",
+            "detail": "Auditor should specialize in math"
+          }
+        ]
+      },
+      {
+        "action": "scenario-testing",
+        "label": "Dependency-failure scenario testing",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:external-dependencies",
+            "strength": "required",
+            "detail": "For dependency failures"
+          }
+        ]
+      },
+      {
+        "action": "static-analysis",
+        "label": "Automated static analysis",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "required",
+            "detail": "AI static analysis tools"
+          }
+        ]
+      },
+      {
+        "action": "unit-tests-boundaries",
+        "label": "Unit tests covering input-range boundaries",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "required",
+            "detail": "Validate intermediate steps, edge cases and input-range boundaries"
+          }
+        ]
+      },
+      {
+        "action": "monitoring",
+        "label": "Continuous monitoring with anomaly detection",
+        "strength": "strongly-recommended",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended",
+            "detail": "If external dependencies exist"
+          },
+          {
+            "from": "trigger:custom-math",
+            "strength": "recommended"
+          },
+          {
+            "from": "trigger:external-dependencies",
+            "strength": "strongly-recommended",
+            "detail": "Dependency health"
+          }
+        ]
+      },
+      {
+        "action": "extended-test-coverage",
+        "label": "Extended test coverage",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended",
+            "detail": "Where autonomy or parameter updates exist"
+          }
+        ]
+      },
+      {
+        "action": "formal-verification",
+        "label": "Formal verification",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "recommended"
+          },
+          {
+            "from": "trigger:price-impact",
+            "strength": "recommended"
+          }
+        ]
+      },
+      {
+        "action": "invariant-testing",
+        "label": "Invariant and stateful fuzz testing",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "recommended",
+            "detail": "Stateful fuzzing may significantly improve assurance"
+          }
+        ]
+      },
+      {
+        "action": "second-audit",
+        "label": "Second independent audit",
+        "strength": "optional",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "optional",
+            "detail": "For math or complex components"
+          }
+        ]
+      }
+    ],
+    "warnings": [
+      "2 dimension(s) unmeasured: the tier is between Medium Risk and High Risk. Unmeasured dimensions are excluded from the total, never counted as zero.",
+      "trigger 'holds-liquidity' could not be evaluated: dimension 'externalLiquidityExposure' is unmeasured",
+      "trigger 'upgradeable' could not be evaluated: dimension 'upgradeability' is unmeasured"
+    ]
+  },
+  "engines": [
+    {
+      "engine": "hookrisk",
+      "displayName": "hookrisk Slither detectors",
+      "version": "0.11.6",
+      "status": "ok",
+      "findingCount": 4,
+      "durationMs": 11261
+    },
+    {
+      "engine": "harness",
+      "displayName": "Differential harness (Foundry)",
+      "version": "1.7.1",
+      "status": "skipped",
+      "reason": "WETHHook's constructor takes 2 argument(s) (address _manager, address _weth) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.",
+      "errorCode": "HR-E305",
+      "findingCount": 0,
+      "durationMs": 6
+    }
+  ],
+  "coverage": {
+    "corroboratedFindings": 0,
+    "uncoveredFunctions": [
+      {
+        "contract": "BaseAggregatorHook",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "BaseAggregatorHook",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "BaseHookDataAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "BaseHookDataAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "FluidDexLiteAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "FluidDexLiteAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "FluidDexT1Aggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "FluidDexT1Aggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "LitePSMAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "LitePSMAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "PancakeSwapV3Aggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "PancakeSwapV3Aggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "SlipstreamAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "SlipstreamAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "StableSwapAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "StableSwapAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "StableSwapNGAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "StableSwapNGAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "TempoExchangeAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "TempoExchangeAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "UniswapV2Aggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "UniswapV2Aggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "UniswapV3Aggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "UniswapV3Aggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "UniswapXAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "UniswapXAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      }
+    ],
+    "staticAnalysisSkipped": false,
+    "dynamicAnalysisSkipped": true,
+    "harnessStatus": "skipped"
+  },
+  "permissions": {
+    "fromEngine": {
+      "beforeInitialize": true,
+      "afterInitialize": false,
+      "beforeAddLiquidity": true,
+      "afterAddLiquidity": false,
+      "beforeRemoveLiquidity": false,
+      "afterRemoveLiquidity": false,
+      "beforeSwap": true,
+      "afterSwap": false,
+      "beforeDonate": false,
+      "afterDonate": false,
+      "beforeSwapReturnDelta": true,
+      "afterSwapReturnDelta": false,
+      "afterAddLiquidityReturnDelta": false,
+      "afterRemoveLiquidityReturnDelta": false
+    }
+  },
+  "invariants": [
+    {
+      "id": "I1",
+      "name": "Conservation and solvency",
+      "status": "skipped",
+      "detail": "WETHHook's constructor takes 2 argument(s) (address _manager, address _weth) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305."
+    },
+    {
+      "id": "I2",
+      "name": "No undeclared extraction",
+      "status": "skipped",
+      "detail": "WETHHook's constructor takes 2 argument(s) (address _manager, address _weth) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305."
+    },
+    {
+      "id": "I3",
+      "name": "Exit liveness",
+      "status": "skipped",
+      "detail": "WETHHook's constructor takes 2 argument(s) (address _manager, address _weth) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305."
+    }
+  ],
+  "gate": {
+    "passed": true,
+    "maxSeverity": "high",
+    "failOnInconclusive": false,
+    "failOnNotAnalysed": true,
+    "failures": []
+  }
+}

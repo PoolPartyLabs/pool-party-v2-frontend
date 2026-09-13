@@ -1,0 +1,57 @@
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+libs = ["lib"]
+solc = "0.8.26"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+bytecode_hash = "none"
+# Read: `vm.getCode` resolves fixture artifacts from `out/`. Write: the generic
+# harness leaves `out/hookrisk-run-<id>.json` there at the end of `setUp` so the
+# CLI can tell a run that never started from a run with nothing to report.
+# Foundry matches permissions by path prefix, so `./out` is the narrowest scope
+# that admits a file whose name is not known until runtime.
+fs_permissions = [{ access = "read-write", path = "./out" }]
+# Deliberately off. v4-core builds with via_ir for gas snapshots; we build for
+# analysis, and via_ir roughly triples compile time for no benefit to us. If a
+# future v4-core release stack-overflows without it, flip it here rather than
+# in a profile so every profile inherits the fix.
+via_ir = false
+
+[profile.default.fuzz]
+runs = 256
+
+# `scan` is what the GitHub Action runs: bounded so a hook repository's CI stays
+# under a few minutes, deep enough to catch state-dependent exit bugs.
+[profile.scan.invariant]
+runs = 256
+depth = 32
+fail_on_revert = false
+shrink_run_limit = 5000
+
+[profile.scan.fuzz]
+runs = 256
+
+# `deep` is for an overnight local run against a hook you actually intend to
+# ship. Same invariants, three orders of magnitude more sequences.
+[profile.deep.invariant]
+runs = 5000
+depth = 128
+fail_on_revert = false
+shrink_run_limit = 100000
+
+[profile.deep.fuzz]
+runs = 100000
+
+[fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = false
+int_types = "long"
+
+[rpc_endpoints]
+base = "${BASE_RPC_URL}"
+unichain = "${UNICHAIN_RPC_URL}"
+mainnet = "${MAINNET_RPC_URL}"

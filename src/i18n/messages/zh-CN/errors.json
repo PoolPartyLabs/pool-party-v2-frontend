@@ -21,5 +21,10 @@
     "unauthorized": "您没有执行此操作的权限。请重新登录。",
     "notFound": "未找到您要查找的内容。",
     "unknown": "我们这边出了点问题。请重试。"
+  },
+  "reference": {
+    "label": "参考编号",
+    "copy": "复制",
+    "copied": "已复制"
   }
 }

@@ -37,7 +37,13 @@
     "bank": {
       "name": "銀行振込",
       "meta": "1〜2営業日"
-    }
+    },
+    "allBlocked": "入金額を{amount}以上に増やしてください。現在、これより少ない金額に対応できる支払い方法はありません。",
+    "loading": "この通貨で利用できる支払い方法を読み込んでいます",
+    "unavailable": "Paybisから現在利用できる支払い方法が返されませんでした。このまま進んで、安全なチェックアウトで支払い方法を選べます。",
+    "blocked": "Paybisでは{amount}以上が必要です。",
+    "minimum": "最低 {amount}",
+    "charge": "支払額 {amount}"
   },
   "review": {
     "title": "確認",
@@ -51,7 +57,11 @@
     "payingWith": "{method}で支払い",
     "change": "変更",
     "confirm": "{method}で確認して支払う",
-    "poweredBy": "Powered by Paybis"
+    "poweredBy": "Powered by Paybis",
+    "payAtCheckout": "チェックアウトで表示",
+    "choosePayment": "支払い方法を選択",
+    "ethUnpriced": "現在ETHの価格を取得できなかったため、購入を開始できませんでした。もう一度お試しください。",
+    "confirmGeneric": "確認して支払う"
   },
   "success": {
     "title": "入金が完了しました",
@@ -61,7 +71,8 @@
     "method": "方法",
     "date": "日付",
     "investNow": "今すぐ投資",
-    "backHome": "ホームに戻る"
+    "backHome": "ホームに戻る",
+    "viewWalletOnExplorer": "エクスプローラーでウォレットを見る"
   },
   "crypto": {
     "title": "暗号資産を入金",
@@ -72,8 +83,8 @@
     "share": "アドレスを共有",
     "asset": "USD Coin · USDC",
     "sent": "資金を送りました",
-    "waitingTitle": "入金を待っています",
-    "waitingBody": "自動的に検出します。特に操作は必要ありません。",
+    "waitingTitle": "数分後にもう一度ご確認ください",
+    "waitingBody": "他のアプリや取引所から送られた送金は確認できません。着金すると残高は自動的に更新されます。",
     "viewAddress": "アドレスとQRを表示",
     "receivedTitle": "入金を受け取りました",
     "added": "{amount} USDCを追加しました",
@@ -87,5 +98,48 @@
     "networkContinue": "続行",
     "changeNetwork": "ネットワークを変更",
     "networkWarning": "USDC は {network} ネットワークでのみ送金してください。他のネットワークで送金すると永久に失う可能性があります。"
+  },
+  "onramp": {
+    "checkout": {
+      "approx": "安全な決済画面では少し高い金額が表示されます。これは提供事業者のスプレッドを含むためで、ウォレットにはおよそ {amount} USDC が届きます。",
+      "approxNoPrefill": "安全な決済画面で支払う金額を入力してください。ウォレットにはおよそ {amount} USDC が届きます。",
+      "baselineUnavailable": "ウォレット残高を読み取れなかったため、まだ購入を開始できません。接続を確認してもう一度お試しください。",
+      "belowMinimum": "投資の最低額 {amount} を下回っています。お金はウォレットにあり、いつでも追加できます。",
+      "uncoveredTitle": "現在お売りできません",
+      "uncoveredBody": "本日はこの金額で {currency} の暗号資産を販売している事業者がありません。別の金額をお試しいただくか、後ほどお越しください。",
+      "currencyUnsupportedBody": "現在、お客様の通貨でのお支払いは受け付けられません。少し時間をおいてもう一度お試しいただくか、後ほどお越しください。",
+      "unverifiedTitle": "お支払いをまだ確認できていません",
+      "unverifiedBody": "お支払い済みの場合、決済が完了しだい資金がウォレットに表示されます。このページを離れても問題はなく、何も失われません。",
+      "openingTitle": "安全な決済画面を開いています",
+      "openingBody": "安全な決済画面で購入を完了してください。このページは開いたままにしてください。"
+    },
+    "resume": {
+      "startNew": "新しい購入を開始",
+      "title": "進行中の購入がある可能性があります",
+      "body": "{minutes}分前に購入を開始しました。支払い済みの場合、送金がまだ進行中の可能性があります。再開すると到着を待ちます。新規作成すると新しい購入になるため、最初の購入が成立しなかった場合のみ選んでください。",
+      "resume": "その購入を再開",
+      "paidTitle": "購入した資金がまだ到着していません",
+      "paidBody": "{minutes}分前にお支払いいただきましたが、資金がまだ到着していません。特に銀行振込では時間がかかることがあります。通常はお待ちいただくのが適切です。最初の購入が確実に到着しないと分かっている場合にのみ、新規購入を開始してください。再度支払うことになります。",
+      "keepWaiting": "待機を続ける"
+    },
+    "settlingTitle": "支払いを受け取りました",
+    "settlingBody": "資金が確定するとすぐに残高が更新されます。数分かかる場合があります。",
+    "tryAgain": "もう一度試す",
+    "settledErrorTitle": "購入が完了しました",
+    "errorTitle": "購入が完了しませんでした",
+    "settledErrorBody": "USDCへの交換を完了できませんでした。資金は安全で、Base上のETHとして保管されています。もう一度お試しいただくと交換が完了します。",
+    "errorBody": "購入は完了せず、資金は移動していません。もう一度お試しください。",
+    "referenceLabel": "参照 ID",
+    "paybisReferenceLabel": "Paybis 参照 ID",
+    "title": "暗号資産を購入",
+    "connecting": "購入を準備しています",
+    "swapping": "USDCに交換しています"
+  },
+  "secureCheckout": "安全な決済",
+  "currency": {
+    "title": "通貨",
+    "search": "{count}件の通貨を検索",
+    "noResults": "該当する通貨がありません",
+    "footnote": "支払い方法は通貨によって異なります。"
   }
 }

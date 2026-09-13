@@ -29,10 +29,10 @@ import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Position, Strategy } from "@/lib/schemas";
 import {
-  act,
   fireEvent,
   renderWithProviders,
   screen,
+  waitFor,
 } from "../../../../tests/utils/renderWithProviders";
 import { MAX_BUILT_TX_AGE_MS } from "../hooks/useWalletSignFlow";
 import { CollectModal } from "./CollectModal";
@@ -140,7 +140,7 @@ const managed = {
  * The mock rail settles in under a second either way; the clock is what the flow reads.
  */
 function confirmPlan(settlesAt = T0): void {
-  fireEvent.click(screen.getByRole("button", { name: "Confirm & continue" }));
+  fireEvent.click(screen.getByTestId("gas-topup-confirm"));
   vi.spyOn(Date, "now").mockReturnValue(settlesAt);
 }
 
@@ -158,21 +158,36 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+/**
+ * POO-1504 [R27]: the run no longer hands the operation back on its own.
+ *
+ * The bottom button IS the run's state, so once every leg has settled it reads `Done` and is ENABLED,
+ * and pressing it is what resumes the original operation. `onDone` used to fire the instant the last
+ * leg settled, which meant the "all done" screen was never seen. The completion EVENT is unmoved: it
+ * still fires on settlement (premise 11), and only the handoff waits for this press.
+ */
+async function pressDone(): Promise<void> {
+  const done = await screen.findByTestId("provisioning-exec-state", undefined, { timeout: 3000 });
+  await waitFor(() => expect(done).toBeEnabled(), { timeout: 3000 });
+  fireEvent.click(done);
+}
+
 describe("WithdrawModal — the funding rail (POO-1045)", () => {
   /** Amount step → build → Review → the Review's approve, which is where the gate sits. */
-  async function reachThePlan() {
+  async function reachTheTopUp() {
     renderWithProviders(
       <WithdrawModal open onOpenChange={vi.fn()} strategy={strategy} position={position} />,
     );
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     await screen.findByText("Review", undefined, { timeout: 3000 });
     fireEvent.click(screen.getByRole("button", { name: "Confirm withdrawal" }));
-    await screen.findByRole("button", { name: "Confirm & continue" }, { timeout: 3000 });
+    await screen.findByTestId("gas-topup-confirm", undefined, { timeout: 3000 });
   }
 
   it("[R1] resumes the built transaction instead of rebuilding it", async () => {
-    await reachThePlan();
+    await reachTheTopUp();
     confirmPlan();
+    await pressDone();
 
     // Straight to the wallet send. The build is step 1 of 2 and it is already done: re-running it
     // would throw away the figures the user just approved on the Review.
@@ -181,8 +196,9 @@ describe("WithdrawModal — the funding rail (POO-1045)", () => {
   });
 
   it("[R2] rebuilds when the funding route outlived the built transaction", async () => {
-    await reachThePlan();
+    await reachTheTopUp();
     confirmPlan(AFTER_A_BRIDGE);
+    await pressDone();
 
     // The build runs AGAIN before anything is signed. Past the server's 5-minute sigDeadline the
     // transaction the user approved is a guaranteed revert, and a bridge easily takes that long.
@@ -190,11 +206,16 @@ describe("WithdrawModal — the funding rail (POO-1045)", () => {
     expect(await screen.findByText(stepOf(2, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
   });
 
-  it("[R4] anchors the plan on the withdraw and cancels back to the Review", async () => {
-    await reachThePlan();
-    expect(screen.getByText("Withdraw from Stable Yield")).toBeInTheDocument();
+  // @rule POO-1509 R4 — the OP-ANCHOR half of POO-1045 [R4] does not survive the move, and the Figma
+  // frame is why: `6550:569` is title, subtitle, presets, note and two buttons, with no plan card and
+  // so no anchor row to print the operation on. A withdraw can only ever be gas-short, so this is now
+  // its provisioning screen. The CANCEL-DESTINATION half is what [R4] still protects here, and it is
+  // unchanged: the exit is the ghost, and it hands the host back its own Review.
+  it("[R4] takes the gas top-up back to the Review", async () => {
+    await reachTheTopUp();
+    expect(screen.getByRole("heading", { name: "Not enough gas" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
     expect(screen.getByRole("button", { name: "Confirm withdrawal" })).toBeInTheDocument();
   });
 
@@ -206,7 +227,7 @@ describe("WithdrawModal — the funding rail (POO-1045)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     await screen.findByText("Review", undefined, { timeout: 3000 });
     fireEvent.click(screen.getByRole("button", { name: "Confirm withdrawal" }));
-    await screen.findByRole("button", { name: "Confirm & continue" }, { timeout: 3000 });
+    await screen.findByTestId("gas-topup-confirm", undefined, { timeout: 3000 });
     onOpenChange.mockClear();
 
     confirmPlan();
@@ -218,25 +239,27 @@ describe("WithdrawModal — the funding rail (POO-1045)", () => {
 
 describe("CollectModal — the funding rail (POO-1045)", () => {
   /** Confirm → build → Review → the Review's approve, which is where the gate sits. */
-  async function reachThePlan(props: Record<string, unknown>) {
+  async function reachTheTopUp(props: Record<string, unknown>) {
     renderWithProviders(<CollectModal open onOpenChange={vi.fn()} {...props} />);
     fireEvent.click(screen.getByRole("button", { name: /^Collect \$/ }));
     await screen.findByText(/Refreshes in/, undefined, { timeout: 3000 });
     fireEvent.click(screen.getByRole("button", { name: /^Collect \$/ }));
-    await screen.findByRole("button", { name: "Confirm & continue" }, { timeout: 3000 });
+    await screen.findByTestId("gas-topup-confirm", undefined, { timeout: 3000 });
   }
 
   it("[R1] resumes the built transaction instead of rebuilding it", async () => {
-    await reachThePlan({ strategy, position });
+    await reachTheTopUp({ strategy, position });
     confirmPlan();
+    await pressDone();
 
     expect(await screen.findByText(stepOf(2, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.queryByText(stepOf(1, 2))).not.toBeInTheDocument();
   });
 
   it("[R2] rebuilds when the funding route outlived the built transaction", async () => {
-    await reachThePlan({ strategy, position });
+    await reachTheTopUp({ strategy, position });
     confirmPlan(AFTER_A_BRIDGE);
+    await pressDone();
 
     expect(await screen.findByText(stepOf(1, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
     expect(await screen.findByText(stepOf(2, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
@@ -246,30 +269,29 @@ describe("CollectModal — the funding rail (POO-1045)", () => {
   // investor does, and had no Strategy object, so the gate was skipped for them and the failure
   // arrived as an opaque wallet error instead of a route that fixes it.
   it("[R3] gates the manager's collect, which has no Strategy of its own", async () => {
-    await reachThePlan({ managed });
-    expect(screen.getByText("Collect from ETH/USDC")).toBeInTheDocument();
+    await reachTheTopUp({ managed });
+    // POO-1509 [R4]: the assertion moved off the plan card's anchor row, which the auxiliary screen
+    // does not have, onto the screen itself. What [R3] is about is that the gate FIRED for a manager
+    // with no Strategy object; reaching this screen at all is that.
+    expect(screen.getByRole("heading", { name: "Not enough gas" })).toBeInTheDocument();
   });
 
   it("[R3] the manager's collect resumes its built transaction too", async () => {
-    let finishCollect = () => {};
-    const collecting = new Promise<void>((resolve) => {
-      finishCollect = resolve;
-    });
-    // Keep the wallet handoff pending until it is observed; a 50ms timer can elapse before
-    // Testing Library resumes on a busy coverage worker.
-    await reachThePlan({ managed: { ...managed, onCollect: vi.fn(() => collecting) } });
+    await reachTheTopUp({ managed });
     confirmPlan();
+    await pressDone();
 
     expect(await screen.findByText(stepOf(2, 2), undefined, { timeout: 3000 })).toBeInTheDocument();
     expect(screen.queryByText(stepOf(1, 2))).not.toBeInTheDocument();
-    await act(async () => finishCollect());
   });
 
-  it("[R4] anchors the plan on the collect and cancels back to the Review", async () => {
-    await reachThePlan({ strategy, position });
-    expect(screen.getByText("Collect from Stable Yield")).toBeInTheDocument();
+  // @rule POO-1509 R4 — same as the withdraw above: no plan card on the auxiliary screen, so no
+  // anchor. The destination is the collect's own Review, which is the surface with the TTL countdown.
+  it("[R4] takes the gas top-up back to the Review", async () => {
+    await reachTheTopUp({ strategy, position });
+    expect(screen.getByRole("heading", { name: "Not enough gas" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
     expect(screen.getByText(/Refreshes in/)).toBeInTheDocument();
   });
 
@@ -281,7 +303,7 @@ describe("CollectModal — the funding rail (POO-1045)", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Collect \$/ }));
     await screen.findByText(/Refreshes in/, undefined, { timeout: 3000 });
     fireEvent.click(screen.getByRole("button", { name: /^Collect \$/ }));
-    await screen.findByRole("button", { name: "Confirm & continue" }, { timeout: 3000 });
+    await screen.findByTestId("gas-topup-confirm", undefined, { timeout: 3000 });
     onOpenChange.mockClear();
 
     confirmPlan();
@@ -293,16 +315,16 @@ describe("CollectModal — the funding rail (POO-1045)", () => {
 
 describe("CompoundModal — the funding rail (POO-1045)", () => {
   /** Compound folds its build into the single confirm step, so the gate sits on the confirm CTA. */
-  async function reachThePlan() {
+  async function reachTheTopUp() {
     renderWithProviders(
       <CompoundModal open onOpenChange={vi.fn()} strategy={strategy} position={position} />,
     );
     fireEvent.click(screen.getByRole("button", { name: /^Compound \$/ }));
-    await screen.findByRole("button", { name: "Confirm & continue" }, { timeout: 3000 });
+    await screen.findByTestId("gas-topup-confirm", undefined, { timeout: 3000 });
   }
 
   it("[R1] runs the compound from the start, because it has no build to resume", async () => {
-    await reachThePlan();
+    await reachTheTopUp();
     confirmPlan();
 
     // One step, and it is the wallet itself: there is no built transaction to go stale, which is
@@ -311,17 +333,19 @@ describe("CompoundModal — the funding rail (POO-1045)", () => {
   });
 
   it("[R2] a long funding route still reaches the wallet, with nothing stale to reuse", async () => {
-    await reachThePlan();
+    await reachTheTopUp();
     confirmPlan(AFTER_A_BRIDGE);
+    await pressDone();
 
     expect(await screen.findByText(stepOf(1, 1), undefined, { timeout: 3000 })).toBeInTheDocument();
   });
 
-  it("[R4] anchors the plan on the compound and cancels back to the confirm", async () => {
-    await reachThePlan();
-    expect(screen.getByText("Compound in Stable Yield")).toBeInTheDocument();
+  // @rule POO-1509 R4 — same as the two above. The compound's destination is its own confirm.
+  it("[R4] takes the gas top-up back to the confirm", async () => {
+    await reachTheTopUp();
+    expect(screen.getByRole("heading", { name: "Not enough gas" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
     expect(screen.getByRole("button", { name: /^Compound \$/ })).toBeInTheDocument();
   });
 
@@ -331,7 +355,7 @@ describe("CompoundModal — the funding rail (POO-1045)", () => {
       <CompoundModal open onOpenChange={onOpenChange} strategy={strategy} position={position} />,
     );
     fireEvent.click(screen.getByRole("button", { name: /^Compound \$/ }));
-    await screen.findByRole("button", { name: "Confirm & continue" }, { timeout: 3000 });
+    await screen.findByTestId("gas-topup-confirm", undefined, { timeout: 3000 });
     onOpenChange.mockClear();
 
     confirmPlan();

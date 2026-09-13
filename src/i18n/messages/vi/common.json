@@ -34,5 +34,10 @@
     "leave": "Rời đi",
     "stay": "Tiếp tục chỉnh sửa"
   },
-  "opensInNewTab": "Mở trong tab mới"
+  "opensInNewTab": "Mở trong tab mới",
+  "chainSwitch": {
+    "pending": "Đang chuyển sang {network}...",
+    "to": "Chuyển sang {network}",
+    "failed": "Ví của bạn chưa chuyển sang {network}. Hãy kiểm tra xem mạng đã được bật trong ví chưa rồi thử lại."
+  }
 }

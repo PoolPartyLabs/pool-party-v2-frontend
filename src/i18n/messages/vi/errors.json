@@ -21,5 +21,10 @@
     "unauthorized": "Bạn không có quyền thực hiện việc đó. Vui lòng đăng nhập lại.",
     "notFound": "Chúng tôi không tìm thấy thứ bạn đang tìm.",
     "unknown": "Đã xảy ra lỗi từ phía chúng tôi. Vui lòng thử lại."
+  },
+  "reference": {
+    "label": "Mã tham chiếu",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép"
   }
 }

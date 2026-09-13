@@ -1,12 +1,29 @@
 /**
  * @id PP-STR-CMP-024
  * @name ProvisioningCostBreakdown
- * @implements-rules-version v1 (POO-1040 rules v1)
+ * @implements-rules-version v2 (POO-1575 rules v2) · v1 (POO-1040 rules v1) · v1 (POO-1380 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * What a funding plan costs, rendered: the hero "You pay" figure, the fee detail behind Show more on
  * the shared {@link CollapsibleReceiptRows} card, and the honest alternative next to it ([R3]) for a
  * user who would rather buy crypto than move what they already hold.
+ *
+ * ## The buy-crypto peer names the amount when it can (POO-1380)
+ *
+ * The peer CTA reads "Buy $101.02" when the host supplies a resolved buy amount (`buyAmountUsd`, the
+ * received-fixed on-ramp charge from `useBuyRouteQuote`, POO-1153 [R10]), and degrades to the bare
+ * "Buy crypto instead" wording whenever that figure has not resolved. That degraded path is the live
+ * default: with the on-ramp disabled (crypto-only cut) and in mock mode the quote is never priced, so
+ * the host passes nothing and the naming simply does not apply. It is a display-only nicety layered on
+ * the same `/deposit` handoff, never a gate on it.
+ *
+ * ## The buy-crypto hint names the buyer's own methods (POO-1575)
+ *
+ * The hint under that CTA read "Pay with a card or Pix" in all 12 locales, to every buyer in every
+ * country, which promises a Brazilian rail to people who will never be offered it. It now names the
+ * methods resolved for the buyer's currency (`buyMethodNames`, at most two, joined in the active
+ * locale) and, with none resolved, keeps only the half of the claim that is always true: skipping
+ * the move between networks.
  *
  * ## It renders numbers, it does not compute them
  *
@@ -46,7 +63,7 @@
 "use client";
 
 import { ChevronRight, CreditCard, RefreshCw } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { CollapsibleReceiptRows } from "@/components/ui/CollapsibleReceiptRows";
 import type { ReceiptRowItem } from "@/components/ui/ReceiptRows";
 import { Link } from "@/i18n/navigation";
@@ -60,7 +77,7 @@ import {
   planCostBreakdown,
 } from "@/lib/provisioning";
 import { cn } from "@/lib/utils/cn";
-import { formatPercent, formatUsd, formatUsdPrecise } from "@/lib/utils/format";
+import { formatFiat, formatPercent, formatUsd, formatUsdPrecise } from "@/lib/utils/format";
 import { useReviewCountdown } from "../../hooks/useReviewCountdown";
 import { DEFAULT_SLIPPAGE_PCT } from "../../lib/slippage";
 import {
@@ -72,6 +89,7 @@ import {
   type FeeLine,
   feeFlatLabel,
 } from "../FeeBreakdown";
+import { formatPaymentMethods } from "./provisioningView";
 
 /**
  * The translator, structurally (the WalletSignModal precedent): these row builders only need to
@@ -85,7 +103,14 @@ const DEPOSIT_HREF = "/deposit";
 /** Per-leg gas is exposed in micro-dollars; six decimals is the precision that keeps it non-zero. */
 const GAS_LEG_DECIMALS = 6;
 
-/** i18n key for a leg's own label, by route kind. */
+/**
+ * i18n key for a leg's own label, by route kind.
+ *
+ * Keyed by `ProvisioningLegKind`, NOT `ProvisioningStepType`, so the POO-1131 `buy-usdc` → `buy`
+ * step-type rename does not touch it. That holds only while `buy` stays a step type and never joins
+ * `ProvisioningLegKind`: a fiat purchase is not an on-chain route leg and must not be priced as one
+ * here. If a `buy` ever needs a cost line, it gets its own map, not an entry in this one.
+ */
 const LEG_LABEL_KEY: Record<ProvisioningLegKind, string> = {
   "swap-token": "provisioning.costs.leg.swapToken",
   "swap-gas": "provisioning.costs.leg.swapGas",
@@ -117,6 +142,62 @@ export interface ProvisioningCostBreakdownProps {
   active?: boolean;
   /** Where the buy-crypto CTA points; defaults to `/deposit`. Pass a deep link to carry context. */
   buyCryptoHref?: string;
+  /**
+   * POO-1380 [R1][R2]: the amount the buy route would actually buy, in USD, so the peer CTA can name
+   * it ("Buy $101.02") instead of the bare "Buy crypto instead". It is the received-fixed on-ramp
+   * charge (`useBuyRouteQuote().chargeUsd`, POO-1153 [R10], the backend's `amountFrom`), the same
+   * figure the FundingRoutePicker buy row names, never the FE-computed shortfall. Rendered through
+   * `formatFiat` in {@link buyAmountCurrency}. [R3] Absent, non-finite, zero, or negative means the
+   * quote has not resolved (the live default in the crypto-only cut and in mock mode), and the CTA
+   * degrades to its current wording rather than showing "Buy undefined", "Buy $NaN", or a bare
+   * currency symbol.
+   */
+  buyAmountUsd?: number;
+  /**
+   * POO-1512 [R7]: the fiat currency {@link buyAmountUsd} is billed in (`chargeCurrencyCode`). The
+   * charge is now denominated in the buyer's own currency, so without this the CTA would say
+   * "Buy $208.00" for the same charge the picker row states as "208.00 EUR". Defaults to USD.
+   */
+  buyAmountCurrency?: string;
+  /**
+   * POO-1575 [R1]: the payment methods Paybis offers for the buyer's own resolved currency, as
+   * display names, so the hint under this CTA names what THIS buyer can pay with.
+   *
+   * The hint used to read "Pay with a card or Pix" to every buyer in every country, which is a
+   * promise about a Brazilian rail most of them are never offered. The list is the one the host
+   * already holds (`useBuyRouteQuote().methods`, POO-1578) and is never resolved a second time here
+   * ([R6]). At most two are named, joined in the active locale.
+   *
+   * Absent or empty ([R3]) is the live default in mock mode and the crypto-only cut, and takes a
+   * hint that names no method rather than inventing one.
+   *
+   * **Why this prop carries no currency pair, unlike `PlanViewOptions.buyPaymentMethods` ([R8]).**
+   * That option describes a `buy` LEG whose charged currency is already decided, so the two can be
+   * compared. This CTA describes a purchase that does not exist yet: it deep-links to `/deposit`,
+   * where the buyer picks an amount and `StandaloneOnRampRail` sizes an order afterwards, so there
+   * is no charged currency at render time to check against. What can be said honestly, and is the
+   * whole claim this hint makes, is that these are the methods the buyer's OWN currency offers. That
+   * holds for the ordinary `USDC-BASE` standalone deposit, which is received-fixed and therefore
+   * resolves the buyer's currency; it does NOT hold if that deposit turns into a gas-first `ETH-BASE`
+   * leg whose ETH target fails to price, which stays pinned to USD (POO-1573 [R5]). Recorded on
+   * `CR-TOK-009` rather than guarded here, because the fact the guard would need does not exist yet.
+   *
+   * PP-TODO(POO-1576): `ProvisioningPanel` does not pass this yet (that file is owned by concurrent
+   * work), so production takes the neutral branch today. The wiring is one line beside the
+   * `buyAmountUsd` it already passes, and it typechecks as written (`displayName` is a `string`,
+   * unlike the `methodLabel` the plan option's handoff has to filter):
+   * `buyMethodNames={(buyRouteQuote.methods ?? []).map((method) => method.displayName)}`.
+   */
+  buyMethodNames?: readonly string[];
+  /**
+   * POO-1503 fix (#835): the host's OWN ticking countdown seconds. When set, the status line
+   * displays this figure and the card runs NO timer of its own: on step 2 the freshness loop lives
+   * in `ProvisioningPanel` (it must fire while the `See details` disclosure is closed, i.e. while
+   * this card is unmounted), and a second `useReviewCountdown` here would both disagree with it and
+   * fire a second re-quote per window against the same quote. Absent (the mock-mode plan screen),
+   * the card keeps its shipped self-driven `QuoteStatus` loop unchanged.
+   */
+  countdownSeconds?: number;
   className?: string;
 }
 
@@ -165,6 +246,23 @@ function sourceLines(
 }
 
 /**
+ * The status line itself, shared by the self-driven {@link QuoteStatus} loop and a host-driven
+ * figure (`countdownSeconds`, POO-1503 fix #835). Display only: no timer, no hook, so a host that
+ * owns the countdown can render this without a second window ever existing. Deliberately NOT an
+ * aria-live region - it changes once a second, and a screen reader announcing the countdown every
+ * second is unusable.
+ */
+function QuoteStatusLabel({ seconds, requoting }: { seconds: number; requoting: boolean }) {
+  const t = useTranslations("strategies");
+  return (
+    <span className="inline-flex items-center justify-center gap-1.5">
+      <RefreshCw className={cn("size-3.5", requoting && "animate-spin")} aria-hidden="true" />
+      {requoting ? t("provisioning.costs.updating") : t("flow.review.refreshIn", { seconds })}
+    </span>
+  );
+}
+
+/**
  * The always-visible quote status: the TTL countdown, or the refresh in flight ([R4]).
  *
  * A child, and KEYED ON `quotedAt` by its parent, so a fresh quote remounts it and the window starts
@@ -173,8 +271,7 @@ function sourceLines(
  *
  * The seconds come from `ttlMs` rather than from `quotedAt + ttlMs - now`: wall-clock math during
  * render differs between the server pass and hydration, and this is the same full-window behaviour
- * every shipped Review has. Deliberately NOT an aria-live region - it changes once a second, and a
- * screen reader announcing the countdown every second is unusable.
+ * every shipped Review has.
  */
 function QuoteStatus({
   ttlMs,
@@ -187,18 +284,12 @@ function QuoteStatus({
   requoting: boolean;
   onRequote: () => void;
 }) {
-  const t = useTranslations("strategies");
   const { seconds } = useReviewCountdown({
     active,
     seconds: Math.max(1, Math.round(ttlMs / 1000)),
     onRefresh: onRequote,
   });
-  return (
-    <span className="inline-flex items-center justify-center gap-1.5">
-      <RefreshCw className={cn("size-3.5", requoting && "animate-spin")} aria-hidden="true" />
-      {requoting ? t("provisioning.costs.updating") : t("flow.review.refreshIn", { seconds })}
-    </span>
-  );
+  return <QuoteStatusLabel seconds={seconds} requoting={requoting} />;
 }
 
 /**
@@ -304,9 +395,32 @@ export function ProvisioningCostBreakdown({
   requoting = false,
   active = true,
   buyCryptoHref = DEPOSIT_HREF,
+  buyAmountUsd,
+  buyAmountCurrency,
+  buyMethodNames,
+  countdownSeconds,
   className,
 }: ProvisioningCostBreakdownProps) {
   const t = useTranslations("strategies");
+  // POO-1575: the `{methods}` list is joined with this locale's own disjunction, never an English
+  // " or ". `undefined` (nothing resolved) is the neutral-hint branch.
+  const locale = useLocale();
+  const namedMethods = formatPaymentMethods(buyMethodNames, locale);
+
+  // POO-1380 [R1][R3]: name the amount only when the quote has actually resolved to a spendable
+  // figure. A guard on finiteness AND positivity is the whole degraded path: undefined (nothing
+  // supplied), NaN/Infinity (a malformed figure), and <= 0 (nothing to buy) all fall back to the
+  // current wording, so the CTA can never read "Buy undefined", "Buy $NaN", or a bare "$".
+  const hasBuyAmount =
+    typeof buyAmountUsd === "number" && Number.isFinite(buyAmountUsd) && buyAmountUsd > 0;
+  // POO-1512 [R7]: the CTA names the charge in the currency it is billed in, the same currency the
+  // FundingRoutePicker buy row prints for this same figure. Absent a currency, USD keeps the
+  // pre-buyer-currency rendering.
+  const buyCryptoLabel = hasBuyAmount
+    ? t("provisioning.costs.buyCrypto.ctaWithAmount", {
+        amount: formatFiat(buyAmountUsd, buyAmountCurrency ?? "USD"),
+      })
+    : t("provisioning.costs.buyCrypto.cta");
   // PP-INTEGRATION-POINT: every figure below was quoted by the live Uniswap Trading API inside the
   // server-only planner (PP-CORE-LIB-055) and travels here on the plan. This component is offline by
   // construction and must stay that way: it never imports the API client (ADR 0003).
@@ -399,18 +513,25 @@ export function ProvisioningCostBreakdown({
         showMoreLabel={t("flow.review.showMore")}
         showLessLabel={t("flow.review.showLess")}
         footer={
-          <QuoteStatus
-            key={plan.quote.quotedAt}
-            ttlMs={plan.quote.ttlMs}
-            // An in-flight re-quote pauses the window. Left running, a host slower than one TTL would
-            // be asked for a second quote while the first is still out, and each expiry would ask
-            // again - the timer hammering a request that is already on its way. Nothing is lost by
-            // pausing: whichever way the re-quote ends, a full window follows. A fresh `quotedAt`
-            // remounts this via its key; an unchanged one re-arms the hook when `active` goes true.
-            active={active && !requoting}
-            requoting={requoting}
-            onRequote={onRequote}
-          />
+          countdownSeconds !== undefined ? (
+            // POO-1503 fix (#835): the host owns the ONE countdown; this is a second reading of it,
+            // not a second timer.
+            <QuoteStatusLabel seconds={countdownSeconds} requoting={requoting} />
+          ) : (
+            <QuoteStatus
+              key={plan.quote.quotedAt}
+              ttlMs={plan.quote.ttlMs}
+              // An in-flight re-quote pauses the window. Left running, a host slower than one TTL
+              // would be asked for a second quote while the first is still out, and each expiry would
+              // ask again - the timer hammering a request that is already on its way. Nothing is lost
+              // by pausing: whichever way the re-quote ends, a full window follows. A fresh
+              // `quotedAt` remounts this via its key; an unchanged one re-arms the hook when `active`
+              // goes true.
+              active={active && !requoting}
+              requoting={requoting}
+              onRequote={onRequote}
+            />
+          )
         }
       />
 
@@ -424,11 +545,13 @@ export function ProvisioningCostBreakdown({
         <span className="flex items-center gap-3">
           <CreditCard className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           <span className="flex flex-col gap-0.5">
-            <span className="font-medium text-foreground text-sm">
-              {t("provisioning.costs.buyCrypto.cta")}
-            </span>
+            <span className="font-medium text-foreground text-sm">{buyCryptoLabel}</span>
             <span className="text-muted-foreground text-xs">
-              {t("provisioning.costs.buyCrypto.hint")}
+              {/* POO-1575 [R1]/[R3]: the methods this buyer can actually use, or a hint that names
+                  none. The shipped copy claimed "a card or Pix" to every buyer in every country. */}
+              {namedMethods === undefined
+                ? t("provisioning.costs.buyCrypto.hint")
+                : t("provisioning.costs.buyCrypto.hintWithMethods", { methods: namedMethods })}
             </span>
           </span>
         </span>

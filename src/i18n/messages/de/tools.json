@@ -1,0 +1,38 @@
+{
+  "title": "Werkzeuge",
+  "subtitle": "Entwicklerwerkzeuge, die mit Pool Party ausgeliefert werden. Nur lesend, und sie fassen deine Wallet nie an.",
+  "hookRisk": {
+    "heading": "Uniswap v4 Hook-Risiko",
+    "intro": "Füge die Adresse eines deployten Hooks ein. hookrisk liest seinen verifizierten Quellcode, kompiliert ihn, bewertet ihn nach dem Hooks Security Framework der Uniswap Foundation und liefert den Bericht unten.",
+    "chainLabel": "Netzwerk",
+    "addressLabel": "Adresse des Hook-Vertrags",
+    "addressPlaceholder": "0x0000000000000000000000000000000000000000",
+    "submit": "Analysieren",
+    "submitRunning": "Analyse läuft",
+    "notice": "Ein Scan kompiliert den Vertrag und führt ein gefuzztes Differential-Harness aus, rechne also mit Minuten statt Sekunden. Der Bericht wird 24 Stunden zwischengespeichert.",
+    "idleTitle": "Noch kein Scan",
+    "idleBody": "Wähle ein Netzwerk, füge die Adresse eines deployten Hooks ein und drücke Analysieren.",
+    "runningTitle": "Scan läuft",
+    "elapsed": "{seconds}s vergangen",
+    "cached": "Ergebnis eines Scans aus den letzten 24 Stunden.",
+    "gatePassed": "Das hookrisk-Gate ist bestanden.",
+    "gateFailed": "Das hookrisk-Gate ist durchgefallen. Der Bericht unten sagt warum, und ein durchgefallenes Gate ist ein Ergebnis, kein Fehler.",
+    "reportHeading": "Bericht",
+    "errorTitle": "Dieser Scan lief nicht",
+    "retry": "Erneut versuchen",
+    "status": {
+      "queued": "In der Warteschlange",
+      "fetchingSource": "Verifizierter Quellcode wird vom Block-Explorer gelesen",
+      "building": "Vertrag wird kompiliert",
+      "scanning": "Detektoren und Differential-Harness laufen",
+      "done": "Bericht fertig",
+      "failed": "Der Scan konnte nicht abgeschlossen werden"
+    },
+    "errors": {
+      "INVALID_ADDRESS": "Das ist keine gültige Vertragsadresse. Sie hat 42 Zeichen und beginnt mit 0x.",
+      "UNSUPPORTED_CHAIN": "Dieses Netzwerk gehört nicht zu den Netzwerken, die dieses Werkzeug liest.",
+      "JOB_UNKNOWN": "Der Server verfolgt diesen Scan nicht mehr. Starte ihn erneut.",
+      "NETWORK": "Der Server ist nicht erreichbar. Prüfe, ob er läuft, und versuche es erneut."
+    }
+  }
+}

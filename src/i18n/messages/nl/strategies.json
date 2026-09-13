@@ -36,6 +36,13 @@
         "name": "Transactie wordt voorbereid",
         "body": "Pool Party berekent de bedragen en de netwerkkosten voor deze transactie. Er wordt nog niets ondertekend of verzonden."
       }
+    },
+    "awaitingSignature": "Wachten op ondertekening",
+    "stepsRunning": {
+      "approve": "{token} goedkeuren"
+    },
+    "stepsDone": {
+      "approve": "{token} goedgekeurd"
     }
   },
   "card": {
@@ -74,7 +81,9 @@
       "ethereum": "Ethereum",
       "stablecoins": "Stablecoins",
       "altcoins": "Altcoins",
-      "meme": "Meme coins"
+      "meme": "Meme coins",
+      "equities": "Stock Tokens",
+      "rwa": "Real-world assets"
     },
     "count": "{count, plural, =0 {Geen strategieën} =1 {# strategie} other {# strategieën}}",
     "owned": "Beheerd",
@@ -199,7 +208,8 @@
     "needMore": "U heeft {amount} meer nodig",
     "cta": {
       "invest": "Beleggen",
-      "deposit": "Storten & beleggen"
+      "deposit": "Storten & beleggen",
+      "checking": "Je saldo wordt gecontroleerd"
     },
     "confirm": {
       "title": "Bevestigen & ondertekenen",
@@ -241,6 +251,12 @@
     },
     "receipt": {
       "amountInvested": "Belegd bedrag"
+    },
+    "sizing": {
+      "resizedNotice": "Uw wallet bevat {available}, dus dat bedrag wordt geïnvesteerd en niet de {requested} die u invoerde.",
+      "refusedTitle": "We kunnen dit bedrag niet investeren",
+      "refusedBody": "U wilde {requested} investeren. Uw wallet bevat {available}, en het minimum voor deze strategie is {minimum}.",
+      "refusedCta": "Bedrag wijzigen"
     }
   },
   "collect": {
@@ -365,13 +381,22 @@
         "wrongChain": "Uw wallet staat op een ander netwerk. Schakel over naar {network} en probeer het opnieuw.",
         "wrongChainUnknown": "Uw wallet staat op een ander netwerk. Wissel van netwerk in uw wallet en probeer het opnieuw.",
         "gasBlocked": "Er staat niets op {network} om de netwerkkosten te dekken, dus dit kan nog niet. Koop wat crypto op {network} of haal wat over uit een ander netwerk.",
-        "gasBlockedUnknown": "Er staat niets op dit netwerk om de netwerkkosten te dekken, dus dit kan nog niet. Koop daar wat crypto of haal wat over uit een ander netwerk."
-      }
+        "gasBlockedUnknown": "Er staat niets op dit netwerk om de netwerkkosten te dekken, dus dit kan nog niet. Koop daar wat crypto of haal wat over uit een ander netwerk.",
+        "transient": "Het netwerk of je wallet heeft niet op tijd geantwoord. Er is niets verplaatst. Probeer het zo opnieuw.",
+        "confirmationTimeout": "Je transactie is verzonden, maar we konden deze niet op tijd bevestigen. Controleer de recente activiteit van je wallet voordat je het opnieuw probeert, voor het geval deze al is doorgegaan.",
+        "chainUnavailable": "In je wallet is {network} niet ingeschakeld, dus die kan hier niet voor tekenen. Schakel {network} in je wallet-app in en schakel er hieronder naartoe.",
+        "chainUnavailableUnknown": "In je wallet is dit netwerk niet ingeschakeld, dus die kan hier niet voor tekenen. Schakel het in je wallet-app in en probeer het opnieuw.",
+        "alreadyBroadcast": "Deze stap is al verstuurd en wordt nog gevolgd. Herlaad de pagina om verder te gaan. Verstuur hem niet opnieuw.",
+        "upstreamUnavailable": "We konden nu geen route berekenen. Dit is tijdelijk, probeer het zo nog eens.",
+        "rangeUnchanged": "Dit is al de range van de positie, dus er is niets te verplaatsen. Kies andere grenzen om te herbalanceren."
+      },
+      "referenceLabel": "Referentie",
+      "paybisReferenceLabel": "Paybis-referentie"
     },
     "slippage": {
       "retryNotice": "De prijs ging voorbij uw maximale slippage ({value}%). Nieuwe poging tegen de huidige prijs.",
       "errorTitle": "De prijs bewoog te veel",
-      "errorBody": "De prijs ging opnieuw voorbij uw maximale slippage ({value}%). Verhoog het in de instellingen of probeer het later opnieuw."
+      "errorBody": "De prijs ging opnieuw voorbij uw maximale slippage ({value}%). De transactie is niet verstuurd."
     },
     "receipt": {
       "strategy": "Strategie",
@@ -469,34 +494,85 @@
       "titleGasOnly": "Eén snelle stap",
       "subtitle": "We hebben precies uitgerekend wat nodig is. We regelen elke stap hier en voeren dan uw transactie uit. Geen omweg via Storten.",
       "cta": "Bevestigen & doorgaan",
-      "cancel": "Annuleren"
+      "cancel": "Annuleren",
+      "feesIncluded": "Kosten inbegrepen.",
+      "back": "Terug",
+      "gasOnArrival": "Gas bij aankomst",
+      "showSteps": "Stappen tonen",
+      "hideSteps": "Stappen verbergen"
     },
     "requote": {
-      "title": "De prijs is veranderd",
-      "body": "Deze stap levert nu ongeveer {percent} minder op dan de prijs die u hebt goedgekeurd. Er is nog niets verstuurd, dus u kunt de nieuwe prijs accepteren of hier stoppen.",
-      "accept": "Nieuwe prijs accepteren",
-      "decline": "Hier stoppen"
+      "title": "De prijzen zijn veranderd tijdens het uitvoeren",
+      "body": "De markt bewoog meer dan de gereserveerde {pct}%, dus er is niets verzonden en uw geld is niet verplaatst. Probeer het opnieuw tegen de huidige prijzen, of wacht een paar minuten tot de markt tot rust komt.",
+      "accept": "Opnieuw proberen",
+      "decline": "Annuleren"
     },
     "steps": {
       "buyUsdc": "USDC kopen",
       "bridge": "Overzetten naar {network}",
       "bridgeGas": "Netwerkkosten naar {network} sturen",
       "swapGas": "Netwerkkosten opladen",
-      "swapToken": "Omzetten naar {token}",
-      "op": "Uw transactie"
+      "swapToken": "{token} omzetten",
+      "op": "Uw transactie",
+      "buy": "{token} kopen"
     },
     "captions": {
       "buyUsdc": "Kaart of lokale overboeking",
-      "bridge": "Geld naar het juiste netwerk verplaatsen",
-      "swapGas": "Een klein deel van wat u hebt, omgezet om de netwerkkosten te dekken",
+      "bridge": "Vanaf {network}",
+      "swapGas": "Betaald met uw {stable}",
       "op": "Uw oorspronkelijke actie",
-      "approve": "Een eenmalige toestemming. Er wordt nog niets verplaatst."
+      "approve": "Een eenmalige toestemming. Er wordt nog niets verplaatst.",
+      "buy": "Betaalmethoden worden bij het afrekenen getoond",
+      "buyMethods": "Betaal met {methods}",
+      "onNetwork": "{network}"
     },
     "exec": {
-      "title": "Uw geld wordt klaargezet",
+      "title": "Bezig",
       "subtitle": "We kopen, routeren en vullen automatisch aan. Uw transactie wordt meteen daarna uitgevoerd.",
       "done": "Klaar",
-      "pending": "In behandeling"
+      "pending": "In behandeling",
+      "takingLonger": "Dit duurt langer dan normaal. Het kan een paar minuten duren.",
+      "status": {
+        "done": "Klaar",
+        "active": "Ga verder in je wallet",
+        "waiting": "Wachten",
+        "notStarted": "Niet gestart",
+        "skipped": "Overgeslagen",
+        "buying": "Rond je aankoop af"
+      },
+      "failure": {
+        "slippage": "De prijs ging voorbij je marge van {pct}%",
+        "slippageNoPct": "De prijs veranderde terwijl deze stap liep",
+        "deadlineExpired": "Deze stap duurde te lang en is verlopen",
+        "insufficientFunds": "Er was niet genoeg over om deze stap te dekken",
+        "userRejected": "Je hebt deze stap in je wallet geweigerd",
+        "unauthorized": "Je wallet had geen toestemming voor deze stap",
+        "wrongChain": "Je wallet stond op een ander netwerk",
+        "alreadyBroadcast": "Deze stap is al verstuurd en wordt nog gevolgd",
+        "upstreamUnavailable": "We konden deze stap nu niet beprijzen",
+        "gasBlocked": "Er is geen gas op dit netwerk om deze stap uit te voeren",
+        "unknown": "Deze stap is niet doorgegaan",
+        "chainUnavailable": "Dit netwerk is niet ingeschakeld in je wallet",
+        "transient": "Het netwerk heeft niet op tijd geantwoord. Probeer deze stap opnieuw.",
+        "confirmationTimeout": "Verzonden, maar niet op tijd bevestigd. Controleer je wallet voordat je opnieuw probeert."
+      },
+      "keepOpen": "Houd dit scherm open.",
+      "failedTitle": "Stap {index} is mislukt",
+      "tryAgain": "Opnieuw proberen",
+      "settledSafe": "{amount} is al doorgekomen en staat veilig.",
+      "settledSafeUnknown": "Sommige stappen zijn al doorgekomen en staan veilig.",
+      "stateProcessing": "Bezig",
+      "stateDone": "Klaar",
+      "stop": {
+        "title": "Hier stoppen?",
+        "settled": "{amount} is al doorgekomen en staat veilig.",
+        "body": "Stap {index} van {total} is bezig en wordt vanzelf afgerond. {restCount, plural, one {Stap {rest} start niet} other {Stappen {rest} starten niet}}, en je geld blijft waar het is.",
+        "bodyLastStep": "Stap {index} van {total} is bezig en wordt vanzelf afgerond. Je geld blijft waar het is.",
+        "bodyNotSent": "Stap {index} van {total} heeft nog geen geld verplaatst. Vraagt je wallet om een handtekening, wijs die dan af. {restCount, plural, one {Stap {rest} start niet} other {Stappen {rest} starten niet}}, en je geld blijft waar het is.",
+        "bodyNotSentLastStep": "Stap {index} van {total} heeft nog geen geld verplaatst. Vraagt je wallet om een handtekening, wijs die dan af. Je geld blijft waar het is.",
+        "keepGoing": "Doorgaan",
+        "stopAnyway": "Toch stoppen"
+      }
     },
     "bridge": {
       "etaSeconds": "Dit duurt meestal ongeveer {seconds, plural, one {# seconde} other {# seconden}}. We gaan verder zodra uw geld binnen is.",
@@ -536,11 +612,13 @@
       },
       "buyCrypto": {
         "cta": "Koop liever crypto",
-        "hint": "Betaal met kaart of Pix en verplaats geen geld tussen netwerken."
+        "hint": "Zonder geld tussen netwerken te verplaatsen.",
+        "ctaWithAmount": "Koop {amount}",
+        "hintWithMethods": "Betaal met {methods} en verplaats geen geld tussen netwerken."
       }
     },
     "fundingSources": {
-      "title": "Wat wilt u gebruiken?",
+      "title": "Kies tokens om om te zetten",
       "subtitle": "Kies wat u heeft. Wij regelen hoe het op de juiste plek komt.",
       "listLabel": "Uw geld",
       "rowLabel": "{symbol} op {network}, {amount}, waard {usd}",
@@ -551,7 +629,7 @@
       "exact": "Precies gedekt",
       "empty": "Er is hier nog niets dat we kunnen gebruiken.",
       "repriced": "De uiteindelijke prijs viel iets hoger uit. Kies nog een bron om {amount} te dekken.",
-      "cta": "Doorgaan",
+      "cta": "Bevestigen en starten",
       "step": "Stap {index}",
       "unblock": "Om dit geld te gebruiken:",
       "unreachable": "We kunnen {symbol} nog niet naar dit netwerk brengen. Kies iets anders uit de lijst.",
@@ -559,7 +637,17 @@
         "ok": "Klaar",
         "topUp": "Heeft een aanvulling nodig",
         "blocked": "Nog niet bruikbaar"
-      }
+      },
+      "settings": "Transactie-instellingen",
+      "meter": "{selected} van {required}",
+      "enough": "Genoeg",
+      "bufferNote": "Inclusief {pct}% gereserveerd voor koersschommelingen. Wat overblijft komt terug in uw wallet.",
+      "convertNeeded": "Omzetten wat nodig is",
+      "recommended": "Aanbevolen",
+      "hideDetails": "Details verbergen",
+      "seeDetails": "Details bekijken",
+      "cancel": "Annuleren",
+      "back": "Terug"
     },
     "recovery": {
       "title": "Er is nog geld onderweg",
@@ -575,7 +663,8 @@
         "collect": "Uw opbrengsten ophalen",
         "compound": "Uw opbrengsten herinvesteren",
         "moveRange": "Een strategie aanpassen",
-        "close": "Uw positie sluiten"
+        "close": "Uw positie sluiten",
+        "deposit": "Geld toevoegen aan uw saldo"
       },
       "leg": {
         "settled": "Klaar.",
@@ -590,6 +679,109 @@
         "rederive": "We kunnen verder waar het gestopt is.",
         "ask": "We willen dat u eerst iets controleert voordat we verdergaan."
       }
+    },
+    "routes": {
+      "need": "Je hebt {amount} nodig",
+      "breakdownLabel": "Waaruit dit bedrag bestaat",
+      "breakdown": "{amount} voor de transactie + {gas} gas",
+      "breakdownGasOnly": "{gas} voor de netwerkkosten",
+      "gasMinimum": "Deze gas-aanvulling dekt veel transacties, niet alleen deze.",
+      "bufferTooltip": "Wij zetten {pct}% extra om voor het geval de prijzen veranderen tijdens de verwerking. Wat overblijft, gaat terug naar uw wallet.",
+      "listLabel": "Hoe je dit dekt",
+      "recommended": "Aanbevolen",
+      "buy": {
+        "subtitle": "{amount} met {method}",
+        "subtitlePending": "Definitief bedrag wordt bij het afrekenen getoond",
+        "minimum": "Minimaal {amount} met {method}",
+        "disclosureLabel": "Waarom dit bedrag",
+        "disclosureMinimum": "Wij plaatsen nooit een order onder {minimum}, dus dit is wat u koopt, ook wanneer de transactie minder nodig heeft.",
+        "disclosureBuffer": "Dit is iets meer dan de transactie nodig heeft: {pct}% voor het geval de prijzen veranderen terwijl uw aankoop wordt afgerond, plus eventuele netwerkkosten.",
+        "disclosureRemainder": "Wat u niet gebruikt, blijft in uw wallet en kunt u voor andere transacties gebruiken.",
+        "title": "{amount} kopen",
+        "preparing": "Je aankoop wordt voorbereid"
+      },
+      "cancel": "Annuleren",
+      "tokens": {
+        "title": "Uw {amount} gebruiken",
+        "subtitle": "{amount} beschikbaar"
+      },
+      "tokensPlusBuy": {
+        "title": "{available} gebruiken + {shortfall} kopen",
+        "subtitle": "{available} in tokens, {shortfall} kopen"
+      },
+      "deposit": {
+        "title": "Storten vanuit externe wallet",
+        "subtitle": "Stuur crypto vanuit een andere wallet van u"
+      }
+    },
+    "onramp": {
+      "method": {
+        "blocked": "Paybis vereist minstens {amount}.",
+        "minimum": "Minimaal {amount}",
+        "title": "Kies hoe u betaalt",
+        "currencyLabel": "Valuta",
+        "currencyNote": "De betaalmethoden veranderen met de valuta.",
+        "listLabel": "Betaalmethode",
+        "loading": "De betaalmethoden voor deze valuta worden geladen",
+        "unavailable": "De aanbieder heeft nu geen betaalmethoden teruggegeven. U kunt doorgaan en in de checkout kiezen hoe u betaalt.",
+        "allBlocked": "Op dit moment accepteert geen enkele betaalmethode minder dan {amount}. Annuleer om het bedrag te wijzigen.",
+        "minimumNotice": "{method} accepteert niet minder dan {amount}. Dat minimum is van de aanbieder, niet van ons, en wat u niet nodig heeft blijft in uw wallet.",
+        "continue": "Doorgaan",
+        "cancel": "Annuleren"
+      },
+      "title": "Crypto kopen",
+      "exit": "Afrekenen sluiten",
+      "uncovered": "Geen enkele betaalprovider kan u op dit moment in {currency} verkopen. Probeer een andere betaalvaluta of gebruik een wallet die u al heeft.",
+      "currencyUnsupported": "We kunnen nog geen kaartbetaling in {currency} aannemen. Gebruik een wallet die u al heeft, of kom terug wanneer uw valuta wordt ondersteund.",
+      "nativeUnavailable": "U kunt hier nog geen ETH met contant geld kopen. Stuur ETH vanuit een andere wallet of exchange en kom terug.",
+      "failedBody": "Uw aankoop is niet gelukt, dus er is geen geld verplaatst. U kunt het opnieuw proberen.",
+      "timedOut": "Uw aankoop wordt nog verwerkt. Er is niets verloren, en we gaan verder zodra uw geld binnen is.",
+      "reconciling": "Uw aankoop wordt bevestigd. Dit kan even duren.",
+      "enterAmount": "Vul het bedrag in bij het afrekenen. Deze stap heeft ongeveer {amount} nodig.",
+      "baselineUnavailable": "Uw saldo wordt gecontroleerd. Dit duurt even.",
+      "openCheckout": "Veilig afrekenen openen",
+      "connecting": "Beveiligde checkout laden.",
+      "opening": "Beveiligde checkout openen.",
+      "open": "Rond uw aankoop af in de checkout hierboven.",
+      "settled": "Aankoop bevestigd.",
+      "closed": "Checkout gesloten. U kunt opnieuw beginnen wanneer u wilt.",
+      "rejected": "De aankoop is geweigerd.",
+      "cancelled": "De aankoop is geannuleerd.",
+      "error": "Er ging iets mis met de checkout. Probeer het opnieuw.",
+      "unavailable": "We konden de beveiligde checkout niet laden. Probeer het opnieuw.",
+      "mockMode": "Crypto kopen is niet beschikbaar in de testmodus.",
+      "settlingTitle": "Uw aankoop wordt verwerkt",
+      "ethUnpricedBody": "We konden uw aankoop niet starten omdat we op dit moment geen ETH-koers konden ophalen, dus er is niets afgeschreven. U kunt het opnieuw proberen.",
+      "resume": {
+        "title": "Mogelijk loopt er nog een aankoop",
+        "body": "U bent {minutes} minuten geleden een aankoop begonnen. Als u hebt betaald, is uw geld mogelijk nog onderweg. Hervatten wacht daarop. Opnieuw beginnen maakt een nieuwe aankoop, dus doe dat alleen als de eerste nooit is doorgegaan.",
+        "resume": "Die aankoop hervatten",
+        "startNew": "Nieuwe aankoop beginnen",
+        "paidTitle": "Uw aankoop is nog onderweg",
+        "paidBody": "U hebt {minutes} minuten geleden betaald en uw geld is nog niet binnen. Dit kan even duren, zeker bij een bankoverschrijving. Wachten is meestal juist. Begin alleen een nieuwe aankoop als u zeker weet dat de eerste nooit aankomt, want dat betekent opnieuw betalen.",
+        "keepWaiting": "Blijven wachten"
+      }
+    },
+    "secureCheckout": "Beveiligde checkout",
+    "slippage": {
+      "raiseCta": "Verhogen naar {pct}% en opnieuw proberen",
+      "customCta": "Opnieuw proberen met {pct}% slippage",
+      "raiseCost": "Een hogere limiet laat elke resterende omzetting, niet alleen deze stap, doorgaan tegen een slechtere prijs. Verhoog alleen als je wilt dat ze worden voltooid.",
+      "stop": "Hier stoppen"
+    },
+    "stepsRunning": {
+      "buy": "{token} kopen",
+      "bridge": "Verplaatsen naar {network}",
+      "bridgeGas": "Kosten naar {network} sturen",
+      "swapGas": "Kosten dekken",
+      "swapToken": "{token} omzetten"
+    },
+    "stepsDone": {
+      "buy": "{token} gekocht",
+      "bridge": "Verplaatst naar {network}",
+      "bridgeGas": "Kosten naar {network} gestuurd",
+      "swapGas": "Kosten gedekt",
+      "swapToken": "{token} omgezet"
     }
   }
 }

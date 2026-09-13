@@ -1,0 +1,204 @@
+{
+  "data": [
+    {
+      "paymentMethod": "pool-party-credit-card",
+      "displayName": "Credit/Debit Card",
+      "id": "pool-party-credit-card",
+      "name": "Credit/Debit Card",
+      "icon": "https://cdn.paybis.com/shared/icons/default/money-services/credit-card.svg",
+      "minAmount": {
+        "amount": "8.63",
+        "currencyCode": "EUR"
+      },
+      "maxAmount": {
+        "amount": "17259.14",
+        "currencyCode": "EUR"
+      },
+      "fees": {
+        "amount": "4.24",
+        "isPercent": true
+      },
+      "labels": ["instant"]
+    },
+    {
+      "paymentMethod": "pool-party-apple-pay-credit-card",
+      "displayName": "Apple Pay",
+      "id": "pool-party-apple-pay-credit-card",
+      "name": "Apple Pay",
+      "icon": "https://cdn.paybis.com/shared/icons/default/money-services/apple-pay.svg",
+      "minAmount": {
+        "amount": "8.63",
+        "currencyCode": "EUR"
+      },
+      "maxAmount": {
+        "amount": "17259.14",
+        "currencyCode": "EUR"
+      },
+      "fees": {
+        "amount": "4.24",
+        "isPercent": true
+      },
+      "labels": ["instant"]
+    },
+    {
+      "paymentMethod": "pool-party-google-pay-credit-card",
+      "displayName": "Google Pay",
+      "id": "pool-party-google-pay-credit-card",
+      "name": "Google Pay",
+      "icon": "https://cdn.paybis.com/shared/icons/default/money-services/google-pay.svg",
+      "minAmount": {
+        "amount": "8.63",
+        "currencyCode": "EUR"
+      },
+      "maxAmount": {
+        "amount": "17259.14",
+        "currencyCode": "EUR"
+      },
+      "fees": {
+        "amount": "4.24",
+        "isPercent": true
+      },
+      "labels": ["instant"]
+    },
+    {
+      "paymentMethod": "pool-party-manual-bank-transfer",
+      "displayName": "SEPA Bank Transfer",
+      "id": "pool-party-manual-bank-transfer",
+      "name": "SEPA Bank Transfer",
+      "icon": "https://cdn.paybis.com/shared/icons/default/money-services/bank-eu.svg",
+      "minAmount": {
+        "amount": "200.00",
+        "currencyCode": "EUR"
+      },
+      "maxAmount": {
+        "amount": "500000.00",
+        "currencyCode": "EUR"
+      },
+      "fees": {
+        "amount": "1.74",
+        "isPercent": true
+      },
+      "labels": ["low-fee"]
+    },
+    {
+      "paymentMethod": "pool-party_bridgerpay_paypal",
+      "displayName": "PayPal",
+      "id": "pool-party_bridgerpay_paypal",
+      "name": "PayPal",
+      "icon": "https://cdn.paybis.com/shared/icons/default/money-services/paypal-bg-1.svg",
+      "minAmount": {
+        "amount": "8.63",
+        "currencyCode": "EUR"
+      },
+      "maxAmount": {
+        "amount": "431478.46",
+        "currencyCode": "EUR"
+      },
+      "fees": {
+        "amount": "5.24",
+        "isPercent": true
+      },
+      "labels": ["instant", "high-approval-rate"]
+    },
+    {
+      "paymentMethod": "pool-party_bridgerpay_revolutpay",
+      "displayName": "Revolut Pay",
+      "id": "pool-party_bridgerpay_revolutpay",
+      "name": "Revolut Pay",
+      "icon": "https://cdn.paybis.com/shared/icons/default/money-services/revolutpay.svg",
+      "minAmount": {
+        "amount": "8.63",
+        "currencyCode": "EUR"
+      },
+      "maxAmount": {
+        "amount": "86295.69",
+        "currencyCode": "EUR"
+      },
+      "fees": {
+        "amount": "2.74",
+        "isPercent": true
+      },
+      "labels": ["low-fee", "high-approval-rate", "instant"]
+    },
+    {
+      "paymentMethod": "pool-party-bridgerpay_paysafe_apm",
+      "displayName": "Paysafe Card",
+      "id": "pool-party-bridgerpay_paysafe_apm",
+      "name": "Paysafe Card",
+      "icon": "https://cdn.paybis.com/shared/icons/default/money-services/paysafecard.svg",
+      "minAmount": {
+        "amount": "5.00",
+        "currencyCode": "EUR"
+      },
+      "maxAmount": {
+        "amount": "1000.00",
+        "currencyCode": "EUR"
+      },
+      "fees": {
+        "amount": "11.24",
+        "isPercent": true
+      },
+      "labels": ["high-approval-rate", "instant"]
+    },
+    {
+      "paymentMethod": "pool-party_bridgerpay_astropay",
+      "displayName": "AstroPay",
+      "id": "pool-party_bridgerpay_astropay",
+      "name": "AstroPay",
+      "icon": "https://cdn.paybis.com/shared/icons/default/money-services/astropay-new.svg",
+      "minAmount": {
+        "amount": "8.63",
+        "currencyCode": "EUR"
+      },
+      "maxAmount": {
+        "amount": "8629.57",
+        "currencyCode": "EUR"
+      },
+      "fees": {
+        "amount": "7.74",
+        "isPercent": true
+      },
+      "labels": ["high-approval-rate", "instant"]
+    },
+    {
+      "paymentMethod": "pool-party_apm_bridgerpay_skrill",
+      "displayName": "Skrill",
+      "id": "pool-party_apm_bridgerpay_skrill",
+      "name": "Skrill",
+      "icon": "https://cdn.paybis.com/shared/icons/default/money-services/skrill.svg",
+      "minAmount": {
+        "amount": "8.63",
+        "currencyCode": "EUR"
+      },
+      "maxAmount": {
+        "amount": "172591.38",
+        "currencyCode": "EUR"
+      },
+      "fees": {
+        "amount": "5.24",
+        "isPercent": true
+      },
+      "labels": ["high-approval-rate", "instant"]
+    },
+    {
+      "paymentMethod": "pool-party_bridgerpay_neteller",
+      "displayName": "Neteller",
+      "id": "pool-party_bridgerpay_neteller",
+      "name": "Neteller",
+      "icon": "https://cdn.paybis.com/shared/icons/default/money-services/neteller.svg",
+      "minAmount": {
+        "amount": "8.63",
+        "currencyCode": "EUR"
+      },
+      "maxAmount": {
+        "amount": "172591.38",
+        "currencyCode": "EUR"
+      },
+      "fees": {
+        "amount": "5.24",
+        "isPercent": true
+      },
+      "labels": ["high-approval-rate", "instant"]
+    }
+  ]
+}

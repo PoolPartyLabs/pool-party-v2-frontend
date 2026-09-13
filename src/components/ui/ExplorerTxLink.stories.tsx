@@ -1,12 +1,14 @@
 /**
- * @id PP-CORE-CMP-050 (POO-514)
+ * @id PP-CORE-CMP-050 (POO-514, POO-1568)
  * @name ExplorerTxLink — stories
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1568 rules v1) · v1
  *
  * Workbench for the shared receipt "View on explorer" link: one story per supported network, plus
- * the empty states (no hash / unsupported network) that render nothing by design.
+ * the empty states (no hash / unsupported network) that render nothing by design, plus the three
+ * variants — the last of which only means anything in the position it ships in.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { Button } from "./Button";
 import { ExplorerTxLink } from "./ExplorerTxLink";
 
 const HASH = "0xMOCK00000000000000000000000000000000MOCK";
@@ -40,3 +42,23 @@ export const NoHash: Story = { args: { network: "base", hash: null } };
 
 /** Unsupported network: nothing renders (no fabricated explorer). */
 export const UnsupportedNetwork: Story = { args: { network: "solana", hash: HASH } };
+
+/** POO-1508 [R48]: the quiet inline line the settling screens use, under their own ghost `Close`. */
+export const TextVariant: Story = { args: { network: "base", hash: HASH, variant: "text" } };
+
+/**
+ * POO-1568 [R1]: the execution screen's link, in the position that is the whole reason the variant
+ * exists — directly under the state button, inside the pinned footer. Shown with the button, because
+ * "one rank quieter than the CTA above it" is not a property this control has on its own.
+ */
+export const GhostUnderTheStateButton: Story = {
+  args: { network: "base", hash: HASH, variant: "ghost" },
+  render: (args) => (
+    <div className="flex flex-col gap-2">
+      <Button className="w-full" size="lg">
+        Done
+      </Button>
+      <ExplorerTxLink {...args} />
+    </div>
+  ),
+};

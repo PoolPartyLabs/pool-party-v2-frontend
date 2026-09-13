@@ -29,3 +29,14 @@ docker-compose*
 .env
 .env.*
 !.env.production
+
+# hookrisk (Uniswap v4 hook risk scanner) ships in this repository for the hackathon write-up only.
+# It is a separate toolchain (Python + Foundry + its own Node CLI), so it never belongs in the
+# DEFAULT image build context: `COPY . .` in the builder stage would carry it into every image for
+# an app that does not import it.
+#
+# The Tools page (PP-TOOLS-SCR-001) does run it, and reaches it WITHOUT touching this exclusion:
+# `docker build --build-arg WITH_HOOKRISK=1 --build-context hookrisk=./hookrisk .` passes the folder
+# as a named build context, read only by the Dockerfile's `hookrisk-1` runtime stage. That keeps the
+# default build byte-identical. See docs/_hackathon_privy/04_TOOLS_PAGE.md.
+hookrisk

@@ -37,7 +37,13 @@
     "bank": {
       "name": "Bank transfer",
       "meta": "1–2 business days"
-    }
+    },
+    "allBlocked": "Increase your deposit to {amount}. No payment method accepts less right now.",
+    "loading": "Loading the payment methods for this currency",
+    "unavailable": "Paybis did not return any payment options right now. You can continue and choose how to pay in the secure checkout.",
+    "blocked": "Paybis needs at least {amount}.",
+    "minimum": "Minimum {amount}",
+    "charge": "You pay {amount}"
   },
   "review": {
     "title": "Review",
@@ -51,7 +57,11 @@
     "payingWith": "Paying with {method}",
     "change": "Change",
     "confirm": "Confirm & pay with {method}",
-    "poweredBy": "Powered by Paybis"
+    "poweredBy": "Powered by Paybis",
+    "payAtCheckout": "Shown at checkout",
+    "choosePayment": "Choose how to pay",
+    "ethUnpriced": "We couldn't start your purchase because we couldn't get an ETH price just now. Please try again.",
+    "confirmGeneric": "Confirm & pay"
   },
   "success": {
     "title": "Deposit confirmed",
@@ -61,7 +71,8 @@
     "method": "Method",
     "date": "Date",
     "investNow": "Invest now",
-    "backHome": "Back to home"
+    "backHome": "Back to home",
+    "viewWalletOnExplorer": "View wallet on explorer"
   },
   "crypto": {
     "title": "Deposit crypto",
@@ -72,8 +83,8 @@
     "share": "Share address",
     "asset": "USD Coin · USDC",
     "sent": "I've sent the funds",
-    "waitingTitle": "Waiting for your deposit",
-    "waitingBody": "We'll detect it automatically. No need to do anything.",
+    "waitingTitle": "Check back in a few minutes",
+    "waitingBody": "We cannot confirm transfers sent from another app or exchange. Your balance updates on its own once the money arrives.",
     "viewAddress": "View address & QR",
     "receivedTitle": "Deposit received",
     "added": "{amount} USDC added",
@@ -87,5 +98,48 @@
     "networkContinue": "Continue",
     "changeNetwork": "Change network",
     "networkWarning": "Send USDC on {network} only. Sending on another network may result in permanent loss."
+  },
+  "onramp": {
+    "checkout": {
+      "approx": "You will see a slightly higher amount in the secure checkout. That covers the provider's spread, so about {amount} USDC reaches your wallet.",
+      "approxNoPrefill": "Enter the amount you want to pay in the secure checkout. About {amount} USDC will reach your wallet.",
+      "baselineUnavailable": "We could not read your wallet balance, so we cannot start a purchase yet. Check your connection and try again.",
+      "belowMinimum": "This is below the {amount} minimum to invest. The money is in your wallet, and you can add more whenever you like.",
+      "uncoveredTitle": "We cannot sell to you right now",
+      "uncoveredBody": "No provider will sell crypto for {currency} at this amount today. Try a different amount, or come back later.",
+      "currencyUnsupportedBody": "We cannot take a payment in your currency right now. Try again in a moment, or come back later.",
+      "unverifiedTitle": "We could not confirm your payment yet",
+      "unverifiedBody": "If you paid, the funds appear in your wallet once the payment settles. You can leave this page; nothing is lost.",
+      "openingTitle": "Opening the secure checkout",
+      "openingBody": "Complete your purchase in the secure checkout. Keep this page open."
+    },
+    "resume": {
+      "startNew": "Start a new purchase",
+      "title": "You may have a purchase in progress",
+      "body": "You started a purchase {minutes} minutes ago. If you paid, the money may still be on its way. Resuming waits for it. Starting again creates a new purchase, so only do that if the first one never went through.",
+      "resume": "Resume that purchase",
+      "paidTitle": "Your purchase is still landing",
+      "paidBody": "You paid {minutes} minutes ago and the money has not arrived yet. This can take a while, especially for a bank transfer. Waiting is usually right. Only start a new purchase if you are sure the first one is never arriving, because that means paying again.",
+      "keepWaiting": "Keep waiting"
+    },
+    "settlingTitle": "Payment received",
+    "settlingBody": "Your balance will update as soon as the funds settle. This can take a few minutes.",
+    "tryAgain": "Try again",
+    "settledErrorTitle": "Your purchase went through",
+    "errorTitle": "Purchase not completed",
+    "settledErrorBody": "We could not finish converting it to USDC. Your money is safe, resting as ETH on Base. Try again to finish the conversion.",
+    "errorBody": "The purchase did not go through and no money was moved. You can try again.",
+    "referenceLabel": "Reference",
+    "paybisReferenceLabel": "Paybis ref",
+    "title": "Buy crypto",
+    "connecting": "Preparing your purchase",
+    "swapping": "Converting to USDC"
+  },
+  "secureCheckout": "Secure checkout",
+  "currency": {
+    "title": "Currency",
+    "search": "Search {count} currencies",
+    "noResults": "No currencies found",
+    "footnote": "Payment methods change with the currency."
   }
 }

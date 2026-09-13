@@ -1,0 +1,38 @@
+{
+  "title": "Outils",
+  "subtitle": "Outils pour développeurs livrés avec Pool Party. En lecture seule, et ils ne touchent jamais à votre portefeuille.",
+  "hookRisk": {
+    "heading": "Risque des hooks Uniswap v4",
+    "intro": "Collez l'adresse d'un hook déployé. hookrisk lit son code source vérifié, le compile, le note selon le Hooks Security Framework de la Uniswap Foundation et renvoie le rapport ci-dessous.",
+    "chainLabel": "Réseau",
+    "addressLabel": "Adresse du contrat du hook",
+    "addressPlaceholder": "0x0000000000000000000000000000000000000000",
+    "submit": "Analyser",
+    "submitRunning": "Analyse en cours",
+    "notice": "Une analyse compile le contrat et exécute un harness différentiel avec fuzzing, comptez donc des minutes et non des secondes. Le rapport est mis en cache pendant 24 heures.",
+    "idleTitle": "Aucune analyse pour le moment",
+    "idleBody": "Choisissez un réseau, collez l'adresse d'un hook déployé et appuyez sur Analyser.",
+    "runningTitle": "Analyse en cours",
+    "elapsed": "{seconds}s écoulées",
+    "cached": "Résultat d'une analyse effectuée au cours des 24 dernières heures.",
+    "gatePassed": "Le gate hookrisk est passé.",
+    "gateFailed": "Le gate hookrisk a échoué. Le rapport ci-dessous en dit la raison, et un gate en échec est un résultat, pas une erreur.",
+    "reportHeading": "Rapport",
+    "errorTitle": "Cette analyse n'a pas été exécutée",
+    "retry": "Réessayer",
+    "status": {
+      "queued": "En file d'attente",
+      "fetchingSource": "Lecture du code source vérifié sur l'explorateur de blocs",
+      "building": "Compilation du contrat",
+      "scanning": "Exécution des détecteurs et du harness différentiel",
+      "done": "Rapport prêt",
+      "failed": "L'analyse n'a pas pu aboutir"
+    },
+    "errors": {
+      "INVALID_ADDRESS": "Ce n'est pas une adresse de contrat valide. Elle doit faire 42 caractères et commencer par 0x.",
+      "UNSUPPORTED_CHAIN": "Ce réseau ne fait pas partie des réseaux lus par cet outil.",
+      "JOB_UNKNOWN": "Le serveur ne suit plus cette analyse. Relancez-la.",
+      "NETWORK": "Le serveur est injoignable. Vérifiez qu'il tourne et réessayez."
+    }
+  }
+}

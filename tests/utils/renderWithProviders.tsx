@@ -17,6 +17,7 @@ import enRewards from "@/i18n/messages/en/rewards.json";
 import enShell from "@/i18n/messages/en/shell.json";
 import enStrategies from "@/i18n/messages/en/strategies.json";
 import enSwap from "@/i18n/messages/en/swap.json";
+import enTools from "@/i18n/messages/en/tools.json";
 import enWallet from "@/i18n/messages/en/wallet.json";
 
 /**
@@ -47,6 +48,7 @@ function Providers({ children }: { children: ReactNode }) {
         rewards: enRewards,
         shell: enShell,
         swap: enSwap,
+        tools: enTools,
         wallet: enWallet,
       }}
     >

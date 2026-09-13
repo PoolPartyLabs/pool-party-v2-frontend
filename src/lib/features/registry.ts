@@ -32,10 +32,15 @@ export type FeatureKey =
   | "adminConsole"
   | "provisioning"
   | "swapScreen"
+  | "fiatOnRamp"
+  | "privyOnRamp"
+  | "onRampCapture"
+  | "robinhoodChain"
   | "activeReserve"
   | "cashPlus"
   | "virtualize"
-  | "strategyCategoryFilter";
+  | "strategyCategoryFilter"
+  | "hookTools";
 
 /**
  * Lifecycle stage of an area:
@@ -221,11 +226,137 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
   cashPlus: {
     key: "cashPlus",
     area: "Cash+",
-    defaultEnabled: false,
+    // HACKATHON (public repository, 2026-09): default ON, like `hookTools` and the on-ramp pair, so a
+    // fresh clone shows both products of the submission without an env file. `NEXT_PUBLIC_CASH_PLUS_MODE`
+    // still selects preview (simulated ledger) unless set otherwise; the env var wins per environment.
+    defaultEnabled: true,
     stage: "next",
     envVar: "NEXT_PUBLIC_FEATURE_CASH_PLUS",
     description:
       "Dedicated Cash+ investment page and responsive navigation. Reads the selected chain directly; no catalog or portfolio integration.",
+  },
+  fiatOnRamp: {
+    key: "fiatOnRamp",
+    area: "Fiat on-ramp (Paybis)",
+    // POO-1129 (epic), dark-launched (premise 10) on a flat baseline. This is the ONE authority on
+    // whether the Paybis fiat on-ramp is a real funding option: the provisioning planner reads it to
+    // decide whether to emit a `buy` leg (POO-1135, `computePlanAction` -> `buildPlan.onRampEnabled`),
+    // and `resolveFundingRoutes` reads the SAME flag for its `onRampEnabled` input, so the plan behind
+    // a buy route and the route the picker offers can never disagree.
+    //
+    // Ships OFF: POO-1135 lands the plan + picker surfaces, but execution (the widget, settlement,
+    // leg re-sizing) is POO-1136 and the CTA repoint is POO-1137. Turning it on before those exist
+    // would offer a buy route that dead-ends. Phase 6 (POO-1137) flips it per environment with
+    // `NEXT_PUBLIC_FEATURE_FIAT_ON_RAMP=true`, once the rail behind it is real.
+    //
+    // Distinct from `provisioning` (which gates the pre-flight gate as a whole) and `deposit` (the
+    // standalone /deposit route): those can be on while fiat funding inside the gate is still off.
+    //
+    // HACKATHON (public repository, 2026-09): default ON. The Privy rail behind this pair is the
+    // e2e flow the submission demonstrates (Google sign-in, embedded wallet, fiat checkout, add
+    // liquidity), so a fresh clone runs it without an env file. The per-environment env var still
+    // wins, and the decision table in `resolveOnRampProvider()` is unchanged.
+    defaultEnabled: true,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_FIAT_ON_RAMP",
+    description:
+      "The Paybis fiat on-ramp as a first-class funding option inside provisioning (buy USDC/ETH on Base, then swap/bridge). Gates both the planner's `buy` leg and the FundingRoutePicker's buy route from one flag. Off until the on-ramp execution rail (POO-1136/1137) ships.",
+  },
+  privyOnRamp: {
+    key: "privyOnRamp",
+    area: "Privy on-ramp rail",
+    // POO-1800, epic POO-1793. WHICH rail serves fiat, never WHETHER fiat is offered. That split is
+    // the whole design: `fiatOnRamp` above stays the ONE authority on whether a buy is a funding
+    // option at all, and this flag is only consulted after that one said yes ([R1]). Turning this on
+    // alone changes nothing a buyer can see, which is what makes it safe to promote per environment
+    // ahead of the migration.
+    //
+    // Read through `resolveOnRampProvider()` / `useOnRampProvider()` (PP-CORE-LIB-105,
+    // PP-CORE-HOK-034), never as a second flag test at a host: the pair has three states
+    // (`none` / `paybis` / `privy`) and a host that reads both booleans itself will eventually get
+    // the table wrong in one place only.
+    //
+    // [R2] DEATH CONDITION, and it is a promise with a date rather than a hope: this flag is
+    // deleted in the same PR that deletes the last Paybis module. A migration switch outlives its
+    // migration exactly when nobody wrote down what ends it, so it is written here, in
+    // docs/FEATURE_FLAGS.md, and pinned by a test in `registry.test.ts`. When the last Paybis module
+    // goes, `resolveOnRampProvider` collapses to the `fiatOnRamp` read and this entry goes with it.
+    //
+    // KNOWN AND ACCEPTED, as for `onRampCapture` below: `NEXT_PUBLIC_FEATURE_ALL=on` sweeps this on
+    // like every other flag, but only outside production (`resolve.ts` -> `isNonProdEnv`), and a dev
+    // build swept on still buys against SANDBOX because `resolveOnRampEnvironment()` reads
+    // `NEXT_PUBLIC_APP_ENV=development` ([R3]). Production requires the explicit
+    // `NEXT_PUBLIC_FEATURE_PRIVY_ON_RAMP=on`, baked at build like every other NEXT_PUBLIC value.
+    //
+    // NOT a route gate, NOT `isManager`, NOT `isMockMode`: the vendor environment is DERIVED
+    // (`resolveOnRampEnvironment`, [R3]) and mock-vs-real stays the hosts' own guard.
+    //
+    // HACKATHON (public repository, 2026-09): default ON. The Privy rail behind this pair is the
+    // e2e flow the submission demonstrates (Google sign-in, embedded wallet, fiat checkout, add
+    // liquidity), so a fresh clone runs it without an env file. The per-environment env var still
+    // wins, and the decision table in `resolveOnRampProvider()` is unchanged.
+    defaultEnabled: true,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_PRIVY_ON_RAMP",
+    description:
+      "Which rail serves the fiat on-ramp once `fiatOnRamp` has offered it: off = Paybis (today's rail), on = Privy. Never turns fiat on by itself, so it is safe to promote per environment before the migration lands. Deleted in the same PR that deletes the last Paybis module.",
+  },
+  onRampCapture: {
+    key: "onRampCapture",
+    area: "Paybis widget capture (diagnostics)",
+    // POO-1598 S3/S4. NOT an area gate, NOT a control, NOT isManager, NOT isMockMode: it is a
+    // TEMPORARY diagnostics instrument. On, the Paybis widget's postMessage stream is recorded as an
+    // ordered, allow-list-redacted sequence on the first-party diagnostics rail
+    // (`paybisCapture.ts`, PP-CORE-LIB-102). Off, not one record is shipped and the module is inert.
+    //
+    // It is in this registry rather than being a bare `NEXT_PUBLIC_*` value for the reason the
+    // registry exists: one place answers "is this switched on in this environment", and a diagnostic
+    // that reads a real buyer's checkout is exactly the thing that should not be discoverable only
+    // by grepping for an env literal.
+    //
+    // Deliberately dark on a flat baseline, and the plan it serves is: ship off, deploy dev to prove
+    // it is inert, cut a release, turn it on in production for ONE real purchase, turn it off, then
+    // delete the whole instrument once the fixtures land (POO-1598 S5).
+    //
+    // KNOWN AND ACCEPTED: `NEXT_PUBLIC_FEATURE_ALL=on` sweeps this on like every other flag. That
+    // switch is non-prod ONLY (`resolve.ts` -> `isNonProdEnv`), and dev runs Paybis SANDBOX with no
+    // real buyer, so the population it can reach there is us. Production requires the explicit
+    // `NEXT_PUBLIC_FEATURE_ON_RAMP_CAPTURE=on`, baked at build like every other NEXT_PUBLIC value.
+    //
+    // The Dev panel CANNOT flip this one, and that is a property of the reader rather than of this
+    // entry: `paybisCapture.ts` arms through `isFeatureEnabled` -> `resolveFeature`, which reads the
+    // registry default plus env and never consults `devOverrides.ts`. Only the `useFeatureFlags`
+    // hook layers the Dev menu's QA overrides on top. So turning this on is a BUILD, deliberately,
+    // and there is no in-session toggle that could start recording a live checkout by accident.
+    defaultEnabled: false,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_ON_RAMP_CAPTURE",
+    description:
+      "Temporary diagnostics: record the Paybis widget's postMessage stream as an ordered, redacted, retrievable sequence so one real purchase becomes a fixture set (POO-1598). NOT a route gate, NOT isManager, NOT isMockMode. Off = the module ships nothing at all.",
+  },
+  robinhoodChain: {
+    key: "robinhoodChain",
+    area: "Robinhood Chain (4663)",
+    // POO-1776, epic POO-1766. A CHAIN PARTICIPATION gate, and the distinction is the whole design:
+    // Robinhood stays in wagmi `supportedChains` unconditionally, so a wallet already sitting on
+    // 4663 connects, signs SIWE and switches to it whatever this flag says. What the flag decides is
+    // narrower, and it is two things: whether a network SELECTOR offers the chain as a place to put
+    // money, and whether the app FANS OUT to it for data (`pools?network=robinhood`, the wallet
+    // holdings read, the 4663 USDC RPC read). An alpha deployment that is reachable is fine; one the
+    // product recommends is not, and one that every user's page load queries in an environment whose
+    // backend has never heard of the slug is just a 400 per user.
+    //
+    // Off in dev AND prod on a flat baseline. Dev turns it on with
+    // `NEXT_PUBLIC_FEATURE_ROBINHOOD_CHAIN=on` in its untracked env BEFORE the image build, because
+    // NEXT_PUBLIC_* is baked at build time rather than read at boot.
+    //
+    // NOT a route gate (there is no /robinhood route), NOT `isManager`, NOT `isMockMode`. Retire it
+    // once the chain leaves alpha, per the launch checklist in docs/FEATURE_FLAGS.md.
+    defaultEnabled: false,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_ROBINHOOD_CHAIN",
+    description:
+      "Whether network selectors OFFER Robinhood Chain (Arbitrum Orbit, id 4663, ETH gas, USDG stable) AND whether the app fans out to it for data (catalog, wallet holdings, on-chain balance reads). The chain stays a wagmi supported chain either way, so connecting and switching to it always works, and a holding on it still resolves a name and a logo. Off = the alpha deployment is reachable but never recommended and never queried.",
   },
   virtualize: {
     key: "virtualize",
@@ -253,6 +384,23 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
     envVar: "NEXT_PUBLIC_FEATURE_STRATEGY_CATEGORY_FILTER",
     description:
       "The POO-830 category-tags surface (R5/R6/R8). PR2: the investor asset-category multi-select filter on the Strategies Explore screen. PR3: the read-only asset + objective tag preview in the strategy builder's DerivedMandateCard. NOT a route gate, NOT isManager, NOT isMockMode. Default off = today's Explore + builder behavior; on = the filter shows (client-side over loaded strategies) and the builder previews the derived tags.",
+  },
+  hookTools: {
+    key: "hookTools",
+    area: "Tools (Uniswap v4 hook risk)",
+    // ON by default, which no other `next` flag here is, and the exception is deliberate: this is
+    // the HACKATHON DEMO FORK. The Tools page is the submission's front door, so a judge opening
+    // the deployed app has to find it without anybody setting an env var first.
+    //
+    // That also makes the flag the removal seam, the same role `activeReserve` plays. If this page
+    // ever merges toward production it ships OFF and is turned on per environment like everything
+    // else; turning it off must leave no trace on any other surface, which is why exactly two
+    // places read it, the route guard and the sidebar entry.
+    defaultEnabled: true,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_HOOK_TOOLS",
+    description:
+      "The Tools page at `/tools`: paste a deployed Uniswap v4 hook address and get the hookrisk report for it. Route-guarded (404 while off) and gates the sidebar entry. The scan runs server-side and needs the hookrisk toolchain plus ETHERSCAN_API_KEY on the host; without them the page reports what is missing rather than a clean bill of health.",
   },
 };
 

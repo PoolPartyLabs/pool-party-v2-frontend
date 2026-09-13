@@ -42,6 +42,31 @@ export function formatUsd(value: number): string {
 }
 
 /**
+ * Money in a currency that is NOT assumed to be USD: `(208, "EUR")` → `"€208.00"`.
+ *
+ * POO-1512 [R7]. The on-ramp charge arrives from Paybis with its own `chargeCurrencyCode`, and since
+ * the buyer is now charged in their own currency, putting that figure through {@link formatUsd} would
+ * print `$208.00` for a EUR 208 charge: a printed claim that does not match what is billed.
+ *
+ * An unknown or malformed code falls back to plain USD formatting rather than throwing. `Intl` rejects
+ * a bad currency code with a RangeError, and a vendor sending an unexpected code must not blank a
+ * screen the user is trying to pay from.
+ *
+ * Fraction digits are deliberately NOT pinned: each currency's own minor units apply, so a zero-decimal
+ * currency renders without invented cents (`(30000, "JPY")` is `"¥30,000"`, never `"¥30,000.00"`).
+ */
+export function formatFiat(value: number, currencyCode: string): string {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currencyCode,
+    }).format(value);
+  } catch {
+    return usd.format(value);
+  }
+}
+
+/**
  * Money at full token precision, trailing zeros trimmed: `38.005424` → `"$38.005424"`, `50` → `"$50"`.
  * Unlike {@link formatUsd} (always 2dp), this preserves the exact spendable figure so the displayed
  * balance matches what "Max" fills and what the Permit2 signature authorizes. Used where the USD value

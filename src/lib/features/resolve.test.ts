@@ -33,13 +33,14 @@ describe("parseFlagValue", () => {
 });
 
 describe("resolveFeature precedence", () => {
-  // @rule CP-UI02: the explicit Cash+ environment setting controls the route gate.
-  it("resolves Cash+ off by default and honors the explicit environment switch", () => {
-    expect(resolveFeature("cashPlus")).toBe(false);
-    vi.stubEnv("NEXT_PUBLIC_FEATURE_CASH_PLUS", "on");
+  // @rule CP-UI02: the explicit Cash+ environment setting controls the route gate. The hackathon fork
+  // ships the registry default ON (see registry.ts); the env var still wins in both directions.
+  it("resolves Cash+ on by default in this fork and honors the explicit environment switch", () => {
     expect(resolveFeature("cashPlus")).toBe(true);
     vi.stubEnv("NEXT_PUBLIC_FEATURE_CASH_PLUS", "off");
     expect(resolveFeature("cashPlus")).toBe(false);
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_CASH_PLUS", "on");
+    expect(resolveFeature("cashPlus")).toBe(true);
   });
   it("falls back to the registry default when nothing overrides it", () => {
     expect(resolveFeature("rewards")).toBe(true); // default on

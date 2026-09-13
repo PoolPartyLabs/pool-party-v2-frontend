@@ -1,0 +1,9 @@
+  scan: src/ERC721OwnershipHook.sol:ERC721OwnershipHook run=7f9ce81e-f7f1-4d16-acb6-f3414b29105e
+  project: out=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/nft-owners-only/repo/out solc=0.8.19 (artifact-metadata) artifact=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/nft-owners-only/repo/out/ERC721OwnershipHook.sol/ERC721OwnershipHook.json
+  hookrisk: slither src/ERC721OwnershipHook.sol:ERC721OwnershipHook
+  hookrisk: 3 finding(s) in other files, not attributed to this target: src/Counter.sol (1), src/implementation/CounterImplementation.sol (1), src/implementation/ERC721OwnershipHookImpl.sol (1)
+  hookrisk: did not analyse the target — ERC721OwnershipHook uses a hook ABI hookrisk cannot analyse: ERC721OwnershipHook (src/ERC721OwnershipHook.sol#10-48) looks like a Uniswap v4 hook but its hook ABI predates the shipped v4 interface (declares the 2023 …
+  hookrisk: 1 finding(s); analysed 0 hook contract(s)
+  hookrisk: ok
+  harness: skipped — ERC721OwnershipHook's constructor takes 2 argument(s) (address _poolManager, address _nftContract) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.
+  scan: finished in 1801ms, exit 2

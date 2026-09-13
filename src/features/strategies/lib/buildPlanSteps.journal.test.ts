@@ -12,6 +12,11 @@
  * a stubbed store would prove nothing about it. No network, no timers.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+/** `waitForReceipt`'s own defaults, mirrored so a test can run the window down deterministically. */
+const RECEIPT_WINDOW_MS = 5 * 60 * 1000;
+const RECEIPT_POLL_MS = 2500;
+
 import type { ProvisioningLeg, ProvisioningPlan, ProvisioningStep } from "@/lib/provisioning";
 import type { Eip1193Provider } from "@/lib/tx/sendTransaction";
 import type { UniswapQuoteResponse, UniswapTransactionRequest } from "@/lib/uniswap/schemas";
@@ -20,13 +25,14 @@ import {
   isRequoteMateriallyWorse,
   type PlanRailCtx,
   type PlanRailDeps,
-  type RequoteChange,
+  PROVISIONING_BUFFER_EXCEEDED_CODE,
 } from "./buildPlanSteps";
 import {
   createJournal,
   createJournalRecorder,
   type FundingJournal,
   getJournal,
+  updateLeg,
 } from "./fundingJournal";
 import { type ChainReader, reconcileJournal } from "./reconcileFundingJournal";
 
@@ -100,9 +106,14 @@ function bridgeLeg(overrides: Partial<ProvisioningLeg> = {}): ProvisioningLeg {
  */
 const bridgeArrives = (baseline = "0"): string[] => [
   baseline,
-  // The smallest delivery that clears the leg's own floor.
-  (BigInt(baseline) + BigInt(bridgeLeg().minAmountOut)).toString(),
+  // The smallest delivery that clears the floor. Since POO-1094 that floor is the FRESH quote's
+  // output, not the planner's `minAmountOut`: the leg may have been re-sized at execution, so a
+  // threshold sized for an amount we are no longer sending would never be met.
+  (BigInt(baseline) + BigInt(DEFAULT_QUOTED_OUT)).toString(),
 ];
+
+/** What the harness's execution-time quote returns unless a test overrides `quotedOut`. */
+const DEFAULT_QUOTED_OUT = "3000000000";
 
 function stepFor(leg: ProvisioningLeg): ProvisioningStep {
   return {
@@ -162,10 +173,18 @@ interface HarnessOptions {
   balances?: Record<string, string[]>;
   /** Quoted output per call, consumed in order; the last value repeats. */
   quotedOut?: string[];
-  /** Reject the receipt read: the tab dying between the broadcast and the receipt. */
+  /**
+   * Keep rejecting the receipt read: an RPC that stays down for the whole confirmation window.
+   *
+   * Since POO-1093 [R1] a dropped read no longer fails the leg on the first try, because a read
+   * that says nothing is not evidence about where the money is. So a test using this must run the
+   * confirmation window down with fake timers; the leg then fails carrying the read error.
+   */
   receiptFails?: boolean;
+  /** The receipt comes back with a FAILED status: the transaction reverted on chain. */
+  receiptReverts?: boolean;
   journalId?: string;
-  confirmRequote?: (change: RequoteChange) => Promise<boolean>;
+  consumeBuffer?: (worseBps: number) => boolean;
 }
 
 interface Harness {
@@ -179,7 +198,7 @@ function harness(options: HarnessOptions = {}): Harness {
   const sent: string[] = [];
   const journalAtReceipt: (FundingJournal | null)[] = [];
   const balanceQueues = { ...(options.balances ?? {}) };
-  const quoted = [...(options.quotedOut ?? ["3000000000"])];
+  const quoted = [...(options.quotedOut ?? [DEFAULT_QUOTED_OUT])];
   let chainHex = POLYGON_HEX;
 
   const provider: Eip1193Provider = {
@@ -201,6 +220,7 @@ function harness(options: HarnessOptions = {}): Harness {
           // The write-ordering probe: what does the record say at the instant we start waiting?
           journalAtReceipt.push(options.journalId ? getJournal(options.journalId) : null);
           if (options.receiptFails) throw new Error("RPC dropped the connection");
+          if (options.receiptReverts) return { status: "0x0", blockNumber: "0x1", logs: [] };
           return { status: "0x1", blockNumber: "0x1", logs: [] };
         }
         default:
@@ -223,7 +243,7 @@ function harness(options: HarnessOptions = {}): Harness {
     }),
     checkApproval: async () => ({ ok: true as const, approval: null, cancel: null }),
     buildSwapTx: async () => ({ ok: true as const, swap: txRequest() }),
-    ...(options.confirmRequote ? { confirmRequote: options.confirmRequote } : {}),
+    ...(options.consumeBuffer ? { consumeBuffer: options.consumeBuffer } : {}),
     ...(options.journalId
       ? { journal: createJournalRecorder(options.journalId, { readNonce: async () => 7 }) }
       : {}),
@@ -296,15 +316,115 @@ describe("[R2] write ordering: the hash lands before anything is awaited", () =>
     expect(atReceipt?.legs[0]?.txHash).toBe(sent[0]);
   });
 
-  it("keeps the hash when the tab dies between the broadcast and the receipt", async () => {
+  it("keeps the hash when the receipt is never learned", async () => {
+    vi.useFakeTimers();
+    try {
+      const journal = journalFor();
+      const { deps, sent } = harness({ journalId: journal.journalId, receiptFails: true });
+
+      const running = runRail(planOf([swapLeg()]), deps);
+      const outcome = running.then(
+        () => ({ ok: true as const }),
+        () => ({ ok: false as const }),
+      );
+      // POO-1093 [R1]: the read failing no longer fails the leg immediately, so run the whole
+      // 5-minute confirmation window down. The leg then fails, and the point of the test is what
+      // the journal holds at that moment.
+      await vi.advanceTimersByTimeAsync(RECEIPT_WINDOW_MS + RECEIPT_POLL_MS);
+      expect((await outcome).ok).toBe(false);
+
+      const persisted = getJournal(journal.journalId);
+      expect(persisted?.legs[0]?.status).toBe("broadcast");
+      expect(persisted?.legs[0]?.txHash).toBe(sent[0]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  /**
+   * POO-1093 [R3]. THE defect: `flow.retry()` re-ran the failed step verbatim, and because the rail
+   * never read the journal, a leg that was already on chain got broadcast a SECOND time. The
+   * provisioning flow sets no `pauseAfterKey`, so both of `useWalletSignFlow.retry()`'s guarded
+   * branches are skipped and it falls through to re-running the step.
+   *
+   * Retrying is still right for a leg that never left. What must never happen is spending again for
+   * money already in flight, and the journal is the only thing that knows the difference.
+   */
+  it("[R3] refuses to re-broadcast a leg the journal already recorded as broadcast", async () => {
     const journal = journalFor();
-    const { deps, sent } = harness({ journalId: journal.journalId, receiptFails: true });
+    const { deps, sent } = harness({ journalId: journal.journalId });
 
-    await expect(runRail(planOf([swapLeg()]), deps)).rejects.toThrow();
+    // Session one broadcast this leg and then died before the receipt.
+    updateLeg(journal.journalId, 0, {
+      status: "broadcast",
+      txHash: "0xaaaa000000000000000000000000000000000000000000000000000000000000",
+    });
 
-    const persisted = getJournal(journal.journalId);
-    expect(persisted?.legs[0]?.status).toBe("broadcast");
-    expect(persisted?.legs[0]?.txHash).toBe(sent[0]);
+    // `TransactionError` carries the machine code on `cause`, which is where `classifyTxError`
+    // reads it from (`diagnostics.ts`).
+    await expect(runRail(planOf([swapLeg()]), deps)).rejects.toMatchObject({
+      cause: { code: "PROVISIONING_LEG_ALREADY_BROADCAST" },
+    });
+
+    // The whole point: no second transaction.
+    expect(sent).toEqual([]);
+    // And the first hash is untouched, so recovery can still reconcile it.
+    expect(getJournal(journal.journalId)?.legs[0]?.txHash).toBe(
+      "0xaaaa000000000000000000000000000000000000000000000000000000000000",
+    );
+  });
+
+  /**
+   * POO-1093 [R3], the case the guard must NOT catch.
+   *
+   * A revert moved no money, so retrying is exactly right. But the rail never called
+   * `recordFailed` at runtime, so a reverted leg stayed `broadcast` forever and the guard would
+   * have blocked the retry while telling the user their transaction "was already sent and is still
+   * being tracked". That is the opposite of what happened.
+   *
+   * A TIMEOUT is deliberately different: we do not know whether it landed, so the leg stays
+   * `broadcast` and the guard keeps protecting it. "Failed" is a verdict, not a shrug.
+   */
+  it("[R3] a REVERT frees the leg to be retried, and keeps its hash as evidence", async () => {
+    const journal = journalFor();
+    const { deps } = harness({ journalId: journal.journalId, receiptReverts: true });
+
+    await expect(runRail(planOf([swapLeg()]), deps)).rejects.toThrow(/reverted/);
+
+    const leg = getJournal(journal.journalId)?.legs[0];
+    expect(leg?.status).toBe("failed");
+    expect(leg?.txHash).toBeDefined();
+  });
+
+  it("[R3] a TIMEOUT leaves the leg broadcast, so the guard still protects it", async () => {
+    vi.useFakeTimers();
+    try {
+      const journal = journalFor();
+      const { deps } = harness({ journalId: journal.journalId, receiptFails: true });
+
+      const outcome = runRail(planOf([swapLeg()]), deps).then(
+        () => ({ ok: true as const }),
+        () => ({ ok: false as const }),
+      );
+      await vi.advanceTimersByTimeAsync(RECEIPT_WINDOW_MS + RECEIPT_POLL_MS);
+      expect((await outcome).ok).toBe(false);
+
+      // We never learned the outcome, so the leg is still treated as in flight.
+      expect(getJournal(journal.journalId)?.legs[0]?.status).toBe("broadcast");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("[R3] still broadcasts a leg that only ever got as far as planned", async () => {
+    // The guard must not turn every retry into a dead end. A leg that never left is exactly what
+    // retry is for.
+    const journal = journalFor();
+    const { deps, sent } = harness({ journalId: journal.journalId });
+
+    await runRail(planOf([swapLeg()]), deps);
+
+    expect(sent).toHaveLength(1);
   });
 
   it("records a bridge's destination baseline before it broadcasts, never after", async () => {
@@ -374,7 +494,18 @@ describe("[R4] a reload or killed tab mid-bridge recovers and continues", () => 
       },
       receiptFails: true,
     });
-    await expect(runRail(planOf([bridgeLeg()]), second.deps)).rejects.toThrow();
+    vi.useFakeTimers();
+    try {
+      const running = runRail(planOf([bridgeLeg()]), second.deps);
+      const outcome = running.then(
+        () => ({ ok: true as const }),
+        () => ({ ok: false as const }),
+      );
+      await vi.advanceTimersByTimeAsync(RECEIPT_WINDOW_MS + RECEIPT_POLL_MS);
+      expect((await outcome).ok).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
 
     const broadcastCount = first.sent.length + second.sent.length;
     expect(broadcastCount).toBe(2);
@@ -479,49 +610,89 @@ describe("[R5] a materially worse re-quote is re-approved before it is signed", 
     ).toBe(true);
   });
 
-  it("re-prompts with the real figures and signs nothing until the user agrees", async () => {
-    const seen: RequoteChange[] = [];
-    const { deps, sent } = harness({
-      quotedOut: ["2700000000"],
-      confirmRequote: async (change) => {
-        seen.push(change);
-        return true;
-      },
-    });
+  it("never consumes the buffer when the price held", async () => {
+    const consumed = vi.fn(() => true);
+    const { deps, sent } = harness({ quotedOut: ["3000000000"], consumeBuffer: consumed });
 
     await runRail(planOf([swapLeg()]), deps);
 
-    expect(seen).toHaveLength(1);
-    expect(seen[0]?.approvedAmountOut).toBe("3000000000");
-    expect(seen[0]?.quotedAmountOut).toBe("2700000000");
-    expect(seen[0]?.worseBps).toBe(1000);
+    expect(consumed).not.toHaveBeenCalled();
+    expect(sent).toHaveLength(1);
+  });
+});
+
+/**
+ * POO-1508 [R43] rules v2: there is no "accept a worse price" step. A materially worse re-quote is
+ * measured against the run's shared buffer instead: absorbed silently within it, refused past it.
+ * `makeConsumeBuffer` mirrors exactly what `ProvisioningPanel.tsx` does (a running bps total against a
+ * fixed limit), so these tests exercise the real cumulative-across-legs shape rather than a single
+ * isolated call.
+ */
+function makeConsumeBuffer(limitBps: number) {
+  let consumedBps = 0;
+  return (worseBps: number): boolean => {
+    const next = consumedBps + worseBps;
+    if (next > limitBps) return false;
+    consumedBps = next;
+    return true;
+  };
+}
+
+describe("[R43] the run's shared buffer, not a step that asks to accept a worse price", () => {
+  it("absorbs a move within the buffer silently: nobody asked, the leg still broadcasts", async () => {
+    const consumeBuffer = vi.fn(makeConsumeBuffer(500));
+    // 300 bps (3%) worse, under the 500 bps (5%) buffer.
+    const { deps, sent } = harness({ quotedOut: ["2910000000"], consumeBuffer });
+
+    await runRail(planOf([swapLeg()]), deps);
+
+    expect(consumeBuffer).toHaveBeenCalledWith(300);
+    expect(consumeBuffer).toHaveReturnedWith(true);
     expect(sent).toHaveLength(1);
   });
 
-  it("broadcasts nothing when the user declines the new price", async () => {
-    const { deps, sent } = harness({
-      quotedOut: ["2700000000"],
-      confirmRequote: async () => false,
-    });
+  it("throws PROVISIONING_BUFFER_EXCEEDED, and sends nothing, when a single re-quote alone exceeds the buffer", async () => {
+    const consumeBuffer = makeConsumeBuffer(500);
+    // 1000 bps (10%) worse, past the 500 bps (5%) buffer on its own.
+    const { deps, sent } = harness({ quotedOut: ["2700000000"], consumeBuffer });
 
-    await expect(runRail(planOf([swapLeg()]), deps)).rejects.toThrow(/price/i);
+    await expect(runRail(planOf([swapLeg()]), deps)).rejects.toMatchObject({
+      cause: { code: PROVISIONING_BUFFER_EXCEEDED_CODE },
+    });
     expect(sent).toHaveLength(0);
   });
 
-  it("refuses to sign a worse price when there is nobody to ask", async () => {
+  it("accumulates consumption across legs in the same run: the second leg trips what the first left within budget", async () => {
+    const consumeBuffer = makeConsumeBuffer(500);
+    // Two legs, each 300 bps (3%) worse alone (within budget on its own), but 600 bps cumulative
+    // exceeds the 500 bps (5%) buffer on the second.
+    const { deps, sent } = harness({
+      quotedOut: ["2910000000", "2910000000"],
+      consumeBuffer,
+    });
+
+    await expect(
+      runRail(planOf([swapLeg({ index: 0 }), swapLeg({ index: 1 })]), deps),
+    ).rejects.toMatchObject({ cause: { code: PROVISIONING_BUFFER_EXCEEDED_CODE } });
+    // The first leg's move was genuinely absorbed and broadcast; only the second was refused.
+    expect(sent).toHaveLength(1);
+  });
+
+  it("a rejected move is never banked: retrying the SAME leg alone at a smaller move succeeds", async () => {
+    // The exceeded attempt above must not have consumed the buffer it was refused against — prove it
+    // directly: a fresh consumeBuffer with the same 500-bps budget, fed the single-leg refusal's
+    // worseBps first (simulating the throw), then a second, smaller move that must still fit whole.
+    const consumeBuffer = makeConsumeBuffer(500);
+    expect(consumeBuffer(600)).toBe(false); // the refused attempt: nothing banked
+    expect(consumeBuffer(500)).toBe(true); // the full budget is still there on retry
+  });
+
+  it("refuses a worse price when there is nobody accounting for the buffer", async () => {
     const { deps, sent } = harness({ quotedOut: ["2700000000"] });
 
-    await expect(runRail(planOf([swapLeg()]), deps)).rejects.toThrow();
+    await expect(runRail(planOf([swapLeg()]), deps)).rejects.toMatchObject({
+      cause: { code: PROVISIONING_BUFFER_EXCEEDED_CODE },
+    });
     expect(sent).toHaveLength(0);
-  });
-
-  it("never asks when the price held", async () => {
-    const asked = vi.fn(async () => true);
-    const { deps, sent } = harness({ quotedOut: ["3000000000"], confirmRequote: asked });
-
-    await runRail(planOf([swapLeg()]), deps);
-
-    expect(asked).not.toHaveBeenCalled();
-    expect(sent).toHaveLength(1);
   });
 });

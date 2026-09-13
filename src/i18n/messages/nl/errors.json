@@ -21,5 +21,10 @@
     "unauthorized": "U hebt geen toestemming om dat te doen. Meld u opnieuw aan.",
     "notFound": "We konden niet vinden wat u zocht.",
     "unknown": "Er is iets misgegaan aan onze kant. Probeer het opnieuw."
+  },
+  "reference": {
+    "label": "Referentie",
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd"
   }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   formatCount,
+  formatFiat,
   formatIdentityLabel,
   formatPercent,
   formatPoolTvl,
@@ -19,6 +20,27 @@ describe("format utils", () => {
   it("formats USD with two decimals and thousands separators", () => {
     expect(formatUsd(4532.5)).toBe("$4,532.50");
     expect(formatUsd(0)).toBe("$0.00");
+  });
+
+  // @rule POO-1512 [R7]: the on-ramp charge is no longer always in dollars, so the figure must be
+  // printed in the currency it is actually billed in.
+  it("formats a charge in the currency it is billed in", () => {
+    expect(formatFiat(208, "EUR")).toBe("€208.00");
+    expect(formatFiat(1234.5, "BRL")).toBe("R$1,234.50");
+    expect(formatFiat(208, "USD")).toBe("$208.00");
+  });
+
+  it("respects a zero-decimal currency's own minor units", () => {
+    // JPY (like KRW and CLP, both in COUNTRY_TO_CURRENCY) has no minor unit: pinning 2 fraction
+    // digits would print "¥30,000.00", a figure no Japanese buyer is ever billed.
+    expect(formatFiat(30000, "JPY")).toBe("¥30,000");
+  });
+
+  it("falls back to USD formatting rather than throwing on a bad currency code", () => {
+    // `Intl` throws a RangeError on an unknown code. A vendor sending something unexpected must not
+    // blank the screen the user is trying to pay from.
+    expect(formatFiat(208, "not-a-currency")).toBe("$208.00");
+    expect(formatFiat(208, "")).toBe("$208.00");
   });
 
   it("formats USD at full token precision, trimming trailing zeros", () => {

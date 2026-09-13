@@ -1,0 +1,245 @@
+name: hookrisk
+description: >-
+  Risk assessment for a Uniswap v4 hook: multi-engine static analysis plus
+  differential invariant fuzzing, scored against the Uniswap Foundation Hooks
+  Security Framework. Emits a manifest, a report, and SARIF for code scanning.
+author: hookrisk contributors
+
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  target:
+    description: 'Hook to assess, as path/to/Hook.sol:ContractName'
+    required: true
+  working-directory:
+    description: 'Foundry project root containing the hook'
+    required: false
+    default: '.'
+  config:
+    description: 'Path to hookrisk.toml (default: <working-directory>/hookrisk.toml)'
+    required: false
+    default: ''
+  fail-on-gate:
+    description: >-
+      Fail the job when the risk gate does not pass. Set to false to report
+      without blocking — useful when adopting hookrisk on an existing codebase,
+      where the first scan is a baseline rather than a verdict.
+    required: false
+    default: 'true'
+  skip-dynamic:
+    description: >-
+      Skip the differential harness. It executes the hook against real v4
+      contracts and takes a few minutes; static-only runs finish in seconds.
+      Note that skipping leaves invariants reported as `skipped`, never as
+      passed.
+    required: false
+    default: 'false'
+  enable-blocksec:
+    description: >-
+      Also run BlockSec HookScan (AGPL-3.0), pulled as a container. It covers
+      two vulnerability classes hookrisk does not, and findings both engines
+      agree on are merged at raised confidence. Off by default because pulling a
+      third-party image should be an explicit choice.
+    required: false
+    default: 'false'
+  upload-sarif:
+    description: 'Upload SARIF so findings appear on the diff and in the Security tab'
+    required: false
+    default: 'true'
+  comment-on-pr:
+    description: 'Post the report as a pull request comment, updating it in place'
+    required: false
+    default: 'true'
+  foundry-version:
+    description: 'Foundry toolchain version'
+    required: false
+    default: 'stable'
+
+outputs:
+  tier:
+    description: 'Risk tier: low, medium or high'
+    value: ${{ steps.scan.outputs.tier }}
+  score:
+    description: 'Total score out of 33'
+    value: ${{ steps.scan.outputs.score }}
+  inconclusive:
+    description: 'true when unmeasured dimensions leave the tier undetermined'
+    value: ${{ steps.scan.outputs.inconclusive }}
+  gate-passed:
+    description: 'true when the risk gate passed'
+    value: ${{ steps.scan.outputs.gate-passed }}
+  findings:
+    description: 'Number of findings after cross-engine reconciliation'
+    value: ${{ steps.scan.outputs.findings }}
+  manifest:
+    description: 'Path to hook-risk.json'
+    value: ${{ steps.scan.outputs.manifest }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: ${{ inputs.foundry-version }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install hookrisk
+      shell: bash
+      run: |
+        set -euo pipefail
+        cd "${{ github.action_path }}/.."
+        python -m pip install --quiet --upgrade pip
+        python -m pip install --quiet 'slither-analyzer>=0.11.5,<0.12'
+        python -m pip install --quiet ./detectors
+        ./scripts/fetch-deps.sh
+        cd cli && npm ci --silent && npm run --silent build
+
+        # A registered-but-invisible plugin is the single most common setup
+        # failure (HR-E004), and it fails as a clean scan rather than an error.
+        # Better to stop here than to publish a green report of nothing.
+        slither --list-detectors | grep -q 'hookrisk-' || {
+          echo "::error::hookrisk detectors did not register with Slither. See HR-E004."
+          exit 1
+        }
+
+    - name: Pull BlockSec HookScan
+      if: inputs.enable-blocksec == 'true'
+      shell: bash
+      run: docker pull --quiet futuretech6/hookscan
+
+    - name: Build target project
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: forge build --build-info
+
+    - name: Scan
+      id: scan
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        # GitHub runs `shell: bash` with -e already set, and `set -uo pipefail`
+        # does not unset it. Without `set +e` the runner aborts here the moment
+        # hookrisk exits 2 — before the handling directly below can run, which
+        # made the step fail for the one outcome it exists to tolerate.
+        set +e
+        set -uo pipefail
+
+        args=("${{ inputs.target }}")
+        [ -n "${{ inputs.config }}" ] && args+=(--config "${{ inputs.config }}")
+        [ "${{ inputs.skip-dynamic }}" = "true" ] && args+=(--skip-dynamic)
+
+        node "${{ github.action_path }}/../cli/dist/cli.js" scan "${args[@]}" --verbose
+        status=$?
+
+        # Exit 2 means the scan completed and the gate failed. That is a result,
+        # not a malfunction, so the outputs are still populated and whether the
+        # job fails is left to `fail-on-gate` below. Anything else is hookrisk
+        # itself failing and stops here.
+        if [ $status -ne 0 ] && [ $status -ne 2 ]; then
+          echo "::error::hookrisk exited $status. See docs/TROUBLESHOOTING.md."
+          exit $status
+        fi
+
+        # From here on a failure is ours, not the scan's.
+        set -e
+
+        manifest="$(pwd)/hook-risk.json"
+        {
+          echo "tier=$(jq -r '.score.tier' "$manifest")"
+          echo "score=$(jq -r '.score.total' "$manifest")"
+          echo "inconclusive=$(jq -r '.score.inconclusive' "$manifest")"
+          # NOT `.gate.passed // true`. jq's alternative operator falls through
+          # on `false` as well as `null`, so that expression reports a failed
+          # gate as passed — it inverts the one value it exists to read.
+          echo "gate-passed=$(jq -r 'if has("gate") then .gate.passed else true end' "$manifest")"
+          echo "findings=$(jq -r '.findings | length' "$manifest")"
+          echo "manifest=$manifest"
+        } >> "$GITHUB_OUTPUT"
+
+        # The report doubles as the job summary, so a reviewer sees the tier and
+        # the findings without opening an artifact.
+        cat "$(pwd)/HOOK_RISK.md" >> "$GITHUB_STEP_SUMMARY"
+
+    - name: Upload SARIF
+      if: inputs.upload-sarif == 'true' && always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.working-directory }}/hookrisk.sarif
+        category: hookrisk
+
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: hookrisk-report
+        path: |
+          ${{ inputs.working-directory }}/hook-risk.json
+          ${{ inputs.working-directory }}/HOOK_RISK.md
+          ${{ inputs.working-directory }}/hookrisk.sarif
+        if-no-files-found: warn
+
+    - name: Comment on pull request
+      if: inputs.comment-on-pr == 'true' && github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = `${{ inputs.working-directory }}/HOOK_RISK.md`;
+          if (!fs.existsSync(path)) return;
+
+          // A marker lets us update one comment instead of adding a new one per
+          // push. A pull request with fifteen identical risk reports is one
+          // nobody reads.
+          const marker = '<!-- hookrisk-report -->';
+          const body = `${marker}\n${fs.readFileSync(path, 'utf8')}`;
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          const existing = comments.find(
+            (c) => c.user.type === 'Bot' && c.body.includes(marker),
+          );
+
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existing.id,
+              body,
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+          }
+
+    - name: Enforce gate
+      if: inputs.fail-on-gate == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set -euo pipefail
+        passed=$(jq -r 'if has("gate") then .gate.passed else true end' hook-risk.json)
+        if [ "$passed" != "true" ]; then
+          echo "::error::hookrisk gate failed:"
+          jq -r '.gate.failures[] | "::error::  " + .' hook-risk.json
+          exit 1
+        fi
+        echo "hookrisk gate passed"

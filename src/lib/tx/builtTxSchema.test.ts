@@ -77,6 +77,55 @@ describe("builtTxSchema", () => {
     });
   });
 
+  // POO-1826: every build-tx response now advertises a gas LIMIT (`tx.gas`, the on-chain estimate
+  // x 1.25). A Pool Party manager write is a 13-frame call graph, and EIP-150's 63/64 rule strands
+  // ~7% of any limit, so a wallet broadcasting at its own bare estimate runs out of gas in the
+  // deepest frame and fails with EMPTY revert data. The schema is the first place the limit has to
+  // survive, and an older API that omits it must keep parsing.
+  describe("tx.gas (POO-1826)", () => {
+    // @rule R1
+    it("accepts an optional decimal-string gas limit", () => {
+      const r = builtTxSchema.safeParse({ ...VALID, tx: { ...VALID.tx, gas: "4150329" } });
+      expect(r.success).toBe(true);
+      if (r.success) expect(r.data.tx.gas).toBe("4150329");
+    });
+
+    // @rule R1
+    it("accepts a 0x-hex gas limit (the same shape `value` takes)", () => {
+      const r = builtTxSchema.safeParse({ ...VALID, tx: { ...VALID.tx, gas: "0x3f52b9" } });
+      expect(r.success).toBe(true);
+      if (r.success) expect(r.data.tx.gas).toBe("0x3f52b9");
+    });
+
+    // @rule R1
+    it("keeps validating a response WITHOUT gas (the field is advisory, older builds omit it)", () => {
+      const r = builtTxSchema.safeParse(VALID);
+      expect(r.success).toBe(true);
+      if (r.success) expect(r.data.tx.gas).toBeUndefined();
+    });
+
+    // @rule R1
+    it("rejects a gas that is not an integer quantity (it is signed into the wallet request)", () => {
+      expect(builtTxSchema.safeParse({ ...VALID, tx: { ...VALID.tx, gas: "4.1e6" } }).success).toBe(
+        false,
+      );
+      expect(builtTxSchema.safeParse({ ...VALID, tx: { ...VALID.tx, gas: "-1" } }).success).toBe(
+        false,
+      );
+      expect(builtTxSchema.safeParse({ ...VALID, tx: { ...VALID.tx, gas: 4150329 } }).success).toBe(
+        false,
+      );
+    });
+
+    // @rule R3
+    it("leaves the DISPLAYED fee on its own field: the limit is a ceiling, not a charge", () => {
+      const r = builtTxSchema.safeParse({ ...VALID, tx: { ...VALID.tx, gas: "4150329" } });
+      expect(r.success).toBe(true);
+      // The network-fee line keeps reading the API's unpadded estimate, untouched by the limit.
+      if (r.success) expect(r.data.estimatedGasInUsd).toBe(VALID.estimatedGasInUsd);
+    });
+  });
+
   // POO-610: the build-tx response carries a `swapInfo` block (price impact + protocol fee + min
   // received). It is DISPLAY-ONLY, strictly numeric, and must never break the tx parse it rides on.
   describe("swapInfo (POO-610)", () => {

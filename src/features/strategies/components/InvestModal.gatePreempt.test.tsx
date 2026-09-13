@@ -185,15 +185,10 @@ describe("InvestModal — gate preempts the deposit deep link (POO-1025)", () =>
   });
 
   // [R5] Backing out returns to the amount step with the entered amount intact, never to /deposit.
-  it("returns to the amount step on cancel, preserving the entered amount", async () => {
-    enterAmount(200, 50);
-
-    fireEvent.click(screen.getByRole("button", { name: "Deposit & invest" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Cancel" }));
-
-    expect(screen.getByLabelText("Amount to invest")).toHaveValue("200");
-    expect(push).not.toHaveBeenCalled();
-  });
+  // The pre-run Cancel this suite used to click no longer exists: the ported panel (POO-1503)
+  // deletes the mock Confirm screen and auto-starts the route. "Leaving the gate lands on the
+  // amount step, never on /deposit" is pinned in `InvestModal.provisioning.test.tsx`, whose
+  // ported version exercises the failure screen's Back, the mock-reachable exit.
 
   // A funded wallet is untouched by this change: it still consults the gate for gas / network.
   it("leaves the funded path unchanged", async () => {

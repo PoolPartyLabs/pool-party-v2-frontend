@@ -1,0 +1,9 @@
+  scan: src/TakeProfitsHook.sol:TakeProfitsHook run=4eaf2ac5-3b5a-486b-92b6-664810c8d44c
+  project: out=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/take-profits-hook/repo/out solc=0.8.30 (artifact-metadata) artifact=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/take-profits-hook/repo/out/TakeProfitsHook.sol/TakeProfitsHook.json
+  hookrisk: slither src/TakeProfitsHook.sol:TakeProfitsHook
+  hookrisk: 1 finding(s) in other files, not attributed to this target: src/TakeProfitsStub.sol (1)
+  hookrisk: did not analyse the target — TakeProfitsHook uses a hook ABI hookrisk cannot analyse: TakeProfitsHook (src/TakeProfitsHook.sol#17-391) looks like a Uniswap v4 hook but its hook ABI predates the shipped v4 interface (declares the 2023 …
+  hookrisk: 1 finding(s); analysed 0 hook contract(s)
+  hookrisk: ok
+  harness: skipped — TakeProfitsHook's constructor takes 2 argument(s) (address _poolManager, string _uri) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.
+  scan: finished in 2603ms, exit 2

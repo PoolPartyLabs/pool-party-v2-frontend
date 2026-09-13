@@ -1,7 +1,7 @@
 /**
- * @id PP-STR-LIB-004 (POO-419, POO-1042)
+ * @id PP-STR-LIB-004 (POO-419, POO-1042, POO-1149, POO-1549, POO-1559, POO-1749)
  * @name buildProvisioningInput
- * @implements-rules-version v2 (POO-1042 rules v1)
+ * @implements-rules-version v5 (POO-1749 rules v1) · v4 (POO-1149 rules v1) · v3 (POO-1549 rules v1) · v2 (POO-1042 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The shared bridge from an op modal to the pre-flight provisioning gate (epic POO-411, POO-419).
@@ -36,8 +36,9 @@
  *        than not having the feature.
  */
 
+import { supportedChains } from "@/lib/chains/config";
 import type { ProvisioningNeedInput } from "@/lib/provisioning";
-import { SCENARIOS } from "@/lib/provisioning";
+import { SCENARIOS, spendableBalancesByChain } from "@/lib/provisioning";
 import type { ProvisioningGateContext } from "@/lib/provisioning/gateContext";
 import { isMockMode } from "@/lib/services";
 
@@ -99,6 +100,46 @@ export interface ProvisioningInputContext {
   amount?: number;
   /** Max slippage from the settings gear, percent (POO-523 R2). Rides through to the planner. */
   slippagePct?: number;
+  /**
+   * POO-1549 [R1]: the chain the OPERATION runs on, resolved from its network slug by the gate hook.
+   *
+   * Real mode never needed it, because `context.targetChainId` is the same fact arriving a different
+   * way. Mock mode did, and not having it is the whole defect: the demo scenarios carry a baked chain,
+   * so every invest presented as bridging to Arbitrum and the five non-spending operations as needing
+   * gas on Base, whatever the strategy was actually on. `undefined` (an unresolvable network slug)
+   * keeps the fixture default rather than guessing: real mode already treats that as non-triggering.
+   */
+  targetChainId?: number;
+  /**
+   * POO-1749 [R1]: the host surface's own directly-read USDC balance on the operation's chain, USD.
+   *
+   * The gate context and the host read the same wallet through different pipes, and the pipes can
+   * disagree. Two deterministic modes are already on record (both 2026-08-24/25, production):
+   * pool-party-api renders a stable balance of ~$9,999.5 or more in scientific notation
+   * (`formatSignificant(balance, 4)` → "1.089e+4"), the funding context's `toBaseUnits` rejects that
+   * string, and the holding drops from `sources` on EVERY read (POO-1750) — $10,885.73 of on-target
+   * USDC erased from the gate's view while the modal beside it displayed that exact figure and gated
+   * its own CTA on it, sending a fully funded investor to buy $11,337.78 of fiat. And at ANY balance,
+   * the surviving row's `usd` is cent-rounded upstream while the Max chip fills the amount at full
+   * precision, so a Max press read as short by a fraction of a cent and fired the funnel.
+   *
+   * USDC on the operation's OWN chain is spendable by the OP LEG by definition: invest consumes it
+   * in place, no Uniswap route involved, so routability is not a fact about that half. The GAS half
+   * is different — `unmetOnTargetUsd` assumes on-target token value can be swapped into native,
+   * which does need a route — but USDC sits on Uniswap's allowlist on all three chains, so
+   * "genuinely unroutable USDC" is in practice always a failed lookup, never a missing route. The
+   * host's read therefore FLOORS the target chain's token value ([R1], `max`, never replace [R3]);
+   * every other chain keeps the routable projection ([R2]). Absent or unusable (non-finite,
+   * non-positive) it contributes nothing, leaving behavior exactly as before ([R4]), and it is
+   * ignored when the context echoes a different chain than the host read ({@link targetChainId}) —
+   * crediting one chain's verified USDC to another is exactly the [R2] violation this rule forbids.
+   * Only invest passes it today.
+   *
+   * This floor SURVIVES POO-1750. It is not a workaround for one serializer bug: it is the
+   * invariant that the gate never reads the wallet as poorer than the host's own on-chain figure,
+   * and two independent pipes can always disagree again. Do not remove it when POO-1750 lands.
+   */
+  targetUsdcBalanceUsd?: number;
 }
 
 /**
@@ -117,19 +158,51 @@ const NON_TRIGGERING_INPUT: ProvisioningNeedInput = {
 };
 
 /**
+ * A supported chain that is NOT the operation's, for the "your money is on the wrong network" story
+ * ([R2]).
+ *
+ * Derived from `supportedChainMetas` rather than hardcoded, so adding a fourth chain cannot leave a
+ * stale literal behind: the previous shape baked `currentChainId: BASE` beside `targetChainId:
+ * ARBITRUM`, and picking Base for a Base operation would have quietly turned the bridge demo into a
+ * same-chain one. Falls back to the operation's own chain when there is somehow no other, which
+ * degrades the demo to "no bridge needed" rather than inventing a chain the app does not support.
+ */
+function offTargetChainId(targetChainId: number): number {
+  return supportedChains.find((chain) => chain.id !== targetChainId)?.id ?? targetChainId;
+}
+
+/**
  * PP-MOCK: the demo input per op, built from the canonical {@link SCENARIOS}. invest reuses the
  * worst-case `usdcBridgeGas` (multi), carrying the entered amount as the op's USDC requirement so the
  * plan sizes the on-ramp realistically; every other op spends no USDC and reuses `gasOnly` (the
  * one-step gas-only branch).
  */
-export function mockProvisioningInput(op: ProvisioningOp, amount?: number): ProvisioningNeedInput {
-  if (op === "invest") {
-    return {
-      ...SCENARIOS.usdcBridgeGas,
-      opRequiredUsdc: amount && amount > 0 ? amount : SCENARIOS.usdcBridgeGas.opRequiredUsdc,
-    };
-  }
-  return { ...SCENARIOS.gasOnly };
+export function mockProvisioningInput(
+  op: ProvisioningOp,
+  amount?: number,
+  targetChainId?: number,
+): ProvisioningNeedInput {
+  const scenario = op === "invest" ? SCENARIOS.usdcBridgeGas : SCENARIOS.gasOnly;
+  const base =
+    op === "invest"
+      ? {
+          ...scenario,
+          opRequiredUsdc: amount && amount > 0 ? amount : scenario.opRequiredUsdc,
+        }
+      : { ...scenario };
+  // [R1] No resolved chain means an unknown network slug, which real mode treats as non-triggering.
+  // Keeping the fixture default is the same refusal to invent: the demo is wrong-chained rather than
+  // wrong AND silent about which chain it thinks it is on.
+  if (targetChainId === undefined) return base;
+  return {
+    ...base,
+    targetChainId,
+    // [R2] Each scenario's STORY is what makes it worth demoing, and both stories are relative to the
+    // operation's chain rather than to a particular one. `gasOnly` is "gas missing on the operation's
+    // OWN chain", so the wallet sits on the target; the invest case is "the money is on the WRONG
+    // network", so it must not.
+    currentChainId: op === "invest" ? offTargetChainId(targetChainId) : targetChainId,
+  };
 }
 
 /**
@@ -146,15 +219,49 @@ export function realProvisioningInput(
   op: ProvisioningOp,
   ctx: ProvisioningInputContext,
 ): ProvisioningNeedInput {
-  const { context, amount, slippagePct } = ctx;
+  const { context, amount, slippagePct, targetUsdcBalanceUsd, targetChainId: hostChainId } = ctx;
   // [R6] Fail safe. No context is "we could not read the wallet", never "the wallet is empty".
   if (!context) return { ...NON_TRIGGERING_INPUT };
 
   const opRequiredUsdc = USDC_SPENDING_OPS.has(op) && amount && amount > 0 ? amount : 0;
 
+  const balancesByChain = spendableBalancesByChain(context.balancesByChain, context.sources);
+  // POO-1749 [R1]-[R4]: the host's own on-chain USDC read floors the TARGET chain's token value. The
+  // projection above can silently lose on-target USDC when the backend inventory drops a row it
+  // failed to serialize (POO-1750: any ~$10k+ stable balance rendered in scientific notation and
+  // rejected by the base-unit parse), and the gate must never read the wallet as holding less than
+  // the figure the host surface has directly verified and is already gating its CTA on.
+  //
+  // The floor keys on `context.targetChainId` because that is the key the map is built under, but it
+  // only applies when that echo AGREES with the chain the host actually read (`hostChainId`, the same
+  // fact the hook resolved for its live read). This PR exists because two pipes disagreed about a
+  // wallet; trusting a third pipe's chain key unchecked would let a drifted echo credit one chain's
+  // verified USDC to another — the exact [R2] violation.
+  //
+  // Known residual (recorded on POO-1750): the floored map also feeds the panel's `gasFundingSource`
+  // choice, so in the narrow case of a dropped row PLUS a genuine gas shortfall the gas-only screen
+  // can offer the USDC-for-gas presets against a `sources` list that lost the row. The wallet DOES
+  // hold that USDC (the host verified it on-chain), so the offer is truthful about the wallet even
+  // when the plan's own server-side re-read may still disagree with it.
+  if (
+    typeof targetUsdcBalanceUsd === "number" &&
+    Number.isFinite(targetUsdcBalanceUsd) &&
+    targetUsdcBalanceUsd > 0 &&
+    (hostChainId === undefined || hostChainId === context.targetChainId)
+  ) {
+    const target = balancesByChain[context.targetChainId] ?? { nativeUsd: 0, tokenUsd: 0 };
+    if (targetUsdcBalanceUsd > target.tokenUsd) {
+      balancesByChain[context.targetChainId] = { ...target, tokenUsd: targetUsdcBalanceUsd };
+    }
+  }
+
   return {
-    // [R1] Where the money is, chain by chain.
-    balancesByChain: context.balancesByChain,
+    // [R1] Where the money is, chain by chain, and since POO-1149 what part of it can actually FUND
+    // this operation: native RAW, tokens ROUTABLE only. The projection moved to `computeNeed.ts` in
+    // POO-1559, when the swap screen needed the same rule; the reasoning, and the production numbers
+    // it was reported on, live in {@link spendableBalancesByChain}. An operation may spend the WHOLE
+    // routable inventory, so the whole of it is passed here.
+    balancesByChain,
     // The legacy field, kept only because the contract still requires it. With `balancesByChain`
     // present the calculator never reads it; pointing it at the target chain is the honest value
     // for "the chain this operation is about".
@@ -179,5 +286,7 @@ export function buildProvisioningInput(
   op: ProvisioningOp,
   ctx: ProvisioningInputContext,
 ): ProvisioningNeedInput {
-  return isMockMode ? mockProvisioningInput(op, ctx.amount) : realProvisioningInput(op, ctx);
+  return isMockMode
+    ? mockProvisioningInput(op, ctx.amount, ctx.targetChainId)
+    : realProvisioningInput(op, ctx);
 }

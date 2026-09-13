@@ -56,6 +56,7 @@ vi.mock("@/i18n/navigation", () => ({
       {children}
     </a>
   ),
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 // The ONE plan seam (POO-1023). Stubbed so each case can hand the panel a real, leg-bearing plan.
@@ -201,7 +202,25 @@ function renderPanel(input: ProvisioningNeedInput = INPUT) {
   );
 }
 
-const confirmCta = () => screen.getByRole("button", { name: "Confirm & continue" });
+/**
+ * POO-1503: with the mock Confirm screen deleted, the seeded mock start runs ungated routes
+ * directly, and a `>=10%` quote renders the funds-at-risk ALERT screen instead; its CTA carries the
+ * `provisioning-confirm` testid the old Confirm's CTA carried. "Not gated" is therefore asserted as
+ * "the run started, with no alert", which is the same rule one surface later.
+ */
+const impactCta = () => screen.getByTestId("provisioning-confirm");
+const expectStartedUngated = async () => {
+  await waitFor(() => {
+    expect(screen.getByTestId("provisioning-panel")).toHaveAttribute("data-phase", "pending");
+  });
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+};
+/**
+ * POO-1509 [R4]: the gas-only branch's CTA. It is a different screen from the plan phase now (the
+ * auxiliary `Not enough gas`), and the gate has to survive that move: a swap-gas leg reaches the same
+ * AMMs as any other, so it is the one funding route that must not become the way around POO-1047.
+ */
+const gasTopUpCta = () => screen.getByTestId("gas-topup-confirm");
 
 /* ---- the real-mode gas-only branch (POO-1044 [R1]), which skips the picker ---- */
 
@@ -322,11 +341,10 @@ describe("ProvisioningPanel — the price-impact gate (POO-1047)", () => {
     computePlan.mockResolvedValue(planOf([swapStep(4.5)]));
     renderPanel();
 
-    await waitFor(() => expect(confirmCta()).toBeEnabled());
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await expectStartedUngated();
   });
 
-  it("[R1][R4] gates AT the threshold and blocks the confirm until the route is acknowledged", async () => {
+  it("[R1][R4] gates AT the threshold and blocks the start until the route is acknowledged", async () => {
     // Two AMM legs, one catastrophic: the user acknowledges the ROUTE, so there is exactly one
     // acknowledgement and it names the worst figure on it.
     computePlan.mockResolvedValue(planOf([swapStep(10), swapStep(2.5, "swap-1")]));
@@ -334,11 +352,11 @@ describe("ProvisioningPanel — the price-impact gate (POO-1047)", () => {
 
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("10.00%");
-    expect(confirmCta()).toBeDisabled();
+    expect(impactCta()).toBeDisabled();
     expect(screen.getAllByRole("checkbox")).toHaveLength(1);
 
     fireEvent.click(screen.getByRole("checkbox"));
-    expect(confirmCta()).toBeEnabled();
+    expect(impactCta()).toBeEnabled();
   });
 
   it("[R2] a re-quote that worsens past the margin clears the acknowledgement", async () => {
@@ -349,7 +367,7 @@ describe("ProvisioningPanel — the price-impact gate (POO-1047)", () => {
     const { rerender } = renderPanel();
 
     fireEvent.click(await screen.findByRole("checkbox"));
-    expect(confirmCta()).toBeEnabled();
+    expect(impactCta()).toBeEnabled();
 
     rerender(
       <ProvisioningPanel
@@ -361,32 +379,38 @@ describe("ProvisioningPanel — the price-impact gate (POO-1047)", () => {
     );
 
     await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("92.41%"));
-    expect(screen.getByRole("checkbox")).not.toBeChecked();
-    expect(confirmCta()).toBeDisabled();
+    // The CTA's `disabled` is a plain value derived from `worsened` every render (never gated on an
+    // effect having fired), so it is already correct on the SAME commit as the alert text above —
+    // asserted synchronously on purpose, as the thing that actually stops a worse trade going through.
+    expect(impactCta()).toBeDisabled();
+    // The checkbox, by contrast, is COSMETIC: it un-checks from `usePriceImpactGate`'s own reset
+    // effect, which fires on a LATER commit than the one that made the alert visible. Asserting it
+    // synchronously right after the `waitFor` above raced that effect — an unrelated extra `useEffect`
+    // anywhere earlier in this component's hook order was enough to flip it from "usually wins the
+    // race" to "reliably loses it" (POO-1527 found this while adding one; unaffected by CTA safety,
+    // since `blocked` never depended on this effect having run). Needs its own `waitFor`.
+    await waitFor(() => expect(screen.getByRole("checkbox")).not.toBeChecked());
   });
 
   it("[R3] a route whose quote reported no impact is NOT gated", async () => {
     computePlan.mockResolvedValue(planOf([swapStep(undefined)]));
     renderPanel();
 
-    await waitFor(() => expect(confirmCta()).toBeEnabled());
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await expectStartedUngated();
   });
 
   it("[R3] a malformed impact figure is NOT gated (never fail closed)", async () => {
     computePlan.mockResolvedValue(planOf([swapStep(Number.NaN)]));
     renderPanel();
 
-    await waitFor(() => expect(confirmCta()).toBeEnabled());
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await expectStartedUngated();
   });
 
   it("[R5] a bridge-only plan is not gated by a figure Across never quoted", async () => {
     computePlan.mockResolvedValue(planOf([bridgeStep(92.41)]));
     renderPanel();
 
-    await waitFor(() => expect(confirmCta()).toBeEnabled());
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    await expectStartedUngated();
   });
 
   /**
@@ -399,25 +423,50 @@ describe("ProvisioningPanel — the price-impact gate (POO-1047)", () => {
    * the gate's "is the route on screen" flag with it, the one funding route that needs no
    * acknowledgement to reach its confirm would be a swap.
    */
-  it("[R1] gates the gas-only real-mode plan, which reaches the confirm with no picker", async () => {
+  it("[R1] gates the gas-only real-mode plan, which reaches its CTA with no picker", async () => {
     computePlan.mockResolvedValue(gasOnlyPlanWithImpact(12));
     renderRealModePanel();
 
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("12.00%");
-    // The picker really was skipped: this is the plan phase, reached directly.
+    // The picker really was skipped: this is the auxiliary gas screen, reached directly.
     expect(screen.queryByRole("listbox", { name: /your funds/i })).not.toBeInTheDocument();
-    expect(confirmCta()).toBeDisabled();
+    expect(gasTopUpCta()).toBeDisabled();
 
     fireEvent.click(screen.getByRole("checkbox"));
-    expect(confirmCta()).toBeEnabled();
+    expect(gasTopUpCta()).toBeEnabled();
   });
 
   it("[R3] leaves the gas-only real-mode plan ungated when its quote reported no impact", async () => {
     computePlan.mockResolvedValue(gasOnlyPlanWithImpact(undefined));
     renderRealModePanel();
 
-    await waitFor(() => expect(confirmCta()).toBeEnabled());
+    await waitFor(() => expect(gasTopUpCta()).toBeEnabled());
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+});
+
+/**
+ * POO-1525 [M3.3]: this file already owns the two mocks (`computePlan`, the gas-only real-mode
+ * context) both scenarios need, so the pinned-footer wiring assertion lives here rather than
+ * duplicating that setup in a file scoped to the sticky footer instead.
+ */
+describe("ProvisioningPanel — the terminal CTA stays pinned (POO-1525)", () => {
+  it("[impact] pins the price-impact alert's Confirm", async () => {
+    computePlan.mockResolvedValue(planOf([swapStep(10), swapStep(2.5, "swap-1")]));
+    renderPanel();
+    await screen.findByRole("alert");
+
+    const footer = screen.getByTestId("provisioning-sticky-footer");
+    expect(footer).toContainElement(impactCta());
+  });
+
+  it("[gas] pins GasTopUpBody's Confirm", async () => {
+    computePlan.mockResolvedValue(gasOnlyPlanWithImpact(undefined));
+    renderRealModePanel();
+    await waitFor(() => expect(gasTopUpCta()).toBeEnabled());
+
+    const footer = screen.getByTestId("provisioning-sticky-footer");
+    expect(footer).toContainElement(gasTopUpCta());
   });
 });

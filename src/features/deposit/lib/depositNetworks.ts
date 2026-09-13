@@ -1,12 +1,16 @@
 /**
- * @id PP-DEP-LIB-002 (POO-479, POO-728)
+ * @id PP-DEP-LIB-002 (POO-479, POO-728, POO-1916)
  * @name deposit networks
- * @implements-rules-version v2
+ * @implements-rules-version v3 (POO-1916 rules v1) · v2
  *
  * The networks a user can pick when depositing USDC by crypto transfer (POO-479). The USDC deposit
  * address is the connected wallet and is IDENTICAL across these EVM networks; the choice only drives
  * the "send on this network" instruction + the loss-of-funds warning. Ethereum is offered per product
- * even though the app's operating chains today are Arbitrum/Base/Polygon.
+ * even though it is not one of the app's operating chains.
+ *
+ * This list is a PRODUCT choice, not a mirror of `supportedChainMetas`, and it is asserted in that
+ * direction: POO-1776 [R4] keeps Robinhood Chain OUT (no on-ramp in the alpha) even though it is a
+ * fully supported operating chain, so a later "the parity test says add every chain" cannot add it.
  *
  * POO-728: the picker now opens with a DEFAULT network pre-selected ({@link DEFAULT_DEPOSIT_NETWORK})
  * so Continue is enabled on open. The default is Arbitrum — one of the app's real operating chains —
@@ -34,6 +38,38 @@ export const DEPOSIT_NETWORKS: readonly DepositNetwork[] = [
   { slug: "base", name: "Base" },
   { slug: "polygon", name: "Polygon" },
 ] as const;
+
+/**
+ * POO-1174 [R5] (rules v2): the chain id `deposit_address_copied` reports for the network the user
+ * PICKED. Deposit-local on purpose: the app-wide `networkToChainId` is built from the three
+ * operating chains, so an Ethereum pick resolved to `undefined` and the
+ * event silently emitted no `chain_id` at all. A `Record` over the slug union covers every
+ * offerable network by construction, so adding a slug without its chain id fails to compile.
+ */
+export const DEPOSIT_CHAIN_IDS: Record<DepositNetworkSlug, number> = {
+  ethereum: 1,
+  arbitrum: 42161,
+  base: 8453,
+  polygon: 137,
+};
+
+/**
+ * Does the crypto-deposit surface serve `chainId`? (POO-1916 [R4].)
+ *
+ * Asked by the provisioning route picker (`resolveFundingRoutes`), which offers a `deposit` ghost
+ * link beside the buy card. Until POO-1916 the two shared ONE gate: `deposit` rode along with
+ * whether a fiat purchase could reach the target chain, which happened to suppress both on Robinhood
+ * Chain and was recorded as "deposit has always been a peer of the buy card". That reasoning is
+ * incidental. The real reason is here: {@link DEPOSIT_NETWORKS} excludes 4663 per POO-1776 [R4], so
+ * the link would send a user to a surface that cannot name their chain, and it stays excluded now
+ * that the purchase itself is offered again.
+ *
+ * Derived from the list rather than restated beside it, so adding a network to the picker offers the
+ * link in the same commit, and an id nobody ships degrades closed.
+ */
+export function depositServesChain(chainId: number): boolean {
+  return DEPOSIT_NETWORKS.some((network) => DEPOSIT_CHAIN_IDS[network.slug] === chainId);
+}
 
 /** The slug of the network pre-selected when the crypto-deposit picker opens (POO-728). */
 const DEFAULT_DEPOSIT_NETWORK_SLUG: DepositNetworkSlug = "arbitrum";

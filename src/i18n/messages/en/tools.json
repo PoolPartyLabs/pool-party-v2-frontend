@@ -1,0 +1,38 @@
+{
+  "title": "Tools",
+  "subtitle": "Developer tooling that ships with Pool Party. Read-only, and it never touches your wallet.",
+  "hookRisk": {
+    "heading": "Uniswap v4 hook risk",
+    "intro": "Paste a deployed hook address. hookrisk reads its verified source, compiles it, scores it against the Uniswap Foundation's Hooks Security Framework and returns the report below.",
+    "chainLabel": "Chain",
+    "addressLabel": "Hook contract address",
+    "addressPlaceholder": "0x0000000000000000000000000000000000000000",
+    "submit": "Analyze",
+    "submitRunning": "Analyzing",
+    "notice": "A scan compiles the contract and runs a fuzzed differential harness, so expect minutes rather than seconds. The report is cached for 24 hours.",
+    "idleTitle": "No scan yet",
+    "idleBody": "Choose a chain, paste a deployed hook address and press Analyze.",
+    "runningTitle": "Scanning",
+    "elapsed": "{seconds}s elapsed",
+    "cached": "Served from a scan run within the last 24 hours.",
+    "gatePassed": "hookrisk gate passed.",
+    "gateFailed": "hookrisk gate failed. The report below says why, and a failed gate is a result, not an error.",
+    "reportHeading": "Report",
+    "errorTitle": "This scan did not run",
+    "retry": "Try again",
+    "status": {
+      "queued": "Queued",
+      "fetchingSource": "Reading the verified source from the block explorer",
+      "building": "Compiling the contract",
+      "scanning": "Running the detectors and the differential harness",
+      "done": "Report ready",
+      "failed": "The scan could not finish"
+    },
+    "errors": {
+      "INVALID_ADDRESS": "That is not a valid contract address. It should be 42 characters starting with 0x.",
+      "UNSUPPORTED_CHAIN": "That chain is not one of the chains this tool reads.",
+      "JOB_UNKNOWN": "This scan is no longer tracked by the server. Run it again.",
+      "NETWORK": "The server could not be reached. Check that it is running and try again."
+    }
+  }
+}

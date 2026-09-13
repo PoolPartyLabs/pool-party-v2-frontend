@@ -1,0 +1,1906 @@
+{
+ "results": [
+  {
+   "slug": "v4-template-counter",
+   "target": "src/Counter.sol:Counter",
+   "scan_exit_code": 0,
+   "static_status": "ok",
+   "static_reason": "",
+   "findings": [
+    {
+     "ruleClass": "hook-profile",
+     "severity": "info",
+     "line": 13,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    }
+   ],
+   "harness_status": "ok",
+   "harness_reason": "",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "passed",
+     "detail": "Conservation and solvency; runs=256 calls=8192 reverts=0"
+    },
+    {
+     "id": "I2",
+     "status": "passed",
+     "detail": "No undeclared extraction (maxFeeBips=0); runs=256 calls=8192 reverts=0"
+    },
+    {
+     "id": "I3",
+     "status": "passed",
+     "detail": "Exit liveness; runs=256 calls=8192 reverts=0"
+    }
+   ],
+   "complexity": {
+    "value": 2,
+    "source": "measured",
+    "evidence": "bracket 'Callbacks write hook state, or 3+ callbacks'; rule `stateWritesInCallbacks >= 1 || callbacksImplemented >= 3` fired. Verified against schema/framework-rubric.json: rules 5/4/3 require usesReturnsDelta or externalCallsInSwapPath>=1, both false, so 2 is the correct first-matching rule."
+   },
+   "total": 5,
+   "total_upper": 25,
+   "tier": "low (tierUpperBound high, inconclusive=true)",
+   "gate_passed": true,
+   "gate_failures": [],
+   "uncovered_functions": 0,
+   "observations": {
+    "swapsExecuted": 14160,
+    "swapsCompared": 14160,
+    "swapsSkipped": 0,
+    "hookedSwapReverted": 0,
+    "positionsOpened": 6915,
+    "positionsClosed": 6915,
+    "donations": 6685,
+    "priceChecks": 14160,
+    "monotonicityViolations": 0,
+    "exitFailures": 0,
+    "sequences": 1285
+   },
+   "permissions_disagreement": [],
+   "harness_run": {
+    "flags": 2752,
+    "permissionsDerived": true,
+    "customCurve": false,
+    "dynamicFee": false,
+    "seeded": "both"
+   },
+   "hook_profile_metrics": {
+    "callbacksImplemented": 4,
+    "callbacksDeclared": 4,
+    "stateWritesInCallbacks": 4,
+    "externalCallsInSwapPath": 0,
+    "internalFunctionsReachableFromCallbacks": 4,
+    "usesReturnsDelta": false,
+    "hasOwnerOnlyFunctions": false
+   },
+   "hr_error_codes": [],
+   "expectations_met": true,
+   "expectation_deviations": [],
+   "extra_runs": "None required \u2014 the expectation asked for no second constructorArgs run (Counter's constructor takes only IPoolManager, which the harness fills automatically: ctorArgs=1 word). A second full scan was run with --log-json to out2-json/ instead: exit 0, 9 stderr lines, all valid JSON, every line carries runId and stage (stages: scan, project, harness, engine:hookrisk, ...), score/gate/findings/invariants byte-identical to out2; only coverage.observations differed (13700 vs 14160 swaps) because the fuzz campaign is unseeded.",
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "Complexity regression from the pre-fix run is fixed and the new value is right. Pre-fix out/hook-risk.json scored complexity 0/5 'Pass-through only; no hook state' for a hook that increments four storage mappings; the new run scores 2/5 from measured hook-profile metrics with the firing rule named in the evidence.",
+     "evidence": "old: {'id':'complexity','value':0,'bracketLabel':'Pass-through only; no hook state','evidence':['No flag-implementation-divergence or unprotected-hook-callback findings...']} vs new: value 2, 'Scored 2 by rule `stateWritesInCallbacks >= 1 || callbacksImplemented >= 3`'"
+    },
+    {
+     "kind": "expected",
+     "description": "Every hook-profile metric checks out against src/Counter.sol. 4 callbacks implemented (_beforeSwap L53, _afterSwap L63, _beforeAddLiquidity L71, _beforeRemoveLiquidity L80); 4 declared true in getHookPermissions; 4 state writes (the four mapping increments); 0 external calls in the swap path (key.toId() is a pure library call); usesReturnsDelta=false (both ReturnDelta flags false, returns ZERO_DELTA/0); hasOwnerOnlyFunctions=false (no owner, no access control). Location 'src/Counter.sol#13-87' matches: contract opens at line 13, file is 87 lines.",
+     "evidence": "finding id 59522d020c88aa77; metrics {callbacksImplemented:4, callbacksDeclared:4, stateWritesInCallbacks:4, externalCallsInSwapPath:0, usesReturnsDelta:false, hasOwnerOnlyFunctions:false}"
+    },
+    {
+     "kind": "expected",
+     "description": "Harness ran for real and permissions agree. permissions.fromEngine (parsed getHookPermissions) is field-for-field identical to permissions.fromRuntime (derived on-chain), and harnessRun.flags=2752=0xAC0 = BEFORE_ADD_LIQUIDITY(1<<11)+BEFORE_REMOVE_LIQUIDITY(1<<9)+BEFORE_SWAP(1<<7)+AFTER_SWAP(1<<6), exactly the four declared callbacks. No disagreement claimed and none exists.",
+     "evidence": "stderr: 'harness: 3 invariant(s), 0 failed (flags=0xac0 derived, seeded=both) observed 1285 sequence(s), 14160 swap(s) landed, 14160 compared ... 0 hooked-only swap revert(s), 0 exit failure(s)'"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "HOOK_RISK.md contradicts itself: the '## Findings' section says 'None.' while the coverage table two sections later credits the hookrisk engine with 1 finding, and the CLI summary line says 'findings 1 info'. The hook-profile classification is rendered in its own section, but a reviewer reading the Findings heading is told the engine produced nothing when the same document says it produced one.",
+     "evidence": "HOOK_RISK.md: '## Findings\\n\\nNone.' vs '| hookrisk Slither detectors | ok | 1 |' and stdout '  findings    1 info'"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Dead relative link in the emitted report. HOOK_RISK.md footnote links '[FEEDBACK.md](FEEDBACK.md)' but the report is written into the user's --out directory, where no FEEDBACK.md exists; the file only lives at the hookrisk repo root. The same relative link appears in the bracketsAreInterpretation note that the whole 'these brackets are our reading' caveat hangs on.",
+     "evidence": "HOOK_RISK.md: '\u1d43 Bracket supplied by hookrisk. ... See [FEEDBACK.md](FEEDBACK.md) #2.'; ls out2/ shows only HOOK_RISK.md, hook-risk.json, hookrisk.sarif"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The harness fuzz campaign is unseeded and no seed is recorded in the manifest, so coverage.observations is not reproducible across runs of identical inputs. Two back-to-back scans of the same contract reported 14160 vs 13700 swaps and 6915 vs 7074 positions. Everything a gate reads (score, invariants, gate, findings) was identical, so this is a reproducibility gap in the evidence, not a scoring flake \u2014 but a reviewer cannot re-derive the quoted numbers, and 'passed with 0 failures' has no recorded seed to re-run.",
+     "evidence": "out2 observations swapsExecuted=14160, positionsOpened=6915; out2-json observations swapsExecuted=13700, positionsOpened=7074; manifest carries harnessRun.seeded='both' (pool seeding, not a fuzz seed) and no numeric seed anywhere"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The default gate produced by `init` passes an undetermined tier. The new template drops maxTier and sets failOnInconclusive = false, so 'between Low Risk and High Risk' with 6 of 9 dimensions unmeasured is a green gate. This is defensible and the template comment explains it honestly, but it means the headline 'gate passed' on a fresh init tells a CI consumer nothing about the six unmeasured dimensions. Pre-fix config (maxTier='medium') failed the same hook for exactly that reason.",
+     "evidence": "old out/hook-risk.json gate: {'passed': false, 'failures': ['tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium']}; new gate: {'passed': true, 'failOnInconclusive': false, 'failures': []}. Not scored a regression: the change is config-template-driven and the report still prints the undetermined-tier warning."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "permissions.disagreement is absent from the manifest entirely rather than present-and-empty. A consumer diffing fromEngine against fromRuntime cannot distinguish 'checked, agreed' from 'field not emitted by this version'.",
+     "evidence": "manifest permissions keys: fromEngine, fromRuntime, harnessRun \u2014 no disagreement key"
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-template-counter/out2",
+   "notes": "Config: old hookrisk.toml saved to repo/hookrisk.toml.old, deleted, regenerated with `init`. Old file had no [harness] section and maxFeeBips = 0, so nothing was copied back. Confirmed the new template has no maxTier and adds failOnInconclusive = false.\n\nforge build was a no-op recompile (70 files, success). Scan exit 0 in 8848ms, zero HR-E codes in stderr, no hook-risk.invalid.json, SARIF 2.1.0 valid with one 'note'-level hook-profile result.\n\nClaim verification: no HIGH findings to check and no callback-intentionally-disabled findings (Counter reverts nothing \u2014 BaseHook's unimplemented callbacks are unreachable because the corresponding permission bits are false, and the harness derived flags 0xAC0 confirms it never calls them). The single INFO hook-profile finding is accurate in every metric and in its line range. Complexity 2/5 matches the rubric's own rule table on the reported metrics.\n\nReading HOOK_RISK.md as a reviewer: it is clear about what was NOT analysed \u2014 the undetermined-tier callout is above the fold, unmeasured dimensions show '\u2014' rather than 0, the bracket-is-interpretation footnote is honest, and 'An invariant with no relevant observations is reported inconclusive, not passed' is exactly the right sentence. Two blemishes: the 'Findings: None' vs '1 finding' contradiction, and the dead FEEDBACK.md link. Neither changes the verdict.\n\nExpectation met in full: pipeline complete, gate PASS, complexity measured at 2/5, harness ok with I1/I2/I3 passed and non-zero observations across every counter."
+  },
+  {
+   "slug": "v4-hooks-public-stablepair",
+   "target": "src/stable/StablePairHook.sol:StablePairHook",
+   "tier": "low (tierUpperBound high, inconclusive)",
+   "total": 5,
+   "total_upper": 25,
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_reason": "hookrisk Slither detectors v0.11.6, 2 findings attributed to target, 13238ms; HR-E205 warning for 26 functions (all in unrelated aggregator contracts)",
+   "harness_status": "failed",
+   "harness_reason": "harness setUp failed: TwinPools: hooked pool would not initialise. With fee 3000: 0x1210aa130000000000000000000000007fa9385be102ac3eac297483dd6233d62b3e1496; with a dynamic fee: same. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304). 0x1210aa13 == InvalidInitializer(address) \u2014 verified with `cast sig`.",
+   "hr_error_codes": [
+    "HR-E205",
+    "HR-E304"
+   ],
+   "findings": [
+    {
+     "ruleClass": "flag-implementation-divergence",
+     "severity": "high",
+     "line": 25,
+     "discriminator": "afterInitialize",
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "hook-profile",
+     "severity": "info",
+     "line": 25,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    }
+   ],
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "inconclusive",
+     "detail": "HR-E304 harness setUp failed (InvalidInitializer); nothing observed"
+    },
+    {
+     "id": "I2",
+     "status": "inconclusive",
+     "detail": "HR-E304; maxFeeBips=100 declared but never exercised"
+    },
+    {
+     "id": "I3",
+     "status": "inconclusive",
+     "detail": "HR-E304"
+    }
+   ],
+   "complexity": {
+    "value": 2,
+    "source": "measured",
+    "evidence": "hook-profile metrics: callbacksImplemented=4, callbacksDeclared=6, stateWritesInCallbacks=1, externalCallsInSwapPath=0, internalFunctionsReachableFromCallbacks=9, usesReturnsDelta=false, hasOwnerOnlyFunctions=false; rule `stateWritesInCallbacks >= 1 || callbacksImplemented >= 3` -> 2. Bracket label 'Callbacks write hook state, or 3+ callbacks' matches schema/framework-rubric.json score-2 bracket exactly; rule table applied correctly (highest-first, first match wins)."
+   },
+   "hook_profile_metrics": {
+    "callbacksImplemented": 4,
+    "callbacksDeclared": 6,
+    "stateWritesInCallbacks": 1,
+    "externalCallsInSwapPath": 0,
+    "internalFunctionsReachableFromCallbacks": 9,
+    "usesReturnsDelta": false,
+    "hasOwnerOnlyFunctions": false
+   },
+   "observations": {},
+   "harness_run": {},
+   "uncovered_functions": 26,
+   "permissions_disagreement": [],
+   "gate_passed": false,
+   "gate_failures": [
+    "1 finding(s) at or above high: StablePairHook (src/stable/StablePairHook.sol#25-259) declares permission `afterInitialize` (bit 12, AFTER_INITIALIZE_FLAG) but provides no working `afterIni..."
+   ],
+   "expectations_met": false,
+   "expectation_deviations": [
+    "Expectation said the HS-02 HIGH is on beforeInitialize; it is now on afterInitialize. The new placement is CORRECT and the expectation is stale: _beforeInitialize IS overridden in src/base/BaseDynamicFeeHook.sol:80-82 with `revert InvalidInitializer(sender)` (a deliberate guard), while _afterInitialize is never overridden and falls through to BaseHook's `revert HookNotImplemented()` (src/base/BaseHook.sol:57-59). Pre-fix run flagged beforeInitialize \u2014 that was the false positive, now fixed.",
+    "Harness: expectation met \u2014 failed loudly with HR-E304 carrying raw revert 0x1210aa13\u2026 = InvalidInitializer(address) (verified via `cast sig`), never ok; all three invariants inconclusive, dynamicAnalysisSkipped=true.",
+    "Upgradeability: expectation met \u2014 value null, source 'unmeasured', evidence 'Not measured: no detector for upgradeable-hook (needs blocksec, which did not run); selfdestruct requires blocksec, which did not run.' Not 0, and excluded from the 5/33 total.",
+    "permissions carries only fromEngine (14 flags); no fromRuntime, no harnessRun, no disagreement key \u2014 consistent with the harness never running, but harnessRun is absent rather than an explicit not-run record."
+   ],
+   "extra_runs": "Not required \u2014 the expectation asked for no second [harness] constructorArgs config, and constructorArgs is not the cause: the constructor takes only IPoolManager (ctorArgs=1 word, derived correctly). The harness can never initialise this hook regardless of ctor args, because BaseDynamicFeeHook._beforeInitialize reverts InvalidInitializer for any caller but the hook itself, and the only legitimate path (StablePairHook.initializePool) is onlyRole(POOL_INITIALIZER_ROLE) on a UUPS proxy the harness never deploys or initialises. Second run performed was the --log-json run into out2-json/: exit 2, identical findings, 10 stderr lines, all valid JSON, all carrying one runId (c87df5a3-8f07-4adf-8bce-a4021d7ef77e) and stage in {scan, project, harness, engine:hookrisk}. Note the harness sub-run has its own distinct id in the msg text (run=f46d\u2026), which is intentional but could confuse a log consumer.",
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "The `callback-intentionally-disabled` INFO classification for beforeInitialize is produced by the engine but silently dropped from the target's report, because it anchors on the delegate in an inherited base file. Running the detector directly emits: `BaseDynamicFeeHook._beforeInitialize(address,PoolKey,uint160) (src/base/BaseDynamicFeeHook.sol#80-82) overrides `beforeInitialize` with `revert InvalidInitializer()`, so PoolManager-routed pool initialisation is disabled by design`. The CLI's file-based target attribution counted it in the stderr line '28 finding(s) in other files, not attributed to this target: \u2026 src/base/BaseDynamicFeeHook.sol (1)'. DETECTORS.md says this class is 'Anchored on the developer's delegate' precisely so it survives filtering \u2014 for any hook whose delegate lives in an inherited base, that guarantee fails. Consequence: HOOK_RISK.md never tells the reader why the harness died with InvalidInitializer, and the one finding that explains the whole run is missing.",
+     "evidence": "/private/tmp/.../out2/scan.stderr line 'hookrisk: 28 finding(s) in other files \u2026 src/base/BaseDynamicFeeHook.sol (1)'; direct run: `.venv/bin/slither . --detect hookrisk-disabled-callback` returns that exact finding; out2/hook-risk.json findings[] has no callback-intentionally-disabled entry."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "The HIGH finding's impact sentence is false for this hook: 'The PoolManager will call it on every matching pool operation and the call will revert, making the pool unusable for that operation.' afterInitialize can never be reached here \u2014 v4-core Hooks.afterInitialize carries `noSelfCall(self)` (lib/v4-core/src/libraries/Hooks.sol:185-192) and the only path to pool creation is the hook self-calling poolManager.initialize from initializePool (StablePairHook.sol:46); every non-self path already reverts in _beforeInitialize. The stub is real (declared bit 12 with no override), so the finding should exist, but the pool is not bricked and this is the sole gate failure driving exit 2.",
+     "evidence": "out2/hook-risk.json findings[0].description; StablePairHook.sol:34-48; BaseDynamicFeeHook.sol:52-58 ('afterInitialize never runs today: initializePool self-calls, and v4 skips callbacks on self-calls'); lib/v4-core/src/libraries/Hooks.sol:185-192 noSelfCall."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "hook-profile reports 'Owner-only surface | false' in HOOK_RISK.md with no caveat, while the hook has a substantial privileged surface: initializePool onlyRole(POOL_INITIALIZER_ROLE) (StablePairHook.sol:36), updateFeeConfig/batchUpdateFeeConfig onlyRole(CONFIG_MANAGER_ROLE) (StableFeeConfiguration.sol:44,54 \u2014 can rewrite referenceSqrtPriceX96 for any pool), _authorizeUpgrade onlyRole(DEFAULT_ADMIN_ROLE) (BaseDynamicFeeHook.sol:48). DETECTORS.md:310 documents the limitation ('recognises comparisons, not role lookups'), but the rendered table states a bare false, and the complexity rule table consumes hasOwnerOnlyFunctions for score 5. OpenZeppelin AccessControl is not an exotic pattern.",
+     "evidence": "out2/HOOK_RISK.md 'Owner-only surface | false'; src/stable/base/StableFeeConfiguration.sol:42-55; src/base/BaseDynamicFeeHook.sol:48; docs/DETECTORS.md:292,310."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "The Security plan table is derived from the lower-bound tier only ('Because: tier:low' \u2014 one full audit, math specialist optional, monitoring optional) in a report that states two lines above that the tier is undetermined between low and high. A reviewer reading the plan gets a low-risk remediation programme for a hook whose measured range tops out at high. No caveat on the table.",
+     "evidence": "out2/HOOK_RISK.md '## Security plan' vs '> **Tier is undetermined.** \u2026 between low and high'; score.recommendations[].sources[].from == 'tier:low' in hook-risk.json."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "externalCallsInSwapPath=0 despite _beforeSwap -> _loadPrice -> poolManager.getSlot0(poolId) (StablePairHook.sol:113), which is an extsload staticcall to the PoolManager. DETECTORS.md:289 excludes library calls, and StateLibrary wraps the call, so 0 is doc-consistent \u2014 but the exclusion is by mechanism, not by destination: any external call to a non-PoolManager address wrapped in a library would also read 0, and complexity rule 3 ('external call in the swap path') would never fire.",
+     "evidence": "src/stable/StablePairHook.sol:17,28,113; docs/DETECTORS.md:289 'Library calls excluded'; out2/hook-risk.json complexity evidence."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The HR-E205 banner ('26 function(s) were not analysed \u2026 Findings below do not cover them') is rendered prominently on stdout and in HOOK_RISK.md, but all 26 are _getFullDebt/_getFullCredit in aggregator contracts unrelated to the scan target \u2014 none are in StablePairHook's inheritance chain. Honest, but as presented it reads as a coverage hole in the target.",
+     "evidence": "out2/hook-risk.json coverage.uncoveredFunctions[] \u2014 every entry is a *Aggregator or BaseHookDataAggregator/BaseAggregatorHook function from lib/v4-periphery/src/base/DeltaResolver.sol#60-76."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The harness failure surfaces raw revert data (0x1210aa130000\u20267fa9385be102ac3eac297483dd6233d62b3e1496) verbatim in stdout, the engine reason, all three invariant details and the coverage table \u2014 five times in one report \u2014 without decoding it. The project's own ABI has InvalidInitializer(address); decoding it to `InvalidInitializer(0x7fa9385b\u2026)` would turn an opaque blob into the single most useful line in the report.",
+     "evidence": "out2/HOOK_RISK.md invariants table and Analysis coverage table; `cast sig 'InvalidInitializer(address)'` -> 0x1210aa13."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Upgradeability is correctly unmeasured, but the report gives the reader no signal at all that this is a UUPS implementation behind an ERC1967 proxy, despite the contract natspec saying so (StablePairHook.sol:20-21) and _authorizeUpgrade being present. The reason given ('needs blocksec, which did not run') implies the only route is an external engine, when the target's own source is explicit.",
+     "evidence": "out2/hook-risk.json score.dimensions[upgradeability].evidence; src/stable/StablePairHook.sol:20-21; src/base/BaseDynamicFeeHook.sol:46-50."
+    },
+    {
+     "kind": "expected",
+     "description": "HEADLINE: HS-02 no longer accuses the deliberate beforeInitialize guard. The pre-fix run reported HIGH 'declares permission beforeInitialize (bit 13) but provides no working beforeInitialize implementation' \u2014 a false positive on a project-owned `revert InvalidInitializer(sender)`. The new run classifies that as INTENTIONALLY_DISABLED (silent for HS-02) and retargets the HIGH to afterInitialize, which is a real stub falling through to BaseHook's HookNotImplemented(). Same hook, same detector, wrong claim replaced by a true one.",
+     "evidence": "out/hook-risk.json (pre-fix) findings[0].title 'beforeInitialize (bit 13, BEFORE_INITIALIZE_FLAG)' vs out2/hook-risk.json findings[0] 'afterInitialize (bit 12, AFTER_INITIALIZE_FLAG)'; source at src/base/BaseDynamicFeeHook.sol:80-82 vs src/base/BaseHook.sol:57-59."
+    },
+    {
+     "kind": "expected",
+     "description": "HEADLINE: the harness refuses to claim anything it did not observe. Pre-fix the manifest had no harness engine at all, invariants 'skipped', coverage.dynamicAnalysisSkipped=false and uncoveredFunctions=0 \u2014 a report that looked more complete than the run was. Now: engines[] carries harness status=failed with errorCode HR-E304, all three invariants inconclusive with the concrete revert, dynamicAnalysisSkipped=true, and the summary says 'no sequence ran and nothing about the hook was observed'. No regression found anywhere in the comparison.",
+     "evidence": "out/hook-risk.json coverage {uncoveredFunctions:0, dynamicAnalysisSkipped:false}, invariants all 'skipped', engines=[hookrisk] only; vs out2/hook-risk.json coverage {harnessStatus:'failed', dynamicAnalysisSkipped:true} and engines[1].errorCode='HR-E304'."
+    },
+    {
+     "kind": "expected",
+     "description": "Unmeasured dimensions are excluded rather than zeroed, and the tier is published as a range: total 5/33, totalUpperBound 25/33, tier low, tierUpperBound high, inconclusive true, plus six per-trigger warnings naming the dimension that blocked each trigger. Complexity bracket and rule match schema/framework-rubric.json exactly. --log-json emits 10 well-formed JSON lines, one runId, stages scan/project/harness/engine:hookrisk. Exit 2 is correct for a failed gate.",
+     "evidence": "out2/hook-risk.json score{total:5,totalUpperBound:25,inconclusive:true}; out2-json/scan.stderr parsed with json.loads, 10/10 lines valid, 0 bad."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-hooks-public-stablepair/out2",
+   "notes": "Config: saved hookrisk.toml.old, re-init'd, restored maxFeeBips=100. Old file had no [harness] section, so nothing else copied back. New template drops maxTier and adds failOnInconclusive=false, so the pre-fix gate failure \"tier is undetermined \u2026 upper bound exceeds medium\" is gone by config change, not by a tool regression.\n\nThe single most important defect this run is the dropped disabled-callback classification. The tool gets the hard call right (beforeInitialize is a deliberate guard, not a stub) and then throws away the finding that says so, because the delegate lives in an inherited base file. The report therefore shows a reviewer a HIGH about afterInitialize and an opaque hex revert from the harness, with no line connecting the two to the hook's actual design. Fixing target attribution to follow the inheritance chain, not the file path, would close it \u2014 and would also make the harness's `seeded: \"hooked-failed\"` path (DETECTORS.md:205ff) reachable for hooks like this one.\n\nMinor, not raised as an anomaly: stateWritesInCallbacks=1 while _beforeSwap writes three fields at StablePairHook.sol:88-90; DETECTORS.md:288 defines the metric as one per (node, variable), which reads as 3. The ERC-7201 storage pointer is fetched via assembly, which plausibly collapses them to one variable. Score is unaffected either way (rule needs >= 1).\n\nVerified verbatim: `cast sig \"InvalidInitializer(address)\"` -> 0x1210aa13, matching the harness revert prefix exactly. No hook-risk.invalid.json was produced; the manifest validated."
+  },
+  {
+   "slug": "v4-hooks-public-weth",
+   "target": "src/WETHHook.sol:WETHHook",
+   "scan_exit_code": 0,
+   "static_status": "ok",
+   "static_reason": "",
+   "findings": [
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "line": 12,
+     "discriminator": "beforeSwapReturnDelta",
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "hook-profile",
+     "severity": "info",
+     "line": 12,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    }
+   ],
+   "harness_status": "skipped",
+   "harness_reason": "WETHHook's constructor takes 2 argument(s) (address _manager, address _weth) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument \u2014 $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.",
+   "harness_run": {},
+   "observations": {},
+   "hook_profile_metrics": {
+    "callbacksImplemented": 2,
+    "callbacksDeclared": 3,
+    "stateWritesInCallbacks": 0,
+    "externalCallsInSwapPath": 7,
+    "internalFunctionsReachableFromCallbacks": 13,
+    "usesReturnsDelta": true,
+    "hasOwnerOnlyFunctions": false
+   },
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "harness skipped (HR-E305, constructor args)"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "harness skipped (HR-E305, constructor args)"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "harness skipped (HR-E305, constructor args)"
+    }
+   ],
+   "complexity": {
+    "value": 4,
+    "source": "measured",
+    "evidence": "Scored 4 by rule `usesReturnsDelta && externalCallsInSwapPath >= 1`; matches schema/framework-rubric.json (score-5 rule additionally needs hasOwnerOnlyFunctions, which is false). Bracket label 'Returns a delta and makes an external call in the swap path' is the rubric's own score-4 label. Correct."
+   },
+   "tier": "medium",
+   "total": 13,
+   "total_upper": 25,
+   "uncovered_functions": 26,
+   "gate_passed": true,
+   "gate_failures": [],
+   "permissions_disagreement": [],
+   "hr_error_codes": [
+    "HR-E205",
+    "HR-E305",
+    "HR-E304 (out2-extra run only)"
+   ],
+   "expectations_met": false,
+   "expectation_deviations": [
+    "The expected `callback-intentionally-disabled` INFO is NOT in the WETHHook report. findings[] contains exactly two entries (custom-accounting, hook-profile); HOOK_RISK.md renders one. The classification was emitted but dropped: stderr says '28 finding(s) in other files, not attributed to this target: ... src/base/BaseTokenWrapperHook.sol (1)'. The false HIGH is genuinely gone, but it was replaced by silence, not by the promised INFO.",
+    "Everything else matched: the harness skip now names '(address _manager, address _weth)' and cites HR-E305; the constructorArgs rerun produced a loud, correctly-classified failure (HR-E304)."
+   ],
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "The callback-intentionally-disabled classification never reaches the WETHHook report. disabled_callback.py anchors the finding on `verdict.delegate`, which for WETHHook is BaseTokenWrapperHook._beforeAddLiquidity in src/base/BaseTokenWrapperHook.sol, so the CLI's target-file attribution filter discards it. WETHHook is the first example named in that detector's own docstring. Net reader experience: HOOK_RISK.md lists `beforeAddLiquidity` under 'Permissions declared', reports callbacksImplemented=2 (beforeInitialize, beforeSwap), and offers no explanation anywhere that PoolManager-routed liquidity reverts by design.",
+     "evidence": "out2/scan.stderr: 'hookrisk: 28 finding(s) in other files, not attributed to this target: ... src/base/BaseTokenWrapperHook.sol (1)'; out2/hook-risk.json .findings has only custom-accounting + hook-profile; docs/DETECTORS.md#disabled-callback claims it is 'anchored on the developer's delegate, so it survives --exclude-dependencies'."
+    },
+    {
+     "kind": "expected",
+     "description": "The pre-fix false HIGH is gone and the gate now passes. Pre-fix out/ had flag-implementation-divergence HIGH at src/WETHHook.sol:12 ('declares beforeAddLiquidity but provides no working implementation'). Verified against source: BaseTokenWrapperHook.sol:106-115 `_beforeAddLiquidity(...) internal pure override { revert LiquidityNotAllowed(); }`, docstring 'Always reverts as liquidity is managed through the token wrapper'. The revert is unambiguously deliberate; the HIGH was wrong and is correctly suppressed.",
+     "evidence": "out/hook-risk.json (pre-fix): 1 high, gate.passed=false, 10/22. out2/hook-risk.json: 0 high, gate.passed=true, 13 with upper bound 25."
+    },
+    {
+     "kind": "expected",
+     "description": "Harness skip is now specific and actionable: it names the arity and decoded parameter list '(address _manager, address _weth)', lists the substitutable placeholders and cites HR-E305; the same text propagates to engines[].reason and all three invariants[].detail, with coverage.harnessStatus='skipped' and dynamicAnalysisSkipped=true.",
+     "evidence": "out2/scan.stderr 'harness: skipped \u2014 WETHHook's constructor takes 2 argument(s) (address _manager, address _weth) ... See HR-E305.'"
+    },
+    {
+     "kind": "expected",
+     "description": "The optional constructorArgs rerun failed loudly instead of silently producing a green harness: engines[harness].status='failed', errorCode='HR-E304', invariants moved skipped -> inconclusive, and the message states 'no sequence ran and nothing about the hook was observed'. The failure is genuine and correct \u2014 0xdcdedda9 is InvalidPoolToken(), because the twin-pool currencies are mock ERC20s rather than (native ETH, real WETH), so _beforeInitialize legitimately refuses.",
+     "evidence": "out2-extra/hook-risk.json engines[1].reason 'TwinPools: hooked pool would not initialise. With fee 3000: 0xdcdedda9; with a dynamic fee: 0xdcdedda9 ... (HR-E304)'; `cast sig \"InvalidPoolToken()\"` -> 0xdcdedda9; BaseTokenWrapperHook.sol:100."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "HR-E304 prints the raw 4-byte selector twice and never decodes it, although the CLI already read the target's Foundry artifact, whose ABI carries InvalidPoolToken/InvalidPoolFee. Decoding would turn opaque hex into the exact diagnosis and would tell the user that constructorArgs alone can never make this hook harnessable.",
+     "evidence": "out2-extra/scan.stderr and out2-extra/hook-risk.json engines[1].reason: 'With fee 3000: 0xdcdedda9; with a dynamic fee: 0xdcdedda9'."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The harness only attempts fee 3000 and a dynamic fee. This hook additionally requires poolKey.fee == 0 (InvalidPoolFee, BaseTokenWrapperHook.sol:101), so even with correct currencies initialisation would fail. Wrapper hooks (fixed currency pair plus zero fee) are structurally outside the twin-pool harness and nothing in the report says so \u2014 the reader is left believing better constructorArgs would fix it.",
+     "evidence": "No fee-0 attempt in the HR-E304 message; `cast sig \"InvalidPoolFee()\"` = 0x1213a0ab."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The HR-E205 banner ('26 function(s) were not analysed \u2014 a clean result does not cover them') is prominent on both stdout and the report, but all 26 are _getFullDebt/_getFullCredit on aggregator contracts unrelated to the target; none is reachable from WETHHook. Scoping the warning to the target's own call graph would keep the honesty without the false alarm.",
+     "evidence": "out2/hook-risk.json .coverage.uncoveredFunctions \u2014 every entry is BaseAggregatorHook/*Aggregator _getFullDebt|_getFullCredit from lib/v4-periphery DeltaResolver."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Finding count is inconsistent between surfaces: stdout and engines[].findingCount say '2 info' and hook-risk.json has 2 findings, but HOOK_RISK.md's '## Findings' section renders only the custom-accounting one. The hook-profile finding is silently hoisted into the 'Hook profile' table with no note that it is one of the two counted findings.",
+     "evidence": "out2/scan.stdout 'findings    2 info' vs out2/HOOK_RISK.md '## Findings' containing a single entry."
+    }
+   ],
+   "extra_runs": "out2-extra/ \u2014 hookrisk.toml with [harness] constructorArgs = [\"$poolManager\", \"$currency1\"]. The harness now launches (stderr: 'harness: WETHHook.sol:WETHHook flags=derived-from-runtime maxFee=0bips ctorArgs=2 word(s)') and fails at setUp with HR-E304: 'TwinPools: hooked pool would not initialise. With fee 3000: 0xdcdedda9; with a dynamic fee: 0xdcdedda9. The twin pools could not be built, so no sequence ran and nothing about the hook was observed.' 0xdcdedda9 = InvalidPoolToken(). engines[harness].status=failed with errorCode HR-E304, coverage.harnessStatus=failed, invariants I1/I2/I3 = inconclusive (vs skipped in out2). Score, findings and tier unchanged (13/33, up to 25/33, medium). Exit code still 0 and 'gate passed' (failOnInconclusive=false, the new template default). So: loud failure, correctly attributed, no fabricated dynamic evidence \u2014 but a CI gate at template defaults would not notice that dynamic analysis produced nothing at all.",
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-hooks-public-weth/out2",
+   "notes": "Config: the old hookrisk.toml had no [harness] section and maxFeeBips = 0, so nothing was carried back. The new template comments out maxTier and defaults failOnInconclusive = false, which is why the gate flips to pass (pre-fix it failed on both the HIGH and the undetermined tier). --log-json run (out2-json): 9 lines, all valid JSON, one stable runId (30b67e83-...) on every line, stages {scan, project, engine:hookrisk, harness}; exit 0. Source check of hook-profile metrics: callbacksDeclared=3 matches getHookPermissions (beforeInitialize, beforeAddLiquidity, beforeSwap; beforeSwapReturnDelta is a delta flag, correctly not counted); stateWritesInCallbacks=0 correct (all fields immutable, written only in constructors); usesReturnsDelta=true correct; hasOwnerOnlyFunctions=false correct (no owner surface); externalCallsInSwapPath=7 plausible (sync, take, settle, weth.withdraw, sync, settle, transfer); callbacksImplemented=2 excludes the reverting _beforeAddLiquidity, defensible only if the disabled-callback INFO also reaches the report \u2014 it does not. Minor: the profile table prints 'Callbacks declared 3' directly above a 'Permissions declared' row listing four names. HOOK_RISK.md is otherwise honest about scope \u2014 it labels every interpreted bracket, states the tier is a range, names the four unmeasured dimensions and unevaluated triggers, and repeats the harness skip reason in three places. The one misleading gap for a reviewer is that nothing explains why beforeAddLiquidity is declared yet always reverts."
+  },
+  {
+   "slug": "cork-hook",
+   "target": "src/CorkHook.sol:CorkHook",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_reason": "hookrisk Slither detectors, 7 findings, 1 hook contract analysed, permissions resolved from the profile",
+   "findings": [
+    {
+     "ruleClass": "unprotected-hook-callback",
+     "severity": "high",
+     "line": 88,
+     "discriminator": "beforeAddLiquidity",
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "unprotected-hook-callback",
+     "severity": "high",
+     "line": 97,
+     "discriminator": "beforeInitialize",
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "unprotected-hook-callback",
+     "severity": "high",
+     "line": 365,
+     "discriminator": "beforeSwap",
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "flag-implementation-divergence",
+     "severity": "high",
+     "line": 31,
+     "discriminator": "beforeRemoveLiquidity",
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "line": 31,
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "hook-profile",
+     "severity": "info",
+     "line": 31,
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "callback-intentionally-disabled",
+     "severity": "info",
+     "line": 88,
+     "discriminator": "beforeAddLiquidity",
+     "engines": [
+      "hookrisk"
+     ]
+    }
+   ],
+   "harness_status": "skipped",
+   "harness_reason": "CorkHook's constructor takes 3 argument(s) (address _poolManager, address _lpBase, address owner) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument \u2014 $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.",
+   "harness_run": {},
+   "observations": {},
+   "permissions_disagreement": [],
+   "hr_error_codes": [
+    "HR-E305"
+   ],
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "harness skipped \u2014 constructor args required (HR-E305)"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "harness skipped \u2014 constructor args required (HR-E305)"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "harness skipped \u2014 constructor args required (HR-E305)"
+    }
+   ],
+   "complexity": {
+    "value": 5,
+    "source": "measured",
+    "evidence": "hook-profile metrics: callbacksImplemented=2, callbacksDeclared=4, stateWritesInCallbacks=4, externalCallsInSwapPath=5, internalFunctionsReachableFromCallbacks=19, usesReturnsDelta=true, hasOwnerOnlyFunctions=true; rule `usesReturnsDelta && externalCallsInSwapPath >= 1 && hasOwnerOnlyFunctions`. All three verified in source (beforeSwapReturnDelta:true at src/CorkHook.sol:81, forwarder.* calls in the swap path at 442/456/530, onlyOwner setters at 228/232). Matches schema/framework-rubric.json's score-5 rule exactly."
+   },
+   "total": 14,
+   "total_upper": 26,
+   "tier": "medium",
+   "uncovered_functions": 0,
+   "hook_profile_metrics": {
+    "callbacksImplemented": 2,
+    "callbacksDeclared": 4,
+    "stateWritesInCallbacks": 4,
+    "externalCallsInSwapPath": 5,
+    "internalFunctionsReachableFromCallbacks": 19,
+    "usesReturnsDelta": true,
+    "hasOwnerOnlyFunctions": true
+   },
+   "gate_passed": false,
+   "gate_failures": [
+    "4 finding(s) at or above high (beforeAddLiquidity#88, beforeInitialize#97, beforeSwap#365, flag-divergence#31)"
+   ],
+   "expectations_met": true,
+   "expectation_deviations": [],
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "HS-01 on beforeInitialize (97) and beforeSwap (365) is TRUE and is the headline result. CorkHook overrides BaseHook's external callbacks directly (`external override`, no modifier) and this v4-periphery BaseHook has no poolManagerOnly guard on them; there is no msg.sender comparison anywhere in CorkHook. Anyone can call beforeInitialize (which deploys an LP clone and writes pool[ammId]) or beforeSwap (which runs _beforeSwap's settle/take/forwarder flow) with an arbitrary PoolKey. This is the real Cork Protocol exploit class.",
+     "evidence": "src/CorkHook.sol:97 `function beforeInitialize(address, PoolKey calldata key, uint160) external virtual override`; :365-370 `function beforeSwap(...) external override`; grep for onlyPoolManager/poolManagerOnly/msg.sender in src/CorkHook.sol returns nothing; lib/v4-periphery/src/base/hooks/BaseHook.sol:59,112 are unguarded stubs that `revert HookNotImplemented()`."
+    },
+    {
+     "kind": "expected",
+     "description": "HS-02 on beforeRemoveLiquidity is TRUE. Permissions declare beforeRemoveLiquidity:true but CorkHook provides no override, so the inherited BaseHook stub reverts HookNotImplemented on every PoolManager-routed removal.",
+     "evidence": "src/CorkHook.sol:75 `beforeRemoveLiquidity: true, // override, only allow removing liquidity from the hook`; no `function beforeRemoveLiquidity` exists in src/CorkHook.sol; BaseHook.sol:78-84 `revert HookNotImplemented()`."
+    },
+    {
+     "kind": "expected",
+     "description": "The remaining expectation items all hold: callback-intentionally-disabled INFO on beforeAddLiquidity is correct and the revert is deliberate; custom-accounting INFO correct; hook-profile hasOwnerOnlyFunctions=true correct; complexity 5/5 matches the rubric's score-5 rule; gate correctly FAILED (exit 2); harness skip message names the exact 3-arg constructor and HR-E305.",
+     "evidence": "src/CorkHook.sol:88-95 body is `revert IErrors.DisableNativeLiquidityModification();` with the comment at :73 'override, only allow adding liquidity from the hook'; :228/:232 `external onlyOwner`; :81 `beforeSwapReturnDelta: true`; :44 `constructor(IPoolManager _poolManager, LiquidityToken _lpBase, address owner)`."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Double-classification on beforeAddLiquidity (line 88): reported both as HS-01 HIGH ('Anyone can call it with an arbitrary PoolKey and arbitrary hookData') and as callback-intentionally-disabled INFO. The function's entire body is an unconditional revert, so the HIGH describes no reachable surface \u2014 a false positive that inflates the gate count to '4 finding(s) at or above high'. The tool already holds the fact needed to suppress or downgrade it, since its own disabled-callback rule fired on the same file:line and discriminator. docs/DETECTORS.md HS-01 documents no carve-out for unconditionally-reverting callbacks.",
+     "evidence": "src/CorkHook.sol:88-95 `revert IErrors.DisableNativeLiquidityModification();`; out2/hook-risk.json has two findings at location.line 88, discriminator beforeAddLiquidity, severities high and info; gate.failures says '4 finding(s) at or above high'."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Contradictory coverage statement: dimension externalDependencies is 'unmeasured' with evidence 'Not measured: no detector for external-call-in-swap-path yet', while the hook-profile finding in the same manifest reports externalCallsInSwapPath=5 and the complexity rule scores 5 partly on that metric. Stale evidence string; the reader is told the tool cannot see something it just counted and scored on.",
+     "evidence": "out2/hook-risk.json score.dimensions[externalDependencies].evidence[0] vs findings[hook-profile].metrics.externalCallsInSwapPath=5 and complexity evidence 'Scored 5 by rule `usesReturnsDelta && externalCallsInSwapPath >= 1 && hasOwnerOnlyFunctions`'."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "engines[harness] with status 'skipped' carries no errorCode even though its reason ends 'See HR-E305.'; the schema defines errorCode only for status 'failed' (the extra run did emit errorCode HR-E304). A CI job must string-parse `reason` to branch on a skip cause.",
+     "evidence": "out2/hook-risk.json engines[1] has no errorCode key; out2-extra/hook-risk.json engines[1] has \"errorCode\": \"HR-E304\"; schema/hook-risk.schema.json:552 'Catalogue code (errors/catalog.json) when status is `failed`'."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The disabled-callback INFO reads 'The harness will observe reverts there' in a run where the harness never ran, and HOOK_RISK.md uses mid-sentence-truncated finding titles ('... that never ...') as section headings. Minor, but both slightly undercut a report whose main virtue is being explicit about what was and was not analysed.",
+     "evidence": "out2/HOOK_RISK.md findings section; coverage.harnessStatus='skipped', dynamicAnalysisSkipped=true."
+    },
+    {
+     "kind": "expected",
+     "description": "No regression against the pre-fix artifacts: the old run had 5 findings/total 10 and gated partly on maxTier (which the new init template deliberately drops); the new run adds hook-profile and callback-intentionally-disabled, measures complexity (5) and price impact, totals 14/33 with upper bound 26/33, keeps the same 4 HIGHs at the same lines, and still fails the gate on severity alone. --log-json emitted 7 valid JSON lines, a single runId, stages scan/project/engine:hookrisk/harness, with errorCode on the harness line.",
+     "evidence": "out/hook-risk.json (total 10, 5 findings) vs out2/hook-risk.json (total 14, 7 findings); out2-json/scan.stderr parses as 7 JSON objects, keys include runId, stage, errorCode."
+    }
+   ],
+   "extra_runs": "out2-extra: rescanned with [harness] constructorArgs = [\"$poolManager\", \"$currency0\", \"$owner\"]. The harness now runs (stderr: 'harness: CorkHook.sol:CorkHook flags=derived-from-runtime maxFee=10000bips ctorArgs=3 word(s)') and fails honestly at setUp: 'TwinPools: hooked pool would not initialise. With fee 3000: 0xc1ab6dc1; with a dynamic fee: 0xc1ab6dc1. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304).' engines[harness].status=failed with errorCode HR-E304; coverage.harnessStatus=failed, dynamicAnalysisSkipped=true; I1/I2/I3 move from 'skipped' to 'inconclusive'; permissions still carries only fromEngine (no fromRuntime/harnessRun \u2014 correct, nothing was observed); total/tier/gate unchanged (14, medium, FAILED, exit 2). The revert is genuine hook behaviour, not a harness defect: CorkHook.beforeInitialize requires the CT token to expose an expiry (IExpiry), so a generic ERC20 twin pool cannot initialise. hookrisk.toml was restored from the backup afterwards.",
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/cork-hook/out2",
+   "notes": "Init flow worked: old config saved to repo/hookrisk.toml.old, new template written (no maxTier, failOnInconclusive=false), maxFeeBips=10000 copied back, no [harness] section existed to restore. forge build cached. Scan exit 2; the only HR code in stderr is HR-E305. Every expectation held, verified line by line against source: HS-01 at 88/97/365, HS-02 on beforeRemoveLiquidity, disabled-callback INFO, custom-accounting INFO, hasOwnerOnlyFunctions true, complexity 5/5 against framework-rubric.json's score-5 rule, gate FAILED, harness skip naming the 3-address constructor. Two real problems. First, the beforeAddLiquidity HIGH is a false positive on a body that is nothing but a revert, and the tool says so itself one finding later \u2014 that costs a gate count and, in a demo, credibility on the one finding a reviewer can disprove in five seconds. Second, the externalDependencies 'no detector yet' evidence contradicts externalCallsInSwapPath=5 in the same manifest. HOOK_RISK.md is otherwise honest about scope: it states the tier is a range, lists unmeasured dimensions, footnotes hookrisk-supplied brackets, and shows the harness as skipped with the reason in both the invariants and coverage tables. No hook-risk.invalid.json was produced; --log-json output is valid JSON lines with runId and stage."
+  },
+  {
+   "slug": "orbital-hook",
+   "target": "src/OrbitalHook.sol:OrbitalHook",
+   "scan_exit_code": 0,
+   "static_status": "ok",
+   "static_reason": "hookrisk Slither detectors v0.11.6, 4 findings, 3700ms, no error code",
+   "findings": [
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "line": 18,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "hook-profile",
+     "severity": "info",
+     "line": 18,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "callback-intentionally-disabled",
+     "severity": "info",
+     "line": 325,
+     "discriminator": "beforeAddLiquidity",
+     "engines": [
+      "hookrisk",
+      "harness"
+     ]
+    },
+    {
+     "ruleClass": "callback-intentionally-disabled",
+     "severity": "info",
+     "line": 338,
+     "discriminator": "beforeRemoveLiquidity",
+     "engines": [
+      "hookrisk"
+     ]
+    }
+   ],
+   "harness_status": "ok",
+   "harness_reason": "3 invariants, 0 failed, 3 inconclusive/NA; flags=0xa88 derived-from-runtime, maxFee=10bips, ctorArgs=4 words, seeded=hooked-failed; 5578ms",
+   "harness_run": {
+    "flags": 2696,
+    "permissionsDerived": true,
+    "customCurve": true,
+    "dynamicFee": false,
+    "seeded": "hooked-failed",
+    "hookedSeedRevert": "Error(\"Use custom addLiquidity\")"
+   },
+   "observations": {
+    "swapsExecuted": 0,
+    "swapsCompared": 0,
+    "swapsSkipped": 0,
+    "hookedSwapReverted": 1285,
+    "positionsOpened": 0,
+    "positionsClosed": 0,
+    "donations": 0,
+    "priceChecks": 0,
+    "monotonicityViolations": 0,
+    "exitFailures": 0,
+    "sequences": 1285
+   },
+   "hook_profile_metrics": {
+    "callbacksImplemented": 1,
+    "callbacksDeclared": 3,
+    "stateWritesInCallbacks": 3,
+    "externalCallsInSwapPath": 3,
+    "internalFunctionsReachableFromCallbacks": 8,
+    "usesReturnsDelta": true,
+    "hasOwnerOnlyFunctions": false
+   },
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "inconclusive",
+     "detail": "\"passed vacuously: 0 swaps landed and 0 positions opened across 1285 sequences; the hook rejected PoolManager liquidity (Error(\\\"Use custom addLiquidity\\\")) so the pool never traded\"; runs=256 calls=8192 reverts=0"
+    },
+    {
+     "id": "I2",
+     "status": "inconclusive",
+     "detail": "0 price checks across 1285 sequences; notes output comparison does not apply to a custom-curve hook, price monotonicity asserted instead"
+    },
+    {
+     "id": "I3",
+     "status": "not-applicable",
+     "detail": "cross-layer: hookrisk classifies beforeAddLiquidity/beforeRemoveLiquidity intentionally disabled AND harness seed rejected with Error(\"Use custom addLiquidity\"); explicitly says liquidity held through the hook's own path is not exercised"
+    }
+   ],
+   "complexity": {
+    "value": 4,
+    "source": "measured",
+    "evidence": "Rule `usesReturnsDelta && externalCallsInSwapPath >= 1` -> 4, bracket \"Returns a delta and makes an external call in the swap path\". Verified against schema/framework-rubric.json: score 5 needs hasOwnerOnlyFunctions (false here, correct \u2014 no Ownable/onlyOwner anywhere in OrbitalHook.sol), so 4 is the right bracket."
+   },
+   "total": 13,
+   "total_upper": 25,
+   "tier": "medium",
+   "uncovered_functions": 0,
+   "permissions_disagreement": [],
+   "hr_error_codes": [],
+   "gate_passed": true,
+   "gate_failures": [],
+   "expectations_met": true,
+   "expectation_deviations": [
+    "None material. All five expectation points held: harness ok with seeded=hooked-failed; I1/I2 inconclusive with swapsCompared=0; I3 not-applicable via explicit cross-layer reconciliation; the beforeAddLiquidity disabled-callback finding carries engines [hookrisk, harness] (merged at confidence high, reconcile log: 'merged into finding 090fb76d50093cbe'); coverage.observations present and HOOK_RISK.md renders a Hook profile table.",
+    "Config: init template confirmed to have no maxTier and failOnInconclusive = false; [harness] constructorArgs and maxFeeBips=10 were restored by hand and were honoured (stderr: 'maxFee=10bips ctorArgs=4 word(s)')."
+   ],
+   "extra_runs": "The expectation did not ask for a second [harness] constructorArgs configuration, so no out2-extra run was performed. A second full run was done with --log-json into out2-json: 11 stderr lines, all valid JSON, single runId 7e6497b7-..., stages {scan, project, harness, engine:hookrisk, reconcile}, keys include ts/runId/level/stage/msg plus per-stage payload (tier,total,inconclusive,gatePassed,exitCode,findings,invariants,status,durationMs). Manifests from out2 and out2-json are byte-identical modulo runId/timings \u2014 the pipeline is deterministic on this target.",
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "The pre-fix HIGH false positive is gone. The old run emitted flag-implementation-divergence HIGH: 'declares permission beforeRemoveLiquidity ... but provides no working beforeRemoveLiquidity implementation ... making the pool unusable for that operation.' The source at src/OrbitalHook.sol:338-345 does implement _beforeRemoveLiquidity; it reverts deliberately ('Use custom removeLiquidity', with a comment routing users to the hook's own removeLiquidity). The new run reclassifies both as callback-intentionally-disabled/info with the right lines (325-335, 338-345). Both reverts verified deliberate against the source.",
+     "evidence": "out/hook-risk.json HIGH title vs out2/hook-risk.json findings[2..3]; src/OrbitalHook.sol:325-345"
+    },
+    {
+     "kind": "expected",
+     "description": "Cross-layer reconciliation is real and visible, not cosmetic. stderr: 'reconcile: beforeAddLiquidity classified intentionally disabled by hookrisk and observed rejecting the harness's seed (Error(\"Use custom addLiquidity\")); merged into finding 090fb76d50093cbe at confidence high' and 'reconcile: I3 not-applicable \u2014 both layers agree PoolManager liquidity is disabled by design'. The report renders it as 'corroborated by multiple engines' with 'Reported by: hookrisk/hookrisk-disabled-callback, harness/seed-reverted'.",
+     "evidence": "out2/scan.stderr lines 8-9; out2/HOOK_RISK.md Findings section"
+    },
+    {
+     "kind": "expected",
+     "description": "Honest vacuity reporting. 1285 sequences, 0 swaps landed, 0 compared, and I1/I2 are inconclusive rather than passed; the coverage paragraph states 'An invariant with no relevant observations is reported inconclusive, not passed.' The pre-fix run reported all three invariants as 'skipped' with no observation counts at all.",
+     "evidence": "out2/hook-risk.json .invariants, .coverage.observations vs out/hook-risk.json .invariants"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "hook-profile metric callbacksImplemented=1 contradicts both the source and hookrisk's own documented definition. docs/DETECTORS.md:286 defines it as 'len(callbacks)'. OrbitalHook overrides three callbacks (_beforeSwap:127, _beforeAddLiquidity:324, _beforeRemoveLiquidity:337) and hookrisk itself reports the latter two as implemented-but-disabled in the same manifest. The HOOK_RISK.md row 'Callbacks implemented (count) | 1' next to 'Callbacks declared | 3' reads to a reviewer like the HS-02 divergence the tool just correctly stopped reporting. Either the metric should be 3 (with a separate disabled count) or the label/doc should say 'active callbacks'.",
+     "evidence": "out2/hook-risk.json findings[1].metrics; docs/DETECTORS.md:286; src/OrbitalHook.sol:127,324,337"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Report table inconsistency: 'Callbacks declared | 3' sits directly above 'Permissions declared | beforeAddLiquidity, beforeRemoveLiquidity, beforeSwap, beforeSwapReturnDelta' (four entries). The 3 counts callbacks and excludes the returnDelta flag, but nothing on the page says so.",
+     "evidence": "out2/HOOK_RISK.md, Hook profile table"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "externalCallsInSwapPath=3 counts poolManager.take/sync/settle but excludes the raw token transfer to the PoolManager: Currency.unwrap(outputCurrency).safeTransfer(address(poolManager), amountOut) at src/OrbitalHook.sol:202. docs/DETECTORS.md:289 says 'Library calls excluded', so this is per spec, but the excluded call is precisely the value-moving external call in the swap path, so HS-05's input undercounts on any hook using SafeTransferLib/SafeERC20 (i.e. most of them).",
+     "evidence": "src/OrbitalHook.sol:197-203; docs/DETECTORS.md:289"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The hook custodies user funds directly (addLiquidity safeTransferFrom's all three tokens to address(this) and beforeSwap does poolManager.take(inputCurrency, address(this), ...)), yet externalLiquidityExposure is 'unmeasured' and the 'holds-liquidity' trigger 'could not be evaluated'. For a fund-holding hook that is the single most load-bearing unmeasured dimension, and the tier range (13 to 25) is driven by exactly this.",
+     "evidence": "src/OrbitalHook.sol:376-388, 196; out2/hook-risk.json .score.dimensions externalLiquidityExposure, warnings"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Zero non-INFO findings on a hook with plainly suspect custom math, and nothing dynamic reached it: the hook's real liquidity/swap path (addLiquidity/removeLiquidity/calculateOrbitalSwap*) is never executed because the harness can only reach PoolManager-routed liquidity. Concrete unassessed defects a reader might assume were covered: initial shares = amount0Max+amount1Max+amount2Max sums raw amounts across three different decimals (line 355); _beforeSwap writes reserves and is not nonReentrant while the two custom entry points are; forge-std console.log is imported and called in the production swap path (lines 157-158, 405-406). The report is honest about the boundary ('liquidity held through the hook's own path is not exercised') but 'findings 4 info / gate passed' still reads as clean.",
+     "evidence": "src/OrbitalHook.sol:355,157,405,127; out2/hook-risk.json .invariants[2].detail"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Minor wording: I1/I2 details open with 'passed vacuously:' inside rows whose status is 'inconclusive'. Copy-pasted out of context ('I1 ... passed vacuously') that inverts the meaning the tool intends.",
+     "evidence": "out2/hook-risk.json .invariants[0].detail; out2/HOOK_RISK.md Invariants table"
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/orbital-hook/out2",
+   "notes": "Config regeneration went clean: init wrote the new template (no maxTier, failOnInconclusive=false, commented-out constructorArgs example); I restored constructorArgs=[\"$poolManager\",\"$currency0\",\"$currency1\",\"$currency1\"] and maxFeeBips=10, both honoured by the run. forge build cached. Exit 0, gate passed, no HR-E codes anywhere in stderr, no hook-risk.invalid.json, SARIF has 4 results matching the 4 findings.\n\nSource verification: no HIGH findings to check. Both callback-intentionally-disabled findings verified deliberate at the exact reported lines (325-335, 338-345) \u2014 each body is a single revert with a comment routing users to the hook's own addLiquidity/removeLiquidity. Profile metrics: stateWritesInCallbacks=3 correct (reserves[in], reserves[out], L_SQUARED via _updateLSquared); usesReturnsDelta=true correct (beforeSwapReturnDelta declared, toBeforeSwapDelta returned); hasOwnerOnlyFunctions=false correct (no Ownable, no access-controlled function). callbacksImplemented=1 is wrong against the documented len(callbacks) definition, externalCallsInSwapPath=3 undercounts the safeTransfer. Complexity 4 checks out against the rubric rule table.\n\nReading HOOK_RISK.md as a reviewer: the \"what was and was not analysed\" story is genuinely clear \u2014 the undetermined-tier callout, per-dimension source column, the \u1d43 footnote disclaiming hookrisk's own brackets, the coverage paragraph with raw observation counts, and I3's explicit statement that the hook's own liquidity path is unexercised. The only misleading bits are the two table issues above and the \"passed vacuously\" phrasing.\n\nNo regressions found; the one behaviour change versus the pre-fix run (the HIGH disappearing) is a fix, not a regression."
+  },
+  {
+   "slug": "oz-antisandwich-mock",
+   "target": "src/mocks/general/AntiSandwichMock.sol:AntiSandwichMock",
+   "scan_exit_code": 0,
+   "static_status": "ok",
+   "static_reason": "hookrisk Slither detectors ok, 2 findings, 10571ms, engine version 0.11.6",
+   "findings": [
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "line": 15,
+     "engines": [
+      "hookrisk"
+     ],
+     "discriminator": ""
+    },
+    {
+     "ruleClass": "hook-profile",
+     "severity": "info",
+     "line": 15,
+     "engines": [
+      "hookrisk"
+     ],
+     "discriminator": ""
+    }
+   ],
+   "harness_status": "ok",
+   "harness_reason": "3 invariants, 0 failed, flags=0xc4 derived, seeded=both, 6583ms",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "passed",
+     "detail": "runs=256 calls=8192 reverts=0 (Conservation and solvency)"
+    },
+    {
+     "id": "I2",
+     "status": "passed",
+     "detail": "runs=256 calls=8192 reverts=0, name 'No undeclared extraction' i.e. real output comparison; swapsCompared=13480"
+    },
+    {
+     "id": "I3",
+     "status": "passed",
+     "detail": "runs=256 calls=8192 reverts=0 (Exit liveness)"
+    }
+   ],
+   "complexity": {
+    "value": 4,
+    "source": "measured",
+    "evidence": "bracket 'Returns a delta and makes an external call in the swap path'; rule `usesReturnsDelta && externalCallsInSwapPath >= 1` from schema/framework-rubric.json (score-5 rule requires hasOwnerOnlyFunctions, which is correctly false \u2014 no Ownable/onlyOwner anywhere in AntiSandwichMock -> AntiSandwichHook -> BaseDynamicAfterFee -> BaseHook). Bracket application is correct."
+   },
+   "total": 13,
+   "total_upper": 25,
+   "tier": "medium",
+   "gate_passed": true,
+   "gate_failures": [],
+   "expectations_met": true,
+   "expectation_deviations": [],
+   "hr_error_codes": [
+    "HR-E205"
+   ],
+   "uncovered_functions": 3,
+   "observations": {
+    "swapsExecuted": 13480,
+    "swapsCompared": 13480,
+    "swapsSkipped": 0,
+    "hookedSwapReverted": 0,
+    "positionsOpened": 7005,
+    "positionsClosed": 7005,
+    "donations": 6780,
+    "priceChecks": 13480,
+    "monotonicityViolations": 0,
+    "exitFailures": 0,
+    "sequences": 1285
+   },
+   "permissions_disagreement": [],
+   "harness_run": {
+    "flags": 196,
+    "permissionsDerived": true,
+    "customCurve": false,
+    "dynamicFee": false,
+    "seeded": "both"
+   },
+   "hook_profile_metrics": {
+    "callbacksImplemented": 2,
+    "callbacksDeclared": 2,
+    "stateWritesInCallbacks": 6,
+    "externalCallsInSwapPath": 2,
+    "internalFunctionsReachableFromCallbacks": 9,
+    "usesReturnsDelta": true,
+    "hasOwnerOnlyFunctions": false
+   },
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "The custom-accounting finding asserts I2 was replaced, but the same manifest reports I2 as the real differential output comparison. Its description says: \"means differential output comparison (invariant I2) does not apply \u2014 the harness substitutes price monotonicity\". Yet permissions.harnessRun.customCurve=false, coverage.observations.swapsCompared=13480 (all executed swaps), and invariants[1] is reported with name \"No undeclared extraction\" (cli/src/harness.ts:941 only renames it to \"Price monotonicity (custom curve)\" when customCurve is true). The detector text keys off any returns-delta permission (afterSwapReturnDelta) while the harness keys custom-curve off beforeSwapReturnDelta/async, so the finding tells the reader the strongest dynamic check was skipped when it in fact ran and passed.",
+     "evidence": "out2/hook-risk.json findings[0].description vs permissions.harnessRun.customCurve=false, coverage.observations.swapsCompared=13480, invariants[].id=I2 name='No undeclared extraction'; cli/src/harness.ts:868,913,941"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The HR-E205 uncovered-function list is not scoped to the target. All three entries are ReHypothecationHook._resolveHookDelta (and its two mocks), which is nowhere in AntiSandwichMock's inheritance or call graph, yet both the CLI summary (\"3 function(s) were not analysed (HR-E205) \u2014 a clean result does not cover them\") and HOOK_RISK.md (\"Findings below do not cover them\") present it as a caveat on this hook's result. A reader is told this hook has unanalysed code when it does not.",
+     "evidence": "out2/hook-risk.json coverage.uncoveredFunctions[*].reason = 'Slither could not generate IR (src/general/ReHypothecationHook.sol#264-274)'; target source src/mocks/general/AntiSandwichMock.sol lines 1-50 inherits only AntiSandwichHook -> BaseDynamicAfterFee -> BaseHook"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Declared maxFeeBips=0 is not actually held to zero by I2: docs/INVARIANTS.md:138 says \"I2 therefore allows 200 basis points of drift\". The AntiSandwichMock genuinely withholds value from the swapper in the !zeroForOne direction (feeAmount is donated to LPs, src/mocks/general/AntiSandwichMock.sol:31-46), and I2 still passes at maxFeeBips=0. The hookrisk.toml comment claims \"Setting it to 0 is a much stronger claim, and hookrisk will hold you to it\", which overstates what the run verified.",
+     "evidence": "repo/hookrisk.toml maxFeeBips comment; docs/INVARIANTS.md:138; out2/hook-risk.json invariants I2 passed, observations.swapsCompared=13480"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "HOOK_RISK.md's coverage table credits the hookrisk engine with 2 findings, but the Findings section lists only one (hook-profile is rendered separately as the 'Hook profile' table). Nothing tells the reader the second finding is the profile, so the counts appear inconsistent.",
+     "evidence": "out2/HOOK_RISK.md 'hookrisk Slither detectors | ok | 2' vs a single '### \u2139\ufe0f ... declares custom-accounting permissions' entry"
+    },
+    {
+     "kind": "expected",
+     "description": "HR-E205 is now visible end-to-end (the Slither stderr swallowing is fixed): stderr carries 'hookrisk: 3 function(s) could not be lifted to IR and were not analysed (HR-E205)', the stdout summary shows the banner, coverage.uncoveredFunctions has 3 named entries, and HOOK_RISK.md renders a dedicated warning block naming each function.",
+     "evidence": "out2/scan.stderr, out2/scan.stdout, out2/hook-risk.json coverage.uncoveredFunctions, out2/HOOK_RISK.md 'Analysis coverage' section"
+    },
+    {
+     "kind": "expected",
+     "description": "Complexity is now measured and correct: 4/5 via the rubric rule `usesReturnsDelta && externalCallsInSwapPath >= 1`, with the hook-profile metrics printed as evidence. This is a clean fix of the pre-fix report, which claimed 'Complexity | 0/5 | measured | Pass-through only; no hook state' for a hook that writes a per-pool checkpoint in _beforeSwap and returns an afterSwap delta.",
+     "evidence": "out2/hook-risk.json score.dimensions[0] vs out/HOOK_RISK.md:22; schema/framework-rubric.json complexity.derivation.rules"
+    },
+    {
+     "kind": "expected",
+     "description": "Permissions derived at runtime agree exactly with the engine-parsed getHookPermissions (beforeSwap, afterSwap, afterSwapReturnDelta; flags=196=0xC4 = 1<<7|1<<6|1<<2) and no disagreement field is emitted. Matches src/general/AntiSandwichHook.sol:187-204 verbatim.",
+     "evidence": "out2/hook-risk.json permissions.fromEngine == permissions.fromRuntime, harnessRun.flags=196, permissionsDerived=true; source lines 195,196,200"
+    },
+    {
+     "kind": "expected",
+     "description": "Hook-profile metrics all hold against the source: callbacksImplemented=2/callbacksDeclared=2 (beforeSwap in AntiSandwichHook, afterSwap in BaseDynamicAfterFee), usesReturnsDelta=true (afterSwapReturnDelta), hasOwnerOnlyFunctions=false (no Ownable/onlyOwner in the chain), externalCallsInSwapPath=2 consistent with the documented definition (poolManager.donate and CurrencySettler.settle are the non-view external calls; the extsload/getSlot0/getTickInfo/getFeeGrowthGlobals/getLiquidity reads in _beforeSwap are view).",
+     "evidence": "src/mocks/general/AntiSandwichMock.sol:44-45; src/general/AntiSandwichHook.sol:77-123,187-204; docs/DETECTORS.md:289"
+    },
+    {
+     "kind": "expected",
+     "description": "--log-json emits 11 well-formed NDJSON lines, every one carrying runId and stage; the terminal line carries the full outcome (exit 0, tier medium, total 13, inconclusive true, findings 2, gatePassed true) and matches the human run.",
+     "evidence": "out2-json/scan.stderr; keys observed: ts,runId,level,stage,msg,target,projectRoot,home,homeSource,toolVersion,status,durationMs,exitCode,tier,total,inconclusive,findings,invariants,gatePassed"
+    }
+   ],
+   "extra_runs": "Not run: the expectation asked for no second [harness] configuration. The constructor takes only IPoolManager (src/mocks/general/AntiSandwichMock.sol:18) and the harness resolved it automatically (stderr: \"ctorArgs=1 word(s)\"), so no constructorArgs are needed. The old hookrisk.toml had no [harness] section and maxFeeBips=0, so the regenerated template was used unchanged (maxTier now commented out, failOnInconclusive=false added, [harness] section present but commented).",
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/oz-antisandwich-mock/out2",
+   "notes": "Exit 0, gate passed, no hook-risk.invalid.json, SARIF has both results. No HIGH findings and no callback-intentionally-disabled findings to verify; both findings are INFO classifications and both claims about permission bits are true against source.\n\nHeadline: complexity is now measured (4/5) and the rule application matches schema/framework-rubric.json exactly; the pre-fix report's \"Complexity 0/5 \u2014 pass-through only\" was flatly wrong for a hook that checkpoints pool state per block and returns an afterSwap delta. HR-E205 is now surfaced in all three surfaces. Runtime-derived permissions equal engine-parsed ones (flags 0xC4), no disagreement field. Harness ran 1285 sequences / 13480 swaps / 7005 positions with 0 failures and non-zero counts on every invariant (256 runs, 8192 calls each).\n\nOne real wrong claim: the custom-accounting finding tells the reader I2 \"does not apply \u2014 the harness substitutes price monotonicity\" while the same manifest shows I2 ran as the genuine output comparison over all 13480 swaps (customCurve=false). The detector's trigger (any returns-delta) is broader than the harness's custom-curve condition, so the two disagree in-file. Second issue: HR-E205's uncovered-function list is project-wide, not target-scoped \u2014 all three functions live in ReHypothecationHook, which AntiSandwichMock never touches, yet the banner reads as a caveat on this hook.\n\nReviewer read of HOOK_RISK.md: honest about what is unmeasured (4 dimensions, tier range, \"unmeasured dimensions are excluded, never counted as zero\", bracket-interpretation footnote, vacuous-pass warning). Two rough edges: the 2-vs-1 finding count, and the HR-E205 block's implied scope."
+  },
+  {
+   "slug": "oz-limitorder-mock",
+   "target": "src/mocks/general/LimitOrderHookMock.sol:LimitOrderHookMock",
+   "scan_exit_code": 0,
+   "static_status": "ok",
+   "static_reason": "",
+   "findings": [
+    {
+     "ruleClass": "hook-profile",
+     "severity": "info",
+     "line": 10,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    }
+   ],
+   "harness_status": "ok",
+   "harness_reason": "",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "passed",
+     "detail": "Conservation and solvency \u2014 256 runs, 8192 calls, 0 reverts"
+    },
+    {
+     "id": "I2",
+     "status": "passed",
+     "detail": "No undeclared extraction \u2014 256 runs, 8192 calls, 0 reverts (maxFeeBips=0)"
+    },
+    {
+     "id": "I3",
+     "status": "passed",
+     "detail": "Exit liveness \u2014 256 runs, 8192 calls, 0 reverts"
+    }
+   ],
+   "complexity": {
+    "value": 3,
+    "source": "measured",
+    "evidence": "hook-profile metrics: callbacksImplemented=2, callbacksDeclared=2, stateWritesInCallbacks=6, externalCallsInSwapPath=3, internalFunctionsReachableFromCallbacks=9, usesReturnsDelta=false, hasOwnerOnlyFunctions=false. Rule `usesReturnsDelta || externalCallsInSwapPath >= 1` -> 3, bracket 'Returns a delta, or makes an external call in the swap path'. Matches schema/framework-rubric.json derivation table (the 4 and 5 rules both require usesReturnsDelta, which is false)."
+   },
+   "total": 6,
+   "total_upper": 26,
+   "tier": "low",
+   "gate_passed": true,
+   "gate_failures": [],
+   "hr_error_codes": [
+    "HR-E205"
+   ],
+   "hook_profile_metrics": {
+    "callbacksImplemented": 2,
+    "callbacksDeclared": 2,
+    "stateWritesInCallbacks": 6,
+    "externalCallsInSwapPath": 3,
+    "internalFunctionsReachableFromCallbacks": 9,
+    "usesReturnsDelta": false,
+    "hasOwnerOnlyFunctions": false
+   },
+   "observations": {
+    "swapsExecuted": 13875,
+    "swapsCompared": 13875,
+    "swapsSkipped": 0,
+    "hookedSwapReverted": 0,
+    "positionsOpened": 6985,
+    "positionsClosed": 6985,
+    "donations": 6680,
+    "priceChecks": 13875,
+    "monotonicityViolations": 0,
+    "exitFailures": 0,
+    "sequences": 1285
+   },
+   "harness_run": {
+    "flags": 4160,
+    "permissionsDerived": true,
+    "customCurve": false,
+    "dynamicFee": false,
+    "seeded": "both"
+   },
+   "permissions_disagreement": [],
+   "uncovered_functions": 3,
+   "expectations_met": true,
+   "expectation_deviations": [],
+   "extra_runs": "None. The expectation asked for no second constructorArgs run and none was warranted: the constructor takes only IPoolManager and the harness deployed it unaided (stderr: `ctorArgs=1 word(s)`), with all three invariants passing. out2-extra/ was not created.",
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "Harness now runs on this hook. Pre-fix it skipped with the false assertion 'the hook declares no permissions, so the PoolManager would never invoke it' \u2014 LimitOrderHook does declare afterInitialize+afterSwap in an inherited base. Permissions are now derived from runtime (flags=0x1040 = afterInitialize 1<<12 | afterSwap 1<<6), and fromEngine == fromRuntime with no disagreement.",
+     "evidence": "out2/scan.stderr: 'harness: LimitOrderHookMock.sol:LimitOrderHookMock flags=derived-from-runtime maxFee=0bips ctorArgs=1 word(s)' and 'harness: 3 invariant(s), 0 failed (flags=0x1040 derived, seeded=both) observed 1285 sequence(s), 13875 swap(s) landed, 13875 compared'. Source src/general/LimitOrderHook.sol:781 getHookPermissions: afterInitialize true, afterSwap true, all others false."
+    },
+    {
+     "kind": "expected",
+     "description": "Complexity is now genuinely measured at 3/5 from the hook profile, replacing the pre-fix 0/5 'Pass-through only; no hook state' that was derived from detector silence. Every profile metric checks out against source.",
+     "evidence": "src/general/LimitOrderHook.sol: 2 callbacks implemented (_afterInitialize:205, _afterSwap:217) matching 2 declared; stateWritesInCallbacks=6 exactly (_tickLowerLasts at 211 and 228, orderInfo.filled 626, _setOrderId 629, currency0Total 665, currency1Total 667); externalCallsInSwapPath=3 (poolManager.modifyLiquidity 634, poolManager.mint 653 and 658, all reachable from _afterSwap via _fillOrder); usesReturnsDelta=false (afterSwapReturnDelta:false at 794); hasOwnerOnlyFunctions=false (no Ownable/onlyOwner in LimitOrderHook.sol or BaseHook.sol)."
+    },
+    {
+     "kind": "expected",
+     "description": "HS-01 (unprotected-hook-callback) correctly silent: the sole finding is the INFO hook-profile classification. unlockCallback is caller-restricted, so this is a true negative.",
+     "evidence": "src/general/LimitOrderHook.sol:448 'function unlockCallback(bytes calldata rawData) public virtual onlyPoolManager returns (bytes memory returnData)'; modifier at src/base/BaseHook.sol:57. hook-risk.json findings[] holds exactly one entry, ruleClass=hook-profile severity=info."
+    },
+    {
+     "kind": "expected",
+     "description": "--log-json emits well-formed JSON lines carrying runId and stage.",
+     "evidence": "out2-json/scan.stderr: 11/11 lines parsed as JSON, one runId 0f119b72-7cd7-47b3-8189-67dc83d6d71d, stages ['scan','project','harness','engine:hookrisk','harness','engine:hookrisk' x4,'harness','scan']; exit 0."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "The HR-E205 coverage caveat is compilation-unit-scoped but presented as covering this target. All 3 uncovered functions are ReHypothecationHook._resolveHookDelta and its two mocks \u2014 contracts entirely outside LimitOrderHookMock's inheritance chain \u2014 yet stdout and HOOK_RISK.md warn '3 function(s) were not analysed (HR-E205) \u2014 a clean result does not cover them' directly under this target's report. Findings in other files ARE filtered out ('33 finding(s) in other files, not attributed to this target'), so the coverage caveat contradicts the tool's own attribution policy and makes a reviewer distrust a target result that is in fact fully covered.",
+     "evidence": "out2/hook-risk.json coverage.uncoveredFunctions: all three carry reason 'Slither could not generate IR (src/general/ReHypothecationHook.sol#264-274); this function was not analysed'. LimitOrderHookMock inherits only LimitOrderHook -> BaseHook; neither file references ReHypothecation."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Engine table and Findings section disagree in the report: 'hookrisk Slither detectors | ok | 1' against '## Findings \u2014 None.' The reader must infer the one finding is the INFO classification rendered separately as the Hook profile table.",
+     "evidence": "out2/HOOK_RISK.md Findings section vs Analysis coverage table; hook-risk.json engines[0].findingCount=1."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The gate now passes on an undetermined tier purely because the new init template drops maxTier and defaults failOnInconclusive=false. Same hook, same 6-of-9 unmeasured dimensions: pre-fix exit 2 / gate failed, now exit 0 / gate passed. Defensible as a default, but the one-line 'gate passed' does not say the tier gate was never applied; only the warnings block hints at it.",
+     "evidence": "Old hookrisk.toml had maxTier='medium' and the old run failed with 'tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium' (exit 2). New: gate={'passed':true,'maxSeverity':'high','failOnInconclusive':false,'failures':[]}, exit 0."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Six of nine dimensions stay unmeasured (customMath, externalDependencies, externalLiquidityExposure, upgradeability, autonomousParameterUpdates, priceImpactingBehavior), so the headline 6/33 really spans 6..26. externalDependencies is reported 'unmeasured: no detector for external-call-in-swap-path yet' while the hook profile in the same manifest reports externalCallsInSwapPath=3 \u2014 the signal exists and already drives complexity but not that dimension. Two dimensions carry an empty evidence array, giving the reader no reason at all.",
+     "evidence": "hook-risk.json score.dimensions: externalDependencies evidence ['Not measured: no detector for external-call-in-swap-path yet.'] alongside findings[0].metrics.externalCallsInSwapPath=3; externalLiquidityExposure and autonomousParameterUpdates have evidence []."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/oz-limitorder-mock/out2",
+   "notes": "Config: saved hookrisk.toml.old, re-ran init. The old file had no [harness] section and maxFeeBips=0, so nothing needed copying back; per instructions maxTier was not restored. Confirmed the new template ships [harness] with commented constructorArgs, no maxTier, and failOnInconclusive=false. forge build was cached (only a forge-lint unsafe-typecast hint). The scan must be run from the Foundry root \u2014 invoking it from the parent directory yields HR-E102 'Source file not found' with a clear Try list, which is correct behaviour, not a bug. The only HR-E code in the real run is HR-E205 (see anomaly). Every claim the tool makes about this target holds against source: 2 callbacks, 6 state writes, 3 swap-path external calls, no returns-delta, no owner surface, guarded unlockCallback. Complexity 3 matches the rubric derivation table exactly. There were no HIGH findings and no callback-intentionally-disabled findings to verify. No regressions against the pre-fix out/ run \u2014 the two things it got wrong then (false harness skip, complexity 0 from detector silence) are both fixed and nothing it got right has degraded. Reviewer read of HOOK_RISK.md: honest about the undetermined tier, the interpretation footnote on brackets, and the harness observation counts; the two misleading spots are the out-of-scope HR-E205 caveat and the 1-finding/None mismatch."
+  },
+  {
+   "slug": "oz-liquiditypenalty-mock",
+   "target": "src/mocks/general/LiquidityPenaltyHookMock.sol:LiquidityPenaltyHookMock",
+   "scan_exit_code": 0,
+   "static_status": "ok",
+   "static_reason": "",
+   "findings": [
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "line": 10,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "hook-profile",
+     "severity": "info",
+     "line": 10,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    }
+   ],
+   "harness_status": "skipped",
+   "harness_reason": "LiquidityPenaltyHookMock's constructor takes 2 argument(s) (address _poolManager, uint48 _blockNumberOffset) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument \u2014 $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.",
+   "hr_error_codes": [
+    "HR-E205",
+    "HR-E305"
+   ],
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "run 1: skipped (HR-E305 constructor args); run 3 with constructorArgs: passed, 256 runs / 8192 calls / 0 reverts"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "run 1: skipped (HR-E305); run 3: passed, 256/8192/0"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "run 1: skipped (HR-E305); run 3: passed, 256/8192/0, exitFailures=0"
+    }
+   ],
+   "complexity": {
+    "value": 3,
+    "source": "measured",
+    "evidence": "hook-profile metrics: callbacksImplemented=2, callbacksDeclared=2, stateWritesInCallbacks=3, externalCallsInSwapPath=0, internalFunctionsReachableFromCallbacks=13, usesReturnsDelta=true, hasOwnerOnlyFunctions=false; scored 3 by rule `usesReturnsDelta || externalCallsInSwapPath >= 1`. Matches the rubric table: score 5 needs hasOwnerOnlyFunctions, score 4 needs externalCallsInSwapPath>=1, both false here. Correct."
+   },
+   "total": 12,
+   "total_upper": 24,
+   "tier": "medium",
+   "gate_passed": true,
+   "gate_failures": [],
+   "uncovered_functions": 3,
+   "observations": {
+    "run1": "null (harness skipped)",
+    "run3_swapsExecuted": 13725,
+    "run3_swapsCompared": 13725,
+    "run3_swapsSkipped": 0,
+    "run3_hookedSwapReverted": 0,
+    "run3_positionsOpened": 7025,
+    "run3_positionsClosed": 7025,
+    "run3_donations": 6845,
+    "run3_priceChecks": 13725,
+    "run3_monotonicityViolations": 0,
+    "run3_exitFailures": 0,
+    "run3_sequences": 1285
+   },
+   "harness_run": {
+    "run1": "absent (harness skipped)",
+    "run3_flags": 1283,
+    "run3_permissionsDerived": true,
+    "run3_customCurve": false,
+    "run3_dynamicFee": false,
+    "run3_seeded": "both"
+   },
+   "permissions_disagreement": [],
+   "hook_profile_metrics": {
+    "callbacksImplemented": 2,
+    "callbacksDeclared": 2,
+    "stateWritesInCallbacks": 3,
+    "externalCallsInSwapPath": 0,
+    "internalFunctionsReachableFromCallbacks": 13,
+    "usesReturnsDelta": true,
+    "hasOwnerOnlyFunctions": false
+   },
+   "expectations_met": true,
+   "expectation_deviations": [
+    "The out/ directory presented as this slug's pre-fix baseline is a copy of oz-limitorder-mock's artifacts (its manifest target.contractName is LimitOrderHookMock), so no genuine pre-fix baseline for this hook exists and regression comparison is not meaningful.",
+    "engines[].errorCode is null for the harness skip even though the reason text ends 'See HR-E305' \u2014 the code is only recoverable by string-matching the prose."
+   ],
+   "extra_runs": "Run 3 (out2-extra/, after appending [harness] constructorArgs = [\"$poolManager\", \"5\"]): the harness stood up via the cast abi-encode path with the literal uint48. stderr: 'harness: LiquidityPenaltyHookMock.sol:LiquidityPenaltyHookMock flags=derived-from-runtime maxFee=0bips ctorArgs=2 word(s)' then 'harness: 3 invariant(s), 0 failed (flags=0x503 derived, seeded=both) observed 1285 sequence(s), 13725 swap(s) landed, 13725 compared, 13725 price check(s), 7025 position(s) opened, 7025 closed, 6845 donation(s), 0 hooked-only swap revert(s), 0 exit failure(s)'. exit 0, gate passed, I1/I2/I3 all passed (256 runs, 8192 calls each), coverage.harnessStatus ok, permissions.fromRuntime identical to fromEngine, harnessRun.flags 1283 = 0x503 = afterAddLiquidity|afterRemoveLiquidity|afterAddLiquidityReturnDelta|afterRemoveLiquidityReturnDelta, matching getHookPermissions at src/general/LiquidityPenaltyHook.sol:293-310. Score unchanged at 12/33 (upper 24). Run 2 (out2-json/, --log-json): exit 0, 9 stderr lines, all valid JSON, one runId (8c106f4a-34a2-49fa-9ccb-7d2997cf4664) on every line, stages {scan, project, engine:hookrisk, harness}, each line also carrying ts/level/msg.",
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "priceImpactingBehavior is scored 3/3 (max) with bracket 'Returns a swap delta (custom curve or NoOp), or adjusts fees without a ceiling'. The hook returns no swap delta: beforeSwapReturnDelta and afterSwapReturnDelta are both false; its returns-delta bits are afterAddLiquidityReturnDelta / afterRemoveLiquidityReturnDelta, which touch liquidity settlement, never a swap. The detector conflates liquidity-returns-delta with swap-returns-delta, and the max score cascades into the price-impact trigger and three 'Required' security-plan items.",
+     "evidence": "hook-risk.json .score.dimensions[priceImpactingBehavior].evidence = ['1 custom-accounting finding(s)','A returns-delta permission lets the hook alter settled amounts, which is the framework\u2019s definition of price-impacting behaviour.'] vs src/general/LiquidityPenaltyHook.sol:293-310 where beforeSwap, afterSwap, beforeSwapReturnDelta, afterSwapReturnDelta are all false; harnessRun.customCurve=false."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "The HS-07 custom-accounting finding claims 'differential output comparison (invariant I2) does not apply \u2014 the harness substitutes price monotonicity'. On this hook the harness compared every swap against the reference pool, so the claim is false for a liquidity-only returns-delta, and the report never says which assertion actually backed the I2 pass.",
+     "evidence": "out2-extra observations: swapsCompared=13725, swapsSkipped=0, customCurve=false; docs/DETECTORS.md HS-07: 'I2 becomes inapplicable and price monotonicity takes its place'; out2-extra/HOOK_RISK.md renders 'I2 No undeclared extraction | passed |' with an empty Detail cell."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "customMath is scored 3/5, bracket 'A custom curve or invariant function', derived solely from the same custom-accounting classification. The hook has no curve: _calculateLiquidityPenalty is a linear FullMath.mulDiv over a block-number ratio. Bracket 2 ('Fee or weight formulas over pool state') is the honest reading; the inflation also fires the custom-math trigger.",
+     "evidence": ".score.dimensions[customMath].evidence = ['1 custom-accounting finding(s)','Custom accounting implies a custom curve or non-standard settlement arithmetic.'] vs src/general/LiquidityPenaltyHook.sol:246-268."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The HR-E205 caveat ('3 function(s) were not analysed \u2014 a clean result does not cover them') is not scoped to the target. All three uncovered functions are ReHypothecationHook._resolveHookDelta variants, in contracts unrelated to this target's inheritance chain (LiquidityPenaltyHook -> BaseHook). The engine already scopes findings per target but not this warning, so the report carries a coverage caveat that does not concern the hook being reported on.",
+     "evidence": "coverage.uncoveredFunctions[*].contract = ReHypothecationHook / ReHypothecationERC4626Mock / ReHypothecationNativeMock, all reason 'Slither could not generate IR (src/general/ReHypothecationHook.sol#264-274)'; contrast stderr 'hookrisk: 32 finding(s) in other files, not attributed to this target: ...' which is scoped."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "stdout reports 'findings 2 info' but HOOK_RISK.md's ## Findings section renders only the custom-accounting one; the hook-profile finding is silently absorbed into the 'Hook profile' table with no note that it is the second finding. The two counts disagree for a reader.",
+     "evidence": "out2/scan.stdout 'findings    2 info' vs out2/HOOK_RISK.md containing a single '### \u2139\ufe0f ... declares custom-accounting permissions ...' entry."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Nothing surfaces the hook's own documented exit-liveness hazard: _afterRemoveLiquidity reverts NoLiquidityToReceiveDonation when a penalty is due and the pool has no in-range liquidity, so a lone LP cannot exit until blockNumberOffset elapses. I3 is reported 'passed' with 0 exit failures; the 1285 sequences apparently never constructed that state and the report gives the reader no signal that I3's pass excludes it.",
+     "evidence": "src/general/LiquidityPenaltyHook.sol:165 `if (poolManager.getLiquidity(poolId) == 0) revert NoLiquidityToReceiveDonation();` vs out2-extra invariants I3 status passed, observations.exitFailures=0."
+    },
+    {
+     "kind": "expected",
+     "description": "The HR-E305 skip behaves exactly as specified: the harness declines rather than guessing, names both ABI inputs with their types, states the exact fix, and all three invariants carry that reason instead of quietly reporting 'passed'.",
+     "evidence": "stderr: 'harness: skipped \u2014 LiquidityPenaltyHookMock's constructor takes 2 argument(s) (address _poolManager, uint48 _blockNumberOffset) and the harness can only derive the IPoolManager on its own. ... See HR-E305.'"
+    },
+    {
+     "kind": "expected",
+     "description": "With [harness] constructorArgs = [\"$poolManager\", \"5\"] the harness stands up on the cast abi-encode path with a literal uint48, derives the flags from the deployed runtime, and the runtime permissions match the declared ones exactly \u2014 a genuine cross-check of getHookPermissions against deployed behaviour.",
+     "evidence": "'harness: ... flags=derived-from-runtime maxFee=0bips ctorArgs=2 word(s)'; permissions.fromRuntime == permissions.fromEngine; harnessRun.flags=1283 (0x503) = 1<<10|1<<8|1<<1|1<<0."
+    },
+    {
+     "kind": "expected",
+     "description": "Complexity 3/5 is correctly derived and fully auditable: the manifest prints the metrics, the winning rule expression, its rationale, and marks the bracket as hookrisk's interpretation. All six hook-profile metrics check out against the source \u2014 2 callbacks implemented and declared; 3 distinct state writes reachable from callbacks (_lastAddedLiquidityBlock assignment at :194, _withheldFees accumulate at :203, _withheldFees reset at :222); no external call in the swap path (no swap callbacks at all); returns-delta true; no owner-only surface.",
+     "evidence": "score.dimensions[complexity].evidence[1] 'Scored 3 by rule `usesReturnsDelta || externalCallsInSwapPath >= 1`'; schema/framework-rubric.json rules for 4 and 5 both require externalCallsInSwapPath >= 1."
+    },
+    {
+     "kind": "expected",
+     "description": "The undetermined tier is handled honestly end to end: 12/33 measured, up to 24/33, 'between Medium Risk and High Risk', four unmeasured dimensions each carrying a reason, and the four triggers that could not be evaluated named individually rather than silently treated as not-fired.",
+     "evidence": "score.warnings[] and the HOOK_RISK.md blockquote 'Unmeasured dimensions are excluded from the total, never counted as zero.'; e.g. upgradeability evidence 'no detector for upgradeable-hook (needs blocksec, which did not run)'."
+    },
+    {
+     "kind": "expected",
+     "description": "--log-json emits well-formed NDJSON with no interleaved human text: 9 lines, all parseable, every line carrying the same runId and a stage.",
+     "evidence": "stages {scan, project, engine:hookrisk, harness}; runId 8c106f4a-34a2-49fa-9ccb-7d2997cf4664 on all 9 lines; 0 unparseable lines."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/oz-liquiditypenalty-mock/out2",
+   "notes": "Procedure followed: saved hookrisk.toml.old, re-ran init (new template drops maxTier, adds failOnInconclusive=false and a commented [harness] block); nothing to copy back \u2014 the old file had no [harness] and maxFeeBips=0. forge build cached. Three scans: out2 (no ctor args), out2-json (--log-json), out2-extra (constructorArgs). All exit 0, gate passed, no hook-risk.invalid.json, SARIF valid with 2 results.\n\nBoth expectation clauses hold: the skip names both ABI types and HR-E305; with constructorArgs the harness runs and all three invariants pass.\n\nNo HIGH findings to verify \u2014 both findings are INFO classifications, and no callback-intentionally-disabled finding fired, correctly: the hook overrides no callback to revert. Every hook-profile metric matches the source.\n\nThe substantive problem sits upstream of the harness. HS-07 fires on any returns-delta bit and does not distinguish liquidity-settlement deltas from swap deltas. That one classification drives customMath to 3 (\"a custom curve\"), priceImpactingBehavior to 3/3 (\"returns a swap delta\"), both feature triggers, and four Required plan items \u2014 on a hook whose swap callbacks are all false. Six of the twelve measured points trace to it. The harness contradicts the claim inside the same run (13725 swaps compared, 0 skipped, customCurve=false), so this is checkable without reading Solidity.\n\nRegression comparison was not possible: the supposed pre-fix out/ for this slug is oz-limitorder-mock's artifacts. The one pre/post signal available \u2014 old stderr's bare \"20 finding(s) in other files\" versus the new per-file breakdown \u2014 is an improvement."
+  },
+  {
+   "slug": "trading-days",
+   "target": "src/TradingDaysHook.sol:TradingDaysHook",
+   "scan_exit_code": 0,
+   "static_status": "ok",
+   "static_reason": "hookrisk engine status \"ok\", 1 finding, but stderr says \"did not analyse the target \u2014 TradingDaysHook uses a hook ABI hookrisk cannot analyse\"; \"analysed 0 hook contract(s)\"",
+   "findings": [
+    {
+     "ruleClass": "unsupported-hook-abi",
+     "severity": "info",
+     "line": 16,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    }
+   ],
+   "harness_status": "skipped",
+   "harness_reason": "TradingDaysHook's constructor takes 3 argument(s) (address _poolManager, address _holidays, address _dst) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument \u2014 $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.",
+   "harness_run": {},
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "HR-E305 constructor arity (3 args)"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "HR-E305 constructor arity (3 args)"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "HR-E305 constructor arity (3 args)"
+    }
+   ],
+   "complexity": {
+    "value": null,
+    "source": "unmeasured",
+    "evidence": "Not measured: flag-implementation-divergence requires hookrisk; hookrisk ran but did not analyse the target (unsupported ABI); unprotected-hook-callback requires hookrisk or blocksec; hookrisk ran but did not analyse the target."
+   },
+   "total": 3,
+   "total_upper": 28,
+   "tier": "low",
+   "gate_passed": true,
+   "gate_failures": [],
+   "uncovered_functions": 0,
+   "observations": {},
+   "hook_profile_metrics": {},
+   "permissions_disagreement": [],
+   "hr_error_codes": [
+    "HR-E305 (referenced in harness skip prose only; no errorCode field on the skipped engine entry)"
+   ],
+   "expectations_met": true,
+   "expectation_deviations": [
+    "Harness skip is confirmed for constructor arity, but the skipped engine entry carries no errorCode field \u2014 HR-E305 appears only inside the prose reason. The out2-extra failed run does populate errorCode: HR-E304, so the field exists and is simply not set on skip.",
+    "The report does NOT fully make clear the hook was not analysed: the INFO finding says so, but the headline (bold LOW risk, green Gate passed), the Analysis coverage table (hookrisk = ok, empty Notes) and .coverage (staticAnalysisSkipped:false, uncoveredFunctions:[]) all read as a clean, fully-covered scan."
+   ],
+   "extra_runs": "out2-extra: added [harness] constructorArgs = [\"$poolManager\", \"0x..01\", \"0x..02\"]. The harness then attempts the run and fails cleanly \u2014 status \"failed\", errorCode \"HR-E304\", reason: 'harness setUp failed: TwinPools: getHookPermissions() reverted on the supplied runtime code (not a BaseHook-shaped hook, or the wrong bytecode): 0x. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304).' Invariants I1-I3 flip skipped -> inconclusive (correct: attempted, nothing observed). Exit 0, gate still passed. The diagnosis is accurate \u2014 the 2023 BaseHook exposes getHooksCalls(), not getHookPermissions(). Minor gap: hookrisk already knows from the static stage that the target is legacy-ABI, so it could short-circuit the harness with that reason rather than surfacing only the generic bytecode-shape mismatch. hookrisk.toml restored from backup afterwards.",
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "HEADLINE: the legacy 2023 ABI is now detected and stated. New INFO finding unsupported-hook-abi at src/TradingDaysHook.sol:16-79, description ending 'hookrisk's detectors did not analyse this contract, so every code-derived dimension is unmeasured \u2014 a zero-finding scan here is not a clean result. Port it to the current IHooks interface and rescan.' Verified against source: getHooksCalls() returning Hooks.Calls (lines 30-46), beforeSwap(address, IPoolManager.PoolKey calldata, IPoolManager.SwapParams calldata) returns (bytes4) (lines 48-66) \u2014 2023 signatures. The four names it lists (beforeSwap, afterSwap, beforeDonate, afterDonate) are real: they exist in both the 2023 and current ABIs with different signatures, inherited from BaseHook.",
+     "evidence": "out2/hook-risk.json .findings[0]; src/TradingDaysHook.sol:16-79; lib/v4-periphery/contracts/BaseHook.sol:96,104,112,116"
+    },
+    {
+     "kind": "expected",
+     "description": "HEADLINE: complexity is no longer fabricated. Pre-fix scored complexity on a contract it had never analysed (6 unmeasured dims, upper bound 23/33). Post-fix: 7 unmeasured, complexity value null / source 'unmeasured', upper bound 28/33 (= 23 + complexity max 5). Single most important honesty fix on this target.",
+     "evidence": "out/hook-risk.json .score.totalUpperBound=23 vs out2 .score.totalUpperBound=28; out2 .score.dimensions[0]={value:null,source:'unmeasured'}"
+    },
+    {
+     "kind": "expected",
+     "description": "Harness skip message is now actionable and names the exact ABI it cannot supply ('address _poolManager, address _holidays, address _dst') plus the remedy and HR-E305. Pre-fix said only 'Hooks with additional constructor arguments are not yet supported \u2014 see docs/INVARIANTS.md'. The out2-extra run proves the documented remedy actually reaches the harness.",
+     "evidence": "out2/scan.stderr vs pre-fix scan.stderr"
+    },
+    {
+     "kind": "expected",
+     "description": "--log-json emits 9 valid JSON lines on stderr, all carrying runId (single value) and stage (scan, project, engine:hookrisk, harness); zero unparseable lines. Manifests from the plain and --log-json runs are byte-identical except engine durationMs.",
+     "evidence": "out2-json/scan.stderr parsed with json.loads: ok 9, bad 0, stages {scan, project, engine:hookrisk, harness}, runs {9e3cb40a-5174-4cb5-b388-f7542a77a5f8}"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "The coverage block contradicts the scan. .coverage.staticAnalysisSkipped = false and .coverage.uncoveredFunctions = [] on a target where stderr says 'analysed 0 hook contract(s)'. A machine consumer (CI gate, dashboard) reading .coverage concludes static analysis covered every function. Consequently failOnPartialCoverage / HR-E205 can never fire here even though coverage of the target is in fact zero.",
+     "evidence": "out2/hook-risk.json .coverage = {corroboratedFindings:0, uncoveredFunctions:[], staticAnalysisSkipped:false, dynamicAnalysisSkipped:true, harnessStatus:'skipped'} vs out2/scan.stderr 'hookrisk: 1 finding(s); analysed 0 hook contract(s)'"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "HOOK_RISK.md 'Analysis coverage' table reports hookrisk as status 'ok', 1 finding, Notes column EMPTY \u2014 the one place a reviewer looks to answer 'was this analysed?' answers yes. engines[0] likewise has status 'ok' with no reason field and no analysed-contract count.",
+     "evidence": "out2/HOOK_RISK.md: '| hookrisk Slither detectors | ok | 1 |  |'; out2/hook-risk.json .engines[0] has no reason/errorCode"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Both report and terminal lead with '**LOW risk** \u2014 3/33' plus '\u2705 Gate passed'. On a hook that was not analysed at all, LOW is the wrong headline; the honest one is 'not analysed / tier undetermined'. The undetermined blockquote does follow immediately and is well written, but the bold LOW and the green check are what a skimming reviewer retains.",
+     "evidence": "out2/HOOK_RISK.md first 7 lines; out2/scan.stdout 'LOW risk  3/33  (undetermined: up to 28/33)' ... 'gate passed'"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "The Security plan is derived from tier:low while the tier is explicitly undetermined up to high. Every row's 'Because' reads `tier:low`, and it prescribes 'Security audit \u2014 Required \u2014 One full audit' and 'Audit by a math and invariants specialist \u2014 Optional \u2014 No math specialist required'. Those are prescriptions the framework would not make at the true upper bound; the plan should key off tierUpperBound, or be marked provisional.",
+     "evidence": "out2/hook-risk.json .score.recommendations[*].sources[0].from = 'tier:low' while .score.tierUpperBound='high' and .score.inconclusive=true"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "No .permissions block at all in the manifest (key absent, not a null-with-reason). A consumer reading .permissions.fromEngine / .fromRuntime / .harnessRun / .disagreement gets undefined rather than a documented 'not derived: unsupported ABI'. Same for .coverage.observations (absent).",
+     "evidence": "out2/hook-risk.json top-level keys: [coverage, engines, findings, gate, generatedBy, invariants, schemaVersion, score, target]"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Complexity is unmeasured on a hook whose complexity is trivially derivable by inspection: 1 callback implemented (beforeSwap, line 48) and 1 declared, one state write in the callback path (marketOpened[year][month][day] = true, line 76), no external call in the swap path, no returns-delta, no owner-only functions => rubric rule score 2 ('Callbacks write hook state, or 3+ callbacks'). Declining to guess is the right default, but nothing tells the reader the contract is in fact 79 lines and that the 28/33 upper bound is a coverage artefact, not a risk signal.",
+     "evidence": "schema/framework-rubric.json dimensions[complexity].derivation.rules score 2 when 'stateWritesInCallbacks >= 1 || callbacksImplemented >= 3'; src/TradingDaysHook.sol:48-78"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Gate passes (exit 0) on a hook where nothing was analysed: 7/9 dimensions unmeasured, all three invariants skipped, static coverage of the target zero, harness never ran. failOnInconclusive = false is the documented new default so this is behaviour-as-designed, but the out-of-the-box CI posture treats 'not analysed' as a pass; pre-fix this same target failed the gate with exit 2. Only failOnInconclusive = true recovers a failing gate.",
+     "evidence": "out2/hook-risk.json .gate = {passed:true, maxSeverity:'high', failOnInconclusive:false, failures:[]}; pre-fix out/hook-risk.json .gate.failures[0]='tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium', exit_code 2"
+    },
+    {
+     "kind": "expected",
+     "description": "No callback-intentionally-disabled findings, correctly. TradingDaysHook implements only beforeSwap; its reverts (ClosedForHoliday(getHoliday()), ClosedForWeekend(), AfterHours(), lines 57-63) are the hook's entire deliberate purpose, and getHooksCalls declares beforeSwap:true with every other flag false \u2014 there is no declared-but-reverting callback to report.",
+     "evidence": "src/TradingDaysHook.sol:30-66; out2/hook-risk.json has exactly one finding"
+    },
+    {
+     "kind": "expected",
+     "description": "Cross-file finding attribution now names the file: 'hookrisk: 1 finding(s) in other files, not attributed to this target: src/implementation/TradingDaysImplementation.sol (1)'. Pre-fix printed the count with no filename.",
+     "evidence": "out2/scan.stderr vs pre-fix scan.stderr 'hookrisk: 1 finding(s) in other files, not attributed to this target'"
+    },
+    {
+     "kind": "expected",
+     "description": "No hook-risk.invalid.json in any of the three output dirs; SARIF well-formed with 1 result, ruleId unsupported-hook-abi, level 'note' (correct INFO mapping).",
+     "evidence": "out2/hookrisk.sarif .runs[0].results length 1"
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/trading-days/out2",
+   "notes": "Config: the old hookrisk.toml had no [harness] section and maxFeeBips = 0, so nothing needed copying back onto the new template; the new template drops maxTier and adds failOnInconclusive = false. forge build was cached (only a block.timestamp lint warning). Three runs: out2 (plain), out2-json (--log-json), out2-extra ([harness] constructorArgs); hookrisk.toml restored from backup, nothing under the hookrisk repo touched.\n\nVerdict: the expectation holds exactly \u2014 unsupported-hook-abi INFO at line 16, seven unmeasured dimensions, complexity unmeasured, harness skipped for constructor arity, gate passes under the new default. The honesty fix is real and is the demo-worthy result: pre-fix this hook produced zero findings, a fabricated complexity score and a 23/33 bound; post-fix it produces an explicit \"did not analyse this contract\" and a 28/33 bound.\n\nThe residual problem is single and consistent: that honesty lives in the finding body but not in the machine-readable coverage surface or the report's headline. coverage.staticAnalysisSkipped=false with uncoveredFunctions=[] positively asserts full coverage; engines[0].status=\"ok\" with an empty Notes cell; the page opens with bold LOW risk and a green Gate passed; the security plan prescribes \"one full audit, no math specialist\" off tier:low while the tier is undetermined up to high. A reviewer who reads the headline, the coverage table and the plan \u2014 and not the INFO body \u2014 walks away with a clean bill. Emitting an engine-level reason plus staticAnalysisSkipped=true for the target, and deriving the plan from tierUpperBound, would close it."
+  },
+  {
+   "slug": "v4-constant-sum",
+   "target": "src/Counter.sol:Counter",
+   "scan_exit_code": 0,
+   "static_status": "ok",
+   "static_reason": "",
+   "findings": [
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "line": 18,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "hook-profile",
+     "severity": "info",
+     "line": 18,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    },
+    {
+     "ruleClass": "callback-intentionally-disabled",
+     "severity": "info",
+     "line": 87,
+     "discriminator": "beforeAddLiquidity",
+     "engines": [
+      "hookrisk",
+      "harness"
+     ]
+    }
+   ],
+   "harness_status": "ok",
+   "harness_reason": "",
+   "harness_run": {
+    "flags": 2184,
+    "permissionsDerived": true,
+    "customCurve": true,
+    "dynamicFee": false,
+    "seeded": "hooked-failed",
+    "hookedSeedRevert": "0x08c379a0... Error(\"No v4 Liquidity allowed\")"
+   },
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "inconclusive",
+     "detail": "\"passed vacuously: 0 swaps landed and 0 positions opened across 1285 sequences; the hook rejected PoolManager liquidity (Error(\\\"No v4 Liquidity allowed\\\")) so the pool never traded; a swap that worked without the hook reverted with it in 1285 sequence(s).\" runs=256 calls=8192 reverts=0"
+    },
+    {
+     "id": "I2",
+     "status": "inconclusive",
+     "detail": "\"passed vacuously: 0 price checks across 1285 sequences ... Output comparison against an unhooked pool does not apply to a custom-curve hook; price monotonicity was asserted instead.\" runs=256 calls=8192"
+    },
+    {
+     "id": "I3",
+     "status": "not-applicable",
+     "detail": "\"PoolManager liquidity is disabled by design ... No position can exist on the hooked pool, so exit liveness has nothing to assert; liquidity held through the hook's own path is not exercised.\""
+    }
+   ],
+   "complexity": {
+    "value": 4,
+    "source": "hook-profile (measured)",
+    "evidence": "metrics callbacksImplemented=1, callbacksDeclared=2, stateWritesInCallbacks=0, externalCallsInSwapPath=2, internalFunctionsReachableFromCallbacks=3, usesReturnsDelta=true, hasOwnerOnlyFunctions=false; rule `usesReturnsDelta && externalCallsInSwapPath >= 1` -> 4. Verified against schema/framework-rubric.json: rule 5 needs hasOwnerOnlyFunctions (false, correct \u2014 no owner surface in source), so 4 is the right bracket."
+   },
+   "total": 13,
+   "total_upper": 25,
+   "tier": "medium (upper bound high, inconclusive)",
+   "gate_passed": true,
+   "gate_failures": [],
+   "hr_error_codes": [],
+   "hook_profile_metrics": {
+    "callbacksImplemented": 1,
+    "callbacksDeclared": 2,
+    "stateWritesInCallbacks": 0,
+    "externalCallsInSwapPath": 2,
+    "internalFunctionsReachableFromCallbacks": 3,
+    "usesReturnsDelta": true,
+    "hasOwnerOnlyFunctions": false
+   },
+   "observations": {
+    "swapsExecuted": 0,
+    "swapsCompared": 0,
+    "swapsSkipped": 0,
+    "hookedSwapReverted": 1285,
+    "positionsOpened": 0,
+    "positionsClosed": 0,
+    "donations": 0,
+    "priceChecks": 0,
+    "monotonicityViolations": 0,
+    "exitFailures": 0,
+    "sequences": 1285
+   },
+   "uncovered_functions": 0,
+   "permissions_disagreement": [],
+   "expectations_met": true,
+   "expectation_deviations": [
+    "None material. Every clause held: harness ok with seeded=hooked-failed; I1/I2 inconclusive carrying observation counts; I3 not-applicable; disabled-callback INFO merged with harness attribution (engines hookrisk+harness, evidence line 'harness: the seed position was rejected in beforeAddLiquidity (0x259982e5) with Error(\"No v4 Liquidity allowed\")'); custom-accounting INFO; complexity 4/5. The manifest now carries an engines[] row {engine:harness, status:ok, findingCount:0, durationMs:5371} and coverage.harnessStatus='ok' \u2014 the silent 0-invariant pass is gone.",
+    "Wording only: stderr summary says '3 invariant(s), 0 failed, 3 inconclusive' while the reconciled manifest is 2 inconclusive + 1 not-applicable; the reconcile line two lines later explains it."
+   ],
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "HEADLINE: the pre-fix HIGH false positive is gone. Pre-fix run failed the gate with 'declares permission beforeAddLiquidity (bit 11) but provides no working beforeAddLiquidity im...'. The revert at src/Counter.sol:87-94 is deliberate (natspec '@notice No liquidity will be managed by v4 PoolManager'; revert(\"No v4 Liquidity allowed\")). Now reported as INFO callback-intentionally-disabled, corroborated by two engines, exit 0, gate passed.",
+     "evidence": "out2/hook-risk.json finding a43cc8e88654b94b, engines=[hookrisk/hookrisk-disabled-callback, harness/seed-reverted]; stderr 'reconcile: beforeAddLiquidity classified intentionally disabled by hookrisk and observed rejecting the harness's seed ... merged into finding a43cc8e88654b94b at confidence high'"
+    },
+    {
+     "kind": "expected",
+     "description": "HEADLINE: the silent 0-invariant pass is fixed. Pre-fix stderr: 'harness: 0 invariant(s), 0 failed' with no harness engine row. Now three invariant rows, an engines[] harness row, coverage.harnessStatus, and I1/I2 reported inconclusive rather than passed, with the reason (hook rejected the seed) and counts.",
+     "evidence": "stderr 'harness: 3 invariant(s), 0 failed, 3 inconclusive (flags=0x888 derived, seeded=hooked-failed) observed 1285 sequence(s), 0 swap(s) landed ... 1285 hooked-only swap revert(s)'; HOOK_RISK.md 'An invariant with no relevant observations is reported inconclusive, not passed.'"
+    },
+    {
+     "kind": "expected",
+     "description": "I3 correctly reconciled to not-applicable by cross-layer agreement, and the honest caveat is stated: 'liquidity held through the hook's own path is not exercised.' Permissions agree between engine (getHookPermissions source) and runtime (flags 2184 = 0x888 = beforeAddLiquidity|beforeSwap|beforeSwapReturnDelta), matching the source exactly.",
+     "evidence": "stderr 'reconcile: I3 not-applicable \u2014 both layers agree PoolManager liquidity is disabled by design'; .permissions.fromEngine == .permissions.fromRuntime; harnessRun.flags=2184"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Misleading invariant wording: I1 and I2 have status 'inconclusive' but their detail opens with 'passed vacuously: ...'. That directly contradicts both the status field and the report's own sentence 'An invariant with no relevant observations is reported inconclusive, not passed.' A reviewer skimming the Invariants table reads the word 'passed' first.",
+     "evidence": "hook-risk.json .invariants[0].detail = 'passed vacuously: 0 swaps landed and 0 positions opened across 1285 sequences...' with .status = 'inconclusive'; same for I2"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Self-contradicting evidence string on the externalDependencies dimension: it claims 'Not measured: no detector for external-call-in-swap-path yet' while the same manifest measures externalCallsInSwapPath=2 from the hook-profile and uses that exact metric to score complexity 4. The two poolManager.mint/burn calls in _beforeSwap are real external calls in the swap path.",
+     "evidence": "score.dimensions[externalDependencies].evidence[0] vs score.dimensions[complexity].evidence[0] 'externalCallsInSwapPath=2' and rule 'usesReturnsDelta && externalCallsInSwapPath >= 1'; src/Counter.sol:65 poolManager.mint, :70 poolManager.burn"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The hook's own liquidity path is entirely unassessed by either layer. addLiquidity (src/Counter.sol:102) is permissionless and _unlockCallback (:106-126) pulls ERC20 from the payer via transferFrom into the PoolManager and mints ERC6909 to the hook itself, with 'TODO: mint an LP receipt token' at :123 \u2014 the depositor gets no claim, so deposited funds are unrecoverable. Also two unchecked transferFrom return values (:112, :116). No finding, no dimension, externalLiquidityExposure unmeasured. The harness never calls it (0 positions opened), and I3's caveat is the only hint.",
+     "evidence": "src/Counter.sol:102-126; hook-risk.json findings contain no entry above info and none referencing addLiquidity/_unlockCallback; coverage.uncoveredFunctions=[] despite those functions never being exercised"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "For any custom-curve hook that rejects PoolManager liquidity, the harness can never reach a conclusive I1/I2: seeding only goes through PoolManager modifyLiquidity, so all 1285 sequences produced 0 landed swaps. The tool reports this honestly but has no fallback (e.g. seeding via the hook's own addLiquidity, which exists here and is ABI-visible), so the custom curve \u2014 the single riskiest thing about this hook \u2014 gets zero dynamic coverage.",
+     "evidence": "coverage.observations {sequences:1285, swapsExecuted:0, swapsCompared:0, priceChecks:0, hookedSwapReverted:1285}; harnessRun.seeded='hooked-failed'"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "coverage.uncoveredFunctions=[] reads as 'full coverage' while the harness executed nothing (0 swaps, 0 positions) and addLiquidity/_unlockCallback were never entered. The field appears to track static coverage only, but the manifest and report do not say so, and HOOK_RISK.md's 'Analysis coverage' section never lists uncovered functions at all.",
+     "evidence": "hook-risk.json .coverage.uncoveredFunctions = [] with .coverage.observations.sequences=1285, swapsExecuted=0"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "hook-profile reports callbacksImplemented=1, callbacksDeclared=2, but the source implements both declared callbacks \u2014 _beforeSwap (:48) and _beforeAddLiquidity (:87), the latter as a deliberate revert. Neither the manifest nor the report defines the metric as excluding disabled callbacks, so the 1-vs-2 pairing re-creates exactly the 'a declared callback has no implementation' impression the HIGH-severity fix removed.",
+     "evidence": "HOOK_RISK.md 'Callbacks implemented (count) | 1 / Callbacks declared | 2'; src/Counter.sol:48 and :87 are both `override` implementations"
+    }
+   ],
+   "extra_runs": "Not requested by this expectation and not applicable: the Counter constructor takes only IPoolManager, which the harness resolves itself (stderr 'ctorArgs=1 word(s)'), and the old config carried no [harness] section, so out2-extra/ was not produced. Instead I ran the scan a second time with --log-json into out2-json/: exit 0, 12 stderr lines, all valid JSON (jq -s parses all 12), every line carries a string runId and stage, a single runId across the run (50a9837c-0374-4041-92dd-920979c8caa1), stages observed = project, harness, engine:hookrisk, reconcile, scan. The two manifests are byte-identical after stripping runId/timing fields, so the run is deterministic.",
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-constant-sum/out2",
+   "notes": "Config regenerated per procedure: old hookrisk.toml saved to repo/hookrisk.toml.old; it had no [harness] section and maxFeeBips = 0, so nothing was copied back. New template confirmed: maxTier commented out, failOnInconclusive = false, [harness] constructorArgs commented out.\n\nSource verification: no HIGH findings to check. The one disabled callback is genuinely deliberate (src/Counter.sol:86-94, natspec plus a constant-revert body). Every hook-profile metric checks out against the source except the callbacksImplemented framing noted above: 2 declared permissions (beforeAddLiquidity, beforeSwap \u2014 return-delta flags are not callbacks), 0 storage writes in _beforeSwap, 2 external calls in the swap path (poolManager.mint/burn), usesReturnsDelta true (beforeSwapReturnDelta), no owner surface. Complexity 4 is the correct bracket under the rubric's rule table.\n\nHOOK_RISK.md as a reviewer: strong. It states the tier is undetermined and why, marks every interpreted bracket with the \u1d43 footnote, says unmeasured dimensions are excluded rather than zeroed, and prints the observation counts under the invariants. Two things mislead: the \"passed vacuously\" prefix on two rows whose status is inconclusive, and the absence of any statement that the hook's own addLiquidity path was neither statically flagged nor dynamically exercised \u2014 the reader has to infer it from one clause inside I3's detail.\n\nGate posture: passes now partly because the new template drops maxTier and defaults failOnInconclusive=false, so an undetermined medium-to-high tier is not a failure by default. That is documented in the template comments, but it means the default CI config cannot fail on tier for any hook with unmeasured dimensions."
+  },
+  {
+   "slug": "v4-stoploss",
+   "target": "src/StopLoss.sol:StopLoss",
+   "scan_exit_code": 0,
+   "static_status": "ok",
+   "static_reason": "hookrisk engine ran (status ok, 1 finding) but explicitly did not analyse the target: verbose log \"hookrisk: did not analyse the target \u2014 StopLoss uses a hook ABI hookrisk cannot analyse\" and \"hookrisk: 1 finding(s); analysed 0 hook contract(s)\".",
+   "findings": [
+    {
+     "ruleClass": "unsupported-hook-abi",
+     "severity": "info",
+     "line": 17,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    }
+   ],
+   "harness_status": "failed",
+   "harness_reason": "harness setUp failed: TwinPools: getHookPermissions() reverted on the supplied runtime code (not a BaseHook-shaped hook, or the wrong bytecode): 0x. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304).",
+   "hr_error_codes": [
+    "HR-E304"
+   ],
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "inconclusive",
+     "detail": "harness setUp failed: TwinPools: getHookPermissions() reverted \u2026 (HR-E304)"
+    },
+    {
+     "id": "I2",
+     "status": "inconclusive",
+     "detail": "harness setUp failed: TwinPools: getHookPermissions() reverted \u2026 (HR-E304)"
+    },
+    {
+     "id": "I3",
+     "status": "inconclusive",
+     "detail": "harness setUp failed: TwinPools: getHookPermissions() reverted \u2026 (HR-E304)"
+    }
+   ],
+   "complexity": {
+    "value": null,
+    "source": "unmeasured",
+    "evidence": "Not measured: flag-implementation-divergence requires hookrisk; hookrisk ran but did not analyse the target (unsupported-hook-abi); unprotected-hook-callback requires hookrisk or blocksec; hookrisk ran but did not analyse the target."
+   },
+   "total": 3,
+   "total_upper": 28,
+   "tier": "low",
+   "gate_passed": true,
+   "gate_failures": [],
+   "uncovered_functions": 0,
+   "observations": {},
+   "harness_run": {},
+   "permissions_disagreement": [],
+   "hook_profile_metrics": {},
+   "expectations_met": true,
+   "expectation_deviations": [],
+   "extra_runs": "None required: the expectation asked for none, and a [harness] constructorArgs config cannot help here. StopLoss's constructor is `constructor(IPoolManager _poolManager)` (StopLoss.sol:42) and the harness already derived it (verbose: \"ctorArgs=1 word(s)\"); the failure is downstream of deployment, because the legacy hook exposes getHooksCalls() and not getHookPermissions(). The --log-json run was done instead (out2-json/): 10 stderr lines, all valid JSON, every line carrying runId and stage (first line stage=\"scan\", runId=5ea848c8-...); the score block is identical to the plain run, exit 0.",
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "Legacy-ABI refusal is correct, verified against source. StopLoss.sol:44 declares getHooksCalls() returning Hooks.Calls, callbacks take IPoolManager.PoolKey, and all eight BaseHook callbacks (lib/v4-periphery/contracts/BaseHook.sol:67-116) are 2023 signatures. INFO unsupported-hook-abi at src/StopLoss.sol:17, whose description states outright: 'hookrisk's detectors did not analyse this contract, so every code-derived dimension is unmeasured \u2014 a zero-finding scan here is not a clean result.'",
+     "evidence": "out2/hook-risk.json findings[0]; out2/scan.stderr lines 6-7; StopLoss.sol:44-55; BaseHook.sol:67-116"
+    },
+    {
+     "kind": "expected",
+     "description": "The harness fails loudly and honestly: engines[1].status=failed, errorCode HR-E304, coverage.harnessStatus=failed, dynamicAnalysisSkipped=true, and I1/I2/I3 all inconclusive (not skipped, not passed) \u2014 the posture docs/TROUBLESHOOTING.md#hr-e304 promises.",
+     "evidence": "out2/hook-risk.json engines[1] and invariants[]; out2/scan.stderr line 9"
+    },
+    {
+     "kind": "expected",
+     "description": "Regression fixed: complexity is now unmeasured with evidence naming both missing detectors. The pre-fix run claimed a MEASURED complexity of 0, bracket 'Pass-through only; no hook state', for a hook that implements two callbacks, writes hook state in them (tickLowerLasts, stopLossPositions, claimable) and re-enters poolManager.lock() mid-afterSwap. That flatly false claim is gone.",
+     "evidence": "out/hook-risk.json score.dimensions[complexity].value=0 vs out2 value=null; StopLoss.sol:67-129"
+    },
+    {
+     "kind": "expected",
+     "description": "Regression fixed: pre-fix invariants were 'skipped' with detail 'the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare' \u2014 false, the hook declares afterInitialize and afterSwap (StopLoss.sol:47,51). Now inconclusive with the real reason.",
+     "evidence": "out/hook-risk.json invariants[] vs out2/hook-risk.json invariants[]"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Exit-code contract not honoured for HR-E304. errors/catalog.json:303 and the generated docs/TROUBLESHOOTING.md both declare HR-E304 => exit code 43 ('Exit code 43.'), and the doc's preamble sells exit codes as how CI distinguishes 'I could not run'. This scan emitted HR-E304 and exited 0; docs/hackathon/notes-I.md:171 asserts 'a process exit of 2' for the equivalent unrunnable-hook case. No CLI path exits 43 for a degraded harness \u2014 either the catalogue's exitCode is wrong for non-fatal engine failures or the CLI is.",
+     "evidence": "out2/exit_code = 0; errors/catalog.json:303 \"exitCode\": 43; docs/TROUBLESHOOTING.md line 65 and the HR-E304 section; docs/hackathon/notes-I.md:171"
+    },
+    {
+     "kind": "regression",
+     "description": "Default posture is weaker on this hook. With the OLD config (maxTier = \"medium\") the pre-fix scan reported gate.passed=false, failure 'tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium'. The NEW init template comments maxTier out and sets failOnInconclusive = false, so the identical situation \u2014 nothing analysed statically, dynamic layer dead \u2014 now yields 'Gate passed' and exit 0. Defensible as a default, but out of the box a hook the tool could not assess at all is green in CI.",
+     "evidence": "out/hook-risk.json gate.passed=false vs out2/hook-risk.json gate {passed:true, failures:[]}; regenerated hookrisk.toml [gate] block"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Headline reads LOW on an unassessed hook. HOOK_RISK.md leads with '**LOW risk** \u2014 3/33' then 'Gate passed', stdout with 'LOW risk 3/33', and the Security plan table sources every recommendation from tier:low ('Security audit \u2014 Required \u2014 tier:low', 'No math specialist required'). Those 3 points are entirely declared (tvlPotential 0 + teamMaturity 3); zero code-derived dimensions exist. The undetermined-tier callout and the coverage table are correct but subordinate to a bold LOW, and the section titled 'What was assessed' lists only contract/source/mode \u2014 it never says what was not assessed.",
+     "evidence": "out2/HOOK_RISK.md lines 3-9, 'What was assessed' and 'Security plan' tables; out2/scan.stdout line 1"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The coverage block hides zero coverage from machine consumers: coverage = {corroboratedFindings:0, uncoveredFunctions:[], staticAnalysisSkipped:false, dynamicAnalysisSkipped:true, harnessStatus:'failed'}. Empty uncoveredFunctions plus staticAnalysisSkipped:false reads as 'static analysis covered everything', while the log says 'analysed 0 hook contract(s)'. No field in .coverage (no analysedContracts counter) carries that fact; it exists only in the finding prose and the verbose line.",
+     "evidence": "out2/hook-risk.json .coverage; out2/scan.stderr 'hookrisk: 1 finding(s); analysed 0 hook contract(s)'"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Finding title is a mid-word truncation of the description: '\u2026predates the shipped v4 interface (declares the 2023 getHooksCalls(); callba...'. It propagates verbatim into the HOOK_RISK.md H3 heading, the stderr line and the SARIF result. The rule class has no short human title.",
+     "evidence": "out2/hook-risk.json findings[0].title; out2/HOOK_RISK.md '### StopLoss (src/StopLoss.sol#17-205) \u2026 callba...'"
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-stoploss/out2",
+   "notes": "Config: saved hookrisk.toml.old, regenerated via init. The old file had no [harness] section and maxFeeBips = 0, so nothing was copied back; the old [gate] maxTier = \"medium\" was dropped per procedure. forge build was cached (only an erc20-unchecked-transfer lint at StopLoss.sol:191). No hook-risk.invalid.json in either run; SARIF valid, one result, ruleId unsupported-hook-abi. The manifest carries no permissions block and no hook-profile finding \u2014 consistent with zero hook contracts analysed, hence the empty permissions/observations/harnessRun/hook_profile_metrics above; there were no HIGH findings and no callback-intentionally-disabled findings to verify against source. Complexity has no bracket to check against schema/framework-rubric.json because it is unmeasured; the rubric's derivation table needs hook-profile metrics that were never produced. One nitpick not filed as an anomaly: the finding enumerates only four non-current callbacks (afterDonate, afterSwap, beforeDonate, beforeSwap) though all eight BaseHook callbacks are legacy \u2014 beforeInitialize/afterInitialize/beforeModifyPosition/afterModifyPosition are omitted, presumably because their name+arity still matches (or no longer exists in) the current IHooks. The conclusion is right; the list reads as exhaustive and is not. My run reproduces the integrator's committed evidence in docs/hackathon/evidence/scans/after/v4-stoploss/ exactly: exit 0, total 3, upper 28, gate true, harness failed HR-E304."
+  },
+  {
+   "slug": "take-profits-hook",
+   "target": "src/TakeProfitsHook.sol:TakeProfitsHook",
+   "scan_exit_code": 0,
+   "static_status": "ok",
+   "static_reason": "hookrisk engine status ok, 1 finding, but stderr: \"hookrisk: did not analyse the target \u2014 TakeProfitsHook uses a hook ABI hookrisk cannot analyse\" / \"1 finding(s); analysed 0 hook contract(s)\". 1 further finding in src/TakeProfitsStub.sol correctly withheld as not attributed to the target.",
+   "findings": [
+    {
+     "ruleClass": "unsupported-hook-abi",
+     "severity": "info",
+     "line": 17,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    }
+   ],
+   "harness_status": "skipped",
+   "harness_reason": "TakeProfitsHook's constructor takes 2 argument(s) (address _poolManager, string _uri) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument \u2014 $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.",
+   "hr_error_codes": [
+    "HR-E305",
+    "HR-E304"
+   ],
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "HR-E305 constructor-args skip; in the extra constructorArgs run: inconclusive (HR-E304)"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "HR-E305 constructor-args skip; extra run: inconclusive"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "HR-E305 constructor-args skip; extra run: inconclusive"
+    }
+   ],
+   "complexity": {
+    "value": null,
+    "source": "unmeasured",
+    "evidence": "Not measured: flag-implementation-divergence requires hookrisk; hookrisk ran but did not analyse the target (unsupported legacy ABI); unprotected-hook-callback requires hookrisk or blocksec, same reason. Ground truth from source would be rubric bracket 3 (2 callbacks writing hook state + external calls in the swap path)."
+   },
+   "total": 3,
+   "total_upper": 28,
+   "tier": "low",
+   "gate_passed": true,
+   "gate_failures": [],
+   "uncovered_functions": 0,
+   "observations": {},
+   "permissions_disagreement": [],
+   "harness_run": {},
+   "hook_profile_metrics": {},
+   "expectations_met": true,
+   "expectation_deviations": [
+    "None material. The expectation held exactly: unsupported-hook-abi INFO, harness skipped on the (IPoolManager, string uri) constructor with HR-E305, and the optional constructorArgs = [\"$poolManager\", \"ipfs://x\"] run encoded the string via cast (stderr: ctorArgs=4 word(s)) then failed loudly on the legacy runtime with HR-E304 (getHookPermissions() reverted).",
+    "Config note: the old hookrisk.toml had no [harness] section and maxFeeBips = 0, so nothing needed copying back after re-init; the new template drops maxTier and adds failOnInconclusive = false, which is why the gate now passes where the pre-fix run failed."
+   ],
+   "extra_runs": "out2-extra/ with [harness] constructorArgs = [\"$poolManager\", \"ipfs://x\"]: exit 0. The harness attempted deployment (\"harness: TakeProfitsHook.sol:TakeProfitsHook flags=derived-from-runtime maxFee=0bips ctorArgs=4 word(s)\") \u2014 the string was ABI-encoded correctly (address + offset + length + data = 4 words). It then failed loudly: \"harness setUp failed: TwinPools: getHookPermissions() reverted on the supplied runtime code (not a BaseHook-shaped hook, or the wrong bytecode): 0x. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304).\" engines[].harness.status = failed, coverage.harnessStatus = failed, dynamicAnalysisSkipped = true, I1/I2/I3 = inconclusive (never \"passed\"). Score unchanged at 3/33 (up to 28). Gate still passed (no invariant violation, only INFO findings) \u2014 documented behaviour, but a failed engine still yields a green verdict line. Config restored afterwards.",
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "Headline: the legacy 2023 hook ABI is detected and named precisely, and the tool refuses to pretend it analysed the hook. Claim verified against source.",
+     "evidence": "src/TakeProfitsHook.sol:62 `function getHooksCalls() public pure override returns (Hooks.Calls memory)`; afterInitialize (76-85) and afterSwap (87-105) are both `external override poolManagerOnly returns (bytes4)` \u2014 no (bytes4,int128) return, and no getHookPermissions anywhere in the file. Finding text: \"...its hook ABI predates the shipped v4 interface (declares the 2023 getHooksCalls(); callbacks with non-current signatures: afterDonate, afterSwap, beforeDonate, beforeSwap; inherits BaseHook without any current-ABI callback). hookrisk's detectors did not analyse this contract, so every code-derived dimension is unmeasured \u2014 a zero-finding scan here is not a clean result.\""
+    },
+    {
+     "kind": "expected",
+     "description": "Harness skip is actionable and honest: it names the exact constructor ABI, the substitution placeholders and HR-E305; coverage.dynamicAnalysisSkipped = true and all three invariants report skipped rather than passing.",
+     "evidence": "out2/hook-risk.json engines[1].reason and invariants[].detail; coverage {\"dynamicAnalysisSkipped\": true, \"harnessStatus\": \"skipped\"}"
+    },
+    {
+     "kind": "expected",
+     "description": "Two real fixes vs the pre-fix run: (a) the pre-fix scan produced ZERO findings on this legacy hook (a silent clean-looking result); it now produces the unsupported-hook-abi INFO. (b) The pre-fix manifest claimed coverage.dynamicAnalysisSkipped = false while all invariants were skipped and no harness engine entry existed at all \u2014 a false coverage claim, now corrected.",
+     "evidence": "out/hook-risk.json: findings [], engines [hookrisk only], coverage.dynamicAnalysisSkipped false, no harnessStatus. out2/hook-risk.json: 1 finding, harness engine row, dynamicAnalysisSkipped true, harnessStatus \"skipped\"."
+    },
+    {
+     "kind": "expected",
+     "description": "--log-json emits valid JSON Lines; every line carries runId and stage, and the harness skip carries errorCode HR-E305. Manifest is identical to the non-json run.",
+     "evidence": "9/9 lines parsed, 0 bad. Keys: ts, runId, level, stage, msg, target, projectRoot, home, homeSource, toolVersion, errorCode, status, exitCode, gatePassed, tier, total, inconclusive, findings, invariants, durationMs. First line: {\"ts\":\"2026-09-12T16:33:22.659Z\",\"runId\":\"94a04bfc-0af8-4429-b890-b9c2e50443f5\",\"level\":\"info\",\"stage\":\"scan\",...}"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Misleading report surface: HOOK_RISK.md's \"Analysis coverage\" table shows the hookrisk engine as a bare `ok` with 1 finding and an empty Notes cell, even though the engine analysed 0 hook contracts. The stderr line \"analysed 0 hook contract(s)\" never reaches the report. Combined with the \"**LOW risk** \u2014 3/33\" headline and \"\u2705 **Gate passed.**\", a reviewer skimming the report can read it as a clean scan; only reading the INFO finding's body corrects that.",
+     "evidence": "out2/HOOK_RISK.md: \"| hookrisk Slither detectors | ok | 1 |  |\" vs out2/scan.stderr: \"hookrisk: did not analyse the target ...\" and \"hookrisk: 1 finding(s); analysed 0 hook contract(s)\"."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Dead relative link in every generated report: HOOK_RISK.md footnote links [FEEDBACK.md](FEEDBACK.md), which resolves next to the report in the --out directory. Only HOOK_RISK.md, hook-risk.json and hookrisk.sarif are written there; FEEDBACK.md lives at the hookrisk repo root.",
+     "evidence": "out2/HOOK_RISK.md: \"\u1d43 Bracket supplied by hookrisk. The framework publishes brackets for only two of its nine dimensions; the rest are our reading of its prose. See [FEEDBACK.md](FEEDBACK.md) #2.\"; ls out2/ \u2192 HOOK_RISK.md, hook-risk.json, hookrisk.sarif, scan.stdout, scan.stderr, exit_code."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Legacy-ABI hooks get no code-derived score at all, even where the rubric's own inputs are trivially readable from source. complexity, customMath, priceImpactingBehavior and externalDependencies are all `unmeasured` because the hook-profile classification never runs. From the source the complexity bracket is determinable: 2 callbacks implemented (afterInitialize, afterSwap), both write hook state (tickLowerLasts), external calls in the swap path (poolManager.getSlot0, fillOrder \u2192 poolManager.lock, IERC20 transfers) \u2192 bracket 3. Nothing in the report tells the reader this much is knowable.",
+     "evidence": "schema/framework-rubric.json complexity brackets 0-5 (3 = \"Returns a delta, or makes an external call in the swap path\"); src/TakeProfitsHook.sol:102 `tickLowerLasts[key.toId()] = currentTickLower;` inside afterSwap, :107 `poolManager.getSlot0(key.toId())`, :121 `fillOrder(...)`. Manifest complexity.value = null."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The 3/33 total and the \"LOW risk\" badge are composed entirely of declared inputs (teamMaturity 3, tvlPotential 0) \u2014 zero code-derived signal \u2014 yet the Security plan table asserts every recommendation \"Because tier:low\" for a tier the same document calls undetermined. The undetermined blockquote is present and correct, but tier:low is then consumed downstream as if settled.",
+     "evidence": "out2/HOOK_RISK.md Security plan: all five rows sourced `tier:low`; score.inconclusive = true, score.tierUpperBound = \"high\"; the only non-null dimensions are the two declared ones."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "A scan in which the target was never analysed and every invariant was skipped exits 0 and prints \"gate passed\". The new init template comments out maxTier and defaults failOnInconclusive = false, so the pre-fix run's gate failure (old config had maxTier = \"medium\") no longer occurs. Documented and deliberate, but the default CI posture now green-lights a hook about which nothing was measured; only failOnInconclusive = true recovers it.",
+     "evidence": "docs/SCORING.md:283-305 \"The tier gate is a deliberate choice\". out/hook-risk.json gate.passed = false, failure \"tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium\" vs out2/hook-risk.json gate {\"passed\": true, \"failures\": []}."
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "The repo itself is a 2023 tutorial-era hook, not current v4: legacy Hooks.Calls / getHooksCalls, unchecked IERC20.transfer (forge lint flags it during build), forge-std console.sol imported into production source. Nothing hookrisk can analyse until it is ported.",
+     "evidence": "forge build lint: \"IERC20(tokenToSendContract).transfer(destination, amountToSend); \u2501\u2501\u2501 erc20-unchecked-transfer\" at src/TakeProfitsHook.sol:363; src/TakeProfitsHook.sol:15 `import \"forge-std/console.sol\";`"
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/take-profits-hook/out2",
+   "notes": "Config: old hookrisk.toml saved as hookrisk.toml.old, re-init run; the old file had no [harness] section and maxFeeBips = 0, so nothing was copied back. New template confirmed: maxTier commented out, failOnInconclusive = false, [harness] constructorArgs documented with placeholders. forge build was cached (one lint warning, no errors). Three runs: out2 (baseline), out2-json (--log-json; identical manifest, 9/9 valid JSON lines carrying runId and stage), out2-extra (constructorArgs); config restored to the post-init state afterwards. No permissions block and no hook-profile finding exist in the manifest \u2014 correct, since hookrisk analysed 0 hook contracts, so permissions/hook_profile_metrics/observations/harness_run are empty rather than wrong. No HIGH findings to verify; the single INFO is a classification and every clause of it checks out against the source. No callback-intentionally-disabled findings on this target. Behaviour on this hook is honest end-to-end and a clear improvement over the pre-fix run; the remaining weakness is presentational \u2014 the green \"LOW risk / gate passed\" headline and the bare `ok` engine row understate that the target itself was never analysed."
+  },
+  {
+   "slug": "nft-owners-only",
+   "target": "src/ERC721OwnershipHook.sol:ERC721OwnershipHook",
+   "scan_exit_code": 0,
+   "static_status": "ok",
+   "static_reason": "hookrisk engine ran ok (v0.11.6, 1854ms) but analysed 0 hook contracts: \"did not analyse the target \u2014 ERC721OwnershipHook uses a hook ABI hookrisk cannot analyse\". 3 findings in other files (src/Counter.sol, src/implementation/CounterImplementation.sol, src/implementation/ERC721OwnershipHookImpl.sol) correctly not attributed to the target.",
+   "findings": [
+    {
+     "ruleClass": "unsupported-hook-abi",
+     "severity": "info",
+     "line": 10,
+     "discriminator": "",
+     "engines": [
+      "hookrisk"
+     ]
+    }
+   ],
+   "harness_status": "skipped",
+   "harness_reason": "ERC721OwnershipHook's constructor takes 2 argument(s) (address _poolManager, address _nftContract) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument \u2014 $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "harness skipped, HR-E305 (2-arg constructor)"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "harness skipped, HR-E305 (2-arg constructor)"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "harness skipped, HR-E305 (2-arg constructor)"
+    }
+   ],
+   "complexity": {
+    "value": null,
+    "source": "unmeasured",
+    "evidence": "Not measured: flag-implementation-divergence requires hookrisk; hookrisk ran but did not analyse the target (unsupported hook ABI); unprotected-hook-callback requires hookrisk or blocksec; same reason. Correct: with 0 hook contracts analysed no bracket from schema/framework-rubric.json can be applied."
+   },
+   "total": 3,
+   "total_upper": 28,
+   "tier": "low",
+   "gate_passed": true,
+   "gate_failures": [],
+   "hr_error_codes": [
+    "HR-E305 (harness skip; present in --log-json record, absent from manifest engines[])",
+    "HR-E304 (extra run only: harness setUp failure)"
+   ],
+   "uncovered_functions": 0,
+   "observations": {},
+   "permissions_disagreement": [],
+   "harness_run": {},
+   "hook_profile_metrics": {},
+   "expectations_met": true,
+   "expectation_deviations": [],
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "Headline: the legacy-ABI hook is now identified instead of silently passing. The finding names its evidence and states that a clean scan means nothing here: 'declares the 2023 getHooksCalls(); callbacks with non-current signatures: afterDonate, afterSwap, beforeDonate, beforeSwap; inherits BaseHook without any current-ABI callback ... hookrisk's detectors did not analyse this contract, so every code-derived dimension is unmeasured \u2014 a zero-finding scan here is not a clean result.' Verified against source: getHooksCalls() at line 23, beforeSwap(address, IPoolManager.PoolKey, IPoolManager.SwapParams) returns (bytes4) at 37-47. Claim holds.",
+     "evidence": "out2/hook-risk.json findings[0]; src/ERC721OwnershipHook.sol:10-48"
+    },
+    {
+     "kind": "expected",
+     "description": "Harness skip claim verified against source and exactly right: constructor(IPoolManager _poolManager, IERC721 _nftContract) at lines 16-21 is 2 args and the message names both by ABI type. All three invariants are skipped, not passed; coverage carries dynamicAnalysisSkipped:true and harnessStatus 'skipped'.",
+     "evidence": "src/ERC721OwnershipHook.sol:16-21; out2/hook-risk.json engines[1], invariants[], coverage"
+    },
+    {
+     "kind": "expected",
+     "description": "--log-json emits 9 well-formed JSON lines, every one carrying runId and stage (scan, project, engine:hookrisk, harness); 0 malformed. The harness line carries errorCode HR-E305, status, durationMs and per-invariant statuses; the final scan line carries exitCode/tier/total/inconclusive/gatePassed.",
+     "evidence": "out2-json/scan.stderr, validated line-by-line with json.loads"
+    },
+    {
+     "kind": "expected",
+     "description": "No regression vs pre-fix. Pre-fix reported 0 findings, '\u2713 hookrisk ok', 6 unmeasured dimensions and no sign the target was untouched \u2014 a silently clean scan. New run adds the unsupported-hook-abi finding, marks complexity unmeasured (7 dimensions), names the other-file findings and raises the honest upper bound 23->28. Exit 2->0 and gate fail->pass follow from the new template (maxTier removed, failOnInconclusive=false), not from a behaviour regression.",
+     "evidence": "out/scan.stderr vs out2/scan.stderr and out2/scan.stdout"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "The skip message tells the user to add [harness] constructorArgs, but the same run already knows the ABI is unsupported. Following that advice (out2-extra) makes the harness start and then fail HR-E304: 'TwinPools: getHookPermissions() reverted on the supplied runtime code'. The tool recommends a remediation it can already prove is a dead end for legacy-ABI hooks.",
+     "evidence": "out2-extra/scan.stderr: 'harness: ... ctorArgs=2 word(s)' then 'harness: failed \u2014 ... (HR-E304)'"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "The harness engine entry in hook-risk.json carries no errorCode field, although the --log-json record for the same event does ('errorCode':'HR-E305'). A machine consumer of the manifest has to regex the prose reason to recover the code.",
+     "evidence": "out2/hook-risk.json engines[1] keys: engine, displayName, version, status, reason, findingCount, durationMs"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "The finding title is truncated mid-word ('declares the 2023 ge...') and that truncated string is reused verbatim as the HOOK_RISK.md heading, the SARIF message, the stderr line and inside the complexity dimension's evidence string. Reads as data corruption rather than an ellipsis.",
+     "evidence": "out2/HOOK_RISK.md '### (i) ... declares the 2023 ge...'; out2/hook-risk.json score.dimensions[0].evidence[0]"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "HOOK_RISK.md's Security plan derives strengths from the lower bound of an explicitly undetermined tier: 'Bug bounty programme | Optional | tier:low', likewise the math audit and continuous monitoring rows \u2014 on a hook where zero code-derived dimensions were measured and the upper bound is high. Two lines earlier the same report says the tier is a range.",
+     "evidence": "out2/HOOK_RISK.md '## Security plan', Because column 'tier:low'"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "HOOK_RISK.md's 'What was assessed' table lists only Contract / Source / Mode. It never states the load-bearing fact that hookrisk analysed 0 hook contracts; the Analysis coverage row shows hookrisk as plain 'ok | 1'. A reviewer skimming the top sees 'LOW risk 3/33' and 'Gate passed'.",
+     "evidence": "out2/HOOK_RISK.md sections 'What was assessed' and 'Analysis coverage'"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "No permissions block in the manifest at all (schema-optional, so not invalid). Legitimate for a hook declaring getHooksCalls() rather than getHookPermissions(), but the declared flag set is plainly readable from source lines 23-35 (beforeSwap only) and goes wholly unreported, so no address/source/implemented comparison is offered.",
+     "evidence": "out2/hook-risk.json has no 'permissions' key; src/ERC721OwnershipHook.sol:23-35"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The hook's real risk property \u2014 beforeSwap reverts for any swapper holding 0 NFTs (an unconditional swap-DoS gate plus an external balanceOf call in the swap path) \u2014 is surfaced nowhere. Correct behaviour given the unsupported ABI, but the reviewer gets no signal that this hook can block swaps.",
+     "evidence": "src/ERC721OwnershipHook.sol:42-44 'if (nftContract.balanceOf(sender) == 0) { revert NotNftOwner(); }'"
+    }
+   ],
+   "extra_runs": "out2-extra/: added [harness] constructorArgs = [\"$poolManager\", \"0x000000000000000000000000000000000000dEaD\"] following the tool's own skip advice. The harness then started (\"harness: ERC721OwnershipHook.sol:ERC721OwnershipHook flags=derived-from-runtime maxFee=0bips ctorArgs=2 word(s)\") and failed honestly: \"harness setUp failed: TwinPools: getHookPermissions() reverted on the supplied runtime code (not a BaseHook-shaped hook, or the wrong bytecode): 0x. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304).\" Invariants moved skipped -> inconclusive, which is the right distinction (attempted, unobserved). Score, tier, finding set unchanged; exit 0, gate still passed. Config restored from hookrisk.toml.bak. Confirms the anomaly above: the remediation the skip message recommends cannot work for a legacy-ABI hook that hookrisk has already classified as legacy in the same run.",
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/nft-owners-only/out2",
+   "notes": "Procedure followed. Old hookrisk.toml saved as repo/hookrisk.toml.old, init regenerated; the old file had no [harness] section and maxFeeBips = 0, so nothing needed copying back. New template confirmed: maxTier commented out, failOnInconclusive = false, [harness] constructorArgs documented. forge build cached. Three scans: out2 (main), out2-json (--log-json), out2-extra (constructorArgs experiment). Exit 0 in all three, gate passed in all three, no hook-risk.invalid.json, SARIF carries one result with ruleId unsupported-hook-abi. jsonschema is not installed in the .venv, so the manifest was checked by hand against schema/hook-risk.schema.json: every present key is a declared property and all five required keys are present. No HIGH findings to verify. No callback-intentionally-disabled findings. No hook-profile finding was emitted (target not analysed), so none of the six profile metrics could be sanity-checked; that absence is consistent with the unsupported-ABI path rather than a contradiction. Complexity is unmeasured with an explicit per-detector reason, so no rubric bracket applies. HR-E305 is documented in docs/TROUBLESHOOTING.md (exit 44) and DEMO_RUNBOOK.md. Nothing under /Users/rafaelzochling/gitrepos/external/hookrisk was modified."
+  },
+  {
+   "slug": "ref-fee-hook",
+   "target": "src/RefHook.sol:Counter",
+   "scan_exit_code": 0,
+   "static_status": "failed",
+   "static_reason": "HR-E202 Foundry test path shadows the source path, so nothing is analysed: Error (7920): Identifier not found or not unique. --> src/RefHook.sol:144:59:",
+   "findings": [],
+   "harness_status": "skipped",
+   "harness_reason": "artifact directory <repo>/out does not exist (forge config: out = \"out\") \u2014 run `forge build` in <repo> first.",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "artifact directory <repo>/out does not exist \u2014 run `forge build` first."
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "artifact directory <repo>/out does not exist \u2014 run `forge build` first."
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "artifact directory <repo>/out does not exist \u2014 run `forge build` first."
+    }
+   ],
+   "complexity": {
+    "value": null,
+    "source": "unmeasured",
+    "evidence": "Not measured: flag-implementation-divergence requires hookrisk, which did not run; unprotected-hook-callback requires hookrisk or blocksec, which did not run."
+   },
+   "total": 3,
+   "total_upper": 28,
+   "tier": "low",
+   "gate_passed": true,
+   "gate_failures": [],
+   "uncovered_functions": 0,
+   "observations": {},
+   "permissions_disagreement": [],
+   "harness_run": {},
+   "hook_profile_metrics": {},
+   "hr_error_codes": [
+    "HR-E202"
+   ],
+   "expectations_met": false,
+   "expectation_deviations": [
+    "Expected HR-E203 (solc error); got HR-E202 (\"Foundry test path shadows the source path\") in engines[0].errorCode, engine reason, stdout, HOOK_RISK.md and the JSON log. The old mislabel is NOT fixed.",
+    "Expected non-empty reason with an HR-E code and errorCode set: MET (reason non-empty, errorCode \"HR-E202\").",
+    "Expected harness skipped, no artifact: MET (engines[1].status=skipped, invariants I1/I2/I3 skipped).",
+    "Gate behaviour when nothing ran: gate.passed=true, gate.failures=[], exit 0 \u2014 zero engines produced any result and the tool still exits green."
+   ],
+   "extra_runs": "None requested by the expectation, and a [harness] constructorArgs run is moot: the project does not compile, so no artifact exists to deploy (constructor is (IPoolManager,uint24), 2 args). A --log-json run was done to out2-json/: stderr is 8 valid JSON lines, every line carries runId (c3e387b2-7c80-46fd-9551-4699446b45b5) and stage (scan|project|engine:hookrisk|harness); the final line carries durationMs, exitCode, tier, total, inconclusive, findings, gatePassed. Valid NDJSON.",
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "Wrong errorCode and a factually false error title. The target fails to compile (undeclared Currency at src/RefHook.sol:144:59, plus undeclared ref/fees/hookfee0 elsewhere) \u2014 that is HR-E203. hookrisk reports HR-E202 'Foundry test path shadows the source path, so nothing is analysed', but foundry.toml has src=\"src\" and no test key, so test defaults to \"test\" and does not shadow src; slither's own command proves it: `forge build --build-info --deny never --skip ./test/** ./script/** --force`. Root cause: raw slither output contains BOTH HR-E203 patterns ('InvalidCompilation', 'Compilation failed. Can you run build command?') and HR-E202's single pattern ('<repo>/out/build-info is not a directory.'), and errors/catalog.json orders HR-E202 first. HR-E202's pattern is intrinsically ambiguous: any failed build leaves no build-info dir. Known and unfixed \u2014 notes-D.md:143,165-166 names the fix, DEMO_RUNBOOK.md:430 documents the code as 'usually mislabelled'.",
+     "evidence": "out2/hook-risk.json engines[0].errorCode=\"HR-E202\"; HOOK_RISK.md coverage row 'failed (HR-E202)'; a direct slither run emitted all four strings above."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Green exit 0 and '\u2705 Gate passed.' on a hook where nothing was analysed: static engine failed, harness skipped, all three invariants skipped, findings []. The gate evaluates only maxSeverity and failOnInconclusive; it has no rule for 'an engine failed'. In CI this is a passing build on a contract that does not compile.",
+     "evidence": "out2/hook-risk.json gate = {\"passed\":true,\"maxSeverity\":\"high\",\"failOnInconclusive\":false,\"failures\":[]}; exit_code=0; HOOK_RISK.md line 5 '\u2705 **Gate passed.**' directly under '**LOW risk** \u2014 3/33'."
+    },
+    {
+     "kind": "regression",
+     "description": "Pre-fix the same repo exited 2 with gate.passed=false ('tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium'). The new `init` template comments out maxTier and sets failOnInconclusive=false, so the identical scan now exits 0 and passes. The one guard that kept this un-analysable repo red in CI was removed by the default template.",
+     "evidence": "out/hook-risk.json gate.failures=['tier is undetermined ...'], out/exit_code=2 vs out2 gate.failures=[], exit_code=0. New hookrisk.toml lines 38-44 ('# maxTier = \"medium\"') and 54-60 (failOnInconclusive = false)."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "coverage.staticAnalysisSkipped = false while the static engine failed and analysed nothing, and coverage.uncoveredFunctions = [] (reads as '0 uncovered functions') when zero functions were covered. A machine consumer reading coverage alone concludes static analysis ran cleanly. There is also no top-level .permissions key at all, so nothing records that permission resolution never happened.",
+     "evidence": "out2/hook-risk.json coverage = {\"corroboratedFindings\":0,\"uncoveredFunctions\":[],\"staticAnalysisSkipped\":false,\"dynamicAnalysisSkipped\":true,\"harnessStatus\":\"skipped\"}; top-level keys: schemaVersion, generatedBy, target, findings, score, engines, coverage, invariants, gate."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Misleading harness remediation. The harness skip reason and all three invariant details say 'run `forge build` in <repo> first' \u2014 but forge build WAS run and failed with the same compile error the static engine surfaced in this run. The tool never states 'this project does not compile'; the user is sent to a command that cannot succeed.",
+     "evidence": "engines[1].reason and invariants[*].detail, verbatim '... does not exist (forge config: out = \"out\") \u2014 run `forge build` in ... first.'; forge build output: 'Error: Compiler run failed: Error (6275): Source \"src/Counter.sol\" not found' plus the src/RefHook.sol identifier errors."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "The engine failure line is printed twice on stderr in --verbose mode (once at level info, once at level error), duplicated identically in the JSON log.",
+     "evidence": "out2/scan.stderr lines 4-5 identical; out2-json/scan.stderr two consecutive objects at 16:34:16.773 (level info) and 16:34:16.774 (level error) with the same msg."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The solc version is guessed wrong and recorded unqualified in the manifest: 'foundry.toml pins no solc version and no artifact was found; assuming 0.8.26' and target.solcVersion=\"0.8.26\", while the pragma is ^0.8.19 and forge actually selected 0.8.30. Harmless here because nothing compiled, but the manifest records a solc version never used.",
+     "evidence": "out2/scan.stderr line 2; hook-risk.json target.solcVersion=\"0.8.26\"; forge build: 'Compiling 77 files with Solc 0.8.30'; src/RefHook.sol:2 'pragma solidity ^0.8.19;'."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "HOOK_RISK.md links [FEEDBACK.md](FEEDBACK.md) relative to the output directory, but no FEEDBACK.md is written there \u2014 a broken link in every generated report.",
+     "evidence": "out2/ contains only HOOK_RISK.md, hook-risk.json, hookrisk.sarif (plus our scan.stdout/stderr/exit_code)."
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "The target repo genuinely does not compile: src/RefHook.sol references undeclared identifiers (`ref` in getFee and afterModifyPosition, `fees`/`hookfee0`/`hookfee1` in afterSwap and afterModifyPosition, `Currency` unimported at line 144), instantiates a struct with `new Fees()`, and test/RefHook.t.sol imports a non-existent ../src/Counter.sol. Nothing hookrisk can do; the expectation's premise is confirmed.",
+     "evidence": "forge build: 'Error (6275): Source \"src/Counter.sol\" not found'; slither: 'Error (7920): Identifier not found or not unique.'; src/RefHook.sol:144 `Currency[] calldata currencies`."
+    },
+    {
+     "kind": "expected",
+     "description": "HEADLINE FIX: the engine failure is now legible. Pre-fix the reason was the empty 'could not parse Slither output: ' with no errorCode; post-fix it carries an HR-E code and the actual solc diagnostic with file:line. A real improvement even though the code chosen is wrong.",
+     "evidence": "out/hook-risk.json engines[0].reason='could not parse Slither output: ' (no errorCode field) vs out2 reason containing 'Error (7920) ... --> src/RefHook.sol:144:59:' with errorCode='HR-E202'."
+    },
+    {
+     "kind": "expected",
+     "description": "HEADLINE FIX: the harness is now honest about not running. Pre-fix the manifest had a single engines[] row (no harness), no invariants key, and dynamicAnalysisSkipped=false \u2014 it silently implied dynamic analysis happened. Post-fix there is a harness engine row with status=skipped and a reason, an invariants[] array with I1/I2/I3 skipped plus details, harnessStatus='skipped', and dynamicAnalysisSkipped=true.",
+     "evidence": "out/hook-risk.json engines length 1, coverage.dynamicAnalysisSkipped=false, no invariants key vs out2 engines length 2 + invariants[3] + dynamicAnalysisSkipped=true."
+    },
+    {
+     "kind": "expected",
+     "description": "Score arithmetic stays honest under total failure: 7 dimensions unmeasured with value null and per-dimension evidence naming the missing detector ('requires hookrisk, which did not run'), total 3/33, totalUpperBound 28/33, inconclusive=true, tierUpperBound='high', and all six unevaluable triggers listed as warnings. Unmeasured is never scored as zero.",
+     "evidence": "out2/hook-risk.json score.dimensions[0].evidence and score.warnings[0]: '7 dimension(s) unmeasured: the tier is between Low Risk and High Risk. Unmeasured dimensions are excluded from the total, never counted as zero.'"
+    },
+    {
+     "kind": "expected",
+     "description": "--log-json produces well-formed NDJSON with runId and stage on every line; artifacts written on every run, no hook-risk.invalid.json, no crash, valid SARIF 2.1.0 with 0 results.",
+     "evidence": "out2-json/scan.stderr (8 lines, all parse); sarif version 2.1.0, runs[0].results length 0."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/ref-fee-hook/out2",
+   "notes": "Config: the old hookrisk.toml had no [harness] section and maxFeeBips = 0, so nothing needed copying back; the only substantive template delta is maxTier commented out plus failOnInconclusive = false, and that delta alone flips this repo from exit 2 to exit 0. forge build fails (both the missing test import and the source's own identifier errors), so the expectation's premise holds.\n\nNo HIGH findings, no callback-intentionally-disabled entries, no hook-profile finding and no permissions block exist to verify \u2014 findings[] is empty because no engine ran; complexity is null/unmeasured, so the rubric bracket table in schema/framework-rubric.json is never exercised.\n\nReading HOOK_RISK.md as a reviewer: the top says \"LOW risk \u2014 3/33\" and \"Gate passed\" with a green check; the honest material (Analysis coverage showing failed + skipped, Invariants all skipped, seven unmeasured dimensions) sits below the fold. The tier-undetermined blockquote is good, but nothing anywhere states the plain fact that the contract does not compile, and \"Gate passed\" is what a skimmer takes away.\n\nTwo pre-fix anomalies are genuinely fixed (empty engine reason; phantom dynamic coverage). The headline defect the integrator expected fixed \u2014 HR-E202 vs HR-E203 \u2014 is not. Nothing under /Users/rafaelzochling/gitrepos/external/hookrisk was modified. Time box respected."
+  }
+ ],
+ "missing": [
+  "v2-on-v4"
+ ]
+}

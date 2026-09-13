@@ -1,0 +1,49 @@
+{
+  "name": "hookrisk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Executable risk assessment for Uniswap v4 hooks: multi-engine static analysis plus differential invariant fuzzing, scored against the Uniswap Foundation Hooks Security Framework.",
+  "keywords": [
+    "uniswap",
+    "uniswap-v4",
+    "uniswap-hooks",
+    "solidity",
+    "security",
+    "static-analysis",
+    "invariant-testing",
+    "sarif"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "hookrisk": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "test": "npm run build && node --test \"dist/**/*.test.js\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0"
+  }
+}

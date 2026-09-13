@@ -1,0 +1,272 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedBy": {
+    "tool": "hookrisk",
+    "version": "0.1.0",
+    "commandLine": "hookrisk scan src/Counter.sol:Counter"
+  },
+  "target": {
+    "mode": "source",
+    "contractName": "Counter",
+    "sourceFile": "src/Counter.sol",
+    "solcVersion": "0.8.26"
+  },
+  "findings": [],
+  "score": {
+    "total": 3,
+    "totalUpperBound": 23,
+    "tier": "low",
+    "tierUpperBound": "high",
+    "inconclusive": true,
+    "rubric": {
+      "framework": "Uniswap Hooks Security Framework",
+      "revision": "e7e8da52fd5717b6eb4517ea779b766f63148c41",
+      "url": "https://github.com/uniswapfoundation/security-framework"
+    },
+    "dimensions": [
+      {
+        "id": "complexity",
+        "name": "Complexity",
+        "value": 0,
+        "max": 5,
+        "source": "measured",
+        "bracketLabel": "Pass-through only; no hook state",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "No flag-implementation-divergence or unprotected-hook-callback findings, and every detector that could produce one ran."
+        ]
+      },
+      {
+        "id": "customMath",
+        "name": "Custom math",
+        "value": null,
+        "max": 5,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "Not measured: no detector for rounding-direction yet."
+        ]
+      },
+      {
+        "id": "externalDependencies",
+        "name": "External dependencies",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "Not measured: no detector for external-call-in-swap-path yet."
+        ]
+      },
+      {
+        "id": "externalLiquidityExposure",
+        "name": "External liquidity exposure",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": []
+      },
+      {
+        "id": "tvlPotential",
+        "name": "TVL potential",
+        "value": 0,
+        "max": 5,
+        "source": "declared",
+        "bracketLabel": "Under $100K (experimental or personal project)",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure tvlPotential."
+        ]
+      },
+      {
+        "id": "teamMaturity",
+        "name": "Team maturity",
+        "value": 3,
+        "max": 3,
+        "source": "declared",
+        "bracketLabel": "Unproven: no prior production deployments, or deployments lacking audits and operational rigor; new, anonymous, or no public track record",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure teamMaturity."
+        ]
+      },
+      {
+        "id": "upgradeability",
+        "name": "Upgradeability",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "Not measured: no detector for upgradeable-hook (needs blocksec, which did not run); selfdestruct requires blocksec, which did not run."
+        ]
+      },
+      {
+        "id": "autonomousParameterUpdates",
+        "name": "Autonomous parameter updates",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": []
+      },
+      {
+        "id": "priceImpactingBehavior",
+        "name": "Price impacting behavior",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "Not measured: no detector for unbounded-dynamic-fee yet."
+        ]
+      }
+    ],
+    "triggers": [],
+    "recommendations": [
+      {
+        "action": "audit",
+        "label": "Security audit",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:low",
+            "strength": "required",
+            "detail": "One full audit"
+          }
+        ]
+      },
+      {
+        "action": "static-analysis",
+        "label": "Automated static analysis",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:low",
+            "strength": "required",
+            "detail": "AI static analysis tools"
+          }
+        ]
+      },
+      {
+        "action": "bug-bounty",
+        "label": "Bug bounty programme",
+        "strength": "optional",
+        "sources": [
+          {
+            "from": "tier:low",
+            "strength": "optional"
+          }
+        ]
+      },
+      {
+        "action": "math-specialist-audit",
+        "label": "Audit by a math and invariants specialist",
+        "strength": "optional",
+        "sources": [
+          {
+            "from": "tier:low",
+            "strength": "optional",
+            "detail": "No math specialist required"
+          }
+        ]
+      },
+      {
+        "action": "monitoring",
+        "label": "Continuous monitoring with anomaly detection",
+        "strength": "optional",
+        "sources": [
+          {
+            "from": "tier:low",
+            "strength": "optional",
+            "detail": "Unless TVL grows significantly"
+          }
+        ]
+      }
+    ],
+    "warnings": [
+      "6 dimension(s) unmeasured: the tier is between Low Risk and High Risk. Unmeasured dimensions are excluded from the total, never counted as zero.",
+      "trigger 'custom-math' could not be evaluated: dimension 'customMath' is unmeasured",
+      "trigger 'holds-liquidity' could not be evaluated: dimension 'externalLiquidityExposure' is unmeasured",
+      "trigger 'external-dependencies' could not be evaluated: dimension 'externalDependencies' is unmeasured",
+      "trigger 'autonomous' could not be evaluated: dimension 'autonomousParameterUpdates' is unmeasured",
+      "trigger 'price-impact' could not be evaluated: dimension 'priceImpactingBehavior' is unmeasured",
+      "trigger 'upgradeable' could not be evaluated: dimension 'upgradeability' is unmeasured"
+    ]
+  },
+  "engines": [
+    {
+      "engine": "hookrisk",
+      "displayName": "hookrisk Slither detectors",
+      "version": "0.11.6",
+      "status": "ok",
+      "findingCount": 0,
+      "durationMs": 1463
+    }
+  ],
+  "coverage": {
+    "corroboratedFindings": 0,
+    "uncoveredFunctions": [],
+    "staticAnalysisSkipped": false,
+    "dynamicAnalysisSkipped": false
+  },
+  "permissions": {
+    "fromSource": {
+      "beforeInitialize": false,
+      "afterInitialize": false,
+      "beforeAddLiquidity": true,
+      "afterAddLiquidity": false,
+      "beforeRemoveLiquidity": true,
+      "afterRemoveLiquidity": false,
+      "beforeSwap": true,
+      "afterSwap": true,
+      "beforeDonate": false,
+      "afterDonate": false,
+      "beforeSwapReturnDelta": false,
+      "afterSwapReturnDelta": false,
+      "afterAddLiquidityReturnDelta": false,
+      "afterRemoveLiquidityReturnDelta": false
+    }
+  },
+  "invariants": [
+    {
+      "id": "I1",
+      "name": "Conservation and solvency",
+      "status": "passed",
+      "runs": 256,
+      "calls": 8192,
+      "reverts": 0
+    },
+    {
+      "id": "I2",
+      "name": "Hook does not block swaps",
+      "status": "passed",
+      "runs": 256,
+      "calls": 8192,
+      "reverts": 0
+    },
+    {
+      "id": "I3",
+      "name": "Exit liveness",
+      "status": "passed",
+      "runs": 256,
+      "calls": 8192,
+      "reverts": 0
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "maxTier": "medium",
+    "maxSeverity": "high",
+    "failures": [
+      "tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium"
+    ]
+  }
+}

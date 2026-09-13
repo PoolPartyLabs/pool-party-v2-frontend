@@ -36,6 +36,13 @@
         "name": "トランザクションを準備中",
         "body": "Pool Party がこのトランザクションの金額とネットワーク手数料を計算しています。まだ何も署名も送信もされていません。"
       }
+    },
+    "awaitingSignature": "署名待ち",
+    "stepsRunning": {
+      "approve": "{token} を承認中"
+    },
+    "stepsDone": {
+      "approve": "{token} を承認しました"
     }
   },
   "card": {
@@ -74,7 +81,9 @@
       "ethereum": "Ethereum",
       "stablecoins": "Stablecoins",
       "altcoins": "Altcoins",
-      "meme": "Meme coins"
+      "meme": "Meme coins",
+      "equities": "Stock Tokens",
+      "rwa": "Real-world assets"
     },
     "count": "{count, plural, =0 {戦略なし} other {# 件の戦略}}",
     "owned": "運用中",
@@ -199,7 +208,8 @@
     "needMore": "あと{amount}必要です",
     "cta": {
       "invest": "投資する",
-      "deposit": "入金して投資"
+      "deposit": "入金して投資",
+      "checking": "残高を確認しています"
     },
     "confirm": {
       "title": "確認して署名",
@@ -241,6 +251,12 @@
     },
     "receipt": {
       "amountInvested": "投資額"
+    },
+    "sizing": {
+      "resizedNotice": "ウォレットの残高は {available} のため、入力された {requested} ではなくこの金額が投資されます。",
+      "refusedTitle": "この金額では投資できません",
+      "refusedBody": "{requested} の投資をご希望でしたが、ウォレットの残高は {available} で、この戦略の最低額は {minimum} です。",
+      "refusedCta": "金額を変更する"
     }
   },
   "collect": {
@@ -365,13 +381,22 @@
         "wrongChain": "ウォレットが別のネットワークに接続されています。{network} に切り替えてもう一度お試しください。",
         "wrongChainUnknown": "ウォレットが別のネットワークに接続されています。ウォレットでネットワークを切り替えてもう一度お試しください。",
         "gasBlocked": "{network}にネットワーク費用を賄えるものがないため、まだ実行できません。{network}で少額の暗号資産を購入するか、他のネットワークから少し移してください。",
-        "gasBlockedUnknown": "このネットワークにネットワーク費用を賄えるものがないため、まだ実行できません。そのネットワークで少額の暗号資産を購入するか、他のネットワークから少し移してください。"
-      }
+        "gasBlockedUnknown": "このネットワークにネットワーク費用を賄えるものがないため、まだ実行できません。そのネットワークで少額の暗号資産を購入するか、他のネットワークから少し移してください。",
+        "transient": "ネットワークまたはウォレットが時間内に応答しませんでした。資金は移動していません。しばらくしてからもう一度お試しください。",
+        "confirmationTimeout": "取引は送信されましたが、時間内に確認できませんでした。すでに完了している可能性があるため、もう一度試す前にウォレットの最近のアクティビティをご確認ください。",
+        "chainUnavailable": "ウォレットで{network}が有効になっていないため、署名できません。ウォレットアプリで{network}を有効にしてから、下のボタンで切り替えてください。",
+        "chainUnavailableUnknown": "ウォレットでこのネットワークが有効になっていないため、署名できません。ウォレットアプリで有効にしてから、もう一度お試しください。",
+        "alreadyBroadcast": "このステップはすでに送信され、現在も追跡中です。ページを再読み込みして再開してください。もう一度送信しないでください。",
+        "upstreamUnavailable": "現在ルートを算出できませんでした。一時的な問題です。少し時間をおいて再度お試しください。",
+        "rangeUnchanged": "これはすでにポジションの範囲なので、移動するものはありません。リバランスするには別の範囲を選んでください。"
+      },
+      "referenceLabel": "参照 ID",
+      "paybisReferenceLabel": "Paybis 参照 ID"
     },
     "slippage": {
       "retryNotice": "価格が最大スリッページ（{value}%）を超えました。現在の価格で再試行しています。",
       "errorTitle": "価格の変動が大きすぎます",
-      "errorBody": "価格が再び最大スリッページ（{value}%）を超えました。設定で引き上げるか、後でもう一度お試しください。"
+      "errorBody": "価格が再び最大スリッページ（{value}%）を超えました。トランザクションは送信されていません。"
     },
     "receipt": {
       "strategy": "戦略",
@@ -469,34 +494,85 @@
       "titleGasOnly": "あと一ステップ",
       "subtitle": "必要なことをすべて計算しました。ここで各ステップを順に処理してから、お客様の取引を実行します。入金ページへの移動は不要です。",
       "cta": "確認して次へ",
-      "cancel": "キャンセル"
+      "cancel": "キャンセル",
+      "feesIncluded": "手数料込みです。",
+      "back": "戻る",
+      "gasOnArrival": "到着時のガス",
+      "showSteps": "手順を表示",
+      "hideSteps": "手順を非表示"
     },
     "requote": {
-      "title": "価格が変わりました",
-      "body": "このステップで受け取れる金額が、承認した価格より約 {percent} 少なくなりました。まだ何も送信していないので、新しい価格を受け入れるか、ここで中止できます。",
-      "accept": "新しい価格を受け入れる",
-      "decline": "ここで中止する"
+      "title": "実行中に価格が変動しました",
+      "body": "市場価格が確保していた{pct}%を超えて変動したため、何も送信されておらず、資金も動いていません。現在の価格でもう一度お試しいただくか、市場が落ち着くまで数分お待ちください。",
+      "accept": "もう一度試す",
+      "decline": "キャンセル"
     },
     "steps": {
       "buyUsdc": "USDCを購入",
       "bridge": "{network}へ移動",
       "bridgeGas": "{network} へ費用を送金",
       "swapGas": "費用を補充",
-      "swapToken": "{token}に交換",
-      "op": "お客様の取引"
+      "swapToken": "{token} を変換",
+      "op": "お客様の取引",
+      "buy": "{token}を購入"
     },
     "captions": {
       "buyUsdc": "カードまたは現地決済",
-      "bridge": "正しいネットワークに資金を移動",
-      "swapGas": "保有資産のごく一部を、ネットワーク費用に交換します",
+      "bridge": "{network} から",
+      "swapGas": "お持ちの {stable} から支払い",
       "op": "元の操作",
-      "approve": "1回だけの許可です。まだ資金は動きません。"
+      "approve": "1回だけの許可です。まだ資金は動きません。",
+      "buy": "お支払い方法はチェックアウト時に表示されます",
+      "buyMethods": "{methods} でお支払い",
+      "onNetwork": "{network}"
     },
     "exec": {
-      "title": "資金を準備しています",
+      "title": "処理中です",
       "subtitle": "購入・ルーティング・補充を自動で行います。完了後すぐに取引が実行されます。",
       "done": "完了",
-      "pending": "処理中"
+      "pending": "処理中",
+      "takingLonger": "通常より時間がかかっています。数分かかることがあります。",
+      "status": {
+        "done": "完了",
+        "active": "ウォレットで続行してください",
+        "waiting": "待機中",
+        "notStarted": "未実行",
+        "skipped": "スキップ",
+        "buying": "購入を完了してください"
+      },
+      "failure": {
+        "slippage": "価格が許容範囲{pct}%を超えました",
+        "slippageNoPct": "このステップの実行中に価格が変動しました",
+        "deadlineExpired": "このステップは時間がかかりすぎ、期限切れになりました",
+        "insufficientFunds": "このステップをまかなう残高が足りませんでした",
+        "userRejected": "ウォレットでこのステップを拒否しました",
+        "unauthorized": "ウォレットにこのステップの権限がありませんでした",
+        "wrongChain": "ウォレットが別のネットワークにありました",
+        "alreadyBroadcast": "このステップはすでに送信され、現在も追跡中です",
+        "upstreamUnavailable": "現在このステップの価格を算出できませんでした",
+        "gasBlocked": "このネットワークには、このステップを実行するためのガスがありません",
+        "unknown": "このステップは完了しませんでした",
+        "chainUnavailable": "このネットワークはウォレットで有効になっていません",
+        "transient": "ネットワークが時間内に応答しませんでした。このステップをもう一度お試しください。",
+        "confirmationTimeout": "送信済みですが、時間内に確認できませんでした。再試行の前にウォレットをご確認ください。"
+      },
+      "keepOpen": "この画面を開いたままにしてください。",
+      "failedTitle": "ステップ {index} が失敗しました",
+      "tryAgain": "もう一度試す",
+      "settledSafe": "{amount} はすでに完了し、安全です。",
+      "settledSafeUnknown": "一部のステップはすでに完了し、安全です。",
+      "stateProcessing": "処理中",
+      "stateDone": "完了",
+      "stop": {
+        "title": "ここで停止しますか？",
+        "settled": "{amount} はすでに完了し、安全です。",
+        "body": "ステップ {index} / {total} は進行中で、このまま自動的に完了します。{restCount, plural, other {ステップ {rest} は開始されません}}。資金はそのままの場所にとどまります。",
+        "bodyLastStep": "ステップ {index} / {total} は進行中で、このまま自動的に完了します。資金はそのままの場所にとどまります。",
+        "bodyNotSent": "ステップ {index} / {total} はまだ資金を動かしていません。ウォレットに署名のリクエストが表示されている場合は拒否してください。{restCount, plural, other {ステップ {rest} は開始されません}}。資金はそのままの場所にとどまります。",
+        "bodyNotSentLastStep": "ステップ {index} / {total} はまだ資金を動かしていません。ウォレットに署名のリクエストが表示されている場合は拒否してください。資金はそのままの場所にとどまります。",
+        "keepGoing": "続ける",
+        "stopAnyway": "それでも停止する"
+      }
     },
     "bridge": {
       "etaSeconds": "通常は約{seconds, plural, other {#秒}}かかります。資金が届き次第、続行します。",
@@ -536,11 +612,13 @@
       },
       "buyCrypto": {
         "cta": "代わりに暗号資産を購入",
-        "hint": "カードまたは Pix で支払えば、ネットワーク間で資金を移す必要はありません。"
+        "hint": "ネットワーク間で資金を移す必要はありません。",
+        "ctaWithAmount": "{amount} を購入",
+        "hintWithMethods": "{methods} で支払えば、ネットワーク間で資金を移す必要はありません。"
       }
     },
     "fundingSources": {
-      "title": "何を使いますか？",
+      "title": "変換するトークンを選択",
       "subtitle": "お持ちのものを選んでください。適切な場所へ移す方法はこちらで用意します。",
       "listLabel": "あなたの資金",
       "rowLabel": "{network} の {symbol}、{amount}、{usd} 相当",
@@ -551,7 +629,7 @@
       "exact": "ちょうど足りています",
       "empty": "ここにはまだ使えるものがありません。",
       "repriced": "最終的な金額が少し高くなりました。{amount} を賄うために、もう1つ選んでください。",
-      "cta": "続ける",
+      "cta": "確認して開始",
       "step": "ステップ {index}",
       "unblock": "この資金を使うには:",
       "unreachable": "{symbol} はまだこのネットワークへ移せません。一覧から別のものを選んでください。",
@@ -559,7 +637,17 @@
         "ok": "利用可能",
         "topUp": "補充が必要",
         "blocked": "まだ使えません"
-      }
+      },
+      "settings": "取引設定",
+      "meter": "{required} のうち {selected}",
+      "enough": "十分です",
+      "bufferNote": "価格変動に備えて{pct}%を確保しています。余った分はウォレットに戻ります。",
+      "convertNeeded": "必要な分だけ変換",
+      "recommended": "おすすめ",
+      "hideDetails": "詳細を隠す",
+      "seeDetails": "詳細を見る",
+      "cancel": "キャンセル",
+      "back": "戻る"
     },
     "recovery": {
       "title": "送金がまだ進行中です",
@@ -575,7 +663,8 @@
         "collect": "収益の受け取り",
         "compound": "収益の再投資",
         "moveRange": "戦略の調整",
-        "close": "ポジションのクローズ"
+        "close": "ポジションのクローズ",
+        "deposit": "残高への入金"
       },
       "leg": {
         "settled": "完了しました。",
@@ -590,6 +679,109 @@
         "rederive": "止まったところから再開できます。",
         "ask": "続ける前に確認していただきたいことがあります。"
       }
+    },
+    "routes": {
+      "need": "{amount} が必要です",
+      "breakdownLabel": "この金額の内訳",
+      "breakdown": "取引に {amount}、ガスに {gas}",
+      "breakdownGasOnly": "ネットワーク手数料に {gas}",
+      "gasMinimum": "このガスの追加分は、今回の取引だけでなく複数の取引に使われます。",
+      "bufferTooltip": "処理中に価格が変動する場合に備え、{pct}%多く交換します。余った分はウォレットに返金されます。",
+      "listLabel": "資金の用意のしかた",
+      "recommended": "おすすめ",
+      "buy": {
+        "subtitle": "{method} で {amount}",
+        "subtitlePending": "最終金額はチェックアウト時に表示されます",
+        "minimum": "{method} は最低 {amount}",
+        "disclosureLabel": "この金額になる理由",
+        "disclosureMinimum": "{minimum} を下回る注文は行わないため、取引に必要な金額がそれより少ない場合でも、購入するのはこの金額です。",
+        "disclosureBuffer": "これは取引に必要な金額より少し多めです。購入の処理中に価格が変動した場合に備える {pct}% と、ネットワーク手数料がかかる場合はその分が含まれます。",
+        "disclosureRemainder": "使わなかった分はウォレットに残り、他の取引に使えます。",
+        "title": "{amount} を購入",
+        "preparing": "購入の準備をしています"
+      },
+      "cancel": "キャンセル",
+      "tokens": {
+        "title": "{amount} を使う",
+        "subtitle": "{amount} 利用可能"
+      },
+      "tokensPlusBuy": {
+        "title": "{available} を使う + {shortfall} を購入",
+        "subtitle": "トークンで {available}、{shortfall} を購入"
+      },
+      "deposit": {
+        "title": "外部ウォレットから入金",
+        "subtitle": "自分の別のウォレットから暗号資産を送金"
+      }
+    },
+    "onramp": {
+      "method": {
+        "blocked": "Paybisでは{amount}以上が必要です。",
+        "minimum": "最低 {amount}",
+        "title": "支払い方法を選択",
+        "currencyLabel": "通貨",
+        "currencyNote": "支払い方法は通貨によって変わります。",
+        "listLabel": "支払い方法",
+        "loading": "この通貨で使える支払い方法を読み込んでいます",
+        "unavailable": "提供元から支払い方法が返されませんでした。このまま進んで、決済画面で支払い方法を選ぶこともできます。",
+        "allBlocked": "現在、{amount}未満を受け付ける支払い方法はありません。キャンセルして金額を変更してください。",
+        "minimumNotice": "{method} は {amount} 未満を受け付けません。この下限は当社ではなく提供元によるもので、必要のない分はウォレットに残ります。",
+        "continue": "続行",
+        "cancel": "キャンセル"
+      },
+      "title": "暗号資産を購入",
+      "exit": "チェックアウトを閉じる",
+      "uncovered": "現在、{currency}で販売できる決済プロバイダーがありません。別の支払い通貨を試すか、すでにお持ちのウォレットから入金してください。",
+      "currencyUnsupported": "{currency}でのカード決済にはまだ対応していません。すでにお持ちのウォレットから入金するか、対応後にあらためてお試しください。",
+      "nativeUnavailable": "ここではまだ現金でETHを購入できません。他のウォレットや取引所からETHを送ってから戻ってください。",
+      "failedBody": "購入が完了しなかったため、資金は移動していません。もう一度お試しください。",
+      "timedOut": "購入はまだ処理中です。資金が失われることはなく、着金しだい続行します。",
+      "reconciling": "購入を確認しています。少し時間がかかる場合があります。",
+      "enterAmount": "決済画面で金額を入力してください。このステップには約{amount}が必要です。",
+      "baselineUnavailable": "残高を確認しています。少々お待ちください。",
+      "openCheckout": "安全な決済画面を開く",
+      "connecting": "安全なチェックアウトを読み込んでいます。",
+      "opening": "安全なチェックアウトを開いています。",
+      "open": "上のチェックアウトで購入を完了してください。",
+      "settled": "購入が確認されました。",
+      "closed": "チェックアウトを閉じました。準備ができたらもう一度始められます。",
+      "rejected": "購入が拒否されました。",
+      "cancelled": "購入がキャンセルされました。",
+      "error": "チェックアウトで問題が発生しました。もう一度お試しください。",
+      "unavailable": "安全なチェックアウトを読み込めませんでした。もう一度お試しください。",
+      "mockMode": "暗号資産の購入はモックモードでは利用できません。",
+      "settlingTitle": "購入を処理しています",
+      "ethUnpricedBody": "現在ETHの価格を取得できなかったため、購入を開始できませんでした。請求は発生していません。もう一度お試しください。",
+      "resume": {
+        "title": "進行中の購入がある可能性があります",
+        "body": "{minutes}分前に購入を開始しました。支払い済みの場合、送金がまだ進行中の可能性があります。再開すると到着を待ちます。新規作成すると新しい購入になるため、最初の購入が成立しなかった場合のみ選んでください。",
+        "resume": "その購入を再開",
+        "startNew": "新しい購入を開始",
+        "paidTitle": "購入した資金がまだ到着していません",
+        "paidBody": "{minutes}分前にお支払いいただきましたが、資金がまだ到着していません。特に銀行振込では時間がかかることがあります。通常はお待ちいただくのが適切です。最初の購入が確実に到着しないと分かっている場合にのみ、新規購入を開始してください。再度支払うことになります。",
+        "keepWaiting": "待機を続ける"
+      }
+    },
+    "secureCheckout": "安全な決済",
+    "slippage": {
+      "raiseCta": "{pct}%に上げて再試行",
+      "customCta": "スリッページ{pct}%で再試行",
+      "raiseCost": "上限を上げると、このステップだけでなく残りのすべての変換が、より不利な価格でも完了できるようになります。完了させたい場合のみ上げてください。",
+      "stop": "ここで停止"
+    },
+    "stepsRunning": {
+      "buy": "{token} を購入中",
+      "bridge": "{network} へ移動中",
+      "bridgeGas": "{network} へ手数料を送信中",
+      "swapGas": "手数料を用意中",
+      "swapToken": "{token} を変換中"
+    },
+    "stepsDone": {
+      "buy": "{token} を購入しました",
+      "bridge": "{network} へ移動しました",
+      "bridgeGas": "{network} へ手数料を送信しました",
+      "swapGas": "手数料を用意しました",
+      "swapToken": "{token} を変換しました"
     }
   }
 }
