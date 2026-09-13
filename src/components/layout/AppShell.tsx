@@ -10,7 +10,7 @@
  *
  * Desktop and mobile use SEPARATE nav sets ({@link DESKTOP_NAV_ITEMS} / {@link MOBILE_NAV_ITEMS}):
  * the mobile tab bar mirrors the 5-tab mobile design (Home · Invest · Cards · Deposit · Profile),
- * while the desktop sidebar has room for Home · Portfolio · Strategies · Deposit · Profile. The
+ * while the desktop sidebar has room for Home · Portfolio · Strategies · Deposit · Tools · Profile. The
  * active item is matched by the leading path segment via `usePathname` (a tab may also own extra
  * segments via {@link NavItem.activeFor}). A {@link ManagerEntry} row is always pinned to the top
  * of the sidebar (the manager area ships in v1, not feature-flagged, murilo 2026-06-11); its
@@ -34,6 +34,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PieChart,
+  ShieldCheck,
   Smile,
   TrendingUp,
   User,
@@ -76,6 +77,7 @@ type NavLabelKey =
   | "strategies"
   | "cards"
   | "deposit"
+  | "tools"
   | "profile"
   | "rubberRush"
   | "managerIncentive";
@@ -144,6 +146,9 @@ const DESKTOP_NAV_ITEMS: readonly NavItem[] = [
   { labelKey: "strategies", href: "/strategies", icon: TrendingUp, flag: "strategies" },
   { labelKey: "cards", href: "/cards", icon: CreditCard, flag: "cards", mockOnly: true },
   { labelKey: "deposit", href: "/deposit", icon: ArrowDownToLine, flag: "deposit" },
+  // Developer tooling (hookrisk). Desktop only: it renders a long Markdown report and asks for a
+  // contract address, neither of which belongs in a five-tab mobile footer.
+  { labelKey: "tools", href: "/tools", icon: ShieldCheck, flag: "hookTools" },
   { labelKey: "profile", href: "/profile", icon: User, flag: "profile" },
   // Manager-only incentive program, then Rubber Rush pinned LAST (both desktop-only, rewards-gated).
   {
@@ -273,6 +278,7 @@ export function AppShell({ children, className }: AppShellProps) {
     strategies: t("nav.strategies"),
     cards: t("nav.cards"),
     deposit: t("nav.deposit"),
+    tools: t("nav.tools"),
     profile: t("nav.profile"),
     rubberRush: t("nav.rubberRush"),
     managerIncentive: t("nav.managerIncentive"),

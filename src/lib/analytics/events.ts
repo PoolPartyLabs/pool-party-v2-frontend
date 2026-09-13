@@ -155,6 +155,16 @@ export const ANALYTICS_EVENTS = [
   // POO-1506 [R40]: the mid-run `8b` prompt appeared (second slippage failure, raise-or-stop asked).
   // Premise 11's blocked-intent event for this screen.
   "funding_slippage_raise_blocked",
+  // Tools — Uniswap v4 hook risk scan (PP-TOOLS-SCR-001 / PP-TOOLS-CMP-001). `completed` fires when
+  // the REPORT is in hand, never on the Analyze click: a scan takes minutes, and a click reported as
+  // a completion would make the funnel show a 100% success rate against a tool that can fail.
+  "tools_hookrisk_viewed",
+  "tools_hookrisk_started",
+  "tools_hookrisk_completed",
+  "tools_hookrisk_failed",
+  // Blocked intent: the user asked for a scan and the product said no (bad address, chain we do not
+  // read). Distinct from `failed`, which is a scan that was attempted and could not finish.
+  "tools_hookrisk_blocked",
   // Rewards
   "reward_program_viewed",
   "reward_referral_shared",

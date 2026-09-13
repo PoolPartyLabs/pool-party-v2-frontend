@@ -88,6 +88,8 @@ function envOverride(key: FeatureKey): string | undefined {
       return process.env.NEXT_PUBLIC_FEATURE_VIRTUALIZE;
     case "strategyCategoryFilter":
       return process.env.NEXT_PUBLIC_FEATURE_STRATEGY_CATEGORY_FILTER;
+    case "hookTools":
+      return process.env.NEXT_PUBLIC_FEATURE_HOOK_TOOLS;
     default:
       return undefined;
   }

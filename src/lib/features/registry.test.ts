@@ -26,7 +26,7 @@ describe("feature registry", () => {
     expect(new Set(vars).size).toBe(vars.length);
   });
 
-  it("encodes the launch matrix — core areas + Rewards + the Privy fiat rail on, everything else off", () => {
+  it("encodes the launch matrix — core areas + Rewards + the Privy fiat rail + the Tools page on, everything else off", () => {
     // Hackathon fork (public repository, 2026-09): `fiatOnRamp` + `privyOnRamp` ship ON so a fresh
     // clone runs the Privy on-ramp without an env file. The test environment pins them back OFF in
     // `tests/setup.ts` for the ported on-ramp suites; this assertion reads the registry directly, so
@@ -37,6 +37,7 @@ describe("feature registry", () => {
         "deposit",
         "fiatOnRamp",
         "home",
+        "hookTools",
         "portfolio",
         "privyOnRamp",
         "profile",
@@ -64,6 +65,13 @@ describe("feature registry", () => {
   it("registers the two off-by-default switches the port carried (diagnostics + chain gate)", () => {
     expect(FEATURES.onRampCapture.defaultEnabled).toBe(false);
     expect(FEATURES.robinhoodChain.defaultEnabled).toBe(false);
+  });
+
+  it("registers the hookTools flag, ON for the hackathon demo fork", () => {
+    expect(FEATURE_KEYS).toContain("hookTools");
+    expect(FEATURES.hookTools.defaultEnabled).toBe(true);
+    expect(FEATURES.hookTools.stage).toBe("next");
+    expect(FEATURES.hookTools.envVar).toBe("NEXT_PUBLIC_FEATURE_HOOK_TOOLS");
   });
 
   it("core areas are stage 'core' and enabled (nav-level kill-switch only)", () => {

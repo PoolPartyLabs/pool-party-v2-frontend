@@ -1,0 +1,38 @@
+{
+  "title": "工具",
+  "subtitle": "随 Pool Party 一起发布的开发者工具。只读，绝不触碰你的钱包。",
+  "hookRisk": {
+    "heading": "Uniswap v4 Hook 风险",
+    "intro": "粘贴已部署 Hook 的地址。hookrisk 会读取其已验证源码、完成编译，按 Uniswap Foundation 的 Hooks Security Framework 打分，并在下方给出报告。",
+    "chainLabel": "链",
+    "addressLabel": "Hook 合约地址",
+    "addressPlaceholder": "0x0000000000000000000000000000000000000000",
+    "submit": "开始分析",
+    "submitRunning": "分析中",
+    "notice": "一次扫描要编译合约并运行带模糊测试的差分 harness，所以耗时是分钟级而不是秒级。报告会缓存 24 小时。",
+    "idleTitle": "还没有扫描",
+    "idleBody": "选择一条链，粘贴已部署 Hook 的地址，然后点击开始分析。",
+    "runningTitle": "扫描中",
+    "elapsed": "已用时 {seconds} 秒",
+    "cached": "来自最近 24 小时内的一次扫描结果。",
+    "gatePassed": "hookrisk 门禁通过。",
+    "gateFailed": "hookrisk 门禁未通过。下方报告说明了原因，门禁未通过是一个结果，不是错误。",
+    "reportHeading": "报告",
+    "errorTitle": "这次扫描没有运行",
+    "retry": "重试",
+    "status": {
+      "queued": "排队中",
+      "fetchingSource": "正在从区块浏览器读取已验证源码",
+      "building": "正在编译合约",
+      "scanning": "正在运行检测器与差分 harness",
+      "done": "报告已生成",
+      "failed": "扫描未能完成"
+    },
+    "errors": {
+      "INVALID_ADDRESS": "这不是有效的合约地址。地址应为以 0x 开头的 42 个字符。",
+      "UNSUPPORTED_CHAIN": "该链不在本工具支持读取的链之内。",
+      "JOB_UNKNOWN": "服务器已不再跟踪这次扫描。请重新运行。",
+      "NETWORK": "无法连接服务器。请确认服务在运行后重试。"
+    }
+  }
+}

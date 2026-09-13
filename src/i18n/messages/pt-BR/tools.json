@@ -1,0 +1,38 @@
+{
+  "title": "Ferramentas",
+  "subtitle": "Ferramentas de desenvolvimento que acompanham a Pool Party. Somente leitura e nunca tocam na sua carteira.",
+  "hookRisk": {
+    "heading": "Risco de hooks Uniswap v4",
+    "intro": "Cole o endereço de um hook publicado. O hookrisk lê o código-fonte verificado, compila, pontua conforme o Hooks Security Framework da Uniswap Foundation e devolve o relatório abaixo.",
+    "chainLabel": "Rede",
+    "addressLabel": "Endereço do contrato do hook",
+    "addressPlaceholder": "0x0000000000000000000000000000000000000000",
+    "submit": "Analisar",
+    "submitRunning": "Analisando",
+    "notice": "A análise compila o contrato e executa um harness diferencial com fuzzing, então espere minutos, não segundos. O relatório fica em cache por 24 horas.",
+    "idleTitle": "Nenhuma análise ainda",
+    "idleBody": "Escolha a rede, cole o endereço de um hook publicado e toque em Analisar.",
+    "runningTitle": "Analisando",
+    "elapsed": "{seconds}s decorridos",
+    "cached": "Resultado de uma análise feita nas últimas 24 horas.",
+    "gatePassed": "O gate do hookrisk passou.",
+    "gateFailed": "O gate do hookrisk falhou. O relatório abaixo explica por quê, e um gate reprovado é um resultado, não um erro.",
+    "reportHeading": "Relatório",
+    "errorTitle": "Esta análise não foi executada",
+    "retry": "Tentar de novo",
+    "status": {
+      "queued": "Na fila",
+      "fetchingSource": "Lendo o código-fonte verificado no explorador de blocos",
+      "building": "Compilando o contrato",
+      "scanning": "Rodando os detectores e o harness diferencial",
+      "done": "Relatório pronto",
+      "failed": "A análise não pôde ser concluída"
+    },
+    "errors": {
+      "INVALID_ADDRESS": "Este não é um endereço de contrato válido. Ele deve ter 42 caracteres e começar com 0x.",
+      "UNSUPPORTED_CHAIN": "Esta rede não está entre as redes que esta ferramenta lê.",
+      "JOB_UNKNOWN": "Esta análise não é mais acompanhada pelo servidor. Rode de novo.",
+      "NETWORK": "Não foi possível falar com o servidor. Verifique se ele está no ar e tente de novo."
+    }
+  }
+}

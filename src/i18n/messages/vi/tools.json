@@ -1,0 +1,38 @@
+{
+  "title": "Công cụ",
+  "subtitle": "Công cụ dành cho lập trình viên đi kèm Pool Party. Chỉ đọc, và không bao giờ chạm vào ví của bạn.",
+  "hookRisk": {
+    "heading": "Rủi ro hook Uniswap v4",
+    "intro": "Dán địa chỉ một hook đã triển khai. hookrisk đọc mã nguồn đã xác minh, biên dịch, chấm điểm theo Hooks Security Framework của Uniswap Foundation và trả về báo cáo bên dưới.",
+    "chainLabel": "Chuỗi",
+    "addressLabel": "Địa chỉ hợp đồng hook",
+    "addressPlaceholder": "0x0000000000000000000000000000000000000000",
+    "submit": "Phân tích",
+    "submitRunning": "Đang phân tích",
+    "notice": "Một lượt quét sẽ biên dịch hợp đồng và chạy harness vi sai có fuzzing, nên hãy tính bằng phút chứ không phải giây. Báo cáo được lưu đệm trong 24 giờ.",
+    "idleTitle": "Chưa có lượt quét nào",
+    "idleBody": "Chọn một chuỗi, dán địa chỉ hook đã triển khai rồi bấm Phân tích.",
+    "runningTitle": "Đang quét",
+    "elapsed": "Đã trôi qua {seconds} giây",
+    "cached": "Kết quả từ một lượt quét trong 24 giờ qua.",
+    "gatePassed": "Cổng kiểm tra hookrisk đã đạt.",
+    "gateFailed": "Cổng kiểm tra hookrisk không đạt. Báo cáo bên dưới nói rõ lý do, và cổng không đạt là một kết quả chứ không phải lỗi.",
+    "reportHeading": "Báo cáo",
+    "errorTitle": "Lượt quét này đã không chạy",
+    "retry": "Thử lại",
+    "status": {
+      "queued": "Đang chờ",
+      "fetchingSource": "Đang đọc mã nguồn đã xác minh từ trình khám phá khối",
+      "building": "Đang biên dịch hợp đồng",
+      "scanning": "Đang chạy các bộ dò và harness vi sai",
+      "done": "Báo cáo đã sẵn sàng",
+      "failed": "Lượt quét không thể hoàn tất"
+    },
+    "errors": {
+      "INVALID_ADDRESS": "Đây không phải địa chỉ hợp đồng hợp lệ. Nó phải có 42 ký tự và bắt đầu bằng 0x.",
+      "UNSUPPORTED_CHAIN": "Chuỗi đó không nằm trong các chuỗi mà công cụ này đọc.",
+      "JOB_UNKNOWN": "Máy chủ không còn theo dõi lượt quét này. Hãy chạy lại.",
+      "NETWORK": "Không liên lạc được với máy chủ. Kiểm tra xem nó có đang chạy không rồi thử lại."
+    }
+  }
+}

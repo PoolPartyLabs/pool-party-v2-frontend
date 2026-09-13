@@ -38,7 +38,8 @@ export type FeatureKey =
   | "robinhoodChain"
   | "activeReserve"
   | "virtualize"
-  | "strategyCategoryFilter";
+  | "strategyCategoryFilter"
+  | "hookTools";
 
 /**
  * Lifecycle stage of an area:
@@ -370,6 +371,23 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
     envVar: "NEXT_PUBLIC_FEATURE_STRATEGY_CATEGORY_FILTER",
     description:
       "The POO-830 category-tags surface (R5/R6/R8). PR2: the investor asset-category multi-select filter on the Strategies Explore screen. PR3: the read-only asset + objective tag preview in the strategy builder's DerivedMandateCard. NOT a route gate, NOT isManager, NOT isMockMode. Default off = today's Explore + builder behavior; on = the filter shows (client-side over loaded strategies) and the builder previews the derived tags.",
+  },
+  hookTools: {
+    key: "hookTools",
+    area: "Tools (Uniswap v4 hook risk)",
+    // ON by default, which no other `next` flag here is, and the exception is deliberate: this is
+    // the HACKATHON DEMO FORK. The Tools page is the submission's front door, so a judge opening
+    // the deployed app has to find it without anybody setting an env var first.
+    //
+    // That also makes the flag the removal seam, the same role `activeReserve` plays. If this page
+    // ever merges toward production it ships OFF and is turned on per environment like everything
+    // else; turning it off must leave no trace on any other surface, which is why exactly two
+    // places read it, the route guard and the sidebar entry.
+    defaultEnabled: true,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_HOOK_TOOLS",
+    description:
+      "The Tools page at `/tools`: paste a deployed Uniswap v4 hook address and get the hookrisk report for it. Route-guarded (404 while off) and gates the sidebar entry. The scan runs server-side and needs the hookrisk toolchain plus ETHERSCAN_API_KEY on the host; without them the page reports what is missing rather than a clean bill of health.",
   },
 };
 
