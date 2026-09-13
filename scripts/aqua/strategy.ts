@@ -12,7 +12,6 @@
  *   pnpm aqua:dock  --strategy 0x...     --vault 0x... --mandate production
  *   pnpm aqua:launch-payloads --vault 0x... --production 60 --demo 40
  */
-import { randomUUID } from "node:crypto";
 import { config } from "dotenv";
 
 config({ path: ".env.local", quiet: true });
