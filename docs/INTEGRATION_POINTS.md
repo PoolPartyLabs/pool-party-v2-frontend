@@ -70,7 +70,7 @@ Epic POO-1022 (2026-07-24/25). **Pay for any Pool Party operation with any token
 
 ## Tools: Uniswap v4 hook risk scan (hookrisk)
 
-Hackathon, 2026-09-13. The `/tools` page (PP-TOOLS-SCR-001) takes a chain and a deployed hook address and returns the hookrisk report for it. Behind the `hookTools` flag; full write-up in `docs/_hackathon_privy/04_TOOLS_PAGE.md`.
+Hackathon, 2026-09-13. The `/tools` page (PP-TOOLS-SCR-001) takes a chain and a deployed hook address and returns the hookrisk report for it. Behind the `hookTools` flag; full write-up in `docs/_hackathon_hookrisk/04_TOOLS_PAGE.md`.
 
 **This surface has no mock branch, deliberately.** Everywhere else in this repo `isMockMode` decides whether data is real, and a mock is a legitimate placeholder. Here it would not be: the artifact is a *risk assessment of a contract someone may be about to trade against*, and a plausible-looking fabricated one is worse than an empty page. So when the toolchain or the key is missing, the job fails fast naming exactly what is absent and the screen prints that instead of a report. That is the same posture hookrisk itself takes (`hookrisk/CLAUDE.md`: a tool that reports nothing looks exactly like success).
 
