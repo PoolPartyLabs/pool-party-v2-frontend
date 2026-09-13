@@ -1,0 +1,20 @@
+# hookrisk's own harness project, used to dogfood the CLI against the
+# planted-bug hooks. `maxFeeBips = 100` is what SkimmingFeeHook documents;
+# it actually charges 350, and invariant I2 is expected to catch the difference.
+[declared]
+teamMaturity = 3
+tvlPotential = 0
+maxFeeBips = 100
+
+[gate]
+
+# Strict on purpose: these are hookrisk's own fixtures, and the dogfood
+# workflow asserts that a hook the harness cannot stand up comes back as a
+# gate failure (exit 2), not as a clean pass with unmeasured dimensions.
+failOnInconclusive = true
+maxTier = "medium"
+maxSeverity = "high"
+
+[engines]
+hookrisk = true
+blocksec = false
