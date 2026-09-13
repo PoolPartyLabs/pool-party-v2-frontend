@@ -23,7 +23,15 @@
     "aqua:roll": "tsx --conditions=react-server scripts/aqua/strategy.ts roll",
     "aqua:dock": "tsx --conditions=react-server scripts/aqua/strategy.ts dock",
     "aqua:launch-payloads": "tsx --conditions=react-server scripts/aqua/strategy.ts launch-payloads",
-    "aqua:discover": "tsx --conditions=react-server scripts/aqua/discover.ts"
+    "aqua:discover": "tsx --conditions=react-server scripts/aqua/discover.ts",
+    "cash-plus:export": "tsx scripts/cash-plus/cli.ts export",
+    "cash-plus:deploy-fork": "tsx scripts/cash-plus/cli.ts deploy-fork",
+    "cash-plus:verify": "tsx scripts/cash-plus/cli.ts verify",
+    "cash-plus:ship": "tsx scripts/cash-plus/cli.ts ship",
+    "cash-plus:keeper": "tsx scripts/cash-plus/cli.ts keeper",
+    "cash-plus:counterparty": "tsx scripts/cash-plus/cli.ts counterparty",
+    "cash-plus:demo": "tsx scripts/cash-plus/cli.ts demo",
+    "cash-plus:evidence": "tsx scripts/cash-plus/snapshot-history.ts"
   },
   "dependencies": {
     "@1inch/aqua-sdk": "0.2.0",
