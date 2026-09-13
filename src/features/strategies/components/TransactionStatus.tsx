@@ -33,6 +33,12 @@ export interface TransactionStatusProps {
   body?: ReactNode;
   /** Footer actions (e.g. View position / Done on success; Try again / Copy error on error). */
   children?: ReactNode;
+  /**
+   * POO-1109: stable handle for the e2e harness. Every flow's terminal state renders through this
+   * component, and the specs have had to match its translated title to know they got there, so a
+   * copy edit in any of 12 locales breaks them. Optional: existing call sites are unaffected.
+   */
+  testId?: string;
 }
 
 /** Phase → icon badge. Kept as a lookup to avoid a nested ternary in the JSX. */
@@ -59,9 +65,19 @@ function StatusIcon({ phase }: { phase: TransactionPhase }) {
 }
 
 /** Centered status block for the transactional flows. */
-export function TransactionStatus({ phase, title, body, children }: TransactionStatusProps) {
+export function TransactionStatus({
+  phase,
+  title,
+  body,
+  children,
+  testId,
+}: TransactionStatusProps) {
   return (
-    <div className="flex flex-col items-center gap-4 py-4 text-center">
+    <div
+      data-testid={testId}
+      data-phase={phase}
+      className="flex flex-col items-center gap-4 py-4 text-center"
+    >
       <StatusIcon phase={phase} />
       <div>
         {/* POO-807 R1: the mock-mode indicator (self-gated; nothing renders in real mode). */}

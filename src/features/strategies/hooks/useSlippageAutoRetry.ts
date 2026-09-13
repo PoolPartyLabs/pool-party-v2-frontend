@@ -27,6 +27,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { AnalyticsFlow } from "@/lib/analytics/events";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import type { WalletSignFlow } from "./useWalletSignFlow";
 
@@ -35,7 +36,11 @@ export interface UseSlippageAutoRetryOptions<Ctx = Record<string, unknown>> {
   /** The wallet-sign flow whose slippage failures drive the orchestration. */
   flow: WalletSignFlow<Ctx>;
   /** The operation name for the analytics event (e.g. "invest", "withdraw", "collect"). */
-  flowName: string;
+  /**
+   * POO-1171: narrowed from `string` to the closed {@link AnalyticsFlow}. All eight callers already
+   * passed a member of it, so this is the type catching up with reality rather than a migration.
+   */
+  flowName: AnalyticsFlow;
   /** The strategy id for the analytics event. */
   strategyId: string;
   /** The current gear slippage tolerance, in percent (interpolated into the notice + error copy). */

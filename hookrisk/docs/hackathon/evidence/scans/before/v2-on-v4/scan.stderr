@@ -1,0 +1,23 @@
+  hookrisk: slither src/V2PairHook.sol:V2PairHook
+  hookrisk: 2 finding(s) in other files, not attributed to this target
+  hookrisk: 4 finding(s)
+  harness: skipped — V2PairHook's constructor takes 0 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported — see docs/INVARIANTS.md.
+
+MEDIUM risk  10/33  (undetermined: up to 22/33)
+
+  findings    2 high, 1 info
+  ✓ hookrisk   ok
+  ! 4 dimension(s) unmeasured: the tier is between Medium Risk and High Risk. Unmeasured dimensions are excluded from the total, never counted as zero.
+  ! trigger 'holds-liquidity' could not be evaluated: dimension 'externalLiquidityExposure' is unmeasured
+  ! trigger 'external-dependencies' could not be evaluated: dimension 'externalDependencies' is unmeasured
+  ! trigger 'autonomous' could not be evaluated: dimension 'autonomousParameterUpdates' is unmeasured
+  ! trigger 'upgradeable' could not be evaluated: dimension 'upgradeability' is unmeasured
+
+  /private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v2-on-v4/out/HOOK_RISK.md
+  /private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v2-on-v4/out/hook-risk.json
+  /private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v2-on-v4/out/hookrisk.sarif
+
+  gate failed
+    - tier is undetermined between Medium Risk and High Risk; the upper bound exceeds the configured maximum of medium
+    - 2 finding(s) at or above high: V2PairHook.afterSwap(address,PoolKey,IPoolManager.SwapParams,BalanceDelta,bytes) (src/V2PairHook.sol#196-207) is an IHooks callback (0xb47b2fb1) that never c...; V2PairHook (src/V2PairHook.sol#21-284) declares permission `beforeAddLiquidity` (bit 11, BEFORE_ADD_LIQUIDITY_FLAG) but provides no working `beforeAddLiquidi...
+

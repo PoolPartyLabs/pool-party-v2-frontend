@@ -15,7 +15,7 @@ data services are fully wired behind a toggle and 151 `PP-INTEGRATION-POINT` sea
 
 | Surface | Status | Evidence |
 |---|---|---|
-| Wallet / auth (Privy + wagmi/viem) | REAL | `@privy-io/react-auth` 3.29.2, `@privy-io/wagmi` 4.0.11; `src/app/providers.tsx:74-109` (gated on `!isMockMode`) |
+| Wallet / auth (Privy + wagmi/viem) | REAL | `@privy-io/react-auth` 3.42.0, `@privy-io/wagmi` 4.0.17 (bumped for the Privy on-ramp port; `useAddFunds` ships from 3.40); `src/app/providers.tsx:74-109` (gated on `!isMockMode`) |
 | Chains | Arbitrum (42161), Base (8453), Polygon (137) | `src/lib/chains/config.ts:54,59,74` |
 | Session auth | REAL | SIWE → JWT in httpOnly cookie `pp_access_token`; `src/lib/auth/session.ts:21,47-70` |
 | Analytics (GTM/GA4) | REAL | `@next/third-parties`; `src/app/[locale]/layout.tsx:66`; Consent Mode v2 `src/lib/analytics/consentSnippet.ts`; ~60 events `src/lib/analytics/events.ts` |
@@ -24,7 +24,7 @@ data services are fully wired behind a toggle and 151 `PP-INTEGRATION-POINT` sea
 | Main API client | BUILT, mock-by-default | `apiFetch` server-only, x-api-key, GET retries, Next cache tags; `src/lib/api/client.ts:128-255` |
 | Analytics indexer client | BUILT, mock-by-default | `analyticsFetch`; `src/lib/analytics-api/client.ts:56-146` |
 | Data services (tokens, strategies, positions, balances, rewards, manager, cards, tx) | MOCKED-ONLY | `src/lib/services/index.ts` ternary; real branch placeholder; fixtures in `src/mocks/` |
-| Paybis (fiat on/off-ramp) | MOCKED-ONLY (CSP-ready) | `src/features/deposit/DepositScreen.tsx:192-205`; allowlisted `src/lib/security/csp.ts:66,76`; SDK not installed |
+| Fiat on-ramp (Privy rail; Paybis dormant) | REAL in real mode, default ON (`fiatOnRamp` + `privyOnRamp`) | Ported from the private repository for the hackathon (epic POO-1793). `/deposit` runs `DepositPrivyCheckout` (`PP-DEP-CMP-006`) over `usePrivyOnRamp` (`PP-CORE-HOK-035`, `useAddFunds`), the provisioning gate emits a `buy` leg rendered by `PrivyBuyStep` (`PP-STR-CMP-029`); settlement is the OBSERVED balance delta (`awaitOnRampSettlement`, `PP-CORE-LIB-110`), never the provider claim. Vendor environment DERIVED (`resolveOnRampEnvironment`: sandbox unless `NEXT_PUBLIC_APP_ENV=production` and real mode). Mock mode keeps the fixture path. Paybis modules remain in the tree behind `privyOnRamp=off` and are not mounted. CSP: `crypto-js.stripe.com`, `js.stripe.com`, `*.rpc.privy.systems` (`src/lib/security/csp.ts`) |
 | CoinGecko (prices) | ABSENT | logo CDN only; no price feed |
 
 ## The mock toggle

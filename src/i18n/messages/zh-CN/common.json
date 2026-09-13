@@ -34,5 +34,10 @@
     "leave": "离开",
     "stay": "继续编辑"
   },
-  "opensInNewTab": "在新标签页中打开"
+  "opensInNewTab": "在新标签页中打开",
+  "chainSwitch": {
+    "pending": "正在切换到 {network}...",
+    "to": "切换到 {network}",
+    "failed": "您的钱包未切换到 {network}。请确认钱包中已启用该网络后重试。"
+  }
 }

@@ -1,0 +1,1 @@
+"""hookrisk Slither detectors."""

@@ -13,10 +13,20 @@
  * decomposes into a same-chain swap then a same-token bridge, because a cross-chain different-token
  * quote is not routable (POO-1034 [R1]).
  *
+ * {@link gasTopUpStep} is the file's second scenario (POO-1779): a single-chain gas top-up, whose
+ * subject is the chain's own stable rather than a route. It is parameterised because the answer
+ * differs per chain, which is the only reason the step exists as a factory here.
+ *
  * Lives under `tests/` rather than `src/` because it is test-only data, alongside the existing
  * `tests/virtualizationLayout.ts` helper.
  */
-import type { ProvisioningLeg, ProvisioningPlan, ProvisioningStep } from "@/lib/provisioning";
+import {
+  NATIVE_TOKEN_ADDRESS,
+  type ProvisioningLeg,
+  type ProvisioningLegToken,
+  type ProvisioningPlan,
+  type ProvisioningStep,
+} from "@/lib/provisioning";
 
 /** Polygon 137. */
 export const WETH_POLYGON = {
@@ -41,6 +51,58 @@ export const USDC_ARBITRUM = {
   decimals: 6,
   chainId: 42161,
 } as const;
+
+/**
+ * Robinhood Chain 4663, whose stable slot holds USDG rather than USDC (POO-1779 [R1]).
+ *
+ * The address is the deployed one carried in `src/lib/chains/config.ts`, hardcoded here rather than
+ * read back from that config: a fixture that derives its data from the module under test can only
+ * ever agree with it.
+ */
+export const USDG_ROBINHOOD = {
+  address: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+  symbol: "USDG",
+  decimals: 6,
+  chainId: 4663,
+} as const;
+
+/**
+ * A gas top-up step: spend the chain's OWN stable for its native coin, on one chain (POO-1779 [R1]).
+ *
+ * Parameterised by the stable because that is the whole subject of the rule. The row's caption reads
+ * "Paid from your {stable}" and the answer differs per chain: USDC on the launch three, USDG on
+ * Robinhood Chain. Both {@link USDC_ARBITRUM} and {@link USDG_ROBINHOOD} sit on an ETH-gas chain, so
+ * the delivered native symbol is a constant here and the stable is the only thing that varies.
+ */
+export function gasTopUpStep(stable: ProvisioningLegToken): ProvisioningStep {
+  const chainId = stable.chainId;
+  return {
+    type: "swap-gas",
+    key: "swap-gas-0",
+    labelKey: "provisioning.steps.swapGas",
+    fromToken: stable.symbol,
+    toToken: "ETH",
+    fromChainId: chainId,
+    toChainId: chainId,
+    chainId,
+    amountUsd: 10,
+    amountToken: "10",
+    method: "SEND_TX",
+    leg: {
+      index: 0,
+      kind: "swap-gas",
+      chainId,
+      tokenIn: stable,
+      tokenOut: { address: NATIVE_TOKEN_ADDRESS, symbol: "ETH", decimals: 18, chainId },
+      amountIn: "10000000",
+      amountOutQuoted: "3000000000000000",
+      minAmountOut: "2940000000000000",
+      routing: "CLASSIC",
+      gasUsd: 0.02,
+      requoteAtExecution: false,
+    },
+  };
+}
 
 /** Leg 0: swap WETH into USDC, on Polygon. */
 export const SWAP_LEG: ProvisioningLeg = {

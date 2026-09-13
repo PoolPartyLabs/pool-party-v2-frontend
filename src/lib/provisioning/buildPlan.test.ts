@@ -24,11 +24,13 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FundingSource } from "@/lib/balances/fundingInventory";
+import { getUsdcAddress } from "@/lib/chains/config";
 import type { UniswapQuoteResponse, UniswapRouting } from "@/lib/uniswap/schemas";
+import { PAYBIS_MIN_USD } from "./computeNeed";
 import { planCostBreakdown } from "./costBreakdown";
 import { quoteFixture } from "./fixtures/uniswapQuotes";
 import type { GasFeasibility, GasTopUpPlan } from "./gasFeasibility";
-import type { ProvisioningLeg, ProvisioningStepType } from "./types";
+import type { ProvisioningLeg, ProvisioningStep, ProvisioningStepType } from "./types";
 
 const mocks = vi.hoisted(() => ({ quoteSwap: vi.fn() }));
 vi.mock("@/lib/uniswap/actions", () => ({
@@ -1493,5 +1495,1276 @@ describe("buildPlan: bridging gas into a BLOCKED target chain [R1]", () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.code).toBe("PROVISIONING_GAS_BLOCKED");
+  });
+});
+
+/**
+ * POO-1107. `priceLeg` collapsed EVERY `!result.ok` into "this source is not routable", including a
+ * transient 429. So a throttled quote read as "no route exists": the source was silently dropped and
+ * a funded wallet could be told it had insufficient funds.
+ *
+ * The distinction is the whole point. A 404 IS a routing boundary and must still drop the source, or
+ * every unroutable pair would fail the plan. A 429 is not an answer about routing at all.
+ */
+describe("buildPlan: a throttled quote is not a routing verdict (POO-1107)", () => {
+  const usdcBase = () =>
+    source({
+      chainId: BASE,
+      address: USDC_BASE,
+      symbol: "USDC",
+      decimals: 6,
+      amount: "500000000",
+      usd: 500,
+    });
+
+  // Both throttles, because they are different code vocabularies from different hops and only one
+  // of them is the case that actually fires. `FUNDING_WALLET_RATE_LIMITED` is pool-party-api's own
+  // per-wallet Uniswap-quota shed (POO-1097 [R2]); `UNISWAP_RATE_LIMITED` is Uniswap's 429
+  // forwarded through it. A set covering only the forwarded one leaves the real case broken.
+  it.each([
+    "FUNDING_WALLET_RATE_LIMITED",
+    "THROTTLER",
+    "UNISWAP_RATE_LIMITED",
+    "SYSTEM_TIMEOUT",
+  ])("[R2] reports an upstream failure, never insufficient funds, when a quote fails with %s", async (code) => {
+    mocks.quoteSwap.mockResolvedValue({
+      ok: false,
+      code,
+      message: "Too many requests",
+    });
+
+    const result = await buildPlan({
+      targetChainId: ARBITRUM,
+      requiredAmount: "100000000",
+      requiredUsd: 100,
+      sources: [usdcBase()],
+      inventory: [usdcBase()],
+      gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: verdict(ARBITRUM) },
+      slippagePct: 2,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    // The user has 500 USDC. Telling them they are short is the specific failure to eliminate.
+    expect(result.code).not.toBe("PROVISIONING_INSUFFICIENT_FUNDS");
+    expect(result.code).toBe("PROVISIONING_UPSTREAM_UNAVAILABLE");
+  });
+
+  it("[R1] a 404 still drops the source, because that IS a routing verdict", async () => {
+    // The regression guard for the fix: if the transient check were widened to catch everything,
+    // an unroutable pair would fail the whole plan instead of moving to the next source.
+    mocks.quoteSwap.mockResolvedValue({
+      ok: false,
+      code: "UNISWAP_REQUEST_ERROR",
+      message: "ResourceNotFound",
+    });
+
+    const result = await buildPlan({
+      targetChainId: ARBITRUM,
+      requiredAmount: "100000000",
+      requiredUsd: 100,
+      sources: [usdcBase()],
+      inventory: [usdcBase()],
+      gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: verdict(ARBITRUM) },
+      slippagePct: 2,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("PROVISIONING_INSUFFICIENT_FUNDS");
+  });
+
+  // The throw escalates the two GAS pricing sites as well, and those answer with a different code.
+  // Both assertions are about not lying: a throttled quote must not be reported as a settled fact
+  // about the user's money, whether that fact is "you are short" or "this chain cannot transact".
+  it("[R2] a throttled gas-bridge quote is an outage, not a BLOCKED verdict", async () => {
+    const ethOnBase = source({
+      address: NATIVE_TOKEN_ADDRESS,
+      chainId: BASE,
+      symbol: "ETH",
+      decimals: 18,
+      amount: (ONE_ETH / BigInt(100)).toString(),
+      usd: 36,
+    });
+
+    mocks.quoteSwap.mockResolvedValue({
+      ok: false,
+      code: "FUNDING_WALLET_RATE_LIMITED",
+      message: "Too many funding requests for this wallet; retry in 12s",
+    });
+
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [usdcBase()],
+        // The wallet CAN donate gas into the blocked target; only the quote is unavailable.
+        inventory: [usdcBase(), ethOnBase],
+        gasByChain: {
+          [BASE]: verdict(BASE),
+          [ARBITRUM]: verdict(ARBITRUM, {
+            verdict: "BLOCKED",
+            shortfallUsd: 0.075,
+            surplusUsd: 0,
+            reasonKey: "provisioning.gasVerdict.noNative",
+          }),
+        },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    // PROVISIONING_GAS_BLOCKED would claim the chain is unusable. We do not know that: we could not
+    // price the bridge that would have unblocked it.
+    expect(result.code).not.toBe("PROVISIONING_GAS_BLOCKED");
+    expect(result.code).toBe("PROVISIONING_UPSTREAM_UNAVAILABLE");
+  });
+
+  it("[R2] a throttled swap-gas top-up quote is an outage, not a shortfall", async () => {
+    mocks.quoteSwap.mockResolvedValue({
+      ok: false,
+      code: "SYSTEM_RATE_LIMITED",
+      message: "Too Many Requests",
+    });
+
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [WETH_ON_POLYGON],
+        gasByChain: {
+          [POLYGON]: verdict(POLYGON, { verdict: "TOP_UP", shortfallUsd: 10, topUp: topUp() }),
+          [ARBITRUM]: verdict(ARBITRUM),
+        },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).not.toBe("PROVISIONING_INSUFFICIENT_FUNDS");
+    expect(result.code).toBe("PROVISIONING_UPSTREAM_UNAVAILABLE");
+  });
+});
+
+// -------------------------------------------------------------------------------------------------
+// POO-1135: the fiat on-ramp funds what the wallet cannot. `buildPlan` emitted zero fiat steps before
+// this; a shortfall dead-ended in PROVISIONING_INSUFFICIENT_FUNDS or PROVISIONING_GAS_BLOCKED. With
+// `onRampEnabled`, it emits a `buy` leading step (+ display swap/bridge, re-sized at execution by
+// POO-1136) instead. Epic POO-1129 rules v3.
+// -------------------------------------------------------------------------------------------------
+
+describe("POO-1135: the fiat on-ramp buy leg [R1]/[R2]", () => {
+  const blocked = (chainId: number, over: Partial<GasFeasibility> = {}) =>
+    verdict(chainId, {
+      verdict: "BLOCKED",
+      shortfallUsd: 0.075,
+      surplusUsd: 0,
+      reasonKey: "provisioning.gasVerdict.noNative",
+      ...over,
+    });
+
+  // @rule R1 R2 — empty wallet, off-Base target: buy ETH (gas-first) -> swap the op slice to USDC on
+  // Base -> bridge to the operation's chain -> op.
+  it("buys ETH on Base, swaps to USDC and bridges, for an empty wallet on Arbitrum", async () => {
+    // POO-1916 [R3]: the fiat bridge is QUOTED before the purchase is offered, so an off-Base
+    // target needs the leg it will really run to be a pair the table serves.
+    route(USDC_BASE, BASE, USDC_ARBITRUM, ARBITRUM, { routing: "BRIDGE", ...BRIDGE_RATE });
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [ARBITRUM]: blocked(ARBITRUM) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["buy", "swap-token", "bridge", "op"]);
+
+    const buy = result.plan.steps.find((step) => step.type === "buy");
+    expect(buy?.toToken).toBe("ETH");
+    expect(buy?.toChainId).toBe(BASE);
+    expect(buy?.poweredBy).toBe("paybis");
+    expect(buy?.order?.currencyCode).toBe("ETH-BASE");
+    // A fiat step has no source chain, so the merged caption path must tolerate its absence.
+    expect(buy?.fromChainId).toBeUndefined();
+
+    expect(result.plan.variant).toBe("multi");
+    expect(result.plan.reason).toEqual(expect.arrayContaining(["gas", "usdc", "network"]));
+    // The fiat path is PRICED by Paybis, not Uniswap, and its display steps still carry no executable
+    // leg (their real size is the settled delta, POO-1136). POO-1916 [R3] adds exactly one Uniswap
+    // call to it, and it is not a price: it is the routability probe on the leg that crosses, whose
+    // numbers are discarded. One, so a regression that starts sizing the fiat path from a quote reds
+    // here rather than silently pricing money that has not arrived.
+    expect(quoteCalls()).toHaveLength(1);
+    expect(quoteCalls()[0]).toMatchObject({ tokenInChainId: BASE, tokenOutChainId: ARBITRUM });
+    expect(legsOf(result.plan)).toHaveLength(0);
+  });
+
+  // POO-1542 [B]: the reachable case named in the issue, at buildPlan's OWN boundary. This function
+  // already read Base's verdict before this issue (unlike the panel, which read only the target's),
+  // so its OWN decision for this exact input does not move. What this locks in is that switching to
+  // the function SHARED with `fundingRoutes.ts` (`onRampRouteBuysGas`) preserves that decision byte
+  // for byte, which is what makes the two call sites provably unable to diverge going forward. Proof
+  // that the shared predicate is otherwise a real change lives in `computeNeed.test.ts` (mutating
+  // `onRampRouteBuysGas` itself) and `fundingRoutes.test.ts` (the row-level divergence this issue
+  // actually reports: the panel's OWN target-only reading disagreeing with this one).
+  it("still buys ETH gas-first when the TARGET chain is OK but Base has no verdict at all", async () => {
+    // POO-1916 [R3]: the fiat bridge is QUOTED before the purchase is offered, so an off-Base
+    // target needs the leg it will really run to be a pair the table serves.
+    route(USDC_BASE, BASE, USDC_ARBITRUM, ARBITRUM, { routing: "BRIDGE", ...BRIDGE_RATE });
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [ARBITRUM]: verdict(ARBITRUM) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const buy = result.plan.steps.find((step) => step.type === "buy");
+    expect(buy?.toToken).toBe("ETH");
+    expect(buy?.toChainId).toBe(BASE);
+  });
+
+  // POO-1542 [B]: the one input the shared predicate MOVES at this boundary. The old expression here
+  // (`gasStillBlocked || Base not-OK`) read a merely-TOP_UP target as fine and ordered plain USDC;
+  // `onRampRouteBuysGas` reads any not-OK target as "buys gas", so this case now goes ETH-first with
+  // a gas component on the order. Deliberate, and the [R4] direction: the surplus stays in the wallet
+  // and never strands, so the cost is a few dollars more on the card, never an understated row or an
+  // unbroadcastable route. The crypto swap-gas leg for the target's own top-up still rides alongside,
+  // the same deliberate double provision as the Base TOP_UP case below.
+  it("buys ETH gas-first when Base is OK but the TARGET chain is only TOP_UP", async () => {
+    // POO-1916 [R3]: the fiat bridge is QUOTED before the purchase is offered, so an off-Base
+    // target needs the leg it will really run to be a pair the table serves.
+    route(USDC_BASE, BASE, USDC_ARBITRUM, ARBITRUM, { routing: "BRIDGE", ...BRIDGE_RATE });
+    route(WETH_ARBITRUM, ARBITRUM, NATIVE_TOKEN_ADDRESS, ARBITRUM, {
+      routing: "CLASSIC",
+      ...PARITY,
+      gasFeeUSD: "0.01",
+    });
+
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: {
+          [BASE]: verdict(BASE),
+          [ARBITRUM]: verdict(ARBITRUM, {
+            verdict: "TOP_UP",
+            shortfallUsd: 10,
+            topUp: topUp({
+              token: {
+                symbol: "WETH",
+                address: WETH_ARBITRUM,
+                decimals: 18,
+                balanceRaw: ONE_ETH.toString(),
+                balanceUsd: 2_500,
+              },
+            }),
+          }),
+        },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const buy = result.plan.steps.find((step) => step.type === "buy");
+    expect(buy?.toToken).toBe("ETH");
+    expect(buy?.toChainId).toBe(BASE);
+    expect(buy?.order?.currencyCode).toBe("ETH-BASE");
+  });
+
+  // @rule R1 — a wallet that already has gas on Base buys USDC directly, with no swap.
+  it("buys USDC directly when the wallet already has gas on Base", async () => {
+    // POO-1916 [R3]: the fiat bridge is QUOTED before the purchase is offered, so an off-Base
+    // target needs the leg it will really run to be a pair the table serves.
+    route(USDC_BASE, BASE, USDC_ARBITRUM, ARBITRUM, { routing: "BRIDGE", ...BRIDGE_RATE });
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: verdict(ARBITRUM) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["buy", "bridge", "op"]);
+    const buy = result.plan.steps.find((step) => step.type === "buy");
+    expect(buy?.toToken).toBe("USDC");
+    expect(buy?.order?.currencyCode).toBe("USDC-BASE");
+  });
+
+  // @rule R1 R2 — a Base operation never bridges; a gas-first buy still swaps its op slice to USDC.
+  it("stays on Base for a Base operation, no bridge", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: BASE,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [BASE]: blocked(BASE) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["buy", "swap-token", "op"]);
+  });
+
+  // @rule R1 — carry (POO-1133 review): a gas-only fiat top-up buys ETH but has NOTHING to swap, so
+  // the ETH->USDC leg is skipped despite `needsSwapToUsdc` mirroring the ETH choice. Emitting it would
+  // charge the user gas for a swap of nothing.
+  it("skips the ETH->USDC swap for a gas-only top-up (op-funding slice is zero)", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: BASE,
+        requiredAmount: "0",
+        requiredUsd: 0,
+        sources: [],
+        gasByChain: { [BASE]: blocked(BASE) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["buy", "op"]);
+    expect(result.plan.steps.find((step) => step.type === "buy")?.toToken).toBe("ETH");
+    expect(result.plan.variant).toBe("gas-only");
+    expect(result.plan.reason).toEqual(["gas"]);
+  });
+
+  // @rule R6 — the whole order floors at the Paybis $10 minimum, even for a $2 shortfall.
+  it("floors the fiat amount at the Paybis minimum for a tiny shortfall", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: BASE,
+        requiredAmount: "2000000",
+        requiredUsd: 2,
+        sources: [],
+        gasByChain: { [BASE]: verdict(BASE) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const buy = result.plan.steps.find((step) => step.type === "buy");
+    expect(Number(buy?.order?.fiatAmount)).toBeGreaterThanOrEqual(10);
+  });
+
+  // The crypto-only cut is unchanged: with the on-ramp off, a shortfall still dead-ends exactly as it
+  // did, so shipping this code dark cannot move production behaviour.
+  it("still fails with PROVISIONING_INSUFFICIENT_FUNDS when the on-ramp is disabled", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [ARBITRUM]: verdict(ARBITRUM) },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("PROVISIONING_INSUFFICIENT_FUNDS");
+  });
+
+  it("still fails with PROVISIONING_GAS_BLOCKED when the on-ramp is disabled", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: "0",
+        requiredUsd: 0,
+        sources: [],
+        gasByChain: { [ARBITRUM]: blocked(ARBITRUM) },
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("PROVISIONING_GAS_BLOCKED");
+  });
+
+  // PR 719 review, BLOCKING. The on-ramp does NOT un-block every chain. The rail delivers ETH or USDC
+  // on BASE and nothing else ([R2]), and `planGasBridge` needs a donor holding the SAME native symbol
+  // (there is no cross-chain different-token route), so a POL chain can be reached by neither path.
+  // Falling the refusal through for it emitted buy-ETH-on-Base -> swap -> bridge-USDC-to-Polygon and
+  // handed back a plan whose op transaction can never broadcast: the user pays fiat and the USDC
+  // lands where they hold zero native. That is the stranded-halfway plan UF-22 [R3] forbids, so the
+  // refusal stands regardless of the flag. Arbitrum and Base (both ETH) are covered above; only
+  // Polygon exercises the non-ETH branch, which is why this slipped.
+  it("[R3] still refuses a gas-BLOCKED POLYGON target, on-ramp enabled or not", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: POLYGON,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [POLYGON]: blocked(POLYGON) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("PROVISIONING_GAS_BLOCKED");
+    // The native coin the rail cannot deliver is named, so the refusal is diagnosable from the
+    // response alone.
+    expect(result.message).toContain("POL");
+  });
+
+  // The same refusal on the pure `gasStillBlocked` shape (nothing to fund, only gas missing), which
+  // is the emit gate rather than the early return.
+  it("[R3] refuses a gas-only POLYGON top-up too, rather than buying gas it cannot deliver", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: POLYGON,
+        requiredAmount: "0",
+        requiredUsd: 0,
+        sources: [],
+        gasByChain: { [POLYGON]: blocked(POLYGON) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.code).toBe("PROVISIONING_GAS_BLOCKED");
+  });
+
+  // PR 719 review, DECIDED (keep). A Base TOP_UP verdict plans a swap-gas leg AND the buy still goes
+  // ETH-first, so Base gas is provisioned twice. That is deliberate: the swap-gas leg is itself a Base
+  // transaction, so it cannot fund the purchase's own swap/bridge ORIGIN transactions on Base — those
+  // have to be payable before it runs. Buying ETH first is what makes them executable at all. Per [R4]
+  // the surplus stays in the wallet and never strands; a few dollars more on the card is the right
+  // side to err on against an unbroadcastable route.
+  it("[R1] buys ETH first on a Base TOP_UP, keeping the deliberate double gas provision", async () => {
+    route(USDC_BASE, BASE, NATIVE_TOKEN_ADDRESS, BASE, {
+      routing: "CLASSIC",
+      // The inverse of the table's $2,500 ETH: 2,500e6 USDC buys 1e18 wei.
+      rateNum: ONE_ETH,
+      rateDen: BigInt(2_500) * BigInt(10) ** BigInt(6),
+      gasFeeUSD: "0.01",
+    });
+    /** $50 of USDC on Base against a $100 requirement: the tokens-plus-buy shape. */
+    const HALF_USDC_ON_BASE = source({
+      address: USDC_BASE,
+      chainId: BASE,
+      symbol: "USDC",
+      decimals: 6,
+      amount: "50000000",
+      usd: 50,
+    });
+
+    const result = await buildPlan(
+      {
+        targetChainId: BASE,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [HALF_USDC_ON_BASE],
+        gasByChain: {
+          [BASE]: verdict(BASE, {
+            verdict: "TOP_UP",
+            shortfallUsd: 10,
+            topUp: topUp({
+              token: {
+                symbol: "USDC",
+                address: USDC_BASE,
+                decimals: 6,
+                balanceRaw: "50000000",
+                balanceUsd: 50,
+              },
+              amountRaw: "10000000",
+            }),
+          }),
+        },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // Both provisions are present: the crypto swap-gas leg AND a gas-first fiat buy.
+    expect(stepTypes(result.plan.steps)).toEqual(["buy", "swap-token", "swap-gas", "op"]);
+
+    const buy = result.plan.steps.find((step) => step.type === "buy");
+    expect(buy?.toToken).toBe("ETH");
+    expect(buy?.order?.currencyCode).toBe("ETH-BASE");
+    // $10 of the $50 holding went to the swap-gas leg, so $40 funded the operation and $60 is left to
+    // buy. The order carries the gas component ON TOP of that, which is the over-buy being accepted.
+    expect(Number(buy?.order?.fiatAmount)).toBeGreaterThan(60);
+    // Exactly one crypto leg, the Base swap-gas: the fiat steps carry none (POO-1136 sizes them).
+    const legs = legsOf(result.plan);
+    expect(legs).toHaveLength(1);
+    expect(legs[0]).toMatchObject({ kind: "swap-gas", chainId: BASE });
+  });
+});
+// -------------------------------------------------------------------------------------------------
+// POO-1916, superseding POO-1779 / POO-1784 for the stable question. The on-ramp sells USDC on Base,
+// but the leg that carries a purchase onwards is a BRIDGE and the bridge is NOT same-token-only:
+// `USDC(8453) -> USDG(4663)` answers `200`, `routing: "BRIDGE"` (probed live 2026-09-11, re-probed
+// 2026-09-12, 10.000000 USDC in for ~9.95 USDG out). So a fiat purchase does reach a Robinhood
+// strategy, and the refusal was withholding a route that works.
+//
+// What replaces the refusal is not a second hardcode ("4663 is fine") but the live question ([R3]):
+// the planner quotes the fiat bridge before it offers the purchase, and a pair the bridge will not
+// carry degrades into the same `PROVISIONING_INSUFFICIENT_FUNDS` dead end a `404` already produces.
+// -------------------------------------------------------------------------------------------------
+
+describe("POO-1916: the fiat on-ramp funds a chain whose stable the BRIDGE can deliver", () => {
+  const ROBINHOOD = 4663;
+  /** Read from the registry, never retyped: [R2] is "the target stable comes from `ChainMeta`". */
+  const USDG = getUsdcAddress(ROBINHOOD) as string;
+
+  const blocked = (chainId: number) =>
+    verdict(chainId, {
+      verdict: "BLOCKED",
+      shortfallUsd: 0.075,
+      surplusUsd: 0,
+      reasonKey: "provisioning.gasVerdict.noNative",
+    });
+
+  /** The leg the live probe confirmed: Base USDC into the target chain's own stable. */
+  const fiatBridge = (tokenOut: string, chainOut: number) =>
+    route(USDC_BASE, BASE, tokenOut, chainOut, { routing: "BRIDGE", ...BRIDGE_RATE });
+
+  // @rule R1
+  it("[R1] plans buy -> bridge -> op for a USDG target the bridge can reach", async () => {
+    fiatBridge(USDG, ROBINHOOD);
+
+    const result = await buildPlan(
+      {
+        targetChainId: ROBINHOOD,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [BASE]: verdict(BASE), [ROBINHOOD]: verdict(ROBINHOOD) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    // The reversal, in one assertion: this was `PROVISIONING_INSUFFICIENT_FUNDS` before POO-1916.
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["buy", "bridge", "op"]);
+  });
+
+  // @rule R2
+  it("[R2] names the TARGET chain's own stable on the bridge step, not a USDC literal", async () => {
+    fiatBridge(USDG, ROBINHOOD);
+
+    const result = await buildPlan(
+      {
+        targetChainId: ROBINHOOD,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [BASE]: verdict(BASE), [ROBINHOOD]: verdict(ROBINHOOD) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const bridge = result.plan.steps.find((step) => step.type === "bridge");
+    // The purchase still delivers USDC, because that is what the rail sells. What lands on the far
+    // side is the target chain's stable, and the row has to say so or the user reads "USDC" for a
+    // token they will never hold.
+    expect(result.plan.steps.find((step) => step.type === "buy")?.toToken).toBe("USDC");
+    expect(bridge?.fromToken).toBe("USDC");
+    expect(bridge?.toToken).toBe("USDG");
+    expect(bridge?.toChainId).toBe(ROBINHOOD);
+  });
+
+  // @rule R2
+  it("[R2] asks the bridge for the registry's USDG address, not for a USDC on 4663", async () => {
+    fiatBridge(USDG, ROBINHOOD);
+
+    await buildPlan(
+      {
+        targetChainId: ROBINHOOD,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [BASE]: verdict(BASE), [ROBINHOOD]: verdict(ROBINHOOD) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    const probe = quoteCalls().find((call) => call.tokenOutChainId === ROBINHOOD);
+    expect(probe).toBeDefined();
+    expect(probe?.tokenIn.toLowerCase()).toBe(USDC_BASE.toLowerCase());
+    expect(probe?.tokenInChainId).toBe(BASE);
+    // Compared against the registry's own value, so a test that pasted the address would not pass
+    // against a second literal in the planner.
+    expect(probe?.tokenOut.toLowerCase()).toBe(USDG.toLowerCase());
+  });
+
+  // @rule R3
+  it("[R3] degrades like a 404 when the bridge will not carry the target's stable", async () => {
+    // No route registered, so the harness answers `404 ResourceNotFound` exactly as the live API
+    // does for a pair it does not serve. The failure mode this pins is the one the issue names:
+    // replacing "the target stable must be USDC" with "4663 is fine" and then offering a purchase
+    // that dies after the card has already been charged.
+    const result = await buildPlan(
+      {
+        targetChainId: ROBINHOOD,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [BASE]: verdict(BASE), [ROBINHOOD]: verdict(ROBINHOOD) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    // The same dead end the crypto-only cut gives, which the panel already renders as "you need
+    // <stable> on <chain>": legible, and it never charges a card for an undeliverable token.
+    expect(result.code).toBe("PROVISIONING_INSUFFICIENT_FUNDS");
+  });
+
+  // @rule R3
+  it("[R3] asks the question LIVE rather than answering it from the chain id", async () => {
+    // The same chain, the same request, two different answers decided only by what the API serves.
+    // A static predicate cannot produce this pair, which is what makes it the test for [R3].
+    const request = {
+      targetChainId: ROBINHOOD,
+      requiredAmount: HUNDRED_USDC,
+      requiredUsd: 100,
+      sources: [],
+      gasByChain: { [BASE]: verdict(BASE), [ROBINHOOD]: verdict(ROBINHOOD) },
+      onRampEnabled: true,
+    };
+
+    const refused = await buildPlan(request, { nowIso: NOW });
+    fiatBridge(USDG, ROBINHOOD);
+    const offered = await buildPlan(request, { nowIso: NOW });
+
+    expect(refused.ok).toBe(false);
+    expect(offered.ok).toBe(true);
+  });
+
+  // @rule R3
+  it("[R3] an OUTAGE on the probe is not a routing verdict", async () => {
+    // POO-1107's rule, which the new quote has to obey too: a throttled upstream must not tell a
+    // funded user their chain cannot be reached. `priceLeg` throws `UpstreamUnavailableError` on a
+    // transient code, and the planner surfaces that rather than silently dropping the purchase.
+    mocks.quoteSwap.mockResolvedValue({
+      ok: false,
+      code: "UNISWAP_RATE_LIMITED",
+      message: "429 Too Many Requests",
+    });
+
+    const result = await buildPlan(
+      {
+        targetChainId: ROBINHOOD,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [BASE]: verdict(BASE), [ROBINHOOD]: verdict(ROBINHOOD) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    // The user is not told they are short. Same verdict POO-1107 already pins for a crypto leg.
+    expect(result.code).not.toBe("PROVISIONING_INSUFFICIENT_FUNDS");
+    expect(result.code).toBe("PROVISIONING_UPSTREAM_UNAVAILABLE");
+  });
+
+  // The launch chains are untouched, and now prove the probe is genuinely asked for them too.
+  it("still buys and bridges for a USDC target on the same input shape", async () => {
+    fiatBridge(USDC_ARBITRUM, ARBITRUM);
+
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: verdict(ARBITRUM) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["buy", "bridge", "op"]);
+    expect(result.plan.steps.find((step) => step.type === "buy")?.toToken).toBe("USDC");
+    expect(result.plan.steps.find((step) => step.type === "bridge")?.toToken).toBe("USDC");
+  });
+
+  // @rule R3
+  it("[R3] a Base target asks no bridge probe at all, because nothing crosses", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: BASE,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [BASE]: verdict(BASE) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["buy", "op"]);
+    expect(quoteCalls()).toEqual([]);
+  });
+
+  // A gas-only purchase buys ETH on Base and never touches a stable at all, so it has no bridge to
+  // probe and keeps working for every chain {@link onRampCanUnblockGas} already allows. Refusing it
+  // would assemble a legless plan with `needed: false` — a confirm that runs nothing and reports
+  // success, which is the silent dead end UF-22 [R3] exists to prevent.
+  it("still buys ETH for a gas-only requirement on a USDG chain, with no probe", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ROBINHOOD,
+        requiredAmount: "0",
+        requiredUsd: 0,
+        sources: [],
+        gasByChain: { [ROBINHOOD]: blocked(ROBINHOOD) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["buy", "op"]);
+    expect(result.plan.steps.find((step) => step.type === "buy")?.toToken).toBe("ETH");
+    expect(quoteCalls()).toEqual([]);
+  });
+});
+
+// -------------------------------------------------------------------------------------------------
+// POO-1140 (absorbed): the gas headroom raise reaches the bridge-gas ESCAPE leg too, not just the
+// swap top-up. It is clamped to the donor's surplus and must never turn a viable donor into a skip.
+// -------------------------------------------------------------------------------------------------
+
+describe("POO-1140: the gas raise reaches the bridge-gas escape leg", () => {
+  const ETH_ON_BASE = source({
+    address: NATIVE_TOKEN_ADDRESS,
+    chainId: BASE,
+    symbol: "ETH",
+    decimals: 18,
+    amount: (ONE_ETH / BigInt(100)).toString(), // 0.01 ETH ~= $36 at the table rate
+    usd: 36,
+  });
+  const blocked = (chainId: number) =>
+    verdict(chainId, {
+      verdict: "BLOCKED",
+      shortfallUsd: 0.075,
+      surplusUsd: 0,
+      reasonKey: "provisioning.gasVerdict.noNative",
+    });
+
+  beforeEach(() => {
+    route(NATIVE_TOKEN_ADDRESS, BASE, NATIVE_TOKEN_ADDRESS, ARBITRUM, {
+      routing: "BRIDGE",
+      ...BRIDGE_RATE,
+      gasFeeUSD: "0.01",
+      estimatedFillTimeMs: 1_000,
+    });
+    route(USDC_BASE, BASE, USDC_ARBITRUM, ARBITRUM, {
+      routing: "BRIDGE",
+      ...BRIDGE_RATE,
+      gasFeeUSD: "0.01",
+      estimatedFillTimeMs: 1_000,
+    });
+  });
+
+  async function bridgeGasOut(gasChoiceUsd?: number): Promise<bigint> {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [USDC_ON_BASE, ETH_ON_BASE],
+        gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: blocked(ARBITRUM) },
+        ...(gasChoiceUsd === undefined ? {} : { gasChoiceUsd }),
+      },
+      { nowIso: NOW },
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("plan failed");
+    const gas = legsOf(result.plan).find((leg) => leg.kind === "bridge-gas");
+    return BigInt(gas?.amountOutQuoted ?? "0");
+  }
+
+  it("a gas choice within the donor's surplus raises the bridge-gas amount", async () => {
+    const baseline = await bridgeGasOut();
+    const raised = await bridgeGasOut(3);
+    expect(raised).toBeGreaterThan(baseline);
+  });
+
+  it("an oversized gas choice still yields a plan (falls back to the classifier figure)", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [USDC_ON_BASE, ETH_ON_BASE],
+        gasByChain: { [BASE]: verdict(BASE), [ARBITRUM]: blocked(ARBITRUM) },
+        gasChoiceUsd: 1_000_000,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["bridge-gas", "bridge", "op"]);
+  });
+});
+
+// -------------------------------------------------------------------------------------------------
+// POO-1141 (absorbed): a large gas headroom choice can consume balance the operation needs when the
+// gas source is ALSO a funding source. The discretionary raise is bounded so it never starves the op.
+// -------------------------------------------------------------------------------------------------
+
+describe("POO-1141: the gas raise cannot starve the operation", () => {
+  beforeEach(() => {
+    route(WETH_ARBITRUM, ARBITRUM, NATIVE_TOKEN_ADDRESS, ARBITRUM, {
+      routing: "CLASSIC",
+      ...PARITY,
+      gasFeeUSD: "0.02",
+    });
+    route(WETH_ARBITRUM, ARBITRUM, USDC_ARBITRUM, ARBITRUM, {
+      routing: "CLASSIC",
+      ...ETH_TO_USDC,
+      gasFeeUSD: "0.02",
+    });
+  });
+
+  const topUpVerdict = verdict(ARBITRUM, {
+    verdict: "TOP_UP",
+    quotedGasUsd: 0.04,
+    requiredGasUsd: 0.075,
+    shortfallUsd: 0.065,
+    surplusUsd: 0,
+    reasonKey: "provisioning.gasVerdict.topUp",
+    topUp: topUp({
+      token: {
+        symbol: "WETH",
+        address: WETH_ARBITRUM,
+        decimals: 18,
+        balanceRaw: ONE_ETH.toString(),
+        balanceUsd: 2_500,
+      },
+      amountRaw: "30000000000000", // ~$0.075 at $2,500/ETH
+      amountUsd: 0.075,
+      buyNativeUsd: 0.075,
+    }),
+  });
+
+  it("funds the operation instead of starving it when the gas source also funds the op", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: "2000000000", // $2,000 USDC of a $2,500 holding
+        requiredUsd: 2_000,
+        sources: [WETH_ON_ARBITRUM],
+        gasByChain: { [ARBITRUM]: topUpVerdict },
+        // Unbounded, this would swap $2,000 of the holding to gas and leave the op $1,500 short.
+        gasChoiceUsd: 2_000,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stepTypes(result.plan.steps)).toEqual(["swap-gas", "swap-token", "op"]);
+  });
+
+  it("still honours a headroom choice that fits within the free surplus", async () => {
+    // $2,000 op of a $2,500 holding leaves $500 free; $100 of gas fits without starving anything.
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: "2000000000",
+        requiredUsd: 2_000,
+        sources: [WETH_ON_ARBITRUM],
+        gasByChain: { [ARBITRUM]: topUpVerdict },
+        gasChoiceUsd: 100,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const gasLeg = legsOf(result.plan).find((leg) => leg.kind === "swap-gas");
+    // $100 of WETH at $2,500 = 0.04 ETH = 4e16 wei.
+    expect(BigInt(gasLeg?.amountIn ?? "0")).toBe(BigInt("40000000000000000"));
+  });
+});
+
+describe("POO-1641: the buy amount IS the picker's still-to-go", () => {
+  /**
+   * What the operation actually receives from the purchase.
+   *
+   * Identical to what was ordered, which is the whole point of POO-1641. POO-1166 believed we took a
+   * 1% cut out of the delivery and sized every order up to survive it; we do not, and never did. The
+   * partner-side configuration is already inside the price Paybis quotes, so the delivered crypto
+   * arrives whole (Rafael, 2026-08-16).
+   */
+  function landedUsd(buy: ProvisioningStep | undefined): number {
+    return Number(buy?.order?.fiatAmount);
+  }
+
+  // @rule R2 — the header's "still to go" is `requiredUsd − what the selection covers`, and the buy
+  // funds exactly that remainder. A $100 op on Base holding 17.54 USDC on Base (the on-target asset,
+  // earmarked with no bridge) leaves $82.46 to go, so the buy is $82.46. It was $83.30.
+  //
+  // The buy and "still to go" are now the SAME figure on this path, which is the reconciliation
+  // POO-1166 could only state as an inequality.
+  it("sizes the buy at the still-to-go remainder, with no fee headroom on top", async () => {
+    const onTarget = source({
+      address: USDC_BASE,
+      chainId: BASE,
+      symbol: "USDC",
+      decimals: 6,
+      amount: "17540000", // 17.54 USDC on the operation's own chain
+      usd: 17.54,
+    });
+    const result = await buildPlan(
+      {
+        targetChainId: BASE,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [onTarget],
+        gasByChain: { [BASE]: verdict(BASE) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // On-target USDC is earmarked with no bridge; the buy lands on Base directly, so no leg loses value
+    // between the buy and the operation and the reconciliation is exact.
+    expect(stepTypes(result.plan.steps)).toEqual(["buy", "op"]);
+    const buy = result.plan.steps.find((step) => step.type === "buy");
+    // still to go = requiredUsd − committed = 100 − 17.54 = 82.46. The buy IS that.
+    expect(buy?.amountUsd).toBe(82.46);
+    expect(Number(buy?.order?.fiatAmount)).toBe(82.46);
+    // The regression lock for POO-1166's gross-up: $83.30 is a figure nobody receives.
+    expect(Number(buy?.order?.fiatAmount)).toBeLessThan(83.3);
+    expect(landedUsd(buy)).toBe(82.46);
+  });
+
+  // @rule R2 — the guarantee, across remainders: the order is the requirement, to the cent. Every one
+  // of these used to carry a percent of headroom for a cut nobody collects.
+  it("orders exactly the requirement, whatever the remainder", async () => {
+    for (const requiredUsd of [12, 73.9, 100, 250.37]) {
+      const result = await buildPlan(
+        {
+          targetChainId: BASE,
+          requiredAmount: `${Math.round(requiredUsd * 1_000_000)}`,
+          requiredUsd,
+          sources: [],
+          gasByChain: { [BASE]: verdict(BASE) },
+          onRampEnabled: true,
+        },
+        { nowIso: NOW },
+      );
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      const buy = result.plan.steps.find((step) => step.type === "buy");
+      expect(landedUsd(buy)).toBe(requiredUsd);
+    }
+  });
+
+  // @rule R4 — the $10 floor is unaffected. It lives INSIDE `sizeOnRampOrder`, downstream of the
+  // removed gross-up, so removing an upstream term cannot drop an order below it: a $2 remainder is
+  // still ordered at $10, exactly as it was when it arrived here as $2.03.
+  it("still floors a tiny remainder at the Paybis minimum", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: BASE,
+        requiredAmount: "2000000",
+        requiredUsd: 2,
+        sources: [],
+        gasByChain: { [BASE]: verdict(BASE) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const buy = result.plan.steps.find((step) => step.type === "buy");
+    expect(Number(buy?.order?.fiatAmount)).toBe(PAYBIS_MIN_USD);
+  });
+
+  /**
+   * @rule R4 — the one band where the gross-up was doing the floor's job, and the floor takes it back.
+   *
+   * A requirement in `(9.90, 10.00]` is the ONLY range where removing an upstream term could
+   * conceivably drop an order under the Paybis minimum: it is exactly the range the gross-up used to
+   * lift over $10 on its own ($9.95 / 0.99 = $10.05). It cannot, because `sizeOnRampOrder` applies
+   * `Math.max(minUsd, …)` to whatever it is handed, so the order lands ON the floor rather than under
+   * it. Asserted rather than reasoned about, because "the floor still holds" is the one claim this
+   * refactor cannot be allowed to get wrong: an order Paybis rejects is a dead flow, not a cheaper one.
+   */
+  it("lands ON the Paybis floor, never under it, for a requirement just below $10", async () => {
+    const result = await buildPlan(
+      {
+        targetChainId: BASE,
+        requiredAmount: "9950000",
+        requiredUsd: 9.95,
+        sources: [],
+        gasByChain: { [BASE]: verdict(BASE) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const buy = result.plan.steps.find((step) => step.type === "buy");
+    expect(Number(buy?.order?.fiatAmount)).toBe(PAYBIS_MIN_USD);
+    expect(Number(buy?.order?.fiatAmount)).toBeGreaterThanOrEqual(PAYBIS_MIN_USD);
+  });
+
+  /**
+   * @rule R2 R4 — the gas-first `ETH-BASE` leg carries the change too, on BOTH figures it names.
+   *
+   * This leg serves the empty first-time wallet, so it is the one that matters most, and it sizes two
+   * amounts from the same `requiredUsd`: `fiatAmount` and the received-fixed `ethTarget.fundingUsd`
+   * (POO-1573 [R2]). Both were carrying the 1%; both stop. And the ETH floor recipe (`gasFloorEth`)
+   * is a separate term that this change does not touch, which is what keeps the leg funding real gas.
+   */
+  it("drops the fee headroom from the gas-first ETH leg, on both of its figures", async () => {
+    // POO-1916 [R3]: the fiat bridge is QUOTED before the purchase is offered, so an off-Base
+    // target needs the leg it will really run to be a pair the table serves.
+    route(USDC_BASE, BASE, USDC_ARBITRUM, ARBITRUM, { routing: "BRIDGE", ...BRIDGE_RATE });
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        // No Base verdict at all: the wallet holds no Base ETH, so the buy goes ETH-first.
+        gasByChain: { [ARBITRUM]: verdict(ARBITRUM, { verdict: "BLOCKED", surplusUsd: 0 }) },
+        onRampEnabled: true,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const buy = result.plan.steps.find((step) => step.type === "buy");
+    expect(buy?.order?.currencyCode).toBe("ETH-BASE");
+    // $100 required, no classifier gas figure and no gas choice, so the order is the requirement.
+    // It was $101.02 on both halves.
+    expect(buy?.order?.fiatAmount).toBe("100.00");
+    expect(buy?.order?.ethTarget?.fundingUsd).toBe("100.00");
+  });
+});
+
+/**
+ * POO-1779: the plan's target endpoint is the TARGET CHAIN'S stable. On Robinhood Chain that is
+ * USDG, and the symbol rides on the leg + step the provisioning rail labels its rows from.
+ */
+describe("POO-1779: the funding target is the chain's own stable", () => {
+  const ROBINHOOD = 4663;
+  const USDG = getUsdcAddress(ROBINHOOD) as string;
+  const WETH_ROBINHOOD = "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73";
+
+  // @rule R1
+  it("[R1] routes a Robinhood source into USDG, not a USDC that chain does not have", async () => {
+    route(WETH_ROBINHOOD, ROBINHOOD, USDG, ROBINHOOD, {
+      routing: "CLASSIC",
+      // 1 WETH -> 2,500 USDG (6 decimals), the table's standard rate.
+      rateNum: BigInt(2_500) * BigInt(10) ** BigInt(6),
+      rateDen: ONE_ETH,
+    });
+    const wethOnRobinhood = source({
+      address: WETH_ROBINHOOD,
+      chainId: ROBINHOOD,
+      symbol: "WETH",
+      decimals: 18,
+      amount: ONE_ETH.toString(),
+      usd: 2_500,
+    });
+
+    const result = await buildPlan({
+      targetChainId: ROBINHOOD,
+      requiredAmount: HUNDRED_USDC,
+      requiredUsd: 100,
+      sources: [wethOnRobinhood],
+      inventory: [wethOnRobinhood],
+      gasByChain: { [ROBINHOOD]: verdict(ROBINHOOD) },
+      slippagePct: 2,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const [leg] = legsOf(result.plan);
+    expect(leg?.tokenOut).toMatchObject({ address: USDG, symbol: "USDG", chainId: ROBINHOOD });
+    expect(result.plan.steps.find((step) => step.type === "swap-token")?.toToken).toBe("USDG");
+  });
+
+  // @rule R2 — an Arbitrum plan still targets USDC.
+  it("[R2] keeps USDC as the target endpoint on the launch chains", async () => {
+    route(WETH_ARBITRUM, ARBITRUM, USDC_ARBITRUM, ARBITRUM, {
+      routing: "CLASSIC",
+      rateNum: BigInt(2_500) * BigInt(10) ** BigInt(6),
+      rateDen: ONE_ETH,
+    });
+
+    const result = await buildPlan({
+      targetChainId: ARBITRUM,
+      requiredAmount: HUNDRED_USDC,
+      requiredUsd: 100,
+      sources: [WETH_ON_ARBITRUM],
+      inventory: [WETH_ON_ARBITRUM],
+      gasByChain: { [ARBITRUM]: verdict(ARBITRUM) },
+      slippagePct: 2,
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(legsOf(result.plan)[0]?.tokenOut.symbol).toBe("USDC");
+  });
+});
+
+// -------------------------------------------------------------------------------------------------
+// POO-1927 [R3]: the buy step's vendor attribution is DERIVED from the rail, not a literal.
+//
+// `poweredBy` used to be the string `"paybis"` on every fiat buy leg, including one Privy brokers
+// through Stripe or MoonPay, and the type admitted no other answer. The rail now arrives on the
+// request exactly as `onRampEnabled` already does (`computePlanAction` threads both).
+//
+// The last test in this block is the one that answers rejection 10 of the epic's handoff, which
+// forbids touching the provisioning engine: it proves the rail changes the ATTRIBUTION and nothing
+// else: same steps, same keys, same order, same amounts, same legs.
+// -------------------------------------------------------------------------------------------------
+
+describe("POO-1927: the fiat attribution follows the rail [R3]", () => {
+  const blockedArb = () =>
+    verdict(ARBITRUM, {
+      verdict: "BLOCKED",
+      shortfallUsd: 0.075,
+      surplusUsd: 0,
+      reasonKey: "provisioning.gasVerdict.noNative",
+    });
+
+  const planOnRail = async (rail?: "paybis" | "privy") => {
+    // POO-1916 [R3]: the fiat bridge is QUOTED before the purchase is offered, so this off-Base
+    // target needs the leg it will really run to be a pair the table serves. Without the route the
+    // probe answers 404, `buildOnRampSteps` returns no steps, and the plan dead-ends in
+    // `PROVISIONING_INSUFFICIENT_FUNDS` with no buy step left to attribute at all.
+    route(USDC_BASE, BASE, USDC_ARBITRUM, ARBITRUM, { routing: "BRIDGE", ...BRIDGE_RATE });
+    return buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: HUNDRED_USDC,
+        requiredUsd: 100,
+        sources: [],
+        gasByChain: { [ARBITRUM]: blockedArb() },
+        onRampEnabled: true,
+        ...(rail === undefined ? {} : { onRampRail: rail }),
+      },
+      { nowIso: NOW },
+    );
+  };
+
+  // @rule R3: the Privy rail is now expressible, which is the whole point. The old type could not
+  // say it, so the buy leg could only ever credit a vendor that had nothing to do with the charge.
+  it("[R3] credits privy when the request says the rail is privy", async () => {
+    const result = await planOnRail("privy");
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.plan.steps.find((step) => step.type === "buy")?.poweredBy).toBe("privy");
+  });
+
+  // @rule R3: the Paybis rail is unchanged while it lives (POO-1819 keeps it as the 72-hour
+  // rollback target), so its attribution must still be exactly what it always was.
+  it("[R3] credits paybis when the request says the rail is paybis", async () => {
+    const result = await planOnRail("paybis");
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.plan.steps.find((step) => step.type === "buy")?.poweredBy).toBe("paybis");
+  });
+
+  // @rule R3: back-compat, a caller that has not been taught the rail gets the pre-POO-1927 answer
+  // rather than an undefined attribution. The ONE production caller always supplies it, which is
+  // pinned in `planActions.test.ts` so this default can never silently become the shipped answer.
+  it("[R3] falls back to paybis when the request carries no rail", async () => {
+    const result = await planOnRail();
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.plan.steps.find((step) => step.type === "buy")?.poweredBy).toBe("paybis");
+  });
+
+  // @rule R3: rejection 10 of the epic's handoff says the provisioning engine is NOT touched, and
+  // `buildOnRampSteps` / `ProvisioningOrder` get zero behavioural changes. `poweredBy` is a display
+  // attribution field, so flipping the rail must move nothing a leg, a size or an order depends on.
+  it("[R3] changes the attribution and NOTHING else about the plan", async () => {
+    const paybis = await planOnRail("paybis");
+    const privy = await planOnRail("privy");
+
+    expect(paybis.ok && privy.ok).toBe(true);
+    if (!paybis.ok || !privy.ok) return;
+
+    // Strip the one field under test; everything else must be byte-identical, the sized fiat
+    // `order` included.
+    const withoutAttribution = (plan: typeof paybis.plan) =>
+      plan.steps.map(({ poweredBy: _poweredBy, ...rest }) => rest);
+
+    expect(withoutAttribution(privy.plan)).toEqual(withoutAttribution(paybis.plan));
+    expect(stepTypes(privy.plan.steps)).toEqual(stepTypes(paybis.plan.steps));
+    expect(legsOf(privy.plan)).toEqual(legsOf(paybis.plan));
+    expect(privy.plan.variant).toBe(paybis.plan.variant);
+    expect(privy.plan.quote).toEqual(paybis.plan.quote);
   });
 });

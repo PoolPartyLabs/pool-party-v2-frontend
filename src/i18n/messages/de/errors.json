@@ -21,5 +21,10 @@
     "unauthorized": "Sie haben dazu keine Berechtigung. Bitte melden Sie sich erneut an.",
     "notFound": "Wir konnten nicht finden, wonach Sie gesucht haben.",
     "unknown": "Bei uns ist etwas schiefgelaufen. Bitte versuchen Sie es erneut."
+  },
+  "reference": {
+    "label": "Referenz",
+    "copy": "Kopieren",
+    "copied": "Kopiert"
   }
 }

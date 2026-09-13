@@ -34,5 +34,10 @@
     "leave": "Weggaan",
     "stay": "Blijven bewerken"
   },
-  "opensInNewTab": "Opent in een nieuw tabblad"
+  "opensInNewTab": "Opent in een nieuw tabblad",
+  "chainSwitch": {
+    "pending": "Overschakelen naar {network}...",
+    "to": "Overschakelen naar {network}",
+    "failed": "Je wallet is niet overgeschakeld naar {network}. Controleer of het netwerk in je wallet is ingeschakeld en probeer het opnieuw."
+  }
 }

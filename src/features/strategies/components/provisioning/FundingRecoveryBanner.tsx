@@ -1,7 +1,7 @@
 /**
- * @id PP-STR-CMP-025 (POO-1055)
+ * @id PP-STR-CMP-025 (POO-1055, POO-1508)
  * @name FundingRecoveryBanner
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1508 rules v2) · v1
  * @hackathon POO-1022 (Universal Funding)
  *
  * The surface the funding recovery journal was always for
@@ -65,6 +65,10 @@ import type { JournalAction, LegVerdict } from "../../lib/reconcileFundingJourna
  */
 function resumeHref(operation: FundingJournal["operation"]): string {
   const { kind, strategyId } = operation;
+  // POO-1137: a standalone `/deposit` purchase precedes no operation and carries no strategy, so it
+  // resumes on the deposit screen, where the rail picks the record up and converts what was bought
+  // instead of minting a second purchase.
+  if (kind === "deposit") return "/deposit";
   if (!strategyId) return "/portfolio";
   const managerOnly = kind === "move-range" || kind === "close";
   return managerOnly ? `/manager/strategies/${strategyId}` : `/strategies/${strategyId}`;
@@ -85,6 +89,7 @@ export function FundingRecoveryBanner() {
     compound: t("provisioning.recovery.op.compound"),
     "move-range": t("provisioning.recovery.op.moveRange"),
     close: t("provisioning.recovery.op.close"),
+    deposit: t("provisioning.recovery.op.deposit"),
   };
   const statusLabel: Record<JournalAction, string> = {
     complete: t("provisioning.recovery.status.complete"),
@@ -137,10 +142,13 @@ export function FundingRecoveryBanner() {
     <section
       role="status"
       aria-label={t("provisioning.recovery.title")}
-      className="mb-4 flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning/10 p-4"
+      // POO-1508 [R55]: no tinted fill behind this box. Colour lives only on the title sentence that
+      // names what happened, below; a wash behind the whole banner made every line read equally
+      // urgent, and this one is shown far more often than not (any funding still in flight at all).
+      className="mb-4 flex flex-col gap-3 rounded-xl border border-border p-4"
     >
       <div className="text-sm">
-        <p className="font-semibold text-foreground">{t("provisioning.recovery.title")}</p>
+        <p className="font-semibold text-warning">{t("provisioning.recovery.title")}</p>
         <p className="mt-0.5 text-muted-foreground">{operationLabel[journal.operation.kind]}</p>
         <p className="mt-0.5 text-muted-foreground">
           {t("provisioning.recovery.progress", { index: index + 1, total: journal.legs.length })}
@@ -170,7 +178,11 @@ export function FundingRecoveryBanner() {
       ) : null}
 
       <div className="flex flex-col gap-2 sm:flex-row">
-        {action === "rederive" || action === "ask" ? (
+        {/* POO-1508 [R46]: `ask` (the ambiguous leg, `verdict === "unknown"`) does NOT get `resume`,
+          deliberately no longer sharing this branch with `rederive`. With no hash there is nothing
+          safe to re-send, and the account link above is the only honest exit; `recheck` below is
+          what's left, which is safe to press as many times as the user likes. */}
+        {action === "rederive" ? (
           <Link
             href={resumeHref(journal.operation)}
             className="inline-flex h-11 flex-1 items-center justify-center rounded-md bg-primary font-medium text-primary-foreground text-sm transition-colors hover:bg-primary/90"

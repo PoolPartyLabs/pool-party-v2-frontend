@@ -34,5 +34,10 @@
     "leave": "Leave",
     "stay": "Keep editing"
   },
-  "opensInNewTab": "Opens in new tab"
+  "opensInNewTab": "Opens in new tab",
+  "chainSwitch": {
+    "pending": "Switching to {network}...",
+    "to": "Switch to {network}",
+    "failed": "Your wallet didn't switch to {network}. Check that the network is enabled in your wallet, then try again."
+  }
 }

@@ -34,5 +34,10 @@
     "leave": "移動する",
     "stay": "編集を続ける"
   },
-  "opensInNewTab": "新しいタブで開きます"
+  "opensInNewTab": "新しいタブで開きます",
+  "chainSwitch": {
+    "pending": "{network}に切り替えています...",
+    "to": "{network}に切り替える",
+    "failed": "ウォレットが{network}に切り替わりませんでした。ウォレットでこのネットワークが有効になっているか確認して、もう一度お試しください。"
+  }
 }

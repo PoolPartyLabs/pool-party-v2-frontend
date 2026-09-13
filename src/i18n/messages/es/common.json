@@ -34,5 +34,10 @@
     "leave": "Salir",
     "stay": "Seguir editando"
   },
-  "opensInNewTab": "Se abre en una pestaña nueva"
+  "opensInNewTab": "Se abre en una pestaña nueva",
+  "chainSwitch": {
+    "pending": "Cambiando a {network}...",
+    "to": "Cambiar a {network}",
+    "failed": "Tu billetera no cambió a {network}. Comprueba que la red esté habilitada en tu billetera e inténtalo de nuevo."
+  }
 }

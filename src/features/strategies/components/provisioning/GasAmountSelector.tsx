@@ -1,26 +1,47 @@
 /**
- * @id PP-CORE-CMP-039
+ * @id PP-CORE-CMP-039 (POO-1509, POO-1526)
  * @name GasAmountSelector
- * @implements-rules-version v2
+ * @implements-rules-version v4 (POO-1526 rules v1) · v3 (POO-1509 rules v1) · v2
  *
- * The $10 / $25 / Custom gas-amount control for the buy-gas modal (PP-CORE-MOD-010) — also reused
- * inline by the provisioning wizard's gas top-up step (POO-409). Presets are an allowlist; a Custom
- * amount is bound to [$10, $200] (the Paybis floor → max). Controlled: the parent owns the
- * {@link GasChoice}; the raw Custom text is local so typing stays smooth. Validation + parsing live in
- * the pure {@link validateGas} / {@link selectCustom} helpers.
+ * The Custom-plus-presets gas-amount control, rendered only by {@link GasTopUpBody}
+ * (PP-CORE-CMP-070) since POO-1509 [R35] made `Not enough gas` the one place a gas amount is picked.
+ * Presets are an allowlist; a Custom amount is bound to the source's floor and ceiling. Controlled:
+ * the parent owns the {@link GasChoice}; the raw Custom text is local so typing stays smooth.
+ * Validation + parsing live in the pure {@link validateGas} / {@link selectCustom} helpers.
+ *
+ * ## v3: one `source`, because three independent props could disagree
+ *
+ * `presets`, `minUsd` and `maxUsd` used to arrive separately while {@link validateGas} was called
+ * with no source at all, so it validated against the CARD floor whatever the labels said. On the
+ * on-chain path that shipped a contradiction: a $7 custom amount was refused, under an error message
+ * that read `Minimum $5.00`. All three now derive from `source`, which is the same input
+ * {@link gasPresets} / {@link gasMinUsd} / {@link gasMaxUsd} already keyed off, so the bound that
+ * rejects an amount is by construction the bound the user was shown.
  *
  * PP-A11Y: the three options are `aria-pressed` toggle buttons; the Custom input is labelled and its
  * below-min/over-max error is wired via `aria-describedby` + `role="alert"` (text, never color alone).
+ *
+ * ## Provisioning v3 mobile [M5.2], POO-1526
+ *
+ * `min-h-11` lives on the shared {@link pillClass} helper, not on one pill: the three presets and
+ * Custom sit in the same row, and growing one without the others would misalign it against them.
  */
 "use client";
 
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import type { GasChoice } from "@/lib/provisioning";
-import { GAS_CUSTOM_MAX_USD, GAS_CUSTOM_MIN_USD, GAS_PRESETS_USD } from "@/lib/provisioning";
 import { cn } from "@/lib/utils/cn";
 import { formatUsd } from "@/lib/utils/format";
-import { selectCustom, selectPreset, validateGas } from "./gasSelection";
+import {
+  type GasFundingSource,
+  gasMaxUsd,
+  gasMinUsd,
+  gasPresets,
+  selectCustom,
+  selectPreset,
+  validateGas,
+} from "./gasSelection";
 
 /** Public props for {@link GasAmountSelector}. */
 export interface GasAmountSelectorProps {
@@ -30,19 +51,23 @@ export interface GasAmountSelectorProps {
   onChange: (value: GasChoice) => void;
   /** Spendable USDC (USD) — drives the over-balance (on-ramp) signal in {@link validateGas}. */
   balanceUsd: number;
-  /** Preset shortcuts; defaults to `GAS_PRESETS_USD` ($10/$25). */
-  presets?: readonly number[];
-  /** Custom lower bound (USD); defaults to `GAS_CUSTOM_MIN_USD` ($10). */
-  minUsd?: number;
-  /** Custom upper bound (USD); defaults to `GAS_CUSTOM_MAX_USD` ($200). */
-  maxUsd?: number;
+  /**
+   * Where the gas is paid from, which decides the presets, the floor, the ceiling AND the validation
+   * ([R35]). Defaults to `"card"`, the pre-POO-1084 behaviour ($10/$25, floor $10).
+   */
+  source?: GasFundingSource;
   className?: string;
 }
 
-/** Option pill styling (selected = gold). */
+/**
+ * Option pill styling (selected = gold).
+ *
+ * [M5.2] `min-h-11` applies to the shared helper so all pills in the row (presets + Custom) grow
+ * together — fixing one and leaving its siblings at the old `py-2.5` height would misalign the row.
+ */
 function pillClass(active: boolean): string {
   return cn(
-    "rounded-xl border px-3 py-2.5 text-center font-semibold text-sm transition-colors",
+    "min-h-11 rounded-xl border px-3 py-2.5 text-center font-semibold text-sm transition-colors",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
     active
       ? "border-primary bg-primary/10 text-primary"
@@ -50,14 +75,12 @@ function pillClass(active: boolean): string {
   );
 }
 
-/** $10 / $25 / Custom gas selector. */
+/** Preset-plus-Custom gas selector, bounded by the funding source ([R35]). */
 export function GasAmountSelector({
   value,
   onChange,
   balanceUsd,
-  presets = GAS_PRESETS_USD,
-  minUsd = GAS_CUSTOM_MIN_USD,
-  maxUsd = GAS_CUSTOM_MAX_USD,
+  source = "card",
   className,
 }: GasAmountSelectorProps) {
   const t = useTranslations("strategies");
@@ -65,8 +88,13 @@ export function GasAmountSelector({
   const inputRef = useRef<HTMLInputElement>(null);
   const [customText, setCustomText] = useState("");
 
+  // [R35] All four from one input, so the bound that REJECTS an amount is the bound the error text
+  // names. They were three props and a defaulted validation call, and they disagreed.
+  const presets = gasPresets(source);
+  const minUsd = gasMinUsd(source);
+  const maxUsd = gasMaxUsd(source);
   const isCustom = value !== null && value.presetUsd === null;
-  const validity = validateGas(value, balanceUsd);
+  const validity = validateGas(value, balanceUsd, source);
   const showError =
     isCustom && !validity.ok && (validity.reason === "belowMin" || validity.reason === "overMax");
 
@@ -77,7 +105,7 @@ export function GasAmountSelector({
 
   function pickPreset(usd: number) {
     setCustomText("");
-    onChange(selectPreset(usd as 10 | 25));
+    onChange(selectPreset(usd as 5 | 10 | 25));
   }
 
   function onCustomInput(next: string) {

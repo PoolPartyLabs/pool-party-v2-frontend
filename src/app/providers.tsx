@@ -3,7 +3,7 @@
 /**
  * @id PP-CORE-LAY (SETUP / POO-194)
  * @name Providers
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1763 rules v2 [R6]: embedded wallet UIs off) · v1
  *
  * Client-side provider tree for wallet integration. Nests Privy > QueryClient > Wagmi so that
  * wagmi hooks have access to both the QueryClient and the Privy-managed wallet. Gated on
@@ -92,6 +92,11 @@ export function Providers({ children }: { children: ReactNode }) {
             : ["google", "wallet", "email"],
         embeddedWallets: {
           ethereum: { createOnLogin: "users-without-wallets" },
+          // POO-1763 [R6]: a Google-login wallet signs and sends HEADLESSLY. Privy's own confirmation
+          // screen is a separate portal that dismissed the sheet underneath it and cancelled the run;
+          // the product decision is that our sheet, with its stepper and "What am I signing?"
+          // disclosure, is the ONLY confirmation. External wallets keep their own prompts.
+          showWalletUIs: false,
         },
         externalWallets: {
           coinbaseWallet: { config: { preference: { options: "eoaOnly" } } },

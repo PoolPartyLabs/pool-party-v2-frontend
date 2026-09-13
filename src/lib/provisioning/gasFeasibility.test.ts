@@ -22,6 +22,7 @@
 import { describe, expect, it } from "vitest";
 import enStrategies from "@/i18n/messages/en/strategies.json";
 import type { UniswapQuoteResponse } from "@/lib/uniswap/schemas";
+import type { GasTopUpPlan } from "./gasFeasibility";
 import {
   classifyGasFeasibility,
   GAS_ESCAPE_LABEL_KEYS,
@@ -31,6 +32,7 @@ import {
   type GasCandidateChain,
   type GasSourceToken,
   quoteGasUsd,
+  raiseTopUpToUsd,
   withGasHeadroom,
 } from "./gasFeasibility";
 
@@ -458,5 +460,101 @@ describe("every emitted i18n key exists in the source locale", () => {
     ...Object.values(GAS_ESCAPE_LABEL_KEYS),
   ])("%s resolves to copy", (key) => {
     expect(typeof resolve(key)).toBe("string");
+  });
+});
+
+/**
+ * POO-1085 [F2-R2]. The user may ask to hold MORE native than the route strictly needs, and the
+ * classifier's own figure is the floor under that ask: an undersized gas leg reverts on-chain, so a
+ * choice below the requirement is ignored rather than honoured.
+ */
+describe("raiseTopUpToUsd", () => {
+  /** A sized top-up: $1 of a 100-token holding worth $10, i.e. 10 base units per dollar. */
+  function sizedTopUp(over: Partial<GasTopUpPlan> = {}): GasTopUpPlan {
+    return {
+      token: {
+        symbol: "USDC",
+        address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        decimals: 6,
+        balanceRaw: "10000000", // 10 USDC
+        balanceUsd: 10,
+      },
+      amountRaw: "1000000", // 1 USDC
+      amountUsd: 1,
+      buyNativeUsd: 1,
+      ...over,
+    };
+  }
+
+  it("[F2-R2] raises the slice proportionally to a larger target", () => {
+    const raised = raiseTopUpToUsd(sizedTopUp(), 5);
+
+    expect(raised.buyNativeUsd).toBe(5);
+    expect(raised.amountUsd).toBe(5);
+    expect(raised.amountRaw).toBe("5000000");
+  });
+
+  it("[F2-R2] a target below the classifier's figure is IGNORED, not honoured", () => {
+    // The floor is the whole point: below it the leg does not cover the transaction it pays for.
+    expect(raiseTopUpToUsd(sizedTopUp(), 0.5)).toEqual(sizedTopUp());
+  });
+
+  it("[F2-R2] a target equal to the classifier's figure changes nothing", () => {
+    expect(raiseTopUpToUsd(sizedTopUp(), 1)).toEqual(sizedTopUp());
+  });
+
+  it("[F2-R3] no target at all leaves the plan byte for byte as it was", () => {
+    expect(raiseTopUpToUsd(sizedTopUp(), undefined)).toEqual(sizedTopUp());
+    expect(raiseTopUpToUsd(sizedTopUp(), 0)).toEqual(sizedTopUp());
+    expect(raiseTopUpToUsd(sizedTopUp(), Number.NaN)).toEqual(sizedTopUp());
+    expect(raiseTopUpToUsd(sizedTopUp(), Number.POSITIVE_INFINITY)).toEqual(sizedTopUp());
+  });
+
+  it("caps at the holding and reports what the cap actually delivers", () => {
+    // Asking for $25 out of a $10 holding: spend all of it, and say so. Reporting $25 would put a
+    // figure on screen the swap cannot deliver.
+    const raised = raiseTopUpToUsd(sizedTopUp(), 25);
+
+    expect(raised.amountRaw).toBe("10000000");
+    expect(raised.buyNativeUsd).toBe(10);
+    expect(raised.amountUsd).toBe(10);
+  });
+
+  it("rounds the slice UP, so a raised top-up is never a hair short", () => {
+    // $1 of a $3 holding of 1 token (18 decimals): raising to $2 lands on a repeating fraction.
+    const raised = raiseTopUpToUsd(
+      sizedTopUp({
+        token: {
+          symbol: "WETH",
+          address: "0x4200000000000000000000000000000000000006",
+          decimals: 18,
+          balanceRaw: "1000000000000000000",
+          balanceUsd: 3,
+        },
+        amountRaw: "333333333333333334",
+        amountUsd: 1,
+        buyNativeUsd: 1,
+      }),
+      2,
+    );
+
+    expect(BigInt(raised.amountRaw)).toBeGreaterThanOrEqual(BigInt("666666666666666667"));
+    expect(BigInt(raised.amountRaw)).toBeLessThanOrEqual(BigInt("1000000000000000000"));
+    expect(raised.buyNativeUsd).toBe(2);
+  });
+
+  it("leaves a malformed slice alone rather than deriving a new one from it", () => {
+    const broken = sizedTopUp({ amountRaw: "not-a-number" });
+    expect(raiseTopUpToUsd(broken, 5)).toEqual(broken);
+
+    const zeroBase = sizedTopUp({ buyNativeUsd: 0 });
+    expect(raiseTopUpToUsd(zeroBase, 5)).toEqual(zeroBase);
+  });
+
+  it("does not mutate the top-up it is given", () => {
+    const original = sizedTopUp();
+    const snapshot = structuredClone(original);
+    raiseTopUpToUsd(original, 5);
+    expect(original).toEqual(snapshot);
   });
 });

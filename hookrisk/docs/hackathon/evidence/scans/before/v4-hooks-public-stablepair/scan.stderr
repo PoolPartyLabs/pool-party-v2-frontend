@@ -1,0 +1,25 @@
+  hookrisk: slither src/stable/StablePairHook.sol:StablePairHook
+  hookrisk: 24 finding(s) in other files, not attributed to this target
+  hookrisk: 2 finding(s)
+  harness: skipped — no compiled artifact at /private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-hooks-public-stablepair/repo/out/StablePairHook.sol/StablePairHook.json — run `forge build` in the target project first.
+
+LOW risk  4/33  (undetermined: up to 24/33)
+
+  findings    1 high
+  ✓ hookrisk   ok
+  ! 6 dimension(s) unmeasured: the tier is between Low Risk and High Risk. Unmeasured dimensions are excluded from the total, never counted as zero.
+  ! trigger 'custom-math' could not be evaluated: dimension 'customMath' is unmeasured
+  ! trigger 'holds-liquidity' could not be evaluated: dimension 'externalLiquidityExposure' is unmeasured
+  ! trigger 'external-dependencies' could not be evaluated: dimension 'externalDependencies' is unmeasured
+  ! trigger 'autonomous' could not be evaluated: dimension 'autonomousParameterUpdates' is unmeasured
+  ! trigger 'price-impact' could not be evaluated: dimension 'priceImpactingBehavior' is unmeasured
+  ! trigger 'upgradeable' could not be evaluated: dimension 'upgradeability' is unmeasured
+
+  /private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-hooks-public-stablepair/out/HOOK_RISK.md
+  /private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-hooks-public-stablepair/out/hook-risk.json
+  /private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-hooks-public-stablepair/out/hookrisk.sarif
+
+  gate failed
+    - tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium
+    - 1 finding(s) at or above high: StablePairHook (src/stable/StablePairHook.sol#25-259) declares permission `beforeInitialize` (bit 13, BEFORE_INITIALIZE_FLAG) but provides no working `before...
+

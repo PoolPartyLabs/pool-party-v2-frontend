@@ -1,0 +1,551 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedBy": {
+    "tool": "hookrisk",
+    "version": "0.1.0",
+    "commandLine": "hookrisk scan src/mocks/general/LiquidityPenaltyHookMock.sol:LiquidityPenaltyHookMock"
+  },
+  "target": {
+    "mode": "source",
+    "contractName": "LiquidityPenaltyHookMock",
+    "sourceFile": "src/mocks/general/LiquidityPenaltyHookMock.sol",
+    "solcVersion": "0.8.26",
+    "artifactDir": "out",
+    "projectConfigSource": "forge-config"
+  },
+  "findings": [
+    {
+      "id": "3d57274c53ca5daa",
+      "ruleClass": "custom-accounting",
+      "title": "LiquidityPenaltyHookMock (src/mocks/general/LiquidityPenaltyHookMock.sol#10-18) declares custom-accounting permissions: `afterAddLiquidityReturnDelta` (bit …",
+      "description": "LiquidityPenaltyHookMock (src/mocks/general/LiquidityPenaltyHookMock.sol#10-18) declares custom-accounting permissions: `afterAddLiquidityReturnDelta` (bit 1), `afterRemoveLiquidityReturnDelta` (bit 0). The hook can alter settled amounts, which raises its risk tier under the framework's custom-math and price-impact triggers and is liquidity-side only: swaps still route through v4's pricing, so the harness keeps comparing swap output against the reference pool (invariant I2).",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/mocks/general/LiquidityPenaltyHookMock.sol",
+        "line": 10,
+        "endLine": 18
+      },
+      "evidence": [
+        "LiquidityPenaltyHookMock (src/mocks/general/LiquidityPenaltyHookMock.sol#10-18) declares custom-accounting permissions: `afterAddLiquidityReturnDelta` (bit 1), `afterRemoveLiquidityReturnDelta` (bit 0). The hook can alter settled amounts, which raises its risk tier under the framework's custom-math and price-impact triggers and is liquidity-side only: swaps still route through v4's pricing, so the harness keeps comparing swap output against the reference pool (invariant I2)."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-custom-accounting",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ],
+      "informsDimensions": [
+        "customMath",
+        "priceImpactingBehavior"
+      ],
+      "informsTriggers": [
+        "custom-math",
+        "price-impact"
+      ]
+    },
+    {
+      "id": "f7666f171749ba83",
+      "ruleClass": "hook-profile",
+      "title": "LiquidityPenaltyHookMock (src/mocks/general/LiquidityPenaltyHookMock.sol#10-18) is a recognised v4 hook: implements afterAddLiquidity, afterRemoveLiquidity; …",
+      "description": "LiquidityPenaltyHookMock (src/mocks/general/LiquidityPenaltyHookMock.sol#10-18) is a recognised v4 hook: implements afterAddLiquidity, afterRemoveLiquidity; declares 2 callback permission(s); 3 state write(s) reachable from callbacks; 0 external call(s) in the swap path.",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/mocks/general/LiquidityPenaltyHookMock.sol",
+        "line": 10,
+        "endLine": 18
+      },
+      "evidence": [
+        "LiquidityPenaltyHookMock (src/mocks/general/LiquidityPenaltyHookMock.sol#10-18) is a recognised v4 hook: implements afterAddLiquidity, afterRemoveLiquidity; declares 2 callback permission(s); 3 state write(s) reachable from callbacks; 0 external call(s) in the swap path."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-hook-profile",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ],
+      "informsDimensions": [
+        "complexity"
+      ],
+      "metrics": {
+        "callbacksImplemented": 2,
+        "callbacksDeclared": 2,
+        "stateWritesInCallbacks": 3,
+        "externalCallsInSwapPath": 0,
+        "externalCallsInSwapPathThirdParty": 0,
+        "internalFunctionsReachableFromCallbacks": 13,
+        "usesReturnsDelta": true,
+        "hasOwnerOnlyFunctions": false
+      },
+      "permissions": {
+        "beforeInitialize": false,
+        "afterInitialize": false,
+        "beforeAddLiquidity": false,
+        "afterAddLiquidity": true,
+        "beforeRemoveLiquidity": false,
+        "afterRemoveLiquidity": true,
+        "beforeSwap": false,
+        "afterSwap": false,
+        "beforeDonate": false,
+        "afterDonate": false,
+        "beforeSwapReturnDelta": false,
+        "afterSwapReturnDelta": false,
+        "afterAddLiquidityReturnDelta": true,
+        "afterRemoveLiquidityReturnDelta": true
+      }
+    },
+    {
+      "id": "e9d56db8df287653",
+      "ruleClass": "unvalidated-pool-key",
+      "title": "The hook serves any pool it is attached to: a second pool with a different fee or spacing was accepted",
+      "description": "The differential harness initialised a second pool with the same currencies and hook but a different fee tier or tick spacing, then called the hook as the PoolManager with that pool's key; the hook did not reject it. `onlyPoolManager` does not prevent this — anyone can create a pool that names an existing hook — so a hook whose logic assumes one pool (a stored reserve, a per-pool fee, a one-time initialisation) must compare the key or the PoolId itself. A hook designed to serve many pools has nothing to fix; this is a classification, reported so the assumption is checked rather than inherited.",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/mocks/general/LiquidityPenaltyHookMock.sol",
+        "line": 10
+      },
+      "evidence": [
+        "harness: a second pool (same currencies and hook, different fee or tick spacing) initialised, and the first implemented swap-or-liquidity callback returned when called as the PoolManager with its key [exclusivity-probe]"
+      ],
+      "engines": [
+        {
+          "engine": "harness",
+          "nativeRule": "exclusivity-probe",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ]
+    }
+  ],
+  "score": {
+    "total": 9,
+    "totalUpperBound": 15,
+    "tier": "medium",
+    "tierUpperBound": "medium",
+    "inconclusive": false,
+    "rubric": {
+      "framework": "Uniswap Hooks Security Framework",
+      "revision": "e7e8da52fd5717b6eb4517ea779b766f63148c41",
+      "url": "https://github.com/uniswapfoundation/security-framework"
+    },
+    "dimensions": [
+      {
+        "id": "complexity",
+        "name": "Complexity",
+        "value": 3,
+        "max": 5,
+        "source": "measured",
+        "bracketLabel": "Returns a delta, or makes an external call in the swap path",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "hook-profile metrics: callbacksImplemented=2, callbacksDeclared=2, stateWritesInCallbacks=3, externalCallsInSwapPath=0, externalCallsInSwapPathThirdParty=0, internalFunctionsReachableFromCallbacks=13, usesReturnsDelta=true, hasOwnerOnlyFunctions=false",
+          "Scored 3 by rule `usesReturnsDelta || externalCallsInSwapPath >= 1`: Either a returns-delta permission or an external call in the swap path is a 'multi-step flow' in the prose's sense: the callback's effect is not local to itself. (hookrisk’s interpretation; the framework publishes no brackets)",
+          "The hook implements callbacks with non-trivial structure. This establishes a floor only; the measured value comes from the hook-profile metrics when the engine profiled the target."
+        ]
+      },
+      {
+        "id": "customMath",
+        "name": "Custom math",
+        "value": 2,
+        "max": 5,
+        "source": "measured",
+        "bracketLabel": "Fee or weight formulas over pool state",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "returns-delta is liquidity-side only (no swap delta); swaps still compare against the reference pool",
+          "1 custom-accounting finding(s)",
+          "Custom accounting implies a custom curve or non-standard settlement arithmetic."
+        ]
+      },
+      {
+        "id": "externalDependencies",
+        "name": "External dependencies",
+        "value": 0,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "None; the hook touches only the PoolManager and the pair's tokens",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "No external-call-in-swap-path findings, and every detector that could produce one ran.",
+          "Corroborated by the hook profile: zero third-party calls in the swap path."
+        ]
+      },
+      {
+        "id": "externalLiquidityExposure",
+        "name": "External liquidity exposure",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": []
+      },
+      {
+        "id": "tvlPotential",
+        "name": "TVL potential",
+        "value": 0,
+        "max": 5,
+        "source": "declared",
+        "bracketLabel": "Under $100K (experimental or personal project)",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure tvlPotential."
+        ]
+      },
+      {
+        "id": "teamMaturity",
+        "name": "Team maturity",
+        "value": 3,
+        "max": 3,
+        "source": "declared",
+        "bracketLabel": "Unproven: no prior production deployments, or deployments lacking audits and operational rigor; new, anonymous, or no public track record",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure teamMaturity."
+        ]
+      },
+      {
+        "id": "upgradeability",
+        "name": "Upgradeability",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "Not measured: no detector for upgradeable-hook (needs blocksec, which did not run); selfdestruct requires blocksec, which did not run."
+        ]
+      },
+      {
+        "id": "autonomousParameterUpdates",
+        "name": "Autonomous parameter updates",
+        "value": 0,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "All parameters set by an explicit privileged call",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "No admin-surface findings, and every detector that could produce one ran.",
+          "Corroborated by the hook profile: no owner-only surface, and HS-03 found no unguarded mutator of callback-read state."
+        ]
+      },
+      {
+        "id": "priceImpactingBehavior",
+        "name": "Price impacting behavior",
+        "value": 1,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "Charges a fixed, declared fee",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "returns-delta is liquidity-side only (no swap delta); swaps still compare against the reference pool",
+          "1 custom-accounting finding(s)",
+          "A returns-delta permission lets the hook alter settled amounts, which is the framework’s definition of price-impacting behaviour."
+        ]
+      }
+    ],
+    "triggers": [
+      {
+        "id": "custom-math",
+        "name": "Custom Curve or Non Standard Math",
+        "firedBy": [
+          "returns-delta-permission"
+        ],
+        "derivationIsInterpretation": true
+      },
+      {
+        "id": "price-impact",
+        "name": "Price Impacting Behavior",
+        "firedBy": [
+          "priceImpactingBehavior >= 1 (is 1)",
+          "returns-delta-permission"
+        ],
+        "derivationIsInterpretation": true
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "adversarial-simulation",
+        "label": "Adversarial and economic simulation",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:price-impact",
+            "strength": "required",
+            "detail": "Auditors should simulate worst-case economic and adversarial price manipulation"
+          }
+        ]
+      },
+      {
+        "action": "audit",
+        "label": "Security audit",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "required",
+            "detail": "One full audit"
+          }
+        ]
+      },
+      {
+        "action": "bug-bounty",
+        "label": "Bug bounty programme",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended"
+          },
+          {
+            "from": "trigger:price-impact",
+            "strength": "required"
+          }
+        ]
+      },
+      {
+        "action": "math-specialist-audit",
+        "label": "Audit by a math and invariants specialist",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "required",
+            "detail": "At least one audit including a math and invariants specialist"
+          },
+          {
+            "from": "trigger:price-impact",
+            "strength": "required",
+            "detail": "Auditor should specialize in math"
+          }
+        ]
+      },
+      {
+        "action": "static-analysis",
+        "label": "Automated static analysis",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "required",
+            "detail": "AI static analysis tools"
+          }
+        ]
+      },
+      {
+        "action": "unit-tests-boundaries",
+        "label": "Unit tests covering input-range boundaries",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "required",
+            "detail": "Validate intermediate steps, edge cases and input-range boundaries"
+          }
+        ]
+      },
+      {
+        "action": "extended-test-coverage",
+        "label": "Extended test coverage",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended",
+            "detail": "Where autonomy or parameter updates exist"
+          }
+        ]
+      },
+      {
+        "action": "invariant-testing",
+        "label": "Invariant and stateful fuzz testing",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "recommended",
+            "detail": "Stateful fuzzing may significantly improve assurance"
+          }
+        ]
+      },
+      {
+        "action": "monitoring",
+        "label": "Continuous monitoring with anomaly detection",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended",
+            "detail": "If external dependencies exist"
+          },
+          {
+            "from": "trigger:custom-math",
+            "strength": "recommended"
+          }
+        ]
+      },
+      {
+        "action": "second-audit",
+        "label": "Second independent audit",
+        "strength": "optional",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "optional",
+            "detail": "For math or complex components"
+          }
+        ]
+      }
+    ],
+    "warnings": [
+      "trigger 'holds-liquidity' could not be evaluated: dimension 'externalLiquidityExposure' is unmeasured",
+      "trigger 'upgradeable' could not be evaluated: dimension 'upgradeability' is unmeasured"
+    ]
+  },
+  "engines": [
+    {
+      "engine": "hookrisk",
+      "displayName": "hookrisk Slither detectors",
+      "version": "0.11.6",
+      "status": "ok",
+      "findingCount": 2,
+      "durationMs": 7881
+    },
+    {
+      "engine": "harness",
+      "displayName": "Differential harness (Foundry)",
+      "version": "1.7.1",
+      "status": "ok",
+      "findingCount": 0,
+      "durationMs": 5212
+    }
+  ],
+  "coverage": {
+    "corroboratedFindings": 0,
+    "uncoveredFunctions": [
+      {
+        "contract": "ReHypothecationHook",
+        "function": "_resolveHookDelta",
+        "reason": "Slither could not generate IR (src/general/ReHypothecationHook.sol#264-274); this function was not analysed"
+      },
+      {
+        "contract": "ReHypothecationERC4626Mock",
+        "function": "_resolveHookDelta",
+        "reason": "Slither could not generate IR (src/general/ReHypothecationHook.sol#264-274); this function was not analysed"
+      },
+      {
+        "contract": "ReHypothecationNativeMock",
+        "function": "_resolveHookDelta",
+        "reason": "Slither could not generate IR (src/general/ReHypothecationHook.sol#264-274); this function was not analysed"
+      }
+    ],
+    "staticAnalysisSkipped": false,
+    "dynamicAnalysisSkipped": false,
+    "harnessStatus": "ok",
+    "observations": {
+      "swapsExecuted": 13795,
+      "swapsCompared": 13795,
+      "swapsSkipped": 0,
+      "hookedSwapReverted": 0,
+      "positionsOpened": 6460,
+      "positionsClosed": 6460,
+      "donations": 6835,
+      "priceChecks": 13795,
+      "monotonicityViolations": 0,
+      "exitFailures": 0,
+      "sequences": 1285
+    }
+  },
+  "permissions": {
+    "fromEngine": {
+      "beforeInitialize": false,
+      "afterInitialize": false,
+      "beforeAddLiquidity": false,
+      "afterAddLiquidity": true,
+      "beforeRemoveLiquidity": false,
+      "afterRemoveLiquidity": true,
+      "beforeSwap": false,
+      "afterSwap": false,
+      "beforeDonate": false,
+      "afterDonate": false,
+      "beforeSwapReturnDelta": false,
+      "afterSwapReturnDelta": false,
+      "afterAddLiquidityReturnDelta": true,
+      "afterRemoveLiquidityReturnDelta": true
+    },
+    "fromRuntime": {
+      "beforeInitialize": false,
+      "afterInitialize": false,
+      "beforeAddLiquidity": false,
+      "afterAddLiquidity": true,
+      "beforeRemoveLiquidity": false,
+      "afterRemoveLiquidity": true,
+      "beforeSwap": false,
+      "afterSwap": false,
+      "beforeDonate": false,
+      "afterDonate": false,
+      "beforeSwapReturnDelta": false,
+      "afterSwapReturnDelta": false,
+      "afterAddLiquidityReturnDelta": true,
+      "afterRemoveLiquidityReturnDelta": true
+    },
+    "disagreement": [],
+    "harnessRun": {
+      "flags": 1283,
+      "permissionsDerived": true,
+      "customCurve": false,
+      "dynamicFee": false,
+      "seeded": "both",
+      "probes": {
+        "eoaGuard": {
+          "afterAddLiquidity": "guarded",
+          "afterRemoveLiquidity": "guarded"
+        },
+        "exclusivity": "accepted",
+        "selectors": {
+          "afterAddLiquidity": "ok",
+          "afterRemoveLiquidity": "ok"
+        }
+      }
+    }
+  },
+  "invariants": [
+    {
+      "id": "I1",
+      "name": "Conservation and solvency",
+      "status": "passed",
+      "runs": 256,
+      "calls": 8192,
+      "reverts": 0
+    },
+    {
+      "id": "I2",
+      "name": "No undeclared extraction",
+      "status": "passed",
+      "runs": 256,
+      "calls": 8192,
+      "reverts": 0
+    },
+    {
+      "id": "I3",
+      "name": "Exit liveness",
+      "status": "passed",
+      "runs": 256,
+      "calls": 8192,
+      "reverts": 0
+    }
+  ],
+  "gate": {
+    "passed": true,
+    "maxSeverity": "high",
+    "failOnInconclusive": false,
+    "failOnNotAnalysed": true,
+    "failures": []
+  }
+}

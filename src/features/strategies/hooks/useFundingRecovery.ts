@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-HOK-021 (POO-1055)
  * @name useFundingRecovery
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-1507 rules v1) · v1
  * @hackathon POO-1022 (Universal Funding)
  *
  * Mounts the READING half of the funding recovery journal (`docs/_hackathon/02_BRIDGE_ARCHITECTURE.md`
@@ -40,6 +40,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/useAuth";
+import { reportClientError } from "@/lib/observability/reportClientError";
 import { NATIVE_TOKEN_ADDRESS } from "@/lib/provisioning";
 import { isMockMode } from "@/lib/services";
 // PP-INTEGRATION-POINT: the per-chain RPC reads behind the §3.5 decision table. Each takes its own
@@ -72,6 +73,26 @@ export interface FundingRecovery {
 
 /** Nothing to recover. Also the whole of mock mode. */
 const NOTHING = { journal: null, reconciliation: null } as const;
+
+/**
+ * POO-1507 [D5]: `Stop anyway` on the funding panel's mid-run confirmation closes that surface and
+ * wants the app-wide banner to reflect the interruption immediately, rather than waiting for the
+ * next load. `useFundingRecovery` is a single instance mounted once in `AppShell`, with no ref the
+ * panel — far away in the tree, and sometimes a different bundle chunk entirely — could hold, so the
+ * signal travels as a window event: the same decoupling `pp:consent` already uses in
+ * `src/lib/analytics/consent.ts` for an identical shape, one writer far from its one reader.
+ */
+const RECOVERY_RECHECK_EVENT = "pp:funding-recovery-recheck";
+
+/**
+ * Ask the mounted recovery surface to re-read the journal right now. A no-op with nothing listening
+ * (no wallet connected, or the banner not yet mounted) — the next mount picks the record up anyway,
+ * this only removes the wait for one.
+ */
+export function requestFundingRecoveryRecheck(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(RECOVERY_RECHECK_EVENT));
+}
 
 /**
  * The chain, as three reads.
@@ -137,7 +158,9 @@ export function useFundingRecovery(): FundingRecovery {
         // Every individual read is already guarded inside the reconciler, so reaching here means
         // something structural. Leaving the record untouched and surfaced is the safe failure: the
         // in-flight fact that stops a double broadcast is exactly what must not be lost.
-        console.error("[useFundingRecovery] could not reconcile the funding journal", error);
+        // POO-243: "something structural" on the path that stops a double broadcast is exactly the
+        // failure that must not be invisible. No journal contents are sent, only the failure class.
+        reportClientError("funding.journal_reconcile_failed", error);
       }
       if (cancelled) return;
       // Re-read rather than reuse `found`: the apply may have retired the route entirely (every leg
@@ -158,6 +181,12 @@ export function useFundingRecovery(): FundingRecovery {
   const recheck = useCallback(() => {
     setAttempt((current) => current + 1);
   }, []);
+
+  // POO-1507 [D5]: the same re-read `recheck` triggers, fired from outside this hook's own tree.
+  useEffect(() => {
+    window.addEventListener(RECOVERY_RECHECK_EVENT, recheck);
+    return () => window.removeEventListener(RECOVERY_RECHECK_EVENT, recheck);
+  }, [recheck]);
 
   const journalId = state.journal?.journalId ?? null;
   const abandon = useCallback(() => {

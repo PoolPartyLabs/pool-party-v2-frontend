@@ -1,78 +1,65 @@
 /**
  * @id PP-CORE-LIB-057 (POO-1042)
  * @name provisioning gate context
- * @implements-rules-version v1
+ * @implements-rules-version v2
  * @hackathon POO-1022 (Universal Funding)
  *
  * Everything the pre-flight gate needs to know about a wallet, read once, server-side.
  *
- * Until now the gate's real branch was a hard-disable stub: `realProvisioningInput` returned a
- * wallet holding a million dollars, so it could never trip, and the whole rail below it was
- * unreachable outside a local mock demo. This file is what replaces the stub — the one place the
- * live reads happen, so the six op modals stay identical and there is nowhere for a second,
+ * The gate's real branch was once a hard-disable stub: `realProvisioningInput` returned a wallet
+ * holding a million dollars, so it could never trip. This module replaced that stub and remains the
+ * single entry point, so the six op modals stay identical and there is nowhere for a second,
  * divergent assembly to grow.
  *
- * Three answers come out of it:
+ * ## Where the assembly lives (POO-1098)
  *
- *   **What is where** ([R1]). Per-chain native and token USD, from the shipped multi-chain holdings
- *   read. Native and token are separated because only the chain's OWN native coin can pay for a
- *   transaction there, which is the fact the whole gas model turns on.
+ * It is no longer assembled HERE. `GET /api/v1/funding/context` on pool-party-api now does the work
+ * this file used to do inline, and the three answers below come back from that one call:
+ *
+ *   **What is where** ([R1]). Per-chain native and token USD, from the RAW holdings. Native and
+ *   token are separated because only the chain's OWN native coin can pay for a transaction there,
+ *   which is the fact the whole gas model turns on.
  *
  *   **Can each chain transact** ([R9]). A {@link GasFeasibility} verdict for every candidate source
  *   chain AND for the operation's own chain. POO-1039 treats a chain with no verdict as selectable
  *   with no badge, deliberately erring towards letting a user spend their own money; supplying one
  *   for every chain is what makes that fallback unreachable in production rather than load-bearing.
  *
- *   **What gas actually costs** ([R4]). From a live `POST /quote`, never the `0.5` that
+ *   **What gas actually costs** ([R4]). From a live quote, never the `0.5` that
  *   `mapManagerStrategyDetail.ts` still hardcodes. The gate runs BEFORE the operation is built, and
  *   before this epic the only genuine gas figure in the codebase existed only AFTER a build.
  *
- * ## The fail-safe posture ([R6])
+ * What did NOT move is the pure classification and display code ([R4] of POO-1098):
+ * `gasFeasibility.ts` and the picker's helpers stay here, so the UI renders without a round trip.
+ *
+ * ## The fail-safe posture ([R5])
  *
  * A degraded read resolves to NO context, and no context means no gate: the operation proceeds
  * exactly as it does today. This is not defensive padding, it is the single most important
  * behavioural rule in the issue. A wallet that is genuinely funded, blocked by a provisioning modal
  * because a balance endpoint blipped, is strictly worse than never having built the feature.
  *
- * Which is also why the USDC-only on-chain fallback that {@link getFundingInventory} uses is
- * deliberately NOT used here. That path carries no native balances at all, so every chain would read
- * as having zero gas and the gate would fire on every operation, for every user, precisely while the
- * backend is unhealthy. Degrading to "we do not know" is honest; degrading to "you have no gas" is a
- * lie that costs the user their transaction.
+ * The backend holds the same posture from the other side: it answers 200 with `degraded: true`
+ * rather than a 4xx, precisely so no caller can forget to special-case a status and fail CLOSED. It
+ * also refuses to fall back to a USDC-only on-chain read on a total outage, because that path
+ * carries no native balances at all and every chain would read as having zero gas. Degrading to "we
+ * do not know" is honest; degrading to "you have no gas" is a lie that costs the user their
+ * transaction.
  *
- * Server-only: it reads the wallet holdings API and quotes through the key-bearing Uniswap layer
- * (ADR 0003). A client surface reaches it through `getProvisioningContextAction` (`planActions.ts`),
- * which derives the wallet from the SIWE session.
+ * Server-only: it holds the session bearer and the API key boundary. A client surface reaches it
+ * through `getProvisioningContextAction` (`planActions.ts`), which derives the wallet from the SIWE
+ * session; the address is never a client-supplied parameter, here or on the route.
  */
 import "server-only";
 
-import { fetchWalletHoldings } from "@/lib/balances/fetchWalletHoldings";
+import { z } from "zod";
+import { apiFetch } from "@/lib/api/client";
+import { ApiError, ApiParseError } from "@/lib/api/errors";
+import { getAuthHeader } from "@/lib/auth/session";
 import type { FundingSource } from "@/lib/balances/fundingInventory";
-import { getFundingInventory, toBaseUnits } from "@/lib/balances/fundingInventory";
-import type { TokenBalance } from "@/lib/balances/types";
-import { getUsdcAddress } from "@/lib/chains/config";
-// PP-INTEGRATION-POINT: per-chain gas pricing ← Uniswap `POST /quote`, through the server-action
-// layer (PP-CORE-LIB-052). The only upstream call this module makes on its own account.
-import { quoteSwap } from "@/lib/uniswap/actions";
-import type {
-  GasCandidateChain,
-  GasFeasibility,
-  GasSourceToken,
-  RouteGasQuote,
-} from "./gasFeasibility";
-import { classifyGasFeasibility, quoteGasUsd } from "./gasFeasibility";
+import { logWarn } from "@/lib/observability/logger";
+import type { GasFeasibility } from "./gasFeasibility";
 import type { ChainBalancesUsd } from "./types";
-import { NATIVE_TOKEN_ADDRESS } from "./types";
-
-/**
- * The size of the gas-pricing probe, in USDC base units: 1 USDC.
- *
- * Gas is a property of the transaction, not of its size, so the probe only has to be an amount that
- * routes. One dollar is small enough to quote on any pool we would ever fund through and large
- * enough not to fall under a minimum. It is never broadcast and never shown; only its `gasFeeUSD`
- * is read.
- */
-const GAS_PROBE_USDC = "1000000";
 
 /** What the pre-flight gate knows about a wallet, for ONE operation. */
 export interface ProvisioningGateContext {
@@ -116,161 +103,175 @@ export interface ProvisioningGateContext {
   gasEstimateUsd: number;
 }
 
-/** A USD figure we are willing to add up: finite and not negative. */
-function usd(value: number): number {
-  return Number.isFinite(value) && value > 0 ? value : 0;
-}
-
-/** Per-chain native / token USD from the raw holdings ([R1]). */
-function balancesByChain(holdings: readonly TokenBalance[]): Record<number, ChainBalancesUsd> {
-  const byChain: Record<number, ChainBalancesUsd> = {};
-  for (const holding of holdings) {
-    const chain = byChain[holding.chainId] ?? { nativeUsd: 0, tokenUsd: 0 };
-    if (holding.isNative) chain.nativeUsd += usd(holding.usd);
-    else chain.tokenUsd += usd(holding.usd);
-    byChain[holding.chainId] = chain;
-  }
-  return byChain;
-}
+/** One thing the wallet can pay with, exactly as `FundingSource` is served. */
+const servedFundingSourceSchema = z.object({
+  address: z.string(),
+  chainId: z.number(),
+  symbol: z.string(),
+  decimals: z.number(),
+  amount: z.string(),
+  usd: z.number(),
+  reachableChainIds: z.array(z.number()),
+  isNative: z.boolean(),
+  logoUrl: z.string(),
+});
 
 /**
- * Live gas for one chain's transactions, in USD ([R4]).
+ * The gas verdict, validated on every scalar the gate acts on.
  *
- * The probe is a USDC → native swap on that chain, which is not an arbitrary choice: it is the exact
- * shape of the `swap-gas` leg the planner prepends on a TOP_UP chain, so the figure prices the
- * cheapest real transaction this rail can put on that chain.
- *
- * The same figure fills three fields, for three stated reasons rather than as a shortcut:
- *
- *   `swapUsd`       this chain's own transaction, which is what was measured;
- *   `topUpSwapUsd`  a gas top-up IS this swap, so it costs this;
- *   `bridgeUsd`     only off-target, where the chain must also originate a bridge. Across's deposit
- *                   is cheaper than an AMM swap, so this over-states it. That is the safe direction:
- *                   over-stating asks for slightly more native headroom, under-stating strands the
- *                   user mid-route with a transaction they cannot pay for.
- *
- * `approvalUsd` is deliberately absent: `POST /check_approval` returns calldata and no gas figure,
- * so there is nothing to read, and inventing one is exactly what [R4] forbids. The classifier's 25%
- * proportional headroom plus its $0.05 floor is what covers it.
- *
- * An unquotable chain returns `{}` rather than a guess. The classifier then degrades to its bare
- * floor, which still refuses to promise that an empty wallet can transact but does not block a
- * funded one.
+ * Not a passthrough. This decides whether a user is told a chain cannot pay for its own transaction,
+ * so a missing `verdict` or a `requiredGasUsd` that arrived as a string is exactly the drift worth
+ * failing on. `topUp` and `escapes` are structurally optional (present only for TOP_UP and BLOCKED)
+ * and are passed through as-is: they are consumed by pure display helpers that already tolerate a
+ * partial, and re-declaring their internals here would be a second copy of a contract that lives in
+ * `gasFeasibility.ts`.
  */
-async function quoteChainGas(chainId: number, targetChainId: number): Promise<RouteGasQuote> {
-  const usdc = getUsdcAddress(chainId);
-  if (!usdc) return {};
+const servedGasFeasibilitySchema = z.object({
+  chainId: z.number(),
+  verdict: z.enum(["OK", "TOP_UP", "BLOCKED"]),
+  quotedGasUsd: z.number(),
+  requiredGasUsd: z.number(),
+  shortfallUsd: z.number(),
+  surplusUsd: z.number(),
+  reasonKey: z.string(),
+  topUp: z.unknown().optional(),
+  escapes: z.unknown().optional(),
+});
 
-  const result = await quoteSwap({
-    tokenIn: usdc,
-    tokenOut: NATIVE_TOKEN_ADDRESS,
-    tokenInChainId: chainId,
-    tokenOutChainId: chainId,
-    amount: GAS_PROBE_USDC,
-    type: "EXACT_INPUT",
+/**
+ * What `GET /api/v1/funding/context` returns.
+ *
+ * Validated rather than trusted: this is the shape the ENTIRE pre-flight gate reads, and a contract
+ * drift that slipped through would surface as a wallet that looks empty, which is the one reading
+ * this module exists to prevent. Money stays in its wire form here (token amounts as decimal
+ * strings, USD as numbers) because that is what `ProvisioningGateContext` already speaks.
+ *
+ * Deliberately NOT `.strict()`: the backend may add fields, and failing the gate closed over an
+ * unknown key would be exactly the fail-closed behaviour [R5] forbids.
+ */
+const servedFundingContextSchema = z.object({
+  targetChainId: z.number(),
+  sources: z.array(servedFundingSourceSchema),
+  gasByChain: z.record(z.string(), servedGasFeasibilitySchema),
+  balancesByChain: z.record(z.string(), z.object({ nativeUsd: z.number(), tokenUsd: z.number() })),
+  nativeHoldings: z.array(servedFundingSourceSchema),
+  gasEstimateUsd: z.number(),
+  degraded: z.boolean(),
+  degradedReason: z.string().optional(),
+});
+
+/** Exactly what comes off the wire. `z.record` keys are strings there; the context uses numbers. */
+type ServedContextWire = z.infer<typeof servedFundingContextSchema>;
+
+/**
+ * Record, once, that a context read produced no context.
+ *
+ * The fail-open posture below is correct and non-negotiable, but it has the cost `observeFailure.ts`
+ * (PP-REW, POO-567) already names for the analytics fetchers: a degrade that is indistinguishable
+ * from a legitimate answer is invisible. Here it is worse than invisible. The catch is deliberately
+ * catch-all, so a schema drift, a permanently misrouted endpoint, or a plain TypeError in the
+ * mapping below all disable the gate for EVERY user, silently and indefinitely, while every request
+ * still returns 200 to the browser. Nothing else in the stack would ever report it.
+ *
+ * Never throws, and deliberately carries no wallet address: a warning must not turn a degraded gate
+ * fatal, and this path is not a place to start writing identities to server logs.
+ *
+ * POO-243: emits through the platform structured logger this file asked for. It also carries the
+ * upstream `requestId` when `apiFetch` captured one, which is what closes the loop the docblock
+ * above complains about: a silently disabled gate can now be matched to the exact pool-party-api
+ * request that disabled it, in the other repo's logs.
+ */
+function observeGateContextFailure(cause: unknown): void {
+  const typed = cause instanceof ApiError || cause instanceof ApiParseError ? cause : null;
+  logWarn("provisioning.gate_context_unavailable", {
+    reason: "gate disabled for this operation",
+    endpoint: "funding/context",
+    status: typed?.status ?? 0,
+    code: typed?.code ?? (cause instanceof Error ? cause.name : "DEGRADED"),
+    requestId: typed?.requestId,
+    message: cause instanceof Error ? cause.message : String(cause),
   });
-  if (!result.ok) return {};
-
-  const gasUsd = quoteGasUsd(result.quote);
-  if (gasUsd === undefined) return {};
-
-  return {
-    swapUsd: gasUsd,
-    topUpSwapUsd: gasUsd,
-    ...(chainId === targetChainId ? {} : { bridgeUsd: gasUsd }),
-  };
 }
 
-/** The non-native, routable holdings on `chainId`: what a gas top-up there could be sliced from. */
-function gasSources(sources: readonly FundingSource[], chainId: number): GasSourceToken[] {
-  return sources
-    .filter((source) => source.chainId === chainId && !source.isNative)
-    .map((source) => ({
-      symbol: source.symbol,
-      address: source.address,
-      decimals: source.decimals,
-      balanceRaw: source.amount,
-      balanceUsd: source.usd,
-    }));
+/** Re-key a wire record of chain ids, dropping any key that is not an INTEGER rather than NaN-ing it. */
+function byChainId<T>(wire: Record<string, T>): Record<number, T> {
+  const out: Record<number, T> = {};
+  for (const [key, value] of Object.entries(wire)) {
+    const chainId = Number(key);
+    if (Number.isInteger(chainId)) out[chainId] = value;
+  }
+  return out;
 }
 
 /**
- * Assemble the gate context for `address` running an operation on `targetChainId`.
+ * The context, assembled by pool-party-api (POO-1098).
  *
- * Returns `null` when the wallet cannot be read ([R6]). Never throws: the caller is a server action
- * whose contract is a typed result, and a rejection here would surface to the browser as an opaque
- * failure that the gate would have no way to distinguish from "you are short".
+ * This used to fan out from here: three wallet-holdings reads, up to 25 routability lookups, and a
+ * gas quote per candidate chain. Roughly thirty upstream calls, and the gate builds twice per plan,
+ * so a single invest modal cost around sixty. Once POO-1097 put the Uniswap transport behind our own
+ * backend, every one of those also started consuming pool-party-api's shared per-API-key bucket.
+ * Collapsing the fan-out is the fix; the two builds now cost one request each.
+ *
+ * [R1 v2]: NOT deduped by passing the context back from the browser, which is what the issue
+ * originally asked for. `planActions` deliberately resolves the client's selection KEYS against a
+ * server-read inventory so no client-supplied amount ever reaches `buildPlan`; handing the context
+ * to the client and taking it back would make `usableBalance` and `gasByChain` user-controlled, and
+ * `buildPlan`'s per-source cap would then be capping against a number the user chose. One request
+ * per build, twice, is cheap enough that a server-side memo would be invalidation complexity buying
+ * very little.
+ *
+ * [R5]: returns `null` on ANY failure, not only on the backend's `degraded` flag. The route can
+ * answer 401 for an expired session, 400, 408, and 429 for either the per-wallet Uniswap quota or
+ * the global throttle. `null` means no context and therefore NO GATE, so a funded wallet is never
+ * blocked behind a modal because a backend was busy. An absent answer is not a measurement: a
+ * consumer that read an empty `balancesByChain` as "this wallet holds nothing" would tell a funded
+ * user they have no gas.
  */
 export async function buildProvisioningGateContext(
   address: `0x${string}`,
   targetChainId: number,
 ): Promise<ProvisioningGateContext | null> {
   if (!address) return null;
+  // `targetChainId` is typed but reaches us from a `"use server"` argument, which Next does not
+  // runtime-check. Validate before interpolating so a non-integer cannot smuggle a second query
+  // param onto the URL. The backend's `@IsInt()` would reject it anyway; refusing here spends no
+  // request on it, and refusing means `null`, which is the same fail-open answer as any other
+  // unreadable input ([R5]).
+  if (!Number.isInteger(targetChainId) || targetChainId <= 0) return null;
 
-  let holdings: TokenBalance[];
   try {
-    // Throws only when EVERY network failed. See the header for why the USDC-only fallback that
-    // `getFundingInventory` uses is not acceptable HERE: it carries no native balances.
-    holdings = await fetchWalletHoldings(address);
-  } catch {
+    // PP-INTEGRATION-POINT: the provisioning gate context, assembled server-side (POO-1098).
+    const context = await apiFetch<ServedContextWire>(
+      `funding/context?targetChainId=${targetChainId}`,
+      { headers: await getAuthHeader(), schema: servedFundingContextSchema },
+    );
+
+    // A 204, or anything that parsed to nothing. Not an empty wallet.
+    if (!context) {
+      observeGateContextFailure("empty body");
+      return null;
+    }
+    // The backend's own "I could not read this honestly" signal.
+    if (context.degraded) {
+      observeGateContextFailure(context.degradedReason ?? "degraded");
+      return null;
+    }
+
+    return {
+      targetChainId: context.targetChainId,
+      sources: context.sources,
+      nativeHoldings: context.nativeHoldings,
+      // `topUp` / `escapes` stay `unknown` in the schema by design (see above); every scalar the
+      // gate acts on is validated, so the cast is over the two structurally-optional display fields.
+      gasByChain: byChainId(context.gasByChain) as Record<number, GasFeasibility>,
+      balancesByChain: byChainId(context.balancesByChain),
+      gasEstimateUsd: context.gasEstimateUsd,
+    };
+  } catch (error) {
+    // [R5]. Deliberately catch-all: every failure mode here means the same thing to the caller, and
+    // enumerating statuses would leave the next one to be added failing CLOSED. Logged rather than
+    // swallowed silently, for the reason below.
+    observeGateContextFailure(error);
     return null;
   }
-
-  // A routability outage costs the user the picker, not the gate: the balances are still known, so
-  // the verdicts below are still true, and the panel renders an honest empty list.
-  const sources = await getFundingInventory(address, holdings).catch(() => [] as FundingSource[]);
-
-  // [R9] Every chain the user could spend FROM, plus the chain the operation runs ON, which needs
-  // gas even when it funds nothing (the operation itself is a transaction there).
-  const candidateChainIds = [
-    ...new Set([...sources.map((source) => source.chainId), targetChainId]),
-  ].sort((a, b) => a - b);
-
-  const balances = balancesByChain(holdings);
-
-  const candidates: GasCandidateChain[] = await Promise.all(
-    candidateChainIds.map(async (chainId) => ({
-      chainId,
-      nativeBalanceUsd: balances[chainId]?.nativeUsd ?? 0,
-      gas: await quoteChainGas(chainId, targetChainId),
-      sources: gasSources(sources, chainId),
-    })),
-  );
-
-  // Unfiltered, so a native balance under the picker's dust threshold can still donate gas.
-  const nativeHoldings: FundingSource[] = holdings.flatMap((holding) => {
-    if (!holding.isNative || !holding.address) return [];
-    const amount = toBaseUnits(holding);
-    if (amount === null) return [];
-    return [
-      {
-        address: holding.address,
-        chainId: holding.chainId,
-        symbol: holding.symbol,
-        decimals: holding.decimals,
-        amount,
-        usd: holding.usd,
-        // Never used for gas donation, and an empty list must not read as "reaches everywhere".
-        reachableChainIds: [],
-        isNative: true,
-        logoUrl: holding.logoUrl,
-      },
-    ];
-  });
-
-  const gasByChain: Record<number, GasFeasibility> = {};
-  for (const verdict of classifyGasFeasibility(candidates)) {
-    gasByChain[verdict.chainId] = verdict;
-  }
-
-  return {
-    targetChainId,
-    sources,
-    nativeHoldings,
-    gasByChain,
-    balancesByChain: balances,
-    // [R4] What the operation's chain must hold for the operation to run: quoted, plus headroom,
-    // plus the gas swap's own cost when that chain has to buy its gas first.
-    gasEstimateUsd: gasByChain[targetChainId]?.requiredGasUsd ?? 0,
-  };
 }

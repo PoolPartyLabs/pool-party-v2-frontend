@@ -1,0 +1,9 @@
+  scan: src/TradingDaysHook.sol:TradingDaysHook run=24a0f37a-f767-4411-9556-397f565ce3b6
+  project: out=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/trading-days/repo/out solc=0.8.19 (artifact-metadata) artifact=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/trading-days/repo/out/TradingDaysHook.sol/TradingDaysHook.json
+  hookrisk: slither src/TradingDaysHook.sol:TradingDaysHook
+  hookrisk: 1 finding(s) in other files, not attributed to this target: src/implementation/TradingDaysImplementation.sol (1)
+  hookrisk: did not analyse the target — TradingDaysHook uses a hook ABI hookrisk cannot analyse: TradingDaysHook (src/TradingDaysHook.sol#16-79) looks like a Uniswap v4 hook but its hook ABI predates the shipped v4 interface (declares the 2023 …
+  hookrisk: 1 finding(s); analysed 0 hook contract(s)
+  hookrisk: ok
+  harness: skipped — TradingDaysHook's constructor takes 3 argument(s) (address _poolManager, address _holidays, address _dst) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.
+  scan: finished in 3135ms, exit 2

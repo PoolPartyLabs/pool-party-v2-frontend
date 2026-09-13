@@ -1,0 +1,430 @@
+{
+  "$comment": [
+    "Single source of truth for every error hookrisk can emit.",
+    "",
+    "The Python detectors (detectors/slither_hookrisk/utils/diagnostics.py) and the",
+    "TypeScript CLI (cli/src/errors.ts) both load this file, so a message can never",
+    "drift between the two runtimes. docs/TROUBLESHOOTING.md is generated from it by",
+    "scripts/gen_error_docs.py, and CI fails if the generated file is stale.",
+    "",
+    "Fields:",
+    "  code      Stable identifier. Never reuse or renumber; retire instead.",
+    "  title     One line, imperative or declarative, no trailing period.",
+    "  cause     Why this happens, in terms of what the user did or their environment.",
+    "  fix       Ordered, concrete remediation steps. First entry is the usual fix.",
+    "  match     Regexes tested against raw tool output to auto-classify a failure.",
+    "  exitCode  Process exit status. Distinct ranges make CI assertions readable.",
+    "  seeAlso   Optional links to upstream issues or docs.",
+    "",
+    "Ranges: 0xx environment, 1xx configuration, 2xx compilation/static analysis,",
+    "3xx harness execution, 4xx network and explorers, 5xx manifest and scoring,",
+    "9xx internal.",
+    "",
+    "Exit codes intentionally avoid 1: a bare 1 is what an uncaught crash produces,",
+    "so reserving it lets CI distinguish 'hookrisk reported a problem' from",
+    "'hookrisk itself broke'. Exit code 2 is reserved for 'scan completed and the",
+    "risk gate failed', which is a successful run, not an error. Exit code 64 is",
+    "sysexits.h EX_USAGE: the command line itself was wrong, so no scan was even",
+    "attempted. It has no HR-E entry because there is nothing to diagnose — the",
+    "usage text is the whole message."
+  ],
+  "version": 1,
+  "reserved": {
+    "0": "scan completed, gate passed",
+    "1": "uncaught internal crash (never emitted deliberately)",
+    "2": "scan completed, risk gate failed — this is a result, not an error",
+    "64": "usage: unknown command, or no command at all (sysexits.h EX_USAGE)"
+  },
+  "errors": [
+    {
+      "code": "HR-E001",
+      "title": "Foundry is not installed or not on PATH",
+      "exitCode": 10,
+      "cause": "hookrisk shells out to `forge` to compile the target and to run the differential harness. Neither the static nor the dynamic layer can start without it.",
+      "fix": [
+        "Install Foundry: `curl -L https://foundry.paradigm.xyz | bash && foundryup`",
+        "Reopen your shell, or `source ~/.bashrc` / `source ~/.zshenv`, so PATH picks it up.",
+        "Verify with `forge --version`. hookrisk requires 1.0.0 or newer.",
+        "In CI, use `foundry-rs/foundry-toolchain@v1` before calling hookrisk."
+      ],
+      "match": [
+        "forge: command not found",
+        "No such file or directory: 'forge'"
+      ]
+    },
+    {
+      "code": "HR-E002",
+      "title": "Slither is not installed or not importable",
+      "exitCode": 10,
+      "cause": "The static layer is a Slither detector plugin. Without Slither, hookrisk can still run the harness and score declared dimensions, but every measured static dimension would be unscored — so it stops rather than emit a manifest that silently understates risk.",
+      "fix": [
+        "`pipx install slither-analyzer` (recommended — keeps it off your system Python).",
+        "Or, inside a virtualenv: `pip install slither-analyzer`.",
+        "Then install the plugin: `pip install ./detectors` from the repo root.",
+        "Verify with `slither --list-detectors | grep hookrisk`.",
+        "To deliberately score without static analysis, pass `--skip-static`. The manifest records `staticAnalysis.skipped: true` and the affected dimensions are reported as unmeasured, never as zero."
+      ],
+      "match": [
+        "slither: command not found",
+        "No module named 'slither'"
+      ]
+    },
+    {
+      "code": "HR-E003",
+      "title": "Python version is unsupported",
+      "exitCode": 10,
+      "cause": "The detector plugin uses `match` statements and PEP 604 unions, and Slither itself requires a modern runtime.",
+      "fix": [
+        "Install Python 3.10 or newer.",
+        "Confirm the interpreter Slither actually uses: `slither --version` then `python3 -c 'import sys; print(sys.version)'`.",
+        "A pipx install pins its own interpreter, which is usually the cleanest fix on macOS where the system Python is old."
+      ],
+      "match": [
+        "requires Python >=3\\.",
+        "SyntaxError.*match"
+      ]
+    },
+    {
+      "code": "HR-E004",
+      "title": "The hookrisk Slither plugin is installed but not registered",
+      "exitCode": 10,
+      "cause": "Slither discovers plugins through the `slither_analyzer.plugin` entry point. If the package was installed into a different environment than the one running Slither, the detectors are on disk but invisible.",
+      "fix": [
+        "Check they are registered: `slither --list-detectors | grep HS-`.",
+        "If nothing prints, install into the same environment: `python -m pip install ./detectors` using the interpreter that owns Slither.",
+        "With pipx, inject rather than install: `pipx inject slither-analyzer ./detectors`.",
+        "Editable installs (`pip install -e ./detectors`) do register entry points, but only after the environment is restarted."
+      ],
+      "match": [
+        "No detector found matching",
+        "Unknown detector: HS-"
+      ]
+    },
+    {
+      "code": "HR-E005",
+      "title": "hookrisk cannot find its own installation",
+      "exitCode": 10,
+      "cause": "The CLI is one part of hookrisk. The differential harness is a Foundry project under `harness/` and the manifest schema and framework rubric are JSON under `schema/`, and the CLI reads all three at runtime. It finds them by walking up from its own `dist/` directory, which only works when it is run from a checkout that `make setup` has prepared. A copied `dist/`, a global `npm install` of the package alone, or a partial checkout leaves it with nothing to run.",
+      "fix": [
+        "From a hookrisk checkout, run `make setup`. It creates the virtualenv, materialises the pinned Solidity dependencies into `harness/lib/`, registers the detectors and builds the CLI.",
+        "If the CLI lives somewhere else on purpose, point it at the checkout: `export HOOKRISK_HOME=/path/to/hookrisk`.",
+        "Confirm the directory really is one: it must contain both `harness/foundry.toml` and `schema/`.",
+        "hookrisk is not published to npm today; see docs/ARCHITECTURE.md for what a split into a standalone package would require."
+      ],
+      "match": [
+        "cannot find its own installation",
+        "HOOKRISK_HOME"
+      ]
+    },
+    {
+      "code": "HR-E101",
+      "title": "hookrisk.toml is missing a required declared dimension",
+      "exitCode": 20,
+      "cause": "The Uniswap Foundation framework scores nine dimensions. Some are measurable from code; the rest — team maturity above all — are self-declared by definition. hookrisk refuses to invent them, because a fabricated declaration produces a total score that looks authoritative and is not.",
+      "fix": [
+        "Run `hookrisk init` to generate a commented hookrisk.toml with every declared field and the framework's own scoring brackets inline.",
+        "Fill in `[declared] teamMaturity` (0-3) and `[declared] tvlPotential` (0-5) at minimum.",
+        "See docs/SCORING.md for which dimensions hookrisk measures and which it cannot.",
+        "There is deliberately no default. See FEEDBACK.md #3 for why defaulting these would undermine the framework."
+      ],
+      "match": [
+        "missing declared dimension",
+        "hookrisk\\.toml.*required"
+      ]
+    },
+    {
+      "code": "HR-E102",
+      "title": "Target hook could not be resolved",
+      "exitCode": 20,
+      "cause": "The scan target must be either `path/to/File.sol:ContractName` for source mode, or a `0x`-prefixed 20-byte address plus `--chain` for deployed mode. Anything else is ambiguous.",
+      "fix": [
+        "Source mode: `hookrisk scan src/MyHook.sol:MyHook`.",
+        "Deployed mode: `hookrisk scan 0xabc...123 --chain base`.",
+        "If the contract name is omitted and the file declares exactly one contract, hookrisk uses it; if the file declares several, name the one you mean.",
+        "Run `hookrisk targets src/MyHook.sol` to list the contracts hookrisk can see in a file."
+      ],
+      "match": [
+        "could not resolve target",
+        "ambiguous contract name"
+      ]
+    },
+    {
+      "code": "HR-E103",
+      "title": "Declared fee bound is missing while the hook can alter fees",
+      "exitCode": 20,
+      "cause": "Invariant I2 asserts that a swap through the hooked pool returns at least what the vanilla pool returns, less the fee the hook declares it charges. Without a declared bound there is no threshold to test against, and any extraction at all would look legitimate.",
+      "fix": [
+        "Set `[declared] maxFeeBps` in hookrisk.toml to the largest fee your hook can ever charge, in basis points.",
+        "If the hook charges no fee of its own, set it to 0 explicitly — that is a much stronger assertion and hookrisk will hold you to it.",
+        "If the hook implements a custom curve (a returns-delta permission), I2 does not apply; hookrisk substitutes price monotonicity plus I1 and I3. See docs/INVARIANTS.md."
+      ],
+      "match": [
+        "maxFeeBps.*not declared",
+        "no declared fee bound"
+      ]
+    },
+    {
+      "code": "HR-E201",
+      "title": "Foundry library path is parent-relative and Slither cannot resolve it",
+      "exitCode": 30,
+      "cause": "crytic-compile, which Slither uses to drive Foundry, does not normalise `..` segments in `libs`. Compilation succeeds, then name resolution fails on an inherited interface, and the abort message names an arbitrary contract rather than the real problem. Observed with `libs = [\"../harness/lib\"]` compiling v4-core, which aborts with `AssertionError: Contract IExttload not found`.",
+      "fix": [
+        "Replace the parent-relative entry with a symlink inside the project: `ln -s ../shared/lib lib`, then `libs = [\"lib\"]`.",
+        "Or vendor the dependencies into the project directly.",
+        "This is an upstream limitation, not a problem with your contracts — the same tree compiles fine under `forge build`.",
+        "hookrisk's own corpus uses the symlink approach; see corpus/foundry.toml."
+      ],
+      "match": [
+        "AssertionError: Contract \\w+ not found",
+        "Failed to resolved name for reference id"
+      ],
+      "seeAlso": [
+        "https://github.com/crytic/crytic-compile"
+      ]
+    },
+    {
+      "code": "HR-E202",
+      "title": "Foundry test path shadows the source path, so nothing is analysed",
+      "exitCode": 30,
+      "cause": "crytic-compile builds with `forge build --build-info --skip ./<test>/** --skip ./<script>/** --force`. When `test` in foundry.toml points at the same directory as `src`, every contract is skipped and `--force` clears any earlier artifacts. Slither then finds no build-info and reports either a hard failure or, worse, a clean scan of nothing.",
+      "fix": [
+        "Give `test` its own directory in foundry.toml, even if it is empty.",
+        "Confirm the build actually produced artifacts: `ls out/build-info` should contain a JSON file after `forge build --build-info`.",
+        "If your project genuinely keeps tests beside sources, pass `--foundry-compile-all` so crytic-compile omits the skip flags."
+      ],
+      "match": []
+    },
+    {
+      "code": "HR-E203",
+      "title": "Target compiles under forge but not under Slither",
+      "exitCode": 30,
+      "cause": "Slither parses solc's AST, which is stricter about some constructs than code generation is, and it does not support every solc version the moment that version ships.",
+      "fix": [
+        "Confirm the baseline: `forge build --build-info --force` on its own.",
+        "Pin a solc version Slither supports in foundry.toml, e.g. `solc = \"0.8.26\"`.",
+        "Try `--ignore-compile` after a manual `forge build --build-info` so Slither reuses your artifacts instead of rebuilding.",
+        "If it still fails, `--skip-static` produces a manifest from the harness alone, with every static dimension marked unmeasured."
+      ],
+      "match": [
+        "InvalidCompilation",
+        "solc.*not supported",
+        "Compilation failed\\. Can you run build command\\?"
+      ]
+    },
+    {
+      "code": "HR-E205",
+      "title": "Static analysis could not lift every function to IR",
+      "exitCode": 31,
+      "cause": "Slither failed to build SlithIR for one or more functions and continued anyway, logging `Impossible to generate IR for <function>`. Those functions were never analysed. Reporting the scan as clean would be a false negative dressed up as a pass — observed on OpenZeppelin's own AntiSandwichHook, where three functions including `_afterSwap` fail to lift.",
+      "fix": [
+        "Read the affected function manually. hookrisk lists every skipped function in the manifest under `staticAnalysis.uncoveredFunctions` and in HOOK_RISK.md.",
+        "Try a different solc version in foundry.toml; IR lifting failures are often version specific.",
+        "The dynamic layer is unaffected — the differential harness executes the real bytecode, so invariants I1-I3 still cover these paths.",
+        "Pass `--fail-on-partial-coverage` to make this a hard failure instead of a warning. Appropriate for a release gate on your own hook; too strict for scanning third-party code.",
+        "Please report the function upstream at https://github.com/crytic/slither/issues — these are upstream bugs and they are fixable."
+      ],
+      "match": [
+        "Impossible to generate IR for",
+        "ContractSolcParsing"
+      ],
+      "seeAlso": [
+        "https://github.com/crytic/slither/issues"
+      ]
+    },
+    {
+      "code": "HR-E204",
+      "title": "Hook source not found for a deployed address",
+      "exitCode": 30,
+      "cause": "Deployed-mode scanning fetches verified source from the block explorer. Unverified contracts have none, so hookrisk falls back to bytecode-only analysis with reduced confidence.",
+      "fix": [
+        "This is a warning by default, not a failure — the manifest records `sourceAvailable: false` and lowers the confidence of every affected finding.",
+        "Set `ETHERSCAN_API_KEY` for the multichain V2 endpoint; without a key you are heavily rate limited.",
+        "hookrisk falls back to Sourcify automatically when the explorer has nothing.",
+        "Pass `--require-source` to make this a hard error instead, which is the right setting for a CI gate on your own contracts."
+      ],
+      "match": [
+        "source not verified",
+        "Contract source code not verified"
+      ]
+    },
+    {
+      "code": "HR-E301",
+      "title": "Differential harness could not deploy the hook at a flag-bearing address",
+      "exitCode": 40,
+      "cause": "v4 reads a hook's permissions from the low 14 bits of its address. The harness uses `deployCodeTo` to place the hook at an address carrying exactly the flags it declares, which requires the compiled artifact to be on disk under the name the harness expects.",
+      "fix": [
+        "Build first: `forge build` in the project containing the hook.",
+        "Check that `getHookPermissions()` returns the permissions the hook actually implements — a mismatch here is HS-02, and it makes the address unconstructible.",
+        "If the hook's constructor calls `Hooks.validateHookPermissions`, it will revert at a mismatched address; that revert is the intended behaviour and the finding is real.",
+        "See docs/INVARIANTS.md for how the twin pools are constructed."
+      ],
+      "match": [
+        "deployCodeTo.*failed",
+        "HookAddressNotValid"
+      ]
+    },
+    {
+      "code": "HR-E302",
+      "title": "Invariant run found a counterexample",
+      "exitCode": 41,
+      "cause": "This is a result, not a malfunction. One of I1 (conservation), I2 (undeclared extraction) or I3 (exit liveness) failed, and the manifest carries the shrunk call sequence that reproduces it.",
+      "fix": [
+        "Read the counterexample: `hook-risk.json` → `invariants[].counterexample` holds the calldata sequence.",
+        "Reproduce it in isolation: `forge test --match-test <name> -vvvv` inside harness/.",
+        "I3 failures mean a liquidity provider could not withdraw. Treat as critical until proven otherwise.",
+        "I2 failures may be a missing or understated `maxFeeBps` declaration rather than a bug — check the declaration first, and if the fee is real and intended, declare it."
+      ],
+      "match": [
+        "Invariant .* FAILED",
+        "invariant_\\w+.*failed"
+      ]
+    },
+    {
+      "code": "HR-E303",
+      "title": "Harness timed out before completing its sequences",
+      "exitCode": 42,
+      "cause": "The `scan` profile is bounded for CI. A hook with expensive callbacks, or a very deep external-call graph, can exceed the budget.",
+      "fix": [
+        "Raise the budget: `--timeout 900` (seconds).",
+        "Reduce sequence depth for a first pass: `FOUNDRY_PROFILE=scan forge test --invariant-depth 16`.",
+        "Partial results are still written; the manifest marks the affected invariants `inconclusive`, which is deliberately not the same as `passed`.",
+        "For a pre-deployment run use `FOUNDRY_PROFILE=deep` locally rather than widening the CI budget."
+      ],
+      "match": [
+        "timed out",
+        "TIMEOUT"
+      ]
+    },
+    {
+      "code": "HR-E304",
+      "title": "Differential harness could not set up the twin pools",
+      "exitCode": 2,
+      "cause": "The hook was deployed, but building the pools around it failed: pool initialisation or the initial PoolManager liquidity reverted inside a hook callback, or forge exited before running a single sequence. Nothing about the hook's behaviour was observed. hookrisk reports this as a harness failure with every invariant `inconclusive` — deliberately not `passed`, and deliberately not absent, because a dynamic layer that did not run must not look like one that ran and found nothing. This is an engine result recorded in the manifest (engines[].errorCode), not a CLI abort: the process exit code is decided by the gate, which fails on it by default (failOnNotAnalysed) and exits 2.",
+      "fix": [
+        "Read the unwrapped revert in the reason: it names the callback (e.g. `beforeAddLiquidity (0x259982e5)`) and the hook's own error, decoded from v4's ERC-7751 `WrappedError` wrapper.",
+        "A hook that rejects PoolManager liquidity by design (a custom-curve hook holding its own reserves) is handled: the harness records `seeded = \"hooked-failed\"` and hookrisk marks I2/I3 not-applicable rather than failing. If you see this error instead, the harness in use predates that record — rebuild from the same checkout as the CLI.",
+        "A hook that reverts on a static LP fee is retried with `LPFeeLibrary.DYNAMIC_FEE_FLAG`; a revert on both means the hook's `beforeInitialize` needs state the harness does not provide.",
+        "Reproduce in isolation: `HOOKRISK_ARTIFACT=... forge test --match-contract GenericHookInvariants -vvvv` inside harness/, with the same environment the CLI logs under `--verbose`."
+      ],
+      "match": [
+        "harness setUp failed",
+        "setUp\\(\\).*Failure"
+      ],
+      "seeAlso": [
+        "docs/INVARIANTS.md"
+      ]
+    },
+    {
+      "code": "HR-E305",
+      "title": "Hook constructor arguments could not be derived",
+      "exitCode": 2,
+      "cause": "The harness deploys the hook itself, so it has to supply whatever the constructor takes. It can derive two shapes on its own — no arguments, or a single `IPoolManager`/`address` — and needs to be told about anything else. This is reported as a skip with the ABI types in the message rather than guessed, because a constructor fed zero addresses produces a hook that reverts somewhere inside `setUp` for a reason nobody can read. This is an engine result recorded in the manifest (engines[].errorCode), not a CLI abort: the process exit code is decided by the gate, which fails on it by default (failOnNotAnalysed) and exits 2.",
+      "fix": [
+        "Add `[harness] constructorArgs` to hookrisk.toml: an array of strings, one per constructor argument in ABI order.",
+        "Use the placeholders for anything the harness deploys itself: `$poolManager`, `$currency0`, `$currency1`, `$owner` (the test contract) and `$hook` (the hook's own flag-bearing address). Each is substituted word-for-word before deployment.",
+        "Write every other value the way `cast abi-encode` accepts it — decimal integers, 0x-prefixed addresses and bytes, `true`/`false`. The values are passed to cast verbatim; a cast parse error is repeated in the skip reason.",
+        "Struct (tuple) constructor arguments are not supported yet; the skip reason says so when that is the case."
+      ],
+      "match": [
+        "constructorArgs",
+        "constructor takes .* argument"
+      ],
+      "seeAlso": [
+        "docs/INVARIANTS.md"
+      ]
+    },
+    {
+      "code": "HR-E401",
+      "title": "RPC endpoint is unset or unreachable",
+      "exitCode": 50,
+      "cause": "Deployed-mode and fork-mode scanning need an archive-capable RPC for the target chain.",
+      "fix": [
+        "Set the endpoint: `export BASE_RPC_URL=https://...` (or `UNICHAIN_RPC_URL`, `MAINNET_RPC_URL`).",
+        "Public endpoints frequently refuse wide `eth_getLogs` ranges; the crawler chunks automatically, but a dedicated endpoint is far faster.",
+        "Verify independently: `cast block-number --rpc-url $BASE_RPC_URL`.",
+        "Source-mode scanning needs no RPC at all — omit `--chain` to stay offline."
+      ],
+      "match": [
+        "missing RPC",
+        "could not connect",
+        "ECONNREFUSED"
+      ]
+    },
+    {
+      "code": "HR-E402",
+      "title": "Explorer API rejected the request",
+      "exitCode": 50,
+      "cause": "Source fetching uses the Etherscan V2 multichain API, which takes one key across chains via the `chainid` parameter. A missing key still works but at a rate limit low enough to fail on any real crawl.",
+      "fix": [
+        "Set `ETHERSCAN_API_KEY`. One key covers every supported chain on V2.",
+        "On HTTP 429, hookrisk retries with exponential backoff; a persistent 429 means the key is exhausted.",
+        "Sourcify is tried automatically when the explorer returns nothing, and needs no key.",
+        "Use `--cache-dir` to reuse fetched sources across runs instead of re-fetching."
+      ],
+      "match": [
+        "Max rate limit reached",
+        "Invalid API Key",
+        "NOTOK"
+      ]
+    },
+    {
+      "code": "HR-E403",
+      "title": "Codehash changed between scan and report",
+      "exitCode": 51,
+      "cause": "A manifest is bound to one `(chainId, address, codehash)` triple. If the code at the address changed mid-scan the manifest would describe contracts that no longer exist — which is precisely the upgrade scenario the binding exists to catch.",
+      "fix": [
+        "Re-run the scan against the new code.",
+        "If the hook is upgradeable, this is expected on every upgrade and is exactly why HS-04 raises the tier: a manifest cannot outlive the code it describes.",
+        "Publish an upgrade policy and re-scan as part of it — the framework's Upgradeable trigger requires this anyway.",
+        "For reproducible reporting, pin a block: `--block <number>`."
+      ],
+      "match": [
+        "codehash mismatch",
+        "code changed during scan"
+      ]
+    },
+    {
+      "code": "HR-E501",
+      "title": "Generated manifest does not validate against the schema",
+      "exitCode": 60,
+      "cause": "An internal inconsistency: hookrisk produced a manifest its own schema rejects. Downstream consumers rely on the schema, so emitting it anyway would push the failure onto them.",
+      "fix": [
+        "This is a bug in hookrisk. Please open an issue with the full output.",
+        "Attach the rejected manifest: it is written to `hook-risk.invalid.json` for exactly this purpose.",
+        "As a workaround, `--no-validate` emits it regardless. Do not feed the result to a gate."
+      ],
+      "match": [
+        "schema validation failed",
+        "does not match schema"
+      ]
+    },
+    {
+      "code": "HR-E502",
+      "title": "Risk gate threshold not met",
+      "exitCode": 2,
+      "cause": "Not an error. The scan completed and the resulting tier or findings exceeded the configured gate, so the CI step fails on purpose.",
+      "fix": [
+        "Read HOOK_RISK.md for the tier and the findings that drove it.",
+        "Fix the findings, or raise the threshold deliberately in hookrisk.toml `[gate] maxTier`.",
+        "To report without gating, pass `--no-gate`; the manifest is still produced.",
+        "A rising tier after a code change is the tool working. Re-scoring downward without changing the code is the failure mode the framework warns about."
+      ],
+      "match": [
+        "gate failed",
+        "tier exceeds"
+      ]
+    },
+    {
+      "code": "HR-E901",
+      "title": "Unexpected internal error",
+      "exitCode": 70,
+      "cause": "hookrisk hit a state it does not have a specific diagnosis for.",
+      "fix": [
+        "Re-run with `--verbose` to get the full stack trace and the exact tool invocations.",
+        "Please open an issue with that output; an unmapped failure is a gap in this catalogue and we treat it as a bug.",
+        "`--debug-dir <path>` dumps every intermediate artifact (build-info, Slither JSON, forge output) for attaching to the report."
+      ],
+      "match": []
+    }
+  ]
+}

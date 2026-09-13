@@ -1,23 +1,28 @@
 /**
- * @id PP-CORE-LIB-053 (POO-1031)
+ * @id PP-CORE-LIB-053 (POO-1031, POO-1157)
  * @name funding inventory
- * @implements-rules-version v1
+ * @implements-rules-version v3 (POO-1157 / POO-1129 rules v3) · v1 (POO-1031 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
- * What can this wallet actually PAY WITH, across Arbitrum, Base and Polygon?
+ * What can this wallet actually PAY WITH, across every ACTIVE chain (`activeChainMetas`, so a
+ * flag-gated chain is neither read nor offered as a bridge destination while its flag is off)?
  *
  * Layer 2 of the funding rail (`docs/_hackathon/00_IMPLEMENTATION_PLAN.md` §5): the intersection of
  * what the wallet holds and what Uniswap can route. Holdings come from the shipped, server-only
  * multi-chain reader ({@link fetchWalletHoldings}) — this file adds no second balance source — and
  * routability from `GET /swappable_tokens`, scoped per held token.
  *
- * The intersection is the whole point ([R1]). A balance the router cannot move is not money the user
- * can spend here, and offering it produces a plan that dies at quote time, after the user chose it.
+ * The intersection is the point for CROSS-CHAIN reach ([R1]): a balance no bridge can move to the
+ * operation's chain is offered nowhere but its own. A SAME-CHAIN spend needs no route at all, so a
+ * token Uniswap advertises no bridge destination for is still money the user can spend here (POO-1157),
+ * kept rather than dropped; the consumer decides reach, short-circuiting same-chain first.
  *
  * Degradation is layered rather than all-or-nothing, because a funded wallet that renders as empty is
  * the worst outcome in this feature: one chain failing is skipped ([R3], the shipped behavior of
  * `fetchWalletHoldings`), every chain failing falls back to the USDC-only on-chain read ([R4]), and
- * one token's routability lookup failing drops that token only.
+ * one token's routability lookup failing keeps that token as SAME-CHAIN-ONLY rather than dropping it
+ * (POO-1157), so a transient upstream blip degrades a row's cross-chain reach instead of removing a
+ * funded holding, and the degrade is recorded.
  *
  * Money convention (pinned by `src/lib/provisioning/types.ts`): token-native amounts are decimal
  * STRINGS, USD figures are display-grade numbers. {@link FundingSource.amount} is base units (wei) as
@@ -30,7 +35,8 @@
 import "server-only";
 
 import { parseUnits } from "viem";
-import { supportedChainMetas } from "@/lib/chains/config";
+import { activeChainMetas } from "@/lib/chains/config";
+import { isFeatureEnabled } from "@/lib/features";
 // PP-INTEGRATION-POINT: routable-token allowlist ← Uniswap `GET /swappable_tokens`, through the
 // server-action layer (PP-CORE-LIB-052). This is the only upstream call the inventory makes.
 import { listSwappableTokens } from "@/lib/uniswap/actions";
@@ -55,8 +61,13 @@ export interface FundingSource {
   /** USD value of the holding at read time, display-grade ([R2], [R6]). */
   usd: number;
   /**
-   * The supported chains this token can be routed to, ascending. Never empty: a token that reaches
-   * none of them is not a funding source at all ([R1]).
+   * The supported chains this token can be BRIDGED to, ascending. These are Uniswap bridge
+   * DESTINATIONS and EXCLUDE the token's own chain (POO-1155). MAY be empty (POO-1157): an empty set
+   * means the token is spendable ONLY on its own chain, because Uniswap advertises no bridge
+   * destination for it or the routability lookup degraded. Same-chain spendability needs no bridge and
+   * is judged by the consumer, which short-circuits `source.chainId === targetChainId` before reading
+   * this set ({@link reachesChain}, `computePlanAction`); an empty set is therefore offered same-chain
+   * and refused cross-chain, never dropped.
    */
   reachableChainIds: number[];
   /** Whether this is the chain's native coin (ETH / POL), which needs no ERC-20 approval. */
@@ -75,11 +86,21 @@ export interface FundingSource {
  */
 export const MAX_ROUTABILITY_LOOKUPS = 25;
 
-/** The chain ids this app operates on. A route to anywhere else cannot fund an operation here. */
-const SUPPORTED_CHAIN_IDS = supportedChainMetas.map((meta) => meta.chain.id);
-
-/** A plain, unsigned decimal number: what {@link parseUnits} can be trusted with. */
-const PLAIN_DECIMAL = /^\d+(\.\d+)?$/;
+/**
+ * The chain ids this app operates on AND currently participates in. A route to anywhere else cannot
+ * fund an operation here, and a route to a flag-gated chain is not an offer this environment makes
+ * (POO-1776 [R1]): `reachableChainIds` is what the funding route's destination chains are drawn
+ * from, so the ONE `featureFlag` has to decide it as well, or a flag-off environment could offer a
+ * bridge onto a chain whose catalog and holdings it is deliberately not reading.
+ *
+ * A function read at CALL time, mirroring `fetchStrategies.activeNetworks`, not a module-level
+ * const: a const would freeze the flag at import and make the gate untestable without a module
+ * reset. `isFeatureEnabled` rather than a passed-in reader, because this module is `server-only`
+ * and the Dev menu's client-side QA overrides cannot reach it anyway.
+ */
+function activeChainIds(): number[] {
+  return activeChainMetas(isFeatureEnabled).map((meta) => meta.chain.id);
+}
 
 /**
  * Holdings for `address`, with the shipped degradation ([R3], [R4]).
@@ -97,55 +118,59 @@ async function readHoldings(address: `0x${string}`): Promise<TokenBalance[]> {
   }
 }
 
+// `toBaseUnits` moved to `./toBaseUnits` (POO-1137): it is pure, and this module is `server-only`,
+// so the client-side standalone on-ramp plan could not import it without breaking the bundle.
+// Re-exported here so every existing caller is unchanged and there stays ONE truncation rule.
+import { toBaseUnits } from "./toBaseUnits";
+
+export { toBaseUnits };
+
 /**
- * A holding's balance in base units, as a decimal string, or `null` when it cannot be expressed
- * exactly ([R2]).
+ * The supported chains this token can be BRIDGED to ([R1]), or `null` when the lookup DEGRADED
+ * (POO-1157). A genuinely empty array (`[]`) and a degraded read (`null`) were conflated before, and
+ * they are different facts: `listSwappableTokens` returns where the token can be moved TO and EXCLUDES
+ * the source chain (POO-1155, verified on dev: `USDC on 42161 -> [137, 8453]`, `ETH on 8453 ->
+ * [42161]`), so an empty result means "no BRIDGE destination", which for a same-chain spend is not a
+ * problem at all. Returning `null` on `!result.ok` lets {@link toFundingSource} tell a transient
+ * upstream failure apart from a real answer, so the degrade can be recorded rather than vanishing into
+ * an indistinguishable empty set.
  *
- * Two safety properties, both about never claiming more than the wallet holds:
- *
- *   - the EXACT decimal string is preferred over the float beside it. `Number("1.234567890123456789")`
- *     rounds UP, and a swap sized from that reverts for insufficient balance;
- *   - a fraction longer than the token's decimals is TRUNCATED, not rounded, because `parseUnits`
- *     rounds and rounding up one base unit has the same effect.
- *
- * The float path remains for the degraded USDC-only read, where the balance was a number to begin
- * with. `toFixed` there mirrors the shipped precedent in `seedAmounts.ts:110`; anything it cannot
- * render as a plain decimal (a value past 1e21, an infinity) is rejected rather than guessed at.
+ * Both `null` and `[]` map to the same conservative outcome downstream (offered same-chain, refused
+ * cross-chain), so failing closed on cross-chain is still the side we err on: an unproven route is not
+ * a route. Same-chain spendability needs no bridge and is judged by the consumer ({@link reachesChain}
+ * and `computePlanAction` short-circuit on `chainId`), never from this list.
  */
-export function toBaseUnits(holding: TokenBalance): string | null {
-  const decimal = (holding.amountExact ?? holding.amount.toFixed(holding.decimals)).trim();
-  if (!PLAIN_DECIMAL.test(decimal)) return null;
+async function reachableChainIds(
+  tokenIn: string,
+  tokenInChainId: number,
+): Promise<number[] | null> {
+  const result = await listSwappableTokens({ tokenIn, tokenInChainId });
+  if (!result.ok) return null;
 
-  const [whole, fraction = ""] = decimal.split(".");
-  const truncated =
-    fraction.length > holding.decimals
-      ? `${whole}.${fraction.slice(0, holding.decimals)}`
-      : decimal;
-
-  try {
-    const raw = parseUnits(truncated, holding.decimals);
-    return raw > BigInt(0) ? raw.toString() : null;
-  } catch {
-    return null;
-  }
+  const reachable = new Set(result.tokens.map((token) => token.chainId));
+  return activeChainIds()
+    .filter((chainId) => reachable.has(chainId))
+    .sort((a, b) => a - b);
 }
 
 /**
- * Which supported chains this token can be routed to ([R1]). Empty means "not a funding source":
- * either Uniswap routes it nowhere we operate, or we could not find out, and an unproven route is
- * not a route. Failing closed is the right side to err on here — the cost is a token missing from
- * the picker, against a plan that fails after the user committed to it.
+ * Record, once per holding, that its routability lookup degraded (POO-1157).
  *
- * The token's OWN chain is not assumed: it is reported only when the API lists it, because a token
- * with no same-chain pair genuinely cannot fund an operation on its own chain without bridging. In
- * practice any listed token comes back with its own chain among the results.
+ * A degraded read and a genuinely empty destination list now behave IDENTICALLY (both keep the
+ * holding as same-chain-only), which is the safe default but also makes a transient upstream failure
+ * invisible: it silently shrinks the CROSS-CHAIN reach of someone's usable balance. This is the one
+ * place the two are still told apart, so that shrink is observable. Never throws and carries no wallet
+ * address: a diagnostic must not turn a degraded lookup fatal, and this is not a place to write
+ * identities to server logs. Mirrors `observeGateContextFailure` (`gateContext.ts`), the same rail's
+ * other degraded-read observer.
+ *
+ * PP-INTEGRATION-POINT: swap console.warn for the platform structured logger once one exists.
  */
-async function reachableChainIds(tokenIn: string, tokenInChainId: number): Promise<number[]> {
-  const result = await listSwappableTokens({ tokenIn, tokenInChainId });
-  if (!result.ok) return [];
-
-  const reachable = new Set(result.tokens.map((token) => token.chainId));
-  return SUPPORTED_CHAIN_IDS.filter((chainId) => reachable.has(chainId)).sort((a, b) => a - b);
+function observeDegradedReach(holding: TokenBalance): void {
+  console.warn("[funding] routability lookup degraded; holding kept as same-chain-only", {
+    chainId: holding.chainId,
+    symbol: holding.symbol,
+  });
 }
 
 /** A holding as a funding source, or `null` when it cannot fund anything. */
@@ -156,8 +181,13 @@ async function toFundingSource(holding: TokenBalance): Promise<FundingSource | n
   const amount = toBaseUnits(holding);
   if (amount === null) return null;
 
+  // POO-1157: an empty or degraded reach is NO LONGER a drop. A token Uniswap advertises no bridge
+  // destination for is spendable on its OWN chain, and a degraded lookup is an unknown, not proof of
+  // non-spendability. Dropping either is exactly how a funded wallet renders as empty. Both keep the
+  // holding with `reachableChainIds: []`, which the consumers read as "same-chain only"; the degrade
+  // is additionally recorded so a silently shrinking usable balance is observable.
   const reach = await reachableChainIds(holding.address, holding.chainId);
-  if (reach.length === 0) return null;
+  if (reach === null) observeDegradedReach(holding);
 
   return {
     address: holding.address,
@@ -168,7 +198,8 @@ async function toFundingSource(holding: TokenBalance): Promise<FundingSource | n
     // [R6] Already priced by the holdings feed. Quoting each row to USDC just to label it would be
     // one upstream call per token on a surface that lists many.
     usd: holding.usd,
-    reachableChainIds: reach,
+    // `null` (degraded) and `[]` (no bridge destination) both mean "same-chain only" to the consumers.
+    reachableChainIds: reach ?? [],
     isNative: holding.isNative ?? false,
     logoUrl: holding.logoUrl,
   };

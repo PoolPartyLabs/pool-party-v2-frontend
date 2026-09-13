@@ -14,7 +14,7 @@ describe("computePlan (mock mode)", () => {
   it("delegates to the mock planner and returns a ProvisioningPlan", async () => {
     const plan = await computePlan(SCENARIOS.usdcOnly);
     expect(plan.variant).toBe("multi");
-    expect(plan.steps.map((s) => s.type)).toEqual(["buy-usdc", "op"]);
+    expect(plan.steps.map((s) => s.type)).toEqual(["buy", "op"]);
     expect(plan.steps.at(-1)?.type).toBe("op");
   });
 

@@ -6,7 +6,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 394 markers across 215 files (2026-07-26)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 444 markers across 244 files (2026-09-13)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -20,6 +20,26 @@ git grep -n 'PP-INTEGRATION-POINT' -- src   # 394 markers across 215 files (2026
 > **Scope note for this public repository.** This document covers the **front-end** seams only, which is
 > what the code in this repository owns. The request/response contracts of the Pool Party backend
 > services live with those services in their own repositories and are intentionally not reproduced here.
+
+## Fiat on-ramp (Privy rail, default on; Paybis dormant behind `privyOnRamp=off`)
+
+Ported from the private repository for the hackathon (epic POO-1793 over the POO-1129 foundation); the narrative is `docs/_hackathon_privy/`. **Read the section through one fact:** money is counted only when a balance read says so. The provider's `submitted` / `confirmed` is a claim; `settled` is the observed on-chain delta, and every receipt and every `completed` event fires from it.
+
+**Three orthogonal gates.** `isMockMode` keeps the fixture path on both hosts (the Privy checkout never opens against fixtures); `fiatOnRamp` decides whether a purchase is offered at all (the planner's `buy` leg and the picker's buy route read the SAME flag); `privyOnRamp` decides WHICH rail serves it. Both ship **on** in this repository (`docs/FEATURE_FLAGS.md`). The vendor environment is DERIVED, `stripe-sandbox` unless `NEXT_PUBLIC_APP_ENV=production` and real mode, so a development build cannot charge a real card.
+
+| Marker | File | Status today | Expected real call / remaining gap |
+|---|---|---|---|
+| Rail decision | `src/lib/onramp/onRampProvider.ts` (PP-CORE-LIB-105) + `useOnRampProvider.ts` (PP-CORE-HOK-034) | **REAL, pure.** One decision table, `none` / `paybis` / `privy`, read by the server resolver and the client hook so the two hosts move together | none |
+| Privy fiat checkout | `src/lib/onramp/usePrivyOnRamp.ts` (PP-CORE-HOK-035), `useAddFunds` from `@privy-io/react-auth@3.42.0` | **REAL in real mode.** Fiat only (`crypto` never passed), `defaultAsset` always set or the adapter refuses, the call synchronous inside the click so the popup is not blocked, an intent record minted first (`onRampIntent.ts`, PP-CORE-LIB-107) | Privy's checkout surface (Stripe inside the modal; MoonPay / Coinbase / Meld as popups). `useAddFunds` is marked experimental by the vendor, which is why one adapter absorbs it |
+| Exit classification | `src/lib/onramp/classifyAddFundsOutcome.ts` (PP-CORE-LIB-109) | **REAL, pure.** One question, could money have moved: `no` only for the SDK's pre-flight guards and a popup that never opened; everything else `maybe` | Literal-message table read from the shipped bundle; a reworded message degrades to an observation window, never to a cancellation |
+| Settlement | `src/lib/onramp/awaitOnRampSettlement.ts` (PP-CORE-LIB-110), bound by `useOnRampSettlement.ts` (PP-CORE-HOK-025) | **REAL.** One `balanceOf` on the destination chain, polled with backoff against a baseline read BEFORE the checkout opened | The window does not survive a reload yet; cross-session resume is tracked in the private backlog (POO-1833) |
+| Coverage question | `src/lib/onramp/coverageProbe.ts` (PP-CORE-LIB-108) + `useOnRampCoverage.ts` (PP-CORE-HOK-036) | **REAL.** `PUT https://auth.privy.io/api/v1/onramp/fiat/quotes` through `fetch` (not the SDK, which swallows failures), so a rail outage and an uncovered country are told apart | `unknown` never blocks; `uncovered` does |
+| Buyer currency | `src/lib/onramp/resolveOnRampCurrency.ts` (PP-CORE-LIB-096), `buyerCurrency.ts`, `currencyPairs.ts` | **REAL, server-only.** Edge country header, then profile country, then USD; validated against the fiat set the rail sells in | Needs `PP_API_URL` / `PP_API_KEY` for the profile read; a currency the rail cannot charge in refuses rather than defaulting |
+| `/deposit` host | `src/features/deposit/DepositScreen.tsx` (PP-DEP-SCR-001) -> `DepositPrivyCheckout.tsx` (PP-DEP-CMP-006) | **REAL in real mode.** `amount` -> `onramp` -> `onramp-settling` -> `success`, plus the four honest exits; no review step, the provider prices the charge | Paybis path (`StandaloneOnRampRail`, `PaymentMethodDialog`, `PaymentMethodList`) stays in the tree, unmounted while `privyOnRamp` is on |
+| Provisioning host | `src/features/strategies/components/ProvisioningPanel.tsx` (PP-CORE-CMP-046) -> `provisioning/provisioningView.ts` -> `PrivyBuyStep.tsx` (PP-STR-CMP-029) | **REAL in real mode.** The planner's `buy` leg (`src/lib/provisioning/planActions.ts`, `buildPlan.onRampEnabled`) rendered on the Privy rail; the next legs size themselves from the balance the buy actually produced | `ETH-BASE` (native) is not for sale on the rail; the step refuses before opening |
+| Purchase funnel | `src/lib/analytics/fundingBuyFunnel.ts` (PP-CORE-LIB-111) | **REAL.** `funding_buy_started` / `submitted` / `failed` / `settled`, one emitter for both hosts, `settled` only from the watcher | Declared in `docs/ANALYTICS_EVENTS.md` |
+| Settlement webhook relay | `src/app/api/webhooks/privy/funds-deposited/route.ts` (PP-CORE-SEC-005) | **REAL.** Byte-faithful relay of `wallet.funds_deposited` to `pool-party-api`, which holds the signing secret | Optional for the demo; the browser-side watcher settles on its own |
+| Paybis foundation (dormant) | `src/lib/onramp/onRampActions.ts`, `paybisWidget.ts`, `paybisCapture.ts`, `src/app/api/onramp/method-icon/route.ts`, `src/features/strategies/components/provisioning/PaybisWidgetFrame.tsx` | **Code, not a surface.** Reachable only with `privyOnRamp=off`; the widget loader is not mounted in this repository | Kept so the tree matches the private main file for file; deleted together with the `privyOnRamp` flag when the Paybis rail retires |
 
 ## Universal Funding rail (Uniswap Trading API)
 
@@ -47,3 +67,15 @@ Epic POO-1022 (2026-07-24/25). **Pay for any Pool Party operation with any token
 | Buy-crypto alternative | `src/features/strategies/components/provisioning/PoweredByPaybis.tsx`, `BuyGasModal.tsx` (PP-CORE-MOD-010) | **A handoff, not an integration.** This epic wrote no on-ramp code. The gas surface stopped naming a fiat provider, because the step it actually implements is an on-chain swap; the fiat option survives as a CTA to the existing `/deposit` surface | **PP-INTEGRATION-POINT (POO-87/POO-213):** the real Paybis ramp is still a CSP-ready stub. See the [Fiat on-ramp](#fiat-on-ramp-paybis) section |
 
 
+
+## Tools: Uniswap v4 hook risk scan (hookrisk)
+
+Hackathon, 2026-09-13. The `/tools` page (PP-TOOLS-SCR-001) takes a chain and a deployed hook address and returns the hookrisk report for it. Behind the `hookTools` flag; full write-up in `docs/_hackathon_hookrisk/04_TOOLS_PAGE.md`.
+
+**This surface has no mock branch, deliberately.** Everywhere else in this repo `isMockMode` decides whether data is real, and a mock is a legitimate placeholder. Here it would not be: the artifact is a *risk assessment of a contract someone may be about to trade against*, and a plausible-looking fabricated one is worse than an empty page. So when the toolchain or the key is missing, the job fails fast naming exactly what is absent and the screen prints that instead of a report. That is the same posture hookrisk itself takes (`hookrisk/CLAUDE.md`: a tool that reports nothing looks exactly like success).
+
+| Marker | File | Status today | Expected real call / remaining gap |
+|---|---|---|---|
+| Block explorer (verified source) | `src/lib/tools/hookrisk/explorer.ts` (PP-TOOLS-LIB-002) | **REAL.** `GET https://api.etherscan.io/v2/api?chainid=…&module=contract&action=getsourcecode`, one V2 endpoint covering all five chains. Server-only; the key is read at call time in `jobs.ts` (PP-TOOLS-LIB-005) so an unset key fails one job rather than the module | `ETHERSCAN_API_KEY`, server-only, no `NEXT_PUBLIC_` prefix ever. An unverified contract returns `NOT_VERIFIED`, a named result, not an empty source set |
+| hookrisk toolchain (`forge`, then the CLI) | `src/lib/tools/hookrisk/run.ts` (PP-TOOLS-LIB-004), driven by `jobs.ts` (PP-TOOLS-LIB-005) | **REAL.** A child process on the Node runtime: `forge build`, then `node $HOOKRISK_HOME/cli/dist/cli.js init` and `scan <File.sol>:<Contract> --out <job dir>`. `spawn` without a shell, so an explorer-supplied contract name can never become a shell metacharacter | Needs foundry, slither and a built `hookrisk/cli/dist/cli.js` on the host (`make setup` inside `hookrisk/`, or the `WITH_HOOKRISK=1` image). **Exit 2 is a RESULT** (gate failed, report written), 10+ means it could not run |
+| Job registry | `src/lib/tools/hookrisk/jobs.ts` (PP-TOOLS-LIB-005) | **REAL, and in process memory.** One running job per `(chainId, address)`; a second start joins it. Reports are cached on disk for 24 h under `$HOOKRISK_WORK_DIR/hookrisk/<sha256>/`, swept by each request rather than by a cron | **PP-INTEGRATION-POINT:** the registry is per replica and per restart, so a second instance does not see the first's running job. The disk cache is what actually survives, so the worst case is a wasted rerun. A durable queue replaces it if this leaves hackathon scope |

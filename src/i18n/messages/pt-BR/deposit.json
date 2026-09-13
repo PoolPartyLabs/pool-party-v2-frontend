@@ -37,7 +37,13 @@
     "bank": {
       "name": "Transferência bancária",
       "meta": "1–2 dias úteis"
-    }
+    },
+    "allBlocked": "Aumente seu depósito para {amount}. Nenhuma forma de pagamento aceita menos que isso no momento.",
+    "loading": "Carregando os meios de pagamento para esta moeda",
+    "unavailable": "A Paybis não retornou nenhuma forma de pagamento agora. Você pode continuar e escolher como pagar no checkout seguro.",
+    "blocked": "A Paybis exige no mínimo {amount}.",
+    "minimum": "Mínimo {amount}",
+    "charge": "Você paga {amount}"
   },
   "review": {
     "title": "Revisar",
@@ -51,7 +57,11 @@
     "payingWith": "Pagando com {method}",
     "change": "Alterar",
     "confirm": "Confirmar e pagar com {method}",
-    "poweredBy": "Powered by Paybis"
+    "poweredBy": "Powered by Paybis",
+    "payAtCheckout": "Mostrado no checkout",
+    "choosePayment": "Escolha como pagar",
+    "ethUnpriced": "Não conseguimos iniciar sua compra porque não obtivemos o preço do ETH agora. Tente novamente.",
+    "confirmGeneric": "Confirmar e pagar"
   },
   "success": {
     "title": "Depósito confirmado",
@@ -61,7 +71,8 @@
     "method": "Método",
     "date": "Data",
     "investNow": "Investir agora",
-    "backHome": "Voltar ao início"
+    "backHome": "Voltar ao início",
+    "viewWalletOnExplorer": "Ver carteira no explorer"
   },
   "crypto": {
     "title": "Depositar cripto",
@@ -72,8 +83,8 @@
     "share": "Compartilhar endereço",
     "asset": "USD Coin · USDC",
     "sent": "Já enviei os fundos",
-    "waitingTitle": "Aguardando seu depósito",
-    "waitingBody": "Vamos detectar automaticamente. Você não precisa fazer nada.",
+    "waitingTitle": "Volte daqui a alguns minutos",
+    "waitingBody": "Não conseguimos confirmar transferências enviadas de outro app ou corretora. Seu saldo é atualizado sozinho assim que o dinheiro chegar.",
     "viewAddress": "Ver endereço e QR",
     "receivedTitle": "Depósito recebido",
     "added": "{amount} USDC adicionados",
@@ -87,5 +98,48 @@
     "networkContinue": "Continuar",
     "changeNetwork": "Trocar rede",
     "networkWarning": "Envie USDC apenas na rede {network}. Enviar em outra rede pode resultar em perda permanente."
+  },
+  "onramp": {
+    "checkout": {
+      "approx": "Você verá um valor um pouco maior no checkout seguro. Ele cobre o spread do provedor, então cerca de {amount} USDC chegam à sua carteira.",
+      "approxNoPrefill": "Informe no checkout seguro quanto você quer pagar. Cerca de {amount} USDC chegarão à sua carteira.",
+      "baselineUnavailable": "Não conseguimos ler o saldo da sua carteira, então ainda não dá para iniciar a compra. Verifique sua conexão e tente de novo.",
+      "belowMinimum": "Isso está abaixo do mínimo de {amount} para investir. O dinheiro está na sua carteira e você pode adicionar mais quando quiser.",
+      "uncoveredTitle": "Não conseguimos vender para você agora",
+      "uncoveredBody": "Nenhum provedor vende cripto em {currency} nesse valor hoje. Tente outro valor ou volte mais tarde.",
+      "currencyUnsupportedBody": "Não conseguimos receber um pagamento na sua moeda agora. Tente de novo em instantes ou volte mais tarde.",
+      "unverifiedTitle": "Ainda não conseguimos confirmar seu pagamento",
+      "unverifiedBody": "Se você pagou, os fundos aparecem na sua carteira assim que o pagamento for liquidado. Você pode sair desta página; nada se perde.",
+      "openingTitle": "Abrindo o checkout seguro",
+      "openingBody": "Conclua sua compra no checkout seguro. Mantenha esta página aberta."
+    },
+    "resume": {
+      "startNew": "Começar uma nova compra",
+      "title": "Você pode ter uma compra em andamento",
+      "body": "Você iniciou uma compra há {minutes} minutos. Se você pagou, o dinheiro ainda pode estar a caminho. Retomar aguarda por ele. Começar de novo cria uma nova compra, então faça isso apenas se a primeira nunca tiver sido concluída.",
+      "resume": "Retomar essa compra",
+      "paidTitle": "Sua compra ainda está chegando",
+      "paidBody": "Você pagou há {minutes} minutos e o dinheiro ainda não chegou. Isso pode demorar, especialmente em transferência bancária. Esperar costuma ser o certo. Só comece uma nova compra se tiver certeza de que a primeira nunca vai chegar, porque isso significa pagar de novo.",
+      "keepWaiting": "Continuar esperando"
+    },
+    "settlingTitle": "Pagamento recebido",
+    "settlingBody": "Seu saldo será atualizado assim que os fundos forem liquidados. Isso pode levar alguns minutos.",
+    "tryAgain": "Tentar novamente",
+    "settledErrorTitle": "Sua compra foi concluída",
+    "errorTitle": "Compra não concluída",
+    "settledErrorBody": "Não conseguimos terminar a conversão para USDC. Seu dinheiro está seguro, guardado como ETH na Base. Tente novamente para concluir a conversão.",
+    "errorBody": "A compra não foi concluída e nenhum valor foi movimentado. Você pode tentar novamente.",
+    "referenceLabel": "Referência",
+    "paybisReferenceLabel": "Referência Paybis",
+    "title": "Comprar cripto",
+    "connecting": "Preparando sua compra",
+    "swapping": "Convertendo para USDC"
+  },
+  "secureCheckout": "Checkout seguro",
+  "currency": {
+    "title": "Moeda",
+    "search": "Buscar entre {count} moedas",
+    "noResults": "Nenhuma moeda encontrada",
+    "footnote": "As formas de pagamento mudam de acordo com a moeda."
   }
 }

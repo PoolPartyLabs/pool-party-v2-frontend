@@ -1,0 +1,38 @@
+{
+  "title": "Hulpmiddelen",
+  "subtitle": "Ontwikkelaarstools die met Pool Party meekomen. Alleen lezen, en ze raken je wallet nooit aan.",
+  "hookRisk": {
+    "heading": "Uniswap v4 hook-risico",
+    "intro": "Plak het adres van een gedeployde hook. hookrisk leest de geverifieerde broncode, compileert die, scoort hem tegen het Hooks Security Framework van de Uniswap Foundation en geeft het rapport hieronder terug.",
+    "chainLabel": "Netwerk",
+    "addressLabel": "Adres van het hook-contract",
+    "addressPlaceholder": "0x0000000000000000000000000000000000000000",
+    "submit": "Analyseren",
+    "submitRunning": "Bezig met analyseren",
+    "notice": "Een scan compileert het contract en draait een gefuzzde differentiële harness, dus reken op minuten in plaats van seconden. Het rapport blijft 24 uur in cache.",
+    "idleTitle": "Nog geen scan",
+    "idleBody": "Kies een netwerk, plak het adres van een gedeployde hook en druk op Analyseren.",
+    "runningTitle": "Bezig met scannen",
+    "elapsed": "{seconds}s verstreken",
+    "cached": "Resultaat van een scan uit de laatste 24 uur.",
+    "gatePassed": "De hookrisk-gate is geslaagd.",
+    "gateFailed": "De hookrisk-gate is gezakt. Het rapport hieronder zegt waarom, en een gezakte gate is een resultaat, geen fout.",
+    "reportHeading": "Rapport",
+    "errorTitle": "Deze scan is niet uitgevoerd",
+    "retry": "Opnieuw proberen",
+    "status": {
+      "queued": "In de wachtrij",
+      "fetchingSource": "Geverifieerde broncode wordt van de block explorer gelezen",
+      "building": "Contract wordt gecompileerd",
+      "scanning": "Detectoren en differentiële harness draaien",
+      "done": "Rapport klaar",
+      "failed": "De scan kon niet worden afgerond"
+    },
+    "errors": {
+      "INVALID_ADDRESS": "Dat is geen geldig contractadres. Het telt 42 tekens en begint met 0x.",
+      "UNSUPPORTED_CHAIN": "Dat netwerk hoort niet bij de netwerken die deze tool leest.",
+      "JOB_UNKNOWN": "De server volgt deze scan niet meer. Voer hem opnieuw uit.",
+      "NETWORK": "De server is niet bereikbaar. Controleer of hij draait en probeer het opnieuw."
+    }
+  }
+}

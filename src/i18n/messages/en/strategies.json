@@ -36,6 +36,13 @@
         "name": "Preparing transaction",
         "body": "Pool Party is computing the amounts and the network fee for this transaction. Nothing is signed or sent yet."
       }
+    },
+    "awaitingSignature": "Awaiting signature",
+    "stepsRunning": {
+      "approve": "Approving {token}"
+    },
+    "stepsDone": {
+      "approve": "Approved {token}"
     }
   },
   "card": {
@@ -74,7 +81,9 @@
       "ethereum": "Ethereum",
       "stablecoins": "Stablecoins",
       "altcoins": "Altcoins",
-      "meme": "Meme coins"
+      "meme": "Meme coins",
+      "equities": "Stock Tokens",
+      "rwa": "Real-world assets"
     },
     "count": "{count, plural, =0 {No strategies} =1 {# strategy} other {# strategies}}",
     "owned": "Managed",
@@ -199,7 +208,8 @@
     "needMore": "You need {amount} more",
     "cta": {
       "invest": "Invest",
-      "deposit": "Deposit & invest"
+      "deposit": "Deposit & invest",
+      "checking": "Checking your funds"
     },
     "confirm": {
       "title": "Confirm & sign",
@@ -241,6 +251,12 @@
     },
     "receipt": {
       "amountInvested": "Amount Invested"
+    },
+    "sizing": {
+      "resizedNotice": "Your wallet holds {available}, so that is what will be invested, not the {requested} you entered.",
+      "refusedTitle": "We cannot invest this amount",
+      "refusedBody": "You asked to invest {requested}. Your wallet holds {available}, and the minimum for this strategy is {minimum}.",
+      "refusedCta": "Change the amount"
     }
   },
   "collect": {
@@ -365,13 +381,22 @@
         "wrongChain": "Your wallet is on a different network. Switch it to {network} and try again.",
         "wrongChainUnknown": "Your wallet is on a different network. Switch networks in your wallet and try again.",
         "gasBlocked": "There is nothing on {network} to cover network costs, so this can't run yet. Buy a little crypto on {network}, or move some over from another network.",
-        "gasBlockedUnknown": "There is nothing on this network to cover network costs, so this can't run yet. Buy a little crypto there, or move some over from another network."
-      }
+        "gasBlockedUnknown": "There is nothing on this network to cover network costs, so this can't run yet. Buy a little crypto there, or move some over from another network.",
+        "transient": "The network or your wallet did not answer in time. Nothing was moved. Please try again in a moment.",
+        "confirmationTimeout": "Your transaction was sent, but we could not confirm it in time. Check your wallet's recent activity before trying again, in case it already went through.",
+        "chainUnavailable": "Your wallet doesn't have {network} enabled, so it can't sign for this. Enable {network} in your wallet app, then switch to it below.",
+        "chainUnavailableUnknown": "Your wallet doesn't have this network enabled, so it can't sign for this. Enable it in your wallet app and try again.",
+        "alreadyBroadcast": "This step was already sent and is still being tracked. Reload the page to pick it up. Do not send it again.",
+        "upstreamUnavailable": "We could not price a route just now. This is temporary, please try again in a moment.",
+        "rangeUnchanged": "This is already the position's range, so there is nothing to move. Pick different bounds to rebalance."
+      },
+      "referenceLabel": "Reference",
+      "paybisReferenceLabel": "Paybis ref"
     },
     "slippage": {
       "retryNotice": "The price moved beyond your max slippage ({value}%). Retrying at the current price.",
       "errorTitle": "Price moved too much",
-      "errorBody": "The price moved beyond your max slippage ({value}%) again. Raise it in the settings or try again later."
+      "errorBody": "The price moved beyond your max slippage ({value}%) again. The transaction was not sent."
     },
     "receipt": {
       "strategy": "Strategy",
@@ -469,34 +494,85 @@
       "titleGasOnly": "One quick step",
       "subtitle": "We worked out exactly what this needs. We'll handle each step right here, then run your transaction. No detour to Deposit.",
       "cta": "Confirm & continue",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "feesIncluded": "Fees included.",
+      "back": "Back",
+      "gasOnArrival": "Gas on arrival",
+      "showSteps": "Show steps",
+      "hideSteps": "Hide steps"
     },
     "requote": {
-      "title": "The price changed",
-      "body": "This step now returns about {percent} less than the price you approved. Nothing has been sent yet, so you can accept the new price or stop here.",
-      "accept": "Accept new price",
-      "decline": "Stop here"
+      "title": "Prices moved while this ran",
+      "body": "The market moved more than the {pct}% we set aside, so nothing was sent and your money did not move. Try again at today's prices, or wait a few minutes for the market to settle.",
+      "accept": "Try again",
+      "decline": "Cancel"
     },
     "steps": {
       "buyUsdc": "Buy USDC",
       "bridge": "Move to {network}",
       "bridgeGas": "Send fees to {network}",
       "swapGas": "Cover fees",
-      "swapToken": "Convert to {token}",
-      "op": "Your transaction"
+      "swapToken": "Convert {token}",
+      "op": "Your transaction",
+      "buy": "Buy {token}"
     },
     "captions": {
       "buyUsdc": "Card or Pix",
-      "bridge": "Move funds to the right network",
-      "swapGas": "A small part of what you hold, converted to cover network costs",
+      "bridge": "From {network}",
+      "swapGas": "Paid from your {stable}",
       "op": "Your original action",
-      "approve": "A one-time permission. Nothing moves yet."
+      "approve": "A one-time permission. Nothing moves yet.",
+      "buy": "Payment options shown at checkout",
+      "buyMethods": "Pay with {methods}",
+      "onNetwork": "{network}"
     },
     "exec": {
-      "title": "Setting up your funds",
+      "title": "Working on it",
       "subtitle": "We'll buy, route and top up automatically. Your transaction runs right after.",
       "done": "Done",
-      "pending": "Pending"
+      "pending": "Pending",
+      "takingLonger": "This is taking longer than usual. It can take a few minutes.",
+      "status": {
+        "done": "Done",
+        "active": "Continue in your wallet",
+        "waiting": "Waiting",
+        "notStarted": "Not started",
+        "skipped": "Skipped",
+        "buying": "Complete your purchase"
+      },
+      "failure": {
+        "slippage": "Price moved past your {pct}% slippage",
+        "slippageNoPct": "The price moved while this step was running",
+        "deadlineExpired": "This step took too long and expired",
+        "insufficientFunds": "There was not enough left to cover this step",
+        "userRejected": "You declined this step in your wallet",
+        "unauthorized": "Your wallet was not allowed to run this step",
+        "wrongChain": "Your wallet was on a different network",
+        "alreadyBroadcast": "This step was already sent and is still being tracked",
+        "upstreamUnavailable": "We could not price this step just now",
+        "gasBlocked": "There is no gas on this network to run this step",
+        "unknown": "This step did not go through",
+        "chainUnavailable": "This network isn't enabled in your wallet",
+        "transient": "The network did not answer in time. Try this step again.",
+        "confirmationTimeout": "Sent, but not confirmed in time. Check your wallet before retrying."
+      },
+      "keepOpen": "Keep this open.",
+      "failedTitle": "Step {index} failed",
+      "tryAgain": "Try again",
+      "settledSafe": "{amount} already went through and is safe.",
+      "settledSafeUnknown": "Some steps already went through and are safe.",
+      "stateProcessing": "Processing",
+      "stateDone": "Done",
+      "stop": {
+        "title": "Stop here?",
+        "settled": "{amount} already went through and is safe.",
+        "body": "Step {index} of {total} is running and will finish on its own. {restCount, plural, one {Step {rest} will not start} other {Steps {rest} will not start}}, and your funds stay where they land.",
+        "bodyLastStep": "Step {index} of {total} is running and will finish on its own. Your funds stay where they land.",
+        "bodyNotSent": "Step {index} of {total} has not moved any funds yet. If your wallet is asking for a signature, decline it. {restCount, plural, one {Step {rest} will not start} other {Steps {rest} will not start}}, and your funds stay where they are.",
+        "bodyNotSentLastStep": "Step {index} of {total} has not moved any funds yet. If your wallet is asking for a signature, decline it. Your funds stay where they are.",
+        "keepGoing": "Keep going",
+        "stopAnyway": "Stop anyway"
+      }
     },
     "bridge": {
       "etaSeconds": "This usually takes about {seconds, plural, one {# second} other {# seconds}}. We'll continue as soon as your funds arrive.",
@@ -536,11 +612,13 @@
       },
       "buyCrypto": {
         "cta": "Buy crypto instead",
-        "hint": "Pay with a card or Pix and skip moving funds between networks."
+        "hint": "Skip moving funds between networks.",
+        "ctaWithAmount": "Buy {amount}",
+        "hintWithMethods": "Pay with {methods} and skip moving funds between networks."
       }
     },
     "fundingSources": {
-      "title": "What would you like to spend?",
+      "title": "Choose tokens to convert",
       "subtitle": "Pick anything you hold. We'll work out how to get it where it needs to go.",
       "listLabel": "Your funds",
       "rowLabel": "{symbol} on {network}, {amount}, worth {usd}",
@@ -551,7 +629,7 @@
       "exact": "Exactly covered",
       "empty": "There's nothing here we can spend yet.",
       "repriced": "The final price came in a little higher. Pick one more source to cover {amount}.",
-      "cta": "Continue",
+      "cta": "Confirm and start",
       "step": "Step {index}",
       "unblock": "To use this money:",
       "unreachable": "We can't move {symbol} to this network yet. Pick something else from the list.",
@@ -559,7 +637,17 @@
         "ok": "Ready",
         "topUp": "Needs a top up",
         "blocked": "Can't be used yet"
-      }
+      },
+      "settings": "Transaction settings",
+      "meter": "{selected} of {required}",
+      "enough": "Enough",
+      "bufferNote": "Includes {pct}% set aside for price moves. Anything left over comes back to your wallet.",
+      "convertNeeded": "Convert what's needed",
+      "recommended": "Recommended",
+      "hideDetails": "Hide details",
+      "seeDetails": "See details",
+      "cancel": "Cancel",
+      "back": "Back"
     },
     "recovery": {
       "title": "You have funding in progress",
@@ -575,7 +663,8 @@
         "collect": "Collecting your earnings",
         "compound": "Reinvesting your earnings",
         "moveRange": "Adjusting a strategy",
-        "close": "Closing your position"
+        "close": "Closing your position",
+        "deposit": "Adding money to your balance"
       },
       "leg": {
         "settled": "Done.",
@@ -590,6 +679,109 @@
         "rederive": "We can pick this up from where it stopped.",
         "ask": "We need you to check one thing before we continue."
       }
+    },
+    "routes": {
+      "need": "You need {amount}",
+      "breakdownLabel": "What makes up this amount",
+      "breakdown": "{amount} for the transaction + {gas} gas",
+      "breakdownGasOnly": "{gas} to cover network fees",
+      "gasMinimum": "This gas top-up covers many transactions, not just this one.",
+      "bufferTooltip": "We convert {pct}% extra in case prices move while it runs. Anything left over comes back to your wallet.",
+      "listLabel": "How to fund this",
+      "recommended": "Recommended",
+      "buy": {
+        "subtitle": "{amount} with {method}",
+        "subtitlePending": "Final charge shown at checkout",
+        "minimum": "Minimum {amount} with {method}",
+        "disclosureLabel": "Why this amount",
+        "disclosureMinimum": "We never place an order below {minimum}, so this is what you will buy even when the transaction needs less.",
+        "disclosureBuffer": "This is a little more than the transaction needs: {pct}% in case prices move while your purchase settles, plus any network fees.",
+        "disclosureRemainder": "Anything you do not use stays in your wallet and can be used for other transactions.",
+        "title": "Buy {amount}",
+        "preparing": "Preparing your purchase"
+      },
+      "cancel": "Cancel",
+      "tokens": {
+        "title": "Use your {amount}",
+        "subtitle": "{amount} available"
+      },
+      "tokensPlusBuy": {
+        "title": "Use {available} + buy {shortfall}",
+        "subtitle": "{available} in tokens, buy {shortfall}"
+      },
+      "deposit": {
+        "title": "Deposit from external wallet",
+        "subtitle": "Send crypto from another wallet you hold"
+      }
+    },
+    "onramp": {
+      "method": {
+        "blocked": "Paybis needs at least {amount}.",
+        "minimum": "Min. {amount}",
+        "title": "Choose how to pay",
+        "currencyLabel": "Currency",
+        "currencyNote": "Payment methods change with the currency.",
+        "listLabel": "Payment method",
+        "loading": "Loading the payment methods for this currency",
+        "unavailable": "The provider didn't return any payment options just now. You can still continue and choose how to pay in the checkout.",
+        "allBlocked": "No payment method accepts less than {amount} right now. Cancel to change your amount.",
+        "minimumNotice": "{method} does not accept less than {amount}. That minimum is the provider's, not ours, and anything you don't need stays in your wallet.",
+        "continue": "Continue",
+        "cancel": "Cancel"
+      },
+      "title": "Buy crypto",
+      "exit": "Close checkout",
+      "uncovered": "No payment provider can sell to you right now in {currency}. Try another payment currency, or fund from a wallet you already hold.",
+      "currencyUnsupported": "We can't take a card payment in {currency} yet. Fund from a wallet you already hold, or come back when your currency is supported.",
+      "nativeUnavailable": "You can't buy ETH with cash here yet. Add ETH from another wallet or exchange, then come back.",
+      "failedBody": "Your purchase did not go through, so no funds were moved. You can try again.",
+      "timedOut": "Your purchase is still settling. Nothing is lost, and we'll continue as soon as your funds arrive.",
+      "reconciling": "Confirming your purchase. This can take a moment.",
+      "enterAmount": "Enter the amount in the checkout. This step needs about {amount}.",
+      "baselineUnavailable": "Checking your balance. This takes a moment.",
+      "openCheckout": "Open secure checkout",
+      "connecting": "Loading the secure checkout.",
+      "opening": "Opening the secure checkout.",
+      "open": "Complete your purchase in the checkout above.",
+      "settled": "Purchase confirmed.",
+      "closed": "Checkout closed. You can start again when you're ready.",
+      "rejected": "The purchase was declined.",
+      "cancelled": "The purchase was cancelled.",
+      "error": "Something went wrong with the checkout. Please try again.",
+      "unavailable": "We couldn't load the secure checkout. Please try again.",
+      "mockMode": "Buy crypto is not available in mock mode.",
+      "settlingTitle": "Your purchase is settling",
+      "ethUnpricedBody": "We couldn't start your purchase because we couldn't get an ETH price just now, so nothing was charged. You can try again.",
+      "resume": {
+        "title": "You may have a purchase in progress",
+        "body": "You started a purchase {minutes} minutes ago. If you paid, the money may still be on its way. Resuming waits for it. Starting again creates a new purchase, so only do that if the first one never went through.",
+        "resume": "Resume that purchase",
+        "startNew": "Start a new purchase",
+        "paidTitle": "Your purchase is still landing",
+        "paidBody": "You paid {minutes} minutes ago and the money has not arrived yet. This can take a while, especially for a bank transfer. Waiting is usually right. Only start a new purchase if you are sure the first one is never arriving, because that means paying again.",
+        "keepWaiting": "Keep waiting"
+      }
+    },
+    "secureCheckout": "Secure checkout",
+    "slippage": {
+      "raiseCta": "Raise to {pct}% and retry",
+      "customCta": "Retry with {pct}% slippage",
+      "raiseCost": "A higher limit lets every remaining conversion, not just this step, go through at a worse price. Raise it only if you want them to complete.",
+      "stop": "Stop here"
+    },
+    "stepsRunning": {
+      "buy": "Buying {token}",
+      "bridge": "Moving to {network}",
+      "bridgeGas": "Sending fees to {network}",
+      "swapGas": "Covering fees",
+      "swapToken": "Converting {token}"
+    },
+    "stepsDone": {
+      "buy": "Bought {token}",
+      "bridge": "Moved to {network}",
+      "bridgeGas": "Sent fees to {network}",
+      "swapGas": "Covered fees",
+      "swapToken": "Converted {token}"
     }
   }
 }

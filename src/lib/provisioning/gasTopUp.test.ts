@@ -160,7 +160,7 @@ const QUOTED_GAS_USD = 0.02;
  * The classifier's verdict for the operation's chain, run for real over `nativeUsd`.
  *
  * `swapUsd` is the operation's own transaction and `topUpSwapUsd` is the gas swap's, exactly as
- * `gateContext.quoteChainGas` fills them from one probe.
+ * pool-party-api's `FundingContextService` fills them from one probe (POO-1098).
  */
 function classifyTarget(nativeUsd: number, sources: readonly FundingSource[] = [WETH_ON_ARBITRUM]) {
   const candidate: GasCandidateChain = {
@@ -423,5 +423,97 @@ describe("[R3] exactly-zero native is BLOCKED, and no impossible plan is present
     if (!result.ok) return;
     expect(legsOf(result.plan).some((leg) => leg.kind === "swap-gas")).toBe(false);
     expect(quoteCalls().some((call) => call.tokenInChainId === POLYGON)).toBe(false);
+  });
+});
+
+/**
+ * POO-1085 [F2-R2]/[F2-R3]. The user's gas choice is a floor-respecting CEILING: it may raise the
+ * slice above what the classifier priced, never lower it. Below the classifier's figure the leg
+ * would not cover the transaction it exists to pay for, and would revert after the user signed.
+ */
+describe("[F2-R2] the gas choice raises the top-up, and can never shrink it", () => {
+  const NATIVE_USD = 0.01;
+
+  /** The `swap-gas` leg's input amount for a given choice, in base units. */
+  async function gasLegAmountIn(gasChoiceUsd?: number): Promise<bigint> {
+    const verdict = classifyTarget(NATIVE_USD);
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: "0",
+        requiredUsd: 0,
+        sources: [],
+        gasByChain: { [ARBITRUM]: verdict },
+        ...(gasChoiceUsd === undefined ? {} : { gasChoiceUsd }),
+      },
+      { nowIso: NOW },
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("buildPlan failed");
+    const [leg] = legsOf(result.plan);
+    return BigInt(leg?.amountIn ?? "0");
+  }
+
+  it("[F2-R3] no choice reproduces exactly the plan that shipped before the parameter existed", async () => {
+    const verdict = classifyTarget(NATIVE_USD);
+
+    expect(await gasLegAmountIn()).toBe(BigInt(verdict.topUp?.amountRaw ?? "0"));
+  });
+
+  it("[F2-R2] a choice ABOVE the classifier's figure buys more native", async () => {
+    const classifier = await gasLegAmountIn();
+    // The classifier's figure here is cents; $5 is the smallest on-chain preset.
+    const chosen = await gasLegAmountIn(5);
+
+    expect(chosen).toBeGreaterThan(classifier);
+  });
+
+  it("[F2-R2] the raise is proportional: $10 buys about twice what $5 does", async () => {
+    const five = await gasLegAmountIn(5);
+    const ten = await gasLegAmountIn(10);
+
+    // Exact doubling is not asserted: both slices round UP by a base unit, so they can differ by
+    // one. The property that matters is that the choice scales the slice rather than snapping it.
+    expect(ten).toBeGreaterThanOrEqual(five * BigInt(2) - BigInt(2));
+    expect(ten).toBeLessThanOrEqual(five * BigInt(2) + BigInt(2));
+  });
+
+  it("[F2-R2] a choice BELOW the classifier's figure is ignored, not honoured", async () => {
+    const verdict = classifyTarget(NATIVE_USD);
+    const required = verdict.topUp?.buyNativeUsd ?? 0;
+
+    expect(required).toBeGreaterThan(0);
+    // Half of what the route actually costs. Honouring it would emit a leg that cannot pay for the
+    // transaction it is buying gas for.
+    expect(await gasLegAmountIn(required / 2)).toBe(BigInt(verdict.topUp?.amountRaw ?? "0"));
+  });
+
+  it("[F2-R2] a choice larger than the holding spends the holding, and no more", async () => {
+    // The WETH position is ~$2,500; ask for far more than that.
+    const chosen = await gasLegAmountIn(1_000_000);
+
+    expect(chosen).toBe(BigInt(WETH_ON_ARBITRUM.amount));
+  });
+
+  it("[F2-R2] the step's USD reflects what is actually being swapped", async () => {
+    const verdict = classifyTarget(NATIVE_USD);
+    const result = await buildPlan(
+      {
+        targetChainId: ARBITRUM,
+        requiredAmount: "0",
+        requiredUsd: 0,
+        sources: [],
+        gasByChain: { [ARBITRUM]: verdict },
+        gasChoiceUsd: 5,
+      },
+      { nowIso: NOW },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const gasStep = result.plan.steps.find((step) => step.type === "swap-gas");
+    // Never the classifier's cents while the leg spends five dollars: the figure on screen has to be
+    // the figure being spent (POO-799 #1).
+    expect(gasStep?.amountUsd).toBeGreaterThanOrEqual(5);
   });
 });

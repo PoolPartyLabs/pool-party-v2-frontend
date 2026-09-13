@@ -8,6 +8,8 @@
  * {@link CATASTROPHIC_PRICE_IMPACT_PCT}, the Review shows a destructive, always-visible alert
  * stating the estimated loss (never inside the collapsible details, where the incident's 92.41%
  * was hidden) and the operation's primary CTA stays disabled until the user checks an explicit
+ * @analytics-events tx_impact_gate_blocked, tx_impact_gate_acknowledged
+ *
  * "I understand I may lose about X%" acknowledgment.
  *
  * `usePriceImpactGate` owns the acknowledgment lifecycle [R5/R5v2]: the check survives the
@@ -23,7 +25,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { AnalyticsFlow } from "@/lib/analytics/events";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { formatPercent } from "@/lib/utils/format";
 
 /**
@@ -47,6 +51,18 @@ export function isCatastrophicPriceImpact(
 }
 
 /** What {@link usePriceImpactGate} hands the hosting modal. */
+/**
+ * Context the gate's two events carry (POO-1172). Optional so a host that has not been wired yet
+ * still emits, rather than the gate going silent while five lanes land at different times: an event
+ * with no `flow` is a cut you cannot slice, while a missing event is a number nobody can compute.
+ */
+export interface PriceImpactGateAnalytics {
+  /** Which transaction flow the gate engaged in. */
+  flow?: AnalyticsFlow;
+  /** The strategy under the operation, where the host knows it. */
+  strategyId?: string;
+}
+
 export interface PriceImpactGateState {
   /** The user has checked the acknowledgment. */
   acknowledged: boolean;
@@ -66,6 +82,7 @@ export interface PriceImpactGateState {
 export function usePriceImpactGate(
   priceImpactPct: number | undefined,
   active: boolean,
+  analytics?: PriceImpactGateAnalytics,
 ): PriceImpactGateState {
   const [acknowledged, setAcknowledgedState] = useState(false);
   const [ackedAtPct, setAckedAtPct] = useState<number | null>(null);
@@ -81,17 +98,66 @@ export function usePriceImpactGate(
       setAckedAtPct(null);
     }
   }, [gated, active, worsened]);
+
+  // POO-1172: the gate's own instrumentation. Read through a ref so the emitters are stable and the
+  // effect below does not re-fire on every re-quote render.
+  const { track } = useAnalytics();
+  const analyticsRef = useRef(analytics);
+  analyticsRef.current = analytics;
+  const blocked = gated && (!acknowledged || worsened);
+  /**
+   * POO-1172 [P0]: `tx_impact_gate_blocked` fires from DERIVED STATE, not from a click, because the
+   * CTA is hard-disabled while blocked and there is therefore no click to intercept. Once per
+   * engagement: `firedAtPct` holds the impact the gate last reported, and a re-quote only counts as
+   * a NEW engagement once the gate has actually released in between.
+   *
+   * Without it, POO-1010 (a 92.41% price impact hidden inside a collapsible) is invisible: nothing
+   * in the union records that routing handed a user a quote that would destroy their funds.
+   */
+  const firedAtPct = useRef<number | null>(null);
+  useEffect(() => {
+    if (!blocked || !active) {
+      if (!blocked) firedAtPct.current = null;
+      return;
+    }
+    if (firedAtPct.current !== null) return;
+    firedAtPct.current = priceImpactPct ?? null;
+    const ctx = analyticsRef.current;
+    track("tx_impact_gate_blocked", {
+      ...(ctx?.flow ? { flow: ctx.flow } : {}),
+      ...(ctx?.strategyId ? { strategy_id: ctx.strategyId } : {}),
+      ...(priceImpactPct == null ? {} : { metric_value: priceImpactPct }),
+      metric_name: "price_impact_pct",
+    });
+  }, [blocked, active, priceImpactPct, track]);
+
   const setAcknowledged = useCallback(
     (value: boolean) => {
       setAcknowledgedState(value);
       setAckedAtPct(value && priceImpactPct != null ? priceImpactPct : null);
+      /**
+       * POO-1172 [P0]: the explicit funds-at-risk override, and only the override. Unchecking is not
+       * an event: the ratio that matters is acknowledged/blocked, and counting a toggle-off would
+       * let one hesitant user inflate the denominator's twin.
+       *
+       * A HIGH override rate means the gate is a speed bump rather than a stop, and the real fix is
+       * upstream routing. That reading is the entire reason both events exist as a pair.
+       */
+      if (!value) return;
+      const ctx = analyticsRef.current;
+      track("tx_impact_gate_acknowledged", {
+        ...(ctx?.flow ? { flow: ctx.flow } : {}),
+        ...(ctx?.strategyId ? { strategy_id: ctx.strategyId } : {}),
+        ...(priceImpactPct == null ? {} : { metric_value: priceImpactPct }),
+        metric_name: "price_impact_pct",
+      });
     },
-    [priceImpactPct],
+    [priceImpactPct, track],
   );
   return {
     acknowledged,
     setAcknowledged,
-    blocked: gated && (!acknowledged || worsened),
+    blocked,
   };
 }
 

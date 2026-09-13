@@ -1,7 +1,7 @@
 /**
- * @id PP-STR-LIB-017 (POO-1036, POO-1037, POO-1038, POO-1043)
+ * @id PP-STR-LIB-017 (POO-1036, POO-1037, POO-1038, POO-1043, POO-1094, POO-1093, POO-1136, POO-1154, POO-1508, POO-1916)
  * @name buildPlanSteps (provisioning execution rail)
- * @implements-rules-version v2 (POO-1043 rules v1) · v1 (POO-1036 rules v1)
+ * @implements-rules-version v5 (POO-1916 rules v1) · v4 (POO-1508 rules v2) · v3 (POO-1154 / POO-1129 rules v3, POO-1136 / POO-1129 rules v3) · v2 (POO-1043 rules v1) · v1 (POO-1036 rules v1, POO-1094 rules v1, POO-1093 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The seam the Universal Funding epic converges on: it turns a priced {@link ProvisioningPlan} into
@@ -64,9 +64,19 @@
  *   That is why the broadcast helper below is `sendBuiltTransaction` + `waitForReceipt` rather than
  *   the combined `executeBuiltTransaction`: the combined form resolves only after the receipt, which
  *   is exactly the window a closed tab falls into.
- * - **The re-quote gate ([R5]).** A leg is re-quoted at execution time by construction, so the price
- *   CAN move between approval and signature. A materially worse one is re-approved by the user before
- *   anything is signed ({@link isRequoteMateriallyWorse}); with nobody to ask, it refuses.
+ * - **The re-quote gate ([R5], POO-1508 [R43] rules v2).** A leg is re-quoted at execution time by
+ *   construction, so the price CAN move between approval and signature.
+ *   {@link isRequoteMateriallyWorse} still decides whether a move is worth acting on at all (a per-leg
+ *   1% tolerance, unchanged). What happens next is not: there is no "accept a worse price" step, and
+ *   never was meant to be one signed silently by the user's earlier consent to *some* slippage. A move
+ *   past the tolerance is measured against the BUFFER the user was shown before broadcasting anything
+ *   ({@link SEED_BUFFER_RATE}, the 5% "set aside for price moves" disclosure), consumed CUMULATIVELY
+ *   across every leg of the run through {@link PlanRailDeps.consumeBuffer}. Within the reserved buffer
+ *   the leg proceeds at the worse price with nobody asked, because the user already approved absorbing
+ *   exactly this by seeing the disclosure. Past it, nothing is sent: the leg throws
+ *   {@link PROVISIONING_BUFFER_EXCEEDED_CODE}, which the panel turns into "prices moved while this ran,
+ *   try again or cancel" rather than a silent continuation or a mid-flow interrogation. With nobody to
+ *   ask (`consumeBuffer` not wired), it refuses exactly as before rather than assuming the buffer holds.
  *
  * **Approvals are deliberately not journaled.** An approval moves no funds, so re-running one cannot
  * spend money twice, and each leg reads its own `nonceBefore` immediately before its own prompt, so
@@ -100,13 +110,35 @@
  * PP-INTEGRATION-POINT: every wallet interaction a funding plan performs is issued from this module,
  * against the Uniswap server-action layer (PP-CORE-LIB-052) injected as {@link PlanRailDeps}.
  */
-import type { ProvisioningLeg, ProvisioningPlan, ProvisioningStep } from "@/lib/provisioning";
+import { parseUnits } from "viem";
+import {
+  apiNetworkForChain,
+  getUsdcAddress,
+  nativeSymbol,
+  stableSymbol,
+} from "@/lib/chains/config";
+import { isOnRampCurrencyCode, type OnRampCurrencyCode } from "@/lib/onramp/tokenDeltas";
+import type {
+  ProvisioningLeg,
+  ProvisioningOrder,
+  ProvisioningPlan,
+  ProvisioningStep,
+} from "@/lib/provisioning";
 import { NATIVE_TOKEN_ADDRESS } from "@/lib/provisioning";
+// POO-1154 Gap 2: reused here as the WALLET RESERVE FOR SIGNING when a fiat buy-swap would otherwise
+// spend the FULL native delta — the floor of native the user KEEPS so the swap can gas itself ("you
+// cannot spend the gas you sign with"), exactly `reserveNativeFloor` / `belowGasFloor`'s [R13] second
+// consumer. It is NOT the [R1] gas TRIGGER and never sizes a gas COST: it caps the funding leg's spend
+// and never reaches `classifyGasFeasibility` or `buildPlan`'s quote-driven gas path. See
+// `nativeReserve.ts`.
+import { NATIVE_RESERVE_ETH } from "@/lib/provisioning/nativeReserve";
+import type { BuildTxFailure } from "@/lib/tx/actionResult";
 import type { BuiltTx } from "@/lib/tx/builtTxSchema";
 import {
   type Eip1193Provider,
   sendBuiltTransaction,
   TransactionError,
+  TX_REVERTED,
   waitForReceipt,
 } from "@/lib/tx/sendTransaction";
 import type { UniswapQuoteResponse, UniswapTransactionRequest } from "@/lib/uniswap/schemas";
@@ -150,10 +182,15 @@ export interface PlanRailState {
   legHashes: Record<string, string>;
 }
 
-/** The result shape every injected server action returns (mirrors `UniswapActionResult`). */
-export type RailActionResult<TPayload> =
-  | ({ ok: true } & TPayload)
-  | { ok: false; code: string; message: string };
+/**
+ * The result shape every injected server action returns (mirrors `UniswapActionResult`).
+ *
+ * POO-1251 [R1]: the failure branch IS the house {@link BuildTxFailure} rather than a private copy of
+ * three of its fields. The copy narrowed `correlationId` away at the type, so {@link actionError}
+ * could never be checked against a failure that carries one, on the rail that runs the money path.
+ * The same correction this issue applied to `planActions.ts` and `onRampActions.ts`.
+ */
+export type RailActionResult<TPayload> = ({ ok: true } & TPayload) | BuildTxFailure;
 
 /** `POST /quote` input, structurally identical to the action's `QuoteSwapInput`. */
 export interface RailQuoteInput {
@@ -233,12 +270,17 @@ export interface PlanRailDeps {
    */
   journal?: FundingJournalRecorder;
   /**
-   * Ask the user to approve a materially worse re-quote before it is signed ([R5]). Resolving
-   * `false` aborts the leg without broadcasting. With no confirmer wired the rail REFUSES a worse
-   * price rather than signing it silently: there is nobody to approve it, and a user must never sign
-   * a materially different price than the one they agreed to.
+   * POO-1508 [R43] rules v2: consume `worseBps` of the run's shared price-move buffer
+   * ({@link SEED_BUFFER_RATE}, 5%, tracked cumulatively across every leg). Returns `true` when the
+   * buffer still covers it, in which case the leg proceeds at the worse price with NOBODY ASKED — the
+   * user already approved absorbing exactly this by seeing the buffer disclosure before broadcasting
+   * anything. Returns `false` once the run's cumulative consumption would exceed the buffer, in which
+   * case the leg throws {@link PROVISIONING_BUFFER_EXCEEDED_CODE} rather than being signed. With no
+   * consumer wired the rail REFUSES a worse price rather than assuming the buffer holds: there is
+   * nobody accounting for it, and a user must never have a materially different price sent on their
+   * behalf that nothing confirmed was within what they were shown.
    */
-  confirmRequote?: (change: RequoteChange) => Promise<boolean>;
+  consumeBuffer?: (worseBps: number) => boolean;
   /**
    * Called the INSTANT a leg's broadcast returns a hash, before anything is awaited, from the same
    * synchronous point as the journal's own `broadcast` write.
@@ -252,33 +294,53 @@ export interface PlanRailDeps {
    * not return until its funds land on the destination chain.
    */
   onLegBroadcast?: (event: { leg: ProvisioningLeg; txHash: string; at: number }) => void;
+  /**
+   * Execute the fiat purchase of a `buy` step (POO-1136): mint the `requestId` ([R8], execution-time,
+   * never plan-time), open the embedded Paybis widget, and RESOLVE once the purchase settles from the
+   * observed balance delta ([R4]/[R11], scoped to the on-ramp chain + the token the order bought).
+   *
+   * It resolves with nothing: the rail records the delivered token's balance as a baseline BEFORE this
+   * runs and re-reads it after, so the downstream swap / bridge legs size themselves from the real
+   * delta through the SAME `requoteAtExecution` machinery every crypto leg uses ({@link resolveAmountIn}).
+   * It THROWS on a terminal failure (widget abandoned, card declined) so the flow fails legibly, and on
+   * a reconcile timeout with a code the panel routes to the existing `settling` phase (the money may
+   * still be in flight, so it is never a failure). Absent, a `buy` step fails legibly rather than being
+   * silently skipped: there is nobody to open the widget.
+   *
+   * The React bridge lives in the panel (`ProvisioningPanel`), which renders `PaybisWidgetFrame` and
+   * resolves this from a promise held in state: the widget has to RENDER for a settlement to happen at
+   * all. Injected, not imported, for the same reason the Uniswap actions are.
+   */
+  runOnRampBuy?: (args: OnRampBuyRequest) => Promise<void>;
 }
 
-/** What moved between the price the user approved and the price about to be signed ([R5]). */
-export interface RequoteChange {
-  /** The route leg's index, so the surface can name the step. */
-  legIndex: number;
-  /** Base units in, as this leg is REALLY sized at execution time. */
-  amountIn: string;
-  /** Base units out at the price the user approved, scaled to nothing: the planner's own figure. */
-  approvedAmountOut: string;
-  /** Base units out the fresh quote offers for {@link amountIn}. */
-  quotedAmountOut: string;
-  /** How much worse the RATE got, in basis points. Always positive when this is raised. */
-  worseBps: number;
+/** What the rail hands the panel to run one fiat purchase (POO-1136). */
+export interface OnRampBuyRequest {
+  /** The Paybis pre-fill: currency code + fiat amount ([R8]: carries no requestId / quoteId). */
+  order: ProvisioningOrder;
+  /** The token the order buys, scoping settlement detection to the purchase ([R11]). */
+  expectedToken: OnRampCurrencyCode;
 }
 
 /**
- * How far a re-quote may drift against the user before it has to be re-approved: 100 bps (1%).
+ * How far a re-quote may drift against the user before it is worth acting on at all: 100 bps (1%).
  *
  * A quote for a leg expires in about a minute and a bridge settles in minutes, so a re-quote is
- * normal rather than exceptional (§4.4). Re-prompting on every basis point would train users to
- * click through the prompt, which is worse than not having it.
+ * normal rather than exceptional (§4.4). Acting on every basis point would spend the run's buffer on
+ * noise, which is worse than not having the gate.
  */
 export const REQUOTE_MATERIAL_BPS = 100;
 
-/** Whether a rail step grants an allowance or executes the route leg itself. */
-export type PlanRailStepKind = "approve" | "leg";
+/**
+ * POO-1508 [R43] rules v2: thrown by {@link gateRequote} when a materially worse re-quote, added to
+ * what the run has already consumed of its buffer, would exceed it. The panel routes this to the
+ * "prices moved while this ran" screen (`Try again` retries THIS leg with a fresh quote / `Cancel`
+ * aborts the run), never to the generic failure phase.
+ */
+export const PROVISIONING_BUFFER_EXCEEDED_CODE = "PROVISIONING_BUFFER_EXCEEDED";
+
+/** Whether a rail step grants an allowance, executes a route leg, or runs the fiat purchase. */
+export type PlanRailStepKind = "approve" | "leg" | "buy";
 
 /**
  * One step of the rail. Exported because it is the plan's EXECUTION shape, which the plan card
@@ -299,6 +361,37 @@ export type PlanRailStep =
       planStep: ProvisioningStep;
       leg?: ProvisioningLeg;
       previousLeg?: ProvisioningLeg;
+      /**
+       * POO-1136: size this leg to a FRACTION of the settled delta, in basis points, reserving the
+       * rest. Set only on the fiat ETH->USDC buy-swap: the on-ramp bought ETH for gas PLUS funding
+       * ([R1]), so the swap must convert only the funding share and leave the gas share as native
+       * (you also cannot swap 100% of native ETH, the swap tx itself needs gas). The share is the
+       * plan's own `buy-swap.amountUsd / buy.amountUsd`, so it scales with whatever the user actually
+       * bought ([R4]). Absent on every crypto leg and on a fiat USDC bridge, which spend the whole delta.
+       */
+      sizeFractionBps?: number;
+      /**
+       * POO-1154 Gap 2 / [R13]: base units of NATIVE to keep in the wallet when this leg would otherwise
+       * spend the FULL native delta (no {@link sizeFractionBps} reserves a share). Set only on a fiat
+       * buy-swap whose `tokenIn` is native and whose funding share is not strictly below the buy total:
+       * spending 100% of native ETH leaves nothing to gas the swap itself. This is the SIGNING RESERVE
+       * (`NATIVE_RESERVE_ETH`, the [R13] second consumer), native the user KEEPS to sign — never a gas
+       * COST, so it never reaches `classifyGasFeasibility` or the quote-driven gas sizing. Mutually
+       * exclusive with {@link sizeFractionBps} by construction (a proportional reserve already holds
+       * native back). Absent on every crypto leg and on a non-native fiat leg.
+       */
+      reserveNativeRaw?: string;
+    }
+  | {
+      key: string;
+      kind: "buy";
+      planStep: ProvisioningStep;
+      /**
+       * The SYNTHETIC leg the fiat purchase delivers (POO-1136): its `tokenOut` is the bought asset on
+       * Base and its `index` is where the buy records the pre-purchase baseline, so the next fiat leg's
+       * {@link resolveAmountIn} sizes the delta against it exactly as one crypto leg feeds the next.
+       */
+      buyLeg: ProvisioningLeg;
     };
 
 /** Calldata: 0x-prefixed and NON-EMPTY. `"0x"` fails this, which is the point ([R4]). */
@@ -337,11 +430,68 @@ export function readRailState(ctx: PlanRailCtx): PlanRailState {
 export function planRailSteps(plan: ProvisioningPlan): PlanRailStep[] {
   const rail: PlanRailStep[] = [];
   let previousLeg: ProvisioningLeg | undefined;
+  // POO-1136: fiat legs are SYNTHESIZED (buildPlan emits the buy sub-route legless, [R4]/[R8]), and
+  // their indices key the rail's baselines / hashes / journal, so they must never collide with the
+  // planner's own crypto leg indices. Start past the highest one.
+  let fiatIndex = maxLegIndex(plan) + 1;
+  // The legless fiat sub-route is contiguous right after the `buy` (buildPlan emits it first, before
+  // any crypto leg). Only inside it is a legless swap / bridge SYNTHESIZED rather than refused; the
+  // first legged crypto step ends it.
+  let inFiatSubroute = false;
+  // The buy's total fiat USD, so the ETH->USDC buy-swap can reserve the gas share of the delta ([R1]).
+  let buyTotalUsd = 0;
 
   for (const planStep of plan.steps) {
     // The trailing anchor is a display marker for the operation itself, not a route leg.
     if (planStep.type === "op") continue;
-    const leg = planStep.leg;
+
+    // POO-1136: the fiat purchase. Run against the on-ramp, not a route leg. It carries a SYNTHETIC
+    // delivered leg so the next fiat leg sizes the settled delta against the baseline the buy records
+    // under it, exactly as one crypto leg feeds the next ({@link resolveAmountIn}).
+    if (planStep.type === "buy") {
+      const buyLeg = syntheticBuyLeg(planStep, fiatIndex++);
+      if (buyLeg) {
+        rail.push({ key: planStep.key, kind: "buy", planStep, buyLeg });
+        previousLeg = buyLeg;
+        inFiatSubroute = true;
+        buyTotalUsd = planStep.amountUsd;
+        continue;
+      }
+      // A buy whose delivered asset we cannot resolve falls through to the legless leg step, which
+      // refuses legibly rather than executing an unsized purchase.
+    }
+
+    // POO-1136: a legless downstream fiat step (swap / bridge after a buy) is synthesized into a real
+    // leg from known token constants, so the branch below emits its approval and the existing rail
+    // machinery executes it. Its amount is a placeholder that `requoteAtExecution` re-sizes from the
+    // settled delta at execution ([R4]).
+    let leg = planStep.leg;
+    // [R1] The ETH->USDC buy-swap converts the FUNDING share of the delta and reserves the gas share.
+    let sizeFractionBps: number | undefined;
+    // POO-1154 Gap 2 / [R13]: base units of native to keep when the leg would spend the FULL delta.
+    let reserveNativeRaw: string | undefined;
+    if (leg) {
+      inFiatSubroute = false;
+    } else if (inFiatSubroute) {
+      const synthesized = synthesizeFiatLeg(planStep, fiatIndex);
+      if (synthesized) {
+        leg = synthesized;
+        fiatIndex++;
+        sizeFractionBps = fiatSwapFractionBps(planStep, buyTotalUsd);
+        // POO-1154 Gap 2: with no proportional share to reserve (`fiatSwapFractionBps` returned
+        // undefined => spend the full delta) a NATIVE buy-swap would swap 100% of the native balance and
+        // leave nothing to gas its own transaction. Keep the signing reserve instead ([R13]). A
+        // proportional reserve (`sizeFractionBps` set) already holds native back, so the two never both
+        // apply; a non-native leg (a USDC bridge) pays no native gas here, so it keeps nothing.
+        if (
+          sizeFractionBps === undefined &&
+          sameAddress(leg.tokenIn.address, NATIVE_TOKEN_ADDRESS)
+        ) {
+          reserveNativeRaw = nativeSigningReserveRaw(leg.tokenIn.decimals);
+        }
+      }
+    }
+
     if (!leg) {
       rail.push({ key: planStep.key, kind: "leg", planStep });
       continue;
@@ -349,10 +499,173 @@ export function planRailSteps(plan: ProvisioningPlan): PlanRailStep[] {
     if (isExecutable(planStep) && !sameAddress(leg.tokenIn.address, NATIVE_TOKEN_ADDRESS)) {
       rail.push({ key: `approve:${planStep.key}`, kind: "approve", planStep, leg, previousLeg });
     }
-    rail.push({ key: planStep.key, kind: "leg", planStep, leg, previousLeg });
+    rail.push({
+      key: planStep.key,
+      kind: "leg",
+      planStep,
+      leg,
+      previousLeg,
+      ...(sizeFractionBps === undefined ? {} : { sizeFractionBps }),
+      ...(reserveNativeRaw === undefined ? {} : { reserveNativeRaw }),
+    });
     previousLeg = leg;
   }
   return rail;
+}
+
+/**
+ * The share of the settled delta the fiat ETH->USDC buy-swap converts, in basis points, or `undefined`
+ * to spend the whole delta (POO-1136 [R1]).
+ *
+ * The on-ramp bought ETH for the operation's funding PLUS gas, so the swap must convert only the
+ * funding share (`buy-swap.amountUsd`) of what the purchase delivered (`buy.amountUsd`) and leave the
+ * gas share as native. The ratio is the plan's own, so it scales with whatever the user actually bought
+ * ([R4]), and you can never swap 100% of native ETH anyway, the swap transaction needs gas to run.
+ *
+ * Only for a `swap-token` fiat leg; a fiat `bridge` moves the whole (already-USDC) delta. `undefined`
+ * when the ratio is not a proper fraction (missing / non-positive / not below one), which spends the
+ * full delta rather than reserving a figure we cannot trust.
+ *
+ * Exported for the standalone `/deposit` rail (POO-1137), which has to record the SAME share in its
+ * recovery journal at settlement so a resumed conversion converts what the live run would have. A
+ * second copy of this ratio in the deposit feature is exactly the drift this export prevents.
+ *
+ * PP-NOTE (POO-1129 follow-up POO-1154): two known gaps in the fiat sizing were WAIVED out of POO-1136
+ * because both fail legibly and non-destructively (the leg or the op refuses and the money rests in the
+ * user's own wallet as ETH or USDC on Base, so nothing strands and nothing is charged twice).
+ *   1. SOLVED (POO-1154 Gap 2). `undefined` above spends the FULL delta whenever the funding share is
+ *      not strictly below the buy total. For a native-ETH purchase whose gas component is zero that
+ *      built a swap of 100% of the native balance, which the wallet then could not gas. `planRailSteps`
+ *      now marks that leg with {@link PlanRailStep.reserveNativeRaw} (the [R13] signing reserve, native
+ *      the user KEEPS to sign — not a gas COST), and {@link sizeFromRealBalance} keeps it back.
+ *   2. STILL TRACKED (POO-1154 Gap 1). A user who SHRINKS the purchase inside the widget can land a
+ *      settled delta whose PROPORTIONAL gas share falls under what `classifyGasFeasibility` required.
+ *      Re-verdicting that needs a quote-driven valuation of the reserved native at execution and a
+ *      user-facing surface, both of which are open design questions on POO-1154; the raise-only floor
+ *      (`NATIVE_RESERVE_ETH`) must NOT stand in for the classifier figure ([R4]/[R13]).
+ * Neither is solved by a second sizing path in this function.
+ */
+export function fiatSwapFractionBps(
+  planStep: ProvisioningStep,
+  buyTotalUsd: number,
+): number | undefined {
+  if (planStep.type !== "swap-token") return undefined;
+  const fundingUsd = planStep.amountUsd;
+  if (!(buyTotalUsd > 0) || !(fundingUsd > 0) || fundingUsd >= buyTotalUsd) return undefined;
+  return Math.round((fundingUsd / buyTotalUsd) * 10_000);
+}
+
+/**
+ * The native SIGNING RESERVE for a full-delta buy-swap, in base units, or `undefined` when the floor is
+ * disabled (POO-1154 Gap 2 / [R13]).
+ *
+ * `NATIVE_RESERVE_ETH` converted at the native coin's own decimals, exactly as `reserveNativeFloor`
+ * (`planActions.ts`) does for a selected native funding source: this is the SAME quantity, kept back so
+ * the swap can gas itself, applied here to the on-ramp delta instead of a picked holding. `toFixed`
+ * keeps the float out of `parseUnits` (never scientific notation). A `0` floor (the config kill switch,
+ * `NEXT_PUBLIC_PAYBIS_GAS_FLOOR_ETH="0"`) returns `undefined` so nothing is reserved and the leg spends
+ * the whole delta, matching the standalone trigger and the wallet-reserve consumers.
+ *
+ * Deliberately NOT a gas COST: it never sizes a purchase and never reaches `classifyGasFeasibility` or
+ * `buildPlan`'s gas path, so [R4]/[R1]'s "gas comes from the quote, never a constant" is untouched.
+ */
+function nativeSigningReserveRaw(decimals: number): string | undefined {
+  const reserve = parseUnits(NATIVE_RESERVE_ETH.toFixed(decimals), decimals);
+  return reserve > BigInt(0) ? reserve.toString() : undefined;
+}
+
+/** The highest crypto leg index the planner assigned, or -1 when there are none (POO-1136). */
+function maxLegIndex(plan: ProvisioningPlan): number {
+  return plan.steps.reduce((max, step) => (step.leg ? Math.max(max, step.leg.index) : max), -1);
+}
+
+/**
+ * The tokens a fiat sub-route touches, as executable {@link ProvisioningLeg.tokenIn} endpoints
+ * (POO-1136).
+ *
+ * Paybis sells ETH / USDC on Base ([R2]), so the origin addresses are KNOWN constants: native
+ * (`0x0…0`) for the chain's own coin, `getUsdcAddress` for the stable. That is what lets a fiat leg
+ * be built at rail time without the settled delta, which supplies only the SIZE (deferred through
+ * `requoteAtExecution`). Returns `undefined` for anything else, so an unexpected asset refuses
+ * rather than routing wrongly.
+ *
+ * POO-1916 [R2]: the stable arm matched the LITERAL "USDC" and nothing else, which was invisible
+ * while every fiat route ended on a USDC chain. It does not any more. The bridge delivers the TARGET
+ * chain's stable (`USDC(8453) -> USDG(4663)` quotes `200`, probed live 2026-09-11), so a correct
+ * `buy-bridge` step now says `toToken: "USDG"` — and this function would have answered `undefined`
+ * to it, refusing the row and leaving the purchase with nowhere to land. Compared against the
+ * chain's own stable symbol instead. It is no looser: `stableSymbol` reads the registry, so an
+ * unexpected ticker still refuses, and a chain outside the registry refuses at `getUsdcAddress`.
+ */
+function resolveFiatToken(
+  symbol: string | undefined,
+  chainId: number | undefined,
+): ProvisioningLeg["tokenIn"] | undefined {
+  if (symbol === undefined || chainId === undefined) return undefined;
+  if (symbol === stableSymbol(chainId)) {
+    const address = getUsdcAddress(chainId);
+    return address ? { address, symbol, decimals: 6, chainId } : undefined;
+  }
+  if (symbol === nativeSymbol(apiNetworkForChain(chainId))) {
+    return { address: NATIVE_TOKEN_ADDRESS, symbol, decimals: 18, chainId };
+  }
+  return undefined;
+}
+
+/**
+ * The synthetic leg a fiat `buy` delivers (POO-1136): the bought asset on Base, carried so the first
+ * downstream fiat leg sizes the settled delta against the baseline the buy records under its `index`.
+ *
+ * Only `index` and `tokenOut` are load-bearing (the delta baseline key and the endpoint the next leg
+ * continues); the rest are inert placeholders, because a fiat buy is never itself run as a route leg.
+ */
+function syntheticBuyLeg(planStep: ProvisioningStep, index: number): ProvisioningLeg | undefined {
+  const delivered = resolveFiatToken(planStep.toToken, planStep.toChainId);
+  if (!delivered) return undefined;
+  return {
+    index,
+    kind: "swap-token",
+    chainId: delivered.chainId,
+    tokenIn: delivered,
+    tokenOut: delivered,
+    amountIn: "0",
+    amountOutQuoted: "0",
+    minAmountOut: "0",
+    routing: "CLASSIC",
+    gasUsd: 0,
+    requoteAtExecution: false,
+  };
+}
+
+/**
+ * Turn a legless downstream fiat step (buy-swap ETH->USDC on Base, or buy-bridge USDC Base->target)
+ * into a real, executable {@link ProvisioningLeg} (POO-1136).
+ *
+ * The tokens come from the step's own display fields resolved to addresses ({@link resolveFiatToken});
+ * the amount is `"0"`, a placeholder every field of which `requoteAtExecution` overrides at execution
+ * (the input is sized from the settled delta, the arrival floor from the fresh quote). Returns
+ * `undefined` when either endpoint cannot be resolved, so the step falls back to refusing.
+ */
+function synthesizeFiatLeg(planStep: ProvisioningStep, index: number): ProvisioningLeg | undefined {
+  const tokenIn = resolveFiatToken(planStep.fromToken, planStep.fromChainId);
+  const tokenOut = resolveFiatToken(planStep.toToken, planStep.toChainId);
+  if (!tokenIn || !tokenOut) return undefined;
+  const kind: ProvisioningLeg["kind"] = planStep.type === "bridge" ? "bridge" : "swap-token";
+  return {
+    index,
+    kind,
+    chainId: tokenIn.chainId,
+    tokenIn,
+    tokenOut,
+    amountIn: "0",
+    amountOutQuoted: "0",
+    minAmountOut: "0",
+    routing: kind === "bridge" ? "BRIDGE" : "CLASSIC",
+    gasUsd: 0,
+    // [R4]/[R8] The whole point: this leg is sized from the settled delta at execution, never here.
+    requoteAtExecution: true,
+    ...(planStep.etaSeconds === undefined ? {} : { etaSeconds: planStep.etaSeconds }),
+  };
 }
 
 /**
@@ -408,8 +721,68 @@ export function buildPlanSteps(
     run: (ctx: PlanRailCtx) =>
       railStep.kind === "approve"
         ? runApprovalStep(railStep, ctx, deps)
-        : runLegStep(railStep, ctx, deps, slippagePct),
+        : railStep.kind === "buy"
+          ? runBuyStep(railStep, ctx, deps)
+          : runLegStep(railStep, ctx, deps, slippagePct),
   }));
+}
+
+/**
+ * Execute one fiat `buy` step (POO-1136), replacing the `PROVISIONING_STEP_UNSUPPORTED` throw.
+ *
+ * Option (A): the purchase is a first-class flow step (its own testid, its own signing disclosure),
+ * and the downstream swap / bridge are LEGGED steps the existing rail machinery runs unchanged. This
+ * step's only job is the fiat half and the hand-off to that machinery:
+ *
+ *   1. read the delivered token's balance on Base as a BASELINE, keyed by the synthetic buy leg, so
+ *      the next fiat leg sizes the settled delta against it through {@link resolveAmountIn} — the same
+ *      mechanism a crypto leg uses to feed the next ([R4]);
+ *   2. run the purchase ({@link PlanRailDeps.runOnRampBuy}): mint the `requestId` ([R8], execution
+ *      time), open the widget, and resolve once the balance delta appears ([R11], scoped).
+ *
+ * It returns NO `txHash`: a fiat buy mines no on-chain transaction, so it is terminal-good WITHOUT a
+ * hash, the one leg the e2e harness hash-exempts. A terminal widget failure throws (the flow fails
+ * legibly); a reconcile timeout throws a code the panel routes to `settling`. Both come out of
+ * `runOnRampBuy`, so this step neither swallows nor reclassifies them.
+ */
+async function runBuyStep(
+  railStep: Extract<PlanRailStep, { kind: "buy" }>,
+  ctx: PlanRailCtx,
+  deps: PlanRailDeps,
+): Promise<FlowStepResult<PlanRailCtx>> {
+  const { buyLeg, planStep } = railStep;
+  const order = planStep.order;
+  if (!order) throw unsupportedStep(planStep, "carries no on-ramp order");
+  if (!deps.runOnRampBuy) throw unsupportedStep(planStep, "has no on-ramp runner");
+  // [R11] `currencyCode` is typed `string` on the order (it crosses the planner boundary as data), so
+  // it is VALIDATED here rather than asserted. An unknown code would otherwise reach
+  // `selectPurchaseDeltas`, miss the scope map, and throw a bare `TypeError` at settlement time, i.e.
+  // after the card has been charged. Refusing BEFORE the widget opens costs the user nothing.
+  const currencyCode = order.currencyCode;
+  if (!isOnRampCurrencyCode(currencyCode)) {
+    throw unsupportedStep(planStep, `buys an unsupported currency "${currencyCode}"`);
+  }
+
+  // [R4] The pre-purchase baseline of the delivered token, read on-chain on Base, recorded under the
+  // synthetic buy leg's index. The downstream leg reads the same balance after settlement and spends
+  // the DIFFERENCE, so a pre-existing holding of the same token is never swept into the route.
+  const baseline = await deps.readTokenBalance({
+    chainId: buyLeg.tokenOut.chainId,
+    token: buyLeg.tokenOut.address,
+    owner: deps.owner,
+  });
+  const state = readRailState(ctx);
+  const withBaseline: PlanRailState = {
+    ...state,
+    outBaselines: { ...state.outBaselines, [buyLeg.index]: baseline },
+  };
+
+  // [R8] The requestId is minted INSIDE runOnRampBuy, at execution time, never baked into the plan.
+  // [R11] `expectedToken` scopes settlement to the token the order bought (ETH-BASE / USDC-BASE).
+  await deps.runOnRampBuy({ order, expectedToken: currencyCode });
+
+  // [R7] A new context partial, never a write into the frozen one this step was handed.
+  return { [PLAN_RAIL_STATE_KEY]: withBaseline };
 }
 
 /**
@@ -542,7 +915,14 @@ async function runLegStep(
   // is why the rail feels this and the single-chain operations never did.
   await deps.switchChain?.(leg.chainId);
 
-  const { amount, state } = await resolveAmountIn(leg, railStep.previousLeg, ctx, deps);
+  const { amount, state } = await resolveAmountIn(
+    leg,
+    railStep.previousLeg,
+    ctx,
+    deps,
+    railStep.sizeFractionBps,
+    railStep.reserveNativeRaw,
+  );
 
   // [R6] The quote that actually gets signed is taken now, at the size this leg really spends.
   // EXACT_INPUT because at execution time the known quantity is what we hold, not what we want.
@@ -634,7 +1014,12 @@ async function runLegStep(
         token: leg.tokenOut.address,
         owner: deps.owner,
         baseline,
-        minAmountOut: leg.minAmountOut,
+        // POO-1094: the FRESH quote's output, the same threshold `beginLeg` records above and for
+        // the same reason. A bridge leg carries no slippage tolerance, and this leg may have just
+        // been re-sized from the previous leg's realised delta, so the planner's figure is a floor
+        // for an amount we are no longer sending. Comparing against it made a bridge that landed in
+        // full read as unarrived until the ceiling, and `onDone()` never fired.
+        minAmountOut: quotedOut ?? leg.minAmountOut,
         ...(leg.etaSeconds === undefined ? {} : { etaMs: leg.etaSeconds * 1000 }),
       },
       { readTokenBalance: deps.readTokenBalance },
@@ -677,13 +1062,15 @@ async function resolveAmountIn(
   previousLeg: ProvisioningLeg | undefined,
   ctx: PlanRailCtx,
   deps: PlanRailDeps,
+  sizeFractionBps?: number,
+  reserveNativeRaw?: string,
 ): Promise<{ amount: string; state: PlanRailState }> {
   const state = readRailState(ctx);
   const memoised = state.legAmountsIn[String(leg.index)];
   if (memoised) return { amount: memoised, state };
 
   const amount = leg.requoteAtExecution
-    ? await sizeFromRealBalance(leg, previousLeg, state, deps)
+    ? await sizeFromRealBalance(leg, previousLeg, state, deps, sizeFractionBps, reserveNativeRaw)
     : leg.amountIn;
   return {
     amount,
@@ -697,6 +1084,8 @@ async function sizeFromRealBalance(
   previousLeg: ProvisioningLeg | undefined,
   state: PlanRailState,
   deps: PlanRailDeps,
+  sizeFractionBps?: number,
+  reserveNativeRaw?: string,
 ): Promise<string> {
   const balance = toBigInt(
     await deps.readTokenBalance({
@@ -717,12 +1106,32 @@ async function sizeFromRealBalance(
   // Fall back to the smaller of what the user approved and what is actually there: the first never
   // spends beyond the reviewed plan, the second never builds a transaction that cannot settle.
   const planned = toBigInt(leg.amountIn, "amount");
-  const amount =
+  const delta =
     baseline === undefined
       ? planned < balance
         ? planned
         : balance
       : balance - toBigInt(baseline, "balance");
+
+  // POO-1136 [R1]: a fiat ETH->USDC buy-swap converts only the funding share of the delta and reserves
+  // the gas share (the on-ramp bought ETH for both, and the swap tx itself needs native to run). The
+  // fraction is applied to the DELTA, so the reserve scales with whatever the purchase delivered ([R4]).
+  const fractioned =
+    sizeFractionBps === undefined || delta <= BigInt(0)
+      ? delta
+      : (delta * BigInt(sizeFractionBps)) / BigInt(10_000);
+
+  // POO-1154 Gap 2 / [R13]: with no proportional share to reserve, a NATIVE buy-swap would spend the
+  // whole delta and leave nothing to gas its own transaction. Keep the signing reserve back (native the
+  // user KEEPS to sign, never a gas COST). Only ever set alongside an undefined `sizeFractionBps`, so
+  // `fractioned === delta` here; subtracting rather than re-deriving keeps the two paths from drifting.
+  // A delta at or below the reserve leaves nothing, and the shipped empty-leg throw below fires.
+  const reserve =
+    reserveNativeRaw !== undefined && delta > BigInt(0)
+      ? toBigInt(reserveNativeRaw, "reserve")
+      : BigInt(0);
+  const retained = fractioned - reserve;
+  const amount = retained > BigInt(0) ? retained : BigInt(0);
 
   if (amount <= BigInt(0)) {
     throw new TransactionError("The previous funding step delivered nothing to continue with", {
@@ -795,6 +1204,25 @@ async function broadcast(
   deps: PlanRailDeps,
   leg?: ProvisioningLeg,
 ): Promise<`0x${string}`> {
+  // POO-1093 [R3]: never spend twice for money already in flight.
+  //
+  // `flow.retry()` re-runs the failed step verbatim (the provisioning flow sets no `pauseAfterKey`,
+  // so both of `useWalletSignFlow.retry()`'s guarded branches are skipped), and the rail used to
+  // broadcast again without ever asking whether this leg had already left. One flaky receipt read
+  // was enough to arm it, and the amount is memoised into the rail context, so the retry re-sent the
+  // identical size: a second bridge deposit wherever the wallet still held a residual balance.
+  //
+  // Refusing here rather than at the button keeps the guard at the choke point every leg funnels
+  // through, so a new caller cannot route around it. Recovery is the correct path from this state:
+  // `reconcileFundingJournal` reads the chain and decides whether the leg landed.
+  const recorded = leg ? deps.journal?.legStatus(leg.index) : null;
+  if (recorded?.status === "broadcast" && recorded.txHash) {
+    throw new TransactionError(
+      "This step already went out and is being tracked. Reload to pick it up rather than sending it again.",
+      { code: "PROVISIONING_LEG_ALREADY_BROADCAST", txHash: recorded.txHash },
+    );
+  }
+
   const hash = await sendBuiltTransaction(
     deps.provider,
     toBuiltTx(request, deps.owner),
@@ -805,16 +1233,41 @@ async function broadcast(
     deps.journal?.recordBroadcast(leg.index, hash);
     reportBroadcast(leg, hash, deps);
   }
-  await waitForReceipt(deps.provider, hash);
+  try {
+    await waitForReceipt(deps.provider, hash);
+  } catch (error) {
+    // POO-1093 [R3]: a REVERT moved no money, so the leg must be freed or the guard above would
+    // block the legitimate retry while telling the user it "was already sent and is still being
+    // tracked" — the opposite of what happened. `recordFailed` keeps the hash, which is still
+    // evidence.
+    //
+    // A TIMEOUT is deliberately NOT treated this way. We never learned the outcome, so the leg may
+    // well be on chain and must stay `broadcast` for the guard to keep protecting it. "Failed" is a
+    // verdict, not a shrug.
+    if (leg && isRevert(error)) deps.journal?.recordFailed(leg.index);
+    throw error;
+  }
   return hash;
 }
 
+/** A receipt that came back FAILED, as opposed to a read we never got an answer from. */
+function isRevert(error: unknown): boolean {
+  return (
+    error instanceof TransactionError &&
+    (error.cause as { code?: string } | undefined)?.code === TX_REVERTED
+  );
+}
+
 /**
- * Hold the leg if the fresh quote is materially worse than the price the user approved ([R5]).
+ * POO-1508 [R43] rules v2: hold the leg if the fresh quote is materially worse than the price the
+ * user approved ([R5]), UNLESS the run's shared price-move buffer still covers it.
  *
  * Runs BEFORE the permit signature and therefore before anything the user could mistake for consent.
- * With no confirmer wired this refuses rather than proceeding: silently signing a refreshed quote is
- * the failure mode that turns a good integration into a support incident (§4.4).
+ * There is no "accept a worse price" step here, on purpose: within the buffer the leg proceeds with
+ * nobody asked (the disclosure shown before broadcasting anything is the consent), and past it nothing
+ * is sent at all. With no consumer wired this refuses rather than assuming the buffer holds: silently
+ * signing a refreshed quote nothing accounted for is the failure mode that turns a good integration
+ * into a support incident (§4.4).
  */
 async function gateRequote(
   leg: ProvisioningLeg,
@@ -827,19 +1280,11 @@ async function gateRequote(
   const quoted = { amountIn, amountOut: quotedOut };
   if (!isRequoteMateriallyWorse(approved, quoted)) return;
 
-  const change: RequoteChange = {
-    legIndex: leg.index,
-    amountIn,
-    approvedAmountOut: leg.amountOutQuoted,
-    quotedAmountOut: quotedOut,
-    worseBps: requoteWorseBps(approved, quoted) ?? 0,
-  };
-  if (deps.confirmRequote && (await deps.confirmRequote(change))) return;
+  const worseBps = requoteWorseBps(approved, quoted) ?? 0;
+  if (deps.consumeBuffer?.(worseBps)) return;
   throw new TransactionError(
-    deps.confirmRequote
-      ? "The new price was not approved, so nothing was sent"
-      : "The price for this step moved against you and could not be re-approved",
-    { code: deps.confirmRequote ? "PROVISIONING_REQUOTE_REJECTED" : "PROVISIONING_REQUOTE_WORSE" },
+    "The market moved more than the buffer we set aside, so nothing was sent and your money did not move",
+    { code: PROVISIONING_BUFFER_EXCEEDED_CODE },
   );
 }
 
@@ -986,8 +1431,15 @@ function unsupportedStep(planStep: ProvisioningStep, detail: string): Transactio
 /**
  * A typed action failure as the throw the flow expects. The house contract (POO-475 [R3]): the code
  * rides on `error.cause.code`, which is where `toTxError` / `classifyTxError` read it, so a funding
- * failure classifies exactly like every other build-action failure.
+ * failure classifies exactly like every other build-action failure. POO-1251 [R1]: the correlation
+ * id rides alongside it, so a funding failure gets a support reference like every other one.
  */
-function actionError(failure: { code: string; message: string }): TransactionError {
-  return new TransactionError(failure.message, { code: failure.code });
+function actionError(failure: BuildTxFailure): TransactionError {
+  return new TransactionError(failure.message, {
+    code: failure.code,
+    // Omitted rather than set to `undefined`, so `toTxError`'s fallback to the browser trace id fires
+    // on a failure that never reached the backend. `TransactionError.cause` is `unknown`, so nothing
+    // here is checked at compile time and the spelling of this key is guarded by tests alone.
+    ...(failure.correlationId ? { correlationId: failure.correlationId } : {}),
+  });
 }

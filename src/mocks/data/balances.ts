@@ -72,6 +72,11 @@ export const tokenBalances: TokenBalance[] = [
     usd: 50,
     chainId: 8453, // Base
     logoUrl: LOGO.eth,
+    // POO-1513: ETH on Base IS the native coin, and the flag was simply missing. Readers that ask
+    // "does this wallet hold gas" match on `isNative === true` (`readBaseNativeEth`), so a mock ETH
+    // row without it reads as a zero gas balance: mock mode's /deposit was permanently sized
+    // ETH-FIRST and could never show the ordinary USDC purchase, which is the case it exists to show.
+    isNative: true,
   },
   {
     symbol: "DAI",

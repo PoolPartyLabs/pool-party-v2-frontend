@@ -36,6 +36,13 @@
         "name": "트랜잭션 준비 중",
         "body": "Pool Party가 이 트랜잭션의 금액과 네트워크 수수료를 계산하고 있어요. 아직 서명도 전송도 이루어지지 않았어요."
       }
+    },
+    "awaitingSignature": "서명 대기 중",
+    "stepsRunning": {
+      "approve": "{token} 승인 중"
+    },
+    "stepsDone": {
+      "approve": "{token} 승인 완료"
     }
   },
   "card": {
@@ -74,7 +81,9 @@
       "ethereum": "Ethereum",
       "stablecoins": "Stablecoins",
       "altcoins": "Altcoins",
-      "meme": "Meme coins"
+      "meme": "Meme coins",
+      "equities": "Stock Tokens",
+      "rwa": "Real-world assets"
     },
     "count": "{count, plural, =0 {전략 없음} =1 {전략 #개} other {전략 #개}}",
     "owned": "운용 중",
@@ -199,7 +208,8 @@
     "needMore": "{amount}가 더 필요합니다",
     "cta": {
       "invest": "투자",
-      "deposit": "입금 후 투자"
+      "deposit": "입금 후 투자",
+      "checking": "잔액을 확인하는 중"
     },
     "confirm": {
       "title": "확인 및 서명",
@@ -241,6 +251,12 @@
     },
     "receipt": {
       "amountInvested": "투자 금액"
+    },
+    "sizing": {
+      "resizedNotice": "지갑 잔액이 {available}이므로 입력하신 {requested}가 아니라 이 금액이 투자됩니다.",
+      "refusedTitle": "이 금액은 투자할 수 없습니다",
+      "refusedBody": "{requested} 투자를 요청하셨습니다. 지갑 잔액은 {available}이고, 이 전략의 최소 금액은 {minimum}입니다.",
+      "refusedCta": "금액 변경"
     }
   },
   "collect": {
@@ -365,13 +381,22 @@
         "wrongChain": "지갑이 다른 네트워크에 연결되어 있습니다. {network}(으)로 전환한 후 다시 시도해 주세요.",
         "wrongChainUnknown": "지갑이 다른 네트워크에 연결되어 있습니다. 지갑에서 네트워크를 전환한 후 다시 시도해 주세요.",
         "gasBlocked": "{network}에 네트워크 비용을 낼 자산이 없어 아직 실행할 수 없습니다. {network}에서 암호화폐를 조금 구매하거나 다른 네트워크에서 옮겨 오세요.",
-        "gasBlockedUnknown": "이 네트워크에 네트워크 비용을 낼 자산이 없어 아직 실행할 수 없습니다. 해당 네트워크에서 암호화폐를 조금 구매하거나 다른 네트워크에서 옮겨 오세요."
-      }
+        "gasBlockedUnknown": "이 네트워크에 네트워크 비용을 낼 자산이 없어 아직 실행할 수 없습니다. 해당 네트워크에서 암호화폐를 조금 구매하거나 다른 네트워크에서 옮겨 오세요.",
+        "transient": "네트워크 또는 지갑이 제때 응답하지 않았습니다. 자금은 이동하지 않았습니다. 잠시 후 다시 시도해 주세요.",
+        "confirmationTimeout": "거래가 전송되었지만 제때 확인하지 못했습니다. 이미 처리되었을 수 있으니 다시 시도하기 전에 지갑의 최근 활동을 확인해 주세요.",
+        "chainUnavailable": "지갑에 {network}가 활성화되어 있지 않아 서명할 수 없습니다. 지갑 앱에서 {network}를 활성화한 다음 아래에서 전환하세요.",
+        "chainUnavailableUnknown": "지갑에 이 네트워크가 활성화되어 있지 않아 서명할 수 없습니다. 지갑 앱에서 활성화한 다음 다시 시도하세요.",
+        "alreadyBroadcast": "이 단계는 이미 전송되었으며 계속 추적 중입니다. 페이지를 새로고침해 이어서 진행하세요. 다시 전송하지 마세요.",
+        "upstreamUnavailable": "지금은 경로를 계산할 수 없었습니다. 일시적인 문제이니 잠시 후 다시 시도해 주세요.",
+        "rangeUnchanged": "이미 포지션의 범위이므로 이동할 것이 없습니다. 리밸런싱하려면 다른 범위를 선택하세요."
+      },
+      "referenceLabel": "참조",
+      "paybisReferenceLabel": "Paybis 참조"
     },
     "slippage": {
       "retryNotice": "가격이 최대 슬리피지({value}%)를 초과했어요. 현재 가격으로 다시 시도하고 있어요.",
       "errorTitle": "가격이 너무 많이 움직였어요",
-      "errorBody": "가격이 다시 최대 슬리피지({value}%)를 초과했어요. 설정에서 올리거나 나중에 다시 시도해 주세요."
+      "errorBody": "가격이 다시 최대 슬리피지({value}%)를 초과했어요. 트랜잭션은 전송되지 않았어요."
     },
     "receipt": {
       "strategy": "전략",
@@ -469,34 +494,85 @@
       "titleGasOnly": "빠른 단계 하나",
       "subtitle": "필요한 사항을 정확히 계산했습니다. 여기서 각 단계를 처리한 후 거래를 실행합니다. 입금 페이지로 이동할 필요 없어요.",
       "cta": "확인하고 계속하기",
-      "cancel": "취소"
+      "cancel": "취소",
+      "feesIncluded": "수수료 포함입니다.",
+      "back": "뒤로",
+      "gasOnArrival": "도착 시 가스",
+      "showSteps": "단계 표시",
+      "hideSteps": "단계 숨기기"
     },
     "requote": {
-      "title": "가격이 변경되었습니다",
-      "body": "이 단계에서 받게 되는 금액이 승인하신 가격보다 약 {percent} 줄었습니다. 아직 아무것도 전송되지 않았으므로 새 가격을 수락하거나 여기서 중단할 수 있습니다.",
-      "accept": "새 가격 수락",
-      "decline": "여기서 중단"
+      "title": "진행하는 동안 가격이 변동했어요",
+      "body": "시장이 확보해 둔 {pct}%보다 더 많이 움직여서 아무것도 전송되지 않았고, 자금도 이동하지 않았어요. 오늘 가격으로 다시 시도하거나, 시장이 안정될 때까지 몇 분 기다려 주세요.",
+      "accept": "다시 시도",
+      "decline": "취소"
     },
     "steps": {
       "buyUsdc": "USDC 구매",
       "bridge": "{network}으로 이동",
       "bridgeGas": "{network}으로 비용 전송",
       "swapGas": "비용 충전",
-      "swapToken": "{token}으로 전환",
-      "op": "내 거래"
+      "swapToken": "{token} 변환",
+      "op": "내 거래",
+      "buy": "{token} 구매"
     },
     "captions": {
       "buyUsdc": "카드 또는 현지 결제",
-      "bridge": "올바른 네트워크로 자금 이동",
-      "swapGas": "보유 자산의 일부를 네트워크 비용으로 전환합니다",
+      "bridge": "{network}에서",
+      "swapGas": "보유한 {stable}에서 지불",
       "op": "원래 요청한 작업",
-      "approve": "한 번만 필요한 승인입니다. 아직 자금은 이동하지 않습니다."
+      "approve": "한 번만 필요한 승인입니다. 아직 자금은 이동하지 않습니다.",
+      "buy": "결제 수단은 결제 시 표시됩니다",
+      "buyMethods": "{methods}로 결제",
+      "onNetwork": "{network}"
     },
     "exec": {
-      "title": "자금을 준비하고 있어요",
+      "title": "처리 중입니다",
       "subtitle": "자동으로 구매, 라우팅, 충전을 완료합니다. 완료 즉시 거래가 실행됩니다.",
       "done": "완료",
-      "pending": "진행 중"
+      "pending": "진행 중",
+      "takingLonger": "평소보다 오래 걸리고 있습니다. 몇 분 정도 걸릴 수 있습니다.",
+      "status": {
+        "done": "완료",
+        "active": "지갑에서 계속하세요",
+        "waiting": "대기 중",
+        "notStarted": "시작 전",
+        "skipped": "건너뜀",
+        "buying": "구매를 완료하세요"
+      },
+      "failure": {
+        "slippage": "가격이 허용 범위 {pct}%를 넘었습니다",
+        "slippageNoPct": "이 단계가 진행되는 동안 가격이 변했습니다",
+        "deadlineExpired": "이 단계가 너무 오래 걸려 만료되었습니다",
+        "insufficientFunds": "이 단계를 처리할 잔액이 부족했습니다",
+        "userRejected": "지갑에서 이 단계를 거절했습니다",
+        "unauthorized": "지갑에 이 단계에 대한 권한이 없었습니다",
+        "wrongChain": "지갑이 다른 네트워크에 있었습니다",
+        "alreadyBroadcast": "이 단계는 이미 전송되었으며 계속 추적 중입니다",
+        "upstreamUnavailable": "지금은 이 단계의 가격을 계산할 수 없었습니다",
+        "gasBlocked": "이 네트워크에는 이 단계를 실행할 가스가 없습니다",
+        "unknown": "이 단계가 완료되지 않았습니다",
+        "chainUnavailable": "이 네트워크는 지갑에서 활성화되어 있지 않습니다",
+        "transient": "네트워크가 제때 응답하지 않았습니다. 이 단계를 다시 시도해 주세요.",
+        "confirmationTimeout": "전송되었지만 제때 확인되지 않았습니다. 다시 시도하기 전에 지갑을 확인하세요."
+      },
+      "keepOpen": "이 화면을 열어 두세요.",
+      "failedTitle": "{index}단계가 실패했습니다",
+      "tryAgain": "다시 시도",
+      "settledSafe": "{amount}는 이미 처리되어 안전합니다.",
+      "settledSafeUnknown": "일부 단계는 이미 처리되어 안전합니다.",
+      "stateProcessing": "처리 중",
+      "stateDone": "완료",
+      "stop": {
+        "title": "여기서 중단할까요?",
+        "settled": "{amount}는 이미 처리되어 안전합니다.",
+        "body": "{total}단계 중 {index}단계가 진행 중이며 스스로 완료됩니다. {restCount, plural, other {{rest}단계는 시작되지 않습니다}}. 자금은 있는 곳에 그대로 남습니다.",
+        "bodyLastStep": "{total}단계 중 {index}단계가 진행 중이며 스스로 완료됩니다. 자금은 있는 곳에 그대로 남습니다.",
+        "bodyNotSent": "{total}단계 중 {index}단계는 아직 자금을 옮기지 않았습니다. 지갑에 서명 요청이 떠 있다면 거절하세요. {restCount, plural, other {{rest}단계는 시작되지 않습니다}}. 자금은 있는 곳에 그대로 남습니다.",
+        "bodyNotSentLastStep": "{total}단계 중 {index}단계는 아직 자금을 옮기지 않았습니다. 지갑에 서명 요청이 떠 있다면 거절하세요. 자금은 있는 곳에 그대로 남습니다.",
+        "keepGoing": "계속하기",
+        "stopAnyway": "그래도 중단"
+      }
     },
     "bridge": {
       "etaSeconds": "보통 약 {seconds, plural, other {#초}}가 걸립니다. 자금이 도착하는 대로 계속 진행합니다.",
@@ -536,11 +612,13 @@
       },
       "buyCrypto": {
         "cta": "대신 암호화폐 구매",
-        "hint": "카드나 Pix로 결제하면 네트워크 간에 자금을 옮길 필요가 없습니다."
+        "hint": "네트워크 간에 자금을 옮길 필요가 없습니다.",
+        "ctaWithAmount": "{amount} 구매",
+        "hintWithMethods": "{methods}로 결제하면 네트워크 간에 자금을 옮길 필요가 없습니다."
       }
     },
     "fundingSources": {
-      "title": "무엇을 사용하시겠어요?",
+      "title": "변환할 토큰 선택",
       "subtitle": "보유한 자산을 선택하세요. 알맞은 곳으로 옮기는 방법은 저희가 처리합니다.",
       "listLabel": "내 자금",
       "rowLabel": "{network}의 {symbol}, {amount}, {usd} 상당",
@@ -551,7 +629,7 @@
       "exact": "정확히 충족되었습니다",
       "empty": "아직 여기에서 사용할 수 있는 자산이 없습니다.",
       "repriced": "최종 금액이 조금 더 높아졌습니다. {amount}을(를) 채우려면 하나를 더 선택하세요.",
-      "cta": "계속",
+      "cta": "확인하고 시작",
       "step": "{index}단계",
       "unblock": "이 자금을 사용하려면:",
       "unreachable": "{symbol}은(는) 아직 이 네트워크로 옮길 수 없습니다. 목록에서 다른 자산을 선택해 주세요.",
@@ -559,7 +637,17 @@
         "ok": "사용 가능",
         "topUp": "충전이 필요함",
         "blocked": "아직 사용할 수 없음"
-      }
+      },
+      "settings": "거래 설정",
+      "meter": "{required} 중 {selected}",
+      "enough": "충분함",
+      "bufferNote": "가격 변동에 대비해 {pct}%를 따로 확보합니다. 남는 금액은 지갑으로 돌아갑니다.",
+      "convertNeeded": "필요한 만큼만 변환",
+      "recommended": "추천",
+      "hideDetails": "자세히 숨기기",
+      "seeDetails": "자세히 보기",
+      "cancel": "취소",
+      "back": "뒤로"
     },
     "recovery": {
       "title": "자금 이동이 진행 중입니다",
@@ -575,7 +663,8 @@
         "collect": "수익 받기",
         "compound": "수익 재투자",
         "moveRange": "전략 조정",
-        "close": "포지션 종료"
+        "close": "포지션 종료",
+        "deposit": "잔액에 자금 추가"
       },
       "leg": {
         "settled": "완료되었습니다.",
@@ -590,6 +679,109 @@
         "rederive": "멈춘 지점부터 이어서 진행할 수 있습니다.",
         "ask": "계속하기 전에 확인이 필요한 것이 있습니다."
       }
+    },
+    "routes": {
+      "need": "{amount}가 필요합니다",
+      "breakdownLabel": "이 금액의 구성 내역",
+      "breakdown": "거래에 {amount}, 가스에 {gas}",
+      "breakdownGasOnly": "네트워크 수수료로 {gas}",
+      "gasMinimum": "이번에 추가하는 가스는 이번 거래뿐 아니라 여러 거래에 사용됩니다.",
+      "bufferTooltip": "처리 중 가격이 변동할 경우를 대비해 {pct}%를 추가로 전환합니다. 남은 금액은 지갑으로 환급됩니다.",
+      "listLabel": "자금 마련 방법",
+      "recommended": "추천",
+      "buy": {
+        "subtitle": "{method}로 {amount}",
+        "subtitlePending": "최종 금액은 결제 시 표시됩니다",
+        "minimum": "{method} 최소 {amount}",
+        "disclosureLabel": "이 금액인 이유",
+        "disclosureMinimum": "저희는 {minimum} 미만으로는 주문하지 않으므로, 거래에 필요한 금액이 그보다 적더라도 이 금액을 구매하게 됩니다.",
+        "disclosureBuffer": "이 금액은 거래에 필요한 금액보다 조금 더 많습니다. 구매가 처리되는 동안 가격이 변동할 경우에 대비한 {pct}%와 네트워크 수수료가 발생하는 경우 그 금액이 포함됩니다.",
+        "disclosureRemainder": "사용하지 않은 금액은 지갑에 남아 다른 거래에 사용할 수 있습니다.",
+        "title": "{amount} 구매",
+        "preparing": "구매를 준비하고 있습니다"
+      },
+      "cancel": "취소",
+      "tokens": {
+        "title": "{amount} 사용",
+        "subtitle": "{amount} 사용 가능"
+      },
+      "tokensPlusBuy": {
+        "title": "{available} 사용 + {shortfall} 구매",
+        "subtitle": "토큰으로 {available}, {shortfall} 구매"
+      },
+      "deposit": {
+        "title": "외부 지갑에서 입금",
+        "subtitle": "보유한 다른 지갑에서 암호화폐 전송"
+      }
+    },
+    "onramp": {
+      "method": {
+        "blocked": "Paybis는 최소 {amount} 이상이 필요합니다.",
+        "minimum": "최소 {amount}",
+        "title": "결제 방법 선택",
+        "currencyLabel": "통화",
+        "currencyNote": "통화에 따라 결제 방법이 달라집니다.",
+        "listLabel": "결제 방법",
+        "loading": "이 통화로 사용할 수 있는 결제 방법을 불러오는 중입니다",
+        "unavailable": "제공업체가 지금은 결제 방법을 반환하지 않았습니다. 계속 진행해서 결제 화면에서 방법을 선택할 수 있습니다.",
+        "allBlocked": "현재 {amount} 미만을 받는 결제 수단이 없습니다. 취소하고 금액을 변경하세요.",
+        "minimumNotice": "{method}은(는) {amount} 미만은 받지 않습니다. 이 최소 금액은 저희가 아니라 제공업체의 기준이며, 필요하지 않은 금액은 지갑에 그대로 남습니다.",
+        "continue": "계속",
+        "cancel": "취소"
+      },
+      "title": "암호화폐 구매",
+      "exit": "결제 닫기",
+      "uncovered": "현재 {currency}(으)로 판매할 수 있는 결제 제공업체가 없습니다. 다른 결제 통화를 시도하거나 이미 보유한 지갑을 사용하세요.",
+      "currencyUnsupported": "아직 {currency}(으)로는 카드 결제를 받을 수 없습니다. 이미 보유한 지갑을 사용하시거나, 해당 통화가 지원된 뒤에 다시 시도해 주세요.",
+      "nativeUnavailable": "아직 여기서는 현금으로 ETH를 살 수 없습니다. 다른 지갑이나 거래소에서 ETH를 보낸 후 다시 오세요.",
+      "failedBody": "구매가 완료되지 않아 자금이 이동되지 않았습니다. 다시 시도할 수 있습니다.",
+      "timedOut": "구매가 아직 처리 중입니다. 잃어버린 것은 없으며, 자금이 도착하는 대로 계속 진행합니다.",
+      "reconciling": "구매를 확인하는 중입니다. 잠시 걸릴 수 있습니다.",
+      "enterAmount": "결제 화면에서 금액을 입력하세요. 이 단계에는 약 {amount}가 필요합니다.",
+      "baselineUnavailable": "잔액을 확인하는 중입니다. 잠시만 기다려 주세요.",
+      "openCheckout": "안전한 결제 화면 열기",
+      "connecting": "보안 결제를 불러오는 중입니다.",
+      "opening": "보안 결제를 여는 중입니다.",
+      "open": "위의 결제 화면에서 구매를 완료하세요.",
+      "settled": "구매가 확인되었습니다.",
+      "closed": "결제를 닫았습니다. 준비되면 다시 시작할 수 있습니다.",
+      "rejected": "구매가 거절되었습니다.",
+      "cancelled": "구매가 취소되었습니다.",
+      "error": "결제 중 문제가 발생했습니다. 다시 시도해 주세요.",
+      "unavailable": "보안 결제를 불러오지 못했습니다. 다시 시도해 주세요.",
+      "mockMode": "암호화폐 구매는 목 모드에서 사용할 수 없습니다.",
+      "settlingTitle": "구매를 처리하고 있습니다",
+      "ethUnpricedBody": "지금 ETH 가격을 가져오지 못해 구매를 시작할 수 없었습니다. 청구된 금액은 없습니다. 다시 시도해 주세요.",
+      "resume": {
+        "title": "진행 중인 구매가 있을 수 있습니다",
+        "body": "{minutes}분 전에 구매를 시작했습니다. 결제하셨다면 자금이 아직 이동 중일 수 있습니다. 이어서 진행하면 도착을 기다립니다. 새로 시작하면 새 구매가 생성되므로 첫 번째 구매가 완료되지 않은 경우에만 선택하세요.",
+        "resume": "해당 구매 이어하기",
+        "startNew": "새 구매 시작하기",
+        "paidTitle": "구매하신 자금이 아직 도착하지 않았습니다",
+        "paidBody": "{minutes}분 전에 결제하셨지만 자금이 아직 도착하지 않았습니다. 특히 계좌 이체는 시간이 걸릴 수 있습니다. 대개는 기다리시는 것이 맞습니다. 첫 번째 구매가 절대 도착하지 않는다고 확신할 때만 새 구매를 시작하세요. 다시 결제하게 되기 때문입니다.",
+        "keepWaiting": "계속 기다리기"
+      }
+    },
+    "secureCheckout": "보안 결제",
+    "slippage": {
+      "raiseCta": "{pct}%로 올리고 다시 시도",
+      "customCta": "슬리피지 {pct}%로 다시 시도",
+      "raiseCost": "한도를 높이면 이 단계만이 아니라 남은 모든 변환이 더 불리한 가격으로도 진행됩니다. 완료를 원할 때만 높이세요.",
+      "stop": "여기서 중단"
+    },
+    "stepsRunning": {
+      "buy": "{token} 구매 중",
+      "bridge": "{network}(으)로 이동 중",
+      "bridgeGas": "{network}(으)로 수수료 전송 중",
+      "swapGas": "수수료 확보 중",
+      "swapToken": "{token} 변환 중"
+    },
+    "stepsDone": {
+      "buy": "{token} 구매 완료",
+      "bridge": "{network}(으)로 이동 완료",
+      "bridgeGas": "{network}(으)로 수수료 전송 완료",
+      "swapGas": "수수료 확보 완료",
+      "swapToken": "{token} 변환 완료"
     }
   }
 }

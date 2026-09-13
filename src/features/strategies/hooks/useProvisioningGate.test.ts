@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE-HOK-017 (POO-419, POO-1042)
+ * @id PP-CORE-HOK-017 (POO-419, POO-1042, POO-1564, POO-1749)
  * @name useProvisioningGate — tests
- * @implements-rules-version v2 (POO-1042 rules v1)
+ * @implements-rules-version v5 (POO-1749 rules v1) · v4 (POO-1564 rules v1) · v3 (POO-1048 rules v1) · v2 (POO-1042 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The host-side gate decision. With the `provisioning` flag OFF (the shipped baseline) `evaluate`
@@ -42,11 +42,35 @@ const { useProvisioningGate } = await import("./useProvisioningGate");
 
 const ARBITRUM = 42161;
 const POLYGON = 137;
+const BASE = 8453;
+
+/**
+ * One routable holding, so the fixture describes a wallet that can EXIST.
+ *
+ * POO-1149: `balancesByChain` is the RAW per-chain figure and `sources` is the routable inventory, and
+ * the gate now judges "can this fund the operation" on the second. A fixture with $800 of raw token and
+ * an empty inventory described a wallet holding money nothing could convert, which is exactly the shape
+ * that produced the reported defect (POO-1552: 3.2263 VIRTUAL on Base suppressing the gate). Stating
+ * both keeps these tests meaning what they say.
+ */
+function routable(chainId: number, usd: number) {
+  return {
+    address: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+    chainId,
+    symbol: "USDC",
+    decimals: 6,
+    amount: "800000000",
+    usd,
+    reachableChainIds: [42161, 8453],
+    isNative: false,
+    logoUrl: "",
+  };
+}
 
 /** A live context: money on Polygon, nothing on the Arbitrum operation's chain. */
 const LIVE_CONTEXT = {
   targetChainId: ARBITRUM,
-  sources: [],
+  sources: [routable(POLYGON, 800)],
   gasByChain: {},
   balancesByChain: {
     [POLYGON]: { nativeUsd: 5, tokenUsd: 800 },
@@ -169,6 +193,71 @@ describe("useProvisioningGate (real mode, POO-1042)", () => {
     expect(result.current.input?.gasEstimateUsd).toBe(0.07);
   });
 
+  /**
+   * POO-1552 [R2]/[R3]: the reported failure was a Base invest that deep-linked to `/deposit` while
+   * routable USDC sat on Arbitrum, with the same wallet's Arbitrum invest gating correctly. Nothing
+   * in `computeProvisioningNeed` or the chain config singles out any one chain, so a Base or Polygon
+   * target with a resolved live context must gate exactly like the Arbitrum case above. This does
+   * not reproduce the report itself (which needs a live wallet this suite has no access to); it
+   * locks in that the calculator has no per-chain bias, so a future regression here cannot hide
+   * behind "well it works on Arbitrum".
+   */
+  it("[R2] gates a Base target exactly like Arbitrum, given a resolved live context", async () => {
+    getProvisioningContextAction.mockResolvedValue({
+      ok: true,
+      context: {
+        targetChainId: BASE,
+        sources: [],
+        gasByChain: {},
+        balancesByChain: {
+          [ARBITRUM]: { nativeUsd: 5, tokenUsd: 305 },
+          [BASE]: { nativeUsd: 0, tokenUsd: 0 },
+        },
+        gasEstimateUsd: 0.05,
+      },
+    });
+    const { result } = renderHook(() =>
+      useProvisioningGate({ op: "invest", network: "base", enabled: true }),
+    );
+    await waitFor(() => expect(result.current.context).not.toBeNull());
+
+    let gated = false;
+    act(() => {
+      gated = result.current.evaluate(1);
+    });
+
+    expect(result.current.status).toBe("ready");
+    expect(gated).toBe(true);
+  });
+
+  it("[R3] gates a Polygon target exactly like Arbitrum, given a resolved live context", async () => {
+    getProvisioningContextAction.mockResolvedValue({
+      ok: true,
+      context: {
+        targetChainId: POLYGON,
+        sources: [],
+        gasByChain: {},
+        balancesByChain: {
+          [ARBITRUM]: { nativeUsd: 5, tokenUsd: 305 },
+          [POLYGON]: { nativeUsd: 0, tokenUsd: 0 },
+        },
+        gasEstimateUsd: 0.05,
+      },
+    });
+    const { result } = renderHook(() =>
+      useProvisioningGate({ op: "invest", network: "polygon", enabled: true }),
+    );
+    await waitFor(() => expect(result.current.context).not.toBeNull());
+
+    let gated = false;
+    act(() => {
+      gated = result.current.evaluate(1);
+    });
+
+    expect(result.current.status).toBe("ready");
+    expect(gated).toBe(true);
+  });
+
   it("[R6] refuses to gate before the context has resolved", () => {
     getProvisioningContextAction.mockReturnValue(new Promise(() => {}));
     const { result } = renderHook(() =>
@@ -252,6 +341,9 @@ describe("useProvisioningGate (real mode, POO-1042)", () => {
       context: {
         ...LIVE_CONTEXT,
         // Funded on the operation's own chain: gas covered, USDC covered, nothing to provision.
+        // POO-1149: "covered" has to be stated in the ROUTABLE inventory as well as in the raw
+        // balances, because that is what the gate now measures against.
+        sources: [routable(ARBITRUM, 500)],
         balancesByChain: { [ARBITRUM]: { nativeUsd: 20, tokenUsd: 500 } },
       },
     });
@@ -266,6 +358,154 @@ describe("useProvisioningGate (real mode, POO-1042)", () => {
     expect((window.dataLayer ?? []).filter((e) => e.event === "funding_gate_triggered")).toEqual(
       [],
     );
+  });
+
+  /**
+   * The context's LIFETIME, which is what made the second open of a modal behave unlike the first.
+   *
+   * `evaluate` collapses "no context" into `false`, and for a short wallet the host reads `false` as
+   * `router.push("/deposit")`. So every close that nulled the context reopened a window in which a
+   * user holding funds on another chain was sent to buy fiat. It is not a thin race in practice: a
+   * closed-midway funding run has just spent the shared per-API-key throttle bucket, so the refetch
+   * is precisely the one likely to come back `ok: false`.
+   */
+  it("keeps the context across a close, so a reopen still has an answer", async () => {
+    const { result, rerender } = renderHook(
+      ({ open }: { open: boolean }) =>
+        useProvisioningGate({ op: "invest", network: "arbitrum", enabled: open }),
+      { initialProps: { open: true } },
+    );
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+
+    rerender({ open: false });
+
+    // Closed: the read stops, the ANSWER stays. A stale context can only ever over-offer
+    // provisioning (the panel re-derives the plan from a fresh server read); a null one silently
+    // sends a fundable user to /deposit.
+    expect(result.current.context).toEqual(LIVE_CONTEXT);
+    let gated = false;
+    act(() => {
+      gated = result.current.evaluate(100);
+    });
+    expect(gated).toBe(true);
+  });
+
+  it("keeps the last good context when the refresh fails, and still says the read failed", async () => {
+    const { result, rerender } = renderHook(
+      ({ open }: { open: boolean }) =>
+        useProvisioningGate({ op: "invest", network: "arbitrum", enabled: open }),
+      { initialProps: { open: true } },
+    );
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+    rerender({ open: false });
+
+    // The reopen's read is throttled away. [R6] is about not gating on information we do not have —
+    // and we DO have it, from a moment ago. `status` still reports the failure honestly.
+    getProvisioningContextAction.mockResolvedValue({
+      ok: false,
+      code: "PROVISIONING_BALANCES_UNAVAILABLE",
+      message: "throttled",
+    });
+    rerender({ open: true });
+    await waitFor(() => expect(result.current.status).toBe("unavailable"));
+
+    expect(result.current.context).toEqual(LIVE_CONTEXT);
+    let gated = false;
+    act(() => {
+      gated = result.current.evaluate(100);
+    });
+    expect(gated).toBe(true);
+  });
+
+  it("[R2] drops a held context the moment the operation's chain changes", async () => {
+    const { result, rerender } = renderHook(
+      ({ network }: { network: string }) =>
+        useProvisioningGate({ op: "invest", network, enabled: true }),
+      { initialProps: { network: "arbitrum" } },
+    );
+    await waitFor(() => expect(result.current.context).toEqual(LIVE_CONTEXT));
+
+    // A different operation's chain: the held answer describes another wallet slice, and [R2] is
+    // that the gate never decides one chain on another's balances. Retention is per-chain or it is
+    // a correctness bug, not a convenience.
+    getProvisioningContextAction.mockImplementation(() => new Promise(() => {}));
+    rerender({ network: "base" });
+
+    await waitFor(() => expect(result.current.context).toBeNull());
+    expect(result.current.status).toBe("loading");
+  });
+
+  it("never retains anything once the flag goes off", async () => {
+    const { result, rerender } = renderHook(
+      () => useProvisioningGate({ op: "invest", network: "arbitrum", enabled: true }),
+      {},
+    );
+    await waitFor(() => expect(result.current.context).toEqual(LIVE_CONTEXT));
+
+    flagOn = false;
+    rerender();
+
+    // A dark-launched feature turning off must leave nothing behind that could still gate.
+    await waitFor(() => expect(result.current.context).toBeNull());
+    expect(result.current.status).toBe("inert");
+  });
+
+  /**
+   * POO-1749 [R1]: the 2026-08-24 incident, end to end through the hook. The context arrives with
+   * the Arbitrum USDC missing from `sources` (POO-1750: any ~$10k+ stable balance is rendered in
+   * scientific notation and rejected by the funding context's base-unit parse, on every read)
+   * while the raw balances still carry it; without the host's own read, `evaluate` fired the multi
+   * funnel at a wallet the host had just verified as funded.
+   */
+  it("[POO-1749 R1] the host's direct USDC read stops the gate contradicting the host", async () => {
+    const incident = {
+      targetChainId: ARBITRUM,
+      sources: [
+        {
+          address: "0x0000000000000000000000000000000000000000",
+          chainId: ARBITRUM,
+          symbol: "ETH",
+          decimals: 18,
+          amount: "1897000000000000",
+          usd: 4.71,
+          reachableChainIds: [],
+          isNative: true,
+          logoUrl: "",
+        },
+      ],
+      gasByChain: {},
+      balancesByChain: { [ARBITRUM]: { nativeUsd: 4.71, tokenUsd: 10_885.73 } },
+      gasEstimateUsd: 0.07,
+    };
+    getProvisioningContextAction.mockResolvedValue({ ok: true, context: incident });
+
+    // Without the host's figure the gate still fires: the projection alone reads the wallet as empty.
+    const bare = renderHook(() =>
+      useProvisioningGate({ op: "invest", network: "arbitrum", enabled: true }),
+    );
+    await waitFor(() => expect(bare.result.current.context).not.toBeNull());
+    let gatedWithout = false;
+    act(() => {
+      gatedWithout = bare.result.current.evaluate(10_800);
+    });
+    expect(gatedWithout).toBe(true);
+
+    // With it, the gate stands aside and the invest signs directly.
+    const { result } = renderHook(() =>
+      useProvisioningGate({
+        op: "invest",
+        network: "arbitrum",
+        enabled: true,
+        targetUsdcBalanceUsd: 10_885.73,
+      }),
+    );
+    await waitFor(() => expect(result.current.context).not.toBeNull());
+    let gated = true;
+    act(() => {
+      gated = result.current.evaluate(10_800);
+    });
+    expect(gated).toBe(false);
+    expect(result.current.input).toBeNull();
   });
 
   it("[R10] binds no wallet: the gate decides, the panel signs", () => {

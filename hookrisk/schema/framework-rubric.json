@@ -1,0 +1,545 @@
+{
+  "$comment": [
+    "The Uniswap Hooks Security Framework, expressed as data.",
+    "",
+    "This is a faithful port of the framework's prose into a form a program can",
+    "evaluate. Where the prose is unambiguous, this file reproduces it. Where it",
+    "is not, this file makes an interpretation and marks it `interpretation: true`",
+    "with a pointer to the FEEDBACK.md item that reports the gap upstream.",
+    "",
+    "That distinction is the whole point. A scoring tool that silently invents",
+    "definitions produces numbers that look like the framework's and are not. Every",
+    "value below is either the Foundation's or visibly ours.",
+    "",
+    "Source: https://github.com/uniswapfoundation/security-framework",
+    "Pinned at commit e7e8da52fd5717b6eb4517ea779b766f63148c41, read 2026-07-26.",
+    "",
+    "The Uniswap Foundation does not review, endorse or certify this port, nor any",
+    "score derived from it. See the disclaimer in their README."
+  ],
+
+  "framework": {
+    "name": "Uniswap Hooks Security Framework",
+    "url": "https://github.com/uniswapfoundation/security-framework",
+    "worksheet": "https://docs.google.com/spreadsheets/d/1oZdKZh13UbqVp3HujAcv-2NKP-j7NQAELhB7kyWlLRE/edit",
+    "revision": "e7e8da52fd5717b6eb4517ea779b766f63148c41",
+    "retrieved": "2026-07-26"
+  },
+
+  "$comment_strengths": [
+    "The framework uses five words for recommendation strength and never orders",
+    "them, so multiple triggers firing on one hook produce conflicting guidance",
+    "with no stated resolution. FEEDBACK.md #3 reports this.",
+    "",
+    "We define the ordinal below and merge by maximum. `required` and `mandatory`",
+    "are treated as the same level: they appear interchangeably in the source and",
+    "we found no case where a distinction was intended."
+  ],
+  "strengths": [
+    { "id": "optional", "rank": 0, "label": "Optional" },
+    { "id": "recommended", "rank": 1, "label": "Recommended" },
+    { "id": "strongly-recommended", "rank": 2, "label": "Strongly recommended" },
+    { "id": "required", "rank": 3, "label": "Required", "aliases": ["mandatory"] }
+  ],
+
+  "$comment_dimensions": [
+    "Nine dimensions, total range 0-33.",
+    "",
+    "Only TVL potential and Team maturity carry brackets in the source. For the",
+    "other seven we derived brackets from the descriptive prose; each is marked",
+    "`bracketsAreInterpretation: true`. FEEDBACK.md #2 asks the Foundation to",
+    "publish authoritative ones, at which point ours should be deleted.",
+    "",
+    "`measurable` records whether hookrisk can observe the value from code and",
+    "chain state, or whether it must be declared by the team. A measured value and",
+    "a declared value are not the same kind of claim and the manifest keeps them",
+    "apart."
+  ],
+  "dimensions": [
+    {
+      "id": "complexity",
+      "name": "Complexity",
+      "min": 0,
+      "max": 5,
+      "measurable": "measured",
+      "description": "Total code complexity including branching logic, number of callbacks, configuration patterns, and multi-step flows.",
+      "bracketsAreInterpretation": true,
+      "interpretationNote": "Derived from callback count, hook state written in callbacks, external calls in the swap path, returns-delta and privileged surface — the properties the source's prose names and the hook-profile classification can count. See FEEDBACK.md #2.",
+      "brackets": [
+        { "score": 0, "label": "No callbacks implemented; pass-through only" },
+        { "score": 1, "label": "1-2 callbacks, no hook state written in them" },
+        { "score": 2, "label": "Callbacks write hook state, or 3+ callbacks" },
+        { "score": 3, "label": "Returns a delta, or makes an external call in the swap path" },
+        { "score": 4, "label": "Returns a delta and makes an external call in the swap path" },
+        { "score": 5, "label": "Returns a delta, external call in the swap path, and an owner-only surface" }
+      ],
+      "$comment_derivation": [
+        "How hookrisk turns the `hook-profile` classification's metrics into a",
+        "score. Evaluated highest score first; the first rule whose `when` holds",
+        "wins. `when` uses the same tiny grammar as requirement conditions",
+        "(`name OP number`, bare boolean names, `&&` / `||`, left to right, no",
+        "parentheses), over the metric names the engine-metadata contract defines.",
+        "",
+        "This is an interpretation: the framework describes complexity in prose",
+        "and publishes no brackets. The rationale per rule says which sentence of",
+        "that prose the rule reads. HS-01 / HS-02 findings still establish a floor",
+        "of 1 independently of this table (derive.ts)."
+      ],
+      "derivation": {
+        "interpretation": true,
+        "source": "hook-profile",
+        "metrics": [
+          "callbacksImplemented",
+          "callbacksDeclared",
+          "stateWritesInCallbacks",
+          "externalCallsInSwapPath",
+          "internalFunctionsReachableFromCallbacks",
+          "usesReturnsDelta",
+          "hasOwnerOnlyFunctions"
+        ],
+        "rules": [
+          {
+            "score": 5,
+            "when": "usesReturnsDelta && externalCallsInSwapPath >= 1 && hasOwnerOnlyFunctions",
+            "rationale": "Custom settlement, a mid-swap dependency and a privileged surface together are every source of 'multi-step flows' and 'configuration patterns' the prose lists."
+          },
+          {
+            "score": 4,
+            "when": "usesReturnsDelta && externalCallsInSwapPath >= 1",
+            "rationale": "A hook that both alters settled amounts and leaves the swap path mid-flight has two interacting flows to reason about, not one."
+          },
+          {
+            "score": 3,
+            "when": "usesReturnsDelta || externalCallsInSwapPath >= 1",
+            "rationale": "Either a returns-delta permission or an external call in the swap path is a 'multi-step flow' in the prose's sense: the callback's effect is not local to itself."
+          },
+          {
+            "score": 2,
+            "when": "stateWritesInCallbacks >= 1 || callbacksImplemented >= 3",
+            "rationale": "Hook state written in callbacks is the 'branching logic' the prose names first; three or more callbacks is its 'number of callbacks'."
+          },
+          {
+            "score": 1,
+            "when": "callbacksImplemented >= 1",
+            "rationale": "One or two callbacks that write no hook state: observers and pass-through guards."
+          },
+          {
+            "score": 0,
+            "when": "callbacksImplemented == 0",
+            "rationale": "Nothing to branch on. A hook contract with no callback implemented is pass-through by construction."
+          }
+        ]
+      }
+    },
+    {
+      "id": "customMath",
+      "name": "Custom math",
+      "min": 0,
+      "max": 5,
+      "measurable": "measured",
+      "description": "Any math deviating from standard constant-product AMM operations: custom bonding curves, dynamic fee formulas, TWAMM or streaming-swap math, non-integer exponents, logarithmic or exponential functions, composite pricing, weighted or piecewise curves, multi-variable state transformations.",
+      "bracketsAreInterpretation": true,
+      "interpretationNote": "Ordered by the failure modes the source lists: rounding drift, then input-range violations, then discontinuities, then invariant instability.",
+      "brackets": [
+        { "score": 0, "label": "No arithmetic beyond bookkeeping" },
+        { "score": 1, "label": "Fixed-point multiply/divide with audited libraries only" },
+        { "score": 2, "label": "Fee or weight formulas over pool state" },
+        { "score": 3, "label": "A custom curve or invariant function" },
+        { "score": 4, "label": "Time-dependent or iterative math (TWAMM, streaming, decay)" },
+        { "score": 5, "label": "Non-integer exponents, logarithms, or piecewise/discontinuous curves" }
+      ]
+    },
+    {
+      "id": "externalDependencies",
+      "name": "External dependencies",
+      "min": 0,
+      "max": 3,
+      "measurable": "measured",
+      "description": "Oracles, lending markets, LST systems, bridges, cross-chain flows, off-chain data sources.",
+      "bracketsAreInterpretation": true,
+      "brackets": [
+        { "score": 0, "label": "None; the hook touches only the PoolManager and the pair's tokens" },
+        { "score": 1, "label": "One immutable, trusted dependency read outside the swap path" },
+        { "score": 2, "label": "A dependency read inside the swap path, or more than one dependency" },
+        { "score": 3, "label": "Cross-chain or off-chain data, or a dependency that can be replaced" }
+      ],
+      "$comment_findingDerivation": [
+        "HS-05 reports one finding per external call inside the swap path whose",
+        "destination is neither the PoolManager nor one of the pair's tokens.",
+        "The score depends on the call's kind, which the detector carries on the",
+        "finding as `metrics.isStatic`. Rules are read in the order written; the",
+        "first whose class and condition match wins, and a rule with no `when`",
+        "is that class's fallback.",
+        "",
+        "Silence does not measure this dimension. HS-05 never looks outside the",
+        "swap path, and 'one immutable, trusted dependency read outside the swap",
+        "path' is the framework's own 1 bracket — so a hook with an oracle read",
+        "in afterInitialize and none in beforeSwap is a 1 that HS-05 cannot see."
+      ],
+      "findingDerivation": {
+        "interpretation": true,
+        "attributes": ["severityRank", "isStatic"],
+        "rules": [
+          {
+            "ruleClass": "external-call-in-swap-path",
+            "score": 1,
+            "when": "isStatic == 1",
+            "rationale": "A staticcall inside the swap path cannot write to the dependency or reenter the PoolManager, so the swap depends on the dependency's value but not on its behaviour. Scored 1, 'one immutable, trusted dependency', as a floor: the framework's 2 bracket says 'a dependency read inside the swap path' without qualifying the call kind, so a reviewer who finds the dependency replaceable should declare 2 or 3."
+          },
+          {
+            "ruleClass": "external-call-in-swap-path",
+            "score": 2,
+            "rationale": "The framework's 2 bracket verbatim: a dependency read inside the swap path. Unconditional, so a finding whose call kind the detector did not classify also scores 2 — the direction that does not understate risk."
+          }
+        ]
+      }
+    },
+    {
+      "id": "externalLiquidityExposure",
+      "name": "External liquidity exposure",
+      "min": 0,
+      "max": 3,
+      "measurable": "measured",
+      "description": "The hook moves tokens to external protocols, holds its own liquidity, or participates in lending flows.",
+      "bracketsAreInterpretation": true,
+      "brackets": [
+        { "score": 0, "label": "Holds no balance between transactions" },
+        { "score": 1, "label": "Holds fees or dust between transactions" },
+        { "score": 2, "label": "Holds principal liquidity on behalf of users" },
+        { "score": 3, "label": "Rehypothecates into an external protocol" }
+      ]
+    },
+    {
+      "id": "tvlPotential",
+      "name": "TVL potential",
+      "min": 0,
+      "max": 5,
+      "measurable": "declared",
+      "measurableNote": "Current TVL is observable on-chain in deployed mode and is reported as evidence, but the dimension asks about *potential*, which depends on incentive plans no tool can see.",
+      "description": "Liquidity can grow after launch. Hooks intended for farms or incentivized pools should assume higher potential TVL.",
+      "bracketsAreInterpretation": false,
+      "brackets": [
+        { "score": 0, "label": "Under $100K (experimental or personal project)" },
+        { "score": 1, "label": "$100K - $1M" },
+        { "score": 2, "label": "$1M - $5M" },
+        { "score": 3, "label": "$5M - $15M" },
+        { "score": 4, "label": "$15M - $50M, mid-size protocol integration, or incentives" },
+        { "score": 5, "label": "$50M+, major protocol integration, or significant incentives" }
+      ]
+    },
+    {
+      "id": "teamMaturity",
+      "name": "Team maturity",
+      "min": 0,
+      "max": 3,
+      "measurable": "declared",
+      "measurableNote": "Self-declared by definition. hookrisk has no defensible way to observe it and deliberately refuses to default it (error HR-E101).",
+      "description": "Experts with multiple production deployments and prior audits score low risk. New or anonymous teams score higher.",
+      "bracketsAreInterpretation": false,
+      "brackets": [
+        { "score": 0, "label": "Highly mature: audited production deployments or UUPS upgrades across 2+ distinct codebases, mature DevOps, active incident response, demonstrated responsibility in past disclosures" },
+        { "score": 1, "label": "Experienced: at least one audited production deployment or upgrade, some operational experience, less breadth across codebases" },
+        { "score": 2, "label": "Moderately experienced: has deployed to production but without demonstrable operational maturity; upgrade, monitoring and incident processes informal or ad hoc" },
+        { "score": 3, "label": "Unproven: no prior production deployments, or deployments lacking audits and operational rigor; new, anonymous, or no public track record" }
+      ]
+    },
+    {
+      "id": "upgradeability",
+      "name": "Upgradeability",
+      "min": 0,
+      "max": 3,
+      "measurable": "measured",
+      "description": "Upgradeable hooks are more flexible but dangerous. Admin controls and proxy patterns introduce storage layout issues, logic upgrade errors, and governance attacks.",
+      "bracketsAreInterpretation": true,
+      "interpretationNote": "Graded by who controls the upgrade, which is what §5 of the framework's best-practice checklist actually cares about.",
+      "brackets": [
+        { "score": 0, "label": "Immutable; no proxy, no DELEGATECALL to mutable code" },
+        { "score": 1, "label": "Upgradeable behind a timelock" },
+        { "score": 2, "label": "Upgradeable behind a multisig with no timelock" },
+        { "score": 3, "label": "Upgradeable by an EOA, or a custom (non-standard) upgrade mechanism" }
+      ]
+    },
+    {
+      "id": "autonomousParameterUpdates",
+      "name": "Autonomous parameter updates",
+      "min": 0,
+      "max": 3,
+      "measurable": "measured",
+      "description": "The hook adjusts its own configuration automatically or based on internal state. Autonomy amplifies misconfiguration and emergent behavior risks.",
+      "bracketsAreInterpretation": true,
+      "interpretationNote": "Graded by the guardrails the framework §1.6 requires: bounded rate of change, time/state gating, monotonicity.",
+      "brackets": [
+        { "score": 0, "label": "All parameters set by an explicit privileged call" },
+        { "score": 1, "label": "Self-adjusting within hard-coded bounds and a rate limit" },
+        { "score": 2, "label": "Self-adjusting with bounds but no rate limit, or vice versa" },
+        { "score": 3, "label": "Self-adjusting with neither bounds nor rate limiting" }
+      ],
+      "$comment_findingDerivation": [
+        "HS-03 measures the *privileged* surface — who may change what — while",
+        "this dimension asks about *autonomy*. The two overlap where the",
+        "framework's guardrails do: a parameter that can move without bounds or",
+        "a rate limit. The mapping below is hookrisk's reading of that overlap,",
+        "and it is a floor in both branches: HS-03 cannot see a fee the hook",
+        "recomputes from its own state inside a callback, which is the shape the",
+        "3 bracket describes, so silence from HS-03 leaves the dimension",
+        "unmeasured rather than 0 (see derive.ts)."
+      ],
+      "findingDerivation": {
+        "interpretation": true,
+        "attributes": ["severityRank"],
+        "rules": [
+          {
+            "ruleClass": "admin-surface",
+            "score": 2,
+            "when": "severityRank >= 3",
+            "rationale": "HS-03 at HIGH is an unguarded state-changing external function: anybody can move the hook's parameters, so no access control enforces bounds or a rate limit. Scored 2 rather than 3 because the 3 bracket describes a hook that adjusts itself — here a caller still has to act — and never 0, because 0 is 'all parameters set by an explicit privileged call' and an unguarded call is not privileged."
+          },
+          {
+            "ruleClass": "admin-surface",
+            "score": 1,
+            "when": "severityRank >= 2",
+            "rationale": "HS-03 at MEDIUM is an owner-only mutator (hook-profile.hasOwnerOnlyFunctions). The framework's 0 bracket describes exactly this shape, but scoring 0 would rank a hook whose owner can move the fee level with a hook that has no parameters at all, and source analysis cannot see the owner's guardrails — timelock, ceiling, multisig. 1 records the surface as a floor without asserting autonomy; a team that has a timelock should declare 0 in hookrisk.toml."
+          },
+          {
+            "ruleClass": "admin-surface",
+            "score": 1,
+            "rationale": "An admin-surface finding below MEDIUM still evidences a parameter surface whose guardrails were not verified; the same floor applies."
+          }
+        ]
+      }
+    },
+    {
+      "id": "priceImpactingBehavior",
+      "name": "Price impacting behavior",
+      "min": 0,
+      "max": 3,
+      "measurable": "measured",
+      "description": "Hooks that directly influence the swap path, effective price, routing decisions, or fee structure.",
+      "bracketsAreInterpretation": true,
+      "brackets": [
+        { "score": 0, "label": "Observes swaps; does not alter price, fee or delta" },
+        { "score": 1, "label": "Charges a fixed, declared fee" },
+        { "score": 2, "label": "Adjusts the LP fee dynamically within a declared ceiling" },
+        { "score": 3, "label": "Returns a swap delta (custom curve or NoOp), or adjusts fees without a ceiling" }
+      ],
+      "$comment_findingDerivation": [
+        "`custom-accounting` keeps its flat score in derive.ts (3, the bracket",
+        "verbatim). Only HS-06 needs a rationale recorded here, because the",
+        "number it produces is deliberately one bracket below the one its own",
+        "title suggests."
+      ],
+      "findingDerivation": {
+        "interpretation": true,
+        "attributes": ["severityRank"],
+        "rules": [
+          {
+            "ruleClass": "unbounded-dynamic-fee",
+            "score": 2,
+            "rationale": "HS-06's evidence is negative — it did not find a bound on a fee the hook sets dynamically. The 3 bracket ('adjusts fees without a ceiling') asserts that no ceiling exists anywhere, which a source detector cannot establish: a ceiling in the controller, in a library the detector did not resolve, or enforced off-chain is invisible to it. So the measured value is the 2 bracket, 'adjusts the LP fee dynamically', and the missing ceiling is reported as the finding itself. A reviewer who confirms there is no ceiling should declare 3."
+          }
+        ]
+      }
+    }
+  ],
+
+  "totalRange": { "min": 0, "max": 33 },
+
+  "$comment_tiers": [
+    "Tier boundaries are stated explicitly in framework §3 and are not an",
+    "interpretation. The baseline recommendations are transcribed from the same",
+    "section; note that §3's 'optional' entries can be overridden upward by the",
+    "feature triggers below, which §3 does not say and FEEDBACK.md #4 reports."
+  ],
+  "tiers": [
+    {
+      "id": "low",
+      "name": "Low Risk",
+      "min": 0,
+      "max": 6,
+      "summary": "Relatively small surface area, little or no math, no external interactions.",
+      "baseline": [
+        { "action": "audit", "strength": "required", "detail": "One full audit" },
+        { "action": "static-analysis", "strength": "required", "detail": "AI static analysis tools" },
+        { "action": "math-specialist-audit", "strength": "optional", "detail": "No math specialist required" },
+        { "action": "bug-bounty", "strength": "optional" },
+        { "action": "monitoring", "strength": "optional", "detail": "Unless TVL grows significantly" }
+      ]
+    },
+    {
+      "id": "medium",
+      "name": "Medium Risk",
+      "min": 7,
+      "max": 17,
+      "summary": "Moderate complexity, custom logic, or meaningful dependencies.",
+      "baseline": [
+        { "action": "audit", "strength": "required", "detail": "One full audit" },
+        { "action": "static-analysis", "strength": "required", "detail": "AI static analysis tools" },
+        { "action": "second-audit", "strength": "optional", "detail": "For math or complex components" },
+        { "action": "bug-bounty", "strength": "recommended" },
+        { "action": "monitoring", "strength": "recommended", "detail": "If external dependencies exist" },
+        { "action": "extended-test-coverage", "strength": "recommended", "detail": "Where autonomy or parameter updates exist" }
+      ]
+    },
+    {
+      "id": "high",
+      "name": "High Risk",
+      "min": 18,
+      "max": 33,
+      "summary": "Complex math, external liquidity, autonomous behavior, upgradeability, price impact, or large TVL.",
+      "baseline": [
+        { "action": "audit", "strength": "required", "detail": "Two formal audits" },
+        { "action": "math-specialist-audit", "strength": "required", "detail": "One of the two audits by a math specialist" },
+        { "action": "bug-bounty", "strength": "required" },
+        { "action": "invariant-testing", "strength": "recommended", "detail": "Extended suite including invariants and stateful fuzzing: delta conservation, fee bounds, no unintended reentrancy, monotonicity of curve functions" },
+        { "action": "monitoring", "strength": "required", "detail": "With anomaly detection for silent failure modes" },
+        { "action": "formal-verification", "strength": "optional", "detail": "Invariant preservation, arithmetic bounds, reentrancy and callback-ordering assumptions, composite math correctness" }
+      ],
+      "monitoringTargets": [
+        "Liquidity imbalances",
+        "Delta accounting anomalies",
+        "Sudden dynamic fee spikes",
+        "Gas per swap outliers",
+        "Divergence between expected and actual deltas",
+        "Unusually high revert rates",
+        "Abnormal slippage patterns under small trade sizes",
+        "Deviations between theoretical curve output and on-chain execution",
+        "Drift in time-weighted or iterative math outputs"
+      ]
+    }
+  ],
+
+  "$comment_triggers": [
+    "Seven feature triggers from framework §4. These fire independently of the",
+    "total score, which is the mechanism §5 relies on so that teams cannot score",
+    "themselves low while shipping dangerous primitives.",
+    "",
+    "`derivedFrom` records how hookrisk decides a trigger has fired. The framework",
+    "does not define the relationship between its dimensions and its triggers",
+    "except for TVL; FEEDBACK.md #5 reports this and every entry marked",
+    "`interpretation: true` is our reading, not the Foundation's."
+  ],
+  "triggers": [
+    {
+      "id": "custom-math",
+      "name": "Custom Curve or Non Standard Math",
+      "derivedFrom": { "dimension": "customMath", "atLeast": 3, "interpretation": true },
+      "alsoFiredBy": ["returns-delta-permission", "detector:custom-accounting"],
+      "requirements": [
+        { "action": "math-specialist-audit", "strength": "required", "detail": "At least one audit including a math and invariants specialist" },
+        { "action": "unit-tests-boundaries", "strength": "required", "detail": "Validate intermediate steps, edge cases and input-range boundaries" },
+        { "action": "invariant-testing", "strength": "recommended", "detail": "Stateful fuzzing may significantly improve assurance" },
+        { "action": "formal-verification", "strength": "recommended", "condition": "tvlPotential == 5 || priceImpactingBehavior >= 2" },
+        { "action": "monitoring", "strength": "recommended", "condition": "trigger:autonomous || trigger:price-impact" }
+      ],
+      "note": "The framework states that a specialized math review is recommended whenever custom math is present, even at Low or Medium tier."
+    },
+    {
+      "id": "holds-liquidity",
+      "name": "Hook Holds Its Own Liquidity or Manages External Liquidity",
+      "derivedFrom": { "dimension": "externalLiquidityExposure", "atLeast": 1, "interpretation": true },
+      "requirements": [
+        { "action": "monitoring", "strength": "strongly-recommended", "detail": "Continuous" },
+        { "action": "bug-bounty", "strength": "required", "condition": "tvlPotential == 5" },
+        { "action": "invariant-testing", "strength": "required", "detail": "For accounting logic" },
+        { "action": "audit", "strength": "required", "detail": "At least one audit must evaluate liquidity flow correctness" }
+      ],
+      "note": "The source says the trigger fires when the hook 'temporarily or permanently holds tokens'. Read literally that is nearly every hook, since take/settle within one callback holds tokens briefly. hookrisk reads it as holding a balance across transaction boundaries. FEEDBACK.md #10."
+    },
+    {
+      "id": "external-dependencies",
+      "name": "External Protocol or Oracle Dependencies",
+      "derivedFrom": { "dimension": "externalDependencies", "atLeast": 1, "interpretation": true },
+      "alsoFiredBy": ["detector:external-call-in-swap-path"],
+      "requirements": [
+        { "action": "monitoring", "strength": "strongly-recommended", "detail": "Dependency health" },
+        { "action": "audit", "strength": "required", "detail": "Must review trust assumptions, failure modes and fallback logic" },
+        { "action": "bug-bounty", "strength": "recommended" },
+        { "action": "scenario-testing", "strength": "required", "detail": "For dependency failures" },
+        { "action": "math-specialist-audit", "strength": "required", "condition": "dependencyInfluencesPricing" }
+      ]
+    },
+    {
+      "id": "autonomous",
+      "name": "Autonomous Parameter Updates or Self-Tuning Hook",
+      "derivedFrom": { "dimension": "autonomousParameterUpdates", "atLeast": 1, "interpretation": true },
+      "requirements": [
+        { "action": "invariant-testing", "strength": "required", "detail": "For state transitions" },
+        { "action": "monitoring", "strength": "strongly-recommended" },
+        { "action": "second-audit", "strength": "recommended", "condition": "trigger:custom-math" },
+        { "action": "timelock-or-minimise-upgradeability", "strength": "required", "detail": "Upgradeability must be minimized or time-locked" },
+        { "action": "recovery-procedures", "strength": "required", "detail": "Debugging and recovery procedures must be documented" }
+      ]
+    },
+    {
+      "id": "price-impact",
+      "name": "Price Impacting Behavior",
+      "derivedFrom": { "dimension": "priceImpactingBehavior", "atLeast": 1, "interpretation": true },
+      "alsoFiredBy": ["returns-delta-permission", "dynamic-fee-pool"],
+      "requirements": [
+        { "action": "math-specialist-audit", "strength": "required", "detail": "Auditor should specialize in math" },
+        { "action": "monitoring", "strength": "required", "condition": "tvlPotential == 5" },
+        { "action": "bug-bounty", "strength": "required" },
+        { "action": "formal-verification", "strength": "recommended", "condition": "trigger:autonomous || trigger:external-dependencies" },
+        { "action": "adversarial-simulation", "strength": "required", "detail": "Auditors should simulate worst-case economic and adversarial price manipulation" }
+      ]
+    },
+    {
+      "id": "upgradeable",
+      "name": "Upgradeable",
+      "derivedFrom": { "dimension": "upgradeability", "atLeast": 1, "interpretation": false },
+      "alsoFiredBy": ["detector:upgradeable-hook", "detector:selfdestruct"],
+      "requirements": [
+        { "action": "storage-collision-review", "strength": "required" },
+        { "action": "upgrade-policy-doc", "strength": "required", "detail": "Documentation of upgrade policy mandatory" },
+        { "action": "timelock-or-multisig", "strength": "recommended" },
+        { "action": "second-audit", "strength": "required", "condition": "complexUpgradeConditions" },
+        { "action": "monitoring", "strength": "recommended", "detail": "After each upgrade" },
+        { "action": "bug-bounty", "strength": "required", "condition": "tvlPotential == 5" }
+      ],
+      "note": "This is the one trigger the source ties unambiguously to its own presence: 'Triggers when any form of proxy or upgradeable logic exists.'"
+    },
+    {
+      "id": "tvl-5",
+      "name": "TVL 5 Rating",
+      "derivedFrom": { "dimension": "tvlPotential", "atLeast": 5, "interpretation": false },
+      "requirements": [
+        { "action": "monitoring", "strength": "required" },
+        { "action": "bug-bounty", "strength": "required" },
+        { "action": "audit", "strength": "required", "detail": "At least one high quality audit regardless of feature set" },
+        { "action": "formal-verification", "strength": "recommended" },
+        { "action": "liquidity-limits-or-killswitch", "strength": "recommended", "detail": "Should be considered" },
+        { "action": "emergency-procedures", "strength": "required" }
+      ],
+      "note": "Stated as a numeric threshold in the source, so no interpretation is needed."
+    }
+  ],
+
+  "$comment_actions": [
+    "Display labels for the normalised action vocabulary. The framework phrases",
+    "the same action several ways across sections ('one full audit', 'at least",
+    "one high quality audit', 'at least one audit must evaluate liquidity flow",
+    "correctness'); collapsing them lets the merge rule work, while each",
+    "requirement keeps its original wording in `detail`."
+  ],
+  "actions": {
+    "audit": "Security audit",
+    "second-audit": "Second independent audit",
+    "math-specialist-audit": "Audit by a math and invariants specialist",
+    "static-analysis": "Automated static analysis",
+    "bug-bounty": "Bug bounty programme",
+    "monitoring": "Continuous monitoring with anomaly detection",
+    "formal-verification": "Formal verification",
+    "invariant-testing": "Invariant and stateful fuzz testing",
+    "unit-tests-boundaries": "Unit tests covering input-range boundaries",
+    "extended-test-coverage": "Extended test coverage",
+    "scenario-testing": "Dependency-failure scenario testing",
+    "adversarial-simulation": "Adversarial and economic simulation",
+    "storage-collision-review": "Storage layout collision review",
+    "upgrade-policy-doc": "Published upgrade policy",
+    "timelock-or-multisig": "Timelock or multisig on privileged actions",
+    "timelock-or-minimise-upgradeability": "Minimise or timelock upgradeability",
+    "recovery-procedures": "Documented debugging and recovery procedures",
+    "emergency-procedures": "Emergency response procedures",
+    "liquidity-limits-or-killswitch": "Liquidity limits or kill switch"
+  }
+}

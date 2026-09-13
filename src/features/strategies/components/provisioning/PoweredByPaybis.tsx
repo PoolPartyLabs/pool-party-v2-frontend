@@ -9,7 +9,7 @@
  *
  * POO-1044 [R5] removed it from the buy-gas modal. A gas top-up is an on-chain swap of what the
  * wallet already holds (`swap-gas`), so the attribution named a provider with no part in the step.
- * The remaining on-ramp surfaces are the plan card's `buy-usdc` caption, which renders the same key
+ * The remaining on-ramp surfaces are the plan card's `buy` caption, which renders the same key
  * inline, and the deposit screen, which has its own.
  *
  * PP-INTEGRATION-POINT: the real Paybis ramp (CSP-ready stub, POO-87/POO-213) is wired with the rail

@@ -1,0 +1,38 @@
+{
+  "title": "Herramientas",
+  "subtitle": "Herramientas para desarrolladores incluidas en Pool Party. Solo lectura y nunca tocan tu billetera.",
+  "hookRisk": {
+    "heading": "Riesgo de hooks de Uniswap v4",
+    "intro": "Pega la dirección de un hook desplegado. hookrisk lee su código fuente verificado, lo compila, lo puntúa con el Hooks Security Framework de la Uniswap Foundation y devuelve el informe aquí abajo.",
+    "chainLabel": "Red",
+    "addressLabel": "Dirección del contrato del hook",
+    "addressPlaceholder": "0x0000000000000000000000000000000000000000",
+    "submit": "Analizar",
+    "submitRunning": "Analizando",
+    "notice": "El análisis compila el contrato y ejecuta un harness diferencial con fuzzing, así que cuenta con minutos, no segundos. El informe se guarda en caché durante 24 horas.",
+    "idleTitle": "Aún no hay análisis",
+    "idleBody": "Elige una red, pega la dirección de un hook desplegado y pulsa Analizar.",
+    "runningTitle": "Analizando",
+    "elapsed": "{seconds}s transcurridos",
+    "cached": "Resultado de un análisis hecho en las últimas 24 horas.",
+    "gatePassed": "El gate de hookrisk pasó.",
+    "gateFailed": "El gate de hookrisk falló. El informe de abajo explica por qué, y un gate fallido es un resultado, no un error.",
+    "reportHeading": "Informe",
+    "errorTitle": "Este análisis no se ejecutó",
+    "retry": "Intentar de nuevo",
+    "status": {
+      "queued": "En cola",
+      "fetchingSource": "Leyendo el código fuente verificado en el explorador de bloques",
+      "building": "Compilando el contrato",
+      "scanning": "Ejecutando los detectores y el harness diferencial",
+      "done": "Informe listo",
+      "failed": "El análisis no pudo terminar"
+    },
+    "errors": {
+      "INVALID_ADDRESS": "Esa no es una dirección de contrato válida. Debe tener 42 caracteres y empezar por 0x.",
+      "UNSUPPORTED_CHAIN": "Esa red no está entre las redes que lee esta herramienta.",
+      "JOB_UNKNOWN": "El servidor ya no sigue este análisis. Vuelve a ejecutarlo.",
+      "NETWORK": "No se pudo contactar con el servidor. Comprueba que está activo e inténtalo de nuevo."
+    }
+  }
+}

@@ -1,0 +1,7 @@
+  scan: src/CorkHook.sol:CorkHook run=29c99bcc-d8e1-4e39-9bf5-268ee4d5817e
+  project: out=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/cork-hook/repo/out solc=0.8.26 (forge-config) artifact=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/cork-hook/repo/out/CorkHook.sol/CorkHook.json
+  hookrisk: slither src/CorkHook.sol:CorkHook
+  hookrisk: 11 finding(s); analysed 1 hook contract(s); permissions resolved from the profile
+  hookrisk: ok
+  harness: skipped — CorkHook's constructor takes 3 argument(s) (address _poolManager, address _lpBase, address owner) and the harness can only derive the IPoolManager on its own. Add [harness] constructorArgs to hookrisk.toml with one value per argument — $poolManager, $currency0, $currency1, $owner, $hook are substituted with the harness's own addresses, anything else is passed literally to `cast abi-encode`. See HR-E305.
+  scan: finished in 4326ms, exit 2

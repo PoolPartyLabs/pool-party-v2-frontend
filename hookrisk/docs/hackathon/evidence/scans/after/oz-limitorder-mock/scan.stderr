@@ -1,0 +1,12 @@
+  scan: src/mocks/general/LimitOrderHookMock.sol:LimitOrderHookMock run=7e697cd0-997f-4c3a-b93d-42ada0a3b3de
+  project: out=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/oz-limitorder-mock/repo/out solc=0.8.26 (forge-config) artifact=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/oz-limitorder-mock/repo/out/LimitOrderHookMock.sol/LimitOrderHookMock.json
+  harness: LimitOrderHookMock.sol:LimitOrderHookMock flags=derived-from-runtime maxFee=0bips ctorArgs=1 word(s) run=0b913826-7a35-4aa0-9401-1992ba4d02ed
+  hookrisk: slither src/mocks/general/LimitOrderHookMock.sol:LimitOrderHookMock
+  harness: 3 invariant(s), 0 failed (flags=0x1040 derived, seeded=both) observed 1285 sequence(s), 13630 swap(s) landed, 13630 compared, 13630 price check(s), 6965 position(s) opened, 6965 closed, 6785 donation(s), 0 hooked-only swap revert(s), 0 exit failure(s); probes: eoa guard held on 2 callback(s); selectors ok; exclusivity accepted
+  hookrisk: 3 function(s) could not be lifted to IR and were not analysed (HR-E205)
+  hookrisk: 43 finding(s) in other files, not attributed to this target: src/mocks/base/BaseHookMock.sol (12), src/mocks/base/BaseCustomCurveMock.sol (4), src/mocks/base/BaseCustomAccountingFeeMock.sol (3), src/mocks/fee/BaseDynamicAfterFeeMock.sol (3), src/mocks/fee/BaseDynamicFeeMock.sol (3), src/mocks/base/BaseAsyncSwapMock.sol (2), src/mocks/fee/BaseHookFeeMock.sol (2), src/mocks/fee/BaseOverrideFeeMock.sol (2), src/mocks/general/AntiSandwichMock.sol (2), src/mocks/general/LiquidityPenaltyHookMock.sol (2), src/mocks/general/ReHypothecationERC4626Mock.sol (2), src/mocks/general/ReHypothecationNativeMock.sol (2), src/fee/BaseDynamicFee.sol (1), src/fee/BaseOverrideFee.sol (1), src/mocks/oracles/panoptic/BaseOracleHookMock.sol (1), src/mocks/oracles/panoptic/OracleHookWithV3AdaptersMock.sol (1)
+  hookrisk: 1 finding(s); analysed 16 hook contract(s); permissions resolved from the profile
+  hookrisk: ok
+  harness: ok
+  reconcile: the hook accepted a callback for a second pool; added an unvalidated-pool-key classification
+  scan: finished in 7966ms, exit 0

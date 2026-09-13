@@ -242,6 +242,11 @@ describe("[R2] the surface offers re-derivation, never a re-send", () => {
       "href",
       `https://polygonscan.com/address/${WALLET}`,
     );
+    // POO-1508 [R46]: with no hash there is nothing safe to re-send, so "Pick up where this left
+    // off" is not offered AT ALL here, not merely de-emphasised beside the account link.
+    expect(
+      screen.queryByRole("link", { name: "Pick up where this left off" }),
+    ).not.toBeInTheDocument();
   });
 });
 

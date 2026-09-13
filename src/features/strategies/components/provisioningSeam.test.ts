@@ -22,11 +22,14 @@ import { describe, expect, it } from "vitest";
 
 const ROOT = join(__dirname, "..", "..", "..", "..");
 
-/** The two surfaces that used to bypass the seam. */
-const SURFACES = [
-  "src/features/strategies/components/ProvisioningPanel.tsx",
-  "src/features/strategies/components/ProvisioningWizardModal.tsx",
-] as const;
+/**
+ * The surfaces that used to bypass the seam.
+ *
+ * There were two. `ProvisioningWizardModal` (PP-CORE-MOD-011) was deleted by POO-1146 as dead code
+ * once the v2 redesign made the panel render Plan, Confirm and Execution itself, so the seam it had
+ * to respect no longer exists to be broken. The panel is the only production surface left.
+ */
+const SURFACES = ["src/features/strategies/components/ProvisioningPanel.tsx"] as const;
 
 function read(relativePath: string): string {
   return readFileSync(join(ROOT, relativePath), "utf8");

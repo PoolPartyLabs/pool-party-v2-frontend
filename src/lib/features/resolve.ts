@@ -74,12 +74,22 @@ function envOverride(key: FeatureKey): string | undefined {
       return process.env.NEXT_PUBLIC_FEATURE_PROVISIONING;
     case "swapScreen":
       return process.env.NEXT_PUBLIC_FEATURE_SWAP_SCREEN;
+    case "fiatOnRamp":
+      return process.env.NEXT_PUBLIC_FEATURE_FIAT_ON_RAMP;
+    case "privyOnRamp":
+      return process.env.NEXT_PUBLIC_FEATURE_PRIVY_ON_RAMP;
+    case "onRampCapture":
+      return process.env.NEXT_PUBLIC_FEATURE_ON_RAMP_CAPTURE;
+    case "robinhoodChain":
+      return process.env.NEXT_PUBLIC_FEATURE_ROBINHOOD_CHAIN;
     case "activeReserve":
       return process.env.NEXT_PUBLIC_FEATURE_ACTIVE_RESERVE;
     case "virtualize":
       return process.env.NEXT_PUBLIC_FEATURE_VIRTUALIZE;
     case "strategyCategoryFilter":
       return process.env.NEXT_PUBLIC_FEATURE_STRATEGY_CATEGORY_FILTER;
+    case "hookTools":
+      return process.env.NEXT_PUBLIC_FEATURE_HOOK_TOOLS;
     default:
       return undefined;
   }

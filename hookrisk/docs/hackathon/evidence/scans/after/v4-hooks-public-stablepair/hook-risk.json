@@ -1,0 +1,606 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedBy": {
+    "tool": "hookrisk",
+    "version": "0.1.0",
+    "commandLine": "hookrisk scan src/stable/StablePairHook.sol:StablePairHook"
+  },
+  "target": {
+    "mode": "source",
+    "contractName": "StablePairHook",
+    "sourceFile": "src/stable/StablePairHook.sol",
+    "solcVersion": "0.8.26",
+    "artifactDir": "foundry-out",
+    "projectConfigSource": "forge-config"
+  },
+  "findings": [
+    {
+      "id": "43523c48d3fde3fa",
+      "ruleClass": "flag-implementation-divergence",
+      "title": "StablePairHook (src/stable/StablePairHook.sol#25-259) declares permission `afterInitialize` (bit 12, AFTER_INITIALIZE_FLAG) but provides no working …",
+      "description": "StablePairHook (src/stable/StablePairHook.sol#25-259) declares permission `afterInitialize` (bit 12, AFTER_INITIALIZE_FLAG) but provides no working `afterInitialize` implementation. The PoolManager will call it on every matching pool operation and the call will revert, making the pool unusable for that operation.",
+      "severity": "high",
+      "confidence": "medium",
+      "location": {
+        "file": "src/stable/StablePairHook.sol",
+        "line": 25,
+        "endLine": 259
+      },
+      "discriminator": "afterInitialize",
+      "evidence": [
+        "StablePairHook (src/stable/StablePairHook.sol#25-259) declares permission `afterInitialize` (bit 12, AFTER_INITIALIZE_FLAG) but provides no working `afterInitialize` implementation. The PoolManager will call it on every matching pool operation and the call will revert, making the pool unusable for that operation."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-flag-divergence",
+          "severity": "high",
+          "confidence": "medium"
+        }
+      ],
+      "informsDimensions": [
+        "complexity"
+      ]
+    },
+    {
+      "id": "b1d13a56fdd11dfb",
+      "ruleClass": "admin-surface",
+      "title": "StablePairHook.initializePool(PoolKey,uint160,StableFeeConfig) (src/stable/StablePairHook.sol#34-48) (initializePool) is restricted to a privileged caller …",
+      "description": "StablePairHook.initializePool(PoolKey,uint160,StableFeeConfig) (src/stable/StablePairHook.sol#34-48) (initializePool) is restricted to a privileged caller and writes `STABLE_FEE_CONFIGURATION_STORAGE_LOCATION` which the callbacks read. That key can change the swap's economics after deployment: the framework's autonomous-parameter-updates concern.",
+      "severity": "medium",
+      "confidence": "medium",
+      "location": {
+        "file": "src/stable/StablePairHook.sol",
+        "line": 34,
+        "endLine": 48
+      },
+      "function": {
+        "name": "initializePool"
+      },
+      "discriminator": "initializePool",
+      "evidence": [
+        "StablePairHook.initializePool(PoolKey,uint160,StableFeeConfig) (src/stable/StablePairHook.sol#34-48) (initializePool) is restricted to a privileged caller and writes `STABLE_FEE_CONFIGURATION_STORAGE_LOCATION` which the callbacks read. That key can change the swap's economics after deployment: the framework's autonomous-parameter-updates concern."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-admin-surface",
+          "severity": "medium",
+          "confidence": "medium"
+        }
+      ],
+      "informsDimensions": [
+        "autonomousParameterUpdates",
+        "complexity"
+      ]
+    },
+    {
+      "id": "0acb440f46048450",
+      "ruleClass": "callback-intentionally-disabled",
+      "title": "StablePairHook (src/stable/StablePairHook.sol#25-259) overrides `beforeInitialize` (inherited from BaseDynamicFeeHook._beforeInitialize) with `revert …",
+      "description": "StablePairHook (src/stable/StablePairHook.sol#25-259) overrides `beforeInitialize` (inherited from BaseDynamicFeeHook._beforeInitialize) with `revert InvalidInitializer()`, so PoolManager-routed pool initialisation is disabled by design; the differential harness records such reverts when it runs. This is not the missing implementation HS-02 reports.",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/stable/StablePairHook.sol",
+        "line": 25,
+        "endLine": 259
+      },
+      "discriminator": "beforeInitialize",
+      "evidence": [
+        "StablePairHook (src/stable/StablePairHook.sol#25-259) overrides `beforeInitialize` (inherited from BaseDynamicFeeHook._beforeInitialize) with `revert InvalidInitializer()`, so PoolManager-routed pool initialisation is disabled by design; the differential harness records such reverts when it runs. This is not the missing implementation HS-02 reports."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-disabled-callback",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ]
+    },
+    {
+      "id": "b40a51c354277a90",
+      "ruleClass": "hook-profile",
+      "title": "StablePairHook (src/stable/StablePairHook.sol#25-259) is a recognised v4 hook: implements afterAddLiquidity, afterSwap, beforeAddLiquidity, beforeSwap; …",
+      "description": "StablePairHook (src/stable/StablePairHook.sol#25-259) is a recognised v4 hook: implements afterAddLiquidity, afterSwap, beforeAddLiquidity, beforeSwap; declares 6 callback permission(s); 1 state write(s) reachable from callbacks; 0 external call(s) in the swap path.",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/stable/StablePairHook.sol",
+        "line": 25,
+        "endLine": 259
+      },
+      "evidence": [
+        "StablePairHook (src/stable/StablePairHook.sol#25-259) is a recognised v4 hook: implements afterAddLiquidity, afterSwap, beforeAddLiquidity, beforeSwap; declares 6 callback permission(s); 1 state write(s) reachable from callbacks; 0 external call(s) in the swap path."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-hook-profile",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ],
+      "informsDimensions": [
+        "complexity"
+      ],
+      "metrics": {
+        "callbacksImplemented": 4,
+        "callbacksDeclared": 6,
+        "stateWritesInCallbacks": 1,
+        "externalCallsInSwapPath": 0,
+        "externalCallsInSwapPathThirdParty": 0,
+        "internalFunctionsReachableFromCallbacks": 9,
+        "usesReturnsDelta": false,
+        "hasOwnerOnlyFunctions": true
+      },
+      "permissions": {
+        "beforeInitialize": true,
+        "afterInitialize": true,
+        "beforeAddLiquidity": true,
+        "afterAddLiquidity": true,
+        "beforeRemoveLiquidity": false,
+        "afterRemoveLiquidity": false,
+        "beforeSwap": true,
+        "afterSwap": true,
+        "beforeDonate": false,
+        "afterDonate": false,
+        "beforeSwapReturnDelta": false,
+        "afterSwapReturnDelta": false,
+        "afterAddLiquidityReturnDelta": false,
+        "afterRemoveLiquidityReturnDelta": false
+      }
+    }
+  ],
+  "score": {
+    "total": 6,
+    "totalUpperBound": 17,
+    "tier": "low",
+    "tierUpperBound": "medium",
+    "inconclusive": true,
+    "rubric": {
+      "framework": "Uniswap Hooks Security Framework",
+      "revision": "e7e8da52fd5717b6eb4517ea779b766f63148c41",
+      "url": "https://github.com/uniswapfoundation/security-framework"
+    },
+    "dimensions": [
+      {
+        "id": "complexity",
+        "name": "Complexity",
+        "value": 2,
+        "max": 5,
+        "source": "measured",
+        "bracketLabel": "Callbacks write hook state, or 3+ callbacks",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "hook-profile metrics: callbacksImplemented=4, callbacksDeclared=6, stateWritesInCallbacks=1, externalCallsInSwapPath=0, externalCallsInSwapPathThirdParty=0, internalFunctionsReachableFromCallbacks=9, usesReturnsDelta=false, hasOwnerOnlyFunctions=true",
+          "Scored 2 by rule `stateWritesInCallbacks >= 1 || callbacksImplemented >= 3`: Hook state written in callbacks is the 'branching logic' the prose names first; three or more callbacks is its 'number of callbacks'. (hookrisk’s interpretation; the framework publishes no brackets)",
+          "1 flag-implementation-divergence finding(s)",
+          "The hook implements callbacks with non-trivial structure. This establishes a floor only; the measured value comes from the hook-profile metrics when the engine profiled the target."
+        ]
+      },
+      {
+        "id": "customMath",
+        "name": "Custom math",
+        "value": null,
+        "max": 5,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "Not measured: no detector for rounding-direction yet."
+        ]
+      },
+      {
+        "id": "externalDependencies",
+        "name": "External dependencies",
+        "value": 0,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "None; the hook touches only the PoolManager and the pair's tokens",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "No external-call-in-swap-path findings, and every detector that could produce one ran.",
+          "Corroborated by the hook profile: zero third-party calls in the swap path."
+        ]
+      },
+      {
+        "id": "externalLiquidityExposure",
+        "name": "External liquidity exposure",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": []
+      },
+      {
+        "id": "tvlPotential",
+        "name": "TVL potential",
+        "value": 0,
+        "max": 5,
+        "source": "declared",
+        "bracketLabel": "Under $100K (experimental or personal project)",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure tvlPotential."
+        ]
+      },
+      {
+        "id": "teamMaturity",
+        "name": "Team maturity",
+        "value": 3,
+        "max": 3,
+        "source": "declared",
+        "bracketLabel": "Unproven: no prior production deployments, or deployments lacking audits and operational rigor; new, anonymous, or no public track record",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure teamMaturity."
+        ]
+      },
+      {
+        "id": "upgradeability",
+        "name": "Upgradeability",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "Not measured: no detector for upgradeable-hook (needs blocksec, which did not run); selfdestruct requires blocksec, which did not run."
+        ]
+      },
+      {
+        "id": "autonomousParameterUpdates",
+        "name": "Autonomous parameter updates",
+        "value": 1,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "Self-adjusting within hard-coded bounds and a rate limit",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "1 admin-surface finding(s)",
+          "Scored 1 by rule `severityRank >= 2` on initializePool (medium): HS-03 at MEDIUM is an owner-only mutator (hook-profile.hasOwnerOnlyFunctions). The framework's 0 bracket describes exactly this shape, but scoring 0 would rank a hook whose owner can move the fee level with a hook that has no parameters at all, and source analysis cannot see the owner's guardrails — timelock, ceiling, multisig. 1 records the surface as a floor without asserting autonomy; a team that has a timelock should declare 0 in hookrisk.toml. (hookrisk’s interpretation; the framework publishes no brackets)",
+          "HS-03 found a state-changing external function on the hook. The framework grades this dimension by the guardrails on a parameter change (bounds, rate limit, gating); an admin surface is where those guardrails would have to live."
+        ]
+      },
+      {
+        "id": "priceImpactingBehavior",
+        "name": "Price impacting behavior",
+        "value": 0,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "Observes swaps; does not alter price, fee or delta",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "No custom-accounting or unbounded-dynamic-fee findings, and every detector that could produce one ran.",
+          "Corroborated by the hook profile: no returns-delta permission, and HS-06 found no unbounded dynamic fee."
+        ]
+      }
+    ],
+    "triggers": [
+      {
+        "id": "autonomous",
+        "name": "Autonomous Parameter Updates or Self-Tuning Hook",
+        "firedBy": [
+          "autonomousParameterUpdates >= 1 (is 1)"
+        ],
+        "derivationIsInterpretation": true
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "audit",
+        "label": "Security audit",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:low",
+            "strength": "required",
+            "detail": "One full audit"
+          }
+        ]
+      },
+      {
+        "action": "invariant-testing",
+        "label": "Invariant and stateful fuzz testing",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:autonomous",
+            "strength": "required",
+            "detail": "For state transitions"
+          }
+        ]
+      },
+      {
+        "action": "recovery-procedures",
+        "label": "Documented debugging and recovery procedures",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:autonomous",
+            "strength": "required",
+            "detail": "Debugging and recovery procedures must be documented"
+          }
+        ]
+      },
+      {
+        "action": "static-analysis",
+        "label": "Automated static analysis",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:low",
+            "strength": "required",
+            "detail": "AI static analysis tools"
+          }
+        ]
+      },
+      {
+        "action": "timelock-or-minimise-upgradeability",
+        "label": "Minimise or timelock upgradeability",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:autonomous",
+            "strength": "required",
+            "detail": "Upgradeability must be minimized or time-locked"
+          }
+        ]
+      },
+      {
+        "action": "monitoring",
+        "label": "Continuous monitoring with anomaly detection",
+        "strength": "strongly-recommended",
+        "sources": [
+          {
+            "from": "tier:low",
+            "strength": "optional",
+            "detail": "Unless TVL grows significantly"
+          },
+          {
+            "from": "trigger:autonomous",
+            "strength": "strongly-recommended"
+          }
+        ]
+      },
+      {
+        "action": "bug-bounty",
+        "label": "Bug bounty programme",
+        "strength": "optional",
+        "sources": [
+          {
+            "from": "tier:low",
+            "strength": "optional"
+          }
+        ]
+      },
+      {
+        "action": "math-specialist-audit",
+        "label": "Audit by a math and invariants specialist",
+        "strength": "optional",
+        "sources": [
+          {
+            "from": "tier:low",
+            "strength": "optional",
+            "detail": "No math specialist required"
+          }
+        ]
+      }
+    ],
+    "warnings": [
+      "3 dimension(s) unmeasured: the tier is between Low Risk and Medium Risk. Unmeasured dimensions are excluded from the total, never counted as zero.",
+      "trigger 'custom-math' could not be evaluated: dimension 'customMath' is unmeasured",
+      "trigger 'holds-liquidity' could not be evaluated: dimension 'externalLiquidityExposure' is unmeasured",
+      "trigger 'upgradeable' could not be evaluated: dimension 'upgradeability' is unmeasured"
+    ]
+  },
+  "engines": [
+    {
+      "engine": "hookrisk",
+      "displayName": "hookrisk Slither detectors",
+      "version": "0.11.6",
+      "status": "ok",
+      "findingCount": 4,
+      "durationMs": 11693
+    },
+    {
+      "engine": "harness",
+      "displayName": "Differential harness (Foundry)",
+      "version": "1.7.1",
+      "status": "failed",
+      "reason": "harness setUp failed: TwinPools: hooked pool would not initialise. With fee 3000: 0x1210aa130000000000000000000000007fa9385be102ac3eac297483dd6233d62b3e1496; with a dynamic fee: 0x1210aa130000000000000000000000007fa9385be102ac3eac297483dd6233d62b3e1496. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304).",
+      "errorCode": "HR-E304",
+      "findingCount": 0,
+      "durationMs": 190
+    }
+  ],
+  "coverage": {
+    "corroboratedFindings": 0,
+    "uncoveredFunctions": [
+      {
+        "contract": "BaseAggregatorHook",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "BaseAggregatorHook",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "BaseHookDataAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "BaseHookDataAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "FluidDexLiteAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "FluidDexLiteAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "FluidDexT1Aggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "FluidDexT1Aggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "LitePSMAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "LitePSMAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "PancakeSwapV3Aggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "PancakeSwapV3Aggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "SlipstreamAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "SlipstreamAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "StableSwapAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "StableSwapAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "StableSwapNGAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "StableSwapNGAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "TempoExchangeAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "TempoExchangeAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "UniswapV2Aggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "UniswapV2Aggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "UniswapV3Aggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "UniswapV3Aggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      },
+      {
+        "contract": "UniswapXAggregator",
+        "function": "_getFullDebt",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#60-66); this function was not analysed"
+      },
+      {
+        "contract": "UniswapXAggregator",
+        "function": "_getFullCredit",
+        "reason": "Slither could not generate IR (lib/v4-periphery/src/base/DeltaResolver.sol#71-76); this function was not analysed"
+      }
+    ],
+    "staticAnalysisSkipped": false,
+    "dynamicAnalysisSkipped": true,
+    "harnessStatus": "failed"
+  },
+  "permissions": {
+    "fromEngine": {
+      "beforeInitialize": true,
+      "afterInitialize": true,
+      "beforeAddLiquidity": true,
+      "afterAddLiquidity": true,
+      "beforeRemoveLiquidity": false,
+      "afterRemoveLiquidity": false,
+      "beforeSwap": true,
+      "afterSwap": true,
+      "beforeDonate": false,
+      "afterDonate": false,
+      "beforeSwapReturnDelta": false,
+      "afterSwapReturnDelta": false,
+      "afterAddLiquidityReturnDelta": false,
+      "afterRemoveLiquidityReturnDelta": false
+    }
+  },
+  "invariants": [
+    {
+      "id": "I1",
+      "name": "Conservation and solvency",
+      "status": "inconclusive",
+      "detail": "harness setUp failed: TwinPools: hooked pool would not initialise. With fee 3000: 0x1210aa130000000000000000000000007fa9385be102ac3eac297483dd6233d62b3e1496; with a dynamic fee: 0x1210aa130000000000000000000000007fa9385be102ac3eac297483dd6233d62b3e1496. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304)."
+    },
+    {
+      "id": "I2",
+      "name": "No undeclared extraction",
+      "status": "inconclusive",
+      "detail": "harness setUp failed: TwinPools: hooked pool would not initialise. With fee 3000: 0x1210aa130000000000000000000000007fa9385be102ac3eac297483dd6233d62b3e1496; with a dynamic fee: 0x1210aa130000000000000000000000007fa9385be102ac3eac297483dd6233d62b3e1496. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304)."
+    },
+    {
+      "id": "I3",
+      "name": "Exit liveness",
+      "status": "inconclusive",
+      "detail": "harness setUp failed: TwinPools: hooked pool would not initialise. With fee 3000: 0x1210aa130000000000000000000000007fa9385be102ac3eac297483dd6233d62b3e1496; with a dynamic fee: 0x1210aa130000000000000000000000007fa9385be102ac3eac297483dd6233d62b3e1496. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304)."
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "maxSeverity": "high",
+    "failOnInconclusive": false,
+    "failOnNotAnalysed": true,
+    "failures": [
+      "the differential harness failed: harness setUp failed: TwinPools: hooked pool would not initialise. With fee 3000: 0x1210aa130000000000000000000000007fa9385be102ac3eac297483dd6233d62b3e1496; with a dynamic fee: 0x1210aa13000000000000",
+      "1 finding(s) at or above high: StablePairHook (src/stable/StablePairHook.sol#25-259) declares permission `afterInitialize` (bit 12, AFTER_INITIALIZE_FLAG) but provides no working …"
+    ]
+  }
+}

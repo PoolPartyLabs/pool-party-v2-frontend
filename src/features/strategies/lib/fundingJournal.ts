@@ -1,5 +1,5 @@
 /**
- * @id PP-STR-LIB-019 (POO-1038, POO-1043)
+ * @id PP-STR-LIB-019 (POO-1038, POO-1043, POO-1093)
  * @name funding recovery journal
  * @implements-rules-version v2 (POO-1043 rules v1) · v1 (POO-1038 rules v1)
  * @hackathon POO-1022 (Universal Funding)
@@ -77,14 +77,26 @@ export const JOURNAL_MAX_RECORDS = 3;
  */
 export const LEASE_TTL_MS = 30_000;
 
-/** The operations provisioning can precede. Mirrors the six wallet flows this repo already ships. */
+/**
+ * The operations provisioning can precede: the six wallet flows this repo ships, plus `deposit`.
+ *
+ * `deposit` is the standalone `/deposit` fiat purchase (POO-1137, epic POO-1129). It is the one kind
+ * that precedes no on-chain operation at all, and it is journaled for exactly the reason the rest are:
+ * a gas-first purchase settles as ETH on Base and then has ONE leg left, the swap to USDC. Between
+ * those two moments the purchase is invisible to a balance read as a deposit, because the ETH it
+ * delivered is indistinguishable from a holding the user always had. Re-deriving the plan there does
+ * not repeat nothing, it mints a SECOND Paybis purchase (the fresh balance now clears the gas floor,
+ * so the retry buys USDC direct) and strands the first purchase's ETH. This record is what makes that
+ * window resumable instead: see `standaloneOnRampPlan.findStandaloneSwapResume`.
+ */
 export type FundingOperationKind =
   | "invest"
   | "withdraw"
   | "collect"
   | "compound"
   | "move-range"
-  | "close";
+  | "close"
+  | "deposit";
 
 /**
  * What a journaled transaction does. `approve` is journaled too: it is a broadcast like any other.
@@ -151,7 +163,7 @@ const fundingJournalSchema = z.object({
   createdAt: z.number(),
   updatedAt: z.number(),
   operation: z.object({
-    kind: z.enum(["invest", "withdraw", "collect", "compound", "move-range", "close"]),
+    kind: z.enum(["invest", "withdraw", "collect", "compound", "move-range", "close", "deposit"]),
     targetChainId: z.number().int().positive(),
     strategyId: z.string().optional(),
   }),
@@ -290,13 +302,24 @@ export function getJournal(journalId: string, now: number = Date.now()): Funding
  * A journal belonging to another address is never returned, never acted on and never modified.
  * Switching accounts mid-bridge is real user behaviour, and resuming another account's route would
  * be the worst bug this file could have.
+ *
+ * `kind` narrows to one operation. The app-wide recovery banner wants ANY route in flight and passes
+ * none; a surface that can only resume its own kind (the standalone `/deposit` rail) passes its own,
+ * so a newer journal for a different operation cannot mask the record it is looking for. Records are
+ * newest-first, so the unscoped call keeps returning exactly what it always did.
  */
 export function findResumableJournal(
   wallet: string,
   now: number = Date.now(),
+  kind?: FundingOperationKind,
 ): FundingJournal | null {
   const owner = wallet.toLowerCase();
-  return readJournals(now).find((journal) => journal.wallet === owner) ?? null;
+  return (
+    readJournals(now).find(
+      (journal) =>
+        journal.wallet === owner && (kind === undefined || journal.operation.kind === kind),
+    ) ?? null
+  );
 }
 
 /**
@@ -426,6 +449,14 @@ export interface FundingJournalRecorder {
   recordSettled(index: number): void;
   /** The leg reverted or was abandoned. Its hash is kept: it is still evidence. */
   recordFailed(index: number): void;
+  /**
+   * What this leg's record currently says, or `null` when there is none (POO-1093 [R2]).
+   *
+   * The recorder used to be write-only, which is why a retry could re-broadcast a leg that was
+   * already on chain: nothing between the click and `eth_sendTransaction` could see the hash. A
+   * caller that is about to spend money reads this first.
+   */
+  legStatus(index: number): FundingLeg | null;
 }
 
 /**
@@ -447,6 +478,11 @@ export function createJournalRecorder(
     },
     recordBroadcast(index, hash) {
       const now = clock();
+      // POO-1093 [R5]: never overwrite a hash. After a double broadcast the journal used to hold
+      // only the SECOND, so the first became invisible to the app forever: recovery reconciled the
+      // second, retired the journal, and nothing ever accounted for the first.
+      const existing = readLeg(journalId, index);
+      if (existing?.txHash) return;
       updateLeg(journalId, index, { status: "broadcast", txHash: hash, broadcastAt: now }, now);
     },
     recordSettled(index) {
@@ -456,7 +492,15 @@ export function createJournalRecorder(
     recordFailed(index) {
       updateLeg(journalId, index, { status: "failed" }, clock());
     },
+    legStatus(index) {
+      return readLeg(journalId, index);
+    },
   };
+}
+
+/** One leg's current record, or `null` when the journal or the leg is absent. */
+function readLeg(journalId: string, index: number): FundingLeg | null {
+  return getJournal(journalId)?.legs.find((leg) => leg.index === index) ?? null;
 }
 
 /**
@@ -489,15 +533,36 @@ export function createDeferredJournalRecorder(
     recordBroadcast: (index, hash) => bound()?.recordBroadcast(index, hash),
     recordSettled: (index) => bound()?.recordSettled(index),
     recordFailed: (index) => bound()?.recordFailed(index),
+    // An UNBOUND recorder reports null, which reads as "no record" and therefore as "safe to
+    // broadcast". That is correct: with no journal there is no prior broadcast to protect against,
+    // and it matches how every other method here no-ops when unbound.
+    legStatus: (index) => bound()?.legStatus(index) ?? null,
   };
 }
 
-/** Insert or replace a leg by index, preserving route order. */
+/** A leg whose money has already moved. Its record is evidence and must not be walked backwards. */
+function hasMoved(leg: FundingLeg): boolean {
+  return leg.status === "broadcast" || leg.status === "settled";
+}
+
+/**
+ * Insert or replace a leg by index, preserving route order.
+ *
+ * POO-1093 [R4]: a re-run calls `beginLeg` again, and its entry always carries `status: "planned"`,
+ * so a naive merge REGRESSED a leg that had already broadcast. That destroyed the evidence the
+ * retry guard depends on, and cost `reconcileFundingJournal` its strongest test (status plus hash)
+ * leaving only the weaker nonce comparison. The planned fields still refresh: only the fields that
+ * record what actually happened on chain are protected.
+ */
 function upsertLeg(journalId: string, leg: FundingLeg, now: number): void {
   writeJournal(journalId, now, (journal) => {
     const legs = journal.legs.some((existing) => existing.index === leg.index)
       ? journal.legs.map((existing) =>
-          existing.index === leg.index ? { ...existing, ...leg } : existing,
+          existing.index === leg.index
+            ? hasMoved(existing)
+              ? { ...existing, ...leg, status: existing.status, txHash: existing.txHash }
+              : { ...existing, ...leg }
+            : existing,
         )
       : [...journal.legs, leg].sort((a, b) => a.index - b.index);
     return { ...journal, legs };

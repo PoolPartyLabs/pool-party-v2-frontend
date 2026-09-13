@@ -1,0 +1,22 @@
+  hookrisk: slither src/CorkHook.sol:CorkHook
+  hookrisk: 6 finding(s)
+  harness: skipped — CorkHook's constructor takes 3 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported — see docs/INVARIANTS.md.
+
+MEDIUM risk  10/33  (undetermined: up to 22/33)
+
+  findings    4 high, 1 info
+  ✓ hookrisk   ok
+  ! 4 dimension(s) unmeasured: the tier is between Medium Risk and High Risk. Unmeasured dimensions are excluded from the total, never counted as zero.
+  ! trigger 'holds-liquidity' could not be evaluated: dimension 'externalLiquidityExposure' is unmeasured
+  ! trigger 'external-dependencies' could not be evaluated: dimension 'externalDependencies' is unmeasured
+  ! trigger 'autonomous' could not be evaluated: dimension 'autonomousParameterUpdates' is unmeasured
+  ! trigger 'upgradeable' could not be evaluated: dimension 'upgradeability' is unmeasured
+
+  /private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/cork-hook/out/HOOK_RISK.md
+  /private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/cork-hook/out/hook-risk.json
+  /private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/cork-hook/out/hookrisk.sarif
+
+  gate failed
+    - tier is undetermined between Medium Risk and High Risk; the upper bound exceeds the configured maximum of medium
+    - 4 finding(s) at or above high: CorkHook.beforeAddLiquidity(address,PoolKey,IPoolManager.ModifyLiquidityParams,bytes) (src/CorkHook.sol#88-95) is an IHooks callback (0x259982e5) that never ...; CorkHook.beforeInitialize(address,PoolKey,uint160) (src/CorkHook.sol#97-124) is an IHooks callback (0xdc98354e) that never compares msg.sender against poolMa...; CorkHook.beforeSwap(address,PoolKey,IPoolManager.SwapParams,bytes) (src/CorkHook.sol#365-378) is an IHooks callback (0x575e24b4) that never compares msg.send...
+

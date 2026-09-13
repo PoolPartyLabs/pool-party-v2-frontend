@@ -7,8 +7,9 @@
  * Resolves a {@link ProvisioningPlan} through the ONE seam that decides mock vs real:
  * {@link computePlan} (`src/lib/provisioning/planner.ts`).
  *
- * Why this hook exists at all. Both provisioning surfaces (PP-CORE-CMP-046 `ProvisioningPanel` and
- * PP-CORE-MOD-011 `ProvisioningWizardModal`) used to call `mockComputePlan` DIRECTLY inside a
+ * Why this hook exists at all. Both provisioning surfaces of the time (PP-CORE-CMP-046
+ * `ProvisioningPanel` and the since-removed PP-CORE-MOD-011 wizard) used to call
+ * `mockComputePlan` DIRECTLY inside a
  * synchronous `useMemo`, bypassing the seam. That meant the real planner could be fully wired and
  * still never be called: flipping `NEXT_PUBLIC_MOCK_MODE=false` changed nothing. Two live PP-FIXMEs
  * recorded it (POO-432 on the panel, POO-418 on the wizard); this hook deletes both.

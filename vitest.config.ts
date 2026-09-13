@@ -9,12 +9,20 @@ export default defineConfig({
       // server-only is a Next.js build-time guard that throws on client import.
       // In Vitest there is no client/server boundary, so we alias it to a noop.
       "server-only": new URL("./tests/__mocks__/server-only.ts", import.meta.url).pathname,
+      // The ported on-ramp and observability modules reach the Sentry SDK for `trace_id` and
+      // breadcrumbs. The SDK is a plain dependency here (never initialised in this public build),
+      // and the test graph aliases it to a recording stub so component tests need no real SDK.
+      "@sentry/nextjs": new URL("./tests/__mocks__/sentry-nextjs.ts", import.meta.url).pathname,
     },
   },
   test: {
     environment: "jsdom",
     globals: true,
     setupFiles: ["./tests/setup.ts"],
+    // The ported suites (265 files) were written against a 30s budget; the 5s default measures
+    // machine load, not hangs.
+    hookTimeout: 30_000,
+    testTimeout: 30_000,
     include: ["src/**/*.{test,spec}.{ts,tsx}", "tests/**/*.{test,spec}.{ts,tsx}"],
     server: {
       deps: {

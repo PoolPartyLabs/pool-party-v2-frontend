@@ -1,0 +1,19 @@
+# hookrisk Solidity dependency lock
+#
+# Format: <dir> <url> <commit>
+#
+# We pin commits rather than use git submodules on purpose. The harness is one
+# surface of a four-surface monorepo that also has to be publishable standalone,
+# and submodules make `git subtree split` produce a repository whose .gitmodules
+# paths no longer resolve. A flat lockfile is reproducible, reviewable in a diff,
+# and lets `make deps` work identically inside and outside CI.
+#
+# Refresh with `make deps-update`, which rewrites the commit column from the
+# `ref` comment beside each entry and leaves a diff for review.
+
+forge-std              https://github.com/foundry-rs/forge-std.git              6e8c4a92c9a8b31c1b0f0c39296d1fa4695c7df8  # master 2026-07
+v4-core                https://github.com/Uniswap/v4-core.git                   46c6834698c48bc4a463a86d8420f4eb1d7f3b75  # main 2026-07
+v4-periphery           https://github.com/Uniswap/v4-periphery.git              3245c3cb99c48fa1dc2459c3b60abc37d4294aba  # main 2026-07, @uniswap/v4-periphery 1.0.4
+uniswap-hooks          https://github.com/OpenZeppelin/uniswap-hooks.git        26dc8e53f812a1ca390d470342adb6cd8c3286ad  # master 2026-07, @openzeppelin/uniswap-hooks 1.2.2
+openzeppelin-contracts https://github.com/OpenZeppelin/openzeppelin-contracts.git c64a1edb67b6e3f4a15cca8909c9482ad33a02b0  # v5.4.0
+solmate                https://github.com/transmissions11/solmate.git           eaa7041378f9a6c12f943de08a6c41b31a9870fc  # v7

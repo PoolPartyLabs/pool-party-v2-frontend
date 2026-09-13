@@ -22,8 +22,8 @@ PP-[AREA]-[TYPE]-[NNN]
 | Component | Values | Example |
 |-----------|--------|---------|
 | Prefix | `PP` (Pool Party) | `PP` |
-| AREA | CORE, LAY, ONB, AUTH, DASH, PORT, STR, SAV, TOK, PRED, PERP, CARD, DEP, REW, MGR, PROF, NOTI, ACT, ERR | `DASH` |
-| TYPE | SCR, MOD, CMP, LAY, FLW, HOK, CTX, STO, LIB, MCK, STY, I18N | `SCR` |
+| AREA | CORE, LAY, ONB, AUTH, DASH, PORT, STR, SAV, TOK, PRED, PERP, CARD, DEP, REW, MGR, PROF, NOTI, ACT, ERR, ADM, TOOLS | `DASH` |
+| TYPE | SCR, MOD, CMP, DOC, LAY, FLW, HOK, CTX, STO, LIB, API, MCK, STY, I18N | `SCR` |
 | NNN | Sequential, zero-padded | `001` |
 
 Final example: `PP-DASH-SCR-001`.
@@ -54,6 +54,7 @@ Taxonomy reflects the actual Pool Party V2 product surfaces (managed-investing f
 | ACT | Activity / transaction history |
 | ERR | Error pages (404, 500, etc.) |
 | ADM | Internal Admin / Ops Console |
+| TOOLS | Developer tooling shipped inside the app (today: the Uniswap v4 hook risk scan at `/tools`) |
 
 ### Types
 | Code | Meaning | Example |
@@ -68,6 +69,7 @@ Taxonomy reflects the actual Pool Party V2 product surfaces (managed-investing f
 | CTX | React context | `PP-AUTH-CTX-001` WalletContext |
 | STO | Zustand store | `PP-AUTH-STO-001` walletStore |
 | LIB | Lib/utility | `PP-CORE-LIB-003` formatCurrency |
+| API | Next route handler (`src/app/api/**/route.ts`). Distinct from LIB: it is an HTTP contract, so its shape is a public surface someone else can call | `PP-TOOLS-API-001` hookrisk scan endpoint |
 | MCK | Mock data/service | `PP-CORE-MCK-001` simulation utils |
 | STY | Style token | `PP-CORE-STY-001` design tokens |
 | I18N | Translation namespace | `PP-CORE-I18N-001` common translations |

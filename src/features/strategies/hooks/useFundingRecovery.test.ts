@@ -29,7 +29,7 @@ import {
   updateLeg,
 } from "../lib/fundingJournal";
 import { JOURNAL_POLL_CEILING_MS } from "../lib/reconcileFundingJournal";
-import { useFundingRecovery } from "./useFundingRecovery";
+import { requestFundingRecoveryRecheck, useFundingRecovery } from "./useFundingRecovery";
 
 const WALLET = "0xc3673adc0000000000000000000000000000beef";
 const OTHER_WALLET = "0xdeadbeef0000000000000000000000000000cafe";
@@ -250,6 +250,34 @@ describe("[R2] the §3.5 decision table has a production caller", () => {
 
     // Every leg settled, so there is nothing in flight left to recover and the record is gone (§3.7).
     await waitFor(() => expect(result.current.journal).toBeNull());
+  });
+});
+
+/**
+ * POO-1507 [D5]: `Stop anyway` on the mid-run confirmation closes the panel and wants the app-wide
+ * banner to reflect the interruption immediately, not on the next load. The banner's own hook,
+ * `useFundingRecovery`, is a SINGLE instance mounted once in `AppShell`, with no ref the panel could
+ * hold, so the signal travels as a window event — the same decoupling `pp:consent` already uses in
+ * `src/lib/analytics/consent.ts` for an identical shape (one writer far from the one reader).
+ */
+describe("POO-1507 [D5]: an app-wide recheck signal, for a stop mid-run", () => {
+  it("re-reads the journal when the signal fires, without waiting for a recheck() call", async () => {
+    killedMidBridge();
+    mocks.receipts[BRIDGE_HASH] = { status: "success" };
+    mocks.balances[`${ARBITRUM}:${USDC_ARBITRUM}`] = BigInt("1000000");
+
+    const { result } = renderHook(() => useFundingRecovery());
+    await waitFor(() => expect(result.current.reconciliation?.action).toBe("wait"));
+
+    // The funds arrive, and the panel (not this hook) hears that the user stopped the run.
+    mocks.balances[`${ARBITRUM}:${USDC_ARBITRUM}`] = BigInt("3997000000");
+    act(() => requestFundingRecoveryRecheck());
+
+    await waitFor(() => expect(result.current.journal).toBeNull());
+  });
+
+  it("does nothing when no instance is mounted to hear it", () => {
+    expect(() => requestFundingRecoveryRecheck()).not.toThrow();
   });
 });
 
