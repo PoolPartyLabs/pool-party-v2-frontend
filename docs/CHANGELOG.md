@@ -1,5 +1,16 @@
 # Documentation CHANGELOG
 
+## v0.16, 2026-09-13
+
+### Hackathon track 3: the Privy on-ramp ported to the public repository, plus hookrisk
+
+- **Code port, not a tree swap.** The fiat on-ramp lineage (epic POO-1793 over POO-1129) is copied from the private repository onto the public July baseline as new commits: `src/lib/onramp/` (61 files), the `/deposit` surface, the provisioning `buy` leg and `PrivyBuyStep`, seven drifted shared modules and the tests that travel with them (~265 files). `ProvisioningWizardModal` is deleted as in the private main. Continuity record: `docs/_hackathon_privy/03_PRE_EXISTING_VS_NEW.md`.
+- **Flags.** `fiatOnRamp` and `privyOnRamp` ship **on** in this repository (registry defaults, `FEATURE_FLAGS.md` rows, `.env.example`); `onRampCapture` and `robinhoodChain` registered off. The test environment pins the two rail flags off in `tests/setup.ts` so the ported suites run against the baseline they were written for; `registry.test.ts` asserts the shipped defaults.
+- **Dependencies.** `@privy-io/react-auth` 3.42.0, `@privy-io/wagmi` 4.0.17, `@sentry/nextjs` 10.73.0 as a library (never initialised; aliased to a stub in vitest).
+- **Docs synced.** 62 artifact rows in `IDS_REGISTRY.md` (Totals recomputed), 14 event rows in `ANALYTICS_EVENTS.md`, a Privy on-ramp section and a fresh marker census in `INTEGRATION_POINTS.md`, `ARCHITECTURE_STATE.md` rows, the `_hackathon/03_PRE_EXISTING_VS_NEW.md` continuity table (wizard modal moved to Deleted, two rows added, file count recomputed).
+- **Copy.** Every key the ported code uses in all 11 locales; the `deposit` namespace and the `strategies.provisioning` subtree follow the private values. `pt-PT` is not configured here.
+- **hookrisk.** The Uniswap v4 hook risk scanner developed during the hackathon lands at `hookrisk/` as a snapshot (`d256e91a`) with a provenance banner, excluded from biome, tsc and the Docker context. README gains the track 3 and hookrisk sections; `docs/_hackathon_privy/` holds the placeholder narrative, goal, flow, runbook and continuity record.
+
 ## v0.15, 2026-07-01
 
 ### No-em-dash standing copy rule + sweep (POO-357)
