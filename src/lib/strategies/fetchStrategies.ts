@@ -4,7 +4,7 @@
  * @implements-rules-version v1
  *
  * Server-side read of the strategy catalog from pool-party-api. `GET /api/v1/pools?network={n}`
- * is per-network, so the supported chains are fetched in parallel and merged. One network failing
+ * is per-network, so the ACTIVE chains are fetched in parallel and merged. One network failing
  * yields a partial catalog; if ALL fail, the error propagates (page error boundary).
  *
  * The catalog is wallet-independent and slow-moving, and every authenticated page renders it under
@@ -26,13 +26,25 @@ import "server-only";
 
 import { apiFetch } from "@/lib/api/client";
 import { DEFAULT_PAGE_LIMIT, drainPages } from "@/lib/api/drainPages";
-import { supportedChainMetas } from "@/lib/chains/config";
+import { activeChainMetas } from "@/lib/chains/config";
+import { isFeatureEnabled } from "@/lib/features";
 import type { Strategy } from "@/lib/schemas";
 import { mapStrategy } from "./mapStrategy";
 import { apiPoolsResponseSchema } from "./poolsSchema";
 
-/** The API network slugs to query, derived from the shared chain config (single source). */
-const API_NETWORKS = supportedChainMetas.map((meta) => meta.apiNetworkId);
+/**
+ * The API network slugs to query, derived from the shared chain config (single source) and filtered
+ * by the chain gates (POO-1776 [R1]).
+ *
+ * `isFeatureEnabled` rather than a passed-in reader: this is a `server-only` module, so there is no
+ * `useFeatureFlags()` to hand it and the Dev menu's client-side QA overrides could not reach it
+ * anyway. The catalog an environment serves is an env decision, and `NEXT_PUBLIC_*` is baked at
+ * build time, so the answer is fixed for the image. Read at CALL time all the same: a module-level
+ * const would freeze it at import and make the gate untestable without a module reset.
+ */
+function activeNetworks(): string[] {
+  return activeChainMetas(isFeatureEnabled).map((meta) => meta.apiNetworkId);
+}
 
 /**
  * Data-cache window (seconds) for the catalog. TVL/APY drift slowly, so a short window collapses
@@ -75,11 +87,12 @@ async function fetchNetworkStrategies(network: string): Promise<NetworkResult> {
 }
 
 /**
- * Fetch the full strategy catalog across every supported network.
+ * Fetch the full strategy catalog across every ACTIVE network (POO-1776 [R1]: a flag-gated chain is
+ * not queried while its flag is off).
  * Partial failures are tolerated; a total failure rethrows the first error.
  */
 export async function fetchStrategies(): Promise<Strategy[]> {
-  const results = await Promise.all(API_NETWORKS.map(fetchNetworkStrategies));
+  const results = await Promise.all(activeNetworks().map(fetchNetworkStrategies));
 
   const ok = results.filter((r): r is { ok: true; strategies: Strategy[] } => r.ok);
 

@@ -52,4 +52,33 @@ describe("buildTxFailure", () => {
       message: "plain string failure",
     });
   });
+
+  /**
+   * @rule POO-1251 R1 — the correlation id has to cross the RSC boundary AS DATA for the same reason
+   * the code does. `ApiError` already carried it and this mapper dropped it, which is why the error
+   * dialog could never show a reference: the id existed server-side for every failed build and
+   * nothing carried it the last hop.
+   */
+  it("carries an ApiError's correlation id through to the failure", () => {
+    const failure = buildTxFailure(
+      new ApiError(500, "SLIPPAGE_EXCEEDED", "slippage", "80a8cbb7d98b4bc9ba2f7c6c5e78c17d"),
+    );
+    expect(failure.correlationId).toBe("80a8cbb7d98b4bc9ba2f7c6c5e78c17d");
+  });
+
+  it("carries an ApiParseError's correlation id through to the failure", () => {
+    const failure = buildTxFailure(
+      new ApiParseError("drift", [], "80a8cbb7d98b4bc9ba2f7c6c5e78c17d"),
+    );
+    expect(failure.correlationId).toBe("80a8cbb7d98b4bc9ba2f7c6c5e78c17d");
+  });
+
+  // A call that never reached the backend has no id, and the key is ABSENT rather than undefined, so
+  // a consumer's `?? fallback` fires and the dialog falls back to the browser's own trace id.
+  it("omits the correlation id when the failure never reached the backend", () => {
+    expect("correlationId" in buildTxFailure(new ApiError(0, "SYSTEM_NETWORK_ERROR", "down"))).toBe(
+      false,
+    );
+    expect("correlationId" in buildTxFailure(new Error("boom"))).toBe(false);
+  });
 });

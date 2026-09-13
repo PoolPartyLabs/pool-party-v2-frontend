@@ -4,10 +4,21 @@
  * @implements-rules-version v1
  *
  * [R1] per-network reads merged. [R6] getStrategyById. [R7] partial vs total failure.
+ * POO-1776 [R1]: the fan-out enumerates the ACTIVE chains, so a flag-gated chain is never queried
+ * while its flag is off.
  */
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/lib/api/client";
+import { activeChainMetas, ROBINHOOD_CHAIN_ID, supportedChainMetas } from "@/lib/chains/config";
+import { isFeatureEnabled } from "@/lib/features";
 import type { ApiPool } from "./poolsSchema";
+
+/** The networks this environment actually fans out to (the gated chains are off by default). */
+const activeNetworks = () => activeChainMetas(isFeatureEnabled).map((meta) => meta.apiNetworkId);
+
+/** The API slug of the flag-gated alpha chain, read from the config rather than retyped. */
+const GATED_NETWORK = supportedChainMetas.find((meta) => meta.chain.id === ROBINHOOD_CHAIN_ID)
+  ?.apiNetworkId as string;
 
 const apiFetch = vi.fn();
 vi.mock("@/lib/api/client", async (importOriginal) => {
@@ -41,24 +52,53 @@ const response = (...pools: ApiPool[]) => ({ totalItems: pools.length, pools });
 
 describe("fetchStrategies", () => {
   beforeEach(() => apiFetch.mockReset());
+  afterEach(() => vi.unstubAllEnvs());
 
   it("[R1] queries each supported network (page 0) and merges the mapped pools", async () => {
-    // A short first page (< limit) is the last page, so each network is one request.
-    apiFetch
-      .mockResolvedValueOnce(response(pool("0xarb")))
-      .mockResolvedValueOnce(response(pool("0xbase")))
-      .mockResolvedValueOnce(response(pool("0xpoly")));
+    // A short first page (< limit) is the last page, so each network is one request. Both the
+    // responses and the expectation derive from `activeChainMetas` rather than a literal triple
+    // (POO-1776 [R2]): a hand-listed set turns "the new chain is never queried" into a green test.
+    apiFetch.mockImplementation(async (path?: string) => {
+      const network = new URLSearchParams((path ?? "").split("?")[1] ?? "").get("network") ?? "";
+      return response(pool(`0x${network}`, { network }));
+    });
 
     const { fetchStrategies } = await importFetch();
     const strategies = await fetchStrategies();
 
     const paths = apiFetch.mock.calls.map((c) => c[0]);
-    expect(paths).toEqual([
-      "pools?network=arbitrum&page=0&limit=100",
-      "pools?network=base&page=0&limit=100",
-      "pools?network=polygon&page=0&limit=100",
-    ]);
-    expect(strategies.map((s) => s.id)).toEqual(["0xarb", "0xbase", "0xpoly"]);
+    expect(paths).toEqual(activeNetworks().map((n) => `pools?network=${n}&page=0&limit=100`));
+    expect(strategies.map((s) => s.id)).toEqual(activeNetworks().map((n) => `0x${n}`));
+  });
+
+  /**
+   * @rule POO-1776 [R1] — the flag gates the DATA FAN-OUT, not only the network picker. An
+   * environment with the alpha chain switched off must not ask the API for its catalog at all: the
+   * prod backend does not know the slug and answers 400, so every page load would carry a failed
+   * upstream call per user for a chain nothing can reach anyway.
+   */
+  it("[R1] never queries a flag-gated network while its flag is off", async () => {
+    apiFetch.mockResolvedValue(response());
+
+    const { fetchStrategies } = await importFetch();
+    await fetchStrategies();
+
+    const paths = apiFetch.mock.calls.map((c) => String(c[0]));
+    expect(paths.some((path) => path.includes(`network=${GATED_NETWORK}`))).toBe(false);
+    expect(paths).toHaveLength(activeNetworks().length);
+  });
+
+  // @rule POO-1776 [R1] — flag on, the gated chain is a full participant in the catalog read.
+  it("[R1] queries a flag-gated network once its flag is on", async () => {
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_ROBINHOOD_CHAIN", "on");
+    apiFetch.mockResolvedValue(response());
+
+    const { fetchStrategies } = await importFetch();
+    await fetchStrategies();
+
+    const paths = apiFetch.mock.calls.map((c) => String(c[0]));
+    expect(paths).toContain(`pools?network=${GATED_NETWORK}&page=0&limit=100`);
+    expect(paths).toHaveLength(supportedChainMetas.length);
   });
 
   it("[R1][R2] drains a 250-pool network across 3 pages (>100 rows are NOT truncated)", async () => {
@@ -134,10 +174,12 @@ describe("fetchStrategies", () => {
   });
 
   it("[R7] rethrows when every network fails", async () => {
+    // One rejection per ACTIVE network, counted from the chain config: a hand-written triple
+    // silently stopped covering "all failed" the moment a fourth chain arrived (POO-1776 [R2]).
     apiFetch.mockResolvedValue(undefined);
-    apiFetch.mockRejectedValueOnce(new ApiError(503, "SYSTEM_NOT_CONFIGURED", "arb down"));
-    apiFetch.mockRejectedValueOnce(new ApiError(503, "SYSTEM_NOT_CONFIGURED", "base down"));
-    apiFetch.mockRejectedValueOnce(new ApiError(503, "SYSTEM_NOT_CONFIGURED", "poly down"));
+    for (const network of activeNetworks()) {
+      apiFetch.mockRejectedValueOnce(new ApiError(503, "SYSTEM_NOT_CONFIGURED", `${network} down`));
+    }
 
     const { fetchStrategies } = await importFetch();
     let caught: unknown;

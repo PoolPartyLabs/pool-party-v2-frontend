@@ -1,7 +1,7 @@
 /**
- * @id PP-CORE (POO-206)
+ * @id PP-CORE (POO-206; POO-1551 revision)
  * @name Server-side API client
- * @implements-rules-version v4
+ * @implements-rules-version v6 (POO-1551 rules v2) · v5
  *
  * Typed fetch wrapper for pool-party-api. Server-only: used by Server Actions
  * and Server Components. The browser never imports this module.
@@ -33,12 +33,44 @@
  * Nest `response` data second (old contract), status-class fallback last (codeless 429 becomes
  * SYSTEM_RATE_LIMITED). Works against BOTH old and new API shapes.
  *
+ * v5 (observability, POO-243): this function is the chokepoint every backend call in the app
+ * inherits from, so the trace contract and the contract-drift signal both belong here and nowhere
+ * else. Two additions:
+ *
+ * [R14] Trace context OUT. Every request carries a W3C `traceparent` (plus `x-request-id`, except on
+ * a data-cached GET — see `buildTraceHeaders` for why that one exception is load-bearing), so one
+ * page render is ONE trace across all three services. The backend's echoed `x-request-id` comes back
+ * IN and is attached to every ApiError / ApiParseError, so an error reaching a boundary can be tied
+ * to the upstream request that caused it.
+ *
+ * [R15] Zod failures are LOGGED before they are thrown. Until now `schema.safeParse` failed and
+ * `result.error.issues` — the only artefact naming WHICH field drifted — was discarded on the way to
+ * the throw. In a Server Component that throw is a 500 for the whole route segment, so the known
+ * dashboard-outage mode was detected by a user complaining and then diagnosed with no evidence at
+ * all. The issues now go out as one structured line with the endpoint, status and request id.
+ *
+ * v6 (POO-1551 rules v2): [R10]'s retry gate was `method === "GET"`, full stop. The rationale is
+ * sound for a write — replaying a deposit or a withdrawal is unsafe — but it also covered a POST
+ * that is a READ dressed as a write. `POST auth/nonce` mints a single-use nonce with no side effect
+ * worth protecting, and it is the one call standing between a user and their session, so a ~34s
+ * pp_api redeploy window (migrations run before the app binds its port) turned a transient blip
+ * into a hard sign-in failure while a strategy list got three attempts. [R16] adds the per-call
+ * `safeToReplay` opt-in: it widens WHICH methods may retry and nothing else — the attempt cap, the
+ * wall-clock budget and the transient-status set are untouched, and an unmarked write keeps exactly
+ * the protection it has today.
+ *
  * PP-INTEGRATION-POINT: all reads/writes to pool-party-api go through apiFetch().
  */
 import "server-only";
 
 import type { ZodType } from "zod";
 import { isLegacyNetwork } from "@/lib/chains/config";
+import { logError, summarizeZodIssues } from "@/lib/observability/logger";
+import {
+  buildTraceHeaders,
+  getRequestTraceId,
+  readResponseRequestId,
+} from "@/lib/observability/trace";
 import { ApiError, ApiParseError, parseApiErrorBody } from "./errors";
 
 export { ApiError, ApiParseError };
@@ -82,6 +114,27 @@ interface ApiFetchOptions<T = unknown> {
    * instead of waiting out `revalidate`. Ignored without `revalidate` / for non-GET.
    */
   tags?: string[];
+  /**
+   * [R16] (POO-1551) Opt this non-GET call into the [R10] transient retry, because replaying it
+   * causes no harm.
+   *
+   * `safeToReplay`, not `idempotent`: the two are different properties and only this one is the
+   * precondition for retrying. `POST auth/nonce` is NOT idempotent — every call mints a different
+   * nonce — yet it is perfectly safe to replay, because the extra nonce is inert and the handshake
+   * proceeds with whichever response actually came back. Naming the flag `idempotent` would ask
+   * each call site to certify something untrue, and the reviewer's question here is precisely
+   * "what happens if this runs twice".
+   *
+   * Deliberately opt-in and one-directional: it widens WHICH methods may retry and nothing else.
+   * The attempt cap ({@link MAX_RETRIES}), the wall-clock budget ({@link MAX_TOTAL_MS}) and
+   * {@link RETRYABLE_STATUS} all still apply, and a write that does not name itself keeps the
+   * GET-only protection unchanged — replaying a deposit or a withdrawal must stay impossible by
+   * default rather than by remembering to pass `false`.
+   *
+   * The bar for setting it: the request either has no side effect, or a repeat is provably inert.
+   * Anything that moves money, signs, or mutates a position does not qualify.
+   */
+  safeToReplay?: boolean;
 }
 
 /** A fetch init that also accepts Next's `next` data-cache options. */
@@ -178,6 +231,7 @@ export async function apiFetch<T = unknown>(
     unwrapData = true,
     revalidate,
     tags,
+    safeToReplay = false,
   } = options;
 
   // Legacy networks (Arbitrum / Base) hit the legacy backend when PP_API_URL_LEGACY is configured;
@@ -195,12 +249,24 @@ export async function apiFetch<T = unknown>(
   // [R1] Construct URL: {PP_API_URL}/api/{apiVersion}/{path} (apiVersion defaults to v1).
   const url = `${apiUrl}/api/${apiVersion}/${path}`;
 
-  // [R2] Build headers: x-api-key + content-type for bodies + custom headers.
+  // [R9] Opt-in data cache, GET only. Writes and uncached reads keep Next's default (no-store).
+  // Resolved BEFORE the headers because it decides which trace headers are safe to send: Next keys a
+  // cached fetch on its headers, so a per-request `x-request-id` would turn every cached GET into a
+  // permanent MISS and silently undo [R9] itself.
+  const dataCached = method === "GET" && revalidate !== undefined;
+
+  // [R2] Build headers: x-api-key + content-type for bodies + [R14] trace context + custom headers.
   const headers = new Headers();
   headers.set("x-api-key", apiKey);
   if (body !== undefined) {
     headers.set("content-type", "application/json");
   }
+  // [R14] One trace-id for the whole render, a fresh span-id per call.
+  const traceId = getRequestTraceId();
+  for (const [name, value] of Object.entries(buildTraceHeaders(traceId, { dataCached }))) {
+    headers.set(name, value);
+  }
+  // Caller headers last, so an explicit override still wins over anything set above.
   if (extraHeaders) {
     for (const [name, value] of Object.entries(extraHeaders)) {
       headers.set(name, value);
@@ -212,13 +278,14 @@ export async function apiFetch<T = unknown>(
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   };
-  // [R9] Opt-in data cache, GET only. Writes and uncached reads keep Next's default (no-store).
-  if (method === "GET" && revalidate !== undefined) {
+  if (dataCached && revalidate !== undefined) {
     init.next = tags && tags.length > 0 ? { revalidate, tags } : { revalidate };
   }
 
   // [R10] Retries are GET-only: replaying a non-idempotent write (deposit, withdraw) is unsafe.
-  const canRetry = method === "GET";
+  // [R16] (POO-1551) …unless the call site declares this particular request safe to replay. See
+  // `safeToReplay`: an opt-in widening of the METHOD gate only, never of the cap or the budget.
+  const canRetry = method === "GET" || safeToReplay;
 
   // [R12] Bound the total wall-clock across attempts so retries never push past the CDN/ALB 504
   // window. `canRetryNow` gates every retry decision on both the attempt cap and this budget.
@@ -288,8 +355,14 @@ export async function apiFetch<T = unknown>(
       } catch {
         // Non-JSON error body (e.g. HTML): fall through to the status-class mapping.
       }
-      const { code, message } = parseApiErrorBody(response.status, errorBody);
-      throw new ApiError(response.status, code, message);
+      const { code, message, correlationId } = parseApiErrorBody(response.status, errorBody);
+      // [R14] Prefer the backend's own correlationId; fall back to the echoed transport header.
+      throw new ApiError(
+        response.status,
+        code,
+        message,
+        correlationId ?? readResponseRequestId(response.headers),
+      );
     }
 
     // [R5] Parse success body.
@@ -302,9 +375,22 @@ export async function apiFetch<T = unknown>(
     if (schema) {
       const result = schema.safeParse(payload);
       if (!result.success) {
+        const requestId = readResponseRequestId(response.headers);
+        // [R15] Log BEFORE throwing. The throw becomes a 500 for the whole route segment in a
+        // Server Component, and the issues are the only artefact that names the drifted field.
+        logError("api.response_parse_failed", {
+          traceId,
+          requestId,
+          endpoint: `${method} /api/${apiVersion}/${path}`,
+          status: response.status,
+          code: "SYSTEM_PARSE_ERROR",
+          issueCount: result.error.issues.length,
+          issues: summarizeZodIssues(result.error.issues),
+        });
         throw new ApiParseError(
-          `API response validation failed for ${method} /api/v1/${path}`,
+          `API response validation failed for ${method} /api/${apiVersion}/${path}`,
           result.error.issues,
+          requestId,
         );
       }
       return result.data;

@@ -10,9 +10,19 @@
  * acknowledgment is checked; [R4] absent impact = no gate; [R5/R5v2] the acknowledgment resets when
  * the gate deactivates (impact re-quotes below threshold, the Review is left, or the impact
  * worsens more than 1pp past the acknowledged figure).
+ *
+ * POO-1172 adds the gate's own instrumentation to the same hook, and the second describe below locks
+ * it: `tx_impact_gate_blocked` fires from DERIVED state once per engagement (the Review re-quotes
+ * every 5s, so an unlatched emitter would report the same blocked quote twelve times a minute) and
+ * re-arms only after the gate has actually RELEASED; `tx_impact_gate_acknowledged` fires on the
+ * user's override and on nothing else, because the number that matters is the override RATE and
+ * both a toggle-off and the effect's programmatic reset would corrupt it.
+ *
+ * Assertions read `window.dataLayer` rather than a mocked `track`, so what is asserted is what GTM
+ * would really receive, sanitizer included (the convention of ProvisioningPanel.analytics.test.tsx).
  */
 import { act } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fireEvent,
   renderWithProviders,
@@ -22,11 +32,20 @@ import {
   CATASTROPHIC_PRICE_IMPACT_PCT,
   isCatastrophicPriceImpact,
   PriceImpactGate,
+  type PriceImpactGateAnalytics,
   usePriceImpactGate,
 } from "./PriceImpactGate";
 
-function Harness({ pct, active = true }: { pct?: number; active?: boolean }) {
-  const gate = usePriceImpactGate(pct, active);
+function Harness({
+  pct,
+  active = true,
+  analytics,
+}: {
+  pct?: number;
+  active?: boolean;
+  analytics?: PriceImpactGateAnalytics;
+}) {
+  const gate = usePriceImpactGate(pct, active, analytics);
   return (
     <div>
       <PriceImpactGate
@@ -40,6 +59,18 @@ function Harness({ pct, active = true }: { pct?: number; active?: boolean }) {
     </div>
   );
 }
+
+/** Every gate event GTM would have received so far, in emission order. */
+function gateEvents(name: "tx_impact_gate_blocked" | "tx_impact_gate_acknowledged") {
+  return ((window.dataLayer ?? []) as Record<string, unknown>[]).filter(
+    (entry) => entry.event === name,
+  );
+}
+
+/** Fresh dataLayer per test: the counts below are the whole point, so they cannot carry over. */
+beforeEach(() => {
+  window.dataLayer = [];
+});
 
 describe("isCatastrophicPriceImpact (POO-1011 R1)", () => {
   it("is false below the threshold, true at and above it, false for missing data (R4)", () => {
@@ -128,5 +159,129 @@ describe("PriceImpactGate (POO-1011)", () => {
     rerender(<Harness pct={15.8} />);
     expect(screen.getByRole("checkbox")).toBeChecked();
     expect(screen.getByRole("button", { name: "CTA" })).toBeEnabled();
+  });
+});
+
+describe("usePriceImpactGate — instrumentation (POO-1172)", () => {
+  const ctx: PriceImpactGateAnalytics = { flow: "invest", strategyId: "str-usdc-eth-1" };
+
+  it("[P0] reports the block ONCE per engagement, with the impact pct that caused it", () => {
+    const { rerender } = renderWithProviders(<Harness pct={15} analytics={ctx} />);
+    expect(gateEvents("tx_impact_gate_blocked")).toHaveLength(1);
+    expect(gateEvents("tx_impact_gate_blocked")[0]).toMatchObject({
+      event: "tx_impact_gate_blocked",
+      flow: "invest",
+      strategy_id: "str-usdc-eth-1",
+      metric_name: "price_impact_pct",
+      metric_value: 15,
+    });
+
+    // The Review re-quotes every 5s. Same figure, then worse ones: the gate never released, so this
+    // is still ONE engagement. An unlatched emitter would turn a single blocked user into a series.
+    rerender(<Harness pct={15} analytics={ctx} />);
+    rerender(<Harness pct={41.7} analytics={ctx} />);
+    rerender(<Harness pct={92.41} analytics={ctx} />);
+    expect(screen.getByRole("button", { name: "CTA" })).toBeDisabled();
+    expect(gateEvents("tx_impact_gate_blocked")).toHaveLength(1);
+  });
+
+  it("[P0] re-arms after the gate RELEASES below the threshold, and reports the new figure", () => {
+    const { rerender } = renderWithProviders(<Harness pct={15} analytics={ctx} />);
+    expect(gateEvents("tx_impact_gate_blocked")).toHaveLength(1);
+
+    // Routing improves: the gate releases entirely (no alert, CTA enabled). Still one event.
+    rerender(<Harness pct={1.2} analytics={ctx} />);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(gateEvents("tx_impact_gate_blocked")).toHaveLength(1);
+
+    // It degrades again: a genuinely NEW engagement, reported at its own pct.
+    rerender(<Harness pct={92.41} analytics={ctx} />);
+    const blocked = gateEvents("tx_impact_gate_blocked");
+    expect(blocked).toHaveLength(2);
+    expect(blocked[1]).toMatchObject({ metric_value: 92.41 });
+  });
+
+  it("[P0] re-arms when the acknowledgment releases the gate and a worsening re-quote re-blocks it", () => {
+    const { rerender } = renderWithProviders(<Harness pct={15} analytics={ctx} />);
+    expect(gateEvents("tx_impact_gate_blocked")).toHaveLength(1);
+
+    // Acknowledging releases the CTA: the gate is no longer blocking.
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(screen.getByRole("button", { name: "CTA" })).toBeEnabled();
+    expect(gateEvents("tx_impact_gate_blocked")).toHaveLength(1);
+
+    // [R5v2] the re-quote invalidates that consent and blocks again: a second block to report.
+    rerender(<Harness pct={92.41} analytics={ctx} />);
+    expect(screen.getByRole("button", { name: "CTA" })).toBeDisabled();
+    const blocked = gateEvents("tx_impact_gate_blocked");
+    expect(blocked).toHaveLength(2);
+    expect(blocked[1]).toMatchObject({ metric_value: 92.41 });
+  });
+
+  it("[P0] stays silent while the Review is not showing, and reports on the way in", () => {
+    const { rerender } = renderWithProviders(<Harness pct={15} active={false} analytics={ctx} />);
+    expect(gateEvents("tx_impact_gate_blocked")).toHaveLength(0);
+
+    rerender(<Harness pct={15} active analytics={ctx} />);
+    expect(gateEvents("tx_impact_gate_blocked")).toHaveLength(1);
+  });
+
+  it("[R1/R4] never reports a block below the threshold or without a figure", () => {
+    const { rerender } = renderWithProviders(<Harness pct={4.5} analytics={ctx} />);
+    rerender(<Harness pct={undefined} analytics={ctx} />);
+    rerender(<Harness pct={CATASTROPHIC_PRICE_IMPACT_PCT - 0.01} analytics={ctx} />);
+    expect(gateEvents("tx_impact_gate_blocked")).toHaveLength(0);
+  });
+
+  it("[P0] reports the acknowledgment on the user's override and NOT on the uncheck", () => {
+    renderWithProviders(
+      <Harness pct={92.41} analytics={{ flow: "withdraw", strategyId: "str-9" }} />,
+    );
+    expect(gateEvents("tx_impact_gate_acknowledged")).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole("checkbox"));
+    const acked = gateEvents("tx_impact_gate_acknowledged");
+    expect(acked).toHaveLength(1);
+    expect(acked[0]).toMatchObject({
+      event: "tx_impact_gate_acknowledged",
+      flow: "withdraw",
+      strategy_id: "str-9",
+      metric_name: "price_impact_pct",
+      metric_value: 92.41,
+    });
+
+    // Toggling off is not an override. Counting it would inflate the denominator's twin and make
+    // the override rate (the entire reason the pair exists) unreadable.
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(gateEvents("tx_impact_gate_acknowledged")).toHaveLength(1);
+  });
+
+  it("[P0] does not report an acknowledgment for the effect's programmatic resets", () => {
+    const { rerender } = renderWithProviders(<Harness pct={15} analytics={ctx} />);
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(gateEvents("tx_impact_gate_acknowledged")).toHaveLength(1);
+
+    // [R5v2] a worsening re-quote clears the consent from inside the effect (setAcknowledgedState,
+    // not the user's setAcknowledged). No user decided anything, so there is nothing to report.
+    rerender(<Harness pct={92.41} analytics={ctx} />);
+    expect(screen.getByRole("checkbox")).not.toBeChecked();
+    expect(gateEvents("tx_impact_gate_acknowledged")).toHaveLength(1);
+
+    // [R5] the same for the drop-below-threshold reset and for leaving the Review.
+    fireEvent.click(screen.getByRole("checkbox"));
+    rerender(<Harness pct={1.2} analytics={ctx} />);
+    act(() => {
+      rerender(<Harness pct={15} active={false} analytics={ctx} />);
+    });
+    expect(gateEvents("tx_impact_gate_acknowledged")).toHaveLength(2);
+  });
+
+  it("emits with no flow context at all when the host has not been wired yet", () => {
+    renderWithProviders(<Harness pct={15} />);
+    const blocked = gateEvents("tx_impact_gate_blocked");
+    expect(blocked).toHaveLength(1);
+    expect(blocked[0]).not.toHaveProperty("flow");
+    expect(blocked[0]).not.toHaveProperty("strategy_id");
+    expect(blocked[0]).toMatchObject({ metric_name: "price_impact_pct", metric_value: 15 });
   });
 });

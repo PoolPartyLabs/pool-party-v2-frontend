@@ -1,13 +1,14 @@
 /**
- * @id PP-CORE (POO-206)
+ * @id PP-CORE (POO-206; POO-1551 revision)
  * @name API client tests
- * @implements-rules-version v3
+ * @implements-rules-version v4 (POO-1551 rules v2) · v3
  *
  * TDD tests for the server-side API client that calls pool-party-api directly
  * with PP_API_KEY. Used by Server Actions only; the browser never imports this.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
+import { activeSentryTraceId } from "@/lib/observability/sentry/traceId";
 
 // server-only is aliased to a noop in vitest.config.ts (resolve.alias).
 
@@ -16,6 +17,14 @@ import { z } from "zod";
 // ---------------------------------------------------------------------------
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
+
+/**
+ * POO-1147: the Sentry bridge `getRequestTraceId` reads. It returns `undefined` by default, which is
+ * "Sentry disabled" and therefore exactly the behaviour every pre-existing test below was written
+ * against; the POO-1147 block at the bottom is the only place it returns an id.
+ */
+vi.mock("@/lib/observability/sentry/traceId", () => ({ activeSentryTraceId: vi.fn() }));
+const sentryTraceId = vi.mocked(activeSentryTraceId);
 
 function setEnv(url?: string, key?: string) {
   if (url) vi.stubEnv("PP_API_URL", url);
@@ -169,6 +178,21 @@ describe("apiClient", () => {
 
       const [url] = fetchCall();
       expect(url).toBe("https://api.poolparty.example/api/v1/pools?network=polygon");
+    });
+
+    // POO-1777 [R1]: Robinhood Chain (4663) runs the CURRENT v0.5.x manager, so it must reach the
+    // current backend even in the environments that still configure a legacy one. There is no
+    // per-chain branch to get wrong here, only the `isLegacy` datum on ChainMeta, and a wrong one
+    // fails at the wallet prompt rather than at the call.
+    it("[POO-1777] uses PP_API_URL for robinhood even when the legacy URL is set", async () => {
+      vi.stubEnv("PP_API_URL_LEGACY", "https://legacy.poolparty.example");
+      upstreamOk({ data: [] });
+      const { apiFetch } = await importClient();
+
+      await apiFetch("pools?network=robinhood", { network: "robinhood" });
+
+      const [url] = fetchCall();
+      expect(url).toBe("https://api.poolparty.example/api/v1/pools?network=robinhood");
     });
 
     it("[POO-316] falls back to PP_API_URL for a legacy network when no legacy URL is set", async () => {
@@ -597,11 +621,13 @@ describe("apiClient", () => {
       expect(mockFetch).toHaveBeenCalledTimes(3);
     });
 
+    // POO-1551: the example is a real state-changing write. It used to be `auth/nonce`, which now
+    // opts INTO retry via [R16] - leaving it here would document the opposite of the shipped rule.
     it("does NOT retry a non-GET write on 429 (idempotency)", async () => {
       upstreamError(429);
       const { apiFetch } = await importClient();
 
-      const promise = apiFetch("auth/nonce", { method: "POST", body: {} });
+      const promise = apiFetch("portfolio/build/add-liquidity-tx", { method: "POST", body: {} });
       const assertion = expect(promise).rejects.toMatchObject({ status: 429 });
       await vi.runAllTimersAsync();
       await assertion;
@@ -640,6 +666,91 @@ describe("apiClient", () => {
   });
 
   // -----------------------------------------------------------------------
+  // [R16] Per-call opt-in retry for a non-GET request that is SAFE TO REPLAY (POO-1551)
+  // -----------------------------------------------------------------------
+  describe("[R16] safeToReplay opt-in retry", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    // The reported incident (reference 2c7e8a851b3f469b8b99c35581007a1b): pp_api was recreated and
+    // its port stayed closed for ~34s while migrations ran. One connection refusal on the nonce
+    // POST was a hard sign-in failure, because the GET-only gate gave it zero attempts.
+    it("retries a safe-to-replay POST through a transport failure", async () => {
+      upstreamNetworkFailure();
+      upstreamOk({ data: { nonce: "n-1" } });
+      const { apiFetch } = await importClient();
+
+      const promise = apiFetch("auth/nonce", {
+        method: "POST",
+        body: {},
+        safeToReplay: true,
+      });
+      await vi.runAllTimersAsync();
+
+      expect(await promise).toEqual({ nonce: "n-1" });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("retries a safe-to-replay POST on a transient status", async () => {
+      upstreamError(503);
+      upstreamOk({ data: { nonce: "n-2" } });
+      const { apiFetch } = await importClient();
+
+      const promise = apiFetch("auth/nonce", { method: "POST", body: {}, safeToReplay: true });
+      await vi.runAllTimersAsync();
+
+      expect(await promise).toEqual({ nonce: "n-2" });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    // The opt-in widens WHICH methods may retry. It must not widen the attempt cap, the time
+    // budget, or which statuses count as transient - a sustained outage still fails fast.
+    it("still gives up after the retry cap when the upstream never returns", async () => {
+      upstreamNetworkFailure();
+      upstreamNetworkFailure();
+      upstreamNetworkFailure();
+      const { apiFetch } = await importClient();
+
+      const promise = apiFetch("auth/nonce", { method: "POST", body: {}, safeToReplay: true });
+      const assertion = expect(promise).rejects.toMatchObject({
+        status: 0,
+        code: "SYSTEM_NETWORK_ERROR",
+      });
+      await vi.runAllTimersAsync();
+      await assertion;
+
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+
+    it("does NOT retry a safe-to-replay POST on a non-transient status", async () => {
+      upstreamError(400, { code: "AUTH_WALLET_INVALID", message: "bad wallet" });
+      const { apiFetch } = await importClient();
+
+      const promise = apiFetch("auth/nonce", { method: "POST", body: {}, safeToReplay: true });
+      const assertion = expect(promise).rejects.toMatchObject({ status: 400 });
+      await vi.runAllTimersAsync();
+      await assertion;
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    // [R3] The gate stays OPT-IN. A write that does not name itself replayable keeps the exact
+    // protection it has today, which is the whole reason this is a per-call flag and not a
+    // relaxation of the GET-only default.
+    it("leaves an unmarked POST unretried", async () => {
+      upstreamNetworkFailure();
+      const { apiFetch } = await importClient();
+
+      const promise = apiFetch("portfolio/build/add-liquidity-tx", { method: "POST", body: {} });
+      const assertion = expect(promise).rejects.toMatchObject({ code: "SYSTEM_NETWORK_ERROR" });
+      await vi.runAllTimersAsync();
+      await assertion;
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // -----------------------------------------------------------------------
   // [R11] 408 Request Timeout is transient (the backend's own 15s timeout signal)
   // -----------------------------------------------------------------------
   describe("[R11] 408 transient retry", () => {
@@ -663,7 +774,7 @@ describe("apiClient", () => {
       upstreamError(408, { message: "Request timeout" });
       const { apiFetch } = await importClient();
 
-      const promise = apiFetch("auth/nonce", { method: "POST", body: {} });
+      const promise = apiFetch("portfolio/build/add-liquidity-tx", { method: "POST", body: {} });
       const assertion = expect(promise).rejects.toMatchObject({ status: 408 });
       await vi.runAllTimersAsync();
       await assertion;
@@ -740,7 +851,7 @@ describe("apiClient", () => {
       upstreamHang();
       const { apiFetch } = await importClient();
 
-      const promise = apiFetch("auth/nonce", { method: "POST", body: {} });
+      const promise = apiFetch("portfolio/build/add-liquidity-tx", { method: "POST", body: {} });
       const assertion = expect(promise).rejects.toMatchObject({
         status: 408,
         code: "SYSTEM_TIMEOUT",
@@ -769,6 +880,264 @@ describe("apiClient", () => {
       expect(headers.get("authorization")).toBe("Bearer jwt-123");
       // API key still present
       expect(headers.get("x-api-key")).toBe("test-api-key-secret");
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // [R14]/[R15] Observability + the cross-service trace contract (POO-243)
+  // -----------------------------------------------------------------------
+  describe("[R14] trace context", () => {
+    it("sends a W3C traceparent and x-request-id on an uncached request", async () => {
+      upstreamOk({ data: {} });
+      const { apiFetch } = await importClient();
+
+      await apiFetch("pools");
+
+      const headers = fetchCall()[1].headers as Headers;
+      const traceparent = headers.get("traceparent") ?? "";
+      expect(traceparent).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
+      // The contract: x-request-id IS the trace id, so one value correlates both hops.
+      expect(headers.get("x-request-id")).toBe(traceparent.split("-")[1]);
+    });
+
+    /**
+     * Next keys a data-cached fetch on its HEADERS and strips only `traceparent`/`tracestate`
+     * (incremental-cache `calculateCacheKey`). A per-request `x-request-id` would make every cached
+     * GET a permanent MISS, silently undoing the [R9] window POO-453 added to survive the per-IP
+     * throttle. The trace id is still on the wire inside `traceparent`, so nothing is lost.
+     */
+    it("OMITS x-request-id on a data-cached GET so the fetch cache key stays stable", async () => {
+      upstreamOk({ data: {} });
+      const { apiFetch } = await importClient();
+
+      await apiFetch("pools", { revalidate: 60 });
+
+      const headers = fetchCall()[1].headers as Headers;
+      expect(headers.get("traceparent")).toMatch(/^00-[0-9a-f]{32}-/);
+      expect(headers.get("x-request-id")).toBeNull();
+    });
+
+    it("still sends x-request-id on a write (never data-cached)", async () => {
+      upstreamOk({ data: {} });
+      const { apiFetch } = await importClient();
+
+      await apiFetch("pools", { method: "POST", body: {}, revalidate: 60 });
+
+      expect((fetchCall()[1].headers as Headers).get("x-request-id")).toMatch(/^[0-9a-f]{32}$/);
+    });
+
+    it("lets an explicit caller header win over the injected one", async () => {
+      upstreamOk({ data: {} });
+      const { apiFetch } = await importClient();
+
+      await apiFetch("pools", { headers: { "x-request-id": "caller-supplied" } });
+
+      expect((fetchCall()[1].headers as Headers).get("x-request-id")).toBe("caller-supplied");
+    });
+
+    it("attaches the backend's echoed x-request-id to a thrown ApiError", async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({ code: "POOL_NOT_FOUND", message: "nope" }), {
+          status: 404,
+          headers: { "content-type": "application/json", "x-request-id": "req-from-backend" },
+        }),
+      );
+      const { apiFetch, ApiError } = await importClient();
+
+      const error = (await apiFetch("pools/0xabc").catch((e: unknown) => e)) as InstanceType<
+        typeof ApiError
+      >;
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error.code).toBe("POOL_NOT_FOUND");
+      expect(error.requestId).toBe("req-from-backend");
+    });
+
+    it("prefers the error envelope's correlationId over the transport header", async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            statusCode: 500,
+            error: { code: "STRATEGY_SYNC_FAILED", message: "boom", correlationId: "corr-1" },
+          }),
+          {
+            status: 500,
+            headers: { "content-type": "application/json", "x-request-id": "transport-1" },
+          },
+        ),
+      );
+      const { apiFetch } = await importClient();
+
+      const error = (await apiFetch("pools").catch((e: unknown) => e)) as {
+        code: string;
+        requestId?: string;
+      };
+      expect(error.code).toBe("STRATEGY_SYNC_FAILED");
+      expect(error.requestId).toBe("corr-1");
+    });
+  });
+
+  describe("[R15] zod failures are logged, not discarded", () => {
+    /**
+     * THE regression this whole change exists for. In a Server Component the throw below is a 500
+     * for the entire route segment, and until POO-243 the `ZodIssue[]` — the only artefact naming
+     * WHICH field drifted — was dropped on the way out. The outage was then detected by a user
+     * complaining, and diagnosed with nothing.
+     */
+    it("logs the drifted field path, expected and received BEFORE throwing", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { tvlUsd: "1200.5" } }), {
+          status: 200,
+          headers: { "content-type": "application/json", "x-request-id": "req-9" },
+        }),
+      );
+      const { apiFetch, ApiParseError } = await importClient();
+      const schema = z.object({ tvlUsd: z.number() });
+
+      await expect(apiFetch("pools/0xabc", { schema })).rejects.toThrow(ApiParseError);
+
+      expect(errorSpy).toHaveBeenCalledOnce();
+      const record = JSON.parse(String(errorSpy.mock.calls[0]?.[0])) as Record<string, unknown>;
+      expect(record).toMatchObject({
+        level: "error",
+        event: "api.response_parse_failed",
+        endpoint: "GET /api/v1/pools/0xabc",
+        status: 200,
+        code: "SYSTEM_PARSE_ERROR",
+        requestId: "req-9",
+        issueCount: 1,
+      });
+      expect(record.traceId).toMatch(/^[0-9a-f]{32}$/);
+      expect(record.issues).toEqual([
+        expect.objectContaining({ path: "tvlUsd", expected: "number", received: "string" }),
+      ]);
+      errorSpy.mockRestore();
+    });
+
+    it("masks a wallet address in the logged endpoint (never a raw identity in a log)", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const wallet = "0x1234567890abcdef1234567890abcdef12345678";
+      upstreamOk({ data: { total: "x" } });
+      const { apiFetch } = await importClient();
+
+      await apiFetch(`portfolio/${wallet}`, {
+        schema: z.object({ total: z.number() }),
+      }).catch(() => {});
+
+      const line = String(errorSpy.mock.calls[0]?.[0]);
+      expect(line).not.toContain(wallet);
+      expect(line).toContain("0x1234…5678");
+      errorSpy.mockRestore();
+    });
+
+    it("still carries the issues on the thrown ApiParseError for callers that branch on them", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      upstreamOk({ data: { tvlUsd: "1200.5" } });
+      const { apiFetch } = await importClient();
+
+      const error = (await apiFetch("pools", {
+        schema: z.object({ tvlUsd: z.number() }),
+      }).catch((e: unknown) => e)) as { issues: unknown[] };
+      expect(error.issues).toHaveLength(1);
+      vi.restoreAllMocks();
+    });
+
+    it("logs nothing on a successful parse", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      upstreamOk({ data: { tvlUsd: 1200.5 } });
+      const { apiFetch } = await importClient();
+
+      await apiFetch("pools", { schema: z.object({ tvlUsd: z.number() }) });
+
+      expect(errorSpy).not.toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // POO-1147: the Sentry trace id on the wire, and the data-cache key it must not disturb
+  // -----------------------------------------------------------------------
+  describe("[POO-1147] Sentry trace id and cache-key stability", () => {
+    /** The headers Next actually keys a cached fetch on: everything it does NOT strip. */
+    function cacheKeyHeaders(n: number): [string, string][] {
+      const headers = new Headers(fetchCall(n)[1].headers);
+      // `incremental-cache/index.js` deletes exactly these two before hashing the key.
+      headers.delete("traceparent");
+      headers.delete("tracestate");
+      return [...headers.entries()].sort();
+    }
+
+    it("puts SENTRY's trace id on the wire, so the API logs the id the Sentry issue shows", async () => {
+      const sentryId = "0af7651916cd43dd8448eb211c80319c";
+      sentryTraceId.mockReturnValue(sentryId);
+      upstreamOk({ data: {} });
+      const { apiFetch } = await importClient();
+
+      await apiFetch("pools");
+
+      const headers = fetchCall()[1].headers as Headers;
+      expect(headers.get("traceparent")).toBe(
+        `00-${sentryId}-${headers.get("traceparent")?.split("-")[2]}-01`,
+      );
+      expect(headers.get("traceparent")?.split("-")[1]).toBe(sentryId);
+      // Same value as the correlation id the backend echoes back and logs against.
+      expect(headers.get("x-request-id")).toBe(sentryId);
+    });
+
+    it("falls back to a minted id when Sentry is disabled, and still sends a valid traceparent", async () => {
+      sentryTraceId.mockReturnValue(undefined);
+      upstreamOk({ data: {} });
+      const { apiFetch } = await importClient();
+
+      await apiFetch("pools");
+
+      expect((fetchCall()[1].headers as Headers).get("traceparent")).toMatch(
+        /^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/,
+      );
+    });
+
+    /**
+     * THE regression test the vendor layer needs. Next derives a data-cached fetch's key from its
+     * headers and strips ONLY `traceparent`/`tracestate`, so ANY other per-request header - POO-243's
+     * `x-request-id`, or Sentry's `sentry-trace`/`baggage` - turns every cached GET into a permanent
+     * MISS and silently undoes POO-453's per-IP throttle mitigation.
+     *
+     * Sentry's Node SDK injects its headers from the `undici:request:create` diagnostics channel,
+     * i.e. inside the dispatch and AFTER Next has computed the key from this `RequestInit`, so it
+     * cannot reach the key. That is a property of two other projects, not of ours; this test pins
+     * OUR half of it - the headers we hand to `fetch` do not vary per request once the two stripped
+     * ones are removed - so a regression on this side fails here rather than in production.
+     */
+    it("keeps a data-cached GET's cache-key headers byte-identical across two renders", async () => {
+      sentryTraceId.mockReturnValue(undefined);
+      upstreamOk({ data: {} });
+      upstreamOk({ data: {} });
+      const { apiFetch } = await importClient();
+
+      await apiFetch("pools", { revalidate: 60 });
+      await apiFetch("pools", { revalidate: 60 });
+
+      // Different renders, so genuinely different trace ids...
+      const traceparents = [0, 1].map((n) =>
+        (fetchCall(n)[1].headers as Headers).get("traceparent"),
+      );
+      expect(traceparents[0]).not.toBe(traceparents[1]);
+      // ...and an identical cache key regardless.
+      expect(cacheKeyHeaders(0)).toEqual(cacheKeyHeaders(1));
+    });
+
+    it("sends no Sentry header of its own on a data-cached GET", async () => {
+      sentryTraceId.mockReturnValue("0af7651916cd43dd8448eb211c80319c");
+      upstreamOk({ data: {} });
+      const { apiFetch } = await importClient();
+
+      await apiFetch("pools", { revalidate: 60 });
+
+      const headers = fetchCall()[1].headers as Headers;
+      // Not in Next's strip list: either of these in the RequestInit would be a permanent cache MISS.
+      expect(headers.get("sentry-trace")).toBeNull();
+      expect(headers.get("baggage")).toBeNull();
+      expect(headers.get("x-request-id")).toBeNull();
     });
   });
 });
