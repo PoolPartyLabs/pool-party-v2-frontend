@@ -7,4 +7,8 @@ allowBuilds:
   bufferutil: true
   keccak: true
   utf-8-validate: true
+  # @sentry/cli ships its binary as per-platform `optionalDependencies` that pnpm installs from the
+  # lockfile with no script; its postinstall is only a CDN-download fallback. `false` records the
+  # decision and silences ERR_PNPM_IGNORED_BUILDS (same setting as the private repository).
+  '@sentry/cli': false
 verifyDepsBeforeRun: false
