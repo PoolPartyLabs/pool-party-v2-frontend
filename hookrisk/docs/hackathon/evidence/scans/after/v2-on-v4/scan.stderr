@@ -1,0 +1,9 @@
+  scan: src/V2PairHook.sol:V2PairHook run=d5c3b959-96f6-4178-a126-cffbd709376c
+  project: out=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v2-on-v4/repo/out solc=0.8.24 (forge-config) artifact=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v2-on-v4/repo/out/V2PairHook.sol/V2PairHook.json
+  harness: V2PairHook.sol:V2PairHook flags=derived-from-runtime maxFee=30bips ctorArgs=none run=267dd115-f858-4ee0-b105-67d7f6f6dec3
+  hookrisk: slither src/V2PairHook.sol:V2PairHook
+  hookrisk: did not analyse the target — V2PairHook uses a hook ABI hookrisk cannot analyse: V2PairHook (src/V2PairHook.sol#21-284) implements afterAddLiquidity, afterInitialize, afterRemoveLiquidity, beforeAddLiquidity, beforeInitialize, …
+  hookrisk: 7 finding(s); analysed 1 hook contract(s); permissions resolved from the profile
+  hookrisk: ok
+  harness: failed — harness setUp failed: TwinPools: hook constructor reverted: 0x. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304).
+  scan: finished in 10783ms, exit 2

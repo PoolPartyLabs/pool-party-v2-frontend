@@ -1,0 +1,10 @@
+  scan: src/StopLoss.sol:StopLoss run=ff4d8728-d33a-46e3-8c05-279c6a2381c4
+  project: out=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-stoploss/repo/out solc=0.8.19 (artifact-metadata) artifact=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-stoploss/repo/out/StopLoss.sol/StopLoss.json
+  harness: StopLoss.sol:StopLoss flags=derived-from-runtime maxFee=0bips ctorArgs=1 word(s) run=580366ab-2d05-439f-9174-c9af9bbc84ce
+  hookrisk: slither src/StopLoss.sol:StopLoss
+  hookrisk: 1 finding(s) in other files, not attributed to this target: src/implementation/StopLossImplementation.sol (1)
+  hookrisk: did not analyse the target — StopLoss uses a hook ABI hookrisk cannot analyse: StopLoss (src/StopLoss.sol#17-205) looks like a Uniswap v4 hook but its hook ABI predates the shipped v4 interface (declares the 2023 getHooksCalls(); …
+  hookrisk: 1 finding(s); analysed 0 hook contract(s)
+  hookrisk: ok
+  harness: failed — harness setUp failed: TwinPools: getHookPermissions() reverted on the supplied runtime code (not a BaseHook-shaped hook, or the wrong bytecode): 0x. The twin pools could not be built, so no sequence ran and nothing about the hook was observed (HR-E304).
+  scan: finished in 6356ms, exit 2

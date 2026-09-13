@@ -1,0 +1,384 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedBy": {
+    "tool": "hookrisk",
+    "version": "0.1.0",
+    "commandLine": "hookrisk scan src/mocks/general/AntiSandwichMock.sol:AntiSandwichMock"
+  },
+  "target": {
+    "mode": "source",
+    "contractName": "AntiSandwichMock",
+    "sourceFile": "src/mocks/general/AntiSandwichMock.sol",
+    "solcVersion": "0.8.26"
+  },
+  "findings": [
+    {
+      "id": "7be0f8a2693c8ef7",
+      "ruleClass": "custom-accounting",
+      "title": "AntiSandwichMock (src/mocks/general/AntiSandwichMock.sol#15-50) declares custom-accounting permissions: `afterSwapReturnDelta` (bit 2)",
+      "description": "AntiSandwichMock (src/mocks/general/AntiSandwichMock.sol#15-50) declares custom-accounting permissions: `afterSwapReturnDelta` (bit 2). The hook can alter settled amounts, which raises its risk tier under the framework's custom-math and price-impact triggers and means differential output comparison (invariant I2) does not apply — the harness substitutes price monotonicity.",
+      "severity": "info",
+      "confidence": "high",
+      "location": {
+        "file": "src/mocks/general/AntiSandwichMock.sol",
+        "line": 15,
+        "endLine": 50
+      },
+      "evidence": [
+        "AntiSandwichMock (src/mocks/general/AntiSandwichMock.sol#15-50) declares custom-accounting permissions: `afterSwapReturnDelta` (bit 2). The hook can alter settled amounts, which raises its risk tier under the framework's custom-math and price-impact triggers and means differential output comparison (invariant I2) does not apply — the harness substitutes price monotonicity."
+      ],
+      "engines": [
+        {
+          "engine": "hookrisk",
+          "nativeRule": "hookrisk-custom-accounting",
+          "severity": "info",
+          "confidence": "high"
+        }
+      ],
+      "informsDimensions": [
+        "customMath",
+        "priceImpactingBehavior"
+      ],
+      "informsTriggers": [
+        "custom-math",
+        "price-impact"
+      ]
+    }
+  ],
+  "score": {
+    "total": 9,
+    "totalUpperBound": 21,
+    "tier": "medium",
+    "tierUpperBound": "high",
+    "inconclusive": true,
+    "rubric": {
+      "framework": "Uniswap Hooks Security Framework",
+      "revision": "e7e8da52fd5717b6eb4517ea779b766f63148c41",
+      "url": "https://github.com/uniswapfoundation/security-framework"
+    },
+    "dimensions": [
+      {
+        "id": "complexity",
+        "name": "Complexity",
+        "value": 0,
+        "max": 5,
+        "source": "measured",
+        "bracketLabel": "Pass-through only; no hook state",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "No flag-implementation-divergence or unprotected-hook-callback findings, and every detector that could produce one ran."
+        ]
+      },
+      {
+        "id": "customMath",
+        "name": "Custom math",
+        "value": 3,
+        "max": 5,
+        "source": "measured",
+        "bracketLabel": "A custom curve or invariant function",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "1 custom-accounting finding(s)",
+          "Custom accounting implies a custom curve or non-standard settlement arithmetic."
+        ]
+      },
+      {
+        "id": "externalDependencies",
+        "name": "External dependencies",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "Not measured: no detector for external-call-in-swap-path yet."
+        ]
+      },
+      {
+        "id": "externalLiquidityExposure",
+        "name": "External liquidity exposure",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": []
+      },
+      {
+        "id": "tvlPotential",
+        "name": "TVL potential",
+        "value": 0,
+        "max": 5,
+        "source": "declared",
+        "bracketLabel": "Under $100K (experimental or personal project)",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure tvlPotential."
+        ]
+      },
+      {
+        "id": "teamMaturity",
+        "name": "Team maturity",
+        "value": 3,
+        "max": 3,
+        "source": "declared",
+        "bracketLabel": "Unproven: no prior production deployments, or deployments lacking audits and operational rigor; new, anonymous, or no public track record",
+        "bracketsAreInterpretation": false,
+        "evidence": [
+          "Declared in hookrisk.toml. hookrisk does not measure teamMaturity."
+        ]
+      },
+      {
+        "id": "upgradeability",
+        "name": "Upgradeability",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "Not measured: no detector for upgradeable-hook (needs blocksec, which did not run); selfdestruct requires blocksec, which did not run."
+        ]
+      },
+      {
+        "id": "autonomousParameterUpdates",
+        "name": "Autonomous parameter updates",
+        "value": null,
+        "max": 3,
+        "source": "unmeasured",
+        "bracketLabel": null,
+        "bracketsAreInterpretation": true,
+        "evidence": []
+      },
+      {
+        "id": "priceImpactingBehavior",
+        "name": "Price impacting behavior",
+        "value": 3,
+        "max": 3,
+        "source": "measured",
+        "bracketLabel": "Returns a swap delta (custom curve or NoOp), or adjusts fees without a ceiling",
+        "bracketsAreInterpretation": true,
+        "evidence": [
+          "1 custom-accounting finding(s)",
+          "A returns-delta permission lets the hook alter settled amounts, which is the framework’s definition of price-impacting behaviour."
+        ]
+      }
+    ],
+    "triggers": [
+      {
+        "id": "custom-math",
+        "name": "Custom Curve or Non Standard Math",
+        "firedBy": [
+          "customMath >= 3 (is 3)",
+          "returns-delta-permission"
+        ],
+        "derivationIsInterpretation": true
+      },
+      {
+        "id": "price-impact",
+        "name": "Price Impacting Behavior",
+        "firedBy": [
+          "priceImpactingBehavior >= 1 (is 3)",
+          "returns-delta-permission"
+        ],
+        "derivationIsInterpretation": true
+      }
+    ],
+    "recommendations": [
+      {
+        "action": "adversarial-simulation",
+        "label": "Adversarial and economic simulation",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:price-impact",
+            "strength": "required",
+            "detail": "Auditors should simulate worst-case economic and adversarial price manipulation"
+          }
+        ]
+      },
+      {
+        "action": "audit",
+        "label": "Security audit",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "required",
+            "detail": "One full audit"
+          }
+        ]
+      },
+      {
+        "action": "bug-bounty",
+        "label": "Bug bounty programme",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended"
+          },
+          {
+            "from": "trigger:price-impact",
+            "strength": "required"
+          }
+        ]
+      },
+      {
+        "action": "math-specialist-audit",
+        "label": "Audit by a math and invariants specialist",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "required",
+            "detail": "At least one audit including a math and invariants specialist"
+          },
+          {
+            "from": "trigger:price-impact",
+            "strength": "required",
+            "detail": "Auditor should specialize in math"
+          }
+        ]
+      },
+      {
+        "action": "static-analysis",
+        "label": "Automated static analysis",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "required",
+            "detail": "AI static analysis tools"
+          }
+        ]
+      },
+      {
+        "action": "unit-tests-boundaries",
+        "label": "Unit tests covering input-range boundaries",
+        "strength": "required",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "required",
+            "detail": "Validate intermediate steps, edge cases and input-range boundaries"
+          }
+        ]
+      },
+      {
+        "action": "extended-test-coverage",
+        "label": "Extended test coverage",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended",
+            "detail": "Where autonomy or parameter updates exist"
+          }
+        ]
+      },
+      {
+        "action": "formal-verification",
+        "label": "Formal verification",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "recommended"
+          }
+        ]
+      },
+      {
+        "action": "invariant-testing",
+        "label": "Invariant and stateful fuzz testing",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "trigger:custom-math",
+            "strength": "recommended",
+            "detail": "Stateful fuzzing may significantly improve assurance"
+          }
+        ]
+      },
+      {
+        "action": "monitoring",
+        "label": "Continuous monitoring with anomaly detection",
+        "strength": "recommended",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "recommended",
+            "detail": "If external dependencies exist"
+          },
+          {
+            "from": "trigger:custom-math",
+            "strength": "recommended"
+          }
+        ]
+      },
+      {
+        "action": "second-audit",
+        "label": "Second independent audit",
+        "strength": "optional",
+        "sources": [
+          {
+            "from": "tier:medium",
+            "strength": "optional",
+            "detail": "For math or complex components"
+          }
+        ]
+      }
+    ],
+    "warnings": [
+      "4 dimension(s) unmeasured: the tier is between Medium Risk and High Risk. Unmeasured dimensions are excluded from the total, never counted as zero.",
+      "trigger 'holds-liquidity' could not be evaluated: dimension 'externalLiquidityExposure' is unmeasured",
+      "trigger 'external-dependencies' could not be evaluated: dimension 'externalDependencies' is unmeasured",
+      "trigger 'autonomous' could not be evaluated: dimension 'autonomousParameterUpdates' is unmeasured",
+      "trigger 'upgradeable' could not be evaluated: dimension 'upgradeability' is unmeasured"
+    ]
+  },
+  "engines": [
+    {
+      "engine": "hookrisk",
+      "displayName": "hookrisk Slither detectors",
+      "version": "0.11.6",
+      "status": "ok",
+      "findingCount": 1,
+      "durationMs": 7484
+    }
+  ],
+  "coverage": {
+    "corroboratedFindings": 0,
+    "uncoveredFunctions": [],
+    "staticAnalysisSkipped": false,
+    "dynamicAnalysisSkipped": false
+  },
+  "invariants": [
+    {
+      "id": "I1",
+      "name": "Conservation and solvency",
+      "status": "skipped",
+      "detail": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare."
+    },
+    {
+      "id": "I2",
+      "name": "No undeclared extraction",
+      "status": "skipped",
+      "detail": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare."
+    },
+    {
+      "id": "I3",
+      "name": "Exit liveness",
+      "status": "skipped",
+      "detail": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare."
+    }
+  ],
+  "gate": {
+    "passed": false,
+    "maxTier": "medium",
+    "maxSeverity": "high",
+    "failures": [
+      "tier is undetermined between Medium Risk and High Risk; the upper bound exceeds the configured maximum of medium"
+    ]
+  }
+}

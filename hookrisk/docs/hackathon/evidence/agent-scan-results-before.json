@@ -1,0 +1,1228 @@
+{
+ "results": [
+  {
+   "slug": "v4-template-counter",
+   "repo": "https://github.com/uniswapfoundation/v4-template",
+   "target": "src/Counter.sol:Counter",
+   "api_era": "modern-getHookPermissions",
+   "base_class": "@openzeppelin/uniswap-hooks BaseHook (@openzeppelin/uniswap-hooks/src/base/BaseHook.sol)",
+   "constructor_args": 1,
+   "clone_ok": true,
+   "deps_ok": true,
+   "build_ok": true,
+   "build_error": "",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_findings": [],
+   "static_reason": "",
+   "harness_status": "ok",
+   "harness_reason": "",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "passed",
+     "detail": "Conservation and solvency; 256 runs / 8192 calls / 0 reverts"
+    },
+    {
+     "id": "I2",
+     "status": "passed",
+     "detail": "Hook does not block swaps; maxFee=0bips declared; 256 runs / 8192 calls / 0 reverts"
+    },
+    {
+     "id": "I3",
+     "status": "passed",
+     "detail": "Exit liveness; 256 runs / 8192 calls / 0 reverts"
+    }
+   ],
+   "tier": "low",
+   "total": 3,
+   "total_upper": 23,
+   "inconclusive": true,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium"
+   ],
+   "hr_error_codes": [],
+   "uncovered_functions": 0,
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "Full pipeline ran end to end on the official template: Slither with hookrisk detectors reported 0 findings, coverage was complete (uncoveredFunctions=[], staticAnalysisSkipped=false, dynamicAnalysisSkipped=false), and the harness ran all three invariants to completion.",
+     "evidence": "scan.stderr: 'hookrisk: slither src/Counter.sol:Counter' / 'hookrisk: 0 finding(s)' / 'harness: Counter.sol:Counter flags=0xac0 maxFee=0bips' / 'harness: 3 invariant(s), 0 failed'"
+    },
+    {
+     "kind": "expected",
+     "description": "Permission flag decoding is correct. Counter declares beforeAddLiquidity, beforeRemoveLiquidity, beforeSwap, afterSwap and no *ReturnDelta; the harness computed flags=0xac0 = 2048+512+128+64, exactly those four bits.",
+     "evidence": "scan.stderr 'harness: Counter.sol:Counter flags=0xac0'; src/Counter.sol getHookPermissions() lines 30-46."
+    },
+    {
+     "kind": "expected",
+     "description": "Exit 2 (gate failed) on a pristine, uncompromised official template. The only failure is the undetermined-tier rule: 6 of 9 dimensions are unmeasured (upper bound 23/33 > medium) and the two declared dimensions were left at init defaults (teamMaturity=3, tvlPotential=0). Not a false positive on code, but the default gate config red-lights the reference hook out of the box.",
+     "evidence": "hook-risk.json .gate.failures[0] = 'tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium'; .score = {total:3, totalUpperBound:23, tier:'low', tierUpperBound:'high', inconclusive:true}."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "6 of 9 rubric dimensions have no detector, so two thirds of the score is structurally unmeasurable: customMath, externalDependencies, externalLiquidityExposure, upgradeability, autonomousParameterUpdates, priceImpactingBehavior. Every rubric trigger depending on them is also unevaluable, so the tool cannot distinguish a trivial counter from a custom-curve hook on those axes.",
+     "evidence": "scan.stderr: '! 6 dimension(s) unmeasured' plus six lines of the form \"trigger 'custom-math' could not be evaluated: dimension 'customMath' is unmeasured\". Manifest evidence strings: 'Not measured: no detector for rounding-direction yet.', 'Not measured: no detector for external-call-in-swap-path yet.'; externalLiquidityExposure carries an empty evidence array (no reason given at all)."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The complexity dimension's bracketLabel is factually wrong for this hook. hookrisk scored complexity=0 with the label 'Pass-through only; no hook state', but Counter maintains four PoolId=>uint256 mappings and writes one on every callback. The value is derived purely from the absence of two detector findings, not from any state analysis, so the human-readable bracket asserts something about the code the tool never checked. bracketsAreInterpretation:true mitigates but does not remove the misstatement.",
+     "evidence": "hook-risk.json .score.dimensions[0]: {id:'complexity', value:0, source:'measured', bracketLabel:'Pass-through only; no hook state', evidence:['No flag-implementation-divergence or unprotected-hook-callback findings, and every detector that could produce one ran.']} vs src/Counter.sol lines 21-25 (beforeSwapCount/afterSwapCount/beforeAddLiquidityCount/beforeRemoveLiquidityCount) and the '++' writes in each _before*/_after* body."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "--verbose wrote nothing to stdout; the entire human report (engine lines, score, warnings, artifact paths, gate result) went to stderr and scan.stdout is empty. A user piping stdout to a file or a CI log parser gets zero output on a successful run.",
+     "evidence": "scan.stdout is 0 bytes; the complete report text appears in scan.stderr."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-template-counter",
+   "notes": "Clean run, no fixes needed. Clone with --recurse-submodules --shallow-submodules succeeded (HEAD 1fbf9554, 2025-10-28); forge build compiled 90 files with solc 0.8.30 on the first try, no remapping edits, no extra forge install, no package.json in the repo. foundry.toml sets src=\"src\" and does not set test, so test defaults to \"test\" and is not equal to src: HR-E202 correctly did not fire. No HR-E codes appear anywhere in scan.stderr or scan.stdout. hookrisk.toml was left exactly as init wrote it (teamMaturity=3, tvlPotential=0, maxFeeBips=0); Counter charges no swap fee, so 0 bips is the true value and I2 passed under that strict claim. Artifacts written: out/hook-risk.json, out/HOOK_RISK.md, out/hookrisk.sarif. No invalid manifest, no crash, no stack trace. Exit 2 matches documented gate-failed semantics. Total wall clock roughly 6 minutes.",
+   "duration_minutes": 6
+  },
+  {
+   "slug": "v4-hooks-public-stablepair",
+   "repo": "https://github.com/Uniswap/v4-hooks-public",
+   "target": "src/stable/StablePairHook.sol:StablePairHook",
+   "api_era": "modern-getHookPermissions",
+   "base_class": "src/base/BaseDynamicFeeHook.sol BaseDynamicFeeHook (-> BaseUUPSHook -> BaseHook, all repo-local under src/base/; not @openzeppelin/uniswap-hooks and not v4-periphery BaseHook)",
+   "constructor_args": 1,
+   "clone_ok": true,
+   "deps_ok": true,
+   "build_ok": true,
+   "build_error": "",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_reason": "",
+   "static_findings": [
+    {
+     "ruleClass": "flag-implementation-divergence",
+     "severity": "high",
+     "title": "StablePairHook (src/stable/StablePairHook.sol#25-259) declares permission `beforeInitialize` (bit 13, BEFORE_INITIALIZE_FLAG) but provides no working `beforeInitialize` implementation. The PoolManager will call it on every matching pool operation and the call will revert, making the pool unusable for that operation.",
+     "line": 25
+    }
+   ],
+   "harness_status": "skipped",
+   "harness_reason": "\"no compiled artifact at <repo>/out/StablePairHook.sol/StablePairHook.json \u2014 run `forge build` in the target project first.\" The build DID succeed; foundry.toml sets out = 'foundry-out', which hookrisk does not read.",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "no compiled artifact at <repo>/out/StablePairHook.sol/StablePairHook.json \u2014 run `forge build` in the target project first."
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "same artifact-path message"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "same artifact-path message"
+    }
+   ],
+   "tier": "low",
+   "total": 4,
+   "total_upper": 24,
+   "inconclusive": true,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium",
+    "1 finding(s) at or above high: StablePairHook (src/stable/StablePairHook.sol#25-259) declares permission `beforeInitialize` (bit 13, BEFORE_INITIALIZE_FLAG) but provides no working `before..."
+   ],
+   "uncovered_functions": 0,
+   "hr_error_codes": [],
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "Harness and all three invariants skipped because hookrisk hardcodes the Foundry artifact dir as <root>/out and ignores foundry.toml's `out = 'foundry-out'`. The artifact exists; repo/out does not. The error text (\"run `forge build` in the target project first\") is therefore misleading \u2014 forge build succeeded. This is NOT the hint's predicted extra-constructor-args skip: the constructor takes exactly 1 arg (IPoolManager).",
+     "evidence": "scan.stderr: \"harness: skipped \u2014 no compiled artifact at .../repo/out/StablePairHook.sol/StablePairHook.json \u2014 run `forge build` in the target project first.\" | `ls repo/out` -> No such file or directory; `ls repo/foundry-out/StablePairHook.sol` -> StablePairHook.json | foundry.toml: out = 'foundry-out'"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "flag-implementation-divergence: the mechanism claim is right (BaseDynamicFeeHook._beforeInitialize unconditionally reverts InvalidInitializer), but the stated impact \u2014 \"making the pool unusable for that operation\" \u2014 is wrong for this hook. Pools are created through StablePairHook.initializePool, which self-calls poolManager.initialize, and v4 skips hook callbacks when the hook itself is the caller, so beforeInitialize never fires on the supported path. The always-revert IS the intended pool-creation guard. Reported high severity / medium confidence, and it alone trips the severity gate.",
+     "evidence": "SARIF message.text as quoted in static_findings; src/base/BaseDynamicFeeHook.sol: `function _beforeInitialize(address sender, PoolKey calldata, uint160) internal virtual override returns (bytes4) { revert InvalidInitializer(sender); }` with doc comment \"This requires pool initialization to be done through `initializePool`, as this function is not called when the hook itself is caller.\"; src/stable/StablePairHook.sol:46 `tick = poolManager.initialize(poolKey, sqrtPriceX96);`"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Manifest coverage flag contradicts the invariant results: coverage.dynamicAnalysisSkipped is false while I1/I2/I3 are all status \"skipped\" and the harness never ran.",
+     "evidence": "jq .coverage -> {\"corroboratedFindings\":0,\"uncoveredFunctions\":[],\"staticAnalysisSkipped\":false,\"dynamicAnalysisSkipped\":false}; jq '.invariants[].status' -> skipped, skipped, skipped"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Finding-count discrepancy between the verbose log and the manifest: the engine line reports 2 findings for the target; the manifest and SARIF each contain exactly 1. No dedup or suppression note is printed to explain the drop.",
+     "evidence": "scan.stderr: \"hookrisk: 2 finding(s)\"; jq '.findings|length' hook-risk.json -> 1; SARIF has a single result"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "6 of 9 rubric dimensions unmeasured (customMath, externalDependencies, externalLiquidityExposure, upgradeability, autonomousParameterUpdates, priceImpactingBehavior), leaving the score inconclusive at 4..24/33 and low..high \u2014 which is itself one of the two gate failures. Two of those are squarely material here and visible in source: the hook is UUPS-upgradeable (BaseUUPSHook, _authorizeUpgrade, initializer) and it is a dynamic-fee hook.",
+     "evidence": "manifest: upgradeability evidence \"Not measured: no detector for upgradeable-hook (needs blocksec, which did not run); selfdestruct requires blocksec, which did not run.\"; priceImpactingBehavior evidence \"Not measured: no detector for unbounded-dynamic-fee yet.\"; gate failure 1: \"tier is undetermined between Low Risk and High Risk\""
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Complexity scored 1/5 (\"1-2 callbacks, no branching on hook state\") derived solely from the count of flag-divergence findings, with the manifest admitting no complexity metric exists. The hook declares 6 permission flags and carries a non-trivial decaying-fee curve (StableFeeCalculation.sol), so 1/5 is very likely an underestimate that still feeds the total.",
+     "evidence": "dimension complexity evidence: [\"1 flag-implementation-divergence finding(s)\", \"The hook implements callbacks with non-trivial structure. This establishes a floor only; hookrisk has no dedicated complexity metric yet.\"]"
+    },
+    {
+     "kind": "expected",
+     "description": "Slither ran cleanly over a large multi-project repo: engine status ok, zero HR-E codes anywhere, uncoveredFunctions empty, and 24 findings in non-target files correctly attributed away from the target. Exit code 2 matches gate.passed=false.",
+     "evidence": "scan.stderr: \"hookrisk: 24 finding(s) in other files, not attributed to this target\" and \"\u2713 hookrisk   ok\"; exit_code file -> 2; grep 'HR-E' over scan.stderr, scan.stdout and hook-risk.json -> no matches"
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-hooks-public-stablepair",
+   "duration_minutes": 17,
+   "notes": "Clone at e4eabe5, submodules recursive, no failures. forge build succeeded on the first attempt; no fixes, no remapping edits. foundry.toml: auto_detect_solc = true (hook pragma pinned 0.8.26), evm_version cancun, via_ir false in the default profile, out = 'foundry-out'. src and test are separate trees, so HR-E202 does not apply and was not emitted. Permissions frozen in BaseDynamicFeeHook.getHookPermissions: beforeInitialize, afterInitialize, beforeAddLiquidity, afterAddLiquidity, beforeSwap, afterSwap all true; all four *ReturnDelta flags false; remove-liquidity and donate false. Constructor is `constructor(IPoolManager _manager)` \u2014 1 arg \u2014 with roles wired later via `initialize(address,address,address)` behind a UUPS proxy. hookrisk.toml kept teamMaturity=3, tvlPotential=0; maxFeeBips set to 100 because the configurable optimal fee is capped at MAX_OPTIMAL_FEE_E6 = 1e4 (1% = 100 bips) in src/stable/base/StableFeeConfiguration.sol:17. That declaration was never exercised since I2 was skipped with the rest of the harness. Unclear: whether the harness would additionally have needed the proxy plus an initialize() call to stand this hook up \u2014 the artifact-path bug short-circuited before any deployment attempt, so the initializer/extra-args question the hint anticipated remains untested here."
+  },
+  {
+   "slug": "v4-hooks-public-weth",
+   "repo": "https://github.com/Uniswap/v4-hooks-public",
+   "target": "src/WETHHook.sol:WETHHook",
+   "api_era": "modern-getHookPermissions",
+   "constructor_args": 2,
+   "clone_ok": true,
+   "deps_ok": true,
+   "build_ok": true,
+   "build_error": "",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_reason": "",
+   "static_findings": [
+    {
+     "ruleClass": "flag-implementation-divergence",
+     "severity": "high",
+     "title": "WETHHook declares permission `beforeAddLiquidity` (bit 11, BEFORE_ADD_LIQUIDITY_FLAG) but provides no working `beforeAddLiquidity` implementation",
+     "line": 12
+    },
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "title": "WETHHook declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3)",
+     "line": 12
+    }
+   ],
+   "harness_status": "skipped",
+   "harness_reason": "Primary run: \"no compiled artifact at <repo>/out/WETHHook.sol/WETHHook.json \u2014 run `forge build` in the target project first.\" (false: forge build had succeeded; this project sets out = 'foundry-out'). Control run with out -> foundry-out symlink gave the real reason: \"WETHHook's constructor takes 2 argument(s); the harness supplies exactly one (the IPoolManager).\"",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "no compiled artifact at <repo>/out/WETHHook.sol/WETHHook.json (primary run); constructor takes 2 args (control run)"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "same as I1"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "same as I1"
+    }
+   ],
+   "tier": "medium",
+   "total": 10,
+   "total_upper": 22,
+   "inconclusive": true,
+   "uncovered_functions": 0,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Medium Risk and High Risk; the upper bound exceeds the configured maximum of medium",
+    "1 finding(s) at or above high: WETHHook (src/WETHHook.sol#12-54) declares permission `beforeAddLiquidity` (bit 11, BEFORE_ADD_LIQUIDITY_FLAG) but provides no working `beforeAddLiquidity` i..."
+   ],
+   "hr_error_codes": [],
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "HS-02 flag-implementation-divergence false positive at HIGH severity. WETHHook (via BaseTokenWrapperHook) does override the beforeAddLiquidity delegate; it deliberately reverts with a documented custom error LiquidityNotAllowed() because the wrapper pool intentionally blocks all liquidity operations. hookrisk reports 'provides no working beforeAddLiquidity implementation', conflating a designed block with an unimplemented BaseHook stub. Declared permissions and implementation do match here. This finding is one of the two gate failures.",
+     "evidence": "src/base/BaseTokenWrapperHook.sol:106-115 '/// @dev Always reverts as liquidity is managed through the token wrapper' ... 'function _beforeAddLiquidity(address, PoolKey calldata, ModifyLiquidityParams calldata, bytes calldata) internal pure override returns (bytes4) { revert LiquidityNotAllowed(); }'. Root cause in hookrisk: detectors/slither_hookrisk/utils/hook_analysis.py:254 'if always_reverts(function): return False' and :270 'if delegates and all(always_reverts(target) for target in delegates): return False' \u2014 no distinction between HookNotImplemented() and a purposeful custom-error revert."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Harness artifact path is hardcoded to <projectRoot>/out/, ignoring foundry.toml's 'out' key. This project sets out = 'foundry-out', so the harness skipped with a misleading message telling the user to run forge build \u2014 which had already succeeded. It masked the true documented skip reason.",
+     "evidence": "cli/src/harness.ts:173 \"const source = join(options.projectRoot, 'out', artifactName, `${options.contractName}.json`);\" and :176 'no compiled artifact at ${source} \u2014 run `forge build` in the target project first.' Artifact actually present at repo/foundry-out/WETHHook.sol/WETHHook.json. Control: symlinking repo/out -> foundry-out and re-scanning changed the skip reason to the constructor-arity one."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Dynamic invariants I1/I2/I3 cannot be evaluated for any hook whose constructor takes more than the IPoolManager. WETHHook takes (IPoolManager, address payable weth), so all three skip even once the artifact is found. Expected per the hint, but it is why 4 dimensions stay unmeasured and the tier stays inconclusive (10/33, up to 22/33).",
+     "evidence": "Control-run stderr: 'harness: skipped \u2014 WETHHook's constructor takes 2 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported \u2014 see docs/INVARIANTS.md.'"
+    },
+    {
+     "kind": "expected",
+     "description": "HS-07 custom-accounting fired at info severity on beforeSwapReturnDelta \u2014 correct for this returns-delta custom-curve wrapper hook.",
+     "evidence": "findings[1]: ruleClass 'custom-accounting', severity info, 'WETHHook (src/WETHHook.sol#12-54) declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3)'; src/base/BaseTokenWrapperHook.sol:76 'beforeSwapReturnDelta: true'."
+    },
+    {
+     "kind": "expected",
+     "description": "Cross-file attribution filter worked in this large multi-hook monorepo: 24 findings in other contracts were excluded from the target. Coverage complete (0 uncovered functions), no HR-E codes, no crash, exit code 2 is the correct code for a failed gate.",
+     "evidence": "scan.stderr: 'hookrisk: 24 finding(s) in other files, not attributed to this target' / 'hookrisk: 2 finding(s)'; exit_code file contains 2."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-hooks-public-weth",
+   "base_class": "local src/base/BaseTokenWrapperHook.sol -> src/base/BaseHook.sol (repo-vendored BaseHook implementing IHooks + v4-periphery ImmutableState; also inherits v4-periphery DeltaResolver). Not OpenZeppelin uniswap-hooks.",
+   "duration_minutes": 14,
+   "notes": "Repo HEAD e4eabe526f9b516fff78d98ba781251747f0fd6e. Clone with --recurse-submodules --shallow-submodules succeeded first try; no forge install or npm install needed. foundry.toml: auto_detect_solc = true (WETHHook pragma 0.8.26; forge pulled 0.8.26/0.8.29/0.8.30 across the tree), evm_version cancun, via_ir false, out = 'foundry-out'. test/ and src/ are separate directories, so HR-E202 does not apply. Full forge build succeeded with warnings only, all in unrelated src/aggregator-hooks files. hookrisk.toml left at generated defaults (teamMaturity=3, tvlPotential=0, maxFeeBips=0) \u2014 the hook rejects any non-zero pool fee (InvalidPoolFee in _beforeInitialize), so 0 is the accurate declaration. Two scans: the primary into out/ (reported here) and one control into out2/ after symlinking repo/out -> foundry-out, purely to isolate the harness-skip cause; the symlink was removed afterwards. Both runs exited 2 with identical score, findings and gate failures. Nothing under /Users/rafaelzochling/gitrepos/external/hookrisk was modified; make was not run."
+  },
+  {
+   "slug": "cork-hook",
+   "repo": "https://github.com/Cork-Technology/Cork-Hook",
+   "target": "src/CorkHook.sol:CorkHook",
+   "api_era": "modern-getHookPermissions",
+   "base_class": "v4-periphery BaseHook (lib/v4-periphery/src/base/hooks/BaseHook.sol), plus OZ Ownable and ICorkHook",
+   "constructor_args": 3,
+   "clone_ok": true,
+   "deps_ok": true,
+   "build_ok": true,
+   "build_error": "",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_reason": "hookrisk Slither engine ran, status ok, 0 uncovered functions",
+   "static_findings": [
+    {
+     "ruleClass": "unprotected-hook-callback",
+     "severity": "high",
+     "title": "CorkHook.beforeAddLiquidity(...) is an IHooks callback (0x259982e5) that never compares msg.sender against poolManager",
+     "line": 88
+    },
+    {
+     "ruleClass": "unprotected-hook-callback",
+     "severity": "high",
+     "title": "CorkHook.beforeInitialize(address,PoolKey,uint160) is an IHooks callback (0xdc98354e) that never compares msg.sender against poolManager",
+     "line": 97
+    },
+    {
+     "ruleClass": "unprotected-hook-callback",
+     "severity": "high",
+     "title": "CorkHook.beforeSwap(address,PoolKey,IPoolManager.SwapParams,bytes) is an IHooks callback (0x575e24b4) that never compares msg.sender against poolManager",
+     "line": 365
+    },
+    {
+     "ruleClass": "flag-implementation-divergence",
+     "severity": "high",
+     "title": "CorkHook declares permission `beforeRemoveLiquidity` (bit 9, BEFORE_REMOVE_LIQUIDITY_FLAG) but provides no working beforeRemoveLiquidity implementation",
+     "line": 31
+    },
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "title": "CorkHook declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3)",
+     "line": 31
+    }
+   ],
+   "harness_status": "skipped",
+   "harness_reason": "CorkHook's constructor takes 3 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported \u2014 see docs/INVARIANTS.md.",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "constructor takes 3 args; harness supplies only IPoolManager"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "constructor takes 3 args; harness supplies only IPoolManager"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "constructor takes 3 args; harness supplies only IPoolManager"
+    }
+   ],
+   "tier": "medium",
+   "total": 10,
+   "total_upper": 22,
+   "uncovered_functions": 0,
+   "inconclusive": true,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Medium Risk and High Risk; the upper bound exceeds the configured maximum of medium",
+    "4 finding(s) at or above high: beforeAddLiquidity / beforeInitialize / beforeSwap unprotected-hook-callback, plus flag-implementation-divergence"
+   ],
+   "hr_error_codes": [],
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "HS-01 (unprotected-hook-callback) fired on the exact function behind the May 2025 $11M Cork exploit: beforeSwap at src/CorkHook.sol:365. The hint's premise was wrong \u2014 the archived repo's HEAD (50e78ac, 'Merge pull request #25') is still the vulnerable code; PR #19's onlyPoolManager fix never landed on any ref of this repo, so no pre-fix second clone was needed or possible.",
+     "evidence": "manifest finding: \"CorkHook.beforeSwap(address,PoolKey,IPoolManager.SwapParams,bytes) (src/CorkHook.sol#365-378) is an IHooks callback (0x575e24b4) that never compares msg.sender against poolMa...\" severity high. Source at HEAD: `function beforeSwap(address sender, PoolKey calldata key, IPoolManager.SwapParams calldata params, bytes calldata hookData) external override returns (bytes4, BeforeSwapDelta delta, uint24)` \u2014 no modifier, no msg.sender check. `git log --all --oneline -S\"onlyPoolManager\" -- src/CorkHook.sol` returns nothing across all 9 remote branches; `grep -rn onlyPoolManager src/` returns nothing; this pinned v4-periphery BaseHook exposes only `selfOnly` and `onlyValidPools` modifiers, no poolManagerOnly."
+    },
+    {
+     "kind": "expected",
+     "description": "HS-02 (flag-implementation-divergence) on beforeRemoveLiquidity is a true positive, not a false alarm: CorkHook sets beforeRemoveLiquidity: true in getHookPermissions but never overrides the callback, so the inherited BaseHook default reverts and any PoolManager-routed removal fails.",
+     "evidence": "src/CorkHook.sol:75 `beforeRemoveLiquidity: true, // override, only allow removing liquidity from the hook`; the only other repo-wide match for the identifier is lib/v4-periphery/src/base/hooks/BaseHook.sol:78, whose body is `revert HookNotImplemented();`"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Harness skipped entirely (I1/I2/I3) purely because the constructor takes 3 args (IPoolManager, LiquidityToken, owner). Both extra args are trivially constructible (a deployed LiquidityToken template and any owner address), so the whole dynamic dimension goes unmeasured on a hook that is otherwise an ideal harness target.",
+     "evidence": "scan.stderr: \"harness: skipped \u2014 CorkHook's constructor takes 3 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported \u2014 see docs/INVARIANTS.md.\""
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "4 of 9 rubric dimensions unmeasured (externalDependencies, externalLiquidityExposure, upgradeability, autonomousParameterUpdates), leaving the tier undetermined over a 12-point band (10..22 of 33) and collapsing 4 triggers. autonomousParameterUpdates is demonstrably non-zero here \u2014 the owner can rewrite the swap fee at will \u2014 but no detector covers it.",
+     "evidence": "manifest warnings: \"4 dimension(s) unmeasured: the tier is between Medium Risk and High Risk\"; dimension evidence \"Not measured: no detector for external-call-in-swap-path yet.\" and \"Not measured: no detector for upgradeable-hook (needs blocksec, which did not run)\". Contrast src/CorkHook.sol:228 `function updateBaseFeePercentage(address ra, address ct, uint256 baseFeePercentage) external onlyOwner`."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Finding-count discrepancy between the verbose engine line and the emitted artifacts, with no explanation of what was dropped \u2014 makes the pipeline opaque to anyone reconciling raw Slither output against the manifest. Low severity.",
+     "evidence": "scan.stderr line 2: \"  hookrisk: 6 finding(s)\"; but `jq '.findings|length' out/hook-risk.json` => 5 and the SARIF also has 5 results (3 unprotected-hook-callback, 1 flag-implementation-divergence, 1 custom-accounting)."
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "remappings.txt contains a dangling remapping to a directory that does not exist in the checkout. Harmless here (nothing under src/ imports it) and it did not affect the build or the scan, but it is a latent break for any consumer resolving that prefix.",
+     "evidence": "remappings.txt line: `Depeg-swap=lib/Depeg-swap/`; `ls lib/Depeg-swap` => \"No such file or directory\". lib/ contains only forge-std, openzeppelin-contracts, openzeppelin-contracts-upgradeable, prb-math, v4-periphery."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/cork-hook",
+   "duration_minutes": 9,
+   "notes": "Clean run: exit 2 (gate failed), no HR-E codes anywhere in scan.stderr, no crash, no invalid manifest. Clone with --recurse-submodules --shallow-submodules worked first try; `forge build` succeeded with zero modifications (solc 0.8.26 pinned in foundry.toml, evm_version cancun, src=\"src\" vs test=\"test\" are distinct so HR-E202 does not apply). Only forge-lint warnings, no compile errors.\n\nHint correction: the pre-fix/post-fix A/B was neither runnable nor necessary. The archived repo's main HEAD (50e78ac) IS the pre-fix code \u2014 `onlyPoolManager` appears nowhere in src/ at any commit on any of the 9 remote branches, so PR #19's fix was never merged here. hookrisk fired HS-01 on the exploited beforeSwap (line 365) at high severity, and on beforeInitialize (97) and beforeAddLiquidity (88), which are equally unprotected in the same file. So the pre-fix behaviour is confirmed positive; the negative half of the A/B (silence on a fixed version) could not be tested from this repo.\n\nhookrisk.toml: teamMaturity=3, tvlPotential=0 as instructed; maxFeeBips=10000 because the hook's documented ceiling is src/lib/State.sol:139 `MAX_FEE = 100e18` (100%, owner-settable via updateBaseFeePercentage). That declaration turned out inert since the harness skipped and I2 never ran."
+  },
+  {
+   "slug": "orbital-hook",
+   "repo": "https://github.com/Dhruv-2003/ethglobal-buenos-aires-25",
+   "target": "src/OrbitalHook.sol:OrbitalHook",
+   "api_era": "modern-getHookPermissions",
+   "base_class": "@openzeppelin/uniswap-hooks BaseHook (@openzeppelin/uniswap-hooks/src/base/BaseHook.sol); also inherits solady ERC20 and IUnlockCallback",
+   "constructor_args": 4,
+   "clone_ok": true,
+   "deps_ok": true,
+   "build_ok": true,
+   "build_error": "Plain `forge build` at repo root FAILS: Error (9097): Identifier already declared \u2014 lib/forge-std/src/Base.sol:16 CREATE2_FACTORY vs script/OrbitalDeployLive.s.sol:18. `forge build --skip 'script/**'` succeeds (83 files, solc 0.8.30, warnings only). foundry.lock revision mismatch warnings for lib/forge-std, lib/uniswap-hooks, lib/hookmate.",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_reason": "hookrisk Slither engine ran; 3 native findings merged into 2; coverage complete (0 uncovered functions)",
+   "static_findings": [
+    {
+     "ruleClass": "flag-implementation-divergence",
+     "severity": "high",
+     "title": "OrbitalHook declares permission `beforeRemoveLiquidity` (bit 9) but provides no working implementation (evidence array also covers beforeAddLiquidity, bit 11)",
+     "line": 18
+    },
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "title": "OrbitalHook declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3)",
+     "line": 18
+    }
+   ],
+   "harness_status": "skipped",
+   "harness_reason": "OrbitalHook's constructor takes 4 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported \u2014 see docs/INVARIANTS.md.",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "constructor takes 4 arguments; harness supplies only IPoolManager"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "constructor takes 4 arguments; harness supplies only IPoolManager"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "constructor takes 4 arguments; harness supplies only IPoolManager"
+    }
+   ],
+   "tier": "medium",
+   "total": 10,
+   "total_upper": 22,
+   "inconclusive": true,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Medium Risk and High Risk; the upper bound exceeds the configured maximum of medium",
+    "1 finding(s) at or above high: OrbitalHook (src/OrbitalHook.sol#18-476) declares permission `beforeRemoveLiquidity` (bit 9, BEFORE_REMOVE_LIQUIDITY_FLAG) but provides no working `beforeRem..."
+   ],
+   "hr_error_codes": [],
+   "uncovered_functions": 0,
+   "duration_minutes": 11,
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/orbital-hook",
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "HS-07-equivalent (`custom-accounting`, info) fired correctly on the spherical 3-asset curve: the hook declares beforeSwapReturnDelta and settles through its own reserves mapping via poolManager.take/sync/settle. It correctly drove customMath=3 and priceImpactingBehavior=3.",
+     "evidence": "manifest finding 73572973470128d8, nativeRule hookrisk-custom-accounting: \"declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3) ... means differential output comparison (invariant I2) does not apply \u2014 the harness substitutes price monotonicity\""
+    },
+    {
+     "kind": "expected",
+     "description": "flag-implementation-divergence (high) is semantically accurate. _beforeAddLiquidity/_beforeRemoveLiquidity ARE implemented but revert unconditionally, so PoolManager-routed liquidity is genuinely bricked by design. The message describes real behaviour rather than falsely claiming a missing function.",
+     "evidence": "src/OrbitalHook.sol:323-343: `revert(\"Use custom addLiquidity\")` / `revert(\"Use custom removeLiquidity\")`; manifest finding 044349706a34a9d8 severity=high confidence=medium, evidence array lists both bit 11 and bit 9"
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Harness (I1/I2/I2b/I3) skipped entirely because the constructor takes 4 args (IPoolManager + 3 Currency). The hinted monotonicity (I2b) and exit-liveness (I3) results were never produced \u2014 and exit-liveness is precisely what this hook stresses, since every PoolManager-routed exit reverts and the only exit is the custom removeLiquidity.",
+     "evidence": "scan.stderr: \"harness: skipped \u2014 OrbitalHook's constructor takes 4 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported\""
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "externalLiquidityExposure and autonomousParameterUpdates are reported unmeasured with an EMPTY evidence array, unlike externalDependencies and upgradeability which explain why (\"no detector for ...\"). The reader gets a null dimension with no stated reason. Substantively the hook plainly custodies user funds (reserves mapping, safeTransferFrom into address(this), mints its own ERC20 LP token), so 'holds-liquidity' going unevaluated understates the tier and is the main driver of the 10..22 undetermined band.",
+     "evidence": "manifest dimensions: {\"id\":\"externalLiquidityExposure\",\"value\":null,\"source\":\"unmeasured\",\"evidence\":[]} and {\"id\":\"autonomousParameterUpdates\",\"value\":null,\"source\":\"unmeasured\",\"evidence\":[]}; stderr: \"! trigger 'holds-liquidity' could not be evaluated: dimension 'externalLiquidityExposure' is unmeasured\""
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "The repo itself does not build with plain `forge build`: script/OrbitalDeployLive.s.sol redeclares CREATE2_FACTORY, colliding with forge-std Base.sol; foundry.lock also reports revision mismatches for three libs (only lib/solady is a live submodule). Unrelated to hookrisk, and hookrisk was unaffected \u2014 a clean re-run after `rm -rf out cache` gave identical results, so its compile path builds only the target's dependency closure.",
+     "evidence": "forge build: \"Error (9097): Identifier already declared. --> lib/forge-std/src/Base.sol:16 ... Note: The previous declaration is here: --> script/OrbitalDeployLive.s.sol:18\"; second scan from clean state: exit=2, same 2 findings, same 10/22"
+    }
+   ],
+   "notes": "foundry.toml: solc_version=0.8.30, via_ir=true, evm_version=cancun, src=\"src\", test defaults to \"test\" (separate) \u2014 no HR-E202. No HR-E codes appeared in scan.stdout or scan.stderr. hookrisk.toml: teamMaturity=3, tvlPotential=0, maxFeeBips set to 10 (hook charges LP_FEE=1000/1_000_000 = 0.1% = 10 bips, src/OrbitalHook.sol:32-34). Only file added to the repo was hookrisk.toml; nothing else modified. Scan run twice (out/ and out2/) with identical output. HS-01-style silence appears correct: the callbacks are gated by BaseHook's onlyPoolManager, and the only unauthenticated external entry points are addLiquidity/removeLiquidity (permissionless pro-rata by design) plus an empty no-op unlockCallback. Outside hookrisk's rule set but worth a human's attention: _beforeSwap both calls poolManager.take for the input AND returns a positive input delta, and L_SQUARED is recomputed from post-trade reserves after every swap, which is not a fee-growth-preserving invariant update. Wall clock roughly 11 minutes."
+  },
+  {
+   "slug": "oz-antisandwich-mock",
+   "repo": "https://github.com/OpenZeppelin/uniswap-hooks",
+   "target": "src/mocks/general/AntiSandwichMock.sol:AntiSandwichMock",
+   "api_era": "modern-getHookPermissions",
+   "base_class": "AntiSandwichHook (src/general/AntiSandwichHook.sol) -> BaseDynamicAfterFee -> repo-local BaseHook (src/base/BaseHook.sol, the @openzeppelin/uniswap-hooks BaseHook)",
+   "constructor_args": 1,
+   "clone_ok": true,
+   "deps_ok": true,
+   "build_ok": true,
+   "build_error": "",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_findings": [
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "title": "AntiSandwichMock (src/mocks/general/AntiSandwichMock.sol#15-50) declares custom-accounting permissions: `afterSwapReturnDelta` (bit 2)",
+     "line": 15
+    }
+   ],
+   "static_reason": "",
+   "harness_status": "skipped",
+   "harness_reason": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare.",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare."
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "same reason"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "same reason"
+    }
+   ],
+   "tier": "medium",
+   "total": 9,
+   "total_upper": 21,
+   "inconclusive": true,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Medium Risk and High Risk; the upper bound exceeds the configured maximum of medium"
+   ],
+   "hr_error_codes": [],
+   "uncovered_functions": 0,
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "Harness skipped with a factually false reason. AntiSandwichMock inherits getHookPermissions() from AntiSandwichHook (beforeSwap, afterSwap, afterSwapReturnDelta = true), so flags != 0, and its constructor takes only IPoolManager \u2014 the harness should have run. Root cause: cli/src/harness.ts parseDeclaredPermissions() text-searches only the target file (sourceText.indexOf('getHookPermissions')); the mock file has no such function, returns null, flagsFrom() yields 0. hookrisk contradicts itself inside one manifest: the Slither detector resolved the inherited permission set in the same run.",
+     "evidence": "scan.stderr: \"harness: skipped \u2014 the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare.\" vs findings[0].title: \"AntiSandwichMock (...#15-50) declares custom-accounting permissions: `afterSwapReturnDelta` (bit 2)\". Source: /Users/rafaelzochling/gitrepos/external/hookrisk/cli/src/harness.ts:103-133 and :183-187."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Manifest coverage.dynamicAnalysisSkipped is false although no harness ran and all three invariants are 'skipped'. A consumer gating on that field would wrongly conclude the dynamic layer executed.",
+     "evidence": "hook-risk.json .coverage = {\"corroboratedFindings\":0,\"uncoveredFunctions\":[],\"staticAnalysisSkipped\":false,\"dynamicAnalysisSkipped\":false} while .invariants[].status are all \"skipped\"."
+    },
+    {
+     "kind": "expected",
+     "description": "Gate failed (exit 2) because 4 of 9 dimensions are unmeasured, leaving the tier undetermined between medium and high, above the configured maxTier=medium. hookrisk surfaces the uncertainty instead of scoring unmeasured dimensions as zero.",
+     "evidence": "gate.failures[0] = \"tier is undetermined between Medium Risk and High Risk; the upper bound exceeds the configured maximum of medium\"; score.total=9, totalUpperBound=21, inconclusive=true."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Four dimensions have no working detector (externalDependencies, externalLiquidityExposure, upgradeability, autonomousParameterUpdates); two of them carry an empty evidence array, so the manifest does not say why they are unmeasured.",
+     "evidence": "dimensions[].evidence: externalDependencies -> \"Not measured: no detector for external-call-in-swap-path yet.\"; upgradeability -> \"...needs blocksec, which did not run\"; externalLiquidityExposure and autonomousParameterUpdates -> []."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "19 Slither findings were dropped as \"in other files, not attributed to this target\" with no per-file listing in stderr or the manifest. For this hook the real logic lives in the inherited AntiSandwichHook.sol, so the user cannot tell whether relevant findings were discarded.",
+     "evidence": "scan.stderr: \"hookrisk: 19 finding(s) in other files, not attributed to this target\"."
+    },
+    {
+     "kind": "expected",
+     "description": "The hint's predicted HR-E205 (Slither failing to lift AntiSandwichHook._afterSwap to IR) did not occur in this run: no HR-E code appeared anywhere and uncoveredFunctions is empty.",
+     "evidence": "grep -o 'HR-E[0-9]*' over scan.stderr, scan.stdout, out/*.json, out/*.md returned nothing; .coverage.uncoveredFunctions = []; engines[0] = {engine:\"hookrisk\", status:\"ok\", findingCount:1, durationMs:7484}."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/oz-antisandwich-mock",
+   "duration_minutes": 11,
+   "notes": "Clone at 26dc8e5 with recursive submodules succeeded first try; forge build clean (lint warnings only) and out/AntiSandwichMock.sol/AntiSandwichMock.json exists despite foundry.toml no_match_path='src/mocks/**/*.sol', because the test suite imports the mock. foundry.toml: solc 0.8.26, src='src', test='test' (distinct, so no HR-E202), evm_version=cancun. No remapping or install fixes were needed. hookrisk.toml left at defaults (teamMaturity=3, tvlPotential=0, maxFeeBips=0); the hook documents no fixed swap fee \u2014 it retains an implicit anti-sandwich surplus and donates it to LPs, which is exactly the I2 case that never got exercised. Headline: the most informative check for a returns-delta hook (differential I1/I2/I3) was skipped on a false premise, because the harness resolves permissions by text-searching only the target file. That fails for every concrete hook inheriting getHookPermissions from a base \u2014 the standard OpenZeppelin uniswap-hooks shape, and the pattern the tool's own pinned corpus uses. Manifest has no top-level .permissions or .dimensions keys (dimensions live under .score.dimensions)."
+  },
+  {
+   "slug": "oz-limitorder-mock",
+   "repo": "https://github.com/OpenZeppelin/uniswap-hooks",
+   "target": "src/mocks/general/LimitOrderHookMock.sol:LimitOrderHookMock",
+   "api_era": "modern-getHookPermissions",
+   "base_class": "@openzeppelin/uniswap-hooks own BaseHook (src/base/BaseHook.sol), reached via abstract LimitOrderHook (src/general/LimitOrderHook.sol), which also implements IUnlockCallback",
+   "constructor_args": 1,
+   "clone_ok": true,
+   "deps_ok": true,
+   "build_ok": true,
+   "build_error": "",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_findings": [],
+   "static_reason": "hookrisk Slither engine ran (status ok, 9872ms, v0.11.6) and produced 0 findings attributed to the target; 20 findings landed in other files (all other mocks) and were filtered out.",
+   "harness_status": "skipped",
+   "harness_reason": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare.",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare."
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare."
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare."
+    }
+   ],
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium"
+   ],
+   "tier": "low",
+   "total": 3,
+   "total_upper": 23,
+   "inconclusive": true,
+   "uncovered_functions": 0,
+   "hr_error_codes": [],
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "hookrisk claims the hook declares no permissions, which is false. LimitOrderHookMock inherits getHookPermissions() from abstract LimitOrderHook, returning afterInitialize:true and afterSwap:true. Root cause: cli/src/harness.ts parseDeclaredPermissions() does indexOf('getHookPermissions') on the target FILE text only, with no inheritance resolution, returns null, flags==0, and the harness skips with a factually wrong reason. The manifest also records permissions:null and hook:null.",
+     "evidence": "scan.stderr: 'harness: skipped \u2014 the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare.' vs src/general/LimitOrderHook.sol:781-797 getHookPermissions() { afterInitialize: true, ..., afterSwap: true }. cli/src/harness.ts:103-105 'const start = sourceText.indexOf(\"getHookPermissions\"); if (start < 0) return null;' and :183-187 'const flags = flagsFrom(options.permissions); if (flags === 0) return skipped(...)'."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Complexity is reported as source:'measured', value 0/5, bracket 'Pass-through only; no hook state', for a hook that maintains an on-chain limit-order book (order mappings, tick tracking, three unlock paths through unlockCallback). The dimension is derived solely from the absence of flag-divergence / unprotected-callback findings, so silence from two detectors is presented as a positive measurement of low complexity \u2014 wrong, and wrong in the reassuring direction.",
+     "evidence": "hook-risk.json dimension complexity: {value:0, source:'measured', bracketLabel:'Pass-through only; no hook state', evidence:['No flag-implementation-divergence or unprotected-hook-callback findings, and every detector that could produce one ran.']} against src/general/LimitOrderHook.sol:65 'abstract contract LimitOrderHook is BaseHook, IUnlockCallback' (~800 lines of order-book state)."
+    },
+    {
+     "kind": "expected",
+     "description": "HS-01 (unprotected-hook-callback) correctly did NOT fire on LimitOrderHook.unlockCallback, which carries onlyPoolManager. Verified independently: a direct run of all hookrisk-* detectors over the project produced zero findings anywhere in LimitOrderHook.sol or LimitOrderHookMock.sol, so this is a genuine true negative and not an artefact of the file-attribution filter.",
+     "evidence": "src/general/LimitOrderHook.sol:448 'function unlockCallback(bytes calldata rawData) public virtual onlyPoolManager returns (bytes memory returnData)'. Direct slither run with all hookrisk-* detectors: all 20 findings are in src/mocks/base/BaseHookMock.sol (10 flag-divergence), BaseCustomCurveMock.sol (3), BaseCustomAccountingFeeMock.sol (2), BaseAsyncSwapMock.sol, BaseDynamicAfterFeeMock.sol, BaseHookFeeMock.sol, AntiSandwichMock.sol, LiquidityPenaltyHookMock.sol \u2014 none in LimitOrderHook*.sol."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Latent, did not bite here: findings are attributed by exact source-file string equality, so for a thin mock whose entire implementation lives in an inherited file, any detector finding attributed to the parent file would be silently dropped from the target's score. Did not manifest on this target because no detector fired on either file.",
+     "evidence": "cli/src/engines/slither.ts:216 'const findings = all.filter((f) => !f.location || f.location.file === ctx.sourceFile);' and scan.stderr 'hookrisk: 20 finding(s) in other files, not attributed to this target'."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "6 of 9 dimensions unmeasured (customMath, externalDependencies, externalLiquidityExposure, upgradeability, autonomousParameterUpdates, priceImpactingBehavior) and all 6 triggers unevaluable; with the harness also skipped, nothing dynamic was assessed. The 3..23/33 band is honestly reported and the gate correctly failed on the upper bound, but every risk-bearing dimension of a limit-order hook went unassessed.",
+     "evidence": "hook-risk.json score.warnings: '6 dimension(s) unmeasured: the tier is between Low Risk and High Risk. Unmeasured dimensions are excluded from the total, never counted as zero.' plus six \"trigger '<x>' could not be evaluated\" entries; engines[] contains only hookrisk (blocksec disabled by default)."
+    },
+    {
+     "kind": "expected",
+     "description": "No HR-E error codes emitted; HR-E202 (test == src) not applicable since foundry.toml has src='src', test='test'. solc detected correctly as 0.8.26. Exit code 2 (gate failed) matches the documented contract.",
+     "evidence": "grep -o 'HR-E[0-9]*' over scan.stderr and scan.stdout returned nothing. hook-risk.json target.solcVersion '0.8.26' matches foundry.toml solc = \"0.8.26\". exit_code file contains 2."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/oz-limitorder-mock",
+   "duration_minutes": 16,
+   "notes": "Clone at 26dc8e5, submodules recursive, forge build clean (warnings only). foundry.toml sets no_match_path = \"src/mocks/**/*.sol\", so mocks are excluded from the default compile set, but the LimitOrderHookMock artifact exists in out/ anyway because the test suite imports it, so no build workaround was needed. No remapping or config edits were made. hookrisk.toml left at defaults (teamMaturity=3, tvlPotential=0, maxFeeBips=0); LimitOrderHook charges no swap fee of its own, so 0 is correct.\n\nThe headline result is the harness skip. Its reason is not a hedge, it is a false factual assertion: the target does declare afterInitialize and afterSwap. Because parseDeclaredPermissions is a single-file text scan with no inheritance resolution, every hook whose permissions live in an inherited base \u2014 a very common OpenZeppelin/v4-periphery shape, and the shape of every mock in this repo \u2014 will be silently treated as a non-hook by the dynamic layer, and the manifest's permissions/hook fields come out null.\n\nSecond concern: complexity is emitted as source:'measured' with the bracket 'Pass-through only; no hook state'. Absence of two detector classes is not evidence of low complexity; that dimension would be more honest as unmeasured for this target.\n\nHS-01 behaved correctly (true negative on an onlyPoolManager unlockCallback), confirmed by a direct detector run. Scoring band, gate failure and exit code were all correct and clearly reported."
+  },
+  {
+   "slug": "trading-days",
+   "repo": "https://github.com/horsefacts/trading-days",
+   "target": "src/TradingDaysHook.sol:TradingDaysHook",
+   "api_era": "legacy-getHooksCalls",
+   "constructor_args": 3,
+   "clone_ok": true,
+   "deps_ok": true,
+   "build_ok": true,
+   "build_error": "",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_reason": "hookrisk engine ran (status ok), 0 findings attributed to the target; stderr also logged \"1 finding(s) in other files, not attributed to this target\"",
+   "static_findings": [],
+   "harness_status": "skipped",
+   "harness_reason": "TradingDaysHook's constructor takes 3 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported \u2014 see docs/INVARIANTS.md.",
+   "base_class": "v4-periphery BaseHook (import \"v4-periphery/BaseHook.sol\" -> lib/v4-periphery/contracts/BaseHook.sol, 2023 API)",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "constructor takes 3 args; harness supplies only IPoolManager"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "constructor takes 3 args; harness supplies only IPoolManager \u2014 the expected 'hook blocks swaps' failure was never exercised"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "constructor takes 3 args; harness supplies only IPoolManager"
+    }
+   ],
+   "tier": "low",
+   "total": 3,
+   "total_upper": 23,
+   "inconclusive": true,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium"
+   ],
+   "uncovered_functions": 0,
+   "hr_error_codes": [],
+   "duration_minutes": 11,
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/trading-days",
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "Wrong claim: the complexity dimension is scored 0/5 with bracket \"Pass-through only; no hook state\" and evidence \"No flag-implementation-divergence or unprotected-hook-callback findings, and every detector that could produce one ran.\" Both halves are false for this contract. (a) The hook has state: mapping marketOpened written from beforeSwap. (b) beforeSwap is declared external override with NO poolManagerOnly modifier, while lib/v4-periphery/contracts/BaseHook.sol:25 defines modifier poolManagerOnly(). Any EOA can call TradingDaysHook.beforeSwap directly, set marketOpened[y][m][d] and emit DingDingDing \u2014 an unprotected hook callback the detector claims does not exist. Impact is low (event + flag only), but the assertion that every detector that could produce one ran is unwarranted on a legacy-API hook.",
+     "evidence": "src/TradingDaysHook.sol:48-52 'function beforeSwap(address sender, IPoolManager.PoolKey calldata, IPoolManager.SwapParams calldata) external override returns (bytes4)' vs lib/v4-periphery/contracts/BaseHook.sol:25 'modifier poolManagerOnly()'; manifest complexity evidence string quoted above; findings array is []."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Legacy 2023 API hook (getHooksCalls() returning Hooks.Calls, no getHookPermissions()) is scanned without any signal that the permissions surface could not be read. hookrisk reports engine status ok, 0 findings, coverage.uncoveredFunctions 0, and no HR-E code anywhere in stderr \u2014 a user cannot tell from the output that the flag/implementation-divergence check had no modern permissions function to compare against.",
+     "evidence": "src/TradingDaysHook.sol:31 'function getHooksCalls() public pure override returns (Hooks.Calls memory)'; scan.stderr contains no 'HR-E' string; manifest engines[0] = {hookrisk, ok, null}."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Harness skipped for extra constructor arguments, so all three invariants (I1/I2/I3) are skipped. The expected outcome \u2014 I2 'hook does not block swaps' failing by design \u2014 was never produced. The hook demonstrably reverts swaps (ClosedForHoliday / ClosedForWeekend / AfterHours) yet nothing in the score or gate reflects swap-blocking behaviour; priceImpactingBehavior stays unmeasured.",
+     "evidence": "scan.stderr: 'harness: skipped \u2014 TradingDaysHook's constructor takes 3 argument(s); the harness supplies exactly one (the IPoolManager).'; src/TradingDaysHook.sol:58-63 revert branches in beforeSwap."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "solc version mismatch in the manifest: hookrisk records solcVersion 0.8.26 while forge build compiled the project with Solc 0.8.19 (pragma ^0.8.15, no solc pin in foundry.toml). The manifest's compiler provenance does not match the project's own build.",
+     "evidence": "hook-risk.json line 12: \"solcVersion\": \"0.8.26\"; forge build output: 'Compiling 74 files with Solc 0.8.19'."
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "Submodule wiring uses git@github.com: SSH URLs for the nested lib/v4-periphery/lib/v4-core, so git clone --recurse-submodules fails without an SSH key. Worked around with a repo-local 'git submodule set-url lib/v4-core https://github.com/Uniswap/v4-core.git' inside lib/v4-periphery, then submodule sync/update. Unrelated to hookrisk.",
+     "evidence": "clone output: \"fatal: clone of 'git@github.com:Uniswap/v4-core.git' into submodule path ... failed / Failed to clone 'lib/v4-core' a second time, aborting\"."
+    },
+    {
+     "kind": "expected",
+     "description": "Gate correctly fails (exit 2) on inconclusiveness rather than on findings: 6 of 9 dimensions unmeasured, total 3 with upper bound 23, tier low with tierUpperBound high. hookrisk refuses to count unmeasured dimensions as zero and says so explicitly.",
+     "evidence": "gate.failures[0]: 'tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium'; exit_code file contains 2."
+    },
+    {
+     "kind": "expected",
+     "description": "foundry.toml has src=\"src\" with the default test dir, i.e. test != src, so HR-E202 correctly did not fire.",
+     "evidence": "foundry.toml [profile.default] src = \"src\", out = \"out\", libs = [\"lib\"]; no test key."
+    }
+   ],
+   "notes": "Commit scanned: 63b1c17 (default branch HEAD). Build clean (74 files, Solc 0.8.19, via_ir=true) after fixing the SSH submodule URL. hookrisk.toml left at defaults (teamMaturity=3, tvlPotential=0, maxFeeBips=0) \u2014 the hook charges no fee, so 0 is accurate. Total session ~11 min, inside the box.\n\nHeadline: hookrisk ran cleanly and produced an honest \"most of this is unmeasured\" verdict, which is the right posture. But the one dimension it did claim to measure (complexity = 0, \"pass-through only; no hook state\") is wrong in both directions, and the unprotected beforeSwap is a real if low-impact miss. Whether HS-01 is silent because of the legacy API or because the detector does not model BaseHook's poolManagerOnly-by-inheritance pattern I could not determine without reading hookrisk's detector source, which was out of scope.\n\nArtifacts: scan.stdout, scan.stderr, exit_code, out/hook-risk.json, out/HOOK_RISK.md, out/hookrisk.sarif (results: [])."
+  },
+  {
+   "slug": "v4-constant-sum",
+   "repo": "https://github.com/saucepoint/v4-constant-sum",
+   "target": "src/Counter.sol:Counter",
+   "api_era": "modern-getHookPermissions",
+   "base_class": "local fork src/forks/BaseHook.sol (abstract BaseHook is IHooks) + v4-periphery/src/base/SafeCallback.sol",
+   "constructor_args": 1,
+   "clone_ok": true,
+   "deps_ok": true,
+   "build_ok": true,
+   "build_error": "",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_reason": "",
+   "static_findings": [
+    {
+     "ruleClass": "flag-implementation-divergence",
+     "severity": "high",
+     "title": "Counter (src/Counter.sol#18-127) declares permission `beforeAddLiquidity` (bit 11, BEFORE_ADD_LIQUIDITY_FLAG) but provides no working `beforeAddLiquidity` implementation. The PoolManager will call it on every matching pool operation and the call will revert, making the pool unusable for that operation.",
+     "line": 18
+    },
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "title": "Counter (src/Counter.sol#18-127) declares custom-accounting permissions: `beforeSwapReturnDelta` (bit 3)",
+     "line": 18
+    }
+   ],
+   "harness_status": "ok",
+   "harness_reason": "hookrisk logged `harness: Counter.sol:Counter flags=0x888 maxFee=0bips (custom curve: I2 -> monotonicity)` then `harness: 0 invariant(s), 0 failed` and returned status ok. Manual replay of the same command shows setUp() reverted: WrappedError(0x4444...0888, 0x259982e5 /*beforeAddLiquidity*/, Error(\"No v4 Liquidity allowed\")). Zero invariants were actually evaluated.",
+   "invariants": [],
+   "tier": "medium",
+   "total": 10,
+   "total_upper": 22,
+   "inconclusive": true,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Medium Risk and High Risk; the upper bound exceeds the configured maximum of medium",
+    "1 finding(s) at or above high: Counter (src/Counter.sol#18-127) declares permission `beforeAddLiquidity` (bit 11, BEFORE_ADD_LIQUIDITY_FLAG) but provides no working `beforeAddLiquidity` im..."
+   ],
+   "uncovered_functions": 0,
+   "hr_error_codes": [],
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "The dynamic harness silently produced nothing and the report never says so. forge's setUp() reverted (the harness adds v4 liquidity in setUp; this hook blocks it), so translate() saw only a setUp() row and returned an empty list, which hookrisk reported as status 'ok'. The manifest has NO `invariants` key at all, `.engines` contains only the hookrisk Slither row (no harness row, no reason), `.coverage.dynamicAnalysisSkipped` is false, and HOOK_RISK.md's coverage table lists one engine. A reader is told dynamic analysis was not skipped while zero invariants ran. Announcing 'custom curve: I2 -> monotonicity' and then evaluating no monotonicity invariant compounds it.",
+     "evidence": "scan.stderr: 'harness: Counter.sol:Counter flags=0x888 maxFee=0bips (custom curve: I2 -> monotonicity)' / 'harness: 0 invariant(s), 0 failed'. Manual replay in /Users/rafaelzochling/gitrepos/external/hookrisk/harness with the same env (HOOKRISK_ARTIFACT=Counter.sol:Counter, HOOKRISK_FLAGS=2184, HOOKRISK_CUSTOM_CURVE=1) yields test_results = {setUp(): Failure, reason WrappedError(0x4444000000000000000000000000000000000888, 0x259982e5, 0x08c379a0...'No v4 Liquidity allowed', 0xa9e35b2f)}. cli/src/harness.ts:229-235 turns that into {status:'ok', invariants: []}."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "HS-02 flag-implementation-divergence fires HIGH on a deliberate revert-guard. src/Counter.sol:87-94 DOES override _beforeAddLiquidity with revert(\"No v4 Liquidity allowed\") under the comment '@notice No liquidity will be managed by v4 PoolManager' \u2014 the declared flag matches an intentional implementation. The consequence sentence ('the call will revert, making the pool unusable for that operation') is factually correct, but 'provides no working beforeAddLiquidity implementation' misdescribes an explicit override, and the detector cannot distinguish an intentional block from a missing callback. This single finding is what fails the CI gate on maxSeverity.",
+     "evidence": "src/Counter.sol:87-94 `function _beforeAddLiquidity(...) internal pure override returns (bytes4) { revert(\"No v4 Liquidity allowed\"); }`; src/forks/BaseHook.sol:68-75 dispatches external beforeAddLiquidity -> _beforeAddLiquidity. Manifest findings[0].severity=high, ruleClass=flag-implementation-divergence, confidence medium."
+    },
+    {
+     "kind": "expected",
+     "description": "HS-07 custom-accounting fired correctly on beforeSwapReturnDelta and drove customMath=3, priceImpactingBehavior=3, the custom-math and price-impact triggers, and the math-specialist-audit / adversarial-simulation recommendations. The finding text correctly states I2 does not apply and the harness substitutes price monotonicity.",
+     "evidence": "manifest findings[1] ruleClass=custom-accounting severity=info; HOOK_RISK.md:76 '...differential output comparison (invariant I2) does not apply \u2014 the harness substitutes price monotonicity.'"
+    },
+    {
+     "kind": "expected",
+     "description": "Gate correctly failed with exit 2 on both the undetermined tier upper bound (10..22, medium..high, 4 unmeasured dimensions) and the high finding; no HR-E codes were emitted anywhere.",
+     "evidence": "exit_code file = 2; scan.stderr 'gate failed' with the two enumerated failures; grep -o 'HR-E[0-9]*' over scan.stderr and scan.stdout returns nothing."
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "The repo's main branch was 'Refreshed' onto the v4-template layout: the constant-sum hook is the contract named Counter in src/Counter.sol (added by commit 317050a 'example constant sum'); there is no CSMM.sol / ConstantSum.sol in any branch or in history. Nothing here impedes hookrisk, but the name is misleading for anyone matching on filename.",
+     "evidence": "git log --all --diff-filter=A --name-only lists only src/Counter.sol, src/forks/BaseHook.sol, test/custom-accounting/ExampleHook.sol; head commit cce8f6c 'Refresh (#2)'."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-constant-sum",
+   "duration_minutes": 15,
+   "notes": "Clone with --recurse-submodules worked first try; forge build compiled clean with zero fix attempts (solc 0.8.26, evm cancun, ffi=true). foundry.toml sets src=\"src\" and no test key, so test != src \u2014 HR-E202 does not apply. hookrisk init defaults kept (teamMaturity=3, tvlPotential=0, maxFeeBips=0); the hook swaps strictly 1:1 and returns fee 0 from _beforeSwap, so 0 bips is honest. Target src/Counter.sol:Counter: modern getHookPermissions(), flags 0x888 = beforeAddLiquidity + beforeSwap + beforeSwapReturnDelta, one constructor arg (IPoolManager), vendored BaseHook fork plus v4-periphery SafeCallback; it also implements _unlockCallback and an unpermissioned public addLiquidity(). The most important observation: hookrisk's dynamic engine could not reach a single invariant because the harness setUp adds v4 liquidity and this hook reverts it, yet the manifest shows no harness engine row, no invariants key, and dynamicAnalysisSkipped=false. The class of hooks the I2b monotonicity path was specialised for (custom curves that disable v4 liquidity) is exactly the class whose harness setUp cannot complete."
+  },
+  {
+   "slug": "v4-stoploss",
+   "repo": "https://github.com/saucepoint/v4-stoploss",
+   "target": "src/StopLoss.sol:StopLoss",
+   "api_era": "legacy-getHooksCalls",
+   "constructor_args": 1,
+   "clone_ok": true,
+   "build_ok": true,
+   "deps_ok": true,
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_findings": [],
+   "static_reason": "Slither ran and completed (engine hookrisk status=ok, coverage.staticAnalysisSkipped=false, uncoveredFunctions=[]), but produced 0 findings attributed to the target. stderr: \"hookrisk: 1 finding(s) in other files, not attributed to this target\" then \"hookrisk: 0 finding(s)\".",
+   "harness_status": "skipped",
+   "harness_reason": "\"harness: skipped \u2014 the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare.\" The hook does declare permissions, but via legacy getHooksCalls(), which hookrisk does not parse.",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare."
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare."
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare."
+    }
+   ],
+   "tier": "low",
+   "total": 3,
+   "total_upper": 23,
+   "inconclusive": true,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium"
+   ],
+   "uncovered_functions": 0,
+   "hr_error_codes": [],
+   "base_class": "UniV4UserHook (repo-local, src/UniV4UserHook.sol) extending v4-periphery BaseHook (import \"v4-periphery/BaseHook.sol\" -> lib/v4-periphery/contracts/BaseHook.sol); StopLoss also inherits solmate ERC1155 and forge-std Test",
+   "build_error": "",
+   "anomalies": [
+    {
+     "kind": "hookrisk-gap",
+     "description": "Legacy-API hook silently treated as declaring no permissions: harness and all three invariants skip, and no diagnostic names the API mismatch. StopLoss declares afterInitialize+afterSwap via getHooksCalls() (Hooks.Calls struct), which hookrisk does not parse.",
+     "evidence": "src/StopLoss.sol:44 `function getHooksCalls() public pure override returns (Hooks.Calls memory)` with afterInitialize:true, afterSwap:true. scan.stderr: \"harness: skipped \u2014 the hook declares no permissions, so the PoolManager would never invoke it and there is nothing to compare.\"; hook-risk.json .invariants[] all status=skipped with the same detail. No HR-E code emitted."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Wrong positive claim from that blindness: complexity is recorded as source=\"measured\", value 0, bracket \"Pass-through only; no hook state\". StopLoss is not pass-through and holds substantial hook state (tickLowerLasts, stopLossPositions, four ERC1155 mappings) and performs re-entrant swaps via poolManager.lock. Recording 0/5 measured rather than unmeasured makes the 3/33 lower bound look earned.",
+     "evidence": "hook-risk.json dimensions[0]: {\"id\":\"complexity\",\"value\":0,\"source\":\"measured\",\"bracketLabel\":\"Pass-through only; no hook state\",\"evidence\":[\"No flag-implementation-divergence or unprotected-hook-callback findings, and every detector that could produce one ran.\"]}"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "HS-01-class miss: afterSwap is an unprotected external hook callback (no poolManagerOnly, no msg.sender check) that reaches poolManager.lock -> swap, and hookrisk reported 0 findings. afterInitialize in the same contract does carry poolManagerOnly, so the asymmetry sits in one file.",
+     "evidence": "src/StopLoss.sol:68-73 `function afterSwap(address, IPoolManager.PoolKey calldata key, IPoolManager.SwapParams calldata params, BalanceDelta) external override returns (bytes4)` (no modifier) vs src/StopLoss.sol:56-61 afterInitialize `external override poolManagerOnly`. hook-risk.json .findings == []."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Manifest records the wrong solc version. target.solcVersion is 0.8.26; the project can only compile at 0.8.19 because src/UniV4UserHook.sol pins `pragma solidity =0.8.19`, and forge's artifact metadata confirms 0.8.19.",
+     "evidence": "hook-risk.json .target = {\"mode\":\"source\",\"contractName\":\"StopLoss\",\"sourceFile\":\"src/StopLoss.sol\",\"solcVersion\":\"0.8.26\"}; repo/out/StopLoss.sol/StopLoss.json .metadata.compiler.version = \"0.8.19+commit.7dd6d404\"; src/UniV4UserHook.sol:2 `pragma solidity =0.8.19;`."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "coverage.dynamicAnalysisSkipped is false even though the harness was skipped and every invariant is skipped. A consumer reading coverage alone would conclude dynamic analysis ran.",
+     "evidence": "hook-risk.json .coverage = {\"corroboratedFindings\":0,\"uncoveredFunctions\":[],\"staticAnalysisSkipped\":false,\"dynamicAnalysisSkipped\":false} alongside .invariants[].status == \"skipped\" for I1, I2, I3."
+    },
+    {
+     "kind": "expected",
+     "description": "Exit code 2 and the gate failure are correct: with 6 of 9 dimensions unmeasured the tier is genuinely undetermined (3..23 / 33) and the upper bound exceeds maxTier=medium. hookrisk did not fabricate a passing score, and the manifest labels the unmeasured dimensions explicitly.",
+     "evidence": "exit_code=2; .gate = {\"passed\":false,\"maxTier\":\"medium\",\"failures\":[\"tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium\"]}; .score.inconclusive=true, total=3, totalUpperBound=23."
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "Repo submodules are declared with git@github.com: SSH URLs, so `git clone --recurse-submodules` aborts without an SSH key; needed an https url rewrite. Unrelated to hookrisk.",
+     "evidence": "clone output: \"fatal: clone of 'git@github.com:Uniswap/v4-core.git' into submodule path 'lib/v4-periphery/lib/v4-core' failed ... Failed to clone 'lib/v4-core' a second time, aborting\". Resolved with `git -c url.\"https://github.com/\".insteadOf=\"git@github.com:\" submodule update --init --recursive`."
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "The production hook inherits forge-std Test, linking test tooling into the deployable contract. Not a hookrisk issue, but it shapes what Slither sees.",
+     "evidence": "src/StopLoss.sol:16 `contract StopLoss is UniV4UserHook, ERC1155, Test {` with `import \"forge-std/Test.sol\";` at line 15."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v4-stoploss",
+   "duration_minutes": 13,
+   "notes": "Clone needed an https rewrite for SSH submodule URLs; after that `forge build` (forge 1.7.1) succeeded clean at solc 0.8.19, exit 0, no fix attempts needed. foundry.toml sets no solc version and no test path, so test defaults to \"test\" and src is \"src\" \u2014 they differ, HR-E202 not applicable. No HR-E code appears anywhere in scan.stderr (24 lines total; --verbose added little beyond three \"hookrisk:\" progress lines). No *ReturnDelta permission exists in this API era; getHooksCalls returns the 8-field Hooks.Calls struct with afterInitialize and afterSwap true. Constructor takes exactly 1 arg (IPoolManager), so the harness skip is attributed to zero parsed permissions, not to extra constructor args \u2014 that path was not exercised. No documented swap fee, so maxFeeBips left at 0; teamMaturity=3, tvlPotential=0 as instructed. No crash and no hook-risk.invalid.json; hook-risk.json, HOOK_RISK.md and hookrisk.sarif were all written. Headline matches the hint: a legacy hook scans as \"LOW risk 3/33\" with zero findings and a silent harness skip, and the only thing keeping CI red is the inconclusive-tier gate \u2014 with that guard relaxed this would read as a clean pass on a contract with an unprotected afterSwap."
+  },
+  {
+   "slug": "take-profits-hook",
+   "repo": "https://github.com/LearnWeb3DAO/uniswap-v4-take-profits-hook",
+   "target": "src/TakeProfitsHook.sol:TakeProfitsHook",
+   "api_era": "legacy-getHooksCalls",
+   "base_class": "periphery-next BaseHook (import \"periphery-next/BaseHook.sol\" -> lib/periphery-next/contracts/BaseHook.sol); also inherits OpenZeppelin ERC1155",
+   "constructor_args": 2,
+   "clone_ok": true,
+   "build_ok": true,
+   "deps_ok": true,
+   "build_error": "",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_reason": "hookrisk Slither engine reported status ok with 0 findings attributed to the target (\"hookrisk: 1 finding(s) in other files, not attributed to this target\" / \"hookrisk: 0 finding(s)\").",
+   "static_findings": [],
+   "harness_status": "skipped",
+   "harness_reason": "harness: skipped \u2014 TakeProfitsHook's constructor takes 2 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported \u2014 see docs/INVARIANTS.md.",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "constructor takes 2 arguments; harness supplies exactly one (the IPoolManager)"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "constructor takes 2 arguments; harness supplies exactly one (the IPoolManager)"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "constructor takes 2 arguments; harness supplies exactly one (the IPoolManager)"
+    }
+   ],
+   "tier": "low",
+   "total": 3,
+   "total_upper": 23,
+   "inconclusive": true,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium"
+   ],
+   "hr_error_codes": [],
+   "uncovered_functions": 0,
+   "duration_minutes": 11,
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/take-profits-hook",
+   "anomalies": [
+    {
+     "kind": "hookrisk-bug",
+     "description": "Complexity was scored as MEASURED 0/5 with the bracket label \"Pass-through only; no hook state\" on a 391-line ERC1155 hook that owns six state mappings, mints/burns order tokens, loops filling orders inside afterSwap, and moves ERC20 balances. The supporting evidence string is itself a false claim: no HS detector could have run, because the contract was never recognised as a hook.",
+     "evidence": "hook-risk.json dimensions[complexity]: {\"value\":0,\"source\":\"measured\",\"bracketLabel\":\"Pass-through only; no hook state\",\"evidence\":[\"No flag-implementation-divergence or unprotected-hook-callback findings, and every detector that could produce one ran.\"]}. Source contradicts it: src/TakeProfitsHook.sol declares `mapping(PoolId poolId => mapping(int24 tick => mapping(bool zeroForOne => int256 amount))) public takeProfitPositions;` plus five more state mappings, and afterSwap runs `while (attemptToFillMoreOrders) { (attemptToFillMoreOrders, currentTickLower) = _tryFulfillingOrders(key, params); ... }`."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "HS-02's documented behaviour for a hook with no getHookPermissions() did not happen. The detector docstring promises an informational finding rather than silence; the scan produced zero findings.",
+     "evidence": "hs02_flag_divergence.py docstring: \"A hook that never declares `getHookPermissions()` gets an informational finding rather than silence\", and _detect_hook() contains `if declared is None: results.append(self._report([... \"implements IHooks callbacks but does not declare getHookPermissions()\" ...]))`. Actual manifest: \"findings\": []. Root cause traced: hook_analysis.is_hook_contract() returns bool(implemented_callbacks(contract)), and implemented_callbacks matches on the full normalised signature against hooks_spec.CALLBACK_SIGNATURES[\"afterSwap\"] = \"afterSwap(address,(address,address,uint24,int24,address),(bool,int256,uint160),int256,bytes)\". This 2023 hook implements `afterSwap(address, PoolKey calldata, IPoolManager.SwapParams calldata, BalanceDelta) external override poolManagerOnly returns (bytes4)` (src/TakeProfitsHook.sol:87-92) \u2014 no hookData tail \u2014 so _detect_hook is never reached and every HS detector is silently skipped."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Legacy-API hook (getHooksCalls()) is silently treated as not-a-hook: static analysis reports engine status ok / 0 findings with no diagnostic telling the user the API era was unsupported. The run only avoids reading as a clean bill of health because six unrelated dimensions are unmeasured, which pushed the gate to fail on tier uncertainty rather than on anything about this contract.",
+     "evidence": "scan.stderr: \"hookrisk: 0 finding(s)\" and \"\u2713 hookrisk   ok\"; grep -o 'HR-E[0-9]*' over scan.stderr returned nothing. Source declares `function getHooksCalls() public pure override returns (Hooks.Calls memory)` at src/TakeProfitsHook.sol:62 and no getHookPermissions() anywhere."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "All three dynamic invariants (I1/I2/I3) skipped because the constructor is (IPoolManager, string uri) \u2014 the ERC1155 metadata URI is a second argument the harness cannot supply. A hook that custodies user funds via ERC1155 order tokens therefore gets no dynamic assessment at all.",
+     "evidence": "invariants[].detail (all three): \"TakeProfitsHook's constructor takes 2 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported \u2014 see docs/INVARIANTS.md.\""
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "The repo's nested submodule lib/periphery-next pins Uniswap v4-core via an SSH URL, so --recurse-submodules fails on any machine without a GitHub SSH key. Worked around by rewriting lib/periphery-next/.gitmodules to https:// and re-running submodule update --init --recursive; afterwards forge build succeeded (exit 0) on forge 1.7.1 with only three erc20-unchecked-transfer lints.",
+     "evidence": "git clone output: \"git@github.com: Permission denied (publickey). ... fatal: clone of 'git@github.com:Uniswap/v4-core.git' into submodule path '.../lib/periphery-next/lib/v4-core' failed ... Failed to clone 'lib/v4-core' a second time, aborting\". Note: url.insteadOf set in the superproject's config did NOT propagate to the nested submodule; the nested .gitmodules had to be edited."
+    }
+   ],
+   "notes": "foundry.toml is minimal ([profile.default] src/out/libs/ffi only) \u2014 no solc pin, and the test dir is the default \"test\", distinct from src, so HR-E202 does not apply. hookrisk.toml left at init defaults (teamMaturity=3, tvlPotential=0, maxFeeBips=0); the hook documents no swap fee. The build is clean, coverage.uncoveredFunctions=0, and Slither clearly lifted the contract \u2014 the silence is signature matching, not an IR gap. The headline a user sees is \"LOW risk 3/33\", \"findings none\", and a green \"\u2713 hookrisk ok\" on a hook where no hook-specific detector examined anything. The gate failure is incidental (tier uncertainty from six unmeasured dimensions), so a project configured with maxTier=\"high\" would get exit 0 on this scan. Artifacts: scan.stdout (empty), scan.stderr (24 lines), exit_code, out/hook-risk.json, out/HOOK_RISK.md, out/hookrisk.sarif. Elapsed ~11 minutes; no step was cut for time."
+  },
+  {
+   "slug": "nft-owners-only",
+   "repo": "https://github.com/wagmiwiz/nft-owners-only-uniswap-hook",
+   "target": "src/ERC721OwnershipHook.sol:ERC721OwnershipHook",
+   "api_era": "legacy-getHooksCalls",
+   "constructor_args": 2,
+   "clone_ok": true,
+   "deps_ok": true,
+   "build_ok": true,
+   "build_error": "",
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_findings": [],
+   "static_reason": "hookrisk engine ok, 0 findings attributed to target; stderr also reported \"2 finding(s) in other files, not attributed to this target\"",
+   "harness_status": "skipped",
+   "harness_reason": "ERC721OwnershipHook's constructor takes 2 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported \u2014 see docs/INVARIANTS.md.",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "constructor arity 2; harness supplies only IPoolManager"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "constructor arity 2; harness supplies only IPoolManager"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "constructor arity 2; harness supplies only IPoolManager"
+    }
+   ],
+   "tier": "low",
+   "total": 3,
+   "total_upper": 23,
+   "inconclusive": true,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium"
+   ],
+   "uncovered_functions": 0,
+   "hr_error_codes": [],
+   "base_class": "v4-periphery BaseHook (import \"v4-periphery/BaseHook.sol\" -> lib/v4-periphery/contracts/BaseHook.sol, legacy pre-release v4-periphery pinned to solc =0.8.19)",
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/nft-owners-only",
+   "duration_minutes": 6,
+   "anomalies": [
+    {
+     "kind": "hookrisk-gap",
+     "description": "Legacy-API hook (getHooksCalls(), Hooks.Calls struct, IPoolManager.PoolKey) is scanned with zero findings and no diagnostic. Nothing in stdout/stderr/manifest tells the user hookrisk's permission-based reasoning does not apply to a pre-release v4 hook; no HR-E code is emitted at all.",
+     "evidence": "src/ERC721OwnershipHook.sol:22 'function getHooksCalls() public pure override returns (Hooks.Calls memory)'. scan.stderr: 'hookrisk: 0 finding(s)' and '\u2713 hookrisk   ok'. grep -o 'HR-E[0-9]*' over scan.stderr and hook-risk.json returned nothing."
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "complexity is reported as source=\"measured\", value 0, with an affirmative evidence string claiming every relevant detector ran \u2014 on a hook whose permission function hookrisk's detectors cannot read. The measured/unmeasured distinction is the manifest's core honesty contract; here a legacy hook that was effectively not analysed is recorded as measured-clean, pulling the lower bound to 3/33 'LOW risk'.",
+     "evidence": "hook-risk.json .score.dimensions[0]: {\"id\":\"complexity\",\"value\":0,\"source\":\"measured\",\"bracketLabel\":\"Pass-through only; no hook state\",\"evidence\":[\"No flag-implementation-divergence or unprotected-hook-callback findings, and every detector that could produce one ran.\"]}"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "HS-01 (unprotected hook callback) is silent on a callback with no msg.sender check. ERC721OwnershipHook.beforeSwap is declared 'external override' with no poolManagerOnly modifier and no msg.sender comparison; the base class supplies the modifier but the override never applies it. Impact on this particular hook is nil (no state written, only a revert or selector return), but the detector's precondition is met and nothing fired.",
+     "evidence": "src/ERC721OwnershipHook.sol:37-46: 'function beforeSwap(address sender, IPoolManager.PoolKey calldata, IPoolManager.SwapParams calldata) external override returns (bytes4) { if (nftContract.balanceOf(sender) == 0) { revert NotNftOwner(); } return BaseHook.beforeSwap.selector; }'. lib/v4-periphery/contracts/BaseHook.sol:25 defines 'modifier poolManagerOnly()' which this override does not use. hook-risk.json .findings == []."
+    },
+    {
+     "kind": "expected",
+     "description": "Harness correctly skipped all three invariants with the constructor-arity reason, naming the count and the missing argument precisely and pointing at docs/INVARIANTS.md.",
+     "evidence": "scan.stderr: 'harness: skipped \u2014 ERC721OwnershipHook's constructor takes 2 argument(s); the harness supplies exactly one (the IPoolManager).' Source: 'constructor(IPoolManager _poolManager, IERC721 _nftContract) BaseHook(_poolManager)'."
+    },
+    {
+     "kind": "expected",
+     "description": "Exit code 2 with a gate failure on tier indeterminacy is the right outcome: 6 of 9 dimensions unmeasured, upper bound 23/33 (high) against maxTier=medium. hookrisk refused to present 3/33 as the answer.",
+     "evidence": "exit_code file contains 2. .gate.failures[0]: 'tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium'. .score.inconclusive == true, .score.totalUpperBound == 23."
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "Submodules fail to clone out of the box: lib/v4-periphery/.gitmodules pins v4-core via an SSH URL (git@github.com:Uniswap/v4-core.git), aborting --recurse-submodules for anyone without a GitHub SSH key. Worked around with a url.insteadOf rewrite; deps_ok true after that.",
+     "evidence": "clone output: 'git@github.com: Permission denied (publickey). ... fatal: clone of ''git@github.com:Uniswap/v4-core.git'' into submodule path ''lib/v4-periphery/lib/v4-core'' failed ... Failed to clone ''lib/v4-core'' a second time, aborting'"
+    }
+   ],
+   "notes": "foundry.toml declares no solc_version; forge selected 0.8.19, forced by BaseHook's \"pragma solidity =0.8.19\". src=\"src\" and test is a separate directory, so HR-E202 (test == src) does not apply and was not raised. No fee is documented in the repo or README, so maxFeeBips stayed 0; teamMaturity=3, tvlPotential=0 as instructed. Build succeeded on the first attempt (76 files, warnings only) after the SSH-submodule workaround. Two Slither findings existed in other files and were correctly withheld as not attributed to the target; I did not inspect them. The gap and the two bugs share one root cause: the legacy getHooksCalls() API. What separates the bugs from the gap is that hookrisk does not merely fail to analyse the hook \u2014 it affirmatively records complexity as measured-clean with evidence asserting \"every detector that could produce one ran\", and leaves findings empty, so a manifest reader cannot tell this hook was never really examined. Whether HS-01's silence is a distinct detector defect or the same legacy-API blind spot I could not determine without reading hookrisk's detector source, which was out of scope."
+  },
+  {
+   "slug": "ref-fee-hook",
+   "repo": "https://github.com/mergd/ref-fee-hook",
+   "target": "src/RefHook.sol:Counter",
+   "api_era": "legacy-getHooksCalls",
+   "base_class": "v4-periphery BaseHook (import \"v4-periphery/BaseHook.sol\" -> lib/v4-periphery/contracts/BaseHook.sol)",
+   "constructor_args": 2,
+   "clone_ok": true,
+   "deps_ok": true,
+   "build_ok": false,
+   "build_error": "forge build (full) fails first on test/RefHook.t.sol:15 `import {Counter} from \"../src/Counter.sol\";` -> Error (6275): Source \"src/Counter.sol\" not found. With --skip test --skip script the src itself fails: Compiling 67 files with Solc 0.8.30 / Error (7920): Identifier not found or not unique. --> src/RefHook.sol:144:59  function claimRefLinkFees(bytes32 refCode, PoolId id, Currency[] calldata currencies). Currency is never imported; the file also has other undeclared identifiers (`ref`/`params` in beforeSwap/getFee, `fees`, `hookfee0`, `Fees fee = new Fees()` on a struct).",
+   "scan_exit_code": 2,
+   "static_status": "failed",
+   "static_reason": "engines[0] = {engine: hookrisk, status: failed, reason: \"could not parse Slither output: \"} \u2014 reason string is empty after the colon and carries no HR-E code. Running the same slither binary by hand shows the real cause: crytic_compile.platform.exceptions.InvalidCompilation: Compilation failed. Can you run build command? / out/build-info is not a directory.",
+   "static_findings": [],
+   "harness_status": "skipped",
+   "harness_reason": "harness: skipped \u2014 no compiled artifact at <repo>/out/RefHook.sol/Counter.json \u2014 run `forge build` in the target project first. (Correct: the project does not compile, so no artifact exists.)",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "no compiled artifact at <repo>/out/RefHook.sol/Counter.json \u2014 run `forge build` in the target project first."
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "no compiled artifact at <repo>/out/RefHook.sol/Counter.json \u2014 run `forge build` in the target project first."
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "no compiled artifact at <repo>/out/RefHook.sol/Counter.json \u2014 run `forge build` in the target project first."
+    }
+   ],
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium"
+   ],
+   "tier": "low",
+   "total": 3,
+   "total_upper": 28,
+   "inconclusive": true,
+   "uncovered_functions": 0,
+   "hr_error_codes": [],
+   "anomalies": [
+    {
+     "kind": "ecosystem-issue",
+     "description": "The repo is an unfinished Oct-2023 ETHOnline hackathon submission that has never compiled. src/RefHook.sol references undeclared identifiers (Currency, ref, params, fees, hookfee0/hookfee1) and does `Fees fee = new Fees()` on a struct; test/RefHook.t.sol imports a non-existent src/Counter.sol. It targets the pre-release v4 API (v4-core/contracts/..., IHookFeeManager, IDynamicFeeManager, hookFeesAccrued, collectHookFees, ModifyPositionParams), none of which exist in v4 today. Nothing hookrisk could do would make this scannable.",
+     "evidence": "forge build --skip test --skip script: `Error (7920): Identifier not found or not unique. --> src/RefHook.sol:144:59`; git log -1: fe3fbc8467b9df9982c088e49d345b0801696747 2023-10-08."
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "Submodules cannot be fetched as documented: lib/v4-periphery's own .gitmodules pins lib/v4-core to the SSH URL git@github.com:Uniswap/v4-core.git, so the prescribed --recurse-submodules clone aborts without an SSH key. Worked around with `git submodule set-url` + https insteadOf inside lib/v4-periphery.",
+     "evidence": "`git@github.com: Permission denied (publickey). ... Failed to clone 'lib/v4-core' a second time, aborting / fatal: Failed to recurse into submodule path 'lib/v4-periphery'`"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "Misleading/empty engine failure message with no HR-E code. When Slither cannot compile the project, hookrisk reports `could not parse Slither output: ` \u2014 nothing after the colon, no error code, and the wrong diagnosis (Slither produced no output to parse; it raised InvalidCompilation). The user is told hookrisk failed to parse rather than that their project does not build. No HR-E code appears anywhere in scan.stderr, so the failure is not machine-classifiable.",
+     "evidence": "scan.stderr: `x hookrisk   failed  could not parse Slither output: `; manifest .engines[0].reason == \"could not parse Slither output: \"; direct slither run: `crytic_compile.platform.exceptions.InvalidCompilation: Compilation failed. Can you run build command? / .../out/build-info is not a directory.`; `grep -o 'HR-E[0-9]*' scan.stderr` returns nothing."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "The legacy API is never called out. The contract defines getHooksCalls() (2023 Hooks.Calls struct) and no getHookPermissions(); hookrisk emits no diagnostic about the API era and the manifest has no field recording it. Because the static engine also failed, the run is indistinguishable from any other build failure \u2014 a user gets no signal that this hook predates the shipped v4 interface.",
+     "evidence": "src/RefHook.sol:39 `function getHooksCalls() public pure override returns (Hooks.Calls memory)`; hook-risk.json .target = {mode:\"source\", contractName:\"Counter\", sourceFile:\"src/RefHook.sol\", solcVersion:\"0.8.26\"} \u2014 no API-era field, no warning in scan.stderr."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Headline output leads with `LOW risk 3/33` and .score.tier == \"low\" even though every engine failed and every invariant was skipped \u2014 3/33 is purely the declared inputs (teamMaturity=3, tvlPotential=0). The qualifiers are present (inconclusive:true, tierUpperBound:\"high\", `(undetermined: up to 28/33)`) and the gate correctly fails, so this is a presentation gap rather than a wrong claim, but the first line a reader sees is reassuring on a hook nothing was measured on.",
+     "evidence": "scan.stderr: `LOW risk  3/33  (undetermined: up to 28/33)`; manifest .score = {total:3,totalUpperBound:28,tier:\"low\",tierUpperBound:\"high\",inconclusive:true}; 7 of 9 dimensions source:\"unmeasured\"."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Minor: hookrisk records solcVersion 0.8.26 for a file whose pragma is ^0.8.19 and which Foundry compiled with 0.8.30. Both satisfy the pragma, so this is not wrong, but the manifest's solc value does not match what the project actually builds with.",
+     "evidence": "hook-risk.json .target.solcVersion == \"0.8.26\"; forge build output: `Compiling 67 files with Solc 0.8.30`; src/RefHook.sol:2 `pragma solidity ^0.8.19;`; foundry.toml pins no solc."
+    },
+    {
+     "kind": "expected",
+     "description": "Exit code 2 with a single, accurate gate failure; harness and I1-I3 skipped with a correct and actionable reason naming the missing artifact path; each unmeasured dimension carries an evidence string explaining which detector was missing or did not run. The error path behaved as documented apart from the engine-reason string.",
+     "evidence": "exit_code file contains 2; gate.failures = [\"tier is undetermined between Low Risk and High Risk; the upper bound exceeds the configured maximum of medium\"]; dimensions[].evidence e.g. \"Not measured: custom-accounting requires hookrisk, which did not run; no detector for rounding-direction yet.\""
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/ref-fee-hook",
+   "duration_minutes": 13,
+   "notes": "The hook is src/RefHook.sol, contract name `Counter` (unrenamed v4-template scaffold). Legacy API: getHooksCalls() returning Hooks.Calls{beforeModifyPosition, afterModifyPosition, beforeSwap, afterSwap = true}; the 2023 struct has no *ReturnDelta fields at all, so none is declared. Constructor: (IPoolManager _poolManager, uint24 _ref_fee) = 2 args, so the harness would have been skipped for extra constructor args even on a compiling hook. foundry.toml pins no solc and does not set test == src (src=\"src\", default test dir) \u2014 no HR-E202. maxFeeBips left at 0: the README documents no fee value and REF_FEE is a caller-supplied constructor argument, so there is no documented number to declare. I2 therefore never ran (skipped, not failed) and the undeclared-extraction question is untestable on this repo. Two build attempts were made (full build, then --skip test --skip script); no source was edited. The only change to the repo was rewriting submodule URLs from SSH to HTTPS."
+  },
+  {
+   "slug": "v2-on-v4",
+   "repo": "https://github.com/hensha256/v2-on-v4",
+   "target": "src/V2PairHook.sol:V2PairHook",
+   "api_era": "modern-getHookPermissions",
+   "constructor_args": 0,
+   "clone_ok": true,
+   "build_ok": true,
+   "scan_exit_code": 2,
+   "static_status": "ok",
+   "static_findings": [
+    {
+     "ruleClass": "unprotected-hook-callback",
+     "severity": "high",
+     "title": "V2PairHook.afterSwap(...) is an IHooks callback (0xb47b2fb1) that never checks msg.sender",
+     "line": 196
+    },
+    {
+     "ruleClass": "flag-implementation-divergence",
+     "severity": "high",
+     "title": "declares permission `beforeAddLiquidity` (bit 11) but provides no working `beforeAddLiquidity` implementation",
+     "line": 21
+    },
+    {
+     "ruleClass": "custom-accounting",
+     "severity": "info",
+     "title": "declares custom-accounting permissions: `afterSwapReturnDelta` (bit 2), `beforeSwapReturnDelta` (bit 3)",
+     "line": 21
+    }
+   ],
+   "harness_status": "skipped",
+   "harness_reason": "\"V2PairHook's constructor takes 0 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported \u2014 see docs/INVARIANTS.md.\"",
+   "invariants": [
+    {
+     "id": "I1",
+     "status": "skipped",
+     "detail": "constructor-arity mismatch (0 args vs harness's 1)"
+    },
+    {
+     "id": "I2",
+     "status": "skipped",
+     "detail": "constructor-arity mismatch (0 args vs harness's 1)"
+    },
+    {
+     "id": "I3",
+     "status": "skipped",
+     "detail": "constructor-arity mismatch (0 args vs harness's 1)"
+    }
+   ],
+   "anomalies": [
+    {
+     "kind": "expected",
+     "description": "HS-07 (custom-accounting, info) fired on the *ReturnDelta permissions \u2014 exactly the hint's prediction for a NoOp-swap custom-curve hook. Drove customMath to 3/5 (\"A custom curve or invariant function\").",
+     "evidence": "manifest finding cc07c2e9a89d4d3c: \"declares custom-accounting permissions: `afterSwapReturnDelta` (bit 2), `beforeSwapReturnDelta` (bit 3)\"; source src/V2PairHook.sol:221-222 sets both true."
+    },
+    {
+     "kind": "expected",
+     "description": "HS-01 (unprotected-hook-callback, high) on afterSwap is a true positive at the pattern level: afterSwap has no poolManagerOnly modifier and no msg.sender check, unlike beforeInitialize/beforeSwap which do.",
+     "evidence": "src/V2PairHook.sol:196-207 `function afterSwap(...) external view override returns (bytes4, int128)` \u2014 no modifier; compare :129 `poolManagerOnly` on beforeInitialize. (Real impact is low: the function is `view` and only tloads a transient slot, so severity high overstates exploitability, but the missing check is real.)"
+    },
+    {
+     "kind": "hookrisk-bug",
+     "description": "HS-02 (flag-implementation-divergence, high) false positive. The hook DOES implement beforeAddLiquidity \u2014 an explicit override that reverts AddLiquidityDirectToHook() by design, because liquidity is added via mint(). The detector cannot distinguish a deliberate revert-to-block from BaseHook's inherited HookNotImplemented stub, and its wording asserts an unintended failure.",
+     "evidence": "Finding 05541df791c576c5: \"provides no working `beforeAddLiquidity` implementation. The PoolManager will call it ... and the call will revert, making the pool unusable for that operation.\" Source src/V2PairHook.sol:141-149: `// Reverts as liquidity should be added by calling `mint` on this contract` / `function beforeAddLiquidity(...) external pure override returns (bytes4) { revert AddLiquidityDirectToHook(); }`. This finding is one of the two that failed the gate."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Harness skipped, so I2b monotonicity (the hint's expected path) was never exercised. Cause is a factory-deployed hook: the constructor takes 0 args and reads currency0/currency1/poolManager from IUniswapV2PairHookFactory(msg.sender).parameters(). The harness only supports the exactly-one-IPoolManager-arg shape, so a 0-arg constructor is rejected by the same message written for \"additional constructor arguments\".",
+     "evidence": "stderr: \"harness: skipped \u2014 V2PairHook's constructor takes 0 argument(s); the harness supplies exactly one (the IPoolManager). Hooks with additional constructor arguments are not yet supported\". Source src/V2PairHook.sol:55-58. The message is also slightly misleading: 0 is fewer, not additional."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "Complexity scored 1/5 with bracket \"1-2 callbacks, no branching on hook state\" for a hook that implements 4 callbacks and a full constant-product AMM with reserves, k-checks and transient storage. The manifest self-labels this a floor, but the bracket label as rendered is factually wrong for this contract.",
+     "evidence": "manifest dimensions[complexity]: value 1, bracketLabel \"1-2 callbacks, no branching on hook state\", evidence \"...establishes a floor only; hookrisk has no dedicated complexity metric yet.\" Contract implements beforeInitialize, beforeAddLiquidity, beforeSwap, afterSwap."
+    },
+    {
+     "kind": "hookrisk-gap",
+     "description": "4 of 8 dimensions unmeasured (externalDependencies, externalLiquidityExposure, autonomousParameterUpdates, upgradeability), leaving the tier undetermined 10-22/33 (medium..high) and all four gate triggers unevaluable.",
+     "evidence": "stderr: \"4 dimension(s) unmeasured: the tier is between Medium Risk and High Risk\" plus 4 \"trigger '...' could not be evaluated\" lines; manifest .score.inconclusive=true."
+    },
+    {
+     "kind": "ecosystem-issue",
+     "description": "Repo does not build as-is on current Foundry, and its submodules use git@ SSH URLs so --recurse-submodules fails without a GitHub SSH key. Both are repo-side, not hookrisk.",
+     "evidence": "clone: \"git@github.com: Permission denied (publickey) ... Failed to clone 'lib/solmate' a second time, aborting\" (fixed by rewriting the three submodule URLs to https). forge build: \"Error (9582): Member \\\"lastCallGas\\\" not found ... --> test/V2PairHook.t.sol:138:22\" \u2014 src compiles; only the test file is stale. Used `forge build --skip test`."
+    }
+   ],
+   "artifacts_dir": "/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/v2-on-v4",
+   "notes": "Base class is the repo's OWN vendored `src/BaseHook.sol` (abstract, implements IHooks; declares `getHookPermissions()` and a legacy-era `lockAcquired(bytes)`), not v4-periphery's and not OpenZeppelin's. So the hook is modern-API on permissions but pinned to an old v4-core (CurrencySettleTake, lockAcquired, IPoolManager.SwapParams). hookrisk handled the vendored base class fine.\n\nfoundry.toml: solc 0.8.24, evm cancun, src=\"src\", out=\"out\", no `test` key \u2014 so test != src; HR-E202 did not apply and no HR-E code appeared anywhere in scan.stderr/stdout.\n\nmaxFeeBips set to 30 (the hook hardcodes the V2 0.3% fee: `amountIn * 997 / (reservesIn*1000 + amountInWithFee)` at src/V2PairHook.sol:244-246). This had no observable effect since I2 was skipped.\n\nCoverage: uncoveredFunctions = 0, engine hookrisk status ok, no Slither IR-lifting gap.\n\nOne unexplained line: stderr says \"hookrisk: 2 finding(s) in other files, not attributed to this target\" with no way to see what they were. Not a bug per se \u2014 correct attribution behaviour \u2014 but a user cannot tell whether those were in src/BaseHook.sol or in lib/. Worth a --show-unattributed flag.\n\nExit code 2 (gate failed) is correct given maxSeverity=high and an undetermined tier above maxTier=medium. Build succeeded for src, so the scan ran on real artifacts throughout. No crash, no invalid manifest.",
+   "tier": "medium",
+   "total": 10,
+   "total_upper": 22,
+   "inconclusive": true,
+   "gate_passed": false,
+   "gate_failures": [
+    "tier is undetermined between Medium Risk and High Risk; the upper bound exceeds the configured maximum of medium",
+    "2 finding(s) at or above high: V2PairHook.afterSwap(...) is an IHooks callback (0xb47b2fb1) that never checks msg.sender; V2PairHook declares permission `beforeAddLiquidity` (bit 11, BEFORE_ADD_LIQUIDITY_FLAG) but provides no working `beforeAddLiquidity` implementation"
+   ],
+   "uncovered_functions": 0,
+   "hr_error_codes": [],
+   "base_class": "src/BaseHook.sol (repo-vendored abstract BaseHook implementing IHooks; not v4-periphery, not @openzeppelin/uniswap-hooks)",
+   "deps_ok": true,
+   "build_error": "Full `forge build` fails only on the test file: \"Error (9582): Member \\\"lastCallGas\\\" not found or not visible after argument-dependent lookup in contract Vm. --> test/V2PairHook.t.sol:138:22 | console2.log(vm.lastCallGas().gasTotalUsed);\". `forge build --skip test` succeeds and produces out/V2PairHook.sol/V2PairHook.json.",
+   "static_reason": "",
+   "duration_minutes": 13
+  }
+ ],
+ "missing": []
+}

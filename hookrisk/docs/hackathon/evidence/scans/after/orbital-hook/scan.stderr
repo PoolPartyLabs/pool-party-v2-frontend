@@ -1,0 +1,14 @@
+  scan: src/OrbitalHook.sol:OrbitalHook run=af72cf35-3597-4260-9228-d946c6649a59
+  project: out=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/orbital-hook/repo/out solc=0.8.30 (forge-config) artifact=/private/tmp/claude-501/-Users-rafaelzochling-gitrepos-external-hookrisk/fe92e33d-04a3-4e07-8d2b-dc6ec02f1fac/scratchpad/hooks/orbital-hook/repo/out/OrbitalHook.sol/OrbitalHook.json
+  harness: OrbitalHook.sol:OrbitalHook flags=derived-from-runtime maxFee=10bips ctorArgs=4 word(s) run=31ba1790-e46a-4206-a138-dedcc31a08d6
+  hookrisk: slither src/OrbitalHook.sol:OrbitalHook
+  hookrisk: 6 finding(s); analysed 1 hook contract(s); permissions resolved from the profile
+  harness: 3 invariant(s), 0 failed, 3 inconclusive (flags=0xa88 derived, seeded=hooked-failed) observed 1285 sequence(s), 0 swap(s) landed, 0 compared, 0 price check(s), 0 position(s) opened, 0 closed, 0 donation(s), 1285 hooked-only swap revert(s), 0 exit failure(s); probes: eoa guard held on 3 callback(s); selectors: beforeAddLiquidity=reverted, beforeRemoveLiquidity=reverted, beforeSwap=reverted; exclusivity not-applicable
+  hookrisk: ok
+  harness: ok
+  reconcile: beforeAddLiquidity classified intentionally disabled by hookrisk and observed rejecting the harness's seed (Error("Use custom addLiquidity")); merged into finding 090fb76d50093cbe at confidence high
+  reconcile: I3 not-applicable — both layers agree PoolManager liquidity is disabled by design
+  reconcile: beforeAddLiquidity reverted under the selector probe, but finding 090fb76d50093cbe classifies it as intentionally disabled; not reported as a selector mismatch
+  reconcile: beforeRemoveLiquidity reverted under the selector probe, but finding 745d0b5a1b7e8c94 classifies it as intentionally disabled; not reported as a selector mismatch
+  reconcile: beforeSwap reverted under the selector probe on a custom curve that refused its seed (no reserves); not reported as a selector mismatch — see the inconclusive invariants
+  scan: finished in 4133ms, exit 0
