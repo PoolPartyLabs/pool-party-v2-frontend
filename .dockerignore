@@ -29,3 +29,8 @@ docker-compose*
 .env
 .env.*
 !.env.production
+
+# hookrisk (Uniswap v4 hook risk scanner) ships in this repository for the hackathon write-up only.
+# It is a separate toolchain (Python + Foundry + its own Node CLI) with no link to the Next.js app,
+# so it never belongs in the image build context.
+hookrisk
