@@ -1,0 +1,37 @@
+/** Test-only deployment; never imported by the browser. */
+const address = "0x1111111111111111111111111111111111111111";
+const hash = `0x${"a".repeat(64)}`;
+export const manifestFixture = {
+  schemaVersion: 1,
+  id: "test-deployment",
+  runId: "test-run",
+  mode: "fork",
+  chainId: 31337,
+  networkName: "Arbitrum local fork",
+  rpcUrl: "http://127.0.0.1:8549",
+  deploymentBlock: "123",
+  deploymentBlockHash: hash,
+  vault: address,
+  aqua: address,
+  router: address,
+  aavePool: address,
+  usdc: { address, symbol: "USDC", decimals: 6 },
+  secondary: {
+    address: "0x2222222222222222222222222222222222222222",
+    symbol: "USD₮0",
+    decimals: 6,
+  },
+  usdcAdapter: address,
+  secondaryAdapter: address,
+  usdcAToken: address,
+  secondaryAToken: address,
+  pricing: address,
+  programFactory: address,
+  oracle: address,
+  usdcFeed: address,
+  secondaryFeed: address,
+  sequencerFeed: address,
+  explorerUrl: null,
+  codeHashes: Array.from({ length: 5 }, () => ({ address, hash })),
+  source: { chainId: 42161, blockNumber: "100", swapVmCommit: "a".repeat(40) },
+};

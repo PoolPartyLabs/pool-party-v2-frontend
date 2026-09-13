@@ -30,6 +30,7 @@ import type { CashPlusController, CashPlusSnapshot } from "@/lib/cash-plus/types
 import { useMaskValue } from "@/lib/hooks/maskValue";
 import { cn } from "@/lib/utils/cn";
 import { formatUsdPrecise } from "@/lib/utils/format";
+import { CashPlusDemoWallet } from "./CashPlusDemoWallet";
 import { cashPlusMoney } from "./CashPlusPresentation";
 
 export interface CashPlusSnapshotProps {
@@ -68,7 +69,8 @@ export function CashPlusHero({
           </p>
         </div>
       </div>
-      <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end sm:gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-3 sm:flex-col sm:items-end sm:gap-2">
+        <CashPlusDemoWallet controller={controller} />
         {snapshot ? (
           <span
             className={cn(
@@ -245,7 +247,11 @@ export function CashPlusChart({ snapshot, className }: CashPlusSnapshotProps) {
         </div>
       ) : data.length > 1 ? (
         <>
-          <PerformanceChart data={data} ariaLabel={t("chart.label")} className="h-40" />
+          <PerformanceChart
+            data={data}
+            ariaLabel={t(snapshot.mode === "preview" ? "chart.sample" : "chart.label")}
+            className="h-40"
+          />
           <div className="mt-3 flex justify-between gap-3 text-muted-foreground text-[10px]">
             <span>{data[0]?.label}</span>
             <span>{data.at(-1)?.label}</span>
@@ -281,13 +287,13 @@ export function CashPlusReturnSources({ snapshot, className }: CashPlusSnapshotP
   const items = [
     {
       label: t("sources.interest"),
-      hint: t("sources.interestHint"),
+      hint: t(snapshot.mode === "preview" ? "demoUI.interestHint" : "sources.interestHint"),
       value: snapshot.interestAssets,
       icon: Landmark,
     },
     {
       label: t("sources.conversions"),
-      hint: t("sources.conversionHint"),
+      hint: t(snapshot.mode === "preview" ? "demoUI.conversionHint" : "sources.conversionHint"),
       value: snapshot.conversionAssets,
       icon: ArrowLeftRight,
     },

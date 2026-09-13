@@ -32,6 +32,40 @@ function controller(overrides: Partial<CashPlusController> = {}): CashPlusContro
 }
 beforeEach(() => localStorage.clear());
 describe("CashPlusView", () => {
+  // @rule CP-UI-DEMO01: demo controls act locally and keep USDC out of the other-assets list.
+  it("offers explicit simulation and reset without duplicating the USDC wallet", async () => {
+    const user = userEvent.setup();
+    const advanceDay = vi.fn().mockResolvedValue(undefined);
+    const reset = vi.fn();
+    renderWithProviders(
+      <CashPlusView
+        controller={controller({
+          demo: {
+            advanceDay,
+            reset,
+            advancing: false,
+            walletTokens: [
+              {
+                address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+                symbol: "USDC",
+                decimals: 6,
+                amount: BigInt(25000000000),
+              },
+            ],
+          },
+        })}
+      />,
+    );
+    expect(screen.queryByText("Other assets in your demo wallet")).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Simulate 1 day" }));
+    expect(advanceDay).toHaveBeenCalledOnce();
+    await user.click(screen.getByRole("button", { name: "Reset demo" }));
+    expect(reset).toHaveBeenCalledOnce();
+    await user.click(screen.getByRole("button", { name: "Demo wallet balance" }));
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      "Simulated funds. No wallet signature or real transfer.",
+    );
+  });
   // @rule CP-UI09: show a safe unavailable state without a fake balance or raw RPC details.
   it("shows an explicit error and retries without leaking the raw failure", async () => {
     const user = userEvent.setup();
@@ -53,7 +87,7 @@ describe("CashPlusView", () => {
     await user.click(screen.getAllByRole("button", { name: "Close" }).at(-1) as HTMLElement);
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(c.resetTransaction).not.toHaveBeenCalled();
-    expect(screen.getByText("Transaction submitted")).toBeInTheDocument();
+    expect(screen.getByText("Updating demo balances")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Transaction details" }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(c.confirm).not.toHaveBeenCalled();

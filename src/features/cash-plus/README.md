@@ -2,7 +2,7 @@
 
 The dedicated `/cash-plus` page contains the full investor journey: understand, invest, monitor and withdraw. The `cashPlus` feature flag gates the route and both navigation surfaces. Cash+ does not change the strategy catalog, Home aggregation, Portfolio models or platform API.
 
-Namespace: `cashPlus`. Status: one investor screen implemented, with a separate direct-chain controller. Business rules: version 1 of the [dedicated-page specifications](../../../docs/features/cash-plus/). No external issue number was created for this authorized local implementation.
+Namespace: `cashPlus`. Current delivery: an interactive, explicitly simulated investor demo. Start it with `pnpm cash-plus:ui`, then open `http://localhost:3049/en/cash-plus`. No wallet connection, RPC endpoint, contract deployment, API or database is required. The prior direct-chain controller and local-fork tools remain available separately; they are not used by this demo. See the [current UI delivery guide](../../../docs/features/cash-plus/cash-plus-ui-demo.md). No external issue number was created for this authorized implementation.
 
 ## Artifacts
 
@@ -14,8 +14,12 @@ Namespace: `cashPlus`. Status: one investor screen implemented, with a separate 
 | PP-CP-MOD-001 | CashPlusTransactionSheet | Modal | Review, exact approval, signing, pending, decoded receipt and recoverable error presentation |
 | PP-CP-CMP-003 | CashPlusSimulation | Calculator | Isolated annual assumptions, persistent illustrative label and no mutation of chain state |
 | PP-CP-CMP-004 | CashPlusDetails | Component group | Bounded activity, receipt references, underlying composition, liquidity and fee disclosures |
+| PP-CP-CMP-005 | CashPlusDemoControls | Component | Explicit one-day simulation, assumptions, reset and non-USDC wallet components |
+| PP-CP-CMP-006 | CashPlusDemoWallet | Component | Clearly labeled simulated USDC wallet and balance sheet |
+| PP-CP-HOOK-002 | useCashPlusDemo | Hook | Review, pending, success, session persistence and duplicate-confirm protection |
+| PP-CP-MCK-002 | cashPlusDemo | Mock service | Exact integer accounting for deposits, withdrawals, proportional exits and explicit simulated returns |
 
-`CashPlusScreen` obtains a `CashPlusController` through `useCashPlus`. The pure `CashPlusView` accepts that controller explicitly for tests and Storybook. `CashPlusProvider` belongs to the direct-chain integration boundary; the route wraps the screen with it. No wallet operation is implemented inside a presentation component.
+`CashPlusScreen` obtains a `CashPlusController` through `useCashPlus`. Preview routes to `useCashPlusDemo`; real modes retain the direct-chain path. The pure `CashPlusView` accepts that controller explicitly for tests and Storybook. `CashPlusProvider` belongs to the direct-chain integration boundary; the route wraps the screen with it. No wallet operation is implemented inside a presentation component.
 
 ## Presentation rules
 
@@ -28,6 +32,8 @@ Namespace: `cashPlus`. Status: one investor screen implemented, with a separate 
 - Investor dollar displays state the USDC equals $1 assumption. Exact transaction token amounts remain visible independently of rounded dollar displays.
 - The comparison is collapsed by default, keeps an illustrative label when open and never changes observed balances, history or signing amounts.
 - Preview fixtures remain visibly marked and cannot be treated as proof of a real transaction.
+- Preview operations run review, pending and success locally. They produce no transaction hash or explorer link, and never request a wallet or create an RPC client.
+- Demo state persists in session storage. Reset restores the initial balances. The one-day control is the only action that simulates new returns; page refresh does not accrue them.
 - Local-fork hashes show local receipt details and never link to a public explorer.
 - Pending operations can be dismissed and reopened without clearing the controller journal or sending again.
 
@@ -60,9 +66,17 @@ English is canonical. Portuguese and Vietnamese copy were authored locally; the 
 - `controller.loadEarlierHistory`: one explicit bounded extension to the current event window.
 - `CASH_PLUS_PREVIEW_SNAPSHOT`: explicitly illustrative fixtures under `src/mocks/data`, used by component stories and tests.
 
-All calculations affecting balances, shares, slippage or calldata belong to `src/lib/cash-plus`. Presentation converts to numeric display only at the rendering boundary. The simulator uses the separate Decimal-based comparison module.
+Canonical chain calculations belong to `src/lib/cash-plus`. The explicit demo ledger lives in `src/mocks/services/cashPlusDemo.ts`, uses exact integers and never enters fork/live mode. Presentation converts to numeric display only at the rendering boundary. The simulator uses the separate Decimal-based comparison module.
 
-## Demo runtime
+## Current UI demo
+
+Run `pnpm cash-plus:ui`. Invest from the simulated 25,000 USDC wallet, inspect the updated position, select **Simulate 1 day**, then withdraw a partial amount or all shares. A proportional exit returns each simulated asset separately; receipt tokens are not credited as spendable USDC. **Reset demo** starts again. The application header's unrelated mock wallet is hidden on this page so only the Cash+ demo wallet is presented.
+
+The daily assumptions are explicit: 95% of pool value in lending at 4% yearly, conversion turnover of 40 times pool value yearly and a 5 bps gross spread. The daily update excludes costs and losses. The annual business calculator remains separate, includes its own cost/fee assumptions and does not change demo balances. Neither view promises a return.
+
+## Separate protocol rehearsal tools
+
+This section describes the previously implemented optional fork workflow, not the default UI demonstration. Do not run it when preparing a UI-only presentation.
 
 Start a fresh public-RPC fork immediately before a rehearsal with `pnpm cash-plus:demo --step start`. Then use the generated manifest and run the page with `NEXT_PUBLIC_MOCK_MODE=true NEXT_PUBLIC_FEATURE_CASH_PLUS=true NEXT_PUBLIC_CASH_PLUS_MODE=fork pnpm exec next dev --turbopack --port 3049`. This keeps the rest of the app in its established mock mode while Cash+ reads actual contracts and signs with an injected local-fork wallet. The existing app header remains the mock app session; the Cash+ investment form uses the injected signing account and its real fork USDC balance.
 

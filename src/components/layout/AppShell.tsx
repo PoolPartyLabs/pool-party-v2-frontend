@@ -393,7 +393,11 @@ export function AppShell({ children, className }: AppShellProps) {
               <LocaleSwitcher />
             </div>
             {/* Wallet entry: connected chip + modal (WalletMenu), or the connect/login fallback. */}
-            <WalletMenu />
+            {isMockMode &&
+            pathname === "/cash-plus" &&
+            (process.env.NEXT_PUBLIC_CASH_PLUS_MODE ?? "preview") === "preview" ? null : (
+              <WalletMenu />
+            )}
           </div>
         </header>
 

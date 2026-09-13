@@ -30,6 +30,15 @@ function controller(transaction: CashPlusTransaction): CashPlusController {
   };
 }
 describe("CashPlusTransactionSheet", () => {
+  it("labels a mocked operation without claiming a chain submission or wallet fee", () => {
+    const c = controller({ phase: "pending", kind: "deposit" });
+    c.snapshot = { ...c.snapshot, mode: "preview" } as CashPlusController["snapshot"];
+    renderWithProviders(<CashPlusTransactionSheet open controller={c} onOpenChange={vi.fn()} />);
+    expect(screen.getByRole("heading", { name: "Updating demo balances" })).toBeInTheDocument();
+    expect(screen.queryByText(/Waiting for an onchain receipt/)).toBeNull();
+    expect(screen.queryByText("Transaction hash")).toBeNull();
+    expect(screen.queryByRole("link", { name: "View on explorer" })).toBeNull();
+  });
   // @rule CP-TX08, CP-TX10: submission is pending until a decoded receipt exists.
   it("keeps a submitted hash pending and offers no duplicate confirmation action", () => {
     renderWithProviders(

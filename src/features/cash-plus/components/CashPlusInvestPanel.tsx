@@ -213,7 +213,11 @@ function CashPlusInvestForm({ controller, className }: CashPlusInvestPanelProps)
               <p className="text-destructive">{validation}</p>
             ) : (
               <CashPlusRow
-                label={withdrawing ? t("position.available") : t("invest.wallet")}
+                label={
+                  withdrawing
+                    ? t("position.available")
+                    : t(snapshot?.mode === "preview" ? "demoUI.wallet" : "invest.wallet")
+                }
                 personal
               >
                 {cashPlusMoney(
@@ -268,7 +272,9 @@ function CashPlusInvestForm({ controller, className }: CashPlusInvestPanelProps)
               {t("invest.withdraw")}
             </Button>
           ) : null}
-          <p className="text-center text-muted-foreground text-xs">{t("invest.hint")}</p>
+          <p className="text-center text-muted-foreground text-xs">
+            {t(snapshot?.mode === "preview" ? "demoUI.hint" : "invest.hint")}
+          </p>
         </div>
         {withdrawing && hasShares ? (
           <div className="border-border border-t pt-4">

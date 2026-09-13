@@ -21,6 +21,7 @@ import {
   CashPlusReturnSources,
   CashPlusSkeleton,
 } from "./CashPlusDashboard";
+import { CashPlusDemoControls } from "./CashPlusDemoControls";
 import {
   CashPlusActivity,
   CashPlusComposition,
@@ -71,7 +72,9 @@ export function CashPlusView({ controller }: CashPlusViewProps) {
     <PersistedMaskProvider persistKey={INVESTOR_HIDE_VALUES_KEY}>
       <div className="flex min-w-0 flex-col gap-6 pb-6">
         <CashPlusHero controller={controller} />
-        {snapshot.mode !== "live" ? (
+        {snapshot.mode === "preview" && controller.demo ? (
+          <CashPlusDemoControls controller={controller} />
+        ) : snapshot.mode !== "live" ? (
           <p className="rounded-lg border border-border bg-surface px-4 py-3 text-muted-foreground text-xs leading-relaxed">
             {snapshot.mode === "preview" ? t("previewNotice") : t("forkNotice")}
           </p>
@@ -92,7 +95,7 @@ export function CashPlusView({ controller }: CashPlusViewProps) {
           >
             <span className="inline-flex items-center gap-2 text-sm">
               <Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-              {t("transaction.pending")}
+              {t(snapshot.mode === "preview" ? "demoUI.pending" : "transaction.pending")}
             </span>
             <Button size="sm" variant="secondary" onClick={() => setDismissed(false)}>
               {t("activity.receipt")}

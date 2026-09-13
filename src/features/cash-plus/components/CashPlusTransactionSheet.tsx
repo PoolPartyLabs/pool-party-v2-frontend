@@ -42,6 +42,7 @@ export function CashPlusTransactionSheet({
 }: CashPlusTransactionSheetProps) {
   const t = useTranslations("cashPlus");
   const { transaction: tx, snapshot } = controller;
+  const simulated = snapshot?.mode === "preview";
   const heading = useRef<HTMLHeadingElement>(null);
   const openingAction = useRef<HTMLElement | null>(null);
   const pending = tx.phase === "pending";
@@ -51,11 +52,11 @@ export function CashPlusTransactionSheet({
   const failed = tx.phase === "error";
   const proportional = tx.kind === "proportional";
   const title = success
-    ? t("transaction.success")
+    ? t(simulated ? "demoUI.success" : "transaction.success")
     : failed
       ? t("transaction.error")
       : pending
-        ? t("transaction.pending")
+        ? t(simulated ? "demoUI.pending" : "transaction.pending")
         : tx.phase === "approval"
           ? t("transaction.approval")
           : tx.phase === "signature"
@@ -68,17 +69,17 @@ export function CashPlusTransactionSheet({
                   ? t("transaction.reviewInvest")
                   : t("transaction.reviewWithdraw");
   const description = success
-    ? t("transaction.successBody")
+    ? t(simulated ? "demoUI.successBody" : "transaction.successBody")
     : pending
-      ? t("transaction.pendingBody")
+      ? t(simulated ? "demoUI.pendingBody" : "transaction.pendingBody")
       : tx.phase === "approval"
         ? t("transaction.approvalBody")
         : tx.phase === "signature"
           ? t("transaction.signatureBody")
-          : t("transaction.reviewBody");
+          : t(simulated ? "demoUI.reviewBody" : "transaction.reviewBody");
   const amount = success ? tx.receipt?.assets : tx.amountAssets;
   const outputs = success ? tx.receipt?.tokens : tx.outputs;
-  const hash = tx.receipt?.hash ?? tx.hash;
+  const hash = simulated ? undefined : (tx.receipt?.hash ?? tx.hash);
   const errorCode = tx.errorCode ?? "UNKNOWN";
   const errorMessage =
     errorCode === "PREVIEW_ONLY"
@@ -190,7 +191,7 @@ export function CashPlusTransactionSheet({
         </div>
         {snapshot?.mode === "preview" ? (
           <p className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-primary text-xs leading-relaxed">
-            {t("transaction.previewOnly")}
+            {t("demoUI.hint")}
           </p>
         ) : null}
         {(reviewing || success) && amount !== undefined && amount !== null ? (
@@ -245,7 +246,9 @@ export function CashPlusTransactionSheet({
                 {formatUnits(tx.minShares, 18)}
               </CashPlusRow>
             ) : null}
-            <CashPlusRow label={t("transaction.fee")}>{t("transaction.feeValue")}</CashPlusRow>
+            <CashPlusRow label={t("transaction.fee")}>
+              {t(simulated ? "demoUI.feeValue" : "transaction.feeValue")}
+            </CashPlusRow>
           </div>
         ) : null}
         {hash ? (
@@ -277,11 +280,11 @@ export function CashPlusTransactionSheet({
                   void controller.confirm();
                 }}
               >
-                {t("transaction.confirm")}
+                {t(simulated ? "demoUI.confirm" : "transaction.confirm")}
               </Button>
               <p className="flex items-center justify-center gap-1.5 text-muted-foreground text-[10px]">
                 <ShieldCheck className="size-3.5" aria-hidden="true" />
-                {t("invest.hint")}
+                {t(simulated ? "demoUI.hint" : "invest.hint")}
               </p>
             </>
           ) : !signing && tx.phase !== "preflight" ? (

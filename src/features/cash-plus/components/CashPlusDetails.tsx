@@ -240,31 +240,33 @@ export function CashPlusDetails({ snapshot, className }: CashPlusSnapshotProps) 
             <p className="mt-3 text-muted-foreground text-xs leading-relaxed">{item.body}</p>
           </details>
         ))}
-        <details className="group py-4">
-          <summary className={summaryClass}>
-            {t("details.contracts")}
-            <ChevronDown
-              className="size-4 text-muted-foreground transition-transform group-open:rotate-180"
-              aria-hidden="true"
-            />
-          </summary>
-          <div className="mt-4 space-y-3">
-            <CashPlusRow label={t("details.network")}>{snapshot.networkName}</CashPlusRow>
-            <CashPlusRow label={t("details.policy")}>
-              {snapshot.policyVersion.toString()}
-            </CashPlusRow>
-            <CashPlusRow label={t("details.oracle")}>
-              {snapshot.oracleHealthy ? t("details.healthy") : t("details.unhealthy")}
-            </CashPlusRow>
-            <CashPlusRow label={t("details.run")}>{snapshot.runId}</CashPlusRow>
-            <div className="text-xs">
-              <p className="text-muted-foreground">{t("details.vault")}</p>
-              <p className="mt-1 break-all font-mono text-[10px]">
-                {snapshot.vault ?? t("unavailable")}
-              </p>
+        {snapshot.mode !== "preview" ? (
+          <details className="group py-4">
+            <summary className={summaryClass}>
+              {t("details.contracts")}
+              <ChevronDown
+                className="size-4 text-muted-foreground transition-transform group-open:rotate-180"
+                aria-hidden="true"
+              />
+            </summary>
+            <div className="mt-4 space-y-3">
+              <CashPlusRow label={t("details.network")}>{snapshot.networkName}</CashPlusRow>
+              <CashPlusRow label={t("details.policy")}>
+                {snapshot.policyVersion.toString()}
+              </CashPlusRow>
+              <CashPlusRow label={t("details.oracle")}>
+                {snapshot.oracleHealthy ? t("details.healthy") : t("details.unhealthy")}
+              </CashPlusRow>
+              <CashPlusRow label={t("details.run")}>{snapshot.runId}</CashPlusRow>
+              <div className="text-xs">
+                <p className="text-muted-foreground">{t("details.vault")}</p>
+                <p className="mt-1 break-all font-mono text-[10px]">
+                  {snapshot.vault ?? t("unavailable")}
+                </p>
+              </div>
             </div>
-          </div>
-        </details>
+          </details>
+        ) : null}
       </div>
     </Card>
   );
@@ -272,7 +274,7 @@ export function CashPlusDetails({ snapshot, className }: CashPlusSnapshotProps) 
 
 export function CashPlusDemoPanel({ snapshot }: CashPlusSnapshotProps) {
   const t = useTranslations("cashPlus");
-  if (snapshot.mode === "live") return null;
+  if (snapshot.mode !== "fork") return null;
   return (
     <details className="group rounded-xl border border-border p-5">
       <summary className={cn(summaryClass, "text-muted-foreground")}>

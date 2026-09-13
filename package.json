@@ -31,7 +31,8 @@
     "cash-plus:keeper": "tsx scripts/cash-plus/cli.ts keeper",
     "cash-plus:counterparty": "tsx scripts/cash-plus/cli.ts counterparty",
     "cash-plus:demo": "tsx scripts/cash-plus/cli.ts demo",
-    "cash-plus:evidence": "tsx scripts/cash-plus/snapshot-history.ts"
+    "cash-plus:evidence": "tsx scripts/cash-plus/snapshot-history.ts",
+    "cash-plus:ui": "NEXT_PUBLIC_MOCK_MODE=true NEXT_PUBLIC_FEATURE_CASH_PLUS=true NEXT_PUBLIC_CASH_PLUS_MODE=preview next dev --turbopack --port 3049"
   },
   "dependencies": {
     "@1inch/aqua-sdk": "0.2.0",
