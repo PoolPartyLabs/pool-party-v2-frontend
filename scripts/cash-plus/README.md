@@ -6,6 +6,16 @@ The contract workspace defaults to `../cash-plus-contracts/contracts`; set `CASH
 
 ## Start or connect to a fork
 
+Start a presentation with a fresh latest block and deploy immediately:
+
+```sh
+pnpm cash-plus:demo --step start
+```
+
+This builds first, archives the prior local journal, receipts and manifest under ignored `.runs/`, chooses an unused loopback port starting at 8550, and starts a new detached Anvil process pinned to the upstream's latest block. It then deploys a new vault and updates the browser manifest. Existing forks are never reset or stopped. Stop the previous keeper and reconcile pending browser/operator transactions before switching runs; unresolved operator hashes or an active signer lock cause startup to refuse the switch. The command prints the new RPC, source block and Anvil PID. Run the investor deposit, conversion and withdrawal immediately: the public RPC may stop serving new historical storage requests within minutes, even while already cached reads still work.
+
+Use `--port 8552` to require a particular unused port or `--upstream https://your-archive-rpc` to supply an Arbitrum archive endpoint. The upstream is read only; all deployments and writes remain restricted to local Anvil. To connect to an Anvil process you started yourself:
+
 ```sh
 anvil --host 127.0.0.1 --port 8550 --chain-id 31337 --fork-url https://arb1.arbitrum.io/rpc --silent
 pnpm cash-plus:deploy-fork --rpc http://127.0.0.1:8550
@@ -34,7 +44,7 @@ pnpm cash-plus:demo --step capacity --cap 1500
 
 Use the browser for investor approval/deposit/redemption when presenting the UI. The CLI investor commands are separate reproducible test actors, and the full non-browser rehearsal is `pnpm cash-plus:demo --step rehearse`. The designated investor remains fully exited after that rehearsal, with lifetime cashflows retained.
 
-For a persistent serial loop, run `pnpm cash-plus:keeper`; it checks health, parks excess, restores configured buffers, reconciles/rotates canonical orders and waits ten seconds. `--iterations 2` is a bounded rehearsal. A failure stops the loop instead of retrying an unknown write. Each signer is locked across simulation, submission and receipt. A crashed process's lock is recovered only after proving its PID is absent. Existing pending hashes are resolved before any new send; timeout or an unresolved/reverted receipt stops the command and retains its journal. Inspect the saved receipt and reconcile the state explicitly before restarting after a reverted transaction. Receipt/state writes are atomic, and evidence/order entries merge across independent signer processes.
+For a persistent serial loop, run `pnpm cash-plus:keeper`; it checks health, parks excess, restores configured buffers, reconciles/rotates canonical orders and waits ten seconds. `--iterations 2` is a bounded rehearsal. A failure stops the loop instead of retrying an unknown write. Rotation preflights the new order before docking old orders whenever an active-order slot is free. Expired public-RPC storage produces `HISTORICAL_FORK_STATE_UNAVAILABLE`; details remain in `.local/last-fork-error.log`. Each signer is locked across simulation, submission and receipt. A crashed process's lock is recovered only after proving its PID is absent. Existing pending hashes are resolved before any new send; timeout or an unresolved/reverted receipt stops the command and retains its journal. Inspect the saved receipt and reconcile the state explicitly before restarting after a reverted transaction. Receipt/state writes are atomic, and evidence/order entries merge across independent signer processes.
 
 Each canonical ship is independently encoded in TypeScript and compared byte-for-byte with the onchain factory; router order hashing is also checked. All four maker hooks use empty data. Counterparty calldata fixes exact input, input-first settlement, transferFrom+Aqua.push, no callbacks, default recipient equal to counterparty, minimum output and a 60-second deadline. Output-first and exact-output cases are covered in contracts. Virtual amounts are based on actual current underlying/receipt balances, including Aave's one-unit rounding.
 
@@ -47,7 +57,7 @@ pnpm exec tsx scripts/cash-plus/snapshot-history.ts
 pnpm exec vitest run tests/cash-plus/cli.test.ts
 ```
 
-`.local/evidence.json` includes manifest, roles, ABI hashes, policy fixture, pending state, all successful operation hashes/custom events, current NAV/components and investor cashflows. `.local/<txhash>.json` retains full receipts, including ERC-20 and official Aqua/SwapVM logs. `.local/snapshot-history.json` reads before/after investor and conversion values at the actual receipt block and records block hashes. `.local/rejected-limit.txt` holds the exact expected rejection. Keep the contract test logs with this bundle. These local receipts have no valid public explorer links.
+`.local/evidence.json` includes manifest, roles, ABI hashes, policy fixture, pending state, all successful operation hashes/custom events, current NAV/components, investor cashflows and current active order hashes. An empty `activeStrategies` means there is no currently shipped order. `.local/<txhash>.json` retains full receipts, including ERC-20 and official Aqua/SwapVM logs. `.local/snapshot-history.json` reads before/after investor and conversion values at the actual receipt block and records block hashes. `.local/rejected-limit.txt` holds the exact expected rejection. Keep the contract test logs with this bundle. These local receipts have no valid public explorer links.
 
 Meaningful CLI tests cover official opcode/argument packing, complete-order hashing, malformed parameter rejection, taker flags and minimum/deadline widths, local-only RPC restrictions, concurrent signer locks, stale process recovery and pending receipt success/revert/timeout behavior. Contract tests separately execute real deployed protocols; a compiler or mock-router test alone is insufficient.
 

@@ -1,6 +1,7 @@
 // @vitest-environment node
 /** @id PP-CP-LIB-024 @name Cash+ operator safety tests @implements-rules-version v1 */
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type Address, decodeAbiParameters, type Hex, keccak256, parseAbiParameters } from "viem";
@@ -14,6 +15,11 @@ import {
   requireLocalForkUrl,
   takerTraits,
 } from "../../scripts/cash-plus/compiler";
+import {
+  archivePreviousRun,
+  historicalForkStateUnavailable,
+  unusedForkPort,
+} from "../../scripts/cash-plus/fresh-fork";
 import {
   acquireSignerLock,
   reconcilePending,
@@ -109,5 +115,62 @@ describe("operator boundaries and restart", () => {
     );
     expect(await reconcilePending(undefined, wait)).toBeUndefined();
     expect(wait).toHaveBeenCalledOnce();
+  });
+  it("refuses an occupied fork port without touching the existing server", async () => {
+    const server = createServer();
+    await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
+    try {
+      const endpoint = server.address();
+      if (!endpoint || typeof endpoint === "string") throw new Error("TEST_SERVER_ADDRESS");
+      await expect(unusedForkPort(String(endpoint.port))).rejects.toThrow("FORK_PORT_IN_USE");
+      expect(server.listening).toBe(true);
+      await expect(unusedForkPort("443")).rejects.toThrow("FORK_PORT_REQUIRES_INTEGER");
+    } finally {
+      await new Promise<void>((done) => server.close(() => done()));
+    }
+  });
+  it("archives receipts and manifest, leaving source files unchanged and rejecting pending writes", () => {
+    const dir = mkdtempSync(join(tmpdir(), "cashplus-archive-"));
+    dirs.push(dir);
+    const source = join(dir, "local");
+    const archives = join(dir, "runs");
+    const manifest = join(dir, "deployment.json");
+    mkdirSync(source);
+    const state = { runId: "test-run", actors: { keeper: "0xabc" }, pending: {} };
+    const stateText = JSON.stringify(state);
+    writeFileSync(join(source, "state.json"), stateText);
+    writeFileSync(join(source, "receipt.json"), "receipt-evidence");
+    writeFileSync(manifest, "manifest-evidence");
+    const archive = archivePreviousRun(source, manifest, archives);
+    expect(archive).toBeDefined();
+    if (!archive) throw new Error("TEST_ARCHIVE_MISSING");
+    expect(readFileSync(join(archive, "receipt.json"), "utf8")).toBe("receipt-evidence");
+    expect(readFileSync(join(archive, "deployment.json"), "utf8")).toBe("manifest-evidence");
+    expect(readFileSync(join(source, "state.json"), "utf8")).toBe(stateText);
+    expect(existsSync(join(archive, "state.lock"))).toBe(false);
+    const lock = acquireSignerLock(join(source, "0xabc.lock"));
+    try {
+      expect(() => archivePreviousRun(source, manifest, archives)).toThrow(
+        "SIGNER_ALREADY_RUNNING",
+      );
+    } finally {
+      releaseSignerLock(lock);
+    }
+    writeFileSync(
+      join(source, "state.json"),
+      JSON.stringify({ ...state, pending: { "0xabc": { hash: "0x01" } } }),
+    );
+    expect(() => archivePreviousRun(source, manifest, archives)).toThrow(
+      "PENDING_OPERATIONS_RECONCILE",
+    );
+    expect(existsSync(join(source, "state.lock"))).toBe(false);
+    expect(readFileSync(join(archive, "state.json"), "utf8")).toBe(stateText);
+  });
+  it("distinguishes expired historical storage from a policy rejection", () => {
+    expect(historicalForkStateUnavailable(new Error("metadata is not found, 482538129"))).toBe(
+      true,
+    );
+    expect(historicalForkStateUnavailable(new Error("missing trie node"))).toBe(true);
+    expect(historicalForkStateUnavailable(new Error("FillLimit"))).toBe(false);
   });
 });

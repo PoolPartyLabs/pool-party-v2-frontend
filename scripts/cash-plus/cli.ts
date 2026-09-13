@@ -1,6 +1,6 @@
 /** @id PP-CP-LIB-022 @name Cash+ fork operator CLI @implements-rules-version v1 */
 import { createHash, randomBytes } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   type Address,
@@ -28,6 +28,7 @@ import {
   type ProgramParameters,
   takerTraits,
 } from "./compiler";
+import { archivePreviousRun, historicalForkStateUnavailable, startFreshFork } from "./fresh-fork";
 import {
   type Actors,
   artifact,
@@ -115,17 +116,17 @@ async function getter(
 ): Promise<unknown> {
   return read(address(d.vault), vaultAbi(), name, args);
 }
-async function deploy() {
-  if (stateExists() && !flag("new-run")) {
+async function deploy(options: { rpcUrl?: string; fresh?: boolean; built?: boolean } = {}) {
+  if (stateExists() && !flag("new-run") && !options.fresh) {
     console.log(
       "Existing run found. Verifying it; pass --new-run to deploy another vault without resetting the chain.",
     );
     await verify();
     return;
   }
-  if (!flag("skip-build")) buildContracts();
+  if (!flag("skip-build") && !options.built) buildContracts();
   exportAbis();
-  const rpcUrl = must(arg("rpc", "http://127.0.0.1:8550"));
+  const rpcUrl = options.rpcUrl ?? must(arg("rpc", "http://127.0.0.1:8550"));
   const metadata = await assertFork(rpcUrl);
   const accounts = await rpc<Address[]>(rpcUrl, "eth_accounts");
   if (accounts.length < 5) throw new Error("FIVE_UNLOCKED_ANVIL_TEST_ACCOUNTS_REQUIRED");
@@ -401,14 +402,6 @@ async function ship() {
       console.log(`Active canonical order ${hash}`);
       return hash;
     }
-    await transact(
-      s.actors.keeper,
-      address(d.vault),
-      vaultAbi(),
-      "dock",
-      [hash],
-      "dock expired or expiring order",
-    );
   }
   const inventory = (await getter(d, "inventory")) as Array<{
     walletBalance: bigint;
@@ -433,6 +426,25 @@ async function ship() {
     throw new Error("FACTORY_COMPILER_MISMATCH");
   if ((await read(address(d.router), routerAbi, "hash", [order])) !== orderHash(order))
     throw new Error("ROUTER_HASH_MISMATCH");
+  // Probe new Aqua storage before removing old orders whenever the contract has a free slot.
+  const maximumActive = Number(await getter(d, "MAX_ACTIVE_ORDERS"));
+  if (active.length < maximumActive)
+    await c.publicClient.simulateContract({
+      account: s.actors.keeper,
+      address: address(d.vault),
+      abi: vaultAbi(),
+      functionName: "shipCanonical",
+      args: [p],
+    });
+  for (const hash of active)
+    await transact(
+      s.actors.keeper,
+      address(d.vault),
+      vaultAbi(),
+      "dock",
+      [hash],
+      "dock expired or expiring order",
+    );
   await transact(
     s.actors.keeper,
     address(d.vault),
@@ -639,11 +651,12 @@ async function investorRedeem() {
 async function report() {
   const d = await deployment();
   const s = loadState();
-  const [status, inventory, shares, cashflows] = await Promise.all([
+  const [status, inventory, shares, cashflows, activeStrategies] = await Promise.all([
     getter(d, "status"),
     getter(d, "inventory"),
     getter(d, "sharesOf", [s.actors.investor]),
     getter(d, "accountCashflows", [s.actors.investor]),
+    getter(d, "activeStrategies"),
   ]);
   const evidence = {
     ...s,
@@ -651,6 +664,7 @@ async function report() {
     inventory,
     investorShares: shares,
     investorCashflows: cashflows,
+    activeStrategies,
     lockfileSha256: createHash("sha256")
       .update(readFileSync(resolve(root, "pnpm-lock.yaml")))
       .digest("hex"),
@@ -668,6 +682,7 @@ async function report() {
       inventory,
       shares,
       cashflows,
+      activeStrategies,
     }),
   );
 }
@@ -687,6 +702,16 @@ async function capacity() {
 }
 async function demo() {
   const step = arg("step", "status");
+  if (step === "start") {
+    if (!flag("skip-build")) buildContracts();
+    const archive = archivePreviousRun();
+    if (archive) console.log(`Previous run evidence preserved: ${archive}`);
+    const fork = await startFreshFork(arg("port"), arg("upstream"));
+    console.log(
+      `Fresh fork ${fork.rpcUrl}, source ${fork.sourceBlock}, PID ${fork.pid}. Run the demo immediately; public historical state can expire.`,
+    );
+    return deploy({ rpcUrl: fork.rpcUrl, fresh: true, built: true });
+  }
   if (step === "invest") return investorDeposit();
   if (step === "park") return keeperOnce();
   if (step === "convert") return counterparty();
@@ -717,6 +742,12 @@ async function main() {
   throw new Error("Commands: export, deploy-fork, verify, ship, keeper, counterparty, demo");
 }
 main().catch((error) => {
-  console.error(error);
+  if (historicalForkStateUnavailable(error)) {
+    mkdirSync(local, { recursive: true });
+    writeFileSync(resolve(local, "last-fork-error.log"), String(error));
+    console.error(
+      "HISTORICAL_FORK_STATE_UNAVAILABLE: The upstream RPC no longer serves required storage at this fork's pinned block. No transaction resend or fork reset was performed. Preserve evidence, reconcile pending transactions, then use `pnpm cash-plus:demo --step start` for a fresh run or an archival RPC. Details: scripts/cash-plus/.local/last-fork-error.log",
+    );
+  } else console.error(error);
   process.exitCode = 1;
 });
