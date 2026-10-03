@@ -11,6 +11,10 @@ const version = { protocolVersion: z.literal("v2") };
 export const uint = z.string().regex(/^\d{1,78}$/);
 const decimal = z.string().regex(/^-?\d+(\.\d+)?$/);
 const record = z.object(version).passthrough();
+const wireInteger = z.preprocess(
+  (value) => (typeof value === "string" ? Number(value) : value),
+  z.number().int().nonnegative().max(1_000_000),
+) as z.ZodType<number>;
 const amount = record.extend({ raw: uint, decimal });
 const amounts = record.extend({ amount0: amount.nullable(), amount1: amount.nullable() });
 const profile = record.extend({
@@ -76,11 +80,11 @@ export const fundViewSchema = fundDetailSchema.extend({
     .nullable(),
   fees: record
     .extend({
-      flowFeeBps: z.number().int(),
-      payoutFeeBps: z.number().int(),
-      performanceFeeBps: z.number().int(),
-      managementFeeBps: z.number().int(),
-      standardPayoutTermSeconds: z.number().int(),
+      flowFeeBps: wireInteger,
+      payoutFeeBps: wireInteger,
+      performanceFeeBps: wireInteger,
+      managementFeeBps: wireInteger,
+      standardPayoutTermSeconds: wireInteger,
     })
     .optional(),
 });
@@ -145,7 +149,7 @@ export const transactionSchema = z.object({
 export const previewSchema = record.extend({
   sharesMinted: uint.optional(),
   usdcCharged: uint.optional(),
-  flowFee: uint,
+  flowFee: uint.optional(),
   refundToCaller: uint.optional(),
   sharePrice: uint.optional(),
   usdcGross: uint.optional(),

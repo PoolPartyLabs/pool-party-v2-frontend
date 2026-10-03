@@ -3,6 +3,23 @@ import { mockFund, mockFundBuild, mockHolder } from "@/mocks/data/v2Funds";
 import { fundBuildSchema, fundViewSchema, holderSchema } from "./fundSchemas";
 
 describe("fund view mapping contracts", () => {
+  it("R4 follows API PR 181 string fee terms and scalar exit previews", () => {
+    const fees = {
+      protocolVersion: "v2",
+      flowFeeBps: "25",
+      payoutFeeBps: "200",
+      performanceFeeBps: "2000",
+      managementFeeBps: "0",
+      standardPayoutTermSeconds: "259200",
+    };
+    expect(fundViewSchema.parse({ ...mockFund, fees }).fees?.flowFeeBps).toBe(25);
+    expect(
+      fundBuildSchema.parse({
+        ...mockFundBuild({ action: "exit-closed-fund" }),
+        preview: { protocolVersion: "v2", usdcPaid: "12345" },
+      }).preview?.usdcPaid,
+    ).toBe("12345");
+  });
   it("R2 parses fund NAV, deployment and position views while normalizing report-age strings", () => {
     const value = fundViewSchema.parse({
       ...mockFund,

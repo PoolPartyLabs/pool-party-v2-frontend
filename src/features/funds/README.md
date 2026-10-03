@@ -12,4 +12,4 @@ POO-2175, rules v2. The existing `fundContracts` flag and `useContractFamily` pr
 
 Mock mode uses `src/mocks/data/v2Funds.ts`, never real wallet sends. All eleven configured locales include `strategies.funds`. Tests cover mapping, rollout shapes, protocol discrimination, safe builders, approval receipts/rebuilds, freshness/cancellation, route selection and translated states.
 
-Transits/balances depend on API PR #180. Authoritative previews/fees depend on the orchestrator's follow-up API PR. Unavailable fields remain visibly unavailable or explicitly estimated, never presented as authoritative.
+Transits/balances depend on API PR #180. Authoritative previews/fees follow API PR #181 (POO-2176): fee terms arrive as decimal strings and scalar income/exit previews contain only `usdcPaid`. Unavailable fields remain visibly unavailable or explicitly estimated, never presented as authoritative.

@@ -40,11 +40,14 @@ function WalletInvestorActions(props: FundActionsPanelProps) {
   return (
     <InvestorActions
       {...props}
-      send={async (built) => {
+      send={async (built, active) => {
+        if (!active()) throw new Error("V2_CANCELED");
         const wallet = findWalletForAddress(wallets, props.wallet);
         if (!wallet) throw new Error("V2_SESSION");
         await wallet.switchChain(42161);
+        if (!active()) throw new Error("V2_CANCELED");
         const provider = await wallet.getEthereumProvider();
+        if (!active()) throw new Error("V2_CANCELED");
         for (const tx of built.transactions)
           await executeBuiltTransaction(
             provider,
@@ -62,7 +65,7 @@ function InvestorActions({
   wallet,
   refresh,
   send,
-}: FundActionsPanelProps & { send: (built: FundBuild) => Promise<void> }) {
+}: FundActionsPanelProps & { send: (built: FundBuild, active: () => boolean) => Promise<void> }) {
   const t = useTranslations("strategies.funds");
   const [amount, setAmount] = useState("");
   const [minShares, setMinShares] = useState("1");
@@ -166,7 +169,15 @@ function InvestorActions({
     setPhase("sending");
     try {
       if (built.nextAction) {
-        const next = await approveAndRebuild(built, send, () => build(intent, active), active);
+        const next = await approveAndRebuild(
+          built,
+          async (transaction) => {
+            await send(transaction, active);
+            if (active()) setBuilt(null);
+          },
+          () => build(intent, active),
+          active,
+        );
         if (!active()) return;
         setBuilt(next);
         setPhase("review");
@@ -180,7 +191,7 @@ function InvestorActions({
         return;
       }
       setPhase("sending");
-      await send(latest);
+      await send(latest, active);
       if (!active()) return;
       setBuilt(null);
       setPhase("success");
@@ -207,6 +218,12 @@ function InvestorActions({
     { key: "usdcGross", label: t("gross"), decimals: 6 },
     { key: "payoutFee", label: t("payoutFee"), decimals: 6 },
     { key: "usdcPaid", label: t("paid"), decimals: 6 },
+    { key: "sharesBurned", label: t("shares"), decimals: 18 },
+    { key: "usdcRequested", label: t("amount"), decimals: 6 },
+    { key: "usdcOutstanding", label: t("pendingPayout"), decimals: 6 },
+    { key: "marketCost", label: t("payoutFee"), decimals: 6 },
+    { key: "sharePrice", label: t("sharePrice"), decimals: 24 },
+    { key: "shareAssets", label: t("nav"), decimals: 6 },
   ];
   return (
     <section className="rounded-xl border border-border p-5 space-y-4">
@@ -319,6 +336,29 @@ function InvestorActions({
               ) : null;
             })}
           </dl>
+          {preview ? (
+            <dl>
+              {Object.entries(preview)
+                .filter(
+                  ([key]) =>
+                    key !== "protocolVersion" && !fields.some((field) => field.key === key),
+                )
+                .map(([key, value]) => (
+                  <div className="flex justify-between gap-3 break-all" key={key}>
+                    <dt>{t("value")}</dt>
+                    <dd>
+                      {typeof value === "boolean"
+                        ? value
+                          ? t("ready")
+                          : t("notReady")
+                        : typeof value === "string" || typeof value === "number"
+                          ? String(value)
+                          : t("unavailable")}
+                    </dd>
+                  </div>
+                ))}
+            </dl>
+          ) : null}
         </div>
       ) : null}
       {built ? (
