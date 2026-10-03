@@ -82,5 +82,8 @@
     "v1": "V1",
     "v2": "V2",
     "tooltip": "Wechseln Sie zwischen dem aktuellen Builder (V1) und der Vorschau der Fondsverträge (V2)."
+  },
+  "toaster": {
+    "ariaLabel": "Benachrichtigungen"
   }
 }

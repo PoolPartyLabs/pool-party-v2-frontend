@@ -82,5 +82,8 @@
     "v1": "V1",
     "v2": "V2",
     "tooltip": "Switch between the live builder (V1) and the fund contracts preview (V2)."
+  },
+  "toaster": {
+    "ariaLabel": "Notifications"
   }
 }
