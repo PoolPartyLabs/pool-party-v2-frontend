@@ -17,7 +17,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { MandateDraft } from "../../mandateDraft";
 import { createEmptyPlan } from "../plan/buildPlan";
 import { emptySpokePlan, hubSupplyPlan, makeTestDraft } from "../plan/planTestKit";
-import { placePopover } from "./AnchoredPopover";
+import { AnchoredPopover, placePopover } from "./AnchoredPopover";
 import { makeDescribeContext } from "./blockTestKit";
 import { CanvasMenu } from "./CanvasMenu";
 import {
@@ -238,7 +238,7 @@ describe("CanvasMenu", () => {
     // @rule I2
     // @rule D4
     await open(networkMenuModel(makeDescribeContext(emptySpokePlan())));
-    expect(screen.getByText("Robinhood Chain are already on the canvas.")).toBeInTheDocument();
+    expect(screen.getByText("Robinhood Chain is already on the canvas.")).toBeInTheDocument();
     expect(screen.getAllByRole("menuitem")).toHaveLength(1);
   });
 
@@ -306,5 +306,84 @@ describe("CanvasMenu", () => {
       window.dispatchEvent(new Event("resize"));
     });
     await waitFor(() => expect(menu.style.top).toBe("260px"));
+  });
+});
+
+describe("AnchoredPopover (review F4 of PR #36)", () => {
+  /** A popover on an anchor the test can detach, closed by its parent when it asks. */
+  function Popover({ anchor, onClose }: { anchor: HTMLElement; onClose(): void }) {
+    const [open, setOpen] = useState(true);
+    return open ? (
+      <AnchoredPopover
+        anchor={anchor}
+        role="menu"
+        aria-label="popover"
+        onClose={() => {
+          onClose();
+          setOpen(false);
+        }}
+      >
+        <button type="button" role="menuitem" data-popover-item="">
+          item
+        </button>
+      </AnchoredPopover>
+    ) : null;
+  }
+
+  function attachedAnchor(): HTMLButtonElement {
+    const anchor = document.createElement("button");
+    anchor.textContent = "anchor";
+    document.body.append(anchor);
+    return anchor;
+  }
+
+  const BOX = {
+    left: 100,
+    top: 200,
+    right: 140,
+    bottom: 240,
+    width: 40,
+    height: 40,
+    x: 100,
+    y: 200,
+  };
+
+  it("closes when its anchor leaves the document, instead of moving to a zero box", async () => {
+    // @rule BB9
+    const anchor = attachedAnchor();
+    anchor.getBoundingClientRect = () => BOX as DOMRect;
+    const onClose = vi.fn();
+    render(<Popover anchor={anchor} onClose={onClose} />);
+    const menu = screen.getByRole("menu", { name: "popover" });
+    await waitFor(() => expect(menu.style.left).toBe("152px"));
+    anchor.remove();
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(menu.style.left).toBe("152px");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("closes on its next render when its anchor is gone (a re-flow replaced it)", () => {
+    // @rule BB9
+    const anchor = attachedAnchor();
+    const onClose = vi.fn();
+    const view = render(<Popover anchor={anchor} onClose={onClose} />);
+    anchor.remove();
+    view.rerender(<Popover anchor={anchor} onClose={onClose} />);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives focus back to its anchor without scrolling the clipped canvas", async () => {
+    // @rule BB9
+    const anchor = attachedAnchor();
+    const focus = vi.spyOn(anchor, "focus");
+    const user = userEvent.setup();
+    render(<Popover anchor={anchor} onClose={() => {}} />);
+    expect(screen.getByRole("menuitem", { name: "item" })).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(anchor).toHaveFocus();
   });
 });

@@ -17,10 +17,10 @@
  *   always inside an 8 px viewport margin. It follows the anchor on resize, scroll and wheel (the
  *   canvas pans and zooms under it).
  * - DISMISS: Escape, Tab and a press outside it (outside the anchor too, so the anchor's own click
- *   toggles) call `onClose`.
+ *   toggles) call `onClose`; so does an anchor that left the document (a re-flow replaced it).
  * - FOCUS: on open, the first enabled item (`[data-popover-item]` without `aria-disabled="true"`),
  *   else the first item; Arrow Up and Down move between items, wrapping, Home and End jump; on close,
- *   focus returns to the anchor when it was inside the popover.
+ *   focus returns to the anchor when it was inside the popover, without scrolling the canvas.
  */
 "use client";
 
@@ -107,6 +107,12 @@ export function AnchoredPopover({
   const reposition = useCallback(() => {
     const root = rootRef.current;
     if (!root) return;
+    // A detached anchor measures as a zero box at the top-left corner: close instead of jumping
+    // there (review F4 of PR #36). A re-flow that replaces the template or port does this.
+    if (!anchor.isConnected) {
+      onCloseRef.current();
+      return;
+    }
     const box = anchor.getBoundingClientRect();
     const own = root.getBoundingClientRect();
     const next = placePopover(
@@ -145,13 +151,21 @@ export function AnchoredPopover({
     const root = rootRef.current;
     const items = itemsOf(root);
     const first = items.find((item) => item.getAttribute("aria-disabled") !== "true") ?? items[0];
-    (first ?? root)?.focus();
+    (first ?? root)?.focus({ preventScroll: true });
     return () => {
       const active = document.activeElement;
       const ours = !active || active === document.body || (root?.contains(active) ?? false);
-      if (ours && anchor.isConnected) anchor.focus();
+      // `preventScroll`: the anchor sits in the canvas, which clips its content; a focus that
+      // scrolled it into view would shift the canvas under the viewport (review F4 of PR #36).
+      if (ours && anchor.isConnected) anchor.focus({ preventScroll: true });
     };
   }, [anchor]);
+
+  // Every render checks the anchor too: the plan changed under an open menu and the renderer
+  // replaced its anchor, with no resize or scroll to trigger `reposition`.
+  useLayoutEffect(() => {
+    if (!anchor.isConnected) onCloseRef.current();
+  });
 
   // A press outside the popover and its anchor closes it.
   useEffect(() => {
