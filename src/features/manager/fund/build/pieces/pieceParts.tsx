@@ -25,6 +25,10 @@
  * 4. **{@link canvasInteractive}: the attribute that keeps the viewport off a piece** (plan section
  *    3.2). Spread on cards, pills, templates, ports, share labels and network chips; never on a
  *    group box or the SVG of lines, which are canvas background.
+ * 5. **The focus policy (review of PR #34).** A piece with an ACTION is a real button (templates,
+ *    insert ports, position cards, a share label that selects). A piece that only EXPLAINS itself
+ *    (a flow pill, the spine lock, a spoke's share label, a network chip) is an {@link Explained}:
+ *    focusable, not a button, its tooltip on hover and focus and wired with `aria-describedby`.
  */
 "use client";
 
@@ -39,7 +43,7 @@ import {
   Route,
   Upload,
 } from "lucide-react";
-import type { ReactElement, Ref } from "react";
+import { type HTMLAttributes, type ReactElement, type ReactNode, type Ref, useId } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils/cn";
 import { CANVAS_INTERACTIVE_ATTR } from "../canvas/useCanvasViewport";
@@ -159,15 +163,19 @@ export interface CardCopyProps {
   caption: string;
   /** The caption colour token. */
   captionTone: string;
+  /** Lets a card measure whether its title overflows (D11, review F5). */
+  titleRef?: Ref<HTMLSpanElement>;
   /** Lets a card measure whether its caption overflows (D11). */
   captionRef?: Ref<HTMLSpanElement>;
 }
 
 /** Title (Body/Medium) over caption (Caption/Default), gap 1, each on one line with an ellipsis. */
-export function CardCopy({ title, caption, captionTone, captionRef }: CardCopyProps) {
+export function CardCopy({ title, caption, captionTone, titleRef, captionRef }: CardCopyProps) {
   return (
     <span className="flex min-w-0 flex-1 flex-col gap-px">
-      <span className="truncate font-medium text-foreground text-sm leading-normal">{title}</span>
+      <span ref={titleRef} className="truncate font-medium text-foreground text-sm leading-normal">
+        {title}
+      </span>
       <span ref={captionRef} className={cn("truncate text-xs leading-normal", captionTone)}>
         {caption}
       </span>
@@ -175,16 +183,24 @@ export function CardCopy({ title, caption, captionTone, captionRef }: CardCopyPr
   );
 }
 
+/** The app's standard keyboard focus ring. */
+export const FOCUS_RING = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
 /** Public props for {@link PieceTooltip}. */
 export interface PieceTooltipProps {
-  /** One line of text. */
-  content: string;
+  /** One line. Usually a string; a node only when part of the line takes another colour. */
+  content: ReactNode;
   side?: "top" | "bottom";
   /** Gap between the piece and the tooltip, in px. */
   sideOffset?: number;
   /** Controlled open state, for a trigger that opens only on some condition (D11). */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Describe the trigger by the tooltip text at all times (`aria-describedby` on a hidden copy),
+   * not only while the tooltip is open. For the elements that only explain themselves.
+   */
+  describe?: boolean;
   /** The trigger: one element, which receives the hover and focus handlers. */
   children: ReactElement;
 }
@@ -196,12 +212,24 @@ export function PieceTooltip({
   sideOffset = 4,
   open,
   onOpenChange,
+  describe = false,
   children,
 }: PieceTooltipProps) {
+  const descriptionId = useId();
+  // Only when describing: an `aria-describedby` passed to the trigger replaces the one Radix sets
+  // while the tooltip is open, so it must not be passed (even as undefined) otherwise.
+  const described = describe ? { "aria-describedby": descriptionId } : {};
   return (
     <TooltipProvider delayDuration={200}>
       <Tooltip open={open} onOpenChange={onOpenChange}>
-        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        <TooltipTrigger asChild {...described}>
+          {children}
+        </TooltipTrigger>
+        {describe ? (
+          <span id={descriptionId} hidden>
+            {content}
+          </span>
+        ) : null}
         <TooltipContent
           side={side}
           sideOffset={sideOffset}
@@ -212,5 +240,44 @@ export function PieceTooltip({
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  );
+}
+
+/** Public props for {@link Explained}. */
+export interface ExplainedProps extends Omit<HTMLAttributes<HTMLSpanElement>, "content"> {
+  /** The explanation: the tooltip, and the element's description. */
+  tooltip: ReactNode;
+  side?: "top" | "bottom";
+  sideOffset?: number;
+  /**
+   * Describe the element by its tooltip (default). Off only when the tooltip is already the
+   * element's name (the spine lock), so a screen reader does not read it twice.
+   */
+  describe?: boolean;
+  children?: ReactNode;
+}
+
+/**
+ * An element that only EXPLAINS itself (the review's focus policy): an auto flow pill, the spine
+ * lock, a spoke's share label, a network chip. A keyboard must reach its tooltip ([C19]), but it has
+ * no action, so it is a focusable `span`, NOT a button: nothing announces a control that does
+ * nothing, and there is no Enter handler. Its tooltip opens on hover and on focus and describes it.
+ */
+export function Explained({
+  tooltip,
+  side,
+  sideOffset,
+  describe = true,
+  className,
+  children,
+  ...rest
+}: ExplainedProps) {
+  return (
+    <PieceTooltip content={tooltip} side={side} sideOffset={sideOffset} describe={describe}>
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: the review's focus policy (POO-2154): a tab stop for its tooltip (C19) that is not announced as a button doing nothing. */}
+      <span tabIndex={0} {...rest} className={cn(FOCUS_RING, className)}>
+        {children}
+      </span>
+    </PieceTooltip>
   );
 }

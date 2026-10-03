@@ -14,14 +14,20 @@
  * pill: the small disc the drawings show behind the Swap icon is an artefact the handoff discards.
  * Collect fees uses `coins` (the handoff gives it no icon; `coins` is the nearest of `BlockIcon`).
  *
- * The pill never changes its stroke, so its 1 px border is a real CSS border: content starts at 11,
- * exactly where the Figma frames draw it. Its tooltip opens on hover and on focus ([C19]): the pill
- * is a button so a keyboard reaches it (the app's `InfoTip` pattern). It selects nothing in this
- * batch (I5: pills are not selectable); its name is its text.
+ * Stroke (review F6, measured in Figma on 2026-10-03, nodes 8220:2482 and 8220:2501 of canvas C):
+ * the pill frame is 176 x 26, its 1 px stroke is INSIDE and COUNTS in layout
+ * (`strokesIncludedInLayout`), padding 0 / 10, gap 6, so the icon sits at x 11, y 7 and the text
+ * at x 29. A CSS border on a border-box element is exactly that: the outer size stays 176 x 26 and
+ * the content starts at 1 + 10 = 11. The card is different (its stroke does not count in layout,
+ * so it is an overlay there). The pill never changes its stroke, so nothing moves.
+ *
+ * A pill selects nothing in this batch (I5) and only explains itself, so under the review's focus
+ * policy it is an `Explained` element: focusable (a keyboard reaches its tooltip, [C19]) but not a
+ * button, its tooltip on hover and focus and wired as its description. Its name is its text.
  */
 "use client";
 
-import { BlockIconGlyph, canvasInteractive, PieceTooltip } from "./pieceParts";
+import { BlockIconGlyph, canvasInteractive, Explained } from "./pieceParts";
 import type { FlowContent } from "./pieceTypes";
 
 /** Public props for {@link FlowPill}. */
@@ -34,18 +40,16 @@ export interface FlowPillProps {
 export function FlowPill({ content }: FlowPillProps) {
   const { text, tooltip, icon } = content;
   return (
-    <PieceTooltip content={tooltip}>
-      <button
-        type="button"
-        {...canvasInteractive}
-        data-flow-pill=""
-        className="flex h-[26px] w-[176px] shrink-0 cursor-default items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        <BlockIconGlyph icon={icon} size={12} className="text-muted-foreground" />
-        <span className="truncate whitespace-nowrap text-muted-foreground text-xs leading-normal">
-          {text}
-        </span>
-      </button>
-    </PieceTooltip>
+    <Explained
+      tooltip={tooltip}
+      {...canvasInteractive}
+      data-flow-pill=""
+      className="box-border flex h-[26px] w-[176px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-2.5"
+    >
+      <BlockIconGlyph icon={icon} size={12} className="text-muted-foreground" />
+      <span className="truncate whitespace-nowrap text-muted-foreground text-xs leading-normal">
+        {text}
+      </span>
+    </Explained>
   );
 }

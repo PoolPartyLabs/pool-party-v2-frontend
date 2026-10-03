@@ -14,9 +14,11 @@
  * carry a 14 px lock in `muted-foreground` at the right end, with the tooltip "Fixed: USDC on
  * Arbitrum" on hover and on focus ([C19]).
  *
- * Not selectable, no ports, no hover look: the card is not a control. The lock is a button only so
- * a keyboard can reach its tooltip (the app's `InfoTip` pattern); it is named by that tooltip. The
- * card still carries `data-canvas-interactive`, like every card, so a press on it never pans.
+ * Not selectable, no ports, no hover look: the card is not a control. The lock has no action, so
+ * under the review's focus policy it is an `Explained` element, not a button: a tab stop so a
+ * keyboard reaches its tooltip, an image named by that tooltip. Without `lockTooltip` the lock is
+ * drawn as a decorative icon and is no tab stop. The card still carries `data-canvas-interactive`,
+ * like every card, so a press on it never pans.
  */
 "use client";
 
@@ -28,8 +30,8 @@ import {
   CardCopy,
   CardIconBox,
   canvasInteractive,
+  Explained,
   PieceStroke,
-  PieceTooltip,
 } from "./pieceParts";
 import type { BlockIcon } from "./pieceTypes";
 
@@ -50,16 +52,19 @@ function SpineLock({ tooltip }: { tooltip: string | undefined }) {
   if (tooltip === undefined) {
     return <span className="flex shrink-0 text-muted-foreground">{glyph}</span>;
   }
+  // The lock only explains itself: focusable, not a button (the review's focus policy). It shows no
+  // text, so its tooltip is its NAME (an image named "Fixed: USDC on Arbitrum"); describing it by
+  // the same sentence as well would make a screen reader read it twice.
   return (
-    <PieceTooltip content={tooltip}>
-      <button
-        type="button"
-        aria-label={tooltip}
-        className="flex shrink-0 cursor-default rounded-full text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        {glyph}
-      </button>
-    </PieceTooltip>
+    <Explained
+      tooltip={tooltip}
+      describe={false}
+      role="img"
+      aria-label={tooltip}
+      className="flex shrink-0 rounded-full text-muted-foreground"
+    >
+      {glyph}
+    </Explained>
   );
 }
 

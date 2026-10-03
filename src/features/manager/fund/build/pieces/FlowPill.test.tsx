@@ -7,7 +7,8 @@
  *
  * The flow pill of the Build canvas (handoff v1.2 [BB3], [C7], [C19], [BB10]): Swap · auto, Swap,
  * Collect fees and Bridge · auto. Every pill has the same 176 x 26 shape, a plain 12 px icon (no
- * disc) and one line of text; its tooltip opens on hover and on focus.
+ * disc) and one line of text; its tooltip opens on hover and on focus. A pill only explains itself,
+ * so it is focusable but not a button (the review's focus policy).
  */
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -27,6 +28,20 @@ const COLLECT_FEES: FlowContent = {
   icon: "coins",
 };
 
+/** The pill element, found by its text (it is not a button). */
+function pillOf(text: string): HTMLElement {
+  const pill = screen.getByText(text).closest<HTMLElement>("[data-flow-pill]");
+  if (!pill) throw new Error("no pill");
+  return pill;
+}
+
+/** The text a reader sees: the hidden description copy left out. */
+function visibleText(container: HTMLElement): string {
+  const copy = container.cloneNode(true) as HTMLElement;
+  for (const hidden of copy.querySelectorAll("[hidden]")) hidden.remove();
+  return copy.textContent ?? "";
+}
+
 const PILLS: ReadonlyArray<[string, FlowContent]> = [
   ["Swap · auto", SWAP_AUTO],
   ["Swap", { text: "Swap", tooltip: "Swaps into another token of your mandate", icon: "swap" }],
@@ -42,7 +57,7 @@ describe("FlowPill", () => {
   it("[BB3] is 176 x 26, radius full, surface, 1 px border, padding 0 x 10, gap 6", () => {
     render(<FlowPill content={SWAP_AUTO} />);
 
-    const pill = screen.getByRole("button", { name: "Swap · auto" });
+    const pill = pillOf("Swap · auto");
     for (const token of [
       "w-[176px]",
       "h-[26px]",
@@ -62,7 +77,7 @@ describe("FlowPill", () => {
   it("[BB3, C7] a plain 12 px muted icon, straight on the pill: no disc, no icon box", () => {
     render(<FlowPill content={SWAP_AUTO} />);
 
-    const pill = screen.getByRole("button", { name: "Swap · auto" });
+    const pill = pillOf("Swap · auto");
     const icon = pill.querySelector("[data-block-icon]");
     expect(icon?.parentElement).toBe(pill);
     expect(icon).toHaveAttribute("width", "12");
@@ -84,9 +99,7 @@ describe("FlowPill", () => {
     ]) {
       expect(text.className).toContain(token);
     }
-    expect(screen.getByRole("button", { name: "Swap · auto" }).className).toContain(
-      "whitespace-nowrap",
-    );
+    expect(pillOf("Swap · auto").className).toContain("whitespace-nowrap");
   });
 
   for (const [label, content] of PILLS) {
@@ -94,7 +107,7 @@ describe("FlowPill", () => {
     it(`[BB3] ${label}: its text and the ${content.icon} icon`, () => {
       render(<FlowPill content={content} />);
 
-      const pill = screen.getByRole("button", { name: content.text });
+      const pill = pillOf(content.text);
       expect(pill.querySelector("[data-block-icon]")).toHaveAttribute(
         "data-block-icon",
         content.icon,
@@ -108,7 +121,7 @@ describe("FlowPill", () => {
     render(<FlowPill content={SWAP_AUTO} />);
 
     await user.tab();
-    expect(screen.getByRole("button", { name: "Swap · auto" })).toHaveFocus();
+    expect(pillOf("Swap · auto")).toHaveFocus();
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip).toHaveTextContent("The app swaps USDC into the pool tokens");
     const surface = tooltip.parentElement as HTMLElement;
@@ -122,7 +135,7 @@ describe("FlowPill", () => {
     const user = userEvent.setup();
     render(<FlowPill content={COLLECT_FEES} />);
 
-    await user.hover(screen.getByRole("button", { name: "Collect fees" }));
+    await user.hover(pillOf("Collect fees"));
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
       "Claims the pool fees into Income (fees)",
@@ -130,10 +143,40 @@ describe("FlowPill", () => {
   });
 
   // @rule I5
-  it("[I5] not selectable in this batch: no pressed state", () => {
+  it("[I5, focus policy] not selectable: focusable for its tooltip, but no button and no action", async () => {
+    const user = userEvent.setup();
     render(<FlowPill content={SWAP_AUTO} />);
 
-    expect(screen.getByRole("button", { name: "Swap · auto" })).not.toHaveAttribute("aria-pressed");
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    const pill = pillOf("Swap · auto");
+    expect(pill).toHaveAttribute("tabindex", "0");
+    expect(pill).not.toHaveAttribute("aria-pressed");
+    expect(pill).not.toHaveAttribute("role");
+    for (const token of ["focus-visible:ring-2", "focus-visible:ring-ring"]) {
+      expect(pill.className).toContain(token);
+    }
+    await user.tab();
+    expect(pill).toHaveFocus();
+  });
+
+  // @rule C19
+  it("[C19, focus policy] the tooltip describes the pill at all times", () => {
+    render(<FlowPill content={SWAP_AUTO} />);
+
+    expect(pillOf("Swap · auto")).toHaveAccessibleDescription(
+      "The app swaps USDC into the pool tokens",
+    );
+  });
+
+  // @rule BB3
+  it("[BB3, F6] like the Figma pill, the 1 px stroke counts in layout: content starts at 11", () => {
+    render(<FlowPill content={SWAP_AUTO} />);
+
+    const pill = pillOf("Swap · auto");
+    expect(pill.className).toContain("box-border");
+    expect(pill.className).toContain("border");
+    expect(pill.className).toContain("px-2.5");
+    expect(pill.querySelector("[data-piece-stroke]")).toBeNull();
   });
 
   // @rule Interactive elements
@@ -144,10 +187,7 @@ describe("FlowPill", () => {
       </div>,
     );
 
-    expect(screen.getByRole("button", { name: "Swap · auto" })).toHaveAttribute(
-      CANVAS_INTERACTIVE_ATTR,
-      "",
-    );
+    expect(pillOf("Swap · auto")).toHaveAttribute(CANVAS_INTERACTIVE_ATTR, "");
     expect(isCanvasBackground(screen.getByText("Swap · auto"), container)).toBe(false);
   });
 
@@ -157,6 +197,6 @@ describe("FlowPill", () => {
       <FlowPill content={{ text: "P1", tooltip: "T1", icon: "swap" }} />,
     );
 
-    expect(container.textContent).toBe("P1");
+    expect(visibleText(container)).toBe("P1");
   });
 });

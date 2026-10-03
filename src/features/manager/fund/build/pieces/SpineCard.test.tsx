@@ -129,10 +129,11 @@ describe("SpineCard", () => {
         "data-block-icon",
         spine.icon,
       );
+      expect(screen.queryByRole("button")).not.toBeInTheDocument();
       if (spine.locked) {
-        expect(screen.getByRole("button", { name: LOCK })).toBeInTheDocument();
+        expect(screen.getByRole("img", { name: LOCK })).toBeInTheDocument();
       } else {
-        expect(screen.queryByRole("button")).not.toBeInTheDocument();
+        expect(screen.queryByRole("img")).not.toBeInTheDocument();
       }
     });
   }
@@ -149,7 +150,7 @@ describe("SpineCard", () => {
       />,
     );
 
-    const lock = screen.getByRole("button", { name: LOCK });
+    const lock = screen.getByRole("img", { name: LOCK });
     expect(cardOf("Deposit").lastElementChild).toBe(lock);
     expect(lock.className).toContain("text-muted-foreground");
     expect(lock.className).toContain("shrink-0");
@@ -172,7 +173,7 @@ describe("SpineCard", () => {
     );
 
     await user.tab();
-    expect(screen.getByRole("button", { name: LOCK })).toHaveFocus();
+    expect(screen.getByRole("img", { name: LOCK })).toHaveFocus();
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip).toHaveTextContent(LOCK);
     const surface = tooltip.parentElement as HTMLElement;
@@ -194,9 +195,50 @@ describe("SpineCard", () => {
       />,
     );
 
-    await user.hover(screen.getByRole("button", { name: LOCK }));
+    await user.hover(screen.getByRole("img", { name: LOCK }));
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(LOCK);
+  });
+
+  // @rule C19
+  it("[C19, focus policy] the lock is a tab stop for its tooltip, not a button, named by it", async () => {
+    const user = userEvent.setup();
+    render(
+      <SpineCard
+        title="Deposit"
+        caption="USDC · Arbitrum"
+        icon="depositIn"
+        locked
+        lockTooltip={LOCK}
+      />,
+    );
+
+    const lock = screen.getByRole("img", { name: LOCK });
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(lock).toHaveAttribute("tabindex", "0");
+    for (const token of ["focus-visible:ring-2", "focus-visible:ring-ring"]) {
+      expect(lock.className).toContain(token);
+    }
+    // Its tooltip is already its name, so it is not described a second time.
+    expect(lock).not.toHaveAttribute("aria-describedby");
+    await user.tab();
+    expect(lock).toHaveFocus();
+  });
+
+  // @rule BB2
+  it("[BB2, F8] locked without a lock tooltip: the lock is drawn, decorative, and no tab stop", () => {
+    const { container } = render(
+      <SpineCard title="Deposit" caption="USDC · Arbitrum" icon="depositIn" locked />,
+    );
+
+    const lock = cardOf("Deposit").lastElementChild as HTMLElement;
+    const glyph = lock.querySelector("svg.lucide-lock");
+    expect(glyph).not.toBeNull();
+    expect(glyph).toHaveAttribute("width", "14");
+    expect(glyph).toHaveAttribute("aria-hidden", "true");
+    expect(lock.className).toContain("text-muted-foreground");
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(container.querySelector("[tabindex]")).toBeNull();
   });
 
   // @rule BB2

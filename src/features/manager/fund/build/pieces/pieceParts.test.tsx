@@ -5,15 +5,22 @@
  * @analytics-events none, presentational helpers; the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event
  *
- * The three helpers every canvas piece shares: the stroke drawn inside a piece ([A3]: it takes no
- * layout space, so a card is 176 x 62 in every state), the icon set (`BlockIcon`), and the one-line
- * tooltip ([BB10]).
+ * The helpers every canvas piece shares: the stroke drawn inside a piece ([A3]: it takes no layout
+ * space, so a card is 176 x 62 in every state), the icon set (`BlockIcon`), the one-line tooltip
+ * ([BB10]), and the focusable element that only explains itself (the review's focus policy: a tab
+ * stop for its tooltip, [C19], that is not announced as a button).
  */
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { CANVAS_INTERACTIVE_ATTR, CANVAS_LAYER_ATTR } from "../canvas/useCanvasViewport";
-import { BlockIconGlyph, canvasInteractive, PieceStroke, PieceTooltip } from "./pieceParts";
+import {
+  BlockIconGlyph,
+  canvasInteractive,
+  Explained,
+  PieceStroke,
+  PieceTooltip,
+} from "./pieceParts";
 import type { BlockIcon } from "./pieceTypes";
 
 describe("PieceStroke", () => {
@@ -131,6 +138,101 @@ describe("PieceTooltip", () => {
     const surface = (await screen.findByRole("tooltip")).parentElement as HTMLElement;
     expect(surface).toHaveAttribute("data-side", "bottom");
     expect(surface).toHaveAttribute("data-tooltip-offset", "8");
+  });
+});
+
+describe("PieceTooltip describe", () => {
+  // @rule C19
+  it("[C19] with describe, the trigger is always described by the tooltip text", () => {
+    render(
+      <PieceTooltip content="Moves USDG to Robinhood Chain" describe>
+        <button type="button">pill</button>
+      </PieceTooltip>,
+    );
+
+    expect(screen.getByRole("button", { name: "pill" })).toHaveAccessibleDescription(
+      "Moves USDG to Robinhood Chain",
+    );
+  });
+
+  // @rule C19
+  it("[C19] without describe, Radix still describes the trigger while the tooltip is open", async () => {
+    const user = userEvent.setup();
+    render(
+      <PieceTooltip content="Add network">
+        <button type="button">box</button>
+      </PieceTooltip>,
+    );
+
+    expect(screen.getByRole("button", { name: "box" })).not.toHaveAttribute("aria-describedby");
+    await user.tab();
+    await screen.findByRole("tooltip");
+    expect(screen.getByRole("button", { name: "box" })).toHaveAttribute("aria-describedby");
+  });
+});
+
+describe("Explained", () => {
+  // @rule C19
+  it("[C19, focus policy] a tab stop that is not a button, with the app focus ring", async () => {
+    const user = userEvent.setup();
+    render(<Explained tooltip="Claims the pool fees into Income (fees)">Collect fees</Explained>);
+
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    const element = screen.getByText("Collect fees");
+    expect(element).toHaveAttribute("tabindex", "0");
+    for (const token of [
+      "focus-visible:outline-none",
+      "focus-visible:ring-2",
+      "focus-visible:ring-ring",
+    ]) {
+      expect(element.className).toContain(token);
+    }
+    await user.tab();
+    expect(element).toHaveFocus();
+  });
+
+  // @rule C19
+  it("[C19, focus policy] its tooltip opens on focus and on hover, and describes it", async () => {
+    const user = userEvent.setup();
+    render(<Explained tooltip="Claims the pool fees into Income (fees)">Collect fees</Explained>);
+    const element = screen.getByText("Collect fees");
+
+    expect(element).toHaveAccessibleDescription("Claims the pool fees into Income (fees)");
+    await user.tab();
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Claims the pool fees into Income (fees)",
+    );
+    await user.tab();
+    await user.hover(element);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Claims the pool fees into Income (fees)",
+    );
+  });
+
+  // @rule C19
+  it("[C19] Enter does nothing: there is no action to run", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<Explained tooltip="T">X</Explained>);
+
+    await user.tab();
+    await user.keyboard("{Enter}");
+
+    expect(container.querySelector("button")).toBeNull();
+    expect(screen.getByText("X")).not.toHaveAttribute("role");
+  });
+
+  // @rule C19
+  it("[C19] passes its attributes and classes through to the element", () => {
+    render(
+      <Explained tooltip="T" className="h-5" data-flow-pill="" {...canvasInteractive}>
+        X
+      </Explained>,
+    );
+
+    const element = screen.getByText("X");
+    expect(element.className).toContain("h-5");
+    expect(element).toHaveAttribute("data-flow-pill", "");
+    expect(element).toHaveAttribute(CANVAS_INTERACTIVE_ATTR, "");
   });
 });
 
