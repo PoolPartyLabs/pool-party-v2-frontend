@@ -111,6 +111,7 @@
     "showMore": "Mostrar más pools",
     "poolSearch": "Busca por par, token o dirección de la pool",
     "poolEmpty": "Ninguna pool coincide con la búsqueda.",
+    "poolWrongNetwork": "Esta pool existe en {network}, no en la red que has seleccionado.",
     "poolTvl": "TVL",
     "poolApr": "APR",
     "tierShare": "{pct}% seleccionado",
@@ -676,6 +677,29 @@
       "slotsCaption": "Un token ocupa un espacio en cada red en la que opera. El mandato tiene {max} espacios.",
       "noPrice": "Aún sin feed de precio",
       "empty": "Ningún token coincide con su búsqueda."
+    },
+    "pools": {
+      "search": "Token, par o dirección de la pool",
+      "secondToken": "Segundo token (opcional)",
+      "caption": "Pegue la dirección de una pool en el primer campo para encontrarla directamente.",
+      "tabAll": "Todas · {count}",
+      "tabProtocol": "{protocol} · {count}",
+      "results": "{count, plural, one {# pool} other {# pools}} con al menos uno de sus tokens",
+      "yours": "Sus pools · {count}",
+      "feeTier": "{fee} fee tier",
+      "tierShare": "{pct}% seleccionado",
+      "addsToken": "agrega {symbol} a sus tokens",
+      "hasHook": "tiene un hook",
+      "fixed": "Las pools quedan fijas en el lanzamiento. No podrá agregar una después.",
+      "allSelectedTitle": "Todas las pools con sus tokens ya están en Sus pools",
+      "allSelectedBody": "Las {count} pools están todas seleccionadas. Quite una a la derecha para acotar el mandato.",
+      "broadTitle": "Esta estrategia llevará un indicador de mandato Amplio",
+      "broadBody": "Todos los tokens y todas las pools están seleccionados, por lo que la estrategia puede operar con todo lo que sus redes ofrecen. Los inversionistas ven el indicador antes de depositar.",
+      "empty": "Ninguna pool coincide con su búsqueda.",
+      "loading": "Cargando pools…",
+      "v4Pending": "Las pools de Uniswap v4 llegan con la fuente de datos de los contratos de fondo.",
+      "retry": "Intentar de nuevo",
+      "error": "No se pudieron cargar las pools. Revise su conexión e intente de nuevo."
     }
   }
 }

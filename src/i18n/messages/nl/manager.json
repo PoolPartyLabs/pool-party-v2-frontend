@@ -111,6 +111,7 @@
     "showMore": "Meer pools tonen",
     "poolSearch": "Zoek op paar, token of pooladres",
     "poolEmpty": "Geen pools komen overeen met uw zoekopdracht.",
+    "poolWrongNetwork": "Deze pool bestaat op {network}, niet op het geselecteerde netwerk.",
     "poolTvl": "TVL",
     "poolApr": "APR",
     "tierShare": "{pct}% geselecteerd",
@@ -676,6 +677,29 @@
       "slotsCaption": "Een token neemt één slot in op elk netwerk waarop het draait. Het mandaat heeft {max} slots.",
       "noPrice": "Nog geen prijsfeed",
       "empty": "Geen tokens komen overeen met uw zoekopdracht."
+    },
+    "pools": {
+      "search": "Token, paar of pooladres",
+      "secondToken": "Tweede token (optioneel)",
+      "caption": "Plak het adres van een pool in het eerste veld om deze direct te vinden.",
+      "tabAll": "Alle · {count}",
+      "tabProtocol": "{protocol} · {count}",
+      "results": "{count, plural, one {# pool} other {# pools}} met minstens één van uw tokens",
+      "yours": "Uw pools · {count}",
+      "feeTier": "{fee} fee tier",
+      "tierShare": "{pct}% geselecteerd",
+      "addsToken": "voegt {symbol} toe aan uw tokens",
+      "hasHook": "heeft een hook",
+      "fixed": "Pools worden bij de lancering vastgelegd. U kunt er later geen meer toevoegen.",
+      "allSelectedTitle": "Alle pools met uw tokens staan al in Uw pools",
+      "allSelectedBody": "Alle {count} pools zijn geselecteerd. Verwijder er rechts één om het mandaat te beperken.",
+      "broadTitle": "Deze strategie krijgt de aanduiding \"Breed mandaat\"",
+      "broadBody": "Elk token en elke pool is geselecteerd, waardoor de strategie kan handelen in alles wat haar netwerken bieden. Investeerders zien de aanduiding voordat ze storten.",
+      "empty": "Geen pools komen overeen met uw zoekopdracht.",
+      "loading": "Pools laden…",
+      "v4Pending": "Uniswap v4-pools komen beschikbaar met de gegevensbron van de fondscontracten.",
+      "retry": "Opnieuw proberen",
+      "error": "De pools konden niet worden geladen. Controleer uw verbinding en probeer het opnieuw."
     }
   }
 }

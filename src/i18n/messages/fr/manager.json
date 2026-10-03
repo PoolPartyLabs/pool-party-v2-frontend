@@ -111,6 +111,7 @@
     "showMore": "Afficher plus de pools",
     "poolSearch": "Rechercher par paire, jeton ou adresse de pool",
     "poolEmpty": "Aucun pool ne correspond à votre recherche.",
+    "poolWrongNetwork": "Ce pool existe sur {network}, pas sur le réseau que vous avez sélectionné.",
     "poolTvl": "TVL",
     "poolApr": "APR",
     "tierShare": "{pct}% sélectionné",
@@ -676,6 +677,29 @@
       "slotsCaption": "Un jeton occupe un emplacement sur chaque réseau sur lequel il fonctionne. Le mandat dispose de {max} emplacements.",
       "noPrice": "Pas encore de flux de prix",
       "empty": "Aucun jeton ne correspond à votre recherche."
+    },
+    "pools": {
+      "search": "Jeton, paire ou adresse de pool",
+      "secondToken": "Deuxième jeton (facultatif)",
+      "caption": "Collez l'adresse d'un pool dans le premier champ pour le trouver directement.",
+      "tabAll": "Toutes · {count}",
+      "tabProtocol": "{protocol} · {count}",
+      "results": "{count, plural, one {# pool} other {# pools}} avec au moins un de vos jetons",
+      "yours": "Vos pools · {count}",
+      "feeTier": "Fee tier de {fee}",
+      "tierShare": "{pct}% sélectionné",
+      "addsToken": "ajoute {symbol} à vos jetons",
+      "hasHook": "a un hook",
+      "fixed": "Les pools sont fixés au lancement. Vous ne pourrez pas en ajouter un plus tard.",
+      "allSelectedTitle": "Tous les pools avec vos jetons sont déjà dans Vos pools",
+      "allSelectedBody": "Les {count} pools sont toutes sélectionnées. Retirez-en une à droite pour restreindre le mandat.",
+      "broadTitle": "Cette stratégie portera un indicateur de mandat Large",
+      "broadBody": "Chaque jeton et chaque pool est sélectionné, si bien que la stratégie peut échanger tout ce que ses réseaux proposent. Les investisseurs voient l'indicateur avant de déposer.",
+      "empty": "Aucun pool ne correspond à votre recherche.",
+      "loading": "Chargement des pools…",
+      "v4Pending": "Les pools Uniswap v4 arrivent avec la source de données des contrats de fonds.",
+      "retry": "Réessayer",
+      "error": "Impossible de charger les pools. Vérifiez votre connexion et réessayez."
     }
   }
 }

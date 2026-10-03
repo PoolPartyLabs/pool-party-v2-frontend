@@ -111,6 +111,7 @@
     "showMore": "Mostrar mais pools",
     "poolSearch": "Buscar por par, token ou endereço da pool",
     "poolEmpty": "Nenhuma pool corresponde à busca.",
+    "poolWrongNetwork": "Essa pool existe na rede {network}, não na rede selecionada.",
     "poolTvl": "TVL",
     "poolApr": "APR",
     "tierShare": "{pct}% selecionado",
@@ -676,6 +677,29 @@
       "slotsCaption": "Um token ocupa um slot em cada rede em que roda. O mandato tem {max} slots.",
       "noPrice": "Ainda sem feed de preço",
       "empty": "Nenhum token corresponde à sua busca."
+    },
+    "pools": {
+      "search": "Token, par ou endereço da pool",
+      "secondToken": "Segundo token (opcional)",
+      "caption": "Cole o endereço de uma pool no primeiro campo para encontrá-la diretamente.",
+      "tabAll": "Todas · {count}",
+      "tabProtocol": "{protocol} · {count}",
+      "results": "{count, plural, one {# pool} other {# pools}} com pelo menos um dos seus tokens",
+      "yours": "Suas pools · {count}",
+      "feeTier": "{fee} fee tier",
+      "tierShare": "{pct}% selecionado",
+      "addsToken": "adiciona {symbol} aos seus tokens",
+      "hasHook": "tem um hook",
+      "fixed": "As pools são fixadas no lançamento. Você não pode adicionar uma depois.",
+      "allSelectedTitle": "Todas as pools com seus tokens já estão em \"Suas pools\"",
+      "allSelectedBody": "Todas as {count} pools estão selecionadas. Remova uma à direita para restringir o mandato.",
+      "broadTitle": "Esta estratégia terá o indicador de mandato Amplo",
+      "broadBody": "Todos os tokens e todas as pools estão selecionados, então a estratégia pode negociar qualquer coisa que suas redes oferecem. Os investidores veem o indicador antes de depositar.",
+      "empty": "Nenhuma pool corresponde à sua busca.",
+      "loading": "Carregando pools…",
+      "v4Pending": "As pools do Uniswap v4 chegam com a fonte de dados dos contratos de fundo.",
+      "retry": "Tentar novamente",
+      "error": "Não foi possível carregar as pools. Verifique sua conexão e tente novamente."
     }
   }
 }
