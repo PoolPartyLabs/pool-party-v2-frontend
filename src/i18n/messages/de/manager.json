@@ -666,6 +666,16 @@
       "lending": "Verleih · stellen Sie Token bereit, um Zinsen zu verdienen",
       "dex": "Liquidity positions · verdienen Sie Handelsgebühren in einer Preisspanne",
       "perps": "Perpetuals · Long- und Short-Positionen mit Hebel"
+    },
+    "tokens": {
+      "search": "Token suchen · Symbol, Name oder Adresse",
+      "caption": "Nur Token aus den von Ihnen gewählten Netzwerken und Protokollen werden aufgeführt. Jeder Token wird auf dem Hub bepreist.",
+      "results": "{count, plural, one {# verfügbarer Token} other {# verfügbare Token}} in Ihren Netzwerken und Protokollen",
+      "yours": "Ihre Token · {count}",
+      "depositToken": "Einzahlungstoken",
+      "slotsCaption": "Ein Token belegt einen Slot auf jedem Netzwerk, auf dem er läuft. Das Mandat verfügt über {max} Slots.",
+      "noPrice": "Noch kein Preis-Feed",
+      "empty": "Keine Token entsprechen Ihrer Suche."
     }
   }
 }

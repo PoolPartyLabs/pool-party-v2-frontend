@@ -666,6 +666,16 @@
       "lending": "Uitlenen · stel tokens beschikbaar om rente te verdienen",
       "dex": "Liquidity positions · verdien handelskosten in een prijsbereik",
       "perps": "Perpetuals · long- en shortposities met hefboom"
+    },
+    "tokens": {
+      "search": "Tokens zoeken · symbool, naam of adres",
+      "caption": "Alleen tokens van de gekozen netwerken en protocollen worden vermeld. Elk token wordt geprijsd op de hub.",
+      "results": "{count, plural, one {# token beschikbaar} other {# tokens beschikbaar}} op uw netwerken en protocollen",
+      "yours": "Uw tokens · {count}",
+      "depositToken": "Stortingstoken",
+      "slotsCaption": "Een token neemt één slot in op elk netwerk waarop het draait. Het mandaat heeft {max} slots.",
+      "noPrice": "Nog geen prijsfeed",
+      "empty": "Geen tokens komen overeen met uw zoekopdracht."
     }
   }
 }

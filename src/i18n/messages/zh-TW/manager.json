@@ -666,6 +666,16 @@
       "lending": "借貸 · 提供代幣以賺取利息",
       "dex": "Liquidity positions · 在價格區間內賺取交易手續費",
       "perps": "永續 · 帶槓桿的多空頭寸"
+    },
+    "tokens": {
+      "search": "搜尋代幣 · 代號、名稱或地址",
+      "caption": "僅列出您所選網路與協議上的代幣。每個代幣都以 hub 定價。",
+      "results": "您的網路與協議中有 {count, plural, other {# 個代幣}} 可用",
+      "yours": "您的代幣 · {count}",
+      "depositToken": "存款代幣",
+      "slotsCaption": "每個代幣會在其運作的每個網路上佔用一個名額。該授權範圍共有 {max} 個名額。",
+      "noPrice": "暫無價格資料來源",
+      "empty": "沒有符合您搜尋的代幣。"
     }
   }
 }

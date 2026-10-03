@@ -666,6 +666,16 @@
       "lending": "Empréstimo · forneça tokens para ganhar juros",
       "dex": "Liquidity positions · ganhe taxas de negociação em uma faixa de preço",
       "perps": "Perpétuos · posições compradas e vendidas com alavancagem"
+    },
+    "tokens": {
+      "search": "Buscar tokens · símbolo, nome ou endereço",
+      "caption": "Apenas tokens das redes e protocolos escolhidos são listados. Todo token é precificado no hub.",
+      "results": "{count, plural, one {# token disponível} other {# tokens disponíveis}} nas suas redes e protocolos",
+      "yours": "Seus tokens · {count}",
+      "depositToken": "Token de depósito",
+      "slotsCaption": "Um token ocupa um slot em cada rede em que roda. O mandato tem {max} slots.",
+      "noPrice": "Ainda sem feed de preço",
+      "empty": "Nenhum token corresponde à sua busca."
     }
   }
 }

@@ -666,6 +666,16 @@
       "lending": "借贷 · 提供代币以赚取利息",
       "dex": "Liquidity positions · 在价格区间内赚取交易手续费",
       "perps": "永续 · 带杠杆的多空头寸"
+    },
+    "tokens": {
+      "search": "搜索代币 · 代号、名称或地址",
+      "caption": "仅列出您所选网络和协议上的代币。每个代币都以 hub 定价。",
+      "results": "您的网络和协议中有 {count, plural, other {# 个代币}} 可用",
+      "yours": "您的代币 · {count}",
+      "depositToken": "存款代币",
+      "slotsCaption": "每个代币会在其运行的每个网络上占用一个名额。该授权范围共有 {max} 个名额。",
+      "noPrice": "暂无价格数据源",
+      "empty": "没有符合搜索条件的代币。"
     }
   }
 }
