@@ -789,6 +789,21 @@ describe("PoolsStep", () => {
   //   expect(networksAsked()).toEqual(["arbitrum"]);
   // });
 
+  // @rule R30 @rule R16 v2
+  it("never asks a network the catalog does not know", async () => {
+    const user = userEvent.setup();
+    // A draft saved before the buildathon scope dropped Base (POO-2142). `withNetworks` would refuse
+    // it, so it is built by hand: this is about what the step does with stored data.
+    const stale = ["arbitrum", "base"] as unknown as NetworkId[];
+    renderStep({ ...draftOn(), networks: stale });
+    await screen.findByText("0 pools with at least one of your tokens");
+
+    await user.type(screen.getByLabelText("Token, pair or pool address"), PASTED);
+
+    await waitFor(() => expect(findMandatePoolByAddress).toHaveBeenCalled());
+    expect(networksAsked()).toEqual(["arbitrum"]);
+  });
+
   // @rule R30
   it("says so when a pasted address is nowhere", async () => {
     const user = userEvent.setup();

@@ -33,7 +33,14 @@ function protocol(id: ProtocolId): MandateProtocol {
 describe("buildMandateCatalog, networks", () => {
   it("lists the hub and Robinhood Chain only, in catalog order with the hub first", () => {
     // @rule R16 v2: Base, Polygon and Unichain are no longer offered (POO-2142).
-    expect(CATALOG.networks.map((n) => n.id)).toEqual(["arbitrum", "robinhood"]);
+    expect(CATALOG.networks.map((n) => n.id)).toEqual([
+      "arbitrum",
+      "robinhood",
+      // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+      // "base",
+      // "polygon",
+      // "unichain",
+    ]);
     expect(CATALOG.networks[0]).toMatchObject({ id: "arbitrum", isHub: true, available: true });
     expect(CATALOG.networks.filter((n) => n.isHub)).toHaveLength(1);
   });
@@ -43,6 +50,10 @@ describe("buildMandateCatalog, networks", () => {
     expect(CATALOG.networks.map((n) => n.name)).toEqual([
       "fundBuilder.networkNames.arbitrum",
       "fundBuilder.networkNames.robinhood",
+      // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+      // "fundBuilder.networkNames.base",
+      // "fundBuilder.networkNames.polygon",
+      // "fundBuilder.networkNames.unichain",
     ]);
   });
 
@@ -74,21 +85,36 @@ describe("buildMandateCatalog, networks", () => {
     // @rule R17
     expect(network("arbitrum").brandColor).toBe("#28A0F0");
     expect(network("robinhood").brandColor).toBe("#00C805");
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+    // expect(network("base").brandColor).toBe("#0052FF");
+    // expect(network("polygon").brandColor).toBe("#8247E5");
+    // expect(network("unichain").brandColor).toBe("#F50DB4");
     expect(network("arbitrum").chainId).toBe(42161);
     expect(network("robinhood").chainId).toBe(4663);
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+    // expect(network("base").chainId).toBe(8453);
+    // expect(network("polygon").chainId).toBe(137);
+    // expect(network("unichain").chainId).toBeNull();
   });
 });
 
 describe("buildMandateCatalog, deposit token", () => {
-  it("returns the hub's stable with its own label", () => {
+  it("returns the chain's stable with its own label on every network that has one", () => {
     // @rule R18
-    const token = CATALOG.depositTokenFor("arbitrum");
-    expect(token).not.toBeNull();
-    expect(token?.symbol).toBe("USDC");
-    expect(token?.name).toBe("USD Coin");
-    expect(token?.network).toBe("arbitrum");
-    expect(token?.priced).toBe(true);
-    expect(token?.address).toMatch(/^0x[0-9a-f]{40}$/);
+    for (const id of [
+      "arbitrum",
+      // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+      // "base",
+      // "polygon",
+    ] as const) {
+      const token = CATALOG.depositTokenFor(id);
+      expect(token).not.toBeNull();
+      expect(token?.symbol).toBe("USDC");
+      expect(token?.name).toBe("USD Coin");
+      expect(token?.network).toBe(id);
+      expect(token?.priced).toBe(true);
+      expect(token?.address).toMatch(/^0x[0-9a-f]{40}$/);
+    }
   });
 
   it("labels the Robinhood Chain deposit token USDG, the chain's own stable (never the literal USDC)", () => {
@@ -168,11 +194,24 @@ describe("buildMandateCatalog, protocols", () => {
 
   it("scopes each protocol to the networks it runs on", () => {
     // @rule R20 @rule R16 v2: no protocol runs on a network the mandate no longer offers.
-    const all: NetworkId[] = ["arbitrum", "robinhood"];
+    const all: NetworkId[] = [
+      "arbitrum",
+      "robinhood",
+      // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+      // "base",
+      // "polygon",
+      // "unichain",
+    ];
     expect(protocol("uniswap-v3-swap").availableOn).toEqual(all);
     expect(protocol("across").availableOn).toEqual(all);
     expect(protocol("aave-v3").availableOn).toEqual(["arbitrum"]);
-    expect(protocol("uniswap-v3").availableOn).toEqual(["arbitrum", "robinhood"]);
+    expect(protocol("uniswap-v3").availableOn).toEqual([
+      "arbitrum",
+      "robinhood",
+      // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+      // "base",
+      // "polygon",
+    ]);
     expect(protocol("uniswap-v4").availableOn).toEqual(["arbitrum", "robinhood"]);
     // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
     // expect(protocol("gmx").availableOn).toEqual([]);
