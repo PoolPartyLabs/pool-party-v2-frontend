@@ -79,7 +79,7 @@ export const LockTooltip: Story = {
   play: async ({ canvasElement, userEvent }) => {
     await userEvent.tab();
     await expect(
-      within(canvasElement).getByRole("button", { name: storyT("spine.lockTooltip") }),
+      within(canvasElement).getByRole("img", { name: storyT("spine.lockTooltip") }),
     ).toHaveFocus();
   },
 };

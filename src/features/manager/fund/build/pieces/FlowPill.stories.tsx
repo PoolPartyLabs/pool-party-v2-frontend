@@ -11,7 +11,12 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, within } from "storybook/test";
 import { FlowPill } from "./FlowPill";
-import { storyNetworkNames, storyT, withCanvasBackground } from "./pieceStorySupport";
+import {
+  expectOuterSize,
+  storyNetworkNames,
+  storyT,
+  withCanvasBackground,
+} from "./pieceStorySupport";
 
 const meta = {
   title: "Manager/Fund builder/Build canvas/Pieces/FlowPill",
@@ -30,8 +35,15 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Swap · auto: placed by the app before a pool (C13). */
-export const SwapAuto: Story = {};
+/** Swap · auto: placed by the app before a pool (C13). Measured: 176 x 26. */
+export const SwapAuto: Story = {
+  play: async ({ canvasElement }) => {
+    await expectOuterSize(canvasElement.querySelector("[data-flow-pill]"), {
+      width: 176,
+      height: 26,
+    });
+  },
+};
 
 /** Swap: placed by the manager at a port. */
 export const Swap: Story = {
@@ -63,10 +75,11 @@ export const BridgeAuto: Story = {
   },
 };
 
-/** The tooltip on keyboard focus (C19): side top, offset 4, one line. */
+/** The tooltip on keyboard focus (C19): a tab stop that is not a button (focus policy). */
 export const TooltipOnFocus: Story = {
   play: async ({ canvasElement, userEvent }) => {
     await userEvent.tab();
-    await expect(within(canvasElement).getByRole("button")).toHaveFocus();
+    await expect(canvasElement.querySelector("[data-flow-pill]")).toHaveFocus();
+    await expect(within(canvasElement).queryByRole("button")).toBeNull();
   },
 };

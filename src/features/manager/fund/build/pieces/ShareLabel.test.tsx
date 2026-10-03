@@ -17,6 +17,13 @@ import { ShareLabel } from "./ShareLabel";
 
 const TIP = "60% of the strategy's capital";
 
+/** A spoke's label (no action): found by its text. */
+function spokeLabel(): HTMLElement {
+  const label = screen.getByText("35%").closest<HTMLElement>("[data-share-label]");
+  if (!label) throw new Error("no label");
+  return label;
+}
+
 function strokeOf(element: Element): Element {
   const stroke = element.querySelector("[data-piece-stroke]");
   if (!stroke) throw new Error("no stroke");
@@ -119,15 +126,46 @@ describe("ShareLabel", () => {
   });
 
   // @rule BB4
-  it("[BB4, D26] without an action it is no button, and still reads the whole sentence", () => {
+  it("[BB4, D26, focus policy] without an action: a tab stop, not a button, described by its tooltip", async () => {
+    const user = userEvent.setup();
     render(<ShareLabel text="35%" tooltip="35% of the strategy's capital" highlighted={false} />);
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
-    expect(screen.getByText("35% of the strategy's capital").className).toContain("sr-only");
-    expect(screen.getByText("35%").closest("[aria-hidden='true']")).not.toBeNull();
-    // The stroke clips to the label's radius through `rounded-[inherit]` on every wrapper.
-    const stroke = document.querySelector("[data-piece-stroke]");
-    expect(stroke?.parentElement?.className).toContain("rounded-[inherit]");
+    const label = spokeLabel();
+    expect(label).toHaveAttribute("tabindex", "0");
+    expect(label).not.toHaveAttribute("role");
+    expect(label).toHaveAccessibleDescription("35% of the strategy's capital");
+    for (const token of ["focus-visible:ring-2", "focus-visible:ring-ring", "h-5", "px-2"]) {
+      expect(label.className).toContain(token);
+    }
+    // The stroke sits directly in the label, which carries the radius it clips to.
+    expect(label.querySelector(":scope > [data-piece-stroke]")).not.toBeNull();
+    expect(label.className).toContain("rounded-full");
+
+    await user.tab();
+    expect(label).toHaveFocus();
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("35% of the strategy's capital");
+  });
+
+  // @rule BB8
+  it("[BB8] without an action it still reports hover and focus", () => {
+    const onHoverChange = vi.fn();
+    render(
+      <ShareLabel
+        text="35%"
+        tooltip="35% of the strategy's capital"
+        highlighted={false}
+        onHoverChange={onHoverChange}
+      />,
+    );
+    const label = spokeLabel();
+
+    fireEvent.pointerEnter(label);
+    fireEvent.pointerLeave(label);
+    fireEvent.focus(label);
+    fireEvent.blur(label);
+
+    expect(onHoverChange.mock.calls).toEqual([[true], [false], [true], [false]]);
   });
 
   // @rule C19

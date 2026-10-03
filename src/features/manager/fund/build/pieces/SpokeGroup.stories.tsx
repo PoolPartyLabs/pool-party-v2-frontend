@@ -53,12 +53,17 @@ export const EmptyWithClose: Story = {
 /** The same empty spoke without the close control. */
 export const EmptyWithoutClose: Story = { args: EMPTY_SPOKE };
 
-/** D6: the network is no longer in the mandate. */
-export const Invalid: Story = { args: { invalid: true } };
+/** D6: the network is no longer in the mandate; the reason is read and shown in the tooltip (F3). */
+export const Invalid: Story = {
+  args: { invalid: true, invalidLabel: storyT("card.invalid") },
+  play: async ({ canvasElement, userEvent }) => {
+    await userEvent.hover(within(canvasElement).getByText(robinhood, { ignore: "[hidden]" }));
+  },
+};
 
 /** The chip names its network on hover: tooltip on top, offset 4, plus the title attribute. */
 export const ChipTooltip: Story = {
   play: async ({ canvasElement, userEvent }) => {
-    await userEvent.hover(within(canvasElement).getByText(robinhood));
+    await userEvent.hover(within(canvasElement).getByText(robinhood, { ignore: "[hidden]" }));
   },
 };

@@ -15,13 +15,14 @@
  *
  * A button named by its tooltip (I10, C19): the tooltip names what the slot's menu offers (D13,
  * "Insert a flow block: Swap"). A press hands the port itself to the renderer as the menu's anchor.
- * It carries `data-canvas-interactive`, so a press on it never pans.
+ * It carries `data-canvas-interactive`, so a press on it never pans. Drawn at 16 px, it answers a
+ * press within 8 px around it (F4, the app's `InfoTip` pattern), so it is not a 16 px target.
  */
 "use client";
 
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { canvasInteractive, PieceStroke, PieceTooltip } from "./pieceParts";
+import { canvasInteractive, FOCUS_RING, PieceStroke, PieceTooltip } from "./pieceParts";
 
 /** Public props for {@link InsertPort}. */
 export interface InsertPortProps {
@@ -46,7 +47,11 @@ export function InsertPort({ tooltip, active, onActivate }: InsertPortProps) {
         aria-label={tooltip}
         aria-haspopup="menu"
         onClick={(event) => onActivate(event.currentTarget)}
-        className="relative flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-full bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        // F4: the port is drawn at 16 px; ::after extends the hit area by 8 on every side.
+        className={cn(
+          "relative flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-full bg-background after:absolute after:-inset-2 after:rounded-full after:content-['']",
+          FOCUS_RING,
+        )}
       >
         <PieceStroke width={1} radius={8} dash="3 3" className={tone} />
         <Plus

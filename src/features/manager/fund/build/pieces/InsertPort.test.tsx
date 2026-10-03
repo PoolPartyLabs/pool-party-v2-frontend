@@ -35,6 +35,16 @@ describe("InsertPort", () => {
   });
 
   // @rule BB7
+  it("[BB7, F4] the 16 px port has a larger hit area, with the same drawn size", () => {
+    render(<InsertPort tooltip={TIP} active={false} onActivate={() => {}} />);
+
+    const port = screen.getByRole("button", { name: TIP });
+    for (const token of ["size-4", "after:absolute", "after:-inset-2", "after:content-['']"]) {
+      expect(port.className).toContain(token);
+    }
+  });
+
+  // @rule BB7
   it("[BB7] active: stroke and plus in primary", () => {
     render(<InsertPort tooltip={TIP} active onActivate={() => {}} />);
 

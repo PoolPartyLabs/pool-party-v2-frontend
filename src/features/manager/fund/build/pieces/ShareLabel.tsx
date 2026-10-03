@@ -14,11 +14,18 @@
  * `primary` text. The stroke is drawn inside, so the label keeps its size when it lights up and
  * stays centred on its stub.
  *
+ * Stroke (review F6, measured in Figma on 2026-10-03, node 8220:2556 of canvas C): the label frame
+ * is 45 x 20 for "60%", its 1 px stroke is INSIDE and COUNTS in layout, padding 1 / 7, so the text
+ * box (16 high) sits at x 8, y 2. Here the stroke is an overlay (it must grow to 1.5 px without
+ * moving anything), so the inset is written out instead: height 20, padding 8 left and right, the
+ * 16 px line centred, which puts the text at x 8, y 2 and keeps the outer width at 16 + the text.
+ *
  * With `onActivate` it is a button named by its tooltip (I10: "60% of the strategy's capital"); a
  * press hands the element to the renderer as the anchor (I5: a hub chain's label selects the block
- * it feeds). Without it (a spoke's label selects nothing, D26) it is plain text that still reads the
- * whole sentence to a screen reader. Either way the tooltip opens on hover, the button also on focus
- * ([C19]), and the label carries `data-canvas-interactive`.
+ * it feeds). Without it (a spoke's label selects nothing, D26) it only explains itself, so under the
+ * review's focus policy it is an `Explained` element: a tab stop, not a button, described by its
+ * tooltip. Either way the tooltip opens on hover and on focus ([C19]), and the label carries
+ * `data-canvas-interactive`.
  *
  * Hover and keyboard focus are reported through `onHoverChange`, so the renderer (S6) lights the
  * edge and the label together; the label never decides its own highlight.
@@ -29,7 +36,7 @@
 "use client";
 
 import { cn } from "@/lib/utils/cn";
-import { canvasInteractive, PieceStroke, PieceTooltip } from "./pieceParts";
+import { canvasInteractive, Explained, FOCUS_RING, PieceStroke, PieceTooltip } from "./pieceParts";
 
 /** Public props for {@link ShareLabel}. */
 export interface ShareLabelProps {
@@ -61,7 +68,11 @@ export function ShareLabel({
     onFocus: () => onHoverChange?.(true),
     onBlur: () => onHoverChange?.(false),
   };
-  const marks = { ...canvasInteractive, "data-highlighted": highlighted ? "" : undefined };
+  const marks = {
+    ...canvasInteractive,
+    "data-share-label": "",
+    "data-highlighted": highlighted ? "" : undefined,
+  };
   const face = (
     <>
       <PieceStroke
@@ -80,30 +91,26 @@ export function ShareLabel({
     </>
   );
 
+  if (!onActivate) {
+    // A spoke's label only explains itself (D26): focusable, not a button (focus policy).
+    return (
+      <Explained tooltip={tooltip} {...marks} {...hoverHandlers} className={LABEL_BOX}>
+        {face}
+      </Explained>
+    );
+  }
   return (
     <PieceTooltip content={tooltip}>
-      {onActivate ? (
-        <button
-          type="button"
-          {...marks}
-          {...hoverHandlers}
-          aria-label={tooltip}
-          onClick={(event) => onActivate(event.currentTarget)}
-          className={cn(
-            LABEL_BOX,
-            "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          )}
-        >
-          {face}
-        </button>
-      ) : (
-        <span {...marks} {...hoverHandlers} className={LABEL_BOX}>
-          <span className="sr-only">{tooltip}</span>
-          <span aria-hidden="true" className="contents rounded-[inherit]">
-            {face}
-          </span>
-        </span>
-      )}
+      <button
+        type="button"
+        {...marks}
+        {...hoverHandlers}
+        aria-label={tooltip}
+        onClick={(event) => onActivate(event.currentTarget)}
+        className={cn(LABEL_BOX, "cursor-pointer", FOCUS_RING)}
+      >
+        {face}
+      </button>
     </PieceTooltip>
   );
 }
