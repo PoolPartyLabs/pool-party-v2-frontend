@@ -1,13 +1,15 @@
 /**
  * @id PP-MGR-STO-001
  * @name mandateDraftStore tests
- * @implements-rules-version v3 (POO-2121 rules v1, POO-2167 rules v3)
+ * @implements-rules-version v3 (POO-2121 rules v1, POO-2167 rules v3, POO-2151 rules v1)
  * @analytics-events none, a storage module; the builder shell owns the mandate events.
  *
  * Covers R7/R9: round trip, sort, corrupt payload, unavailable storage, subscription and ids. And
  * R20 v3 (POO-2167): a stored draft that still names Uniswap v3 positions is sanitised on load.
+ * And the Storage rule of POO-2151: the Build plan and the phase ride in the draft, optional.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { supplyBorrowPlan } from "./build/plan/planTestKit";
 import { createEmptyDraft, type MandateDraft } from "./mandateDraft";
 import {
   deleteDraft,
@@ -272,6 +274,54 @@ describe("drafts stored before Uniswap v3 positions became unavailable", () => {
 
     const raw = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");
     expect(raw.drafts.v3.protocols).toContain("uniswap-v3");
+  });
+});
+
+/**
+ * POO-2151 (Build canvas, slice S1): the plan rides inside the draft, in the same payload, and the
+ * payload version does not move, because both new fields are optional and a draft without them is
+ * exactly the draft this store already wrote.
+ */
+describe("the Build plan inside a draft", () => {
+  function storeRaw(entries: Record<string, unknown>): void {
+    window.localStorage.setItem(
+      MANDATE_DRAFTS_KEY,
+      JSON.stringify({ version: MANDATE_DRAFTS_VERSION, drafts: entries }),
+    );
+  }
+
+  it("reads a saved plan and its phase back deep-equal, under payload version 1", () => {
+    // @rule Storage
+    const plan = supplyBorrowPlan();
+    upsertDraft({ ...draft("p", "2026-10-03T00:00:00.000Z"), plan, lastPhase: "build" });
+    expect(MANDATE_DRAFTS_VERSION).toBe(1);
+    expect(getDraft("p")?.plan).toEqual(plan);
+    expect(getDraft("p")?.lastPhase).toBe("build");
+  });
+
+  it("keeps a draft whose plan is unreadable and drops only the plan", () => {
+    // @rule Storage
+    const good = draft("broken-plan", "2026-10-03T00:00:00.000Z");
+    storeRaw({ "broken-plan": { ...good, plan: { version: 9, hub: null } } });
+    const read = getDraft("broken-plan");
+    expect(read?.id).toBe("broken-plan");
+    expect(read?.networks).toEqual(good.networks);
+    expect(read).not.toHaveProperty("plan");
+    expect(listDrafts().map((d) => d.id)).toEqual(["broken-plan"]);
+  });
+
+  it("reads a draft written before the canvas as a draft with no plan and no phase", () => {
+    // @rule Storage
+    storeRaw({ older: draft("older", "2026-10-01T00:00:00.000Z") });
+    const read = getDraft("older");
+    expect(read).not.toHaveProperty("plan");
+    expect(read).not.toHaveProperty("lastPhase");
+  });
+
+  it("drops a phase it does not know, which then reads as the mandate", () => {
+    // @rule Storage
+    storeRaw({ odd: { ...draft("odd", "2026-10-01T00:00:00.000Z"), lastPhase: "review" } });
+    expect(getDraft("odd")).not.toHaveProperty("lastPhase");
   });
 });
 

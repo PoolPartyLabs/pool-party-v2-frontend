@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-STO-001
  * @name mandateDraftStore
- * @implements-rules-version v3 (POO-2121 rules v1, POO-2167 rules v3)
+ * @implements-rules-version v3 (POO-2121 rules v1, POO-2167 rules v3, POO-2151 rules v1)
  * @analytics-events none, a storage module. The builder shell (PP-MGR-SCR-002) emits the save and
  *   abandon events; a store that emitted its own would double-count every write.
  *
@@ -25,6 +25,7 @@
  * 3. **No storage access at import time.** This module is imported by a client component that also
  *    renders on the server, where `window` does not exist.
  */
+import { normalizePlan } from "./build/plan/planStorage";
 import {
   MANDATE_STEP_ORDER,
   type MandateDraft,
@@ -87,6 +88,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * builder's resume) and `listDrafts` (the Console's counts) both come through it, so neither can show
  * a Uniswap v3 position the manager could no longer remove. Like the rest of this function it only
  * reads; the stored copy is replaced by the next real write.
+ *
+ * POO-2151 (Build canvas): `plan` and `lastPhase` are OPTIONAL and checked on their own. A plan that
+ * fails `normalizePlan` is dropped and the draft is kept (coordinator default D18); an unknown phase
+ * is dropped and reads as the mandate (D16). Neither moves {@link MANDATE_DRAFTS_VERSION}: a draft
+ * without them is exactly what this store wrote before.
  */
 function normalizeDraft(value: unknown): MandateDraft | null {
   if (!isRecord(value)) return null;
@@ -103,10 +109,18 @@ function normalizeDraft(value: unknown): MandateDraft | null {
   if (!isRecord(caps.networks) || !isRecord(caps.protocols) || !isRecord(caps.tokens)) return null;
   const universe = value.poolUniverseCount;
   if (universe !== undefined && universe !== null && typeof universe !== "number") return null;
-  return withoutUnavailableProtocols({
-    ...(value as unknown as MandateDraft),
+  const { plan: storedPlan, lastPhase: storedPhase, ...rest } = value;
+  const draft: MandateDraft = {
+    ...(rest as unknown as MandateDraft),
     poolUniverseCount: typeof universe === "number" ? universe : null,
-  });
+  };
+  // POO-2151 (D18): an unreadable plan costs the plan, never the draft. A draft without one reads as
+  // the empty plan, and every block is empty in this batch, so nothing configured is lost.
+  const plan = storedPlan === undefined ? null : normalizePlan(storedPlan);
+  if (plan) draft.plan = plan;
+  // D16: a phase this build does not know is dropped, and no phase reads as the mandate.
+  if (storedPhase === "mandate" || storedPhase === "build") draft.lastPhase = storedPhase;
+  return withoutUnavailableProtocols(draft);
 }
 
 /** Read the payload. Anything unreadable, foreign or malformed reads as empty, and is NOT written. */

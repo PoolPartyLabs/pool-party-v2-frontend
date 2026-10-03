@@ -1,8 +1,11 @@
 /**
  * @id PP-MGR-HOK-006
  * @name useMandateDraft tests
- * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2151 rules v1)
  * @analytics-events none, a state hook; the builder shell owns the mandate events.
+ *
+ * And the Dirty rule of POO-2151: a Build plan edit arms the leave prompt and never touches the
+ * selection fingerprint, so it never un-completes a mandate.
  *
  * Covers R9: hydration, unknown id, blocked reducers, the save paths (including a throwing
  * localStorage), the dirty flag and the catalog, which reads no flag since rules v2 (R17 v2,
@@ -11,11 +14,13 @@
  */
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { emptyPlan, hubSupplyPlan } from "./build/plan/planTestKit";
 import {
   addToken,
   createEmptyDraft,
   type MandateDraft,
   REQUIRED_PROTOCOLS,
+  selectionFingerprint,
   withNetworks,
   withProtocols,
 } from "./mandateDraft";
@@ -380,6 +385,54 @@ describe("isDirty", () => {
       completed.current.update((d) => ({ ...d, completedAt: "2026-10-03T00:00:00.000Z" }));
     });
     expect(completed.current.isDirty).toBe(true);
+  });
+
+  it("goes up on a Build plan edit, and comes down when that plan is saved", async () => {
+    // @rule Dirty
+    seed("plan", { name: "ETH and BTC on Arbitrum", savedAt: "2026-10-01T00:00:00.000Z" });
+    const { result } = renderHook(() => useMandateDraft("plan"));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+
+    act(() => {
+      result.current.update((d) => ({ ...d, plan: hubSupplyPlan() }));
+    });
+    expect(result.current.isDirty).toBe(true);
+
+    await act(async () => {
+      await result.current.save();
+    });
+    expect(result.current.isDirty).toBe(false);
+    expect(result.current.draft.plan).toEqual(hubSupplyPlan());
+  });
+
+  it("does not count an empty plan written over a draft that had none, or a phase change", async () => {
+    // @rule Dirty
+    seed("calm", { name: "ETH and BTC on Arbitrum", savedAt: "2026-10-01T00:00:00.000Z" });
+    const { result } = renderHook(() => useMandateDraft("calm"));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+
+    act(() => {
+      result.current.update((d) => ({ ...d, plan: emptyPlan(), lastPhase: "build" }));
+    });
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  it("leaves the selection fingerprint alone on a plan edit, so a plan never un-completes a mandate", async () => {
+    // @rule Dirty
+    seed("done", {
+      name: "ETH and BTC on Arbitrum",
+      savedAt: "2026-10-01T00:00:00.000Z",
+      completedAt: "2026-10-01T00:00:00.000Z",
+    });
+    const { result } = renderHook(() => useMandateDraft("done"));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    const before = selectionFingerprint(result.current.draft);
+
+    act(() => {
+      result.current.update((d) => ({ ...d, plan: hubSupplyPlan() }));
+    });
+    expect(selectionFingerprint(result.current.draft)).toBe(before);
+    expect(result.current.draft.completedAt).toBe("2026-10-01T00:00:00.000Z");
   });
 });
 
