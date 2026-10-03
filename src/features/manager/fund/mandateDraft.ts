@@ -928,6 +928,9 @@ function ensurePoolToken(
     .find((t) => t.network === pool.network && t.address.toLowerCase() === address);
   if (fromCatalog) return addToken(draft, fromCatalog, catalog);
 
+  if (catalog.dataMode === "real")
+    return { blocked: { step: "tokens", reason: "not_priced", rowId: key } };
+
   // Not in the static list. The pool came from the API, which knows tokens the bundled lists do
   // not, so the pool's own token data is used rather than refusing a real pool. The price rule
   // still applies, and the entry lands on the POOL's network only: there is no catalog row to tell

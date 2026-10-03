@@ -171,6 +171,8 @@ describe("real Mandate", () => {
     };
     const result = addPool(withProtocols(draft(), ["uniswap-v4"]), pool, real);
     expect(isBlocked(result)).toBe(false);
+    const absent = buildRealCatalog([token(usdc)], [reserve]);
+    expect(isBlocked(addPool(withProtocols(draft(), ["uniswap-v4"]), pool, absent))).toBe(true);
     if (isBlocked(result)) throw new Error("unexpected refusal");
     expect(result.tokens).toHaveLength(2);
     expect(toV2MandateSelection(result, real).chains[0]?.uniswapV4PoolIds).toEqual([poolId]);

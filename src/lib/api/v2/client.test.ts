@@ -36,6 +36,7 @@ describe("v2Fetch", () => {
       "https://api.example.test/api/v2/catalog/tokens?chainId=42161",
       expect.objectContaining({
         cache: "no-store",
+        redirect: "error",
         headers: expect.objectContaining({ "x-api-key": "server-secret" }),
       }),
     );

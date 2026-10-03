@@ -257,7 +257,7 @@ function tokensItWouldAdd(draft: MandateDraft, pool: MandatePoolRef): string[] {
  * frees a slot, so a denominator that moved with it would move while the manager edited a different
  * step. The slot refusal still stops an "Add all" batch, because that one IS the manager's to act on.
  */
-function canEverAdd(draft: MandateDraft, pool: MandatePoolRef): boolean {
+function canEverAdd(draft: MandateDraft, pool: MandatePoolRef, catalog: MandateCatalog): boolean {
   if (pool.hasHook) return false;
   if (!draft.networks.includes(pool.network)) return false;
   if (
@@ -266,7 +266,15 @@ function canEverAdd(draft: MandateDraft, pool: MandatePoolRef): boolean {
   )
     return false;
   return [pool.token0, pool.token1].every(
-    (side) => mandateHoldsSide(draft, pool, side.address) || isPricedSymbol(side.symbol),
+    (side) =>
+      mandateHoldsSide(draft, pool, side.address) ||
+      (catalog.dataMode === "real"
+        ? catalog
+            .tokensFor([pool.network], draft.protocols)
+            .some(
+              (token) => token.address.toLowerCase() === side.address.toLowerCase() && token.priced,
+            )
+        : isPricedSymbol(side.symbol)),
   );
 }
 
@@ -287,7 +295,7 @@ function addAllPools(
   for (const pool of candidates) {
     // Against the RUNNING draft, not the original: a pool added a moment ago may have brought in the
     // token that makes the next one addable.
-    if (!canEverAdd(next, pool)) continue;
+    if (!canEverAdd(next, pool, catalog)) continue;
     const result = addPool(next, pool, catalog);
     if (isBlocked(result)) return { next, blocked: result.blocked };
     next = result;
@@ -734,10 +742,10 @@ export function PoolsStep({
     if (universe === null || universe.signature !== universeSignature) return null;
     const inUniverse = new Set(universe.pools.map((pool) => pool.id));
     return (
-      universe.pools.filter((pool) => canEverAdd(draft, pool)).length +
+      universe.pools.filter((pool) => canEverAdd(draft, pool, catalog)).length +
       draft.pools.filter((pool) => !inUniverse.has(pool.id)).length
     );
-  }, [universe, universeSignature, draft]);
+  }, [universe, universeSignature, draft, catalog]);
 
   /**
    * Published whenever the draft is not already carrying it, so the shell and Review measure the
@@ -836,8 +844,8 @@ export function PoolsStep({
 
   // What "Add all" would actually add, and therefore the number it is allowed to print (R31).
   const addable = useMemo(
-    () => filtered.filter((pool) => canEverAdd(draft, pool)),
-    [filtered, draft],
+    () => filtered.filter((pool) => canEverAdd(draft, pool, catalog)),
+    [filtered, draft, catalog],
   );
 
   /**
@@ -861,8 +869,8 @@ export function PoolsStep({
    * the manager is holding: "All 8 pools are selected" over a universe measured before an Add widened
    * it is the same false claim the Broad flag used to make, with a number printed next to it.
    */
-  const addableFound = resolution.pools.filter((pool) => canEverAdd(draft, pool)).length;
-  const addableLeft = available.filter((pool) => canEverAdd(draft, pool)).length;
+  const addableFound = resolution.pools.filter((pool) => canEverAdd(draft, pool, catalog)).length;
+  const addableLeft = available.filter((pool) => canEverAdd(draft, pool, catalog)).length;
   const allSelected =
     !loading && !failed && onScreenIsCurrent && addableFound > 0 && addableLeft === 0;
   const broad = isBroadMandate(draft, catalog, universeCount ?? 0);
@@ -1002,7 +1010,16 @@ export function PoolsStep({
   function rowRefusal(pool: MandatePoolRef): { reason: MandateBlockReason; label: string } | null {
     if (pool.hasHook) return { reason: "has_hook", label: t("fundBuilder.pools.hasHook") };
     const unpriced = [pool.token0, pool.token1].some(
-      (side) => !mandateHoldsSide(draft, pool, side.address) && !isPricedSymbol(side.symbol),
+      (side) =>
+        !mandateHoldsSide(draft, pool, side.address) &&
+        (catalog.dataMode === "real"
+          ? !catalog
+              .tokensFor([pool.network], draft.protocols)
+              .some(
+                (token) =>
+                  token.address.toLowerCase() === side.address.toLowerCase() && token.priced,
+              )
+          : !isPricedSymbol(side.symbol)),
     );
     if (unpriced) return { reason: "not_priced", label: t("fundBuilder.tokens.noPrice") };
     return null;

@@ -37,6 +37,7 @@ export async function v2Fetch<ResponseData>(
     response = await fetch(`${base.replace(/\/$/, "")}/api/v2${path}`, {
       headers: { "x-api-key": key, accept: "application/json" },
       cache: "no-store",
+      redirect: "error",
       signal: AbortSignal.timeout(15_000),
     });
   } catch {
