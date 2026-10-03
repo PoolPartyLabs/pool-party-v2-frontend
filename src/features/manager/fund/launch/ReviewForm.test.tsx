@@ -52,6 +52,15 @@ describe("Review UI [R1, R6, R9]", () => {
     expect(input.onLaunch).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent("Check your identity");
   });
+  it("launches exact fractional fee percentages without binary rounding errors", async () => {
+    const input = props();
+    renderWithProviders(<FundReviewForm {...input} />);
+    const management = screen.getByLabelText(/Management fee/);
+    await userEvent.clear(management);
+    await userEvent.type(management, "0.29");
+    await userEvent.click(screen.getByRole("button", { name: "Launch strategy" }));
+    expect(input.onLaunch).toHaveBeenCalledWith(expect.objectContaining({ managementFeeBps: 29 }));
+  });
   it("successful logo upload stages only the HTTPS URL and uploading blocks launch", async () => {
     const input = props();
     renderWithProviders(<FundReviewForm {...input} />);

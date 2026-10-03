@@ -159,7 +159,9 @@ export function FundReviewForm({
               max="90"
               step="0.01"
               value={review.performanceFeeBps / 100}
-              onChange={(event) => update("performanceFeeBps", Number(event.target.value) * 100)}
+              onChange={(event) =>
+                update("performanceFeeBps", Math.round(Number(event.target.value) * 100))
+              }
             />
           </label>
           <label className="flex flex-col gap-2">
@@ -171,7 +173,9 @@ export function FundReviewForm({
               max="5"
               step="0.01"
               value={review.managementFeeBps / 100}
-              onChange={(event) => update("managementFeeBps", Number(event.target.value) * 100)}
+              onChange={(event) =>
+                update("managementFeeBps", Math.round(Number(event.target.value) * 100))
+              }
             />
           </label>
           <p className="text-sm sm:col-span-2">{t("fundLaunch.feesNote")}</p>
@@ -199,7 +203,9 @@ export function FundReviewForm({
               max="10"
               step="0.01"
               value={review.payoutFeeBps / 100}
-              onChange={(event) => update("payoutFeeBps", Number(event.target.value) * 100)}
+              onChange={(event) =>
+                update("payoutFeeBps", Math.round(Number(event.target.value) * 100))
+              }
             />
           </label>
           <p>{t("fundLaunch.fixedTerms")}</p>
