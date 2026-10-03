@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { TrackView } from "@/components/analytics/TrackView";
+import { FundFamilySwitch } from "@/features/funds/FundFamilySwitch";
 import { PortfolioPagedLoader } from "@/features/portfolio/PortfolioPagedLoader";
 import { PortfolioView } from "@/features/portfolio/PortfolioView";
 import { buildPortfolioViewModel } from "@/features/portfolio/portfolioViewModel";
@@ -9,6 +10,10 @@ import { positionCollectedFees } from "@/mocks/data/positions";
 
 /** PP-PORT-SCR-001 — holdings & performance. */
 export default async function PortfolioPage({ params }: { params: Promise<{ locale: string }> }) {
+  return <FundFamilySwitch view="holder" v1={<V1PortfolioPage params={params} />} />;
+}
+
+async function V1PortfolioPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
 
