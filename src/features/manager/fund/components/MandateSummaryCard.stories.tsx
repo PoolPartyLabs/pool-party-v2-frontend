@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-026
  * @name MandateSummaryCard.stories
- * @implements-rules-version v1 (POO-2127 rules v1)
+ * @implements-rules-version v2 (POO-2127 rules v1, POO-2142 rules v2)
  * @analytics-events none, a story file over a read-only card that emits nothing
  *
  * Storybook coverage for the mandate summary (POO-2127 [B1]).
@@ -29,7 +29,7 @@ import {
 } from "../mandateDraft";
 import { MandateSummaryCard } from "./MandateSummaryCard";
 
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 
 const base = createEmptyDraft("2026-10-01T00:00:00.000Z", "d-1");
 

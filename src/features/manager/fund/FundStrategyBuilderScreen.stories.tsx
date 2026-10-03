@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen.stories
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  *
  * Storybook coverage for the fund-contracts builder shell (POO-2122, epic POO-2119).
  *
@@ -29,8 +29,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useSearchParams } from "@storybook/nextjs-vite/navigation.mock";
 import type { ReadonlyURLSearchParams } from "next/navigation";
-import { type ReactNode, useEffect } from "react";
-import { setOverride } from "@/lib/features/devOverrides";
 import { FundStrategyBuilderScreen } from "./FundStrategyBuilderScreen";
 import { buildMandateCatalog } from "./mandateCatalog";
 import { createEmptyDraft, type MandateDraft, withNetworks, withProtocols } from "./mandateDraft";
@@ -42,8 +40,11 @@ const SEEDED_AT = "2026-10-03T00:00:00.000Z";
 /** The id the seeded draft is stored under and the deep link points at. */
 const SEEDED_ID = "story-mandate-draft";
 
-/** Robinhood Chain on, so the seeded draft's spoke is a network the shell's own catalog allows. */
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+/**
+ * The shell's own catalog, where Robinhood Chain is always available (R17 v2, POO-2142), so the
+ * stories no longer force the `robinhoodChain` flag for the seeded draft's spoke.
+ */
+const catalog = buildMandateCatalog();
 
 /** Empty the drafts store so a story never resumes what the one before it left behind. */
 function clearDrafts(): void {
@@ -76,12 +77,6 @@ function setQuery(search: string): void {
   );
 }
 
-/** Releases the flag override this file forces, by key, so it does not leak into the next story. */
-function FlagScope({ children }: { children: ReactNode }) {
-  useEffect(() => () => setOverride("robinhoodChain", null), []);
-  return <>{children}</>;
-}
-
 const meta = {
   title: "Manager/FundStrategyBuilderScreen",
   component: FundStrategyBuilderScreen,
@@ -104,14 +99,9 @@ type Story = StoryObj<typeof meta>;
 export const FirstStep: Story = {
   decorators: [
     (Story) => {
-      setOverride("robinhoodChain", true);
       clearDrafts();
       setQuery("");
-      return (
-        <FlagScope>
-          <Story />
-        </FlagScope>
-      );
+      return <Story />;
     },
   ],
 };
@@ -120,15 +110,10 @@ export const FirstStep: Story = {
 export const ResumedOnLastStep: Story = {
   decorators: [
     (Story) => {
-      setOverride("robinhoodChain", true);
       clearDrafts();
       upsertDraft(progressedDraft());
       setQuery(`draft=${SEEDED_ID}&step=limits`);
-      return (
-        <FlagScope>
-          <Story />
-        </FlagScope>
-      );
+      return <Story />;
     },
   ],
 };

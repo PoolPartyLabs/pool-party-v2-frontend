@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-042
  * @name NetworkDots.stories
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  *
  * Storybook coverage for the network logos that carry their name (POO-2123 [R10]).
  *
@@ -13,7 +13,7 @@ import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { buildMandateCatalog } from "../mandateCatalog";
 import { NetworkDots } from "./NetworkDots";
 
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 
 const meta = {
   title: "Manager/NetworkDots",
@@ -43,12 +43,13 @@ export const HubAndSpoke: Story = {
   args: { networks: ["arbitrum", "robinhood"] },
 };
 
-/** Every network, including Unichain, which has no committed mark and renders as a monogram. */
-export const EveryNetwork: Story = {
-  args: { networks: ["arbitrum", "robinhood", "base", "polygon", "unichain"] },
-};
+// PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+// /** Every network, including Unichain, which has no committed mark and renders as a monogram. */
+// export const EveryNetwork: Story = {
+//   args: { networks: ["arbitrum", "robinhood", "base", "polygon", "unichain"] },
+// };
 
 /** Row-logo size: the same component the step uses beside a network name. */
 export const Large: Story = {
-  args: { networks: ["arbitrum", "robinhood", "base"], size: 24 },
+  args: { networks: ["arbitrum", "robinhood"], size: 24 },
 };

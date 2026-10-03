@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep.stories
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  *
  * Storybook coverage for Mandate step 2 (POO-2123 [R19] to [R22]).
  *
@@ -25,7 +25,7 @@ import {
 } from "../mandateDraft";
 import { ProtocolsStep } from "./ProtocolsStep";
 
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 
 /** A draft on the given networks, already holding the given protocols. */
 function draftWith(networks: NetworkId[], protocols: ProtocolId[]): MandateDraft {

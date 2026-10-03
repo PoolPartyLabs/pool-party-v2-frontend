@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-039
  * @name LimitsStep.stories
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  *
  * Storybook coverage for Mandate step 5 (POO-2126 [R6] / [R39] to [R43]).
  *
@@ -12,8 +12,8 @@
  * message.
  *
  * The drafts are seeded DIRECTLY rather than through `withNetworks` / `withProtocols`, because the
- * Figma frame shows Base and the catalog marks it "Coming soon"; the reducer would drop it, and the
- * Limits step still has to render a row for whatever the draft carries.
+ * Limits step has to render a row for whatever the draft carries. The Figma frame also shows Base;
+ * the mandate no longer offers Base (rules v2, POO-2142), so the drafts here leave it out.
  *
  * PP-NOTE: Storybook's `stories` glob is `src/features/<area>/components/<file>`, so a story under
  * `steps/` is not loaded today (same note as `NetworksStep.stories.tsx` and
@@ -34,7 +34,7 @@ import {
 } from "../mandateDraft";
 import { LimitsStep } from "./LimitsStep";
 
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 
 /** The two unlocked tokens the Figma frame shows, as the draft stores them. */
 const WETH: MandateTokenRef = {
@@ -59,7 +59,7 @@ function selections(caps: MandateCaps): MandateDraft {
   const base = createEmptyDraft("2026-10-03T00:00:00.000Z", "story");
   return {
     ...base,
-    networks: ["arbitrum", "robinhood", "base"],
+    networks: ["arbitrum", "robinhood"],
     protocols: ["uniswap-v3-swap", "across", "aave-v3", "uniswap-v3", "uniswap-v4"],
     tokens: [...base.tokens, WETH, WBTC],
     caps,
@@ -71,7 +71,6 @@ const FIGMA_CAPS: MandateCaps = {
   networks: {
     arbitrum: { noCap: true, pct: 0 },
     robinhood: { noCap: false, pct: 40 },
-    base: { noCap: true, pct: 0 },
   },
   protocols: {
     "aave-v3": { noCap: false, pct: 60 },
@@ -147,7 +146,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-/** The Figma frame: Robinhood 40%, Base No cap, Aave v3 60%, Uniswap v3 35%, v4 No cap, WETH 60%. */
+/** The Figma frame minus Base (POO-2142): Robinhood 40%, Aave v3 60%, Uniswap v3 35%, v4 No cap. */
 export const Figma: Story = {
   render: () => <Harness catalog={catalog} initial={selections(FIGMA_CAPS)} />,
 };
