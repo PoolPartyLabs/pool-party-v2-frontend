@@ -62,6 +62,7 @@ async function walletIdentity() {
 }
 export async function loadFundsAction(view: "explore" | "holder" | "manager") {
   return resultOf(async () => {
+    z.enum(["explore", "holder", "manager"]).parse(view);
     const wallet = view === "explore" ? null : await walletIdentity();
     const funds = isMockMode ? [mockFund] : (await readFunds()).funds;
     if (view === "manager")
@@ -176,6 +177,10 @@ export async function buildFundAction(core: string, input: FundIntent) {
   });
 }
 const starts = new Map<string, { at: number; jobId?: string }>();
+const polls = new Map<string, { at: number; job: Awaited<ReturnType<typeof pollReport>> }>();
+async function pollReport(jobId: string) {
+  return fundRequest(`/report-jobs/${jobId}`, reportJobSchema, undefined, true);
+}
 async function verifiedReportWallet() {
   const wallet = await walletIdentity();
   if (!isMockMode) {
@@ -215,9 +220,13 @@ export async function pollFundReportAction(core: string, jobId: string) {
     z.string().uuid().parse(jobId);
     if (isMockMode)
       return { protocolVersion: "v2" as const, core, jobId, status: "delivered" as const };
-    const job = await fundRequest(`/report-jobs/${jobId}`, reportJobSchema, undefined, true);
+    for (const [key, value] of polls) if (Date.now() - value.at > 15_000) polls.delete(key);
+    const cached = polls.get(jobId);
+    if (!cached && polls.size >= 100) throw new ApiError(429, "V2_UNAVAILABLE", "rate limited");
+    const job = cached ? cached.job : await pollReport(jobId);
     if (job.core.toLowerCase() !== core.toLowerCase())
       throw new ApiError(403, "V2_SESSION", "wrong fund");
+    polls.set(jobId, { at: Date.now(), job });
     return job;
   });
 }

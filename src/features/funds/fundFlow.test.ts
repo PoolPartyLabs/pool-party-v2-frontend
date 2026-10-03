@@ -3,6 +3,32 @@ import { mockFund, mockFundBuild } from "@/mocks/data/v2Funds";
 import { approveAndRebuild, ensureFreshValuation } from "./fundFlow";
 
 describe("investor fund flows", () => {
+  it("R6 failed jobs stop without a mint or burn builder", async () => {
+    await expect(
+      ensureFreshValuation({
+        read: async () => ({ ...mockFund, lastReport: null }),
+        start: async () => "job",
+        poll: async () => "failed",
+        wait: async () => {},
+        active: () => true,
+        refreshing: vi.fn(),
+      }),
+    ).rejects.toThrow("V2_UNAVAILABLE");
+  });
+  it("R6 bounded pending jobs time out rather than polling forever", async () => {
+    const poll = vi.fn().mockResolvedValue("pending");
+    await expect(
+      ensureFreshValuation({
+        read: async () => ({ ...mockFund, lastReport: null }),
+        start: async () => "job",
+        poll,
+        wait: async () => {},
+        active: () => true,
+        refreshing: vi.fn(),
+      }),
+    ).rejects.toThrow("V2_UNAVAILABLE");
+    expect(poll).toHaveBeenCalledTimes(120);
+  });
   it("R6 skips the report job only when the accepted report is fresh", async () => {
     const start = vi.fn();
     await ensureFreshValuation({

@@ -51,6 +51,7 @@ export async function approveAndRebuild(
   rebuild: () => Promise<FundBuild>,
   active: () => boolean,
 ) {
+  if (!active()) throw new Error("V2_CANCELED");
   if (!build.nextAction) return build;
   await send(build);
   if (!active()) throw new Error("V2_CANCELED");
