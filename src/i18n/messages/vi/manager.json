@@ -792,6 +792,164 @@
       "summaryTokens": "Token",
       "summaryPools": "Pool",
       "summaryLimits": "Giới hạn"
+    },
+    "canvas": {
+      "title": "Lắp ráp chiến lược của bạn",
+      "subtitle": "Lắp ráp chiến lược từ các khối. Kéo một khối vào, rồi cấu hình nó ở bên phải. Các khối chỉ dùng những gì nhiệm vụ cho phép.",
+      "hint": "Ctrl + cuộn để thu phóng (Cmd + cuộn trên Mac) · kéo để di chuyển · nhấp đúp để vừa khung",
+      "zoom": {
+        "in": "Phóng to",
+        "out": "Thu nhỏ",
+        "fit": "Vừa khung nhìn",
+        "readout": "{pct}%",
+        "readoutLabel": "Thu phóng {pct}%"
+      },
+      "bar": {
+        "back": "Quay lại: Nhiệm vụ",
+        "next": "Tiếp theo: Xem lại"
+      },
+      "palette": {
+        "fromMandate": "Từ nhiệm vụ của bạn",
+        "flowBlocks": "Khối luồng",
+        "comingSoon": "Sắp ra mắt",
+        "caption": "Kéo một khối vào canvas. Khối được thêm ở trạng thái trống: chọn pool, tài sản hoặc thị trường ở bên phải.",
+        "soon": "Sắp có",
+        "soonTooltip": "Sắp ra mắt"
+      },
+      "blocks": {
+        "uniswapV4Pool": {
+          "protocol": "Uniswap v4",
+          "type": "Vị thế thanh khoản"
+        },
+        "uniswapV3Pool": {
+          "protocol": "Uniswap v3",
+          "type": "Vị thế thanh khoản"
+        },
+        "aaveSupply": {
+          "protocol": "Aave v3",
+          "type": "Cung cấp"
+        },
+        "aaveBorrow": {
+          "protocol": "Aave v3",
+          "type": "Vay"
+        },
+        "pendle": {
+          "protocol": "Pendle",
+          "type": "Vị thế yield"
+        },
+        "gmxPerp": {
+          "protocol": "GMX",
+          "type": "Vị thế perp"
+        }
+      },
+      "card": {
+        "poolTitle": "{token0} / {token1}",
+        "poolCaption": "{protocol} · {fee}%",
+        "supplyTitle": "Cung cấp {symbol}",
+        "borrowTitle": "Vay {symbol}",
+        "aaveCaption": "Aave v3",
+        "aaveCaptionOnNetwork": "Aave v3 · {network}",
+        "emptySupply": "Aave v3 Cung cấp",
+        "emptyBorrow": "Aave v3 Vay",
+        "pickPool": "Chọn một pool",
+        "pickAsset": "Chọn một tài sản",
+        "invalid": "Không còn trong nhiệm vụ của bạn",
+        "accessibleName": "{title}, {caption}, trên {network}, {pct}% vốn"
+      },
+      "spine": {
+        "deposit": {
+          "title": "Nạp tiền",
+          "caption": "USDC · Arbitrum"
+        },
+        "idleInput": {
+          "title": "Vốn chờ (đầu vào)",
+          "caption": "USDC đang chờ trên hub"
+        },
+        "idleOutput": {
+          "title": "Vốn chờ (đầu ra)",
+          "caption": "USDC đã về hub"
+        },
+        "income": {
+          "title": "Thu nhập (phí)",
+          "caption": "USDC · Arbitrum"
+        },
+        "withdraw": {
+          "title": "Rút tiền",
+          "caption": "USDC · Arbitrum"
+        },
+        "lockTooltip": "Cố định: USDC trên Arbitrum"
+      },
+      "flow": {
+        "swapAuto": "Swap · tự động",
+        "swap": "Swap",
+        "collectFees": "Thu phí",
+        "bridgeAuto": "Bridge · tự động"
+      },
+      "tooltip": {
+        "addProtocol": "Thêm giao thức trên {network}",
+        "addNetwork": "Thêm mạng",
+        "portBefore": "Chèn một khối luồng: Swap",
+        "portAfterPool": "Chèn một khối luồng: Thu phí",
+        "portAfterSupply": "Chèn một khối: Vay, Swap",
+        "portAfterBorrow": "Chèn một khối luồng: Swap",
+        "swapAuto": "Ứng dụng swap {token} sang các token của pool",
+        "swapAutoSupply": "Ứng dụng swap {token} sang {asset}",
+        "swap": "Swap sang một token khác trong nhiệm vụ của bạn",
+        "bridgeAuto": "Chuyển {token} sang {network}",
+        "collectFees": "Thu phí của pool vào Thu nhập (phí)",
+        "share": "{pct}% vốn của chiến lược"
+      },
+      "empty": {
+        "addProtocol": "Thêm giao thức",
+        "addNetwork": "Thêm mạng",
+        "startHere": "Bắt đầu tại đây: thêm một giao thức trên Arbitrum (hình tròn) hoặc thêm một mạng (hình hộp)."
+      },
+      "menu": {
+        "protocols": {
+          "title": "Giao thức trên {network}",
+          "footer": "Các giao thức trong nhiệm vụ của bạn trên {network}.",
+          "none": "Không có giao thức nào trong nhiệm vụ của bạn khả dụng trên {network}.",
+          "borrowDisabled": "Vay · thêm bên dưới một khối Cung cấp"
+        },
+        "comingSoonType": "{type} · sắp ra mắt",
+        "link": {
+          "protocols": "Sửa nhiệm vụ · Giao thức",
+          "networks": "Sửa nhiệm vụ · Mạng"
+        },
+        "networks": {
+          "title": "Các mạng trong nhiệm vụ của bạn",
+          "option": "spoke · thêm một bridge",
+          "placed": "{names} đã có trên canvas.",
+          "none": "Nhiệm vụ của bạn không có mạng nào khác."
+        },
+        "port": {
+          "before": "Trước {title}",
+          "after": "Sau {title}",
+          "borrowOption": "Vay dựa trên khoản cung cấp này",
+          "flowOption": "Khối luồng",
+          "footerAfterSupply": "Các khối trong nhiệm vụ của bạn phù hợp sau khoản cung cấp này.",
+          "footer": "Các khối trong nhiệm vụ của bạn phù hợp tại đây."
+        }
+      },
+      "panel": {
+        "overline": "Cấu hình khối",
+        "nothingTitle": "Chưa chọn gì",
+        "nothingBody": "Thêm một giao thức hoặc một mạng trên canvas, hoặc kéo một khối từ bên trái. Khối mới được thêm ở trạng thái trống; bạn chọn pool, tài sản hoặc thị trường của nó tại đây.",
+        "remove": "Xóa khối",
+        "typeNoPool": "{type} · chưa có pool",
+        "typeNoAsset": "{type} · chưa có tài sản",
+        "menuOpen": "Chọn một giao thức trong menu. Khối sẽ được thêm trên {network} và mở tại đây.",
+        "portMenuOpenSupply": "Chọn mục đứng sau {title}. Một khối Vay dùng khoản cung cấp đó làm tài sản thế chấp.",
+        "portMenuOpenBefore": "Chọn mục đứng trước {title}.",
+        "portMenuOpenAfter": "Chọn mục đứng sau {title}."
+      },
+      "network": {
+        "remove": "Xóa {network}"
+      },
+      "toast": {
+        "removed": "Đã xóa khối",
+        "undo": "Hoàn tác"
+      }
     }
   }
 }

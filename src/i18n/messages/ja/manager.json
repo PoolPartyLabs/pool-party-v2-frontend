@@ -792,6 +792,164 @@
       "summaryTokens": "トークン",
       "summaryPools": "プール",
       "summaryLimits": "上限"
+    },
+    "canvas": {
+      "title": "戦略を組み立てる",
+      "subtitle": "ブロックを組み合わせて戦略を作ります。ブロックをドラッグして配置し、右側で設定してください。ブロックはマンデートで許可された範囲のみを使用します。",
+      "hint": "Ctrl + スクロールでズーム（Mac は Cmd + スクロール）· ドラッグで移動 · ダブルクリックで全体表示",
+      "zoom": {
+        "in": "拡大",
+        "out": "縮小",
+        "fit": "全体を表示",
+        "readout": "{pct}%",
+        "readoutLabel": "ズーム {pct}%"
+      },
+      "bar": {
+        "back": "戻る: マンデート",
+        "next": "次へ: 確認"
+      },
+      "palette": {
+        "fromMandate": "マンデートから",
+        "flowBlocks": "フローブロック",
+        "comingSoon": "近日公開",
+        "caption": "ブロックをキャンバスにドラッグしてください。空の状態で追加されます。プール、資産、マーケットは右側で選びます。",
+        "soon": "近日",
+        "soonTooltip": "近日公開"
+      },
+      "blocks": {
+        "uniswapV4Pool": {
+          "protocol": "Uniswap v4",
+          "type": "流動性ポジション"
+        },
+        "uniswapV3Pool": {
+          "protocol": "Uniswap v3",
+          "type": "流動性ポジション"
+        },
+        "aaveSupply": {
+          "protocol": "Aave v3",
+          "type": "供給"
+        },
+        "aaveBorrow": {
+          "protocol": "Aave v3",
+          "type": "借入"
+        },
+        "pendle": {
+          "protocol": "Pendle",
+          "type": "イールドポジション"
+        },
+        "gmxPerp": {
+          "protocol": "GMX",
+          "type": "パーペチュアルポジション"
+        }
+      },
+      "card": {
+        "poolTitle": "{token0} / {token1}",
+        "poolCaption": "{protocol} · {fee}%",
+        "supplyTitle": "{symbol} を供給",
+        "borrowTitle": "{symbol} を借入",
+        "aaveCaption": "Aave v3",
+        "aaveCaptionOnNetwork": "Aave v3 · {network}",
+        "emptySupply": "Aave v3 供給",
+        "emptyBorrow": "Aave v3 借入",
+        "pickPool": "プールを選択",
+        "pickAsset": "資産を選択",
+        "invalid": "マンデートの対象外になりました",
+        "accessibleName": "{title}、{caption}、{network} 上、資本の {pct}%"
+      },
+      "spine": {
+        "deposit": {
+          "title": "入金",
+          "caption": "USDC · Arbitrum"
+        },
+        "idleInput": {
+          "title": "待機資金（入口）",
+          "caption": "ハブで待機中の USDC"
+        },
+        "idleOutput": {
+          "title": "待機資金（出口）",
+          "caption": "ハブに戻った USDC"
+        },
+        "income": {
+          "title": "収益（手数料）",
+          "caption": "USDC · Arbitrum"
+        },
+        "withdraw": {
+          "title": "出金",
+          "caption": "USDC · Arbitrum"
+        },
+        "lockTooltip": "固定: Arbitrum 上の USDC"
+      },
+      "flow": {
+        "swapAuto": "スワップ · 自動",
+        "swap": "スワップ",
+        "collectFees": "手数料回収",
+        "bridgeAuto": "ブリッジ · 自動"
+      },
+      "tooltip": {
+        "addProtocol": "{network} にプロトコルを追加",
+        "addNetwork": "ネットワークを追加",
+        "portBefore": "フローブロックを挿入: スワップ",
+        "portAfterPool": "フローブロックを挿入: 手数料回収",
+        "portAfterSupply": "ブロックを挿入: 借入、スワップ",
+        "portAfterBorrow": "フローブロックを挿入: スワップ",
+        "swapAuto": "アプリが {token} をプールのトークンにスワップします",
+        "swapAutoSupply": "アプリが {token} を {asset} にスワップします",
+        "swap": "マンデート内の別のトークンにスワップします",
+        "bridgeAuto": "{token} を {network} に移動します",
+        "collectFees": "プールの手数料を収益（手数料）に回収します",
+        "share": "戦略の資本の {pct}%"
+      },
+      "empty": {
+        "addProtocol": "プロトコルを追加",
+        "addNetwork": "ネットワークを追加",
+        "startHere": "ここから始めましょう: Arbitrum にプロトコルを追加（円）するか、ネットワークを追加（ボックス）します。"
+      },
+      "menu": {
+        "protocols": {
+          "title": "{network} のプロトコル",
+          "footer": "{network} で使えるマンデートのプロトコルです。",
+          "none": "{network} で利用できるマンデートのプロトコルはありません。",
+          "borrowDisabled": "借入 · 供給ブロックの下に追加してください"
+        },
+        "comingSoonType": "{type} · 近日公開",
+        "link": {
+          "protocols": "マンデートを編集 · プロトコル",
+          "networks": "マンデートを編集 · ネットワーク"
+        },
+        "networks": {
+          "title": "マンデートのネットワーク",
+          "option": "スポーク · ブリッジを追加",
+          "placed": "{names} はすでにキャンバス上にあります。",
+          "none": "マンデートに他のネットワークはありません。"
+        },
+        "port": {
+          "before": "{title} の前",
+          "after": "{title} の後",
+          "borrowOption": "この供給を担保に借入",
+          "flowOption": "フローブロック",
+          "footerAfterSupply": "この供給の後に置けるマンデートのブロックです。",
+          "footer": "ここに置けるマンデートのブロックです。"
+        }
+      },
+      "panel": {
+        "overline": "ブロックを設定",
+        "nothingTitle": "未選択",
+        "nothingBody": "キャンバスにプロトコルかネットワークを追加するか、左からブロックをドラッグしてください。新しいブロックは空の状態で追加され、プール、資産、マーケットはここで選びます。",
+        "remove": "ブロックを削除",
+        "typeNoPool": "{type} · プール未選択",
+        "typeNoAsset": "{type} · 資産未選択",
+        "menuOpen": "メニューからプロトコルを選んでください。ブロックは {network} に追加され、ここに表示されます。",
+        "portMenuOpenSupply": "{title} の後に置くものを選んでください。借入ブロックはその供給を担保として使います。",
+        "portMenuOpenBefore": "{title} の前に置くものを選んでください。",
+        "portMenuOpenAfter": "{title} の後に置くものを選んでください。"
+      },
+      "network": {
+        "remove": "{network} を削除"
+      },
+      "toast": {
+        "removed": "ブロックを削除しました",
+        "undo": "元に戻す"
+      }
     }
   }
 }
