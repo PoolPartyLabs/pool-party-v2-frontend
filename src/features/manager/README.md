@@ -208,6 +208,141 @@ over `PP-CORE-LIB-020` (`src/lib/uniswap/tick.ts`):
   acceptance from POO-319). This lane adds regression/verification coverage; the width clamp above also
   keeps blur/step results at or above the minimum.
 
+## Fund contracts builder (V2 toggle, POO-2119)
+
+The Mandate step of a second, parallel strategy builder for the fund contracts (hub Arbitrum, spoke
+Robinhood Chain, PoolPartyLabs/smartcontract-v2), speced from
+`manager-fund-contracts-2026-10-02/handoff-strategy-builder-mandate-2026-10-03.md`. It signs nothing
+on chain: everything persists as a local draft, and the V1 builder above is untouched by any of it.
+
+**The toggle and the flag.** `ContractFamilyToggle` (`PP-CORE-CMP-075`, header, "V1 | V2") decides
+which family of contracts a manager surface addresses; `useContractFamily` (`PP-CORE-HOK-038`)
+persists the choice as a UI preference (`localStorage` key `pp.contractFamily`, default `"v1"`).
+Both sit behind the `fundContracts` registry entry (`PP-CORE-LIB-011`, env
+`NEXT_PUBLIC_FEATURE_FUND_CONTRACTS`, default off). **Not a route gate:** `BuilderRouteSwitch` sends
+`/manager/new` to this V1 screen (`PP-MGR-SCR-002`, unchanged) or to the fund-contracts preview
+`FundStrategyBuilderScreen` per the toggle; flag off renders V1 byte-identically, no skeleton.
+
+**Folder layout.** `src/features/manager/fund/`: `mandateCatalog.ts` (`PP-MGR-LIB-018`),
+`mandateDraft.ts` (`PP-MGR-LIB-019`), `mandateDraftStore.ts` (`PP-MGR-STO-001`),
+`useMandateDraft.ts` (`PP-MGR-HOK-006`), `mandatePoolSource.ts`, `FundStrategyBuilderScreen.tsx` /
+`BuilderRouteSwitch.tsx` / `FundBuildLanding.tsx` (all `PP-MGR-SCR-002`), `steps/{Networks,
+Protocols, Tokens, Pools, Limits}Step.tsx` (`PP-MGR-CMP-035` to `039`), and
+`components/{MandateRow, NetworkDots, BuilderActionBar, MandateSubStepHeader, CopyAddressChip,
+MandateSummaryCard, MandateDraftsList, FundDraftsSlot, NameDraftDialog}.tsx`. The V1 builder stays
+in `src/features/manager/components/`, imported for its helpers but never modified by this phase.
+
+**Draft store key.** `pp.manager.mandateDrafts.v1`, versioned JSON (`{ version: 1, drafts:
+Record<id, MandateDraft> }`) in `localStorage`, one entry per drafted mandate. This is the ONLY
+persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO-001` carries the
+`PP-INTEGRATION-POINT` for the backend draft API this becomes.
+
+**Step rules, one paragraph each, rule numbers from the handoff.**
+
+- **Shell (R1 to R14).** Page header "Create new strategy" with a "Save & exit" text button and no
+  "Back to console" (R1); the three-phase stepper Mandate/Build/Review, a reached phase clickable
+  (R2); the sub-step header collapsed by default, one line "MANDATE · STEP n OF 5" plus the title
+  plus "Next: `<step>`", hover peeks it open, a click pins it (R3); step titles of reached steps are
+  links, the current one is not, unreached ones are disabled (R4); a sticky Back/Next action bar,
+  Next on step 5 reads "Next: Build strategy" (R5), and Next is NEVER disabled, a block shows an
+  inline reason and scrolls to the row instead (R6); Save & exit opens the naming dialog only on the
+  first save, after that it saves silently with a toast (R7); the draft name is 10 to 50 characters,
+  the same rule the create-pool API applies to the strategy name (R8); every selection survives Back,
+  Next and Save & exit (R9); every network logo carries a tooltip and a `title` with its name (R10);
+  every pool address on the Pools step copies the real address on click (R11); a selected row uses
+  the raised-surface treatment with the primary colour on the checkbox, never a row fill (R12); the
+  Broad mandate flag raises only when every token AND every pool are selected, never from networks or
+  protocols alone (R13); every string is a translation key, 11 locales, no em dash (R14).
+- **Networks (R15 to R18).** The hub, Arbitrum, is locked and shown first (R15); the four spokes
+  render in a two-column grid under "Other networks" with "Select all" (R16); availability is
+  catalog data (`PP-MGR-LIB-018`), an unavailable spoke is disabled, "Coming soon", and still reports
+  a blocked click (R17); the Robinhood Chain deposit token is USDG, not USDC, which the step shows as
+  USDG / Global Dollar, amending the handoff's literal default (R18, see "Coordinator defaults" and
+  `docs/COMPLIANCE_REGISTER.md` `CR-MGR-013`).
+- **Protocols (R19 to R22).** The swap adapter and Across are locked above a divider, "Required"
+  (R19); "Protocols to operate" lists the rest with "Select all" and an "On" column of per-network
+  dots (R20); availability is data, per protocol and per network, a disabled combination still
+  reports its click (R21); "Across" is named only on its own row, never in the bridge caption (R22).
+- **Tokens (R23 to R28).** Two columns, the catalog (minus what the draft already holds) on the
+  left, "Your tokens" on the right (R23); the deposit token is a locked, one-row-per-network entry
+  that cannot be removed (R24); the catalog lists only tokens available on the chosen networks and
+  protocols (R25); a search field, a network filter and "Add all N" narrow or bulk-add the catalog
+  (R26); the mandate holds at most 16 token slots, one per network a token runs on, exceeding it
+  disables Add with "No slots left" (R27); only priced tokens (`PRICED_SYMBOLS`) are offered by
+  default, an unpriced one is reachable by search, disabled, "No price feed yet" (R28).
+- **Pools (R29 to R38).** The step is skipped entirely with no DEX protocol chosen, and the header
+  then reads "OF 4" (R29); search matches V1's own pattern, including pasting a pool address (R30);
+  protocol tabs carry result counts (R31); a result card shows the tier share, both token addresses
+  as copy chips, TVL and APR (R32); an added pool moves to "Your pools" (R33); pools are a CLOSED
+  list fixed at creation, both tokens must already be mandate tokens (R34); the per-protocol scope
+  for caps and for Build is "every pool with at least one mandate token" (R35); "Show more" paginates
+  the results (R36); an all-selected state raises the Broad mandate notice (R37, see `CR-MGR-010`);
+  a pool carrying a Uniswap v4 hook is listed and disabled, "has a hook" (R38).
+- **Limits (R39 to R43).** Three groups, per network / per protocol / per token, each row a "No cap"
+  checkbox or a 5%-step slider (R39); the hub row is locked, "No cap, the hub holds what is not sent
+  elsewhere" (R40); only the per-spoke-network cap exists on chain today, in USDC, checked on send,
+  per-protocol and per-token caps have no contract basis yet and must not be presented as on-chain
+  guarantees (R41, see `CR-MGR-011`); the shared footnote states caps are checked when money moves
+  and growth from price changes is not forced back (R42, see `CR-MGR-012`); rows come from the
+  earlier steps minus their locked rows (R43).
+- **Name draft dialog.** Title "Name your draft", a body explaining why, a 10-to-50-character name
+  field with a live counter and a progress line naming the draft's own counts ("Saved so far: 3
+  networks, 4 protocols, 3 tokens, Mandate step 3 of 5"), "Keep editing" and "Save and exit".
+
+**Coordinator defaults (handoff open points).** The handoff names its own open points as decisions
+for Murilo; absent an answer, the coordinator applied a default so the slices could proceed. **1.**
+Where the draft lives: `localStorage` today (`mandateDraftStore.ts`), not a backend; reload and the
+Console drafts list depend on the answer, the five Mandate screens do not. **2.** Which networks,
+protocols and tokens ship enabled on day one: the catalog's `available` flags (Arbitrum and
+Robinhood Chain only) and `PRICED_SYMBOLS` (USDC, ETH/WETH, USDG, WBTC, cbBTC, USDT, DAI, ARB, LINK,
+wstETH) are the coordinator's conservative reading of the contracts, not a confirmed release list.
+**3.** The Robinhood deposit token: the coordinator OVERTURNED the handoff's literal instruction
+("the frontend shows USDC everywhere until this is settled with Rafael") and the Tokens/Networks
+steps print the chain's real stable, USDG / Global Dollar, instead; `CR-MGR-013` records that this
+override is pending Rafael's and Murilo's confirmation, not a settled answer. **4.** Slot semantics:
+a token added enters every selected network where the catalog has it, one slot per entry; a manager
+cannot keep a token off one network to free a slot. **5.** Cap units: per-protocol and per-token caps
+are a frontend-only percentage with no contract basis (`CR-MGR-011`); whether they should exist at
+all before the contracts support them is unanswered. **6.** The flag's name, "Broad mandate", and
+its investor-facing placement: the name is a proposal and the placement is not built at all
+(`CR-MGR-010`). **7.** "Strategy" vs "fund" wording in the console for this contract family: carried
+as "strategy" throughout, matching the V1 builder's vocabulary, unresolved. **8.** The Uniswap v4
+pool catalog has no endpoint on any network today, so a v4 request in real mode returns nothing (see
+`docs/INTEGRATION_POINTS.md`, "Fund contracts builder"). **9.** "N% selected" on a pool card mirrors V1 exactly: the pool's share of the pair's TVL across the fetched fee tiers, computed client-side (`tierShare` in `mandatePoolSource.ts`); no API field carries a manager share today, so the handoff's "share of V1 managers who chose that tier" has no source and the V1 computation wins. **10.** "Next: Build strategy" on step 5 marks the mandate complete, persists the draft, and lands on the Build placeholder (`FundBuildLanding`) that prints the mandate back; Back: Mandate returns to Limits. **11.** The feature flag is `fundContracts` (`NEXT_PUBLIC_FEATURE_FUND_CONTRACTS`), off by default, `next` stage; the header toggle renders only while it is on and the V2 builder only while the toggle says V2; `v2.dev.pool-party.xyz` needs the variable baked before the image build. **12.** Deep links are query params on the existing route, `/manager/new?draft=<id>&step=<key>` (plus `&phase=build` once the mandate completed), no new route folder. Decisions 1 to 12 are recorded in the "Plan" section of the POO-2119 Linear issue; Murilo can overturn any of them.
+
+**What is NOT done.** The Build canvas (still in design; `FundBuildLanding`, `PP-MGR-SCR-002`, is a
+landing that prints the mandate back and says the canvas is coming, nothing more). Review (this
+phase has none). Investor-facing flag placement (the strategy card and detail show no Broad-mandate
+flag anywhere today, `CR-MGR-010`). Backend persistence (drafts are `localStorage` only,
+`PP-MGR-STO-001`'s own `PP-INTEGRATION-POINT`; wiring issue POO-2132). Mobile layouts (desktop only,
+per the handoff). Uniswap v4 pool data in real mode (mock fixtures only,
+`docs/INTEGRATION_POINTS.md`; wiring issue POO-2133). The seams that wait on the contract interface
+(registries, price source, spoke cap unit, contract-family marker) are tracked together by wiring
+issue POO-2134, against POO-2116 slices 5, 7 and 12.
+
+**Analytics, as shipped** (not the epic's first proposal; see `docs/ANALYTICS_EVENTS.md`, "Manager,
+fund builder"). The funnel is `builder_mandate_started` / `_step_viewed` / `_step_submitted` /
+`_blocked` / `_completed` / `_abandoned`, plus `builder_draft_saved` and `builder_mandate_error`, and
+the Build-phase / drafts trio `builder_build_landing_viewed`, `builder_draft_opened`,
+`builder_draft_deleted`. `builder_mandate_blocked`'s five NEW reasons are `nothing_selected`,
+`cap_missing`, `no_slots`, `has_hook` and `coming_soon`; `price_unknown` (an unpriced token) and
+`name_invalid` (the draft name) REUSE the existing POO-1172 reason series rather than mint
+per-builder duplicates. A draft-save failure reports `builder_mandate_error { error_code:
+"DRAFT_SAVE_FAILED", error_origin: "app" }`; the same event also carries the Pools step's catalog
+read failing, `POOLS_FETCH_FAILED` / `upstream` when the list on screen is the one that failed and
+`POOLS_UNIVERSE_FETCH_FAILED` / `upstream` when it was the universe measured beside a search (nothing
+is drawn for that one; the Broad mandate count just stays unknown). `contract_family_toggled`
+(`PP-CORE-CMP-075`) is a
+sibling event outside this funnel: it fires on the V1/V2 choice itself, not on anything inside
+either builder.
+
+**Follow-up, not acted on: coverage thresholds.** `vitest.config.ts`'s per-glob thresholds have no
+glob matching `src/features/manager/fund/**`; its existing `src/features/**/hooks/**` entry does not
+reach `useMandateDraft.ts`, which sits directly in `fund/`, not in a nested `hooks/` folder. Every
+file here still counts toward the GLOBAL floor (statements 75 / branches 70 / functions 82 / lines
+78), just not a stricter dedicated one the way `src/lib/utils/**` gets. Noted here rather than
+changed, per this slice's instruction not to touch the thresholds.
+
 ## IDs
 
 | ID | Type | Name | Status | Test coverage |

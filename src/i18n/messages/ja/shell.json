@@ -76,5 +76,11 @@
   "locale": {
     "changeLanguage": "言語を変更",
     "title": "言語"
+  },
+  "contractFamily": {
+    "label": "ビルダーのバージョン",
+    "v1": "V1",
+    "v2": "V2",
+    "tooltip": "現在のビルダー（V1）とファンドコントラクトのプレビュー（V2）を切り替えます。"
   }
 }

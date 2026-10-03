@@ -76,5 +76,11 @@
   "locale": {
     "changeLanguage": "Alterar idioma",
     "title": "Idioma"
+  },
+  "contractFamily": {
+    "label": "Versão do construtor",
+    "v1": "V1",
+    "v2": "V2",
+    "tooltip": "Alterne entre o construtor atual (V1) e a prévia dos contratos de fundo (V2)."
   }
 }

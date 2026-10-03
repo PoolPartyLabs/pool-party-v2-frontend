@@ -47,6 +47,7 @@ import { ManagerDashboardView } from "./components/ManagerDashboardView";
 import { ManagerProfileTabView } from "./components/ManagerProfileTabView";
 import { ManageStrategiesView } from "./components/ManageStrategiesView";
 import { StrategyManageView } from "./components/StrategyManageView";
+import { FundDraftsSlot } from "./fund/components/FundDraftsSlot";
 
 // PP-MOCK: mock-mode viewer wallet sentinel. In mock mode useAuth().address is undefined per consumer
 // (no shared session), so the greeting's own-profile link would collapse to plain text. This labeled
@@ -333,6 +334,10 @@ export function ManagerConsoleScreen({
             {t("manage.notFound")}
           </p>
         ) : null}
+        {/* POO-2127 [D2]: fund-contract drafts, above the managed list. Renders nothing unless the
+            `fundContracts` flag is on AND the header toggle says V2, so this tab is byte-identical
+            to today's otherwise (ManagerConsoleScreen.fundDrafts.test.tsx compares the markup). */}
+        <FundDraftsSlot />
         <ManageStrategiesView strategies={strategies} onManage={handleManage} />
       </ConsoleShell>
     );

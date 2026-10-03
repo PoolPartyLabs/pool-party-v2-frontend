@@ -57,6 +57,7 @@ import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import { isMockMode } from "@/lib/services";
 import { cn } from "@/lib/utils/cn";
 import { AppFooter } from "./AppFooter";
+import { ContractFamilyToggle } from "./ContractFamilyToggle";
 import { DevMenu } from "./DevMenu";
 import { GuardedLink } from "./GuardedLink";
 import { RewardsPill } from "./RewardsPill";
@@ -389,6 +390,11 @@ export function AppShell({ children, className }: AppShellProps) {
                 <DevMenu managerMode={managerMode} onManagerModeChange={setManagerMode} />
               </div>
             ) : null}
+            {/* POO-2120 [R4]: which contract family /manager/new builds against, V1 or V2. Sits
+                immediately before the points pill so the two read as one cluster. It reads its own
+                `fundContracts` flag and renders nothing while that is off, which is why there is no
+                gate here: the shell owes it no condition. */}
+            <ContractFamilyToggle />
             {isEnabled("rewards") ? <RewardsPill quacks={quacks ?? 0} /> : null}
             {/* Language: below lg a Languages icon opens the bottom-sheet picker (POO-904 R1);
                 lg+ keeps the select unchanged (R3). Both run the shared useLocaleSwitch seam. */}
