@@ -700,6 +700,28 @@
       "v4Pending": "Uniswap v4-pools komen beschikbaar met de gegevensbron van de fondscontracten.",
       "retry": "Opnieuw proberen",
       "error": "De pools konden niet worden geladen. Controleer uw verbinding en probeer het opnieuw."
+    },
+    "limits": {
+      "perNetwork": "Per netwerk",
+      "perNetworkCaption": "Maximaal kapitaalaandeel per netwerk · in stappen van 5%",
+      "perProtocol": "Per protocol",
+      "perProtocolCaption": "Maximaal kapitaalaandeel per protocol · in stappen van 5%",
+      "perToken": "Per token",
+      "perTokenCaption": "Maximaal kapitaalaandeel aangehouden in elk token · in stappen van 5%",
+      "tokenOnNetwork": "{symbol} op {network}",
+      "hubRow": "Geen limiet · de hub houdt aan wat niet ergens anders naartoe wordt gestuurd",
+      "hubCaption": "Hub",
+      "footnote": "Limieten worden gecontroleerd wanneer geld wordt verplaatst. Groei door prijswijzigingen wordt niet teruggedrongen.",
+      "capMissing": "Stel een limiet in of vink Geen limiet aan om door te gaan.",
+      "sliderLabel": "Maximaal aandeel voor {name}",
+      "noCapLabel": "Geen limiet voor {name}",
+      "unset": "Niet ingesteld",
+      "noRows": "Hier is niets om te begrenzen: aan deze groep is niets toegevoegd.",
+      "kind": {
+        "lending": "Uitlenen",
+        "dex": "Liquidity positions",
+        "perps": "Perpetuals"
+      }
     }
   }
 }

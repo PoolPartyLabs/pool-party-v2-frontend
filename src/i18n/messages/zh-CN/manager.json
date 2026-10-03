@@ -700,6 +700,28 @@
       "v4Pending": "Uniswap v4 资金池将随基金合约数据源一同上线。",
       "retry": "重试",
       "error": "无法加载资金池。请检查您的网络连接并重试。"
+    },
+    "limits": {
+      "perNetwork": "按网络",
+      "perNetworkCaption": "每个网络的最大资金占比 · 以 5% 为单位",
+      "perProtocol": "按协议",
+      "perProtocolCaption": "每个协议的最大资金占比 · 以 5% 为单位",
+      "perToken": "按代币",
+      "perTokenCaption": "每个代币持有的最大资金占比 · 以 5% 为单位",
+      "tokenOnNetwork": "{network} 上的 {symbol}",
+      "hubRow": "无上限 · hub 持有未发送至其他地方的资金",
+      "hubCaption": "Hub",
+      "footnote": "限额仅在资金变动时进行核查。因价格变化而产生的增长不会被强制调回。",
+      "capMissing": "请设置限额，或勾选“无上限”以继续。",
+      "sliderLabel": "{name} 的最大占比",
+      "noCapLabel": "{name} 无上限",
+      "unset": "未设置",
+      "noRows": "此处无需设置限额：此分组中未添加任何内容。",
+      "kind": {
+        "lending": "借贷",
+        "dex": "Liquidity positions",
+        "perps": "永续"
+      }
     }
   }
 }

@@ -700,6 +700,28 @@
       "v4Pending": "Les pools Uniswap v4 arrivent avec la source de données des contrats de fonds.",
       "retry": "Réessayer",
       "error": "Impossible de charger les pools. Vérifiez votre connexion et réessayez."
+    },
+    "limits": {
+      "perNetwork": "Par réseau",
+      "perNetworkCaption": "Part maximale du capital par réseau · par paliers de 5 %",
+      "perProtocol": "Par protocole",
+      "perProtocolCaption": "Part maximale du capital par protocole · par paliers de 5 %",
+      "perToken": "Par jeton",
+      "perTokenCaption": "Part maximale du capital détenue dans chaque jeton · par paliers de 5 %",
+      "tokenOnNetwork": "{symbol} sur {network}",
+      "hubRow": "Aucun plafond · le hub conserve ce qui n'est pas envoyé ailleurs",
+      "hubCaption": "Hub",
+      "footnote": "Les plafonds sont vérifiés lors des mouvements de fonds. La croissance due aux variations de prix n'est pas forcée à revenir en arrière.",
+      "capMissing": "Définissez un plafond ou cochez Aucun plafond pour continuer.",
+      "sliderLabel": "Part maximale pour {name}",
+      "noCapLabel": "Aucun plafond pour {name}",
+      "unset": "Non défini",
+      "noRows": "Rien à plafonner ici : rien n'a été ajouté à ce groupe.",
+      "kind": {
+        "lending": "Prêt",
+        "dex": "Liquidity positions",
+        "perps": "Perpétuels"
+      }
     }
   }
 }

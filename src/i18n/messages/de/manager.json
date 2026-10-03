@@ -700,6 +700,28 @@
       "v4Pending": "Uniswap v4-Pools kommen mit der Datenquelle der Fondsverträge.",
       "retry": "Erneut versuchen",
       "error": "Die Pools konnten nicht geladen werden. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+    },
+    "limits": {
+      "perNetwork": "Pro Netzwerk",
+      "perNetworkCaption": "Maximaler Kapitalanteil pro Netzwerk · in 5-%-Schritten",
+      "perProtocol": "Pro Protokoll",
+      "perProtocolCaption": "Maximaler Kapitalanteil pro Protokoll · in 5-%-Schritten",
+      "perToken": "Pro Token",
+      "perTokenCaption": "Maximaler Kapitalanteil, der in jedem Token gehalten wird · in 5-%-Schritten",
+      "tokenOnNetwork": "{symbol} auf {network}",
+      "hubRow": "Kein Limit · der Hub hält, was nicht anderswohin gesendet wird",
+      "hubCaption": "Hub",
+      "footnote": "Limits werden bei Geldbewegungen überprüft. Wachstum durch Preisänderungen wird nicht zurückgedrängt.",
+      "capMissing": "Legen Sie ein Limit fest oder aktivieren Sie Kein Limit, um fortzufahren.",
+      "sliderLabel": "Maximaler Anteil für {name}",
+      "noCapLabel": "Kein Limit für {name}",
+      "unset": "Nicht festgelegt",
+      "noRows": "Hier gibt es nichts zu begrenzen: Dieser Gruppe wurde nichts hinzugefügt.",
+      "kind": {
+        "lending": "Verleih",
+        "dex": "Liquidity positions",
+        "perps": "Perpetuals"
+      }
     }
   }
 }
