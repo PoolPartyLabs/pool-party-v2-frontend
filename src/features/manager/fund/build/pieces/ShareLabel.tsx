@@ -99,7 +99,7 @@ export function ShareLabel({
       ) : (
         <span {...marks} {...hoverHandlers} className={LABEL_BOX}>
           <span className="sr-only">{tooltip}</span>
-          <span aria-hidden="true" className="contents">
+          <span aria-hidden="true" className="contents rounded-[inherit]">
             {face}
           </span>
         </span>

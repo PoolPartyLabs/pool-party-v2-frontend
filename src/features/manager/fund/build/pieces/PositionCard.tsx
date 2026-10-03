@@ -158,7 +158,7 @@ export function PositionCard({ content, selected, onSelect }: PositionCardProps)
         // from assistive technology so it is not read twice.
         <div {...marks} className={boxClass}>
           <span className="sr-only">{accessibleName}</span>
-          <span aria-hidden="true" className="contents">
+          <span aria-hidden="true" className="contents rounded-[inherit]">
             {body}
           </span>
         </div>

@@ -62,7 +62,13 @@ export interface PieceStrokeProps {
   className?: string;
 }
 
-/** A stroke drawn inside its piece: an overlay that takes no layout space ([A3]). */
+/**
+ * A stroke drawn inside its piece: an overlay that takes no layout space ([A3]).
+ *
+ * The overlay clips itself with `border-radius: inherit`, so its DOM parent must carry the piece's
+ * radius, or pass it on (`rounded-[inherit]` on any wrapper in between); otherwise the outer half
+ * of the stroke would show in the square corners.
+ */
 export function PieceStroke({ width, radius, dash, className }: PieceStrokeProps) {
   return (
     <svg

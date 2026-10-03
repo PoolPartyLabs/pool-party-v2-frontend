@@ -125,6 +125,9 @@ describe("ShareLabel", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(screen.getByText("35% of the strategy's capital").className).toContain("sr-only");
     expect(screen.getByText("35%").closest("[aria-hidden='true']")).not.toBeNull();
+    // The stroke clips to the label's radius through `rounded-[inherit]` on every wrapper.
+    const stroke = document.querySelector("[data-piece-stroke]");
+    expect(stroke?.parentElement?.className).toContain("rounded-[inherit]");
   });
 
   // @rule C19

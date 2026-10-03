@@ -345,6 +345,10 @@ describe("PositionCard", () => {
     expect(screen.getByText(NAME).className).toContain("sr-only");
     expect(screen.getByText("WETH / USDC").closest("[aria-hidden='true']")).not.toBeNull();
     expect(container.firstElementChild).toHaveAttribute(CANVAS_INTERACTIVE_ATTR, "");
+    // The stroke clips to the card's radius through `rounded-[inherit]`: the wrapper between the
+    // card and the stroke must pass the radius on, or the corners would show square.
+    const stroke = container.querySelector("[data-piece-stroke]");
+    expect(stroke?.parentElement?.className).toContain("rounded-[inherit]");
   });
 
   // @rule Interactive elements
