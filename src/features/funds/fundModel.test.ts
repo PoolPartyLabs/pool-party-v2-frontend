@@ -32,5 +32,6 @@ describe("fund model rules v2", () => {
     expect(fundErrorKey("V2_DEFERRED")).toBe("deferred");
     expect(fundErrorKey("StaleSpokeReport")).toBe("refreshing");
     expect(fundErrorKey("V2_UNAVAILABLE")).toBe("unavailable");
+    expect(fundErrorKey("TX_CONFIRMATION_UNKNOWN")).toBe("confirmationTimeout");
   });
 });

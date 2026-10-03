@@ -37,6 +37,7 @@ export function reportFreshness(age: number | null, maximum: number, elapsed = 0
   return age !== null && age >= 0 && maximum > 0 && age + elapsed <= maximum;
 }
 export function fundErrorKey(code: string) {
+  if (code === "TX_CONFIRMATION_UNKNOWN") return "confirmationTimeout";
   if (/BelowMinFirstDeposit|DepositBelowOneShare|SharesBelowMinimum|PayoutBelowOneShare/.test(code))
     return "minimum";
   if (/FUND_LIMIT_EXCEEDED|SpokeCapExceeded/.test(code)) return "limit";

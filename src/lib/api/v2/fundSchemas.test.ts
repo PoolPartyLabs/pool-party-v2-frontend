@@ -55,4 +55,13 @@ describe("fund view mapping contracts", () => {
       }).success,
     ).toBe(false);
   });
+  it("R4 rejects malformed optional preview amounts before rendering", () => {
+    for (const key of ["sharesBurned", "usdcRequested", "usdcOutstanding", "marketCost"])
+      expect(
+        fundBuildSchema.safeParse({
+          ...mockFundBuild({ action: "deposit" }),
+          preview: { protocolVersion: "v2", [key]: "not-an-integer" },
+        }).success,
+      ).toBe(false);
+  });
 });

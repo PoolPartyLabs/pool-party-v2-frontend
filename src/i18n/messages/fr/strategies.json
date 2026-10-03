@@ -860,6 +860,7 @@
     "state": "État du fonds",
     "balances": "Soldes des spokes",
     "transits": "Transferts",
-    "loadMore": "Charger plus"
+    "loadMore": "Charger plus",
+    "confirmationTimeout": "Votre transaction a été envoyée, mais nous n'avons pas pu la confirmer à temps. Vérifiez l'activité récente de votre portefeuille avant de réessayer, au cas où elle serait déjà passée."
   }
 }

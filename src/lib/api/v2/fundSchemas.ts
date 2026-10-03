@@ -155,6 +155,11 @@ export const previewSchema = record.extend({
   usdcGross: uint.optional(),
   payoutFee: uint.optional(),
   usdcPaid: uint.optional(),
+  sharesBurned: uint.optional(),
+  usdcRequested: uint.optional(),
+  usdcOutstanding: uint.optional(),
+  marketCost: uint.optional(),
+  shareAssets: uint.optional(),
 });
 export const fundBuildSchema = record.extend({
   transactions: z.array(transactionSchema).length(1),

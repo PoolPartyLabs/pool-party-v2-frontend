@@ -860,6 +860,7 @@
     "state": "Estado do fundo",
     "balances": "Saldos dos spokes",
     "transits": "Transferências",
-    "loadMore": "Carregar mais"
+    "loadMore": "Carregar mais",
+    "confirmationTimeout": "Sua transação foi enviada, mas não conseguimos confirmá-la a tempo. Verifique a atividade recente da sua carteira antes de tentar de novo, caso ela já tenha sido concluída."
   }
 }

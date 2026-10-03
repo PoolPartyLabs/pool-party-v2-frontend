@@ -860,6 +860,7 @@
     "state": "基金狀態",
     "balances": "Spoke餘額",
     "transits": "轉帳",
-    "loadMore": "載入更多"
+    "loadMore": "載入更多",
+    "confirmationTimeout": "您的交易已送出，但我們未能及時確認。再次嘗試前請查看您錢包的近期活動，以防它已經完成。"
   }
 }

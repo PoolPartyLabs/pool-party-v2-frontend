@@ -860,6 +860,7 @@
     "state": "Fund state",
     "balances": "Spoke balances",
     "transits": "Transits",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "confirmationTimeout": "Your transaction was sent, but we could not confirm it in time. Check your wallet's recent activity before trying again, in case it already went through."
   }
 }

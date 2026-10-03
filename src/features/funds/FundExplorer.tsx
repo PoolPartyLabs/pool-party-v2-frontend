@@ -51,7 +51,9 @@ export function FundExplorer({ view }: FundExplorerProps) {
           <FundDraftsSlot />
         </>
       ) : null}
-      {!result ? (
+      {view !== "explore" && !isMockMode && !isSignedIn ? (
+        <p role="status">{t("session")}</p>
+      ) : !result ? (
         <p role="status">{t("loading")}</p>
       ) : !result.ok ? (
         <div role="alert">

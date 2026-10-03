@@ -860,6 +860,7 @@
     "state": "펀드 상태",
     "balances": "Spoke 잔액",
     "transits": "전송",
-    "loadMore": "더 불러오기"
+    "loadMore": "더 불러오기",
+    "confirmationTimeout": "거래가 전송되었지만 제때 확인하지 못했습니다. 이미 처리되었을 수 있으니 다시 시도하기 전에 지갑의 최근 활동을 확인해 주세요."
   }
 }

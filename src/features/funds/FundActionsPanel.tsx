@@ -48,13 +48,15 @@ function WalletInvestorActions(props: FundActionsPanelProps) {
         if (!active()) throw new Error("V2_CANCELED");
         const provider = await wallet.getEthereumProvider();
         if (!active()) throw new Error("V2_CANCELED");
-        for (const tx of built.transactions)
+        for (const tx of built.transactions) {
+          if (!active()) throw new Error("V2_CANCELED");
           await executeBuiltTransaction(
             provider,
             { tx, chainId: tx.chainId },
             props.wallet,
             tx.chainId,
           );
+        }
       }}
     />
   );
@@ -198,7 +200,14 @@ function InvestorActions({
       refresh();
     } catch (failure) {
       if (active()) {
-        setError(fundErrorKey(failure instanceof Error ? failure.message : "V2_UNAVAILABLE"));
+        const code =
+          failure && typeof failure === "object" && "code" in failure
+            ? String(failure.code)
+            : failure instanceof Error
+              ? failure.message
+              : "V2_UNAVAILABLE";
+        setError(fundErrorKey(code));
+        if (code === "TX_CONFIRMATION_UNKNOWN") setBuilt(null);
         setPhase("review");
       }
     }

@@ -860,6 +860,7 @@
     "state": "Fondszustand",
     "balances": "Spoke-Guthaben",
     "transits": "Übertragungen",
-    "loadMore": "Mehr laden"
+    "loadMore": "Mehr laden",
+    "confirmationTimeout": "Deine Transaktion wurde gesendet, aber wir konnten sie nicht rechtzeitig bestätigen. Prüfe die letzten Aktivitäten deiner Wallet, bevor du es erneut versuchst, falls sie bereits durchgegangen ist."
   }
 }

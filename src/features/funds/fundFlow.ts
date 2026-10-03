@@ -29,6 +29,7 @@ export async function ensureFreshValuation(ports: FreshnessPorts) {
     await ports.wait();
     if (!ports.active()) throw new Error("V2_CANCELED");
     const state = await ports.poll(jobId);
+    if (!ports.active()) throw new Error("V2_CANCELED");
     if (state === "failed") throw new Error("V2_UNAVAILABLE");
     if (state === "delivered") {
       const refreshed = await ports.read();

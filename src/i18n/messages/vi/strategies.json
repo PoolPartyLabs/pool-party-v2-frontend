@@ -860,6 +860,7 @@
     "state": "Trạng thái quỹ",
     "balances": "Số dư spoke",
     "transits": "Chuyển tiền",
-    "loadMore": "Tải thêm"
+    "loadMore": "Tải thêm",
+    "confirmationTimeout": "Giao dịch của bạn đã được gửi, nhưng chúng tôi không thể xác nhận kịp thời. Hãy kiểm tra hoạt động gần đây của ví trước khi thử lại, phòng khi giao dịch đã hoàn tất."
   }
 }

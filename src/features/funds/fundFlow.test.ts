@@ -3,6 +3,24 @@ import { mockFund, mockFundBuild } from "@/mocks/data/v2Funds";
 import { approveAndRebuild, ensureFreshValuation } from "./fundFlow";
 
 describe("investor fund flows", () => {
+  it("R6 cancellation after a poll blocks a stale valuation reread", async () => {
+    let active = true;
+    const read = vi.fn().mockResolvedValue({ ...mockFund, lastReport: null });
+    await expect(
+      ensureFreshValuation({
+        read,
+        start: async () => "job",
+        poll: async () => {
+          active = false;
+          return "delivered";
+        },
+        wait: async () => {},
+        active: () => active,
+        refreshing: vi.fn(),
+      }),
+    ).rejects.toThrow("V2_CANCELED");
+    expect(read).toHaveBeenCalledTimes(1);
+  });
   it("R6 failed jobs stop without a mint or burn builder", async () => {
     await expect(
       ensureFreshValuation({

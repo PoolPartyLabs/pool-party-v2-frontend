@@ -860,6 +860,7 @@
     "state": "Estado del fondo",
     "balances": "Saldos de spokes",
     "transits": "Transferencias",
-    "loadMore": "Cargar más"
+    "loadMore": "Cargar más",
+    "confirmationTimeout": "Tu transacción se envió, pero no pudimos confirmarla a tiempo. Revisa la actividad reciente de tu billetera antes de volver a intentarlo, por si ya se completó."
   }
 }

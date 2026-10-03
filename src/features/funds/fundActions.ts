@@ -58,6 +58,12 @@ async function walletIdentity() {
   const wallet = await getSessionWallet();
   if (!wallet || !addressSchema.safeParse(wallet).success)
     throw new ApiError(401, "V2_SESSION", "sign in");
+  const owner = await apiFetch("users/me", {
+    schema: z.object({ walletAddress: addressSchema }),
+    headers: await getAuthHeader(),
+  });
+  if (!owner || owner.walletAddress.toLowerCase() !== wallet.toLowerCase())
+    throw new ApiError(401, "V2_SESSION", "unverified session");
   return wallet;
 }
 export async function loadFundsAction(view: "explore" | "holder" | "manager") {
@@ -92,7 +98,8 @@ export async function loadFundsAction(view: "explore" | "holder" | "manager") {
 export async function loadFundAction(core: string) {
   return resultOf(async () => {
     addressSchema.parse(core);
-    const wallet = isMockMode ? mockWallet : await getSessionWallet();
+    const session = isMockMode ? mockWallet : await getSessionWallet();
+    const wallet = session ? await walletIdentity() : null;
     const fund = isMockMode ? mockFund : await readFund(core);
     const holder = wallet ? (isMockMode ? mockHolder : await readHolder(core, wallet)) : null;
     return { fund, holder, wallet };
@@ -182,16 +189,7 @@ async function pollReport(jobId: string) {
   return fundRequest(`/report-jobs/${jobId}`, reportJobSchema, undefined, true);
 }
 async function verifiedReportWallet() {
-  const wallet = await walletIdentity();
-  if (!isMockMode) {
-    const owner = await apiFetch("users/me", {
-      schema: z.object({ walletAddress: addressSchema }),
-      headers: await getAuthHeader(),
-    });
-    if (!owner || owner.walletAddress.toLowerCase() !== wallet.toLowerCase())
-      throw new ApiError(401, "V2_SESSION", "unverified session");
-  }
-  return wallet;
+  return walletIdentity();
 }
 export async function startFundReportAction(core: string) {
   return resultOf(async () => {
@@ -226,7 +224,7 @@ export async function pollFundReportAction(core: string, jobId: string) {
     const job = cached ? cached.job : await pollReport(jobId);
     if (job.core.toLowerCase() !== core.toLowerCase())
       throw new ApiError(403, "V2_SESSION", "wrong fund");
-    polls.set(jobId, { at: Date.now(), job });
+    if (!cached) polls.set(jobId, { at: Date.now(), job });
     return job;
   });
 }
