@@ -919,7 +919,7 @@
         "networks": {
           "title": "Réseaux de votre mandat",
           "option": "spoke · ajoute un bridge",
-          "placed": "{names} sont déjà sur le canvas.",
+          "placed": "{count, plural, =1 {{names} est déjà sur le canvas.} other {{names} sont déjà sur le canvas.}}",
           "none": "Votre mandat n'a pas d'autre réseau."
         },
         "port": {
@@ -939,6 +939,7 @@
         "typeNoPool": "{type} · pas encore de pool",
         "typeNoAsset": "{type} · pas encore d'actif",
         "menuOpen": "Choisissez un protocole dans le menu. Le bloc est ajouté sur {network} et s'ouvre ici.",
+        "menuOpenNetwork": "Choisissez un réseau dans le menu. Le réseau est ajouté au canvas avec son bridge.",
         "portMenuOpenSupply": "Choisissez ce qui vient après {title}. Un bloc d'Emprunt utilise cette fourniture comme garantie.",
         "portMenuOpenBefore": "Choisissez ce qui vient avant {title}.",
         "portMenuOpenAfter": "Choisissez ce qui vient après {title}."

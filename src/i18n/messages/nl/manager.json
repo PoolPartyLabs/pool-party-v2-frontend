@@ -919,7 +919,7 @@
         "networks": {
           "title": "Netwerken uit uw mandaat",
           "option": "spoke · voegt een bridge toe",
-          "placed": "{names} staan al op het canvas.",
+          "placed": "{count, plural, =1 {{names} staat al op het canvas.} other {{names} staan al op het canvas.}}",
           "none": "Uw mandaat heeft geen ander netwerk."
         },
         "port": {
@@ -939,6 +939,7 @@
         "typeNoPool": "{type} · nog geen pool",
         "typeNoAsset": "{type} · nog geen asset",
         "menuOpen": "Kies een protocol in het menu. Het blok wordt toegevoegd op {network} en opent hier.",
+        "menuOpenNetwork": "Kies een netwerk in het menu. Het netwerk wordt met zijn bridge aan het canvas toegevoegd.",
         "portMenuOpenSupply": "Kies wat er na {title} komt. Een Lening-blok gebruikt dat aanbod als onderpand.",
         "portMenuOpenBefore": "Kies wat er vóór {title} komt.",
         "portMenuOpenAfter": "Kies wat er na {title} komt."

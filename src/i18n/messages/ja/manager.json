@@ -919,7 +919,7 @@
         "networks": {
           "title": "マンデートのネットワーク",
           "option": "スポーク · ブリッジを追加",
-          "placed": "{names} はすでにキャンバス上にあります。",
+          "placed": "{count, plural, =1 {{names} はすでにキャンバス上にあります。} other {{names} はすでにキャンバス上にあります。}}",
           "none": "マンデートに他のネットワークはありません。"
         },
         "port": {
@@ -939,6 +939,7 @@
         "typeNoPool": "{type} · プール未選択",
         "typeNoAsset": "{type} · 資産未選択",
         "menuOpen": "メニューからプロトコルを選んでください。ブロックは {network} に追加され、ここに表示されます。",
+        "menuOpenNetwork": "メニューからネットワークを選んでください。ネットワークはブリッジとともにキャンバスに追加されます。",
         "portMenuOpenSupply": "{title} の後に置くものを選んでください。借入ブロックはその供給を担保として使います。",
         "portMenuOpenBefore": "{title} の前に置くものを選んでください。",
         "portMenuOpenAfter": "{title} の後に置くものを選んでください。"

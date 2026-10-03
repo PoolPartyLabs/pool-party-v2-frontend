@@ -919,7 +919,7 @@
         "networks": {
           "title": "Networks from your mandate",
           "option": "spoke · adds a bridge",
-          "placed": "{names} are already on the canvas.",
+          "placed": "{count, plural, =1 {{names} is already on the canvas.} other {{names} are already on the canvas.}}",
           "none": "Your mandate has no other network."
         },
         "port": {
@@ -939,6 +939,7 @@
         "typeNoPool": "{type} · no pool yet",
         "typeNoAsset": "{type} · no asset yet",
         "menuOpen": "Choose a protocol in the menu. The block is added on {network} and opens here.",
+        "menuOpenNetwork": "Choose a network in the menu. The network is added to the canvas with its bridge.",
         "portMenuOpenSupply": "Choose what comes after {title}. A Borrow block uses that supply as its collateral.",
         "portMenuOpenBefore": "Choose what comes before {title}.",
         "portMenuOpenAfter": "Choose what comes after {title}."

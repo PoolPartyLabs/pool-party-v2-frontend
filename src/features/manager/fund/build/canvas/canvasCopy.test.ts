@@ -85,8 +85,9 @@ describe("canvas copy: one tree in every locale", () => {
   });
 
   // @rule G7
-  it("[G7] lands 100 keys, and none of the six review.* keys slice S7 owns", () => {
-    expect(EN.size).toBe(100);
+  it("[G7] lands 101 keys, and none of the six review.* keys slice S7 owns", () => {
+    // 100 from S2, plus `panel.menuOpenNetwork` (review F3 of PR #36, POO-2155).
+    expect(EN.size).toBe(101);
     expect([...EN.keys()].some((key) => key.startsWith("review."))).toBe(false);
   });
 
@@ -214,7 +215,11 @@ describe("canvas copy: the handoff's English, verbatim", () => {
     ["menu.link.networks", "Edit mandate · Networks"],
     ["menu.networks.title", "Networks from your mandate"],
     ["menu.networks.option", "spoke · adds a bridge"],
-    ["menu.networks.placed", "{names} are already on the canvas."],
+    // Review F2 of PR #36: the handoff's sentence, agreeing with the number of networks placed.
+    [
+      "menu.networks.placed",
+      "{count, plural, =1 {{names} is already on the canvas.} other {{names} are already on the canvas.}}",
+    ],
     ["menu.port.after", "After {title}"],
     ["panel.overline", "Configure block"],
     ["panel.nothingTitle", "Nothing selected"],
