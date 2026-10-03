@@ -666,6 +666,16 @@
       "lending": "Lending · supply tokens to earn interest",
       "dex": "Liquidity positions · earn trading fees in a price range",
       "perps": "Perpetuals · long and short positions with leverage"
+    },
+    "tokens": {
+      "search": "Search tokens · symbol, name or address",
+      "caption": "Only tokens on the networks and protocols you chose are listed. Every token is priced on the hub.",
+      "results": "{count, plural, one {# token} other {# tokens}} available on your networks and protocols",
+      "yours": "Your tokens · {count}",
+      "depositToken": "Deposit token",
+      "slotsCaption": "A token takes one slot on each network it runs on. The mandate holds {max} slots.",
+      "noPrice": "No price feed yet",
+      "empty": "No tokens match your search."
     }
   }
 }

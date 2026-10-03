@@ -666,6 +666,16 @@
       "lending": "Cho vay · cung cấp token để nhận lãi",
       "dex": "Liquidity positions · kiếm phí giao dịch trong một khoảng giá",
       "perps": "Vĩnh cửu · vị thế long và short có sử dụng đòn bẩy"
+    },
+    "tokens": {
+      "search": "Tìm token · mã, tên hoặc địa chỉ",
+      "caption": "Chỉ liệt kê các token trên những mạng và giao thức bạn đã chọn. Mọi token đều được định giá trên hub.",
+      "results": "{count, plural, other {# token}} khả dụng trên các mạng và giao thức của bạn",
+      "yours": "Token của bạn · {count}",
+      "depositToken": "Token nạp tiền",
+      "slotsCaption": "Mỗi token chiếm một slot trên mỗi mạng mà nó hoạt động. Nhiệm vụ này có {max} slot.",
+      "noPrice": "Chưa có nguồn giá",
+      "empty": "Không có token nào khớp với tìm kiếm của bạn."
     }
   }
 }

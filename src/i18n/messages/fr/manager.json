@@ -666,6 +666,16 @@
       "lending": "Prêt · fournissez des jetons pour gagner des intérêts",
       "dex": "Liquidity positions · gagnez des frais de transaction dans une fourchette de prix",
       "perps": "Perpétuels · positions longues et courtes avec effet de levier"
+    },
+    "tokens": {
+      "search": "Rechercher des jetons · symbole, nom ou adresse",
+      "caption": "Seuls les jetons des réseaux et protocoles choisis sont listés. Chaque jeton est évalué sur le hub.",
+      "results": "{count, plural, one {# jeton disponible} other {# jetons disponibles}} sur vos réseaux et protocoles",
+      "yours": "Vos jetons · {count}",
+      "depositToken": "Jeton de dépôt",
+      "slotsCaption": "Un jeton occupe un emplacement sur chaque réseau sur lequel il fonctionne. Le mandat dispose de {max} emplacements.",
+      "noPrice": "Pas encore de flux de prix",
+      "empty": "Aucun jeton ne correspond à votre recherche."
     }
   }
 }
