@@ -28,6 +28,7 @@ import {
   MAX_TOKEN_SLOTS,
   type MandateDraft,
   type MandatePoolRef,
+  type NetworkId,
   nextStep,
   previousStep,
   REQUIRED_PROTOCOLS,
@@ -200,6 +201,23 @@ describe("withNetworks", () => {
   //   const off = buildMandateCatalog({ robinhoodChain: false });
   //   expect(withNetworks(empty(), ["robinhood"], off).networks).toEqual(["arbitrum"]);
   // });
+
+  it("ignores a network id the catalog does not know", () => {
+    // @rule R17 v2: a stale draft can still carry a network the buildathon scope dropped (POO-2142).
+    const ids = ["base", "polygon", "unichain", "robinhood"] as unknown as NetworkId[];
+    expect(withNetworks(empty(), ids, catalog).networks).toEqual(["arbitrum", "robinhood"]);
+  });
+
+  it("ignores a network the catalog marks unavailable", () => {
+    // @rule R17 v2: no offered network is unavailable today; the guard stays for the next one.
+    const spokeOff = {
+      ...catalog,
+      networks: catalog.networks.map((n) =>
+        n.id === "robinhood" ? { ...n, available: false } : n,
+      ),
+    };
+    expect(withNetworks(empty(), ["robinhood"], spokeOff).networks).toEqual(["arbitrum"]);
+  });
 
   it("adds and removes the locked deposit row per selected network", () => {
     // @rule R24

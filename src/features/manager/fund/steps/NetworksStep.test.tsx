@@ -20,7 +20,7 @@ import {
   screen,
   userEvent,
 } from "../../../../../tests/utils/renderWithProviders";
-import { buildMandateCatalog } from "../mandateCatalog";
+import { buildMandateCatalog, type MandateCatalog } from "../mandateCatalog";
 import { createEmptyDraft, type MandateDraft, type NetworkId } from "../mandateDraft";
 import { NetworksStep } from "./NetworksStep";
 
@@ -28,6 +28,18 @@ const catalog = buildMandateCatalog();
 // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
 // /** Every spoke off, so nothing but the hub is in the mandate. */
 // const catalogNoSpokes = buildMandateCatalog({ robinhoodChain: false });
+
+/**
+ * The real catalog with Robinhood Chain marked unavailable. No network the buildathon scope offers
+ * is unavailable (R17 v2), but the disabled-row path of this step stays in the code, so it is
+ * exercised here: a disabled spoke, its blocked intent, and no Select all with no spoke to select.
+ */
+const catalogSpokeUnavailable: MandateCatalog = {
+  ...catalog,
+  networks: catalog.networks.map((network) =>
+    network.id === "robinhood" ? { ...network, available: false } : network,
+  ),
+};
 
 function draftWith(networks: NetworkId[]): MandateDraft {
   const empty = createEmptyDraft("2026-10-03T00:00:00.000Z", "draft-1");
@@ -216,6 +228,73 @@ describe("NetworksStep", () => {
 
     expect(update).toHaveBeenCalledTimes(1);
     expect(onBlocked).not.toHaveBeenCalled();
+  });
+
+  // @rule R17 v2: the disabled-row path stays, exercised on a catalog that marks the spoke unavailable.
+  it("marks a spoke the catalog turns off Coming soon and reports the click as a blocked intent", async () => {
+    const user = userEvent.setup();
+    const { update, onBlocked } = renderStep({ catalog: catalogSpokeUnavailable });
+
+    const robinhood = screen.getByRole("checkbox", { name: "Robinhood Chain" });
+    expect(robinhood).toHaveAttribute("aria-disabled", "true");
+    expect(robinhood).toHaveAttribute("data-mandate-row", "robinhood");
+    expect(screen.getByText("Coming soon")).toBeInTheDocument();
+
+    await user.click(robinhood);
+
+    expect(onBlocked).toHaveBeenCalledWith({
+      step: "networks",
+      reason: "coming_soon",
+      rowId: "robinhood",
+    });
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  // @rule R16
+  it("offers no Select all when no spoke is available at all", () => {
+    renderStep({ catalog: catalogSpokeUnavailable });
+
+    expect(screen.queryByRole("checkbox", { name: "Select all" })).not.toBeInTheDocument();
+  });
+
+  // @rule R17 v2
+  it("answers a Coming soon click with the event only, never with Pick at least one", async () => {
+    const user = userEvent.setup();
+    const update = vi.fn();
+    const onBlocked = vi.fn();
+    const draft = draftWith([]);
+    const { rerender } = renderWithProviders(
+      <NetworksStep
+        draft={draft}
+        catalog={catalogSpokeUnavailable}
+        update={update}
+        block={null}
+        onBlocked={onBlocked}
+      />,
+    );
+
+    await user.click(screen.getByRole("checkbox", { name: "Robinhood Chain" }));
+
+    expect(onBlocked).toHaveBeenCalledWith({
+      step: "networks",
+      reason: "coming_soon",
+      rowId: "robinhood",
+    });
+    // The shell hands the refusal straight back as `block`, which is the render that matters.
+    rerender(
+      <NetworksStep
+        draft={draft}
+        catalog={catalogSpokeUnavailable}
+        update={update}
+        block={{ step: "networks", reason: "coming_soon", rowId: "robinhood" }}
+        onBlocked={onBlocked}
+      />,
+    );
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByText("Pick at least one to continue.")).not.toBeInTheDocument();
+    // The pill is where "not yet" is said, and it is still said.
+    expect(screen.getByText("Coming soon")).toBeInTheDocument();
   });
 
   // @rule R12
