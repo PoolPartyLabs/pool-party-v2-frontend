@@ -25,6 +25,9 @@ const NETWORK_VISUALS: Record<string, NetworkVisual> = {
   base: { src: "/networks/base.png", color: "#0052FF" },
   arbitrum: { src: "/networks/arbitrum.png", color: "#28A0F0" },
   polygon: { src: "/networks/polygon.png", color: "#8247E5" },
+  // POO-1881, ported with the fund builder (POO-2119): Robinhood Chain is the spoke a fund Mandate
+  // names, so it gets its official mark instead of the monogram an unmapped slug falls back to.
+  robinhood: { src: "/networks/robinhood.png", color: "#00C805" },
 };
 
 /** Public props for {@link NetworkLogo}. */

@@ -609,12 +609,48 @@
   },
   "window30d": "30d",
   "fundBuilder": {
+    "common": {
+      "selectAll": "Seleccionar todo",
+      "alwaysIncluded": "Siempre incluido",
+      "comingSoon": "Próximamente",
+      "clearAll": "Deseleccionar todo",
+      "add": "Agregar",
+      "addAll": "Agregar los {count}",
+      "remove": "Quitar {name}",
+      "showMore": "Mostrar más pools ({count})",
+      "andMore": "y {count} más",
+      "slotsUsed": "Espacios de red usados",
+      "slotsCount": "{used} de {max}",
+      "noSlots": "Sin espacios disponibles",
+      "copyAddress": "Copiar dirección del token",
+      "copied": "Copiado",
+      "sortFilter": "Ordenar",
+      "sortPrefix": "Ordenar:",
+      "sortName": "Nombre",
+      "sortTvl": "TVL",
+      "allNetworks": "Todas las redes",
+      "networkFilter": "Red",
+      "noCap": "Sin límite",
+      "nothingSelected": "Elija al menos uno para continuar.",
+      "hubNote": "Los depósitos y retiros ocurren en esta red."
+    },
+    "networks": {
+      "hub": "Hub",
+      "others": "Otras redes"
+    },
     "networkNames": {
       "arbitrum": "Arbitrum",
       "robinhood": "Robinhood Chain",
       "base": "Base",
       "polygon": "Polygon",
       "unichain": "Unichain"
+    },
+    "protocols": {
+      "required": "Obligatorio",
+      "requiredSubtitle": "Toda estrategia necesita una forma de intercambiar tokens y de mover dinero entre sus redes.",
+      "operate": "Protocolos para operar",
+      "on": "En",
+      "onFootnote": "\"En\" muestra las redes del paso 1 en las que cada protocolo está disponible."
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",

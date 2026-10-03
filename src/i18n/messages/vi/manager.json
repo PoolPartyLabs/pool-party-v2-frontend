@@ -609,12 +609,48 @@
   },
   "window30d": "30 ngày",
   "fundBuilder": {
+    "common": {
+      "selectAll": "Chọn tất cả",
+      "alwaysIncluded": "Luôn được bao gồm",
+      "comingSoon": "Sắp ra mắt",
+      "clearAll": "Bỏ chọn tất cả",
+      "add": "Thêm",
+      "addAll": "Thêm tất cả {count}",
+      "remove": "Xóa {name}",
+      "showMore": "Xem thêm pool ({count})",
+      "andMore": "và {count} mục khác",
+      "slotsUsed": "Slot mạng đã dùng",
+      "slotsCount": "{used} trên {max}",
+      "noSlots": "Hết slot",
+      "copyAddress": "Sao chép địa chỉ token",
+      "copied": "Đã sao chép",
+      "sortFilter": "Sắp xếp",
+      "sortPrefix": "Sắp xếp:",
+      "sortName": "Tên",
+      "sortTvl": "TVL",
+      "allNetworks": "Tất cả các mạng",
+      "networkFilter": "Mạng",
+      "noCap": "Không giới hạn",
+      "nothingSelected": "Chọn ít nhất một mục để tiếp tục.",
+      "hubNote": "Nạp và rút tiền diễn ra trên mạng này."
+    },
+    "networks": {
+      "hub": "Hub",
+      "others": "Các mạng khác"
+    },
     "networkNames": {
       "arbitrum": "Arbitrum",
       "robinhood": "Robinhood Chain",
       "base": "Base",
       "polygon": "Polygon",
       "unichain": "Unichain"
+    },
+    "protocols": {
+      "required": "Bắt buộc",
+      "requiredSubtitle": "Mọi chiến lược đều cần một cách để đổi token và chuyển tiền giữa các mạng của nó.",
+      "operate": "Giao thức để vận hành",
+      "on": "Trên",
+      "onFootnote": "\"Trên\" hiển thị các mạng từ bước 1 nơi mỗi giao thức khả dụng."
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
