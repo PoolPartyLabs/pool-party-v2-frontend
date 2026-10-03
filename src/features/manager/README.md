@@ -263,8 +263,12 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
   USDG / Global Dollar, amending the handoff's literal default (R18, see "Coordinator defaults" and
   `docs/COMPLIANCE_REGISTER.md` `CR-MGR-013`).
 - **Protocols (R19 to R22).** The swap adapter and Across are locked above a divider, "Required"
-  (R19); "Protocols to operate" lists Aave v3 (Arbitrum only), Uniswap v3 and Uniswap v4 (Arbitrum,
-  Robinhood Chain) with "Select all" and an "On" column of per-network dots (R20 v2, POO-2143); GMX
+  (R19); "Protocols to operate" lists Aave v3 (Arbitrum only) and Uniswap v4 (Arbitrum, Robinhood
+  Chain) with "Select all" and an "On" column of per-network dots, while Uniswap v3 positions stay
+  listed but disabled, "Coming soon", because the fund contracts have no Uniswap v3 position adapter
+  (R20 v3, POO-2167; the required Uniswap v3 swap is a different row and stays); no reducer accepts
+  Uniswap v3 positions, and a stored draft that still names them loses the protocol, its pools and
+  its cap row when it is loaded (`withoutUnavailableProtocols`, applied by `mandateDraftStore.ts`); GMX
   is no longer offered and is commented out of the catalog, not deleted; availability stays data,
   per protocol and per network, so a disabled combination still reports its click (R21 v2); "Across"
   is named only on its own row, never in the bridge caption (R22).
@@ -321,7 +325,10 @@ phase has none). Investor-facing flag placement (the strategy card and detail sh
 flag anywhere today, `CR-MGR-010`). Backend persistence (drafts are `localStorage` only,
 `PP-MGR-STO-001`'s own `PP-INTEGRATION-POINT`; wiring issue POO-2132). Mobile layouts (desktop only,
 per the handoff). Uniswap v4 pool data in real mode (mock fixtures only,
-`docs/INTEGRATION_POINTS.md`; wiring issue POO-2133). The seams that wait on the contract interface
+`docs/INTEGRATION_POINTS.md`; wiring issue POO-2133). Known consequence of rules v3 (POO-2167):
+Uniswap v4 is the only selectable position protocol, so in real mode the Pools step lists nothing and
+its Next refuses with `nothing_selected` until a Uniswap v4 pool source exists (POO-2133, POO-2146);
+an Aave-only mandate skips the Pools step and completes. The seams that wait on the contract interface
 (registries, price source, spoke cap unit, contract-family marker) are tracked together by wiring
 issue POO-2134, against POO-2116 slices 5, 7 and 12.
 
