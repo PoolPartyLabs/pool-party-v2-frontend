@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-006
  * @name useMandateDraft
- * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2151 rules v1)
  * @analytics-events none, this hook owns draft STATE rather than instrumentation. It surfaces
  *   `lastBlock` and the save outcome, and the builder shell (PP-MGR-SCR-002) turns those into
  *   `builder_mandate_blocked` and the save/abandon events. A hook that emitted them itself would
@@ -20,6 +20,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { planFingerprint } from "./build/plan/planStorage";
 import { buildMandateCatalog, type MandateCatalog } from "./mandateCatalog";
 import {
   createEmptyDraft,
@@ -60,9 +61,14 @@ export interface UseMandateDraftResult {
   isDirty: boolean;
 }
 
-/** Everything a save has to carry: the five selections plus the name and the completion stamp. */
+/**
+ * Everything a save has to carry: the five selections, the name, the completion stamp and the Build
+ * plan (POO-2151, coordinator default D17). The plan is HERE and not in `selectionFingerprint`, so a
+ * plan edit arms the leave prompt without ever invalidating a completed mandate. `lastPhase` is
+ * bookkeeping, like `lastStep`, and stays out.
+ */
 function unsavedFingerprint(draft: MandateDraft): string {
-  return `${draft.name ?? ""}|${draft.completedAt ?? ""}|${selectionFingerprint(draft)}`;
+  return `${draft.name ?? ""}|${draft.completedAt ?? ""}|${selectionFingerprint(draft)}|${planFingerprint(draft.plan)}`;
 }
 
 /**

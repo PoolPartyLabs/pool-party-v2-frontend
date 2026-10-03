@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-044
  * @name MandateDraftsList tests
- * @implements-rules-version v1 (POO-2127 rules v1)
+ * @implements-rules-version v3 (POO-2127 rules v1, POO-2167 rules v3, POO-2151 rules v1)
  * @analytics-events none, the names are ASSERTED here rather than emitted; a test is never an
  *   emitter, so a screen cannot count as instrumented by being tested
  *
@@ -44,7 +44,7 @@ const toasts = vi.hoisted(() => {
 });
 vi.mock("@/components/ui/Toast", () => ({ toast: toasts.toast }));
 
-import { MandateDraftsList } from "./MandateDraftsList";
+import { draftResumeHref, MandateDraftsList } from "./MandateDraftsList";
 
 /** Hours ago, as an ISO stamp. */
 function hoursAgo(hours: number): string {
@@ -122,16 +122,58 @@ describe("MandateDraftsList", () => {
 
   // @rule D1
   it("counts the steps the draft actually has, so a skipped Pools step is not counted", async () => {
-    // R29: a mandate with a position protocol has five steps; one without has four.
+    // R29: a mandate with a position protocol has five steps; one without has four. Uniswap v4,
+    // the position protocol the buildathon scope offers (R20 v3, POO-2167).
     const withPools = withProtocols(saved("a", { lastStep: "limits" }), [
       ...REQUIRED_PROTOCOLS,
-      "uniswap-v3",
+      "uniswap-v4",
     ]);
     seedPayload({ ...withPools, updatedAt: hoursAgo(3) });
 
     renderWithProviders(<MandateDraftsList />);
 
     expect(await screen.findByText(/Mandate, step 5 of 5/)).toBeInTheDocument();
+  });
+
+  /**
+   * R20 v3 (POO-2167): a draft parked on Pools whose only position protocol was Uniswap v3 loses the
+   * protocol, and so the Pools step, when it is loaded, while `lastStep` still says "pools". The row
+   * counts from the first step the manager has not passed instead of printing "step 0".
+   */
+  // @rule D1 @rule R20 v3
+  it("counts from the first unpassed step when the parked step no longer exists", async () => {
+    seedPayload(
+      saved("v3", {
+        protocols: [...REQUIRED_PROTOCOLS, "uniswap-v3"],
+        passedSteps: ["networks", "protocols", "tokens"],
+        lastStep: "pools",
+        updatedAt: hoursAgo(2),
+      }),
+    );
+
+    renderWithProviders(<MandateDraftsList />);
+
+    expect(
+      await screen.findByText("Mandate, step 4 of 4 · updated 2 hours ago"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/step 0 of/)).not.toBeInTheDocument();
+  });
+
+  // @rule D3 @rule R20 v3
+  it("Open resumes a draft whose parked step no longer exists on the first unpassed step", async () => {
+    seedPayload(
+      saved("v3", {
+        protocols: [...REQUIRED_PROTOCOLS, "uniswap-v3"],
+        passedSteps: ["networks", "protocols", "tokens"],
+        lastStep: "pools",
+      }),
+    );
+
+    renderWithProviders(<MandateDraftsList />);
+    await userEvent.click(await screen.findByRole("button", { name: "Open" }));
+
+    expect(nav.push).toHaveBeenCalledWith("/manager/new?draft=v3&step=limits");
+    expect(emitted("builder_draft_opened")).toEqual([{ step: "limits" }]);
   });
 
   // @rule D1
@@ -166,6 +208,23 @@ describe("MandateDraftsList", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Open" }));
 
     expect(nav.push).toHaveBeenCalledWith("/manager/new?draft=a&step=tokens");
+  });
+
+  // @rule Resume
+  it("Open resumes a completed draft last saved in Build on the Build phase", async () => {
+    seedPayload(
+      saved("b", {
+        lastStep: "limits",
+        passedSteps: ["networks", "protocols", "tokens", "limits"],
+        completedAt: hoursAgo(3),
+        lastPhase: "build",
+      }),
+    );
+
+    renderWithProviders(<MandateDraftsList />);
+    await userEvent.click(await screen.findByRole("button", { name: "Open" }));
+
+    expect(nav.push).toHaveBeenCalledWith("/manager/new?draft=b&step=limits&phase=build");
   });
 
   // @rule D3
@@ -289,5 +348,46 @@ describe("MandateDraftsList", () => {
     upsertDraft(saved("late", { name: "Saved from the builder" }));
 
     expect(await screen.findByText("Saved from the builder")).toBeInTheDocument();
+  });
+});
+
+/**
+ * POO-2151 (coordinator default D16): a completed draft last saved in Build opens on Build. Only
+ * that case adds the phase: Build exists only for a mandate that closed, and a draft with no phase
+ * is one written before the canvas, which reads as the mandate.
+ */
+describe("draftResumeHref", () => {
+  const done = (over: Partial<MandateDraft> = {}) =>
+    saved("r", {
+      lastStep: "limits",
+      passedSteps: ["networks", "protocols", "tokens", "limits"],
+      completedAt: "2026-10-03T00:00:00.000Z",
+      ...over,
+    });
+
+  it("adds the Build phase for a completed draft last saved in Build", () => {
+    // @rule Resume
+    expect(draftResumeHref(done({ lastPhase: "build" }))).toBe(
+      "/manager/new?draft=r&step=limits&phase=build",
+    );
+  });
+
+  it("leaves the phase out for a draft last saved in the mandate", () => {
+    // @rule Resume
+    expect(draftResumeHref(done({ lastPhase: "mandate" }))).toBe(
+      "/manager/new?draft=r&step=limits",
+    );
+  });
+
+  it("leaves the phase out for a draft with no phase, which reads as the mandate", () => {
+    // @rule Resume
+    expect(draftResumeHref(done())).toBe("/manager/new?draft=r&step=limits");
+  });
+
+  it("leaves the phase out for a draft whose mandate is not complete, whatever it says", () => {
+    // @rule Resume
+    expect(draftResumeHref(done({ completedAt: null, lastPhase: "build" }))).toBe(
+      "/manager/new?draft=r&step=limits",
+    );
   });
 });

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-STO-001
  * @name mandateDraftStore
- * @implements-rules-version v1 (POO-2121 rules v1)
+ * @implements-rules-version v3 (POO-2121 rules v1, POO-2167 rules v3, POO-2151 rules v1)
  * @analytics-events none, a storage module. The builder shell (PP-MGR-SCR-002) emits the save and
  *   abandon events; a store that emitted its own would double-count every write.
  *
@@ -24,8 +24,19 @@
  *    only by the next real write, which is a deliberate user action.
  * 3. **No storage access at import time.** This module is imported by a client component that also
  *    renders on the server, where `window` does not exist.
+ *
+ * And one for the Build plan (POO-2151, PR #31 review F1): **an unreadable plan is never deleted
+ * silently.** A draft whose stored plan this build cannot read loads without it and with
+ * `planUnreadable: true`, and every write, of any draft, puts that raw plan back untouched until a
+ * save of that draft with a new plan replaces it.
  */
-import { MANDATE_STEP_ORDER, type MandateDraft, type MandateStepKey } from "./mandateDraft";
+import { normalizePlan } from "./build/plan/planStorage";
+import {
+  MANDATE_STEP_ORDER,
+  type MandateDraft,
+  type MandateStepKey,
+  withoutUnavailableProtocols,
+} from "./mandateDraft";
 
 /** The one storage key. Namespaced and versioned, per the repo's localStorage policy. */
 export const MANDATE_DRAFTS_KEY = "pp.manager.mandateDrafts.v1";
@@ -76,6 +87,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * the first drafts were written, and a draft that predates it is complete in every other way. Null is
  * also its own honest value ("no pool universe resolved yet"), so the default cannot be mistaken for
  * a count.
+ *
+ * R20 v3 (POO-2167): a protocol the product can no longer operate is dropped here, with its pools
+ * and its cap row ({@link withoutUnavailableProtocols}). This is the one read path: `getDraft` (the
+ * builder's resume) and `listDrafts` (the Console's counts) both come through it, so neither can show
+ * a Uniswap v3 position the manager could no longer remove. Like the rest of this function it only
+ * reads; the stored copy is replaced by the next real write.
+ *
+ * POO-2151 (Build canvas): `plan` and `lastPhase` are OPTIONAL and checked on their own. A plan that
+ * fails `normalizePlan` is left out of the draft, which is kept and marked `planUnreadable` (the app
+ * then works with the empty plan, never a guess), while the raw plan stays in storage untouched (see
+ * {@link readStore} and {@link upsertDraft}). An unknown phase is dropped and reads as the mandate
+ * (D16). Neither moves {@link MANDATE_DRAFTS_VERSION}: a draft without them is exactly what this
+ * store wrote before. A stored `planUnreadable` is ignored: the marker is derived on every read.
  */
 function normalizeDraft(value: unknown): MandateDraft | null {
   if (!isRecord(value)) return null;
@@ -92,15 +116,40 @@ function normalizeDraft(value: unknown): MandateDraft | null {
   if (!isRecord(caps.networks) || !isRecord(caps.protocols) || !isRecord(caps.tokens)) return null;
   const universe = value.poolUniverseCount;
   if (universe !== undefined && universe !== null && typeof universe !== "number") return null;
-  return {
-    ...(value as unknown as MandateDraft),
+  const {
+    plan: storedPlan,
+    lastPhase: storedPhase,
+    planUnreadable: _derivedOnRead,
+    ...rest
+  } = value;
+  const draft: MandateDraft = {
+    ...(rest as unknown as MandateDraft),
     poolUniverseCount: typeof universe === "number" ? universe : null,
   };
+  // POO-2151: an unreadable plan costs the plan in memory, never the draft, and is never deleted
+  // silently: the draft says so (`planUnreadable`) and the raw plan stays stored (readStore).
+  if (storedPlan !== undefined) {
+    const plan = normalizePlan(storedPlan);
+    if (plan) draft.plan = plan;
+    else draft.planUnreadable = true;
+  }
+  // D16: a phase this build does not know is dropped, and no phase reads as the mandate.
+  if (storedPhase === "mandate" || storedPhase === "build") draft.lastPhase = storedPhase;
+  return withoutUnavailableProtocols(draft);
+}
+
+/**
+ * What the store holds: the drafts as the screens read them, plus the RAW stored plan of every draft
+ * whose plan this build could not read, by draft id, so a write can put it back byte for byte.
+ */
+interface StoreState {
+  drafts: Record<string, MandateDraft>;
+  unreadablePlans: Record<string, unknown>;
 }
 
 /** Read the payload. Anything unreadable, foreign or malformed reads as empty, and is NOT written. */
-function readPayload(): MandateDraftsPayload {
-  const empty: MandateDraftsPayload = { version: MANDATE_DRAFTS_VERSION, drafts: {} };
+function readStore(): StoreState {
+  const empty: StoreState = { drafts: {}, unreadablePlans: {} };
   const store = storage();
   if (!store) return empty;
   try {
@@ -111,23 +160,42 @@ function readPayload(): MandateDraftsPayload {
     const payload = parsed as Partial<MandateDraftsPayload>;
     if (payload.version !== MANDATE_DRAFTS_VERSION) return empty;
     if (typeof payload.drafts !== "object" || payload.drafts === null) return empty;
-    const drafts: Record<string, MandateDraft> = {};
+    const state: StoreState = { drafts: {}, unreadablePlans: {} };
     for (const [id, entry] of Object.entries(payload.drafts as Record<string, unknown>)) {
       const draft = normalizeDraft(entry);
-      if (draft) drafts[id] = draft;
+      if (!draft) continue;
+      state.drafts[id] = draft;
+      if (draft.planUnreadable) state.unreadablePlans[id] = (entry as { plan?: unknown }).plan;
     }
-    return { version: MANDATE_DRAFTS_VERSION, drafts };
+    return state;
   } catch {
     return empty;
   }
 }
 
-/** Write the payload. False means the write did not happen, and the caller must say so. */
-function writePayload(payload: MandateDraftsPayload): boolean {
+/**
+ * One draft as it goes to storage. The `planUnreadable` marker is never stored (it is derived on
+ * read), and a draft with no plan of its own gets its unreadable raw plan back, untouched: only a
+ * save that carries a NEW plan replaces it (PR #31 review, F1).
+ */
+function toStoredEntry(draft: MandateDraft, unreadablePlan: unknown): Record<string, unknown> {
+  const { planUnreadable: _marker, ...entry } = draft;
+  if (entry.plan === undefined && unreadablePlan !== undefined) {
+    return { ...entry, plan: unreadablePlan };
+  }
+  return entry;
+}
+
+/** Write the drafts. False means the write did not happen, and the caller must say so. */
+function writeStore(state: StoreState): boolean {
   const store = storage();
   if (!store) return false;
+  const drafts: Record<string, Record<string, unknown>> = {};
+  for (const [id, draft] of Object.entries(state.drafts)) {
+    drafts[id] = toStoredEntry(draft, state.unreadablePlans[id]);
+  }
   try {
-    store.setItem(MANDATE_DRAFTS_KEY, JSON.stringify(payload));
+    store.setItem(MANDATE_DRAFTS_KEY, JSON.stringify({ version: MANDATE_DRAFTS_VERSION, drafts }));
     return true;
   } catch {
     return false;
@@ -140,14 +208,14 @@ function notify(): void {
 
 /** Every stored draft, newest first, which is the order the Console drafts card shows them in. */
 export function listDrafts(): MandateDraft[] {
-  return Object.values(readPayload().drafts).sort(
+  return Object.values(readStore().drafts).sort(
     (a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt),
   );
 }
 
 /** One draft by id, or null when it is not stored (a deleted draft, or a link to someone else's). */
 export function getDraft(id: string): MandateDraft | null {
-  return readPayload().drafts[id] ?? null;
+  return readStore().drafts[id] ?? null;
 }
 
 /**
@@ -156,14 +224,22 @@ export function getDraft(id: string): MandateDraft | null {
  * The timestamp is set HERE rather than by the reducers so that the pure domain never reads a
  * clock: "when was this last touched" means "when did it last reach storage", which is also what
  * the drafts list shows. Returns the stored draft, or null when the write failed.
+ *
+ * An unreadable plan is never deleted silently (PR #31 review, F1). Every OTHER draft is written
+ * back with its raw stored plan untouched, and so is THIS draft while it carries no `plan` of its
+ * own: the returned draft then still says `planUnreadable`. Only a save that carries a new `plan`
+ * replaces the raw one, and the marker goes with it.
  */
 export function upsertDraft(draft: MandateDraft): MandateDraft | null {
-  const stored: MandateDraft = { ...draft, updatedAt: new Date().toISOString() };
-  const payload = readPayload();
-  const ok = writePayload({
-    version: MANDATE_DRAFTS_VERSION,
-    drafts: { ...payload.drafts, [stored.id]: stored },
-  });
+  const state = readStore();
+  const keepsUnreadable = draft.plan === undefined && state.unreadablePlans[draft.id] !== undefined;
+  const { planUnreadable: _marker, ...base } = draft;
+  const stored: MandateDraft = {
+    ...base,
+    updatedAt: new Date().toISOString(),
+    ...(keepsUnreadable ? { planUnreadable: true } : {}),
+  };
+  const ok = writeStore({ ...state, drafts: { ...state.drafts, [stored.id]: stored } });
   if (!ok) return null;
   notify();
   return stored;
@@ -179,11 +255,11 @@ export function upsertDraft(draft: MandateDraft): MandateDraft | null {
  */
 export function deleteDraft(id: string): boolean {
   if (!storage()) return false;
-  const payload = readPayload();
-  if (!(id in payload.drafts)) return true;
-  const drafts = { ...payload.drafts };
+  const state = readStore();
+  if (!(id in state.drafts)) return true;
+  const drafts = { ...state.drafts };
   delete drafts[id];
-  if (!writePayload({ version: MANDATE_DRAFTS_VERSION, drafts })) return false;
+  if (!writeStore({ ...state, drafts })) return false;
   notify();
   return true;
 }
