@@ -73,7 +73,10 @@ export interface LayoutInput {
 }
 
 export interface LayoutOptions {
-  /** Measured width of the empty-canvas sentence, in px (English: 420). Read only when empty. */
+  /**
+   * Measured width of the empty-canvas sentence, in px (English: 420). Read only when empty, and
+   * rounded up to an even integer there, so a fractional measure keeps every x whole.
+   */
   startHereWidth: number;
 }
 

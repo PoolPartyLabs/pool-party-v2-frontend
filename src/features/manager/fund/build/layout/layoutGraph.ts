@@ -29,13 +29,21 @@
  *   the deepest content.
  * - L6, the empty canvas: spine at 202, templates 60 each side, captions 22 under the circle and 6
  *   under the box, the sentence 28 under the captions' top, Idle output 48 under the sentence.
- * - L4, normalisation, LAST: translate the whole graph so the leftmost content sits at x 24.
+ * - L4, normalisation, LAST: translate the whole graph RIGHT until the leftmost content sits at x
+ *   24; it never moves left.
  *
- * PP-NOTE (L4, read for the narrow case): the handoff says "translate right until the leftmost
- * content sits at 24" and "graph size = content bounds plus 24 on every side". Both hold only if the
- * translation is exactly `24 - leftmost`, which is negative in one case: an empty canvas whose
- * sentence is narrower than Deposit (236 px, a short locale). Then the graph moves LEFT and the spine
- * lands on its minimum, 142. Every drawn reference (English, 420 px) shifts right by 32 either way.
+ * PP-NOTE (L4, the coordinator's reading, review of PR #33): the handoff says "translate the whole
+ * graph to the right until the leftmost content sits at x = 24", and for the empty canvas "the
+ * whole graph shifts right until the sentence starts at the canvas padding". So the shift is
+ * `max(0, 24 - leftmost)`. Outside the empty canvas the leftmost content is never right of 24 (the
+ * row starts there), so nothing changes. On an empty canvas whose start-here sentence is narrower
+ * than 356 px (a short locale), nothing shifts: the spine stays at 202 and Deposit, the leftmost
+ * content, starts at 84. A left padding larger than 24 on a narrow empty canvas is the accepted
+ * consequence; the right and bottom paddings stay 24. Every drawn reference is unchanged (English
+ * canvas D, 420 px, shifts by 32; Build state 5 by 76).
+ *
+ * The measured sentence width is rounded UP to an even integer first, so the sentence, centred on a
+ * whole spine, keeps every x of the empty graph whole (a measured 419.64 lays out as 420).
  *
  * Every edge is ONE straight segment with a stable id, so a share label names its stub (`edgeId`)
  * and the renderer can highlight it. Ports come from `portSlotsOf` (S1, C17), never re-derived.
@@ -445,10 +453,12 @@ function layoutEmpty(input: LayoutInput, options: LayoutOptions): Draft {
     ...spanning("bus:idleInput", "structural", L.BUS_Y, [c, centreOf(circle), centreOf(netbox)]),
   );
 
-  const width =
+  const measured =
     Number.isFinite(options.startHereWidth) && options.startHereWidth > 0
       ? options.startHereWidth
       : 0;
+  // Up to an even integer, so the sentence centred on the spine starts on a whole x.
+  const width = Math.ceil(measured / 2) * 2;
   const captionTop = Math.max(
     bottomOf(circle) + L.EMPTY_CAPTION_GAP_CIRCLE,
     bottomOf(netbox) + L.EMPTY_CAPTION_GAP_BOX,
@@ -477,7 +487,7 @@ function movePoint(p: Point, dx: number): Point {
   return { ...p, x: p.x + dx };
 }
 
-/** L4, last: translate everything so the leftmost content sits at the canvas padding. */
+/** L4, last: translate everything right until the leftmost content sits at the canvas padding. */
 function normalise(d: Draft): GraphLayout {
   const content: Rect[] = [
     ...d.spine.map((n) => n.rect),
@@ -487,7 +497,7 @@ function normalise(d: Draft): GraphLayout {
     ...d.templates.map((n) => n.rect),
     ...(d.emptyCaptions ? [d.emptyCaptions.startHere] : []),
   ];
-  const dx = L.CANVAS_PAD - Math.min(...content.map((r) => r.x));
+  const dx = Math.max(0, L.CANVAS_PAD - Math.min(...content.map((r) => r.x)));
   const right = Math.max(...content.map(rightOf)) + dx;
   const bottom = Math.max(...content.map(bottomOf));
   const captions = d.emptyCaptions;

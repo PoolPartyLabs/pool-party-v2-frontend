@@ -36,7 +36,7 @@ import * as planRules from "../plan/planRules";
 import type { GraphLayout, LayoutChain, LayoutInput, LayoutStep, Rect } from "./graphTypes";
 import { LAYOUT } from "./layoutConstants";
 import { layoutGraph } from "./layoutGraph";
-import { horizontalRuns, nodeRects, verticalsAt } from "./layoutTestKit";
+import { horizontalRuns, labelKey, nodeRects, verticalsAt } from "./layoutTestKit";
 
 const real = vi.hoisted(() => ({
   portSlotsOf: null as null | typeof import("../plan/planRules").portSlotsOf,
@@ -507,6 +507,27 @@ describe("[C8] share labels", () => {
     }
   });
 
+  // @rule C8
+  it("[C8] names the card each label feeds, written out (canvas A, Build state 3)", () => {
+    const feeds = (fixture: BuildCanvasFixture) =>
+      Object.fromEntries(
+        layoutGraph(fixture.input, EN).shareLabels.map((l) => [labelKey(l), l.target.feedsBlockId]),
+      );
+    expect(feeds(canvasA)).toEqual({
+      "a-hub-1": "a-hub-1-pool",
+      "a-hub-2": "a-hub-2-supply",
+      "a-hub-3": "a-hub-3-supply",
+      "spoke:base": null,
+      "a-base-1": "a-base-1-pool",
+      "a-base-2": "a-base-2-pool",
+      "a-base-3": "a-base-3-supply",
+      "spoke:robinhood": null,
+      "a-rh-1": "a-rh-1-pool",
+      "a-rh-2": "a-rh-2-pool",
+    });
+    expect(feeds(BUILD_CANVAS_FIXTURES.buildState3)).toEqual({ "s3-chain": "s3-pool" });
+  });
+
   // @rule C8 @rule L10
   it("[L10] names an edge that exists for every label", () => {
     const layout = layoutGraph(canvasA.input, EN);
@@ -669,6 +690,188 @@ describe("[C18] inserting pushes, never rearranges; removing closes the gap", ()
 });
 
 // ---------------------------------------------------------------------------
+// C18, A5: adding or removing a whole chain moves the columns after it by one pitch
+// ---------------------------------------------------------------------------
+
+/** One column of a row: a chain and the 32 after it. */
+const PITCH = LAYOUT.CARD_W + LAYOUT.SIBLING;
+const SPINE_ROLES = new Set(["deposit", "idleInput", "idleOutput", "income", "withdraw"]);
+
+function newChain(id: string): LayoutChain {
+  return {
+    id,
+    sharePct: 0,
+    steps: [
+      { id: `${id}-swap`, family: "flow", kind: "swap", auto: true, configured: true },
+      {
+        id: `${id}-pool`,
+        family: "position",
+        kind: "uniswapV4Pool",
+        auto: false,
+        configured: true,
+      },
+    ],
+  };
+}
+
+function editRow(
+  input: LayoutInput,
+  network: string,
+  edit: (chains: LayoutChain[]) => LayoutChain[],
+): LayoutInput {
+  const next = structuredClone(input);
+  if (network === next.hubNetwork) next.hub.chains = edit(next.hub.chains);
+  for (const spoke of next.spokes) if (spoke.network === network) spoke.chains = edit(spoke.chains);
+  return next;
+}
+
+/** How far the normalisation moved the graph: before it, the row always starts at x 24. */
+function rowShift(layout: GraphLayout, hubNetwork: string): number {
+  const hubBlocks = layout.blocks.filter((b) => b.network === hubNetwork).map((b) => b.rect.x);
+  return Math.min(hubCircle(layout).x, ...hubBlocks) - LAYOUT.CANVAS_PAD;
+}
+
+/** Every box but the spine, in the coordinates before normalisation. */
+function rawBoxes(layout: GraphLayout, hubNetwork: string): Record<string, Rect> {
+  const dx = rowShift(layout, hubNetwork);
+  return Object.fromEntries(
+    Object.entries(nodeRects(layout))
+      .filter(([key]) => !SPINE_ROLES.has(key))
+      .map(([key, r]) => [key, { ...r, x: r.x - dx }]),
+  );
+}
+
+/**
+ * C18 and A5 for a whole column: every box whose x is past `threshold` moves by `delta`, every other
+ * box stays; the edited spoke's box keeps its x and changes width by `delta`, its Bridge (centred)
+ * moves by half of it. The normalisation shift changes only when Idle output decides the leftmost
+ * content.
+ */
+function expectColumnMoved(
+  before: GraphLayout,
+  after: GraphLayout,
+  hubNetwork: string,
+  edit: { network: string; threshold: number; inclusive: boolean; delta: number },
+) {
+  const b = rawBoxes(before, hubNetwork);
+  const a = rawBoxes(after, hubNetwork);
+  const spoke = edit.network !== hubNetwork;
+  for (const [key, rb] of Object.entries(b)) {
+    const ra = a[key];
+    if (!ra) continue;
+    if (spoke && key === `group:${edit.network}`) {
+      expect([ra.x, ra.y, ra.w], key).toEqual([rb.x, rb.y, rb.w + edit.delta]);
+    } else if (spoke && key === `bridge:${edit.network}`) {
+      expect(ra, key).toEqual({ ...rb, x: rb.x + edit.delta / 2 });
+    } else {
+      const moves = edit.inclusive ? rb.x >= edit.threshold : rb.x > edit.threshold;
+      expect(ra, key).toEqual(moves ? { ...rb, x: rb.x + edit.delta } : rb);
+    }
+  }
+  for (const layout of [before, after]) {
+    if (rowShift(layout, hubNetwork) !== 0) {
+      expect(spine(layout, "idleOutput").x).toBe(LAYOUT.CANVAS_PAD);
+    }
+  }
+}
+
+describe("[C18] adding or removing a whole chain moves only the columns after it", () => {
+  const appends: Array<[string, string]> = [];
+  const removals: Array<[string, string, string]> = [];
+  for (const [name, fixture] of WITH_CHAINS) {
+    const { hubNetwork, hub, spokes } = fixture.input;
+    const rows = [
+      { network: hubNetwork, chains: hub.chains },
+      ...spokes.map((s) => ({ network: s.network, chains: s.chains })),
+    ];
+    for (const row of rows) {
+      const isHub = row.network === hubNetwork;
+      // A spoke with no chain is ST9 (the circle is centred), covered on its own below.
+      if (isHub || row.chains.length > 0) appends.push([name, row.network]);
+      for (const chain of row.chains) {
+        const leavesCanvasEmpty = isHub && row.chains.length === 1 && spokes.length === 0;
+        const emptiesSpoke = !isHub && row.chains.length === 1;
+        if (!leavesCanvasEmpty && !emptiesSpoke) removals.push([name, row.network, chain.id]);
+      }
+    }
+  }
+
+  // @rule C18 @rule A5
+  it.each(
+    appends,
+  )("[C18] %s: a chain appended to %s moves its circle and what follows", (name, network) => {
+    const fixture = BUILD_CANVAS_FIXTURES[name as keyof typeof BUILD_CANVAS_FIXTURES];
+    const before = layoutGraph(fixture.input, EN);
+    const after = layoutGraph(
+      editRow(fixture.input, network, (c) => [...c, newChain("edit-new")]),
+      EN,
+    );
+    const hub = fixture.input.hubNetwork;
+    const threshold = rawBoxes(before, hub)[`addProtocol:${network}`]?.x ?? Number.NaN;
+    expectColumnMoved(before, after, hub, { network, threshold, inclusive: true, delta: PITCH });
+    // The new chain takes the circle's old place.
+    expect(rawBoxes(after, hub)["edit-new-swap"]?.x).toBe(threshold);
+  });
+
+  // @rule C18 @rule A5
+  it.each(
+    removals,
+  )("[C18] %s: removing from %s the chain %s closes its column", (name, network, chainId) => {
+    const fixture = BUILD_CANVAS_FIXTURES[name as keyof typeof BUILD_CANVAS_FIXTURES];
+    const before = layoutGraph(fixture.input, EN);
+    const after = layoutGraph(
+      editRow(fixture.input, network, (c) => c.filter((x) => x.id !== chainId)),
+      EN,
+    );
+    const hub = fixture.input.hubNetwork;
+    const first = fixture.input.hub.chains
+      .concat(fixture.input.spokes.flatMap((s) => s.chains))
+      .find((c) => c.id === chainId)?.steps[0]?.id;
+    const threshold = rawBoxes(before, hub)[first ?? ""]?.x ?? Number.NaN;
+    expectColumnMoved(before, after, hub, { network, threshold, inclusive: false, delta: -PITCH });
+    expect(after.blocks.some((b) => b.chainId === chainId)).toBe(false);
+  });
+
+  // @rule C18 @rule ST9 @rule C16
+  it("[C16] the first chain of an empty spoke sends its circle to the row's end", () => {
+    const before = layoutGraph(newSpokeNoChain.input, EN);
+    const after = layoutGraph(
+      editRow(newSpokeNoChain.input, "robinhood", () => [newChain("edit-new")]),
+      EN,
+    );
+    const b = rawBoxes(before, "arbitrum");
+    const a = rawBoxes(after, "arbitrum");
+    const grown = LAYOUT.CIRCLE + LAYOUT.SIBLING; // 280 - 208: a card, 32 and the circle vs a card
+    expect(a["group:robinhood"]?.w).toBe((b["group:robinhood"]?.w ?? 0) + grown);
+    expect(a["addProtocol:robinhood"]?.x).toBe(
+      (a["edit-new-pool"]?.x ?? 0) + LAYOUT.CARD_W + LAYOUT.SIBLING,
+    );
+    expect(a.addNetwork?.x).toBe((b.addNetwork?.x ?? 0) + grown);
+    for (const key of ["nsp-hub-swap", "nsp-hub-pool", "addProtocol:arbitrum", "group:robinhood"]) {
+      expect(a[key]?.x, key).toBe(b[key]?.x);
+    }
+  });
+
+  // @rule C18 @rule ST9 @rule C16
+  it("[C16] removing a spoke's last chain centres its circle again and closes the gap", () => {
+    const before = layoutGraph(hubEmptyWithSpoke.input, EN);
+    const after = layoutGraph(
+      editRow(hubEmptyWithSpoke.input, "robinhood", () => []),
+      EN,
+    );
+    const b = rawBoxes(before, "arbitrum");
+    const a = rawBoxes(after, "arbitrum");
+    const shrunk = LAYOUT.CIRCLE + LAYOUT.SIBLING;
+    const group = a["group:robinhood"];
+    if (!group) throw new Error("spoke lost");
+    expect(group.w).toBe((b["group:robinhood"]?.w ?? 0) - shrunk);
+    expect(centreX(a["addProtocol:robinhood"] ?? group)).toBe(centreX(group));
+    expect(a.addNetwork?.x).toBe((b.addNetwork?.x ?? 0) - shrunk);
+    expect(a["addProtocol:arbitrum"]).toEqual(b["addProtocol:arbitrum"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // A3, L3, L4, L10 on every fixture
 // ---------------------------------------------------------------------------
 
@@ -800,11 +1003,70 @@ describe("[L6] the empty canvas follows the width of the start-here sentence", (
   });
 
   // @rule L6 @rule L4
-  it("[L6] lets the spine rule the left edge when the sentence is narrower than Deposit", () => {
+  it("[L4] never moves the graph left: a 200 px sentence keeps the spine at 202", () => {
     const layout = layoutGraph(canvasD.input, { startHereWidth: 200 });
-    expect(spine(layout, "deposit").x).toBe(LAYOUT.CANVAS_PAD);
-    expect(layout.spineCentreX).toBe(LAYOUT.SPINE_MIN_CENTRE);
-    expect(layout.emptyCaptions?.startHere.x).toBe(LAYOUT.SPINE_MIN_CENTRE - 100);
+    expect(layout.spineCentreX).toBe(LAYOUT.EMPTY_SPINE_CENTRE);
+    // The accepted consequence: a left padding larger than 24 (Deposit at 84).
+    expect(spine(layout, "deposit").x).toBe(84);
+    expect(layout.emptyCaptions?.startHere).toEqual({ x: 102, y: 334, w: 200, h: 18 });
+    expect(layout.width).toBe(right(spine(layout, "deposit")) + LAYOUT.CANVAS_PAD);
+  });
+
+  // @rule L6 @rule L4
+  it("[L4] never moves the graph left: a 300 px sentence keeps the spine at 202", () => {
+    const layout = layoutGraph(canvasD.input, { startHereWidth: 300 });
+    expect(layout.spineCentreX).toBe(LAYOUT.EMPTY_SPINE_CENTRE);
+    expect(spine(layout, "deposit").x).toBe(84);
+    expect(layout.emptyCaptions?.startHere).toEqual({ x: 52, y: 334, w: 300, h: 18 });
+    expect(layout.width).toBe(352 + LAYOUT.CANVAS_PAD);
+  });
+
+  // @rule L6 @rule L4
+  it("[L4] starts shifting at 356 px: at the boundary the sentence sits at 24 with no shift", () => {
+    const layout = layoutGraph(canvasD.input, { startHereWidth: 356 });
+    expect(layout.spineCentreX).toBe(LAYOUT.EMPTY_SPINE_CENTRE);
+    expect(layout.emptyCaptions?.startHere.x).toBe(LAYOUT.CANVAS_PAD);
+    expect(layout.width).toBe(356 + LAYOUT.CANVAS_PAD * 2);
+  });
+
+  // @rule L6 @rule L4
+  it("[L4] shifts right above 356 px: 358 shifts by 1, 420 by 32", () => {
+    const at358 = layoutGraph(canvasD.input, { startHereWidth: 358 });
+    expect(at358.spineCentreX).toBe(LAYOUT.EMPTY_SPINE_CENTRE + 1);
+    expect(at358.emptyCaptions?.startHere.x).toBe(LAYOUT.CANVAS_PAD);
+    const at420 = layoutGraph(canvasD.input, { startHereWidth: 420 });
+    expect(at420.spineCentreX).toBe(LAYOUT.EMPTY_SPINE_CENTRE + 32);
+  });
+
+  // @rule L4
+  it("[L4] never shifts left for any sentence width", () => {
+    for (let width = 0; width <= 720; width += 4) {
+      const layout = layoutGraph(canvasD.input, { startHereWidth: width });
+      expect(layout.spineCentreX).toBeGreaterThanOrEqual(LAYOUT.EMPTY_SPINE_CENTRE);
+      expect(Math.min(...contentRects(layout).map((r) => r.x))).toBeGreaterThanOrEqual(
+        LAYOUT.CANVAS_PAD,
+      );
+    }
+  });
+
+  // @rule L6
+  it("[L6] rounds a measured width up to an even integer, so every x stays whole", () => {
+    const exact = layoutGraph(canvasD.input, EN);
+    expect(layoutGraph(canvasD.input, { startHereWidth: 419.64 })).toEqual(exact);
+    expect(layoutGraph(canvasD.input, { startHereWidth: 419 })).toEqual(exact);
+    const odd = layoutGraph(canvasD.input, { startHereWidth: 421 });
+    expect(odd.emptyCaptions?.startHere.w).toBe(422);
+    expect(odd.spineCentreX).toBe(235);
+    for (const width of [300.3, 357.01, 419.64, 421, 500.5]) {
+      const layout = layoutGraph(canvasD.input, { startHereWidth: width });
+      const xs = [
+        layout.spineCentreX,
+        layout.width,
+        ...contentRects(layout).flatMap((r) => [r.x, r.w]),
+        ...layout.edges.flatMap((e) => e.points.map((p) => p.x)),
+      ];
+      expect(xs.filter((x) => !Number.isInteger(x))).toEqual([]);
+    }
   });
 
   // @rule L6
