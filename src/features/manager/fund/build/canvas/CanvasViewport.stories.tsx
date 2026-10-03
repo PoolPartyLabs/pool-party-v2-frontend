@@ -13,7 +13,7 @@
  * readout a reviewer sees is the one the code computed, not an argument passed in.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { expect, within } from "storybook/test";
+import { expect, waitFor, within } from "storybook/test";
 import { CanvasViewport } from "./CanvasViewport";
 import {
   CANVAS_A_SIZE,
@@ -96,7 +96,8 @@ export const Panning: Story = {
     });
     viewport.dispatchEvent(new PointerEvent("pointerdown", at(0, 0)));
     viewport.dispatchEvent(new PointerEvent("pointermove", at(60, 30)));
-    await expect(viewport.className).toContain("cursor-grabbing");
+    // The class follows a React state update, which may land after this line: wait for it.
+    await waitFor(() => expect(viewport.className).toContain("cursor-grabbing"));
   },
 };
 

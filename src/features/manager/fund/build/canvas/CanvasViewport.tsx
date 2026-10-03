@@ -24,7 +24,8 @@
  *    wraps instead of running under them.
  * 3. **The readout speaks a sentence.** "87%" alone is a bare number to a screen reader; it reads
  *    "Zoom 87%", from its own key, and is not a live region: a wheel would announce every step.
- * 4. **The page never scrolls sideways because of the graph (A7).** The box clips, its width comes
+ * 4. **The page never scrolls sideways because of the graph (A7).** The box clips (`overflow: clip`,
+ *    so focus cannot scroll it either), its width comes
  *    from the grid column (`minmax(0, 1fr)`), and the layer is absolutely positioned, so a 2080 wide
  *    graph never widens anything. Proven by the `WideGraphNoPageScroll` story, not in jsdom.
  */
@@ -105,8 +106,11 @@ export function CanvasViewport({
       ref={canvasRef}
       data-canvas-viewport=""
       aria-describedby={hintId}
+      // overflow: clip, NOT hidden. `hidden` still makes a scroll container, so focusing a card that
+      // sits outside the visible box (keyboard Tab) would scroll the box itself and drift the graph
+      // and the zoom controls away from the view the transform describes. `clip` cannot scroll.
       className={cn(
-        "relative h-[640px] w-full touch-none select-none overflow-hidden rounded-xl bg-background",
+        "relative h-[640px] w-full touch-none select-none overflow-clip rounded-xl bg-background",
         panning ? "cursor-grabbing" : "cursor-grab",
       )}
       {...bind}

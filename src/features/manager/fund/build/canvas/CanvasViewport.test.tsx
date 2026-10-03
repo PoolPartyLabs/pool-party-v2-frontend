@@ -101,9 +101,19 @@ describe("CanvasViewport: the container", () => {
     renderViewport();
 
     expect(canvas().className).toContain("h-[640px]");
-    expect(canvas().className).toContain("overflow-hidden");
     expect(canvas().className).toContain("rounded-xl");
     expect(canvas().className).toContain("bg-background");
+  });
+
+  // @rule AN5
+  it("[AN5] clips with overflow: clip, never overflow: hidden, so focus cannot scroll the box", () => {
+    renderViewport();
+
+    // `hidden` still makes a scroll container: focusing a card outside the visible box (keyboard
+    // Tab, once S4 and S6 put cards in it) would scroll the box itself, drifting the graph and the
+    // zoom controls away from the view the transform describes. `clip` makes no scroll container.
+    expect(canvas().className).toContain("overflow-clip");
+    expect(canvas().className).not.toContain("overflow-hidden");
   });
 
   // @rule AN5
