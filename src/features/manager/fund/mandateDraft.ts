@@ -2,7 +2,7 @@
  * @id PP-MGR-LIB-019
  * @name mandateDraft
  * @implements-rules-version v3 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
- *   POO-2167 rules v3)
+ *   POO-2167 rules v3, POO-2151 rules v1)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -32,6 +32,8 @@
  * fund contracts' own registries, and a reducer that imported it could not be handed another one.
  */
 import { getUsdcAddress, networkToChainId, supportedChainMetas } from "@/lib/chains/config";
+// Types only: the plan module imports this one's types back, so a runtime import would be a cycle.
+import type { BuilderPhase, BuildPlan } from "./build/plan/buildPlan";
 import type { MandateCatalog, MandateCatalogToken } from "./mandateCatalog";
 
 // ---------------------------------------------------------------------------
@@ -234,6 +236,19 @@ export interface MandateDraft {
    * is already known.
    */
   poolUniverseCount: number | null;
+  /**
+   * The Build canvas plan (POO-2151, PP-MGR-LIB-021). OPTIONAL, so every draft written before the
+   * canvas existed, and every literal draft in a test, stays a valid draft: no plan reads as the
+   * empty plan (`planOf`). The draft store keeps a draft whose stored plan is unreadable and drops
+   * only the plan (coordinator default D18). Never part of {@link selectionFingerprint}, so a plan
+   * edit never invalidates a completed mandate (D17); the unsaved fingerprint counts it instead.
+   */
+  plan?: BuildPlan;
+  /**
+   * The builder phase this draft was last saved in (coordinator default D16). OPTIONAL: no value
+   * reads as "mandate". Bookkeeping, like `lastStep`, so it is in no fingerprint.
+   */
+  lastPhase?: BuilderPhase;
 }
 
 /** Why the product said no. Maps 1:1 to the blocked-intent reason the shell reports. */
