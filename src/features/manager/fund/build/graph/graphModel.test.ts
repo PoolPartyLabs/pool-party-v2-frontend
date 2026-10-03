@@ -17,7 +17,7 @@ import {
   canvasD,
   newSpokeNoChain,
 } from "@/mocks/data/buildCanvasFixtures";
-import { type GraphLayout, targetKey } from "../layout/graphTypes";
+import { type GraphLayout, type LayoutInput, targetKey } from "../layout/graphTypes";
 import { layoutGraph } from "../layout/layoutGraph";
 import {
   chainShares,
@@ -31,6 +31,7 @@ import {
   portTooltipKey,
   readingPoint,
   SPINE_ICON,
+  shareNumber,
 } from "./graphModel";
 
 const EN = { startHereWidth: 420 };
@@ -42,6 +43,40 @@ function layoutOf(name: keyof typeof BUILD_CANVAS_FIXTURES): GraphLayout {
 function keys(items: GraphItem[]): string[] {
   return items.map((item) => item.key);
 }
+
+const block = (blockId: string) => targetKey({ kind: "block", blockId });
+const port = (side: "before" | "after", blockId: string) =>
+  targetKey({ kind: "port", side, blockId });
+const label = (chainId: string | null, network: string, feedsBlockId: string | null) =>
+  targetKey({ kind: "shareLabel", chainId, network, feedsBlockId });
+const addProtocol = (network: string) => targetKey({ kind: "addProtocol", network });
+const ADD_NETWORK = targetKey({ kind: "addNetwork" });
+
+/** A plan the invariants refuse (INV1 duplicate_network): one network on two spokes. */
+const TWIN_SPOKES: LayoutInput = {
+  hubNetwork: "arbitrum",
+  hub: { chains: [] },
+  spokes: ["tw-1", "tw-2"].map((id) => ({
+    network: "robinhood",
+    sharePct: 20,
+    chains: [
+      {
+        id,
+        sharePct: 20,
+        steps: [
+          { id: `${id}-swap`, family: "flow", kind: "swap", auto: true, configured: true },
+          {
+            id: `${id}-pool`,
+            family: "position",
+            kind: "uniswapV4Pool",
+            auto: false,
+            configured: true,
+          },
+        ],
+      },
+    ],
+  })),
+};
 
 describe("graphItems", () => {
   it.each(
@@ -63,34 +98,73 @@ describe("graphItems", () => {
   });
 
   // @rule I10
-  it("[I10] lists canvas C in reading order: top to bottom, then left to right", () => {
+  it("[I10] lists canvas C chain by chain: label, ports and blocks top to bottom, then the templates", () => {
     expect(keys(graphItems(layoutGraph(canvasC.input, EN)))).toEqual([
       "spine:deposit",
       "spine:idleInput",
-      targetKey({
-        kind: "shareLabel",
-        chainId: "c-pool",
-        network: "arbitrum",
-        feedsBlockId: "c-pool-pool",
-      }),
-      targetKey({
-        kind: "shareLabel",
-        chainId: "c-supply",
-        network: "arbitrum",
-        feedsBlockId: "c-supply-supply",
-      }),
-      targetKey({ kind: "addNetwork" }),
-      targetKey({ kind: "port", side: "before", blockId: "c-supply-supply" }),
-      targetKey({ kind: "block", blockId: "c-pool-swap" }),
-      targetKey({ kind: "block", blockId: "c-supply-supply" }),
-      targetKey({ kind: "addProtocol", network: "arbitrum" }),
-      targetKey({ kind: "block", blockId: "c-pool-pool" }),
-      targetKey({ kind: "port", side: "after", blockId: "c-supply-supply" }),
-      targetKey({ kind: "block", blockId: "c-pool-fees" }),
+      label("c-pool", "arbitrum", "c-pool-pool"),
+      block("c-pool-swap"),
+      block("c-pool-pool"),
+      block("c-pool-fees"),
+      label("c-supply", "arbitrum", "c-supply-supply"),
+      port("before", "c-supply-supply"),
+      block("c-supply-supply"),
+      port("after", "c-supply-supply"),
+      addProtocol("arbitrum"),
+      ADD_NETWORK,
       "spine:idleOutput",
       "spine:income",
       "spine:withdraw",
     ]);
+  });
+
+  // @rule I10
+  it("[I10] lists the empty canvas: the hub circle and its caption, Add network and its caption, the sentence", () => {
+    expect(keys(graphItems(layoutGraph(canvasD.input, EN)))).toEqual([
+      "spine:deposit",
+      "spine:idleInput",
+      addProtocol("arbitrum"),
+      "caption:addProtocol",
+      ADD_NETWORK,
+      "caption:addNetwork",
+      "caption:startHere",
+      "spine:idleOutput",
+      "spine:withdraw",
+    ]);
+  });
+
+  // @rule I10
+  it("[I10] lists a spoke as a whole: chip, share label, Bridge, its chains, its Add protocol", () => {
+    expect(keys(graphItems(layoutGraph(newSpokeNoChain.input, EN)))).toEqual([
+      "spine:deposit",
+      "spine:idleInput",
+      label("nsp-hub", "arbitrum", "nsp-hub-pool"),
+      block("nsp-hub-swap"),
+      block("nsp-hub-pool"),
+      port("after", "nsp-hub-pool"),
+      addProtocol("arbitrum"),
+      "group:robinhood",
+      label(null, "robinhood", null),
+      "bridge:robinhood",
+      addProtocol("robinhood"),
+      ADD_NETWORK,
+      "spine:idleOutput",
+      "spine:withdraw",
+    ]);
+  });
+
+  // @rule I10
+  it("[I10] keeps a chain's blocks in order whatever the chains around it", () => {
+    const layout = layoutGraph(canvasA.input, EN);
+    const order = keys(graphItems(layout));
+    for (const chain of canvasA.input.hub.chains) {
+      const positions = chain.steps.map((step) => order.indexOf(block(step.id)));
+      expect(positions).toEqual([...positions].sort((a, b) => a - b));
+      const first = positions[0] ?? -1;
+      const last = positions[positions.length - 1] ?? -1;
+      // Only the chain's own ports may sit between its blocks, never another chain's items.
+      expect(last - first).toBeLessThan(chain.steps.length + 2);
+    }
   });
 
   // @rule I10
@@ -115,22 +189,47 @@ describe("graphItems", () => {
     expect(readingPoint(label)).toEqual({ top: 210, x: 112 });
   });
 
-  // @rule I10
-  it("[I10] reads a spoke group at its network chip, after the labels above it", () => {
-    const layout = layoutGraph(newSpokeNoChain.input, EN);
+  // @rule F6
+  it("[F6] a plan with one network on two spokes keeps both, under unique keys, nothing dropped", () => {
+    const layout = layoutGraph(TWIN_SPOKES, EN);
     const items = graphItems(layout);
-    const group = items.find((item) => item.type === "group");
-    if (!group) throw new Error("no group");
-    expect(readingPoint(group)).toEqual({ top: 228 - 10.5, x: layout.groups[0]?.chipAnchor.x });
+    expect(new Set(keys(items)).size).toBe(items.length);
+    expect(items.filter((item) => item.type === "group")).toHaveLength(2);
+    expect(items.filter((item) => item.type === "bridge")).toHaveLength(2);
+    expect(items.filter((item) => item.type === "template")).toHaveLength(4);
+    // Every node of the layout is an item: nothing silently dropped.
+    expect(items).toHaveLength(
+      layout.spine.length +
+        layout.blocks.length +
+        layout.bridges.length +
+        layout.groups.length +
+        layout.templates.length +
+        layout.ports.length +
+        layout.shareLabels.length,
+    );
+    // The second spoke reads after the first, each with its own chain.
     const order = keys(items);
-    const spokeLabel = targetKey({
-      kind: "shareLabel",
-      chainId: null,
-      network: "robinhood",
-      feedsBlockId: null,
-    });
-    expect(order.indexOf(spokeLabel)).toBeLessThan(order.indexOf(group.key));
-    expect(order.indexOf(group.key)).toBeLessThan(order.indexOf("bridge:robinhood"));
+    expect(order.indexOf(block("tw-1-pool"))).toBeLessThan(order.indexOf("group:robinhood#2"));
+    expect(order.indexOf("group:robinhood#2")).toBeLessThan(order.indexOf(block("tw-2-pool")));
+  });
+
+  // @rule F6
+  it("[F6] gives each twin spoke's label its own stub, and every line a unique id", () => {
+    const layout = layoutGraph(TWIN_SPOKES, EN);
+    const edges = pieceEdges(layout);
+    expect(new Set(edges.map((edge) => edge.id)).size).toBe(edges.length);
+    expect(edges).toHaveLength(layout.edges.length);
+    const spokeLabels = graphItems(layout).filter(
+      (item): item is Extract<GraphItem, { type: "label" }> =>
+        item.type === "label" && item.node.target.chainId === null,
+    );
+    expect(spokeLabels.map((item) => item.edgeId)).toEqual([
+      "stub:spoke:robinhood",
+      "stub:spoke:robinhood#2",
+    ]);
+    for (const item of spokeLabels) {
+      expect(edges.some((edge) => edge.id === item.edgeId)).toBe(true);
+    }
   });
 
   it("lists the empty canvas captions and the start-here sentence (L6)", () => {
@@ -218,6 +317,14 @@ describe("chainShares and formatShare", () => {
     expect(formatShare(60)).toBe("60%");
     expect(formatShare(0)).toBe("0%");
     expect(formatShare(12.5)).toBe("12.5%");
+  });
+
+  // @rule F3
+  it("[F3] rounds a share once: 100 / 3 is 33.3 in every message and 33.3% on its label", () => {
+    expect(shareNumber(100 / 3)).toBe("33.3");
+    expect(formatShare(100 / 3)).toBe("33.3%");
+    expect(shareNumber(60)).toBe("60");
+    expect(formatShare(100 / 3)).toBe(`${shareNumber(100 / 3)}%`);
   });
 });
 

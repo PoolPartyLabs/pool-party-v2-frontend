@@ -42,6 +42,7 @@ function argsOf(fixture: BuildCanvasFixture, options?: FixtureGraphOptions): Bui
   return {
     ...fixtureGraphProps(fixture, options),
     activeTargetKeys: NO_KEYS,
+    invalidNetworks: NO_KEYS,
     onTarget: fn(),
     onRemoveSpoke: fn(),
   };

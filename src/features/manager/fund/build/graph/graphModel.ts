@@ -8,18 +8,29 @@
  * What {@link BuildGraph} derives from a laid-out graph before it draws anything. Pure: same layout,
  * same answer; no DOM, no React, no strings (copy is the renderer's, through next-intl).
  *
- * 1. **Items in reading order ([I10]).** Every node the layout returns becomes one item with a
- *    stable key (the {@link targetKey} of its target when it has one), and the items are sorted the
- *    way a page is read: by the TOP edge of what is drawn, then by its horizontal CENTRE. The DOM
- *    follows this order, so the tab order is the reading order and nothing needs a positive
- *    `tabIndex`. A spoke group is read where its network chip sits (the chip is its only focusable
- *    part), so the chip comes after the share labels above it and before its Bridge.
- * 2. **Layers ([L7]).** Back to front: group boxes, lines, cards, pills and templates (and the spine
+ * 1. **Items in reading order ([I10], coordinator decision on the review of PR #35).** Every node the
+ *    layout returns becomes one item with a stable key, and the items are read CHAIN BY CHAIN, the
+ *    way the money flows: Deposit and Idle input; each hub chain left to right (its share label,
+ *    then its ports and blocks top to bottom, so a before-port precedes its card and an after-port
+ *    follows it); the hub's Add protocol; each spoke as a whole (its chip, its share label, its
+ *    Bridge, its chains in the same order, its Add protocol); Add network; then Idle output, Income
+ *    (fees) and Withdraw. The DOM follows this order, so the tab order is the reading order and
+ *    nothing needs a positive `tabIndex`. On the empty canvas each caption follows its template and
+ *    the start-here sentence follows them. Where an item sits (hub or which spoke) is read from the
+ *    geometry (a spoke owns what lies within its box's width), so a malformed plan still places
+ *    every item; anything left over is read by position before the bottom of the spine.
+ * 2. **Keys.** A key is the {@link targetKey} of the item's target, or its kind and network; a key
+ *    met again (a plan that names one network on two spokes, which the invariants refuse) takes the
+ *    suffix `#2`, `#3`, so React never sees a duplicate and nothing is dropped. Line ids get the same
+ *    treatment, and a share label points at its own occurrence of its stub.
+ * 3. **Layers ([L7]).** Back to front: group boxes, lines, cards, pills and templates (and the spine
  *    cards and the empty-canvas copy), insert ports, share labels and network chips. Because the DOM
  *    is in reading order, not in layer order, the renderer paints the layers with `z-index`.
- * 3. **Port tooltips (D13).** A port names what its menu offers: before any card "Swap"; after a
+ * 4. **Port tooltips (D13).** A port names what its menu offers: before any card "Swap"; after a
  *    pool "Collect fees"; after a supply "Borrow, Swap"; after a borrow "Swap" (the I4 list).
- * 4. **Line tones.** `income` lines are green, every other kind is muted (the `GraphEdges` contract).
+ * 5. **Line tones.** `income` lines are green, every other kind is muted (the `GraphEdges` contract).
+ * 6. **Shares.** A share is rounded once ({@link shareNumber}) and the same text goes on the label,
+ *    in its tooltip and in the card's name, so 100 / 3 reads 33.3 everywhere.
  */
 import { formatPercent } from "@/lib/utils/format";
 import type {
@@ -49,7 +60,7 @@ export type GraphItem =
   | { type: "group"; key: string; node: GroupNode }
   | { type: "template"; key: string; node: TemplateNode }
   | { type: "port"; key: string; node: PortNode }
-  | { type: "label"; key: string; node: ShareLabelNode }
+  | { type: "label"; key: string; node: ShareLabelNode; edgeId: string }
   | { type: "caption"; key: string; caption: "addProtocol" | "addNetwork"; at: Point }
   | { type: "sentence"; key: string; rect: Rect };
 
@@ -73,8 +84,23 @@ function part(value: string): string {
   return encodeURIComponent(value);
 }
 
-/** Every node of a layout, one item each, before sorting. */
+/** A namer that returns `id` the first time, then `id#2`, `id#3` for each repeat. */
+function occurrences(): (id: string) => string {
+  const seen = new Map<string, number>();
+  return (id) => {
+    const count = (seen.get(id) ?? 0) + 1;
+    seen.set(id, count);
+    return count === 1 ? id : `${id}#${count}`;
+  };
+}
+
+/**
+ * Every node of a layout, one item each, in the layout's own order. Keys are not yet unique; a
+ * label's `edgeId` already names its own occurrence of its stub (the n-th label on a stub id gets
+ * the n-th line with that id, as {@link pieceEdges} names them).
+ */
 function collect(layout: GraphLayout): GraphItem[] {
+  const labelEdge = occurrences();
   const items: GraphItem[] = [];
   for (const node of layout.spine) items.push({ type: "spine", key: `spine:${node.role}`, node });
   for (const node of layout.blocks) {
@@ -91,7 +117,12 @@ function collect(layout: GraphLayout): GraphItem[] {
   }
   for (const node of layout.ports) items.push({ type: "port", key: targetKey(node.target), node });
   for (const node of layout.shareLabels) {
-    items.push({ type: "label", key: targetKey(node.target), node });
+    items.push({
+      type: "label",
+      key: targetKey(node.target),
+      node,
+      edgeId: labelEdge(node.edgeId),
+    });
   }
   const captions = layout.emptyCaptions;
   if (captions) {
@@ -140,15 +171,143 @@ export function readingPoint(item: GraphItem): { top: number; x: number } {
   }
 }
 
-/**
- * Every node of a layout as an item, in reading order ([I10]): top to bottom, then left to right.
- * The sort is stable, so two items read at the same point keep the layout's order.
- */
-export function graphItems(layout: GraphLayout): GraphItem[] {
-  return collect(layout)
+/** Inside one chain, at the same top: the label, a before-port, the block, an after-port. */
+function chainRank(item: GraphItem): number {
+  if (item.type === "label") return 0;
+  if (item.type === "port") return item.node.target.side === "before" ? 1 : 3;
+  return 2;
+}
+
+/** Items sorted by where they are read: top edge, then horizontal centre. Stable. */
+function byPosition(items: GraphItem[]): GraphItem[] {
+  return items
     .map((item) => ({ item, at: readingPoint(item) }))
     .sort((a, b) => a.at.top - b.at.top || a.at.x - b.at.x)
     .map(({ item }) => item);
+}
+
+interface SpokeSlot {
+  group: GraphItem[];
+  labels: GraphItem[];
+  bridges: GraphItem[];
+  chains: string[];
+  tail: GraphItem[];
+}
+
+/**
+ * Every node of a layout as an item, in reading order ([I10]): chain by chain, the hub first, then
+ * each spoke as a whole (see the file header). Keys are unique.
+ */
+export function graphItems(layout: GraphLayout): GraphItem[] {
+  const chainOf = new Map(layout.blocks.map((node) => [node.id, node.chainId]));
+  const spokes: SpokeSlot[] = layout.groups.map(() => ({
+    group: [],
+    labels: [],
+    bridges: [],
+    chains: [],
+    tail: [],
+  }));
+  const hub = { chains: [] as string[], tail: [] as GraphItem[] };
+  const chains = new Map<string, GraphItem[]>();
+  const spineTop: GraphItem[] = [];
+  const spineBottom: GraphItem[] = [];
+  const end: GraphItem[] = [];
+  const leftover: GraphItem[] = [];
+
+  // The spoke whose box spans x, or null for the hub (spokes never overlap the hub's chains).
+  const spokeAt = (x: number): SpokeSlot | null => {
+    const index = layout.groups.findIndex(
+      (group) => x >= group.rect.x && x <= group.rect.x + group.rect.w,
+    );
+    return spokes[index] ?? null;
+  };
+  const toChain = (chainId: string, item: GraphItem) => {
+    let list = chains.get(chainId);
+    if (!list) {
+      list = [];
+      chains.set(chainId, list);
+      (spokeAt(readingPoint(item).x) ?? hub).chains.push(chainId);
+    }
+    list.push(item);
+  };
+
+  for (const item of collect(layout)) {
+    switch (item.type) {
+      case "spine":
+        (item.node.role === "deposit" || item.node.role === "idleInput"
+          ? spineTop
+          : spineBottom
+        ).push(item);
+        break;
+      case "block":
+        toChain(item.node.chainId, item);
+        break;
+      case "port": {
+        const chainId = chainOf.get(item.node.target.blockId);
+        if (chainId === undefined) leftover.push(item);
+        else toChain(chainId, item);
+        break;
+      }
+      case "label": {
+        const { chainId } = item.node.target;
+        if (chainId !== null) {
+          toChain(chainId, item);
+          break;
+        }
+        const spoke = spokeAt(item.node.center.x);
+        if (spoke) spoke.labels.push(item);
+        else leftover.push(item);
+        break;
+      }
+      case "group": {
+        const spoke = spokes[layout.groups.indexOf(item.node)];
+        if (spoke) spoke.group.push(item);
+        else leftover.push(item);
+        break;
+      }
+      case "bridge": {
+        const spoke = spokeAt(readingPoint(item).x);
+        if (spoke) spoke.bridges.push(item);
+        else leftover.push(item);
+        break;
+      }
+      case "template":
+        if (item.node.target.kind === "addNetwork") end.push(item);
+        else (spokeAt(readingPoint(item).x) ?? hub).tail.push(item);
+        break;
+      case "caption":
+        // Each caption follows its template: the hub circle's in the hub, the box's at the end.
+        (item.caption === "addProtocol" ? hub.tail : end).push(item);
+        break;
+      case "sentence":
+        end.push(item);
+        break;
+    }
+  }
+
+  const chainItems = (chainId: string): GraphItem[] =>
+    (chains.get(chainId) ?? [])
+      .map((item) => ({ item, top: readingPoint(item).top }))
+      .sort((a, b) => a.top - b.top || chainRank(a.item) - chainRank(b.item))
+      .map(({ item }) => item);
+
+  const ordered: GraphItem[] = [
+    ...spineTop,
+    ...hub.chains.flatMap(chainItems),
+    ...hub.tail,
+    ...spokes.flatMap((spoke) => [
+      ...spoke.group,
+      ...spoke.labels,
+      ...spoke.bridges,
+      ...spoke.chains.flatMap(chainItems),
+      ...spoke.tail,
+    ]),
+    ...end,
+    ...byPosition(leftover),
+    ...spineBottom,
+  ];
+  const unique = occurrences();
+  return ordered.map((item) => ({ ...item, key: unique(item.key) }));
 }
 
 /** The [L7] layer an item paints in. A group's chip is lifted to the label layer by the renderer. */
@@ -204,10 +363,14 @@ export function edgeTone(kind: EdgeKind): PieceEdge["tone"] {
   return kind === "income" ? "income" : "muted";
 }
 
-/** The layout's edges as `GraphEdges` draws them (ids and points unchanged). */
+/**
+ * The layout's edges as `GraphEdges` draws them, points unchanged. An id met again (two spokes on
+ * one network repeat their stub ids) takes `#2`, `#3`, so every line keeps its own key.
+ */
 export function pieceEdges(layout: GraphLayout): PieceEdge[] {
+  const unique = occurrences();
   return layout.edges.map((edge) => ({
-    id: edge.id,
+    id: unique(edge.id),
     tone: edgeTone(edge.kind),
     points: edge.points,
   }));
@@ -222,7 +385,21 @@ export function chainShares(layout: GraphLayout): Map<string, number> {
   return shares;
 }
 
-/** A share as printed on its label ([BB4]): "60%", "0%", "12.5%". */
+/** Whole shares print no decimals, any other share one. */
+function shareDigits(pct: number): number {
+  return Number.isInteger(pct) ? 0 : 1;
+}
+
+/**
+ * A share rounded once, as the text every message receives ("{pct}% of the strategy's capital"):
+ * "60", "12.5", and 100 / 3 is "33.3". The same digits as {@link formatShare}, so the label, its
+ * tooltip and the card's name never disagree.
+ */
+export function shareNumber(pct: number): string {
+  return pct.toFixed(shareDigits(pct));
+}
+
+/** A share as printed on its label ([BB4]): "60%", "0%", "12.5%", "33.3%". */
 export function formatShare(pct: number): string {
-  return formatPercent(pct, Number.isInteger(pct) ? 0 : 1);
+  return formatPercent(pct, shareDigits(pct));
 }

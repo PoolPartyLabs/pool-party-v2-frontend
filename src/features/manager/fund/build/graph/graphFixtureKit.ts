@@ -111,9 +111,9 @@ export function fixtureGraphProps(
       caption: content.caption,
       icon: iconOf(content.icon),
       state: content.state,
-      // The renderer names the card's place (I10); this is what the registry would hand it.
+      // The renderer names the card's place and state (I10) and defaults a coming-soon card's
+      // "Soon" tag, so the fixtures hand it neither.
       accessibleName: `${content.title}, ${content.caption}`,
-      soonTag: content.state === "comingSoon" ? fixtureT("palette.soon") : undefined,
     };
   };
 

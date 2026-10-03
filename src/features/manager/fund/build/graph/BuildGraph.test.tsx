@@ -16,6 +16,7 @@ import {
   BUILD_CANVAS_FIXTURES,
   type BuildCanvasFixture,
   buildState3,
+  buildState5,
   canvasA,
   canvasC,
   canvasD,
@@ -27,6 +28,7 @@ import {
   renderWithProviders,
   screen,
   userEvent,
+  waitFor,
   within,
 } from "../../../../../../tests/utils/renderWithProviders";
 import { CanvasViewport } from "../canvas/CanvasViewport";
@@ -35,16 +37,24 @@ import {
   CANVAS_LAYER_ATTR,
   isCanvasBackground,
 } from "../canvas/useCanvasViewport";
-import { type GraphLayout, type GraphTarget, targetKey } from "../layout/graphTypes";
+import {
+  type GraphLayout,
+  type GraphTarget,
+  type LayoutInput,
+  targetKey,
+} from "../layout/graphTypes";
 import { layoutGraph } from "../layout/layoutGraph";
 import type { BlockContent } from "../pieces/pieceTypes";
 import { BuildGraph, type BuildGraphProps } from "./BuildGraph";
 import { fixtureGraphProps } from "./graphFixtureKit";
 import { formatShare, GRAPH_LAYER } from "./graphModel";
+import { useGraphLayout } from "./useGraphLayout";
 
 type FixtureName = keyof typeof BUILD_CANVAS_FIXTURES;
 const FIXTURE_NAMES = Object.keys(BUILD_CANVAS_FIXTURES) as FixtureName[];
 
+/** [I9] How a moved node travels, once the graph has been painted. */
+const MOVE = "left 150ms ease-out, top 150ms ease-out";
 const NO_KEYS: ReadonlySet<string> = new Set();
 const layerAttr = { [CANVAS_LAYER_ATTR]: "" };
 
@@ -55,21 +65,26 @@ function propsFor(
   return {
     ...fixtureGraphProps(fixture),
     activeTargetKeys: NO_KEYS,
+    invalidNetworks: NO_KEYS,
     onTarget: vi.fn(),
     ...overrides,
   };
 }
 
-/** Renders the graph inside a stand-in graph layer, as the viewport would hold it. */
-function renderGraph(fixture: BuildCanvasFixture, overrides: Partial<BuildGraphProps> = {}) {
-  const props = propsFor(fixture, overrides);
-  const utils = renderWithProviders(
+/** The graph inside a stand-in graph layer, as the viewport would hold it. */
+function graphUi(props: BuildGraphProps) {
+  return (
     <div data-testid="canvas">
       <div {...layerAttr}>
         <BuildGraph {...props} />
       </div>
-    </div>,
+    </div>
   );
+}
+
+function renderGraph(fixture: BuildCanvasFixture, overrides: Partial<BuildGraphProps> = {}) {
+  const props = propsFor(fixture, overrides);
+  const utils = renderWithProviders(graphUi(props));
   return { ...utils, props };
 }
 
@@ -233,7 +248,7 @@ describe("BuildGraph, the empty canvas", () => {
     renderGraph(canvasD);
     expect(
       screen.getAllByRole("button").map((button) => button.getAttribute("aria-label")),
-    ).toEqual(["Add network", "Add protocol on Arbitrum"]);
+    ).toEqual(["Add protocol on Arbitrum", "Add network"]);
     expect(document.querySelector("[data-card-state]")).toBeNull();
   });
 });
@@ -276,37 +291,182 @@ describe("BuildGraph, stacking order", () => {
 });
 
 describe("BuildGraph, reading order", () => {
-  // @rule I10
-  it("[I10] reaches every focusable element top to bottom, then left to right", () => {
-    renderGraph(canvasC);
-    const order = [...document.querySelectorAll<HTMLElement>('button, [tabindex="0"]')].map(
-      (element) => element.closest("[data-graph-node]")?.getAttribute("data-graph-node"),
-    );
+  const label = (chainId: string | null, network: string, feeds: string | null) =>
+    targetKey({ kind: "shareLabel", chainId, network, feedsBlockId: feeds });
+  const port = (side: "before" | "after", blockId: string) =>
+    targetKey({ kind: "port", side, blockId });
+  const addProtocol = (network: string) => targetKey({ kind: "addProtocol", network });
 
-    expect(order).toEqual([
+  /** The node of every tab stop, in document (tab) order. */
+  function tabOrder(): Array<string | null | undefined> {
+    return [...document.querySelectorAll<HTMLElement>('button, [tabindex="0"]')].map((element) =>
+      element.closest("[data-graph-node]")?.getAttribute("data-graph-node"),
+    );
+  }
+
+  // @rule I10
+  it("[I10] canvas C: chain by chain (label, ports and blocks top to bottom), then the templates", () => {
+    renderGraph(canvasC);
+    expect(tabOrder()).toEqual([
       "spine:deposit",
-      targetKey({
-        kind: "shareLabel",
-        chainId: "c-pool",
-        network: "arbitrum",
-        feedsBlockId: "c-pool-pool",
-      }),
-      targetKey({
-        kind: "shareLabel",
-        chainId: "c-supply",
-        network: "arbitrum",
-        feedsBlockId: "c-supply-supply",
-      }),
-      targetKey({ kind: "addNetwork" }),
-      targetKey({ kind: "port", side: "before", blockId: "c-supply-supply" }),
+      label("c-pool", "arbitrum", "c-pool-pool"),
       blockKey("c-pool-swap"),
-      blockKey("c-supply-supply"),
-      targetKey({ kind: "addProtocol", network: "arbitrum" }),
       blockKey("c-pool-pool"),
-      targetKey({ kind: "port", side: "after", blockId: "c-supply-supply" }),
       blockKey("c-pool-fees"),
+      label("c-supply", "arbitrum", "c-supply-supply"),
+      port("before", "c-supply-supply"),
+      blockKey("c-supply-supply"),
+      port("after", "c-supply-supply"),
+      addProtocol("arbitrum"),
+      targetKey({ kind: "addNetwork" }),
       "spine:withdraw",
     ]);
+  });
+
+  // @rule I10
+  it("[I10] canvas A: the hub's chains, its Add protocol, each spoke as a whole, Add network last", () => {
+    renderGraph(canvasA);
+    expect(tabOrder()).toEqual([
+      "spine:deposit",
+      label("a-hub-1", "arbitrum", "a-hub-1-pool"),
+      blockKey("a-hub-1-swap"),
+      blockKey("a-hub-1-pool"),
+      blockKey("a-hub-1-fees"),
+      label("a-hub-2", "arbitrum", "a-hub-2-supply"),
+      port("before", "a-hub-2-supply"),
+      blockKey("a-hub-2-supply"),
+      blockKey("a-hub-2-swap"),
+      blockKey("a-hub-2-pool"),
+      blockKey("a-hub-2-fees"),
+      label("a-hub-3", "arbitrum", "a-hub-3-supply"),
+      blockKey("a-hub-3-swap"),
+      blockKey("a-hub-3-supply"),
+      blockKey("a-hub-3-borrow"),
+      port("after", "a-hub-3-borrow"),
+      addProtocol("arbitrum"),
+      "group:base",
+      label(null, "base", null),
+      "bridge:base",
+      label("a-base-1", "base", "a-base-1-pool"),
+      blockKey("a-base-1-swap"),
+      blockKey("a-base-1-pool"),
+      blockKey("a-base-1-fees"),
+      label("a-base-2", "base", "a-base-2-pool"),
+      blockKey("a-base-2-swap"),
+      blockKey("a-base-2-pool"),
+      blockKey("a-base-2-fees"),
+      label("a-base-3", "base", "a-base-3-supply"),
+      port("before", "a-base-3-supply"),
+      blockKey("a-base-3-supply"),
+      port("after", "a-base-3-supply"),
+      addProtocol("base"),
+      "group:robinhood",
+      label(null, "robinhood", null),
+      "bridge:robinhood",
+      label("a-rh-1", "robinhood", "a-rh-1-pool"),
+      blockKey("a-rh-1-swap"),
+      blockKey("a-rh-1-pool"),
+      blockKey("a-rh-1-fees"),
+      label("a-rh-2", "robinhood", "a-rh-2-pool"),
+      blockKey("a-rh-2-swap"),
+      blockKey("a-rh-2-pool"),
+      blockKey("a-rh-2-fees"),
+      addProtocol("robinhood"),
+      targetKey({ kind: "addNetwork" }),
+      "spine:withdraw",
+    ]);
+  });
+
+  /** Canvas C with its two hub chains in the other order, so a re-flow moves DOM nodes. */
+  const swappedC = {
+    ...canvasC.input,
+    hub: { chains: [...canvasC.input.hub.chains].reverse() },
+  } satisfies typeof canvasC.input;
+
+  /** Canvas C with a third hub chain inserted at the right of the row. */
+  const thirdChainC = {
+    ...canvasC.input,
+    hub: {
+      chains: [
+        ...canvasC.input.hub.chains,
+        {
+          id: "c-new",
+          sharePct: 0,
+          steps: [
+            {
+              id: "c-new-supply",
+              family: "position",
+              kind: "aaveSupply",
+              auto: false,
+              configured: false,
+            },
+          ],
+        },
+      ],
+    },
+  } satisfies typeof canvasC.input;
+
+  function describeWithNew(fixture: BuildCanvasFixture): BuildGraphProps["describeBlock"] {
+    const base = fixtureGraphProps(fixture);
+    return (id) =>
+      id === "c-new-supply"
+        ? {
+            title: "Aave v3 Supply",
+            caption: "Pick an asset",
+            icon: "bank",
+            state: "empty",
+            accessibleName: "",
+          }
+        : base.describeBlock(id);
+  }
+
+  // @rule I10
+  // @rule I9
+  it("[I10, I9] keeps keyboard focus on its element when a block is inserted elsewhere", () => {
+    const props = propsFor(canvasC, { describeBlock: describeWithNew(canvasC) });
+    const { rerender } = renderGraph(canvasC, props);
+    const supply = screen.getByRole("button", { name: /^Supply USDC/ });
+    act(() => supply.focus());
+    rerender(graphUi({ ...props, layout: layoutGraph(thirdChainC, { startHereWidth: 420 }) }));
+    expect(document.activeElement).toBe(supply);
+  });
+
+  // @rule I10
+  // @rule I9
+  it("[I10, I9] keeps keyboard focus on its element when a re-flow reorders the DOM", () => {
+    const props = propsFor(canvasC);
+    const { rerender } = renderGraph(canvasC, props);
+    const pool = screen.getByRole("button", { name: /^WETH \/ USDC/ });
+    act(() => pool.focus());
+    // A browser drops focus when it moves the focused element (a move removes it first, and the
+    // focus fixup sends focus to the body); jsdom does not, so the test does it the browser's way.
+    const moves = [
+      [Node.prototype, "insertBefore"],
+      [Node.prototype, "appendChild"],
+    ] as const;
+    let dropped = 0;
+    for (const [proto, method] of moves) {
+      const real = proto[method] as (...args: Node[]) => Node;
+      vi.spyOn(proto, method).mockImplementation(function (this: Node, ...args: Node[]) {
+        const moved = args[0];
+        const active = document.activeElement;
+        if (moved?.isConnected && active instanceof HTMLElement && moved.contains(active)) {
+          active.blur();
+          dropped += 1;
+        }
+        return real.apply(this, args);
+      } as never);
+    }
+    rerender(graphUi({ ...props, layout: layoutGraph(swappedC, { startHereWidth: 420 }) }));
+    // The move did drop focus, the way a browser does; React DOM puts it back after the commit
+    // because the keys are stable, so the element is moved, never remounted.
+    expect(dropped).toBeGreaterThan(0);
+    // The DOM did reorder: the Supply chain now reads before the pool chain.
+    const order = tabOrder();
+    expect(order.indexOf(blockKey("c-supply-supply"))).toBeLessThan(
+      order.indexOf(blockKey("c-pool-pool")),
+    );
+    expect(document.activeElement).toBe(pool);
   });
 
   // @rule I10
@@ -641,7 +801,9 @@ describe("BuildGraph, selection and active targets", () => {
     const card = node(blockKey("s3-pool")).querySelector("[data-card-state]");
     expect(card).toHaveAttribute("data-card-state", "empty");
     expect(card).toHaveAttribute("data-selected");
-    expect(card).toHaveAccessibleName("Uniswap v4, Pick a pool, on Arbitrum, 0% of the capital");
+    expect(card).toHaveAccessibleName(
+      "Uniswap v4 · no pool yet, Pick a pool, on Arbitrum, 0% of the capital",
+    );
   });
 
   // @rule I3
@@ -807,15 +969,44 @@ describe("BuildGraph, re-flow (I9)", () => {
   });
 
   // @rule I9
-  it("[I9] animates a moved node 150 ms ease-out", () => {
+  it("[I9] animates a moved node 150 ms ease-out once the graph has been painted", async () => {
     renderGraph(canvasC);
-    expect(node(targetKey({ kind: "addNetwork" })).style.transition).toBe(
-      "left 150ms ease-out, top 150ms ease-out",
+    await waitFor(() =>
+      expect(node(targetKey({ kind: "addNetwork" })).style.transition).toBe(MOVE),
     );
   });
 
+  // @rule F4
+  it("[F4] the first measured commit applies no transition, so the empty canvas never slides", async () => {
+    // The sentence measures 480 px, not the 420 px estimate the first render lays out with.
+    const context = { font: "", measureText: () => ({ width: 480 }) };
+    vi.stubGlobal(
+      "OffscreenCanvas",
+      class {
+        getContext() {
+          return context;
+        }
+      },
+    );
+    const props = propsFor(canvasD);
+    function Measured() {
+      const layout = useGraphLayout(canvasD.input);
+      return <BuildGraph {...props} layout={layout} />;
+    }
+    renderWithProviders(<Measured />);
+
+    // The measured layout is the one committed...
+    expect(node("caption:startHere").style.width).toBe("480px");
+    // ...and nothing carries a transition yet, so its new positions are not animated.
+    for (const element of document.querySelectorAll<HTMLElement>("[data-graph-node]")) {
+      expect(element.style.transition).toBe("");
+    }
+    // Later re-flows animate.
+    await waitFor(() => expect(node("spine:deposit").style.transition).toBe(MOVE));
+  });
+
   // @rule I9
-  it("[I9, D8] does not animate under reduced motion", () => {
+  it("[I9, D8] does not animate under reduced motion", async () => {
     vi.stubGlobal(
       "matchMedia",
       vi.fn((query: string) => ({
@@ -826,6 +1017,8 @@ describe("BuildGraph, re-flow (I9)", () => {
       })),
     );
     renderGraph(canvasC);
+    // Past the first painted frame, when motion would otherwise switch on.
+    await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
     for (const element of document.querySelectorAll<HTMLElement>("[data-graph-node]")) {
       expect(element.style.transition).toBe("");
     }
@@ -842,10 +1035,227 @@ describe("BuildGraph, re-flow (I9)", () => {
         <BuildGraph {...props} />
       </CanvasViewport>,
     );
+    // Settled: motion switches on after the first painted frame (F4).
+    await waitFor(() => expect(node("spine:deposit").style.transition).toBe(MOVE));
     const calls = describeBlock.mock.calls.length;
     expect(calls).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: "Zoom in" }));
     await user.click(screen.getByRole("button", { name: "Zoom out" }));
     expect(describeBlock).toHaveBeenCalledTimes(calls);
+  });
+});
+
+describe("BuildGraph, the card's state in its tag and its name (F2)", () => {
+  const base = fixtureGraphProps(canvasC);
+  const patched =
+    (blockId: string, patch: Partial<BlockContent>): BuildGraphProps["describeBlock"] =>
+    (id) =>
+      id === blockId ? { ...base.describeBlock(id), ...patch } : base.describeBlock(id);
+
+  // @rule F2
+  // @rule D27
+  it("[F2, D27] a coming-soon card shows the Soon tag by default and says coming soon in its name", () => {
+    renderGraph(canvasC, {
+      describeBlock: patched("c-pool-pool", {
+        caption: "Uniswap v3 · 0.05%",
+        state: "comingSoon",
+        soonTag: undefined,
+      }),
+    });
+    const card = node(blockKey("c-pool-pool")).querySelector("[data-card-state]");
+    expect(card).toHaveAttribute("data-card-state", "comingSoon");
+    expect(card?.querySelector("[data-soon-tag]")).toHaveTextContent("Soon");
+    expect(card).toHaveAccessibleName(
+      "WETH / USDC, Uniswap v3 · 0.05% · coming soon, on Arbitrum, 60% of the capital",
+    );
+  });
+
+  // @rule F2
+  // @rule D6
+  it("[F2, D6] an invalid card says why in its name, even when the registry kept its caption", () => {
+    renderGraph(canvasC, { describeBlock: patched("c-supply-supply", { state: "invalid" }) });
+    expect(
+      node(blockKey("c-supply-supply")).querySelector("[data-card-state]"),
+    ).toHaveAccessibleName(
+      "Supply USDC, No longer in your mandate, on Arbitrum, 40% of the capital",
+    );
+  });
+
+  // @rule F2
+  it("[F2] an empty card says what it still lacks: no pool yet, no asset yet", () => {
+    renderGraph(canvasC, {
+      describeBlock: patched("c-supply-supply", {
+        title: "Aave v3 Supply",
+        caption: "Pick an asset",
+        state: "empty",
+      }),
+    });
+    expect(
+      node(blockKey("c-supply-supply")).querySelector("[data-card-state]"),
+    ).toHaveAccessibleName(
+      "Aave v3 Supply · no asset yet, Pick an asset, on Arbitrum, 40% of the capital",
+    );
+  });
+});
+
+describe("BuildGraph, one rounding of a share (F3)", () => {
+  // @rule F3
+  it("[F3] a third of the capital reads 33.3% on the label, in its tooltip and in the card's name", () => {
+    const thirds = {
+      ...canvasC.input,
+      hub: {
+        chains: canvasC.input.hub.chains.map((chain) =>
+          chain.id === "c-pool" ? { ...chain, sharePct: 100 / 3 } : chain,
+        ),
+      },
+    } satisfies typeof canvasC.input;
+    renderGraph(canvasC, { layout: layoutGraph(thirds, { startHereWidth: 420 }) });
+    const shareLabel = node(
+      targetKey({
+        kind: "shareLabel",
+        chainId: "c-pool",
+        network: "arbitrum",
+        feedsBlockId: "c-pool-pool",
+      }),
+    ).querySelector("[data-share-label]");
+    expect(shareLabel).toHaveTextContent("33.3%");
+    expect(shareLabel).toHaveAccessibleName("33.3% of the strategy's capital");
+    expect(
+      screen.getByRole("button", {
+        name: "WETH / USDC, Uniswap v4 · 0.05%, on Arbitrum, 33.3% of the capital",
+      }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("BuildGraph, one network on two spokes (F6)", () => {
+  /** A plan the invariants refuse (INV1 duplicate_network): it must still draw whole. */
+  const twin: LayoutInput = {
+    hubNetwork: "arbitrum",
+    hub: { chains: [] },
+    spokes: ["tw-1", "tw-2"].map((id) => ({
+      network: "robinhood",
+      sharePct: 20,
+      chains: [
+        {
+          id,
+          sharePct: 20,
+          steps: [
+            { id: `${id}-swap`, family: "flow", kind: "swap", auto: true, configured: true },
+            {
+              id: `${id}-pool`,
+              family: "position",
+              kind: "uniswapV4Pool",
+              auto: false,
+              configured: true,
+            },
+          ],
+        },
+      ],
+    })),
+  };
+
+  const twinCopy: Partial<BuildGraphProps> = {
+    describeBlock: () => ({
+      title: "WETH / USDG",
+      caption: "Uniswap v4 · 0.05%",
+      icon: "layers",
+      state: "default",
+      accessibleName: "",
+    }),
+    describeFlow: () => ({
+      text: "Swap · auto",
+      tooltip: "The app swaps USDG into the pool tokens",
+      icon: "swap",
+    }),
+  };
+
+  // @rule F6
+  it("[F6] draws both spokes, every block and every line, with no duplicate key", () => {
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const layout = layoutGraph(twin, { startHereWidth: 420 });
+    renderGraph(canvasC, { ...twinCopy, layout });
+
+    expect(errors.mock.calls.flat().join(" ")).not.toMatch(/same key/i);
+    expect(document.querySelectorAll("[data-spoke-group]")).toHaveLength(2);
+    expect(node("bridge:robinhood")).not.toBe(node("bridge:robinhood#2"));
+    expect(document.querySelectorAll("[data-card-state]")).toHaveLength(2);
+    expect(document.querySelectorAll("[data-flow-pill]")).toHaveLength(4);
+    const lines = [...document.querySelectorAll("polyline[data-edge-id]")];
+    expect(lines).toHaveLength(layout.edges.length);
+    expect(new Set(lines.map((line) => line.getAttribute("data-edge-id"))).size).toBe(lines.length);
+    const nodes = [...document.querySelectorAll("[data-graph-node]")];
+    expect(new Set(nodes.map((element) => element.getAttribute("data-graph-node"))).size).toBe(
+      nodes.length,
+    );
+  });
+
+  // @rule F6
+  it("[F6] lights the second spoke's own stub when its label is hovered", () => {
+    renderGraph(canvasC, { ...twinCopy, layout: layoutGraph(twin, { startHereWidth: 420 }) });
+    const spokeLabel = targetKey({
+      kind: "shareLabel",
+      chainId: null,
+      network: "robinhood",
+      feedsBlockId: null,
+    });
+    const second = node(`${spokeLabel}#2`).querySelector("[data-share-label]");
+    if (!second) throw new Error("no second spoke label");
+    fireEvent.pointerEnter(second);
+    const lit = [...document.querySelectorAll("polyline[data-highlighted]")];
+    expect(lit.map((line) => line.getAttribute("data-edge-id"))).toEqual([
+      "stub:spoke:robinhood#2",
+    ]);
+  });
+});
+
+describe("BuildGraph, literal positions from the reference numbers (F7)", () => {
+  // @rule F7
+  // @rule L8
+  it("[F7, L8] canvas C, worked example 1: the pool, the Supply and its ports, Add network, Withdraw, 60%", () => {
+    renderGraph(canvasC);
+    expectBox(node(blockKey("c-pool-pool")), 24, 294, 176, 62);
+    expectBox(node(blockKey("c-supply-supply")), 232, 244, 176, 62);
+    const before = targetKey({ kind: "port", side: "before", blockId: "c-supply-supply" });
+    expectBox(node(before), 312, 236, 16, 16);
+    const after = targetKey({ kind: "port", side: "after", blockId: "c-supply-supply" });
+    expectBox(node(after), 312, 298, 16, 16);
+    expectBox(node(targetKey({ kind: "addNetwork" })), 520, 228, 64, 72);
+    expectBox(node("spine:withdraw"), 186, 588, 236, 62);
+    const sixty = node(
+      targetKey({
+        kind: "shareLabel",
+        chainId: "c-pool",
+        network: "arbitrum",
+        feedsBlockId: "c-pool-pool",
+      }),
+    );
+    expect([sixty.style.left, sixty.style.top]).toEqual(["112px", "220px"]);
+  });
+
+  // @rule F7
+  // @rule ST7
+  it("[F7, ST7] canvas A: the Base group and the hub's Borrow", () => {
+    renderGraph(canvasA);
+    expectBox(node("group:base"), 728, 228, 696, 292);
+    expectBox(node(blockKey("a-hub-3-borrow")), 440, 380, 176, 62);
+  });
+
+  // @rule F7
+  // @rule ST6
+  it("[F7, ST6] Build state 5: Idle output and the pool, after the shift of 76", () => {
+    renderGraph(buildState5);
+    expectBox(node("spine:idleOutput"), 24, 454, 236, 62);
+    expectBox(node(blockKey("s5-pool")), 100, 294, 176, 62);
+  });
+});
+
+describe("BuildGraph, invalid networks are always handed in (F8)", () => {
+  // @rule F8
+  it("[F8] invalidNetworks is a required prop", () => {
+    const { invalidNetworks: _required, ...rest } = propsFor(canvasC);
+    // @ts-expect-error invalidNetworks is required (F8): the type refuses a graph without it.
+    const element = <BuildGraph {...rest} />;
+    expect(element.props).not.toHaveProperty("invalidNetworks");
   });
 });

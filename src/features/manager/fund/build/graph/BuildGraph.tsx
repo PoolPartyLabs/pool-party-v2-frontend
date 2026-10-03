@@ -22,11 +22,18 @@
  *   creates no stacking context and its network chip can be lifted to the label layer.
  * - [I10] Templates, ports, cards and chain share labels are buttons named by their tooltip; pills,
  *   locks, a spoke's label and the network chips only explain themselves (focusable, not buttons:
- *   the focus policy of the pieces). Everything is in the DOM in reading order (top to bottom, then
- *   left to right, see `graphModel`), so the tab order is the reading order with no positive
- *   `tabIndex`. Lines are hidden from assistive technology. A card is named by its place:
- *   `card.accessibleName` with its title and caption (from `describeBlock`), its network and its
- *   chain's share ("WETH / USDC, Uniswap v4 · 0.05%, on Arbitrum, 60% of the capital").
+ *   the focus policy of the pieces). Everything is in the DOM in reading order, CHAIN BY CHAIN (the
+ *   coordinator's decision on the review of PR #35, see `graphModel`), so the tab order is the
+ *   reading order with no positive `tabIndex`. Nodes keep stable keys, so a re-flow that reorders
+ *   them moves the focused element and React DOM gives it its focus back after the commit. Lines
+ *   are hidden from assistive technology. A card is named by its place: `card.accessibleName` with
+ *   its title and caption (from `describeBlock`), its network and its chain's share ("WETH / USDC,
+ *   Uniswap v4 · 0.05%, on Arbitrum, 60% of the capital"), and the name says the card's state with
+ *   the existing copy: an empty card's title reads "Uniswap v4 · no pool yet" (`panel.typeNoPool`,
+ *   `panel.typeNoAsset`), a coming-soon caption "Uniswap v3 · 0.05% · coming soon"
+ *   (`menu.comingSoonType`), an invalid caption "No longer in your mandate" (`card.invalid`). A
+ *   coming-soon card always carries its "Soon" tag (`palette.soon` when the registry gives none).
+ * - Shares are rounded once (`shareNumber`): the label, its tooltip and the card's name agree.
  * - [C19] Every template, port, pill, share label, network chip and lock has its tooltip. Ports use
  *   the four D13 variants by the side of the port and the kind of its card; a share label says
  *   `tooltip.share`; the Bridge has no block id, so its text and tooltip are built here from
@@ -35,7 +42,9 @@
  * - [BB8] Hovering an edge or its share label (or focusing the label) lights both.
  * - [I9] A re-flow moves each node 150 ms ease-out: nodes are keyed by stable ids, so React keeps the
  *   element and the browser animates its new position; none under reduced motion (D8). The lines
- *   snap to the new layout (an SVG polyline cannot transition its points).
+ *   snap to the new layout (an SVG polyline cannot transition its points). Motion starts only after
+ *   the first frame is painted, so the first layout (and the measured one that may replace the
+ *   estimate before paint) never slides into place.
  * - [I3], [I5], [C15], [C17] `activeTargetKeys` light the matching templates and ports; the card of
  *   `selectedId` gets its selected look; spine cards, pills and the Bridge select nothing.
  * - Drop and background contracts: every template, port, card and share label is wrapped in an
@@ -49,9 +58,9 @@
  * per change of the props they read, so a hover re-renders only the labels and the lines. Pan and
  * zoom live in the viewport, which never re-renders its children: moving the view draws nothing.
  *
- * Addition to plan section 3.5 (optional, so no caller breaks): `invalidNetworks`, the spoke networks
- * the mandate no longer holds (D6), drawn as invalid groups. `BuildGraphProps` has no other source
- * for that state.
+ * Addition to plan section 3.5 (required since the review of PR #35, so no caller forgets it):
+ * `invalidNetworks`, the spoke networks the mandate no longer holds (D6), drawn as invalid groups.
+ * `BuildGraphProps` has no other source for that state.
  */
 "use client";
 
@@ -61,6 +70,7 @@ import {
   memo,
   type ReactElement,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -93,6 +103,7 @@ import {
   pieceEdges,
   portTooltipKey,
   SPINE_ICON,
+  shareNumber,
 } from "./graphModel";
 
 /** Public props for {@link BuildGraph} (coordinator plan section 3.5). */
@@ -113,11 +124,14 @@ export interface BuildGraphProps {
   onTarget(target: GraphTarget, anchor: HTMLElement): void;
   /** Removes a spoke with no chain (I7, D5). Without it no group offers the close control. */
   onRemoveSpoke?(network: string): void;
-  /** Spoke networks no longer in the mandate (D6), drawn invalid. Addition to plan section 3.5. */
-  invalidNetworks?: ReadonlySet<string>;
+  /**
+   * Spoke networks no longer in the mandate (D6), drawn as invalid groups (addition to plan section
+   * 3.5). The caller builds it from `validatePlan(plan, ctx)` (`build/plan/planInvariants.ts`): the
+   * `targetId` of every violation whose `code` is `"network_not_in_mandate"` (invariant 1), which
+   * carries the spoke's network. Pass an empty set when there is none.
+   */
+  invalidNetworks: ReadonlySet<string>;
 }
-
-const NO_NETWORKS: ReadonlySet<string> = new Set();
 
 /** [I9] How a moved node travels to its new place. */
 const MOVE = "left 150ms ease-out, top 150ms ease-out";
@@ -182,15 +196,69 @@ function useGraphCopy() {
       emptyAddNetwork: t("fundBuilder.canvas.empty.addNetwork"),
       startHere: t("fundBuilder.canvas.empty.startHere"),
       invalid: t("fundBuilder.canvas.card.invalid"),
+      soon: t("fundBuilder.canvas.palette.soon"),
       addProtocol: (network: string) => t("fundBuilder.canvas.tooltip.addProtocol", { network }),
       bridgeTooltip: (token: string, network: string) =>
         t("fundBuilder.canvas.tooltip.bridgeAuto", { token, network }),
-      share: (pct: number) => t("fundBuilder.canvas.tooltip.share", { pct }),
-      cardName: (values: { title: string; caption: string; network: string; pct: number }) =>
+      // `pct` is the share already rounded by `shareNumber`, so every message agrees with the label.
+      share: (pct: string) => t("fundBuilder.canvas.tooltip.share", { pct }),
+      cardName: (values: { title: string; caption: string; network: string; pct: string }) =>
         t("fundBuilder.canvas.card.accessibleName", values),
+      comingSoon: (type: string) => t("fundBuilder.canvas.menu.comingSoonType", { type }),
+      noPoolYet: (type: string) => t("fundBuilder.canvas.panel.typeNoPool", { type }),
+      noAssetYet: (type: string) => t("fundBuilder.canvas.panel.typeNoAsset", { type }),
       removeNetwork: (network: string) => t("fundBuilder.canvas.network.remove", { network }),
     };
   }, [t]);
+}
+
+type GraphCopy = ReturnType<typeof useGraphCopy>;
+
+/**
+ * The card's content with its state said in words (F2): the accessible name names its place and its
+ * state, and a coming-soon card always has its tag. Only existing keys: an empty card's title takes
+ * "no pool yet" or "no asset yet" (a pool kind, or anything else), a coming-soon caption takes
+ * "coming soon", an invalid caption is the reason itself.
+ */
+function cardContent(
+  content: BlockContent,
+  place: { kind: string; network: string; pct: string },
+  copy: GraphCopy,
+): BlockContent {
+  let { title, caption } = content;
+  if (content.state === "empty") {
+    const pool = place.kind === "uniswapV4Pool" || place.kind === "uniswapV3Pool";
+    title = pool ? copy.noPoolYet(title) : copy.noAssetYet(title);
+  } else if (content.state === "comingSoon") {
+    caption = copy.comingSoon(caption);
+  } else if (content.state === "invalid") {
+    caption = copy.invalid;
+  }
+  return {
+    ...content,
+    soonTag: content.state === "comingSoon" ? (content.soonTag ?? copy.soon) : content.soonTag,
+    accessibleName: copy.cardName({
+      title,
+      caption,
+      network: place.network,
+      pct: place.pct,
+    }),
+  };
+}
+
+/** D8 and F4: motion only after the first frame is painted, and never under reduced motion. */
+function useMotion(): boolean {
+  const reduced = usePrefersReducedMotion();
+  const [painted, setPainted] = useState(false);
+  useEffect(() => {
+    if (typeof requestAnimationFrame !== "function") {
+      setPainted(true);
+      return;
+    }
+    const frame = requestAnimationFrame(() => setPainted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return painted && !reduced;
 }
 
 /** The pieces a wrapper holds that a press must never pan through (section 3.2 of the plan). */
@@ -294,10 +362,10 @@ export const BuildGraph = memo(function BuildGraph({
   activeTargetKeys,
   onTarget,
   onRemoveSpoke,
-  invalidNetworks = NO_NETWORKS,
+  invalidNetworks,
 }: BuildGraphProps) {
   const copy = useGraphCopy();
-  const motion = !usePrefersReducedMotion();
+  const motion = useMotion();
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
 
   // The callbacks read the latest handlers through refs, so the nodes built below stay valid.
@@ -344,19 +412,21 @@ export const BuildGraph = memo(function BuildGraph({
         case "block": {
           const block = item.node;
           if (block.family === "position") {
-            const content = describeBlock(block.id);
-            const accessibleName = copy.cardName({
-              title: content.title,
-              caption: content.caption,
-              network: networkName(block.network),
-              pct: shares.get(block.chainId) ?? 0,
-            });
+            const content = cardContent(
+              describeBlock(block.id),
+              {
+                kind: block.kind,
+                network: networkName(block.network),
+                pct: shareNumber(shares.get(block.chainId) ?? 0),
+              },
+              copy,
+            );
             out.set(
               item.key,
               <CardSlot
                 key={item.key}
                 wrapper={wrapper}
-                content={{ ...content, accessibleName }}
+                content={content}
                 selected={block.id === selectedId}
                 onSelect={(anchor) => report({ kind: "block", blockId: block.id }, anchor)}
               />,
@@ -411,7 +481,8 @@ export const BuildGraph = memo(function BuildGraph({
         }
         case "template": {
           const target = item.node.target;
-          const active = activeTargetKeys.has(item.key);
+          // The target's key, not the item's: a repeated item key carries a "#2" suffix (F6).
+          const active = activeTargetKeys.has(targetKey(target));
           const activate = (anchor: HTMLElement) => report(target, anchor);
           out.set(
             item.key,
@@ -441,7 +512,7 @@ export const BuildGraph = memo(function BuildGraph({
             <div key={item.key} {...wrapper}>
               <InsertPort
                 tooltip={copy.port[key]}
-                active={activeTargetKeys.has(item.key)}
+                active={activeTargetKeys.has(targetKey(target))}
                 onActivate={(anchor) => report(target, anchor)}
               />
             </div>,
@@ -519,17 +590,19 @@ export const BuildGraph = memo(function BuildGraph({
       {items.map((item) => {
         if (item.type !== "label") return nodes.get(item.key) ?? null;
         const label = item.node;
+        // The item's own stub: two spokes on one network each light their own line (F6).
+        const edgeId = item.edgeId;
         return (
           <div key={item.key} {...wrapperProps(item, motion)}>
             <ShareLabel
               text={formatShare(label.pct)}
-              tooltip={copy.share(label.pct)}
-              highlighted={hoveredEdge === label.edgeId}
+              tooltip={copy.share(shareNumber(label.pct))}
+              highlighted={hoveredEdge === edgeId}
               // D26: a spoke's label feeds its Bridge, which is not selectable: it only explains.
               onActivate={
                 label.target.chainId === null ? undefined : (anchor) => report(label.target, anchor)
               }
-              onHoverChange={(hovered) => hoverLabel(label.edgeId, hovered)}
+              onHoverChange={(hovered) => hoverLabel(edgeId, hovered)}
             />
           </div>
         );
