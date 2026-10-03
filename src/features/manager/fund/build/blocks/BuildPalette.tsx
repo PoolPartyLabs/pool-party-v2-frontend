@@ -37,12 +37,16 @@ import { type PointerEvent as ReactPointerEvent, useEffect, useId, useRef, useSt
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils/cn";
 import { exceedsPanThreshold } from "../canvas/viewportMath";
+import { GRAPH_TARGET_ATTR } from "../layout/graphTypes";
 import { Explained } from "../pieces/pieceParts";
 import { BlockMark } from "./BlockMark";
 import type { PaletteDragItem, PaletteItem, PaletteModel, PaletteSection } from "./blockRegistry";
 
-/** The attribute S6 renders on every drop target, holding `targetKey(target)`. */
-export const GRAPH_TARGET_ATTR = "data-graph-target";
+/**
+ * The attribute S6 renders on every drop target, holding `targetKey(target)`. It lives beside
+ * `targetKey` (`layout/graphTypes.ts`), so the renderer and the palette read the one constant.
+ */
+export { GRAPH_TARGET_ATTR };
 
 /** I3: the key of the graph target under a point, or null. */
 export function resolveDropKey(x: number, y: number): string | null {

@@ -99,6 +99,13 @@ function keyPart(value: string | null): string {
 }
 
 /**
+ * The attribute that carries {@link targetKey} on every drop target the renderer draws (S6), and
+ * that the palette's drop resolves (S5). One constant for both sides (S7 wiring, POO-2157): the
+ * renderer wrote it as a literal while the palette exported its own copy.
+ */
+export const GRAPH_TARGET_ATTR = "data-graph-target";
+
+/**
  * A stable string per target, used for `activeTargetKeys` (S5) and `data-graph-target` (S6). Two
  * different targets never share a key: every field is encoded, so an id holding ":" cannot collide.
  */
