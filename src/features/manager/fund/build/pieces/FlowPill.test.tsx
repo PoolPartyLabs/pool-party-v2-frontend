@@ -16,23 +16,26 @@ import { CANVAS_INTERACTIVE_ATTR, isCanvasBackground } from "../canvas/useCanvas
 import { FlowPill } from "./FlowPill";
 import type { FlowContent } from "./pieceTypes";
 
+const SWAP_AUTO: FlowContent = {
+  text: "Swap · auto",
+  tooltip: "The app swaps USDC into the pool tokens",
+  icon: "swap",
+};
+const COLLECT_FEES: FlowContent = {
+  text: "Collect fees",
+  tooltip: "Claims the pool fees into Income (fees)",
+  icon: "coins",
+};
+
 const PILLS: ReadonlyArray<[string, FlowContent]> = [
-  [
-    "Swap · auto",
-    { text: "Swap · auto", tooltip: "The app swaps USDC into the pool tokens", icon: "swap" },
-  ],
+  ["Swap · auto", SWAP_AUTO],
   ["Swap", { text: "Swap", tooltip: "Swaps into another token of your mandate", icon: "swap" }],
-  [
-    "Collect fees",
-    { text: "Collect fees", tooltip: "Claims the pool fees into Income (fees)", icon: "coins" },
-  ],
+  ["Collect fees", COLLECT_FEES],
   [
     "Bridge · auto",
     { text: "Bridge · auto", tooltip: "Moves USDG to Robinhood Chain", icon: "bridge" },
   ],
 ];
-
-const SWAP_AUTO = PILLS[0][1];
 
 describe("FlowPill", () => {
   // @rule BB3
@@ -117,7 +120,7 @@ describe("FlowPill", () => {
   // @rule C19
   it("[C19] the tooltip opens on hover", async () => {
     const user = userEvent.setup();
-    render(<FlowPill content={PILLS[2][1]} />);
+    render(<FlowPill content={COLLECT_FEES} />);
 
     await user.hover(screen.getByRole("button", { name: "Collect fees" }));
 
