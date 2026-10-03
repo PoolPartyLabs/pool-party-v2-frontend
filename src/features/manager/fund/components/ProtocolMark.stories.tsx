@@ -1,14 +1,15 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolMark.stories
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2143 rules v2)
  *
  * Storybook coverage for the shared protocol mark (POO-2128, epic POO-2119).
  *
  * The story that earns its place is `EveryProtocol`: the component has exactly one branch, and the
  * only way to see that the branch is drawn correctly is the full set side by side, where the three
- * Uniswap ids carry the committed asset and Across, Aave v3 and GMX fall back to a monogram. One
- * story per id would say the same thing six times and would not show the fallbacks lining up.
+ * Uniswap ids carry the committed asset and Across and Aave v3 fall back to a monogram (GMX did too,
+ * until the buildathon scope commented it out, POO-2143). One story per id would say the same thing
+ * five times and would not show the fallbacks lining up.
  *
  * `BothSizes` is the second: the two call sites differ only in edge (24 px on Mandate step 2, 28 px
  * on step 5), which is the whole reason `size` is a prop rather than a constant, and a reviewer can
@@ -25,7 +26,8 @@ const PROTOCOLS: { id: ProtocolId; name: string }[] = [
   { id: "aave-v3", name: "Aave v3" },
   { id: "uniswap-v3", name: "Uniswap v3" },
   { id: "uniswap-v4", name: "Uniswap v4" },
-  { id: "gmx", name: "GMX" },
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+  // { id: "gmx", name: "GMX" },
 ];
 
 /** One labelled mark, so a reviewer can tell which id produced which drawing. */
@@ -61,7 +63,7 @@ type Story = StoryObj<typeof meta>;
 /** The default: one Uniswap row mark at the step 2 edge. */
 export const Default: Story = {};
 
-/** All six ids: the asset for the three Uniswap ones, a monogram for the rest. */
+/** All five ids: the asset for the three Uniswap ones, a monogram for the rest. */
 export const EveryProtocol: Story = {
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
