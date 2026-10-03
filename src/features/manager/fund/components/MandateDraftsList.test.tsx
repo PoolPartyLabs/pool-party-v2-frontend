@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-044
  * @name MandateDraftsList tests
- * @implements-rules-version v1 (POO-2127 rules v1)
+ * @implements-rules-version v3 (POO-2127 rules v1, POO-2167 rules v3)
  * @analytics-events none, the names are ASSERTED here rather than emitted; a test is never an
  *   emitter, so a screen cannot count as instrumented by being tested
  *
@@ -122,10 +122,11 @@ describe("MandateDraftsList", () => {
 
   // @rule D1
   it("counts the steps the draft actually has, so a skipped Pools step is not counted", async () => {
-    // R29: a mandate with a position protocol has five steps; one without has four.
+    // R29: a mandate with a position protocol has five steps; one without has four. Uniswap v4,
+    // the position protocol the buildathon scope offers (R20 v3, POO-2167).
     const withPools = withProtocols(saved("a", { lastStep: "limits" }), [
       ...REQUIRED_PROTOCOLS,
-      "uniswap-v3",
+      "uniswap-v4",
     ]);
     seedPayload({ ...withPools, updatedAt: hoursAgo(3) });
 
