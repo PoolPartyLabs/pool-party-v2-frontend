@@ -26,6 +26,7 @@
  * 4. `default`.
  */
 import { networkStableSymbol } from "@/lib/chains/config";
+import { formatPercent } from "@/lib/utils/format";
 import { HUB_NETWORK, type MandateDraft, type NetworkId, tokenKey } from "../../mandateDraft";
 import type { BlockContent, BlockIcon, FlowContent } from "../pieces/pieceTypes";
 import {
@@ -40,7 +41,17 @@ import {
 import { findBlock } from "../plan/planDerive";
 import type { PlanViolation } from "../plan/planInvariants";
 import { arrivingTokenKey, isPoolKind } from "../plan/planRules";
-import { type BlockCopy, feeNumber, shareNumber } from "./blockCopy";
+import type { BlockCopy } from "./blockCopy";
+
+/** The share placeholder of a sentence that already prints "%": "60", "33.3" (through format.ts). */
+export function shareNumber(pct: number): string {
+  return formatPercent(pct, Number.isInteger(pct) ? 0 : 1).replace(/%$/, "");
+}
+
+/** A pool fee tier from basis points, as the fee caption prints it: 5 bps is "0.05" (format.ts). */
+export function feeNumber(feeBps: number): string {
+  return formatPercent(feeBps / 100, 2).replace(/%$/, "");
+}
 
 /** Where a kind can be placed (S1 decides; this names it). */
 export type BlockPlacement = "newChain" | "afterSupply";

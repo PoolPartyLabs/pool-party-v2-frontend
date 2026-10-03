@@ -21,21 +21,10 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { formatPercent } from "@/lib/utils/format";
 import type { BlockKind } from "../plan/buildPlan";
 
 /** A translator scoped to the `manager` namespace. */
 export type ManagerTranslate = (key: string, values?: Record<string, string | number>) => string;
-
-/** The share placeholder of a sentence that already prints "%": "60", "33.3" (through format.ts). */
-export function shareNumber(pct: number): string {
-  return formatPercent(pct, Number.isInteger(pct) ? 0 : 1).replace(/%$/, "");
-}
-
-/** A pool fee tier from basis points, the way the fee caption prints it: 5 bps is "0.05". */
-export function feeNumber(feeBps: number): string {
-  return formatPercent(feeBps / 100, 2).replace(/%$/, "");
-}
 
 /** The strings of the block registry, the menus, the palette and the panel stub. */
 export interface BlockCopy {
