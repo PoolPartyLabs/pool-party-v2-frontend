@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-044
  * @name MandateDraftsList tests
- * @implements-rules-version v3 (POO-2127 rules v1, POO-2167 rules v3)
+ * @implements-rules-version v3 (POO-2127 rules v1, POO-2167 rules v3, POO-2151 rules v1)
  * @analytics-events none, the names are ASSERTED here rather than emitted; a test is never an
  *   emitter, so a screen cannot count as instrumented by being tested
  *
@@ -44,7 +44,7 @@ const toasts = vi.hoisted(() => {
 });
 vi.mock("@/components/ui/Toast", () => ({ toast: toasts.toast }));
 
-import { MandateDraftsList } from "./MandateDraftsList";
+import { draftResumeHref, MandateDraftsList } from "./MandateDraftsList";
 
 /** Hours ago, as an ISO stamp. */
 function hoursAgo(hours: number): string {
@@ -210,6 +210,23 @@ describe("MandateDraftsList", () => {
     expect(nav.push).toHaveBeenCalledWith("/manager/new?draft=a&step=tokens");
   });
 
+  // @rule Resume
+  it("Open resumes a completed draft last saved in Build on the Build phase", async () => {
+    seedPayload(
+      saved("b", {
+        lastStep: "limits",
+        passedSteps: ["networks", "protocols", "tokens", "limits"],
+        completedAt: hoursAgo(3),
+        lastPhase: "build",
+      }),
+    );
+
+    renderWithProviders(<MandateDraftsList />);
+    await userEvent.click(await screen.findByRole("button", { name: "Open" }));
+
+    expect(nav.push).toHaveBeenCalledWith("/manager/new?draft=b&step=limits&phase=build");
+  });
+
   // @rule D3
   it("records the resume with the step it resumed on", async () => {
     seedPayload(
@@ -331,5 +348,46 @@ describe("MandateDraftsList", () => {
     upsertDraft(saved("late", { name: "Saved from the builder" }));
 
     expect(await screen.findByText("Saved from the builder")).toBeInTheDocument();
+  });
+});
+
+/**
+ * POO-2151 (coordinator default D16): a completed draft last saved in Build opens on Build. Only
+ * that case adds the phase: Build exists only for a mandate that closed, and a draft with no phase
+ * is one written before the canvas, which reads as the mandate.
+ */
+describe("draftResumeHref", () => {
+  const done = (over: Partial<MandateDraft> = {}) =>
+    saved("r", {
+      lastStep: "limits",
+      passedSteps: ["networks", "protocols", "tokens", "limits"],
+      completedAt: "2026-10-03T00:00:00.000Z",
+      ...over,
+    });
+
+  it("adds the Build phase for a completed draft last saved in Build", () => {
+    // @rule Resume
+    expect(draftResumeHref(done({ lastPhase: "build" }))).toBe(
+      "/manager/new?draft=r&step=limits&phase=build",
+    );
+  });
+
+  it("leaves the phase out for a draft last saved in the mandate", () => {
+    // @rule Resume
+    expect(draftResumeHref(done({ lastPhase: "mandate" }))).toBe(
+      "/manager/new?draft=r&step=limits",
+    );
+  });
+
+  it("leaves the phase out for a draft with no phase, which reads as the mandate", () => {
+    // @rule Resume
+    expect(draftResumeHref(done())).toBe("/manager/new?draft=r&step=limits");
+  });
+
+  it("leaves the phase out for a draft whose mandate is not complete, whatever it says", () => {
+    // @rule Resume
+    expect(draftResumeHref(done({ completedAt: null, lastPhase: "build" }))).toBe(
+      "/manager/new?draft=r&step=limits",
+    );
   });
 });
