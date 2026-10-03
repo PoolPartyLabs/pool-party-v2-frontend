@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundBuildLanding tests
- * @implements-rules-version v1 (POO-2127 rules v1)
+ * @implements-rules-version v2 (POO-2127 rules v1, POO-2142 rules v2)
  * @analytics-events none, the names are ASSERTED here rather than emitted; a test is never an
  *   emitter, so a screen cannot count as instrumented by being tested
  *
@@ -25,7 +25,7 @@ vi.mock("@/lib/analytics/useAnalytics", () => ({ useAnalytics: () => analytics }
 
 import { FundBuildLanding } from "./FundBuildLanding";
 
-const catalog: MandateCatalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog: MandateCatalog = buildMandateCatalog();
 
 function draftOf(over: Partial<MandateDraft> = {}): MandateDraft {
   return {

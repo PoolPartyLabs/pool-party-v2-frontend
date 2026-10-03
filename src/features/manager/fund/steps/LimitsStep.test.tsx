@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-039
  * @name LimitsStep.test
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  * @analytics-events none, the shell emits
  *
  * POO-2126 [R6] / [R39] to [R43], epic POO-2119. Mandate step 5.
@@ -35,7 +35,7 @@ import {
 } from "../mandateDraft";
 import { LimitsStep } from "./LimitsStep";
 
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 const NOW = "2026-10-03T00:00:00.000Z";
 
 /** The two unlocked tokens the Figma shows, as the draft stores them. */
@@ -62,22 +62,20 @@ function emptyDraft(): MandateDraft {
 }
 
 /**
- * The draft the Figma frame draws. Seeded directly rather than through `withNetworks`, because Base
- * is "Coming soon" in the catalog and the reducer would drop it; the Limits step still has to render
- * a row for a network the draft carries (see `capRows`).
+ * The draft the Figma frame draws, seeded directly. The frame also shows Base with No cap; the
+ * mandate no longer offers Base (rules v2, POO-2142), so the No cap row here is Uniswap v4's.
  */
 function figmaDraft(overrides: Partial<MandateDraft> = {}): MandateDraft {
   const base = emptyDraft();
   return {
     ...base,
-    networks: ["arbitrum", "robinhood", "base"],
+    networks: ["arbitrum", "robinhood"],
     protocols: ["uniswap-v3-swap", "across", "aave-v3", "uniswap-v3", "uniswap-v4"],
     tokens: [...base.tokens, WETH, WBTC],
     caps: {
       networks: {
         arbitrum: { noCap: true, pct: 0 },
         robinhood: { noCap: false, pct: 40 },
-        base: { noCap: true, pct: 0 },
       },
       protocols: {
         "aave-v3": { noCap: false, pct: 60 },
@@ -153,7 +151,6 @@ describe("LimitsStep", () => {
 
     for (const id of [
       "robinhood",
-      "base",
       "aave-v3",
       "uniswap-v3",
       "uniswap-v4",
@@ -226,11 +223,11 @@ describe("LimitsStep", () => {
   it("hides the slider and the value on a No cap row", () => {
     renderStep();
 
-    const base = within(row("base"));
-    expect(base.queryByRole("slider")).not.toBeInTheDocument();
-    expect(base.queryByText("0%")).not.toBeInTheDocument();
-    expect(base.getByRole("checkbox")).toHaveAttribute("aria-checked", "true");
-    expect(base.getByText("No cap")).toBeInTheDocument();
+    const v4 = within(row("uniswap-v4"));
+    expect(v4.queryByRole("slider")).not.toBeInTheDocument();
+    expect(v4.queryByText("0%")).not.toBeInTheDocument();
+    expect(v4.getByRole("checkbox")).toHaveAttribute("aria-checked", "true");
+    expect(v4.getByText("No cap")).toBeInTheDocument();
   });
 
   // @rule R39
@@ -508,7 +505,7 @@ describe("LimitsStep", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Set a cap or tick No cap to continue.");
     expect(row("robinhood").scrollIntoView).toHaveBeenCalledWith({ block: "center" });
     expect(row("robinhood").className).toContain("ring-destructive/60");
-    expect(row("base").className).not.toContain("ring-destructive/60");
+    expect(row("aave-v3").className).not.toContain("ring-destructive/60");
   });
 
   // @rule R6

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-026
  * @name MandateSummaryCard tests
- * @implements-rules-version v1 (POO-2127 rules v1)
+ * @implements-rules-version v2 (POO-2127 rules v1, POO-2142 rules v2)
  * @analytics-events none, a read-only card emits nothing; the landing that renders it owns the view
  *   event (PP-MGR-SCR-002)
  *
@@ -32,10 +32,10 @@ import {
 import { MandateSummaryCard } from "./MandateSummaryCard";
 
 /**
- * The Robinhood spoke is on, because Arbitrum is the ONLY other network the catalog marks
- * available today: a two-network fixture has no other pair to be made of.
+ * The catalog offers Arbitrum and Robinhood Chain only (rules v2, POO-2142), so a two-network
+ * fixture has no other pair to be made of.
  */
-const catalog: MandateCatalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog: MandateCatalog = buildMandateCatalog();
 
 /** A draft with the hub only, as the builder creates it. */
 function base(over: Partial<MandateDraft> = {}): MandateDraft {

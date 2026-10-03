@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-037
  * @name TokensStep.test
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  * @analytics-events none, the shell emits
  *
  * POO-2124 [R13] / [R23] / [R24] / [R25] / [R26] / [R27] / [R28], epic POO-2119. Mandate step 3.
@@ -43,7 +43,7 @@ import {
 } from "../mandateDraft";
 import { TokensStep } from "./TokensStep";
 
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 
 /** Every token key the catalog can produce, so a rendered card can be read back as a symbol. */
 const SYMBOL_BY_KEY = new Map(

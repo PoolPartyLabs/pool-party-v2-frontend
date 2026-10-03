@@ -1,11 +1,12 @@
 /**
  * @id PP-MGR-LIB-019
  * @name mandateDraft tests
- * @implements-rules-version v1 (POO-2121 rules v1)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2)
  * @analytics-events none, a pure domain; the builder shell owns the mandate events.
  *
  * One `it()` per rule in the S1 brief. Every reducer is also checked for immutability: a draft
  * handed in must come back untouched, because the React hook keeps the previous draft on a block.
+ * Rules v2 (POO-2142, buildathon scope): the mandate names Arbitrum and Robinhood Chain only.
  */
 import { describe, expect, it } from "vitest";
 import { buildMandateCatalog, type MandateCatalogToken } from "./mandateCatalog";
@@ -47,7 +48,7 @@ import {
 } from "./mandateDraft";
 
 const NOW = "2026-10-03T12:00:00.000Z";
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 
 function empty(): MandateDraft {
   return createEmptyDraft(NOW, "draft-1");
@@ -186,17 +187,19 @@ describe("withNetworks", () => {
     expect(next.networks).toEqual(["arbitrum", "robinhood"]);
   });
 
-  it("ignores a network the catalog marks unavailable", () => {
-    // @rule R17
-    const next = withNetworks(empty(), ["base", "polygon", "unichain", "robinhood"], catalog);
-    expect(next.networks).toEqual(["arbitrum", "robinhood"]);
-  });
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+  // it("ignores a network the catalog marks unavailable", () => {
+  //   // @rule R17
+  //   const next = withNetworks(empty(), ["base", "polygon", "unichain", "robinhood"], catalog);
+  //   expect(next.networks).toEqual(["arbitrum", "robinhood"]);
+  // });
 
-  it("ignores a flag-gated network while its flag is off", () => {
-    // @rule R17
-    const off = buildMandateCatalog({ robinhoodChain: false });
-    expect(withNetworks(empty(), ["robinhood"], off).networks).toEqual(["arbitrum"]);
-  });
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+  // it("ignores a flag-gated network while its flag is off", () => {
+  //   // @rule R17
+  //   const off = buildMandateCatalog({ robinhoodChain: false });
+  //   expect(withNetworks(empty(), ["robinhood"], off).networks).toEqual(["arbitrum"]);
+  // });
 
   it("adds and removes the locked deposit row per selected network", () => {
     // @rule R24
@@ -495,8 +498,8 @@ describe("addPool", () => {
   });
 
   it("refuses a pool on a network the mandate does not name", () => {
-    // @rule R34
-    const result = addPool(withDex(), pool({ network: "base" }), catalog);
+    // @rule R34: the draft holds the hub alone, so a Robinhood Chain pool is outside it.
+    const result = addPool(withDex(), pool({ network: "robinhood" }), catalog);
     expect(isBlocked(result)).toBe(true);
     if (isBlocked(result)) {
       expect(result.blocked).toEqual({
@@ -627,14 +630,13 @@ describe("clearCap", () => {
   it("prunes nothing else: the other rows, scopes and selections stay", () => {
     // @rule R39
     let draft = setCap(empty(), "networks", "robinhood", { noCap: false, pct: 40 });
-    draft = setCap(draft, "networks", "base", { noCap: false, pct: 20 });
+    draft = setCap(draft, "networks", "arbitrum", { noCap: false, pct: 20 });
     draft = setCap(draft, "protocols", "aave-v3", { noCap: false, pct: 60 });
     draft = setCap(draft, "tokens", "arbitrum:0xabc", { noCap: true, pct: 0 });
 
     const cleared = clearCap(draft, "networks", "robinhood");
 
-    expect(cleared.caps.networks.base).toEqual({ noCap: false, pct: 20 });
-    expect(cleared.caps.networks.arbitrum).toEqual(draft.caps.networks.arbitrum);
+    expect(cleared.caps.networks.arbitrum).toEqual({ noCap: false, pct: 20 });
     expect(cleared.caps.protocols["aave-v3"]).toEqual({ noCap: false, pct: 60 });
     expect(cleared.caps.tokens["arbitrum:0xabc"]).toEqual({ noCap: true, pct: 0 });
     expect(cleared.networks).toEqual(draft.networks);
@@ -643,11 +645,11 @@ describe("clearCap", () => {
 
   it("is a no-op on a row that has no record, and never mutates its input", () => {
     // @rule R9
-    const draft = setCap(empty(), "networks", "robinhood", { noCap: false, pct: 40 });
+    const draft = setCap(empty(), "protocols", "aave-v3", { noCap: false, pct: 40 });
     const snapshot = JSON.stringify(draft);
 
-    expect(clearCap(draft, "networks", "base")).toBe(draft);
-    clearCap(draft, "networks", "robinhood");
+    expect(clearCap(draft, "networks", "robinhood")).toBe(draft);
+    clearCap(draft, "protocols", "aave-v3");
     expect(JSON.stringify(draft)).toBe(snapshot);
   });
 
@@ -920,7 +922,7 @@ describe("isBroadMandate", () => {
 
   it("selecting every network alone raises nothing", () => {
     // @rule R13
-    const draft = withNetworks(withDex(), ["robinhood", "base", "polygon", "unichain"], catalog);
+    const draft = withNetworks(withDex(), ["robinhood"], catalog);
     expect(isBroadMandate(draft, catalog, 1)).toBe(false);
   });
 
@@ -1010,7 +1012,7 @@ describe("poolUniverseCount, the Broad mandate denominator kept on the draft", (
     // @rule R13
     const draft = createEmptyDraft("2026-10-01T00:00:00.000Z", "d-universe");
     expect(draft.poolUniverseCount).toBeNull();
-    expect(isBroadMandate(draft, buildMandateCatalog({ robinhoodChain: false }), 0)).toBe(false);
+    expect(isBroadMandate(draft, catalog, 0)).toBe(false);
   });
 
   it("is cleared by withNetworks, which changes what the universe was measured over", () => {

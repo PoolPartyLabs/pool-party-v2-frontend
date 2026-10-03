@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-038
  * @name mandatePoolSource tests
- * @implements-rules-version v1 (POO-2125 rules v1)
+ * @implements-rules-version v2 (POO-2125 rules v1, POO-2142 rules v2)
  * @analytics-events none, a data adapter
  *
  * The Pools step's data adapter, both modes. The two that matter most here are the ones a screen
@@ -801,13 +801,28 @@ describe("findMandatePoolByAddress, real mode", () => {
   it("passes the endpoint's wrong-network answer through, in one call", async () => {
     vi.mocked(getDexPoolByAddressAction).mockResolvedValue({
       pools: [],
-      foundOnNetwork: "base",
+      foundOnNetwork: "robinhood",
     });
 
     const located = await findMandatePoolByAddress("arbitrum", ARB_WETH, ["uniswap-v3"]);
 
-    expect(located).toEqual({ pool: null, foundOn: "base" });
+    expect(located).toEqual({ pool: null, foundOn: "robinhood" });
     expect(getDexPoolByAddressAction).toHaveBeenCalledTimes(1);
+  });
+
+  // @rule R16 v2 (POO-2142): Base, Polygon and Unichain left the mandate's union, so a pool the
+  // endpoint finds on one of them is the same as a slug the mandate never modelled: no advisory.
+  it("gives no wrong-network advisory for a network the mandate no longer offers", async () => {
+    for (const slug of ["base", "polygon", "unichain"]) {
+      vi.mocked(getDexPoolByAddressAction).mockResolvedValue({
+        pools: [],
+        foundOnNetwork: slug,
+      });
+
+      await expect(findMandatePoolByAddress("arbitrum", ARB_WETH, ["uniswap-v3"])).resolves.toEqual(
+        { pool: null, foundOn: null },
+      );
+    }
   });
 
   // The API's network slug is a free string. A slug outside the mandate's own union has no row in

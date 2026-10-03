@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep.test
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  * @analytics-events none, the shell emits
  *
  * POO-2123 [R12] / [R19] / [R20] / [R21] / [R22], epic POO-2119. Mandate step 2.
@@ -29,7 +29,7 @@ import {
 } from "../mandateDraft";
 import { ProtocolsStep } from "./ProtocolsStep";
 
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 
 function draftWith(networks: NetworkId[], protocols: ProtocolId[]): MandateDraft {
   const base = withNetworks(
