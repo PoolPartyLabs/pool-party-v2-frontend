@@ -252,6 +252,55 @@ export const ANALYTICS_EVENTS = [
   // POO-1174, deposit. `deposit_address_copied` carries `chain_id` ONLY: the address is excluded by
   // derivation, never left to `sanitizeParams` to scrub.
   "deposit_address_copied",
+
+  // POO-2122 (epic POO-2119), the fund-contracts strategy builder's Mandate phase
+  // (`PP-MGR-SCR-002`). Five screens of list-picking with NO on-chain action in them, which decides
+  // what each of these can honestly mean.
+  //
+  // `started` fires once per builder session on a draft that was never saved, so the denominator is
+  // "a manager began a mandate", not "a manager opened the builder again". `step_viewed` fires per
+  // STEP VISIT rather than per mount, because the five steps live under one pathname and
+  // `page_viewed` cannot see a single one of them: without it every per-step rate below has a
+  // numerator and no denominator. `step_submitted` carries the four selection counts at the moment
+  // Next was accepted, which is what turns "managers drop at Tokens" into "managers drop at Tokens
+  // holding two tokens".
+  //
+  // `completed` fires on the draft reaching STORAGE, never on the last Next and never on the
+  // dialog's click: persistence is the only settlement this phase has, and a mandate that was not
+  // written down did not happen (the rule every transactional `completed` here follows: it waits
+  // for the receipt, never for the click).
+  // `blocked` is the one that earns its place most: four of the five steps can refuse Next with the
+  // button still enabled, and a refusal that emitted nothing would be indistinguishable from a
+  // manager who simply stopped.
+  "builder_mandate_started",
+  "builder_mandate_step_viewed",
+  "builder_mandate_step_submitted",
+  "builder_mandate_blocked",
+  "builder_mandate_completed",
+  "builder_mandate_abandoned",
+  "builder_draft_saved",
+  "builder_mandate_error",
+
+  // POO-2127 (epic POO-2119), what happens on either side of the Mandate: the Build phase a closed
+  // mandate opens onto, and the Console card that is the only way back into a parked one.
+  //
+  // `builder_build_landing_viewed` is a view with a specific job. The Build canvas does not exist
+  // yet, so this screen is where a manager who finished a mandate currently stops, and
+  // `builder_mandate_completed` cannot tell how many of them arrive and look at it: a deep link
+  // into a completed draft reaches the landing without completing anything, and a completion
+  // followed by an immediate exit reaches it for one frame. Counting arrivals separately is what
+  // turns "N mandates were closed" into "N mandates were closed and M managers came back to look
+  // at one", which is the number that says whether the canvas is the next thing to build.
+  //
+  // `builder_draft_opened` and `builder_draft_deleted` are the Console's half of the same funnel.
+  // `builder_mandate_abandoned{draft_saved:true}` says a manager parked work; only these two say
+  // what happened to it afterwards, and they point at opposite conclusions. A resume is the parked
+  // draft doing its job; a delete is a mandate the manager decided against, and the `step` it was
+  // parked on is where they changed their mind. Without them a saved draft's fate is invisible and
+  // every parked mandate reads as a pending success.
+  "builder_build_landing_viewed",
+  "builder_draft_opened",
+  "builder_draft_deleted",
 ] as const;
 
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[number];
@@ -389,6 +438,89 @@ export const ANALYTICS_NAV_ITEMS = [
 ] as const;
 
 export type AnalyticsNavItem = (typeof ANALYTICS_NAV_ITEMS)[number];
+
+/**
+ * The five steps of the fund builder's Mandate phase (POO-2122, epic POO-2119).
+ *
+ * Mirrors `MandateStepKey` in `src/features/manager/fund/mandateDraft.ts` on purpose rather than
+ * importing it. `src/lib/analytics` is a leaf that feature modules depend on; an import the other
+ * way would make the analytics catalog depend on the manager feature for a union of five strings.
+ * The mirror is not free-floating: the shell passes its own `MandateStepKey` into {@link step}, so
+ * TypeScript compares the two at every emission and a step added upstream fails to compile here.
+ */
+export const ANALYTICS_MANDATE_STEPS = [
+  "networks",
+  "protocols",
+  "tokens",
+  "pools",
+  "limits",
+] as const;
+
+export type AnalyticsMandateStep = (typeof ANALYTICS_MANDATE_STEPS)[number];
+
+/**
+ * Why the fund builder refused something the manager asked for (POO-2122, epic POO-2119).
+ *
+ * Declared beside {@link ANALYTICS_BLOCK_REASONS} rather than inside it, and the separation is
+ * deliberate on both sides. That list is the TRANSACTION kit's (`txFlowKit.ts`, POO-1172), owned by
+ * the shared modal instrumentation that five flows depend on; nothing here signs anything, and
+ * growing a shared V1 union by five values for one new screen would make every tx-flow consumer
+ * carry reasons that cannot occur in it. {@link AnalyticsParams.block_reason} accepts both, so one
+ * GA4 dimension still answers "why did the product say no" across the whole app.
+ *
+ * Five values where the mandate domain defines seven, because two were not distinct from reasons
+ * that already exist and inventing a synonym would split one question into two half-populated
+ * series: `name_length` IS `name_invalid` (whose own doc reads "missing or fails its length rule"),
+ * and `not_priced` IS `price_unknown`. The fold is explicit and total in
+ * `FundStrategyBuilderScreen.tsx`, so no reason can reach GA4 unmapped.
+ */
+export const ANALYTICS_MANDATE_BLOCK_REASONS = [
+  /**
+   * A step cannot be left because nothing in it was picked: today the Pools step with zero pools.
+   *
+   * Not `nothing_to_claim`, which is about what a POSITION holds when a modal opens and which no
+   * input can clear. This is about what the manager has not chosen yet, and the next click clears
+   * it. The count is the denominator for "does the Pools step make it obvious that picking is
+   * required", which the handoff flags as the one step with no safe default.
+   */
+  "nothing_selected",
+  /**
+   * The Limits step was left with a row carrying neither a percentage nor "No cap".
+   *
+   * Not `amount_invalid`: nothing was typed wrongly, a decision was not taken at all. The rows are
+   * derived from three earlier steps, so a manager can arrive at a longer list than they expected,
+   * and this count is what says whether Limits asks for more decisions than it is worth.
+   */
+  "cap_missing",
+  /**
+   * A token could not be added because the mandate's 16 network slots are full (R27).
+   *
+   * A CONTRACT ceiling rather than a product choice, which is what gives the number an audience: it
+   * says how often the limit the fund contracts impose is the thing standing between a manager and
+   * the mandate they wanted.
+   */
+  "no_slots",
+  /**
+   * A pool was refused because it carries a Uniswap v4 hook.
+   *
+   * Nothing about the manager's input is wrong and no other choice of theirs clears it: the pool
+   * cannot be held by these contracts at all. Counted because "should we support hooked pools" is
+   * an open product decision, and listing them rather than hiding them is what makes the demand
+   * measurable in the first place.
+   */
+  "has_hook",
+  /**
+   * A network, protocol or token the manager tried to pick is not live yet (R17, R21).
+   *
+   * The most actionable blocked intent in the phase: a direct count of demand, per row, for
+   * something drawn but not shipped. Distinct from `chain_unavailable` (their wallet lacks our
+   * chain) and `unsupported_chain` (we lack their chain): here both sides are fine and the feature
+   * is what does not exist yet.
+   */
+  "coming_soon",
+] as const;
+
+export type AnalyticsMandateBlockReason = (typeof ANALYTICS_MANDATE_BLOCK_REASONS)[number];
 
 /**
  * The error codes THIS repository produces, for a failure that never reached the API.
@@ -543,6 +675,57 @@ export const ANALYTICS_ERROR_CODES = [
   "WRONG_ACCOUNT",
   /** Ours: `errorCode.ts` `KIND_CODES.wrongChain`, raised by `assertProviderOnChain`. */
   "WRONG_CHAIN",
+  /**
+   * Ours (POO-2122): the fund builder could not write a mandate draft to storage.
+   *
+   * Spelled out here rather than sent as `"storage"`, because `sanitizeParams` DROPS any
+   * `error_code` that is not `<DOMAIN>_<REASON>` ({@link isAnalyticsErrorCodeShape}). A lowercase
+   * word would have shipped a failure event with a blank dimension, which is the exact defect
+   * POO-1173 D1 found in the wallet-rejection path.
+   *
+   * It stays one code for every way the write can fail (quota, blocked site data, a private window)
+   * because the browser does not tell us which, and three codes we cannot distinguish would be
+   * three guesses.
+   */
+  "DRAFT_SAVE_FAILED",
+  /**
+   * Ours (POO-2127): the Console's Drafts card could not remove a mandate draft from storage.
+   *
+   * Its own code rather than a reuse of `DRAFT_SAVE_FAILED`, because the two are different acts with
+   * different consequences: a save that fails loses work the manager just did, and a delete that
+   * fails leaves a draft they wanted gone sitting in the list. A funnel that merged them could not
+   * tell a storage refusing writes from one refusing removals, and only one of the two asks a
+   * manager to retry something.
+   *
+   * Same single-code reasoning as its sibling: `deleteDraft` answers whether the draft is gone and
+   * not why it is not, so three codes we cannot distinguish would be three guesses.
+   */
+  "DRAFT_DELETE_FAILED",
+  /**
+   * Ours (POO-2125): the fund builder's Pools step could not read the pool catalog.
+   *
+   * One code for every way the read can fail, because the step cannot tell them apart: the adapter
+   * answers `/dex-pools` in real mode and a mock in the other, and both surface as a rejected
+   * promise. What it is NOT is an empty list, which is why this exists at all: "no pools hold your
+   * tokens" is a fact about the mandate and "we could not ask" is a fact about us, and a funnel that
+   * merged them would send everyone looking at the wrong half.
+   */
+  "POOLS_FETCH_FAILED",
+  /**
+   * Ours (POO-2125): the same read failed, measuring the pool universe BESIDE a search.
+   *
+   * Its own code rather than a reuse of `POOLS_FETCH_FAILED`, because that one is the drawn,
+   * retryable state: the manager is looking at the error panel and its Try again. A measurement
+   * running beside a token search or a pasted address draws nothing at all, so a funnel that merged
+   * the two would count a state nobody was shown, and while the universe was unknown one failed
+   * search reported it twice, once for the visible read and once for the measurement, then again on
+   * every retry. In the universe view there is one read serving both, and it keeps the drawn code.
+   *
+   * What it measures is the denominator the Broad-mandate flag divides by (R13), so this is the
+   * code to watch when the flag is missing from mandates that should carry it: the measurement
+   * leaves the universe unknown rather than publishing a stale count, which keeps the flag down.
+   */
+  "POOLS_UNIVERSE_FETCH_FAILED",
 ] as const;
 
 export type AnalyticsErrorCode = (typeof ANALYTICS_ERROR_CODES)[number];
@@ -671,13 +854,19 @@ export interface AnalyticsParams {
    */
   tx_step?: AnalyticsTxStep;
   /**
-   * Why a CTA could not act (POO-1172). Values in `ANALYTICS_BLOCK_REASONS`.
+   * Why a CTA could not act (POO-1172). Values in `ANALYTICS_BLOCK_REASONS`, plus the fund
+   * builder's own in {@link ANALYTICS_MANDATE_BLOCK_REASONS} (POO-2122).
    *
    * A CODE, never a label. The one enumerated set of block reasons in the repo builds TRANSLATED
    * strings, and sending those would produce eleven variants of one reason and leak product copy
    * into an analytics property.
+   *
+   * ONE dimension over two closed unions, rather than a second param. "Why did the product say no"
+   * is a single question whichever screen asked it, and splitting it would mean every report that
+   * ranks refusals had to union two columns by hand. Both unions stay closed, so a value still
+   * cannot be invented at a call site.
    */
-  block_reason?: AnalyticsBlockReason;
+  block_reason?: AnalyticsBlockReason | AnalyticsMandateBlockReason;
   /**
    * The cross-service trace id (POO-1212 [1]). Makes a GA4 row joinable to the Sentry issue holding
    * the stack trace and to the indexer log line holding the cause.
@@ -764,6 +953,48 @@ export interface AnalyticsParams {
   auth_method?: AnalyticsAuthMethod;
   /** Which navigation entry was activated (POO-1183 [R7]). */
   nav_item?: AnalyticsNavItem;
+  /**
+   * Which Mandate step a `builder_mandate_*` event happened on (POO-2122).
+   *
+   * The dimension the whole phase is cut on. Five screens share one pathname, so without it every
+   * mandate row says only "somewhere in the builder", and the two questions the funnel exists to
+   * answer, where managers stop and which step refuses them, both become unanswerable.
+   *
+   * A closed union declared HERE rather than imported from `mandateDraft.ts`: `src/lib/analytics`
+   * is a leaf that features depend on, never the reverse, and importing a feature module into it
+   * would invert that for a type with five members. The shell passes its own `MandateStepKey`, so
+   * the two are checked against each other at every call site; a sixth step added upstream stops
+   * compiling here, which is the failure mode worth having.
+   */
+  step?: AnalyticsMandateStep;
+  /**
+   * What the draft held when the event fired (POO-2122): one count per selection list.
+   *
+   * Four scalars rather than one joined string (the shape {@link sync_networks} uses), because
+   * these are quantities to average and compare, not a set to group by. "Managers who dropped at
+   * Pools had picked 2.1 tokens on average" is the sentence they exist for.
+   */
+  networks_count?: number;
+  protocols_count?: number;
+  tokens_count?: number;
+  pools_count?: number;
+  /**
+   * On `builder_mandate_abandoned`: whether the mandate the manager walked away from had ever
+   * reached storage (POO-2122).
+   *
+   * The difference between the two abandonments is the whole point of carrying it. An UNSAVED one
+   * lost work, and the count is a product defect we can act on; a SAVED one is a manager who will
+   * probably come back, and counting the two together would hide the first inside the second.
+   */
+  draft_saved?: boolean;
+  /**
+   * On `builder_draft_saved`: whether this was the save that NAMED the draft (POO-2122).
+   *
+   * First saves and later ones answer different questions. The first is a conversion (a mandate
+   * became a thing that survives a reload) and is the one with a dialog in front of it; the rest
+   * measure how often managers park work mid-flow.
+   */
+  first_save?: boolean;
   chain_id?: number;
 
   // --- Universal Funding funnel (POO-1048 [R2]) --------------------------------------------------

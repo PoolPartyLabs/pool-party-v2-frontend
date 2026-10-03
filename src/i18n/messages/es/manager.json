@@ -610,6 +610,39 @@
   },
   "window30d": "30d",
   "fundBuilder": {
+    "header": {
+      "saveExit": "Guardar y salir"
+    },
+    "subStep": {
+      "overline": "MANDATO · PASO {n} DE {count}",
+      "next": "Siguiente: {step}",
+      "back": "Atrás: {step}",
+      "nextBuild": "Siguiente: Construir estrategia",
+      "expand": "Mostrar los pasos del mandato",
+      "collapse": "Ocultar los pasos del mandato"
+    },
+    "steps": {
+      "networks": {
+        "title": "Redes",
+        "subtitle": "Elija las redes en las que esta estrategia puede operar. Arbitrum siempre es el hub."
+      },
+      "protocols": {
+        "title": "Protocolos",
+        "subtitle": "Elija los protocolos que esta estrategia puede usar. Los swaps y el bridge siempre están incluidos."
+      },
+      "tokens": {
+        "title": "Tokens",
+        "subtitle": "Elija los tokens que esta estrategia puede mantener. Provienen de las redes y protocolos que eligió."
+      },
+      "pools": {
+        "title": "Pools",
+        "subtitle": "Elija las pools a las que esta estrategia puede proveer liquidez. Provienen de los protocolos y tokens que eligió."
+      },
+      "limits": {
+        "title": "Límites",
+        "subtitle": "Limite cuánto del capital puede mantener cada red, protocolo y token."
+      }
+    },
     "common": {
       "selectAll": "Seleccionar todo",
       "alwaysIncluded": "Siempre incluido",
@@ -722,6 +755,43 @@
         "dex": "Liquidity positions",
         "perps": "Perpetuos"
       }
+    },
+    "draft": {
+      "title": "Ponga nombre a su borrador",
+      "body": "Todo lo que eligió hasta ahora se conserva. El nombre es cómo encontrará este borrador entre sus estrategias; puede cambiarlo más adelante en Revisión.",
+      "nameLabel": "Nombre del borrador",
+      "namePlaceholder": "ETH y BTC en Arbitrum",
+      "helper": "De 10 a 50 caracteres, la misma regla que el nombre de la estrategia.",
+      "counter": "{count} / {max}",
+      "progress": "Guardado hasta ahora: {networks} redes, {protocols} protocolos, {tokens} tokens · Mandato, paso {n} de {count}",
+      "keepEditing": "Seguir editando",
+      "save": "Guardar y salir",
+      "saveContinue": "Guardar y continuar",
+      "empty": "Póngale un nombre al borrador",
+      "saveFailed": "No se pudo guardar el borrador. Sus elecciones siguen aquí; intente de nuevo.",
+      "saved": "Borrador guardado"
+    },
+    "drafts": {
+      "title": "Borradores",
+      "row": "Mandato, paso {n} de {count} · actualizado {when}",
+      "open": "Abrir",
+      "delete": "Eliminar",
+      "deleteTitle": "¿Eliminar este borrador?",
+      "deleteBody": "{name} y todo lo que eligió en él se eliminarán. Esto no se puede deshacer.",
+      "empty": "Aún no hay borradores. Comience una estrategia y use Guardar y salir para conservarla.",
+      "deleteFailed": "No se pudo eliminar el borrador. Intente de nuevo.",
+      "unnamed": "Borrador sin nombre"
+    },
+    "build": {
+      "title": "Construir",
+      "pending": "El área de construcción de los contratos de fondo está en diseño. Su mandato está guardado; vuelva cuando esté disponible.",
+      "summary": "Su mandato",
+      "backMandate": "Atrás: Mandato",
+      "summaryNetworks": "Redes",
+      "summaryProtocols": "Protocolos",
+      "summaryTokens": "Tokens",
+      "summaryPools": "Pools",
+      "summaryLimits": "Límites"
     }
   }
 }

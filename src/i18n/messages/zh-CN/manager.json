@@ -610,6 +610,39 @@
   },
   "window30d": "30 天",
   "fundBuilder": {
+    "header": {
+      "saveExit": "保存并退出"
+    },
+    "subStep": {
+      "overline": "授权范围 · 第 {n}/{count} 步",
+      "next": "下一步：{step}",
+      "back": "上一步：{step}",
+      "nextBuild": "下一步：构建策略",
+      "expand": "显示授权范围步骤",
+      "collapse": "隐藏授权范围步骤"
+    },
+    "steps": {
+      "networks": {
+        "title": "网络",
+        "subtitle": "选择此策略可以运行的网络。Arbitrum 始终是 hub。"
+      },
+      "protocols": {
+        "title": "协议",
+        "subtitle": "选择此策略可以使用的协议。Swap 和 Bridge 始终包含在内。"
+      },
+      "tokens": {
+        "title": "代币",
+        "subtitle": "选择此策略可以持有的代币。它们来自您选择的网络和协议。"
+      },
+      "pools": {
+        "title": "资金池",
+        "subtitle": "选择此策略可以提供流动性的资金池。它们来自您选择的协议和代币。"
+      },
+      "limits": {
+        "title": "限额",
+        "subtitle": "限制每个网络、协议和代币可持有的资金比例上限。"
+      }
+    },
     "common": {
       "selectAll": "全选",
       "alwaysIncluded": "始终包含",
@@ -722,6 +755,43 @@
         "dex": "Liquidity positions",
         "perps": "永续"
       }
+    },
+    "draft": {
+      "title": "为您的草稿命名",
+      "body": "到目前为止您所做的所有选择都会保留。此名称用于在您的策略列表中找到该草稿，之后您可以在“核对”中修改。",
+      "nameLabel": "草稿名称",
+      "namePlaceholder": "Arbitrum 上的 ETH 和 BTC",
+      "helper": "10 到 50 个字符，与策略名称的规则相同。",
+      "counter": "{count} / {max}",
+      "progress": "目前已保存：{networks} 个网络、{protocols} 个协议、{tokens} 个代币 · 授权范围，第 {n}/{count} 步",
+      "keepEditing": "继续编辑",
+      "save": "保存并退出",
+      "saveContinue": "保存并继续",
+      "empty": "请为草稿命名",
+      "saveFailed": "无法保存草稿。您的选择仍保留在此，请重试。",
+      "saved": "草稿已保存"
+    },
+    "drafts": {
+      "title": "草稿",
+      "row": "授权范围，第 {n}/{count} 步 · 更新于 {when}",
+      "open": "打开",
+      "delete": "删除",
+      "deleteTitle": "删除此草稿？",
+      "deleteBody": "{name} 以及其中您所做的所有选择都将被删除。此操作无法撤销。",
+      "empty": "暂无草稿。开始一个策略，并使用“保存并退出”来保留它。",
+      "deleteFailed": "无法删除草稿，请重试。",
+      "unnamed": "未命名草稿"
+    },
+    "build": {
+      "title": "构建",
+      "pending": "基金合约的构建画布仍在设计中。您的授权范围已保存，上线后请再回来查看。",
+      "summary": "您的授权范围",
+      "backMandate": "上一步：授权范围",
+      "summaryNetworks": "网络",
+      "summaryProtocols": "协议",
+      "summaryTokens": "代币",
+      "summaryPools": "资金池",
+      "summaryLimits": "限额"
     }
   }
 }

@@ -610,6 +610,39 @@
   },
   "window30d": "30 天",
   "fundBuilder": {
+    "header": {
+      "saveExit": "儲存並退出"
+    },
+    "subStep": {
+      "overline": "授權範圍 · 第 {n}/{count} 步",
+      "next": "下一步：{step}",
+      "back": "上一步：{step}",
+      "nextBuild": "下一步：建構策略",
+      "expand": "顯示授權範圍步驟",
+      "collapse": "隱藏授權範圍步驟"
+    },
+    "steps": {
+      "networks": {
+        "title": "網路",
+        "subtitle": "選擇此策略可以運作的網路。Arbitrum 永遠是 hub。"
+      },
+      "protocols": {
+        "title": "協議",
+        "subtitle": "選擇此策略可以使用的協議。Swap 和 Bridge 永遠包含在內。"
+      },
+      "tokens": {
+        "title": "代幣",
+        "subtitle": "選擇此策略可以持有的代幣。它們來自您選擇的網路與協議。"
+      },
+      "pools": {
+        "title": "資金池",
+        "subtitle": "選擇此策略可以提供流動性的資金池。它們來自您選擇的協議與代幣。"
+      },
+      "limits": {
+        "title": "限額",
+        "subtitle": "限制每個網路、協議與代幣可持有的資金比例上限。"
+      }
+    },
     "common": {
       "selectAll": "全選",
       "alwaysIncluded": "永遠包含",
@@ -722,6 +755,43 @@
         "dex": "Liquidity positions",
         "perps": "永續"
       }
+    },
+    "draft": {
+      "title": "為您的草稿命名",
+      "body": "到目前為止您所做的所有選擇都會保留。此名稱用於在您的策略清單中找到該草稿，之後您可以在「審核」中修改。",
+      "nameLabel": "草稿名稱",
+      "namePlaceholder": "Arbitrum 上的 ETH 和 BTC",
+      "helper": "10 到 50 個字元，與策略名稱的規則相同。",
+      "counter": "{count} / {max}",
+      "progress": "目前已儲存：{networks} 個網路、{protocols} 個協議、{tokens} 個代幣 · 授權範圍，第 {n}/{count} 步",
+      "keepEditing": "繼續編輯",
+      "save": "儲存並退出",
+      "saveContinue": "儲存並繼續",
+      "empty": "請為草稿命名",
+      "saveFailed": "無法儲存草稿。您的選擇仍保留在此，請再試一次。",
+      "saved": "草稿已儲存"
+    },
+    "drafts": {
+      "title": "草稿",
+      "row": "授權範圍，第 {n}/{count} 步 · 更新於 {when}",
+      "open": "開啟",
+      "delete": "刪除",
+      "deleteTitle": "刪除這份草稿？",
+      "deleteBody": "{name} 以及其中您所做的所有選擇都將被刪除。此操作無法復原。",
+      "empty": "暫無草稿。開始建立策略，並使用「儲存並退出」來保留它。",
+      "deleteFailed": "無法刪除草稿，請再試一次。",
+      "unnamed": "未命名草稿"
+    },
+    "build": {
+      "title": "建構",
+      "pending": "基金合約的建構畫布仍在設計中。您的授權範圍已儲存，上線後請再回來查看。",
+      "summary": "您的授權範圍",
+      "backMandate": "上一步：授權範圍",
+      "summaryNetworks": "網路",
+      "summaryProtocols": "協議",
+      "summaryTokens": "代幣",
+      "summaryPools": "資金池",
+      "summaryLimits": "限額"
     }
   }
 }

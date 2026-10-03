@@ -610,6 +610,39 @@
   },
   "window30d": "30 ngày",
   "fundBuilder": {
+    "header": {
+      "saveExit": "Lưu và thoát"
+    },
+    "subStep": {
+      "overline": "NHIỆM VỤ · BƯỚC {n}/{count}",
+      "next": "Tiếp theo: {step}",
+      "back": "Quay lại: {step}",
+      "nextBuild": "Tiếp theo: Xây dựng chiến lược",
+      "expand": "Hiện các bước của nhiệm vụ",
+      "collapse": "Ẩn các bước của nhiệm vụ"
+    },
+    "steps": {
+      "networks": {
+        "title": "Mạng",
+        "subtitle": "Chọn các mạng mà chiến lược này có thể hoạt động trên đó. Arbitrum luôn là hub."
+      },
+      "protocols": {
+        "title": "Giao thức",
+        "subtitle": "Chọn các giao thức mà chiến lược này có thể dùng. Swap và bridge luôn được bao gồm."
+      },
+      "tokens": {
+        "title": "Token",
+        "subtitle": "Chọn các token mà chiến lược này có thể giữ. Chúng đến từ các mạng và giao thức bạn đã chọn."
+      },
+      "pools": {
+        "title": "Pool",
+        "subtitle": "Chọn các pool mà chiến lược này có thể cung cấp thanh khoản. Chúng đến từ các giao thức và token bạn đã chọn."
+      },
+      "limits": {
+        "title": "Giới hạn",
+        "subtitle": "Đặt giới hạn số vốn mà mỗi mạng, giao thức và token có thể giữ."
+      }
+    },
     "common": {
       "selectAll": "Chọn tất cả",
       "alwaysIncluded": "Luôn được bao gồm",
@@ -722,6 +755,43 @@
         "dex": "Liquidity positions",
         "perps": "Vĩnh cửu"
       }
+    },
+    "draft": {
+      "title": "Đặt tên cho bản nháp của bạn",
+      "body": "Mọi lựa chọn của bạn từ trước đến nay đều được giữ lại. Tên này giúp bạn tìm lại bản nháp này trong các chiến lược của mình; bạn có thể đổi tên sau ở phần Xem lại.",
+      "nameLabel": "Tên bản nháp",
+      "namePlaceholder": "ETH và BTC trên Arbitrum",
+      "helper": "Từ 10 đến 50 ký tự, cùng quy tắc với tên chiến lược.",
+      "counter": "{count} / {max}",
+      "progress": "Đã lưu đến hiện tại: {networks} mạng, {protocols} giao thức, {tokens} token · Nhiệm vụ, bước {n}/{count}",
+      "keepEditing": "Tiếp tục chỉnh sửa",
+      "save": "Lưu và thoát",
+      "saveContinue": "Lưu và tiếp tục",
+      "empty": "Hãy đặt tên cho bản nháp",
+      "saveFailed": "Không thể lưu bản nháp. Các lựa chọn của bạn vẫn còn ở đây; hãy thử lại.",
+      "saved": "Đã lưu bản nháp"
+    },
+    "drafts": {
+      "title": "Bản nháp",
+      "row": "Nhiệm vụ, bước {n}/{count} · cập nhật {when}",
+      "open": "Mở",
+      "delete": "Xóa",
+      "deleteTitle": "Xóa bản nháp này?",
+      "deleteBody": "{name} và mọi thứ bạn đã chọn trong đó sẽ bị xóa. Hành động này không thể hoàn tác.",
+      "empty": "Chưa có bản nháp nào. Hãy bắt đầu một chiến lược và dùng Lưu và thoát để giữ lại.",
+      "deleteFailed": "Không thể xóa bản nháp. Hãy thử lại.",
+      "unnamed": "Bản nháp chưa đặt tên"
+    },
+    "build": {
+      "title": "Xây dựng",
+      "pending": "Khung xây dựng cho các hợp đồng quỹ vẫn đang trong giai đoạn thiết kế. Nhiệm vụ của bạn đã được lưu; hãy quay lại khi tính năng này ra mắt.",
+      "summary": "Nhiệm vụ của bạn",
+      "backMandate": "Quay lại: Nhiệm vụ",
+      "summaryNetworks": "Mạng",
+      "summaryProtocols": "Giao thức",
+      "summaryTokens": "Token",
+      "summaryPools": "Pool",
+      "summaryLimits": "Giới hạn"
     }
   }
 }

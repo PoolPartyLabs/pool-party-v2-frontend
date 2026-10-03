@@ -610,6 +610,39 @@
   },
   "window30d": "30日",
   "fundBuilder": {
+    "header": {
+      "saveExit": "保存して終了"
+    },
+    "subStep": {
+      "overline": "マンデート · ステップ {n}/{count}",
+      "next": "次へ: {step}",
+      "back": "戻る: {step}",
+      "nextBuild": "次へ: 戦略を構築",
+      "expand": "マンデートのステップを表示",
+      "collapse": "マンデートのステップを隠す"
+    },
+    "steps": {
+      "networks": {
+        "title": "ネットワーク",
+        "subtitle": "この戦略が稼働できるネットワークを選びます。Arbitrum は常にハブです。"
+      },
+      "protocols": {
+        "title": "プロトコル",
+        "subtitle": "この戦略が使用できるプロトコルを選びます。スワップとブリッジは常に含まれます。"
+      },
+      "tokens": {
+        "title": "トークン",
+        "subtitle": "この戦略が保有できるトークンを選びます。選択したネットワークとプロトコルから決まります。"
+      },
+      "pools": {
+        "title": "プール",
+        "subtitle": "この戦略が流動性を提供できるプールを選びます。選択したプロトコルとトークンから決まります。"
+      },
+      "limits": {
+        "title": "上限",
+        "subtitle": "各ネットワーク・プロトコル・トークンが保有できる資本の割合に上限を設定します。"
+      }
+    },
     "common": {
       "selectAll": "すべて選択",
       "alwaysIncluded": "常に含まれる",
@@ -722,6 +755,43 @@
         "dex": "Liquidity positions",
         "perps": "パーペチュアル"
       }
+    },
+    "draft": {
+      "title": "ドラフトに名前を付ける",
+      "body": "これまでに選んだ内容はすべて保持されます。この名前で、戦略一覧からこのドラフトを見つけられます。後で「確認」画面から変更できます。",
+      "nameLabel": "ドラフト名",
+      "namePlaceholder": "ArbitrumのETHとBTC",
+      "helper": "10〜50文字で、戦略名と同じ規則です。",
+      "counter": "{count} / {max}",
+      "progress": "ここまでの保存内容: ネットワーク{networks}件、プロトコル{protocols}件、トークン{tokens}件 · マンデート、ステップ{n}/{count}",
+      "keepEditing": "編集を続ける",
+      "save": "保存して終了",
+      "saveContinue": "保存して続ける",
+      "empty": "ドラフトに名前を付けてください",
+      "saveFailed": "ドラフトを保存できませんでした。選択内容はまだ残っています。再試行してください。",
+      "saved": "ドラフトを保存しました"
+    },
+    "drafts": {
+      "title": "ドラフト",
+      "row": "マンデート、ステップ{n}/{count} · 更新: {when}",
+      "open": "開く",
+      "delete": "削除",
+      "deleteTitle": "このドラフトを削除しますか？",
+      "deleteBody": "{name}と、その中で選択したすべての内容が削除されます。この操作は元に戻せません。",
+      "empty": "ドラフトはまだありません。戦略を開始し、「保存して終了」を使って保存してください。",
+      "deleteFailed": "ドラフトを削除できませんでした。再試行してください。",
+      "unnamed": "名前のないドラフト"
+    },
+    "build": {
+      "title": "構築",
+      "pending": "ファンドコントラクトのビルドキャンバスはまだデザイン中です。マンデートは保存されています。公開されたら戻ってきてください。",
+      "summary": "あなたのマンデート",
+      "backMandate": "戻る: マンデート",
+      "summaryNetworks": "ネットワーク",
+      "summaryProtocols": "プロトコル",
+      "summaryTokens": "トークン",
+      "summaryPools": "プール",
+      "summaryLimits": "上限"
     }
   }
 }

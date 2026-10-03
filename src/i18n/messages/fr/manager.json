@@ -610,6 +610,39 @@
   },
   "window30d": "30 j",
   "fundBuilder": {
+    "header": {
+      "saveExit": "Enregistrer et quitter"
+    },
+    "subStep": {
+      "overline": "MANDAT · ÉTAPE {n} SUR {count}",
+      "next": "Suivant : {step}",
+      "back": "Précédent : {step}",
+      "nextBuild": "Suivant : Construire la stratégie",
+      "expand": "Afficher les étapes du mandat",
+      "collapse": "Masquer les étapes du mandat"
+    },
+    "steps": {
+      "networks": {
+        "title": "Réseaux",
+        "subtitle": "Choisissez les réseaux sur lesquels cette stratégie peut fonctionner. Arbitrum est toujours le hub."
+      },
+      "protocols": {
+        "title": "Protocoles",
+        "subtitle": "Choisissez les protocoles que cette stratégie peut utiliser. Les swaps et le bridge sont toujours inclus."
+      },
+      "tokens": {
+        "title": "Jetons",
+        "subtitle": "Choisissez les jetons que cette stratégie peut détenir. Ils proviennent des réseaux et protocoles que vous avez choisis."
+      },
+      "pools": {
+        "title": "Pools",
+        "subtitle": "Choisissez les pools auxquels cette stratégie peut fournir de la liquidité. Ils proviennent des protocoles et jetons que vous avez choisis."
+      },
+      "limits": {
+        "title": "Limites",
+        "subtitle": "Plafonnez la part du capital que chaque réseau, protocole et jeton peut détenir."
+      }
+    },
     "common": {
       "selectAll": "Tout sélectionner",
       "alwaysIncluded": "Toujours inclus",
@@ -722,6 +755,43 @@
         "dex": "Liquidity positions",
         "perps": "Perpétuels"
       }
+    },
+    "draft": {
+      "title": "Nommez votre brouillon",
+      "body": "Tout ce que vous avez choisi jusqu'ici est conservé. Le nom vous permettra de retrouver ce brouillon parmi vos stratégies ; vous pourrez le modifier plus tard dans Vérification.",
+      "nameLabel": "Nom du brouillon",
+      "namePlaceholder": "ETH et BTC sur Arbitrum",
+      "helper": "De 10 à 50 caractères, la même règle que pour le nom de la stratégie.",
+      "counter": "{count} / {max}",
+      "progress": "Enregistré jusqu'ici : {networks} réseaux, {protocols} protocoles, {tokens} jetons · Mandat, étape {n} sur {count}",
+      "keepEditing": "Continuer la modification",
+      "save": "Enregistrer et quitter",
+      "saveContinue": "Enregistrer et continuer",
+      "empty": "Donnez un nom au brouillon",
+      "saveFailed": "Impossible d'enregistrer le brouillon. Vos choix sont toujours là ; réessayez.",
+      "saved": "Brouillon enregistré"
+    },
+    "drafts": {
+      "title": "Brouillons",
+      "row": "Mandat, étape {n} sur {count} · mis à jour {when}",
+      "open": "Ouvrir",
+      "delete": "Supprimer",
+      "deleteTitle": "Supprimer ce brouillon ?",
+      "deleteBody": "{name} et tout ce que vous y avez choisi seront supprimés. Cette action est irréversible.",
+      "empty": "Pas encore de brouillons. Démarrez une stratégie et utilisez Enregistrer et quitter pour en conserver une.",
+      "deleteFailed": "Impossible de supprimer le brouillon. Réessayez.",
+      "unnamed": "Brouillon sans nom"
+    },
+    "build": {
+      "title": "Construire",
+      "pending": "L'espace de construction pour les contrats de fonds est en cours de conception. Votre mandat est enregistré ; revenez lorsqu'il sera disponible.",
+      "summary": "Votre mandat",
+      "backMandate": "Précédent : Mandat",
+      "summaryNetworks": "Réseaux",
+      "summaryProtocols": "Protocoles",
+      "summaryTokens": "Jetons",
+      "summaryPools": "Pools",
+      "summaryLimits": "Limites"
     }
   }
 }

@@ -610,6 +610,39 @@
   },
   "window30d": "30d",
   "fundBuilder": {
+    "header": {
+      "saveExit": "Salvar e sair"
+    },
+    "subStep": {
+      "overline": "MANDATO · ETAPA {n} DE {count}",
+      "next": "Próximo: {step}",
+      "back": "Voltar: {step}",
+      "nextBuild": "Próximo: Construir estratégia",
+      "expand": "Mostrar as etapas do mandato",
+      "collapse": "Ocultar as etapas do mandato"
+    },
+    "steps": {
+      "networks": {
+        "title": "Redes",
+        "subtitle": "Escolha as redes em que esta estratégia pode operar. Arbitrum é sempre o hub."
+      },
+      "protocols": {
+        "title": "Protocolos",
+        "subtitle": "Escolha os protocolos que esta estratégia pode usar. Swaps e o bridge são sempre incluídos."
+      },
+      "tokens": {
+        "title": "Tokens",
+        "subtitle": "Escolha os tokens que esta estratégia pode manter. Eles vêm das redes e protocolos que você escolheu."
+      },
+      "pools": {
+        "title": "Pools",
+        "subtitle": "Escolha as pools às quais esta estratégia pode fornecer liquidez. Elas vêm dos protocolos e tokens que você escolheu."
+      },
+      "limits": {
+        "title": "Limites",
+        "subtitle": "Limite quanto do capital cada rede, protocolo e token pode manter."
+      }
+    },
     "common": {
       "selectAll": "Selecionar tudo",
       "alwaysIncluded": "Sempre incluído",
@@ -722,6 +755,43 @@
         "dex": "Liquidity positions",
         "perps": "Perpétuos"
       }
+    },
+    "draft": {
+      "title": "Dê um nome ao seu rascunho",
+      "body": "Tudo o que você escolheu até agora é mantido. O nome é como você vai encontrar este rascunho nas suas estratégias; você pode alterá-lo depois, na Revisão.",
+      "nameLabel": "Nome do rascunho",
+      "namePlaceholder": "ETH e BTC na Arbitrum",
+      "helper": "De 10 a 50 caracteres, a mesma regra do nome da estratégia.",
+      "counter": "{count} / {max}",
+      "progress": "Salvo até agora: {networks} redes, {protocols} protocolos, {tokens} tokens · Mandato, etapa {n} de {count}",
+      "keepEditing": "Continuar editando",
+      "save": "Salvar e sair",
+      "saveContinue": "Salvar e continuar",
+      "empty": "Dê um nome ao rascunho",
+      "saveFailed": "Não foi possível salvar o rascunho. Suas escolhas continuam aqui; tente novamente.",
+      "saved": "Rascunho salvo"
+    },
+    "drafts": {
+      "title": "Rascunhos",
+      "row": "Mandato, etapa {n} de {count} · atualizado {when}",
+      "open": "Abrir",
+      "delete": "Excluir",
+      "deleteTitle": "Excluir este rascunho?",
+      "deleteBody": "{name} e tudo o que você escolheu nele serão removidos. Isso não pode ser desfeito.",
+      "empty": "Ainda não há rascunhos. Comece uma estratégia e use Salvar e sair para guardar uma.",
+      "deleteFailed": "Não foi possível excluir o rascunho. Tente novamente.",
+      "unnamed": "Rascunho sem nome"
+    },
+    "build": {
+      "title": "Construir",
+      "pending": "A área de construção dos contratos de fundo ainda está em design. Seu mandato está salvo; volte quando estiver disponível.",
+      "summary": "Seu mandato",
+      "backMandate": "Voltar: Mandato",
+      "summaryNetworks": "Redes",
+      "summaryProtocols": "Protocolos",
+      "summaryTokens": "Tokens",
+      "summaryPools": "Pools",
+      "summaryLimits": "Limites"
     }
   }
 }
