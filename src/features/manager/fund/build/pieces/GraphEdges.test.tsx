@@ -140,6 +140,76 @@ describe("GraphEdges", () => {
     expect(lineOf(container, "income:pool").getAttribute("class")).toContain("text-primary");
   });
 
+  // @rule BB8
+  it("[BB8, F9] an L corner of two lines is closed: both ends at the corner reach half a stroke past it", () => {
+    const bus: PieceEdge = {
+      id: "bus",
+      tone: "muted",
+      points: [
+        { x: 112, y: 196.75 },
+        { x: 552, y: 196.75 },
+      ],
+    };
+    const stub: PieceEdge = {
+      id: "stub",
+      tone: "muted",
+      points: [
+        { x: 112, y: 196.75 },
+        { x: 112, y: 244 },
+      ],
+    };
+    const { container } = render(
+      <GraphEdges width={608} height={674} edges={[bus, stub]} highlightedId={null} />,
+    );
+
+    // The corner end moves 0.75 outward along its own segment; the free ends stay where they are.
+    expect(lineOf(container, "bus")).toHaveAttribute("points", "111.25,196.75 552,196.75");
+    expect(lineOf(container, "stub")).toHaveAttribute("points", "112,196 112,244");
+    expect(lineOf(container, "bus")).toHaveAttribute("stroke-linecap", "butt");
+  });
+
+  // @rule BB8
+  it("[BB8, F9] a line ending on another line's run reaches its far edge, inside that line", () => {
+    const run: PieceEdge = {
+      id: "run",
+      tone: "muted",
+      points: [
+        { x: 100, y: 430.75 },
+        { x: 400, y: 430.75 },
+      ],
+    };
+    const drop: PieceEdge = {
+      id: "drop",
+      tone: "muted",
+      points: [
+        { x: 320, y: 306 },
+        { x: 320, y: 430.75 },
+      ],
+    };
+    const { container } = render(
+      <GraphEdges width={608} height={674} edges={[run, drop]} highlightedId={null} />,
+    );
+
+    expect(lineOf(container, "drop")).toHaveAttribute("points", "320,306 320,431.5");
+    expect(lineOf(container, "run")).toHaveAttribute("points", "100,430.75 400,430.75");
+  });
+
+  // @rule BB8
+  it("[BB8, F9] an end at a node touches no other line: it stays put and never pokes past the node", () => {
+    const { container } = render(
+      <GraphEdges width={608} height={674} edges={[PRINCIPAL, INCOME]} highlightedId={null} />,
+    );
+
+    expect(lineOf(container, "principal:pool")).toHaveAttribute(
+      "points",
+      "100,406 100,430.75 170,430.75 170,478",
+    );
+    expect(lineOf(container, "income:pool")).toHaveAttribute(
+      "points",
+      "124,406 124,454.75 438,454.75 438,478",
+    );
+  });
+
   // @rule I9
   it("[I9] colour changes respect reduced motion", () => {
     const { container } = render(
