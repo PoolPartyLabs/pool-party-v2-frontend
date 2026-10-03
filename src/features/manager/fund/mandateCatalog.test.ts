@@ -1,11 +1,11 @@
 /**
  * @id PP-MGR-LIB-018
  * @name mandateCatalog tests
- * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2)
  * @analytics-events none, a pure catalog; the builder shell owns the mandate events.
  *
- * Covers R16/R17 v2 (networks + availability), R18 (deposit token), R20/R21 (protocols), R25 (token
- * union) and R28 (priced set). The catalog reads no flag since rules v2 (POO-2142), so no flag
+ * Covers R16/R17 v2 (networks + availability), R18 (deposit token), R20/R21 v2 (protocols, no GMX),
+ * R25 (token union) and R28 (priced set). The catalog reads no flag since rules v2 (POO-2142), so no flag
  * runtime is mocked.
  */
 import { describe, expect, it } from "vitest";
@@ -142,15 +142,16 @@ describe("buildMandateCatalog, deposit token", () => {
 });
 
 describe("buildMandateCatalog, protocols", () => {
-  it("lists the six protocols in catalog order with the required two first", () => {
-    // @rule R20
+  it("lists the five protocols in catalog order with the required two first", () => {
+    // @rule R20 v2: Aave v3, Uniswap v3 and Uniswap v4 to operate; GMX is no longer offered (POO-2143).
     expect(CATALOG.protocols.map((p) => p.id)).toEqual([
       "uniswap-v3-swap",
       "across",
       "aave-v3",
       "uniswap-v3",
       "uniswap-v4",
-      "gmx",
+      // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+      // "gmx",
     ]);
     expect(CATALOG.protocols.filter((p) => p.required).map((p) => p.id)).toEqual([
       "uniswap-v3-swap",
@@ -185,11 +186,12 @@ describe("buildMandateCatalog, protocols", () => {
       name: "fundBuilder.protocolNames.uniswapV4",
       captionKey: "fundBuilder.protocolCaptions.dex",
     });
-    expect(protocol("gmx")).toMatchObject({
-      kind: "perps",
-      name: "fundBuilder.protocolNames.gmx",
-      captionKey: "fundBuilder.protocolCaptions.perps",
-    });
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+    // expect(protocol("gmx")).toMatchObject({
+    //   kind: "perps",
+    //   name: "fundBuilder.protocolNames.gmx",
+    //   captionKey: "fundBuilder.protocolCaptions.perps",
+    // });
   });
 
   it("scopes each protocol to the networks it runs on", () => {
@@ -213,12 +215,21 @@ describe("buildMandateCatalog, protocols", () => {
       // "polygon",
     ]);
     expect(protocol("uniswap-v4").availableOn).toEqual(["arbitrum", "robinhood"]);
-    expect(protocol("gmx").availableOn).toEqual([]);
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+    // expect(protocol("gmx").availableOn).toEqual([]);
   });
 
-  it("marks only GMX unavailable", () => {
-    // @rule R21
-    expect(CATALOG.protocols.filter((p) => !p.available).map((p) => p.id)).toEqual(["gmx"]);
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+  // it("marks only GMX unavailable", () => {
+  //   // @rule R21
+  //   expect(CATALOG.protocols.filter((p) => !p.available).map((p) => p.id)).toEqual(["gmx"]);
+  // });
+
+  it("no longer offers GMX, and marks every protocol it lists available", () => {
+    // @rule R21 v2 (POO-2143): the GMX data goes; the `available` field and its mechanism stay.
+    expect(CATALOG.protocols.map((p) => p.id)).not.toContain("gmx");
+    expect(CATALOG.protocols.every((p) => p.available)).toBe(true);
+    expect(CATALOG.protocols.map((p) => p.kind)).not.toContain("perps");
   });
 });
 

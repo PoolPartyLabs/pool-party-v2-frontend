@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-039
  * @name LimitsStep
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2143 rules v2)
  * @analytics-events none, the shell emits
  *
  * POO-2126 [R6] / [R39] / [R40] / [R41] / [R42] / [R43], epic POO-2119. Mandate step 5: how much of
@@ -123,7 +123,8 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
     "aave-v3": t("fundBuilder.protocolNames.aaveV3"),
     "uniswap-v3": t("fundBuilder.protocolNames.uniswapV3"),
     "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
-    gmx: t("fundBuilder.protocolNames.gmx"),
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+    // gmx: t("fundBuilder.protocolNames.gmx"),
   };
   // The short form of the protocol caption (R39): "Lending", not "Lending · supply tokens to earn
   // interest". Only the kinds that can reach a cap row are listed; `capRows` drops the required two,
@@ -131,7 +132,8 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
   const kindCaptions: Partial<Record<MandateProtocol["kind"], string>> = {
     lending: t("fundBuilder.limits.kind.lending"),
     dex: t("fundBuilder.limits.kind.dex"),
-    perps: t("fundBuilder.limits.kind.perps"),
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+    // perps: t("fundBuilder.limits.kind.perps"),
   };
 
   // The visible text. The accessible name adds the row (see the checkbox below).

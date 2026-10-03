@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2143 rules v2)
  * @analytics-events none, the shell emits
  *
  * POO-2123 [R12] / [R19] / [R20] / [R21] / [R22], epic POO-2119. Mandate step 2: the protocols this
@@ -15,7 +15,8 @@
  * difference matters: Aave v3 runs on the hub only, so a Robinhood dot beside it would promise a
  * deployment that does not exist, and the manager would discover it on step 4 with no pools. When
  * that intersection is empty the column is dropped entirely rather than drawn as a bare label, and
- * the row goes disabled (R21) alongside a protocol the product lists but cannot operate (GMX).
+ * the row goes disabled (R21) alongside a protocol the product lists but cannot operate. GMX was that
+ * protocol until the buildathon scope commented it out (R21 v2, POO-2143); the mechanism stays.
  *
  * A disabled row still takes its click and reports it through `onBlocked`, exactly as on step 1:
  * "which protocol did managers keep trying to add" is the one question this screen can answer for
@@ -52,14 +53,16 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
     "aave-v3": t("fundBuilder.protocolNames.aaveV3"),
     "uniswap-v3": t("fundBuilder.protocolNames.uniswapV3"),
     "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
-    gmx: t("fundBuilder.protocolNames.gmx"),
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+    // gmx: t("fundBuilder.protocolNames.gmx"),
   };
   const captions: Record<MandateProtocol["kind"], string> = {
     swap: t("fundBuilder.protocolCaptions.swap"),
     bridge: t("fundBuilder.protocolCaptions.bridge"),
     lending: t("fundBuilder.protocolCaptions.lending"),
     dex: t("fundBuilder.protocolCaptions.dex"),
-    perps: t("fundBuilder.protocolCaptions.perps"),
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+    // perps: t("fundBuilder.protocolCaptions.perps"),
   };
 
   const required = catalog.protocols.filter((protocol) => protocol.required);

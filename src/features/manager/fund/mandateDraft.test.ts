@@ -1,12 +1,13 @@
 /**
  * @id PP-MGR-LIB-019
  * @name mandateDraft tests
- * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2)
  * @analytics-events none, a pure domain; the builder shell owns the mandate events.
  *
  * One `it()` per rule in the S1 brief. Every reducer is also checked for immutability: a draft
  * handed in must come back untouched, because the React hook keeps the previous draft on a block.
- * Rules v2 (POO-2142, buildathon scope): the mandate names Arbitrum and Robinhood Chain only.
+ * Rules v2 (buildathon scope): the mandate names Arbitrum and Robinhood Chain only (POO-2142), and
+ * GMX is no longer a protocol it can name (POO-2143).
  */
 import { describe, expect, it } from "vitest";
 import { buildMandateCatalog, type MandateCatalogToken } from "./mandateCatalog";
@@ -30,6 +31,7 @@ import {
   type MandatePoolRef,
   type NetworkId,
   nextStep,
+  type ProtocolId,
   previousStep,
   REQUIRED_PROTOCOLS,
   removePool,
@@ -275,9 +277,18 @@ describe("withProtocols", () => {
     ]);
   });
 
-  it("ignores an unavailable protocol", () => {
-    // @rule R21
-    const next = draftOf(withProtocols(empty(), [...REQUIRED_PROTOCOLS, "gmx", "aave-v3"]));
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+  // it("ignores an unavailable protocol", () => {
+  //   // @rule R21
+  //   const next = draftOf(withProtocols(empty(), [...REQUIRED_PROTOCOLS, "gmx", "aave-v3"]));
+  //   expect(next.protocols).not.toContain("gmx");
+  //   expect(next.protocols).toContain("aave-v3");
+  // });
+
+  it("ignores a protocol id the catalog does not know", () => {
+    // @rule R21 v2: a stale draft can still carry GMX, which the buildathon scope dropped (POO-2143).
+    const ids = [...REQUIRED_PROTOCOLS, "gmx", "aave-v3"] as unknown as ProtocolId[];
+    const next = draftOf(withProtocols(empty(), ids));
     expect(next.protocols).not.toContain("gmx");
     expect(next.protocols).toContain("aave-v3");
   });

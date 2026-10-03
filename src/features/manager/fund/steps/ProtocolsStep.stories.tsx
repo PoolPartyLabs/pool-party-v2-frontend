@@ -1,9 +1,10 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep.stories
- * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v2 (POO-2142 rules v2, POO-2143 rules v2)
  *
- * Storybook coverage for Mandate step 2 (POO-2123 [R19] to [R22]).
+ * Storybook coverage for Mandate step 2 (POO-2123 [R19] to [R22]; rules v2, POO-2143: Aave v3,
+ * Uniswap v3 and Uniswap v4 to operate, no GMX).
  *
  * The story that earns its place is `HubAndSpoke` against `HubOnly`: the "On" dots change with the
  * networks of step 1, which is the whole point of that column and the thing a static mock-up cannot
@@ -95,7 +96,7 @@ export const HubAndSpoke: Story = {
   render: () => <Harness catalog={catalog} initial={draftWith(["robinhood"], [])} />,
 };
 
-/** Everything selectable chosen, so Select all reads ticked and GMX still does not. */
+/** Everything selectable chosen, so Select all reads ticked. */
 export const EverythingChosen: Story = {
   render: () => (
     <Harness

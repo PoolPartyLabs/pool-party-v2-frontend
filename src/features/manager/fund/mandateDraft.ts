@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-019
  * @name mandateDraft
- * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -48,14 +48,15 @@ export type NetworkId =
   // "unichain" |
   "arbitrum" | "robinhood";
 
-/** A protocol a mandate can name. `uniswap-v3-swap` is the swap adapter, not the position protocol. */
+/**
+ * A protocol a mandate can name. `uniswap-v3-swap` is the swap adapter, not the position protocol.
+ * The buildathon scope operates Aave v3, Uniswap v3 and Uniswap v4 (R20 v2), and no longer GMX
+ * (R21 v2).
+ */
 export type ProtocolId =
-  | "uniswap-v3-swap"
-  | "across"
-  | "aave-v3"
-  | "uniswap-v3"
-  | "uniswap-v4"
-  | "gmx";
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+  // "gmx" |
+  "uniswap-v3-swap" | "across" | "aave-v3" | "uniswap-v3" | "uniswap-v4";
 
 /** The protocols that make the Pools step meaningful: they hold liquidity positions. */
 export type DexProtocolId = "uniswap-v3" | "uniswap-v4";
@@ -89,17 +90,22 @@ export const PROTOCOL_ORDER: readonly ProtocolId[] = [
   "aave-v3",
   "uniswap-v3",
   "uniswap-v4",
-  "gmx",
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+  // "gmx",
 ];
 
 /** The position protocols. A draft with none of these skips the Pools step (R29). */
 export const DEX_PROTOCOL_IDS: readonly DexProtocolId[] = ["uniswap-v3", "uniswap-v4"];
 
 /**
- * Protocols the product lists but cannot operate (R21). GMX is not a candidate for the fund
- * contracts, so it renders disabled with "Coming soon" and no reducer accepts it.
+ * Protocols the product lists but cannot operate (R21). An id listed here renders disabled with
+ * "Coming soon" and no reducer accepts it. Empty in the buildathon scope (R21 v2): GMX, its only
+ * entry, is no longer offered at all, and the mechanism stays for the next protocol that needs it.
  */
-export const UNAVAILABLE_PROTOCOLS: readonly ProtocolId[] = ["gmx"];
+export const UNAVAILABLE_PROTOCOLS: readonly ProtocolId[] = [
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+  // "gmx",
+];
 
 /** The contract ceiling on token entries (DEC-030). A token takes one slot per network it runs on. */
 export const MAX_TOKEN_SLOTS = 16;
