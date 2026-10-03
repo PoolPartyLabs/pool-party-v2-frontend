@@ -38,7 +38,10 @@
 import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import {
-  BlockIconGlyph,
+  CARD_BOX,
+  CARD_RADIUS,
+  CardCopy,
+  CardIconBox,
   canvasInteractive,
   PieceStroke,
   type PieceStrokeProps,
@@ -56,7 +59,6 @@ export interface PositionCardProps {
   onSelect?(): void;
 }
 
-const CARD_RADIUS = 20;
 const HOVER = "group-hover:text-muted-foreground";
 
 /** The stroke of the card for a state and a selection ([BB1], D27). */
@@ -113,25 +115,13 @@ export function PositionCard({ content, selected, onSelect }: PositionCardProps)
   const body = (
     <>
       <PieceStroke {...stroke} radius={CARD_RADIUS} />
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-surface-raised">
-        <BlockIconGlyph
-          icon={icon}
-          size={16}
-          className={cn(
-            "transition-colors motion-reduce:transition-none",
-            selected ? "text-primary" : "text-muted-foreground",
-          )}
-        />
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col gap-px">
-        <span className="truncate font-medium text-foreground text-sm leading-normal">{title}</span>
-        <span
-          ref={captionRef}
-          className={cn("truncate text-xs leading-normal", captionTone(state))}
-        >
-          {caption}
-        </span>
-      </span>
+      <CardIconBox icon={icon} tone={selected ? "text-primary" : "text-muted-foreground"} />
+      <CardCopy
+        title={title}
+        caption={caption}
+        captionTone={captionTone(state)}
+        captionRef={captionRef}
+      />
       {state === "comingSoon" && soonTag ? <SoonTag text={soonTag} /> : null}
     </>
   );
@@ -141,8 +131,7 @@ export function PositionCard({ content, selected, onSelect }: PositionCardProps)
     "data-card-state": state,
     "data-selected": selected ? "" : undefined,
   };
-  const boxClass =
-    "group relative flex h-[62px] w-[176px] shrink-0 items-center gap-2.5 rounded-xl bg-surface px-[13px] py-[11px] text-left";
+  const boxClass = cn(CARD_BOX, "group w-[176px]");
 
   return (
     <PieceTooltip

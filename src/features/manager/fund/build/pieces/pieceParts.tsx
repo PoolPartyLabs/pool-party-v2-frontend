@@ -39,7 +39,7 @@ import {
   Route,
   Upload,
 } from "lucide-react";
-import type { ReactElement } from "react";
+import type { ReactElement, Ref } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils/cn";
 import { CANVAS_INTERACTIVE_ATTR } from "../canvas/useCanvasViewport";
@@ -121,6 +121,51 @@ export function BlockIconGlyph({ icon, size, className }: BlockIconGlyphProps) {
       absoluteStrokeWidth
       className={cn("shrink-0", className)}
     />
+  );
+}
+
+/** The radius of a position or spine card ([BB1], [BB2]). */
+export const CARD_RADIUS = 20;
+
+/**
+ * The box of a position or spine card, without its width: 62 high, radius 20, `surface`, padding
+ * 11 / 13, gap 10 ([BB1], [BB2]). No border class: the stroke is a {@link PieceStroke}.
+ */
+export const CARD_BOX =
+  "relative flex h-[62px] shrink-0 items-center gap-2.5 rounded-xl bg-surface px-[13px] py-[11px] text-left";
+
+/** The 28 x 28 icon box of a card (radius 12, `surface-raised`) with its 16 px icon. */
+export function CardIconBox({ icon, tone }: { icon: BlockIcon; tone: string }) {
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-surface-raised">
+      <BlockIconGlyph
+        icon={icon}
+        size={16}
+        className={cn("transition-colors motion-reduce:transition-none", tone)}
+      />
+    </span>
+  );
+}
+
+/** Public props for {@link CardCopy}. */
+export interface CardCopyProps {
+  title: string;
+  caption: string;
+  /** The caption colour token. */
+  captionTone: string;
+  /** Lets a card measure whether its caption overflows (D11). */
+  captionRef?: Ref<HTMLSpanElement>;
+}
+
+/** Title (Body/Medium) over caption (Caption/Default), gap 1, each on one line with an ellipsis. */
+export function CardCopy({ title, caption, captionTone, captionRef }: CardCopyProps) {
+  return (
+    <span className="flex min-w-0 flex-1 flex-col gap-px">
+      <span className="truncate font-medium text-foreground text-sm leading-normal">{title}</span>
+      <span ref={captionRef} className={cn("truncate text-xs leading-normal", captionTone)}>
+        {caption}
+      </span>
+    </span>
   );
 }
 
