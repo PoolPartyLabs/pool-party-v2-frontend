@@ -59,6 +59,15 @@ export async function fundRequest<ResponseData>(
     throw new ApiError(response.status, code, "fund operation failed");
   }
   if (response.headers.get("x-pool-party-protocol") !== "v2") throw new ApiParseError(path, []);
+  function validateVersion(value: unknown): void {
+    if (Array.isArray(value)) for (const entry of value) validateVersion(entry);
+    else if (value !== null && typeof value === "object") {
+      const record = value as Record<string, unknown>;
+      if (record.protocolVersion !== "v2") throw new ApiParseError(path, []);
+      for (const entry of Object.values(record)) validateVersion(entry);
+    }
+  }
+  validateVersion(envelope.data);
   const parsed = schema.safeParse(envelope.data);
   if (!parsed.success) throw new ApiParseError(path, parsed.error.issues);
   return parsed.data;

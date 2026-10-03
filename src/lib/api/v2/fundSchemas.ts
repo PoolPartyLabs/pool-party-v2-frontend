@@ -18,6 +18,7 @@ const profile = record.extend({
   description: z.string().optional(),
   image: z.string().nullable().optional(),
   imageUrl: z.string().nullable().optional(),
+  managerDisplayName: z.string().optional(),
   manager: z.unknown().optional(),
 });
 export const fundRowSchema = fundIdentitySchema.extend({ profile: profile.nullable().optional() });
@@ -58,12 +59,21 @@ export const positionsSchema = record.extend({ positions: z.array(positionSchema
 export const fundViewSchema = fundDetailSchema.extend({
   profile: profile.nullable().optional(),
   lastReport: record
-    .extend({ ageSeconds: z.number(), report: record.extend({ sequence: uint, timestamp: uint }) })
+    .extend({
+      ageSeconds: z.preprocess(
+        (value) => (typeof value === "string" ? Number(value) : value),
+        z.number().nonnegative(),
+      ) as z.ZodType<number>,
+      report: record.extend({ sequence: uint, timestamp: uint }),
+    })
     .nullable()
     .optional(),
   positionsSummary: positionsSchema.optional(),
   limits: record.optional().nullable(),
-  limitsUsage: record.optional().nullable(),
+  limitsUsage: z
+    .union([record, z.array(record)])
+    .optional()
+    .nullable(),
   fees: record
     .extend({
       flowFeeBps: z.number().int(),
