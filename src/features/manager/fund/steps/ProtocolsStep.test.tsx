@@ -45,6 +45,18 @@ const catalogV4SpokeOnly: MandateCatalog = {
   ),
 };
 
+/**
+ * The real catalog with Aave v3 marked unavailable. `UNAVAILABLE_PROTOCOLS` is empty in the
+ * buildathon scope (R21 v2), but the `available: false` branch of this step stays, so it is
+ * exercised here: the row it lists but cannot operate, the way GMX used to render.
+ */
+const catalogAaveUnavailable: MandateCatalog = {
+  ...catalog,
+  protocols: catalog.protocols.map((protocol) =>
+    protocol.id === "aave-v3" ? { ...protocol, available: false } : protocol,
+  ),
+};
+
 function draftWith(networks: NetworkId[], protocols: ProtocolId[]): MandateDraft {
   const base = withNetworks(
     createEmptyDraft("2026-10-03T00:00:00.000Z", "draft-1"),
@@ -258,6 +270,40 @@ describe("ProtocolsStep", () => {
       rowId: "uniswap-v4",
     });
     expect(update).not.toHaveBeenCalled();
+  });
+
+  // @rule R21 v2: the `available: false` branch stays, exercised on a catalog that turns Aave v3 off.
+  it("marks a protocol the catalog turns off Coming soon and reports the click as a blocked intent", async () => {
+    const user = userEvent.setup();
+    const { update, onBlocked } = renderStep(draftWith([], []), catalogAaveUnavailable);
+
+    const aave = screen.getByRole("checkbox", { name: "Aave v3" });
+    expect(aave).toHaveAttribute("aria-disabled", "true");
+    expect(within(row("aave-v3")).getByText("Coming soon")).toBeInTheDocument();
+
+    await user.click(aave);
+
+    expect(onBlocked).toHaveBeenCalledWith({
+      step: "protocols",
+      reason: "coming_soon",
+      rowId: "aave-v3",
+    });
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  // @rule R20 @rule R21 v2
+  it("keeps a protocol the catalog turns off out of Select all", async () => {
+    const user = userEvent.setup();
+    const { protocolsAfterUpdate } = renderStep(draftWith([], []), catalogAaveUnavailable);
+
+    await user.click(screen.getByRole("checkbox", { name: "Select all" }));
+
+    expect(protocolsAfterUpdate()).toEqual([
+      "uniswap-v3-swap",
+      "across",
+      "uniswap-v3",
+      "uniswap-v4",
+    ]);
   });
 
   // @rule R22

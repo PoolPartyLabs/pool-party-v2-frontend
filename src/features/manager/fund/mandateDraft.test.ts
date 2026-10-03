@@ -31,6 +31,7 @@ import {
   type MandatePoolRef,
   type NetworkId,
   nextStep,
+  type ProtocolId,
   previousStep,
   REQUIRED_PROTOCOLS,
   removePool,
@@ -283,6 +284,14 @@ describe("withProtocols", () => {
   //   expect(next.protocols).not.toContain("gmx");
   //   expect(next.protocols).toContain("aave-v3");
   // });
+
+  it("ignores a protocol id the catalog does not know", () => {
+    // @rule R21 v2: a stale draft can still carry GMX, which the buildathon scope dropped (POO-2143).
+    const ids = [...REQUIRED_PROTOCOLS, "gmx", "aave-v3"] as unknown as ProtocolId[];
+    const next = draftOf(withProtocols(empty(), ids));
+    expect(next.protocols).not.toContain("gmx");
+    expect(next.protocols).toContain("aave-v3");
+  });
 
   it("orders the protocols by the catalog, not by the argument", () => {
     // @rule R20
