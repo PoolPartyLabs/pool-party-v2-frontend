@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-STO-001
  * @name mandateDraftStore
- * @implements-rules-version v1 (POO-2121 rules v1)
+ * @implements-rules-version v3 (POO-2121 rules v1, POO-2167 rules v3)
  * @analytics-events none, a storage module. The builder shell (PP-MGR-SCR-002) emits the save and
  *   abandon events; a store that emitted its own would double-count every write.
  *
@@ -25,7 +25,12 @@
  * 3. **No storage access at import time.** This module is imported by a client component that also
  *    renders on the server, where `window` does not exist.
  */
-import { MANDATE_STEP_ORDER, type MandateDraft, type MandateStepKey } from "./mandateDraft";
+import {
+  MANDATE_STEP_ORDER,
+  type MandateDraft,
+  type MandateStepKey,
+  withoutUnavailableProtocols,
+} from "./mandateDraft";
 
 /** The one storage key. Namespaced and versioned, per the repo's localStorage policy. */
 export const MANDATE_DRAFTS_KEY = "pp.manager.mandateDrafts.v1";
@@ -76,6 +81,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * the first drafts were written, and a draft that predates it is complete in every other way. Null is
  * also its own honest value ("no pool universe resolved yet"), so the default cannot be mistaken for
  * a count.
+ *
+ * R20 v3 (POO-2167): a protocol the product can no longer operate is dropped here, with its pools
+ * and its cap row ({@link withoutUnavailableProtocols}). This is the one read path: `getDraft` (the
+ * builder's resume) and `listDrafts` (the Console's counts) both come through it, so neither can show
+ * a Uniswap v3 position the manager could no longer remove. Like the rest of this function it only
+ * reads; the stored copy is replaced by the next real write.
  */
 function normalizeDraft(value: unknown): MandateDraft | null {
   if (!isRecord(value)) return null;
@@ -92,10 +103,10 @@ function normalizeDraft(value: unknown): MandateDraft | null {
   if (!isRecord(caps.networks) || !isRecord(caps.protocols) || !isRecord(caps.tokens)) return null;
   const universe = value.poolUniverseCount;
   if (universe !== undefined && universe !== null && typeof universe !== "number") return null;
-  return {
+  return withoutUnavailableProtocols({
     ...(value as unknown as MandateDraft),
     poolUniverseCount: typeof universe === "number" ? universe : null,
-  };
+  });
 }
 
 /** Read the payload. Anything unreadable, foreign or malformed reads as empty, and is NOT written. */

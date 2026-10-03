@@ -1,10 +1,11 @@
 /**
  * @id PP-MGR-STO-001
  * @name mandateDraftStore tests
- * @implements-rules-version v1 (POO-2121 rules v1)
+ * @implements-rules-version v3 (POO-2121 rules v1, POO-2167 rules v3)
  * @analytics-events none, a storage module; the builder shell owns the mandate events.
  *
- * Covers R7/R9: round trip, sort, corrupt payload, unavailable storage, subscription and ids.
+ * Covers R7/R9: round trip, sort, corrupt payload, unavailable storage, subscription and ids. And
+ * R20 v3 (POO-2167): a stored draft that still names Uniswap v3 positions is sanitised on load.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createEmptyDraft, type MandateDraft } from "./mandateDraft";
@@ -177,6 +178,100 @@ describe("corrupt and foreign payloads", () => {
 
     expect(getDraft("older")?.poolUniverseCount).toBeNull();
     expect(getDraft("older")?.id).toBe("older");
+  });
+});
+
+/**
+ * R20 v3 (POO-2167): Uniswap v3 positions became unavailable after drafts naming them were saved.
+ * Such a draft is sanitised on READ, through the one path both `getDraft` (the builder's resume) and
+ * `listDrafts` (the Console's counts) take, and the stored copy is left alone until the next real
+ * write, as for every other entry this module only half agrees with.
+ */
+describe("drafts stored before Uniswap v3 positions became unavailable", () => {
+  function storedWithV3(): MandateDraft {
+    const base = draft("v3", "2026-10-02T00:00:00.000Z");
+    const side = { address: "0xaa", symbol: "ETH", name: "Ether", logoUrl: null };
+    const usdc = { address: "0xbb", symbol: "USDC", name: "USD Coin", logoUrl: null };
+    const pool = (id: string, protocol: "uniswap-v3" | "uniswap-v4") => ({
+      id,
+      address: `0x${id}`,
+      network: "arbitrum" as const,
+      protocol,
+      token0: side,
+      token1: usdc,
+      feeBps: 5,
+      feeTier: 0.05,
+      tvlUsd: 42_000_000,
+      aprPct: 14.2,
+      tierSharePct: null,
+      hasHook: false,
+    });
+    return {
+      ...base,
+      name: "Blue chips on Arbitrum",
+      lastStep: "limits",
+      passedSteps: ["networks", "protocols", "tokens", "pools"],
+      protocols: ["uniswap-v3-swap", "across", "aave-v3", "uniswap-v3", "uniswap-v4"],
+      pools: [pool("p-v3", "uniswap-v3"), pool("p-v4", "uniswap-v4")],
+      caps: {
+        ...base.caps,
+        protocols: {
+          "aave-v3": { noCap: false, pct: 20 },
+          "uniswap-v3": { noCap: false, pct: 40 },
+          "uniswap-v4": { noCap: true, pct: 0 },
+        },
+      },
+      poolUniverseCount: 9,
+    };
+  }
+
+  function store(entry: MandateDraft): void {
+    window.localStorage.setItem(
+      MANDATE_DRAFTS_KEY,
+      JSON.stringify({ version: MANDATE_DRAFTS_VERSION, drafts: { [entry.id]: entry } }),
+    );
+  }
+
+  it("drops the protocol, its pools and its cap row when the draft is read", () => {
+    // @rule R20 v3
+    store(storedWithV3());
+
+    const read = getDraft("v3");
+    expect(read?.protocols).toEqual(["uniswap-v3-swap", "across", "aave-v3", "uniswap-v4"]);
+    expect(read?.pools.map((p) => p.id)).toEqual(["p-v4"]);
+    expect(read?.caps.protocols).toEqual({
+      "aave-v3": { noCap: false, pct: 20 },
+      "uniswap-v4": { noCap: true, pct: 0 },
+    });
+    expect(listDrafts()[0]?.protocols).not.toContain("uniswap-v3");
+    expect(listDrafts()[0]?.pools).toHaveLength(1);
+  });
+
+  it("changes nothing else on the draft", () => {
+    // @rule R20 v3
+    const stored = storedWithV3();
+    store(stored);
+
+    const read = getDraft("v3");
+    expect(read?.name).toBe(stored.name);
+    expect(read?.lastStep).toBe("limits");
+    expect(read?.passedSteps).toEqual(stored.passedSteps);
+    expect(read?.tokens).toEqual(stored.tokens);
+    expect(read?.networks).toEqual(stored.networks);
+    expect(read?.caps.networks).toEqual(stored.caps.networks);
+    expect(read?.poolUniverseCount).toBe(9);
+    expect(read?.updatedAt).toBe(stored.updatedAt);
+  });
+
+  it("leaves the stored copy alone until the next real write", () => {
+    // @rule R20 v3 @rule R7
+    store(storedWithV3());
+
+    getDraft("v3");
+    listDrafts();
+
+    const raw = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");
+    expect(raw.drafts.v3.protocols).toContain("uniswap-v3");
   });
 });
 
