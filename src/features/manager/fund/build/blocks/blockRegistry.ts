@@ -259,6 +259,46 @@ export function describeFlow(blockId: string, ctx: DescribeContext): FlowContent
   return { text: copy.flow.swapAuto, tooltip: copy.tooltip.swapAuto(token), icon: "swap" };
 }
 
+/** The head of the panel stub for a selected block (AN10). */
+export interface PanelHead {
+  /** The block kind, which picks the protocol logo. */
+  blockKind: BlockKind;
+  /** The title: "Uniswap v4", "Aave v3". */
+  protocolName: string;
+  /** The caption: "Liquidity position", or "Liquidity position · no pool yet" while empty. */
+  blockType: string;
+  /** Where the block sits (C5), for the network chip. */
+  network: NetworkId;
+  networkName: string;
+}
+
+/**
+ * AN10: the head of the panel stub for a selected block: protocol name over block type, the type
+ * saying what an empty block still lacks (" · no pool yet", " · no asset yet"), and the network the
+ * block sits on (C5). Null for a pill or an id the plan does not hold: only cards are selectable.
+ */
+export function describePanelHead(blockId: string, ctx: DescribeContext): PanelHead | null {
+  const found = findBlock(ctx.plan, blockId);
+  if (found?.block.family !== "position") return null;
+  const { copy } = ctx;
+  const kind = found.block.kind;
+  const type = copy.blockType(kind);
+  const field = BLOCK_REGISTRY[kind].configField;
+  const blockType =
+    found.block.config !== null || field === null
+      ? type
+      : field === "pool"
+        ? copy.panel.typeNoPool(type)
+        : copy.panel.typeNoAsset(type);
+  return {
+    blockKind: kind,
+    protocolName: copy.protocolName(kind),
+    blockType,
+    network: found.network,
+    networkName: copy.networkName(found.network),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Palette (AN8, D25)
 // ---------------------------------------------------------------------------

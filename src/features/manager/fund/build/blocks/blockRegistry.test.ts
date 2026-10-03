@@ -29,7 +29,13 @@ import {
   supplyBorrowPlan,
   TEST_ASSET_KEYS,
 } from "../plan/planTestKit";
-import { BLOCK_REGISTRY, describeBlock, describeFlow, paletteModel } from "./blockRegistry";
+import {
+  BLOCK_REGISTRY,
+  describeBlock,
+  describeFlow,
+  describePanelHead,
+  paletteModel,
+} from "./blockRegistry";
 import { catalogWithAaveOnSpoke, makeDescribeContext, makeTestCopy } from "./blockTestKit";
 
 const ALL_KINDS: BlockKind[] = [
@@ -412,5 +418,43 @@ describe("paletteModel", () => {
     const text = all.map((i) => `${i.id} ${i.name} ${i.caption ?? ""}`.toLowerCase()).join("|");
     expect(text).not.toMatch(/bridge/);
     expect(text).not.toMatch(/output|withdraw|deposit|idle/);
+  });
+});
+
+describe("describePanelHead", () => {
+  it("heads a configured block with its protocol, its type and its network", () => {
+    // @rule AN10
+    expect(describePanelHead("hub-pool-pool", makeDescribeContext(hubPoolPlan()))).toEqual({
+      blockKind: "uniswapV4Pool",
+      protocolName: "Uniswap v4",
+      blockType: "Liquidity position",
+      network: "arbitrum",
+      networkName: "Arbitrum",
+    });
+    expect(describePanelHead("rh-pool-pool", makeDescribeContext(spokePoolPlan()))).toMatchObject({
+      network: "robinhood",
+      networkName: "Robinhood Chain",
+    });
+  });
+
+  it("says what an empty block still lacks: no pool yet, no asset yet", () => {
+    // @rule AN10
+    // @rule G6
+    expect(describePanelHead("b", makeDescribeContext(oneEmpty("uniswapV4Pool")))?.blockType).toBe(
+      "Liquidity position · no pool yet",
+    );
+    expect(describePanelHead("b", makeDescribeContext(oneEmpty("aaveSupply")))?.blockType).toBe(
+      "Supply · no asset yet",
+    );
+    expect(describePanelHead("b", makeDescribeContext(oneEmpty("aaveBorrow")))).toMatchObject({
+      protocolName: "Aave v3",
+      blockType: "Borrow · no asset yet",
+    });
+  });
+
+  it("heads nothing for a pill or an unknown id", () => {
+    // @rule I5
+    expect(describePanelHead("hub-pool-swap", makeDescribeContext(hubPoolPlan()))).toBeNull();
+    expect(describePanelHead("nope", makeDescribeContext(hubPoolPlan()))).toBeNull();
   });
 });
