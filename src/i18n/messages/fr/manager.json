@@ -607,5 +607,29 @@
       "collectBody": "Les frais de trading s'accumulent dans la position. Collectez-les vers votre solde ou réinvestissez-les. Vous payez le gas."
     }
   },
-  "window30d": "30 j"
+  "window30d": "30 j",
+  "fundBuilder": {
+    "networkNames": {
+      "arbitrum": "Arbitrum",
+      "robinhood": "Robinhood Chain",
+      "base": "Base",
+      "polygon": "Polygon",
+      "unichain": "Unichain"
+    },
+    "protocolNames": {
+      "uniswapV3Swap": "Uniswap v3",
+      "across": "Across",
+      "aaveV3": "Aave v3",
+      "uniswapV3": "Uniswap v3",
+      "uniswapV4": "Uniswap v4",
+      "gmx": "GMX"
+    },
+    "protocolCaptions": {
+      "swap": "Swap · convertit un jeton en un autre",
+      "bridge": "Bridge · déplace des fonds entre vos réseaux",
+      "lending": "Prêt · fournissez des jetons pour gagner des intérêts",
+      "dex": "Liquidity positions · gagnez des frais de transaction dans une fourchette de prix",
+      "perps": "Perpétuels · positions longues et courtes avec effet de levier"
+    }
+  }
 }

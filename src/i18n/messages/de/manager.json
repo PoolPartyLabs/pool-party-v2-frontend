@@ -607,5 +607,29 @@
       "collectBody": "Handelsgebühren sammeln sich in der Position an. Holen Sie sie auf Ihr Guthaben oder reinvestieren Sie sie. Sie zahlen das Gas."
     }
   },
-  "window30d": "30 T"
+  "window30d": "30 T",
+  "fundBuilder": {
+    "networkNames": {
+      "arbitrum": "Arbitrum",
+      "robinhood": "Robinhood Chain",
+      "base": "Base",
+      "polygon": "Polygon",
+      "unichain": "Unichain"
+    },
+    "protocolNames": {
+      "uniswapV3Swap": "Uniswap v3",
+      "across": "Across",
+      "aaveV3": "Aave v3",
+      "uniswapV3": "Uniswap v3",
+      "uniswapV4": "Uniswap v4",
+      "gmx": "GMX"
+    },
+    "protocolCaptions": {
+      "swap": "Swap · wandelt einen Token in einen anderen um",
+      "bridge": "Bridge · verschiebt Geld zwischen Ihren Netzwerken",
+      "lending": "Verleih · stellen Sie Token bereit, um Zinsen zu verdienen",
+      "dex": "Liquidity positions · verdienen Sie Handelsgebühren in einer Preisspanne",
+      "perps": "Perpetuals · Long- und Short-Positionen mit Hebel"
+    }
+  }
 }

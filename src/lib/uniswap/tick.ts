@@ -42,6 +42,24 @@ const TICK_BASE = 1.0001;
  */
 export const MIN_RANGE_SPACINGS = 2;
 
+/**
+ * The only fee tiers Uniswap v3 defines, in bps (POO-1497, ported with the fund builder, POO-2119).
+ */
+export const CANONICAL_FEE_BPS = [1, 5, 30, 100] as const;
+
+/**
+ * Is this a real Uniswap v3 fee tier?
+ *
+ * {@link tickSpacing} below cannot tell a real 0.30% pool from a tier it does not recognise: it
+ * answers 60 for ANY unknown argument, silently. PancakeSwap v3's 0.25% tier (spacing 50, not 60) is
+ * the concrete value that would mis-snap. The fund builder's pool source and the pool-by-address
+ * action use this to keep such a pool out of a mandate; the V1 pair search in this repository does
+ * not filter by it yet.
+ */
+export function isCanonicalFeeBps(feeBps: number | null | undefined): boolean {
+  return feeBps != null && (CANONICAL_FEE_BPS as readonly number[]).includes(feeBps);
+}
+
 /** Tick spacing per fee tier (in bps: 1=0.01%, 5=0.05%, 30=0.30%, 100=1.00%). */
 export function tickSpacing(feeBps: number): number {
   switch (feeBps) {

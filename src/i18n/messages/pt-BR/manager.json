@@ -607,5 +607,29 @@
       "collectBody": "As taxas de trading acumulam na posição. Colete para o seu saldo ou recomponha na posição. Você paga o gas."
     }
   },
-  "window30d": "30d"
+  "window30d": "30d",
+  "fundBuilder": {
+    "networkNames": {
+      "arbitrum": "Arbitrum",
+      "robinhood": "Robinhood Chain",
+      "base": "Base",
+      "polygon": "Polygon",
+      "unichain": "Unichain"
+    },
+    "protocolNames": {
+      "uniswapV3Swap": "Uniswap v3",
+      "across": "Across",
+      "aaveV3": "Aave v3",
+      "uniswapV3": "Uniswap v3",
+      "uniswapV4": "Uniswap v4",
+      "gmx": "GMX"
+    },
+    "protocolCaptions": {
+      "swap": "Swap · converte um token em outro",
+      "bridge": "Bridge · move dinheiro entre suas redes",
+      "lending": "Empréstimo · forneça tokens para ganhar juros",
+      "dex": "Liquidity positions · ganhe taxas de negociação em uma faixa de preço",
+      "perps": "Perpétuos · posições compradas e vendidas com alavancagem"
+    }
+  }
 }

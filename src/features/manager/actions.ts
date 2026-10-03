@@ -31,6 +31,7 @@ import { getAuthHeader, getSessionWallet } from "@/lib/auth/session";
 import { fetchManagerFinancials } from "@/lib/financials/fetchManagerFinancials";
 import type { ManagerFinancials } from "@/lib/financials/financialsSchema";
 import { fetchDexPoolState } from "@/lib/manager/dexPoolState";
+import { fetchDexPoolByAddress } from "@/lib/manager/fetchDexPoolByAddress";
 import { fetchDexPools } from "@/lib/manager/fetchDexPools";
 import { fetchManagedPoolDetail } from "@/lib/manager/fetchManagedPoolDetail";
 import { fetchManagerProfile } from "@/lib/manager/profile/fetchManagerProfile";
@@ -52,6 +53,8 @@ import {
   sliceByDays,
 } from "@/lib/timeseries/manageSeries";
 import { mapTimeseries } from "@/lib/timeseries/mapTimeseries";
+import { isCanonicalFeeBps } from "@/lib/uniswap/tick";
+import { isEvmAddress } from "@/lib/utils/address";
 import { type SparkResult, sparkFromSeries } from "./lib/buildSpark";
 import { synthesizeManagerProfile } from "./lib/synthesizeManagerProfile";
 import { buildManagerConsole, type ManagerConsoleViewModel } from "./managerConsoleViewModel";
@@ -382,6 +385,35 @@ export async function getDexPoolsAction(
 ): Promise<UniswapPool[]> {
   const pools = await fetchDexPools(network, currency0, currency1, await getAuthHeader());
   return pools.map((pool) => mapDexPool(pool, network));
+}
+
+/**
+ * Resolve a Uniswap v3 pool by its own contract address (POO-1429/POO-1430, ported with the fund
+ * builder, POO-2119): the paste-an-address entry point of the fund builder's Pools step, mutually
+ * exclusive with the pair-keyed `getDexPoolsAction`. `foundOnNetwork` is set only when the address
+ * resolves on a DIFFERENT network than `network`.
+ */
+export async function getDexPoolByAddressAction(
+  network: string,
+  poolAddress: string,
+): Promise<{ pools: UniswapPool[]; foundOnNetwork?: string }> {
+  // Defense in depth at the server boundary: a server action is a public HTTP endpoint, so the UI's
+  // own address-shape gate is not the trust boundary. A non-address never reaches the backend; it
+  // answers the endpoint's own not-found contract (a plain `{ data: [] }`).
+  if (!isEvmAddress(poolAddress)) return { pools: [] };
+  const { pools, foundOnNetwork } = await fetchDexPoolByAddress(
+    network,
+    poolAddress,
+    await getAuthHeader(),
+  );
+  // Only real Uniswap v3 tiers (POO-1497). The RAW tier, exactly, never a rounded one: `feeTier` is
+  // hundredths of a bip, and a 50 tier (0.005%) rounded to 1 bps would pass as a real 0.01% pool.
+  return {
+    pools: pools
+      .filter((pool) => isCanonicalFeeBps(pool.feeTier / 100))
+      .map((pool) => mapDexPool(pool, network)),
+    foundOnNetwork,
+  };
 }
 
 /** The live on-chain price + tick of the selected builder pool (POO-861 R1/R3). */

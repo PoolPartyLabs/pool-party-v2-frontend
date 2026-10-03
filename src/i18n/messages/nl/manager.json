@@ -607,5 +607,29 @@
       "collectBody": "Handelsfees bouwen op in de positie. In ze naar je saldo of herinvesteer ze. Jij betaalt de gas."
     }
   },
-  "window30d": "30d"
+  "window30d": "30d",
+  "fundBuilder": {
+    "networkNames": {
+      "arbitrum": "Arbitrum",
+      "robinhood": "Robinhood Chain",
+      "base": "Base",
+      "polygon": "Polygon",
+      "unichain": "Unichain"
+    },
+    "protocolNames": {
+      "uniswapV3Swap": "Uniswap v3",
+      "across": "Across",
+      "aaveV3": "Aave v3",
+      "uniswapV3": "Uniswap v3",
+      "uniswapV4": "Uniswap v4",
+      "gmx": "GMX"
+    },
+    "protocolCaptions": {
+      "swap": "Swap · zet een token om in een ander",
+      "bridge": "Bridge · verplaatst geld tussen uw netwerken",
+      "lending": "Uitlenen · stel tokens beschikbaar om rente te verdienen",
+      "dex": "Liquidity positions · verdien handelskosten in een prijsbereik",
+      "perps": "Perpetuals · long- en shortposities met hefboom"
+    }
+  }
 }

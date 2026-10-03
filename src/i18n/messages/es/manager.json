@@ -607,5 +607,29 @@
       "collectBody": "Las comisiones de trading se acumulan en la posición. Cóbralas a tu saldo o recompónlas en la posición. Tú pagas el gas."
     }
   },
-  "window30d": "30d"
+  "window30d": "30d",
+  "fundBuilder": {
+    "networkNames": {
+      "arbitrum": "Arbitrum",
+      "robinhood": "Robinhood Chain",
+      "base": "Base",
+      "polygon": "Polygon",
+      "unichain": "Unichain"
+    },
+    "protocolNames": {
+      "uniswapV3Swap": "Uniswap v3",
+      "across": "Across",
+      "aaveV3": "Aave v3",
+      "uniswapV3": "Uniswap v3",
+      "uniswapV4": "Uniswap v4",
+      "gmx": "GMX"
+    },
+    "protocolCaptions": {
+      "swap": "Swap · convierte un token en otro",
+      "bridge": "Bridge · mueve dinero entre sus redes",
+      "lending": "Préstamo · suministre tokens para ganar intereses",
+      "dex": "Liquidity positions · gane comisiones de trading en un rango de precio",
+      "perps": "Perpetuos · posiciones largas y cortas con apalancamiento"
+    }
+  }
 }

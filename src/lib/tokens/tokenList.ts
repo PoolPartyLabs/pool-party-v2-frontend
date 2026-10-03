@@ -27,6 +27,7 @@
 import arbitrum from "./data/arbitrum.json";
 import base from "./data/base.json";
 import polygon from "./data/polygon.json";
+import robinhood from "./data/robinhood.json";
 
 /** A token the manager can pick when creating a pool. */
 export interface TokenInfo {
@@ -60,6 +61,11 @@ const RAW: Record<string, Record<string, RawToken>> = {
   arbitrum: normalizeKeys(arbitrum as Record<string, RawToken>),
   base: normalizeKeys(base as Record<string, RawToken>),
   polygon: normalizeKeys(polygon as Record<string, RawToken>),
+  // POO-1777 / POO-1879 / POO-1890, ported with the fund builder (POO-2119): Robinhood Chain (4663)
+  // ships a CURATED list (USDG, WETH9, and the tokenised stocks, funds and one pre-IPO claim), not a
+  // ported one. Decimals are not in this data: they are read on chain. The fund builder's Mandate
+  // needs it because Robinhood Chain is the one spoke the fund contracts name.
+  robinhood: normalizeKeys(robinhood as Record<string, RawToken>),
 };
 
 /**
@@ -72,6 +78,7 @@ const CANONICAL_ETH: ReadonlySet<string> = new Set([
   "0x4200000000000000000000000000000000000006", // Base WETH
   "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619", // Polygon WETH
   "0x82af49447d8a07e3bd95bd0d56f35241523fbab1", // Arbitrum WETH (data ticker already "ETH")
+  "0x0bd7d308f8e1639fab988df18a8011f41eacad73", // Robinhood Chain WETH9 (POO-1777)
 ]);
 
 /**
@@ -86,6 +93,7 @@ const SEARCH_ALIASES: Record<string, readonly string[]> = {
   // POO-879: Base USD₮0's symbol uses the ₮ (U+20AE) glyph, so plain "usdt"/"usdt0" typing would miss
   // it. The alias keeps it typeable in ASCII without merging it into the separate canonical USDT entry.
   "0x102d758f688a4c1c5a80b116bd945d4455460282": ["usdt0"], // Base USD₮0 (Stargate) → typeable as "usdt0"
+  "0x0bd7d308f8e1639fab988df18a8011f41eacad73": ["weth"], // Robinhood Chain WETH9, shown as ETH
 };
 
 const NO_ALIASES: readonly string[] = [];
@@ -161,6 +169,19 @@ const MAJOR_ADDRESSES: Record<string, ReadonlySet<string>> = {
     "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270", // WPOL
     "0x53e0bca35ec356bd5dddfebbd1fc0fd03fabad39", // LINK
     "0xd6df932a45c0f255f85145f286ea0b292b21c90b", // AAVE
+  ]),
+  // POO-1890 [R8], ported with the fund builder (POO-2119): a curated ten of the thirty-seven.
+  robinhood: new Set([
+    "0x5fc5360d0400a0fd4f2af552add042d716f1d168", // USDG, the chain's stable
+    "0x0bd7d308f8e1639fab988df18a8011f41eacad73", // WETH9 (shown as ETH)
+    "0xd0601ce157db5bdc3162bbac2a2c8af5320d9eec", // NVDA Stock Token
+    "0x4a0e65a3eccec6dbe60ae065f2e7bb85fae35eea", // SPCX Stock Token
+    "0xaf3d76f1834a1d425780943c99ea8a608f8a93f9", // AAPL Stock Token
+    "0x2e0847e8910a9732eb3fb1bb4b70a580adad4fe3", // GOOGL Stock Token
+    "0x4eb576e9c8a24b5fb11dd8eee5e5e2554ade1cf4", // ANTHROPIC Pre IPO Token
+    "0x322f0929c4625ed5bad873c95208d54e1c003b2d", // TSLA Stock Token
+    "0xe93237c50d904957cf27e7b1133b510c669c2e74", // MSFT Stock Token
+    "0xec262a75e413fafd0df80480274532c79d42da09", // MSTR Stock Token
   ]),
 };
 
