@@ -1,7 +1,8 @@
 /**
  * @id PP-MGR-LIB-019
  * @name mandateDraft
- * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2)
+ * @implements-rules-version v3 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
+ *   POO-2167 rules v3)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -50,8 +51,8 @@ export type NetworkId =
 
 /**
  * A protocol a mandate can name. `uniswap-v3-swap` is the swap adapter, not the position protocol.
- * The buildathon scope operates Aave v3, Uniswap v3 and Uniswap v4 (R20 v2), and no longer GMX
- * (R21 v2).
+ * The buildathon scope operates Aave v3 and Uniswap v4 (R20 v3); Uniswap v3 positions stay listed
+ * but unavailable ({@link UNAVAILABLE_PROTOCOLS}), and GMX is no longer named at all (R21 v2).
  */
 export type ProtocolId =
   // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
@@ -99,10 +100,17 @@ export const DEX_PROTOCOL_IDS: readonly DexProtocolId[] = ["uniswap-v3", "uniswa
 
 /**
  * Protocols the product lists but cannot operate (R21). An id listed here renders disabled with
- * "Coming soon" and no reducer accepts it. Empty in the buildathon scope (R21 v2): GMX, its only
- * entry, is no longer offered at all, and the mechanism stays for the next protocol that needs it.
+ * "Coming soon", no reducer accepts it, and a stored draft that still names it loses it on load
+ * ({@link withoutUnavailableProtocols}).
+ *
+ * R20 v3 (2026-10-03, POO-2167): Uniswap v3 POSITIONS are here because the fund contracts have no
+ * Uniswap v3 position adapter yet. The required `uniswap-v3-swap` is a different id and never here
+ * (R19). Every piece of Uniswap v3 position code (the pool source's real path, the Pools tabs, the
+ * mapping) stays in place and unreachable through the UI, so restoring the protocol is removing it
+ * from this list.
  */
 export const UNAVAILABLE_PROTOCOLS: readonly ProtocolId[] = [
+  "uniswap-v3",
   // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
   // "gmx",
 ];
@@ -671,6 +679,44 @@ export function withProtocols(draft: MandateDraft, protocols: ProtocolId[]): Man
   });
 }
 
+/**
+ * R20 v3: a STORED draft without the protocols the product can no longer operate.
+ *
+ * A draft saved while Uniswap v3 positions were offered can still name them, hold v3 pools and carry
+ * a v3 cap row, and no reducer would ever let the manager take those out again (the row is disabled).
+ * The draft store runs every entry through this on load, so both the builder's resume and the
+ * Console's counts read the sanitised draft.
+ *
+ * It drops exactly three things: the unavailable ids, the pools on them, and their protocol cap rows.
+ * Nothing else moves, deliberately, unlike {@link withProtocols}, which also un-passes Pools and
+ * expires `poolUniverseCount`. Both are harmless left alone: a resume lands on a reachable step
+ * (`isStepReachable` never reaches a hidden one), and fewer pools can only turn the Broad mandate
+ * flag OFF ({@link isBroadMandate} needs `pools.length >= poolUniverseCount`), the safe direction.
+ *
+ * Returns the SAME object when there is nothing to drop. Every pool is read defensively, because the
+ * store validates the `pools` array but not its entries, and a throw here would cost the Console
+ * every draft rather than the one malformed entry.
+ */
+export function withoutUnavailableProtocols(draft: MandateDraft): MandateDraft {
+  const unavailable = new Set<string>(UNAVAILABLE_PROTOCOLS);
+  const onUnavailable = (pool: MandatePoolRef | null | undefined) =>
+    unavailable.has(pool?.protocol ?? "");
+  const holds =
+    draft.protocols.some((id) => unavailable.has(id)) ||
+    draft.pools.some(onUnavailable) ||
+    Object.keys(draft.caps.protocols).some((key) => unavailable.has(key));
+  if (!holds) return draft;
+  return {
+    ...draft,
+    protocols: draft.protocols.filter((id) => !unavailable.has(id)),
+    pools: draft.pools.filter((pool) => !onUnavailable(pool)),
+    caps: {
+      ...draft.caps,
+      protocols: retainKeys(draft.caps.protocols, (key) => !unavailable.has(key)),
+    },
+  };
+}
+
 /** Append token entries under the slot ceiling (R27), or refuse without changing anything. */
 function addTokenRefs(
   draft: MandateDraft,
@@ -822,10 +868,13 @@ function ensurePoolToken(
  * R33/R34/R38: put a pool in the mandate, pulling in whichever of its tokens is missing.
  *
  * Refusals, in order: a Uniswap v4 hook (not supported), a pool on a network the mandate does not
- * name, a pool on a PROTOCOL the mandate does not name, then whatever adding its tokens refuses (no
- * price feed, no slots left). The protocol check exists because a pasted address reaches this
- * function without passing a protocol filter first, and a mandate holding a position on a protocol
- * it never named is exactly as invalid as one on a network it never named.
+ * name, a pool on a PROTOCOL the mandate does not name or the product cannot operate (R20 v3), then
+ * whatever adding its tokens refuses (no price feed, no slots left). The protocol check exists
+ * because a pasted address reaches this function without passing a protocol filter first, and a
+ * mandate holding a position on a protocol it never named is exactly as invalid as one on a network
+ * it never named. The unavailable check reads the catalog, as `withNetworks` does, and covers a draft
+ * that still names such a protocol because it reached a step without passing through the store's
+ * load (see {@link withoutUnavailableProtocols}).
  *
  * PP-NOTE: assumption (coordinator default). The brief says a token block "propagates"; the REASON
  * propagates while `step` and `rowId` are re-targeted to the Pools step and the pool's own row. A
@@ -845,7 +894,10 @@ export function addPool(
   if (!draft.networks.includes(pool.network)) {
     return { blocked: { step: "pools", reason: "coming_soon", rowId: pool.id } };
   }
-  if (!draft.protocols.includes(pool.protocol)) {
+  if (
+    !draft.protocols.includes(pool.protocol) ||
+    catalog.protocols.some((p) => p.id === pool.protocol && !p.available)
+  ) {
     return { blocked: { step: "pools", reason: "coming_soon", rowId: pool.id } };
   }
 
