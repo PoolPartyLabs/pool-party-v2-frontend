@@ -93,8 +93,8 @@ export interface MandateCatalog {
 
 /**
  * Brand colours, taken from the builder's own network catalog (`src/mocks/data/pools.ts` NETWORKS)
- * so the fund builder's dots match the V1 builder's. Unichain has no row there yet and carries its
- * brand pink.
+ * so the fund builder's dots match the V1 builder's. Both offered networks have a row there. The
+ * commented-out Unichain entry below has none and would carry its brand pink once restored.
  */
 const BRAND_COLORS: Record<NetworkId, string> = {
   arbitrum: "#28A0F0",
@@ -205,8 +205,9 @@ function depositTokenFor(network: NetworkId): MandateCatalogToken | null {
  *
  * PP-NOTE: R25, protocol filtering waits for a token registry per adapter. The protocols are part
  * of the signature because the real source is keyed by them, and narrowing by protocol today would
- * mean inventing which tokens each adapter supports. A network with no bundled list (Unichain)
- * contributes nothing rather than an invented list.
+ * mean inventing which tokens each adapter supports. A network with no bundled list contributes
+ * nothing rather than an invented list; both offered networks have one today, and Unichain, the
+ * network that had none, is commented out of the buildathon scope (POO-2142).
  */
 function tokensFor(networks: NetworkId[], _protocols: ProtocolId[]): MandateCatalogToken[] {
   const out: MandateCatalogToken[] = [];
