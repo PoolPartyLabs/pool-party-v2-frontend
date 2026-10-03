@@ -12,15 +12,15 @@ export function composition(pool: CatalogPool, lower: string, upper: string) {
   const price = new Decimal(pool.currentPrice.token1PerToken0);
   const minimum = new Decimal(lower);
   const maximum = new Decimal(upper);
-  if (!price.isPositive() || !minimum.isPositive() || !maximum.gt(minimum))
-    throw new Error("INVALID_RANGE");
+  if (!price.gt(0) || !minimum.gt(0) || !maximum.gt(minimum)) throw new Error("INVALID_RANGE");
   if (price.lte(minimum)) return { share0: new Decimal(1), share1: new Decimal(0) };
   if (price.gte(maximum)) return { share0: new Decimal(0), share1: new Decimal(1) };
   const current = price.sqrt();
   const value0 = maximum.sqrt().minus(current).mul(current).div(maximum.sqrt());
   const value1 = current.minus(minimum.sqrt());
   const total = value0.plus(value1);
-  return { share0: value0.div(total), share1: value1.div(total) };
+  const share0 = value0.div(total);
+  return { share0, share1: new Decimal(1).minus(share0) };
 }
 export function positionAmounts(
   pool: CatalogPool,

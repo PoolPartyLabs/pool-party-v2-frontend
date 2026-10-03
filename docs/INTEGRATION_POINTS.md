@@ -6,7 +6,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 461 markers across 259 files (2026-10-03)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 465 markers across 263 files (2026-10-03)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -20,6 +20,17 @@ git grep -n 'PP-INTEGRATION-POINT' -- src   # 461 markers across 259 files (2026
 > **Scope note for this public repository.** This document covers the **front-end** seams only, which is
 > what the code in this repository owns. The request/response contracts of the Pool Party backend
 > services live with those services in their own repositories and are intentionally not reproduced here.
+
+## Fund Review and launch (POO-2172, rules v1)
+
+| Seam | Owned file | Contract and remaining integration |
+|------|------------|------------------------------------|
+| Just-in-time launch builders | `src/lib/api/v2/launch.ts` | Server-only v2 API writes with `x-api-key`; admin routes additionally require server-only `PP_API_ADMIN_KEY` as `x-admin-key`. API PR #180 provides payoutFeeBps/transits/balances. |
+| Wallet, receipts and staged logo | `src/features/manager/fund/launch/FundReviewSlot.tsx` | Real Privy wallet plus chain proof and mined receipts. Logo uses existing wallet-scoped S3 POST, no v1 strategy UUID. Mock mode never signs. |
+| Canvas BuildPlan v1 | `src/features/manager/fund/launch/plan.ts` | Reads `draft.plan` from POO-2151 through an owned structural adapter. POO-2144/2171 must provide range/loss/leaf execution fields and Next to `phase=review`. Missing details refuse launch. |
+| Browser checkpoint journal | `src/features/manager/fund/launch/journal.ts` | Per manager/draft immutable steps, hashes, receipt state, addresses and actual net principal. Durable API launch-plan and cross-device coordination are later work. |
+
+See `src/features/manager/fund/launch/README.md` for the adapter gaps, recovery rules and operational waits.
 
 ## Fiat on-ramp (Privy rail, default on; Paybis dormant behind `privyOnRamp=off`)
 

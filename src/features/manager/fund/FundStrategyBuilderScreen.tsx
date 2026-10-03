@@ -88,6 +88,7 @@ import { BuilderActionBar } from "./components/BuilderActionBar";
 import { MandateSubStepHeader } from "./components/MandateSubStepHeader";
 import { NameDraftDialog } from "./components/NameDraftDialog";
 import { FundBuildLanding } from "./FundBuildLanding";
+import { FundReviewSlot } from "./launch/FundReviewSlot";
 import type { MandateCatalog } from "./mandateCatalog";
 import {
   firstUnpassedStep,
@@ -240,9 +241,12 @@ export function FundStrategyBuilderScreen() {
    * derivation below correct on the very first render that has the stored draft. See the file
    * header for why this is not an effect.
    */
-  const [phaseChoice, setPhaseChoice] = useState<"mandate" | "build" | null>(null);
-  const phase: "mandate" | "build" =
-    phaseChoice ?? (requestedPhase === "build" && draft.completedAt !== null ? "build" : "mandate");
+  const [phaseChoice, setPhaseChoice] = useState<"mandate" | "build" | "review" | null>(null);
+  const phase: "mandate" | "build" | "review" =
+    phaseChoice ??
+    (draft.completedAt !== null && (requestedPhase === "build" || requestedPhase === "review")
+      ? requestedPhase
+      : "mandate");
 
   const [dialog, setDialog] = useState<"exit" | "complete" | null>(null);
   const [shellBlock, setShellBlock] = useState<StepBlock | null>(null);
@@ -414,7 +418,7 @@ export function FundStrategyBuilderScreen() {
    */
   useEffect(() => {
     if (!hydrated || draft.savedAt === null) return;
-    const query = `?draft=${draft.id}&step=${step}${phase === "build" ? "&phase=build" : ""}`;
+    const query = `?draft=${draft.id}&step=${step}${phase !== "mandate" ? `&phase=${phase}` : ""}`;
     routerRef.current.replace(`${pathname}${query}`, { scroll: false });
   }, [hydrated, draft.savedAt, draft.id, step, phase, pathname]);
 
@@ -646,13 +650,16 @@ export function FundStrategyBuilderScreen() {
       {/* R2: the V1 stepper, unchanged. Build is reachable only once the mandate is finished, and
           [B4] Review stays unreachable: the stepper only makes an EARLIER phase clickable. */}
       <BuilderStepper
-        active={phase === "build" ? "build" : "mandate"}
+        active={phase}
         onStepClick={(target) => {
           if (target === "mandate") handleBackToMandate();
+          if (target === "build") setPhaseChoice("build");
         }}
       />
 
-      {phase === "build" ? (
+      {phase === "review" ? (
+        <FundReviewSlot draft={draft} catalog={catalog} onBack={() => setPhaseChoice("build")} />
+      ) : phase === "build" ? (
         <FundBuildLanding
           draft={draft}
           catalog={catalog}
