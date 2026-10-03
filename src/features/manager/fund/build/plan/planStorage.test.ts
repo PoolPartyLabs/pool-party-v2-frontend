@@ -4,9 +4,9 @@
  * @implements-rules-version v1 (POO-2151 rules v1)
  * @analytics-events none, a pure storage helper.
  *
- * Covers the Storage rule (a stored plan reads back deep-equal, an unreadable one is refused so the
- * draft store can drop only the plan, coordinator default D18) and the Dirty rule (the fingerprint
- * the unsaved check compares, D17).
+ * Covers the Storage rule (a stored plan reads back deep-equal; an unreadable one is refused, so the
+ * draft store marks the draft `planUnreadable` and keeps the raw plan) and the Dirty rule (the
+ * fingerprint the unsaved check compares, D17).
  */
 import { describe, expect, it } from "vitest";
 import { createEmptyPlan } from "./buildPlan";

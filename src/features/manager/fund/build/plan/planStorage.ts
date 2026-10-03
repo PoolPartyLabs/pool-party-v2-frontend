@@ -12,7 +12,8 @@
  *   written by another build, so its SHAPE is checked before any screen touches it. It is a
  *   structural check only: a plan that names a pool or a network the mandate no longer holds is
  *   still a plan, and `validatePlan` reports those (coordinator default D6). Anything else unreadable
- *   is null, and the store then keeps the draft and drops only the plan (D18).
+ *   is null: the store then keeps the draft WITHOUT the plan, marks it `planUnreadable`, and keeps the
+ *   raw plan in storage untouched until a save with a new plan replaces it (PR #31 review, F1).
  * - {@link planFingerprint} is what the unsaved check compares (D17), so a plan edit arms the leave
  *   prompt. No plan and the empty plan are the same work, so they fingerprint the same.
  *

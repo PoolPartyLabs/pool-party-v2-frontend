@@ -239,11 +239,19 @@ export interface MandateDraft {
   /**
    * The Build canvas plan (POO-2151, PP-MGR-LIB-021). OPTIONAL, so every draft written before the
    * canvas existed, and every literal draft in a test, stays a valid draft: no plan reads as the
-   * empty plan (`planOf`). The draft store keeps a draft whose stored plan is unreadable and drops
-   * only the plan (coordinator default D18). Never part of {@link selectionFingerprint}, so a plan
-   * edit never invalidates a completed mandate (D17); the unsaved fingerprint counts it instead.
+   * empty plan (`planOf`). When the stored plan cannot be read, the draft is kept WITHOUT a plan and
+   * carries {@link planUnreadable}. Never part of {@link selectionFingerprint}, so a plan edit never
+   * invalidates a completed mandate (D17); the unsaved fingerprint counts it instead.
    */
   plan?: BuildPlan;
+  /**
+   * True iff storage holds a plan for this draft that this build cannot read (for example one a
+   * newer build wrote). Set by the draft store on READ, never stored. The draft then has no `plan`
+   * (the app works with the empty plan, not a guess), and the store keeps the raw plan untouched on
+   * every write, of this draft or any other, until a save of this draft with a new `plan` replaces it
+   * (PR #31 review, F1: a plan is never deleted silently). Absent means false.
+   */
+  planUnreadable?: boolean;
   /**
    * The builder phase this draft was last saved in (coordinator default D16). OPTIONAL: no value
    * reads as "mandate". Bookkeeping, like `lastStep`, so it is in no fingerprint.

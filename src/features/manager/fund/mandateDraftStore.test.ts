@@ -299,7 +299,7 @@ describe("the Build plan inside a draft", () => {
     expect(getDraft("p")?.lastPhase).toBe("build");
   });
 
-  it("keeps a draft whose plan is unreadable and drops only the plan", () => {
+  it("keeps a draft whose plan is unreadable, without the plan, and marks it planUnreadable", () => {
     // @rule Storage
     const good = draft("broken-plan", "2026-10-03T00:00:00.000Z");
     storeRaw({ "broken-plan": { ...good, plan: { version: 9, hub: null } } });
@@ -307,7 +307,79 @@ describe("the Build plan inside a draft", () => {
     expect(read?.id).toBe("broken-plan");
     expect(read?.networks).toEqual(good.networks);
     expect(read).not.toHaveProperty("plan");
+    expect(read?.planUnreadable).toBe(true);
     expect(listDrafts().map((d) => d.id)).toEqual(["broken-plan"]);
+  });
+
+  it("marks no draft whose plan it could read, or that has none", () => {
+    // @rule Storage
+    storeRaw({
+      fine: { ...draft("fine", "2026-10-03T00:00:00.000Z"), plan: supplyBorrowPlan() },
+      none: draft("none", "2026-10-02T00:00:00.000Z"),
+    });
+    expect(getDraft("fine")).not.toHaveProperty("planUnreadable");
+    expect(getDraft("none")).not.toHaveProperty("planUnreadable");
+  });
+
+  describe("an unreadable plan is never deleted silently", () => {
+    /** A plan a newer build wrote: version 2 means nothing to this one. */
+    const NEWER = { version: 2, hub: { chains: [] }, spokes: [], lanes: ["future"] };
+
+    function rawPlanOf(id: string): string | undefined {
+      const raw = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");
+      const plan = raw.drafts?.[id]?.plan;
+      return plan === undefined ? undefined : JSON.stringify(plan);
+    }
+
+    function seedNewer(): void {
+      storeRaw({
+        b: { ...draft("b", "2026-10-02T00:00:00.000Z"), plan: NEWER },
+        a: draft("a", "2026-10-01T00:00:00.000Z"),
+      });
+    }
+
+    it("keeps it byte for byte when ANOTHER draft is saved", () => {
+      // @rule Storage
+      seedNewer();
+      const before = rawPlanOf("b");
+      upsertDraft({ ...draft("a", "2026-10-01T00:00:00.000Z"), plan: supplyBorrowPlan() });
+      expect(rawPlanOf("b")).toBe(before);
+      expect(rawPlanOf("b")).toBe(JSON.stringify(NEWER));
+      expect(getDraft("b")?.planUnreadable).toBe(true);
+    });
+
+    it("keeps it byte for byte when another draft is deleted", () => {
+      // @rule Storage
+      seedNewer();
+      expect(deleteDraft("a")).toBe(true);
+      expect(rawPlanOf("b")).toBe(JSON.stringify(NEWER));
+    });
+
+    it("keeps it when the affected draft is saved without a new plan, and never stores the marker", () => {
+      // @rule Storage
+      seedNewer();
+      const loaded = getDraft("b");
+      if (!loaded) throw new Error("fixture: b not read");
+      const saved = upsertDraft({ ...loaded, name: "Renamed while unreadable" });
+      expect(rawPlanOf("b")).toBe(JSON.stringify(NEWER));
+      expect(saved?.planUnreadable).toBe(true);
+      expect(saved).not.toHaveProperty("plan");
+      const raw = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");
+      expect(raw.drafts.b).not.toHaveProperty("planUnreadable");
+      expect(raw.drafts.b.name).toBe("Renamed while unreadable");
+    });
+
+    it("replaces it, and drops the marker, when the affected draft is saved WITH a new plan", () => {
+      // @rule Storage
+      seedNewer();
+      const loaded = getDraft("b");
+      if (!loaded) throw new Error("fixture: b not read");
+      const saved = upsertDraft({ ...loaded, plan: supplyBorrowPlan() });
+      expect(rawPlanOf("b")).toBe(JSON.stringify(supplyBorrowPlan()));
+      expect(saved).not.toHaveProperty("planUnreadable");
+      expect(getDraft("b")?.plan).toEqual(supplyBorrowPlan());
+      expect(getDraft("b")).not.toHaveProperty("planUnreadable");
+    });
   });
 
   it("reads a draft written before the canvas as a draft with no plan and no phase", () => {

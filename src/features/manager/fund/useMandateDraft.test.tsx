@@ -417,6 +417,35 @@ describe("isDirty", () => {
     expect(result.current.isDirty).toBe(false);
   });
 
+  it("loads an unreadable plan as planUnreadable and keeps it stored through a save", async () => {
+    // @rule Storage
+    const newer = { version: 2, hub: { chains: [] }, spokes: [] };
+    window.localStorage.setItem(
+      MANDATE_DRAFTS_KEY,
+      JSON.stringify({
+        version: MANDATE_DRAFTS_VERSION,
+        drafts: {
+          kept: {
+            ...createEmptyDraft("2026-10-01T00:00:00.000Z", "kept"),
+            name: "ETH and BTC on Arbitrum",
+            plan: newer,
+          },
+        },
+      }),
+    );
+    const { result } = renderHook(() => useMandateDraft("kept"));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    expect(result.current.draft.planUnreadable).toBe(true);
+    expect(result.current.draft.plan).toBeUndefined();
+
+    await act(async () => {
+      await result.current.save();
+    });
+    const raw = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");
+    expect(JSON.stringify(raw.drafts.kept.plan)).toBe(JSON.stringify(newer));
+    expect(result.current.draft.planUnreadable).toBe(true);
+  });
+
   it("leaves the selection fingerprint alone on a plan edit, so a plan never un-completes a mandate", async () => {
     // @rule Dirty
     seed("done", {
