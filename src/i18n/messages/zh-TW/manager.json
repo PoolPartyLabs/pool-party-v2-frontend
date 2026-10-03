@@ -111,6 +111,7 @@
     "showMore": "顯示更多資金池",
     "poolSearch": "依交易對、代幣或資金池地址搜尋",
     "poolEmpty": "沒有符合您搜尋的資金池。",
+    "poolWrongNetwork": "此資金池存在於 {network}，而非您選擇的網路。",
     "poolTvl": "TVL",
     "poolApr": "APR",
     "tierShare": "已選 {pct}%",
@@ -676,6 +677,29 @@
       "slotsCaption": "每個代幣會在其運作的每個網路上佔用一個名額。該授權範圍共有 {max} 個名額。",
       "noPrice": "暫無價格資料來源",
       "empty": "沒有符合您搜尋的代幣。"
+    },
+    "pools": {
+      "search": "代幣、交易對或資金池地址",
+      "secondToken": "第二個代幣（選填）",
+      "caption": "在第一個欄位貼上資金池地址即可直接找到它。",
+      "tabAll": "全部 · {count}",
+      "tabProtocol": "{protocol} · {count}",
+      "results": "{count, plural, other {包含您至少一個代幣的資金池有 # 個}}",
+      "yours": "您的資金池 · {count}",
+      "feeTier": "{fee} fee tier",
+      "tierShare": "已選 {pct}%",
+      "addsToken": "將 {symbol} 新增到您的代幣",
+      "hasHook": "帶有 hook",
+      "fixed": "資金池在啟動時即固定，之後無法再新增。",
+      "allSelectedTitle": "包含您代幣的所有資金池都已在「您的資金池」中",
+      "allSelectedBody": "全部 {count} 個資金池皆已選取。請在右側移除一個以縮小授權範圍。",
+      "broadTitle": "此策略將帶有「廣泛授權範圍」標記",
+      "broadBody": "所有代幣與所有資金池皆已選取，因此該策略可以交易其網路提供的任何資產。投資人在存款前會看到該標記。",
+      "empty": "沒有符合您搜尋的資金池。",
+      "loading": "正在載入資金池…",
+      "v4Pending": "Uniswap v4 資金池將隨基金合約資料來源一同上線。",
+      "retry": "再試一次",
+      "error": "無法載入資金池。請檢查您的網路連線並再試一次。"
     }
   }
 }

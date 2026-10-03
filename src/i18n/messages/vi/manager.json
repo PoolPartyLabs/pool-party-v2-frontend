@@ -111,6 +111,7 @@
     "showMore": "Xem thêm pool",
     "poolSearch": "Tìm theo cặp, token hoặc địa chỉ pool",
     "poolEmpty": "Không có pool nào khớp với tìm kiếm của bạn.",
+    "poolWrongNetwork": "Pool này tồn tại trên {network}, không phải trên mạng bạn đã chọn.",
     "poolTvl": "TVL",
     "poolApr": "APR",
     "tierShare": "Đã chọn {pct}%",
@@ -676,6 +677,29 @@
       "slotsCaption": "Mỗi token chiếm một slot trên mỗi mạng mà nó hoạt động. Nhiệm vụ này có {max} slot.",
       "noPrice": "Chưa có nguồn giá",
       "empty": "Không có token nào khớp với tìm kiếm của bạn."
+    },
+    "pools": {
+      "search": "Token, cặp hoặc địa chỉ pool",
+      "secondToken": "Token thứ hai (tùy chọn)",
+      "caption": "Dán địa chỉ pool vào ô đầu tiên để tìm trực tiếp.",
+      "tabAll": "Tất cả · {count}",
+      "tabProtocol": "{protocol} · {count}",
+      "results": "{count, plural, other {# pool}} có chứa ít nhất một token của bạn",
+      "yours": "Pool của bạn · {count}",
+      "feeTier": "{fee} fee tier",
+      "tierShare": "Đã chọn {pct}%",
+      "addsToken": "thêm {symbol} vào token của bạn",
+      "hasHook": "có hook",
+      "fixed": "Pool được cố định khi ra mắt. Bạn không thể thêm pool sau đó.",
+      "allSelectedTitle": "Mọi pool có token của bạn đều đã có trong mục Pool của bạn",
+      "allSelectedBody": "Tất cả {count} pool đều đã được chọn. Hãy xóa một pool ở bên phải để thu hẹp nhiệm vụ.",
+      "broadTitle": "Chiến lược này sẽ có cờ hiệu nhiệm vụ Rộng",
+      "broadBody": "Mọi token và mọi pool đều được chọn, vì vậy chiến lược có thể giao dịch bất kỳ tài sản nào mạng của nó cung cấp. Nhà đầu tư sẽ thấy cờ hiệu này trước khi nạp tiền.",
+      "empty": "Không có pool nào khớp với tìm kiếm của bạn.",
+      "loading": "Đang tải pool…",
+      "v4Pending": "Các pool Uniswap v4 sẽ có khi nguồn dữ liệu hợp đồng quỹ ra mắt.",
+      "retry": "Thử lại",
+      "error": "Không thể tải pool. Hãy kiểm tra kết nối của bạn và thử lại."
     }
   }
 }

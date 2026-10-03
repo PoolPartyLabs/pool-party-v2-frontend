@@ -111,6 +111,7 @@
     "showMore": "Show more pools",
     "poolSearch": "Search by pair, token or pool address",
     "poolEmpty": "No pools match your search.",
+    "poolWrongNetwork": "This pool exists on {network}, not the network you have selected.",
     "poolTvl": "TVL",
     "poolApr": "APR",
     "tierShare": "{pct}% selected",
@@ -676,6 +677,29 @@
       "slotsCaption": "A token takes one slot on each network it runs on. The mandate holds {max} slots.",
       "noPrice": "No price feed yet",
       "empty": "No tokens match your search."
+    },
+    "pools": {
+      "search": "Token, pair or pool address",
+      "secondToken": "Second token (optional)",
+      "caption": "Paste a pool address in the first field to find it directly.",
+      "tabAll": "All · {count}",
+      "tabProtocol": "{protocol} · {count}",
+      "results": "{count, plural, one {# pool} other {# pools}} with at least one of your tokens",
+      "yours": "Your pools · {count}",
+      "feeTier": "{fee} fee tier",
+      "tierShare": "{pct}% selected",
+      "addsToken": "adds {symbol} to your tokens",
+      "hasHook": "has a hook",
+      "fixed": "Pools are fixed at launch. You cannot add one later.",
+      "allSelectedTitle": "Every pool with your tokens is already in Your pools",
+      "allSelectedBody": "All {count} pools are selected. Remove one on the right to narrow the mandate.",
+      "broadTitle": "This strategy will carry a Broad mandate flag",
+      "broadBody": "Every token and every pool is selected, so the strategy can trade anything its networks offer. Investors see the flag before they deposit.",
+      "empty": "No pools match your search.",
+      "loading": "Loading pools…",
+      "v4Pending": "Uniswap v4 pools arrive with the fund contracts data source.",
+      "retry": "Try again",
+      "error": "Couldn't load the pools. Check your connection and try again."
     }
   }
 }

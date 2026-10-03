@@ -111,6 +111,7 @@
     "showMore": "Mehr Pools anzeigen",
     "poolSearch": "Nach Paar, Token oder Pool-Adresse suchen",
     "poolEmpty": "Keine Pools entsprechen Ihrer Suche.",
+    "poolWrongNetwork": "Dieser Pool existiert auf {network}, nicht auf dem ausgewählten Netzwerk.",
     "poolTvl": "TVL",
     "poolApr": "APR",
     "tierShare": "{pct}% ausgewählt",
@@ -676,6 +677,29 @@
       "slotsCaption": "Ein Token belegt einen Slot auf jedem Netzwerk, auf dem er läuft. Das Mandat verfügt über {max} Slots.",
       "noPrice": "Noch kein Preis-Feed",
       "empty": "Keine Token entsprechen Ihrer Suche."
+    },
+    "pools": {
+      "search": "Token, Paar oder Pool-Adresse",
+      "secondToken": "Zweiter Token (optional)",
+      "caption": "Fügen Sie die Adresse eines Pools in das erste Feld ein, um ihn direkt zu finden.",
+      "tabAll": "Alle · {count}",
+      "tabProtocol": "{protocol} · {count}",
+      "results": "{count, plural, one {# Pool} other {# Pools}} mit mindestens einem Ihrer Token",
+      "yours": "Ihre Pools · {count}",
+      "feeTier": "{fee} Fee Tier",
+      "tierShare": "{pct}% ausgewählt",
+      "addsToken": "fügt {symbol} zu Ihren Token hinzu",
+      "hasHook": "hat einen Hook",
+      "fixed": "Pools werden beim Launch festgelegt. Sie können später keinen weiteren hinzufügen.",
+      "allSelectedTitle": "Alle Pools mit Ihren Token befinden sich bereits in „Ihre Pools“",
+      "allSelectedBody": "Alle {count} Pools sind ausgewählt. Entfernen Sie rechts einen, um das Mandat einzugrenzen.",
+      "broadTitle": "Diese Strategie erhält die Kennzeichnung „Breites Mandat“",
+      "broadBody": "Jeder Token und jeder Pool ist ausgewählt, sodass die Strategie alles handeln kann, was ihre Netzwerke bieten. Anleger sehen die Kennzeichnung, bevor sie einzahlen.",
+      "empty": "Keine Pools entsprechen Ihrer Suche.",
+      "loading": "Pools werden geladen…",
+      "v4Pending": "Uniswap v4-Pools kommen mit der Datenquelle der Fondsverträge.",
+      "retry": "Erneut versuchen",
+      "error": "Die Pools konnten nicht geladen werden. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut."
     }
   }
 }
