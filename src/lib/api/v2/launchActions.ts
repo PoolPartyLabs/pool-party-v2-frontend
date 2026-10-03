@@ -6,7 +6,8 @@
  */
 "use server";
 import { z } from "zod";
-import { getSessionWallet } from "@/lib/auth/session";
+import { apiFetch } from "@/lib/api/client";
+import { getAuthHeader, getSessionWallet } from "@/lib/auth/session";
 import { isFeatureEnabled } from "@/lib/features";
 import { ApiError } from "../errors";
 import { launchFetch } from "./launch";
@@ -42,6 +43,18 @@ async function session(from?: string): Promise<string> {
   const wallet = await getSessionWallet();
   if (!wallet || (from && wallet !== from.toLowerCase()))
     throw new ApiError(401, "V2_UNAUTHORIZED", "unauthorized");
+  const headers = await getAuthHeader();
+  if (!headers.Authorization) throw new ApiError(401, "V2_UNAUTHORIZED", "unauthorized");
+  try {
+    const owner = await apiFetch("users/me", {
+      headers,
+      schema: z.object({ walletAddress: addressSchema }),
+    });
+    if (!owner || owner.walletAddress.toLowerCase() !== wallet)
+      throw new Error("identity mismatch");
+  } catch {
+    throw new ApiError(401, "V2_UNAUTHORIZED", "unauthorized");
+  }
   return wallet;
 }
 async function manager(core: string): Promise<string> {

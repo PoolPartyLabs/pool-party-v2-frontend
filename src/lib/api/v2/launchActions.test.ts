@@ -2,8 +2,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as actions from "./launchActions";
 import { buildLaunchSwapAction, triggerLaunchReportAction } from "./launchActions";
 
-const mocks = vi.hoisted(() => ({ wallet: vi.fn(), fetch: vi.fn() }));
-vi.mock("@/lib/auth/session", () => ({ getSessionWallet: mocks.wallet }));
+const mocks = vi.hoisted(() => ({
+  wallet: vi.fn(),
+  fetch: vi.fn(),
+  verified: vi.fn(),
+  auth: vi.fn(),
+}));
+vi.mock("@/lib/auth/session", () => ({
+  getSessionWallet: mocks.wallet,
+  getAuthHeader: mocks.auth,
+}));
+vi.mock("@/lib/api/client", () => ({ apiFetch: mocks.verified }));
 vi.mock("@/lib/features", () => ({ isFeatureEnabled: () => true }));
 const core = `0x${"12".repeat(20)}`;
 const wallet = `0x${"34".repeat(20)}`;
@@ -26,6 +35,8 @@ describe("launch server-only admin boundary [R8]", () => {
     vi.stubEnv("PP_API_KEY", "normal-secret");
     vi.stubEnv("PP_API_ADMIN_KEY", "admin-secret");
     mocks.wallet.mockResolvedValue(wallet);
+    mocks.auth.mockResolvedValue({ Authorization: "Bearer session-token" });
+    mocks.verified.mockResolvedValue({ walletAddress: wallet });
     mocks.fetch.mockImplementation(async () =>
       response({ protocolVersion: "v2", manager: wallet }),
     );
@@ -41,11 +52,33 @@ describe("launch server-only admin boundary [R8]", () => {
       error: { status: 401 },
     });
     mocks.wallet.mockResolvedValue(core);
+    mocks.verified.mockResolvedValue({ walletAddress: core });
     expect(await triggerLaunchReportAction(core)).toMatchObject({
       ok: false,
       error: { status: 403 },
     });
     expect(mocks.fetch.mock.calls.some(([url]) => String(url).endsWith("/report"))).toBe(false);
+  });
+  it("rejects forged decoded sessions unless the authenticated API verifies the same wallet", async () => {
+    mocks.verified.mockResolvedValue({ walletAddress: core });
+    expect(await buildLaunchSwapAction(swap)).toMatchObject({ ok: false, error: { status: 401 } });
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    mocks.verified.mockRejectedValue(new Error("Bearer session-token rejected"));
+    const result = await buildLaunchSwapAction(swap);
+    expect(result).toMatchObject({ ok: false, error: { status: 401 } });
+    expect(JSON.stringify(result)).not.toContain("session-token");
+    expect(mocks.verified).toHaveBeenCalledWith(
+      "users/me",
+      expect.objectContaining({
+        headers: { Authorization: "Bearer session-token" },
+      }),
+    );
+  });
+  it("rejects a decoded session without a bearer token before contacting the API", async () => {
+    mocks.auth.mockResolvedValue({});
+    expect(await buildLaunchSwapAction(swap)).toMatchObject({ ok: false, error: { status: 401 } });
+    expect(mocks.verified).not.toHaveBeenCalled();
+    expect(mocks.fetch).not.toHaveBeenCalled();
   });
   it("sends x-api-key and x-admin-key server-side and rate limits duplicate report jobs", async () => {
     mocks.fetch

@@ -18,7 +18,7 @@ Creation is atomic with seed. Actual `FundSeeded.shares` defines the deployable 
 
 Builds happen just in time. Swap/open reread actual unallocated balances; range-derived composition uses Decimal and token decimals. V4 minimum amounts reflect the chosen loss bound. Allocation is aggregate on the hub. Bridge quotes are refreshed before send; transit reads prove credit before spoke execution. Reports expose pending/failed/expired jobs, not invented countdowns. No TVL/APR values are fabricated.
 
-API writes run in new server-only files, separate from the shared v2 read client. Server actions require a session and compare its wallet with the on-chain manager before privileged work. `PP_API_KEY` is sent as `x-api-key`; `PP_API_ADMIN_KEY` is sent as `x-admin-key`, as required by the actual API guards. Report triggers have bounded process-local per-wallet/core throttling; upstream throttling remains necessary across replicas. Keys and upstream messages never return to clients.
+API writes run in new server-only files, separate from the shared v2 read client. Server actions verify the bearer session against authenticated `users/me` without caching or public-profile fallback, then compare that verified wallet with the on-chain manager before privileged work. `PP_API_KEY` is sent as `x-api-key`; `PP_API_ADMIN_KEY` is sent as `x-admin-key`, as required by the actual API guards. Report triggers have bounded process-local per-wallet/core throttling; upstream throttling remains necessary across replicas. Keys and upstream messages never return to clients.
 
 Logo upload reuses `useUploadMedia("logo")`, wallet-scoped presigned S3 POST, without a v1 strategy UUID. Deployment must provide media configuration, session authentication and CORS.
 
