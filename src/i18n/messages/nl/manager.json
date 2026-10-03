@@ -950,6 +950,15 @@
       "toast": {
         "removed": "Blok verwijderd",
         "undo": "Ongedaan maken"
+      },
+      "planUnreadable": "Dit concept bevat een plan dat deze versie van de app niet kan openen. Het blijft bewaard zoals het is; een blok toevoegen start een nieuw plan, dat het vervangt wanneer u opslaat.",
+      "review": {
+        "emptyPlan": "Voeg een blok toe voordat u gaat controleren.",
+        "invalidBlock": "Verwijder de blokken die niet langer in uw mandaat staan, of bewerk het mandaat.",
+        "comingSoon": "Verwijder de blokken die binnenkort beschikbaar komen.",
+        "emptyBlock": "Configureer elk blok voordat u gaat controleren.",
+        "overShare": "De aandelen tellen op tot meer dan het kapitaal erboven.",
+        "unavailable": "Controleren is nog niet beschikbaar."
       }
     }
   }

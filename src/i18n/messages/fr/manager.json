@@ -950,6 +950,15 @@
       "toast": {
         "removed": "Bloc retiré",
         "undo": "Annuler"
+      },
+      "planUnreadable": "Ce brouillon contient un plan que cette version de l'app ne peut pas ouvrir. Il est conservé tel quel ; ajouter un bloc démarre un nouveau plan, qui le remplace lorsque vous enregistrez.",
+      "review": {
+        "emptyPlan": "Ajoutez un bloc avant la vérification.",
+        "invalidBlock": "Retirez les blocs qui ne font plus partie de votre mandat, ou modifiez le mandat.",
+        "comingSoon": "Retirez les blocs bientôt disponibles.",
+        "emptyBlock": "Configurez chaque bloc avant la vérification.",
+        "overShare": "Les parts additionnées dépassent le capital situé au-dessus d'elles.",
+        "unavailable": "La vérification n'est pas encore disponible."
       }
     }
   }

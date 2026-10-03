@@ -950,6 +950,15 @@
       "toast": {
         "removed": "Bloco removido",
         "undo": "Desfazer"
+      },
+      "planUnreadable": "Este rascunho tem um plano que esta versão do app não consegue abrir. Ele é mantido como está; adicionar um bloco inicia um novo plano, que o substitui quando você salvar.",
+      "review": {
+        "emptyPlan": "Adicione um bloco antes da Revisão.",
+        "invalidBlock": "Remova os blocos que não estão mais no seu mandato ou edite o mandato.",
+        "comingSoon": "Remova os blocos marcados como Em breve.",
+        "emptyBlock": "Configure todos os blocos antes da Revisão.",
+        "overShare": "As porcentagens somam mais do que o capital acima delas.",
+        "unavailable": "A Revisão ainda não está disponível."
       }
     }
   }

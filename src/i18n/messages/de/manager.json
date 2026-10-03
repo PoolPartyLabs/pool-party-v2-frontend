@@ -950,6 +950,15 @@
       "toast": {
         "removed": "Block entfernt",
         "undo": "Rückgängig"
+      },
+      "planUnreadable": "Dieser Entwurf enthält einen Plan, den diese Version der App nicht öffnen kann. Er bleibt unverändert erhalten; wenn Sie einen Block hinzufügen, beginnt ein neuer Plan, der ihn beim Speichern ersetzt.",
+      "review": {
+        "emptyPlan": "Fügen Sie vor der Überprüfung einen Block hinzu.",
+        "invalidBlock": "Entfernen Sie die Blöcke, die nicht mehr in Ihrem Mandat sind, oder bearbeiten Sie das Mandat.",
+        "comingSoon": "Entfernen Sie die Blöcke, die demnächst verfügbar sind.",
+        "emptyBlock": "Konfigurieren Sie vor der Überprüfung jeden Block.",
+        "overShare": "Die Anteile ergeben zusammen mehr als das Kapital darüber.",
+        "unavailable": "Die Überprüfung ist noch nicht verfügbar."
       }
     }
   }
