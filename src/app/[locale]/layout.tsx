@@ -8,6 +8,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { AnalyticsListener } from "@/components/analytics/AnalyticsListener";
 import { ConsentBanner } from "@/components/analytics/ConsentBanner";
+import { Toaster } from "@/components/ui/Toast";
 import { routing } from "@/i18n/routing";
 import { CONSENT_DEFAULT_SNIPPET } from "@/lib/analytics/consentSnippet";
 import "../globals.css";
@@ -77,11 +78,19 @@ export default async function LocaleLayout({
          * Privy/wagmi/viem bundle (POO-491). `AnalyticsIdentify` moved there too (it needs a mounted
          * WagmiProvider). `ConsentBanner` + `AnalyticsListener` are wallet-free and stay global so
          * consent + pageview tracking still run on every route.
+         *
+         * POO-2173: `Toaster` is the render target of the imperative `toast(...)` API (fund builder
+         * "Draft saved", strategy manage view, drafts list). It was never mounted, so every toast was
+         * silently dropped. It is mounted ONCE, here, because a toast can be raised from any route and
+         * a second Toaster would draw every toast twice. It needs no provider and is wallet-free, so
+         * it stays out of the `(auth)` tree. sonner injects its own `<style>` at runtime, which the
+         * existing `style-src 'unsafe-inline'` allows; there is no nonce to forward.
          */}
         <NextIntlClientProvider>
           {children}
           <ConsentBanner />
           <AnalyticsListener />
+          <Toaster />
         </NextIntlClientProvider>
       </body>
     </html>
