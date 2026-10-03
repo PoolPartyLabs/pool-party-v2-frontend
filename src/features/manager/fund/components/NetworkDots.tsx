@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-042
  * @name NetworkDots
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  * @analytics-events none, the shell emits
  *
  * POO-2123 [R10], epic POO-2119. Network logos that say which network they are.
@@ -23,8 +23,8 @@
  * steps use the same one rather than each declaring a copy that can drift.
  *
  * Brand colours come from the catalog (`PP-MGR-LIB-018`), never from a local map: a network with no
- * committed mark under `public/networks` (Unichain today) falls back to a monogram, and the monogram
- * must be the brand's colour, which only the catalog knows.
+ * committed mark under `public/networks` (Unichain, commented out of the buildathon scope by POO-2142)
+ * falls back to a monogram, and the monogram must be the brand's colour, which only the catalog knows.
  */
 "use client";
 
@@ -46,9 +46,10 @@ export function useNetworkNames(): Record<NetworkId, string> {
   return {
     arbitrum: t("fundBuilder.networkNames.arbitrum"),
     robinhood: t("fundBuilder.networkNames.robinhood"),
-    base: t("fundBuilder.networkNames.base"),
-    polygon: t("fundBuilder.networkNames.polygon"),
-    unichain: t("fundBuilder.networkNames.unichain"),
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+    // base: t("fundBuilder.networkNames.base"),
+    // polygon: t("fundBuilder.networkNames.polygon"),
+    // unichain: t("fundBuilder.networkNames.unichain"),
   };
 }
 
@@ -116,8 +117,9 @@ export interface NetworkDotsProps {
   /** Logo edge size in px. Defaults to 16. */
   size?: number;
   /**
-   * How many logos to draw. Defaults to 5, the size of the whole network universe, so nothing is
-   * dropped today; a caller with less room passes a smaller number.
+   * How many logos to draw. Defaults to 5, the size of the whole network universe before the
+   * buildathon scope (POO-2142), so nothing is dropped today; a caller with less room passes a
+   * smaller number.
    */
   max?: number;
   /** Extra classes on the row. */

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-019
  * @name mandateDraft
- * @implements-rules-version v1 (POO-2121 rules v1)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -26,8 +26,9 @@
  * showing a change the store rejected. Reducers also never read a clock: the store stamps
  * `updatedAt` on write, so the same input always produces the same output.
  *
- * The catalog arrives as an ARGUMENT rather than an import (see mandateCatalog.ts). It depends on a
- * feature flag, and a pure function that reads a flag runtime cannot be tested without one.
+ * The catalog arrives as an ARGUMENT rather than an import (see mandateCatalog.ts). It no longer
+ * depends on a feature flag (rules v2, POO-2142), but its source is still the seam that becomes the
+ * fund contracts' own registries, and a reducer that imported it could not be handed another one.
  */
 import { getUsdcAddress, networkToChainId, supportedChainMetas } from "@/lib/chains/config";
 import type { MandateCatalog, MandateCatalogToken } from "./mandateCatalog";
@@ -36,8 +37,16 @@ import type { MandateCatalog, MandateCatalogToken } from "./mandateCatalog";
 // Identities and ordering
 // ---------------------------------------------------------------------------
 
-/** A network a mandate can name. Only the hub and Robinhood Chain exist on chain today (DEC-018). */
-export type NetworkId = "arbitrum" | "robinhood" | "base" | "polygon" | "unichain";
+/**
+ * A network a mandate can name. Only the hub and Robinhood Chain exist on chain today (DEC-018), and
+ * they are the only two the buildathon scope offers (R16 v2).
+ */
+export type NetworkId =
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+  // "base" |
+  // "polygon" |
+  // "unichain" |
+  "arbitrum" | "robinhood";
 
 /** A protocol a mandate can name. `uniswap-v3-swap` is the swap adapter, not the position protocol. */
 export type ProtocolId =
@@ -67,9 +76,10 @@ export const MANDATE_STEP_ORDER: readonly MandateStepKey[] = [
 export const NETWORK_ORDER: readonly NetworkId[] = [
   "arbitrum",
   "robinhood",
-  "base",
-  "polygon",
-  "unichain",
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+  // "base",
+  // "polygon",
+  // "unichain",
 ];
 
 /** Catalog order for protocols (R20), required two first. */
@@ -591,8 +601,8 @@ function syncNetworks(draft: MandateDraft, networks: NetworkId[]): MandateDraft 
  * R15/R16/R17: set the network list.
  *
  * The hub is always kept, whatever the argument says. A network the catalog marks unavailable is
- * ignored rather than rejected: the row is disabled in the UI, so arriving here means a stale draft
- * or a flag that turned off, and the right answer is a draft that stays valid. Removing a network
+ * ignored rather than rejected: the row is disabled in the UI, so arriving here means a stale draft,
+ * and the right answer is a draft that stays valid. Removing a network
  * takes its tokens, its pools and its cap rows with it (invariant 1 in the file header).
  */
 export function withNetworks(
