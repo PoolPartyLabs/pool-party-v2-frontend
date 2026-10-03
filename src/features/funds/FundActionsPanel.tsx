@@ -12,6 +12,7 @@ import { formatUnits } from "viem";
 import type { FundBuild, FundHolder, FundView } from "@/lib/api/v2/fundSchemas";
 import { isMockMode } from "@/lib/services";
 import { executeBuiltTransaction, findWalletForAddress } from "@/lib/tx/sendTransaction";
+import { sanitizeNumericInput } from "@/lib/utils/numericInput";
 import {
   buildFundAction,
   type FundIntent,
@@ -218,7 +219,9 @@ function InvestorActions({
             inputMode="decimal"
             value={amount}
             disabled={busy}
-            onChange={(event) => setAmount(event.target.value)}
+            onChange={(event) =>
+              setAmount(sanitizeNumericInput(event.target.value, { maxDecimals: 6 }))
+            }
           />
         </label>
         <label>
@@ -228,7 +231,9 @@ function InvestorActions({
             inputMode="numeric"
             value={minShares}
             disabled={busy}
-            onChange={(event) => setMinShares(event.target.value)}
+            onChange={(event) =>
+              setMinShares(sanitizeNumericInput(event.target.value, { maxDecimals: 0 }))
+            }
           />
         </label>
         <label>
@@ -238,7 +243,9 @@ function InvestorActions({
             inputMode="numeric"
             value={loss}
             disabled={busy}
-            onChange={(event) => setLoss(event.target.value)}
+            onChange={(event) =>
+              setLoss(sanitizeNumericInput(event.target.value, { maxDecimals: 0 }))
+            }
           />
         </label>
       </div>

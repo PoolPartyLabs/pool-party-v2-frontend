@@ -123,6 +123,7 @@ export const mockHolder: FundHolder = {
     awaitingSettlement: false,
   },
   positionsSummary: { ...version, positions: [position] },
+  positions: [position],
 };
 export const mockPositionDetail: FundPositionDetail = {
   ...version,
@@ -141,6 +142,9 @@ export const mockPositionDetail: FundPositionDetail = {
   },
 };
 export function mockFundBuild(intent: { action: string; amount?: string }): FundBuild {
+  const gross = BigInt(intent.amount ?? "0");
+  const flowFee = (gross * BigInt(25)) / BigInt(10000);
+  const payoutFee = (gross * BigInt(200)) / BigInt(10000);
   return {
     ...version,
     transactions: [
@@ -156,9 +160,9 @@ export function mockFundBuild(intent: { action: string; amount?: string }): Fund
         : {
             ...version,
             usdcGross: intent.amount ?? "0",
-            payoutFee: "0",
-            flowFee: "0",
-            usdcPaid: intent.amount ?? "0",
+            payoutFee: payoutFee.toString(),
+            flowFee: flowFee.toString(),
+            usdcPaid: (gross - flowFee - payoutFee).toString(),
           },
   };
 }

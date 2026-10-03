@@ -28,6 +28,10 @@ shows ("Become a manager" vs "Manager"), via `isManager` (mocked by the Dev-menu
 
 ## Resolution precedence (highest wins)
 
+POO-2175 (rules v2) extends the existing `fundContracts` gate to V2 fund discovery, holder portfolio,
+manager read views and `/funds/:core`. The existing family preference selects these views; V1 elements
+and Murilo's toggle/builder switch remain unchanged. Server fund actions also check the flag.
+
 1. **Dev/QA session override** — non-prod only; layered **client-side** in `useFeatureFlags` (see [Dev/QA override panel](#devqa-override-panel) below). Flips nav + entry-link visibility live; does **not** reach the server `requireFeature` guard (`resolveFeature` stays env-pure).
 2. **Per-flag env** — `NEXT_PUBLIC_FEATURE_<KEY>` (`on`/`off`/`true`/`false`/`1`/`0`).
 3. **`NEXT_PUBLIC_FEATURE_ALL=on`** — non-prod only; reveals every off area (dev/staging dogfooding).

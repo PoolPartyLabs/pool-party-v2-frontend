@@ -97,15 +97,18 @@ export const holderSchema = record.extend({
     awaitingSettlement: z.boolean(),
   }),
   positionsSummary: positionsSchema.optional(),
+  positions: z.array(positionSchema).optional(),
 });
 export const positionDetailSchema = record.extend({
-  position: positionSchema,
-  history: record.extend({
-    complete: z.boolean(),
-    events: z.array(
-      record.extend({ type: z.string(), timestamp: z.string(), transactionHash: poolIdSchema }),
-    ),
-  }),
+  position: positionSchema.nullable(),
+  history: record
+    .extend({
+      complete: z.boolean(),
+      events: z.array(
+        record.extend({ type: z.string(), timestamp: z.string(), transactionHash: poolIdSchema }),
+      ),
+    })
+    .nullable(),
 });
 export const transitSchema = record.extend({
   transitId: poolIdSchema,

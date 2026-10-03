@@ -231,14 +231,14 @@ function FundDetailData({ core }: FundDetailProps) {
               {position.uncollectedIncome ? (
                 <ReadOnlyFields value={position.uncollectedIncome} />
               ) : null}
-              {holder?.positionsSummary?.positions.find(
+              {(holder?.positions ?? holder?.positionsSummary?.positions)?.find(
                 (exposure) =>
                   exposure.positionKey === position.positionKey &&
                   exposure.chainId === position.chainId,
               )?.holderExposure ? (
                 <ReadOnlyFields
                   value={
-                    holder.positionsSummary.positions.find(
+                    (holder.positions ?? holder.positionsSummary?.positions)?.find(
                       (exposure) =>
                         exposure.positionKey === position.positionKey &&
                         exposure.chainId === position.chainId,
@@ -270,8 +270,8 @@ function FundDetailData({ core }: FundDetailProps) {
         {history ? (
           <div className="mt-4">
             <h3>{t("history")}</h3>
-            <p>{history.history.complete ? t("complete") : t("partialHistory")}</p>
-            {history.history.events.length === 0 ? (
+            <p>{history.history?.complete ? t("complete") : t("partialHistory")}</p>
+            {!history.history || history.history.events.length === 0 ? (
               <p>{t("empty")}</p>
             ) : (
               history.history.events.map((event) => (
