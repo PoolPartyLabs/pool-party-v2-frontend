@@ -7,7 +7,7 @@ POO-2177, rules v1. Integration only: Murilo owns the full Review page (POO-2172
 - `useV2Launch` reads the canvas owner's `draft.plan` (`BuildPlan` v1 from frontend PR #31, `feat/mgr-poo-2151-build-plan-model`, `src/features/manager/fund/build/plan/buildPlan.ts`). `CanvasPlan` is a structural read adapter, not a competing store or reducer. Until that model lands, launch reports an execution gap without guessing trades.
 - `draft.launchExecution[blockId]` is an owned extension adapter: v4 requires `priceLower`, `priceUpper` (human token1/token0) and `maxLossBps` (1..500). Serial drawings with multiple positions require `leafSharePct` for each independent leaf. Configuration panels currently persist only `poolId`/`assetKey`; their owner must supply these missing fields. They are not added to canvas files here.
 - Canvas spoke child percentages are percentages of root principal. The adapter divides each child by the group's root share, then applies that fraction to actual net destination credit. Aave is always an independent leaf, never the funding source of a later pool.
-- API PR #180 (`uBits-Capital/pool-party-api`, `feat/be-poo-2174-v2-launch-support`) supplies configurable `payoutFeeBps`, transits and spoke balances. If unavailable, launch fails visibly, never falls back to mock calldata.
+- API PR #180 (`uBits-Capital/pool-party-api`, merged October 4, 2026) supplies configurable `payoutFeeBps`, transits and spoke balances. Deployment must include that release; if unavailable, launch fails visibly, never falls back to mock calldata.
 
 ## Safety and recovery
 
