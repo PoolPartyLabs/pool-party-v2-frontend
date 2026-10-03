@@ -263,9 +263,11 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
   USDG / Global Dollar, amending the handoff's literal default (R18, see "Coordinator defaults" and
   `docs/COMPLIANCE_REGISTER.md` `CR-MGR-013`).
 - **Protocols (R19 to R22).** The swap adapter and Across are locked above a divider, "Required"
-  (R19); "Protocols to operate" lists the rest with "Select all" and an "On" column of per-network
-  dots (R20); availability is data, per protocol and per network, a disabled combination still
-  reports its click (R21); "Across" is named only on its own row, never in the bridge caption (R22).
+  (R19); "Protocols to operate" lists Aave v3 (Arbitrum only), Uniswap v3 and Uniswap v4 (Arbitrum,
+  Robinhood Chain) with "Select all" and an "On" column of per-network dots (R20 v2, POO-2143); GMX
+  is no longer offered and is commented out of the catalog, not deleted; availability stays data,
+  per protocol and per network, so a disabled combination still reports its click (R21 v2); "Across"
+  is named only on its own row, never in the bridge caption (R22).
 - **Tokens (R23 to R28).** Two columns, the catalog (minus what the draft already holds) on the
   left, "Your tokens" on the right (R23); the deposit token is a locked, one-row-per-network entry
   that cannot be removed (R24); the catalog lists only tokens available on the chosen networks and
