@@ -37,8 +37,9 @@
  * `network_not_in_mandate` (their `targetId` is the spoke's network). The undo toast and "Draft
  * saved" use the `<Toaster />` the locale layout already mounts once.
  *
- * PP-INTEGRATION-POINT: the plan rides the mandate draft (browser store, `useMandateDraft`); when
- * drafts move to the backend draft API (wiring issue POO-2132) this screen changes nothing.
+ * PP-NOTE: no seam of its own and no service call. The plan rides the mandate draft, whose store
+ * read and write are the integration point (marked in `useMandateDraft`, wiring issue POO-2132);
+ * when drafts move to the backend draft API this screen changes nothing.
  */
 "use client";
 

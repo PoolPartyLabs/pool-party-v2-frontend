@@ -2,6 +2,7 @@
  * @id PP-MGR-SCR-002
  * @name BuilderRouteSwitch - tests
  * @implements-rules-version v1 (POO-2120 rules v1, POO-2157 rules v1)
+ * @analytics-events none, a routing test: it asserts what renders, and a test is never an emitter
  *
  * POO-2120 [R6] / [R8]. Behaviour: the four branches of the switch, and the one that matters most,
  * the flag being off, pinned twice. Once on markup identity (the switch renders its `v1` child and
