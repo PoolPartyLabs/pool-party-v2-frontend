@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-041
  * @name MandateRow.stories
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  *
  * Storybook coverage for the shared Mandate selection row (POO-2123 [R12]).
  *
@@ -14,7 +14,7 @@ import { buildMandateCatalog } from "../mandateCatalog";
 import { MandateRow } from "./MandateRow";
 import { NetworkDots, NetworkLogoWithName } from "./NetworkDots";
 
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 
 const meta = {
   title: "Manager/MandateRow",
@@ -43,10 +43,10 @@ type Story = StoryObj<typeof meta>;
 /** Not in the mandate: default surface, empty box. */
 export const Unselected: Story = {
   args: {
-    id: "base",
-    ariaLabel: "Base",
-    title: "Base",
-    logo: <NetworkLogoWithName network="base" catalog={catalog} size={20} />,
+    id: "robinhood",
+    ariaLabel: "Robinhood Chain",
+    title: "Robinhood Chain",
+    logo: <NetworkLogoWithName network="robinhood" catalog={catalog} size={20} />,
   },
 };
 
@@ -67,15 +67,19 @@ export const Locked: Story = {
   },
 };
 
-/** Listed, not operable yet. Still clickable, so the demand is measurable (R17). */
+/**
+ * Listed, not operable yet. Still clickable, so the demand is measurable (R17). No network row
+ * reaches this state in the buildathon scope (R17 v2, POO-2142); the row shows the generic disabled
+ * state the component keeps.
+ */
 export const ComingSoon: Story = {
   args: {
-    id: "unichain",
-    ariaLabel: "Unichain",
-    title: "Unichain",
+    id: "robinhood",
+    ariaLabel: "Robinhood Chain",
+    title: "Robinhood Chain",
     disabled: true,
     statusLabel: "Coming soon",
-    logo: <NetworkLogoWithName network="unichain" catalog={catalog} size={20} />,
+    logo: <NetworkLogoWithName network="robinhood" catalog={catalog} size={20} />,
   },
 };
 

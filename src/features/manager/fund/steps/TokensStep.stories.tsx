@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-037
  * @name TokensStep.stories
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  *
  * Storybook coverage for Mandate step 3 (POO-2124 [R23] to [R28]).
  *
@@ -30,7 +30,7 @@ import {
 } from "../mandateDraft";
 import { TokensStep } from "./TokensStep";
 
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 
 /** A draft on the hub plus the given spokes, with its locked deposit rows already in place. */
 function draftOn(spokes: NetworkId[] = []): MandateDraft {

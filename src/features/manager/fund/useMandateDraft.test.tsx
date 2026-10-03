@@ -1,11 +1,13 @@
 /**
  * @id PP-MGR-HOK-006
  * @name useMandateDraft tests
- * @implements-rules-version v1 (POO-2121 rules v1)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2)
  * @analytics-events none, a state hook; the builder shell owns the mandate events.
  *
  * Covers R9: hydration, unknown id, blocked reducers, the save paths (including a throwing
- * localStorage), the dirty flag and the flag-derived catalog.
+ * localStorage), the dirty flag and the catalog, which reads no flag since rules v2 (R17 v2,
+ * POO-2142). The `robinhoodChain` flag stays mocked OFF on purpose: Robinhood Chain must still be
+ * offered while it is off.
  */
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -394,20 +396,23 @@ describe("remove", () => {
 });
 
 describe("catalog", () => {
-  it("builds the catalog from the robinhoodChain flag", async () => {
-    // @rule R17
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+  // it("builds the catalog from the robinhoodChain flag", async () => {
+  //   // @rule R17
+  //   const { result } = renderHook(() => useMandateDraft());
+  //   await waitFor(() => expect(result.current.hydrated).toBe(true));
+  //   expect(result.current.catalog.networks).toHaveLength(5);
+  //   expect(result.current.catalog.networks.find((n) => n.id === "robinhood")?.available).toBe(
+  //     false,
+  //   );
+  // });
+
+  it("opens Robinhood Chain while the robinhoodChain flag is off", async () => {
+    // @rule R17 v2: the fund builder no longer reads the flag (POO-2142); `beforeEach` pins it off.
+    expect(flags.robinhoodChain).toBe(false);
     const { result } = renderHook(() => useMandateDraft());
     await waitFor(() => expect(result.current.hydrated).toBe(true));
-    expect(result.current.catalog.networks).toHaveLength(5);
-    expect(result.current.catalog.networks.find((n) => n.id === "robinhood")?.available).toBe(
-      false,
-    );
-  });
-
-  it("opens Robinhood Chain while the flag is on", async () => {
-    // @rule R17
-    flags.robinhoodChain = true;
-    const { result } = renderHook(() => useMandateDraft());
+    expect(result.current.catalog.networks.map((n) => n.id)).toEqual(["arbitrum", "robinhood"]);
     await waitFor(() => expect(result.current.hydrated).toBe(true));
     expect(result.current.catalog.networks.find((n) => n.id === "robinhood")?.available).toBe(true);
 

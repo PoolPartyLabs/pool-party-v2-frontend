@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen tests
- * @implements-rules-version v1 (POO-2122 rules v1)
+ * @implements-rules-version v2 (POO-2122 rules v1, POO-2142 rules v2)
  * @analytics-events none, the names are ASSERTED here rather than emitted; a test is never an
  *   emitter, so a screen cannot count as instrumented by being tested
  *
@@ -129,7 +129,7 @@ function arbPool(over: Partial<MandatePoolRef> = {}): MandatePoolRef {
  * token and the cap rows really are the ones `capRows` derives.
  */
 function wholeMandate(id: string): MandateDraft {
-  const catalog = buildMandateCatalog({ robinhoodChain: false });
+  const catalog = buildMandateCatalog();
   const base = withProtocols(createEmptyDraft("2026-10-01T00:00:00.000Z", id), [
     ...REQUIRED_PROTOCOLS,
     "uniswap-v3",
@@ -886,7 +886,7 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
   });
   /** A completed mandate holding every priced hub token and the whole pool universe (R13). */
   function broadDraft(id: string, poolUniverseCount: number | null): MandateDraft {
-    const catalog = buildMandateCatalog({ robinhoodChain: false });
+    const catalog = buildMandateCatalog();
     let base = withProtocols(createEmptyDraft("2026-10-01T00:00:00.000Z", id), [
       ...REQUIRED_PROTOCOLS,
       "uniswap-v3",

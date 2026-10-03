@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-006
  * @name useMandateDraft
- * @implements-rules-version v1 (POO-2121 rules v1)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2)
  * @analytics-events none, this hook owns draft STATE rather than instrumentation. It surfaces
  *   `lastBlock` and the save outcome, and the builder shell (PP-MGR-SCR-002) turns those into
  *   `builder_mandate_blocked` and the save/abandon events. A hook that emitted them itself would
@@ -20,7 +20,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { buildMandateCatalog, type MandateCatalog } from "./mandateCatalog";
 import {
   createEmptyDraft,
@@ -74,12 +73,10 @@ function unsavedFingerprint(draft: MandateDraft): string {
  *   "start here" is a better answer than a dead end.
  */
 export function useMandateDraft(draftId?: string): UseMandateDraftResult {
-  const { isEnabled } = useFeatureFlags();
-  const robinhoodChain = isEnabled("robinhoodChain");
-
-  // One catalog per flag state. Steps compare catalog rows by identity in memos, so a fresh object
-  // on every render would invalidate all of them.
-  const catalog = useMemo(() => buildMandateCatalog({ robinhoodChain }), [robinhoodChain]);
+  // One catalog per mount, built from no flag (R17 v2, POO-2142: Robinhood Chain is always offered).
+  // Steps compare catalog rows by identity in memos, so a fresh object on every render would
+  // invalidate all of them.
+  const catalog = useMemo(() => buildMandateCatalog(), []);
 
   // The pristine draft is built once, and it doubles as the dirty-check baseline before the first
   // save: `isDirty` then means "anything was selected", which is the condition the shell's

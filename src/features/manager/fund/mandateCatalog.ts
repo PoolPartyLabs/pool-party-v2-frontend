@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-018
  * @name mandateCatalog
- * @implements-rules-version v1 (POO-2121 rules v1)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2)
  * @analytics-events none, a data catalog. The builder shell (PP-MGR-SCR-002) owns every mandate
  *   event; nothing here touches the dataLayer.
  *
@@ -11,9 +11,16 @@
  * lowercase "robinhood" to two manager surfaces (see `networkDisplayName` in lib/chains/config.ts).
  *
  * Availability is DATA, not a branch. Only Arbitrum (hub) and Robinhood Chain exist on the fund
- * contracts today (DEC-018), so every other network carries `available: false` and renders disabled
- * with "Coming soon". Flipping one on is a one-field edit here, and {@link withNetworks} refuses
- * anything this catalog has not turned on, so a disabled row cannot be reached around the UI.
+ * contracts today (DEC-018), and the buildathon scope (rules v2, POO-2142) offers exactly those two,
+ * both available (R16 v2, R17 v2). Base, Polygon and Unichain are commented out below rather than
+ * deleted, so restoring one is uncommenting it, and its `available` entry decides whether it renders
+ * disabled with "Coming soon". {@link withNetworks} refuses anything this catalog has not turned on,
+ * so a disabled row cannot be reached around the UI.
+ *
+ * PP-NOTE: buildathon scope (2026-10-03, POO-2142): the locale keys of the commented-out networks,
+ * `fundBuilder.networkNames.{base,polygon,unichain}`, stay in all 11 locales, because a locale JSON
+ * cannot hold a comment. Nothing reads them until their networks are restored; `i18n:check` ignores
+ * an unused key.
  *
  * NAMES ARE KEYS. `MandateNetwork.name` and `MandateProtocol.name` hold a translation key under the
  * `manager` namespace (`fundBuilder.networkNames.arbitrum`, …), not a display string, so a screen
@@ -74,7 +81,7 @@ export interface MandateCatalogToken {
   priced: boolean;
 }
 
-/** The whole catalog, built once per feature-flag state. */
+/** The whole catalog. It reads no feature flag (rules v2, POO-2142). */
 export interface MandateCatalog {
   networks: MandateNetwork[];
   protocols: MandateProtocol[];
@@ -86,33 +93,34 @@ export interface MandateCatalog {
 
 /**
  * Brand colours, taken from the builder's own network catalog (`src/mocks/data/pools.ts` NETWORKS)
- * so the fund builder's dots match the V1 builder's. Unichain has no row there yet and carries its
- * brand pink.
+ * so the fund builder's dots match the V1 builder's. Both offered networks have a row there. The
+ * commented-out Unichain entry below has none and would carry its brand pink once restored.
  */
 const BRAND_COLORS: Record<NetworkId, string> = {
   arbitrum: "#28A0F0",
   robinhood: "#00C805",
-  base: "#0052FF",
-  polygon: "#8247E5",
-  unichain: "#F50DB4",
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+  // base: "#0052FF",
+  // polygon: "#8247E5",
+  // unichain: "#F50DB4",
 };
 
 /**
- * R17: which networks the fund contracts can operate on.
+ * R16 v2 / R17 v2: which networks the fund contracts can operate on.
  *
- * PP-NOTE: assumption (coordinator default, handoff open point 2). Only the hub and Robinhood Chain
- * exist on chain (DEC-018), and Robinhood Chain is additionally behind its own flag because that is
- * the switch the rest of the app already uses to decide whether it recommends that chain at all
- * (`ChainMeta.featureFlag`). Base, Polygon and Unichain are listed and disabled, which is the whole
- * reason the list is data.
+ * Only the hub and Robinhood Chain exist on chain (DEC-018), and both are always available. The fund
+ * builder no longer reads the `robinhoodChain` flag (rules v2, POO-2142); that flag keeps gating the
+ * V1 surfaces only. Base, Polygon and Unichain used to be listed and disabled, which is the whole
+ * reason the list is data; they are commented out for the buildathon scope.
  */
-function buildNetworks(flags: { robinhoodChain: boolean }): MandateNetwork[] {
+function buildNetworks(): MandateNetwork[] {
   const available: Record<NetworkId, boolean> = {
     arbitrum: true,
-    robinhood: flags.robinhoodChain,
-    base: false,
-    polygon: false,
-    unichain: false,
+    robinhood: true,
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+    // base: false,
+    // polygon: false,
+    // unichain: false,
   };
   return NETWORK_ORDER.map((id) => ({
     id,
@@ -150,7 +158,16 @@ function buildProtocols(): MandateProtocol[] {
     "uniswap-v3-swap": { kind: "swap", availableOn: [...ALL_NETWORKS] },
     across: { kind: "bridge", availableOn: [...ALL_NETWORKS] },
     "aave-v3": { kind: "lending", availableOn: ["arbitrum"] },
-    "uniswap-v3": { kind: "dex", availableOn: ["arbitrum", "robinhood", "base", "polygon"] },
+    "uniswap-v3": {
+      kind: "dex",
+      availableOn: [
+        "arbitrum",
+        "robinhood",
+        // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+        // "base",
+        // "polygon",
+      ],
+    },
     "uniswap-v4": { kind: "dex", availableOn: ["arbitrum", "robinhood"] },
     gmx: { kind: "perps", availableOn: [] },
   };
@@ -188,8 +205,9 @@ function depositTokenFor(network: NetworkId): MandateCatalogToken | null {
  *
  * PP-NOTE: R25, protocol filtering waits for a token registry per adapter. The protocols are part
  * of the signature because the real source is keyed by them, and narrowing by protocol today would
- * mean inventing which tokens each adapter supports. A network with no bundled list (Unichain)
- * contributes nothing rather than an invented list.
+ * mean inventing which tokens each adapter supports. A network with no bundled list contributes
+ * nothing rather than an invented list; both offered networks have one today, and Unichain, the
+ * network that had none, is commented out of the buildathon scope (POO-2142).
  */
 function tokensFor(networks: NetworkId[], _protocols: ProtocolId[]): MandateCatalogToken[] {
   const out: MandateCatalogToken[] = [];
@@ -213,16 +231,15 @@ function tokensFor(networks: NetworkId[], _protocols: ProtocolId[]): MandateCata
 }
 
 /**
- * Build the catalog for a flag state.
+ * Build the catalog.
  *
- * Takes the flags as an argument rather than importing `isFeatureEnabled`, for the reason
- * `lib/chains/config.ts` gives for the same choice: a client caller passes `useFeatureFlags()`,
- * which layers the Dev menu's QA overrides on top, and a flag read buried in here would silently
- * ignore them and make the Dev panel look broken.
+ * Takes no flags since rules v2 (POO-2142): Robinhood Chain is always available in the fund
+ * builder (R17 v2), and the `robinhoodChain` flag keeps gating the V1 surfaces only. Every call
+ * returns the same lists, so a caller that needs a stable identity memoises it once.
  */
-export function buildMandateCatalog(flags: { robinhoodChain: boolean }): MandateCatalog {
+export function buildMandateCatalog(): MandateCatalog {
   return {
-    networks: buildNetworks(flags),
+    networks: buildNetworks(),
     protocols: buildProtocols(),
     tokensFor,
     depositTokenFor,

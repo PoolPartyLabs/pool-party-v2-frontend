@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundBuildLanding.stories
- * @implements-rules-version v1 (POO-2127 rules v1)
+ * @implements-rules-version v2 (POO-2127 rules v1, POO-2142 rules v2)
  * @analytics-events none, a story file. The landing emits its own view event on mount; the harness
  *   has no GTM container, so nothing leaves the workbench
  *
@@ -29,7 +29,7 @@ import {
   withProtocols,
 } from "./mandateDraft";
 
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 
 /** A token the manager chose. */
 function token(symbol: string): MandateTokenRef {

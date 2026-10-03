@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-MCK-003
  * @name fund pool catalog (mock) tests
- * @implements-rules-version v1 (POO-2125 rules v1)
+ * @implements-rules-version v2 (POO-2125 rules v1, POO-2142 rules v2)
  * @analytics-events none, a data fixture
  *
  * Invariants of the fund-contracts pool fixtures. These are not "does the array have items" tests:
@@ -226,7 +226,7 @@ describe("fund pool fixtures", () => {
 describe("fund pool fixtures, the hub Uniswap v3 set", () => {
   /** The priced tokens the catalog offers on Arbitrum, deposit token included, by address. */
   function pricedHubTokens(): string[] {
-    const catalog = buildMandateCatalog({ robinhoodChain: true });
+    const catalog = buildMandateCatalog();
     const deposit = catalog.depositTokenFor("arbitrum");
     const rest = catalog
       .tokensFor(["arbitrum"], ["uniswap-v3"])

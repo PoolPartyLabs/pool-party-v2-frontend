@@ -253,10 +253,13 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
   the raised-surface treatment with the primary colour on the checkbox, never a row fill (R12); the
   Broad mandate flag raises only when every token AND every pool are selected, never from networks or
   protocols alone (R13); every string is a translation key, 11 locales, no em dash (R14).
-- **Networks (R15 to R18).** The hub, Arbitrum, is locked and shown first (R15); the four spokes
-  render in a two-column grid under "Other networks" with "Select all" (R16); availability is
-  catalog data (`PP-MGR-LIB-018`), an unavailable spoke is disabled, "Coming soon", and still reports
-  a blocked click (R17); the Robinhood Chain deposit token is USDG, not USDC, which the step shows as
+- **Networks (R15 to R18).** The hub, Arbitrum, is locked and shown first (R15); the one spoke,
+  Robinhood Chain, renders in the two-column grid under "Other networks" with "Select all" (R16 v2,
+  POO-2142, buildathon scope: Base, Polygon and Unichain are commented out of the catalog, not
+  deleted); Robinhood Chain is always available, the fund builder no longer reads the
+  `robinhoodChain` flag (which keeps gating the V1 surfaces), and no network row renders "Coming
+  soon"; availability stays catalog data (`PP-MGR-LIB-018`), so a spoke marked unavailable would be
+  disabled and still report a blocked click (R17 v2); the Robinhood Chain deposit token is USDG, not USDC, which the step shows as
   USDG / Global Dollar, amending the handoff's literal default (R18, see "Coordinator defaults" and
   `docs/COMPLIANCE_REGISTER.md` `CR-MGR-013`).
 - **Protocols (R19 to R22).** The swap adapter and Across are locked above a divider, "Required"

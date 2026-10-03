@@ -1,9 +1,10 @@
 /**
  * @id PP-MGR-CMP-035
  * @name NetworksStep.stories
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  *
- * Storybook coverage for Mandate step 1 (POO-2123 [R15] to [R17]).
+ * Storybook coverage for Mandate step 1 (POO-2123 [R15] to [R17]; rules v2, POO-2142: the hub and
+ * Robinhood Chain only, both always available).
  *
  * The step is a controlled component: it owns no draft, it hands reducers to `update`. The harness
  * below closes that loop with local state, so the canvas behaves like the real screen (ticking a
@@ -50,8 +51,9 @@ function Harness({ catalog, initial }: { catalog: MandateCatalog; initial: Manda
   );
 }
 
-const withRobinhood = buildMandateCatalog({ robinhoodChain: true });
-const withoutRobinhood = buildMandateCatalog({ robinhoodChain: false });
+const catalog = buildMandateCatalog();
+// PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+// const withoutRobinhood = buildMandateCatalog({ robinhoodChain: false });
 
 const meta = {
   title: "Manager/NetworksStep",
@@ -59,8 +61,8 @@ const meta = {
   // The step is controlled, so every story renders the harness instead of these args; they are here
   // because `Meta<typeof NetworksStep>` requires the component's own required props to be satisfied.
   args: {
-    draft: draftWith(withRobinhood, []),
-    catalog: withRobinhood,
+    draft: draftWith(catalog, []),
+    catalog,
     update: () => {},
     block: null,
     onBlocked: () => {},
@@ -81,17 +83,16 @@ type Story = StoryObj<typeof meta>;
 
 /** A fresh mandate: the hub alone, one spoke selectable. */
 export const HubOnly: Story = {
-  render: () => <Harness catalog={withRobinhood} initial={draftWith(withRobinhood, [])} />,
+  render: () => <Harness catalog={catalog} initial={draftWith(catalog, [])} />,
 };
 
 /** Every available spoke chosen, so Select all reads ticked. */
 export const EveryAvailableSpoke: Story = {
-  render: () => (
-    <Harness catalog={withRobinhood} initial={draftWith(withRobinhood, ["robinhood"])} />
-  ),
+  render: () => <Harness catalog={catalog} initial={draftWith(catalog, ["robinhood"])} />,
 };
 
-/** The `robinhoodChain` flag off: all four spokes are Coming soon and Select all is not offered. */
-export const NothingAvailableYet: Story = {
-  render: () => <Harness catalog={withoutRobinhood} initial={draftWith(withoutRobinhood, [])} />,
-};
+// PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+// /** The `robinhoodChain` flag off: all four spokes are Coming soon and Select all is not offered. */
+// export const NothingAvailableYet: Story = {
+//   render: () => <Harness catalog={withoutRobinhood} initial={draftWith(withoutRobinhood, [])} />,
+// };

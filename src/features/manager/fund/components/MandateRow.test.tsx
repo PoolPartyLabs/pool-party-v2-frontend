@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-041
  * @name MandateRow.test
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  * @analytics-events none, the row reports nothing; its caller decides what a click means
  *
  * POO-2123 [R12] / [R15] / [R17] / [R19] / [R21], epic POO-2119. The shared Mandate selection row.
@@ -21,10 +21,10 @@ import { MandateRow } from "./MandateRow";
 function row(overrides: Partial<React.ComponentProps<typeof MandateRow>> = {}) {
   return (
     <MandateRow
-      id="base"
-      ariaLabel="Base"
+      id="robinhood"
+      ariaLabel="Robinhood Chain"
       logo={<span data-testid="logo" />}
-      title="Base"
+      title="Robinhood Chain"
       {...overrides}
     />
   );
@@ -35,9 +35,9 @@ describe("MandateRow", () => {
   it("renders an unselected row as a checkbox on the default surface", () => {
     renderWithProviders(row());
 
-    const control = screen.getByRole("checkbox", { name: "Base" });
+    const control = screen.getByRole("checkbox", { name: "Robinhood Chain" });
     expect(control).toHaveAttribute("aria-checked", "false");
-    expect(control).toHaveAttribute("data-mandate-row", "base");
+    expect(control).toHaveAttribute("data-mandate-row", "robinhood");
     expect(control.className).toContain("bg-surface");
     expect(control.className).not.toContain("bg-surface-raised");
   });
@@ -46,7 +46,7 @@ describe("MandateRow", () => {
   it("fills a selected row with the raised surface and ticks its checkbox", () => {
     renderWithProviders(row({ selected: true }));
 
-    const control = screen.getByRole("checkbox", { name: "Base" });
+    const control = screen.getByRole("checkbox", { name: "Robinhood Chain" });
     expect(control).toHaveAttribute("aria-checked", "true");
     expect(control.className).toContain("bg-surface-raised");
     // R12: no yellow fill on the row itself; the primary colour lives on the checkbox.
@@ -58,7 +58,7 @@ describe("MandateRow", () => {
     const onToggle = vi.fn();
     renderWithProviders(row({ onToggle }));
 
-    await userEvent.click(screen.getByRole("checkbox", { name: "Base" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: "Robinhood Chain" }));
 
     expect(onToggle).toHaveBeenCalledTimes(1);
   });
@@ -69,7 +69,7 @@ describe("MandateRow", () => {
     const onToggle = vi.fn();
     renderWithProviders(row({ disabled: true, statusLabel: "Coming soon", onToggle }));
 
-    const control = screen.getByRole("checkbox", { name: "Base" });
+    const control = screen.getByRole("checkbox", { name: "Robinhood Chain" });
     expect(control).toHaveAttribute("aria-disabled", "true");
     // The native `disabled` attribute would swallow the click, and with it the only signal that
     // someone wanted this network.
@@ -96,7 +96,7 @@ describe("MandateRow", () => {
       screen.getByText("Deposits and withdrawals happen on this network."),
     ).toBeInTheDocument();
     // The block still answers to the row id, so a validation notice can scroll to it.
-    expect(container.querySelector('[data-mandate-row="base"]')).not.toBeNull();
+    expect(container.querySelector('[data-mandate-row="robinhood"]')).not.toBeNull();
   });
 
   it("renders the trailing slot and the caption", () => {

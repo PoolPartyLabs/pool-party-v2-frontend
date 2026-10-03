@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-038
  * @name PoolsStep.test
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2142 rules v2)
  * @analytics-events none, the shell emits
  *
  * POO-2125 [R11] / [R13] / [R29] to [R38], epic POO-2119. Mandate step 4.
@@ -75,7 +75,7 @@ import {
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
 import { PoolsStep } from "./PoolsStep";
 
-const catalog = buildMandateCatalog({ robinhoodChain: true });
+const catalog = buildMandateCatalog();
 
 /** Real Arbitrum addresses, so a pool's tokens resolve against the bundled token lists. */
 const USDC = "0xaf88d065e77c8cc2239327c5edb3a432268e5831";
@@ -774,12 +774,28 @@ describe("PoolsStep", () => {
     expect(networksAsked()).toEqual(["arbitrum"]);
   });
 
-  // @rule R30
-  it("never asks a network the catalog marks unavailable", async () => {
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
+  // // @rule R30
+  // it("never asks a network the catalog marks unavailable", async () => {
+  //   const user = userEvent.setup();
+  //   // A draft saved while a network was enabled and reopened after it was turned off. `withNetworks`
+  //   // would refuse it, so it is built by hand: this is about what the step does with stored data.
+  //   renderStep({ ...draftOn(), networks: ["arbitrum", "base"] });
+  //   await screen.findByText("0 pools with at least one of your tokens");
+  //
+  //   await user.type(screen.getByLabelText("Token, pair or pool address"), PASTED);
+  //
+  //   await waitFor(() => expect(findMandatePoolByAddress).toHaveBeenCalled());
+  //   expect(networksAsked()).toEqual(["arbitrum"]);
+  // });
+
+  // @rule R30 @rule R16 v2
+  it("never asks a network the catalog does not know", async () => {
     const user = userEvent.setup();
-    // A draft saved while a network was enabled and reopened after it was turned off. `withNetworks`
-    // would refuse it, so it is built by hand: this is about what the step does with stored data.
-    renderStep({ ...draftOn(), networks: ["arbitrum", "base"] });
+    // A draft saved before the buildathon scope dropped Base (POO-2142). `withNetworks` would refuse
+    // it, so it is built by hand: this is about what the step does with stored data.
+    const stale = ["arbitrum", "base"] as unknown as NetworkId[];
+    renderStep({ ...draftOn(), networks: stale });
     await screen.findByText("0 pools with at least one of your tokens");
 
     await user.type(screen.getByLabelText("Token, pair or pool address"), PASTED);
