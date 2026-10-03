@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-026
  * @name MandateSummaryCard
- * @implements-rules-version v1 (POO-2127 rules v1)
+ * @implements-rules-version v2 (POO-2127 rules v1, POO-2143 rules v2)
  * @analytics-events none, a read-only card. It shows what was already decided and offers no
  *   control, so there is no intent here to record; the landing that renders it owns the view event
  *   (PP-MGR-SCR-002)
@@ -157,7 +157,8 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
     "aave-v3": t("fundBuilder.protocolNames.aaveV3"),
     "uniswap-v3": t("fundBuilder.protocolNames.uniswapV3"),
     "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
-    gmx: t("fundBuilder.protocolNames.gmx"),
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+    // gmx: t("fundBuilder.protocolNames.gmx"),
   };
 
   const noCapLabel = t("fundBuilder.common.noCap");

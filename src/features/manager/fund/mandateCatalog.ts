@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-018
  * @name mandateCatalog
- * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2)
  * @analytics-events none, a data catalog. The builder shell (PP-MGR-SCR-002) owns every mandate
  *   event; nothing here touches the dataLayer.
  *
@@ -17,10 +17,15 @@
  * disabled with "Coming soon". {@link withNetworks} refuses anything this catalog has not turned on,
  * so a disabled row cannot be reached around the UI.
  *
- * PP-NOTE: buildathon scope (2026-10-03, POO-2142): the locale keys of the commented-out networks,
- * `fundBuilder.networkNames.{base,polygon,unichain}`, stay in all 11 locales, because a locale JSON
- * cannot hold a comment. Nothing reads them until their networks are restored; `i18n:check` ignores
- * an unused key.
+ * The protocols follow the same rule (R20 v2, R21 v2, POO-2143): Aave v3, Uniswap v3 and Uniswap v4
+ * to operate, beside the required two. GMX and its `perps` kind are commented out, not deleted; the
+ * mechanism that disables a protocol (`available`, or no network in common with step 1) stays.
+ *
+ * PP-NOTE: buildathon scope (2026-10-03, POO-2142, POO-2143): the locale keys of the commented-out
+ * networks and protocol stay in all 11 locales, because a locale JSON cannot hold a comment:
+ * `fundBuilder.networkNames.{base,polygon,unichain}` (POO-2142), and `fundBuilder.protocolNames.gmx`,
+ * `fundBuilder.protocolCaptions.perps` and `fundBuilder.limits.kind.perps` (POO-2143). Nothing
+ * reads them until their entries are restored; `i18n:check` ignores an unused key.
  *
  * NAMES ARE KEYS. `MandateNetwork.name` and `MandateProtocol.name` hold a translation key under the
  * `manager` namespace (`fundBuilder.networkNames.arbitrum`, …), not a display string, so a screen
@@ -57,11 +62,17 @@ export interface MandateNetwork {
   chainId: number | null;
 }
 
+/** What a protocol does, which picks its caption (`fundBuilder.protocolCaptions.<kind>`). */
+type MandateProtocolKind =
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+  // "perps" |
+  "swap" | "bridge" | "lending" | "dex";
+
 /** One protocol row on the Protocols step. `name` and `captionKey` are both translation keys. */
 export interface MandateProtocol {
   id: ProtocolId;
   name: string;
-  kind: "swap" | "bridge" | "lending" | "dex" | "perps";
+  kind: MandateProtocolKind;
   /** Always in the mandate, shown locked with "Always included" (R19). */
   required: boolean;
   /** The networks this protocol runs on. The step shows the intersection with step 1 as dots. */
@@ -139,18 +150,20 @@ const PROTOCOL_NAME_KEYS: Record<ProtocolId, string> = {
   "aave-v3": "aaveV3",
   "uniswap-v3": "uniswapV3",
   "uniswap-v4": "uniswapV4",
-  gmx: "gmx",
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+  // gmx: "gmx",
 };
 
 const ALL_NETWORKS: readonly NetworkId[] = NETWORK_ORDER;
 
 /**
- * R20/R21: the protocols, and where each one runs.
+ * R20 v2 / R21 v2: the protocols, and where each one runs.
  *
  * On chain today: Uniswap v4 positions and Aave v3 supply (hub only), with Uniswap v3 present as
- * the swap adapter. The rest is listed and scoped so the Protocols step can show honest network
- * dots. Copy never says "via Across" outside that row (R22), and nothing here promises a per-
- * protocol guarantee the contracts do not make.
+ * the swap adapter. The buildathon scope operates Aave v3 (Arbitrum only), Uniswap v3 and Uniswap v4
+ * (Arbitrum, Robinhood Chain); GMX is commented out (POO-2143). Each is scoped so the Protocols step
+ * can show honest network dots. Copy never says "via Across" outside that row (R22), and nothing
+ * here promises a per-protocol guarantee the contracts do not make.
  */
 function buildProtocols(): MandateProtocol[] {
   const unavailable = new Set<string>(UNAVAILABLE_PROTOCOLS);
@@ -169,7 +182,8 @@ function buildProtocols(): MandateProtocol[] {
       ],
     },
     "uniswap-v4": { kind: "dex", availableOn: ["arbitrum", "robinhood"] },
-    gmx: { kind: "perps", availableOn: [] },
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+    // gmx: { kind: "perps", availableOn: [] },
   };
   return PROTOCOL_ORDER.map((id) => ({
     id,
