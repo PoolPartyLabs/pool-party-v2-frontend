@@ -610,6 +610,19 @@
   },
   "window30d": "30 ngày",
   "fundBuilder": {
+    "real": {
+      "loading": "Đang tải danh mục v2",
+      "error": "Danh mục v2 hiện không khả dụng.",
+      "retry": "Thử lại",
+      "stale": "Bản nháp này dùng dữ liệu cũ hoặc mô phỏng. Hãy tạo bản nháp mới ở chế độ thực.",
+      "protocols": "Chọn giao thức vị thế theo mạng. Uniswap v3 chỉ dùng cho swap.",
+      "reserve": "APY supply của {symbol}: {apy}",
+      "unavailable": "Không khả dụng",
+      "metrics": "TVL và APR chưa được lập chỉ mục.",
+      "limits": "Tỷ lệ Robinhood được lưu như ý định của quỹ, chưa được thực thi on-chain cho đến POO-2169.",
+      "allocation": "Thanh trượt giao thức và token chỉ hỗ trợ phân bổ Build cục bộ, không phải giới hạn quỹ.",
+      "poolId": "Dán PoolId bytes32"
+    },
     "header": {
       "saveExit": "Lưu và thoát"
     },

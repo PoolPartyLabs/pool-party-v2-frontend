@@ -287,6 +287,11 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
 
   return (
     <section data-mandate-step={STEP} className="flex flex-col gap-6">
+      {catalog.dataMode === "real" ? (
+        <p role="note" className="text-muted-foreground text-sm">
+          {t("fundBuilder.real.limits")}
+        </p>
+      ) : null}
       {/* R6: one notice for the step, above every group, because the row it points at can be in any
           of the three. The ring and the scroll are what name the row. */}
       {ownBlock ? (
@@ -391,7 +396,11 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
       </div>
 
       {/* R42 */}
-      <p className="text-muted-foreground text-sm">{t("fundBuilder.limits.footnote")}</p>
+      <p className="text-muted-foreground text-sm">
+        {catalog.dataMode === "real"
+          ? t("fundBuilder.real.allocation")
+          : t("fundBuilder.limits.footnote")}
+      </p>
     </section>
   );
 }

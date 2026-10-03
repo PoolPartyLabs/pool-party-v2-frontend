@@ -823,7 +823,7 @@ describe("PoolsStep", () => {
     renderStep(draftOn(["robinhood"]));
     await screen.findByText("0 pools with at least one of your tokens");
 
-    await user.type(screen.getByLabelText("Token, pair or pool address"), PASTED);
+    await user.type(screen.getByLabelText("Token, pair or pool address"), `0x${"ab".repeat(32)}`);
 
     expect(await screen.findByText("No pools match your search.")).toBeInTheDocument();
     // Two selected networks, two server actions. Never five, and never one for a network the
@@ -888,7 +888,7 @@ describe("PoolsStep", () => {
   });
 
   // @rule R31
-  it("tells the truth about Uniswap v4 in real mode instead of showing nothing", async () => {
+  it("shows the catalog empty state in real mode instead of the superseded pending notice", async () => {
     services.mockMode = false;
     searchAnswers([pool({ id: "v3-a", protocol: "uniswap-v3" })]);
     const user = userEvent.setup();
@@ -897,8 +897,9 @@ describe("PoolsStep", () => {
     await user.click(await screen.findByRole("tab", { name: "Uniswap v4 · 0" }));
 
     expect(
-      await screen.findByText("Uniswap v4 pools arrive with the fund contracts data source."),
-    ).toBeInTheDocument();
+      screen.queryByText("Uniswap v4 pools arrive with the fund contracts data source."),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("No pools match your search.")).toBeInTheDocument();
   });
 
   // @rule R31

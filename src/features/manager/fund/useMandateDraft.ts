@@ -20,7 +20,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { buildMandateCatalog, type MandateCatalog } from "./mandateCatalog";
+import { isMockMode } from "@/lib/services";
+import type { MandateCatalog } from "./mandateCatalog";
 import {
   createEmptyDraft,
   draftNameError,
@@ -30,6 +31,8 @@ import {
   selectionFingerprint,
 } from "./mandateDraft";
 import { deleteDraft, getDraft, newDraftId, upsertDraft } from "./mandateDraftStore";
+import { useV2MandateCatalog } from "./useV2MandateCatalog";
+import { toV2MandateSelection } from "./v2Mandate";
 
 /** Why a save did not happen. "storage" is the only one the name rule does not cover. */
 export type MandateSaveError = "empty" | "length" | "storage";
@@ -76,13 +79,23 @@ export function useMandateDraft(draftId?: string): UseMandateDraftResult {
   // One catalog per mount, built from no flag (R17 v2, POO-2142: Robinhood Chain is always offered).
   // Steps compare catalog rows by identity in memos, so a fresh object on every render would
   // invalidate all of them.
-  const catalog = useMemo(() => buildMandateCatalog(), []);
+  const catalog = useV2MandateCatalog();
 
   // The pristine draft is built once, and it doubles as the dirty-check baseline before the first
   // save: `isDirty` then means "anything was selected", which is the condition the shell's
   // beforeunload prompt needs.
   const [pristine] = useState<MandateDraft>(() =>
-    createEmptyDraft(new Date().toISOString(), draftId ?? newDraftId()),
+    isMockMode
+      ? createEmptyDraft(new Date().toISOString(), draftId ?? newDraftId())
+      : {
+          ...createEmptyDraft(new Date().toISOString(), draftId ?? newDraftId()),
+          dataMode: "real",
+          catalogVersion: "v2-catalog-v1",
+          protocols: ["uniswap-v3-swap"],
+          positionProtocolsByChain: {},
+          aaveV3Reserves: [],
+          spokeCapPercent: null,
+        },
   );
   const [draft, setDraft] = useState<MandateDraft>(pristine);
   const [saved, setSaved] = useState<MandateDraft | null>(null);
@@ -129,9 +142,19 @@ export function useMandateDraft(draftId?: string): UseMandateDraftResult {
         if (error) return { ok: false, error };
       }
       const current = draftRef.current;
+      if (!isMockMode && options?.complete) {
+        try {
+          toV2MandateSelection(current, catalog);
+        } catch {
+          return { ok: false, error: "storage" };
+        }
+      }
       const now = new Date().toISOString();
       const next: MandateDraft = {
         ...current,
+        ...(!isMockMode && options?.complete
+          ? { v2Selection: toV2MandateSelection(current, catalog) }
+          : {}),
         name: name !== undefined ? name.trim() : current.name,
         savedAt: now,
         // The completion stamp rides on THIS write and is committed to state only when the write
@@ -148,7 +171,7 @@ export function useMandateDraft(draftId?: string): UseMandateDraftResult {
       setSaved(stored);
       return { ok: true };
     },
-    [],
+    [catalog],
   );
 
   const remove = useCallback(() => {

@@ -610,6 +610,19 @@
   },
   "window30d": "30 天",
   "fundBuilder": {
+    "real": {
+      "loading": "正在載入 v2 目錄",
+      "error": "v2 目錄目前無法使用。",
+      "retry": "重試",
+      "stale": "此草稿使用過時或模擬資料。請在真實模式下建立新草稿。",
+      "protocols": "請依網路選擇部位協議。Uniswap v3 僅用於 swap。",
+      "reserve": "{symbol} supply APY：{apy}",
+      "unavailable": "無法使用",
+      "metrics": "TVL 與 APR 尚未建立索引。",
+      "limits": "Robinhood 百分比儲存為基金意圖，在 POO-2169 完成前不會在鏈上強制執行。",
+      "allocation": "協議與代幣滑桿僅為本機 Build 配置分配工具，並非基金限額。",
+      "poolId": "貼上 bytes32 PoolId"
+    },
     "header": {
       "saveExit": "儲存並退出"
     },

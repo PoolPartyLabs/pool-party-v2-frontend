@@ -26,11 +26,13 @@
  * PP-INTEGRATION-POINT: Uniswap v4 pool catalog for the fund contracts (no API today; wiring issue
  * POO-2133, which was open point 8 on POO-2119).
  */
-import { getDexPoolByAddressAction, getDexPoolsAction } from "@/features/manager/actions";
+
+import { ApiError } from "@/lib/api/errors";
+import { getCatalogPoolAction, getCatalogPoolsAction } from "@/lib/api/v2/actions";
+import type { CatalogPool, V2ChainId } from "@/lib/api/v2/schemas";
 import type { UniswapPool } from "@/lib/schemas";
 import { isMockMode } from "@/lib/services";
 import { findToken } from "@/lib/tokens/tokenList";
-import { isCanonicalFeeBps } from "@/lib/uniswap/tick";
 import { fundPoolFixtures } from "@/mocks/data/fundPools";
 import { uniswapPools } from "@/mocks/data/pools";
 import { simulateDelay } from "@/mocks/utils/simulate";
@@ -163,13 +165,16 @@ export function tierShare(pools: MandatePoolRef[]): Map<string, number | null> {
   const pairTvl = new Map<string, number>();
   for (const pool of pools) {
     const key = groupKey(pool);
-    pairTvl.set(key, (pairTvl.get(key) ?? 0) + pool.tvlUsd);
+    pairTvl.set(key, (pairTvl.get(key) ?? 0) + (pool.tvlUsd ?? 0));
   }
 
   const shares = new Map<string, number | null>();
   for (const pool of pools) {
     const total = pairTvl.get(groupKey(pool)) ?? 0;
-    shares.set(pool.id, total > 0 ? Math.round((pool.tvlUsd / total) * 100) : null);
+    shares.set(
+      pool.id,
+      total > 0 && pool.tvlUsd !== null ? Math.round((pool.tvlUsd / total) * 100) : null,
+    );
   }
   return shares;
 }
@@ -226,18 +231,6 @@ async function searchMock(input: PoolSearchInput): Promise<MandatePoolRef[]> {
 }
 
 /**
- * Whether a `/dex-pools` row sits on a fee tier Uniswap v3 defines, judged on the RAW tier.
- *
- * `feeBps` is a rounded figure (`mapDexPool` rounds `feeTier / 100`), so a tier of 50 or 120 rounds
- * to 1 bps and a tier of 2990 rounds to 30, and a filter on it would wave each through as a real
- * tier. The raw tier cannot be mistaken that way. It is absent only on mock data, whose `feeBps` is
- * exact, which is the one case that falls back to it.
- */
-function isOnUniswapV3Tier(pool: UniswapPool): boolean {
-  return isCanonicalFeeBps(pool.feeTier != null ? pool.feeTier / 100 : pool.feeBps);
-}
-
-/**
  * The real search: the pair-keyed `/dex-pools` read, mapped through `mapDexPool`.
  *
  * Only real Uniswap v3 fee tiers pass (POO-1497), judged on the raw tier ({@link isOnUniswapV3Tier}).
@@ -250,15 +243,60 @@ function isOnUniswapV3Tier(pool: UniswapPool): boolean {
  * POO-2133). Until it exists a v4 request adds nothing, and a v4-only mandate gets an empty list.
  */
 async function searchReal(input: PoolSearchInput): Promise<MandatePoolRef[]> {
-  if (!input.protocols.includes("uniswap-v3")) return [];
-  const pools = await getDexPoolsAction(
-    input.network,
-    input.tokenAddress,
-    input.secondTokenAddress,
+  if (!input.protocols.includes("uniswap-v4")) return [];
+  const result = await getCatalogPoolsAction(chainFor(input.network), {
+    tokenAddress: input.tokenAddress,
+    ...(input.secondTokenAddress ? { secondTokenAddress: input.secondTokenAddress } : {}),
+  });
+  if (!result.ok)
+    throw new ApiError(result.error.status, result.error.code, "v2 catalog unavailable");
+  return result.data.pools.filter(eligiblePool).map(mapV2Pool);
+}
+
+function chainFor(network: NetworkId): V2ChainId {
+  return network === "arbitrum" ? 42161 : 4663;
+}
+function eligiblePool(pool: CatalogPool): boolean {
+  return (
+    pool.eligible &&
+    !pool.hooked &&
+    /^0x0{40}$/.test(pool.poolKey.hooks) &&
+    ![pool.poolKey.currency0, pool.poolKey.currency1].some((currency) =>
+      /^0x0{40}$/.test(currency),
+    ) &&
+    pool.tokens.every((token) => token.hubPriced) &&
+    pool.liquidity !== "0"
   );
-  return pools
-    .filter(isOnUniswapV3Tier)
-    .map((pool) => mapUniswapPoolToMandatePool(pool, "uniswap-v3"));
+}
+export function mapV2Pool(pool: CatalogPool): MandatePoolRef {
+  const side = (currency: string) => {
+    const token = pool.tokens.find(
+      (entry) => entry.address.toLowerCase() === currency.toLowerCase(),
+    );
+    if (!token) throw new Error("catalog pool currency missing");
+    return {
+      address: token.address.toLowerCase(),
+      symbol: token.symbol,
+      name: token.name,
+      logoUrl: token.logoUrl,
+    };
+  };
+  return {
+    id: `${pool.chainId}:${pool.poolId.toLowerCase()}`,
+    address: pool.poolId.toLowerCase(),
+    poolId: pool.poolId.toLowerCase(),
+    poolKey: pool.poolKey,
+    network: pool.chainId === "42161" ? "arbitrum" : "robinhood",
+    protocol: "uniswap-v4",
+    token0: side(pool.poolKey.currency0),
+    token1: side(pool.poolKey.currency1),
+    feeTier: pool.poolKey.fee,
+    feeBps: pool.poolKey.fee / 100,
+    tvlUsd: pool.tvlUsd === null ? null : Number(pool.tvlUsd),
+    aprPct: pool.feesApr === null ? null : Number(pool.feesApr),
+    tierSharePct: null,
+    hasHook: pool.hooked,
+  };
 }
 
 /**
@@ -270,8 +308,8 @@ async function searchReal(input: PoolSearchInput): Promise<MandatePoolRef[]> {
 export async function searchMandatePools(input: PoolSearchInput): Promise<MandatePoolRef[]> {
   const found = isMockMode ? await searchMock(input) : await searchReal(input);
 
-  const ordered = [...found].sort((a, b) => b.tvlUsd - a.tvlUsd);
-  const shares = tierShare(ordered);
+  const ordered = [...found].sort((a, b) => (b.tvlUsd ?? 0) - (a.tvlUsd ?? 0));
+  const shares = isMockMode ? tierShare(ordered) : new Map<string, number | null>();
   // A new object per row: the fixtures are module-level constants and must not be written through.
   return ordered.map((pool) => ({ ...pool, tierSharePct: shares.get(pool.id) ?? null }));
 }
@@ -337,24 +375,16 @@ export async function findMandatePoolByAddress(
     return { pool: null, foundOn: matches[0]?.network ?? null };
   }
 
-  // `/dex-pools` answers Uniswap v3 and nothing else, so a mandate without v3 has no protocol this
-  // read could satisfy. Asking anyway would both offer a pool the mandate cannot hold and spend one
-  // server action per selected network on an answer that has to be thrown away.
-  if (!protocols.includes("uniswap-v3")) return { pool: null, foundOn: null };
-
-  // Already real for Uniswap v3: the action does its own address validation and answers the
-  // endpoint's not-found contract as an empty list.
-  const { pools, foundOnNetwork } = await getDexPoolByAddressAction(network, address);
-  // Same tier guard as the pair search: a pasted address must not smuggle in what a search refuses.
-  const first = pools.find(isOnUniswapV3Tier);
-  if (first) return { pool: mapUniswapPoolToMandatePool(first, "uniswap-v3"), foundOn: null };
-
-  // `foundOnNetwork` is a free API slug. One outside the mandate's own union has no catalog row and
-  // no translated name, so it is dropped rather than printed raw at a manager; one that names the
-  // network we just asked about carries no information at all.
-  const elsewhere =
-    foundOnNetwork !== undefined && isNetworkId(foundOnNetwork) && foundOnNetwork !== network
-      ? foundOnNetwork
-      : null;
-  return { pool: null, foundOn: elsewhere };
+  if (!protocols.includes("uniswap-v4") || !/^0x[0-9a-f]{64}$/.test(wanted))
+    return { pool: null, foundOn: null };
+  const result = await getCatalogPoolAction(chainFor(network), wanted);
+  if (result.ok)
+    return { pool: eligiblePool(result.data) ? mapV2Pool(result.data) : null, foundOn: null };
+  if (result.error.status !== 404)
+    throw new ApiError(result.error.status, result.error.code, "v2 catalog unavailable");
+  const other = network === "arbitrum" ? "robinhood" : "arbitrum";
+  const elsewhere = await getCatalogPoolAction(chainFor(other), wanted);
+  if (!elsewhere.ok && elsewhere.error.status !== 404)
+    throw new ApiError(elsewhere.error.status, elsewhere.error.code, "v2 catalog unavailable");
+  return { pool: null, foundOn: elsewhere.ok && eligiblePool(elsewhere.data) ? other : null };
 }

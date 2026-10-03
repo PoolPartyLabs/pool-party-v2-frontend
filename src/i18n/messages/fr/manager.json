@@ -610,6 +610,19 @@
   },
   "window30d": "30 j",
   "fundBuilder": {
+    "real": {
+      "loading": "Chargement du catalogue v2",
+      "error": "Le catalogue v2 est indisponible.",
+      "retry": "Réessayer",
+      "stale": "Ce brouillon utilise des données obsolètes ou simulées. Créez un nouveau brouillon en mode réel.",
+      "protocols": "Choisissez les protocoles de positions par réseau. Uniswap v3 sert uniquement aux swap.",
+      "reserve": "APY de supply de {symbol} : {apy}",
+      "unavailable": "Indisponible",
+      "metrics": "TVL et APR ne sont pas encore indexés.",
+      "limits": "Le pourcentage Robinhood est enregistré comme intention du fonds, sans application on-chain avant POO-2169.",
+      "allocation": "Les curseurs de protocole et de token sont des aides locales à l’allocation Build, pas des limites du fonds.",
+      "poolId": "Collez un PoolId bytes32"
+    },
     "header": {
       "saveExit": "Enregistrer et quitter"
     },

@@ -147,6 +147,7 @@ const SKELETON_ROWS = ["first", "second", "third"] as const;
 
 /** A trimmed value shaped like an on-chain address. Mirrors V1's `looksLikeAddress` (POO-1430). */
 const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
+const POOL_ID_RE = /^0x[0-9a-fA-F]{64}$/;
 
 type NetworkFilter = NetworkId | typeof ALL_NETWORKS;
 type ProtocolTab = DexProtocolId | typeof ALL_PROTOCOLS;
@@ -259,6 +260,11 @@ function tokensItWouldAdd(draft: MandateDraft, pool: MandatePoolRef): string[] {
 function canEverAdd(draft: MandateDraft, pool: MandatePoolRef): boolean {
   if (pool.hasHook) return false;
   if (!draft.networks.includes(pool.network)) return false;
+  if (
+    draft.dataMode === "real" &&
+    !draft.positionProtocolsByChain?.[pool.network]?.includes("uniswap-v4")
+  )
+    return false;
   return [pool.token0, pool.token1].every(
     (side) => mandateHoldsSide(draft, pool, side.address) || isPricedSymbol(side.symbol),
   );
@@ -372,7 +378,7 @@ export function PoolsStep({
   );
 
   const trimmed = firstQuery.trim();
-  const isAddress = ADDRESS_RE.test(trimmed);
+  const isAddress = (isMockMode ? ADDRESS_RE : POOL_ID_RE).test(trimmed);
 
   /**
    * What the result list should be answering right now.
@@ -835,7 +841,7 @@ export function PoolsStep({
   );
 
   // R31: v4 has no endpoint in real mode, so its tab says so rather than showing a bare empty list.
-  const v4Pending = !isMockMode && activeTab === "uniswap-v4";
+  const v4Pending = false;
 
   /**
    * Whether the list on screen is an answer about the mandate as it stands.
@@ -1124,14 +1130,21 @@ export function PoolsStep({
         </div>
 
         <div className="flex shrink-0 flex-col items-end text-xs">
-          <span className="text-foreground">
-            <span className="text-muted-foreground">{t("mandate.poolTvl")}</span>{" "}
-            {formatUsdCompact(pool.tvlUsd)}
-          </span>
-          <span className="text-success">
-            <AprTooltip className="text-muted-foreground">{t("mandate.poolApr")}</AprTooltip>{" "}
-            {formatPercent(pool.aprPct)}
-          </span>
+          {pool.tvlUsd !== null ? (
+            <span className="text-foreground">
+              <span className="text-muted-foreground">{t("mandate.poolTvl")}</span>{" "}
+              {formatUsdCompact(pool.tvlUsd)}
+            </span>
+          ) : null}
+          {pool.aprPct !== null ? (
+            <span className="text-success">
+              <AprTooltip className="text-muted-foreground">{t("mandate.poolApr")}</AprTooltip>{" "}
+              {formatPercent(pool.aprPct)}
+            </span>
+          ) : null}
+          {pool.tvlUsd === null && pool.aprPct === null ? (
+            <span className="text-muted-foreground">{t("fundBuilder.real.metrics")}</span>
+          ) : null}
         </div>
 
         {refusal ? (
@@ -1271,7 +1284,9 @@ export function PoolsStep({
                     onChange={(event) => setFirstQuery(event.target.value)}
                     onFocus={() => setFirstFocused(true)}
                     onBlur={() => setFirstFocused(false)}
-                    placeholder={t("fundBuilder.pools.search")}
+                    placeholder={
+                      isMockMode ? t("fundBuilder.pools.search") : t("fundBuilder.real.poolId")
+                    }
                     aria-label={t("fundBuilder.pools.search")}
                     className="pl-9"
                   />
