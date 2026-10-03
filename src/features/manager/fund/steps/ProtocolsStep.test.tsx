@@ -1,10 +1,12 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep.test
- * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v2 (POO-2142 rules v2, POO-2143 rules v2)
  * @analytics-events none, the shell emits
  *
- * POO-2123 [R12] / [R19] / [R20] / [R21] / [R22], epic POO-2119. Mandate step 2.
+ * POO-2123 [R12] / [R19] / [R20] / [R21] / [R22], epic POO-2119. Mandate step 2. Rules v2
+ * (POO-2143, buildathon scope): Aave v3, Uniswap v3 and Uniswap v4 to operate, no GMX. The disabled
+ * row mechanism stays, so it is exercised on a catalog where Uniswap v4 runs on Robinhood Chain only.
  *
  * As on step 1, the reducer is `PP-MGR-LIB-019`'s and tested there; these cases assert the screen's
  * own decisions. Two of them carry real weight: the "On" column must show the INTERSECTION with the
@@ -19,7 +21,7 @@ import {
   userEvent,
   within,
 } from "../../../../../tests/utils/renderWithProviders";
-import { buildMandateCatalog } from "../mandateCatalog";
+import { buildMandateCatalog, type MandateCatalog } from "../mandateCatalog";
 import {
   createEmptyDraft,
   type MandateDraft,
@@ -31,6 +33,18 @@ import { ProtocolsStep } from "./ProtocolsStep";
 
 const catalog = buildMandateCatalog();
 
+/**
+ * The real catalog with Uniswap v4 moved to Robinhood Chain only. No protocol the buildathon scope
+ * offers runs on no network of a hub-only mandate, so this is how the R21 mechanism that stays (a
+ * protocol with no network in common with step 1 renders disabled) is still exercised.
+ */
+const catalogV4SpokeOnly: MandateCatalog = {
+  ...catalog,
+  protocols: catalog.protocols.map((protocol) =>
+    protocol.id === "uniswap-v4" ? { ...protocol, availableOn: ["robinhood"] } : protocol,
+  ),
+};
+
 function draftWith(networks: NetworkId[], protocols: ProtocolId[]): MandateDraft {
   const base = withNetworks(
     createEmptyDraft("2026-10-03T00:00:00.000Z", "draft-1"),
@@ -41,13 +55,16 @@ function draftWith(networks: NetworkId[], protocols: ProtocolId[]): MandateDraft
 }
 
 /** Render the step and expose the reducer the screen last handed to `update`. */
-function renderStep(draft: MandateDraft = draftWith([], [])) {
+function renderStep(
+  draft: MandateDraft = draftWith([], []),
+  stepCatalog: MandateCatalog = catalog,
+) {
   const update = vi.fn();
   const onBlocked = vi.fn();
   renderWithProviders(
     <ProtocolsStep
       draft={draft}
-      catalog={catalog}
+      catalog={stepCatalog}
       update={update}
       block={null}
       onBlocked={onBlocked}
@@ -92,14 +109,25 @@ describe("ProtocolsStep", () => {
 
     expect(screen.getByText("Protocols to operate")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Aave v3" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Uniswap v3" })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Uniswap v4" })).toBeInTheDocument();
     expect(screen.getByText("Lending · supply tokens to earn interest")).toBeInTheDocument();
     expect(
       screen.getAllByText("Liquidity positions · earn trading fees in a price range"),
     ).toHaveLength(2);
-    expect(
-      screen.getByText("Perpetuals · long and short positions with leverage"),
-    ).toBeInTheDocument();
+    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+    // expect(
+    //   screen.getByText("Perpetuals · long and short positions with leverage"),
+    // ).toBeInTheDocument();
+  });
+
+  // @rule R20 v2 @rule R21 v2
+  it("no longer offers GMX, and renders no Coming soon row on the shipped catalog", () => {
+    renderStep();
+
+    expect(screen.queryByRole("checkbox", { name: "GMX" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Perpetuals · long and short positions with leverage")).toBeNull();
+    expect(screen.queryByText("Coming soon")).not.toBeInTheDocument();
   });
 
   // @rule R20
@@ -157,7 +185,7 @@ describe("ProtocolsStep", () => {
     );
     await user.click(screen.getByRole("checkbox", { name: "Select all" }));
 
-    // GMX is not a candidate, so Select all never reaches it; Uniswap v3 and v4 and Aave v3 do.
+    // Every protocol to operate is selectable on a hub-only mandate: Uniswap v3 and v4 and Aave v3.
     expect(protocolsAfterUpdate()).toEqual([
       "uniswap-v3-swap",
       "across",
@@ -189,33 +217,47 @@ describe("ProtocolsStep", () => {
     expect(protocolsAfterUpdate()).toEqual(["uniswap-v3-swap", "across"]);
   });
 
-  // @rule R21
-  it("marks GMX Coming soon and reports the click as a blocked intent", async () => {
+  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
+  // // @rule R21
+  // it("marks GMX Coming soon and reports the click as a blocked intent", async () => {
+  //   const user = userEvent.setup();
+  //   const { update, onBlocked } = renderStep();
+  //
+  //   const gmx = screen.getByRole("checkbox", { name: "GMX" });
+  //   expect(gmx).toHaveAttribute("aria-disabled", "true");
+  //   expect(within(row("gmx")).getByText("Coming soon")).toBeInTheDocument();
+  //
+  //   await user.click(gmx);
+  //
+  //   expect(onBlocked).toHaveBeenCalledWith({
+  //     step: "protocols",
+  //     reason: "coming_soon",
+  //     rowId: "gmx",
+  //   });
+  //   expect(update).not.toHaveBeenCalled();
+  // });
+
+  // @rule R21 v2
+  it("disables a protocol that runs on no network of this mandate", async () => {
+    // GMX was the shipped example and left with POO-2143; the branch stays, and catches any
+    // protocol whose networks are all outside the draft. Here: Uniswap v4 on Robinhood Chain only,
+    // against a hub-only mandate.
     const user = userEvent.setup();
-    const { update, onBlocked } = renderStep();
+    const { update, onBlocked } = renderStep(draftWith([], []), catalogV4SpokeOnly);
 
-    const gmx = screen.getByRole("checkbox", { name: "GMX" });
-    expect(gmx).toHaveAttribute("aria-disabled", "true");
-    expect(within(row("gmx")).getByText("Coming soon")).toBeInTheDocument();
+    const v4 = screen.getByRole("checkbox", { name: "Uniswap v4" });
+    expect(v4).toHaveAttribute("aria-disabled", "true");
+    expect(within(row("uniswap-v4")).getByText("Coming soon")).toBeInTheDocument();
+    expect(within(row("uniswap-v4")).queryByRole("img")).not.toBeInTheDocument();
 
-    await user.click(gmx);
+    await user.click(v4);
 
     expect(onBlocked).toHaveBeenCalledWith({
       step: "protocols",
       reason: "coming_soon",
-      rowId: "gmx",
+      rowId: "uniswap-v4",
     });
     expect(update).not.toHaveBeenCalled();
-  });
-
-  // @rule R21
-  it("disables a protocol that runs on no network of this mandate", () => {
-    // GMX is the shipped example: `availableOn` is empty, so the intersection is empty too and the
-    // row can only say "Coming soon". The same branch catches a future protocol whose networks are
-    // all outside the draft.
-    renderStep();
-
-    expect(within(row("gmx")).queryByRole("img")).not.toBeInTheDocument();
   });
 
   // @rule R22
@@ -243,9 +285,10 @@ describe("ProtocolsStep", () => {
    * "Pick at least one to continue." answered a click on GMX by telling the manager to pick
    * something, which is what they had just tried to do, about a row the product cannot offer at all.
    * The event is the half that has to survive, because "which protocol did managers keep trying to
-   * add" is the only question this screen can answer for the roadmap.
+   * add" is the only question this screen can answer for the roadmap. GMX left with POO-2143, so the
+   * disabled row here is Uniswap v4 on a catalog that runs it on Robinhood Chain only.
    */
-  // @rule R21
+  // @rule R21 v2
   it("answers a Coming soon click with the event only, never with Pick at least one", async () => {
     const user = userEvent.setup();
     const update = vi.fn();
@@ -254,26 +297,26 @@ describe("ProtocolsStep", () => {
     const { rerender } = renderWithProviders(
       <ProtocolsStep
         draft={draft}
-        catalog={catalog}
+        catalog={catalogV4SpokeOnly}
         update={update}
         block={null}
         onBlocked={onBlocked}
       />,
     );
 
-    await user.click(screen.getByRole("checkbox", { name: "GMX" }));
+    await user.click(screen.getByRole("checkbox", { name: "Uniswap v4" }));
 
     expect(onBlocked).toHaveBeenCalledWith({
       step: "protocols",
       reason: "coming_soon",
-      rowId: "gmx",
+      rowId: "uniswap-v4",
     });
     rerender(
       <ProtocolsStep
         draft={draft}
-        catalog={catalog}
+        catalog={catalogV4SpokeOnly}
         update={update}
-        block={{ step: "protocols", reason: "coming_soon", rowId: "gmx" }}
+        block={{ step: "protocols", reason: "coming_soon", rowId: "uniswap-v4" }}
         onBlocked={onBlocked}
       />,
     );

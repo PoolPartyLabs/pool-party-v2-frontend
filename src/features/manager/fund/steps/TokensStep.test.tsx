@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-037
  * @name TokensStep.test
- * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v2 (POO-2142 rules v2, POO-2143 rules v2)
  * @analytics-events none, the shell emits
  *
  * POO-2124 [R13] / [R23] / [R24] / [R25] / [R26] / [R27] / [R28], epic POO-2119. Mandate step 3.
@@ -487,7 +487,7 @@ describe("TokensStep", () => {
     const { unmount } = renderStep(draft, {
       step: "protocols",
       reason: "coming_soon",
-      rowId: "gmx",
+      rowId: "uniswap-v4",
     });
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     unmount();
