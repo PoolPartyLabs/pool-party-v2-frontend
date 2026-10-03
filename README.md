@@ -45,6 +45,16 @@ Claude Code was used throughout as a pair programmer, directed by the team throu
 
 Kept for history, and pre-existing for this event: **Universal Funding** (Uniswap Trading API; docs in [`docs/_hackathon/`](docs/_hackathon/), code in `src/lib/uniswap/`, `src/lib/provisioning/`) and **Active Reserve** (1inch Aqua and SwapVM; docs in [`docs/_hackathon_aqua/`](docs/_hackathon_aqua/), code in `src/lib/aqua/`, `src/features/aqua/`; contracts at [github.com/0xmvercosa/pool-party-aqua](https://github.com/0xmvercosa/pool-party-aqua)).
 
+## Which parts of your code have been produced during the Buildathon?
+
+Before the Arbitrum Open House Singapore: Online Buildathon, this repository held the Pool Party v2 frontend (investor app, Manager Console with the V1 single-pool strategy builder, design system, i18n, analytics, wallet and auth) and its earlier modules. Built during the Buildathon, from scratch (PR #20 onward): the Strategy Builder for the fund contracts, Mandate step, covering its Figma design, business rules, implementation and tests. A manager declares in five steps what a fund may touch (networks, protocols, tokens, pools, limits), on Arbitrum as the hub and Robinhood Chain, with Uniswap v3, Uniswap v4 and Aave v3; the Across bridge and the Uniswap v3 swap are always included. Token lists, pool reads and UI primitives are reused, not new. In code:
+
+- everything under `src/features/manager/fund/`
+- the V1 / V2 toggle in the app header
+- the `fundContracts` feature flag
+- the builder switch on `/manager/new`
+- the drafts card in the Manager Console
+
 ---
 
 ## How it works
