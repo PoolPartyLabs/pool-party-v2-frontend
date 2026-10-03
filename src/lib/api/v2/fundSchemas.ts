@@ -1,0 +1,161 @@
+/**
+ * @id PP-STR-LIB-025 (POO-2175)
+ * @name fundSchemas
+ * @implements-rules-version v2
+ * Fund-only view and transaction contracts, optional rollout previews.
+ */
+import { z } from "zod";
+import { addressSchema, fundDetailSchema, fundIdentitySchema, poolIdSchema } from "./schemas";
+
+const version = { protocolVersion: z.literal("v2") };
+export const uint = z.string().regex(/^\d{1,78}$/);
+const decimal = z.string().regex(/^-?\d+(\.\d+)?$/);
+const record = z.object(version).passthrough();
+const amount = record.extend({ raw: uint, decimal });
+const amounts = record.extend({ amount0: amount.nullable(), amount1: amount.nullable() });
+const profile = record.extend({
+  name: z.string().optional(),
+  description: z.string().optional(),
+  image: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
+  manager: z.unknown().optional(),
+});
+export const fundRowSchema = fundIdentitySchema.extend({ profile: profile.nullable().optional() });
+export const fundListSchema = z.object({
+  ...version,
+  funds: z.array(fundRowSchema),
+  nextBlock: uint.optional(),
+  discovery: z.string(),
+});
+export const positionSchema = record.extend({
+  chainId: z.string(),
+  positionKey: poolIdSchema,
+  adapterKind: z.string(),
+  status: z.string(),
+  tokens: z.array(
+    record.extend({ address: addressSchema, symbol: z.string(), decimals: z.number().int() }),
+  ),
+  valueUsd: decimal.nullable(),
+  currentValueUsd: decimal.nullable().optional(),
+  uncollectedIncomeUsd: decimal.nullable(),
+  shareOfNav: decimal.nullable(),
+  currentAmounts: amounts.nullable().optional(),
+  uncollectedIncome: amounts.nullable().optional(),
+  uniswap: record
+    .extend({
+      tickLower: z.number(),
+      tickUpper: z.number(),
+      currentTick: z.number(),
+      inRange: z.boolean(),
+      lowerPrice: record.optional(),
+      upperPrice: record.optional(),
+    })
+    .nullable(),
+  aave: record.extend({ currentBalance: amount, supplyApy: decimal.nullable() }).nullable(),
+  holderExposure: record.optional().nullable(),
+});
+export const positionsSchema = record.extend({ positions: z.array(positionSchema) });
+export const fundViewSchema = fundDetailSchema.extend({
+  profile: profile.nullable().optional(),
+  lastReport: record
+    .extend({ ageSeconds: z.number(), report: record.extend({ sequence: uint, timestamp: uint }) })
+    .nullable()
+    .optional(),
+  positionsSummary: positionsSchema.optional(),
+  limits: record.optional().nullable(),
+  limitsUsage: record.optional().nullable(),
+  fees: record
+    .extend({
+      flowFeeBps: z.number().int(),
+      payoutFeeBps: z.number().int(),
+      performanceFeeBps: z.number().int(),
+      managementFeeBps: z.number().int(),
+      standardPayoutTermSeconds: z.number().int(),
+    })
+    .optional(),
+});
+export const holderSchema = record.extend({
+  shares: uint,
+  value: uint,
+  incomeOwed: uint,
+  claimable: z.boolean(),
+  incomeWithdrawal: z.tuple([uint, z.boolean()]),
+  payout: record.extend({
+    open: z.boolean(),
+    usdcOutstanding: uint,
+    termEndsAt: uint,
+    awaitingSettlement: z.boolean(),
+  }),
+  positionsSummary: positionsSchema.optional(),
+});
+export const positionDetailSchema = record.extend({
+  position: positionSchema,
+  history: record.extend({
+    complete: z.boolean(),
+    events: z.array(
+      record.extend({ type: z.string(), timestamp: z.string(), transactionHash: poolIdSchema }),
+    ),
+  }),
+});
+export const transitSchema = record.extend({
+  transitId: poolIdSchema,
+  direction: z.string(),
+  kind: z.string(),
+  stage: z.string(),
+  state: z.string(),
+  amountSent: uint,
+  credited: uint.nullable(),
+  nextStepHint: z.string().nullable(),
+  legs: record,
+});
+export const transitsSchema = record.extend({
+  items: z.array(transitSchema),
+  nextCursor: z.string().nullable(),
+  coverage: z.array(record),
+});
+export const balancesSchema = record.extend({
+  chainId: z.string(),
+  status: z.string(),
+  balancesStatus: z.string(),
+  operatingCash: uint.nullable(),
+  readyForNextStep: z.boolean(),
+  tokens: z.array(record.extend({ token: addressSchema, unallocatedBalance: uint.nullable() })),
+});
+export const transactionSchema = z.object({
+  ...version,
+  to: addressSchema,
+  from: addressSchema,
+  data: z.string().regex(/^0x(?:[a-fA-F0-9]{2})*$/),
+  value: uint,
+  chainId: z.literal(42161),
+});
+export const previewSchema = record.extend({
+  sharesMinted: uint.optional(),
+  usdcCharged: uint.optional(),
+  flowFee: uint,
+  refundToCaller: uint.optional(),
+  sharePrice: uint.optional(),
+  usdcGross: uint.optional(),
+  payoutFee: uint.optional(),
+  usdcPaid: uint.optional(),
+});
+export const fundBuildSchema = record.extend({
+  transactions: z.array(transactionSchema).length(1),
+  nextAction: z.string().optional(),
+  preview: previewSchema.nullable().optional(),
+  previewUnavailableReason: z.string().optional(),
+});
+export const reportStartSchema = record.extend({ jobId: z.string().uuid() });
+export const reportJobSchema = record.extend({
+  jobId: z.string().uuid(),
+  core: addressSchema,
+  status: z.enum(["pending", "delivered", "failed"]),
+});
+export type FundRow = z.infer<typeof fundRowSchema>;
+export type FundView = z.infer<typeof fundViewSchema>;
+export type FundHolder = z.infer<typeof holderSchema>;
+export type FundPosition = z.infer<typeof positionSchema>;
+export type FundBuild = z.infer<typeof fundBuildSchema>;
+export type FundPositionDetail = z.infer<typeof positionDetailSchema>;
+export type FundTransit = z.infer<typeof transitSchema>;
+export type FundBalances = z.infer<typeof balancesSchema>;
