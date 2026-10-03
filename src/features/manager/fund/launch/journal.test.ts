@@ -29,6 +29,12 @@ const setup = () => {
 };
 
 describe("launch checkpoint state machine [R3, R6]", () => {
+  it("advances one ready step for an explicit sign/next action", async () => {
+    const { journal, storage, driver } = setup();
+    await runLaunch(journal, storage, driver, undefined, undefined, 1);
+    expect(journal.checkpoints.create?.status).toBe("confirmed");
+    expect(journal.checkpoints["discover-hub"]).toBeUndefined();
+  });
   it("continues an independent hub leaf while a report is waiting", async () => {
     const { journal, storage, driver } = setup();
     journal.steps = [

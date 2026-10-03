@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-ACT-013 (POO-2172)
+ * @id PP-MGR-ACT-013 (POO-2177)
  * @name v2LaunchActions
  * @implements-rules-version v1
  * Session-authorized launch builders. No secrets or upstream errors cross this boundary.
@@ -186,6 +186,26 @@ export async function quoteLaunchBridgeAction(core: string, amount: string) {
       amount,
       bridgeRank: 0,
     });
+  });
+}
+export async function quoteLaunchSwapAction(input: unknown) {
+  return result(async () => {
+    const body = swapRequestSchema.parse(input);
+    await manager(body.core);
+    return launchFetch(
+      `/funds/${body.core}/swap/quote`,
+      "GET",
+      versionedRecordSchema,
+      undefined,
+      false,
+      {
+        side: body.side,
+        tokenIn: body.tokenIn,
+        tokenOut: body.tokenOut,
+        amountIn: body.amountIn,
+        maxLossBps: String(body.maxLossBps),
+      },
+    );
   });
 }
 export async function readLaunchBalancesAction(core: string, chain: 42161 | 4663) {

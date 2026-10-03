@@ -45,6 +45,19 @@ describe("launch server-only admin boundary [R8]", () => {
     expect(await buildLaunchSwapAction({ ...swap, maxLossBps: 800 })).toMatchObject({ ok: false });
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
+  it("quotes swaps with validated query parameters and without an admin key", async () => {
+    mocks.fetch
+      .mockResolvedValueOnce(response({ protocolVersion: "v2", manager: wallet }))
+      .mockResolvedValueOnce(response({ protocolVersion: "v2", quotedAmountOut: "99" }));
+    expect(await actions.quoteLaunchSwapAction(swap)).toMatchObject({ ok: true });
+    const [url, init] = mocks.fetch.mock.calls.at(-1) ?? [];
+    expect(String(url)).toContain("/swap/quote?side=hub&tokenIn=");
+    expect(String(url)).toContain("maxLossBps=100");
+    expect(init.headers).not.toHaveProperty("x-admin-key");
+    expect(await actions.quoteLaunchSwapAction({ ...swap, maxLossBps: 800 })).toMatchObject({
+      ok: false,
+    });
+  });
   it("refuses unauthenticated or non-manager report triggers", async () => {
     mocks.wallet.mockResolvedValue(null);
     expect(await triggerLaunchReportAction(core)).toMatchObject({

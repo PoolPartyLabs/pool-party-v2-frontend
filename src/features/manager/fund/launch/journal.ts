@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-STO-002 (POO-2172)
+ * @id PP-MGR-STO-002 (POO-2177)
  * @name launchJournal
  * @implements-rules-version v1
  * Durable checkpoints: uncertain receipts always reconcile before rebuilding.
@@ -131,12 +131,14 @@ export async function runLaunch(
   driver: LaunchDriver,
   onChange: (journal: LaunchJournal) => void = () => {},
   signal?: AbortSignal,
+  maxSteps = Number.POSITIVE_INFINITY,
 ): Promise<LaunchJournal> {
   const persist = () => {
     saveJournal(storage, journal);
     onChange(structuredClone(journal));
   };
   persist();
+  let processed = 0;
   for (const step of journal.steps) {
     if (signal?.aborted) return journal;
     const checkpoint = journal.checkpoints[step.id] ?? {
@@ -144,7 +146,6 @@ export async function runLaunch(
       chain: step.chain,
       status: "idle" as const,
     };
-    journal.checkpoints[step.id] = checkpoint;
     if (checkpoint.status === "confirmed") continue;
     if (
       step.dependencies.some(
@@ -152,6 +153,9 @@ export async function runLaunch(
       )
     )
       continue;
+    if (processed >= maxSteps) return journal;
+    journal.checkpoints[step.id] = checkpoint;
+    processed += 1;
     try {
       if (checkpoint.txHash && checkpoint.receiptStatus !== "reverted") {
         const receipt = await driver.receipt(step.chain, checkpoint.txHash);

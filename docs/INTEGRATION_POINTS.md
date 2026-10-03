@@ -6,7 +6,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 465 markers across 263 files (2026-10-03)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 466 markers across 264 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -21,13 +21,14 @@ git grep -n 'PP-INTEGRATION-POINT' -- src   # 465 markers across 263 files (2026
 > what the code in this repository owns. The request/response contracts of the Pool Party backend
 > services live with those services in their own repositories and are intentionally not reproduced here.
 
-## Fund Review and launch (POO-2172, rules v1)
+## Fund Review/launch integration (POO-2177, rules v1; page POO-2172)
 
 | Seam | Owned file | Contract and remaining integration |
 |------|------------|------------------------------------|
 | Just-in-time launch builders | `src/lib/api/v2/launch.ts` | Server-only v2 API writes with `x-api-key`; admin routes additionally require server-only `PP_API_ADMIN_KEY` as `x-admin-key`. API PR #180 provides payoutFeeBps/transits/balances. |
-| Wallet, receipts and staged logo | `src/features/manager/fund/launch/FundReviewSlot.tsx` | Real Privy wallet plus chain proof and mined receipts. Logo uses existing wallet-scoped S3 POST, no v1 strategy UUID. Mock mode never signs. |
-| Canvas BuildPlan v1 | `src/features/manager/fund/launch/plan.ts` | Reads `draft.plan` from POO-2151 through an owned structural adapter. POO-2144/2171 must provide range/loss/leaf execution fields and Next to `phase=review`. Missing details refuse launch. |
+| Real wallet/receipts | `src/features/manager/fund/launch/useV2LaunchWallet.ts` | Headless Privy/wagmi binding, chain proof, mined receipts and hub USDC balance. Real-only provider mount; mock mode never signs. |
+| Review page binding | `src/features/manager/fund/launch/useV2Launch.ts` | Murilo's POO-2172 page consumes steps/signatures/status and explicit launch/next/sign/retry/resume/pause. `useV2ReviewDraft` supplies validated fields, fixed terms, net preview and staged wallet-scoped S3 logo. No page/shell changes here. |
+| Canvas BuildPlan v1 | `src/features/manager/fund/launch/plan.ts` | Reads `draft.plan` from PR #31 (POO-2151) through an owned structural adapter, no competing reducers. POO-2144/2171 must provide range/loss/leaf execution fields; POO-2172 owns Review navigation. Missing details refuse launch. |
 | Browser checkpoint journal | `src/features/manager/fund/launch/journal.ts` | Per manager/draft immutable steps, hashes, receipt state, addresses and actual net principal. Durable API launch-plan and cross-device coordination are later work. |
 
 See `src/features/manager/fund/launch/README.md` for the adapter gaps, recovery rules and operational waits.

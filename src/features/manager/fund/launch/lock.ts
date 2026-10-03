@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-STO-002 (POO-2172)
+ * @id PP-MGR-STO-002 (POO-2177)
  * @name launchJournalLock
  * @implements-rules-version v1
  * Cross-tab exclusive launch ownership. Unsupported browsers fail closed.

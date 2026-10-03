@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-LIB-028 (POO-2172)
+ * @id PP-MGR-LIB-028 (POO-2177)
  * @name v2LaunchApi
  * @implements-rules-version v1
  * Server-only writes, independent of the shared read client.
@@ -15,6 +15,7 @@ export async function launchFetch<ResponseData>(
   schema: ZodType<ResponseData>,
   body?: unknown,
   admin = false,
+  query?: Record<string, string>,
 ): Promise<ResponseData> {
   if (!/^\/(funds(?:\/[a-zA-Z0-9/-]+)?|swap-route|report-jobs\/[a-zA-Z0-9-]+)$/.test(path))
     throw new ApiError(400, "V2_INVALID_PATH", "invalid launch path");
@@ -23,10 +24,11 @@ export async function launchFetch<ResponseData>(
   const adminKey = admin ? process.env.PP_API_ADMIN_KEY : undefined;
   if (!base || !key || (admin && !adminKey))
     throw new ApiError(503, "V2_UNAVAILABLE", "v2 unavailable");
+  const suffix = query ? `?${new URLSearchParams(query).toString()}` : "";
   let response: Response;
   let payload: unknown;
   try {
-    response = await fetch(`${base.replace(/\/$/, "")}/api/v2${path}`, {
+    response = await fetch(`${base.replace(/\/$/, "")}/api/v2${path}${suffix}`, {
       method,
       headers: {
         "x-api-key": key,
