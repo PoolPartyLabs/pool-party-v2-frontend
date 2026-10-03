@@ -14,8 +14,9 @@
  * LEGALITY IS NOT HERE. Whether a kind may be placed on a network (C22, INV2), which ports exist
  * (C17) and what fits them (I4) are S1's rules (`kindAvailability`, `portSlotsOf`, `insertOptions`),
  * one source of truth the reducers also read. The registry reads `BLOCK_KIND_STATUS` instead of
- * keeping a copy, and its `placement` and `swapAuto` fields are documentation of S1's behaviour that
- * a test holds equal to the reducers.
+ * keeping a copy; its `placement` (read by the menus and the drop targets) is held equal to the
+ * reducers by a test. The Swap · auto companion is S1's alone (`reconcileAutoBlocks`), so the
+ * registry keeps no field for it (review F5 of PR #36).
  *
  * Card states (D27, D6, C22), in order of precedence:
  * 1. `comingSoon`: the kind's status is coming soon, whatever the mandate holds;
@@ -56,24 +57,22 @@ export function feeNumber(feeBps: number): string {
 /** Where a kind can be placed (S1 decides; this names it). */
 export type BlockPlacement = "newChain" | "afterSupply";
 
-/** When the app places a Swap · auto directly before the block (C13). */
-export type SwapAutoCompanion = "always" | "whenAssetDiffers" | "never";
-
 /** One block kind, as the canvas presents it. */
 export interface BlockDefinition {
   kind: BlockKind;
   /** C22, read from `BLOCK_KIND_STATUS`. */
   status: BlockKindStatus;
   icon: BlockIcon;
-  /** The translation key of the protocol name ("Uniswap v4"). */
+  /**
+   * The translation keys of the protocol name ("Uniswap v4") and of the block type ("Liquidity
+   * position"). Kept because the shared contract (plan section 3.5) names them for the panel batch;
+   * this slice reads the same keys as literals in `blockCopy`, so the i18n usage scan binds them.
+   */
   protocolNameKey: string;
-  /** The translation key of the block type ("Liquidity position"). */
   blockTypeKey: string;
   paletteSection: "mandate" | "comingSoon";
   /** A new chain (a row's Add protocol circle), or directly under a Supply (its bottom port). */
   placement: BlockPlacement;
-  /** The companion the app places (C13); Collect fees is the manager's (D2). */
-  swapAuto: SwapAutoCompanion;
   /** What an empty block waits for: "Pick a pool", "Pick an asset"; null for undrawn kinds. */
   configField: "pool" | "asset" | null;
 }
@@ -82,7 +81,6 @@ function definition(
   kind: BlockKind,
   icon: BlockIcon,
   placement: BlockPlacement,
-  swapAuto: SwapAutoCompanion,
   configField: BlockDefinition["configField"],
 ): BlockDefinition {
   const status = BLOCK_KIND_STATUS[kind];
@@ -94,7 +92,6 @@ function definition(
     blockTypeKey: `fundBuilder.canvas.blocks.${kind}.type`,
     paletteSection: status === "comingSoon" ? "comingSoon" : "mandate",
     placement,
-    swapAuto,
     configField,
   };
 }
@@ -104,12 +101,12 @@ function definition(
  * "Building blocks"); they take the pool's icon until they are.
  */
 export const BLOCK_REGISTRY: Readonly<Record<BlockKind, BlockDefinition>> = {
-  uniswapV4Pool: definition("uniswapV4Pool", "layers", "newChain", "always", "pool"),
-  aaveSupply: definition("aaveSupply", "bank", "newChain", "whenAssetDiffers", "asset"),
-  aaveBorrow: definition("aaveBorrow", "bank", "afterSupply", "never", "asset"),
-  uniswapV3Pool: definition("uniswapV3Pool", "layers", "newChain", "always", "pool"),
-  pendle: definition("pendle", "layers", "newChain", "never", null),
-  gmxPerp: definition("gmxPerp", "layers", "newChain", "never", null),
+  uniswapV4Pool: definition("uniswapV4Pool", "layers", "newChain", "pool"),
+  aaveSupply: definition("aaveSupply", "bank", "newChain", "asset"),
+  aaveBorrow: definition("aaveBorrow", "bank", "afterSupply", "asset"),
+  uniswapV3Pool: definition("uniswapV3Pool", "layers", "newChain", "pool"),
+  pendle: definition("pendle", "layers", "newChain", null),
+  gmxPerp: definition("gmxPerp", "layers", "newChain", null),
 };
 
 /** The kinds in registry order (the order the palette and the menus list them). */
@@ -253,6 +250,9 @@ export function describeFlow(blockId: string, ctx: DescribeContext): FlowContent
     return { text: copy.flow.swap, tooltip: copy.tooltip.swap, icon: "swap" };
   }
   const next = found.chain.steps[found.index + 1];
+  // `{token}` is the token that ACTUALLY arrives (a Borrow's asset after a Borrow), and the
+  // network's stable when the plan does not say. A deviation from D7 (always the network's stable),
+  // APPROVED by the coordinator in the review of PR #36.
   const arrivingKey = next ? arrivingTokenKey(ctx.plan, ctx, next.id) : null;
   const token =
     (arrivingKey ? tokenSymbol(ctx.draft, found.network, arrivingKey) : null) ??

@@ -919,7 +919,7 @@
         "networks": {
           "title": "来自您授权范围的网络",
           "option": "spoke · 会添加一个 Bridge",
-          "placed": "{names} 已在画布上。",
+          "placed": "{count, plural, =1 {{names} 已在画布上。} other {{names} 已在画布上。}}",
           "none": "您的授权范围没有其他网络。"
         },
         "port": {
@@ -939,6 +939,7 @@
         "typeNoPool": "{type} · 尚未选择资金池",
         "typeNoAsset": "{type} · 尚未选择资产",
         "menuOpen": "在菜单中选择一个协议。区块将添加到 {network} 并在此打开。",
+        "menuOpenNetwork": "在菜单中选择一个网络。该网络将连同其 Bridge 添加到画布上。",
         "portMenuOpenSupply": "选择 {title} 之后的内容。借款区块以该供应作为抵押。",
         "portMenuOpenBefore": "选择 {title} 之前的内容。",
         "portMenuOpenAfter": "选择 {title} 之后的内容。"

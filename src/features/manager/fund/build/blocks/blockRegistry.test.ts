@@ -95,7 +95,7 @@ describe("BLOCK_REGISTRY", () => {
     expect(BLOCK_REGISTRY.aaveBorrow.icon).toBe("bank");
   });
 
-  it("states placements and companions that agree with the S1 reducers", () => {
+  it("states placements that agree with the S1 reducers, and leaves companions to them", () => {
     // @rule C13
     // @rule C14
     const ctx = makeTestContext();
@@ -109,12 +109,11 @@ describe("BLOCK_REGISTRY", () => {
     expect(
       insertOptions(hubSupplyPlan(), { side: "after", blockId: "hub-supply-supply" }),
     ).toContainEqual({ family: "position", kind: "aaveBorrow" });
-    // A pool always arrives with its Swap · auto; a Supply does not on the hub.
+    // Review F5 of PR #36: the Swap · auto companion is S1's alone (reconcileAutoBlocks); the
+    // registry keeps no field for it. A pool arrives with one, a Supply does not on the hub.
+    expect(Object.keys(BLOCK_REGISTRY.uniswapV4Pool)).not.toContain("swapAuto");
     const pool = addChain(createEmptyPlan(), ctx, "arbitrum", "uniswapV4Pool");
     const supply = addChain(createEmptyPlan(), ctx, "arbitrum", "aaveSupply");
-    expect(BLOCK_REGISTRY.uniswapV4Pool.swapAuto).toBe("always");
-    expect(BLOCK_REGISTRY.aaveSupply.swapAuto).toBe("whenAssetDiffers");
-    expect(BLOCK_REGISTRY.aaveBorrow.swapAuto).toBe("never");
     expect(!isPlanBlocked(pool) && pool.hub.chains[0]?.steps.map((s) => s.kind)).toEqual([
       "swap",
       "uniswapV4Pool",

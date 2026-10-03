@@ -72,7 +72,8 @@ export interface BlockCopy {
     linkNetworks: string;
     networksTitle: string;
     networksOption: string;
-    networksPlaced(names: string): string;
+    /** "{names} is / are already on the canvas.": `count` picks the number (review F2). */
+    networksPlaced(names: string, count: number): string;
     networksNone: string;
     portBefore(title: string): string;
     portAfter(title: string): string;
@@ -96,11 +97,14 @@ export interface BlockCopy {
     typeNoPool(type: string): string;
     typeNoAsset(type: string): string;
     menuOpen(network: string): string;
+    /** While the Add network menu is open (review F3, coordinator copy). */
+    menuOpenNetwork: string;
     portMenuOpenSupply(title: string): string;
     portMenuOpenBefore(title: string): string;
     portMenuOpenAfter(title: string): string;
   };
-  networkRemove(network: string): string;
+  // No spoke "Remove {network}" label: the renderer (S6) builds its own from
+  // `network.remove` (review F5 of PR #36 removed the unused copy here).
   toast: { removed: string; undo: string };
 }
 
@@ -178,7 +182,8 @@ export function makeBlockCopy(t: ManagerTranslate, locale: string): BlockCopy {
       linkNetworks: t("fundBuilder.canvas.menu.link.networks"),
       networksTitle: t("fundBuilder.canvas.menu.networks.title"),
       networksOption: t("fundBuilder.canvas.menu.networks.option"),
-      networksPlaced: (names) => t("fundBuilder.canvas.menu.networks.placed", { names }),
+      networksPlaced: (names, count) =>
+        t("fundBuilder.canvas.menu.networks.placed", { names, count }),
       networksNone: t("fundBuilder.canvas.menu.networks.none"),
       portBefore: (title) => t("fundBuilder.canvas.menu.port.before", { title }),
       portAfter: (title) => t("fundBuilder.canvas.menu.port.after", { title }),
@@ -202,11 +207,11 @@ export function makeBlockCopy(t: ManagerTranslate, locale: string): BlockCopy {
       typeNoPool: (type) => t("fundBuilder.canvas.panel.typeNoPool", { type }),
       typeNoAsset: (type) => t("fundBuilder.canvas.panel.typeNoAsset", { type }),
       menuOpen: (network) => t("fundBuilder.canvas.panel.menuOpen", { network }),
+      menuOpenNetwork: t("fundBuilder.canvas.panel.menuOpenNetwork"),
       portMenuOpenSupply: (title) => t("fundBuilder.canvas.panel.portMenuOpenSupply", { title }),
       portMenuOpenBefore: (title) => t("fundBuilder.canvas.panel.portMenuOpenBefore", { title }),
       portMenuOpenAfter: (title) => t("fundBuilder.canvas.panel.portMenuOpenAfter", { title }),
     },
-    networkRemove: (network) => t("fundBuilder.canvas.network.remove", { network }),
     toast: {
       removed: t("fundBuilder.canvas.toast.removed"),
       undo: t("fundBuilder.canvas.toast.undo"),

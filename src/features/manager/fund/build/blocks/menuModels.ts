@@ -179,7 +179,10 @@ export function networkMenuModel(ctx: MenuContext): MenuModel {
   }));
   const footer =
     placed.length > 0
-      ? copy.menu.networksPlaced(copy.listNames(placed.map((n) => copy.networkName(n))))
+      ? copy.menu.networksPlaced(
+          copy.listNames(placed.map((n) => copy.networkName(n))),
+          placed.length,
+        )
       : options.length === 0
         ? copy.menu.networksNone
         : null;
@@ -279,11 +282,13 @@ export function menuModelFor(target: GraphTarget, ctx: MenuContext): MenuModel |
 /**
  * AN10: what the panel stub says while a menu is open. The Add protocol menu names the network the
  * block lands on; a port menu after a Supply uses the Figma sentence (8181-2110), the others the
- * coordinator's. The Add network menu has none.
+ * coordinator's; the Add network menu has the coordinator's parallel sentence (review F3 of PR #36,
+ * waiting for the product owner's confirmation). A target with no menu has none.
  */
 export function menuOpenSentence(target: GraphTarget, ctx: MenuContext): string | null {
   const { copy } = ctx;
   if (target.kind === "addProtocol") return copy.panel.menuOpen(copy.networkName(target.network));
+  if (target.kind === "addNetwork") return copy.panel.menuOpenNetwork;
   if (target.kind !== "port") return null;
   const title = describeBlock(target.blockId, ctx).title;
   if (target.side === "before") return copy.panel.portMenuOpenBefore(title);

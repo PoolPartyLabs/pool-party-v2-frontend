@@ -161,7 +161,8 @@ describe("networkMenuModel", () => {
     // @rule D4
     const model = networkMenuModel(makeDescribeContext(emptySpokePlan()));
     expect(model.options).toEqual([]);
-    expect(model.footer).toBe("Robinhood Chain are already on the canvas.");
+    // Review F2: one network placed reads in the singular.
+    expect(model.footer).toBe("Robinhood Chain is already on the canvas.");
     expect(model.emptySentence).toBeNull();
   });
 
@@ -174,10 +175,10 @@ describe("networkMenuModel", () => {
     expect(model.footer).toBe("Your mandate has no other network.");
   });
 
-  it("joins several placed networks with the locale's conjunction", () => {
+  it("joins several placed networks with the locale's conjunction, in the plural", () => {
     // @rule I2
     const ctx = makeDescribeContext(emptySpokePlan());
-    expect(ctx.copy.menu.networksPlaced(ctx.copy.listNames(["Base", "Robinhood Chain"]))).toBe(
+    expect(ctx.copy.menu.networksPlaced(ctx.copy.listNames(["Base", "Robinhood Chain"]), 2)).toBe(
       "Base and Robinhood Chain are already on the canvas.",
     );
   });
@@ -335,11 +336,18 @@ describe("menuOpenSentence", () => {
     ).toBe("Choose what comes before Supply USDC.");
   });
 
-  it("has no sentence for the Add network menu", () => {
+  it("tells what the Add network menu adds while it is open (review F3, coordinator copy)", () => {
     // @rule AN10
     expect(menuOpenSentence({ kind: "addNetwork" }, makeDescribeContext(createEmptyPlan()))).toBe(
-      null,
+      "Choose a network in the menu. The network is added to the canvas with its bridge.",
     );
+  });
+
+  it("has no sentence for a target that opens no menu", () => {
+    // @rule AN10
+    expect(
+      menuOpenSentence({ kind: "block", blockId: "x" }, makeDescribeContext(createEmptyPlan())),
+    ).toBeNull();
   });
 });
 

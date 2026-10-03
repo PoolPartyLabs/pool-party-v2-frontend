@@ -919,7 +919,7 @@
         "networks": {
           "title": "Các mạng trong nhiệm vụ của bạn",
           "option": "spoke · thêm một bridge",
-          "placed": "{names} đã có trên canvas.",
+          "placed": "{count, plural, =1 {{names} đã có trên canvas.} other {{names} đã có trên canvas.}}",
           "none": "Nhiệm vụ của bạn không có mạng nào khác."
         },
         "port": {
@@ -939,6 +939,7 @@
         "typeNoPool": "{type} · chưa có pool",
         "typeNoAsset": "{type} · chưa có tài sản",
         "menuOpen": "Chọn một giao thức trong menu. Khối sẽ được thêm trên {network} và mở tại đây.",
+        "menuOpenNetwork": "Chọn một mạng trong menu. Mạng sẽ được thêm vào canvas cùng với bridge của nó.",
         "portMenuOpenSupply": "Chọn mục đứng sau {title}. Một khối Vay dùng khoản cung cấp đó làm tài sản thế chấp.",
         "portMenuOpenBefore": "Chọn mục đứng trước {title}.",
         "portMenuOpenAfter": "Chọn mục đứng sau {title}."

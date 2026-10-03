@@ -919,7 +919,7 @@
         "networks": {
           "title": "운용 방침의 네트워크",
           "option": "스포크 · 브리지 추가",
-          "placed": "{names}은(는) 이미 캔버스에 있습니다.",
+          "placed": "{count, plural, =1 {{names}은(는) 이미 캔버스에 있습니다.} other {{names}은(는) 이미 캔버스에 있습니다.}}",
           "none": "운용 방침에 다른 네트워크가 없습니다."
         },
         "port": {
@@ -939,6 +939,7 @@
         "typeNoPool": "{type} · 아직 풀 없음",
         "typeNoAsset": "{type} · 아직 자산 없음",
         "menuOpen": "메뉴에서 프로토콜을 선택하세요. 블록은 {network}에 추가되고 여기에서 열립니다.",
+        "menuOpenNetwork": "메뉴에서 네트워크를 선택하세요. 네트워크는 브리지와 함께 캔버스에 추가됩니다.",
         "portMenuOpenSupply": "{title} 뒤에 올 항목을 선택하세요. 차입 블록은 그 공급을 담보로 사용합니다.",
         "portMenuOpenBefore": "{title} 앞에 올 항목을 선택하세요.",
         "portMenuOpenAfter": "{title} 뒤에 올 항목을 선택하세요."
