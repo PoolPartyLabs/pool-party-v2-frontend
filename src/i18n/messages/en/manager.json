@@ -700,6 +700,28 @@
       "v4Pending": "Uniswap v4 pools arrive with the fund contracts data source.",
       "retry": "Try again",
       "error": "Couldn't load the pools. Check your connection and try again."
+    },
+    "limits": {
+      "perNetwork": "Per network",
+      "perNetworkCaption": "Max share of capital on each network · 5% steps",
+      "perProtocol": "Per protocol",
+      "perProtocolCaption": "Max share of capital in each protocol · 5% steps",
+      "perToken": "Per token",
+      "perTokenCaption": "Max share of capital held in each token · 5% steps",
+      "tokenOnNetwork": "{symbol} on {network}",
+      "hubRow": "No cap · the hub holds what is not sent elsewhere",
+      "hubCaption": "Hub",
+      "footnote": "Caps are checked when money moves. Growth from price changes is not forced back.",
+      "capMissing": "Set a cap or tick No cap to continue.",
+      "sliderLabel": "Max share for {name}",
+      "noCapLabel": "No cap for {name}",
+      "unset": "Not set",
+      "noRows": "Nothing to cap here: nothing was added in this group.",
+      "kind": {
+        "lending": "Lending",
+        "dex": "Liquidity positions",
+        "perps": "Perpetuals"
+      }
     }
   }
 }

@@ -700,6 +700,28 @@
       "v4Pending": "Uniswap v4 풀은 펀드 컨트랙트 데이터 소스와 함께 제공됩니다.",
       "retry": "다시 시도",
       "error": "풀을 불러올 수 없습니다. 연결 상태를 확인하고 다시 시도하세요."
+    },
+    "limits": {
+      "perNetwork": "네트워크별",
+      "perNetworkCaption": "네트워크별 최대 자본 비율 · 5% 단위",
+      "perProtocol": "프로토콜별",
+      "perProtocolCaption": "프로토콜별 최대 자본 비율 · 5% 단위",
+      "perToken": "토큰별",
+      "perTokenCaption": "각 토큰에 보유되는 최대 자본 비율 · 5% 단위",
+      "tokenOnNetwork": "{network}의 {symbol}",
+      "hubRow": "한도 없음 · hub는 다른 곳으로 보내지 않은 자금을 보유합니다",
+      "hubCaption": "Hub",
+      "footnote": "한도는 자금이 이동할 때 확인됩니다. 가격 변동으로 인한 증가분은 강제로 되돌리지 않습니다.",
+      "capMissing": "계속하려면 한도를 설정하거나 '한도 없음'을 선택하세요.",
+      "sliderLabel": "{name}의 최대 비율",
+      "noCapLabel": "{name}에 한도 없음",
+      "unset": "설정되지 않음",
+      "noRows": "여기에는 설정할 한도가 없습니다. 이 그룹에 추가된 항목이 없습니다.",
+      "kind": {
+        "lending": "대출",
+        "dex": "Liquidity positions",
+        "perps": "무기한"
+      }
     }
   }
 }

@@ -700,6 +700,28 @@
       "v4Pending": "Các pool Uniswap v4 sẽ có khi nguồn dữ liệu hợp đồng quỹ ra mắt.",
       "retry": "Thử lại",
       "error": "Không thể tải pool. Hãy kiểm tra kết nối của bạn và thử lại."
+    },
+    "limits": {
+      "perNetwork": "Theo mạng",
+      "perNetworkCaption": "Tỷ lệ vốn tối đa trên mỗi mạng · mức tăng 5%",
+      "perProtocol": "Theo giao thức",
+      "perProtocolCaption": "Tỷ lệ vốn tối đa trong mỗi giao thức · mức tăng 5%",
+      "perToken": "Theo token",
+      "perTokenCaption": "Tỷ lệ vốn tối đa được giữ trong mỗi token · mức tăng 5%",
+      "tokenOnNetwork": "{symbol} trên {network}",
+      "hubRow": "Không giới hạn · hub giữ phần không được gửi đến nơi khác",
+      "hubCaption": "Hub",
+      "footnote": "Giới hạn được kiểm tra khi tiền di chuyển. Phần tăng trưởng do biến động giá không bị buộc phải giảm trở lại.",
+      "capMissing": "Đặt một giới hạn hoặc chọn Không giới hạn để tiếp tục.",
+      "sliderLabel": "Tỷ lệ tối đa cho {name}",
+      "noCapLabel": "Không giới hạn cho {name}",
+      "unset": "Chưa đặt",
+      "noRows": "Không có gì để giới hạn ở đây: chưa có gì được thêm vào nhóm này.",
+      "kind": {
+        "lending": "Cho vay",
+        "dex": "Liquidity positions",
+        "perps": "Vĩnh cửu"
+      }
     }
   }
 }

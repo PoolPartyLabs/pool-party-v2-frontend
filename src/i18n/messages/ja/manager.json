@@ -700,6 +700,28 @@
       "v4Pending": "Uniswap v4のプールは、ファンドコントラクトのデータソースとともに追加されます。",
       "retry": "再試行",
       "error": "プールを読み込めませんでした。接続を確認して再試行してください。"
+    },
+    "limits": {
+      "perNetwork": "ネットワーク別",
+      "perNetworkCaption": "各ネットワークにおける資本の最大割合 · 5%刻み",
+      "perProtocol": "プロトコル別",
+      "perProtocolCaption": "各プロトコルにおける資本の最大割合 · 5%刻み",
+      "perToken": "トークン別",
+      "perTokenCaption": "各トークンに保持される資本の最大割合 · 5%刻み",
+      "tokenOnNetwork": "{network} の {symbol}",
+      "hubRow": "上限なし · hub は他に送られなかった分を保持します",
+      "hubCaption": "Hub",
+      "footnote": "上限は資金移動時にチェックされます。価格変動による増加分が強制的に戻されることはありません。",
+      "capMissing": "続けるには上限を設定するか、「上限なし」にチェックを入れてください。",
+      "sliderLabel": "{name} の最大割合",
+      "noCapLabel": "{name} は上限なし",
+      "unset": "未設定",
+      "noRows": "ここには設定する上限がありません。このグループには何も追加されていません。",
+      "kind": {
+        "lending": "レンディング",
+        "dex": "Liquidity positions",
+        "perps": "パーペチュアル"
+      }
     }
   }
 }

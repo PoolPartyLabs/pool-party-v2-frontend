@@ -700,6 +700,28 @@
       "v4Pending": "As pools do Uniswap v4 chegam com a fonte de dados dos contratos de fundo.",
       "retry": "Tentar novamente",
       "error": "Não foi possível carregar as pools. Verifique sua conexão e tente novamente."
+    },
+    "limits": {
+      "perNetwork": "Por rede",
+      "perNetworkCaption": "Participação máxima do capital em cada rede · incrementos de 5%",
+      "perProtocol": "Por protocolo",
+      "perProtocolCaption": "Participação máxima do capital em cada protocolo · incrementos de 5%",
+      "perToken": "Por token",
+      "perTokenCaption": "Participação máxima do capital mantida em cada token · incrementos de 5%",
+      "tokenOnNetwork": "{symbol} na rede {network}",
+      "hubRow": "Sem limite · o hub mantém o que não é enviado a outro lugar",
+      "hubCaption": "Hub",
+      "footnote": "Os limites são verificados quando o dinheiro se move. O crescimento causado por mudanças de preço não é forçado a recuar.",
+      "capMissing": "Defina um limite ou marque Sem limite para continuar.",
+      "sliderLabel": "Participação máxima para {name}",
+      "noCapLabel": "Sem limite para {name}",
+      "unset": "Não definido",
+      "noRows": "Nada para limitar aqui: nada foi adicionado a este grupo.",
+      "kind": {
+        "lending": "Empréstimo",
+        "dex": "Liquidity positions",
+        "perps": "Perpétuos"
+      }
     }
   }
 }

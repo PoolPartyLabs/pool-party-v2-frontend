@@ -700,6 +700,28 @@
       "v4Pending": "Uniswap v4 資金池將隨基金合約資料來源一同上線。",
       "retry": "再試一次",
       "error": "無法載入資金池。請檢查您的網路連線並再試一次。"
+    },
+    "limits": {
+      "perNetwork": "按網路",
+      "perNetworkCaption": "每個網路的最大資金佔比 · 以 5% 為單位",
+      "perProtocol": "按協議",
+      "perProtocolCaption": "每個協議的最大資金佔比 · 以 5% 為單位",
+      "perToken": "按代幣",
+      "perTokenCaption": "每個代幣持有的最大資金佔比 · 以 5% 為單位",
+      "tokenOnNetwork": "{network} 上的 {symbol}",
+      "hubRow": "無上限 · hub 持有未發送至其他地方的資金",
+      "hubCaption": "Hub",
+      "footnote": "限額僅在資金變動時進行查核。因價格變化而產生的增長不會被強制調回。",
+      "capMissing": "請設定限額，或勾選「無上限」以繼續。",
+      "sliderLabel": "{name} 的最大佔比",
+      "noCapLabel": "{name} 無上限",
+      "unset": "未設定",
+      "noRows": "此處無需設定限額：此分組中未新增任何內容。",
+      "kind": {
+        "lending": "借貸",
+        "dex": "Liquidity positions",
+        "perps": "永續"
+      }
     }
   }
 }
