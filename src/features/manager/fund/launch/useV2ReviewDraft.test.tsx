@@ -62,4 +62,18 @@ describe("headless Review contract [R1, R2, R9]", () => {
     expect(upload).toHaveBeenCalledTimes(1);
     expect(result.current.uploadError).toBe("fundLaunch.uploadFailed");
   });
+  it("reports seed bounds and malformed identity and refuses invalid fee precision", () => {
+    const { result } = renderHook(() =>
+      useV2ReviewDraft({ draft, catalog, balance: BigInt(200000000) }),
+    );
+    act(() => result.current.setField("seed", "99"));
+    expect(result.current.errors[0]?.field).toBe("seed");
+    expect(() => result.current.setFeePercent("payoutFeeBps", "8.001")).toThrow("INVALID_FEE");
+    act(() => result.current.setField("seed", "bad"));
+    expect(result.current.preview).toBeNull();
+    const unknown = renderHook(() => useV2ReviewDraft({ draft, catalog, balance: null }));
+    expect(() => unknown.result.current.prepare(`0x${"34".repeat(20)}`)).toThrow("INVALID_DEPOSIT");
+    act(() => unknown.result.current.setMax());
+    expect(unknown.result.current.review.seed).toBe("100");
+  });
 });

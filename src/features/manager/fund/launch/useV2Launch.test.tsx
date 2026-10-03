@@ -147,4 +147,92 @@ describe("headless launch binding [R3, R4, R6]", () => {
     });
     expect(disabled.result.current.error?.code).toBe("V2_UNAVAILABLE");
   });
+  it("advances exactly one ready step for next and sign without running the full plan", async () => {
+    const { result } = renderHook(() => useV2Launch(options()));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    await act(async () => {
+      await result.current.next();
+    });
+    expect(mocks.build).toHaveBeenCalledTimes(1);
+    expect(result.current.currentStep?.kind).toBe("create");
+    await act(async () => {
+      await result.current.sign();
+    });
+    expect(mocks.build).toHaveBeenCalledTimes(2);
+    expect(result.current.currentStep?.kind).toBe("discover");
+  });
+  it("exposes honest waits, polls and pauses without rebuilding confirmed work", async () => {
+    mocks.build.mockResolvedValue({});
+    const { result } = renderHook(() => useV2Launch({ ...options(), pollInterval: 1 }));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    let pending: Promise<void>;
+    await act(async () => {
+      pending = result.current.launch();
+    });
+    await waitFor(() => expect(mocks.build.mock.calls.length).toBeGreaterThan(1));
+    expect(result.current.checkpoints.approve?.status).toBe("waiting");
+    await act(async () => {
+      result.current.pause();
+      await pending;
+    });
+    expect(result.current.busy).toBe(false);
+    expect(result.current.status).toBe("paused");
+  });
+  it("refuses missing wallet/plan and missing or mismatched frozen review", async () => {
+    const missingWallet = renderHook(() =>
+      useV2Launch({ ...options(), manager: null, wallet: null }),
+    );
+    await act(async () => {
+      await missingWallet.result.current.launch();
+    });
+    expect(missingWallet.result.current.error?.messageKey).toBe("fundLaunch.walletOrJournal");
+    missingWallet.unmount();
+    const noPlan = renderHook(() => useV2Launch({ ...options(), plan: undefined }));
+    await waitFor(() => expect(noPlan.result.current.hydrated).toBe(true));
+    await act(async () => {
+      await noPlan.result.current.launch();
+    });
+    expect(noPlan.result.current.error?.code).toBe("BUILD_EXECUTION_GAP");
+    noPlan.unmount();
+    const noReview = renderHook(() => useV2Launch({ ...options(), frozen: undefined }));
+    await waitFor(() => expect(noReview.result.current.hydrated).toBe(true));
+    await act(async () => {
+      await noReview.result.current.resume();
+    });
+    expect(noReview.result.current.error?.code).toBe("INVALID_JOURNAL");
+    await act(async () => {
+      await noReview.result.current.launch();
+    });
+    expect(noReview.result.current.error?.code).toBe("INVALID_REVIEW");
+    noReview.unmount();
+    const prepare = vi.fn(() => ({ ...frozen, request: { ...frozen.request, manager: base } }));
+    const mismatch = renderHook(() => useV2Launch({ ...options(), prepare }));
+    await waitFor(() => expect(mismatch.result.current.hydrated).toBe(true));
+    expect(prepare).not.toHaveBeenCalled();
+    await act(async () => {
+      await mismatch.result.current.launch();
+    });
+    expect(mismatch.result.current.error?.code).toBe("INVALID_REVIEW");
+  });
+  it("validates unreadable plan and redacts non-code prepare errors", async () => {
+    const badPlan = renderHook(() =>
+      useV2Launch({ ...options(), plan: { ...plan, version: 2 } as unknown as typeof plan }),
+    );
+    await waitFor(() => expect(badPlan.result.current.hydrated).toBe(true));
+    expect(badPlan.result.current.gap).toBe(true);
+    badPlan.unmount();
+    const invalid = renderHook(() =>
+      useV2Launch({
+        ...options(),
+        prepare: () => {
+          throw new Error("sensitive private data");
+        },
+      }),
+    );
+    await waitFor(() => expect(invalid.result.current.hydrated).toBe(true));
+    await act(async () => {
+      await invalid.result.current.launch();
+    });
+    expect(invalid.result.current.error?.code).toBe("LAUNCH_STEP_FAILED");
+  });
 });
