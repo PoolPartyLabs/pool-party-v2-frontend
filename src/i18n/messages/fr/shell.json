@@ -82,5 +82,8 @@
     "v1": "V1",
     "v2": "V2",
     "tooltip": "Basculez entre le constructeur actuel (V1) et l'aperçu des contrats de fonds (V2)."
+  },
+  "toaster": {
+    "ariaLabel": "Notifications"
   }
 }
