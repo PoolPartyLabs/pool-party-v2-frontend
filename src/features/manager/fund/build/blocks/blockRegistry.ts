@@ -1,0 +1,348 @@
+/**
+ * @id PP-MGR-LIB-024
+ * @name blockRegistry
+ * @implements-rules-version v1 (POO-2155 rules v1)
+ * @analytics-events none, a pure module. What the canvas does with a block is reported by
+ *   `useBuildCanvas` through `onEvent`, and the Build screen (PP-MGR-SCR-002, S7) maps it to events.
+ *
+ * One definition per block kind (handoff v1.2 "Building blocks"): its icon, its palette section, where
+ * it can be placed, which companion the app places with it, which field an empty block waits for.
+ * Then the two functions the renderer (S6) calls for every card and pill: {@link describeBlock} and
+ * {@link describeFlow}, which derive a card's title, caption, state and accessible name from its
+ * `config` (heads-up HU2), so the card re-renders the moment the panel batch writes a config.
+ *
+ * LEGALITY IS NOT HERE. Whether a kind may be placed on a network (C22, INV2), which ports exist
+ * (C17) and what fits them (I4) are S1's rules (`kindAvailability`, `portSlotsOf`, `insertOptions`),
+ * one source of truth the reducers also read. The registry reads `BLOCK_KIND_STATUS` instead of
+ * keeping a copy, and its `placement` and `swapAuto` fields are documentation of S1's behaviour that
+ * a test holds equal to the reducers.
+ *
+ * Card states (D27, D6, C22), in order of precedence:
+ * 1. `comingSoon`: the kind's status is coming soon, whatever the mandate holds;
+ * 2. `invalid`: the block names something the mandate no longer holds (an INV2 violation on the
+ *    block, or a spoke whose network left the mandate); its caption reads "No longer in your
+ *    mandate" and the block is never deleted silently;
+ * 3. `empty`: `config` is null (G6: every block the manager adds in this batch);
+ * 4. `default`.
+ */
+import { networkStableSymbol } from "@/lib/chains/config";
+import { HUB_NETWORK, type MandateDraft, type NetworkId, tokenKey } from "../../mandateDraft";
+import type { BlockContent, BlockIcon, FlowContent } from "../pieces/pieceTypes";
+import {
+  BLOCK_KIND_PROTOCOL,
+  BLOCK_KIND_STATUS,
+  type BlockKind,
+  type BlockKindStatus,
+  type BuildPlan,
+  type FlowKind,
+  type PositionBlock,
+} from "../plan/buildPlan";
+import { findBlock } from "../plan/planDerive";
+import type { PlanViolation } from "../plan/planInvariants";
+import { arrivingTokenKey, isPoolKind } from "../plan/planRules";
+import { type BlockCopy, feeNumber, shareNumber } from "./blockCopy";
+
+/** Where a kind can be placed (S1 decides; this names it). */
+export type BlockPlacement = "newChain" | "afterSupply";
+
+/** When the app places a Swap · auto directly before the block (C13). */
+export type SwapAutoCompanion = "always" | "whenAssetDiffers" | "never";
+
+/** One block kind, as the canvas presents it. */
+export interface BlockDefinition {
+  kind: BlockKind;
+  /** C22, read from `BLOCK_KIND_STATUS`. */
+  status: BlockKindStatus;
+  icon: BlockIcon;
+  /** The translation key of the protocol name ("Uniswap v4"). */
+  protocolNameKey: string;
+  /** The translation key of the block type ("Liquidity position"). */
+  blockTypeKey: string;
+  paletteSection: "mandate" | "comingSoon";
+  /** A new chain (a row's Add protocol circle), or directly under a Supply (its bottom port). */
+  placement: BlockPlacement;
+  /** The companion the app places (C13); Collect fees is the manager's (D2). */
+  swapAuto: SwapAutoCompanion;
+  /** What an empty block waits for: "Pick a pool", "Pick an asset"; null for undrawn kinds. */
+  configField: "pool" | "asset" | null;
+}
+
+function definition(
+  kind: BlockKind,
+  icon: BlockIcon,
+  placement: BlockPlacement,
+  swapAuto: SwapAutoCompanion,
+  configField: BlockDefinition["configField"],
+): BlockDefinition {
+  const status = BLOCK_KIND_STATUS[kind];
+  return {
+    kind,
+    status,
+    icon,
+    protocolNameKey: `fundBuilder.canvas.blocks.${kind}.protocol`,
+    blockTypeKey: `fundBuilder.canvas.blocks.${kind}.type`,
+    paletteSection: status === "comingSoon" ? "comingSoon" : "mandate",
+    placement,
+    swapAuto,
+    configField,
+  };
+}
+
+/**
+ * Every block kind, in palette and menu order. Pendle and GMX cards are not drawn yet (handoff
+ * "Building blocks"); they take the pool's icon until they are.
+ */
+export const BLOCK_REGISTRY: Readonly<Record<BlockKind, BlockDefinition>> = {
+  uniswapV4Pool: definition("uniswapV4Pool", "layers", "newChain", "always", "pool"),
+  aaveSupply: definition("aaveSupply", "bank", "newChain", "whenAssetDiffers", "asset"),
+  aaveBorrow: definition("aaveBorrow", "bank", "afterSupply", "never", "asset"),
+  uniswapV3Pool: definition("uniswapV3Pool", "layers", "newChain", "always", "pool"),
+  pendle: definition("pendle", "layers", "newChain", "never", null),
+  gmxPerp: definition("gmxPerp", "layers", "newChain", "never", null),
+};
+
+/** The kinds in registry order (the order the palette and the menus list them). */
+export const BLOCK_KINDS: readonly BlockKind[] = Object.keys(BLOCK_REGISTRY) as BlockKind[];
+
+/** What {@link describeBlock} and {@link describeFlow} read. */
+export interface DescribeContext {
+  plan: BuildPlan;
+  draft: MandateDraft;
+  /** `validatePlan` of the plan (useBuildPlan's memoised list). */
+  violations: readonly PlanViolation[];
+  copy: BlockCopy;
+}
+
+const INVALID_BLOCK_CODES: ReadonlySet<PlanViolation["code"]> = new Set([
+  "kind_not_in_mandate",
+  "kind_not_on_network",
+  "config_not_in_mandate",
+]);
+
+/** D6: whether a block names something the mandate no longer holds. */
+export function isBlockInvalid(
+  blockId: string,
+  network: NetworkId,
+  violations: readonly PlanViolation[],
+): boolean {
+  return violations.some(
+    (v) =>
+      (INVALID_BLOCK_CODES.has(v.code) && v.targetId === blockId) ||
+      (v.code === "network_not_in_mandate" && v.targetId === network),
+  );
+}
+
+/** The symbol of a mandate token of this network, or null when the draft does not hold it. */
+function tokenSymbol(draft: MandateDraft, network: NetworkId, key: string): string | null {
+  const lower = key.toLowerCase();
+  return draft.tokens.find((t) => t.network === network && tokenKey(t) === lower)?.symbol ?? null;
+}
+
+/** Title and caption of a position block from its config (HU2), before any state override. */
+function titleAndCaption(
+  block: PositionBlock,
+  network: NetworkId,
+  ctx: DescribeContext,
+): { title: string; caption: string } {
+  const { copy, draft } = ctx;
+  const protocol = copy.protocolName(block.kind);
+  if (isPoolKind(block.kind)) {
+    const config = block.config as { poolId: string } | null;
+    const pool = config ? draft.pools.find((p) => p.id === config.poolId) : undefined;
+    if (!pool) return { title: protocol, caption: copy.card.pickPool };
+    return {
+      title: copy.card.poolTitle(pool.token0.symbol, pool.token1.symbol),
+      caption: copy.card.poolCaption(protocol, feeNumber(pool.feeBps)),
+    };
+  }
+  if (block.kind === "aaveSupply" || block.kind === "aaveBorrow") {
+    const symbol = block.config ? tokenSymbol(draft, network, block.config.assetKey) : null;
+    if (symbol === null) {
+      return {
+        title: block.kind === "aaveSupply" ? copy.card.emptySupply : copy.card.emptyBorrow,
+        caption: copy.card.pickAsset,
+      };
+    }
+    if (block.kind === "aaveBorrow") {
+      return { title: copy.card.borrowTitle(symbol), caption: copy.card.aaveCaption };
+    }
+    return {
+      title: copy.card.supplyTitle(symbol),
+      caption:
+        network === HUB_NETWORK
+          ? copy.card.aaveCaption
+          : copy.card.aaveCaptionOnNetwork(copy.networkName(network)),
+    };
+  }
+  // Pendle and GMX: not drawn yet, so the card reads its protocol over its type.
+  return { title: protocol, caption: copy.blockType(block.kind) };
+}
+
+/** A card for an id the plan does not hold: neutral, so a stale render never throws. */
+function unknownCard(): BlockContent {
+  return { title: "", caption: "", icon: "layers", state: "invalid", accessibleName: "" };
+}
+
+/**
+ * HU2, D27, C22, I10: what a position card shows, derived from its kind, its `config`, the plan's
+ * violations and the C22 table. The accessible name states the card's place ("WETH / USDC, Uniswap
+ * v4 · 0.05%, on Arbitrum, 60% of the capital"), the share being its chain's.
+ */
+export function describeBlock(blockId: string, ctx: DescribeContext): BlockContent {
+  const found = findBlock(ctx.plan, blockId);
+  if (found?.block.family !== "position") return unknownCard();
+  const block = found.block;
+  const def = BLOCK_REGISTRY[block.kind];
+  const { copy } = ctx;
+  const base = titleAndCaption(block, found.network, ctx);
+  const state: BlockContent["state"] =
+    def.status === "comingSoon"
+      ? "comingSoon"
+      : isBlockInvalid(block.id, found.network, ctx.violations)
+        ? "invalid"
+        : block.config === null
+          ? "empty"
+          : "default";
+  const caption = state === "invalid" ? copy.card.invalid : base.caption;
+  const content: BlockContent = {
+    title: base.title,
+    caption,
+    icon: def.icon,
+    state,
+    accessibleName: copy.card.accessibleName({
+      title: base.title,
+      caption,
+      network: copy.networkName(found.network),
+      pct: shareNumber(found.chain.sharePct),
+    }),
+  };
+  if (state === "comingSoon") content.soonTag = copy.palette.soon;
+  return content;
+}
+
+/** A pill for an id the plan does not hold. */
+function unknownPill(): FlowContent {
+  return { text: "", tooltip: "", icon: "swap" };
+}
+
+/**
+ * C13, C19, D7: what a flow pill shows. A Swap · auto names the token that arrives (the network's
+ * stable at the head of a chain, so USDG on Robinhood Chain; a Borrow's asset after a Borrow) and,
+ * before a Supply, the asset it buys. The Bridge is not a plan block: S6 draws it from its spoke.
+ */
+export function describeFlow(blockId: string, ctx: DescribeContext): FlowContent {
+  const found = findBlock(ctx.plan, blockId);
+  if (found?.block.family !== "flow") return unknownPill();
+  const { copy } = ctx;
+  const kind: FlowKind = found.block.kind;
+  if (kind === "collectFees") {
+    return { text: copy.flow.collectFees, tooltip: copy.tooltip.collectFees, icon: "coins" };
+  }
+  if (!found.block.auto) {
+    return { text: copy.flow.swap, tooltip: copy.tooltip.swap, icon: "swap" };
+  }
+  const next = found.chain.steps[found.index + 1];
+  const arrivingKey = next ? arrivingTokenKey(ctx.plan, ctx, next.id) : null;
+  const token =
+    (arrivingKey ? tokenSymbol(ctx.draft, found.network, arrivingKey) : null) ??
+    networkStableSymbol(found.network);
+  if (next?.family === "position" && next.kind === "aaveSupply" && next.config) {
+    const asset = tokenSymbol(ctx.draft, found.network, next.config.assetKey);
+    if (asset) {
+      return {
+        text: copy.flow.swapAuto,
+        tooltip: copy.tooltip.swapAutoSupply(token, asset),
+        icon: "swap",
+      };
+    }
+  }
+  return { text: copy.flow.swapAuto, tooltip: copy.tooltip.swapAuto(token), icon: "swap" };
+}
+
+// ---------------------------------------------------------------------------
+// Palette (AN8, D25)
+// ---------------------------------------------------------------------------
+
+/** What a palette row drags: a position kind, or a flow block the manager places. */
+export type PaletteDragItem =
+  | { family: "position"; kind: BlockKind }
+  | { family: "flow"; kind: FlowKind };
+
+/** One palette row. `drag` null: not draggable (coming soon). */
+export interface PaletteItem {
+  /** The kind it stands for, also the id of its logo or icon. */
+  id: BlockKind | FlowKind;
+  name: string;
+  /** The block type under the name; null for a flow row. */
+  caption: string | null;
+  drag: PaletteDragItem | null;
+}
+
+export interface PaletteSection {
+  id: "mandate" | "flow" | "comingSoon";
+  label: string;
+  items: PaletteItem[];
+}
+
+export interface PaletteModel {
+  /** In display order. An empty mandate section is left out. */
+  sections: PaletteSection[];
+  /** The caption under the mandate and flow lists. */
+  caption: string;
+  soonTag: string;
+  soonTooltip: string;
+}
+
+/**
+ * AN8, D25: the palette of a mandate. FROM YOUR MANDATE lists the enabled kinds whose protocol is in
+ * the mandate (whatever the network: the drop targets say where); FLOW BLOCKS lists Swap, and Collect
+ * fees only when an enabled pool protocol is in the mandate (Uniswap v4 today); COMING SOON lists the
+ * coming-soon kinds whatever the mandate holds (C22, D12). No Bridge (the app places it, C4) and no
+ * Output (the spine is fixed, C2).
+ */
+export function paletteModel(draft: MandateDraft, copy: BlockCopy): PaletteModel {
+  const inMandate = (kind: BlockKind) => {
+    const protocol = BLOCK_KIND_PROTOCOL[kind];
+    return protocol !== null && draft.protocols.includes(protocol);
+  };
+  const mandate: PaletteItem[] = BLOCK_KINDS.filter(
+    (kind) => BLOCK_REGISTRY[kind].status === "enabled" && inMandate(kind),
+  ).map((kind) => ({
+    id: kind,
+    name: copy.protocolName(kind),
+    caption: copy.blockType(kind),
+    drag: { family: "position", kind },
+  }));
+  const hasEnabledPool = BLOCK_KINDS.some(
+    (kind) => isPoolKind(kind) && BLOCK_REGISTRY[kind].status === "enabled" && inMandate(kind),
+  );
+  const flow: PaletteItem[] = [
+    { id: "swap", name: copy.flow.swap, caption: null, drag: { family: "flow", kind: "swap" } },
+  ];
+  if (hasEnabledPool) {
+    flow.push({
+      id: "collectFees",
+      name: copy.flow.collectFees,
+      caption: null,
+      drag: { family: "flow", kind: "collectFees" },
+    });
+  }
+  const comingSoon: PaletteItem[] = BLOCK_KINDS.filter(
+    (kind) => BLOCK_REGISTRY[kind].status === "comingSoon",
+  ).map((kind) => ({ id: kind, name: copy.protocolName(kind), caption: null, drag: null }));
+
+  const sections: PaletteSection[] = [];
+  if (mandate.length > 0) {
+    sections.push({ id: "mandate", label: copy.palette.fromMandate, items: mandate });
+  }
+  sections.push({ id: "flow", label: copy.palette.flowBlocks, items: flow });
+  if (comingSoon.length > 0) {
+    sections.push({ id: "comingSoon", label: copy.palette.comingSoon, items: comingSoon });
+  }
+  return {
+    sections,
+    caption: copy.palette.caption,
+    soonTag: copy.palette.soon,
+    soonTooltip: copy.palette.soonTooltip,
+  };
+}
