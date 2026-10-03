@@ -226,8 +226,10 @@ Both sit behind the `fundContracts` registry entry (`PP-CORE-LIB-011`, env
 **Folder layout.** `src/features/manager/fund/`: `mandateCatalog.ts` (`PP-MGR-LIB-018`),
 `mandateDraft.ts` (`PP-MGR-LIB-019`), `mandateDraftStore.ts` (`PP-MGR-STO-001`),
 `useMandateDraft.ts` (`PP-MGR-HOK-006`), `mandatePoolSource.ts`, `FundStrategyBuilderScreen.tsx` /
-`BuilderRouteSwitch.tsx` / `FundBuildLanding.tsx` (all `PP-MGR-SCR-002`), `steps/{Networks,
-Protocols, Tokens, Pools, Limits}Step.tsx` (`PP-MGR-CMP-035` to `039`), and
+`BuilderRouteSwitch.tsx` / `FundBuildLanding.tsx` (all `PP-MGR-SCR-002`; the landing is the Build
+placeholder that the activation slice, POO-2157, replaces with the Build canvas), `steps/{Networks,
+Protocols, Tokens, Pools, Limits}Step.tsx` (`PP-MGR-CMP-035` to `039`), `build/` (the Build canvas, own
+section below), and
 `components/{MandateRow, NetworkDots, BuilderActionBar, MandateSubStepHeader, CopyAddressChip,
 MandateSummaryCard, MandateDraftsList, FundDraftsSlot, NameDraftDialog}.tsx`. The V1 builder stays
 in `src/features/manager/components/`, imported for its helpers but never modified by this phase.
@@ -319,9 +321,10 @@ as "strategy" throughout, matching the V1 builder's vocabulary, unresolved. **8.
 pool catalog has no endpoint on any network today, so a v4 request in real mode returns nothing (see
 `docs/INTEGRATION_POINTS.md`, "Fund contracts builder"). **9.** "N% selected" on a pool card mirrors V1 exactly: the pool's share of the pair's TVL across the fetched fee tiers, computed client-side (`tierShare` in `mandatePoolSource.ts`); no API field carries a manager share today, so the handoff's "share of V1 managers who chose that tier" has no source and the V1 computation wins. **10.** "Next: Build strategy" on step 5 marks the mandate complete, persists the draft, and lands on the Build placeholder (`FundBuildLanding`) that prints the mandate back; Back: Mandate returns to Limits. **11.** The feature flag is `fundContracts` (`NEXT_PUBLIC_FEATURE_FUND_CONTRACTS`), off by default, `next` stage; the header toggle renders only while it is on and the V2 builder only while the toggle says V2; `v2.dev.pool-party.xyz` needs the variable baked before the image build. **12.** Deep links are query params on the existing route, `/manager/new?draft=<id>&step=<key>` (plus `&phase=build` once the mandate completed), no new route folder. Decisions 1 to 12 are recorded in the "Plan" section of the POO-2119 Linear issue; Murilo can overturn any of them.
 
-**What is NOT done.** The Build canvas (still in design; `FundBuildLanding`, `PP-MGR-SCR-002`, is a
-landing that prints the mandate back and says the canvas is coming, nothing more). Review (this
-phase has none). Investor-facing flag placement (the strategy card and detail show no Broad-mandate
+**What is NOT done.** The Build canvas is built but not mounted: `FundBuildLanding`
+(`PP-MGR-SCR-002`) is still the landing that prints the mandate back, until the activation slice
+(POO-2157) mounts the canvas in its place; what the canvas does and does not do is in its own section
+below. Review (this phase has none; POO-2172). Investor-facing flag placement (the strategy card and detail show no Broad-mandate
 flag anywhere today, `CR-MGR-010`). Backend persistence (drafts are `localStorage` only,
 `PP-MGR-STO-001`'s own `PP-INTEGRATION-POINT`; wiring issue POO-2132). Mobile layouts (desktop only,
 per the handoff). Uniswap v4 pool data in real mode (mock fixtures only,
@@ -336,7 +339,8 @@ issue POO-2134, against POO-2116 slices 5, 7 and 12.
 fund builder"). The funnel is `builder_mandate_started` / `_step_viewed` / `_step_submitted` /
 `_blocked` / `_completed` / `_abandoned`, plus `builder_draft_saved` and `builder_mandate_error`, and
 the Build-phase / drafts trio `builder_build_landing_viewed`, `builder_draft_opened`,
-`builder_draft_deleted`. `builder_mandate_blocked`'s five NEW reasons are `nothing_selected`,
+`builder_draft_deleted` (the activation slice, POO-2157, replaces `builder_build_landing_viewed` with
+the Build canvas events; its names are in `docs/ANALYTICS_EVENTS.md` once that slice lands). `builder_mandate_blocked`'s five NEW reasons are `nothing_selected`,
 `cap_missing`, `no_slots`, `has_hook` and `coming_soon`; `price_unknown` (an unpriced token) and
 `name_invalid` (the draft name) REUSE the existing POO-1172 reason series rather than mint
 per-builder duplicates. A draft-save failure reports `builder_mandate_error { error_code:
@@ -354,6 +358,162 @@ reach `useMandateDraft.ts`, which sits directly in `fund/`, not in a nested `hoo
 file here still counts toward the GLOBAL floor (statements 75 / branches 70 / functions 82 / lines
 78), just not a stricter dedicated one the way `src/lib/utils/**` gets. Noted here rather than
 changed, per this slice's instruction not to touch the thresholds.
+
+## Build canvas (fund contracts builder, epic POO-2144)
+
+The Build phase of the fund-contracts builder: the manager assembles the strategy as a top-down graph of
+blocks, using only what the mandate holds, and always sees where the capital goes and how it comes back.
+The rules (C1 to C22, I1 to I10, the layout constants) are the handoff in the description of Linear issue
+POO-2144, v1.2 with C22 (later revisions reconciled it with the deployed alpha and changed no rule). All of it
+is behind the `fundContracts` flag (default off) and the V2 toggle, and it signs and sends nothing: a plan is a
+local draft. The canvas is built as dormant slices (POO-2151 to POO-2156) that mount nothing. Mounting it in
+the shell, the `Next: Review` checks and the canvas analytics are the activation slice, POO-2157, and are not
+described here.
+
+**Folder map** (`src/features/manager/fund/build/`; every file carries its id in its header):
+
+| Folder | Ids | What it owns |
+|---|---|---|
+| `plan/` | `PP-MGR-LIB-021`, `PP-MGR-HOK-007` | The plan model, the rules (`planRules`), the pure reducers, `validatePlan` (INV1 to INV6), the derived facts, storage inside the draft, the `useBuildPlan` hook, and test support `planTestKit` |
+| `canvas/` | `PP-MGR-CMP-045` to `047`, `PP-MGR-LIB-022`, `PP-MGR-HOK-008` | The Build step frame (`BuildStepLayout`), the clipped canvas with zoom, pan and fit (`CanvasViewport`, `useCanvasViewport`, `viewportMath`) and the panel slot (`BuildPanelSlot`) |
+| `layout/` | `PP-MGR-LIB-023` | The pure layout function, its types, its constants (`LAYOUT`), `toLayoutInput` and test support `layoutTestKit` |
+| `pieces/` | `PP-MGR-CMP-048` to `055` | The presentational pieces: spine card, position card, flow pill, share label, insert port, spoke group, edges, the two templates. Strings arrive as props; they import nothing from `plan/`, `layout/`, `blocks/` or `graph/` |
+| `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056` to `058`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu and its popover, the panel stub, the selection guard and the controller (`useBuildCanvas`) |
+| `graph/` | `PP-MGR-CMP-059` | The renderer `BuildGraph` (layout, pieces, selection and active targets in, presses out), its reading-order model, `useGraphLayout` and `useTextWidth` |
+
+The reference canvases live in `src/mocks/data/buildCanvasFixtures.ts` (`PP-MGR-MCK-004`). The components have
+stories in their folders (the helpers `AnchoredPopover` and `BlockMark` are shown through the menu and palette
+stories). Legality is decided in one place, `plan/` (`kindAvailability`, `portSlotsOf`, `insertOptions`, the
+reducers); the layout, the registry and the menus read it, and the registry's own `placement` field is held
+equal to the reducers by a test.
+
+**The plan model in five lines.**
+
+1. `BuildPlan` is `{ version: 1, hub: { chains }, spokes: [{ network, sharePct, chains }] }`, hub chains and
+   spokes left to right; a `Chain` is `{ id, sharePct, steps }`, its steps top to bottom.
+2. A step is a position block (a card: `uniswapV4Pool`, `aaveSupply` and `aaveBorrow` are enabled;
+   `uniswapV3Pool`, `pendle` and `gmxPerp` are coming soon and are never created) or a flow block (a pill:
+   `swap` or `collectFees`, with `auto: true` for the ones the app owns and the manager cannot add or remove).
+3. A position block's `config` is `null` while the block is empty (every block a manager adds in this batch),
+   else `{ poolId }` or `{ assetKey }`; "configured", a card's title and caption and the Swap · auto above a
+   block all derive from it (HU2).
+4. `sharePct` is a percentage of the strategy's capital: hub chains plus spokes at most 100, a spoke's chains
+   at most the spoke's share (INV3). A block that is not the first of its chain has no share.
+5. The reducers (`addChain`, `addSpoke`, `removeSpoke`, `insertAt`, `removeBlock`, `setBlockConfig`,
+   `setChainShare`, `setSpokeShare`, `reconcileAutoBlocks`) are pure and immutable and return the new plan or
+   `{ blocked: { reason } }`; the plan is an optional field of the mandate draft (`MandateDraft.plan?`, with
+   `lastPhase?`), saved in the same `localStorage` payload.
+
+**The layout is derived and never stored.** Positions and sizes, the Bridge of a spoke, the Income (fees)
+block, the return lines, the insert ports, the template positions, a block's network (the group it sits in,
+C5) and a card's title and caption are computed from the plan and from nothing else. `toLayoutInput(plan)`
+maps the stored plan onto a structural `LayoutInput`, `layoutGraph(input, { startHereWidth })` returns the
+`GraphLayout` (the box of every node, the centre line of every 1.5 px stroke, labels, ports, groups,
+templates, the graph size), and `BuildGraph` draws it. Every distance is in `LAYOUT` (C21). Pan and zoom live
+in the viewport and never lay the graph out again; any change to the plan recomputes it (C1, C18).
+
+**Adding a block kind: the registry is the place.** Availability is data, so enabling a coming-soon kind is
+one line of `BLOCK_KIND_STATUS` (`plan/buildPlan.ts`). A new position kind needs, in order: its entry in `BlockKind`,
+`BLOCK_KIND_STATUS`, `BLOCK_KIND_PROTOCOL` and `BlockConfigByKind` (`plan/buildPlan.ts`); the sequence rules
+it follows in `plan/planRules.ts` and `plan/planInvariants.ts`; its definition in `BLOCK_REGISTRY` and its
+title and caption in `blocks/blockRegistry.ts` (`titleAndCaption`, `describeBlock`); the keys
+`fundBuilder.canvas.blocks.<kind>.protocol` and `.type` read in `blocks/blockCopy.ts`, in all 11 locales
+(`pnpm i18n:check`); and a block sheet in Linear (POO-2160 to POO-2166 are the sheets of today's kinds).
+
+**Coordinator defaults a product owner may overturn.** The handoff names its own open points; the coordinator
+applied a default so the slices could proceed (the plan comment on POO-2144 is the record). Each one is
+overturnable, and `D12`, `D19`, `D29` are the ones most likely to be.
+
+| Id | Point | Default |
+|---|---|---|
+| D1 | Sequences with more than one position | The renderer and `validatePlan` accept any plan that satisfies INV5 (canvas A is valid); port menus offer only the I4 list, plus Swap after a Borrow |
+| D2 | Collect fees with a pool | Not added with the pool; the manager places it (the recommendation to add it waits for the panel batch) |
+| D3 | Spoke share | `Spoke.sharePct` is stored and shown above the Bridge; new spokes and chains start at 0%; the unallocated share is not printed |
+| D4 | No network left to add | The Add network box stays; its menu shows the footer and the link; the press reports `no_network_left` |
+| D5 | Remove a network, remove a block | A close control on the chip of a spoke with no chain; Remove block acts at once with an undo toast; the `confirmRemove` seam waits for the panel |
+| D6 | Mandate edited after the plan exists | Never delete silently: blocks that no longer fit show "No longer in your mandate" |
+| D7 | USDG on Robinhood Chain | Swap · auto and Bridge tooltips take `{token}` from `networkStableSymbol(network)`, never a literal USDC. The registry deviates once, approved in the review of PR #36: Swap · auto names the token that actually arrives (a Borrow's asset after a Borrow) |
+| D8 | Zoom, motion, hover | 10% steps from 25% to 150%, fit may go lower; re-flow 150 ms ease-out, none under reduced motion; card hover border `muted-foreground`; no animation in the viewport itself |
+| D9 | Where the plan lives | Only in the draft (the browser store). Product owner rulings of 2026-10-03: no backend strategy drafts, no fund creation through the API, the Uniswap v4 pool and Aave reserve catalogs come from the backend API being built (POO-2146), no sample data in real mode |
+| D10 | Hub with no chain beside a spoke | The hub's Add protocol circle sits at the left end of the row (x 24) |
+| D11 | Long captions | One line with an ellipsis, the full text in a tooltip; the card stays 62 high |
+| D12 | Coming-soon rows against rule A4 | A fixed product list, disabled, shown in every Add protocol menu and in the palette whatever the mandate; A4 is read as "every enabled option" |
+| D13 | Port tooltip | One tooltip per slot naming what its menu offers, instead of the single handoff string |
+| D14 | Shape of `config` | `{ poolId }` and `{ assetKey }`, extended by the panel batch; a manager Swap has no config |
+| D15 | Fixtures that name Base | Fixtures are `LayoutInput` (networks are strings); `BuildPlan` stays strict on `NetworkId` |
+| D16 | Resume on Build | Optional `lastPhase` on the draft, written on every save as the phase the manager is in; the Console Open adds `&phase=build` for a completed draft whose last phase is Build |
+| D17 | Unsaved check | `planFingerprint` joins the unsaved fingerprint; plan edits never un-complete the mandate |
+| D18 | Unreadable stored plan | The draft is kept and only the plan is dropped (every block is empty in this batch) |
+| D19 | Next: Review | Never disabled; ordered checks, then "Review is not available yet"; the six notices are added by the activation slice (POO-2157) |
+| D20 | Analytics names | Defined and emitted by the activation slice (POO-2157) |
+| D21 | Menu popover | The new dependency was NOT approved: the menus use the in-house `AnchoredPopover` behind a narrow interface, so swapping it later touches one file |
+| D22 | Drag | Native pointer events, no library; the menus are the keyboard path |
+| D23 | Grid width | The Build phase uses the full content width (canvas column about 604 against 656 in Figma) |
+| D24 | The Build placeholder | `FundBuildLanding` is replaced by the activation slice; `MandateSummaryCard` stays for Review |
+| D25 | Palette | Enabled kinds of the mandate's protocols; Collect fees only with an enabled pool protocol; the column scrolls inside itself past 640 |
+| D26 | Share label of a spoke | Selects nothing (it feeds the Bridge, which is not selectable) |
+| D27 | Invalid and coming-soon cards | Invalid: `destructive` border and caption; coming soon: the "Soon" tag. Both are meant to block Review |
+| D28 | Locales | 11, the repository's config, not the 12 the handoff names |
+| D29 | Aave v3 Borrow | Stays enabled as handoff C22 says, although the fund contracts are supply only; moving it to coming soon is one line of `BLOCK_KIND_STATUS` plus two strings; `docs/COMPLIANCE_REGISTER.md` `CR-MGR-016` |
+
+Two readings in code are the coordinator's, not the handoff's: INV5 reads "nothing follows a pool except its
+Collect fees" as "a pool, or its Collect fees, ends the chain" (`plan/planInvariants.ts`), and normalisation
+(L4) only ever shifts the graph to the right (`layout/layoutGraph.ts`).
+
+**What is NOT done.** The configuration panel: pool, price range, allocation, slippage and the Aave fields
+(handoff POO-2171); the panel is a slot filled by a stub (`PanelStub`) that only shows the selected block's head
+and Remove block, so every block a manager adds stays empty and configured blocks exist only in fixtures and
+stories. Review (POO-2172); the `Next: Review` checks belong to the activation slice (POO-2157). Real data sources: Uniswap v4 pools and Aave v3
+reserves (POO-2133, POO-2146), with no sample data in real mode; quotes for the Swap and the Bridge (POO-2148).
+Anything on chain: no block becomes an operation (the seams are rows of `docs/INTEGRATION_POINTS.md`, "Fund
+contracts builder"). Backend drafts (POO-2132, not needed for the buildathon MVP). Mobile (desktop only, per
+the handoff). What the canvas prints that must be verified before a real manager sees it is
+`docs/COMPLIANCE_REGISTER.md` `CR-MGR-014` to `CR-MGR-019`.
+
+**Nobody has seen this screen in a browser.** The tests run in jsdom, which has no layout engine, no canvas
+text measure and no Safari gesture events. The stories exist for every component and for the graph on every
+reference canvas, but no one has opened them next to the Figma frames. The proof that the page never scrolls
+sideways because of the graph (A7) is the `WideGraphNoPageScroll` story, not a unit test; the Safari pinch
+path of the viewport is untested (a note in `useCanvasViewport.ts`); the first browser walk is the review
+slice's (POO-2159) and needs Murilo's permission.
+
+### Parity record (A2, POO-2158)
+
+What was compared: the layout function against the Figma reference canvases, node by node, as measured by the
+layout slice (POO-2153) in Figma file `jjOf5DL9uVEB7WBR9nGb4A`, Drafts page, section "Strategy Builder · fund
+contracts", read on 2026-10-03 after the Swap · auto redraw. The measurements and the assertions are
+`src/features/manager/fund/build/layout/layoutGraph.oracles.test.ts` over the fixtures of
+`src/mocks/data/buildCanvasFixtures.ts`; nothing was re-measured for this record. The handoff's tolerance is 1
+px; the oracles are tighter.
+
+| Reference | Frame | Graph node measured | Fixture | Graph size asserted | Layout oracle |
+|---|---|---|---|---|---|
+| Canvas A, complex | [8099-2757](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8099-2757) | 8219:2481 (the frame is 2356 wide because the open menu is drawn inside it) | `canvasA` | 2080 x 772 | Matches |
+| Canvas B, intermediate | [8119-2723](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8119-2723) | 8207:2481 | `canvasB` | 1248 x 624 | Matches |
+| Canvas C, simple (worked example 1) | [8119-2921](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8119-2921) | 8220:2481 | `canvasC` | 608 x 674 | Matches, and every row of the handoff table |
+| Canvas D, empty (Build state 1) | [8119-3062](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8119-3062) | 8172:2110 | `canvasD` | 468 x 572 (English sentence 420 wide) | Matches |
+| Build state 3, block added, empty, selected | [8130-4133](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8130-4133) | 8130:4749 (drawn at 100%) | `buildState3` | 400 x 576 | Matches |
+| Build state 5, one configured chain with Collect fees | [8145-2061](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8145-2061) | 8145:2689 (drawn at 0.8981, divided back) | `buildState5` | 552 x 650 | Matches, and the handoff's normalisation numbers (shift 76) |
+
+How a layout is "matching": every box of a node is equal to the frame's (exact, 0 px); the full list of line
+rectangles is equal as a multiset (Figma draws each segment as a 1.5 px rectangle); share labels, network chips
+and ports are within 0.5 px (Figma centres a 45 px label at x + 22.5, and a 21 px chip on the 228 border sits
+at 227.5); for Build state 5 each Figma number divided by the scale is within 0.01 of the oracle. Beside the
+frames the handoff's own numbers are asserted: worked example 1 (canvas C, 608 x 674), worked example 2 (928 x
+772, computed in the handoff, not drawn: fixture `workedExample2`, no frame), the state 5 normalisation and
+canvas D's shift of 32. Two fixtures have no frame and no oracle against Figma: a new spoke with no chain
+(`newSpokeNoChain`, ST9) and a hub with no chain beside a spoke (`hubEmptyWithSpoke`, open point 10, default
+D10); `layoutGraph.test.ts` exercises them. The 48 tests of the oracle file pass on the canvas integration branch
+(run on 2026-10-03).
+
+What the record does NOT cover, so nobody reads more into it: it compares geometry, not pixels. The rendered
+graph at 100% next to the frames (the second half of A2) has not been done: the `BuildGraph` stories pin only
+the graph's outer box against the layout's size. Pieces were checked against Figma where a review measured
+them (the pill stroke, nodes 8220:2482 and 8220:2501; the share label, node 8220:2556), not as a set. The
+canvas column is about 604 wide at the app's content width against 656 in Figma (D23). Build state 2 (the Add
+protocol menu, 8130-3408) has no geometry oracle: its rows are asserted by the menu model tests and drawn by
+the `CanvasMenu` and `PanelStub` stories. The right-hand panel of states 3 and 5 is next-batch content and is
+not compared. The oracle file records no delta between a handoff number and a frame.
 
 ## IDs
 
