@@ -10,14 +10,15 @@
  * card, a share label, the background, a new block, a remove) are tested with the controller.
  */
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-import { type SelectionGuard, useBlockSelection } from "./useBlockSelection";
+import { describe, expect, it, type Mock, vi } from "vitest";
+import { useBlockSelection } from "./useBlockSelection";
 
-function guard(allow: boolean): SelectionGuard & {
-  allowChange: ReturnType<typeof vi.fn>;
-  onRefused: ReturnType<typeof vi.fn>;
+/** A guard that always answers `allow`, recording what it was asked. */
+function guard(allow: boolean): {
+  allowChange: Mock<(next: string | null) => boolean>;
+  onRefused: Mock<() => void>;
 } {
-  return { allowChange: vi.fn(() => allow), onRefused: vi.fn() };
+  return { allowChange: vi.fn((_next: string | null) => allow), onRefused: vi.fn() };
 }
 
 describe("useBlockSelection", () => {
