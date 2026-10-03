@@ -33,6 +33,8 @@ import {
   mockFundBuild,
   mockHolder,
   mockPositionDetail,
+  mockSpokeBalances,
+  mockTransits,
   mockWallet,
 } from "@/mocks/data/v2Funds";
 
@@ -108,8 +110,13 @@ export async function loadFundManagerAction(core: string, cursor?: string) {
       throw new ApiError(403, "V2_SESSION", "not manager");
     if (isMockMode)
       return {
-        transits: { protocolVersion: "v2" as const, items: [], nextCursor: null, coverage: [] },
-        balances: [],
+        transits: {
+          protocolVersion: "v2" as const,
+          items: mockTransits,
+          nextCursor: null,
+          coverage: [],
+        },
+        balances: mockSpokeBalances,
       };
     const transits = await readTransits(core, cursor);
     const balances = [];
@@ -120,9 +127,14 @@ export async function loadFundManagerAction(core: string, cursor?: string) {
 export async function loadFundTransitAction(core: string, id: string) {
   return resultOf(async () => {
     const wallet = await walletIdentity();
-    const fund = await readFund(core);
+    const fund = isMockMode ? mockFund : await readFund(core);
     if (fund.manager.toLowerCase() !== wallet.toLowerCase())
       throw new ApiError(403, "V2_SESSION", "not manager");
+    if (isMockMode) {
+      const transit = mockTransits.find((transit) => transit.transitId === id);
+      if (!transit) throw new ApiError(404, "V2_NOT_FOUND", "missing transit");
+      return transit;
+    }
     return readTransit(core, id);
   });
 }

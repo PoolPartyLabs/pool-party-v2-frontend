@@ -6,7 +6,14 @@
  */
 
 import { estimateDeposit } from "@/features/funds/fundModel";
-import type { FundBuild, FundHolder, FundPositionDetail, FundView } from "@/lib/api/v2/fundSchemas";
+import type {
+  FundBalances,
+  FundBuild,
+  FundHolder,
+  FundPositionDetail,
+  FundTransit,
+  FundView,
+} from "@/lib/api/v2/fundSchemas";
 export const mockWallet = `0x${"1".repeat(40)}`;
 const core = `0x${"2".repeat(40)}`;
 const positionKey = `0x${"3".repeat(64)}`;
@@ -30,6 +37,37 @@ const position = {
     supplyApy: "4.21",
   },
   holderExposure: { ...version, valueUsd: "2500", amount0: "2500" },
+};
+const v4Position = {
+  ...version,
+  chainId: "4663",
+  positionKey: `0x${"4".repeat(64)}`,
+  adapterKind: "uniswap-v4",
+  status: "open",
+  tokens: [token, { ...token, symbol: "WETH", decimals: 18 }],
+  valueUsd: "400000",
+  currentValueUsd: "400000",
+  uncollectedIncomeUsd: "1250.50",
+  shareOfNav: "40",
+  uniswap: {
+    ...version,
+    tickLower: -199370,
+    tickUpper: -195370,
+    currentTick: -197375,
+    inRange: true,
+  },
+  aave: null,
+  currentAmounts: {
+    ...version,
+    amount0: { ...version, raw: "200000000000", decimal: "200000" },
+    amount1: { ...version, raw: "75000000000000000000", decimal: "75" },
+  },
+  uncollectedIncome: {
+    ...version,
+    amount0: { ...version, raw: "650000000", decimal: "650" },
+    amount1: { ...version, raw: "200000000000000000", decimal: "0.2" },
+  },
+  holderExposure: { ...version, ownershipPercent: "1", valueUsd: "4000" },
 };
 export const mockFund: FundView = {
   ...version,
@@ -96,7 +134,7 @@ export const mockFund: FundView = {
     ageSeconds: 120,
     report: { ...version, sequence: "42", timestamp: String(Math.floor(Date.now() / 1000) - 120) },
   },
-  positionsSummary: { ...version, positions: [position] },
+  positionsSummary: { ...version, positions: [position, v4Position] },
   limits: { ...version, spokeCapEnforcedOnChain: false },
   limitsUsage: { ...version, network: [{ ...version, currentPercent: "40", percent: 60 }] },
   fees: {
@@ -122,8 +160,8 @@ export const mockHolder: FundHolder = {
     termEndsAt: "0",
     awaitingSettlement: false,
   },
-  positionsSummary: { ...version, positions: [position] },
-  positions: [position],
+  positionsSummary: { ...version, positions: [position, v4Position] },
+  positions: [position, v4Position],
 };
 export const mockPositionDetail: FundPositionDetail = {
   ...version,
@@ -141,10 +179,54 @@ export const mockPositionDetail: FundPositionDetail = {
     ],
   },
 };
-export function mockFundBuild(intent: { action: string; amount?: string }): FundBuild {
+export const mockTransits: FundTransit[] = [
+  {
+    ...version,
+    transitId: `0x${"5".repeat(64)}`,
+    direction: "hub-to-spoke",
+    kind: "Principal",
+    stage: "credited",
+    state: "Sent",
+    amountSent: "100000000000",
+    credited: "99950000000",
+    nextStepHint: "refresh-spoke-balances-before-building",
+    legs: {
+      ...version,
+      sent: {
+        ...version,
+        transactionHash: positionKey,
+        timestamp: "2026-10-03T12:00:00Z",
+        blockNumber: "511198500",
+      },
+      credited: {
+        ...version,
+        transactionHash: positionKey,
+        timestamp: "2026-10-03T12:10:00Z",
+        blockNumber: "78804500",
+      },
+      acknowledged: null,
+    },
+  },
+];
+export const mockSpokeBalances: FundBalances[] = [
+  {
+    ...version,
+    chainId: "4663",
+    status: "created",
+    balancesStatus: "available",
+    operatingCash: "0",
+    readyForNextStep: true,
+    tokens: [{ ...version, token: mockWallet, unallocatedBalance: "150000000000" }],
+  },
+];
+export function mockFundBuild(intent: {
+  action: string;
+  amount?: string;
+  mode?: "Instant" | "Standard";
+}): FundBuild {
   const gross = BigInt(intent.amount ?? "0");
   const flowFee = (gross * BigInt(25)) / BigInt(10000);
-  const payoutFee = (gross * BigInt(200)) / BigInt(10000);
+  const payoutFee = intent.mode === "Standard" ? BigInt(0) : (gross * BigInt(200)) / BigInt(10000);
   return {
     ...version,
     transactions: [
