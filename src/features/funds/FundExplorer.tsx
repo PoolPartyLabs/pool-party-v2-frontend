@@ -8,6 +8,7 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { formatUnits } from "viem";
+import { FundDraftsSlot } from "@/features/manager/fund/components/FundDraftsSlot";
 import { Link } from "@/i18n/navigation";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useSiweSession } from "@/lib/auth/useSiweSession";
@@ -19,6 +20,7 @@ export interface FundExplorerProps {
 }
 export function FundExplorer({ view }: FundExplorerProps) {
   const t = useTranslations("strategies.funds");
+  const managerText = useTranslations("manager.dashboard");
   const { address } = useAuth();
   const { isSignedIn } = useSiweSession();
   const [result, setResult] = useState<Awaited<ReturnType<typeof loadFundsAction>> | null>(null);
@@ -41,6 +43,14 @@ export function FundExplorer({ view }: FundExplorerProps) {
       <h1 className="text-2xl font-semibold">
         {view === "holder" ? t("holdings") : view === "manager" ? t("managerView") : t("title")}
       </h1>
+      {view === "manager" ? (
+        <>
+          <Link className="rounded-lg border border-border px-4 py-2 w-fit" href="/manager/new">
+            {managerText("createNew")}
+          </Link>
+          <FundDraftsSlot />
+        </>
+      ) : null}
       {!result ? (
         <p role="status">{t("loading")}</p>
       ) : !result.ok ? (
