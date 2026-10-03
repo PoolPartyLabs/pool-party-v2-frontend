@@ -20,6 +20,15 @@ const fixture = (
 ): CanvasPlan => ({ version: 1, hub: { chains: hub }, spokes });
 
 describe("Build to launch adapter [R2, R4, R5]", () => {
+  it("creates an included empty spoke without bridging zero capital", () => {
+    const plan = fixture(
+      [chain("aave", "aaveSupply")],
+      [{ network: "robinhood", sharePct: 0, chains: [] }],
+    );
+    const steps = deriveLaunchSteps(plan, {}, false, true);
+    expect(steps.filter((step) => step.kind === "spoke")).toHaveLength(1);
+    expect(steps.some((step) => step.kind === "bridge")).toBe(false);
+  });
   it("converts canvas root shares to fractions of actual Robinhood net arrival", () => {
     const plan = fixture(
       [chain("hub", "aaveSupply", 60)],

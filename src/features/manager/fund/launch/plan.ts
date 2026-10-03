@@ -160,6 +160,7 @@ export function deriveLaunchSteps(
   };
   positions(plan.hub.chains, 42161, "allocate");
   for (const group of plan.spokes) {
+    if (group.sharePct === 0 && group.chains.length === 0) continue;
     if (
       group.sharePct <= 0 ||
       group.chains.reduce((sum, chain) => sum + percent(chain.sharePct), 0) > group.sharePct

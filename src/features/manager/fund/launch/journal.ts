@@ -54,6 +54,44 @@ export function loadJournal(
     !journal.addresses
   )
     throw new Error("INVALID_JOURNAL");
+  const ids = new Set(journal.steps.map((step) => step.id));
+  if (
+    journal.steps.length === 0 ||
+    ids.size !== journal.steps.length ||
+    journal.steps.some(
+      (step) =>
+        typeof step.id !== "string" ||
+        ![42161, 4663].includes(step.chain) ||
+        ![
+          "approve",
+          "create",
+          "discover",
+          "spoke",
+          "profile",
+          "allocate",
+          "report",
+          "bridge",
+          "arrival",
+          "swap",
+          "open",
+        ].includes(step.kind) ||
+        !Array.isArray(step.dependencies) ||
+        step.dependencies.some((id) => !ids.has(id)),
+    )
+  )
+    throw new Error("INVALID_JOURNAL");
+  for (const [id, checkpoint] of Object.entries(journal.checkpoints)) {
+    if (
+      !checkpoint ||
+      !ids.has(id) ||
+      checkpoint.stepId !== id ||
+      ![42161, 4663].includes(checkpoint.chain) ||
+      !["idle", "building", "signing", "submitted", "waiting", "confirmed", "failed"].includes(
+        checkpoint.status,
+      )
+    )
+      throw new Error("INVALID_JOURNAL");
+  }
   return journal;
 }
 export function createJournal(
