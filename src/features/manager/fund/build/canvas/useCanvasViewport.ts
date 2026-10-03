@@ -13,7 +13,8 @@
  * Ctrl + wheel (and a trackpad pinch, which the browser reports as Ctrl + wheel) would then zoom the
  * whole PAGE while the canvas zoomed too, and a plain wheel would scroll the page under the graph.
  * So the hook attaches the wheel itself, on the element behind `canvasRef`, with
- * `{ passive: false }`, and `bind` carries only the pointer and double-click handlers.
+ * `{ passive: false }`, and `bind` carries only the pointer and double-click handlers. Safari
+ * reports a pinch as `gesturestart` / `gesturechange` instead, so those get the same treatment.
  *
  * ## What "background" means
  *
@@ -126,8 +127,19 @@ interface DragState {
   pointerId: number;
   startX: number;
   startY: number;
-  origin: ViewTransform;
+  /** The pointer at the last applied move. Only meaningful once `panning` is true. */
+  lastX: number;
+  lastY: number;
   panning: boolean;
+}
+
+/** Shift the view by a screen delta, keeping whatever scale and offset it has now. */
+function panBy(dx: number, dy: number) {
+  return (previous: ViewTransform): ViewTransform => ({
+    scale: previous.scale,
+    x: previous.x + dx,
+    y: previous.y + dy,
+  });
 }
 
 function isMeasured(size: Size | null): size is Size {
@@ -145,8 +157,6 @@ export function useCanvasViewport({
   const [panning, setPanning] = useState(false);
 
   // Handlers read the latest values through refs, so their identities stay stable.
-  const viewRef = useRef(view);
-  viewRef.current = view;
   const graphSizeRef = useRef(graphSize);
   graphSizeRef.current = graphSize;
   const canvasSizeRef = useRef(canvasSize);
@@ -201,8 +211,19 @@ export function useCanvasViewport({
       };
       setView((previous) => applyWheel(previous, input));
     };
+    // Safari reports a trackpad pinch as gesturestart / gesturechange (its GestureEvent), not as
+    // Ctrl + wheel, so the wheel listener alone would let a pinch over the canvas zoom the page.
+    // These only block that page zoom; the canvas zooms with Cmd + scroll and the controls there.
+    // PP-NOTE: NOT verified in Safari; the tests stand a plain Event in for GestureEvent (jsdom).
+    const onGesture = (event: Event) => event.preventDefault();
     element.addEventListener("wheel", onWheel, { passive: false });
-    return () => element.removeEventListener("wheel", onWheel);
+    element.addEventListener("gesturestart", onGesture, { passive: false });
+    element.addEventListener("gesturechange", onGesture, { passive: false });
+    return () => {
+      element.removeEventListener("wheel", onWheel);
+      element.removeEventListener("gesturestart", onGesture);
+      element.removeEventListener("gesturechange", onGesture);
+    };
   }, [canvasRef]);
 
   const zoomBy = useCallback((direction: 1 | -1) => {
@@ -246,7 +267,8 @@ export function useCanvasViewport({
           pointerId: event.pointerId,
           startX: event.clientX,
           startY: event.clientY,
-          origin: viewRef.current,
+          lastX: event.clientX,
+          lastY: event.clientY,
           panning: false,
         };
         // Keep receiving the move and the release when the pointer leaves the canvas mid-drag.
@@ -259,14 +281,22 @@ export function useCanvasViewport({
       onPointerMove: (event) => {
         const drag = dragRef.current;
         if (!drag || event.pointerId !== drag.pointerId) return;
-        const dx = event.clientX - drag.startX;
-        const dy = event.clientY - drag.startY;
         if (!drag.panning) {
-          if (!exceedsPanThreshold(dx, dy)) return;
+          if (!exceedsPanThreshold(event.clientX - drag.startX, event.clientY - drag.startY)) {
+            return;
+          }
           drag.panning = true;
           setPanning(true);
         }
-        setView({ scale: drag.origin.scale, x: drag.origin.x + dx, y: drag.origin.y + dy });
+        // Each move adds only its own delta to the CURRENT view, so a wheel or control zoom in the
+        // middle of a drag is kept: rebuilding from a snapshot taken at pointer down would undo it.
+        // The first applied move starts at the press itself (lastX / lastY), so the 4 px of the
+        // threshold are not lost either.
+        const dx = event.clientX - drag.lastX;
+        const dy = event.clientY - drag.lastY;
+        drag.lastX = event.clientX;
+        drag.lastY = event.clientY;
+        setView(panBy(dx, dy));
       },
       onPointerUp: (event) => {
         const drag = dragRef.current;

@@ -118,6 +118,26 @@ function wheel(target: Element, init: WheelEventInit): WheelEvent {
   return event;
 }
 
+/**
+ * jsdom implements no pointer capture, so the canvas gets a recording stand-in with the same
+ * contract: capture is per pointer id, and release only holds for an id that was captured.
+ */
+function stubPointerCapture(element: HTMLElement) {
+  const captured = new Set<number>();
+  const set = vi.fn((pointerId: number) => {
+    captured.add(pointerId);
+  });
+  const release = vi.fn((pointerId: number) => {
+    captured.delete(pointerId);
+  });
+  Object.assign(element, {
+    setPointerCapture: set,
+    releasePointerCapture: release,
+    hasPointerCapture: (pointerId: number) => captured.has(pointerId),
+  });
+  return { set, release, isCaptured: (pointerId: number) => captured.has(pointerId) };
+}
+
 /** The graph point under a page point, given the current view. */
 function graphPointUnder(clientX: number, clientY: number) {
   const { view } = result();
@@ -305,6 +325,62 @@ describe("useCanvasViewport: the wheel (native, non-passive)", () => {
   });
 });
 
+describe("useCanvasViewport: Safari pinch (gesture events)", () => {
+  // Safari reports a trackpad pinch as gesturestart / gesturechange, not as Ctrl + wheel. jsdom has
+  // no GestureEvent, so a plain cancelable Event of the same type stands in for it.
+  function gesture(target: Element, type: string): Event {
+    const event = new Event(type, { bubbles: true, cancelable: true });
+    act(() => {
+      target.dispatchEvent(event);
+    });
+    return event;
+  }
+
+  // @rule I8
+  it("[I8] registers gesturestart and gesturechange as native listeners with passive: false", () => {
+    const spy = vi.spyOn(HTMLElement.prototype, "addEventListener");
+
+    render(<Harness graphSize={WORKED_EXAMPLE_1} />);
+
+    const canvas = screen.getByTestId("canvas");
+    for (const type of ["gesturestart", "gesturechange"]) {
+      const calls = spy.mock.calls.filter(
+        ([name], index) => name === type && spy.mock.contexts[index] === canvas,
+      );
+      expect(calls).toHaveLength(1);
+      expect(calls[0]?.[2]).toEqual({ passive: false });
+    }
+  });
+
+  // @rule I8
+  it("[I8] blocks the page zoom of a pinch over the canvas, a card included", () => {
+    render(<Harness graphSize={WORKED_EXAMPLE_1} />);
+    const before = result().view;
+
+    expect(gesture(screen.getByTestId("canvas"), "gesturestart").defaultPrevented).toBe(true);
+    expect(gesture(screen.getByTestId("card-title"), "gesturechange").defaultPrevented).toBe(true);
+    // Blocking the page zoom is all it does: the canvas itself does not move.
+    expect(result().view).toEqual(before);
+  });
+
+  // @rule I8
+  it("[I8] removes both gesture listeners on unmount", () => {
+    const spy = vi.spyOn(HTMLElement.prototype, "removeEventListener");
+    const { unmount } = render(<Harness graphSize={WORKED_EXAMPLE_1} />);
+    const canvas = screen.getByTestId("canvas");
+
+    unmount();
+
+    for (const type of ["gesturestart", "gesturechange"]) {
+      expect(
+        spy.mock.calls.some(
+          ([name], index) => name === type && spy.mock.contexts[index] === canvas,
+        ),
+      ).toBe(true);
+    }
+  });
+});
+
 describe("useCanvasViewport: drag, click and double-click on the background", () => {
   function press(target: Element, from: [number, number], to: [number, number]) {
     const canvas = screen.getByTestId("canvas");
@@ -413,17 +489,89 @@ describe("useCanvasViewport: drag, click and double-click on the background", ()
   });
 
   // @rule I5 (part)
-  it("[I5] a cancelled press ends the pan without a background click", () => {
+  it("[I5] a cancelled pan is released: no background click, no capture, no further movement", () => {
     const onBackgroundClick = vi.fn();
     render(<Harness graphSize={WORKED_EXAMPLE_1} onBackgroundClick={onBackgroundClick} />);
     const canvas = screen.getByTestId("canvas");
+    const capture = stubPointerCapture(canvas);
 
     fireEvent.pointerDown(canvas, { button: 0, pointerId: 1, clientX: 300, clientY: 300 });
-    fireEvent.pointerCancel(canvas, { pointerId: 1 });
-    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 300, clientY: 300 });
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 340, clientY: 300 });
+    expect(result().panning).toBe(true);
+    const panned = result().view;
 
-    expect(onBackgroundClick).not.toHaveBeenCalled();
+    fireEvent.pointerCancel(canvas, { pointerId: 1 });
+
     expect(result().panning).toBe(false);
+    expect(capture.release).toHaveBeenCalledWith(1);
+    expect(capture.isCaptured(1)).toBe(false);
+    // What follows the cancel belongs to no press: it neither moves the view nor clicks.
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 400, clientY: 360 });
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 400, clientY: 360 });
+    expect(result().view).toEqual(panned);
+    expect(onBackgroundClick).not.toHaveBeenCalled();
+  });
+
+  // @rule I8
+  it("[I8] a background press captures the pointer and the release lets it go", () => {
+    render(<Harness graphSize={WORKED_EXAMPLE_1} />);
+    const canvas = screen.getByTestId("canvas");
+    const capture = stubPointerCapture(canvas);
+
+    fireEvent.pointerDown(canvas, { button: 0, pointerId: 7, clientX: 300, clientY: 300 });
+    expect(capture.set).toHaveBeenCalledWith(7);
+    expect(capture.isCaptured(7)).toBe(true);
+
+    fireEvent.pointerMove(canvas, { pointerId: 7, clientX: 340, clientY: 300 });
+    fireEvent.pointerUp(canvas, { pointerId: 7, clientX: 340, clientY: 300 });
+    expect(capture.release).toHaveBeenCalledWith(7);
+    expect(capture.isCaptured(7)).toBe(false);
+  });
+
+  // @rule I5 (part)
+  it("[I5] a press on an interactive element never captures the pointer", () => {
+    render(<Harness graphSize={WORKED_EXAMPLE_1} />);
+    const capture = stubPointerCapture(screen.getByTestId("canvas"));
+
+    fireEvent.pointerDown(screen.getByTestId("card"), { button: 0, pointerId: 1 });
+
+    expect(capture.set).not.toHaveBeenCalled();
+  });
+
+  // @rule I8
+  it("[I8] a wheel zoom in the middle of a pan is kept, and the pan goes on from it", () => {
+    render(<Harness graphSize={WORKED_EXAMPLE_1} />);
+    const canvas = screen.getByTestId("canvas");
+
+    fireEvent.pointerDown(canvas, { button: 0, pointerId: 1, clientX: 300, clientY: 300 });
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 340, clientY: 300 });
+    const panned = result().view;
+    wheel(canvas, { deltaY: -40, ctrlKey: true, clientX: 400, clientY: 300 });
+    const zoomed = result().view;
+    expect(zoomed.scale).toBeGreaterThan(panned.scale);
+
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 360, clientY: 310 });
+
+    // Both effects are kept: the zoom's scale and offset, plus the 20 x 10 of the second move.
+    expect(result().view).toEqual({ scale: zoomed.scale, x: zoomed.x + 20, y: zoomed.y + 10 });
+    fireEvent.pointerUp(canvas, { pointerId: 1, clientX: 360, clientY: 310 });
+    expect(result().view).toEqual({ scale: zoomed.scale, x: zoomed.x + 20, y: zoomed.y + 10 });
+  });
+
+  // @rule I8
+  it("[I8] a control zoom in the middle of a pan is kept too", () => {
+    render(<Harness graphSize={WORKED_EXAMPLE_1} />);
+    const canvas = screen.getByTestId("canvas");
+
+    fireEvent.pointerDown(canvas, { button: 0, pointerId: 1, clientX: 300, clientY: 300 });
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 320, clientY: 300 });
+    act(() => result().zoomIn());
+    const zoomed = result().view;
+    expect(zoomed.scale).toBe(0.9);
+
+    fireEvent.pointerMove(canvas, { pointerId: 1, clientX: 335, clientY: 290 });
+
+    expect(result().view).toEqual({ scale: 0.9, x: zoomed.x + 15, y: zoomed.y - 10 });
   });
 
   // @rule I8
