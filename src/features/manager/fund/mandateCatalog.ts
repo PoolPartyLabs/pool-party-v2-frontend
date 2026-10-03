@@ -37,6 +37,8 @@
  * shape of this module is the seam: `buildMandateCatalog` keeps its signature and the source behind
  * it changes. Tracked by wiring issue POO-2134.
  */
+
+import type { CatalogReserve } from "@/lib/api/v2/schemas";
 import { networkToChainId } from "@/lib/chains/config";
 import { canonicalTokenSymbol, tokensForNetwork } from "@/lib/tokens/tokenList";
 import {
@@ -94,6 +96,12 @@ export interface MandateCatalogToken {
 
 /** The whole catalog. It reads no feature flag (rules v2, POO-2142). */
 export interface MandateCatalog {
+  validateDraft?: (draft: import("./mandateDraft").MandateDraft) => boolean;
+  dataMode?: "real";
+  loading?: boolean;
+  error?: boolean;
+  retry?: () => void;
+  reserves?: CatalogReserve[];
   networks: MandateNetwork[];
   protocols: MandateProtocol[];
   /** Every token available on these networks, minus each network's deposit token, sorted by symbol. */

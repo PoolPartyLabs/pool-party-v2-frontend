@@ -75,8 +75,8 @@
  * the manager is still reading. Which one a read reports is decided by whether it is also the list
  * when it lands, never by the view it started in.
  *
- * PP-INTEGRATION-POINT: pool catalog ← `mandatePoolSource` (real for Uniswap v3 through
- * `/dex-pools`; Uniswap v4 has no endpoint yet, wiring issue POO-2133).
+ * Pool catalog resolved by POO-2133: `mandatePoolSource` reads the real v4 catalog;
+ * mock mode retains the existing fixtures.
  */
 "use client";
 
@@ -147,6 +147,7 @@ const SKELETON_ROWS = ["first", "second", "third"] as const;
 
 /** A trimmed value shaped like an on-chain address. Mirrors V1's `looksLikeAddress` (POO-1430). */
 const ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
+const POOL_ID_RE = /^0x[0-9a-fA-F]{64}$/;
 
 type NetworkFilter = NetworkId | typeof ALL_NETWORKS;
 type ProtocolTab = DexProtocolId | typeof ALL_PROTOCOLS;
@@ -256,11 +257,24 @@ function tokensItWouldAdd(draft: MandateDraft, pool: MandatePoolRef): string[] {
  * frees a slot, so a denominator that moved with it would move while the manager edited a different
  * step. The slot refusal still stops an "Add all" batch, because that one IS the manager's to act on.
  */
-function canEverAdd(draft: MandateDraft, pool: MandatePoolRef): boolean {
+function canEverAdd(draft: MandateDraft, pool: MandatePoolRef, catalog: MandateCatalog): boolean {
   if (pool.hasHook) return false;
   if (!draft.networks.includes(pool.network)) return false;
+  if (
+    draft.dataMode === "real" &&
+    !draft.positionProtocolsByChain?.[pool.network]?.includes("uniswap-v4")
+  )
+    return false;
   return [pool.token0, pool.token1].every(
-    (side) => mandateHoldsSide(draft, pool, side.address) || isPricedSymbol(side.symbol),
+    (side) =>
+      mandateHoldsSide(draft, pool, side.address) ||
+      (catalog.dataMode === "real"
+        ? catalog
+            .tokensFor([pool.network], draft.protocols)
+            .some(
+              (token) => token.address.toLowerCase() === side.address.toLowerCase() && token.priced,
+            )
+        : isPricedSymbol(side.symbol)),
   );
 }
 
@@ -281,7 +295,7 @@ function addAllPools(
   for (const pool of candidates) {
     // Against the RUNNING draft, not the original: a pool added a moment ago may have brought in the
     // token that makes the next one addable.
-    if (!canEverAdd(next, pool)) continue;
+    if (!canEverAdd(next, pool, catalog)) continue;
     const result = addPool(next, pool, catalog);
     if (isBlocked(result)) return { next, blocked: result.blocked };
     next = result;
@@ -372,7 +386,7 @@ export function PoolsStep({
   );
 
   const trimmed = firstQuery.trim();
-  const isAddress = ADDRESS_RE.test(trimmed);
+  const isAddress = (isMockMode ? ADDRESS_RE : POOL_ID_RE).test(trimmed);
 
   /**
    * What the result list should be answering right now.
@@ -728,10 +742,10 @@ export function PoolsStep({
     if (universe === null || universe.signature !== universeSignature) return null;
     const inUniverse = new Set(universe.pools.map((pool) => pool.id));
     return (
-      universe.pools.filter((pool) => canEverAdd(draft, pool)).length +
+      universe.pools.filter((pool) => canEverAdd(draft, pool, catalog)).length +
       draft.pools.filter((pool) => !inUniverse.has(pool.id)).length
     );
-  }, [universe, universeSignature, draft]);
+  }, [universe, universeSignature, draft, catalog]);
 
   /**
    * Published whenever the draft is not already carrying it, so the shell and Review measure the
@@ -830,12 +844,9 @@ export function PoolsStep({
 
   // What "Add all" would actually add, and therefore the number it is allowed to print (R31).
   const addable = useMemo(
-    () => filtered.filter((pool) => canEverAdd(draft, pool)),
-    [filtered, draft],
+    () => filtered.filter((pool) => canEverAdd(draft, pool, catalog)),
+    [filtered, draft, catalog],
   );
-
-  // R31: v4 has no endpoint in real mode, so its tab says so rather than showing a bare empty list.
-  const v4Pending = !isMockMode && activeTab === "uniswap-v4";
 
   /**
    * Whether the list on screen is an answer about the mandate as it stands.
@@ -858,8 +869,8 @@ export function PoolsStep({
    * the manager is holding: "All 8 pools are selected" over a universe measured before an Add widened
    * it is the same false claim the Broad flag used to make, with a number printed next to it.
    */
-  const addableFound = resolution.pools.filter((pool) => canEverAdd(draft, pool)).length;
-  const addableLeft = available.filter((pool) => canEverAdd(draft, pool)).length;
+  const addableFound = resolution.pools.filter((pool) => canEverAdd(draft, pool, catalog)).length;
+  const addableLeft = available.filter((pool) => canEverAdd(draft, pool, catalog)).length;
   const allSelected =
     !loading && !failed && onScreenIsCurrent && addableFound > 0 && addableLeft === 0;
   const broad = isBroadMandate(draft, catalog, universeCount ?? 0);
@@ -905,7 +916,19 @@ export function PoolsStep({
       }
     }
     for (const id of displayNetworks) {
-      for (const token of searchTokens(id, q, MAX_SUGGESTIONS)) {
+      const candidates =
+        catalog.dataMode === "real"
+          ? catalog
+              .tokensFor([id], draft.protocols)
+              .filter(
+                (token) =>
+                  token.priced &&
+                  (token.symbol.toLowerCase().includes(q) ||
+                    token.name.toLowerCase().includes(q) ||
+                    token.address.toLowerCase().startsWith(q)),
+              )
+          : searchTokens(id, q, MAX_SUGGESTIONS);
+      for (const token of candidates) {
         push({
           address: token.address,
           symbol: token.symbol,
@@ -987,7 +1010,16 @@ export function PoolsStep({
   function rowRefusal(pool: MandatePoolRef): { reason: MandateBlockReason; label: string } | null {
     if (pool.hasHook) return { reason: "has_hook", label: t("fundBuilder.pools.hasHook") };
     const unpriced = [pool.token0, pool.token1].some(
-      (side) => !mandateHoldsSide(draft, pool, side.address) && !isPricedSymbol(side.symbol),
+      (side) =>
+        !mandateHoldsSide(draft, pool, side.address) &&
+        (catalog.dataMode === "real"
+          ? !catalog
+              .tokensFor([pool.network], draft.protocols)
+              .some(
+                (token) =>
+                  token.address.toLowerCase() === side.address.toLowerCase() && token.priced,
+              )
+          : !isPricedSymbol(side.symbol)),
     );
     if (unpriced) return { reason: "not_priced", label: t("fundBuilder.tokens.noPrice") };
     return null;
@@ -1124,14 +1156,21 @@ export function PoolsStep({
         </div>
 
         <div className="flex shrink-0 flex-col items-end text-xs">
-          <span className="text-foreground">
-            <span className="text-muted-foreground">{t("mandate.poolTvl")}</span>{" "}
-            {formatUsdCompact(pool.tvlUsd)}
-          </span>
-          <span className="text-success">
-            <AprTooltip className="text-muted-foreground">{t("mandate.poolApr")}</AprTooltip>{" "}
-            {formatPercent(pool.aprPct)}
-          </span>
+          {pool.tvlUsd !== null ? (
+            <span className="text-foreground">
+              <span className="text-muted-foreground">{t("mandate.poolTvl")}</span>{" "}
+              {formatUsdCompact(pool.tvlUsd)}
+            </span>
+          ) : null}
+          {pool.aprPct !== null ? (
+            <span className="text-success">
+              <AprTooltip className="text-muted-foreground">{t("mandate.poolApr")}</AprTooltip>{" "}
+              {formatPercent(pool.aprPct)}
+            </span>
+          ) : null}
+          {pool.tvlUsd === null && pool.aprPct === null ? (
+            <span className="text-muted-foreground">{t("fundBuilder.real.metrics")}</span>
+          ) : null}
         </div>
 
         {refusal ? (
@@ -1221,7 +1260,6 @@ export function PoolsStep({
         />
       );
     }
-    if (v4Pending) return <EmptyState title={t("fundBuilder.pools.v4Pending")} />;
     if (allSelected) {
       return (
         <EmptyState
@@ -1271,7 +1309,9 @@ export function PoolsStep({
                     onChange={(event) => setFirstQuery(event.target.value)}
                     onFocus={() => setFirstFocused(true)}
                     onBlur={() => setFirstFocused(false)}
-                    placeholder={t("fundBuilder.pools.search")}
+                    placeholder={
+                      isMockMode ? t("fundBuilder.pools.search") : t("fundBuilder.real.poolId")
+                    }
                     aria-label={t("fundBuilder.pools.search")}
                     className="pl-9"
                   />
@@ -1409,7 +1449,7 @@ export function PoolsStep({
               />
               {/* Only what it would really add. "Add all 3" over two addable pools and a hooked one
                   is a promise the button cannot keep, and "Add all 0" is not an offer. */}
-              {addable.length > 0 && !v4Pending ? (
+              {addable.length > 0 ? (
                 <Button variant="secondary" size="sm" onClick={handleAddAll}>
                   <Plus className="size-4" aria-hidden="true" />
                   {t("fundBuilder.common.addAll", { count: addable.length })}

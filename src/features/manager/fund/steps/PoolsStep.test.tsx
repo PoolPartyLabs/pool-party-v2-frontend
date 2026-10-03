@@ -313,7 +313,10 @@ async function pickNetwork(user: ReturnType<typeof userEvent.setup>, label: stri
 }
 
 /** Render the step and expose what the last `update` reducer would do to the draft. */
-function renderStep(draft: MandateDraft = draftOn(), options: { block?: StepBlock | null } = {}) {
+function renderStep(
+  draft: MandateDraft = draftOn(),
+  options: { block?: StepBlock | null; source?: typeof catalog } = {},
+) {
   const update = vi.fn();
   const onBlocked = vi.fn();
   const onError = vi.fn();
@@ -321,7 +324,7 @@ function renderStep(draft: MandateDraft = draftOn(), options: { block?: StepBloc
   const view = renderWithProviders(
     <PoolsStep
       draft={draft}
-      catalog={catalog}
+      catalog={options.source ?? catalog}
       update={update}
       block={options.block ?? null}
       onBlocked={onBlocked}
@@ -361,6 +364,28 @@ beforeEach(() => {
 });
 
 describe("PoolsStep", () => {
+  it("uses real catalog pricing rather than the static symbol list for pool additions", async () => {
+    services.mockMode = false;
+    const target = pool({ protocol: "uniswap-v4", token0: side(WETH, "CATALOG") });
+    searchAnswers([target]);
+    const real = {
+      ...catalog,
+      dataMode: "real" as const,
+      tokensFor: () => [{ ...side(WETH, "CATALOG"), network: "arbitrum" as const, priced: true }],
+    };
+    const initial = {
+      ...draftOn(),
+      dataMode: "real" as const,
+      catalogVersion: "v2-catalog-v1" as const,
+      protocols: ["uniswap-v3-swap" as const, "uniswap-v4" as const],
+      positionProtocolsByChain: { arbitrum: ["uniswap-v4" as const] },
+    };
+    const { draftAfterUpdate } = renderStep(initial, { source: real });
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Add" }));
+    expect(draftAfterUpdate().pools).toHaveLength(1);
+    expect(draftAfterUpdate().tokens.some((token) => token.symbol === "CATALOG")).toBe(true);
+  });
+
   // @rule R29
   it("renders nothing when the mandate holds no DEX protocol", () => {
     const noDex = withProtocols(draftOn(), [...REQUIRED_PROTOCOLS]);
@@ -823,7 +848,7 @@ describe("PoolsStep", () => {
     renderStep(draftOn(["robinhood"]));
     await screen.findByText("0 pools with at least one of your tokens");
 
-    await user.type(screen.getByLabelText("Token, pair or pool address"), PASTED);
+    await user.type(screen.getByLabelText("Token, pair or pool address"), `0x${"ab".repeat(32)}`);
 
     expect(await screen.findByText("No pools match your search.")).toBeInTheDocument();
     // Two selected networks, two server actions. Never five, and never one for a network the
@@ -888,7 +913,7 @@ describe("PoolsStep", () => {
   });
 
   // @rule R31
-  it("tells the truth about Uniswap v4 in real mode instead of showing nothing", async () => {
+  it("shows the catalog empty state in real mode instead of the superseded pending notice", async () => {
     services.mockMode = false;
     searchAnswers([pool({ id: "v3-a", protocol: "uniswap-v3" })]);
     const user = userEvent.setup();
@@ -897,8 +922,9 @@ describe("PoolsStep", () => {
     await user.click(await screen.findByRole("tab", { name: "Uniswap v4 · 0" }));
 
     expect(
-      await screen.findByText("Uniswap v4 pools arrive with the fund contracts data source."),
-    ).toBeInTheDocument();
+      screen.queryByText("Uniswap v4 pools arrive with the fund contracts data source."),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("No pools match your search.")).toBeInTheDocument();
   });
 
   // @rule R31
