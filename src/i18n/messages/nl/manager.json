@@ -609,12 +609,48 @@
   },
   "window30d": "30d",
   "fundBuilder": {
+    "common": {
+      "selectAll": "Alles selecteren",
+      "alwaysIncluded": "Altijd inbegrepen",
+      "comingSoon": "Binnenkort",
+      "clearAll": "Alles wissen",
+      "add": "Toevoegen",
+      "addAll": "Alle {count} toevoegen",
+      "remove": "{name} verwijderen",
+      "showMore": "Meer pools tonen ({count})",
+      "andMore": "en nog {count}",
+      "slotsUsed": "Gebruikte netwerkslots",
+      "slotsCount": "{used} van {max}",
+      "noSlots": "Geen slots meer beschikbaar",
+      "copyAddress": "Tokenadres kopiëren",
+      "copied": "Gekopieerd",
+      "sortFilter": "Sorteren",
+      "sortPrefix": "Sorteren:",
+      "sortName": "Naam",
+      "sortTvl": "TVL",
+      "allNetworks": "Alle netwerken",
+      "networkFilter": "Netwerk",
+      "noCap": "Geen limiet",
+      "nothingSelected": "Kies er minstens één om door te gaan.",
+      "hubNote": "Stortingen en opnames gebeuren op dit netwerk."
+    },
+    "networks": {
+      "hub": "Hub",
+      "others": "Andere netwerken"
+    },
     "networkNames": {
       "arbitrum": "Arbitrum",
       "robinhood": "Robinhood Chain",
       "base": "Base",
       "polygon": "Polygon",
       "unichain": "Unichain"
+    },
+    "protocols": {
+      "required": "Verplicht",
+      "requiredSubtitle": "Elke strategie heeft een manier nodig om tokens te wisselen en geld tussen haar netwerken te verplaatsen.",
+      "operate": "Te gebruiken protocollen",
+      "on": "Op",
+      "onFootnote": "\"Op\" toont de netwerken uit stap 1 waarop elk protocol beschikbaar is."
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",

@@ -609,12 +609,48 @@
   },
   "window30d": "30 j",
   "fundBuilder": {
+    "common": {
+      "selectAll": "Tout sélectionner",
+      "alwaysIncluded": "Toujours inclus",
+      "comingSoon": "Bientôt disponible",
+      "clearAll": "Tout désélectionner",
+      "add": "Ajouter",
+      "addAll": "Ajouter les {count}",
+      "remove": "Retirer {name}",
+      "showMore": "Afficher plus de pools ({count})",
+      "andMore": "et {count} de plus",
+      "slotsUsed": "Emplacements réseau utilisés",
+      "slotsCount": "{used} sur {max}",
+      "noSlots": "Plus d'emplacements disponibles",
+      "copyAddress": "Copier l'adresse du jeton",
+      "copied": "Copié",
+      "sortFilter": "Trier",
+      "sortPrefix": "Trier :",
+      "sortName": "Nom",
+      "sortTvl": "TVL",
+      "allNetworks": "Tous les réseaux",
+      "networkFilter": "Réseau",
+      "noCap": "Aucun plafond",
+      "nothingSelected": "Choisissez au moins un élément pour continuer.",
+      "hubNote": "Les dépôts et les retraits se font sur ce réseau."
+    },
+    "networks": {
+      "hub": "Hub",
+      "others": "Autres réseaux"
+    },
     "networkNames": {
       "arbitrum": "Arbitrum",
       "robinhood": "Robinhood Chain",
       "base": "Base",
       "polygon": "Polygon",
       "unichain": "Unichain"
+    },
+    "protocols": {
+      "required": "Obligatoire",
+      "requiredSubtitle": "Chaque stratégie a besoin d'un moyen d'échanger des jetons et de déplacer des fonds entre ses réseaux.",
+      "operate": "Protocoles à utiliser",
+      "on": "Sur",
+      "onFootnote": "« Sur » indique les réseaux de l'étape 1 où chaque protocole est disponible."
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",

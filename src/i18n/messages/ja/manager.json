@@ -609,12 +609,48 @@
   },
   "window30d": "30日",
   "fundBuilder": {
+    "common": {
+      "selectAll": "すべて選択",
+      "alwaysIncluded": "常に含まれる",
+      "comingSoon": "近日公開",
+      "clearAll": "すべて解除",
+      "add": "追加",
+      "addAll": "{count}件すべて追加",
+      "remove": "{name} を削除",
+      "showMore": "さらにプールを表示（{count}）",
+      "andMore": "他{count}件",
+      "slotsUsed": "使用中のネットワークスロット",
+      "slotsCount": "{used} / {max}",
+      "noSlots": "空きスロットがありません",
+      "copyAddress": "トークンアドレスをコピー",
+      "copied": "コピーしました",
+      "sortFilter": "並び替え",
+      "sortPrefix": "並び替え:",
+      "sortName": "名前",
+      "sortTvl": "TVL",
+      "allNetworks": "すべてのネットワーク",
+      "networkFilter": "ネットワーク",
+      "noCap": "上限なし",
+      "nothingSelected": "続けるには少なくとも1つ選んでください。",
+      "hubNote": "入金と出金はこのネットワークで行われます。"
+    },
+    "networks": {
+      "hub": "Hub",
+      "others": "その他のネットワーク"
+    },
     "networkNames": {
       "arbitrum": "Arbitrum",
       "robinhood": "Robinhood Chain",
       "base": "Base",
       "polygon": "Polygon",
       "unichain": "Unichain"
+    },
+    "protocols": {
+      "required": "必須",
+      "requiredSubtitle": "どの戦略にも、トークンを交換し、ネットワーク間で資金を移動する手段が必要です。",
+      "operate": "運用に使うプロトコル",
+      "on": "対応",
+      "onFootnote": "「対応」は、各プロトコルが利用できる、ステップ1のネットワークを示します。"
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",

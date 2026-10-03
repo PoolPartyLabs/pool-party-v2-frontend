@@ -609,12 +609,48 @@
   },
   "window30d": "30 T",
   "fundBuilder": {
+    "common": {
+      "selectAll": "Alle auswählen",
+      "alwaysIncluded": "Immer enthalten",
+      "comingSoon": "Demnächst",
+      "clearAll": "Alle abwählen",
+      "add": "Hinzufügen",
+      "addAll": "Alle {count} hinzufügen",
+      "remove": "{name} entfernen",
+      "showMore": "Weitere Pools anzeigen ({count})",
+      "andMore": "und {count} weitere",
+      "slotsUsed": "Genutzte Netzwerk-Slots",
+      "slotsCount": "{used} von {max}",
+      "noSlots": "Keine Slots mehr verfügbar",
+      "copyAddress": "Token-Adresse kopieren",
+      "copied": "Kopiert",
+      "sortFilter": "Sortieren",
+      "sortPrefix": "Sortieren:",
+      "sortName": "Name",
+      "sortTvl": "TVL",
+      "allNetworks": "Alle Netzwerke",
+      "networkFilter": "Netzwerk",
+      "noCap": "Kein Limit",
+      "nothingSelected": "Wählen Sie mindestens eins aus, um fortzufahren.",
+      "hubNote": "Einzahlungen und Auszahlungen erfolgen auf diesem Netzwerk."
+    },
+    "networks": {
+      "hub": "Hub",
+      "others": "Andere Netzwerke"
+    },
     "networkNames": {
       "arbitrum": "Arbitrum",
       "robinhood": "Robinhood Chain",
       "base": "Base",
       "polygon": "Polygon",
       "unichain": "Unichain"
+    },
+    "protocols": {
+      "required": "Erforderlich",
+      "requiredSubtitle": "Jede Strategie braucht eine Möglichkeit, Token zu tauschen und Geld zwischen ihren Netzwerken zu bewegen.",
+      "operate": "Protokolle für den Betrieb",
+      "on": "Auf",
+      "onFootnote": "„Auf“ zeigt die Netzwerke aus Schritt 1, auf denen jedes Protokoll verfügbar ist."
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",

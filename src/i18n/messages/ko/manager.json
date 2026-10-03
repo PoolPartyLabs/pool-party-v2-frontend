@@ -609,12 +609,48 @@
   },
   "window30d": "30일",
   "fundBuilder": {
+    "common": {
+      "selectAll": "전체 선택",
+      "alwaysIncluded": "항상 포함됨",
+      "comingSoon": "출시 예정",
+      "clearAll": "전체 해제",
+      "add": "추가",
+      "addAll": "전체 {count}개 추가",
+      "remove": "{name} 제거",
+      "showMore": "풀 더 보기 ({count})",
+      "andMore": "외 {count}개",
+      "slotsUsed": "사용된 네트워크 슬롯",
+      "slotsCount": "{used} / {max}",
+      "noSlots": "남은 슬롯이 없습니다",
+      "copyAddress": "토큰 주소 복사",
+      "copied": "복사됨",
+      "sortFilter": "정렬",
+      "sortPrefix": "정렬:",
+      "sortName": "이름",
+      "sortTvl": "TVL",
+      "allNetworks": "모든 네트워크",
+      "networkFilter": "네트워크",
+      "noCap": "한도 없음",
+      "nothingSelected": "계속하려면 하나 이상 선택하세요.",
+      "hubNote": "입금과 출금은 이 네트워크에서 이루어집니다."
+    },
+    "networks": {
+      "hub": "Hub",
+      "others": "기타 네트워크"
+    },
     "networkNames": {
       "arbitrum": "Arbitrum",
       "robinhood": "Robinhood Chain",
       "base": "Base",
       "polygon": "Polygon",
       "unichain": "Unichain"
+    },
+    "protocols": {
+      "required": "필수",
+      "requiredSubtitle": "모든 전략에는 토큰을 교환하고 네트워크 간에 자금을 이동할 방법이 필요합니다.",
+      "operate": "운용에 사용할 프로토콜",
+      "on": "지원",
+      "onFootnote": "'지원'은 각 프로토콜을 사용할 수 있는 1단계의 네트워크를 보여줍니다."
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",

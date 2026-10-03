@@ -609,12 +609,48 @@
   },
   "window30d": "30 天",
   "fundBuilder": {
+    "common": {
+      "selectAll": "全选",
+      "alwaysIncluded": "始终包含",
+      "comingSoon": "即将推出",
+      "clearAll": "取消全选",
+      "add": "添加",
+      "addAll": "添加全部 {count} 个",
+      "remove": "移除 {name}",
+      "showMore": "显示更多资金池（{count}）",
+      "andMore": "以及另外 {count} 个",
+      "slotsUsed": "已使用的网络名额",
+      "slotsCount": "{used} / {max}",
+      "noSlots": "名额已用完",
+      "copyAddress": "复制代币地址",
+      "copied": "已复制",
+      "sortFilter": "排序",
+      "sortPrefix": "排序：",
+      "sortName": "名称",
+      "sortTvl": "TVL",
+      "allNetworks": "所有网络",
+      "networkFilter": "网络",
+      "noCap": "无上限",
+      "nothingSelected": "请至少选择一项以继续。",
+      "hubNote": "存款和提款都在此网络上进行。"
+    },
+    "networks": {
+      "hub": "Hub",
+      "others": "其他网络"
+    },
     "networkNames": {
       "arbitrum": "Arbitrum",
       "robinhood": "Robinhood Chain",
       "base": "Base",
       "polygon": "Polygon",
       "unichain": "Unichain"
+    },
+    "protocols": {
+      "required": "必需",
+      "requiredSubtitle": "每个策略都需要一种在代币之间兑换，并在其网络之间转移资金的方式。",
+      "operate": "用于运营的协议",
+      "on": "可用于",
+      "onFootnote": "“可用于”显示第 1 步中每个协议可用的网络。"
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",

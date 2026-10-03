@@ -609,12 +609,48 @@
   },
   "window30d": "30 天",
   "fundBuilder": {
+    "common": {
+      "selectAll": "全選",
+      "alwaysIncluded": "永遠包含",
+      "comingSoon": "即將推出",
+      "clearAll": "取消全選",
+      "add": "新增",
+      "addAll": "新增全部 {count} 個",
+      "remove": "移除 {name}",
+      "showMore": "顯示更多資金池（{count}）",
+      "andMore": "以及另外 {count} 個",
+      "slotsUsed": "已使用的網路名額",
+      "slotsCount": "{used} / {max}",
+      "noSlots": "名額已用完",
+      "copyAddress": "複製代幣地址",
+      "copied": "已複製",
+      "sortFilter": "排序",
+      "sortPrefix": "排序：",
+      "sortName": "名稱",
+      "sortTvl": "TVL",
+      "allNetworks": "所有網路",
+      "networkFilter": "網路",
+      "noCap": "無上限",
+      "nothingSelected": "請至少選擇一項以繼續。",
+      "hubNote": "存款與提款都在此網路上進行。"
+    },
+    "networks": {
+      "hub": "Hub",
+      "others": "其他網路"
+    },
     "networkNames": {
       "arbitrum": "Arbitrum",
       "robinhood": "Robinhood Chain",
       "base": "Base",
       "polygon": "Polygon",
       "unichain": "Unichain"
+    },
+    "protocols": {
+      "required": "必要",
+      "requiredSubtitle": "每個策略都需要一種在代幣之間兌換、並在其網路之間轉移資金的方式。",
+      "operate": "用於運作的協議",
+      "on": "可用於",
+      "onFootnote": "「可用於」顯示第 1 步中每個協議可用的網路。"
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
