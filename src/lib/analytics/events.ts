@@ -292,16 +292,7 @@ export const ANALYTICS_EVENTS = [
   "builder_draft_saved",
   "builder_mandate_error",
 
-  // POO-2127 (epic POO-2119), what happens on either side of the Mandate: the Build phase a closed
-  // mandate opens onto, and the Console card that is the only way back into a parked one.
-  //
-  // `builder_build_landing_viewed` is a view with a specific job. The Build canvas does not exist
-  // yet, so this screen is where a manager who finished a mandate currently stops, and
-  // `builder_mandate_completed` cannot tell how many of them arrive and look at it: a deep link
-  // into a completed draft reaches the landing without completing anything, and a completion
-  // followed by an immediate exit reaches it for one frame. Counting arrivals separately is what
-  // turns "N mandates were closed" into "N mandates were closed and M managers came back to look
-  // at one", which is the number that says whether the canvas is the next thing to build.
+  // POO-2127 (epic POO-2119), the Console card that is the only way back into a parked mandate.
   //
   // `builder_draft_opened` and `builder_draft_deleted` are the Console's half of the same funnel.
   // `builder_mandate_abandoned{draft_saved:true}` says a manager parked work; only these two say
@@ -309,9 +300,38 @@ export const ANALYTICS_EVENTS = [
   // draft doing its job; a delete is a mandate the manager decided against, and the `step` it was
   // parked on is where they changed their mind. Without them a saved draft's fate is invisible and
   // every parked mandate reads as a pending success.
-  "builder_build_landing_viewed",
+  //
+  // POO-2157 (epic POO-2144) RETIRED `builder_build_landing_viewed`: the landing it counted is gone,
+  // and `builder_build_viewed` below counts arrivals on the canvas that replaced it.
   "builder_draft_opened",
   "builder_draft_deleted",
+
+  // POO-2157 (epic POO-2144, coordinator default D20), the Build phase of the fund builder: the
+  // canvas where a closed mandate becomes a plan of blocks (`PP-MGR-SCR-002`). Like the Mandate,
+  // nothing here signs anything, so its settlement is persistence too.
+  //
+  // `viewed` is the arrival (a completion, a Console Open or a Back from Review), with what the plan
+  // already held. `started` is the first block placed on an empty plan, the denominator of the
+  // phase. The five canvas events are the plan being edited, each named after the gesture rather
+  // than the reducer behind it, so "managers add networks and never place a block on them" can be
+  // read straight off the series. `blocked` is the canvas refusing a gesture or Next: Review: the
+  // button is never disabled, so a refusal leaves no other trace. `abandoned` closes the phase's
+  // arithmetic and `error` is a draft that could not be written from Build.
+  //
+  // `builder_build_submitted` and `builder_build_completed` are NOT declared: Review does not exist
+  // yet, so there is nothing to submit to and no save that opens it (D20). They arrive with the
+  // Review handoff, `completed` on the write that opens Review, never on the click.
+  "builder_build_viewed",
+  "builder_build_started",
+  "builder_block_added",
+  "builder_network_added",
+  "builder_network_removed",
+  "builder_flow_block_inserted",
+  "builder_block_removed",
+  "builder_block_restored",
+  "builder_build_blocked",
+  "builder_build_abandoned",
+  "builder_build_error",
 ] as const;
 
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[number];
@@ -532,6 +552,84 @@ export const ANALYTICS_MANDATE_BLOCK_REASONS = [
 ] as const;
 
 export type AnalyticsMandateBlockReason = (typeof ANALYTICS_MANDATE_BLOCK_REASONS)[number];
+
+/**
+ * Why the Build canvas refused something the manager asked for (POO-2157, coordinator default D20).
+ *
+ * Two halves in one closed union. The first ten are the plan reducers' own reasons
+ * (`PlanBlockReason` in `src/features/manager/fund/build/plan/buildPlan.ts`), mirrored here rather
+ * than imported for the reason {@link ANALYTICS_MANDATE_STEPS} gives: this file is a leaf. The mirror
+ * is checked at compile time anyway, because `buildAnalytics.ts` maps them through a total
+ * `Record<PlanBlockReason, AnalyticsBuildBlockReason>`. The last six are Next: Review's ordered
+ * checks (D19), one per inline notice, so "which check stops managers at the Review door" is one
+ * dimension with one value per notice.
+ *
+ * `coming_soon` also exists in {@link ANALYTICS_MANDATE_BLOCK_REASONS} with the same meaning (a row
+ * drawn but not live), so the two builders answer that question in one series.
+ */
+export const ANALYTICS_BUILD_BLOCK_REASONS = [
+  /** A kind, network, pool or asset the mandate does not hold (handoff C6, INV1, INV2). */
+  "not_in_mandate",
+  /** A Uniswap v3 position, Pendle or GMX block: drawn, not live yet (C22). */
+  "coming_soon",
+  /** A Borrow with no Supply directly above it in the same chain (C14). */
+  "borrow_needs_supply",
+  /** The Add network box was pressed with every mandate network already on the canvas (D4). */
+  "no_network_left",
+  /** A network that already has its group (INV1). */
+  "network_on_canvas",
+  /** An insert the slot does not take (INV5, I4). */
+  "slot_not_allowed",
+  /** Shares that would add up to more than the capital above them (INV3). */
+  "share_exceeds_parent",
+  /** An app-owned Swap · auto removed on its own (INV6). */
+  "auto_owned",
+  /** A network with chains on it removed from its chip (I7, D5). */
+  "spoke_not_empty",
+  /** A target that no longer exists (a stale press, a late Undo). */
+  "unknown_target",
+  /** Next: Review on a plan with no block at all. */
+  "review_empty_plan",
+  /** Next: Review on a plan holding a block or a network the mandate no longer holds (D6). */
+  "review_invalid_block",
+  /** Next: Review on a plan holding a coming-soon block. */
+  "review_coming_soon_block",
+  /** Next: Review on a plan holding a block nobody configured yet (G6). */
+  "review_empty_block",
+  /** Next: Review on a plan whose shares add up to more than the capital above them (C8). */
+  "review_over_share",
+  /** Next: Review on a plan that passes every check: Review itself does not exist yet (D19). */
+  "review_unavailable",
+] as const;
+
+export type AnalyticsBuildBlockReason = (typeof ANALYTICS_BUILD_BLOCK_REASONS)[number];
+
+/**
+ * The block kinds of the Build canvas, as a `block_kind` value (POO-2157): the six position kinds
+ * (`BlockKind`) and the two flow kinds (`FlowKind`) of `buildPlan.ts`. Mirrored, not imported, for
+ * the leaf reason above; `buildAnalytics.ts` maps them through a total `Record`.
+ */
+export const ANALYTICS_BUILD_BLOCK_KINDS = [
+  "uniswapV4Pool",
+  "aaveSupply",
+  "aaveBorrow",
+  "uniswapV3Pool",
+  "pendle",
+  "gmxPerp",
+  "swap",
+  "collectFees",
+] as const;
+
+export type AnalyticsBuildBlockKind = (typeof ANALYTICS_BUILD_BLOCK_KINDS)[number];
+
+/**
+ * The networks a Build canvas block or group sits on (POO-2157): `NetworkId` of `mandateDraft.ts`,
+ * mirrored. The buildathon scope offers two; a network restored upstream stops compiling in
+ * `buildAnalytics.ts` until it is added here, which is the failure mode worth having.
+ */
+export const ANALYTICS_BUILD_NETWORKS = ["arbitrum", "robinhood"] as const;
+
+export type AnalyticsBuildNetwork = (typeof ANALYTICS_BUILD_NETWORKS)[number];
 
 /**
  * The error codes THIS repository produces, for a failure that never reached the API.
@@ -866,7 +964,8 @@ export interface AnalyticsParams {
   tx_step?: AnalyticsTxStep;
   /**
    * Why a CTA could not act (POO-1172). Values in `ANALYTICS_BLOCK_REASONS`, plus the fund
-   * builder's own in {@link ANALYTICS_MANDATE_BLOCK_REASONS} (POO-2122).
+   * builder's own in {@link ANALYTICS_MANDATE_BLOCK_REASONS} (POO-2122) and, for the Build canvas,
+   * {@link ANALYTICS_BUILD_BLOCK_REASONS} (POO-2157).
    *
    * A CODE, never a label. The one enumerated set of block reasons in the repo builds TRANSLATED
    * strings, and sending those would produce eleven variants of one reason and leak product copy
@@ -877,7 +976,7 @@ export interface AnalyticsParams {
    * ranks refusals had to union two columns by hand. Both unions stay closed, so a value still
    * cannot be invented at a call site.
    */
-  block_reason?: AnalyticsBlockReason | AnalyticsMandateBlockReason;
+  block_reason?: AnalyticsBlockReason | AnalyticsMandateBlockReason | AnalyticsBuildBlockReason;
   /**
    * The cross-service trace id (POO-1212 [1]). Makes a GA4 row joinable to the Sentry issue holding
    * the stack trace and to the indexer log line holding the cause.
@@ -1006,6 +1105,11 @@ export interface AnalyticsParams {
    * The difference between the two abandonments is the whole point of carrying it. An UNSAVED one
    * lost work, and the count is a product defect we can act on; a SAVED one is a manager who will
    * probably come back, and counting the two together would hide the first inside the second.
+   *
+   * On `builder_build_abandoned` (POO-2157) the same question one phase later: whether everything
+   * on screen had reached storage. A Build draft was always saved once (the mandate completed on a
+   * write), so "ever saved" would always read true there; what can be lost is a plan edit made since
+   * the last save, so `false` means unsaved plan edits were left behind.
    */
   draft_saved?: boolean;
   /**
@@ -1016,6 +1120,28 @@ export interface AnalyticsParams {
    * measure how often managers park work mid-flow.
    */
   first_save?: boolean;
+  /**
+   * What the Build plan held when a `builder_build_*` event fired (POO-2157): the cards a manager
+   * placed (position blocks; the app's Swap · auto and the Collect fees pills are not counted) and
+   * the spoke networks on the canvas. Quantities to compare, like the Mandate's four counts.
+   */
+  blocks_count?: number;
+  spokes_count?: number;
+  /**
+   * Which kind of block a Build canvas event is about (POO-2157): a position kind or a flow kind,
+   * the plan's own id, never the translated card title.
+   */
+  block_kind?: AnalyticsBuildBlockKind;
+  /** Which network a Build canvas block or group sits on (POO-2157): the hub or a spoke. */
+  network?: AnalyticsBuildNetwork;
+  /**
+   * How a block reached the canvas (POO-2157, handoff I1, I3, I4): `template` from an Add protocol
+   * menu, `palette` dropped from the palette, `port` chosen in an insert port's menu. The question it
+   * answers is whether managers drag at all, which decides how much the palette is worth.
+   */
+  via?: "template" | "palette" | "port";
+  /** Which side of a card a flow block was inserted on (POO-2157, handoff I4). */
+  slot?: "before" | "after";
   chain_id?: number;
 
   // --- Universal Funding funnel (POO-1048 [R2]) --------------------------------------------------

@@ -1,7 +1,8 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen tests
- * @implements-rules-version v3 (POO-2122 rules v1, POO-2142 rules v2, POO-2167 rules v3)
+ * @implements-rules-version v3 (POO-2122 rules v1, POO-2142 rules v2, POO-2167 rules v3,
+ *   POO-2157 rules v1)
  * @analytics-events none, the names are ASSERTED here rather than emitted; a test is never an
  *   emitter, so a screen cannot count as instrumented by being tested
  *
@@ -9,7 +10,9 @@
  * navigation (R6, R9), the skipped Pools step (R29), deep links, Save & exit (R7), completion on
  * settlement rather than on a click (R6), and the funnel, including the two events that only exist
  * because something did NOT happen (blocked and abandoned). The position protocol in these fixtures
- * is Uniswap v4, the one the buildathon scope offers (R20 v3, POO-2167).
+ * is Uniswap v4, the one the buildathon scope offers (R20 v3, POO-2167). Since POO-2157 the Build
+ * phase is the canvas; this file keeps the shell's half of it (the phase in the URL, the view, the
+ * way back, the phase each save records) and `build/BuildScreen.test.tsx` proves the canvas.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -21,7 +24,6 @@ import {
 import { buildMandateCatalog } from "./mandateCatalog";
 import {
   addPool,
-  addToken,
   createEmptyDraft,
   isBlocked,
   type MandateDraft,
@@ -521,9 +523,7 @@ describe("FundStrategyBuilderScreen", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Next: Build strategy" }));
 
-    expect(
-      await screen.findByText(/The Build canvas for the fund contracts is in design/),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Build your strategy" })).toBeInTheDocument();
     expect(emitted("builder_mandate_completed")).toEqual([
       {
         step: "limits",
@@ -580,9 +580,7 @@ describe("FundStrategyBuilderScreen", () => {
     await userEvent.type(screen.getByLabelText("Draft name"), "ETH and BTC on Arbitrum");
     await userEvent.click(screen.getByRole("button", { name: "Save and continue" }));
 
-    expect(
-      await screen.findByText(/The Build canvas for the fund contracts is in design/),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Build your strategy" })).toBeInTheDocument();
     expect(emitted("builder_mandate_completed")).toHaveLength(1);
     expect(nav.push).not.toHaveBeenCalled();
   });
@@ -687,9 +685,7 @@ describe("FundStrategyBuilderScreen", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Next: Build strategy" }));
 
-    expect(
-      await screen.findByText(/The Build canvas for the fund contracts is in design/),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Build your strategy" })).toBeInTheDocument();
     expect(emitted("builder_mandate_blocked")).toHaveLength(0);
     expect(emitted("builder_mandate_completed")).toHaveLength(1);
     expect(getDraft("d-whole")?.completedAt).not.toBeNull();
@@ -703,7 +699,10 @@ describe("FundStrategyBuilderScreen", () => {
  * the URL alongside the step for a reload to land back where the manager was. The one asymmetry
  * worth pinning is that `phase=build` is NOT trusted on its own: Build exists only for a mandate
  * that closed, and a hand-edited or stale link into it must land on the mandate rather than on a
- * Build landing summarising a draft that was never finished.
+ * Build canvas planning over a draft that was never finished.
+ *
+ * POO-2157 replaced the landing with the canvas (`build/BuildScreen.tsx`); the canvas's own rules
+ * are proven in `build/BuildScreen.test.tsx`. What stays here is the shell's half of the phase.
  */
 describe("FundStrategyBuilderScreen, the Build phase", () => {
   // @rule B3
@@ -728,7 +727,8 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
   });
 
   // @rule B3
-  it("records the landing as its own view", async () => {
+  // @rule AE1 (POO-2157)
+  it("records the Build canvas as its own view", async () => {
     nav.params = new URLSearchParams("draft=d-view&step=limits&phase=build");
     seed("d-view", {
       name: "ETH and BTC on Arbitrum",
@@ -739,13 +739,15 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
 
     renderWithProviders(<FundStrategyBuilderScreen />);
 
-    await waitFor(() => expect(emitted("builder_build_landing_viewed")).toHaveLength(1));
-    // The Mandate's per-step denominator must not count the landing as a step visit.
+    await waitFor(() =>
+      expect(emitted("builder_build_viewed")).toEqual([{ blocks_count: 0, spokes_count: 0 }]),
+    );
+    // The Mandate's per-step denominator must not count Build as a step visit.
     expect(emitted("builder_mandate_step_viewed")).toHaveLength(0);
   });
 
   // @rule B3
-  it("resumes a completed draft on the Build landing when the link says so", async () => {
+  it("resumes a completed draft on the Build canvas when the link says so", async () => {
     nav.params = new URLSearchParams("draft=d-done&step=limits&phase=build");
     seed("d-done", {
       name: "ETH and BTC on Arbitrum",
@@ -756,9 +758,7 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
 
     renderWithProviders(<FundStrategyBuilderScreen />);
 
-    expect(
-      await screen.findByText(/The Build canvas for the fund contracts is in design/),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Build your strategy" })).toBeInTheDocument();
     expect(screen.queryByText(/MANDATE · STEP/)).not.toBeInTheDocument();
   });
 
@@ -774,10 +774,8 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
     renderWithProviders(<FundStrategyBuilderScreen />);
 
     expect(await screen.findByText("MANDATE · STEP 4 OF 4")).toBeInTheDocument();
-    expect(
-      screen.queryByText(/The Build canvas for the fund contracts is in design/),
-    ).not.toBeInTheDocument();
-    expect(emitted("builder_build_landing_viewed")).toHaveLength(0);
+    expect(screen.queryByRole("heading", { name: "Build your strategy" })).not.toBeInTheDocument();
+    expect(emitted("builder_build_viewed")).toHaveLength(0);
   });
 
   // @rule B2
@@ -863,7 +861,7 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
   });
 
   // @rule B4 / R2
-  it("[R2] keeps Review unreachable from the Build landing", async () => {
+  it("[R2] keeps the stepper's Review unreachable from the Build canvas", async () => {
     nav.params = new URLSearchParams("draft=d-review&step=limits&phase=build");
     seed("d-review", {
       name: "ETH and BTC on Arbitrum",
@@ -875,12 +873,14 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
     renderWithProviders(<FundStrategyBuilderScreen />);
     await screen.findByRole("button", { name: "Back: Mandate" });
 
-    // The V1 stepper only makes an EARLIER phase clickable, so Review is text, not a control.
-    expect(screen.queryByRole("button", { name: /Review/ })).not.toBeInTheDocument();
+    // The V1 stepper only makes an EARLIER phase clickable, so Review is text, not a control. The
+    // canvas's own "Next: Review" is the bar's button (POO-2157), and it refuses in this batch.
+    expect(screen.queryByRole("button", { name: "Review" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next: Review" })).toBeInTheDocument();
   });
 
   // @rule B2
-  it("Save & exit still works from the Build landing", async () => {
+  it("Save & exit still works from the Build canvas", async () => {
     nav.params = new URLSearchParams("draft=d-exit&step=limits&phase=build");
     seed("d-exit", {
       name: "ETH and BTC on Arbitrum",
@@ -896,8 +896,12 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
   });
 
-  // @rule B1
-  it("summarises the mandate on the landing", async () => {
+  /**
+   * POO-2157 (D24): the mandate summary (and with it R13's Broad notice, which it carries) left the
+   * Build phase with the landing. `MandateSummaryCard` stays, with its own tests, for Review.
+   */
+  // @rule B1 / D24
+  it("[D24] Build no longer prints the mandate summary: it waits for Review", async () => {
     nav.params = new URLSearchParams("draft=d-sum&step=limits&phase=build");
     seed("d-sum", {
       name: "ETH and BTC on Arbitrum",
@@ -908,50 +912,10 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
 
     renderWithProviders(<FundStrategyBuilderScreen />);
 
-    expect(await screen.findByRole("heading", { name: "Your mandate" })).toBeInTheDocument();
-    expect(screen.getByTestId("mandate-summary-networks")).toHaveTextContent("Arbitrum");
+    expect(await screen.findByRole("heading", { name: "Build your strategy" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Your mandate" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mandate-summary-networks")).not.toBeInTheDocument();
   });
-  /** A completed mandate holding every priced hub token and the whole pool universe (R13). */
-  function broadDraft(id: string, poolUniverseCount: number | null): MandateDraft {
-    const catalog = buildMandateCatalog();
-    let base = withProtocols(createEmptyDraft("2026-10-01T00:00:00.000Z", id), [
-      ...REQUIRED_PROTOCOLS,
-      "uniswap-v4",
-    ]);
-    for (const token of catalog.tokensFor(base.networks, base.protocols)) {
-      if (!token.priced) continue;
-      const next = addToken(base, token, catalog);
-      if (isBlocked(next))
-        throw new Error(`fixture: ${token.symbol} refused, ${next.blocked.reason}`);
-      base = next;
-    }
-    const [usdc, other] = base.tokens;
-    if (!usdc || !other) throw new Error("fixture: expected two tokens");
-    const pool: MandatePoolRef = {
-      id: "arb-v4-test-5",
-      address: "0x1111111111111111111111111111111111111111",
-      network: "arbitrum",
-      protocol: "uniswap-v4",
-      token0: { address: usdc.address, symbol: usdc.symbol, name: usdc.name, logoUrl: null },
-      token1: { address: other.address, symbol: other.symbol, name: other.name, logoUrl: null },
-      feeBps: 5,
-      feeTier: 500,
-      tvlUsd: 1_000_000,
-      aprPct: 8,
-      tierSharePct: null,
-      hasHook: false,
-    };
-    return seed(id, {
-      ...base,
-      pools: [pool],
-      poolUniverseCount,
-      name: "Everything on Arbitrum",
-      passedSteps: ["networks", "protocols", "tokens", "pools", "limits"],
-      lastStep: "limits",
-      completedAt: "2026-10-02T00:00:00.000Z",
-      savedAt: "2026-10-02T00:00:00.000Z",
-    });
-  }
 
   /**
    * A mandate edited after it closed is open again.
@@ -987,15 +951,13 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
 
     await waitFor(() => expect(getDraft("d-reopen")?.completedAt).toBeNull());
 
-    // And the Build landing is no longer a place that link can reach.
+    // And the Build canvas is no longer a place that link can reach.
     view.unmount();
     nav.params = new URLSearchParams("draft=d-reopen&step=limits&phase=build");
     renderWithProviders(<FundStrategyBuilderScreen />);
 
     expect(await screen.findByText("MANDATE · STEP 4 OF 4")).toBeInTheDocument();
-    expect(
-      screen.queryByText(/The Build canvas for the fund contracts is in design/),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Build your strategy" })).not.toBeInTheDocument();
   });
 
   // @rule B2 / R9
@@ -1026,29 +988,37 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
     // And the step it was parked on is the one the manager walked back to, so the save really did
     // carry the navigation rather than an untouched copy.
     expect(getDraft("d-nav-only")?.lastStep).toBe("tokens");
+    // D16 (POO-2157): saved from the Mandate phase after a Back, so it resumes on the Mandate.
+    expect(getDraft("d-nav-only")?.lastPhase).toBe("mandate");
   });
 
-  // @rule R13
-  it("[R13] raises the Broad mandate flag on the landing when every token and every pool were taken", async () => {
-    nav.params = new URLSearchParams("draft=d-broad&step=limits&phase=build");
-    broadDraft("d-broad", 1);
-
+  // @rule D16 (POO-2157)
+  it("[D16] the completing save records Build, so a manager who leaves right after resumes there", async () => {
+    nav.params = new URLSearchParams("draft=d-complete-phase&step=limits");
+    seed("d-complete-phase", {
+      name: "ETH and BTC on Arbitrum",
+      passedSteps: ["networks", "protocols", "tokens"],
+      lastStep: "limits",
+    });
     renderWithProviders(<FundStrategyBuilderScreen />);
+    await screen.findByText("MANDATE · STEP 4 OF 4");
 
-    expect(await screen.findByRole("heading", { name: "Your mandate" })).toBeInTheDocument();
-    expect(screen.getByText("This strategy will carry a Broad mandate flag")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Next: Build strategy" }));
+
+    await screen.findByRole("heading", { name: "Build your strategy" });
+    expect(getDraft("d-complete-phase")?.lastPhase).toBe("build");
   });
 
-  // @rule R13
-  it("[R13] keeps the flag down while the pool universe is wider than the draft, or was never searched", async () => {
-    nav.params = new URLSearchParams("draft=d-narrow&step=limits&phase=build");
-    broadDraft("d-narrow", 3);
-
+  // @rule D16 (POO-2157)
+  it("[D16] a Save & exit from the Mandate phase records the Mandate", async () => {
+    nav.params = new URLSearchParams("draft=d-mandate-phase&step=networks");
+    seed("d-mandate-phase", { name: "ETH and BTC on Arbitrum" });
     renderWithProviders(<FundStrategyBuilderScreen />);
+    await screen.findByText("MANDATE · STEP 1 OF 4");
 
-    expect(await screen.findByRole("heading", { name: "Your mandate" })).toBeInTheDocument();
-    expect(
-      screen.queryByText("This strategy will carry a Broad mandate flag"),
-    ).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
+    expect(getDraft("d-mandate-phase")?.lastPhase).toBe("mandate");
   });
 });
