@@ -42,9 +42,12 @@ import {
 const toasts = vi.hoisted(() => ({ toast: vi.fn() }));
 vi.mock("@/components/ui/Toast", () => ({ toast: toasts.toast }));
 
+/** One messages object, as the app has: a new one per render would hand out a new translator. */
+const MESSAGES = { manager: enManager };
+
 function WithMessages({ children }: { children: ReactNode }) {
   return (
-    <NextIntlClientProvider locale="en" messages={{ manager: enManager }}>
+    <NextIntlClientProvider locale="en" messages={MESSAGES}>
       {children}
     </NextIntlClientProvider>
   );
@@ -223,7 +226,7 @@ describe("useBuildCanvas: Add network (I2, I7)", () => {
     press(result, { kind: "addNetwork" });
     expect(result.current.canvas.openMenu?.model.options).toEqual([]);
     expect(result.current.canvas.openMenu?.model.footer).toBe(
-      "Robinhood Chain are already on the canvas.",
+      "Robinhood Chain is already on the canvas.",
     );
     expect(events).toEqual([{ type: "blocked", reason: "no_network_left" }]);
   });
@@ -242,10 +245,14 @@ describe("useBuildCanvas: Add network (I2, I7)", () => {
     expect(full.events).toEqual([{ type: "blocked", reason: "spoke_not_empty" }]);
   });
 
-  it("names the close control of a spoke chip", async () => {
-    // @rule I7
-    const { result } = await mount(emptySpokePlan());
-    expect(result.current.canvas.spokeRemoveLabel("robinhood")).toBe("Remove Robinhood Chain");
+  it("tells the panel stub what the Add network menu adds while it is open", async () => {
+    // @rule AN10
+    // Review F3 of PR #36: coordinator copy, waiting for the product owner.
+    const { result } = await mount(hubSupplyPlan());
+    press(result, { kind: "addNetwork" });
+    expect(result.current.canvas.panelProps.body).toBe(
+      "Choose a network in the menu. The network is added to the canvas with its bridge.",
+    );
   });
 });
 
@@ -451,28 +458,80 @@ describe("useBuildCanvas: remove (I6, HU4)", () => {
 });
 
 describe("useBuildCanvas: keyboard (I10)", () => {
-  function key(key: string, target: EventTarget | null = document.body) {
-    return { key, target, preventDefault: vi.fn() };
+  function key(
+    key: string,
+    target: EventTarget | null = document.body,
+    modifiers: { metaKey?: boolean; ctrlKey?: boolean; altKey?: boolean; shiftKey?: boolean } = {},
+  ) {
+    return { key, target, preventDefault: vi.fn(), ...modifiers };
   }
 
-  it("removes the selected block on Delete", async () => {
+  it.each([
+    "Delete",
+    // Review F1 of PR #36: a Mac keyboard's delete key sends Backspace.
+    "Backspace",
+  ])("removes the selected block on %s", async (name) => {
     // @rule I10
     const { result, events } = await mount(hubSupplyPlan());
     press(result, { kind: "block", blockId: "hub-supply-supply" });
-    const event = key("Delete");
+    const event = key(name);
     act(() => result.current.canvas.onKeyDown(event));
     await waitFor(() => expect(result.current.buildPlan.plan.hub.chains).toEqual([]));
     expect(event.preventDefault).toHaveBeenCalled();
     expect(events).toEqual([{ type: "blockRemoved", kind: "aaveSupply" }]);
   });
 
-  it("does nothing on Delete inside a text field, or with nothing selected", async () => {
+  it.each([
+    "Delete",
+    "Backspace",
+  ])("leaves %s alone in a text field and with nothing selected", async (name) => {
     // @rule I10
     const { result } = await mount(hubSupplyPlan());
-    act(() => result.current.canvas.onKeyDown(key("Delete")));
+    const nothing = key(name);
+    act(() => result.current.canvas.onKeyDown(nothing));
+    expect(nothing.preventDefault).not.toHaveBeenCalled();
     press(result, { kind: "block", blockId: "hub-supply-supply" });
     const input = document.createElement("input");
-    act(() => result.current.canvas.onKeyDown(key("Delete", input)));
+    const textarea = document.createElement("textarea");
+    const editable = document.createElement("div");
+    // The attribute, as markup sets it (jsdom does not reflect the `contentEditable` property).
+    editable.setAttribute("contenteditable", "true");
+    document.body.append(input, textarea, editable);
+    for (const target of [input, textarea, editable]) {
+      const typing = key(name, target);
+      act(() => result.current.canvas.onKeyDown(typing));
+      // The key is never claimed, so the field edits its text as usual.
+      expect(typing.preventDefault).not.toHaveBeenCalled();
+    }
+    expect(result.current.buildPlan.plan).toEqual(hubSupplyPlan());
+    expect(result.current.selection.selectedId).toBe("hub-supply-supply");
+  });
+
+  it.each([
+    { metaKey: true },
+    { ctrlKey: true },
+    { altKey: true },
+    { shiftKey: true },
+  ])("ignores Backspace and Delete pressed with a modifier (%o)", async (modifier) => {
+    // @rule I10
+    const { result } = await mount(hubSupplyPlan());
+    press(result, { kind: "block", blockId: "hub-supply-supply" });
+    for (const name of ["Delete", "Backspace"]) {
+      const event = key(name, document.body, modifier);
+      act(() => result.current.canvas.onKeyDown(event));
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    }
+    expect(result.current.buildPlan.plan).toEqual(hubSupplyPlan());
+  });
+
+  it("ignores Backspace while a menu is open", async () => {
+    // @rule I10
+    const { result } = await mount(hubSupplyPlan());
+    press(result, { kind: "block", blockId: "hub-supply-supply" });
+    press(result, { kind: "addProtocol", network: "arbitrum" });
+    const event = key("Backspace");
+    act(() => result.current.canvas.onKeyDown(event));
+    expect(event.preventDefault).not.toHaveBeenCalled();
     expect(result.current.buildPlan.plan).toEqual(hubSupplyPlan());
   });
 
@@ -591,6 +650,22 @@ describe("useBuildCanvas: content", () => {
     expect(result.current.canvas.describeBlock("hub-pool-pool").title).toBe("WETH / USDC");
     expect(result.current.canvas.describeFlow("hub-pool-swap").text).toBe("Swap · auto");
     expect(result.current.canvas.networkName("robinhood")).toBe("Robinhood Chain");
+  });
+
+  it("keeps describeBlock, describeFlow and networkName stable until the plan changes", async () => {
+    // @rule HU2
+    // Review F5 of PR #36: the renderer memoises on these identities.
+    const { result, rerender } = await mount(hubPoolPlan());
+    const first = result.current.canvas;
+    rerender();
+    expect(result.current.canvas.describeBlock).toBe(first.describeBlock);
+    expect(result.current.canvas.describeFlow).toBe(first.describeFlow);
+    expect(result.current.canvas.networkName).toBe(first.networkName);
+    expect(result.current.canvas.onTarget).toBe(first.onTarget);
+    press(result, { kind: "port", side: "after", blockId: "hub-pool-pool" });
+    choose(result, "insert:after:hub-pool-pool:collectFees");
+    expect(result.current.canvas.describeBlock).not.toBe(first.describeBlock);
+    expect(result.current.canvas.describeFlow).not.toBe(first.describeFlow);
   });
 
   it("hands the palette the mandate's model", async () => {

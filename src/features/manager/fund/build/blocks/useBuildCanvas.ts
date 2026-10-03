@@ -104,7 +104,17 @@ export interface CanvasKeyEvent {
   key: string;
   target: EventTarget | null;
   preventDefault(): void;
+  metaKey?: boolean;
+  ctrlKey?: boolean;
+  altKey?: boolean;
+  shiftKey?: boolean;
 }
+
+/**
+ * I10: the keys that remove the selected block. A Mac keyboard's delete key sends "Backspace"
+ * (review F1 of PR #36), so both count; neither does with a modifier held.
+ */
+const REMOVE_KEYS: ReadonlySet<string> = new Set(["Delete", "Backspace"]);
 
 export interface BuildCanvasController {
   /** Targets drawn active (`primary`): the open menu's anchor, and every valid drop while dragging. */
@@ -116,7 +126,7 @@ export interface BuildCanvasController {
   onTarget(target: GraphTarget, anchor: HTMLElement): void;
   /** A click on the canvas background (S2's viewport, through S7). */
   onBackgroundClick(): void;
-  /** Delete removes the selected block; Escape closes an open menu (I10). */
+  /** Delete or Backspace removes the selected block; Escape closes an open menu (I10). */
   onKeyDown(event: CanvasKeyEvent): void;
   chooseOption(option: MenuOption): void;
   closeMenu(): void;
@@ -130,8 +140,6 @@ export interface BuildCanvasController {
   describeFlow(blockId: string): FlowContent;
   /** The translated network name (the raw id for a network this build does not name). */
   networkName(network: string): string;
-  /** The accessible name of a spoke chip's close control: "Remove Robinhood Chain". */
-  spokeRemoveLabel(network: string): string;
   paletteProps: BuildPaletteProps;
   panelProps: PanelStubProps;
   menuProps: CanvasMenuProps;
@@ -158,11 +166,13 @@ function newPositionIds(before: BuildPlan, after: BuildPlan): string[] {
   return all(after).filter((id) => !had.has(id));
 }
 
-/** Whether a key press happens in a text field, where Delete edits text. */
+/** Whether a key press happens in a text field, where Delete and Backspace edit text. */
 function isEditable(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   return (
     target.isContentEditable ||
+    // `isContentEditable` needs layout in some engines (jsdom has none): read the attribute too.
+    target.closest('[contenteditable]:not([contenteditable="false"])') !== null ||
     target instanceof HTMLInputElement ||
     target instanceof HTMLTextAreaElement ||
     target instanceof HTMLSelectElement
@@ -362,7 +372,8 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
         setMenu(null);
         return;
       }
-      if (event.key !== "Delete" || latest.current.menu || isEditable(event.target)) return;
+      if (!REMOVE_KEYS.has(event.key) || latest.current.menu || isEditable(event.target)) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
       const selected = latest.current.input.selection.selectedId;
       if (!selected) return;
       event.preventDefault();
@@ -432,6 +443,11 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
     [openMenu, chooseOption, editMandate, closeMenu],
   );
 
+  // Stable while the plan, the mandate, the violations and the locale do not change, so the
+  // renderer (S6) can memoise every card on them (review F5 of PR #36).
+  const describeBlockNow = useCallback((blockId: string) => describeBlock(blockId, ctx), [ctx]);
+  const describeFlowNow = useCallback((blockId: string) => describeFlow(blockId, ctx), [ctx]);
+
   return {
     activeTargetKeys,
     openMenu,
@@ -444,10 +460,9 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
     requestRemove,
     removeSpoke: removeSpokeFromChip,
     editMandate,
-    describeBlock: (blockId) => describeBlock(blockId, ctx),
-    describeFlow: (blockId) => describeFlow(blockId, ctx),
+    describeBlock: describeBlockNow,
+    describeFlow: describeFlowNow,
     networkName: copy.networkName,
-    spokeRemoveLabel: (network) => copy.networkRemove(copy.networkName(network)),
     paletteProps,
     panelProps,
     menuProps,
