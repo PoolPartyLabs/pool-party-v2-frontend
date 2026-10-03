@@ -11,6 +11,7 @@
 - **Left behind, because this repository has no place for them:** the pt-PT copy (11 locales here, 12 in the private repository) and the pins of the analytics instrumentation guard and of the design-token gate (neither script exists here).
 - **Docs synced.** 20 artifact rows in `IDS_REGISTRY.md` (Totals 532 to 552; `PP-MGR-SCR-002` gets the row it never had here), a "Fund contracts builder" section in `INTEGRATION_POINTS.md` with the marker census recounted (464 markers across 259 files), the `fundContracts` row in `FEATURE_FLAGS.md`, two sections and one row in `ANALYTICS_EVENTS.md` (twelve events), a new `docs/COMPLIANCE_REGISTER.md` carrying the four entries this feature raised (`CR-MGR-010` to `CR-MGR-013`), and the section "Fund contracts builder (V2 toggle, POO-2119)" in `src/features/manager/README.md`.
 - **Not built:** the Build canvas and Review for the fund contracts, the investor-facing Broad mandate flag (POO-2136), backend persistence of drafts (POO-2132), Uniswap v4 pool data in real mode (POO-2133), the seams that wait on the contract interface (POO-2134), mobile layouts.
+- **Buildathon scope, networks (rules v2, POO-2142).** The mandate offers Arbitrum (hub) and Robinhood Chain only, Robinhood Chain always available: `buildMandateCatalog()` and `useMandateDraft` no longer read the `robinhoodChain` flag, which keeps gating the V1 surfaces. Base, Polygon and Unichain are commented out in place, not deleted, so restoring one is uncommenting it; their locale keys stay in all 11 locales.
 
 ## v0.16, 2026-09-13
 
