@@ -236,7 +236,7 @@ That slice must fetch the current catalog again and rebuild from the draft, not 
 Build canvas files are unchanged. Mock v3/v4 fixtures and V1 builder behavior remain unchanged.
 All added copy is translated in the 11 configured locales; machine-tier translations still require native review.
 
-Artifacts: `PP-CORE-LIB-112` to `PP-CORE-LIB-115`, `PP-MGR-LIB-021`, `PP-MGR-HOK-007`, `PP-MGR-CMP-047`.
+Artifacts: `PP-CORE-LIB-112` to `PP-CORE-LIB-115`, `PP-MGR-LIB-033`, `PP-MGR-HOK-014`, `PP-MGR-CMP-065`.
 Resolved integration points: catalog tokens/pricing/Aave, v4 pool catalog, percentage intent serialization.
 Open integrations: backend draft persistence (POO-2132), Review/launch, on-chain percentage cap (POO-2169), TVL/APR indexing.
 

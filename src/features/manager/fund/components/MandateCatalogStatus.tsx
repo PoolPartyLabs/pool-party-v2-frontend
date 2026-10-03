@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-CMP-047 (POO-2133)
+ * @id PP-MGR-CMP-065 (POO-2133)
  * @name MandateCatalogStatus
  * @implements-rules-version v1
  * Honest real catalog loading, failure and stale-draft notices.
