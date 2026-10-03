@@ -76,4 +76,21 @@ describe("v2Fetch", () => {
     await expect(v2Fetch("/funds", schema)).rejects.toBeInstanceOf(ApiError);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+  // @rule R1
+  it("rejects unsupported routes before sending the server key", async () => {
+    await expect(v2Fetch("/strategies", schema)).rejects.toMatchObject({ code: "V2_INVALID_PATH" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  // @rule R2
+  it("rejects invalid JSON and preserves an unavailable error for non-JSON outages", async () => {
+    fetchMock.mockResolvedValue(
+      new Response("not json", { status: 200, headers: { "x-pool-party-protocol": "v2" } }),
+    );
+    await expect(v2Fetch("/funds", schema)).rejects.toBeInstanceOf(ApiParseError);
+    fetchMock.mockResolvedValue(new Response("not json", { status: 503 }));
+    await expect(v2Fetch("/funds", schema)).rejects.toMatchObject({
+      code: "V2_UNAVAILABLE",
+      status: 503,
+    });
+  });
 });

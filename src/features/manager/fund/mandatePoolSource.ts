@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-020
  * @name mandatePoolSource
- * @implements-rules-version v1 (POO-2125 rules v1)
+ * @implements-rules-version v1 (POO-2133 frontend slice A; mock POO-2125 rules v1)
  * @analytics-events none, a data adapter. The Pools step (PP-MGR-CMP-038) emits its own view and
  *   blocked-intent events through the shell's `onBlocked` prop; nothing here touches the dataLayer.
  *
@@ -12,19 +12,13 @@
  * (`fundPools.ts`), through the repo's latency helper and with the usual rare failure, so the step
  * has a loading state and an error state to render before any backend exists.
  *
- * Real mode reads the same `/dex-pools` server actions the V1 builder reads. There is one honest
- * hole in it: Uniswap v4. No endpoint returns v4 pools on any network today, so a v4 request
- * contributes NOTHING rather than quietly serving v3 pools under a v4 label, which would put a pool
- * in a mandate the fund contracts cannot hold. The step shows the `fundBuilder.pools.v4Pending`
- * copy for that case.
+ * Real mode reads the v2 catalog only: eligible Uniswap v4 pools identified by bytes32 PoolId.
+ * PoolKey and catalog token metadata are retained, and unavailable metrics stay null.
  *
  * Errors are never swallowed. A failed read throws and the step owns the error state; an empty list
  * means "no pools matched", which is a different thing a manager must be able to tell apart.
  *
- * PP-INTEGRATION-POINT: Mandate pool catalog ← pool-party-api `/dex-pools` (already real for
- * Uniswap v3, see `getDexPoolsAction`).
- * PP-INTEGRATION-POINT: Uniswap v4 pool catalog for the fund contracts (no API today; wiring issue
- * POO-2133, which was open point 8 on POO-2119).
+ * PP-INTEGRATION-POINT: resolved POO-2133, server actions read `/api/v2/catalog/uniswap-v4/pools`.
  */
 
 import { ApiError } from "@/lib/api/errors";
@@ -231,16 +225,7 @@ async function searchMock(input: PoolSearchInput): Promise<MandatePoolRef[]> {
 }
 
 /**
- * The real search: the pair-keyed `/dex-pools` read, mapped through `mapDexPool`.
- *
- * Only real Uniswap v3 fee tiers pass (POO-1497), judged on the raw tier ({@link isOnUniswapV3Tier}).
- * The action may already drop the others, but this module does not lean on that: `/dex-pools` is
- * pair-keyed and `dex` is a free string on the API, so a 0.25% pool of another DEX can come back
- * beside the real tiers, and a mandate is fixed at launch. Listing such a pool as "Uniswap v3" would
- * let a manager fix a position the adapter cannot hold.
- *
- * PP-INTEGRATION-POINT: Uniswap v4 pool catalog for the fund contracts (no API today; wiring issue
- * POO-2133). Until it exists a v4 request adds nothing, and a v4-only mandate gets an empty list.
+ * Real v4 pair filtering. API eligibility is checked defensively before mapping a row.
  */
 async function searchReal(input: PoolSearchInput): Promise<MandatePoolRef[]> {
   if (!input.protocols.includes("uniswap-v4")) return [];
@@ -336,12 +321,8 @@ export interface MandatePoolLocation {
  * chosen on, but a miss is not silent: both modes report the network the address DOES live on when
  * they know it.
  *
- * Real mode knows because the endpoint says so. `/dex-pools?poolAddress=` answers a two-key envelope
- * `{ data, foundOnNetwork }` (POO-1429/POO-1430 [R9]) and `getDexPoolByAddressAction` passes it
- * straight through. Returning only the pool threw that away, and the Pools step had to rediscover it
- * by asking every other catalog network in turn: up to five sequential server actions per paste,
- * including networks the fund contracts do not operate on, where an unrecognised slug can answer a
- * 400 and turn a plain "not on your networks" into the error state.
+ * Real mode resolves a bytes32 PoolId on the selected chain. Only a 404 probes the other supported
+ * chain; transport, protocol or dormant errors remain errors rather than wrong-chain advice.
  *
  * Mock mode knows because it holds the whole universe locally, and answers the same shape so the
  * step needs no mode branch of its own.

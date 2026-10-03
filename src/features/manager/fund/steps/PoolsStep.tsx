@@ -75,8 +75,8 @@
  * the manager is still reading. Which one a read reports is decided by whether it is also the list
  * when it lands, never by the view it started in.
  *
- * PP-INTEGRATION-POINT: pool catalog ← `mandatePoolSource` (real for Uniswap v3 through
- * `/dex-pools`; Uniswap v4 has no endpoint yet, wiring issue POO-2133).
+ * Pool catalog resolved by POO-2133: `mandatePoolSource` reads the real v4 catalog;
+ * mock mode retains the existing fixtures.
  */
 "use client";
 
@@ -840,9 +840,6 @@ export function PoolsStep({
     [filtered, draft],
   );
 
-  // R31: v4 has no endpoint in real mode, so its tab says so rather than showing a bare empty list.
-  const v4Pending = false;
-
   /**
    * Whether the list on screen is an answer about the mandate as it stands.
    *
@@ -911,7 +908,19 @@ export function PoolsStep({
       }
     }
     for (const id of displayNetworks) {
-      for (const token of searchTokens(id, q, MAX_SUGGESTIONS)) {
+      const candidates =
+        catalog.dataMode === "real"
+          ? catalog
+              .tokensFor([id], draft.protocols)
+              .filter(
+                (token) =>
+                  token.priced &&
+                  (token.symbol.toLowerCase().includes(q) ||
+                    token.name.toLowerCase().includes(q) ||
+                    token.address.toLowerCase().startsWith(q)),
+              )
+          : searchTokens(id, q, MAX_SUGGESTIONS);
+      for (const token of candidates) {
         push({
           address: token.address,
           symbol: token.symbol,
@@ -1234,7 +1243,6 @@ export function PoolsStep({
         />
       );
     }
-    if (v4Pending) return <EmptyState title={t("fundBuilder.pools.v4Pending")} />;
     if (allSelected) {
       return (
         <EmptyState
@@ -1424,7 +1432,7 @@ export function PoolsStep({
               />
               {/* Only what it would really add. "Add all 3" over two addable pools and a hooked one
                   is a promise the button cannot keep, and "Add all 0" is not an offer. */}
-              {addable.length > 0 && !v4Pending ? (
+              {addable.length > 0 ? (
                 <Button variant="secondary" size="sm" onClick={handleAddAll}>
                   <Plus className="size-4" aria-hidden="true" />
                   {t("fundBuilder.common.addAll", { count: addable.length })}

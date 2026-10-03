@@ -162,7 +162,7 @@ export const fundDetailSchema = fundIdentitySchema
   .extend({
     mandate: mandateSchema,
     state: z.enum(["Open", "Closing", "Closed"]),
-    fundState: uint,
+    fundState: z.number().int().min(0).max(2),
     sharePrice: uint,
     shareAssets: uint,
     grossAssets: uint,

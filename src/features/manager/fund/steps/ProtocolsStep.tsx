@@ -140,14 +140,21 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
   /** R20: every selectable protocol, or none of them. The required two are never in scope. */
   function toggleAll() {
     const ids = new Set<ProtocolId>(selectable.map((protocol) => protocol.id));
-    update((current) =>
-      withProtocols(
+    update((current) => {
+      const result = withProtocols(
         current,
         allSelected
           ? current.protocols.filter((protocol) => !ids.has(protocol))
           : [...current.protocols, ...ids],
-      ),
-    );
+      );
+      if (catalog.dataMode === "real")
+        result.aaveV3Reserves = result.protocols.includes("aave-v3")
+          ? (catalog.reserves ?? [])
+              .filter((reserve) => reserve.available)
+              .map((reserve) => reserve.token.address.toLowerCase())
+          : [];
+      return result;
+    });
   }
 
   /** One operable row: the choice, its caption, and where it runs. */

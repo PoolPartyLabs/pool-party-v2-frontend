@@ -50,16 +50,16 @@ export function useV2MandateCatalog() {
       cancelled = true;
     };
   }, [attempt]);
-  return useMemo(
-    () =>
-      isMockMode
-        ? buildMandateCatalog()
-        : {
-            ...buildRealCatalog(state.tokens, state.reserves),
-            loading: state.loading,
-            error: state.error,
-            retry,
-          },
-    [state, retry],
-  );
+  return useMemo(() => {
+    if (isMockMode) return buildMandateCatalog();
+    const catalog = buildRealCatalog(state.tokens, state.reserves);
+    return {
+      ...catalog,
+      loading: state.loading,
+      error: state.error,
+      retry,
+      validateDraft: (draft: import("./mandateDraft").MandateDraft) =>
+        !state.loading && !state.error && (catalog.validateDraft?.(draft) ?? false),
+    };
+  }, [state, retry]);
 }

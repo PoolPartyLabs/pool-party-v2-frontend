@@ -18,8 +18,9 @@ import {
 } from "./mandateDraft";
 import { buildRealCatalog, toV2MandateSelection } from "./v2Mandate";
 
-const usdc = depositTokenRefFor("arbitrum")!;
-const usdg = depositTokenRefFor("robinhood")!;
+const usdc = depositTokenRefFor("arbitrum");
+const usdg = depositTokenRefFor("robinhood");
+if (!usdc || !usdg) throw new Error("missing base token fixtures");
 const token = (ref: typeof usdc): CatalogToken => ({
   protocolVersion: "v2",
   chainId: ref.network === "arbitrum" ? "42161" : "4663",
@@ -173,5 +174,18 @@ describe("real Mandate", () => {
     if (isBlocked(result)) throw new Error("unexpected refusal");
     expect(result.tokens).toHaveLength(2);
     expect(toV2MandateSelection(result, real).chains[0]?.uniswapV4PoolIds).toEqual([poolId]);
+    expect(() => toV2MandateSelection({ ...result, pools: [pool, pool] }, real)).toThrow();
+    expect(() =>
+      toV2MandateSelection(
+        { ...result, pools: [{ ...pool, poolKey: { ...pool.poolKey, tickSpacing: 0 } }] },
+        real,
+      ),
+    ).toThrow();
+    expect(() =>
+      toV2MandateSelection(
+        { ...result, positionProtocolsByChain: JSON.parse('{"arbitrum":["uniswap-v3"]}') },
+        real,
+      ),
+    ).toThrow();
   });
 });

@@ -125,6 +125,15 @@ export function toV2MandateSelection(draft: MandateDraft, catalog: MandateCatalo
     const protocols =
       draft.positionProtocolsByChain?.[network] ??
       (draft.protocols.includes("uniswap-v4") ? ["uniswap-v4"] : []);
+    if (
+      protocols.some(
+        (protocol) =>
+          !draft.protocols.includes(protocol) ||
+          (protocol !== "uniswap-v4" && !(protocol === "aave-v3" && network === "arbitrum")),
+      ) ||
+      new Set(pools.map((pool) => pool.poolId?.toLowerCase())).size !== pools.length
+    )
+      throw new Error("invalid position selection");
     if (protocols.includes("uniswap-v4") && pools.length === 0)
       throw new Error("selected v4 chain requires a pool");
     for (const pool of pools) {
@@ -133,6 +142,12 @@ export function toV2MandateSelection(draft: MandateDraft, catalog: MandateCatalo
         !protocols.includes("uniswap-v4") ||
         !pool.poolId ||
         !pool.poolKey ||
+        !Number.isInteger(pool.poolKey.fee) ||
+        pool.poolKey.fee < 0 ||
+        pool.poolKey.fee > 10000 ||
+        !Number.isInteger(pool.poolKey.tickSpacing) ||
+        pool.poolKey.tickSpacing <= 0 ||
+        pool.poolKey.currency0.toLowerCase() >= pool.poolKey.currency1.toLowerCase() ||
         pool.hasHook ||
         !/^0x0{40}$/.test(pool.poolKey.hooks) ||
         [pool.poolKey.currency0, pool.poolKey.currency1].some(
@@ -151,7 +166,10 @@ export function toV2MandateSelection(draft: MandateDraft, catalog: MandateCatalo
           .filter((entry) => entry.address.toLowerCase() !== base.address)
           .map((entry) => entry.address.toLowerCase()),
       ],
-      uniswapV4PoolIds: pools.map((pool) => pool.poolId!),
+      uniswapV4PoolIds: pools.map((pool) => {
+        if (!pool.poolId) throw new Error("missing pool id");
+        return pool.poolId;
+      }),
     };
   });
   if (draft.pools.some((pool) => !draft.networks.includes(pool.network)))

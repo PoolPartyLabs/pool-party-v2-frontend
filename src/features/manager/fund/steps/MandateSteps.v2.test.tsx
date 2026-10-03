@@ -154,7 +154,7 @@ describe("real Mandate step contract", () => {
   it("Limits discloses client-only allocation aids and permits them to remain unset", () => {
     const current = withProtocols(draft(), ["aave-v3"]);
     renderWithProviders(<Harness step="limits" initial={current} />);
-    expect(screen.getByText(/not enforced on chain until POO-2169/)).toBeInTheDocument();
+    expect(screen.getAllByText(/not enforced on chain until POO-2169/).length).toBeGreaterThan(0);
     expect(validateStep(current, "limits", catalog)).toBeNull();
     expect(toV2MandateSelection(current, catalog)).not.toHaveProperty("caps");
   });
