@@ -6,7 +6,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 460 markers across 257 files (2026-10-03)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 461 markers across 258 files (2026-10-03)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap

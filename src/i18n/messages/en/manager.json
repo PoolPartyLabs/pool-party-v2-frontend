@@ -610,6 +610,39 @@
   },
   "window30d": "30d",
   "fundBuilder": {
+    "header": {
+      "saveExit": "Save & exit"
+    },
+    "subStep": {
+      "overline": "MANDATE · STEP {n} OF {count}",
+      "next": "Next: {step}",
+      "back": "Back: {step}",
+      "nextBuild": "Next: Build strategy",
+      "expand": "Show the mandate steps",
+      "collapse": "Hide the mandate steps"
+    },
+    "steps": {
+      "networks": {
+        "title": "Networks",
+        "subtitle": "Pick the networks this strategy can operate on. Arbitrum is always the hub."
+      },
+      "protocols": {
+        "title": "Protocols",
+        "subtitle": "Pick the protocols this strategy can use. Swaps and the bridge are always included."
+      },
+      "tokens": {
+        "title": "Tokens",
+        "subtitle": "Pick the tokens this strategy can hold. They come from the networks and protocols you chose."
+      },
+      "pools": {
+        "title": "Pools",
+        "subtitle": "Pick the pools this strategy can provide liquidity to. They come from the protocols and tokens you chose."
+      },
+      "limits": {
+        "title": "Limits",
+        "subtitle": "Cap how much of the capital each network, protocol and token can hold."
+      }
+    },
     "common": {
       "selectAll": "Select all",
       "alwaysIncluded": "Always included",
@@ -722,6 +755,43 @@
         "dex": "Liquidity positions",
         "perps": "Perpetuals"
       }
+    },
+    "draft": {
+      "title": "Name your draft",
+      "body": "Everything you chose so far is kept. The name is how you will find this draft in your strategies; you can change it later on Review.",
+      "nameLabel": "Draft name",
+      "namePlaceholder": "ETH and BTC on Arbitrum",
+      "helper": "10 to 50 characters, same rule as the strategy name.",
+      "counter": "{count} / {max}",
+      "progress": "Saved so far: {networks} networks, {protocols} protocols, {tokens} tokens · Mandate, step {n} of {count}",
+      "keepEditing": "Keep editing",
+      "save": "Save and exit",
+      "saveContinue": "Save and continue",
+      "empty": "Give the draft a name",
+      "saveFailed": "Couldn't save the draft. Your choices are still here; try again.",
+      "saved": "Draft saved"
+    },
+    "drafts": {
+      "title": "Drafts",
+      "row": "Mandate, step {n} of {count} · updated {when}",
+      "open": "Open",
+      "delete": "Delete",
+      "deleteTitle": "Delete this draft?",
+      "deleteBody": "{name} and everything you chose in it will be removed. This cannot be undone.",
+      "empty": "No drafts yet. Start a strategy and use Save & exit to keep one.",
+      "deleteFailed": "Couldn't delete the draft. Try again.",
+      "unnamed": "Unnamed draft"
+    },
+    "build": {
+      "title": "Build",
+      "pending": "The Build canvas for the fund contracts is in design. Your mandate is saved; come back when it ships.",
+      "summary": "Your mandate",
+      "backMandate": "Back: Mandate",
+      "summaryNetworks": "Networks",
+      "summaryProtocols": "Protocols",
+      "summaryTokens": "Tokens",
+      "summaryPools": "Pools",
+      "summaryLimits": "Limits"
     }
   }
 }

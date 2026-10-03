@@ -55,6 +55,55 @@ Convention: `<area>_<object>_<action>`, snake_case, max 40 chars. Transactional 
 | `strategy_share_export_failed` | Yield Receipt PNG export (or the native file-attach) failed on Save or a share target (POO-906 R5); surfaced to the user, ids only in params | `strategy_id`, `share_target`, `share_period` | PP-STR-MOD-009 |
 | `strategy_launch_submitted` | Manager Launch strategy (create pool) confirmed — fired once from the Launch-confirm approve (the build→review→sign flow start, before the signatures). Carries the pool id (the strategy has no id yet at launch). | `strategy_id` (pool id) | PP-MGR-SCR-002 |
 
+## Manager, fund builder (Mandate)
+
+The fund-contracts builder's first phase (POO-2122, epic POO-2119): five list-picking screens that
+fix a fund's mandate (networks, protocols, tokens, pools, caps) before anything is built. **Nothing
+in this phase signs a transaction**, which is what decides the shape of the funnel below: its only
+settlement is the draft reaching storage, so `builder_mandate_completed` waits for the write and not
+for the last Next.
+
+Two of the eight exist because something did NOT happen, and they are the ones that make the rest
+readable. `builder_mandate_blocked` is the only trace a refusal leaves at all: Next stays enabled
+when the product says no (R6, design rule P36), so without it a manager stopped by the Pools step
+is indistinguishable from one who lost interest. `builder_mandate_abandoned` is what closes the
+arithmetic, `started` = `completed` + `abandoned`, and its `draft_saved` separates the session that
+LOST work from the one that parked it, which point at opposite fixes.
+
+All five steps live under one pathname (`/manager/new`), so `page_viewed` sees one screen where
+there are five: `builder_mandate_step_viewed` is the per-step denominator every rate here is
+measured against, and it fires per VISIT, counting a revisit through Back again.
+
+| Event | When it fires | Key params | Emitting artifact |
+|-------|---------------|-----------|-------------------|
+| `builder_mandate_started` | The builder opened on a mandate that was never saved: no draft id in the URL, or an id naming a draft that is gone. Once per session, after the draft store has been read. A RESUMED draft deliberately does not fire it, so the denominator stays "a manager began a mandate" rather than "a manager opened the builder again" | `networks_count`, `protocols_count`, `tokens_count`, `pools_count` (the starting mandate: the hub, the two required protocols and the deposit token) | PP-MGR-SCR-002 (`FundStrategyBuilderScreen.tsx`) |
+| `builder_mandate_step_viewed` | A Mandate step became the visible one. Per step VISIT, not per mount and not per render: Back is part of how the Mandate is used, and a denominator that ignored a revisit would make every per-step refusal rate look better than it is | `step` (`networks`, `protocols`, `tokens`, `pools`, `limits`) | PP-MGR-SCR-002 (`FundStrategyBuilderScreen.tsx`) |
+| `builder_mandate_step_submitted` | Next was accepted on a step, including the LAST one (where it is followed by the completion attempt rather than by another step). Carries the four counts AT that moment, which is what turns "managers drop at Tokens" into "managers drop at Tokens holding two tokens" | `step`, `networks_count`, `protocols_count`, `tokens_count`, `pools_count` | PP-MGR-SCR-002 (`FundStrategyBuilderScreen.tsx`) |
+| `builder_mandate_blocked` | The product refused something the manager asked for: Next on a step that cannot be left (Pools with no pool, Limits with an unanswered cap), a selection a reducer refused (the 16-slot ceiling, a hooked pool, a row that is not live yet), or Save with a name that fails the 10-to-50 rule. **The CTA is never disabled**, so this event is the entire record of the refusal: there is no click to count, no error to log and no failed request anywhere | `step`, `block_reason` (`nothing_selected`, `cap_missing`, `no_slots`, `has_hook`, `coming_soon`, plus `price_unknown` for an unpriced token and `name_invalid` for the draft name, both folded onto the reasons POO-1172 already defines so one series answers the question across both builders) | PP-MGR-SCR-002 (`FundStrategyBuilderScreen.tsx`); the step bodies report through `onBlocked` and never emit |
+| `builder_mandate_completed` | The mandate was finished AND persisted. Fires only after `save()` answered `{ ok: true }`, never on the last Next and never on the dialog's click: persistence is this phase's only settlement, and a mandate that was not written down does not survive a reload. At most one per session | `step` (always `limits`), `networks_count`, `protocols_count`, `tokens_count`, `pools_count` | PP-MGR-SCR-002 (`FundStrategyBuilderScreen.tsx`) |
+| `builder_mandate_abandoned` | The builder unmounted without completing and without a Save & exit. `draft_saved` is the dimension worth having: `false` means work was lost and is a product defect we can act on, `true` means a manager parked a named draft they will probably come back to | `step` (where they actually left, read at unmount rather than captured), `draft_saved` | PP-MGR-SCR-002 (`FundStrategyBuilderScreen.tsx`) |
+| `builder_draft_saved` | A draft reached storage, from Save & exit or from the completion path. `first_save` splits the two questions: `true` is the conversion (a mandate became a thing that survives a reload, and it is the one with the naming dialog in front of it), `false` measures how often managers park work mid-flow | `step`, `first_save` | PP-MGR-SCR-002 (`FundStrategyBuilderScreen.tsx`) |
+| `builder_mandate_error` | A draft could not be written: storage quota, blocked site data, a private window. The manager keeps everything they chose and stays on the step. One code for every cause, because the browser does not tell us which and three codes we cannot distinguish would be three guesses. Also carries the Pools step's catalog read (POO-2125), in two codes, both `upstream` and both raised through `PoolsStep`'s `onError` prop so every emission still leaves from the shell: `POOLS_FETCH_FAILED` is the read the step DREW an error state for, with the Try again under it, and `POOLS_UNIVERSE_FETCH_FAILED` is a pool-universe measurement that failed beside a search the manager is still reading, where nothing is drawn and nothing is offered to retry. Splitting them keeps the drawn code countable: while the universe was unknown, one failed search reported it twice, once for the visible read and once for the measurement, then again on every retry. In the universe view one read serves both, so a failure there is one event with the drawn code. Both are deliberately distinct from an empty result, which is a fact about the mandate rather than about us. And the Console's refused DELETE (POO-2127): `DRAFT_DELETE_FAILED` / `app`, its own code rather than a reuse of the save's, because a save that fails loses work the manager just did while a delete that fails leaves a draft they wanted gone sitting in the list, and only one of the two asks them to retry anything | `step`, `error_code` (`DRAFT_SAVE_FAILED`, `DRAFT_DELETE_FAILED`, `POOLS_FETCH_FAILED`, `POOLS_UNIVERSE_FETCH_FAILED`), `error_origin` (`app`, `upstream`) | PP-MGR-SCR-002 (`FundStrategyBuilderScreen.tsx`), PP-MGR-CMP-044 (`MandateDraftsList.tsx`, the refused delete) |
+
+## Manager, fund builder (Build phase and parked drafts)
+
+Either side of the Mandate (POO-2127, epic POO-2119). The Build canvas is still in design, so a
+closed mandate currently opens onto a landing that prints the mandate back and says so; a mandate
+that was parked instead lives in the Console's Drafts card, which is the only way back into it and
+the only way to throw it away.
+
+The three events below exist because `builder_mandate_completed` and
+`builder_mandate_abandoned{draft_saved:true}` both stop one step short of the question being asked.
+A completion says a mandate was closed, not how many managers came back to look at one; a saved
+abandonment says work was parked, not whether it was ever resumed. **Without `builder_draft_deleted`
+every parked mandate reads as a pending success**, which is the reading most likely to be wrong.
+
+| Event | When it fires | Key params | Emitting artifact |
+|-------|---------------|-----------|-------------------|
+| `builder_build_landing_viewed` | The Build phase's landing mounted: either the last Next completed the mandate, or a `?phase=build` link resumed a draft that had already completed. Once per mount, via `useTrackView` | none (the draft's selections are already carried by `builder_mandate_completed`; repeating them here would make two series of the same counts that can disagree) | PP-MGR-SCR-002 (`FundBuildLanding.tsx`) |
+| `builder_draft_opened` | Open was pressed on a draft in the Console's Drafts card. Fires on the press rather than on the builder mounting, because the press is the intent and a navigation that fails to mount is exactly the case worth seeing | `step` (where the draft was parked, which is where the manager is about to land) | PP-MGR-CMP-044 (`MandateDraftsList.tsx`) |
+| `builder_draft_deleted` | A draft was removed, after the confirm dialog was answered Delete. Never on opening the dialog: a cancelled delete is not a delete, and counting it would turn hesitation into a decision | `step` (where the draft was parked when the manager gave up on it; the step they could not get past is the actionable half of a deletion) | PP-MGR-CMP-044 (`MandateDraftsList.tsx`) |
+
 ## Transaction flows (cross-modal)
 
 | Event | When it fires | Key params | Emitting artifact |

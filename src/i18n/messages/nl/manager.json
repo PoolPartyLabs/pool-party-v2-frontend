@@ -610,6 +610,39 @@
   },
   "window30d": "30d",
   "fundBuilder": {
+    "header": {
+      "saveExit": "Opslaan en afsluiten"
+    },
+    "subStep": {
+      "overline": "MANDAAT · STAP {n} VAN {count}",
+      "next": "Volgende: {step}",
+      "back": "Terug: {step}",
+      "nextBuild": "Volgende: Strategie bouwen",
+      "expand": "Mandaatstappen weergeven",
+      "collapse": "Mandaatstappen verbergen"
+    },
+    "steps": {
+      "networks": {
+        "title": "Netwerken",
+        "subtitle": "Kies de netwerken waarop deze strategie actief kan zijn. Arbitrum is altijd de hub."
+      },
+      "protocols": {
+        "title": "Protocollen",
+        "subtitle": "Kies de protocollen die deze strategie kan gebruiken. Swaps en de bridge zijn altijd inbegrepen."
+      },
+      "tokens": {
+        "title": "Tokens",
+        "subtitle": "Kies de tokens die deze strategie kan aanhouden. Ze komen van de netwerken en protocollen die u hebt gekozen."
+      },
+      "pools": {
+        "title": "Pools",
+        "subtitle": "Kies de pools waaraan deze strategie liquiditeit kan verschaffen. Ze komen van de protocollen en tokens die u hebt gekozen."
+      },
+      "limits": {
+        "title": "Limieten",
+        "subtitle": "Begrens hoeveel van het kapitaal elk netwerk, protocol en token mag aanhouden."
+      }
+    },
     "common": {
       "selectAll": "Alles selecteren",
       "alwaysIncluded": "Altijd inbegrepen",
@@ -722,6 +755,43 @@
         "dex": "Liquidity positions",
         "perps": "Perpetuals"
       }
+    },
+    "draft": {
+      "title": "Geef uw concept een naam",
+      "body": "Alles wat u tot nu toe hebt gekozen, wordt bewaard. Aan de hand van de naam vindt u dit concept terug bij uw strategieën; u kunt deze later wijzigen bij Controleren.",
+      "nameLabel": "Naam van het concept",
+      "namePlaceholder": "ETH en BTC op Arbitrum",
+      "helper": "10 tot 50 tekens, dezelfde regel als bij de strategienaam.",
+      "counter": "{count} / {max}",
+      "progress": "Tot nu toe opgeslagen: {networks} netwerken, {protocols} protocollen, {tokens} tokens · Mandaat, stap {n} van {count}",
+      "keepEditing": "Doorgaan met bewerken",
+      "save": "Opslaan en afsluiten",
+      "saveContinue": "Opslaan en doorgaan",
+      "empty": "Geef het concept een naam",
+      "saveFailed": "Het concept kon niet worden opgeslagen. Uw keuzes staan er nog; probeer het opnieuw.",
+      "saved": "Concept opgeslagen"
+    },
+    "drafts": {
+      "title": "Concepten",
+      "row": "Mandaat, stap {n} van {count} · bijgewerkt {when}",
+      "open": "Openen",
+      "delete": "Verwijderen",
+      "deleteTitle": "Dit concept verwijderen?",
+      "deleteBody": "{name} en alles wat u daarin hebt gekozen, worden verwijderd. Dit kan niet ongedaan worden gemaakt.",
+      "empty": "Nog geen concepten. Start een strategie en gebruik Opslaan en afsluiten om er een te bewaren.",
+      "deleteFailed": "Het concept kon niet worden verwijderd. Probeer het opnieuw.",
+      "unnamed": "Naamloos concept"
+    },
+    "build": {
+      "title": "Bouwen",
+      "pending": "Het bouwcanvas voor de fondscontracten is nog in ontwerp. Uw mandaat is opgeslagen; kom terug zodra het beschikbaar is.",
+      "summary": "Uw mandaat",
+      "backMandate": "Terug: Mandaat",
+      "summaryNetworks": "Netwerken",
+      "summaryProtocols": "Protocollen",
+      "summaryTokens": "Tokens",
+      "summaryPools": "Pools",
+      "summaryLimits": "Limieten"
     }
   }
 }

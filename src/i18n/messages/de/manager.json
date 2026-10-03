@@ -610,6 +610,39 @@
   },
   "window30d": "30 T",
   "fundBuilder": {
+    "header": {
+      "saveExit": "Speichern und beenden"
+    },
+    "subStep": {
+      "overline": "MANDAT · SCHRITT {n} VON {count}",
+      "next": "Weiter: {step}",
+      "back": "Zurück: {step}",
+      "nextBuild": "Weiter: Strategie erstellen",
+      "expand": "Mandatsschritte anzeigen",
+      "collapse": "Mandatsschritte ausblenden"
+    },
+    "steps": {
+      "networks": {
+        "title": "Netzwerke",
+        "subtitle": "Wählen Sie die Netzwerke, auf denen diese Strategie laufen kann. Arbitrum ist immer der Hub."
+      },
+      "protocols": {
+        "title": "Protokolle",
+        "subtitle": "Wählen Sie die Protokolle, die diese Strategie nutzen kann. Swaps und die Bridge sind immer enthalten."
+      },
+      "tokens": {
+        "title": "Tokens",
+        "subtitle": "Wählen Sie die Token, die diese Strategie halten kann. Sie stammen aus den von Ihnen gewählten Netzwerken und Protokollen."
+      },
+      "pools": {
+        "title": "Pools",
+        "subtitle": "Wählen Sie die Pools, denen diese Strategie Liquidität bereitstellen kann. Sie stammen aus den von Ihnen gewählten Protokollen und Token."
+      },
+      "limits": {
+        "title": "Limits",
+        "subtitle": "Begrenzen Sie, wie viel Kapital jedes Netzwerk, Protokoll und Token halten darf."
+      }
+    },
     "common": {
       "selectAll": "Alle auswählen",
       "alwaysIncluded": "Immer enthalten",
@@ -722,6 +755,43 @@
         "dex": "Liquidity positions",
         "perps": "Perpetuals"
       }
+    },
+    "draft": {
+      "title": "Benennen Sie Ihren Entwurf",
+      "body": "Alles, was Sie bisher ausgewählt haben, wird gespeichert. Anhand des Namens finden Sie diesen Entwurf später unter Ihren Strategien wieder; Sie können ihn später unter Überprüfung ändern.",
+      "nameLabel": "Entwurfsname",
+      "namePlaceholder": "ETH und BTC auf Arbitrum",
+      "helper": "10 bis 50 Zeichen, dieselbe Regel wie beim Strategienamen.",
+      "counter": "{count} / {max}",
+      "progress": "Bisher gespeichert: {networks} Netzwerke, {protocols} Protokolle, {tokens} Token · Mandat, Schritt {n} von {count}",
+      "keepEditing": "Weiter bearbeiten",
+      "save": "Speichern und beenden",
+      "saveContinue": "Speichern und fortfahren",
+      "empty": "Geben Sie dem Entwurf einen Namen",
+      "saveFailed": "Der Entwurf konnte nicht gespeichert werden. Ihre Auswahl ist weiterhin vorhanden; versuchen Sie es erneut.",
+      "saved": "Entwurf gespeichert"
+    },
+    "drafts": {
+      "title": "Entwürfe",
+      "row": "Mandat, Schritt {n} von {count} · aktualisiert {when}",
+      "open": "Öffnen",
+      "delete": "Löschen",
+      "deleteTitle": "Diesen Entwurf löschen?",
+      "deleteBody": "{name} und alles, was Sie darin ausgewählt haben, werden entfernt. Dies kann nicht widerrufen werden.",
+      "empty": "Noch keine Entwürfe. Starten Sie eine Strategie und nutzen Sie Speichern und beenden, um sie zu behalten.",
+      "deleteFailed": "Der Entwurf konnte nicht gelöscht werden. Versuchen Sie es erneut.",
+      "unnamed": "Unbenannter Entwurf"
+    },
+    "build": {
+      "title": "Erstellen",
+      "pending": "Der Build-Bereich für die Fondsverträge befindet sich noch im Design. Ihr Mandat ist gespeichert; kommen Sie zurück, sobald er verfügbar ist.",
+      "summary": "Ihr Mandat",
+      "backMandate": "Zurück: Mandat",
+      "summaryNetworks": "Netzwerke",
+      "summaryProtocols": "Protokolle",
+      "summaryTokens": "Tokens",
+      "summaryPools": "Pools",
+      "summaryLimits": "Limits"
     }
   }
 }
