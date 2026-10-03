@@ -76,5 +76,11 @@
   "locale": {
     "changeLanguage": "Taal wijzigen",
     "title": "Taal"
+  },
+  "contractFamily": {
+    "label": "Builderversie",
+    "v1": "V1",
+    "v2": "V2",
+    "tooltip": "Schakel tussen de huidige builder (V1) en de preview van de fondscontracten (V2)."
   }
 }

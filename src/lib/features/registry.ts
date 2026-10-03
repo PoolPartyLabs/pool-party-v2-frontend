@@ -40,7 +40,8 @@ export type FeatureKey =
   | "cashPlus"
   | "virtualize"
   | "strategyCategoryFilter"
-  | "hookTools";
+  | "hookTools"
+  | "fundContracts";
 
 /**
  * Lifecycle stage of an area:
@@ -401,6 +402,32 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
     envVar: "NEXT_PUBLIC_FEATURE_HOOK_TOOLS",
     description:
       "The Tools page at `/tools`: paste a deployed Uniswap v4 hook address and get the hookrisk report for it. Route-guarded (404 while off) and gates the sidebar entry. The scan runs server-side and needs the hookrisk toolchain plus ETHERSCAN_API_KEY on the host; without them the page reports what is missing rather than a clean bill of health.",
+  },
+  fundContracts: {
+    key: "fundContracts",
+    area: "Fund contracts builder (V2 preview)",
+    // POO-2120, epic POO-2119. Gates TWO things and nothing else: the header's "V1 | V2"
+    // contract-family toggle, and which builder `/manager/new` renders once that toggle says V2.
+    //
+    // NOT a route gate, and the distinction is the whole design: `/manager/new` ALWAYS resolves.
+    // With this flag off the page renders the live V1 single-pool builder byte-identically, with no
+    // skeleton and no delay, so the flag can never 404 the one screen a manager uses to earn. A
+    // route gate would have made "is the preview switched on" and "can anyone create a strategy"
+    // the same question, which they are not.
+    //
+    // NOT `isManager` (the manager area ships unflagged in v1, so the role gate is upstream of this
+    // one) and NOT `isMockMode` (the V2 builder persists local drafts and calls no contract; mock
+    // vs real is the drafts store's own seam, see PP-MGR-STO-001).
+    //
+    // Ships off in dev and prod alike on a flat baseline. Dev turns it on with
+    // `NEXT_PUBLIC_FEATURE_FUND_CONTRACTS=on` in its untracked env file BEFORE the image build,
+    // since NEXT_PUBLIC_* is baked at build time rather than read at boot. Retire the flag once the
+    // fund contracts replace V1 rather than sit beside it.
+    defaultEnabled: false,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_FUND_CONTRACTS",
+    description:
+      'Whether the header shows the "V1 | V2" contract-family toggle and whether `/manager/new` can render the fund-contracts (V2) builder instead of the live V1 one. NOT a route gate: `/manager/new` always resolves, and off = today\'s V1 builder unchanged. Not isManager, not isMockMode. Off = the V2 preview does not exist for the user.',
   },
 };
 

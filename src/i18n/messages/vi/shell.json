@@ -76,5 +76,11 @@
   "locale": {
     "changeLanguage": "Thay đổi ngôn ngữ",
     "title": "Ngôn ngữ"
+  },
+  "contractFamily": {
+    "label": "Phiên bản trình tạo",
+    "v1": "V1",
+    "v2": "V2",
+    "tooltip": "Chuyển giữa trình tạo hiện tại (V1) và bản xem trước hợp đồng quỹ (V2)."
   }
 }

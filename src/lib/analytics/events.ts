@@ -174,6 +174,17 @@ export const ANALYTICS_EVENTS = [
   "locale_changed",
   "web_vitals",
   "app_error_shown",
+  /**
+   * POO-2120 [R5]: the manager switched the header's contract-family toggle (`PP-CORE-CMP-075`),
+   * which decides whether `/manager/new` renders the live V1 builder or the fund-contracts (V2)
+   * one. Carries `family`, the family switched TO.
+   *
+   * Fires on a CHANGE, never on a press: pressing the already-selected segment emits nothing, so
+   * the series counts builders entered rather than clicks on a control. `app_`, not `manager_`,
+   * because the control lives in the app shell beside the RewardsPill and is reachable from every
+   * screen; which screen it was is already `page_location`.
+   */
+  "contract_family_toggled",
 
   // ===========================================================================================
   // POO-1171 (LANE-0): declared ahead of their emitters, each with an owner.
@@ -953,6 +964,16 @@ export interface AnalyticsParams {
   auth_method?: AnalyticsAuthMethod;
   /** Which navigation entry was activated (POO-1183 [R7]). */
   nav_item?: AnalyticsNavItem;
+  /**
+   * Which contract family the manager switched TO (POO-2120 [R5]): `"v1"` the live Uniswap v3
+   * single-pool builder, `"v2"` the fund-contracts builder. A closed literal union rather than a
+   * string, because there are exactly two families and a third value would mean a bug rather than
+   * a new option.
+   *
+   * The family switched TO, never a from/to pair: the previous family is the previous row of the
+   * same series, and a second param would let the two disagree.
+   */
+  family?: "v1" | "v2";
   /**
    * Which Mandate step a `builder_mandate_*` event happened on (POO-2122).
    *

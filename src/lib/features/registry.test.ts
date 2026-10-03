@@ -134,6 +134,25 @@ describe("feature registry", () => {
     expect(source).not.toMatch(/defaultEnabled:\s*process\.env\.NODE_ENV/);
   });
 
+  // @rule R1 (POO-2120, epic POO-2119)
+  it("registers the fundContracts gate, default off (POO-2120 [R1])", () => {
+    // Gates the header V1/V2 toggle and which builder `/manager/new` renders. NOT a route gate:
+    // the route always resolves, and with the flag off it renders the V1 builder byte-identically.
+    expect(FEATURE_KEYS).toContain("fundContracts");
+    expect(FEATURES.fundContracts.defaultEnabled).toBe(false);
+    expect(FEATURES.fundContracts.stage).toBe("next");
+    expect(FEATURES.fundContracts.envVar).toBe("NEXT_PUBLIC_FEATURE_FUND_CONTRACTS");
+  });
+
+  // @rule R1. The entry has to say what it is NOT, where the next reader meets it. A flag that
+  // decides which of two builders renders is the one most likely to be mistaken for a route guard.
+  it("[R1] the fundContracts entry states it is not a route gate", () => {
+    const source = readFileSync(join(__dirname, "registry.ts"), "utf8");
+    const start = source.indexOf("  fundContracts: {");
+    const entry = source.slice(start, source.indexOf("\n  },", start));
+    expect(entry).toContain("NOT a route gate");
+  });
+
   it("does NOT register a financialsV2 flag (PP-CORE-LIB-048 removed it)", () => {
     // POO-990: the `financialsV2` data-source flag was deleted — the FE reads the C1 /financials payload
     // UNCONDITIONALLY (legacy /metrics consumption fully excised). This locks the flag out for good: no

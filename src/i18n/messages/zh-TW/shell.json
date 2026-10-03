@@ -76,5 +76,11 @@
   "locale": {
     "changeLanguage": "變更語言",
     "title": "語言"
+  },
+  "contractFamily": {
+    "label": "搭建器版本",
+    "v1": "V1",
+    "v2": "V2",
+    "tooltip": "在目前搭建器（V1）與基金合約預覽（V2）之間切換。"
   }
 }

@@ -246,6 +246,37 @@ describe("AppShell", () => {
     expect(screen.getByText(/Developed by Pool Party Labs/)).toBeInTheDocument();
   });
 
+  // POO-2120 [R4]: the contract-family toggle sits in the header's right cluster, immediately
+  // BEFORE the RewardsPill, so it reads as the left half of the pill pair. Asserted as DOM order
+  // rather than by a class, because order is what decides what the manager sees first.
+  // @rule R4
+  it("[R4] renders the V1/V2 toggle immediately before the rewards pill when fundContracts is on", () => {
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_FUND_CONTRACTS", "on");
+    renderWithProviders(
+      <AppShell>
+        <div>content</div>
+      </AppShell>,
+    );
+    const toggle = screen.getByRole("group", { name: "Builder version" });
+    const pill = screen.getByRole("link", { name: /Quacks/ });
+    // Same cluster, and the toggle comes first.
+    expect(toggle.parentElement).toBe(pill.parentElement);
+    expect(toggle.compareDocumentPosition(pill) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  // @rule R4 / R3. Off is absent, so the v1 header is byte-identical to what it was.
+  it("[R4] renders no V1/V2 toggle while fundContracts is off", () => {
+    renderWithProviders(
+      <AppShell>
+        <div>content</div>
+      </AppShell>,
+    );
+    expect(screen.queryByRole("group", { name: "Builder version" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "V2" })).toBeNull();
+    // The rest of the header cluster is untouched.
+    expect(screen.getByRole("link", { name: /Quacks/ })).toBeInTheDocument();
+  });
+
   it("always shows the manager entry, and flips Become-a-manager to Manager via the dev toggle", async () => {
     const user = userEvent.setup();
     renderWithProviders(
