@@ -223,6 +223,53 @@ describe("INV3 inside a spoke", () => {
       { invariant: 3, code: "share_exceeds_parent", targetId: "robinhood" },
     ]);
   });
+
+  it("reports a negative spoke share once, as negative_share on that spoke", () => {
+    // @rule INV3
+    const plan = emptySpokePlan();
+    const spoke = plan.spokes[0];
+    if (spoke) spoke.sharePct = -5;
+    expect(validatePlan(plan, ctx)).toEqual([
+      { invariant: 3, code: "negative_share", targetId: "robinhood" },
+    ]);
+  });
+});
+
+describe("INV1 on the hub", () => {
+  it("reports the hub listed as a spoke", () => {
+    // @rule INV1
+    const plan: BuildPlan = {
+      ...emptyPlan(),
+      spokes: [{ network: "arbitrum", sharePct: 0, chains: [] }],
+    };
+    expect(validatePlan(plan, ctx)).toEqual([
+      { invariant: 1, code: "network_not_in_mandate", targetId: "arbitrum" },
+    ]);
+  });
+});
+
+describe("INV3 share arithmetic", () => {
+  /** Three hub chains, each a Supply of USDC, with these shares. */
+  function threeChains(a: number, b: number, c: number): BuildPlan {
+    const chain = (id: string, sharePct: number): Chain => ({
+      id,
+      sharePct,
+      steps: [supply(`${id}-s`)],
+    });
+    return { ...emptyPlan(), hub: { chains: [chain("x", a), chain("y", b), chain("z", c)] } };
+  }
+
+  it("accepts shares that add up to 100 in decimal, even when floating point lands above it", () => {
+    // @rule INV3
+    expect(codes(threeChains(33.3, 33.3, 33.4))).toEqual([]);
+    // 0.2 + 83.9 + 15.9 is 100.00000000000001 in floating point.
+    expect(codes(threeChains(0.2, 83.9, 15.9))).toEqual([]);
+  });
+
+  it("reports a sum that passes 100 by more than the rounding slack", () => {
+    // @rule INV3
+    expect(codes(threeChains(0.2, 83.9, 15.900001))).toEqual(["share_exceeds_parent"]);
+  });
 });
 
 describe("INV5 sequences", () => {
@@ -236,6 +283,20 @@ describe("INV5 sequences", () => {
     // @rule INV5
     expect(codes(hubOf([autoSwap("a"), pool("p"), swap("m")]))).toEqual(["sequence"]);
     expect(codes(hubOf([autoSwap("a"), pool("p"), fees("f"), swap("m")]))).toEqual(["sequence"]);
+  });
+
+  it("reports a position after a pool's Collect fees: the pool, or its fees, ends the chain", () => {
+    // @rule INV5
+    expect(validatePlan(hubOf([autoSwap("a"), pool("p"), fees("f"), supply("s")]), ctx)).toEqual([
+      { invariant: 5, code: "sequence", targetId: "s" },
+    ]);
+  });
+
+  it("reports a second Collect fees after a pool's Collect fees", () => {
+    // @rule INV5
+    expect(validatePlan(hubOf([autoSwap("a"), pool("p"), fees("f1"), fees("f2")]), ctx)).toEqual([
+      { invariant: 5, code: "sequence", targetId: "f2" },
+    ]);
   });
 
   it("reports a manager Swap that is neither before a position nor after an Aave block", () => {

@@ -4,10 +4,11 @@
  * @implements-rules-version v1 (POO-2151 rules v1)
  * @analytics-events none, a pure domain module; refusals are reported by the Build screen (S7).
  *
- * Covers G5 and HU2 (the plan shape, `config` null as the empty block) and C22 (the availability
- * table is data). The Borrow entry of the table is deliberately NOT pinned here: whether Aave v3
- * Borrow is enabled is coordinator default D29, overturnable by the product owner, so flipping it is
- * one line of data and no test rewrite. The tests that depend on it set it explicitly.
+ * Covers G5 (the plan shape) and C22 (the availability table is data). "Configured" (HU2) is
+ * `isConfigured`, tested in `planDerive.test.ts`. The shipped table is pinned by ONE test, so a
+ * silent flip fails it; flipping Aave v3 Borrow on purpose (coordinator default D29) changes that
+ * one expectation and nothing else, because every other test that depends on Borrow sets its status
+ * explicitly.
  */
 import { describe, expect, it } from "vitest";
 import { createEmptyDraft } from "../../mandateDraft";
@@ -65,25 +66,6 @@ describe("the plan shape", () => {
     };
     expect(planOf({ ...draft, plan })).toBe(plan);
   });
-
-  it("keeps config null as the one marker of an empty block", () => {
-    // @rule HU2
-    const plan = createEmptyPlan();
-    const withEmpty: BuildPlan = {
-      ...plan,
-      hub: {
-        chains: [
-          {
-            id: "c1",
-            sharePct: 0,
-            steps: [{ id: "b1", family: "position", kind: "uniswapV4Pool", config: null }],
-          },
-        ],
-      },
-    };
-    const block = withEmpty.hub.chains[0]?.steps[0];
-    expect(block?.family === "position" ? block.config : "not a position").toBeNull();
-  });
 });
 
 describe("isPlanBlocked", () => {
@@ -116,6 +98,18 @@ describe("the availability table (C22)", () => {
       expect(["enabled", "comingSoon"]).toContain(BLOCK_KIND_STATUS[kind]);
     }
     expect(Object.keys(BLOCK_KIND_STATUS).sort()).toEqual([...ALL_KINDS].sort());
+  });
+
+  it("pins the shipped defaults, so a silent flip fails here (Borrow enabled is default D29)", () => {
+    // @rule C22
+    expect(BLOCK_KIND_STATUS).toEqual({
+      uniswapV4Pool: "enabled",
+      aaveSupply: "enabled",
+      aaveBorrow: "enabled",
+      uniswapV3Pool: "comingSoon",
+      pendle: "comingSoon",
+      gmxPerp: "comingSoon",
+    });
   });
 
   it("maps each kind to the mandate protocol it needs, and Pendle and GMX to none", () => {

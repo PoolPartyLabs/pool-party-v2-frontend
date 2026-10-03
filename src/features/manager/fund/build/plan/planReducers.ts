@@ -199,9 +199,9 @@ export function reconcileAutoBlocks(
  *
  * A pool chain arrives as [Swap · auto, pool]; a Supply chain as [Supply]. Collect fees is never
  * added with the pool (coordinator default D2). Refusals, in order: `coming_soon` (C22),
- * `not_in_mandate` (the protocol is not in the mandate or not offered on that network), then
- * `unknown_target` (the network has no row on the canvas), then `borrow_needs_supply` (a Borrow is
- * never the head of a chain, C14).
+ * `not_in_mandate` (the protocol is not in the mandate or not offered on that network, or the
+ * network itself is no longer in the mandate), then `unknown_target` (the network has no row on the
+ * canvas), then `borrow_needs_supply` (a Borrow is never the head of a chain, C14).
  */
 export function addChain(
   plan: BuildPlan,
@@ -213,6 +213,9 @@ export function addChain(
   if (availability === "coming_soon") return blocked("coming_soon", network);
   if (availability !== "enabled") return blocked("not_in_mandate", network);
   const isHub = network === HUB_NETWORK;
+  // A spoke placed while its network was in the mandate stays on the canvas after the mandate drops
+  // it (open point 6, D6: never deleted silently), but nothing new is built on it (C6).
+  if (!isHub && !ctx.draft.networks.includes(network)) return blocked("not_in_mandate", network);
   if (!isHub && !plan.spokes.some((spoke) => spoke.network === network)) {
     return blocked("unknown_target", network);
   }

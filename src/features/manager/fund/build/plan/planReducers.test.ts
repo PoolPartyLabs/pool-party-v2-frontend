@@ -186,6 +186,14 @@ describe("addChain (I1, C13, C22)", () => {
     expect(reason(addChain(emptyPlan(), ctx, "robinhood", "uniswapV4Pool"))).toBe("unknown_target");
   });
 
+  it("refuses a spoke whose network has left the mandate since it was placed", () => {
+    // @rule C6
+    const draft: MandateDraft = { ...makeTestDraft(), networks: ["arbitrum"] };
+    expect(
+      reason(addChain(withRobinhoodSpoke(), { ...ctx, draft }, "robinhood", "uniswapV4Pool")),
+    ).toBe("not_in_mandate");
+  });
+
   it("refuses a Borrow as a new chain: it needs a Supply above it (Borrow enabled)", () => {
     // @rule C14
     kinds.aaveBorrow = "enabled";
@@ -671,6 +679,44 @@ describe("setChainShare and setSpokeShare (HU5, C8, INV3)", () => {
     // @rule HU5
     expect(reason(setChainShare(hubPoolPlan(), ctx, "nope", 10))).toBe("unknown_target");
     expect(reason(setSpokeShare(hubPoolPlan(), ctx, "robinhood", 10))).toBe("unknown_target");
+  });
+
+  describe("rounding slack (SHARE_EPSILON)", () => {
+    /** Two hub chains holding `a` and `b`, plus the Supply chain the test sets. */
+    function twoPlusOne(a: number, b: number): BuildPlan {
+      const plan = hubSupplyPlan();
+      const chain = (id: string, sharePct: number): Chain => ({
+        id,
+        sharePct,
+        steps: [
+          {
+            id: `${id}-s`,
+            family: "position",
+            kind: "aaveSupply",
+            config: { assetKey: TEST_ASSET_KEYS.usdcArbitrum },
+          },
+        ],
+      });
+      return { ...plan, hub: { chains: [chain("x", a), chain("y", b), ...plan.hub.chains] } };
+    }
+
+    it("accepts shares that add up to 100 in decimal, even when floating point lands above it", () => {
+      // @rule INV3
+      expect(
+        hubChain(ok(setChainShare(twoPlusOne(33.3, 33.3), ctx, "hub-supply", 33.4)), 2)?.sharePct,
+      ).toBe(33.4);
+      // 0.2 + 83.9 + 15.9 is 100.00000000000001 in floating point.
+      expect(
+        hubChain(ok(setChainShare(twoPlusOne(0.2, 83.9), ctx, "hub-supply", 15.9)), 2)?.sharePct,
+      ).toBe(15.9);
+    });
+
+    it("refuses a sum that passes 100 by more than the slack", () => {
+      // @rule INV3
+      expect(reason(setChainShare(twoPlusOne(0.2, 83.9), ctx, "hub-supply", 15.900001))).toBe(
+        "share_exceeds_parent",
+      );
+    });
   });
 });
 

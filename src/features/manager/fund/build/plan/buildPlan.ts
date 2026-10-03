@@ -118,6 +118,13 @@ export type BlockKindStatus = "enabled" | "comingSoon";
 /**
  * C22: which kinds a manager can place. DATA, not a branch: enabling a kind is changing its value.
  *
+ * NOT the mandate catalog's `available` flag (`MandateProtocol.available`, mandateCatalog.ts). That
+ * one says whether a PROTOCOL can be named in the mandate at all (Uniswap v3 positions cannot, R20
+ * v3), and a protocol it turns off never reaches `draft.protocols`. This table says whether a BLOCK
+ * KIND can be placed on the canvas. `kindAvailability` reads this table first, then whether the
+ * kind's protocol is in `draft.protocols`, then the catalog's `availableOn`. The two tables agree on
+ * Uniswap v3 today by decision, not by derivation: each one is flipped on its own.
+ *
  * PP-NOTE: `aaveBorrow` is coordinator default D29 (handoff v1.2 C22 enables it; the fund contracts
  * are supply only). Moving it to "comingSoon" is this one line; see the file header.
  */

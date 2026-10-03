@@ -22,8 +22,10 @@
  * 6. Auto blocks are owned by the app: a Swap · auto exactly where `reconcileAutoBlocks` puts one.
  *
  * PP-NOTE: invariant 5 reads "nothing follows a pool except its Collect fees" as "a pool ends its
- * chain, or its Collect fees does". No drawing continues a chain after a pool, and coordinator default
- * D1 accepts every other sequence the invariant allows (canvas A's Supply, Swap · auto, pool).
+ * chain, or its Collect fees does". That is the coordinator's reading (recorded with the PR #31
+ * review), consistent with C10 and C11, and the product owner may overturn it. No drawing continues
+ * a chain after a pool, and coordinator default D1 accepts every other sequence the invariant allows
+ * (canvas A's Supply, Swap · auto, pool).
  */
 import { HUB_NETWORK, type NetworkId, tokenKey } from "../../mandateDraft";
 import {
@@ -138,6 +140,10 @@ function sequenceViolations(steps: readonly Step[]): string[] {
       if (!afterAave && !beforePosition) out.push(step.id);
     }
     // After a pool, only its Collect fees, and nothing after that Collect fees.
+    // PP-NOTE: this is the COORDINATOR'S READING of the handoff text "nothing follows a pool except
+    // its Collect fees": the pool, or its Collect fees, ends the chain, which matches C10 and C11
+    // (a chain's last block drops into the return lines). So a position after the Collect fees and
+    // a second Collect fees are both violations. The product owner may overturn this reading.
     if (before?.family === "position" && isPoolKind(before.kind)) {
       if (!(step.family === "flow" && step.kind === "collectFees")) out.push(step.id);
     }
@@ -212,10 +218,10 @@ export function validatePlan(
     report({ invariant: 3, code: "share_exceeds_parent", targetId: null });
   }
   for (const spoke of plan.spokes) {
+    // One cause, one report: a negative spoke share is the fault, not the chains above it.
     if (!(spoke.sharePct >= 0)) {
       report({ invariant: 3, code: "negative_share", targetId: spoke.network });
-    }
-    if (shareOf(spoke.chains) > spoke.sharePct + SHARE_EPSILON) {
+    } else if (shareOf(spoke.chains) > spoke.sharePct + SHARE_EPSILON) {
       report({ invariant: 3, code: "share_exceeds_parent", targetId: spoke.network });
     }
   }
