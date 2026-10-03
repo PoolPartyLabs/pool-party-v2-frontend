@@ -42,3 +42,15 @@ export type DexPool = z.infer<typeof dexPoolSchema>;
 
 /** The dex-pools list (after the `{ data }` envelope is unwrapped). */
 export const dexPoolsResponseSchema = z.array(dexPoolSchema);
+
+/**
+ * The full envelope for `GET /dex-pools?network&poolAddress` (POO-1429 [R7], ported with the fund
+ * builder, POO-2119), validated WITHOUT unwrapping first so the optional `foundOnNetwork` sibling key
+ * survives: `apiFetch`'s generic unwrap only opens a SINGLE-key `{ data }` envelope, and a
+ * wrong-network answer carries two keys. `foundOnNetwork` is present only on a wrong-network
+ * resolve; absent on every other outcome (found, or a plain not-found `{ data: [] }`).
+ */
+export const dexPoolByAddressResponseSchema = z.object({
+  data: dexPoolsResponseSchema,
+  foundOnNetwork: z.string().optional(),
+});

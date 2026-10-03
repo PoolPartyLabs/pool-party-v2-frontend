@@ -607,5 +607,29 @@
       "collectBody": "Phí giao dịch tích lũy trong vị thế. Nhận về số dư hoặc tái đầu tư vào vị thế. Bạn trả gas."
     }
   },
-  "window30d": "30 ngày"
+  "window30d": "30 ngày",
+  "fundBuilder": {
+    "networkNames": {
+      "arbitrum": "Arbitrum",
+      "robinhood": "Robinhood Chain",
+      "base": "Base",
+      "polygon": "Polygon",
+      "unichain": "Unichain"
+    },
+    "protocolNames": {
+      "uniswapV3Swap": "Uniswap v3",
+      "across": "Across",
+      "aaveV3": "Aave v3",
+      "uniswapV3": "Uniswap v3",
+      "uniswapV4": "Uniswap v4",
+      "gmx": "GMX"
+    },
+    "protocolCaptions": {
+      "swap": "Swap · chuyển đổi một token sang token khác",
+      "bridge": "Bridge · chuyển tiền giữa các mạng của bạn",
+      "lending": "Cho vay · cung cấp token để nhận lãi",
+      "dex": "Liquidity positions · kiếm phí giao dịch trong một khoảng giá",
+      "perps": "Vĩnh cửu · vị thế long và short có sử dụng đòn bẩy"
+    }
+  }
 }

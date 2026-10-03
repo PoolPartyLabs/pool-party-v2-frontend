@@ -607,5 +607,29 @@
       "collectBody": "Trading fees accrue to the position. Collect them to your balance or compound them back in. You pay the gas."
     }
   },
-  "window30d": "30d"
+  "window30d": "30d",
+  "fundBuilder": {
+    "networkNames": {
+      "arbitrum": "Arbitrum",
+      "robinhood": "Robinhood Chain",
+      "base": "Base",
+      "polygon": "Polygon",
+      "unichain": "Unichain"
+    },
+    "protocolNames": {
+      "uniswapV3Swap": "Uniswap v3",
+      "across": "Across",
+      "aaveV3": "Aave v3",
+      "uniswapV3": "Uniswap v3",
+      "uniswapV4": "Uniswap v4",
+      "gmx": "GMX"
+    },
+    "protocolCaptions": {
+      "swap": "Swaps · converts one token into another",
+      "bridge": "Bridge · moves money between your networks",
+      "lending": "Lending · supply tokens to earn interest",
+      "dex": "Liquidity positions · earn trading fees in a price range",
+      "perps": "Perpetuals · long and short positions with leverage"
+    }
+  }
 }

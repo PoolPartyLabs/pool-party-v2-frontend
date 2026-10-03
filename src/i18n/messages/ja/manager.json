@@ -607,5 +607,29 @@
       "collectBody": "取引手数料はポジションに蓄積されます。残高に回収するか、ポジションに複利投入できます。ガス代はあなたの負担です。"
     }
   },
-  "window30d": "30日"
+  "window30d": "30日",
+  "fundBuilder": {
+    "networkNames": {
+      "arbitrum": "Arbitrum",
+      "robinhood": "Robinhood Chain",
+      "base": "Base",
+      "polygon": "Polygon",
+      "unichain": "Unichain"
+    },
+    "protocolNames": {
+      "uniswapV3Swap": "Uniswap v3",
+      "across": "Across",
+      "aaveV3": "Aave v3",
+      "uniswapV3": "Uniswap v3",
+      "uniswapV4": "Uniswap v4",
+      "gmx": "GMX"
+    },
+    "protocolCaptions": {
+      "swap": "スワップ · あるトークンを別のトークンに変換",
+      "bridge": "ブリッジ · ネットワーク間で資金を移動",
+      "lending": "レンディング · トークンを供給して利息を得る",
+      "dex": "Liquidity positions · 価格帯の中で取引手数料を獲得",
+      "perps": "パーペチュアル · レバレッジを使ったロングとショートのポジション"
+    }
+  }
 }

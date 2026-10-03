@@ -120,6 +120,7 @@ vi.mock("@/lib/financials/fetchManagerFinancials", () => ({
   },
 }));
 vi.mock("@/lib/manager/fetchDexPools", () => ({ fetchDexPools: vi.fn() }));
+vi.mock("@/lib/manager/fetchDexPoolByAddress", () => ({ fetchDexPoolByAddress: vi.fn() }));
 vi.mock("@/lib/manager/fetchManagedPoolDetail", () => ({
   fetchManagedPoolDetail: async () => {
     mocks.detailCalls += 1;
@@ -139,7 +140,12 @@ vi.mock("@/lib/timeseries/fetchPoolTimeseries", () => ({
   },
 }));
 
-import { getManagerConsoleAction, getManagerStrategyDetailAction } from "./actions";
+import { fetchDexPoolByAddress } from "@/lib/manager/fetchDexPoolByAddress";
+import {
+  getDexPoolByAddressAction,
+  getManagerConsoleAction,
+  getManagerStrategyDetailAction,
+} from "./actions";
 
 beforeEach(() => {
   mocks.aumSeries = [];
@@ -627,5 +633,71 @@ describe("getManagerStrategyDetailAction", () => {
     // Even with rows in the payload, no wallet means the action never reads positions (uses []).
     mocks.positions = [heldClosed];
     expect(await getManagerStrategyDetailAction("0xclosed")).toBeNull();
+  });
+});
+
+describe("getDexPoolByAddressAction (POO-1429/POO-1430)", () => {
+  // Real 40-hex shapes: the action refuses anything else at the boundary (see the last test), so
+  // a placeholder like "0xpool" would exercise the guard, not the path under test.
+  const poolAddr = "0x5555555555555555555555555555555555555555";
+  const base = {
+    address: poolAddr,
+    currency0: { address: "0xa", symbol: "USDC", decimals: 6 },
+    currency1: { address: "0xb", symbol: "WETH", decimals: 18 },
+    tvlUsd: 1_000_000,
+    aprPct: 12,
+    currentPrice: 1,
+    feeTier: 500,
+  };
+
+  beforeEach(() => {
+    vi.mocked(fetchDexPoolByAddress).mockReset();
+  });
+
+  it("resolves a pool, mapped through mapDexPool, with no foundOnNetwork on a plain success", async () => {
+    vi.mocked(fetchDexPoolByAddress).mockResolvedValue({
+      pools: [base] as never,
+      foundOnNetwork: undefined,
+    });
+
+    const result = await getDexPoolByAddressAction("base", poolAddr);
+
+    expect(fetchDexPoolByAddress).toHaveBeenCalledWith("base", poolAddr, {
+      Authorization: "Bearer t",
+    });
+    expect(result.pools.map((p) => p.id)).toEqual([poolAddr]);
+    expect(result.foundOnNetwork).toBeUndefined();
+  });
+
+  it("passes foundOnNetwork through untouched on a wrong-network resolve", async () => {
+    vi.mocked(fetchDexPoolByAddress).mockResolvedValue({ pools: [], foundOnNetwork: "arbitrum" });
+
+    const result = await getDexPoolByAddressAction("base", poolAddr);
+
+    expect(result.pools).toEqual([]);
+    expect(result.foundOnNetwork).toBe("arbitrum");
+  });
+
+  it("refuses a non-address string before reaching the backend", async () => {
+    // Defense in depth: a server action is a public endpoint, so the UI's `looksLikeAddress` gate
+    // is not the trust boundary. Mirrors the endpoint's own not-found contract (`{ data: [] }`).
+    const result = await getDexPoolByAddressAction("base", "not-an-address");
+
+    expect(result).toEqual({ pools: [] });
+    expect(fetchDexPoolByAddress).not.toHaveBeenCalled();
+  });
+
+  it("[POO-1497] drops a resolved pool with a non-canonical fee tier", async () => {
+    // Belt-and-suspenders: the backend's own factory round trip (POO-1429 [R4]/[R8]) already
+    // rejects a non-canonical fee tier before this ever returns, but this action must not silently
+    // trust that.
+    vi.mocked(fetchDexPoolByAddress).mockResolvedValue({
+      pools: [{ ...base, feeTier: 2500 }] as never,
+      foundOnNetwork: undefined,
+    });
+
+    const result = await getDexPoolByAddressAction("base", poolAddr);
+
+    expect(result.pools).toEqual([]);
   });
 });

@@ -607,5 +607,29 @@
       "collectBody": "交易費用會在部位中累積。可領取到餘額或複投回部位。gas 費由你承擔。"
     }
   },
-  "window30d": "30 天"
+  "window30d": "30 天",
+  "fundBuilder": {
+    "networkNames": {
+      "arbitrum": "Arbitrum",
+      "robinhood": "Robinhood Chain",
+      "base": "Base",
+      "polygon": "Polygon",
+      "unichain": "Unichain"
+    },
+    "protocolNames": {
+      "uniswapV3Swap": "Uniswap v3",
+      "across": "Across",
+      "aaveV3": "Aave v3",
+      "uniswapV3": "Uniswap v3",
+      "uniswapV4": "Uniswap v4",
+      "gmx": "GMX"
+    },
+    "protocolCaptions": {
+      "swap": "Swap · 將一種代幣轉換為另一種",
+      "bridge": "Bridge · 在您的網路之間轉移資金",
+      "lending": "借貸 · 提供代幣以賺取利息",
+      "dex": "Liquidity positions · 在價格區間內賺取交易手續費",
+      "perps": "永續 · 帶槓桿的多空頭寸"
+    }
+  }
 }

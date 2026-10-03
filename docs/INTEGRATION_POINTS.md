@@ -6,7 +6,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 448 markers across 248 files (2026-09-13)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 457 markers across 255 files (2026-10-03)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -40,6 +40,19 @@ Ported from the private repository for the hackathon (epic POO-1793 over the POO
 | Purchase funnel | `src/lib/analytics/fundingBuyFunnel.ts` (PP-CORE-LIB-111) | **REAL.** `funding_buy_started` / `submitted` / `failed` / `settled`, one emitter for both hosts, `settled` only from the watcher | Declared in `docs/ANALYTICS_EVENTS.md` |
 | Settlement webhook relay | `src/app/api/webhooks/privy/funds-deposited/route.ts` (PP-CORE-SEC-005) | **REAL.** Byte-faithful relay of `wallet.funds_deposited` to `pool-party-api`, which holds the signing secret | Optional for the demo; the browser-side watcher settles on its own |
 | Paybis foundation (dormant) | `src/lib/onramp/onRampActions.ts`, `paybisWidget.ts`, `paybisCapture.ts`, `src/app/api/onramp/method-icon/route.ts`, `src/features/strategies/components/provisioning/PaybisWidgetFrame.tsx` | **Code, not a surface.** Reachable only with `privyOnRamp=off`; the widget loader is not mounted in this repository | Kept so the tree matches the private main file for file; deleted together with the `privyOnRamp` flag when the Paybis rail retires |
+
+## Fund contracts builder (Manager Console V2, epic POO-2119)
+
+The Mandate step of the fund-contracts strategy builder (hub Arbitrum, spoke Robinhood Chain,
+PoolPartyLabs/smartcontract-v2): five list-picking screens, reached from the header's V1/V2
+`ContractFamilyToggle` (`PP-CORE-CMP-075`) behind the `fundContracts` flag, that persist a local
+draft and sign nothing on chain. All seams below are real facts about this phase: it talks to no
+backend of its own yet, and every mock surface it adds is marked.
+
+| Marker | File | Mocked today | Expected real call |
+|---|---|---|---|
+| Mandate catalog (networks, protocols, tokens, price source) | `src/features/manager/fund/mandateCatalog.ts` (`PP-MGR-LIB-018`, `buildMandateCatalog`); `PRICED_SYMBOLS` on `src/features/manager/fund/mandateDraft.ts` (`PP-MGR-LIB-019`) | Availability is DATA, not a call: only Arbitrum (hub) and Robinhood Chain carry `available: true` (DEC-018 per the handoff); every other network/protocol is disabled, "Coming soon". `PRICED_SYMBOLS` is a coordinator default (handoff open point 2) widening "USDC, WETH, USDG today" to the blue chips the static token lists already carry; outside it a token renders disabled, "No price feed yet" | the fund contracts' own registries: networks and adapters per hub, the token registry per adapter, the price-source registry. `buildMandateCatalog`'s signature is the seam; the source behind it changes, not the shape. Wiring issue: POO-2134 |
+| Mandate draft persistence (draft API) | `src/features/manager/fund/mandateDraftStore.ts` (`PP-MGR-STO-001`); `src/features/manager/fund/useMandateDraft.ts` (`PP-MGR-HOK-006`); `src/features/manager/fund/components/MandateDraftsList.tsx` (`PP-MGR-CMP-044`) | A draft is read/written as versioned JSON in `localStorage` key `pp.manager.mandateDrafts.v1` (`{ version: 1, drafts: Record<id, MandateDraft> }`); every access in try/catch, a corrupt payload reads as empty and is left alone until the next real write (handoff open point 1) | the backend draft API: `listDrafts` becomes a fetch, `upsertDraft` a PUT, `deleteDraft` a DELETE, `subscribe` a cache invalidation. The store's six-function API is the seam and does not change shape. Wiring issue: POO-2132 |
 
 ## Universal Funding rail (Uniswap Trading API)
 
