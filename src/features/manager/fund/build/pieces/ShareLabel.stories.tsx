@@ -10,7 +10,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, within } from "storybook/test";
 import { formatPercent } from "@/lib/utils/format";
-import { storyT, withCanvasBackground } from "./pieceStorySupport";
+import { expectOuterSize, storyT, withCanvasBackground } from "./pieceStorySupport";
 import { ShareLabel } from "./ShareLabel";
 
 const meta = {
@@ -24,6 +24,18 @@ const meta = {
     highlighted: false,
     onActivate: () => {},
     onHoverChange: () => {},
+  },
+  // F8: every story without its own play measures the label: 20 high, its text inset 8 from the
+  // left and 2 from the top, as the Figma label (8220:2556), highlighted or not.
+  play: async ({ canvasElement }) => {
+    const label = canvasElement.querySelector("[data-share-label]");
+    await expectOuterSize(label, { height: 20 });
+    const text = label?.querySelector("span:not([data-piece-stroke])");
+    if (!label || !text) throw new Error("no label text");
+    const outer = label.getBoundingClientRect();
+    const inner = text.getBoundingClientRect();
+    await expect(inner.left - outer.left).toBeCloseTo(8, 1);
+    await expect(inner.top - outer.top).toBeCloseTo(2, 1);
   },
 } satisfies Meta<typeof ShareLabel>;
 
@@ -41,7 +53,7 @@ export const ZeroPercent: Story = {
   args: { text: formatPercent(0, 0), tooltip: storyT("tooltip.share", { pct: 0 }) },
 };
 
-/** A spoke's share (D26): selects nothing, so it is not a button. */
+/** A spoke's share (D26): selects nothing, so it is a tab stop for its tooltip, not a button. */
 export const NoAction: Story = {
   args: {
     text: formatPercent(35, 0),

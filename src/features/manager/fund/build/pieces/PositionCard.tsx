@@ -23,10 +23,11 @@
  * its bottom edge ([A3]).
  *
  * Everything it shows comes from `content`, which S5 derives from the block's `config` (HU2): this
- * piece never builds a title or a caption. A long caption stays on one line with an ellipsis; the
- * full text opens in a tooltip, but only when the ellipsis actually cut it (D11): the card measures
- * the caption when the tooltip asks to open, so a caption that fits never shows a tooltip that
- * repeats it.
+ * piece never builds a title or a caption. A long title or caption stays on one line with an
+ * ellipsis; the full text opens in a tooltip, but only for the line the ellipsis actually cut (D11,
+ * review F5: the Soon tag narrows the title's room): the card measures both lines when the tooltip
+ * asks to open, so a card whose text fits never shows a tooltip that repeats it. Both cut: the
+ * tooltip carries the title, then the caption, on one line.
  *
  * With `onSelect` the card is a button named by `accessibleName` (I10: "WETH / USDC, Uniswap v4 ·
  * 0.05%, on Arbitrum, 60% of the capital") and announced as pressed while selected; without it, a
@@ -43,6 +44,7 @@ import {
   CardCopy,
   CardIconBox,
   canvasInteractive,
+  FOCUS_RING,
   PieceStroke,
   type PieceStrokeProps,
   PieceTooltip,
@@ -60,6 +62,17 @@ export interface PositionCardProps {
 }
 
 const HOVER = "group-hover:text-muted-foreground";
+
+/** Which of the card's two lines the ellipsis cut. */
+interface CutLines {
+  title: boolean;
+  caption: boolean;
+}
+
+/** Whether an ellipsis cut this line: its text is wider than its box. */
+function isCut(element: HTMLElement | null): boolean {
+  return element !== null && element.scrollWidth > element.clientWidth;
+}
 
 /** The stroke of the card for a state and a selection ([BB1], D27). */
 function cardStroke(
@@ -101,15 +114,28 @@ function SoonTag({ text }: { text: string }) {
 /** A position block on the Build canvas, 176 x 62 in every state. */
 export function PositionCard({ content, selected, onSelect }: PositionCardProps) {
   const { title, caption, icon, state, accessibleName, fullCaption, soonTag } = content;
+  const titleRef = useRef<HTMLSpanElement>(null);
   const captionRef = useRef<HTMLSpanElement>(null);
-  const [tooltipOpen, setTooltipOpen] = useState(false);
+  // Which lines the ellipsis cut, measured when the tooltip asks to open; null while closed.
+  const [cutLines, setCutLines] = useState<CutLines | null>(null);
   const interactive = onSelect !== undefined;
 
-  // D11: open only when the ellipsis cut the caption, measured at the moment the tooltip asks.
+  // D11 and review F5: open only when the ellipsis cut the title or the caption (the Soon tag
+  // narrows the title's room), measured at the moment the tooltip asks.
   const handleTooltipChange = useCallback((next: boolean) => {
-    const element = captionRef.current;
-    setTooltipOpen(next && element !== null && element.scrollWidth > element.clientWidth);
+    const lines = { title: isCut(titleRef.current), caption: isCut(captionRef.current) };
+    setCutLines(next && (lines.title || lines.caption) ? lines : null);
   }, []);
+  const tooltip =
+    cutLines === null ? (
+      (fullCaption ?? caption)
+    ) : (
+      <>
+        {cutLines.title ? <span className="font-medium">{title}</span> : null}
+        {cutLines.title && cutLines.caption ? " " : null}
+        {cutLines.caption ? (fullCaption ?? caption) : null}
+      </>
+    );
 
   const stroke = cardStroke(state, selected, interactive);
   const body = (
@@ -120,6 +146,7 @@ export function PositionCard({ content, selected, onSelect }: PositionCardProps)
         title={title}
         caption={caption}
         captionTone={captionTone(state)}
+        titleRef={titleRef}
         captionRef={captionRef}
       />
       {state === "comingSoon" && soonTag ? <SoonTag text={soonTag} /> : null}
@@ -134,11 +161,7 @@ export function PositionCard({ content, selected, onSelect }: PositionCardProps)
   const boxClass = cn(CARD_BOX, "group w-[176px]");
 
   return (
-    <PieceTooltip
-      content={fullCaption ?? caption}
-      open={tooltipOpen}
-      onOpenChange={handleTooltipChange}
-    >
+    <PieceTooltip content={tooltip} open={cutLines !== null} onOpenChange={handleTooltipChange}>
       {interactive ? (
         <button
           type="button"
@@ -146,10 +169,7 @@ export function PositionCard({ content, selected, onSelect }: PositionCardProps)
           aria-label={accessibleName}
           aria-pressed={selected}
           onClick={() => onSelect?.()}
-          className={cn(
-            boxClass,
-            "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          )}
+          className={cn(boxClass, "cursor-pointer", FOCUS_RING)}
         >
           {body}
         </button>

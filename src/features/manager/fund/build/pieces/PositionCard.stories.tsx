@@ -12,7 +12,12 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, within } from "storybook/test";
 import { PositionCard } from "./PositionCard";
-import { storyNetworkNames, storyT, withCanvasBackground } from "./pieceStorySupport";
+import {
+  expectOuterSize,
+  storyNetworkNames,
+  storyT,
+  withCanvasBackground,
+} from "./pieceStorySupport";
 import type { BlockContent } from "./pieceTypes";
 
 const poolTitle = storyT("card.poolTitle", { token0: "WETH", token1: "USDC" });
@@ -53,6 +58,14 @@ const meta = {
   parameters: { layout: "padded" },
   decorators: [withCanvasBackground],
   args: { content: configuredPool, selected: false, onSelect: () => {} },
+  // F8: every story without its own play measures the card's outer box: 176 x 62 in every state
+  // (default, selected, empty, invalid, coming soon), the stroke drawn inside ([A3]).
+  play: async ({ canvasElement }) => {
+    await expectOuterSize(canvasElement.querySelector("[data-card-state]"), {
+      width: 176,
+      height: 62,
+    });
+  },
 } satisfies Meta<typeof PositionCard>;
 
 export default meta;

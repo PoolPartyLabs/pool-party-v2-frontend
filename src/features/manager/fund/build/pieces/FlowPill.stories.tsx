@@ -30,20 +30,25 @@ const meta = {
       icon: "swap",
     },
   },
+  // F8: every story without its own play measures the pill: 176 x 26, and its icon inset 11 from
+  // the left, where the Figma pill (8220:2482) draws it (1 px stroke in layout plus 10 of padding).
+  play: async ({ canvasElement }) => {
+    const pill = canvasElement.querySelector("[data-flow-pill]");
+    await expectOuterSize(pill, { width: 176, height: 26 });
+    const icon = pill?.querySelector("[data-block-icon]");
+    if (!pill || !icon) throw new Error("no pill icon");
+    await expect(icon.getBoundingClientRect().left - pill.getBoundingClientRect().left).toBeCloseTo(
+      11,
+      1,
+    );
+  },
 } satisfies Meta<typeof FlowPill>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Swap · auto: placed by the app before a pool (C13). Measured: 176 x 26. */
-export const SwapAuto: Story = {
-  play: async ({ canvasElement }) => {
-    await expectOuterSize(canvasElement.querySelector("[data-flow-pill]"), {
-      width: 176,
-      height: 26,
-    });
-  },
-};
+/** Swap · auto: placed by the app before a pool (C13). */
+export const SwapAuto: Story = {};
 
 /** Swap: placed by the manager at a port. */
 export const Swap: Story = {

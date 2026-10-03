@@ -11,9 +11,9 @@
  * that matters most ([A3]: the card is 176 x 62 whatever its stroke) is asserted by comparing the
  * box classes of every state.
  */
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CANVAS_INTERACTIVE_ATTR, isCanvasBackground } from "../canvas/useCanvasViewport";
 import { PositionCard } from "./PositionCard";
 import type { BlockContent, CardState } from "./pieceTypes";
@@ -50,6 +50,12 @@ function iconOf(element: HTMLElement): SVGElement {
   const icon = element.querySelector<SVGElement>("[data-block-icon]");
   if (!icon) throw new Error("no icon");
   return icon;
+}
+
+/** Makes jsdom report an element as cut by its ellipsis (it has no layout of its own). */
+function cut(element: HTMLElement): void {
+  Object.defineProperty(element, "scrollWidth", { configurable: true, value: 160 });
+  Object.defineProperty(element, "clientWidth", { configurable: true, value: 112 });
 }
 
 /** The classes that decide the card's box: size, padding, border width, box sizing. */
@@ -291,11 +297,50 @@ describe("PositionCard", () => {
     Object.defineProperty(caption, "scrollWidth", { configurable: true, value: 112 });
     Object.defineProperty(caption, "clientWidth", { configurable: true, value: 112 });
 
+    // Radix opens a tooltip on focus synchronously (no delay), and the card answers that request in
+    // the same event, so by the time the tab has settled the decision is made: nothing to wait for.
     await user.tab();
     expect(card()).toHaveFocus();
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  // @rule D11
+  it("[D11, F5] a title cut by its ellipsis (a coming-soon card, the tag takes room) opens a tooltip with the title", async () => {
+    const user = userEvent.setup();
+    render(
+      <PositionCard
+        content={{ ...SOON, title: "WSTETH / WETH" }}
+        selected={false}
+        onSelect={() => {}}
+      />,
+    );
+    cut(screen.getByText("WSTETH / WETH"));
+
+    await user.tab();
+
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("WSTETH / WETH");
+    expect(tooltip).not.toHaveTextContent("Uniswap v3 · 0.05%");
+  });
+
+  // @rule D11
+  it("[D11, F5] title and caption both cut: the tooltip carries both, title first", async () => {
+    const user = userEvent.setup();
+    render(
+      <PositionCard
+        content={content({ title: "WSTETH / WETH", caption: "Aave v3 · Robinhood Chain" })}
+        selected={false}
+        onSelect={() => {}}
+      />,
+    );
+    cut(screen.getByText("WSTETH / WETH"));
+    cut(screen.getByText("Aave v3 · Robinhood Chain"));
+
+    await user.tab();
+
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("WSTETH / WETH Aave v3 · Robinhood Chain");
   });
 
   // @rule I5
@@ -396,35 +441,45 @@ describe("PositionCard", () => {
     expect(card()).toHaveAttribute("data-card-state", state);
   });
 
-  // @rule D11
-  it("[D11] hover on a card whose caption fits opens no tooltip, past the 200 ms delay", async () => {
-    const user = userEvent.setup();
-    render(<PositionCard content={content()} selected={false} onSelect={() => {}} />);
+  // The pointer is moved with fireEvent, not user-event: Testing Library's async wrapper waits on a
+  // real setTimeout after every user-event call, which never fires under fake timers.
+  describe("hover, past the 200 ms open delay (fake timers, no sleeping)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
 
-    await user.hover(card());
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // @rule D11
+    it("[D11] hover on a card whose caption fits opens no tooltip", () => {
+      render(<PositionCard content={content()} selected={false} onSelect={() => {}} />);
 
-    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
-  });
+      fireEvent.pointerMove(card());
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
 
-  // @rule D11
-  it("[D11] hover on a card whose caption is cut opens the full caption", async () => {
-    const user = userEvent.setup();
-    render(
-      <PositionCard
-        content={content({ caption: "Aave v3 · Robinhood Chain", title: "Supply USDG" })}
-        selected={false}
-        onSelect={() => {}}
-      />,
-    );
-    const caption = screen.getByText("Aave v3 · Robinhood Chain");
-    Object.defineProperty(caption, "scrollWidth", { configurable: true, value: 160 });
-    Object.defineProperty(caption, "clientWidth", { configurable: true, value: 112 });
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    });
 
-    await user.hover(card());
+    // @rule D11
+    it("[D11] hover on a card whose caption is cut opens the full caption, same 300 ms", () => {
+      render(
+        <PositionCard
+          content={content({ caption: "Aave v3 · Robinhood Chain", title: "Supply USDG" })}
+          selected={false}
+          onSelect={() => {}}
+        />,
+      );
+      cut(screen.getByText("Aave v3 · Robinhood Chain"));
 
-    await waitFor(() =>
-      expect(screen.getByRole("tooltip")).toHaveTextContent("Aave v3 · Robinhood Chain"),
-    );
+      fireEvent.pointerMove(card());
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+
+      expect(screen.getByRole("tooltip")).toHaveTextContent("Aave v3 · Robinhood Chain");
+    });
   });
 });

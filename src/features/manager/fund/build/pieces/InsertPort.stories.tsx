@@ -10,7 +10,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { expect, within } from "storybook/test";
 import { InsertPort } from "./InsertPort";
-import { storyT, withCanvasBackground } from "./pieceStorySupport";
+import { expectOuterSize, storyT, withCanvasBackground } from "./pieceStorySupport";
 
 const meta = {
   title: "Manager/Fund builder/Build canvas/Pieces/InsertPort",
@@ -18,6 +18,14 @@ const meta = {
   parameters: { layout: "padded" },
   decorators: [withCanvasBackground],
   args: { tooltip: storyT("tooltip.portBefore"), active: false, onActivate: () => {} },
+  // F8: every story without its own play measures the drawn port: 16 x 16, active or not (the
+  // larger hit area is a pseudo-element and does not change the box).
+  play: async ({ canvasElement }) => {
+    await expectOuterSize(canvasElement.querySelector("[data-insert-port]"), {
+      width: 16,
+      height: 16,
+    });
+  },
 } satisfies Meta<typeof InsertPort>;
 
 export default meta;
