@@ -882,21 +882,21 @@
       "flow": {
         "swapAuto": "Swap · 自動",
         "swap": "Swap",
-        "collectFees": "收取費用",
+        "collectFees": "領取手續費",
         "bridgeAuto": "Bridge · 自動"
       },
       "tooltip": {
         "addProtocol": "在 {network} 上新增協議",
         "addNetwork": "新增網路",
         "portBefore": "插入流程區塊：Swap",
-        "portAfterPool": "插入流程區塊：收取費用",
+        "portAfterPool": "插入流程區塊：領取手續費",
         "portAfterSupply": "插入區塊：借款、Swap",
         "portAfterBorrow": "插入流程區塊：Swap",
         "swapAuto": "應用程式將 {token} Swap 為資金池代幣",
         "swapAutoSupply": "應用程式將 {token} Swap 為 {asset}",
         "swap": "Swap 為您授權範圍內的其他代幣",
         "bridgeAuto": "將 {token} 移轉到 {network}",
-        "collectFees": "將資金池手續費收取到收益（手續費）",
+        "collectFees": "領取部位賺取的手續費，計入收益（手續費）",
         "share": "占策略資金的 {pct}%"
       },
       "empty": {

@@ -882,21 +882,21 @@
       "flow": {
         "swapAuto": "Swap · 自动",
         "swap": "Swap",
-        "collectFees": "收取费用",
+        "collectFees": "领取手续费",
         "bridgeAuto": "Bridge · 自动"
       },
       "tooltip": {
         "addProtocol": "在 {network} 上添加协议",
         "addNetwork": "添加网络",
         "portBefore": "插入流程区块：Swap",
-        "portAfterPool": "插入流程区块：收取费用",
+        "portAfterPool": "插入流程区块：领取手续费",
         "portAfterSupply": "插入区块：借款、Swap",
         "portAfterBorrow": "插入流程区块：Swap",
         "swapAuto": "应用将 {token} Swap 为资金池代币",
         "swapAutoSupply": "应用将 {token} Swap 为 {asset}",
         "swap": "Swap 为您授权范围内的其他代币",
         "bridgeAuto": "将 {token} 转移到 {network}",
-        "collectFees": "将资金池手续费收取到收益（手续费）",
+        "collectFees": "领取头寸赚取的手续费，计入收益（手续费）",
         "share": "占策略资金的 {pct}%"
       },
       "empty": {
