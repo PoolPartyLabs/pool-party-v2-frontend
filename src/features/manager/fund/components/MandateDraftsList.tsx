@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-044
  * @name MandateDraftsList
- * @implements-rules-version v1 (POO-2127 rules v1)
+ * @implements-rules-version v3 (POO-2127 rules v1, POO-2167 rules v3)
  * @analytics-events builder_draft_opened, builder_draft_deleted, builder_mandate_error
  *
  * POO-2127 [D1] / [D3], epic POO-2119 (handoff blast radius item 1). The Manager Console's Drafts
@@ -33,6 +33,12 @@
  * clock anyway; the `now` is captured with each store read, so a draft saved while the Console is
  * open reads as "1 minute ago" rather than against a stale baseline.
  *
+ * ## Where a draft is
+ *
+ * The row label, the Open link and its event all read the step through `resumeStep`, never
+ * `lastStep` raw: a stored draft parked on Pools that lost its only position protocol on load (R20
+ * v3, POO-2167) keeps `lastStep: "pools"` on a draft with no Pools step, which read "step 0 of 4".
+ *
  * PP-INTEGRATION-POINT: the drafts move to the backend draft API with the store itself
  * (`PP-MGR-STO-001`, wiring issue POO-2132); this card changes nothing when they do, because it
  * only ever asked the store.
@@ -47,7 +53,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { toast } from "@/components/ui/Toast";
 import { useRouter } from "@/i18n/navigation";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
-import { type MandateDraft, stepIndex } from "../mandateDraft";
+import { type MandateDraft, resumeStep, stepIndex } from "../mandateDraft";
 import { deleteDraft, listDrafts, subscribe } from "../mandateDraftStore";
 
 /** What the card is looking at: the drafts, and the moment they were read. */
@@ -79,8 +85,9 @@ export function MandateDraftsList() {
     (draft: MandateDraft) => {
       // On the press, not on the builder mounting: the press is the intent, and a navigation that
       // never mounts is exactly the case worth being able to see.
-      track("builder_draft_opened", { step: draft.lastStep });
-      router.push(`/manager/new?draft=${draft.id}&step=${draft.lastStep}`);
+      const step = resumeStep(draft);
+      track("builder_draft_opened", { step });
+      router.push(`/manager/new?draft=${draft.id}&step=${step}`);
     },
     [router, track],
   );
@@ -141,7 +148,7 @@ export function MandateDraftsList() {
         ) : (
           <ul className="flex flex-col gap-2">
             {drafts.map((draft) => {
-              const position = stepIndex(draft, draft.lastStep);
+              const position = stepIndex(draft, resumeStep(draft));
               // A saved draft always has a name (the dialog asks for one first), so this is the
               // stale-payload case: a neutral label beats printing an id at the manager.
               const name = draft.name ?? t("fundBuilder.drafts.unnamed");

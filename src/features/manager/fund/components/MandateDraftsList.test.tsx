@@ -135,6 +135,47 @@ describe("MandateDraftsList", () => {
     expect(await screen.findByText(/Mandate, step 5 of 5/)).toBeInTheDocument();
   });
 
+  /**
+   * R20 v3 (POO-2167): a draft parked on Pools whose only position protocol was Uniswap v3 loses the
+   * protocol, and so the Pools step, when it is loaded, while `lastStep` still says "pools". The row
+   * counts from the first step the manager has not passed instead of printing "step 0".
+   */
+  // @rule D1 @rule R20 v3
+  it("counts from the first unpassed step when the parked step no longer exists", async () => {
+    seedPayload(
+      saved("v3", {
+        protocols: [...REQUIRED_PROTOCOLS, "uniswap-v3"],
+        passedSteps: ["networks", "protocols", "tokens"],
+        lastStep: "pools",
+        updatedAt: hoursAgo(2),
+      }),
+    );
+
+    renderWithProviders(<MandateDraftsList />);
+
+    expect(
+      await screen.findByText("Mandate, step 4 of 4 · updated 2 hours ago"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/step 0 of/)).not.toBeInTheDocument();
+  });
+
+  // @rule D3 @rule R20 v3
+  it("Open resumes a draft whose parked step no longer exists on the first unpassed step", async () => {
+    seedPayload(
+      saved("v3", {
+        protocols: [...REQUIRED_PROTOCOLS, "uniswap-v3"],
+        passedSteps: ["networks", "protocols", "tokens"],
+        lastStep: "pools",
+      }),
+    );
+
+    renderWithProviders(<MandateDraftsList />);
+    await userEvent.click(await screen.findByRole("button", { name: "Open" }));
+
+    expect(nav.push).toHaveBeenCalledWith("/manager/new?draft=v3&step=limits");
+    expect(emitted("builder_draft_opened")).toEqual([{ step: "limits" }]);
+  });
+
   // @rule D1
   it("lists the most recently touched draft first", async () => {
     seedPayload(

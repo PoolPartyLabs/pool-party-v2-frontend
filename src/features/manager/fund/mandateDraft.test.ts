@@ -41,6 +41,7 @@ import {
   removePool,
   removeToken,
   removeTokenSymbol,
+  resumeStep,
   type StepBlock,
   selectionCounts,
   selectionFingerprint,
@@ -891,6 +892,28 @@ describe("firstUnpassedStep and isStepReachable", () => {
       passedSteps: ["networks", "protocols", "tokens"],
     } as MandateDraft;
     expect(isStepReachable(draft, "pools")).toBe(false);
+  });
+});
+
+describe("resumeStep", () => {
+  it("is the parked step while that step exists", () => {
+    // @rule R9
+    expect(resumeStep({ ...withDex(), lastStep: "pools" })).toBe("pools");
+    expect(resumeStep({ ...empty(), lastStep: "tokens" })).toBe("tokens");
+  });
+
+  it("falls back to the first unpassed step when the parked step is hidden", () => {
+    // @rule R9 @rule R29 @rule R20 v3 - a stored draft parked on Pools whose only position protocol
+    // was Uniswap v3 keeps `lastStep: "pools"` after the load drops the protocol.
+    const parked = withoutUnavailableProtocols({
+      ...empty(),
+      protocols: [...REQUIRED_PROTOCOLS, "uniswap-v3"],
+      passedSteps: ["networks", "protocols", "tokens"],
+      lastStep: "pools",
+    });
+    expect(parked.lastStep).toBe("pools");
+    expect(resumeStep(parked)).toBe("limits");
+    expect(stepIndex(parked, resumeStep(parked))).toEqual({ index: 4, count: 4 });
   });
 });
 

@@ -396,6 +396,32 @@ describe("FundStrategyBuilderScreen", () => {
     expect(emitted("builder_mandate_started")).toHaveLength(0);
   });
 
+  /**
+   * R20 v3 (POO-2167): a draft parked on Pools whose only position protocol was Uniswap v3 loses the
+   * Pools step when it is loaded, while `lastStep` still says "pools". The shell must never draw that
+   * step, not even for the one render before the resume moves `lastStep`: the view event and the URL
+   * are the two traces such a frame leaves.
+   */
+  // @rule R9 @rule R20 v3
+  it("[R9] never draws a Pools step the stored draft lost on load, and resumes past it", async () => {
+    nav.params = new URLSearchParams("draft=d-v3-parked&step=pools");
+    seed("d-v3-parked", {
+      protocols: [...REQUIRED_PROTOCOLS, "uniswap-v3"],
+      passedSteps: ["networks", "protocols", "tokens"],
+      lastStep: "pools",
+    });
+
+    renderWithProviders(<FundStrategyBuilderScreen />);
+
+    expect(await screen.findByText("MANDATE · STEP 4 OF 4")).toBeInTheDocument();
+    expect(emitted("builder_mandate_step_viewed")).toEqual([{ step: "limits" }]);
+    expect(nav.replace).not.toHaveBeenCalledWith(
+      expect.stringContaining("step=pools"),
+      expect.anything(),
+    );
+    expect(screen.queryByText(/STEP 0 OF/)).not.toBeInTheDocument();
+  });
+
   // @rule R9
   it("[R9] a deep link into a step nobody reached lands on the first unpassed one", async () => {
     nav.params = new URLSearchParams("draft=d-ahead&step=limits");

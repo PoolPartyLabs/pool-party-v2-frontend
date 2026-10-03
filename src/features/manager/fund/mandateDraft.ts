@@ -425,6 +425,20 @@ export function isStepReachable(draft: MandateDraft, step: MandateStepKey): bool
   return draft.passedSteps.includes(step) || step === firstUnpassedStep(draft);
 }
 
+/**
+ * R9: the step a draft is DISPLAYED or RESUMED on: `lastStep` while that step is visible, else the
+ * first visible step nobody passed.
+ *
+ * `lastStep` can name a step the draft no longer has. A stored draft parked on Pools whose only
+ * position protocol was Uniswap v3 loses that protocol on load (R20 v3, POO-2167, see
+ * {@link withoutUnavailableProtocols}) and with it the Pools step, while `lastStep` still says
+ * "pools". Read raw, that is "step 0 of 4" in the Console and a frame of a step the stepper does not
+ * draw in the builder, so every place that shows or resumes a draft's step reads it through here.
+ */
+export function resumeStep(draft: MandateDraft): MandateStepKey {
+  return visibleSteps(draft).includes(draft.lastStep) ? draft.lastStep : firstUnpassedStep(draft);
+}
+
 // ---------------------------------------------------------------------------
 // Cap rows and validation (R6, R40, R43)
 // ---------------------------------------------------------------------------
@@ -689,9 +703,16 @@ export function withProtocols(draft: MandateDraft, protocols: ProtocolId[]): Man
  *
  * It drops exactly three things: the unavailable ids, the pools on them, and their protocol cap rows.
  * Nothing else moves, deliberately, unlike {@link withProtocols}, which also un-passes Pools and
- * expires `poolUniverseCount`. Both are harmless left alone: a resume lands on a reachable step
- * (`isStepReachable` never reaches a hidden one), and fewer pools can only turn the Broad mandate
- * flag OFF ({@link isBroadMandate} needs `pools.length >= poolUniverseCount`), the safe direction.
+ * expires `poolUniverseCount`. That leaves two stale fields, and neither is harmless on its own:
+ *
+ * - `lastStep` can still say "pools" on a draft that no longer has a Pools step. Read raw it gives
+ *   `stepIndex` 0 ("step 0 of 4" in the Console) and one frame of a hidden step in the builder, so
+ *   every place that displays or resumes a draft's step reads it through {@link resumeStep}, which
+ *   falls back to the first unpassed step. A stale "pools" in `passedSteps` is inert: the
+ *   sub-step header and the reachability rules only ever ask about visible steps.
+ * - `poolUniverseCount` can describe a wider universe than the draft now has. Fewer pools can only
+ *   turn the Broad mandate flag OFF ({@link isBroadMandate} needs
+ *   `pools.length >= poolUniverseCount`), the safe direction.
  *
  * Returns the SAME object when there is nothing to drop. Every pool is read defensively, because the
  * store validates the `pools` array but not its entries, and a throw here would cost the Console

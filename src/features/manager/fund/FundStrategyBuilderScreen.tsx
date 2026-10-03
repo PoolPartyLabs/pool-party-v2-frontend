@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen
- * @implements-rules-version v1 (POO-2122 rules v1)
+ * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
  *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
  *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error
@@ -20,6 +20,11 @@
  * Back, the sub-step header, a deep link and a reload. One of the two would eventually win on the
  * wrong screen. `passedSteps` is the other half: it is append-only and it is what makes a step
  * reachable, so navigation can never jump ahead of validation.
+ *
+ * One exception, read through `resumeStep`: when `lastStep` names a step the draft no longer has,
+ * the current step is the first unpassed one. A stored draft parked on Pools whose only position
+ * protocol was Uniswap v3 arrives exactly like that (R20 v3, POO-2167), and reading `lastStep` raw
+ * drew one frame of a step the stepper does not show, with its view event and its URL.
  *
  * ## Why `completed` fires on the SAVE and not on the last Next
  *
@@ -100,6 +105,7 @@ import {
   type MandateStepKey,
   nextStep,
   previousStep,
+  resumeStep,
   type StepBlock,
   selectionCounts,
   selectionFingerprint,
@@ -229,7 +235,9 @@ export function FundStrategyBuilderScreen() {
     isDirty,
   } = useMandateDraft(initialDraftId);
 
-  const step = draft.lastStep;
+  // Through `resumeStep`, not `lastStep` raw: a stored draft can name a step it no longer has (see
+  // the file header), and the resume effect below only corrects `lastStep` one render later.
+  const step = resumeStep(draft);
   const steps = visibleSteps(draft);
   const position = stepIndex(draft, step);
 
