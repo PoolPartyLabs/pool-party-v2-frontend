@@ -87,6 +87,7 @@ describe("graphItems", () => {
     const expected =
       layout.spine.length +
       layout.blocks.length +
+      (layout.feeSwaps?.length ?? 0) +
       layout.bridges.length +
       layout.groups.length +
       layout.templates.length +
@@ -106,6 +107,7 @@ describe("graphItems", () => {
       block("c-pool-swap"),
       block("c-pool-pool"),
       block("c-pool-fees"),
+      "fee-swap:c-pool-fees",
       label("c-supply", "arbitrum", "c-supply-supply"),
       port("before", "c-supply-supply"),
       block("c-supply-supply"),

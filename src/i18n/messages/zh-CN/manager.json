@@ -1024,6 +1024,7 @@
         "bridgeAuto": "Bridge · 自动"
       },
       "tooltip": {
+        "feeSwap": "将收取的费用兑换为{token}",
         "addProtocol": "在 {network} 上添加协议",
         "addNetwork": "添加网络",
         "portBefore": "插入流程区块：Swap",

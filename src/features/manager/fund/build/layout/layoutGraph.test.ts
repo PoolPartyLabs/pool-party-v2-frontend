@@ -308,16 +308,20 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
     const circles = layout.templates
       .filter((t) => t.target.kind === "addProtocol")
       .map((t) => bottom(t.rect));
-    const deepest = Math.max(...lasts, ...circles);
+    const deepest = Math.max(
+      ...lasts,
+      ...circles,
+      ...(layout.feeSwaps ?? []).map((node) => bottom(node.rect)),
+    );
     expect(horizontalRuns(layout, "principal", deepest + LAYOUT.LINK).length).toBeGreaterThan(0);
   });
 
   // @rule C11
   it("[C11] turns both lines at one level for a single chain ending in Collect fees", () => {
     const layout = layoutGraph(buildState5.input, EN);
-    expect(horizontalRuns(layout, "principal", 430)).toEqual([[142, 176]]);
-    expect(horizontalRuns(layout, "income", 430)).toEqual([[200, 410]]);
-    expect(spine(layout, "idleOutput").y).toBe(430 + LAYOUT.LINK);
+    expect(horizontalRuns(layout, "principal", 480)).toEqual([[88, 142]]);
+    expect(horizontalRuns(layout, "income", 504)).toEqual([[188, 410]]);
+    expect(spine(layout, "idleOutput").y).toBe(504 + LAYOUT.LINK);
   });
 
   // @rule C11
@@ -923,6 +927,7 @@ describe("[A3] one spacing rule set", () => {
     );
     const lowest = Math.max(
       ...layout.blocks.filter((b) => b.network === "base").map((b) => bottom(b.rect)),
+      ...(layout.feeSwaps ?? []).filter((n) => n.network === "base").map((n) => bottom(n.rect)),
     );
     expect(bottom(group.rect) - lowest).toBe(LAYOUT.GROUP_PAD);
   });

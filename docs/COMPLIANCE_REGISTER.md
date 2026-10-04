@@ -79,3 +79,7 @@ Status: RESOLVED. V2 Follow/Following is local UI state scoped to one viewed man
 ## Verification record: automatic fee block and confirmed removal
 
 2026-10-04, POO-2210, PP-MGR-LIB-021 / PP-MGR-SCR-002: applying a newly selected pool includes the existing Collect fees step. This changes the draft composition, not fee rates, collection permissions or transaction consent. Verify that managers can see and remove the step before launch. Every user-block and empty-spoke removal now asks in a modal and names the real allocation/cascade effect; cancel preserves the plan. Unrelated panel drafts survive removal. No new asset, venue, custody or return claim is introduced. Existing fee/routing disclosures remain applicable and unresolved entries are unchanged.
+
+### CR-MGR-POO2213, 2026-10-04, derived income conversion diagram
+
+Status: RESOLVED for visual scope. The automatic fee-swap pill describes the intended income path to the network stable; it is not a submitted swap, quote or execution guarantee. No persisted plan step, transaction payload, fee or supported asset changes. Real income-conversion wiring requires its own backend/contract validation before claiming execution.

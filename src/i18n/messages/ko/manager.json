@@ -1024,6 +1024,7 @@
         "bridgeAuto": "브리지 · 자동"
       },
       "tooltip": {
+        "feeSwap": "수집한 수수료를 {token}(으)로 전환합니다",
         "addProtocol": "{network}에 프로토콜 추가",
         "addNetwork": "네트워크 추가",
         "portBefore": "플로우 블록 삽입: 스왑",

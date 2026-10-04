@@ -1024,6 +1024,7 @@
         "bridgeAuto": "Bridge · tự động"
       },
       "tooltip": {
+        "feeSwap": "Chuyển phí đã thu thành {token}",
         "addProtocol": "Thêm giao thức trên {network}",
         "addNetwork": "Thêm mạng",
         "portBefore": "Chèn một khối luồng: Swap",

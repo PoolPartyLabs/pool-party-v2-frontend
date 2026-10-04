@@ -1024,6 +1024,7 @@
         "bridgeAuto": "ブリッジ · 自動"
       },
       "tooltip": {
+        "feeSwap": "回収した手数料を{token}に交換します",
         "addProtocol": "{network} にプロトコルを追加",
         "addNetwork": "ネットワークを追加",
         "portBefore": "フローブロックを挿入: スワップ",

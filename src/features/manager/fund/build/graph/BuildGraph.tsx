@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name BuildGraph
- * @implements-rules-version v1 (POO-2156 rules v1; POO-2210 rules v1)
+ * @implements-rules-version v1 (POO-2156 rules v1; POO-2210 rules v1); POO-2213 rules v1
  * @analytics-events none, a controlled renderer: every activation leaves through `onTarget` (and a
  *   spoke removal through `onRemoveSpoke`); the Build screen (PP-MGR-SCR-002, S7) maps them to the
  *   builder events, so nothing here tracks.
@@ -194,6 +194,8 @@ function useGraphCopy() {
       lock: t("fundBuilder.canvas.spine.lockTooltip"),
       removeBlock: t("fundBuilder.canvas.panel.remove"),
       bridge: t("fundBuilder.canvas.flow.bridgeAuto"),
+      feeSwap: t("fundBuilder.canvas.flow.swapAuto"),
+      feeSwapTooltip: (token: string) => t("fundBuilder.canvas.tooltip.feeSwap", { token }),
       addNetwork: t("fundBuilder.canvas.tooltip.addNetwork"),
       emptyAddProtocol: t("fundBuilder.canvas.empty.addProtocol"),
       emptyAddNetwork: t("fundBuilder.canvas.empty.addNetwork"),
@@ -269,6 +271,7 @@ const INTERACTIVE_TYPES: ReadonlySet<GraphItem["type"]> = new Set([
   "spine",
   "block",
   "bridge",
+  "feeSwap",
   "template",
   "port",
   "label",
@@ -286,6 +289,7 @@ function placement(item: GraphItem): CSSProperties {
     case "spine":
     case "block":
     case "bridge":
+    case "feeSwap":
     case "template":
     case "group": {
       const { x, y, w, h } = item.node.rect;
@@ -426,6 +430,21 @@ export const BuildGraph = memo(function BuildGraph({
                 icon={SPINE_ICON[role]}
                 locked={locked}
                 lockTooltip={locked ? copy.lock : undefined}
+              />
+            </div>,
+          );
+          break;
+        }
+        case "feeSwap": {
+          out.set(
+            item.key,
+            <div key={item.key} {...wrapper}>
+              <FlowPill
+                content={{
+                  text: copy.feeSwap,
+                  tooltip: copy.feeSwapTooltip(networkStableSymbol(item.node.network)),
+                  icon: "swap",
+                }}
               />
             </div>,
           );
