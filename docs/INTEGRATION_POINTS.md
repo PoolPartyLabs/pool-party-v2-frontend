@@ -47,7 +47,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 475 markers across 272 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 478 markers across 275 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -61,6 +61,12 @@ git grep -n 'PP-INTEGRATION-POINT' -- src   # 475 markers across 272 files (2026
 > **Scope note for this public repository.** This document covers the **front-end** seams only, which is
 > what the code in this repository owns. The request/response contracts of the Pool Party backend
 > services live with those services in their own repositories and are intentionally not reproduced here.
+
+## Build configuration panel data (POO-2185, rules v1; panels POO-2171)
+
+| Seam | Owned files | Contract and remaining integration |
+|------|-------------|------------------------------------|
+| Panel live pool read | `src/features/manager/fund/build/panel/usePanelPool.ts`, `panelCatalogView.ts`; mock `src/mocks/data/buildPanelFixtures.ts` | Existing server action `getCatalogPoolAction(chainId, poolId)` (`GET /api/v2/catalog/uniswap-v4/pools/{poolId}?chainId=`), on mount and 15 s (`LIVE_POOL_PRICE_REFRESH_MS`) after each read settles while a panel is open; reads never overlap and one that never settles ends as a timeout after 30 s. Only the bare PoolId reaches it (`config.poolId`); anything else is `INVALID_POOL_ID` before a call, and an answer for another pool or chain is `V2_INVALID_RESPONSE`. The price is derived from `sqrtPriceX96` and the served price only cross-checks it (0.5%). Use and Apply require the hook's `applicable`. Real mode never falls back to fixtures: errors surface with a retry. Mock mode serves `buildPanelFixtures.ts` (every hookless mock v4 pool) with no network. The Aave reserve rows (`usePanelReserves.ts`) select over the reserves of the shell's `useV2MandateCatalog` instance, passed in (no second load); re-reading the supply APY while a panel is open is an open decision. No new API client. |
 
 ## Fund Review/launch integration (POO-2177, rules v1; page POO-2172)
 
