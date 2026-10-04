@@ -901,5 +901,11 @@
     "notAvailable": "Chưa có dữ liệu",
     "balanceUnavailable": "Số dư: chưa có dữ liệu",
     "target": "USDC trên Arbitrum"
+  },
+  "investorV2": {
+    "unavailable": "Không có sẵn",
+    "incomplete": "Không có sẵn",
+    "error": "Không có sẵn",
+    "retry": "Thử lại"
   }
 }

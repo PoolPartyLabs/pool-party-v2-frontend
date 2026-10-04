@@ -901,5 +901,11 @@
     "notAvailable": "사용할 수 없음",
     "balanceUnavailable": "잔액: 확인할 수 없음",
     "target": "Arbitrum의 USDC"
+  },
+  "investorV2": {
+    "unavailable": "이용할 수 없음",
+    "incomplete": "이용할 수 없음",
+    "error": "이용할 수 없음",
+    "retry": "다시 시도"
   }
 }

@@ -1,14 +1,16 @@
+import { investorHref } from "@/features/funds/investorListModel";
+
 /**
  * @id PP-PORT (POO-159)
  * @name PositionLink
- * @implements-rules-version v1
+ * @implements-rules-version v1; POO-2215 rules v1
  *
  * Client wrapper around the locale-aware Link for an owned position. Navigates to the position's
  * strategy detail and emits `position_detail_viewed` (position + strategy id) on click. Keeps
  * PositionCard and the positions table as Server Components — only this leaf is client. Tracking
  * goes through `useAnalytics()`; never gtag/dataLayer directly.
  */
-"use client";
+("use client");
 
 import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
@@ -20,6 +22,7 @@ export interface PositionLinkProps {
   positionId: string;
   /** The strategy the position belongs to; also the navigation target. */
   strategyId: string;
+  protocolVersion?: "v1" | "v2";
   /** Classes forwarded to the underlying link. */
   className?: string;
   /** Accessible name — for a label-only stretched overlay link with no visible children. */
@@ -41,11 +44,12 @@ export function PositionLink({
   ariaLabel,
   children,
   from,
+  protocolVersion,
 }: PositionLinkProps) {
   const { track } = useAnalytics();
   return (
     <Link
-      href={from ? `/strategies/${strategyId}?from=${from}` : `/strategies/${strategyId}`}
+      href={investorHref({ id: strategyId, protocolVersion }, from)}
       className={className}
       aria-label={ariaLabel}
       onClick={() =>

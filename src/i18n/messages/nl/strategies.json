@@ -901,5 +901,11 @@
     "notAvailable": "Niet beschikbaar",
     "balanceUnavailable": "Saldo: niet beschikbaar",
     "target": "USDC op Arbitrum"
+  },
+  "investorV2": {
+    "unavailable": "Niet beschikbaar",
+    "incomplete": "Niet beschikbaar",
+    "error": "Niet beschikbaar",
+    "retry": "Opnieuw proberen"
   }
 }

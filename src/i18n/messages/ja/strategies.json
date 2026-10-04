@@ -901,5 +901,11 @@
     "notAvailable": "利用できません",
     "balanceUnavailable": "残高：利用できません",
     "target": "Arbitrum上のUSDC"
+  },
+  "investorV2": {
+    "unavailable": "利用できません",
+    "incomplete": "利用できません",
+    "error": "利用できません",
+    "retry": "再試行"
   }
 }
