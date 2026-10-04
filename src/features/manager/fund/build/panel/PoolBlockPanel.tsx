@@ -213,6 +213,20 @@ export function PoolBlockPanel({
   const labelId = useId();
   const data = usePoolOptions(context, sharePct === 0);
   const live = usePoolSnapshot();
+  // A pool selected while deferred has no range. Initialize only missing fields
+  // from the first applicable positive snapshot; preserve saved/custom ranges.
+  useEffect(() => {
+    if (sharePct === 0 || !live.applicable || !live.pool) return;
+    const missingRange =
+      config.tickLower === undefined ||
+      config.tickUpper === undefined ||
+      config.fullRange === undefined ||
+      config.displayInverted === undefined;
+    if (!missingRange) return;
+    const defaults = defaultConfig(live.pool, config.poolId);
+    if (!defaults) return;
+    onConfigChange({ ...defaults, ...config });
+  }, [sharePct, live.applicable, live.pool, config, onConfigChange]);
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">

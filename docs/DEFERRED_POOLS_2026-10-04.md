@@ -1,9 +1,11 @@
 # Deferred pools at zero allocation
 
-POO-2204 rules v1. Zero allocation preserves the selected pool in the build plan and mandate,
+POO-2204 rules v1. Pool panel artifact: PP-MGR-CMP-069. Zero allocation preserves the selected pool in the build plan and mandate,
 while deferring range configuration and execution. The current draft allocation drives the panel,
 so changing zero to positive immediately restores the live-price and range gate. Changing positive
-to zero hides range and preserves earlier ticks. Applying persists the pool and zero share.
+to zero hides range and preserves earlier ticks. A pool selected without a range receives
+missing range defaults from its first applicable positive live snapshot, making range controls
+usable without replacing a saved range. Applying persists the pool and zero share.
 
 The configured zero pool does not start the single-pool live read or catalog batch for range
 defaults. Review skips range completeness only for deferred pool chains, retaining authorization,

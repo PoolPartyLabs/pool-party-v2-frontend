@@ -279,3 +279,42 @@ describe("deferred reads (POO-2204)", () => {
     expect(live.mock.lastCall?.[1]).toBeNull();
   });
 });
+
+describe("deferred range initialization (POO-2204)", () => {
+  // @rule R1, R5
+  it("offers usable range controls after a range-less deferred pool becomes positive", async () => {
+    const deferred = { poolId: config.poolId, slippagePct: 2 };
+    renderWithProviders(
+      <PanelHarness
+        draft={draft}
+        plan={{
+          version: 1,
+          hub: {
+            chains: [
+              {
+                id: "c",
+                sharePct: 0,
+                steps: [{ id: "b", family: "position", kind: "uniswapV4Pool", config: deferred }],
+              },
+            ],
+          },
+          spokes: [],
+        }}
+        selectedId="b"
+        bodies={{ uniswapV4Pool: poolBlockPanel }}
+      />,
+    );
+    const slider = screen.getByRole("slider", { name: "Allocation" });
+    slider.focus();
+    await userEvent.setup().keyboard("{ArrowRight}");
+    await waitFor(() =>
+      expect(
+        screen.queryByLabelText(manager.fundBuilder.canvas.panel.pool.loading),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole("group", { name: manager.fundBuilder.canvas.panel.range.label }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeEnabled();
+  });
+});
