@@ -7,6 +7,7 @@
  * Precise USDC seed input, field reasons and pre-signing whole-share estimates.
  */
 "use client";
+import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -69,7 +70,7 @@ export function ReviewFirstDepositCard({
       </div>
       <div className="relative">
         <div className="pointer-events-none absolute left-4 top-4 z-10 flex items-center gap-2">
-          <img src="/tokens/usdc.png" alt="" className="size-6" />
+          <Image src="/tokens/usdc.png" alt="" width={24} height={24} className="size-6" />
           <span className="text-sm">USDC</span>
         </div>
         <Input

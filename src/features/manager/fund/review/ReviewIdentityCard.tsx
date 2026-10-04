@@ -105,6 +105,7 @@ export function ReviewIdentityCard({
       <div id="review-imageUrl" tabIndex={-1} className="flex items-center gap-4">
         <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-dashed border-border bg-surface-raised">
           {image ? (
+            // biome-ignore lint/performance/noImgElement: crop previews use local data URLs.
             <img src={image} alt={name} className="size-full object-cover" />
           ) : (
             <ImageIcon className="size-5 text-muted-foreground" aria-hidden="true" />

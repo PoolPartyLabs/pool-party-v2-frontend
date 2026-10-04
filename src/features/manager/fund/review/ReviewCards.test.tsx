@@ -63,7 +63,8 @@ describe("Review identity [R1] [R2] [R3] [R5]", () => {
         onUploadLogo={upload}
       />,
     );
-    const input = container.querySelector('input[type="file"]')!;
+    const input = container.querySelector('input[type="file"]');
+    if (!input) throw new Error("Missing logo picker");
     fireEvent.change(input, {
       target: { files: [new File(["bad"], "logo.svg", { type: "image/svg+xml" })] },
     });
@@ -83,7 +84,9 @@ describe("Review identity [R1] [R2] [R3] [R5]", () => {
         onUploadLogo={upload}
       />,
     );
-    fireEvent.change(container.querySelector('input[type="file"]')!, {
+    const input = container.querySelector('input[type="file"]');
+    if (!input) throw new Error("Missing logo picker");
+    fireEvent.change(input, {
       target: { files: [new File(["ok"], "logo.png", { type: "image/png" })] },
     });
     await userEvent.click(await screen.findByText("Apply crop"));
