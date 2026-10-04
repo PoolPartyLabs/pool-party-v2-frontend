@@ -906,6 +906,32 @@ describe("split shares", () => {
     });
   });
 
+  it("name the base token below the range and the quote token above it, read either way", () => {
+    // @rule R5, R6 (finding 24: the one-token sentence follows the displayed status)
+    const USDC_WETH: LivePoolGrid = {
+      decimals0: 6,
+      decimals1: 18,
+      tickSpacing: 10,
+      currentPrice: 1 / 3050,
+    };
+    for (const pool of [WETH_USDC, USDC_WETH]) {
+      for (const inverted of [false, true]) {
+        const range = presetRange(pool, 10, inverted) as PoolRange;
+        const shown = displayBounds(range, pool);
+        // A displayed price, as the manager reads it, turned back into the pool's canonical price.
+        const at = (displayed: number): LivePoolGrid => ({
+          ...pool,
+          currentPrice: inverted ? 1 / displayed : displayed,
+        });
+        const label = `token0 decimals ${pool.decimals0}, inverted ${inverted}`;
+        expect(rangeStatus(range, at(shown.min / 2)), label).toBe("below");
+        expect(rangeSplit(range, at(shown.min / 2))?.basePct, label).toBe(100);
+        expect(rangeStatus(range, at(shown.max * 2)), label).toBe("above");
+        expect(rangeSplit(range, at(shown.max * 2))?.quotePct, label).toBe(100);
+      }
+    }
+  });
+
   it("are 50 / 50 for Full", () => {
     // @rule R6
     for (const inverted of [false, true]) {
