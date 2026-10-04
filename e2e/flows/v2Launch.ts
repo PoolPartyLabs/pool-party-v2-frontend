@@ -1,4 +1,5 @@
 import type { Page, TestInfo } from "@playwright/test";
+import type { FundLaunchDraft } from "../../src/features/manager/fund/launch/contracts";
 import { expect } from "../fixtures";
 import { connectAndSignIn } from "../helpers/connect";
 
@@ -77,6 +78,11 @@ export async function prepareV2Launch(
   const noCap = page.getByRole("checkbox", { name: "No cap for Robinhood Chain", exact: true });
   if ((await noCap.getAttribute("aria-checked")) === "true") await noCap.click();
   await page.getByRole("slider", { name: "Max share for Robinhood Chain", exact: true }).fill("50");
+  for (const control of await page
+    .getByRole("checkbox", { name: /^No cap for (Aave v3|Uniswap v4|WETH on)/ })
+    .all()) {
+    if ((await control.getAttribute("aria-checked")) !== "true") await control.click();
+  }
   const now = new Date();
   const name = `Rehearsal ${String(now.getUTCHours()).padStart(2, "0")}${String(now.getUTCMinutes()).padStart(2, "0")}`;
   await page.getByRole("button", { name: "Next: Build strategy", exact: true }).click();
@@ -89,27 +95,69 @@ export async function prepareV2Launch(
   for (const kind of [/Uniswap v4 Liquidity position/, /Aave v3 Supply/]) {
     await page.getByRole("button", { name: "Add protocol on Arbitrum", exact: true }).click();
     await page.getByRole("menuitem", { name: kind }).click();
+    const panel = page.locator("[data-block-panel]");
+    await panel
+      .getByRole("button", {
+        name: kind.source.startsWith("Uniswap")
+          ? /^Use .*USDC.*WETH|^Use .*WETH.*USDC/
+          : "Use USDC",
+      })
+      .click();
+    const allocation = panel.getByRole("slider", { name: "Allocation", exact: true });
+    await allocation.press("Home");
+    for (let increment = 0; increment < 6; increment++) await allocation.press("ArrowRight");
+    await expect(allocation).toHaveAttribute("aria-valuenow", "30");
+    if (kind.source.startsWith("Uniswap")) {
+      await panel
+        .locator("[data-price-range]")
+        .getByRole("button", { name: "±10%", exact: true })
+        .click();
+      await panel
+        .locator("[data-fund-slippage]")
+        .getByRole("button", { name: "0.5%", exact: true })
+        .click();
+    }
+    await panel.getByRole("button", { name: "Apply changes", exact: true }).click();
+    await expect(panel.getByText("All changes applied", { exact: true })).toBeVisible();
+    await page.screenshot({
+      path: info.outputPath(
+        kind.source.startsWith("Uniswap") ? "panel-uniswap-arbitrum.png" : "panel-aave-usdc.png",
+      ),
+      fullPage: true,
+    });
   }
   await page.getByRole("button", { name: "Fit to view", exact: true }).click();
   await page.getByRole("button", { name: "Add network", exact: true }).click();
   await page.getByRole("menuitem", { name: /^Robinhood Chain/ }).click();
   await page.getByRole("button", { name: "Add protocol on Robinhood Chain", exact: true }).click();
   await page.getByRole("menuitem", { name: /Uniswap v4 Liquidity position/ }).click();
-  await page.getByRole("button", { name: "Save & exit", exact: true }).click();
-  await expect(page).toHaveURL(/\/manager(?:\?|$)/);
+  const spokePanel = page.locator("[data-block-panel]");
+  await spokePanel.getByRole("button", { name: /^Use / }).first().click();
+  const spokeAllocation = spokePanel.getByRole("slider", { name: "Allocation", exact: true });
+  await spokeAllocation.press("Home");
+  for (let increment = 0; increment < 8; increment++) await spokeAllocation.press("ArrowRight");
+  await expect(spokeAllocation).toHaveAttribute("aria-valuenow", "40");
+  await spokePanel
+    .locator("[data-price-range]")
+    .getByRole("button", { name: "±20%", exact: true })
+    .click();
+  await spokePanel
+    .locator("[data-fund-slippage]")
+    .getByRole("button", { name: "1%", exact: true })
+    .click();
+  await spokePanel.getByRole("button", { name: "Apply changes", exact: true }).click();
+  await page.screenshot({ path: info.outputPath("panel-uniswap-robinhood.png"), fullPage: true });
+  await page.getByRole("button", { name: "Next: Review", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Review your strategy", exact: true }),
+  ).toBeVisible();
   mark("Build");
   const draft = await page.evaluate(() => {
     const payload = JSON.parse(localStorage.getItem("pp.manager.mandateDrafts.v1") ?? "{}");
-    return Object.values(payload.drafts ?? {}).at(-1) as {
-      id: string;
-      tokens: Array<{ address: string }>;
-      pools: Array<{ poolId: string }>;
-      aaveV3Reserves: string[];
-      spokeCapPercent: number;
-    };
+    return Object.values(payload.drafts ?? {}).at(-1) as FundLaunchDraft;
   });
   expect(draft.pools.map((pool) => pool.poolId).sort()).toEqual([hubPool, spokePool].sort());
-  expect(draft.aaveV3Reserves.map((address) => address.toLowerCase())).toEqual([
+  expect(draft.aaveV3Reserves?.map((address) => address.toLowerCase())).toEqual([
     usdc.toLowerCase(),
   ]);
   expect(draft.spokeCapPercent).toBe(50);
@@ -122,6 +170,29 @@ export async function prepareV2Launch(
     await page.waitForTimeout(Math.min(cooldown, 120_000));
     mark("Catalog throttle cooldown (not launch waiting)");
   }
+  if (process.env.E2E_V2_REVIEW_ENTRY !== "fallback") {
+    await page.locator("#review-name").fill(name);
+    await page.getByLabel("Performance fee", { exact: true }).fill("20");
+    await page.getByLabel("Management fee", { exact: true }).fill("0");
+    await page.getByLabel("Instant withdrawal fee", { exact: true }).fill("2");
+    await page.getByLabel("Minimum first deposit", { exact: true }).fill("2");
+    await page.getByLabel("First deposit amount", { exact: true }).fill("2");
+    await page.getByLabel("First deposit amount", { exact: true }).blur();
+    await expect(page.getByRole("button", { name: "Launch strategy", exact: true })).toBeEnabled();
+    await expect(page.getByRole("heading", { name: "Launch steps", exact: true })).toBeVisible();
+    await expect(page.locator("main ol li").filter({ hasText: "Open position" })).toHaveCount(3);
+    await expect(page.locator("main [role='status']")).toHaveCount(0);
+    await page.screenshot({
+      path: info.outputPath("murilo-review-before-launch.png"),
+      fullPage: true,
+    });
+    await capture("review");
+    mark("Murilo Review");
+    return { draft, name };
+  }
+  await page.getByRole("button", { name: "Back to Build", exact: true }).click();
+  await page.getByRole("button", { name: "Save & exit", exact: true }).click();
+  await expect(page).toHaveURL(/\/manager(?:\?|$)/);
   await page.goto("/en/manager");
   await page.getByRole("link", { name: "Review & launch drafts (v2)", exact: true }).click();
   await page.locator(`a[href*="/${draft.id}"]`).filter({ hasText: "Review" }).click();
