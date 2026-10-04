@@ -291,6 +291,9 @@ export const ANALYTICS_EVENTS = [
   "builder_mandate_abandoned",
   "builder_draft_saved",
   "builder_mandate_error",
+  "builder_launch_signature",
+  "builder_launch_completed",
+  "builder_launch_failed",
 
   // POO-2127 (epic POO-2119), the Console card that is the only way back into a parked mandate.
   //
@@ -1156,6 +1159,18 @@ export interface AnalyticsParams {
   /** Which side of a card a flow block was inserted on (POO-2157, handoff I4). */
   slot?: "before" | "after";
   chain_id?: number;
+  step_kind?:
+    | "approve"
+    | "create"
+    | "discover"
+    | "spoke"
+    | "profile"
+    | "allocate"
+    | "report"
+    | "bridge"
+    | "arrival"
+    | "swap"
+    | "open";
 
   // --- Universal Funding funnel (POO-1048 [R2]) --------------------------------------------------
   // What a funding route IS, in the three dimensions the funnel is analysed on: its shape, its

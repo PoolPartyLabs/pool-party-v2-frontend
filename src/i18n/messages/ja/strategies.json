@@ -785,6 +785,17 @@
     }
   },
   "funds": {
+    "protocols": "プロトコル",
+    "noPositions": "ポジションはまだありません",
+    "viewDetails": "詳細を見る",
+    "dormant": "V2ファンドはまだ利用できません。後でもう一度お試しください。",
+    "launchJourneys": "ローンチの進行状況",
+    "noJourneys": "このデバイスにはローンチの履歴がまだありません。",
+    "journeysUnavailable": "このブラウザーではローンチの履歴を読み込めません。ファンドは引き続き利用できます。",
+    "journeyCompleted": "完了",
+    "journeyInProgress": "進行中",
+    "viewJourney": "進行状況を見る",
+    "resumeLaunch": "ローンチを再開",
     "title": "ファンド",
     "holdings": "保有ファンド",
     "managerView": "ファンド管理",

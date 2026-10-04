@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-045 (POO-2177)
  * @name FundLaunchJourneyStore
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2181)
  */
 import { z } from "zod";
 import { getChainById } from "@/lib/chains";
@@ -83,4 +83,63 @@ export function journeyPath(journeyId: string, locale: string): string {
 }
 export function checkpointKey(journey: LaunchJourney): string {
   return journalKey(journey.draftId, journey.manager);
+}
+export function listLaunchJourneys(manager: string | null | undefined): {
+  journeys: LaunchJourney[];
+  unavailable: boolean;
+} {
+  if (!manager || typeof window === "undefined") return { journeys: [], unavailable: false };
+  const journeys: LaunchJourney[] = [];
+  try {
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (!key?.startsWith(`pp:v2:journey:1:${manager.toLowerCase()}:`)) continue;
+      try {
+        const journey = readJourney(key.slice("pp:v2:journey:1:".length));
+        if (
+          journey?.manager.toLowerCase() === manager.toLowerCase() &&
+          journey.draft.review?.name
+        ) {
+          launchStatus(journey);
+          journeys.push(journey);
+        }
+      } catch {}
+    }
+    journeys.sort((first, second) => second.createdAt.localeCompare(first.createdAt));
+    return { journeys, unavailable: false };
+  } catch {
+    return { journeys: [], unavailable: true };
+  }
+}
+export function launchStatus(journey: LaunchJourney) {
+  const steps =
+    journey.journal?.steps ??
+    getLaunchSteps(journey.draft).map((step) => ({
+      ...step,
+      chain: step.chainId,
+      dependencies: [],
+    }));
+  const current =
+    steps.find((step) => journey.journal?.checkpoints[step.id]?.status !== "confirmed") ?? null;
+  const failed = steps.some((step) => journey.journal?.checkpoints[step.id]?.status === "failed");
+  const completed = steps.length > 0 && current === null;
+  return {
+    journeyId: journey.journeyId,
+    status: completed ? ("complete" as const) : failed ? ("failed" as const) : ("paused" as const),
+    current,
+    outcome: completed
+      ? ("completed" as const)
+      : failed
+        ? ("failed" as const)
+        : ("in-progress" as const),
+  };
+}
+export function getLaunchStatusForDraft(draftId: string, manager?: string | null) {
+  const journey = listLaunchJourneys(manager).journeys.find((entry) => entry.draftId === draftId);
+  if (!journey) return null;
+  try {
+    return launchStatus(journey);
+  } catch {
+    return null;
+  }
 }
