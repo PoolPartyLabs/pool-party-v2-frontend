@@ -17,7 +17,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 465 markers across 263 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 470 markers across 268 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -31,6 +31,19 @@ git grep -n 'PP-INTEGRATION-POINT' -- src   # 465 markers across 263 files (2026
 > **Scope note for this public repository.** This document covers the **front-end** seams only, which is
 > what the code in this repository owns. The request/response contracts of the Pool Party backend
 > services live with those services in their own repositories and are intentionally not reproduced here.
+
+## Fund Review/launch integration (POO-2177, rules v1; page POO-2172)
+
+| Seam | Owned file | Contract and remaining integration |
+|------|------------|------------------------------------|
+| Just-in-time launch builders | `src/lib/api/v2/launch.ts` | Server-only v2 API writes with `x-api-key`; admin routes additionally require server-only `PP_API_ADMIN_KEY` as `x-admin-key`. API PR #180 provides payoutFeeBps/transits/balances. |
+| Real wallet/receipts | `src/features/manager/fund/launch/useV2LaunchWallet.ts` | Headless Privy/wagmi binding, chain proof, mined receipts and hub USDC balance. Real-only provider mount; mock mode never signs. |
+| Agreed public seam | `src/features/manager/fund/launch/index.ts` | `startFundLaunch(draft: FundLaunchDraft): Promise<{journeyId: string}>`; pure `getLaunchSteps(draft): LaunchStepPreview[]`; `useV2ReviewDraft(draftId)` => review/setField/errors/launchBlockers/isReady; `useV2Launch(journeyId)` => steps/current/sign/retry/resume/cancel/outcome; `FundLaunchJourney`; `explorerTxUrl(chainId, hash)`. Exports ReviewDraft/FundLaunchDraft/LaunchStepPreview/LaunchJourney types. |
+| Review DATA / Launch JOURNEY split | `src/features/manager/fund/launch/useV2ReviewDraft.ts`, `FundLaunchJourney.tsx` | Murilo owns Review PAGE (POO-2172). Review setters preserve latest MandateDraft.review beside plan. Our start entry freezes/resumes and navigates to manager/fund-launch/[journeyId]; Journey owns outcomes and immediate explorer hashes/receipt statuses. No builder page/shell edits. Flow fee fallback is labelled until detail fees exist. |
+| Canvas BuildPlan v1 | `src/features/manager/fund/launch/plan.ts` | Reads `draft.plan` from origin/feat/mgr-poo-2144-canvas-integration (PR #31/POO-2151 roll-up) through owned structural adapter, no competing reducers. POO-2144/2171 must provide canonical range/loss/leaf execution fields; empty config/Borrow fail closed. |
+| Browser checkpoint journal | `src/features/manager/fund/launch/journal.ts` | Per manager/draft immutable steps, hashes, receipt state, addresses and actual net principal. Durable API launch-plan and cross-device coordination are later work. |
+
+See `src/features/manager/fund/launch/README.md` for the adapter gaps, recovery rules and operational waits.
 
 ## Fiat on-ramp (Privy rail, default on; Paybis dormant behind `privyOnRamp=off`)
 

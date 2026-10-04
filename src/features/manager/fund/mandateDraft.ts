@@ -218,6 +218,7 @@ export interface MandateCaps {
 
 /** The one object the five Mandate screens read and write. */
 export interface MandateDraft {
+  review?: import("./launch/review").ReviewDraft;
   v2Selection?: {
     chains: { chainId: 42161 | 4663; tokens: string[]; uniswapV4PoolIds: string[] }[];
     aaveV3Reserves: string[];

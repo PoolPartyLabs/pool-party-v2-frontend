@@ -1,0 +1,220 @@
+/**
+ * @id PP-MGR-HOK-019 (POO-2177)
+ * @name useV2LaunchBinding
+ * @implements-rules-version v1
+ */
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
+import { isMockMode } from "@/lib/services";
+import { createLaunchDriver, type FrozenLaunch, type LaunchWallet } from "./driver";
+import {
+  createJournal,
+  type JournalStorage,
+  journalKey,
+  type LaunchJournal,
+  loadJournal,
+  runLaunch,
+} from "./journal";
+import { withLaunchLock } from "./lock";
+import { type CanvasPlan, deriveLaunchSteps, type ExecutionConfig, type LaunchStep } from "./plan";
+
+export interface V2LaunchOptions {
+  draftId: string;
+  manager: string | null;
+  plan?: CanvasPlan;
+  execution?: Record<string, ExecutionConfig>;
+  spoke: boolean;
+  frozen?: FrozenLaunch;
+  prepare?: () => FrozenLaunch;
+  wallet: LaunchWallet | null;
+  storage?: JournalStorage;
+  pollInterval?: number;
+}
+export interface V2LaunchError {
+  code: string;
+  messageKey:
+    | "fundLaunch.partialFailure"
+    | "fundLaunch.buildGap"
+    | "fundLaunch.walletOrJournal"
+    | "fundLaunch.realOnly";
+}
+export interface LaunchSignature {
+  stepId: string;
+  chain: 42161 | 4663;
+  type: "transaction" | "message";
+  status: string;
+  conditional: boolean;
+}
+export function useV2LaunchBinding(options: V2LaunchOptions) {
+  // PP-INTEGRATION-POINT: Murilo's Review page consumes headless launch state and explicit actions.
+  const { isEnabled } = useFeatureFlags();
+  const [journal, setJournal] = useState<LaunchJournal | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<V2LaunchError | null>(null);
+  const running = useRef(false);
+  const abort = useRef<AbortController | null>(null);
+  useEffect(() => {
+    setJournal(null);
+    setHydrated(false);
+    setError(null);
+    if (!options.manager) return;
+    try {
+      setJournal(loadJournal(options.storage ?? localStorage, options.draftId, options.manager));
+      setHydrated(true);
+    } catch {
+      setError({ code: "INVALID_JOURNAL", messageKey: "fundLaunch.walletOrJournal" });
+    }
+    return () => {
+      abort.current?.abort();
+    };
+  }, [options.draftId, options.manager, options.storage]);
+  let steps: LaunchStep[] = [];
+  let gap = false;
+  try {
+    if (journal) steps = journal.steps;
+    else if (options.plan)
+      steps = deriveLaunchSteps(options.plan, options.execution ?? {}, true, options.spoke);
+    else gap = true;
+  } catch {
+    gap = true;
+  }
+  const execute = async (resume: boolean, once: boolean) => {
+    if (running.current) return;
+    if (isMockMode || !isEnabled("fundContracts")) {
+      setError({ code: "V2_UNAVAILABLE", messageKey: "fundLaunch.realOnly" });
+      return;
+    }
+    if (!hydrated || !options.manager || !options.wallet) {
+      setError({ code: "INVALID_JOURNAL", messageKey: "fundLaunch.walletOrJournal" });
+      return;
+    }
+    if (gap) {
+      setError({ code: "BUILD_EXECUTION_GAP", messageKey: "fundLaunch.buildGap" });
+      return;
+    }
+    const manager = options.manager;
+    const wallet = options.wallet;
+    const storage = options.storage ?? localStorage;
+    const controller = new AbortController();
+    abort.current = controller;
+    running.current = true;
+    setBusy(true);
+    setError(null);
+    let active = true;
+    const changed = (value: LaunchJournal) => {
+      if (active && !controller.signal.aborted) setJournal(value);
+    };
+    try {
+      await withLaunchLock(journalKey(options.draftId, manager), async () => {
+        let current = loadJournal(storage, options.draftId, manager);
+        if (!current) {
+          if (resume) throw new Error("INVALID_JOURNAL");
+          const frozen = options.prepare ? options.prepare() : options.frozen;
+          if (!frozen || frozen.request.manager.toLowerCase() !== manager.toLowerCase())
+            throw new Error("INVALID_REVIEW");
+          current = createJournal(options.draftId, manager, frozen, steps);
+        }
+        const driver = createLaunchDriver({
+          send: async (transaction) => {
+            if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
+            return wallet.send(transaction);
+          },
+          sign: async (message) => {
+            if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
+            return wallet.sign(message);
+          },
+          receipt: (chain, hash) => wallet.receipt(chain, hash),
+        });
+        do {
+          await runLaunch(
+            current,
+            storage,
+            driver,
+            changed,
+            controller.signal,
+            once ? 1 : Number.POSITIVE_INFINITY,
+          );
+          const failed = Object.values(current.checkpoints).find(
+            (checkpoint) => checkpoint.status === "failed",
+          );
+          if (failed) {
+            setError({
+              code: failed.error ?? "LAUNCH_STEP_FAILED",
+              messageKey: "fundLaunch.partialFailure",
+            });
+            break;
+          }
+          if (
+            once ||
+            current.steps.every((step) => current?.checkpoints[step.id]?.status === "confirmed")
+          )
+            break;
+          await new Promise<void>((resolve) => {
+            const finish = () => {
+              clearTimeout(timeout);
+              controller.signal.removeEventListener("abort", finish);
+              resolve();
+            };
+            const timeout = setTimeout(finish, options.pollInterval ?? 10_000);
+            controller.signal.addEventListener("abort", finish, { once: true });
+            if (controller.signal.aborted) finish();
+          });
+        } while (!controller.signal.aborted);
+      });
+    } catch (failure) {
+      if (!controller.signal.aborted)
+        setError({
+          code:
+            failure instanceof Error && /^[A-Z][A-Z0-9_]*$/.test(failure.message)
+              ? failure.message
+              : "LAUNCH_STEP_FAILED",
+          messageKey: "fundLaunch.partialFailure",
+        });
+    } finally {
+      active = false;
+      running.current = false;
+      setBusy(false);
+    }
+  };
+  const currentStep =
+    steps.find((step) => journal?.checkpoints[step.id]?.status !== "confirmed") ?? null;
+  const signatures: LaunchSignature[] = steps
+    .filter((step) => !["discover", "report", "arrival"].includes(step.kind))
+    .map((step) => ({
+      stepId: step.id,
+      chain: step.chain,
+      type: step.kind === "profile" ? "message" : "transaction",
+      status: journal?.checkpoints[step.id]?.status ?? "idle",
+      conditional: ["approve", "swap", "profile"].includes(step.kind),
+    }));
+  return {
+    journal,
+    hydrated,
+    busy,
+    gap,
+    error,
+    steps,
+    currentStep,
+    signatures,
+    checkpoints: journal?.checkpoints ?? {},
+    addresses: journal?.addresses ?? {},
+    status: busy
+      ? "running"
+      : error
+        ? "failed"
+        : journal && !currentStep
+          ? "complete"
+          : journal
+            ? "paused"
+            : "idle",
+    launch: () => execute(false, false),
+    resume: () => execute(true, false),
+    retry: () => execute(true, false),
+    next: () => execute(journal !== null, true),
+    sign: () => execute(journal !== null, true),
+    pause: () => abort.current?.abort(),
+  };
+}
+export type V2LaunchBinding = ReturnType<typeof useV2LaunchBinding>;
