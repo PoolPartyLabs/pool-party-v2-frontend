@@ -610,6 +610,19 @@
   },
   "window30d": "30d",
   "fundBuilder": {
+    "real": {
+      "loading": "Loading v2 catalog",
+      "error": "The v2 catalog is unavailable.",
+      "retry": "Retry",
+      "stale": "This draft uses stale or mock data. Start a new draft in real mode.",
+      "protocols": "Choose position protocols per network. Uniswap v3 is swap-only.",
+      "reserve": "{symbol} supply APY: {apy}",
+      "unavailable": "Unavailable",
+      "metrics": "TVL and APR are not indexed yet.",
+      "limits": "Robinhood percentage is stored as fund intent, not enforced on chain until POO-2169.",
+      "allocation": "Protocol and token sliders are local Build allocation aids, not fund limits.",
+      "poolId": "Paste a bytes32 PoolId"
+    },
     "header": {
       "saveExit": "Save & exit"
     },

@@ -610,6 +610,19 @@
   },
   "window30d": "30 天",
   "fundBuilder": {
+    "real": {
+      "loading": "正在加载 v2 目录",
+      "error": "v2 目录暂不可用。",
+      "retry": "重试",
+      "stale": "此草稿使用过时或模拟数据。请在真实模式下新建草稿。",
+      "protocols": "请按网络选择仓位协议。Uniswap v3 仅用于 swap。",
+      "reserve": "{symbol} supply APY：{apy}",
+      "unavailable": "不可用",
+      "metrics": "TVL 和 APR 尚未建立索引。",
+      "limits": "Robinhood 百分比作为基金意图保存，在 POO-2169 完成前不会在链上强制执行。",
+      "allocation": "协议和代币滑块仅用于本地 Build 配置分配，并非基金限额。",
+      "poolId": "粘贴 bytes32 PoolId"
+    },
     "header": {
       "saveExit": "保存并退出"
     },

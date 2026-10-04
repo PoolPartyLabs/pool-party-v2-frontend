@@ -32,6 +32,8 @@
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils/cn";
+import { formatPercent } from "@/lib/utils/format";
+import { MandateCatalogStatus } from "../components/MandateCatalogStatus";
 import { MandateCheckbox, MandateRow } from "../components/MandateRow";
 import { NetworkDots } from "../components/NetworkDots";
 import { ProtocolMark } from "../components/ProtocolMark";
@@ -66,7 +68,15 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
     // perps: t("fundBuilder.protocolCaptions.perps"),
   };
 
-  const required = catalog.protocols.filter((protocol) => protocol.required);
+  const required = catalog.protocols.filter(
+    (protocol) =>
+      protocol.required &&
+      !(
+        catalog.dataMode === "real" &&
+        protocol.id === "across" &&
+        !draft.networks.includes("robinhood")
+      ),
+  );
   const operable = catalog.protocols.filter((protocol) => !protocol.required);
   const chosen = new Set<ProtocolId>(draft.protocols);
 
@@ -117,21 +127,35 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
       const next = current.protocols.includes(id)
         ? current.protocols.filter((protocol) => protocol !== id)
         : [...current.protocols, id];
-      return withProtocols(current, next);
+      const result = withProtocols(current, next);
+      if (catalog.dataMode === "real")
+        result.aaveV3Reserves = result.protocols.includes("aave-v3")
+          ? (catalog.reserves ?? [])
+              .filter((reserve) => reserve.available)
+              .map((reserve) => reserve.token.address.toLowerCase())
+          : [];
+      return result;
     });
   }
 
   /** R20: every selectable protocol, or none of them. The required two are never in scope. */
   function toggleAll() {
     const ids = new Set<ProtocolId>(selectable.map((protocol) => protocol.id));
-    update((current) =>
-      withProtocols(
+    update((current) => {
+      const result = withProtocols(
         current,
         allSelected
           ? current.protocols.filter((protocol) => !ids.has(protocol))
           : [...current.protocols, ...ids],
-      ),
-    );
+      );
+      if (catalog.dataMode === "real")
+        result.aaveV3Reserves = result.protocols.includes("aave-v3")
+          ? (catalog.reserves ?? [])
+              .filter((reserve) => reserve.available)
+              .map((reserve) => reserve.token.address.toLowerCase())
+          : [];
+      return result;
+    });
   }
 
   /** One operable row: the choice, its caption, and where it runs. */
@@ -169,6 +193,73 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
 
   return (
     <section data-mandate-step={STEP} className="flex flex-col gap-6">
+      <MandateCatalogStatus catalog={catalog} draft={draft} />
+      {catalog.dataMode === "real" ? (
+        <p className="text-muted-foreground text-sm">{t("fundBuilder.real.protocols")}</p>
+      ) : null}
+      {catalog.dataMode === "real"
+        ? (catalog.reserves ?? []).map((reserve) => (
+            <p key={reserve.poolKey} className="text-sm">
+              {t("fundBuilder.real.reserve", {
+                symbol: reserve.token.symbol,
+                apy: formatPercent(Number(reserve.supplyApy)),
+              })}
+              {!reserve.available ? ` · ${t("fundBuilder.real.unavailable")}` : ""}
+            </p>
+          ))
+        : null}
+      {catalog.dataMode === "real"
+        ? draft.networks.map((network) => (
+            <fieldset key={network} className="flex gap-3">
+              <legend className="text-sm">
+                {t(
+                  network === "arbitrum"
+                    ? "fundBuilder.networkNames.arbitrum"
+                    : "fundBuilder.networkNames.robinhood",
+                )}
+              </legend>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={(draft.positionProtocolsByChain?.[network] ?? []).includes("uniswap-v4")}
+                  onChange={(event) => {
+                    const checked = event.target.checked;
+                    update((current) => {
+                      const byChain = {
+                        ...current.positionProtocolsByChain,
+                        [network]: checked
+                          ? [
+                              ...(current.positionProtocolsByChain?.[network] ?? []).filter(
+                                (id) => id !== "uniswap-v4",
+                              ),
+                              "uniswap-v4" as const,
+                            ]
+                          : (current.positionProtocolsByChain?.[network] ?? []).filter(
+                              (id) => id !== "uniswap-v4",
+                            ),
+                      };
+                      const hasV4 = Object.values(byChain).some((ids) =>
+                        ids?.includes("uniswap-v4"),
+                      );
+                      return {
+                        ...current,
+                        positionProtocolsByChain: byChain,
+                        protocols: hasV4
+                          ? Array.from(new Set([...current.protocols, "uniswap-v4" as const]))
+                          : current.protocols.filter((id) => id !== "uniswap-v4"),
+                        pools: checked
+                          ? current.pools
+                          : current.pools.filter((pool) => pool.network !== network),
+                        poolUniverseCount: null,
+                      };
+                    });
+                  }}
+                />
+                {names["uniswap-v4"]}
+              </label>
+            </fieldset>
+          ))
+        : null}
       {/* Required (R19) */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

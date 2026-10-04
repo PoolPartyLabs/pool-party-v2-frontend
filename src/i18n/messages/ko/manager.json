@@ -610,6 +610,19 @@
   },
   "window30d": "30일",
   "fundBuilder": {
+    "real": {
+      "loading": "v2 카탈로그를 불러오고 있어요",
+      "error": "v2 카탈로그를 사용할 수 없어요.",
+      "retry": "다시 시도",
+      "stale": "이 초안은 오래된 데이터나 모의 데이터를 사용해요. 실제 모드에서 새 초안을 시작하세요.",
+      "protocols": "네트워크별 포지션 프로토콜을 선택하세요. Uniswap v3는 swap 전용이에요.",
+      "reserve": "{symbol} supply APY: {apy}",
+      "unavailable": "사용 불가",
+      "metrics": "TVL과 APR은 아직 인덱싱되지 않았어요.",
+      "limits": "Robinhood 비율은 펀드의 의도로 저장되지만 POO-2169 전에는 on-chain으로 강제되지 않아요.",
+      "allocation": "프로토콜 및 토큰 슬라이더는 로컬 Build 배분 도구이며 펀드 한도가 아니에요.",
+      "poolId": "bytes32 PoolId를 붙여 넣으세요"
+    },
     "header": {
       "saveExit": "저장하고 나가기"
     },

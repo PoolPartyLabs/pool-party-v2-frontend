@@ -610,6 +610,19 @@
   },
   "window30d": "30日",
   "fundBuilder": {
+    "real": {
+      "loading": "v2カタログを読み込んでいます",
+      "error": "v2カタログを利用できません。",
+      "retry": "再試行",
+      "stale": "この下書きは古いデータまたは模擬データを使用しています。実データモードで新しい下書きを作成してください。",
+      "protocols": "ネットワークごとにポジションのプロトコルを選択してください。Uniswap v3はswap専用です。",
+      "reserve": "{symbol}のsupply APY: {apy}",
+      "unavailable": "利用不可",
+      "metrics": "TVLとAPRはまだインデックス化されていません。",
+      "limits": "Robinhoodの割合はファンドの意図として保存されますが、POO-2169まではon-chainで強制されません。",
+      "allocation": "プロトコルとトークンのスライダーはBuildのローカル配分補助で、ファンドの制限ではありません。",
+      "poolId": "bytes32 PoolIdを貼り付けてください"
+    },
     "header": {
       "saveExit": "保存して終了"
     },

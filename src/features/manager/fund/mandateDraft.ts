@@ -177,6 +177,14 @@ export interface MandateTokenRef {
 
 /** One pool in a mandate. Shape mirrors what `mapDexPool` produces from the `/dex-pools` API. */
 export interface MandatePoolRef {
+  poolId?: string;
+  poolKey?: {
+    currency0: string;
+    currency1: string;
+    fee: number;
+    tickSpacing: number;
+    hooks: string;
+  };
   id: string;
   address: string;
   network: NetworkId;
@@ -185,8 +193,8 @@ export interface MandatePoolRef {
   token1: Pick<MandateTokenRef, "address" | "symbol" | "name" | "logoUrl">;
   feeBps: number;
   feeTier: number;
-  tvlUsd: number;
-  aprPct: number;
+  tvlUsd: number | null;
+  aprPct: number | null;
   /** Share of V1 managers who chose this tier, read from the API. Never invented; null when absent. */
   tierSharePct: number | null;
   /** Uniswap v4 hooks are not supported, so a pool with one cannot be added (R38). */
@@ -208,6 +216,16 @@ export interface MandateCaps {
 
 /** The one object the five Mandate screens read and write. */
 export interface MandateDraft {
+  v2Selection?: {
+    chains: { chainId: 42161 | 4663; tokens: string[]; uniswapV4PoolIds: string[] }[];
+    aaveV3Reserves: string[];
+    spokeCapPercent: number | null;
+  };
+  dataMode?: "real";
+  catalogVersion?: "v2-catalog-v1";
+  positionProtocolsByChain?: Partial<Record<NetworkId, ("uniswap-v4" | "aave-v3")[]>>;
+  aaveV3Reserves?: string[];
+  spokeCapPercent?: number | null;
   id: string;
   name: string | null;
   createdAt: string;
@@ -345,7 +363,16 @@ export function selectionCounts(draft: MandateDraft): {
  * on top) and the builder shell, which invalidates a completion when a selection changes under it.
  */
 export function selectionFingerprint(draft: MandateDraft): string {
-  return JSON.stringify([draft.networks, draft.protocols, draft.tokens, draft.pools, draft.caps]);
+  return JSON.stringify([
+    draft.networks,
+    draft.protocols,
+    draft.tokens,
+    draft.pools,
+    draft.caps,
+    ...(draft.dataMode === "real"
+      ? [draft.positionProtocolsByChain, draft.aaveV3Reserves, draft.spokeCapPercent]
+      : []),
+  ]);
 }
 
 /** R8: the draft name rule, as the dialog's helper and its blocked click both read it. */
@@ -503,6 +530,69 @@ export function validateStep(
   step: MandateStepKey,
   catalog: MandateCatalog,
 ): StepBlock | null {
+  if (catalog.dataMode === "real") {
+    if (
+      catalog.loading ||
+      catalog.error ||
+      draft.dataMode !== "real" ||
+      draft.catalogVersion !== "v2-catalog-v1"
+    ) {
+      return { step, reason: "coming_soon", rowId: null };
+    }
+    if (
+      step === "protocols" &&
+      !draft.protocols.some((id) => id === "uniswap-v4" || id === "aave-v3")
+    ) {
+      return { step, reason: "nothing_selected", rowId: null };
+    }
+    if (
+      step === "protocols" &&
+      draft.protocols.some(
+        (id) => !catalog.protocols.some((protocol) => protocol.id === id && protocol.available),
+      )
+    )
+      return { step, reason: "coming_soon", rowId: null };
+    if (step === "tokens") {
+      const allowed = [
+        ...catalog.tokensFor(draft.networks, draft.protocols),
+        ...draft.networks.flatMap((network) => {
+          const base = catalog.depositTokenFor(network);
+          return base ? [base] : [];
+        }),
+      ];
+      if (
+        draft.tokens.length > MAX_TOKEN_SLOTS ||
+        draft.tokens.some(
+          (token) => !allowed.some((entry) => tokenKey(entry) === tokenKey(token) && entry.priced),
+        ) ||
+        draft.networks.some((network) => {
+          const base = catalog.depositTokenFor(network);
+          return !base || !draft.tokens.some((entry) => tokenKey(entry) === tokenKey(base));
+        })
+      )
+        return { step, reason: "not_priced", rowId: null };
+    }
+    if (step === "pools") {
+      for (const network of draft.networks) {
+        const selected =
+          draft.positionProtocolsByChain?.[network] ??
+          (draft.protocols.includes("uniswap-v4") ? ["uniswap-v4"] : []);
+        if (
+          selected.includes("uniswap-v4") &&
+          !draft.pools.some((pool) => pool.network === network && pool.protocol === "uniswap-v4")
+        ) {
+          return { step, reason: "nothing_selected", rowId: network };
+        }
+      }
+    }
+    if (step === "limits") {
+      if (draft.networks.includes("robinhood") && !draft.caps.networks.robinhood)
+        return { step, reason: "cap_missing", rowId: "robinhood" };
+      if (catalog.validateDraft && !catalog.validateDraft(draft))
+        return { step, reason: "nothing_selected", rowId: null };
+      return null;
+    }
+  }
   if (step === "pools") {
     if (!visibleSteps(draft).includes("pools")) return null;
     if (draft.pools.length > 0) return null;
@@ -668,7 +758,20 @@ export function withNetworks(
   }
   const ordered = catalog.networks.filter((n) => wanted.has(n.id)).map((n) => n.id);
   const next = ordered.includes(HUB_NETWORK) ? ordered : [HUB_NETWORK, ...ordered];
-  return withUniverseExpiry(draft, syncNetworks(draft, next));
+  const synced = syncNetworks(draft, next);
+  if (draft.dataMode === "real") {
+    synced.protocols = synced.protocols.filter((id) => id !== "across");
+    if (next.includes("robinhood"))
+      synced.protocols = PROTOCOL_ORDER.filter(
+        (id) => id === "across" || synced.protocols.includes(id),
+      );
+    if (synced.positionProtocolsByChain)
+      synced.positionProtocolsByChain = retainKeys(synced.positionProtocolsByChain, (key) =>
+        next.includes(key as NetworkId),
+      );
+    if (!next.includes("robinhood")) synced.spokeCapPercent = null;
+  }
+  return withUniverseExpiry(draft, synced);
 }
 
 /**
@@ -696,9 +799,23 @@ export function withNetworks(
 export function withProtocols(draft: MandateDraft, protocols: ProtocolId[]): MandateDraft {
   const unavailable = new Set<string>(UNAVAILABLE_PROTOCOLS);
   const known = new Set<string>(PROTOCOL_ORDER);
-  const wanted = new Set<ProtocolId>(REQUIRED_PROTOCOLS);
+  const wanted = new Set<ProtocolId>(
+    draft.dataMode === "real"
+      ? draft.networks.includes("robinhood")
+        ? REQUIRED_PROTOCOLS
+        : ["uniswap-v3-swap"]
+      : REQUIRED_PROTOCOLS,
+  );
   for (const id of protocols) {
-    if (known.has(id) && !unavailable.has(id)) wanted.add(id);
+    if (
+      known.has(id) &&
+      !unavailable.has(id) &&
+      !(
+        draft.dataMode === "real" &&
+        (id === "uniswap-v3" || (id === "across" && !draft.networks.includes("robinhood")))
+      )
+    )
+      wanted.add(id);
   }
   const next = PROTOCOL_ORDER.filter((id) => wanted.has(id));
   const keptIds = new Set<string>(next);
@@ -706,6 +823,22 @@ export function withProtocols(draft: MandateDraft, protocols: ProtocolId[]): Man
   return withUniverseExpiry(draft, {
     ...draft,
     protocols: next,
+    ...(draft.dataMode === "real"
+      ? {
+          positionProtocolsByChain: Object.fromEntries(
+            draft.networks.map((network) => [
+              network,
+              next.filter(
+                (id) =>
+                  (id === "uniswap-v4" &&
+                    (!draft.protocols.includes("uniswap-v4") ||
+                      draft.positionProtocolsByChain?.[network]?.includes("uniswap-v4"))) ||
+                  (id === "aave-v3" && network === "arbitrum"),
+              ),
+            ]),
+          ),
+        }
+      : {}),
     // A pool's protocol is always a position protocol, so losing every one of them empties this.
     pools: draft.pools.filter((p) => keptIds.has(p.protocol)),
     passedSteps: dex ? draft.passedSteps : draft.passedSteps.filter((s) => s !== "pools"),
@@ -814,7 +947,7 @@ export function addToken(
   catalog: MandateCatalog,
 ): MandateReducerResult {
   const rowId = tokenKey(token);
-  if (!isPricedSymbol(token.symbol)) {
+  if (catalog.dataMode === "real" ? !token.priced : !isPricedSymbol(token.symbol)) {
     return { blocked: { step: "tokens", reason: "not_priced", rowId } };
   }
   const wanted = token.symbol.toLowerCase();
@@ -885,6 +1018,9 @@ function ensurePoolToken(
     .find((t) => t.network === pool.network && t.address.toLowerCase() === address);
   if (fromCatalog) return addToken(draft, fromCatalog, catalog);
 
+  if (catalog.dataMode === "real")
+    return { blocked: { step: "tokens", reason: "not_priced", rowId: key } };
+
   // Not in the static list. The pool came from the API, which knows tokens the bundled lists do
   // not, so the pool's own token data is used rather than refusing a real pool. The price rule
   // still applies, and the entry lands on the POOL's network only: there is no catalog row to tell
@@ -944,6 +1080,11 @@ export function addPool(
   ) {
     return { blocked: { step: "pools", reason: "coming_soon", rowId: pool.id } };
   }
+  if (
+    draft.dataMode === "real" &&
+    !draft.positionProtocolsByChain?.[pool.network]?.includes("uniswap-v4")
+  )
+    return { blocked: { step: "pools", reason: "coming_soon", rowId: pool.id } };
 
   let next = draft;
   for (const side of [pool.token0, pool.token1]) {
@@ -990,6 +1131,9 @@ export function setCap(
   const current = draft.caps[scope] as Record<string, MandateCap>;
   return {
     ...draft,
+    ...(draft.dataMode === "real" && scope === "networks" && key === "robinhood"
+      ? { spokeCapPercent: normalized.noCap ? null : normalized.pct }
+      : {}),
     caps: { ...draft.caps, [scope]: { ...current, [key]: normalized } } as MandateCaps,
   };
 }

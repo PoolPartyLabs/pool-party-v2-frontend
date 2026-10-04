@@ -610,6 +610,19 @@
   },
   "window30d": "30d",
   "fundBuilder": {
+    "real": {
+      "loading": "Cargando catálogo v2",
+      "error": "El catálogo v2 no está disponible.",
+      "retry": "Reintentar",
+      "stale": "Este borrador usa datos antiguos o simulados. Inicie uno nuevo en modo real.",
+      "protocols": "Seleccione protocolos de posiciones por red. Uniswap v3 solo permite swap.",
+      "reserve": "APY de supply de {symbol}: {apy}",
+      "unavailable": "No disponible",
+      "metrics": "TVL y APR aún no están indexados.",
+      "limits": "El porcentaje de Robinhood se guarda como intención del fondo, sin aplicarse on-chain hasta POO-2169.",
+      "allocation": "Los controles de protocolo y token son ayudas locales de asignación del Build, no límites del fondo.",
+      "poolId": "Pegue un PoolId bytes32"
+    },
     "header": {
       "saveExit": "Guardar y salir"
     },
