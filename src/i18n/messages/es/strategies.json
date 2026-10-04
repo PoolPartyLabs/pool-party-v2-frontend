@@ -807,6 +807,7 @@
     "unavailable": "No disponible",
     "refreshing": "Actualizando valoración",
     "minimum": "Depósito mínimo",
+    "payoutWholeShares": "Los retiros se realizan en participaciones enteras; mínimo 1 participación.",
     "limit": "Límite del fondo excedido",
     "deferred": "Retiro de ingresos aplazado. Los ingresos recaudados están por debajo del mínimo del puente.",
     "notReady": "Aún no se puede reclamar o liquidar",
