@@ -15,7 +15,7 @@ import type { FundLaunchDraft } from "./contracts";
 import { FundLaunchJourneysList } from "./FundLaunchJourneysList";
 import { createJournal, journalKey, saveJournal } from "./journal";
 import { getLaunchStatusForDraft, journeyKey, listLaunchJourneys, persistJourney } from "./journey";
-import { deriveLaunchSteps } from "./plan";
+import { type CanvasPlan, deriveLaunchSteps } from "./plan";
 import { useV2LaunchStatus } from "./useV2LaunchStatus";
 
 const mocks = vi.hoisted(() => ({
@@ -75,12 +75,12 @@ const draft: FundLaunchDraft = {
     spokes: [],
   },
 };
-function orphanJournal() {
+function orphanJournal(plan: CanvasPlan = draft.plan) {
   const journal = createJournal(
     draft.id,
     wallet,
     {
-      plan: draft.plan,
+      plan,
       review: draft.review,
       request: {
         manager: wallet,
@@ -94,7 +94,7 @@ function orphanJournal() {
         seedAmount: "100000000",
       },
     },
-    deriveLaunchSteps(draft.plan, {}, true, false),
+    deriveLaunchSteps(plan, {}, true, false),
   );
   journal.checkpoints.create = {
     stepId: "create",
@@ -112,6 +112,44 @@ describe("wallet-local launch status POO-2181", () => {
     mocks.address = wallet;
     vi.restoreAllMocks();
     vi.clearAllMocks();
+  });
+  it("discovers accepted no-auto collectFees flow without mutating frozen data", () => {
+    const plan: CanvasPlan = structuredClone(draft.plan);
+    const chain = plan.hub.chains[0];
+    if (!chain) throw new Error("fixture");
+    chain.steps.push({ id: "fees", family: "flow", kind: "collectFees", config: {} });
+    const journal = orphanJournal(plan);
+    const raw = localStorage.getItem(journalKey(draft.id, wallet));
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    const { result } = renderHook(() => useV2LaunchStatus(draft.id));
+    expect(result.current).toMatchObject({ journeyId: `${wallet}:${draft.id}`, status: "paused" });
+    expect(result.current?.current).toEqual(JSON.parse(JSON.stringify(journal.steps[0])));
+    expect(localStorage.getItem(journalKey(draft.id, wallet))).toBe(raw);
+    expect(localStorage.getItem(journeyKey(`${wallet}:${draft.id}`))).toBeNull();
+    expect(writes).not.toHaveBeenCalled();
+    expect(mocks.catalog).not.toHaveBeenCalled();
+    expect(mocks.balance).not.toHaveBeenCalled();
+  });
+  it.each([
+    { id: "fees", family: "flow", kind: "collectFees", auto: "yes" },
+    { id: "fees", family: "flow", kind: "collectFees", config: { tickLower: "bad" } },
+    { id: "fees", family: "invalid", kind: "collectFees" },
+  ])("hides malformed frozen flow %j without storage writes", (flow) => {
+    const journal = orphanJournal();
+    const frozen = journal.frozen as Record<string, unknown>;
+    localStorage.setItem(
+      journalKey(draft.id, wallet),
+      JSON.stringify({
+        ...journal,
+        frozen: {
+          ...frozen,
+          plan: { ...draft.plan, hub: { chains: [{ id: "hub", sharePct: 100, steps: [flow] }] } },
+        },
+      }),
+    );
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    expect(getLaunchStatusForDraft(draft.id, wallet)).toBeNull();
+    expect(writes).not.toHaveBeenCalled();
   });
   it("discovers a wallet-scoped orphan without writes, catalog or balance reads", () => {
     const journal = orphanJournal();
@@ -181,7 +219,11 @@ describe("wallet-local launch status POO-2181", () => {
       review: { ...draft.review, seed: "0" },
     };
     upsertDraft(edited);
-    orphanJournal();
+    const plan: CanvasPlan = structuredClone(draft.plan);
+    const chain = plan.hub.chains[0];
+    if (!chain) throw new Error("fixture");
+    chain.steps.push({ id: "fees", family: "flow", kind: "collectFees", config: {} });
+    orphanJournal(plan);
     mocks.reviewBinding = {
       draft: edited,
       catalog: buildMandateCatalog(),

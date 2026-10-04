@@ -6,10 +6,9 @@
 import { z } from "zod";
 import { createRequestSchema } from "@/lib/api/v2/launchSchemas";
 import { getChainById } from "@/lib/chains";
-import { normalizePlan } from "../build/plan/planStorage";
 import type { FundLaunchDraft, LaunchJourney, LaunchStepPreview } from "./contracts";
 import { journalKey, type LaunchJournal, loadJournal } from "./journal";
-import { deriveLaunchSteps, validateTickAlignment } from "./plan";
+import { type CanvasPlan, deriveLaunchSteps, validateTickAlignment } from "./plan";
 import { rawUsdc, reviewSchema } from "./review";
 
 export { explorerAddressUrl, explorerTxUrl } from "@/lib/chain/explorer";
@@ -52,6 +51,55 @@ export function getLaunchSteps(draft: FundLaunchDraft): LaunchStepPreview[] {
 export function journeyKey(journeyId: string): string {
   return `pp:v2:journey:1:${journeyId}`;
 }
+const launchChainSchema = z
+  .object({
+    id: z.string(),
+    sharePct: z.number().finite(),
+    steps: z.array(
+      z
+        .object({
+          id: z.string(),
+          family: z.enum(["position", "flow"]),
+          kind: z.string(),
+          auto: z.boolean().optional(),
+          config: z
+            .object({
+              poolId: z.string().optional(),
+              assetKey: z.string().optional(),
+              priceLower: z.string().optional(),
+              priceUpper: z.string().optional(),
+              tickLower: z.number().finite().optional(),
+              tickUpper: z.number().finite().optional(),
+              fullRange: z.boolean().optional(),
+              slippagePct: z.number().finite().optional(),
+              displayInverted: z.boolean().optional(),
+            })
+            .passthrough()
+            .nullable()
+            .optional(),
+        })
+        .passthrough(),
+    ),
+  })
+  .passthrough();
+const launchPlanSchema = z
+  .object({
+    version: z.literal(1),
+    hub: z.object({ chains: z.array(launchChainSchema) }).passthrough(),
+    spokes: z.array(
+      z
+        .object({
+          network: z.string(),
+          sharePct: z.number().finite(),
+          chains: z.array(launchChainSchema),
+        })
+        .passthrough(),
+    ),
+  })
+  .passthrough();
+export function assertLaunchPlan(value: unknown): asserts value is CanvasPlan {
+  launchPlanSchema.parse(value);
+}
 export function readFrozenJournal(draftId: string, manager: string) {
   const journal = loadJournal(localStorage, draftId, manager);
   if (!journal) return null;
@@ -77,8 +125,8 @@ export function readFrozenJournal(draftId: string, manager: string) {
   const frozen = z
     .object({ plan: z.unknown(), review: reviewSchema, request: createRequestSchema })
     .parse(journal.frozen);
+  assertLaunchPlan(frozen.plan);
   if (
-    !normalizePlan(frozen.plan) ||
     frozen.request.manager.toLowerCase() !== manager.toLowerCase() ||
     frozen.request.minFirstDeposit !== rawUsdc(frozen.review.minimum).toString() ||
     frozen.request.seedAmount !== rawUsdc(frozen.review.seed).toString() ||

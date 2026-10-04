@@ -7,12 +7,17 @@
 import { useEffect, useState } from "react";
 import { getCatalogReservesAction, getCatalogTokensAction } from "@/lib/api/v2/actions";
 import { createRequestSchema } from "@/lib/api/v2/launchSchemas";
-import { normalizePlan } from "../build/plan/planStorage";
 import { getDraft } from "../mandateDraftStore";
 import { buildRealCatalog, toV2MandateSelection } from "../v2Mandate";
-import type { LaunchJourney } from "./contracts";
+import type { FundLaunchDraft, LaunchJourney } from "./contracts";
 import type { FrozenLaunch } from "./driver";
-import { explorerTxUrl, persistJourney, readFrozenJournal, readJourney } from "./journey";
+import {
+  assertLaunchPlan,
+  explorerTxUrl,
+  persistJourney,
+  readFrozenJournal,
+  readJourney,
+} from "./journey";
 import { hasLaunchTokenAllowance, rawUsdc } from "./review";
 import { useV2LaunchBinding } from "./useV2LaunchBinding";
 import { useV2LaunchWallet } from "./useV2LaunchWallet";
@@ -45,9 +50,11 @@ export function useV2Launch(journeyId: string) {
         const draft = journal ? getDraft(draftId) : null;
         if (journal && draft) {
           const snapshot = journal.frozen as Required<FrozenLaunch>;
-          const plan = normalizePlan(snapshot.plan);
-          if (!plan) throw new Error("INVALID_JOURNAL");
-          found = persistJourney({ ...draft, plan, review: snapshot.review }, manager);
+          assertLaunchPlan(snapshot.plan);
+          found = persistJourney(
+            { ...draft, plan: snapshot.plan, review: snapshot.review } as FundLaunchDraft,
+            manager,
+          );
         }
       }
       if (!found) {

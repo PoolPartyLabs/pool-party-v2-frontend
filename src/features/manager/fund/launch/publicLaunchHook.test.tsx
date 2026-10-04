@@ -5,7 +5,7 @@ import { MANDATE_DRAFTS_KEY, upsertDraft } from "../mandateDraftStore";
 import type { FundLaunchDraft } from "./contracts";
 import { createJournal, journalKey, saveJournal } from "./journal";
 import { journeyKey, persistJourney } from "./journey";
-import { deriveLaunchSteps } from "./plan";
+import { type CanvasPlan, deriveLaunchSteps } from "./plan";
 import { useV2Launch } from "./useV2Launch";
 
 const mocks = vi.hoisted(() => ({
@@ -92,13 +92,13 @@ const orphanFrozen = () => ({
     seedAmount: "100000000",
   },
 });
-function storeOrphan() {
+function storeOrphan(plan: CanvasPlan = draft.plan) {
   upsertDraft({ ...draft, tokens: [], plan: undefined, review: { ...draft.review, seed: "0" } });
   const journal = createJournal(
     draft.id,
     manager,
-    orphanFrozen(),
-    deriveLaunchSteps(draft.plan, {}, true, false),
+    { ...orphanFrozen(), plan },
+    deriveLaunchSteps(plan, {}, true, false),
   );
   journal.checkpoints.create = {
     stepId: "create",
@@ -129,6 +129,46 @@ describe("public launch hook seam [R3, R4, R6]", () => {
       pause: vi.fn(),
       status: "running",
     });
+  });
+  it("recovers an accepted collectFees flow without auto and preserves frozen bytes", async () => {
+    const plan: CanvasPlan = structuredClone(draft.plan);
+    const chain = plan.hub.chains[0];
+    if (!chain) throw new Error("fixture");
+    chain.steps.push({ id: "fees", family: "flow", kind: "collectFees", config: {} });
+    const journal = storeOrphan(plan);
+    const rawJournal = localStorage.getItem(journalKey(draft.id, manager));
+    const frozenBytes = JSON.stringify(journal.frozen);
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    const { result } = renderHook(() => useV2Launch(encodeURIComponent(`${manager}:${draft.id}`)));
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    expect(result.current.journey?.draft.plan).toEqual(plan);
+    expect(result.current.journey?.draft.plan.hub.chains[0]?.steps[1]).not.toHaveProperty("auto");
+    expect(JSON.stringify(result.current.journey?.journal?.frozen)).toBe(frozenBytes);
+    expect(localStorage.getItem(journalKey(draft.id, manager))).toBe(rawJournal);
+    expect(writes).toHaveBeenCalledTimes(1);
+    expect(mocks.catalog).not.toHaveBeenCalled();
+    expect(mocks.binding.mock.results.at(-1)?.value.sign).not.toHaveBeenCalled();
+  });
+  it.each([
+    { id: "fees", family: "flow", kind: "collectFees", auto: "yes" },
+    { id: "fees", family: "flow", kind: "collectFees", config: { fullRange: "yes" } },
+    { id: "fees", family: "flow", kind: 42 },
+  ])("rejects malformed frozen flow %j without recovery writes", async (flow) => {
+    const journal = storeOrphan();
+    const plan = { ...draft.plan, hub: { chains: [{ id: "leaf", sharePct: 100, steps: [flow] }] } };
+    localStorage.setItem(
+      journalKey(draft.id, manager),
+      JSON.stringify({
+        ...journal,
+        frozen: { ...orphanFrozen(), plan },
+      }),
+    );
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    const { result } = renderHook(() => useV2Launch(`${manager}:${draft.id}`));
+    await waitFor(() => expect(result.current.loadingError).toBe(true));
+    expect(result.current.ready).toBe(false);
+    expect(writes).not.toHaveBeenCalled();
+    expect(mocks.catalog).not.toHaveBeenCalled();
   });
   it("recovers orphan metadata from frozen data before invalid editable draft readiness", async () => {
     const journal = storeOrphan();
