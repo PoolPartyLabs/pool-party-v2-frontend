@@ -32,4 +32,24 @@ describe("non-spending rehearsal sign-in boundary", () => {
       ),
     ).toBe(false);
   });
+  it("rejects another origin, financial statements, appended resources and malformed hex", () => {
+    const message = buildSiweMessage({
+      address,
+      domain: "v2.dev.pool-party.xyz",
+      uri: "https://v2.dev.pool-party.xyz",
+      chainId: 42161,
+      nonce: "nonce12345",
+      statement: "Sign in to Pool Party",
+    });
+    for (const unsafe of [
+      message.replaceAll("v2.dev.pool-party.xyz", "attacker.example"),
+      message.replace("Sign in to Pool Party", "Authorize a fund launch"),
+      `${message}\nResources:\n- https://attacker.example/authorization`,
+      message.replace("Chain ID: 42161", "Chain ID: 1"),
+      `0x${Buffer.from(message).toString("hex")}ffx`,
+    ]) {
+      expect(rehearsalSignInAllowed(unsafe, address)).toBe(false);
+    }
+    expect(rehearsalSignInAllowed(message, ".*")).toBe(false);
+  });
 });
