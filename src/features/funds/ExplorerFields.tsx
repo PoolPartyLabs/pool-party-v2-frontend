@@ -80,10 +80,16 @@ export function ExplorerFields({
     );
   if (typeof value === "object") {
     const record = value as Record<string, unknown>;
-    const currentChain = "chainId" in record ? Number(record.chainId) : chainId;
+    const reportChain = record.sourceChainId ?? record.spokeChainId;
+    const currentChain =
+      "chainId" in record
+        ? Number(record.chainId)
+        : reportChain != null && !("destinationChainId" in record)
+          ? Number(reportChain)
+          : chainId;
     const source = Number(record.sourceChainId);
     const destination = Number(record.destinationChainId);
-    const transit = "sourceChainId" in record || "destinationChainId" in record;
+    const transit = "destinationChainId" in record;
     const context: Record<string, number | undefined> = transit
       ? {
           sent: source,
@@ -100,7 +106,12 @@ export function ExplorerFields({
           escrow: source,
           spokeVault: record.direction === "spoke-to-hub" ? source : destination,
         }
-      : chainByField;
+      : {
+          ...chainByField,
+          ...(reportChain != null && !("destinationChainId" in record)
+            ? { publishTxHash: Number(reportChain) }
+            : {}),
+        };
     return (
       <dl className="space-y-1">
         {Object.entries(record)

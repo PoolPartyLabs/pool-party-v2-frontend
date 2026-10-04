@@ -19,6 +19,29 @@ import { mockFund, mockFundBuild, mockHolder, mockWallet } from "@/mocks/data/v2
 import { FundActionsPanel } from "./FundActionsPanel";
 
 describe("fund investor controls", () => {
+  it("explains a fractional payout as a one-share minimum instead of a deposit error", async () => {
+    mocks.load.mockResolvedValue({ ok: true, data: { fund: mockFund } });
+    mocks.build.mockResolvedValue({
+      ok: false,
+      error: { code: "PayoutBelowOneShare", status: 400 },
+    });
+    renderWithProviders(
+      <FundActionsPanel
+        fund={mockFund}
+        holder={mockHolder}
+        wallet={mockWallet}
+        refresh={vi.fn()}
+      />,
+    );
+    await userEvent.type(screen.getByLabelText("Amount (USDC)"), "0.5");
+    await userEvent.click(screen.getByRole("button", { name: "Instant payout" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Payouts are in whole shares; minimum 1 share.",
+    );
+    expect(screen.getByRole("alert")).not.toHaveTextContent("Minimum deposit");
+    expect(screen.getByRole("alert")).not.toHaveTextContent("PayoutBelowOneShare");
+    expect(screen.queryByRole("button", { name: "Confirm in wallet" })).not.toBeInTheDocument();
+  });
   it("R4 labels pre-approval estimate and replaces it with authoritative builder values", async () => {
     mocks.load.mockResolvedValue({ ok: true, data: { fund: mockFund } });
     mocks.build.mockResolvedValue({

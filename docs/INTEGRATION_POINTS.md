@@ -1,5 +1,17 @@
 # Integration Points
 
+## Conditional fallback Review (POO-2183, rules v1)
+
+`fallback/allocation.ts` resolves today's zero-share canvas into launch-only `chain.sharePct` (whole-fund percentages) and `launchExecution[blockId].leafSharePct` (percentage of its chain). Missing position shares split remaining 100% equally, integer remainder to the first; flow blocks have no shares. Root defaults split remaining hub/spoke budgets, preserving positive written root/leaf shares read-only. A missing spoke root uses only the explicit Mandate `spokeCapPercent` / selected network percentage, never an invented network split. Final root budgets and leaf sums are validated; fractional whole-fund leaf budgets remain blockers. `applyFallbackExecutionAtLaunch` applies config and allocation together without writing canvas or storage. The fund #2 zero-share/empty-config test produces the exact 11-signature hub/Aave/spoke journey without signing.
+
+The same-gated index `/manager/fund-launch/review` reads `listDrafts` / `subscribe` without writing the browser-local Mandate store. `FallbackReviewIndex.tsx` combines wallet-local persisted journeys, `useV2LaunchStatus` Resume links and pure `draftReadiness.ts` live-catalog/balance previews. The Mandate store has no wallet ownership metadata; this limitation is visible. Our `FundExplorer` manager V2 section links to the index; Murilo's draft list/page files remain unchanged. Demo date: October 4, 2026, cutoff 09:00 BST, demo 16:00 BST. Exact confirmed pool/reserve IDs and clicks are in the fallback README.
+
+`src/features/manager/fund/launch/fallback/FallbackReview.tsx` binds only POO-2177's `useV2ReviewDraft` and `startFundLaunch`. The separate route `/manager/fund-launch/review/[draftId]` requires `fundContracts` and real V2; no signatures on mount. Review persistence and staged logo upload stay in the existing hook.
+
+`fallback/execution.ts` is an immutable launch-time snapshot adapter. Empty Pool config receives manager-visible catalog-aligned finite full range and slippage 1%; empty Aave Supply receives an explicitly selected Mandate reserve assetKey. Zero/absent roots fill the remaining known Mandate budget, and zero/absent position leaves split the remaining chain budget. Positive panel-written roots/leaves and nonempty config win read-only. Unsupported Aave swaps, unknown network splits and invalid allocations remain blocked. No canvas/store schema changes. See `src/features/manager/fund/launch/fallback/README.md` for direct-URL demo clicks.
+
+**Temporary fallback for the October 4, 2026 demo; Murilo's POO-2172 Review replaces it**. Murilo confirmed the 09:00 BST cutoff would be missed, and Rafael authorized landing this separate route. Panel-written configuration and shares remain authoritative and read-only; the launch adapter only fills gaps.
+
 ## Created v2 funds and launch status (POO-2181, rules v2)
 
 | Boundary | Owned files | Contract |
@@ -35,7 +47,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 471 markers across 269 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 475 markers across 272 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -58,7 +70,7 @@ git grep -n 'PP-INTEGRATION-POINT' -- src   # 471 markers across 269 files (2026
 | Real wallet/receipts | `src/features/manager/fund/launch/useV2LaunchWallet.ts` | Headless Privy/wagmi binding, chain proof, mined receipts and hub USDC balance. Real-only provider mount; mock mode never signs. |
 | Agreed public seam | `src/features/manager/fund/launch/index.ts` | `startFundLaunch(draft: FundLaunchDraft): Promise<{journeyId: string}>`; pure `getLaunchSteps(draft): LaunchStepPreview[]`; `useV2ReviewDraft(draftId)` => review/setField/errors/launchBlockers/isReady; `useV2Launch(journeyId)` => steps/current/sign/retry/resume/cancel/outcome; `FundLaunchJourney`; `explorerTxUrl(chainId, hash)`. Exports ReviewDraft/FundLaunchDraft/LaunchStepPreview/LaunchJourney types. |
 | Review DATA / Launch JOURNEY split | `src/features/manager/fund/launch/useV2ReviewDraft.ts`, `FundLaunchJourney.tsx` | Murilo owns Review PAGE (POO-2172). Review setters preserve latest MandateDraft.review beside plan. Our start entry freezes/resumes and navigates to manager/fund-launch/[journeyId]; Journey owns outcomes and immediate explorer hashes/receipt statuses. No builder page/shell edits. Flow fee fallback is labelled until detail fees exist. |
-| Canvas BuildPlan v1 | `src/features/manager/fund/launch/plan.ts` | Reads `draft.plan` from origin/feat/mgr-poo-2144-canvas-integration (PR #31/POO-2151 roll-up) through owned structural adapter, no competing reducers. POO-2144/2171 must provide canonical range/loss/leaf execution fields; empty config/Borrow fail closed. Since POO-2184 (slice PA1) the canvas writes them: the pool config carries the bare v4 PoolId, canonical aligned `tickLower`/`tickUpper`, `fullRange`, `displayInverted` and `slippagePct` 0.1 to 5 (`build/plan/blockConfig.ts`), one chain holds one position, and `launchAgreement.test.ts` checks that every plan `planReadiness` calls ready is accepted by `getLaunchSteps`. |
+| Canvas BuildPlan v1 | `src/features/manager/fund/launch/plan.ts` | Reads `draft.plan` from origin/feat/mgr-poo-2144-canvas-integration (PR #31/POO-2151 roll-up) through owned structural adapter, no competing reducers. POO-2144/2171 must provide canonical range/loss/leaf execution fields; empty config/Borrow fail closed. Since POO-2184 (slice PA1) the pool config carries the bare v4 PoolId (stored as the row's own, lowercase), canonical `tickLower`/`tickUpper`, `fullRange`, `displayInverted` and `slippagePct` 0.1 to 5 (`build/plan/blockConfig.ts`): the panels write them, and the reducer refuses ticks off the pool's spacing and Full off its aligned extremes on a row with its pool key. One chain holds one position, and `launchAgreement.test.ts` checks that every plan `planReadiness` calls ready is accepted by `getLaunchSteps`. |
 | Browser checkpoint journal | `src/features/manager/fund/launch/journal.ts` | Per manager/draft immutable steps, hashes, receipt state, addresses and actual net principal. Durable API launch-plan and cross-device coordination are later work. |
 
 See `src/features/manager/fund/launch/README.md` for the adapter gaps, recovery rules and operational waits.

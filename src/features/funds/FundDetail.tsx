@@ -161,12 +161,21 @@ function FundDetailData({ core }: FundDetailProps) {
         {fund.lastReport ? (
           <ReadOnlyFields
             value={fund.lastReport.report}
-            chainId={hubChain}
+            chainId={Number(
+              fund.lastReport.report.sourceChainId ??
+                fund.lastReport.report.spokeChainId ??
+                hubChain,
+            )}
             chainByField={{
               publishTxHash:
-                fund.mandate.spokes.length === 1
-                  ? Number(fund.mandate.spokes[0]?.chainId)
-                  : undefined,
+                (fund.lastReport.report.sourceChainId ?? fund.lastReport.report.spokeChainId) !=
+                null
+                  ? Number(
+                      fund.lastReport.report.sourceChainId ?? fund.lastReport.report.spokeChainId,
+                    )
+                  : fund.mandate.spokes.length === 1
+                    ? Number(fund.mandate.spokes[0]?.chainId)
+                    : undefined,
               deliveryTxHash: hubChain,
             }}
           />

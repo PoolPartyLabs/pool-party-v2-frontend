@@ -807,6 +807,7 @@
     "unavailable": "Không khả dụng",
     "refreshing": "Đang cập nhật định giá",
     "minimum": "Khoản nạp tối thiểu",
+    "payoutWholeShares": "Khoản rút được tính theo đơn vị phần sở hữu nguyên; tối thiểu 1 đơn vị.",
     "limit": "Vượt giới hạn quỹ",
     "deferred": "Hoãn rút thu nhập. Thu nhập đã thu thấp hơn mức tối thiểu của cầu nối.",
     "notReady": "Chưa sẵn sàng nhận hoặc quyết toán",

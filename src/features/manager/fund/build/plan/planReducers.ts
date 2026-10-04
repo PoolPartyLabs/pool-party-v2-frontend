@@ -24,7 +24,13 @@
  * `not_in_mandate`, so `PlanBlockReason` gains no value for it.
  */
 import { HUB_NETWORK, type NetworkId, tokenKey } from "../../mandateDraft";
-import { configShapeOfKind, findMandatePool, isConfigFor } from "./blockConfig";
+import {
+  configShapeOfKind,
+  findMandatePool,
+  isConfigFor,
+  isRangeOnGrid,
+  poolRefKey,
+} from "./blockConfig";
 import {
   type AaveBlockConfig,
   BLOCK_KIND_PROTOCOL,
@@ -355,8 +361,12 @@ export function removeBlock(plan: BuildPlan, ctx: PlanContext, blockId: string):
  * (or a mock row's id, `findMandatePool`), the asset a mandate token of the block's network
  * (`not_in_mandate`, C6). A config whose shape does not match the block's kind, or that the stored
  * plan could not read back (`isConfigFor`: a field of the panel contract with a wrong type or out of
- * range), a flow block or an unknown id is `unknown_target`. Null always succeeds: it empties the
- * block. The config is stored as given (a copy), so fields the panel batch adds survive.
+ * range), a flow block or an unknown id is `unknown_target`, and so is a range off the pool's grid
+ * when the row carries its pool key (`isRangeOnGrid`: ticks on the pool's own spacing, Full on its
+ * finite aligned extremes; a mock row has no pool key and nothing to check). Null always succeeds:
+ * it empties the block. The config is stored as given (a copy, so fields the panel batch adds
+ * survive) with the row's own ids, the bare PoolId of `poolRefKey` and the `tokenKey`, whatever
+ * casing it came in: the launch compares them strictly (review M3 of PR #51).
  */
 export function setBlockConfig(
   plan: BuildPlan,
@@ -367,23 +377,30 @@ export function setBlockConfig(
   const found = findBlock(plan, blockId);
   if (found?.block.family !== "position") return blocked("unknown_target", blockId);
   const block = found.block;
+  let stored: PoolBlockConfig | AaveBlockConfig | null = null;
   if (config !== null) {
     if (!isConfigFor(block.kind, config)) return blocked("unknown_target", blockId);
     if (configShapeOfKind(block.kind) === "pool") {
-      const poolId = (config as PoolBlockConfig).poolId;
-      const pool = findMandatePool(ctx.draft.pools, found.network, poolId);
-      if (pool?.protocol !== BLOCK_KIND_PROTOCOL[block.kind]) {
+      const poolConfig = config as PoolBlockConfig;
+      const pool = findMandatePool(ctx.draft.pools, found.network, poolConfig.poolId);
+      if (!pool || pool.protocol !== BLOCK_KIND_PROTOCOL[block.kind]) {
         return blocked("not_in_mandate", blockId);
       }
+      const spacing = pool.poolKey?.tickSpacing;
+      if (spacing !== undefined && !isRangeOnGrid(poolConfig, spacing)) {
+        return blocked("unknown_target", blockId);
+      }
+      stored = { ...poolConfig, poolId: poolRefKey(pool) };
     } else {
       const assetKey = (config as AaveBlockConfig).assetKey.toLowerCase();
       const token = ctx.draft.tokens.find(
         (t) => t.network === found.network && tokenKey(t) === assetKey,
       );
       if (!token) return blocked("not_in_mandate", blockId);
+      stored = { ...(config as AaveBlockConfig), assetKey: tokenKey(token) };
     }
   }
-  const next = { ...block, config: config === null ? null : { ...config } } as PositionBlock;
+  const next = { ...block, config: stored } as PositionBlock;
   const steps = found.chain.steps.map((step, i) => (i === found.index ? next : step));
   return reconcileAutoBlocks(withSteps(plan, found.chain.id, steps), ctx);
 }
@@ -566,6 +583,13 @@ function allSteps(plan: BuildPlan): Step[] {
  * ({@link removeBlockReleasingShare}, built on {@link removeBlock}): the steps before minus the
  * steps after, and `allocatedPct` before minus after. So it cannot drift from the I6 cascade.
  * Null when the remove would be refused (an app-owned block, an unknown id).
+ *
+ * Two notes for the caller (review L3 and L4 of PR #51):
+ * - it RUNS the remove, whose Swap · auto reconciliation may take ids from `ctx.newId`; called at
+ *   render time, pass a throwaway id source (`newId: () => "describe-only"`) so describing never
+ *   advances the real one;
+ * - build the confirm sentence from `removedWith`, never from the handoff's wording: I6 removes the
+ *   Borrow directly under a Supply, not everything placed under that Borrow.
  */
 export function describeRemoval(
   plan: BuildPlan,

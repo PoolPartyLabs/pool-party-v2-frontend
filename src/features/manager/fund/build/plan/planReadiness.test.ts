@@ -15,7 +15,10 @@
  * - [RD3] a chain with more than one position, or anything under a Supply;
  * - [RD4] a second Supply of the same reserve on one network;
  * - [RD5] a Swap in a chain with no pool (a Supply of a token other than the one that arrives, or a
- *   manager Swap): the launch runs no swap outside a pool yet.
+ *   manager Swap): the launch runs no swap outside a pool yet;
+ * - [RD6] a spoke holding more than the sum of its chains (an empty spoke that kept its share, or
+ *   a share that is not whole): the launch would bridge capital nothing deploys, or refuse
+ *   (review M1 of PR #51). It runs right after the 0% check, with the other share checks.
  *
  * Each refusal names the block to REVEAL (never to select), or null.
  */
@@ -81,6 +84,7 @@ describe("planReadiness: a ready plan (finding 4)", () => {
       "review_over_share",
       "review_incomplete_block",
       "review_zero_share",
+      "review_unused_spoke_share",
       "review_stacked_positions",
       "review_duplicate_reserve",
       "review_unsupported_swap",
@@ -114,6 +118,40 @@ describe("planReadiness: what the launch needs before Review (RD1 to RD5)", () =
     const plan = readyPlan();
     firstChain(plan).sharePct = 12.5;
     expect(readinessOf(plan)).toMatchObject({ refusal: "review_zero_share" });
+  });
+
+  it("[RD6] refuses a spoke holding more than its chains, and reveals the network", () => {
+    // @rule RD6
+    for (const spokePct of [45, 40.5]) {
+      const plan = withCompletePools(spokePoolPlan());
+      const spoke = plan.spokes[0];
+      if (!spoke) throw new Error("fixture: no spoke");
+      spoke.sharePct = spokePct;
+      expect(readinessOf(plan)).toEqual({
+        ready: false,
+        refusal: "review_unused_spoke_share",
+        target: { kind: "network", network: "robinhood" },
+      });
+    }
+  });
+
+  it("[RD6] refuses a spoke whose last chain went and whose share stayed", () => {
+    // @rule RD6
+    const plan: BuildPlan = {
+      ...readyPlan(),
+      spokes: [{ network: "robinhood", sharePct: 0, chains: [] }],
+    };
+    expect(readinessOf(plan)).toEqual({ ready: true });
+    const hub = firstChain(plan);
+    hub.sharePct = 30;
+    const stranded: BuildPlan = {
+      ...plan,
+      spokes: [{ network: "robinhood", sharePct: 30, chains: [] }],
+    };
+    expect(readinessOf(stranded)).toMatchObject({
+      refusal: "review_unused_spoke_share",
+      target: { kind: "network", network: "robinhood" },
+    });
   });
 
   it("[RD3] refuses a Borrow under a Supply, and reveals the Borrow", () => {

@@ -21,12 +21,13 @@
  * 3. a coming-soon block (C22);
  * 4. an empty block, one nobody configured (G6: every block a manager adds arrives empty);
  * 5. shares that add up to more than the capital above them (C8, INV3);
- * 6. to 10. what the launch needs (POO-2184, verification finding 4): a pool picked but not
- *    finished, a chain with no whole share above 0, a chain with more than one position or anything
- *    under a Supply, a second Supply of the same reserve on one network, a Swap outside a pool;
- * 11. otherwise Review is not available yet: the Review handoff has not arrived.
+ * 6. to 11. what the launch needs (POO-2184, verification finding 4): a pool picked but not
+ *    finished, a chain with no whole share above 0, a spoke holding more than its chains, a chain
+ *    with more than one position or anything under a Supply, a second Supply of the same reserve on
+ *    one network, a Swap outside a pool;
+ * 12. otherwise Review is not available yet: the Review handoff has not arrived.
  *
- * Checks 1 to 10 are `planReadiness` (PP-MGR-LIB-028), the pure gate this module used to hold and
+ * Checks 1 to 11 are `planReadiness` (PP-MGR-LIB-028), the pure gate this module used to hold and
  * the Review page shares; `reviewVerdict` adds only the last answer.
  *
  * Each refusal carries the block to bring into view (the first one in reading order: the plan's own
@@ -45,7 +46,7 @@ import { PLAN_READINESS_REFUSALS, planReadiness, type ReadinessTarget } from "./
 
 /**
  * Next: Review's refusals, in the order the checks run (D19): the readiness checks of
- * `planReadiness` (PP-MGR-LIB-028, POO-2184: S7's five, then PA1's five), then "not available yet".
+ * `planReadiness` (PP-MGR-LIB-028, POO-2184: S7's five, then PA1's six), then "not available yet".
  */
 export const REVIEW_REFUSALS = [...PLAN_READINESS_REFUSALS, "review_unavailable"] as const;
 
@@ -60,6 +61,7 @@ export type ReviewNoticeKey =
   | "overShare"
   | "incompleteBlock"
   | "zeroShare"
+  | "unusedSpokeShare"
   | "stackedPositions"
   | "duplicateReserve"
   | "unsupportedSwap"
@@ -73,6 +75,7 @@ export const REVIEW_NOTICE_KEY: Readonly<Record<ReviewRefusal, ReviewNoticeKey>>
   review_over_share: "overShare",
   review_incomplete_block: "incompleteBlock",
   review_zero_share: "zeroShare",
+  review_unused_spoke_share: "unusedSpokeShare",
   review_stacked_positions: "stackedPositions",
   review_duplicate_reserve: "duplicateReserve",
   review_unsupported_swap: "unsupportedSwap",

@@ -13,6 +13,7 @@ import { FundLaunchJourneysList } from "@/features/manager/fund/launch/FundLaunc
 import { Link } from "@/i18n/navigation";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useSiweSession } from "@/lib/auth/useSiweSession";
+import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { isMockMode } from "@/lib/services";
 import { FundListCard } from "./FundListCard";
 import { loadFundsAction } from "./fundActions";
@@ -23,6 +24,8 @@ export interface FundExplorerProps {
 export function FundExplorer({ view }: FundExplorerProps) {
   const t = useTranslations("strategies.funds");
   const managerText = useTranslations("manager.dashboard");
+  const fallbackText = useTranslations("manager.fallbackIndex");
+  const { isEnabled } = useFeatureFlags();
   const { address } = useAuth();
   const { isSignedIn } = useSiweSession();
   const [snapshot, setSnapshot] = useState<{
@@ -81,6 +84,11 @@ export function FundExplorer({ view }: FundExplorerProps) {
             {managerText("createNew")}
           </Link>
           <FundDraftsSlot />
+          {!isMockMode && isEnabled("fundContracts") ? (
+            <Link className="underline focus-visible:outline-2" href="/manager/fund-launch/review">
+              {fallbackText("title")}
+            </Link>
+          ) : null}
           <FundLaunchJourneysList manager={address} />
         </>
       ) : null}

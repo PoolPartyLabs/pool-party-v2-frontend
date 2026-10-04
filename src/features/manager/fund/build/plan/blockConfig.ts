@@ -26,6 +26,14 @@
  *   (`planReadiness.ts`, PP-MGR-LIB-028) asks for it before Review ({@link isPoolConfigComplete}).
  *
  * Fields this module does not know are kept, as S1 promised the panel batch.
+ *
+ * The WRITE adds two rules that need the mandate row, so they live in `setBlockConfig` (and through
+ * it `applyBlockConfig`): on a row with its pool key, the range must sit on the pool's grid
+ * ({@link isRangeOnGrid}); and the stored ids are the row's own (`poolRefKey`, `tokenKey`), since
+ * the launch compares them strictly.
+ *
+ * Layering: this module reads the slippage bounds from `panel/fundSlippage.ts`, which must never
+ * import from `plan/` (that would make a cycle).
  */
 import { MAX_TICK, MIN_TICK } from "@/lib/uniswap/tick";
 import type { MandatePoolRef, NetworkId } from "../../mandateDraft";
@@ -122,7 +130,11 @@ export function isConfigFor(kind: string, config: unknown): boolean {
   return shape === "pool" ? poolFieldsValid(config) : optional(config.slippagePct, isSlippage);
 }
 
-/** Whether a pool config holds every field the launch reads, each one valid. */
+/**
+ * Whether a pool config holds every field Apply writes, each one valid. Stricter than the launch on
+ * purpose: `getLaunchSteps` reads neither `fullRange` nor `displayInverted`, but the panels always
+ * write both, so a pool without them was not configured by a panel.
+ */
 export function isPoolConfigComplete(
   config: PoolBlockConfig | null,
 ): config is CompletePoolBlockConfig {
@@ -148,6 +160,25 @@ export function fullRangeTicks(
     tickLower: Math.ceil(MIN_TICK / tickSpacing) * tickSpacing,
     tickUpper: Math.floor(MAX_TICK / tickSpacing) * tickSpacing,
   };
+}
+
+/**
+ * Whether a pool config's range sits on the pool's own grid (review M2 of PR #51): each tick it
+ * carries is a multiple of `tickSpacing`, and `fullRange: true` comes with exactly the finite
+ * aligned extremes ({@link fullRangeTicks}), as the launch checks (`validateTickAlignment`, the
+ * fallback execution). A config with no ticks yet passes, unless it claims Full; a spacing that is
+ * not a positive integer passes nothing that carries a range.
+ */
+export function isRangeOnGrid(config: PoolBlockConfig, tickSpacing: number): boolean {
+  const full = fullRangeTicks(tickSpacing);
+  const { tickLower, tickUpper } = config;
+  if (full === null) {
+    return tickLower === undefined && tickUpper === undefined && config.fullRange !== true;
+  }
+  const onGrid = (tick: number | undefined) => tick === undefined || tick % tickSpacing === 0;
+  if (!onGrid(tickLower) || !onGrid(tickUpper)) return false;
+  if (config.fullRange !== true) return true;
+  return tickLower === full.tickLower && tickUpper === full.tickUpper;
 }
 
 /** What a pool config's `poolId` names in a mandate row: its bare PoolId, else its id (a mock). */

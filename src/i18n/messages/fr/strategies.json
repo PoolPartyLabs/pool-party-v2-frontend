@@ -807,6 +807,7 @@
     "unavailable": "Indisponible",
     "refreshing": "Actualisation de la valorisation",
     "minimum": "Dépôt minimum",
+    "payoutWholeShares": "Les retraits se font en parts entières ; minimum 1 part.",
     "limit": "Limite du fonds dépassée",
     "deferred": "Retrait des revenus différé. Les revenus collectés sont inférieurs au minimum du pont.",
     "notReady": "Réclamation ou règlement non disponible",

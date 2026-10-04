@@ -183,7 +183,7 @@ describe("reviewVerdict: Next: Review checks the plan in order (AN4, D19)", () =
     expect(Object.keys(REVIEW_NOTICE_KEY).sort()).toEqual([...REVIEW_REFUSALS].sort());
     const keys = Object.values(REVIEW_NOTICE_KEY);
     expect(new Set(keys).size).toBe(keys.length);
-    // S7's checks in S7's order, PA1's five after them (POO-2184), "unavailable" last.
+    // S7's checks in S7's order, PA1's six after them (POO-2184), "unavailable" last.
     expect(REVIEW_REFUSALS).toEqual([
       "review_empty_plan",
       "review_invalid_block",
@@ -192,6 +192,7 @@ describe("reviewVerdict: Next: Review checks the plan in order (AN4, D19)", () =
       "review_over_share",
       "review_incomplete_block",
       "review_zero_share",
+      "review_unused_spoke_share",
       "review_stacked_positions",
       "review_duplicate_reserve",
       "review_unsupported_swap",
