@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-052
  * @name manageLayout tests
- * @implements-rules-version v1 (POO-2226)
+ * @implements-rules-version v1 (POO-2226, POO-2232)
  * @analytics-events none, pure geometry tests.
  */
 import { describe, expect, it } from "vitest";
@@ -53,5 +53,238 @@ describe("Manage geometry", () => {
     expect(graph.nodes.filter((n) => n.kind === "position")).toHaveLength(3);
     expect(graph.nodes.filter((n) => n.kind === "cash")).toHaveLength(3);
     expect(graph.nodes.filter((n) => n.kind === "group")).toHaveLength(2);
+  });
+});
+
+function centerX(node: { rect: { x: number; w: number } }): number {
+  return node.rect.x + node.rect.w / 2;
+}
+function horizontalRuns(edge: { points: ReadonlyArray<{ x: number; y: number }> }) {
+  return edge.points.slice(1).flatMap((point, index) => {
+    const previous = edge.points[index];
+    return previous && previous.y === point.y && previous.x !== point.x
+      ? [{ y: point.y, left: Math.min(previous.x, point.x), right: Math.max(previous.x, point.x) }]
+      : [];
+  });
+}
+function orthogonalRuns(edge: { points: ReadonlyArray<{ x: number; y: number }> }) {
+  return edge.points.slice(1).flatMap((point, index) => {
+    const previous = edge.points[index];
+    if (!previous) return [];
+    if (previous.y === point.y && previous.x !== point.x)
+      return [
+        {
+          axis: "horizontal",
+          fixed: point.y,
+          start: Math.min(previous.x, point.x),
+          end: Math.max(previous.x, point.x),
+        },
+      ];
+    if (previous.x === point.x && previous.y !== point.y)
+      return [
+        {
+          axis: "vertical",
+          fixed: point.x,
+          start: Math.min(previous.y, point.y),
+          end: Math.max(previous.y, point.y),
+        },
+      ];
+    return [];
+  });
+}
+
+describe("POO-2232 corrected geometry", () => {
+  it("[R1,R2] single-spoke Bridge, Idle, input Swap, position and Collect share one straight axis", () => {
+    const graph = layoutManageGraph(normalizeManageModel(mockFund));
+    const sequence = graph.nodes.filter(
+      (node) =>
+        node.chainId === 4663 &&
+        (node.kind === "idle" ||
+          node.kind === "position" ||
+          (node.kind === "flow" && node.flow !== "feeSwap")),
+    );
+    expect(new Set(sequence.map(centerX)).size).toBe(1);
+    expect(sequence.every((node) => centerX(node) === 424)).toBe(true);
+    const connector = graph.edges.find((edge) => edge.id === "bridge:idle:4663");
+    expect(connector?.points).toHaveLength(2);
+  });
+  it("[R2,R3] centers entry/exit anchors symmetrically around hub, independent of lateral cash", () => {
+    const graph = layoutManageGraph(normalizeManageModel(mockFund));
+    const hub = graph.nodes.find((node) => node.kind === "deposit");
+    const aave = graph.nodes.find((node) => node.kind === "position" && node.chainId === 42161);
+    const bridge = graph.nodes.find((node) => node.kind === "flow" && node.flow === "bridge");
+    const output = graph.nodes.find((node) => node.kind === "withdrawal");
+    const income = graph.nodes.find((node) => node.kind === "income");
+    if (!hub || !aave || !bridge || !output || !income) throw new Error("fixture nodes");
+    expect(centerX(hub)).toBe(312);
+    expect(centerX(aave)).toBe(200);
+    expect(centerX(bridge)).toBe(424);
+    expect(centerX(hub) - centerX(aave)).toBe(centerX(bridge) - centerX(hub));
+    expect(centerX(output)).toBe(178);
+    expect(centerX(income)).toBe(446);
+    expect(centerX(hub) - centerX(output)).toBe(centerX(income) - centerX(hub));
+  });
+  it("[R3,R4] keeps cash lateral with a 24px connection and liquidity cards 176x232", () => {
+    const graph = layoutManageGraph(normalizeManageModel(mockFund));
+    for (const cash of graph.nodes.filter((node) => node.kind === "cash")) {
+      const idle = graph.nodes.find(
+        (node) => node.kind === "idle" && node.chainId === cash.chainId,
+      );
+      if (!idle) throw new Error("cash without idle");
+      expect(cash.rect.x - idle.rect.x - idle.rect.w).toBe(24);
+      expect(cash.rect.y).toBe(idle.rect.y);
+      expect([cash.rect.w, cash.rect.h]).toEqual([160, 136]);
+    }
+    const position = graph.nodes.find((node) => node.kind === "position" && node.chainId === 4663);
+    expect([position?.rect.w, position?.rect.h]).toEqual([176, 232]);
+  });
+  it("[R5,R6] routes principal and converted income on a shared bend height outside node interiors", () => {
+    const graph = layoutManageGraph(normalizeManageModel(mockFund));
+    const principal = graph.edges.find((edge) => edge.id.startsWith("principal:collect:"));
+    const income = graph.edges.find((edge) => edge.id.startsWith("income:fee-swap:"));
+    if (!principal || !income) throw new Error("missing returns");
+    const gray = horizontalRuns(principal).at(-1);
+    const green = horizontalRuns(income).at(-1);
+    expect(gray?.y).toBe(green?.y);
+    if (!gray || !green) throw new Error("missing return bends");
+    expect(green.left - gray.right).toBe(24);
+    for (const edge of graph.edges) {
+      for (const [index, point] of edge.points.entries()) {
+        const previous = edge.points[index - 1];
+        if (!previous || previous.x !== point.x || previous.y === point.y) continue;
+        const top = Math.min(previous.y, point.y);
+        const bottom = Math.max(previous.y, point.y);
+        for (const node of graph.nodes.filter((node) => node.kind !== "group")) {
+          const crosses =
+            point.x > node.rect.x &&
+            point.x < node.rect.x + node.rect.w &&
+            bottom > node.rect.y &&
+            top < node.rect.y + node.rect.h;
+          expect(crosses, `${edge.id} crosses ${node.id} vertically`).toBe(false);
+        }
+      }
+      for (const run of horizontalRuns(edge)) {
+        for (const node of graph.nodes.filter((node) => node.kind !== "group")) {
+          const crosses =
+            run.y > node.rect.y &&
+            run.y < node.rect.y + node.rect.h &&
+            run.right > node.rect.x &&
+            run.left < node.rect.x + node.rect.w;
+          expect(crosses, `${edge.id} crosses ${node.id}`).toBe(false);
+        }
+      }
+    }
+  });
+  it("[R2,R3,R6] grows multi-spoke/multi-position bounds without overlapping cards or cash", () => {
+    const source = mockFund.positionsSummary?.positions[1];
+    if (!source) throw new Error("fixture");
+    const model = normalizeManageModel({
+      ...mockFund,
+      positionsSummary: {
+        protocolVersion: "v2",
+        positions: [
+          source,
+          { ...source, positionKey: `0x${"5".repeat(64)}` },
+          { ...source, chainId: "8453" },
+          { ...source, chainId: "10", positionKey: `0x${"6".repeat(64)}` },
+        ],
+      },
+    });
+    const graph = layoutManageGraph(model);
+    const nodes = graph.nodes.filter((node) => node.kind !== "group");
+    for (let i = 0; i < nodes.length; i++)
+      for (const b of nodes.slice(i + 1)) {
+        const a = nodes[i];
+        if (!a) continue;
+        expect(
+          a.rect.x < b.rect.x + b.rect.w &&
+            b.rect.x < a.rect.x + a.rect.w &&
+            a.rect.y < b.rect.y + b.rect.h &&
+            b.rect.y < a.rect.y + a.rect.h,
+          `${a.id} overlaps ${b.id}`,
+        ).toBe(false);
+      }
+    expect(
+      nodes.every((node) => node.rect.x >= 24 && node.rect.x + node.rect.w <= graph.width - 24),
+    ).toBe(true);
+    const bridges = graph.nodes.filter((node) => node.kind === "flow" && node.flow === "bridge");
+    const hub = graph.nodes.find((node) => node.kind === "deposit");
+    if (!hub) throw new Error("hub");
+    expect((Math.min(...bridges.map(centerX)) + Math.max(...bridges.map(centerX))) / 2).toBe(
+      centerX(hub),
+    );
+  });
+  it("[R5,R6] keeps multi-position principal and fee returns distinct without collinear fusion or card crossings", () => {
+    const source = mockFund.positionsSummary?.positions[1];
+    if (!source) throw new Error("fixture");
+    const graph = layoutManageGraph(
+      normalizeManageModel({
+        ...mockFund,
+        positionsSummary: {
+          protocolVersion: "v2",
+          positions: [
+            source,
+            { ...source, positionKey: `0x${"5".repeat(64)}` },
+            { ...source, chainId: "8453" },
+            { ...source, chainId: "10", positionKey: `0x${"6".repeat(64)}` },
+          ],
+        },
+      }),
+    );
+    const principal = graph.edges.filter((edge) => edge.id.startsWith("principal:"));
+    const income = graph.edges.filter((edge) => edge.id.startsWith("income:"));
+    expect(principal.length).toBeGreaterThan(1);
+    expect(income.length).toBeGreaterThan(1);
+    const outputNode = graph.nodes.find((node) => node.kind === "withdrawal");
+    const incomeNode = graph.nodes.find((node) => node.kind === "income");
+    if (!outputNode || !incomeNode) throw new Error("output nodes");
+    expect(outputNode.rect.y).toBe(incomeNode.rect.y);
+    const reaches = (
+      edges: typeof principal,
+      node: { rect: { x: number; y: number; w: number } },
+    ) =>
+      edges.filter((edge) => {
+        const end = edge.points.at(-1);
+        return end?.x === centerX(node) && end.y === node.rect.y;
+      });
+    const finalGray = reaches(principal, outputNode).flatMap((edge) =>
+      horizontalRuns(edge).slice(-1),
+    );
+    const finalGreen = reaches(income, incomeNode).flatMap((edge) =>
+      horizontalRuns(edge).slice(-1),
+    );
+    expect(finalGray.length).toBeGreaterThan(0);
+    expect(finalGreen.length).toBeGreaterThan(0);
+    for (const gray of finalGray)
+      for (const green of finalGreen) {
+        expect(gray.y).toBe(green.y);
+        expect(green.left - gray.right).toBeGreaterThanOrEqual(24);
+      }
+    for (const gray of principal)
+      for (const green of income) {
+        for (const a of orthogonalRuns(gray))
+          for (const b of orthogonalRuns(green)) {
+            const overlap =
+              a.axis === b.axis && a.fixed === b.fixed && a.start < b.end && b.start < a.end;
+            expect(overlap, `${gray.id} fuses with ${green.id} ${a.axis}`).toBe(false);
+          }
+      }
+    for (const edge of [...principal, ...income])
+      for (const run of orthogonalRuns(edge)) {
+        for (const node of graph.nodes.filter((node) => node.kind !== "group")) {
+          const rect = node.rect;
+          const crosses =
+            run.axis === "horizontal"
+              ? run.fixed > rect.y &&
+                run.fixed < rect.y + rect.h &&
+                run.end > rect.x &&
+                run.start < rect.x + rect.w
+              : run.fixed > rect.x &&
+                run.fixed < rect.x + rect.w &&
+                run.end > rect.y &&
+                run.start < rect.y + rect.h;
+          expect(crosses, `${edge.id} crosses ${node.id} ${run.axis}`).toBe(false);
+        }
+      }
   });
 });

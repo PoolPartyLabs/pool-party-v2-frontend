@@ -93,3 +93,40 @@ describe("Manage reads", () => {
     expect(manageProtocolMark("unknown-adapter")).toBe("unknown");
   });
 });
+
+describe("POO-2232 current position status", () => {
+  it("[R4,R5] takes authoritative open-position inRange, not ticks or an edited range", () => {
+    const current = mockFund.positionsSummary?.positions[1];
+    if (!current?.uniswap) throw new Error("liquidity fixture");
+    for (const inRange of [true, false]) {
+      const position = normalizeManageModel({
+        ...mockFund,
+        positionsSummary: {
+          protocolVersion: "v2",
+          positions: [{ ...current, uniswap: { ...current.uniswap, inRange } }],
+        },
+      }).positions[0];
+      expect(position?.rangeStatus).toEqual({
+        status: "available",
+        value: inRange ? "in" : "out",
+        source: "positionsSummary.uniswap.inRange",
+      });
+    }
+  });
+  it("[R4] missing, closed and unsupported states never default to in range", () => {
+    const current = mockFund.positionsSummary?.positions[1];
+    if (!current) throw new Error("liquidity fixture");
+    for (const source of [
+      { ...current, uniswap: null },
+      { ...current, status: "closed" },
+      { ...current, adapterKind: "unknown" },
+    ]) {
+      const model = normalizeManageModel({
+        ...mockFund,
+        positionsSummary: { protocolVersion: "v2", positions: [source] },
+      });
+      expect(model.positions[0]?.rangeStatus.status).toBe("unavailable");
+    }
+    expect(normalizeManageModel(mockFund).positions[0]?.rangeStatus.status).toBe("unavailable");
+  });
+});

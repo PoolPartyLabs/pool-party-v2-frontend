@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-085
  * @name ManageCanvas stories
- * @implements-rules-version v1 (POO-2226)
+ * @implements-rules-version v1 (POO-2226, POO-2232)
  * @analytics-events none, fixture stories.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
@@ -24,6 +24,23 @@ type Story = StoryObj<typeof meta>;
 export const NoSelection: Story = {};
 export const LiquiditySelected: Story = { args: { selectedId: model.positions[1]?.id ?? null } };
 export const SupplySelected: Story = { args: { selectedId: model.positions[0]?.id ?? null } };
+function withCurrentRange(inRange: boolean | null) {
+  return normalizeManageModel({
+    ...mockFund,
+    positionsSummary: {
+      protocolVersion: "v2",
+      positions: (mockFund.positionsSummary?.positions ?? []).map((position) => ({
+        ...position,
+        uniswap: position.uniswap && inRange !== null ? { ...position.uniswap, inRange } : null,
+      })),
+    },
+  });
+}
+export const InRange: Story = { args: { model: withCurrentRange(true) } };
+export const OutOfRange: Story = {
+  args: { model: withCurrentRange(false), selectedId: model.positions[1]?.id ?? null },
+};
+export const RangeUnavailable: Story = { args: { model: withCurrentRange(null) } };
 export const EmptyPositions: Story = {
   args: {
     model: normalizeManageModel({

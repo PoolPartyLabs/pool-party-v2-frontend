@@ -53,4 +53,45 @@ describe("Manage canvas", () => {
     ).toBe(true);
     expect([...cash].every((n) => n.textContent?.includes("Not available"))).toBe(true);
   });
+  it("POO-2232 [R4,R5] shows live range text and a fixed decorative marker, never on Aave", () => {
+    const model = normalizeManageModel(mockFund);
+    const view = renderWithProviders(
+      <ManageCanvas model={model} selectedId={null} onSelect={vi.fn()} />,
+    );
+    expect(screen.getByText("In range")).toBeInTheDocument();
+    const status = document.querySelector("[data-manage-range]");
+    const bar = status?.querySelector("svg");
+    expect(bar).toHaveAttribute("aria-hidden", "true");
+    expect(bar).toHaveAttribute("width", "148");
+    expect(bar).toHaveAttribute("height", "10");
+    expect(bar?.querySelector("[data-range-marker]")).toHaveAttribute("x", "73");
+    expect(document.querySelectorAll("[data-manage-range]")).toHaveLength(1);
+    expect(document.querySelectorAll("[data-manage-position]")[1]).toHaveAccessibleDescription(
+      "In range",
+    );
+    const current = mockFund.positionsSummary?.positions[1];
+    if (!current?.uniswap) throw new Error("liquidity fixture");
+    const out = normalizeManageModel({
+      ...mockFund,
+      positionsSummary: {
+        protocolVersion: "v2",
+        positions: [{ ...current, uniswap: { ...current.uniswap, inRange: false } }],
+      },
+    });
+    view.rerender(
+      <ManageCanvas model={out} selectedId={out.positions[0]?.id ?? null} onSelect={vi.fn()} />,
+    );
+    expect(screen.getByText("Out of range")).toBeInTheDocument();
+    expect(screen.queryByText("In range")).not.toBeInTheDocument();
+    expect(document.querySelector("[data-range-track]")).toHaveAttribute("width", "148");
+    expect(document.querySelector("[data-manage-range]")).toHaveClass("text-destructive");
+    expect(screen.queryByRole("slider")).not.toBeInTheDocument();
+    const unavailable = normalizeManageModel({
+      ...mockFund,
+      positionsSummary: { protocolVersion: "v2", positions: [{ ...current, uniswap: null }] },
+    });
+    view.rerender(<ManageCanvas model={unavailable} selectedId={null} onSelect={vi.fn()} />);
+    expect(document.querySelector("[data-manage-range]")).toHaveTextContent("Not available");
+    expect(document.querySelector("[data-manage-range]")).not.toHaveClass("text-success");
+  });
 });

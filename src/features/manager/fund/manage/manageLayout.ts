@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-052
  * @name manageLayout
- * @implements-rules-version v1 (POO-2226)
+ * @implements-rules-version v1 (POO-2226, POO-2232)
  * @analytics-events none, pure read-only layout.
  *
  * Build's sizes, chain hierarchy and orthogonal relationships with taller live balance cards.
@@ -30,7 +30,10 @@ export interface ManageLayout {
   edges: PieceEdge[];
 }
 const CASH = { w: 160, h: 136 };
-const POSITION = { supply: 160, liquidity: 192, unsupported: 160 };
+const POSITION = { supply: 160, liquidity: 232, unsupported: 160 };
+const OUTPUT = { withdrawal: 168, income: 102 };
+const POSITION_STEP = LAYOUT.CARD_W + LAYOUT.SIBLING;
+const positionRowWidth = (count: number) => LAYOUT.CARD_W + Math.max(0, count - 1) * POSITION_STEP;
 
 /** Geometry depends only on observed chain/position identities, never panel selection or draft. */
 export function layoutManageGraph(model: ManageModel): ManageLayout {
@@ -46,24 +49,37 @@ export function layoutManageGraph(model: ManageModel): ManageLayout {
   const bottom = (n: ManageNode) => n.rect.y + n.rect.h;
   const hub = model.chains.find((c) => c.hub);
   const spokes = model.chains.filter((c) => !c.hub);
-  const hubWidth =
-    Math.max(hub?.positions.length ?? 0, spokes.length ? 0 : 1) * (LAYOUT.CARD_W + LAYOUT.SIBLING);
-  let cursor = LAYOUT.CANVAS_PAD + hubWidth;
+  // Entry anchors determine the hub axis. Cash only enlarges the enclosing chain/canvas bounds.
+  const firstPositionLeft = LAYOUT.CANVAS_PAD + LAYOUT.CARD_W / 2;
+  const hubCount = hub?.positions.length ?? 0;
+  const hubRowWidth = hubCount ? positionRowWidth(hubCount) : 0;
+  let cursor = hubCount
+    ? firstPositionLeft + hubRowWidth + LAYOUT.SIBLING
+    : firstPositionLeft - LAYOUT.GROUP_PAD;
   const spokeSlots = spokes.map((chain) => {
     const x = cursor;
-    const width = Math.max(
-      392,
-      Math.max(1, chain.positions.length) * LAYOUT.CARD_W +
-        Math.max(0, chain.positions.length - 1) * LAYOUT.SIBLING +
-        LAYOUT.LINK +
-        CASH.w +
-        LAYOUT.GROUP_PAD * 2,
+    const rowWidth = positionRowWidth(chain.positions.length);
+    const axis = x + LAYOUT.GROUP_PAD + rowWidth / 2;
+    const right = Math.max(
+      x + LAYOUT.GROUP_PAD + rowWidth + LAYOUT.PAIR,
+      axis + LAYOUT.CARD_W / 2 + LAYOUT.LINK + CASH.w,
     );
+    const width = right + LAYOUT.GROUP_PAD - x;
     cursor += width + LAYOUT.SIBLING;
-    return { chain, x, width };
+    return { chain, x, width, axis };
   });
-  const width = Math.max(656, cursor - LAYOUT.SIBLING + LAYOUT.CANVAS_PAD);
-  const spineX = width / 2;
+  const entryAxes = [
+    ...Array.from(
+      { length: hubCount },
+      (_, index) => firstPositionLeft + LAYOUT.CARD_W / 2 + index * POSITION_STEP,
+    ),
+    ...spokeSlots.map((slot) => slot.axis),
+  ];
+  const entryMidpoint = entryAxes.length
+    ? (Math.min(...entryAxes) + Math.max(...entryAxes)) / 2
+    : LAYOUT.SPINE_MIN_CENTRE + LAYOUT.OUTPUT_OFFSET;
+  const shift = Math.max(0, LAYOUT.SPINE_MIN_CENTRE + LAYOUT.OUTPUT_OFFSET - entryMidpoint);
+  const spineX = entryMidpoint + shift;
   const deposit = add({
     id: "deposit",
     kind: "deposit",
@@ -142,7 +158,13 @@ export function layoutManageGraph(model: ManageModel): ManageLayout {
         flow: "feeSwap",
         chainId,
         positionId,
-        rect: { x, y: bottom(collect) + LAYOUT.LINK, w: LAYOUT.PILL_W, h: LAYOUT.PILL_H },
+        // Fees keep their own +PAIR port. Principal skirts this pill, retaining its -PAIR port.
+        rect: {
+          x: x + LAYOUT.PAIR,
+          y: bottom(collect) + LAYOUT.LINK,
+          w: LAYOUT.PILL_W,
+          h: LAYOUT.PILL_H,
+        },
       });
       edge(`collect:${p.id}`, [
         { x: center(node), y: bottom(node) },
@@ -166,7 +188,7 @@ export function layoutManageGraph(model: ManageModel): ManageLayout {
     const first = position(
       model.hubChainId,
       p.id,
-      LAYOUT.CANVAS_PAD + index * (LAYOUT.CARD_W + LAYOUT.SIBLING),
+      firstPositionLeft + shift + index * POSITION_STEP,
       busY + LAYOUT.STUB,
     );
     if (first) {
@@ -177,7 +199,10 @@ export function layoutManageGraph(model: ManageModel): ManageLayout {
       ]);
     }
   }
-  for (const { chain, x, width: groupWidth } of spokeSlots) {
+  for (const slot of spokeSlots) {
+    const { chain, width: groupWidth } = slot;
+    const x = slot.x + shift;
+    const axis = slot.axis + shift;
     const start = nodes.length;
     const bridge = add({
       id: `bridge:${chain.chainId}`,
@@ -185,7 +210,7 @@ export function layoutManageGraph(model: ManageModel): ManageLayout {
       flow: "bridge",
       chainId: chain.chainId,
       rect: {
-        x: x + (groupWidth - LAYOUT.PILL_W) / 2,
+        x: axis - LAYOUT.PILL_W / 2,
         y: busY + LAYOUT.STUB,
         w: LAYOUT.PILL_W,
         h: LAYOUT.PILL_H,
@@ -201,7 +226,7 @@ export function layoutManageGraph(model: ManageModel): ManageLayout {
       kind: "idle",
       chainId: chain.chainId,
       rect: {
-        x: x + LAYOUT.GROUP_PAD,
+        x: axis - LAYOUT.CARD_W / 2,
         y: bottom(bridge) + LAYOUT.LINK,
         w: LAYOUT.CARD_W,
         h: CASH.h,
@@ -215,8 +240,6 @@ export function layoutManageGraph(model: ManageModel): ManageLayout {
     });
     edge(`bridge:idle:${chain.chainId}`, [
       { x: center(bridge), y: bottom(bridge) },
-      { x: center(bridge), y: chainIdle.rect.y - LAYOUT.LINK / 2 },
-      { x: center(chainIdle), y: chainIdle.rect.y - LAYOUT.LINK / 2 },
       { x: center(chainIdle), y: chainIdle.rect.y },
     ]);
     edge(`spoke:cash:${chain.chainId}`, [
@@ -227,7 +250,7 @@ export function layoutManageGraph(model: ManageModel): ManageLayout {
       const first = position(
         chain.chainId,
         p.id,
-        x + LAYOUT.GROUP_PAD + index * (LAYOUT.CARD_W + LAYOUT.SIBLING),
+        x + LAYOUT.GROUP_PAD + index * POSITION_STEP,
         bottom(chainIdle) + LAYOUT.LINK,
       );
       if (first)
@@ -261,46 +284,113 @@ export function layoutManageGraph(model: ManageModel): ManageLayout {
       { x: Math.max(spineX, ...entrances), y: busY },
     ]);
   }
-  const outputsTop = Math.max(bottom(idle), ...nodes.map(bottom)) + LAYOUT.STUB;
+  // The unconverted Figma fixture bends LINK below Collect. Keeping the fee Swap adds one
+  // PILL_H + LINK step (50px), then both independent return paths share the same bend.
+  const branchBendY =
+    Math.max(...nodes.filter((node) => node.kind !== "group").map(bottom)) + LAYOUT.LINK;
+  const outputX = spineX - LAYOUT.OUTPUT_OFFSET;
+  const incomeX = spineX + LAYOUT.OUTPUT_OFFSET;
+  const principalPorts = returns.map(
+    (r) => center(r.principalSource) - (r.income ? LAYOUT.PAIR : 0),
+  );
+  const incomePorts = returns.filter((r) => r.income).map((r) => center(r.source));
+  const overlapsDirectReturns = principalPorts.some((gray) =>
+    incomePorts.some(
+      (green) =>
+        Math.min(gray, outputX) < Math.max(green, incomeX) &&
+        Math.min(green, incomeX) < Math.max(gray, outputX),
+    ),
+  );
+  // Several positions can place gray and green spans on top of each other. Aggregate each tone
+  // on a separate upstream bus, then use trunks outside every return port for the shared final
+  // bend. Same-tone joins remain intentional; perpendicular crossings never merge the tones.
+  const principalBusY = branchBendY;
+  const incomeBusY = branchBendY + (overlapsDirectReturns ? LAYOUT.LINK : 0);
+  const returnBendY = incomeBusY + (overlapsDirectReturns ? LAYOUT.LINK : 0);
+  const allPorts = [outputX, incomeX, ...principalPorts, ...incomePorts];
+  const principalTrunkX = Math.min(...allPorts) - LAYOUT.LINK;
+  const incomeTrunkX = Math.max(...allPorts) + LAYOUT.LINK;
+  const outputsTop = returnBendY + LAYOUT.STUB;
   const output = add({
     id: "withdrawal",
     kind: "withdrawal",
     rect: {
-      x: spineX - LAYOUT.OUTPUT_OFFSET - LAYOUT.SPINE_W / 2,
+      x: outputX - LAYOUT.SPINE_W / 2,
       y: outputsTop,
       w: LAYOUT.SPINE_W,
-      h: 168,
+      h: OUTPUT.withdrawal,
     },
   });
   const income = add({
     id: "income",
     kind: "income",
     rect: {
-      x: spineX + LAYOUT.OUTPUT_OFFSET - LAYOUT.SPINE_W / 2,
+      x: incomeX - LAYOUT.SPINE_W / 2,
       y: outputsTop,
       w: LAYOUT.SPINE_W,
-      h: 102,
+      h: OUTPUT.income,
     },
   });
   for (const r of returns) {
     const cx = center(r.principalSource) - (r.income ? LAYOUT.PAIR : 0);
-    edge(`principal:${r.principalSource.id}`, [
-      { x: cx, y: bottom(r.principalSource) },
-      { x: cx, y: outputsTop - LAYOUT.LINK },
-      { x: center(output), y: outputsTop - LAYOUT.LINK },
-      { x: center(output), y: outputsTop },
-    ]);
+    const principal = [{ x: cx, y: bottom(r.principalSource) }];
+    if (r.income) {
+      // Take the short left corridor while the conversion occupies the straight principal lane.
+      // Rejoin below it so the final gray/green ports remain PAIR * 2 apart at the shared bend.
+      const besideConversionX = r.source.rect.x - LAYOUT.PAIR;
+      const aboveConversionY = r.source.rect.y - LAYOUT.PAIR;
+      const belowConversionY = bottom(r.source) + LAYOUT.PAIR;
+      principal.push(
+        { x: cx, y: aboveConversionY },
+        { x: besideConversionX, y: aboveConversionY },
+        { x: besideConversionX, y: belowConversionY },
+        { x: cx, y: belowConversionY },
+      );
+    }
+    if (overlapsDirectReturns)
+      principal.push({ x: cx, y: principalBusY }, { x: principalTrunkX, y: principalBusY });
+    else
+      principal.push(
+        { x: cx, y: returnBendY },
+        { x: center(output), y: returnBendY },
+        { x: center(output), y: outputsTop },
+      );
+    edge(`principal:${r.principalSource.id}`, principal);
     if (r.income)
       edge(
         `income:${r.source.id}`,
-        [
-          { x: center(r.source), y: bottom(r.source) },
-          { x: center(r.source), y: outputsTop - LAYOUT.LINK * 2 },
-          { x: center(income), y: outputsTop - LAYOUT.LINK * 2 },
-          { x: center(income), y: outputsTop },
-        ],
+        overlapsDirectReturns
+          ? [
+              { x: center(r.source), y: bottom(r.source) },
+              { x: center(r.source), y: incomeBusY },
+              { x: incomeTrunkX, y: incomeBusY },
+            ]
+          : [
+              { x: center(r.source), y: bottom(r.source) },
+              { x: center(r.source), y: returnBendY },
+              { x: center(income), y: returnBendY },
+              { x: center(income), y: outputsTop },
+            ],
         "income",
       );
+  }
+  if (overlapsDirectReturns) {
+    edge("principal:aggregation", [
+      { x: principalTrunkX, y: principalBusY },
+      { x: principalTrunkX, y: returnBendY },
+      { x: center(output), y: returnBendY },
+      { x: center(output), y: outputsTop },
+    ]);
+    edge(
+      "income:aggregation",
+      [
+        { x: incomeTrunkX, y: incomeBusY },
+        { x: incomeTrunkX, y: returnBendY },
+        { x: center(income), y: returnBendY },
+        { x: center(income), y: outputsTop },
+      ],
+      "income",
+    );
   }
   const withdraw = add({
     id: "withdraw",
@@ -327,7 +417,7 @@ export function layoutManageGraph(model: ManageModel): ManageLayout {
       tone,
     );
   return {
-    width: Math.max(width, cash.rect.x + CASH.w + LAYOUT.CANVAS_PAD),
+    width: Math.max(...nodes.map((node) => node.rect.x + node.rect.w)) + LAYOUT.CANVAS_PAD,
     height: bottom(withdraw) + LAYOUT.CANVAS_PAD,
     nodes,
     edges,
