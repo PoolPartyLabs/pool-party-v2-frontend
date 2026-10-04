@@ -204,6 +204,7 @@ export async function runLaunch(
         (await driver.reconcile(step, checkpoint, journal))
       ) {
         checkpoint.status = "confirmed";
+        delete checkpoint.error;
         persist();
         continue;
       }

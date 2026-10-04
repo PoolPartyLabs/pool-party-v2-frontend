@@ -29,6 +29,21 @@ const setup = () => {
 };
 
 describe("launch checkpoint state machine [R3, R6]", () => {
+  it("clears a previous error when Retry reconciles the completed step", async () => {
+    const { journal, storage, driver } = setup();
+    journal.steps = [{ id: "profile", kind: "profile", chain: 42161, dependencies: [] }];
+    journal.checkpoints.profile = {
+      stepId: "profile",
+      chain: 42161,
+      status: "failed",
+      error: "V2_UNAVAILABLE",
+    };
+    vi.mocked(driver.reconcile).mockResolvedValueOnce(true);
+    await runLaunch(journal, storage, driver);
+    expect(journal.checkpoints.profile?.status).toBe("confirmed");
+    expect(journal.checkpoints.profile?.error).toBeUndefined();
+    expect(driver.build).not.toHaveBeenCalled();
+  });
   it.each([
     "V2_DEFERRED",
     "V2_RATE_LIMITED",

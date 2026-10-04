@@ -23,6 +23,18 @@ import {
 } from "./launchSchemas";
 import { addressSchema, poolIdSchema } from "./schemas";
 
+const reportInteger = z.string().regex(/^\d{1,78}$/);
+const launchFundReadSchema = versionedRecordSchema.extend({
+  lastReport: versionedRecordSchema
+    .extend({
+      report: versionedRecordSchema.extend({ sequence: reportInteger, timestamp: reportInteger }),
+      wormholeSequence: reportInteger,
+      acceptedAt: reportInteger,
+      ageSeconds: reportInteger,
+    })
+    .nullable(),
+});
+
 const reportTriggers = new Map<string, number>();
 async function result<ResponseData>(work: () => Promise<ResponseData>) {
   try {
@@ -133,7 +145,7 @@ export async function discoverLaunchFundAction(input: unknown) {
 export async function readLaunchFundAction(core: string) {
   return result(async () => {
     await manager(core);
-    return launchFetch(`/funds/${core}`, "GET", versionedRecordSchema);
+    return launchFetch(`/funds/${core}`, "GET", launchFundReadSchema);
   });
 }
 export async function buildLaunchCapitalAction(core: string, input: unknown) {
