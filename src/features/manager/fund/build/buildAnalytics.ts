@@ -1,12 +1,13 @@
 /**
  * @id PP-MGR-SCR-002
  * @name buildAnalytics
- * @implements-rules-version v1 (POO-2157 rules v1)
+ * @implements-rules-version v1 (POO-2157 rules v1; the panel events of POO-2187 rules v1)
  * @analytics-events none emitted here: a pure mapping. The Build screen (`BuildScreen.tsx`) and the
  *   builder shell (`FundStrategyBuilderScreen.tsx`) emit through `useAnalytics().track()` what this
  *   module names (builder_block_added, builder_network_added, builder_network_removed,
- *   builder_flow_block_inserted, builder_block_removed, builder_block_restored,
- *   builder_build_blocked) and the counts it computes.
+ *   builder_flow_block_inserted, builder_block_removed, builder_block_configured,
+ *   builder_block_applied, builder_block_discarded, builder_block_leave_blocked,
+ *   builder_block_limit_hit, builder_build_blocked) and the counts it computes.
  *
  * How the Build canvas reaches GA4 (slice S7, POO-2157, rules AE1 to AE6, coordinator default D20).
  * Rides on PP-MGR-SCR-002 and has no id of its own.
@@ -20,17 +21,24 @@
  * - The canvas controller (`useBuildCanvas`) reports gestures, not reducers; the mapping keeps that:
  *   a Borrow inserted at a port is `builder_block_added` (via `port`), a Swap or a Collect fees
  *   inserted there is `builder_flow_block_inserted`, exactly as the controller says.
+ * - The configuration panel (POO-2187) reports through its draft (`usePanelDraft`) and the
+ *   Allocation's ceiling; {@link panelEventToAnalytics} and {@link limitHitToAnalytics} map them,
+ *   the panel fields and the ceiling reasons through total `Record`s into closed unions too.
  */
 import type {
   AnalyticsBuildBlockKind,
   AnalyticsBuildBlockReason,
+  AnalyticsBuildLimit,
   AnalyticsBuildNetwork,
+  AnalyticsBuildPanelField,
   AnalyticsEvent,
   AnalyticsParams,
 } from "@/lib/analytics/events";
 import type { NetworkId } from "../mandateDraft";
 import type { BuildCanvasEvent } from "./blocks/useBuildCanvas";
 import type { ReviewRefusal } from "./buildScreenModel";
+import type { PanelDraftEvent, PanelField } from "./panel/usePanelDraft";
+import type { AllocationCeilingReason } from "./plan/allocationCeiling";
 import type { BlockKind, BuildPlan, FlowKind, PlanBlockReason } from "./plan/buildPlan";
 import { chainsWithNetwork } from "./plan/planDerive";
 
@@ -82,6 +90,25 @@ export const BUILD_BLOCK_KIND_EVENT: Readonly<
 export const BUILD_NETWORK_EVENT: Readonly<Record<NetworkId, AnalyticsBuildNetwork>> = {
   arbitrum: "arbitrum",
   robinhood: "robinhood",
+};
+
+/** A panel field, as `fields_changed` names it (POO-2187). The identity, checked for totality. */
+export const PANEL_FIELD_EVENT: Readonly<Record<PanelField, AnalyticsBuildPanelField>> = {
+  pool: "pool",
+  asset: "asset",
+  range: "range",
+  quote: "quote",
+  slippage: "slippage",
+  allocation: "allocation",
+};
+
+/** [P8] The ceiling that stopped the Allocation slider, as `limit` (POO-2187). */
+export const ALLOCATION_LIMIT_EVENT: Readonly<
+  Record<AllocationCeilingReason, AnalyticsBuildLimit>
+> = {
+  protocolCap: "mandate_cap",
+  networkCap: "network_cap",
+  strategyRoom: "parent_share",
 };
 
 /** What a Build event carries about the plan: the cards placed and the spokes on the canvas. */
@@ -138,11 +165,46 @@ export function canvasEventToAnalytics(event: BuildCanvasEvent): BuildAnalyticsE
     case "blockRemoved":
       return {
         event: "builder_block_removed",
+        params: {
+          block_kind: BUILD_BLOCK_KIND_EVENT[event.kind],
+          cascade_count: event.cascadeCount,
+        },
+      };
+    case "blocked":
+      return {
+        event: "builder_build_blocked",
+        params: { block_reason: PLAN_BLOCK_REASON_EVENT[event.reason] },
+      };
+  }
+}
+
+/** [POO-2187] A configuration panel event, as the GA4 event it is. */
+export function panelEventToAnalytics(event: PanelDraftEvent): BuildAnalyticsEvent {
+  switch (event.type) {
+    case "configured":
+      return {
+        event: "builder_block_configured",
+        params: {
+          block_kind: BUILD_BLOCK_KIND_EVENT[event.kind],
+          network: BUILD_NETWORK_EVENT[event.network],
+        },
+      };
+    case "applied":
+      return {
+        event: "builder_block_applied",
+        params: {
+          block_kind: BUILD_BLOCK_KIND_EVENT[event.kind],
+          fields_changed: event.fields.map((field) => PANEL_FIELD_EVENT[field]).join(","),
+        },
+      };
+    case "discarded":
+      return {
+        event: "builder_block_discarded",
         params: { block_kind: BUILD_BLOCK_KIND_EVENT[event.kind] },
       };
-    case "blockRestored":
+    case "leaveBlocked":
       return {
-        event: "builder_block_restored",
+        event: "builder_block_leave_blocked",
         params: { block_kind: BUILD_BLOCK_KIND_EVENT[event.kind] },
       };
     case "blocked":
@@ -151,4 +213,15 @@ export function canvasEventToAnalytics(event: BuildCanvasEvent): BuildAnalyticsE
         params: { block_reason: PLAN_BLOCK_REASON_EVENT[event.reason] },
       };
   }
+}
+
+/** [P8, POO-2187] The Allocation slider stopped at its ceiling: which block, which ceiling. */
+export function limitHitToAnalytics(
+  kind: BlockKind,
+  reason: AllocationCeilingReason,
+): BuildAnalyticsEvent {
+  return {
+    event: "builder_block_limit_hit",
+    params: { block_kind: BUILD_BLOCK_KIND_EVENT[kind], limit: ALLOCATION_LIMIT_EVENT[reason] },
+  };
 }

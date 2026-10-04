@@ -1,11 +1,13 @@
 /**
  * @id PP-MGR-SCR-002
  * @name BuildScreen
- * @implements-rules-version v1 (POO-2157 rules v1)
+ * @implements-rules-version v1 (POO-2157 rules v1; the configuration panel of POO-2187 rules v1)
  * @analytics-events builder_build_viewed, builder_build_started, builder_block_added,
  *   builder_network_added, builder_network_removed, builder_flow_block_inserted,
- *   builder_block_removed, builder_block_restored, builder_build_blocked, builder_build_error
- *   (PLAN_UNREADABLE only; the save error is the shell's)
+ *   builder_block_removed (with cascade_count), builder_block_configured, builder_block_applied,
+ *   builder_block_discarded, builder_block_leave_blocked, builder_block_limit_hit,
+ *   builder_build_blocked, builder_build_error (PLAN_UNREADABLE only; the save error is the
+ *   shell's)
  *
  * The Build phase of the fund strategy builder (slice S7, POO-2157, epic POO-2144; handoff v1.2):
  * the canvas that replaced the Build landing. The shell (`FundStrategyBuilderScreen`) keeps the page
@@ -35,11 +37,19 @@
  * - [AE1 to AE6] The view, the first block (`started`), the canvas events of the controller and the
  *   refusals, all through `useAnalytics().track()` / `useTrackView`, mapped by `buildAnalytics.ts`.
  *   The abandonment and the save error are the shell's: it is what knows how the session ended.
+ * - [POO-2187] The CONFIGURATION PANEL (`BlockPanel`, PP-MGR-CMP-061) replaces the canvas batch's
+ *   stub in the right column. Its draft (`usePanelDraft`, PP-MGR-HOK-014) registers the selection
+ *   guard, so with changes not applied every exit above (another block, the background, the Edit
+ *   mandate links, Back, Next, Save & exit, the stepper) keeps the selection and shows the notice;
+ *   Apply changes or Discard changes then completes the exit (P6). Remove block and the Delete key
+ *   open the panel's confirm (P10, DP11); there is no Undo toast. An Edit mandate link names the
+ *   selected block, and `initialSelectedId` brings it back selected (finding 19). The panel's events
+ *   (configured, applied, discarded, leave blocked, limit hit) go through `buildAnalytics.ts` too.
  *
  * Wiring notes: the renderer's spoke removal is `onRemoveSpoke` and the controller's is
  * `removeSpoke`; `invalidNetworks` (required) is built from the violations whose code is
- * `network_not_in_mandate` (their `targetId` is the spoke's network). The undo toast and "Draft
- * saved" use the `<Toaster />` the locale layout already mounts once.
+ * `network_not_in_mandate` (their `targetId` is the spoke's network). "Draft saved" uses the
+ * `<Toaster />` the locale layout already mounts once.
  *
  * PP-NOTE: no seam of its own and no service call. The plan rides the mandate draft, whose store
  * read and write are the integration point (marked in `useMandateDraft`, wiring issue POO-2132);
@@ -56,10 +66,19 @@ import { isBlocked, type MandateDraft } from "../mandateDraft";
 import type { UseMandateDraftResult } from "../useMandateDraft";
 import { BuildPalette } from "./blocks/BuildPalette";
 import { CanvasMenu } from "./blocks/CanvasMenu";
-import { PanelStub } from "./blocks/PanelStub";
 import { useBlockSelection } from "./blocks/useBlockSelection";
-import { type BuildCanvasEvent, useBuildCanvas } from "./blocks/useBuildCanvas";
-import { canvasEventToAnalytics, planCounts, REVIEW_REFUSAL_EVENT } from "./buildAnalytics";
+import {
+  type BuildCanvasEvent,
+  type MandateEditStep,
+  useBuildCanvas,
+} from "./blocks/useBuildCanvas";
+import {
+  canvasEventToAnalytics,
+  limitHitToAnalytics,
+  panelEventToAnalytics,
+  planCounts,
+  REVIEW_REFUSAL_EVENT,
+} from "./buildAnalytics";
 import {
   REVIEW_NOTICE_KEY,
   type ReviewNoticeKey,
@@ -74,7 +93,11 @@ import { CanvasViewport, type CanvasViewportHandle } from "./canvas/CanvasViewpo
 import { BuildGraph } from "./graph/BuildGraph";
 import { useDraftGraphLayout } from "./graph/useGraphLayout";
 import type { GraphLayout } from "./layout/graphTypes";
-import type { BuildPlan } from "./plan/buildPlan";
+import { BlockPanel } from "./panel/BlockPanel";
+import { type PanelDraftEvent, panelTarget, usePanelDraft } from "./panel/usePanelDraft";
+import type { AllocationCeilingReason } from "./plan/allocationCeiling";
+import type { BlockKind, BuildPlan } from "./plan/buildPlan";
+import { planOf } from "./plan/buildPlan";
 import { planFingerprint } from "./plan/planStorage";
 import { useBuildPlan } from "./plan/useBuildPlan";
 
@@ -91,8 +114,16 @@ export interface BuildScreenProps {
   update: UseMandateDraftResult["update"];
   /** Back: Mandate, already past the guard. Lands on the last Mandate step. */
   onBackToMandate(): void;
-  /** An Edit mandate link, already past the guard: step 1 (networks) or step 2 (protocols). */
-  onEditMandate(step: "networks" | "protocols"): void;
+  /**
+   * An Edit mandate link, already past the guard: a canvas menu's (networks, protocols) or the
+   * panel's (tokens, pools, limits), with the block selected when it was followed (finding 19).
+   */
+  onEditMandate(step: MandateEditStep, selectedId: string | null): void;
+  /**
+   * The block to select on arrival: the one selected when an Edit mandate link was followed, so the
+   * walk back lands on Build with the same block. Ignored when the plan no longer holds it.
+   */
+  initialSelectedId?: string | null;
   /**
    * Receives the selection guard's leave check while Build is mounted, so the shell's own ways out
    * (Save & exit, the stepper's Mandate pill) pass it too (HU3). Cleared on unmount.
@@ -121,13 +152,14 @@ function useReviewCopy(): Record<ReviewNoticeKey, string> {
   );
 }
 
-/** The Build phase: palette, canvas, panel stub and the Back / Next bar. */
+/** The Build phase: palette, canvas, configuration panel and the Back / Next bar. */
 export function BuildScreen({
   draft,
   catalog,
   update,
   onBackToMandate,
   onEditMandate,
+  initialSelectedId = null,
   leaveGuardRef,
 }: BuildScreenProps) {
   const t = useTranslations("manager");
@@ -149,7 +181,11 @@ export function BuildScreen({
   );
 
   const buildPlan = useBuildPlan({ draft, catalog, update: updateKeepingStoredPlan });
-  const selection = useBlockSelection();
+  // [Finding 19] Back from an Edit mandate link with the block selected then, if it still exists.
+  const [arrivalSelection] = useState(() =>
+    panelTarget(planOf(draft), initialSelectedId) ? initialSelectedId : null,
+  );
+  const selection = useBlockSelection(arrivalSelection);
   const plan = buildPlan.plan;
   const { violations } = buildPlan;
 
@@ -189,6 +225,25 @@ export function BuildScreen({
     [track],
   );
 
+  // [POO-2187] The panel's draft of the selected block, and its guard (P3, P5, P6).
+  const onPanelEvent = useCallback(
+    (event: PanelDraftEvent) => {
+      const mapped = panelEventToAnalytics(event);
+      track(mapped.event, mapped.params);
+    },
+    [track],
+  );
+  const target = useMemo(
+    () => panelTarget(plan, selection.selectedId),
+    [plan, selection.selectedId],
+  );
+  const panel = usePanelDraft({
+    target,
+    registerGuard: selection.registerGuard,
+    applyBlockConfig: buildPlan.applyBlockConfig,
+    onEvent: onPanelEvent,
+  });
+
   const controller = useBuildCanvas({
     draft,
     catalog,
@@ -196,7 +251,16 @@ export function BuildScreen({
     selection,
     onEvent,
     onEditMandate,
+    beforeRemove: panel.reset,
   });
+
+  const onLimitHit = useCallback(
+    (kind: BlockKind, reason: AllocationCeilingReason) => {
+      const mapped = limitHitToAnalytics(kind, reason);
+      track(mapped.event, mapped.params);
+    },
+    [track],
+  );
 
   // [HU3] The shell's own exits read the guard while Build is on screen.
   const { guardLeave } = selection;
@@ -315,7 +379,20 @@ export function BuildScreen({
         }
         panel={
           <BuildPanelSlot>
-            <PanelStub {...controller.panelProps} />
+            <BlockPanel
+              ctx={controller.context}
+              selectedId={selectedId}
+              menuSentence={controller.menuSentence}
+              panel={panel}
+              removeConfirmOpen={controller.removeConfirmId !== null}
+              onRemoveRequest={() => {
+                if (selectedId) controller.requestRemove(selectedId);
+              }}
+              onRemoveCancel={controller.cancelRemove}
+              onRemoveConfirm={controller.confirmRemove}
+              onEditMandate={controller.editMandate}
+              onLimitHit={onLimitHit}
+            />
           </BuildPanelSlot>
         }
         onBack={handleBack}
