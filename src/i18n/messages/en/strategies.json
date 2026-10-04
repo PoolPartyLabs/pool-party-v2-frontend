@@ -861,6 +861,22 @@
     "balances": "Spoke balances",
     "transits": "Transits",
     "loadMore": "Load more",
-    "confirmationTimeout": "Your transaction was sent, but we could not confirm it in time. Check your wallet's recent activity before trying again, in case it already went through."
+    "confirmationTimeout": "Your transaction was sent, but we could not confirm it in time. Check your wallet's recent activity before trying again, in case it already went through.",
+    "transactions": "Transactions",
+    "pendingConfirmation": "Pending confirmation",
+    "confirmedBlock": "Confirmed in block {block}",
+    "reverted": "Reverted",
+    "revertUnknown": "The transaction reverted. No decoded reason is available.",
+    "coreVault": "Core Vault",
+    "spokeVault": "Spoke Vault",
+    "shareToken": "ShareToken",
+    "adapter": "Adapter",
+    "transactionHash": "Transaction hash",
+    "reportPublish": "Report publication",
+    "reportDelivery": "Report delivery",
+    "transitSend": "Send",
+    "transitFill": "Fill",
+    "transitAcknowledgement": "Acknowledgement",
+    "decodedError": "Decoded error: {name}"
   }
 }

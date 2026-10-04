@@ -861,6 +861,22 @@
     "balances": "Soldes des spokes",
     "transits": "Transferts",
     "loadMore": "Charger plus",
-    "confirmationTimeout": "Votre transaction a été envoyée, mais nous n'avons pas pu la confirmer à temps. Vérifiez l'activité récente de votre portefeuille avant de réessayer, au cas où elle serait déjà passée."
+    "confirmationTimeout": "Votre transaction a été envoyée, mais nous n'avons pas pu la confirmer à temps. Vérifiez l'activité récente de votre portefeuille avant de réessayer, au cas où elle serait déjà passée.",
+    "transactions": "Transactions",
+    "pendingConfirmation": "Confirmation en attente",
+    "confirmedBlock": "Confirmée dans le bloc {block}",
+    "reverted": "Annulée sur la chaîne",
+    "revertUnknown": "La transaction a été annulée sur la chaîne. Aucun motif décodé disponible.",
+    "coreVault": "Core Vault",
+    "spokeVault": "Spoke Vault",
+    "shareToken": "ShareToken",
+    "adapter": "Adaptateur",
+    "transactionHash": "Identifiant de transaction",
+    "reportPublish": "Publication du rapport",
+    "reportDelivery": "Livraison du rapport",
+    "transitSend": "Envoi",
+    "transitFill": "Exécution",
+    "transitAcknowledgement": "Accusé de réception",
+    "decodedError": "Erreur décodée : {name}"
   }
 }

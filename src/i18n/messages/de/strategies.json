@@ -861,6 +861,22 @@
     "balances": "Spoke-Guthaben",
     "transits": "Übertragungen",
     "loadMore": "Mehr laden",
-    "confirmationTimeout": "Deine Transaktion wurde gesendet, aber wir konnten sie nicht rechtzeitig bestätigen. Prüfe die letzten Aktivitäten deiner Wallet, bevor du es erneut versuchst, falls sie bereits durchgegangen ist."
+    "confirmationTimeout": "Deine Transaktion wurde gesendet, aber wir konnten sie nicht rechtzeitig bestätigen. Prüfe die letzten Aktivitäten deiner Wallet, bevor du es erneut versuchst, falls sie bereits durchgegangen ist.",
+    "transactions": "Transaktionen",
+    "pendingConfirmation": "Bestätigung ausstehend",
+    "confirmedBlock": "In Block {block} bestätigt",
+    "reverted": "Rückgängig gemacht",
+    "revertUnknown": "Die Transaktion wurde rückgängig gemacht. Kein entschlüsselter Grund verfügbar.",
+    "coreVault": "Core Vault",
+    "spokeVault": "Spoke Vault",
+    "shareToken": "ShareToken",
+    "adapter": "Adapter",
+    "transactionHash": "Transaktionshash",
+    "reportPublish": "Berichtsveröffentlichung",
+    "reportDelivery": "Berichtsübermittlung",
+    "transitSend": "Senden",
+    "transitFill": "Ausführung",
+    "transitAcknowledgement": "Empfangsbestätigung",
+    "decodedError": "Entschlüsselter Fehler: {name}"
   }
 }

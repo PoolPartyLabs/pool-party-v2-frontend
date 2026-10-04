@@ -9,18 +9,7 @@ import type { FundLaunchDraft, LaunchJourney, LaunchStepPreview } from "./contra
 import { journalKey, loadJournal } from "./journal";
 import { deriveLaunchSteps } from "./plan";
 
-const bases = {
-  42161: "https://arbiscan.io",
-  4663: "https://robinhoodchain.blockscout.com",
-} as const;
-export function explorerTxUrl(chainId: number, hash: string): string | null {
-  if (!/^0x[0-9a-fA-F]{64}$/.test(hash) || !(chainId in bases)) return null;
-  return `${bases[chainId as keyof typeof bases]}/tx/${hash}`;
-}
-export function explorerAddressUrl(chainId: number, address: string): string | null {
-  if (!/^0x[0-9a-fA-F]{40}$/.test(address) || !(chainId in bases)) return null;
-  return `${bases[chainId as keyof typeof bases]}/address/${address}`;
-}
+export { explorerAddressUrl, explorerTxUrl } from "@/lib/chain/explorer";
 export function getLaunchSteps(draft: FundLaunchDraft): LaunchStepPreview[] {
   if (
     draft.plan.hub.chains.some((chain) => chain.sharePct <= 0) ||

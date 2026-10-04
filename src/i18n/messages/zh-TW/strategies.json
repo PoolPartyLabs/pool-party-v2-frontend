@@ -861,6 +861,22 @@
     "balances": "Spoke餘額",
     "transits": "轉帳",
     "loadMore": "載入更多",
-    "confirmationTimeout": "您的交易已送出，但我們未能及時確認。再次嘗試前請查看您錢包的近期活動，以防它已經完成。"
+    "confirmationTimeout": "您的交易已送出，但我們未能及時確認。再次嘗試前請查看您錢包的近期活動，以防它已經完成。",
+    "transactions": "交易",
+    "pendingConfirmation": "等待確認",
+    "confirmedBlock": "已於區塊 {block} 確認",
+    "reverted": "已還原",
+    "revertUnknown": "交易已還原，目前沒有可解析的原因。",
+    "coreVault": "Core Vault",
+    "spokeVault": "Spoke Vault",
+    "shareToken": "ShareToken",
+    "adapter": "介接器",
+    "transactionHash": "交易雜湊",
+    "reportPublish": "報告發布",
+    "reportDelivery": "報告傳送",
+    "transitSend": "傳送",
+    "transitFill": "成交",
+    "transitAcknowledgement": "收件確認",
+    "decodedError": "已解析的錯誤：{name}"
   }
 }

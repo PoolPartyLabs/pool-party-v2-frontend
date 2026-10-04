@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-SCR-004 (POO-2175)
  * @name FundExplorer
- * @implements-rules-version v2
+ * @implements-rules-version v2 (POO-2175); v1 (POO-2179 explorer records)
  * Isolated v2 discovery, holder portfolio and manager fund list.
  */
 "use client";
@@ -13,6 +13,7 @@ import { Link } from "@/i18n/navigation";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useSiweSession } from "@/lib/auth/useSiweSession";
 import { isMockMode } from "@/lib/services";
+import { ExplorerFields } from "./ExplorerFields";
 import { loadFundsAction } from "./fundActions";
 import { fundErrorKey } from "./fundModel";
 export interface FundExplorerProps {
@@ -67,15 +68,18 @@ export function FundExplorer({ view }: FundExplorerProps) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {result.data.funds.map((fund) => (
-            <Link
-              className="rounded-xl border border-border p-5 hover:bg-accent focus-visible:outline-2"
-              href={`/funds/${fund.coreVault}`}
-              key={`v2:${fund.coreVault}`}
-            >
-              <h2 className="font-semibold">{fund.profile?.name ?? `PP-${fund.creationNumber}`}</h2>
+            <article className="rounded-xl border border-border p-5" key={`v2:${fund.coreVault}`}>
+              <h2 className="font-semibold">
+                <Link
+                  className="hover:underline focus-visible:outline-2"
+                  href={`/funds/${fund.coreVault}`}
+                >
+                  {fund.profile?.name ?? `PP-${fund.creationNumber}`}
+                </Link>
+              </h2>
               <p className="text-sm text-muted-foreground">{fund.profile?.description}</p>
               <p className="break-all text-sm">
-                {t("manager")}: {fund.manager}
+                {t("manager")}: <ExplorerFields value={fund.manager} chainId={42161} />
               </p>
               <p>
                 {fund.chains
@@ -88,7 +92,7 @@ export function FundExplorer({ view }: FundExplorerProps) {
                   {formatUnits(BigInt(result.data.holders[fund.coreVault]?.shares ?? "0"), 18)}
                 </p>
               ) : null}
-            </Link>
+            </article>
           ))}
         </div>
       )}

@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-LIB-030 (POO-2175)
  * @name fundFlow
- * @implements-rules-version v2
+ * @implements-rules-version v2 (POO-2175); v1 (POO-2179 explorer records)
  * Cancellable accepted-report state machine and approve/receipt/rebuild flow.
  */
 import type { FundBuild, FundView } from "@/lib/api/v2/fundSchemas";
@@ -9,7 +9,7 @@ import { reportFreshness } from "./fundModel";
 export interface FreshnessPorts {
   read: () => Promise<FundView>;
   start: () => Promise<string>;
-  poll: (jobId: string) => Promise<"pending" | "delivered" | "failed">;
+  poll: (jobId: string) => Promise<"pending" | "delivered" | "expired" | "failed">;
   wait: () => Promise<void>;
   active: () => boolean;
   refreshing: () => void;
@@ -30,7 +30,7 @@ export async function ensureFreshValuation(ports: FreshnessPorts) {
     if (!ports.active()) throw new Error("V2_CANCELED");
     const state = await ports.poll(jobId);
     if (!ports.active()) throw new Error("V2_CANCELED");
-    if (state === "failed") throw new Error("V2_UNAVAILABLE");
+    if (state === "failed" || state === "expired") throw new Error("V2_UNAVAILABLE");
     if (state === "delivered") {
       const refreshed = await ports.read();
       if (!ports.active()) throw new Error("V2_CANCELED");

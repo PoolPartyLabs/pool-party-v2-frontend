@@ -861,6 +861,22 @@
     "balances": "Spoke 잔액",
     "transits": "전송",
     "loadMore": "더 불러오기",
-    "confirmationTimeout": "거래가 전송되었지만 제때 확인하지 못했습니다. 이미 처리되었을 수 있으니 다시 시도하기 전에 지갑의 최근 활동을 확인해 주세요."
+    "confirmationTimeout": "거래가 전송되었지만 제때 확인하지 못했습니다. 이미 처리되었을 수 있으니 다시 시도하기 전에 지갑의 최근 활동을 확인해 주세요.",
+    "transactions": "거래",
+    "pendingConfirmation": "확인 대기 중",
+    "confirmedBlock": "블록 {block}에서 확인됐어요",
+    "reverted": "취소됐어요",
+    "revertUnknown": "거래가 취소됐어요. 해석된 사유를 확인할 수 없어요.",
+    "coreVault": "Core Vault",
+    "spokeVault": "Spoke Vault",
+    "shareToken": "ShareToken",
+    "adapter": "어댑터",
+    "transactionHash": "거래 해시",
+    "reportPublish": "보고서 게시",
+    "reportDelivery": "보고서 전달",
+    "transitSend": "전송",
+    "transitFill": "체결",
+    "transitAcknowledgement": "수신 확인",
+    "decodedError": "해석된 오류: {name}"
   }
 }

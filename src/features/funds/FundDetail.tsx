@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-SCR-005 (POO-2175)
  * @name FundDetail
- * @implements-rules-version v2
+ * @implements-rules-version v2 (POO-2175); v1 (POO-2179 explorer records)
  * Fund valuation, holder exposure, position history and manager read-only progress.
  */
 "use client";
@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth/useAuth";
 import { useSiweSession } from "@/lib/auth/useSiweSession";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { useContractFamily } from "@/lib/hooks/useContractFamily";
+import { ExplorerFields as ReadOnlyFields } from "./ExplorerFields";
 import { FundActionsPanel } from "./FundActionsPanel";
 import {
   loadFundAction,
@@ -38,7 +39,9 @@ function FundDetailData({ core }: FundDetailProps) {
   const { isSignedIn } = useSiweSession();
   const [result, setResult] = useState<Awaited<ReturnType<typeof loadFundAction>> | null>(null);
   const [revision, setRevision] = useState(0);
+  const [loadedIdentity, setLoadedIdentity] = useState("");
   const [history, setHistory] = useState<FundPositionDetail | null>(null);
+  const [historyChain, setHistoryChain] = useState<number | undefined>();
   const [manager, setManager] = useState<{
     transits: FundTransit[];
     balances: FundBalances[];
@@ -53,13 +56,15 @@ function FundDetailData({ core }: FundDetailProps) {
     if (!requestKey) return;
     let active = true;
     detailRun.current += 1;
-    setResult(null);
     setHistory(null);
     setManager(null);
     setTransit(null);
     setElapsed(0);
     void loadFundAction(core).then((value) => {
-      if (active) setResult(value);
+      if (active) {
+        setResult(value);
+        setLoadedIdentity(`${core}:${address ?? ""}:${isSignedIn}`);
+      }
     });
     const timer = setInterval(() => {
       if (active) setElapsed((value) => value + 1);
@@ -87,7 +92,8 @@ function FundDetailData({ core }: FundDetailProps) {
       active = false;
     };
   }, [result, core]);
-  if (!result) return <p role="status">{t("loading")}</p>;
+  if (!result || loadedIdentity !== `${core}:${address ?? ""}:${isSignedIn}`)
+    return <p role="status">{t("loading")}</p>;
   if (!result.ok)
     return (
       <div role="alert">
@@ -98,6 +104,7 @@ function FundDetailData({ core }: FundDetailProps) {
       </div>
     );
   const { fund, holder, wallet } = result.data;
+  const hubChain = Number(fund.mandate.hubChainId);
   const money = (value: string | undefined, decimals = 6) =>
     value === undefined ? t("unavailable") : formatUnits(BigInt(value), decimals);
   const nav = [
@@ -134,7 +141,8 @@ function FundDetailData({ core }: FundDetailProps) {
         </h1>
         <p>{fund.profile?.description}</p>
         <p className="break-all">
-          {t("manager")}: {fund.profile?.managerDisplayName ?? fund.manager}
+          {t("manager")}: {fund.profile?.managerDisplayName}{" "}
+          <ReadOnlyFields value={fund.manager} chainId={hubChain} />
         </p>
         <p>
           {t("state")}: {fund.state}
@@ -150,6 +158,19 @@ function FundDetailData({ core }: FundDetailProps) {
       </dl>
       <section>
         <h2 className="font-semibold">{t("report")}</h2>
+        {fund.lastReport ? (
+          <ReadOnlyFields
+            value={fund.lastReport.report}
+            chainId={hubChain}
+            chainByField={{
+              publishTxHash:
+                fund.mandate.spokes.length === 1
+                  ? Number(fund.mandate.spokes[0]?.chainId)
+                  : undefined,
+              deliveryTxHash: hubChain,
+            }}
+          />
+        ) : null}
         <p aria-live="polite">
           {fund.lastReport
             ? t("reportAge", { seconds: fund.lastReport.ageSeconds + elapsed })
@@ -159,11 +180,21 @@ function FundDetailData({ core }: FundDetailProps) {
       </section>
       <section>
         <h2 className="font-semibold">{t("chains")}</h2>
+        <ReadOnlyFields
+          chainId={hubChain}
+          value={{
+            coreVault: fund.coreVault,
+            shareToken: fund.shareToken,
+            valueReportReceiver: fund.valueReportReceiver,
+            ...(fund.managerFeeVault ? { managerFeeVault: fund.managerFeeVault } : {}),
+          }}
+        />
         {fund.chains.map((chain) => (
-          <p key={chain.chainId}>
+          <div key={chain.chainId}>
             {chain.chainId === "42161" ? "Arbitrum" : "Robinhood"}:{" "}
             {chain.status === "created" ? t("created") : t("pending")}
-          </p>
+            <ReadOnlyFields value={chain} />
+          </div>
         ))}
       </section>
       <section>
@@ -207,6 +238,13 @@ function FundDetailData({ core }: FundDetailProps) {
                 {position.adapterKind === "aave-v3" ? "Aave v3" : "Uniswap v4"} ·{" "}
                 {position.tokens.map((token) => token.symbol).join(" / ")}
               </h3>
+              <ReadOnlyFields value={position.tokens} chainId={Number(position.chainId)} />
+              {typeof position.adapter === "string" ? (
+                <ReadOnlyFields
+                  value={{ adapter: position.adapter }}
+                  chainId={Number(position.chainId)}
+                />
+              ) : null}
               <p>
                 {t("value")}: {position.valueUsd ?? t("unavailable")} USD
               </p>
@@ -251,6 +289,7 @@ function FundDetailData({ core }: FundDetailProps) {
                 onClick={() => {
                   const request = ++detailRun.current;
                   setHistory(null);
+                  setHistoryChain(Number(position.chainId));
                   void loadFundPositionAction(
                     core,
                     Number(position.chainId),
@@ -275,9 +314,12 @@ function FundDetailData({ core }: FundDetailProps) {
               <p>{t("empty")}</p>
             ) : (
               history.history.events.map((event) => (
-                <p className="break-all" key={event.transactionHash}>
-                  {event.type} · {event.timestamp} · {event.transactionHash}
-                </p>
+                <div
+                  className="break-all"
+                  key={`${event.transactionHash}:${event.logIndex ?? event.type}`}
+                >
+                  <ReadOnlyFields value={event} chainId={historyChain} />
+                </div>
               ))
             )}
           </div>
@@ -342,67 +384,10 @@ function FundDetailData({ core }: FundDetailProps) {
               {t("loadMore")}
             </button>
           ) : null}
-          {transit ? <ReadOnlyFields value={transit} /> : null}
+          {transit ? <ReadOnlyFields value={transit} chainId={hubChain} /> : null}
         </section>
       ) : null}
       {detailError ? <p role="alert">{t(detailError)}</p> : null}
     </article>
   );
-}
-function ReadOnlyFields({ value }: { value: unknown }) {
-  const t = useTranslations("strategies.funds");
-  const labels: Record<string, string> = {
-    raw: t("amount"),
-    decimal: t("amount"),
-    amount0: t("amount"),
-    amount1: t("amount"),
-    valueUsd: t("value"),
-    currentPercent: t("limits"),
-    percent: t("limits"),
-    enforcedOnChain: t("notOnChain"),
-    chainId: t("chains"),
-    tokens: t("positions"),
-    token: t("positions"),
-    unallocatedBalance: t("balance"),
-    operatingCash: t("balance"),
-    stage: t("state"),
-    state: t("state"),
-    legs: t("transits"),
-    direction: t("transits"),
-    amountSent: t("amount"),
-    credited: t("paid"),
-    nextStepHint: t("notReady"),
-    readyForNextStep: t("ready"),
-    status: t("state"),
-    balancesStatus: t("state"),
-    networks: t("chains"),
-    network: t("chains"),
-  };
-  if (value === null || value === undefined) return <span>{t("unavailable")}</span>;
-  if (Array.isArray(value))
-    return (
-      <ul>
-        {value.map((entry) => (
-          <li key={JSON.stringify(entry)}>
-            <ReadOnlyFields value={entry} />
-          </li>
-        ))}
-      </ul>
-    );
-  if (typeof value === "object")
-    return (
-      <dl className="space-y-1">
-        {Object.entries(value)
-          .filter(([key]) => key !== "protocolVersion")
-          .map(([key, entry]) => (
-            <div className="flex flex-wrap gap-2 break-all text-sm" key={key}>
-              <dt>{labels[key] ?? t("value")}</dt>
-              <dd>
-                <ReadOnlyFields value={entry} />
-              </dd>
-            </div>
-          ))}
-      </dl>
-    );
-  return <span>{String(value)}</span>;
 }
