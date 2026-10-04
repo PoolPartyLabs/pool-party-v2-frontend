@@ -77,6 +77,7 @@
     "returnManager": "Zur Manager-Konsole",
     "uploadFailed": "Logo-Upload fehlgeschlagen. Versuchen Sie eine andere PNG- oder JPG-Datei.",
     "buildGap": "Der Build-Plan benötigt Ausführungsdetails. Ergänzen Sie Bereiche und Zuweisungen im Build.",
+    "duplicateAaveReserve": "Pro Netzwerk ist nur ein Aave-Supply-Block je Reserve erlaubt. Entfernen Sie das Duplikat vor dem Start.",
     "validation": "Prüfen Sie Identität, Gebührenlimits, Mindesteinzahlung und USDC-Guthaben.",
     "partialFailure": "Einige Schritte waren erfolgreich. Der erneute Versuch setzt hier fort, ohne einen weiteren Fonds anzulegen.",
     "realOnly": "Der Start benötigt den Echtmodus. Mit Mock-Daten werden keine Signaturen angefordert.",

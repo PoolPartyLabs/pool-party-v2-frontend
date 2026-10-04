@@ -77,6 +77,7 @@
     "returnManager": "Retour à la console",
     "uploadFailed": "Échec du téléversement. Essayez un autre PNG ou JPG.",
     "buildGap": "Le plan Build nécessite des détails d’exécution. Revenez compléter les plages et allocations.",
+    "duplicateAaveReserve": "Un seul bloc Aave Supply par réserve est autorisé sur chaque réseau. Supprimez le doublon avant le lancement.",
     "validation": "Vérifiez votre identité, les limites des frais, le dépôt minimum et votre solde USDC.",
     "partialFailure": "Certaines étapes ont réussi. Réessayez cette étape sans créer un autre fonds.",
     "realOnly": "Le lancement nécessite le mode réel. Aucune signature n’est demandée avec des données simulées.",

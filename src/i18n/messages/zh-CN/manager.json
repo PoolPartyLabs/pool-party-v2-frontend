@@ -77,6 +77,7 @@
     "returnManager": "返回管理面板",
     "uploadFailed": "标志上传失败。请尝试其他PNG或JPG。",
     "buildGap": "Build计划需要执行详情。请返回Build完成价格范围与分配。",
+    "duplicateAaveReserve": "每个网络的同一储备资产仅允许一个 Aave Supply 区块。请在启动前删除重复区块。",
     "validation": "请检查身份信息、费率限制、最低存款和USDC余额。",
     "partialFailure": "部分步骤已成功。重试会恢复此步骤，不会创建另一个基金。",
     "realOnly": "启动需要真实模式。模拟数据不会请求签名。",

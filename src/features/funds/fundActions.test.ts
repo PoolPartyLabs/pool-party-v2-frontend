@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   request: vi.fn(),
   readFund: vi.fn(),
   readFunds: vi.fn(),
+  readHistory: vi.fn(),
   owner: vi.fn(),
 }));
 vi.mock("@/lib/services", () => ({ isMockMode: false }));
@@ -19,6 +20,7 @@ vi.mock("@/lib/api/v2/fundTransport", () => ({ fundRequest: mocks.request }));
 vi.mock("@/lib/api/v2/funds", () => ({
   readFund: mocks.readFund,
   readFunds: mocks.readFunds,
+  readFundHistory: mocks.readHistory,
   readHolder: vi.fn(),
   readBalances: vi.fn(),
   readPosition: vi.fn(),
@@ -30,12 +32,31 @@ import { ApiError } from "@/lib/api/errors";
 import { mockFund, mockFundBuild } from "@/mocks/data/v2Funds";
 import {
   buildFundAction,
+  loadFundHistoryAction,
   loadFundsAction,
   pollFundReportAction,
   startFundReportAction,
 } from "./fundActions";
 
 describe("fund server action safety", () => {
+  it("loads public fund-wide history without trading or position-history requests", async () => {
+    mocks.readHistory.mockResolvedValue({
+      coreVault: mockFund.coreVault,
+      events: [],
+      nextCursor: null,
+      indexing: [],
+    });
+    expect(await loadFundHistoryAction(mockFund.coreVault)).toMatchObject({ ok: true });
+    expect(mocks.readHistory).toHaveBeenCalledWith(mockFund.coreVault, undefined);
+    expect(mocks.request).not.toHaveBeenCalled();
+  });
+  it("rejects another fund's history and malformed cursors", async () => {
+    mocks.readHistory.mockResolvedValue({ coreVault: `0x${"9".repeat(40)}` });
+    expect(await loadFundHistoryAction(mockFund.coreVault)).toMatchObject({ ok: false });
+    mocks.readHistory.mockClear();
+    expect(await loadFundHistoryAction(mockFund.coreVault, "bad")).toMatchObject({ ok: false });
+    expect(mocks.readHistory).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.enabled = true;

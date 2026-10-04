@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allocationRaw, type CanvasPlan, deriveLaunchSteps } from "./plan";
+import { allocationRaw, type CanvasPlan, deriveLaunchSteps, launchPlanError } from "./plan";
 
 const chain = (id: string, kind: string, sharePct = 100) => ({
   id,
@@ -20,6 +20,49 @@ const fixture = (
 ): CanvasPlan => ({ version: 1, hub: { chains: hub }, spokes });
 
 describe("Build to launch adapter [R2, R4, R5]", () => {
+  it("surfaces a clear duplicate reserve reason without leaking unknown errors", () => {
+    expect(launchPlanError(new Error("DUPLICATE_AAVE_RESERVE"))).toEqual({
+      code: "DUPLICATE_AAVE_RESERVE",
+      messageKey: "fundLaunch.duplicateAaveReserve",
+    });
+    expect(launchPlanError(new Error("private endpoint"))).toEqual({
+      code: "BUILD_EXECUTION_GAP",
+      messageKey: "fundLaunch.buildGap",
+    });
+  });
+  it("blocks the same Aave reserve across roots, case-insensitively", () => {
+    const plan = fixture([chain("first", "aaveSupply", 50), chain("second", "aaveSupply", 50)]);
+    const block = plan.hub.chains[1]?.steps[0];
+    if (!block) throw new Error("fixture");
+    block.config = { assetKey: "ARBITRUM:0xBASE" };
+    expect(() => deriveLaunchSteps(plan, {}, false, false)).toThrow("DUPLICATE_AAVE_RESERVE");
+  });
+  it("blocks repeated Aave leaves even with valid explicit shares", () => {
+    const plan = fixture([chain("first", "aaveSupply")]);
+    const block = chain("second", "aaveSupply").steps[0];
+    if (!block) throw new Error("fixture");
+    plan.hub.chains[0]?.steps.push(block);
+    expect(() =>
+      deriveLaunchSteps(
+        plan,
+        {
+          "first-position": { leafSharePct: 50 },
+          "second-position": { leafSharePct: 50 },
+        },
+        false,
+        false,
+      ),
+    ).toThrow("DUPLICATE_AAVE_RESERVE");
+  });
+  it("permits separate Aave reserves", () => {
+    const plan = fixture([chain("first", "aaveSupply", 50), chain("second", "aaveSupply", 50)]);
+    const block = plan.hub.chains[1]?.steps[0];
+    if (!block) throw new Error("fixture");
+    block.config = { assetKey: "arbitrum:0xother" };
+    expect(
+      deriveLaunchSteps(plan, {}, false, false).filter((step) => step.kind === "open"),
+    ).toHaveLength(2);
+  });
   it("consumes typed panel canonical ticks and clamped slippage without another model", () => {
     const plan = fixture([chain("pool", "uniswapV4Pool")]);
     const block = plan.hub.chains[0]?.steps[0];

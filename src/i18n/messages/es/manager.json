@@ -77,6 +77,7 @@
     "returnManager": "Volver a la consola",
     "uploadFailed": "Error al subir el logo. Pruebe otro PNG o JPG.",
     "buildGap": "El plan Build necesita detalles de ejecución. Vuelva para completar los rangos y las asignaciones.",
+    "duplicateAaveReserve": "Solo se permite un bloque Aave Supply por reserva en cada red. Elimina el duplicado antes del lanzamiento.",
     "validation": "Revise la identidad, los límites de comisiones, el depósito mínimo y su saldo USDC.",
     "partialFailure": "Algunos pasos se completaron. El reintento reanuda este paso sin crear otro fondo.",
     "realOnly": "El lanzamiento requiere modo real. No se solicitan firmas con datos mock.",
