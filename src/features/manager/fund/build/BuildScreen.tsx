@@ -4,7 +4,8 @@
  * @implements-rules-version v1 (POO-2157 rules v1)
  * @analytics-events builder_build_viewed, builder_build_started, builder_block_added,
  *   builder_network_added, builder_network_removed, builder_flow_block_inserted,
- *   builder_block_removed, builder_block_restored, builder_build_blocked
+ *   builder_block_removed, builder_block_restored, builder_build_blocked, builder_build_error
+ *   (PLAN_UNREADABLE only; the save error is the shell's)
  *
  * The Build phase of the fund strategy builder (slice S7, POO-2157, epic POO-2144; handoff v1.2):
  * the canvas that replaced the Build landing. The shell (`FundStrategyBuilderScreen`) keeps the page
@@ -149,6 +150,16 @@ export function BuildScreen({
 
   // [AE1] One view per visit, with what the plan held on arrival.
   useTrackView("builder_build_viewed", planCounts(plan));
+
+  // [AE, D18] Arriving on a stored plan this build cannot read is an error of ours: once per visit
+  // (review F11 of PR #41). Latched like `useTrackView`, so a re-run effect never reports twice.
+  const [unreadableOnArrival] = useState(() => draft.planUnreadable === true);
+  const reportedUnreadable = useRef(false);
+  useEffect(() => {
+    if (!unreadableOnArrival || reportedUnreadable.current) return;
+    reportedUnreadable.current = true;
+    track("builder_build_error", { error_code: "PLAN_UNREADABLE", error_origin: "app" });
+  }, [unreadableOnArrival, track]);
 
   // The plan of the LAST render. A canvas event is reported synchronously inside the gesture that
   // changed the plan, before React renders again, so this is the plan as it was before the change.

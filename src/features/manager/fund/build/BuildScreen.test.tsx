@@ -364,6 +364,8 @@ describe("BuildScreen: the canvas replaces the Build landing (G2, AN1, D23, AE1)
     );
     expect(emitted("builder_mandate_step_viewed")).toHaveLength(0);
     expect(emitted("builder_build_landing_viewed")).toHaveLength(0);
+    // A plan this build reads is no error.
+    expect(emitted("builder_build_error")).toHaveLength(0);
   });
 
   it("[I8] opens at fit", async () => {
@@ -895,6 +897,13 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
     );
     // The empty canvas, never a guess at the plan.
     expect(screen.getByText(/Start here: add a protocol on Arbitrum/)).toBeInTheDocument();
+    // [AE] Stored data this screen cannot use is an error of ours, reported once per visit (review
+    // F11 of PR #41).
+    await waitFor(() =>
+      expect(emitted("builder_build_error")).toEqual([
+        { error_code: "PLAN_UNREADABLE", error_origin: "app" },
+      ]),
+    );
 
     await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));

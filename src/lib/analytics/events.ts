@@ -835,6 +835,16 @@ export const ANALYTICS_ERROR_CODES = [
    * leaves the universe unknown rather than publishing a stale count, which keeps the flag down.
    */
   "POOLS_UNIVERSE_FETCH_FAILED",
+  /**
+   * Ours (POO-2157, review F11 of PR #41): the Build canvas opened a draft whose stored plan this
+   * build cannot read (a newer build's, or one edited by hand), so it shows the empty canvas and
+   * keeps the stored plan untouched (D18).
+   *
+   * Reported once per visit on `builder_build_error`, `app` origin: the data is our own and our
+   * code cannot use it. Nothing failed for the manager yet, but a plan they made is out of reach,
+   * and without this the only trace would be a notice nobody counts.
+   */
+  "PLAN_UNREADABLE",
 ] as const;
 
 export type AnalyticsErrorCode = (typeof ANALYTICS_ERROR_CODES)[number];
