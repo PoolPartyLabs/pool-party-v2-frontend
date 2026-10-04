@@ -370,9 +370,11 @@ fund builder"). The funnel is `builder_mandate_started` / `_step_viewed` / `_ste
 `_blocked` / `_completed` / `_abandoned`, plus `builder_draft_saved` and `builder_mandate_error`, and
 the drafts pair `builder_draft_opened` and `builder_draft_deleted`, and the Build canvas events of POO-2157
 (`builder_build_viewed`, `builder_build_started`, `builder_block_added`, `builder_network_added`,
-`builder_network_removed`, `builder_flow_block_inserted`, `builder_block_removed`, `builder_block_restored`,
-`builder_build_blocked`, `builder_build_abandoned` and `builder_build_error`, declared in
-`docs/ANALYTICS_EVENTS.md`); `builder_build_landing_viewed` is retired. `builder_mandate_blocked`'s five NEW reasons are `nothing_selected`,
+`builder_network_removed`, `builder_flow_block_inserted`, `builder_block_removed` (with `cascade_count` since
+POO-2187), `builder_build_blocked`, `builder_build_abandoned` and `builder_build_error`, declared in
+`docs/ANALYTICS_EVENTS.md`), and the configuration panel's of POO-2187 (`builder_block_configured`,
+`builder_block_applied`, `builder_block_discarded`, `builder_block_leave_blocked`, `builder_block_limit_hit`);
+`builder_build_landing_viewed` and `builder_block_restored` are retired. `builder_mandate_blocked`'s five NEW reasons are `nothing_selected`,
 `cap_missing`, `no_slots`, `has_hook` and `coming_soon`; `price_unknown` (an unpriced token) and
 `name_invalid` (the draft name) REUSE the existing POO-1172 reason series rather than mint
 per-builder duplicates. A draft-save failure reports `builder_mandate_error { error_code:
@@ -489,7 +491,7 @@ overturnable. The handoff (v1.3, open point 12) asked Murilo to decide Borrow, a
 | D17 | Unsaved check | `planFingerprint` joins the unsaved fingerprint; plan edits never un-complete the mandate |
 | D18 | Unreadable stored plan | The draft is kept and only the plan is dropped (every block is empty in this batch); the Build screen says so with the empty canvas under the message and reports `builder_build_error` (`PLAN_UNREADABLE`) |
 | D19 | Next: Review | Never disabled; ordered checks (empty plan, a block or network no longer in the mandate, a coming-soon block, an empty block, shares over the capital above them), then "Review is not available yet"; each refusal shows an inline notice (`fundBuilder.canvas.review.*`) and reports `builder_build_blocked` (shipped by POO-2157) |
-| D20 | Analytics names | `builder_build_viewed`, `builder_build_started`, `builder_block_added`, `builder_network_added`, `builder_network_removed`, `builder_flow_block_inserted`, `builder_block_removed`, `builder_block_restored`, `builder_build_blocked`, `builder_build_abandoned` and `builder_build_error`; `builder_build_landing_viewed` is retired (shipped by POO-2157, `docs/ANALYTICS_EVENTS.md`) |
+| D20 | Analytics names | `builder_build_viewed`, `builder_build_started`, `builder_block_added`, `builder_network_added`, `builder_network_removed`, `builder_flow_block_inserted`, `builder_block_removed`, `builder_block_restored`, `builder_build_blocked`, `builder_build_abandoned` and `builder_build_error`; `builder_build_landing_viewed` is retired (shipped by POO-2157, `docs/ANALYTICS_EVENTS.md`). POO-2187 later retired `builder_block_restored` with the Undo toast and added the configuration panel's five events |
 | D21 | Menu popover | The new dependency was NOT approved: the menus use the in-house `AnchoredPopover` behind a narrow interface, so swapping it later touches one file |
 | D22 | Drag | Native pointer events, no library; the menus are the keyboard path |
 | D23 | Grid width | The Build phase uses the full content width (canvas column about 604 against 656 in Figma) |

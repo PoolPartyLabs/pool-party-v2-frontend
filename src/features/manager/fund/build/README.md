@@ -15,8 +15,9 @@ record against Figma are in `src/features/manager/README.md`, section "Build can
 | `canvas/` | `PP-MGR-CMP-045` to `047`, `PP-MGR-LIB-022`, `PP-MGR-HOK-008` | The step frame, the clipped canvas with zoom, pan and fit, the panel slot |
 | `layout/` | `PP-MGR-LIB-023` | The pure layout function, its types, its constants, `toLayoutInput` |
 | `pieces/` | `PP-MGR-CMP-048` to `055` | The presentational pieces; strings arrive as props |
-| `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056` to `058`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu, the panel stub, the selection guard, the controller |
+| `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056`, `057`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu, the selection guard (with its resume), the controller (with the remove confirm). The panel stub `PP-MGR-CMP-058` is removed |
 | `graph/` | `PP-MGR-CMP-059` | The renderer, its reading-order model, `useGraphLayout`, `useTextWidth` |
+| `panel/` | `PP-MGR-CMP-061` to `068`, `PP-MGR-HOK-014`, `PP-MGR-LIB-029`, `PP-MGR-LIB-030` | The configuration panel (POO-2171): the shell `BlockPanel` and its kind to body registry `panelBodies.ts`, the shared controls, the draft `usePanelDraft`, the range and slippage maths; fixture bodies and a harness for stories and tests |
 
 The reference canvases used as test oracles and story data are in `src/mocks/data/buildCanvasFixtures.ts`.
 
@@ -28,6 +29,18 @@ The reference canvases used as test oracles and story data are in `src/mocks/dat
 - `pieces/` import nothing from `plan/`, `layout/`, `blocks/` or `graph/`; `BuildGraph` imports nothing from
   `plan/` or `blocks/`.
 - The canvas calls no API and requests no transaction: it writes the mandate draft and nothing else.
+- The configuration panel edits a DRAFT of the selected block; only Apply changes writes the plan
+  (`useBuildPlan().applyBlockConfig`). Every remove goes through `removeBlockReleasingShare`, after the
+  panel's confirm.
+
+## Adding a panel body
+
+The shell (`panel/BlockPanel.tsx`) owns the head, the modes, Use (the kind's defaults at 0%), the Allocation
+field, the status row, Apply changes, Remove block and the leave guard. A kind's body owns the rest: add one line
+to `PANEL_BODIES` (`panel/panelBodies.ts`) with a `PanelBodyDefinition` of the kind's config, that is `usePick`
+(Modes 2 and 3: the rows with the config Use writes, and their copy) and `Fields` (Mode 4: the fields between the
+head and the status row, which place the `allocation` node they are given). A kind with no body shows the head and
+Remove block.
 
 ## Adding a block kind
 
