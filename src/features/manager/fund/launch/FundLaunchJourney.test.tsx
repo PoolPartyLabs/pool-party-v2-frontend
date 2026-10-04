@@ -1,4 +1,4 @@
-import { fireEvent, within } from "@testing-library/react";
+import { fireEvent, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders, screen } from "../../../../../tests/utils/renderWithProviders";
 import { FundLaunchJourney } from "./FundLaunchJourney";
@@ -178,4 +178,18 @@ it("POO-2212 opens a modal without signing and close pauses, reopening needs exp
   expect(screen.getByRole("dialog")).toBeInTheDocument();
   expect(state.sign).not.toHaveBeenCalled();
   expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "2");
+});
+
+it("POO-2212 returns keyboard focus to the reopen control after Escape without signing", async () => {
+  state.mock = false;
+  state.error = false;
+  state.busy = false;
+  state.outcome = "in-progress";
+  vi.clearAllMocks();
+  renderWithProviders(<FundLaunchJourney journeyId="journey" />);
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+  await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  expect(state.cancel).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole("button", { name: "Resume journey" })).toHaveFocus();
+  expect(state.sign).not.toHaveBeenCalled();
 });

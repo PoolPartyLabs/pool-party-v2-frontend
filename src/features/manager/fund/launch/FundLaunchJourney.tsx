@@ -7,8 +7,15 @@
 "use client";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { StrategyLogo } from "@/components/data-display/StrategyLogo";
 import { Button } from "@/components/ui/Button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/Dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/Dialog";
 import { Link } from "@/i18n/navigation";
 import { isMockMode } from "@/lib/services";
 import { explorerAddressUrl } from "./journey";
@@ -21,6 +28,29 @@ export function FundLaunchJourney({ journeyId }: { journeyId: string }) {
 }
 function RealJourney({ journeyId }: { journeyId: string }) {
   const launch = useV2Launch(journeyId);
+  return <FundLaunchJourneyView launch={launch} />;
+}
+
+export type FundLaunchJourneyState = Pick<
+  ReturnType<typeof useV2Launch>,
+  | "steps"
+  | "addresses"
+  | "loadingError"
+  | "ready"
+  | "busy"
+  | "error"
+  | "outcome"
+  | "sign"
+  | "resume"
+  | "retry"
+  | "cancel"
+> & {
+  journey: { draft: { review: { name: string; imageUrl?: string } } } | null;
+  journal: object | null;
+};
+
+/** Presentation seam for the real launch binding and wallet-free Storybook states. */
+export function FundLaunchJourneyView({ launch }: { launch: FundLaunchJourneyState }) {
   const [open, setOpen] = useState(true);
   const setModalOpen = (next: boolean) => {
     if (!next) launch.cancel();
@@ -29,6 +59,7 @@ function RealJourney({ journeyId }: { journeyId: string }) {
   const confirmed = launch.steps.filter((step) => step.status === "confirmed").length;
   const t = useTranslations("manager");
   const currentStep = launch.steps.find((step) => step.status !== "confirmed");
+  const fundName = launch.journey?.draft.review.name;
   const core = launch.addresses.coreVault;
   const addressUrl = core ? explorerAddressUrl(42161, core) : null;
   const labels = {
@@ -60,14 +91,23 @@ function RealJourney({ journeyId }: { journeyId: string }) {
   };
   return (
     <section className="mx-auto flex w-full flex-col gap-4 p-6">
-      <Button variant="secondary" onClick={() => setOpen(true)}>
-        {t("fundLaunch.resumeJourney")}
-      </Button>
       <Dialog open={open} onOpenChange={setModalOpen}>
-        <DialogContent className="flex max-h-[90dvh] max-w-xl flex-col gap-4 overflow-hidden">
-          <header>
+        <DialogTrigger asChild>
+          <Button variant="secondary">{t("fundLaunch.resumeJourney")}</Button>
+        </DialogTrigger>
+        <DialogContent className="flex max-h-[90dvh] max-w-xl flex-col gap-4 overflow-hidden rounded-2xl">
+          <header className="shrink-0 space-y-4 pr-8">
+            {fundName ? (
+              <div className="flex items-center gap-3">
+                <StrategyLogo
+                  url={launch.journey?.draft.review.imageUrl}
+                  name={fundName}
+                  className="size-10 shrink-0 bg-primary/15 text-primary"
+                />
+                <p className="min-w-0 break-words font-semibold">{fundName}</p>
+              </div>
+            ) : null}
             <DialogTitle>{t("fundLaunch.journeyTitle")}</DialogTitle>
-            <p>{launch.journey?.draft.review.name}</p>
             <DialogDescription>{t("fundLaunch.journeyWait")}</DialogDescription>
           </header>
           {launch.loadingError || (!launch.ready && !launch.busy) ? (
@@ -81,7 +121,7 @@ function RealJourney({ journeyId }: { journeyId: string }) {
           <div className="flex min-h-0 flex-1 flex-col gap-4">
             <aside
               aria-label={t("fundLaunch.signNext")}
-              className="shrink-0 rounded-xl border border-border bg-surface p-4"
+              className="shrink-0 rounded-2xl border border-border bg-surface-raised p-4"
             >
               <p className="mb-2 text-sm text-muted-foreground">
                 {t("fundLaunch.stepProgress", {
@@ -106,7 +146,15 @@ function RealJourney({ journeyId }: { journeyId: string }) {
               </div>
               {currentStep ? (
                 <div className="mb-4" aria-live="polite">
-                  <h2 className="font-medium">{labels[currentStep.kind]}</h2>
+                  <div className="flex items-center gap-3">
+                    {launch.busy ? (
+                      <span
+                        aria-hidden="true"
+                        className="size-5 shrink-0 motion-safe:animate-spin rounded-full border-2 border-primary/25 border-t-primary"
+                      />
+                    ) : null}
+                    <h2 className="font-medium">{labels[currentStep.kind]}</h2>
+                  </div>
                   <p>
                     {currentStep.chainId === 42161 ? "Arbitrum" : "Robinhood Chain"} ·{" "}
                     {statuses[currentStep.status]}
