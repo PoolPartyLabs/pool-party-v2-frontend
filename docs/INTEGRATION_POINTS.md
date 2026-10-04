@@ -1,12 +1,23 @@
 # Integration Points
 
+## V2 fund investor and manager pages (POO-2175, rules v2)
+
+| Boundary | Files | Real / mock behavior |
+|---|---|---|
+| Fund reads | `src/lib/api/v2/funds.ts`, `fundSchemas.ts` | Existing server-only v2 client; no V1 joins. Isolated `v2Funds` fixtures in mock mode. |
+| Investor builders | `src/features/funds/fundActions.ts`, `FundActionsPanel.tsx` | SIWE-derived wallet, simulated API transactions, explicit wallet confirmation, approval receipt then rebuild; optional authoritative preview / fees rollout. |
+| Fresh reports | `fundTransport.ts`, `fundFlow.ts` | Server-only admin key, verified bearer, rate-limited start, 15-second polling, reread acceptance/freshness before rebuild. |
+| Manager reads | `FundDetail.tsx`, `fundActions.ts` | Transits and spoke balances from API PR #180; no new manager writes. |
+
+See `src/features/funds/README.md`. `PP_API_ADMIN_KEY` remains server-only; never put it in a public variable or browser request.
+
 Inventory of the front-end seams that run mocked or placeholder logic today and are replaced by a real
 integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the code maps to this document.
 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 466 markers across 264 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 469 markers across 267 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
