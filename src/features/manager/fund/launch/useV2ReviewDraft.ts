@@ -141,7 +141,14 @@ export function useV2ReviewDraft(draftId: string) {
     },
     uploadLogo: async (file: File) => {
       const imageUrl = await binding.uploadLogo(file);
-      persistReview({ ...binding.review, imageUrl });
+      // The upload is async: the manager may have edited identity, fees or seed meanwhile.
+      // Merge only the uploaded URL into the latest saved review, never its pre-upload snapshot.
+      const latest = getDraft(draftId);
+      if (!latest) {
+        setStorageError(true);
+        return imageUrl;
+      }
+      persistReview({ ...(latest.review ?? binding.review), imageUrl });
       return imageUrl;
     },
     launchBlockers,
