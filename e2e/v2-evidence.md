@@ -11,6 +11,7 @@ into the shell; `cast wallet address` confirmed `0x3A3ea619C0f37a7D2fF07FF442d86
 | USDC approval | PASS, displayed hash + explorer + confirmed receipt | [0x395256811ba907c16a64bbbff4b1720c1dd1a41fa34342327490613d87530e0c](https://arbiscan.io/tx/0x395256811ba907c16a64bbbff4b1720c1dd1a41fa34342327490613d87530e0c) | allowance 2 USDC | 38,596 / 0.00000077230596 |
 | Fund #1 deposit | PASS on-chain, preview and hash display; initial holder-refresh assertion throttled, subsequent holder read PASS | [0x95785603afd04aa3a5de05e97014b871a7b97fc12d7069f0a2b34100869b45b3](https://arbiscan.io/tx/0x95785603afd04aa3a5de05e97014b871a7b97fc12d7069f0a2b34100869b45b3) | budget 2; charged 1.007786; flow fee 0.005; unused budget 0.992214 USDC; minted 1 share / raw 1e18 | 865,923 / 0.00001731846 |
 | Instant half-raw-share payout | BLOCKED by authoritative preflight `PayoutBelowOneShare`; no payout broadcast | None | requested 0.501393 USDC for raw 5e17 shares; received 0 | 0 / 0 |
+| Authorized one-whole-share Instant payout | PASS, UI hash + Arbiscan + confirmed receipt + exact USDC reconciliation | [0x408c982502307d17124ca8c8fec9227aaec975f01ad2cee3d5005f698174f9b8](https://arbiscan.io/tx/0x408c982502307d17124ca8c8fec9227aaec975f01ad2cee3d5005f698174f9b8) | burned raw 1e18 / 1 share; gross 1.002762; Instant fee 0.020055 (200 bps); flow fee 0.002506; received 0.980201 USDC | 822,533 / 0.000016478626122 |
 | Standard payout | SKIPPED, optional; half-share cannot be served | None | 0 | 0 |
 | Holder after deposit | PASS after cooldown | Fund #1 holder reads raw 1e18 / 1 displayed share | 1 share | 0 |
 | Five-minute post-deposit history | Diagnostic PASS; history remains incomplete and empty | Endpoint below, no new deposit transaction in position history | No write | 0 |
@@ -49,7 +50,18 @@ Contract root cause: `smartcontract-v2/src/libraries/ShareMath.sol:90` rounds bu
 whole shares; `smartcontract-v2/src/core/CoreVaultPayoutLogic.sol:127` rejects zero burn.
 The decimals assertion is real, but fractionally denominated ERC20 units do not change
 this contract rule. No larger payout, second deposit, or extra funding was attempted.
-The 2% Instant fee/USDC-received path remains unproven because no valid half-share payout exists.
+The initial half-share attempt remains rejected as expected. A subsequent explicit authorization
+allowed redemption of the full one-share holding. `@v2-payout` passed against deployed dev:
+receipt `0x1`, burner sender, exactly raw 1e18 burned, and received 980201 USDC base units
+equal to the authoritative UI preview. The request had 1% price headroom but could not burn
+more than the single-share balance. Gross 1002762 minus 20055 Instant fee and 2506 flow fee
+equals net 980201. No additional deposit was made.
+
+UX fix commit `cc5636b8`: the fractional request previously showed "Minimum deposit", not a raw
+contract error, but it was misleading. `fundModel.ts` now maps `PayoutBelowOneShare` separately
+to "Payouts are in whole shares; minimum 1 share." All 11 locales include the key; a fund-form
+test checks the accessible alert and absence of the deposit label/raw error/confirm action.
+This fix is in PR #47 only, not deployed. Lists/Manager Console and history were not changed.
 
 ## History diagnosis (API read-only; no API repo edits)
 
@@ -82,8 +94,8 @@ timestamps are retained in the ignored history diagnostic JSON.
 
 ## Final balances and safety
 
-Arbitrum burner: **3.270414 USDC**, **0.000462022587552 ETH**, **1 fund #1 share**.
-Total USDC charged 1.007786, total gas 0.00001809076596 ETH. Journal reserves 2 USDC
+Arbitrum burner after the full payout: **4.250615 USDC**, **0.000445543961430 ETH**, **0 fund #1 shares**.
+Total USDC charged 1.007786, received 0.980201, total gas 0.000034569392082 ETH. Journal reserves 2 USDC
 of the authorized 3-USDC ceiling, preventing replay across reruns. No optional claim,
 extra funding, merge, deploy or API source edit.
 
@@ -94,9 +106,9 @@ are retained there; no secret entered browser injection or a committed file.
 No local app/backend server started; no other agents' worktrees were touched.
 
 Final gates after merging current main (including slice E and #39): typecheck PASS;
-biome no errors (84 existing warnings, one info); 70 fund tests PASS; full suite
-767 files / 10,237 passing tests, one expected failure; i18n 11 locales / 2487 keys PASS;
+biome no errors (84 existing warnings, one info); 71 fund tests PASS; full suite
+767 files / 10,238 passing tests, one expected failure; i18n 11 locales / 2488 keys PASS;
 production build PASS. Earlier branch comparison was 10,207 tests, this patch added
-two source-chain regressions; the remaining increase comes from incoming main.
+two source-chain regressions and one payout UX test; the remaining increase comes from incoming main.
 Standalone E2E compile still reports only two pre-existing RPC generic errors in
 `e2e/wallet/mockWallet.ts:132`; no new standalone errors.

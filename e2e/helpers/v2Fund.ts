@@ -53,6 +53,7 @@ export interface RunState {
   sharesBefore?: string;
   sharesAfter?: string;
   depositBudget?: string;
+  payoutRequest?: string;
   initialUsdc?: string;
   initialEth?: string;
   spent: string;
@@ -170,8 +171,12 @@ export const test = walletTest.extend<{ safeWallet: undefined }>({
               if (!run.sharesAfter) throw new Error("No verified new shares; payout blocked");
               const mode = Number(decoded.args?.[1]);
               const requested = BigInt(decoded.args?.[0] ?? 0);
-              if (requested <= 0n || requested > BigInt(run.depositBudget ?? "0") / 2n)
-                throw new Error("Payout exceeds half the authorized new deposit budget");
+              if (
+                requested <= 0n ||
+                requested !== BigInt(run.payoutRequest ?? "0") ||
+                requested > BigInt(run.depositBudget ?? "0")
+              )
+                throw new Error("Payout does not match the authorized one-share request");
               if (mode !== 0 || run.transactions.some((item) => item.action === "requestPayout"))
                 throw new Error("Only one Instant payout is authorized");
             } else throw new Error("Unauthorized fund operation");

@@ -9,10 +9,11 @@ Writes require the funded dev burner in `E2E_PRIVATE_KEY` **in the shell only** 
 Wait for PR #45 to merge and for explorer links to appear on deployed fund history before writes.
 These are real mainnet transactions: one deposit, at most 2.2 USDC, cumulative ceiling 3 USDC,
 one Instant payout, no native-value transfer. The optional Standard payout is skipped.
-Payout sizing reads ShareToken `decimals()` and converts half the newly minted raw balance
-to USDC using on-chain Share Price. Despite 18 token decimals, the v2 contract currently rounds
-burns to whole shares; a half-share request can return `PayoutBelowOneShare` before broadcast.
-Do not increase the request to burn the entire holding without separate authorization.
+Payout sizing reads ShareToken `decimals()` and computes whole units from the raw balance.
+The authorized follow-up redeems exactly the burner's one whole share. Request sizing includes
+one-percent price headroom; the authoritative preview must burn exactly the one-share balance.
+The journal prevents a second payout broadcast. Fractional requests return `PayoutBelowOneShare`;
+the fund form now explains "Payouts are in whole shares; minimum 1 share."
 `E2E_V2_FUND=2` explicitly selects fund #2 for a deposit. `E2E_V2_HISTORY=1` runs the
 five-minute read-only history diagnostic after a deposit (`--grep 'history diagnostic'`).
 The authorized dev burner source is the separate `pool-party-v2-frontend/.env.dev` checkout;
