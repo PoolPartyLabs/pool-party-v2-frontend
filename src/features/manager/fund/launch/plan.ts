@@ -1,9 +1,11 @@
 /**
  * @id PP-MGR-LIB-037 (POO-2177)
  * @name launchPlanAdapter
- * @implements-rules-version v2 (POO-2181)
+ * @implements-rules-version v2 (POO-2181); POO-2204 rules v1
  * Owned structural adapter for the canvas BuildPlan v1.
  */
+import { isConfigFor } from "../build/plan/blockConfig";
+
 export interface CanvasPlan {
   // PP-INTEGRATION-POINT: canvas owners provide BuildPlan v1 and missing range/leaf execution fields.
   version: 1;
@@ -144,6 +146,9 @@ export function deriveLaunchSteps(
       percent(chain.sharePct);
       const leaves = chain.steps.filter((step) => step.family === "position");
       if (leaves.length === 0) throw new Error("EMPTY_BUILD");
+      const deferred =
+        chain.sharePct === 0 && leaves.length === 1 && leaves[0]?.kind === "uniswapV4Pool";
+      if (chain.sharePct === 0 && !deferred) throw new Error("INVALID_ALLOCATION");
       let leafTotal = 0;
       for (const block of chain.steps) {
         if (ids.has(block.id)) throw new Error("DUPLICATE_BLOCK");
@@ -161,6 +166,10 @@ export function deriveLaunchSteps(
           !block.config
         )
           throw new Error("UNSUPPORTED_POSITION");
+        if (deferred) {
+          if (!isConfigFor("uniswapV4Pool", block.config)) throw new Error("INVALID_BUILD");
+          continue;
+        }
         const settings = { ...execution[block.id], ...block.config };
         if (settings.tickLower !== undefined && settings.tickUpper !== undefined) {
           delete settings.priceLower;
@@ -228,7 +237,10 @@ export function deriveLaunchSteps(
   };
   positions(plan.hub.chains, 42161, "allocate");
   for (const group of plan.spokes) {
-    if (group.sharePct === 0 && group.chains.length === 0) continue;
+    if (group.sharePct === 0 && group.chains.every((chain) => chain.sharePct === 0)) {
+      positions(group.chains, 4663, "profile", "robinhood");
+      continue;
+    }
     if (
       group.sharePct <= 0 ||
       group.chains.reduce((sum, chain) => sum + percent(chain.sharePct), 0) > group.sharePct

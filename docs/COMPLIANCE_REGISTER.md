@@ -66,3 +66,7 @@ paragraph used the same Aave reserve snapshot as SupplyBlockPanel; CR-MGR-024 re
 ## Verification record: continuous launch prompts
 
 2026-10-04, POO-2203, PP-MGR-HOK-019 and PP-MGR-CMP-081: explicit Sign now continues sequential wallet prompts after prerequisites settle. Verify each wallet still presents the actual transaction/message, Pause stops future prompts, and rejection or uncertain broadcasts never authorize replay. Existing driver validation, wallet/chain checks, journal reconciliation and settlement-only completion analytics are retained. Regression tests cover these transitions with mocks; no live transaction or browser signing test was performed. The change does not add venues, fees, custody or return claims and does not resolve the existing launch disclosure entries.
+
+## Verification record: pools with deferred allocation
+
+2026-10-04, POO-2204, PP-MGR-CMP-069: zero allocation preserves the pool's immutable permission without opening a position or routing funds to it at launch. Range estimates are hidden until the manager allocates capital; positive allocations still require current eligibility and range checks. Verify that later management offers the operation when capital is allocated. This fix makes no claim that a position already exists or earns yield at 0%. Existing venue/range disclosures and custody questions remain open. A wholly idle launch retains its previous restriction pending Murilo's decision.

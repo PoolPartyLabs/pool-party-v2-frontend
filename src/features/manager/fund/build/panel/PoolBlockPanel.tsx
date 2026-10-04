@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-069
  * @name PoolBlockPanel
- * @implements-rules-version v1 (POO-2189)
+ * @implements-rules-version v1 (POO-2189); POO-2204 rules v1
  * @analytics-events none (the panel shell emits)
  * The Uniswap v4 body: mandate pool defaults from a mount read, and a live-gated draft range.
  */
@@ -19,6 +19,7 @@ import {
 import { simulateDelay, simulateError } from "@/mocks/utils/simulate";
 import { isPoolConfigComplete, isRangeOnGrid } from "../plan/blockConfig";
 import type { PoolBlockConfig } from "../plan/buildPlan";
+import { findBlock } from "../plan/planDerive";
 import { FundSlippageControl } from "./FundSlippageControl";
 import { PanelFieldLabel } from "./PanelFieldLabel";
 import { PanelSelect } from "./PanelSelect";
@@ -49,8 +50,9 @@ export function PoolPanelProvider({
   context,
   config,
   children,
+  sharePct,
 }: PanelConfiguredProviderProps<PoolBlockConfig>) {
-  const live = usePanelPool(chainFor(context), config.poolId);
+  const live = usePanelPool(chainFor(context), sharePct === 0 ? null : config.poolId);
   return <PoolSnapshot.Provider value={live}>{children}</PoolSnapshot.Provider>;
 }
 function usePoolSnapshot(): UsePanelPoolResult {
@@ -65,7 +67,7 @@ function defaultConfig(pool: PanelPoolView, poolId: string): PoolBlockConfig | n
   return range ? { poolId, ...range, slippagePct: 2 } : null;
 }
 /** One network catalog read per mounted body; cancellation prevents a previous network landing. */
-function usePoolOptions(context: PanelBodyContext) {
+function usePoolOptions(context: PanelBodyContext, deferred = false) {
   const t = useTranslations("manager.fundBuilder.canvas.panel");
   const chainId = chainFor(context);
   const rows = panelPoolsFor(context.draft, chainId);
@@ -79,6 +81,7 @@ function usePoolOptions(context: PanelBodyContext) {
   const [initialRows] = useState(rows);
   // biome-ignore lint/correctness/useExhaustiveDependencies: revision deliberately restarts a failed batch read.
   useEffect(() => {
+    if (deferred) return;
     let active = true;
     setState({ chainId, status: "loading", views: new Map() });
     const read = async () => {
@@ -115,17 +118,22 @@ function usePoolOptions(context: PanelBodyContext) {
     return () => {
       active = false;
     };
-  }, [chainId, revision, initialRows]);
-  const status = state.chainId === chainId ? state.status : "loading";
+  }, [chainId, revision, initialRows, deferred]);
+  const status = deferred ? "ready" : state.chainId === chainId ? state.status : "loading";
   return {
     rows,
     status,
     retry: () => setRevision((value) => value + 1),
     options: rows.map((row) => {
       const view = status === "ready" ? state.views.get(row.poolId) : undefined;
-      const config = view ? defaultConfig(view, row.poolId) : null;
-      const reason =
-        status === "loading"
+      const config = deferred
+        ? { poolId: row.poolId, slippagePct: 2 }
+        : view
+          ? defaultConfig(view, row.poolId)
+          : null;
+      const reason = deferred
+        ? undefined
+        : status === "loading"
           ? t("pool.loading")
           : status === "error"
             ? t("pool.failed")
@@ -144,7 +152,8 @@ function usePoolOptions(context: PanelBodyContext) {
 }
 function usePoolPick(context: PanelBodyContext): PanelPickModel<PoolBlockConfig> {
   const t = useTranslations("manager.fundBuilder.canvas.panel");
-  const data = usePoolOptions(context);
+  const deferred = findBlock(context.plan, context.blockId)?.chain.sharePct === 0;
+  const data = usePoolOptions(context, deferred);
   return {
     heading: t("pool.heading"),
     count: data.rows.length,
@@ -169,9 +178,14 @@ function usePoolPick(context: PanelBodyContext): PanelPickModel<PoolBlockConfig>
     onRetry: data.retry,
   };
 }
-function usePoolApplyGate(_context: PanelBodyContext, config: PoolBlockConfig) {
+function usePoolApplyGate(
+  _context: PanelBodyContext,
+  config: PoolBlockConfig,
+  sharePct?: number | null,
+) {
   const t = useTranslations("manager.fundBuilder.canvas.panel");
   const live = usePoolSnapshot();
+  if (sharePct === 0) return { ok: true };
   const valid =
     live.pool &&
     isPoolConfigComplete(config) &&
@@ -195,11 +209,33 @@ export function PoolBlockPanel({
   config,
   onConfigChange,
   allocation,
+  sharePct,
 }: PanelFieldsProps<PoolBlockConfig>) {
   const t = useTranslations("manager.fundBuilder.canvas.panel");
   const labelId = useId();
-  const data = usePoolOptions(context);
+  const data = usePoolOptions(context, sharePct === 0);
   const live = usePoolSnapshot();
+  // A pool selected while deferred has no range. Initialize only missing fields
+  // from the first applicable positive snapshot; preserve saved/custom ranges.
+  useEffect(() => {
+    if (sharePct === 0 || !live.applicable || !live.pool) return;
+    const missingRange =
+      config.tickLower === undefined ||
+      config.tickUpper === undefined ||
+      config.fullRange === undefined ||
+      config.displayInverted === undefined;
+    if (!missingRange) return;
+    const defaults = defaultConfig(live.pool, config.poolId);
+    if (!defaults) return;
+    onConfigChange({
+      ...defaults,
+      ...config,
+      tickLower: config.tickLower ?? defaults.tickLower,
+      tickUpper: config.tickUpper ?? defaults.tickUpper,
+      fullRange: config.fullRange ?? defaults.fullRange,
+      displayInverted: config.displayInverted ?? defaults.displayInverted,
+    });
+  }, [sharePct, live.applicable, live.pool, config, onConfigChange]);
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
@@ -233,20 +269,30 @@ export function PoolBlockPanel({
         />
       </div>
       {allocation}
-      {live.pool && isPoolConfigComplete(config) ? (
+      {sharePct === 0 ? null : live.pool && isPoolConfigComplete(config) ? (
         <PriceRangeField
           pool={live.pool}
           range={config}
           onChange={(range) => onConfigChange({ ...config, ...range })}
         />
-      ) : (
+      ) : live.status === "loading" ? (
         <div
           role="status"
           className="h-40 animate-pulse rounded-xl bg-surface-raised"
           aria-label={t("pool.loading")}
         />
+      ) : (
+        <p role="status" className="text-muted-foreground text-xs">
+          {live.status === "error"
+            ? t("pool.failed")
+            : !live.pool?.eligible
+              ? t("pool.ineligible")
+              : !live.pool.hasActiveLiquidity
+                ? t("pool.noLiquidity")
+                : t("pool.incomplete")}
+        </p>
       )}
-      {live.status === "error" ? (
+      {sharePct !== 0 && live.status === "error" ? (
         <div role="alert" className="text-muted-foreground text-xs">
           {t("pool.failed")}{" "}
           <button type="button" className={PANEL_LINK} onClick={live.retry}>

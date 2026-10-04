@@ -209,7 +209,7 @@ PP-MGR-CMP-077 connects the existing `useV2ReviewDraft`, read-only `useV2LaunchS
 and `startFundLaunch` seams. It never reconstructs launch transactions or writes a journal.
 The mock branch does not mount Privy hooks or substitute fixtures into real Review.
 `getLaunchSteps` remains the source of the grouped signature preview.
-| Uniswap v4 pool panel defaults | `src/features/manager/fund/build/panel/PoolBlockPanel.tsx` | Mount read through `getCatalogPoolsAction`, MCK-005 in mock mode; missing, unread or ineligible rows disable Use. `usePanelPool` gates Apply on the latest live read. POO-2189 @rules-v1. |
+| Uniswap v4 pool panel defaults | `src/features/manager/fund/build/panel/PoolBlockPanel.tsx` | Mount read through `getCatalogPoolsAction`, MCK-005 in mock mode; missing, unread or ineligible rows disable Use. `usePanelPool` gates positive-allocation Apply on the latest live read. POO-2204 skips range reads and swap/open execution at zero allocation, preserving the mandate pool for later use. POO-2189 and POO-2204 @rules-v1. |
 ## Aave Supply configuration (POO-2194, rules v1)
 
 `SupplyBlockPanel.tsx` reads `usePanelReserves` against the shell's catalog, sourced from
