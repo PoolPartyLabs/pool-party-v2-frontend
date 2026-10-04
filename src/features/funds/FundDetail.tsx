@@ -1,29 +1,38 @@
 /**
- * @id PP-STR-SCR-005 (POO-2175)
+ * @id PP-STR-SCR-006
  * @name FundDetail
- * @implements-rules-version v2 (POO-2175); v1 (POO-2179 explorer records)
- * Fund valuation, holder exposure, position history and manager read-only progress.
+ * @implements-rules-version v1 (POO-2216)
+ * @analytics-events strategy_detail_viewed, app_cta_blocked, app_error_shown
+ * Investor V2 projection in the existing Details frame; technical manager view is separate.
  */
 "use client";
-import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { formatUnits } from "viem";
-import type { FundBalances, FundPositionDetail, FundTransit } from "@/lib/api/v2/fundSchemas";
+import { StrategyLogo } from "@/components/data-display/StrategyLogo";
+import { InvestModal } from "@/features/strategies/components/InvestModal";
+import { ManagerCard } from "@/features/strategies/components/ManagerCard";
+import { StrategyDetailFrame } from "@/features/strategies/components/StrategyDetailFrame";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
+import { useTrackView } from "@/lib/analytics/useTrackView";
+import type { FundView } from "@/lib/api/v2/fundSchemas";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useSiweSession } from "@/lib/auth/useSiweSession";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { useContractFamily } from "@/lib/hooks/useContractFamily";
-import { ExplorerFields as ReadOnlyFields } from "./ExplorerFields";
-import { FundActionsPanel } from "./FundActionsPanel";
-import { FundHistory } from "./FundHistory";
+import { isMockMode } from "@/lib/services";
+import { readErc20Balance } from "@/lib/tokens/readErc20";
+import { formatPercent, formatTokenAmount, formatUsdPrecise } from "@/lib/utils/format";
+import { FundTechnicalDetail } from "./FundTechnicalDetail";
+import { loadPersonalFundDetailsAction, loadPublicFundDetailsAction } from "./fundDetailsActions";
 import {
-  loadFundAction,
-  loadFundManagerAction,
-  loadFundPositionAction,
-  loadFundTransitAction,
-} from "./fundActions";
-import { fundErrorKey, reportFreshness } from "./fundModel";
+  detailedCoverage,
+  fundResumeAmount,
+  hasFundInterest,
+  type PersonalFundState,
+} from "./fundDetailsModel";
+
 export interface FundDetailProps {
   core: string;
 }
@@ -32,373 +41,412 @@ export function FundDetail({ core }: FundDetailProps) {
   const { isEnabled } = useFeatureFlags();
   const { family, hydrated } = useContractFamily();
   if (!isEnabled("fundContracts") || (hydrated && family !== "v2")) return <p>{t("switchV2")}</p>;
-  return hydrated ? <FundDetailData core={core} /> : <p role="status">{t("loading")}</p>;
+  return hydrated ? <FundInvestorDetails core={core} /> : <p role="status">{t("loading")}</p>;
 }
-function FundDetailData({ core }: FundDetailProps) {
-  const t = useTranslations("strategies.funds");
+function FundInvestorDetails({ core }: FundDetailProps) {
+  const t = useTranslations("strategies.DetailsV2");
   const { address } = useAuth();
+  const { track } = useAnalytics();
   const { isSignedIn } = useSiweSession();
-  const [result, setResult] = useState<Awaited<ReturnType<typeof loadFundAction>> | null>(null);
+  const [publicRead, setPublicRead] = useState<Awaited<
+    ReturnType<typeof loadPublicFundDetailsAction>
+  > | null>(null);
+  const [personal, setPersonal] = useState<PersonalFundState>({ status: "loading" });
+  const [balanceRead, setBalanceRead] = useState<{ identity: string; value: number } | null>(null);
   const [revision, setRevision] = useState(0);
-  const [loadedIdentity, setLoadedIdentity] = useState("");
-  const [history, setHistory] = useState<FundPositionDetail | null>(null);
-  const [historyChain, setHistoryChain] = useState<number | undefined>();
-  const [manager, setManager] = useState<{
-    transits: FundTransit[];
-    balances: FundBalances[];
-    cursor: string | null;
-  } | null>(null);
-  const [transit, setTransit] = useState<FundTransit | null>(null);
-  const [detailError, setDetailError] = useState<string | null>(null);
-  const [elapsed, setElapsed] = useState(0);
-  const detailRun = useRef(0);
+  const [identity, setIdentity] = useState("");
+  const key = `${core}:${address ?? ""}:${isSignedIn}:${revision}`;
   useEffect(() => {
-    const requestKey = `${address ?? ""}:${isSignedIn}:${revision}`;
-    if (!requestKey) return;
     let active = true;
-    detailRun.current += 1;
-    setHistory(null);
-    setManager(null);
-    setTransit(null);
-    setElapsed(0);
-    void loadFundAction(core).then((value) => {
-      if (active) {
-        setResult(value);
-        setLoadedIdentity(`${core}:${address ?? ""}:${isSignedIn}`);
-      }
-    });
-    const timer = setInterval(() => {
-      if (active) setElapsed((value) => value + 1);
-    }, 1000);
+    setIdentity(key);
+    setPublicRead(null);
+    setPersonal(address && isSignedIn ? { status: "loading" } : { status: "disconnected" });
+    void loadPublicFundDetailsAction(core)
+      .then((result) => {
+        if (active) setPublicRead(result);
+      })
+      .catch(() => {
+        if (active) setPublicRead({ ok: false, code: "V2_UNAVAILABLE" });
+      });
+    if (address && isSignedIn)
+      void loadPersonalFundDetailsAction(core)
+        .then((result) => {
+          if (!active) return;
+          setPersonal(
+            result.ok &&
+              result.data.holder &&
+              result.data.wallet?.toLowerCase() === address.toLowerCase()
+              ? { status: "ready", holder: result.data.holder, wallet: result.data.wallet }
+              : { status: "error", code: result.ok ? "V2_SESSION" : result.error.code },
+          );
+        })
+        .catch(() => {
+          if (active) setPersonal({ status: "error", code: "V2_UNAVAILABLE" });
+        });
     return () => {
       active = false;
-      detailRun.current += 1;
-      clearInterval(timer);
     };
-  }, [core, address, isSignedIn, revision]);
+  }, [core, address, isSignedIn, key]);
   useEffect(() => {
+    if (isMockMode || !publicRead?.ok || personal.status !== "ready" || identity !== key) return;
     let active = true;
-    if (result?.ok && result.data.wallet?.toLowerCase() === result.data.fund.manager.toLowerCase())
-      void loadFundManagerAction(core).then((value) => {
-        if (!active) return;
-        if (value.ok)
-          setManager({
-            transits: value.data.transits.items,
-            balances: value.data.balances,
-            cursor: value.data.transits.nextCursor,
-          });
-        else setDetailError(fundErrorKey(value.error.code));
+    // PP-INTEGRATION-POINT: same existing ERC20 balance reader as provisioning, hub USDC only.
+    void readErc20Balance(
+      publicRead.fund.mandate.usdc as `0x${string}`,
+      personal.wallet as `0x${string}`,
+      42161,
+    )
+      .then((raw) => {
+        if (active) setBalanceRead({ identity: key, value: Number(formatUnits(raw, 6)) });
+      })
+      .catch(() => {
+        if (active) setBalanceRead(null);
       });
     return () => {
       active = false;
     };
-  }, [result, core]);
-  if (!result || loadedIdentity !== `${core}:${address ?? ""}:${isSignedIn}`)
-    return <p role="status">{t("loading")}</p>;
-  if (!result.ok)
+  }, [identity, key, publicRead, personal]);
+  const errorCode =
+    publicRead && !publicRead.ok
+      ? publicRead.code
+      : personal.status === "error"
+        ? personal.code
+        : null;
+  useEffect(() => {
+    if (identity === key && errorCode)
+      track("app_error_shown", {
+        strategy_id: core,
+        error_code: errorCode,
+        error_origin: "upstream",
+      });
+  }, [identity, key, errorCode, track, core]);
+  if (identity !== key || !publicRead) return <p role="status">{t("loading")}</p>;
+  if (!publicRead.ok)
     return (
       <div role="alert">
-        <p>{t(fundErrorKey(result.error.code))}</p>
-        <button type="button" onClick={() => setRevision((value) => value + 1)}>
+        <p>{t("unavailable")}</p>
+        <button type="button" onClick={() => setRevision((v) => v + 1)}>
           {t("retry")}
         </button>
       </div>
     );
-  const { fund, holder, wallet } = result.data;
-  const hubChain = Number(fund.mandate.hubChainId);
-  const money = (value: string | undefined, decimals = 6) =>
-    value === undefined ? t("unavailable") : formatUnits(BigInt(value), decimals);
-  const nav = [
-    { label: t("sharePrice"), value: fund.sharePrice, decimals: 24 },
-    { label: t("nav"), value: fund.shareAssets },
-    { label: t("gross"), value: fund.grossAssets },
-    { label: t("idle"), value: fund.idle },
-    { label: t("freeIdle"), value: fund.freeIdle },
-    { label: t("reserve"), value: fund.payoutReserve },
-    { label: t("inFlight"), value: fund.inFlightValue },
-  ];
-  const fresh =
-    fund.mandate.spokes.length === 0 ||
-    reportFreshness(
-      fund.lastReport?.ageSeconds ?? null,
-      fund.mandate.spokes[0]?.maxReportAge ?? 0,
-      elapsed,
-    );
   return (
-    <article className="flex flex-col gap-6">
-      <header>
-        {fund.profile?.imageUrl && /^https:\/\//.test(fund.profile.imageUrl) ? (
-          <Image
-            src={fund.profile.imageUrl}
-            alt={fund.profile.name ?? `PP-${fund.creationNumber}`}
-            width={80}
-            height={80}
-            unoptimized
-            className="rounded-xl"
-          />
-        ) : null}
-        <h1 className="text-2xl font-semibold">
-          {fund.profile?.name ?? `PP-${fund.creationNumber}`}
-        </h1>
-        <p>{fund.profile?.description}</p>
-        <p className="break-all">
-          {t("manager")}: {fund.profile?.managerDisplayName}{" "}
-          <ReadOnlyFields value={fund.manager} chainId={hubChain} />
-        </p>
-        <p>
-          {t("state")}: {fund.state}
-        </p>
-      </header>
-      <dl className="grid gap-4 rounded-xl border border-border p-5 md:grid-cols-3">
-        {nav.map((row) => (
-          <div key={row.label}>
-            <dt className="text-sm text-muted-foreground">{row.label}</dt>
-            <dd className="font-semibold">{money(row.value, row.decimals)} USDC</dd>
-          </div>
-        ))}
-      </dl>
-      <section>
-        <h2 className="font-semibold">{t("report")}</h2>
-        {fund.lastReport ? (
-          <ReadOnlyFields
-            value={fund.lastReport.report}
-            chainId={Number(
-              fund.lastReport.report.sourceChainId ??
-                fund.lastReport.report.spokeChainId ??
-                hubChain,
-            )}
-            chainByField={{
-              publishTxHash:
-                (fund.lastReport.report.sourceChainId ?? fund.lastReport.report.spokeChainId) !=
-                null
-                  ? Number(
-                      fund.lastReport.report.sourceChainId ?? fund.lastReport.report.spokeChainId,
-                    )
-                  : fund.mandate.spokes.length === 1
-                    ? Number(fund.mandate.spokes[0]?.chainId)
-                    : undefined,
-              deliveryTxHash: hubChain,
-            }}
-          />
-        ) : null}
-        <p aria-live="polite">
-          {fund.lastReport
-            ? t("reportAge", { seconds: fund.lastReport.ageSeconds + elapsed })
-            : t("unavailable")}{" "}
-          · {fresh ? t("fresh") : t("refreshing")}
-        </p>
-      </section>
-      <section>
-        <h2 className="font-semibold">{t("chains")}</h2>
-        <ReadOnlyFields
-          chainId={hubChain}
-          value={{
-            coreVault: fund.coreVault,
-            shareToken: fund.shareToken,
-            valueReportReceiver: fund.valueReportReceiver,
-            ...(fund.managerFeeVault ? { managerFeeVault: fund.managerFeeVault } : {}),
-          }}
-        />
-        {fund.chains.map((chain) => (
-          <div key={chain.chainId}>
-            {chain.chainId === "42161" ? "Arbitrum" : "Robinhood"}:{" "}
-            {chain.status === "created" ? t("created") : t("pending")}
-            <ReadOnlyFields value={chain} />
-          </div>
-        ))}
-      </section>
-      <section>
-        <h2 className="font-semibold">{t("limits")}</h2>
-        <p>{t("notOnChain")}</p>
-        {fund.limitsUsage ? <ReadOnlyFields value={fund.limitsUsage} /> : <p>{t("unavailable")}</p>}
-      </section>
-      {holder ? (
-        <section className="rounded-xl border border-border p-5">
-          <h2 className="font-semibold">{t("holdings")}</h2>
-          <dl className="grid gap-3 md:grid-cols-3">
-            {[
-              { label: t("shares"), value: money(holder.shares, 18) },
-              { label: t("value"), value: money(holder.value) },
-              { label: t("income"), value: money(holder.incomeOwed) },
-              { label: t("pendingPayout"), value: money(holder.payout.usdcOutstanding) },
-              { label: t("claimability"), value: holder.claimable ? t("ready") : t("notReady") },
-            ].map((row) => (
-              <div key={row.label}>
-                <dt>{row.label}</dt>
-                <dd>{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-          {holder.payout.open ? (
-            <p>
-              {t("termEnds")}: {new Date(Number(holder.payout.termEndsAt) * 1000).toLocaleString()}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
-      <section>
-        <h2 className="font-semibold">{t("positions")}</h2>
-        <div className="grid gap-4 md:grid-cols-2">
-          {fund.positionsSummary?.positions.map((position) => (
-            <div
-              className="rounded-xl border border-border p-5"
-              key={`${position.chainId}:${position.positionKey}`}
-            >
-              <h3>
-                {position.adapterKind === "aave-v3" ? "Aave v3" : "Uniswap v4"} ·{" "}
-                {position.tokens.map((token) => token.symbol).join(" / ")}
-              </h3>
-              <ReadOnlyFields value={position.tokens} chainId={Number(position.chainId)} />
-              {typeof position.adapter === "string" ? (
-                <ReadOnlyFields
-                  value={{ adapter: position.adapter }}
-                  chainId={Number(position.chainId)}
-                />
-              ) : null}
-              <p>
-                {t("value")}: {position.valueUsd ?? t("unavailable")} USD
-              </p>
-              <p>
-                {t("income")}: {position.uncollectedIncomeUsd ?? t("unavailable")} USD
-              </p>
-              {position.uniswap ? (
-                <>
-                  <p>
-                    {t("range")}: {position.uniswap.tickLower} – {position.uniswap.tickUpper}
-                  </p>
-                  <p>{position.uniswap.inRange ? t("inRange") : t("outRange")}</p>
-                </>
-              ) : null}
-              {position.aave ? (
-                <p>
-                  {t("balance")}: {position.aave.currentBalance.decimal} · APY{" "}
-                  {position.aave.supplyApy ?? t("unavailable")}%
-                </p>
-              ) : null}
-              {position.currentAmounts ? <ReadOnlyFields value={position.currentAmounts} /> : null}
-              {position.uncollectedIncome ? (
-                <ReadOnlyFields value={position.uncollectedIncome} />
-              ) : null}
-              {(holder?.positions ?? holder?.positionsSummary?.positions)?.find(
-                (exposure) =>
-                  exposure.positionKey === position.positionKey &&
-                  exposure.chainId === position.chainId,
-              )?.holderExposure ? (
-                <ReadOnlyFields
-                  value={
-                    (holder.positions ?? holder.positionsSummary?.positions)?.find(
-                      (exposure) =>
-                        exposure.positionKey === position.positionKey &&
-                        exposure.chainId === position.chainId,
-                    )?.holderExposure
-                  }
-                />
-              ) : null}
-              <button
-                type="button"
-                onClick={() => {
-                  const request = ++detailRun.current;
-                  setHistory(null);
-                  setHistoryChain(Number(position.chainId));
-                  void loadFundPositionAction(
-                    core,
-                    Number(position.chainId),
-                    position.positionKey,
-                  ).then((value) => {
-                    if (request !== detailRun.current) return;
-                    if (value.ok) setHistory(value.data);
-                    else setDetailError(fundErrorKey(value.error.code));
-                  });
-                }}
-              >
-                {t("history")}
-              </button>
-            </div>
-          )) ?? <p>{t("empty")}</p>}
-        </div>
-        <FundHistory key={core} core={core} />
-        {history ? (
-          <div className="mt-4">
-            <h3>{t("history")}</h3>
-            <p>{history.history?.complete ? t("complete") : t("partialHistory")}</p>
-            {!history.history || history.history.events.length === 0 ? (
-              <p>{t("empty")}</p>
-            ) : (
-              history.history.events.map((event) => (
-                <div
-                  className="break-all"
-                  key={`${event.transactionHash}:${event.logIndex ?? event.type}`}
-                >
-                  <ReadOnlyFields value={event} chainId={historyChain} />
-                </div>
-              ))
-            )}
-          </div>
-        ) : null}
-      </section>
-      {wallet && holder ? (
-        <FundActionsPanel
-          key={`${core}:${wallet}`}
-          fund={fund}
-          holder={holder}
-          wallet={wallet}
-          refresh={() => setRevision((value) => value + 1)}
-        />
+    <FundDetailsPresenter
+      key={key}
+      fund={publicRead.fund}
+      personal={personal}
+      balance={balanceRead?.identity === key ? balanceRead.value : null}
+      onRetry={() => setRevision((v) => v + 1)}
+    />
+  );
+}
+export function FundDetailsPresenter({
+  fund,
+  personal,
+  balance = null,
+  onRetry,
+}: {
+  fund: FundView;
+  personal: PersonalFundState;
+  balance?: number | null;
+  onRetry?: () => void;
+}) {
+  const t = useTranslations("strategies.DetailsV2");
+  const fundText = useTranslations("strategies.funds");
+  const query = useSearchParams();
+  const { track } = useAnalytics();
+  useTrackView("strategy_detail_viewed", { strategy_id: fund.coreVault });
+  const [investOpen, setInvestOpen] = useState(false);
+  const [resume, setResume] = useState<number | null>(null);
+  const fromPortfolio = query.get("from") === "portfolio";
+  const withdrawalRequested = query.get("withdraw") === "1";
+  const managerView =
+    query.get("view") === "manager" &&
+    personal.status === "ready" &&
+    personal.wallet.toLowerCase() === fund.manager.toLowerCase();
+  useEffect(() => {
+    const amount = fundResumeAmount(query, personal);
+    if (amount !== null) {
+      setResume(amount);
+      setInvestOpen(true);
+    }
+  }, [query, personal]);
+  const money = (raw: string | undefined, decimals = 6) =>
+    raw === undefined
+      ? t("unavailable")
+      : formatTokenAmount(Number(formatUnits(BigInt(raw), decimals)), "USDC", 6);
+  const number = (raw: string, decimals: number) =>
+    formatTokenAmount(Number(formatUnits(BigInt(raw), decimals)), "", 6).trim();
+  const pct = (bps: unknown) =>
+    typeof bps === "number" ? formatPercent(bps / 100, 2) : t("unavailable");
+  const fundName = fund.profile?.name?.trim() || `PP-${fund.creationNumber}`;
+  const fundLogo = fund.profile?.imageUrl || fund.profile?.image || undefined;
+  const managerName = fund.profile?.managerDisplayName?.trim() || fund.manager;
+  const chainName = (id: string) =>
+    id === "42161" ? "Arbitrum" : id === "4663" ? "Robinhood" : id;
+  const tokenName = (chainId: string, address: string) =>
+    fund.positionsSummary?.positions
+      .filter((position) => position.chainId === chainId)
+      .flatMap((position) => position.tokens)
+      .find((token) => token.address.toLowerCase() === address.toLowerCase())?.symbol ||
+    `${address.slice(0, 6)}…${address.slice(-4)}`;
+  const protocolName = (chainId: string, address: string) => {
+    const chain = fund.chains.find((chain) => chain.chainId === chainId);
+    if (chain?.uniswapV4Adapter?.toLowerCase() === address.toLowerCase()) return "Uniswap v4";
+    if (chain?.uniswapV3SwapAdapter?.toLowerCase() === address.toLowerCase()) return "Uniswap v3";
+    if (chain?.aaveV3Adapter?.toLowerCase() === address.toLowerCase()) return "Aave v3";
+    return `${address.slice(0, 6)}…${address.slice(-4)}`;
+  };
+  const holder = personal.status === "ready" ? personal.holder : null;
+  const owned = holder ? hasFundInterest(holder) : false;
+  const closed = fund.state !== "Open";
+  const coverage = detailedCoverage(fund);
+  const positions = fund.positionsSummary?.positions ?? [];
+  const blocked = (action: string) =>
+    track("app_cta_blocked", {
+      strategy_id: fund.coreVault,
+      reason: `capability_unavailable:${action}`,
+    });
+  const unavailableAction = (label: string) => (
+    <button
+      type="button"
+      aria-disabled="true"
+      onClick={() => blocked(label)}
+      className="rounded-lg border border-border px-3 py-2 text-muted-foreground text-sm"
+    >
+      {label}: {t("unavailable")}
+    </button>
+  );
+  const actions = (
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5">
+      {!closed ? (
+        <button
+          type="button"
+          className="rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground"
+          onClick={() => setInvestOpen(true)}
+        >
+          {owned ? t("addFunds") : t("invest")}
+        </button>
       ) : (
-        <p>{t("session")}</p>
+        <p>{fund.state === "Closed" ? t("closed") : t("closing")}</p>
       )}
-      {manager ? (
-        <section>
-          <h2 className="font-semibold">{t("managerView")}</h2>
-          <h3>{t("balances")}</h3>
-          {manager.balances.map((balance) => (
-            <ReadOnlyFields key={balance.chainId} value={balance} />
-          ))}
-          <h3>{t("transits")}</h3>
-          {manager.transits.length === 0 ? (
-            <p>{t("empty")}</p>
-          ) : (
-            manager.transits.map((item) => (
-              <button
-                className="block"
-                type="button"
-                key={item.transitId}
-                onClick={() => {
-                  const request = ++detailRun.current;
-                  void loadFundTransitAction(core, item.transitId).then((value) => {
-                    if (request !== detailRun.current) return;
-                    if (value.ok) setTransit(value.data);
-                    else setDetailError(fundErrorKey(value.error.code));
-                  });
-                }}
-              >
-                {item.direction} · {item.stage} · {item.amountSent}
-              </button>
-            ))
-          )}
-          {manager.cursor ? (
-            <button
-              type="button"
-              onClick={() => {
-                const request = ++detailRun.current;
-                void loadFundManagerAction(core, manager.cursor ?? undefined).then((value) => {
-                  if (request !== detailRun.current) return;
-                  if (value.ok)
-                    setManager((previous) => ({
-                      transits: [...(previous?.transits ?? []), ...value.data.transits.items],
-                      balances: value.data.balances,
-                      cursor: value.data.transits.nextCursor,
-                    }));
-                });
-              }}
-            >
-              {t("loadMore")}
-            </button>
-          ) : null}
-          {transit ? <ReadOnlyFields value={transit} chainId={hubChain} /> : null}
-        </section>
+      {owned ? (
+        <>
+          {unavailableAction(t("collect"))}
+          {unavailableAction(t("withdraw"))}
+        </>
       ) : null}
-      {detailError ? <p role="alert">{t(detailError)}</p> : null}
-    </article>
+      {withdrawalRequested && !owned ? unavailableAction(t("withdraw")) : null}
+      {!owned && !closed ? (
+        <>
+          <Row label={t("minimum")} value={money(fund.mandate.minFirstDeposit)} />
+          <Row label={t("currency")} value="USDC" />
+        </>
+      ) : null}
+    </div>
+  );
+  const position =
+    personal.status === "loading" ? (
+      <div role="status" className="rounded-xl border border-border p-5">
+        {t("loading")}
+      </div>
+    ) : personal.status === "error" ? (
+      <div role="alert" className="rounded-xl border border-border p-5">
+        <p>{t("holderError")}</p>
+        <button type="button" onClick={onRetry}>
+          {t("retry")}
+        </button>
+      </div>
+    ) : owned && holder ? (
+      <section className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-5">
+        <h2 className="font-semibold">{t("yourPosition")}</h2>
+        <Row label={t("currentValue")} value={money(holder.value)} />
+        <Row label={t("shares")} value={number(holder.shares, 18)} />
+        <Row label={t("income")} value={money(holder.incomeOwed)} />
+        {holder.payout.open ? (
+          <>
+            <Row label={t("pendingPayout")} value={money(holder.payout.usdcOutstanding)} />
+            <p>{t("processing")}</p>
+          </>
+        ) : null}
+      </section>
+    ) : null;
+  const manager = (
+    <ManagerCard
+      name={managerName}
+      address={fund.manager}
+      verified={false}
+      trailingAction={unavailableAction(t("follow"))}
+    />
+  );
+  if (managerView) return <FundTechnicalDetail core={fund.coreVault} />;
+  return (
+    <StrategyDetailFrame
+      backHref={fromPortfolio ? "/portfolio" : "/strategies"}
+      backLabel={t("back")}
+      rail={
+        <>
+          {position}
+          {actions}
+          {manager}
+        </>
+      }
+      flows={
+        <InvestModal
+          family="v2"
+          fund={{
+            core: fund.coreVault,
+            name: fundName,
+            logoUrl: fundLogo,
+            minFirstDepositRaw: fund.mandate.minFirstDeposit,
+            holderSharesRaw: holder?.shares ?? null,
+          }}
+          balance={balance}
+          open={investOpen}
+          onOpenChange={setInvestOpen}
+          resumeAmount={resume}
+          fromPortfolio={fromPortfolio}
+          walletAddress={personal.status === "ready" ? personal.wallet : undefined}
+        />
+      }
+    >
+      <section className="rounded-xl border border-border bg-surface p-5 lg:p-6">
+        <div className="flex items-start gap-4">
+          <StrategyLogo url={fundLogo} name={fundName} className="size-12 text-lg font-semibold" />
+          <div className="min-w-0 flex-1">
+            <h1 className="break-words font-bold text-xl">{fundName}</h1>
+            <p className="text-muted-foreground text-sm">{managerName}</p>
+            <span className="rounded border border-border px-1.5 py-0.5 text-xs font-medium">
+              V2
+            </span>
+          </div>
+          <div className="text-right">
+            <p className="font-bold text-2xl tabular-nums">{money(fund.sharePrice, 24)}</p>
+            <p className="text-muted-foreground text-xs">{t("sharePrice")}</p>
+          </div>
+        </div>
+        <Row label={t("risk")} value={t("unavailable")} />
+      </section>
+      <div className="lg:hidden">{position}</div>
+      <div className="lg:hidden">{actions}</div>
+      <div className="lg:hidden">{manager}</div>
+      <section className="rounded-xl border border-border bg-surface p-5">
+        <h2 className="font-semibold">{t("history")}</h2>
+        <div className="mt-4 flex h-32 items-center justify-center rounded-lg border border-border border-dashed lg:h-40">
+          {t("unavailable")}
+        </div>
+      </section>
+      <section className="grid grid-cols-2 gap-3">
+        {[
+          [t("minimum"), money(fund.mandate.minFirstDeposit)],
+          [t("totalValue"), money(fund.shareAssets)],
+          [
+            t("preparation"),
+            fund.fees
+              ? `${fund.fees.standardPayoutTermSeconds / 3600} ${t("hours")}`
+              : t("unavailable"),
+          ],
+          [t("performanceFee"), pct(fund.fees?.performanceFeeBps)],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-xl border border-border bg-surface p-5">
+            <p className="text-muted-foreground text-sm">{label}</p>
+            <p className="font-semibold tabular-nums">{value}</p>
+          </div>
+        ))}
+      </section>
+      <Disclosure title={t("about")}>
+        <p>{fund.profile?.description?.trim() || t("unavailable")}</p>
+      </Disclosure>
+      <Disclosure title={t("composition")}>
+        <p>
+          {coverage === null
+            ? t("unavailable")
+            : t("coverage", { percent: String(100 - coverage) })}
+        </p>
+        {positions.map((p) => (
+          <div key={`${p.chainId}:${p.positionKey}`} className="border-border border-t py-3">
+            <Row
+              label={`${p.adapterKind} · ${p.tokens.map((token) => token.symbol).join(" / ")}`}
+              value={
+                p.currentValueUsd !== undefined && p.currentValueUsd !== null
+                  ? formatUsdPrecise(Number(p.currentValueUsd))
+                  : p.valueUsd !== null
+                    ? formatUsdPrecise(Number(p.valueUsd))
+                    : t("unavailable")
+              }
+            />
+            <Row
+              label={t("share")}
+              value={
+                p.shareOfNav === null ? t("unavailable") : formatPercent(Number(p.shareOfNav), 2)
+              }
+            />
+          </div>
+        ))}
+      </Disclosure>
+      <Disclosure title={t("mandate")}>
+        <p>{t("scope")}</p>
+        <Row
+          label={fundText("chains")}
+          value={fund.chains
+            .map(
+              (chain) =>
+                `${chainName(chain.chainId)}${chain.status === "pending" ? ` (${fundText("pending")})` : ""}`,
+            )
+            .join(" · ")}
+        />
+        <Row
+          label={t("allowed")}
+          value={
+            fund.mandate.tokens.length
+              ? fund.mandate.tokens
+                  .map(
+                    (token) =>
+                      `${tokenName(token.chainId, token.token)} (${chainName(token.chainId)})`,
+                  )
+                  .join(" · ")
+              : t("unavailable")
+          }
+        />
+        <Row
+          label={fundText("protocols")}
+          value={
+            fund.mandate.adapters.length
+              ? fund.mandate.adapters
+                  .map(
+                    (adapter) =>
+                      `${protocolName(adapter.chainId, adapter.adapter)} (${chainName(adapter.chainId)})`,
+                  )
+                  .join(" · ")
+              : t("unavailable")
+          }
+        />
+        <Row label={fundText("limits")} value={t("unavailable")} />
+      </Disclosure>
+      <Disclosure title={t("fees")}>
+        <Row label={t("deposit")} value={pct(fund.fees?.flowFeeBps)} />
+        <Row label={t("management")} value={pct(fund.fees?.managementFeeBps)} />
+        <Row label={t("faster")} value={pct(fund.fees?.payoutFeeBps)} />
+        <Row label={t("networkCost")} value={t("unavailable")} />
+      </Disclosure>
+    </StrategyDetailFrame>
+  );
+}
+function Row({ label, value }: { label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-muted-foreground text-sm">{label}</span>
+      <span className="min-w-0 break-words text-right text-sm font-medium tabular-nums">
+        {value}
+      </span>
+    </div>
+  );
+}
+function Disclosure({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <details className="rounded-xl border border-border bg-surface p-5">
+      <summary className="cursor-pointer font-semibold">{title}</summary>
+      <div className="mt-4 flex flex-col gap-3 text-sm">{children}</div>
+    </details>
   );
 }

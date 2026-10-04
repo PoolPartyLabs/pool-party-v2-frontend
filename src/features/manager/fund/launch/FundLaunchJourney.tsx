@@ -252,7 +252,7 @@ export function FundLaunchJourneyView({ launch }: { launch: FundLaunchJourneySta
                       {core}
                     </a>
                   ) : null}
-                  <Link href={`/funds/${core}`} className="ml-3 underline">
+                  <Link href={`/funds/${core}?view=manager`} className="ml-3 underline">
                     {t("fundLaunch.viewFund")}
                   </Link>
                 </div>

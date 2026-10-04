@@ -113,7 +113,7 @@ export function FundExplorer({ view }: FundExplorerProps) {
         <div className="grid gap-4 md:grid-cols-2">
           {result.data.funds.map((fund) => (
             <div key={`v2:${fund.coreVault}`} className="flex flex-col gap-2">
-              <FundListCard fund={fund} />
+              <FundListCard fund={fund} managerView={view === "manager"} />
               {result.data.holders[fund.coreVault] ? (
                 <p>
                   {t("shares")}:{" "}

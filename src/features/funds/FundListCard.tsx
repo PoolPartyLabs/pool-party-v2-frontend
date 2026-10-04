@@ -12,8 +12,9 @@ import { type FundListEntry, fundListModel } from "./fundListModel";
 
 export interface FundListCardProps {
   fund: FundListEntry;
+  managerView?: boolean;
 }
-export function FundListCard({ fund }: FundListCardProps) {
+export function FundListCard({ fund, managerView = false }: FundListCardProps) {
   const t = useTranslations("strategies.funds");
   const card = fundListModel(fund);
   return (
@@ -24,7 +25,7 @@ export function FundListCard({ fund }: FundListCardProps) {
           <h2 className="font-semibold">
             <Link
               className="hover:underline focus-visible:outline-2"
-              href={`/funds/${fund.coreVault}`}
+              href={`/funds/${fund.coreVault}${managerView ? "?view=manager" : ""}`}
             >
               {card.name}
             </Link>
@@ -77,7 +78,7 @@ export function FundListCard({ fund }: FundListCardProps) {
         <LimitsSummary value={card.limitsUsage} />
       </div>
       <Link
-        href={`/funds/${fund.coreVault}`}
+        href={`/funds/${fund.coreVault}${managerView ? "?view=manager" : ""}`}
         className="mt-auto rounded-md border border-border px-3 py-2 text-center font-medium focus-visible:outline-2"
       >
         {t("viewDetails")}
