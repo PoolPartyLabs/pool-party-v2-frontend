@@ -1,8 +1,7 @@
 /**
  * @id PP-CORE-LAY-001
- * @implements-rules-version v1 (POO-2209)
  * @name AppShell
- * @implements-rules-version v1
+ * @implements-rules-version v1; POO-2209 rules v1
  *
  * Authenticated app shell. Desktop (lg+): a persistent left sidebar (brand + nav) and a top bar
  * (Dev menu + rewards pill + locale switch + wallet menu). Mobile: a top brand bar (brand +
@@ -148,11 +147,8 @@ const DESKTOP_NAV_ITEMS: readonly NavItem[] = [
   { labelKey: "home", href: "/", icon: House, flag: "home" },
   { labelKey: "portfolio", href: "/portfolio", icon: PieChart, flag: "portfolio" },
   { labelKey: "strategies", href: "/strategies", icon: TrendingUp, flag: "strategies" },
-
   { labelKey: "cards", href: "/cards", icon: CreditCard, flag: "cards", mockOnly: true },
   { labelKey: "deposit", href: "/deposit", icon: ArrowDownToLine, flag: "deposit" },
-  // Developer tooling (hookrisk). Desktop only: it renders a long Markdown report and asks for a
-  // contract address, neither of which belongs in a five-tab mobile footer.
 
   { labelKey: "profile", href: "/profile", icon: User, flag: "profile" },
   // Manager-only incentive program, then Rubber Rush pinned LAST (both desktop-only, rewards-gated).

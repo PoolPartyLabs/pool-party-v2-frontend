@@ -1,8 +1,7 @@
 /**
  * @id PP-MGR-SCR-005
- * @implements-rules-version v1 (POO-2209)
  * @name ManagerProfileScreen
- * @implements-rules-version v3
+ * @implements-rules-version v3; POO-2209 rules v1
  *
  * Public manager profile (`/m/<handle>`): a YouTube-style banner (uploaded image or gradient
  * fallback, never stretched) with the avatar overlapping it, the identity block (name, verified
