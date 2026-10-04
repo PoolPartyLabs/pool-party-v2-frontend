@@ -85,11 +85,11 @@ describe("canvas copy: one tree in every locale", () => {
   });
 
   // @rule G7
-  it("[G7] lands 113 keys, the eleven review.* keys of slices S7 and PA1 among them", () => {
+  it("[G7] lands 114 keys, the twelve review.* keys of slices S7 and PA1 among them", () => {
     // 100 from S2, plus `panel.menuOpenNetwork` (review F3 of PR #36, POO-2155), plus seven from S7
-    // (POO-2157): the six Next: Review notices (D19) and `planUnreadable` (D18), plus the five
+    // (POO-2157): the six Next: Review notices (D19) and `planUnreadable` (D18), plus the six
     // launch readiness notices of PA1 (POO-2184).
-    expect(EN.size).toBe(113);
+    expect(EN.size).toBe(114);
     expect([...EN.keys()].filter((key) => key.startsWith("review.")).sort()).toEqual([
       "review.comingSoon",
       "review.duplicateReserve",
@@ -101,6 +101,7 @@ describe("canvas copy: one tree in every locale", () => {
       "review.stackedPositions",
       "review.unavailable",
       "review.unsupportedSwap",
+      "review.unusedSpokeShare",
       "review.zeroShare",
     ]);
   });
@@ -266,6 +267,10 @@ describe("canvas copy: the handoff's English, verbatim", () => {
       "Set a price range and a max slippage for every pool before Review.",
     ],
     ["review.zeroShare", "Give every block a share above 0%, or remove it."],
+    [
+      "review.unusedSpokeShare",
+      "A network holds more of the capital than its blocks use. Give its blocks that share, or remove the network.",
+    ],
     [
       "review.stackedPositions",
       "Remove the blocks placed under a Supply block: they cannot launch yet.",

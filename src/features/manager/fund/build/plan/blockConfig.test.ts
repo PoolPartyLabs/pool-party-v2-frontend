@@ -16,6 +16,11 @@
  *   the block's network, so a real-mode row (`42161:<poolId>`, from `mapV2Pool`) is found by its
  *   bare PoolId and never by its row id, and a mock row (no PoolId) by its id.
  * - [K4] a write the reader would refuse is refused by the reducer too.
+ * - [K5] on a row that carries its pool key (a real-mode row), the ticks are multiples of the
+ *   pool's tick spacing and Full is exactly the finite aligned extremes; the reducer refuses any
+ *   other write (review M2 of PR #51). A mock row has no pool key, so nothing is known to check.
+ * - [K6] the reducer stores the row's own ids (`poolRefKey`, `tokenKey`), whatever casing it was
+ *   handed, because the launch compares them strictly (review M3 of PR #51).
  */
 import { describe, expect, it } from "vitest";
 import { describeBlock } from "../blocks/blockRegistry";
@@ -28,12 +33,20 @@ import {
   fullRangeTicks,
   isConfigFor,
   isPoolConfigComplete,
+  isRangeOnGrid,
 } from "./blockConfig";
 import { type BuildPlan, isPlanBlocked, type PoolBlockConfig } from "./buildPlan";
 import { validatePlan } from "./planInvariants";
 import { setBlockConfig } from "./planReducers";
 import { normalizePlan } from "./planStorage";
-import { hubPoolPlan, makeTestContext, makeTestDraft, TEST_POOL_IDS } from "./planTestKit";
+import {
+  hubPoolPlan,
+  hubSupplyPlan,
+  makeTestContext,
+  makeTestDraft,
+  TEST_ASSET_KEYS,
+  TEST_POOL_IDS,
+} from "./planTestKit";
 import { makeRealModeDraft, REAL_POOL_ID, realPoolRow } from "./realPoolTestKit";
 
 /** What Apply writes for a pool: every field the launch reads. */
@@ -181,6 +194,37 @@ describe("fullRangeTicks: Full is the finite extremes on the pool's own spacing 
   });
 });
 
+describe("isRangeOnGrid: ticks on the pool's own spacing, Full on its extremes (K5)", () => {
+  it("[K5] takes ticks that are multiples of the spacing, and a config with no ticks yet", () => {
+    // @rule K5
+    expect(isRangeOnGrid(COMPLETE, 10)).toBe(true);
+    expect(isRangeOnGrid({ poolId: "p" }, 10)).toBe(true);
+    expect(isRangeOnGrid({ ...COMPLETE, tickLower: -199_380, tickUpper: -195_360 }, 60)).toBe(true);
+  });
+
+  it("[K5] refuses a lower or an upper tick off the grid", () => {
+    // @rule K5
+    expect(isRangeOnGrid({ ...COMPLETE, tickLower: -199_371 }, 10)).toBe(false);
+    expect(isRangeOnGrid({ ...COMPLETE, tickUpper: -195_373 }, 10)).toBe(false);
+    expect(isRangeOnGrid(COMPLETE, 60)).toBe(false);
+  });
+
+  it("[K5] takes Full only on the finite aligned extremes of the grid", () => {
+    // @rule K5
+    const full = { ...COMPLETE, fullRange: true, ...fullRangeTicks(10) };
+    expect(isRangeOnGrid(full, 10)).toBe(true);
+    expect(isRangeOnGrid({ ...COMPLETE, fullRange: true }, 10)).toBe(false);
+    expect(isRangeOnGrid({ poolId: "p", fullRange: true }, 10)).toBe(false);
+    expect(isRangeOnGrid(full, 60)).toBe(false);
+  });
+
+  it("[K5] refuses any range on a spacing that is not a positive integer", () => {
+    // @rule K5
+    expect(isRangeOnGrid(COMPLETE, 0)).toBe(false);
+    expect(isRangeOnGrid({ poolId: "p" }, 0)).toBe(true);
+  });
+});
+
 describe("normalizePlan reads the extended config (K2)", () => {
   it("[K2] reads a complete pool config and a picked-only pool back deep-equal", () => {
     // @rule K2
@@ -263,6 +307,61 @@ describe("the three readers follow the bare PoolId (K3, K4)", () => {
         blocked: { reason: "unknown_target", targetId: "hub-pool-pool" },
       });
     }
+  });
+
+  it("[K5] setBlockConfig refuses ticks off a real row's spacing, and Full off its extremes", () => {
+    // @rule K5
+    const plan = hubPoolWith(null);
+    const real = { ...COMPLETE, poolId: REAL_POOL_ID };
+    for (const config of [
+      { ...real, tickLower: -199_371 },
+      { ...real, tickUpper: -195_373 },
+      { ...real, fullRange: true },
+      { poolId: REAL_POOL_ID, fullRange: true },
+    ]) {
+      expect(setBlockConfig(plan, ctx, "hub-pool-pool", config)).toEqual({
+        blocked: { reason: "unknown_target", targetId: "hub-pool-pool" },
+      });
+    }
+    const full = { ...real, fullRange: true, ...fullRangeTicks(10) };
+    expect(isPlanBlocked(setBlockConfig(plan, ctx, "hub-pool-pool", full))).toBe(false);
+  });
+
+  it("[K5] a mock row, with no pool key, has no spacing to check", () => {
+    // @rule K5
+    const result = setBlockConfig(hubPoolWith(null), makeTestContext(), "hub-pool-pool", {
+      ...COMPLETE,
+      tickLower: -199_371,
+    });
+    expect(isPlanBlocked(result)).toBe(false);
+  });
+
+  it("[K6] setBlockConfig stores the row's own PoolId and token key, whatever the casing", () => {
+    // @rule K6
+    const upper = `0x${REAL_POOL_ID.slice(2).toUpperCase()}`;
+    const pool = setBlockConfig(hubPoolWith(null), ctx, "hub-pool-pool", {
+      ...COMPLETE,
+      poolId: upper,
+    });
+    if (isPlanBlocked(pool)) throw new Error("refused");
+    expect(pool.hub.chains[0]?.steps[1]).toMatchObject({ config: { poolId: REAL_POOL_ID } });
+
+    const mock = setBlockConfig(hubPoolWith(null), makeTestContext(), "hub-pool-pool", {
+      ...COMPLETE,
+      poolId: TEST_POOL_IDS.arbitrum.toUpperCase(),
+    });
+    if (isPlanBlocked(mock)) throw new Error("refused");
+    expect(mock.hub.chains[0]?.steps[1]).toMatchObject({
+      config: { poolId: TEST_POOL_IDS.arbitrum },
+    });
+
+    const supply = setBlockConfig(hubSupplyPlan(), makeTestContext(), "hub-supply-supply", {
+      assetKey: TEST_ASSET_KEYS.usdcArbitrum.toUpperCase().replace("ARBITRUM:0X", "arbitrum:0x"),
+    });
+    if (isPlanBlocked(supply)) throw new Error("refused");
+    expect(supply.hub.chains[0]?.steps[0]).toMatchObject({
+      config: { assetKey: TEST_ASSET_KEYS.usdcArbitrum },
+    });
   });
 
   it("[K3] describeBlock titles a real-mode pool found by its bare PoolId", () => {

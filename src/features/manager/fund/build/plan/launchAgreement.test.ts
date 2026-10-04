@@ -9,12 +9,15 @@
  * authority; these tests hold the canvas to it, through the REAL functions on both sides:
  *
  * - [AG1] CONTRACT: a plan configured only through `applyBlockConfig`, with a hub Uniswap v4 pool
- *   (explicit aligned ticks, and a Full variant on the finite aligned extremes) and an Aave USDC
- *   Supply, each with a share above 0, is accepted, carries the bare PoolId and the loss bound the
- *   launch signs, and passes the launch's own tick alignment check on the catalog spacing.
- * - [AG2] AGREEMENT: every plan `planReadiness` calls ready is accepted by `getLaunchSteps`.
+ *   (ranges from the pool panel's own maths, `presetRange` of PP-MGR-LIB-029, Full included) and
+ *   an Aave USDC Supply, each with a share above 0, is accepted, carries the bare PoolId and the
+ *   loss bound the launch signs (slippage 0.1, 2 and 5% are 10, 200 and 500 bps), and passes the
+ *   launch's own tick alignment check on the catalog spacing. Apply refuses a range off the grid
+ *   and stores the PoolId in the casing the launch compares.
+ * - [AG2] AGREEMENT: every plan `planReadiness` calls ready is accepted by `getLaunchSteps`,
+ *   spoke shapes included (a spoke above its chains, an emptied spoke, a released one).
  * - [AG3] Each refusal PA1 adds stands for a plan `getLaunchSteps` rejects, where the launch has an
- *   equivalent; the one without (the same reserve twice) is stated as such.
+ *   equivalent; those without one are stated as such.
  */
 import { describe, expect, it } from "vitest";
 import type { FundLaunchDraft } from "../../launch/contracts";
@@ -22,6 +25,7 @@ import type * as LaunchIndex from "../../launch/index";
 import { getLaunchSteps as fromJourney } from "../../launch/journey";
 import { deriveLaunchSteps, validateTickAlignment } from "../../launch/plan";
 import type { MandateDraft } from "../../mandateDraft";
+import { type PoolRange, presetRange, type RangePreset } from "../panel/poolRangeMath";
 import { fullRangeTicks } from "./blockConfig";
 import {
   type BuildPlan,
@@ -35,8 +39,16 @@ import {
 import { chainsWithNetwork } from "./planDerive";
 import { validatePlan } from "./planInvariants";
 import { type PlanReadinessRefusal, planReadiness } from "./planReadiness";
-import { addChain, addSpoke, applyBlockConfig, insertAt } from "./planReducers";
 import {
+  addChain,
+  addSpoke,
+  applyBlockConfig,
+  insertAt,
+  removeBlock,
+  removeBlockReleasingShare,
+} from "./planReducers";
+import {
+  completePoolConfig,
   makeTestContext,
   makeTestDraft,
   TEST_ASSET_KEYS,
@@ -44,7 +56,12 @@ import {
   VALID_TEST_PLANS,
   withCompletePools,
 } from "./planTestKit";
-import { makeRealModeDraft, REAL_POOL_ID, REAL_POOL_TICK_SPACING } from "./realPoolTestKit";
+import {
+  makeRealModeDraft,
+  REAL_POOL_ID,
+  REAL_POOL_TICK_SPACING,
+  realCatalogPool,
+} from "./realPoolTestKit";
 
 /**
  * `launch/index.ts` re-exports `getLaunchSteps` from `journey.ts` unchanged. It is imported from
@@ -98,8 +115,23 @@ function readinessOf(plan: BuildPlan, draft: MandateDraft = makeTestDraft()) {
   return planReadiness(plan, validatePlan(plan, ctx));
 }
 
-/** An aligned canonical range on the real pool's spacing of 10, around tick -197375. */
-const RANGE = { tickLower: -199_370, tickUpper: -195_370 };
+/**
+ * The real pool as the pool panel reads it live (PB, `poolRangeMath.ts`, PP-MGR-LIB-029): WETH (18
+ * decimals) over USDC (6), the catalog's spacing of 10, the catalog's current tick.
+ */
+const LIVE_POOL = {
+  decimals0: 18,
+  decimals1: 6,
+  tickSpacing: REAL_POOL_TICK_SPACING,
+  currentTick: realCatalogPool().currentTick,
+};
+
+/** A preset chip's range from the panel's own maths, as the panel writes it on Apply. */
+function panelRange(preset: RangePreset, displayInverted = false): PoolRange {
+  const range = presetRange(LIVE_POOL, preset, displayInverted);
+  if (!range) throw new Error(`fixture: no ${preset} range`);
+  return range;
+}
 
 /**
  * [AG1] The demo plan, configured only through `applyBlockConfig`: the blocks come from the Add
@@ -131,20 +163,19 @@ function demoPlan(pool: Omit<PoolBlockConfig, "poolId">): { plan: BuildPlan; dra
   return { plan, draft };
 }
 
-const EXPLICIT = { ...RANGE, fullRange: false, displayInverted: false, slippagePct: 2 };
-
-const FULL = {
-  ...(fullRangeTicks(REAL_POOL_TICK_SPACING) ?? RANGE),
-  fullRange: true,
-  displayInverted: true,
-  slippagePct: 0.5,
-};
+const POOL_CASES: Array<[string, Omit<PoolBlockConfig, "poolId">, number]> = [
+  ["the ±10% preset, slippage 2%", { ...panelRange(10), slippagePct: 2 }, 200],
+  ["the ±5% preset read inverted, slippage 0.1%", { ...panelRange(5, true), slippagePct: 0.1 }, 10],
+  ["the ±20% preset, slippage 5%", { ...panelRange(20), slippagePct: 5 }, 500],
+  [
+    "Full on the finite aligned extremes, slippage 0.5%",
+    { ...panelRange("full"), slippagePct: 0.5 },
+    50,
+  ],
+];
 
 describe("[AG1] the contract: a plan written by Apply is a plan the launch runs", () => {
-  for (const [name, pool, bps] of [
-    ["explicit aligned ticks", EXPLICIT, 200],
-    ["Full range on the finite aligned extremes", FULL, 50],
-  ] as const) {
+  for (const [name, pool, bps] of POOL_CASES) {
     it(`[AG1] accepts a hub v4 pool (${name}) and a Supply USDC`, () => {
       // @rule AG1
       const { plan, draft } = demoPlan(pool);
@@ -166,13 +197,55 @@ describe("[AG1] the contract: a plan written by Apply is a plan the launch runs"
         tickUpper: pool.tickUpper,
         maxLossBps: bps,
       });
+      expect(open?.config?.poolId).toMatch(/^0x[0-9a-fA-F]{64}$/);
       expect(() => validateTickAlignment(open?.config ?? {}, REAL_POOL_TICK_SPACING)).not.toThrow();
     });
   }
 
-  it("[AG1] Full range is the widest pair of ticks on the pool's own spacing", () => {
+  it("[AG1] Full is the widest pair of ticks on the pool's own spacing, on both sides", () => {
     // @rule AG1
-    expect(FULL).toMatchObject({ tickLower: -887_270, tickUpper: 887_270 });
+    expect(panelRange("full")).toMatchObject({ tickLower: -887_270, tickUpper: 887_270 });
+    expect(fullRangeTicks(REAL_POOL_TICK_SPACING)).toEqual({
+      tickLower: -887_270,
+      tickUpper: 887_270,
+    });
+  });
+
+  it("[AG1] the PoolId the launch reads is the catalog's bytes32", () => {
+    // @rule AG1
+    expect(REAL_POOL_ID).toMatch(/^0x[0-9a-fA-F]{64}$/);
+  });
+
+  it("[AG1] Apply refuses a range off the pool's grid, and Full off its extremes", () => {
+    // @rule AG1
+    const { plan, draft } = demoPlan({ ...panelRange(10), slippagePct: 2 });
+    const ctx = makeTestContext(draft);
+    const poolId = blockIdOf(plan, "uniswapV4Pool");
+    const ten = panelRange(10);
+    for (const config of [
+      { ...ten, tickLower: ten.tickLower + 1 },
+      { ...ten, fullRange: true },
+    ]) {
+      expect(
+        applyBlockConfig(plan, ctx, poolId, { poolId: REAL_POOL_ID, ...config, slippagePct: 2 }),
+      ).toEqual({ blocked: { reason: "unknown_target", targetId: poolId } });
+    }
+  });
+
+  it("[AG1] Apply stores the PoolId the launch compares strictly, whatever casing it got", () => {
+    // @rule AG1
+    const { plan, draft } = demoPlan({ ...panelRange(10), slippagePct: 2 });
+    const poolId = blockIdOf(plan, "uniswapV4Pool");
+    const upper = `0x${REAL_POOL_ID.slice(2).toUpperCase()}`;
+    const next = planOf(
+      applyBlockConfig(plan, makeTestContext(draft), poolId, {
+        poolId: upper,
+        ...panelRange(10),
+        slippagePct: 2,
+      }),
+    );
+    const steps = deriveLaunchSteps(launchDraft(next, draft).plan, {}, true, false);
+    expect(steps.find((step) => step.id === `${poolId}:open`)?.config?.poolId).toBe(REAL_POOL_ID);
   });
 });
 
@@ -213,9 +286,24 @@ function pool(id: string, pct: number, config: PoolBlockConfig | null): Chain {
   };
 }
 
-const COMPLETE: PoolBlockConfig = { poolId: TEST_POOL_IDS.arbitrum, ...EXPLICIT };
+const COMPLETE: PoolBlockConfig = completePoolConfig(TEST_POOL_IDS.arbitrum);
 const AUTO_SWAP: Step = { id: "x-swap", family: "flow", kind: "swap", auto: true };
 const MANUAL_SWAP: Step = { id: "m-swap", family: "flow", kind: "swap", auto: false };
+
+/** `spokePlan(chainPct)` with the spoke's own share set apart from its chain (review M1). */
+function spokeHolding(spokePct: number, chainPct = 40): BuildPlan {
+  const plan = spokePlan(chainPct);
+  return { ...plan, spokes: plan.spokes.map((spoke) => ({ ...spoke, sharePct: spokePct })) };
+}
+
+/** A hub pool at 50 beside a spoke pool at 40, then the spoke pool removed the way given. */
+function afterSpokeRemove(release: boolean): BuildPlan {
+  const ctx = makeTestContext();
+  const spoke = spokePlan(40);
+  const plan = { ...spoke, hub: { chains: [pool("p", 50, COMPLETE)] } };
+  const id = blockIdOf(spoke, "uniswapV4Pool");
+  return planOf(release ? removeBlockReleasingShare(plan, ctx, id) : removeBlock(plan, ctx, id));
+}
 
 /** A spoke pool chain built through the reducers, at `pct` of the strategy. */
 function spokePlan(pct: number): BuildPlan {
@@ -274,6 +362,19 @@ const CORPUS: Record<string, () => BuildPlan> = {
     return { ...plan, hub: { chains: [pool("p", 60, COMPLETE)] } };
   },
   "spoke pool at 0": () => spokePlan(0),
+  "spoke 40.5 over a chain of 40": () => spokeHolding(40.5),
+  "spoke 45 over a chain of 40": () => spokeHolding(45),
+  "spoke left at 40 by the old remove": () => afterSpokeRemove(false),
+  "spoke released to 0 by the panel's remove": () => afterSpokeRemove(true),
+  "pool without the two display flags": () =>
+    hubOf(
+      pool("p", 60, {
+        poolId: TEST_POOL_IDS.arbitrum,
+        tickLower: COMPLETE.tickLower,
+        tickUpper: COMPLETE.tickUpper,
+        slippagePct: 2,
+      }),
+    ),
 };
 
 describe("[AG2] agreement: every plan readiness calls ready, the launch accepts", () => {
@@ -293,6 +394,7 @@ describe("[AG2] agreement: every plan readiness calls ready, the launch accepts"
         "pool with Collect fees",
         "spoke pool 40",
         "spoke pool 40 + hub pool 60",
+        "spoke released to 0 by the panel's remove",
         "spokePoolPlan (complete)",
         "two pools",
       ].sort(),
@@ -319,9 +421,17 @@ describe("[AG3] each new refusal stands for a plan the launch rejects", () => {
     ["review_stacked_positions", "supply then manager swap", "BUILD_EXECUTION_GAP"],
     ["review_unsupported_swap", "supply WETH", "BUILD_EXECUTION_GAP"],
     ["review_unsupported_swap", "manager swap then supply", "BUILD_EXECUTION_GAP"],
+    ["review_unused_spoke_share", "spoke 40.5 over a chain of 40", "INVALID_ALLOCATION"],
     // No equivalent in the launch adapter: it opens the same reserve twice without a word. The
     // canvas is stricter on purpose (one Aave open per reserve), and this pins that it is the one.
     ["review_duplicate_reserve", "same reserve twice", null],
+    // No equivalent either: the launch bridges a spoke's whole share and deploys only its chains,
+    // so the rest would sit on the spoke. The canvas refuses it (review M1 of PR #51).
+    ["review_unused_spoke_share", "spoke 45 over a chain of 40", null],
+    ["review_unused_spoke_share", "spoke left at 40 by the old remove", null],
+    // Stricter on purpose: Apply always writes both flags, so a pool without them was not written
+    // by a panel; the launch reads neither flag (review L1 of PR #51).
+    ["review_incomplete_block", "pool without the two display flags", null],
   ];
 
   for (const [refusal, name, code] of cases) {

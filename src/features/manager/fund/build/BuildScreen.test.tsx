@@ -47,7 +47,7 @@ import { getDraft, MANDATE_DRAFTS_KEY, upsertDraft } from "../mandateDraftStore"
 import type { SelectionGuard, UseBlockSelectionResult } from "./blocks/useBlockSelection";
 import { computeFit } from "./canvas/viewportMath";
 import type { BuildPlan, PositionBlock, Step } from "./plan/buildPlan";
-import { makeTestDraft } from "./plan/planTestKit";
+import { makeTestDraft, TEST_ASSET_KEYS } from "./plan/planTestKit";
 
 const nav = vi.hoisted(() => ({
   push: vi.fn(),
@@ -621,6 +621,84 @@ const REFUSALS: Array<[string, BuildPlan | undefined, string, string]> = [
   ],
 ];
 
+/** A Supply chain on the hub of the two-network mandate, at `pct`, of the asset given. */
+function supplyChain(
+  id: string,
+  pct: number,
+  assetKey: string,
+  before: Step[] = [],
+  after: Step[] = [],
+) {
+  const supply: PositionBlock = {
+    id: `${id}-supply`,
+    family: "position",
+    kind: "aaveSupply",
+    config: { assetKey },
+  };
+  return { id, sharePct: pct, steps: [...before, supply, ...after] };
+}
+
+/** The readiness refusals that need Aave or a spoke in the mandate (POO-2184, review L5). */
+const AAVE_REFUSALS: Array<[string, BuildPlan, string, string]> = [
+  [
+    "a block under a Supply",
+    {
+      version: 1,
+      hub: {
+        chains: [
+          supplyChain(
+            "u",
+            40,
+            TEST_ASSET_KEYS.usdcArbitrum,
+            [],
+            [{ id: "u-swap", family: "flow", kind: "swap", auto: false }],
+          ),
+        ],
+      },
+      spokes: [],
+    },
+    "Remove the blocks placed under a Supply block: they cannot launch yet.",
+    "review_stacked_positions",
+  ],
+  [
+    "the same reserve supplied twice",
+    {
+      version: 1,
+      hub: {
+        chains: [
+          supplyChain("a", 30, TEST_ASSET_KEYS.usdcArbitrum),
+          supplyChain("b", 20, TEST_ASSET_KEYS.usdcArbitrum),
+        ],
+      },
+      spokes: [],
+    },
+    "Supply each asset in one block only. Remove the second Supply of the same asset.",
+    "review_duplicate_reserve",
+  ],
+  [
+    "a Swap outside a pool",
+    {
+      version: 1,
+      hub: {
+        chains: [supplyChain("w", 40, TEST_ASSET_KEYS.wethArbitrum, [autoSwap("w-swap")])],
+      },
+      spokes: [],
+    },
+    "Swaps outside a pool cannot launch yet. Supply the token that arrives, or remove the Swap.",
+    "review_unsupported_swap",
+  ],
+  [
+    "a spoke that kept a share its chains left",
+    {
+      version: 1,
+      hub: { chains: [supplyChain("s", 40, TEST_ASSET_KEYS.usdcArbitrum)] },
+      spokes: [{ network: "robinhood", sharePct: 30, chains: [] }],
+    },
+    "A network holds more of the capital than its blocks use. Give its blocks that share, or remove the network.",
+    "review_unused_spoke_share",
+  ],
+];
+
 describe("BuildScreen: Next: Review (AN4, D19, AE6)", () => {
   it.each(
     REFUSALS,
@@ -640,6 +718,20 @@ describe("BuildScreen: Next: Review (AN4, D19, AE6)", () => {
     // Never leaves the step in this batch.
     expect(screen.getByRole("heading", { name: "Build your strategy" })).toBeInTheDocument();
     expect(nav.push).not.toHaveBeenCalled();
+  });
+
+  it.each(
+    AAVE_REFUSALS,
+  )("[AN4] with Aave and a spoke in the mandate, refuses %s with its own notice", async (_label, plan, notice, reason) => {
+    // @rule AN4
+    // @rule AE6
+    seedBuild(twoNetworkMandate("d-next-aave"), plan);
+    await openBuild();
+
+    await userEvent.click(screen.getByRole("button", { name: "Next: Review" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(notice);
+    expect(emitted("builder_build_blocked")).toEqual([{ block_reason: reason }]);
   });
 
   it("[AN4] the notice goes as soon as the plan changes", async () => {

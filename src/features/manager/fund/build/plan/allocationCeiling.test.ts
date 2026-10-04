@@ -17,10 +17,12 @@
 import { describe, expect, it } from "vitest";
 import type { MandateCaps, MandateDraft } from "../../mandateDraft";
 import { allocationCeiling } from "./allocationCeiling";
-import type { BuildPlan, Chain } from "./buildPlan";
+import { type BuildPlan, type Chain, isPlanBlocked } from "./buildPlan";
+import { applyBlockConfig } from "./planReducers";
 import {
   hubPoolPlan,
   hubSupplyPlan,
+  makeTestContext,
   makeTestDraft,
   spokePoolPlan,
   TEST_ASSET_KEYS,
@@ -183,6 +185,31 @@ describe("allocationCeiling: the mandate caps are totals (P8a, P8c)", () => {
       max: 70,
       reason: "strategyRoom",
     });
+  });
+
+  it("[P8a] a cap lowered below the block's own share: the ceiling sits below that share", () => {
+    // @rule P8a
+    // The chain holds 60 and the mandate now caps Uniswap v4 at 40: the ceiling is 40, its own 60
+    // left out of the count. The reducers enforce C8 only, so the panel clamps what it shows.
+    const draft = withCaps({
+      protocols: { "uniswap-v4": { noCap: false, pct: 40 }, "aave-v3": { noCap: true, pct: 0 } },
+    });
+    const plan = hubOf(poolChain("a", 60));
+    expect(allocationCeiling(plan, { draft }, "a")).toEqual({
+      max: 40,
+      reason: "protocolCap",
+      protocol: "uniswap-v4",
+      capPct: 40,
+      otherPct: 0,
+    });
+    const applied = applyBlockConfig(
+      plan,
+      makeTestContext(draft),
+      "a-pool",
+      { poolId: TEST_POOL_IDS.arbitrum },
+      60,
+    );
+    expect(isPlanBlocked(applied)).toBe(false);
   });
 
   it("[P8a] never goes below 0 when the others already pass the cap", () => {
