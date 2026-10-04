@@ -52,6 +52,7 @@ const BUILD_DIR = join(ROOT, ".next");
 export const SERVER_ONLY_SECRET_NAMES = [
   "UNISWAP_API_KEY",
   "PP_API_KEY",
+  "PP_API_ADMIN_KEY",
   "PP_ANALYTICS_USER_ID_SECRET",
   // Aqua / Active Reserve (POO-1057 hackathon branch). The taker key signs settlement and
   // must never reach a bundle; there is no database in this feature.

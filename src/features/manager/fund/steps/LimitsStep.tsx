@@ -287,6 +287,11 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
 
   return (
     <section data-mandate-step={STEP} className="flex flex-col gap-6">
+      {catalog.dataMode === "real" ? (
+        <p role="note" className="text-muted-foreground text-sm">
+          {t("fundBuilder.real.limits")}
+        </p>
+      ) : null}
       {/* R6: one notice for the step, above every group, because the row it points at can be in any
           of the three. The ring and the scroll are what name the row. */}
       {ownBlock ? (
@@ -302,7 +307,11 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
       <div className="flex flex-col gap-2">
         <GroupHead
           title={t("fundBuilder.limits.perNetwork")}
-          caption={t("fundBuilder.limits.perNetworkCaption")}
+          caption={
+            catalog.dataMode === "real"
+              ? t("fundBuilder.real.limits")
+              : t("fundBuilder.limits.perNetworkCaption")
+          }
         />
 
         {/* R40: the hub is not a cap, it is the remainder. Locked, with no control to move. */}
@@ -320,9 +329,7 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
           }
         />
 
-        {/* PP-INTEGRATION-POINT: the spoke cap becomes the Mandate `spokeCap` (hub USDC units) at
-            fund creation; the unit conversion from share to USDC is not defined yet (wiring issue
-            POO-2134). */}
+        {/* PP-INTEGRATION-POINT: POO-2133 stores percentage intent; POO-2169 adds on-chain enforcement. */}
         {rows.networks.length === 0
           ? emptyLine()
           : rows.networks.map((network) =>
@@ -339,7 +346,11 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
       <div className="flex flex-col gap-2 border-border border-t pt-6">
         <GroupHead
           title={t("fundBuilder.limits.perProtocol")}
-          caption={t("fundBuilder.limits.perProtocolCaption")}
+          caption={
+            catalog.dataMode === "real"
+              ? t("fundBuilder.real.allocation")
+              : t("fundBuilder.limits.perProtocolCaption")
+          }
         />
         {rows.protocols.length === 0
           ? emptyLine()
@@ -360,7 +371,11 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
       <div className="flex flex-col gap-2 border-border border-t pt-6">
         <GroupHead
           title={t("fundBuilder.limits.perToken")}
-          caption={t("fundBuilder.limits.perTokenCaption")}
+          caption={
+            catalog.dataMode === "real"
+              ? t("fundBuilder.real.allocation")
+              : t("fundBuilder.limits.perTokenCaption")
+          }
         />
         {/* One row per token ENTRY, which means one per network the token runs on (R27). The two
             rows of the same token are different caps on different chains, so the network is in the
@@ -391,7 +406,11 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
       </div>
 
       {/* R42 */}
-      <p className="text-muted-foreground text-sm">{t("fundBuilder.limits.footnote")}</p>
+      <p className="text-muted-foreground text-sm">
+        {catalog.dataMode === "real"
+          ? t("fundBuilder.real.allocation")
+          : t("fundBuilder.limits.footnote")}
+      </p>
     </section>
   );
 }

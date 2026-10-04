@@ -133,7 +133,7 @@ describe("fund pool fixtures", () => {
   // A flat catalog is not realistic: real pool TVL is a power law, so the fixture must span orders
   // of magnitude rather than clustering at one size.
   it("spreads TVL across orders of magnitude", () => {
-    const tvls = all.map((pool) => pool.tvlUsd);
+    const tvls = all.map((pool) => pool.tvlUsd ?? 0);
     expect(Math.max(...tvls)).toBeGreaterThan(20_000_000);
     expect(Math.min(...tvls)).toBeLessThan(1_000_000);
   });

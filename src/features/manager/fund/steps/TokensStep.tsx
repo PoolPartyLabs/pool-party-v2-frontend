@@ -47,6 +47,8 @@ import { FilterDropdown } from "@/components/ui/FilterDropdown";
 import { Input } from "@/components/ui/Input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils/cn";
+import { safeHttpUrl } from "@/lib/utils/sanitize";
+import { MandateCatalogStatus } from "../components/MandateCatalogStatus";
 import { NetworkDots, useNetworkNames } from "../components/NetworkDots";
 import type { MandateCatalog, MandateCatalogToken } from "../mandateCatalog";
 import {
@@ -88,6 +90,7 @@ interface CatalogGroup {
 
 /** One "Your tokens" row: a symbol, and the networks the draft holds it on. */
 interface MandateGroup {
+  logoUrl: string | null;
   symbol: string;
   name: string;
   /** The deposit token (R24): no remove control, a Lock and the "Deposit token" caption. */
@@ -139,6 +142,7 @@ function groupMandate(tokens: MandateTokenRef[]): MandateGroup[] {
     if (!current) {
       groups.set(key, {
         symbol: token.symbol,
+        logoUrl: token.logoUrl,
         name: token.name,
         locked: token.locked,
         networks: [token.network],
@@ -190,9 +194,24 @@ function TokenMark({
   group,
   size,
 }: {
-  group: { symbol: string; networks: NetworkId[] };
+  group: {
+    symbol: string;
+    networks: NetworkId[];
+    first?: MandateCatalogToken;
+    logoUrl?: string | null;
+  };
   size: 22 | 28;
 }) {
+  const catalogLogo = safeHttpUrl(group.first?.logoUrl ?? group.logoUrl);
+  if (catalogLogo)
+    return (
+      <img
+        src={catalogLogo}
+        alt=""
+        aria-hidden="true"
+        className={cn("rounded-full", size === 28 ? "size-7" : "size-[22px]")}
+      />
+    );
   return (
     <TokenLogo
       symbol={group.symbol}
@@ -392,6 +411,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
     >
       {/* The catalog (R25, R26) */}
       <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <MandateCatalogStatus catalog={catalog} draft={draft} />
         <div className="flex items-center gap-3">
           <div className="relative min-w-0 flex-1">
             <Search
@@ -460,7 +480,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
           </p>
         ) : null}
 
-        {visible.length === 0 ? (
+        {catalog.loading || catalog.error ? null : visible.length === 0 ? (
           <EmptyState title={t("fundBuilder.tokens.empty")} />
         ) : (
           <div className="grid grid-cols-2 gap-2">{visible.map(catalogCard)}</div>
