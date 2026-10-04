@@ -1069,6 +1069,12 @@
         "comingSoon": "Remove the blocks that are coming soon.",
         "emptyBlock": "Configure every block before Review.",
         "overShare": "The shares add up to more than the capital above them.",
+        "incompleteBlock": "Set a price range and a max slippage for every pool before Review.",
+        "zeroShare": "Give every block a share above 0%, or remove it.",
+        "unusedSpokeShare": "A network holds more of the capital than its blocks use. Give its blocks that share, or remove the network.",
+        "stackedPositions": "Remove the blocks placed under a Supply block: they cannot launch yet.",
+        "duplicateReserve": "Supply each asset in one block only. Remove the second Supply of the same asset.",
+        "unsupportedSwap": "Swaps outside a pool cannot launch yet. Supply the token that arrives, or remove the Swap.",
         "unavailable": "Review is not available yet."
       }
     }

@@ -56,6 +56,12 @@ export const REVIEW_REFUSAL_EVENT: Readonly<Record<ReviewRefusal, AnalyticsBuild
   review_coming_soon_block: "review_coming_soon_block",
   review_empty_block: "review_empty_block",
   review_over_share: "review_over_share",
+  review_incomplete_block: "review_incomplete_block",
+  review_zero_share: "review_zero_share",
+  review_unused_spoke_share: "review_unused_spoke_share",
+  review_stacked_positions: "review_stacked_positions",
+  review_duplicate_reserve: "review_duplicate_reserve",
+  review_unsupported_swap: "review_unsupported_swap",
   review_unavailable: "review_unavailable",
 };
 

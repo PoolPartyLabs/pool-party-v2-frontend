@@ -34,6 +34,7 @@ import {
   createEmptyPlan,
   type FlowBlock,
   type PlanContext,
+  type PoolBlockConfig,
   type PositionBlock,
 } from "./buildPlan";
 
@@ -256,6 +257,44 @@ export function spokePoolPlan(): BuildPlan {
 /** A Robinhood Chain spoke just added: no chain, 0%. */
 export function emptySpokePlan(): BuildPlan {
   return { ...createEmptyPlan(), spokes: [{ network: "robinhood", sharePct: 0, chains: [] }] };
+}
+
+// ---------------------------------------------------------------------------
+// Complete configs (POO-2184): what the panels' Apply writes
+// ---------------------------------------------------------------------------
+
+/**
+ * A pool config with every field the launch reads (the panel contract of POO-2184): a canonical
+ * range on a tick spacing of 10 (the 0.05% tier), not full range, the quote as stored, 2% slippage.
+ */
+export function completePoolConfig(poolId: string): PoolBlockConfig {
+  return {
+    poolId,
+    tickLower: -199_370,
+    tickUpper: -195_370,
+    fullRange: false,
+    displayInverted: false,
+    slippagePct: 2,
+  };
+}
+
+/** The same plan with every configured pool block's config completed (`completePoolConfig`). */
+export function withCompletePools(plan: BuildPlan): BuildPlan {
+  const complete = (chain: Chain): Chain => ({
+    ...chain,
+    steps: chain.steps.map((step) =>
+      step.family === "position" &&
+      (step.kind === "uniswapV4Pool" || step.kind === "uniswapV3Pool") &&
+      step.config
+        ? { ...step, config: completePoolConfig(step.config.poolId) }
+        : step,
+    ),
+  });
+  return {
+    ...plan,
+    hub: { chains: plan.hub.chains.map(complete) },
+    spokes: plan.spokes.map((spoke) => ({ ...spoke, chains: spoke.chains.map(complete) })),
+  };
 }
 
 /** Every valid plan above, by name, for tests that sweep them all. */

@@ -25,11 +25,19 @@
  */
 import { HUB_NETWORK, type NetworkId, tokenKey } from "../../mandateDraft";
 import {
+  configShapeOfKind,
+  findMandatePool,
+  isConfigFor,
+  isRangeOnGrid,
+  poolRefKey,
+} from "./blockConfig";
+import {
   type AaveBlockConfig,
   BLOCK_KIND_PROTOCOL,
   type BlockKind,
   type BuildPlan,
   type Chain,
+  isPlanBlocked,
   type PlanBlockReason,
   type PlanContext,
   type PlanReducerResult,
@@ -38,7 +46,7 @@ import {
   type Spoke,
   type Step,
 } from "./buildPlan";
-import { findBlock } from "./planDerive";
+import { allocatedPct, findBlock } from "./planDerive";
 import {
   arrivingTokenAt,
   type InsertChoice,
@@ -346,30 +354,19 @@ export function removeBlock(plan: BuildPlan, ctx: PlanContext, blockId: string):
   return reconcileAutoBlocks(withSteps(plan, chain.id, steps), ctx);
 }
 
-/** Which config a value is by shape: a pool's, an Aave block's, or neither. */
-function configShape(config: unknown): "pool" | "aave" | null {
-  if (typeof config !== "object" || config === null) return null;
-  const pool = typeof (config as Partial<PoolBlockConfig>).poolId === "string";
-  const aave = typeof (config as Partial<AaveBlockConfig>).assetKey === "string";
-  if (pool && !aave) return "pool";
-  if (aave && !pool) return "aave";
-  return null;
-}
-
-/** Which config a kind takes. Pendle and GMX take none yet (BlockConfigByKind is `never`). */
-function configShapeOf(kind: BlockKind): "pool" | "aave" | null {
-  if (isPoolKind(kind)) return "pool";
-  if (kind === "aaveSupply" || kind === "aaveBorrow") return "aave";
-  return null;
-}
-
 /**
  * HU2, C13: set (or clear, with null) a card's configuration, then reconcile its Swap · auto.
  *
- * The pool must be a mandate pool of the block's network and protocol, the asset a mandate token
- * of the block's network (`not_in_mandate`, C6). A config whose shape does not match the block's
- * kind, a flow block or an unknown id is `unknown_target`. Null always succeeds: it empties the
- * block. The config is stored as given (a copy), so fields the panel batch adds survive.
+ * The pool must be a mandate pool of the block's network and protocol, named by its bare PoolId
+ * (or a mock row's id, `findMandatePool`), the asset a mandate token of the block's network
+ * (`not_in_mandate`, C6). A config whose shape does not match the block's kind, or that the stored
+ * plan could not read back (`isConfigFor`: a field of the panel contract with a wrong type or out of
+ * range), a flow block or an unknown id is `unknown_target`, and so is a range off the pool's grid
+ * when the row carries its pool key (`isRangeOnGrid`: ticks on the pool's own spacing, Full on its
+ * finite aligned extremes; a mock row has no pool key and nothing to check). Null always succeeds:
+ * it empties the block. The config is stored as given (a copy, so fields the panel batch adds
+ * survive) with the row's own ids, the bare PoolId of `poolRefKey` and the `tokenKey`, whatever
+ * casing it came in: the launch compares them strictly (review M3 of PR #51).
  */
 export function setBlockConfig(
   plan: BuildPlan,
@@ -380,30 +377,30 @@ export function setBlockConfig(
   const found = findBlock(plan, blockId);
   if (found?.block.family !== "position") return blocked("unknown_target", blockId);
   const block = found.block;
+  let stored: PoolBlockConfig | AaveBlockConfig | null = null;
   if (config !== null) {
-    const shape = configShape(config);
-    if (shape === null || shape !== configShapeOf(block.kind)) {
-      return blocked("unknown_target", blockId);
-    }
-    if (shape === "pool") {
-      const poolId = (config as PoolBlockConfig).poolId;
-      const pool = ctx.draft.pools.find((p) => p.id === poolId);
-      if (
-        !pool ||
-        pool.network !== found.network ||
-        pool.protocol !== BLOCK_KIND_PROTOCOL[block.kind]
-      ) {
+    if (!isConfigFor(block.kind, config)) return blocked("unknown_target", blockId);
+    if (configShapeOfKind(block.kind) === "pool") {
+      const poolConfig = config as PoolBlockConfig;
+      const pool = findMandatePool(ctx.draft.pools, found.network, poolConfig.poolId);
+      if (!pool || pool.protocol !== BLOCK_KIND_PROTOCOL[block.kind]) {
         return blocked("not_in_mandate", blockId);
       }
+      const spacing = pool.poolKey?.tickSpacing;
+      if (spacing !== undefined && !isRangeOnGrid(poolConfig, spacing)) {
+        return blocked("unknown_target", blockId);
+      }
+      stored = { ...poolConfig, poolId: poolRefKey(pool) };
     } else {
       const assetKey = (config as AaveBlockConfig).assetKey.toLowerCase();
       const token = ctx.draft.tokens.find(
         (t) => t.network === found.network && tokenKey(t) === assetKey,
       );
       if (!token) return blocked("not_in_mandate", blockId);
+      stored = { ...(config as AaveBlockConfig), assetKey: tokenKey(token) };
     }
   }
-  const next = { ...block, config: config === null ? null : { ...config } } as PositionBlock;
+  const next = { ...block, config: stored } as PositionBlock;
   const steps = found.chain.steps.map((step, i) => (i === found.index ? next : step));
   return reconcileAutoBlocks(withSteps(plan, found.chain.id, steps), ctx);
 }
@@ -476,4 +473,138 @@ export function setSpokeShare(
     },
     ctx,
   );
+}
+
+// ---------------------------------------------------------------------------
+// The panel's Apply and Remove (POO-2184, handoff P3, P7, P8, P10)
+// ---------------------------------------------------------------------------
+
+/** Chain one reducer after another: a refusal ends the composition and comes back as it was. */
+function then(
+  result: PlanReducerResult,
+  next: (plan: BuildPlan) => PlanReducerResult,
+): PlanReducerResult {
+  return isPlanBlocked(result) ? result : next(result);
+}
+
+/**
+ * Finding 11, P3, P8, DP3: the panel's Apply, as ONE reducer, so it lands whole or not at all.
+ *
+ * Writes the block's config through {@link setBlockConfig} (its checks, its Swap · auto), then, when
+ * `sharePct` is given, its chain's share through {@link setChainShare}. On a spoke the spoke's share
+ * is the sum of its chains (open point 3, DP3), so {@link setSpokeShare} moves it too: raised BEFORE
+ * the chain when the sum grows (the chain is checked against its spoke), lowered AFTER the chain
+ * when it shrinks (the spoke is checked against its chains). A spoke holding more than its chains
+ * comes down to their sum on the next Apply that gives a share.
+ *
+ * Only the first position of a chain has an Allocation (P8), so a share for any other block is
+ * `unknown_target`, and so is a share that is not a whole percent from 0 (the launch takes whole
+ * percents, `launch/plan.ts`); a share over what the parent holds is the share reducers' own
+ * `share_exceeds_parent`. Any refusal comes back as it came, and the plan stays as it was.
+ */
+export function applyBlockConfig(
+  plan: BuildPlan,
+  ctx: PlanContext,
+  blockId: string,
+  config: PoolBlockConfig | AaveBlockConfig | null,
+  sharePct?: number,
+): PlanReducerResult {
+  const found = findBlock(plan, blockId);
+  if (found?.block.family !== "position") return blocked("unknown_target", blockId);
+  if (sharePct !== undefined) {
+    const first = found.chain.steps.find((step) => step.family === "position");
+    if (first?.id !== blockId) return blocked("unknown_target", blockId);
+    if (!Number.isInteger(sharePct) || sharePct < 0) return blocked("unknown_target", blockId);
+  }
+  const chainId = found.chain.id;
+  const configured = setBlockConfig(plan, ctx, blockId, config);
+  if (sharePct === undefined) return configured;
+  return then(configured, (current) => {
+    const spoke = current.spokes.find((s) => s.chains.some((chain) => chain.id === chainId));
+    if (!spoke) return setChainShare(current, ctx, chainId, sharePct);
+    const total =
+      sharePct + sum(spoke.chains.filter((c) => c.id !== chainId).map((c) => c.sharePct));
+    if (total > spoke.sharePct) {
+      return then(setSpokeShare(current, ctx, spoke.network, total), (raised) =>
+        setChainShare(raised, ctx, chainId, sharePct),
+      );
+    }
+    return then(setChainShare(current, ctx, chainId, sharePct), (lowered) =>
+      setSpokeShare(lowered, ctx, spoke.network, total),
+    );
+  });
+}
+
+/**
+ * P10, I6, DP3: the panel's Remove block. {@link removeBlock} with its cascade, then, for a block
+ * on a spoke, the spoke's share brought down to what its remaining chains hold, so the share of a
+ * chain that leaves goes back to Idle input on a spoke as it does on the hub.
+ */
+export function removeBlockReleasingShare(
+  plan: BuildPlan,
+  ctx: PlanContext,
+  blockId: string,
+): PlanReducerResult {
+  const network = findBlock(plan, blockId)?.network ?? null;
+  return then(removeBlock(plan, ctx, blockId), (removed) => {
+    const spoke = removed.spokes.find((s) => s.network === network);
+    if (!spoke) return removed;
+    const held = sum(spoke.chains.map((chain) => chain.sharePct));
+    return held < spoke.sharePct ? setSpokeShare(removed, ctx, spoke.network, held) : removed;
+  });
+}
+
+/** What the remove confirm says about one block (P10). */
+export interface RemovalDescription {
+  blockId: string;
+  /** The block has no config: the confirm reads "Remove this block?" and nothing more. */
+  empty: boolean;
+  /** The share of the strategy that goes back to Idle input; 0 when the chain keeps it. */
+  returnedPct: number;
+  /** The block's chain goes with it (it was the chain's last position). */
+  chainRemoved: boolean;
+  /**
+   * Every other step removed with it (its Swap · auto, its Collect fees, the Borrow under it and
+   * what hangs under that Borrow), in plan order, as the plan held them.
+   */
+  removedWith: Step[];
+}
+
+/** Every step of a plan, in plan order. */
+function allSteps(plan: BuildPlan): Step[] {
+  return [
+    ...plan.hub.chains.flatMap((chain) => chain.steps),
+    ...plan.spokes.flatMap((spoke) => spoke.chains.flatMap((chain) => chain.steps)),
+  ];
+}
+
+/**
+ * P10: what removing a block takes with it, computed from the REAL remove
+ * ({@link removeBlockReleasingShare}, built on {@link removeBlock}): the steps before minus the
+ * steps after, and `allocatedPct` before minus after. So it cannot drift from the I6 cascade.
+ * Null when the remove would be refused (an app-owned block, an unknown id).
+ *
+ * Two notes for the caller (review L3 and L4 of PR #51):
+ * - it RUNS the remove, whose Swap · auto reconciliation may take ids from `ctx.newId`; called at
+ *   render time, pass a throwaway id source (`newId: () => "describe-only"`) so describing never
+ *   advances the real one;
+ * - build the confirm sentence from `removedWith`, never from the handoff's wording: I6 removes the
+ *   Borrow directly under a Supply, not everything placed under that Borrow.
+ */
+export function describeRemoval(
+  plan: BuildPlan,
+  ctx: PlanContext,
+  blockId: string,
+): RemovalDescription | null {
+  const found = findBlock(plan, blockId);
+  const after = removeBlockReleasingShare(plan, ctx, blockId);
+  if (!found || isPlanBlocked(after)) return null;
+  const kept = new Set(allSteps(after).map((step) => step.id));
+  return {
+    blockId,
+    empty: found.block.family === "position" && found.block.config === null,
+    returnedPct: allocatedPct(plan) - allocatedPct(after),
+    chainRemoved: locateChain(after, found.chain.id) === null,
+    removedWith: allSteps(plan).filter((step) => step.id !== blockId && !kept.has(step.id)),
+  };
 }

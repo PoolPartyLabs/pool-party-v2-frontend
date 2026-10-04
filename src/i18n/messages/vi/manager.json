@@ -1069,6 +1069,12 @@
         "comingSoon": "Hãy xóa các khối sắp ra mắt.",
         "emptyBlock": "Hãy cấu hình mọi khối trước khi xem lại.",
         "overShare": "Tổng các tỷ trọng vượt quá số vốn phía trên chúng.",
+        "incompleteBlock": "Hãy đặt khoảng giá và mức trượt giá tối đa cho mọi pool trước khi xem lại.",
+        "zeroShare": "Hãy cho mỗi khối một tỷ trọng lớn hơn 0%, hoặc xóa khối đó.",
+        "unusedSpokeShare": "Một mạng giữ nhiều vốn hơn mức các khối của nó sử dụng. Hãy giao tỷ trọng đó cho các khối, hoặc xóa mạng.",
+        "stackedPositions": "Hãy xóa các khối đặt dưới một khối Cung cấp: chúng chưa thể khởi chạy.",
+        "duplicateReserve": "Chỉ cung cấp mỗi tài sản trong một khối. Hãy xóa khối Cung cấp thứ hai của cùng tài sản.",
+        "unsupportedSwap": "Swap bên ngoài pool chưa thể khởi chạy. Hãy cung cấp token đến nơi, hoặc xóa Swap.",
         "unavailable": "Chức năng xem lại chưa khả dụng."
       }
     }

@@ -21,6 +21,7 @@
  * (`mandateDraftStore`, PP-MGR-STO-001). When drafts move to the backend draft API (wiring issue
  * POO-2132) the plan travels in the same payload, and this read check stays the gate it passes.
  */
+import { isConfigFor } from "./blockConfig";
 import {
   type BlockKind,
   BUILD_PLAN_VERSION,
@@ -52,17 +53,12 @@ function isNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
-/** Whether a stored config has the shape its kind takes. Extra fields are kept (panel batch). */
-function isConfigFor(kind: string, config: unknown): boolean {
-  if (config === null) return true;
-  if (!isRecord(config)) return false;
-  const pool = typeof config.poolId === "string";
-  const aave = typeof config.assetKey === "string";
-  if (kind === "uniswapV4Pool" || kind === "uniswapV3Pool") return pool && !aave;
-  if (kind === "aaveSupply" || kind === "aaveBorrow") return aave && !pool;
-  return false;
-}
-
+/**
+ * A stored step. A position's `config` must be one its kind takes (`isConfigFor`, PP-MGR-LIB-026):
+ * the right shape, `poolId` xor `assetKey`, and every field of the panel contract it carries of the
+ * right type and range, so a malformed config makes the plan unreadable while a config still being
+ * filled in (a pool with no range yet) reads. Extra fields are kept (panel batch).
+ */
 function isStep(value: unknown): boolean {
   if (!isRecord(value) || !isId(value.id)) return false;
   if (value.family === "position") {
