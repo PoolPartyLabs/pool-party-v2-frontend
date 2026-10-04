@@ -117,6 +117,8 @@ export interface UseCanvasViewportResult {
 export interface UseCanvasViewportInput {
   /** The laid-out graph size, or null until the layout exists. The first non-null size fits. */
   graphSize: Size | null;
+  /** Optional opening scale, preserving fit as the default for Build. */
+  initialScale?: number;
   /** The canvas container: measured, and the target of the native wheel listener. */
   canvasRef: RefObject<HTMLElement | null>;
   /** A background press that did not pan (handoff [I5]: clears the selection, in S5). */
@@ -149,6 +151,7 @@ function isMeasured(size: Size | null): size is Size {
 /** Pan, zoom and fit state for the Build canvas. */
 export function useCanvasViewport({
   graphSize,
+  initialScale,
   canvasRef,
   onBackgroundClick,
 }: UseCanvasViewportInput): UseCanvasViewportResult {
@@ -190,8 +193,16 @@ export function useCanvasViewport({
   useIsomorphicLayoutEffect(() => {
     if (fittedRef.current || !graphSize || !isMeasured(canvasSize)) return;
     fittedRef.current = true;
-    setView(computeFit(canvasSize, graphSize));
-  }, [graphSize, canvasSize]);
+    setView(
+      initialScale === undefined
+        ? computeFit(canvasSize, graphSize)
+        : {
+            scale: Math.max(0.25, Math.min(1.5, initialScale)),
+            x: Math.max(0, (canvasSize.width - graphSize.width * initialScale) / 2),
+            y: 0,
+          },
+    );
+  }, [graphSize, canvasSize, initialScale]);
 
   // [I8] The wheel, native and non-passive (see the file header).
   useEffect(() => {
