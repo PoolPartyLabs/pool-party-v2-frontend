@@ -171,12 +171,16 @@ export async function prepareV2Launch(
     mark("Catalog throttle cooldown (not launch waiting)");
   }
   if (process.env.E2E_V2_REVIEW_ENTRY !== "fallback") {
+    const seed =
+      process.env.E2E_V2_SIGNED_DRY === "launch" && process.env.E2E_V2_NO_SIGN === "1"
+        ? (process.env.E2E_V2_DRY_SEED_USDC ?? "2")
+        : "2";
     await page.locator("#review-name").fill(name);
     await page.getByLabel("Performance fee", { exact: true }).fill("20");
     await page.getByLabel("Management fee", { exact: true }).fill("0");
     await page.getByLabel("Instant withdrawal fee", { exact: true }).fill("2");
     await page.getByLabel("Minimum first deposit", { exact: true }).fill("2");
-    await page.getByLabel("First deposit amount", { exact: true }).fill("2");
+    await page.getByLabel("First deposit amount", { exact: true }).fill(seed);
     await page.getByLabel("First deposit amount", { exact: true }).blur();
     await expect(page.getByRole("button", { name: "Launch strategy", exact: true })).toBeEnabled();
     await expect(page.getByRole("heading", { name: "Launch steps", exact: true })).toBeVisible();

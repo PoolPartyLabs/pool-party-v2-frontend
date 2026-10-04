@@ -23,6 +23,14 @@ import {
 const burner = "0x3A3ea619C0f37a7D2fF07FF442d863f316A99A7a";
 const mode = v2LaunchMode(process.env.E2E_V2_SIGNED_DRY);
 const resumeStatePath = process.env.E2E_V2_RESUME_STATE;
+const drySeed =
+  mode === "dry-launch" && process.env.E2E_V2_NO_SIGN === "1"
+    ? process.env.E2E_V2_DRY_SEED_USDC
+    : undefined;
+
+function launchRows(page: Page) {
+  return page.locator('main section ol[aria-live="polite"] > li');
+}
 type Kind = keyof Pick<
   typeof manager.fundLaunch,
   | "approve"
@@ -109,7 +117,7 @@ async function readSteps(page: Page): Promise<Step[]> {
       screenshot: null,
     }));
   }
-  const rows = await page.locator("main section > ol > li").all();
+  const rows = await launchRows(page).all();
   const steps: Step[] = [];
   for (const row of rows) {
     const heading = row.locator("h2");
@@ -180,9 +188,11 @@ async function assertReviewSafety(page: Page, address: string) {
     throw new Error("Cannot establish seed and flow fee from Review");
   const total = parseUnits(seed, 6) + parseUnits(fee[1], 6);
   expect(parseUnits(principal[1], 6)).toBeLessThanOrEqual(parseUnits(seed, 6));
-  expect(total, "Seed plus displayed protocol flow fee exceeds 2.1 USDC").toBeLessThanOrEqual(
-    2_100_000n,
-  );
+  if (drySeed) expect(seed).toBe(drySeed);
+  expect(
+    total,
+    "Seed plus displayed protocol flow fee exceeds authorized ceiling",
+  ).toBeLessThanOrEqual(drySeed ? 10_100_000n : 2_100_000n);
   return { seedUsdc: seed, flowFeeUsdc: fee[1], totalUsdcRaw: total.toString(), preview };
 }
 
@@ -340,7 +350,7 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
           step.screenshot = info.outputPath(
             `step-${index + 1}-${step.kind}-${step.status.replace(/\W+/g, "-")}.png`,
           );
-          const rows = page.locator("main section > ol > li");
+          const rows = launchRows(page);
           const isReview = await page
             .getByRole("heading", { name: "Review your strategy", exact: true })
             .count();
@@ -428,7 +438,7 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
         await expect(
           page.getByRole("heading", { name: "Fund launch journey", exact: true }),
         ).toBeVisible();
-        const rows = page.locator("main section > ol > li");
+        const rows = launchRows(page);
         await expect(rows).toHaveCount(expectedSteps.length);
         await expect(rows.locator("h2")).toHaveText(expectedLabels);
         const sign = page.getByRole("button", { name: "Sign next step", exact: true });

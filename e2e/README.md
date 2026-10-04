@@ -39,6 +39,9 @@ Set `E2E_V2_NO_SIGN=1` for agent-operated validation: it rejects every signature
 including SIWE, in every mode, even if signed mode is opted in and armed.
 Expired/revoked auth state must fail, not fall back to SIWE. Never print cookie values or keys.
 The rows must remain Not started, with no transaction hashes or signature-click timestamps.
+For the recording certification, set `E2E_V2_DRY_SEED_USDC=10.03` together with
+`E2E_V2_SIGNED_DRY=launch` and `E2E_V2_NO_SIGN=1`. Only this strictly unsigned mode
+uses the override and a 10.1 USDC preview ceiling; signed runs retain the 2.1 USDC ceiling.
 SIWE permits only the existing deployed origin or exactly `http://localhost:3000`, with matching
 domain/URI, the authorized wallet, chains 42161/4663 and the fixed authentication statements.
 Other localhost ports, mismatched origins, financial statements and extra resources are rejected.
