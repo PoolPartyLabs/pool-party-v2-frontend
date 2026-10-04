@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen
- * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1)
+ * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2195 rules v1)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
  *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
  *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
@@ -99,6 +99,15 @@
  *    `builder_build_abandoned` (whether unsaved plan edits were left behind, and how many blocks),
  *    and a save that fails from Build is `builder_build_error`. A Build session is never also counted
  *    as a Mandate abandonment: the mandate it plans over is already closed.
+ *
+ * ## The Review phase (POO-2195 rules v1)
+ *
+ * Next: Review first passes the Build selection guard and readiness check, then saves the plan
+ * with `lastPhase: "review"` before opening ReviewPhase. The stored phase and `?phase=review`
+ * resume a completed mandate directly in Review; an incomplete mandate still resumes Mandate.
+ * Save & exit preserves `review`, while Back: Build restores `build` and can reveal the selected
+ * readiness blocker without changing the canvas selection. ReviewPhase owns the review fields,
+ * launch gates and the existing launch journey; this shell owns phase persistence and navigation.
  */
 "use client";
 
