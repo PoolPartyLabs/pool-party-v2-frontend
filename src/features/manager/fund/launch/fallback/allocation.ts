@@ -20,7 +20,6 @@ function percent(value: number | undefined): number {
 function split(total: number, ids: string[]) {
   percent(total);
   if (!ids.length) {
-    if (total !== 0) throw new Error("INVALID_ALLOCATION");
     return {};
   }
   const each = Math.floor(total / ids.length);
@@ -41,6 +40,8 @@ export function fallbackAllocations(
   const spokes = draft.plan.spokes.map((spoke) => {
     if (spoke.network !== "robinhood") throw new Error("INVALID_ALLOCATION");
     if (spoke.sharePct !== undefined && spoke.sharePct !== 0) percent(spoke.sharePct);
+    if (spoke.sharePct === 0 && spoke.chains.length === 0)
+      return { network: spoke.network, sharePct: 0 };
     const mandate = draft.spokeCapPercent ?? draft.v2Selection?.spokeCapPercent;
     const cap = draft.caps?.networks.robinhood;
     const networkShare = mandate ?? (cap && !cap.noCap ? cap.pct : undefined);
@@ -102,7 +103,7 @@ export function fallbackAllocations(
       if (validate && positions.reduce((sum, block) => sum + percent(leaves[block.id]), 0) !== 100)
         throw new Error("INVALID_ALLOCATION");
     }
-    if (validate && entries.reduce((sum, chain) => sum + percent(chains[chain.id]), 0) !== budget)
+    if (validate && entries.reduce((sum, chain) => sum + percent(chains[chain.id]), 0) > budget)
       throw new Error("INVALID_ALLOCATION");
   };
   allocateChains(draft.plan.hub.chains, 100 - spokeTotal);

@@ -13,6 +13,52 @@ import { getLaunchSteps } from "../journey";
 import { fallbackAllocations } from "./allocation";
 import { applyFallbackExecutionAtLaunch, fallbackLaunchPreview } from "./execution";
 
+describe("applied panel allocation parity", () => {
+  it("preserves idle hub capital accepted by the public launch preview", () => {
+    const draft = fixture();
+    draft.plan.spokes = [];
+    draft.plan.hub.chains = [
+      {
+        id: "supply-root",
+        sharePct: 35,
+        steps: [
+          {
+            id: "supply",
+            family: "position",
+            kind: "aaveSupply",
+            config: { assetKey: `arbitrum:${usdc}` },
+          },
+        ],
+      },
+    ];
+    expect(getLaunchSteps(draft).length).toBeGreaterThan(0);
+    const snapshot = applyFallbackExecutionAtLaunch(draft, {}, `arbitrum:${usdc}`);
+    expect(snapshot.plan.hub.chains[0]?.sharePct).toBe(35);
+    expect(fallbackLaunchPreview(draft, {}, `arbitrum:${usdc}`).blockers).toEqual([]);
+  });
+  it("preserves an included zero-share empty spoke instead of treating its cap as allocation", () => {
+    const draft = fixture();
+    draft.plan.spokes = [{ network: "robinhood", sharePct: 0, chains: [] }];
+    draft.plan.hub.chains = [
+      {
+        id: "supply-root",
+        sharePct: 35,
+        steps: [
+          {
+            id: "supply",
+            family: "position",
+            kind: "aaveSupply",
+            config: { assetKey: `arbitrum:${usdc}` },
+          },
+        ],
+      },
+    ];
+    const snapshot = applyFallbackExecutionAtLaunch(draft, {}, `arbitrum:${usdc}`);
+    expect(snapshot.plan.spokes[0]?.sharePct).toBe(0);
+    expect(getLaunchSteps(snapshot).some((step) => step.kind === "bridge")).toBe(false);
+  });
+});
+
 const usdc = "0xaf88d065e77c8cc2239327c5edb3a432268e5831";
 const hubPool = "0xfc7b3ad139daaf1e9c3637ed921c154d1b04286f8a82b805a6c352da57028653";
 const spokePool = "0xfcfae8fa0bd6da961bcf5d990f27690932deac4f093e99bf3e871691c6586593";

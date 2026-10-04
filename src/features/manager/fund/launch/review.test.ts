@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { previewSeed, rawUsdc, validateLogo, validateReview } from "./review";
+import { buildMandateCatalog } from "../mandateCatalog";
+import { createEmptyDraft, tokenKey, validateStep } from "../mandateDraft";
+import {
+  hasLaunchTokenAllowance,
+  previewSeed,
+  rawUsdc,
+  validateLogo,
+  validateReview,
+} from "./review";
 
 const review = {
   name: "  Aave income fund  ",
@@ -13,6 +21,29 @@ const review = {
 };
 
 describe("fund Review [R1, R2]", () => {
+  it.each([
+    [undefined, false],
+    [{ pct: 0, noCap: false }, false],
+    [{ pct: 5, noCap: false }, true],
+    [{ noCap: true, pct: 100 }, true],
+  ] as const)("matches the Limits amendment for cap %j", (cap, allowed) => {
+    const token = {
+      network: "arbitrum" as const,
+      address: `0x${"12".repeat(20)}`,
+      symbol: "WETH",
+      name: "Wrapped Ether",
+      logoUrl: null,
+      locked: false,
+    };
+    const draft = {
+      ...createEmptyDraft("2026-10-04", "limits"),
+      tokens: [token],
+      caps: { networks: {}, protocols: {}, tokens: cap ? { [tokenKey(token)]: cap } : {} },
+    };
+    expect(hasLaunchTokenAllowance(draft)).toBe(allowed);
+    expect(validateStep(draft, "limits", buildMandateCatalog()) === null).toBe(allowed);
+    expect(hasLaunchTokenAllowance({ ...draft, tokens: [{ ...token, locked: true }] })).toBe(false);
+  });
   it("trims identity and validates the manager's first deposit", () => {
     expect(validateReview(review, BigInt("100000000")).name).toBe("Aave income fund");
   });

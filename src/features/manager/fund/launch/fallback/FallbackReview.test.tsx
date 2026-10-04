@@ -1,6 +1,8 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../../../../../tests/utils/renderWithProviders";
+import { createJournal, journalKey, saveJournal } from "../journal";
+import { journeyKey } from "../journey";
 import { FallbackReview } from "./FallbackReview";
 
 const state = vi.hoisted(() => ({
@@ -11,6 +13,9 @@ const state = vi.hoisted(() => ({
   rootShare: 100,
   leafShare: 0,
   duplicate: false,
+  realStatus: false,
+  address: `0x${"34".repeat(20)}` as string | undefined,
+  status: null as null | { journeyId: string; status: "paused" | "complete" },
 }));
 const start = vi.hoisted(() => vi.fn(async (_draft: unknown) => ({ journeyId: "journey" })));
 const setField = vi.hoisted(() => vi.fn());
@@ -91,6 +96,21 @@ vi.mock("../index", () => ({
     uploadLogo,
   }),
 }));
+vi.mock("@/lib/auth/useAuth", () => ({ useAuth: () => ({ address: state.address }) }));
+vi.mock("../useV2LaunchStatus", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../useV2LaunchStatus")>();
+  return {
+    useV2LaunchStatus: (draftId: string) => {
+      const status = actual.useV2LaunchStatus(draftId);
+      return state.realStatus ? status : state.status;
+    },
+  };
+});
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <a href={`/en${href}`}>{children}</a>
+  ),
+}));
 vi.mock("../../useV2MandateCatalog", () => ({
   useV2MandateCatalog: () => {
     throw new Error("Fallback must reuse the Review binding catalog, not load a second copy");
@@ -107,8 +127,94 @@ describe("fallback Review [R1, R5]", () => {
       rootShare: 100,
       leafShare: 0,
       duplicate: false,
+      realStatus: false,
+      address: `0x${"34".repeat(20)}`,
+      status: null,
     });
     vi.clearAllMocks();
+    localStorage.clear();
+  });
+  it("uses real read-only status to resume an orphan despite invalid edited draft", async () => {
+    state.realStatus = true;
+    state.blocked = true;
+    state.rootShare = 0;
+    state.duplicate = true;
+    const manager = `0x${"34".repeat(20)}`;
+    const review = {
+      name: "Frozen income fund",
+      description: "",
+      imageUrl: "",
+      performanceFeeBps: 2000,
+      managementFeeBps: 0,
+      payoutFeeBps: 200,
+      minimum: "100",
+      seed: "100",
+    };
+    const journal = createJournal(
+      "draft",
+      manager,
+      {
+        plan: {
+          version: 1,
+          hub: {
+            chains: [
+              {
+                id: "root",
+                sharePct: 100,
+                steps: [
+                  {
+                    id: "supply",
+                    family: "position",
+                    kind: "aaveSupply",
+                    config: { assetKey: `arbitrum:${manager}` },
+                  },
+                ],
+              },
+            ],
+          },
+          spokes: [],
+        },
+        review,
+        request: {
+          manager,
+          chains: [{ chainId: 42161, tokens: [manager], uniswapV4PoolIds: [] }],
+          aaveV3Reserves: [],
+          spokeCapPercent: null,
+          performanceFeeBps: 2000,
+          managementFeeBps: 0,
+          payoutFeeBps: 200,
+          minFirstDeposit: "100000000",
+          seedAmount: "100000000",
+        },
+      },
+      [{ id: "create", kind: "create", chain: 42161, dependencies: [] }],
+    );
+    journal.checkpoints.create = {
+      stepId: "create",
+      chain: 42161,
+      status: "submitted",
+      txHash: `0x${"ab".repeat(32)}`,
+      receiptStatus: "unknown",
+    };
+    saveJournal(localStorage, journal);
+    const raw = localStorage.getItem(journalKey("draft", manager));
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    const { rerender } = renderWithProviders(<FallbackReview draftId="draft" />);
+    expect(await screen.findByRole("link", { name: "Resume launch" })).toHaveAttribute(
+      "href",
+      `/en/manager/fund-launch/${encodeURIComponent(`${manager}:draft`)}`,
+    );
+    expect(screen.queryByRole("button", { name: /Launch ·/ })).not.toBeInTheDocument();
+    expect(start).not.toHaveBeenCalled();
+    expect(writes).not.toHaveBeenCalled();
+    expect(localStorage.getItem(journeyKey(`${manager}:draft`))).toBeNull();
+    expect(localStorage.getItem(journalKey("draft", manager))).toBe(raw);
+    state.address = `0x${"56".repeat(20)}`;
+    rerender(<FallbackReview draftId="draft" />);
+    expect(screen.queryByRole("link", { name: "Resume launch" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Launch ·/ })).toBeDisabled();
+    expect(writes).not.toHaveBeenCalled();
+    writes.mockRestore();
   });
   it("renders terms and signatures without launching on mount", async () => {
     renderWithProviders(<FallbackReview draftId="draft" />);
@@ -124,6 +230,18 @@ describe("fallback Review [R1, R5]", () => {
         hub: { chains: [{ steps: [{ config: { assetKey: `arbitrum:0x${"12".repeat(20)}` } }] }] },
       },
     });
+  });
+  it.each([
+    "paused",
+    "complete",
+  ] as const)("opens the existing %s journey instead of editing or relaunching", (status) => {
+    state.status = { journeyId: "manager:draft", status };
+    renderWithProviders(<FallbackReview draftId="draft" />);
+    expect(
+      screen.getByRole("link", { name: status === "complete" ? "View launch" : "Resume launch" }),
+    ).toHaveAttribute("href", "/en/manager/fund-launch/manager%3Adraft");
+    expect(screen.queryByRole("button", { name: /Launch ·/ })).not.toBeInTheDocument();
+    expect(start).not.toHaveBeenCalled();
   });
   it("shows the duplicate reserve blocker and disables Launch", () => {
     state.duplicate = true;

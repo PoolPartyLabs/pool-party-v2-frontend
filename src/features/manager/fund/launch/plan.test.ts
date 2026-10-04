@@ -77,6 +77,59 @@ describe("Build to launch adapter [R2, R4, R5]", () => {
     block.kind = "aaveBorrow";
     expect(() => deriveLaunchSteps(plan, {}, false, false)).toThrow("UNSUPPORTED_POSITION");
   });
+  it("never lets stale launch execution override newly applied panel ticks or slippage", () => {
+    const plan = fixture([chain("pool", "uniswapV4Pool")]);
+    const block = plan.hub.chains[0]?.steps[0];
+    if (!block) throw new Error("fixture");
+    block.config = { poolId: "pool", tickLower: -100, tickUpper: 100, slippagePct: 0.1 };
+    const steps = deriveLaunchSteps(
+      plan,
+      {
+        "pool-position": {
+          tickLower: -200,
+          tickUpper: 200,
+          priceLower: "1000",
+          priceUpper: "2000",
+          maxLossBps: 500,
+          leafSharePct: 100,
+        },
+      },
+      false,
+      false,
+    );
+    expect(steps.find((step) => step.kind === "open")?.config).toMatchObject({
+      tickLower: -100,
+      tickUpper: 100,
+      maxLossBps: 10,
+      leafSharePct: 100,
+    });
+    expect(steps.find((step) => step.kind === "open")?.config?.priceLower).toBeUndefined();
+    expect(steps.find((step) => step.kind === "open")?.config?.priceUpper).toBeUndefined();
+  });
+  it.each([
+    0,
+    0.01,
+    0.099,
+    5.01,
+    NaN,
+    Infinity,
+  ])("rejects panel slippage %s before rounding", (slippagePct) => {
+    const plan = fixture([chain("pool", "uniswapV4Pool")]);
+    const block = plan.hub.chains[0]?.steps[0];
+    if (!block) throw new Error("fixture");
+    block.config = { poolId: "pool", tickLower: -100, tickUpper: 100, slippagePct };
+    expect(() => deriveLaunchSteps(plan, {}, false, false)).toThrow("INVALID_SLIPPAGE");
+  });
+  it("refuses a zero explicit leaf before creating an unexecutable zero amount", () => {
+    expect(() =>
+      deriveLaunchSteps(
+        fixture([chain("aave", "aaveSupply")]),
+        { "aave-position": { leafSharePct: 0 } },
+        false,
+        false,
+      ),
+    ).toThrow("INVALID_ALLOCATION");
+  });
   it("creates an included empty spoke without bridging zero capital", () => {
     const plan = fixture(
       [chain("aave", "aaveSupply")],

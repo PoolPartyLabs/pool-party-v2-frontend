@@ -48,6 +48,40 @@ const draft: FundLaunchDraft = {
 };
 describe("public journey contracts [R3, R4, R6]", () => {
   beforeEach(() => localStorage.clear());
+  it("checks the mandate pool grid in the public preview, not only after Launch", () => {
+    const poolId = `0x${"ab".repeat(32)}`;
+    const selected = {
+      ...draft,
+      pools: [{ poolId, network: "arbitrum", poolKey: { tickSpacing: 10 } }],
+      plan: {
+        ...draft.plan,
+        hub: {
+          chains: [
+            {
+              id: "pool",
+              sharePct: 100,
+              steps: [
+                {
+                  id: "pool-position",
+                  family: "position",
+                  kind: "uniswapV4Pool",
+                  config: { poolId, tickLower: -101, tickUpper: 100, slippagePct: 1 },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    } as FundLaunchDraft;
+    expect(() => getLaunchSteps(selected)).toThrow("BUILD_TICK_ALIGNMENT");
+    const block = selected.plan.hub.chains[0]?.steps[0];
+    if (!block?.config) throw new Error("fixture");
+    block.config.tickLower = -100;
+    block.config.fullRange = true;
+    expect(() => getLaunchSteps(selected)).toThrow("BUILD_TICK_ALIGNMENT");
+    block.config.fullRange = false;
+    expect(() => getLaunchSteps(selected)).not.toThrow();
+  });
   it("R1 reads the route-encoded journey id from the original persisted key", () => {
     const journey = persistJourney(draft, manager);
     expect(readJourney(encodeURIComponent(journey.journeyId))).toEqual(

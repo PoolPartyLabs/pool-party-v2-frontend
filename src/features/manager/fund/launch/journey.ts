@@ -4,10 +4,12 @@
  * @implements-rules-version v2 (POO-2181)
  */
 import { z } from "zod";
+import { createRequestSchema } from "@/lib/api/v2/launchSchemas";
 import { getChainById } from "@/lib/chains";
 import type { FundLaunchDraft, LaunchJourney, LaunchStepPreview } from "./contracts";
-import { journalKey, loadJournal } from "./journal";
-import { deriveLaunchSteps } from "./plan";
+import { journalKey, type LaunchJournal, loadJournal } from "./journal";
+import { type CanvasPlan, deriveLaunchSteps, validateTickAlignment } from "./plan";
+import { rawUsdc, reviewSchema } from "./review";
 
 export { explorerAddressUrl, explorerTxUrl } from "@/lib/chain/explorer";
 export function getLaunchSteps(draft: FundLaunchDraft): LaunchStepPreview[] {
@@ -16,12 +18,23 @@ export function getLaunchSteps(draft: FundLaunchDraft): LaunchStepPreview[] {
     draft.plan.spokes.some((spoke) => spoke.chains.some((chain) => chain.sharePct <= 0))
   )
     throw new Error("INVALID_ALLOCATION");
-  return deriveLaunchSteps(
+  const steps = deriveLaunchSteps(
     draft.plan,
     draft.launchExecution ?? {},
     true,
     draft.networks.includes("robinhood"),
-  ).map((step) => ({
+  );
+  for (const step of steps.filter(
+    (entry) => entry.protocol === "uniswap-v4" && entry.kind === "open",
+  )) {
+    const pool = draft.pools.find(
+      (entry) =>
+        entry.network === (step.chain === 42161 ? "arbitrum" : "robinhood") &&
+        entry.poolId?.toLowerCase() === step.config?.poolId?.toLowerCase(),
+    );
+    if (pool?.poolKey) validateTickAlignment(step.config ?? {}, pool.poolKey.tickSpacing);
+  }
+  return steps.map((step) => ({
     id: step.id,
     chainId: step.chain,
     kind: step.kind,
@@ -37,6 +50,92 @@ export function getLaunchSteps(draft: FundLaunchDraft): LaunchStepPreview[] {
 }
 export function journeyKey(journeyId: string): string {
   return `pp:v2:journey:1:${journeyId}`;
+}
+const launchChainSchema = z
+  .object({
+    id: z.string(),
+    sharePct: z.number().finite(),
+    steps: z.array(
+      z
+        .object({
+          id: z.string(),
+          family: z.enum(["position", "flow"]),
+          kind: z.string(),
+          auto: z.boolean().optional(),
+          config: z
+            .object({
+              poolId: z.string().optional(),
+              assetKey: z.string().optional(),
+              priceLower: z.string().optional(),
+              priceUpper: z.string().optional(),
+              tickLower: z.number().finite().optional(),
+              tickUpper: z.number().finite().optional(),
+              fullRange: z.boolean().optional(),
+              slippagePct: z.number().finite().optional(),
+              displayInverted: z.boolean().optional(),
+            })
+            .passthrough()
+            .nullable()
+            .optional(),
+        })
+        .passthrough(),
+    ),
+  })
+  .passthrough();
+const launchPlanSchema = z
+  .object({
+    version: z.literal(1),
+    hub: z.object({ chains: z.array(launchChainSchema) }).passthrough(),
+    spokes: z.array(
+      z
+        .object({
+          network: z.string(),
+          sharePct: z.number().finite(),
+          chains: z.array(launchChainSchema),
+        })
+        .passthrough(),
+    ),
+  })
+  .passthrough();
+export function assertLaunchPlan(value: unknown): asserts value is CanvasPlan {
+  launchPlanSchema.parse(value);
+}
+export function readFrozenJournal(draftId: string, manager: string) {
+  const journal = loadJournal(localStorage, draftId, manager);
+  if (!journal) return null;
+  z.object({
+    checkpoints: z.record(
+      z.object({
+        txHash: z
+          .string()
+          .regex(/^0x[0-9a-fA-F]{64}$/)
+          .optional(),
+        receiptStatus: z.enum(["success", "reverted", "unknown"]).optional(),
+      }),
+    ),
+    addresses: z.record(z.string().regex(/^0x[0-9a-fA-F]{40}$/)),
+  }).parse(journal);
+  if (
+    journal.steps.some((step) => {
+      const checkpoint = journal.checkpoints[step.id];
+      return checkpoint && checkpoint.chain !== step.chain;
+    })
+  )
+    throw new Error("INVALID_JOURNAL");
+  const frozen = z
+    .object({ plan: z.unknown(), review: reviewSchema, request: createRequestSchema })
+    .parse(journal.frozen);
+  assertLaunchPlan(frozen.plan);
+  if (
+    frozen.request.manager.toLowerCase() !== manager.toLowerCase() ||
+    frozen.request.minFirstDeposit !== rawUsdc(frozen.review.minimum).toString() ||
+    frozen.request.seedAmount !== rawUsdc(frozen.review.seed).toString() ||
+    frozen.request.performanceFeeBps !== frozen.review.performanceFeeBps ||
+    frozen.request.managementFeeBps !== frozen.review.managementFeeBps ||
+    frozen.request.payoutFeeBps !== frozen.review.payoutFeeBps
+  )
+    throw new Error("INVALID_JOURNAL");
+  return journal;
 }
 export function readJourney(journeyId: string): LaunchJourney | null {
   if (typeof window === "undefined") return null;
@@ -73,14 +172,22 @@ export function persistJourney(draft: FundLaunchDraft, manager: string): LaunchJ
   const journeyId = `${manager.toLowerCase()}:${draft.id}`;
   const previous = readJourney(journeyId);
   if (previous) return previous;
-  getLaunchSteps(draft);
   const journal = loadJournal(localStorage, draft.id, manager);
+  if (!journal) getLaunchSteps(draft);
+  const frozen = journal?.frozen as
+    | { plan?: FundLaunchDraft["plan"]; review?: FundLaunchDraft["review"] }
+    | undefined;
+  const snapshot = {
+    ...draft,
+    ...(frozen?.plan ? { plan: frozen.plan } : {}),
+    ...(frozen?.review ? { review: frozen.review } : {}),
+  };
   const journey: LaunchJourney = {
     version: 1,
     journeyId,
     draftId: draft.id,
     manager: manager.toLowerCase(),
-    draft: structuredClone(draft),
+    draft: structuredClone(snapshot),
     createdAt: new Date().toISOString(),
     ...(journal ? { journal } : {}),
   };
@@ -128,12 +235,18 @@ export function launchStatus(journey: LaunchJourney) {
       chain: step.chainId,
       dependencies: [],
     }));
-  const current =
-    steps.find((step) => journey.journal?.checkpoints[step.id]?.status !== "confirmed") ?? null;
-  const failed = steps.some((step) => journey.journal?.checkpoints[step.id]?.status === "failed");
+  return journalStatus(journey.journeyId, steps, journey.journal?.checkpoints ?? {});
+}
+function journalStatus(
+  journeyId: string,
+  steps: LaunchJournal["steps"],
+  checkpoints: LaunchJournal["checkpoints"],
+) {
+  const current = steps.find((step) => checkpoints[step.id]?.status !== "confirmed") ?? null;
+  const failed = steps.some((step) => checkpoints[step.id]?.status === "failed");
   const completed = steps.length > 0 && current === null;
   return {
-    journeyId: journey.journeyId,
+    journeyId,
     status: completed ? ("complete" as const) : failed ? ("failed" as const) : ("paused" as const),
     current,
     outcome: completed
@@ -144,10 +257,19 @@ export function launchStatus(journey: LaunchJourney) {
   };
 }
 export function getLaunchStatusForDraft(draftId: string, manager?: string | null) {
-  const journey = listLaunchJourneys(manager).journeys.find((entry) => entry.draftId === draftId);
-  if (!journey) return null;
+  if (!manager || typeof window === "undefined" || !/^0x[0-9a-fA-F]{40}$/.test(manager))
+    return null;
   try {
-    return launchStatus(journey);
+    const journeyId = `${manager.toLowerCase()}:${draftId}`;
+    const journey = readJourney(journeyId);
+    if (journey) {
+      if (journey.manager.toLowerCase() !== manager.toLowerCase() || journey.draftId !== draftId)
+        return null;
+      return launchStatus(journey);
+    }
+    const journal = readFrozenJournal(draftId, manager);
+    if (!journal) return null;
+    return journalStatus(journeyId, journal.steps, journal.checkpoints);
   } catch {
     return null;
   }

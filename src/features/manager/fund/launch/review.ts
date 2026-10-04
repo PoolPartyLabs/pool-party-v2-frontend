@@ -5,6 +5,14 @@
  * Review validation and integer seed accounting.
  */
 import { z } from "zod";
+import { type MandateDraft, tokenKey } from "../mandateDraft";
+
+export function hasLaunchTokenAllowance(draft: MandateDraft): boolean {
+  return draft.tokens.some((token) => {
+    const cap = draft.caps.tokens[tokenKey(token)];
+    return !token.locked && (cap?.noCap === true || (cap?.pct ?? 0) > 0);
+  });
+}
 
 const plainText = z.string().refine(
   (value) =>

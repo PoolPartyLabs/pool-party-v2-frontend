@@ -1,10 +1,11 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createEmptyDraft } from "../mandateDraft";
+import { createEmptyDraft, tokenKey } from "../mandateDraft";
+import { MANDATE_DRAFTS_KEY, upsertDraft } from "../mandateDraftStore";
 import type { FundLaunchDraft } from "./contracts";
-import { createJournal, saveJournal } from "./journal";
-import { persistJourney } from "./journey";
-import { deriveLaunchSteps } from "./plan";
+import { createJournal, journalKey, saveJournal } from "./journal";
+import { journeyKey, persistJourney } from "./journey";
+import { type CanvasPlan, deriveLaunchSteps } from "./plan";
 import { useV2Launch } from "./useV2Launch";
 
 const mocks = vi.hoisted(() => ({
@@ -22,11 +23,29 @@ vi.mock("@/lib/api/v2/actions", () => ({
 }));
 vi.mock("../v2Mandate", () => ({
   buildRealCatalog: vi.fn(),
-  toV2MandateSelection: () => ({ chains: [], aaveV3Reserves: [], spokeCapPercent: null }),
+  toV2MandateSelection: () => ({
+    chains: [{ chainId: 42161, tokens: [`0x${"34".repeat(20)}`], uniswapV4PoolIds: [] }],
+    aaveV3Reserves: [],
+    spokeCapPercent: null,
+  }),
 }));
 const manager = `0x${"34".repeat(20)}`;
+const permitted = {
+  network: "arbitrum" as const,
+  address: manager,
+  symbol: "WETH",
+  name: "Wrapped Ether",
+  logoUrl: null,
+  locked: false,
+};
 const draft: FundLaunchDraft = {
   ...createEmptyDraft("2026-10-04", "hook"),
+  tokens: [permitted],
+  caps: {
+    networks: {},
+    protocols: {},
+    tokens: { [tokenKey(permitted)]: { noCap: true, pct: 100 } },
+  },
   review: {
     name: "Income fund demo",
     description: "",
@@ -58,8 +77,43 @@ const draft: FundLaunchDraft = {
     spokes: [],
   },
 };
+const orphanFrozen = () => ({
+  plan: draft.plan,
+  review: draft.review,
+  request: {
+    manager,
+    chains: [{ chainId: 42161, tokens: [manager], uniswapV4PoolIds: [] }],
+    aaveV3Reserves: [],
+    spokeCapPercent: null,
+    performanceFeeBps: 2000,
+    managementFeeBps: 0,
+    payoutFeeBps: 200,
+    minFirstDeposit: "100000000",
+    seedAmount: "100000000",
+  },
+});
+function storeOrphan(plan: CanvasPlan = draft.plan) {
+  upsertDraft({ ...draft, tokens: [], plan: undefined, review: { ...draft.review, seed: "0" } });
+  const journal = createJournal(
+    draft.id,
+    manager,
+    { ...orphanFrozen(), plan },
+    deriveLaunchSteps(plan, {}, true, false),
+  );
+  journal.checkpoints.create = {
+    stepId: "create",
+    chain: 42161,
+    status: "submitted",
+    txHash: `0x${"ab".repeat(32)}`,
+    receiptStatus: "unknown",
+  };
+  journal.addresses.coreVault = manager;
+  saveJournal(localStorage, journal);
+  return journal;
+}
 describe("public launch hook seam [R3, R4, R6]", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     localStorage.clear();
     vi.clearAllMocks();
     mocks.manager = manager;
@@ -75,6 +129,122 @@ describe("public launch hook seam [R3, R4, R6]", () => {
       pause: vi.fn(),
       status: "running",
     });
+  });
+  it("recovers an accepted collectFees flow without auto and preserves frozen bytes", async () => {
+    const plan: CanvasPlan = structuredClone(draft.plan);
+    const chain = plan.hub.chains[0];
+    if (!chain) throw new Error("fixture");
+    chain.steps.push({ id: "fees", family: "flow", kind: "collectFees", config: {} });
+    const journal = storeOrphan(plan);
+    const rawJournal = localStorage.getItem(journalKey(draft.id, manager));
+    const frozenBytes = JSON.stringify(journal.frozen);
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    const { result } = renderHook(() => useV2Launch(encodeURIComponent(`${manager}:${draft.id}`)));
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    expect(result.current.journey?.draft.plan).toEqual(plan);
+    expect(result.current.journey?.draft.plan.hub.chains[0]?.steps[1]).not.toHaveProperty("auto");
+    expect(JSON.stringify(result.current.journey?.journal?.frozen)).toBe(frozenBytes);
+    expect(localStorage.getItem(journalKey(draft.id, manager))).toBe(rawJournal);
+    expect(writes).toHaveBeenCalledTimes(1);
+    expect(mocks.catalog).not.toHaveBeenCalled();
+    expect(mocks.binding.mock.results.at(-1)?.value.sign).not.toHaveBeenCalled();
+  });
+  it.each([
+    { id: "fees", family: "flow", kind: "collectFees", auto: "yes" },
+    { id: "fees", family: "flow", kind: "collectFees", config: { fullRange: "yes" } },
+    { id: "fees", family: "flow", kind: 42 },
+  ])("rejects malformed frozen flow %j without recovery writes", async (flow) => {
+    const journal = storeOrphan();
+    const plan = { ...draft.plan, hub: { chains: [{ id: "leaf", sharePct: 100, steps: [flow] }] } };
+    localStorage.setItem(
+      journalKey(draft.id, manager),
+      JSON.stringify({
+        ...journal,
+        frozen: { ...orphanFrozen(), plan },
+      }),
+    );
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    const { result } = renderHook(() => useV2Launch(`${manager}:${draft.id}`));
+    await waitFor(() => expect(result.current.loadingError).toBe(true));
+    expect(result.current.ready).toBe(false);
+    expect(writes).not.toHaveBeenCalled();
+    expect(mocks.catalog).not.toHaveBeenCalled();
+  });
+  it("recovers orphan metadata from frozen data before invalid editable draft readiness", async () => {
+    const journal = storeOrphan();
+    const rawJournal = localStorage.getItem(journalKey(draft.id, manager));
+    const rawDrafts = localStorage.getItem(MANDATE_DRAFTS_KEY);
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    const journeyId = `${manager}:${draft.id}`;
+    const { result } = renderHook(() => useV2Launch(encodeURIComponent(journeyId)));
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    expect(result.current.journey).toMatchObject({
+      journeyId,
+      draft: { plan: draft.plan, review: draft.review, tokens: [] },
+      journal: JSON.parse(rawJournal ?? "null"),
+    });
+    expect(mocks.binding).toHaveBeenLastCalledWith(
+      expect.objectContaining({ draftId: draft.id, manager, frozen: journal.frozen }),
+    );
+    expect(writes).toHaveBeenCalledTimes(1);
+    expect(writes).toHaveBeenCalledWith(journeyKey(journeyId), expect.any(String));
+    expect(localStorage.getItem(journalKey(draft.id, manager))).toBe(rawJournal);
+    expect(localStorage.getItem(MANDATE_DRAFTS_KEY)).toBe(rawDrafts);
+    expect(mocks.catalog).not.toHaveBeenCalled();
+    expect(mocks.binding.mock.results.at(-1)?.value.sign).not.toHaveBeenCalled();
+    writes.mockRestore();
+  });
+  it("rejects another wallet without recovering metadata, then recovers on wallet connection", async () => {
+    storeOrphan();
+    mocks.manager = `0x${"56".repeat(20)}`;
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    const journeyId = `${manager}:${draft.id}`;
+    const { result, rerender } = renderHook(() => useV2Launch(encodeURIComponent(journeyId)));
+    await waitFor(() => expect(result.current.loadingError).toBe(true));
+    expect(result.current.ready).toBe(false);
+    expect(result.current.journey).toBeNull();
+    expect(writes).not.toHaveBeenCalled();
+    expect(mocks.binding).toHaveBeenLastCalledWith(
+      expect.objectContaining({ manager: null, wallet: null, frozen: undefined }),
+    );
+    expect(mocks.catalog).not.toHaveBeenCalled();
+    mocks.manager = manager;
+    rerender();
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    writes.mockRestore();
+  });
+  it.each([
+    "journal",
+    "plan",
+    "review",
+    "request",
+    "hash",
+    "wallet",
+  ])("fails closed on malformed orphan %s without writes or catalog hydration", async (part) => {
+    const journal = storeOrphan();
+    const frozen = orphanFrozen();
+    const broken = {
+      ...journal,
+      ...(part === "journal" ? { steps: [] } : {}),
+      ...(part === "hash"
+        ? { checkpoints: { create: { ...journal.checkpoints.create, txHash: "bad" } } }
+        : {}),
+      frozen: {
+        ...frozen,
+        ...(["plan", "review", "request"].includes(part) ? { [part]: {} } : {}),
+        ...(part === "wallet"
+          ? { request: { ...frozen.request, manager: `0x${"56".repeat(20)}` } }
+          : {}),
+      },
+    };
+    localStorage.setItem(journalKey(draft.id, manager), JSON.stringify(broken));
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    const { result } = renderHook(() => useV2Launch(`${manager}:${draft.id}`));
+    await waitFor(() => expect(result.current.loadingError).toBe(true));
+    expect(result.current.ready).toBe(false);
+    expect(writes).not.toHaveBeenCalled();
+    expect(mocks.catalog).not.toHaveBeenCalled();
+    writes.mockRestore();
   });
   it("reads frozen journal on reload and exposes broadcast explorer links without catalog I/O", async () => {
     const frozen = { plan: draft.plan, review: draft.review, request: { manager } };
@@ -125,6 +295,13 @@ describe("public launch hook seam [R3, R4, R6]", () => {
   it("reports failed catalog hydration without requesting signatures", async () => {
     mocks.catalog.mockResolvedValue({ ok: false });
     const journey = persistJourney(draft, manager);
+    const { result } = renderHook(() => useV2Launch(journey.journeyId));
+    await waitFor(() => expect(result.current.outcome).toBe("failed"));
+    await result.current.sign();
+    expect(mocks.binding.mock.results.at(-1)?.value.sign).not.toHaveBeenCalled();
+  });
+  it("rejects a legacy unfrozen journey that bypasses Limits", async () => {
+    const journey = persistJourney({ ...draft, tokens: [] }, manager);
     const { result } = renderHook(() => useV2Launch(journey.journeyId));
     await waitFor(() => expect(result.current.outcome).toBe("failed"));
     await result.current.sign();

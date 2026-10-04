@@ -1,19 +1,54 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { createEmptyDraft } from "../mandateDraft";
+import { createEmptyDraft, tokenKey } from "../mandateDraft";
+import { toV2MandateSelection } from "../v2Mandate";
 import { useV2ReviewBinding } from "./useV2ReviewBinding";
 
 vi.mock("@/lib/media/useUploadMedia", () => ({ useUploadMedia: () => vi.fn() }));
 vi.mock("../v2Mandate", () => ({
-  toV2MandateSelection: () => ({
+  toV2MandateSelection: vi.fn(() => ({
     chains: [{ chainId: 42161, tokens: [`0x${"12".repeat(20)}`], uniswapV4PoolIds: [] }],
     aaveV3Reserves: [],
     spokeCapPercent: null,
-  }),
+  })),
 }));
-const draft = { ...createEmptyDraft("2026-10-04", "draft"), name: "Income fund demo" };
+const permitted = {
+  network: "arbitrum" as const,
+  address: `0x${"12".repeat(20)}`,
+  symbol: "WETH",
+  name: "Wrapped Ether",
+  logoUrl: null,
+  locked: false,
+};
+const draft = {
+  ...createEmptyDraft("2026-10-04", "draft"),
+  name: "Income fund demo",
+  tokens: [permitted],
+  caps: {
+    networks: {},
+    protocols: {},
+    tokens: { [tokenKey(permitted)]: { noCap: true, pct: 100 } },
+  },
+};
 const catalog = {} as Parameters<typeof useV2ReviewBinding>[0]["catalog"];
 describe("headless Review contract [R1, R2, R9]", () => {
+  it("rejects selections wider than the provisioning API before freezing", () => {
+    const { result } = renderHook(() =>
+      useV2ReviewBinding({ draft, catalog, balance: BigInt(200000000) }),
+    );
+    vi.mocked(toV2MandateSelection).mockReturnValueOnce({
+      chains: [
+        {
+          chainId: 42161,
+          tokens: [`0x${"12".repeat(20)}`, `0x${"34".repeat(20)}`, `0x${"56".repeat(20)}`],
+          uniswapV4PoolIds: [],
+        },
+      ],
+      aaveV3Reserves: [],
+      spokeCapPercent: null,
+    });
+    expect(() => result.current.prepare(`0x${"34".repeat(20)}`)).toThrow();
+  });
   it("maps defaults, fixed investor terms and net seed preview without rendering UI", () => {
     const { result } = renderHook(() =>
       useV2ReviewBinding({ draft, catalog, balance: BigInt(200000000) }),

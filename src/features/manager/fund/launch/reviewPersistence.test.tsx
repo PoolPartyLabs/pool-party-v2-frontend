@@ -1,16 +1,28 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createEmptyDraft } from "../mandateDraft";
+import { createEmptyDraft, tokenKey } from "../mandateDraft";
 import { getDraft, upsertDraft } from "../mandateDraftStore";
 import { createJournal, saveJournal } from "./journal";
 import { deriveLaunchSteps } from "./plan";
 import { useV2ReviewDraft } from "./useV2ReviewDraft";
 
-const mocks = vi.hoisted(() => ({ fund: vi.fn(), upload: vi.fn() }));
+const mocks = vi.hoisted(() => ({ fund: vi.fn(), upload: vi.fn(), tokenCount: 1 }));
 vi.mock("@/lib/api/v2/launchActions", () => ({ readLaunchFundAction: mocks.fund }));
 
 vi.mock("../useV2MandateCatalog", () => ({ useV2MandateCatalog: () => ({}) }));
-vi.mock("../v2Mandate", () => ({ toV2MandateSelection: () => ({}) }));
+vi.mock("../v2Mandate", () => ({
+  toV2MandateSelection: () => ({
+    chains: [
+      {
+        chainId: 42161,
+        tokens: ["12", "34", "56"].slice(0, mocks.tokenCount).map((byte) => `0x${byte.repeat(20)}`),
+        uniswapV4PoolIds: [],
+      },
+    ],
+    aaveV3Reserves: [],
+    spokeCapPercent: null,
+  }),
+}));
 vi.mock("./useV2LaunchWallet", () => ({
   useV2LaunchWallet: () => ({
     manager: `0x${"34".repeat(20)}`,
@@ -31,15 +43,30 @@ const review = {
   minimum: "100",
   seed: "100",
 };
+const permitted = {
+  network: "arbitrum" as const,
+  address: `0x${"12".repeat(20)}`,
+  symbol: "WETH",
+  name: "Wrapped Ether",
+  logoUrl: null,
+  locked: false,
+};
 describe("agreed Review draft seam [V1, V2, V5, V8, V9]", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    mocks.tokenCount = 1;
     mocks.upload.mockResolvedValue("https://cdn.test/logo.png");
     mocks.fund.mockResolvedValue({ ok: true, data: { fees: { flowFeeBps: "50" } } });
     upsertDraft({
       ...createEmptyDraft("2026-10-04", "review"),
       name: review.name,
+      tokens: [permitted],
+      caps: {
+        networks: {},
+        protocols: {},
+        tokens: { [tokenKey(permitted)]: { noCap: true, pct: 100 } },
+      },
       review,
       ...{
         plan: {
@@ -75,6 +102,28 @@ describe("agreed Review draft seam [V1, V2, V5, V8, V9]", () => {
     act(() => result.current.setFeePercent("managementFeeBps", "9"));
     expect(getDraft("review")?.review?.managementFeeBps).toBe(500);
     expect(result.current.isReady).toBe(true);
+  });
+  it("exposes the Limits amendment as a non-bypassable localized Build blocker", async () => {
+    const latest = getDraft("review");
+    if (!latest) throw new Error("fixture");
+    upsertDraft({ ...latest, caps: { networks: {}, protocols: {}, tokens: {} } });
+    const { result } = renderHook(() => useV2ReviewDraft("review"));
+    await waitFor(() => expect(result.current.draft).not.toBeNull());
+    expect(result.current.launchBlockers).toContainEqual({
+      code: "BUILD_LIMITS_TOKEN_ALLOWANCE_REQUIRED",
+      messageKey: "fundBuilder.limits.positiveTokenRequired",
+    });
+    expect(result.current.isReady).toBe(false);
+  });
+  it("keeps unsupported provisioning cardinality distinct from fallback-fillable execution", async () => {
+    mocks.tokenCount = 3;
+    const { result } = renderHook(() => useV2ReviewDraft("review"));
+    await waitFor(() => expect(result.current.draft).not.toBeNull());
+    expect(result.current.launchBlockers).toContainEqual({
+      code: "BUILD_PROVISIONING_SELECTION_GAP",
+      messageKey: "fundLaunch.buildGap",
+    });
+    expect(result.current.isReady).toBe(false);
   });
   it("exposes reasons for invalid fields and missing Build, never an unexplained disabled launch", async () => {
     const { result } = renderHook(() => useV2ReviewDraft("review"));

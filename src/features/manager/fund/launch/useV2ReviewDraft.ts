@@ -6,6 +6,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { readLaunchFundAction } from "@/lib/api/v2/launchActions";
+import { createRequestSchema } from "@/lib/api/v2/launchSchemas";
 import type { MandateDraft } from "../mandateDraft";
 import { getDraft, subscribe, upsertDraft } from "../mandateDraftStore";
 import { useV2MandateCatalog } from "../useV2MandateCatalog";
@@ -14,6 +15,7 @@ import type { FundLaunchDraft } from "./contracts";
 import { loadJournal } from "./journal";
 import { getLaunchSteps } from "./journey";
 import { type CanvasPlan, launchPlanError } from "./plan";
+import { hasLaunchTokenAllowance } from "./review";
 import { useV2LaunchWallet } from "./useV2LaunchWallet";
 import { useV2ReviewBinding } from "./useV2ReviewBinding";
 
@@ -96,8 +98,23 @@ export function useV2ReviewDraft(draftId: string) {
       messageKey: "fundLaunch.uploadFailed",
     });
   if (draft) {
+    if (!hasLaunchTokenAllowance(draft))
+      launchBlockers.push({
+        code: "BUILD_LIMITS_TOKEN_ALLOWANCE_REQUIRED",
+        messageKey: "fundBuilder.limits.positiveTokenRequired",
+      });
     try {
-      toV2MandateSelection(draft, catalog);
+      const selection = toV2MandateSelection(draft, catalog);
+      if (
+        !createRequestSchema
+          .innerType()
+          .pick({ chains: true, aaveV3Reserves: true, spokeCapPercent: true })
+          .safeParse(selection).success
+      )
+        launchBlockers.push({
+          code: "BUILD_PROVISIONING_SELECTION_GAP",
+          messageKey: "fundLaunch.buildGap",
+        });
       if (!draft.plan) throw new Error("BUILD_EXECUTION_GAP");
       getLaunchSteps({ ...draft, review: binding.review } as FundLaunchDraft);
     } catch (error) {

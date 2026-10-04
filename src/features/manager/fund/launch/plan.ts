@@ -37,6 +37,7 @@ export interface ExecutionConfig {
   maxLossBps?: number;
   tickLower?: number;
   tickUpper?: number;
+  fullRange?: boolean;
 }
 export interface LaunchStep {
   id: string;
@@ -73,7 +74,7 @@ function percent(value: number): number {
   return value;
 }
 export function validateTickAlignment(config: ExecutionConfig, tickSpacing: number): void {
-  if (config.tickLower === undefined && config.tickUpper === undefined) return;
+  if (config.tickLower === undefined && config.tickUpper === undefined && !config.fullRange) return;
   const lower = config.tickLower;
   const upper = config.tickUpper;
   if (
@@ -87,7 +88,10 @@ export function validateTickAlignment(config: ExecutionConfig, tickSpacing: numb
     upper > 887272 ||
     lower >= upper ||
     lower % tickSpacing !== 0 ||
-    upper % tickSpacing !== 0
+    upper % tickSpacing !== 0 ||
+    (config.fullRange === true &&
+      (lower !== Math.ceil(-887272 / tickSpacing) * tickSpacing ||
+        upper !== Math.floor(887272 / tickSpacing) * tickSpacing))
   )
     throw new Error("BUILD_TICK_ALIGNMENT");
 }
@@ -157,17 +161,29 @@ export function deriveLaunchSteps(
           !block.config
         )
           throw new Error("UNSUPPORTED_POSITION");
-        const settings = { ...block.config, ...execution[block.id] };
+        const settings = { ...execution[block.id], ...block.config };
+        if (settings.tickLower !== undefined && settings.tickUpper !== undefined) {
+          delete settings.priceLower;
+          delete settings.priceUpper;
+        }
         if (block.kind === "aaveSupply" && settings.assetKey) {
           const reserve = `${chainId}:${settings.assetKey.toLowerCase()}`;
           if (aaveReserves.has(reserve)) throw new Error("DUPLICATE_AAVE_RESERVE");
           aaveReserves.add(reserve);
         }
-        if (settings.maxLossBps === undefined && typeof settings.slippagePct === "number")
+        if (typeof settings.slippagePct === "number") {
+          if (
+            !Number.isFinite(settings.slippagePct) ||
+            settings.slippagePct < 0.1 ||
+            settings.slippagePct > 5
+          )
+            throw new Error("INVALID_SLIPPAGE");
           settings.maxLossBps = Math.round(settings.slippagePct * 100);
+        }
         if (leaves.length > 1 && settings.leafSharePct === undefined)
           throw new Error("BUILD_EXECUTION_GAP");
         const leafShare = percent(settings.leafSharePct ?? 100);
+        if (chain.sharePct === 0 || leafShare === 0) throw new Error("INVALID_ALLOCATION");
         leafTotal += leafShare;
         const sharePct = (chain.sharePct * leafShare) / 100;
         if (!Number.isInteger(sharePct)) throw new Error("BUILD_EXECUTION_GAP");
@@ -177,7 +193,7 @@ export function deriveLaunchSteps(
           group,
           blockId: block.id,
           protocol: block.kind === "aaveSupply" ? ("aave-v3" as const) : ("uniswap-v4" as const),
-          config: { ...block.config, ...settings },
+          config: { ...settings },
         };
         if (block.kind === "uniswapV4Pool") {
           const ticks =
