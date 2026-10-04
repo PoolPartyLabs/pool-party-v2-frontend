@@ -422,9 +422,7 @@ describe("[AG3] each new refusal stands for a plan the launch rejects", () => {
     ["review_unsupported_swap", "supply WETH", "BUILD_EXECUTION_GAP"],
     ["review_unsupported_swap", "manager swap then supply", "BUILD_EXECUTION_GAP"],
     ["review_unused_spoke_share", "spoke 40.5 over a chain of 40", "INVALID_ALLOCATION"],
-    // No equivalent in the launch adapter: it opens the same reserve twice without a word. The
-    // canvas is stricter on purpose (one Aave open per reserve), and this pins that it is the one.
-    ["review_duplicate_reserve", "same reserve twice", null],
+    ["review_duplicate_reserve", "same reserve twice", "DUPLICATE_AAVE_RESERVE"],
     // No equivalent either: the launch bridges a spoke's whole share and deploys only its chains,
     // so the rest would sit on the spoke. The canvas refuses it (review M1 of PR #51).
     ["review_unused_spoke_share", "spoke 45 over a chain of 40", null],
