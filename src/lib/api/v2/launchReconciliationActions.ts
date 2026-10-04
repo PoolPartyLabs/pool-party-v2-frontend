@@ -195,11 +195,10 @@ async function apiCandidates(
   throw new ApiError(503, "V2_RECONCILIATION_INCOMPLETE", "incomplete candidate scan");
 }
 
-async function rpcCandidates(input: LaunchSubmissionCandidatesInput) {
+async function rpcCandidates(input: LaunchSubmissionCandidatesInput, deadline: number) {
   const chain = getChainById(input.chainId);
   if (!chain) throw new ApiError(503, "V2_UNAVAILABLE", "unavailable");
   const controller = new AbortController();
-  const deadline = Date.now() + 20_000;
   async function boundedRead<Result>(read: () => Promise<Result>): Promise<Result> {
     const remaining = deadline - Date.now();
     if (remaining <= 0)
@@ -267,7 +266,8 @@ async function rpcCandidates(input: LaunchSubmissionCandidatesInput) {
 }
 
 export async function readLaunchSubmissionCandidatesAction(core: string, input: unknown) {
-  const boundedRead = createBoundedRead(Date.now() + 20_000);
+  const deadline = Date.now() + 20_000;
+  const boundedRead = createBoundedRead(deadline);
   try {
     addressSchema.parse(core);
     const request = inputSchema.parse(input);
@@ -277,7 +277,7 @@ export async function readLaunchSubmissionCandidatesAction(core: string, input: 
     const data =
       request.mode === "api"
         ? await apiCandidates(core, request, boundedRead)
-        : await rpcCandidates(request);
+        : await rpcCandidates(request, deadline);
     return { ok: true as const, data };
   } catch (error) {
     return {

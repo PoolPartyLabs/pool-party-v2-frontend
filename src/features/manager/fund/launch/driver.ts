@@ -264,7 +264,27 @@ async function submissionBoundary(
   const submission = checkpoint.data?.submission as { fromBlock?: unknown } | undefined;
   if (typeof submission?.fromBlock === "string" && /^\d+$/.test(submission.fromBlock))
     return BigInt(submission.fromBlock);
-  let boundary: bigint | null = null;
+  let allocationBoundary: bigint | null = null;
+  if (step.kind === "bridge") {
+    const allocation = journal.steps.find((entry) => entry.kind === "allocate");
+    if (allocation) {
+      const checkpoint = journal.checkpoints[allocation.id];
+      if (checkpoint?.status !== "confirmed" || !checkpoint.txHash)
+        throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+      const mined = await wallet.receipt(42161, checkpoint.txHash);
+      if (
+        !mined ||
+        mined.status !== "success" ||
+        mined.transactionHash.toLowerCase() !== checkpoint.txHash.toLowerCase() ||
+        mined.from.toLowerCase() !== journal.manager ||
+        mined.to?.toLowerCase() !== coreOf(journal).toLowerCase() ||
+        decodeLaunchReceipt(mined).allocated !== budget(allocation, journal).toString()
+      )
+        throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+      allocationBoundary = mined.blockNumber;
+    }
+  }
+  let boundary: bigint | null = allocationBoundary;
   const visited = new Set<string>();
   const visit = async (id: string): Promise<void> => {
     if (visited.has(id)) return;

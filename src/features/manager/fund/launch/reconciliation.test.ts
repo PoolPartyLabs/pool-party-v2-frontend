@@ -470,6 +470,22 @@ describe("driver submission recovery [POO-2222 rules-v1]", () => {
     );
     expect(checkpoint.txHash).toBeUndefined();
   });
+  it("R3 never falls back to older creation evidence when the allocation receipt is invalid", async () => {
+    const { driver, journal, wallet, checkpoint } = setupBridge();
+    journal.steps.unshift({ id: "create", kind: "create", chain: 42161, dependencies: [] });
+    journal.steps.find((step) => step.id === "allocate")!.dependencies = ["create"];
+    journal.checkpoints.create!.txHash = transitId;
+    wallet.receipt.mockImplementation(async (_chain, tx) =>
+      tx === transitId
+        ? receipt({}, { transactionHash: transitId, blockNumber: BigInt(511641900) })
+        : receipt(bridgeLog(), { transactionHash: tx }),
+    );
+    await expect(driver.reconcile(bridge, checkpoint, journal)).rejects.toThrow(
+      "SUBMISSION_RECONCILIATION_REQUIRED",
+    );
+    expect(checkpoint.txHash).toBeUndefined();
+    expect(wallet.send).not.toHaveBeenCalled();
+  });
   it("R3 rejects a legacy bridge transaction with another bridge rank or calldata", async () => {
     const { driver, journal, wallet, checkpoint } = setupBridge();
     wallet.transaction.mockResolvedValue({
