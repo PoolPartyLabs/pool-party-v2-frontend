@@ -27,7 +27,10 @@
  * - [I8, I9] The viewport opens at fit (S2 does it on the first graph size); after a change the new
  *   or newly selected block is revealed by the minimum pan (`revealTarget`), never re-fitted.
  * - [D18] A draft whose stored plan this build cannot read says so, with the empty canvas under
- *   it; the stored plan is replaced only by a save that carries a plan the manager made here.
+ *   it, until a save replaces that plan. It is replaced only by a plan the manager made here, and
+ *   an EMPTY plan is not one: a write that leaves the plan empty again on such a draft stores no
+ *   plan, so the store keeps the unreadable one, nothing is left to save and the leave prompt stays
+ *   down (review F1 of PR #41: add a block, remove it, Save & exit used to erase it).
  * - [AE1 to AE6] The view, the first block (`started`), the canvas events of the controller and the
  *   refusals, all through `useAnalytics().track()` / `useTrackView`, mapped by `buildAnalytics.ts`.
  *   The abandonment and the save error are the shell's: it is what knows how the session ended.
@@ -48,7 +51,7 @@ import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useStat
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useTrackView } from "@/lib/analytics/useTrackView";
 import type { MandateCatalog } from "../mandateCatalog";
-import type { MandateDraft } from "../mandateDraft";
+import { isBlocked, type MandateDraft } from "../mandateDraft";
 import type { UseMandateDraftResult } from "../useMandateDraft";
 import { BuildPalette } from "./blocks/BuildPalette";
 import { CanvasMenu } from "./blocks/CanvasMenu";
@@ -71,6 +74,7 @@ import { BuildGraph } from "./graph/BuildGraph";
 import { useDraftGraphLayout } from "./graph/useGraphLayout";
 import type { GraphLayout } from "./layout/graphTypes";
 import type { BuildPlan } from "./plan/buildPlan";
+import { planFingerprint } from "./plan/planStorage";
 import { useBuildPlan } from "./plan/useBuildPlan";
 
 /** Runs `proceed` (a way out of the Build step) only when the selection guards allow it (HU3). */
@@ -124,7 +128,21 @@ export function BuildScreen({
   const reviewCopy = useReviewCopy();
   const { track } = useAnalytics();
 
-  const buildPlan = useBuildPlan({ draft, catalog, update });
+  // [D18] An unreadable stored plan is replaced only by a plan with something in it: a write that
+  // leaves the plan EMPTY on such a draft stores no plan again (see the file header).
+  const updateKeepingStoredPlan = useCallback<UseMandateDraftResult["update"]>(
+    (fn) =>
+      update((current) => {
+        const next = fn(current);
+        if (isBlocked(next) || next.planUnreadable !== true || next.plan === undefined) return next;
+        if (planFingerprint(next.plan) !== planFingerprint(undefined)) return next;
+        const { plan: _empty, ...withoutPlan } = next;
+        return withoutPlan;
+      }),
+    [update],
+  );
+
+  const buildPlan = useBuildPlan({ draft, catalog, update: updateKeepingStoredPlan });
   const selection = useBlockSelection();
   const plan = buildPlan.plan;
   const { violations } = buildPlan;
@@ -240,8 +258,10 @@ export function BuildScreen({
   const noticeText =
     notice && notice.plan === plan ? reviewCopy[REVIEW_NOTICE_KEY[notice.refusal]] : null;
 
-  // [D18] Storage holds a plan this build cannot read; until the manager makes a new one, say so.
-  const unreadable = draft.planUnreadable === true && draft.plan === undefined;
+  // [D18] Storage holds a plan this build cannot read: say so until a save replaces it. The store
+  // drops the marker only on the save that carries the new plan, so a block added since keeps the
+  // notice up (its copy says that saving replaces the stored plan).
+  const unreadable = draft.planUnreadable === true;
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: the Build step hands Delete and Escape to the canvas controller (I10); the keys come from the focused card, template or port inside it.

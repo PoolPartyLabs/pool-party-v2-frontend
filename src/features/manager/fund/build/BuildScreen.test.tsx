@@ -782,13 +782,14 @@ describe("BuildScreen: the plan survives (A8, D16)", () => {
   });
 });
 
-describe("BuildScreen: leaving (leave guard, AE abandonment and error)", () => {
-  function beforeUnloadPrevented(): boolean {
-    const event = new Event("beforeunload", { cancelable: true });
-    window.dispatchEvent(event);
-    return event.defaultPrevented;
-  }
+/** Whether the browser's leave prompt is armed: a cancelable `beforeunload` gets prevented. */
+function beforeUnloadPrevented(): boolean {
+  const event = new Event("beforeunload", { cancelable: true });
+  window.dispatchEvent(event);
+  return event.defaultPrevented;
+}
 
+describe("BuildScreen: leaving (leave guard, AE abandonment and error)", () => {
   it("[Leave guard, AE] without plan edits: no prompt, and the abandonment says nothing was lost", async () => {
     // @rule AE1
     seedBuild(hubMandate("d-leave-clean"), poolPlan());
@@ -882,6 +883,61 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
 
     const raw = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");
     expect(raw.drafts["d-unreadable"].plan).toEqual(unreadable);
+  });
+
+  /**
+   * Review F1 of PR #41: add a block, remove it, Save & exit used to write an EMPTY version 1 plan
+   * over the one this build could not read, with no notice on screen and no leave prompt. An empty
+   * plan is not a plan the manager made, so the stored one has to survive it.
+   */
+  it("[D18] add then remove leaves the unreadable stored plan in place, and keeps saying so", async () => {
+    // @rule D18
+    const unreadable = { version: 99, hub: { chains: [] }, spokes: [] };
+    seedBuild(hubMandate("d-unreadable-undo"), unreadable as unknown as BuildPlan);
+    await openBuild();
+
+    await addPoolFromMenu();
+    // A plan with a block in it: a save would replace the stored one, so the notice still says it
+    // and the leave prompt is armed.
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "This draft holds a plan this version of the app cannot open.",
+    );
+    await waitFor(() => expect(beforeUnloadPrevented()).toBe(true));
+
+    await userEvent.click(card(/^Uniswap v4 · no pool yet/));
+    await userEvent.keyboard("{Delete}");
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /^Uniswap v4 · no pool yet/ })).toBeNull(),
+    );
+
+    // Empty again: nothing to save, so no prompt, and the notice stays.
+    await waitFor(() => expect(beforeUnloadPrevented()).toBe(false));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "This draft holds a plan this version of the app cannot open.",
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
+
+    const raw = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");
+    expect(raw.drafts["d-unreadable-undo"].plan).toEqual(unreadable);
+  });
+
+  it("[D18] a plan with a block replaces the unreadable one when saved, and the notice goes", async () => {
+    // @rule D18
+    const unreadable = { version: 99, hub: { chains: [] }, spokes: [] };
+    seedBuild(hubMandate("d-unreadable-new"), unreadable as unknown as BuildPlan);
+    await openBuild();
+
+    await addPoolFromMenu();
+    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
+
+    const raw = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");
+    expect(raw.drafts["d-unreadable-new"].plan.version).toBe(1);
+    expect(raw.drafts["d-unreadable-new"].plan.hub.chains).toHaveLength(1);
+    expect(getDraft("d-unreadable-new")?.planUnreadable).toBeUndefined();
+    expect(screen.queryByRole("status")).toBeNull();
   });
 });
 
