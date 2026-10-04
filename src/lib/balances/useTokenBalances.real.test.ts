@@ -48,3 +48,35 @@ it("R4 does not retain the previous account's holdings when the new read fails",
   await waitFor(() => expect(result.current.isLoading).toBe(false));
   expect(result.current.balances).toEqual([]);
 });
+it("R4 a late prior-wallet refresh cannot unlock the current wallet's pending refresh", async () => {
+  mocks.holdings.mockResolvedValue([holding]);
+  const { result, rerender } = renderHook(useTokenBalances);
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+  let resolveOld!: (value: (typeof holding)[]) => void;
+  mocks.holdings.mockImplementationOnce(
+    () =>
+      new Promise<(typeof holding)[]>((resolve) => {
+        resolveOld = resolve;
+      }),
+  );
+  act(() => result.current.refresh());
+  mocks.address = "0xdef";
+  act(() => rerender());
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+  let resolveCurrent!: (value: (typeof holding)[]) => void;
+  mocks.holdings.mockImplementationOnce(
+    () =>
+      new Promise<(typeof holding)[]>((resolve) => {
+        resolveCurrent = resolve;
+      }),
+  );
+  act(() => result.current.refresh());
+  const callsBeforeOldSettlement = mocks.holdings.mock.calls.length;
+  await act(async () => resolveOld([{ ...holding, usd: 99 }]));
+  expect(result.current.isRefreshing).toBe(true);
+  act(() => result.current.refresh());
+  expect(mocks.holdings).toHaveBeenCalledTimes(callsBeforeOldSettlement);
+  await act(async () => resolveCurrent([{ ...holding, usd: 24 }]));
+  expect(result.current.isRefreshing).toBe(false);
+  expect(result.current.totalUsd).toBe(24);
+});

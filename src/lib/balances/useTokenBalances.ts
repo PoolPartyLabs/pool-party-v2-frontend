@@ -112,8 +112,10 @@ export function useTokenBalances(): WalletBalances {
         // R3: a failed refresh keeps the last good balances on screen.
       })
       .finally(() => {
-        refreshingRef.current = false;
-        if (runIdRef.current === runId) setIsRefreshing(false);
+        if (runIdRef.current === runId) {
+          refreshingRef.current = false;
+          setIsRefreshing(false);
+        }
       });
   }, [read]);
 

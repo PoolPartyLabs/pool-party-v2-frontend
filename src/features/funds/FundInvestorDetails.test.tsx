@@ -109,12 +109,12 @@ describe("investor V2 details", () => {
     const view = renderWithProviders(<FundDetail core={mockFund.coreVault} />);
     await waitFor(() => expect(mocks.balance).toHaveBeenCalledTimes(1));
     mocks.wallet = `0x${"5".repeat(40)}`;
-    mocks.balance.mockResolvedValue(3000000n);
+    mocks.balance.mockResolvedValue(BigInt(3000000));
     view.rerender(<FundDetail core={mockFund.coreVault} />);
     await waitFor(() =>
       expect(screen.getByTestId("invest-host")).toHaveAttribute("data-balance", "3"),
     );
-    await act(async () => resolveOld(90000000n));
+    await act(async () => resolveOld(BigInt(90000000)));
     expect(screen.getByTestId("invest-host")).toHaveAttribute("data-balance", "3");
   });
   it("R3 R4 shows exact-unit values and unproven actions unavailable", async () => {
