@@ -45,6 +45,7 @@ export const NarrowLongValues: Story = {
       ...mockFund,
       profile: {
         ...mockFund.profile,
+        protocolVersion: "v2",
         name: "A long fund name with an address-only manager",
         managerDisplayName: "",
         description: `https://example.com/${"a".repeat(120)}`,
