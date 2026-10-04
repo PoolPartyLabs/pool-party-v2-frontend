@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { FundLaunchDraft } from "../contracts";
 import { getLaunchSteps } from "../journey";
 import { fallbackAllocations } from "./allocation";
-import { applyFallbackExecutionAtLaunch } from "./execution";
+import { applyFallbackExecutionAtLaunch, fallbackLaunchPreview } from "./execution";
 
 const usdc = "0xaf88d065e77c8cc2239327c5edb3a432268e5831";
 const hubPool = "0xfc7b3ad139daaf1e9c3637ed921c154d1b04286f8a82b805a6c352da57028653";
@@ -63,6 +63,18 @@ const fixture = () =>
   }) as unknown as FundLaunchDraft;
 
 describe("fallback allocations for today's canvas", () => {
+  it("preserves the duplicate reserve blocker through fallback readiness", () => {
+    const draft = fixture();
+    const chain = draft.plan.hub.chains[0];
+    if (!chain) throw new Error("fixture");
+    chain.steps = [
+      { id: "first", family: "position", kind: "aaveSupply", config: null },
+      { id: "second", family: "position", kind: "aaveSupply", config: null },
+    ];
+    expect(fallbackLaunchPreview(draft, {}, `arbitrum:${usdc}`).blockers).toEqual([
+      "DUPLICATE_AAVE_RESERVE",
+    ]);
+  });
   it("takes fund2 zero shares and empty configs through the immutable adapter to the exact signature journey without signing", () => {
     const draft = fixture();
     expect(() => getLaunchSteps(draft)).toThrow();

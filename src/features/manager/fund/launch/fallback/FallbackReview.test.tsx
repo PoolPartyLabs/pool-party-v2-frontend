@@ -10,6 +10,7 @@ const state = vi.hoisted(() => ({
   blocked: false,
   rootShare: 100,
   leafShare: 0,
+  duplicate: false,
 }));
 const start = vi.hoisted(() => vi.fn(async (_draft: unknown) => ({ journeyId: "journey" })));
 const setField = vi.hoisted(() => vi.fn());
@@ -40,7 +41,12 @@ vi.mock("../index", () => ({
                 {
                   id: "root",
                   sharePct: state.rootShare,
-                  steps: [{ id: "supply", kind: "aaveSupply", family: "position", config: {} }],
+                  steps: [
+                    { id: "supply", kind: "aaveSupply", family: "position", config: {} },
+                    ...(state.duplicate
+                      ? [{ id: "duplicate", kind: "aaveSupply", family: "position", config: {} }]
+                      : []),
+                  ],
                 },
               ],
             },
@@ -97,6 +103,7 @@ describe("fallback Review [R1, R5]", () => {
       blocked: false,
       rootShare: 100,
       leafShare: 0,
+      duplicate: false,
     });
     vi.clearAllMocks();
   });
@@ -114,6 +121,17 @@ describe("fallback Review [R1, R5]", () => {
         hub: { chains: [{ steps: [{ config: { assetKey: `arbitrum:0x${"12".repeat(20)}` } }] }] },
       },
     });
+  });
+  it("shows the duplicate reserve blocker and disables Launch", () => {
+    state.duplicate = true;
+    renderWithProviders(<FallbackReview draftId="draft" />);
+    expect(
+      screen.getByText(
+        "Only one Aave Supply block per reserve is allowed on each network. Remove the duplicate before launch.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Launch ·/ })).toBeDisabled();
+    expect(start).not.toHaveBeenCalled();
   });
   it("preserves non-execution blockers", () => {
     state.blocked = true;

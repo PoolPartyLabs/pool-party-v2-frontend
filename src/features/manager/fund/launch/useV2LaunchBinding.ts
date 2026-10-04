@@ -21,7 +21,13 @@ import {
   saveJournal,
 } from "./journal";
 import { withLaunchLock } from "./lock";
-import { type CanvasPlan, deriveLaunchSteps, type ExecutionConfig, type LaunchStep } from "./plan";
+import {
+  type CanvasPlan,
+  deriveLaunchSteps,
+  type ExecutionConfig,
+  type LaunchStep,
+  launchPlanError,
+} from "./plan";
 
 export interface V2LaunchOptions {
   draftId: string;
@@ -40,6 +46,7 @@ export interface V2LaunchError {
   messageKey:
     | "fundLaunch.partialFailure"
     | "fundLaunch.buildGap"
+    | "fundLaunch.duplicateAaveReserve"
     | "fundLaunch.walletOrJournal"
     | "fundLaunch.realOnly";
 }
@@ -77,13 +84,15 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
   }, [options.draftId, options.manager, options.storage]);
   let steps: LaunchStep[] = [];
   let gap = false;
+  let planError = launchPlanError(null);
   try {
     if (journal) steps = journal.steps;
     else if (options.plan)
       steps = deriveLaunchSteps(options.plan, options.execution ?? {}, true, options.spoke);
     else gap = true;
-  } catch {
+  } catch (error) {
     gap = true;
+    planError = launchPlanError(error);
   }
   const execute = async (resume: boolean, once: boolean) => {
     if (running.current) return;
@@ -96,7 +105,7 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
       return;
     }
     if (gap) {
-      setError({ code: "BUILD_EXECUTION_GAP", messageKey: "fundLaunch.buildGap" });
+      setError(planError);
       return;
     }
     const manager = options.manager;

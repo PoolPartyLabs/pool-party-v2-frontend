@@ -333,7 +333,13 @@ function RealFallbackReview({ draftId }: { draftId: string }) {
           <li key={`${blocker.code}-${blocker.field ?? ""}`}>{translate(blocker.messageKey)}</li>
         ))}
         {preview.blockers.map((blocker) => (
-          <li key={blocker}>{translate("fallbackReview.executionBlocked")}</li>
+          <li key={blocker}>
+            {translate(
+              blocker === "DUPLICATE_AAVE_RESERVE"
+                ? "fundLaunch.duplicateAaveReserve"
+                : "fallbackReview.executionBlocked",
+            )}
+          </li>
         ))}
         {feeInputInvalid ? <li>{translate("fundLaunch.validation")}</li> : null}
       </ul>
