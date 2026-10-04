@@ -115,6 +115,7 @@ import { useUnsavedChanges } from "@/lib/hooks/unsavedChanges";
 import { cn } from "@/lib/utils/cn";
 import { BuilderStepper } from "../components/BuilderStepper";
 import { BuildScreen, type LeaveGuard } from "./build/BuildScreen";
+import type { MandateEditStep } from "./build/blocks/useBuildCanvas";
 import { planCounts } from "./build/buildAnalytics";
 import { type BuilderPhase, planOf } from "./build/plan/buildPlan";
 import { BuilderActionBar } from "./components/BuilderActionBar";
@@ -319,6 +320,11 @@ export function FundStrategyBuilderScreen() {
    * phase there is no canvas and they proceed at once.
    */
   const buildLeaveRef = useRef<LeaveGuard | null>(null);
+  /**
+   * [Finding 19, POO-2187] The block selected when an Edit mandate link left Build: the walk forward
+   * brings Build back with it selected. Back: Mandate is not an edit and clears it.
+   */
+  const [buildReturnBlock, setBuildReturnBlock] = useState<string | null>(null);
   const guardBuildExit = useCallback((proceed: () => void) => {
     const guard = phaseRef.current === "build" ? buildLeaveRef.current : null;
     if (guard) guard(proceed);
@@ -562,21 +568,24 @@ export function FundStrategyBuilderScreen() {
     viewedStep.current = null;
     setShellBlock(null);
     clearBlock();
+    setBuildReturnBlock(null);
     setPhaseChoice("mandate");
     update((d) => ({ ...d, lastStep: "limits" }));
   }, [clearBlock, update]);
 
   /**
-   * [C6, A4] An Edit mandate link of the Build canvas: Mandate step 1 (networks) or step 2
-   * (protocols), with the plan left in the draft. Both steps were passed (Build needs a closed
-   * mandate), so they are reachable; walking forward through Next: Build strategy closes the
-   * mandate again and returns to Build with the plan intact. The canvas already asked its guard.
+   * [C6, A4] An Edit mandate link of the Build canvas (step 1 networks, step 2 protocols) or of its
+   * configuration panel (step 3 tokens, step 4 pools, step 5 limits; finding 19), with the plan left
+   * in the draft. Every step was passed (Build needs a closed mandate), so it is reachable; walking
+   * forward through Next: Build strategy closes the mandate again and returns to Build with the plan
+   * intact and the block that was selected selected again. The canvas already asked its guard.
    */
   const handleEditMandate = useCallback(
-    (target: "networks" | "protocols") => {
+    (target: MandateEditStep, selectedId: string | null) => {
       viewedStep.current = null;
       setShellBlock(null);
       clearBlock();
+      setBuildReturnBlock(selectedId);
       setPhaseChoice("mandate");
       update((d) => ({ ...d, lastStep: target }));
     },
@@ -784,6 +793,7 @@ export function FundStrategyBuilderScreen() {
           update={update}
           onBackToMandate={handleBackToMandate}
           onEditMandate={handleEditMandate}
+          initialSelectedId={buildReturnBlock}
           leaveGuardRef={buildLeaveRef}
         />
       ) : (

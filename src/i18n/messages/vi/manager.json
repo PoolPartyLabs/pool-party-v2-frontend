@@ -1055,14 +1055,62 @@
         "menuOpenNetwork": "Chọn một mạng trong menu. Mạng sẽ được thêm vào canvas cùng với bridge của nó.",
         "portMenuOpenSupply": "Chọn mục đứng sau {title}. Một khối Vay dùng khoản cung cấp đó làm tài sản thế chấp.",
         "portMenuOpenBefore": "Chọn mục đứng trước {title}.",
-        "portMenuOpenAfter": "Chọn mục đứng sau {title}."
+        "portMenuOpenAfter": "Chọn mục đứng sau {title}.",
+        "networkTooltip": "Khối này nằm trên {network}. Mạng của một khối do vị trí của nó trên canvas quyết định.",
+        "moreAbout": "Tìm hiểu thêm về {label}",
+        "use": "Dùng",
+        "useItem": "Dùng {title}",
+        "apply": "Áp dụng thay đổi",
+        "status": {
+          "pending": "Thay đổi chưa được áp dụng",
+          "applied": "Đã áp dụng tất cả thay đổi",
+          "discard": "Loại bỏ"
+        },
+        "leave": {
+          "title": "Thay đổi chưa được áp dụng",
+          "body": "Bạn đã thay đổi khối này nhưng chưa áp dụng. Hãy áp dụng hoặc loại bỏ các thay đổi trước khi chuyển sang khối khác.",
+          "discard": "Loại bỏ thay đổi"
+        },
+        "confirm": {
+          "title": "Xóa {title}?",
+          "titleEmpty": "Xóa khối này?",
+          "share": "Phần {pct}% được phân bổ cho khối này sẽ quay về Vốn chờ (đầu vào).",
+          "removedWith": "{count, plural, =1 {{steps} cũng sẽ bị xóa theo.} other {{steps} cũng sẽ bị xóa theo.}}",
+          "swapAuto": "bước Swap · tự động",
+          "swap": "bước Swap",
+          "collectFees": "bước Thu phí",
+          "block": "khối {title}",
+          "cancel": "Hủy"
+        },
+        "allocation": {
+          "label": "Phân bổ",
+          "help": "Tính trên vốn của chiến lược. Tỷ lệ này hiển thị trên đường nối dẫn vốn vào khối này.",
+          "helpCap": "Tính trên vốn của chiến lược. Nhiệm vụ của bạn giới hạn {protocol} ở mức {pct}%. Tỷ lệ này hiển thị trên đường nối dẫn vốn vào khối này.",
+          "capProtocol": "Đã đạt mức tối đa. Nhiệm vụ của bạn giới hạn {protocol} ở mức {pct}%.",
+          "capNetwork": "Đã đạt mức tối đa. Nhiệm vụ của bạn giới hạn {network} ở mức {pct}%.",
+          "room": "Đã đạt mức tối đa. Các khối khác nối với Vốn chờ (đầu vào) đã chiếm {pct}%.",
+          "needMore": "Cần thêm?"
+        },
+        "slippage": {
+          "label": "Slippage tối đa",
+          "help": "Hủy giao dịch nếu giá biến động vượt quá mức này trước khi giao dịch được xác nhận.",
+          "custom": "Tùy chỉnh",
+          "customLabel": "Slippage tối đa tùy chỉnh, tính theo phần trăm",
+          "max": "Mức tối đa là {pct}%."
+        },
+        "link": {
+          "tokens": "Sửa nhiệm vụ · Token",
+          "pools": "Sửa nhiệm vụ · Pool",
+          "limits": "Sửa nhiệm vụ · Giới hạn"
+        },
+        "refused": {
+          "notInMandate": "Pool hoặc tài sản này không còn trong nhiệm vụ của bạn trên mạng này. Hãy chọn mục khác hoặc sửa nhiệm vụ.",
+          "shareExceedsParent": "Tỷ lệ này vượt quá phần còn lại phía trên khối này. Hãy giảm xuống và áp dụng lại.",
+          "other": "Không thể áp dụng thay đổi này. Hãy kiểm tra các giá trị và thử lại."
+        }
       },
       "network": {
         "remove": "Xóa {network}"
-      },
-      "toast": {
-        "removed": "Đã xóa khối",
-        "undo": "Hoàn tác"
       },
       "planUnreadable": "Bản nháp này chứa một kế hoạch mà phiên bản ứng dụng này không mở được. Kế hoạch được giữ nguyên; thêm một khối sẽ bắt đầu một kế hoạch mới, và kế hoạch mới sẽ thay thế kế hoạch cũ khi bạn lưu.",
       "review": {

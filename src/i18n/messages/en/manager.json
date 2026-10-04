@@ -1055,14 +1055,62 @@
         "menuOpenNetwork": "Choose a network in the menu. The network is added to the canvas with its bridge.",
         "portMenuOpenSupply": "Choose what comes after {title}. A Borrow block uses that supply as its collateral.",
         "portMenuOpenBefore": "Choose what comes before {title}.",
-        "portMenuOpenAfter": "Choose what comes after {title}."
+        "portMenuOpenAfter": "Choose what comes after {title}.",
+        "networkTooltip": "This block is on {network}. A block takes the network of the place it sits in on the canvas.",
+        "moreAbout": "More about {label}",
+        "use": "Use",
+        "apply": "Apply changes",
+        "status": {
+          "pending": "Changes not applied",
+          "applied": "All changes applied",
+          "discard": "Discard"
+        },
+        "leave": {
+          "title": "Changes not applied",
+          "body": "You changed this block and did not apply. Apply or discard the changes before you move to another block.",
+          "discard": "Discard changes"
+        },
+        "confirm": {
+          "title": "Remove {title}?",
+          "titleEmpty": "Remove this block?",
+          "share": "Its {pct}% goes back to Idle input.",
+          "removedWith": "{count, plural, =1 {{steps} is removed with it.} other {{steps} are removed with it.}}",
+          "swapAuto": "its Swap · auto step",
+          "swap": "its Swap step",
+          "collectFees": "its Collect fees step",
+          "block": "the {title} block",
+          "cancel": "Cancel"
+        },
+        "allocation": {
+          "label": "Allocation",
+          "help": "Of the strategy's capital. The share shows on the line that feeds this block.",
+          "helpCap": "Of the strategy's capital. Your mandate caps {protocol} at {pct}%. The share shows on the line that feeds this block.",
+          "capProtocol": "Maximum reached. Your mandate caps {protocol} at {pct}%.",
+          "capNetwork": "Maximum reached. Your mandate caps {network} at {pct}%.",
+          "room": "Maximum reached. The other blocks under Idle input already take {pct}%.",
+          "needMore": "Need more?"
+        },
+        "slippage": {
+          "label": "Max slippage",
+          "help": "Cancels the transaction if the price moves more than this before it confirms.",
+          "custom": "Custom",
+          "customLabel": "Custom max slippage, in percent",
+          "max": "{pct}% is the maximum."
+        },
+        "link": {
+          "tokens": "Edit mandate · Tokens",
+          "pools": "Edit mandate · Pools",
+          "limits": "Edit mandate · Limits"
+        },
+        "useItem": "Use {title}",
+        "refused": {
+          "notInMandate": "This pool or asset is no longer in your mandate on this network. Pick another, or edit the mandate.",
+          "shareExceedsParent": "This share is more than the room left above this block. Lower it and apply again.",
+          "other": "This change could not be applied. Check the values and try again."
+        }
       },
       "network": {
         "remove": "Remove {network}"
-      },
-      "toast": {
-        "removed": "Block removed",
-        "undo": "Undo"
       },
       "planUnreadable": "This draft holds a plan this version of the app cannot open. It is kept as it is; adding a block starts a new plan, which replaces it when you save.",
       "review": {

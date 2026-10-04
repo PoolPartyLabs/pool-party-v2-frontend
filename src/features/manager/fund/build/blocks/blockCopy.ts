@@ -104,8 +104,8 @@ export interface BlockCopy {
     portMenuOpenAfter(title: string): string;
   };
   // No spoke "Remove {network}" label: the renderer (S6) builds its own from
-  // `network.remove` (review F5 of PR #36 removed the unused copy here).
-  toast: { removed: string; undo: string };
+  // `network.remove` (review F5 of PR #36 removed the unused copy here). No toast either: the
+  // configuration panel's remove confirm replaced the Undo toast (POO-2187, P10, DP11).
 }
 
 /** Build the copy from a `manager` translator and the active locale. Pure: no React. */
@@ -211,10 +211,6 @@ export function makeBlockCopy(t: ManagerTranslate, locale: string): BlockCopy {
       portMenuOpenSupply: (title) => t("fundBuilder.canvas.panel.portMenuOpenSupply", { title }),
       portMenuOpenBefore: (title) => t("fundBuilder.canvas.panel.portMenuOpenBefore", { title }),
       portMenuOpenAfter: (title) => t("fundBuilder.canvas.panel.portMenuOpenAfter", { title }),
-    },
-    toast: {
-      removed: t("fundBuilder.canvas.toast.removed"),
-      undo: t("fundBuilder.canvas.toast.undo"),
     },
   };
 }

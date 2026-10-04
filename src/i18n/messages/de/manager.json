@@ -1055,14 +1055,62 @@
         "menuOpenNetwork": "Wählen Sie im Menü ein Netzwerk. Das Netzwerk wird mit seiner Bridge zum Canvas hinzugefügt.",
         "portMenuOpenSupply": "Wählen Sie, was nach {title} kommt. Ein Kreditaufnahme-Block nutzt diese Bereitstellung als Sicherheit.",
         "portMenuOpenBefore": "Wählen Sie, was vor {title} kommt.",
-        "portMenuOpenAfter": "Wählen Sie, was nach {title} kommt."
+        "portMenuOpenAfter": "Wählen Sie, was nach {title} kommt.",
+        "networkTooltip": "Dieser Block befindet sich auf {network}. Ein Block übernimmt das Netzwerk des Bereichs, in dem er auf dem Canvas platziert ist.",
+        "moreAbout": "Mehr zu {label}",
+        "use": "Verwenden",
+        "useItem": "{title} verwenden",
+        "apply": "Änderungen übernehmen",
+        "status": {
+          "pending": "Änderungen nicht übernommen",
+          "applied": "Alle Änderungen übernommen",
+          "discard": "Verwerfen"
+        },
+        "leave": {
+          "title": "Änderungen nicht übernommen",
+          "body": "Sie haben diesen Block geändert, die Änderungen aber nicht übernommen. Übernehmen oder verwerfen Sie die Änderungen, bevor Sie zu einem anderen Block wechseln.",
+          "discard": "Änderungen verwerfen"
+        },
+        "confirm": {
+          "title": "{title} entfernen?",
+          "titleEmpty": "Diesen Block entfernen?",
+          "share": "Der diesem Block zugewiesene Anteil von {pct} % geht zurück an Eingang (ungenutzt).",
+          "removedWith": "{count, plural, =1 {{steps} wird ebenfalls entfernt.} other {{steps} werden ebenfalls entfernt.}}",
+          "swapAuto": "sein Schritt Swap · auto",
+          "swap": "sein Schritt Swap",
+          "collectFees": "sein Schritt Gebühren einsammeln",
+          "block": "der Block {title}",
+          "cancel": "Abbrechen"
+        },
+        "allocation": {
+          "label": "Allokation",
+          "help": "Vom Kapital der Strategie. Der Anteil wird auf der Linie angezeigt, die diesen Block speist.",
+          "helpCap": "Vom Kapital der Strategie. Ihr Mandat begrenzt {protocol} auf {pct} %. Der Anteil wird auf der Linie angezeigt, die diesen Block speist.",
+          "capProtocol": "Maximum erreicht. Ihr Mandat begrenzt {protocol} auf {pct} %.",
+          "capNetwork": "Maximum erreicht. Ihr Mandat begrenzt {network} auf {pct} %.",
+          "room": "Maximum erreicht. Die anderen Blöcke unter Eingang (ungenutzt) belegen bereits {pct} %.",
+          "needMore": "Brauchen Sie mehr?"
+        },
+        "slippage": {
+          "label": "Maximale Slippage",
+          "help": "Bricht die Transaktion ab, wenn sich der Preis vor der Bestätigung um mehr als diesen Wert ändert.",
+          "custom": "Benutzerdefiniert",
+          "customLabel": "Benutzerdefinierte maximale Slippage in Prozent",
+          "max": "Das Maximum beträgt {pct} %."
+        },
+        "link": {
+          "tokens": "Mandat bearbeiten · Tokens",
+          "pools": "Mandat bearbeiten · Pools",
+          "limits": "Mandat bearbeiten · Limits"
+        },
+        "refused": {
+          "notInMandate": "Dieser Pool oder dieses Asset ist auf diesem Netzwerk nicht mehr in Ihrem Mandat. Wählen Sie ein anderes oder bearbeiten Sie das Mandat.",
+          "shareExceedsParent": "Dieser Anteil ist größer als der verfügbare Spielraum über diesem Block. Verringern Sie ihn und übernehmen Sie erneut.",
+          "other": "Diese Änderung konnte nicht übernommen werden. Prüfen Sie die Werte und versuchen Sie es erneut."
+        }
       },
       "network": {
         "remove": "{network} entfernen"
-      },
-      "toast": {
-        "removed": "Block entfernt",
-        "undo": "Rückgängig"
       },
       "planUnreadable": "Dieser Entwurf enthält einen Plan, den diese Version der App nicht öffnen kann. Er bleibt unverändert erhalten; wenn Sie einen Block hinzufügen, beginnt ein neuer Plan, der ihn beim Speichern ersetzt.",
       "review": {
