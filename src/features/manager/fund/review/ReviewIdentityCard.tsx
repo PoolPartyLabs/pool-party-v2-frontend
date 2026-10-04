@@ -124,7 +124,7 @@ export function ReviewIdentityCard({
             }}
           />
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             className="rounded-full"
             type="button"
