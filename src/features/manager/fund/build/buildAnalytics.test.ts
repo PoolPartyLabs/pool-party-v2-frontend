@@ -60,8 +60,8 @@ describe("buildAnalytics: the Build events are declared (AE1 to AE6, D20)", () =
     // POO-2187: the Undo toast is gone (P10, DP11), and the event that counted it with it.
     expect(ANALYTICS_EVENTS).not.toContain("builder_block_restored");
     // D20: submitted and completed are declared with the Review handoff, never ahead of it.
-    expect(ANALYTICS_EVENTS).not.toContain("builder_build_submitted");
-    expect(ANALYTICS_EVENTS).not.toContain("builder_build_completed");
+    expect(ANALYTICS_EVENTS).toContain("builder_build_submitted");
+    expect(ANALYTICS_EVENTS).toContain("builder_build_completed");
   });
 
   it("[AE6] the block reason union holds every plan reason and the twelve Next: Review reasons", () => {

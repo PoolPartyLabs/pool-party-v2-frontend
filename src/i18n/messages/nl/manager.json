@@ -1237,7 +1237,36 @@
         "seedOverBalance": "Uw eerste storting overschrijdt uw beschikbare USDC-saldo.",
         "seedNoShare": "Verhoog de eerste storting om na de protocolkosten minstens één heel aandeel te ontvangen.",
         "balanceUnread": "Wacht tot uw USDC-saldo geladen is voordat u lanceert."
-      }
+      },
+      "title": "Controleer uw strategie",
+      "caption": "Bevestig identiteit, kosten, voorwaarden en eerste storting vóór ondertekening.",
+      "draftUnavailable": "Het opgeslagen concept kon niet geladen worden. Probeer opnieuw of ga terug naar Build.",
+      "retry": "Opnieuw proberen",
+      "catalogUnavailable": "De live catalogus kon niet geladen worden. Probeer opnieuw vóór de lancering.",
+      "retryBalance": "Saldo vernieuwen",
+      "launch": "Strategie lanceren",
+      "launchFailed": "De lancering kon niet starten. Probeer opnieuw.",
+      "backBuild": "Terug naar Build",
+      "resumeLaunch": "Lancering hervatten",
+      "viewLaunch": "Lancering bekijken",
+      "mockUnavailable": "Lanceren vereist de echte modus en een verbonden wallet.",
+      "investorPreviewTitle": "Voorbeeld voor beleggers",
+      "previewInvalid": "Corrigeer de velden voor het beleggersvoorbeeld.",
+      "mandateSummary": "Mandaatsoverzicht",
+      "editMandate": "Mandaat bewerken",
+      "selectionSummary": "{tokens} tokens, {pools} pools, {protocols} protocollen",
+      "buildSummary": "Toegepaste Build",
+      "editBuild": "Build bewerken",
+      "positionCount": "{count, plural, one {# positie} other {# posities}}",
+      "allocationIntent": "Allocaties beschrijven uw intentie. Uitvoering en afwikkeling van de bridge bepalen de werkelijke bedragen.",
+      "launchPreviewTitle": "Lanceringsstappen",
+      "upToSignatures": "Tot {count} handtekeningen",
+      "signatureKinds": "{transactions} transacties en {messages} profielberichten",
+      "launchPreviewBlocked": "Voltooi de toegepaste Build om de lanceringsstappen te zien.",
+      "fixedTitle": "Vastgelegd bij de lancering",
+      "fixedSummary": "Mandaat, minimale eerste storting en kosten voor directe opname worden bij de lancering vastgelegd.",
+      "decreaseTitle": "Kunnen alleen dalen",
+      "decreaseSummary": "Prestatie- en beheervergoedingen kunnen na de lancering alleen dalen."
     }
   }
 }

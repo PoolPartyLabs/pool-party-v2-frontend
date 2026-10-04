@@ -1237,7 +1237,36 @@
         "seedOverBalance": "Ihre erste Einzahlung übersteigt Ihr verfügbares USDC-Guthaben.",
         "seedNoShare": "Erhöhen Sie die erste Einzahlung, um nach der Protokollgebühr mindestens einen ganzen Anteil zu erhalten.",
         "balanceUnread": "Warten Sie vor dem Start, bis Ihr USDC-Guthaben geladen ist."
-      }
+      },
+      "title": "Prüfen Sie Ihre Strategie",
+      "caption": "Bestätigen Sie Identität, Gebühren, Bedingungen und erste Einzahlung vor der Unterschrift.",
+      "draftUnavailable": "Der gespeicherte Entwurf konnte nicht geladen werden. Versuchen Sie es erneut oder kehren Sie zu Build zurück.",
+      "retry": "Erneut versuchen",
+      "catalogUnavailable": "Der Live-Katalog konnte nicht geladen werden. Versuchen Sie es vor dem Start erneut.",
+      "retryBalance": "Guthaben aktualisieren",
+      "launch": "Strategie starten",
+      "launchFailed": "Der Start konnte nicht beginnen. Versuchen Sie es erneut.",
+      "backBuild": "Zurück zu Build",
+      "resumeLaunch": "Start fortsetzen",
+      "viewLaunch": "Start anzeigen",
+      "mockUnavailable": "Der Start erfordert den Echtmodus und eine verbundene Wallet.",
+      "investorPreviewTitle": "Anlegervorschau",
+      "previewInvalid": "Korrigieren Sie die Felder für die Anlegervorschau.",
+      "mandateSummary": "Mandatsübersicht",
+      "editMandate": "Mandat bearbeiten",
+      "selectionSummary": "{tokens} Token, {pools} pools, {protocols} Protokolle",
+      "buildSummary": "Angewendeter Build",
+      "editBuild": "Build bearbeiten",
+      "positionCount": "{count, plural, one {# Position} other {# Positionen}}",
+      "allocationIntent": "Die Zuteilung beschreibt Ihre Absicht. Ausführung und bridge-Abwicklung bestimmen die tatsächlichen Beträge.",
+      "launchPreviewTitle": "Startschritte",
+      "upToSignatures": "Bis zu {count} Unterschriften",
+      "signatureKinds": "{transactions} Transaktionen und {messages} Profilnachrichten",
+      "launchPreviewBlocked": "Schließen Sie den angewendeten Build ab, um die Startschritte zu sehen.",
+      "fixedTitle": "Beim Start festgelegt",
+      "fixedSummary": "Mandat, Mindesteinzahlung und Gebühr für sofortige Auszahlung werden beim Start festgelegt.",
+      "decreaseTitle": "Können nur sinken",
+      "decreaseSummary": "Performance- und Verwaltungsgebühren können nach dem Start nur sinken."
     }
   }
 }

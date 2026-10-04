@@ -54,6 +54,12 @@ import { computeFit } from "./canvas/viewportMath";
 import type { BuildPlan, PositionBlock, Step } from "./plan/buildPlan";
 import { makeTestDraft, TEST_ASSET_KEYS } from "./plan/planTestKit";
 
+// The connected Review behavior is tested in review/ReviewPhase.test.tsx. Keep this canvas
+// suite outside Privy's SDK, which installs global beforeunload focus tracking in jsdom.
+vi.mock("../review/ReviewPhase", () => ({
+  ReviewPhase: () => <p>Review launch requires real mode and a connected wallet.</p>,
+}));
+
 const nav = vi.hoisted(() => ({
   push: vi.fn(),
   replace: vi.fn(),
@@ -652,12 +658,6 @@ const REFUSALS: Array<[string, BuildPlan | undefined, string, string]> = [
     "Give every block a share above 0%, or remove it.",
     "review_zero_share",
   ],
-  [
-    "a plan that passes every check",
-    poolPlan(),
-    "Review is not available yet.",
-    "review_unavailable",
-  ],
 ];
 
 /** A Supply chain on the hub of the two-network mandate, at `pct`, of the asset given. */
@@ -927,7 +927,10 @@ const EXITS: Array<[string, () => Promise<unknown>, () => Promise<unknown>]> = [
   [
     "Next: Review",
     async () => userEvent.click(screen.getByRole("button", { name: "Next: Review" })),
-    async () => expect(await screen.findByText("Review is not available yet.")).toBeInTheDocument(),
+    async () =>
+      expect(
+        await screen.findByText("Review launch requires real mode and a connected wallet."),
+      ).toBeInTheDocument(),
   ],
   [
     "Save & exit",

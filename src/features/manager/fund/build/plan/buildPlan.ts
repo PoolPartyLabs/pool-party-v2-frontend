@@ -132,7 +132,7 @@ export interface BuildPlan {
 }
 
 /** The phase of the builder a draft was last in (coordinator default D16). */
-export type BuilderPhase = "mandate" | "build";
+export type BuilderPhase = "mandate" | "build" | "review";
 
 export type BlockKindStatus = "enabled" | "comingSoon";
 

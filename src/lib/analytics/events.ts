@@ -291,6 +291,14 @@ export const ANALYTICS_EVENTS = [
   "builder_mandate_abandoned",
   "builder_draft_saved",
   "builder_mandate_error",
+  "builder_review_view",
+  "builder_review_field_changed",
+  "builder_review_abandoned",
+  "builder_review_error",
+  "builder_launch_clicked",
+  "builder_launch_blocked",
+  "builder_build_submitted",
+  "builder_build_completed",
   "builder_launch_signature",
   "builder_launch_completed",
   "builder_launch_failed",
@@ -321,9 +329,8 @@ export const ANALYTICS_EVENTS = [
   // button is never disabled, so a refusal leaves no other trace. `abandoned` closes the phase's
   // arithmetic and `error` is a draft that could not be written from Build.
   //
-  // `builder_build_submitted` and `builder_build_completed` are NOT declared: Review does not exist
-  // yet, so there is nothing to submit to and no save that opens it (D20). They arrive with the
-  // Review handoff, `completed` on the write that opens Review, never on the click.
+  // POO-2195 adds submitted and completed above. Completion fires on the successful save
+  // opening Review, never on the click.
   //
   // POO-2187 (the configuration panel, POO-2171) RETIRED `builder_block_restored`: Remove now asks
   // in the panel first (handoff P10, decision DP11), so the Undo toast it counted is gone, and
@@ -969,6 +976,8 @@ export function joinAnalyticsMultiValue(values: readonly string[]): string {
 }
 
 export interface AnalyticsParams {
+  /** Review field identifier only; never form values or wallet details. */
+  review_field?: string;
   /** Monetary value, denominated in {@link currency} (GA4 standard). Exact values are allowed. */
   value?: number;
   /**

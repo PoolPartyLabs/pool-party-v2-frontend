@@ -1237,7 +1237,36 @@
         "seedOverBalance": "Votre premier dépôt dépasse votre solde USDC disponible.",
         "seedNoShare": "Augmentez le premier dépôt pour recevoir au moins une part entière après les frais du protocole.",
         "balanceUnread": "Attendez le chargement de votre solde USDC avant de lancer."
-      }
+      },
+      "title": "Vérifiez votre stratégie",
+      "caption": "Confirmez l’identité, les frais, les conditions et le premier dépôt avant de signer.",
+      "draftUnavailable": "Le brouillon enregistré n’a pas pu être chargé. Réessayez ou revenez à Build.",
+      "retry": "Réessayer",
+      "catalogUnavailable": "Le catalogue en direct n’a pas pu être chargé. Réessayez avant de lancer.",
+      "retryBalance": "Actualiser le solde",
+      "launch": "Lancer la stratégie",
+      "launchFailed": "Le lancement n’a pas pu démarrer. Réessayez.",
+      "backBuild": "Retour à Build",
+      "resumeLaunch": "Reprendre le lancement",
+      "viewLaunch": "Voir le lancement",
+      "mockUnavailable": "Le lancement nécessite le mode réel et un wallet connecté.",
+      "investorPreviewTitle": "Aperçu investisseur",
+      "previewInvalid": "Corrigez les champs pour afficher l’aperçu investisseur.",
+      "mandateSummary": "Résumé du mandat",
+      "editMandate": "Modifier le mandat",
+      "selectionSummary": "{tokens} tokens, {pools} pools, {protocols} protocoles",
+      "buildSummary": "Build appliqué",
+      "editBuild": "Modifier Build",
+      "positionCount": "{count, plural, one {# position} other {# positions}}",
+      "allocationIntent": "Les allocations décrivent votre intention. L’exécution et le règlement du bridge déterminent les montants réels.",
+      "launchPreviewTitle": "Étapes du lancement",
+      "upToSignatures": "Jusqu’à {count} signatures",
+      "signatureKinds": "{transactions} transactions et {messages} messages de profil",
+      "launchPreviewBlocked": "Terminez le Build appliqué pour voir les étapes du lancement.",
+      "fixedTitle": "Fixés au lancement",
+      "fixedSummary": "Le mandat, le premier dépôt minimum et les frais de retrait instantané sont fixés au lancement.",
+      "decreaseTitle": "Peuvent uniquement diminuer",
+      "decreaseSummary": "Les frais de performance et de gestion peuvent uniquement diminuer après le lancement."
     }
   }
 }

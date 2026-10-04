@@ -1237,7 +1237,36 @@
         "seedOverBalance": "您的首次入金超過可用的USDC餘額。",
         "seedNoShare": "請提高首次入金，以在扣除協定費用後取得至少一個整數持分。",
         "balanceUnread": "啟動前請等候USDC餘額載入完成。"
-      }
+      },
+      "title": "檢視您的策略",
+      "caption": "簽署前確認資料、費用、投資人條款與首次入金。",
+      "draftUnavailable": "無法載入儲存的草稿。請重試或返回Build。",
+      "retry": "重試",
+      "catalogUnavailable": "無法載入即時目錄。啟動前請重試。",
+      "retryBalance": "更新餘額",
+      "launch": "啟動策略",
+      "launchFailed": "無法開始啟動。請重試。",
+      "backBuild": "返回Build",
+      "resumeLaunch": "繼續啟動",
+      "viewLaunch": "查看啟動",
+      "mockUnavailable": "啟動需要真實模式與已連接的wallet。",
+      "investorPreviewTitle": "投資人預覽",
+      "previewInvalid": "修正欄位以查看投資人預覽。",
+      "mandateSummary": "授權範圍摘要",
+      "editMandate": "編輯授權範圍",
+      "selectionSummary": "{tokens}個代幣、{pools}個pool、{protocols}個協定",
+      "buildSummary": "已套用的Build",
+      "editBuild": "編輯Build",
+      "positionCount": "{count}個部位",
+      "allocationIntent": "配置表示您的計畫意圖。執行與bridge結算決定實際金額。",
+      "launchPreviewTitle": "啟動步驟",
+      "upToSignatures": "最多{count}次簽署",
+      "signatureKinds": "{transactions}筆交易與{messages}則個人資料訊息",
+      "launchPreviewBlocked": "完成已套用的Build以預覽啟動步驟。",
+      "fixedTitle": "啟動時固定",
+      "fixedSummary": "授權範圍、最低首次入金與即時提領費在啟動時固定。",
+      "decreaseTitle": "只能調降",
+      "decreaseSummary": "績效費與管理費在啟動後只能調降。"
     }
   }
 }

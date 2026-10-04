@@ -134,7 +134,8 @@ function normalizeDraft(value: unknown): MandateDraft | null {
     else draft.planUnreadable = true;
   }
   // D16: a phase this build does not know is dropped, and no phase reads as the mandate.
-  if (storedPhase === "mandate" || storedPhase === "build") draft.lastPhase = storedPhase;
+  if (storedPhase === "mandate" || storedPhase === "build" || storedPhase === "review")
+    draft.lastPhase = storedPhase;
   return withoutUnavailableProtocols(draft);
 }
 

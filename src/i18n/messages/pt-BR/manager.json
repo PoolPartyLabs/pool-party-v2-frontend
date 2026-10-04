@@ -1237,7 +1237,36 @@
         "seedOverBalance": "Seu primeiro depósito supera o saldo disponível de USDC.",
         "seedNoShare": "Aumente o primeiro depósito para receber pelo menos uma cota inteira após a taxa do protocolo.",
         "balanceUnread": "Espere o saldo de USDC carregar antes de lançar."
-      }
+      },
+      "title": "Revise sua estratégia",
+      "caption": "Confirme identidade, taxas, termos do investidor e primeiro depósito antes de assinar.",
+      "draftUnavailable": "Não foi possível carregar o rascunho salvo. Tente novamente ou volte para Build.",
+      "retry": "Tentar novamente",
+      "catalogUnavailable": "Não foi possível carregar o catálogo ao vivo. Tente novamente antes de lançar.",
+      "retryBalance": "Atualizar saldo",
+      "launch": "Lançar estratégia",
+      "launchFailed": "Não foi possível iniciar o lançamento. Tente novamente.",
+      "backBuild": "Voltar para Build",
+      "resumeLaunch": "Retomar lançamento",
+      "viewLaunch": "Ver lançamento",
+      "mockUnavailable": "O lançamento exige o modo real e uma wallet conectada.",
+      "investorPreviewTitle": "Prévia do investidor",
+      "previewInvalid": "Corrija os campos para ver a prévia do investidor.",
+      "mandateSummary": "Resumo do mandato",
+      "editMandate": "Editar mandato",
+      "selectionSummary": "{tokens} tokens, {pools} pools, {protocols} protocolos",
+      "buildSummary": "Build aplicado",
+      "editBuild": "Editar Build",
+      "positionCount": "{count, plural, one {# posição} other {# posições}}",
+      "allocationIntent": "As alocações descrevem sua intenção. A execução e a liquidação da bridge determinam os valores reais.",
+      "launchPreviewTitle": "Etapas do lançamento",
+      "upToSignatures": "Até {count} assinaturas",
+      "signatureKinds": "{transactions} transações e {messages} mensagens de perfil",
+      "launchPreviewBlocked": "Conclua o Build aplicado para ver as etapas do lançamento.",
+      "fixedTitle": "Fixos no lançamento",
+      "fixedSummary": "O mandato, o mínimo do primeiro depósito e a taxa de saída instantânea são fixos no lançamento.",
+      "decreaseTitle": "Só podem diminuir",
+      "decreaseSummary": "As taxas de performance e gestão só podem diminuir após o lançamento."
     }
   }
 }

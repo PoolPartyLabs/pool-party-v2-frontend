@@ -313,3 +313,20 @@ The Uniswap v4 hook risk scan at `/tools` (PP-TOOLS-SCR-001, hackathon). Every e
 | `contract_family_toggled` | The header's V1 / V2 contract-family toggle CHANGED the chosen family, which decides whether `/manager/new` renders the live Uniswap v3 single-pool builder or the fund-contracts (V2) one (POO-2120 [R5]). Fires on a change, never on a press: pressing the already-selected segment emits nothing, so the series counts builders entered rather than clicks on a control. `app`-level rather than `manager_`, because the control lives in the shell beside the RewardsPill and is reachable from every screen; which screen it was is already `page_location`. Only exists while the `fundContracts` flag is on | `family` (the family switched TO, `"v1"` or `"v2"`; never a from/to pair, the previous family is the previous row) | PP-CORE-CMP-075 (`ContractFamilyToggle.tsx`) |
 | `web_vitals` | A Core Web Vital reported | `metric_name`, `metric_value`, `metric_rating` | PP-CORE-* (provider) |
 | `app_error_shown` | An error boundary/state shown | `error_code` | PP-CORE-CMP-019 |
+
+
+### Fund Review assembly (POO-2195, PP-MGR-CMP-077, rules v1)
+
+| Event | Emitting artifact | Settlement / parameters |
+|---|---|---|
+| `builder_review_view` | PP-MGR-CMP-077 `ReviewPhase` | Entry into real Review; family v2 |
+| `builder_review_field_changed` | PP-MGR-CMP-077 `ReviewPhase` | Field ID only (`review_field`), no content or monetary input |
+| `builder_launch_clicked` | PP-MGR-CMP-077 `ReviewPhase` | Launch or Resume intent; family v2 |
+| `builder_launch_blocked` | PP-MGR-CMP-077 `ReviewPhase` | First field / Build reason; field ID and classified error code |
+| `builder_review_abandoned` | PP-MGR-CMP-077 `ReviewPhase` | Leaves Review without starting or resuming launch |
+| `builder_review_error` | PP-MGR-CMP-077 and PP-MGR-SCR-002 | Draft, balance retry, logo, save or launch-entry error; safe classified code |
+| `builder_build_submitted` | PP-MGR-SCR-002 | Ready Build requests persisted Review entry |
+| `builder_build_completed` | PP-MGR-SCR-002 | Only after the save opening Review succeeds |
+
+The existing launch journey exclusively emits launch signature, completion and failure.
+Review never declares a settlement on a click or a broadcast.

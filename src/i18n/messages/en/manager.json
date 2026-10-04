@@ -1237,7 +1237,36 @@
         "seedOverBalance": "Your first deposit exceeds your available USDC balance.",
         "seedNoShare": "Increase the first deposit to receive at least one whole share after the protocol fee.",
         "balanceUnread": "Wait for your USDC balance to load before launching."
-      }
+      },
+      "title": "Review your strategy",
+      "caption": "Confirm your identity, fees, investor terms and first deposit before signing.",
+      "draftUnavailable": "The saved draft could not be loaded. Retry or return to Build.",
+      "retry": "Retry",
+      "catalogUnavailable": "The live catalog could not be loaded. Retry before launching.",
+      "retryBalance": "Retry balance",
+      "launch": "Launch strategy",
+      "launchFailed": "Launch could not start. Please retry.",
+      "backBuild": "Back to Build",
+      "resumeLaunch": "Resume launch",
+      "viewLaunch": "View launch",
+      "mockUnavailable": "Review launch requires real mode and a connected wallet.",
+      "investorPreviewTitle": "Investor preview",
+      "previewInvalid": "Correct the fields to see the investor preview.",
+      "mandateSummary": "Mandate summary",
+      "editMandate": "Edit mandate",
+      "selectionSummary": "{tokens} tokens, {pools} pools, {protocols} protocols",
+      "buildSummary": "Applied Build",
+      "editBuild": "Edit Build",
+      "positionCount": "{count, plural, one {# position} other {# positions}}",
+      "allocationIntent": "Allocations describe your plan intent. Execution and bridge settlement determine the actual amounts.",
+      "launchPreviewTitle": "Launch steps",
+      "upToSignatures": "Up to {count} signatures",
+      "signatureKinds": "{transactions} transactions and {messages} profile messages",
+      "launchPreviewBlocked": "Finish the applied Build to preview launch steps.",
+      "fixedTitle": "Fixed at launch",
+      "fixedSummary": "Mandate, minimum first deposit and instant withdrawal fee are fixed at launch.",
+      "decreaseTitle": "Can only go down",
+      "decreaseSummary": "Performance and management fees can only decrease after launch."
     }
   }
 }
