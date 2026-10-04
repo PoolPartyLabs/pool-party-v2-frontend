@@ -26,6 +26,7 @@ import {
 import { invert, toCanonicalBounds, toDisplayBounds } from "../../../lib/invertPrice";
 import { clampRangeBound, snapPriceForPool, stepPriceForPool } from "../../../lib/poolTickSnap";
 import { RANGE_PRESETS } from "../../../lib/presets";
+import { roundPrice } from "../../../lib/priceFormat";
 import {
   commitBoundInput,
   currentPoolPrice,
@@ -671,6 +672,68 @@ describe("typed bounds", () => {
     expectValid(next, WETH_USDC);
     expect(next.fullRange).toBe(false);
     expect(next.tickUpper).toBe(full.tickUpper);
+  });
+
+  it("can move an untouched bound one tick on a spacing-1 pool when the shown text is unknown", () => {
+    // @rule R3 (why the shown text matters: V1's typed-price snap floors, POO-319)
+    const pool: LivePoolGrid = { ...WETH_USDC, tickSpacing: 1 };
+    const start = presetRange(pool, 5) as PoolRange;
+    const shown = roundPrice(displayBounds(start, pool).min, 3050);
+    expect([start.tickLower, start.tickUpper]).toEqual([-196605, -195604]);
+    expect(shown).toBe("2897.21");
+    expect(commitBoundInput(start, pool, "min", shown).tickLower).toBe(-196606);
+  });
+
+  it("keeps a bound committed untouched, given the text the field showed", () => {
+    // @rule R3 (P5: an untouched field is not a change)
+    for (const spacing of [1, 2, 10, 60]) {
+      const pool: LivePoolGrid = { ...WETH_USDC, tickSpacing: spacing };
+      for (const inverted of [false, true]) {
+        const reference = inverted ? 1 / 3050 : 3050;
+        for (const pct of RANGE_PRESETS) {
+          const start = presetRange(pool, pct, inverted) as PoolRange;
+          const shown = displayBounds(start, pool);
+          for (const bound of BOUNDS) {
+            const text = roundPrice(shown[bound], reference);
+            const label = `spacing ${spacing} ±${pct} ${bound} inverted ${inverted}`;
+            expect(commitBoundInput(start, pool, bound, text, text), label).toBe(start);
+            expect(commitBoundInput(start, pool, bound, ` ${text} `, text), label).toBe(start);
+          }
+        }
+      }
+    }
+  });
+
+  it("already kept an untouched bound on a spacing of 10 or 60, without the shown text", () => {
+    // @rule R3
+    for (const spacing of [10, 60]) {
+      const pool: LivePoolGrid = { ...WETH_USDC, tickSpacing: spacing };
+      for (const inverted of [false, true]) {
+        const reference = inverted ? 1 / 3050 : 3050;
+        for (const pct of RANGE_PRESETS) {
+          const start = presetRange(pool, pct, inverted) as PoolRange;
+          const shown = displayBounds(start, pool);
+          for (const bound of BOUNDS) {
+            const text = roundPrice(shown[bound], reference);
+            expect(
+              commitBoundInput(start, pool, bound, text),
+              `spacing ${spacing} ±${pct} ${bound} inverted ${inverted}`,
+            ).toEqual(start);
+          }
+        }
+      }
+    }
+  });
+
+  it("still snaps a value that differs from the shown text", () => {
+    // @rule R3
+    const pool: LivePoolGrid = { ...WETH_USDC, tickSpacing: 1 };
+    const start = presetRange(pool, 10) as PoolRange;
+    const shown = roundPrice(displayBounds(start, pool).min, 3050);
+    const typedNow = commitBoundInput(start, pool, "min", "2900", shown);
+    expect(typedNow).toEqual(commitBoundInput(start, pool, "min", "2900"));
+    expect(typedNow.tickLower).toBe(Math.floor(priceToTick(2900, 18, 6)));
+    expect(typedNow.tickUpper).toBe(start.tickUpper);
   });
 });
 
