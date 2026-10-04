@@ -41,3 +41,7 @@ POO-2175, rules v2. The existing `fundContracts` flag and `useContractFamily` pr
 Mock mode uses `src/mocks/data/v2Funds.ts`, never real wallet sends. All eleven configured locales include `strategies.funds`. Tests cover mapping, rollout shapes, protocol discrimination, safe builders, approval receipts/rebuilds, freshness/cancellation, route selection and translated states.
 
 Transits/balances depend on API PR #180. Authoritative previews/fees follow API PR #181 (POO-2176): fee terms arrive as decimal strings and scalar income/exit previews contain only `usdcPaid`. Unavailable fields remain visibly unavailable or explicitly estimated, never presented as authoritative.
+
+## Investor handoff, 2026-10-04
+
+POO-2214 supersedes the separate technical investor presentation with the existing Strategies/Portfolio and Details hosts. See [the phased delivery plan](../../../docs/investor/V2_DELIVERY_PLAN.md). Missing data/actions use Not available per Murilo. POO-2217 prepares the existing Invest amount host and account-bound funding return without enabling unverified V2 execution. Manager technical fund operations remain separate. POO-2219 tracks API enablement for Rafael.

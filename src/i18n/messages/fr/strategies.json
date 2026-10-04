@@ -896,5 +896,10 @@
     "transitFill": "Exécution",
     "transitAcknowledgement": "Accusé de réception",
     "decodedError": "Erreur décodée : {name}"
+  },
+  "investV2": {
+    "notAvailable": "Non disponible",
+    "balanceUnavailable": "Solde : non disponible",
+    "target": "USDC sur Arbitrum"
   }
 }

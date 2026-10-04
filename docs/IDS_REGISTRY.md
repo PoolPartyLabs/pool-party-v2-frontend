@@ -882,3 +882,7 @@ POO-2209 rules v1 updates PP-CORE-LAY-001, PP-MGR-SCR-005 (including its private
 POO-2212 rules v1 updates PP-MGR-CMP-081: centered provisioning-style fund launch modal, explicit resume, close-to-pause, current action and confirmed-checkpoint progress. Runner and journal remain unchanged.
 
 POO-2213 rules v1 updates PP-MGR-CMP-059, PP-MGR-LIB-023 and graph model: derived fee conversion nodes, split income/principal paths, no persisted execution or user controls.
+
+### Investor V2 reuse, POO-2217
+
+Existing IDs retained: PP-STR-MOD-001 (`InvestModal`, discriminated unavailable V2 amount host), PP-STR-CMP-005 (`StrategyMiniHeader`, V2 identity with unavailable risk), PP-DEP-LIB-003 (`investContext`, account-bound V2 return context). No new modal, provisioning state machine or route is introduced. Rules v1 for this additive V2 slice; preceding V1 rule history remains applicable.

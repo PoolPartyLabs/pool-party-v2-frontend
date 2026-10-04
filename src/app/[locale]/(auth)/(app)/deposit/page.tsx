@@ -29,7 +29,8 @@ export default async function DepositPage({
   if (parsed) {
     let strategyName: string | null = null;
     try {
-      strategyName = (await strategyService.getById(parsed.strategyId))?.name ?? null;
+      if (parsed.family !== "v2")
+        strategyName = (await strategyService.getById(parsed.strategyId))?.name ?? null;
     } catch {
       strategyName = null;
     }

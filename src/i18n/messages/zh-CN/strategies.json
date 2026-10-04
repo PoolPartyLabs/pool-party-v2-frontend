@@ -896,5 +896,10 @@
     "transitFill": "成交",
     "transitAcknowledgement": "接收确认",
     "decodedError": "已解码的错误：{name}"
+  },
+  "investV2": {
+    "notAvailable": "暂不可用",
+    "balanceUnavailable": "余额：暂不可用",
+    "target": "Arbitrum 上的 USDC"
   }
 }

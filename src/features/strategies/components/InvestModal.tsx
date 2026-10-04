@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-MOD-001
  * @name InvestModal (amount → building → review → sign)
- * @implements-rules-version v11 (POO-1043 rules v1) · v10 (POO-801 rules v1) · v1 (POO-819: top-level lockupDays source) · v1 (POO-842 rules v1) · v1 (POO-905: served-rate protocol fee estimate) · v1 (POO-1025 rules v1)
+ * @implements-rules-version v1 (POO-2217 V2 unavailable host/context); v11 (POO-1043 rules v1) · v10 (POO-801 rules v1) · v1 (POO-819: top-level lockupDays source) · v1 (POO-842 rules v1) · v1 (POO-905: served-rate protocol fee estimate) · v1 (POO-1025 rules v1)
  * @hackathon POO-1022 (Universal Funding)
  *
  * The invest flow as a single dialog: enter an amount → confirm & sign → pending → success.
@@ -92,9 +92,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ExplorerTxLink } from "@/components/ui/ExplorerTxLink";
 import type { ReceiptRowItem } from "@/components/ui/ReceiptRows";
 import { TransactionModalHeader } from "@/components/ui/TransactionModalHeader";
+import { rawAmount } from "@/features/funds/fundModel";
 import { applyReferralCodeAction } from "@/features/rewards/actions";
 import { useReferralOperationLog } from "@/features/rewards/hooks/useReferralOperationLog";
 import { useRouter } from "@/i18n/navigation";
+import { useTxAmountBlocked } from "@/lib/analytics/txFlowKit";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { MIN_AMOUNT_FOR_ADD_LIQUIDITY } from "@/lib/config/operationMinimums";
 import { qualifiesForApplyRetry, readPendingReferralCode } from "@/lib/rewards/pendingReferralCode";
@@ -240,7 +242,8 @@ function sameToTheCent(a: number, b: number): boolean {
   return Math.round(a * 100) === Math.round(b * 100);
 }
 
-export interface InvestModalProps {
+export interface LegacyInvestModalProps {
+  family?: "v1";
   /** Whether the dialog is open. */
   open: boolean;
   /** Open-state change handler. */
@@ -257,8 +260,8 @@ export interface InvestModalProps {
   /** Called once the invest succeeds, so the detail screen refreshes into the owned state. */
   onInvested?: () => void;
   /**
-   * Amount to resume at the "Confirm & sign" step when the dialog opens — set by the parent after a
-   * Deposit & invest top-up (?invest=) so the investor returns straight to confirm without retyping
+   * Amount to restore in the amount field when the dialog opens, set by the parent after a
+   * Deposit & invest top-up (?invest=). It never automatically starts a build or signature
    * (POO-281 R3). A normal open (null/undefined) starts at the amount step as usual.
    */
   resumeAmount?: number | null;
@@ -271,17 +274,53 @@ export interface InvestModalProps {
   depositOrigin?: "investor" | "manager";
 }
 
-/** Invest-amount + confirm dialog. */
-export function InvestModal({
-  open,
-  onOpenChange,
-  strategy,
-  balance,
-  buildInvestSteps,
-  onInvested,
-  resumeAmount,
-  depositOrigin,
-}: InvestModalProps) {
+/** V2 identity is deliberately not a V1 Strategy or execution input. */
+export interface FundInvestModalProps {
+  family: "v2";
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  fund: {
+    core: string;
+    name: string;
+    logoUrl?: string | null;
+    minFirstDepositRaw: string | null;
+    holderSharesRaw: string | null;
+  };
+  balance: number | null;
+  resumeAmount?: number | null;
+  depositOrigin?: "investor" | "manager";
+  fromPortfolio?: boolean;
+  walletAddress?: string;
+}
+export type InvestModalProps = LegacyInvestModalProps | FundInvestModalProps;
+
+/** The existing invest amount, review and provisioning host for both contract families. */
+export function InvestModal(props: InvestModalProps) {
+  const { open, onOpenChange, balance, resumeAmount, depositOrigin } = props;
+  const isV2 = props.family === "v2";
+  const buildInvestSteps = props.family === "v2" ? undefined : props.buildInvestSteps;
+  const onInvested = props.family === "v2" ? undefined : props.onInvested;
+  // Presentation only. Never pass this identity to a builder, service or Strategy schema.
+  const strategy =
+    props.family === "v2"
+      ? {
+          id: props.fund.core,
+          name: props.fund.name,
+          network: "arbitrum" as const,
+          minInvestment: null,
+          estReturn: null,
+          lockupDays: undefined,
+          detail: undefined,
+          poolPair: undefined,
+          protocolFeePct: undefined,
+        }
+      : props.strategy;
+  const miniHeader =
+    props.family === "v2" ? (
+      <StrategyMiniHeader fund={props.fund} />
+    ) : (
+      <StrategyMiniHeader strategy={props.strategy} />
+    );
   const t = useTranslations("strategies");
   // Receipt dates render in the ACTIVE locale (a hard-coded en-US date on a pt-BR receipt is the
   // semantic-i18n class i18n:check cannot catch).
@@ -300,7 +339,7 @@ export function InvestModal({
   const gate = useProvisioningGate({
     op: "invest",
     network: strategy.network,
-    enabled: open,
+    enabled: open && !isV2,
     slippagePct: slippage,
   });
   const [deadlineMins, setDeadlineMins] = useState(30);
@@ -323,12 +362,39 @@ export function InvestModal({
   const amount = Number.parseFloat(amountText) || 0;
   // Platform-wide minimum (env-configurable, default 10; dev lowers it). Managers may require more,
   // never less (POO-184 R1).
-  const effectiveMin = Math.max(MIN_AMOUNT_FOR_ADD_LIQUIDITY, strategy.minInvestment);
-  const belowMin = amount > 0 && amount < effectiveMin;
-  const needsDeposit = amount > balance;
-  const shortfall = Math.max(0, amount - balance);
-  const meetsMin = amount >= effectiveMin;
-  const estYield = (amount * strategy.estReturn) / 100;
+  const v2MinimumRaw =
+    props.family === "v2" && props.fund.holderSharesRaw !== null
+      ? BigInt(props.fund.holderSharesRaw) > BigInt(0)
+        ? "0"
+        : props.fund.minFirstDepositRaw
+      : null;
+  const effectiveMin =
+    props.family === "v2"
+      ? v2MinimumRaw === null
+        ? null
+        : Number(v2MinimumRaw) / 1_000_000
+      : Math.max(MIN_AMOUNT_FOR_ADD_LIQUIDITY, props.strategy.minInvestment);
+  let v2BudgetRaw: string | null = null;
+  if (isV2) {
+    try {
+      v2BudgetRaw = rawAmount(amountText);
+    } catch {
+      /* Invalid precision has no amount. */
+    }
+  }
+  const belowMin = isV2
+    ? v2MinimumRaw !== null && v2BudgetRaw !== null && BigInt(v2BudgetRaw) < BigInt(v2MinimumRaw)
+    : effectiveMin !== null && amount > 0 && amount < effectiveMin;
+  const needsDeposit = balance !== null && amount > balance;
+  const shortfall = balance === null ? null : Math.max(0, amount - balance);
+  const meetsMin = effectiveMin !== null && amount >= effectiveMin;
+  const estYield = strategy.estReturn === null ? null : (amount * strategy.estReturn) / 100;
+  // PP-INTEGRATION-POINT: POO-2219 supplies the approved investor preview/guard/receipt contract.
+  // Until then this existing host can collect an amount, but cannot fund, build or sign for V2.
+  useTxAmountBlocked(
+    { flow: "invest", strategyId: strategy.id },
+    open && isV2 ? "v2_execution_unavailable" : null,
+  );
   // POO-819 R4: real mode carries the lock-up TOP-LEVEL (the mapper never sets `detail`), so read it
   // top-level first and fall back to the mock prospectus `detail.lockupDays` for mock parity.
   const lockupDays = strategy.lockupDays ?? strategy.detail?.lockupDays ?? 0;
@@ -342,8 +408,12 @@ export function InvestModal({
   // in real mode, or the mock 4-step walk in mock mode. Steps rebuild when amount / slippage change.
   const investSteps = useMemo<FlowStep<InvestCtx>[]>(
     () =>
-      buildInvestSteps ? buildInvestSteps(amount, slippage) : mockInvestSteps(slippageRef, amount),
-    [amount, slippage, buildInvestSteps],
+      isV2
+        ? []
+        : buildInvestSteps
+          ? buildInvestSteps(amount, slippage)
+          : mockInvestSteps(slippageRef, amount),
+    [amount, slippage, buildInvestSteps, isV2],
   );
   // POO-598: the flow PAUSES after the `build` step (pauseAfterKey), so the Review renders the built
   // figures before the send. approve + Permit2 necessarily run before the pause (the build consumes
@@ -353,7 +423,7 @@ export function InvestModal({
     pauseAfterKey: "build",
   });
   // POO-514 R3 (mirrors WithdrawModal / POO-505 R3): real mode is any provided step builder.
-  const isReal = buildInvestSteps != null;
+  const isReal = isV2 || buildInvestSteps != null;
   // POO-598 R3 reshaped by POO-801 R6: the network-fee line reads the BUILT gas. Mock mode (whose
   // build carries no estimate) keeps the honest PP-MOCK figure; real mode NEVER falls back to it —
   // a real build without `estimatedGasInUsd` hides the line instead of fabricating $0.30
@@ -476,8 +546,12 @@ export function InvestModal({
 
   // Track the invest flow opening (once per open).
   useEffect(() => {
-    if (open) track("strategy_invest_started", { strategy_id: strategy.id });
-  }, [open, track, strategy.id]);
+    if (!open) return;
+    track("strategy_invest_started", { strategy_id: strategy.id });
+    if (isV2)
+      return () =>
+        track("tx_flow_abandoned", { flow: "invest", strategy_id: strategy.id, tx_exit: "amount" });
+  }, [open, track, strategy.id, isV2]);
 
   // Resume after a Deposit & invest top-up: the chosen amount comes back from the parent (?invest=),
   // so the investor lands on the AMOUNT step with it prefilled instead of retyping (POO-281 R3).
@@ -623,6 +697,7 @@ export function InvestModal({
   }
 
   function handlePrimary() {
+    if (isV2) return;
     // POO-1025 R1: when the wallet is short on this chain, consult the provisioning gate BEFORE the
     // deposit round trip. Previously this early-returned to /deposit and the gate at the bottom of
     // this function was never reached for a short wallet, so the invest USDC/network branch was dead
@@ -667,10 +742,10 @@ export function InvestModal({
                 the Dialog X — not on the confirm/review step. */}
             <TransactionModalHeader
               title={t("invest.title")}
-              onSettings={() => setSettingsOpen(true)}
+              onSettings={isV2 ? undefined : () => setSettingsOpen(true)}
               settingsLabel={t("invest.settings.title")}
             />
-            <StrategyMiniHeader strategy={strategy} />
+            {miniHeader}
 
             <div className="mt-2 flex flex-col gap-5">
               <div className="text-center">
@@ -689,27 +764,45 @@ export function InvestModal({
               />
               {/* Tapping the wallet balance fills the amount with the full spendable balance — same
                   as the Max chip (6dp = USDC decimals, so it signs the exact amount; POO-303). */}
-              <button
-                type="button"
-                onClick={() => setAmountText(amountToText(balance, 6))}
-                className="mx-auto rounded-md text-center text-muted-foreground text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {t("invest.balance", { amount: formatUsdPrecise(balance) })}
-              </button>
+              {balance === null ? (
+                <p className="text-center text-muted-foreground text-sm">
+                  {t("investV2.balanceUnavailable")}
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAmountText(amountToText(balance, 6))}
+                  className="mx-auto rounded-md text-center text-muted-foreground text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {t("invest.balance", { amount: formatUsdPrecise(balance) })}
+                </button>
+              )}
 
-              {belowMin ? (
+              {belowMin && effectiveMin !== null ? (
                 <p className="rounded-md bg-warning/10 px-3 py-2 text-center text-warning text-sm">
                   {t("invest.belowMin", { min: formatUsd(effectiveMin) })}
                 </p>
               ) : null}
-              {!belowMin && needsDeposit ? (
+              {!isV2 && !belowMin && needsDeposit && shortfall !== null ? (
                 <p className="rounded-md bg-warning/10 px-3 py-2 text-center text-warning text-sm">
                   {t("invest.needMore", { amount: formatUsd(shortfall) })}
                 </p>
               ) : null}
 
-              <Button className="w-full" size="lg" disabled={!meetsMin} onClick={handlePrimary}>
-                {needsDeposit ? t("invest.cta.deposit") : t("invest.cta.invest")}
+              {isV2 ? (
+                <p className="text-center text-muted-foreground text-sm">{t("investV2.target")}</p>
+              ) : null}
+              <Button
+                className="w-full"
+                size="lg"
+                disabled={isV2 || !meetsMin}
+                onClick={handlePrimary}
+              >
+                {isV2
+                  ? t("investV2.notAvailable")
+                  : needsDeposit
+                    ? t("invest.cta.deposit")
+                    : t("invest.cta.invest")}
               </Button>
             </div>
           </>
@@ -723,7 +816,7 @@ export function InvestModal({
             <DialogHeader className="sr-only">
               <DialogTitle>{t("flow.processing")}</DialogTitle>
             </DialogHeader>
-            <StrategyMiniHeader strategy={strategy} />
+            {miniHeader}
             <WalletSteps
               steps={stepLabels}
               activeStep={flow.activeStep}
@@ -742,7 +835,7 @@ export function InvestModal({
               onBack={() => setPhase("amount")}
               backLabel={t("invest.confirm.back")}
             />
-            <StrategyMiniHeader strategy={strategy} />
+            {miniHeader}
 
             {/* POO-598 R4: the visible re-quote countdown — the built figures refresh when it hits 0. */}
             <p className="flex items-center justify-center gap-1.5 text-muted-foreground text-xs">
@@ -782,7 +875,8 @@ export function InvestModal({
                   },
                   {
                     label: t("invest.confirm.estYield"),
-                    value: formatSignedUsd(estYield),
+                    value:
+                      estYield === null ? t("investV2.notAvailable") : formatSignedUsd(estYield),
                     tone: "positive",
                   },
                   {
@@ -854,7 +948,7 @@ export function InvestModal({
             <DialogHeader className="sr-only">
               <DialogTitle>{t("provisioning.plan.title")}</DialogTitle>
             </DialogHeader>
-            <StrategyMiniHeader strategy={strategy} />
+            {miniHeader}
             <ProvisioningPanel
               input={gate.input}
               context={gate.context}
@@ -885,7 +979,7 @@ export function InvestModal({
             <DialogHeader className="sr-only">
               <DialogTitle>{t("flow.processing")}</DialogTitle>
             </DialogHeader>
-            <StrategyMiniHeader strategy={strategy} />
+            {miniHeader}
             {/* POO-499 R2: the auto-retry notice sits in the pending view (the flow re-runs from build;
                 the notice makes the possible wallet re-prompt legible). */}
             {slippageRetry.autoRetrying ? (

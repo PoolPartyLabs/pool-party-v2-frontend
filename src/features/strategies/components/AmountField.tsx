@@ -1,7 +1,7 @@
 /**
  * @id PP-DEP-CMP-002
  * @name AmountField
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2217 V2 unavailable host/context); v1
  *
  * Prominent USD amount entry shared by the invest and withdraw flows: a large editable figure plus
  * "discreet" (ghost) increment chips that ADD to the current amount, and a Max chip that sets the
@@ -35,7 +35,7 @@ export interface AmountFieldProps {
   /** Additive increment chips, in USD (e.g. `[50, 100, 250]`). */
   increments: number[];
   /** Value the Max chip sets. */
-  maxValue: number;
+  maxValue: number | null;
   /** Label for the Max chip. */
   maxLabel: string;
   /** Accessible label for the input. */
@@ -87,7 +87,10 @@ export function AmountField({
         ))}
         <button
           type="button"
-          onClick={() => onValueChange(amountToText(maxValue, maxFractionDigits))}
+          disabled={maxValue === null}
+          onClick={() => {
+            if (maxValue !== null) onValueChange(amountToText(maxValue, maxFractionDigits));
+          }}
           className="rounded-full border border-border px-3 py-1.5 font-medium text-muted-foreground text-sm transition-colors hover:bg-surface-raised hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {maxLabel}

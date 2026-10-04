@@ -896,5 +896,10 @@
     "transitFill": "Uitvoering",
     "transitAcknowledgement": "Ontvangstbevestiging",
     "decodedError": "Gedecodeerde fout: {name}"
+  },
+  "investV2": {
+    "notAvailable": "Niet beschikbaar",
+    "balanceUnavailable": "Saldo: niet beschikbaar",
+    "target": "USDC op Arbitrum"
   }
 }

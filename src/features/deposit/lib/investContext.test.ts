@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseInvestParams } from "./investContext";
+import { buildInvestReturnHref, parseInvestParams } from "./investContext";
 
 describe("parseInvestParams", () => {
   // @rule POO-494 R1: the context exists whenever a strategy id is in the URL.
@@ -67,5 +67,63 @@ describe("parseInvestParams", () => {
     expect(parseInvestParams({ strategy: "s1", origin: "console" })?.origin).toBe("investor");
     expect(parseInvestParams({ strategy: "s1", origin: ["manager"] })?.origin).toBe("investor");
     expect(parseInvestParams({ strategy: "s1", origin: "" })?.origin).toBe("investor");
+  });
+});
+
+describe("V2 funding identity (POO-2217 R2)", () => {
+  const core = `0x${"1".repeat(40)}`;
+  const wallet = `0x${"2".repeat(40)}`;
+  const query = {
+    family: "v2",
+    core,
+    account: wallet,
+    amount: "9.123456",
+    invest: "10.123456",
+    from: "portfolio",
+  };
+
+  it("keeps a fund identity separate from a V1 strategy", () => {
+    expect(parseInvestParams(query)).toEqual({
+      family: "v2",
+      core,
+      wallet,
+      shortfall: 9.123456,
+      investAmount: 10.123456,
+      origin: "investor",
+      fromPortfolio: true,
+    });
+  });
+
+  it("never falls back to V1 on malformed or mixed family context", () => {
+    expect(parseInvestParams({ ...query, core: "not-an-address", strategy: "s1" })).toBeNull();
+    expect(parseInvestParams({ ...query, account: undefined })).toBeNull();
+    expect(parseInvestParams({ family: "v3", strategy: "s1" })).toBeNull();
+  });
+
+  it("rejects V2 amounts with excess precision, exponents or trailing text", () => {
+    for (const invest of ["10.1234567", "1e3", "10usd", "Infinity", "-1"]) {
+      expect(parseInvestParams({ ...query, invest })?.investAmount).toBeUndefined();
+    }
+  });
+
+  it("returns to fund amount with portfolio and account context, without a signing flag", () => {
+    const context = parseInvestParams(query);
+    expect(context).not.toBeNull();
+    expect(buildInvestReturnHref(context, wallet)).toBe(
+      `/funds/${core}?invest=10.123456&account=${wallet}&from=portfolio`,
+    );
+    expect(buildInvestReturnHref(context, `0x${"3".repeat(40)}`)).toBeNull();
+    expect(buildInvestReturnHref(context, null)).toBeNull();
+  });
+
+  it("preserves the exact legacy investor and manager return URLs", () => {
+    expect(buildInvestReturnHref(parseInvestParams({ strategy: "s1", invest: "100" }))).toBe(
+      "/strategies/s1?invest=100",
+    );
+    expect(
+      buildInvestReturnHref(
+        parseInvestParams({ strategy: "s1", origin: "manager", invest: "100" }),
+      ),
+    ).toBe("/manager?manage=s1&invest=100");
   });
 });

@@ -896,5 +896,10 @@
     "transitFill": "체결",
     "transitAcknowledgement": "수신 확인",
     "decodedError": "해석된 오류: {name}"
+  },
+  "investV2": {
+    "notAvailable": "사용할 수 없음",
+    "balanceUnavailable": "잔액: 확인할 수 없음",
+    "target": "Arbitrum의 USDC"
   }
 }

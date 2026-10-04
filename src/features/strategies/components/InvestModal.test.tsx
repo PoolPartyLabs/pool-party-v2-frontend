@@ -157,6 +157,63 @@ async function reachReview(value = "200"): Promise<void> {
 }
 
 describe("InvestModal", () => {
+  it("opens the existing amount host for V2 without V1 metrics, mock steps or automatic signing", () => {
+    renderWithProviders(
+      <InvestModal
+        family="v2"
+        open
+        onOpenChange={vi.fn()}
+        fund={{
+          core: `0x${"1".repeat(40)}`,
+          name: "V2 fund",
+          minFirstDepositRaw: "10000000",
+          holderSharesRaw: "0",
+        }}
+        balance={null}
+        resumeAmount={25.123456}
+      />,
+    );
+    expect(screen.getByText("V2 fund")).toBeInTheDocument();
+    expect(screen.getByLabelText("Amount to invest")).toHaveValue("25.123456");
+    expect(screen.getByRole("button", { name: "Not available" })).toBeDisabled();
+    expect(screen.queryByText("Confirm investment")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Permit2/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /settings/i })).not.toBeInTheDocument();
+  });
+
+  it("uses a V2 first-deposit minimum without imposing the V1 platform minimum on top-ups", () => {
+    const { rerender } = renderWithProviders(
+      <InvestModal
+        family="v2"
+        open
+        onOpenChange={vi.fn()}
+        fund={{
+          core: `0x${"1".repeat(40)}`,
+          name: "V2 fund",
+          minFirstDepositRaw: "50000000",
+          holderSharesRaw: "0",
+        }}
+        balance={100}
+      />,
+    );
+    setAmount("2");
+    expect(screen.getByText(/Minimum investment/)).toBeInTheDocument();
+    rerender(
+      <InvestModal
+        family="v2"
+        open
+        onOpenChange={vi.fn()}
+        fund={{
+          core: `0x${"1".repeat(40)}`,
+          name: "V2 fund",
+          minFirstDepositRaw: "50000000",
+          holderSharesRaw: "1000000000000000000",
+        }}
+        balance={100}
+      />,
+    );
+    expect(screen.queryByText(/Minimum investment/)).not.toBeInTheDocument();
+  });
   beforeEach(() => {
     window.dataLayer = [];
     mockPush.mockClear();
