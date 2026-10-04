@@ -809,14 +809,16 @@
       "aaveV3": "Aave v3",
       "uniswapV3": "Uniswap v3",
       "uniswapV4": "Uniswap v4",
-      "gmx": "GMX"
+      "gmx": "GMX",
+      "pendle": "Pendle"
     },
     "protocolCaptions": {
       "swap": "Swap · chuyển đổi một token sang token khác",
       "bridge": "Bridge · chuyển tiền giữa các mạng của bạn",
       "lending": "Cho vay · cung cấp token để nhận lãi",
       "dex": "Liquidity positions · kiếm phí giao dịch trong một khoảng giá",
-      "perps": "Vĩnh cửu · vị thế long và short có sử dụng đòn bẩy"
+      "perps": "Vĩnh cửu · vị thế long và short có sử dụng đòn bẩy",
+      "yield": "Vị thế yield · kiếm yield từ lãi suất cố định và thả nổi"
     },
     "tokens": {
       "search": "Tìm token · mã, tên hoặc địa chỉ",

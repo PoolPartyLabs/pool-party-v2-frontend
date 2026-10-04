@@ -1,8 +1,8 @@
 /**
  * @id PP-MGR-LIB-018
  * @name mandateCatalog
- * @implements-rules-version v3 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
- *   POO-2167 rules v3)
+ * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
+ *   POO-2167 rules v4)
  * @analytics-events none, a data catalog. The builder shell (PP-MGR-SCR-002) owns every mandate
  *   event; nothing here touches the dataLayer.
  *
@@ -18,16 +18,10 @@
  * disabled with "Coming soon". {@link withNetworks} refuses anything this catalog has not turned on,
  * so a disabled row cannot be reached around the UI.
  *
- * The protocols follow the same rule (R20 v3, R21 v2): Aave v3 and Uniswap v4 to operate, beside the
- * required two. Uniswap v3 positions stay listed with `available: false`, so the row renders "Coming
- * soon" (POO-2167). GMX and its `perps` kind are commented out, not deleted (POO-2143); the mechanism
- * that disables a protocol (`available`, or no network in common with step 1) stays.
- *
- * PP-NOTE: buildathon scope (2026-10-03, POO-2142, POO-2143): the locale keys of the commented-out
- * networks and protocol stay in all 11 locales, because a locale JSON cannot hold a comment:
- * `fundBuilder.networkNames.{base,polygon,unichain}` (POO-2142), and `fundBuilder.protocolNames.gmx`,
- * `fundBuilder.protocolCaptions.perps` and `fundBuilder.limits.kind.perps` (POO-2143). Nothing
- * reads them until their entries are restored; `i18n:check` ignores an unused key.
+ * Rules v4 (POO-2167) list Aave v3 and Uniswap v4 to operate beside the required protocols.
+ * Uniswap v3 positions, GMX and Pendle remain visible but unavailable. GMX and Pendle have no
+ * supported fund-contract networks. The same availability mechanism disables each future row.
+ * The unused locale keys of the commented-out networks stay in all 11 locales for later restoration.
  *
  * NAMES ARE KEYS. `MandateNetwork.name` and `MandateProtocol.name` hold a translation key under the
  * `manager` namespace (`fundBuilder.networkNames.arbitrum`, …), not a display string, so a screen
@@ -67,10 +61,7 @@ export interface MandateNetwork {
 }
 
 /** What a protocol does, which picks its caption (`fundBuilder.protocolCaptions.<kind>`). */
-type MandateProtocolKind =
-  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
-  // "perps" |
-  "swap" | "bridge" | "lending" | "dex";
+type MandateProtocolKind = "swap" | "bridge" | "lending" | "dex" | "perps" | "yield";
 
 /** One protocol row on the Protocols step. `name` and `captionKey` are both translation keys. */
 export interface MandateProtocol {
@@ -160,8 +151,8 @@ const PROTOCOL_NAME_KEYS: Record<ProtocolId, string> = {
   "aave-v3": "aaveV3",
   "uniswap-v3": "uniswapV3",
   "uniswap-v4": "uniswapV4",
-  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
-  // gmx: "gmx",
+  gmx: "gmx",
+  pendle: "pendle",
 };
 
 const ALL_NETWORKS: readonly NetworkId[] = NETWORK_ORDER;
@@ -172,8 +163,8 @@ const ALL_NETWORKS: readonly NetworkId[] = NETWORK_ORDER;
  * On chain today: Uniswap v4 positions and Aave v3 supply (hub only), with Uniswap v3 present as
  * the swap adapter. The buildathon scope operates Aave v3 (Arbitrum only) and Uniswap v4 (Arbitrum,
  * Robinhood Chain). Uniswap v3 positions keep their row and their networks but are unavailable
- * (`UNAVAILABLE_PROTOCOLS`, POO-2167): the fund contracts have no Uniswap v3 position adapter. GMX is
- * commented out (POO-2143). Each is scoped so the Protocols step
+ * (`UNAVAILABLE_PROTOCOLS`, POO-2167). GMX and Pendle stay visible with no supported fund-contract
+ * networks and are unavailable in both modes. Each is scoped so the Protocols step
  * can show honest network dots. Copy never says "via Across" outside that row (R22), and nothing
  * here promises a per-protocol guarantee the contracts do not make.
  */
@@ -194,8 +185,8 @@ function buildProtocols(): MandateProtocol[] {
       ],
     },
     "uniswap-v4": { kind: "dex", availableOn: ["arbitrum", "robinhood"] },
-    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
-    // gmx: { kind: "perps", availableOn: [] },
+    gmx: { kind: "perps", availableOn: [] },
+    pendle: { kind: "yield", availableOn: [] },
   };
   return PROTOCOL_ORDER.map((id) => ({
     id,

@@ -191,3 +191,10 @@ describe("real Mandate", () => {
     ).toThrow();
   });
 });
+
+// @rule R3 (POO-2167 v4)
+it.each(["gmx", "pendle"])("refuses future %s in real executable selections (POO-2167)", (id) => {
+  const current = withProtocols(draft(), ["aave-v3"]);
+  current.protocols.push(id as never);
+  expect(() => toV2MandateSelection(current, catalog())).toThrow("unsupported position protocol");
+});

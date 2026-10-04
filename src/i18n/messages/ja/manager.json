@@ -809,14 +809,16 @@
       "aaveV3": "Aave v3",
       "uniswapV3": "Uniswap v3",
       "uniswapV4": "Uniswap v4",
-      "gmx": "GMX"
+      "gmx": "GMX",
+      "pendle": "Pendle"
     },
     "protocolCaptions": {
       "swap": "スワップ · あるトークンを別のトークンに変換",
       "bridge": "ブリッジ · ネットワーク間で資金を移動",
       "lending": "レンディング · トークンを供給して利息を得る",
       "dex": "Liquidity positions · 価格帯の中で取引手数料を獲得",
-      "perps": "パーペチュアル · レバレッジを使ったロングとショートのポジション"
+      "perps": "パーペチュアル · レバレッジを使ったロングとショートのポジション",
+      "yield": "Yieldポジション · 固定金利と変動金利でyieldを獲得"
     },
     "tokens": {
       "search": "トークンを検索 · シンボル、名前、アドレス",

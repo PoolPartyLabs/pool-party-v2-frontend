@@ -1,11 +1,11 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep.test
- * @implements-rules-version v3 (POO-2142 rules v2, POO-2143 rules v2, POO-2167 rules v3)
+ * @implements-rules-version v4 (POO-2142 rules v2, POO-2143 rules v2, POO-2167 rules v4)
  * @analytics-events none, the shell emits
  *
  * POO-2123 [R12] / [R19] / [R20] / [R21] / [R22], epic POO-2119. Mandate step 2. Rules v2
- * (POO-2143, buildathon scope): no GMX. Rules v3 (POO-2167): Aave v3 and Uniswap v4 to operate, and
+ * (POO-2143, buildathon scope): no GMX. Rules v4 restores its future row and adds Pendle, with
  * Uniswap v3 positions listed but "Coming soon". The disabled row mechanism is also exercised on a
  * catalog where Uniswap v4 runs on Robinhood Chain only.
  *
@@ -86,7 +86,13 @@ function renderStep(
     const reducer = update.mock.calls.at(-1)?.[0] as (d: MandateDraft) => MandateDraft;
     return reducer(draft).protocols;
   };
-  return { draft, update, onBlocked, protocolsAfterUpdate };
+  return {
+    draft,
+    update,
+    onBlocked,
+    protocolsAfterUpdate,
+    draftAfterUpdate: () => update.mock.calls.at(-1)?.[0](draft) as MandateDraft,
+  };
 }
 
 /** The row with this `data-mandate-row`, whatever shape it took. */
@@ -133,12 +139,133 @@ describe("ProtocolsStep", () => {
     // ).toBeInTheDocument();
   });
 
-  // @rule R20 v2 @rule R21 v2
-  it("no longer offers GMX", () => {
-    renderStep();
+  // @rule R1 (POO-2167 v4)
+  it("keeps real-mode helper, APY and duplicate network selectors out of the Figma layout (POO-2167)", () => {
+    const realDraft = {
+      ...draftWith(["robinhood"], []),
+      dataMode: "real" as const,
+      catalogVersion: "v2-catalog-v1" as const,
+    };
+    const { container } = renderWithProviders(
+      <ProtocolsStep
+        draft={realDraft}
+        catalog={{
+          ...catalog,
+          dataMode: "real",
+          reserves: [
+            {
+              poolKey: "reserve",
+              token: { symbol: "USDC" },
+              supplyApy: "3.2",
+              available: true,
+            } as never,
+          ],
+        }}
+        update={vi.fn()}
+        block={null}
+        onBlocked={vi.fn()}
+      />,
+    );
+    expect(
+      screen.queryByText("Choose position protocols per network. Uniswap v3 is swap-only."),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/USDC supply APY/)).not.toBeInTheDocument();
+    expect(container.querySelector("fieldset")).toBeNull();
+    expect(container.querySelector('input[type="checkbox"]')).toBeNull();
+    expect(screen.getByText("Required")).toBeInTheDocument();
+  });
 
-    expect(screen.queryByRole("checkbox", { name: "GMX" })).not.toBeInTheDocument();
-    expect(screen.queryByText("Perpetuals · long and short positions with leverage")).toBeNull();
+  // @rule R2 @rule R3 (POO-2167 v4)
+  it.each([
+    undefined,
+    "real",
+  ] as const)("shows GMX and Pendle Coming soon and blocks their selection in %s mode (POO-2167)", async (dataMode) => {
+    const user = userEvent.setup();
+    const { update, onBlocked } = renderStep(
+      { ...draftWith([], []), dataMode, catalogVersion: "v2-catalog-v1" },
+      { ...catalog, dataMode },
+    );
+    for (const [id, name] of [
+      ["gmx", "GMX"],
+      ["pendle", "Pendle"],
+    ] as const) {
+      const control = screen.getByRole("checkbox", { name });
+      expect(control).toHaveAttribute("aria-disabled", "true");
+      expect(control).toHaveAttribute("aria-checked", "false");
+      expect(within(row(id)).getByText("Coming soon")).toBeInTheDocument();
+      expect(within(row(id)).queryByText("On")).not.toBeInTheDocument();
+      await user.click(control);
+      expect(onBlocked).toHaveBeenCalledWith({
+        step: "protocols",
+        reason: "coming_soon",
+        rowId: id,
+      });
+    }
+    expect(update).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(
+      update.mock.calls.at(-1)?.[0]({ ...draftWith([], []), dataMode }).protocols,
+    ).not.toContain("gmx");
+    expect(
+      update.mock.calls.at(-1)?.[0]({ ...draftWith([], []), dataMode }).protocols,
+    ).not.toContain("pendle");
+  });
+
+  // @rule R5 (POO-2167 v4)
+  it("selects v4 only on supported chosen networks from its row (POO-2167)", async () => {
+    const { draftAfterUpdate } = renderStep(
+      { ...draftWith(["robinhood"], []), dataMode: "real" },
+      { ...catalogV4SpokeOnly, dataMode: "real" },
+    );
+    await userEvent.setup().click(screen.getByRole("checkbox", { name: "Uniswap v4" }));
+    expect(draftAfterUpdate().positionProtocolsByChain).toEqual({
+      arbitrum: [],
+      robinhood: ["uniswap-v4"],
+    });
+  });
+
+  // @rule R5 (POO-2167 v4)
+  it("Select all retains real position choices on each supported network without duplicate selectors (POO-2167)", async () => {
+    const { draftAfterUpdate } = renderStep(
+      {
+        ...draftWith(["robinhood"], ["uniswap-v4"]),
+        dataMode: "real",
+        positionProtocolsByChain: { arbitrum: ["uniswap-v4"], robinhood: [] },
+      },
+      { ...catalog, dataMode: "real" },
+    );
+    await userEvent.setup().click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(draftAfterUpdate().positionProtocolsByChain).toEqual({
+      arbitrum: ["aave-v3", "uniswap-v4"],
+      robinhood: ["uniswap-v4"],
+    });
+  });
+
+  // @rule R5 (POO-2167 v4)
+  it("clears v4 pools and chains while preserving Aave when its row is deselected (POO-2167)", async () => {
+    const real = {
+      ...draftWith(["robinhood"], ["aave-v3", "uniswap-v4"]),
+      dataMode: "real" as const,
+      positionProtocolsByChain: {
+        arbitrum: ["aave-v3", "uniswap-v4"] as ("aave-v3" | "uniswap-v4")[],
+        robinhood: ["uniswap-v4"] as const as ["uniswap-v4"],
+      },
+      pools: [{ id: "pool", network: "arbitrum", protocol: "uniswap-v4" } as never],
+      poolUniverseCount: 1,
+    };
+    const { draftAfterUpdate } = renderStep(real, {
+      ...catalog,
+      dataMode: "real",
+      reserves: [{ available: true, token: { address: "0xABC" } } as never],
+    });
+    await userEvent.setup().click(screen.getByRole("checkbox", { name: "Uniswap v4" }));
+    expect(draftAfterUpdate()).toMatchObject({
+      protocols: ["uniswap-v3-swap", "across", "aave-v3"],
+      positionProtocolsByChain: { arbitrum: ["aave-v3"], robinhood: [] },
+      pools: [],
+      aaveV3Reserves: ["0xabc"],
+      poolUniverseCount: null,
+    });
   });
 
   // @rule R20 v3 (POO-2167)
@@ -150,7 +277,7 @@ describe("ProtocolsStep", () => {
     expect(v3).toHaveAttribute("aria-disabled", "true");
     expect(within(row("uniswap-v3")).getByText("Coming soon")).toBeInTheDocument();
     // The only Coming soon row on the shipped catalog: Aave v3 and Uniswap v4 stay operable.
-    expect(screen.getAllByText("Coming soon")).toHaveLength(1);
+    expect(screen.getAllByText("Coming soon")).toHaveLength(3);
     expect(screen.getByRole("checkbox", { name: "Uniswap v4" })).not.toHaveAttribute(
       "aria-disabled",
       "true",
@@ -417,4 +544,55 @@ describe("ProtocolsStep", () => {
     );
     expect(screen.getByRole("alert")).toHaveTextContent("Pick at least one to continue.");
   });
+});
+
+// @rule R2 @rule R3 (POO-2167 v4)
+it("never enables stale future protocols even if a catalog erroneously offers them (POO-2167)", async () => {
+  const future = {
+    ...catalog,
+    protocols: catalog.protocols.map((entry) =>
+      ["gmx", "pendle"].includes(entry.id)
+        ? { ...entry, available: true, availableOn: ["arbitrum" as const] }
+        : entry,
+    ),
+  };
+  const { protocolsAfterUpdate } = renderStep(draftWith([], ["gmx", "pendle"]), future);
+  for (const name of ["GMX", "Pendle"]) {
+    expect(screen.getByRole("checkbox", { name })).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("checkbox", { name })).toHaveAttribute("aria-checked", "false");
+  }
+  await userEvent.setup().click(screen.getByRole("checkbox", { name: "Select all" }));
+  expect(protocolsAfterUpdate()).not.toContain("gmx");
+  expect(protocolsAfterUpdate()).not.toContain("pendle");
+});
+
+// @rule R6 (POO-2167 v4)
+it("preserves real catalog failure with retry and loading status (POO-2167)", async () => {
+  const retry = vi.fn();
+  const current = {
+    ...draftWith([], []),
+    dataMode: "real" as const,
+    catalogVersion: "v2-catalog-v1" as const,
+  };
+  const { rerender } = renderWithProviders(
+    <ProtocolsStep
+      draft={current}
+      catalog={{ ...catalog, dataMode: "real", error: true, retry }}
+      update={vi.fn()}
+      block={null}
+      onBlocked={vi.fn()}
+    />,
+  );
+  await userEvent.setup().click(screen.getByRole("button", { name: "Retry" }));
+  expect(retry).toHaveBeenCalledOnce();
+  rerender(
+    <ProtocolsStep
+      draft={current}
+      catalog={{ ...catalog, dataMode: "real", loading: true }}
+      update={vi.fn()}
+      block={null}
+      onBlocked={vi.fn()}
+    />,
+  );
+  expect(screen.getByRole("status")).toBeInTheDocument();
 });

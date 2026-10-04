@@ -809,14 +809,16 @@
       "aaveV3": "Aave v3",
       "uniswapV3": "Uniswap v3",
       "uniswapV4": "Uniswap v4",
-      "gmx": "GMX"
+      "gmx": "GMX",
+      "pendle": "Pendle"
     },
     "protocolCaptions": {
       "swap": "Swap · 将一种代币转换为另一种",
       "bridge": "Bridge · 在您的网络之间转移资金",
       "lending": "借贷 · 提供代币以赚取利息",
       "dex": "Liquidity positions · 在价格区间内赚取交易手续费",
-      "perps": "永续 · 带杠杆的多空头寸"
+      "perps": "永续 · 带杠杆的多空头寸",
+      "yield": "Yield 仓位 · 通过固定和浮动利率赚取 yield"
     },
     "tokens": {
       "search": "搜索代币 · 代号、名称或地址",
