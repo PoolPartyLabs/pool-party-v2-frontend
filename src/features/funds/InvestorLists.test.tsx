@@ -35,7 +35,7 @@ describe("existing investor cards with V2 data", () => {
       />,
     );
     expect(screen.getByText("V2")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: mockFund.profile.name })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Balanced Income" })).toHaveAttribute(
       "href",
       `/funds/${mockFund.coreVault}?from=portfolio`,
     );

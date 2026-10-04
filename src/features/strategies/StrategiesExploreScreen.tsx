@@ -305,7 +305,7 @@ export function StrategiesExploreScreen({
   const typeOptions: FilterOption<StrategyType | null>[] = [
     { value: null, label: t("explore.allTypes") },
     ...STRATEGY_TYPES.map((option) => ({
-      value: option as InvestorStrategyType | null,
+      value: option as StrategyType | null,
       label: typeLabels[option],
     })),
   ];

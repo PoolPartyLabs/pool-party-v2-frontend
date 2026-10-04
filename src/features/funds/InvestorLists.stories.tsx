@@ -4,7 +4,7 @@
  * @implements-rules-version v1 (POO-2215)
  * @analytics-events none, Storybook fixtures
  */
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { PositionCard } from "@/features/portfolio/components/PositionCard";
 import { StrategyCard } from "@/features/strategies/components/StrategyCard";
 import { mockFund, mockHolder, mockWallet } from "@/mocks/data/v2Funds";

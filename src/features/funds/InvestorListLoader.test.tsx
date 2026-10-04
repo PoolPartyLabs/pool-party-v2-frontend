@@ -135,7 +135,7 @@ describe("V2 list loader", () => {
     });
     renderWithProviders(<InvestorListLoader view="explore" />);
     await waitFor(() => expect(screen.getByText("0 owned / 0 invested")).toBeInTheDocument());
-    expect(screen.getByText(mockFund.profile.name)).toBeInTheDocument();
+    expect(screen.getByText("Balanced Income")).toBeInTheDocument();
   });
   // @rule R5
   it("keeps closed income and payout pending rows exclusively active", async () => {

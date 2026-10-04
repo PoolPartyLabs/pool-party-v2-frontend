@@ -184,7 +184,7 @@ export interface PortfolioPagedControls {
 }
 
 /** Public props for {@link PortfolioView}. */
-export interface PortfolioViewProps {
+export interface InvestorPortfolioViewProps {
   totalValue: number | null;
   totalEarned: number | null;
   /**
@@ -202,13 +202,34 @@ export interface PortfolioViewProps {
   allocation: AllocationSegment[] | null;
   /** The investor's positions (joined with their strategies). In the paged path, the accumulated pages. */
   positions: InvestorPortfolioEntry[];
-  investorV2?: boolean;
+  investorV2: true;
   /**
    * Real-mode server-paging controls (POO-668). Present → the active + closed lists are server-paged
    * with "Load more" and render plainly (windowing superseded). Absent → the mock-mode windowed +
    * one-shot behavior.
    */
   paged?: PortfolioPagedControls;
+}
+
+/** Preserve the existing V1 public contract for loaders and financial view-models. */
+export interface PortfolioViewProps
+  extends Omit<
+    InvestorPortfolioViewProps,
+    | "investorV2"
+    | "totalValue"
+    | "totalEarned"
+    | "currentValue"
+    | "avgApy"
+    | "allocation"
+    | "positions"
+  > {
+  investorV2?: false;
+  totalValue: number;
+  totalEarned: number;
+  currentValue: number;
+  avgApy: number;
+  allocation: AllocationSegment[];
+  positions: PortfolioViewPosition[];
 }
 
 /** First-run state shown when the investor has no positions. */
@@ -257,7 +278,7 @@ function LoadMoreButton({ loading, onClick }: { loading: boolean; onClick: () =>
 }
 
 /** Holdings & performance. */
-export function PortfolioView(props: PortfolioViewProps) {
+export function PortfolioView(props: PortfolioViewProps | InvestorPortfolioViewProps) {
   const t = useTranslations("portfolio");
   const ts = useTranslations("strategies");
   const tc = useTranslations("common");

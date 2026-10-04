@@ -163,7 +163,7 @@ export function InvestorListLoader({ view }: { view: "explore" | "holder" }) {
       e.position.currentValue > 0 ||
       e.position.status !== "closed" ||
       result.data.holders[e.strategy.id]?.payout.open ||
-      BigInt(result.data.holders[e.strategy.id]?.incomeOwed ?? "0") > 0n,
+      BigInt(result.data.holders[e.strategy.id]?.incomeOwed ?? "0") > BigInt(0),
   );
   if (sort.key === "value")
     active.sort(
