@@ -46,7 +46,7 @@ Core Vault / Spoke Vault: **not created**. Total launch time and active/wait spl
 - `pnpm lint`: zero errors, 84 pre-existing warnings and one info.
 - `pnpm build`: PASS; existing dependency/build warnings. `pnpm secrets:check`: PASS for 681 client files, no configured build secrets (prefix check only).
 - Skill-requested `pnpm e2e:secrets-check` script is not present on this main baseline. Do not claim it ran.
-- Failed Playwright trace/screenshot/video are retained locally under `test-results/`; report under `playwright-report/`. Traces contain authentication material and are **not pushed or pasted into the PR**.
+- The final standalone history failure trace/screenshot/video is retained locally under `test-results/`; report under `playwright-report/`. Earlier primary-run artifacts were replaced by later Playwright runs; their console outcomes are recorded above. Traces contain authentication material and are **not pushed or pasted into the PR**.
 
 ## Human recording recommendation
 
@@ -60,6 +60,6 @@ Recording is October 4, 2026 at **16:00 BST / 15:00 UTC**. There are no measured
 
 ## Balances and teardown
 
-Initial read-only snapshot: Arbitrum **4.250615 USDC**, **0.00194554396143 ETH**; Robinhood **0.001998558552158842 ETH**. This run submits no transactions; end snapshot is recorded in the PR/final output, not assumed.
+Initial and final read-only snapshots agree: Arbitrum **4.250615 USDC**, **0.00194554396143 ETH**; Robinhood **0.001998558552158842 ETH**. Final independent `cast` reads at **2026-10-04T04:38:05Z** confirmed these unchanged balances. This run submits no transactions.
 
 No Next server, Docker stack or deployment was started. Port 3000 had no listener at teardown checks. Playwright-owned browsers exited. Failed artifacts retained. All other expected worktrees, including `hackathon-privy-institutional-onramp`, the finish-work baseline and sibling `worktree_*` folders, are untouched.
