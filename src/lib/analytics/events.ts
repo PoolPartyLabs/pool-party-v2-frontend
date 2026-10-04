@@ -563,9 +563,10 @@ export type AnalyticsMandateBlockReason = (typeof ANALYTICS_MANDATE_BLOCK_REASON
  * (`PlanBlockReason` in `src/features/manager/fund/build/plan/buildPlan.ts`), mirrored here rather
  * than imported for the reason {@link ANALYTICS_MANDATE_STEPS} gives: this file is a leaf. The mirror
  * is checked at compile time anyway, because `buildAnalytics.ts` maps them through a total
- * `Record<PlanBlockReason, AnalyticsBuildBlockReason>`. The last six are Next: Review's ordered
- * checks (D19), one per inline notice, so "which check stops managers at the Review door" is one
- * dimension with one value per notice.
+ * `Record<PlanBlockReason, AnalyticsBuildBlockReason>`. The last eleven are Next: Review's ordered
+ * checks (D19; S7's six, with the five launch readiness checks of POO-2184 before the last), one
+ * per inline notice, so "which check stops managers at the Review door" is one dimension with one
+ * value per notice.
  *
  * `coming_soon` also exists in {@link ANALYTICS_MANDATE_BLOCK_REASONS} with the same meaning (a row
  * drawn but not live), so the two builders answer that question in one series.
@@ -601,6 +602,16 @@ export const ANALYTICS_BUILD_BLOCK_REASONS = [
   "review_empty_block",
   /** Next: Review on a plan whose shares add up to more than the capital above them (C8). */
   "review_over_share",
+  /** Next: Review on a pool not finished yet: no range or no slippage (POO-2184). */
+  "review_incomplete_block",
+  /** Next: Review on a chain with no whole share above 0% (POO-2184). */
+  "review_zero_share",
+  /** Next: Review on a chain with more than one position, or anything under a Supply. */
+  "review_stacked_positions",
+  /** Next: Review on a plan supplying the same reserve twice on one network (POO-2184). */
+  "review_duplicate_reserve",
+  /** Next: Review on a Swap outside a pool, which the launch cannot run yet (POO-2184). */
+  "review_unsupported_swap",
   /** Next: Review on a plan that passes every check: Review itself does not exist yet (D19). */
   "review_unavailable",
 ] as const;

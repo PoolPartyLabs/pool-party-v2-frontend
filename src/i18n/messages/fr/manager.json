@@ -1009,6 +1009,11 @@
         "comingSoon": "Retirez les blocs bientôt disponibles.",
         "emptyBlock": "Configurez chaque bloc avant la vérification.",
         "overShare": "Les parts additionnées dépassent le capital situé au-dessus d'elles.",
+        "incompleteBlock": "Définissez une fourchette de prix et un slippage maximal pour chaque pool avant la vérification.",
+        "zeroShare": "Attribuez à chaque bloc une part supérieure à 0 %, ou retirez-le.",
+        "stackedPositions": "Retirez les blocs placés sous un bloc Fournir : ils ne peuvent pas encore être lancés.",
+        "duplicateReserve": "Fournissez chaque actif dans un seul bloc. Retirez le second bloc Fournir du même actif.",
+        "unsupportedSwap": "Les swaps hors d'un pool ne peuvent pas encore être lancés. Fournissez le jeton qui arrive, ou retirez le Swap.",
         "unavailable": "La vérification n'est pas encore disponible."
       }
     }

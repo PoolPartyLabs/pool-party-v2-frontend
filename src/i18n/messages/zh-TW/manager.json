@@ -1009,6 +1009,11 @@
         "comingSoon": "請移除即將推出的區塊。",
         "emptyBlock": "請先設定每個區塊，再進行審核。",
         "overShare": "各份額之和超過了其上層的資金。",
+        "incompleteBlock": "請先為每個池設定價格區間和最大滑價，再進行審核。",
+        "zeroShare": "請為每個區塊設定大於 0% 的份額，或將其移除。",
+        "stackedPositions": "請移除放在供應區塊下方的區塊：它們暫時無法啟動。",
+        "duplicateReserve": "每種資產只能在一個區塊中供應。請移除同一資產的第二個供應區塊。",
+        "unsupportedSwap": "池外的 Swap 暫時無法啟動。請供應抵達的代幣，或移除該 Swap。",
         "unavailable": "審核功能尚未開放。"
       }
     }

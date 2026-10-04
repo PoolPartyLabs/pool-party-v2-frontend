@@ -100,7 +100,7 @@ export interface BuildScreenProps {
   leaveGuardRef?: MutableRefObject<LeaveGuard | null>;
 }
 
-/** The six Next: Review notices, through literal keys so the i18n usage scan sees each one. */
+/** The eleven Next: Review notices, through literal keys so the i18n usage scan sees each one. */
 function useReviewCopy(): Record<ReviewNoticeKey, string> {
   const t = useTranslations("manager");
   return useMemo(
@@ -110,6 +110,11 @@ function useReviewCopy(): Record<ReviewNoticeKey, string> {
       comingSoon: t("fundBuilder.canvas.review.comingSoon"),
       emptyBlock: t("fundBuilder.canvas.review.emptyBlock"),
       overShare: t("fundBuilder.canvas.review.overShare"),
+      incompleteBlock: t("fundBuilder.canvas.review.incompleteBlock"),
+      zeroShare: t("fundBuilder.canvas.review.zeroShare"),
+      stackedPositions: t("fundBuilder.canvas.review.stackedPositions"),
+      duplicateReserve: t("fundBuilder.canvas.review.duplicateReserve"),
+      unsupportedSwap: t("fundBuilder.canvas.review.unsupportedSwap"),
       unavailable: t("fundBuilder.canvas.review.unavailable"),
     }),
     [t],

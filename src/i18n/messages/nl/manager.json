@@ -1009,6 +1009,11 @@
         "comingSoon": "Verwijder de blokken die binnenkort beschikbaar komen.",
         "emptyBlock": "Configureer elk blok voordat u gaat controleren.",
         "overShare": "De aandelen tellen op tot meer dan het kapitaal erboven.",
+        "incompleteBlock": "Stel voor elke pool een prijsbereik en een maximale slippage in voordat u gaat controleren.",
+        "zeroShare": "Geef elk blok een aandeel boven 0%, of verwijder het.",
+        "stackedPositions": "Verwijder de blokken onder een Aanbieden-blok: die kunnen nog niet worden gelanceerd.",
+        "duplicateReserve": "Bied elk asset in één blok aan. Verwijder het tweede Aanbieden-blok van hetzelfde asset.",
+        "unsupportedSwap": "Swaps buiten een pool kunnen nog niet worden gelanceerd. Bied de token aan die binnenkomt, of verwijder de Swap.",
         "unavailable": "Controleren is nog niet beschikbaar."
       }
     }
