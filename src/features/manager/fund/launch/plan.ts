@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-037 (POO-2177)
  * @name launchPlanAdapter
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2181)
  * Owned structural adapter for the canvas BuildPlan v1.
  */
 export interface CanvasPlan {
@@ -65,6 +65,25 @@ export interface LaunchStep {
 function percent(value: number): number {
   if (!Number.isInteger(value) || value < 0 || value > 100) throw new Error("INVALID_ALLOCATION");
   return value;
+}
+export function validateTickAlignment(config: ExecutionConfig, tickSpacing: number): void {
+  if (config.tickLower === undefined && config.tickUpper === undefined) return;
+  const lower = config.tickLower;
+  const upper = config.tickUpper;
+  if (
+    !Number.isInteger(tickSpacing) ||
+    tickSpacing <= 0 ||
+    lower === undefined ||
+    upper === undefined ||
+    !Number.isInteger(lower) ||
+    !Number.isInteger(upper) ||
+    lower < -887272 ||
+    upper > 887272 ||
+    lower >= upper ||
+    lower % tickSpacing !== 0 ||
+    upper % tickSpacing !== 0
+  )
+    throw new Error("BUILD_TICK_ALIGNMENT");
 }
 
 export function deriveLaunchSteps(

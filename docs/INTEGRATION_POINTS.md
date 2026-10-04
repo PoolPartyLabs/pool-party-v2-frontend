@@ -8,6 +8,14 @@
 
 **fallback; merges only if POO-2172 Review is not on main by 09:00 BST; Murilo's page replaces it**. DRAFT only, no merge/deploy in this task; confirm the cutoff/demo calendar date before any landing decision.
 
+## Created v2 funds and launch status (POO-2181, rules v2)
+
+| Boundary | Owned files | Contract |
+|---|---|---|
+| List enrichment | `src/features/funds/fundActions.ts`, `fundListModel.ts`, `FundListCard.tsx`, `FundExplorer.tsx` | Existing server-only `readFunds` and `readFund`; v2-only cards, authoritative manager filter, missing metrics preserved. |
+| Local launch status | `src/features/manager/fund/launch/journey.ts`, `journal.ts`, `useV2LaunchStatus.ts`, `FundLaunchJourneysList.tsx` | Existing browser persistence, wallet isolation, completion/focus/storage revalidation. No new discover write. |
+| Review exports and launch checks | `launch/index.ts`, `plan.ts`, `driver.ts`, `startFundLaunch.ts`, `useV2LaunchBinding.ts` | Public helpers unchanged; catalog tick alignment fails closed, privacy-safe existing analytics entry point. Murilo's Review/canvas files untouched. |
+
 ## V2 fund explorer records (POO-2179, rules v1)
 
 | Boundary | Files | Real / mock behavior |

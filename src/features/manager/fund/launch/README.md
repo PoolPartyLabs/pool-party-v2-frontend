@@ -1,5 +1,14 @@
 # Fund Review data and launch journey
 
+## Slice E contracts (POO-2181, rules v2)
+
+- Public index additionally exports `validateLogo`, `rawUsdc` and `previewSeed` unchanged from `review.ts`.
+- `useV2LaunchStatus(draftId)` reads the connected wallet's persisted journey without signing, RPC/balance reads or new storage. It returns `{ journeyId, status, current, outcome } | null`. Status is `paused`, `failed` or `complete`; outcome is `in-progress`, `failed` or `completed`. `current` is the first unconfirmed launch step, or null. Draft/wallet switches hide stale status immediately.
+- Pure browser read `getLaunchStatusForDraft(draftId, manager)` requires an explicit wallet to avoid exposing another wallet's stored journey. Missing wallet returns null. Same-tab journal, cross-tab storage and focus events update Review and the Manager Console.
+- Launch owns `builder_launch_signature` (`chain_id`, `step_kind`), `builder_launch_completed` and `builder_launch_failed` (`step_kind`, sanitized `error_code`, `error_origin`). Review alone owns its launch-click event. No raw addresses, hashes, draft IDs or amounts are tracked; completion is persisted once, including resume.
+- Catalog tick spacing is verified before launch entry, before create and before v4 swap/open. Unaligned or invalid finite endpoints fail closed with `BUILD_TICK_ALIGNMENT`; full range uses aligned finite extremes. Legacy price-only ranges remain accepted.
+- Manager Console journeys reuse `pp:v2:journey:1:*` and existing checkpoint journals; no cross-device storage is claimed. Incomplete launches resume the existing journey screen. Discovery still comes only from slice B's existing discover step.
+
 ## Public seam (agreed October 4, 2026)
 
 Import from `src/features/manager/fund/launch/index.ts`:

@@ -41,6 +41,35 @@ describe("fund server action safety", () => {
     mocks.enabled = true;
     mocks.wallet = `0x${"1".repeat(40)}`;
     mocks.owner.mockResolvedValue({ walletAddress: mocks.wallet });
+    mocks.readFund.mockRejectedValue(new ApiError(503, "V2_UNAVAILABLE", "unavailable"));
+  });
+  it("R2 enriches discovery identities with fund details", async () => {
+    const { mandate: _mandate, sharePrice: _price, ...identity } = mockFund;
+    mocks.readFunds.mockResolvedValue({ funds: [identity] });
+    mocks.readFund.mockResolvedValue(mockFund);
+    const result = await loadFundsAction("explore");
+    expect(result).toMatchObject({
+      ok: true,
+      data: { funds: [{ sharePrice: mockFund.sharePrice }] },
+    });
+    expect(mocks.readFund).toHaveBeenCalledWith(mockFund.coreVault);
+  });
+  it("R2 keeps an identity when its detail is unavailable", async () => {
+    mocks.readFunds.mockResolvedValue({ funds: [mockFund] });
+    mocks.readFund.mockRejectedValue(new ApiError(503, "V2_UNAVAILABLE", "unavailable"));
+    expect(await loadFundsAction("explore")).toMatchObject({
+      ok: true,
+      data: { funds: [mockFund] },
+    });
+  });
+  it("R3 filters by authoritative detail manager, not profile presentation", async () => {
+    mocks.readFunds.mockResolvedValue({ funds: [{ ...mockFund, manager: mocks.wallet }] });
+    mocks.readFund.mockResolvedValue({
+      ...mockFund,
+      manager: `0x${"8".repeat(40)}`,
+      profile: { manager: mocks.wallet },
+    });
+    expect(await loadFundsAction("manager")).toMatchObject({ ok: true, data: { funds: [] } });
   });
   it("R4 builds with session-derived from/holder and preserves authoritative previews", async () => {
     mocks.request.mockResolvedValue(mockFundBuild({ action: "deposit" }));

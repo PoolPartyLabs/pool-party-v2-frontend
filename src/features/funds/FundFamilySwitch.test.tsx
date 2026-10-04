@@ -11,6 +11,14 @@ vi.mock("./FundExplorer", () => ({ FundExplorer: () => <p>isolated-v2-funds</p> 
 import { FundFamilySwitch } from "./FundFamilySwitch";
 
 describe("fund family route switch", () => {
+  it("R1 enabled V1 preference leaves V1 content unchanged", () => {
+    mocks.enabled = true;
+    mocks.family = "v1";
+    mocks.hydrated = true;
+    renderWithProviders(<FundFamilySwitch view="manager" v1={<p>v1-original</p>} />);
+    expect(screen.getByText("v1-original")).toBeInTheDocument();
+    expect(screen.queryByText("isolated-v2-funds")).not.toBeInTheDocument();
+  });
   it("R1 flag off leaves the V1 element unchanged", () => {
     mocks.enabled = false;
     mocks.family = "v2";

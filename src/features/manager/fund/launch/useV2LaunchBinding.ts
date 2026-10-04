@@ -1,10 +1,13 @@
 /**
  * @id PP-MGR-HOK-019 (POO-2177)
  * @name useV2LaunchBinding
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2181)
+ * @analytics-events builder_launch_signature, builder_launch_completed, builder_launch_failed
  */
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { isAnalyticsErrorCodeShape } from "@/lib/analytics/events";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { isMockMode } from "@/lib/services";
 import { createLaunchDriver, type FrozenLaunch, type LaunchWallet } from "./driver";
@@ -15,6 +18,7 @@ import {
   type LaunchJournal,
   loadJournal,
   runLaunch,
+  saveJournal,
 } from "./journal";
 import { withLaunchLock } from "./lock";
 import { type CanvasPlan, deriveLaunchSteps, type ExecutionConfig, type LaunchStep } from "./plan";
@@ -49,6 +53,7 @@ export interface LaunchSignature {
 export function useV2LaunchBinding(options: V2LaunchOptions) {
   // PP-INTEGRATION-POINT: Murilo's Review page consumes headless launch state and explicit actions.
   const { isEnabled } = useFeatureFlags();
+  const { track } = useAnalytics();
   const [journal, setJournal] = useState<LaunchJournal | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -116,17 +121,21 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
             throw new Error("INVALID_REVIEW");
           current = createJournal(options.draftId, manager, frozen, steps);
         }
-        const driver = createLaunchDriver({
-          send: async (transaction) => {
-            if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
-            return wallet.send(transaction);
+        const driver = createLaunchDriver(
+          {
+            send: async (transaction) => {
+              if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
+              return wallet.send(transaction);
+            },
+            sign: async (message) => {
+              if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
+              return wallet.sign(message);
+            },
+            receipt: (chain, hash) => wallet.receipt(chain, hash),
           },
-          sign: async (message) => {
-            if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
-            return wallet.sign(message);
-          },
-          receipt: (chain, hash) => wallet.receipt(chain, hash),
-        });
+          (step) =>
+            track("builder_launch_signature", { chain_id: step.chain, step_kind: step.kind }),
+        );
         do {
           await runLaunch(
             current,
@@ -140,6 +149,15 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
             (checkpoint) => checkpoint.status === "failed",
           );
           if (failed) {
+            const code =
+              failed.error && isAnalyticsErrorCodeShape(failed.error)
+                ? failed.error
+                : "LAUNCH_STEP_FAILED";
+            track("builder_launch_failed", {
+              step_kind: current.steps.find((step) => step.id === failed.stepId)?.kind,
+              error_code: code,
+              error_origin: code === "USER_REJECTED" ? "user" : "app",
+            });
             setError({
               code: failed.error ?? "LAUNCH_STEP_FAILED",
               messageKey: "fundLaunch.partialFailure",
@@ -162,9 +180,30 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
             if (controller.signal.aborted) finish();
           });
         } while (!controller.signal.aborted);
+        if (
+          !controller.signal.aborted &&
+          current.steps.length > 0 &&
+          current.steps.every((step) => current?.checkpoints[step.id]?.status === "confirmed") &&
+          !current.analyticsCompleted
+        ) {
+          current.analyticsCompleted = true;
+          saveJournal(storage, current);
+          track("builder_launch_completed");
+          changed(structuredClone(current));
+        }
       });
     } catch (failure) {
-      if (!controller.signal.aborted)
+      if (!controller.signal.aborted) {
+        const code =
+          failure instanceof Error && isAnalyticsErrorCodeShape(failure.message)
+            ? failure.message
+            : "LAUNCH_STEP_FAILED";
+        track("builder_launch_failed", {
+          step_kind: steps.find((step) => journal?.checkpoints[step.id]?.status !== "confirmed")
+            ?.kind,
+          error_code: code,
+          error_origin: "app",
+        });
         setError({
           code:
             failure instanceof Error && /^[A-Z][A-Z0-9_]*$/.test(failure.message)
@@ -172,6 +211,7 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
               : "LAUNCH_STEP_FAILED",
           messageKey: "fundLaunch.partialFailure",
         });
+      }
     } finally {
       active = false;
       running.current = false;
