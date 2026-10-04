@@ -3,6 +3,21 @@ import { mockFund, mockFundBuild } from "@/mocks/data/v2Funds";
 import { approveAndRebuild, ensureFreshValuation } from "./fundFlow";
 
 describe("investor fund flows", () => {
+  // @rule R4
+  it("stops an expired report job without assuming a fresh valuation", async () => {
+    const poll = vi.fn().mockResolvedValue("expired");
+    await expect(
+      ensureFreshValuation({
+        read: async () => ({ ...mockFund, lastReport: null }),
+        start: async () => "job",
+        poll,
+        wait: async () => {},
+        active: () => true,
+        refreshing: vi.fn(),
+      }),
+    ).rejects.toThrow("V2_UNAVAILABLE");
+    expect(poll).toHaveBeenCalledOnce();
+  });
   it("R6 cancellation after a poll blocks a stale valuation reread", async () => {
     let active = true;
     const read = vi.fn().mockResolvedValue({ ...mockFund, lastReport: null });

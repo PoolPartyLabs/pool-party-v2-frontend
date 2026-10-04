@@ -872,6 +872,22 @@
     "balances": "Spoke残高",
     "transits": "送金",
     "loadMore": "さらに読み込む",
-    "confirmationTimeout": "取引は送信されましたが、時間内に確認できませんでした。すでに完了している可能性があるため、もう一度試す前にウォレットの最近のアクティビティをご確認ください。"
+    "confirmationTimeout": "取引は送信されましたが、時間内に確認できませんでした。すでに完了している可能性があるため、もう一度試す前にウォレットの最近のアクティビティをご確認ください。",
+    "transactions": "取引",
+    "pendingConfirmation": "承認待ち",
+    "confirmedBlock": "ブロック {block} で承認されました",
+    "reverted": "取り消されました",
+    "revertUnknown": "取引は取り消されました。解析された理由はありません。",
+    "coreVault": "Core Vault",
+    "spokeVault": "Spoke Vault",
+    "shareToken": "ShareToken",
+    "adapter": "アダプター",
+    "transactionHash": "取引ハッシュ",
+    "reportPublish": "レポート公開",
+    "reportDelivery": "レポート配信",
+    "transitSend": "送信",
+    "transitFill": "約定",
+    "transitAcknowledgement": "受領確認",
+    "decodedError": "解析されたエラー: {name}"
   }
 }

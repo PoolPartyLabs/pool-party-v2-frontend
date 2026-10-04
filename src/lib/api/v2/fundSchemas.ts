@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-LIB-025 (POO-2175)
  * @name fundSchemas
- * @implements-rules-version v2
+ * @implements-rules-version v2 (POO-2175); v1 (POO-2179 explorer records)
  * Fund-only view and transaction contracts, optional rollout previews.
  */
 import { z } from "zod";
@@ -171,7 +171,7 @@ export const reportStartSchema = record.extend({ jobId: z.string().uuid() });
 export const reportJobSchema = record.extend({
   jobId: z.string().uuid(),
   core: addressSchema,
-  status: z.enum(["pending", "delivered", "failed"]),
+  status: z.enum(["pending", "delivered", "expired", "failed"]),
 });
 export type FundRow = z.infer<typeof fundRowSchema>;
 export type FundView = z.infer<typeof fundViewSchema>;

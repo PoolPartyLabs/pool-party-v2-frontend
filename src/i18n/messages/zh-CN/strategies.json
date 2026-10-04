@@ -872,6 +872,22 @@
     "balances": "Spoke余额",
     "transits": "转账",
     "loadMore": "加载更多",
-    "confirmationTimeout": "您的交易已发送，但我们未能及时确认。再次尝试前请查看您钱包的近期活动，以防它已经完成。"
+    "confirmationTimeout": "您的交易已发送，但我们未能及时确认。再次尝试前请查看您钱包的近期活动，以防它已经完成。",
+    "transactions": "交易",
+    "pendingConfirmation": "等待确认",
+    "confirmedBlock": "已在区块 {block} 确认",
+    "reverted": "已回滚",
+    "revertUnknown": "交易已回滚，暂无可解码的原因。",
+    "coreVault": "Core Vault",
+    "spokeVault": "Spoke Vault",
+    "shareToken": "ShareToken",
+    "adapter": "适配器",
+    "transactionHash": "交易哈希",
+    "reportPublish": "报告发布",
+    "reportDelivery": "报告交付",
+    "transitSend": "发送",
+    "transitFill": "成交",
+    "transitAcknowledgement": "接收确认",
+    "decodedError": "已解码的错误：{name}"
   }
 }

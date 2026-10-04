@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-SCR-004 (POO-2175)
  * @name FundExplorer
- * @implements-rules-version v2 (POO-2181)
+ * @implements-rules-version v2 (POO-2175, POO-2181); v1 (POO-2179 explorer records)
  * Isolated v2 discovery, holder portfolio and manager fund list.
  */
 "use client";

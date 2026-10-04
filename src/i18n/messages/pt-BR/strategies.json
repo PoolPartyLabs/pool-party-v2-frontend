@@ -872,6 +872,22 @@
     "balances": "Saldos dos spokes",
     "transits": "Transferências",
     "loadMore": "Carregar mais",
-    "confirmationTimeout": "Sua transação foi enviada, mas não conseguimos confirmá-la a tempo. Verifique a atividade recente da sua carteira antes de tentar de novo, caso ela já tenha sido concluída."
+    "confirmationTimeout": "Sua transação foi enviada, mas não conseguimos confirmá-la a tempo. Verifique a atividade recente da sua carteira antes de tentar de novo, caso ela já tenha sido concluída.",
+    "transactions": "Transações",
+    "pendingConfirmation": "Aguardando confirmação",
+    "confirmedBlock": "Confirmada no bloco {block}",
+    "reverted": "Revertida",
+    "revertUnknown": "A transação foi revertida. O motivo decodificado não está disponível.",
+    "coreVault": "Core Vault",
+    "spokeVault": "Spoke Vault",
+    "shareToken": "ShareToken",
+    "adapter": "Adaptador",
+    "transactionHash": "Hash da transação",
+    "reportPublish": "Publicação do relatório",
+    "reportDelivery": "Entrega do relatório",
+    "transitSend": "Envio",
+    "transitFill": "Execução",
+    "transitAcknowledgement": "Confirmação de recebimento",
+    "decodedError": "Erro decodificado: {name}"
   }
 }

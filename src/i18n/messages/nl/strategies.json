@@ -872,6 +872,22 @@
     "balances": "Spoke-saldi",
     "transits": "Overdrachten",
     "loadMore": "Meer laden",
-    "confirmationTimeout": "Je transactie is verzonden, maar we konden deze niet op tijd bevestigen. Controleer de recente activiteit van je wallet voordat je het opnieuw probeert, voor het geval deze al is doorgegaan."
+    "confirmationTimeout": "Je transactie is verzonden, maar we konden deze niet op tijd bevestigen. Controleer de recente activiteit van je wallet voordat je het opnieuw probeert, voor het geval deze al is doorgegaan.",
+    "transactions": "Transacties",
+    "pendingConfirmation": "In afwachting van bevestiging",
+    "confirmedBlock": "Bevestigd in blok {block}",
+    "reverted": "Teruggedraaid",
+    "revertUnknown": "De transactie is teruggedraaid. Er is geen gedecodeerde reden beschikbaar.",
+    "coreVault": "Core Vault",
+    "spokeVault": "Spoke Vault",
+    "shareToken": "ShareToken",
+    "adapter": "Adapter",
+    "transactionHash": "Transactiehash",
+    "reportPublish": "Rapportpublicatie",
+    "reportDelivery": "Rapportlevering",
+    "transitSend": "Verzending",
+    "transitFill": "Uitvoering",
+    "transitAcknowledgement": "Ontvangstbevestiging",
+    "decodedError": "Gedecodeerde fout: {name}"
   }
 }
