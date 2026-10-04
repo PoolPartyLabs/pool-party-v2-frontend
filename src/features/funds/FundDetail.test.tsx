@@ -30,8 +30,42 @@ vi.mock("./FundActionsPanel", () => ({ FundActionsPanel: () => <p>investor-contr
 
 import { mockFund, mockHolder } from "@/mocks/data/v2Funds";
 import { FundDetail } from "./FundDetail";
+import liveReport from "./fixtures/fund1Report.json";
 
 describe("fund detail views", () => {
+  it.each([
+    ["spokeChainId", "4663"],
+    ["spokeChainId", 4663],
+    ["sourceChainId", "4663"],
+    ["sourceChainId", 4663],
+  ])("renders actual Report token/adapter explorer context with %s=%s", async (field, chain) => {
+    const { spokeChainId: _spokeChainId, ...report } = liveReport;
+    mocks.load.mockResolvedValue({
+      ok: true,
+      data: {
+        fund: {
+          ...mockFund,
+          lastReport: {
+            protocolVersion: "v2",
+            ageSeconds: 100,
+            report: { ...report, [field]: chain },
+          },
+        },
+        holder: mockHolder,
+        wallet: `0x${"4".repeat(40)}`,
+      },
+    });
+    renderWithProviders(<FundDetail core={mockFund.coreVault} />);
+    await screen.findByRole("heading", { name: "Balanced Income" });
+    for (const identifier of [liveReport.unallocated[0]?.token, liveReport.positions[0]?.adapter]) {
+      if (!identifier) throw new Error("Captured Report identifier missing");
+      for (const link of screen.getAllByRole("link", { name: identifier }))
+        expect(link).toHaveAttribute(
+          "href",
+          `https://robinhoodchain.blockscout.com/address/${identifier}`,
+        );
+    }
+  });
   it("renders fund #1 Robinhood report identifiers on their source explorer", async () => {
     const token = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
     const adapter = "0xd38ae81065205E9E34AB9031aFC80d4cd5136486";

@@ -1,0 +1,76 @@
+{
+  "protocolVersion": "v2",
+  "sequence": "33",
+  "timestamp": "1791084640",
+  "fundId": "0xe49050db325f1963991d8b7fa591be9fe3fac1e7bfea0c34955c4f67893f6e46",
+  "mandateHash": "0x9714b37e5576b0d8b07652dee42cb16517fdea99528468d877e41b0ec806a198",
+  "spokeChainId": "4663",
+  "blockNumber": "26116310",
+  "unallocated": [
+    {
+      "token": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+      "amount": "3782",
+      "protocolVersion": "v2"
+    },
+    {
+      "token": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+      "amount": "353",
+      "protocolVersion": "v2"
+    }
+  ],
+  "positions": [
+    {
+      "adapter": "0xd38ae81065205E9E34AB9031aFC80d4cd5136486",
+      "poolKey": "0xfcfae8fa0bd6da961bcf5d990f27690932deac4f093e99bf3e871691c6586593",
+      "poolId": "0xfcfae8fa0bd6da961bcf5d990f27690932deac4f093e99bf3e871691c6586593",
+      "tickLower": -199370,
+      "tickUpper": -195370,
+      "liquidity": "503455017887",
+      "token0": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+      "token1": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+      "principal0": "908678570760781",
+      "principal1": "2525126",
+      "income0": "50636872085",
+      "income1": "165",
+      "protocolVersion": "v2"
+    }
+  ],
+  "cumulativeIncome": [
+    {
+      "token": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+      "amount": "186",
+      "protocolVersion": "v2"
+    },
+    {
+      "token": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+      "amount": "60922181590",
+      "protocolVersion": "v2"
+    }
+  ],
+  "collectedIncome": [
+    {
+      "token": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
+      "amount": "21",
+      "protocolVersion": "v2"
+    },
+    {
+      "token": "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+      "amount": "10285309505",
+      "protocolVersion": "v2"
+    }
+  ],
+  "operatingCash": "0",
+  "cumulativeReceived": "4966000",
+  "cumulativeSentHome": "0",
+  "arrivedTransits": [
+    {
+      "transitId": "0xaccc9953f586ff761b128fd8c638b7d53f601c7fc23837aad3ae40495941bddd",
+      "amount": "4966000",
+      "protocolVersion": "v2"
+    }
+  ],
+  "inFlightToHub": [],
+  "unwindResults": "0x",
+  "collectionResults": "0x",
+  "refundedTransits": []
+}

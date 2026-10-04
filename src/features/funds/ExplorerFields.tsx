@@ -80,11 +80,12 @@ export function ExplorerFields({
     );
   if (typeof value === "object") {
     const record = value as Record<string, unknown>;
+    const reportChain = record.sourceChainId ?? record.spokeChainId;
     const currentChain =
       "chainId" in record
         ? Number(record.chainId)
-        : "sourceChainId" in record && !("destinationChainId" in record)
-          ? Number(record.sourceChainId)
+        : reportChain != null && !("destinationChainId" in record)
+          ? Number(reportChain)
           : chainId;
     const source = Number(record.sourceChainId);
     const destination = Number(record.destinationChainId);
@@ -107,8 +108,8 @@ export function ExplorerFields({
         }
       : {
           ...chainByField,
-          ...("sourceChainId" in record && !("destinationChainId" in record)
-            ? { publishTxHash: source }
+          ...(reportChain != null && !("destinationChainId" in record)
+            ? { publishTxHash: Number(reportChain) }
             : {}),
         };
     return (
