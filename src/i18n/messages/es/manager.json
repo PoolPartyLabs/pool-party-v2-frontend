@@ -1,4 +1,22 @@
 {
+  "fallbackIndex": {
+    "title": "Revisar y lanzar borradores (v2)",
+    "localDrafts": "Los borradores se guardan en este navegador; el almacenamiento no registra la wallet propietaria. El estado del lanzamiento pertenece a su wallet conectada.",
+    "connect": "Conecte su wallet de gestor para revisar los borradores.",
+    "loading": "Cargando borradores guardados...",
+    "empty": "No hay borradores guardados en este navegador.",
+    "unnamed": "Borrador sin nombre",
+    "lastSaved": "Último guardado (hora de Londres):",
+    "unsaved": "No guardado",
+    "ready": "Listo para revisar. El lanzamiento vuelve a validar wallet, saldo y configuración.",
+    "catalog": "Revise el catálogo activo del Mandato.",
+    "balance": "Saldo de wallet no disponible.",
+    "review": "Complete o corrija la revisión y el capital inicial.",
+    "execution": "Revise la configuración de ejecución y las asignaciones.",
+    "reviewLaunch": "Revisar y lanzar",
+    "inProgress": "Lanzamiento en curso. Reanude el proceso existente.",
+    "resume": "Reanudar"
+  },
   "fallbackReview": {
     "title": "Revisar y lanzar (v2)",
     "identity": "Identidad",

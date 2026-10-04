@@ -1,4 +1,22 @@
 {
+  "fallbackIndex": {
+    "title": "檢閱並啟動草稿 (v2)",
+    "localDrafts": "草稿儲存在此瀏覽器中，儲存空間不記錄wallet擁有者。啟動狀態屬於您連接的wallet。",
+    "connect": "連接管理者wallet以檢閱草稿。",
+    "loading": "正在載入已儲存的草稿...",
+    "empty": "此瀏覽器中沒有已儲存的草稿。",
+    "unnamed": "未命名草稿",
+    "lastSaved": "上次儲存（倫敦時間）：",
+    "unsaved": "未儲存",
+    "ready": "可以檢閱。啟動時會重新驗證wallet、餘額及設定。",
+    "catalog": "檢查目前的授權範圍目錄。",
+    "balance": "wallet餘額無法使用。",
+    "review": "完成或修正檢閱欄位與初始資金。",
+    "execution": "檢查執行設定與配置。",
+    "reviewLaunch": "檢閱並啟動",
+    "inProgress": "啟動已在進行中。請繼續現有流程。",
+    "resume": "繼續"
+  },
   "fallbackReview": {
     "title": "檢閱並啟動 (v2)",
     "identity": "身分資訊",

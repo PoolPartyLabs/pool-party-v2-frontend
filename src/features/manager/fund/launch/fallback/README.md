@@ -3,16 +3,27 @@
 Minimal, unstyled, temporary binding to the POO-2177 public hooks. Murilo owns POO-2172 Review and POO-2171 panels. No builder, canvas, Mandate or Review file is modified.
 
 **fallback; merges only if POO-2172 Review is not on main by 09:00 BST; Murilo's page replaces it**.
-Open as DRAFT only. Do not merge or deploy from this task. The brief does not specify the calendar date for the 09:00 BST cutoff and 16:00 BST demo; confirm it before any landing decision (work started October 4, 2026).
+Open as DRAFT only. Do not merge or deploy from this task. Confirmed date: October 4, 2026. Cutoff: 09:00 BST (08:00 UTC). Demo: 16:00 BST (15:00 UTC).
 
 ## Demo clicks
 
 1. Run the existing real V2 environment with `NEXT_PUBLIC_FEATURE_FUND_CONTRACTS=on`, `NEXT_PUBLIC_MOCK_MODE=false`, existing server API/session/media credentials and configured wallets. Never put API keys in public variables.
-2. Sign in with the manager wallet. Complete Mandate and Build, save the draft in this browser. Copy `draftId` from the existing builder URL. This browser's saved draft and original manager wallet are required.
-3. Open `/en/manager/fund-launch/review/<draftId>` directly. Slice E landed on main during final validation, but its Manager Console reuses Murilo's existing `FundDraftsSlot` / `MandateDraftsList` rather than providing a slice-owned draft list. Those files are outside this new-files-only scope, so this PR documents the direct URL instead of changing them. The heading is "Review & launch (v2)".
-4. Edit name, description, PNG/JPG logo, fees (Instant 0-10%), minimum and seed. Click **Refresh** for balance/catalog as needed. Check the whole-share seed preview and fixed investor terms.
-5. Under **Default execution settings (fallback until block panels ship)**, select the exact Mandate pool/asset if ambiguous. Pool defaults: canonical finite aligned full range, slippage 1%. Untick Full range to edit aligned canonical ticks. Existing nonempty panel config is read-only and wins entirely.
-6. Resolve every blocker. Click **Launch · N signatures** once. The existing launch entry freezes a snapshot and navigates to `/en/manager/fund-launch/<journeyId>`; click **Sign next step** there. Each wallet transaction is explicit. No signature is requested on Review mount.
+2. Sign in with the manager wallet. Complete Mandate and Build with the demo pools/reserve below; save the draft in this browser. This browser's saved draft and original manager wallet are required.
+3. In Manager Console, choose the V2 section and click **Review & launch drafts (v2)**. The link is in our slice-owned `FundExplorer` manager section; Murilo's `FundDraftsSlot`, `MandateDraftsList`, builder and canvas files remain untouched. Direct index URL: `/en/manager/fund-launch/review`.
+4. Check the draft's name, London-time last-saved timestamp and readiness/blockers summary. Click **Review & launch** for that draft. For a launch already in progress, click **Resume** instead to open its existing journey. Launch status is wallet-scoped. Mandate storage itself is browser-local and has no wallet ownership metadata; the index explicitly discloses this rather than inventing an ownership filter.
+5. Edit name, description, PNG/JPG logo, fees (Instant 0-10%), minimum and seed. Click **Refresh** for balance/catalog as needed. Check the whole-share seed preview and fixed investor terms.
+6. Under **Default execution settings (fallback until block panels ship)**, select the exact Mandate pool/asset if ambiguous. Pool defaults: canonical finite aligned full range, slippage 1%. Untick Full range to edit aligned canonical ticks. Existing nonempty panel config is read-only and wins entirely.
+7. Resolve every blocker. Click **Launch · N signatures** once. The existing launch entry freezes a snapshot and navigates to `/en/manager/fund-launch/<journeyId>`; click **Sign next step** there. Each wallet transaction is explicit. No signature is requested on index or Review mount.
+
+## Confirmed demo catalog selections
+
+From the orchestrator-provided fund #2 `mainnet-records/fund2/draft.json` (read October 4, 2026); these are selections, not hardcoded UI defaults:
+
+- Arbitrum USDC/WETH v4 (42161): `0xfc7b3ad139daaf1e9c3637ed921c154d1b04286f8a82b805a6c352da57028653`.
+- Robinhood USDG/WETH v4 (4663): `0xfcfae8fa0bd6da961bcf5d990f27690932deac4f093e99bf3e871691c6586593`.
+- Arbitrum Aave USDC reserve: `0xaf88d065e77c8cC2239327C5EDb3A432268e5831`; assetKey `arbitrum:0xaf88d065e77c8cc2239327c5edb3a432268e5831`.
+
+Index readiness is a read-only estimate using saved Review, live catalog/balance and the same fallback preview; it does not persist Review, execution or allocate missing leaf budgets. Opening Review and launch revalidates. Wallet-local journeys remain reachable even if their saved Mandate draft was removed.
 
 ## Safety and seams
 
@@ -26,8 +37,7 @@ Aave Supply identity comes from the manager's explicit Mandate reserves and toke
 
 ## Open questions
 
-- Confirm the calendar date of the conditional 09:00 BST cutoff and 16:00 BST demo.
-- Confirm the demo Mandate's exact pool and hub deposit Aave reserve; ambiguous rows require manager selection, never an inferred trade.
+- Date and demo selections are confirmed above. Any additional ambiguous rows still require manager selection, never an inferred trade.
 - When POO-2172 lands, remove/retire this separate fallback route rather than integrating it into Murilo's page. POO-2171 nonempty config already wins.
 
 ## Validation (October 4, 2026)

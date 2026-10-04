@@ -1,4 +1,22 @@
 {
+  "fallbackIndex": {
+    "title": "Entwürfe prüfen und starten (v2)",
+    "localDrafts": "Entwürfe werden in diesem Browser gespeichert; der Speicher erfasst keinen Wallet-Eigentümer. Der Startstatus gehört Ihrer verbundenen Wallet.",
+    "connect": "Verbinden Sie Ihre Manager-Wallet, um Entwürfe zu prüfen.",
+    "loading": "Gespeicherte Entwürfe werden geladen...",
+    "empty": "Keine gespeicherten Entwürfe in diesem Browser.",
+    "unnamed": "Unbenannter Entwurf",
+    "lastSaved": "Zuletzt gespeichert (Londoner Zeit):",
+    "unsaved": "Nicht gespeichert",
+    "ready": "Bereit zur Prüfung. Beim Start werden Wallet, Guthaben und Einstellungen erneut geprüft.",
+    "catalog": "Prüfen Sie den aktuellen Mandatskatalog.",
+    "balance": "Wallet-Guthaben nicht verfügbar.",
+    "review": "Vervollständigen oder korrigieren Sie Prüfung und Startkapital.",
+    "execution": "Prüfen Sie Ausführungseinstellungen und Zuweisungen.",
+    "reviewLaunch": "Prüfen und starten",
+    "inProgress": "Start läuft bereits. Setzen Sie den vorhandenen Ablauf fort.",
+    "resume": "Fortsetzen"
+  },
   "fallbackReview": {
     "title": "Prüfen und starten (v2)",
     "identity": "Identität",

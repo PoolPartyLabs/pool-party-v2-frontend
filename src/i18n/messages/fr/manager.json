@@ -1,4 +1,22 @@
 {
+  "fallbackIndex": {
+    "title": "Vérifier et lancer les brouillons (v2)",
+    "localDrafts": "Les brouillons sont locaux à ce navigateur ; le stockage ne conserve pas le propriétaire du wallet. Le statut du lancement appartient à votre wallet connecté.",
+    "connect": "Connectez votre wallet de gestionnaire pour vérifier les brouillons.",
+    "loading": "Chargement des brouillons enregistrés...",
+    "empty": "Aucun brouillon enregistré dans ce navigateur.",
+    "unnamed": "Brouillon sans nom",
+    "lastSaved": "Dernier enregistrement (heure de Londres) :",
+    "unsaved": "Non enregistré",
+    "ready": "Prêt pour vérification. Le lancement revalide votre wallet, le solde et les paramètres.",
+    "catalog": "Vérifiez le catalogue actif du Mandat.",
+    "balance": "Solde du wallet indisponible.",
+    "review": "Complétez ou corrigez la vérification et le capital initial.",
+    "execution": "Vérifiez les paramètres et les allocations.",
+    "reviewLaunch": "Vérifier et lancer",
+    "inProgress": "Lancement en cours. Reprenez le parcours existant.",
+    "resume": "Reprendre"
+  },
   "fallbackReview": {
     "title": "Vérifier et lancer (v2)",
     "identity": "Identité",

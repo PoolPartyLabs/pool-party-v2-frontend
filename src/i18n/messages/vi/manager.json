@@ -1,4 +1,22 @@
 {
+  "fallbackIndex": {
+    "title": "Kiểm tra và khởi chạy bản nháp (v2)",
+    "localDrafts": "Bản nháp được lưu trong trình duyệt này; kho lưu trữ không ghi chủ sở hữu wallet. Trạng thái khởi chạy thuộc wallet đang kết nối.",
+    "connect": "Kết nối wallet quản lý để kiểm tra bản nháp.",
+    "loading": "Đang tải bản nháp đã lưu...",
+    "empty": "Không có bản nháp đã lưu trong trình duyệt này.",
+    "unnamed": "Bản nháp chưa có tên",
+    "lastSaved": "Lưu lần cuối (giờ Luân Đôn):",
+    "unsaved": "Chưa lưu",
+    "ready": "Sẵn sàng kiểm tra. Khi khởi chạy, wallet, số dư và cài đặt được kiểm tra lại.",
+    "catalog": "Kiểm tra danh mục ủy quyền hiện tại.",
+    "balance": "Số dư wallet không khả dụng.",
+    "review": "Hoàn thiện hoặc sửa phần kiểm tra và vốn ban đầu.",
+    "execution": "Kiểm tra cài đặt thực thi và phân bổ.",
+    "reviewLaunch": "Kiểm tra và khởi chạy",
+    "inProgress": "Đã bắt đầu khởi chạy. Tiếp tục quy trình hiện có.",
+    "resume": "Tiếp tục"
+  },
   "fallbackReview": {
     "title": "Kiểm tra và khởi chạy (v2)",
     "identity": "Thông tin nhận dạng",

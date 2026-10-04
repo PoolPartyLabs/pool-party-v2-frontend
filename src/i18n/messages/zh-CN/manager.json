@@ -1,4 +1,22 @@
 {
+  "fallbackIndex": {
+    "title": "审核并启动草稿 (v2)",
+    "localDrafts": "草稿保存在此浏览器中，存储不记录wallet所有者。启动状态属于您连接的wallet。",
+    "connect": "连接管理者wallet以审核草稿。",
+    "loading": "正在加载已保存的草稿...",
+    "empty": "此浏览器中没有已保存的草稿。",
+    "unnamed": "未命名草稿",
+    "lastSaved": "上次保存（伦敦时间）：",
+    "unsaved": "未保存",
+    "ready": "可以审核。启动时会重新验证wallet、余额和设置。",
+    "catalog": "检查当前授权范围目录。",
+    "balance": "wallet余额不可用。",
+    "review": "完成或修正审核字段和初始资金。",
+    "execution": "检查执行设置和分配。",
+    "reviewLaunch": "审核并启动",
+    "inProgress": "启动已在进行中。请恢复现有流程。",
+    "resume": "恢复"
+  },
   "fallbackReview": {
     "title": "审核并启动 (v2)",
     "identity": "身份信息",

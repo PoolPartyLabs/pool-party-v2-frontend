@@ -1,4 +1,22 @@
 {
+  "fallbackIndex": {
+    "title": "下書きを確認して開始 (v2)",
+    "localDrafts": "下書きはこのブラウザーに保存され、walletの所有者は記録されません。開始状況は接続中のwalletに紐づきます。",
+    "connect": "管理者walletを接続して下書きを確認してください。",
+    "loading": "保存済み下書きを読み込み中...",
+    "empty": "このブラウザーには保存済み下書きがありません。",
+    "unnamed": "名前のない下書き",
+    "lastSaved": "最終保存（ロンドン時間）：",
+    "unsaved": "未保存",
+    "ready": "確認の準備ができています。開始時にwallet、残高、設定を再検証します。",
+    "catalog": "現在のマンデートカタログを確認してください。",
+    "balance": "wallet残高を取得できません。",
+    "review": "確認項目と初期資金を入力または修正してください。",
+    "execution": "実行設定と配分を確認してください。",
+    "reviewLaunch": "確認して開始",
+    "inProgress": "開始処理が進行中です。既存の手順を再開してください。",
+    "resume": "再開"
+  },
   "fallbackReview": {
     "title": "確認して開始 (v2)",
     "identity": "基本情報",

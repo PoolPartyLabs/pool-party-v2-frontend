@@ -1,4 +1,22 @@
 {
+  "fallbackIndex": {
+    "title": "Revisar e lançar rascunhos (v2)",
+    "localDrafts": "Os rascunhos ficam neste navegador; o armazenamento não registra o proprietário da wallet. O status do lançamento pertence à wallet conectada.",
+    "connect": "Conecte sua wallet de gestor para revisar os rascunhos.",
+    "loading": "Carregando rascunhos salvos...",
+    "empty": "Nenhum rascunho salvo neste navegador.",
+    "unnamed": "Rascunho sem nome",
+    "lastSaved": "Último salvamento (horário de Londres):",
+    "unsaved": "Não salvo",
+    "ready": "Pronto para revisão. O lançamento valida novamente wallet, saldo e configurações.",
+    "catalog": "Verifique o catálogo ativo do Mandato.",
+    "balance": "Saldo da wallet indisponível.",
+    "review": "Preencha ou corrija a revisão e o capital inicial.",
+    "execution": "Verifique configurações de execução e alocações.",
+    "reviewLaunch": "Revisar e lançar",
+    "inProgress": "Lançamento em andamento. Retome a jornada existente.",
+    "resume": "Retomar"
+  },
   "fallbackReview": {
     "title": "Revisar e lançar (v2)",
     "identity": "Identidade",

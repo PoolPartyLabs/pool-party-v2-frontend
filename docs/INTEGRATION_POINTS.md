@@ -2,6 +2,8 @@
 
 ## Conditional fallback Review (POO-2183, rules v1)
 
+The same-gated index `/manager/fund-launch/review` reads `listDrafts` / `subscribe` without writing the browser-local Mandate store. `FallbackReviewIndex.tsx` combines wallet-local persisted journeys, `useV2LaunchStatus` Resume links and pure `draftReadiness.ts` live-catalog/balance previews. The Mandate store has no wallet ownership metadata; this limitation is visible. Our `FundExplorer` manager V2 section links to the index; Murilo's draft list/page files remain unchanged. Demo date: October 4, 2026, cutoff 09:00 BST, demo 16:00 BST. Exact confirmed pool/reserve IDs and clicks are in the fallback README.
+
 `src/features/manager/fund/launch/fallback/FallbackReview.tsx` binds only POO-2177's `useV2ReviewDraft` and `startFundLaunch`. The separate route `/manager/fund-launch/review/[draftId]` requires `fundContracts` and real V2; no signatures on mount. Review persistence and staged logo upload stay in the existing hook.
 
 `fallback/execution.ts` is an immutable launch-time snapshot adapter. Empty Pool config receives manager-visible catalog-aligned finite full range and slippage 1%; empty Aave Supply receives an explicitly selected Mandate reserve assetKey. Any nonempty panel config wins read-only. Unsupported Aave swaps and missing leaf budgets remain blocked. No canvas/store schema changes. See `src/features/manager/fund/launch/fallback/README.md` for direct-URL demo clicks.
@@ -43,7 +45,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 474 markers across 271 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 475 markers across 272 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap

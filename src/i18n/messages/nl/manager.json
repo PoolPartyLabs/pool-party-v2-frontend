@@ -1,4 +1,22 @@
 {
+  "fallbackIndex": {
+    "title": "Concepten controleren en starten (v2)",
+    "localDrafts": "Concepten staan lokaal in deze browser; de opslag registreert geen wallet-eigenaar. De startstatus hoort bij uw verbonden wallet.",
+    "connect": "Verbind uw beheerderswallet om concepten te controleren.",
+    "loading": "Opgeslagen concepten laden...",
+    "empty": "Geen opgeslagen concepten in deze browser.",
+    "unnamed": "Naamloos concept",
+    "lastSaved": "Laatst opgeslagen (Londense tijd):",
+    "unsaved": "Niet opgeslagen",
+    "ready": "Klaar voor controle. De start controleert wallet, saldo en instellingen opnieuw.",
+    "catalog": "Controleer de actuele Mandaatcatalogus.",
+    "balance": "Wallet-saldo niet beschikbaar.",
+    "review": "Vul de controle en het startkapitaal in of corrigeer deze.",
+    "execution": "Controleer uitvoeringsinstellingen en toewijzingen.",
+    "reviewLaunch": "Controleren en starten",
+    "inProgress": "Start is al bezig. Hervat het bestaande traject.",
+    "resume": "Hervatten"
+  },
   "fallbackReview": {
     "title": "Controleren en starten (v2)",
     "identity": "Identiteit",

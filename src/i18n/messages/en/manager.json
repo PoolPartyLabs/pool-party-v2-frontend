@@ -1,4 +1,22 @@
 {
+  "fallbackIndex": {
+    "title": "Review & launch drafts (v2)",
+    "localDrafts": "Saved drafts are local to this browser; the draft store does not record wallet ownership. Launch status belongs to your connected wallet.",
+    "connect": "Connect your manager wallet to review saved drafts.",
+    "loading": "Loading saved drafts...",
+    "empty": "No saved drafts in this browser.",
+    "unnamed": "Unnamed draft",
+    "lastSaved": "Last saved (London time):",
+    "unsaved": "Not saved",
+    "ready": "Ready for Review. Launch revalidates your wallet, balance and execution settings.",
+    "catalog": "Check the live Mandate catalog.",
+    "balance": "Wallet balance is unavailable.",
+    "review": "Complete or correct Review fields and seed.",
+    "execution": "Check execution settings and allocations.",
+    "reviewLaunch": "Review & launch",
+    "inProgress": "Launch already in progress. Resume the existing journey.",
+    "resume": "Resume"
+  },
   "fallbackReview": {
     "title": "Review & launch (v2)",
     "identity": "Identity",

@@ -1,4 +1,22 @@
 {
+  "fallbackIndex": {
+    "title": "초안 검토 및 시작 (v2)",
+    "localDrafts": "초안은 이 브라우저에 저장되며 wallet 소유자는 기록되지 않아요. 시작 상태는 연결된 wallet에 속해요.",
+    "connect": "관리자 wallet을 연결하여 초안을 검토하세요.",
+    "loading": "저장된 초안을 불러오는 중...",
+    "empty": "이 브라우저에 저장된 초안이 없어요.",
+    "unnamed": "이름 없는 초안",
+    "lastSaved": "마지막 저장 (런던 시간):",
+    "unsaved": "저장되지 않음",
+    "ready": "검토 준비가 되었어요. 시작 시 wallet, 잔액, 설정을 다시 검증해요.",
+    "catalog": "현재 위임 범위 카탈로그를 확인하세요.",
+    "balance": "wallet 잔액을 사용할 수 없어요.",
+    "review": "검토 항목과 초기 자금을 입력하거나 수정하세요.",
+    "execution": "실행 설정과 배분을 확인하세요.",
+    "reviewLaunch": "검토 및 시작",
+    "inProgress": "이미 시작 중이에요. 기존 여정을 재개하세요.",
+    "resume": "재개"
+  },
   "fallbackReview": {
     "title": "검토 및 시작 (v2)",
     "identity": "기본 정보",
