@@ -26,6 +26,12 @@ vi.mock("@/lib/features/useFeatureFlags", () => ({
 vi.mock("../index", () => ({
   startFundLaunch: start,
   useV2ReviewDraft: () => ({
+    catalog: {
+      loading: false,
+      error: false,
+      depositTokenFor: () => ({ address: `0x${"12".repeat(20)}` }),
+      validateDraft: () => true,
+    },
     draft: state.draft
       ? {
           id: "draft",
@@ -86,12 +92,9 @@ vi.mock("../index", () => ({
   }),
 }));
 vi.mock("../../useV2MandateCatalog", () => ({
-  useV2MandateCatalog: () => ({
-    loading: false,
-    error: false,
-    depositTokenFor: () => ({ address: `0x${"12".repeat(20)}` }),
-    validateDraft: () => true,
-  }),
+  useV2MandateCatalog: () => {
+    throw new Error("Fallback must reuse the Review binding catalog, not load a second copy");
+  },
 }));
 
 describe("fallback Review [R1, R5]", () => {

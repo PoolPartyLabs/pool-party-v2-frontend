@@ -106,6 +106,7 @@ export function useV2ReviewDraft(draftId: string) {
   }
   return {
     ...binding,
+    catalog,
     draft,
     manager: wallet.manager,
     setField: <Field extends keyof typeof binding.review>(
