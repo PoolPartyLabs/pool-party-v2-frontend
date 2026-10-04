@@ -452,7 +452,7 @@ and makes it mandatory; a hub-only Arbitrum fund has no Across, no spoke and no 
 **Adding a block kind: the registry is the place.** Availability is data: moving a kind between enabled and
 coming soon is one line of `BLOCK_KIND_STATUS` (`plan/buildPlan.ts`), which is how Borrow moves in the slice
 that follows from D29. Making a coming-soon kind placeable takes more: Uniswap v3 positions also need the mandate
-catalog to offer `uniswap-v3` again (`UNAVAILABLE_PROTOCOLS`, `mandateCatalog.ts`, POO-2167), and Pendle and GMX
+catalog to offer `uniswap-v3` again (`UNAVAILABLE_PROTOCOLS` in `mandateDraft.ts`, read by `mandateCatalog.ts`, POO-2167), and Pendle and GMX
 have no `ProtocolId` (`BLOCK_KIND_PROTOCOL` is null and their config is `never`), so they follow the full list
 below. A new position kind needs, in order: its entry in `BlockKind`, `BLOCK_KIND_STATUS`, `BLOCK_KIND_PROTOCOL`
 and `BlockConfigByKind` (`plan/buildPlan.ts`); the stored-plan check in `plan/planStorage.ts` (`POSITION_KINDS`

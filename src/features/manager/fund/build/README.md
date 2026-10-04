@@ -47,4 +47,5 @@ Availability is data: moving a kind between enabled and coming soon is one line 
 7. a block sheet in Linear, and a row in `docs/IDS_REGISTRY.md` if the kind adds a file with an id.
 
 Making a coming-soon kind placeable takes more than step 1: Uniswap v3 positions also need the mandate catalog to
-offer `uniswap-v3` again (`UNAVAILABLE_PROTOCOLS`, `mandateCatalog.ts`), and Pendle and GMX have no `ProtocolId`.
+offer `uniswap-v3` again (`UNAVAILABLE_PROTOCOLS` in `mandateDraft.ts`, read by `mandateCatalog.ts`), and Pendle and GMX
+have no `ProtocolId`.
