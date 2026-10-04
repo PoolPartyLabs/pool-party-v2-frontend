@@ -134,7 +134,7 @@ describe("[MCK-005] pool fixtures", () => {
 
   it("keeps the liquidity of every pool active and the scale plausible", () => {
     for (const { pool } of PANEL_POOL_FIXTURES) {
-      expect(BigInt(pool.liquidity) > 0n).toBe(true);
+      expect(BigInt(pool.liquidity) > BigInt(0)).toBe(true);
       expect(pool.eligible).toBe(true);
     }
   });

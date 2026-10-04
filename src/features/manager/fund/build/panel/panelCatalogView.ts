@@ -148,6 +148,14 @@ export function networkOfChain(chainId: V2ChainId): NetworkId {
 // Price
 // ---------------------------------------------------------------------------
 
+// The compile target is ES2017, which has no BigInt literals (`0n`): the constants are built with
+// the function, the way `launch/review.ts` does.
+const ZERO = BigInt(0);
+const ONE = BigInt(1);
+const TEN = BigInt(10);
+/** 2^192: the square of the Q64.96 scale. */
+const Q192 = ONE << BigInt(192);
+
 /**
  * The canonical price, token1 per token0 in human units, from a Uniswap sqrt price Q64.96.
  *
@@ -163,10 +171,10 @@ export function priceFromSqrtPriceX96(
   if (!/^\d+$/.test(sqrtPriceX96)) return null;
   if (!Number.isInteger(decimals0) || !Number.isInteger(decimals1)) return null;
   const sqrt = BigInt(sqrtPriceX96);
-  if (sqrt <= 0n) return null;
+  if (sqrt <= ZERO) return null;
   const exponent = decimals0 - decimals1;
-  const numerator = sqrt * sqrt * (exponent > 0 ? 10n ** BigInt(exponent) : 1n);
-  const denominator = (1n << 192n) * (exponent < 0 ? 10n ** BigInt(-exponent) : 1n);
+  const numerator = sqrt * sqrt * (exponent > 0 ? TEN ** BigInt(exponent) : ONE);
+  const denominator = Q192 * (exponent < 0 ? TEN ** BigInt(-exponent) : ONE);
   const price = Number(numerator) / Number(denominator);
   return Number.isFinite(price) && price > 0 ? price : null;
 }
@@ -232,7 +240,7 @@ export function toPanelPoolView(pool: CatalogPool): PanelPoolView {
       !ZERO_ADDRESS.test(pool.poolKey.currency0) &&
       !ZERO_ADDRESS.test(pool.poolKey.currency1) &&
       pool.tokens.every((token) => token.hubPriced),
-    hasActiveLiquidity: BigInt(pool.liquidity) > 0n,
+    hasActiveLiquidity: BigInt(pool.liquidity) > ZERO,
   };
 }
 
