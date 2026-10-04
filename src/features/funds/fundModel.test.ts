@@ -27,6 +27,7 @@ describe("fund model rules v2", () => {
     expect(reportFreshness(0, 0)).toBe(false);
   });
   it("R7 maps contract, limit, deferred and dormant errors without raw messages", () => {
+    expect(fundErrorKey("PayoutBelowOneShare")).toBe("payoutWholeShares");
     expect(fundErrorKey("BelowMinFirstDeposit")).toBe("minimum");
     expect(fundErrorKey("FUND_LIMIT_EXCEEDED")).toBe("limit");
     expect(fundErrorKey("V2_DEFERRED")).toBe("deferred");

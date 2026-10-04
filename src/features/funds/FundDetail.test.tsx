@@ -30,8 +30,89 @@ vi.mock("./FundActionsPanel", () => ({ FundActionsPanel: () => <p>investor-contr
 
 import { mockFund, mockHolder } from "@/mocks/data/v2Funds";
 import { FundDetail } from "./FundDetail";
+import liveReport from "./fixtures/fund1Report.json";
 
 describe("fund detail views", () => {
+  it.each([
+    ["spokeChainId", "4663"],
+    ["spokeChainId", 4663],
+    ["sourceChainId", "4663"],
+    ["sourceChainId", 4663],
+  ])("renders actual Report token/adapter explorer context with %s=%s", async (field, chain) => {
+    const { spokeChainId: _spokeChainId, ...report } = liveReport;
+    mocks.load.mockResolvedValue({
+      ok: true,
+      data: {
+        fund: {
+          ...mockFund,
+          lastReport: {
+            protocolVersion: "v2",
+            ageSeconds: 100,
+            report: { ...report, [field]: chain },
+          },
+        },
+        holder: mockHolder,
+        wallet: `0x${"4".repeat(40)}`,
+      },
+    });
+    renderWithProviders(<FundDetail core={mockFund.coreVault} />);
+    await screen.findByRole("heading", { name: "Balanced Income" });
+    for (const identifier of [liveReport.unallocated[0]?.token, liveReport.positions[0]?.adapter]) {
+      if (!identifier) throw new Error("Captured Report identifier missing");
+      for (const link of screen.getAllByRole("link", { name: identifier }))
+        expect(link).toHaveAttribute(
+          "href",
+          `https://robinhoodchain.blockscout.com/address/${identifier}`,
+        );
+    }
+  });
+  it("renders fund #1 Robinhood report identifiers on their source explorer", async () => {
+    const token = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
+    const adapter = "0xd38ae81065205E9E34AB9031aFC80d4cd5136486";
+    const published = `0x${"a".repeat(64)}`;
+    const delivered = `0x${"b".repeat(64)}`;
+    mocks.load.mockResolvedValue({
+      ok: true,
+      data: {
+        fund: {
+          ...mockFund,
+          lastReport: {
+            protocolVersion: "v2",
+            ageSeconds: 100,
+            report: {
+              protocolVersion: "v2",
+              sourceChainId: "4663",
+              sequence: "26115832",
+              timestamp: "1791078904",
+              tokens: [{ token }],
+              positions: [{ adapter }],
+              publishTxHash: published,
+              deliveryTxHash: delivered,
+            },
+          },
+        },
+        holder: mockHolder,
+        wallet: `0x${"4".repeat(40)}`,
+      },
+    });
+    renderWithProviders(<FundDetail core={mockFund.coreVault} />);
+    expect(await screen.findByRole("link", { name: token })).toHaveAttribute(
+      "href",
+      `https://robinhoodchain.blockscout.com/address/${token}`,
+    );
+    expect(screen.getByRole("link", { name: adapter })).toHaveAttribute(
+      "href",
+      `https://robinhoodchain.blockscout.com/address/${adapter}`,
+    );
+    expect(screen.getByRole("link", { name: published })).toHaveAttribute(
+      "href",
+      `https://robinhoodchain.blockscout.com/tx/${published}`,
+    );
+    expect(screen.getByRole("link", { name: delivered })).toHaveAttribute(
+      "href",
+      `https://arbiscan.io/tx/${delivered}`,
+    );
+  });
   it("R2 maps Share Price at 24 decimals and NAV at six without mixing V1", async () => {
     mocks.load.mockResolvedValue({
       ok: true,

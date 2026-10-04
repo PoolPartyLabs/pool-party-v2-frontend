@@ -1,5 +1,17 @@
 # IDs Registry
 
+## Fallback Review and launch (POO-2183, rules v1)
+
+| ID | Artifact | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-MGR-LIB-049` | Immutable fallback root/leaf allocation defaults | Lib | n/a (code) | In Review | POO-2183 | `src/features/manager/fund/launch/fallback/allocation.ts` @rules-v1 |
+| `PP-MGR-SCR-008` | Read-only saved draft Review index route | Screen | n/a (code) | In Review | POO-2183 | `src/app/[locale]/(auth)/(app)/manager/fund-launch/review/page.tsx` @rules-v1 |
+| `PP-MGR-CMP-084` | Connected manager fallback draft index | Component | n/a (code) | In Review | POO-2183 | `src/features/manager/fund/launch/fallback/FallbackReviewIndex.tsx` @rules-v1 |
+| `PP-MGR-LIB-048` | Read-only Review readiness/blocker summary | Lib | n/a (code) | In Review | POO-2183 | `src/features/manager/fund/launch/fallback/draftReadiness.ts` @rules-v1 |
+| `PP-MGR-SCR-007` | Separate fallback Review route | Screen | n/a (code) | In Review | POO-2183 | `src/app/[locale]/(auth)/(app)/manager/fund-launch/review/[draftId]/page.tsx` @rules-v1 |
+| `PP-MGR-CMP-083` | Minimal fallback Review binding | Component | n/a (code) | In Review | POO-2183 | `src/features/manager/fund/launch/fallback/FallbackReview.tsx` @rules-v1 |
+| `PP-MGR-LIB-047` | Immutable launch-time execution fallback and tick alignment | Lib | n/a (code) | In Review | POO-2183 | `src/features/manager/fund/launch/fallback/execution.ts` @rules-v1 |
+
 ## Created v2 fund lists (POO-2181)
 
 | ID | Artifact | Type | Design | Impl | Linear | Reference |
@@ -40,7 +52,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 624 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 631 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
