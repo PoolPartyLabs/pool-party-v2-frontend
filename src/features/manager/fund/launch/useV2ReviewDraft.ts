@@ -144,11 +144,11 @@ export function useV2ReviewDraft(draftId: string) {
       // The upload is async: the manager may have edited identity, fees or seed meanwhile.
       // Merge only the uploaded URL into the latest saved review, never its pre-upload snapshot.
       const latest = getDraft(draftId);
-      if (!latest?.review) {
+      if (!latest) {
         setStorageError(true);
         return imageUrl;
       }
-      persistReview({ ...latest.review, imageUrl });
+      persistReview({ ...(latest.review ?? binding.review), imageUrl });
       return imageUrl;
     },
     launchBlockers,
