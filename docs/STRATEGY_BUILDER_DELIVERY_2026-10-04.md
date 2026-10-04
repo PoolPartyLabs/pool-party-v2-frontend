@@ -3,6 +3,8 @@
 Scope: POO-2116, Build panels POO-2171, Review POO-2172, integration POO-2196 and
 the Limits follow-up POO-2197 (rules v2).
 This document records the code delivery for the hackathon. Browser acceptance is owned by Murilo.
+All functional delivery PRs are merged as of 11:14 UTC; the final code revision and validation
+boundaries are recorded in the final integration section below. Earlier snapshots remain historical.
 The delivery snapshot below is from 11:01 UTC on October 4. The complete path and follow-up
 regressions described here still depend on the pending integrations listed in that snapshot.
 
@@ -157,3 +159,45 @@ claim a deployed revision or final full-suite result.
 The composed tree contains 658 artifact rows in `IDS_REGISTRY.md` and 484 integration markers
 across 278 source files. Against `c711a7b`, the documentation branch differs in the feature README
 and standalone feature-registry comments only under `src/`; product source and tests are identical.
+
+## Final code integration, 2026-10-04 11:15 UTC
+
+Murilo requested immediate review and merge so Rafael could deploy. Normal squash merges were used;
+no repository protection was bypassed. All functional delivery slices are now in public main:
+
+| PR | Slice | Merge commit |
+| --- | --- | --- |
+| [#71](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/71) | Gas-only price-impact consent, POO-2198 | `b5ae4cae1ae99a9b3835aac1780c3447bcc3b26d` |
+| [#68](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/68) | Uniswap pool configuration, POO-2189 | `bc9e94768cdc44c01a0c3ce892f06805136de52d` |
+| [#67](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/67) | Review and existing launch binding, POO-2195 | `82992e362e781b0c0794d2e0b4e35e124d3c08c1` |
+| [#72](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/72) | Limits boundaries and positive token allowance, POO-2197 v2 | `12e55668d86f62ea9eb01fdf1274e70825591694` |
+
+The code revision given to Rafael is `12e55668d86f62ea9eb01fdf1274e70825591694`.
+[Documentation PR #73](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/73) records this
+handoff and reconciles README, registry and feature-flag descriptions; it changes no runtime logic.
+
+Validation and its limits:
+
+- The final Fund and documentation suite passed **2,682 tests in 126 files** after the Limits recovery
+  corrections. A subsequent composed Provisioning/documentation check passed 34 tests in two files.
+- Typecheck, lint, all 11 locales, configuration and Next build passed on the reviewed feature heads.
+  The full lint run retains 84 existing warnings and one informational diagnostic.
+- #71 passed every functional/build CI check: **11,139 tests**, one expected failure, five skipped,
+  807 passing files, **93.01% line coverage** and **85.09% branches**, plus Next and Storybook builds.
+- #66's final integration CI also completed with every functional/build check passing.
+- The Uniswap panel and Review implementation match the earlier fully CI-passed composed head
+  `d94356cd`; their later behavioral addition is the independently CI-passed #71 correction.
+- The final main reconciliation for #67 and #72 retained their entire reviewed trees unchanged:
+  `9d7d5d5a6ac8c43dbd07edc5fbed5daa383b39a1` and
+  `1473934cf036a877b2ae8631314d42661e9ee49a`, respectively. Final dependency coverage/Storybook
+  reruns were still pending at merge. They are not represented as passed.
+- The inherited dependency audit remains failed. It is separate from feature checks and unresolved.
+- No browser acceptance, authenticated API smoke, deployment or financial transaction was performed
+  by Codex. A merge does not establish what is running on v2.dev. Rafael reported that his first
+  deployment was advanced to use the then-current `95a43126`; the code revision above was supplied
+  afterwards for his next deployment. Murilo performs browser acceptance.
+
+[Deployment handoff in Slack](https://pool-party-space.slack.com/archives/C0C43MK5EER/p1791112508039919)
+contains the exact code revision, completed work and pending CI disclosure. The broader POO-2116
+scope, Borrow cleanup POO-2165, contract cap enforcement POO-2169 and the separate POO-1883
+virtualizer teardown defect remain open work; this delivery does not close them.

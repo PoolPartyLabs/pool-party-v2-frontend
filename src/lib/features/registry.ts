@@ -409,7 +409,7 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
     // POO-2120/2175/2195: gates the header toggle, V2 builder selection, fund views and
     // dedicated fund/launch routes. The builder route itself retains its V1 fallback.
     //
-    // NOT a route gate, and the distinction is the whole design: `/manager/new` ALWAYS resolves.
+    // Not a route gate for `/manager/new`: this builder route always resolves.
     // With this flag off the page renders the live V1 single-pool builder byte-identically, with no
     // skeleton and no delay, so the flag can never 404 the one screen a manager uses to earn. A
     // route gate would have made "is the preview switched on" and "can anyone create a strategy"
