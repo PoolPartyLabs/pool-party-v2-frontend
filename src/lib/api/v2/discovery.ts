@@ -28,16 +28,28 @@ export function discoveryPendingError(
       !!value && typeof value === "object" && !Array.isArray(value),
   );
   const code = candidates.find((candidate) => typeof candidate.code === "string")?.code;
+  if (
+    code === undefined &&
+    candidates.some(
+      (candidate) => candidate.deferred === true || typeof candidate.error === "string",
+    )
+  )
+    return null;
   const retry = candidates.find(
     (candidate) => typeof candidate.retryAfterSeconds === "number",
   )?.retryAfterSeconds;
   const retryAfterSeconds =
     typeof retry === "number" && Number.isFinite(retry) && retry >= 0 ? retry : undefined;
   const headerRetry =
-    retryAfter && /^\d+(?:\.\d+)?$/.test(retryAfter) ? Number(retryAfter) : undefined;
+    retryAfter && /^\d+(?:\.\d+)?$/.test(retryAfter)
+      ? Number(retryAfter)
+      : retryAfter && Number.isFinite(Date.parse(retryAfter))
+        ? Math.max(0, (Date.parse(retryAfter) - Date.now()) / 1000)
+        : undefined;
   const effectiveRetry =
     retryAfterSeconds ??
-    (headerRetry !== undefined && Number.isFinite(headerRetry) ? headerRetry : undefined);
+    (headerRetry !== undefined && Number.isFinite(headerRetry) ? headerRetry : undefined) ??
+    (code === undefined && [409, 425].includes(status) ? 2 : undefined);
   if (
     code !== "V2_DISCOVERY_PENDING" &&
     !(code === undefined && [409, 425, 503].includes(status) && effectiveRetry !== undefined)

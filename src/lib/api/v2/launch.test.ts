@@ -5,6 +5,23 @@ import { launchFetch } from "./launch";
 const fetchMock = vi.fn();
 const schema = z.object({ protocolVersion: z.literal("v2"), value: z.string() });
 describe("server-only launch transport [R8]", () => {
+  it.each([409, 425])("waits two seconds for uncoded HTTP%s without metadata", async (status) => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({}), { status }));
+    await expect(launchFetch("/funds", "GET", schema)).rejects.toMatchObject({
+      code: "V2_DISCOVERY_PENDING",
+      retryAfterSeconds: 2,
+    });
+  });
+  it("honors an HTTP-date Retry-After for a pending unavailable response", async () => {
+    const retryDate = new Date(Math.ceil(Date.now() / 1000) * 1000 + 3000).toUTCString();
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({}), { status: 503, headers: { "retry-after": retryDate } }),
+    );
+    await expect(launchFetch("/funds", "GET", schema)).rejects.toMatchObject({
+      code: "V2_DISCOVERY_PENDING",
+      retryAfterSeconds: expect.any(Number),
+    });
+  });
   it("honors numeric Retry-After metadata on a pending HTTP425", async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({}), { status: 425, headers: { "retry-after": "2" } }),
