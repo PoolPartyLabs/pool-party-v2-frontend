@@ -1,5 +1,13 @@
 # Integration Points
 
+## Conditional fallback Review (POO-2183, rules v1)
+
+`src/features/manager/fund/launch/fallback/FallbackReview.tsx` binds only POO-2177's `useV2ReviewDraft` and `startFundLaunch`. The separate route `/manager/fund-launch/review/[draftId]` requires `fundContracts` and real V2; no signatures on mount. Review persistence and staged logo upload stay in the existing hook.
+
+`fallback/execution.ts` is an immutable launch-time snapshot adapter. Empty Pool config receives manager-visible catalog-aligned finite full range and slippage 1%; empty Aave Supply receives an explicitly selected Mandate reserve assetKey. Any nonempty panel config wins read-only. Unsupported Aave swaps and missing leaf budgets remain blocked. No canvas/store schema changes. See `src/features/manager/fund/launch/fallback/README.md` for direct-URL demo clicks.
+
+**fallback; merges only if POO-2172 Review is not on main by 09:00 BST; Murilo's page replaces it**. DRAFT only, no merge/deploy in this task; confirm the cutoff/demo calendar date before any landing decision.
+
 ## V2 fund explorer records (POO-2179, rules v1)
 
 | Boundary | Files | Real / mock behavior |
@@ -27,7 +35,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 471 markers across 269 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 474 markers across 271 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
