@@ -8,6 +8,7 @@ import "server-only";
 import { v2Fetch } from "./client";
 import {
   balancesSchema,
+  fundHistorySchema,
   fundListSchema,
   fundViewSchema,
   holderSchema,
@@ -20,6 +21,11 @@ import { addressSchema, chainIdSchema, poolIdSchema } from "./schemas";
 export const readFunds = () => v2Fetch("/funds", fundListSchema);
 export const readFund = (core: string) =>
   v2Fetch(`/funds/${addressSchema.parse(core)}`, fundViewSchema);
+export const readFundHistory = (core: string, cursor?: string) =>
+  v2Fetch(
+    `/funds/${addressSchema.parse(core)}/history?${new URLSearchParams({ limit: "20", ...(cursor ? { cursor } : {}) })}`,
+    fundHistorySchema,
+  );
 export const readHolder = (core: string, wallet: string) =>
   v2Fetch(
     `/funds/${addressSchema.parse(core)}/holders/${addressSchema.parse(wallet)}`,

@@ -16,6 +16,7 @@ import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { useContractFamily } from "@/lib/hooks/useContractFamily";
 import { ExplorerFields as ReadOnlyFields } from "./ExplorerFields";
 import { FundActionsPanel } from "./FundActionsPanel";
+import { FundHistory } from "./FundHistory";
 import {
   loadFundAction,
   loadFundManagerAction,
@@ -315,6 +316,7 @@ function FundDetailData({ core }: FundDetailProps) {
             </div>
           )) ?? <p>{t("empty")}</p>}
         </div>
+        <FundHistory key={core} core={core} />
         {history ? (
           <div className="mt-4">
             <h3>{t("history")}</h3>
