@@ -904,7 +904,25 @@
       "summaryProtocols": "Protocols",
       "summaryTokens": "Tokens",
       "summaryPools": "Pools",
-      "summaryLimits": "Limits"
+      "summaryLimits": "Limits",
+      "supplyPanel": {
+        "heading": "Assets in your mandate",
+        "filter": "Filter by token or address",
+        "caption": "Only the tokens of your mandate that Aave v3 lists on {network} (step 3).",
+        "needAsset": "Need another asset?",
+        "noMatch": "No asset in your mandate matches {typed}",
+        "noMatchCaption": "Tokens are chosen in the mandate, step 3. Your build stays saved while you edit it.",
+        "empty": "No Aave asset in your mandate is on {network}",
+        "asset": "Asset",
+        "help": "Tokens of your mandate that Aave v3 lists on {network}.",
+        "apy": "Supply APY",
+        "unsupported": "Only USDC on Arbitrum is supported for Supply.",
+        "inactive": "Reserve inactive",
+        "frozen": "Reserve frozen",
+        "paused": "Reserve paused",
+        "supplyCapReached": "Supply cap reached",
+        "unavailable": "Unavailable"
+      }
     },
     "canvas": {
       "title": "Build your strategy",

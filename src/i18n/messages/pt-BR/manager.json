@@ -904,7 +904,25 @@
       "summaryProtocols": "Protocolos",
       "summaryTokens": "Tokens",
       "summaryPools": "Pools",
-      "summaryLimits": "Limites"
+      "summaryLimits": "Limites",
+      "supplyPanel": {
+        "heading": "Ativos do seu mandato",
+        "filter": "Filtrar por token ou endereço",
+        "caption": "Somente os tokens do seu mandato listados na Aave v3 em {network} (etapa 3).",
+        "needAsset": "Precisa de outro ativo?",
+        "noMatch": "Nenhum ativo do seu mandato corresponde a {typed}",
+        "noMatchCaption": "Os tokens são escolhidos no mandato, na etapa 3. Sua configuração permanece salva enquanto você edita.",
+        "empty": "Nenhum ativo Aave do seu mandato está em {network}",
+        "asset": "Ativo",
+        "help": "Tokens do seu mandato listados na Aave v3 em {network}.",
+        "apy": "APY de Supply",
+        "unsupported": "O Supply está disponível apenas para USDC na Arbitrum.",
+        "inactive": "Reserva inativa",
+        "frozen": "Reserva congelada",
+        "paused": "Reserva pausada",
+        "supplyCapReached": "Limite de Supply atingido",
+        "unavailable": "Indisponível"
+      }
     },
     "canvas": {
       "title": "Monte sua estratégia",

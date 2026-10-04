@@ -904,7 +904,25 @@
       "summaryProtocols": "프로토콜",
       "summaryTokens": "토큰",
       "summaryPools": "풀",
-      "summaryLimits": "한도"
+      "summaryLimits": "한도",
+      "supplyPanel": {
+        "heading": "운용 지침의 자산",
+        "filter": "토큰 또는 주소로 필터링",
+        "caption": "운용 지침에서 선택하고 {network}의 Aave v3에 등록된 토큰만 표시됩니다(3단계).",
+        "needAsset": "다른 자산이 필요한가요?",
+        "noMatch": "운용 지침에 {typed}와 일치하는 자산이 없습니다",
+        "noMatchCaption": "토큰은 운용 지침의 3단계에서 선택합니다. 편집하는 동안 구성이 저장됩니다.",
+        "empty": "운용 지침에 {network}의 Aave 자산이 없습니다",
+        "asset": "자산",
+        "help": "{network}의 Aave v3에 등록된 운용 지침의 토큰입니다.",
+        "apy": "Supply APY",
+        "unsupported": "Supply는 Arbitrum의 USDC만 지원합니다.",
+        "inactive": "비활성 리저브",
+        "frozen": "동결된 리저브",
+        "paused": "일시 중지된 리저브",
+        "supplyCapReached": "Supply 한도 도달",
+        "unavailable": "사용 불가"
+      }
     },
     "canvas": {
       "title": "전략 구성하기",

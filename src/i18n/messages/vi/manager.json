@@ -904,7 +904,25 @@
       "summaryProtocols": "Giao thức",
       "summaryTokens": "Token",
       "summaryPools": "Pool",
-      "summaryLimits": "Giới hạn"
+      "summaryLimits": "Giới hạn",
+      "supplyPanel": {
+        "heading": "Tài sản trong ủy nhiệm của bạn",
+        "filter": "Lọc theo token hoặc địa chỉ",
+        "caption": "Chỉ các token trong ủy nhiệm được Aave v3 hỗ trợ trên {network} (bước 3).",
+        "needAsset": "Cần tài sản khác?",
+        "noMatch": "Không có tài sản nào trong ủy nhiệm khớp với {typed}",
+        "noMatchCaption": "Token được chọn ở bước 3 của ủy nhiệm. Cấu hình vẫn được lưu trong khi chỉnh sửa.",
+        "empty": "Không có tài sản Aave nào trong ủy nhiệm trên {network}",
+        "asset": "Tài sản",
+        "help": "Các token trong ủy nhiệm được Aave v3 hỗ trợ trên {network}.",
+        "apy": "APY Supply",
+        "unsupported": "Supply chỉ hỗ trợ USDC trên Arbitrum.",
+        "inactive": "Dự trữ không hoạt động",
+        "frozen": "Dự trữ bị đóng băng",
+        "paused": "Dự trữ tạm dừng",
+        "supplyCapReached": "Đã đạt giới hạn Supply",
+        "unavailable": "Không khả dụng"
+      }
     },
     "canvas": {
       "title": "Lắp ráp chiến lược của bạn",
