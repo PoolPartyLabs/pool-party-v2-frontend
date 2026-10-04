@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen
- * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1)
+ * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2197 rules v2)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
  *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
  *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
@@ -103,7 +103,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { type ComponentType, useCallback, useEffect, useRef, useState } from "react";
+import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { toast } from "@/components/ui/Toast";
@@ -111,6 +111,7 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 import type { AnalyticsMandateBlockReason } from "@/lib/analytics/events";
 import type { AnalyticsBlockReason } from "@/lib/analytics/txFlowKit";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
+import { useAuth } from "@/lib/auth/useAuth";
 import { useUnsavedChanges } from "@/lib/hooks/unsavedChanges";
 import { cn } from "@/lib/utils/cn";
 import { BuilderStepper } from "../components/BuilderStepper";
@@ -121,6 +122,7 @@ import { type BuilderPhase, planOf } from "./build/plan/buildPlan";
 import { BuilderActionBar } from "./components/BuilderActionBar";
 import { MandateSubStepHeader } from "./components/MandateSubStepHeader";
 import { NameDraftDialog } from "./components/NameDraftDialog";
+import { getLaunchStatusForDraft } from "./launch/journey";
 import type { MandateCatalog } from "./mandateCatalog";
 import {
   firstUnpassedStep,
@@ -175,6 +177,7 @@ export const MANDATE_BLOCK_REASON_EVENT: Record<
 > = {
   nothing_selected: "nothing_selected",
   cap_missing: "cap_missing",
+  token_allowance_required: "token_allowance_required",
   no_slots: "no_slots",
   has_hook: "has_hook",
   coming_soon: "coming_soon",
@@ -264,7 +267,25 @@ export function FundStrategyBuilderScreen() {
 
   // Through `resumeStep`, not `lastStep` raw: a stored draft can name a step it no longer has (see
   // the file header), and the resume effect below only corrects `lastStep` one render later.
-  const step = resumeStep(draft);
+  const { address, isLoading: walletLoading } = useAuth();
+  // POO-2197: derive the displayed phase without rewriting recovery state. The wallet can arrive
+  // after draft hydration; an existing frozen journey always retains its original resume path.
+  const existingJourney = hydrated ? getLaunchStatusForDraft(draft.id, address ?? null) : null;
+  const hasExistingJourney = existingJourney !== null;
+  const revisedLimitsBlock = useMemo(
+    () =>
+      hydrated && draft.completedAt !== null && !hasExistingJourney
+        ? validateStep(draft, "limits", catalog)
+        : null,
+    [hydrated, draft, hasExistingJourney, catalog],
+  );
+  const [revisitedMandate, setRevisitedMandate] = useState(false);
+  const step =
+    revisedLimitsBlock &&
+    !revisitedMandate &&
+    (requestedPhase === "build" || requestedPhase === "review")
+      ? "limits"
+      : resumeStep(draft);
   const steps = visibleSteps(draft);
   const position = stepIndex(draft, step);
 
@@ -276,8 +297,10 @@ export function FundStrategyBuilderScreen() {
    * header for why this is not an effect.
    */
   const [phaseChoice, setPhaseChoice] = useState<BuilderPhase | null>(null);
-  const phase: BuilderPhase =
-    phaseChoice ?? (requestedPhase === "build" && draft.completedAt !== null ? "build" : "mandate");
+  const phase: BuilderPhase = revisedLimitsBlock
+    ? "mandate"
+    : (phaseChoice ??
+      (requestedPhase === "build" && draft.completedAt !== null ? "build" : "mandate"));
 
   const [dialog, setDialog] = useState<"exit" | "complete" | null>(null);
   const [shellBlock, setShellBlock] = useState<StepBlock | null>(null);
@@ -285,7 +308,7 @@ export function FundStrategyBuilderScreen() {
 
   // The block the step body renders: the shell's own (a refused Next) takes precedence over the
   // hook's, which records a reducer that refused a selection.
-  const activeBlock = shellBlock ?? lastBlock;
+  const activeBlock = revisedLimitsBlock ?? shellBlock ?? lastBlock;
 
   // R9 / handoff: the browser warns before losing a mandate, from the first selection onward.
   // `exiting` disarms it on the way out, so Save & exit does not prompt about work it just saved.
@@ -412,6 +435,18 @@ export function FundStrategyBuilderScreen() {
     },
     [track],
   );
+
+  const reportedRevisionBlock = useRef<string | null>(null);
+  useEffect(() => {
+    if (!revisedLimitsBlock || walletLoading) return;
+    const key = `${draft.id}:${revisedLimitsBlock.reason}:${revisedLimitsBlock.rowId}`;
+    if (reportedRevisionBlock.current === key) return;
+    reportedRevisionBlock.current = key;
+    track("builder_mandate_blocked", {
+      step: "limits",
+      block_reason: MANDATE_BLOCK_REASON_EVENT[revisedLimitsBlock.reason],
+    });
+  }, [draft.id, revisedLimitsBlock, track, walletLoading]);
 
   /**
    * The Pools step could not read its catalog (POO-2125 [R30]).
@@ -666,6 +701,7 @@ export function FundStrategyBuilderScreen() {
   const handleBack = useCallback(() => {
     const previous = previousStep(draft, step);
     if (!previous) return;
+    setRevisitedMandate(true);
     setShellBlock(null);
     clearBlock();
     update((d) => ({ ...d, lastStep: previous }));
@@ -674,6 +710,7 @@ export function FundStrategyBuilderScreen() {
   const handleNavigate = useCallback(
     (target: MandateStepKey) => {
       if (!isStepReachable(draft, target)) return;
+      setRevisitedMandate(true);
       setShellBlock(null);
       clearBlock();
       update((d) => ({ ...d, lastStep: target }));

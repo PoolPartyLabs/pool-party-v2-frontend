@@ -870,7 +870,9 @@
         "lending": "レンディング",
         "dex": "Liquidity positions",
         "perps": "パーペチュアル"
-      }
+      },
+      "positiveTokenRequired": "USDC以外のトークンを少なくとも1つ、0%を超える上限に設定するか、上限なしを選択してください。",
+      "addPositiveToken": "Tokensで別のトークンを追加し、上限を0%より高く設定するか、上限なしを選択してください。USDCはすでに含まれています。"
     },
     "draft": {
       "title": "ドラフトに名前を付ける",

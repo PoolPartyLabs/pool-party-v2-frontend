@@ -2,7 +2,7 @@
  * @id PP-MGR-LIB-019
  * @name mandateDraft
  * @implements-rules-version v3 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
- *   POO-2167 rules v3, POO-2151 rules v1)
+ *   POO-2167 rules v3, POO-2151 rules v1, POO-2197 rules v2)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -284,6 +284,7 @@ export interface MandateDraft {
 export type MandateBlockReason =
   | "nothing_selected"
   | "cap_missing"
+  | "token_allowance_required"
   | "no_slots"
   | "has_hook"
   | "not_priced"
@@ -524,9 +525,9 @@ export function capRows(
 /**
  * R6: what stops Next on this step, or null when nothing does.
  *
- * Networks, Protocols and Tokens never block: the hub alone is a valid mandate, the required two
- * are always present, and USDC alone is a valid token list. The slot ceiling is enforced when a
- * token is ADDED (R27), not when the step is left, so there is nothing left to check here.
+ * Networks, Protocols and Tokens never block in mock mode. USDC alone remains a valid token list
+ * while selecting, but POO-2197 requires another positively allowed token before leaving Limits.
+ * The slot ceiling is enforced when a token is ADDED (R27), not when the step is left, so there is nothing left to check here.
  */
 export function validateStep(
   draft: MandateDraft,
@@ -588,13 +589,6 @@ export function validateStep(
         }
       }
     }
-    if (step === "limits") {
-      if (draft.networks.includes("robinhood") && !draft.caps.networks.robinhood)
-        return { step, reason: "cap_missing", rowId: "robinhood" };
-      if (catalog.validateDraft && !catalog.validateDraft(draft))
-        return { step, reason: "nothing_selected", rowId: null };
-      return null;
-    }
   }
   if (step === "pools") {
     if (!visibleSteps(draft).includes("pools")) return null;
@@ -603,22 +597,41 @@ export function validateStep(
   }
   if (step === "limits") {
     const rows = capRows(draft, catalog);
-    for (const network of rows.networks) {
-      if (!draft.caps.networks[network]) {
-        return { step: "limits", reason: "cap_missing", rowId: network };
+    if (catalog.dataMode === "real") {
+      // Preserve the real mandate's existing cap contract: only the spoke cap is required.
+      if (draft.networks.includes("robinhood") && !draft.caps.networks.robinhood)
+        return { step, reason: "cap_missing", rowId: "robinhood" };
+      if (catalog.validateDraft && !catalog.validateDraft(draft))
+        return { step, reason: "nothing_selected", rowId: null };
+    } else {
+      for (const network of rows.networks) {
+        if (!draft.caps.networks[network]) {
+          return { step: "limits", reason: "cap_missing", rowId: network };
+        }
+      }
+      for (const protocol of rows.protocols) {
+        if (!draft.caps.protocols[protocol]) {
+          return { step: "limits", reason: "cap_missing", rowId: protocol };
+        }
+      }
+      for (const token of rows.tokens) {
+        const key = tokenKey(token);
+        if (!draft.caps.tokens[key]) {
+          return { step: "limits", reason: "cap_missing", rowId: key };
+        }
       }
     }
-    for (const protocol of rows.protocols) {
-      if (!draft.caps.protocols[protocol]) {
-        return { step: "limits", reason: "cap_missing", rowId: protocol };
-      }
-    }
-    for (const token of rows.tokens) {
-      const key = tokenKey(token);
-      if (!draft.caps.tokens[key]) {
-        return { step: "limits", reason: "cap_missing", rowId: key };
-      }
-    }
+    if (
+      !rows.tokens.some((token) => {
+        const cap = draft.caps.tokens[tokenKey(token)];
+        return cap?.noCap || (cap?.pct ?? 0) > 0;
+      })
+    )
+      return {
+        step: "limits",
+        reason: "token_allowance_required",
+        rowId: rows.tokens[0] ? tokenKey(rows.tokens[0]) : null,
+      };
     return null;
   }
   return null;

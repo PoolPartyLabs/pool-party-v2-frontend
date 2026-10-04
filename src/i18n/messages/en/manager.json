@@ -870,7 +870,9 @@
         "lending": "Lending",
         "dex": "Liquidity positions",
         "perps": "Perpetuals"
-      }
+      },
+      "positiveTokenRequired": "Allow at least one token besides USDC above 0% or select No cap.",
+      "addPositiveToken": "Add another token in Tokens, then set its limit above 0% or select No cap. USDC is already included."
     },
     "draft": {
       "title": "Name your draft",

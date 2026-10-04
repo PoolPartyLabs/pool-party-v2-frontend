@@ -2,7 +2,7 @@
  * @id PP-MGR-LIB-019
  * @name mandateDraft tests
  * @implements-rules-version v3 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
- *   POO-2167 rules v3)
+ *   POO-2167 rules v3, POO-2197 rules v2)
  * @analytics-events none, a pure domain; the builder shell owns the mandate events.
  *
  * One `it()` per rule in the S1 brief. Every reducer is also checked for immutability: a draft
@@ -738,7 +738,9 @@ describe("clearCap", () => {
     // @rule R6
     let draft = withNetworks(empty(), ["robinhood"], catalog);
     draft = setCap(draft, "networks", "robinhood", { noCap: true, pct: 0 });
-    expect(validateStep(draft, "limits", catalog)).toBeNull();
+    expect(validateStep(draft, "limits", catalog)).toMatchObject({
+      reason: "token_allowance_required",
+    });
 
     draft = clearCap(draft, "networks", "robinhood");
 
@@ -981,9 +983,11 @@ describe("validateStep", () => {
     expect(validateStep(draft, "limits", catalog)).toBeNull();
   });
 
-  it("passes Limits when the draft has no cap rows at all", () => {
-    // @rule R6 @rule R40
-    expect(validateStep(empty(), "limits", catalog)).toBeNull();
+  it("requires another positive token when the draft has no cap rows", () => {
+    // @rule POO-2197 R3
+    expect(validateStep(empty(), "limits", catalog)).toMatchObject({
+      reason: "token_allowance_required",
+    });
   });
 });
 
@@ -1279,5 +1283,56 @@ describe("withoutUnavailableProtocols", () => {
     const snapshot = JSON.stringify(stored);
     withoutUnavailableProtocols(stored);
     expect(JSON.stringify(stored)).toBe(snapshot);
+  });
+});
+
+describe("Limits positive token allowances (POO-2197)", () => {
+  // @rule POO-2197 R3
+  it("blocks USDC alone, even with another network's required deposit token", () => {
+    expect(validateStep(empty(), "limits", catalog)).toEqual({
+      step: "limits",
+      reason: "token_allowance_required",
+      rowId: null,
+    });
+    const spoke = setCap(withNetworks(empty(), ["robinhood"], catalog), "networks", "robinhood", {
+      noCap: true,
+      pct: 0,
+    });
+    expect(validateStep(spoke, "limits", catalog)).toEqual({
+      step: "limits",
+      reason: "token_allowance_required",
+      rowId: null,
+    });
+  });
+  // @rule POO-2197 R3
+  it.each([
+    { noCap: true, pct: 0 },
+    { noCap: false, pct: 5 },
+  ])("allows USDC plus another positively allowed token %j", (cap) => {
+    const token = catalogToken("arbitrum", "ARB");
+    const draft = setCap(
+      draftOf(addToken(empty(), token, catalog)),
+      "tokens",
+      tokenKey(token),
+      cap,
+    );
+    expect(validateStep(draft, "limits", catalog)).toBeNull();
+  });
+  // @rule POO-2197 R3
+  it("prioritizes a missing cap, then blocks an explicit zero cap", () => {
+    const token = catalogToken("arbitrum", "ARB");
+    const draft = draftOf(addToken(empty(), token, catalog));
+    expect(validateStep(draft, "limits", catalog)).toEqual({
+      step: "limits",
+      reason: "cap_missing",
+      rowId: tokenKey(token),
+    });
+    expect(
+      validateStep(
+        setCap(draft, "tokens", tokenKey(token), { noCap: false, pct: 0 }),
+        "limits",
+        catalog,
+      ),
+    ).toEqual({ step: "limits", reason: "token_allowance_required", rowId: tokenKey(token) });
   });
 });
