@@ -1,10 +1,49 @@
 import { describe, expect, it } from "vitest";
 import { renderWithProviders, screen } from "../../../tests/utils/renderWithProviders";
 import { ExplorerFields } from "./ExplorerFields";
+import liveReport from "./fixtures/fund1Report.json";
 
 const hash = `0x${"a".repeat(64)}`;
 const address = `0x${"b".repeat(40)}`;
 describe("fund explorer fields", () => {
+  it.each([
+    ["spokeChainId", "4663"],
+    ["spokeChainId", 4663],
+    ["sourceChainId", "4663"],
+    ["sourceChainId", 4663],
+  ])("links real fund #1 Report addresses with %s=%s", (field, chain) => {
+    const { spokeChainId: _spokeChainId, ...report } = liveReport;
+    renderWithProviders(<ExplorerFields chainId={42161} value={{ ...report, [field]: chain }} />);
+    for (const identifier of [
+      ...liveReport.unallocated.map((entry) => entry.token),
+      ...liveReport.positions.flatMap((entry) => [entry.adapter, entry.token0, entry.token1]),
+    ]) {
+      for (const link of screen.getAllByRole("link", { name: identifier }))
+        expect(link).toHaveAttribute(
+          "href",
+          `https://robinhoodchain.blockscout.com/address/${identifier}`,
+        );
+    }
+  });
+  it("prefers sourceChainId over spokeChainId and keeps the hub fallback when both are absent", () => {
+    const { spokeChainId: _spokeChainId, ...report } = liveReport;
+    const { rerender } = renderWithProviders(
+      <ExplorerFields
+        chainId={42161}
+        value={{ ...report, spokeChainId: 42161, sourceChainId: 4663 }}
+      />,
+    );
+    const token = liveReport.unallocated[0].token;
+    expect(screen.getAllByRole("link", { name: token })[0]).toHaveAttribute(
+      "href",
+      `https://robinhoodchain.blockscout.com/address/${token}`,
+    );
+    rerender(<ExplorerFields chainId={42161} value={report} />);
+    expect(screen.getAllByRole("link", { name: token })[0]).toHaveAttribute(
+      "href",
+      `https://arbiscan.io/address/${token}`,
+    );
+  });
   it("uses a fund report source chain for nested token and adapter addresses without changing delivery context", () => {
     const token = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
     renderWithProviders(
