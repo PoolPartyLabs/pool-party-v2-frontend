@@ -1,5 +1,33 @@
 # V2 deployed mainnet checks (PP-E2E-V2-001)
 
+## Opt-in launch rehearsal (PP-E2E-V2-003)
+
+From the retained `test-fe-poo-2182-v2-launch-signed` worktree, export the authorized
+`E2E_PRIVATE_KEY` in the shell only. Never put the key in browser storage, arguments or tracked files.
+For the human-operated signed run:
+
+```bash
+E2E_V2_SIGNED=1 E2E_V2_SIGNED_DRY=0 E2E_BASE_URL=https://v2.dev.pool-party.xyz E2E_CHAIN=arbitrum E2E_CATALOG_COOLDOWN_MS=65000 pnpm exec playwright test e2e/specs/v2-launch-signed.spec.ts --workers=1
+```
+
+Set `E2E_V2_SIGNED_DRY=1` instead to run through Review and assert the Launch button and
+step list without clicking Launch. Dry mode blocks every financial signature/broadcast in Node;
+only narrowly allowlisted SIWE authentication messages are permitted. Without `E2E_V2_SIGNED=1`
+the spec skips. Review must use the authorized manager address and seed plus displayed flow fee
+must not exceed 2.1 USDC. Panel-written settings/shares remain authoritative.
+
+The signed journey polls every ten seconds, reloads once after the first confirmed spoke step,
+then clicks Resume. Resume may advance multiple steps; the Node bridge records the UI before
+each signature. No automatic failed-step retry occurs. JSON evidence accumulates step observations
+at `test-results/v2-launch-signed-evidence.json`, with per-step screenshots in the test output folder.
+Timestamps denote UI observations, not block timestamps; off-chain steps have null hashes and
+may have null click timestamps. Retain this evidence and checkpoints after a failed signed run;
+do not rerun blindly, because a new browser creates a new draft rather than resuming old funds.
+The original non-spending rehearsal still stops before Launch and asserts existing fund history.
+
+Static E2E checks: `pnpm exec tsc -p e2e/tsconfig.json --noEmit`,
+`pnpm exec biome check e2e`, and `pnpm exec biome lint e2e`.
+
 Run read-only checks with `E2E_BASE_URL=https://v2.dev.pool-party.xyz E2E_CHAIN=arbitrum pnpm exec playwright test --grep '@v2-read' --workers=1`.
 Read specs reuse the EIP-6963 wallet and SIWE helper. Fund #2 discovery depends on deployed POO-2181.
 

@@ -10,5 +10,9 @@ export function rehearsalSignInAllowed(raw: string, address: string): boolean {
     `^v2\\.dev\\.pool-party\\.xyz wants you to sign in with your Ethereum account:\\n${address}\\n\\nSign in to Pool Party\\n\\nURI: https://v2\\.dev\\.pool-party\\.xyz\\nVersion: 1\\nChain ID: (?:42161|4663)\\nNonce: [A-Za-z0-9]{8,}\\nIssued At: \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z\\nExpiration Time: \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$`,
     "i",
   );
-  return legacy.test(message) || siwe.test(message);
+  const privy = new RegExp(
+    `^v2\\.dev\\.pool-party\\.xyz wants you to sign in with your Ethereum account:\\n${address}\\n\\nBy signing, you are proving you own this wallet and logging in\\. This does not initiate a transaction or cost any fees\\.\\n\\nURI: https://v2\\.dev\\.pool-party\\.xyz\\nVersion: 1\\nChain ID: (?:42161|4663)\\nNonce: [A-Za-z0-9]{8,}\\nIssued At: \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z\\nResources:\\n- https://privy\\.io$`,
+    "i",
+  );
+  return legacy.test(message) || siwe.test(message) || privy.test(message);
 }
