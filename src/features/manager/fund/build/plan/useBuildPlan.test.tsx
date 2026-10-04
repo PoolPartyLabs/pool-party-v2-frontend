@@ -15,7 +15,7 @@ import { MANDATE_DRAFTS_KEY, upsertDraft } from "../../mandateDraftStore";
 import { useMandateDraft } from "../../useMandateDraft";
 import { createEmptyPlan } from "./buildPlan";
 import { addChain, addSpoke, removeBlock, setChainShare } from "./planReducers";
-import { hubPoolPlan, makeTestDraft } from "./planTestKit";
+import { hubPoolPlan, makeTestDraft, spokePoolPlan, TEST_POOL_IDS } from "./planTestKit";
 import { useBuildPlan } from "./useBuildPlan";
 
 /** The mandate hook and the plan hook together, as the Build screen will mount them. */
@@ -149,5 +149,48 @@ describe("useBuildPlan", () => {
       result.current.build.apply((plan, ctx) => setChainShare(plan, ctx, "hub-pool", 30));
     });
     expect(result.current.build.violations).toEqual([]);
+  });
+});
+
+describe("useBuildPlan.applyBlockConfig: one Apply is one apply (POO-2184, A1)", () => {
+  const config = {
+    poolId: TEST_POOL_IDS.robinhood,
+    tickLower: -199_370,
+    tickUpper: -195_370,
+    fullRange: false,
+    displayInverted: false,
+    slippagePct: 2,
+  };
+
+  it("[A1, A2] writes the config, the chain's share and the spoke's share in one draft update", async () => {
+    // @rule A1
+    // @rule A2
+    const { result } = await mount({ plan: spokePoolPlan() });
+    const before = result.current.mandate.draft;
+    let outcome: unknown;
+    act(() => {
+      outcome = result.current.build.applyBlockConfig("rh-pool-pool", config, 60);
+    });
+    expect(outcome).toEqual({ ok: true });
+    const plan = result.current.build.plan;
+    expect(plan.spokes[0]?.sharePct).toBe(60);
+    expect(plan.spokes[0]?.chains[0]?.sharePct).toBe(60);
+    expect(plan.spokes[0]?.chains[0]?.steps[1]).toMatchObject({ config });
+    expect(result.current.mandate.draft).not.toBe(before);
+  });
+
+  it("[A1] keeps the previous draft, by identity, when any part of the Apply is refused", async () => {
+    // @rule A1
+    const { result } = await mount({ plan: spokePoolPlan() });
+    const before = result.current.mandate.draft;
+    let outcome: unknown;
+    act(() => {
+      outcome = result.current.build.applyBlockConfig("rh-pool-pool", config, 120);
+    });
+    expect(outcome).toEqual({
+      ok: false,
+      blocked: { reason: "share_exceeds_parent", targetId: "robinhood" },
+    });
+    expect(result.current.mandate.draft).toBe(before);
   });
 });
