@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-HOK-007 (POO-2133)
+ * @id PP-MGR-HOK-011 (POO-2133)
  * @name useV2MandateCatalog
  * @implements-rules-version v1
  * Real-mode catalog loading with cancellation and explicit retry, never mock fallback.
