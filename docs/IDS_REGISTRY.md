@@ -1,5 +1,20 @@
 # IDs Registry
 
+## V2 fund pages (POO-2175)
+
+| ID | Artifact | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-STR-SCR-004` | FundExplorer and FundFamilySwitch, isolated V2 list / holder portfolio / manager list | Screen | n/a (code) | In Review | POO-2175 | `src/features/funds/README.md` @rules-v2 |
+| `PP-STR-SCR-005` | FundDetail, fund NAV / holder exposure / position history / manager transit reads | Screen | n/a (code) | In Review | POO-2175 | `src/features/funds/README.md` @rules-v2 |
+| `PP-STR-LIB-024` | fundModel, exact integer estimate and error / freshness mapping | Lib | n/a (code) | In Review | POO-2175 | `src/features/funds/README.md` @rules-v2 |
+| `PP-STR-LIB-025` | fundSchemas, isolated wire contracts and optional rollout preview | Lib | n/a (code) | In Review | POO-2175 | `src/features/funds/README.md` @rules-v2 |
+| `PP-STR-LIB-026` | fundReads, fund-only v2 client reads | Lib | n/a (code) | In Review | POO-2175 | `src/features/funds/README.md` @rules-v2 |
+| `PP-STR-LIB-027` | fundTransport, server-only builder and admin report request boundary | Lib | n/a (code) | In Review | POO-2175 | `src/features/funds/README.md` @rules-v2 |
+| `PP-STR-LIB-028` | fundActions, authenticated serializable fund actions | Lib | n/a (code) | In Review | POO-2175 | `src/features/funds/README.md` @rules-v2 |
+| `PP-STR-LIB-029` | v2FundsFixtures, isolated realistic mock fund and holder data | Lib | n/a (code) | In Review | POO-2175 | `src/features/funds/README.md` @rules-v2 |
+| `PP-STR-LIB-030` | fundFlow, report state machine and approve / receipt / rebuild | Lib | n/a (code) | In Review | POO-2175 | `src/features/funds/README.md` @rules-v2 |
+| `PP-STR-CMP-032` | FundActionsPanel, investor intent and wallet confirmation | Component | n/a (code) | In Review | POO-2175 | `src/features/funds/README.md` @rules-v2 |
+
 Central registry of every Pool Party visual + code artifact ID. Source of truth for traceability across Figma, Linear, code, and docs. See `02_NAMING_CONVENTION.md` for the format.
 
 - Generated: 2026-05-29 from the Figma sweep (investor app) + the Linear Foundation backlog + the Manager Console backlog.
@@ -7,7 +22,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 583 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 593 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -26,9 +41,9 @@ They are recorded together so a reader can tell a disclosed repeat from an undet
 | `PP-CORE-LIB-113` | v2ApiSchemas: real v2 catalog/Mandate slice A | Lib | n/a (code) | In Review | POO-2133 | code-only; `src/lib/api/v2/schemas.ts` @rules-v1 |
 | `PP-CORE-LIB-114` | v2CatalogReads: real v2 catalog/Mandate slice A | Lib | n/a (code) | In Review | POO-2133 | code-only; `src/lib/api/v2/catalog.ts` @rules-v1 |
 | `PP-CORE-LIB-115` | v2CatalogActions: real v2 catalog/Mandate slice A | Lib | n/a (code) | In Review | POO-2133 | code-only; `src/lib/api/v2/actions.ts` @rules-v1 |
-| `PP-MGR-LIB-021` | v2Mandate: real v2 catalog/Mandate slice A | Lib | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/v2Mandate.ts` @rules-v1 |
-| `PP-MGR-HOK-007` | useV2MandateCatalog: real v2 catalog/Mandate slice A | Hook | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/useV2MandateCatalog.ts` @rules-v1 |
-| `PP-MGR-CMP-047` | MandateCatalogStatus: real v2 catalog/Mandate slice A | Component | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/components/MandateCatalogStatus.tsx` @rules-v1 |
+| `PP-MGR-LIB-025` | v2Mandate: real v2 catalog/Mandate slice A | Lib | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/v2Mandate.ts` @rules-v1 |
+| `PP-MGR-HOK-011` | useV2MandateCatalog: real v2 catalog/Mandate slice A | Hook | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/useV2MandateCatalog.ts` @rules-v1 |
+| `PP-MGR-CMP-060` | MandateCatalogStatus: real v2 catalog/Mandate slice A | Component | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/components/MandateCatalogStatus.tsx` @rules-v1 |
 
 ## CORE · Design system, primitives, generic reusable components and modals
 

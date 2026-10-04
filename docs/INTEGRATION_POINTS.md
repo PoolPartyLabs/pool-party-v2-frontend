@@ -1,12 +1,23 @@
 # Integration Points
 
+## V2 fund investor and manager pages (POO-2175, rules v2)
+
+| Boundary | Files | Real / mock behavior |
+|---|---|---|
+| Fund reads | `src/lib/api/v2/funds.ts`, `fundSchemas.ts` | Existing server-only v2 client; no V1 joins. Isolated `v2Funds` fixtures in mock mode. |
+| Investor builders | `src/features/funds/fundActions.ts`, `FundActionsPanel.tsx` | SIWE-derived wallet, simulated API transactions, explicit wallet confirmation, approval receipt then rebuild; optional authoritative preview / fees rollout. |
+| Fresh reports | `fundTransport.ts`, `fundFlow.ts` | Server-only admin key, verified bearer, rate-limited start, 15-second polling, reread acceptance/freshness before rebuild. |
+| Manager reads | `FundDetail.tsx`, `fundActions.ts` | Transits and spoke balances from API PR #180; no new manager writes. |
+
+See `src/features/funds/README.md`. `PP_API_ADMIN_KEY` remains server-only; never put it in a public variable or browser request.
+
 Inventory of the front-end seams that run mocked or placeholder logic today and are replaced by a real
 integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the code maps to this document.
 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 462 markers across 260 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 465 markers across 263 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -46,7 +57,9 @@ Ported from the private repository for the hackathon (epic POO-1793 over the POO
 The Mandate step of the fund-contracts strategy builder (hub Arbitrum, spoke Robinhood Chain,
 PoolPartyLabs/smartcontract-v2): five list-picking screens, reached from the header's V1/V2
 `ContractFamilyToggle` (`PP-CORE-CMP-075`) behind the `fundContracts` flag, that persist a local
-draft and sign nothing on chain. POO-2133 wires the real catalog behind server actions; mock fixtures
+draft and sign nothing on chain. POO-2133 wires the real catalog behind server actions with
+`v2Mandate` (`PP-MGR-LIB-025`), `useV2MandateCatalog` (`PP-MGR-HOK-011`) and
+`MandateCatalogStatus` (`PP-MGR-CMP-060`); mock fixtures
 remain the local preview harness. Draft persistence and Review/launch remain separate slices.
 
 | Marker | File | Mocked today | Expected real call |

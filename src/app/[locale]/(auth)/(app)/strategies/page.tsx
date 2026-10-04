@@ -2,6 +2,7 @@ import { setRequestLocale } from "next-intl/server";
 // POO-1067 (hackathon POO-1057). Self-gating: renders null unless the `activeReserve` flag is on
 // AND a live vault answers on Arbitrum. Removing the entry is this import plus the two JSX uses.
 import { ActiveReserveEntryCard } from "@/features/aqua/ActiveReserveEntryCard";
+import { FundFamilySwitch } from "@/features/funds/FundFamilySwitch";
 import { ExplorePagedLoader } from "@/features/strategies/ExplorePagedLoader";
 import { StrategiesExploreScreen } from "@/features/strategies/StrategiesExploreScreen";
 import { isMockMode, positionService } from "@/lib/services";
@@ -9,6 +10,10 @@ import { listStrategies } from "@/lib/strategies/strategyCatalog";
 
 /** PP-STR-SCR-001 — the managed-strategies discovery list. */
 export default async function StrategiesPage({ params }: { params: Promise<{ locale: string }> }) {
+  return <FundFamilySwitch view="explore" v1={<V1StrategiesPage params={params} />} />;
+}
+
+async function V1StrategiesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
 

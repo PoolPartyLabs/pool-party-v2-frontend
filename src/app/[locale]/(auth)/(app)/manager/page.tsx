@@ -1,4 +1,5 @@
 import { setRequestLocale } from "next-intl/server";
+import { FundFamilySwitch } from "@/features/funds/FundFamilySwitch";
 import { ManagerConsoleDataLoader } from "@/features/manager/ManagerConsoleDataLoader";
 import { ManagerConsoleScreen } from "@/features/manager/ManagerConsoleScreen";
 import { loadOwnerDisplayName } from "@/lib/profile/loadInvestorProfile";
@@ -6,6 +7,21 @@ import { isMockMode, managerService } from "@/lib/services";
 
 /** PP-MGR-SCR-001 — Manager console (Overview). Ships in v1 (not feature-flagged, murilo 2026-06-11). */
 export default async function ManagerPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ manage?: string }>;
+}) {
+  return (
+    <FundFamilySwitch
+      view="manager"
+      v1={<V1ManagerPage params={params} searchParams={searchParams} />}
+    />
+  );
+}
+
+async function V1ManagerPage({
   params,
   searchParams,
 }: {
