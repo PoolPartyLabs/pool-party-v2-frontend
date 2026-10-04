@@ -1,10 +1,14 @@
 import { parseUnits } from "viem";
 import { describe, expect, it, vi } from "vitest";
 import type { CatalogPool } from "@/lib/api/v2/schemas";
+import { createEmptyDraft } from "../mandateDraft";
 import { positionAmounts } from "./composition";
+import type { FundLaunchDraft } from "./contracts";
 import { createLaunchDriver, type FrozenLaunch } from "./driver";
 import { createJournal, runLaunch } from "./journal";
-import type { LaunchStep } from "./plan";
+import { getLaunchSteps } from "./journey";
+import { allocationRaw, deriveLaunchSteps, type LaunchStep } from "./plan";
+import { previewSeed, rawUsdc } from "./review";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
@@ -183,6 +187,240 @@ function liveSetup(principal = "2000000", allocation = "1200000", share = 30) {
 }
 
 describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
+  it("proves the recording 10 USDC 30/30/40 plan through public preview and real driver", async () => {
+    const plan: FundLaunchDraft["plan"] = {
+      version: 1,
+      hub: {
+        chains: [
+          {
+            id: "hub",
+            sharePct: 60,
+            steps: [
+              {
+                id: "v4",
+                family: "position",
+                kind: "uniswapV4Pool",
+                config: {
+                  poolId: livePoolId,
+                  tickLower: -198360,
+                  tickUpper: -196350,
+                  slippagePct: 0.5,
+                },
+              },
+              {
+                id: "aave",
+                family: "position",
+                kind: "aaveSupply",
+                config: {
+                  assetKey: `arbitrum:${liveUsdc}`,
+                  slippagePct: 0.5,
+                },
+              },
+            ],
+          },
+        ],
+      },
+      spokes: [
+        {
+          network: "robinhood",
+          sharePct: 40,
+          chains: [
+            {
+              id: "spoke",
+              sharePct: 40,
+              steps: [
+                {
+                  id: "robinhood-v4",
+                  family: "position",
+                  kind: "uniswapV4Pool",
+                  config: {
+                    poolId: `0x${"ab".repeat(32)}`,
+                    tickLower: -198360,
+                    tickUpper: -196350,
+                    slippagePct: 1,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const execution = { v4: { leafSharePct: 50 }, aave: { leafSharePct: 50 } };
+    const draft: FundLaunchDraft = {
+      ...createEmptyDraft("2026-10-04", "recording"),
+      networks: ["arbitrum", "robinhood"],
+      plan,
+      launchExecution: execution,
+      review: {
+        name: "Recording multi-leaf",
+        description: "",
+        imageUrl: "",
+        performanceFeeBps: 2000,
+        managementFeeBps: 0,
+        payoutFeeBps: 200,
+        minimum: "2",
+        seed: "10",
+      },
+    };
+    const steps = deriveLaunchSteps(plan, execution, true, true);
+    expect(getLaunchSteps(draft).map((step) => step.id)).toEqual(steps.map((step) => step.id));
+    const seed = previewSeed(rawUsdc(draft.review.seed), 25);
+    expect(seed).toEqual({
+      fee: BigInt("25000"),
+      shares: BigInt("9"),
+      principal: BigInt("9000000"),
+      charged: BigInt("9025000"),
+      remainder: BigInt("975000"),
+    });
+    const allocation = allocationRaw(seed.principal, 60);
+    const leafBudget = allocationRaw(seed.principal, 30);
+    const bridgeBudget = allocationRaw(seed.principal, 40);
+    expect([allocation, leafBudget, bridgeBudget]).toEqual([
+      BigInt("5400000"),
+      BigInt("2700000"),
+      BigInt("3600000"),
+    ]);
+    const { driver, journal, wallet, balances } = liveSetup(
+      seed.principal.toString(),
+      allocation.toString(),
+    );
+    journal.steps = steps;
+    journal.frozen = { ...(journal.frozen as FrozenLaunch), plan, review: draft.review };
+    const requireStep = (id: string) => {
+      const step = steps.find((entry) => entry.id === id);
+      if (!step) throw new Error("Missing recording step");
+      return step;
+    };
+    expect(requireStep("v4:swap").config?.maxLossBps).toBe(50);
+    expect(requireStep("aave:open").sharePct).toBe(30);
+    expect(requireStep("robinhood-v4:swap")).toMatchObject({
+      sharePct: 40,
+      shareDenominator: 40,
+      config: { maxLossBps: 100 },
+    });
+    const built = {
+      transactions: [{ from: manager, to: core, chainId: 42161, value: "0", data: "0x1234" }],
+    };
+    mocks.capital.mockResolvedValue({ ok: true, data: built });
+    mocks.quote.mockResolvedValue({ ok: true, data: {} });
+    await driver.build(requireStep("allocate"), journal);
+    expect(mocks.capital.mock.lastCall?.[1]).toMatchObject({
+      action: "allocate-to-hub",
+      amount: allocation.toString(),
+    });
+    balances(allocation, BigInt("0"));
+    await driver.build(requireStep("v4:swap"), journal);
+    const spent = BigInt(mocks.swap.mock.lastCall![0].amountIn);
+    expect(spent).toBe(BigInt("1286239"));
+    const received = (spent * BigInt("17635116476090")) / BigInt("47638");
+    journal.checkpoints["v4:swap"] = {
+      stepId: "v4:swap",
+      chain: 42161,
+      status: "confirmed",
+      data: {
+        receipt: {
+          swapped: {
+            vault: core,
+            tokenIn: liveUsdc,
+            tokenOut: liveWeth,
+            amountIn: spent.toString(),
+            amountOut: received.toString(),
+          },
+        },
+      },
+    };
+    balances(allocation - spent, received);
+    mocks.pool.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        ...livePool,
+        currentPrice: { ...livePool.currentPrice, token1PerToken0: "2701.3832415934247232" },
+      },
+    });
+    await driver.build(requireStep("v4:open"), journal);
+    const deposited = parseUnits(mocks.open.mock.lastCall![1].amount1, 6);
+    const remainder = allocation - spent - deposited;
+    expect({ deposited, remainder }).toEqual({
+      deposited: BigInt("1413761"),
+      remainder: BigInt("2700000"),
+    });
+    expect(spent + deposited).toBeLessThanOrEqual(leafBudget);
+    expect(remainder * BigInt("100")).toBeGreaterThanOrEqual(leafBudget * BigInt("99"));
+    journal.checkpoints["v4:open"] = { stepId: "v4:open", chain: 42161, status: "confirmed" };
+    balances(remainder, BigInt("0"));
+    await driver.build(requireStep("aave:open"), journal);
+    expect(parseUnits(mocks.open.mock.lastCall![1].amount, 6)).toBe(leafBudget);
+    balances((leafBudget * BigInt("99")) / BigInt("100"), BigInt("0"));
+    await driver.build(requireStep("aave:open"), journal);
+    expect(parseUnits(mocks.open.mock.lastCall![1].amount, 6)).toBe(BigInt("2673000"));
+    balances(BigInt("2672999"), BigInt("0"));
+    await expect(driver.build(requireStep("aave:open"), journal)).rejects.toThrow(
+      "BALANCE_CHANGED",
+    );
+    await driver.build(requireStep("bridge"), journal);
+    expect(mocks.capital.mock.lastCall?.[1]).toMatchObject({
+      action: "send-to-spoke",
+      amount: bridgeBudget.toString(),
+    });
+    expect(mocks.quote).toHaveBeenLastCalledWith(core, bridgeBudget.toString());
+    const usdG = "0x5fc5360d0400a0fd4f2af552add042d716f1d168";
+    const spokeWeth = "0x0bd7d308f8e1639fab988df18a8011f41eacad73";
+    const spokePoolId = requireStep("robinhood-v4:swap").config?.poolId;
+    journal.arrival = bridgeBudget.toString();
+    (journal.frozen as FrozenLaunch).request.chains.push({
+      chainId: 4663,
+      tokens: [usdG, spokeWeth],
+      uniswapV4PoolIds: [spokePoolId!],
+    });
+    mocks.fund.mockResolvedValue({
+      ok: true,
+      data: {
+        chains: [
+          {
+            chainId: "4663",
+            uniswapV4Adapter: manager,
+            aaveV3Adapter: manager,
+            spokeVault: core,
+          },
+        ],
+      },
+    });
+    mocks.balances.mockResolvedValue({
+      ok: true,
+      data: {
+        balancesStatus: "available",
+        tokens: [
+          { token: usdG, unallocatedBalance: bridgeBudget.toString() },
+          { token: spokeWeth, unallocatedBalance: "0" },
+        ],
+      },
+    });
+    mocks.pool.mockResolvedValue({
+      ok: true,
+      data: {
+        ...livePool,
+        chainId: "4663",
+        poolId: spokePoolId,
+        poolKey: { ...livePool.poolKey, currency0: spokeWeth, currency1: usdG },
+        tokens: livePool.tokens.map((token, index) => ({
+          ...token,
+          chainId: "4663",
+          address: index === 0 ? spokeWeth : usdG,
+          symbol: index === 0 ? "WETH" : "USDG",
+        })),
+      },
+    });
+    mocks.swap.mockResolvedValueOnce({
+      ok: true,
+      data: { transactions: [{ ...built.transactions[0], chainId: 4663 }] },
+    });
+    await driver.build(requireStep("robinhood-v4:swap"), journal);
+    expect(mocks.swap.mock.lastCall?.[0]).toMatchObject({ amountIn: "1714985", maxLossBps: 100 });
+    expect(wallet.send).not.toHaveBeenCalled();
+    expect(wallet.sign).not.toHaveBeenCalled();
+    expect(wallet.receipt).not.toHaveBeenCalled();
+  });
   it("R1 refuses the live .5 allocation versus a .6/.6 frozen hub plan", async () => {
     const { driver, journal, swap, balances, wallet } = liveSetup("2000000", "500000");
     balances(BigInt("500000"), BigInt(0));
