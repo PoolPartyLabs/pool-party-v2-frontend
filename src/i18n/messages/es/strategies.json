@@ -861,6 +861,22 @@
     "balances": "Saldos de spokes",
     "transits": "Transferencias",
     "loadMore": "Cargar más",
-    "confirmationTimeout": "Tu transacción se envió, pero no pudimos confirmarla a tiempo. Revisa la actividad reciente de tu billetera antes de volver a intentarlo, por si ya se completó."
+    "confirmationTimeout": "Tu transacción se envió, pero no pudimos confirmarla a tiempo. Revisa la actividad reciente de tu billetera antes de volver a intentarlo, por si ya se completó.",
+    "transactions": "Transacciones",
+    "pendingConfirmation": "Confirmación pendiente",
+    "confirmedBlock": "Confirmada en el bloque {block}",
+    "reverted": "Revertida",
+    "revertUnknown": "La transacción fue revertida. No hay un motivo decodificado disponible.",
+    "coreVault": "Core Vault",
+    "spokeVault": "Spoke Vault",
+    "shareToken": "ShareToken",
+    "adapter": "Adaptador",
+    "transactionHash": "Hash de transacción",
+    "reportPublish": "Publicación del informe",
+    "reportDelivery": "Entrega del informe",
+    "transitSend": "Envío",
+    "transitFill": "Ejecución",
+    "transitAcknowledgement": "Acuse de recibo",
+    "decodedError": "Error decodificado: {name}"
   }
 }

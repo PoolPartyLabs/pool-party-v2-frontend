@@ -861,6 +861,22 @@
     "balances": "Số dư spoke",
     "transits": "Chuyển tiền",
     "loadMore": "Tải thêm",
-    "confirmationTimeout": "Giao dịch của bạn đã được gửi, nhưng chúng tôi không thể xác nhận kịp thời. Hãy kiểm tra hoạt động gần đây của ví trước khi thử lại, phòng khi giao dịch đã hoàn tất."
+    "confirmationTimeout": "Giao dịch của bạn đã được gửi, nhưng chúng tôi không thể xác nhận kịp thời. Hãy kiểm tra hoạt động gần đây của ví trước khi thử lại, phòng khi giao dịch đã hoàn tất.",
+    "transactions": "Giao dịch",
+    "pendingConfirmation": "Đang chờ xác nhận",
+    "confirmedBlock": "Đã xác nhận trong khối {block}",
+    "reverted": "Đã hoàn tác",
+    "revertUnknown": "Giao dịch đã hoàn tác. Không có lý do được giải mã.",
+    "coreVault": "Core Vault",
+    "spokeVault": "Spoke Vault",
+    "shareToken": "ShareToken",
+    "adapter": "Bộ điều hợp",
+    "transactionHash": "Mã băm giao dịch",
+    "reportPublish": "Công bố báo cáo",
+    "reportDelivery": "Chuyển báo cáo",
+    "transitSend": "Gửi",
+    "transitFill": "Khớp lệnh",
+    "transitAcknowledgement": "Xác nhận nhận",
+    "decodedError": "Lỗi đã giải mã: {name}"
   }
 }

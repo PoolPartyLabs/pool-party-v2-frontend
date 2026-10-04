@@ -1,18 +1,22 @@
 /**
  * @id PP-STR-CMP-032 (POO-2175)
  * @name FundActionsPanel
- * @implements-rules-version v2
+ * @implements-rules-version v2 (POO-2175); v1 (POO-2179 explorer records)
  * Investor confirmation, authoritative previews and wallet receipt flow.
  */
 "use client";
 import { useWallets } from "@privy-io/react-auth";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { formatUnits } from "viem";
+import { Toaster } from "@/components/ui/Toast";
 import type { FundBuild, FundHolder, FundView } from "@/lib/api/v2/fundSchemas";
 import { isMockMode } from "@/lib/services";
-import { executeBuiltTransaction, findWalletForAddress } from "@/lib/tx/sendTransaction";
+import { findWalletForAddress } from "@/lib/tx/sendTransaction";
 import { sanitizeNumericInput } from "@/lib/utils/numericInput";
+import { ExplorerFields } from "./ExplorerFields";
+import { FundTransactionRecord } from "./FundTransactionRecord";
 import {
   buildFundAction,
   type FundIntent,
@@ -22,6 +26,11 @@ import {
 } from "./fundActions";
 import { approveAndRebuild, ensureFreshValuation } from "./fundFlow";
 import { estimateDeposit, fundErrorKey, rawAmount } from "./fundModel";
+import {
+  fundTransactionCode,
+  sendFundTransaction,
+  type FundTransactionRecord as TransactionRecord,
+} from "./fundTransactions";
 export interface FundActionsPanelProps {
   fund: FundView;
   holder: FundHolder;
@@ -40,7 +49,7 @@ function WalletInvestorActions(props: FundActionsPanelProps) {
   return (
     <InvestorActions
       {...props}
-      send={async (built, active) => {
+      send={async (built, active, action, observe) => {
         if (!active()) throw new Error("V2_CANCELED");
         const wallet = findWalletForAddress(wallets, props.wallet);
         if (!wallet) throw new Error("V2_SESSION");
@@ -50,12 +59,7 @@ function WalletInvestorActions(props: FundActionsPanelProps) {
         if (!active()) throw new Error("V2_CANCELED");
         for (const tx of built.transactions) {
           if (!active()) throw new Error("V2_CANCELED");
-          await executeBuiltTransaction(
-            provider,
-            { tx, chainId: tx.chainId },
-            props.wallet,
-            tx.chainId,
-          );
+          await sendFundTransaction(provider, tx, props.wallet, action, observe);
         }
       }}
     />
@@ -67,7 +71,14 @@ function InvestorActions({
   wallet,
   refresh,
   send,
-}: FundActionsPanelProps & { send: (built: FundBuild, active: () => boolean) => Promise<void> }) {
+}: FundActionsPanelProps & {
+  send: (
+    built: FundBuild,
+    active: () => boolean,
+    action: string,
+    observe: (record: TransactionRecord) => void,
+  ) => Promise<void>;
+}) {
   const t = useTranslations("strategies.funds");
   const [amount, setAmount] = useState("");
   const [minShares, setMinShares] = useState("1");
@@ -76,17 +87,28 @@ function InvestorActions({
   const [built, setBuilt] = useState<FundBuild | null>(null);
   const [phase, setPhase] = useState("idle");
   const [error, setError] = useState<string | null>(null);
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [reports, setReports] = useState<Record<string, unknown>[]>([]);
+  const toastIds = useRef(new Set<string>());
+  const toasterId = `fund-actions:${fund.coreVault}:${wallet}`;
+  const identityRun = useRef(0);
   const run = useRef(0);
   const busy = phase === "building" || phase === "refreshing" || phase === "sending";
   useEffect(() => {
     const identity = `${fund.coreVault}:${wallet}`;
     if (!identity) return;
     run.current += 1;
+    identityRun.current += 1;
+    setTransactions([]);
+    setReports([]);
     setBuilt(null);
     setIntent(null);
     setPhase("idle");
     return () => {
       run.current += 1;
+      identityRun.current += 1;
+      for (const id of toastIds.current) toast.dismiss(id);
+      toastIds.current.clear();
     };
   }, [fund.coreVault, wallet]);
   useEffect(() => {
@@ -110,11 +132,33 @@ function InvestorActions({
       start: async () => {
         const result = await startFundReportAction(fund.coreVault);
         if (!result.ok) throw new Error(result.error.code);
+        if (active())
+          setReports((previous) => [
+            ...previous.filter((job) => job.jobId !== result.data.jobId),
+            { jobId: result.data.jobId, status: "pending" },
+          ]);
         return result.data.jobId;
       },
       poll: async (job) => {
         const result = await pollFundReportAction(fund.coreVault, job);
         if (!result.ok) throw new Error(result.error.code);
+        if (active())
+          setReports((previous) =>
+            previous.map((entry) =>
+              entry.jobId === job
+                ? {
+                    jobId: job,
+                    status: result.data.status,
+                    ...(typeof result.data.publishTxHash === "string"
+                      ? { publishTxHash: result.data.publishTxHash }
+                      : {}),
+                    ...(typeof result.data.deliveryTxHash === "string"
+                      ? { deliveryTxHash: result.data.deliveryTxHash }
+                      : {}),
+                  }
+                : entry,
+            ),
+          );
         return result.data.status;
       },
     });
@@ -169,12 +213,31 @@ function InvestorActions({
     const active = () => run.current === id;
     setError(null);
     setPhase("sending");
+    const identity = identityRun.current;
+    const observe = (record: TransactionRecord) => {
+      if (identity !== identityRun.current) return;
+      setTransactions((previous) => {
+        const index = previous.findIndex(
+          (entry) => entry.chainId === record.chainId && entry.hash === record.hash,
+        );
+        return index < 0
+          ? [...previous, record]
+          : previous.map((entry, offset) => (offset === index ? record : entry));
+      });
+      const toastId = `${fund.coreVault}:${wallet}:${record.chainId}:${record.hash}`;
+      toastIds.current.add(toastId);
+      toast(<FundTransactionRecord record={record} />, {
+        id: toastId,
+        toasterId,
+        duration: record.status === "pending" ? Infinity : 10_000,
+      });
+    };
     try {
       if (built.nextAction) {
         const next = await approveAndRebuild(
           built,
           async (transaction) => {
-            await send(transaction, active);
+            await send(transaction, active, "approve", observe);
             if (active()) setBuilt(null);
           },
           () => build(intent, active),
@@ -193,19 +256,28 @@ function InvestorActions({
         return;
       }
       setPhase("sending");
-      await send(latest, active);
+      const action =
+        intent.action === "request-payout"
+          ? intent.mode === "Instant"
+            ? "instant"
+            : "standard"
+          : (
+              {
+                deposit: "deposit",
+                "claim-payout": "claim",
+                "request-income-withdrawal": "withdrawIncome",
+                "settle-income-withdrawal": "settleIncome",
+                "exit-closed-fund": "exit",
+              } as const
+            )[intent.action];
+      await send(latest, active, action, observe);
       if (!active()) return;
       setBuilt(null);
       setPhase("success");
       refresh();
     } catch (failure) {
       if (active()) {
-        const code =
-          failure && typeof failure === "object" && "code" in failure
-            ? String(failure.code)
-            : failure instanceof Error
-              ? failure.message
-              : "V2_UNAVAILABLE";
+        const code = fundTransactionCode(failure);
         setError(fundErrorKey(code));
         if (code === "TX_CONFIRMATION_UNKNOWN") setBuilt(null);
         setPhase("review");
@@ -236,6 +308,7 @@ function InvestorActions({
   ];
   return (
     <section className="rounded-xl border border-border p-5 space-y-4">
+      <Toaster id={toasterId} />
       <h2 className="font-semibold">{t("actions")}</h2>
       <div className="grid gap-3 md:grid-cols-3">
         <label>
@@ -388,6 +461,33 @@ function InvestorActions({
         </p>
       ) : null}
       {error ? <p role="alert">{t(error)}</p> : null}
+      {reports.length > 0 ? (
+        <section aria-live="polite" aria-label={t("report")}>
+          <h3>{t("report")}</h3>
+          <ExplorerFields
+            value={reports}
+            chainByField={{
+              publishTxHash:
+                fund.mandate.spokes.length === 1
+                  ? Number(fund.mandate.spokes[0]?.chainId)
+                  : undefined,
+              deliveryTxHash: Number(fund.mandate.hubChainId),
+            }}
+          />
+        </section>
+      ) : null}
+      {transactions.length > 0 ? (
+        <section
+          aria-live="polite"
+          aria-label={t("transactions")}
+          className="space-y-3 rounded-xl border border-border p-4"
+        >
+          <h3>{t("transactions")}</h3>
+          {transactions.map((record) => (
+            <FundTransactionRecord key={`${record.chainId}:${record.hash}`} record={record} />
+          ))}
+        </section>
+      ) : null}
     </section>
   );
 }

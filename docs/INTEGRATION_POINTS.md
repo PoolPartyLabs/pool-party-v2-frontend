@@ -1,5 +1,15 @@
 # Integration Points
 
+## V2 fund explorer records (POO-2179, rules v1)
+
+| Boundary | Files | Real / mock behavior |
+|---|---|---|
+| Wallet broadcast and receipt | `src/features/funds/fundTransactions.ts`, `FundActionsPanel.tsx` | Existing account/chain-checked `sendBuiltTransaction`, followed by `waitForReceipt`. A full hash is displayed before polling; confirmed blocks, mined reverts and uncertain receipts retain the record. Mock actions never fabricate a hash. |
+| Revert diagnostics | `fundTransactions.ts` | Error-only signatures from the API's CoreVault/SpokeVault/ShareToken ABI, 168 unique signatures. Replay is read-only `eth_call` at the receipt block, bounded to five seconds. Only decoded error names and translated categories reach the UI; raw RPC messages never do. |
+| Explorer context | `ExplorerFields.tsx`, `src/lib/chain/explorer.ts` | Position/deployment chain IDs, transit source/destination and fund hub context. Unknown chains remain text. Report publication uses the sole configured spoke; delivery and protocol acknowledgement events use the hub. Existing launch exports remain stable. |
+
+Report-job views whitelist identifiers/status/publication/delivery hashes from server responses; admin payloads are never rendered. Receipt records survive the authoritative refresh and input edits, but reset on fund/wallet change. No manager write capability is introduced.
+
 ## V2 fund investor and manager pages (POO-2175, rules v2)
 
 | Boundary | Files | Real / mock behavior |
@@ -17,7 +27,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 469 markers across 267 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 470 markers across 268 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
