@@ -807,6 +807,7 @@
     "unavailable": "Nicht verfügbar",
     "refreshing": "Bewertung wird aktualisiert",
     "minimum": "Mindesteinzahlung",
+    "payoutWholeShares": "Auszahlungen erfolgen in ganzen Anteilen; mindestens 1 Anteil.",
     "limit": "Fondslimit überschritten",
     "deferred": "Ertragsauszahlung aufgeschoben. Die gesammelten Erträge liegen unter dem Bridge-Mindestbetrag.",
     "notReady": "Noch nicht abrufbar oder abrechenbar",

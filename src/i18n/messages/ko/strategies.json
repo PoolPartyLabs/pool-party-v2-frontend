@@ -807,6 +807,7 @@
     "unavailable": "이용할 수 없어요",
     "refreshing": "평가액 갱신 중",
     "minimum": "최소 입금액",
+    "payoutWholeShares": "지급은 정수 지분 단위로 이루어집니다. 최소 1지분입니다.",
     "limit": "펀드 한도 초과",
     "deferred": "수익 출금이 보류됐어요. 수집된 수익이 브리지 최소 금액보다 적어요.",
     "notReady": "청구 또는 정산 준비가 안 됐어요",
