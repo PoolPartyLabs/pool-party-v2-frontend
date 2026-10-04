@@ -3,6 +3,8 @@
 Scope: POO-2116, Build panels POO-2171, Review POO-2172, integration POO-2196 and
 the Limits follow-up POO-2197 (rules v2).
 This document records the code delivery for the hackathon. Browser acceptance is owned by Murilo.
+The delivery snapshot below is from 11:01 UTC on October 4. The complete path and follow-up
+regressions described here still depend on the pending integrations listed in that snapshot.
 
 ## Entry and supported path
 
@@ -13,7 +15,8 @@ Robinhood Chain also uses the existing `NEXT_PUBLIC_FEATURE_ROBINHOOD_CHAIN` bui
 API credentials remain server-only. The dev host is `https://v2.dev.pool-party.xyz`; merging code does
 not by itself prove that host runs the merged revision.
 
-The supported alpha path is Mandate -> Build -> Review -> the existing launch journey:
+The expected alpha path after the pending integrations is Mandate -> Build -> Review -> the existing
+launch journey:
 
 1. Complete the mandate with Arbitrum, optionally Robinhood Chain, and the intended tokens/pools.
    Limits requires USDC plus another token with a positive allowance. No cap counts; an unset or
@@ -61,13 +64,27 @@ temporary fallback `/manager/fund-launch/review/[draftId]` remains available wit
 - Limits validates the minimum positive token allowance in both catalog modes. The mandatory
   deposit asset counts once; another network's mandatory deposit entry alone does not satisfy the
   second-token requirement. Existing drafts must meet the rule when continuing the builder.
+- POO-2197 preserves completed draft recovery while the wallet loads: the shell shows a skeleton,
+  permits no transient Limits edit and preserves the URL and stored draft until journey ownership
+  is known. An existing launch journey retains its original Build/Review resume path.
+- A completed draft without a journey waits for its real catalog before Limits validation. Catalog
+  failure uses the existing unavailable state and Retry, without a false missing-cap message or
+  blocked-intent event. A refusal in an earlier step reveals that step and its own message even
+  when the resumed Limits is also invalid. Correcting a token allowance stays in Limits until Next.
+- Pending PR #71, POO-2198, fixes the gas-only price-impact gate. The auxiliary gas confirmation
+  never requests normal funding auto-start, so that request could not arm its consent lifecycle.
+  The gate now follows the visible source screen for gas-only operations. Regressions cover blocked
+  intent, disabled top-up until acknowledgement, cleared consent after leaving and fresh consent
+  when a quote worsens. Ordinary funding keeps its existing gate activation.
 
 ## Delivery boundaries and ownership
 
 No authenticated live API smoke was performed in this delivery session: suitable credentials were
 not present in the relevant checkouts. The specification/code audit found coverage for required
-panel properties; that is not a guarantee of deployed endpoint health. POO-2145 tracks the existing
-host/key boundary. Rafael owns the signed rehearsal and backend deployment evidence.
+panel properties and found no new missing backend property; that is not a guarantee of deployed
+endpoint health. POO-2145 tracks the existing host/key boundary. Rafael reports successful hub swaps
+and position opens; the API `bridgeRank` query fix remains in flight. These are Rafael's reported
+results, separate from Codex's code audit. Rafael owns the signed rehearsal and deployment evidence.
 
 Borrow is unavailable for launch. Its palette cleanup, slice PA0, was explicitly deferred by the
 accepted demo plan; the current UI can still offer the block, and readiness/launch fail closed.
@@ -81,8 +98,51 @@ Compliance entries CR-MGR-021 through CR-MGR-025 track caps/slippage, range esti
 Review disclosures. The canonical `COMPLIANCE_REGISTER.md` controls launch readiness. The inherited
 dependency audit failure is separate from feature validation; these PRs change no dependencies.
 
+## Approved deployment and recording schedule
+
+Murilo approved Rafael's October 4 schedule. These are planned checkpoints, not completed deployment
+or browser evidence. All times are BST (UTC+1).
+
+| Time | Checkpoint | Owner |
+| --- | --- | --- |
+| 13:00 BST / 12:00 UTC | Deploy the current main revision | Rafael |
+| 14:15 BST / 13:15 UTC | Freeze the delivery changes | Delivery coordination |
+| 14:30 BST / 13:30 UTC | Second deployment | Rafael |
+| 15:00 BST / 14:00 UTC | Preflight for the recording | Rafael |
+| 16:00 BST / 15:00 UTC | Recording | Murilo and Rafael |
+
+Murilo owns complete browser acceptance. Rafael owns deployments and the authorized signed
+rehearsal. The deployed revision and rehearsal receipts must be recorded separately from a merge.
+
 ## Delivery evidence
 
-The final merged PRs, commit IDs and composed validation results are recorded here at integration.
-Murilo performs the complete browser journey and reports the outcome. Codex does not claim browser
-verification or transaction execution.
+Snapshot: 2026-10-04 11:01 UTC. Confirmed merged delivery work:
+
+| PR | Delivery | Merge commit |
+| --- | --- | --- |
+| [#54](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/54) | Panel shell and guards, POO-2187 | `e0a0d4d6` |
+| [#69](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/69) | Review logo upload persistence regression | `289dcc9a` |
+| [#70](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/70) | Shared Privy declaration-test compiler setup, POO-1883 | `3bf2ad1` |
+| [#65](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/65) | Review cards, POO-2188 | `b80c4c39` |
+| [#66](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/66) | Aave USDC Supply panel, POO-2194 | `95a43126` |
+
+Pending integration at this snapshot:
+
+| Work | State |
+| --- | --- |
+| [#67](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/67), Review assembly / POO-2195 | Not merged |
+| [#68](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/68), Uniswap panel / POO-2189 | Not merged |
+| [#71](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/71), gas-only impact gate / POO-2198 | Not merged; reviewed head `799d74d4` |
+| Limits follow-up, POO-2197 rules v2 | Not merged; composed guard review approved |
+
+For POO-2197, four recovery regressions failed before the guard fixes; the latest scoped shell,
+BuildScreen and ReviewNavigation run passes 114 tests. For #71, the new blocked-intent assertion
+failed before the fix, then the focused 12 tests and broader 119 tests in seven files passed.
+Its typecheck passed with a 4 GB Node heap, and scoped Biome and locale parity checks passed.
+These are scoped validation results, not the final composed full-suite result.
+
+The inherited dependency audit still fails. The merged SDK test correction addresses the separate
+declaration setup timeout; it does not resolve or waive dependency findings. Final merge commits,
+composed checks and deployed revision evidence will be appended by the integration owner.
+Murilo reports the complete browser journey. Codex does not claim browser verification, authenticated
+API smoke or transaction execution.
