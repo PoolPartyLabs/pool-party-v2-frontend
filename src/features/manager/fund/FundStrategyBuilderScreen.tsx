@@ -277,6 +277,7 @@ export function FundStrategyBuilderScreen() {
    * derivation below correct on the very first render that has the stored draft. See the file
    * header for why this is not an effect.
    */
+  const [reviewRevealTarget, setReviewRevealTarget] = useState<ReadinessTarget | null>(null);
   const [phaseChoice, setPhaseChoice] = useState<BuilderPhase | null>(null);
   const phase: BuilderPhase =
     phaseChoice ??
@@ -772,19 +773,7 @@ export function FundStrategyBuilderScreen() {
     (target?: ReadinessTarget | null) => {
       stampPhase("build");
       setPhaseChoice("build");
-      if (target)
-        requestAnimationFrame(() => {
-          const id =
-            target.kind === "block"
-              ? target.blockId
-              : target.kind === "chain"
-                ? target.chainId
-                : target.network;
-          const element = document.querySelector<HTMLElement>(
-            `[data-block-id="${CSS.escape(id)}"]`,
-          );
-          element?.scrollIntoView?.({ block: "center" });
-        });
+      setReviewRevealTarget(target ?? null);
     },
     [stampPhase],
   );
@@ -838,7 +827,7 @@ export function FundStrategyBuilderScreen() {
         <ReviewPhase
           draftId={draft.id}
           onBackToBuild={handleReviewBack}
-          onEditMandate={() => handleEditMandate("networks")}
+          onEditMandate={() => handleEditMandate("networks", null)}
         />
       ) : phase === "build" ? (
         <BuildScreen
@@ -850,6 +839,7 @@ export function FundStrategyBuilderScreen() {
           initialSelectedId={buildReturnBlock}
           leaveGuardRef={buildLeaveRef}
           onReview={() => void handleOpenReview()}
+          initialRevealTarget={reviewRevealTarget}
         />
       ) : (
         <>

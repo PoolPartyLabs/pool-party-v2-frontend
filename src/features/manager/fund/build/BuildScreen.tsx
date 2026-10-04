@@ -86,6 +86,7 @@ import {
   REVIEW_NOTICE_KEY,
   type ReviewNoticeKey,
   type ReviewRefusal,
+  type ReviewTarget,
   revealTarget,
   reviewVerdict,
   targetRect,
@@ -134,6 +135,8 @@ export interface BuildScreenProps {
   leaveGuardRef?: MutableRefObject<LeaveGuard | null>;
   /** Opens Review after readiness and the selected-panel leave guard pass. */
   onReview?: () => void;
+  /** First Review blocker to reveal without selecting its block. */
+  initialRevealTarget?: ReviewTarget | null;
 }
 
 /** The twelve Next: Review notices, through literal keys so the i18n usage scan sees each one. */
@@ -168,6 +171,7 @@ export function BuildScreen({
   initialSelectedId = null,
   leaveGuardRef,
   onReview,
+  initialRevealTarget,
 }: BuildScreenProps) {
   const t = useTranslations("manager");
   const reviewCopy = useReviewCopy();
@@ -291,6 +295,10 @@ export function BuildScreen({
     [layout.width, layout.height],
   );
   const viewportRef = useRef<CanvasViewportHandle>(null);
+  useEffect(() => {
+    const rect = targetRect(layout, initialRevealTarget ?? null);
+    if (rect) viewportRef.current?.revealRect(rect);
+  }, [layout, initialRevealTarget]);
 
   // [D6] The spokes whose network left the mandate are drawn as invalid groups.
   const invalidNetworks = useMemo(

@@ -54,7 +54,7 @@ export function ReviewFirstDepositCard({
         <h3 className="text-sm font-medium">{t("firstDepositTitle")}</h3>
         <p className="mt-1 text-xs text-muted-foreground">{t("firstDepositCaption")}</p>
       </div>
-      <div className="flex items-center justify-end gap-2 text-xs">
+      <div aria-live="polite" className="flex items-center justify-end gap-2 text-xs">
         <span className="text-muted-foreground">{t("balance")}</span>
         <span className="font-mono tabular-nums">
           {balance === null ? t("unavailable") : `${formatUsdc(balance, locale)} USDC`}
@@ -89,7 +89,7 @@ export function ReviewFirstDepositCard({
         {t("seedHelp", { minimum: min === null ? t("unavailable") : formatUsdc(min, locale) })}
       </p>
       {preview && (
-        <div className="rounded-xl bg-surface-raised p-3">
+        <div aria-live="polite" className="rounded-xl bg-surface-raised p-3">
           <h4 className="mb-2 text-xs font-medium">{t("previewTitle")}</h4>
           <dl className="space-y-2 text-xs">
             {(

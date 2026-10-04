@@ -12,7 +12,12 @@ import {
   userEvent,
   waitFor,
 } from "../../../../../tests/utils/renderWithProviders";
-import { hubSupplyPlan, makeTestDraft } from "../build/plan/planTestKit";
+import {
+  hubSupplyPlan,
+  makeTestDraft,
+  spokePoolPlan,
+  withCompletePools,
+} from "../build/plan/planTestKit";
 import { buildMandateCatalog } from "../mandateCatalog";
 import { ReviewPhase } from "./ReviewPhase";
 import { reviewStoryBalance, reviewStoryKit, reviewStoryPreview } from "./reviewStoryKit";
@@ -120,6 +125,23 @@ describe("Review assembly [R1-R9]", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Launch strategy" }));
     expect(back).toHaveBeenCalled();
     expect(mocks.start).not.toHaveBeenCalled();
+  });
+  it("blocks a catalog failure and keeps retry available", async () => {
+    mocks.binding.catalog = { ...buildMandateCatalog(), error: true, retry: vi.fn() };
+    show();
+    await userEvent.click(await screen.findByRole("button", { name: "Launch strategy" }));
+    expect(mocks.start).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
+  });
+  it("shows a spoke launch preview grouped on its actual network", async () => {
+    const d = draft();
+    d.plan = withCompletePools(spokePoolPlan());
+    mocks.binding.draft = d;
+    show();
+    expect(await screen.findByText("Launch steps")).toBeInTheDocument();
+    expect(screen.getAllByText("Robinhood Chain").length).toBeGreaterThan(0);
+    expect(screen.getByText(/Up to \d+ signatures/)).toBeInTheDocument();
+    expect(screen.getByText(/transactions and .* profile messages/)).toBeInTheDocument();
   });
   it("enters the existing launch exactly once even on repeated clicks", async () => {
     let finish: (value: { journeyId: string }) => void = () => {};
