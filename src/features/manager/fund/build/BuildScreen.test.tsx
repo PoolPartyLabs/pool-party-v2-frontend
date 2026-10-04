@@ -173,8 +173,21 @@ function autoSwap(id: string): Step {
   return { id, family: "flow", kind: "swap", auto: true };
 }
 
-function pool(id: string, poolId: string | null): PositionBlock {
-  return { id, family: "position", kind: "uniswapV4Pool", config: poolId ? { poolId } : null };
+/** A pool block, configured with every field the panels write (POO-2184) unless told otherwise. */
+function pool(id: string, poolId: string | null, complete = true): PositionBlock {
+  if (poolId === null) return { id, family: "position", kind: "uniswapV4Pool", config: null };
+  const range = {
+    tickLower: -199_380,
+    tickUpper: -195_360,
+    fullRange: false,
+    displayInverted: false,
+  };
+  return {
+    id,
+    family: "position",
+    kind: "uniswapV4Pool",
+    config: complete ? { poolId, ...range, slippagePct: 2 } : { poolId },
+  };
 }
 
 /** One hub chain at `pct`: [Swap · auto, the WETH / USDC pool], configured unless told otherwise. */
@@ -579,6 +592,26 @@ const REFUSALS: Array<[string, BuildPlan | undefined, string, string]> = [
     poolPlan(120),
     "The shares add up to more than the capital above them.",
     "review_over_share",
+  ],
+  [
+    "a pool picked but not finished",
+    {
+      version: 1,
+      hub: {
+        chains: [
+          { id: "c1", sharePct: 60, steps: [autoSwap("c1-swap"), pool("c1-pool", POOL_ID, false)] },
+        ],
+      },
+      spokes: [],
+    },
+    "Set a price range and a max slippage for every pool before Review.",
+    "review_incomplete_block",
+  ],
+  [
+    "a block with no share",
+    poolPlan(0),
+    "Give every block a share above 0%, or remove it.",
+    "review_zero_share",
   ],
   [
     "a plan that passes every check",

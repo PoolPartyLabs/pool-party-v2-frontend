@@ -52,7 +52,7 @@ describe("buildAnalytics: the Build events are declared (AE1 to AE6, D20)", () =
     expect(ANALYTICS_EVENTS).not.toContain("builder_build_completed");
   });
 
-  it("[AE6] the block reason union holds every plan reason and the six Next: Review reasons", () => {
+  it("[AE6] the block reason union holds every plan reason and the eleven Next: Review reasons", () => {
     // @rule AE6
     expect([...ANALYTICS_BUILD_BLOCK_REASONS].sort()).toEqual(
       [
@@ -71,6 +71,11 @@ describe("buildAnalytics: the Build events are declared (AE1 to AE6, D20)", () =
         "review_coming_soon_block",
         "review_empty_block",
         "review_over_share",
+        "review_incomplete_block",
+        "review_zero_share",
+        "review_stacked_positions",
+        "review_duplicate_reserve",
+        "review_unsupported_swap",
         "review_unavailable",
       ].sort(),
     );
