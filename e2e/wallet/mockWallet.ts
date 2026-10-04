@@ -129,7 +129,10 @@ export async function installMockWallet(
         // Never proxy wallet_/metamask_ control methods to the RPC (it rejects them → connect fails).
         if (method.startsWith("wallet_") || method.startsWith("metamask_")) return null;
         // Everything else (eth_call, eth_getBalance, eth_getTransactionReceipt, gas/fee, …) → RPC.
-        return publicClient(current).request({ method, params });
+        return publicClient(current).request({
+          method,
+          params,
+        } as Parameters<PublicClient["request"]>[0]);
     }
   };
 
