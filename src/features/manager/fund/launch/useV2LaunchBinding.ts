@@ -67,10 +67,12 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
   const [error, setError] = useState<V2LaunchError | null>(null);
   const running = useRef(false);
   const abort = useRef<AbortController | null>(null);
+  const [paused, setPaused] = useState(false);
   useEffect(() => {
     setJournal(null);
     setHydrated(false);
     setError(null);
+    setPaused(false);
     if (!options.manager) return;
     try {
       setJournal(loadJournal(options.storage ?? localStorage, options.draftId, options.manager));
@@ -94,8 +96,9 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
     gap = true;
     planError = launchPlanError(error);
   }
-  const execute = async (resume: boolean, once: boolean) => {
+  const execute = async (resume: boolean, once: boolean, readOnly = false) => {
     if (running.current) return;
+    if (!readOnly) setPaused(false);
     if (isMockMode || !isEnabled("fundContracts")) {
       setError({ code: "V2_UNAVAILABLE", messageKey: "fundLaunch.realOnly" });
       return;
@@ -133,10 +136,12 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
         const driver = createLaunchDriver(
           {
             send: async (transaction) => {
+              if (readOnly) throw new Error("READ_ONLY_RECONCILIATION");
               if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
               return wallet.send(transaction);
             },
             sign: async (message) => {
+              if (readOnly) throw new Error("READ_ONLY_RECONCILIATION");
               if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
               return wallet.sign(message);
             },
@@ -162,10 +167,19 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
             changed,
             controller.signal,
             once ? 1 : Number.POSITIVE_INFINITY,
+            readOnly,
           );
           const failed = Object.values(current.checkpoints).find(
             (checkpoint) => checkpoint.status === "failed",
           );
+          if (readOnly) {
+            if (failed)
+              setError({
+                code: failed.error ?? "LAUNCH_STEP_FAILED",
+                messageKey: "fundLaunch.partialFailure",
+              });
+            break;
+          }
           if (failed) {
             const code =
               failed.error && isAnalyticsErrorCodeShape(failed.error)
@@ -236,6 +250,32 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
       setBusy(false);
     }
   };
+  const executeRef = useRef(execute);
+  useEffect(() => {
+    executeRef.current = execute;
+  });
+  useEffect(() => {
+    if (!hydrated || busy || paused || !journal || !options.wallet) return;
+    const pending = Object.values(journal.checkpoints).filter(
+      (checkpoint) =>
+        checkpoint.status !== "confirmed" &&
+        checkpoint.receiptStatus !== "reverted" &&
+        (checkpoint.status === "waiting" ||
+          checkpoint.status === "submitted" ||
+          (checkpoint.txHash && checkpoint.receiptStatus === "unknown")),
+    );
+    if (!pending.length) return;
+    const nextRetry = Math.min(
+      ...pending.map(
+        (checkpoint) => checkpoint.retryAt ?? Date.now() + (options.pollInterval ?? 10_000),
+      ),
+    );
+    const timeout = setTimeout(
+      () => void executeRef.current(true, false, true),
+      Math.min(2_147_483_647, Math.max(1, nextRetry - Date.now())),
+    );
+    return () => clearTimeout(timeout);
+  }, [hydrated, busy, paused, journal, options.wallet, options.pollInterval]);
   const currentStep =
     steps.find((step) => journal?.checkpoints[step.id]?.status !== "confirmed") ?? null;
   const signatures: LaunchSignature[] = steps
@@ -272,7 +312,10 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
     retry: () => execute(true, false),
     next: () => execute(journal !== null, true),
     sign: () => execute(journal !== null, true),
-    pause: () => abort.current?.abort(),
+    pause: () => {
+      setPaused(true);
+      abort.current?.abort();
+    },
   };
 }
 export type V2LaunchBinding = ReturnType<typeof useV2LaunchBinding>;

@@ -8,6 +8,7 @@ import "server-only";
 // PP-INTEGRATION-POINT: v2 launch writes and admin builders require the enabled API and server keys.
 import type { ZodType } from "zod";
 import { ApiError, ApiParseError } from "../errors";
+import { discoveryPendingError } from "./discovery";
 
 export async function launchFetch<ResponseData>(
   path: string,
@@ -46,6 +47,12 @@ export async function launchFetch<ResponseData>(
     throw new ApiError(503, "V2_UNAVAILABLE", "v2 unavailable");
   }
   if (!response.ok) {
+    const pending = discoveryPendingError(
+      response.status,
+      payload,
+      response.headers.get("retry-after"),
+    );
+    if (pending) throw pending;
     const envelope =
       payload !== null && typeof payload === "object"
         ? (payload as { deferred?: unknown; response?: { deferred?: unknown } })

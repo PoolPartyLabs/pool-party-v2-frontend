@@ -18,6 +18,15 @@ const reply = (data: unknown, status = 200, version = "v2") =>
   });
 
 describe("v2Fetch", () => {
+  it("preserves nested discovery metadata rather than flattening it to unavailable", async () => {
+    fetchMock.mockResolvedValue(
+      reply({ response: { code: "V2_DISCOVERY_PENDING", retryAfterSeconds: 2 } }, 503),
+    );
+    await expect(v2Fetch("/funds", schema)).rejects.toMatchObject({
+      code: "V2_DISCOVERY_PENDING",
+      retryAfterSeconds: 2,
+    });
+  });
   beforeEach(() => {
     vi.stubEnv("PP_API_URL", "https://api.example.test");
     vi.stubEnv("PP_API_KEY", "server-secret");

@@ -61,6 +61,7 @@
   },
   "fundLaunch": {
     "reportWait": "Wachten op een geaccepteerd rapport. Meestal 14-19 minuten, soms langer. We blijven controleren tot het binnenkomt; pauzeren bewaart uw voortgang.",
+    "discoveryWait": "Wachten op indexering. Deze stap wordt automatisch opnieuw geprobeerd.",
     "journeyTitle": "Fondsstart",
     "journeyWait": "Elke transactie vereist bevestiging. Bridges en rapporten kunnen minuten duren.",
     "receiptLabel": "Ontvangstbewijs",

@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   open: vi.fn(),
   swap: vi.fn(),
   pool: vi.fn(),
+  positions: vi.fn(),
 }));
 vi.mock("@/lib/api/v2/launchActions", () => ({
   buildCreateFundAction: mocks.create,
@@ -35,6 +36,7 @@ vi.mock("@/lib/api/v2/launchActions", () => ({
   triggerLaunchReportAction: mocks.trigger,
   buildLaunchPositionAction: mocks.open,
   buildLaunchSwapAction: mocks.swap,
+  readLaunchPositionsAction: mocks.positions,
 }));
 vi.mock("@/lib/api/v2/actions", () => ({ getCatalogPoolAction: mocks.pool }));
 const manager = `0x${"12".repeat(20)}`;
@@ -53,6 +55,49 @@ const setup = () => {
   return { driver, journal, wallet };
 };
 describe("just-in-time launch driver [R2, R3, R6]", () => {
+  it("verifies mined Aave by positionKey and chain, not pool registration or USD value", async () => {
+    const { driver, journal } = setup();
+    const positionKey = `0x${"00".repeat(12)}af88d065e77c8cc2239327c5edb3a432268e5831`;
+    const step: LaunchStep = {
+      id: "aave",
+      kind: "open",
+      chain: 42161,
+      dependencies: [],
+      config: { assetKey: `arbitrum:${core}` },
+    };
+    const checkpoint = {
+      stepId: step.id,
+      chain: step.chain,
+      status: "waiting" as const,
+      data: { receipt: { positionKey } },
+    };
+    mocks.positions.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        positions: [
+          { chainId: "42161", positionKey, poolKey: positionKey, status: "open", valueUsd: "0.25" },
+        ],
+      },
+    });
+    await expect(driver.complete(step, checkpoint, journal)).resolves.toBeUndefined();
+    expect(mocks.positions).toHaveBeenCalledWith(core);
+    mocks.positions.mockResolvedValueOnce({
+      ok: true,
+      data: { positions: [{ chainId: "4663", positionKey, status: "open" }] },
+    });
+    await expect(driver.complete(step, checkpoint, journal)).rejects.toMatchObject({
+      code: "V2_DISCOVERY_PENDING",
+    });
+    mocks.positions.mockResolvedValueOnce({ ok: true, data: { positions: [] } });
+    await expect(driver.complete(step, checkpoint, journal)).rejects.toMatchObject({
+      code: "V2_DISCOVERY_PENDING",
+    });
+    mocks.positions.mockResolvedValueOnce({
+      ok: false,
+      error: { status: 500, code: "V2_REQUEST_FAILED" },
+    });
+    await expect(driver.complete(step, checkpoint, journal)).rejects.toThrow("V2_REQUEST_FAILED");
+  });
   it("opens hub Aave only from actual USDC and refuses insufficient balances", async () => {
     const { driver, journal } = setup();
     journal.frozen = {

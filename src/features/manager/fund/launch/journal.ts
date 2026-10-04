@@ -4,6 +4,8 @@
  * @implements-rules-version v3 (POO-2192)
  * Durable checkpoints: uncertain receipts always reconcile before rebuilding.
  */
+
+import { V2DiscoveryPendingError } from "@/lib/api/v2/discovery";
 import type { LaunchStep } from "./plan";
 
 export interface Checkpoint {
@@ -14,6 +16,10 @@ export interface Checkpoint {
   receiptStatus?: "success" | "reverted" | "unknown";
   error?: string;
   data?: Record<string, unknown>;
+  waitReason?: "discovery";
+  retryAt?: number;
+  retryCount?: number;
+  retryAfterSeconds?: number;
 }
 export interface LaunchJournal {
   version: 1;
@@ -153,6 +159,7 @@ export async function runLaunch(
   onChange: (journal: LaunchJournal) => void = () => {},
   signal?: AbortSignal,
   maxSteps = Number.POSITIVE_INFINITY,
+  readOnly = false,
 ): Promise<LaunchJournal> {
   const persist = () => {
     saveJournal(storage, journal);
@@ -168,7 +175,22 @@ export async function runLaunch(
       status: "idle" as const,
     };
     if (checkpoint.status === "confirmed") continue;
+    if (checkpoint.retryAt && checkpoint.retryAt > Date.now()) continue;
+    if (readOnly && !checkpoint.txHash && checkpoint.status !== "waiting") continue;
+    if (readOnly && !checkpoint.txHash && step.kind === "profile") continue;
     if (
+      step.kind === "bridge" &&
+      !checkpoint.txHash &&
+      journal.steps.some(
+        (sibling) =>
+          sibling.chain === 42161 &&
+          ["open", "swap"].includes(sibling.kind) &&
+          journal.checkpoints[sibling.id]?.status !== "confirmed",
+      )
+    )
+      continue;
+    if (
+      !checkpoint.txHash &&
       step.dependencies.some(
         (dependency) => journal.checkpoints[dependency]?.status !== "confirmed",
       )
@@ -191,6 +213,10 @@ export async function runLaunch(
           await driver.complete(step, checkpoint, journal);
           checkpoint.status = "confirmed";
           delete checkpoint.error;
+          delete checkpoint.waitReason;
+          delete checkpoint.retryAt;
+          delete checkpoint.retryAfterSeconds;
+          delete checkpoint.retryCount;
           persist();
           continue;
         }
@@ -222,6 +248,10 @@ export async function runLaunch(
       if (built.complete) {
         await driver.complete(step, checkpoint, journal);
         checkpoint.status = "confirmed";
+        delete checkpoint.waitReason;
+        delete checkpoint.retryAt;
+        delete checkpoint.retryAfterSeconds;
+        delete checkpoint.retryCount;
         persist();
         continue;
       }
@@ -231,6 +261,13 @@ export async function runLaunch(
         continue;
       }
       checkpoint.status = "signing";
+      if (readOnly) {
+        checkpoint.status = "idle";
+        delete checkpoint.waitReason;
+        delete checkpoint.retryAt;
+        persist();
+        continue;
+      }
       persist();
       checkpoint.txHash = await driver.send(step, built.transaction);
       checkpoint.receiptStatus = "unknown";
@@ -248,6 +285,25 @@ export async function runLaunch(
       persist();
     } catch (error) {
       if (
+        error instanceof V2DiscoveryPendingError ||
+        (error instanceof Error && error.message === "V2_DISCOVERY_PENDING")
+      ) {
+        const retryAfterSeconds = (error as V2DiscoveryPendingError).retryAfterSeconds;
+        checkpoint.retryCount = (checkpoint.retryCount ?? 0) + 1;
+        checkpoint.retryAfterSeconds = retryAfterSeconds;
+        checkpoint.retryAt =
+          Date.now() +
+          Math.max(
+            1000,
+            (retryAfterSeconds ?? Math.min(30, 2 ** Math.min(checkpoint.retryCount, 5))) * 1000,
+          );
+        checkpoint.waitReason = "discovery";
+        checkpoint.status = "waiting";
+        delete checkpoint.error;
+        persist();
+        continue;
+      }
+      if (
         ["discover", "report", "arrival"].includes(step.kind) &&
         error instanceof Error &&
         ["V2_DEFERRED", "V2_RATE_LIMITED"].includes(error.message)
@@ -263,7 +319,7 @@ export async function runLaunch(
           ? error.message
           : "LAUNCH_STEP_FAILED";
       persist();
-      if (step.kind !== "report") return journal;
+      if (step.kind !== "report" && !readOnly) return journal;
     }
   }
   return journal;

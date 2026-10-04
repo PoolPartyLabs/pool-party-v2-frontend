@@ -82,6 +82,57 @@ const options = () => ({
   pollInterval: 1,
 });
 describe("headless launch binding [R3, R4, R6]", () => {
+  it("honors Pause for hydrated receipt polling until explicit resume", async () => {
+    const journal = createJournal("draft", manager, frozen, [
+      { id: "aave", kind: "open", chain: 42161, dependencies: [] },
+    ]);
+    journal.checkpoints.aave = {
+      stepId: "aave",
+      chain: 42161,
+      status: "waiting",
+      txHash: "0xknown",
+      receiptStatus: "unknown",
+    };
+    localStorage.setItem(journalKey("draft", manager), JSON.stringify(journal));
+    const { result } = renderHook(() => useV2LaunchBinding({ ...options(), pollInterval: 50 }));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    act(() => result.current.pause());
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    expect(mocks.receipt).not.toHaveBeenCalled();
+    await act(async () => {
+      await result.current.resume();
+    });
+    expect(result.current.checkpoints.aave?.status).toBe("confirmed");
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
+  it("automatically polls a hydrated unknown receipt despite a failed sibling, without signing", async () => {
+    const journal = createJournal("draft", manager, frozen, [
+      { id: "bad", kind: "open", chain: 42161, dependencies: [] },
+      { id: "aave", kind: "open", chain: 42161, dependencies: [] },
+    ]);
+    journal.checkpoints.bad = {
+      stepId: "bad",
+      chain: 42161,
+      status: "failed",
+      error: "V2_REQUEST_FAILED",
+    };
+    journal.checkpoints.aave = {
+      stepId: "aave",
+      chain: 42161,
+      status: "waiting",
+      txHash: "0xknown",
+      receiptStatus: "unknown",
+    };
+    localStorage.setItem(journalKey("draft", manager), JSON.stringify(journal));
+    mocks.receipt
+      .mockResolvedValueOnce({ status: "unknown" })
+      .mockResolvedValue({ status: "success" });
+    const { result } = renderHook(() => useV2LaunchBinding(options()));
+    await waitFor(() => expect(result.current.checkpoints.aave?.status).toBe("confirmed"));
+    expect(result.current.checkpoints.bad?.status).toBe("failed");
+    expect(mocks.send).not.toHaveBeenCalled();
+    expect(mocks.build).not.toHaveBeenCalled();
+  });
   it("polls an explicitly advanced report until accepted, without signing the following bridge", async () => {
     const journal = createJournal("draft", manager, frozen, [
       { id: "report", kind: "report", chain: 42161, dependencies: [] },

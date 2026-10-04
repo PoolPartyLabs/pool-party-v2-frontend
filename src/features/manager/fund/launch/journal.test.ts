@@ -29,6 +29,99 @@ const setup = () => {
 };
 
 describe("launch checkpoint state machine [R3, R6]", () => {
+  it("backoffs pending without metadata and never signs a recovered builder in read-only polling", async () => {
+    const { journal, storage, driver } = setup();
+    journal.steps = [{ id: "leaf", kind: "open", chain: 42161, dependencies: [] }];
+    vi.mocked(driver.build).mockRejectedValueOnce(new Error("V2_DISCOVERY_PENDING"));
+    const started = Date.now();
+    await runLaunch(journal, storage, driver);
+    expect(journal.checkpoints.leaf?.retryAt).toBeGreaterThanOrEqual(started + 2000);
+    const checkpoint = journal.checkpoints.leaf;
+    if (!checkpoint) throw new Error("missing checkpoint");
+    checkpoint.retryAt = 0;
+    vi.mocked(driver.build).mockResolvedValueOnce({ transaction: {} });
+    await runLaunch(journal, storage, driver, undefined, undefined, undefined, true);
+    expect(driver.send).not.toHaveBeenCalled();
+    expect(journal.checkpoints.leaf?.status).toBe("idle");
+  });
+  it("never runs a profile signer from automatic waiting reconciliation", async () => {
+    const { journal, storage, driver } = setup();
+    journal.steps = [{ id: "profile", kind: "profile", chain: 42161, dependencies: [] }];
+    journal.checkpoints.profile = { stepId: "profile", chain: 42161, status: "waiting" };
+    await runLaunch(journal, storage, driver, undefined, undefined, undefined, true);
+    expect(driver.build).not.toHaveBeenCalled();
+    expect(driver.send).not.toHaveBeenCalled();
+  });
+  it("waits with persisted discovery backoff and does not build before retryAfter", async () => {
+    const { journal, storage, driver } = setup();
+    journal.steps = [{ id: "leaf", kind: "open", chain: 42161, dependencies: [] }];
+    vi.mocked(driver.build).mockRejectedValueOnce(
+      Object.assign(new Error("V2_DISCOVERY_PENDING"), { retryAfterSeconds: 2 }),
+    );
+    const started = Date.now();
+    await runLaunch(journal, storage, driver);
+    expect(journal.checkpoints.leaf).toMatchObject({ status: "waiting", waitReason: "discovery" });
+    expect(journal.checkpoints.leaf?.retryAt).toBeGreaterThanOrEqual(started + 2000);
+    await runLaunch(journal, storage, driver);
+    expect(driver.build).toHaveBeenCalledTimes(1);
+    expect(driver.send).not.toHaveBeenCalled();
+  });
+  it("polls a submitted sibling despite earlier failure without rebuilding or rebroadcast", async () => {
+    const { journal, storage, driver } = setup();
+    journal.steps = [
+      { id: "bad", kind: "open", chain: 42161, dependencies: [] },
+      { id: "leaf", kind: "open", chain: 42161, dependencies: [] },
+    ];
+    journal.checkpoints.bad = {
+      stepId: "bad",
+      chain: 42161,
+      status: "failed",
+      error: "V2_REQUEST_FAILED",
+    };
+    journal.checkpoints.leaf = {
+      stepId: "leaf",
+      chain: 42161,
+      status: "waiting",
+      txHash: "0xknown",
+      receiptStatus: "unknown",
+    };
+    await runLaunch(journal, storage, driver, undefined, undefined, undefined, true);
+    expect(journal.checkpoints.leaf?.status).toBe("confirmed");
+    expect(journal.checkpoints.bad?.status).toBe("failed");
+    expect(driver.build).not.toHaveBeenCalled();
+    expect(driver.send).not.toHaveBeenCalled();
+  });
+  it("keeps a receipt-success position waiting for API verification without rebroadcast", async () => {
+    const { journal, storage, driver } = setup();
+    journal.steps = [{ id: "leaf", kind: "open", chain: 42161, dependencies: [] }];
+    journal.checkpoints.leaf = {
+      stepId: "leaf",
+      chain: 42161,
+      status: "submitted",
+      txHash: "0xknown",
+    };
+    vi.mocked(driver.complete).mockRejectedValueOnce(
+      Object.assign(new Error("V2_DISCOVERY_PENDING"), { retryAfterSeconds: 2 }),
+    );
+    await runLaunch(journal, storage, driver);
+    expect(journal.checkpoints.leaf).toMatchObject({ status: "waiting", receiptStatus: "success" });
+    journal.checkpoints.leaf.retryAt = 0;
+    await runLaunch(journal, storage, driver);
+    expect(journal.checkpoints.leaf?.status).toBe("confirmed");
+    expect(driver.build).not.toHaveBeenCalled();
+    expect(driver.send).not.toHaveBeenCalled();
+  });
+  it("blocks an old-journal bridge while an independent hub leaf is pending", async () => {
+    const { journal, storage, driver } = setup();
+    journal.steps = [
+      { id: "leaf", kind: "open", chain: 42161, dependencies: [] },
+      { id: "bridge", kind: "bridge", chain: 42161, dependencies: [] },
+    ];
+    vi.mocked(driver.build).mockResolvedValue({});
+    await runLaunch(journal, storage, driver);
+    expect(driver.build).toHaveBeenCalledTimes(1);
+    expect(journal.checkpoints.bridge).toBeUndefined();
+  });
   it("clears a previous error when Retry reconciles the completed step", async () => {
     const { journal, storage, driver } = setup();
     journal.steps = [{ id: "profile", kind: "profile", chain: 42161, dependencies: [] }];
