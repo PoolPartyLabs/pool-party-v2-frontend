@@ -171,7 +171,7 @@ describe("headless launch binding [R3, R4, R6]", () => {
     const { result } = renderHook(() => useV2LaunchBinding(options()));
     await waitFor(() => expect(result.current.hydrated).toBe(true));
     await act(async () => {
-      await result.current.sign();
+      await result.current.next();
     });
     expect(mocks.build).toHaveBeenCalledTimes(3);
     expect(result.current.checkpoints.report?.status).toBe("confirmed");
@@ -275,7 +275,7 @@ describe("headless launch binding [R3, R4, R6]", () => {
     });
     expect(disabled.result.current.error?.code).toBe("V2_UNAVAILABLE");
   });
-  it("advances exactly one ready step for next and sign without running the full plan", async () => {
+  it("keeps next as one-step advancement while Sign continues the remaining plan", async () => {
     const { result } = renderHook(() => useV2LaunchBinding(options()));
     await waitFor(() => expect(result.current.hydrated).toBe(true));
     await act(async () => {
@@ -286,9 +286,108 @@ describe("headless launch binding [R3, R4, R6]", () => {
     await act(async () => {
       await result.current.sign();
     });
-    expect(mocks.build).toHaveBeenCalledTimes(2);
-    expect(result.current.currentStep?.kind).toBe("discover");
+    expect(mocks.build.mock.calls.length).toBeGreaterThan(2);
+    expect(result.current.status).toBe("complete");
   });
+
+  const storeTwoSteps = () => {
+    const journal = createJournal("draft", manager, frozen, [
+      { id: "first", kind: "approve", chain: 42161, dependencies: [] },
+      { id: "second", kind: "create", chain: 42161, dependencies: ["first"] },
+    ]);
+    localStorage.setItem(journalKey("draft", manager), JSON.stringify(journal));
+    mocks.build.mockResolvedValue({ transaction: {} });
+  };
+  it("R1 one Sign serially prompts both steps after successful receipts", async () => {
+    storeTwoSteps();
+    const { result } = renderHook(() => useV2LaunchBinding(options()));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    expect(mocks.send).not.toHaveBeenCalled();
+    await act(async () => {
+      await result.current.sign();
+    });
+    expect(mocks.send.mock.calls.map(([step]) => step.id)).toEqual(["first", "second"]);
+    expect(result.current.status).toBe("complete");
+    expect(mocks.receipt).toHaveBeenCalledTimes(2);
+  });
+  it("R1/R3 waits for a receipt, ignores double Sign and stops continuation on Pause", async () => {
+    storeTwoSteps();
+    let settle!: (value: { status: string }) => void;
+    mocks.receipt.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          settle = resolve;
+        }),
+    );
+    const { result } = renderHook(() => useV2LaunchBinding(options()));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    let run!: Promise<void>;
+    act(() => {
+      run = result.current.sign();
+    });
+    await waitFor(() => expect(mocks.receipt).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      await result.current.sign();
+    });
+    expect(mocks.send).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      result.current.pause();
+      settle({ status: "success" });
+      await run;
+    });
+    expect(mocks.send).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await result.current.resume();
+    });
+    expect(mocks.send.mock.calls.map(([step]) => step.id)).toEqual(["first", "second"]);
+    expect(result.current.status).toBe("complete");
+  });
+  it("R3 stops on rejection until explicit retry and never repeats the confirmed step", async () => {
+    storeTwoSteps();
+    mocks.send.mockResolvedValueOnce("0xfirst").mockRejectedValueOnce(new Error("USER_REJECTED"));
+    const { result } = renderHook(() => useV2LaunchBinding(options()));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    await act(async () => {
+      await result.current.sign();
+    });
+    expect(result.current.error?.code).toBe("USER_REJECTED");
+    expect(result.current.checkpoints.first?.status).toBe("confirmed");
+    await act(async () => {
+      await result.current.retry();
+    });
+    expect(mocks.send.mock.calls.map(([step]) => step.id)).toEqual(["first", "second", "second"]);
+    expect(result.current.status).toBe("complete");
+  });
+  it.each(["unmount", "wallet change"])("R2/R3 stops the next prompt after %s", async (change) => {
+    storeTwoSteps();
+    let settle!: (value: { status: string }) => void;
+    mocks.receipt.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          settle = resolve;
+        }),
+    );
+    const { result, rerender, unmount } = renderHook(
+      ({ account }) => useV2LaunchBinding({ ...options(), manager: account }),
+      { initialProps: { account: manager } },
+    );
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    let run!: Promise<void>;
+    act(() => {
+      run = result.current.sign();
+    });
+    await waitFor(() => expect(mocks.receipt).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      if (change === "unmount") unmount();
+      else rerender({ account: base });
+    });
+    await act(async () => {
+      settle({ status: "success" });
+      await run;
+    });
+    expect(mocks.send).toHaveBeenCalledTimes(1);
+  });
+
   it("exposes honest waits, polls and pauses without rebuilding confirmed work", async () => {
     mocks.build.mockResolvedValue({});
     const { result } = renderHook(() => useV2LaunchBinding({ ...options(), pollInterval: 1 }));
