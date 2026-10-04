@@ -60,6 +60,7 @@
     "launch": "Starten · {count} Signaturen"
   },
   "fundLaunch": {
+    "reportWait": "Warten auf einen akzeptierten Bericht. Meist 14-19 Minuten, manchmal länger. Wir prüfen weiter bis zum Eingang; eine Pause bewahrt Ihren Fortschritt.",
     "journeyTitle": "Fondsstart",
     "journeyWait": "Jede Transaktion benötigt Ihre Bestätigung. Bridge und Berichte können Minuten dauern.",
     "receiptLabel": "Beleg",

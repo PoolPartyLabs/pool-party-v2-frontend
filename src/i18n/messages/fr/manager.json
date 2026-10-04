@@ -60,6 +60,7 @@
     "launch": "Lancer · {count} signatures"
   },
   "fundLaunch": {
+    "reportWait": "En attente d’un rapport accepté. Généralement 14-19 minutes, parfois plus. Nous vérifions jusqu’à son arrivée ; une pause conserve votre progression.",
     "journeyTitle": "Lancement du fonds",
     "journeyWait": "Chaque transaction demande votre confirmation. Ponts et rapports peuvent prendre plusieurs minutes.",
     "receiptLabel": "Reçu",

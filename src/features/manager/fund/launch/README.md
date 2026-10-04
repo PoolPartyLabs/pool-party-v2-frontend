@@ -68,6 +68,8 @@ Actions verify bearer session via authenticated users/me with no caching/public-
 
 ## Known gaps and validation
 
+- Accepted reports are observed through the manager-authenticated fund detail read, not an admin report trigger. A null report stays waiting, with a 14-19 minute typical finalized-report estimate and no journey deadline. Single-step actions poll the selected waiting step and stop before the next signature. Explicitly deferred reads and throttling wait; real API errors still fail and preserve Retry checkpoints. The enabled API keeper owns report publication and delivery.
+
 - POO-2172 connects its Launch button; POO-2144/2171 supply typed panel configuration. Only our separate Journey route is installed.
 - Non-base two-conversion pairs, non-base Aave assets and standalone manual swaps fail closed. No speculative routes.
 - Journal is browser-local, not cross-device durable launch-plan. Web Locks guard duplicate tabs; unsupported browsers fail closed. Alpha reorg handling and cross-device coordination need the later API.

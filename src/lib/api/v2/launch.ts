@@ -45,16 +45,24 @@ export async function launchFetch<ResponseData>(
   } catch {
     throw new ApiError(503, "V2_UNAVAILABLE", "v2 unavailable");
   }
-  if (!response.ok)
+  if (!response.ok) {
+    const envelope =
+      payload !== null && typeof payload === "object"
+        ? (payload as { deferred?: unknown; response?: { deferred?: unknown } })
+        : {};
     throw new ApiError(
       response.status,
       response.status === 429
         ? "V2_RATE_LIMITED"
-        : response.status === 409
-          ? "V2_CONFLICT"
-          : "V2_REQUEST_FAILED",
+        : [408, 503].includes(response.status) &&
+            (envelope.deferred === true || envelope.response?.deferred === true)
+          ? "V2_DEFERRED"
+          : response.status === 409
+            ? "V2_CONFLICT"
+            : "V2_REQUEST_FAILED",
       "v2 request failed",
     );
+  }
   if (response.headers.get("x-pool-party-protocol") !== "v2") throw new ApiParseError(path, []);
   const data =
     payload !== null && typeof payload === "object"

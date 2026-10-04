@@ -145,6 +145,15 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
           (step) =>
             track("builder_launch_signature", { chain_id: step.chain, step_kind: step.kind }),
         );
+        const singleStepId = once
+          ? current.steps.find(
+              (step) =>
+                current.checkpoints[step.id]?.status !== "confirmed" &&
+                step.dependencies.every(
+                  (dependency) => current.checkpoints[dependency]?.status === "confirmed",
+                ),
+            )?.id
+          : undefined;
         do {
           await runLaunch(
             current,
@@ -174,7 +183,7 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
             break;
           }
           if (
-            once ||
+            (once && (!singleStepId || current.checkpoints[singleStepId]?.status !== "waiting")) ||
             current.steps.every((step) => current?.checkpoints[step.id]?.status === "confirmed")
           )
             break;

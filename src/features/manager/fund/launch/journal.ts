@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-STO-002 (POO-2177)
  * @name launchJournal
- * @implements-rules-version v2 (POO-2181)
+ * @implements-rules-version v3 (POO-2192)
  * Durable checkpoints: uncertain receipts always reconcile before rebuilding.
  */
 import type { LaunchStep } from "./plan";
@@ -212,6 +212,7 @@ export async function runLaunch(
       if (checkpoint.status === "signing" && step.kind !== "profile")
         throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
       checkpoint.status = "building";
+      delete checkpoint.error;
       persist();
       const built = await driver.build(step, journal);
       checkpoint.data = { ...checkpoint.data, ...built.data };
@@ -245,6 +246,16 @@ export async function runLaunch(
       delete checkpoint.error;
       persist();
     } catch (error) {
+      if (
+        ["discover", "report", "arrival"].includes(step.kind) &&
+        error instanceof Error &&
+        ["V2_DEFERRED", "V2_RATE_LIMITED"].includes(error.message)
+      ) {
+        checkpoint.status = "waiting";
+        delete checkpoint.error;
+        persist();
+        continue;
+      }
       checkpoint.status = "failed";
       checkpoint.error =
         error instanceof Error && /^[A-Z][A-Z0-9_]*$/.test(error.message)

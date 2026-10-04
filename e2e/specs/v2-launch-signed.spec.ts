@@ -3,7 +3,7 @@
  * @name opt-in v2 launch E2E
  * @implements-rules-version v1
  */
-import { mkdir, writeFile } from "node:fs/promises";
+import { chmod, mkdir, open, readFile, writeFile } from "node:fs/promises";
 import type { Page } from "@playwright/test";
 import { parseUnits } from "viem";
 import manager from "../../src/i18n/messages/en/manager.json";
@@ -14,11 +14,13 @@ import {
   safeV2WalletCall,
   v2LaunchFailure,
   v2LaunchMode,
+  v2LaunchResumeState,
   v2LaunchStepLabel,
 } from "../helpers/v2LaunchSigning";
 
 const burner = "0x3A3ea619C0f37a7D2fF07FF442d863f316A99A7a";
 const mode = v2LaunchMode(process.env.E2E_V2_SIGNED_DRY);
+const resumeStatePath = process.env.E2E_V2_RESUME_STATE;
 type Kind = keyof Pick<
   typeof manager.fundLaunch,
   | "approve"
@@ -64,6 +66,7 @@ const test = base.extend<{ signingGuard: Guard }>({
                   mode,
                   guard.armed,
                   process.env.E2E_V2_SIGNED,
+                  process.env.E2E_V2_NO_SIGN,
                 )
               ) {
                 await guard.beforeSignature();
@@ -175,7 +178,10 @@ async function assertLaunchedFund(page: Page, core: string, name: string) {
 }
 
 test.describe("@v2-launch-signed opt-in mainnet launch", () => {
-  test.use({ viewport: { width: 1920, height: 1080 } });
+  test.use({
+    viewport: { width: 1920, height: 1080 },
+    storageState: process.env.E2E_V2_RESUME_STATE ?? process.env.E2E_V2_AUTH_STATE,
+  });
   test.describe.configure({ mode: "serial", timeout: 90 * 60_000 });
   test.skip(process.env.E2E_V2_SIGNED !== "1", "Human operator must explicitly opt in");
 
@@ -216,6 +222,70 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
         : info.outputPath("v2-launch-signed-evidence.json");
     await mkdir(info.outputDir, { recursive: true });
     const persist = async () => writeFile(evidencePath, JSON.stringify(evidence, null, 2));
+    const storageDir = info.outputPath("storage-evidence");
+    await mkdir(storageDir, { recursive: true, mode: 0o700 });
+    await chmod(storageDir, 0o700);
+    let checkpointSequence = 0;
+    let checkpointQueue = Promise.resolve();
+    let checkpointFailed = false;
+    const checkpoint = (label: string) => {
+      checkpointQueue = checkpointQueue
+        .then(async () => {
+          const state = JSON.stringify(await page.context().storageState(), null, 2);
+          const filename = `${String(++checkpointSequence).padStart(4, "0")}-${label.replace(/[^\w-]/g, "-")}.json`;
+          for (const path of [`${storageDir}/${filename}`, `${storageDir}/storage-state.json`]) {
+            const handle = await open(path, "w", 0o600);
+            try {
+              await handle.chmod(0o600);
+              await handle.writeFile(state);
+            } finally {
+              await handle.close();
+            }
+          }
+        })
+        .catch(() => {
+          checkpointFailed = true;
+        });
+      return checkpointQueue;
+    };
+    await page.exposeFunction("__ppV2StorageCheckpoint", (label: string) =>
+      checkpoint(
+        /^(step-\d+-(approve|create|discover|spoke|profile|allocate|report|bridge|arrival|swap|open)-(idle|building|signing|submitted|waiting|confirmed|failed)|journal-changed)$/.test(
+          label,
+        )
+          ? label
+          : "journal-changed",
+      ),
+    );
+    await page.addInitScript(() => {
+      const observed = new Map<string, string>();
+      window.addEventListener("pp:v2:launch-changed", () => {
+        const notify = (
+          window as unknown as {
+            __ppV2StorageCheckpoint: (label: string) => Promise<void>;
+          }
+        ).__ppV2StorageCheckpoint;
+        for (let index = 0; index < localStorage.length; index += 1) {
+          const key = localStorage.key(index);
+          if (!key?.startsWith("pp:v2:launch:1:")) continue;
+          try {
+            const journal = JSON.parse(localStorage.getItem(key) ?? "null") as {
+              steps: Array<{ id: string; kind: string }>;
+              checkpoints: Record<string, { status: string }>;
+            };
+            for (const [stepIndex, step] of journal.steps.entries()) {
+              const status = journal.checkpoints[step.id]?.status ?? "idle";
+              const identity = `${key}:${step.id}`;
+              if (observed.get(identity) === status) continue;
+              observed.set(identity, status);
+              void notify(`step-${stepIndex + 1}-${step.kind}-${status}`).catch(() => {});
+            }
+          } catch {
+            void notify("journal-changed").catch(() => {});
+          }
+        }
+      });
+    });
     const snapshot = async (clicked = false) => {
       const current = await readSteps(page);
       const active = current.findIndex((step) => step.status !== "Confirmed");
@@ -227,6 +297,8 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
         step.confirmedAt =
           previous?.confirmedAt ?? (step.status === "Confirmed" ? step.observedAt : null);
         step.screenshot = previous?.screenshot ?? null;
+        if (step.status === "Confirmed" && previous?.status !== "Confirmed")
+          await checkpoint(`step-${index + 1}-${step.kind}-confirmed-observed`);
         if (
           !previous?.screenshot ||
           previous.status !== step.status ||
@@ -244,23 +316,51 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
       evidence.steps = current;
       evidence.observations.push({ at: new Date().toISOString(), steps: current });
       await persist();
+      await checkpointQueue;
+      expect(checkpointFailed, "V2_LAUNCH_STORAGE_CHECKPOINT_FAILED").toBe(false);
     };
     try {
       expect(process.env.E2E_PRIVATE_KEY, "Explicit authorized key required").toBeTruthy();
       expect(wallet.address.toLowerCase()).toBe(burner.toLowerCase());
-      const prepared = await prepareV2Launch(page, info);
-      evidence.draftId = prepared.draft.id;
-      evidence.name = prepared.name;
-      evidence.review = await assertReviewSafety(page, wallet.address);
+      let resumed: ReturnType<typeof v2LaunchResumeState> | undefined;
+      if (resumeStatePath) {
+        resumed = v2LaunchResumeState(
+          JSON.parse(await readFile(resumeStatePath, "utf8")),
+          process.env.E2E_BASE_URL ?? "http://localhost:3000",
+          burner,
+        );
+        expect(parseUnits(resumed.seed, 6), "Persisted seed exceeds 2.1 USDC").toBeLessThanOrEqual(
+          2_100_000n,
+        );
+        evidence.draftId = resumed.draftId;
+        evidence.name = resumed.name;
+        await page.goto(resumed.path);
+        await expect(page).toHaveURL((url) => url.pathname === resumed?.path);
+        await expect(
+          page.getByRole("heading", { name: "Fund launch journey", exact: true }),
+        ).toBeVisible();
+        expect(
+          v2LaunchResumeState(await page.context().storageState(), page.url(), burner),
+        ).toEqual(resumed);
+        await checkpoint("resume-loaded");
+      } else {
+        const prepared = await prepareV2Launch(page, info);
+        evidence.draftId = prepared.draft.id;
+        evidence.name = prepared.name;
+        evidence.review = await assertReviewSafety(page, wallet.address);
+        await checkpoint("review-ready");
+      }
       const launch = page.getByRole("button", { name: /^Launch · \d+ signatures$/ });
-      await expect(launch).toBeEnabled();
-      evidence.launchButton = await launch.innerText();
+      if (!resumed) {
+        await expect(launch).toBeEnabled();
+        evidence.launchButton = await launch.innerText();
+      }
       await snapshot();
       if (mode === "dry") {
         evidence.outcome = "dry-completed-without-launch";
         return;
       }
-      if (mode === "dry-launch") {
+      if (mode === "dry-launch" && !resumed) {
         const expectedSteps: Array<[Kind, number]> = [
           ["approve", 42161],
           ["create", 42161],
@@ -306,6 +406,11 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
         evidence.outcome = "dry-launch-completed-without-signing";
         return;
       }
+      if (mode === "dry-launch") {
+        expect(signingGuard.armed).toBe(false);
+        evidence.outcome = "dry-resume-inspected-without-signing";
+        return;
+      }
       signingGuard.beforeSignature = async () => {
         expect(wallet.address.toLowerCase()).toBe(burner.toLowerCase());
         const accounts = await page.evaluate(async () =>
@@ -316,10 +421,22 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
           ).__ppWalletBridge({ method: "eth_accounts" }),
         );
         expect(accounts.map((account) => account.toLowerCase())).toEqual([burner.toLowerCase()]);
+        v2LaunchResumeState(await page.context().storageState(), page.url(), burner);
         await snapshot(true);
       };
       signingGuard.armed = true;
-      await launch.click();
+      if (resumed) {
+        const resume = page.getByRole("button", {
+          name: resumed.failed ? "Retry failed step" : "Resume journey",
+          exact: true,
+        });
+        await expect(resume).toBeEnabled();
+        evidence.resumeAt = new Date().toISOString();
+        await checkpoint(resumed.failed ? "before-retry" : "before-resume");
+        await resume.click();
+      } else {
+        await launch.click();
+      }
       await expect(
         page.getByRole("heading", { name: "Fund launch journey", exact: true }),
       ).toBeVisible();
@@ -342,6 +459,7 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
           break;
         }
         if (
+          !resumed &&
           !evidence.reloadAt &&
           evidence.steps.some((step) => step.chainId === 4663 && step.status === "Confirmed")
         ) {
@@ -377,7 +495,7 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
       for (const address of evidence.spokeVaults) expect(address).toMatch(/^0x[\da-f]{40}$/i);
       await persist();
       signingGuard.armed = false;
-      await assertLaunchedFund(page, evidence.coreVault as string, prepared.name);
+      await assertLaunchedFund(page, evidence.coreVault as string, evidence.name as string);
     } catch {
       evidence.outcome = "failed";
       const alerts = await page
@@ -389,11 +507,13 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
     } finally {
       signingGuard.armed = false;
       evidence.finishedAt = new Date().toISOString();
+      await checkpoint(evidence.outcome === "failed" ? "failure" : "final");
       await persist();
       await info.attach("v2-launch-signed-evidence", {
         path: evidencePath,
         contentType: "application/json",
       });
+      expect(checkpointFailed, "V2_LAUNCH_STORAGE_CHECKPOINT_FAILED").toBe(false);
     }
   });
 });

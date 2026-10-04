@@ -4,6 +4,8 @@ import {
   safeV2WalletCall,
   v2LaunchFailure,
   v2LaunchMode,
+  v2LaunchResumePath,
+  v2LaunchResumeState,
   v2LaunchStepLabel,
 } from "../e2e/helpers/v2LaunchSigning";
 import { buildLegacySiweMessage } from "../src/lib/auth/siweMessage";
@@ -52,7 +54,6 @@ describe("v2 launch signing safety", () => {
 
   it.each([
     "dry",
-    "dry-launch",
     "signed",
   ] as const)("allows only allowlisted SIWE authentication and reads without arming in %s", (mode) => {
     expect(
@@ -82,6 +83,43 @@ describe("v2 launch signing safety", () => {
         "1",
       ),
     ).toThrow("Launch signing is disarmed");
+  });
+
+  it("blocks SIWE too in launch-dry, even with explicit opt-in and arming", () => {
+    expect(() =>
+      assertV2LaunchSigningAllowed(
+        {
+          method: "personal_sign",
+          params: [buildLegacySiweMessage(address, "nonce12345"), address],
+        },
+        address,
+        "dry-launch",
+        true,
+        "1",
+      ),
+    ).toThrow("Launch signing is disarmed");
+  });
+
+  it.each([
+    "dry",
+    "dry-launch",
+    "signed",
+  ] as const)("NO_SIGN blocks every signature including SIWE in %s without blocking reads", (mode) => {
+    for (const method of financialMethods) {
+      expect(() =>
+        assertV2LaunchSigningAllowed(
+          { method, params: [buildLegacySiweMessage(address, "nonce12345"), address] },
+          address,
+          mode,
+          true,
+          "1",
+          "1",
+        ),
+      ).toThrow("Launch signing is disarmed");
+    }
+    expect(
+      assertV2LaunchSigningAllowed({ method: "eth_accounts" }, address, mode, true, "1", "1"),
+    ).toBe(false);
   });
 
   it("requires both arming and explicit opt-in for signed financial requests", () => {
@@ -150,9 +188,10 @@ describe("v2 launch signing safety", () => {
     }
   });
   it("sanitizes callback failures before they can cross the browser bridge", async () => {
+    const secret = `0x${"a".repeat(64)}`;
     await expect(
       safeV2WalletCall(async () => {
-        throw new Error("upstream endpoint sensitive detail");
+        throw new Error(`upstream endpoint ${secret}`);
       }),
     ).rejects.toThrow(/^V2_WALLET_REQUEST_FAILED$/);
     expect(await safeV2WalletCall(async () => "public result")).toBe("public result");
@@ -163,6 +202,184 @@ describe("v2 launch signing safety", () => {
       error: "V2_LAUNCH_FAILED",
       uiError: "V2_LAUNCH_UI_ERROR",
     });
+  });
+});
+
+describe("wallet-local launch resume", () => {
+  const origin = "https://v2.dev.pool-party.xyz";
+  const draftId = "416268a3-35e7-4ce9-874d-41dad4c29e4e";
+  const journeyId = `${address.toLowerCase()}:${draftId}`;
+  const journey = {
+    version: 1,
+    journeyId,
+    manager: address.toLowerCase(),
+    draftId,
+    createdAt: "2026-10-04T00:00:00Z",
+    draft: { id: draftId, review: { name: "Existing launch", seed: "2" } },
+  };
+  const journal = {
+    version: 1,
+    draftId,
+    manager: address.toLowerCase(),
+    frozen: journey.draft,
+    steps: [{ id: "approve", chain: 42161, kind: "approve", dependencies: [] }],
+    checkpoints: {},
+    addresses: {},
+  };
+  const entries = (): [{ name: string; value: string }, { name: string; value: string }] => [
+    { name: `pp:v2:journey:1:${journeyId}`, value: JSON.stringify(journey) },
+    { name: `pp:v2:launch:1:${journeyId}`, value: JSON.stringify(journal) },
+  ];
+  const state = (localStorage: Array<{ name: string; value: string }> = entries()) => ({
+    cookies: [],
+    origins: [{ origin, localStorage }],
+  });
+
+  it("uses the exact encoded wallet:draft route, never the review route", () => {
+    expect(v2LaunchResumePath(journeyId, address)).toBe(
+      `/en/manager/fund-launch/${encodeURIComponent(journeyId)}`,
+    );
+    for (const invalid of [
+      `${`0x${"1".repeat(40)}`}:${draftId}`,
+      `${address}:`,
+      `${address}:../review`,
+      `${address}:draft?new=1`,
+      encodeURIComponent(journeyId),
+    ]) {
+      expect(() => v2LaunchResumePath(invalid, address)).toThrow(/^V2_LAUNCH_INVALID_RESUME$/);
+    }
+  });
+
+  it("reads persisted metadata and the existing unfinished journal for the exact origin", () => {
+    expect(v2LaunchResumeState(state(), origin, address)).toEqual({
+      path: `/en/manager/fund-launch/${encodeURIComponent(journeyId)}`,
+      journeyId,
+      draftId,
+      name: "Existing launch",
+      seed: "2",
+      failed: false,
+    });
+    expect(() => v2LaunchResumeState(state(), "http://localhost:3000", address)).toThrow(
+      /^V2_LAUNCH_INVALID_RESUME$/,
+    );
+  });
+
+  it("selects Retry failed step only for a persisted failure", () => {
+    const localStorage = entries();
+    localStorage[1].value = JSON.stringify({
+      ...journal,
+      checkpoints: { approve: { stepId: "approve", chain: 42161, status: "failed" } },
+    });
+    expect(v2LaunchResumeState(state(localStorage), origin, address).failed).toBe(true);
+  });
+
+  it("refuses missing journals, completed journeys, and mismatched wallet or draft metadata", () => {
+    const complete = entries();
+    complete[1].value = JSON.stringify({
+      ...journal,
+      checkpoints: { approve: { stepId: "approve", chain: 42161, status: "confirmed" } },
+    });
+    const wrongManager = entries();
+    wrongManager[0].value = JSON.stringify({ ...journey, manager: `0x${"1".repeat(40)}` });
+    const wrongDraft = entries();
+    wrongDraft[0].value = JSON.stringify({ ...journey, draft: { ...journey.draft, id: "other" } });
+    const wrongJournal = entries();
+    wrongJournal[1].value = JSON.stringify({ ...journal, manager: `0x${"1".repeat(40)}` });
+    for (const localStorage of [
+      [],
+      entries().slice(0, 1),
+      complete,
+      wrongManager,
+      wrongDraft,
+      wrongJournal,
+    ]) {
+      expect(() => v2LaunchResumeState(state(localStorage), origin, address)).toThrow(
+        /^V2_LAUNCH_INVALID_RESUME$/,
+      );
+    }
+    expect(() => v2LaunchResumeState(state(), origin, `0x${"1".repeat(40)}`)).toThrow(
+      /^V2_LAUNCH_INVALID_RESUME$/,
+    );
+  });
+
+  it("fails ambiguity instead of choosing the newest draft or another origin", () => {
+    const secondId = `${address.toLowerCase()}:second`;
+    const localStorage = [
+      ...entries(),
+      {
+        name: `pp:v2:journey:1:${secondId}`,
+        value: JSON.stringify({
+          ...journey,
+          journeyId: secondId,
+          draftId: "second",
+          draft: { ...journey.draft, id: "second" },
+        }),
+      },
+      {
+        name: `pp:v2:launch:1:${secondId}`,
+        value: JSON.stringify({ ...journal, draftId: "second" }),
+      },
+    ];
+    expect(() => v2LaunchResumeState(state(localStorage), origin, address)).toThrow(
+      /^V2_LAUNCH_AMBIGUOUS_RESUME$/,
+    );
+  });
+
+  it("ignores completed journeys and unrelated origins without changing the selected journal", () => {
+    const completeId = `${address.toLowerCase()}:complete`;
+    const localStorage = [
+      ...entries(),
+      {
+        name: `pp:v2:journey:1:${completeId}`,
+        value: JSON.stringify({
+          ...journey,
+          journeyId: completeId,
+          draftId: "complete",
+          draft: { ...journey.draft, id: "complete" },
+        }),
+      },
+      {
+        name: `pp:v2:launch:1:${completeId}`,
+        value: JSON.stringify({
+          ...journal,
+          draftId: "complete",
+          checkpoints: { approve: { stepId: "approve", chain: 42161, status: "confirmed" } },
+        }),
+      },
+    ];
+    const original = JSON.stringify(localStorage);
+    const stored = state(localStorage);
+    stored.origins.push({ origin: "http://localhost:3000", localStorage: entries() });
+    expect(v2LaunchResumeState(stored, origin, address).journeyId).toBe(journeyId);
+    expect(JSON.stringify(localStorage)).toBe(original);
+  });
+
+  it("rejects duplicate origins, duplicate storage keys, and malformed checkpoints", () => {
+    const duplicateOrigin = state();
+    duplicateOrigin.origins.push({ origin, localStorage: entries() });
+    const malformedJournal = entries();
+    malformedJournal[1].value = JSON.stringify({
+      ...journal,
+      checkpoints: { approve: { stepId: "other", chain: 42161, status: "confirmed" } },
+    });
+    for (const stored of [
+      duplicateOrigin,
+      state([...entries(), ...entries()]),
+      state(malformedJournal),
+    ]) {
+      expect(() => v2LaunchResumeState(stored, origin, address)).toThrow(
+        /^V2_LAUNCH_INVALID_RESUME$/,
+      );
+    }
+  });
+
+  it("never leaks keys or cookie values through validation failures", () => {
+    const secret = `0x${"a".repeat(64)}`;
+    const invalid = state([{ name: `pp:v2:journey:1:${journeyId}`, value: secret }]);
+    expect(() => v2LaunchResumeState(invalid, origin, address)).toThrow(
+      /^V2_LAUNCH_INVALID_RESUME$/,
+    );
+    expect(() => v2LaunchResumePath(secret, address)).toThrow(/^V2_LAUNCH_INVALID_RESUME$/);
   });
 });
 /**
