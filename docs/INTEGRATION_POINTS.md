@@ -41,13 +41,17 @@ Report-job views whitelist identifiers/status/publication/delivery hashes from s
 
 See `src/features/funds/README.md`. `PP_API_ADMIN_KEY` remains server-only; never put it in a public variable or browser request.
 
+## Launch submission recovery (POO-2222, rules v1)
+
+`launchReconciliationActions.ts` verifies SIWE session ownership before reading API transit history or bounded chain logs. `launch/driver.ts` validates successful receipt emitters, planned identities and saved calldata before recovering hashes and bridge transit IDs. Wallet callbacks persist submission hashes before analytics; automatic reconciliation is read-only and cannot send replacement transactions. Missing evidence stays fail-closed.
+
 Inventory of the front-end seams that run mocked or placeholder logic today and are replaced by a real
 integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the code maps to this document.
 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 484 markers across 278 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 489 markers across 282 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap

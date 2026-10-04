@@ -4,11 +4,12 @@
  * @implements-rules-version v3 (POO-2192)
  * @implements-rules-version v1 (POO-2208)
  * @implements-rules-version v1 (POO-2211)
+ * @implements-rules-version v1 (POO-2222)
  * Just-in-time API builders and receipt reconciliation. No wallet broadcast occurs on import.
  */
 
 import Decimal from "decimal.js";
-import { formatUnits, type TransactionReceipt } from "viem";
+import { decodeFunctionData, formatUnits, type Hex, parseAbi, type TransactionReceipt } from "viem";
 import { z } from "zod";
 import { getCatalogPoolAction } from "@/lib/api/v2/actions";
 import { V2DiscoveryPendingError } from "@/lib/api/v2/discovery";
@@ -27,6 +28,7 @@ import {
   readLaunchProfileAction,
   readLaunchTransitAction,
 } from "@/lib/api/v2/launchActions";
+import { readLaunchSubmissionCandidatesAction } from "@/lib/api/v2/launchReconciliationActions";
 import {
   type CreateFundRequest,
   type LaunchTransaction,
@@ -34,10 +36,16 @@ import {
 } from "@/lib/api/v2/launchSchemas";
 import { addressSchema, catalogPoolSchema } from "@/lib/api/v2/schemas";
 import { positionAmounts } from "./composition";
-import type { Checkpoint, LaunchDriver, LaunchJournal } from "./journal";
+import {
+  type Checkpoint,
+  hasUnresolvedSubmission,
+  type LaunchDriver,
+  type LaunchJournal,
+} from "./journal";
 import { allocationRaw, type LaunchStep, validateTickAlignment } from "./plan";
 import { canonicalProfile, type LaunchProfile, profileMessage } from "./profile";
 import { decodeLaunchReceipt } from "./receipt";
+import { matchLaunchSubmission, type SubmissionIdentity } from "./reconciliation";
 import type { FundReview } from "./review";
 
 export interface FrozenLaunch {
@@ -46,9 +54,23 @@ export interface FrozenLaunch {
   plan?: import("./plan").CanvasPlan;
 }
 export interface LaunchWallet {
-  send(transaction: LaunchTransaction): Promise<string>;
+  send(
+    transaction: LaunchTransaction,
+    onSubmitted?: (hash: string) => void,
+    signal?: AbortSignal,
+  ): Promise<string>;
   receipt(chain: 42161 | 4663, hash: string): Promise<TransactionReceipt | null>;
   sign(message: string): Promise<string>;
+  blockNumber?(chain: 42161 | 4663): Promise<bigint>;
+  transaction?(
+    chain: 42161 | 4663,
+    hash: string,
+  ): Promise<{
+    from: string;
+    to: string | null;
+    input: string;
+    value: bigint;
+  } | null>;
 }
 
 function unwrap<Data>(
@@ -231,6 +253,127 @@ function launchProfile(journal: LaunchJournal): LaunchProfile {
     tags: [],
     ...intent,
   };
+}
+
+async function submissionBoundary(
+  step: LaunchStep,
+  checkpoint: Checkpoint,
+  journal: LaunchJournal,
+  wallet: LaunchWallet,
+): Promise<bigint | null> {
+  const submission = checkpoint.data?.submission as { fromBlock?: unknown } | undefined;
+  if (typeof submission?.fromBlock === "string" && /^\d+$/.test(submission.fromBlock))
+    return BigInt(submission.fromBlock);
+  let boundary: bigint | null = null;
+  const visited = new Set<string>();
+  const visit = async (id: string): Promise<void> => {
+    if (visited.has(id)) return;
+    visited.add(id);
+    const dependency = journal.steps.find((entry) => entry.id === id);
+    const previous = journal.checkpoints[id];
+    if (!dependency || previous?.status !== "confirmed") return;
+    if (dependency.chain === step.chain && previous.txHash) {
+      const mined = await wallet.receipt(step.chain, previous.txHash);
+      if (
+        mined?.status === "success" &&
+        mined.transactionHash.toLowerCase() === previous.txHash.toLowerCase() &&
+        (boundary === null || mined.blockNumber > boundary)
+      )
+        boundary = mined.blockNumber;
+    }
+    for (const parent of dependency.dependencies) await visit(parent);
+  };
+  for (const dependency of step.dependencies) await visit(dependency);
+  if (step.kind === "bridge") {
+    const allocation = journal.steps.find((entry) => entry.kind === "allocate");
+    if (allocation) await visit(allocation.id);
+  }
+  return boundary;
+}
+
+async function submissionIdentity(
+  step: LaunchStep,
+  checkpoint: Checkpoint,
+  journal: LaunchJournal,
+  fromBlock: bigint,
+): Promise<SubmissionIdentity> {
+  const saved = (checkpoint.data?.submission as { transaction?: unknown } | undefined)?.transaction;
+  const built = saved ? launchTransactionSchema.parse(saved) : undefined;
+  const identity: SubmissionIdentity = {
+    manager: journal.manager,
+    vault: built?.to ?? coreOf(journal),
+    fromBlock,
+  };
+  if (step.kind === "allocate" || step.kind === "bridge") {
+    identity.vault = coreOf(journal);
+    identity.amount = budget(step, journal).toString();
+    return identity;
+  }
+  if (step.kind === "create" || step.kind === "approve" || step.kind === "spoke") {
+    if (!built) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+    if (step.kind === "approve") {
+      const decoded = decodeFunctionData({
+        abi: parseAbi(["function approve(address spender, uint256 value) returns (bool)"]),
+        data: built.data as Hex,
+      });
+      identity.spender = decoded.args[0];
+      identity.amount = decoded.args[1].toString();
+    } else {
+      const provision =
+        step.kind === "create" ? record(checkpoint.data?.provision) : createData(journal);
+      const predicted = record(provision.predictedAddresses);
+      identity.core = step.kind === "create" ? addressSchema.parse(predicted.coreVault) : undefined;
+      if (step.kind === "spoke") {
+        const chain = z
+          .array(
+            z
+              .object({ chainId: z.union([z.string(), z.number()]), spokeVault: addressSchema })
+              .passthrough(),
+          )
+          .parse(predicted.chains)
+          .find((entry) => String(entry.chainId) === "4663");
+        identity.core = chain?.spokeVault;
+        identity.fundId = z.string().parse(predicted.fundId);
+        identity.mandateHash = z.string().parse(provision.mandateHash);
+      }
+    }
+    return identity;
+  }
+  const fund = unwrap(await readLaunchFundAction(coreOf(journal)));
+  const chain = z
+    .array(
+      z
+        .object({
+          chainId: z.string(),
+          spokeVault: addressSchema,
+          uniswapV4Adapter: addressSchema,
+          aaveV3Adapter: addressSchema,
+        })
+        .passthrough(),
+    )
+    .parse(fund.chains)
+    .find((entry) => entry.chainId === String(step.chain));
+  if (!chain) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+  identity.vault = chain.spokeVault;
+  identity.adapter = step.protocol === "aave-v3" ? chain.aaveV3Adapter : chain.uniswapV4Adapter;
+  identity.poolKey =
+    step.protocol === "aave-v3"
+      ? `0x${step.config?.assetKey?.split(":")[1]?.slice(2).padStart(64, "0")}`
+      : step.config?.poolId;
+  if (step.kind === "swap") {
+    if (!built) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+    const decoded = decodeFunctionData({
+      abi: parseAbi([
+        "function swap(address swapAdapter, address tokenIn, address tokenOut, uint256 amountIn, uint16 maxLossBps, bytes route) returns (uint256 amountOut)",
+      ]),
+      data: built.data as Hex,
+    });
+    identity.adapter = decoded.args[0];
+    identity.tokenIn = decoded.args[1];
+    identity.tokenOut = decoded.args[2];
+    identity.amount = decoded.args[3].toString();
+  }
+  return identity;
 }
 
 export function createLaunchDriver(
@@ -521,10 +664,11 @@ export function createLaunchDriver(
       );
       return { transaction: transaction(built, step.chain, from) };
     },
-    async send(step, input) {
+    async send(step, input, onSubmitted) {
       const built = launchTransactionSchema.parse(input);
       if (built.chainId !== step.chain) throw new Error("UNSAFE_TRANSACTION");
-      const hash = await wallet.send(built);
+      const hash = await wallet.send(built, onSubmitted);
+      onSubmitted?.(hash);
       onSignature(step);
       return hash;
     },
@@ -533,7 +677,15 @@ export function createLaunchDriver(
       if (!receipt) return { status: "unknown" };
       if (receipt.transactionHash.toLowerCase() !== hash.toLowerCase())
         throw new Error("BALANCES_UNAVAILABLE");
-      return { status: receipt.status, data: { receipt: decodeLaunchReceipt(receipt) } };
+      return {
+        status: receipt.status,
+        data: {
+          receipt: {
+            ...decodeLaunchReceipt(receipt),
+            blockNumber: receipt.blockNumber?.toString(),
+          },
+        },
+      };
     },
     async reconcile(step, checkpoint, journal) {
       if (step.kind === "profile") {
@@ -544,14 +696,72 @@ export function createLaunchDriver(
             canonicalProfile(launchProfile(journal))
         );
       }
-      if (
-        step.kind === "create" &&
-        !checkpoint.txHash &&
-        (checkpoint.status === "signing" ||
-          checkpoint.error === "SUBMISSION_RECONCILIATION_REQUIRED")
-      )
+      if (!hasUnresolvedSubmission(step, checkpoint)) return false;
+      try {
+        const boundary = await submissionBoundary(step, checkpoint, journal, wallet);
+        if (boundary === null) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+        const identity = await submissionIdentity(step, checkpoint, journal, boundary);
+        const saved = (checkpoint.data?.submission as { transaction?: unknown } | undefined)
+          ?.transaction;
+        const built = saved ? launchTransactionSchema.parse(saved) : undefined;
+        const provision = ["create", "approve"].includes(step.kind)
+          ? record(checkpoint.data?.provision)
+          : undefined;
+        const core =
+          journal.addresses.coreVault ??
+          addressSchema.parse(record(provision?.predictedAddresses).coreVault);
+        const found = new Map<string, { hash: string; data: Record<string, unknown> }>();
+        for (const mode of ["api", "rpc"] as const) {
+          const candidates = await readLaunchSubmissionCandidatesAction(core, {
+            chainId: step.chain,
+            address: identity.vault,
+            fromBlock: boundary.toString(),
+            mode,
+            preCreation: ["create", "approve"].includes(step.kind),
+          });
+          if (!candidates.ok) continue;
+          for (const hash of candidates.data.hashes) {
+            if (
+              Object.values(journal.checkpoints).some(
+                (previous) =>
+                  previous !== checkpoint && previous.txHash?.toLowerCase() === hash.toLowerCase(),
+              )
+            )
+              continue;
+            const mined = await wallet.receipt(step.chain, hash);
+            if (!mined || mined.transactionHash.toLowerCase() !== hash.toLowerCase()) continue;
+            const evidence = matchLaunchSubmission(step, mined, identity);
+            if (!evidence) continue;
+            if (built) {
+              if (!wallet.transaction) continue;
+              const submitted = await wallet.transaction(step.chain, hash);
+              if (
+                !submitted ||
+                submitted.from.toLowerCase() !== journal.manager ||
+                submitted.to?.toLowerCase() !== built.to.toLowerCase() ||
+                submitted.input.toLowerCase() !== built.data.toLowerCase() ||
+                submitted.value.toString() !== built.value
+              )
+                continue;
+            }
+            found.set(hash.toLowerCase(), {
+              hash,
+              data: { ...evidence, blockNumber: mined.blockNumber.toString() },
+            });
+          }
+          if (found.size > 0) break;
+        }
+        if (found.size !== 1) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+        const recovered = [...found.values()][0]!;
+        checkpoint.txHash = recovered.hash;
+        checkpoint.receiptStatus = "success";
+        checkpoint.data = { ...checkpoint.data, receipt: recovered.data };
+        await driver.complete(step, checkpoint, journal);
+        return true;
+      } catch (failure) {
+        if (failure instanceof V2DiscoveryPendingError) throw failure;
         throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
-      return false;
+      }
     },
     async complete(step, checkpoint, journal) {
       if (step.kind === "open") {
@@ -595,6 +805,23 @@ export function createLaunchDriver(
       }
       if (step.kind === "arrival") journal.arrival = z.string().parse(checkpoint.data?.arrival);
     },
+  };
+  const build = driver.build;
+  driver.build = async (step, journal) => {
+    const result = await build(step, journal);
+    if (!result.transaction) return result;
+    const built = launchTransactionSchema.parse(result.transaction);
+    const fromBlock = wallet.blockNumber ? await wallet.blockNumber(step.chain) : undefined;
+    return {
+      ...result,
+      data: {
+        ...result.data,
+        submission: {
+          transaction: built,
+          ...(fromBlock === undefined ? {} : { fromBlock: fromBlock.toString() }),
+        },
+      },
+    };
   };
   return driver;
 }

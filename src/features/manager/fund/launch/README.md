@@ -1,5 +1,13 @@
 # Fund Review data and launch journey
 
+## Lost submission hashes (POO-2222, rules v1)
+
+Wallet-returned hashes persist synchronously before signature analytics and receipt polling, even if the page unmounts during send. A durable submission-attempt marker prevents replay of ambiguous signing failures; definitive wallet rejection or cancellation before broadcast remains explicitly retryable.
+
+Read-only reconciliation recovers bridge, allocation, vault swaps/opens, approvals, fund creation and spoke creation from successful manager receipts. API fund-transit history is checked first, followed by RPC logs in chunks of at most ten blocks within a bounded submission window. New checkpoints retain the built transaction and pre-send block: recovered transactions must match its exact sender, destination, calldata and value. Legacy bridge checkpoints use confirmed allocation/ancestor receipt blocks and match the Core emitter, spoke index, destination chain and planned amount. Successful bridges persist both receipt and checkpoint transit identities. Opens also wait for position discovery.
+
+Missing, stale, reverted, unrelated or ambiguous evidence remains `SUBMISSION_RECONCILIATION_REQUIRED`; the runner never broadcasts a replacement. This patch does not deploy or sign transactions.
+
 ## Slice E contracts (POO-2181, rules v2)
 
 - Public index additionally exports `validateLogo`, `rawUsdc` and `previewSeed` unchanged from `review.ts`.
