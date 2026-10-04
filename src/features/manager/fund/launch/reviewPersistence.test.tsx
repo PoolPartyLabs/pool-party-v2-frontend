@@ -2,7 +2,12 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createEmptyDraft } from "../mandateDraft";
 import { getDraft, upsertDraft } from "../mandateDraftStore";
+import { createJournal, saveJournal } from "./journal";
+import { deriveLaunchSteps } from "./plan";
 import { useV2ReviewDraft } from "./useV2ReviewDraft";
+
+const mocks = vi.hoisted(() => ({ fund: vi.fn(), upload: vi.fn() }));
+vi.mock("@/lib/api/v2/launchActions", () => ({ readLaunchFundAction: mocks.fund }));
 
 vi.mock("../useV2MandateCatalog", () => ({ useV2MandateCatalog: () => ({}) }));
 vi.mock("../v2Mandate", () => ({ toV2MandateSelection: () => ({}) }));
@@ -14,7 +19,7 @@ vi.mock("./useV2LaunchWallet", () => ({
   }),
 }));
 vi.mock("@/lib/media/useUploadMedia", () => ({
-  useUploadMedia: () => async () => "https://cdn.test/logo.png",
+  useUploadMedia: () => mocks.upload,
 }));
 const review = {
   name: "Income fund demo",
@@ -29,6 +34,9 @@ const review = {
 describe("agreed Review draft seam [V1, V2, V5, V8, V9]", () => {
   beforeEach(() => {
     localStorage.clear();
+    vi.clearAllMocks();
+    mocks.upload.mockResolvedValue("https://cdn.test/logo.png");
+    mocks.fund.mockResolvedValue({ ok: true, data: { fees: { flowFeeBps: 50 } } });
     upsertDraft({
       ...createEmptyDraft("2026-10-04", "review"),
       name: review.name,
@@ -78,5 +86,51 @@ describe("agreed Review draft seam [V1, V2, V5, V8, V9]", () => {
     expect(
       missing.result.current.launchBlockers.some((blocker) => blocker.code === "DRAFT_UNAVAILABLE"),
     ).toBe(true);
+  });
+  it("uses deployed flow fees for its estimate instead of silently hardcoding the fallback", async () => {
+    const plan = {
+      version: 1 as const,
+      hub: {
+        chains: [
+          {
+            id: "leaf",
+            sharePct: 100,
+            steps: [
+              {
+                id: "aave",
+                family: "position" as const,
+                kind: "aaveSupply",
+                config: { assetKey: "arbitrum:asset" },
+              },
+            ],
+          },
+        ],
+      },
+      spokes: [],
+    };
+    const journal = createJournal(
+      "review",
+      `0x${"34".repeat(20)}`,
+      {},
+      deriveLaunchSteps(plan, {}, true, false),
+    );
+    journal.addresses.coreVault = `0x${"12".repeat(20)}`;
+    saveJournal(localStorage, journal);
+    const { result } = renderHook(() => useV2ReviewDraft("review"));
+    await waitFor(() => expect(result.current.feeConfiguration.flowSource).toBe("fund-detail"));
+    expect(result.current.preview?.fee).toBe(BigInt(500000));
+  });
+  it("persists staged logo, clamps performance and payout, and refuses malformed fee strings", async () => {
+    const { result } = renderHook(() => useV2ReviewDraft("review"));
+    await waitFor(() => expect(result.current.draft).not.toBeNull());
+    await act(async () => {
+      await result.current.uploadLogo(new File(["png"], "logo.png", { type: "image/png" }));
+    });
+    expect(getDraft("review")?.review?.imageUrl).toBe("https://cdn.test/logo.png");
+    act(() => result.current.setFeePercent("performanceFeeBps", "1"));
+    expect(result.current.review.performanceFeeBps).toBe(1000);
+    act(() => result.current.setFeePercent("payoutFeeBps", "90"));
+    expect(result.current.review.payoutFeeBps).toBe(1000);
+    expect(() => result.current.setFeePercent("payoutFeeBps", "oops")).toThrow("INVALID_FEE");
   });
 });
