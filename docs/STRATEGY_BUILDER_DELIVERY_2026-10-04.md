@@ -133,7 +133,7 @@ Pending integration at this snapshot:
 | [#67](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/67), Review assembly / POO-2195 | Not merged |
 | [#68](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/68), Uniswap panel / POO-2189 | Not merged |
 | [#71](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/71), gas-only impact gate / POO-2198 | Not merged; reviewed head `799d74d4` |
-| Limits follow-up, POO-2197 rules v2 | Not merged; composed guard review approved |
+| [#72](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/72), Limits follow-up / POO-2197 rules v2 | Not merged; reviewed `c711a7b`, stacked on Review #67 |
 
 For POO-2197, four recovery regressions failed before the guard fixes; the latest scoped shell,
 BuildScreen and ReviewNavigation run passes 114 tests. For #71, the new blocked-intent assertion
@@ -146,3 +146,14 @@ declaration setup timeout; it does not resolve or waive dependency findings. Fin
 composed checks and deployed revision evidence will be appended by the integration owner.
 Murilo reports the complete browser journey. Codex does not claim browser verification, authenticated
 API smoke or transaction execution.
+
+### Documentation integration checkpoint, 2026-10-04 11:03 UTC
+
+The documentation branch incorporates Limits PR #72 at `c711a7b`, including the #71 gas-only
+regression and final recovery guards. #72 remains stacked on Review #67 and is not yet merged into
+public main. This integration preserves the earlier confirmed-merge snapshot above; it does not
+claim a deployed revision or final full-suite result.
+
+The composed tree contains 658 artifact rows in `IDS_REGISTRY.md` and 484 integration markers
+across 278 source files. Against `c711a7b`, the documentation branch differs in the feature README
+and standalone feature-registry comments only under `src/`; product source and tests are identical.
