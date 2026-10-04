@@ -92,8 +92,8 @@ export const managePositionSchema = z
       const pool = position.uniswap;
       if (!pool || position.aave || position.tokens.length !== 2) return invalid();
       if (
-        pool.poolKey.currency0.toLowerCase() !== position.tokens[0].address.toLowerCase() ||
-        pool.poolKey.currency1.toLowerCase() !== position.tokens[1].address.toLowerCase() ||
+        pool.poolKey.currency0.toLowerCase() !== position.tokens[0]?.address.toLowerCase() ||
+        pool.poolKey.currency1.toLowerCase() !== position.tokens[1]?.address.toLowerCase() ||
         pool.tickSpacing !== pool.poolKey.tickSpacing ||
         pool.fee !== pool.poolKey.fee ||
         pool.tickLower >= pool.tickUpper ||
@@ -108,7 +108,7 @@ export const managePositionSchema = z
       !position.aave ||
       position.uniswap ||
       position.tokens.length !== 1 ||
-      position.aave.asset.address.toLowerCase() !== position.tokens[0].address.toLowerCase() ||
+      position.aave.asset.address.toLowerCase() !== position.tokens[0]?.address.toLowerCase() ||
       position.currentAmounts.amount1 ||
       position.oracleAmounts.amount1 ||
       position.uncollectedIncome.amount1
