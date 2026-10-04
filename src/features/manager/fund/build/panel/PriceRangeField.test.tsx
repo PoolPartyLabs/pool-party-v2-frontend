@@ -117,4 +117,16 @@ describe("PriceRangeField", () => {
     expect(screen.queryByText(/position starts/)).not.toBeInTheDocument();
     expect(screen.getByText("100%")).toBeInTheDocument();
   });
+  it("POO-2227 offers 44px Manage touch targets while retaining the Build default", () => {
+    const view = renderWithProviders(
+      <PriceRangeField pool={pool} range={initial} onChange={vi.fn()} />,
+    );
+    expect(screen.getByRole("button", { name: "±5%" })).toHaveClass("h-[29px]");
+    view.rerender(<PriceRangeField pool={pool} range={initial} onChange={vi.fn()} touchTargets />);
+    expect(screen.getByRole("button", { name: "±5%" })).toHaveClass("min-h-11");
+    expect(screen.getByRole("button", { name: "Increase Min price" })).toHaveClass(
+      "min-h-11",
+      "min-w-11",
+    );
+  });
 });
