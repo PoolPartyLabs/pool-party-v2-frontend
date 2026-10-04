@@ -1,7 +1,7 @@
 /**
  * @id PP-BALANCES (POO-815, POO-270)
  * @name walletHoldingsActions
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2224)
  *
  * Server Action for the connected wallet's full multi-token holdings. The wallet identity is derived
  * server-side from the SIWE session cookie (POO-270), not trusted from the client, and the API read
@@ -17,12 +17,16 @@ import { fetchWalletHoldings } from "@/lib/balances/fetchWalletHoldings";
 import type { TokenBalance } from "@/lib/balances/types";
 
 /**
- * The signed-in wallet's holdings. Not signed in → `[]`. On any failure → `null` (fall back to the
+ * The signed-in wallet's holdings. Not signed in or session identity mismatch → `null`. On any failure → `null` (fall back to the
  * USDC-only read); the array (possibly empty) is the real holdings otherwise.
  */
-export async function getWalletHoldingsAction(): Promise<TokenBalance[] | null> {
+export async function getWalletHoldingsAction(
+  // This is a consistency guard only. The API identity always comes from the verified session.
+  expectedWallet?: string,
+): Promise<TokenBalance[] | null> {
   const wallet = await getSessionWallet();
-  if (!wallet) return [];
+  if (!wallet || (expectedWallet && wallet.toLowerCase() !== expectedWallet.toLowerCase()))
+    return null;
   try {
     return await fetchWalletHoldings(wallet);
   } catch {
