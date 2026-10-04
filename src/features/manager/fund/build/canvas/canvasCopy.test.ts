@@ -85,17 +85,24 @@ describe("canvas copy: one tree in every locale", () => {
   });
 
   // @rule G7
-  it("[G7] lands 108 keys, the six review.* keys of slice S7 among them", () => {
+  it("[G7] lands 114 keys, the twelve review.* keys of slices S7 and PA1 among them", () => {
     // 100 from S2, plus `panel.menuOpenNetwork` (review F3 of PR #36, POO-2155), plus seven from S7
-    // (POO-2157): the six Next: Review notices (D19) and `planUnreadable` (D18).
-    expect(EN.size).toBe(108);
+    // (POO-2157): the six Next: Review notices (D19) and `planUnreadable` (D18), plus the six
+    // launch readiness notices of PA1 (POO-2184).
+    expect(EN.size).toBe(114);
     expect([...EN.keys()].filter((key) => key.startsWith("review.")).sort()).toEqual([
       "review.comingSoon",
+      "review.duplicateReserve",
       "review.emptyBlock",
       "review.emptyPlan",
+      "review.incompleteBlock",
       "review.invalidBlock",
       "review.overShare",
+      "review.stackedPositions",
       "review.unavailable",
+      "review.unsupportedSwap",
+      "review.unusedSpokeShare",
+      "review.zeroShare",
     ]);
   });
 
@@ -254,6 +261,28 @@ describe("canvas copy: the handoff's English, verbatim", () => {
     ["review.comingSoon", "Remove the blocks that are coming soon."],
     ["review.emptyBlock", "Configure every block before Review."],
     ["review.overShare", "The shares add up to more than the capital above them."],
+    // PA1 (POO-2184): the launch readiness notices.
+    [
+      "review.incompleteBlock",
+      "Set a price range and a max slippage for every pool before Review.",
+    ],
+    ["review.zeroShare", "Give every block a share above 0%, or remove it."],
+    [
+      "review.unusedSpokeShare",
+      "A network holds more of the capital than its blocks use. Give its blocks that share, or remove the network.",
+    ],
+    [
+      "review.stackedPositions",
+      "Remove the blocks placed under a Supply block: they cannot launch yet.",
+    ],
+    [
+      "review.duplicateReserve",
+      "Supply each asset in one block only. Remove the second Supply of the same asset.",
+    ],
+    [
+      "review.unsupportedSwap",
+      "Swaps outside a pool cannot launch yet. Supply the token that arrives, or remove the Swap.",
+    ],
     ["review.unavailable", "Review is not available yet."],
   ])("[AN4] the Next: Review notice %s reads %j", (key, english) => {
     expect(EN.get(key)).toBe(english);

@@ -21,7 +21,14 @@
  * 3. a coming-soon block (C22);
  * 4. an empty block, one nobody configured (G6: every block a manager adds arrives empty);
  * 5. shares that add up to more than the capital above them (C8, INV3);
- * 6. otherwise Review is not available yet: the Review handoff has not arrived.
+ * 6. to 11. what the launch needs (POO-2184, verification finding 4): a pool picked but not
+ *    finished, a chain with no whole share above 0, a spoke holding more than its chains, a chain
+ *    with more than one position or anything under a Supply, a second Supply of the same reserve on
+ *    one network, a Swap outside a pool;
+ * 12. otherwise Review is not available yet: the Review handoff has not arrived.
+ *
+ * Checks 1 to 11 are `planReadiness` (PP-MGR-LIB-028), the pure gate this module used to hold and
+ * the Review page shares; `reviewVerdict` adds only the last answer.
  *
  * Each refusal carries the block to bring into view (the first one in reading order: the plan's own
  * order, hub first, then the spokes, top to bottom), or null when the fault is not one block.
@@ -34,18 +41,14 @@
  */
 import type { GraphLayout, Rect } from "./layout/graphTypes";
 import type { BuildPlan } from "./plan/buildPlan";
-import { chainsWithNetwork, findBlock } from "./plan/planDerive";
-import type { PlanViolation, PlanViolationCode } from "./plan/planInvariants";
+import type { PlanViolation } from "./plan/planInvariants";
+import { PLAN_READINESS_REFUSALS, planReadiness, type ReadinessTarget } from "./plan/planReadiness";
 
-/** Next: Review's refusals, in the order the checks run (D19). */
-export const REVIEW_REFUSALS = [
-  "review_empty_plan",
-  "review_invalid_block",
-  "review_coming_soon_block",
-  "review_empty_block",
-  "review_over_share",
-  "review_unavailable",
-] as const;
+/**
+ * Next: Review's refusals, in the order the checks run (D19): the readiness checks of
+ * `planReadiness` (PP-MGR-LIB-028, POO-2184: S7's five, then PA1's six), then "not available yet".
+ */
+export const REVIEW_REFUSALS = [...PLAN_READINESS_REFUSALS, "review_unavailable"] as const;
 
 export type ReviewRefusal = (typeof REVIEW_REFUSALS)[number];
 
@@ -56,6 +59,12 @@ export type ReviewNoticeKey =
   | "comingSoon"
   | "emptyBlock"
   | "overShare"
+  | "incompleteBlock"
+  | "zeroShare"
+  | "unusedSpokeShare"
+  | "stackedPositions"
+  | "duplicateReserve"
+  | "unsupportedSwap"
   | "unavailable";
 
 export const REVIEW_NOTICE_KEY: Readonly<Record<ReviewRefusal, ReviewNoticeKey>> = {
@@ -64,14 +73,17 @@ export const REVIEW_NOTICE_KEY: Readonly<Record<ReviewRefusal, ReviewNoticeKey>>
   review_coming_soon_block: "comingSoon",
   review_empty_block: "emptyBlock",
   review_over_share: "overShare",
+  review_incomplete_block: "incompleteBlock",
+  review_zero_share: "zeroShare",
+  review_unused_spoke_share: "unusedSpokeShare",
+  review_stacked_positions: "stackedPositions",
+  review_duplicate_reserve: "duplicateReserve",
+  review_unsupported_swap: "unsupportedSwap",
   review_unavailable: "unavailable",
 };
 
 /** What a refusal points at: a card, a chain (its first card) or a spoke's group. */
-export type ReviewTarget =
-  | { kind: "block"; blockId: string }
-  | { kind: "chain"; chainId: string }
-  | { kind: "network"; network: string };
+export type ReviewTarget = ReadinessTarget;
 
 export interface ReviewVerdict {
   refusal: ReviewRefusal;
@@ -80,72 +92,17 @@ export interface ReviewVerdict {
 }
 
 /**
- * Which check a violation fails. Total over `PlanViolationCode`, so a new invariant code fails to
- * compile here instead of slipping past Next: Review.
+ * [AN4, D19] What Next: Review answers for this plan and its violations: the first readiness check
+ * that fails (`planReadiness`, the pure gate the Review page shares), or, for a ready plan, Review
+ * not available yet.
  */
-const VIOLATION_CHECK: Readonly<
-  Record<
-    PlanViolationCode,
-    "review_invalid_block" | "review_coming_soon_block" | "review_over_share"
-  >
-> = {
-  network_not_in_mandate: "review_invalid_block",
-  duplicate_network: "review_invalid_block",
-  kind_not_in_mandate: "review_invalid_block",
-  kind_not_on_network: "review_invalid_block",
-  config_not_in_mandate: "review_invalid_block",
-  // Not reachable through the reducers (see the file header): a hand-edited stored plan only.
-  chain_without_position: "review_invalid_block",
-  sequence: "review_invalid_block",
-  orphan_auto: "review_invalid_block",
-  missing_auto: "review_invalid_block",
-  kind_coming_soon: "review_coming_soon_block",
-  share_exceeds_parent: "review_over_share",
-  negative_share: "review_over_share",
-};
-
-/** A violation's `targetId` as a target: a block, a chain or a spoke network of this plan. */
-function resolveTarget(plan: BuildPlan, targetId: string | null): ReviewTarget | null {
-  if (targetId === null) return null;
-  if (findBlock(plan, targetId)) return { kind: "block", blockId: targetId };
-  if (chainsWithNetwork(plan).some(({ chain }) => chain.id === targetId)) {
-    return { kind: "chain", chainId: targetId };
-  }
-  if (plan.spokes.some((spoke) => spoke.network === targetId)) {
-    return { kind: "network", network: targetId };
-  }
-  return null;
-}
-
-/** The plan's position blocks, in reading order. */
-function positions(plan: BuildPlan) {
-  return chainsWithNetwork(plan).flatMap(({ chain }) =>
-    chain.steps.filter((step) => step.family === "position"),
-  );
-}
-
-/** [AN4, D19] What Next: Review answers for this plan and its violations. */
 export function reviewVerdict(
   plan: BuildPlan,
   violations: readonly PlanViolation[],
 ): ReviewVerdict {
-  const cards = positions(plan);
-  if (cards.length === 0) return { refusal: "review_empty_plan", target: null };
-
-  for (const check of ["review_invalid_block", "review_coming_soon_block"] as const) {
-    const first = violations.find((violation) => VIOLATION_CHECK[violation.code] === check);
-    if (first) return { refusal: check, target: resolveTarget(plan, first.targetId) };
-  }
-
-  const empty = cards.find((card) => card.config === null);
-  if (empty) return { refusal: "review_empty_block", target: { kind: "block", blockId: empty.id } };
-
-  const share = violations.find(
-    (violation) => VIOLATION_CHECK[violation.code] === "review_over_share",
-  );
-  if (share) return { refusal: "review_over_share", target: resolveTarget(plan, share.targetId) };
-
-  return { refusal: "review_unavailable", target: null };
+  const readiness = planReadiness(plan, violations);
+  if (readiness.ready) return { refusal: "review_unavailable", target: null };
+  return { refusal: readiness.refusal, target: readiness.target };
 }
 
 /** Where a target sits in the laid-out graph, or null when it is not drawn. */

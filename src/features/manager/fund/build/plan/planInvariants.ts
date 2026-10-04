@@ -28,6 +28,7 @@
  * (canvas A's Supply, Swap · auto, pool).
  */
 import { HUB_NETWORK, type NetworkId, tokenKey } from "../../mandateDraft";
+import { findMandatePool } from "./blockConfig";
 import {
   BLOCK_KIND_PROTOCOL,
   BLOCK_KIND_STATUS,
@@ -85,12 +86,9 @@ function configInMandate(
   if (isPoolKind(block.kind)) {
     const poolId = config.poolId;
     if (typeof poolId !== "string") return false;
-    return draft.pools.some(
-      (pool) =>
-        pool.id === poolId &&
-        pool.network === network &&
-        pool.protocol === BLOCK_KIND_PROTOCOL[block.kind],
-    );
+    // The bare PoolId of a real-mode row, or a mock row's id, inside the block's network.
+    const pool = findMandatePool(draft.pools, network, poolId);
+    return pool?.protocol === BLOCK_KIND_PROTOCOL[block.kind];
   }
   if (block.kind === "aaveSupply" || block.kind === "aaveBorrow") {
     const assetKey = config.assetKey;

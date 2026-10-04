@@ -30,15 +30,18 @@ import type { MandateDraft } from "../../mandateDraft";
 import { newDraftId } from "../../mandateDraftStore";
 import type { UseMandateDraftResult } from "../../useMandateDraft";
 import {
+  type AaveBlockConfig,
   type BuildPlan,
   createEmptyPlan,
   isPlanBlocked,
   type PlanBlock,
   type PlanContext,
   type PlanReducerResult,
+  type PoolBlockConfig,
   planOf,
 } from "./buildPlan";
 import { type PlanViolation, validatePlan } from "./planInvariants";
+import { applyBlockConfig } from "./planReducers";
 
 /** What one `apply` did: the plan changed, or the reducer refused and nothing changed. */
 export type PlanApplyResult = { ok: true } | { ok: false; blocked: PlanBlock };
@@ -49,6 +52,15 @@ export interface UseBuildPlanResult {
   violations: readonly PlanViolation[];
   /** Run a plan reducer on the CURRENT draft's plan and write the result into the draft. */
   apply(reducer: (plan: BuildPlan, ctx: PlanContext) => PlanReducerResult): PlanApplyResult;
+  /**
+   * The panel's Apply changes (POO-2184): `applyBlockConfig` as ONE `apply`, so the config, the
+   * chain's share and, on a spoke, the spoke's share land in one draft update or not at all.
+   */
+  applyBlockConfig(
+    blockId: string,
+    config: PoolBlockConfig | AaveBlockConfig | null,
+    sharePct?: number,
+  ): PlanApplyResult;
 }
 
 /** Read and edit the Build plan of the draft the mandate hook holds. */
@@ -85,5 +97,15 @@ export function useBuildPlan(input: {
     [update, catalog],
   );
 
-  return { plan, violations, apply };
+  const applyConfig = useCallback(
+    (
+      blockId: string,
+      config: PoolBlockConfig | AaveBlockConfig | null,
+      sharePct?: number,
+    ): PlanApplyResult =>
+      apply((current, ctx) => applyBlockConfig(current, ctx, blockId, config, sharePct)),
+    [apply],
+  );
+
+  return { plan, violations, apply, applyBlockConfig: applyConfig };
 }

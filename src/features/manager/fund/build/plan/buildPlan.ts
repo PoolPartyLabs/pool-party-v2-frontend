@@ -48,14 +48,35 @@ export type PoolBlockKind = "uniswapV4Pool" | "uniswapV3Pool";
 /** The flow blocks the plan stores. The Bridge is derived from a spoke and never stored (C4). */
 export type FlowKind = "swap" | "collectFees";
 
-/** A pool block's configuration: `MandatePoolRef.id` of a pool in the mandate (D14). */
+/**
+ * A pool block's configuration (D14, extended by the panel contract of POO-2184, confirmed by the
+ * launch owner on 2026-10-04; checks and helpers in `blockConfig.ts`, PP-MGR-LIB-026).
+ *
+ * `poolId` is the BARE Uniswap v4 PoolId (`MandatePoolRef.poolId`, bytes32) of a real pool, and the
+ * row id of a mock pool, which has no PoolId: readers match `pool.poolId ?? pool.id` within the
+ * block's network (`findMandatePool`), never the real row id `<chainId>:<poolId>`. The other fields
+ * are what Apply writes and the launch adapter reads (`launch/plan.ts`). Each is optional, so a
+ * pool picked but not yet ranged is still a stored plan; `isPoolConfigComplete` says when it is done.
+ */
 export interface PoolBlockConfig {
   poolId: string;
+  /** Canonical lower tick (token1 per token0), on the pool's own tick spacing. */
+  tickLower?: number;
+  /** Canonical upper tick, above `tickLower`, on the same spacing. */
+  tickUpper?: number;
+  /** Full range: the ticks are then the finite aligned extremes (`fullRangeTicks`). */
+  fullRange?: boolean;
+  /** The panel shows the quote inverted. Display only: the ticks stay canonical. */
+  displayInverted?: boolean;
+  /** Max slippage of the Swap · auto and the mint, 0.1 to 5 (the launch's 10 to 500 bps). */
+  slippagePct?: number;
 }
 
 /** An Aave block's configuration: `tokenKey(MandateTokenRef)`, "network:address" (D14). */
 export interface AaveBlockConfig {
   assetKey: string;
+  /** Only when the app swaps into the asset first (C13): that swap's max slippage, 0.1 to 5. */
+  slippagePct?: number;
 }
 
 /** Which configuration each kind carries. Pendle and GMX are not drawn yet, so they carry none. */

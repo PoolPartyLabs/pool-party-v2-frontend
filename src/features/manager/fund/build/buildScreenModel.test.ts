@@ -36,6 +36,7 @@ import {
   makeTestDraft,
   spokePoolPlan,
   TEST_POOL_IDS,
+  withCompletePools,
 } from "./plan/planTestKit";
 
 const catalog = buildMandateCatalog();
@@ -157,10 +158,23 @@ describe("reviewVerdict: Next: Review checks the plan in order (AN4, D19)", () =
   it("[AN4, D19] answers a plan that passes every check with Review not available yet", () => {
     // @rule AN4
     // @rule D19
-    expect(verdictOf(twoChains(60, 40))).toEqual({ refusal: "review_unavailable", target: null });
-    expect(verdictOf(hubPoolWithFeesPlan())).toEqual({
+    // Every check passes once each pool carries the full config the panels write (POO-2184).
+    expect(verdictOf(withCompletePools(twoChains(60, 40)))).toEqual({
       refusal: "review_unavailable",
       target: null,
+    });
+    expect(verdictOf(withCompletePools(hubPoolWithFeesPlan()))).toEqual({
+      refusal: "review_unavailable",
+      target: null,
+    });
+  });
+
+  it("[AN4] PA1's checks only refine S7's last answer: a pool picked but not finished", () => {
+    // @rule AN4
+    // POO-2184 (finding 4): the readiness checks run after S7's, through planReadiness.
+    expect(verdictOf(twoChains(60, 40))).toEqual({
+      refusal: "review_incomplete_block",
+      target: { kind: "block", blockId: "hub-pool-pool" },
     });
   });
 
@@ -169,12 +183,19 @@ describe("reviewVerdict: Next: Review checks the plan in order (AN4, D19)", () =
     expect(Object.keys(REVIEW_NOTICE_KEY).sort()).toEqual([...REVIEW_REFUSALS].sort());
     const keys = Object.values(REVIEW_NOTICE_KEY);
     expect(new Set(keys).size).toBe(keys.length);
+    // S7's checks in S7's order, PA1's six after them (POO-2184), "unavailable" last.
     expect(REVIEW_REFUSALS).toEqual([
       "review_empty_plan",
       "review_invalid_block",
       "review_coming_soon_block",
       "review_empty_block",
       "review_over_share",
+      "review_incomplete_block",
+      "review_zero_share",
+      "review_unused_spoke_share",
+      "review_stacked_positions",
+      "review_duplicate_reserve",
+      "review_unsupported_swap",
       "review_unavailable",
     ]);
   });

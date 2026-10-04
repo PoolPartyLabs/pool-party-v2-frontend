@@ -1,5 +1,13 @@
 # IDs Registry
 
+## Build configuration panels: config contract, ceilings and readiness (POO-2184, slice PA1 of POO-2171)
+
+| ID | Artifact | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-MGR-LIB-026` | blockConfig: the panel config contract confirmed by the launch owner (pool `poolId` as the bare v4 PoolId, canonical aligned `tickLower`/`tickUpper`, `fullRange`, `displayInverted`, `slippagePct` 0.1 to 5; Supply `assetKey` plus `slippagePct` when a swap is needed), `isConfigFor` shared by `normalizePlan` and `setBlockConfig`, `isPoolConfigComplete`, `fullRangeTicks`, `isRangeOnGrid` (the write refuses ticks off a real row's spacing and Full off its extremes), `findMandatePool` (`pool.poolId ?? pool.id` inside the block's network, the row's own ids stored); with it, `applyBlockConfig`, `removeBlockReleasingShare` and `describeRemoval` in `planReducers.ts` and `useBuildPlan.applyBlockConfig`; test support `realPoolTestKit.ts` | Lib | n/a (code) | In Review | [POO-2184](https://linear.app/yeildbay/issue/POO-2184) | `src/features/manager/fund/build/plan/blockConfig.ts` @rules-v1 |
+| `PP-MGR-LIB-027` | allocationCeiling: handoff P8, the ceiling of a chain's Allocation (protocol and network caps as totals, the room of the strategy, the mandate cap named on a tie, no per token cap) | Lib | n/a (code) | In Review | [POO-2184](https://linear.app/yeildbay/issue/POO-2184) | `src/features/manager/fund/build/plan/allocationCeiling.ts` @rules-v1 |
+| `PP-MGR-LIB-028` | planReadiness: the pure Next: Review gate S7 shipped, shared with the Review page, plus six launch checks (pool not finished, no whole share above 0, a spoke holding more than its chains, stacked chain, same reserve twice, Swap outside a pool); `launchAgreement.test.ts` holds it to `getLaunchSteps` | Lib | n/a (code) | In Review | [POO-2184](https://linear.app/yeildbay/issue/POO-2184) | `src/features/manager/fund/build/plan/planReadiness.ts` @rules-v1 |
+
 ## Fallback Review and launch (POO-2183, rules v1)
 
 | ID | Artifact | Type | Design | Impl | Linear | Reference |
@@ -52,7 +60,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 631 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 634 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
