@@ -1,3 +1,4 @@
+/** @id PP-BALANCES @implements-rules-version v1 (POO-2224) */
 import { beforeEach, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ session: vi.fn(), holdings: vi.fn() }));

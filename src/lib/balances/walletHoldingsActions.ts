@@ -21,6 +21,7 @@ import type { TokenBalance } from "@/lib/balances/types";
  * USDC-only read); the array (possibly empty) is the real holdings otherwise.
  */
 export async function getWalletHoldingsAction(
+  // This is a consistency guard only. The API identity always comes from the verified session.
   expectedWallet?: string,
 ): Promise<TokenBalance[] | null> {
   const wallet = await getSessionWallet();

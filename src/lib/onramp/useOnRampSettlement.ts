@@ -43,7 +43,7 @@
  *      ONCE at settlement and once per terminal state, never per poll tick (v1 and v2 share one
  *      per-API-key throttle bucket). The poll is only the DETECTOR; the channel does not return
  *      holdings. Mirrors the shipped `DepositScreen.tsx:241,275` publish precedent (POO-1128 [R5]).
- *   2. **False-zero baseline.** Before the SIWE handshake `getWalletHoldingsAction` returns `[]` (not
+ *   2. **False-zero baseline.** Before POO-2224, during the SIWE handshake `getWalletHoldingsAction` returned `[]` (not
  *      null), which is not nullish and so bypasses the on-chain fallback too: an ungated baseline
  *      reads a silent zero and the delta becomes the whole wallet. So the baseline is taken THROUGH
  *      {@link useTokenBalances} (SIWE-gated, POO-1128) and the hook refuses to open without a session;
