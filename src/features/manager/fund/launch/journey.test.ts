@@ -48,6 +48,18 @@ const draft: FundLaunchDraft = {
 };
 describe("public journey contracts [R3, R4, R6]", () => {
   beforeEach(() => localStorage.clear());
+  it("R1 reads the route-encoded journey id from the original persisted key", () => {
+    const journey = persistJourney(draft, manager);
+    expect(readJourney(encodeURIComponent(journey.journeyId))).toEqual(
+      readJourney(journey.journeyId),
+    );
+  });
+  it("R3 rejects malformed encoding without creating or replacing a checkpoint", () => {
+    const journey = persistJourney(draft, manager);
+    const stored = localStorage.getItem(journeyStore.journeyKey(journey.journeyId));
+    expect(() => readJourney("%not-an-escape")).toThrow("INVALID_JOURNAL");
+    expect(localStorage.getItem(journeyStore.journeyKey(journey.journeyId))).toBe(stored);
+  });
   it("R4 enumerates only the connected wallet's valid persisted journeys", () => {
     persistJourney(draft, manager);
     persistJourney({ ...draft, id: "other" }, base);
