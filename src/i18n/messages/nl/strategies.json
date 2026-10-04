@@ -807,6 +807,7 @@
     "unavailable": "Niet beschikbaar",
     "refreshing": "Waardering wordt vernieuwd",
     "minimum": "Minimale storting",
+    "payoutWholeShares": "Uitbetalingen gebeuren in hele aandelen; minimaal 1 aandeel.",
     "limit": "Fondslimiet overschreden",
     "deferred": "Opname van inkomsten uitgesteld. De geïnde inkomsten liggen onder het bridgeminimum.",
     "notReady": "Nog niet beschikbaar voor opname of afwikkeling",

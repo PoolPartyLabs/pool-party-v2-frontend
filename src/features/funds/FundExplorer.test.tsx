@@ -10,6 +10,10 @@ import {
 import { FundExplorer } from "./FundExplorer";
 
 const mocks = vi.hoisted(() => ({ load: vi.fn(), address: `0x${"1".repeat(40)}`, signedIn: true }));
+const flags = vi.hoisted(() => ({ enabled: true }));
+vi.mock("@/lib/features/useFeatureFlags", () => ({
+  useFeatureFlags: () => ({ isEnabled: () => flags.enabled }),
+}));
 vi.mock("./fundActions", () => ({ loadFundsAction: mocks.load }));
 vi.mock("@/lib/auth/useAuth", () => ({ useAuth: () => ({ address: mocks.address }) }));
 vi.mock("@/lib/auth/useSiweSession", () => ({
@@ -28,10 +32,23 @@ describe("v2 fund lists POO-2181", () => {
     vi.clearAllMocks();
     localStorage.clear();
     mocks.signedIn = true;
+    flags.enabled = true;
     mocks.load.mockResolvedValue({
       ok: true,
       data: { funds: [mockFund], holders: {}, wallet: mocks.address },
     });
+  });
+  it("links the owned manager v2 section to fallback drafts only with the flag on", () => {
+    const view = renderWithProviders(<FundExplorer view="manager" />);
+    expect(screen.getByRole("link", { name: "Review & launch drafts (v2)" })).toHaveAttribute(
+      "href",
+      "/manager/fund-launch/review",
+    );
+    flags.enabled = false;
+    view.rerender(<FundExplorer view="manager" />);
+    expect(
+      screen.queryByRole("link", { name: "Review & launch drafts (v2)" }),
+    ).not.toBeInTheDocument();
   });
   it("R2 renders rich v2 cards without V1 shapes", async () => {
     renderWithProviders(<FundExplorer view="explore" />);

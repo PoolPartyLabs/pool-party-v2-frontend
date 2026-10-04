@@ -807,6 +807,7 @@
     "unavailable": "不可用",
     "refreshing": "估值更新中",
     "minimum": "最低存款",
+    "payoutWholeShares": "赎回以完整份额为单位，最低为1份。",
     "limit": "超出基金限额",
     "deferred": "收益提取已延后。已收集收益低于跨链桥最低金额。",
     "notReady": "尚无法领取或结算",

@@ -807,6 +807,7 @@
     "unavailable": "Indisponível",
     "refreshing": "Atualizando avaliação",
     "minimum": "Depósito mínimo",
+    "payoutWholeShares": "Os resgates são feitos em cotas inteiras; mínimo de 1 cota.",
     "limit": "Limite do fundo excedido",
     "deferred": "Saque de renda adiado. A renda coletada está abaixo do mínimo da bridge.",
     "notReady": "Ainda não disponível para resgate ou liquidação",
