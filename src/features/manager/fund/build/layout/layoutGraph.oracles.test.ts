@@ -757,7 +757,7 @@ describe("worked example 1, POO-2213 fee-return override of handoff (canvas C)",
   });
 
   // @rule L8 @rule C10
-  it("[L8] puts the spine at 304 = (24 + 584) / 2 and the drops at 100, 124 and 320", () => {
+  it("[L8, POO-2213] keeps the spine centered and routes the drops around fee conversion", () => {
     expect(layout.spineCentreX).toBe(304);
     expect(verticalsAt(layout, "principal", 100)).toEqual([[406, 418]]);
     expect(verticalsAt(layout, "income", 124)).toEqual([[406, 418]]);
@@ -815,7 +815,7 @@ describe("worked example 2, POO-2213 fee-return override of handoff numbers (one
   });
 
   // @rule L9 @rule C10 @rule C11
-  it("[L9] draws the principal at 528 and the income 24 under it", () => {
+  it("[L9, POO-2213] draws principal below fee conversion and income 24 under it", () => {
     expect(horizontalRuns(layout, "principal", 578)).toEqual([[12, 624]]);
     expect(verticalXs(layout, "principal")).toEqual([12, 100, 316, 330, 404, 624]);
     expect(verticalsAt(layout, "principal", 330)).toEqual([[578, 626]]);
@@ -849,7 +849,7 @@ describe("Build state 5, POO-2213 fee-return override of handoff numbers", () =>
   });
 
   // @rule L4 @rule L5 @rule C11
-  it("[L4] spans Idle output 24 to 260 and Income 292 to 528, both lines at 430", () => {
+  it("[L4, POO-2213] preserves output widths and separates return levels below the converter", () => {
     expect(box(nodes.idleOutput)).toEqual([24, 528, 236, 62]);
     expect(box(nodes.income)).toEqual([292, 528, 236, 62]);
     expect(horizontalRuns(layout, "principal", 480)).toEqual([[88, 142]]);
@@ -880,7 +880,7 @@ describe("canvas D, the handoff numbers (empty canvas, English sentence 420 wide
 
 describe("canvas A as a plan", () => {
   // @rule L10
-  it("[L10] is 2080 x 772: the open menu and the tooltips are overlays, not graph", () => {
+  it("[L10, POO-2213] is 2080 x 822 with fee conversion; menus and tooltips stay outside graph bounds", () => {
     const layout = layoutGraph(canvasA.input, EN);
     expect([layout.width, layout.height]).toEqual([2080, 822]);
   });

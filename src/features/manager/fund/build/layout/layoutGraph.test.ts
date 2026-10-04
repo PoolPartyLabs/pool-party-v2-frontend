@@ -316,8 +316,8 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
     expect(horizontalRuns(layout, "principal", deepest + LAYOUT.LINK).length).toBeGreaterThan(0);
   });
 
-  // @rule C11
-  it("[C11] turns both lines at one level for a single chain ending in Collect fees", () => {
+  // @rule C11, POO-2213 override: the converter bypass needs separate return levels.
+  it("[POO-2213] separates return levels around a single chain's fee converter", () => {
     const layout = layoutGraph(buildState5.input, EN);
     expect(horizontalRuns(layout, "principal", 480)).toEqual([[88, 142]]);
     expect(horizontalRuns(layout, "income", 504)).toEqual([[188, 410]]);
