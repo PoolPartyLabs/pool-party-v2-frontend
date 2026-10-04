@@ -904,7 +904,25 @@
       "summaryProtocols": "Protokolle",
       "summaryTokens": "Tokens",
       "summaryPools": "Pools",
-      "summaryLimits": "Limits"
+      "summaryLimits": "Limits",
+      "supplyPanel": {
+        "heading": "Vermögenswerte in deinem Mandat",
+        "filter": "Nach Token oder Adresse filtern",
+        "caption": "Nur Token deines Mandats, die Aave v3 auf {network} auflistet (Schritt 3).",
+        "needAsset": "Brauchst du einen anderen Vermögenswert?",
+        "noMatch": "Kein Vermögenswert deines Mandats passt zu {typed}",
+        "noMatchCaption": "Token werden im Mandat in Schritt 3 gewählt. Deine Konfiguration bleibt während der Bearbeitung gespeichert.",
+        "empty": "Kein Aave-Vermögenswert deines Mandats ist auf {network}",
+        "asset": "Vermögenswert",
+        "help": "Token deines Mandats, die Aave v3 auf {network} auflistet.",
+        "apy": "Supply-APY",
+        "unsupported": "Supply unterstützt nur USDC auf Arbitrum.",
+        "inactive": "Reserve inaktiv",
+        "frozen": "Reserve eingefroren",
+        "paused": "Reserve pausiert",
+        "supplyCapReached": "Supply-Limit erreicht",
+        "unavailable": "Nicht verfügbar"
+      }
     },
     "canvas": {
       "title": "Bauen Sie Ihre Strategie",

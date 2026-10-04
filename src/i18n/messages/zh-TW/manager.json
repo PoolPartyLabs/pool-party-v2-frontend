@@ -904,7 +904,25 @@
       "summaryProtocols": "協議",
       "summaryTokens": "代幣",
       "summaryPools": "資金池",
-      "summaryLimits": "限額"
+      "summaryLimits": "限額",
+      "supplyPanel": {
+        "heading": "授權範圍內的資產",
+        "filter": "依代幣或地址篩選",
+        "caption": "僅顯示授權範圍內且由 {network} 上的 Aave v3 支援的代幣（第3步）。",
+        "needAsset": "需要其他資產？",
+        "noMatch": "授權範圍內沒有與 {typed} 相符的資產",
+        "noMatchCaption": "在授權範圍的第3步選擇代幣。編輯時會保留已儲存的設定。",
+        "empty": "授權範圍內沒有 {network} 上的 Aave 資產",
+        "asset": "資產",
+        "help": "授權範圍內由 {network} 上的 Aave v3 支援的代幣。",
+        "apy": "Supply APY",
+        "unsupported": "Supply 僅支援 Arbitrum 上的 USDC。",
+        "inactive": "儲備未啟用",
+        "frozen": "儲備已凍結",
+        "paused": "儲備已暫停",
+        "supplyCapReached": "已達 Supply 上限",
+        "unavailable": "無法使用"
+      }
     },
     "canvas": {
       "title": "搭建您的策略",

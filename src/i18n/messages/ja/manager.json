@@ -904,7 +904,25 @@
       "summaryProtocols": "プロトコル",
       "summaryTokens": "トークン",
       "summaryPools": "プール",
-      "summaryLimits": "上限"
+      "summaryLimits": "上限",
+      "supplyPanel": {
+        "heading": "マンデート内の資産",
+        "filter": "トークンまたはアドレスで絞り込む",
+        "caption": "マンデートで選択され、{network} の Aave v3 に掲載されているトークンのみ（ステップ3）。",
+        "needAsset": "別の資産が必要ですか？",
+        "noMatch": "マンデート内に {typed} に一致する資産はありません",
+        "noMatchCaption": "トークンはマンデートのステップ3で選択します。編集中も設定は保存されます。",
+        "empty": "マンデート内に {network} の Aave 資産はありません",
+        "asset": "資産",
+        "help": "{network} の Aave v3 に掲載されているマンデート内のトークン。",
+        "apy": "Supply APY",
+        "unsupported": "Supply は Arbitrum の USDC のみ対応しています。",
+        "inactive": "リザーブは無効です",
+        "frozen": "リザーブは凍結されています",
+        "paused": "リザーブは一時停止中です",
+        "supplyCapReached": "Supply 上限に達しています",
+        "unavailable": "利用不可"
+      }
     },
     "canvas": {
       "title": "戦略を組み立てる",

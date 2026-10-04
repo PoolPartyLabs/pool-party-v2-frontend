@@ -49,6 +49,7 @@ To list them all:
 ```bash
 git grep -n 'PP-INTEGRATION-POINT' -- src   # 481 markers across 276 files (2026-10-04)
 git grep -n 'PP-INTEGRATION-POINT' -- src   # 480 markers across 276 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 479 markers across 276 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -211,3 +212,12 @@ and `startFundLaunch` seams. It never reconstructs launch transactions or writes
 The mock branch does not mount Privy hooks or substitute fixtures into real Review.
 `getLaunchSteps` remains the source of the grouped signature preview.
 | Uniswap v4 pool panel defaults | `src/features/manager/fund/build/panel/PoolBlockPanel.tsx` | Mount read through `getCatalogPoolsAction`, MCK-005 in mock mode; missing, unread or ineligible rows disable Use. `usePanelPool` gates Apply on the latest live read. POO-2189 @rules-v1. |
+## Aave Supply configuration (POO-2194, rules v1)
+
+`SupplyBlockPanel.tsx` reads `usePanelReserves` against the shell's catalog, sourced from
+`GET /api/v2/catalog/aave-v3/reserves`. Network, mandate tokens and selected reserves intersect
+before rendering. Only USDC on Arbitrum is executable in the alpha; other rows remain disabled.
+`assetKey` is canonical and APY is the served snapshot. Catalog loading/error or an unusable
+selection prevents Use/Apply. There is no second fetch, fixture fallback in real mode, automatic
+reserve refresh or USDC-to-USDC swap. Token logos use the shared resolver; the shell draws network
+and protocol logos. Shared shell analytics cover this body without duplicate emitters.
