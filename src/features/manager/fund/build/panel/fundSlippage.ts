@@ -13,9 +13,9 @@
  * - [R13] Each keystroke goes through the app's `sanitizeSlippageInput` WITHOUT a `max` of 5:
  *   passing 5 would clamp every keystroke, so the blur could never say it capped (finding 27). A
  *   comma reads as the decimal point and one decimal is kept.
- * - [R14] On blur an empty field goes back to the 2% preset, a value under 0.1 (zero included)
- *   becomes 0.1, and a value above 5 becomes 5 with `capped: true`, so the panel can show
- *   "5% is the maximum." (D-D). The app's `floorSlippage` leaves zero untouched by design, so the
+ * - [R14] On blur an empty field keeps a selected chip (the field was never used) and otherwise
+ *   goes back to the 2% preset, a value under 0.1 (zero included) becomes 0.1, and a value above
+ *   5 becomes 5 with `capped: true`, so the panel can show "5% is the maximum." (D-D). The app's `floorSlippage` leaves zero untouched by design, so the
  *   floor is applied here and V1 is not edited.
  * - [R15] The result is `{ pct, bps, preset, capped }`, and `bps` is always an integer from 10 to
  *   500: signed swap routes accept a maximum loss of 0.01% to 5% (`maxLossBps` 1 to 500), and the
@@ -85,13 +85,20 @@ export function sanitizeFundSlippageInput(text: string): string {
 }
 
 /**
- * Commit the custom field when it loses focus (R14): an empty or unreadable field goes back to the
- * 2% preset, under 0.1 (zero included) becomes 0.1, above 5 becomes 5 with `capped`. A typed value
- * stays custom, so `preset` is null even when it equals a chip.
+ * Commit the custom field when it loses focus (R14). Pass `current`, the tolerance the control
+ * holds now, so an empty field can tell its two cases apart:
+ * - empty or unreadable while a chip is selected: the manager never used the field, so the chip
+ *   stays (a blur must not turn a selected 0.5% or 1% into 2%);
+ * - empty or unreadable with no chip selected (a custom value was cleared, or `current` is not
+ *   given): back to the 2% preset (P12);
+ * - a typed value: under 0.1 (zero included) becomes 0.1, above 5 becomes 5 with `capped`, and it
+ *   stays custom, so `preset` is null even when it equals a chip.
  */
-export function commitFundSlippageInput(text: string): FundSlippage {
+export function commitFundSlippageInput(text: string, current?: FundSlippage): FundSlippage {
   const value = Number.parseFloat(sanitizeSlippageInput(text));
-  if (!Number.isFinite(value)) return defaultFundSlippage();
+  if (!Number.isFinite(value)) {
+    return current?.preset != null ? fundSlippagePreset(current.preset) : defaultFundSlippage();
+  }
   if (value > FUND_SLIPPAGE_MAX_PCT) return slippage(FUND_SLIPPAGE_MAX_PCT, null, true);
   if (value < FUND_SLIPPAGE_MIN_PCT) return slippage(FUND_SLIPPAGE_MIN_PCT, null, false);
   return slippage(value, null, false);
