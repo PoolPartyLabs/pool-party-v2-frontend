@@ -126,6 +126,9 @@ describe("launch Journey outcomes [R3, R6]", () => {
   it("R5 keeps signing and Pause in an adjacent controls region before the long steps list", () => {
     const { container } = renderWithProviders(<FundLaunchJourney journeyId="journey" />);
     const controls = screen.getByRole("complementary", { name: "Sign next step" });
+    expect(
+      within(controls).getByRole("heading", { name: "Create and seed fund" }),
+    ).toBeInTheDocument();
     const list = container.querySelector("ol");
     expect(
       list && controls.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING,

@@ -20,6 +20,7 @@ export function FundLaunchJourney({ journeyId }: { journeyId: string }) {
 function RealJourney({ journeyId }: { journeyId: string }) {
   const launch = useV2Launch(journeyId);
   const t = useTranslations("manager");
+  const currentStep = launch.steps.find((step) => step.status !== "confirmed");
   const core = launch.addresses.coreVault;
   const addressUrl = core ? explorerAddressUrl(42161, core) : null;
   const labels = {
@@ -69,6 +70,15 @@ function RealJourney({ journeyId }: { journeyId: string }) {
           aria-label={t("fundLaunch.signNext")}
           className="rounded-xl border border-border bg-surface p-4 lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
         >
+          {currentStep ? (
+            <div className="mb-4" aria-live="polite">
+              <h2 className="font-medium">{labels[currentStep.kind]}</h2>
+              <p>
+                {currentStep.chainId === 42161 ? "Arbitrum" : "Robinhood Chain"} ·{" "}
+                {statuses[currentStep.status]}
+              </p>
+            </div>
+          ) : null}
           {launch.outcome === "completed" ? (
             <p role="status">{t("fundLaunch.journeyComplete")}</p>
           ) : (
