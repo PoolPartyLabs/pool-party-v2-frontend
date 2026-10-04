@@ -1,7 +1,7 @@
 /**
  * @id PP-PORT-SCR-001
  * @name Portfolio
- * @implements-rules-version v3 (POO-829 rules v2)
+ * @implements-rules-version v3 (POO-829 rules v2); POO-2215 rules v1
  *
  * Holdings & performance (presentational; data fetched by the route). Distinct from Home:
  * holdings-focused, leads with all-time earned + allocation-by-risk, no discovery feed, no referral.
@@ -58,6 +58,11 @@ import { StrategyLogo } from "@/components/data-display/StrategyLogo";
 import { AprTooltip } from "@/components/ui/AprTooltip";
 import { EyeToggle } from "@/components/ui/EyeToggle";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
+import {
+  type InvestorPosition,
+  type InvestorStrategy,
+  investorHref,
+} from "@/features/funds/investorListModel";
 import { ManagerLink } from "@/features/manager/components/ManagerLink";
 import { RiskMeter } from "@/features/strategies/components/RiskMeter";
 import { Link } from "@/i18n/navigation";
@@ -84,6 +89,10 @@ import { WindowedCardList, WindowedTableBody } from "./components/WindowedList";
 export interface PortfolioViewPosition {
   position: Position;
   strategy: Strategy;
+}
+export interface InvestorPortfolioEntry {
+  position: InvestorPosition;
+  strategy: InvestorStrategy;
 }
 
 /**
@@ -112,18 +121,18 @@ const SORT_KEY_ORDER: readonly PortfolioSortKey[] = ["risk", "invested", "value"
 const DEFAULT_SORT: PortfolioSort = { key: "yield", dir: "desc" };
 
 /** Numeric value for a position row under a given sort column (mock-mode client sort, [R6]). */
-function sortValue({ position, strategy }: PortfolioViewPosition, key: PortfolioSortKey): number {
+function sortValue({ position, strategy }: InvestorPortfolioEntry, key: PortfolioSortKey): number {
   switch (key) {
     case "risk":
-      return strategy.riskLevel;
+      return strategy.riskLevel ?? 0;
     case "invested":
-      return position.invested;
+      return position.invested ?? 0;
     case "value":
       return position.currentValue;
     case "yield":
-      return position.totalYield;
+      return position.totalYield ?? 0;
     case "rate":
-      return strategy.estReturn;
+      return strategy.estReturn ?? 0;
   }
 }
 
@@ -149,7 +158,7 @@ export interface PortfolioClosedPaging {
    * The loaded closed entries in BACKEND ORDER (closed-with-balance-first, rendered verbatim). `null`
    * before the first reveal; `[]` once revealed with no closed strategies.
    */
-  entries: PortfolioViewPosition[] | null;
+  entries: InvestorPortfolioEntry[] | null;
   /** True while a closed page load (reveal or more) is in flight. */
   loading: boolean;
   /** Whether another closed page exists after the loaded ones (short-page termination). */
@@ -174,30 +183,52 @@ export interface PortfolioPagedControls {
 }
 
 /** Public props for {@link PortfolioView}. */
-export interface PortfolioViewProps {
-  totalValue: number;
-  totalEarned: number;
+export interface InvestorPortfolioViewProps {
+  totalValue: number | null;
+  totalEarned: number | null;
   /**
    * `invested` / `totalYield`: `null` = the C1 `/financials` payload served this field honest-absent,
    * OR financials are unavailable (real mode; PP-CORE-LIB-048); the KPI tile renders the "not available
    * yet" affordance, NEVER $0 ([R5]). In mock mode these are always the mock-computed numbers.
    */
   invested: number | null;
-  currentValue: number;
+  currentValue: number | null;
   totalYield: number | null;
-  avgApy: number;
+  avgApy: number | null;
   /** Labelled value series for the hero chart. */
   chartData: ChartPoint[];
   /** Allocation totals per risk band. */
-  allocation: AllocationSegment[];
+  allocation: AllocationSegment[] | null;
   /** The investor's positions (joined with their strategies). In the paged path, the accumulated pages. */
-  positions: PortfolioViewPosition[];
+  positions: InvestorPortfolioEntry[];
+  investorV2: true;
   /**
    * Real-mode server-paging controls (POO-668). Present → the active + closed lists are server-paged
    * with "Load more" and render plainly (windowing superseded). Absent → the mock-mode windowed +
    * one-shot behavior.
    */
   paged?: PortfolioPagedControls;
+}
+
+/** Preserve the existing V1 public contract for loaders and financial view-models. */
+export interface PortfolioViewProps
+  extends Omit<
+    InvestorPortfolioViewProps,
+    | "investorV2"
+    | "totalValue"
+    | "totalEarned"
+    | "currentValue"
+    | "avgApy"
+    | "allocation"
+    | "positions"
+  > {
+  investorV2?: false;
+  totalValue: number;
+  totalEarned: number;
+  currentValue: number;
+  avgApy: number;
+  allocation: AllocationSegment[];
+  positions: PortfolioViewPosition[];
 }
 
 /** First-run state shown when the investor has no positions. */
@@ -246,13 +277,14 @@ function LoadMoreButton({ loading, onClick }: { loading: boolean; onClick: () =>
 }
 
 /** Holdings & performance. */
-export function PortfolioView(props: PortfolioViewProps) {
+export function PortfolioView(props: PortfolioViewProps | InvestorPortfolioViewProps) {
   const t = useTranslations("portfolio");
   const ts = useTranslations("strategies");
   const tc = useTranslations("common");
   const { track } = useAnalytics();
   const { totalValue, totalEarned, invested, currentValue, totalYield, avgApy } = props;
-  const { chartData, allocation, positions, paged } = props;
+  const { chartData, allocation, positions, paged, investorV2 = false } = props;
+  const tv2 = useTranslations("strategies.investorV2");
 
   // POO-829 [R2]: the active-list sort, default Yield descending. The SINGLE writer is applySort,
   // shared by the desktop headers AND the mobile control (R8) so both drive the same state. In paged
@@ -309,7 +341,11 @@ export function PortfolioView(props: PortfolioViewProps) {
     rate: t("columns.rate"),
   };
   const mobileSortOptions = (
-    paged ? SORT_KEY_ORDER.filter((key) => PAGED_SORTABLE_KEYS.has(key)) : SORT_KEY_ORDER
+    investorV2
+      ? ["value" as const]
+      : paged
+        ? SORT_KEY_ORDER.filter((key) => PAGED_SORTABLE_KEYS.has(key))
+        : SORT_KEY_ORDER
   ).map((key) => ({ value: key, label: sortColumnLabels[key] }));
 
   // "Show closed strategies" (POO-460): the fully-exited (already-withdrawn) closed strategies are
@@ -356,7 +392,7 @@ export function PortfolioView(props: PortfolioViewProps) {
    * (POO-734's dead-header rule); mock mode sorts every column client-side, so all stay interactive.
    */
   const sortableHeader = (key: PortfolioSortKey, label: string, align: "left" | "right") => {
-    if (paged && !PAGED_SORTABLE_KEYS.has(key)) {
+    if ((investorV2 && key !== "value") || (paged && !PAGED_SORTABLE_KEYS.has(key))) {
       return <span className="font-medium">{label}</span>;
     }
     const active = sort.key === key;
@@ -393,30 +429,46 @@ export function PortfolioView(props: PortfolioViewProps) {
               <EyeToggle label={t("hideValues")} />
             </div>
             <p className="mt-1 font-bold text-3xl text-foreground lg:text-4xl">
-              <MaskableValue>{formatUsd(totalValue)}</MaskableValue>
+              <MaskableValue>
+                {totalValue === null ? tv2("unavailable") : formatUsd(totalValue)}
+              </MaskableValue>
             </p>
             {/* POO-555 R6: sign-aware — zero renders neutrally, negatives destructively. */}
             <p
               className={cn(
                 "mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium text-xs",
-                totalEarned > 0 && "bg-success/10 text-success",
-                totalEarned < 0 && "bg-destructive/10 text-destructive",
+                totalEarned !== null && totalEarned > 0 && "bg-success/10 text-success",
+                totalEarned !== null && totalEarned < 0 && "bg-destructive/10 text-destructive",
                 totalEarned === 0 && "bg-surface-raised text-muted-foreground",
               )}
             >
-              {totalEarned > 0 ? <TrendingUp className="size-3" aria-hidden="true" /> : null}
-              {totalEarned < 0 ? <TrendingDown className="size-3" aria-hidden="true" /> : null}
-              {t("allTimeEarned", { amount: formatSignedUsd(totalEarned) })}
+              {totalEarned !== null && totalEarned > 0 ? (
+                <TrendingUp className="size-3" aria-hidden="true" />
+              ) : null}
+              {totalEarned !== null && totalEarned < 0 ? (
+                <TrendingDown className="size-3" aria-hidden="true" />
+              ) : null}
+              {totalEarned === null
+                ? tv2("unavailable")
+                : t("allTimeEarned", { amount: formatSignedUsd(totalEarned) })}
             </p>
             <div className="mt-4 h-28 lg:h-40">
-              <PerformanceChart data={chartData} ariaLabel={t("portfolioValue")} />
+              {investorV2 && chartData.length === 0 ? (
+                <p className="text-muted-foreground text-sm">{tv2("unavailable")}</p>
+              ) : (
+                <PerformanceChart data={chartData} ariaLabel={t("portfolioValue")} />
+              )}
             </div>
           </div>
 
           <div className="flex flex-col gap-4">
             <div className="rounded-xl border border-border bg-surface p-5">
               <p className="mb-3 font-medium text-foreground text-sm">{t("allocationByRisk")}</p>
-              <AllocationByRisk allocation={allocation} />
+              {allocation === null ? (
+                <p className="text-muted-foreground text-sm">{tv2("unavailable")}</p>
+              ) : (
+                <AllocationByRisk allocation={allocation} />
+              )}
             </div>
             {/* Growth CTA — desktop only (replaces referral; never promotes withdrawal). */}
             <div className="hidden rounded-xl border border-border bg-surface p-5 lg:block">
@@ -448,7 +500,11 @@ export function PortfolioView(props: PortfolioViewProps) {
             // POO-936 [R5]: a served NULL renders "not available yet", never $0.
             value={
               invested === null ? (
-                tc("unavailable")
+                investorV2 ? (
+                  tv2("unavailable")
+                ) : (
+                  tc("unavailable")
+                )
               ) : (
                 <MaskableValue>{formatUsdTile(invested)}</MaskableValue>
               )
@@ -456,16 +512,26 @@ export function PortfolioView(props: PortfolioViewProps) {
           />
           <MetricTile
             label={t("currentValue")}
-            value={<MaskableValue>{formatUsdTile(currentValue)}</MaskableValue>}
+            value={
+              <MaskableValue>
+                {currentValue === null ? tv2("unavailable") : formatUsdTile(currentValue)}
+              </MaskableValue>
+            }
           />
           <MetricTile
             label={t("totalYield")}
-            value={totalYield === null ? tc("unavailable") : formatSignedUsdTile(totalYield)}
+            value={
+              totalYield === null
+                ? investorV2
+                  ? tv2("unavailable")
+                  : tc("unavailable")
+                : formatSignedUsdTile(totalYield)
+            }
             deltaTone={totalYield !== null && totalYield < 0 ? "negative" : "positive"}
           />
           <MetricTile
             label={<AprTooltip average>{t("avgApy")}</AprTooltip>}
-            value={formatPercent(avgApy)}
+            value={avgApy === null ? tv2("unavailable") : formatPercent(avgApy)}
           />
         </section>
 
@@ -584,6 +650,9 @@ export function PortfolioView(props: PortfolioViewProps) {
                             <PositionLink
                               positionId={position.id}
                               strategyId={strategy.id}
+                              protocolVersion={
+                                "protocolVersion" in strategy ? strategy.protocolVersion : undefined
+                              }
                               from="portfolio"
                               className="font-medium text-foreground hover:underline"
                             >
@@ -592,6 +661,11 @@ export function PortfolioView(props: PortfolioViewProps) {
                             {/* Strategies the investor manages (PP-INTEGRATION-POINT:
                                 position.isPoolManager) get the "Owned" badge here too — mirrors Home
                                 and the Strategies list. */}
+                            {"protocolVersion" in strategy && strategy.protocolVersion === "v2" ? (
+                              <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                                V2
+                              </span>
+                            ) : null}
                             {position.isPoolManager ? (
                               <span className="shrink-0 rounded-full px-2 py-0.5 font-medium text-primary text-xs ring-1 ring-primary/60 ring-inset">
                                 {ts("explore.owned")}
@@ -626,10 +700,18 @@ export function PortfolioView(props: PortfolioViewProps) {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <RiskMeter level={strategy.riskLevel} />
+                      {strategy.riskLevel === null ? (
+                        tv2("unavailable")
+                      ) : (
+                        <RiskMeter level={strategy.riskLevel} />
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right text-foreground">
-                      <MaskableValue>{formatUsd(position.invested)}</MaskableValue>
+                      <MaskableValue>
+                        {position.invested === null
+                          ? tv2("unavailable")
+                          : formatUsd(position.invested)}
+                      </MaskableValue>
                     </td>
                     <td className="px-4 py-3 text-right text-foreground">
                       <MaskableValue>{formatUsd(position.currentValue)}</MaskableValue>
@@ -637,10 +719,14 @@ export function PortfolioView(props: PortfolioViewProps) {
                     <td
                       className={cn(
                         "px-4 py-3 text-right",
-                        position.totalYield < 0 ? "text-destructive" : "text-success",
+                        position.totalYield !== null && position.totalYield < 0
+                          ? "text-destructive"
+                          : "text-success",
                       )}
                     >
-                      {formatSignedUsd(position.totalYield)}
+                      {position.totalYield === null
+                        ? tv2("unavailable")
+                        : formatSignedUsd(position.totalYield)}
                     </td>
                     <td className="px-4 py-3 text-right text-foreground">
                       {/* POO-647 [R3]: on closed rows the desktop Rate column is reclaimed for the
@@ -650,14 +736,16 @@ export function PortfolioView(props: PortfolioViewProps) {
                           returns here. Active rows keep the APR/APY value. */}
                       {position.status === "closed" ? (
                         <Link
-                          href={`/strategies/${strategy.id}?withdraw=1&from=portfolio`}
+                          href={investorHref(strategy, "portfolio", true)}
                           className="inline-flex items-center rounded-md border border-destructive/40 bg-destructive/5 px-3 py-1.5 font-medium text-destructive text-sm hover:bg-destructive/10"
                         >
                           {ts("detail.actions.withdraw")}
                         </Link>
                       ) : (
                         <>
-                          {formatPercent(strategy.estReturn)}{" "}
+                          {strategy.estReturn === null
+                            ? tv2("unavailable")
+                            : formatPercent(strategy.estReturn)}{" "}
                           <AprTooltip className="font-normal text-[10px] text-muted-foreground uppercase">
                             {strategy.rateType}
                           </AprTooltip>
@@ -744,10 +832,14 @@ export function PortfolioView(props: PortfolioViewProps) {
                         <p
                           className={cn(
                             "font-medium text-sm",
-                            position.totalYield < 0 ? "text-destructive" : "text-success",
+                            position.totalYield !== null && position.totalYield < 0
+                              ? "text-destructive"
+                              : "text-success",
                           )}
                         >
-                          {formatSignedUsd(position.totalYield)}
+                          {position.totalYield === null
+                            ? tv2("unavailable")
+                            : formatSignedUsd(position.totalYield)}
                         </p>
                       </div>
                     </div>

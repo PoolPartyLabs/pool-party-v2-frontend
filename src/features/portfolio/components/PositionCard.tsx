@@ -1,7 +1,7 @@
 /**
  * @id PP-PORT-CMP-002
  * @name PositionCard
- * @implements-rules-version v3
+ * @implements-rules-version v3; POO-2215 rules v1
  *
  * The canonical portfolio position card. Risk-themed accent, manager + verified badge and a status
  * pill (Active / Paused / Closed), then a metric grid (Invested / Total yield / Current value /
@@ -20,9 +20,9 @@ import type { ReactNode } from "react";
 import { MaskableValue } from "@/components/data-display/MaskableValue";
 import { StrategyLogo } from "@/components/data-display/StrategyLogo";
 import { AprTooltip } from "@/components/ui/AprTooltip";
+import type { InvestorPosition, InvestorStrategy } from "@/features/funds/investorListModel";
 import { ManagerLink } from "@/features/manager/components/ManagerLink";
 import { RiskMeter } from "@/features/strategies/components/RiskMeter";
-import type { Position, Strategy } from "@/lib/schemas";
 import { cn } from "@/lib/utils/cn";
 import { formatPercent, formatSignedUsd, formatUsd } from "@/lib/utils/format";
 import { PositionLink } from "./PositionLink";
@@ -57,9 +57,9 @@ function Metric({
 /** Public props for {@link PositionCard}. */
 export interface PositionCardProps {
   /** The investor's position. */
-  position: Position;
+  position: InvestorPosition;
   /** The strategy the position belongs to (for name / manager / risk / rate). */
-  strategy: Strategy;
+  strategy: InvestorStrategy;
   /** Extra classes on the card. */
   className?: string;
 }
@@ -67,16 +67,24 @@ export interface PositionCardProps {
 /** A single owned-position card. */
 export function PositionCard({ position, strategy, className }: PositionCardProps) {
   const t = useTranslations("portfolio");
+  const tv2 = useTranslations("strategies.investorV2");
   const ts = useTranslations("strategies");
-  const accent = RISK_ACCENT[strategy.riskLevel] ?? RISK_ACCENT[3];
-  const yieldTone = position.totalYield < 0 ? "text-destructive" : "text-success";
+  const accent =
+    strategy.riskLevel === null
+      ? "bg-surface-raised"
+      : (RISK_ACCENT[strategy.riskLevel] ?? RISK_ACCENT[3]);
+  const yieldTone =
+    position.totalYield !== null && position.totalYield < 0 ? "text-destructive" : "text-success";
   const isPaused = position.status === "paused";
   const isClosed = position.status === "closed";
-  const statusLabel = isClosed
-    ? t("status.closed")
-    : isPaused
-      ? t("status.paused")
-      : t("status.active");
+  const statusLabel =
+    strategy.protocolVersion === "v2" && !strategy.lifecycleAvailable
+      ? tv2("unavailable")
+      : isClosed
+        ? t("status.closed")
+        : isPaused
+          ? t("status.paused")
+          : t("status.active");
 
   return (
     <div
@@ -129,11 +137,20 @@ export function PositionCard({ position, strategy, className }: PositionCardProp
               </p>
             </div>
           </div>
+          {strategy.protocolVersion === "v2" ? (
+            <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+              V2
+            </span>
+          ) : null}
           <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <RiskMeter level={strategy.riskLevel} />
+          {strategy.riskLevel === null ? (
+            <span className="text-muted-foreground text-xs">{tv2("unavailable")}</span>
+          ) : (
+            <RiskMeter level={strategy.riskLevel} />
+          )}
           <span
             className={cn(
               "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs",
@@ -156,11 +173,19 @@ export function PositionCard({ position, strategy, className }: PositionCardProp
         <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
           <Metric
             label={t("invested")}
-            value={<MaskableValue>{formatUsd(position.invested)}</MaskableValue>}
+            value={
+              <MaskableValue>
+                {position.invested === null ? tv2("unavailable") : formatUsd(position.invested)}
+              </MaskableValue>
+            }
           />
           <Metric
             label={t("totalYield")}
-            value={formatSignedUsd(position.totalYield)}
+            value={
+              position.totalYield === null
+                ? tv2("unavailable")
+                : formatSignedUsd(position.totalYield)
+            }
             valueClass={yieldTone}
           />
           <Metric
@@ -181,7 +206,9 @@ export function PositionCard({ position, strategy, className }: PositionCardProp
               }
               value={
                 <>
-                  {formatPercent(strategy.estReturn)}{" "}
+                  {strategy.estReturn === null
+                    ? tv2("unavailable")
+                    : formatPercent(strategy.estReturn)}{" "}
                   <AprTooltip className="pointer-events-auto relative z-10 font-normal text-[10px] text-muted-foreground uppercase">
                     {strategy.rateType}
                   </AprTooltip>
@@ -196,6 +223,7 @@ export function PositionCard({ position, strategy, className }: PositionCardProp
       <PositionLink
         positionId={position.id}
         strategyId={strategy.id}
+        protocolVersion={strategy.protocolVersion}
         from="portfolio"
         className="absolute inset-0 z-0"
         ariaLabel={strategy.name}

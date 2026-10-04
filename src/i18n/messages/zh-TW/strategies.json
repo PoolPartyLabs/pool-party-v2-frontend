@@ -901,5 +901,11 @@
     "notAvailable": "暫不可用",
     "balanceUnavailable": "餘額：暫不可用",
     "target": "Arbitrum 上的 USDC"
+  },
+  "investorV2": {
+    "unavailable": "暫不可用",
+    "incomplete": "暫不可用",
+    "error": "暫不可用",
+    "retry": "重試"
   }
 }

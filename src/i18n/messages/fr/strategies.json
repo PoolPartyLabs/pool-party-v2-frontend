@@ -901,5 +901,11 @@
     "notAvailable": "Non disponible",
     "balanceUnavailable": "Solde : non disponible",
     "target": "USDC sur Arbitrum"
+  },
+  "investorV2": {
+    "unavailable": "Non disponible",
+    "incomplete": "Non disponible",
+    "error": "Non disponible",
+    "retry": "Réessayer"
   }
 }

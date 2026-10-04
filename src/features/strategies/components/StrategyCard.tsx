@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-CMP-001
  * @name StrategyCard (Investment Card)
- * @implements-rules-version v1
+ * @implements-rules-version v1; POO-2215 rules v1
  *
  * The risk-themed strategy card used in discovery surfaces (Home carousel, Strategies list). Shows
  * the name, manager + verified badge (info blue), the manager's description as a subtitle when set
@@ -17,9 +17,9 @@ import { BadgeCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { StrategyLogo } from "@/components/data-display/StrategyLogo";
 import { AprTooltip } from "@/components/ui/AprTooltip";
+import { type InvestorStrategy, investorHref } from "@/features/funds/investorListModel";
 import { ManagerLink } from "@/features/manager/components/ManagerLink";
 import { Link } from "@/i18n/navigation";
-import type { Strategy } from "@/lib/schemas";
 import { cn } from "@/lib/utils/cn";
 import { formatPercent, formatUsd } from "@/lib/utils/format";
 import { RiskMeter } from "./RiskMeter";
@@ -36,7 +36,7 @@ const RISK_ACCENT: Record<number, string> = {
 /** Public props for {@link StrategyCard}. */
 export interface StrategyCardProps {
   /** The strategy to render. */
-  strategy: Strategy;
+  strategy: InvestorStrategy;
   /** Extra classes on the card. */
   className?: string;
 }
@@ -44,6 +44,7 @@ export interface StrategyCardProps {
 /** A single strategy discovery card. */
 export function StrategyCard({ strategy, className }: StrategyCardProps) {
   const t = useTranslations("strategies");
+  const tv2 = useTranslations("strategies.investorV2");
   // Literal t() calls (not dynamic keys) so the i18n used-key scan resolves every risk label.
   const riskLabels: Record<number, string> = {
     1: t("risk.level1"),
@@ -52,8 +53,11 @@ export function StrategyCard({ strategy, className }: StrategyCardProps) {
     4: t("risk.level4"),
     5: t("risk.level5"),
   };
-  const href = `/strategies/${strategy.id}`;
-  const accent = RISK_ACCENT[strategy.riskLevel] ?? RISK_ACCENT[3];
+  const href = investorHref(strategy);
+  const accent =
+    strategy.riskLevel === null
+      ? "bg-surface-raised"
+      : (RISK_ACCENT[strategy.riskLevel] ?? RISK_ACCENT[3]);
 
   return (
     <div
@@ -64,14 +68,19 @@ export function StrategyCard({ strategy, className }: StrategyCardProps) {
     >
       <span className={cn("h-1 w-full", accent)} aria-hidden="true" />
       <div className="flex flex-1 flex-col gap-4 p-4">
-        <div className="flex items-start gap-3">
+        <div className="relative flex items-start gap-3">
+          {strategy.protocolVersion === "v2" ? (
+            <span className="absolute right-0 top-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+              V2
+            </span>
+          ) : null}
           {/* POO-713: the manager-uploaded strategy logo, with an initials monogram fallback. */}
           <StrategyLogo
             url={strategy.logoUrl}
             name={strategy.name}
             className="size-10 shrink-0 text-sm"
           />
-          <div className="min-w-0">
+          <div className={cn("min-w-0", strategy.protocolVersion === "v2" && "pr-10")}>
             <h3 className="truncate font-semibold text-base text-foreground">{strategy.name}</h3>
             <p className="mt-0.5 flex items-center gap-1 text-muted-foreground text-sm">
               <ManagerLink
@@ -102,21 +111,29 @@ export function StrategyCard({ strategy, className }: StrategyCardProps) {
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <RiskMeter level={strategy.riskLevel} />
-          <span className="text-muted-foreground text-xs">{riskLabels[strategy.riskLevel]}</span>
+          {strategy.riskLevel === null ? (
+            <span className="text-muted-foreground text-xs">{tv2("unavailable")}</span>
+          ) : (
+            <RiskMeter level={strategy.riskLevel} />
+          )}
+          <span className="text-muted-foreground text-xs">
+            {strategy.riskLevel === null ? null : riskLabels[strategy.riskLevel]}
+          </span>
         </div>
 
         <div className="flex items-end justify-between gap-2">
           <div>
             <p className="text-muted-foreground text-xs">{t("card.min")}</p>
             <p className="font-medium text-foreground text-sm">
-              {formatUsd(strategy.minInvestment)}
+              {strategy.minInvestment === null
+                ? tv2("unavailable")
+                : formatUsd(strategy.minInvestment)}
             </p>
           </div>
           <div className="text-right">
             <p className="text-muted-foreground text-xs">{t("card.estReturn")}</p>
             <p className="font-semibold text-success">
-              {formatPercent(strategy.estReturn)}{" "}
+              {strategy.estReturn === null ? tv2("unavailable") : formatPercent(strategy.estReturn)}{" "}
               <AprTooltip className="font-normal text-[10px] text-muted-foreground uppercase">
                 {strategy.rateType}
               </AprTooltip>

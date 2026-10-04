@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-SCR-001
  * @name Strategies · Explore
- * @implements-rules-version v9
+ * @implements-rules-version v9; POO-2215 rules v1
  *
  * POO-894 v1: the asset-category filter round-trips to the SERVER in paged (real) mode - selecting
  * categories forwards `paged.onCategoriesChange` (page-0 reset, like search/risk), the backend
@@ -83,12 +83,13 @@ import { StrategyLogo } from "@/components/data-display/StrategyLogo";
 import { AprTooltip } from "@/components/ui/AprTooltip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterDropdown, type FilterOption } from "@/components/ui/FilterDropdown";
+import { type InvestorStrategy, investorHref } from "@/features/funds/investorListModel";
 import { ManagerLink } from "@/features/manager/components/ManagerLink";
 import { Link } from "@/i18n/navigation";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useTrackView } from "@/lib/analytics/useTrackView";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
-import { type AssetTag, STRATEGY_TYPES, type Strategy, type StrategyType } from "@/lib/schemas";
+import { type AssetTag, STRATEGY_TYPES, type StrategyType } from "@/lib/schemas";
 import { filterStrategiesByAssetTags } from "@/lib/strategies/tags/filterByAssetTags";
 import { cn } from "@/lib/utils/cn";
 import { formatPercent, formatPoolTvl, formatUsd } from "@/lib/utils/format";
@@ -151,19 +152,21 @@ const PAGED_SORTABLE_KEYS: ReadonlySet<SortKey> = new Set(["tvl", "return", "ris
 const SORT_KEY_ORDER: readonly SortKey[] = ["risk", "min", "tvl", "investors", "return"];
 
 /** Numeric value for a strategy under a given sort column. */
-function sortValue(strategy: Strategy, key: SortKey): number {
+function sortValue(strategy: InvestorStrategy, key: SortKey): number {
   switch (key) {
     case "risk":
-      return strategy.riskLevel;
+      return strategy.riskLevel ?? 0;
     case "min":
-      return strategy.minInvestment;
+      return strategy.minInvestment ?? 0;
     case "tvl":
       // Investor TVL sort is by the Uniswap pool TVL (POO-390 R2); missing/zero sorts to the bottom.
-      return strategy.uniswapPoolTvlUsd ?? 0;
+      return (
+        (strategy.protocolVersion === "v2" ? strategy.tvlUsd : strategy.uniswapPoolTvlUsd) ?? 0
+      );
     case "investors":
-      return strategy.investors;
+      return strategy.investors ?? 0;
     case "return":
-      return strategy.estReturn;
+      return strategy.estReturn ?? 0;
   }
 }
 
@@ -201,7 +204,8 @@ export interface StrategiesExplorePagedContract {
 /** Public props for {@link StrategiesExploreScreen}. */
 export interface StrategiesExploreScreenProps {
   /** Every strategy that can be invested in. */
-  strategies: Strategy[];
+  strategies: InvestorStrategy[];
+  investorV2?: boolean;
   /** Ids of strategies the investor manages as pool manager (drives the "Owned" badge). */
   ownedIds: string[];
   /** Ids of strategies the investor holds a (non-manager) position in (drives the "Invested" badge). */
@@ -219,9 +223,11 @@ export function StrategiesExploreScreen({
   strategies,
   ownedIds,
   investedIds,
+  investorV2 = false,
   paged,
 }: StrategiesExploreScreenProps) {
   const t = useTranslations("strategies");
+  const tv2 = useTranslations("strategies.investorV2");
   const tCommon = useTranslations("common");
   const { track } = useAnalytics();
   useTrackView("strategy_list_viewed");
@@ -325,8 +331,8 @@ export function StrategiesExploreScreen({
     investors: t("explore.columns.investors"),
     return: t("explore.columns.return"),
   };
-  const mobileSortOptions: FilterOption<SortKey>[] = SORT_KEY_ORDER.filter(
-    (key) => !isPaged || PAGED_SORTABLE_KEYS.has(key),
+  const mobileSortOptions: FilterOption<SortKey>[] = SORT_KEY_ORDER.filter((key) =>
+    investorV2 ? key === "tvl" || key === "min" : !isPaged || PAGED_SORTABLE_KEYS.has(key),
   ).map((key) => ({ value: key, label: sortColumnLabels[key] }));
 
   const visible = useMemo(() => {
@@ -366,7 +372,11 @@ export function StrategiesExploreScreen({
     () =>
       isPaged || effectiveCategories.length === 0
         ? visible
-        : filterStrategiesByAssetTags(visible, effectiveCategories),
+        : visible.filter(
+            (entry) =>
+              entry.protocolVersion !== "v2" &&
+              filterStrategiesByAssetTags([entry], effectiveCategories).length > 0,
+          ),
     [isPaged, visible, effectiveCategories],
   );
 
@@ -501,7 +511,10 @@ export function StrategiesExploreScreen({
    * column client-side, so all headers stay interactive there.
    */
   const sortableHeader = (key: SortKey, label: string, align: "left" | "right") => {
-    if (isPaged && !PAGED_SORTABLE_KEYS.has(key)) {
+    if (
+      (investorV2 && key !== "tvl" && key !== "min") ||
+      (isPaged && !PAGED_SORTABLE_KEYS.has(key))
+    ) {
       return <span className="font-medium">{label}</span>;
     }
     const active = sort.key === key;
@@ -555,12 +568,14 @@ export function StrategiesExploreScreen({
             POO-667: the TYPE filter is hidden in real (paged) mode — the backend has no `type`
             parameter, so it exists only in mock mode. The risk filter maps to the API `riskProfile`. */}
         <div className="flex flex-wrap items-center gap-2">
-          <FilterDropdown
-            label={t("explore.browseByRisk")}
-            value={risk}
-            onSelect={handleRisk}
-            options={riskOptions}
-          />
+          <fieldset disabled={investorV2} className="contents">
+            <FilterDropdown
+              label={t("explore.browseByRisk")}
+              value={risk}
+              onSelect={investorV2 ? () => {} : handleRisk}
+              options={investorV2 ? [{ value: null, label: tv2("unavailable") }] : riskOptions}
+            />
+          </fieldset>
           {!isPaged && (
             <FilterDropdown
               label={t("explore.browseByType")}
@@ -572,14 +587,16 @@ export function StrategiesExploreScreen({
           {/* POO-830 R8: the multi-select asset-category filter, dark-launched. Hidden entirely when the
               flag is off, so the control row is byte-for-byte today's. Filters client-side (R6). */}
           {categoryFilterEnabled && (
-            <CategoryFilter
-              label={t("explore.browseByCategory")}
-              allLabel={t("explore.allCategories")}
-              selectedCountLabel={(count) => t("explore.categorySelected", { count })}
-              options={categoryOptions}
-              selected={selectedCategories}
-              onChange={handleCategories}
-            />
+            <fieldset disabled={investorV2} className="contents">
+              <CategoryFilter
+                label={t("explore.browseByCategory")}
+                allLabel={investorV2 ? tv2("unavailable") : t("explore.allCategories")}
+                selectedCountLabel={(count) => t("explore.categorySelected", { count })}
+                options={investorV2 ? [] : categoryOptions}
+                selected={selectedCategories}
+                onChange={investorV2 ? () => {} : handleCategories}
+              />
+            </fieldset>
           )}
           {/* POO-843 R2: the mobile sort control. Desktop sorts via the table headers (hidden below
               lg), so this is lg:hidden; it drives the SAME `sort` state the headers do (selectSortKey
@@ -630,9 +647,11 @@ export function StrategiesExploreScreen({
             the category filter is server-side now, so `total` already reflects it and a
             loaded-pages-only count would lie). Mock: the client-filtered count (`categoryVisible`
             narrows it while a category is active, and equals `visible` otherwise). */}
-        {t("explore.count", {
-          count: paged ? paged.total : categoryVisible.length,
-        })}
+        {investorV2
+          ? tv2("incomplete")
+          : t("explore.count", {
+              count: paged ? paged.total : categoryVisible.length,
+            })}
       </p>
 
       {paged?.loading && strategies.length === 0 ? (
@@ -669,7 +688,12 @@ export function StrategiesExploreScreen({
             ariaLabel={t("explore.title")}
             renderCard={(strategy) => (
               <>
-                {tagPill(strategy.id, "absolute top-3 right-3 z-10")}
+                {tagPill(
+                  strategy.id,
+                  strategy.protocolVersion === "v2"
+                    ? "absolute top-3 right-14 z-10"
+                    : "absolute top-3 right-3 z-10",
+                )}
                 <StrategyCard strategy={strategy} />
               </>
             )}
@@ -740,12 +764,17 @@ export function StrategiesExploreScreen({
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <Link
-                              href={`/strategies/${strategy.id}`}
+                              href={investorHref(strategy)}
                               className="font-medium text-foreground hover:underline"
                             >
                               {strategy.name}
                             </Link>
                             {tagPill(strategy.id)}
+                            {strategy.protocolVersion === "v2" ? (
+                              <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                                V2
+                              </span>
+                            ) : null}
                           </div>
                           <p className="text-muted-foreground text-xs">
                             <ManagerLink
@@ -766,26 +795,42 @@ export function StrategiesExploreScreen({
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <RiskMeter level={strategy.riskLevel} />
+                      {strategy.riskLevel === null ? (
+                        tv2("unavailable")
+                      ) : (
+                        <RiskMeter level={strategy.riskLevel} />
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right text-foreground">
-                      {formatUsd(strategy.minInvestment)}
+                      {strategy.minInvestment === null
+                        ? tv2("unavailable")
+                        : formatUsd(strategy.minInvestment)}
                     </td>
                     <td className="px-4 py-3 text-right text-foreground">
-                      {formatPoolTvl(strategy.uniswapPoolTvlUsd)}
+                      {strategy.protocolVersion === "v2" && strategy.tvlUsd === undefined
+                        ? tv2("unavailable")
+                        : formatPoolTvl(
+                            strategy.protocolVersion === "v2"
+                              ? strategy.tvlUsd
+                              : strategy.uniswapPoolTvlUsd,
+                          )}
                     </td>
                     <td className="px-4 py-3 text-right text-foreground">
-                      {strategy.investors.toLocaleString("en-US")}
+                      {strategy.investors === null
+                        ? tv2("unavailable")
+                        : strategy.investors.toLocaleString("en-US")}
                     </td>
                     <td className="px-4 py-3 text-right text-success">
-                      {formatPercent(strategy.estReturn)}{" "}
+                      {strategy.estReturn === null
+                        ? tv2("unavailable")
+                        : formatPercent(strategy.estReturn)}{" "}
                       <AprTooltip className="font-normal text-[10px] text-muted-foreground uppercase">
                         {strategy.rateType}
                       </AprTooltip>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
-                        href={`/strategies/${strategy.id}`}
+                        href={investorHref(strategy)}
                         className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 font-semibold text-primary-foreground text-sm transition-colors hover:bg-primary/90"
                       >
                         {t("card.invest")}
@@ -822,7 +867,7 @@ export function StrategiesExploreScreen({
 /** Shared props for the two window-virtualized surfaces (desktop table body + mobile card list). */
 interface ExploreListProps {
   /** The full, ordered filtered set (the same array a plain `.map()` renders). [R2] count uses this. */
-  strategies: Strategy[];
+  strategies: InvestorStrategy[];
   /** [R1] List-identity key; a change scrolls the window origin to row 0 in the same commit. */
   resetKey: string;
   /** [R3] Flat index of the focused row/card, force-pinned into the window. */
@@ -874,9 +919,9 @@ function ExploreTableBody({
   onRowFocus,
   onRowBlur,
   renderCells,
-}: ExploreListProps & { renderCells: (strategy: Strategy) => ReactNode }) {
+}: ExploreListProps & { renderCells: (strategy: InvestorStrategy) => ReactNode }) {
   const gate = useVirtualizeGate(strategies.length);
-  const rows = useVirtualizedRows<Strategy>({
+  const rows = useVirtualizedRows<InvestorStrategy>({
     items: strategies,
     mode: "window",
     estimateSize: ROW_ESTIMATE,
@@ -888,7 +933,7 @@ function ExploreTableBody({
   });
   useResetOnIdentityChange(rows.scrollToIndex, resetKey, gate.enabled);
 
-  const row = (strategy: Strategy, index: number, measure: boolean) => (
+  const row = (strategy: InvestorStrategy, index: number, measure: boolean) => (
     <tr
       key={strategy.id}
       data-index={index}
@@ -923,7 +968,7 @@ function ExploreTableBody({
             <td colSpan={7} style={{ height: segment.height, padding: 0, border: 0 }} />
           </tr>
         ) : strategies[segment.index] === undefined ? null : (
-          row(strategies[segment.index] as Strategy, segment.index, true)
+          row(strategies[segment.index] as InvestorStrategy, segment.index, true)
         ),
       )}
     </tbody>
@@ -944,9 +989,12 @@ function ExploreCards({
   onRowBlur,
   ariaLabel,
   renderCard,
-}: ExploreListProps & { ariaLabel: string; renderCard: (strategy: Strategy) => ReactNode }) {
+}: ExploreListProps & {
+  ariaLabel: string;
+  renderCard: (strategy: InvestorStrategy) => ReactNode;
+}) {
   const gate = useVirtualizeGate(strategies.length);
-  const rows = useVirtualizedRows<Strategy>({
+  const rows = useVirtualizedRows<InvestorStrategy>({
     items: strategies,
     mode: "window",
     estimateSize: CARD_ESTIMATE,
