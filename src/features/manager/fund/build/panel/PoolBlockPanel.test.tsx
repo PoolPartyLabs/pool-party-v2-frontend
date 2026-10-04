@@ -282,9 +282,16 @@ describe("deferred reads (POO-2204)", () => {
 
 describe("deferred range initialization (POO-2204)", () => {
   // @rule R1, R5
-  it("offers usable range controls after a range-less deferred pool becomes positive", async () => {
+  it.each([
+    false,
+    true,
+  ])("offers usable range controls after a range-less deferred pool becomes positive (explicit undefined: %s)", async (explicitUndefined) => {
     action.mockResolvedValue({ ok: false, error: { code: "FAILED" } });
-    const deferred = { poolId: config.poolId, slippagePct: 2 };
+    const deferred = {
+      poolId: config.poolId,
+      slippagePct: 2,
+      ...(explicitUndefined ? { tickLower: undefined } : {}),
+    };
     renderWithProviders(
       <PanelHarness
         draft={draft}

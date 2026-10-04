@@ -227,7 +227,14 @@ export function PoolBlockPanel({
     if (!missingRange) return;
     const defaults = defaultConfig(live.pool, config.poolId);
     if (!defaults) return;
-    onConfigChange({ ...defaults, ...config });
+    onConfigChange({
+      ...defaults,
+      ...config,
+      tickLower: config.tickLower ?? defaults.tickLower,
+      tickUpper: config.tickUpper ?? defaults.tickUpper,
+      fullRange: config.fullRange ?? defaults.fullRange,
+      displayInverted: config.displayInverted ?? defaults.displayInverted,
+    });
   }, [sharePct, live.applicable, live.pool, config, onConfigChange]);
   return (
     <div className="flex flex-col gap-4">
