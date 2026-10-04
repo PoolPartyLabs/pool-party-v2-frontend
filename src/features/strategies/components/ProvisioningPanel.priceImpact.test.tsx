@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-CMP-022
  * @name ProvisioningPanel price-impact gate tests
- * @implements-rules-version v3 (POO-1047 rules v1) · v2 (POO-1011 rules v2)
+ * @implements-rules-version v1 (POO-2198) · v3 (POO-1047 rules v1) · v2 (POO-1011 rules v2)
  * @hackathon POO-1022 (Universal Funding)
  *
  * POO-1047: a funding route is a swap like any other. The gate that POO-1011 put in front of every
@@ -19,13 +19,13 @@
  * with hand-built REAL plans (a mock-mode fixture plan carries no legs, so it can never gate), and a
  * module mock is file-scoped.
  *
- * The last two cases cover the branch this gate shares with POO-1044's gas-only skip, which landed
+ * The gas-only cases cover the branch this gate shares with POO-1044's picker skip, which landed
  * on a separate branch: a gas-only requirement reaches its confirm with NO funding picker, so it is
- * the one real-mode route that never passes through `phase === "sources"`, and its `swap-gas` leg is
+ * the one real-mode route that never requests the normal auto-start, and its `swap-gas` leg is
  * a CLASSIC swap that has to be gated like any other.
  */
 import type { AnchorHTMLAttributes, ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FundingSource } from "@/lib/balances/fundingInventory";
 import type {
   GasFeasibility,
@@ -319,18 +319,29 @@ function gasOnlyPlanWithImpact(impactPct: number | undefined): ProvisioningPlan 
   };
 }
 
-function renderRealModePanel() {
-  return renderWithProviders(
+function realModePanel(input: ProvisioningNeedInput = GAS_ONLY_INPUT) {
+  return (
     <ProvisioningPanel
-      input={GAS_ONLY_INPUT}
+      input={input}
       context={gasOnlyContext()}
       opLabel="Collect fees"
       onDone={noop}
       onCancel={noop}
       buildPlanSteps={() => []}
-    />,
+    />
   );
 }
+
+function renderRealModePanel() {
+  return renderWithProviders(realModePanel());
+}
+
+const blockedImpactEvents = () =>
+  (window.dataLayer ?? []).filter((entry) => entry.event === "tx_impact_gate_blocked");
+
+beforeEach(() => {
+  window.dataLayer = [];
+});
 
 afterEach(() => {
   computePlan.mockReset();
@@ -435,6 +446,51 @@ describe("ProvisioningPanel — the price-impact gate (POO-1047)", () => {
 
     fireEvent.click(screen.getByRole("checkbox"));
     expect(gasTopUpCta()).toBeEnabled();
+  });
+
+  // @rule POO-2198 R1/R2: the visible gas gate reports blocked intent and owns consent until left.
+  it("reports the gas-only block and clears consent when its screen is left (POO-2198)", async () => {
+    computePlan.mockResolvedValue(gasOnlyPlanWithImpact(12));
+    const { rerender } = renderRealModePanel();
+
+    await waitFor(() => {
+      expect(blockedImpactEvents()).toEqual([
+        expect.objectContaining({ metric_name: "price_impact_pct", metric_value: 12 }),
+      ]);
+    });
+    expect(gasTopUpCta()).toBeDisabled();
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(screen.getByRole("checkbox")).toBeChecked();
+    expect(gasTopUpCta()).toBeEnabled();
+    expect(screen.getByTestId("provisioning-panel")).toHaveAttribute("data-phase", "gas");
+
+    // A changed requirement leaves the auxiliary gas screen for the normal funding picker.
+    rerender(realModePanel({ ...GAS_ONLY_INPUT, opRequiredUsdc: 1_300 }));
+    expect(screen.queryByTestId("gas-topup-confirm")).not.toBeInTheDocument();
+    rerender(realModePanel());
+    expect(screen.getByRole("checkbox")).not.toBeChecked();
+    expect(gasTopUpCta()).toBeDisabled();
+  });
+
+  // @rule POO-2198 R3: a worse gas quote blocks in the same render, before the reset effect.
+  it("requires a fresh gas-only acknowledgement after a worsened quote (POO-2198)", async () => {
+    computePlan.mockResolvedValueOnce(gasOnlyPlanWithImpact(12));
+    computePlan.mockResolvedValue(gasOnlyPlanWithImpact(92.41));
+    const { rerender } = renderRealModePanel();
+
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(gasTopUpCta()).toBeEnabled();
+
+    rerender(realModePanel({ ...GAS_ONLY_INPUT, gasEstimateUsd: 0.08 }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("92.41%"));
+    expect(gasTopUpCta()).toBeDisabled();
+    await waitFor(() => expect(screen.getByRole("checkbox")).not.toBeChecked());
+
+    fireEvent.click(screen.getByRole("checkbox"));
+    expect(screen.getByRole("checkbox")).toBeChecked();
+    expect(gasTopUpCta()).toBeEnabled();
+    expect(screen.getByTestId("provisioning-panel")).toHaveAttribute("data-phase", "gas");
   });
 
   it("[R3] leaves the gas-only real-mode plan ungated when its quote reported no impact", async () => {
