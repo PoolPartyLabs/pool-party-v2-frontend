@@ -41,9 +41,9 @@ They are recorded together so a reader can tell a disclosed repeat from an undet
 | `PP-CORE-LIB-113` | v2ApiSchemas: real v2 catalog/Mandate slice A | Lib | n/a (code) | In Review | POO-2133 | code-only; `src/lib/api/v2/schemas.ts` @rules-v1 |
 | `PP-CORE-LIB-114` | v2CatalogReads: real v2 catalog/Mandate slice A | Lib | n/a (code) | In Review | POO-2133 | code-only; `src/lib/api/v2/catalog.ts` @rules-v1 |
 | `PP-CORE-LIB-115` | v2CatalogActions: real v2 catalog/Mandate slice A | Lib | n/a (code) | In Review | POO-2133 | code-only; `src/lib/api/v2/actions.ts` @rules-v1 |
-| `PP-MGR-LIB-033` | v2Mandate: real v2 catalog/Mandate slice A | Lib | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/v2Mandate.ts` @rules-v1 |
-| `PP-MGR-HOK-014` | useV2MandateCatalog: real v2 catalog/Mandate slice A | Hook | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/useV2MandateCatalog.ts` @rules-v1 |
-| `PP-MGR-CMP-065` | MandateCatalogStatus: real v2 catalog/Mandate slice A | Component | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/components/MandateCatalogStatus.tsx` @rules-v1 |
+| `PP-MGR-LIB-025` | v2Mandate: real v2 catalog/Mandate slice A | Lib | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/v2Mandate.ts` @rules-v1 |
+| `PP-MGR-HOK-011` | useV2MandateCatalog: real v2 catalog/Mandate slice A | Hook | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/useV2MandateCatalog.ts` @rules-v1 |
+| `PP-MGR-CMP-060` | MandateCatalogStatus: real v2 catalog/Mandate slice A | Component | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/components/MandateCatalogStatus.tsx` @rules-v1 |
 
 ## CORE · Design system, primitives, generic reusable components and modals
 

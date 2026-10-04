@@ -58,8 +58,8 @@ The Mandate step of the fund-contracts strategy builder (hub Arbitrum, spoke Rob
 PoolPartyLabs/smartcontract-v2): five list-picking screens, reached from the header's V1/V2
 `ContractFamilyToggle` (`PP-CORE-CMP-075`) behind the `fundContracts` flag, that persist a local
 draft and sign nothing on chain. POO-2133 wires the real catalog behind server actions with
-`v2Mandate` (`PP-MGR-LIB-033`), `useV2MandateCatalog` (`PP-MGR-HOK-014`) and
-`MandateCatalogStatus` (`PP-MGR-CMP-065`); mock fixtures
+`v2Mandate` (`PP-MGR-LIB-025`), `useV2MandateCatalog` (`PP-MGR-HOK-011`) and
+`MandateCatalogStatus` (`PP-MGR-CMP-060`); mock fixtures
 remain the local preview harness. Draft persistence and Review/launch remain separate slices.
 
 | Marker | File | Mocked today | Expected real call |
