@@ -103,7 +103,9 @@
     "waiting": "確認を待機中",
     "confirmed": "確認済み",
     "failed": "失敗",
-    "stepProgress": "ステップ {n}/{total}"
+    "stepProgress": "ステップ {n}/{total}",
+    "reportCountdown": "Wormholeレポート。推定残り時間：{time}",
+    "reportDelayed": "推定時間を超えています。Wormholeレポートを待っています。"
   },
   "entry": {
     "become": "マネージャーになる",

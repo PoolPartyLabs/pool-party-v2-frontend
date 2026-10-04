@@ -103,7 +103,9 @@
     "waiting": "Esperando verificación",
     "confirmed": "Confirmado",
     "failed": "Error",
-    "stepProgress": "Paso {n} de {total}"
+    "stepProgress": "Paso {n} de {total}",
+    "reportCountdown": "Informe de Wormhole. Tiempo restante estimado: {time}",
+    "reportDelayed": "Está tardando más de lo estimado. Esperando el informe de Wormhole."
   },
   "entry": {
     "become": "Conviértete en manager",

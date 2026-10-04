@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-CMP-081 (POO-2212)
+ * @id PP-MGR-CMP-081 (POO-2212, POO-2233)
  * @name FundLaunchJourney.stories
  * @implements-rules-version v1
  * @analytics-events none, isolated presentation with no wallet or API calls
@@ -7,6 +7,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { withManagerMessages } from "../build/canvas/canvasStorySupport";
 import { type FundLaunchJourneyState, FundLaunchJourneyView } from "./FundLaunchJourney";
+import { REPORT_WAIT_MS } from "./useLaunchReportWait";
 
 const kinds = [
   "approve",
@@ -72,6 +73,16 @@ export const Signing: Story = {
   },
 };
 export const WaitingForReport: Story = {
+  render: ({ launch }) => (
+    <FundLaunchJourneyView
+      launch={{
+        ...launch,
+        steps: launch.steps.map((step) =>
+          step.kind === "report" ? { ...step, reportWaitStartedAt: Date.now() } : step,
+        ),
+      }}
+    />
+  ),
   args: {
     launch: {
       ...launch,
@@ -79,6 +90,33 @@ export const WaitingForReport: Story = {
       steps: steps.map((step, index) => ({
         ...step,
         status: index < 7 ? "confirmed" : index === 7 ? "waiting" : "idle",
+      })),
+    },
+  },
+};
+export const DelayedReport: Story = {
+  ...WaitingForReport,
+  render: ({ launch }) => (
+    <FundLaunchJourneyView
+      launch={{
+        ...launch,
+        steps: launch.steps.map((step) =>
+          step.kind === "report"
+            ? { ...step, reportWaitStartedAt: Date.now() - REPORT_WAIT_MS }
+            : step,
+        ),
+      }}
+    />
+  ),
+};
+export const SigningWhileReportWaits: Story = {
+  args: {
+    launch: {
+      ...launch,
+      busy: true,
+      steps: steps.map((step, index) => ({
+        ...step,
+        status: index === 7 ? "waiting" : index === 6 ? "signing" : step.status,
       })),
     },
   },

@@ -103,7 +103,9 @@
     "waiting": "검증 대기 중",
     "confirmed": "확인됨",
     "failed": "실패",
-    "stepProgress": "단계 {n}/{total}"
+    "stepProgress": "단계 {n}/{total}",
+    "reportCountdown": "Wormhole 보고서. 예상 남은 시간: {time}",
+    "reportDelayed": "예상보다 오래 걸리고 있습니다. Wormhole 보고서를 기다리는 중입니다."
   },
   "entry": {
     "become": "운용자 되기",

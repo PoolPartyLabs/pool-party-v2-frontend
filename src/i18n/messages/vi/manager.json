@@ -103,7 +103,9 @@
     "waiting": "Đang chờ xác minh",
     "confirmed": "Đã xác nhận",
     "failed": "Thất bại",
-    "stepProgress": "Bước {n} trên {total}"
+    "stepProgress": "Bước {n} trên {total}",
+    "reportCountdown": "Báo cáo Wormhole. Thời gian còn lại ước tính: {time}",
+    "reportDelayed": "Thời gian chờ đang lâu hơn dự kiến. Đang chờ báo cáo Wormhole."
   },
   "entry": {
     "become": "Trở thành người quản lý",

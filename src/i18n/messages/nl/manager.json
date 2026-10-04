@@ -103,7 +103,9 @@
     "waiting": "Wachten op verificatie",
     "confirmed": "Bevestigd",
     "failed": "Mislukt",
-    "stepProgress": "Stap {n} van {total}"
+    "stepProgress": "Stap {n} van {total}",
+    "reportCountdown": "Wormhole-rapport. Geschatte resterende tijd: {time}",
+    "reportDelayed": "Dit duurt langer dan geschat. We wachten op het Wormhole-rapport."
   },
   "entry": {
     "become": "Word beheerder",
