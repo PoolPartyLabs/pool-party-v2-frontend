@@ -248,6 +248,52 @@ describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
     await expect(driver.build(swap, journal)).rejects.toThrow("BALANCE_CHANGED");
     expect(mocks.swap).not.toHaveBeenCalled();
   });
+  it("R3 replays the observed .1 leaf under .5 allocation without its 69-unit base overrun", async () => {
+    const { driver, journal, allocate, swap, open, aave, balances } = liveSetup(
+      "2000000",
+      "500000",
+    );
+    allocate.sharePct = 25;
+    swap.sharePct = 5;
+    open.sharePct = 5;
+    aave.sharePct = 20;
+    balances(BigInt("500000"), BigInt(0));
+    await driver.build(swap, journal);
+    expect(mocks.swap).toHaveBeenLastCalledWith(expect.objectContaining({ amountIn: "47638" }));
+    journal.checkpoints[swap.id] = {
+      stepId: swap.id,
+      chain: 42161,
+      status: "confirmed",
+      data: {
+        receipt: {
+          swapped: {
+            vault: core,
+            tokenIn: liveUsdc,
+            tokenOut: liveWeth,
+            amountIn: "47638",
+            amountOut: "17635116476090",
+          },
+        },
+      },
+    };
+    balances(BigInt("452362"), BigInt("17635116476090"));
+    mocks.pool.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        ...livePool,
+        currentPrice: { ...livePool.currentPrice, token1PerToken0: "2701.3832415934247232" },
+      },
+    });
+    await driver.build(open, journal);
+    const deposit = parseUnits(mocks.open.mock.lastCall![1].amount1, 6);
+    expect(deposit).toBeLessThanOrEqual(BigInt("52362"));
+    const remainder = BigInt("452362") - deposit;
+    expect(remainder).toBeGreaterThanOrEqual(BigInt("400000"));
+    journal.checkpoints[open.id] = { stepId: open.id, chain: 42161, status: "confirmed" };
+    balances(remainder, BigInt(0));
+    await driver.build(aave, journal);
+    expect(mocks.open).toHaveBeenLastCalledWith(core, expect.objectContaining({ amount: "0.4" }));
+  });
   it("R3 keeps single-leaf initial sizing unchanged", async () => {
     const { driver, journal, swap, allocate, balances } = liveSetup();
     allocate.sharePct = 30;
