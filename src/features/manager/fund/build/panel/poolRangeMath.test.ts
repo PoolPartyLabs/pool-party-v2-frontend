@@ -39,6 +39,7 @@ import {
   type PoolGrid,
   type PoolRange,
   presetRange,
+  type RangeMarker,
   rangeMarker,
   rangeSplit,
   rangeStatus,
@@ -985,6 +986,22 @@ describe("marker", () => {
     // @rule R7
     expect(rangeMarker(fullPoolRange(WETH_USDC), WETH_USDC)).toEqual({ position: 0.5, ratio: 0.5 });
     expect(rangeMarker(range, WETH_USDC_GRID)).toBeNull();
+  });
+
+  it("reaches the ends of the handoff's track only through ratio", () => {
+    // @rule R7 (handoff split bar: a 200 wide track, the range segment from 40 to 160)
+    const onTrack = (ratio: number) => Math.min(200, Math.max(0, 40 + 120 * ratio));
+    // Strip 07, the ±10% range read inverted: the marker at 94.
+    const strip07 = rangeMarker(invertRange(range), WETH_USDC) as RangeMarker;
+    expect(Math.round(onTrack(strip07.ratio))).toBe(94);
+    // Out of range the marker leaves the segment and stops at the end of the track.
+    const below = rangeMarker(range, { ...WETH_USDC, currentPrice: shown.min / 2 }) as RangeMarker;
+    const above = rangeMarker(range, { ...WETH_USDC, currentPrice: shown.max * 2 }) as RangeMarker;
+    expect(onTrack(below.ratio)).toBe(0);
+    expect(onTrack(above.ratio)).toBe(200);
+    // `position` stops at the ends of the segment, so it cannot draw that marker.
+    expect(40 + 120 * below.position).toBe(40);
+    expect(40 + 120 * above.position).toBe(160);
   });
 });
 
