@@ -1107,6 +1107,40 @@
           "notInMandate": "Pool hoặc tài sản này không còn trong nhiệm vụ của bạn trên mạng này. Hãy chọn mục khác hoặc sửa nhiệm vụ.",
           "shareExceedsParent": "Tỷ lệ này vượt quá phần còn lại phía trên khối này. Hãy giảm xuống và áp dụng lại.",
           "other": "Không thể áp dụng thay đổi này. Hãy kiểm tra các giá trị và thử lại."
+        },
+        "range": {
+          "label": "Khoảng giá",
+          "help": "Vị thế nhận phí khi giá hiện tại nằm trong khoảng này.",
+          "quote": "{quote} trên mỗi {base}",
+          "full": "Toàn bộ",
+          "min": "Giá tối thiểu",
+          "max": "Giá tối đa",
+          "increase": "Tăng {label}",
+          "decrease": "Giảm {label}",
+          "current": "Hiện tại {price} · {status}",
+          "always": "luôn trong khoảng",
+          "in": "trong khoảng",
+          "below": "dưới khoảng của bạn",
+          "above": "trên khoảng của bạn",
+          "oneToken": "Vị thế bắt đầu với 100% {token} và không nhận phí cho đến khi giá đi vào khoảng."
+        },
+        "pool": {
+          "label": "Pool",
+          "help": "Các pool Uniswap v4 trong ủy nhiệm của bạn trên {network}.",
+          "heading": "Pool trong ủy nhiệm của bạn",
+          "filter": "Lọc theo token hoặc địa chỉ",
+          "caption": "Chỉ các pool Uniswap v4 trên {network} bạn đã chọn trong ủy nhiệm (bước 4). Pool được cố định khi ra mắt.",
+          "needAnother": "Cần pool khác?",
+          "noMatch": "Không có pool nào trong ủy nhiệm chứa {typed}",
+          "noMatchCaption": "Pool được chọn trong ủy nhiệm, bước 4. Cấu hình của bạn vẫn được lưu trong khi chỉnh sửa.",
+          "empty": "Không có pool nào trong ủy nhiệm của bạn trên {network}",
+          "loading": "Đang chờ giá pool.",
+          "failed": "Không đọc được pool. Hãy thử lại để tiếp tục.",
+          "retry": "Thử lại",
+          "unread": "Không thể đọc pool này.",
+          "ineligible": "Pool này không đủ điều kiện.",
+          "noLiquidity": "Pool này không có thanh khoản đang hoạt động.",
+          "incomplete": "Cấu hình pool chưa hoàn chỉnh."
         }
       },
       "network": {

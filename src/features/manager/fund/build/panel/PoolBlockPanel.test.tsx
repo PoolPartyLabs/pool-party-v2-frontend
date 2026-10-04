@@ -7,7 +7,7 @@
 
 import { renderHook, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import manager from "@/i18n/messages/en/manager.json";
 import { PANEL_POOL_FIXTURES } from "@/mocks/data/buildPanelFixtures";
@@ -17,8 +17,9 @@ import {
   userEvent,
 } from "../../../../../../tests/utils/renderWithProviders";
 import { mapV2Pool } from "../../mandatePoolSource";
-import { hubPoolPlan, makeTestDraft, TEST_CATALOG } from "../plan/planTestKit";
-import { PoolBlockPanel, poolBlockPanel } from "./PoolBlockPanel";
+import { TEST_CATALOG } from "../blocks/blockTestKit";
+import { hubPoolPlan, makeTestDraft } from "../plan/planTestKit";
+import { PoolBlockPanel, PoolPanelProvider, poolBlockPanel } from "./PoolBlockPanel";
 import type { PanelBodyContext } from "./panelBodies";
 import { toLivePoolGrid, toPanelPoolView } from "./panelCatalogView";
 import { PanelHarness } from "./panelTestKit";
@@ -28,10 +29,15 @@ const { action, live } = vi.hoisted(() => ({ action: vi.fn(), live: vi.fn() }));
 vi.mock("@/lib/services", () => ({ isMockMode: false }));
 vi.mock("@/lib/api/v2/actions", () => ({ getCatalogPoolsAction: action }));
 vi.mock("./usePanelPool", () => ({ usePanelPool: live }));
-const raw = PANEL_POOL_FIXTURES[0].pool;
-const second = PANEL_POOL_FIXTURES[1].pool;
+const firstFixture = PANEL_POOL_FIXTURES[0];
+const secondFixture = PANEL_POOL_FIXTURES[1];
+if (!firstFixture || !secondFixture) throw new Error("Pool fixtures required");
+const raw = firstFixture.pool;
+const second = secondFixture.pool;
 const pool = toPanelPoolView(raw);
-const config = { poolId: pool.poolId, ...presetRange(toLivePoolGrid(pool), 10)!, slippagePct: 2 };
+const defaultRange = presetRange(toLivePoolGrid(pool), 10);
+if (!defaultRange) throw new Error("A priced pool fixture is required");
+const config = { poolId: pool.poolId, ...defaultRange, slippagePct: 2 };
 const draft = { ...makeTestDraft(), pools: [mapV2Pool(raw), mapV2Pool(second)] };
 const context: PanelBodyContext = {
   blockId: "b",
@@ -48,11 +54,58 @@ const wrapper = ({ children }: { children: ReactNode }) => (
     {children}
   </NextIntlClientProvider>
 );
+const configuredWrapper = ({ children }: { children: ReactNode }) =>
+  wrapper({
+    children: (
+      <PoolPanelProvider context={context} config={config}>
+        {children}
+      </PoolPanelProvider>
+    ),
+  });
 beforeEach(() => {
   action.mockResolvedValue({ ok: true, data: { pools: [raw, second] } });
   live.mockReturnValue({ pool, status: "ready", applicable: true, error: null, retry: vi.fn() });
 });
 describe("PoolBlockPanel", () => {
+  it("[R2] one Retry updates the displayed price and the Apply gate together", async () => {
+    live.mockImplementation(function useLiveRead() {
+      const [ready, setReady] = useState(false);
+      return {
+        pool,
+        status: ready ? "ready" : "error",
+        applicable: ready,
+        error: ready ? null : { code: "FAILED", status: 503 },
+        retry: () => setReady(true),
+      };
+    });
+    renderWithProviders(
+      <PanelHarness
+        draft={draft}
+        catalog={TEST_CATALOG}
+        plan={{
+          version: 1,
+          hub: {
+            chains: [
+              {
+                id: "c",
+                sharePct: 40,
+                steps: [{ id: "b", family: "position", kind: "uniswapV4Pool", config }],
+              },
+            ],
+          },
+          spokes: [],
+        }}
+        selectedId="b"
+        bodies={{ uniswapV4Pool: poolBlockPanel }}
+      />,
+    );
+    screen.getByRole("slider", { name: "Allocation" }).focus();
+    await userEvent.setup().keyboard("{ArrowRight}");
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeDisabled();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Retry" }));
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeEnabled();
+  });
+
   it("[R1][R3] Use produces the complete aligned default and canonical bare PoolId", async () => {
     const { result } = renderHook(() => poolBlockPanel.usePick(context), { wrapper });
     await waitFor(() => expect(result.current.status).toBe("ready"));
@@ -88,9 +141,13 @@ describe("PoolBlockPanel", () => {
         {(api) => <output data-testid="plan">{JSON.stringify(api.plan)}</output>}
       </PanelHarness>,
     );
-    await userEvent.setup().click(await screen.findByRole("button", { name: /Use WETH \/ USDC/ }));
+    const firstUse = (await screen.findAllByRole("button", { name: /Use WETH \/ USDC/ }))[0];
+    if (!firstUse) throw new Error("A usable pool row is required");
+    await userEvent.setup().click(firstUse);
     expect(screen.getByText("All changes applied")).toBeInTheDocument();
-    expect(JSON.parse(screen.getByTestId("plan").textContent!).hub.chains[0].sharePct).toBe(0);
+    expect(JSON.parse(screen.getByTestId("plan").textContent ?? "{}").hub.chains[0].sharePct).toBe(
+      0,
+    );
   });
   it("[R2] Apply rejects stale display data when the latest live read failed", () => {
     live.mockReturnValue({
@@ -100,9 +157,11 @@ describe("PoolBlockPanel", () => {
       error: { code: "FAILED" },
       retry: vi.fn(),
     });
-    const { result } = renderHook(() => poolBlockPanel.useApplyGate!(context, config), { wrapper });
-    expect(result.current.ok).toBe(false);
-    expect(result.current.reason).toMatch(/failed/i);
+    const { result } = renderHook(() => poolBlockPanel.useApplyGate?.(context, config), {
+      wrapper: configuredWrapper,
+    });
+    expect(result.current?.ok).toBe(false);
+    expect(result.current?.reason).toMatch(/failed/i);
   });
   it("[R2] disables Use for missing or ineligible catalog rows", async () => {
     action.mockResolvedValue({ ok: true, data: { pools: [{ ...raw, liquidity: "0" }] } });
@@ -115,20 +174,22 @@ describe("PoolBlockPanel", () => {
   it("[R7][R8] resets range on a pool change and keeps the shell allocation", async () => {
     const changed = vi.fn();
     renderWithProviders(
-      <PoolBlockPanel
-        context={context}
-        applied={config}
-        config={config}
-        onConfigChange={changed}
-        allocation={<span>Allocation 60%</span>}
-      />,
+      <PoolPanelProvider context={context} config={config}>
+        <PoolBlockPanel
+          context={context}
+          applied={config}
+          config={config}
+          onConfigChange={changed}
+          allocation={<span>Allocation 60%</span>}
+        />
+      </PoolPanelProvider>,
     );
     await waitFor(() => expect(action).toHaveBeenCalled());
-    await userEvent.setup().click(screen.getByRole("combobox"));
+    await userEvent.setup().click(screen.getByRole("button", { name: "Pool" }));
     await userEvent.setup().click(await screen.findByRole("option", { name: /0.3%/ }));
     expect(changed.mock.lastCall?.[0]).toEqual({
       poolId: second.poolId,
-      ...presetRange(toLivePoolGrid(toPanelPoolView(second)), 10)!,
+      ...presetRange(toLivePoolGrid(toPanelPoolView(second)), 10),
       slippagePct: 2,
     });
     expect(screen.getByText("Allocation 60%")).toBeInTheDocument();

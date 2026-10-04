@@ -16,8 +16,13 @@ import { PriceRangeField } from "./PriceRangeField";
 import { toLivePoolGrid, toPanelPoolView } from "./panelCatalogView";
 import { displayBounds, type PoolRange, presetRange } from "./poolRangeMath";
 
-const pool = toPanelPoolView(PANEL_POOL_FIXTURES[0].pool);
-const initial = presetRange(toLivePoolGrid(pool), 10)!;
+const fixture = PANEL_POOL_FIXTURES[0];
+if (!fixture) throw new Error("Pool fixture required");
+const rawPool = fixture.pool;
+const pool = toPanelPoolView(rawPool);
+const candidate = presetRange(toLivePoolGrid(pool), 10);
+if (!candidate) throw new Error("A priced pool fixture is required");
+const initial = candidate;
 function Controlled({
   start = initial,
   onChange = vi.fn(),
@@ -74,7 +79,7 @@ describe("PriceRangeField", () => {
     await user.type(field, "2600");
     expect(changed).not.toHaveBeenCalled();
     await user.tab();
-    expect(changed.mock.lastCall?.[0].tickLower % pool.tickSpacing).toBe(0);
+    expect(Math.abs(changed.mock.lastCall?.[0].tickLower % pool.tickSpacing)).toBe(0);
   });
   it("[R5] inverts the quote while preserving canonical ticks", async () => {
     const changed = vi.fn();
@@ -87,7 +92,7 @@ describe("PriceRangeField", () => {
     );
   });
   it("[R6] names the canonical one-token position and swaps below/above on inversion", () => {
-    const low = toPanelPoolView(panelPoolAtPrice(PANEL_POOL_FIXTURES[0].pool, 2000));
+    const low = toPanelPoolView(panelPoolAtPrice(rawPool, 2000));
     const { rerender } = renderWithProviders(
       <PriceRangeField pool={low} range={initial} onChange={vi.fn()} />,
     );

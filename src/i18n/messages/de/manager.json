@@ -1107,6 +1107,40 @@
           "notInMandate": "Dieser Pool oder dieses Asset ist auf diesem Netzwerk nicht mehr in Ihrem Mandat. Wählen Sie ein anderes oder bearbeiten Sie das Mandat.",
           "shareExceedsParent": "Dieser Anteil ist größer als der verfügbare Spielraum über diesem Block. Verringern Sie ihn und übernehmen Sie erneut.",
           "other": "Diese Änderung konnte nicht übernommen werden. Prüfen Sie die Werte und versuchen Sie es erneut."
+        },
+        "range": {
+          "label": "Preisspanne",
+          "help": "Die Position verdient Gebühren, solange der aktuelle Preis innerhalb dieser Spanne liegt.",
+          "quote": "{quote} pro {base}",
+          "full": "Vollständig",
+          "min": "Min. Preis",
+          "max": "Max. Preis",
+          "increase": "{label} erhöhen",
+          "decrease": "{label} verringern",
+          "current": "Aktuell {price} · {status}",
+          "always": "immer in der Spanne",
+          "in": "in der Spanne",
+          "below": "unter Ihrer Spanne",
+          "above": "über Ihrer Spanne",
+          "oneToken": "Die Position beginnt zu 100% in {token} und verdient keine Gebühren, bis der Preis in die Spanne eintritt."
+        },
+        "pool": {
+          "label": "Pool",
+          "help": "Uniswap v4 Pools Ihres Mandats auf {network}.",
+          "heading": "Pools in Ihrem Mandat",
+          "filter": "Nach Token oder Adresse filtern",
+          "caption": "Nur die Uniswap v4 Pools auf {network}, die Sie im Mandat gewählt haben (Schritt 4). Die Pools werden beim Start festgelegt.",
+          "needAnother": "Benötigen Sie einen anderen Pool?",
+          "noMatch": "Kein Pool Ihres Mandats enthält {typed}",
+          "noMatchCaption": "Pools werden im Mandat in Schritt 4 gewählt. Ihr Aufbau bleibt während der Bearbeitung gespeichert.",
+          "empty": "Kein Pool Ihres Mandats befindet sich auf {network}",
+          "loading": "Warten auf den Poolpreis.",
+          "failed": "Die Poolabfrage ist fehlgeschlagen. Versuchen Sie es erneut.",
+          "retry": "Erneut versuchen",
+          "unread": "Dieser Pool konnte nicht gelesen werden.",
+          "ineligible": "Dieser Pool ist nicht zulässig.",
+          "noLiquidity": "Dieser Pool hat keine aktive Liquidität.",
+          "incomplete": "Die Poolkonfiguration ist unvollständig."
         }
       },
       "network": {

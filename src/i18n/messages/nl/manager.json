@@ -1107,6 +1107,40 @@
           "notInMandate": "Deze pool of dit asset zit niet meer in uw mandaat op dit netwerk. Kies een andere of bewerk het mandaat.",
           "shareExceedsParent": "Dit aandeel is groter dan de ruimte die boven dit blok over is. Verlaag het en pas opnieuw toe.",
           "other": "Deze wijziging kon niet worden toegepast. Controleer de waarden en probeer het opnieuw."
+        },
+        "range": {
+          "label": "Prijsbereik",
+          "help": "De positie verdient vergoedingen zolang de huidige prijs binnen dit bereik ligt.",
+          "quote": "{quote} per {base}",
+          "full": "Volledig",
+          "min": "Min. prijs",
+          "max": "Max. prijs",
+          "increase": "{label} verhogen",
+          "decrease": "{label} verlagen",
+          "current": "Huidig {price} · {status}",
+          "always": "altijd binnen bereik",
+          "in": "binnen bereik",
+          "below": "onder je bereik",
+          "above": "boven je bereik",
+          "oneToken": "De positie begint voor 100% in {token} en verdient geen vergoedingen totdat de prijs binnen het bereik komt."
+        },
+        "pool": {
+          "label": "Pool",
+          "help": "Uniswap v4 pools van je mandaat op {network}.",
+          "heading": "Pools in je mandaat",
+          "filter": "Filter op token of adres",
+          "caption": "Alleen de Uniswap v4 pools op {network} die je in het mandaat koos (stap 4). De pools worden bij de lancering vastgelegd.",
+          "needAnother": "Een andere pool nodig?",
+          "noMatch": "Geen pool in je mandaat bevat {typed}",
+          "noMatchCaption": "Pools worden gekozen in het mandaat, stap 4. Je configuratie blijft opgeslagen tijdens het bewerken.",
+          "empty": "Geen pool van je mandaat staat op {network}",
+          "loading": "Wachten op de poolprijs.",
+          "failed": "Het lezen van de pool is mislukt. Probeer opnieuw om verder te gaan.",
+          "retry": "Opnieuw proberen",
+          "unread": "Deze pool kon niet worden gelezen.",
+          "ineligible": "Deze pool komt niet in aanmerking.",
+          "noLiquidity": "Deze pool heeft geen actieve liquiditeit.",
+          "incomplete": "De poolconfiguratie is onvolledig."
         }
       },
       "network": {

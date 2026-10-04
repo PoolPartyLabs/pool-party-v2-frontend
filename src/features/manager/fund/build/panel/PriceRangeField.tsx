@@ -197,7 +197,10 @@ export function PriceRangeField({ pool, range, onChange }: PriceRangeFieldProps)
                   onKeyDown={(event) => {
                     if (event.key === "Enter") event.currentTarget.blur();
                   }}
-                  className="min-w-0 flex-1 bg-transparent text-center text-foreground text-sm lining-nums tabular-nums outline-none"
+                  className={cn(
+                    "min-w-0 flex-1 bg-transparent text-center text-foreground text-sm lining-nums tabular-nums",
+                    PANEL_FOCUS_RING,
+                  )}
                 />
                 <button
                   type="button"
