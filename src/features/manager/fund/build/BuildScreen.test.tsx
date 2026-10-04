@@ -979,6 +979,40 @@ describe("BuildScreen: the configuration panel (POO-2187, P3 to P10)", () => {
     ]);
   });
 
+  it("[L10, P6] a refused Save & exit, then Apply changes, saves the applied plan once", async () => {
+    // @rule P6
+    seedBuild(hubMandate("d-p6-save"), twoPoolPlan());
+    await openBuild();
+    await dirtyFirstCard();
+    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    expect(nav.push).not.toHaveBeenCalled();
+    await userEvent.click(within(panelRegion()).getByRole("button", { name: "Apply changes" }));
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
+    expect(nav.push).toHaveBeenCalledTimes(1);
+    expect(getDraft("d-p6-save")?.plan?.hub.chains[0]?.sharePct).toBe(55);
+  });
+
+  it("[L1, P6] Next on a plan Review would refuse still asks the panel first", async () => {
+    // @rule P6
+    // @rule AN4
+    // The second chain is an empty block: Next: Review refuses the plan for it.
+    const plan = twoPoolPlan();
+    const second = plan.hub.chains[1];
+    if (!second) throw new Error("fixture");
+    second.steps = [autoSwap("c2-swap"), pool("c2-pool", null)];
+    seedBuild(hubMandate("d-p6-next"), plan);
+    await openBuild();
+    await dirtyFirstCard();
+    await userEvent.click(screen.getByRole("button", { name: "Next: Review" }));
+
+    expect(within(panelRegion()).getByRole("alert")).toHaveTextContent("Changes not applied");
+    expect(emitted("builder_build_blocked")).toEqual([]);
+    await userEvent.click(within(panelRegion()).getByRole("button", { name: "Discard changes" }));
+
+    expect(await screen.findByText("Configure every block before Review.")).toBeInTheDocument();
+    expect(emitted("builder_build_blocked")).toEqual([{ block_reason: "review_empty_block" }]);
+  });
+
   it("[P5] Discard restores the applied values", async () => {
     // @rule P5
     seedBuild(hubMandate("d-discard"), twoPoolPlan());

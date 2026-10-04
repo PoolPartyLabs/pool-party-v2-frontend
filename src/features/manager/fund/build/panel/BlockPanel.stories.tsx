@@ -21,6 +21,7 @@ import {
   supplyBorrowPlan,
   withCompletePools,
 } from "../plan/planTestKit";
+import { fixtureHeldPoolBody, fixtureLimitedSupplyBody } from "./panelFixtures";
 import { PanelHarness } from "./panelTestKit";
 
 /** A hub chain with one empty block, as Add protocol leaves it. */
@@ -150,4 +151,22 @@ export const RemoveConfirmEmpty: Story = {
 /** A kind with no body yet (the Borrow): the head and Remove block, as the stub did. */
 export const NoBodyYet: Story = {
   args: { plan: supplyBorrowPlan(), selectedId: "hub-aave-borrow" },
+};
+
+/** M1, P13: the body's apply gate holds Apply changes, and the status row says why. */
+export const ApplyHeld: Story = {
+  args: {
+    selectedId: "hub-pool-pool",
+    scenario: { share: 45 },
+    bodies: { uniswapV4Pool: fixtureHeldPoolBody },
+  },
+};
+
+/** M2: an asset that cannot be used says why, and its Use is disabled. */
+export const PickAssetNotUsable: Story = {
+  args: {
+    plan: emptyBlockPlan("aaveSupply"),
+    selectedId: "b",
+    bodies: { aaveSupply: fixtureLimitedSupplyBody },
+  },
 };

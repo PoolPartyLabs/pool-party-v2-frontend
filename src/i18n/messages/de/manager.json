@@ -1100,6 +1100,11 @@
           "tokens": "Mandat bearbeiten · Tokens",
           "pools": "Mandat bearbeiten · Pools",
           "limits": "Mandat bearbeiten · Limits"
+        },
+        "refused": {
+          "notInMandate": "Dieser Pool oder dieses Asset ist auf diesem Netzwerk nicht mehr in Ihrem Mandat. Wählen Sie ein anderes oder bearbeiten Sie das Mandat.",
+          "shareExceedsParent": "Dieser Anteil ist größer als der verfügbare Spielraum über diesem Block. Verringern Sie ihn und übernehmen Sie erneut.",
+          "other": "Diese Änderung konnte nicht übernommen werden. Prüfen Sie die Werte und versuchen Sie es erneut."
         }
       },
       "network": {

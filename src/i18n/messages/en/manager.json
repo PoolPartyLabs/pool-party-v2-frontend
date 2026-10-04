@@ -1100,7 +1100,12 @@
           "pools": "Edit mandate · Pools",
           "limits": "Edit mandate · Limits"
         },
-        "useItem": "Use {title}"
+        "useItem": "Use {title}",
+        "refused": {
+          "notInMandate": "This pool or asset is no longer in your mandate on this network. Pick another, or edit the mandate.",
+          "shareExceedsParent": "This share is more than the room left above this block. Lower it and apply again.",
+          "other": "This change could not be applied. Check the values and try again."
+        }
       },
       "network": {
         "remove": "Remove {network}"

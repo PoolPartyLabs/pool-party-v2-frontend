@@ -17,6 +17,10 @@
  *   focus: the panel can be taller than the viewport, and the click that was refused would otherwise
  *   look like nothing happened.
  *
+ * Review of PR #54: an optional `note` under the row says why Apply changes is held (M1, a body's
+ * apply gate, P13) or why the last Use or Apply was refused (M4, then as an alert); the notice
+ * keeps a scroll margin so the sticky action bar never covers it (L5).
+ *
  * Props only: the strings arrive translated, Discard is the caller's.
  */
 "use client";
@@ -48,10 +52,34 @@ export interface PanelStatusRowProps {
   onDiscard(): void;
   /** A counter the caller bumps on every refused exit, so the notice comes back into view each time. */
   attempt?: number;
+  /**
+   * A sentence under the row: why Apply changes is held (`hold`, review M1) or why the last Use or
+   * Apply was refused (`refused`, review M4, announced as an alert).
+   */
+  note?: { tone: "hold" | "refused"; text: string } | null;
+}
+
+/** The note under the row (M1, M4). */
+function Note({ note }: { note: NonNullable<PanelStatusRowProps["note"]> }) {
+  return (
+    <p
+      role={note.tone === "refused" ? "alert" : undefined}
+      data-panel-status-note={note.tone}
+      className={cn("text-xs", note.tone === "refused" ? "text-warning" : "text-muted-foreground")}
+    >
+      {note.text}
+    </p>
+  );
 }
 
 /** The status row of the configuration panel. */
-export function PanelStatusRow({ status, copy, onDiscard, attempt = 0 }: PanelStatusRowProps) {
+export function PanelStatusRow({
+  status,
+  copy,
+  onDiscard,
+  attempt = 0,
+  note = null,
+}: PanelStatusRowProps) {
   const notice = useRef<HTMLDivElement>(null);
 
   // [P6] Each refusal (a new `attempt`) brings the notice into view and moves focus to it.
@@ -72,12 +100,14 @@ export function PanelStatusRow({ status, copy, onDiscard, attempt = 0 }: PanelSt
         tabIndex={-1}
         data-panel-status="leaveBlocked"
         className={cn(
-          "flex flex-col items-start gap-2 rounded-xl border border-warning bg-surface-raised p-4",
+          // L5: the margin keeps the notice clear of the sticky action bar when it scrolls in.
+          "flex scroll-mb-24 flex-col items-start gap-2 rounded-xl border border-warning bg-surface-raised p-4",
           PANEL_FOCUS_RING,
         )}
       >
         <p className="font-medium text-foreground text-sm">{copy.leaveTitle}</p>
         <p className="text-muted-foreground text-xs">{copy.leaveBody}</p>
+        {note ? <Note note={note} /> : null}
         <button type="button" onClick={onDiscard} className={OUTLINE_PILL}>
           {copy.leaveDiscard}
         </button>
@@ -87,32 +117,38 @@ export function PanelStatusRow({ status, copy, onDiscard, attempt = 0 }: PanelSt
 
   if (status === "pending") {
     return (
-      <div data-panel-status="pending" className="flex items-center justify-between gap-3">
-        <span className="flex items-center gap-2 text-foreground text-xs">
-          <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-primary" />
-          {copy.pending}
-        </span>
-        <button
-          type="button"
-          onClick={onDiscard}
-          className={cn(
-            "rounded-sm font-medium text-foreground text-xs hover:underline",
-            PANEL_FOCUS_RING,
-          )}
-        >
-          {copy.discard}
-        </button>
+      <div className="flex flex-col gap-1.5">
+        <div data-panel-status="pending" className="flex items-center justify-between gap-3">
+          <span className="flex items-center gap-2 text-foreground text-xs">
+            <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-primary" />
+            {copy.pending}
+          </span>
+          <button
+            type="button"
+            onClick={onDiscard}
+            className={cn(
+              "rounded-sm font-medium text-foreground text-xs hover:underline",
+              PANEL_FOCUS_RING,
+            )}
+          >
+            {copy.discard}
+          </button>
+        </div>
+        {note ? <Note note={note} /> : null}
       </div>
     );
   }
 
   return (
-    <div
-      data-panel-status="applied"
-      className="flex items-center gap-2 text-muted-foreground text-xs"
-    >
-      <Check aria-hidden="true" className="size-3.5 shrink-0 text-success" />
-      {copy.applied}
+    <div className="flex flex-col gap-1.5">
+      <div
+        data-panel-status="applied"
+        className="flex items-center gap-2 text-muted-foreground text-xs"
+      >
+        <Check aria-hidden="true" className="size-3.5 shrink-0 text-success" />
+        {copy.applied}
+      </div>
+      {note?.tone === "refused" ? <Note note={note} /> : null}
     </div>
   );
 }

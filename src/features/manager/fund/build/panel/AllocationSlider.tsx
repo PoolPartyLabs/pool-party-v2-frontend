@@ -96,10 +96,17 @@ export function AllocationSlider({
   const limited = ceiling < 100;
   const atCeiling = limited && value >= ceiling;
 
+  // Review L4 of PR #54: the value as last moved, so two pointer moves before a render cannot both
+  // read "below the ceiling" and report reaching it twice.
+  const current = useRef(value);
+  current.current = value;
+
   const move = (next: number) => {
-    if (next === value) return;
+    const before = current.current;
+    if (next === before) return;
+    current.current = next;
     onChange(next);
-    if (limited && next === ceiling && value < ceiling) onReachCeiling?.();
+    if (limited && next === ceiling && before < ceiling) onReachCeiling?.();
   };
 
   const fromPointer = (event: PointerEvent<HTMLDivElement>) => {
@@ -143,6 +150,8 @@ export function AllocationSlider({
         aria-valuetext={`${value}%`}
         onKeyDown={onKeyDown}
         onPointerDown={(event) => {
+          // L4: only the main button moves the knob; a right click opens the context menu.
+          if (event.button !== 0) return;
           dragging.current = true;
           event.currentTarget.setPointerCapture?.(event.pointerId);
           fromPointer(event);

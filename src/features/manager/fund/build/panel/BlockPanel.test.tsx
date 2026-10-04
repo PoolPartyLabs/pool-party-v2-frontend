@@ -17,13 +17,23 @@ import {
   within,
 } from "../../../../../../tests/utils/renderWithProviders";
 import type { MandateDraft } from "../../mandateDraft";
-import type { BuildPlan } from "../plan/buildPlan";
+import { fullRangeTicks } from "../plan/blockConfig";
+import type { BuildPlan, PoolBlockConfig } from "../plan/buildPlan";
 import {
   hubPoolPlan,
   makeTestDraft,
   supplyBorrowPlan,
+  TEST_POOL_IDS,
   withCompletePools,
 } from "../plan/planTestKit";
+import { makeRealModeDraft, REAL_POOL_ID, realPoolRow } from "../plan/realPoolTestKit";
+import type { PanelBodyDefinition } from "./panelBodies";
+import {
+  fixtureHeldPoolBody,
+  fixtureLimitedSupplyBody,
+  fixturePoolBody,
+  fixtureSupplyBody,
+} from "./panelFixtures";
 import { PanelHarness } from "./panelTestKit";
 import type { PanelDraftEvent } from "./usePanelDraft";
 
@@ -251,6 +261,157 @@ describe("BlockPanel: Mode 4, configured (P5, P6, P8)", () => {
     await userEvent.click(within(region()).getByRole("button", { name: "Apply changes" }));
     await userEvent.click(within(region()).getByRole("button", { name: "Edit mandate · Limits" }));
     expect(onEditMandate).toHaveBeenCalledWith("limits");
+  });
+});
+
+/** A full-range pool config on a spacing of 10, for the pool `poolId`. */
+function fullPool(poolId: string): PoolBlockConfig {
+  const full = fullRangeTicks(10);
+  if (!full) throw new Error("fixture");
+  return { poolId, ...full, fullRange: true, displayInverted: false, slippagePct: 2 };
+}
+
+/** A pool body whose Use writes `useId`, and whose Fields can write `breakId`. */
+function idBody(useId: string, breakId?: string): PanelBodyDefinition<PoolBlockConfig> {
+  return {
+    usePick(context) {
+      const model = fixturePoolBody.usePick(context);
+      return {
+        ...model,
+        rows: model.rows.slice(0, 1).map((row) => ({ ...row, config: fullPool(useId) })),
+      };
+    },
+    Fields({ config, onConfigChange, allocation }) {
+      return (
+        <>
+          {allocation}
+          {breakId ? (
+            <button type="button" onClick={() => onConfigChange({ ...config, poolId: breakId })}>
+              break
+            </button>
+          ) : null}
+        </>
+      );
+    },
+  };
+}
+
+/** The applied plan, as the harness hands it out. */
+function PlanProbe({ plan }: { plan: BuildPlan }) {
+  return <output data-testid="plan">{JSON.stringify(plan)}</output>;
+}
+
+function appliedPlan(): BuildPlan {
+  return JSON.parse(screen.getByTestId("plan").textContent ?? "{}") as BuildPlan;
+}
+
+describe("BlockPanel: what the review of PR #54 asked for (M1 to M4, L6)", () => {
+  it("[M1, P13] a body's apply gate holds Apply changes and the status row says why", async () => {
+    // @rule M1
+    // @rule P13
+    mount(withCompletePools(hubPoolPlan()), "hub-pool-pool", {
+      bodies: { uniswapV4Pool: fixtureHeldPoolBody },
+    });
+    within(region()).getByRole("slider", { name: "Allocation" }).focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(within(region()).getByText("Changes not applied")).toBeInTheDocument();
+    expect(within(region()).getByRole("button", { name: "Apply changes" })).toBeDisabled();
+    expect(within(region()).getByText("Waiting for the live pool price.")).toBeInTheDocument();
+  });
+
+  it("[M2] a pick row that cannot be used says why and cannot be used", () => {
+    // @rule M2
+    mount(emptyPlan("aaveSupply"), "b", { bodies: { aaveSupply: fixtureLimitedSupplyBody } });
+    const rows = within(region()).getAllByRole("button", { name: /^Use / });
+    expect(rows[0]).toBeEnabled();
+    expect(rows[1]).toBeDisabled();
+    expect(within(region()).getByText("Supply cap reached")).toBeInTheDocument();
+  });
+
+  it("[M3] Use lands a real row's id as its bare PoolId, whatever the body wrote", async () => {
+    // @rule M3
+    const row = realPoolRow();
+    const draft = makeRealModeDraft();
+    const plan: BuildPlan = {
+      version: 1,
+      hub: {
+        chains: [
+          {
+            id: "c",
+            sharePct: 0,
+            steps: [{ id: "b", family: "position", kind: "uniswapV4Pool", config: null }],
+          },
+        ],
+      },
+      spokes: [],
+    };
+    renderWithProviders(
+      <PanelHarness
+        draft={draft}
+        plan={plan}
+        selectedId="b"
+        bodies={{ uniswapV4Pool: idBody(row.id) }}
+      >
+        {(api) => <PlanProbe plan={api.plan} />}
+      </PanelHarness>,
+    );
+    await userEvent.click(
+      within(region()).getAllByRole("button", { name: /^Use / })[0] as HTMLElement,
+    );
+    const stored = appliedPlan().hub.chains[0]?.steps.find((step) => step.family === "position");
+    expect(stored).toMatchObject({ config: { poolId: REAL_POOL_ID } });
+    expect(within(region()).getByText("All changes applied")).toBeInTheDocument();
+  });
+
+  it("[M3] an id in another case is not an edit", async () => {
+    // @rule M3
+    mount(withCompletePools(hubPoolPlan()), "hub-pool-pool", {
+      bodies: {
+        uniswapV4Pool: idBody(TEST_POOL_IDS.arbitrum, TEST_POOL_IDS.arbitrum.toUpperCase()),
+      },
+    });
+    await userEvent.click(within(region()).getByRole("button", { name: "break" }));
+    expect(within(region()).getByText("All changes applied")).toBeInTheDocument();
+  });
+
+  it("[M4] a refused Apply says why, and the next edit clears it", async () => {
+    // @rule M4
+    const { events } = mount(withCompletePools(hubPoolPlan()), "hub-pool-pool", {
+      bodies: { uniswapV4Pool: idBody(TEST_POOL_IDS.arbitrum, "0xnot-in-the-mandate") },
+    });
+    await userEvent.click(within(region()).getByRole("button", { name: "break" }));
+    await userEvent.click(within(region()).getByRole("button", { name: "Apply changes" }));
+    expect(within(region()).getByRole("alert")).toHaveTextContent(
+      "This pool or asset is no longer in your mandate on this network.",
+    );
+    expect(events).toEqual([{ type: "blocked", reason: "not_in_mandate" }]);
+    within(region()).getByRole("slider", { name: "Allocation" }).focus();
+    await userEvent.keyboard("{ArrowRight}");
+    expect(within(region()).queryByRole("alert")).toBeNull();
+  });
+
+  it("[M4] a refused Use says why, under the list", async () => {
+    // @rule M4
+    mount(emptyPlan("uniswapV4Pool"), "b", {
+      bodies: { uniswapV4Pool: idBody("0xnot-in-the-mandate") },
+    });
+    await userEvent.click(
+      within(region()).getAllByRole("button", { name: /^Use / })[0] as HTMLElement,
+    );
+    expect(within(region()).getByRole("alert")).toHaveTextContent(
+      "This pool or asset is no longer in your mandate on this network.",
+    );
+    expect(within(region()).getByText("Pools in your mandate ·")).toBeInTheDocument();
+  });
+
+  it("[L6] after Use focus goes to the first field, after Cancel back to Remove block", async () => {
+    // @rule L6
+    mount(emptyPlan("aaveSupply"), "b", { bodies: { aaveSupply: fixtureSupplyBody } });
+    await userEvent.click(within(region()).getByRole("button", { name: "Use USDC" }));
+    expect(within(region()).getByRole("button", { name: "Asset" })).toHaveFocus();
+    await userEvent.click(within(region()).getByRole("button", { name: "Remove block" }));
+    await userEvent.click(within(region()).getByRole("button", { name: "Cancel" }));
+    expect(within(region()).getByRole("button", { name: "Remove block" })).toHaveFocus();
   });
 });
 

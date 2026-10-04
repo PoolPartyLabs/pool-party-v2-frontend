@@ -1100,6 +1100,11 @@
           "tokens": "Editar mandato · Tokens",
           "pools": "Editar mandato · Pools",
           "limits": "Editar mandato · Limites"
+        },
+        "refused": {
+          "notInMandate": "Este pool ou ativo não está mais no seu mandato nesta rede. Escolha outro ou edite o mandato.",
+          "shareExceedsParent": "Este percentual é maior do que o espaço disponível acima deste bloco. Reduza-o e aplique de novo.",
+          "other": "Não foi possível aplicar esta alteração. Confira os valores e tente de novo."
         }
       },
       "network": {

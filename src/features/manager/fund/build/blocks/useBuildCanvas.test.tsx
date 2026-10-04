@@ -563,6 +563,23 @@ describe("useBuildCanvas: keyboard (I10)", () => {
     expect(events).toEqual([]);
   });
 
+  it("[L3] Delete on a focused panel control does not ask to remove the block", async () => {
+    // @rule I10
+    const { result } = await mount(hubSupplyPlan());
+    press(result, { kind: "block", blockId: "hub-supply-supply" });
+    const slot = document.createElement("section");
+    slot.setAttribute("data-build-panel-slot", "");
+    const slider = document.createElement("div");
+    slot.append(slider);
+    document.body.append(slot);
+    for (const name of ["Delete", "Backspace"]) {
+      const event = key(name, slider);
+      act(() => result.current.canvas.onKeyDown(event));
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    }
+    expect(result.current.canvas.removeConfirmId).toBeNull();
+  });
+
   it("[P10] Escape closes an open remove confirm", async () => {
     // @rule P10
     const { result } = await mount(hubSupplyPlan());

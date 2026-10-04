@@ -194,6 +194,45 @@ describe("usePanelDraft: the draft (P3, P5)", () => {
     expect(result.current.panel.dirty).toBe(true);
     expect(events).toEqual([{ type: "blocked", reason: "share_exceeds_parent" }]);
   });
+
+  it("[M4] keeps the refusal's reason until the next edit", () => {
+    // @rule M4
+    const { result } = mount(completePoolPlan(), "hub-pool-pool");
+    act(() => result.current.panel.setShare(120));
+    act(() => {
+      result.current.panel.apply();
+    });
+    expect(result.current.panel.refusal).toBe("share_exceeds_parent");
+    act(() => result.current.panel.setShare(50));
+    expect(result.current.panel.refusal).toBeNull();
+  });
+
+  it("[M4] keeps a refused Use's reason, and drops it with the block", () => {
+    // @rule M4
+    const { result } = mount(emptyPoolPlan(), "b");
+    act(() => {
+      result.current.panel.use(completePoolConfig("not-in-the-mandate"));
+    });
+    expect(result.current.panel.refusal).toBe("not_in_mandate");
+    act(() => {
+      result.current.selection.select(null);
+    });
+    expect(result.current.panel.refusal).toBeNull();
+  });
+
+  it("[L2] two edits in one event both reach the draft", () => {
+    // @rule P3
+    const { result } = mount(completePoolPlan(), "hub-pool-pool");
+    const config = completePoolConfig(TEST_POOL_IDS.arbitrum);
+    act(() => {
+      result.current.panel.setConfig({ ...config, slippagePct: 1 });
+      result.current.panel.setShare(30);
+    });
+    expect(result.current.panel.draft).toEqual({
+      config: { ...config, slippagePct: 1 },
+      sharePct: 30,
+    });
+  });
 });
 
 describe("usePanelDraft: Use (P7, DP1)", () => {

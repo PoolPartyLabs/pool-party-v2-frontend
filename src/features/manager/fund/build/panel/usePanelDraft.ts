@@ -27,6 +27,10 @@
  *   notice complete the navigation that was stopped.
  * - `reset()` drops the draft quietly, for the remove confirm: a block the manager removes takes its
  *   unapplied changes with it, and nothing resumes.
+ * - [Review M4 of PR #54] A refused Use or Apply is never silent: `refusal` holds the reducer's
+ *   reason until the next edit, Apply, Discard, reset or block change, and the panel says it.
+ * - [Review L2] Each edit builds on the one before it in the same event: the latest draft is kept
+ *   in a ref as soon as it is written, not only on the next render.
  * - Selecting another block starts that block's draft from its applied values.
  */
 "use client";
@@ -115,6 +119,8 @@ export interface UsePanelDraftResult {
   leaveBlocked: boolean;
   /** Counts the refusals, so the notice comes back into view on each one. */
   leaveAttempt: number;
+  /** Why the last Use or Apply was refused, until the next edit, Apply, Discard or reset (M4). */
+  refusal: PlanBlockReason | null;
   setConfig(config: PanelBlockConfig): void;
   setShare(pct: number): void;
   /** P7, DP1: Use writes the kind's defaults as applied, share 0%. True when the plan took it. */
@@ -187,6 +193,7 @@ export function usePanelDraft(input: UsePanelDraftInput): UsePanelDraftResult {
   const [override, setOverride] = useState<{ blockId: string; values: PanelValues } | null>(null);
   const [leave, setLeave] = useState<{ blockId: string; attempt: number } | null>(null);
   const [resumeTick, setResumeTick] = useState(0);
+  const [refused, setRefused] = useState<{ blockId: string; reason: PlanBlockReason } | null>(null);
 
   const applied = target?.applied ?? null;
   const draft = override && override.blockId === blockId ? override.values : applied;
@@ -227,6 +234,7 @@ export function usePanelDraft(input: UsePanelDraftInput): UsePanelDraftResult {
   useEffect(() => {
     pending.current = null;
     setLeave(null);
+    setRefused(null);
     setOverride((before) => (before && before.blockId !== blockId ? null : before));
   }, [blockId]);
 
@@ -244,6 +252,7 @@ export function usePanelDraft(input: UsePanelDraftInput): UsePanelDraftResult {
     latest.current.dirty = false;
     setOverride(null);
     setLeave(null);
+    setRefused(null);
     const change = pending.current;
     pending.current = null;
     if (resume && change) {
@@ -256,7 +265,11 @@ export function usePanelDraft(input: UsePanelDraftInput): UsePanelDraftResult {
     const { target: current, draft: values } = latest.current;
     if (!current || !values) return;
     const edited = next(values);
+    // L2: a second edit in the same event builds on this one, not on the last render's draft.
+    latest.current.draft = edited;
+    latest.current.dirty = !samePanelValues(edited, current.applied);
     setOverride({ blockId: current.blockId, values: edited });
+    setRefused(null);
     // Back to the applied values by hand: nothing is blocked any more, and nothing will resume.
     if (samePanelValues(edited, current.applied)) {
       pending.current = null;
@@ -282,6 +295,7 @@ export function usePanelDraft(input: UsePanelDraftInput): UsePanelDraftResult {
       const share = current.applied.sharePct === null ? undefined : 0;
       const outcome = io.applyBlockConfig(current.blockId, config, share);
       if (!outcome.ok) {
+        setRefused({ blockId: current.blockId, reason: outcome.blocked.reason });
         emit({ type: "blocked", reason: outcome.blocked.reason });
         return false;
       }
@@ -302,6 +316,7 @@ export function usePanelDraft(input: UsePanelDraftInput): UsePanelDraftResult {
       values.sharePct === null ? undefined : values.sharePct,
     );
     if (!outcome.ok) {
+      setRefused({ blockId: current.blockId, reason: outcome.blocked.reason });
       emit({ type: "blocked", reason: outcome.blocked.reason });
       return false;
     }
@@ -323,6 +338,7 @@ export function usePanelDraft(input: UsePanelDraftInput): UsePanelDraftResult {
     latest.current.dirty = false;
     setOverride(null);
     setLeave(null);
+    setRefused(null);
   }, []);
 
   return {
@@ -331,6 +347,7 @@ export function usePanelDraft(input: UsePanelDraftInput): UsePanelDraftResult {
     dirty,
     leaveBlocked,
     leaveAttempt: leaveBlocked && leave ? leave.attempt : 0,
+    refusal: refused && refused.blockId === blockId ? refused.reason : null,
     setConfig,
     setShare,
     use,

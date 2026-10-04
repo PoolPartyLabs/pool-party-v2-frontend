@@ -1100,6 +1100,11 @@
           "tokens": "Modifier le mandat · Jetons",
           "pools": "Modifier le mandat · Pools",
           "limits": "Modifier le mandat · Limites"
+        },
+        "refused": {
+          "notInMandate": "Ce pool ou cet actif ne fait plus partie de votre mandat sur ce réseau. Choisissez-en un autre ou modifiez le mandat.",
+          "shareExceedsParent": "Cette part dépasse la marge disponible au-dessus de ce bloc. Réduisez-la et appliquez à nouveau.",
+          "other": "Cette modification n'a pas pu être appliquée. Vérifiez les valeurs et réessayez."
         }
       },
       "network": {

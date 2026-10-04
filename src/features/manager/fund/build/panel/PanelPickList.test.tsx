@@ -109,6 +109,20 @@ describe("PanelPickList (Modes 2 and 3)", () => {
     expect(onLink).toHaveBeenCalledTimes(1);
   });
 
+  it("[M2] a row that cannot be used says why, and its Use is disabled and described", () => {
+    // @rule M2
+    const [first, second] = ITEMS;
+    if (!first || !second) throw new Error("fixture");
+    renderList({ items: [first, { ...second, useDisabled: false, disabledReason: "Paused" }] });
+    const use = screen.getByRole("button", { name: "Use WBTC / USDC" });
+    expect(use).toBeDisabled();
+    expect(use).toHaveAccessibleDescription("Paused");
+    expect(screen.getByText("Paused")).toBeInTheDocument();
+    // The second line gives way to the reason.
+    expect(screen.queryByText("0.30%")).toBeNull();
+    expect(screen.getByRole("button", { name: "Use WETH / USDC" })).toBeEnabled();
+  });
+
   it("a mandate with nothing here shows its own box and no filter", () => {
     renderList({ items: [], count: 0 });
     expect(screen.getByText("No pool of your mandate is on Arbitrum")).toBeInTheDocument();

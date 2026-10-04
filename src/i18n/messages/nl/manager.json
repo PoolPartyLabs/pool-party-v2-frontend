@@ -1100,6 +1100,11 @@
           "tokens": "Mandaat bewerken · Tokens",
           "pools": "Mandaat bewerken · Pools",
           "limits": "Mandaat bewerken · Limieten"
+        },
+        "refused": {
+          "notInMandate": "Deze pool of dit asset zit niet meer in uw mandaat op dit netwerk. Kies een andere of bewerk het mandaat.",
+          "shareExceedsParent": "Dit aandeel is groter dan de ruimte die boven dit blok over is. Verlaag het en pas opnieuw toe.",
+          "other": "Deze wijziging kon niet worden toegepast. Controleer de waarden en probeer het opnieuw."
         }
       },
       "network": {

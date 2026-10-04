@@ -21,10 +21,12 @@
  * - [AN4, D19] **Next: Review is never disabled.** A press runs the ordered checks of
  *   `buildScreenModel.reviewVerdict`; a refusal shows its inline notice in the bar
  *   (`fundBuilder.canvas.review.*`), brings the first offending block into view and reports
- *   `builder_build_blocked` with the matching reason. A plan that passes every check would leave the
- *   step for Review, so that press asks the selection guard first (HU3) and, Review not existing
- *   yet, answers "Review is not available yet". The notice belongs to the plan it was given for: any
- *   edit takes it away, because a notice that outlives its cause teaches people to ignore notices.
+ *   `builder_build_blocked` with the matching reason. Every press asks the selection guard first
+ *   (HU3; since POO-2187 whatever the verdict, so changes not applied in the panel get its notice
+ *   and the checks run on the plan they leave) and, Review not existing yet, a plan that passes
+ *   every check answers "Review is not available yet". The notice belongs to the plan it was given
+ *   for: any edit takes it away, because a notice that outlives its cause teaches people to ignore
+ *   notices.
  * - [HU3] **Every way out passes `selection.guardLeave`**: Back: Mandate here, both Edit mandate
  *   links in the controller, and the shell's own Save & exit and stepper through `leaveGuardRef`.
  * - [I8, I9] The viewport opens at fit (S2 does it on the first graph size); after a change the new
@@ -326,17 +328,18 @@ export function BuildScreen({
   );
 
   const handleNext = useCallback(() => {
-    const { plan: current, violations: broken, layout: drawn } = latest.current;
-    const verdict = reviewVerdict(current, broken);
-    if (verdict.refusal === "review_unavailable") {
-      // A valid plan would leave the step here, so the press asks the guard first (HU3). Review does
-      // not exist yet (D19): the way out leads to the notice that says so.
-      guardLeave(() => refuse("review_unavailable"));
-      return;
-    }
-    refuse(verdict.refusal);
-    const rect = targetRect(drawn, verdict.target);
-    if (rect) viewportRef.current?.revealRect(rect);
+    // [P6, review L1 of PR #54] Next asks the guard FIRST, whatever the verdict: with changes not
+    // applied the panel's notice answers, and once Apply changes or Discard changes settled the
+    // checks run on the plan as it then is (the resume reads `latest`). Review does not exist yet
+    // (D19): a plan that passes every check leads to the notice that says so.
+    guardLeave(() => {
+      const { plan: current, violations: broken, layout: drawn } = latest.current;
+      const verdict = reviewVerdict(current, broken);
+      refuse(verdict.refusal);
+      if (verdict.refusal === "review_unavailable") return;
+      const rect = targetRect(drawn, verdict.target);
+      if (rect) viewportRef.current?.revealRect(rect);
+    });
   }, [guardLeave, refuse]);
 
   const handleBack = useCallback(() => guardLeave(onBackToMandate), [guardLeave, onBackToMandate]);

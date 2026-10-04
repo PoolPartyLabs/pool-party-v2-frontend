@@ -18,16 +18,17 @@
 import { createTranslator } from "next-intl";
 import { useId } from "react";
 import enManager from "@/i18n/messages/en/manager.json";
-import { tokenKey } from "../../mandateDraft";
+
 import type { ManagerTranslate } from "../blocks/blockCopy";
 import { feeNumber } from "../blocks/blockRegistry";
-import { fullRangeTicks, poolRefKey } from "../plan/blockConfig";
+import { fullRangeTicks } from "../plan/blockConfig";
 import type { AaveBlockConfig, PoolBlockConfig } from "../plan/buildPlan";
 import { FundSlippageControl } from "./FundSlippageControl";
 import { PanelFieldLabel } from "./PanelFieldLabel";
 import { PanelSelect } from "./PanelSelect";
 import type { PanelBodies, PanelBodyDefinition } from "./panelBodies";
 import { makePanelCopy, type PanelCopy, usePanelCopy } from "./panelCopy";
+import { panelAssetKey, panelPoolId } from "./panelIds";
 
 /** The panel copy in English, through next-intl's own translator (ICU filled), for tests. */
 export function makeTestPanelCopy(): PanelCopy {
@@ -74,7 +75,7 @@ export const fixturePoolBody: PanelBodyDefinition<PoolBlockConfig> = {
           { symbol: pool.token1.symbol, network: pool.network },
         ],
         searchText: `${pool.token0.name} ${pool.token1.name} ${pool.address}`,
-        config: fixturePoolConfig(poolRefKey(pool)),
+        config: fixturePoolConfig(panelPoolId(pool)),
       })),
       caption: `Only the Uniswap v4 pools on ${context.networkName} that you chose in the mandate (step 4). Pools are fixed at launch.`,
       link: { prompt: "Need another pool?", label: "Edit mandate · Pools", step: "pools" },
@@ -104,7 +105,7 @@ export const fixturePoolBody: PanelBodyDefinition<PoolBlockConfig> = {
           <PanelSelect
             labelId={labelId}
             options={pools.map((pool) => ({
-              id: poolRefKey(pool),
+              id: panelPoolId(pool),
               label: `${pool.token0.symbol} / ${pool.token1.symbol} · ${feeNumber(pool.feeBps)}%`,
               logos: [
                 { symbol: pool.token0.symbol, network: pool.network },
@@ -147,7 +148,7 @@ export const fixtureSupplyBody: PanelBodyDefinition<AaveBlockConfig> = {
       count: tokens.length,
       filterPlaceholder: "Filter by token",
       rows: tokens.map((token, index) => ({
-        id: tokenKey(token),
+        id: panelAssetKey(token),
         title: token.symbol,
         subtitle: token.name,
         logos: [{ symbol: token.symbol, network: token.network }],
@@ -157,7 +158,7 @@ export const fixtureSupplyBody: PanelBodyDefinition<AaveBlockConfig> = {
           tone: "success",
         },
         searchText: token.address,
-        config: { assetKey: tokenKey(token) },
+        config: { assetKey: panelAssetKey(token) },
       })),
       caption: `Only the tokens of your mandate that Aave v3 lists on ${context.networkName} (step 3).`,
       link: { prompt: "Need another asset?", label: "Edit mandate · Tokens", step: "tokens" },
@@ -185,7 +186,7 @@ export const fixtureSupplyBody: PanelBodyDefinition<AaveBlockConfig> = {
           <PanelSelect
             labelId={labelId}
             options={tokens.map((token) => ({
-              id: tokenKey(token),
+              id: panelAssetKey(token),
               label: token.symbol,
               logos: [{ symbol: token.symbol, network: token.network }],
               metric: { label: "Supply APY", value: "4.1%", tone: "success" },
@@ -209,4 +210,27 @@ export const fixtureSupplyBody: PanelBodyDefinition<AaveBlockConfig> = {
 export const FIXTURE_BODIES: PanelBodies = {
   uniswapV4Pool: fixturePoolBody,
   aaveSupply: fixtureSupplyBody,
+};
+
+/**
+ * The fixture pool body with an apply gate that never opens (review M1): what the Uniswap body does
+ * while its live pool read is loading. Stories and tests.
+ */
+export const fixtureHeldPoolBody: PanelBodyDefinition<PoolBlockConfig> = {
+  ...fixturePoolBody,
+  useApplyGate: () => ({ ok: false, reason: "Waiting for the live pool price." }),
+};
+
+/** A Supply body whose second asset cannot be used, with its reason (review M2). */
+export const fixtureLimitedSupplyBody: PanelBodyDefinition<AaveBlockConfig> = {
+  ...fixtureSupplyBody,
+  usePick(context) {
+    const model = fixtureSupplyBody.usePick(context);
+    return {
+      ...model,
+      rows: model.rows.map((row, index) =>
+        index === 1 ? { ...row, disabledReason: "Supply cap reached" } : row,
+      ),
+    };
+  },
 };

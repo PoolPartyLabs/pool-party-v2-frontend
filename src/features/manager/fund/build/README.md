@@ -38,9 +38,12 @@ The reference canvases used as test oracles and story data are in `src/mocks/dat
 The shell (`panel/BlockPanel.tsx`) owns the head, the modes, Use (the kind's defaults at 0%), the Allocation
 field, the status row, Apply changes, Remove block and the leave guard. A kind's body owns the rest: add one line
 to `PANEL_BODIES` (`panel/panelBodies.ts`) with a `PanelBodyDefinition` of the kind's config, that is `usePick`
-(Modes 2 and 3: the rows with the config Use writes, and their copy) and `Fields` (Mode 4: the fields between the
-head and the status row, which place the `allocation` node they are given). A kind with no body shows the head and
-Remove block.
+(Modes 2 and 3: the rows with the config Use writes, a row's `disabledReason` when it cannot be used, and their
+copy), `Fields` (Mode 4: the fields between the head and the status row, which place the `allocation` node they
+are given) and, optionally, `useApplyGate` (P13: holds Apply changes, with the reason the status row shows, while
+a value it needs is loading or failed). Ids are the mandate rows' canonical keys (`panelPoolId`, `panelAssetKey`);
+the shell passes every config through `canonicalPanelConfig` anyway. A kind with no body shows the head and Remove
+block.
 
 ## Adding a block kind
 

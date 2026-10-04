@@ -357,8 +357,13 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
     const blockId = latest.current.removeConfirmId;
     if (!blockId) return;
     setRemoveConfirm(null);
-    const found = findBlock(latest.current.ctx.plan, blockId);
+    const { plan, draft, catalog } = latest.current.ctx;
+    const found = findBlock(plan, blockId);
     if (!found) return;
+    // Review L7 of PR #54: nothing is dropped for a remove the reducer would refuse.
+    let preview = 0;
+    const previewIds = () => `remove-check-${++preview}`;
+    if (describeRemoval(plan, { draft, catalog, newId: previewIds }, blockId) === null) return;
     const io = latest.current.input;
     // The block takes its unapplied changes with it, so the panel's guard lets the selection go.
     io.beforeRemove?.();
@@ -402,6 +407,10 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
         return;
       }
       if (!REMOVE_KEYS.has(event.key) || latest.current.menu || isEditable(event.target)) return;
+      // Review L3 of PR #54: Delete on a focused panel control (the slider, a chip, the select's
+      // list) is not a request to remove the block; only the card's own keys are.
+      if (event.target instanceof Element && event.target.closest("[data-build-panel-slot]"))
+        return;
       if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
       const selected = latest.current.input.selection.selectedId;
       if (!selected) return;

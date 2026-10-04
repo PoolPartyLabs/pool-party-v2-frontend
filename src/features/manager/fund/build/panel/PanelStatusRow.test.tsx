@@ -69,6 +69,30 @@ describe("PanelStatusRow (P5, P6)", () => {
     expect(onDiscard).toHaveBeenCalledTimes(1);
   });
 
+  it("[M1, M4] a note says why Apply is held, and a refusal is an alert", () => {
+    // @rule M1
+    // @rule M4
+    const { rerender } = render(
+      <PanelStatusRow
+        status="pending"
+        copy={COPY}
+        onDiscard={() => {}}
+        note={{ tone: "hold", text: "Waiting for the live pool price." }}
+      />,
+    );
+    expect(screen.getByText("Waiting for the live pool price.")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
+    rerender(
+      <PanelStatusRow
+        status="pending"
+        copy={COPY}
+        onDiscard={() => {}}
+        note={{ tone: "refused", text: "This change could not be applied." }}
+      />,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("This change could not be applied.");
+  });
+
   it("[P6] every new refusal brings the notice back into view and focus", () => {
     // @rule P6
     const { rerender } = renderRow("leaveBlocked", 1);

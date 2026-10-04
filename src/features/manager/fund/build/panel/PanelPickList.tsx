@@ -23,6 +23,8 @@
  * - [P13] While the caller's live read loads, skeleton rows; a failed read shows the inline retry.
  * - Decision A3: pool rows carry no metric stack (no TVL and no APR); a row without `metric` simply
  *   has none.
+ * - Review M2 of PR #54: a row with a `disabledReason` (a reserve that is not usable) shows the
+ *   reason in place of its second line, dimmed, and its `Use` is disabled and described by it.
  *
  * Props only. The filter is the list's own state; `defaultFilter` seeds it (stories, Mode 3).
  */
@@ -50,6 +52,11 @@ export interface PanelPickItem {
   searchText: string;
   /** `Use` cannot run yet (its live read has not landed). */
   useDisabled?: boolean;
+  /**
+   * The row cannot be used, and why (review M2 of PR #54): "Supply cap reached", "Paused". Shown in
+   * the row in place of the second line, and it disables `Use`.
+   */
+  disabledReason?: string;
 }
 
 /** The link back to a Mandate step. */
@@ -196,14 +203,27 @@ export function PanelPickList({
                 <li
                   key={item.id}
                   data-panel-pick-item={item.id}
+                  data-disabled={item.disabledReason ? "" : undefined}
                   className="flex h-[58px] items-center gap-2.5 rounded-2xl border border-border bg-surface px-3 py-2"
                 >
-                  <TokenLogos logos={item.logos} size={24} ringClass="ring-surface" />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate font-medium text-foreground text-sm">
-                      {item.title}
+                  <span
+                    className={cn(
+                      "flex min-w-0 flex-1 items-center gap-2.5",
+                      item.disabledReason ? "opacity-60" : null,
+                    )}
+                  >
+                    <TokenLogos logos={item.logos} size={24} ringClass="ring-surface" />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate font-medium text-foreground text-sm">
+                        {item.title}
+                      </span>
+                      <span
+                        id={`${headingId}-${item.id}-second`}
+                        className="truncate text-muted-foreground text-xs"
+                      >
+                        {item.disabledReason ?? item.subtitle}
+                      </span>
                     </span>
-                    <span className="truncate text-muted-foreground text-xs">{item.subtitle}</span>
                   </span>
                   {item.metric ? (
                     <span className="flex shrink-0 flex-col items-end">
@@ -220,8 +240,11 @@ export function PanelPickList({
                   ) : null}
                   <button
                     type="button"
-                    disabled={item.useDisabled}
+                    disabled={item.useDisabled === true || Boolean(item.disabledReason)}
                     aria-label={rowLabel(item.title)}
+                    aria-describedby={
+                      item.disabledReason ? `${headingId}-${item.id}-second` : undefined
+                    }
                     onClick={() => onUse(item.id)}
                     className={OUTLINE_PILL}
                   >

@@ -1100,6 +1100,11 @@
           "tokens": "Sửa nhiệm vụ · Token",
           "pools": "Sửa nhiệm vụ · Pool",
           "limits": "Sửa nhiệm vụ · Giới hạn"
+        },
+        "refused": {
+          "notInMandate": "Pool hoặc tài sản này không còn trong nhiệm vụ của bạn trên mạng này. Hãy chọn mục khác hoặc sửa nhiệm vụ.",
+          "shareExceedsParent": "Tỷ lệ này vượt quá phần còn lại phía trên khối này. Hãy giảm xuống và áp dụng lại.",
+          "other": "Không thể áp dụng thay đổi này. Hãy kiểm tra các giá trị và thử lại."
         }
       },
       "network": {

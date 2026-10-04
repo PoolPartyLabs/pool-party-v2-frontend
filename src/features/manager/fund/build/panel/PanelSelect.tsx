@@ -22,6 +22,10 @@
  * active row, Home and End jump, Enter chooses, Escape closes and focus returns to the button. A
  * press outside closes it. Props only: the strings and the options arrive ready.
  *
+ * Review of PR #54: ids are compared WITHOUT case (M3: the ids are hex keys, and the stored key is
+ * the mandate row's canonical one), and an option can be disabled with the reason shown under its
+ * name (M2: a reserve that is not usable); a disabled option cannot be chosen and the arrows skip it.
+ *
  * {@link TokenLogos} (the one or two token logos of a row) lives here and is shared with the pick
  * list (PP-MGR-CMP-068).
  */
@@ -87,6 +91,21 @@ export interface PanelSelectOption {
   logos: readonly PanelTokenLogo[];
   /** The right-aligned stack, or none (decision A3: pool rows leave TVL and APR out). */
   metric?: PanelMetric | null;
+  /** The option cannot be chosen, and why: "Supply cap reached" (review M2). */
+  disabledReason?: string;
+}
+
+/** Two option ids are the same key: hex keys are compared without case (review M3). */
+function sameId(a: string, b: string | null): boolean {
+  return b !== null && a.toLowerCase() === b.toLowerCase();
+}
+
+/** The next enabled option from `from`, stepping by `step`; `from` itself when none is left. */
+function nextEnabled(options: readonly PanelSelectOption[], from: number, step: 1 | -1): number {
+  for (let index = from + step; index >= 0 && index < options.length; index += step) {
+    if (!options[index]?.disabledReason) return index;
+  }
+  return from;
 }
 
 /** Public props for {@link PanelSelect}. */
@@ -131,7 +150,7 @@ export function PanelSelect({
   defaultOpen = false,
 }: PanelSelectProps) {
   const [open, setOpen] = useState(defaultOpen);
-  const selectedIndex = options.findIndex((option) => option.id === value);
+  const selectedIndex = options.findIndex((option) => sameId(option.id, value));
   const [active, setActive] = useState(Math.max(0, selectedIndex));
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -169,18 +188,26 @@ export function PanelSelect({
 
   const choose = (index: number) => {
     const option = options[index];
-    if (!option) return;
-    if (option.id !== value) onChange(option.id);
+    // A disabled option cannot be chosen (M2): the list stays open on it.
+    if (!option || option.disabledReason) return;
+    if (!sameId(option.id, value)) onChange(option.id);
     close();
   };
 
   const onListKey = (event: KeyboardEvent<HTMLDivElement>) => {
-    const last = options.length - 1;
     const moves: Record<string, () => void> = {
-      ArrowDown: () => setActive((index) => Math.min(last, index + 1)),
-      ArrowUp: () => setActive((index) => Math.max(0, index - 1)),
-      Home: () => setActive(0),
-      End: () => setActive(last),
+      ArrowDown: () => setActive((index) => nextEnabled(options, index, 1)),
+      ArrowUp: () => setActive((index) => nextEnabled(options, index, -1)),
+      Home: () =>
+        setActive((index) => {
+          const first = nextEnabled(options, -1, 1);
+          return first < 0 ? index : first;
+        }),
+      End: () =>
+        setActive((index) => {
+          const last = nextEnabled(options, options.length, -1);
+          return last >= options.length ? index : last;
+        }),
       Enter: () => choose(active),
       " ": () => choose(active),
       Escape: () => close(),
@@ -242,7 +269,8 @@ export function PanelSelect({
             className="flex flex-col gap-0.5 outline-none"
           >
             {options.map((option, index) => {
-              const isSelected = option.id === value;
+              const isSelected = sameId(option.id, value);
+              const disabled = Boolean(option.disabledReason);
               return (
                 // biome-ignore lint/a11y/useKeyWithClickEvents: the listbox owns the keyboard (aria-activedescendant); a row is chosen with Enter there.
                 <div
@@ -251,16 +279,25 @@ export function PanelSelect({
                   role="option"
                   tabIndex={-1}
                   aria-selected={isSelected}
+                  aria-disabled={disabled || undefined}
                   onClick={() => choose(index)}
-                  onMouseEnter={() => setActive(index)}
+                  onMouseEnter={() => {
+                    if (!disabled) setActive(index);
+                  }}
                   className={cn(
-                    "flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-2",
-                    isSelected || index === active ? "bg-surface-raised" : null,
+                    "flex items-center gap-2.5 rounded-lg px-2 py-2",
+                    disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                    isSelected || (index === active && !disabled) ? "bg-surface-raised" : null,
                   )}
                 >
                   <TokenLogos logos={option.logos} size={20} ringClass="ring-surface" />
-                  <span className="min-w-0 flex-1 truncate text-foreground text-sm">
-                    {option.label}
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-foreground text-sm">{option.label}</span>
+                    {option.disabledReason ? (
+                      <span className="truncate text-muted-foreground text-xs">
+                        {option.disabledReason}
+                      </span>
+                    ) : null}
                   </span>
                   {option.metric ? <MetricStack metric={option.metric} /> : null}
                   {isSelected ? (

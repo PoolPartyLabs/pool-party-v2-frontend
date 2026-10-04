@@ -10,18 +10,34 @@
  *
  * The SHELL owns what every block shares: the head, the modes, the Use of Mode 2 (the kind's
  * defaults, share 0%, decision DP1), the Allocation field with its ceiling (P8), the status row,
- * Apply changes, Remove block and its confirm, the leave guard. A BODY owns what only its kind
- * knows, in two parts:
+ * Apply changes, Remove block and its confirm, the leave guard, and the notice of a refused Use or
+ * Apply. A BODY owns what only its kind knows, in three parts:
  *
  * - `usePick` (Modes 2 and 3): the rows the mandate offers this block on its network, each with the
  *   config `Use` writes (the kind's defaults; null while it cannot be built yet, which disables that
- *   row's Use), and the copy around them (heading, filter placeholder, caption, link row, no-match
- *   box). It is a hook, called by a component the shell keys on the block, so a body may read live
- *   data (P13) through its own hooks.
+ *   row's Use; a `disabledReason` disables it and says why, for a reserve that is not usable), and
+ *   the copy around them (heading, filter placeholder, caption, link row, no-match box). It is a
+ *   hook, called by a component the shell keys on the block, so a body may read live data (P13)
+ *   through its own hooks.
  * - `Fields` (Mode 4): everything between the head and the status row, in the kind's own order
  *   (the Pool, then the Allocation, then the Price range, then Max slippage, for a pool). It edits
  *   the DRAFT only (P3) through `onConfigChange`, and places the ready Allocation field the shell
  *   hands it (`allocation`, null when this block takes no share of its own) where its kind wants it.
+ * - `useApplyGate` (optional, P13): whether Apply changes may run for the draft config, and the
+ *   sentence that says why not (a live read loading or failed, a bound still being typed). The
+ *   shell holds Apply disabled and shows the sentence in the status row. A hook, called in a
+ *   component the shell keys on the block.
+ *
+ * IDS (review M3 of PR #54). A config a body writes, and the ids it keys its select options by,
+ * are the mandate rows' CANONICAL keys, the ones the reducer stores (`setBlockConfig`, PA1):
+ * `panelPoolId(pool)` (`poolRefKey`: the bare lowercase v4 PoolId of a real row, never its row id
+ * `<chainId>:<poolId>`; a mock row's id) for `poolId`, and `panelAssetKey(token)` (`tokenKey`:
+ * "network:address", lowercase) for `assetKey`, both re-exported here from `panelIds.ts`. A range
+ * sits on `pool.poolKey.tickSpacing` (`isRangeOnGrid`), and Full is `fullRangeTicks(spacing)`:
+ * anything else is refused with `unknown_target`. The shell ENFORCES the ids: every config a body
+ * hands to Use or to `onConfigChange` goes through `canonicalPanelConfig` first, so a row id or
+ * another casing still lands as the canonical key, and the draft never reads a casing change as
+ * an edit.
  *
  * The next slices register here: the Uniswap v4 pool body (`uniswapV4Pool`) and the Aave v3 Supply
  * body (`aaveSupply`), each one line in {@link PANEL_BODIES}. A kind with no body shows the head
@@ -33,6 +49,8 @@ import type { MandateDraft, NetworkId } from "../../mandateDraft";
 import type { MandateEditStep } from "../blocks/useBuildCanvas";
 import type { BlockConfigByKind, BlockKind, BuildPlan } from "../plan/buildPlan";
 import type { PanelPickItem } from "./PanelPickList";
+
+export { canonicalPanelConfig, panelAssetKey, panelPoolId } from "./panelIds";
 
 /** What a body knows about the block it configures. */
 export interface PanelBodyContext {
@@ -92,12 +110,24 @@ export interface PanelFieldsProps<C> {
   allocation: ReactNode | null;
 }
 
+/** P13: whether Apply changes may run, and the translated sentence that says why not. */
+export interface PanelApplyGate {
+  ok: boolean;
+  /** Shown in the status row while `ok` is false: "Waiting for the pool price." */
+  reason?: string;
+}
+
 /** One kind's body. */
 export interface PanelBodyDefinition<C> {
   /** Modes 2 and 3. A hook: the shell calls it in a component keyed on the block. */
   usePick(context: PanelBodyContext): PanelPickModel<C>;
   /** Mode 4: the fields between the head and the status row. */
   Fields: ComponentType<PanelFieldsProps<C>>;
+  /**
+   * P13 (review M1 of PR #54), optional: whether Apply changes may run for the draft `config`. A
+   * hook, called on every render of Mode 4 in a component keyed on the block. Omitted: always ok.
+   */
+  useApplyGate?(context: PanelBodyContext, config: C): PanelApplyGate;
 }
 
 /** The registry: a body per kind, typed by the config that kind carries. */

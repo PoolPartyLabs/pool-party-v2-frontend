@@ -65,6 +65,8 @@ export interface PanelCopy {
     max(pct: string): string;
   };
   link: Record<PanelLinkStep, string>;
+  /** A refused Use or Apply (review M4), by the reducer's reason. */
+  refused: { notInMandate: string; shareExceedsParent: string; other: string };
   /** The live-read treatment of the Mandate stack (P13): "Loading", "unavailable", "Retry". */
   read: { loading: string; error: string; retry: string };
 }
@@ -122,6 +124,11 @@ export function makePanelCopy(t: ManagerTranslate): PanelCopy {
       tokens: t("fundBuilder.canvas.panel.link.tokens"),
       pools: t("fundBuilder.canvas.panel.link.pools"),
       limits: t("fundBuilder.canvas.panel.link.limits"),
+    },
+    refused: {
+      notInMandate: t("fundBuilder.canvas.panel.refused.notInMandate"),
+      shareExceedsParent: t("fundBuilder.canvas.panel.refused.shareExceedsParent"),
+      other: t("fundBuilder.canvas.panel.refused.other"),
     },
     read: {
       loading: t("fundBuilder.real.loading"),

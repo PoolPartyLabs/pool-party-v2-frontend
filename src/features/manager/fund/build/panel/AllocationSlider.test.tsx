@@ -150,6 +150,33 @@ describe("AllocationSlider (P8, P9)", () => {
     expect(slider).toHaveAttribute("aria-valuenow", "45");
   });
 
+  it("[L4] a right click does not move it, and reaching the ceiling twice before a render reports once", () => {
+    // @rule P9
+    const onReachCeiling = vi.fn();
+    const onChange = vi.fn();
+    render(
+      <AllocationSlider
+        value={40}
+        ceiling={70}
+        onChange={onChange}
+        onReachCeiling={onReachCeiling}
+        copy={COPY}
+        ceilingSentence={null}
+        ceilingLink={null}
+      />,
+    );
+    const slider = screen.getByRole("slider", { name: "Allocation" });
+    slider.getBoundingClientRect = () =>
+      ({ left: 0, width: 200, top: 0, height: 14, right: 200, bottom: 14 }) as DOMRect;
+    fireEvent.pointerDown(slider, { pointerId: 1, button: 2, clientX: 120 });
+    expect(onChange).not.toHaveBeenCalled();
+    // The value prop never changes here: two moves to the ceiling before any render.
+    fireEvent.pointerDown(slider, { pointerId: 1, button: 0, clientX: 150 });
+    fireEvent.pointerMove(slider, { pointerId: 1, clientX: 190 });
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onReachCeiling).toHaveBeenCalledTimes(1);
+  });
+
   it("[P9] a press on the track lands on the nearest stop, never past the ceiling", () => {
     // @rule P9
     render(<Controlled start={0} ceiling={70} />);

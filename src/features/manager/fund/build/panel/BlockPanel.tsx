@@ -30,11 +30,15 @@
  * - [P8, P9] The Allocation field (CMP-064) is the shell's: only the first position of a chain has
  *   one, its ceiling is `allocationCeiling` over the applied plan, its reason sentence names the cap
  *   or the strategy's room, and a mandate cap's sentence links to `Edit mandate · Limits`.
+ * - Review of PR #54: a body's `useApplyGate` holds Apply changes and says why in the status row
+ *   (M1, P13); every config a body hands over goes through `canonicalPanelConfig` (M3); a refused
+ *   Use or Apply says why, under the pick list or in the status row (M4); after Use focus moves to
+ *   the first field, after Cancel back to Remove block (L6).
  */
 "use client";
 
 import { useLocale } from "next-intl";
-import { useId, useMemo } from "react";
+import { type ReactNode, useEffect, useId, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils/cn";
@@ -47,14 +51,16 @@ import {
   type AllocationCeilingReason,
   allocationCeiling,
 } from "../plan/allocationCeiling";
-import { BLOCK_KIND_PROTOCOL, type BlockKind } from "../plan/buildPlan";
+import { BLOCK_KIND_PROTOCOL, type BlockKind, type PlanBlockReason } from "../plan/buildPlan";
 import { findBlock } from "../plan/planDerive";
 import { describeRemoval } from "../plan/planReducers";
 import { AllocationSlider } from "./AllocationSlider";
 import { PanelPickList } from "./PanelPickList";
 import { PanelStatusRow } from "./PanelStatusRow";
 import {
+  canonicalPanelConfig,
   PANEL_BODIES,
+  type PanelApplyGate,
   type PanelBodies,
   type PanelBodyContext,
   type PanelBodyDefinition,
@@ -132,6 +138,87 @@ function NetworkChip({
 
 /** A body for any config shape: the registry types each kind's own, the shell holds the union. */
 type AnyBody = PanelBodyDefinition<PanelBlockConfig>;
+
+/** M4: the sentence for a refused Use or Apply, by the reducer's reason. */
+function refusalText(reason: PlanBlockReason, copy: PanelCopy): string {
+  if (reason === "not_in_mandate") return copy.refused.notInMandate;
+  if (reason === "share_exceeds_parent") return copy.refused.shareExceedsParent;
+  return copy.refused.other;
+}
+
+/** M1: a body without a gate is always ready. A hook, so it can stand in for the body's own. */
+function useAlwaysReady(): PanelApplyGate {
+  return { ok: true };
+}
+
+/**
+ * Mode 4 below the head (M1): the body's fields, the status row and Apply changes. A component of
+ * its own, keyed on the block by the caller, so the body's `useApplyGate` hook keeps its identity.
+ */
+function ConfiguredBody({
+  definition,
+  context,
+  panel,
+  applied,
+  config,
+  allocation,
+  copy,
+  onConfigChange,
+}: {
+  definition: AnyBody;
+  context: PanelBodyContext;
+  panel: UsePanelDraftResult;
+  applied: PanelBlockConfig;
+  config: PanelBlockConfig;
+  allocation: ReactNode | null;
+  copy: PanelCopy;
+  onConfigChange(next: PanelBlockConfig): void;
+}) {
+  const useApplyGate = definition.useApplyGate ?? useAlwaysReady;
+  const gate = useApplyGate(context, config);
+  const note = panel.refusal
+    ? { tone: "refused" as const, text: refusalText(panel.refusal, copy) }
+    : panel.dirty && !gate.ok && gate.reason
+      ? { tone: "hold" as const, text: gate.reason }
+      : null;
+  return (
+    <>
+      <div data-panel-fields="" className="flex flex-col gap-4">
+        <definition.Fields
+          context={context}
+          applied={applied}
+          config={config}
+          onConfigChange={onConfigChange}
+          allocation={allocation}
+        />
+      </div>
+      <PanelStatusRow
+        status={panel.leaveBlocked ? "leaveBlocked" : panel.dirty ? "pending" : "applied"}
+        copy={{
+          pending: copy.status.pending,
+          applied: copy.status.applied,
+          discard: copy.status.discard,
+          leaveTitle: copy.leave.title,
+          leaveBody: copy.leave.body,
+          leaveDiscard: copy.leave.discard,
+        }}
+        onDiscard={panel.discard}
+        attempt={panel.leaveAttempt}
+        note={note}
+      />
+      <Button
+        variant="primary"
+        className="w-full"
+        disabled={!panel.dirty || !gate.ok}
+        onClick={() => {
+          panel.apply();
+        }}
+      >
+        {copy.apply}
+      </Button>
+    </>
+  );
+}
 
 /** Ids for a remove preview: a remove can re-add a Swap · auto, whose id the confirm never shows. */
 function previewIds(): () => string {
@@ -251,6 +338,24 @@ export function BlockPanel({
   const found = selectedId ? findBlock(ctx.plan, selectedId) : null;
   const block = found?.block.family === "position" ? found.block : null;
 
+  // L6: where focus goes after the render a Use or a Cancel causes.
+  const root = useRef<HTMLDivElement>(null);
+  const removeButton = useRef<HTMLButtonElement>(null);
+  const focusAfter = useRef<"fields" | "remove" | null>(null);
+  useEffect(() => {
+    const where = focusAfter.current;
+    if (!where) return;
+    focusAfter.current = null;
+    const target =
+      where === "remove"
+        ? removeButton.current
+        : root.current?.querySelector<HTMLElement>(
+            // The first control of the fields, not an (i): focus would open its tooltip.
+            "[data-panel-fields] :is(button, input, [tabindex='0']):not([disabled]):not([data-panel-help])",
+          );
+    target?.focus({ preventScroll: true });
+  });
+
   const removal = useMemo(() => {
     if (!removeConfirmOpen || !selectedId) return null;
     const description = describeRemoval(
@@ -271,7 +376,7 @@ export function BlockPanel({
 
   if (!head || !found || !block || !selectedId) {
     return (
-      <div data-block-panel="nothing" className="flex flex-col gap-2">
+      <div ref={root} data-block-panel="nothing" className="flex flex-col gap-2">
         <p className="font-semibold text-base text-foreground">{ctx.copy.panel.nothingTitle}</p>
         <p className="text-muted-foreground text-sm">
           {menuSentence ?? ctx.copy.panel.nothingBody}
@@ -295,7 +400,7 @@ export function BlockPanel({
     onEditMandate,
   };
 
-  let allocation = null;
+  let allocation: ReactNode | null = null;
   if (mode === "configured" && panel.draft?.sharePct !== null && panel.draft) {
     const ceiling = allocationCeiling(ctx.plan, ctx, found.chain.id);
     if (ceiling) {
@@ -319,8 +424,11 @@ export function BlockPanel({
     }
   }
 
+  // M3: whatever id a body wrote lands as the mandate row's canonical key.
+  const canonical = (config: PanelBlockConfig) => canonicalPanelConfig(config, context);
+
   return (
-    <div data-block-panel={mode} className="flex flex-col gap-4">
+    <div ref={root} data-block-panel={mode} className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <span className="flex h-6 w-[22px] shrink-0 items-center justify-center">
           <BlockMark logo="protocol" markId={kind} name={head.protocolName} size={22} />
@@ -337,50 +445,36 @@ export function BlockPanel({
       </div>
 
       {mode === "pick" && definition ? (
-        <PickBody
-          key={selectedId}
-          definition={definition}
-          context={context}
-          copy={copy}
-          onUse={(config) => {
-            panel.use(config);
-          }}
-        />
+        <>
+          <PickBody
+            key={selectedId}
+            definition={definition}
+            context={context}
+            copy={copy}
+            onUse={(config) => {
+              if (panel.use(canonical(config))) focusAfter.current = "fields";
+            }}
+          />
+          {panel.refusal ? (
+            <p role="alert" data-panel-refused="" className="text-warning text-xs">
+              {refusalText(panel.refusal, copy)}
+            </p>
+          ) : null}
+        </>
       ) : null}
 
       {mode === "configured" && definition && panel.applied?.config && panel.draft?.config ? (
-        <>
-          <definition.Fields
-            context={context}
-            applied={panel.applied.config}
-            config={panel.draft.config}
-            onConfigChange={panel.setConfig}
-            allocation={allocation}
-          />
-          <PanelStatusRow
-            status={panel.leaveBlocked ? "leaveBlocked" : panel.dirty ? "pending" : "applied"}
-            copy={{
-              pending: copy.status.pending,
-              applied: copy.status.applied,
-              discard: copy.status.discard,
-              leaveTitle: copy.leave.title,
-              leaveBody: copy.leave.body,
-              leaveDiscard: copy.leave.discard,
-            }}
-            onDiscard={panel.discard}
-            attempt={panel.leaveAttempt}
-          />
-          <Button
-            variant="primary"
-            className="w-full"
-            disabled={!panel.dirty}
-            onClick={() => {
-              panel.apply();
-            }}
-          >
-            {copy.apply}
-          </Button>
-        </>
+        <ConfiguredBody
+          key={selectedId}
+          definition={definition}
+          context={context}
+          panel={panel}
+          applied={panel.applied.config}
+          config={panel.draft.config}
+          allocation={allocation}
+          copy={copy}
+          onConfigChange={(next) => panel.setConfig(canonical(next))}
+        />
       ) : null}
 
       {removeConfirmOpen && removal ? (
@@ -389,11 +483,15 @@ export function BlockPanel({
           sentence={removal.sentence}
           cancelLabel={copy.confirm.cancel}
           removeLabel={ctx.copy.panel.remove}
-          onCancel={onRemoveCancel}
+          onCancel={() => {
+            focusAfter.current = "remove";
+            onRemoveCancel();
+          }}
           onConfirm={onRemoveConfirm}
         />
       ) : (
         <button
+          ref={removeButton}
           type="button"
           onClick={onRemoveRequest}
           className={cn(

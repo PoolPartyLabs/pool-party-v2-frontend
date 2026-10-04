@@ -93,6 +93,48 @@ describe("PanelSelect (P11)", () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
+  it("[M3] matches the value without case", () => {
+    // @rule M3
+    render(
+      <>
+        <span id="pool-label">Pool</span>
+        <PanelSelect labelId="pool-label" options={OPTIONS} value="WETH-USDC" onChange={vi.fn()} />
+      </>,
+    );
+    expect(screen.getByRole("button", { name: "Pool" })).toHaveTextContent("WETH / USDC · 0.05%");
+  });
+
+  it("[M2] a disabled option shows its reason, the arrows skip it and it cannot be chosen", async () => {
+    // @rule M2
+    const onChange = vi.fn();
+    const options: PanelSelectOption[] = [
+      ...OPTIONS.slice(0, 1),
+      { ...(OPTIONS[1] as PanelSelectOption), disabledReason: "Supply cap reached" },
+      { id: "usdg", label: "USDG", logos: [{ symbol: "USDG" }] },
+    ];
+    render(
+      <>
+        <span id="asset-label">Asset</span>
+        <PanelSelect
+          labelId="asset-label"
+          options={options}
+          value="weth-usdc"
+          onChange={onChange}
+        />
+      </>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Asset" }));
+    const disabled = screen.getByRole("option", { name: /WBTC/ });
+    expect(disabled).toHaveAttribute("aria-disabled", "true");
+    expect(disabled).toHaveTextContent("Supply cap reached");
+    await userEvent.click(disabled);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+    // From the first row, one Arrow Down lands past the disabled one.
+    await userEvent.keyboard("{ArrowDown}{Enter}");
+    expect(onChange).toHaveBeenCalledWith("usdg");
+  });
+
   it("closes on a press outside", async () => {
     renderSelect();
     await userEvent.click(screen.getByRole("button", { name: "Pool" }));
