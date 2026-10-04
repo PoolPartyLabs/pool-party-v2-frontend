@@ -133,4 +133,36 @@ describe("agreed Review draft seam [V1, V2, V5, V8, V9]", () => {
     expect(result.current.review.payoutFeeBps).toBe(1000);
     expect(() => result.current.setFeePercent("payoutFeeBps", "oops")).toThrow("INVALID_FEE");
   });
+  it("maps legacy draft identity and reports missing Build before launch", async () => {
+    upsertDraft({ ...createEmptyDraft("2026-10-04", "legacy"), name: "Legacy fund name" });
+    const { result } = renderHook(() => useV2ReviewDraft("legacy"));
+    await waitFor(() => expect(result.current.review.name).toBe("Legacy fund name"));
+    expect(
+      result.current.launchBlockers.some((blocker) => blocker.code === "BUILD_EXECUTION_GAP"),
+    ).toBe(true);
+    expect(result.current.feeConfiguration.flowSource).toBe("fallback");
+  });
+  it("blocks launch while the staged logo is uploading", async () => {
+    let finish: ((url: string) => void) | undefined;
+    mocks.upload.mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const { result } = renderHook(() => useV2ReviewDraft("review"));
+    await waitFor(() => expect(result.current.draft).not.toBeNull());
+    let pending: Promise<string> | undefined;
+    act(() => {
+      pending = result.current.uploadLogo(new File(["png"], "logo.png", { type: "image/png" }));
+    });
+    expect(result.current.launchBlockers.some((blocker) => blocker.code === "LOGO_UPLOADING")).toBe(
+      true,
+    );
+    await act(async () => {
+      finish?.("https://cdn.test/logo.png");
+      await pending;
+    });
+    expect(result.current.isReady).toBe(true);
+  });
 });
