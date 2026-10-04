@@ -71,12 +71,9 @@ describe("public journey contracts [R3, R4, R6]", () => {
     const journey = persistJourney(draft, manager);
     const encoded = encodeURIComponent(journey.journeyId);
     localStorage.setItem(journeyStore.journeyKey(encoded), "{");
-    const before = Array.from({ length: localStorage.length }, (_, index) => {
-      const key = localStorage.key(index)!;
-      return [key, localStorage.getItem(key)];
-    });
+    const before = Object.entries(localStorage);
     expect(() => readJourney(encoded)).toThrow();
-    expect(before.map(([key]) => [key, localStorage.getItem(key!)])).toEqual(before);
+    expect(Object.entries(localStorage)).toEqual(before);
   });
   it("R3 decodes only once and does not recursively resolve a double-encoded id", () => {
     const journey = persistJourney(draft, manager);
