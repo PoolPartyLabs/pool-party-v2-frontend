@@ -676,3 +676,11 @@ Launch stays enabled to reveal the first field or Build reason in screen order. 
 click calls `startFundLaunch` once; an existing checkpoint offers Resume without changing
 the journal. Fallback Review remains available. Borrow, unsupported catalog data and
 nonexecutable continuations fail closed. All new copy is present in 11 locales.
+
+
+### Mandate Protocols Figma correction (POO-2167, rules v4)
+
+The designed protocol rows now own real network selection. Extra real-mode helper text, reserve
+APY paragraphs and duplicate network checkboxes are removed. GMX, Pendle and Uniswap v3 positions
+remain visible as Coming soon, excluded from selection and executable drafts. Every protocol uses
+a committed brand logo. [Rules, sources and regressions](../../../docs/MANDATE_PROTOCOLS_FIGMA_2026-10-04.md).

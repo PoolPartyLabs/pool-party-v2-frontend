@@ -122,11 +122,11 @@ describe("real Mandate step contract", () => {
     expect(screen.queryByText("Base")).not.toBeInTheDocument();
   });
   // @rule R3
-  it("Protocols keeps swaps locked, omits hub-only Across, displays Aave APY and disables v3 positions", async () => {
+  it("Protocols keeps swaps locked, omits hub-only Across, omits the extra Aave APY paragraph and disables v3 positions", async () => {
     renderWithProviders(<Harness step="protocols" />);
     expect(screen.queryByText("Across")).not.toBeInTheDocument();
-    expect(screen.getByText(/USDC supply APY: 3.2%/)).toBeInTheDocument();
-    expect(screen.getByText("Coming soon")).toBeInTheDocument();
+    expect(screen.queryByText(/USDC supply APY/)).not.toBeInTheDocument();
+    expect(screen.getAllByText("Coming soon")).toHaveLength(3);
     await userEvent.setup().click(screen.getByRole("checkbox", { name: "Aave v3" }));
     expect(JSON.parse(screen.getByTestId("draft").textContent ?? "{}").aaveV3Reserves).toEqual([
       usdc.address,

@@ -1,8 +1,8 @@
 /**
  * @id PP-MGR-LIB-019
  * @name mandateDraft
- * @implements-rules-version v3 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
- *   POO-2167 rules v3, POO-2151 rules v1, POO-2197 rules v2)
+ * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
+ *   POO-2167 rules v4, POO-2151 rules v1, POO-2197 rules v2)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -51,15 +51,15 @@ export type NetworkId =
   // "unichain" |
   "arbitrum" | "robinhood";
 
-/**
- * A protocol a mandate can name. `uniswap-v3-swap` is the swap adapter, not the position protocol.
- * The buildathon scope operates Aave v3 and Uniswap v4 (R20 v3); Uniswap v3 positions stay listed
- * but unavailable ({@link UNAVAILABLE_PROTOCOLS}), and GMX is no longer named at all (R21 v2).
- */
+/** A protocol displayed by the mandate. Future ids are never executable (POO-2167 v4). */
 export type ProtocolId =
-  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
-  // "gmx" |
-  "uniswap-v3-swap" | "across" | "aave-v3" | "uniswap-v3" | "uniswap-v4";
+  | "uniswap-v3-swap"
+  | "across"
+  | "aave-v3"
+  | "uniswap-v3"
+  | "uniswap-v4"
+  | "gmx"
+  | "pendle";
 
 /** The protocols that make the Pools step meaningful: they hold liquidity positions. */
 export type DexProtocolId = "uniswap-v3" | "uniswap-v4";
@@ -93,8 +93,8 @@ export const PROTOCOL_ORDER: readonly ProtocolId[] = [
   "aave-v3",
   "uniswap-v3",
   "uniswap-v4",
-  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
-  // "gmx",
+  "gmx",
+  "pendle",
 ];
 
 /** The position protocols. A draft with none of these skips the Pools step (R29). */
@@ -105,7 +105,8 @@ export const DEX_PROTOCOL_IDS: readonly DexProtocolId[] = ["uniswap-v3", "uniswa
  * "Coming soon", no reducer accepts it, and a stored draft that still names it loses it on load
  * ({@link withoutUnavailableProtocols}).
  *
- * R20 v3 (2026-10-03, POO-2167): Uniswap v3 POSITIONS are here because the fund contracts have no
+ * R20 v4 (2026-10-04, POO-2167): GMX and Pendle are listed but unavailable.
+ * Uniswap v3 POSITIONS are here because the fund contracts have no
  * Uniswap v3 position adapter yet. The required `uniswap-v3-swap` is a different id and never here
  * (R19). In mock mode every piece of Uniswap v3 position code (the pool source's mock path, the
  * Pools tabs, the mapping) stays in place and unreachable through the UI, so restoring the protocol
@@ -113,11 +114,7 @@ export const DEX_PROTOCOL_IDS: readonly DexProtocolId[] = ["uniswap-v3", "uniswa
  * `buildRealCatalog` pins it unavailable, `withProtocols` refuses it, `toV2MandateSelection`
  * allow-lists the other four ids and `searchReal` reads only the v4 catalog.
  */
-export const UNAVAILABLE_PROTOCOLS: readonly ProtocolId[] = [
-  "uniswap-v3",
-  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
-  // "gmx",
-];
+export const UNAVAILABLE_PROTOCOLS: readonly ProtocolId[] = ["uniswap-v3", "gmx", "pendle"];
 
 /** The contract ceiling on token entries (DEC-030). A token takes one slot per network it runs on. */
 export const MAX_TOKEN_SLOTS = 16;
@@ -873,7 +870,7 @@ export function withProtocols(draft: MandateDraft, protocols: ProtocolId[]): Man
  * The draft store runs every entry through this on load, so both the builder's resume and the
  * Console's counts read the sanitised draft.
  *
- * It drops exactly three things: the unavailable ids, the pools on them, and their protocol cap rows.
+ * It drops unavailable ids, their pools and protocol cap rows, and unavailable per-chain entries.
  * Nothing else moves, deliberately, unlike {@link withProtocols}, which also un-passes Pools and
  * expires `poolUniverseCount`. That leaves two stale fields, and neither is harmless on its own:
  *
@@ -894,7 +891,9 @@ export function withoutUnavailableProtocols(draft: MandateDraft): MandateDraft {
   const unavailable = new Set<string>(UNAVAILABLE_PROTOCOLS);
   const onUnavailable = (pool: MandatePoolRef | null | undefined) =>
     unavailable.has(pool?.protocol ?? "");
+  const positionEntries = Object.values(draft.positionProtocolsByChain ?? {});
   const holds =
+    positionEntries.some((ids) => Array.isArray(ids) && ids.some((id) => unavailable.has(id))) ||
     draft.protocols.some((id) => unavailable.has(id)) ||
     draft.pools.some(onUnavailable) ||
     Object.keys(draft.caps.protocols).some((key) => unavailable.has(key));
@@ -902,6 +901,16 @@ export function withoutUnavailableProtocols(draft: MandateDraft): MandateDraft {
   return {
     ...draft,
     protocols: draft.protocols.filter((id) => !unavailable.has(id)),
+    ...(draft.positionProtocolsByChain
+      ? {
+          positionProtocolsByChain: Object.fromEntries(
+            Object.entries(draft.positionProtocolsByChain).map(([network, ids]) => [
+              network,
+              Array.isArray(ids) ? ids.filter((id) => !unavailable.has(id)) : [],
+            ]),
+          ),
+        }
+      : {}),
     pools: draft.pools.filter((pool) => !onUnavailable(pool)),
     caps: {
       ...draft.caps,

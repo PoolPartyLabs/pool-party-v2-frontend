@@ -808,14 +808,16 @@
       "aaveV3": "Aave v3",
       "uniswapV3": "Uniswap v3",
       "uniswapV4": "Uniswap v4",
-      "gmx": "GMX"
+      "gmx": "GMX",
+      "pendle": "Pendle"
     },
     "protocolCaptions": {
       "swap": "Swap · 將一種代幣轉換為另一種",
       "bridge": "Bridge · 在您的網路之間轉移資金",
       "lending": "借貸 · 提供代幣以賺取利息",
       "dex": "Liquidity positions · 在價格區間內賺取交易手續費",
-      "perps": "永續 · 帶槓桿的多空頭寸"
+      "perps": "永續 · 帶槓桿的多空頭寸",
+      "yield": "Yield 部位 · 透過固定和浮動利率賺取 yield"
     },
     "tokens": {
       "search": "搜尋代幣 · 代號、名稱或地址",

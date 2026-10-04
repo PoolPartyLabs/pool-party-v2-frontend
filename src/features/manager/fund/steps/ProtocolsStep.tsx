@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep
- * @implements-rules-version v3 (POO-2143 rules v2, POO-2167 rules v3)
+ * @implements-rules-version v4 (POO-2143 rules v2, POO-2167 rules v4)
  * @analytics-events none, the shell emits
  *
  * POO-2123 [R12] / [R19] / [R20] / [R21] / [R22], epic POO-2119. Mandate step 2: the protocols this
@@ -15,9 +15,9 @@
  * difference matters: Aave v3 runs on the hub only, so a Robinhood dot beside it would promise a
  * deployment that does not exist, and the manager would discover it on step 4 with no pools. When
  * that intersection is empty the column is dropped entirely rather than drawn as a bare label, and
- * the row goes disabled (R21) alongside a protocol the product lists but cannot operate. GMX was that
- * protocol until the buildathon scope commented it out (R21 v2, POO-2143); Uniswap v3 positions are
- * that protocol now (R20 v3, POO-2167), through the same mechanism and the same "Coming soon".
+ * the row goes disabled (R21) alongside a protocol the product lists but cannot operate. Rules v4
+ * (POO-2167) list Uniswap v3 positions, GMX and Pendle through the same Coming soon mechanism.
+ * The designed rows own real per-network selection; no duplicate selectors or APY paragraphs render.
  *
  * A disabled row still takes its click and reports it through `onBlocked`, exactly as on step 1:
  * "which protocol did managers keep trying to add" is the one question this screen can answer for
@@ -32,13 +32,18 @@
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { cn } from "@/lib/utils/cn";
-import { formatPercent } from "@/lib/utils/format";
 import { MandateCatalogStatus } from "../components/MandateCatalogStatus";
 import { MandateCheckbox, MandateRow } from "../components/MandateRow";
 import { NetworkDots } from "../components/NetworkDots";
 import { ProtocolMark } from "../components/ProtocolMark";
 import type { MandateProtocol } from "../mandateCatalog";
-import { type NetworkId, type ProtocolId, withProtocols } from "../mandateDraft";
+import {
+  type MandateDraft,
+  type NetworkId,
+  type ProtocolId,
+  UNAVAILABLE_PROTOCOLS,
+  withProtocols,
+} from "../mandateDraft";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -56,16 +61,16 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
     "aave-v3": t("fundBuilder.protocolNames.aaveV3"),
     "uniswap-v3": t("fundBuilder.protocolNames.uniswapV3"),
     "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
-    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
-    // gmx: t("fundBuilder.protocolNames.gmx"),
+    gmx: t("fundBuilder.protocolNames.gmx"),
+    pendle: t("fundBuilder.protocolNames.pendle"),
   };
   const captions: Record<MandateProtocol["kind"], string> = {
     swap: t("fundBuilder.protocolCaptions.swap"),
     bridge: t("fundBuilder.protocolCaptions.bridge"),
     lending: t("fundBuilder.protocolCaptions.lending"),
     dex: t("fundBuilder.protocolCaptions.dex"),
-    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
-    // perps: t("fundBuilder.protocolCaptions.perps"),
+    perps: t("fundBuilder.protocolCaptions.perps"),
+    yield: t("fundBuilder.protocolCaptions.yield"),
   };
 
   const required = catalog.protocols.filter(
@@ -85,9 +90,11 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
     draft.networks.filter((network) => protocol.availableOn.includes(network));
 
   /** Operable, on chain, and reachable from at least one network this mandate holds. */
-  const selectable = operable.filter(
-    (protocol) => protocol.available && networksFor(protocol).length > 0,
-  );
+  const canSelect = (protocol: MandateProtocol) =>
+    protocol.available &&
+    !UNAVAILABLE_PROTOCOLS.includes(protocol.id) &&
+    networksFor(protocol).length > 0;
+  const selectable = operable.filter(canSelect);
   const allSelected =
     selectable.length > 0 && selectable.every((protocol) => chosen.has(protocol.id));
 
@@ -122,20 +129,42 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
       ?.scrollIntoView({ block: "center" });
   }, [ownBlock]);
 
-  /** Add or remove one protocol. The reducer keeps the required two and clears pools if needed. */
+  /** R5: the designed row owns the choice on every supported selected network in real mode. */
+  function selectProtocols(current: MandateDraft, ids: ProtocolId[]): MandateDraft {
+    const result = withProtocols(current, ids);
+    if (catalog.dataMode !== "real") return result;
+    const positionIds = ["aave-v3", "uniswap-v4"] as const;
+    result.positionProtocolsByChain = Object.fromEntries(
+      result.networks.map((network) => [
+        network,
+        positionIds.filter(
+          (id) =>
+            result.protocols.includes(id) &&
+            catalog.protocols.some(
+              (protocol) =>
+                protocol.id === id && canSelect(protocol) && protocol.availableOn.includes(network),
+            ),
+        ),
+      ]),
+    );
+    result.pools = result.pools.filter((pool) =>
+      result.positionProtocolsByChain?.[pool.network]?.includes("uniswap-v4"),
+    );
+    result.aaveV3Reserves = result.protocols.includes("aave-v3")
+      ? (catalog.reserves ?? [])
+          .filter((reserve) => reserve.available)
+          .map((reserve) => reserve.token.address.toLowerCase())
+      : [];
+    return result;
+  }
+
+  /** Add or remove one protocol. The reducer keeps required rows and clears dependent pools. */
   function toggle(id: ProtocolId) {
     update((current) => {
       const next = current.protocols.includes(id)
         ? current.protocols.filter((protocol) => protocol !== id)
         : [...current.protocols, id];
-      const result = withProtocols(current, next);
-      if (catalog.dataMode === "real")
-        result.aaveV3Reserves = result.protocols.includes("aave-v3")
-          ? (catalog.reserves ?? [])
-              .filter((reserve) => reserve.available)
-              .map((reserve) => reserve.token.address.toLowerCase())
-          : [];
-      return result;
+      return selectProtocols(current, next);
     });
   }
 
@@ -143,19 +172,12 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
   function toggleAll() {
     const ids = new Set<ProtocolId>(selectable.map((protocol) => protocol.id));
     update((current) => {
-      const result = withProtocols(
+      return selectProtocols(
         current,
         allSelected
           ? current.protocols.filter((protocol) => !ids.has(protocol))
           : [...current.protocols, ...ids],
       );
-      if (catalog.dataMode === "real")
-        result.aaveV3Reserves = result.protocols.includes("aave-v3")
-          ? (catalog.reserves ?? [])
-              .filter((reserve) => reserve.available)
-              .map((reserve) => reserve.token.address.toLowerCase())
-          : [];
-      return result;
     });
   }
 
@@ -163,7 +185,7 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
   function operableRow(protocol: MandateProtocol) {
     const name = names[protocol.id];
     const networks = networksFor(protocol);
-    const disabled = !protocol.available || networks.length === 0;
+    const disabled = !canSelect(protocol);
     return (
       <MandateRow
         key={protocol.id}
@@ -171,7 +193,7 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
         ariaLabel={name}
         title={name}
         caption={captions[protocol.kind]}
-        selected={chosen.has(protocol.id)}
+        selected={!disabled && chosen.has(protocol.id)}
         disabled={disabled}
         statusLabel={disabled ? t("fundBuilder.common.comingSoon") : undefined}
         logo={<ProtocolMark id={protocol.id} name={name} />}
@@ -195,72 +217,6 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
   return (
     <section data-mandate-step={STEP} className="flex flex-col gap-6">
       <MandateCatalogStatus catalog={catalog} draft={draft} />
-      {catalog.dataMode === "real" ? (
-        <p className="text-muted-foreground text-sm">{t("fundBuilder.real.protocols")}</p>
-      ) : null}
-      {catalog.dataMode === "real"
-        ? (catalog.reserves ?? []).map((reserve) => (
-            <p key={reserve.poolKey} className="text-sm">
-              {t("fundBuilder.real.reserve", {
-                symbol: reserve.token.symbol,
-                apy: formatPercent(Number(reserve.supplyApy)),
-              })}
-              {!reserve.available ? ` · ${t("fundBuilder.real.unavailable")}` : ""}
-            </p>
-          ))
-        : null}
-      {catalog.dataMode === "real"
-        ? draft.networks.map((network) => (
-            <fieldset key={network} className="flex gap-3">
-              <legend className="text-sm">
-                {t(
-                  network === "arbitrum"
-                    ? "fundBuilder.networkNames.arbitrum"
-                    : "fundBuilder.networkNames.robinhood",
-                )}
-              </legend>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={(draft.positionProtocolsByChain?.[network] ?? []).includes("uniswap-v4")}
-                  onChange={(event) => {
-                    const checked = event.target.checked;
-                    update((current) => {
-                      const byChain = {
-                        ...current.positionProtocolsByChain,
-                        [network]: checked
-                          ? [
-                              ...(current.positionProtocolsByChain?.[network] ?? []).filter(
-                                (id) => id !== "uniswap-v4",
-                              ),
-                              "uniswap-v4" as const,
-                            ]
-                          : (current.positionProtocolsByChain?.[network] ?? []).filter(
-                              (id) => id !== "uniswap-v4",
-                            ),
-                      };
-                      const hasV4 = Object.values(byChain).some((ids) =>
-                        ids?.includes("uniswap-v4"),
-                      );
-                      return {
-                        ...current,
-                        positionProtocolsByChain: byChain,
-                        protocols: hasV4
-                          ? Array.from(new Set([...current.protocols, "uniswap-v4" as const]))
-                          : current.protocols.filter((id) => id !== "uniswap-v4"),
-                        pools: checked
-                          ? current.pools
-                          : current.pools.filter((pool) => pool.network !== network),
-                        poolUniverseCount: null,
-                      };
-                    });
-                  }}
-                />
-                {names["uniswap-v4"]}
-              </label>
-            </fieldset>
-          ))
-        : null}
       {/* Required (R19) */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

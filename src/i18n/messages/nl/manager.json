@@ -808,14 +808,16 @@
       "aaveV3": "Aave v3",
       "uniswapV3": "Uniswap v3",
       "uniswapV4": "Uniswap v4",
-      "gmx": "GMX"
+      "gmx": "GMX",
+      "pendle": "Pendle"
     },
     "protocolCaptions": {
       "swap": "Swap · zet een token om in een ander",
       "bridge": "Bridge · verplaatst geld tussen uw netwerken",
       "lending": "Uitlenen · stel tokens beschikbaar om rente te verdienen",
       "dex": "Liquidity positions · verdien handelskosten in een prijsbereik",
-      "perps": "Perpetuals · long- en shortposities met hefboom"
+      "perps": "Perpetuals · long- en shortposities met hefboom",
+      "yield": "Yieldposities · behaal yield met vaste en variabele tarieven"
     },
     "tokens": {
       "search": "Tokens zoeken · symbool, naam of adres",
