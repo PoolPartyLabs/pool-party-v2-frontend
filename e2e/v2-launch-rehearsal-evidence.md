@@ -63,3 +63,43 @@ Recording is October 4, 2026 at **16:00 BST / 15:00 UTC**. There are no measured
 Initial and final read-only snapshots agree: Arbitrum **4.250615 USDC**, **0.00194554396143 ETH**; Robinhood **0.001998558552158842 ETH**. Final independent `cast` reads at **2026-10-04T04:38:05Z** confirmed these unchanged balances. This run submits no transactions.
 
 No Next server, Docker stack or deployment was started. Port 3000 had no listener at teardown checks. Playwright-owned browsers exited. Failed artifacts retained. All other expected worktrees, including `hackathon-privy-institutional-onramp`, the finish-work baseline and sibling `worktree_*` folders, are untouched.
+# Follow-up verdict — October 4, 2026, 05:28 UTC
+
+**Supersedes the earlier Networks blocker and #51 status below.** The Networks → Protocols failure was an automation artifact: `getByText("Loading v2 catalog")` missed the empty, aria-labelled status. The corrected accessible-role wait passes the entire deployed Mandate using plain clicks and the exact fund #2 catalog IDs, then Build and fallback Review. No storage/API shortcut created this draft. Component regression reproduces the missing text, accessible name and correct loading validation gate.
+
+Root cause: `e2e/specs/v2-launch-rehearsal.spec.ts` (ours); app contract `components/MandateCatalogStatus.tsx:22`; correct fail-closed gate `mandateDraft.ts:536`; Murilo's builder handler `FundStrategyBuilderScreen.tsx:597` is unchanged. SIWE init/authenticate 200, session cookie present, Next enabled but catalog loading at the premature click. Successful catalog responses were captured for both chains and Aave. Robinhood 50% cap passes Limits and is preserved in storage.
+
+## Separate Review failure
+
+Fallback Review server-action HTTP 200 responses contain three `{"ok":false,"error":{"status":429,"code":"SYSTEM_RATE_LIMITED"}}` envelopes. UI: `Catalog unavailable or stale. Refresh before launching.`, execution defaults unavailable, `Launch · 0 signatures` disabled. This is a real API rejection, not an unauthenticated Networks session. Catalog group: `/api/v2/catalog/tokens?chainId=42161`, `/api/v2/catalog/tokens?chainId=4663`, `/api/v2/catalog/aave-v3/reserves` (individual response-to-action mapping not claimed).
+
+Owned amplification fixed: fallback independently mounted a second catalog hook in addition to Review binding (six requests rather than three). It now reuses the binding catalog/state/retry. The component regression throws on any second hook load. This halves mount reads but does not guarantee eliminating the API-key-wide throttle. Likely enforcement: API `src/v2-alpha/catalog/v2-catalog.controller.ts:27`; `src/common/throttler/custom-throttler.guard.ts:25`, `:51`, `:67`. API unchanged; deployed throttle configuration not inspected.
+
+## Observed rehearsal evidence
+
+| Phase | Chain | Explorer / receipt | Outcome | Gas | Seconds |
+|---|---|---|---|---|---|
+| Sign-in + full Mandate | Arbitrum/Robinhood selection | N/A | Exact rows and 50% cap saved | 0 | ~18.6 |
+| Build + Save & exit | Both | N/A | Two hub roots, one spoke root saved through menus | 0 | ~1.0 |
+| Fallback Review + terms | Both | N/A | Name, fees 2/20/0, minimum/seed 2 filled; catalog 429 | 0 | ~3.4 to captured state |
+| Launch / bridge / reports | Both | None | Not signed/submitted | 0 | Not measured |
+
+Trace-derived timings include automation/auth/navigation, not human reading or blockchain confirmation. A further 15-second enabled-Launch assertion timed out. A later cooldown run exceeded the command's four-minute limit without a completed outcome; not called a pass. Core/Spoke Vaults not created; total launch active/wait split and Resume remain unverified. No funds stranded.
+
+## Local attempt and integration
+
+Own `pnpm dev` started twice on port 3000 against the dev API through a read-only SSH tunnel. Both locally available credential configurations yield `/api/v2/catalog/tokens?chainId=42161` → 401 `UNAUTHORIZED`, `Invalid API Key`. Browser stayed on disabled Privy Connect and a 400 resource response; no authenticated local Mandate success claimed. No remote runtime secret read or substitute credential obtained. Component/unit reproductions pass, but fixes are not deployed or verified against an authenticated local API.
+
+#51 merged as `5b5d472e` and is included in this branch. A regression calls its real `applyBlockConfig` with the mapped v2 catalog row shape (fee 500, spacing 10), verifies panel config and root shares 60/40 remain authoritative despite fallback edits, and checks fallback readiness. No semantic adaptation or Murilo source edit. #50 (`c99f7eec`) appeared on main during the follow-up; preserved by integration.
+
+Follow-up validation: launch/component suite **25 files, 167 tests passed**; typecheck and focused Biome pass. Prior full-suite/build results below describe the preceding baseline, not a newly run full build.
+
+Read-only balance confirmation at 05:25 UTC: Arbitrum **4.250615 USDC**, **0.001945543961430000 ETH**; Robinhood **0.001998558552158842 ETH**. Unchanged; zero financial signatures/transactions.
+
+## Camera recommendation
+
+Recording is October 4, 2026, **16:00 BST / 15:00 UTC**. Wait for the catalog loading status to disappear before Networks Next. Show actual Mandate rows and cap, then Build menus and fallback Review terms; automation reaches Review in ~23 seconds, but allow human reading time. Shared catalog throttling remains a live risk: preflight Review and retry only after a deliberate cooldown; do not present empty defaults/disabled Launch as ready. A human must sign and measure the launch. Show real explorer hashes, then cut only measured bridge/report waiting; reload/Resume and the new both-chain fund are not yet rehearsed. Do not promise a bridge completion time.
+
+Precise report: `code-docs/pool-party-sc-v2-handoff/results/mandate-blocker.md`. Raw traces/auth material remain gitignored; only sanitized evidence is committed. Own Next processes and read-only tunnel are torn down at completion; no Docker/API/deploy changes.
+
+---
