@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createLaunchDriver, type FrozenLaunch } from "./driver";
-import { createJournal } from "./journal";
+import { createJournal, runLaunch } from "./journal";
 import type { LaunchStep } from "./plan";
 
 const mocks = vi.hoisted(() => ({
@@ -55,6 +55,64 @@ const setup = () => {
   return { driver, journal, wallet };
 };
 describe("just-in-time launch driver [R2, R3, R6]", () => {
+  it.each([
+    { balance: "29610900", maxLossBps: undefined, amount: "29.6109" },
+    { balance: "29700000", maxLossBps: undefined, amount: "29.7" },
+    { balance: "99000000", maxLossBps: undefined, amount: "29.7" },
+    { balance: "29403000", maxLossBps: 50, amount: "29.403" },
+    { balance: "28809000", maxLossBps: 300, amount: "28.809" },
+    { balance: "28215000", maxLossBps: 1000, amount: "28.215" },
+    { balance: "26730000", maxLossBps: undefined, amount: null },
+    { balance: "0", maxLossBps: undefined, amount: null },
+    { balance: "29402999", maxLossBps: undefined, amount: null },
+    { balance: "28214999", maxLossBps: 1000, amount: null },
+  ])("bounds Aave remainder [R1, R3]: $balance raw, $maxLossBps bps", async ({
+    balance,
+    maxLossBps,
+    amount,
+  }) => {
+    const { driver, journal, wallet } = setup();
+    journal.frozen = {
+      ...frozen,
+      request: { manager, chains: [{ chainId: 42161, tokens: [core] }] },
+    };
+    mocks.fund.mockResolvedValue({
+      ok: true,
+      data: {
+        chains: [
+          { chainId: "42161", uniswapV4Adapter: manager, aaveV3Adapter: manager, spokeVault: core },
+        ],
+      },
+    });
+    mocks.balances.mockResolvedValue({
+      ok: true,
+      data: { balancesStatus: "available", tokens: [{ token: core, unallocatedBalance: balance }] },
+    });
+    mocks.open.mockClear();
+    mocks.open.mockResolvedValue({
+      ok: true,
+      data: {
+        transactions: [{ from: manager, to: core, chainId: 42161, value: "0", data: "0x1234" }],
+      },
+    });
+    const step: LaunchStep = {
+      id: "aave",
+      kind: "open",
+      chain: 42161,
+      dependencies: [],
+      sharePct: 30,
+      protocol: "aave-v3",
+      config: { assetKey: `arbitrum:${core}`, maxLossBps },
+    };
+    if (amount === null) {
+      await expect(driver.build(step, journal)).rejects.toThrow("BALANCE_CHANGED");
+      expect(mocks.open).not.toHaveBeenCalled();
+    } else {
+      await driver.build(step, journal);
+      expect(mocks.open).toHaveBeenLastCalledWith(core, expect.objectContaining({ amount }));
+    }
+    expect(wallet.send).not.toHaveBeenCalled();
+  });
   it("verifies mined Aave by positionKey and chain, not pool registration or USD value", async () => {
     const { driver, journal } = setup();
     const positionKey = `0x${"00".repeat(12)}af88d065e77c8cc2239327c5edb3a432268e5831`;
@@ -150,7 +208,7 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     });
     await expect(driver.build(step, journal)).rejects.toThrow("BALANCES_UNAVAILABLE");
   });
-  it("recomputes v4 swaps and bounded open amounts from live balances", async () => {
+  it("recomputes v4 swaps and retries Aave after confirmed v4 with a 0.3% remainder [R2, R4]", async () => {
     const { driver, journal, wallet } = setup();
     const poolId = `0x${"ab".repeat(32)}`;
     const zero = `0x${"00".repeat(20)}`;
@@ -227,6 +285,15 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     };
     mocks.swap.mockResolvedValue({ ok: true, data: built });
     mocks.open.mockResolvedValue({ ok: true, data: built });
+    const aave: LaunchStep = {
+      id: "aave:open",
+      kind: "open",
+      chain: 42161,
+      dependencies: ["v4:open"],
+      sharePct: 30,
+      protocol: "aave-v3",
+      config: { assetKey: `arbitrum:${core}` },
+    };
     const step: LaunchStep = {
       id: "v4:swap",
       kind: "swap",
@@ -239,6 +306,38 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     await driver.build(step, journal);
     expect(mocks.swap).toHaveBeenCalledWith(
       expect.objectContaining({ core, tokenIn: core, tokenOut: manager, maxLossBps: 100 }),
+    );
+    const plannedSwap = BigInt(mocks.swap.mock.calls.at(-1)?.[0].amountIn);
+    const swapRemainder = (plannedSwap * BigInt(997)) / BigInt(1000);
+    mocks.balances.mockResolvedValue({
+      ok: true,
+      data: {
+        balancesStatus: "available",
+        tokens: [
+          { token: core, unallocatedBalance: swapRemainder.toString() },
+          { token: manager, unallocatedBalance: "0" },
+        ],
+      },
+    });
+    await driver.build(step, journal);
+    expect(mocks.swap).toHaveBeenLastCalledWith(
+      expect.objectContaining({ amountIn: swapRemainder.toString() }),
+    );
+    for (const available of [(plannedSwap * BigInt(90)) / BigInt(100), BigInt(0)]) {
+      mocks.balances.mockResolvedValue({
+        ok: true,
+        data: {
+          balancesStatus: "available",
+          tokens: [
+            { token: core, unallocatedBalance: available.toString() },
+            { token: manager, unallocatedBalance: "0" },
+          ],
+        },
+      });
+      await expect(driver.build(step, journal)).rejects.toThrow("BALANCE_CHANGED");
+    }
+    await expect(driver.build({ ...step, kind: "open" }, journal)).rejects.toThrow(
+      "BALANCE_CHANGED",
     );
     mocks.balances.mockResolvedValue({
       ok: true,
@@ -261,6 +360,39 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
         amount0Min: expect.not.stringMatching(/^0(?:\.0+)?$/),
       }),
     );
+    const storage = { getItem: vi.fn(() => null), setItem: vi.fn() };
+    journal.steps = [{ ...step, id: "v4:open", kind: "open" }, aave];
+    journal.checkpoints["v4:open"] = { status: "confirmed", txHash: "confirmed-v4" };
+    mocks.balances.mockResolvedValue({
+      ok: true,
+      data: {
+        balancesStatus: "available",
+        tokens: [{ token: core, unallocatedBalance: "26730000" }],
+      },
+    });
+    await runLaunch(journal, storage, driver);
+    expect(journal.checkpoints[aave.id]).toMatchObject({
+      status: "failed",
+      error: "BALANCE_CHANGED",
+    });
+    expect(journal.checkpoints[aave.id]?.data).toBeUndefined();
+    mocks.balances.mockResolvedValue({
+      ok: true,
+      data: {
+        balancesStatus: "available",
+        tokens: [{ token: core, unallocatedBalance: "29610900" }],
+      },
+    });
+    await runLaunch(journal, storage, driver);
+    expect(mocks.open).toHaveBeenLastCalledWith(
+      core,
+      expect.objectContaining({ amount: "29.6109", adapter: manager }),
+    );
+    expect(journal.checkpoints[aave.id]?.status).toBe("waiting");
+    expect(journal.checkpoints["v4:open"]).toEqual({
+      status: "confirmed",
+      txHash: "confirmed-v4",
+    });
     await driver.send(step, built.transactions[0]);
     expect(wallet.send).toHaveBeenCalled();
     mocks.swap.mockClear();
