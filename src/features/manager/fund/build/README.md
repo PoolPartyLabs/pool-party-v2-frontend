@@ -65,3 +65,21 @@ Availability is data: moving a kind between enabled and coming soon is one line 
 Making a coming-soon kind placeable takes more than step 1: Uniswap v3 positions also need the mandate catalog to
 offer `uniswap-v3` again (`UNAVAILABLE_PROTOCOLS` in `mandateDraft.ts`, read by `mandateCatalog.ts`), and Pendle and GMX
 have no `ProtocolId`.
+
+## Aave Supply panel (POO-2194, rules v1)
+
+`panel/SupplyBlockPanel.tsx` (`PP-MGR-CMP-072`) registers `aaveSupply` in `PANEL_BODIES`.
+It reads `usePanelReserves` over the shell catalog, intersects the current network and mandate,
+and offers executable USDC on Arbitrum. Other or unavailable reserves are disabled with a reason.
+The Asset select, Supply APY and Allocation follow Figma `8188:2392`. APY is the catalog snapshot,
+not a promise or a continuously refreshed rate. No new polling or external logo source is added.
+
+Use writes the canonical `network:lowercase-address` at share zero. Allocation remains local until
+Apply; Discard and guarded exits use the existing shell. Loading, read failure and a missing or
+unusable selected reserve block Apply. Retry belongs to the same catalog. The current USDC input
+needs no swap, so this panel has no slippage, Borrow or range control. Existing plan and launch
+validators still reject unsupported continuations and duplicate reserve opens.
+
+The shell owns all configuration/Apply/Discard/blocked-intent analytics. Seven stories and the
+component regression suite cover picking, configured and pending allocation, loading, failure,
+empty mandate and unavailable reserve. `CR-MGR-024` tracks the displayed APY snapshot claim.

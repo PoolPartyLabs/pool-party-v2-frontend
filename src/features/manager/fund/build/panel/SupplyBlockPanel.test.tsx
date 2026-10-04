@@ -90,7 +90,7 @@ describe("SupplyBlockPanel", () => {
     const use = panel().getAllByRole("button", { name: /^Use / });
     expect(use[0]).toBeEnabled();
     expect(use[1]).toBeDisabled();
-    await userEvent.click(use[0]);
+    await userEvent.click(panel().getByRole("button", { name: "Use USDC" }));
     const applied = JSON.parse(screen.getByTestId("applied-plan").textContent ?? "{}");
     expect(applied.hub.chains[0]).toMatchObject({
       sharePct: 0,
@@ -104,7 +104,7 @@ describe("SupplyBlockPanel", () => {
   // @rule R1
   it("intersects reserves with the mandate and searches by token address", async () => {
     const draft = makeTestDraft();
-    draft.aaveV3Reserves = [TEST_ASSET_KEYS.usdcArbitrum.split(":")[1]];
+    draft.aaveV3Reserves = [TEST_ASSET_KEYS.usdcArbitrum.slice("arbitrum:".length)];
     mount(false, catalog(), draft);
     expect(panel().getAllByRole("button", { name: /^Use / })).toHaveLength(1);
     await userEvent.type(
@@ -145,7 +145,9 @@ describe("SupplyBlockPanel", () => {
   // @rule R2 @rule R5
   it("blocks unsupported assets even if their catalog reserve is usable", () => {
     const reserves = panelReserveFixtures();
-    reserves[1] = { ...reserves[1], supplyCap: "0", supplyCapReached: false, available: true };
+    const weth = reserves[1];
+    if (!weth) throw new Error("WETH fixture is required");
+    reserves[1] = { ...weth, supplyCap: "0", supplyCapReached: false, available: true };
     mount(false, catalog({ reserves }));
     expect(panel().getByText("Only USDC on Arbitrum is supported for Supply.")).toBeVisible();
     expect(panel().getAllByRole("button", { name: /^Use / })[1]).toBeDisabled();
