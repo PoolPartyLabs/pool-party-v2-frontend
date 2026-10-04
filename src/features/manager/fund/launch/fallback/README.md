@@ -2,8 +2,8 @@
 
 Minimal, unstyled, temporary binding to the POO-2177 public hooks. Murilo owns POO-2172 Review and POO-2171 panels. No builder, canvas, Mandate or Review file is modified.
 
-**fallback; merges only if POO-2172 Review is not on main by 09:00 BST; Murilo's page replaces it**.
-Murilo confirmed at 03:50 BST on October 4, 2026 that POO-2172 Review will not be on main by the cutoff, so the orchestrator plans to land this fallback for the demo. Keep DRAFT while working; mark ready for review only after allocation gates pass, per the follow-up. No merge/deploy in this task. Confirmed date: October 4, 2026. Cutoff: 09:00 BST (08:00 UTC). Demo: 16:00 BST (15:00 UTC).
+**Temporary fallback for the October 4, 2026 demo; Murilo's POO-2172 Review replaces it**.
+Murilo confirmed at 03:50 BST on October 4, 2026 that POO-2172 Review will not be on main by the cutoff, and Rafael authorized landing this separate route after finish-work gates. Confirmed date: October 4, 2026. Cutoff: 09:00 BST (08:00 UTC). Demo: 16:00 BST (15:00 UTC).
 
 ## Demo clicks
 

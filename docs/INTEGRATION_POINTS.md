@@ -10,7 +10,7 @@ The same-gated index `/manager/fund-launch/review` reads `listDrafts` / `subscri
 
 `fallback/execution.ts` is an immutable launch-time snapshot adapter. Empty Pool config receives manager-visible catalog-aligned finite full range and slippage 1%; empty Aave Supply receives an explicitly selected Mandate reserve assetKey. Any nonempty panel config wins read-only. Unsupported Aave swaps and missing leaf budgets remain blocked. No canvas/store schema changes. See `src/features/manager/fund/launch/fallback/README.md` for direct-URL demo clicks.
 
-**fallback; merges only if POO-2172 Review is not on main by 09:00 BST; Murilo's page replaces it**. DRAFT only, no merge/deploy in this task; confirm the cutoff/demo calendar date before any landing decision.
+**Temporary fallback for the October 4, 2026 demo; Murilo's POO-2172 Review replaces it**. Murilo confirmed the 09:00 BST cutoff would be missed, and Rafael authorized landing this separate route. Panel-written configuration and shares remain authoritative and read-only; the launch adapter only fills gaps.
 
 ## Created v2 funds and launch status (POO-2181, rules v2)
 
