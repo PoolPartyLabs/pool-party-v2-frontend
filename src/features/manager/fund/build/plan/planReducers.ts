@@ -31,6 +31,7 @@ import {
   type BlockKind,
   type BuildPlan,
   type Chain,
+  isPlanBlocked,
   type PlanBlockReason,
   type PlanContext,
   type PlanReducerResult,
@@ -39,7 +40,7 @@ import {
   type Spoke,
   type Step,
 } from "./buildPlan";
-import { findBlock } from "./planDerive";
+import { allocatedPct, findBlock } from "./planDerive";
 import {
   arrivingTokenAt,
   type InsertChoice,
@@ -455,4 +456,131 @@ export function setSpokeShare(
     },
     ctx,
   );
+}
+
+// ---------------------------------------------------------------------------
+// The panel's Apply and Remove (POO-2184, handoff P3, P7, P8, P10)
+// ---------------------------------------------------------------------------
+
+/** Chain one reducer after another: a refusal ends the composition and comes back as it was. */
+function then(
+  result: PlanReducerResult,
+  next: (plan: BuildPlan) => PlanReducerResult,
+): PlanReducerResult {
+  return isPlanBlocked(result) ? result : next(result);
+}
+
+/**
+ * Finding 11, P3, P8, DP3: the panel's Apply, as ONE reducer, so it lands whole or not at all.
+ *
+ * Writes the block's config through {@link setBlockConfig} (its checks, its Swap · auto), then, when
+ * `sharePct` is given, its chain's share through {@link setChainShare}. On a spoke the spoke's share
+ * is the sum of its chains (open point 3, DP3), so {@link setSpokeShare} moves it too: raised BEFORE
+ * the chain when the sum grows (the chain is checked against its spoke), lowered AFTER the chain
+ * when it shrinks (the spoke is checked against its chains). A spoke holding more than its chains
+ * comes down to their sum on the next Apply that gives a share.
+ *
+ * Only the first position of a chain has an Allocation (P8), so a share for any other block is
+ * `unknown_target`, and so is a share that is not a whole percent from 0 (the launch takes whole
+ * percents, `launch/plan.ts`); a share over what the parent holds is the share reducers' own
+ * `share_exceeds_parent`. Any refusal comes back as it came, and the plan stays as it was.
+ */
+export function applyBlockConfig(
+  plan: BuildPlan,
+  ctx: PlanContext,
+  blockId: string,
+  config: PoolBlockConfig | AaveBlockConfig | null,
+  sharePct?: number,
+): PlanReducerResult {
+  const found = findBlock(plan, blockId);
+  if (found?.block.family !== "position") return blocked("unknown_target", blockId);
+  if (sharePct !== undefined) {
+    const first = found.chain.steps.find((step) => step.family === "position");
+    if (first?.id !== blockId) return blocked("unknown_target", blockId);
+    if (!Number.isInteger(sharePct) || sharePct < 0) return blocked("unknown_target", blockId);
+  }
+  const chainId = found.chain.id;
+  const configured = setBlockConfig(plan, ctx, blockId, config);
+  if (sharePct === undefined) return configured;
+  return then(configured, (current) => {
+    const spoke = current.spokes.find((s) => s.chains.some((chain) => chain.id === chainId));
+    if (!spoke) return setChainShare(current, ctx, chainId, sharePct);
+    const total =
+      sharePct + sum(spoke.chains.filter((c) => c.id !== chainId).map((c) => c.sharePct));
+    if (total > spoke.sharePct) {
+      return then(setSpokeShare(current, ctx, spoke.network, total), (raised) =>
+        setChainShare(raised, ctx, chainId, sharePct),
+      );
+    }
+    return then(setChainShare(current, ctx, chainId, sharePct), (lowered) =>
+      setSpokeShare(lowered, ctx, spoke.network, total),
+    );
+  });
+}
+
+/**
+ * P10, I6, DP3: the panel's Remove block. {@link removeBlock} with its cascade, then, for a block
+ * on a spoke, the spoke's share brought down to what its remaining chains hold, so the share of a
+ * chain that leaves goes back to Idle input on a spoke as it does on the hub.
+ */
+export function removeBlockReleasingShare(
+  plan: BuildPlan,
+  ctx: PlanContext,
+  blockId: string,
+): PlanReducerResult {
+  const network = findBlock(plan, blockId)?.network ?? null;
+  return then(removeBlock(plan, ctx, blockId), (removed) => {
+    const spoke = removed.spokes.find((s) => s.network === network);
+    if (!spoke) return removed;
+    const held = sum(spoke.chains.map((chain) => chain.sharePct));
+    return held < spoke.sharePct ? setSpokeShare(removed, ctx, spoke.network, held) : removed;
+  });
+}
+
+/** What the remove confirm says about one block (P10). */
+export interface RemovalDescription {
+  blockId: string;
+  /** The block has no config: the confirm reads "Remove this block?" and nothing more. */
+  empty: boolean;
+  /** The share of the strategy that goes back to Idle input; 0 when the chain keeps it. */
+  returnedPct: number;
+  /** The block's chain goes with it (it was the chain's last position). */
+  chainRemoved: boolean;
+  /**
+   * Every other step removed with it (its Swap · auto, its Collect fees, the Borrow under it and
+   * what hangs under that Borrow), in plan order, as the plan held them.
+   */
+  removedWith: Step[];
+}
+
+/** Every step of a plan, in plan order. */
+function allSteps(plan: BuildPlan): Step[] {
+  return [
+    ...plan.hub.chains.flatMap((chain) => chain.steps),
+    ...plan.spokes.flatMap((spoke) => spoke.chains.flatMap((chain) => chain.steps)),
+  ];
+}
+
+/**
+ * P10: what removing a block takes with it, computed from the REAL remove
+ * ({@link removeBlockReleasingShare}, built on {@link removeBlock}): the steps before minus the
+ * steps after, and `allocatedPct` before minus after. So it cannot drift from the I6 cascade.
+ * Null when the remove would be refused (an app-owned block, an unknown id).
+ */
+export function describeRemoval(
+  plan: BuildPlan,
+  ctx: PlanContext,
+  blockId: string,
+): RemovalDescription | null {
+  const found = findBlock(plan, blockId);
+  const after = removeBlockReleasingShare(plan, ctx, blockId);
+  if (!found || isPlanBlocked(after)) return null;
+  const kept = new Set(allSteps(after).map((step) => step.id));
+  return {
+    blockId,
+    empty: found.block.family === "position" && found.block.config === null,
+    returnedPct: allocatedPct(plan) - allocatedPct(after),
+    chainRemoved: locateChain(after, found.chain.id) === null,
+    removedWith: allSteps(plan).filter((step) => step.id !== blockId && !kept.has(step.id)),
+  };
 }
