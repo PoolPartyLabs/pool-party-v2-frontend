@@ -1,5 +1,7 @@
 # PP-E2E-V2-002 — partial rehearsal, October 4, 2026
 
+**Latest verdict:** Networks was an automation loading-selector race, fixed in `2b9d282c`. Plain-click deployed Mandate and Build succeed. Review separately returns catalog API 429; duplicate frontend loading is fixed in `863ee9b3`. See the follow-up section below, which supersedes earlier blocker/#51 observations. Final merged validation: **27 files, 192 tests passed**, typecheck, i18n (11 locales, 2,555 keys), focused Biome and diff checks passed; #50 and #51 preserved. Own Next processes and SSH tunnel stopped, port 3000 clear. No deployment or transaction.
+
 Part of POO-2182. **No fund was launched. No real-mainnet financial signatures or transactions were submitted.** This is a draft PR, not a successful full-launch report. No merge or deployment.
 
 ## Environment and boundaries
