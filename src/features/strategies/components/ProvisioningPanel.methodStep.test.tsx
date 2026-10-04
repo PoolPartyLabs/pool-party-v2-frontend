@@ -485,7 +485,8 @@ describe("ProvisioningPanel — the payment-method step (POO-1576)", () => {
     onRamp.getMethods.mockResolvedValue({ ok: false, code: "NOT_FOUND", message: "no pair" });
     await renderToMethodStep();
 
-    expect(screen.getByTestId("provisioning-method-unavailable")).toBeInTheDocument();
+    // POO-2207: the mounted step can still be waiting for the provider response.
+    expect(await screen.findByTestId("provisioning-method-unavailable")).toBeInTheDocument();
     expect(analyticsEvents("funding_method_unavailable")).toHaveLength(1);
 
     fireEvent.click(screen.getByTestId("provisioning-method-continue"));
