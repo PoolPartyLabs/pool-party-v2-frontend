@@ -4,10 +4,13 @@
  * @implements-rules-version v2 (POO-2181)
  */
 import { z } from "zod";
+import { createRequestSchema } from "@/lib/api/v2/launchSchemas";
 import { getChainById } from "@/lib/chains";
+import { normalizePlan } from "../build/plan/planStorage";
 import type { FundLaunchDraft, LaunchJourney, LaunchStepPreview } from "./contracts";
-import { journalKey, loadJournal } from "./journal";
+import { journalKey, type LaunchJournal, loadJournal } from "./journal";
 import { deriveLaunchSteps, validateTickAlignment } from "./plan";
+import { rawUsdc, reviewSchema } from "./review";
 
 export { explorerAddressUrl, explorerTxUrl } from "@/lib/chain/explorer";
 export function getLaunchSteps(draft: FundLaunchDraft): LaunchStepPreview[] {
@@ -48,6 +51,43 @@ export function getLaunchSteps(draft: FundLaunchDraft): LaunchStepPreview[] {
 }
 export function journeyKey(journeyId: string): string {
   return `pp:v2:journey:1:${journeyId}`;
+}
+export function readFrozenJournal(draftId: string, manager: string) {
+  const journal = loadJournal(localStorage, draftId, manager);
+  if (!journal) return null;
+  z.object({
+    checkpoints: z.record(
+      z.object({
+        txHash: z
+          .string()
+          .regex(/^0x[0-9a-fA-F]{64}$/)
+          .optional(),
+        receiptStatus: z.enum(["success", "reverted", "unknown"]).optional(),
+      }),
+    ),
+    addresses: z.record(z.string().regex(/^0x[0-9a-fA-F]{40}$/)),
+  }).parse(journal);
+  if (
+    journal.steps.some((step) => {
+      const checkpoint = journal.checkpoints[step.id];
+      return checkpoint && checkpoint.chain !== step.chain;
+    })
+  )
+    throw new Error("INVALID_JOURNAL");
+  const frozen = z
+    .object({ plan: z.unknown(), review: reviewSchema, request: createRequestSchema })
+    .parse(journal.frozen);
+  if (
+    !normalizePlan(frozen.plan) ||
+    frozen.request.manager.toLowerCase() !== manager.toLowerCase() ||
+    frozen.request.minFirstDeposit !== rawUsdc(frozen.review.minimum).toString() ||
+    frozen.request.seedAmount !== rawUsdc(frozen.review.seed).toString() ||
+    frozen.request.performanceFeeBps !== frozen.review.performanceFeeBps ||
+    frozen.request.managementFeeBps !== frozen.review.managementFeeBps ||
+    frozen.request.payoutFeeBps !== frozen.review.payoutFeeBps
+  )
+    throw new Error("INVALID_JOURNAL");
+  return journal;
 }
 export function readJourney(journeyId: string): LaunchJourney | null {
   if (typeof window === "undefined") return null;
@@ -147,12 +187,18 @@ export function launchStatus(journey: LaunchJourney) {
       chain: step.chainId,
       dependencies: [],
     }));
-  const current =
-    steps.find((step) => journey.journal?.checkpoints[step.id]?.status !== "confirmed") ?? null;
-  const failed = steps.some((step) => journey.journal?.checkpoints[step.id]?.status === "failed");
+  return journalStatus(journey.journeyId, steps, journey.journal?.checkpoints ?? {});
+}
+function journalStatus(
+  journeyId: string,
+  steps: LaunchJournal["steps"],
+  checkpoints: LaunchJournal["checkpoints"],
+) {
+  const current = steps.find((step) => checkpoints[step.id]?.status !== "confirmed") ?? null;
+  const failed = steps.some((step) => checkpoints[step.id]?.status === "failed");
   const completed = steps.length > 0 && current === null;
   return {
-    journeyId: journey.journeyId,
+    journeyId,
     status: completed ? ("complete" as const) : failed ? ("failed" as const) : ("paused" as const),
     current,
     outcome: completed
@@ -163,10 +209,19 @@ export function launchStatus(journey: LaunchJourney) {
   };
 }
 export function getLaunchStatusForDraft(draftId: string, manager?: string | null) {
-  const journey = listLaunchJourneys(manager).journeys.find((entry) => entry.draftId === draftId);
-  if (!journey) return null;
+  if (!manager || typeof window === "undefined" || !/^0x[0-9a-fA-F]{40}$/.test(manager))
+    return null;
   try {
-    return launchStatus(journey);
+    const journeyId = `${manager.toLowerCase()}:${draftId}`;
+    const journey = readJourney(journeyId);
+    if (journey) {
+      if (journey.manager.toLowerCase() !== manager.toLowerCase() || journey.draftId !== draftId)
+        return null;
+      return launchStatus(journey);
+    }
+    const journal = readFrozenJournal(draftId, manager);
+    if (!journal) return null;
+    return journalStatus(journeyId, journal.steps, journal.checkpoints);
   } catch {
     return null;
   }

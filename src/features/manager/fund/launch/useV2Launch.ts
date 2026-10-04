@@ -7,10 +7,12 @@
 import { useEffect, useState } from "react";
 import { getCatalogReservesAction, getCatalogTokensAction } from "@/lib/api/v2/actions";
 import { createRequestSchema } from "@/lib/api/v2/launchSchemas";
+import { normalizePlan } from "../build/plan/planStorage";
+import { getDraft } from "../mandateDraftStore";
 import { buildRealCatalog, toV2MandateSelection } from "../v2Mandate";
 import type { LaunchJourney } from "./contracts";
 import type { FrozenLaunch } from "./driver";
-import { explorerTxUrl, readJourney } from "./journey";
+import { explorerTxUrl, persistJourney, readFrozenJournal, readJourney } from "./journey";
 import { hasLaunchTokenAllowance, rawUsdc } from "./review";
 import { useV2LaunchBinding } from "./useV2LaunchBinding";
 import { useV2LaunchWallet } from "./useV2LaunchWallet";
@@ -26,7 +28,28 @@ export function useV2Launch(journeyId: string) {
     setFrozen(undefined);
     setLoadingError(false);
     try {
-      const found = readJourney(journeyId);
+      let found = readJourney(journeyId);
+      if (!found) {
+        const decodedId = decodeURIComponent(journeyId);
+        const [, encodedManager, draftId] = /^(0x[0-9a-fA-F]{40}):(.+)$/.exec(decodedId) ?? [];
+        if (
+          !encodedManager ||
+          !draftId ||
+          encodedManager.toLowerCase() !== wallet.manager?.toLowerCase()
+        ) {
+          setLoadingError(true);
+          return;
+        }
+        const manager = encodedManager.toLowerCase();
+        const journal = readFrozenJournal(draftId, manager);
+        const draft = journal ? getDraft(draftId) : null;
+        if (journal && draft) {
+          const snapshot = journal.frozen as Required<FrozenLaunch>;
+          const plan = normalizePlan(snapshot.plan);
+          if (!plan) throw new Error("INVALID_JOURNAL");
+          found = persistJourney({ ...draft, plan, review: snapshot.review }, manager);
+        }
+      }
       if (!found) {
         setLoadingError(true);
         return;
@@ -73,7 +96,7 @@ export function useV2Launch(journeyId: string) {
     return () => {
       active = false;
     };
-  }, [journeyId]);
+  }, [journeyId, wallet.manager]);
   const originalWallet = journey?.manager.toLowerCase() === wallet.manager?.toLowerCase();
   const binding = useV2LaunchBinding({
     draftId: journey?.draftId ?? journeyId,

@@ -7,17 +7,39 @@ import {
   screen,
   waitFor,
 } from "../../../../../tests/utils/renderWithProviders";
+import { buildMandateCatalog } from "../mandateCatalog";
 import { createEmptyDraft } from "../mandateDraft";
+import { upsertDraft } from "../mandateDraftStore";
+import { ReviewPhase } from "../review/ReviewPhase";
 import type { FundLaunchDraft } from "./contracts";
 import { FundLaunchJourneysList } from "./FundLaunchJourneysList";
-import { createJournal, saveJournal } from "./journal";
-import { journeyKey, listLaunchJourneys, persistJourney } from "./journey";
+import { createJournal, journalKey, saveJournal } from "./journal";
+import { getLaunchStatusForDraft, journeyKey, listLaunchJourneys, persistJourney } from "./journey";
+import { deriveLaunchSteps } from "./plan";
 import { useV2LaunchStatus } from "./useV2LaunchStatus";
 
-const mocks = vi.hoisted(() => ({ address: `0x${"3".repeat(40)}` as string | undefined }));
+const mocks = vi.hoisted(() => ({
+  address: `0x${"3".repeat(40)}` as string | undefined,
+  reviewBinding: {} as Record<string, unknown>,
+  push: vi.fn(),
+  start: vi.fn(),
+  track: vi.fn(),
+  catalog: vi.fn(),
+  balance: vi.fn(),
+}));
 vi.mock("@/lib/auth/useAuth", () => ({ useAuth: () => ({ address: mocks.address }) }));
+vi.mock("@/lib/services", () => ({ isMockMode: false }));
+vi.mock("./useV2ReviewDraft", () => ({ useV2ReviewDraft: () => mocks.reviewBinding }));
+vi.mock("./startFundLaunch", () => ({ startFundLaunch: mocks.start }));
+vi.mock("@/lib/api/v2/actions", () => ({
+  getCatalogTokensAction: mocks.catalog,
+  getCatalogReservesAction: mocks.catalog,
+}));
+vi.mock("@/lib/analytics/useAnalytics", () => ({ useAnalytics: () => ({ track: mocks.track }) }));
+vi.mock("@/components/ui/ImageCropModal", () => ({ ImageCropModal: () => null }));
 vi.mock("@/i18n/navigation", () => ({
   Link: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props} />,
+  useRouter: () => ({ push: mocks.push }),
 }));
 const wallet = `0x${"3".repeat(40)}`;
 const draft: FundLaunchDraft = {
@@ -53,11 +75,145 @@ const draft: FundLaunchDraft = {
     spokes: [],
   },
 };
+function orphanJournal() {
+  const journal = createJournal(
+    draft.id,
+    wallet,
+    {
+      plan: draft.plan,
+      review: draft.review,
+      request: {
+        manager: wallet,
+        chains: [{ chainId: 42161, tokens: [wallet], uniswapV4PoolIds: [] }],
+        aaveV3Reserves: [],
+        spokeCapPercent: null,
+        performanceFeeBps: 2000,
+        managementFeeBps: 0,
+        payoutFeeBps: 0,
+        minFirstDeposit: "100000000",
+        seedAmount: "100000000",
+      },
+    },
+    deriveLaunchSteps(draft.plan, {}, true, false),
+  );
+  journal.checkpoints.create = {
+    stepId: "create",
+    chain: 42161,
+    status: "submitted",
+    txHash: `0x${"ab".repeat(32)}`,
+    receiptStatus: "unknown",
+  };
+  saveJournal(localStorage, journal);
+  return journal;
+}
 describe("wallet-local launch status POO-2181", () => {
   beforeEach(() => {
     localStorage.clear();
     mocks.address = wallet;
     vi.restoreAllMocks();
+    vi.clearAllMocks();
+  });
+  it("discovers a wallet-scoped orphan without writes, catalog or balance reads", () => {
+    const journal = orphanJournal();
+    const raw = localStorage.getItem(journalKey(draft.id, wallet));
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    const { result, rerender } = renderHook(() => useV2LaunchStatus(draft.id));
+    expect(result.current).toMatchObject({ journeyId: `${wallet}:${draft.id}`, status: "paused" });
+    expect(result.current?.current).toEqual(JSON.parse(JSON.stringify(journal.steps[0])));
+    expect(writes).not.toHaveBeenCalled();
+    expect(mocks.catalog).not.toHaveBeenCalled();
+    expect(mocks.balance).not.toHaveBeenCalled();
+    expect(localStorage.getItem(journeyKey(`${wallet}:${draft.id}`))).toBeNull();
+    expect(localStorage.getItem(journalKey(draft.id, wallet))).toBe(raw);
+    mocks.address = `0x${"4".repeat(40)}`;
+    rerender();
+    expect(result.current).toBeNull();
+    expect(getLaunchStatusForDraft(draft.id, null)).toBeNull();
+    expect(journal.checkpoints.create?.txHash).toBe(`0x${"ab".repeat(32)}`);
+  });
+  it.each(["failed", "complete"] as const)("reads orphan %s from saved checkpoints", (status) => {
+    const journal = orphanJournal();
+    for (const step of journal.steps) {
+      journal.checkpoints[step.id] = {
+        stepId: step.id,
+        chain: step.chain,
+        status: status === "complete" ? "confirmed" : "failed",
+      };
+    }
+    saveJournal(localStorage, journal);
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    expect(getLaunchStatusForDraft(draft.id, wallet)).toMatchObject({
+      status,
+      outcome: status === "complete" ? "completed" : "failed",
+    });
+    expect(writes).not.toHaveBeenCalled();
+  });
+  it.each([
+    "journal",
+    "plan",
+    "review",
+    "request",
+    "manager",
+  ])("hides malformed orphan %s without repairing storage", (part) => {
+    const journal = orphanJournal();
+    const frozen = journal.frozen as Record<string, unknown>;
+    localStorage.setItem(
+      journalKey(draft.id, wallet),
+      JSON.stringify({
+        ...journal,
+        ...(part === "journal" ? { steps: [] } : {}),
+        ...(part === "manager" ? { manager: `0x${"4".repeat(40)}` } : {}),
+        frozen: {
+          ...frozen,
+          ...(["plan", "review", "request"].includes(part) ? { [part]: {} } : {}),
+        },
+      }),
+    );
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    expect(getLaunchStatusForDraft(draft.id, wallet)).toBeNull();
+    expect(writes).not.toHaveBeenCalled();
+  });
+  it("real Review component resumes an orphan despite invalid edited Build and Review", async () => {
+    const edited = {
+      ...draft,
+      tokens: [],
+      plan: undefined,
+      review: { ...draft.review, seed: "0" },
+    };
+    upsertDraft(edited);
+    orphanJournal();
+    mocks.reviewBinding = {
+      draft: edited,
+      catalog: buildMandateCatalog(),
+      manager: wallet,
+      review: edited.review,
+      balance: null,
+      preview: null,
+      errors: [{ field: "seed", messageKey: "fundLaunch.validation" }],
+      launchBlockers: [
+        { code: "INVALID_REVIEW", field: "seed", messageKey: "fundLaunch.validation" },
+      ],
+      uploading: false,
+      uploadError: null,
+      feeConfiguration: { flowFeeBps: 25, flowSource: "fallback" },
+      setField: vi.fn(),
+      setFeePercent: vi.fn(),
+      setMax: vi.fn(),
+      uploadLogo: vi.fn(),
+      refreshBalance: mocks.balance,
+    };
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    renderWithProviders(
+      <ReviewPhase draftId={draft.id} onBackToBuild={vi.fn()} onEditMandate={vi.fn()} />,
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Resume launch" }));
+    expect(mocks.push).toHaveBeenCalledWith(
+      `/manager/fund-launch/${encodeURIComponent(`${wallet}:${draft.id}`)}`,
+    );
+    expect(mocks.start).not.toHaveBeenCalled();
+    expect(writes).not.toHaveBeenCalled();
+    expect(mocks.catalog).not.toHaveBeenCalled();
+    expect(mocks.balance).not.toHaveBeenCalled();
   });
   it("R8 returns null without a journey and updates on journal completion", async () => {
     const { result } = renderHook(() => useV2LaunchStatus(draft.id));
