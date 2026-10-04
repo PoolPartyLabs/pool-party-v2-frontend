@@ -52,12 +52,17 @@ describe("V2 details projection", () => {
 
 // @rule R3 (POO-2223)
 describe("composition coverage validation", () => {
+  const fixturePosition = (index: number) => {
+    const position = mockFund.positionsSummary?.positions[index];
+    if (!position) throw new Error(`Missing position fixture ${index}`);
+    return position;
+  };
   const withShares = (shares: Array<string | null>) => ({
     ...mockFund,
     positionsSummary: {
       protocolVersion: "v2" as const,
       positions: shares.map((shareOfNav, i) => ({
-        ...(mockFund.positionsSummary?.positions ?? [])[i % 2],
+        ...fixturePosition(i % 2),
         positionKey: `0x${String(i + 1).repeat(64)}`,
         shareOfNav,
       })),
@@ -73,7 +78,7 @@ describe("composition coverage validation", () => {
     expect(detailedCoverage(withShares(shares))).toBeNull();
   });
   it("rejects duplicate chain-position identities", () => {
-    const position = (mockFund.positionsSummary?.positions ?? [])[0];
+    const position = fixturePosition(0);
     expect(
       detailedCoverage({
         ...mockFund,

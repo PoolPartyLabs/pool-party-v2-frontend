@@ -28,12 +28,14 @@ describe("V2 Details presentation", () => {
       <FundDetailsPresenter fund={mockFund} personal={{ status: "disconnected" }} />,
     );
     const user = userEvent.setup();
-    const buttons = screen.getAllByRole("button", { name: "Follow", exact: true });
-    await user.click(buttons[0]);
+    const [desktopFollow, mobileFollow] = screen.getAllByRole("button", { name: "Follow" });
+    if (!desktopFollow || !mobileFollow)
+      throw new Error("Both responsive Follow buttons must exist");
+    await user.click(desktopFollow);
     expect(screen.getAllByRole("button", { name: "Following", pressed: true })).toHaveLength(2);
-    await user.click(screen.getAllByRole("button", { name: "Following" })[1]);
+    await user.click(mobileFollow);
     expect(screen.getAllByRole("button", { name: "Follow", pressed: false })).toHaveLength(2);
-    await user.click(screen.getAllByRole("button", { name: "Follow" })[0]);
+    await user.click(desktopFollow);
     rerender(
       <FundDetailsPresenter
         fund={{ ...mockFund, manager: `0x${"9".repeat(40)}` }}
