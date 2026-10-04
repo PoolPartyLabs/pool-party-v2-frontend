@@ -29,7 +29,7 @@ vi.mock("./fundActions", () => ({
 vi.mock("./FundActionsPanel", () => ({ FundActionsPanel: () => <p>investor-controls</p> }));
 
 import { mockFund, mockHolder } from "@/mocks/data/v2Funds";
-import { FundDetail } from "./FundDetail";
+import { FundTechnicalDetail as FundDetail } from "./FundTechnicalDetail";
 import liveReport from "./fixtures/fund1Report.json";
 
 describe("fund detail views", () => {

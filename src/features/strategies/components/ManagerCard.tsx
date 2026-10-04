@@ -17,6 +17,7 @@
 
 import { BadgeCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 import { ManagerAvatar } from "@/features/manager/components/ManagerAvatar";
 import { ManagerLink } from "@/features/manager/components/ManagerLink";
 import { formatUsd } from "@/lib/utils/format";
@@ -24,6 +25,7 @@ import { formatUsd } from "@/lib/utils/format";
 /** Public props for {@link ManagerCard}. */
 export interface ManagerCardProps {
   /** Manager attribution text: `@handle` when saved, else the truncated address (real mode). */
+  trailingAction?: ReactNode;
   name: string;
   /** Whether to show the verified badge + "Verified manager" sub-line. */
   verified: boolean;
@@ -51,6 +53,7 @@ export function ManagerCard({
   address,
   avatarUrl,
   managerStakeUsd,
+  trailingAction,
 }: ManagerCardProps) {
   const t = useTranslations("strategies");
   // POO-620: "View profile" links by handle or wallet address; hidden only when neither is known.
@@ -88,11 +91,18 @@ export function ManagerCard({
           </span>
         </div>
       ) : null}
-      {profileSlug ? (
-        <ManagerLink handle={handle} address={address} className="font-medium text-primary text-sm">
-          {t("detail.viewProfile")}
-        </ManagerLink>
-      ) : null}
+      <div className="flex items-center justify-between gap-3">
+        {profileSlug ? (
+          <ManagerLink
+            handle={handle}
+            address={address}
+            className="font-medium text-primary text-sm"
+          >
+            {t("detail.viewProfile")}
+          </ManagerLink>
+        ) : null}
+        {trailingAction}
+      </div>
     </div>
   );
 }
