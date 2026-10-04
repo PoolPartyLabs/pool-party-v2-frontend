@@ -48,6 +48,7 @@ To list them all:
 
 ```bash
 git grep -n 'PP-INTEGRATION-POINT' -- src   # 481 markers across 276 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 480 markers across 276 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -209,3 +210,4 @@ PP-MGR-CMP-077 connects the existing `useV2ReviewDraft`, read-only `useV2LaunchS
 and `startFundLaunch` seams. It never reconstructs launch transactions or writes a journal.
 The mock branch does not mount Privy hooks or substitute fixtures into real Review.
 `getLaunchSteps` remains the source of the grouped signature preview.
+| Uniswap v4 pool panel defaults | `src/features/manager/fund/build/panel/PoolBlockPanel.tsx` | Mount read through `getCatalogPoolsAction`, MCK-005 in mock mode; missing, unread or ineligible rows disable Use. `usePanelPool` gates Apply on the latest live read. POO-2189 @rules-v1. |

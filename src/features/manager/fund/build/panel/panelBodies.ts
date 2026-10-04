@@ -49,6 +49,7 @@ import type { MandateDraft, NetworkId } from "../../mandateDraft";
 import type { MandateEditStep } from "../blocks/useBuildCanvas";
 import type { BlockConfigByKind, BlockKind, BuildPlan } from "../plan/buildPlan";
 import type { PanelPickItem } from "./PanelPickList";
+import { poolBlockPanel } from "./PoolBlockPanel";
 
 export { canonicalPanelConfig, panelAssetKey, panelPoolId } from "./panelIds";
 
@@ -117,8 +118,17 @@ export interface PanelApplyGate {
   reason?: string;
 }
 
+/** A configured body's provider shares live data between fields and the Apply gate. */
+export interface PanelConfiguredProviderProps<C> {
+  context: PanelBodyContext;
+  config: C;
+  children: ReactNode;
+}
+
 /** One kind's body. */
 export interface PanelBodyDefinition<C> {
+  /** Optional shared live snapshot, mounted above both Fields and useApplyGate. */
+  Provider?: ComponentType<PanelConfiguredProviderProps<C>>;
   /** Modes 2 and 3. A hook: the shell calls it in a component keyed on the block. */
   usePick(context: PanelBodyContext): PanelPickModel<C>;
   /** Mode 4: the fields between the head and the status row. */
@@ -139,4 +149,4 @@ export type PanelBodies = {
  * The bodies of the app. Empty in this slice: the Uniswap v4 pool body and the Aave v3 Supply body
  * register here in their own slices (`uniswapV4Pool: ...`, `aaveSupply: ...`).
  */
-export const PANEL_BODIES: PanelBodies = {};
+export const PANEL_BODIES: PanelBodies = { uniswapV4Pool: poolBlockPanel };

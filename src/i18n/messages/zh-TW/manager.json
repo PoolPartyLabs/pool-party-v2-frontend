@@ -1107,6 +1107,40 @@
           "notInMandate": "此資金池或資產已不在您於該網路上的授權範圍內。請選擇其他項目，或編輯授權範圍。",
           "shareExceedsParent": "此比例超過了此區塊上方剩餘的額度。請調低後再次套用。",
           "other": "無法套用此變更。請檢查數值後重試。"
+        },
+        "range": {
+          "label": "價格範圍",
+          "help": "目前價格處於此範圍內時，部位會賺取手續費。",
+          "quote": "每 {base} 的 {quote}",
+          "full": "全範圍",
+          "min": "最低價格",
+          "max": "最高價格",
+          "increase": "提高{label}",
+          "decrease": "降低{label}",
+          "current": "目前 {price} · {status}",
+          "always": "始終在範圍內",
+          "in": "範圍內",
+          "below": "低於您的範圍",
+          "above": "高於您的範圍",
+          "oneToken": "部位以100% {token}開始，在價格進入範圍之前不會賺取手續費。"
+        },
+        "pool": {
+          "label": "Pool",
+          "help": "您的授權範圍內位於{network}的Uniswap v4池。",
+          "heading": "授權範圍內的池",
+          "filter": "依代幣或地址篩選",
+          "caption": "僅顯示您在授權設定（第4步）中選擇的{network}上的Uniswap v4池。池在啟動時固定。",
+          "needAnother": "需要其他池？",
+          "noMatch": "您的授權範圍內沒有包含{typed}的池",
+          "noMatchCaption": "池在授權設定第4步中選擇。編輯期間建構設定會保持儲存。",
+          "empty": "您的授權範圍內沒有位於{network}的池",
+          "loading": "正在等待池價格。",
+          "failed": "讀取池失敗。請重試以繼續。",
+          "retry": "重試",
+          "unread": "無法讀取此池。",
+          "ineligible": "此池不符合資格。",
+          "noLiquidity": "此池沒有活躍流動性。",
+          "incomplete": "池設定不完整。"
         }
       },
       "network": {

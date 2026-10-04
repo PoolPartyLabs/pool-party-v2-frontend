@@ -1107,6 +1107,40 @@
           "notInMandate": "This pool or asset is no longer in your mandate on this network. Pick another, or edit the mandate.",
           "shareExceedsParent": "This share is more than the room left above this block. Lower it and apply again.",
           "other": "This change could not be applied. Check the values and try again."
+        },
+        "range": {
+          "label": "Price range",
+          "help": "The position earns fees while the current price is inside this range.",
+          "quote": "{quote} per {base}",
+          "full": "Full",
+          "min": "Min price",
+          "max": "Max price",
+          "increase": "Increase {label}",
+          "decrease": "Decrease {label}",
+          "current": "Current {price} · {status}",
+          "always": "always in range",
+          "in": "in range",
+          "below": "below your range",
+          "above": "above your range",
+          "oneToken": "The position starts 100% in {token} and earns no fees until the price enters the range."
+        },
+        "pool": {
+          "label": "Pool",
+          "help": "Uniswap v4 pools of your mandate on {network}.",
+          "heading": "Pools in your mandate",
+          "filter": "Filter by token or address",
+          "caption": "Only the Uniswap v4 pools on {network} that you chose in the mandate (step 4). Pools are fixed at launch.",
+          "needAnother": "Need another pool?",
+          "noMatch": "No pool in your mandate has {typed}",
+          "noMatchCaption": "Pools are chosen in the mandate, step 4. Your build stays saved while you edit it.",
+          "empty": "No pool of your mandate is on {network}",
+          "loading": "Waiting for the pool price.",
+          "failed": "The pool read failed. Retry to continue.",
+          "retry": "Retry",
+          "unread": "This pool could not be read.",
+          "ineligible": "This pool is not eligible.",
+          "noLiquidity": "This pool has no active liquidity.",
+          "incomplete": "The pool configuration is incomplete."
         }
       },
       "network": {
