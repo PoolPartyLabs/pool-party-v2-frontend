@@ -55,6 +55,15 @@ function enableFlag() {
 }
 
 describe("ContractFamilyToggle", () => {
+  // @rule R1
+  it("mobile control uses the same preference and emits only its explicit selection", async () => {
+    enableFlag();
+    renderWithProviders(<ContractFamilyToggle mobile />);
+    await userEvent.setup().click(screen.getByRole("button", { name: "V2" }));
+    expect(familyState.setFamily).toHaveBeenCalledWith("v2");
+    expect(toggleEvents()).toHaveLength(1);
+  });
+
   // The feature-flag client snapshot is memoized at module scope, so reset it around each test for
   // the per-test `vi.stubEnv` to resolve fresh (same reason as AppShell.test.tsx).
   beforeEach(() => {

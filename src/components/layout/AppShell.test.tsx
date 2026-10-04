@@ -96,6 +96,39 @@ describe("isNavItemVisible", () => {
 });
 
 describe("AppShell", () => {
+  // @rule R1
+  it.each([
+    "/manager/new",
+    "/home",
+    "/strategies/old",
+  ])("does not add the investor mobile row on %s", (route) => {
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_FUND_CONTRACTS", "on");
+    nav.pathname = route;
+    renderWithProviders(
+      <AppShell>
+        <p>page</p>
+      </AppShell>,
+    );
+    expect(screen.queryByTestId("investor-mobile-family")).toBeNull();
+  });
+
+  // @rule R1
+  it.each([
+    "/strategies",
+    "/portfolio",
+    "/funds/0x123",
+  ])("provides a separate mobile family row on %s", (route) => {
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_FUND_CONTRACTS", "on");
+    nav.pathname = route;
+    renderWithProviders(
+      <AppShell>
+        <p>page</p>
+      </AppShell>,
+    );
+    const row = screen.getByTestId("investor-mobile-family");
+    expect(within(row).getByRole("button", { name: "V2" })).toBeInTheDocument();
+  });
+
   // The feature-flag client snapshot is memoized at module scope (stability for useSyncExternalStore);
   // reset it around each test so per-test `vi.stubEnv` flag changes resolve fresh.
   beforeEach(() => {
@@ -257,7 +290,9 @@ describe("AppShell", () => {
         <div>content</div>
       </AppShell>,
     );
-    const toggle = screen.getByRole("group", { name: "Builder version" });
+    const toggle = within(screen.getByRole("banner")).getByRole("group", {
+      name: "Builder version",
+    });
     const pill = screen.getByRole("link", { name: /Quacks/ });
     // Same cluster, and the toggle comes first.
     expect(toggle.parentElement).toBe(pill.parentElement);

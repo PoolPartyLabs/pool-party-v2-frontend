@@ -65,3 +65,9 @@ Remaining enablement: investor V2 transaction review/signing, payout/collection 
 ### Owner-approved delivery boundary
 
 S0-S4 and S8 are covered by PRs #90, #91 and #92. S5-S7 ship their explicit unavailable capability state under rules v2; enabling investor signing, withdrawals, income collection and persistent Follow remains POO-2219. This completes the approved frontend presentation scope after the three PRs merge, without declaring external execution contracts complete. Existing manager operations are accessible through the explicit `?view=manager` route after manager identity validation. Deployment is handed to Rafael and complete browser acceptance to Murilo.
+
+## Mobile follow-up, 2026-10-04
+
+[POO-2220](https://linear.app/yeildbay/issue/POO-2220), rules v1, adds the existing family selector below the mobile header on investor list/fund routes, makes the V2 Details identity/price/metrics wrap, and preserves closed-only Portfolio history. The loader distinguishes known-empty history from a lazy history. Reuses existing IDs, strings, guards and analytics. A narrow Storybook fixture covers long identity and exact monetary display. Behavioral validation: 58 focused layout/toggle/paged-history tests, 21 loader/history tests after review, and 8 investor Details tests; runs overlap.
+
+[POO-2221](https://linear.app/yeildbay/issue/POO-2221), rules v1, covers the shared amount input, mobile Deposit amount and provisioning skeleton widths in a separate PR. Amount fitting changes presentation only and preserves six-decimal Max values. Existing behavior passed 53 focused tests. Both slices use source review and targeted checks; browser acceptance remains with Murilo. No investor execution capability or API contract changes; POO-2219 remains the enablement dependency.

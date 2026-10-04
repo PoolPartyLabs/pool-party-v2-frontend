@@ -593,3 +593,7 @@ Sentry), because POO-243 [R3] keeps error detail off the third-party channel.
 > **Renamed (POO-1801 [R5]):** `PAYBIS_GAS_FLOOR_ETH` is now `NATIVE_RESERVE_ETH` in
 > `src/lib/provisioning/nativeReserve.ts` (same 0.001 default, same behaviour; the env var is
 > `NEXT_PUBLIC_ONRAMP_GAS_FLOOR_ETH`, with the old name read as a fallback until POO-1815).
+
+### Mobile amount width (POO-2221, rules v1)
+
+The keypad-driven mobile amount wraps long input within its container, preserving the full raw text and currency prefix. Desktop entry, validation, limits and funding return are unchanged. This is a presentation fix; no new signing or provisioning capability is enabled.

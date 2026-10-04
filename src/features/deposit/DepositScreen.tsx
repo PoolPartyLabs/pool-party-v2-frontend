@@ -67,7 +67,7 @@
  * PROVIDER-NEUTRAL and never rail-aware, because Privy auto-routes between four providers and our
  * captured outcome does not record which one served.
  *
- * @implements-rules-version v1 (POO-2217 V2 unavailable host/context); v17 (POO-1904 rules v1: no Paybis method surface, no Paybis floor and no
+ * @implements-rules-version v1 (POO-2221); v1 (POO-2217 V2 unavailable host/context); v17 (POO-1904 rules v1: no Paybis method surface, no Paybis floor and no
  *   vendor named on the Privy rail) · v16 (POO-1813 rules v1: the purchase funnel's settled row and
  *   the two-value `deposit_method` on this rail) · v15 (POO-1807 rules v1: the Privy rail host, its
  *   baseline gate, its coverage refusal and its two released-screen exits) · v14 (POO-1794 rules v1) · v13 (POO-1786 rules v1) · v3 (POO-1137 / POO-1129 rules v3) · v4 (POO-727/728/729 rules v1) · v5 (POO-1174 rules v2) · v6 (POO-1573 rules v2) · v7 (POO-1513 rules v1) · v8 (POO-1609 rules v2) · v9 (POO-1614 rules v1) · v10 (POO-1617 rules v1) · v11 (POO-1642 rules v1) · v12 (POO-1624 rules v1)
@@ -1935,9 +1935,9 @@ export function DepositScreen({
             <div className="flex flex-col items-center gap-2 pt-2">
               <p className="text-muted-foreground text-sm">{t("addLabel")}</p>
               {/* Mobile: static display driven by the keypad */}
-              <p className="flex items-center font-bold text-5xl text-foreground lg:hidden">
-                <span>$</span>
-                <span>{amountText || "0"}</span>
+              <p className="flex max-w-full items-baseline justify-center font-bold text-5xl text-foreground lg:hidden">
+                <span className="shrink-0">$</span>
+                <span className="min-w-0 break-all">{amountText || "0"}</span>
               </p>
               {/* Desktop: typed input */}
               <div className="hidden items-center justify-center font-bold text-5xl text-foreground lg:flex">

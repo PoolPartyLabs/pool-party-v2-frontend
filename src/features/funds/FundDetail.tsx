@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-SCR-006
  * @name FundDetail
- * @implements-rules-version v1 (POO-2216)
+ * @implements-rules-version v1 (POO-2216); v1 (POO-2220)
  * @analytics-events strategy_detail_viewed, app_cta_blocked, app_error_shown
  * Investor V2 projection in the existing Details frame; technical manager view is separate.
  */
@@ -311,17 +311,21 @@ export function FundDetailsPresenter({
       }
     >
       <section className="rounded-xl border border-border bg-surface p-5 lg:p-6">
-        <div className="flex items-start gap-4">
+        <div className="flex flex-wrap items-start gap-4 sm:flex-nowrap">
           <StrategyLogo url={fundLogo} name={fundName} className="size-12 text-lg font-semibold" />
           <div className="min-w-0 flex-1">
             <h1 className="break-words font-bold text-xl">{fundName}</h1>
-            <p className="text-muted-foreground text-sm">{managerName}</p>
+            <p className="break-words text-muted-foreground text-sm [overflow-wrap:anywhere]">
+              {managerName}
+            </p>
             <span className="rounded border border-border px-1.5 py-0.5 text-xs font-medium">
               V2
             </span>
           </div>
-          <div className="text-right">
-            <p className="font-bold text-2xl tabular-nums">{money(fund.sharePrice, 24)}</p>
+          <div className="w-full min-w-0 text-left sm:w-auto sm:text-right">
+            <p className="break-words font-bold text-2xl tabular-nums">
+              {money(fund.sharePrice, 24)}
+            </p>
             <p className="text-muted-foreground text-xs">{t("sharePrice")}</p>
           </div>
         </div>
@@ -348,14 +352,16 @@ export function FundDetailsPresenter({
           ],
           [t("performanceFee"), pct(fund.fees?.performanceFeeBps)],
         ].map(([label, value]) => (
-          <div key={label} className="rounded-xl border border-border bg-surface p-5">
-            <p className="text-muted-foreground text-sm">{label}</p>
-            <p className="font-semibold tabular-nums">{value}</p>
+          <div key={label} className="min-w-0 rounded-xl border border-border bg-surface p-5">
+            <p className="break-words text-muted-foreground text-sm">{label}</p>
+            <p className="break-words font-semibold tabular-nums">{value}</p>
           </div>
         ))}
       </section>
       <Disclosure title={t("about")}>
-        <p>{fund.profile?.description?.trim() || t("unavailable")}</p>
+        <p className="break-words [overflow-wrap:anywhere]">
+          {fund.profile?.description?.trim() || t("unavailable")}
+        </p>
       </Disclosure>
       <Disclosure title={t("composition")}>
         <p>

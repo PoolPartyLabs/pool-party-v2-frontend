@@ -298,3 +298,21 @@ describe("PortfolioView — paged closed list (POO-668 R2)", () => {
     expect(await screen.findByText("No closed strategies yet")).toBeInTheDocument();
   });
 });
+
+// @rule R3 (POO-2220)
+it("keeps a lazy closed history reveal when active positions are empty", async () => {
+  const paged = makePaged();
+  renderWithProviders(<PortfolioView {...baseProps([], paged)} />);
+  await userEvent.setup().click(screen.getByRole("button", { name: /Closed strategies/i }));
+  expect(paged.closed.onReveal).toHaveBeenCalledOnce();
+});
+// @rule R3 (POO-2220)
+it("keeps the genuine empty portfolio once closed history is known empty", () => {
+  renderWithProviders(
+    <PortfolioView
+      {...baseProps([], makePaged({ closed: { ...makePaged().closed, entries: [] } }))}
+    />,
+  );
+  expect(screen.queryByRole("button", { name: /Closed strategies/i })).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Start growing your money" })).toBeInTheDocument();
+});

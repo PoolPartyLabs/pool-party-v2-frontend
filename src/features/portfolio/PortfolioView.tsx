@@ -1,7 +1,7 @@
 /**
  * @id PP-PORT-SCR-001
  * @name Portfolio
- * @implements-rules-version v3 (POO-829 rules v2); POO-2215 rules v1
+ * @implements-rules-version v3 (POO-829 rules v2); POO-2215 rules v1; POO-2220 rules v1
  *
  * Holdings & performance (presentational; data fetched by the route). Distinct from Home:
  * holdings-focused, leads with all-time earned + allocation-by-risk, no discovery feed, no referral.
@@ -382,7 +382,13 @@ export function PortfolioView(props: PortfolioViewProps | InvestorPortfolioViewP
     }
   }
 
-  if (positions.length === 0) {
+  const historyPossible =
+    paged &&
+    (paged.closed.entries === null ||
+      paged.closed.loading ||
+      paged.closed.hasMore ||
+      paged.closed.entries.length > 0);
+  if (positions.length === 0 && !historyPossible) {
     return <EmptyPortfolio />;
   }
 
