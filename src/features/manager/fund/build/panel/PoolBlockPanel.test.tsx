@@ -283,6 +283,7 @@ describe("deferred reads (POO-2204)", () => {
 describe("deferred range initialization (POO-2204)", () => {
   // @rule R1, R5
   it("offers usable range controls after a range-less deferred pool becomes positive", async () => {
+    action.mockResolvedValue({ ok: false, error: { code: "FAILED" } });
     const deferred = { poolId: config.poolId, slippagePct: 2 };
     renderWithProviders(
       <PanelHarness
@@ -315,6 +316,98 @@ describe("deferred range initialization (POO-2204)", () => {
     expect(
       screen.getByRole("group", { name: manager.fundBuilder.canvas.panel.range.label }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeEnabled();
+  });
+});
+
+describe("zero pool picker (POO-2204)", () => {
+  // @rule R1, R2
+  it("offers authorized pools at zero without fetching defaults", () => {
+    action.mockClear();
+    const zeroContext = {
+      ...context,
+      blockId: "b",
+      plan: {
+        version: 1 as const,
+        hub: {
+          chains: [
+            {
+              id: "c",
+              sharePct: 0,
+              steps: [
+                {
+                  id: "b",
+                  family: "position" as const,
+                  kind: "uniswapV4Pool" as const,
+                  config: null,
+                },
+              ],
+            },
+          ],
+        },
+        spokes: [],
+      },
+    };
+    const { result } = renderHook(() => poolBlockPanel.usePick(zeroContext), { wrapper });
+    expect(result.current.status).toBe("ready");
+    expect(result.current.rows[0]?.config).toEqual({ poolId: raw.poolId, slippagePct: 2 });
+    expect(action).not.toHaveBeenCalled();
+  });
+});
+
+describe("missing deferred range recovery (POO-2204)", () => {
+  // @rule R1, R5
+  it("shows failure and Retry, then initializes range from the recovered single-pool read", async () => {
+    live.mockImplementation(function useRecoverableRead() {
+      const [ready, setReady] = useState(false);
+      return {
+        pool: ready ? pool : null,
+        status: ready ? "ready" : "error",
+        applicable: ready,
+        error: null,
+        retry: () => setReady(true),
+      };
+    });
+    action.mockResolvedValue({ ok: false, error: { code: "FAILED" } });
+    renderWithProviders(
+      <PanelHarness
+        draft={draft}
+        plan={{
+          version: 1,
+          hub: {
+            chains: [
+              {
+                id: "c",
+                sharePct: 40,
+                steps: [
+                  {
+                    id: "b",
+                    family: "position",
+                    kind: "uniswapV4Pool",
+                    config: { poolId: config.poolId, slippagePct: 2 },
+                  },
+                ],
+              },
+            ],
+          },
+          spokes: [],
+        }}
+        selectedId="b"
+        bodies={{ uniswapV4Pool: poolBlockPanel }}
+      />,
+    );
+    expect(
+      screen.queryByLabelText(manager.fundBuilder.canvas.panel.pool.loading),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeDisabled();
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: manager.fundBuilder.canvas.panel.pool.retry }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("group", { name: manager.fundBuilder.canvas.panel.range.label }),
+      ).toBeInTheDocument(),
+    );
     expect(screen.getByRole("button", { name: "Apply changes" })).toBeEnabled();
   });
 });

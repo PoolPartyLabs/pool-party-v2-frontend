@@ -19,6 +19,7 @@ import {
 import { simulateDelay, simulateError } from "@/mocks/utils/simulate";
 import { isPoolConfigComplete, isRangeOnGrid } from "../plan/blockConfig";
 import type { PoolBlockConfig } from "../plan/buildPlan";
+import { findBlock } from "../plan/planDerive";
 import { FundSlippageControl } from "./FundSlippageControl";
 import { PanelFieldLabel } from "./PanelFieldLabel";
 import { PanelSelect } from "./PanelSelect";
@@ -151,7 +152,8 @@ function usePoolOptions(context: PanelBodyContext, deferred = false) {
 }
 function usePoolPick(context: PanelBodyContext): PanelPickModel<PoolBlockConfig> {
   const t = useTranslations("manager.fundBuilder.canvas.panel");
-  const data = usePoolOptions(context);
+  const deferred = findBlock(context.plan, context.blockId)?.chain.sharePct === 0;
+  const data = usePoolOptions(context, deferred);
   return {
     heading: t("pool.heading"),
     count: data.rows.length,
@@ -266,12 +268,22 @@ export function PoolBlockPanel({
           range={config}
           onChange={(range) => onConfigChange({ ...config, ...range })}
         />
-      ) : (
+      ) : live.status === "loading" ? (
         <div
           role="status"
           className="h-40 animate-pulse rounded-xl bg-surface-raised"
           aria-label={t("pool.loading")}
         />
+      ) : (
+        <p role="status" className="text-muted-foreground text-xs">
+          {live.status === "error"
+            ? t("pool.failed")
+            : !live.pool?.eligible
+              ? t("pool.ineligible")
+              : !live.pool.hasActiveLiquidity
+                ? t("pool.noLiquidity")
+                : t("pool.incomplete")}
+        </p>
       )}
       {sharePct !== 0 && live.status === "error" ? (
         <div role="alert" className="text-muted-foreground text-xs">
