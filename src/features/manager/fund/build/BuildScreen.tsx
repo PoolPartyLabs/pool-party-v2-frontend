@@ -61,6 +61,7 @@ import { useTranslations } from "next-intl";
 import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useTrackView } from "@/lib/analytics/useTrackView";
+import { useUnsavedChanges } from "@/lib/hooks/unsavedChanges";
 import type { MandateCatalog } from "../mandateCatalog";
 import { isBlocked, type MandateDraft } from "../mandateDraft";
 import type { UseMandateDraftResult } from "../useMandateDraft";
@@ -243,6 +244,10 @@ export function BuildScreen({
     applyBlockConfig: buildPlan.applyBlockConfig,
     onEvent: onPanelEvent,
   });
+  // [P6] Browser back, reload and closing the tab get the browser's own prompt while the panel
+  // holds changes not applied, as the shell does for a draft not saved (the in-app exits ask the
+  // selection guard instead).
+  useUnsavedChanges(panel.dirty);
 
   const controller = useBuildCanvas({
     draft,

@@ -940,6 +940,17 @@ describe("BuildScreen: the configuration panel (POO-2187, P3 to P10)", () => {
     expect(emitted("builder_block_discarded")).toEqual([{ block_kind: "uniswapV4Pool" }]);
   });
 
+  it("[P6] browser back, reload and close get the browser's prompt while changes are not applied", async () => {
+    // @rule P6
+    seedBuild(hubMandate("d-p6-unload"), twoPoolPlan());
+    await openBuild();
+    await waitFor(() => expect(beforeUnloadPrevented()).toBe(false));
+    await dirtyFirstCard();
+    await waitFor(() => expect(beforeUnloadPrevented()).toBe(true));
+    await userEvent.click(within(panelRegion()).getByRole("button", { name: "Discard" }));
+    await waitFor(() => expect(beforeUnloadPrevented()).toBe(false));
+  });
+
   it("[P8, P9] the Allocation stops at the mandate cap and says so, with the Limits link", async () => {
     // @rule P8
     // @rule P9
