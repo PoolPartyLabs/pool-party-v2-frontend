@@ -783,10 +783,7 @@
       "unnamed": "Brouillon sans nom"
     },
     "build": {
-      "title": "Construire",
-      "pending": "L'espace de construction pour les contrats de fonds est en cours de conception. Votre mandat est enregistré ; revenez lorsqu'il sera disponible.",
       "summary": "Votre mandat",
-      "backMandate": "Précédent : Mandat",
       "summaryNetworks": "Réseaux",
       "summaryProtocols": "Protocoles",
       "summaryTokens": "Jetons",

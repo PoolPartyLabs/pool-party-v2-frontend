@@ -783,10 +783,7 @@
       "unnamed": "Naamloos concept"
     },
     "build": {
-      "title": "Bouwen",
-      "pending": "Het bouwcanvas voor de fondscontracten is nog in ontwerp. Uw mandaat is opgeslagen; kom terug zodra het beschikbaar is.",
       "summary": "Uw mandaat",
-      "backMandate": "Terug: Mandaat",
       "summaryNetworks": "Netwerken",
       "summaryProtocols": "Protocollen",
       "summaryTokens": "Tokens",

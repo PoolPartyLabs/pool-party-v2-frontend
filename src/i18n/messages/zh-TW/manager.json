@@ -783,10 +783,7 @@
       "unnamed": "未命名草稿"
     },
     "build": {
-      "title": "建構",
-      "pending": "基金合約的建構畫布仍在設計中。您的授權範圍已儲存，上線後請再回來查看。",
       "summary": "您的授權範圍",
-      "backMandate": "上一步：授權範圍",
       "summaryNetworks": "網路",
       "summaryProtocols": "協議",
       "summaryTokens": "代幣",

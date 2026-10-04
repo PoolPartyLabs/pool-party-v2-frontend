@@ -783,10 +783,7 @@
       "unnamed": "名前のないドラフト"
     },
     "build": {
-      "title": "構築",
-      "pending": "ファンドコントラクトのビルドキャンバスはまだデザイン中です。マンデートは保存されています。公開されたら戻ってきてください。",
       "summary": "あなたのマンデート",
-      "backMandate": "戻る: マンデート",
       "summaryNetworks": "ネットワーク",
       "summaryProtocols": "プロトコル",
       "summaryTokens": "トークン",

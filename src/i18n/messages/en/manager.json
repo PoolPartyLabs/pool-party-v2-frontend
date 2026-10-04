@@ -783,10 +783,7 @@
       "unnamed": "Unnamed draft"
     },
     "build": {
-      "title": "Build",
-      "pending": "The Build canvas for the fund contracts is in design. Your mandate is saved; come back when it ships.",
       "summary": "Your mandate",
-      "backMandate": "Back: Mandate",
       "summaryNetworks": "Networks",
       "summaryProtocols": "Protocols",
       "summaryTokens": "Tokens",

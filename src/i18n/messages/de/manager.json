@@ -783,10 +783,7 @@
       "unnamed": "Unbenannter Entwurf"
     },
     "build": {
-      "title": "Erstellen",
-      "pending": "Der Build-Bereich für die Fondsverträge befindet sich noch im Design. Ihr Mandat ist gespeichert; kommen Sie zurück, sobald er verfügbar ist.",
       "summary": "Ihr Mandat",
-      "backMandate": "Zurück: Mandat",
       "summaryNetworks": "Netzwerke",
       "summaryProtocols": "Protokolle",
       "summaryTokens": "Tokens",

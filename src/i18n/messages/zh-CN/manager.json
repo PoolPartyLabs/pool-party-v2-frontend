@@ -783,10 +783,7 @@
       "unnamed": "未命名草稿"
     },
     "build": {
-      "title": "构建",
-      "pending": "基金合约的构建画布仍在设计中。您的授权范围已保存，上线后请再回来查看。",
       "summary": "您的授权范围",
-      "backMandate": "上一步：授权范围",
       "summaryNetworks": "网络",
       "summaryProtocols": "协议",
       "summaryTokens": "代币",

@@ -783,10 +783,7 @@
       "unnamed": "이름 없는 초안"
     },
     "build": {
-      "title": "구성",
-      "pending": "펀드 컨트랙트의 빌드 캔버스는 아직 디자인 중입니다. 운용 방침은 저장되어 있습니다. 출시되면 다시 방문하세요.",
       "summary": "내 운용 방침",
-      "backMandate": "이전: 운용 방침",
       "summaryNetworks": "네트워크",
       "summaryProtocols": "프로토콜",
       "summaryTokens": "토큰",

@@ -783,10 +783,7 @@
       "unnamed": "Borrador sin nombre"
     },
     "build": {
-      "title": "Construir",
-      "pending": "El área de construcción de los contratos de fondo está en diseño. Su mandato está guardado; vuelva cuando esté disponible.",
       "summary": "Su mandato",
-      "backMandate": "Atrás: Mandato",
       "summaryNetworks": "Redes",
       "summaryProtocols": "Protocolos",
       "summaryTokens": "Tokens",
