@@ -42,6 +42,8 @@ Aave Supply identity comes from the manager's explicit Mandate reserves and toke
 
 ## Validation (October 4, 2026)
 
+Follow-up index validation on merged main `349956b5`: typecheck, Biome zero errors (84 existing warnings, one info), all 11 locales / 2535 source keys, production build and 183 touched tests pass. Full main: 767 files, 10231 passed, five pending, zero failed. Full branch: 772 files, 10280 passed, zero pending/failed. No new failed or pending identities. Registry: 624 rows; marker census: 475 across 272 files. Follow-up IDs: SCR-008, CMP-084, LIB-048, each uniquely re-derived on merged main. The final PR includes one additive link in our `FundExplorer` manager section; Murilo's pages/canvas/draft list remain unchanged.
+
 - Initial baseline: `696f24c7`. Final merge includes slice E `150f16d2`; registry has 621 artifact rows. Marker census is re-derived in `docs/INTEGRATION_POINTS.md`. Dependencies installed with `pnpm install --frozen-lockfile`; package/lockfile unchanged.
 - `pnpm typecheck`, `pnpm lint` (zero errors; 84 existing warnings and one info), `pnpm i18n:check` (11 locales, 2519 source keys), `pnpm build`: passed on merged slice E. Build includes the new dynamic fallback route. Compilation produces existing dependency/webpack warnings.
 - Touched launch directory and registry documentation tests: 22 files, 163 passed. Fallback alone: 33 added tests covering helpers, precedence, blockers, fee parsing, upload, launch failure and route gates.
