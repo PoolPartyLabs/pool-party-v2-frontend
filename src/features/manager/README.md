@@ -696,3 +696,7 @@ The position list, graph and inline Manage block share selection. Per-position i
 See the [delivery and acceptance plan](../../../docs/manager-manage-v2-implementation-2026-10-04.md). Data dependencies are POO-2229 (Move preview/recovery), POO-2230 (cash/queue/Income), POO-2231 (future-policy/allocation/lineage). The sidebar uses a temporary expanded-canvas layout without changing the saved preference. Small screens stack list, canvas and panel; focused tests are code-level evidence, not browser verification.
 
 POO-2232 refines this canvas with straight spokes, symmetric branch anchors, fixed lateral cash cards and shared gray/green return bends. Liquidity cards show the authoritative current open-position `uniswap.inRange` as translated status text and a decorative centered bar; draft settings never recolor the current position. Aave has no range indicator. See [visual geometry, source frames and validation](../../../docs/manager-manage-v2-visual-adjustments-2026-10-04.md). The existing fee-conversion Swap remains between Collect fees and Income.
+
+## Strategy creation signing (POO-2233)
+
+The launch modal now follows provisioning with one current-step card and a pinned action footer. The Wormhole report wait shows a persistent 19-minute estimate while the existing report polling controls progression. Expiry explains the delay without signing or declaring settlement. See the [plan, dependencies and validation](../../../docs/strategy-launch-single-step-2026-10-04.md) and [launch module contract](fund/launch/README.md).
