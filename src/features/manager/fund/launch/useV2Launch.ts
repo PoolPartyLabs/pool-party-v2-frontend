@@ -1,7 +1,8 @@
 /**
- * @id PP-MGR-HOK-019 (POO-2177)
+ * @id PP-MGR-HOK-019 (POO-2177, POO-2233)
  * @name useV2Launch
  * @implements-rules-version v1
+ * @analytics-events none: execution events belong to useV2LaunchBinding
  */
 "use client";
 import { useEffect, useState } from "react";
@@ -19,6 +20,7 @@ import {
   readJourney,
 } from "./journey";
 import { hasLaunchTokenAllowance, rawUsdc } from "./review";
+import { useLaunchReportWait } from "./useLaunchReportWait";
 import { useV2LaunchBinding } from "./useV2LaunchBinding";
 import { useV2LaunchWallet } from "./useV2LaunchWallet";
 
@@ -114,11 +116,27 @@ export function useV2Launch(journeyId: string) {
     wallet: originalWallet ? wallet.wallet : null,
     frozen,
   });
+  // Journal hydration is effect-driven; never record the previous journey's checkpoints
+  // under the newly selected journey's identity during the intervening render.
+  const journalMatchesJourney =
+    binding.journal?.draftId === journey?.draftId &&
+    binding.journal?.manager.toLowerCase() === journey?.manager.toLowerCase();
+  const reportWaitStarts = useLaunchReportWait(
+    journey?.manager,
+    journey?.draftId,
+    journalMatchesJourney
+      ? binding.steps.map((step) => ({
+          ...step,
+          status: binding.checkpoints[step.id]?.status ?? "idle",
+        }))
+      : [],
+  );
   const steps = binding.steps.map((step) => {
     const checkpoint = binding.checkpoints[step.id];
     return {
       ...step,
       chainId: step.chain,
+      ...(step.kind === "report" ? { reportWaitStartedAt: reportWaitStarts[step.id] } : {}),
       label: `manager.fundLaunch.${step.kind}`,
       status: checkpoint?.status ?? "idle",
       txHash: checkpoint?.txHash ?? null,

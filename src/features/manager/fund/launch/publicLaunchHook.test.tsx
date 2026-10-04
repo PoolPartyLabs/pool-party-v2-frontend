@@ -260,6 +260,59 @@ describe("public launch hook seam [R3, R4, R6]", () => {
     expect(mocks.binding).toHaveBeenLastCalledWith(expect.objectContaining({ frozen }));
     expect(mocks.catalog).not.toHaveBeenCalled();
   });
+  it.each([
+    manager,
+    `0x${"56".repeat(20)}`,
+  ])("POO-2233 R3 ignores stale report checkpoints while switching to manager %s and a new draft", async (nextManager) => {
+    const firstDraft = { ...draft, id: `report-first-${nextManager}` };
+    const nextDraft = { ...draft, id: `report-next-${nextManager}` };
+    const firstJournal = createJournal(
+      firstDraft.id,
+      manager,
+      orphanFrozen(),
+      deriveLaunchSteps(draft.plan, {}, true, false),
+    );
+    const nextJournal = createJournal(
+      nextDraft.id,
+      nextManager,
+      { ...orphanFrozen(), request: { ...orphanFrozen().request, manager: nextManager } },
+      deriveLaunchSteps(draft.plan, {}, true, false),
+    );
+    saveJournal(localStorage, firstJournal);
+    saveJournal(localStorage, nextJournal);
+    const first = persistJourney(firstDraft, manager);
+    const next = persistJourney(nextDraft, nextManager);
+    const report = { id: "report", kind: "report", chain: 42161, dependencies: [] };
+    const binding = {
+      ...mocks.binding.getMockImplementation()?.(),
+      journal: firstJournal,
+      steps: [report],
+      checkpoints: { report: { stepId: "report", chain: 42161, status: "waiting" } },
+    };
+    mocks.binding.mockReturnValue(binding);
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1_800_000_000_000);
+    const { result, rerender } = renderHook(({ id }) => useV2Launch(id), {
+      initialProps: { id: first.journeyId },
+    });
+    expect(result.current.steps[0]?.reportWaitStartedAt).toBe(Date.now());
+    clock.mockReturnValue(1_800_000_060_000);
+    mocks.manager = nextManager;
+    // The real binding's passive hydration effect can still expose the previous journal here.
+    rerender({ id: next.journeyId });
+    const nextKey = `pp:v2-launch:report-wait:${JSON.stringify([nextManager, nextDraft.id, "report"])}`;
+    expect(localStorage.getItem(nextKey)).toBeNull();
+    expect(result.current.steps[0]?.reportWaitStartedAt).toBeUndefined();
+    mocks.binding.mockReturnValue({ ...binding, journal: nextJournal, checkpoints: {} });
+    rerender({ id: next.journeyId });
+    expect(localStorage.getItem(nextKey)).toBeNull();
+    clock.mockReturnValue(1_800_000_120_000);
+    mocks.binding.mockReturnValue({ ...binding, journal: nextJournal });
+    rerender({ id: next.journeyId });
+    expect(result.current.steps[0]?.reportWaitStartedAt).toBe(Date.now());
+    expect(JSON.parse(localStorage.getItem(nextKey) ?? "null")).toEqual({ startedAt: Date.now() });
+    expect(binding.sign).not.toHaveBeenCalled();
+    expect(mocks.catalog).not.toHaveBeenCalled();
+  });
   it("refuses a different wallet and reports a missing journey as failed", async () => {
     saveJournal(
       localStorage,
