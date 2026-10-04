@@ -1,12 +1,16 @@
 /**
  * @id PP-MGR-LIB-046 (POO-2177)
  * @name startFundLaunch
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2181)
  */
 "use client";
 import { createPublicClient, erc20Abi, type Hex, http } from "viem";
 import { getSessionAction } from "@/features/auth/siweActions";
-import { getCatalogReservesAction, getCatalogTokensAction } from "@/lib/api/v2/actions";
+import {
+  getCatalogPoolAction,
+  getCatalogReservesAction,
+  getCatalogTokensAction,
+} from "@/lib/api/v2/actions";
 import { getChainById, getUsdcAddress } from "@/lib/chains";
 import { isFeatureEnabled } from "@/lib/features";
 import { isMockMode } from "@/lib/services";
@@ -15,7 +19,7 @@ import type { FundLaunchDraft } from "./contracts";
 import { createJournal, journalKey, loadJournal, saveJournal } from "./journal";
 import { getLaunchSteps, journeyPath, persistJourney } from "./journey";
 import { withLaunchLock } from "./lock";
-import { deriveLaunchSteps } from "./plan";
+import { deriveLaunchSteps, validateTickAlignment } from "./plan";
 import { rawUsdc, validateReview } from "./review";
 
 export async function startFundLaunch(draft: FundLaunchDraft): Promise<{ journeyId: string }> {
@@ -26,6 +30,20 @@ export async function startFundLaunch(draft: FundLaunchDraft): Promise<{ journey
     const existing = loadJournal(localStorage, draft.id, manager);
     if (!existing) {
       getLaunchSteps(draft);
+      const steps = deriveLaunchSteps(
+        draft.plan,
+        draft.launchExecution ?? {},
+        true,
+        draft.networks.includes("robinhood"),
+      );
+      for (const step of steps.filter(
+        (entry) => entry.protocol === "uniswap-v4" && entry.kind === "open",
+      )) {
+        if (!step.config?.poolId) throw new Error("POOL_UNAVAILABLE");
+        const result = await getCatalogPoolAction(step.chain, step.config.poolId);
+        if (!result.ok) throw new Error("CATALOG_UNAVAILABLE");
+        validateTickAlignment(step.config, result.data.poolKey.tickSpacing);
+      }
       const chain = getChainById(42161);
       if (!chain) throw new Error("V2_UNAVAILABLE");
       const balance = await createPublicClient({ chain, transport: http() }).readContract({
@@ -61,12 +79,7 @@ export async function startFundLaunch(draft: FundLaunchDraft): Promise<{ journey
             seedAmount: rawUsdc(review.seed).toString(),
           },
         },
-        deriveLaunchSteps(
-          draft.plan,
-          draft.launchExecution ?? {},
-          true,
-          draft.networks.includes("robinhood"),
-        ),
+        steps,
       );
       saveJournal(localStorage, journal);
     }

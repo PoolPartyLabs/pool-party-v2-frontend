@@ -1,5 +1,13 @@
 # V2 fund pages
 
+## Created fund lists (POO-2181, rules v2)
+
+The existing `FundFamilySwitch` selects the v2-only explorer and Manager Console; no V1 page, Strategy model, toggle, canvas or Review page is changed. List identities are enriched by `readFund` in batches of six. A failed individual detail keeps its identity and unavailable metrics. Manager filtering uses authoritative detail/identity manager and a verified session; the client hides results whose verified wallet differs from the connected wallet.
+
+`FundListCard` reuses `StrategyLogo` and the existing card styling, displaying profile, v2 badge, manager, chains/protocols, Share Price (24 decimals), Share Assets (6 decimals), positions and limits usage. Missing values remain unavailable and numeric zero remains zero. All eleven configured locales translate the added list/journey states.
+
+Manager view preserves `FundDraftsSlot` and lists wallet-local incomplete/completed launch journeys independently of fund API availability. Completion reloads mounted fund lists once; mount, focus and cross-tab journal changes revalidate as well. No discovery write, signing, broadcast or deployment is added.
+
 POO-2175, rules v2. The existing `fundContracts` flag and `useContractFamily` preference select fund discovery, holder portfolio and manager read views. V1 elements remain unchanged; Murilo's toggle and builder switch are not edited. Fund detail uses `/funds/:core`, never V1 strategy IDs.
 
 - Fund reads use slice A's server-only `v2Fetch`. Separate schemas preserve profile, NAV, positions, holder exposure, history, limits, transits and internal spoke balances.

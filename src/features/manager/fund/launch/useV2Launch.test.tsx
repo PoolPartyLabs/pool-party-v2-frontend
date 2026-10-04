@@ -89,6 +89,37 @@ describe("headless launch binding [R3, R4, R6]", () => {
     mocks.build.mockResolvedValue({ complete: true });
     mocks.send.mockResolvedValue(`0x${"ab".repeat(32)}`);
     mocks.receipt.mockResolvedValue({ status: "success" });
+    window.dataLayer = [];
+  });
+  it("R9 emits completion once and failure with no identifying payload", async () => {
+    const { result } = renderHook(() => useV2LaunchBinding(options()));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    await act(async () => {
+      await result.current.launch();
+      await result.current.resume();
+    });
+    expect(
+      window.dataLayer?.filter((entry) => entry.event === "builder_launch_completed"),
+    ).toHaveLength(1);
+    expect(window.dataLayer).not.toContainEqual(
+      expect.objectContaining({ event: "builder_launch_clicked" }),
+    );
+  });
+  it("R9 emits a sanitized launch failure for the failing step", async () => {
+    mocks.build.mockRejectedValue(new Error("BUILD_TICK_ALIGNMENT"));
+    const { result } = renderHook(() => useV2LaunchBinding(options()));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    await act(async () => {
+      await result.current.launch();
+    });
+    expect(window.dataLayer).toContainEqual(
+      expect.objectContaining({
+        event: "builder_launch_failed",
+        step_kind: "approve",
+        error_code: "BUILD_TICK_ALIGNMENT",
+      }),
+    );
+    expect(JSON.stringify(window.dataLayer)).not.toContain(manager);
   });
   it("exposes dynamic chain signatures and starts only after explicit launch", async () => {
     const { result } = renderHook(() => useV2LaunchBinding(options()));

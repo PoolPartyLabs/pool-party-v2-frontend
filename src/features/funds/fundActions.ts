@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-LIB-028 (POO-2175)
  * @name fundActions
- * @implements-rules-version v2
+ * @implements-rules-version v2 (POO-2181)
  * PP-INTEGRATION-POINT: serializable fund reads, simulations and report polling.
  */
 "use server";
@@ -37,6 +37,7 @@ import {
   mockTransits,
   mockWallet,
 } from "@/mocks/data/v2Funds";
+import type { FundListEntry } from "./fundListModel";
 
 async function resultOf<ResponseData>(read: () => Promise<ResponseData>) {
   try {
@@ -70,7 +71,24 @@ export async function loadFundsAction(view: "explore" | "holder" | "manager") {
   return resultOf(async () => {
     z.enum(["explore", "holder", "manager"]).parse(view);
     const wallet = view === "explore" ? null : await walletIdentity();
-    const funds = isMockMode ? [mockFund] : (await readFunds()).funds;
+    const identities = isMockMode ? [mockFund] : (await readFunds()).funds;
+    const funds: FundListEntry[] = [];
+    for (let offset = 0; offset < identities.length; offset += 6) {
+      const batch = await Promise.all(
+        identities.slice(offset, offset + 6).map(async (identity) => {
+          if (isMockMode || view === "holder") return identity;
+          try {
+            const detail = await readFund(identity.coreVault);
+            return detail.coreVault.toLowerCase() === identity.coreVault.toLowerCase()
+              ? { ...identity, ...detail, profile: detail.profile ?? identity.profile }
+              : identity;
+          } catch {
+            return identity;
+          }
+        }),
+      );
+      funds.push(...batch);
+    }
     if (view === "manager")
       return {
         funds: funds.filter((fund) => fund.manager.toLowerCase() === wallet?.toLowerCase()),

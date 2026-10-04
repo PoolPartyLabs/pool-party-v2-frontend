@@ -785,6 +785,17 @@
     }
   },
   "funds": {
+    "protocols": "Giao thức",
+    "noPositions": "Chưa có vị thế",
+    "viewDetails": "Xem chi tiết",
+    "dormant": "Quỹ V2 chưa khả dụng. Vui lòng thử lại sau.",
+    "launchJourneys": "Quy trình ra mắt",
+    "noJourneys": "Chưa có lần ra mắt nào trên thiết bị này.",
+    "journeysUnavailable": "Không thể đọc lịch sử ra mắt từ trình duyệt này. Quỹ của bạn vẫn khả dụng.",
+    "journeyCompleted": "Hoàn tất",
+    "journeyInProgress": "Đang tiến hành",
+    "viewJourney": "Xem quy trình",
+    "resumeLaunch": "Tiếp tục ra mắt",
     "title": "Quỹ",
     "holdings": "Quỹ bạn đang nắm giữ",
     "managerView": "Quản lý quỹ",

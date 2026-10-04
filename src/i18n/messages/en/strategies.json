@@ -785,6 +785,17 @@
     }
   },
   "funds": {
+    "protocols": "Protocols",
+    "noPositions": "No positions yet",
+    "viewDetails": "View details",
+    "dormant": "V2 funds are not available yet. Try again later.",
+    "launchJourneys": "Launch journeys",
+    "noJourneys": "No launch journeys on this device yet.",
+    "journeysUnavailable": "Launch journeys cannot be read from this browser. Your funds are still available.",
+    "journeyCompleted": "Completed",
+    "journeyInProgress": "In progress",
+    "viewJourney": "View journey",
+    "resumeLaunch": "Resume launch",
     "title": "Funds",
     "holdings": "Your fund holdings",
     "managerView": "Fund management",

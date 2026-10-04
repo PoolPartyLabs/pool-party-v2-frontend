@@ -785,6 +785,17 @@
     }
   },
   "funds": {
+    "protocols": "Protokolle",
+    "noPositions": "Noch keine Positionen",
+    "viewDetails": "Details ansehen",
+    "dormant": "V2-Fonds sind noch nicht verfügbar. Versuchen Sie es später erneut.",
+    "launchJourneys": "Fondsstarts",
+    "noJourneys": "Noch keine Fondsstarts auf diesem Gerät.",
+    "journeysUnavailable": "Fondsstarts können in diesem Browser nicht gelesen werden. Ihre Fonds bleiben verfügbar.",
+    "journeyCompleted": "Abgeschlossen",
+    "journeyInProgress": "In Bearbeitung",
+    "viewJourney": "Fondsstart ansehen",
+    "resumeLaunch": "Fondsstart fortsetzen",
     "title": "Fonds",
     "holdings": "Ihre Fondsbestände",
     "managerView": "Fondsverwaltung",

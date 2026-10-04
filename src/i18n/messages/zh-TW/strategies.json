@@ -785,6 +785,17 @@
     }
   },
   "funds": {
+    "protocols": "協議",
+    "noPositions": "尚無持倉",
+    "viewDetails": "查看詳情",
+    "dormant": "V2 基金尚未開放。請稍後再試。",
+    "launchJourneys": "啟動流程",
+    "noJourneys": "此裝置尚無啟動紀錄。",
+    "journeysUnavailable": "無法從此瀏覽器讀取啟動紀錄。您的基金仍可使用。",
+    "journeyCompleted": "已完成",
+    "journeyInProgress": "進行中",
+    "viewJourney": "查看流程",
+    "resumeLaunch": "繼續啟動",
     "title": "基金",
     "holdings": "您的基金持有部位",
     "managerView": "基金管理",

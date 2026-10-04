@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createEmptyDraft } from "../mandateDraft";
 import type { FundLaunchDraft } from "./contracts";
+import { createJournal, saveJournal } from "./journal";
+import * as journeyStore from "./journey";
 import {
   explorerAddressUrl,
   explorerTxUrl,
@@ -46,6 +48,33 @@ const draft: FundLaunchDraft = {
 };
 describe("public journey contracts [R3, R4, R6]", () => {
   beforeEach(() => localStorage.clear());
+  it("R4 enumerates only the connected wallet's valid persisted journeys", () => {
+    persistJourney(draft, manager);
+    persistJourney({ ...draft, id: "other" }, base);
+    localStorage.setItem("pp:v2:journey:1:corrupt", "{");
+    expect(journeyStore).toHaveProperty("listLaunchJourneys");
+    expect(journeyStore.listLaunchJourneys(manager).journeys).toHaveLength(1);
+  });
+  it("R8 projects incomplete and complete persisted status without writes", () => {
+    const journey = persistJourney(draft, manager);
+    expect(journeyStore).toHaveProperty("getLaunchStatusForDraft");
+    expect(journeyStore.getLaunchStatusForDraft(draft.id, manager)).toMatchObject({
+      journeyId: journey.journeyId,
+      status: "paused",
+      outcome: "in-progress",
+    });
+    const journal = createJournal(draft.id, manager, {}, [
+      { id: "create", kind: "create", chain: 42161, dependencies: [] },
+    ]);
+    journal.checkpoints.create = { stepId: "create", chain: 42161, status: "confirmed" };
+    saveJournal(localStorage, journal);
+    expect(journeyStore.getLaunchStatusForDraft(draft.id, manager)).toMatchObject({
+      status: "complete",
+      current: null,
+      outcome: "completed",
+    });
+    expect(journeyStore.getLaunchStatusForDraft(draft.id, base)).toBeNull();
+  });
   it("derives signature previews without I/O and never counts server reads", () => {
     expect(getLaunchSteps(draft).find((step) => step.kind === "profile")).toMatchObject({
       signer: "manager-message",

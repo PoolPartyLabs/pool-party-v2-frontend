@@ -1,5 +1,14 @@
 # IDs Registry
 
+## Created v2 fund lists (POO-2181)
+
+| ID | Artifact | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-STR-LIB-033` | V2-only card projection, missing valuation preserved | Lib | n/a (code) | In Review | POO-2181 | `src/features/funds/fundListModel.ts` @rules-v2 |
+| `PP-STR-CMP-035` | Enriched created-fund card | Component | n/a (code) | In Review | POO-2181 | `src/features/funds/FundListCard.tsx` @rules-v2 |
+| `PP-MGR-CMP-082` | Wallet-local launch journeys list | Component | n/a (code) | In Review | POO-2181 | `src/features/manager/fund/launch/FundLaunchJourneysList.tsx` @rules-v2 |
+| `PP-MGR-HOK-021` | Read-only persisted launch status by draft | Hook | n/a (code) | In Review | POO-2181 | `src/features/manager/fund/launch/useV2LaunchStatus.ts` @rules-v2 |
+
 ## V2 fund pages (POO-2175)
 
 | ID | Artifact | Type | Design | Impl | Linear | Reference |
@@ -22,7 +31,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 610 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 614 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 

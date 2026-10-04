@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-SCR-004 (POO-2175)
  * @name FundExplorer
- * @implements-rules-version v2
+ * @implements-rules-version v2 (POO-2181)
  * Isolated v2 discovery, holder portfolio and manager fund list.
  */
 "use client";
@@ -9,10 +9,12 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { formatUnits } from "viem";
 import { FundDraftsSlot } from "@/features/manager/fund/components/FundDraftsSlot";
+import { FundLaunchJourneysList } from "@/features/manager/fund/launch/FundLaunchJourneysList";
 import { Link } from "@/i18n/navigation";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useSiweSession } from "@/lib/auth/useSiweSession";
 import { isMockMode } from "@/lib/services";
+import { FundListCard } from "./FundListCard";
 import { loadFundsAction } from "./fundActions";
 import { fundErrorKey } from "./fundModel";
 export interface FundExplorerProps {
@@ -23,21 +25,51 @@ export function FundExplorer({ view }: FundExplorerProps) {
   const managerText = useTranslations("manager.dashboard");
   const { address } = useAuth();
   const { isSignedIn } = useSiweSession();
-  const [result, setResult] = useState<Awaited<ReturnType<typeof loadFundsAction>> | null>(null);
+  const [snapshot, setSnapshot] = useState<{
+    identity: string;
+    result: Awaited<ReturnType<typeof loadFundsAction>>;
+  } | null>(null);
   const [retry, setRetry] = useState(0);
+  const identity = `${view}:${address ?? ""}:${isSignedIn}`;
+  const result = snapshot?.identity === identity ? snapshot.result : null;
+  useEffect(() => {
+    const refresh = () => setRetry((value) => value + 1);
+    const changed = (event: Event) => {
+      if ((event as CustomEvent<{ completed?: boolean }>).detail?.completed) refresh();
+    };
+    const storage = (event: StorageEvent) => {
+      if (event.key === null || event.key.startsWith("pp:v2:launch:")) refresh();
+    };
+    window.addEventListener("pp:v2:launch-changed", changed);
+    window.addEventListener("storage", storage);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener("pp:v2:launch-changed", changed);
+      window.removeEventListener("storage", storage);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
   useEffect(() => {
     const requestKey = `${address ?? ""}:${retry}`;
     if (!requestKey) return;
     let active = true;
-    setResult(null);
+    setSnapshot(null);
     if (view !== "explore" && !isMockMode && !isSignedIn) return;
-    void loadFundsAction(view).then((value) => {
-      if (active) setResult(value);
-    });
+    void loadFundsAction(view)
+      .then((value) => {
+        if (active) setSnapshot({ identity, result: value });
+      })
+      .catch(() => {
+        if (active)
+          setSnapshot({
+            identity,
+            result: { ok: false, error: { status: 502, code: "V2_UNAVAILABLE" } },
+          });
+      });
     return () => {
       active = false;
     };
-  }, [view, address, isSignedIn, retry]);
+  }, [view, address, isSignedIn, retry, identity]);
   return (
     <section className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold">
@@ -49,15 +81,20 @@ export function FundExplorer({ view }: FundExplorerProps) {
             {managerText("createNew")}
           </Link>
           <FundDraftsSlot />
+          <FundLaunchJourneysList manager={address} />
         </>
       ) : null}
-      {view !== "explore" && !isMockMode && !isSignedIn ? (
+      {view !== "explore" &&
+      !isMockMode &&
+      (!isSignedIn ||
+        !address ||
+        (result?.ok && result.data.wallet?.toLowerCase() !== address.toLowerCase())) ? (
         <p role="status">{t("session")}</p>
       ) : !result ? (
         <p role="status">{t("loading")}</p>
       ) : !result.ok ? (
         <div role="alert">
-          <p>{t(fundErrorKey(result.error.code))}</p>
+          <p>{t(result.error.status === 503 ? "dormant" : fundErrorKey(result.error.code))}</p>
           <button type="button" onClick={() => setRetry((value) => value + 1)}>
             {t("retry")}
           </button>
@@ -67,28 +104,15 @@ export function FundExplorer({ view }: FundExplorerProps) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {result.data.funds.map((fund) => (
-            <Link
-              className="rounded-xl border border-border p-5 hover:bg-accent focus-visible:outline-2"
-              href={`/funds/${fund.coreVault}`}
-              key={`v2:${fund.coreVault}`}
-            >
-              <h2 className="font-semibold">{fund.profile?.name ?? `PP-${fund.creationNumber}`}</h2>
-              <p className="text-sm text-muted-foreground">{fund.profile?.description}</p>
-              <p className="break-all text-sm">
-                {t("manager")}: {fund.manager}
-              </p>
-              <p>
-                {fund.chains
-                  .map((chain) => (chain.chainId === "42161" ? "Arbitrum" : "Robinhood"))
-                  .join(" · ")}
-              </p>
+            <div key={`v2:${fund.coreVault}`} className="flex flex-col gap-2">
+              <FundListCard fund={fund} />
               {result.data.holders[fund.coreVault] ? (
                 <p>
                   {t("shares")}:{" "}
                   {formatUnits(BigInt(result.data.holders[fund.coreVault]?.shares ?? "0"), 18)}
                 </p>
               ) : null}
-            </Link>
+            </div>
           ))}
         </div>
       )}

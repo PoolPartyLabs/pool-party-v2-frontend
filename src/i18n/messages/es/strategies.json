@@ -785,6 +785,17 @@
     }
   },
   "funds": {
+    "protocols": "Protocolos",
+    "noPositions": "Aún no hay posiciones",
+    "viewDetails": "Ver detalles",
+    "dormant": "Los fondos V2 aún no están disponibles. Intente de nuevo más tarde.",
+    "launchJourneys": "Procesos de lanzamiento",
+    "noJourneys": "Aún no hay lanzamientos en este dispositivo.",
+    "journeysUnavailable": "No se pueden leer los lanzamientos en este navegador. Sus fondos siguen disponibles.",
+    "journeyCompleted": "Completado",
+    "journeyInProgress": "En curso",
+    "viewJourney": "Ver lanzamiento",
+    "resumeLaunch": "Reanudar lanzamiento",
     "title": "Fondos",
     "holdings": "Sus fondos",
     "managerView": "Gestión del fondo",

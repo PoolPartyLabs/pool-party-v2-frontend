@@ -218,9 +218,38 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     );
     await driver.send(step, built.transactions[0]);
     expect(wallet.send).toHaveBeenCalled();
+    mocks.swap.mockClear();
+    mocks.open.mockClear();
+    await expect(
+      driver.build(
+        { ...step, config: { ...step.config, tickLower: -101, tickUpper: 100 } },
+        journal,
+      ),
+    ).rejects.toThrow("BUILD_TICK_ALIGNMENT");
+    expect(mocks.swap).not.toHaveBeenCalled();
+    expect(mocks.open).not.toHaveBeenCalled();
     await expect(driver.send({ ...step, chain: 4663 }, built.transactions[0])).rejects.toThrow(
       "UNSAFE_TRANSACTION",
     );
+  });
+  it("R9 observes successful signatures only, excluding rejection", async () => {
+    const { wallet } = setup();
+    const signed = vi.fn();
+    const driver = createLaunchDriver(wallet, signed);
+    const step: LaunchStep = { id: "create", kind: "create", chain: 42161, dependencies: [] };
+    const transaction = {
+      protocolVersion: "v2",
+      from: manager,
+      to: core,
+      chainId: 42161,
+      value: "0",
+      data: "0x1234",
+    };
+    await driver.send(step, transaction);
+    expect(signed).toHaveBeenCalledExactlyOnceWith(step);
+    wallet.send.mockRejectedValueOnce(new Error("USER_REJECTED"));
+    await expect(driver.send(step, transaction)).rejects.toThrow("USER_REJECTED");
+    expect(signed).toHaveBeenCalledTimes(1);
   });
   it("creates the spoke from the exact successful create payload and verifies discovery", async () => {
     const { driver, journal } = setup();
