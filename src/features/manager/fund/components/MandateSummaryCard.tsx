@@ -3,13 +3,13 @@
  * @name MandateSummaryCard
  * @implements-rules-version v2 (POO-2127 rules v1, POO-2143 rules v2)
  * @analytics-events none, a read-only card. It shows what was already decided and offers no
- *   control, so there is no intent here to record; the landing that renders it owns the view event
+ *   control, so there is no intent here to record; the screen that renders it owns the view event
  *   (PP-MGR-SCR-002)
  *
- * POO-2127 [B1], epic POO-2119. The mandate, read back. Rendered on the Build landing today and
- * reusable by Review later, which is why it takes a draft and a catalog and nothing else: no
- * callbacks, no store access, no router. Everything on it is derived, so the card cannot disagree
- * with the five steps that produced it.
+ * POO-2127 [B1], epic POO-2119. The mandate, read back. It left the Build phase with the landing
+ * (POO-2157, D24) and is kept for Review, which is why it takes a draft and a catalog and nothing
+ * else: no callbacks, no store access, no router. Everything on it is derived, so the card cannot
+ * disagree with the five steps that produced it.
  *
  * ## Why the card derives rather than stores
  *

@@ -837,10 +837,7 @@
       "unnamed": "Unnamed draft"
     },
     "build": {
-      "title": "Build",
-      "pending": "The Build canvas for the fund contracts is in design. Your mandate is saved; come back when it ships.",
       "summary": "Your mandate",
-      "backMandate": "Back: Mandate",
       "summaryNetworks": "Networks",
       "summaryProtocols": "Protocols",
       "summaryTokens": "Tokens",
@@ -1004,6 +1001,15 @@
       "toast": {
         "removed": "Block removed",
         "undo": "Undo"
+      },
+      "planUnreadable": "This draft holds a plan this version of the app cannot open. It is kept as it is; adding a block starts a new plan, which replaces it when you save.",
+      "review": {
+        "emptyPlan": "Add a block before Review.",
+        "invalidBlock": "Remove the blocks that are no longer in your mandate, or edit the mandate.",
+        "comingSoon": "Remove the blocks that are coming soon.",
+        "emptyBlock": "Configure every block before Review.",
+        "overShare": "The shares add up to more than the capital above them.",
+        "unavailable": "Review is not available yet."
       }
     }
   }
