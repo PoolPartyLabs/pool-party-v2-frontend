@@ -5,9 +5,47 @@
  */
 import { z } from "zod";
 import { loadJournal } from "../../src/features/manager/fund/launch/journal";
+import { previewSeed, rawUsdc, reviewSchema } from "../../src/features/manager/fund/launch/review";
+import { createRequestSchema } from "../../src/lib/api/v2/launchSchemas";
 import { rehearsalSignInAllowed } from "./rehearsalSignIn";
 
 export type V2LaunchMode = "dry" | "dry-launch" | "signed";
+
+export function validateV2LaunchFrozenIntent(
+  value: unknown,
+  journeyReview: unknown,
+  manager: string,
+): { name: string; seed: string; totalUsdcRaw: string } {
+  try {
+    const frozen = z.object({ request: createRequestSchema, review: reviewSchema }).parse(value);
+    const review = reviewSchema.parse(journeyReview);
+    const seed = BigInt(frozen.request.seedAmount);
+    const minimum = BigInt(frozen.request.minFirstDeposit);
+    if (
+      frozen.request.manager.toLowerCase() !== manager.toLowerCase() ||
+      seed !== rawUsdc(frozen.review.seed) ||
+      seed !== rawUsdc(review.seed) ||
+      minimum !== rawUsdc(frozen.review.minimum) ||
+      minimum !== rawUsdc(review.minimum) ||
+      frozen.review.name !== review.name ||
+      frozen.review.description !== review.description ||
+      frozen.review.imageUrl !== review.imageUrl ||
+      frozen.request.performanceFeeBps !== frozen.review.performanceFeeBps ||
+      frozen.request.managementFeeBps !== frozen.review.managementFeeBps ||
+      frozen.request.payoutFeeBps !== frozen.review.payoutFeeBps ||
+      frozen.review.performanceFeeBps !== review.performanceFeeBps ||
+      frozen.review.managementFeeBps !== review.managementFeeBps ||
+      frozen.review.payoutFeeBps !== review.payoutFeeBps
+    )
+      throw new Error();
+    const preview = previewSeed(seed);
+    const total = seed + preview.fee;
+    if (preview.shares < BigInt("1") || total > BigInt("2100000")) throw new Error();
+    return { name: frozen.review.name, seed: frozen.review.seed, totalUsdcRaw: total.toString() };
+  } catch {
+    throw new Error("V2_LAUNCH_INVALID_RESUME");
+  }
+}
 
 export function v2LaunchResumePath(journeyId: string, manager: string): string {
   const match = /^(0x[\da-f]{40}):([\w-]+)$/i.exec(journeyId);
@@ -26,6 +64,7 @@ export function v2LaunchResumeState(
   draftId: string;
   name: string;
   seed: string;
+  totalUsdcRaw: string;
   failed: boolean;
 } {
   try {
@@ -57,10 +96,7 @@ export function v2LaunchResumeState(
           createdAt: z.string(),
           draft: z.object({
             id: z.string(),
-            review: z.object({
-              name: z.string().trim().min(10).max(50),
-              seed: z.string().regex(/^\d+(\.\d{1,6})?$/),
-            }),
+            review: reviewSchema,
           }),
         })
         .parse(JSON.parse(entry.value));
@@ -85,12 +121,16 @@ export function v2LaunchResumeState(
       if (!journal) throw new Error();
       if (journal.steps.every((step) => journal.checkpoints[step.id]?.status === "confirmed"))
         continue;
+      const intent = validateV2LaunchFrozenIntent(
+        journal.frozen,
+        journey.draft.review,
+        journal.manager,
+      );
       candidates.push({
         path,
         journeyId: journey.journeyId,
         draftId: journey.draftId,
-        name: journey.draft.review.name,
-        seed: journey.draft.review.seed,
+        ...intent,
         failed: journal.steps.some((step) => journal.checkpoints[step.id]?.status === "failed"),
       });
     }

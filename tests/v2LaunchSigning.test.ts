@@ -215,13 +215,38 @@ describe("wallet-local launch resume", () => {
     manager: address.toLowerCase(),
     draftId,
     createdAt: "2026-10-04T00:00:00Z",
-    draft: { id: draftId, review: { name: "Existing launch", seed: "2" } },
+    draft: {
+      id: draftId,
+      review: {
+        name: "Existing launch",
+        description: "",
+        imageUrl: "",
+        seed: "2",
+        minimum: "1",
+        performanceFeeBps: 1000,
+        managementFeeBps: 0,
+        payoutFeeBps: 0,
+      },
+    },
   };
   const journal = {
     version: 1,
     draftId,
     manager: address.toLowerCase(),
-    frozen: journey.draft,
+    frozen: {
+      review: journey.draft.review,
+      request: {
+        manager: address,
+        chains: [{ chainId: 42161, tokens: [address], uniswapV4PoolIds: [] }],
+        aaveV3Reserves: [],
+        spokeCapPercent: null,
+        performanceFeeBps: 1000,
+        managementFeeBps: 0,
+        payoutFeeBps: 0,
+        minFirstDeposit: "1000000",
+        seedAmount: "2000000",
+      },
+    },
     steps: [{ id: "approve", chain: 42161, kind: "approve", dependencies: [] }],
     checkpoints: {},
     addresses: {},
@@ -257,6 +282,7 @@ describe("wallet-local launch resume", () => {
       draftId,
       name: "Existing launch",
       seed: "2",
+      totalUsdcRaw: "2005000",
       failed: false,
     });
     expect(() => v2LaunchResumeState(state(), "http://localhost:3000", address)).toThrow(
@@ -271,6 +297,64 @@ describe("wallet-local launch resume", () => {
       checkpoints: { approve: { stepId: "approve", chain: 42161, status: "failed" } },
     });
     expect(v2LaunchResumeState(state(localStorage), origin, address).failed).toBe(true);
+  });
+
+  it("fails closed on missing or inconsistent frozen execution intent", () => {
+    const frozen = journal.frozen;
+    for (const invalid of [
+      undefined,
+      {},
+      { review: frozen.review },
+      { request: frozen.request },
+      { ...frozen, request: { ...frozen.request, seedAmount: "2000001" } },
+      { ...frozen, request: { ...frozen.request, seedAmount: "1000000000" } },
+      { ...frozen, request: { ...frozen.request, manager: `0x${"1".repeat(40)}` } },
+      { ...frozen, request: { ...frozen.request, manager: "invalid" } },
+      { ...frozen, request: { ...frozen.request, minFirstDeposit: "1000001" } },
+      { ...frozen, request: { ...frozen.request, performanceFeeBps: 2000 } },
+      { ...frozen, request: { ...frozen.request, managementFeeBps: 1 } },
+      { ...frozen, request: { ...frozen.request, payoutFeeBps: 1 } },
+      { ...frozen, review: { ...frozen.review, name: "Different launch" } },
+      { ...frozen, review: { ...frozen.review, description: "Different description" } },
+      { ...frozen, review: { ...frozen.review, imageUrl: "https://example.com/logo.png" } },
+      { ...frozen, review: { ...frozen.review, seed: "2.000001" } },
+      { ...frozen, review: { ...frozen.review, minimum: "1.000001" } },
+      {
+        review: { ...frozen.review, performanceFeeBps: 2000 },
+        request: { ...frozen.request, performanceFeeBps: 2000 },
+      },
+    ]) {
+      const localStorage = entries();
+      localStorage[1].value = JSON.stringify({ ...journal, frozen: invalid });
+      expect(() => v2LaunchResumeState(state(localStorage), origin, address)).toThrow(
+        /^V2_LAUNCH_INVALID_RESUME$/,
+      );
+    }
+  });
+
+  it("caps the actual frozen seed plus the existing default flow fee before resume", () => {
+    for (const [seed, seedAmount, valid] of [
+      ["2.094764", "2094764", true],
+      ["2.094765", "2094765", false],
+      ["2.1", "2100000", false],
+      ["1000", "1000000000", false],
+    ] as const) {
+      const localStorage = entries();
+      const review = { ...journey.draft.review, seed };
+      localStorage[0].value = JSON.stringify({ ...journey, draft: { ...journey.draft, review } });
+      localStorage[1].value = JSON.stringify({
+        ...journal,
+        frozen: { review, request: { ...journal.frozen.request, seedAmount } },
+      });
+      const stored = state(localStorage);
+      const original = JSON.stringify(stored);
+      if (valid) expect(v2LaunchResumeState(stored, origin, address).totalUsdcRaw).toBe("2100000");
+      else
+        expect(() => v2LaunchResumeState(stored, origin, address)).toThrow(
+          /^V2_LAUNCH_INVALID_RESUME$/,
+        );
+      expect(JSON.stringify(stored)).toBe(original);
+    }
   });
 
   it("refuses missing journals, completed journeys, and mismatched wallet or draft metadata", () => {

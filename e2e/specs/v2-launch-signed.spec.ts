@@ -329,9 +329,10 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
           process.env.E2E_BASE_URL ?? "http://localhost:3000",
           burner,
         );
-        expect(parseUnits(resumed.seed, 6), "Persisted seed exceeds 2.1 USDC").toBeLessThanOrEqual(
-          2_100_000n,
-        );
+        expect(
+          BigInt(resumed.totalUsdcRaw),
+          "Frozen seed plus flow fee exceeds 2.1 USDC",
+        ).toBeLessThanOrEqual(2_100_000n);
         evidence.draftId = resumed.draftId;
         evidence.name = resumed.name;
         await page.goto(resumed.path);
