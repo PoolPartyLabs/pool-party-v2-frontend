@@ -238,7 +238,7 @@ All added copy is translated in the 11 configured locales; machine-tier translat
 
 Artifacts: `PP-CORE-LIB-112` to `PP-CORE-LIB-115`, `PP-MGR-LIB-025`, `PP-MGR-HOK-011`, `PP-MGR-CMP-060`.
 Resolved integration points: catalog tokens/pricing/Aave, v4 pool catalog, percentage intent serialization.
-Open integrations: backend draft persistence (POO-2132), Review/launch, on-chain percentage cap (POO-2169), TVL/APR indexing.
+Open integrations: backend draft persistence (POO-2132), on-chain percentage cap (POO-2169), TVL/APR indexing. Review now connects to the existing launch journey (POO-2195).
 
 The Mandate step of a second, parallel strategy builder for the fund contracts (hub Arbitrum, spoke
 Robinhood Chain, PoolPartyLabs/smartcontract-v2), speced from
@@ -352,9 +352,9 @@ pool catalog has a real source since POO-2133: server actions read the backend's
 Robinhood Chain (see "Real catalog wiring" above and `docs/INTEGRATION_POINTS.md`, "Fund contracts builder");
 mock mode keeps its fixtures. **9.** "N% selected" on a pool card mirrors V1 exactly: the pool's share of the pair's TVL across the fetched fee tiers, computed client-side (`tierShare` in `mandatePoolSource.ts`); no API field carries a manager share today, so the handoff's "share of V1 managers who chose that tier" has no source and the V1 computation wins. **10.** "Next: Build strategy" on step 5 marks the mandate complete, persists the draft, and lands on the Build canvas (`BuildScreen`, POO-2157, which replaced the Build landing that printed the mandate back); Back: Mandate returns to Limits. **11.** The feature flag is `fundContracts` (`NEXT_PUBLIC_FEATURE_FUND_CONTRACTS`), off by default, `next` stage; the header toggle renders only while it is on and the V2 builder only while the toggle says V2; `v2.dev.pool-party.xyz` needs the variable baked before the image build. **12.** Deep links are query params on the existing route, `/manager/new?draft=<id>&step=<key>` (plus `&phase=build` once the mandate completed), no new route folder. Decisions 1 to 12 are recorded in the "Plan" section of the POO-2119 Linear issue; Murilo can overturn any of them.
 
-**What is NOT done.** The Build canvas is mounted (POO-2157) and has its own section below, with what it does
-and does not do. Review: the Review page is POO-2172, and the launch journey behind it (POO-2177) is described in
-`src/features/manager/fund/launch/README.md`. Investor-facing flag placement (the strategy card and detail show no Broad-mandate
+**Open integrations and scope.** Build, its configuration panels and Review are implemented below.
+The launch journey behind Review (POO-2177) is described in `src/features/manager/fund/launch/README.md`.
+Remaining work includes investor-facing flag placement (the strategy card and detail show no Broad-mandate
 flag anywhere today, `CR-MGR-010`). Backend persistence (drafts are `localStorage` only,
 `PP-MGR-STO-001`'s own `PP-INTEGRATION-POINT`; wiring issue POO-2132). Mobile layouts (desktop only,
 per the handoff). Uniswap v4 pool metrics (TVL, APR, tier share) stay null until the API provides them (see "Real
@@ -403,7 +403,7 @@ as dormant slices (POO-2151 to POO-2156, on `main` through roll-up #44) and moun
 (POO-2157, #41): `FundStrategyBuilderScreen` renders `BuildScreen` in the Build phase, behind the `fundContracts`
 flag (default off) and the V2 toggle. The canvas signs and sends nothing and calls no API: a plan is a local
 draft. What turns a stored plan into API builder calls is the launch journey of POO-2177
-(`src/features/manager/fund/launch/README.md`), which the Review page (POO-2172) will start. A short folder guide
+(`src/features/manager/fund/launch/README.md`), which the Review page (POO-2172) starts after readiness and persistence checks. A short folder guide
 sits beside the code, in `src/features/manager/fund/build/README.md`.
 
 **Folder map** (`src/features/manager/fund/build/`; every file carries its id in its header):
@@ -416,7 +416,7 @@ sits beside the code, in `src/features/manager/fund/build/README.md`.
 | `layout/` | `PP-MGR-LIB-023` | The pure layout function, its types and `GRAPH_TARGET_ATTR`, its constants (`LAYOUT`), `toLayoutInput` and test support `layoutTestKit` |
 | `pieces/` | `PP-MGR-CMP-048` to `055` | The presentational pieces: spine card, position card, flow pill, share label, insert port, spoke group, edges, the two templates. Strings arrive as props; they import nothing from `plan/`, `layout/`, `blocks/` or `graph/` |
 | `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056`, `057`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu and its popover, the selection guard and the controller (`useBuildCanvas`); the panel stub `PP-MGR-CMP-058` is removed |
-| `panel/` | `PP-MGR-CMP-061` to `068`, `PP-MGR-HOK-014`, `PP-MGR-LIB-029`, `PP-MGR-LIB-030` | The configuration panel shell (POO-2187), its kind to body registry, its shared controls and its draft, and the range and slippage maths |
+| `panel/` | `PP-MGR-CMP-061` to `072`, `PP-MGR-HOK-014`, `PP-MGR-LIB-029`, `PP-MGR-LIB-030` | The configuration panel shell (POO-2187), its kind to body registry, its shared controls and draft, range/slippage maths, Uniswap v4 pool body and Aave USDC Supply body |
 | `graph/` | `PP-MGR-CMP-059` | The renderer `BuildGraph` (layout, pieces, selection and active targets in, presses out), its reading-order model, `useGraphLayout` and `useTextWidth` |
 
 The reference canvases live in `src/mocks/data/buildCanvasFixtures.ts` (`PP-MGR-MCK-004`). The components have
@@ -491,12 +491,12 @@ overturnable. The handoff (v1.3, open point 12) asked Murilo to decide Borrow, a
 | D16 | Resume on Build | Optional `lastPhase` on the draft, written on every save as the phase the manager is in; the Console Open adds `&phase=build` for a completed draft whose last phase is Build |
 | D17 | Unsaved check | `planFingerprint` joins the unsaved fingerprint; plan edits never un-complete the mandate |
 | D18 | Unreadable stored plan | The draft is kept and only the plan is dropped (every block is empty in this batch); the Build screen says so with the empty canvas under the message and reports `builder_build_error` (`PLAN_UNREADABLE`) |
-| D19 | Next: Review | Never disabled; ordered checks (empty plan, a block or network no longer in the mandate, a coming-soon block, an empty block, shares over the capital above them), then "Review is not available yet"; each refusal shows an inline notice (`fundBuilder.canvas.review.*`) and reports `builder_build_blocked` (shipped by POO-2157) |
+| D19 | Next: Review | Never disabled; ordered checks (empty plan, a block or network no longer in the mandate, a coming-soon block, an empty block, shares over the capital above them), then persist the applied plan and enter Review (POO-2195); storage failure stays in Build. Each readiness refusal shows an inline notice (`fundBuilder.canvas.review.*`) and reports `builder_build_blocked` (shipped by POO-2157) |
 | D20 | Analytics names | `builder_build_viewed`, `builder_build_started`, `builder_block_added`, `builder_network_added`, `builder_network_removed`, `builder_flow_block_inserted`, `builder_block_removed`, `builder_block_restored`, `builder_build_blocked`, `builder_build_abandoned` and `builder_build_error`; `builder_build_landing_viewed` is retired (shipped by POO-2157, `docs/ANALYTICS_EVENTS.md`). POO-2187 later retired `builder_block_restored` with the Undo toast and added the configuration panel's five events |
 | D21 | Menu popover | The new dependency was NOT approved: the menus use the in-house `AnchoredPopover` behind a narrow interface, so swapping it later touches one file |
 | D22 | Drag | Native pointer events, no library; the menus are the keyboard path |
 | D23 | Grid width | The Build phase uses the full content width (canvas column about 604 against 656 in Figma) |
-| D24 | The Build placeholder | `FundBuildLanding` is deleted (POO-2157); `MandateSummaryCard` is kept for Review and no screen renders it until Review exists |
+| D24 | The Build placeholder | `FundBuildLanding` is deleted (POO-2157); `MandateSummaryCard` is rendered by the Review plan summary (POO-2195) |
 | D25 | Palette | Enabled kinds of the mandate's protocols; Collect fees only with an enabled pool protocol; the column scrolls inside itself past 640 |
 | D26 | Share label of a spoke | Selects nothing (it feeds the Bridge, which is not selectable) |
 | D27 | Invalid and coming-soon cards | Invalid: `destructive` border and caption; coming soon: the "Soon" tag. Both block Next: Review |
@@ -507,21 +507,17 @@ Two readings in code are the coordinator's, not the handoff's: INV5 reads "nothi
 Collect fees" as "a pool, or its Collect fees, ends the chain" (`plan/planInvariants.ts`), and normalisation
 (L4) only ever shifts the graph to the right (`layout/layoutGraph.ts`).
 
-**What is NOT done.** The bodies of the configuration panel: the pool and price range fields and the Aave
-fields (handoff POO-2171, the slices after POO-2187). The panel shell itself is in (POO-2187, `build/panel/`): the
-modes, Use, the Allocation, Max slippage, the status row with Apply changes and its leave guard, and the remove
-confirm; but its kind to body registry is empty, so a selected block shows its head and Remove block only, every
-block a manager adds stays empty and configured blocks exist only in fixtures and stories. So Next: Review refuses
-every plan a manager can build today, and "Review is not available yet" is reachable only for a stored plan whose
-blocks are configured. The Review page (POO-2172). Aave Borrow as coming soon (decided 2026-10-04, see D29; pending slice PA0). Real data for a block: the
-Mandate reads the v4 pools and the Aave reserves from the backend catalog since POO-2133, but the canvas lists
-none of them (the panel will), and it reads no quote for the Swap or the Bridge (POO-2148). The canvas itself calls
-no API and requests no transaction; the launch journey (POO-2177) compiles a stored plan into builder calls. Backend
-drafts (POO-2132, not needed for the buildathon MVP). Mobile (desktop only, per the handoff). What the canvas
-prints that must be verified before a real manager sees it is `docs/COMPLIANCE_REGISTER.md` `CR-MGR-014` to
-`CR-MGR-020`.
+**Delivered configuration and Review.** The registered Uniswap v4 and Aave USDC Supply bodies use
+live catalog data, shared Apply/Discard guards and atomic allocation/configuration writes. Review
+binds the saved fields, balance, upload and launch/resume journey. See the panel and Review sections
+below and the [delivery source map](../../../docs/STRATEGY_BUILDER_DELIVERY_2026-10-04.md).
 
-**Nobody has seen this screen in a browser.** The tests run in jsdom, which has no layout engine, no canvas
+**Remaining scope.** Borrow's coming-soon palette cleanup (PA0) is deferred by the accepted demo
+plan; Borrow cannot pass launch readiness. Swap/Bridge quote previews on the canvas (POO-2148),
+backend drafts (POO-2132), mobile and the existing compliance disclosures remain separate work.
+The canvas itself sends no transaction; the existing launch journey compiles the applied plan.
+
+**Browser verification.** Murilo owns the full journey test for this delivery. Codex has not run it. The automated component tests run in jsdom, which has no layout engine, no canvas
 text measure and no Safari gesture events. The stories exist for every component and for the graph on every
 reference canvas, but no one has opened them next to the Figma frames. The check that the page never scrolls
 sideways because of the graph (A7) is the play function of the `WideGraphNoPageScroll` story; no CI job runs

@@ -406,18 +406,18 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
   fundContracts: {
     key: "fundContracts",
     area: "Fund contracts builder (V2 preview)",
-    // POO-2120, epic POO-2119. Gates TWO things and nothing else: the header's "V1 | V2"
-    // contract-family toggle, and which builder `/manager/new` renders once that toggle says V2.
+    // POO-2120/2175/2195: gates the header toggle, V2 builder selection, fund views and
+    // dedicated fund/launch routes. The builder route itself retains its V1 fallback.
     //
-    // NOT a route gate, and the distinction is the whole design: `/manager/new` ALWAYS resolves.
+    // Not a route gate for `/manager/new`: this builder route always resolves.
     // With this flag off the page renders the live V1 single-pool builder byte-identically, with no
     // skeleton and no delay, so the flag can never 404 the one screen a manager uses to earn. A
     // route gate would have made "is the preview switched on" and "can anyone create a strategy"
     // the same question, which they are not.
     //
     // NOT `isManager` (the manager area ships unflagged in v1, so the role gate is upstream of this
-    // one) and NOT `isMockMode` (the V2 builder persists local drafts and calls no contract; mock
-    // vs real is the drafts store's own seam, see PP-MGR-STO-001).
+    // one) and NOT `isMockMode`: Mandate/Build persist local drafts, while real Review enters
+    // the existing API and wallet launch journey. Mock mode cannot launch a real fund.
     //
     // Ships off in dev and prod alike on a flat baseline. Dev turns it on with
     // `NEXT_PUBLIC_FEATURE_FUND_CONTRACTS=on` in its untracked env file BEFORE the image build,
