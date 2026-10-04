@@ -305,9 +305,15 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     };
     await driver.build(step, journal);
     expect(mocks.swap).toHaveBeenCalledWith(
-      expect.objectContaining({ core, tokenIn: core, tokenOut: manager, maxLossBps: 100 }),
+      expect.objectContaining({
+        core,
+        tokenIn: core,
+        tokenOut: manager,
+        maxLossBps: 100,
+        amountIn: "23760000",
+      }),
     );
-    const plannedSwap = BigInt(mocks.swap.mock.calls.at(-1)?.[0].amountIn);
+    const plannedSwap = BigInt(23760000);
     const swapRemainder = (plannedSwap * BigInt(997)) / BigInt(1000);
     mocks.balances.mockResolvedValue({
       ok: true,
@@ -323,18 +329,36 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     expect(mocks.swap).toHaveBeenLastCalledWith(
       expect.objectContaining({ amountIn: swapRemainder.toString() }),
     );
-    for (const available of [(plannedSwap * BigInt(90)) / BigInt(100), BigInt(0)]) {
+    for (const { available, maxLossBps, succeeds } of [
+      { available: "23760000", maxLossBps: 100, succeeds: true },
+      { available: "23522400", maxLossBps: 50, succeeds: true },
+      { available: "23522399", maxLossBps: 50, succeeds: false },
+      { available: "22572000", maxLossBps: 1000, succeeds: true },
+      { available: "22571999", maxLossBps: 1000, succeeds: false },
+      { available: "21384000", maxLossBps: 100, succeeds: false },
+      { available: "0", maxLossBps: 100, succeeds: false },
+    ]) {
       mocks.balances.mockResolvedValue({
         ok: true,
         data: {
           balancesStatus: "available",
           tokens: [
-            { token: core, unallocatedBalance: available.toString() },
+            { token: core, unallocatedBalance: available },
             { token: manager, unallocatedBalance: "0" },
           ],
         },
       });
-      await expect(driver.build(step, journal)).rejects.toThrow("BALANCE_CHANGED");
+      mocks.swap.mockClear();
+      const boundedStep = { ...step, config: { ...step.config, maxLossBps } };
+      if (succeeds) {
+        await driver.build(boundedStep, journal);
+        expect(mocks.swap).toHaveBeenLastCalledWith(
+          expect.objectContaining({ amountIn: available }),
+        );
+      } else {
+        await expect(driver.build(boundedStep, journal)).rejects.toThrow("BALANCE_CHANGED");
+        expect(mocks.swap).not.toHaveBeenCalled();
+      }
     }
     await expect(driver.build({ ...step, kind: "open" }, journal)).rejects.toThrow(
       "BALANCE_CHANGED",
@@ -381,6 +405,8 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
       error: "BALANCE_CHANGED",
     });
     expect(journal.checkpoints[aave.id]?.data).toBeUndefined();
+    expect(wallet.send).not.toHaveBeenCalled();
+    mocks.open.mockClear();
     mocks.balances.mockResolvedValue({
       ok: true,
       data: {
@@ -394,6 +420,8 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
       expect.objectContaining({ amount: "29.6109", adapter: manager }),
     );
     expect(journal.checkpoints[aave.id]?.status).toBe("waiting");
+    expect(mocks.open).toHaveBeenCalledTimes(1);
+    expect(wallet.send).toHaveBeenCalledTimes(1);
     expect(journal.checkpoints["v4:open"]).toEqual({
       stepId: "v4:open",
       chain: 42161,
