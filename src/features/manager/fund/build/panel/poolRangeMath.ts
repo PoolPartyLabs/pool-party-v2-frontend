@@ -30,9 +30,11 @@
  * - [R6] The split is the estimated value split at the current price from `tokenSplit`, as whole
  *   percentages that sum to 100: one side is 100% outside the range and exactly on a bound (where
  *   the status still reads in range), and Full is 50 / 50.
- * - [R7] The marker sits at (current - min) / (max - min) on the displayed scale, clamped to
- *   [0, 1], or 0.5 for Full. The unclamped ratio is returned beside it, because the handoff lets
- *   the marker leave the range segment and stop at the end of the track.
+ * - [R7] The marker sits at (current - min) / (max - min) on the displayed scale: `position` is
+ *   that value clamped to [0, 1], `ratio` the same value unclamped, and both are 0.5 for Full. The
+ *   handoff's bar lets the marker leave the range segment and stop at the end of the track, so
+ *   the panel draws it from `ratio`: x = clamp(segmentStart + ratio * segmentWidth, 0,
+ *   trackWidth). `position` stops at the ends of the segment and cannot draw that bar.
  * - [R8] Inverting the quote flips only `displayInverted`; display values come through
  *   `invertPrice.ts` (`toDisplayBounds`, `toCanonicalBounds`, `invert`).
  * - [R9] Reused unchanged: `invertPrice.ts`, `rangeMath.ts` `tokenSplit`, `rangeStatus.ts`
@@ -126,11 +128,21 @@ export interface RangeSplit {
   quotePct: number;
 }
 
-/** Where the current price marker sits along the displayed range (R7). */
+/**
+ * Where the current price marker sits along the displayed range (R7). The panel's bar draws it
+ * from `ratio`, so out of range it leaves the segment and stops at the end of the track.
+ */
 export interface RangeMarker {
-  /** (current - min) / (max - min), clamped to [0, 1]; 0.5 for Full. */
+  /**
+   * (current - min) / (max - min), clamped to [0, 1]; 0.5 for Full. Only for a bar that keeps the
+   * marker inside the range segment: it stops at the segment's ends, never at the track's.
+   */
   position: number;
-  /** The same ratio before the clamp: under 0 below the range, over 1 above it. */
+  /**
+   * The same value before the clamp: under 0 below the range, over 1 above it; 0.5 for Full. The
+   * panel's bar uses this one: x = clamp(segmentStart + ratio * segmentWidth, 0, trackWidth), which
+   * puts the marker at the end of the track once the price is far enough out of range.
+   */
   ratio: number;
 }
 
@@ -413,7 +425,8 @@ export function rangeSplit(range: PoolRange, pool: LivePoolGrid): RangeSplit | n
 
 /**
  * Where the current price marker sits on the displayed range (R7). Null while the current price is
- * unknown; centred for Full.
+ * unknown; centred for Full. Draw the panel's bar from `ratio`, not `position`: out of range the
+ * handoff's marker leaves the segment and stops at the end of the track (see {@link RangeMarker}).
  */
 export function rangeMarker(range: PoolRange, pool: LivePoolGrid): RangeMarker | null {
   if (range.fullRange) return { position: 0.5, ratio: 0.5 };
