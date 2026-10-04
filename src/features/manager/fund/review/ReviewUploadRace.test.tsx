@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-CMP-077 (POO-2195)
+ * @id PP-MGR-HOK-018 (POO-2195)
  * @name ReviewUploadRace.test
  * @implements-rules-version v1
  * @analytics-events none: regression at the existing upload persistence seam.
@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from "vitest";
 import { hubSupplyPlan, makeTestDraft } from "../build/plan/planTestKit";
 import { useV2ReviewDraft } from "../launch/useV2ReviewDraft";
 import { buildMandateCatalog } from "../mandateCatalog";
-import { getDraft, upsertDraft } from "../mandateDraftStore";
+import { deleteDraft, getDraft, upsertDraft } from "../mandateDraftStore";
 
 const reviewStoryKit = {
   name: "Arbitrum stable strategy",
@@ -34,6 +34,59 @@ vi.mock("../launch/useV2LaunchWallet", () => ({
 }));
 vi.mock("../v2Mandate", () => ({ toV2MandateSelection: () => ({}) }));
 describe("logo persistence while editing [R1]", () => {
+  it("persists a logo as the first Review edit of an existing draft", async () => {
+    localStorage.clear();
+    const draft = { ...makeTestDraft(), id: "upload-first", plan: hubSupplyPlan() };
+    upsertDraft(draft);
+    mocks.upload.mockResolvedValue("https://cdn.test/first.png");
+    const { result } = renderHook(() => useV2ReviewDraft("upload-first"));
+    expect(getDraft("upload-first")?.review).toBeUndefined();
+    await act(async () => {
+      await result.current.uploadLogo(new File(["png"], "logo.png", { type: "image/png" }));
+    });
+    expect(getDraft("upload-first")?.review).toMatchObject({
+      name: draft.name,
+      imageUrl: "https://cdn.test/first.png",
+      seed: "100",
+    });
+    expect(result.current.launchBlockers.some((item) => item.code === "STORAGE_UNAVAILABLE")).toBe(
+      false,
+    );
+  });
+  it("does not recreate a draft deleted while upload is pending", async () => {
+    localStorage.clear();
+    upsertDraft({
+      ...makeTestDraft(),
+      id: "upload-deleted",
+      plan: hubSupplyPlan(),
+      review: reviewStoryKit,
+    });
+    let resolve: (url: string) => void = () => {};
+    mocks.upload.mockImplementation(
+      () =>
+        new Promise<string>((done) => {
+          resolve = done;
+        }),
+    );
+    const { result } = renderHook(() => useV2ReviewDraft("upload-deleted"));
+    let pending: Promise<string> | undefined;
+    act(() => {
+      pending = result.current.uploadLogo(new File(["png"], "logo.png", { type: "image/png" }));
+    });
+    act(() => {
+      deleteDraft("upload-deleted");
+    });
+    await act(async () => {
+      resolve("https://cdn.test/new.png");
+      await pending;
+    });
+    expect(getDraft("upload-deleted")).toBeNull();
+    expect(result.current.isReady).toBe(false);
+    expect(result.current.launchBlockers).toContainEqual({
+      code: "STORAGE_UNAVAILABLE",
+      messageKey: "fundLaunch.walletOrJournal",
+    });
+  });
   it("retains concurrent name and seed edits when the upload finishes", async () => {
     localStorage.clear();
     upsertDraft({
