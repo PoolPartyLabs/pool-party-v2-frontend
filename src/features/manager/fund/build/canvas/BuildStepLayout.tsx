@@ -1,12 +1,12 @@
 /**
  * @id PP-MGR-CMP-045
  * @name BuildStepLayout
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2152 and POO-2202 rules v1)
  * @analytics-events none, the layout reports presses through its props; the Build screen
  *   (PP-MGR-SCR-002, S7) decides what a press meant and owns every event
  *
  * The frame of the fund builder's Build step (handoff v1.2 [AN2], [AN3], [AN4]): the heading and
- * subtitle, the three-column grid (palette 220, canvas flexible, panel 360, gap 24, 640 high) and the
+ * subtitle, the three-column grid (palette 220, canvas flexible, panel 360, gap 24, at least 640 high) and the
  * sticky Back / Next bar. It owns no state: the palette, the canvas and the panel arrive as nodes.
  *
  * Decisions worth stating:
@@ -21,7 +21,8 @@
  *    answers it with the inline `notice` (S7 owns the checks and their copy).
  * 3. **The canvas column can shrink, the panel column hugs its content.** `minmax(0, 1fr)` plus
  *    `min-w-0` lets the canvas give way on a narrow content column instead of pushing the page
- *    sideways (A7); the panel is top aligned so its frame never stretches to the 640 of the grid.
+ *    sideways (A7). The canvas stays 640 high; the top-aligned panel reserves its full intrinsic
+ *    height in the grid (POO-2202), including leave notices and errors, above the navigation bar.
  * 4. **The title is an H2 in the H3 style.** The shell already renders the page's H1, so the step
  *    is the next level in the outline; visually it is the app's Heading/H3, as the Mandate's step
  *    title is.
@@ -68,10 +69,10 @@ export function BuildStepLayout({
 
       <div
         data-build-grid=""
-        className="grid h-[640px] grid-cols-[220px_minmax(0,1fr)_360px] gap-6"
+        className="grid min-h-[640px] grid-cols-[220px_minmax(0,1fr)_360px] gap-6"
       >
         <div className="min-h-0">{palette}</div>
-        <div className="min-h-0 min-w-0">{canvas}</div>
+        <div className="h-[640px] min-h-0 min-w-0 self-start">{canvas}</div>
         <div className="self-start">{panel}</div>
       </div>
 

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-045
  * @name BuildStepLayout tests
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2152 and POO-2202 rules v1)
  * @analytics-events none, the layout reports presses through its props; the Build screen
  *   (PP-MGR-SCR-002, S7) owns every event
  *
@@ -68,12 +68,17 @@ describe("BuildStepLayout: heading", () => {
 
 describe("BuildStepLayout: grid", () => {
   // @rule AN3
-  it("[AN3] lays palette, canvas and panel in a 220 / flexible / 360 grid, gap 24, 640 high", () => {
+  it("[AN3] lays palette, canvas and panel in a 220 / flexible / 360 grid, gap 24, at least 640 high", () => {
     const { container } = renderLayout();
 
     const grid = container.querySelector<HTMLElement>("[data-build-grid]");
     expect(grid).not.toBeNull();
-    for (const token of ["grid", "grid-cols-[220px_minmax(0,1fr)_360px]", "gap-6", "h-[640px]"]) {
+    for (const token of [
+      "grid",
+      "grid-cols-[220px_minmax(0,1fr)_360px]",
+      "gap-6",
+      "min-h-[640px]",
+    ]) {
       expect(grid?.className).toContain(token);
     }
     const columns = Array.from(grid?.children ?? []);
@@ -90,6 +95,23 @@ describe("BuildStepLayout: grid", () => {
     const columns = Array.from(container.querySelector("[data-build-grid]")?.children ?? []);
     expect(columns[2]?.className).toContain("self-start");
     expect(columns[1]?.className).toContain("min-w-0");
+  });
+});
+
+describe("BuildStepLayout: expanding configuration panel (POO-2202)", () => {
+  // @rule R1, R2: intrinsic panel content must reserve space before navigation,
+  // while the canvas retains its intended 640px viewport. JSDOM has no layout
+  // engine, so this guards the CSS sizing contract rather than fake rectangles.
+  it("reserves the panel's full height above navigation without growing the canvas", () => {
+    const { container } = renderLayout();
+    const grid = container.querySelector<HTMLElement>("[data-build-grid]");
+    const canvasColumn = grid?.children[1];
+    expect(grid).toHaveClass("min-h-[640px]");
+    expect(grid).not.toHaveClass("h-[640px]");
+    expect(canvasColumn).toHaveClass("h-[640px]", "self-start");
+    expect(
+      (grid?.compareDocumentPosition(bar(container)) ?? 0) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });
 
