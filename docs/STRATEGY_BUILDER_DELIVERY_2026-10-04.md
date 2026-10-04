@@ -1,6 +1,7 @@
 # Strategy Builder delivery, 2026-10-04
 
-Scope: POO-2116, Build panels POO-2171, Review POO-2172 and integration POO-2196.
+Scope: POO-2116, Build panels POO-2171, Review POO-2172, integration POO-2196 and
+the Limits follow-up POO-2197 (rules v2).
 This document records the code delivery for the hackathon. Browser acceptance is owned by Murilo.
 
 ## Entry and supported path
@@ -15,6 +16,8 @@ not by itself prove that host runs the merged revision.
 The supported alpha path is Mandate -> Build -> Review -> the existing launch journey:
 
 1. Complete the mandate with Arbitrum, optionally Robinhood Chain, and the intended tokens/pools.
+   Limits requires USDC plus another token with a positive allowance. No cap counts; an unset or
+   explicit 0% token does not. Moving a Limits slider to 100% selects No cap and hides that slider.
 2. In Build, add Uniswap v4 pool positions on either supported network and/or Aave USDC Supply on
    Arbitrum. Choose the catalog item, assign positive allocation and apply each panel's changes.
 3. Confirm the plan's allocations and readiness. Next: Review persists Build before changing phase;
@@ -55,8 +58,11 @@ temporary fallback `/manager/fund-launch/review/[draftId]` remains available wit
 - Review's launch CTA prevents repeat entry, shows blockers, and resumes an existing journey.
 - Build completion analytics fire after successful persistence. Launch completion remains owned by
   the existing settlement path, with no duplicate completion event in the new Review.
+- Limits validates the minimum positive token allowance in both catalog modes. The mandatory
+  deposit asset counts once; another network's mandatory deposit entry alone does not satisfy the
+  second-token requirement. Existing drafts must meet the rule when continuing the builder.
 
-## Limits and ownership
+## Delivery boundaries and ownership
 
 No authenticated live API smoke was performed in this delivery session: suitable credentials were
 not present in the relevant checkouts. The specification/code audit found coverage for required
