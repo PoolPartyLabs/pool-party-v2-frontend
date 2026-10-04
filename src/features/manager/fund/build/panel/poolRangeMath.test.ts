@@ -95,6 +95,16 @@ function expectValid(range: PoolRange, grid: PoolGrid): void {
   }
 }
 
+/**
+ * A snapped price is within half a spacing plus one tick of the price it was asked for: the
+ * typed-price snap floors the tick (less than one tick) and then rounds it to the spacing (at most
+ * half a spacing). Measured in ticks, so a reciprocal (an inverted display) reads the same.
+ */
+function expectWithinSnap(actual: number, wanted: number, grid: PoolGrid, label: string): void {
+  const ticksAway = Math.abs(Math.log(actual / wanted) / Math.log(1.0001));
+  expect(ticksAway, label).toBeLessThanOrEqual(grid.tickSpacing / 2 + 1);
+}
+
 /** A range from two ticks, never full, for the cases a preset cannot reach. */
 function ticks(tickLower: number, tickUpper: number, displayInverted = false): PoolRange {
   return { tickLower, tickUpper, fullRange: false, displayInverted };
@@ -237,10 +247,18 @@ describe("currentPoolPrice", () => {
 });
 
 describe("presets", () => {
-  it("offers ±5%, ±10% and ±20% beside Full, with ±10% as the default", () => {
+  it("uses V1's presets beside Full, ±10% by default, each one wider than the one before", () => {
     // @rule R1
     expect(RANGE_PRESETS).toEqual([5, 10, 20]);
+    expect(RANGE_PRESETS).toContain(DEFAULT_RANGE_PRESET);
     expect(DEFAULT_RANGE_PRESET).toBe(10);
+    const widths = RANGE_PRESETS.map((pct) => {
+      const range = presetRange(WETH_USDC, pct) as PoolRange;
+      return range.tickUpper - range.tickLower;
+    });
+    for (let i = 1; i < widths.length; i += 1) {
+      expect(widths[i]).toBeGreaterThan(widths[i - 1] ?? Number.POSITIVE_INFINITY);
+    }
   });
 
   it("takes ±pct around the current price and snaps it to usable ticks of the pool", () => {
@@ -251,11 +269,8 @@ describe("presets", () => {
       expect(range.fullRange).toBe(false);
       expect(range.displayInverted).toBe(false);
       const shown = displayBounds(range, WETH_USDC);
-      const oneSpacing = 1.0001 ** WETH_USDC.tickSpacing;
-      expect(shown.min / (3050 * (1 - pct / 100))).toBeGreaterThan(1 / oneSpacing);
-      expect(shown.min / (3050 * (1 - pct / 100))).toBeLessThan(oneSpacing);
-      expect(shown.max / (3050 * (1 + pct / 100))).toBeGreaterThan(1 / oneSpacing);
-      expect(shown.max / (3050 * (1 + pct / 100))).toBeLessThan(oneSpacing);
+      expectWithinSnap(shown.min, 3050 * (1 - pct / 100), WETH_USDC, `±${pct} min`);
+      expectWithinSnap(shown.max, 3050 * (1 + pct / 100), WETH_USDC, `±${pct} max`);
     }
   });
 
@@ -270,8 +285,8 @@ describe("presets", () => {
     ]);
     // Inverted, the band is ±10% around 1 / 3050 as the manager reads it.
     const shown = displayBounds(inverted, WETH_USDC);
-    expect(shown.min).toBeCloseTo((1 / 3050) * 0.9, 6);
-    expect(shown.max).toBeCloseTo((1 / 3050) * 1.1, 6);
+    expectWithinSnap(shown.min, (1 / 3050) * 0.9, WETH_USDC, "inverted min");
+    expectWithinSnap(shown.max, (1 / 3050) * 1.1, WETH_USDC, "inverted max");
   });
 
   it("works from the current tick alone", () => {
@@ -661,7 +676,7 @@ describe("typed bounds", () => {
     // The displayed Min is the canonical upper bound, at 1 / 0.0003.
     expect(next.tickLower).toBe(start.tickLower);
     expect(next.tickUpper).toBe(Math.round(Math.floor(priceToTick(1 / 0.0003, 18, 6)) / 10) * 10);
-    expect(displayBounds(next, WETH_USDC).min).toBeCloseTo(0.0003, 6);
+    expectWithinSnap(displayBounds(next, WETH_USDC).min, 0.0003, WETH_USDC, "typed 0.0003");
   });
 
   it("leave the range as it was when the field is empty, zero or not a number", () => {
@@ -775,22 +790,25 @@ describe("inversion", () => {
     expect(flipped?.quotePct).toBe(split?.basePct);
   });
 
-  it("is symmetric for presets: the band read inverted mirrors the band of the mirrored pool", () => {
-    // @rule R1, R8 (same decimals, so the mirrored pool's ticks are the negated ones)
-    const stable: LivePoolGrid = {
-      decimals0: 6,
-      decimals1: 6,
-      tickSpacing: 10,
-      currentPrice: 1.0003,
-    };
-    const mirrored: LivePoolGrid = { ...stable, currentPrice: 1 / 1.0003 };
-    for (const pct of RANGE_PRESETS) {
-      const read = presetRange(stable, pct, true) as PoolRange;
-      const mirror = presetRange(mirrored, pct, false) as PoolRange;
-      // The typed-price snap floors before it rounds (V1, POO-319), so a mirror may sit one
-      // spacing away, never more.
-      expect(Math.abs(-read.tickUpper - mirror.tickLower), `±${pct}`).toBeLessThanOrEqual(10);
-      expect(Math.abs(-read.tickLower - mirror.tickUpper), `±${pct}`).toBeLessThanOrEqual(10);
+  it("lands a preset read inverted on the exact mirror of the mirrored pool's preset", () => {
+    // @rule R1, R8 (the mirrored pool swaps the tokens, so its ticks are the negated ones)
+    const pairs: Array<[LivePoolGrid, LivePoolGrid]> = [
+      [
+        { decimals0: 6, decimals1: 6, tickSpacing: 10, currentPrice: 1.0003 },
+        { decimals0: 6, decimals1: 6, tickSpacing: 10, currentPrice: 1 / 1.0003 },
+      ],
+      [WETH_USDC, { decimals0: 6, decimals1: 18, tickSpacing: 10, currentPrice: 1 / 3050 }],
+    ];
+    for (const [pool, mirroredPool] of pairs) {
+      for (const pct of RANGE_PRESETS) {
+        const read = presetRange(pool, pct, true) as PoolRange;
+        const mirror = presetRange(mirroredPool, pct, false) as PoolRange;
+        // On an even spacing, flooring a tick and its negation and then rounding half up lands
+        // on mirrored usable ticks, so the mirror is exact, not one spacing off.
+        const label = `token0 decimals ${pool.decimals0} ±${pct}`;
+        expect(mirror.tickLower + read.tickUpper, label).toBe(0);
+        expect(mirror.tickUpper + read.tickLower, label).toBe(0);
+      }
     }
   });
 });
@@ -1089,17 +1107,25 @@ describe("Full", () => {
 });
 
 describe("numbers, not text", () => {
-  it("returns plain numbers for every value the panel shows, for the UI to format", () => {
-    // @rule R11
-    const range = presetRange(WETH_USDC, 10) as PoolRange;
-    const values = [
-      ...Object.values(displayBounds(range, WETH_USDC)),
-      ...Object.values(rangeSplit(range, WETH_USDC) ?? {}),
-      ...Object.values(rangeMarker(range, WETH_USDC) ?? {}),
-      range.tickLower,
-      range.tickUpper,
-    ];
-    for (const value of values) expect(typeof value).toBe("number");
+  it("returns finite numbers for every value the panel shows, leaving the text to the UI", () => {
+    // @rule R11 (no NaN or infinity reaches a field; only Full shows infinity, by design)
+    for (const spacing of [1, 10, 200]) {
+      for (const inverted of [false, true]) {
+        const pool: LivePoolGrid = { ...WETH_USDC, tickSpacing: spacing };
+        const range = presetRange(pool, 10, inverted) as PoolRange;
+        const values = [
+          ...Object.values(displayBounds(range, pool)),
+          ...Object.values(rangeSplit(range, pool) ?? { missing: Number.NaN }),
+          ...Object.values(rangeMarker(range, pool) ?? { missing: Number.NaN }),
+          range.tickLower,
+          range.tickUpper,
+        ];
+        expect(values).toHaveLength(10);
+        for (const value of values) {
+          expect(Number.isFinite(value), `spacing ${spacing} inverted ${inverted}`).toBe(true);
+        }
+      }
+    }
   });
 
   it("never stores a negative zero tick", () => {
