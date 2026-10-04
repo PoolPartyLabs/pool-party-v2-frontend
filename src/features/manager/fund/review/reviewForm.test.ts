@@ -332,8 +332,8 @@ describe("reviewReasons: the first reason in screen order [R9]", () => {
       "logoUploading",
       "performanceFee",
       "managementFee",
-      "instantFee",
       "minimum",
+      "instantFee",
       "seedOverBalance",
       "build",
     ]);
@@ -343,8 +343,8 @@ describe("reviewReasons: the first reason in screen order [R9]", () => {
       "imageUrl",
       "performanceFeeBps",
       "managementFeeBps",
-      "payoutFeeBps",
       "minimum",
+      "payoutFeeBps",
       "seed",
       "build",
     ]);
