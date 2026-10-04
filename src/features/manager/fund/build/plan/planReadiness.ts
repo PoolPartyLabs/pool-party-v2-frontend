@@ -138,7 +138,7 @@ function swapWithoutPool(chain: Chain): string | null {
   if (chain.steps.some((step) => step.family === "position" && isPoolKind(step.kind))) return null;
   const index = chain.steps.findIndex((step) => step.family === "flow" && step.kind === "swap");
   const swap = chain.steps[index];
-  if (!swap || swap.family !== "flow") return null;
+  if (swap?.family !== "flow") return null;
   const fed = chain.steps[index + 1];
   return swap.auto && fed ? fed.id : swap.id;
 }
