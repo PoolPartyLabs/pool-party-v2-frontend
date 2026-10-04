@@ -227,7 +227,7 @@ export interface MandateDraft {
    * How many pools the Pools step found with at least one mandate token on the selected networks
    * the last time it searched (R35), or null before any search. The Broad mandate flag (R13) is
    * derived against it ({@link isBroadMandate}); it is kept on the draft so a completed draft that
-   * is resumed on the Build landing can still raise the flag without re-running the search.
+   * is resumed later can still raise the flag on Review without re-running the search.
    *
    * Published by the Pools step and written by the shell. Reducers here never SET it, but every
    * reducer that actually moves the networks, the protocols or the tokens clears it back to null,
@@ -544,7 +544,7 @@ export function validateStep(
  * `draft.poolUniverseCount ?? 0`), and an unknown universe never raises a flag an investor will see.
  *
  * PP-NOTE: say the consequence plainly. Every reducer that moves the networks, the protocols or the
- * tokens clears the count, and the manager can then reach the Build landing without walking through
+ * tokens clears the count, and the manager can then reach the Build canvas without walking through
  * Pools again, so a mandate completed that way shows NO Broad flag even when it is in fact broad.
  * That is the safe direction for this draft screen (a missing flag here misinforms nobody; a wrong
  * one would) but it is NOT safe at launch: the launch path has to re-measure the universe before an

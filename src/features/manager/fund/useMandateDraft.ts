@@ -143,7 +143,7 @@ export function useMandateDraft(draftId?: string): UseMandateDraftResult {
         // The completion stamp rides on THIS write and is committed to state only when the write
         // landed. A `completedAt` set before the save survives a failed one, and the draft then
         // claims a mandate nothing recorded: no `builder_mandate_completed` fired for it, yet the
-        // next Save & exit persists it as finished and a `?phase=build` link opens its Build landing.
+        // next Save & exit persists it as finished and a `?phase=build` link opens its canvas.
         // The first stamp wins, so re-saving a completed mandate does not move its completion time.
         completedAt: options?.complete ? (current.completedAt ?? now) : current.completedAt,
       };

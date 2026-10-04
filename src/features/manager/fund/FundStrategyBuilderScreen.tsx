@@ -351,7 +351,7 @@ export function FundStrategyBuilderScreen() {
    * how people learn to ignore notices.
    *
    * **A completed mandate that is edited is open again.** `completedAt` is what makes the Build
-   * landing reachable and what a `?phase=build` link trusts, so a cap moved after the mandate closed
+   * canvas reachable and what a `?phase=build` link trusts, so a cap moved after the mandate closed
    * has to take it back; the next Next through Limits closes it again, and that Next is a write,
    * which is what a completion is. Only the five SELECTIONS count, through
    * `selectionFingerprint`: moving between steps is not an edit, and counting `lastStep` here would
