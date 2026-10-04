@@ -234,11 +234,17 @@ describe("useBuildCanvas: Add network (I2, I7)", () => {
     // @rule D5
     const empty = await mount(emptySpokePlan());
     act(() => empty.result.current.canvas.removeSpoke("robinhood"));
+    expect(empty.result.current.buildPlan.plan).toEqual(emptySpokePlan());
+    act(() => empty.result.current.canvas.cancelRemove());
+    expect(empty.result.current.buildPlan.plan).toEqual(emptySpokePlan());
+    act(() => empty.result.current.canvas.removeSpoke("robinhood"));
+    act(() => empty.result.current.canvas.confirmRemove());
     expect(empty.result.current.buildPlan.plan.spokes).toEqual([]);
     expect(empty.events).toEqual([{ type: "networkRemoved", network: "robinhood" }]);
 
     const full = await mount(spokePoolPlan());
     act(() => full.result.current.canvas.removeSpoke("robinhood"));
+    act(() => full.result.current.canvas.confirmRemove());
     expect(full.result.current.buildPlan.plan).toEqual(spokePoolPlan());
     expect(full.events).toEqual([{ type: "blocked", reason: "spoke_not_empty" }]);
   });
@@ -449,15 +455,31 @@ describe("useBuildCanvas: remove (I6, P10, DP11)", () => {
     expect(events).toEqual([]);
   });
 
-  it("[P10] the confirm closes when another block is selected", async () => {
+  it("[POO-2210] a remove request targets the requested block independently of selection", async () => {
     // @rule P10
     const { result } = await mount(supplyBorrowPlan());
     press(result, { kind: "block", blockId: "hub-aave-supply" });
     act(() => result.current.canvas.requestRemove("hub-aave-supply"));
     press(result, { kind: "block", blockId: "hub-aave-borrow" });
-    expect(result.current.canvas.removeConfirmId).toBeNull();
+    expect(result.current.canvas.removeConfirmId).toBe("hub-aave-supply");
+    act(() => result.current.canvas.cancelRemove());
     press(result, { kind: "block", blockId: "hub-aave-supply" });
     expect(result.current.canvas.removeConfirmId).toBeNull();
+  });
+
+  it("[POO-2210] removing an unselected leaf preserves the selected block's pending draft", async () => {
+    const beforeRemove = vi.fn();
+    const { result } = await mount(supplyBorrowPlan(), {}, { beforeRemove });
+    press(result, { kind: "block", blockId: "hub-aave-supply" });
+    act(() => result.current.canvas.requestRemove("hub-aave-borrow"));
+    act(() => result.current.canvas.confirmRemove());
+    expect(beforeRemove).not.toHaveBeenCalled();
+    expect(result.current.selection.selectedId).toBe("hub-aave-supply");
+    expect(
+      result.current.buildPlan.plan.hub.chains[0]?.steps.some(
+        (step) => step.id === "hub-aave-borrow",
+      ),
+    ).toBe(false);
   });
 
   it("removes nothing when a guard still refuses to let the selection go", async () => {

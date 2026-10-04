@@ -70,3 +70,8 @@ paragraph used the same Aave reserve snapshot as SupplyBlockPanel; CR-MGR-024 re
 ## Verification record: pools with deferred allocation
 
 2026-10-04, POO-2204, PP-MGR-CMP-069: zero allocation preserves the pool's immutable permission without opening a position or routing funds to it at launch. Range estimates are hidden until the manager allocates capital; positive allocations still require current eligibility and range checks. Verify that later management offers the operation when capital is allocated. This fix makes no claim that a position already exists or earns yield at 0%. Existing venue/range disclosures and custody questions remain open. A wholly idle launch retains its previous restriction pending Murilo's decision.
+
+
+## Verification record: automatic fee block and confirmed removal
+
+2026-10-04, POO-2210, PP-MGR-LIB-021 / PP-MGR-SCR-002: applying a newly selected pool includes the existing Collect fees step. This changes the draft composition, not fee rates, collection permissions or transaction consent. Verify that managers can see and remove the step before launch. Every user-block and empty-spoke removal now asks in a modal and names the real allocation/cascade effect; cancel preserves the plan. Unrelated panel drafts survive removal. No new asset, venue, custody or return claim is introduced. Existing fee/routing disclosures remain applicable and unresolved entries are unchanged.

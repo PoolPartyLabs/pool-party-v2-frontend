@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-021
  * @name planReducers
- * @implements-rules-version v1 (POO-2151 rules v1)
+ * @implements-rules-version v1 (POO-2151 rules v1; POO-2210 rules v1)
  * @analytics-events none, a pure domain module. A refusal returns `{ blocked }` and the Build
  *   screen (PP-MGR-SCR-002, slice S7) reports it as `builder_build_blocked`.
  *
@@ -517,7 +517,24 @@ export function applyBlockConfig(
     if (!Number.isInteger(sharePct) || sharePct < 0) return blocked("unknown_target", blockId);
   }
   const chainId = found.chain.id;
-  const configured = setBlockConfig(plan, ctx, blockId, config);
+  const previousPool = isPoolKind(found.block.kind)
+    ? (found.block.config as PoolBlockConfig | null)?.poolId
+    : undefined;
+  const nextPool = isPoolKind(found.block.kind)
+    ? (config as PoolBlockConfig | null)?.poolId
+    : undefined;
+  const configured = then(setBlockConfig(plan, ctx, blockId, config), (current) => {
+    if (!nextPool || previousPool?.toLowerCase() === nextPool.toLowerCase()) return current;
+    const selected = findBlock(current, blockId);
+    const below = selected?.chain.steps[(selected?.index ?? 0) + 1];
+    if (below?.kind === "collectFees") return current;
+    return insertAt(
+      current,
+      ctx,
+      { blockId, side: "after" },
+      { family: "flow", kind: "collectFees" },
+    );
+  });
   if (sharePct === undefined) return configured;
   return then(configured, (current) => {
     const spoke = current.spokes.find((s) => s.chains.some((chain) => chain.id === chainId));
