@@ -188,6 +188,8 @@ export function PanelSelect({
     const move = moves[event.key];
     if (!move) return;
     event.preventDefault();
+    // The key belongs to the list: an Escape here must not also close the canvas's confirm or menu.
+    event.stopPropagation();
     move();
   };
 

@@ -124,7 +124,7 @@ describe("samePanelValues and changedFields (P5)", () => {
     expect(samePanelValues(applied, { config, sharePct: 55 })).toBe(false);
     expect(
       changedFields(applied, {
-        config: { ...config, tickLower: config.tickLower - 10, slippagePct: 1 },
+        config: { ...config, tickLower: (config.tickLower ?? 0) - 10, slippagePct: 1 },
         sharePct: 50,
       }),
     ).toEqual(["range", "slippage", "allocation"]);

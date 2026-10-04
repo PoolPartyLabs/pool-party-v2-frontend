@@ -805,7 +805,7 @@ function clickBackground(): void {
 }
 
 /** Every way out of a block or of the step (P6): how to take it, and how to see it was taken. */
-const EXITS: Array<[string, () => Promise<void>, () => Promise<void>]> = [
+const EXITS: Array<[string, () => Promise<unknown>, () => Promise<unknown>]> = [
   [
     "another block",
     async () => userEvent.click(card(/^WETH \/ USDC, .*20% of the capital/)),

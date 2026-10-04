@@ -34,14 +34,14 @@
 "use client";
 
 import { useLocale } from "next-intl";
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils/cn";
 import { BlockMark } from "../blocks/BlockMark";
 import { describeBlock, describePanelHead, shareNumber } from "../blocks/blockRegistry";
 import type { MenuContext } from "../blocks/menuModels";
 import type { MandateEditStep } from "../blocks/useBuildCanvas";
-import { Explained } from "../pieces/pieceParts";
 import {
   type AllocationCeiling,
   type AllocationCeilingReason,
@@ -85,6 +85,49 @@ export interface BlockPanelProps {
   onLimitHit(kind: BlockKind, reason: AllocationCeilingReason): void;
   /** The kind to body registry: the app's by default, fixtures in stories and tests. */
   bodies?: PanelBodies;
+}
+
+/**
+ * [P2, C5] The network chip of the head: read only, so it is not a button, but a keyboard reaches its
+ * tooltip (the canvas's focus policy for an element that only explains itself). The sentence wraps
+ * (the app Tooltip's `max-w-xs`): it is too long for the canvas's one-line tooltip.
+ */
+function NetworkChip({
+  network,
+  name,
+  tooltip,
+}: {
+  network: string;
+  name: string;
+  tooltip: string;
+}) {
+  const descriptionId = useId();
+  return (
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild aria-describedby={descriptionId}>
+          <span
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: the canvas's focus policy (POO-2154): a tab stop for its tooltip (P2), not announced as a button doing nothing.
+            tabIndex={0}
+            data-network-chip=""
+            className={cn(
+              "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface-raised py-1 pr-2.5 pl-1",
+              PANEL_FOCUS_RING,
+            )}
+          >
+            <BlockMark logo="network" markId={network} name={name} size={20} />
+            <span className="text-foreground text-xs">{name}</span>
+          </span>
+        </TooltipTrigger>
+        <span id={descriptionId} hidden>
+          {tooltip}
+        </span>
+        <TooltipContent side="top" className="max-w-xs">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 }
 
 /** A body for any config shape: the registry types each kind's own, the shell holds the union. */
@@ -286,14 +329,11 @@ export function BlockPanel({
           <p className="truncate font-semibold text-base text-foreground">{head.protocolName}</p>
           <p className="truncate text-muted-foreground text-xs">{head.blockType}</p>
         </div>
-        <Explained
+        <NetworkChip
+          network={head.network}
+          name={head.networkName}
           tooltip={copy.networkTooltip(head.networkName)}
-          data-network-chip=""
-          className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface-raised py-1 pr-2.5 pl-1"
-        >
-          <BlockMark logo="network" markId={head.network} name={head.networkName} size={20} />
-          <span className="text-foreground text-xs">{head.networkName}</span>
-        </Explained>
+        />
       </div>
 
       {mode === "pick" && definition ? (
