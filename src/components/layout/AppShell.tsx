@@ -39,7 +39,6 @@ import {
   TrendingUp,
   User,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { LocaleSwitcher } from "@/components/ui/LocaleSwitcher";
@@ -57,6 +56,7 @@ import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import { isMockMode } from "@/lib/services";
 import { cn } from "@/lib/utils/cn";
 import { AppFooter } from "./AppFooter";
+import { BuildShellLayoutContext } from "./BuildShellLayout";
 import { ContractFamilyToggle } from "./ContractFamilyToggle";
 import { DevMenu } from "./DevMenu";
 import { GuardedLink } from "./GuardedLink";
@@ -271,8 +271,8 @@ export function AppShell({ children, className }: AppShellProps) {
   const managerLoading = !isMockMode && realIsManagerLoading;
   // Collapsed sidebar is a simple, non-sensitive UI preference — fine in localStorage (POO-283 R2).
   const [savedCollapsed, setCollapsed] = usePersistentState<boolean>("pp.sidebar.collapsed", false);
-  const searchParams = useSearchParams();
-  const buildArea = pathname === "/manager/new" && searchParams.get("phase") === "build";
+  const [effectiveBuild, setEffectiveBuild] = useState(false);
+  const buildArea = pathname === "/manager/new" && effectiveBuild;
   const collapsed = buildArea || savedCollapsed;
 
   // Literal t() calls per key (the i18n usage scan is static — no dynamic keys).
@@ -425,7 +425,9 @@ export function AppShell({ children, className }: AppShellProps) {
                 operation. Renders nothing unless the connected wallet actually has a route in
                 flight, which is every load but a handful. */}
             <FundingRecoveryBanner />
-            {children}
+            <BuildShellLayoutContext.Provider value={setEffectiveBuild}>
+              {children}
+            </BuildShellLayoutContext.Provider>
           </div>
         </main>
 
