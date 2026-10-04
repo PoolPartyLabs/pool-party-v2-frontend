@@ -29,6 +29,182 @@ const setup = () => {
 };
 
 describe("launch checkpoint state machine [R3, R6]", () => {
+  it("persists the submitted hash before signature analytics can throw", async () => {
+    const { journal, storage, driver } = setup();
+    vi.mocked(driver.send).mockImplementation(async (_step, _transaction, onSubmitted) => {
+      onSubmitted?.("0xhash");
+      expect(loadJournal(storage, "draft", "0xManager")?.checkpoints.create).toMatchObject({
+        status: "submitted",
+        txHash: "0xhash",
+        receiptStatus: "unknown",
+        submissionAttempted: true,
+      });
+      throw new Error("ANALYTICS_FAILED");
+    });
+    await runLaunch(journal, storage, driver);
+    const recovered = loadJournal(storage, "draft", "0xManager");
+    if (!recovered) throw new Error("missing journal");
+    await runLaunch(recovered, storage, driver, undefined, undefined, 1);
+    expect(driver.send).toHaveBeenCalledTimes(1);
+    expect(recovered.checkpoints.create?.status).toBe("confirmed");
+  });
+  it("persists a hash returned after cancellation without querying receipts", async () => {
+    const { journal, storage, driver } = setup();
+    const controller = new AbortController();
+    vi.mocked(driver.send).mockImplementation(async (_step, _transaction, onSubmitted) => {
+      controller.abort();
+      onSubmitted?.("0xhash");
+      return "0xhash";
+    });
+    await runLaunch(journal, storage, driver, undefined, controller.signal);
+    expect(loadJournal(storage, "draft", "0xManager")?.checkpoints.create).toMatchObject({
+      status: "submitted",
+      txHash: "0xhash",
+    });
+    expect(driver.receipt).not.toHaveBeenCalled();
+    expect(driver.complete).not.toHaveBeenCalled();
+  });
+  it("persists an attempted send before the wallet can fail without a hash", async () => {
+    const { journal, storage, driver } = setup();
+    vi.mocked(driver.send).mockImplementation(async () => {
+      expect(loadJournal(storage, "draft", "0xManager")?.checkpoints.create).toMatchObject({
+        status: "signing",
+        submissionAttempted: true,
+      });
+      throw new Error("WALLET_SEND_FAILED");
+    });
+    await runLaunch(journal, storage, driver);
+    const recovered = loadJournal(storage, "draft", "0xManager");
+    if (!recovered) throw new Error("missing journal");
+    await runLaunch(recovered, storage, driver);
+    expect(driver.send).toHaveBeenCalledTimes(1);
+    expect(driver.build).toHaveBeenCalledTimes(1);
+    expect(recovered.checkpoints.create?.error).toBe("SUBMISSION_RECONCILIATION_REQUIRED");
+  });
+  it.each([
+    "USER_REJECTED",
+    "LAUNCH_CANCELLED",
+  ])("permits an explicit retry after definitive no-broadcast %s across reload", async (code) => {
+    const { journal, storage, driver } = setup();
+    vi.mocked(driver.send).mockRejectedValueOnce(new Error(code));
+    await runLaunch(journal, storage, driver);
+    const recovered = loadJournal(storage, "draft", "0xManager");
+    if (!recovered) throw new Error("missing journal");
+    expect(recovered.checkpoints.create).toMatchObject({
+      status: "failed",
+      error: code,
+      submissionAttempted: false,
+    });
+    expect(recovered.checkpoints.create?.txHash).toBeUndefined();
+    await runLaunch(recovered, storage, driver, undefined, undefined, 1);
+    expect(driver.send).toHaveBeenCalledTimes(2);
+    expect(recovered.checkpoints.create?.status).toBe("confirmed");
+  });
+  it.each([
+    "USER_REJECTED",
+    "LAUNCH_CANCELLED",
+  ])("never clears a known submission when a later callback throws %s", async (code) => {
+    const { journal, storage, driver } = setup();
+    vi.mocked(driver.send).mockImplementationOnce(async (_step, _transaction, onSubmitted) => {
+      onSubmitted?.("0xhash");
+      throw new Error(code);
+    });
+    await runLaunch(journal, storage, driver);
+    const recovered = loadJournal(storage, "draft", "0xManager");
+    if (!recovered) throw new Error("missing journal");
+    expect(recovered.checkpoints.create).toMatchObject({
+      txHash: "0xhash",
+      submissionAttempted: true,
+    });
+    await runLaunch(recovered, storage, driver, undefined, undefined, 1);
+    expect(driver.send).toHaveBeenCalledTimes(1);
+    expect(recovered.checkpoints.create?.status).toBe("confirmed");
+  });
+  it.each([
+    "signing",
+    "submitted",
+    "failed",
+  ] as const)("fails closed on legacy %s attempts without a hash", async (status) => {
+    const { journal, storage, driver } = setup();
+    journal.checkpoints.create = { stepId: "create", chain: 42161, status };
+    await runLaunch(journal, storage, driver);
+    expect(driver.reconcile).toHaveBeenCalledTimes(1);
+    expect(driver.build).not.toHaveBeenCalled();
+    expect(driver.send).not.toHaveBeenCalled();
+    expect(journal.checkpoints.create?.error).toBe("SUBMISSION_RECONCILIATION_REQUIRED");
+  });
+  it("reconciles a failed no-hash attempt read-only without rebuilding", async () => {
+    const { journal, storage, driver } = setup();
+    journal.checkpoints.create = {
+      stepId: "create",
+      chain: 42161,
+      status: "failed",
+      submissionAttempted: true,
+    };
+    vi.mocked(driver.reconcile).mockResolvedValue(true);
+    await runLaunch(journal, storage, driver, undefined, undefined, undefined, true);
+    expect(journal.checkpoints.create?.status).toBe("confirmed");
+    expect(driver.send).not.toHaveBeenCalled();
+  });
+  it("rejects a corrupt attempted-send marker on reload", () => {
+    const { journal, storage } = setup();
+    journal.checkpoints.create = {
+      stepId: "create",
+      chain: 42161,
+      status: "failed",
+      submissionAttempted: "false" as unknown as boolean,
+    };
+    storage.value = JSON.stringify(journal);
+    expect(() => loadJournal(storage, "draft", "0xManager")).toThrow("INVALID_JOURNAL");
+  });
+  it("rejects checkpoints whose chain disagrees with the persisted transaction step", () => {
+    const { journal, storage } = setup();
+    journal.checkpoints.create = { stepId: "create", chain: 4663, status: "signing" };
+    storage.value = JSON.stringify(journal);
+    expect(() => loadJournal(storage, "draft", "0xManager")).toThrow("INVALID_JOURNAL");
+  });
+  it("retains submission calldata and block lower bound before invoking the wallet", async () => {
+    const { journal, storage, driver } = setup();
+    const submission = {
+      transaction: { to: "0xvault", data: "0x1234", value: "100" },
+      fromBlock: "123",
+    };
+    vi.mocked(driver.build).mockResolvedValueOnce({
+      transaction: submission.transaction,
+      data: { submission },
+    });
+    vi.mocked(driver.send).mockImplementationOnce(async () => {
+      expect(
+        loadJournal(storage, "draft", "0xManager")?.checkpoints.create?.data?.submission,
+      ).toEqual(submission);
+      throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+    });
+    await runLaunch(journal, storage, driver);
+    expect(
+      loadJournal(storage, "draft", "0xManager")?.checkpoints.create?.data?.submission,
+    ).toEqual(submission);
+  });
+  it("does not retry a failed no-hash send for any transaction kind", async () => {
+    for (const kind of [
+      "approve",
+      "create",
+      "spoke",
+      "allocate",
+      "bridge",
+      "swap",
+      "open",
+    ] as const) {
+      const { journal, storage, driver } = setup();
+      journal.steps = [{ id: "transaction", kind, chain: 42161, dependencies: [] }];
+      vi.mocked(driver.send).mockRejectedValue(new Error("WALLET_SEND_FAILED"));
+      await runLaunch(journal, storage, driver);
+      const recovered = loadJournal(storage, "draft", "0xManager");
+      if (!recovered) throw new Error("missing journal");
+      await runLaunch(recovered, storage, driver);
+      expect(driver.send).toHaveBeenCalledTimes(1);
+      expect(recovered.checkpoints.transaction?.error).toBe("SUBMISSION_RECONCILIATION_REQUIRED");
+    }
+  });
   it.each([
     "soon",
     -1,

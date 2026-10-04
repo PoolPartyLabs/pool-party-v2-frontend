@@ -82,6 +82,7 @@
     "duplicateAaveReserve": "Per netwerk is slechts één Aave Supply-blok per reserve toegestaan. Verwijder het duplicaat vóór de lancering.",
     "validation": "Controleer uw identiteit, kostenlimieten, minimumstorting en USDC-saldo.",
     "partialFailure": "Sommige stappen zijn geslaagd. Opnieuw proberen hervat deze stap zonder een ander fonds te maken.",
+    "submissionReconciliation": "De wallet heeft deze transactie mogelijk ingediend. Het herstel kon geen unieke overeenkomst bevestigen. Er wordt geen vervangende transactie verzonden; hervat om opnieuw te controleren.",
     "realOnly": "Lanceren vereist echte modus. Er worden geen handtekeningen gevraagd met mockgegevens.",
     "walletOrJournal": "Verbind de oorspronkelijke beheerderswallet. Start de creatie niet opnieuw als een opgeslagen checkpoint onleesbaar is.",
     "approve": "USDC goedkeuren",

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-020 (POO-2177)
  * @name useV2LaunchWallet
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2222)
  */
 "use client";
 import { useWallets } from "@privy-io/react-auth";
@@ -42,10 +42,13 @@ export function useV2LaunchWallet() {
   }, [refreshBalance]);
   const binding: LaunchWallet | null = wallet
     ? {
-        async send(transaction) {
+        async send(transaction, onSubmitted, signal) {
+          if (signal?.aborted) throw new Error("LAUNCH_CANCELLED");
           const provider = await ensureChain(wallet, transaction.chainId);
+          if (signal?.aborted) throw new Error("LAUNCH_CANCELLED");
+          let hash: string;
           try {
-            return await sendBuiltTransaction(
+            hash = await sendBuiltTransaction(
               provider,
               { tx: transaction, chainId: transaction.chainId },
               wallet.address,
@@ -56,6 +59,18 @@ export function useV2LaunchWallet() {
               isUserRejection(failure) ? "USER_REJECTED" : "SUBMISSION_RECONCILIATION_REQUIRED",
             );
           }
+          onSubmitted?.(hash);
+          return hash;
+        },
+        async blockNumber(chainId) {
+          const chain = getChainById(chainId);
+          if (!chain) throw new Error("BALANCES_UNAVAILABLE");
+          const block = await createPublicClient({ chain, transport: http() }).getBlockNumber({
+            cacheTime: 0,
+          });
+          if (typeof block !== "bigint" || block < BigInt(0))
+            throw new Error("BALANCES_UNAVAILABLE");
+          return block;
         },
         async receipt(chainId, hash) {
           const chain = getChainById(chainId);
@@ -64,6 +79,25 @@ export function useV2LaunchWallet() {
             return await createPublicClient({ chain, transport: http() }).getTransactionReceipt({
               hash: hash as Hex,
             });
+          } catch {
+            return null;
+          }
+        },
+        async transaction(chainId, hash) {
+          const chain = getChainById(chainId);
+          if (!chain || !/^0x[0-9a-fA-F]{64}$/.test(hash)) return null;
+          try {
+            const submitted = await createPublicClient({ chain, transport: http() }).getTransaction(
+              {
+                hash: hash as Hex,
+              },
+            );
+            return {
+              from: submitted.from,
+              to: submitted.to,
+              input: submitted.input,
+              value: submitted.value,
+            };
           } catch {
             return null;
           }

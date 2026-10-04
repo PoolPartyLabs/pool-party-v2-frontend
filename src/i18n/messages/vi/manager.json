@@ -82,6 +82,7 @@
     "duplicateAaveReserve": "Mỗi mạng chỉ cho phép một khối Aave Supply cho mỗi tài sản dự trữ. Xóa khối trùng lặp trước khi khởi chạy.",
     "validation": "Kiểm tra thông tin, giới hạn phí, khoản nạp tối thiểu và số dư USDC.",
     "partialFailure": "Một số bước đã thành công. Thử lại tiếp tục bước này mà không tạo quỹ khác.",
+    "submissionReconciliation": "wallet có thể đã gửi giao dịch này. Quá trình khôi phục không xác minh được kết quả khớp duy nhất. Không có giao dịch thay thế nào được gửi; hãy tiếp tục để kiểm tra lại.",
     "realOnly": "Ra mắt cần chế độ thực. Không yêu cầu chữ ký với dữ liệu mô phỏng.",
     "walletOrJournal": "Kết nối ví gốc của người quản lý. Nếu không đọc được checkpoint đã lưu, không bắt đầu tạo lại.",
     "approve": "Phê duyệt USDC",

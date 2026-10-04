@@ -82,6 +82,7 @@
     "duplicateAaveReserve": "Only one Aave Supply block per reserve is allowed on each network. Remove the duplicate before launch.",
     "validation": "Check your identity, fee bounds, minimum deposit and USDC balance.",
     "partialFailure": "Some steps succeeded. Retry resumes this step without creating another fund.",
+    "submissionReconciliation": "The wallet may have submitted this transaction. Recovery could not verify a unique match. No replacement transaction will be sent; resume to check again.",
     "realOnly": "Launch requires real mode. No signatures are requested with mock data.",
     "walletOrJournal": "Connect the original manager wallet. If a saved checkpoint cannot be read, do not restart creation.",
     "approve": "Approve USDC",

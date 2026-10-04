@@ -27,6 +27,10 @@ const mocks = vi.hoisted(() => ({
   swap: vi.fn(),
   pool: vi.fn(),
   positions: vi.fn(),
+  candidates: vi.fn(),
+}));
+vi.mock("@/lib/api/v2/launchReconciliationActions", () => ({
+  readLaunchSubmissionCandidatesAction: mocks.candidates,
 }));
 vi.mock("@/lib/api/v2/launchActions", () => ({
   buildCreateFundAction: mocks.create,
@@ -1359,6 +1363,30 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
       },
     });
     await expect(driver.build(step, journal)).rejects.toThrow("UNSAFE_TRANSACTION");
+    expect(wallet.send).not.toHaveBeenCalled();
+  });
+  it("R3 leaves an unresolved allocation fail-closed when no successful receipt matches", async () => {
+    const { driver, journal, wallet } = setup();
+    mocks.candidates.mockResolvedValue({ ok: true, data: { hashes: [] } });
+    const step: LaunchStep = {
+      id: "allocate",
+      kind: "allocate",
+      chain: 42161,
+      dependencies: [],
+      sharePct: 40,
+    };
+    await expect(
+      driver.reconcile(
+        step,
+        {
+          stepId: step.id,
+          chain: 42161,
+          status: "signing",
+          data: { submission: { fromBlock: "511641950" } },
+        },
+        journal,
+      ),
+    ).rejects.toThrow("SUBMISSION_RECONCILIATION_REQUIRED");
     expect(wallet.send).not.toHaveBeenCalled();
   });
   it("ambiguous create submission without a hash cannot be retried as new creation", async () => {

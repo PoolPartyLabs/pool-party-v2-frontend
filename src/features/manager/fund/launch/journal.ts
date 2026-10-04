@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-STO-002 (POO-2177)
  * @name launchJournal
- * @implements-rules-version v3 (POO-2192)
+ * @implements-rules-version v1 (POO-2222), preserves v3 (POO-2192)
  * Durable checkpoints: uncertain receipts always reconcile before rebuilding.
  */
 
@@ -13,6 +13,7 @@ export interface Checkpoint {
   chain: 42161 | 4663;
   status: "idle" | "building" | "signing" | "submitted" | "waiting" | "confirmed" | "failed";
   txHash?: string;
+  submissionAttempted?: boolean;
   receiptStatus?: "success" | "reverted" | "unknown";
   error?: string;
   data?: Record<string, unknown>;
@@ -113,6 +114,9 @@ export function loadJournal(
       !ids.has(id) ||
       checkpoint.stepId !== id ||
       ![42161, 4663].includes(checkpoint.chain) ||
+      checkpoint.chain !== journal.steps.find((step) => step.id === id)?.chain ||
+      (checkpoint.submissionAttempted !== undefined &&
+        typeof checkpoint.submissionAttempted !== "boolean") ||
       (checkpoint.retryAt !== undefined &&
         (typeof checkpoint.retryAt !== "number" ||
           !Number.isFinite(checkpoint.retryAt) ||
@@ -154,13 +158,30 @@ export interface LaunchDriver {
     step: LaunchStep,
     journal: LaunchJournal,
   ): Promise<{ data?: Record<string, unknown>; transaction?: unknown; complete?: boolean }>;
-  send(step: LaunchStep, transaction: unknown): Promise<string>;
+  send(
+    step: LaunchStep,
+    transaction: unknown,
+    onSubmitted?: (hash: string) => void,
+  ): Promise<string>;
   receipt(
     chain: LaunchStep["chain"],
     hash: string,
   ): Promise<{ status: "success" | "reverted" | "unknown"; data?: Record<string, unknown> }>;
   reconcile(step: LaunchStep, checkpoint: Checkpoint, journal: LaunchJournal): Promise<boolean>;
   complete(step: LaunchStep, checkpoint: Checkpoint, journal: LaunchJournal): Promise<void>;
+}
+
+export function hasUnresolvedSubmission(step: LaunchStep, checkpoint: Checkpoint): boolean {
+  return (
+    !["profile", "discover", "report", "arrival"].includes(step.kind) &&
+    !checkpoint.txHash &&
+    checkpoint.status !== "confirmed" &&
+    (checkpoint.submissionAttempted === true ||
+      checkpoint.status === "signing" ||
+      checkpoint.status === "submitted" ||
+      (checkpoint.status === "failed" && checkpoint.submissionAttempted !== false) ||
+      checkpoint.error === "SUBMISSION_RECONCILIATION_REQUIRED")
+  );
 }
 
 export async function runLaunch(
@@ -184,10 +205,12 @@ export async function runLaunch(
       stepId: step.id,
       chain: step.chain,
       status: "idle" as const,
+      submissionAttempted: false,
     };
     if (checkpoint.status === "confirmed") continue;
     if (checkpoint.retryAt && checkpoint.retryAt > Date.now()) continue;
-    if (readOnly && !checkpoint.txHash && checkpoint.status !== "waiting") continue;
+    const unresolved = hasUnresolvedSubmission(step, checkpoint);
+    if (readOnly && !checkpoint.txHash && checkpoint.status !== "waiting" && !unresolved) continue;
     if (readOnly && !checkpoint.txHash && step.kind === "profile") continue;
     if (
       step.kind === "bridge" &&
@@ -250,7 +273,7 @@ export async function runLaunch(
         return journal;
       }
       if (
-        ["signing", "waiting", "failed"].includes(checkpoint.status) &&
+        (unresolved || ["signing", "waiting", "failed"].includes(checkpoint.status)) &&
         (await driver.reconcile(step, checkpoint, journal))
       ) {
         checkpoint.status = "confirmed";
@@ -260,9 +283,9 @@ export async function runLaunch(
       }
       if (checkpoint.error === "SUBMISSION_RECONCILIATION_REQUIRED")
         throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
-      if (checkpoint.status === "signing" && step.kind !== "profile")
-        throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+      if (unresolved) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
       checkpoint.status = "building";
+      checkpoint.submissionAttempted = false;
       delete checkpoint.error;
       persist();
       const built = await driver.build(step, journal);
@@ -296,12 +319,19 @@ export async function runLaunch(
         persist();
         continue;
       }
+      checkpoint.submissionAttempted = true;
       persist();
-      checkpoint.txHash = await driver.send(step, built.transaction);
-      checkpoint.receiptStatus = "unknown";
-      checkpoint.status = "submitted";
-      persist();
-      const receipt = await driver.receipt(step.chain, checkpoint.txHash);
+      const submitted = (hash: string) => {
+        if (checkpoint.txHash === hash && checkpoint.status === "submitted") return;
+        checkpoint.txHash = hash;
+        checkpoint.receiptStatus = "unknown";
+        checkpoint.status = "submitted";
+        persist();
+      };
+      const hash = await driver.send(step, built.transaction, submitted);
+      submitted(hash);
+      if (signal?.aborted) return journal;
+      const receipt = await driver.receipt(step.chain, hash);
       checkpoint.receiptStatus = receipt.status;
       checkpoint.data = { ...checkpoint.data, ...receipt.data };
       if (receipt.status === "success") {
@@ -346,6 +376,8 @@ export async function runLaunch(
         error instanceof Error && /^[A-Z][A-Z0-9_]*$/.test(error.message)
           ? error.message
           : "LAUNCH_STEP_FAILED";
+      if (!checkpoint.txHash && ["USER_REJECTED", "LAUNCH_CANCELLED"].includes(checkpoint.error))
+        checkpoint.submissionAttempted = false;
       persist();
       if (step.kind !== "report" && !readOnly) return journal;
     }

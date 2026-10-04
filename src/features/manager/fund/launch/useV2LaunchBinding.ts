@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-019 (POO-2177)
  * @name useV2LaunchBinding
- * @implements-rules-version v1 (POO-2203), preserves v3 (POO-2192)
+ * @implements-rules-version v1 (POO-2222), preserves v1 (POO-2203), v3 (POO-2192)
  * @analytics-events builder_launch_signature, builder_launch_completed, builder_launch_failed
  */
 "use client";
@@ -13,6 +13,7 @@ import { isMockMode } from "@/lib/services";
 import { createLaunchDriver, type FrozenLaunch, type LaunchWallet } from "./driver";
 import {
   createJournal,
+  hasUnresolvedSubmission,
   type JournalStorage,
   journalKey,
   type LaunchJournal,
@@ -45,6 +46,7 @@ export interface V2LaunchError {
   code: string;
   messageKey:
     | "fundLaunch.partialFailure"
+    | "fundLaunch.submissionReconciliation"
     | "fundLaunch.buildGap"
     | "fundLaunch.duplicateAaveReserve"
     | "fundLaunch.walletOrJournal"
@@ -135,10 +137,10 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
         }
         const driver = createLaunchDriver(
           {
-            send: async (transaction) => {
+            send: async (transaction, onSubmitted) => {
               if (readOnly) throw new Error("READ_ONLY_RECONCILIATION");
               if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
-              return wallet.send(transaction);
+              return wallet.send(transaction, onSubmitted, controller.signal);
             },
             sign: async (message) => {
               if (readOnly) throw new Error("READ_ONLY_RECONCILIATION");
@@ -146,9 +148,13 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
               return wallet.sign(message);
             },
             receipt: (chain, hash) => wallet.receipt(chain, hash),
+            ...(wallet.blockNumber ? { blockNumber: wallet.blockNumber.bind(wallet) } : {}),
+            ...(wallet.transaction ? { transaction: wallet.transaction.bind(wallet) } : {}),
           },
-          (step) =>
-            track("builder_launch_signature", { chain_id: step.chain, step_kind: step.kind }),
+          (step) => {
+            if (!controller.signal.aborted)
+              track("builder_launch_signature", { chain_id: step.chain, step_kind: step.kind });
+          },
         );
         const singleStepId = once
           ? current.steps.find(
@@ -169,6 +175,7 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
             once ? 1 : Number.POSITIVE_INFINITY,
             readOnly,
           );
+          if (controller.signal.aborted) break;
           const failed = Object.values(current.checkpoints).find(
             (checkpoint) => checkpoint.status === "failed",
           );
@@ -176,7 +183,10 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
             if (failed)
               setError({
                 code: failed.error ?? "LAUNCH_STEP_FAILED",
-                messageKey: "fundLaunch.partialFailure",
+                messageKey:
+                  failed.error === "SUBMISSION_RECONCILIATION_REQUIRED"
+                    ? "fundLaunch.submissionReconciliation"
+                    : "fundLaunch.partialFailure",
               });
             break;
           }
@@ -192,7 +202,10 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
             });
             setError({
               code: failed.error ?? "LAUNCH_STEP_FAILED",
-              messageKey: "fundLaunch.partialFailure",
+              messageKey:
+                failed.error === "SUBMISSION_RECONCILIATION_REQUIRED"
+                  ? "fundLaunch.submissionReconciliation"
+                  : "fundLaunch.partialFailure",
             });
             break;
           }
@@ -241,7 +254,10 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
             failure instanceof Error && /^[A-Z][A-Z0-9_]*$/.test(failure.message)
               ? failure.message
               : "LAUNCH_STEP_FAILED",
-          messageKey: "fundLaunch.partialFailure",
+          messageKey:
+            failure instanceof Error && failure.message === "SUBMISSION_RECONCILIATION_REQUIRED"
+              ? "fundLaunch.submissionReconciliation"
+              : "fundLaunch.partialFailure",
         });
       }
     } finally {
@@ -278,6 +294,9 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
         checkpoint.receiptStatus !== "reverted" &&
         (checkpoint.status === "waiting" ||
           checkpoint.status === "submitted" ||
+          journal.steps.some(
+            (step) => step.id === checkpoint.stepId && hasUnresolvedSubmission(step, checkpoint),
+          ) ||
           (checkpoint.txHash && checkpoint.receiptStatus === "unknown")),
     );
     if (!pending.length) return;

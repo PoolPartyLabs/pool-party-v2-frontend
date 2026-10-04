@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   request: vi.fn(),
   read: vi.fn(),
   receipt: vi.fn(),
+  blockNumber: vi.fn(),
+  transaction: vi.fn(),
 }));
 vi.mock("@privy-io/react-auth", () => ({ useWallets: () => ({ wallets: mocks.wallets }) }));
 vi.mock("@/lib/tx/useEnsureWalletChain", () => ({ useEnsureWalletChain: () => mocks.ensure }));
@@ -19,7 +21,12 @@ vi.mock("@/lib/tx/sendTransaction", () => ({
 }));
 vi.mock("viem", async (importOriginal) => ({
   ...(await importOriginal<typeof import("viem")>()),
-  createPublicClient: () => ({ readContract: mocks.read, getTransactionReceipt: mocks.receipt }),
+  createPublicClient: vi.fn(() => ({
+    readContract: mocks.read,
+    getTransactionReceipt: mocks.receipt,
+    getBlockNumber: mocks.blockNumber,
+    getTransaction: mocks.transaction,
+  })),
 }));
 const manager = `0x${"34".repeat(20)}`;
 const transaction: LaunchTransaction = {
@@ -38,6 +45,104 @@ describe("real wallet launch binding [R1, R6]", () => {
     mocks.send.mockResolvedValue(`0x${"ab".repeat(32)}`);
     mocks.receipt.mockResolvedValue({ status: "success" });
     mocks.request.mockResolvedValue("0xsignature");
+    mocks.blockNumber.mockResolvedValue(BigInt(12345));
+  });
+  it.each([
+    42161, 4663,
+  ] as const)("reads a trustworthy block on chain %s without wallet interaction", async (chain) => {
+    const { result } = renderHook(() => useV2LaunchWallet());
+    await waitFor(() => expect(result.current.balance).not.toBeNull());
+    expect(await result.current.wallet?.blockNumber?.(chain)).toBe(BigInt(12345));
+    const { createPublicClient } = await import("viem");
+    expect(createPublicClient).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        chain: expect.objectContaining({ id: chain }),
+      }),
+    );
+    expect(mocks.ensure).not.toHaveBeenCalled();
+    expect(mocks.send).not.toHaveBeenCalled();
+    expect(mocks.request).not.toHaveBeenCalled();
+    mocks.blockNumber.mockRejectedValueOnce(new Error("offline"));
+    await expect(result.current.wallet?.blockNumber?.(chain)).rejects.toThrow();
+  });
+  it("persists a returned hash even if cancellation occurred during broadcast", async () => {
+    const { result } = renderHook(() => useV2LaunchWallet());
+    await waitFor(() => expect(result.current.balance).not.toBeNull());
+    const controller = new AbortController();
+    mocks.send.mockImplementationOnce(async () => {
+      controller.abort();
+      return "0xhash";
+    });
+    const submitted = vi.fn();
+    expect(await result.current.wallet?.send(transaction, submitted, controller.signal)).toBe(
+      "0xhash",
+    );
+    expect(submitted).toHaveBeenCalledWith("0xhash");
+  });
+  it("does not broadcast when cancelled during chain preflight", async () => {
+    const { result } = renderHook(() => useV2LaunchWallet());
+    await waitFor(() => expect(result.current.balance).not.toBeNull());
+    const controller = new AbortController();
+    mocks.ensure.mockImplementationOnce(async () => {
+      controller.abort();
+      return { request: mocks.request };
+    });
+    await expect(
+      result.current.wallet?.send(transaction, vi.fn(), controller.signal),
+    ).rejects.toThrow("LAUNCH_CANCELLED");
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
+  it.each([
+    42161, 4663,
+  ] as const)("reads the exact submitted calldata on chain %s without signing", async (chain) => {
+    const { result } = renderHook(() => useV2LaunchWallet());
+    await waitFor(() => expect(result.current.balance).not.toBeNull());
+    const hash = `0x${"ab".repeat(32)}`;
+    const submitted = {
+      from: manager,
+      to: transaction.to,
+      input: transaction.data,
+      value: BigInt(42),
+    };
+    mocks.transaction.mockResolvedValueOnce({ ...submitted, hash, blockNumber: BigInt(123) });
+    expect(await result.current.wallet?.transaction?.(chain, hash)).toEqual(submitted);
+    expect(mocks.transaction).toHaveBeenCalledWith({ hash });
+    const { createPublicClient } = await import("viem");
+    expect(createPublicClient).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        chain: expect.objectContaining({ id: chain }),
+      }),
+    );
+    expect(mocks.ensure).not.toHaveBeenCalled();
+    expect(mocks.send).not.toHaveBeenCalled();
+    expect(mocks.request).not.toHaveBeenCalled();
+    mocks.transaction.mockRejectedValueOnce(new Error("pending"));
+    expect(await result.current.wallet?.transaction?.(chain, hash)).toBeNull();
+    expect(await result.current.wallet?.transaction?.(chain, "invalid")).toBeNull();
+    expect(mocks.transaction).toHaveBeenCalledTimes(2);
+  });
+  it("does not reinterpret persistence callback failures as wallet rejection", async () => {
+    const { result } = renderHook(() => useV2LaunchWallet());
+    await waitFor(() => expect(result.current.balance).not.toBeNull());
+    const failure = new Error("JOURNAL_WRITE_FAILED");
+    await expect(
+      result.current.wallet?.send(transaction, () => {
+        throw failure;
+      }),
+    ).rejects.toBe(failure);
+    expect(mocks.send).toHaveBeenCalledTimes(1);
+  });
+  it.each([
+    null,
+    BigInt(-1),
+    12345,
+  ])("rejects invalid RPC block lower bounds: %s", async (block) => {
+    const { result } = renderHook(() => useV2LaunchWallet());
+    await waitFor(() => expect(result.current.balance).not.toBeNull());
+    mocks.blockNumber.mockResolvedValueOnce(block);
+    await expect(result.current.wallet?.blockNumber?.(42161)).rejects.toThrow(
+      "BALANCES_UNAVAILABLE",
+    );
   });
   it("reads real balance without requesting signatures and refreshes explicitly", async () => {
     const { result } = renderHook(() => useV2LaunchWallet());
