@@ -202,3 +202,11 @@ before rendering. Only USDC on Arbitrum is executable in the alpha; other rows r
 selection prevents Use/Apply. There is no second fetch, fixture fallback in real mode, automatic
 reserve refresh or USDC-to-USDC swap. Token logos use the shared resolver; the shell draws network
 and protocol logos. Shared shell analytics cover this body without duplicate emitters.
+
+### Review form cards (POO-2188, RB1)
+
+The props-only PP-MGR-CMP-073..076 cards add no service or wallet calls. Their parent
+supplies `useV2ReviewDraft` values, validated cropped-logo upload, hub USDC balance and
+`feeConfiguration`. `reviewForm` reuses the existing `rawUsdc` contract, and the deposit
+card displays the supplied `previewSeed` result. The protocol rate is explicitly estimated
+when its source is fallback. RB2 owns the connected seam and launch-entry analytics.
