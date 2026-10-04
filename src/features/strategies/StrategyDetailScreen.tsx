@@ -55,7 +55,7 @@
  */
 "use client";
 
-import { BadgeCheck, ChevronLeft, Share2 } from "lucide-react";
+import { BadgeCheck, Share2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useRef, useState } from "react";
@@ -82,6 +82,7 @@ import { ManagerCard } from "./components/ManagerCard";
 import { RiskMeter } from "./components/RiskMeter";
 import { ShareYieldModal } from "./components/ShareYieldModal";
 import { SinglePoolProspectus } from "./components/SinglePoolProspectus";
+import { StrategyDetailFrame } from "./components/StrategyDetailFrame";
 import { WithdrawModal } from "./components/WithdrawModal";
 import { useCollectFees } from "./hooks/useCollectFees";
 import { useInvest } from "./hooks/useInvest";
@@ -703,448 +704,424 @@ export function StrategyDetailScreen({
     );
 
   return (
-    <div className="flex flex-col gap-6">
-      <Link
-        href={backHref}
-        className="inline-flex w-fit items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
-      >
-        <ChevronLeft className="size-4" aria-hidden="true" />
-        {t("detail.back")}
-      </Link>
-
-      {/* Mobile is one full-width column; the 2/3 + rail split kicks in at lg. `grid-cols-1`
-          (not a bare `grid`) makes the mobile track `minmax(0,1fr)` so it fills — never content-sizes —
-          the viewport, and `min-w-0` lets the column shrink below its content min-width, so a wide
-          child (long name, prospectus rows) can't blow the column out past the screen. */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Main column */}
-        <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
-          {/* Hero */}
-          <section className="rounded-xl border border-border bg-surface p-5 lg:p-6">
-            <div className="flex items-start gap-4">
-              {/* POO-740: the manager-uploaded logo (StrategyLogo), mirroring Home; the risk tint is
-                  kept for the no-image initials fallback. Fixes the hero that only showed a letter. */}
-              <StrategyLogo
-                url={strategy.logoUrl}
-                name={strategy.name}
-                className={cn("size-12 text-lg font-semibold", tint)}
+    <StrategyDetailFrame
+      backHref={backHref}
+      backLabel={t("detail.back")}
+      rail={
+        <>
+          {positionCard}
+          {railActions}
+          {managerCard}
+        </>
+      }
+      flows={
+        <>
+          {/* Transactional flows */}
+          <InvestModal
+            open={investOpen}
+            onOpenChange={(next) => {
+              setInvestOpen(next);
+              if (!next) setInvestResumeAmount(null);
+            }}
+            strategy={strategy}
+            balance={balance}
+            resumeAmount={investResumeAmount}
+            onInvested={onPositionChanged}
+            buildInvestSteps={
+              isMockMode
+                ? undefined
+                : (amountUsd, slippage) => invest.buildSteps(strategy, amountUsd, slippage)
+            }
+          />
+          {position && effectivePosition ? (
+            <>
+              <CollectModal
+                open={collectOpen}
+                onOpenChange={setCollectOpen}
+                strategy={strategy}
+                position={effectivePosition}
+                buildCollectSteps={
+                  isMockMode
+                    ? undefined
+                    : // POO-802 R0: the handshake steps — the build step pauses the Review on REAL
+                      // figures, the confirm step only signs + sends. POO-417 R2 / POO-463 R4: the
+                      // receive-as choice + gear slippage thread into the server build.
+                      (collectAsTokenPair, slippageTolerance) =>
+                        collect.buildSteps(
+                          strategy,
+                          position,
+                          slippageTolerance,
+                          collectAsTokenPair,
+                        )
+                }
+                onChanged={onPositionChanged}
+                // POO-468 R1: fired ONCE per collect success. Snapshot the claimable AT collect time
+                // (the still-stale prop) and arm the optimistic $0 override above. POO-936 [R3]: a no-op
+                // when the /financials cutover is on (the override is retired; the served figures already
+                // move collected + claimable together).
+                onCollected={
+                  overrideActive ? () => setCollectedAtYield(position.totalYield) : undefined
+                }
               />
-              <div className="min-w-0 flex-1">
-                <h1 className="break-words font-bold text-foreground text-xl">{strategy.name}</h1>
-                <p className="mt-0.5 flex items-center gap-1 text-muted-foreground text-sm">
-                  {/* POO-794 R1/R2: the DUPLICATE manager avatar was removed from this subline (the
+              {/* POO-511 R1: mock-mode only. CompoundModal settles a mock; not mounting it in real
+              mode guarantees no real-mode path reaches that settle (the CTA above is disabled). */}
+              {isMockMode ? (
+                <CompoundModal
+                  open={compoundOpen}
+                  onOpenChange={setCompoundOpen}
+                  strategy={strategy}
+                  position={effectivePosition}
+                  onChanged={onPositionChanged}
+                />
+              ) : null}
+              <WithdrawModal
+                open={withdrawOpen}
+                onOpenChange={setWithdrawOpen}
+                strategy={strategy}
+                position={effectivePosition}
+                buildWithdrawSteps={
+                  isMockMode
+                    ? undefined
+                    : // POO-481 R4: the receive-as choice rides along as shouldSwapFees = !pair.
+                      (amountUsd, slippage, receiveAsPair) =>
+                        withdraw.buildSteps(strategy, position, amountUsd, slippage, receiveAsPair)
+                }
+                onChanged={onPositionChanged}
+              />
+              {canShare && earnings && referralLink ? (
+                <ShareYieldModal
+                  open={shareOpen}
+                  onOpenChange={setShareOpen}
+                  strategyId={strategy.id}
+                  strategyName={strategy.name}
+                  riskLabel={riskLabels[strategy.riskLevel] ?? ""}
+                  earnings={earnings}
+                  referralLink={referralLink}
+                />
+              ) : null}
+            </>
+          ) : null}
+        </>
+      }
+    >
+      {/* Hero */}
+      <section className="rounded-xl border border-border bg-surface p-5 lg:p-6">
+        <div className="flex items-start gap-4">
+          {/* POO-740: the manager-uploaded logo (StrategyLogo), mirroring Home; the risk tint is
+                  kept for the no-image initials fallback. Fixes the hero that only showed a letter. */}
+          <StrategyLogo
+            url={strategy.logoUrl}
+            name={strategy.name}
+            className={cn("size-12 text-lg font-semibold", tint)}
+          />
+          <div className="min-w-0 flex-1">
+            <h1 className="break-words font-bold text-foreground text-xl">{strategy.name}</h1>
+            <p className="mt-0.5 flex items-center gap-1 text-muted-foreground text-sm">
+              {/* POO-794 R1/R2: the DUPLICATE manager avatar was removed from this subline (the
                       photo already renders in the right-rail / mobile ManagerCard). The inline text
                       credit ("by @handle" else masked wallet) + verified badge stay as a lightweight
                       one-line attribution under the name. */}
-                  <ManagerLink
-                    handle={strategy.managerHandle}
-                    address={strategy.managerAddress}
-                    className="truncate"
-                  >
-                    {t("card.by", { manager: strategy.manager })}
-                  </ManagerLink>
-                  {/* POO-771 R6: the verified badge is gated on the backend-derived managerVerified
+              <ManagerLink
+                handle={strategy.managerHandle}
+                address={strategy.managerAddress}
+                className="truncate"
+              >
+                {t("card.by", { manager: strategy.manager })}
+              </ManagerLink>
+              {/* POO-771 R6: the verified badge is gated on the backend-derived managerVerified
                       (the single badge source). */}
-                  {strategy.managerVerified === true ? (
-                    <BadgeCheck
-                      className="size-4 shrink-0 text-info"
-                      aria-label={t("detail.managerVerified")}
-                    />
-                  ) : null}
-                </p>
-                {/* Pool pair + protocol — the strategy's underlying Uniswap v3 pool. "Uniswap v3" is
+              {strategy.managerVerified === true ? (
+                <BadgeCheck
+                  className="size-4 shrink-0 text-info"
+                  aria-label={t("detail.managerVerified")}
+                />
+              ) : null}
+            </p>
+            {/* Pool pair + protocol — the strategy's underlying Uniswap v3 pool. "Uniswap v3" is
                     a protocol name (not translated); V1 is single-protocol (POO-323 items 15, 19). */}
-                {detail?.poolPair ? (
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <span className="rounded-full border border-border px-2.5 py-0.5 font-medium text-foreground text-xs">
-                      {detail.poolPair.token0} / {detail.poolPair.token1}
-                    </span>
-                    <span className="rounded-full border border-border px-2.5 py-0.5 text-muted-foreground text-xs">
-                      Uniswap v3
-                    </span>
-                  </div>
-                ) : null}
+            {detail?.poolPair ? (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-border px-2.5 py-0.5 font-medium text-foreground text-xs">
+                  {detail.poolPair.token0} / {detail.poolPair.token1}
+                </span>
+                <span className="rounded-full border border-border px-2.5 py-0.5 text-muted-foreground text-xs">
+                  Uniswap v3
+                </span>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-2xl text-success">
-                  {formatPercent(strategy.estReturn)}
-                </p>
-                <p className="text-[10px] text-muted-foreground uppercase">
-                  <AprTooltip>{strategy.rateType}</AprTooltip>
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center gap-2">
-              <RiskMeter level={strategy.riskLevel} />
-              <span className="text-muted-foreground text-xs">
-                {riskLabels[strategy.riskLevel]}
-              </span>
-            </div>
-          </section>
+            ) : null}
+          </div>
+          <div className="text-right">
+            <p className="font-bold text-2xl text-success">{formatPercent(strategy.estReturn)}</p>
+            <p className="text-[10px] text-muted-foreground uppercase">
+              <AprTooltip>{strategy.rateType}</AprTooltip>
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-2">
+          <RiskMeter level={strategy.riskLevel} />
+          <span className="text-muted-foreground text-xs">{riskLabels[strategy.riskLevel]}</span>
+        </div>
+      </section>
 
-          {/* Closed banner: the manager ended the strategy; funds are ready to withdraw. */}
-          {isClosed ? (
-            <div className="rounded-xl border border-warning/40 bg-warning/10 p-4">
-              <p className="font-semibold text-foreground text-sm">{t("detail.closed.title")}</p>
-              <p className="mt-1 text-muted-foreground text-sm">
-                {t("detail.closed.body", { manager: strategy.manager })}
-              </p>
-            </div>
-          ) : null}
+      {/* Closed banner: the manager ended the strategy; funds are ready to withdraw. */}
+      {isClosed ? (
+        <div className="rounded-xl border border-warning/40 bg-warning/10 p-4">
+          <p className="font-semibold text-foreground text-sm">{t("detail.closed.title")}</p>
+          <p className="mt-1 text-muted-foreground text-sm">
+            {t("detail.closed.body", { manager: strategy.manager })}
+          </p>
+        </div>
+      ) : null}
 
-          {/* Owned position (mobile shows it here; desktop shows it in the rail) */}
-          {positionCard ? <div className="lg:hidden">{positionCard}</div> : null}
+      {/* Owned position (mobile shows it here; desktop shows it in the rail) */}
+      {positionCard ? <div className="lg:hidden">{positionCard}</div> : null}
 
-          {/* Paused notice */}
-          {isPaused ? (
-            <div className="rounded-xl border border-warning/40 bg-warning/10 p-4">
-              <p className="font-semibold text-foreground text-sm">
-                {t("detail.paused.title", { name: strategy.name })}
-              </p>
-              <p className="mt-1 text-muted-foreground text-sm">{t("detail.paused.body")}</p>
-            </div>
-          ) : null}
+      {/* Paused notice */}
+      {isPaused ? (
+        <div className="rounded-xl border border-warning/40 bg-warning/10 p-4">
+          <p className="font-semibold text-foreground text-sm">
+            {t("detail.paused.title", { name: strategy.name })}
+          </p>
+          <p className="mt-1 text-muted-foreground text-sm">{t("detail.paused.body")}</p>
+        </div>
+      ) : null}
 
-          {/* Mobile action block (desktop uses the rail) */}
-          <div className="lg:hidden">{mobileActions}</div>
+      {/* Mobile action block (desktop uses the rail) */}
+      <div className="lg:hidden">{mobileActions}</div>
 
-          {/* Manager card (mobile shows it here; desktop shows it in the rail) */}
-          <div className="lg:hidden">{managerCard}</div>
+      {/* Manager card (mobile shows it here; desktop shows it in the rail) */}
+      <div className="lg:hidden">{managerCard}</div>
 
-          {/* Performance (pool value). POO-557 R2: tabs are date-based windows; one whose window
+      {/* Performance (pool value). POO-557 R2: tabs are date-based windows; one whose window
               exceeds the available history is disabled (aria-disabled + dimmed), never rendered
               identical to a smaller tab. R3: <2 points → the explicit no-history state. */}
-          <section className="rounded-xl border border-border bg-surface p-5">
-            {/* POO-843 R1: wrap so the tablist drops to its own line on a narrow phone (mirrors the
+      <section className="rounded-xl border border-border bg-surface p-5">
+        {/* POO-843 R1: wrap so the tablist drops to its own line on a narrow phone (mirrors the
                 Home hero) instead of being hidden below sm. */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="font-semibold text-base text-foreground">{t("detail.performance")}</h2>
-              {hasHistory ? (
-                <div
-                  className="flex items-center gap-1 rounded-lg border border-border p-1"
-                  role="tablist"
-                  aria-label={t("detail.performance")}
-                >
-                  {periods.map((label, index) => {
-                    const enabled = periodEnabled(chartData, index);
-                    return (
-                      <button
-                        key={label}
-                        type="button"
-                        role="tab"
-                        disabled={!enabled}
-                        aria-disabled={!enabled}
-                        aria-selected={index === effectivePeriod}
-                        onClick={() => setPeriod(index)}
-                        className={cn(
-                          "rounded-md px-2.5 py-1 text-xs transition-colors",
-                          index === effectivePeriod
-                            ? "bg-surface-raised font-medium text-foreground"
-                            : "text-muted-foreground hover:text-foreground",
-                          "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-muted-foreground",
-                        )}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-semibold text-base text-foreground">{t("detail.performance")}</h2>
+          {hasHistory ? (
+            <div
+              className="flex items-center gap-1 rounded-lg border border-border p-1"
+              role="tablist"
+              aria-label={t("detail.performance")}
+            >
+              {periods.map((label, index) => {
+                const enabled = periodEnabled(chartData, index);
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    role="tab"
+                    disabled={!enabled}
+                    aria-disabled={!enabled}
+                    aria-selected={index === effectivePeriod}
+                    onClick={() => setPeriod(index)}
+                    className={cn(
+                      "rounded-md px-2.5 py-1 text-xs transition-colors",
+                      index === effectivePeriod
+                        ? "bg-surface-raised font-medium text-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                      "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-muted-foreground",
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
-            {hasHistory ? (
-              <div className="mt-4 h-32 lg:h-40">
-                <PerformanceChart data={series} ariaLabel={t("detail.performance")} />
-              </div>
-            ) : (
-              <div className="mt-4 flex h-32 flex-col items-center justify-center gap-1 rounded-lg border border-border border-dashed px-4 text-center lg:h-40">
-                <p className="font-medium text-foreground text-sm">
-                  {t("detail.chart.noHistoryTitle")}
-                </p>
-                <p className="text-muted-foreground text-xs">{t("detail.chart.noHistoryBody")}</p>
-              </div>
-            )}
-          </section>
+          ) : null}
+        </div>
+        {hasHistory ? (
+          <div className="mt-4 h-32 lg:h-40">
+            <PerformanceChart data={series} ariaLabel={t("detail.performance")} />
+          </div>
+        ) : (
+          <div className="mt-4 flex h-32 flex-col items-center justify-center gap-1 rounded-lg border border-border border-dashed px-4 text-center lg:h-40">
+            <p className="font-medium text-foreground text-sm">
+              {t("detail.chart.noHistoryTitle")}
+            </p>
+            <p className="text-muted-foreground text-xs">{t("detail.chart.noHistoryBody")}</p>
+          </div>
+        )}
+      </section>
 
-          {/* 2×2 metrics */}
-          <section className="grid grid-cols-2 gap-3">
-            <MetricTile label={t("detail.metrics.min")} value={formatUsd(strategy.minInvestment)} />
-            <MetricTile
-              label={t("detail.metrics.tvl")}
-              value={formatPoolTvl(strategy.uniswapPoolTvlUsd)}
-            />
-            <MetricTile label={t("detail.metrics.lockup")} value={lockupValue} />
-            {/* POO-902 R1-R3: the Performance fee tile replaces the Investors count. Whole-number
+      {/* 2×2 metrics */}
+      <section className="grid grid-cols-2 gap-3">
+        <MetricTile label={t("detail.metrics.min")} value={formatUsd(strategy.minInvestment)} />
+        <MetricTile
+          label={t("detail.metrics.tvl")}
+          value={formatPoolTvl(strategy.uniswapPoolTvlUsd)}
+        />
+        <MetricTile label={t("detail.metrics.lockup")} value={lockupValue} />
+        {/* POO-902 R1-R3: the Performance fee tile replaces the Investors count. Whole-number
                 fees render bare ("10%", "0%"); a fractional fee keeps one decimal ("12.5%") rather
                 than rounding into a figure the manager never set. Absent fee → no tile. */}
-            {performanceFeePct !== undefined ? (
-              <MetricTile
-                label={t("detail.metrics.performanceFee")}
-                value={formatPercent(
-                  performanceFeePct,
-                  Number.isInteger(performanceFeePct) ? 0 : 1,
-                )}
-              />
-            ) : null}
-          </section>
+        {performanceFeePct !== undefined ? (
+          <MetricTile
+            label={t("detail.metrics.performanceFee")}
+            value={formatPercent(performanceFeePct, Number.isInteger(performanceFeePct) ? 0 : 1)}
+          />
+        ) : null}
+      </section>
 
-          {/* About — the manager's real description (renders in real mode, not gated on `detail`). */}
-          {about ? (
-            <Section title={t("detail.about")}>
-              <p className="text-muted-foreground text-sm leading-relaxed">{about}</p>
-            </Section>
-          ) : null}
+      {/* About — the manager's real description (renders in real mode, not gated on `detail`). */}
+      {about ? (
+        <Section title={t("detail.about")}>
+          <p className="text-muted-foreground text-sm leading-relaxed">{about}</p>
+        </Section>
+      ) : null}
 
-          {detail ? (
-            <>
-              {/* Composition — collapsed by default (POO-903 [R2]); the body (incl. the POO-897
+      {detail ? (
+        <>
+          {/* Composition — collapsed by default (POO-903 [R2]); the body (incl. the POO-897
                   proportions bar) is unchanged, wrapped in one div to keep its spacing. */}
-              <CollapsibleCard title={t("detail.composition")} defaultOpen={false}>
-                <div>
-                  <div className="flex h-3 w-full overflow-hidden rounded-full">
-                    {detail.composition.map((slice, index) => (
+          <CollapsibleCard title={t("detail.composition")} defaultOpen={false}>
+            <div>
+              <div className="flex h-3 w-full overflow-hidden rounded-full">
+                {detail.composition.map((slice, index) => (
+                  <span
+                    key={slice.label}
+                    className={COMPOSITION_COLORS[index % COMPOSITION_COLORS.length]}
+                    style={{ width: `${slice.weight}%` }}
+                    aria-hidden="true"
+                  />
+                ))}
+              </div>
+              <ul className="mt-4 flex flex-col gap-2">
+                {detail.composition.map((slice, index) => (
+                  <li key={slice.label} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="flex items-center gap-2 text-foreground">
                       <span
-                        key={slice.label}
-                        className={COMPOSITION_COLORS[index % COMPOSITION_COLORS.length]}
-                        style={{ width: `${slice.weight}%` }}
+                        className={cn(
+                          "size-2.5 rounded-full",
+                          COMPOSITION_COLORS[index % COMPOSITION_COLORS.length],
+                        )}
                         aria-hidden="true"
                       />
-                    ))}
-                  </div>
-                  <ul className="mt-4 flex flex-col gap-2">
-                    {detail.composition.map((slice, index) => (
-                      <li
-                        key={slice.label}
-                        className="flex items-center justify-between gap-3 text-sm"
-                      >
-                        <span className="flex items-center gap-2 text-foreground">
-                          <span
-                            className={cn(
-                              "size-2.5 rounded-full",
-                              COMPOSITION_COLORS[index % COMPOSITION_COLORS.length],
-                            )}
-                            aria-hidden="true"
-                          />
-                          {slice.label}
-                        </span>
-                        <span className="font-medium text-muted-foreground">
-                          {formatPercent(slice.weight, 0)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CollapsibleCard>
+                      {slice.label}
+                    </span>
+                    <span className="font-medium text-muted-foreground">
+                      {formatPercent(slice.weight, 0)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </CollapsibleCard>
 
-              {/* Investment mandate — collapsed by default (POO-903 [R2]), body unchanged. */}
-              <CollapsibleCard title={t("detail.mandate.title")} defaultOpen={false}>
-                <div>
-                  <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-                    {t("detail.mandate.assets")}
-                  </p>
-                  <div className="flex flex-col divide-y divide-border">
-                    {detail.mandate.assets.map((asset) => (
-                      <DataRow
-                        key={asset.label}
-                        label={asset.label}
-                        value={formatPercent(asset.maxPct, 0)}
-                      />
-                    ))}
-                  </div>
-                  <p className="mt-4 mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-                    {t("detail.mandate.protocols")}
-                  </p>
-                  <div className="flex flex-col divide-y divide-border">
-                    {detail.mandate.protocols.map((protocol) => (
-                      <DataRow
-                        key={protocol.label}
-                        label={protocol.label}
-                        value={formatPercent(protocol.maxPct, 0)}
-                      />
-                    ))}
-                  </div>
-                  <p className="mt-4 mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-                    {t("detail.mandate.networks")}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {detail.mandate.networks.map((network) => (
-                      <span
-                        key={network}
-                        className="rounded-full border border-border px-3 py-1 text-foreground text-xs"
-                      >
-                        {network}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </CollapsibleCard>
+          {/* Investment mandate — collapsed by default (POO-903 [R2]), body unchanged. */}
+          <CollapsibleCard title={t("detail.mandate.title")} defaultOpen={false}>
+            <div>
+              <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                {t("detail.mandate.assets")}
+              </p>
+              <div className="flex flex-col divide-y divide-border">
+                {detail.mandate.assets.map((asset) => (
+                  <DataRow
+                    key={asset.label}
+                    label={asset.label}
+                    value={formatPercent(asset.maxPct, 0)}
+                  />
+                ))}
+              </div>
+              <p className="mt-4 mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                {t("detail.mandate.protocols")}
+              </p>
+              <div className="flex flex-col divide-y divide-border">
+                {detail.mandate.protocols.map((protocol) => (
+                  <DataRow
+                    key={protocol.label}
+                    label={protocol.label}
+                    value={formatPercent(protocol.maxPct, 0)}
+                  />
+                ))}
+              </div>
+              <p className="mt-4 mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                {t("detail.mandate.networks")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {detail.mandate.networks.map((network) => (
+                  <span
+                    key={network}
+                    className="rounded-full border border-border px-3 py-1 text-foreground text-xs"
+                  >
+                    {network}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </CollapsibleCard>
 
-              {/* Risk limits & terms */}
-              <Section title={t("detail.riskLimits.title")}>
-                <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-                  {t("detail.riskLimits.maxDrawdown")}
-                </p>
-                <div className="flex flex-col divide-y divide-border">
-                  {detail.riskLimits.maxDrawdown.map((band) => (
-                    <DataRow
-                      key={band.period}
-                      label={band.period}
-                      value={formatPercent(band.pct)}
-                      tone="destructive"
-                    />
-                  ))}
-                </div>
-                <div className="mt-3 flex flex-col divide-y divide-border border-border border-t">
-                  <DataRow
-                    label={t("detail.riskLimits.leverage")}
-                    value={detail.riskLimits.leverage}
-                  />
-                  <DataRow
-                    label={t("detail.riskLimits.rebalancing")}
-                    value={detail.riskLimits.rebalancing}
-                  />
-                  <DataRow
-                    label={t("detail.riskLimits.liquidity")}
-                    value={detail.riskLimits.liquidity}
-                  />
-                  <DataRow
-                    label={t("detail.riskLimits.strategyType")}
-                    value={detail.riskLimits.strategyType}
-                  />
-                  <DataRow
-                    label={t("detail.riskLimits.benchmark")}
-                    value={detail.riskLimits.benchmark}
-                  />
-                  <DataRow
-                    label={t("detail.riskLimits.custody")}
-                    value={detail.riskLimits.custody}
-                  />
-                </div>
-              </Section>
+          {/* Risk limits & terms */}
+          <Section title={t("detail.riskLimits.title")}>
+            <p className="mb-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+              {t("detail.riskLimits.maxDrawdown")}
+            </p>
+            <div className="flex flex-col divide-y divide-border">
+              {detail.riskLimits.maxDrawdown.map((band) => (
+                <DataRow
+                  key={band.period}
+                  label={band.period}
+                  value={formatPercent(band.pct)}
+                  tone="destructive"
+                />
+              ))}
+            </div>
+            <div className="mt-3 flex flex-col divide-y divide-border border-border border-t">
+              <DataRow label={t("detail.riskLimits.leverage")} value={detail.riskLimits.leverage} />
+              <DataRow
+                label={t("detail.riskLimits.rebalancing")}
+                value={detail.riskLimits.rebalancing}
+              />
+              <DataRow
+                label={t("detail.riskLimits.liquidity")}
+                value={detail.riskLimits.liquidity}
+              />
+              <DataRow
+                label={t("detail.riskLimits.strategyType")}
+                value={detail.riskLimits.strategyType}
+              />
+              <DataRow
+                label={t("detail.riskLimits.benchmark")}
+                value={detail.riskLimits.benchmark}
+              />
+              <DataRow label={t("detail.riskLimits.custody")} value={detail.riskLimits.custody} />
+            </div>
+          </Section>
 
-              {/* Fees */}
-              <Section title={t("detail.fees.title")}>
-                <div className="flex flex-col divide-y divide-border">
-                  <DataRow
-                    label={t("detail.fees.management")}
-                    value={
-                      detail.fees.managementPct > 0
-                        ? formatPercent(detail.fees.managementPct)
-                        : t("detail.fees.none")
-                    }
-                  />
-                </div>
-              </Section>
-            </>
-          ) : (
-            // Real mode (no mock prospectus): derive Composition + Investment mandate from the real
-            // pool, or show "not available" when the pair is unknown — never fabricate (#244).
-            // POO-897 R1/R2: the Composition card shows the per-token proportion: the invested
-            // variant splits from the position's reserve block, the non-invested one from the
-            // strategy's onchain block (range-math tick fallback, R4/R5); unresolvable → null keeps
-            // the single "Liquidity pool 100%" row.
-            <SinglePoolProspectus
-              tokens={strategy.poolPair ?? null}
-              networkName={
-                strategy.network
-                  ? strategy.network.charAt(0).toUpperCase() + strategy.network.slice(1)
-                  : null
-              }
-              network={strategy.network ?? null}
-              split={strategyCompositionSplit(strategy, position)}
-            />
-          )}
-        </div>
-
-        {/* Desktop sticky rail */}
-        <aside className="hidden min-w-0 lg:col-span-1 lg:block">
-          <div className="sticky top-6 flex flex-col gap-4">
-            {positionCard}
-            {railActions}
-            {managerCard}
-          </div>
-        </aside>
-      </div>
-
-      {/* Transactional flows */}
-      <InvestModal
-        open={investOpen}
-        onOpenChange={(next) => {
-          setInvestOpen(next);
-          if (!next) setInvestResumeAmount(null);
-        }}
-        strategy={strategy}
-        balance={balance}
-        resumeAmount={investResumeAmount}
-        onInvested={onPositionChanged}
-        buildInvestSteps={
-          isMockMode
-            ? undefined
-            : (amountUsd, slippage) => invest.buildSteps(strategy, amountUsd, slippage)
-        }
-      />
-      {position && effectivePosition ? (
-        <>
-          <CollectModal
-            open={collectOpen}
-            onOpenChange={setCollectOpen}
-            strategy={strategy}
-            position={effectivePosition}
-            buildCollectSteps={
-              isMockMode
-                ? undefined
-                : // POO-802 R0: the handshake steps — the build step pauses the Review on REAL
-                  // figures, the confirm step only signs + sends. POO-417 R2 / POO-463 R4: the
-                  // receive-as choice + gear slippage thread into the server build.
-                  (collectAsTokenPair, slippageTolerance) =>
-                    collect.buildSteps(strategy, position, slippageTolerance, collectAsTokenPair)
-            }
-            onChanged={onPositionChanged}
-            // POO-468 R1: fired ONCE per collect success. Snapshot the claimable AT collect time
-            // (the still-stale prop) and arm the optimistic $0 override above. POO-936 [R3]: a no-op
-            // when the /financials cutover is on (the override is retired; the served figures already
-            // move collected + claimable together).
-            onCollected={
-              overrideActive ? () => setCollectedAtYield(position.totalYield) : undefined
-            }
-          />
-          {/* POO-511 R1: mock-mode only. CompoundModal settles a mock; not mounting it in real
-              mode guarantees no real-mode path reaches that settle (the CTA above is disabled). */}
-          {isMockMode ? (
-            <CompoundModal
-              open={compoundOpen}
-              onOpenChange={setCompoundOpen}
-              strategy={strategy}
-              position={effectivePosition}
-              onChanged={onPositionChanged}
-            />
-          ) : null}
-          <WithdrawModal
-            open={withdrawOpen}
-            onOpenChange={setWithdrawOpen}
-            strategy={strategy}
-            position={effectivePosition}
-            buildWithdrawSteps={
-              isMockMode
-                ? undefined
-                : // POO-481 R4: the receive-as choice rides along as shouldSwapFees = !pair.
-                  (amountUsd, slippage, receiveAsPair) =>
-                    withdraw.buildSteps(strategy, position, amountUsd, slippage, receiveAsPair)
-            }
-            onChanged={onPositionChanged}
-          />
-          {canShare && earnings && referralLink ? (
-            <ShareYieldModal
-              open={shareOpen}
-              onOpenChange={setShareOpen}
-              strategyId={strategy.id}
-              strategyName={strategy.name}
-              riskLabel={riskLabels[strategy.riskLevel] ?? ""}
-              earnings={earnings}
-              referralLink={referralLink}
-            />
-          ) : null}
+          {/* Fees */}
+          <Section title={t("detail.fees.title")}>
+            <div className="flex flex-col divide-y divide-border">
+              <DataRow
+                label={t("detail.fees.management")}
+                value={
+                  detail.fees.managementPct > 0
+                    ? formatPercent(detail.fees.managementPct)
+                    : t("detail.fees.none")
+                }
+              />
+            </div>
+          </Section>
         </>
-      ) : null}
-    </div>
+      ) : (
+        // Real mode (no mock prospectus): derive Composition + Investment mandate from the real
+        // pool, or show "not available" when the pair is unknown — never fabricate (#244).
+        // POO-897 R1/R2: the Composition card shows the per-token proportion: the invested
+        // variant splits from the position's reserve block, the non-invested one from the
+        // strategy's onchain block (range-math tick fallback, R4/R5); unresolvable → null keeps
+        // the single "Liquidity pool 100%" row.
+        <SinglePoolProspectus
+          tokens={strategy.poolPair ?? null}
+          networkName={
+            strategy.network
+              ? strategy.network.charAt(0).toUpperCase() + strategy.network.slice(1)
+              : null
+          }
+          network={strategy.network ?? null}
+          split={strategyCompositionSplit(strategy, position)}
+        />
+      )}
+    </StrategyDetailFrame>
   );
 }
