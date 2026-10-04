@@ -238,7 +238,7 @@ All added copy is translated in the 11 configured locales; machine-tier translat
 
 Artifacts: `PP-CORE-LIB-112` to `PP-CORE-LIB-115`, `PP-MGR-LIB-025`, `PP-MGR-HOK-011`, `PP-MGR-CMP-060`.
 Resolved integration points: catalog tokens/pricing/Aave, v4 pool catalog, percentage intent serialization.
-Open integrations: backend draft persistence (POO-2132), Review/launch, on-chain percentage cap (POO-2169), TVL/APR indexing.
+Open integrations: backend draft persistence (POO-2132), on-chain percentage cap (POO-2169), TVL/APR indexing. Review now connects to the existing launch journey (POO-2195).
 
 The Mandate step of a second, parallel strategy builder for the fund contracts (hub Arbitrum, spoke
 Robinhood Chain, PoolPartyLabs/smartcontract-v2), speced from
@@ -403,7 +403,7 @@ as dormant slices (POO-2151 to POO-2156, on `main` through roll-up #44) and moun
 (POO-2157, #41): `FundStrategyBuilderScreen` renders `BuildScreen` in the Build phase, behind the `fundContracts`
 flag (default off) and the V2 toggle. The canvas signs and sends nothing and calls no API: a plan is a local
 draft. What turns a stored plan into API builder calls is the launch journey of POO-2177
-(`src/features/manager/fund/launch/README.md`), which the Review page (POO-2172) will start. A short folder guide
+(`src/features/manager/fund/launch/README.md`), which the Review page (POO-2172) starts after readiness and persistence checks. A short folder guide
 sits beside the code, in `src/features/manager/fund/build/README.md`.
 
 **Folder map** (`src/features/manager/fund/build/`; every file carries its id in its header):
@@ -507,21 +507,17 @@ Two readings in code are the coordinator's, not the handoff's: INV5 reads "nothi
 Collect fees" as "a pool, or its Collect fees, ends the chain" (`plan/planInvariants.ts`), and normalisation
 (L4) only ever shifts the graph to the right (`layout/layoutGraph.ts`).
 
-**What is NOT done.** The bodies of the configuration panel: the pool and price range fields and the Aave
-fields (handoff POO-2171, the slices after POO-2187). The panel shell itself is in (POO-2187, `build/panel/`): the
-modes, Use, the Allocation, Max slippage, the status row with Apply changes and its leave guard, and the remove
-confirm; but its kind to body registry is empty, so a selected block shows its head and Remove block only, every
-block a manager adds stays empty and configured blocks exist only in fixtures and stories. So Next: Review refuses
-every plan a manager can build today, and "Review is not available yet" is reachable only for a stored plan whose
-blocks are configured. The Review page (POO-2172). Aave Borrow as coming soon (decided 2026-10-04, see D29; pending slice PA0). Real data for a block: the
-Mandate reads the v4 pools and the Aave reserves from the backend catalog since POO-2133, but the canvas lists
-none of them (the panel will), and it reads no quote for the Swap or the Bridge (POO-2148). The canvas itself calls
-no API and requests no transaction; the launch journey (POO-2177) compiles a stored plan into builder calls. Backend
-drafts (POO-2132, not needed for the buildathon MVP). Mobile (desktop only, per the handoff). What the canvas
-prints that must be verified before a real manager sees it is `docs/COMPLIANCE_REGISTER.md` `CR-MGR-014` to
-`CR-MGR-020`.
+**Delivered configuration and Review.** The registered Uniswap v4 and Aave USDC Supply bodies use
+live catalog data, shared Apply/Discard guards and atomic allocation/configuration writes. Review
+binds the saved fields, balance, upload and launch/resume journey. See the panel and Review sections
+below and the [delivery source map](../../../docs/STRATEGY_BUILDER_DELIVERY_2026-10-04.md).
 
-**Nobody has seen this screen in a browser.** The tests run in jsdom, which has no layout engine, no canvas
+**Remaining scope.** Borrow's coming-soon palette cleanup (PA0) is deferred by the accepted demo
+plan; Borrow cannot pass launch readiness. Swap/Bridge quote previews on the canvas (POO-2148),
+backend drafts (POO-2132), mobile and the existing compliance disclosures remain separate work.
+The canvas itself sends no transaction; the existing launch journey compiles the applied plan.
+
+**Browser verification.** Murilo owns the full journey test for this delivery. Codex has not run it. The automated component tests run in jsdom, which has no layout engine, no canvas
 text measure and no Safari gesture events. The stories exist for every component and for the graph on every
 reference canvas, but no one has opened them next to the Figma frames. The check that the page never scrolls
 sideways because of the graph (A7) is the play function of the `WideGraphNoPageScroll` story; no CI job runs
