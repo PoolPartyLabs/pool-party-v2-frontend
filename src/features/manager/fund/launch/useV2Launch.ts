@@ -92,6 +92,7 @@ export function useV2Launch(journeyId: string) {
       explorerUrl: checkpoint?.txHash ? explorerTxUrl(step.chain, checkpoint.txHash) : null,
       receiptStatus: checkpoint?.receiptStatus ?? null,
       error: checkpoint?.error ?? null,
+      waitReason: checkpoint?.waitReason ?? null,
       result: checkpoint?.data ?? null,
     };
   });

@@ -61,6 +61,7 @@
   },
   "fundLaunch": {
     "reportWait": "Đang chờ báo cáo được chấp nhận. Thường mất 14-19 phút, đôi khi lâu hơn. Chúng tôi tiếp tục kiểm tra cho đến khi báo cáo đến; tạm dừng vẫn giữ tiến trình.",
+    "discoveryWait": "Đang chờ lập chỉ mục. Bước này sẽ tự động được thử lại.",
     "journeyTitle": "Tiến trình ra mắt quỹ",
     "journeyWait": "Mỗi giao dịch cần xác nhận. Cầu nối và báo cáo có thể mất vài phút.",
     "receiptLabel": "Biên nhận",

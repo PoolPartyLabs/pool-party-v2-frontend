@@ -61,6 +61,7 @@
   },
   "fundLaunch": {
     "reportWait": "Esperando un informe aceptado. Normalmente 14-19 minutos, a veces más. Seguimos comprobando hasta que llegue; pausar conserva el progreso.",
+    "discoveryWait": "Esperando la indexación. Este paso se reintentará automáticamente.",
     "journeyTitle": "Proceso de lanzamiento del fondo",
     "journeyWait": "Cada transacción necesita su confirmación. Puentes e informes pueden tardar minutos.",
     "receiptLabel": "Recibo",

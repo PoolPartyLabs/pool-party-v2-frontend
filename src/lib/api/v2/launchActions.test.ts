@@ -28,6 +28,45 @@ const response = (data: unknown, status = 200) =>
   new Response(JSON.stringify({ data }), { status, headers: { "x-pool-party-protocol": "v2" } });
 
 describe("launch server-only admin boundary [R8]", () => {
+  it("serializes only safe discovery metadata through the server action", async () => {
+    mocks.fetch.mockResolvedValueOnce(
+      response({ protocolVersion: "v2", coreVault: core, manager: wallet }),
+    );
+    mocks.fetch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          response: {
+            code: "V2_DISCOVERY_PENDING",
+            retryAfterSeconds: 2,
+            progress: { cursor: "10", target: "20", secret: "admin-key" },
+            message: "secret",
+          },
+        }),
+        { status: 409 },
+      ),
+    );
+    expect(
+      await actions.buildLaunchPositionAction(core, {
+        action: "open",
+        from: wallet,
+        side: "hub",
+        adapter: wallet,
+        poolKey: `0x${"00".repeat(32)}`,
+        amount0: "1",
+        amount1: "0",
+        amount0Min: "0",
+        amount1Min: "0",
+      }),
+    ).toEqual({
+      ok: false,
+      error: {
+        status: 409,
+        code: "V2_DISCOVERY_PENDING",
+        retryAfterSeconds: 2,
+        progress: { cursor: "10", target: "20" },
+      },
+    });
+  });
   it.each([
     undefined,
     false,

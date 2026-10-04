@@ -61,6 +61,7 @@
   },
   "fundLaunch": {
     "reportWait": "En attente d’un rapport accepté. Généralement 14-19 minutes, parfois plus. Nous vérifions jusqu’à son arrivée ; une pause conserve votre progression.",
+    "discoveryWait": "En attente de l’indexation. Cette étape sera réessayée automatiquement.",
     "journeyTitle": "Lancement du fonds",
     "journeyWait": "Chaque transaction demande votre confirmation. Ponts et rapports peuvent prendre plusieurs minutes.",
     "receiptLabel": "Reçu",

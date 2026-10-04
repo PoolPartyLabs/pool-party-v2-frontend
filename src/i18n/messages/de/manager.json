@@ -61,6 +61,7 @@
   },
   "fundLaunch": {
     "reportWait": "Warten auf einen akzeptierten Bericht. Meist 14-19 Minuten, manchmal länger. Wir prüfen weiter bis zum Eingang; eine Pause bewahrt Ihren Fortschritt.",
+    "discoveryWait": "Warten auf die Indexierung. Dieser Schritt wird automatisch erneut versucht.",
     "journeyTitle": "Fondsstart",
     "journeyWait": "Jede Transaktion benötigt Ihre Bestätigung. Bridge und Berichte können Minuten dauern.",
     "receiptLabel": "Beleg",

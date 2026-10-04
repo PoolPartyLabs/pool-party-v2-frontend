@@ -9,6 +9,7 @@ import Decimal from "decimal.js";
 import { formatUnits, type TransactionReceipt } from "viem";
 import { z } from "zod";
 import { getCatalogPoolAction } from "@/lib/api/v2/actions";
+import { V2DiscoveryPendingError } from "@/lib/api/v2/discovery";
 import {
   buildCreateFundAction,
   buildLaunchCapitalAction,
@@ -20,6 +21,7 @@ import {
   quoteLaunchBridgeAction,
   readLaunchBalancesAction,
   readLaunchFundAction,
+  readLaunchPositionsAction,
   readLaunchProfileAction,
   readLaunchTransitAction,
 } from "@/lib/api/v2/launchActions";
@@ -48,9 +50,27 @@ export interface LaunchWallet {
 }
 
 function unwrap<Data>(
-  result: { ok: true; data: Data } | { ok: false; error: { code: string } },
+  result:
+    | { ok: true; data: Data }
+    | {
+        ok: false;
+        error: {
+          code: string;
+          status?: number;
+          retryAfterSeconds?: number;
+          progress?: import("@/lib/api/v2/discovery").DiscoveryProgress;
+        };
+      },
 ): Data {
-  if (!result.ok) throw new Error(result.error.code);
+  if (!result.ok) {
+    if (result.error.code === "V2_DISCOVERY_PENDING")
+      throw new V2DiscoveryPendingError(
+        result.error.status,
+        result.error.retryAfterSeconds,
+        result.error.progress,
+      );
+    throw new Error(result.error.code);
+  }
   return result.data;
 }
 function record(value: unknown): Record<string, unknown> {
@@ -374,6 +394,21 @@ export function createLaunchDriver(
       return false;
     },
     async complete(step, checkpoint, journal) {
+      if (step.kind === "open") {
+        const positionKey = z
+          .object({ positionKey: z.string().regex(/^0x[0-9a-fA-F]{64}$/) })
+          .parse(checkpoint.data?.receipt).positionKey;
+        const positions = unwrap(await readLaunchPositionsAction(coreOf(journal)));
+        if (
+          !positions.positions.some(
+            (position) =>
+              String(position.chainId) === String(step.chain) &&
+              position.positionKey.toLowerCase() === positionKey.toLowerCase() &&
+              !["closed", "exited"].includes(position.status.toLowerCase()),
+          )
+        )
+          throw new V2DiscoveryPendingError(409, 2);
+      }
       if (step.kind === "create") {
         const provision = record(checkpoint.data?.provision);
         const receipt = z

@@ -61,6 +61,7 @@
   },
   "fundLaunch": {
     "reportWait": "正在等待已接受的報告。通常需要14-19分鐘，有時更久。我們會持續檢查直到報告到達；暫停會保留進度。",
+    "discoveryWait": "正在等待索引完成。此步驟將自動重試。",
     "journeyTitle": "基金啟動進程",
     "journeyWait": "每筆交易需要確認。跨鏈與報告可能需要數分鐘。",
     "receiptLabel": "收據",
