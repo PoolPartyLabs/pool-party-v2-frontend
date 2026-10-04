@@ -420,3 +420,7 @@ Dev-only sandbox (404 in production): **`/[locale]/dev/wallet-steps`** (e.g. `/e
 Switch specs, drive the steps manually (controlled) or watch the mock timer (uncontrolled), and read
 the live `buildWalletSignSteps` output. Source: `src/app/[locale]/dev/wallet-steps/`. Storybook story:
 `UI/WalletSignModal`.
+
+### Responsive amount and loading presentation (POO-2221, rules v1)
+
+AmountField grows within its available width and fits ordinary six-decimal input with container-relative type, retaining a 16px minimum font and the exact raw value. Short values keep the previous centered minimum width; exceptional lengths remain natively scrollable. Increment and Max behavior are unchanged. The provisioning loading subtitle is capped to its parent width. Existing amount, deposit and provisioning tests pass (53 focused cases); no V2 execution is enabled.

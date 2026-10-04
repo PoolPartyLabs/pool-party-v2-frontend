@@ -4,7 +4,7 @@
  *   POO-1525, POO-1526, POO-1527, POO-1528, POO-1541, POO-1543, POO-1564, POO-1568, POO-1570,
  *   POO-1573, POO-1596, POO-1641, POO-1808, POO-1811, POO-1812, POO-2198)
  * @name ProvisioningPanel
- * @implements-rules-version v1 (POO-2198) · v41 (POO-1927 rules v1) · v40 (POO-1808 rules v1)
+ * @implements-rules-version v1 (POO-2221); v1 (POO-2198) · v41 (POO-1927 rules v1) · v40 (POO-1808 rules v1)
  *   · v39 (POO-1812 rules v1: ONE buffer rate per run, derived from the
  *   slippage that run allows and spent by the seed, the route targets and the copy, with the
  *   ledger's budget pinned to the rate the run was SEEDED with)
@@ -3950,7 +3950,7 @@ export const ProvisioningPanel = forwardRef<ProvisioningPanelHandle, Provisionin
           ) : null}
           <div className="flex flex-col gap-2">
             <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-4 w-64 max-w-full" />
           </div>
           <Skeleton className="h-40 w-full" />
           <Skeleton className="h-11 w-full" />
