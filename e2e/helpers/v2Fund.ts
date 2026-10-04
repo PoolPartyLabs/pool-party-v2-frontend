@@ -32,6 +32,7 @@ const coreAbi = parseAbi([
   "function deposit(uint256 usdcAmount, uint256 minShares) returns (uint256, uint256)",
   "function requestPayout(uint256 usdcAmount, uint8 mode, uint16 maxLossBps) payable",
   "function shareToken() view returns (address)",
+  "function sharePrice() view returns (uint256)",
 ]);
 const rpc = http(rpcUrl("arbitrum"))({ chain: arbitrum });
 export const client = createPublicClient({
@@ -90,9 +91,33 @@ export async function shares(fund: Hex) {
     args: [BURNER],
   });
 }
+export async function shareMetadata(fund: Hex) {
+  const token = await client.readContract({
+    address: fund,
+    abi: coreAbi,
+    functionName: "shareToken",
+  });
+  const decimals = await client.readContract({
+    address: token,
+    abi: erc20Abi,
+    functionName: "decimals",
+  });
+  const price = await client.readContract({
+    address: fund,
+    abi: coreAbi,
+    functionName: "sharePrice",
+  });
+  return { token, decimals, price };
+}
 export const test = walletTest.extend<{ safeWallet: undefined }>({
   safeWallet: [
     async ({ page }, use) => {
+      page.on("response", async (response) => {
+        if (response.request().method() !== "POST") return;
+        const body = await response.text().catch(() => "");
+        const error = body.match(/"error":\{"status":\d+,"code":"[A-Za-z0-9_]+"\}/)?.[0];
+        if (error) writeFileSync("e2e/.auth/last-server-error.json", error);
+      });
       const original = page.exposeFunction.bind(page);
       page.exposeFunction = async (name, callback) =>
         original(name, async (...args: unknown[]) => {
@@ -176,6 +201,22 @@ export const test = walletTest.extend<{ safeWallet: undefined }>({
             budget: budget.toString(),
           });
           save(run);
+          void (async () => {
+            const link = page.locator(`a[href="${EXPLORERS[42161]}/tx/${hash}"]`).first();
+            try {
+              await link.waitFor({ state: "visible", timeout: 20_000 });
+              await page.screenshot({
+                path: `e2e/.auth/${action}-${hash}-display.png`,
+                fullPage: true,
+              });
+              const latest = state();
+              const record = latest.transactions.find((entry) => entry.hash === hash);
+              if (record) {
+                record.hashDisplayed = "true";
+                save(latest);
+              }
+            } catch {}
+          })();
           return hash;
         });
       try {
@@ -206,7 +247,9 @@ export const test = walletTest.extend<{ safeWallet: undefined }>({
 export async function openFund(page: Page, fund: Hex) {
   await page.goto(`/en/funds/${fund}`);
   const toggle = page.getByRole("button", { name: /^V2$/ });
-  if (await toggle.isVisible()) await toggle.click();
+  await expect(toggle).toBeVisible();
+  if ((await toggle.getAttribute("aria-pressed")) !== "true") await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText("Share Price", { exact: true }).first()).toBeVisible({
     timeout: 60_000,
   });
@@ -229,15 +272,22 @@ export async function field(panel: Locator, label: string, decimals = 6) {
 }
 export async function prepare(page: Page, name: string, info: TestInfo) {
   const panel = actions(page);
+  await page.waitForTimeout(300);
   await panel.getByRole("button", { name, exact: true }).click();
   const ready = panel.getByRole("button", { name: /^(Approve and rebuild|Confirm in wallet)$/ });
   const amount = await panel.getByLabel("Amount (USDC)", { exact: true }).inputValue();
   const minimum = await panel.getByLabel("Minimum whole shares", { exact: true }).inputValue();
   try {
-    await expect(ready).toBeVisible({ timeout: 120_000 });
+    await expect(ready).toBeVisible({
+      timeout: Number(process.env.E2E_V2_BUILD_TIMEOUT ?? "120000"),
+    });
   } catch {
     const message = await panel.innerText();
-    if (!/refreshing|stale/i.test(message)) throw new Error(`Frontend build blocked: ${message}`);
+    const report = page
+      .locator("article > section")
+      .filter({ has: page.getByRole("heading", { name: "Report", exact: true }) });
+    if (!/refreshing|stale/i.test(`${message} ${await report.innerText()}`))
+      throw new Error(`Frontend build blocked: ${message}`);
     info.annotations.push({
       type: "keeper-wait",
       description: "Stale valuation: waiting at most 12 minutes; retry once before any broadcast",

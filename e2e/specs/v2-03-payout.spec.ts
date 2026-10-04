@@ -8,6 +8,7 @@ import {
   openFund,
   prepare,
   save,
+  shareMetadata,
   shares,
   state,
   test,
@@ -26,19 +27,21 @@ test("@v2 @v2-payout Instant payout of half the new deposit value", async ({
     "No confirmed deposit/new shares; unsafe to payout pre-existing holdings",
   );
   if (!run.fund || !run.depositBudget || !run.sharesAfter) return;
-  const minted = BigInt(run.sharesAfter) - BigInt(run.sharesBefore ?? "0");
-  test.skip(
-    minted < 2_000_000_000_000_000_000n,
-    "Fund uses whole shares: half of one newly minted share cannot be paid; preserve holdings rather than burn all new shares",
-  );
   test.setTimeout(1_200_000);
   await login(page, wallet.address);
   await openFund(page, run.fund);
   const panel = actions(page);
   const before = await balances();
   const sharesBefore = await shares(run.fund);
-  const request = BigInt(run.depositBudget) / 2n;
+  const metadata = await shareMetadata(run.fund);
+  const rawHalf = (BigInt(run.sharesAfter) - BigInt(run.sharesBefore ?? "0")) / 2n;
+  const request = (rawHalf * metadata.price) / (10n ** BigInt(metadata.decimals) * 10n ** 18n);
+  info.annotations.push({
+    type: "payout-sizing",
+    description: `ShareToken decimals=${metadata.decimals}; target raw shares=${rawHalf}; requested USDC base units=${request}`,
+  });
   await panel.getByLabel("Amount (USDC)", { exact: true }).fill(formatUnits(request, 6));
+  await page.screenshot({ path: info.outputPath("raw-half-share-request.png"), fullPage: true });
   await prepare(page, "Instant payout", info);
   await expect(
     panel.getByRole("heading", { name: "Authoritative simulation", exact: true }),
@@ -47,6 +50,10 @@ test("@v2 @v2-payout Instant payout of half the new deposit value", async ({
   const fee = await field(panel, "Instant payout fee");
   const paid = await field(panel, "USDC paid");
   const burned = await field(panel, "Shares", 18);
+  expect(
+    burned,
+    "Authoritative payout preview must burn a positive raw share amount",
+  ).toBeGreaterThan(0n);
   expect(fee >= (gross * 200n) / 10_000n - 1n && fee <= (gross * 200n) / 10_000n + 1n).toBe(true);
   expect(burned).toBeLessThanOrEqual(BigInt(run.sharesAfter) - BigInt(run.sharesBefore ?? "0"));
   await page.screenshot({ path: info.outputPath("payout-preview.png"), fullPage: true });

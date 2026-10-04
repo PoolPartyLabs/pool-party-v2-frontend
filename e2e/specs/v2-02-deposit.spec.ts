@@ -35,7 +35,8 @@ test("@v2 @v2-deposit approve and deposit at most 2.2 USDC", async ({ page, wall
   ).toBe(false);
   let selected: (typeof FUNDS)[number] | undefined;
   let amount = 1_000_000n;
-  for (const fund of FUNDS) {
+  const candidates = process.env.E2E_V2_FUND === "2" ? [FUNDS[1]] : FUNDS;
+  for (const fund of candidates) {
     await openFund(page, fund);
     const minimumText = await actions(page)
       .getByText(/^Minimum deposit:/)
@@ -105,9 +106,13 @@ test("@v2 @v2-deposit approve and deposit at most 2.2 USDC", async ({ page, wall
     .poll(
       async () => {
         await page.reload();
-        return page.getByRole("heading", { name: "Your fund holdings", exact: true }).count();
+        return page
+          .getByRole("heading", { name: "Your fund holdings", exact: true })
+          .waitFor({ state: "visible", timeout: 20_000 })
+          .then(() => 1)
+          .catch(() => 0);
       },
-      { timeout: 120_000 },
+      { timeout: 300_000, intervals: [30_000] },
     )
     .toBe(1);
   const holdings = page

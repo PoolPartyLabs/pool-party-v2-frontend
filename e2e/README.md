@@ -9,8 +9,14 @@ Writes require the funded dev burner in `E2E_PRIVATE_KEY` **in the shell only** 
 Wait for PR #45 to merge and for explorer links to appear on deployed fund history before writes.
 These are real mainnet transactions: one deposit, at most 2.2 USDC, cumulative ceiling 3 USDC,
 one Instant payout, no native-value transfer. The optional Standard payout is skipped.
-Shares are indivisible whole shares: if the deposit mints only one, a half-share Instant payout
-is skipped rather than silently redeeming pre-existing shares or the entire new holding.
+Payout sizing reads ShareToken `decimals()` and converts half the newly minted raw balance
+to USDC using on-chain Share Price. Despite 18 token decimals, the v2 contract currently rounds
+burns to whole shares; a half-share request can return `PayoutBelowOneShare` before broadcast.
+Do not increase the request to burn the entire holding without separate authorization.
+`E2E_V2_FUND=2` explicitly selects fund #2 for a deposit. `E2E_V2_HISTORY=1` runs the
+five-minute read-only history diagnostic after a deposit (`--grep 'history diagnostic'`).
+The authorized dev burner source is the separate `pool-party-v2-frontend/.env.dev` checkout;
+filter only `POOL_PARTY_DEV_BURNER_WALLET` into shell `E2E_PRIVATE_KEY`, never source all secrets.
 
 Serial, one worker, no retries. `e2e/.auth/v2-run.json` is an ignored public-transaction journal:
 it prevents duplicate deposits across reruns and preserves broadcast hashes even if UI assertions fail.
