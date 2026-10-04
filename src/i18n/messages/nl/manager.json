@@ -101,7 +101,8 @@
     "submitted": "Verzonden",
     "waiting": "Wachten op verificatie",
     "confirmed": "Bevestigd",
-    "failed": "Mislukt"
+    "failed": "Mislukt",
+    "stepProgress": "Stap {n} van {total}"
   },
   "entry": {
     "become": "Word beheerder",

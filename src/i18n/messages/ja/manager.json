@@ -101,7 +101,8 @@
     "submitted": "送信済み",
     "waiting": "確認を待機中",
     "confirmed": "確認済み",
-    "failed": "失敗"
+    "failed": "失敗",
+    "stepProgress": "ステップ {n}/{total}"
   },
   "entry": {
     "become": "マネージャーになる",
