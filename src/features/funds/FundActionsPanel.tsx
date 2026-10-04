@@ -429,13 +429,21 @@ function InvestorActions({
                   <div className="flex justify-between gap-3 break-all" key={key}>
                     <dt>{t("value")}</dt>
                     <dd>
-                      {typeof value === "boolean"
-                        ? value
-                          ? t("ready")
-                          : t("notReady")
-                        : typeof value === "string" || typeof value === "number"
-                          ? String(value)
-                          : t("unavailable")}
+                      {typeof value === "boolean" ? (
+                        value ? (
+                          t("ready")
+                        ) : (
+                          t("notReady")
+                        )
+                      ) : typeof value === "string" || typeof value === "number" ? (
+                        <ExplorerFields
+                          value={value}
+                          field={key}
+                          chainId={Number(fund.mandate.hubChainId)}
+                        />
+                      ) : (
+                        t("unavailable")
+                      )}
                     </dd>
                   </div>
                 ))}

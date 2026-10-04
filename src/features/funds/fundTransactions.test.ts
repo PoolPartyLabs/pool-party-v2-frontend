@@ -8,12 +8,33 @@ vi.mock("@/lib/tx/sendTransaction", () => ({
 }));
 
 import { mockFundBuild, mockWallet } from "@/mocks/data/v2Funds";
-import { decodeFundRevert, fundTransactionCode, sendFundTransaction } from "./fundTransactions";
+import {
+  decodeFundErrorName,
+  decodeFundRevert,
+  fundTransactionCode,
+  sendFundTransaction,
+} from "./fundTransactions";
 
 const hash = `0x${"a".repeat(64)}`;
 const tx = mockFundBuild({ action: "claim-payout" }).transactions[0];
 if (!tx) throw new Error("missing test transaction");
 describe("fund receipt observation", () => {
+  // @rule R3
+  it("decodes nested provider data while bounding cyclic failures", () => {
+    const abi = parseAbi(["error BelowMinFirstDeposit(uint256 amount, uint256 minFirstDeposit)"]);
+    const data = encodeErrorResult({
+      abi,
+      errorName: "BelowMinFirstDeposit",
+      args: [BigInt(1), BigInt(2)],
+    });
+    expect(decodeFundRevert({ data: { data } })).toBe("minimum");
+    expect(decodeFundErrorName({ cause: { data } })).toBe("BelowMinFirstDeposit");
+    expect(decodeFundRevert({ data: "0x1234" })).toBe("revertUnknown");
+    const cyclic: { cause?: unknown } = {};
+    cyclic.cause = cyclic;
+    expect(decodeFundRevert(cyclic)).toBe("revertUnknown");
+    expect(fundTransactionCode(cyclic)).toBe("V2_UNAVAILABLE");
+  });
   beforeEach(() => {
     vi.resetAllMocks();
     mocks.send.mockResolvedValue(hash);
