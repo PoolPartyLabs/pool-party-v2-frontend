@@ -1,179 +1,175 @@
-# Pool Party
+# Arbitrum Open House Singapore
 
-Front-end for **Pool Party v2**, an **On-Chain Asset Management System (OAMS)**: an open, multi-chain platform where asset managers, human or software, build and operate on-chain investment strategies, and where anyone can invest in them without giving up custody.
+<p align="center">
+  <img src="public/brand/duck-head.png" alt="Pool Party logo" width="96">
+</p>
 
-## Hackathon submission (ETHGlobal, September 2026)
+**Pool Party: On-Chain Asset Management System (OAMS).** Build a fund, define its mandate, compose DeFi positions and launch through a wallet-signed journey. The Arbitrum Open House Singapore submission introduces **Fund Contracts V2**, with Arbitrum One as the hub and Robinhood Chain as an optional spoke.
 
-> **Premise.** Pool Party is an on-chain asset management system: managers build strategies, investors allocate to them under mandates the chain enforces. Uniswap v4 puts arbitrary code, the **hook**, on the swap path of every pool a strategy might touch. A hook can skim more than its declared fee, trap liquidity, or expose a callback anyone can call, and the strategy manager cannot see any of that from a pool page. The Cork hook lost $11M in May 2025 to exactly such a callback. **This submission gives managers a way to measure a hook's risk before opening a position, without leaving the platform and without putting investor funds on the line.** It ships two products: **hookrisk with its Tools page**, so a manager can measure a hook before opening a position, and **Cash+**, a dedicated investment page for business dollar reserves that shows what a conservative, fully explained v4-era strategy looks like to the investor.
+![Arbitrum Open House Singapore: Pool Party Fund Contracts V2](docs/assets/arbitrum-open-house-singapore.jpeg)
 
-### What we built
+[Open the demo](https://v2.dev.pool-party.xyz/en/manager/new) · [Smart contracts](https://github.com/PoolPartyLabs/smartcontract-v2) · [API specification](https://github.com/0xmvercosa/PoolParty_SCs_v2/tree/main/docs/engenharia/2026-10-03-api-v2-alpha-spec) · [Delivery evidence](docs/STRATEGY_BUILDER_DELIVERY_2026-10-04.md)
 
-1. **[`hookrisk/`](hookrisk/), the Uniswap Foundation's Hooks Security Framework made executable.** One command, `hookrisk scan src/MyHook.sol:MyHook`, and the output is a scored manifest, a full Markdown report, SARIF for CI and a meaningful exit code. It does three things a linter does not:
-   - **Reads the hook** with Slither detectors ([`hookrisk/detectors/`](hookrisk/detectors/)): an `IHooks` callback anyone can call (HS-01), declared permissions that disagree with the implemented callbacks (HS-02), the admin surface (HS-03), third-party calls on the swap path (HS-05), unbounded dynamic fees (HS-06), custom accounting as a classification (HS-07).
-   - **Executes the hook** in a twin-pool differential harness on real `v4-core` ([`hookrisk/harness/`](hookrisk/harness/)): two pools identical except for the hook, the same fuzzed sequence, three invariants (no token created or destroyed, no extraction beyond the declared fee, every position can be closed). A hook that documents a 1% fee and charges 3.5% is structurally flawless; only execution sees it.
-   - **Refuses to flatter.** Nine framework dimensions and seven triggers are scored, and a dimension is never scored zero unless a detector capable of finding something actually ran; a missing engine yields an *unmeasured* dimension and a tier **range**. BlockSec's HookScan runs as a second, attributed engine and agreeing findings merge at raised confidence.
-   - **Evidence:** before/after scans of 14 real hooks, including the archived Cork exploit hook, are under [`hookrisk/docs/hackathon/evidence/`](hookrisk/docs/hackathon/evidence/); the narrative is [`hookrisk/docs/hackathon/HACKATHON.md`](hookrisk/docs/hackathon/HACKATHON.md) and the demo is [`hookrisk/docs/hackathon/DEMO_RUNBOOK.md`](hookrisk/docs/hackathon/DEMO_RUNBOOK.md).
-2. **The Tools page in the investor app (`/tools`).** A manager pastes a hook address, picks the chain, and the platform fetches the verified source, builds it, runs hookrisk server-side and renders the report in place. Reports are cached for 24 hours per hook so a second look is instant. This is the seam through which, once v4 strategies land in the platform, the strategy builder will check a hook before a position is opened. Gated by the `hookTools` flag (on in this repository); docs in [`docs/_hackathon_hookrisk/`](docs/_hackathon_hookrisk/).
-
-3. **Cash+ (`/cash-plus`), a dedicated investment page for business dollar reserves.** The strategy combines Aave lending interest with stablecoin conversion spreads through **1inch Aqua and SwapVM**; the page shows the position, its composition and the two sources of return, and every operation is an explicit, exact accounting step. The delivery is an **interactive preview**: invest simulated USDC, advance one explicitly modeled day, inspect the result, withdraw a partial amount, all shares or proportional assets, reset. Receipts are labelled `simulated: true`, carry no transaction hash and trigger no wallet request; the assumptions behind the modeled day are stated on screen and are not a quoted APY. Gated by the `cashPlus` flag (on in this repository, mode `preview`). Docs: [demo guide](docs/features/cash-plus/cash-plus-ui-demo.md), [technical specification](docs/features/cash-plus/cash-plus-technical-spec.md), [contracts accounting](docs/features/cash-plus/cash-plus-contracts-accounting.md), [feature README](src/features/cash-plus/README.md); companion contracts at [pool-party-aqua `feat/cash-plus-demo`](https://github.com/0xmvercosa/pool-party-aqua/tree/feat/cash-plus-demo/contracts/src/cashplus) and the optional [local-fork tooling](scripts/cash-plus/README.md).
-
-### What is new and what is reused (Continuity track)
-
-This repository is a pre-existing production codebase; the [commit history](https://github.com/PoolPartyLabs/pool-party-v2-frontend/commits/) on the hackathon branch is the record of what was built during the event, one theme per commit, never squashed.
-
-| | Status | Where |
-|---|---|---|
-| hookrisk: detectors, harness, scoring, CLI, action, evidence | **New, built during the hackathon** | `hookrisk/` (copied from the team's development repository at `d256e91a`, provenance banner at the top of its README) |
-| Tools page, scan job runner, report rendering, `hookTools` flag | **New, built during the hackathon** | `src/app/[locale]/(auth)/(app)/tools/`, `src/lib/tools/hookrisk/`, `src/app/api/tools/hookrisk/` |
-| Cash+ page, preview ledger, exact share accounting, `cashPlus` flag, local-fork CLI | **New, built during the hackathon** | `src/features/cash-plus/`, `src/lib/cash-plus/`, `src/mocks/services/cashPlusDemo.ts`, `scripts/cash-plus/`, `docs/features/cash-plus/` |
-| Fiat on-ramp on the Privy rail (Google sign-in, embedded wallet, card checkout, buy leg in provisioning) | **Supporting work.** Ported onto this public baseline during the event so the demo account can be funded without leaving the app; the modules themselves come from the team's private repository | `src/lib/onramp/`, `src/features/deposit/`, `PrivyBuyStep`; continuity record in [`docs/_hackathon_privy/03_PRE_EXISTING_VS_NEW.md`](docs/_hackathon_privy/03_PRE_EXISTING_VS_NEW.md) |
-| The investor app itself (strategies, portfolio, provisioning rail, wallet, analytics, security) | **Pre-existing** | everything else under `src/` |
-| Earlier hackathon tracks (Universal Funding, Active Reserve) | **Pre-existing** (July 2026), kept for history | [`docs/_hackathon/`](docs/_hackathon/), [`docs/_hackathon_aqua/`](docs/_hackathon_aqua/) |
-
-Open-source components hookrisk stands on, credited rather than reframed: Slither, Foundry, Uniswap `v4-core` and `v4-periphery`, OpenZeppelin `uniswap-hooks`, BlockSec HookScan (run as a separate process, nothing redistributed). Full list and licences in [`hookrisk/docs/PRIOR_ART.md`](hookrisk/docs/PRIOR_ART.md) and [`hookrisk/NOTICE`](hookrisk/NOTICE) (MIT, except `hookrisk/detectors/` which is AGPL-3.0-only).
-
-### Use of AI tools
-
-Claude Code was used throughout as a pair programmer, directed by the team through written specs, rules and reviews rather than left to generate the project. Everything the judges need to see how the AI was directed is in the repository:
-
-- **How the app work is directed:** [`CLAUDE.md`](CLAUDE.md) (the project's operating rules: business rules before code, TDD, i18n, artifact IDs, analytics as definition of done) and the agent and skill definitions under [`.claude/`](.claude/).
-- **How hookrisk was directed:** [`hookrisk/CLAUDE.md`](hookrisk/CLAUDE.md), the per-workstream notes [`hookrisk/docs/hackathon/notes-A.md`](hookrisk/docs/hackathon/) through `notes-I.md`, and the resume file [`hookrisk/docs/hackathon/RESUME.md`](hookrisk/docs/hackathon/RESUME.md) with every decision and its reason.
-- **How Cash+ was directed:** the specification set under [`docs/features/cash-plus/`](docs/features/cash-plus/) (technical spec, contracts accounting, delivery acceptance, dependency security) written before and during the build, and the feature README.
-- **Where the AI wrote code:** every commit co-authored by the assistant carries a `Co-Authored-By` trailer; file headers carry the issue and rule version the code implements. The framework port, the detector logic, the invariant harness and the scoring rules were specified, reviewed and tested by the team; the assistant drafted implementations and documentation against those specs.
-
-### Earlier tracks in this repository (July 2026)
-
-Kept for history, and pre-existing for this event: **Universal Funding** (Uniswap Trading API; docs in [`docs/_hackathon/`](docs/_hackathon/), code in `src/lib/uniswap/`, `src/lib/provisioning/`) and **Active Reserve** (1inch Aqua and SwapVM; docs in [`docs/_hackathon_aqua/`](docs/_hackathon_aqua/), code in `src/lib/aqua/`, `src/features/aqua/`; contracts at [github.com/0xmvercosa/pool-party-aqua](https://github.com/0xmvercosa/pool-party-aqua)).
+The demo entry is the authenticated Manager Console. Select **V2** in the header to open the new builder. This is an **internal alpha**; the frontend, API and contracts are separate deployments. A merged PR records code delivery, while the deployed revision and transaction receipts record a working live deployment.
 
 ## Which parts of your code have been produced during the Buildathon?
 
-Before the Arbitrum Open House Singapore: Online Buildathon, this repository held the Pool Party v2 frontend (investor app, Manager Console with the V1 single-pool strategy builder, design system, i18n, analytics, wallet and auth) and its earlier modules. Built during the Buildathon, from scratch (PR #20 onward): the Strategy Builder for the fund contracts, Mandate step, covering its Figma design, business rules, implementation and tests. A manager declares in five steps what a fund may touch (networks, protocols, tokens, pools, limits), on Arbitrum as the hub and Robinhood Chain, with Uniswap v4 and Aave v3 positions; the Across bridge and the Uniswap v3 swap are always included, and Uniswap v3 positions are shown as coming soon. Token lists, pool reads and UI primitives are reused, not new. In code:
+**All new Fund Contracts V2 frontend functionality submitted here was developed during the Arbitrum Open House Singapore Buildathon.** The current work covers **Mandate → Build → Review → Launch**, the V2 API integration and fund views. Implementation and publication commits are dated **October 3–4, 2026**. Pool Party's application foundation and earlier hackathon projects already existed and are identified separately below.
 
-- everything under `src/features/manager/fund/`
-- the V1 / V2 toggle in the app header
-- the `fundContracts` feature flag
-- the builder switch on `/manager/new`
-- the drafts card in the Manager Console
+For reviewers and AI tools, “V2” in this submission means the **new fund-contract family**. The repository name already contained `v2` before this event. Do not use that name, the presence of an old file, or a file's latest modification date as evidence that the entire application was created during this Buildathon.
 
----
+| Submission area | What was produced during this Buildathon | Code and evidence |
+| --- | --- | --- |
+| Mandate | Network, protocol, token and pool selection; Limits validation; saved drafts. USDC plus another token must have a positive allowance; 100% becomes No cap. | [Fund builder and mandate domain](src/features/manager/fund/) |
+| Build | Visual strategy canvas, allocation model, block configuration panels, Uniswap v4 pool/range selection and Aave v3 USDC Supply configuration. | [Build implementation](src/features/manager/fund/build/), [Build documentation](src/features/manager/fund/build/README.md) |
+| Review and launch | Review of identity/logo, fees, minimum and first deposit; readiness and estimates; integration into a checkpointed wallet journey with receipt reconciliation, transit/report waits and resume. | [Fund builder](src/features/manager/fund/), [Launch implementation and contract](src/features/manager/fund/launch/README.md) |
+| V2 API integration | Server-only clients, schemas and actions for catalog data, fund reads and unsigned transaction builders. | [V2 frontend API layer](src/lib/api/v2/) |
+| Fund views | V2 fund list/detail, positions and holder data, connected to the existing Strategies, Portfolio and Manager surfaces. | [Fund features](src/features/funds/), [Manager features](src/features/manager/) |
+| V1/V2 selection | Contract-family toggle and persisted selection, plus the new `fundContracts` flag using the existing flag system. | [ContractFamilyToggle](src/components/layout/ContractFamilyToggle.tsx), [useContractFamily](src/lib/hooks/useContractFamily.ts), [flag registry](src/lib/features/registry.ts) |
+| Supporting delivery | Tests, fixtures, translations, analytics events, integration records and compliance entries for the new flows; extensions to shared components. | [Delivery record](docs/STRATEGY_BUILDER_DELIVERY_2026-10-04.md), [integration map](docs/INTEGRATION_POINTS.md), [analytics catalog](docs/ANALYTICS_EVENTS.md) |
 
-## How it works
+**Reused foundation:** the application shell, design system, authentication/wallet integration, V1 builder, provisioning infrastructure, feature-flag framework, localization, analytics and security. Supporting utilities ported from earlier private work, including the Robinhood token list and pool-by-address reader, are dependencies of the submission rather than wholly new inventions. The [October 3 continuity record](docs/CHANGELOG.md#v017-2026-10-03) documents that port.
 
-The platform splits responsibilities into two layers:
+This repository contains the **frontend**. Solidity implementations live in [PoolPartyLabs/smartcontract-v2](https://github.com/PoolPartyLabs/smartcontract-v2); backend endpoint contracts are documented in the [V2 alpha API specification](https://github.com/0xmvercosa/PoolParty_SCs_v2/tree/main/docs/engenharia/2026-10-03-api-v2-alpha-spec). Their history and deployment evidence must be assessed in those repositories, separately from this frontend's commits.
 
-- **On-chain, the trust layer.** Custody, mandates, and settlement. Funds sit in non-custodial vaults, and every action a manager takes is a transaction anyone can verify.
-- **Off-chain, the optimization layer.** Risk analysis, backtesting, algorithmic execution, reporting, and the product surfaces in this repository.
+### First commit and verifiable history
 
-Strategies compose modular protocol adapters (lending, derivatives, spot) into products such as delta-neutral farming, basis trading, and LST loops. Returns come from real on-chain activity (trading fees, lending interest, market making), not token emissions. The protocol is multi-chain native, running on EVM networks and Solana, and the product covers the full loop: fiat in (cards, Apple Pay, local rails in 80+ countries), yield through managed strategies, fiat out or spending through partner cards.
+All timestamps below are **UTC**. Development began in the team's private repository and was then ported to this public repository.
 
-### Mandates
+| Milestone | Timestamp | Evidence |
+| --- | --- | --- |
+| First original implementation commit for the current frontend work | **2026-10-03 02:45:17** | `685457d3bfa94227e0f972e5ee2e63ee62887bfd`, Mandate domain/catalog and tests. Recorded in the local private-repository history; this commit is not publicly accessible. |
+| First publicly accessible commit of this frontend submission | **2026-10-03 15:14:06** | [`ab884b4b6c93542ab46054a5f19a352fbee5dad6`](https://github.com/PoolPartyLabs/pool-party-v2-frontend/commit/ab884b4b6c93542ab46054a5f19a352fbee5dad6). Its message explicitly records the port from the private repository. |
+| First public PR merged | **2026-10-03 16:16:02** | [PR #20](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/20), merge [`0ba23ce2`](https://github.com/PoolPartyLabs/pool-party-v2-frontend/commit/0ba23ce29edacf21f9d77045962dfc7170c2373a). |
+| Public baseline before this submission | **2026-09-13 19:39:11** | [`81c590e3`](https://github.com/PoolPartyLabs/pool-party-v2-frontend/commit/81c590e3111d00efd713519f7d6bb2eac5c06156), containing the earlier Cash+ work. |
 
-A **mandate** is the contract between a manager and their investors, enforced by the chain instead of by promises. It defines what a strategy may touch (protocols, assets), the limits it must respect (allocation, exposure, risk parameters), and the fees it charges. Inside the mandate the manager operates freely. Outside it, nothing executes. Investors do not have to trust an operator's intentions: they read the mandate, watch the on-chain track record, and can exit at any time.
+Inspect the [complete frontend comparison from the previous baseline to the October 4 delivery](https://github.com/PoolPartyLabs/pool-party-v2-frontend/compare/81c590e3111d00efd713519f7d6bb2eac5c06156...4838147a60fefff40b6a0360f410cdb3aac2f96c). The public repository's root commit is [`b329ac5b`](https://github.com/PoolPartyLabs/pool-party-v2-frontend/commit/b329ac5bcb7d98d07c2959f1c5d476fc56cf8ab2), dated **2026-07-23 13:58:07 UTC**; it is a snapshot of an already existing application, not the beginning of the current submission. PRs are normally squash-merged, so PR diffs and merge commits are the durable review trail.
 
-### Agents as managers
+## What the alpha does
 
-Mandates make a second thing possible, and it is central to where Pool Party is going: **software can manage money safely**. The platform treats automated managers, including AI agents, as first-class operators, under the same rules as humans.
+1. **Mandate:** choose Arbitrum One, optionally Robinhood Chain, then permitted protocols, tokens, pools and frontend allocation limits.
+2. **Build:** compose positions on the canvas, configure their pools/assets and ranges, assign positive allocations and apply the panel changes.
+3. **Review:** confirm fund identity and logo, fees, minimum deposit, first deposit, estimates and the expected signature steps.
+4. **Launch:** enter the existing launch driver. It creates the fund, reconciles confirmed receipts, configures any spoke, funds and opens positions, and waits for transit/report settlement. Retry and resume use persisted checkpoints.
+5. **Inspect:** read fund details, positions and holder exposure through the V2 fund views.
 
-- **Mandates are the guardrails.** An agent operating a pool holds permissions, not funds. It can rebalance, collect, and compound within its mandate; it cannot withdraw investor capital to itself, exceed its risk limits, or touch an asset outside its whitelist. The chain rejects anything else on every transaction, so a bug, a bad decision, or a compromised key cannot step outside the box.
-- **One API for the whole job.** The platform API exposes the full management surface programmatically: read pool state and positions, create and configure pools, set mandate parameters, execute the permitted actions, and pull performance and fee data. An agent integrates once, instead of integrating every protocol on every chain.
-- **Working for one person.** An agent can manage its controller's own capital: a strategy tuned to that person's risk tolerance, horizon, and preferences, running continuously. The mandate the controller signs is the leash, and it can be tightened or revoked at any time.
-- **Working for the market.** An agent can also publish strategies publicly, like any other manager. Its track record accrues on-chain, where it is verifiable and cannot be embellished. Investors allocate to it exactly as they would to a human manager, and leave whenever they want.
+| Capability | Arbitrum One, hub | Robinhood Chain, optional spoke |
+| --- | --- | --- |
+| Chain ID | `42161` | `4663` |
+| Base asset | USDC | USDG |
+| Uniswap v4 positions | Supported | Supported |
+| Aave v3 Supply | Canonical USDC only | Unavailable |
+| Execution swaps | Uniswap v3 swap adapter | Uniswap v3 swap adapter |
+| Cross-chain transport | Across capital transport; Wormhole reporting/order messaging | Across capital transport; Wormhole reporting/order messaging |
 
-## Product surfaces
+Uniswap v3 **positions**, Aave Borrow, leverage, perpetuals and additional chains are outside the supported alpha launch path. Across is required for a spoke allocation; a hub-only fund does not need a bridge. Token/protocol cap controls and intended network allocations are frontend planning aids in this alpha; they are not a claim that every displayed limit is enforced on-chain. Borrow may still appear in the canvas palette, but readiness and launch reject it.
 
-This repository hosts the product's front-ends:
+Drafts and launch journals are browser-local. Estimates are labelled, unavailable metrics remain unavailable, and completion depends on settlement rather than transaction broadcast. Feature flags, manager access and mock/real mode are separate controls. See the [delivery boundaries](docs/STRATEGY_BUILDER_DELIVERY_2026-10-04.md#delivery-boundaries-and-ownership) and [compliance register](docs/COMPLIANCE_REGISTER.md) for the alpha's remaining constraints.
 
-- **Investor app**, the current focus. Fiat on-ramp, managed strategies, savings, token exposure, predictions, perps, partner cards, rewards, and off-ramp. Fully designed; v1 in active build.
-- **Manager Console** (B2B). Strategy builder, mandate configuration, backtesting, execution monitoring, and automated investor relations. Design in progress.
-- **White-label** (B2B2C, future). Wallets, neobanks, and fintechs embed the same yield products through the API.
+### Data, endpoints and assets
 
-Agents do not get a separate surface: they operate through the API, under the same mandates.
+| Data | Source used by the frontend |
+| --- | --- |
+| Tokens, decimals, prices and token logos | `GET /api/v2/catalog/tokens?chainId=42161` or `4663`; catalog `logoUrl` with a shared renderer fallback. |
+| Uniswap v4 pool selection and state | `GET /api/v2/catalog/uniswap-v4/pools` and `/{poolId}?chainId=...`; PoolId, PoolKey, spacing, tick and `sqrtPriceX96`. |
+| Pool filters | `tokenAddress` and `secondTokenAddress` pair matching, intersected with the selected mandate and network. |
+| Aave reserves and availability | `GET /api/v2/catalog/aave-v3/reserves?chainId=42161`; APY, supply/cap and active/frozen/paused gates. |
+| Fund and position reads | V2 `/api/v2/funds` endpoints through [typed server actions](src/lib/api/v2/). |
+| Network/protocol artwork | [Network assets](public/networks/), [protocol assets](public/protocols/) and the existing token assets. |
+| Fund logo upload | Existing authenticated media-upload integration, reused by Review. |
 
-## Status
+The API prepares transaction data; the connected wallet signs and broadcasts through the launch driver. API credentials stay server-side. Pool liquidity is not presented as TVL, and missing APR/TVL is not replaced with invented figures. The [detailed source map](docs/STRATEGY_BUILDER_DELIVERY_2026-10-04.md#data-and-assets) connects each panel to its data and launch contract.
 
-V1 of the investor app is in active build, gated per area by a feature-flag registry (see [`docs/FEATURE_FLAGS.md`](docs/FEATURE_FLAGS.md)):
+## Alpha infrastructure addresses
 
-- **Built**: app shell, Home, Portfolio, Strategies, Deposit, Profile, Rewards.
-- **In build**: Cards.
-- **Registered, not built yet**: Savings, Buy tokens, Predictions, Perps, Manager Console.
+The contracts team's [mainnet alpha deployment record](https://github.com/PoolPartyLabs/smartcontract-v2/blob/main/docs/reports/2026-10-03-MVP-REPORT.md#mainnet-alpha-deployment) records deployment on **October 3, 2026**, from frozen contracts release **`797d592`**. The inventory below reproduces the alpha infrastructure addresses supplied for this submission.
 
-The app is **mock-by-default with real seams already wired**. Wallet and auth (Privy + wagmi/viem, SIWE), analytics, and the web-security layer are real. The platform data layer runs on fixtures behind a single toggle and plugs into the backend at explicit, documented integration points (see [`docs/INTEGRATION_POINTS.md`](docs/INTEGRATION_POINTS.md)). The hackathon tracks call live third-party APIs (block explorers and hookrisk for the Tools page, Uniswap Trading API, 1inch Aqua, Privy). The fiat on-ramp (Privy rail) is real in real mode and **on by default** in this repository. UI copy ships in 11 languages.
+These are **factory, implementation and linked-library addresses**, not token addresses or individual fund deposit destinations. Each created fund has its own core, spoke and share-token addresses. The contracts deployment record contains the complete fund-specific inventory and evidence.
 
-> **All figures shown in the running app are synthetic mock data.** TVL, APY, balances, and portfolio values are generated fixtures, not real positions or real money.
+### Same address on Arbitrum One and Robinhood Chain
 
-## Quick start
+| Contract | Address | Explorers |
+| --- | --- | --- |
+| FundFactory | `0x2CDB1f3fa95F8A65495D01D20AD53cF980728534` | [Arbitrum](https://arbiscan.io/address/0x2CDB1f3fa95F8A65495D01D20AD53cF980728534) · [Robinhood](https://robinhoodchain.blockscout.com/address/0x2CDB1f3fa95F8A65495D01D20AD53cF980728534) |
+| Create3Deployer | `0x1Da47CED247a6776329281836600283b033f8e41` | [Arbitrum](https://arbiscan.io/address/0x1Da47CED247a6776329281836600283b033f8e41) · [Robinhood](https://robinhoodchain.blockscout.com/address/0x1Da47CED247a6776329281836600283b033f8e41) |
+| TransitEscrow implementation | `0xfFDc3EdE1D43678dDe55E98fb924a81dCA26383F` | [Arbitrum](https://arbiscan.io/address/0xfFDc3EdE1D43678dDe55E98fb924a81dCA26383F) · [Robinhood](https://robinhoodchain.blockscout.com/address/0xfFDc3EdE1D43678dDe55E98fb924a81dCA26383F) |
+| SpokeCrossChainLib | `0x3341467fd9F8Ce784D77348bEa276cE80EB57693` | [Arbitrum](https://arbiscan.io/address/0x3341467fd9F8Ce784D77348bEa276cE80EB57693) · [Robinhood](https://robinhoodchain.blockscout.com/address/0x3341467fd9F8Ce784D77348bEa276cE80EB57693) |
+| SpokeUnwindLib | `0xfea626E44de1d2d7A01935A485399e992725351D` | [Arbitrum](https://arbiscan.io/address/0xfea626E44de1d2d7A01935A485399e992725351D) · [Robinhood](https://robinhoodchain.blockscout.com/address/0xfea626E44de1d2d7A01935A485399e992725351D) |
+| SpokeCloseLib | `0xFCADfa1b5bCD4eDCa95220E07661795Efa883035` | [Arbitrum](https://arbiscan.io/address/0xFCADfa1b5bCD4eDCa95220E07661795Efa883035) · [Robinhood](https://robinhoodchain.blockscout.com/address/0xFCADfa1b5bCD4eDCa95220E07661795Efa883035) |
+| SpokeIncomeLib | `0xCB8Ece6A3A1FCB80083eD1c8B7c7b6e85B14Dc5B` | [Arbitrum](https://arbiscan.io/address/0xCB8Ece6A3A1FCB80083eD1c8B7c7b6e85B14Dc5B) · [Robinhood](https://robinhoodchain.blockscout.com/address/0xCB8Ece6A3A1FCB80083eD1c8B7c7b6e85B14Dc5B) |
 
-Requires Node 22 (see [`.nvmrc`](.nvmrc)) and [pnpm](https://pnpm.io).
+### Arbitrum One only
+
+| Contract | Address / Arbiscan |
+| --- | --- |
+| ManagerRegistry | [`0xd6671dc995e6d5F2F7f65ea05a513738907737cE`](https://arbiscan.io/address/0xd6671dc995e6d5F2F7f65ea05a513738907737cE) |
+| ChainlinkPriceSource | [`0xd1E43765FCb66515cd8Cf0Ede73dFF2E4bF249bF`](https://arbiscan.io/address/0xd1E43765FCb66515cd8Cf0Ede73dFF2E4bF249bF) |
+| CoreVaultLogic | [`0x43Ddb24ac75Cffa09f0849DDD71a78F7e9C3068d`](https://arbiscan.io/address/0x43Ddb24ac75Cffa09f0849DDD71a78F7e9C3068d) |
+| CoreVaultTransitLogic | [`0x6E6b2461628008C5E496c480860C675c33fe957D`](https://arbiscan.io/address/0x6E6b2461628008C5E496c480860C675c33fe957D) |
+| CoreVaultIncomeLogic | [`0x593BF11bf8e3b2F795bbC538AEe1d59f8D4D55B8`](https://arbiscan.io/address/0x593BF11bf8e3b2F795bbC538AEe1d59f8D4D55B8) |
+| CoreVaultIncomeCollectionLogic | [`0x4a0ae1f3017F6869Bc3B24CD69d0b501BA93FACa`](https://arbiscan.io/address/0x4a0ae1f3017F6869Bc3B24CD69d0b501BA93FACa) |
+| CoreVaultPayoutLogic | [`0xFaa7d44e670570CaB3346522f55D1b25408D05e8`](https://arbiscan.io/address/0xFaa7d44e670570CaB3346522f55D1b25408D05e8) |
+| CoreVaultClosureLogic | [`0x75997F8b180e20695c58fF519D672CFA9274E028`](https://arbiscan.io/address/0x75997F8b180e20695c58fF519D672CFA9274E028) |
+
+## Run locally
+
+Requires Node 22 ([`.nvmrc`](.nvmrc)) and the pnpm version pinned in [`package.json`](package.json).
 
 ```bash
-pnpm install                 # install dependencies
-cp .env.example .env.local   # create local env (mock mode is on by default)
-pnpm dev                     # run the app at http://localhost:3000
+pnpm install
+cp .env.example .env.local
 ```
 
-No backend, RPC, or wallet is required (see [`docs/05_MOCK_STRATEGY.md`](docs/05_MOCK_STRATEGY.md)).
+Set `NEXT_PUBLIC_FEATURE_FUND_CONTRACTS=on` in `.env.local` before starting the app, then run:
 
-## Scripts
+```bash
+pnpm dev
+```
+
+Open `http://localhost:3000/en/manager/new` through the manager flow and select **V2**. The feature flag is baked into production builds, so it must also be set before `pnpm build`.
+
+- **Mock mode**, the local default: fixtures support interface development; mock mode cannot launch a real fund. Wallet/auth configuration is separate from the data toggle.
+- **Real mode:** set `NEXT_PUBLIC_MOCK_MODE=false` and configure the existing Privy/wallet, RPC, API/session and media integration. The V2 client reads `PP_API_URL` and `PP_API_KEY`; privileged launch routes also need server-only `PP_API_ADMIN_KEY`. Robinhood wallet/network paths use `NEXT_PUBLIC_FEATURE_ROBINHOOD_CHAIN=on`. See [`.env.example`](.env.example), [the launch integration](src/features/manager/fund/launch/README.md) and [feature flags](docs/FEATURE_FLAGS.md).
+
+Real-mode balances and catalog/fund reads come from live integrations. The local fixture mode does not describe every figure on a configured live deployment.
 
 | Command | Purpose |
-|---------|---------|
-| `pnpm dev` | Run the dev server at `http://localhost:3000`. |
-| `pnpm cash-plus:ui` | Run the interactive Cash+ mock at `http://localhost:3049/en/cash-plus`. |
-| `pnpm build` / `pnpm start` | Build for production / serve the build. |
-| `pnpm test` / `pnpm test:watch` / `pnpm test:coverage` | Run the Vitest suite (once, in watch mode, with coverage). |
-| `pnpm lint` / `pnpm format` | Check / format the codebase with Biome. |
-| `pnpm typecheck` | Strict TypeScript check. |
-| `pnpm i18n:check` | Verify locale parity, ICU syntax, and used keys across all 11 locales. |
-| `pnpm config:check` | Verify the `.claude` agent and skill config (counts, pinned models). |
-| `pnpm storybook` | Component workshop at `http://localhost:6006`. |
+| --- | --- |
+| `pnpm test` / `pnpm test:coverage` | Vitest suite and coverage. |
+| `pnpm typecheck` / `pnpm lint` | TypeScript and Biome checks. |
+| `pnpm i18n:check` / `pnpm config:check` | Locale parity and repository configuration checks. |
+| `pnpm build` / `pnpm start` | Production build and server. |
+| `pnpm storybook` | Component workbench. |
 
-## Stack
+Stack: Next.js 15, React 19, strict TypeScript, Tailwind 4, Zustand, Zod, next-intl, Privy, wagmi/viem, Vitest and Storybook. The public app has 11 configured locales; [`src/i18n/config.ts`](src/i18n/config.ts) is authoritative.
 
-Next.js 15 (App Router) · TypeScript (strict) · Tailwind 4 · shadcn/ui · Zustand · react-hook-form + Zod · next-intl (11 locales, `en` source) · TanStack Table & Query · Vitest + Testing Library · Storybook · Biome · pnpm · Node 22 (LTS). Details in [`docs/01_TECH_STACK.md`](docs/01_TECH_STACK.md).
+## Documentation and AI-assisted development
 
-## Documentation
+Claude Code and Codex were used to draft and review code, tests and documentation under the team's direction. Specs, numbered business rules, issue references, file headers and PR diffs record the work; AI assistance does not change which parts predate this submission. The event banner is a supplied AI-generated illustration; the Pool Party logo is the existing brand asset.
 
-All canonical documentation lives in [`docs/`](docs/).
+For readers and AI tools, start with these sources:
 
-| Doc | Purpose |
-|-----|---------|
-| [`00_OVERVIEW.md`](docs/00_OVERVIEW.md) | Goals, scope, decisions |
-| [`01_TECH_STACK.md`](docs/01_TECH_STACK.md) | Stack and versions |
-| [`02_NAMING_CONVENTION.md`](docs/02_NAMING_CONVENTION.md) | IDs, naming, area taxonomy, analytics naming |
-| [`03_PROJECT_STRUCTURE.md`](docs/03_PROJECT_STRUCTURE.md) | Folder layout |
-| [`04_CODE_STANDARDS.md`](docs/04_CODE_STANDARDS.md) | Code standards, headers, TDD |
-| [`05_MOCK_STRATEGY.md`](docs/05_MOCK_STRATEGY.md) | Mock and data strategy |
-| [`06_CLAUDE_CODE_AGENTS.md`](docs/06_CLAUDE_CODE_AGENTS.md) | Agents and skills |
-| [`07_LINEAR_WORKFLOW.md`](docs/07_LINEAR_WORKFLOW.md) | Linear backlog and workflow |
-| [`08_DOCUMENTATION_STYLE_GUIDE.md`](docs/08_DOCUMENTATION_STYLE_GUIDE.md) | Documentation style |
-| [`09_ANALYTICS.md`](docs/09_ANALYTICS.md) | Analytics taxonomy, privacy, dashboards |
-| [`10_SECURITY.md`](docs/10_SECURITY.md) | Security baseline (headers, CSP, sessions, DNS, CORS) |
-| [`FEATURE_FLAGS.md`](docs/FEATURE_FLAGS.md) | Flag registry, resolution precedence, v1 launch matrix |
-| [`INTEGRATION_POINTS.md`](docs/INTEGRATION_POINTS.md) | Where real backend, wallet, and contracts plug in |
-| [`DESIGN_INTAKE.md`](docs/DESIGN_INTAKE.md) | Design-change intake queue (Figma to Linear) |
-| [`IDS_REGISTRY.md`](docs/IDS_REGISTRY.md) | Central artifact ID registry |
-| [`FIGMA_INVENTORY.md`](docs/FIGMA_INVENTORY.md) | Per-area inventory of designed artifacts |
-| [`ANALYTICS_EVENTS.md`](docs/ANALYTICS_EVENTS.md) | Living catalog of tracked events |
-| [`CHANGELOG.md`](docs/CHANGELOG.md) | Versioned history of the canonical docs |
+| Source | What it establishes |
+| --- | --- |
+| [October 4 delivery](docs/STRATEGY_BUILDER_DELIVERY_2026-10-04.md) | Merged slices, validation evidence, supported journey and remaining boundaries. |
+| [Manager README](src/features/manager/README.md), [Build README](src/features/manager/fund/build/README.md), [Launch README](src/features/manager/fund/launch/README.md) | Module ownership, state, configuration and execution interfaces. |
+| [Project structure](docs/03_PROJECT_STRUCTURE.md), [stack](docs/01_TECH_STACK.md) | Where code lives and the technology baseline. |
+| [Integration points](docs/INTEGRATION_POINTS.md), [feature flags](docs/FEATURE_FLAGS.md) | Mock/real boundaries and feature availability. |
+| [Artifact IDs](docs/IDS_REGISTRY.md), [analytics](docs/ANALYTICS_EVENTS.md), [compliance](docs/COMPLIANCE_REGISTER.md) | Traceability and product constraints. |
+| [Repository operating rules](CLAUDE.md), [agent/skill definitions](.claude/), [design intake](docs/DESIGN_INTAKE.md) | How specifications and reviews reach development. |
 
-## Development workflow
+Historical documents are dated snapshots. For implementation details, use the current code and its linked tests together with the latest delivery record. For on-chain behavior, use the contracts repository and its deployment report. For API payloads, use the linked V2 API specification and frontend schemas.
 
-Design is the source of truth, and it flows into code through a single intake path:
+## What existed before: earlier hackathons
 
-1. **Design**: screens and components are produced in Figma. Every artifact carries a `PP-AREA-TYPE-NNN` ID (see [`docs/02_NAMING_CONVENTION.md`](docs/02_NAMING_CONVENTION.md)). Mobile and desktop of one screen share one ID (responsive).
-2. **Intake**: each design change (new screen, edit, new state) is recorded in [`docs/DESIGN_INTAKE.md`](docs/DESIGN_INTAKE.md). **This file is reviewed at the start of every working session.**
-3. **Triage to Linear**: each intake entry becomes a Linear issue (referencing the IDs and the change), then the entry is removed from `DESIGN_INTAKE.md`. Business rules are discussed and recorded on the issue before development.
-4. **Build**: issues are implemented under TDD, per [`docs/04_CODE_STANDARDS.md`](docs/04_CODE_STANDARDS.md), and the registry is kept in sync.
+Before this Buildathon, Pool Party already had an investor application, a V1 strategy builder, wallet/auth, a design system, internationalization, analytics, security and provisioning. The repository also retains these earlier submissions:
 
-Tracking lives in Linear (workspace `yeildbay`, team `Pool Party`), one project per product area. See [`docs/07_LINEAR_WORKFLOW.md`](docs/07_LINEAR_WORKFLOW.md).
+| Earlier work | Brief summary | Historical documentation |
+| --- | --- | --- |
+| July 2026: Universal Funding | Uniswap Trading API swaps and bridges to fund operations. | [Universal Funding](docs/_hackathon/) |
+| July 2026: Active Reserve | An Aave-yielding USDC reserve with 1inch Aqua/SwapVM orders to buy ETH below market. | [Active Reserve](docs/_hackathon_aqua/) |
+| September 2026: hookrisk and Tools | Static and dynamic Uniswap hook analysis, plus in-app scan/report rendering. | [hookrisk](hookrisk/), [Tools track](docs/_hackathon_hookrisk/) |
+| September 2026: Cash+ | A business-reserve interface with an explicitly simulated ledger and share accounting. | [Cash+ demo](docs/features/cash-plus/cash-plus-ui-demo.md) |
+| Supporting Privy on-ramp port | Funding integration brought into the public app from earlier private modules. | [Pre-existing vs. new](docs/_hackathon_privy/03_PRE_EXISTING_VS_NEW.md) |
 
-## Conventions
-
-- **Branches:** `<type>/<area>-poo-<num>-<slug>` (`<area>` = domain: `mgr`/`dep`/`int`/`api`/`db`/…, `poo-<num>` = Linear issue). Never commit to `main`; trunk-based behind feature flags, squash-merged and auto-deleted. See [`docs/02_NAMING_CONVENTION.md`](docs/02_NAMING_CONVENTION.md).
-- **Commits:** Conventional Commits, `<type>(<id>): <description>` (lowercase subject, body lines under 100 chars).
-- **Language:** English in all code and documentation. UI copy ships in 11 locales (`en` is the source; translations are reviewed in PR).
-- **Versions:** always LTS / mature-stable (Node 22 LTS, Next 15), never bleeding edge.
-
-## Design source
-
-Designs are maintained in Figma (investor app fully designed; the file is private to the team). The mapping of every design artifact to its ID and frames is in [`docs/IDS_REGISTRY.md`](docs/IDS_REGISTRY.md).
+These earlier projects are retained for continuity and are not claimed as new work for Arbitrum Open House Singapore. Historical third-party attribution remains in [hookrisk's prior art](hookrisk/docs/PRIOR_ART.md) and [NOTICE](hookrisk/NOTICE).

@@ -1,5 +1,16 @@
 # Documentation CHANGELOG
 
+## 2026-10-04: Arbitrum Open House Singapore submission README (POO-2141)
+
+- Put the current event, Pool Party logo and supplied banner first. Replace the Mandate-only
+  submission description with Mandate, Build, Review, launch, V2 API integration and fund views.
+- Record original private development and first public publication separately, with a baseline
+  comparison. Identify reused application infrastructure and retain earlier hackathon attribution.
+- Publish the 15 alpha infrastructure addresses, chain IDs, explorer links and deployment source;
+  clarify that infrastructure addresses are not individual fund deposit destinations.
+- Document supported alpha behavior, real-data sources, local setup and current reference docs.
+  Documentation and artwork only; no runtime, rule, artifact-ID or integration-seam changes.
+
 ## v0.18, 2026-10-04
 
 ### Build canvas for the fund contracts builder (epic POO-2144)
