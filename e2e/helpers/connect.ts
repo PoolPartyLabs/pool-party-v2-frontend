@@ -6,10 +6,25 @@
  * /sign-in. The whole attempt is retried: Privy's EIP-6963 detection can lose the first race and fall
  * back to a QR/deep-link screen instead of the injected connector; a retry (fresh modal) settles it.
  */
-import { expect, type Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
+import { type BrowserContext, expect, type Page } from "@playwright/test";
 
 export async function connectAndSignIn(page: Page, opts: { locale?: string } = {}): Promise<void> {
   const locale = opts.locale ?? "en";
+  if (process.env.E2E_V2_AUTH_STATE) {
+    const state: Awaited<ReturnType<BrowserContext["storageState"]>> = JSON.parse(
+      readFileSync(process.env.E2E_V2_AUTH_STATE, "utf8"),
+    );
+    await page.context().addCookies(state.cookies);
+    await page.addInitScript((origins) => {
+      const saved = origins.find((entry) => entry.origin === location.origin);
+      for (const entry of saved?.localStorage ?? []) localStorage.setItem(entry.name, entry.value);
+    }, state.origins);
+    await page.goto(`/${locale}/manager`);
+    await expect(page).not.toHaveURL(/sign-in/);
+    await expect(page.getByRole("button", { name: "Open wallet", exact: true })).toBeVisible();
+    return;
+  }
   await page.goto(`/${locale}/sign-in`);
 
   // Dismiss the cookie-consent dialog if present — it overlays the auth actions.
