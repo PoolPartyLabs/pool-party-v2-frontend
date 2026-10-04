@@ -1,14 +1,14 @@
 /**
  * @id PP-MGR-LIB-019
  * @name mandateDraft tests
- * @implements-rules-version v3 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
- *   POO-2167 rules v3, POO-2197 rules v2)
+ * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
+ *   POO-2167 rules v4, POO-2197 rules v2)
  * @analytics-events none, a pure domain; the builder shell owns the mandate events.
  *
  * One `it()` per rule in the S1 brief. Every reducer is also checked for immutability: a draft
  * handed in must come back untouched, because the React hook keeps the previous draft on a block.
  * Rules v2 (buildathon scope): the mandate names Arbitrum and Robinhood Chain only (POO-2142), and
- * GMX is no longer a protocol it can name (POO-2143). Rules v3 (POO-2167): Uniswap v3 positions are
+ * Rules v4 (POO-2167): GMX and Pendle are listed but cannot be selected. Uniswap v3 positions are
  * listed but unavailable, so the position protocol these cases select is Uniswap v4, and a draft
  * that still names Uniswap v3 is built by hand, the way an older stored draft arrives.
  */
@@ -148,7 +148,7 @@ describe("constants", () => {
   it("lists Uniswap v3 positions but marks them unavailable, and never the v3 swap", () => {
     // @rule R20 v3 @rule R19
     expect(PROTOCOL_ORDER).toContain("uniswap-v3");
-    expect(UNAVAILABLE_PROTOCOLS).toEqual(["uniswap-v3"]);
+    expect(UNAVAILABLE_PROTOCOLS).toEqual(["uniswap-v3", "gmx", "pendle"]);
     expect(UNAVAILABLE_PROTOCOLS).not.toContain("uniswap-v3-swap");
   });
 
@@ -1335,4 +1335,15 @@ describe("Limits positive token allowances (POO-2197)", () => {
       ),
     ).toEqual({ step: "limits", reason: "token_allowance_required", rowId: tokenKey(token) });
   });
+});
+
+// @rule R3 (POO-2167 v4)
+it.each([
+  undefined,
+  "real",
+] as const)("refuses future protocols from direct %s reducer requests (POO-2167)", (dataMode) => {
+  const current = { ...empty(), dataMode };
+  expect(withProtocols(current, ["aave-v3", "gmx", "pendle"] as ProtocolId[]).protocols).toEqual(
+    dataMode === "real" ? ["uniswap-v3-swap", "aave-v3"] : ["uniswap-v3-swap", "across", "aave-v3"],
+  );
 });

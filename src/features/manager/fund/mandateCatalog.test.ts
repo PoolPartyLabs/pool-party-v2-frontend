@@ -1,12 +1,12 @@
 /**
  * @id PP-MGR-LIB-018
  * @name mandateCatalog tests
- * @implements-rules-version v3 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
- *   POO-2167 rules v3)
+ * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
+ *   POO-2167 rules v4)
  * @analytics-events none, a pure catalog; the builder shell owns the mandate events.
  *
  * Covers R16/R17 v2 (networks + availability), R18 (deposit token), R20 v3/R21 v2 (protocols, no
- * GMX, Uniswap v3 positions listed but unavailable), R25 (token union) and R28 (priced set). The
+ * future rows, all three listed but unavailable), R25 (token union) and R28 (priced set). The
  * catalog reads no flag since rules v2 (POO-2142), so no flag runtime is mocked.
  */
 import { describe, expect, it } from "vitest";
@@ -143,9 +143,9 @@ describe("buildMandateCatalog, deposit token", () => {
 });
 
 describe("buildMandateCatalog, protocols", () => {
-  it("lists the five protocols in catalog order with the required two first", () => {
+  it("lists the seven protocols in catalog order with the required two first", () => {
     // @rule R20 v3: Aave v3 and Uniswap v4 to operate, Uniswap v3 positions still listed (POO-2167);
-    // GMX is no longer offered (POO-2143).
+    // GMX and Pendle stay visible but unavailable (POO-2167 v4).
     expect(CATALOG.protocols.map((p) => p.id)).toEqual([
       "uniswap-v3-swap",
       "across",
@@ -153,7 +153,8 @@ describe("buildMandateCatalog, protocols", () => {
       "uniswap-v3",
       "uniswap-v4",
       // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
-      // "gmx",
+      "gmx",
+      "pendle",
     ]);
     expect(CATALOG.protocols.filter((p) => p.required).map((p) => p.id)).toEqual([
       "uniswap-v3-swap",
@@ -227,15 +228,21 @@ describe("buildMandateCatalog, protocols", () => {
   //   expect(CATALOG.protocols.filter((p) => !p.available).map((p) => p.id)).toEqual(["gmx"]);
   // });
 
-  it("no longer offers GMX", () => {
-    // @rule R21 v2 (POO-2143): the GMX data goes; the `available` field and its mechanism stay.
-    expect(CATALOG.protocols.map((p) => p.id)).not.toContain("gmx");
-    expect(CATALOG.protocols.map((p) => p.kind)).not.toContain("perps");
+  // @rule R2 @rule R3 (POO-2167 v4)
+  it("lists GMX and Pendle as future protocols with no fund networks (POO-2167)", () => {
+    expect(CATALOG.protocols.filter((entry) => ["gmx", "pendle"].includes(entry.id))).toEqual([
+      expect.objectContaining({ id: "gmx", kind: "perps", available: false, availableOn: [] }),
+      expect.objectContaining({ id: "pendle", kind: "yield", available: false, availableOn: [] }),
+    ]);
   });
 
-  it("marks only Uniswap v3 positions unavailable, never the required v3 swap", () => {
-    // @rule R20 v3 (POO-2167): no Uniswap v3 position adapter on the fund contracts yet.
-    expect(CATALOG.protocols.filter((p) => !p.available).map((p) => p.id)).toEqual(["uniswap-v3"]);
+  it("marks all future positions unavailable, never the required v3 swap", () => {
+    // @rule R2 @rule R3 @rule R6 (POO-2167 v4)
+    expect(CATALOG.protocols.filter((p) => !p.available).map((p) => p.id)).toEqual([
+      "uniswap-v3",
+      "gmx",
+      "pendle",
+    ]);
     expect(protocol("uniswap-v3-swap")).toMatchObject({ required: true, available: true });
     expect(protocol("aave-v3").available).toBe(true);
     expect(protocol("uniswap-v4").available).toBe(true);

@@ -1,65 +1,51 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolMark
- * @implements-rules-version v1
+ * @implements-rules-version v4 (POO-2167)
  * @analytics-events none, decorative; the steps that render it emit through the shell
  *
  * A protocol's leading mark, shared by the Mandate steps that list protocols as rows (POO-2128,
  * epic POO-2119).
  *
- * Only Uniswap has a committed asset under `public/protocols`, so everything else takes a monogram
- * on the raised surface rather than a brand colour this repo would be inventing. Decorative in every
- * caller: the row title carries the name, so the mark is `aria-hidden` like every other logo in the
- * app, and it is deliberately NOT a `ProtocolBadge` (that one pairs the asset with the protocol's
- * name as text, at 13 px, for the pool rows; this one is the 24 to 28 px row avatar and prints no
- * text of its own).
- *
- * Lifted here from the two step files that each carried a copy: `ProtocolsStep.tsx` (S3) declared it
- * module-private, and `LimitsStep.tsx` (S6) repeated the twelve lines behind a `PP-DEBT(SEV:LOW)`
- * because a slice may not edit another slice's file. The ID stays `PP-MGR-CMP-036`, the Protocols
- * step's, because that is where the mark was designed and it is the registry row that already
- * describes it. The only difference between the two copies was the edge, which is why `size` is a
- * prop: step 2's rows are 24 px and step 5's are taller at 28 px.
+ * POO-2167 v4: every known protocol uses a committed canonical brand asset. The assets' sources
+ * are recorded in docs/MANDATE_PROTOCOLS_FIGMA_2026-10-04.md. Each is decorative because the
+ * row title supplies its accessible name. Both row sizes share the same mark.
  */
 "use client";
 
 import type { ProtocolId } from "../mandateDraft";
 
-/** The protocols whose brand mark is committed under `public/protocols`. */
-const UNISWAP_PROTOCOLS: readonly ProtocolId[] = ["uniswap-v3-swap", "uniswap-v3", "uniswap-v4"];
+/** Committed brand assets for every protocol the mandate can display (POO-2167 v4). */
+const PROTOCOL_LOGOS: Record<ProtocolId, string> = {
+  "uniswap-v3-swap": "/protocols/uniswap.svg",
+  "uniswap-v3": "/protocols/uniswap.svg",
+  "uniswap-v4": "/protocols/uniswap.svg",
+  across: "/protocols/across.svg",
+  "aave-v3": "/tokens/aave.png",
+  gmx: "/protocols/gmx.svg",
+  pendle: "/protocols/pendle.png",
+};
 
-/** Public props for {@link ProtocolMark}. */
+/** Public props for the decorative protocol logo. */
 export interface ProtocolMarkProps {
-  /** Which protocol, which decides whether a committed asset exists. */
   id: ProtocolId;
-  /** The protocol's display name; only its first letter is used, for the monogram fallback. */
+  /** Kept for shared row callers; the accessible protocol name belongs to the row. */
   name: string;
-  /** Edge length in px. 24 matches the step 2 rows, 28 the taller step 5 ones. */
+  /** Edge length in px. 24 on step 2, 28 on the taller step 5 rows. */
   size?: number;
 }
 
-/** The committed Uniswap asset for a Uniswap protocol, else a monogram of the protocol's name. */
-export function ProtocolMark({ id, name, size = 24 }: ProtocolMarkProps) {
-  if (UNISWAP_PROTOCOLS.includes(id)) {
-    return (
-      // biome-ignore lint/performance/noImgElement: a small committed SVG from our own origin, the same call NetworkLogo and ProtocolBadge make; next/image would add a loader round trip for no payload saving.
-      <img
-        src="/protocols/uniswap.svg"
-        alt=""
-        aria-hidden="true"
-        width={size}
-        height={size}
-        className="shrink-0"
-      />
-    );
-  }
+/** The protocol's canonical local brand mark, hidden from assistive technology. */
+export function ProtocolMark({ id, size = 24 }: ProtocolMarkProps) {
   return (
-    <span
+    // biome-ignore lint/performance/noImgElement: a small local brand asset; matches the network logos.
+    <img
+      src={PROTOCOL_LOGOS[id]}
+      alt=""
       aria-hidden="true"
-      style={{ width: size, height: size }}
-      className="flex shrink-0 items-center justify-center rounded-full bg-surface-raised font-semibold text-foreground text-xs"
-    >
-      {(name.charAt(0) || "?").toUpperCase()}
-    </span>
+      width={size}
+      height={size}
+      className="shrink-0 object-contain"
+    />
   );
 }

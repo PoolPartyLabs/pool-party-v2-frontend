@@ -1,19 +1,12 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolMark.stories
- * @implements-rules-version v2 (POO-2143 rules v2)
+ * @implements-rules-version v4 (POO-2167)
  *
  * Storybook coverage for the shared protocol mark (POO-2128, epic POO-2119).
  *
- * The story that earns its place is `EveryProtocol`: the component has exactly one branch, and the
- * only way to see that the branch is drawn correctly is the full set side by side, where the three
- * Uniswap ids carry the committed asset and Across and Aave v3 fall back to a monogram (GMX did too,
- * until the buildathon scope commented it out, POO-2143). One story per id would say the same thing
- * five times and would not show the fallbacks lining up.
- *
- * `BothSizes` is the second: the two call sites differ only in edge (24 px on Mandate step 2, 28 px
- * on step 5), which is the whole reason `size` is a prop rather than a constant, and a reviewer can
- * only check that the monogram stays centred and circular at both by seeing both.
+ * EveryProtocol shows all seven ids with their canonical local brand assets. BothSizes verifies
+ * the 24 px and 28 px marks shared by the mandate rows.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import type { ProtocolId } from "../mandateDraft";
@@ -26,8 +19,8 @@ const PROTOCOLS: { id: ProtocolId; name: string }[] = [
   { id: "aave-v3", name: "Aave v3" },
   { id: "uniswap-v3", name: "Uniswap v3" },
   { id: "uniswap-v4", name: "Uniswap v4" },
-  // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
-  // { id: "gmx", name: "GMX" },
+  { id: "gmx", name: "GMX" },
+  { id: "pendle", name: "Pendle" },
 ];
 
 /** One labelled mark, so a reviewer can tell which id produced which drawing. */
@@ -50,7 +43,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "The leading mark on a protocol row, shared by Mandate steps 2 and 5. Uniswap has a committed asset; every other protocol takes a monogram on the raised surface rather than a brand colour this repo would be inventing. Always aria-hidden, because the row title carries the name.",
+          "The leading mark on a protocol row, shared by Mandate steps 2 and 5. Every known protocol uses its committed canonical brand asset. Always aria-hidden, because the row title carries the name.",
       },
     },
   },
@@ -63,7 +56,7 @@ type Story = StoryObj<typeof meta>;
 /** The default: one Uniswap row mark at the step 2 edge. */
 export const Default: Story = {};
 
-/** All five ids: the asset for the three Uniswap ones, a monogram for the rest. */
+/** All seven protocol ids with their committed brand assets. */
 export const EveryProtocol: Story = {
   render: () => (
     <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>

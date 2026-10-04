@@ -1,10 +1,10 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep.stories
- * @implements-rules-version v3 (POO-2142 rules v2, POO-2143 rules v2, POO-2167 rules v3)
+ * @implements-rules-version v4 (POO-2142 rules v2, POO-2143 rules v2, POO-2167 rules v4)
  *
- * Storybook coverage for Mandate step 2 (POO-2123 [R19] to [R22]; rules v2, POO-2143: no GMX;
- * rules v3, POO-2167: Aave v3 and Uniswap v4 to operate, Uniswap v3 positions "Coming soon").
+ * Storybook coverage for Mandate step 2 (POO-2123 [R19] to [R22]; rules v4, POO-2167: GMX and Pendle Coming soon;
+ * Aave v3 and Uniswap v4 to operate, Uniswap v3 positions "Coming soon").
  *
  * The story that earns its place is `HubAndSpoke` against `HubOnly`: the "On" dots change with the
  * networks of step 1, which is the whole point of that column and the thing a static mock-up cannot

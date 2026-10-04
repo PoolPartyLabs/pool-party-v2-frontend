@@ -809,14 +809,16 @@
       "aaveV3": "Aave v3",
       "uniswapV3": "Uniswap v3",
       "uniswapV4": "Uniswap v4",
-      "gmx": "GMX"
+      "gmx": "GMX",
+      "pendle": "Pendle"
     },
     "protocolCaptions": {
       "swap": "스왑 · 한 토큰을 다른 토큰으로 전환",
       "bridge": "브리지 · 네트워크 간 자금 이동",
       "lending": "대출 · 토큰을 공급하고 이자를 받으세요",
       "dex": "Liquidity positions · 가격 범위 내에서 거래 수수료를 획득",
-      "perps": "무기한 · 레버리지를 사용한 롱과 숏 포지션"
+      "perps": "무기한 · 레버리지를 사용한 롱과 숏 포지션",
+      "yield": "Yield 포지션 · 고정 및 변동 금리로 yield를 얻어요"
     },
     "tokens": {
       "search": "토큰 검색 · 심볼, 이름 또는 주소",

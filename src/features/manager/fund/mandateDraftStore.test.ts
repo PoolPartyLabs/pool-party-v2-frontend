@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-STO-001
  * @name mandateDraftStore tests
- * @implements-rules-version v3 (POO-2121 rules v1, POO-2167 rules v3, POO-2151 rules v1)
+ * @implements-rules-version v4 (POO-2121 rules v1, POO-2167 rules v4, POO-2151 rules v1)
  * @analytics-events none, a storage module; the builder shell owns the mandate events.
  *
  * Covers R7/R9: round trip, sort, corrupt payload, unavailable storage, subscription and ids. And
@@ -541,4 +541,49 @@ describe("newDraftId", () => {
     expect(typeof id).toBe("string");
     expect(id.length).toBeGreaterThan(8);
   });
+});
+
+// @rule R3 (POO-2167 v4)
+it.each([
+  undefined,
+  "real",
+] as const)("drops future protocol ids, caps and per-chain entries from stored %s drafts (POO-2167)", (dataMode) => {
+  const saved = {
+    ...draft("future", "2026-10-04T00:00:00Z"),
+    dataMode,
+    protocols: ["uniswap-v3-swap", "across", "aave-v3", "gmx", "pendle"],
+    positionProtocolsByChain: { arbitrum: ["aave-v3", "gmx", "pendle"] },
+    caps: {
+      networks: {},
+      tokens: {},
+      protocols: { gmx: { noCap: true, pct: 0 }, pendle: { noCap: true, pct: 0 } },
+    },
+  };
+  window.localStorage.setItem(
+    MANDATE_DRAFTS_KEY,
+    JSON.stringify({ version: MANDATE_DRAFTS_VERSION, drafts: { future: saved } }),
+  );
+  expect(getDraft("future")).toMatchObject({
+    protocols: ["uniswap-v3-swap", "across", "aave-v3"],
+    positionProtocolsByChain: { arbitrum: ["aave-v3"] },
+    caps: { protocols: {} },
+  });
+});
+
+// @rule R3 (POO-2167 v4)
+it("keeps other drafts readable when a stored chain-protocol entry is malformed (POO-2167)", () => {
+  const bad = {
+    ...draft("bad-chain", "2026-10-04T00:00:00Z"),
+    protocols: ["uniswap-v3-swap", "gmx"],
+    positionProtocolsByChain: { arbitrum: "gmx" },
+  };
+  window.localStorage.setItem(
+    MANDATE_DRAFTS_KEY,
+    JSON.stringify({
+      version: MANDATE_DRAFTS_VERSION,
+      drafts: { good: draft("good", "2026-10-04T00:00:00Z"), "bad-chain": bad },
+    }),
+  );
+  expect(getDraft("good")).not.toBeNull();
+  expect(getDraft("bad-chain")?.protocols).not.toContain("gmx");
 });

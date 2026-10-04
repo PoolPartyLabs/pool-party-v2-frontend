@@ -48,3 +48,13 @@ existing product or legal disclosure questions.
 
 | `CR-MGR-023` | The Uniswap v4 panel prints an estimated token value split and states that an out-of-range position earns no fees until the price enters its range (`PriceRangeField`, `RangeSplitBar`, POO-2189). Confirm this copy describes the configured hookless v4 pool and make clear that the split is an estimate before routing real capital. | A position and fee claim about money routed to a third-party pool. Uses the pool's live price and standard concentrated-liquidity value formula, never TVL/APR placeholders. Behind `fundContracts` and the V2 toggle; launch disclosures and the slippage promise remain tracked in CR-MGR-022. | 2026-10-04, POO-2189, PE panel session | Murilo | `OPEN` | |
 | `CR-MGR-024` | May Supply APY be shown without a timestamp or variable-rate explanation before public launch? | `SupplyBlockPanel` displays the catalog reserve APY snapshot. Aave rates vary and the catalog is loaded by the shell without periodic reserve refresh. This is not a promised return. The current feature remains gated; this entry concerns public exposure. | 2026-10-04, POO-2194 | Murilo | `OPEN` | Source: GET /api/v2/catalog/aave-v3/reserves via usePanelReserves; no invented APY or new polling policy. |
+
+## Verification record: Mandate protocol availability
+
+2026-10-04, POO-2167 v4, PP-MGR-CMP-036: the Mandate Protocols step now labels GMX and Pendle
+Coming soon alongside Uniswap v3 positions. This extends the existing future-availability claim in
+CR-MGR-017 to Mandate. Murilo explicitly requested these disabled rows; that UI authorization does
+not answer the existing roadmap/disclosure question. Verify that the three planned protocol labels
+are acceptable before exposing the builder to real users. Regressions verify disabled intent,
+Select all exclusion, saved-draft sanitization and the real serializer's refusal. The removed APY
+paragraph used the same Aave reserve snapshot as SupplyBlockPanel; CR-MGR-024 remains open there.

@@ -809,14 +809,16 @@
       "aaveV3": "Aave v3",
       "uniswapV3": "Uniswap v3",
       "uniswapV4": "Uniswap v4",
-      "gmx": "GMX"
+      "gmx": "GMX",
+      "pendle": "Pendle"
     },
     "protocolCaptions": {
       "swap": "Swap · wandelt einen Token in einen anderen um",
       "bridge": "Bridge · verschiebt Geld zwischen Ihren Netzwerken",
       "lending": "Verleih · stellen Sie Token bereit, um Zinsen zu verdienen",
       "dex": "Liquidity positions · verdienen Sie Handelsgebühren in einer Preisspanne",
-      "perps": "Perpetuals · Long- und Short-Positionen mit Hebel"
+      "perps": "Perpetuals · Long- und Short-Positionen mit Hebel",
+      "yield": "Yield-Positionen · erzielen Sie Yield mit festen und variablen Zinssätzen"
     },
     "tokens": {
       "search": "Token suchen · Symbol, Name oder Adresse",

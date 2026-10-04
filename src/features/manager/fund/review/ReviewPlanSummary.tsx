@@ -46,7 +46,7 @@ export function ReviewPlanSummary({ draft, onEditMandate, onEditBuild }: ReviewP
         {draft.protocols
           .map((protocol) =>
             all(
-              `fundBuilder.protocolNames.${({ "uniswap-v3-swap": "uniswapV3Swap", "uniswap-v3": "uniswapV3", "uniswap-v4": "uniswapV4", "aave-v3": "aaveV3", across: "across", gmx: "gmx" } as const)[protocol]}`,
+              `fundBuilder.protocolNames.${({ "uniswap-v3-swap": "uniswapV3Swap", "uniswap-v3": "uniswapV3", "uniswap-v4": "uniswapV4", "aave-v3": "aaveV3", across: "across", gmx: "gmx", pendle: "pendle" } as const)[protocol]}`,
             ),
           )
           .join(", ")}

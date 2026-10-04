@@ -157,8 +157,8 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
     "aave-v3": t("fundBuilder.protocolNames.aaveV3"),
     "uniswap-v3": t("fundBuilder.protocolNames.uniswapV3"),
     "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
-    // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
-    // gmx: t("fundBuilder.protocolNames.gmx"),
+    gmx: t("fundBuilder.protocolNames.gmx"),
+    pendle: t("fundBuilder.protocolNames.pendle"),
   };
 
   const noCapLabel = t("fundBuilder.common.noCap");
