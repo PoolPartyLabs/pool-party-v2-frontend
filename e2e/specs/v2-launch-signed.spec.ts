@@ -1,11 +1,20 @@
+/**
+ * @id PP-E2E-V2-003
+ * @name opt-in v2 launch E2E
+ * @implements-rules-version v1
+ */
 import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import type { Page } from "@playwright/test";
 import { parseUnits } from "viem";
 import manager from "../../src/i18n/messages/en/manager.json";
 import { test as base, expect } from "../fixtures";
 import { prepareV2Launch } from "../flows/v2Launch";
-import { assertV2LaunchSigningAllowed, v2LaunchMode } from "../helpers/v2LaunchSigning";
+import {
+  assertV2LaunchSigningAllowed,
+  safeV2WalletCall,
+  v2LaunchFailure,
+  v2LaunchMode,
+} from "../helpers/v2LaunchSigning";
 
 const burner = "0x3A3ea619C0f37a7D2fF07FF442d863f316A99A7a";
 const mode = v2LaunchMode(process.env.E2E_V2_SIGNED_DRY);
@@ -43,23 +52,25 @@ const test = base.extend<{ signingGuard: Guard }>({
       const guard: Guard = { armed: false, beforeSignature: async () => {} };
       const expose = page.exposeFunction.bind(page);
       page.exposeFunction = async (name, callback) =>
-        expose(name, async (...args: unknown[]) => {
-          if (name === "__ppWalletBridge") {
-            const request = args[0] as { method: string; params?: unknown[] };
-            if (
-              assertV2LaunchSigningAllowed(
-                request,
-                burner,
-                mode,
-                guard.armed,
-                process.env.E2E_V2_SIGNED,
-              )
-            ) {
-              await guard.beforeSignature();
+        expose(name, async (...args: unknown[]) =>
+          safeV2WalletCall(async () => {
+            if (name === "__ppWalletBridge") {
+              const request = args[0] as { method: string; params?: unknown[] };
+              if (
+                assertV2LaunchSigningAllowed(
+                  request,
+                  burner,
+                  mode,
+                  guard.armed,
+                  process.env.E2E_V2_SIGNED,
+                )
+              ) {
+                await guard.beforeSignature();
+              }
             }
-          }
-          return callback(...args);
-        });
+            return callback(...args);
+          }),
+        );
       await use(guard);
       guard.armed = false;
     },
@@ -99,6 +110,14 @@ async function readSteps(page: Page): Promise<Step[]> {
     });
   }
   expect(steps.length).toBeGreaterThan(0);
+  const statuses = new Set([
+    "Review preview",
+    ...["idle", "building", "signing", "submitted", "waiting", "confirmed", "failed"].map(
+      (key) => manager.fundLaunch[key as keyof typeof manager.fundLaunch],
+    ),
+  ]);
+  for (const step of steps)
+    if (!statuses.has(step.status)) throw new Error("V2_LAUNCH_UNKNOWN_STATUS");
   return steps;
 }
 
@@ -193,8 +212,8 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
     const evidencePath =
       mode === "dry-launch"
         ? info.outputPath("v2-launch-dry-launch-evidence.json")
-        : path.resolve("test-results/v2-launch-signed-evidence.json");
-    await mkdir(path.dirname(evidencePath), { recursive: true });
+        : info.outputPath("v2-launch-signed-evidence.json");
+    await mkdir(info.outputDir, { recursive: true });
     const persist = async () => writeFile(evidencePath, JSON.stringify(evidence, null, 2));
     const snapshot = async (clicked = false) => {
       const current = await readSteps(page);
@@ -307,7 +326,7 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
         await snapshot();
         const alerts = await page.locator("main [role='alert']").allTextContents();
         if (alerts.length || evidence.steps.some((step) => step.status === "Failed")) {
-          evidence.uiError = alerts.join("\n");
+          evidence.uiError = "V2_LAUNCH_UI_ERROR";
           throw new Error("Launch journey failed; no further signatures will be requested");
         }
         if (
@@ -356,16 +375,14 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
       await persist();
       signingGuard.armed = false;
       await assertLaunchedFund(page, evidence.coreVault as string, prepared.name);
-    } catch (error) {
+    } catch {
       evidence.outcome = "failed";
-      evidence.error = error instanceof Error ? error.message : "Launch test failed";
-      evidence.uiError ??= (
-        await page
-          .locator("main [role='alert']")
-          .allTextContents()
-          .catch(() => [])
-      ).join("\n");
-      throw error;
+      const alerts = await page
+        .locator("main [role='alert']")
+        .allTextContents()
+        .catch(() => []);
+      Object.assign(evidence, v2LaunchFailure(alerts.length > 0));
+      throw new Error("V2_LAUNCH_FAILED");
     } finally {
       signingGuard.armed = false;
       evidence.finishedAt = new Date().toISOString();

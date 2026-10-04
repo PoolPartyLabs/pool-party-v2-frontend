@@ -82,3 +82,22 @@ dependency directory also exist; neither was modified. Git hooks remain enabled.
 The launch-only browser flow is **not validated here**. Main orchestration owns that run against
 `http://localhost:3000`, including any API tunnel. The separate journey-ID storage fix belongs to
 its owner's worktree, not this E2E change. Use the isolated-output command in `e2e/README.md`.
+
+### Security/mechanical review follow-up, October 4, 2026
+
+The guard now defaults to deny for unknown RPC/wallet methods. SIWE `personal_sign` requires
+the authorized signer argument. All bridge callback/guard failures are sanitized before reaching
+the browser, and failure evidence stores only fixed codes rather than exception/UI messages.
+Evidence paths for every signed-spec mode now use Playwright's per-test output directory.
+Signed and Review-only commands require fresh result/report directories to preserve operator evidence.
+
+The actual harness lacked Robinhood support, despite the companion skill describing it.
+Independent chain 4663, its official mainnet RPC and USDG address are now present. Unit tests
+exercise wallet switching to Robinhood and back, with no network, signing or broadcasting.
+Provisioning configuration and application sources remain untouched. The R1-R5 rules remain v1.
+The local temporary proxy is paused and untracked outside this PR; no proxy/browser claims are made here.
+
+Validation after these fixes: **25 tests passed across four focused suites**, explicit E2E tsc
+passed, Biome check/lint passed with the same five existing warnings, and all seven changed paths
+passed the companion credential-literal scanner. The previously recorded full-root findings remain
+unrelated and unresolved. No browser or financial run was performed.
