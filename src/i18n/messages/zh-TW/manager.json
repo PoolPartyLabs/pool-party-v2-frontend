@@ -993,14 +993,57 @@
         "menuOpenNetwork": "在選單中選擇一個網路。該網路會連同其 Bridge 新增到畫布上。",
         "portMenuOpenSupply": "選擇 {title} 之後的內容。借款區塊以該供應作為抵押。",
         "portMenuOpenBefore": "選擇 {title} 之前的內容。",
-        "portMenuOpenAfter": "選擇 {title} 之後的內容。"
+        "portMenuOpenAfter": "選擇 {title} 之後的內容。",
+        "networkTooltip": "此區塊位於 {network} 上。區塊的網路由它在畫布上所處的位置決定。",
+        "moreAbout": "進一步了解 {label}",
+        "use": "使用",
+        "useItem": "使用 {title}",
+        "apply": "套用變更",
+        "status": {
+          "pending": "變更尚未套用",
+          "applied": "所有變更已套用",
+          "discard": "捨棄"
+        },
+        "leave": {
+          "title": "變更尚未套用",
+          "body": "您變更了此區塊，但尚未套用。請先套用或捨棄變更，再切換到其他區塊。",
+          "discard": "捨棄變更"
+        },
+        "confirm": {
+          "title": "移除 {title}？",
+          "titleEmpty": "移除此區塊？",
+          "share": "配置給此區塊的 {pct}% 將回到閒置資金（入口）。",
+          "removedWith": "{count, plural, =1 {{steps}也會一併移除。} other {{steps}也會一併移除。}}",
+          "swapAuto": "Swap · 自動 步驟",
+          "swap": "Swap 步驟",
+          "collectFees": "領取手續費步驟",
+          "block": "{title} 區塊",
+          "cancel": "取消"
+        },
+        "allocation": {
+          "label": "配置",
+          "help": "佔策略資金的比例。該比例會顯示在為此區塊輸送資金的連線上。",
+          "helpCap": "佔策略資金的比例。您的授權範圍將 {protocol} 限制在 {pct}%。該比例會顯示在為此區塊輸送資金的連線上。",
+          "capProtocol": "已達上限。您的授權範圍將 {protocol} 限制在 {pct}%。",
+          "capNetwork": "已達上限。您的授權範圍將 {network} 限制在 {pct}%。",
+          "room": "已達上限。閒置資金（入口）下的其他區塊已佔用 {pct}%。",
+          "needMore": "需要更多嗎？"
+        },
+        "slippage": {
+          "label": "最大滑點",
+          "help": "若價格在確認前的變動超過此值，將取消該交易。",
+          "custom": "自訂",
+          "customLabel": "自訂最大滑點（百分比）",
+          "max": "最大值為 {pct}%。"
+        },
+        "link": {
+          "tokens": "編輯授權範圍 · 代幣",
+          "pools": "編輯授權範圍 · 資金池",
+          "limits": "編輯授權範圍 · 限額"
+        }
       },
       "network": {
         "remove": "移除 {network}"
-      },
-      "toast": {
-        "removed": "已移除區塊",
-        "undo": "復原"
       },
       "planUnreadable": "此草稿包含目前版本應用程式無法開啟的計畫。該計畫會原樣保留；新增區塊將開始一個新計畫，並在儲存時取代它。",
       "review": {

@@ -993,14 +993,57 @@
         "menuOpenNetwork": "在菜单中选择一个网络。该网络将连同其 Bridge 添加到画布上。",
         "portMenuOpenSupply": "选择 {title} 之后的内容。借款区块以该供应作为抵押。",
         "portMenuOpenBefore": "选择 {title} 之前的内容。",
-        "portMenuOpenAfter": "选择 {title} 之后的内容。"
+        "portMenuOpenAfter": "选择 {title} 之后的内容。",
+        "networkTooltip": "此区块位于 {network} 上。区块的网络由它在画布上所处的位置决定。",
+        "moreAbout": "进一步了解 {label}",
+        "use": "使用",
+        "useItem": "使用 {title}",
+        "apply": "应用更改",
+        "status": {
+          "pending": "更改尚未应用",
+          "applied": "所有更改已应用",
+          "discard": "放弃"
+        },
+        "leave": {
+          "title": "更改尚未应用",
+          "body": "您更改了此区块，但尚未应用。请先应用或放弃更改，再切换到其他区块。",
+          "discard": "放弃更改"
+        },
+        "confirm": {
+          "title": "移除 {title}？",
+          "titleEmpty": "移除此区块？",
+          "share": "分配给此区块的 {pct}% 将回到闲置资金（入口）。",
+          "removedWith": "{count, plural, =1 {{steps}也会一并移除。} other {{steps}也会一并移除。}}",
+          "swapAuto": "Swap · 自动 步骤",
+          "swap": "Swap 步骤",
+          "collectFees": "领取手续费步骤",
+          "block": "{title} 区块",
+          "cancel": "取消"
+        },
+        "allocation": {
+          "label": "分配",
+          "help": "占策略资金的比例。该比例会显示在为此区块输送资金的连线上。",
+          "helpCap": "占策略资金的比例。您的授权范围将 {protocol} 限制在 {pct}%。该比例会显示在为此区块输送资金的连线上。",
+          "capProtocol": "已达上限。您的授权范围将 {protocol} 限制在 {pct}%。",
+          "capNetwork": "已达上限。您的授权范围将 {network} 限制在 {pct}%。",
+          "room": "已达上限。闲置资金（入口）下的其他区块已占用 {pct}%。",
+          "needMore": "需要更多？"
+        },
+        "slippage": {
+          "label": "最大滑点",
+          "help": "如果价格在确认前的变动超过此值，将取消该交易。",
+          "custom": "自定义",
+          "customLabel": "自定义最大滑点（百分比）",
+          "max": "最大值为 {pct}%。"
+        },
+        "link": {
+          "tokens": "编辑授权范围 · 代币",
+          "pools": "编辑授权范围 · 资金池",
+          "limits": "编辑授权范围 · 限额"
+        }
       },
       "network": {
         "remove": "移除 {network}"
-      },
-      "toast": {
-        "removed": "区块已移除",
-        "undo": "撤销"
       },
       "planUnreadable": "此草稿包含当前版本应用无法打开的计划。该计划会原样保留；添加区块将开始一个新计划，并在保存时替换它。",
       "review": {

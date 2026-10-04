@@ -993,14 +993,57 @@
         "menuOpenNetwork": "Kies een netwerk in het menu. Het netwerk wordt met zijn bridge aan het canvas toegevoegd.",
         "portMenuOpenSupply": "Kies wat er na {title} komt. Een Lening-blok gebruikt dat aanbod als onderpand.",
         "portMenuOpenBefore": "Kies wat er vóór {title} komt.",
-        "portMenuOpenAfter": "Kies wat er na {title} komt."
+        "portMenuOpenAfter": "Kies wat er na {title} komt.",
+        "networkTooltip": "Dit blok bevindt zich op {network}. Een blok neemt het netwerk over van de plek waar het op het canvas staat.",
+        "moreAbout": "Meer over {label}",
+        "use": "Gebruiken",
+        "useItem": "{title} gebruiken",
+        "apply": "Wijzigingen toepassen",
+        "status": {
+          "pending": "Wijzigingen niet toegepast",
+          "applied": "Alle wijzigingen toegepast",
+          "discard": "Verwerpen"
+        },
+        "leave": {
+          "title": "Wijzigingen niet toegepast",
+          "body": "U hebt dit blok gewijzigd, maar de wijzigingen niet toegepast. Pas de wijzigingen toe of verwerp ze voordat u naar een ander blok gaat.",
+          "discard": "Wijzigingen verwerpen"
+        },
+        "confirm": {
+          "title": "{title} verwijderen?",
+          "titleEmpty": "Dit blok verwijderen?",
+          "share": "De {pct}% die aan dit blok is toegewezen, gaat terug naar Inactieve invoer.",
+          "removedWith": "{count, plural, =1 {{steps} wordt ook verwijderd.} other {{steps} worden ook verwijderd.}}",
+          "swapAuto": "zijn stap Swap · auto",
+          "swap": "zijn stap Swap",
+          "collectFees": "zijn stap Fees innen",
+          "block": "het blok {title}",
+          "cancel": "Annuleren"
+        },
+        "allocation": {
+          "label": "Allocatie",
+          "help": "Van het kapitaal van de strategie. Het aandeel wordt getoond op de lijn die dit blok voedt.",
+          "helpCap": "Van het kapitaal van de strategie. Uw mandaat beperkt {protocol} tot {pct}%. Het aandeel wordt getoond op de lijn die dit blok voedt.",
+          "capProtocol": "Maximum bereikt. Uw mandaat beperkt {protocol} tot {pct}%.",
+          "capNetwork": "Maximum bereikt. Uw mandaat beperkt {network} tot {pct}%.",
+          "room": "Maximum bereikt. De andere blokken onder Inactieve invoer nemen al {pct}% in.",
+          "needMore": "Meer nodig?"
+        },
+        "slippage": {
+          "label": "Maximale slippage",
+          "help": "Annuleert de transactie als de prijs vóór de bevestiging meer dan dit verschuift.",
+          "custom": "Aangepast",
+          "customLabel": "Aangepaste maximale slippage, in procenten",
+          "max": "Het maximum is {pct}%."
+        },
+        "link": {
+          "tokens": "Mandaat bewerken · Tokens",
+          "pools": "Mandaat bewerken · Pools",
+          "limits": "Mandaat bewerken · Limieten"
+        }
       },
       "network": {
         "remove": "{network} verwijderen"
-      },
-      "toast": {
-        "removed": "Blok verwijderd",
-        "undo": "Ongedaan maken"
       },
       "planUnreadable": "Dit concept bevat een plan dat deze versie van de app niet kan openen. Het blijft bewaard zoals het is; een blok toevoegen start een nieuw plan, dat het vervangt wanneer u opslaat.",
       "review": {

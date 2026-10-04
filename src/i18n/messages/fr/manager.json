@@ -993,14 +993,57 @@
         "menuOpenNetwork": "Choisissez un réseau dans le menu. Le réseau est ajouté au canvas avec son bridge.",
         "portMenuOpenSupply": "Choisissez ce qui vient après {title}. Un bloc d'Emprunt utilise cette fourniture comme garantie.",
         "portMenuOpenBefore": "Choisissez ce qui vient avant {title}.",
-        "portMenuOpenAfter": "Choisissez ce qui vient après {title}."
+        "portMenuOpenAfter": "Choisissez ce qui vient après {title}.",
+        "networkTooltip": "Ce bloc est sur {network}. Un bloc prend le réseau de l'emplacement où il est placé sur le canvas.",
+        "moreAbout": "En savoir plus sur {label}",
+        "use": "Utiliser",
+        "useItem": "Utiliser {title}",
+        "apply": "Appliquer les modifications",
+        "status": {
+          "pending": "Modifications non appliquées",
+          "applied": "Toutes les modifications appliquées",
+          "discard": "Abandonner"
+        },
+        "leave": {
+          "title": "Modifications non appliquées",
+          "body": "Vous avez modifié ce bloc sans appliquer les modifications. Appliquez-les ou abandonnez-les avant de passer à un autre bloc.",
+          "discard": "Abandonner les modifications"
+        },
+        "confirm": {
+          "title": "Retirer {title} ?",
+          "titleEmpty": "Retirer ce bloc ?",
+          "share": "La part de {pct} % attribuée à ce bloc retourne à Entrée inactive.",
+          "removedWith": "{count, plural, =1 {Retirer ce bloc retire aussi {steps}.} other {Retirer ce bloc retire aussi {steps}.}}",
+          "swapAuto": "son étape Swap · auto",
+          "swap": "son étape Swap",
+          "collectFees": "son étape Collecter les frais",
+          "block": "le bloc {title}",
+          "cancel": "Annuler"
+        },
+        "allocation": {
+          "label": "Répartition",
+          "help": "Du capital de la stratégie. La part s'affiche sur la ligne qui alimente ce bloc.",
+          "helpCap": "Du capital de la stratégie. Votre mandat plafonne {protocol} à {pct} %. La part s'affiche sur la ligne qui alimente ce bloc.",
+          "capProtocol": "Maximum atteint. Votre mandat plafonne {protocol} à {pct} %.",
+          "capNetwork": "Maximum atteint. Votre mandat plafonne {network} à {pct} %.",
+          "room": "Maximum atteint. Les autres blocs reliés à Entrée inactive occupent déjà {pct} %.",
+          "needMore": "Besoin de plus ?"
+        },
+        "slippage": {
+          "label": "Slippage maximal",
+          "help": "Annule la transaction si le prix évolue au-delà de cette valeur avant sa confirmation.",
+          "custom": "Personnalisé",
+          "customLabel": "Slippage maximal personnalisé, en pourcentage",
+          "max": "Le maximum est de {pct} %."
+        },
+        "link": {
+          "tokens": "Modifier le mandat · Jetons",
+          "pools": "Modifier le mandat · Pools",
+          "limits": "Modifier le mandat · Limites"
+        }
       },
       "network": {
         "remove": "Retirer {network}"
-      },
-      "toast": {
-        "removed": "Bloc retiré",
-        "undo": "Annuler"
       },
       "planUnreadable": "Ce brouillon contient un plan que cette version de l'app ne peut pas ouvrir. Il est conservé tel quel ; ajouter un bloc démarre un nouveau plan, qui le remplace lorsque vous enregistrez.",
       "review": {

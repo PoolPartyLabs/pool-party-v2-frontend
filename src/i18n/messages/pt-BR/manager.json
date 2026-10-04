@@ -993,14 +993,57 @@
         "menuOpenNetwork": "Escolha uma rede no menu. A rede é adicionada ao canvas com o seu bridge.",
         "portMenuOpenSupply": "Escolha o que vem depois de {title}. Um bloco de Empréstimo usa esse fornecimento como garantia.",
         "portMenuOpenBefore": "Escolha o que vem antes de {title}.",
-        "portMenuOpenAfter": "Escolha o que vem depois de {title}."
+        "portMenuOpenAfter": "Escolha o que vem depois de {title}.",
+        "networkTooltip": "Este bloco está em {network}. Um bloco assume a rede do lugar em que está no canvas.",
+        "moreAbout": "Mais sobre {label}",
+        "use": "Usar",
+        "useItem": "Usar {title}",
+        "apply": "Aplicar alterações",
+        "status": {
+          "pending": "Alterações não aplicadas",
+          "applied": "Todas as alterações aplicadas",
+          "discard": "Descartar"
+        },
+        "leave": {
+          "title": "Alterações não aplicadas",
+          "body": "Você alterou este bloco e não aplicou as alterações. Aplique ou descarte-as antes de passar para outro bloco.",
+          "discard": "Descartar alterações"
+        },
+        "confirm": {
+          "title": "Remover {title}?",
+          "titleEmpty": "Remover este bloco?",
+          "share": "A alocação de {pct}% deste bloco volta para a Entrada ociosa.",
+          "removedWith": "{count, plural, =1 {Remover este bloco também remove {steps}.} other {Remover este bloco também remove {steps}.}}",
+          "swapAuto": "a etapa Swap · auto",
+          "swap": "a etapa Swap",
+          "collectFees": "a etapa Coletar taxas",
+          "block": "o bloco {title}",
+          "cancel": "Cancelar"
+        },
+        "allocation": {
+          "label": "Alocação",
+          "help": "Do capital da estratégia. O percentual aparece na linha que alimenta este bloco.",
+          "helpCap": "Do capital da estratégia. Seu mandato limita {protocol} a {pct}%. O percentual aparece na linha que alimenta este bloco.",
+          "capProtocol": "Máximo atingido. Seu mandato limita {protocol} a {pct}%.",
+          "capNetwork": "Máximo atingido. Seu mandato limita {network} a {pct}%.",
+          "room": "Máximo atingido. Os outros blocos ligados à Entrada ociosa já ocupam {pct}%.",
+          "needMore": "Precisa de mais?"
+        },
+        "slippage": {
+          "label": "Slippage máximo",
+          "help": "Cancela a transação se o preço variar além desse valor antes da confirmação.",
+          "custom": "Personalizado",
+          "customLabel": "Slippage máximo personalizado, em porcentagem",
+          "max": "O máximo é {pct}%."
+        },
+        "link": {
+          "tokens": "Editar mandato · Tokens",
+          "pools": "Editar mandato · Pools",
+          "limits": "Editar mandato · Limites"
+        }
       },
       "network": {
         "remove": "Remover {network}"
-      },
-      "toast": {
-        "removed": "Bloco removido",
-        "undo": "Desfazer"
       },
       "planUnreadable": "Este rascunho tem um plano que esta versão do app não consegue abrir. Ele é mantido como está; adicionar um bloco inicia um novo plano, que o substitui quando você salvar.",
       "review": {
