@@ -6,6 +6,7 @@
 import type { FundLaunchDraft } from "../contracts";
 import { getLaunchSteps } from "../journey";
 import type { CanvasChain } from "../plan";
+import { type AllocationEdits, fallbackAllocations } from "./allocation";
 
 export type FallbackSettings = NonNullable<CanvasChain["steps"][number]["config"]>;
 export type FallbackEdits = Record<string, FallbackSettings>;
@@ -120,11 +121,14 @@ export function applyFallbackExecutionAtLaunch(
   draft: FundLaunchDraft,
   edits: FallbackEdits,
   hubBaseAssetKey?: string,
+  allocationEdits: AllocationEdits = {},
 ): FundLaunchDraft {
+  const allocation = fallbackAllocations(draft, allocationEdits);
   const execution = { ...draft.launchExecution };
   const chains = (entries: CanvasChain[], network: string): CanvasChain[] =>
     entries.map((chain) => ({
       ...chain,
+      sharePct: allocation.chains[chain.id] ?? 0,
       steps: chain.steps.map((block) => {
         if (block.family !== "position")
           return { ...block, config: block.config ? { ...block.config } : block.config };
@@ -134,8 +138,7 @@ export function applyFallbackExecutionAtLaunch(
           edits[block.id],
           hubBaseAssetKey,
         );
-        const leafSharePct = execution[block.id]?.leafSharePct;
-        execution[block.id] = leafSharePct === undefined ? {} : { leafSharePct };
+        execution[block.id] = { leafSharePct: allocation.leaves[block.id] };
         return { ...block, config };
       }),
     }));
@@ -146,8 +149,9 @@ export function applyFallbackExecutionAtLaunch(
     plan: {
       ...draft.plan,
       hub: { ...draft.plan.hub, chains: chains(draft.plan.hub.chains, "arbitrum") },
-      spokes: draft.plan.spokes.map((spoke) => ({
+      spokes: draft.plan.spokes.map((spoke, index) => ({
         ...spoke,
+        sharePct: allocation.spokes[index]?.sharePct ?? 0,
         chains: chains(spoke.chains, spoke.network),
       })),
     } as FundLaunchDraft["plan"],
@@ -158,10 +162,11 @@ export function fallbackLaunchPreview(
   draft: FundLaunchDraft,
   edits: FallbackEdits,
   hubBaseAssetKey?: string,
+  allocationEdits: AllocationEdits = {},
 ) {
   let snapshot: FundLaunchDraft;
   try {
-    snapshot = applyFallbackExecutionAtLaunch(draft, edits, hubBaseAssetKey);
+    snapshot = applyFallbackExecutionAtLaunch(draft, edits, hubBaseAssetKey, allocationEdits);
   } catch {
     return { steps: [], blockers: ["EXECUTION_UNAVAILABLE"] };
   }

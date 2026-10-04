@@ -1,4 +1,12 @@
 {
+  "fallbackAllocation": {
+    "title": "Participações de alocação (fallback)",
+    "terms": "As participações raiz são percentuais do fundo; a divisão hub/spoke do Mandato não muda. As posições somam 100% por cadeia. Participações ausentes são divididas igualmente, com o resto inteiro na primeira posição. Blocos de fluxo não recebem participação. Cada percentual final do fundo deve ser inteiro.",
+    "root": "Cadeia {chain} em {network}: participação do fundo (%)",
+    "leaf": "Posição {block}: participação nesta cadeia (%)",
+    "panelWins": "A participação do painel prevalece (somente leitura).",
+    "blocked": "A alocação exige divisão de rede conhecida no Mandato, participações raiz inteiras positivas e posições somando 100%. Ajuste para percentuais finais inteiros."
+  },
   "fallbackIndex": {
     "title": "Revisar e lançar rascunhos (v2)",
     "localDrafts": "Os rascunhos ficam neste navegador; o armazenamento não registra o proprietário da wallet. O status do lançamento pertence à wallet conectada.",

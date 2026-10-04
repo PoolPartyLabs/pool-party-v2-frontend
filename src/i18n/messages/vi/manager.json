@@ -1,4 +1,12 @@
 {
+  "fallbackAllocation": {
+    "title": "Tỷ lệ phân bổ (dự phòng)",
+    "terms": "Tỷ lệ gốc là phần trăm của toàn quỹ; phân chia hub/spoke giữ nguyên. Vị thế có tổng 100% mỗi chuỗi. Tỷ lệ thiếu được chia đều, phần dư nguyên dành cho vị thế đầu tiên. Khối luồng không nhận tỷ lệ. Phần trăm quỹ cuối cùng phải là số nguyên.",
+    "root": "Chuỗi {chain} trên {network}: tỷ lệ quỹ (%)",
+    "leaf": "Vị thế {block}: tỷ lệ trong chuỗi này (%)",
+    "panelWins": "Tỷ lệ từ bảng cấu hình được ưu tiên (chỉ đọc).",
+    "blocked": "Phân bổ cần tỷ lệ mạng đã biết, tỷ lệ gốc nguyên dương và tổng vị thế 100%. Điều chỉnh để phần trăm quỹ cuối cùng là số nguyên."
+  },
   "fallbackIndex": {
     "title": "Kiểm tra và khởi chạy bản nháp (v2)",
     "localDrafts": "Bản nháp được lưu trong trình duyệt này; kho lưu trữ không ghi chủ sở hữu wallet. Trạng thái khởi chạy thuộc wallet đang kết nối.",

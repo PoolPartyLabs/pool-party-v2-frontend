@@ -3,7 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../../../../../tests/utils/renderWithProviders";
 import { FallbackReview } from "./FallbackReview";
 
-const state = vi.hoisted(() => ({ mock: false, enabled: true, draft: true, blocked: false }));
+const state = vi.hoisted(() => ({
+  mock: false,
+  enabled: true,
+  draft: true,
+  blocked: false,
+  rootShare: 100,
+  leafShare: 0,
+}));
 const start = vi.hoisted(() => vi.fn(async (_draft: unknown) => ({ journeyId: "journey" })));
 const setField = vi.hoisted(() => vi.fn());
 const uploadLogo = vi.hoisted(() => vi.fn(async () => "https://cdn.test/logo.png"));
@@ -25,13 +32,14 @@ vi.mock("../index", () => ({
           pools: [],
           tokens: [{ network: "arbitrum", address: `0x${"12".repeat(20)}` }],
           aaveV3Reserves: [`0x${"12".repeat(20)}`],
+          launchExecution: { supply: { leafSharePct: state.leafShare } },
           plan: {
             version: 1,
             hub: {
               chains: [
                 {
                   id: "root",
-                  sharePct: 100,
+                  sharePct: state.rootShare,
                   steps: [{ id: "supply", kind: "aaveSupply", family: "position", config: {} }],
                 },
               ],
@@ -82,7 +90,14 @@ vi.mock("../../useV2MandateCatalog", () => ({
 
 describe("fallback Review [R1, R5]", () => {
   beforeEach(() => {
-    Object.assign(state, { mock: false, enabled: true, draft: true, blocked: false });
+    Object.assign(state, {
+      mock: false,
+      enabled: true,
+      draft: true,
+      blocked: false,
+      rootShare: 100,
+      leafShare: 0,
+    });
     vi.clearAllMocks();
   });
   it("renders terms and signatures without launching on mount", async () => {
@@ -104,6 +119,27 @@ describe("fallback Review [R1, R5]", () => {
     state.blocked = true;
     renderWithProviders(<FallbackReview draftId="draft" />);
     expect(screen.getByRole("button", { name: /Launch ·/ })).toBeDisabled();
+  });
+  it("shows editable defaults for zero shares and validates edits before launch", () => {
+    state.rootShare = 0;
+    renderWithProviders(<FallbackReview draftId="draft" />);
+    const root = screen.getByLabelText("arbitrum chain root: fund share (%)");
+    const leaf = screen.getByLabelText("Position supply: share of this chain (%)");
+    expect(root).toHaveValue(100);
+    expect(root).not.toHaveAttribute("readonly");
+    expect(leaf).toHaveValue(100);
+    fireEvent.change(leaf, { target: { value: "99" } });
+    expect(screen.getByRole("button", { name: /Launch ·/ })).toBeDisabled();
+    fireEvent.change(leaf, { target: { value: "100" } });
+    expect(screen.getByRole("button", { name: /Launch ·/ })).toBeEnabled();
+  });
+  it("shows panel-written root and leaf shares read-only", () => {
+    state.leafShare = 100;
+    renderWithProviders(<FallbackReview draftId="draft" />);
+    expect(screen.getByLabelText("arbitrum chain root: fund share (%)")).toHaveAttribute(
+      "readonly",
+    );
+    expect(screen.getByLabelText(/Position supply:/)).toHaveAttribute("readonly");
   });
   it("keeps each invalid fee blocked even when another fee is valid", () => {
     renderWithProviders(<FallbackReview draftId="draft" />);

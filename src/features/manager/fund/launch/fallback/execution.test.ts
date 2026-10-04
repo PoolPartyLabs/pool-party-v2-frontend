@@ -79,7 +79,7 @@ describe("fallback execution [R2, R3, R4, R5]", () => {
     draft.launchExecution = { position: { tickLower: -600, tickUpper: 600, maxLossBps: 400 } };
     const snapshot = applyFallbackExecutionAtLaunch(draft, { position: { tickLower: -60 } });
     expect(snapshot.plan.hub.chains[0]?.steps[0]?.config).toEqual(block.config);
-    expect(snapshot.launchExecution?.position).toEqual({});
+    expect(snapshot.launchExecution?.position).toEqual({ leafSharePct: 100 });
   });
   it("derives Aave Supply identity only from the Mandate and blocks unsupported assets", () => {
     const draft = fixture();
@@ -114,12 +114,12 @@ describe("fallback execution [R2, R3, R4, R5]", () => {
       fallbackLaunchPreview(fixture(), { position: { fullRange: false, ...settings } }).blockers,
     ).toContain("EXECUTION_UNAVAILABLE");
   });
-  it("keeps missing leaf budgets and partial panel configs fail closed", () => {
+  it("defaults missing leaf budgets but keeps partial panel configs fail closed", () => {
     const draft = fixture();
     const chain = draft.plan.hub.chains[0];
     if (!chain) throw new Error("fixture");
     chain.steps.push({ ...chain.steps[0], id: "second" } as (typeof chain.steps)[number]);
-    expect(fallbackLaunchPreview(draft, {}).blockers).toContain("BUILD_EXECUTION_GAP");
+    expect(fallbackLaunchPreview(draft, {}).blockers).toEqual([]);
     chain.steps.pop();
     if (chain.steps[0]) chain.steps[0].config = { poolId };
     expect(fallbackLaunchPreview(draft, {}).blockers).toContain("EXECUTION_UNAVAILABLE");

@@ -15,6 +15,7 @@ import { isMockMode } from "@/lib/services";
 import { useV2MandateCatalog } from "../../useV2MandateCatalog";
 import { type FundLaunchDraft, startFundLaunch, useV2ReviewDraft } from "../index";
 import { validateLogo } from "../review";
+import { type AllocationEdits, fallbackAllocations } from "./allocation";
 import {
   applyFallbackExecutionAtLaunch,
   type FallbackEdits,
@@ -38,6 +39,7 @@ function RealFallbackReview({ draftId }: { draftId: string }) {
   const catalog = useV2MandateCatalog();
   const translate = useTranslations("manager");
   const [edits, setEdits] = useState<FallbackEdits>({});
+  const [allocationEdits, setAllocationEdits] = useState<AllocationEdits>({});
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState(false);
   const [logoInvalid, setLogoInvalid] = useState(false);
@@ -56,7 +58,7 @@ function RealFallbackReview({ draftId }: { draftId: string }) {
   const base = catalog.depositTokenFor("arbitrum");
   const baseAssetKey = base ? `arbitrum:${base.address.toLowerCase()}` : undefined;
   const preview = draft.plan
-    ? fallbackLaunchPreview(draft, edits, baseAssetKey)
+    ? fallbackLaunchPreview(draft, edits, baseAssetKey, allocationEdits)
     : { steps: [], blockers: ["BUILD_EXECUTION_GAP"] };
   const blockers = binding.launchBlockers.filter(
     (blocker) => blocker.code !== "BUILD_EXECUTION_GAP",
@@ -80,7 +82,9 @@ function RealFallbackReview({ draftId }: { draftId: string }) {
     setFailure(false);
     try {
       // PP-INTEGRATION-POINT: only the explicit launch action freezes defaults into the journey snapshot.
-      await startFundLaunch(applyFallbackExecutionAtLaunch(draft, edits, baseAssetKey));
+      await startFundLaunch(
+        applyFallbackExecutionAtLaunch(draft, edits, baseAssetKey, allocationEdits),
+      );
     } catch {
       setFailure(true);
     } finally {
@@ -202,6 +206,9 @@ function RealFallbackReview({ draftId }: { draftId: string }) {
       </p>
       <fieldset disabled={busy} className="flex flex-col gap-3">
         <legend>{translate("fallbackReview.execution")}</legend>
+        {draft.plan ? (
+          <AllocationControls draft={draft} edits={allocationEdits} onChange={setAllocationEdits} />
+        ) : null}
         {draft.plan
           ? fallbackBlocks(draft).map((block) => {
               const readOnly = hasPanelSettings(block);
@@ -342,5 +349,100 @@ function RealFallbackReview({ draftId }: { draftId: string }) {
         {translate("fallbackReview.launch", { count: signatureCount })}
       </Button>
     </section>
+  );
+}
+
+function AllocationControls({
+  draft,
+  edits,
+  onChange,
+}: {
+  draft: FundLaunchDraft;
+  edits: AllocationEdits;
+  onChange: (edits: AllocationEdits) => void;
+}) {
+  const translate = useTranslations("manager");
+  let defaults: ReturnType<typeof fallbackAllocations> | null = null;
+  try {
+    defaults = fallbackAllocations(draft, {}, false);
+  } catch {}
+  const groups = [{ network: "arbitrum", chains: draft.plan.hub.chains }, ...draft.plan.spokes];
+  return (
+    <div>
+      <h2>{translate("fallbackAllocation.title")}</h2>
+      <p>{translate("fallbackAllocation.terms")}</p>
+      {!defaults ? <p role="alert">{translate("fallbackAllocation.blocked")}</p> : null}
+      {groups.map((group) => (
+        <div key={group.network}>
+          {group.chains.map((chain) => {
+            const rootReadOnly = chain.sharePct !== undefined && chain.sharePct !== 0;
+            const rootValue = rootReadOnly
+              ? chain.sharePct
+              : (edits.chains?.[chain.id] ?? defaults?.chains[chain.id]);
+            return (
+              <div key={chain.id}>
+                <label>
+                  {translate("fallbackAllocation.root", {
+                    chain: chain.id,
+                    network: group.network,
+                  })}
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    step={1}
+                    readOnly={rootReadOnly}
+                    value={Number.isFinite(rootValue) ? rootValue : ""}
+                    onChange={(event) =>
+                      onChange({
+                        ...edits,
+                        chains: {
+                          ...edits.chains,
+                          [chain.id]: event.target.value === "" ? NaN : Number(event.target.value),
+                        },
+                      })
+                    }
+                  />
+                </label>
+                {rootReadOnly ? <p>{translate("fallbackAllocation.panelWins")}</p> : null}
+                {chain.steps
+                  .filter((block) => block.family === "position")
+                  .map((block) => {
+                    const saved = draft.launchExecution?.[block.id]?.leafSharePct;
+                    const readOnly = saved !== undefined && saved !== 0;
+                    const value = readOnly
+                      ? saved
+                      : (edits.leaves?.[block.id] ?? defaults?.leaves[block.id]);
+                    return (
+                      <label key={block.id}>
+                        {translate("fallbackAllocation.leaf", { block: block.id })}
+                        <input
+                          type="number"
+                          min={1}
+                          max={100}
+                          step={1}
+                          readOnly={readOnly}
+                          value={Number.isFinite(value) ? value : ""}
+                          onChange={(event) =>
+                            onChange({
+                              ...edits,
+                              leaves: {
+                                ...edits.leaves,
+                                [block.id]:
+                                  event.target.value === "" ? NaN : Number(event.target.value),
+                              },
+                            })
+                          }
+                        />
+                        {readOnly ? translate("fallbackAllocation.panelWins") : null}
+                      </label>
+                    );
+                  })}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
   );
 }

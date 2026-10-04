@@ -1,4 +1,12 @@
 {
+  "fallbackAllocation": {
+    "title": "Allocation shares (fallback)",
+    "terms": "Root shares are percentages of the whole fund; the Mandate hub/spoke split stays unchanged. Position shares total 100% per chain. Missing shares split equally with integer remainder assigned to the first position. Flow blocks receive no share. Each final fund percentage must be an integer.",
+    "root": "{network} chain {chain}: fund share (%)",
+    "leaf": "Position {block}: share of this chain (%)",
+    "panelWins": "Panel-written share wins (read-only).",
+    "blocked": "Allocation requires a known Mandate network split, positive integer root shares and position sums of 100%. Adjust shares so final fund percentages are integers."
+  },
   "fallbackIndex": {
     "title": "Review & launch drafts (v2)",
     "localDrafts": "Saved drafts are local to this browser; the draft store does not record wallet ownership. Launch status belongs to your connected wallet.",

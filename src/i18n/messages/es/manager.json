@@ -1,4 +1,12 @@
 {
+  "fallbackAllocation": {
+    "title": "Participaciones de asignación (fallback)",
+    "terms": "Las participaciones raíz son porcentajes del fondo; la división hub/spoke del Mandato no cambia. Las posiciones suman 100% por cadena. Las participaciones faltantes se reparten por igual y el resto entero va a la primera posición. Los bloques de flujo no reciben participación. Cada porcentaje final debe ser entero.",
+    "root": "Cadena {chain} en {network}: participación del fondo (%)",
+    "leaf": "Posición {block}: participación de esta cadena (%)",
+    "panelWins": "La participación del panel prevalece (solo lectura).",
+    "blocked": "La asignación requiere división de red conocida, participaciones raíz enteras positivas y posiciones que sumen 100%. Ajuste para porcentajes finales enteros."
+  },
   "fallbackIndex": {
     "title": "Revisar y lanzar borradores (v2)",
     "localDrafts": "Los borradores se guardan en este navegador; el almacenamiento no registra la wallet propietaria. El estado del lanzamiento pertenece a su wallet conectada.",

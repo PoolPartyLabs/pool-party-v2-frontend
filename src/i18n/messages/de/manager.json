@@ -1,4 +1,12 @@
 {
+  "fallbackAllocation": {
+    "title": "Zuweisungsanteile (Fallback)",
+    "terms": "Wurzelanteile sind Prozentsätze des Fonds; die Hub/Spoke-Aufteilung bleibt unverändert. Positionen ergeben 100% je Kette. Fehlende Anteile werden gleich verteilt, der ganzzahlige Rest geht an die erste Position. Flussblöcke erhalten keinen Anteil. Jeder endgültige Fondsprozentsatz muss ganzzahlig sein.",
+    "root": "Kette {chain} auf {network}: Fondsanteil (%)",
+    "leaf": "Position {block}: Anteil dieser Kette (%)",
+    "panelWins": "Panel-Anteil hat Vorrang (schreibgeschützt).",
+    "blocked": "Die Zuweisung erfordert eine bekannte Netzwerkaufteilung, positive ganzzahlige Wurzelanteile und Positionen mit 100% Summe. Passen Sie Anteile für ganzzahlige Fondsprozentsätze an."
+  },
   "fallbackIndex": {
     "title": "Entwürfe prüfen und starten (v2)",
     "localDrafts": "Entwürfe werden in diesem Browser gespeichert; der Speicher erfasst keinen Wallet-Eigentümer. Der Startstatus gehört Ihrer verbundenen Wallet.",

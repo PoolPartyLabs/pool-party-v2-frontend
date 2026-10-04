@@ -1,4 +1,12 @@
 {
+  "fallbackAllocation": {
+    "title": "Toewijzingsaandelen (fallback)",
+    "terms": "Hoofdaandelen zijn percentages van het fonds; de hub/spoke-verdeling blijft gelijk. Posities tellen op tot 100% per keten. Ontbrekende aandelen worden gelijk verdeeld met het gehele restant voor de eerste positie. Stroomblokken krijgen geen aandeel. Elk definitief fondspercentage moet geheel zijn.",
+    "root": "Keten {chain} op {network}: fondsaandeel (%)",
+    "leaf": "Positie {block}: aandeel van deze keten (%)",
+    "panelWins": "Paneelaandeel heeft voorrang (alleen-lezen).",
+    "blocked": "Toewijzing vereist een bekende netwerkverdeling, positieve gehele hoofdaandelen en posities met totaal 100%. Pas aandelen aan voor gehele fondspercentages."
+  },
   "fallbackIndex": {
     "title": "Concepten controleren en starten (v2)",
     "localDrafts": "Concepten staan lokaal in deze browser; de opslag registreert geen wallet-eigenaar. De startstatus hoort bij uw verbonden wallet.",

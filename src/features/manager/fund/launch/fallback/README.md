@@ -3,7 +3,7 @@
 Minimal, unstyled, temporary binding to the POO-2177 public hooks. Murilo owns POO-2172 Review and POO-2171 panels. No builder, canvas, Mandate or Review file is modified.
 
 **fallback; merges only if POO-2172 Review is not on main by 09:00 BST; Murilo's page replaces it**.
-Open as DRAFT only. Do not merge or deploy from this task. Confirmed date: October 4, 2026. Cutoff: 09:00 BST (08:00 UTC). Demo: 16:00 BST (15:00 UTC).
+Murilo confirmed at 03:50 BST on October 4, 2026 that POO-2172 Review will not be on main by the cutoff, so the orchestrator plans to land this fallback for the demo. Keep DRAFT while working; mark ready for review only after allocation gates pass, per the follow-up. No merge/deploy in this task. Confirmed date: October 4, 2026. Cutoff: 09:00 BST (08:00 UTC). Demo: 16:00 BST (15:00 UTC).
 
 ## Demo clicks
 
@@ -12,7 +12,7 @@ Open as DRAFT only. Do not merge or deploy from this task. Confirmed date: Octob
 3. In Manager Console, choose the V2 section and click **Review & launch drafts (v2)**. The link is in our slice-owned `FundExplorer` manager section; Murilo's `FundDraftsSlot`, `MandateDraftsList`, builder and canvas files remain untouched. Direct index URL: `/en/manager/fund-launch/review`.
 4. Check the draft's name, London-time last-saved timestamp and readiness/blockers summary. Click **Review & launch** for that draft. For a launch already in progress, click **Resume** instead to open its existing journey. Launch status is wallet-scoped. Mandate storage itself is browser-local and has no wallet ownership metadata; the index explicitly discloses this rather than inventing an ownership filter.
 5. Edit name, description, PNG/JPG logo, fees (Instant 0-10%), minimum and seed. Click **Refresh** for balance/catalog as needed. Check the whole-share seed preview and fixed investor terms.
-6. Under **Default execution settings (fallback until block panels ship)**, select the exact Mandate pool/asset if ambiguous. Pool defaults: canonical finite aligned full range, slippage 1%. Untick Full range to edit aligned canonical ticks. Existing nonempty panel config is read-only and wins entirely.
+6. Under **Default execution settings (fallback until block panels ship)**, check **Allocation shares (fallback)**. Zero/absent root shares default within the existing Mandate hub/spoke budget; position shares split 100% per chain equally, with integer remainder to the first position. Edit missing shares if needed. Positive panel-written shares are read-only. For fund #2: hub 50%, spoke 50%; hub pool/Aave leaves 50%/50%; spoke pool leaf 100%. Flow blocks get no share. Select the exact Mandate pool/asset if ambiguous. Pool defaults: canonical finite aligned full range, slippage 1%. Untick Full range to edit aligned canonical ticks. Existing nonempty panel config is read-only and wins entirely.
 7. Resolve every blocker. Click **Launch · N signatures** once. The existing launch entry freezes a snapshot and navigates to `/en/manager/fund-launch/<journeyId>`; click **Sign next step** there. Each wallet transaction is explicit. No signature is requested on index or Review mount.
 
 ## Confirmed demo catalog selections
@@ -27,9 +27,11 @@ Index readiness is a read-only estimate using saved Review, live catalog/balance
 
 ## Safety and seams
 
-`applyFallbackExecutionAtLaunch` creates a separate immutable launch draft snapshot. It never calls the Mandate/canvas store; only `useV2ReviewDraft` persists Review data. The preview uses the same adapter without persisting anything. Panel execution overrides are discarded except already-explicit leaf budgets, so stale launch overrides cannot defeat panel settings. Missing leaf budgets remain blockers.
+`applyFallbackExecutionAtLaunch` creates a separate immutable launch draft snapshot, applying config and allocations together. It never calls the Mandate/canvas store; only `useV2ReviewDraft` persists Review data. The preview uses the same adapter without persisting anything. Panel execution overrides are discarded except authoritative positive leaf budgets, so stale launch overrides cannot defeat panel settings. Missing budgets now receive visible editable defaults. Zero/absent shares have no stored ownership provenance; positive written values win regardless of source.
 
-Pool identity and tickSpacing come from the saved catalog-backed Mandate pool row; the existing launch driver rereads the real pool before a trade. Tick alignment uses mathematical ceil/floor, including negative ticks. Empty means null/undefined or no own config keys; any partial panel configuration is authoritative and fails closed if incomplete. No inferred leaf allocations, pools outside the Mandate, unsupported chains/protocols or guessed swaps.
+The current merged launch contract stores root share in `chain.sharePct` as a percentage of the whole fund; per-position share is `launchExecution[blockId].leafSharePct` as a percentage of that chain. Root defaults fill remaining hub/spoke budgets from the explicit Mandate network split, never altering it. Position defaults fill remaining 100% across position blocks only. Positive written shares win. The adapter validates integer 1..100 shares, exact group budgets/leaf totals and integer `(chain.sharePct * leafSharePct) / 100` as required by the existing executor. For three equal leaves, 34/33/33 is displayed as the intended split; if a 50% parent makes fractional whole-fund budgets, launch blocks until edited to compatible integer shares. Unknown network split is a blocker, not a 50/50 guess.
+
+Pool identity and tickSpacing come from the saved catalog-backed Mandate pool row; the existing launch driver rereads the real pool before a trade. Tick alignment uses mathematical ceil/floor, including negative ticks. Empty means null/undefined or no own config keys; any partial panel configuration is authoritative and fails closed if incomplete. No pools outside the Mandate, unsupported chains/protocols or guessed swaps.
 
 Aave Supply identity comes from the manager's explicit Mandate reserves and token rows, with explicit selection for ambiguity. The existing launch driver supports only the hub deposit asset, so non-base reserves are blocked here before launch. No slippage control is offered when no swap is needed; non-base Aave swaps require the owning executor to support them first.
 
@@ -41,6 +43,8 @@ Aave Supply identity comes from the manager's explicit Mandate reserves and toke
 - When POO-2172 lands, remove/retire this separate fallback route rather than integrating it into Murilo's page. POO-2171 nonempty config already wins.
 
 ## Validation (October 4, 2026)
+
+Allocation evidence: `allocation.test.ts` takes today's main canvas shape (root shares 0, null configs) using the exact fund #2 pool IDs and Aave reserve, applies the immutable adapter and calls real pure `getLaunchSteps`: 11 signatures (`approve`, `create`, `spoke`, `profile`, `allocate`, hub pool swap/open, Aave open, `bridge`, spoke pool swap/open). It proves the source stays unchanged and panel config/root/leaf values win over fallback edits. No wallet call/signature occurs. Additional tests cover remainder, flow exclusion, invalid sums/network split/fractional budgets and UI read-only/editable controls.
 
 Follow-up index validation on merged main `349956b5`: typecheck, Biome zero errors (84 existing warnings, one info), all 11 locales / 2535 source keys, production build and 183 touched tests pass. Full main: 767 files, 10231 passed, five pending, zero failed. Full branch: 772 files, 10280 passed, zero pending/failed. No new failed or pending identities. Registry: 624 rows; marker census: 475 across 272 files. Follow-up IDs: SCR-008, CMP-084, LIB-048, each uniquely re-derived on merged main. The final PR includes one additive link in our `FundExplorer` manager section; Murilo's pages/canvas/draft list remain unchanged.
 

@@ -1,4 +1,12 @@
 {
+  "fallbackAllocation": {
+    "title": "Parts d’allocation (secours)",
+    "terms": "Les parts racines sont des pourcentages du fonds ; la répartition hub/spoke du Mandat reste inchangée. Les positions totalisent 100% par chaîne. Les parts manquantes sont égales, le reste entier revient à la première position. Les blocs de flux ne reçoivent aucune part. Chaque pourcentage final doit être entier.",
+    "root": "Chaîne {chain} sur {network} : part du fonds (%)",
+    "leaf": "Position {block} : part de cette chaîne (%)",
+    "panelWins": "La part du panneau prévaut (lecture seule).",
+    "blocked": "L’allocation exige une répartition réseau connue, des parts racines entières positives et des positions totalisant 100%. Ajustez pour obtenir des pourcentages finaux entiers."
+  },
   "fallbackIndex": {
     "title": "Vérifier et lancer les brouillons (v2)",
     "localDrafts": "Les brouillons sont locaux à ce navigateur ; le stockage ne conserve pas le propriétaire du wallet. Le statut du lancement appartient à votre wallet connecté.",
