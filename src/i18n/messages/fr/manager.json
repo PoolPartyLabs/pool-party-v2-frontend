@@ -871,8 +871,8 @@
         "dex": "Liquidity positions",
         "perps": "Perpétuels"
       },
-      "positiveTokenRequired": "Autorisez au moins un token en plus de USDC au-delà de 0 % ou sélectionnez Sans plafond.",
-      "addPositiveToken": "Ajoutez un autre token dans Tokens, puis fixez sa limite au-delà de 0 % ou sélectionnez Sans plafond. USDC est déjà inclus."
+      "positiveTokenRequired": "Autorisez au moins un token en plus de USDC au-delà de 0 % ou sélectionnez Aucun plafond.",
+      "addPositiveToken": "Ajoutez un autre token dans Tokens, puis fixez sa limite au-delà de 0 % ou sélectionnez Aucun plafond. USDC est déjà inclus."
     },
     "draft": {
       "title": "Nommez votre brouillon",

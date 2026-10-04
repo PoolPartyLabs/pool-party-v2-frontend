@@ -134,7 +134,7 @@ describe("LimitsStep", () => {
     ["robinhood", "networks", 40],
     ["aave-v3", "protocols", 60],
     [tokenKey(WETH), "tokens", 60],
-  ] as const)("100%% selects No cap for %s and keeps the prior numeric cap", (id, scope, pct) => {
+  ] as const)("100 percent selects No cap for %s and keeps the prior numeric cap", (id, scope, pct) => {
     const { capsAfterUpdate } = renderStep();
     fireEvent.change(within(row(id)).getByRole("slider"), { target: { value: "100" } });
     expect(capsAfterUpdate()[scope][id as never]).toEqual({ noCap: true, pct });

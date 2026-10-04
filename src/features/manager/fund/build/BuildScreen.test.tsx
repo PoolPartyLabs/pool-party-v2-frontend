@@ -68,6 +68,12 @@ vi.mock("next/navigation", () => ({ useSearchParams: () => nav.params }));
 const analytics = vi.hoisted(() => ({ track: vi.fn(), trackFailure: vi.fn() }));
 vi.mock("@/lib/analytics/useAnalytics", () => ({ useAnalytics: () => analytics }));
 
+// The shell reads wallet identity to preserve existing launch recovery. This canvas suite has no
+// wallet journey; keep the real SDK's window/focus listeners outside its beforeunload assertions.
+vi.mock("@/lib/auth/useAuth", () => ({
+  useAuth: () => ({ address: undefined, isLoading: false }),
+}));
+
 vi.mock("@/lib/features/useFeatureFlags", () => ({
   useFeatureFlags: () => ({ flags: {}, isEnabled: () => false }),
 }));
