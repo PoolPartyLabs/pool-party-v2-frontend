@@ -47,7 +47,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 480 markers across 276 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 481 markers across 277 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -194,3 +194,20 @@ Hackathon, 2026-09-13. The `/tools` page (PP-TOOLS-SCR-001) takes a chain and a 
 | Job registry | `src/lib/tools/hookrisk/jobs.ts` (PP-TOOLS-LIB-005) | **REAL, and in process memory.** One running job per `(chainId, address)`; a second start joins it. Reports are cached on disk for 24 h under `$HOOKRISK_WORK_DIR/hookrisk/<sha256>/`, swept by each request rather than by a cron | **PP-INTEGRATION-POINT:** the registry is per replica and per restart, so a second instance does not see the first's running job. The disk cache is what actually survives, so the worst case is a wasted rerun. A durable queue replaces it if this leaves hackathon scope |
 
 | Uniswap v4 pool panel defaults | `src/features/manager/fund/build/panel/PoolBlockPanel.tsx` | Mount read through `getCatalogPoolsAction`, MCK-005 in mock mode; missing, unread or ineligible rows disable Use. `usePanelPool` gates Apply on the latest live read. POO-2189 @rules-v1. |
+## Aave Supply configuration (POO-2194, rules v1)
+
+`SupplyBlockPanel.tsx` reads `usePanelReserves` against the shell's catalog, sourced from
+`GET /api/v2/catalog/aave-v3/reserves`. Network, mandate tokens and selected reserves intersect
+before rendering. Only USDC on Arbitrum is executable in the alpha; other rows remain disabled.
+`assetKey` is canonical and APY is the served snapshot. Catalog loading/error or an unusable
+selection prevents Use/Apply. There is no second fetch, fixture fallback in real mode, automatic
+reserve refresh or USDC-to-USDC swap. Token logos use the shared resolver; the shell draws network
+and protocol logos. Shared shell analytics cover this body without duplicate emitters.
+
+### Review form cards (POO-2188, RB1)
+
+The props-only PP-MGR-CMP-073..076 cards add no service or wallet calls. Their parent
+supplies `useV2ReviewDraft` values, validated cropped-logo upload, hub USDC balance and
+`feeConfiguration`. `reviewForm` reuses the existing `rawUsdc` contract, and the deposit
+card displays the supplied `previewSeed` result. The protocol rate is explicitly estimated
+when its source is fallback. RB2 owns the connected seam and launch-entry analytics.
