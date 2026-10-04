@@ -15,8 +15,11 @@
  */
 "use client";
 
+import { createTranslator } from "next-intl";
 import { useId } from "react";
+import enManager from "@/i18n/messages/en/manager.json";
 import { tokenKey } from "../../mandateDraft";
+import type { ManagerTranslate } from "../blocks/blockCopy";
 import { feeNumber } from "../blocks/blockRegistry";
 import { fullRangeTicks, poolRefKey } from "../plan/blockConfig";
 import type { AaveBlockConfig, PoolBlockConfig } from "../plan/buildPlan";
@@ -24,7 +27,17 @@ import { FundSlippageControl } from "./FundSlippageControl";
 import { PanelFieldLabel } from "./PanelFieldLabel";
 import { PanelSelect } from "./PanelSelect";
 import type { PanelBodies, PanelBodyDefinition } from "./panelBodies";
-import { usePanelCopy } from "./panelCopy";
+import { makePanelCopy, type PanelCopy, usePanelCopy } from "./panelCopy";
+
+/** The panel copy in English, through next-intl's own translator (ICU filled), for tests. */
+export function makeTestPanelCopy(): PanelCopy {
+  const translator = createTranslator({
+    locale: "en",
+    messages: { manager: enManager },
+    namespace: "manager",
+  });
+  return makePanelCopy((key, values) => (translator as unknown as ManagerTranslate)(key, values));
+}
 
 /** The spacing of the fixture pools (the 0.05% tier). */
 const FIXTURE_TICK_SPACING = 10;

@@ -30,6 +30,7 @@ import {
   makeTestDraft,
   spokePoolPlan,
   supplyBorrowPlan,
+  TEST_POOL_IDS,
 } from "../plan/planTestKit";
 import { useBuildPlan } from "../plan/useBuildPlan";
 import { BuildPalette } from "./BuildPalette";
@@ -485,6 +486,45 @@ describe("useBuildCanvas: remove (I6, P10, DP11)", () => {
       { network: "robinhood", sharePct: 0, chains: [] },
     ]);
     expect(events).toEqual([{ type: "blockRemoved", kind: "uniswapV4Pool", cascadeCount: 1 }]);
+  });
+
+  it("[DP3] removing the last block of one spoke chain leaves the spoke at its other chains' sum", async () => {
+    // @rule DP3
+    // @rule I6
+    const chain = (id: string, sharePct: number) => ({
+      id,
+      sharePct,
+      steps: [
+        { id: `${id}-swap`, family: "flow" as const, kind: "swap" as const, auto: true },
+        {
+          id: `${id}-pool`,
+          family: "position" as const,
+          kind: "uniswapV4Pool" as const,
+          config: { poolId: TEST_POOL_IDS.robinhood },
+        },
+      ],
+    });
+    const plan: BuildPlan = {
+      version: 1,
+      hub: { chains: [] },
+      spokes: [
+        { network: "robinhood", sharePct: 35, chains: [chain("rh-a", 20), chain("rh-b", 15)] },
+      ],
+    };
+    const { result } = await mount(plan);
+    press(result, { kind: "block", blockId: "rh-a-pool" });
+    act(() =>
+      result.current.canvas.onKeyDown({
+        key: "Delete",
+        target: document.body,
+        preventDefault() {},
+      }),
+    );
+    act(() => result.current.canvas.confirmRemove());
+    const spoke = result.current.buildPlan.plan.spokes[0];
+    expect(spoke?.chains.map((c) => c.id)).toEqual(["rh-b"]);
+    // The released share goes back to Idle input: the spoke holds exactly what its chains hold.
+    expect(spoke?.sharePct).toBe(15);
   });
 
   it("refuses to remove an app-owned Swap · auto on its own", async () => {
