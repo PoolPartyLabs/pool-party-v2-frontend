@@ -87,3 +87,7 @@ Status: RESOLVED. This changes signing presentation only. Fund identity and prog
 ### CR-MGR-POO2213, 2026-10-04, derived income conversion diagram
 
 Status: RESOLVED for visual scope. The automatic fee-swap pill describes the intended income path to the network stable; it is not a submitted swap, quote or execution guarantee. No persisted plan step, transaction payload, fee or supported asset changes. Real income-conversion wiring requires its own backend/contract validation before claiming execution.
+
+## Investor V2 verification, 2026-10-04
+
+POO-2214/2217: current principal value, historical invested cost and income entitlement must remain distinct. Unknown balances and metrics display Not available; no zero or mock price/fee claim is introduced. The V2 Invest capability is unavailable until POO-2219 supplies an investor-safe review/guard/receipt contract. No V2 signing or provisioning starts from the unavailable host. Raw6 minimum comparisons use integer base units. The return context is account-bound and fills an amount only. These are engineering verification conditions for this slice, not a claim that existing disclosure/legal entries are resolved.

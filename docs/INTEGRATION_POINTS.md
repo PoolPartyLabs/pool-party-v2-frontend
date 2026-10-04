@@ -219,3 +219,7 @@ before rendering. Only USDC on Arbitrum is executable in the alpha; other rows r
 selection prevents Use/Apply. There is no second fetch, fixture fallback in real mode, automatic
 reserve refresh or USDC-to-USDC swap. Token logos use the shared resolver; the shell draws network
 and protocol logos. Shared shell analytics cover this body without duplicate emitters.
+
+## Investor V2 presentation and transaction-host boundary (POO-2214/2217)
+
+`InvestModal` PP-STR-MOD-001 accepts a separate V2 fund identity; it never passes that identity to the V1 Strategy schema, Permit2 steps or mock settlement. Existing amount and provisioning components remain shared, but V2 funding/build/sign is unavailable pending POO-2219. `investContext` PP-DEP-LIB-003 preserves V2 core/account/origin/from and validates return identity; the deposit route does not look up V2 core addresses in the V1 catalogue. See [delivery plan](investor/V2_DELIVERY_PLAN.md).
