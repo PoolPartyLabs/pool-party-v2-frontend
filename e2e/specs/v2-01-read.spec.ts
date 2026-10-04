@@ -5,8 +5,10 @@ test("@v2 @v2-read optional fund #2 discovery", async ({ page, wallet }) => {
   await login(page, wallet.address);
   await page.goto("/en/strategies");
   await page.getByRole("button", { name: /^V2$/ }).click();
-  await expect(page.locator(`a[href$="/funds/${FUNDS[0]}"]`)).toBeVisible({ timeout: 60_000 });
-  const second = page.locator(`a[href$="/funds/${FUNDS[1]}"]`);
+  await expect(page.locator(`article a[href$="/funds/${FUNDS[0]}"]`).first()).toBeVisible({
+    timeout: 60_000,
+  });
+  const second = page.locator(`article a[href$="/funds/${FUNDS[1]}"]`).first();
   test.skip((await second.count()) === 0, "Fund #2 discovery requires deployed POO-2181");
   await expect(second).toBeVisible();
 });
@@ -17,13 +19,16 @@ test("@v2 @v2-read fund discovery, valuation, positions and explorer addresses",
   await login(page, wallet.address);
   await page.goto("/en/strategies");
   await page.getByRole("button", { name: /^V2$/ }).click();
-  await expect(page.locator(`a[href$="/funds/${FUNDS[0]}"]`)).toBeVisible({ timeout: 60_000 });
-  if ((await page.locator(`a[href$="/funds/${FUNDS[1]}"]`).count()) === 0) {
+  await expect(page.locator(`article a[href$="/funds/${FUNDS[0]}"]`).first()).toBeVisible({
+    timeout: 60_000,
+  });
+  const second = page.locator(`article a[href$="/funds/${FUNDS[1]}"]`).first();
+  if ((await second.count()) === 0) {
     info.annotations.push({
       type: "skip",
       description: "Fund #2 discovery requires deployed POO-2181; fund #1 remains required",
     });
-  } else await expect(page.locator(`a[href$="/funds/${FUNDS[1]}"]`)).toBeVisible();
+  } else await expect(second).toBeVisible();
   await openFund(page, FUNDS[0]);
   await expect(page.locator("article header h1")).not.toBeEmpty();
   for (const heading of ["Positions", "Limits usage", "Report", "Chains"]) {
@@ -55,6 +60,7 @@ test("@v2 @v2-read fund discovery, valuation, positions and explorer addresses",
   const history = page.getByRole("button", { name: "Position history", exact: true });
   expect(await history.count()).toBeGreaterThan(0);
   if (await history.count()) {
+    await page.waitForTimeout(2_000);
     await history.first().click();
     await expect(
       page.getByRole("heading", { name: "Position history", exact: true }),
