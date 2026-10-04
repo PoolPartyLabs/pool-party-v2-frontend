@@ -91,7 +91,11 @@ function FundInvestorDetails({ core }: FundDetailProps) {
     if (isMockMode || !publicRead?.ok || personal.status !== "ready" || identity !== key) return;
     let active = true;
     // PP-INTEGRATION-POINT: same existing ERC20 balance reader as provisioning, hub USDC only.
-    void readErc20Balance(publicRead.fund.mandate.usdc, personal.wallet as `0x${string}`, 42161)
+    void readErc20Balance(
+      publicRead.fund.mandate.usdc as `0x${string}`,
+      personal.wallet as `0x${string}`,
+      42161,
+    )
       .then((raw) => {
         if (active) setBalanceRead({ identity: key, value: Number(formatUnits(raw, 6)) });
       })

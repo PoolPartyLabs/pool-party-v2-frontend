@@ -40,7 +40,7 @@ export async function loadPersonalFundDetailsAction(core: string) {
         schema: z.object({ walletAddress: addressSchema }),
         headers: await getAuthHeader(),
       });
-      if (owner.walletAddress.toLowerCase() !== wallet.toLowerCase())
+      if (owner?.walletAddress.toLowerCase() !== wallet.toLowerCase())
         return { ok: false as const, error: { code: "V2_SESSION" } };
     }
     const holder = isMockMode ? mockHolder : await readHolder(core, wallet);

@@ -305,7 +305,7 @@ describe("wallet-local launch status POO-2181", () => {
     expect(await screen.findByRole("link", { name: "View journey" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View details" })).toHaveAttribute(
       "href",
-      `/funds/${wallet}`,
+      `/funds/${wallet}?view=manager`,
     );
   });
   it("R4 skips malformed matching entries and reports inaccessible browser storage", () => {

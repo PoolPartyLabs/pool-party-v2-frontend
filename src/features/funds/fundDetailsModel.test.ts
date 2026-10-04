@@ -40,6 +40,7 @@ describe("V2 details projection", () => {
       detailedCoverage({
         ...mockFund,
         positionsSummary: {
+          protocolVersion: "v2",
           positions: (mockFund.positionsSummary?.positions ?? []).map((p, i) => ({
             ...p,
             shareOfNav: i === 0 ? "25" : "40",

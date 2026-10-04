@@ -62,7 +62,7 @@ export function FundLaunchJourneysList({ manager }: FundLaunchJourneysListProps)
                   {status.outcome === "completed" ? t("viewJourney") : t("resumeLaunch")}
                 </Link>
                 {core && /^0x[0-9a-fA-F]{40}$/.test(core) ? (
-                  <Link className="underline" href={`/funds/${core}`}>
+                  <Link className="underline" href={`/funds/${core}?view=manager`}>
                     {t("viewDetails")}
                   </Link>
                 ) : null}
