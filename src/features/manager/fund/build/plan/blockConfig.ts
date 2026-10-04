@@ -27,21 +27,25 @@
  *
  * Fields this module does not know are kept, as S1 promised the panel batch.
  */
-import { CREATE_POOL_DEFAULT_SLIPPAGE_PCT, SLIPPAGE_MIN } from "@/features/strategies/lib/slippage";
 import { MAX_TICK, MIN_TICK } from "@/lib/uniswap/tick";
 import type { MandatePoolRef, NetworkId } from "../../mandateDraft";
+import {
+  FUND_SLIPPAGE_DEFAULT_PCT,
+  FUND_SLIPPAGE_MAX_PCT,
+  FUND_SLIPPAGE_MIN_PCT,
+} from "../panel/fundSlippage";
 import type { PoolBlockConfig } from "./buildPlan";
 
 export type { AaveBlockConfig, PoolBlockConfig } from "./buildPlan";
 
-/** The lowest max slippage a block takes: the app's shared floor. */
-export const BLOCK_SLIPPAGE_MIN_PCT = SLIPPAGE_MIN;
+/** The lowest max slippage a block takes: the panels' floor (`fundSlippage`, PP-MGR-LIB-030). */
+export const BLOCK_SLIPPAGE_MIN_PCT = FUND_SLIPPAGE_MIN_PCT;
 
 /** The highest: the launch signs a loss bound of at most 500 bps (`launch/plan.ts`). */
-export const BLOCK_SLIPPAGE_MAX_PCT = 5;
+export const BLOCK_SLIPPAGE_MAX_PCT = FUND_SLIPPAGE_MAX_PCT;
 
 /** The slippage after Use (handoff P7, P12): the launch flow's default. */
-export const BLOCK_DEFAULT_SLIPPAGE_PCT = CREATE_POOL_DEFAULT_SLIPPAGE_PCT;
+export const BLOCK_DEFAULT_SLIPPAGE_PCT = FUND_SLIPPAGE_DEFAULT_PCT;
 
 /** A pool config with every field the launch reads: what Apply writes for a pool. */
 export type CompletePoolBlockConfig = Required<PoolBlockConfig>;

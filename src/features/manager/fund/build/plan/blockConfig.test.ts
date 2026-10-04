@@ -20,6 +20,7 @@
 import { describe, expect, it } from "vitest";
 import { describeBlock } from "../blocks/blockRegistry";
 import { makeDescribeContext, TEST_CATALOG } from "../blocks/blockTestKit";
+import { fullPoolRange } from "../panel/poolRangeMath";
 import {
   BLOCK_SLIPPAGE_MAX_PCT,
   BLOCK_SLIPPAGE_MIN_PCT,
@@ -159,6 +160,17 @@ describe("fullRangeTicks: Full is the finite extremes on the pool's own spacing 
     expect(fullRangeTicks(60)).toEqual({ tickLower: -887_220, tickUpper: 887_220 });
     expect(fullRangeTicks(50)).toEqual({ tickLower: -887_250, tickUpper: 887_250 });
     expect(fullRangeTicks(200)).toEqual({ tickLower: -887_200, tickUpper: 887_200 });
+  });
+
+  it("[K1] agrees with the pool panel's Full range on the same grid (PP-MGR-LIB-029)", () => {
+    // @rule K1
+    for (const tickSpacing of [1, 10, 50, 60, 200]) {
+      const full = fullPoolRange({ decimals0: 18, decimals1: 6, tickSpacing });
+      expect(fullRangeTicks(tickSpacing)).toEqual({
+        tickLower: full.tickLower,
+        tickUpper: full.tickUpper,
+      });
+    }
   });
 
   it("[K1] answers null for a spacing that is not a positive integer", () => {
