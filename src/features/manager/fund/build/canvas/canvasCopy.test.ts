@@ -85,10 +85,18 @@ describe("canvas copy: one tree in every locale", () => {
   });
 
   // @rule G7
-  it("[G7] lands 101 keys, and none of the six review.* keys slice S7 owns", () => {
-    // 100 from S2, plus `panel.menuOpenNetwork` (review F3 of PR #36, POO-2155).
-    expect(EN.size).toBe(101);
-    expect([...EN.keys()].some((key) => key.startsWith("review."))).toBe(false);
+  it("[G7] lands 108 keys, the six review.* keys of slice S7 among them", () => {
+    // 100 from S2, plus `panel.menuOpenNetwork` (review F3 of PR #36, POO-2155), plus seven from S7
+    // (POO-2157): the six Next: Review notices (D19) and `planUnreadable` (D18).
+    expect(EN.size).toBe(108);
+    expect([...EN.keys()].filter((key) => key.startsWith("review.")).sort()).toEqual([
+      "review.comingSoon",
+      "review.emptyBlock",
+      "review.emptyPlan",
+      "review.invalidBlock",
+      "review.overShare",
+      "review.unavailable",
+    ]);
   });
 
   // @rule G7
@@ -233,6 +241,21 @@ describe("canvas copy: the handoff's English, verbatim", () => {
       "Choose a protocol in the menu. The block is added on {network} and opens here.",
     ],
   ])("[G7] %s reads the handoff's %j", (key, english) => {
+    expect(EN.get(key)).toBe(english);
+  });
+
+  // @rule AN4 (D19, coordinator strings, slice S7)
+  it.each([
+    ["review.emptyPlan", "Add a block before Review."],
+    [
+      "review.invalidBlock",
+      "Remove the blocks that are no longer in your mandate, or edit the mandate.",
+    ],
+    ["review.comingSoon", "Remove the blocks that are coming soon."],
+    ["review.emptyBlock", "Configure every block before Review."],
+    ["review.overShare", "The shares add up to more than the capital above them."],
+    ["review.unavailable", "Review is not available yet."],
+  ])("[AN4] the Next: Review notice %s reads %j", (key, english) => {
     expect(EN.get(key)).toBe(english);
   });
 });

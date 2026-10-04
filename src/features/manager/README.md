@@ -210,6 +210,36 @@ over `PP-CORE-LIB-020` (`src/lib/uniswap/tick.ts`):
 
 ## Fund contracts builder (V2 toggle, POO-2119)
 
+### Real catalog wiring (POO-2133, rules v1)
+
+With `NEXT_PUBLIC_MOCK_MODE=false`, the existing V2 toggle and `fundContracts` flag use the real v2 catalog.
+`PP_API_URL` and `PP_API_KEY` stay server-only. No admin endpoint, deployment or transaction broadcast is added.
+`src/lib/api/v2/` validates the `{ data }` envelope, v2 protocol header and recursively tagged response records.
+Typed server actions return sanitized errors and catalog data; no upstream secret enters the browser.
+
+- Networks: Arbitrum required, Robinhood optional. Uniswap v3 swaps are locked; Across appears only with Robinhood.
+- Positions: optional Uniswap v4 per selected chain and optional Arbitrum Aave v3 supply. V3 positions show Coming soon.
+- Tokens: per-chain catalog metadata, logos and `hubPriced`; USDC/USDG bases locked; at most 16 unique chain-address entries.
+- Pools: real v4 token/pair filters and bytes32 PoolId lookup; full PoolKey retained. Adding a pool adds both currencies atomically.
+- Aave: catalog supply APY and live availability. No Robinhood reserve, borrowing or invented yield.
+- Limits: `spokeCapPercent` is a 5-point percentage or null. It is fund intent, **not enforced on chain until POO-2169**.
+  Protocol/token sliders are optional local Build allocation aids and never enter the provisioning selection.
+
+Completed real drafts persist `v2Selection`: `{ chains: [{ chainId, tokens, uniswapV4PoolIds }], aaveV3Reserves, spokeCapPercent }`.
+`toV2MandateSelection` revalidates provenance, bases, currencies, position selection and caps before completion.
+Old/mock drafts are flagged, never silently upgraded. Catalog failures show retry, never fixtures as a real fallback.
+Pool TVL/APR/tier share are omitted when unavailable, with an explicit indexing notice.
+Fund list/detail reads are typed; limits derive from detail's Mandate/profile because no standalone limits route exists.
+
+Review supplies manager, fee basis points and raw hub USDC seed/minimum amounts to `POST /api/v2/funds/build-create`.
+That slice must fetch the current catalog again and rebuild from the draft, not trust stored `v2Selection` or old PoolKeys.
+Build canvas files are unchanged. Mock v3/v4 fixtures and V1 builder behavior remain unchanged.
+All added copy is translated in the 11 configured locales; machine-tier translations still require native review.
+
+Artifacts: `PP-CORE-LIB-112` to `PP-CORE-LIB-115`, `PP-MGR-LIB-025`, `PP-MGR-HOK-011`, `PP-MGR-CMP-060`.
+Resolved integration points: catalog tokens/pricing/Aave, v4 pool catalog, percentage intent serialization.
+Open integrations: backend draft persistence (POO-2132), Review/launch, on-chain percentage cap (POO-2169), TVL/APR indexing.
+
 The Mandate step of a second, parallel strategy builder for the fund contracts (hub Arbitrum, spoke
 Robinhood Chain, PoolPartyLabs/smartcontract-v2), speced from
 `manager-fund-contracts-2026-10-02/handoff-strategy-builder-mandate-2026-10-03.md`. It signs nothing
@@ -265,7 +295,8 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
   USDG / Global Dollar, amending the handoff's literal default (R18, see "Coordinator defaults" and
   `docs/COMPLIANCE_REGISTER.md` `CR-MGR-013`).
 - **Protocols (R19 to R22).** The swap adapter and Across are locked above a divider, "Required"
-  (R19); "Protocols to operate" lists Aave v3 (Arbitrum only) and Uniswap v4 (Arbitrum, Robinhood
+  (R19); in real mode Across is shown and held only while Robinhood Chain is selected (POO-2133);
+  "Protocols to operate" lists Aave v3 (Arbitrum only) and Uniswap v4 (Arbitrum, Robinhood
   Chain) with "Select all" and an "On" column of per-network dots, while Uniswap v3 positions stay
   listed but disabled, "Coming soon", because the fund contracts have no Uniswap v3 position adapter
   (R20 v3, POO-2167; the required Uniswap v3 swap is a different row and stays); no reducer accepts
@@ -329,9 +360,9 @@ flag anywhere today, `CR-MGR-010`). Backend persistence (drafts are `localStorag
 `PP-MGR-STO-001`'s own `PP-INTEGRATION-POINT`; wiring issue POO-2132). Mobile layouts (desktop only,
 per the handoff). Uniswap v4 pool data in real mode (mock fixtures only,
 `docs/INTEGRATION_POINTS.md`; wiring issue POO-2133). Known consequence of rules v3 (POO-2167):
-Uniswap v4 is the only selectable position protocol, so in real mode the Pools step lists nothing and
-its Next refuses with `nothing_selected` until a Uniswap v4 pool source exists (POO-2133, POO-2146);
-an Aave-only mandate skips the Pools step and completes. The seams that wait on the contract interface
+Uniswap v4 is the only selectable position protocol, so a mandate that names it cannot pass the Pools
+step without a Uniswap v4 pool, in either mode; an Aave-only mandate skips the Pools step and
+completes. The seams that wait on the contract interface
 (registries, price source, spoke cap unit, contract-family marker) are tracked together by wiring
 issue POO-2134, against POO-2116 slices 5, 7 and 12.
 

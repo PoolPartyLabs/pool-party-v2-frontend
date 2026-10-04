@@ -33,6 +33,7 @@
 
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
+import { MandateCatalogStatus } from "../components/MandateCatalogStatus";
 import { MandateCheckbox, MandateRow } from "../components/MandateRow";
 import { NetworkLogoWithName, useNetworkNames } from "../components/NetworkDots";
 import type { MandateNetwork } from "../mandateCatalog";
@@ -129,6 +130,7 @@ export function NetworksStep({ draft, catalog, update, block, onBlocked }: Manda
 
   return (
     <section data-mandate-step={STEP} className="flex flex-col gap-6">
+      <MandateCatalogStatus catalog={catalog} draft={draft} />
       {/* Hub (R15) */}
       <div className="flex flex-col gap-2">
         <h3 className="font-medium text-foreground text-sm">{t("fundBuilder.networks.hub")}</h3>

@@ -1,4 +1,45 @@
 {
+  "fundLaunch": {
+    "journeyTitle": "펀드 출시 진행",
+    "journeyWait": "각 거래에 확인이 필요해요. 브리지와 보고서는 몇 분 걸릴 수 있어요.",
+    "receiptLabel": "영수증",
+    "receipt_success": "확인됨",
+    "receipt_reverted": "되돌려짐",
+    "receipt_unknown": "아직 미확인",
+    "offchainComplete": "오프체인 단계 완료",
+    "fundExists": "펀드가 생성됐어요. 남은 단계는 생성을 취소하지 않아요.",
+    "viewFund": "펀드 보기",
+    "journeyComplete": "출시 완료",
+    "signNext": "다음 단계 서명",
+    "resumeJourney": "재개",
+    "retryJourney": "재시도",
+    "pauseJourney": "일시 중지",
+    "returnManager": "관리자 콘솔로",
+    "uploadFailed": "로고 업로드에 실패했어요. 다른 PNG 또는 JPG를 시도해 주세요.",
+    "buildGap": "Build 계획에 실행 세부 정보가 필요해요. Build로 돌아가 범위와 배분을 완료해 주세요.",
+    "validation": "기본 정보, 수수료 한도, 최소 입금액과 USDC 잔액을 확인해 주세요.",
+    "partialFailure": "일부 단계가 완료됐어요. 새 펀드를 만들지 않고 이 단계부터 재개해요.",
+    "realOnly": "출시에는 실제 모드가 필요해요. 모의 데이터에서는 서명을 요청하지 않아요.",
+    "walletOrJournal": "원래 매니저 지갑을 연결해 주세요. 저장된 체크포인트를 읽을 수 없으면 생성을 다시 시작하지 마세요.",
+    "approve": "USDC 승인",
+    "create": "펀드 생성 및 입금",
+    "discover": "배포된 주소 확인",
+    "spoke": "Robinhood spoke 생성",
+    "profile": "펀드 프로필 서명",
+    "allocate": "hub에 배분",
+    "report": "승인된 보고서 대기",
+    "bridge": "Robinhood로 bridge",
+    "arrival": "도착 입금 반영 대기",
+    "swap": "실제 잔액으로 swap",
+    "open": "포지션 개설",
+    "idle": "시작 전",
+    "building": "트랜잭션 구성 중",
+    "signing": "지갑에서 확인해 주세요",
+    "submitted": "제출됨",
+    "waiting": "검증 대기 중",
+    "confirmed": "확인됨",
+    "failed": "실패"
+  },
   "entry": {
     "become": "운용자 되기",
     "manager": "Manager Console"
@@ -610,6 +651,19 @@
   },
   "window30d": "30일",
   "fundBuilder": {
+    "real": {
+      "loading": "v2 카탈로그를 불러오고 있어요",
+      "error": "v2 카탈로그를 사용할 수 없어요.",
+      "retry": "다시 시도",
+      "stale": "이 초안은 오래된 데이터나 모의 데이터를 사용해요. 실제 모드에서 새 초안을 시작하세요.",
+      "protocols": "네트워크별 포지션 프로토콜을 선택하세요. Uniswap v3는 swap 전용이에요.",
+      "reserve": "{symbol} supply APY: {apy}",
+      "unavailable": "사용 불가",
+      "metrics": "TVL과 APR은 아직 인덱싱되지 않았어요.",
+      "limits": "Robinhood 비율은 펀드의 의도로 저장되지만 POO-2169 전에는 on-chain으로 강제되지 않아요.",
+      "allocation": "프로토콜 및 토큰 슬라이더는 로컬 Build 배분 도구이며 펀드 한도가 아니에요.",
+      "poolId": "bytes32 PoolId를 붙여 넣으세요"
+    },
     "header": {
       "saveExit": "저장하고 나가기"
     },
@@ -783,10 +837,7 @@
       "unnamed": "이름 없는 초안"
     },
     "build": {
-      "title": "구성",
-      "pending": "펀드 컨트랙트의 빌드 캔버스는 아직 디자인 중입니다. 운용 방침은 저장되어 있습니다. 출시되면 다시 방문하세요.",
       "summary": "내 운용 방침",
-      "backMandate": "이전: 운용 방침",
       "summaryNetworks": "네트워크",
       "summaryProtocols": "프로토콜",
       "summaryTokens": "토큰",
@@ -950,6 +1001,15 @@
       "toast": {
         "removed": "블록을 제거했습니다",
         "undo": "실행 취소"
+      },
+      "planUnreadable": "이 초안에는 현재 버전의 앱에서 열 수 없는 계획이 있습니다. 계획은 그대로 보존됩니다. 블록을 추가하면 새 계획이 시작되며, 저장할 때 기존 계획을 대체합니다.",
+      "review": {
+        "emptyPlan": "검토 전에 블록을 추가하세요.",
+        "invalidBlock": "더 이상 운용 방침에 없는 블록을 제거하거나 운용 방침을 편집하세요.",
+        "comingSoon": "출시 예정인 블록을 제거하세요.",
+        "emptyBlock": "검토 전에 모든 블록을 설정하세요.",
+        "overShare": "비중의 합계가 상위 자본을 초과합니다.",
+        "unavailable": "검토는 아직 사용할 수 없습니다."
       }
     }
   }

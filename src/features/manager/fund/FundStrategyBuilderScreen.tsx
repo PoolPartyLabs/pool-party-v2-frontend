@@ -1,10 +1,11 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen
- * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3)
+ * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
  *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
- *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error
+ *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
+ *   builder_build_abandoned, builder_build_error (the Build canvas emits its own: `BuildScreen`)
  *
  * The fund-contracts strategy builder: the shell the five Mandate steps live in (POO-2122, epic
  * POO-2119). Page header, the three-phase stepper, the collapsible sub-step header, the step body,
@@ -62,17 +63,41 @@
  *
  * ## Why the phase is derived rather than set in an effect (POO-2127 [B3])
  *
- * The Build phase (`FundBuildLanding`) opens when the mandate completes, and a `?phase=build` link
- * reopens it on a draft that already completed. That second half cannot be an effect. The resume
- * effect and the step-view effect run in the SAME commit after hydration, so an effect that called
- * `setPhase("build")` would still leave `phase === "mandate"` in the render the view effect reads,
+ * The Build phase (`BuildScreen`, the canvas, POO-2157) opens when the mandate completes, and a
+ * `?phase=build` link reopens it on a draft that already completed. That second half cannot be an
+ * effect. The resume effect and the step-view effect run in the SAME commit after hydration, so an
+ * effect that called `setPhase("build")` would still leave `phase === "mandate"` in the render the
+ * view effect reads,
  * and every deep link into Build would emit a phantom `builder_mandate_step_viewed{step:"limits"}`
  * for a screen the manager never saw. Deriving the phase during render closes that window: the
  * first render that has the stored draft already knows which phase it is.
  *
  * `phase=build` is NOT trusted on its own. Build exists only for a mandate that closed, so a stale
- * or hand-edited link into it lands on the Mandate instead of on a Build landing summarising a
+ * or hand-edited link into it lands on the Mandate instead of on a Build canvas planning over a
  * mandate that was never finished.
+ *
+ * ## The Build phase (POO-2157, handoff v1.2 of the Build canvas)
+ *
+ * The canvas replaced the Build landing (D24) and takes the full content width (D23). The header,
+ * Save & exit and the stepper stay here, unchanged, with Build current (AN1). Four things are the
+ * shell's because only the shell sees them:
+ *
+ * 1. **Every way out passes the canvas's selection guard (HU3).** The panel of the next batch will
+ *    refuse to lose unapplied changes; Back: Mandate and the Edit mandate links are the canvas's
+ *    own, while Save & exit and the stepper's Mandate pill are here, so they ask the guard through
+ *    the `leaveGuardRef` the canvas fills while it is mounted.
+ * 2. **Every save writes the phase the manager is in (`lastPhase`, D16):** `build` in Build,
+ *    `mandate` in the Mandate phase, including after Back: Mandate and after an Edit mandate link.
+ *    Without it, Back then Save & exit would leave `build` behind and the Console Open would land
+ *    on Build instead of on the step the manager left. The completing save of the mandate writes
+ *    `build`: it is the write that opens Build, so a manager who leaves right after it is resumed
+ *    where they were.
+ * 3. **An Edit mandate link opens Mandate step 1 or 2** with the plan in the draft; walking forward
+ *    through Next: Build strategy returns to Build with the plan intact (C6, A4).
+ * 4. **The end of a Build session is reported as Build's:** leaving without a Save & exit is
+ *    `builder_build_abandoned` (whether unsaved plan edits were left behind, and how many blocks),
+ *    and a save that fails from Build is `builder_build_error`. A Build session is never also counted
+ *    as a Mandate abandonment: the mandate it plans over is already closed.
  */
 "use client";
 
@@ -89,15 +114,16 @@ import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useUnsavedChanges } from "@/lib/hooks/unsavedChanges";
 import { cn } from "@/lib/utils/cn";
 import { BuilderStepper } from "../components/BuilderStepper";
+import { BuildScreen, type LeaveGuard } from "./build/BuildScreen";
+import { planCounts } from "./build/buildAnalytics";
+import { type BuilderPhase, planOf } from "./build/plan/buildPlan";
 import { BuilderActionBar } from "./components/BuilderActionBar";
 import { MandateSubStepHeader } from "./components/MandateSubStepHeader";
 import { NameDraftDialog } from "./components/NameDraftDialog";
-import { FundBuildLanding } from "./FundBuildLanding";
 import type { MandateCatalog } from "./mandateCatalog";
 import {
   firstUnpassedStep,
   isBlocked,
-  isBroadMandate,
   isStepReachable,
   MANDATE_STEP_ORDER,
   type MandateBlockReason,
@@ -204,7 +230,7 @@ function BuilderSkeleton() {
   );
 }
 
-/** The fund-contracts strategy builder (V2). Renders the Mandate phase, then the Build landing. */
+/** The fund-contracts strategy builder (V2). Renders the Mandate phase, then the Build canvas. */
 export function FundStrategyBuilderScreen() {
   const t = useTranslations("manager");
   const router = useRouter();
@@ -248,8 +274,8 @@ export function FundStrategyBuilderScreen() {
    * derivation below correct on the very first render that has the stored draft. See the file
    * header for why this is not an effect.
    */
-  const [phaseChoice, setPhaseChoice] = useState<"mandate" | "build" | null>(null);
-  const phase: "mandate" | "build" =
+  const [phaseChoice, setPhaseChoice] = useState<BuilderPhase | null>(null);
+  const phase: BuilderPhase =
     phaseChoice ?? (requestedPhase === "build" && draft.completedAt !== null ? "build" : "mandate");
 
   const [dialog, setDialog] = useState<"exit" | "complete" | null>(null);
@@ -278,6 +304,42 @@ export function FundStrategyBuilderScreen() {
   const concludedRef = useRef(false);
   /** Guards the funnel arithmetic: one completion per session, however the session got there. */
   const completedRef = useRef(false);
+  /** Set by Save & exit only: a Build session that ended there was parked, not abandoned. */
+  const exitedRef = useRef(false);
+  // The unmount handler and the save failure report by phase, and the Build abandonment says
+  // whether unsaved plan edits were left behind: both read the value of the LAST render.
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+  const isDirtyRef = useRef(isDirty);
+  isDirtyRef.current = isDirty;
+
+  /**
+   * [HU3] The Build canvas's leave check, filled by `BuildScreen` while it is mounted. The shell's
+   * own ways out of Build (Save & exit, the stepper's Mandate pill) pass through it; in the Mandate
+   * phase there is no canvas and they proceed at once.
+   */
+  const buildLeaveRef = useRef<LeaveGuard | null>(null);
+  const guardBuildExit = useCallback((proceed: () => void) => {
+    const guard = phaseRef.current === "build" ? buildLeaveRef.current : null;
+    if (guard) guard(proceed);
+    else proceed();
+  }, []);
+
+  /**
+   * [D16] Stamp the phase this save belongs to, right before the save reads the draft.
+   *
+   * Straight to the reducer, like the universe count below: the phase is bookkeeping, in no
+   * fingerprint, so it neither reopens a completed mandate nor arms the leave prompt, and it leaves
+   * the shell's refused-Next notice alone.
+   */
+  const stampPhase = useCallback(
+    (next: BuilderPhase) => {
+      // A draft already stamped is left alone: even an identical write clears the hook's own notice.
+      if (draftRef.current.lastPhase === next) return;
+      applyReducer((d) => ({ ...d, lastPhase: next }));
+    },
+    [applyReducer],
+  );
 
   /**
    * Every write to the draft, with the two things only the shell can know.
@@ -289,7 +351,7 @@ export function FundStrategyBuilderScreen() {
    * how people learn to ignore notices.
    *
    * **A completed mandate that is edited is open again.** `completedAt` is what makes the Build
-   * landing reachable and what a `?phase=build` link trusts, so a cap moved after the mandate closed
+   * canvas reachable and what a `?phase=build` link trusts, so a cap moved after the mandate closed
    * has to take it back; the next Next through Limits closes it again, and that Next is a write,
    * which is what a completion is. Only the five SELECTIONS count, through
    * `selectionFingerprint`: moving between steps is not an edit, and counting `lastStep` here would
@@ -365,6 +427,12 @@ export function FundStrategyBuilderScreen() {
   );
 
   const reportSaveFailure = useCallback(() => {
+    // A save that fails from the Build canvas is Build's error: the mandate is already closed, and a
+    // Mandate error row would put a Build failure on the Limits step's count.
+    if (phaseRef.current === "build") {
+      track("builder_build_error", { error_code: "DRAFT_SAVE_FAILED", error_origin: "app" });
+      return;
+    }
     track("builder_mandate_error", {
       step: draftRef.current.lastStep,
       // Spelled as a code, not as "storage": `error_code` is a dimension people group by, and every
@@ -441,10 +509,23 @@ export function FundStrategyBuilderScreen() {
    */
   useEffect(
     () => () => {
+      // A session that ends on the Build canvas is Build's to report (POO-2157): the mandate under
+      // it already closed. Only a Save & exit parks it; everything else is an abandonment, and what
+      // it lost is a plan edit made since the last save.
+      if (phaseRef.current === "build") {
+        if (exitedRef.current) return;
+        trackRef.current("builder_build_abandoned", {
+          draft_saved: !isDirtyRef.current,
+          blocks_count: planCounts(planOf(draftRef.current)).blocks_count,
+        });
+        return;
+      }
       if (concludedRef.current) return;
       trackRef.current("builder_mandate_abandoned", {
         step: draftRef.current.lastStep,
-        draft_saved: draftRef.current.savedAt !== null,
+        // Saved AND nothing unsaved since (POO-2157, review F3 of PR #41): a draft saved once and
+        // edited afterwards (a selection, or a plan edit before a Back: Mandate) lost those edits.
+        draft_saved: draftRef.current.savedAt !== null && !isDirtyRef.current,
       });
     },
     [],
@@ -484,6 +565,23 @@ export function FundStrategyBuilderScreen() {
     setPhaseChoice("mandate");
     update((d) => ({ ...d, lastStep: "limits" }));
   }, [clearBlock, update]);
+
+  /**
+   * [C6, A4] An Edit mandate link of the Build canvas: Mandate step 1 (networks) or step 2
+   * (protocols), with the plan left in the draft. Both steps were passed (Build needs a closed
+   * mandate), so they are reachable; walking forward through Next: Build strategy closes the
+   * mandate again and returns to Build with the plan intact. The canvas already asked its guard.
+   */
+  const handleEditMandate = useCallback(
+    (target: "networks" | "protocols") => {
+      viewedStep.current = null;
+      setShellBlock(null);
+      clearBlock();
+      setPhaseChoice("mandate");
+      update((d) => ({ ...d, lastStep: target }));
+    },
+    [clearBlock, update],
+  );
 
   const handleNext = useCallback(async () => {
     const next = nextStep(draft, step);
@@ -531,6 +629,8 @@ export function FundStrategyBuilderScreen() {
       setDialog("complete");
       return;
     }
+    // D16: the completing save is the write that opens Build, so it records Build.
+    stampPhase("build");
     const result = await save(undefined, { complete: true });
     if (!result.ok) {
       reportSaveFailure();
@@ -547,6 +647,7 @@ export function FundStrategyBuilderScreen() {
     reportBlocked,
     reportSaveFailure,
     save,
+    stampPhase,
     step,
     t,
     track,
@@ -573,6 +674,7 @@ export function FundStrategyBuilderScreen() {
 
   const leaveForConsole = useCallback(() => {
     concludedRef.current = true;
+    exitedRef.current = true;
     setExiting(true);
     router.push("/manager");
   }, [router]);
@@ -583,6 +685,8 @@ export function FundStrategyBuilderScreen() {
       setDialog("exit");
       return;
     }
+    // D16: the save records the phase the manager is in, so the Console Open resumes there.
+    stampPhase(phaseRef.current);
     const result = await save();
     if (!result.ok) {
       reportSaveFailure();
@@ -592,7 +696,7 @@ export function FundStrategyBuilderScreen() {
     track("builder_draft_saved", { step, first_save: false });
     toast(t("fundBuilder.draft.saved"));
     leaveForConsole();
-  }, [draft.name, leaveForConsole, reportSaveFailure, save, step, t, track]);
+  }, [draft.name, leaveForConsole, reportSaveFailure, save, stampPhase, step, t, track]);
 
   /**
    * The dialog's save. Wrapped so the shell reports the failure the dialog only renders.
@@ -603,11 +707,13 @@ export function FundStrategyBuilderScreen() {
    */
   const handleDialogSave = useCallback(
     async (name: string) => {
+      // D16, as on the other two saves: the completing one records Build, the others the phase.
+      stampPhase(dialog === "complete" ? "build" : phaseRef.current);
       const result = await save(name, { complete: dialog === "complete" });
       if (!result.ok && result.error === "storage") reportSaveFailure();
       return result;
     },
-    [dialog, reportSaveFailure, save],
+    [dialog, reportSaveFailure, save, stampPhase],
   );
 
   const handleDialogSaved = useCallback(() => {
@@ -639,35 +745,46 @@ export function FundStrategyBuilderScreen() {
     <section
       className={cn(
         "mx-auto flex w-full flex-col gap-6",
-        phase === "mandate" && WIDE_STEPS.includes(step) ? "max-w-[1100px]" : "max-w-3xl",
+        // D23: the Build canvas takes the full content width; the Mandate keeps its columns.
+        phase === "build" ? null : WIDE_STEPS.includes(step) ? "max-w-[1100px]" : "max-w-3xl",
       )}
     >
       <div className="flex items-baseline gap-4">
         <h1 className="font-semibold text-2xl text-foreground">{t("builder.title")}</h1>
         {/* R1: no "Back to console" anywhere in this builder. Managers used it to step back one
-            screen and lost everything, so the only way out is the one that saves. */}
-        <Button variant="ghost" size="sm" onClick={handleSaveExit}>
+            screen and lost everything, so the only way out is the one that saves. In Build it
+            asks the canvas's selection guard first (HU3). */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            guardBuildExit(() => {
+              void handleSaveExit();
+            })
+          }
+        >
           {t("fundBuilder.header.saveExit")}
         </Button>
       </div>
 
       {/* R2: the V1 stepper, unchanged. Build is reachable only once the mandate is finished, and
-          [B4] Review stays unreachable: the stepper only makes an EARLIER phase clickable. */}
+          [B4] Review stays unreachable: the stepper only makes an EARLIER phase clickable. Its
+          Mandate pill is a way out of Build, so it asks the canvas's guard (HU3). */}
       <BuilderStepper
         active={phase === "build" ? "build" : "mandate"}
         onStepClick={(target) => {
-          if (target === "mandate") handleBackToMandate();
+          if (target === "mandate") guardBuildExit(handleBackToMandate);
         }}
       />
 
       {phase === "build" ? (
-        <FundBuildLanding
+        <BuildScreen
           draft={draft}
           catalog={catalog}
-          // R13: derived against the pool universe the Pools step last searched, kept on the draft so
-          // a completed draft resumed here still raises the flag; null (never searched) keeps it down.
-          broad={isBroadMandate(draft, catalog, draft.poolUniverseCount ?? 0)}
+          update={update}
           onBackToMandate={handleBackToMandate}
+          onEditMandate={handleEditMandate}
+          leaveGuardRef={buildLeaveRef}
         />
       ) : (
         <>
