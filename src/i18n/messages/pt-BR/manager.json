@@ -101,7 +101,8 @@
     "submitted": "Enviado",
     "waiting": "Aguardando verificação",
     "confirmed": "Confirmado",
-    "failed": "Falhou"
+    "failed": "Falhou",
+    "stepProgress": "Etapa {n} de {total}"
   },
   "entry": {
     "become": "Seja um manager",

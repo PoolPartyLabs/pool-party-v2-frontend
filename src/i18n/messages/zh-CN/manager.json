@@ -101,7 +101,8 @@
     "submitted": "已提交",
     "waiting": "等待验证",
     "confirmed": "已确认",
-    "failed": "失败"
+    "failed": "失败",
+    "stepProgress": "第 {n} 步，共 {total} 步"
   },
   "entry": {
     "become": "成为管理人",

@@ -101,7 +101,8 @@
     "submitted": "제출됨",
     "waiting": "검증 대기 중",
     "confirmed": "확인됨",
-    "failed": "실패"
+    "failed": "실패",
+    "stepProgress": "단계 {n}/{total}"
   },
   "entry": {
     "become": "운용자 되기",
