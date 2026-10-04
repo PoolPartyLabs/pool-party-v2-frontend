@@ -155,6 +155,7 @@ export function FundDetailsPresenter({
   const [investOpen, setInvestOpen] = useState(false);
   const [resume, setResume] = useState<number | null>(null);
   const fromPortfolio = query.get("from") === "portfolio";
+  const withdrawalRequested = query.get("withdraw") === "1";
   const managerView =
     query.get("view") === "manager" &&
     personal.status === "ready" &&
@@ -231,6 +232,7 @@ export function FundDetailsPresenter({
           {unavailableAction(t("withdraw"))}
         </>
       ) : null}
+      {withdrawalRequested && !owned ? unavailableAction(t("withdraw")) : null}
       {!owned && !closed ? (
         <>
           <Row label={t("minimum")} value={money(fund.mandate.minFirstDeposit)} />

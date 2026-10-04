@@ -52,3 +52,12 @@ Read-only screens reuse existing view/navigation emitters. V2 Invest uses existi
 ## Delivery evidence
 
 Implementation PRs, exact focused test counts and remaining capability state are appended here as each slice is reviewed. POO-2214 must not imply all external API capabilities are enabled merely because the frontend presentation is complete.
+
+### Implementation review, 2026-10-04
+
+- [PR #90](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/90): merged at `852b6375`. Existing Invest V2 amount host and account-bound return; 78 focused tests, Biome/i18n and CI static checks passed.
+- [PR #91](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/91): existing list presenters, discriminated data/links and bounded loader. Initial 75 focused tests; review fixes covered wallet mismatch, closed pending duplication and unknown lifecycle (12 targeted tests). A further 47 tests cover preservation of the V1 public types.
+- POO-2216: shared Details frame, separate manager technical route, public/personal partial reads, real hub USDC balance read, mandate fields, identity-bound funding return and explicit unavailable actions. Initial 79 focused tests across Details/legacy Details/manager list/model, then 3 server trust-boundary tests and 8 investor Details cases.
+- Static dependency audit remains the pre-existing POO-249 issue; these changes add no dependencies. No full local suite/build or complete browser journey was run.
+
+Remaining enablement: investor V2 transaction review/signing, payout/collection semantics, persistent Follow, unavailable metrics/history and discovery completeness remain POO-2219. The frontend delivery intentionally exposes Not available until these are reliable. The existing manager technical operations remain available through manager navigation.

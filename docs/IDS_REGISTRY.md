@@ -886,3 +886,17 @@ POO-2213 rules v1 updates PP-MGR-CMP-059, PP-MGR-LIB-023 and graph model: derive
 ### Investor V2 reuse, POO-2217
 
 Existing IDs retained: PP-STR-MOD-001 (`InvestModal`, discriminated unavailable V2 amount host), PP-STR-CMP-005 (`StrategyMiniHeader`, V2 identity with unavailable risk), PP-DEP-LIB-003 (`investContext`, account-bound V2 return context). No new modal, provisioning state machine or route is introduced. Rules v1 for this additive V2 slice; preceding V1 rule history remains applicable.
+
+### Investor V2 delivery, POO-2214
+
+| ID | Artifact | Issue / rule version | Source |
+|---|---|---|---|
+| PP-STR-LIB-034 | Investor list display models, V1 financial contracts preserved | POO-2215 v1 | `src/features/funds/investorListModel.ts` |
+| PP-STR-LIB-035 | Bounded investor list reads | POO-2215 v1 | `src/features/funds/investorListActions.ts` |
+| PP-STR-CMP-038 | Investor list loader in existing presenters | POO-2215 v1 | `src/features/funds/InvestorListLoader.tsx` |
+| PP-STR-LIB-036 | Investor Details projection and funding-return guards | POO-2216 v1 | `src/features/funds/fundDetailsModel.ts` |
+| PP-STR-LIB-037 | Independent public/verified personal Details reads | POO-2216 v1 | `src/features/funds/fundDetailsActions.ts` |
+| PP-STR-CMP-039 | Existing Details frame extracted for V1/V2 reuse | POO-2216 v1 | `src/features/strategies/components/StrategyDetailFrame.tsx` |
+| PP-STR-SCR-006 | Investor V2 Details | POO-2216 v1 | `src/features/funds/FundDetail.tsx` |
+
+PP-STR-SCR-005 remains the preserved technical manager surface, now `FundTechnicalDetail.tsx`, reachable through explicit manager navigation. Existing Strategies, Portfolio, cards, ManagerCard and modal IDs are reused for their original artifacts.

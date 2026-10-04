@@ -9,11 +9,14 @@ import {
 } from "../../../tests/utils/renderWithProviders";
 
 const mocks = vi.hoisted(() => ({
+  balance: vi.fn(),
   public: vi.fn(),
   personal: vi.fn(),
   wallet: `0x${"4".repeat(40)}`,
   query: "",
 }));
+vi.mock("@/lib/services", () => ({ isMockMode: false }));
+vi.mock("@/lib/tokens/readErc20", () => ({ readErc20Balance: mocks.balance }));
 vi.mock("./fundDetailsActions", () => ({
   loadPublicFundDetailsAction: mocks.public,
   loadPersonalFundDetailsAction: mocks.personal,
@@ -53,6 +56,7 @@ describe("investor V2 details", () => {
   beforeEach(() => {
     mocks.wallet = `0x${"4".repeat(40)}`;
     mocks.query = "";
+    mocks.balance.mockReset().mockResolvedValue(BigInt(25000001));
     mocks.public.mockResolvedValue({ ok: true, fund: mockFund });
     mocks.personal.mockResolvedValue({ ok: false, error: { code: "V2_SESSION" } });
   });
@@ -136,5 +140,15 @@ describe("investor V2 details", () => {
     await screen.findByRole("heading", { name: "New fund" });
     await act(async () => resolveOld({ ok: true, fund: mockFund }));
     expect(screen.queryByRole("heading", { name: "Balanced Income" })).not.toBeInTheDocument();
+  });
+  it("reads the confirmed wallet's hub USDC balance through the existing reader", async () => {
+    mocks.personal.mockResolvedValue({
+      ok: true,
+      data: { holder: mockHolder, wallet: mocks.wallet },
+    });
+    renderWithProviders(<FundDetail core={mockFund.coreVault} />);
+    await waitFor(() =>
+      expect(mocks.balance).toHaveBeenCalledWith(mockFund.mandate.usdc, mocks.wallet, 42161),
+    );
   });
 });

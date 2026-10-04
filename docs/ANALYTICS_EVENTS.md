@@ -334,3 +334,5 @@ Review never declares a settlement on a click or a broadcast.
 ## Investor V2 unavailable host (POO-2217)
 
 PP-STR-MOD-001 reuses `strategy_invest_started` on open, `tx_amount_blocked` with `block_reason=v2_execution_unavailable` from the disabled capability, and `tx_flow_abandoned` on close/unmount while unavailable. No V2 `submitted` or `completed` event can fire from this host. Error and signature classes are inapplicable until execution is enabled in POO-2219. Existing V1 emitters remain unchanged. No wallet address is added to analytics.
+
+POO-2215 reuses Strategies list/filter/sort/navigation events and `portfolio_viewed` through TrackView in PP-STR-CMP-038. PP-STR-SCR-006 (POO-2216) emits `strategy_detail_viewed`, `app_error_shown` for sanitized public/personal read failures, and `app_cta_blocked` for unavailable actions. Its operations use the shared Invest host; no unavailable action emits a financial completion. No raw wallet is added.
