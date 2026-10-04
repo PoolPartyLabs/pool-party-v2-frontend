@@ -947,6 +947,10 @@
     "management": "운용",
     "faster": "빠른 출금",
     "networkCost": "네트워크 비용",
-    "closing": "종료 중"
+    "closing": "종료 중",
+    "noHistory": "아직 내역이 없습니다",
+    "noHistoryDescription": "이 투자의 가격 내역은 아직 제공되지 않습니다.",
+    "currentPositions": "현재 포지션 · USD",
+    "detailed": "상세 확인"
   }
 }

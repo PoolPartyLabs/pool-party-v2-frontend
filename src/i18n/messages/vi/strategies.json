@@ -947,6 +947,10 @@
     "management": "Quản lý",
     "faster": "Rút tiền nhanh hơn",
     "networkCost": "Chi phí mạng",
-    "closing": "Đang đóng"
+    "closing": "Đang đóng",
+    "noHistory": "Chưa có lịch sử",
+    "noHistoryDescription": "Lịch sử giá của khoản đầu tư này hiện chưa có.",
+    "currentPositions": "Vị thế hiện tại · USD",
+    "detailed": "Có chi tiết"
   }
 }

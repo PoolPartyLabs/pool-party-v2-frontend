@@ -947,6 +947,10 @@
     "management": "Beheer",
     "faster": "Snellere opname",
     "networkCost": "Netwerkkosten",
-    "closing": "Wordt gesloten"
+    "closing": "Wordt gesloten",
+    "noHistory": "Nog geen geschiedenis",
+    "noHistoryDescription": "De prijsgeschiedenis van deze belegging is nog niet beschikbaar.",
+    "currentPositions": "Huidige posities · USD",
+    "detailed": "Gespecificeerd"
   }
 }

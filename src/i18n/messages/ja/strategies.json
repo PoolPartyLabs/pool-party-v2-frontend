@@ -947,6 +947,10 @@
     "management": "管理",
     "faster": "迅速な出金",
     "networkCost": "ネットワーク費用",
-    "closing": "終了処理中"
+    "closing": "終了処理中",
+    "noHistory": "履歴はまだありません",
+    "noHistoryDescription": "この投資の価格履歴はまだ利用できません。",
+    "currentPositions": "現在のポジション · USD",
+    "detailed": "内訳あり"
   }
 }

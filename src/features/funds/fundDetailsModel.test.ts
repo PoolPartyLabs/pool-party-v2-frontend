@@ -49,3 +49,46 @@ describe("V2 details projection", () => {
       }),
     ).toBe(65));
 });
+
+// @rule R3 (POO-2223)
+describe("composition coverage validation", () => {
+  const fixturePosition = (index: number) => {
+    const position = mockFund.positionsSummary?.positions[index];
+    if (!position) throw new Error(`Missing position fixture ${index}`);
+    return position;
+  };
+  const withShares = (shares: Array<string | null>) => ({
+    ...mockFund,
+    positionsSummary: {
+      protocolVersion: "v2" as const,
+      positions: shares.map((shareOfNav, i) => ({
+        ...fixturePosition(i % 2),
+        positionKey: `0x${String(i + 1).repeat(64)}`,
+        shareOfNav,
+      })),
+    },
+  });
+  it.each([
+    ["120", "-55"],
+    ["70", "40"],
+    [null, "40"],
+    ["NaN", "40"],
+    ["33.333333333333333333333", "66.666666666666666666668"],
+  ])("rejects unverified shares %j", (...shares) => {
+    expect(detailedCoverage(withShares(shares))).toBeNull();
+  });
+  it("rejects duplicate chain-position identities", () => {
+    const position = fixturePosition(0);
+    expect(
+      detailedCoverage({
+        ...mockFund,
+        positionsSummary: { protocolVersion: "v2", positions: [position, position] },
+      }),
+    ).toBeNull();
+  });
+  it("keeps true zero and exact complete coverage", () => {
+    expect(detailedCoverage(withShares(["0", "0"]))).toBe(0);
+    expect(detailedCoverage(withShares(["33.3", "66.7"]))).toBe(100);
+    expect(detailedCoverage({ ...mockFund, positionsSummary: undefined })).toBeNull();
+  });
+});

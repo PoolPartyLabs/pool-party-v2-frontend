@@ -947,6 +947,10 @@
     "management": "管理",
     "faster": "加速提现",
     "networkCost": "网络费用",
-    "closing": "正在关闭"
+    "closing": "正在关闭",
+    "noHistory": "暂无历史记录",
+    "noHistoryDescription": "此投资的价格历史记录暂不可用。",
+    "currentPositions": "当前仓位 · USD",
+    "detailed": "已明细"
   }
 }

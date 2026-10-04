@@ -947,6 +947,10 @@
     "management": "管理",
     "faster": "加速提領",
     "networkCost": "網路費用",
-    "closing": "正在關閉"
+    "closing": "正在關閉",
+    "noHistory": "尚無歷史記錄",
+    "noHistoryDescription": "此投資的價格歷史記錄尚無法提供。",
+    "currentPositions": "目前部位 · USD",
+    "detailed": "已明細"
   }
 }

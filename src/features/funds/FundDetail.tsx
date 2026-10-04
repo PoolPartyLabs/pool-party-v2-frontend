@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-SCR-006
  * @name FundDetail
- * @implements-rules-version v1 (POO-2216); v1 (POO-2220); v1 (POO-2224)
+ * @implements-rules-version v1 (POO-2216); v1 (POO-2220); v1 (POO-2223); v1 (POO-2224)
  * @analytics-events strategy_detail_viewed, app_cta_blocked, app_error_shown
  * Investor V2 projection in the existing Details frame; technical manager view is separate.
  */
@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useState } from "react";
 import { formatUnits } from "viem";
 import { StrategyLogo } from "@/components/data-display/StrategyLogo";
+import { LocalManagerFollow } from "@/features/manager/components/LocalManagerFollow";
 import { InvestModal } from "@/features/strategies/components/InvestModal";
 import { ManagerCard } from "@/features/strategies/components/ManagerCard";
 import { StrategyDetailFrame } from "@/features/strategies/components/StrategyDetailFrame";
@@ -23,15 +24,11 @@ import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { useContractFamily } from "@/lib/hooks/useContractFamily";
 import { isMockMode } from "@/lib/services";
 import { readErc20Balance } from "@/lib/tokens/readErc20";
-import { formatPercent, formatTokenAmount, formatUsdPrecise } from "@/lib/utils/format";
+import { formatPercent, formatTokenAmount } from "@/lib/utils/format";
+import { FundComposition } from "./FundComposition";
 import { FundTechnicalDetail } from "./FundTechnicalDetail";
 import { loadPersonalFundDetailsAction, loadPublicFundDetailsAction } from "./fundDetailsActions";
-import {
-  detailedCoverage,
-  fundResumeAmount,
-  hasFundInterest,
-  type PersonalFundState,
-} from "./fundDetailsModel";
+import { fundResumeAmount, hasFundInterest, type PersonalFundState } from "./fundDetailsModel";
 
 export interface FundDetailProps {
   core: string;
@@ -157,6 +154,11 @@ export function FundDetailsPresenter({
   const { track } = useAnalytics();
   useTrackView("strategy_detail_viewed", { strategy_id: fund.coreVault });
   const [investOpen, setInvestOpen] = useState(false);
+  const [localFollow, setLocalFollow] = useState<{ manager: string; following: boolean } | null>(
+    null,
+  );
+  const followIdentity = fund.manager.toLowerCase();
+  const following = localFollow?.manager === followIdentity && localFollow.following;
   const [resume, setResume] = useState<number | null>(null);
   const fromPortfolio = query.get("from") === "portfolio";
   const withdrawalRequested = query.get("withdraw") === "1";
@@ -200,8 +202,6 @@ export function FundDetailsPresenter({
   const holder = personal.status === "ready" ? personal.holder : null;
   const owned = holder ? hasFundInterest(holder) : false;
   const closed = fund.state !== "Open";
-  const coverage = detailedCoverage(fund);
-  const positions = fund.positionsSummary?.positions ?? [];
   const blocked = (action: string) =>
     track("app_cta_blocked", {
       strategy_id: fund.coreVault,
@@ -276,7 +276,12 @@ export function FundDetailsPresenter({
       name={managerName}
       address={fund.manager}
       verified={false}
-      trailingAction={unavailableAction(t("follow"))}
+      trailingAction={
+        <LocalManagerFollow
+          following={following}
+          onFollowingChange={(next) => setLocalFollow({ manager: followIdentity, following: next })}
+        />
+      }
     />
   );
   if (managerView) return <FundTechnicalDetail core={fund.coreVault} />;
@@ -336,8 +341,9 @@ export function FundDetailsPresenter({
       <div className="lg:hidden">{manager}</div>
       <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-semibold">{t("history")}</h2>
-        <div className="mt-4 flex h-32 items-center justify-center rounded-lg border border-border border-dashed lg:h-40">
-          {t("unavailable")}
+        <div className="mt-4 flex min-h-40 flex-col items-center justify-center gap-2 rounded-lg border border-border border-dashed p-4 text-center lg:min-h-44">
+          <p className="text-sm">{t("noHistory")}</p>
+          <p className="text-xs text-muted-foreground">{t("noHistoryDescription")}</p>
         </div>
       </section>
       <section className="grid grid-cols-2 gap-3">
@@ -364,31 +370,7 @@ export function FundDetailsPresenter({
         </p>
       </Disclosure>
       <Disclosure title={t("composition")}>
-        <p>
-          {coverage === null
-            ? t("unavailable")
-            : t("coverage", { percent: String(100 - coverage) })}
-        </p>
-        {positions.map((p) => (
-          <div key={`${p.chainId}:${p.positionKey}`} className="border-border border-t py-3">
-            <Row
-              label={`${p.adapterKind} · ${p.tokens.map((token) => token.symbol).join(" / ")}`}
-              value={
-                p.currentValueUsd !== undefined && p.currentValueUsd !== null
-                  ? formatUsdPrecise(Number(p.currentValueUsd))
-                  : p.valueUsd !== null
-                    ? formatUsdPrecise(Number(p.valueUsd))
-                    : t("unavailable")
-              }
-            />
-            <Row
-              label={t("share")}
-              value={
-                p.shareOfNav === null ? t("unavailable") : formatPercent(Number(p.shareOfNav), 2)
-              }
-            />
-          </div>
-        ))}
+        <FundComposition fund={fund} />
       </Disclosure>
       <Disclosure title={t("mandate")}>
         <p>{t("scope")}</p>

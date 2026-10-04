@@ -902,3 +902,5 @@ Existing IDs retained: PP-STR-MOD-001 (`InvestModal`, discriminated unavailable 
 | PP-STR-SCR-006 | Investor V2 Details | POO-2216 v1 | `src/features/funds/FundDetail.tsx` |
 
 PP-STR-SCR-005 remains the preserved technical manager surface, now `FundTechnicalDetail.tsx`, reachable through explicit manager navigation. Existing Strategies, Portfolio, cards, ManagerCard and modal IDs are reused for their original artifacts.
+
+| PP-STR-CMP-040 | Fund composition donut and token/protocol/network legend | POO-2223 v1 | `src/features/funds/FundComposition.tsx` |

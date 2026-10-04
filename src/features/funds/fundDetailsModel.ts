@@ -1,4 +1,5 @@
-/** @id PP-STR-LIB-036 @implements-rules-version v1 (POO-2216) */
+/** @id PP-STR-LIB-036 @implements-rules-version v1 (POO-2216); v1 (POO-2223) */
+import Decimal from "decimal.js";
 import type { FundHolder, FundView } from "@/lib/api/v2/fundSchemas";
 export type PersonalFundState =
   | { status: "loading" | "disconnected" }
@@ -12,11 +13,26 @@ export function hasFundInterest(holder: FundHolder) {
     BigInt(holder.incomeWithdrawal[0]) > BigInt(0)
   );
 }
+/** Validate the supplied weights before converting to display-only chart geometry. */
 export function detailedCoverage(fund: FundView) {
   const positions = fund.positionsSummary?.positions ?? [];
-  if (!positions.length || positions.some((p) => p.shareOfNav === null)) return null;
-  const value = positions.reduce((sum, p) => sum + Number(p.shareOfNav), 0);
-  return Number.isFinite(value) && value >= 0 && value <= 100 ? value : null;
+  if (!positions.length) return null;
+  const Percent = Decimal.clone({ precision: 160 });
+  let coverage = new Percent(0);
+  const identities = new Set<string>();
+  for (const position of positions) {
+    const identity = `${position.chainId}:${position.positionKey.toLowerCase()}`;
+    if (identities.has(identity) || position.shareOfNav === null) return null;
+    identities.add(identity);
+    try {
+      const share = new Percent(position.shareOfNav);
+      if (!share.isFinite() || share.isNegative() || share.greaterThan(100)) return null;
+      coverage = coverage.plus(share);
+    } catch {
+      return null;
+    }
+  }
+  return coverage.greaterThan(100) ? null : coverage.toNumber();
 }
 
 /** Funding returns restore an amount only for the verified account that started them. */

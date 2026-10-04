@@ -947,6 +947,10 @@
     "management": "Management",
     "faster": "Faster withdrawal",
     "networkCost": "Network cost",
-    "closing": "Closing"
+    "closing": "Closing",
+    "noHistory": "No history yet",
+    "noHistoryDescription": "The price history for this investment is not available yet.",
+    "currentPositions": "Current positions · USD",
+    "detailed": "Detailed"
   }
 }
