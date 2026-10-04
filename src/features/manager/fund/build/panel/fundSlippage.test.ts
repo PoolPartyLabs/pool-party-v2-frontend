@@ -102,6 +102,46 @@ describe("commitFundSlippageInput (on blur)", () => {
     }
   });
 
+  it("keeps the selected preset when the blur leaves the custom field empty", () => {
+    // @rule R14 (P12: a blur on the untouched custom field changes nothing)
+    for (const preset of FUND_SLIPPAGE_PRESETS) {
+      for (const text of ["", "   ", ".", "abc"]) {
+        expect(
+          commitFundSlippageInput(text, fundSlippagePreset(preset)),
+          `${preset}% ${JSON.stringify(text)}`,
+        ).toEqual(fundSlippagePreset(preset));
+      }
+    }
+    expect(commitFundSlippageInput("", fundSlippageFromPct(0.5))).toEqual(fundSlippagePreset(0.5));
+  });
+
+  it("still brings a cleared custom value back to the 2% preset", () => {
+    // @rule R14 (P12: an empty field with no other selection goes back to the 2% preset)
+    expect(commitFundSlippageInput("", fundSlippageFromPct(1.7))).toEqual(defaultFundSlippage());
+    expect(commitFundSlippageInput("", commitFundSlippageInput("8"))).toEqual(
+      defaultFundSlippage(),
+    );
+    expect(commitFundSlippageInput("", commitFundSlippageInput("0"))).toEqual(
+      defaultFundSlippage(),
+    );
+  });
+
+  it("commits a typed value whatever is selected", () => {
+    // @rule R14
+    expect(commitFundSlippageInput("1.5", fundSlippagePreset(0.5))).toEqual({
+      pct: 1.5,
+      bps: 150,
+      preset: null,
+      capped: false,
+    });
+    expect(commitFundSlippageInput("9", fundSlippagePreset(1))).toEqual({
+      pct: 5,
+      bps: 500,
+      preset: null,
+      capped: true,
+    });
+  });
+
   it("raises a value under 0.1, zero included, to 0.1", () => {
     // @rule R14
     for (const text of ["0", "0.0", "0.", "0,0", "0.05", "00"]) {
