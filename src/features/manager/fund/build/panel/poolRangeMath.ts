@@ -343,13 +343,20 @@ export function sanitizeBoundInput(text: string, decimalSeparator = "."): string
  * usable tick and pinned at least MIN_RANGE_SPACINGS spacings off the other bound. An empty, zero
  * or unreadable field returns the range unchanged. From Full, the other bound stays at the edge of
  * the grid and the range is no longer full.
+ *
+ * Pass `shownText`, the text the field displayed for this bound: when `text` is still that text,
+ * the field was not edited and the range comes back unchanged. Without it, re-snapping a shown
+ * price can move an untouched bound one tick on a spacing-1 pool, because the typed-price snap
+ * floors (V1, POO-319), and the panel would read "Changes not applied" with no edit (P5).
  */
 export function commitBoundInput(
   range: PoolRange,
   grid: PoolGrid,
   bound: DisplayBound,
   text: string,
+  shownText?: string,
 ): PoolRange {
+  if (shownText !== undefined && text.trim() === shownText.trim()) return range;
   const value = Number.parseFloat(sanitizeNumericInput(text));
   if (!(Number.isFinite(value) && value > 0)) return range;
   const { width } = gridOf(grid);
