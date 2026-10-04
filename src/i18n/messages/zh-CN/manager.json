@@ -904,7 +904,25 @@
       "summaryProtocols": "协议",
       "summaryTokens": "代币",
       "summaryPools": "资金池",
-      "summaryLimits": "限额"
+      "summaryLimits": "限额",
+      "supplyPanel": {
+        "heading": "授权范围内的资产",
+        "filter": "按代币或地址筛选",
+        "caption": "仅显示授权范围内且由 {network} 上的 Aave v3 支持的代币（第3步）。",
+        "needAsset": "需要其他资产？",
+        "noMatch": "授权范围内没有与 {typed} 匹配的资产",
+        "noMatchCaption": "在授权范围的第3步选择代币。编辑时会保留已保存的配置。",
+        "empty": "授权范围内没有 {network} 上的 Aave 资产",
+        "asset": "资产",
+        "help": "授权范围内由 {network} 上的 Aave v3 支持的代币。",
+        "apy": "Supply APY",
+        "unsupported": "Supply 仅支持 Arbitrum 上的 USDC。",
+        "inactive": "储备未激活",
+        "frozen": "储备已冻结",
+        "paused": "储备已暂停",
+        "supplyCapReached": "已达到 Supply 上限",
+        "unavailable": "不可用"
+      }
     },
     "canvas": {
       "title": "搭建您的策略",

@@ -904,7 +904,25 @@
       "summaryProtocols": "Protocollen",
       "summaryTokens": "Tokens",
       "summaryPools": "Pools",
-      "summaryLimits": "Limieten"
+      "summaryLimits": "Limieten",
+      "supplyPanel": {
+        "heading": "Activa in je mandaat",
+        "filter": "Filter op token of adres",
+        "caption": "Alleen tokens uit je mandaat die Aave v3 op {network} aanbiedt (stap 3).",
+        "needAsset": "Een ander activum nodig?",
+        "noMatch": "Geen activum in je mandaat komt overeen met {typed}",
+        "noMatchCaption": "Tokens worden in stap 3 van het mandaat gekozen. Je configuratie blijft opgeslagen tijdens het bewerken.",
+        "empty": "Geen Aave-activum uit je mandaat staat op {network}",
+        "asset": "Activum",
+        "help": "Tokens uit je mandaat die Aave v3 op {network} aanbiedt.",
+        "apy": "Supply-APY",
+        "unsupported": "Supply ondersteunt alleen USDC op Arbitrum.",
+        "inactive": "Reserve inactief",
+        "frozen": "Reserve bevroren",
+        "paused": "Reserve gepauzeerd",
+        "supplyCapReached": "Supply-limiet bereikt",
+        "unavailable": "Niet beschikbaar"
+      }
     },
     "canvas": {
       "title": "Bouw uw strategie",

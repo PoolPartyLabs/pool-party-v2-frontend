@@ -49,6 +49,7 @@ import type { MandateDraft, NetworkId } from "../../mandateDraft";
 import type { MandateEditStep } from "../blocks/useBuildCanvas";
 import type { BlockConfigByKind, BlockKind, BuildPlan } from "../plan/buildPlan";
 import type { PanelPickItem } from "./PanelPickList";
+import { supplyBlockBody } from "./SupplyBlockPanel";
 
 export { canonicalPanelConfig, panelAssetKey, panelPoolId } from "./panelIds";
 
@@ -136,7 +137,6 @@ export type PanelBodies = {
 };
 
 /**
- * The bodies of the app. Empty in this slice: the Uniswap v4 pool body and the Aave v3 Supply body
- * register here in their own slices (`uniswapV4Pool: ...`, `aaveSupply: ...`).
+ * The bodies of the app. Each kind registers independently; the shell owns shared behavior.
  */
-export const PANEL_BODIES: PanelBodies = {};
+export const PANEL_BODIES: PanelBodies = { aaveSupply: supplyBlockBody };
