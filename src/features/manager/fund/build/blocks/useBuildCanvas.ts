@@ -1,17 +1,18 @@
 /**
  * @id PP-MGR-HOK-010
  * @name useBuildCanvas
- * @implements-rules-version v1 (POO-2155 rules v1)
+ * @implements-rules-version v1 (POO-2155 rules v1; the remove confirm and the widened Edit mandate
+ *   of POO-2187 rules v1)
  * @analytics-events none emitted here: every outcome leaves through `onEvent` as a
  *   {@link BuildCanvasEvent} (blockAdded with its `via`, networkAdded, networkRemoved, flowInserted,
- *   blockRemoved, blockRestored, blocked with its reason). The Build screen (PP-MGR-SCR-002, S7)
- *   maps them to the `builder_*` events; a hook that tracked them itself could not be tested apart
- *   from the screen and would fire once per consumer.
+ *   blockRemoved with its cascade count, blocked with its reason). The Build screen
+ *   (PP-MGR-SCR-002, S7) maps them to the `builder_*` events; a hook that tracked them itself could
+ *   not be tested apart from the screen and would fire once per consumer.
  *
  * The controller of the Build canvas (handoff v1.2 I1 to I7, I10, AN10; heads-up HU3, HU4): it
  * turns a press on a graph target, a menu choice, a palette drop, a key and "Remove block" into an
- * S1 reducer through `useBuildPlan.apply`, keeps the open menu, the drag and the selection, and
- * hands the renderer (S6), the palette, the menu and the panel stub what they draw.
+ * S1 reducer through `useBuildPlan.apply`, keeps the open menu, the drag, the selection and the
+ * remove confirm, and hands the renderer (S6), the palette, the menu and the panel what they draw.
  *
  * - LEGALITY is S1's. A menu option or a drop carries a {@link MenuAction}; the reducer decides, and
  *   a refusal is reported as `blocked` with the reducer's reason. A disabled option reports its own
@@ -19,23 +20,23 @@
  * - A NEW BLOCK IS SELECTED (I5, G6): every block added in this batch is empty and arrives selected
  *   (Build state 3), through the selection guard like every other change; the block is added even
  *   when a guard refuses, and the guard shows its notice.
- * - REMOVE (I6, HU4, D5) asks `confirmRemove` (true in this batch; the panel batch adds its confirm
- *   step), then the guards (the selection goes away), then removes with the S1 cascade, clears the
- *   selection and shows the toast "Block removed" with "Undo". Undo restores the snapshot only while
- *   the plan is still the post-remove plan, so it never overwrites a later edit.
- * - EVERY WAY OUT through a menu link passes `selection.guardLeave` (HU3) before `onEditMandate`.
+ * - REMOVE (I6, panels P10, decision DP11) ALWAYS ASKS: "Remove block" in the panel and the Delete
+ *   key open the panel's in-place confirm for the selected block (`removeConfirmId`); nothing is
+ *   removed until it is confirmed. The confirm drops the panel's draft (`beforeRemove`), clears the
+ *   selection through the guards, and removes with the I6 cascade, the spoke's share following
+ *   (`removeBlockReleasingShare`); `blockRemoved` carries how many other steps went with it. The
+ *   canvas batch's Undo toast is gone (I6 as the panels batch amends it).
+ * - EVERY WAY OUT through a menu or panel link passes `selection.guardLeave` (HU3) before
+ *   `onEditMandate`, which also names the block selected then, so the shell can bring Build back with
+ *   that block selected (finding 19). A refused way out resumes after Apply changes or Discard
+ *   changes (P6).
  * - DRAG (I3): while a palette row is dragged, `activeTargetKeys` holds exactly its valid drop
  *   targets (plus the anchor of an open menu, so a template or port whose menu is open looks
  *   active); a drop on one of them applies the same action as the menu, with `via: "palette"`.
- *
- * PP-NOTE: the undo toast goes through the app's Toast primitive (`toast` of sonner). The app does
- * not mount a `<Toaster />` today, so the screen that activates the canvas (S7) must make sure one
- * is mounted, or the toast is never seen.
  */
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { toast } from "@/components/ui/Toast";
 import type { MandateCatalog } from "../../mandateCatalog";
 import type { MandateDraft, NetworkId } from "../../mandateDraft";
 import { type GraphTarget, targetKey } from "../layout/graphTypes";
@@ -50,19 +51,20 @@ import {
   type PlanReducerResult,
 } from "../plan/buildPlan";
 import { findBlock } from "../plan/planDerive";
-import { addChain, addSpoke, insertAt, removeBlock, removeSpoke } from "../plan/planReducers";
+import {
+  addChain,
+  addSpoke,
+  describeRemoval,
+  insertAt,
+  type RemovalDescription,
+  removeBlockReleasingShare,
+  removeSpoke,
+} from "../plan/planReducers";
 import type { InsertSide } from "../plan/planRules";
-import { planFingerprint } from "../plan/planStorage";
 import type { UseBuildPlanResult } from "../plan/useBuildPlan";
 import type { BuildPaletteProps } from "./BuildPalette";
 import { useBlockCopy } from "./blockCopy";
-import {
-  describeBlock,
-  describeFlow,
-  describePanelHead,
-  type PaletteDragItem,
-  paletteModel,
-} from "./blockRegistry";
+import { describeBlock, describeFlow, type PaletteDragItem, paletteModel } from "./blockRegistry";
 import type { CanvasMenuProps } from "./CanvasMenu";
 import {
   dropTargets,
@@ -73,8 +75,13 @@ import {
   menuModelFor,
   menuOpenSentence,
 } from "./menuModels";
-import type { PanelStubProps } from "./PanelStub";
 import type { UseBlockSelectionResult } from "./useBlockSelection";
+
+/**
+ * The Mandate steps an "Edit mandate" link opens: networks and protocols from the canvas menus,
+ * tokens, pools and limits from the configuration panel (finding 19).
+ */
+export type MandateEditStep = "networks" | "protocols" | "tokens" | "pools" | "limits";
 
 /** What happened on the canvas, for S7 to map to analytics (D20). */
 export type BuildCanvasEvent =
@@ -88,8 +95,8 @@ export type BuildCanvasEvent =
   | { type: "networkRemoved"; network: NetworkId }
   /** Swap or Collect fees only: a Borrow inserted at a port is a `blockAdded`. */
   | { type: "flowInserted"; kind: FlowKind; slot: InsertSide }
-  | { type: "blockRemoved"; kind: BlockKind | FlowKind }
-  | { type: "blockRestored"; kind: BlockKind | FlowKind }
+  /** `cascadeCount`: the other steps removed with it (its Swap · auto, Collect fees, Borrow...). */
+  | { type: "blockRemoved"; kind: BlockKind | FlowKind; cascadeCount: number }
   | { type: "blocked"; reason: PlanBlockReason };
 
 /** The menu open on the canvas: its anchor, the target it belongs to, and what it lists. */
@@ -126,23 +133,35 @@ export interface BuildCanvasController {
   onTarget(target: GraphTarget, anchor: HTMLElement): void;
   /** A click on the canvas background (S2's viewport, through S7). */
   onBackgroundClick(): void;
-  /** Delete or Backspace removes the selected block; Escape closes an open menu (I10). */
+  /**
+   * Delete or Backspace opens the remove confirm of the selected block (I10, DP11); Escape closes an
+   * open menu, or else an open confirm.
+   */
   onKeyDown(event: CanvasKeyEvent): void;
   chooseOption(option: MenuOption): void;
   closeMenu(): void;
-  /** Remove a block (I6): `confirmRemove`, the guards, the cascade, the undo toast. */
+  /** Ask to remove a block (P10, DP11): opens the panel's confirm; nothing is removed yet. */
   requestRemove(blockId: string): void;
+  /** The confirm's "Remove block": the draft dropped, the guards, the I6 cascade (P10). */
+  confirmRemove(): void;
+  /** The confirm's "Cancel". */
+  cancelRemove(): void;
+  /** The block whose remove confirm is open, or null. */
+  removeConfirmId: string | null;
   /** Remove a spoke with no chain, from the close control on its chip (I7, D5). */
   removeSpoke(network: NetworkId): void;
-  /** Follow an "Edit mandate" link, through the leave guard (C6, HU3). */
-  editMandate(step: "networks" | "protocols"): void;
+  /** Follow an "Edit mandate" link, through the leave guard (C6, HU3, P6). */
+  editMandate(step: MandateEditStep): void;
   describeBlock(blockId: string): BlockContent;
   describeFlow(blockId: string): FlowContent;
   /** The translated network name (the raw id for a network this build does not name). */
   networkName(network: string): string;
   paletteProps: BuildPaletteProps;
-  panelProps: PanelStubProps;
+  /** Mode 1's sentence while a menu is open on the canvas, or null. */
+  menuSentence: string | null;
   menuProps: CanvasMenuProps;
+  /** The plan, the mandate, the catalog, the violations and the copy, as the panel reads them. */
+  context: MenuContext;
 }
 
 export interface UseBuildCanvasInput {
@@ -151,9 +170,10 @@ export interface UseBuildCanvasInput {
   buildPlan: UseBuildPlanResult;
   selection: UseBlockSelectionResult;
   onEvent(event: BuildCanvasEvent): void;
-  onEditMandate(step: "networks" | "protocols"): void;
-  /** HU4: resolves true in this batch; the panel batch adds its confirm step. */
-  confirmRemove?(blockId: string): Promise<boolean>;
+  /** An Edit mandate link, past the guard: the step, and the block selected when it was followed. */
+  onEditMandate(step: MandateEditStep, selectedId: string | null): void;
+  /** Runs right before a confirmed remove: the panel drops the removed block's draft (P10). */
+  beforeRemove?(): void;
 }
 
 /** The ids of the position blocks of `after` that `before` did not hold. */
@@ -179,8 +199,6 @@ function isEditable(target: EventTarget | null): boolean {
   );
 }
 
-const alwaysConfirm = async () => true;
-
 /** The Build canvas controller. */
 export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasController {
   const { draft, catalog, buildPlan, selection } = input;
@@ -193,11 +211,16 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
 
   const [menu, setMenu] = useState<{ anchor: HTMLElement; target: GraphTarget } | null>(null);
   const [dragging, setDragging] = useState<PaletteDragItem | null>(null);
+  const [removeConfirm, setRemoveConfirm] = useState<string | null>(null);
+  // The confirm belongs to the block it was opened for: another selection closes it for good.
+  if (removeConfirm !== null && removeConfirm !== selection.selectedId) setRemoveConfirm(null);
+  const removeConfirmId =
+    removeConfirm !== null && removeConfirm === selection.selectedId ? removeConfirm : null;
 
-  // Handlers read the latest values through refs: a remove resumes after an await, and a toast's
-  // Undo runs long after the render that created it.
-  const latest = useRef({ input, ctx, menu });
-  latest.current = { input, ctx, menu };
+  // Handlers read the latest values through refs: a guarded way out resumes after the panel
+  // settled, long after the render that created the handler.
+  const latest = useRef({ input, ctx, menu, removeConfirmId });
+  latest.current = { input, ctx, menu, removeConfirmId };
 
   const emit = useCallback((event: BuildCanvasEvent) => latest.current.input.onEvent(event), []);
 
@@ -321,36 +344,39 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
         emit({ type: "blocked", reason: "auto_owned" });
         return;
       }
-      const kind = found.block.kind;
-      const confirm = latest.current.input.confirmRemove ?? alwaysConfirm;
-      void confirm(blockId).then((confirmed) => {
-        if (!confirmed) return;
-        const io = latest.current.input;
-        if (io.selection.selectedId !== null && !io.selection.select(null)) return;
-        const done = run((p, c) => removeBlock(p, c, blockId));
-        if (!done) return;
-        emit({ type: "blockRemoved", kind });
-        const { before, after } = done;
-        const restorable = planFingerprint(after);
-        const { copy: text } = latest.current.ctx;
-        toast(text.toast.removed, {
-          action: {
-            label: text.toast.undo,
-            onClick: () => {
-              // Too late once anything else changed the plan: nothing is overwritten.
-              const outcome = latest.current.input.buildPlan.apply((current) =>
-                planFingerprint(current) === restorable
-                  ? before
-                  : { blocked: { reason: "unknown_target", targetId: null } },
-              );
-              if (outcome.ok) emit({ type: "blockRestored", kind });
-            },
-          },
-        });
-      });
+      // [P10, DP11] Remove always asks: the panel shows its confirm for this block.
+      setMenu(null);
+      setRemoveConfirm(blockId);
     },
-    [run, emit],
+    [emit],
   );
+
+  const cancelRemove = useCallback(() => setRemoveConfirm(null), []);
+
+  const confirmRemove = useCallback(() => {
+    const blockId = latest.current.removeConfirmId;
+    if (!blockId) return;
+    setRemoveConfirm(null);
+    const { plan, draft, catalog } = latest.current.ctx;
+    const found = findBlock(plan, blockId);
+    if (!found) return;
+    // Review L7 of PR #54: nothing is dropped for a remove the reducer would refuse.
+    let preview = 0;
+    const previewIds = () => `remove-check-${++preview}`;
+    if (describeRemoval(plan, { draft, catalog, newId: previewIds }, blockId) === null) return;
+    const io = latest.current.input;
+    // The block takes its unapplied changes with it, so the panel's guard lets the selection go.
+    io.beforeRemove?.();
+    if (io.selection.selectedId !== null && !io.selection.select(null)) return;
+    const removal: { described: RemovalDescription | null } = { described: null };
+    const done = run((p, c) => {
+      removal.described = describeRemoval(p, c, blockId);
+      return removeBlockReleasingShare(p, c, blockId);
+    });
+    if (!done) return;
+    const cascadeCount = removal.described?.removedWith.length ?? 0;
+    emit({ type: "blockRemoved", kind: found.block.kind, cascadeCount });
+  }, [run, emit]);
 
   const removeSpokeFromChip = useCallback(
     (network: NetworkId) => {
@@ -359,10 +385,13 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
     [run, emit],
   );
 
-  const editMandate = useCallback((step: "networks" | "protocols") => {
+  const editMandate = useCallback((step: MandateEditStep) => {
     setMenu(null);
-    const io = latest.current.input;
-    io.selection.guardLeave(() => io.onEditMandate(step));
+    latest.current.input.selection.guardLeave(() => {
+      // Read when the way out runs (after Apply or Discard settled, P6), not when it was asked.
+      const io = latest.current.input;
+      io.onEditMandate(step, io.selection.selectedId);
+    });
   }, []);
 
   const onKeyDown = useCallback(
@@ -372,7 +401,16 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
         setMenu(null);
         return;
       }
+      if (event.key === "Escape" && latest.current.removeConfirmId) {
+        event.preventDefault();
+        setRemoveConfirm(null);
+        return;
+      }
       if (!REMOVE_KEYS.has(event.key) || latest.current.menu || isEditable(event.target)) return;
+      // Review L3 of PR #54: Delete on a focused panel control (the slider, a chip, the select's
+      // list) is not a request to remove the block; only the card's own keys are.
+      if (event.target instanceof Element && event.target.closest("[data-build-panel-slot]"))
+        return;
       if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
       const selected = latest.current.input.selection.selectedId;
       if (!selected) return;
@@ -417,21 +455,10 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
     [palette, applyAction],
   );
 
-  const selectedId = selection.selectedId;
-  const panelProps: PanelStubProps = useMemo(() => {
-    const head = selectedId ? describePanelHead(selectedId, ctx) : null;
-    const sentence = menu ? menuOpenSentence(menu.target, ctx) : null;
-    return {
-      head,
-      nothingTitle: copy.panel.nothingTitle,
-      body: sentence ?? (head ? null : copy.panel.nothingBody),
-      removeLabel: copy.panel.remove,
-      onRemove: () => {
-        const current = latest.current.input.selection.selectedId;
-        if (current) requestRemove(current);
-      },
-    };
-  }, [selectedId, menu, ctx, copy, requestRemove]);
+  const menuSentence = useMemo(
+    () => (menu ? menuOpenSentence(menu.target, ctx) : null),
+    [menu, ctx],
+  );
 
   const menuProps: CanvasMenuProps = useMemo(
     () => ({
@@ -458,13 +485,17 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
     chooseOption,
     closeMenu,
     requestRemove,
+    confirmRemove,
+    cancelRemove,
+    removeConfirmId,
     removeSpoke: removeSpokeFromChip,
     editMandate,
     describeBlock: describeBlockNow,
     describeFlow: describeFlowNow,
     networkName: copy.networkName,
     paletteProps,
-    panelProps,
+    menuSentence,
     menuProps,
+    context: ctx,
   };
 }

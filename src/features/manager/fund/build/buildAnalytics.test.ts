@@ -13,14 +13,20 @@ import { describe, expect, it } from "vitest";
 import {
   ANALYTICS_BUILD_BLOCK_KINDS,
   ANALYTICS_BUILD_BLOCK_REASONS,
+  ANALYTICS_BUILD_LIMITS,
   ANALYTICS_BUILD_NETWORKS,
+  ANALYTICS_BUILD_PANEL_FIELDS,
   ANALYTICS_EVENTS,
 } from "@/lib/analytics/events";
 import {
+  ALLOCATION_LIMIT_EVENT,
   BUILD_BLOCK_KIND_EVENT,
   BUILD_NETWORK_EVENT,
   canvasEventToAnalytics,
+  limitHitToAnalytics,
+  PANEL_FIELD_EVENT,
   PLAN_BLOCK_REASON_EVENT,
+  panelEventToAnalytics,
   planCounts,
   REVIEW_REFUSAL_EVENT,
 } from "./buildAnalytics";
@@ -38,7 +44,11 @@ describe("buildAnalytics: the Build events are declared (AE1 to AE6, D20)", () =
       "builder_network_removed",
       "builder_flow_block_inserted",
       "builder_block_removed",
-      "builder_block_restored",
+      "builder_block_configured",
+      "builder_block_applied",
+      "builder_block_discarded",
+      "builder_block_leave_blocked",
+      "builder_block_limit_hit",
       "builder_build_blocked",
       "builder_build_abandoned",
       "builder_build_error",
@@ -47,6 +57,8 @@ describe("buildAnalytics: the Build events are declared (AE1 to AE6, D20)", () =
       expect(name.length).toBeLessThanOrEqual(40);
     }
     expect(ANALYTICS_EVENTS).not.toContain("builder_build_landing_viewed");
+    // POO-2187: the Undo toast is gone (P10, DP11), and the event that counted it with it.
+    expect(ANALYTICS_EVENTS).not.toContain("builder_block_restored");
     // D20: submitted and completed are declared with the Review handoff, never ahead of it.
     expect(ANALYTICS_EVENTS).not.toContain("builder_build_submitted");
     expect(ANALYTICS_EVENTS).not.toContain("builder_build_completed");
@@ -136,14 +148,9 @@ describe("canvasEventToAnalytics: one canvas event, one GA4 event (AE2 to AE6)",
       { block_kind: "collectFees", slot: "after" },
     ],
     [
-      { type: "blockRemoved", kind: "aaveSupply" },
+      { type: "blockRemoved", kind: "aaveSupply", cascadeCount: 2 },
       "builder_block_removed",
-      { block_kind: "aaveSupply" },
-    ],
-    [
-      { type: "blockRestored", kind: "aaveSupply" },
-      "builder_block_restored",
-      { block_kind: "aaveSupply" },
+      { block_kind: "aaveSupply", cascade_count: 2 },
     ],
     [
       { type: "blocked", reason: "borrow_needs_supply" },
@@ -168,5 +175,65 @@ describe("planCounts: what the view and the abandonment carry (AE1)", () => {
     // Pills are not blocks a manager placed: Swap · auto and Collect fees are not counted.
     expect(planCounts(hubPoolWithFeesPlan())).toEqual({ blocks_count: 1, spokes_count: 0 });
     expect(planCounts(spokePoolPlan())).toEqual({ blocks_count: 1, spokes_count: 1 });
+  });
+});
+
+describe("panelEventToAnalytics: the configuration panel (POO-2187)", () => {
+  it.each([
+    [
+      { type: "configured", kind: "uniswapV4Pool", network: "robinhood" },
+      "builder_block_configured",
+      { block_kind: "uniswapV4Pool", network: "robinhood" },
+    ],
+    [
+      { type: "applied", kind: "aaveSupply", fields: ["asset", "allocation"] },
+      "builder_block_applied",
+      { block_kind: "aaveSupply", fields_changed: "asset,allocation" },
+    ],
+    [
+      { type: "discarded", kind: "uniswapV4Pool" },
+      "builder_block_discarded",
+      { block_kind: "uniswapV4Pool" },
+    ],
+    [
+      { type: "leaveBlocked", kind: "aaveSupply" },
+      "builder_block_leave_blocked",
+      { block_kind: "aaveSupply" },
+    ],
+    [
+      { type: "blocked", reason: "share_exceeds_parent" },
+      "builder_build_blocked",
+      { block_reason: "share_exceeds_parent" },
+    ],
+  ] as const)("[P5, P6, P7] %j is %s", (event, name, params) => {
+    // @rule P5
+    // @rule P6
+    // @rule P7
+    expect(panelEventToAnalytics(event as Parameters<typeof panelEventToAnalytics>[0])).toEqual({
+      event: name,
+      params,
+    });
+  });
+
+  it.each([
+    ["protocolCap", "mandate_cap"],
+    ["networkCap", "network_cap"],
+    ["strategyRoom", "parent_share"],
+  ] as const)("[P8] a ceiling of %s is limit %s", (reason, limit) => {
+    // @rule P8
+    expect(limitHitToAnalytics("uniswapV4Pool", reason)).toEqual({
+      event: "builder_block_limit_hit",
+      params: { block_kind: "uniswapV4Pool", limit },
+    });
+  });
+
+  it("[P8] maps every ceiling and every panel field into the closed unions", () => {
+    // @rule P8
+    expect(Object.values(ALLOCATION_LIMIT_EVENT).sort()).toEqual(
+      [...ANALYTICS_BUILD_LIMITS].sort(),
+    );
+    expect(Object.values(PANEL_FIELD_EVENT).sort()).toEqual(
+      [...ANALYTICS_BUILD_PANEL_FIELDS].sort(),
+    );
   });
 });

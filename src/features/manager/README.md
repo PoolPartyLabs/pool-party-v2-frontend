@@ -370,9 +370,11 @@ fund builder"). The funnel is `builder_mandate_started` / `_step_viewed` / `_ste
 `_blocked` / `_completed` / `_abandoned`, plus `builder_draft_saved` and `builder_mandate_error`, and
 the drafts pair `builder_draft_opened` and `builder_draft_deleted`, and the Build canvas events of POO-2157
 (`builder_build_viewed`, `builder_build_started`, `builder_block_added`, `builder_network_added`,
-`builder_network_removed`, `builder_flow_block_inserted`, `builder_block_removed`, `builder_block_restored`,
-`builder_build_blocked`, `builder_build_abandoned` and `builder_build_error`, declared in
-`docs/ANALYTICS_EVENTS.md`); `builder_build_landing_viewed` is retired. `builder_mandate_blocked`'s five NEW reasons are `nothing_selected`,
+`builder_network_removed`, `builder_flow_block_inserted`, `builder_block_removed` (with `cascade_count` since
+POO-2187), `builder_build_blocked`, `builder_build_abandoned` and `builder_build_error`, declared in
+`docs/ANALYTICS_EVENTS.md`), and the configuration panel's of POO-2187 (`builder_block_configured`,
+`builder_block_applied`, `builder_block_discarded`, `builder_block_leave_blocked`, `builder_block_limit_hit`);
+`builder_build_landing_viewed` and `builder_block_restored` are retired. `builder_mandate_blocked`'s five NEW reasons are `nothing_selected`,
 `cap_missing`, `no_slots`, `has_hook` and `coming_soon`; `price_unknown` (an unpriced token) and
 `name_invalid` (the draft name) REUSE the existing POO-1172 reason series rather than mint
 per-builder duplicates. A draft-save failure reports `builder_mandate_error { error_code:
@@ -413,7 +415,8 @@ sits beside the code, in `src/features/manager/fund/build/README.md`.
 | `canvas/` | `PP-MGR-CMP-045` to `047`, `PP-MGR-LIB-022`, `PP-MGR-HOK-008` | The Build step frame (`BuildStepLayout`), the clipped canvas with zoom, pan and fit (`CanvasViewport`, `useCanvasViewport`, `viewportMath`) and the panel slot (`BuildPanelSlot`) |
 | `layout/` | `PP-MGR-LIB-023` | The pure layout function, its types and `GRAPH_TARGET_ATTR`, its constants (`LAYOUT`), `toLayoutInput` and test support `layoutTestKit` |
 | `pieces/` | `PP-MGR-CMP-048` to `055` | The presentational pieces: spine card, position card, flow pill, share label, insert port, spoke group, edges, the two templates. Strings arrive as props; they import nothing from `plan/`, `layout/`, `blocks/` or `graph/` |
-| `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056` to `058`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu and its popover, the panel stub, the selection guard and the controller (`useBuildCanvas`) |
+| `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056`, `057`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu and its popover, the selection guard and the controller (`useBuildCanvas`); the panel stub `PP-MGR-CMP-058` is removed |
+| `panel/` | `PP-MGR-CMP-061` to `068`, `PP-MGR-HOK-014`, `PP-MGR-LIB-029`, `PP-MGR-LIB-030` | The configuration panel shell (POO-2187), its kind to body registry, its shared controls and its draft, and the range and slippage maths |
 | `graph/` | `PP-MGR-CMP-059` | The renderer `BuildGraph` (layout, pieces, selection and active targets in, presses out), its reading-order model, `useGraphLayout` and `useTextWidth` |
 
 The reference canvases live in `src/mocks/data/buildCanvasFixtures.ts` (`PP-MGR-MCK-004`). The components have
@@ -489,7 +492,7 @@ overturnable. The handoff (v1.3, open point 12) asked Murilo to decide Borrow, a
 | D17 | Unsaved check | `planFingerprint` joins the unsaved fingerprint; plan edits never un-complete the mandate |
 | D18 | Unreadable stored plan | The draft is kept and only the plan is dropped (every block is empty in this batch); the Build screen says so with the empty canvas under the message and reports `builder_build_error` (`PLAN_UNREADABLE`) |
 | D19 | Next: Review | Never disabled; ordered checks (empty plan, a block or network no longer in the mandate, a coming-soon block, an empty block, shares over the capital above them), then "Review is not available yet"; each refusal shows an inline notice (`fundBuilder.canvas.review.*`) and reports `builder_build_blocked` (shipped by POO-2157) |
-| D20 | Analytics names | `builder_build_viewed`, `builder_build_started`, `builder_block_added`, `builder_network_added`, `builder_network_removed`, `builder_flow_block_inserted`, `builder_block_removed`, `builder_block_restored`, `builder_build_blocked`, `builder_build_abandoned` and `builder_build_error`; `builder_build_landing_viewed` is retired (shipped by POO-2157, `docs/ANALYTICS_EVENTS.md`) |
+| D20 | Analytics names | `builder_build_viewed`, `builder_build_started`, `builder_block_added`, `builder_network_added`, `builder_network_removed`, `builder_flow_block_inserted`, `builder_block_removed`, `builder_block_restored`, `builder_build_blocked`, `builder_build_abandoned` and `builder_build_error`; `builder_build_landing_viewed` is retired (shipped by POO-2157, `docs/ANALYTICS_EVENTS.md`). POO-2187 later retired `builder_block_restored` with the Undo toast and added the configuration panel's five events |
 | D21 | Menu popover | The new dependency was NOT approved: the menus use the in-house `AnchoredPopover` behind a narrow interface, so swapping it later touches one file |
 | D22 | Drag | Native pointer events, no library; the menus are the keyboard path |
 | D23 | Grid width | The Build phase uses the full content width (canvas column about 604 against 656 in Figma) |
@@ -504,11 +507,13 @@ Two readings in code are the coordinator's, not the handoff's: INV5 reads "nothi
 Collect fees" as "a pool, or its Collect fees, ends the chain" (`plan/planInvariants.ts`), and normalisation
 (L4) only ever shifts the graph to the right (`layout/layoutGraph.ts`).
 
-**What is NOT done.** The configuration panel: pool, price range, allocation, slippage and the Aave fields
-(handoff POO-2171); the panel is a slot filled by a stub (`PanelStub`) that only shows the selected block's head
-and Remove block, so every block a manager adds stays empty and configured blocks exist only in fixtures and
-stories. So Next: Review refuses every plan a manager can build today, and "Review is not available yet" is
-reachable only for a stored plan whose blocks are configured. The Review page (POO-2172). Aave Borrow as coming soon (decided 2026-10-04, see D29; pending slice PA0). Real data for a block: the
+**What is NOT done.** The bodies of the configuration panel: the pool and price range fields and the Aave
+fields (handoff POO-2171, the slices after POO-2187). The panel shell itself is in (POO-2187, `build/panel/`): the
+modes, Use, the Allocation, Max slippage, the status row with Apply changes and its leave guard, and the remove
+confirm; but its kind to body registry is empty, so a selected block shows its head and Remove block only, every
+block a manager adds stays empty and configured blocks exist only in fixtures and stories. So Next: Review refuses
+every plan a manager can build today, and "Review is not available yet" is reachable only for a stored plan whose
+blocks are configured. The Review page (POO-2172). Aave Borrow as coming soon (decided 2026-10-04, see D29; pending slice PA0). Real data for a block: the
 Mandate reads the v4 pools and the Aave reserves from the backend catalog since POO-2133, but the canvas lists
 none of them (the panel will), and it reads no quote for the Swap or the Bridge (POO-2148). The canvas itself calls
 no API and requests no transaction; the launch journey (POO-2177) compiles a stored plan into builder calls. Backend
@@ -559,8 +564,9 @@ the `BuildGraph` stories pin only the graph's outer box against the layout's siz
 Figma where a review measured them (the pill stroke, nodes 8220:2482 and 8220:2501; the share label, node
 8220:2556), not as a set. The canvas column is about 604 wide at the app's content width against 656 in Figma
 (D23). Build state 2 (the Add protocol menu, 8130-3408) has no geometry oracle: its rows are asserted by the menu
-model tests and drawn by the `CanvasMenu` and `PanelStub` stories. The right-hand panel of states 3 and 5 is
-next-batch content and is not compared. The oracle file records no delta between a handoff number and a frame.
+model tests and drawn by the `CanvasMenu` and `BlockPanel` stories (the panel stub `PanelStub` that first drew it
+was removed by POO-2187). The right-hand panel of states 3 and 5 is the configuration panel's and is not compared
+here. The oracle file records no delta between a handoff number and a frame.
 
 ## IDs
 

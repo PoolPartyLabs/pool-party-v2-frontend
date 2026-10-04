@@ -13,7 +13,12 @@
  * What is proven here, by rule (handoff v1.2 ids, plan section 2 for AN, AE, G, HU, ST):
  * - [G2, AN1, D23] the canvas replaces the landing inside the unchanged shell, at full width;
  * - [I1, I2, I3, I4, I5, I6, I7, I10] add from a menu and from the palette, insert at a port,
- *   select, remove and undo, Delete, add and remove a network;
+ *   select, remove (through the panel's confirm since POO-2187), Delete, add and remove a network;
+ * - [POO-2187, P3 to P10] the configuration panel live in the right column: Use, the draft, Apply
+ *   changes and Discard, the notice on every way out and the way out completed after it, the
+ *   Allocation's ceiling, the remove confirm, and the Edit mandate links that bring Build back
+ *   with the same block selected. The registry is given the panel's FIXTURE pool body, because the
+ *   real Uniswap v4 body is another slice;
  * - [AN4, D19] Next: Review's ordered refusals and their notices, never disabled;
  * - [HU3] every way out of the step asks the selection guard;
  * - [C6, A4] the Edit mandate links and the walk back to Build;
@@ -85,6 +90,13 @@ vi.mock("../mandatePoolSource", () => poolSource);
  * one), so the HU3 cases register a vetoing guard on the screen's own selection through this.
  */
 const selectionSpy = vi.hoisted(() => ({ current: null as UseBlockSelectionResult | null }));
+
+/** The panel's fixture pool body in the registry: the real Uniswap v4 body is its own slice. */
+vi.mock("./panel/panelBodies", async (importOriginal) => {
+  const real = await importOriginal<typeof import("./panel/panelBodies")>();
+  const { fixturePoolBody } = await import("./panel/panelFixtures");
+  return { ...real, PANEL_BODIES: { uniswapV4Pool: fixturePoolBody } };
+});
 vi.mock("./blocks/useBlockSelection", async (importOriginal) => {
   const real = await importOriginal<typeof import("./blocks/useBlockSelection")>();
   return {
@@ -429,6 +441,9 @@ describe("BuildScreen: building the plan (I1 to I7, I10, AE2 to AE6)", () => {
     await addPoolFromMenu();
     await userEvent.click(card(/^Uniswap v4 · no pool yet/));
     await userEvent.keyboard("{Delete}");
+    // DP11: Delete asks first; an empty block's confirm says only "Remove this block?".
+    expect(await screen.findByText("Remove this block?")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: /^Uniswap v4 · no pool yet/ })).toBeNull(),
     );
@@ -486,9 +501,11 @@ describe("BuildScreen: building the plan (I1 to I7, I10, AE2 to AE6)", () => {
     expect(emitted("builder_build_started")).toHaveLength(0);
   });
 
-  it("[I5, I6, AE5] selects a card, removes it, and Undo brings it back", async () => {
+  it("[I5, I6, P10, AE5] selects a card, asks before removing it, then removes its cascade", async () => {
     // @rule I5
     // @rule I6
+    // @rule P10
+    // @rule DP11
     // @rule AE5
     seedBuild(hubMandate("d-remove"), poolPlan());
     await openBuild();
@@ -497,31 +514,53 @@ describe("BuildScreen: building the plan (I1 to I7, I10, AE2 to AE6)", () => {
     expect(card(/^WETH \/ USDC/)).toHaveAttribute("aria-pressed", "true");
     await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
 
+    // Remove always asks, and says what goes with the block: nothing is removed yet.
+    expect(screen.getByText("Remove WETH / USDC?")).toBeInTheDocument();
+    expect(
+      screen.getByText("Its 60% goes back to Idle input. Its Swap · auto step is removed with it."),
+    ).toBeInTheDocument();
+    expect(card(/^WETH \/ USDC/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+    await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
+
     await waitFor(() => expect(screen.queryByRole("button", { name: /^WETH \/ USDC/ })).toBeNull());
     expect(screen.getByText("Nothing selected")).toBeInTheDocument();
-    expect(emitted("builder_block_removed")).toEqual([{ block_kind: "uniswapV4Pool" }]);
-
-    // The undo toast is the safety net of this batch.
-    const [message, options] = toasts.toast.mock.calls[0] ?? [];
-    expect(message).toBe("Block removed");
-    act(() => {
-      (options as { action: { onClick: () => void } }).action.onClick();
-    });
-
-    expect(await screen.findByRole("button", { name: /^WETH \/ USDC/ })).toBeInTheDocument();
-    expect(emitted("builder_block_restored")).toEqual([{ block_kind: "uniswapV4Pool" }]);
+    expect(emitted("builder_block_removed")).toEqual([
+      { block_kind: "uniswapV4Pool", cascade_count: 1 },
+    ]);
+    // DP11: the Undo toast is gone with the confirm that replaced it.
+    expect(toasts.toast).not.toHaveBeenCalled();
   });
 
-  it("[I10] Delete removes the selected card", async () => {
+  it("[P10] Cancel keeps the block, its share and the selection", async () => {
+    // @rule P10
+    seedBuild(hubMandate("d-remove-cancel"), poolPlan());
+    await openBuild();
+    await userEvent.click(card(/^WETH \/ USDC/));
+    await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByText("Remove WETH / USDC?")).toBeNull();
+    expect(card(/^WETH \/ USDC/)).toHaveAttribute("aria-pressed", "true");
+    expect(emitted("builder_block_removed")).toEqual([]);
+  });
+
+  it("[I10, DP11] Delete opens the confirm of the selected card, and the confirm removes it", async () => {
     // @rule I10
+    // @rule DP11
     seedBuild(hubMandate("d-delete"), poolPlan());
     await openBuild();
 
     await userEvent.click(card(/^WETH \/ USDC/));
     await userEvent.keyboard("{Delete}");
 
+    expect(await screen.findByText("Remove WETH / USDC?")).toBeInTheDocument();
+    expect(card(/^WETH \/ USDC/)).toBeInTheDocument();
+    expect(emitted("builder_block_removed")).toEqual([]);
+    await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
     await waitFor(() => expect(screen.queryByRole("button", { name: /^WETH \/ USDC/ })).toBeNull());
-    expect(emitted("builder_block_removed")).toEqual([{ block_kind: "uniswapV4Pool" }]);
+    expect(emitted("builder_block_removed")).toEqual([
+      { block_kind: "uniswapV4Pool", cascade_count: 1 },
+    ]);
   });
 
   it("[I2, I7, AE3] adds a network from the Add network menu, then removes it from its chip", async () => {
@@ -820,6 +859,277 @@ describe("BuildScreen: every way out asks the selection guard (HU3)", () => {
   });
 });
 
+/** Two hub chains on the one pool: c1 at 60%, c2 at 20%. */
+function twoPoolPlan(): BuildPlan {
+  return {
+    version: 1,
+    hub: {
+      chains: [
+        { id: "c1", sharePct: 60, steps: [autoSwap("c1-swap"), pool("c1-pool", POOL_ID)] },
+        { id: "c2", sharePct: 20, steps: [autoSwap("c2-swap"), pool("c2-pool", POOL_ID)] },
+      ],
+    },
+    spokes: [],
+  };
+}
+
+/** The Configure block region. */
+function panelRegion(): HTMLElement {
+  return screen.getByRole("region", { name: "Configure block" });
+}
+
+/** Select the 60% card and move its Allocation one step down: changes not applied. */
+async function dirtyFirstCard(): Promise<void> {
+  await userEvent.click(card(/^WETH \/ USDC, .*60% of the capital/));
+  const slider = within(panelRegion()).getByRole("slider", { name: "Allocation" });
+  act(() => slider.focus());
+  await userEvent.keyboard("{ArrowLeft}");
+  expect(slider).toHaveAttribute("aria-valuenow", "55");
+  expect(within(panelRegion()).getByText("Changes not applied")).toBeInTheDocument();
+}
+
+/** A press on the canvas background that does not pan (I5). */
+function clickBackground(): void {
+  const canvas = document.querySelector<HTMLElement>("[data-canvas-viewport]");
+  if (!canvas) throw new Error("no canvas");
+  fireEvent.pointerDown(canvas, { button: 0, pointerId: 9, clientX: 20, clientY: 20 });
+  fireEvent.pointerUp(canvas, { pointerId: 9, clientX: 20, clientY: 20 });
+}
+
+/** Every way out of a block or of the step (P6): how to take it, and how to see it was taken. */
+const EXITS: Array<[string, () => Promise<unknown>, () => Promise<unknown>]> = [
+  [
+    "another block",
+    async () => userEvent.click(card(/^WETH \/ USDC, .*20% of the capital/)),
+    async () =>
+      expect(card(/^WETH \/ USDC, .*20% of the capital/)).toHaveAttribute("aria-pressed", "true"),
+  ],
+  [
+    "the canvas background",
+    async () => clickBackground(),
+    async () => expect(await within(panelRegion()).findByText("Nothing selected")).toBeVisible(),
+  ],
+  [
+    "an Edit mandate link",
+    async () => {
+      await userEvent.click(screen.getByRole("button", { name: "Add protocol on Arbitrum" }));
+      await userEvent.click(
+        await screen.findByRole("menuitem", { name: "Edit mandate · Protocols" }),
+      );
+    },
+    async () => expect(await screen.findByText("MANDATE · STEP 2 OF 5")).toBeInTheDocument(),
+  ],
+  [
+    "Back: Mandate",
+    async () => userEvent.click(screen.getByRole("button", { name: "Back: Mandate" })),
+    async () => expect(await screen.findByText("MANDATE · STEP 5 OF 5")).toBeInTheDocument(),
+  ],
+  [
+    "Next: Review",
+    async () => userEvent.click(screen.getByRole("button", { name: "Next: Review" })),
+    async () => expect(await screen.findByText("Review is not available yet.")).toBeInTheDocument(),
+  ],
+  [
+    "Save & exit",
+    async () => userEvent.click(screen.getByRole("button", { name: "Save & exit" })),
+    async () => waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager")),
+  ],
+  [
+    "the stepper's Mandate pill",
+    async () => userEvent.click(screen.getByRole("button", { name: "Mandate" })),
+    async () => expect(await screen.findByText("MANDATE · STEP 5 OF 5")).toBeInTheDocument(),
+  ],
+];
+
+describe("BuildScreen: the configuration panel (POO-2187, P3 to P10)", () => {
+  it("[P7, DP1] Use writes the pool with its defaults at 0%, and the panel opens configured", async () => {
+    // @rule P7
+    // @rule DP1
+    seedBuild(hubMandate("d-use"), poolPlan(0, null));
+    await openBuild();
+    await userEvent.click(card(/^Uniswap v4 · no pool yet/));
+    const region = panelRegion();
+    expect(within(region).getByText("Pools in your mandate ·")).toBeInTheDocument();
+
+    await userEvent.click(within(region).getByRole("button", { name: "Use WETH / USDC" }));
+
+    expect(await within(region).findByText("All changes applied")).toBeInTheDocument();
+    expect(within(region).getByRole("button", { name: "Apply changes" })).toBeDisabled();
+    // The card shows the pool at once, at 0% of the capital (DP1).
+    expect(card(/^WETH \/ USDC, .*, 0% of the capital/)).toBeInTheDocument();
+    expect(emitted("builder_block_configured")).toEqual([
+      { block_kind: "uniswapV4Pool", network: "arbitrum" },
+    ]);
+  });
+
+  it("[P3, P5] an edit changes nothing on the canvas until Apply changes", async () => {
+    // @rule P3
+    // @rule P5
+    seedBuild(hubMandate("d-apply"), twoPoolPlan());
+    await openBuild();
+    await dirtyFirstCard();
+    // The canvas still shows the applied share.
+    expect(card(/^WETH \/ USDC, .*60% of the capital/)).toBeInTheDocument();
+    await userEvent.click(within(panelRegion()).getByRole("button", { name: "Apply changes" }));
+
+    expect(await within(panelRegion()).findByText("All changes applied")).toBeInTheDocument();
+    expect(card(/^WETH \/ USDC, .*55% of the capital/)).toBeInTheDocument();
+    expect(emitted("builder_block_applied")).toEqual([
+      { block_kind: "uniswapV4Pool", fields_changed: "allocation" },
+    ]);
+  });
+
+  it("[L10, P6] a refused Save & exit, then Apply changes, saves the applied plan once", async () => {
+    // @rule P6
+    seedBuild(hubMandate("d-p6-save"), twoPoolPlan());
+    await openBuild();
+    await dirtyFirstCard();
+    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    expect(nav.push).not.toHaveBeenCalled();
+    await userEvent.click(within(panelRegion()).getByRole("button", { name: "Apply changes" }));
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
+    expect(nav.push).toHaveBeenCalledTimes(1);
+    expect(getDraft("d-p6-save")?.plan?.hub.chains[0]?.sharePct).toBe(55);
+  });
+
+  it("[L1, P6] Next on a plan Review would refuse still asks the panel first", async () => {
+    // @rule P6
+    // @rule AN4
+    // The second chain is an empty block: Next: Review refuses the plan for it.
+    const plan = twoPoolPlan();
+    const second = plan.hub.chains[1];
+    if (!second) throw new Error("fixture");
+    second.steps = [autoSwap("c2-swap"), pool("c2-pool", null)];
+    seedBuild(hubMandate("d-p6-next"), plan);
+    await openBuild();
+    await dirtyFirstCard();
+    await userEvent.click(screen.getByRole("button", { name: "Next: Review" }));
+
+    expect(within(panelRegion()).getByRole("alert")).toHaveTextContent("Changes not applied");
+    expect(emitted("builder_build_blocked")).toEqual([]);
+    await userEvent.click(within(panelRegion()).getByRole("button", { name: "Discard changes" }));
+
+    expect(await screen.findByText("Configure every block before Review.")).toBeInTheDocument();
+    expect(emitted("builder_build_blocked")).toEqual([{ block_reason: "review_empty_block" }]);
+  });
+
+  it("[P5] Discard restores the applied values", async () => {
+    // @rule P5
+    seedBuild(hubMandate("d-discard"), twoPoolPlan());
+    await openBuild();
+    await dirtyFirstCard();
+    await userEvent.click(within(panelRegion()).getByRole("button", { name: "Discard" }));
+    expect(within(panelRegion()).getByRole("slider", { name: "Allocation" })).toHaveAttribute(
+      "aria-valuenow",
+      "60",
+    );
+    expect(within(panelRegion()).getByText("All changes applied")).toBeInTheDocument();
+    expect(emitted("builder_block_discarded")).toEqual([{ block_kind: "uniswapV4Pool" }]);
+  });
+
+  it.each(
+    EXITS,
+  )("[P6] leaving through %s keeps the step and shows the notice; Apply changes then leaves", async (_name, leave, left) => {
+    // @rule P6
+    seedBuild(hubMandate("d-p6-apply"), twoPoolPlan());
+    await openBuild();
+    await dirtyFirstCard();
+
+    await leave();
+
+    const notice = within(panelRegion()).getByRole("alert");
+    expect(notice).toHaveTextContent("Changes not applied");
+    expect(notice).toHaveTextContent("Apply or discard the changes before you move");
+    expect(notice).toHaveFocus();
+    expect(card(/^WETH \/ USDC, .*60% of the capital/)).toHaveAttribute("aria-pressed", "true");
+    expect(emitted("builder_block_leave_blocked")).toEqual([{ block_kind: "uniswapV4Pool" }]);
+    expect(nav.push).not.toHaveBeenCalled();
+
+    await userEvent.click(within(panelRegion()).getByRole("button", { name: "Apply changes" }));
+
+    await left();
+    expect(emitted("builder_block_applied")).toEqual([
+      { block_kind: "uniswapV4Pool", fields_changed: "allocation" },
+    ]);
+  });
+
+  it.each(
+    EXITS.filter(([name]) => name === "another block" || name === "Back: Mandate"),
+  )("[P6] leaving through %s, then Discard changes, restores and leaves", async (_name, leave, left) => {
+    // @rule P6
+    seedBuild(hubMandate("d-p6-discard"), twoPoolPlan());
+    await openBuild();
+    await dirtyFirstCard();
+    await leave();
+    await userEvent.click(within(panelRegion()).getByRole("button", { name: "Discard changes" }));
+    await left();
+    expect(emitted("builder_block_discarded")).toEqual([{ block_kind: "uniswapV4Pool" }]);
+  });
+
+  it("[P6] browser back, reload and close get the browser's prompt while changes are not applied", async () => {
+    // @rule P6
+    seedBuild(hubMandate("d-p6-unload"), twoPoolPlan());
+    await openBuild();
+    await waitFor(() => expect(beforeUnloadPrevented()).toBe(false));
+    await dirtyFirstCard();
+    await waitFor(() => expect(beforeUnloadPrevented()).toBe(true));
+    await userEvent.click(within(panelRegion()).getByRole("button", { name: "Discard" }));
+    await waitFor(() => expect(beforeUnloadPrevented()).toBe(false));
+  });
+
+  it("[P8, P9] the Allocation stops at the mandate cap and says so, with the Limits link", async () => {
+    // @rule P8
+    // @rule P9
+    const mandate = hubMandate("d-cap");
+    seedBuild(
+      {
+        ...mandate,
+        caps: { ...mandate.caps, protocols: { "uniswap-v4": { noCap: false, pct: 70 } } },
+      },
+      poolPlan(60),
+    );
+    await openBuild();
+    await userEvent.click(card(/^WETH \/ USDC/));
+    const slider = within(panelRegion()).getByRole("slider", { name: "Allocation" });
+    expect(slider).toHaveAttribute("aria-valuemax", "70");
+    act(() => slider.focus());
+    await userEvent.keyboard("{ArrowRight}{ArrowRight}{ArrowRight}");
+
+    expect(slider).toHaveAttribute("aria-valuenow", "70");
+    expect(
+      within(panelRegion()).getByText("Maximum reached. Your mandate caps Uniswap v4 at 70%."),
+    ).toBeInTheDocument();
+    expect(emitted("builder_block_limit_hit")).toEqual([
+      { block_kind: "uniswapV4Pool", limit: "mandate_cap" },
+    ]);
+    // Apply first: the link is a way out, and the panel would hold it otherwise.
+    await userEvent.click(within(panelRegion()).getByRole("button", { name: "Apply changes" }));
+    await userEvent.click(
+      within(panelRegion()).getByRole("button", { name: "Edit mandate · Limits" }),
+    );
+    expect(await screen.findByText("MANDATE · STEP 5 OF 5")).toBeInTheDocument();
+  });
+
+  it("[finding 19] an Edit mandate link brings Build back with the same block selected", async () => {
+    // @rule C6
+    // @rule P1
+    seedBuild(hubMandate("d-return"), poolPlan(0, null));
+    await openBuild();
+    await userEvent.click(card(/^Uniswap v4 · no pool yet/));
+    await userEvent.click(
+      within(panelRegion()).getByRole("button", { name: "Edit mandate · Pools" }),
+    );
+
+    expect(await screen.findByText("MANDATE · STEP 4 OF 5")).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: "Next: Limits" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Next: Build strategy" }));
+
+    await screen.findByRole("heading", { name: "Build your strategy" });
+    expect(card(/^Uniswap v4 · no pool yet/)).toHaveAttribute("aria-pressed", "true");
+    expect(within(panelRegion()).getByText("Pools in your mandate ·")).toBeInTheDocument();
+  });
+});
+
 describe("BuildScreen: Edit mandate and the way back (C6, A4)", () => {
   it("[C6, A4] Edit mandate · Protocols opens step 2, and walking forward returns to Build intact", async () => {
     // @rule C6
@@ -1077,6 +1387,9 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
 
     await userEvent.click(card(/^Uniswap v4 · no pool yet/));
     await userEvent.keyboard("{Delete}");
+    // DP11: Delete asks first; an empty block's confirm says only "Remove this block?".
+    expect(await screen.findByText("Remove this block?")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: /^Uniswap v4 · no pool yet/ })).toBeNull(),
     );

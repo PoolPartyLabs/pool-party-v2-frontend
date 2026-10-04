@@ -6,9 +6,10 @@
  *
  * The controller of the Build canvas (slice S5, POO-2155): it turns a press on a target, a menu
  * choice, a palette drop, a key and Remove block into the S1 reducers, keeps the selection (with
- * its guard) and the open menu, and reports what happened through `onEvent`. Insert and remove
- * start from the S1 `planTestKit` plans, whose blocks are configured: a block the manager adds has
- * no port in this batch (C17). Mounted on the real draft hook, as the Build screen will mount it.
+ * its guard), the open menu and the remove confirm (POO-2187, P10, DP11), and reports what happened
+ * through `onEvent`. Insert and remove start from the S1 `planTestKit` plans, whose blocks are
+ * configured: a block the manager adds has no port in this batch (C17). Mounted on the real draft
+ * hook, as the Build screen mounts it.
  */
 import { act, fireEvent, render, renderHook, waitFor } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
@@ -29,6 +30,7 @@ import {
   makeTestDraft,
   spokePoolPlan,
   supplyBorrowPlan,
+  TEST_POOL_IDS,
 } from "../plan/planTestKit";
 import { useBuildPlan } from "../plan/useBuildPlan";
 import { BuildPalette } from "./BuildPalette";
@@ -38,9 +40,6 @@ import {
   type BuildCanvasEvent,
   useBuildCanvas,
 } from "./useBuildCanvas";
-
-const toasts = vi.hoisted(() => ({ toast: vi.fn() }));
-vi.mock("@/components/ui/Toast", () => ({ toast: toasts.toast }));
 
 /** One messages object, as the app has: a new one per render would hand out a new translator. */
 const MESSAGES = { manager: enManager };
@@ -54,7 +53,8 @@ function WithMessages({ children }: { children: ReactNode }) {
 }
 
 interface HarnessOptions {
-  confirmRemove?: (blockId: string) => Promise<boolean>;
+  /** The panel's draft reset, run right before a confirmed remove (POO-2187). */
+  beforeRemove?: () => void;
 }
 
 /** The draft hook, the plan hook, the selection and the controller, as S7 will mount them. */
@@ -74,7 +74,7 @@ function useHarness(draftId: string, options: HarnessOptions, events: BuildCanva
     selection,
     onEvent: (event) => events.push(event),
     onEditMandate,
-    confirmRemove: options.confirmRemove,
+    beforeRemove: options.beforeRemove,
   });
   return { mandate, buildPlan, selection, canvas };
 }
@@ -129,7 +129,6 @@ function vetoing(): SelectionGuard & {
 
 beforeEach(() => {
   window.localStorage.clear();
-  toasts.toast.mockClear();
   editMandateSpy.mockClear();
 });
 
@@ -194,13 +193,12 @@ describe("useBuildCanvas: Add protocol (I1)", () => {
     expect(result.current.canvas.openMenu).not.toBeNull();
   });
 
-  it("tells the panel stub where the block lands while the menu is open", async () => {
+  it("tells the panel where the block lands while the menu is open", async () => {
     // @rule AN10
     const { result } = await mount(hubSupplyPlan());
-    expect(result.current.canvas.panelProps.head).toBeNull();
-    expect(result.current.canvas.panelProps.body).toMatch(/^Add a protocol or a network/);
+    expect(result.current.canvas.menuSentence).toBeNull();
     press(result, { kind: "addProtocol", network: "arbitrum" });
-    expect(result.current.canvas.panelProps.body).toBe(
+    expect(result.current.canvas.menuSentence).toBe(
       "Choose a protocol in the menu. The block is added on Arbitrum and opens here.",
     );
   });
@@ -245,12 +243,12 @@ describe("useBuildCanvas: Add network (I2, I7)", () => {
     expect(full.events).toEqual([{ type: "blocked", reason: "spoke_not_empty" }]);
   });
 
-  it("tells the panel stub what the Add network menu adds while it is open", async () => {
+  it("tells the panel what the Add network menu adds while it is open", async () => {
     // @rule AN10
     // Review F3 of PR #36: coordinator copy, waiting for the product owner.
     const { result } = await mount(hubSupplyPlan());
     press(result, { kind: "addNetwork" });
-    expect(result.current.canvas.panelProps.body).toBe(
+    expect(result.current.canvas.menuSentence).toBe(
       "Choose a network in the menu. The network is added to the canvas with its bridge.",
     );
   });
@@ -263,7 +261,7 @@ describe("useBuildCanvas: insert ports (I4)", () => {
     const { result, events } = await mount(hubSupplyPlan());
     press(result, { kind: "port", side: "after", blockId: "hub-supply-supply" });
     expect(result.current.canvas.openMenu?.model.title).toBe("After Supply USDC");
-    expect(result.current.canvas.panelProps.body).toBe(
+    expect(result.current.canvas.menuSentence).toBe(
       "Choose what comes after Supply USDC. A Borrow block uses that supply as its collateral.",
     );
     choose(result, "insert:after:hub-supply-supply:aaveBorrow");
@@ -315,8 +313,7 @@ describe("useBuildCanvas: selection (I5, HU3)", () => {
       feedsBlockId: "hub-pool-pool",
     });
     expect(result.current.selection.selectedId).toBe("hub-pool-pool");
-    expect(result.current.canvas.panelProps.head?.protocolName).toBe("Uniswap v4");
-    expect(result.current.canvas.panelProps.body).toBeNull();
+    expect(result.current.canvas.menuSentence).toBeNull();
   });
 
   it("selects nothing from a spoke's share label, or from a pill", async () => {
@@ -375,43 +372,95 @@ describe("useBuildCanvas: selection (I5, HU3)", () => {
     const { result } = await mount(hubSupplyPlan());
     press(result, { kind: "addNetwork" });
     act(() => result.current.canvas.menuProps.onLink("networks"));
-    expect(editMandateSpy).toHaveBeenCalledWith("networks");
+    expect(editMandateSpy).toHaveBeenCalledWith("networks", null);
     expect(result.current.canvas.openMenu).toBeNull();
+  });
+
+  it("[finding 19] names the selected block with the panel's Edit mandate steps", async () => {
+    // @rule C6
+    // @rule P6
+    const { result } = await mount(hubPoolPlan());
+    press(result, { kind: "block", blockId: "hub-pool-pool" });
+    for (const step of ["tokens", "pools", "limits"] as const) {
+      act(() => result.current.canvas.editMandate(step));
+      expect(editMandateSpy).toHaveBeenLastCalledWith(step, "hub-pool-pool");
+    }
+  });
+
+  it("[P6] runs a refused Edit mandate link once the guard's resume is called", async () => {
+    // @rule P6
+    const { result } = await mount(hubPoolPlan());
+    press(result, { kind: "block", blockId: "hub-pool-pool" });
+    let allow = false;
+    let resume: (() => void) | null = null;
+    act(() => {
+      result.current.selection.registerGuard({
+        allowChange: () => allow,
+        onRefused: (change) => {
+          resume = change.resume;
+        },
+      });
+    });
+    act(() => result.current.canvas.editMandate("pools"));
+    expect(editMandateSpy).not.toHaveBeenCalled();
+    allow = true;
+    act(() => (resume as (() => void) | null)?.());
+    expect(editMandateSpy).toHaveBeenCalledWith("pools", "hub-pool-pool");
   });
 });
 
-describe("useBuildCanvas: remove (I6, HU4)", () => {
-  it("removes through confirmRemove, with the cascade, clears the selection and offers Undo", async () => {
-    // @rule I6
-    // @rule HU4
-    // @rule D5
-    const confirmRemove = vi.fn(async () => true);
-    const { result, events } = await mount(hubPoolWithFeesPlan(), {}, { confirmRemove });
-    press(result, { kind: "block", blockId: "hub-pool-pool" });
-    act(() => result.current.canvas.panelProps.onRemove());
-    await waitFor(() => expect(result.current.buildPlan.plan.hub.chains).toEqual([]));
-    expect(confirmRemove).toHaveBeenCalledWith("hub-pool-pool");
-    expect(result.current.selection.selectedId).toBeNull();
-    expect(events).toEqual([{ type: "blockRemoved", kind: "uniswapV4Pool" }]);
-    expect(toasts.toast).toHaveBeenCalledWith(
-      "Block removed",
-      expect.objectContaining({ action: expect.objectContaining({ label: "Undo" }) }),
-    );
-  });
-
-  it("removes nothing when confirmRemove says no", async () => {
-    // @rule HU4
-    const confirmRemove = vi.fn(async () => false);
-    const { result, events } = await mount(hubPoolPlan(), {}, { confirmRemove });
+describe("useBuildCanvas: remove (I6, P10, DP11)", () => {
+  it("[P10] asks first: requestRemove opens the confirm and removes nothing", async () => {
+    // @rule P10
+    // @rule DP11
+    const { result, events } = await mount(hubPoolWithFeesPlan());
     press(result, { kind: "block", blockId: "hub-pool-pool" });
     act(() => result.current.canvas.requestRemove("hub-pool-pool"));
-    await waitFor(() => expect(confirmRemove).toHaveBeenCalled());
-    expect(result.current.buildPlan.plan).toEqual(hubPoolPlan());
+    expect(result.current.canvas.removeConfirmId).toBe("hub-pool-pool");
+    expect(result.current.buildPlan.plan).toEqual(hubPoolWithFeesPlan());
     expect(result.current.selection.selectedId).toBe("hub-pool-pool");
     expect(events).toEqual([]);
   });
 
-  it("removes nothing when a guard refuses to let the selection go", async () => {
+  it("[I6, P10] the confirm removes with the cascade, clears the selection and counts the cascade", async () => {
+    // @rule I6
+    // @rule P10
+    const beforeRemove = vi.fn();
+    const { result, events } = await mount(hubPoolWithFeesPlan(), {}, { beforeRemove });
+    press(result, { kind: "block", blockId: "hub-pool-pool" });
+    act(() => result.current.canvas.requestRemove("hub-pool-pool"));
+    act(() => result.current.canvas.confirmRemove());
+    expect(result.current.buildPlan.plan.hub.chains).toEqual([]);
+    expect(beforeRemove).toHaveBeenCalledTimes(1);
+    expect(result.current.selection.selectedId).toBeNull();
+    expect(result.current.canvas.removeConfirmId).toBeNull();
+    // Its Swap · auto and its Collect fees went with it.
+    expect(events).toEqual([{ type: "blockRemoved", kind: "uniswapV4Pool", cascadeCount: 2 }]);
+  });
+
+  it("[P10] Cancel closes the confirm and keeps everything", async () => {
+    // @rule P10
+    const { result, events } = await mount(hubSupplyPlan());
+    press(result, { kind: "block", blockId: "hub-supply-supply" });
+    act(() => result.current.canvas.requestRemove("hub-supply-supply"));
+    act(() => result.current.canvas.cancelRemove());
+    expect(result.current.canvas.removeConfirmId).toBeNull();
+    expect(result.current.buildPlan.plan).toEqual(hubSupplyPlan());
+    expect(events).toEqual([]);
+  });
+
+  it("[P10] the confirm closes when another block is selected", async () => {
+    // @rule P10
+    const { result } = await mount(supplyBorrowPlan());
+    press(result, { kind: "block", blockId: "hub-aave-supply" });
+    act(() => result.current.canvas.requestRemove("hub-aave-supply"));
+    press(result, { kind: "block", blockId: "hub-aave-borrow" });
+    expect(result.current.canvas.removeConfirmId).toBeNull();
+    press(result, { kind: "block", blockId: "hub-aave-supply" });
+    expect(result.current.canvas.removeConfirmId).toBeNull();
+  });
+
+  it("removes nothing when a guard still refuses to let the selection go", async () => {
     // @rule HU3
     // @rule I6
     const { result } = await mount(hubPoolPlan());
@@ -421,31 +470,61 @@ describe("useBuildCanvas: remove (I6, HU4)", () => {
       result.current.selection.registerGuard(guard);
     });
     act(() => result.current.canvas.requestRemove("hub-pool-pool"));
-    await waitFor(() => expect(guard.onRefused).toHaveBeenCalled());
+    act(() => result.current.canvas.confirmRemove());
+    expect(guard.onRefused).toHaveBeenCalled();
     expect(result.current.buildPlan.plan).toEqual(hubPoolPlan());
   });
 
-  it("restores the plan on Undo while nothing else changed, and only then", async () => {
+  it("[DP3] a spoke chain's remove brings the spoke's share down with it", async () => {
+    // @rule DP3
     // @rule I6
-    const { result, events } = await mount(hubSupplyPlan());
-    press(result, { kind: "block", blockId: "hub-supply-supply" });
-    act(() => result.current.canvas.requestRemove("hub-supply-supply"));
-    await waitFor(() => expect(toasts.toast).toHaveBeenCalledTimes(1));
-    const undo = toasts.toast.mock.calls[0]?.[1]?.action?.onClick as () => void;
-    act(() => undo());
-    expect(result.current.buildPlan.plan).toEqual(hubSupplyPlan());
-    expect(events.at(-1)).toEqual({ type: "blockRestored", kind: "aaveSupply" });
+    const { result, events } = await mount(spokePoolPlan());
+    press(result, { kind: "block", blockId: "rh-pool-pool" });
+    act(() => result.current.canvas.requestRemove("rh-pool-pool"));
+    act(() => result.current.canvas.confirmRemove());
+    expect(result.current.buildPlan.plan.spokes).toEqual([
+      { network: "robinhood", sharePct: 0, chains: [] },
+    ]);
+    expect(events).toEqual([{ type: "blockRemoved", kind: "uniswapV4Pool", cascadeCount: 1 }]);
+  });
 
-    // Remove again, change the plan, then Undo: too late, nothing is restored.
-    act(() => result.current.canvas.requestRemove("hub-supply-supply"));
-    await waitFor(() => expect(toasts.toast).toHaveBeenCalledTimes(2));
-    const staleUndo = toasts.toast.mock.calls[1]?.[1]?.action?.onClick as () => void;
-    press(result, { kind: "addNetwork" });
-    choose(result, "addSpoke:robinhood");
-    const changed = result.current.buildPlan.plan;
-    act(() => staleUndo());
-    expect(result.current.buildPlan.plan).toEqual(changed);
-    expect(events.filter((e) => e.type === "blockRestored")).toHaveLength(1);
+  it("[DP3] removing the last block of one spoke chain leaves the spoke at its other chains' sum", async () => {
+    // @rule DP3
+    // @rule I6
+    const chain = (id: string, sharePct: number) => ({
+      id,
+      sharePct,
+      steps: [
+        { id: `${id}-swap`, family: "flow" as const, kind: "swap" as const, auto: true },
+        {
+          id: `${id}-pool`,
+          family: "position" as const,
+          kind: "uniswapV4Pool" as const,
+          config: { poolId: TEST_POOL_IDS.robinhood },
+        },
+      ],
+    });
+    const plan: BuildPlan = {
+      version: 1,
+      hub: { chains: [] },
+      spokes: [
+        { network: "robinhood", sharePct: 35, chains: [chain("rh-a", 20), chain("rh-b", 15)] },
+      ],
+    };
+    const { result } = await mount(plan);
+    press(result, { kind: "block", blockId: "rh-a-pool" });
+    act(() =>
+      result.current.canvas.onKeyDown({
+        key: "Delete",
+        target: document.body,
+        preventDefault() {},
+      }),
+    );
+    act(() => result.current.canvas.confirmRemove());
+    const spoke = result.current.buildPlan.plan.spokes[0];
+    expect(spoke?.chains.map((c) => c.id)).toEqual(["rh-b"]);
+    // The released share goes back to Idle input: the spoke holds exactly what its chains hold.
+    expect(spoke?.sharePct).toBe(15);
   });
 
   it("refuses to remove an app-owned Swap · auto on its own", async () => {
@@ -470,15 +549,46 @@ describe("useBuildCanvas: keyboard (I10)", () => {
     "Delete",
     // Review F1 of PR #36: a Mac keyboard's delete key sends Backspace.
     "Backspace",
-  ])("removes the selected block on %s", async (name) => {
+  ])("[DP11] opens the remove confirm of the selected block on %s", async (name) => {
     // @rule I10
+    // @rule DP11
     const { result, events } = await mount(hubSupplyPlan());
     press(result, { kind: "block", blockId: "hub-supply-supply" });
     const event = key(name);
     act(() => result.current.canvas.onKeyDown(event));
-    await waitFor(() => expect(result.current.buildPlan.plan.hub.chains).toEqual([]));
     expect(event.preventDefault).toHaveBeenCalled();
-    expect(events).toEqual([{ type: "blockRemoved", kind: "aaveSupply" }]);
+    expect(result.current.canvas.removeConfirmId).toBe("hub-supply-supply");
+    // Nothing is removed until the confirm says so.
+    expect(result.current.buildPlan.plan).toEqual(hubSupplyPlan());
+    expect(events).toEqual([]);
+  });
+
+  it("[L3] Delete on a focused panel control does not ask to remove the block", async () => {
+    // @rule I10
+    const { result } = await mount(hubSupplyPlan());
+    press(result, { kind: "block", blockId: "hub-supply-supply" });
+    const slot = document.createElement("section");
+    slot.setAttribute("data-build-panel-slot", "");
+    const slider = document.createElement("div");
+    slot.append(slider);
+    document.body.append(slot);
+    for (const name of ["Delete", "Backspace"]) {
+      const event = key(name, slider);
+      act(() => result.current.canvas.onKeyDown(event));
+      expect(event.preventDefault).not.toHaveBeenCalled();
+    }
+    expect(result.current.canvas.removeConfirmId).toBeNull();
+  });
+
+  it("[P10] Escape closes an open remove confirm", async () => {
+    // @rule P10
+    const { result } = await mount(hubSupplyPlan());
+    press(result, { kind: "block", blockId: "hub-supply-supply" });
+    act(() => result.current.canvas.onKeyDown(key("Delete")));
+    const escapeKey = key("Escape");
+    act(() => result.current.canvas.onKeyDown(escapeKey));
+    expect(escapeKey.preventDefault).toHaveBeenCalled();
+    expect(result.current.canvas.removeConfirmId).toBeNull();
   });
 
   it.each([
@@ -678,13 +788,13 @@ describe("useBuildCanvas: content", () => {
     ]);
   });
 
-  it("keeps a removed block's network out of the panel once it is gone", async () => {
+  it("leaves nothing selected once the selected block is removed", async () => {
     // @rule AN10
     const { result } = await mount(hubSupplyPlan());
     press(result, { kind: "block", blockId: "hub-supply-supply" });
-    expect(result.current.canvas.panelProps.head?.networkName).toBe("Arbitrum");
     act(() => result.current.canvas.requestRemove("hub-supply-supply"));
-    await waitFor(() => expect(result.current.canvas.panelProps.head).toBeNull());
+    act(() => result.current.canvas.confirmRemove());
+    expect(result.current.selection.selectedId).toBeNull();
     expect(findBlock(result.current.buildPlan.plan, "hub-supply-supply")).toBeNull();
   });
 });
