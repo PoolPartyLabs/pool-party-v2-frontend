@@ -324,6 +324,13 @@ export const ANALYTICS_EVENTS = [
   // `builder_build_submitted` and `builder_build_completed` are NOT declared: Review does not exist
   // yet, so there is nothing to submit to and no save that opens it (D20). They arrive with the
   // Review handoff, `completed` on the write that opens Review, never on the click.
+  //
+  // POO-2187 (the configuration panel, POO-2171) RETIRED `builder_block_restored`: Remove now asks
+  // in the panel first (handoff P10, decision DP11), so the Undo toast it counted is gone, and
+  // `builder_block_removed` carries `cascade_count`. The panel adds five: `configured` (Use wrote
+  // the kind's defaults), `applied` (Apply changes landed, with the fields it changed),
+  // `discarded`, `leave_blocked` (an exit refused while changes were not applied: blocked intent)
+  // and `limit_hit` (the Allocation slider stopped at its ceiling, with which ceiling).
   "builder_build_viewed",
   "builder_build_started",
   "builder_block_added",
@@ -331,7 +338,11 @@ export const ANALYTICS_EVENTS = [
   "builder_network_removed",
   "builder_flow_block_inserted",
   "builder_block_removed",
-  "builder_block_restored",
+  "builder_block_configured",
+  "builder_block_applied",
+  "builder_block_discarded",
+  "builder_block_leave_blocked",
+  "builder_block_limit_hit",
   "builder_build_blocked",
   "builder_build_abandoned",
   "builder_build_error",
@@ -646,6 +657,30 @@ export type AnalyticsBuildBlockKind = (typeof ANALYTICS_BUILD_BLOCK_KINDS)[numbe
 export const ANALYTICS_BUILD_NETWORKS = ["arbitrum", "robinhood"] as const;
 
 export type AnalyticsBuildNetwork = (typeof ANALYTICS_BUILD_NETWORKS)[number];
+
+/**
+ * The fields of the configuration panel, as `builder_block_applied` names them (POO-2187):
+ * `PanelField` of `src/features/manager/fund/build/panel/usePanelDraft.ts`, mirrored for the leaf
+ * reason above; `buildAnalytics.ts` maps them through a total `Record`.
+ */
+export const ANALYTICS_BUILD_PANEL_FIELDS = [
+  "pool",
+  "asset",
+  "range",
+  "quote",
+  "slippage",
+  "allocation",
+] as const;
+
+export type AnalyticsBuildPanelField = (typeof ANALYTICS_BUILD_PANEL_FIELDS)[number];
+
+/**
+ * Which ceiling stopped the Allocation slider (POO-2187, handoff P8): a protocol cap of the
+ * mandate, a network cap, or what the other blocks under Idle input already take.
+ */
+export const ANALYTICS_BUILD_LIMITS = ["mandate_cap", "network_cap", "parent_share"] as const;
+
+export type AnalyticsBuildLimit = (typeof ANALYTICS_BUILD_LIMITS)[number];
 
 /**
  * The error codes THIS repository produces, for a failure that never reached the API.
@@ -1171,6 +1206,18 @@ export interface AnalyticsParams {
   via?: "template" | "palette" | "port";
   /** Which side of a card a flow block was inserted on (POO-2157, handoff I4). */
   slot?: "before" | "after";
+  /**
+   * On `builder_block_removed` (POO-2187): how many OTHER steps the remove took with the block (its
+   * Swap · auto, its Collect fees, the Borrow under a Supply). A count, never the steps' names.
+   */
+  cascade_count?: number;
+  /**
+   * On `builder_block_applied` (POO-2187): the panel fields that Apply changed, comma-joined in a
+   * fixed order, each a value of {@link ANALYTICS_BUILD_PANEL_FIELDS} ("allocation", "range,slippage").
+   */
+  fields_changed?: string;
+  /** On `builder_block_limit_hit` (POO-2187): which ceiling stopped the slider. */
+  limit?: AnalyticsBuildLimit;
   chain_id?: number;
   step_kind?:
     | "approve"

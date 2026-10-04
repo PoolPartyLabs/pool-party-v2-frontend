@@ -1055,14 +1055,62 @@
         "menuOpenNetwork": "Elija una red en el menú. La red se agrega al canvas con su bridge.",
         "portMenuOpenSupply": "Elija qué va después de {title}. Un bloque de Préstamo usa ese suministro como garantía.",
         "portMenuOpenBefore": "Elija qué va antes de {title}.",
-        "portMenuOpenAfter": "Elija qué va después de {title}."
+        "portMenuOpenAfter": "Elija qué va después de {title}.",
+        "networkTooltip": "Este bloque está en {network}. Un bloque toma la red del lugar en el que se ubica en el canvas.",
+        "moreAbout": "Más sobre {label}",
+        "use": "Usar",
+        "useItem": "Usar {title}",
+        "apply": "Aplicar cambios",
+        "status": {
+          "pending": "Cambios sin aplicar",
+          "applied": "Todos los cambios aplicados",
+          "discard": "Descartar"
+        },
+        "leave": {
+          "title": "Cambios sin aplicar",
+          "body": "Hizo cambios en este bloque y no los aplicó. Aplique o descarte los cambios antes de pasar a otro bloque.",
+          "discard": "Descartar cambios"
+        },
+        "confirm": {
+          "title": "¿Quitar {title}?",
+          "titleEmpty": "¿Quitar este bloque?",
+          "share": "El {pct}% asignado a este bloque regresa a Entrada inactiva.",
+          "removedWith": "{count, plural, =1 {{steps} se quita junto con él.} other {{steps} se quitan junto con él.}}",
+          "swapAuto": "su paso Swap · auto",
+          "swap": "su paso Swap",
+          "collectFees": "su paso Cobrar comisiones",
+          "block": "el bloque {title}",
+          "cancel": "Cancelar"
+        },
+        "allocation": {
+          "label": "Asignación",
+          "help": "Del capital de la estrategia. El porcentaje se muestra en la línea que alimenta este bloque.",
+          "helpCap": "Del capital de la estrategia. Su mandato limita {protocol} al {pct}%. El porcentaje se muestra en la línea que alimenta este bloque.",
+          "capProtocol": "Máximo alcanzado. Su mandato limita {protocol} al {pct}%.",
+          "capNetwork": "Máximo alcanzado. Su mandato limita {network} al {pct}%.",
+          "room": "Máximo alcanzado. Los demás bloques conectados a Entrada inactiva ya ocupan el {pct}%.",
+          "needMore": "¿Necesita más?"
+        },
+        "slippage": {
+          "label": "Slippage máximo",
+          "help": "Cancela la transacción si el precio se mueve más allá de este valor antes de que se confirme.",
+          "custom": "Personalizado",
+          "customLabel": "Slippage máximo personalizado, en porcentaje",
+          "max": "El máximo es {pct}%."
+        },
+        "link": {
+          "tokens": "Editar mandato · Tokens",
+          "pools": "Editar mandato · Pools",
+          "limits": "Editar mandato · Límites"
+        },
+        "refused": {
+          "notInMandate": "Este pool o activo ya no está en su mandato en esta red. Elija otro o edite el mandato.",
+          "shareExceedsParent": "Este porcentaje supera el espacio disponible por encima de este bloque. Redúzcalo y vuelva a aplicar.",
+          "other": "No se pudo aplicar este cambio. Revise los valores e inténtelo de nuevo."
+        }
       },
       "network": {
         "remove": "Quitar {network}"
-      },
-      "toast": {
-        "removed": "Bloque quitado",
-        "undo": "Deshacer"
       },
       "planUnreadable": "Este borrador tiene un plan que esta versión de la app no puede abrir. Se conserva tal como está; agregar un bloque inicia un plan nuevo, que lo reemplaza cuando guarde.",
       "review": {

@@ -1055,14 +1055,62 @@
         "menuOpenNetwork": "메뉴에서 네트워크를 선택하세요. 네트워크는 브리지와 함께 캔버스에 추가됩니다.",
         "portMenuOpenSupply": "{title} 뒤에 올 항목을 선택하세요. 차입 블록은 그 공급을 담보로 사용합니다.",
         "portMenuOpenBefore": "{title} 앞에 올 항목을 선택하세요.",
-        "portMenuOpenAfter": "{title} 뒤에 올 항목을 선택하세요."
+        "portMenuOpenAfter": "{title} 뒤에 올 항목을 선택하세요.",
+        "networkTooltip": "이 블록은 {network}에 있습니다. 블록의 네트워크는 캔버스에서 블록이 놓인 위치에 따라 정해집니다.",
+        "moreAbout": "{label} 자세히 보기",
+        "use": "사용",
+        "useItem": "{title} 사용",
+        "apply": "변경 사항 적용",
+        "status": {
+          "pending": "적용되지 않은 변경 사항",
+          "applied": "모든 변경 사항 적용됨",
+          "discard": "폐기"
+        },
+        "leave": {
+          "title": "적용되지 않은 변경 사항",
+          "body": "이 블록을 변경했지만 적용하지 않았습니다. 다른 블록으로 이동하기 전에 변경 사항을 적용하거나 폐기하세요.",
+          "discard": "변경 사항 폐기"
+        },
+        "confirm": {
+          "title": "{title} 블록을 제거하시겠습니까?",
+          "titleEmpty": "이 블록을 제거하시겠습니까?",
+          "share": "이 블록에 배분된 {pct}%는 대기 자금 (입력)으로 돌아갑니다.",
+          "removedWith": "{count, plural, =1 {{steps}도 함께 제거됩니다.} other {{steps}도 함께 제거됩니다.}}",
+          "swapAuto": "스왑 · 자동 단계",
+          "swap": "스왑 단계",
+          "collectFees": "수수료 수령 단계",
+          "block": "{title} 블록",
+          "cancel": "취소"
+        },
+        "allocation": {
+          "label": "배분",
+          "help": "전략 자금에 대한 비율입니다. 이 비율은 이 블록에 자금을 공급하는 선에 표시됩니다.",
+          "helpCap": "전략 자금에 대한 비율입니다. 운용 방침이 {protocol}의 상한을 {pct}%로 제한합니다. 이 비율은 이 블록에 자금을 공급하는 선에 표시됩니다.",
+          "capProtocol": "최대치에 도달했습니다. 운용 방침이 {protocol}의 상한을 {pct}%로 제한합니다.",
+          "capNetwork": "최대치에 도달했습니다. 운용 방침이 {network}의 상한을 {pct}%로 제한합니다.",
+          "room": "최대치에 도달했습니다. 대기 자금 (입력)에 연결된 다른 블록이 이미 {pct}%를 차지하고 있습니다.",
+          "needMore": "더 필요하신가요?"
+        },
+        "slippage": {
+          "label": "최대 슬리피지",
+          "help": "확정되기 전에 가격이 이 값을 넘어 변동하면 트랜잭션을 취소합니다.",
+          "custom": "직접 입력",
+          "customLabel": "직접 입력한 최대 슬리피지(퍼센트 단위)",
+          "max": "최대값은 {pct}%입니다."
+        },
+        "link": {
+          "tokens": "운용 방침 편집 · 토큰",
+          "pools": "운용 방침 편집 · 풀",
+          "limits": "운용 방침 편집 · 한도"
+        },
+        "refused": {
+          "notInMandate": "이 풀 또는 자산은 이 네트워크의 운용 방침에 더 이상 포함되어 있지 않습니다. 다른 항목을 선택하거나 운용 방침을 편집하세요.",
+          "shareExceedsParent": "이 비율이 이 블록 위에 남은 여유분보다 큽니다. 값을 낮춘 뒤 다시 적용하세요.",
+          "other": "이 변경 사항을 적용할 수 없습니다. 값을 확인한 뒤 다시 시도하세요."
+        }
       },
       "network": {
         "remove": "{network} 제거"
-      },
-      "toast": {
-        "removed": "블록을 제거했습니다",
-        "undo": "실행 취소"
       },
       "planUnreadable": "이 초안에는 현재 버전의 앱에서 열 수 없는 계획이 있습니다. 계획은 그대로 보존됩니다. 블록을 추가하면 새 계획이 시작되며, 저장할 때 기존 계획을 대체합니다.",
       "review": {
