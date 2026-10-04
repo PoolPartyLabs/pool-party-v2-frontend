@@ -846,6 +846,165 @@
       "summaryTokens": "代币",
       "summaryPools": "资金池",
       "summaryLimits": "限额"
+    },
+    "canvas": {
+      "title": "搭建您的策略",
+      "subtitle": "用区块组装策略。拖入一个区块，然后在右侧配置。区块只使用授权范围允许的内容。",
+      "hint": "Ctrl + 滚轮缩放（Mac 上为 Cmd + 滚轮）· 拖动以移动 · 双击以适应画布",
+      "zoom": {
+        "in": "放大",
+        "out": "缩小",
+        "fit": "适应视图",
+        "readout": "{pct}%",
+        "readoutLabel": "缩放 {pct}%"
+      },
+      "bar": {
+        "back": "上一步：授权范围",
+        "next": "下一步：核对"
+      },
+      "palette": {
+        "fromMandate": "来自您的授权范围",
+        "flowBlocks": "流程区块",
+        "comingSoon": "即将推出",
+        "caption": "将区块拖到画布上。它以空白状态加入：在右侧选择资金池、资产或市场。",
+        "soon": "即将",
+        "soonTooltip": "即将推出"
+      },
+      "blocks": {
+        "uniswapV4Pool": {
+          "protocol": "Uniswap v4",
+          "type": "流动性头寸"
+        },
+        "uniswapV3Pool": {
+          "protocol": "Uniswap v3",
+          "type": "流动性头寸"
+        },
+        "aaveSupply": {
+          "protocol": "Aave v3",
+          "type": "供应"
+        },
+        "aaveBorrow": {
+          "protocol": "Aave v3",
+          "type": "借款"
+        },
+        "pendle": {
+          "protocol": "Pendle",
+          "type": "Yield 头寸"
+        },
+        "gmxPerp": {
+          "protocol": "GMX",
+          "type": "永续头寸"
+        }
+      },
+      "card": {
+        "poolTitle": "{token0} / {token1}",
+        "poolCaption": "{protocol} · {fee}%",
+        "supplyTitle": "供应 {symbol}",
+        "borrowTitle": "借入 {symbol}",
+        "aaveCaption": "Aave v3",
+        "aaveCaptionOnNetwork": "Aave v3 · {network}",
+        "emptySupply": "Aave v3 供应",
+        "emptyBorrow": "Aave v3 借款",
+        "pickPool": "选择资金池",
+        "pickAsset": "选择资产",
+        "invalid": "已不在您的授权范围内",
+        "accessibleName": "{title}，{caption}，位于 {network}，占资金的 {pct}%"
+      },
+      "spine": {
+        "deposit": {
+          "title": "存款",
+          "caption": "USDC · Arbitrum"
+        },
+        "idleInput": {
+          "title": "闲置资金（入口）",
+          "caption": "在 hub 上等待的 USDC"
+        },
+        "idleOutput": {
+          "title": "闲置资金（出口）",
+          "caption": "回到 hub 的 USDC"
+        },
+        "income": {
+          "title": "收益（手续费）",
+          "caption": "USDC · Arbitrum"
+        },
+        "withdraw": {
+          "title": "提款",
+          "caption": "USDC · Arbitrum"
+        },
+        "lockTooltip": "固定：Arbitrum 上的 USDC"
+      },
+      "flow": {
+        "swapAuto": "Swap · 自动",
+        "swap": "Swap",
+        "collectFees": "领取手续费",
+        "bridgeAuto": "Bridge · 自动"
+      },
+      "tooltip": {
+        "addProtocol": "在 {network} 上添加协议",
+        "addNetwork": "添加网络",
+        "portBefore": "插入流程区块：Swap",
+        "portAfterPool": "插入流程区块：领取手续费",
+        "portAfterSupply": "插入区块：借款、Swap",
+        "portAfterBorrow": "插入流程区块：Swap",
+        "swapAuto": "应用将 {token} Swap 为资金池代币",
+        "swapAutoSupply": "应用将 {token} Swap 为 {asset}",
+        "swap": "Swap 为您授权范围内的其他代币",
+        "bridgeAuto": "将 {token} 转移到 {network}",
+        "collectFees": "领取头寸赚取的手续费，计入收益（手续费）",
+        "share": "占策略资金的 {pct}%"
+      },
+      "empty": {
+        "addProtocol": "添加协议",
+        "addNetwork": "添加网络",
+        "startHere": "从这里开始：在 Arbitrum 上添加协议（圆形），或添加网络（方框）。"
+      },
+      "menu": {
+        "protocols": {
+          "title": "{network} 上的协议",
+          "footer": "您的授权范围在 {network} 上的协议。",
+          "none": "您的授权范围中没有可在 {network} 上使用的协议。",
+          "borrowDisabled": "借款 · 请添加在供应区块下方"
+        },
+        "comingSoonType": "{type} · 即将推出",
+        "link": {
+          "protocols": "编辑授权范围 · 协议",
+          "networks": "编辑授权范围 · 网络"
+        },
+        "networks": {
+          "title": "来自您授权范围的网络",
+          "option": "spoke · 会添加一个 Bridge",
+          "placed": "{count, plural, =1 {{names} 已在画布上。} other {{names} 已在画布上。}}",
+          "none": "您的授权范围没有其他网络。"
+        },
+        "port": {
+          "before": "在 {title} 之前",
+          "after": "在 {title} 之后",
+          "borrowOption": "以此供应为抵押借款",
+          "flowOption": "流程区块",
+          "footerAfterSupply": "可放在此供应之后的授权范围区块。",
+          "footer": "可放在此处的授权范围区块。"
+        }
+      },
+      "panel": {
+        "overline": "配置区块",
+        "nothingTitle": "未选择任何内容",
+        "nothingBody": "在画布上添加协议或网络，或从左侧拖入区块。新区块以空白状态加入；您在这里选择其资金池、资产或市场。",
+        "remove": "移除区块",
+        "typeNoPool": "{type} · 尚未选择资金池",
+        "typeNoAsset": "{type} · 尚未选择资产",
+        "menuOpen": "在菜单中选择一个协议。区块将添加到 {network} 并在此打开。",
+        "menuOpenNetwork": "在菜单中选择一个网络。该网络将连同其 Bridge 添加到画布上。",
+        "portMenuOpenSupply": "选择 {title} 之后的内容。借款区块以该供应作为抵押。",
+        "portMenuOpenBefore": "选择 {title} 之前的内容。",
+        "portMenuOpenAfter": "选择 {title} 之后的内容。"
+      },
+      "network": {
+        "remove": "移除 {network}"
+      },
+      "toast": {
+        "removed": "区块已移除",
+        "undo": "撤销"
+      }
     }
   }
 }

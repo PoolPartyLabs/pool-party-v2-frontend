@@ -1,14 +1,15 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen tests
- * @implements-rules-version v2 (POO-2122 rules v1, POO-2142 rules v2)
+ * @implements-rules-version v3 (POO-2122 rules v1, POO-2142 rules v2, POO-2167 rules v3)
  * @analytics-events none, the names are ASSERTED here rather than emitted; a test is never an
  *   emitter, so a screen cannot count as instrumented by being tested
  *
  * The shell's own behaviour, with the five step bodies as the placeholders they still are:
  * navigation (R6, R9), the skipped Pools step (R29), deep links, Save & exit (R7), completion on
  * settlement rather than on a click (R6), and the funnel, including the two events that only exist
- * because something did NOT happen (blocked and abandoned).
+ * because something did NOT happen (blocked and abandoned). The position protocol in these fixtures
+ * is Uniswap v4, the one the buildathon scope offers (R20 v3, POO-2167).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -93,13 +94,13 @@ function seed(id: string, over: Partial<MandateDraft> = {}): MandateDraft {
   return stored;
 }
 
-/** A hub Uniswap v3 pool the Pools step's adapter could have returned, with USDC on one side. */
+/** A hub Uniswap v4 pool the Pools step's adapter could have returned, with USDC on one side. */
 function arbPool(over: Partial<MandatePoolRef> = {}): MandatePoolRef {
   return {
     id: "arb-weth-usdc-30",
     address: "0xc6962004f452be9203591991d15f6b388e09e8d0",
     network: "arbitrum",
-    protocol: "uniswap-v3",
+    protocol: "uniswap-v4",
     token0: {
       address: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
       symbol: "WETH",
@@ -132,7 +133,7 @@ function wholeMandate(id: string): MandateDraft {
   const catalog = buildMandateCatalog();
   const base = withProtocols(createEmptyDraft("2026-10-01T00:00:00.000Z", id), [
     ...REQUIRED_PROTOCOLS,
-    "uniswap-v3",
+    "uniswap-v4",
   ]);
   const added = addPool(base, arbPool(), catalog);
   if (isBlocked(added)) throw new Error(`fixture: the pool was refused, ${added.blocked.reason}`);
@@ -147,7 +148,7 @@ function wholeMandate(id: string): MandateDraft {
     // The two rows `capRows` derives here: the chosen position protocol and the unlocked token.
     caps: {
       networks: {},
-      protocols: { "uniswap-v3": { noCap: true, pct: 0 } },
+      protocols: { "uniswap-v4": { noCap: true, pct: 0 } },
       tokens: { [tokenKey(weth)]: { noCap: true, pct: 0 } },
     },
   });
@@ -177,7 +178,7 @@ function lostItsPools(id: string): MandateDraft {
 function withPools(id: string, over: Partial<MandateDraft> = {}): MandateDraft {
   const base = withProtocols(createEmptyDraft("2026-10-01T00:00:00.000Z", id), [
     ...REQUIRED_PROTOCOLS,
-    "uniswap-v3",
+    "uniswap-v4",
   ]);
   return seed(id, { ...base, savedAt: "2026-10-01T00:00:00.000Z", ...over });
 }
@@ -393,6 +394,32 @@ describe("FundStrategyBuilderScreen", () => {
 
     expect(await screen.findByText("MANDATE · STEP 3 OF 4")).toBeInTheDocument();
     expect(emitted("builder_mandate_started")).toHaveLength(0);
+  });
+
+  /**
+   * R20 v3 (POO-2167): a draft parked on Pools whose only position protocol was Uniswap v3 loses the
+   * Pools step when it is loaded, while `lastStep` still says "pools". The shell must never draw that
+   * step, not even for the one render before the resume moves `lastStep`: the view event and the URL
+   * are the two traces such a frame leaves.
+   */
+  // @rule R9 @rule R20 v3
+  it("[R9] never draws a Pools step the stored draft lost on load, and resumes past it", async () => {
+    nav.params = new URLSearchParams("draft=d-v3-parked&step=pools");
+    seed("d-v3-parked", {
+      protocols: [...REQUIRED_PROTOCOLS, "uniswap-v3"],
+      passedSteps: ["networks", "protocols", "tokens"],
+      lastStep: "pools",
+    });
+
+    renderWithProviders(<FundStrategyBuilderScreen />);
+
+    expect(await screen.findByText("MANDATE · STEP 4 OF 4")).toBeInTheDocument();
+    expect(emitted("builder_mandate_step_viewed")).toEqual([{ step: "limits" }]);
+    expect(nav.replace).not.toHaveBeenCalledWith(
+      expect.stringContaining("step=pools"),
+      expect.anything(),
+    );
+    expect(screen.queryByText(/STEP 0 OF/)).not.toBeInTheDocument();
   });
 
   // @rule R9
@@ -889,7 +916,7 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
     const catalog = buildMandateCatalog();
     let base = withProtocols(createEmptyDraft("2026-10-01T00:00:00.000Z", id), [
       ...REQUIRED_PROTOCOLS,
-      "uniswap-v3",
+      "uniswap-v4",
     ]);
     for (const token of catalog.tokensFor(base.networks, base.protocols)) {
       if (!token.priced) continue;
@@ -901,10 +928,10 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
     const [usdc, other] = base.tokens;
     if (!usdc || !other) throw new Error("fixture: expected two tokens");
     const pool: MandatePoolRef = {
-      id: "arb-v3-test-5",
+      id: "arb-v4-test-5",
       address: "0x1111111111111111111111111111111111111111",
       network: "arbitrum",
-      protocol: "uniswap-v3",
+      protocol: "uniswap-v4",
       token0: { address: usdc.address, symbol: usdc.symbol, name: usdc.name, logoUrl: null },
       token1: { address: other.address, symbol: other.symbol, name: other.name, logoUrl: null },
       feeBps: 5,

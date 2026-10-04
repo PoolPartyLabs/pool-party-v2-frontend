@@ -846,6 +846,165 @@
       "summaryTokens": "Tokens",
       "summaryPools": "Pools",
       "summaryLimits": "Limits"
+    },
+    "canvas": {
+      "title": "Bauen Sie Ihre Strategie",
+      "subtitle": "Stellen Sie die Strategie aus Blöcken zusammen. Ziehen Sie einen hinein und konfigurieren Sie ihn rechts. Blöcke nutzen nur, was das Mandat erlaubt.",
+      "hint": "Strg + Scrollen zum Zoomen (Cmd + Scrollen auf dem Mac) · Ziehen zum Verschieben · Doppelklick zum Einpassen",
+      "zoom": {
+        "in": "Vergrößern",
+        "out": "Verkleinern",
+        "fit": "An Ansicht anpassen",
+        "readout": "{pct}%",
+        "readoutLabel": "Zoom {pct}%"
+      },
+      "bar": {
+        "back": "Zurück: Mandat",
+        "next": "Weiter: Überprüfung"
+      },
+      "palette": {
+        "fromMandate": "Aus Ihrem Mandat",
+        "flowBlocks": "Flow-Blöcke",
+        "comingSoon": "Demnächst",
+        "caption": "Ziehen Sie einen Block auf den Canvas. Er kommt leer an: Wählen Sie rechts den Pool, das Asset oder den Markt.",
+        "soon": "Bald",
+        "soonTooltip": "Demnächst"
+      },
+      "blocks": {
+        "uniswapV4Pool": {
+          "protocol": "Uniswap v4",
+          "type": "Liquiditätsposition"
+        },
+        "uniswapV3Pool": {
+          "protocol": "Uniswap v3",
+          "type": "Liquiditätsposition"
+        },
+        "aaveSupply": {
+          "protocol": "Aave v3",
+          "type": "Bereitstellung"
+        },
+        "aaveBorrow": {
+          "protocol": "Aave v3",
+          "type": "Kreditaufnahme"
+        },
+        "pendle": {
+          "protocol": "Pendle",
+          "type": "Yield-Position"
+        },
+        "gmxPerp": {
+          "protocol": "GMX",
+          "type": "Perp-Position"
+        }
+      },
+      "card": {
+        "poolTitle": "{token0} / {token1}",
+        "poolCaption": "{protocol} · {fee}%",
+        "supplyTitle": "{symbol} bereitstellen",
+        "borrowTitle": "{symbol} leihen",
+        "aaveCaption": "Aave v3",
+        "aaveCaptionOnNetwork": "Aave v3 · {network}",
+        "emptySupply": "Aave v3 Bereitstellung",
+        "emptyBorrow": "Aave v3 Kreditaufnahme",
+        "pickPool": "Pool wählen",
+        "pickAsset": "Asset wählen",
+        "invalid": "Nicht mehr in Ihrem Mandat",
+        "accessibleName": "{title}, {caption}, auf {network}, {pct}% des Kapitals"
+      },
+      "spine": {
+        "deposit": {
+          "title": "Einzahlung",
+          "caption": "USDC · Arbitrum"
+        },
+        "idleInput": {
+          "title": "Eingang (ungenutzt)",
+          "caption": "USDC wartet auf dem Hub"
+        },
+        "idleOutput": {
+          "title": "Ausgang (ungenutzt)",
+          "caption": "USDC zurück auf dem Hub"
+        },
+        "income": {
+          "title": "Erträge (Gebühren)",
+          "caption": "USDC · Arbitrum"
+        },
+        "withdraw": {
+          "title": "Auszahlung",
+          "caption": "USDC · Arbitrum"
+        },
+        "lockTooltip": "Fest: USDC auf Arbitrum"
+      },
+      "flow": {
+        "swapAuto": "Swap · auto",
+        "swap": "Swap",
+        "collectFees": "Gebühren einsammeln",
+        "bridgeAuto": "Bridge · auto"
+      },
+      "tooltip": {
+        "addProtocol": "Protokoll auf {network} hinzufügen",
+        "addNetwork": "Netzwerk hinzufügen",
+        "portBefore": "Flow-Block einfügen: Swap",
+        "portAfterPool": "Flow-Block einfügen: Gebühren einsammeln",
+        "portAfterSupply": "Block einfügen: Kreditaufnahme, Swap",
+        "portAfterBorrow": "Flow-Block einfügen: Swap",
+        "swapAuto": "Die App swappt {token} in die Pool-Token",
+        "swapAutoSupply": "Die App swappt {token} in {asset}",
+        "swap": "Swappt in einen anderen Token Ihres Mandats",
+        "bridgeAuto": "Verschiebt {token} nach {network}",
+        "collectFees": "Sammelt die Pool-Gebühren in Erträge (Gebühren) ein",
+        "share": "{pct}% des Strategiekapitals"
+      },
+      "empty": {
+        "addProtocol": "Protokoll hinzufügen",
+        "addNetwork": "Netzwerk hinzufügen",
+        "startHere": "Hier beginnen: Fügen Sie ein Protokoll auf Arbitrum (Kreis) oder ein Netzwerk (Box) hinzu."
+      },
+      "menu": {
+        "protocols": {
+          "title": "Protokolle auf {network}",
+          "footer": "Protokolle Ihres Mandats auf {network}.",
+          "none": "Kein Protokoll Ihres Mandats ist auf {network} verfügbar.",
+          "borrowDisabled": "Kreditaufnahme · unter einem Bereitstellungsblock hinzufügen"
+        },
+        "comingSoonType": "{type} · demnächst",
+        "link": {
+          "protocols": "Mandat bearbeiten · Protokolle",
+          "networks": "Mandat bearbeiten · Netzwerke"
+        },
+        "networks": {
+          "title": "Netzwerke aus Ihrem Mandat",
+          "option": "Spoke · fügt eine Bridge hinzu",
+          "placed": "{count, plural, =1 {{names} ist bereits auf dem Canvas.} other {{names} sind bereits auf dem Canvas.}}",
+          "none": "Ihr Mandat hat kein weiteres Netzwerk."
+        },
+        "port": {
+          "before": "Vor {title}",
+          "after": "Nach {title}",
+          "borrowOption": "Gegen diese Bereitstellung leihen",
+          "flowOption": "Flow-Block",
+          "footerAfterSupply": "Blöcke Ihres Mandats, die nach dieser Bereitstellung passen.",
+          "footer": "Blöcke Ihres Mandats, die hier passen."
+        }
+      },
+      "panel": {
+        "overline": "Block konfigurieren",
+        "nothingTitle": "Nichts ausgewählt",
+        "nothingBody": "Fügen Sie auf dem Canvas ein Protokoll oder ein Netzwerk hinzu, oder ziehen Sie einen Block von links hinein. Ein neuer Block kommt leer an; hier wählen Sie seinen Pool, sein Asset oder seinen Markt.",
+        "remove": "Block entfernen",
+        "typeNoPool": "{type} · noch kein Pool",
+        "typeNoAsset": "{type} · noch kein Asset",
+        "menuOpen": "Wählen Sie im Menü ein Protokoll. Der Block wird auf {network} hinzugefügt und öffnet sich hier.",
+        "menuOpenNetwork": "Wählen Sie im Menü ein Netzwerk. Das Netzwerk wird mit seiner Bridge zum Canvas hinzugefügt.",
+        "portMenuOpenSupply": "Wählen Sie, was nach {title} kommt. Ein Kreditaufnahme-Block nutzt diese Bereitstellung als Sicherheit.",
+        "portMenuOpenBefore": "Wählen Sie, was vor {title} kommt.",
+        "portMenuOpenAfter": "Wählen Sie, was nach {title} kommt."
+      },
+      "network": {
+        "remove": "{network} entfernen"
+      },
+      "toast": {
+        "removed": "Block entfernt",
+        "undo": "Rückgängig"
+      }
     }
   }
 }

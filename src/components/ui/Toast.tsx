@@ -12,10 +12,17 @@ import { cn } from "@/lib/utils/cn";
 
 /**
  * Maps sonner's internal CSS custom properties onto Pool Party design tokens so toasts inherit
- * the live theme instead of sonner's built-in palette. Cast to React.CSSProperties because these
- * are sonner-specific custom properties, not standard style keys.
+ * the live theme instead of sonner's built-in palette, and sets the app font. Cast to
+ * React.CSSProperties because the `--*` keys are sonner-specific custom properties, not standard
+ * style keys.
  */
 const toasterTokenStyle = {
+  // POO-2173: sonner's injected stylesheet sets a system font stack on `[data-sonner-toaster]`, so
+  // without this every toast was drawn in system-ui while the rest of the app is Poppins. Same stack
+  // as the `--font-sans` token in globals.css, spelled with the next/font variable the locale layout
+  // sets on <body>. It has to be an inline style: sonner's rule is unlayered, so a Tailwind utility
+  // class (which lives in a cascade layer) would lose to it.
+  fontFamily: "var(--font-poppins), ui-sans-serif, system-ui, sans-serif",
   "--normal-bg": "var(--color-surface-raised)",
   "--normal-text": "var(--color-foreground)",
   "--normal-border": "var(--color-border)",

@@ -846,6 +846,165 @@
       "summaryTokens": "Tokens",
       "summaryPools": "Pools",
       "summaryLimits": "Limits"
+    },
+    "canvas": {
+      "title": "Build your strategy",
+      "subtitle": "Assemble the strategy from blocks. Drag one in, then configure it on the right. Blocks only use what the mandate allows.",
+      "hint": "Ctrl + scroll to zoom (Cmd + scroll on Mac) · drag to move · double-click to fit",
+      "zoom": {
+        "in": "Zoom in",
+        "out": "Zoom out",
+        "fit": "Fit to view",
+        "readout": "{pct}%",
+        "readoutLabel": "Zoom {pct}%"
+      },
+      "bar": {
+        "back": "Back: Mandate",
+        "next": "Next: Review"
+      },
+      "palette": {
+        "fromMandate": "From your mandate",
+        "flowBlocks": "Flow blocks",
+        "comingSoon": "Coming soon",
+        "caption": "Drag a block onto the canvas. It arrives empty: pick the pool, asset or market on the right.",
+        "soon": "Soon",
+        "soonTooltip": "Coming soon"
+      },
+      "blocks": {
+        "uniswapV4Pool": {
+          "protocol": "Uniswap v4",
+          "type": "Liquidity position"
+        },
+        "uniswapV3Pool": {
+          "protocol": "Uniswap v3",
+          "type": "Liquidity position"
+        },
+        "aaveSupply": {
+          "protocol": "Aave v3",
+          "type": "Supply"
+        },
+        "aaveBorrow": {
+          "protocol": "Aave v3",
+          "type": "Borrow"
+        },
+        "pendle": {
+          "protocol": "Pendle",
+          "type": "Yield position"
+        },
+        "gmxPerp": {
+          "protocol": "GMX",
+          "type": "Perp position"
+        }
+      },
+      "card": {
+        "poolTitle": "{token0} / {token1}",
+        "poolCaption": "{protocol} · {fee}%",
+        "supplyTitle": "Supply {symbol}",
+        "borrowTitle": "Borrow {symbol}",
+        "aaveCaption": "Aave v3",
+        "aaveCaptionOnNetwork": "Aave v3 · {network}",
+        "emptySupply": "Aave v3 Supply",
+        "emptyBorrow": "Aave v3 Borrow",
+        "pickPool": "Pick a pool",
+        "pickAsset": "Pick an asset",
+        "invalid": "No longer in your mandate",
+        "accessibleName": "{title}, {caption}, on {network}, {pct}% of the capital"
+      },
+      "spine": {
+        "deposit": {
+          "title": "Deposit",
+          "caption": "USDC · Arbitrum"
+        },
+        "idleInput": {
+          "title": "Idle input",
+          "caption": "USDC waiting on the hub"
+        },
+        "idleOutput": {
+          "title": "Idle output",
+          "caption": "USDC back on the hub"
+        },
+        "income": {
+          "title": "Income (fees)",
+          "caption": "USDC · Arbitrum"
+        },
+        "withdraw": {
+          "title": "Withdraw",
+          "caption": "USDC · Arbitrum"
+        },
+        "lockTooltip": "Fixed: USDC on Arbitrum"
+      },
+      "flow": {
+        "swapAuto": "Swap · auto",
+        "swap": "Swap",
+        "collectFees": "Collect fees",
+        "bridgeAuto": "Bridge · auto"
+      },
+      "tooltip": {
+        "addProtocol": "Add protocol on {network}",
+        "addNetwork": "Add network",
+        "portBefore": "Insert a flow block: Swap",
+        "portAfterPool": "Insert a flow block: Collect fees",
+        "portAfterSupply": "Insert a block: Borrow, Swap",
+        "portAfterBorrow": "Insert a flow block: Swap",
+        "swapAuto": "The app swaps {token} into the pool tokens",
+        "swapAutoSupply": "The app swaps {token} into {asset}",
+        "swap": "Swaps into another token of your mandate",
+        "bridgeAuto": "Moves {token} to {network}",
+        "collectFees": "Claims the pool fees into Income (fees)",
+        "share": "{pct}% of the strategy's capital"
+      },
+      "empty": {
+        "addProtocol": "Add protocol",
+        "addNetwork": "Add network",
+        "startHere": "Start here: add a protocol on Arbitrum (circle), or add a network (box)."
+      },
+      "menu": {
+        "protocols": {
+          "title": "Protocols on {network}",
+          "footer": "Protocols of your mandate on {network}.",
+          "none": "No protocol of your mandate is available on {network}.",
+          "borrowDisabled": "Borrow · add it under a Supply block"
+        },
+        "comingSoonType": "{type} · coming soon",
+        "link": {
+          "protocols": "Edit mandate · Protocols",
+          "networks": "Edit mandate · Networks"
+        },
+        "networks": {
+          "title": "Networks from your mandate",
+          "option": "spoke · adds a bridge",
+          "placed": "{count, plural, =1 {{names} is already on the canvas.} other {{names} are already on the canvas.}}",
+          "none": "Your mandate has no other network."
+        },
+        "port": {
+          "before": "Before {title}",
+          "after": "After {title}",
+          "borrowOption": "Borrow against this supply",
+          "flowOption": "Flow block",
+          "footerAfterSupply": "Blocks of your mandate that fit after this supply.",
+          "footer": "Blocks of your mandate that fit here."
+        }
+      },
+      "panel": {
+        "overline": "Configure block",
+        "nothingTitle": "Nothing selected",
+        "nothingBody": "Add a protocol or a network on the canvas, or drag a block from the left. A new block arrives empty; you pick its pool, asset or market here.",
+        "remove": "Remove block",
+        "typeNoPool": "{type} · no pool yet",
+        "typeNoAsset": "{type} · no asset yet",
+        "menuOpen": "Choose a protocol in the menu. The block is added on {network} and opens here.",
+        "menuOpenNetwork": "Choose a network in the menu. The network is added to the canvas with its bridge.",
+        "portMenuOpenSupply": "Choose what comes after {title}. A Borrow block uses that supply as its collateral.",
+        "portMenuOpenBefore": "Choose what comes before {title}.",
+        "portMenuOpenAfter": "Choose what comes after {title}."
+      },
+      "network": {
+        "remove": "Remove {network}"
+      },
+      "toast": {
+        "removed": "Block removed",
+        "undo": "Undo"
+      }
     }
   }
 }

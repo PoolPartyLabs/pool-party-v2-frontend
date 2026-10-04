@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep
- * @implements-rules-version v2 (POO-2143 rules v2)
+ * @implements-rules-version v3 (POO-2143 rules v2, POO-2167 rules v3)
  * @analytics-events none, the shell emits
  *
  * POO-2123 [R12] / [R19] / [R20] / [R21] / [R22], epic POO-2119. Mandate step 2: the protocols this
@@ -16,7 +16,8 @@
  * deployment that does not exist, and the manager would discover it on step 4 with no pools. When
  * that intersection is empty the column is dropped entirely rather than drawn as a bare label, and
  * the row goes disabled (R21) alongside a protocol the product lists but cannot operate. GMX was that
- * protocol until the buildathon scope commented it out (R21 v2, POO-2143); the mechanism stays.
+ * protocol until the buildathon scope commented it out (R21 v2, POO-2143); Uniswap v3 positions are
+ * that protocol now (R20 v3, POO-2167), through the same mechanism and the same "Coming soon".
  *
  * A disabled row still takes its click and reports it through `onBlocked`, exactly as on step 1:
  * "which protocol did managers keep trying to add" is the one question this screen can answer for

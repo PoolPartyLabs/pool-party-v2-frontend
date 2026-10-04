@@ -5,9 +5,10 @@ import localFont from "next/font/local";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AnalyticsListener } from "@/components/analytics/AnalyticsListener";
 import { ConsentBanner } from "@/components/analytics/ConsentBanner";
+import { Toaster } from "@/components/ui/Toast";
 import { routing } from "@/i18n/routing";
 import { CONSENT_DEFAULT_SNIPPET } from "@/lib/analytics/consentSnippet";
 import "../globals.css";
@@ -30,6 +31,30 @@ const poppins = localFont({
 // self-hosted, exposing the same `--font-geist-mono` var. Applied below via `GeistMono.variable`.
 
 const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
+
+/**
+ * POO-2173 review F1: where toasts sit relative to the rest of the page chrome.
+ *
+ * Bottom offset. Desktop keeps the position the Toast primitive was designed with, bottom-right at
+ * sonner's own 24px offset, which is the fallback of the variable below. Below `lg` the shell shows
+ * its fixed bottom tab bar (`AppShell`, `lg:hidden`), and a toast at 24px would sit on top of it, so
+ * `max-lg` defines `--pp-toast-bottom` as the spacing step `AppFooter` reserves under the page for
+ * that bar (`pb-24`). The shell has no tab-bar height token; that step is the one number it owns for
+ * "clear the bar", and `layout.test.tsx` fails if the two drift apart. The offset goes through both
+ * `offset` and `mobileOffset`: sonner switches to the latter at 600px, but the bar is shown up to
+ * 1024px, so the breakpoint lives in the class, not in the library.
+ * PP-NOTE: not seen in a browser yet.
+ */
+const TOASTER_BOTTOM_OFFSET = "var(--pp-toast-bottom, 24px)";
+const TOASTER_CLASS_NAME = "max-lg:[--pp-toast-bottom:calc(var(--spacing)*24)]";
+
+/**
+ * Stacking. sonner ships `z-index: 999999999`, which put a toast over the consent banner. The app's
+ * own scale is: mobile tab bar 40, dialogs / sheets / consent banner 50. A toast at 45 clears the tab
+ * bar and stays under the banner, which must remain answerable. Inline style, because sonner's rule
+ * is unlayered and a utility class would lose to it.
+ */
+const TOASTER_Z_INDEX = 45;
 
 export const metadata: Metadata = {
   title: "Pool Party",
@@ -61,6 +86,8 @@ export default async function LocaleLayout({
     notFound();
   }
   setRequestLocale(locale);
+  // POO-2173 review F2: sonner's live region is announced to screen readers; name it in the page language.
+  const tShell = await getTranslations({ locale, namespace: "shell" });
 
   return (
     <html lang={locale}>
@@ -77,11 +104,25 @@ export default async function LocaleLayout({
          * Privy/wagmi/viem bundle (POO-491). `AnalyticsIdentify` moved there too (it needs a mounted
          * WagmiProvider). `ConsentBanner` + `AnalyticsListener` are wallet-free and stay global so
          * consent + pageview tracking still run on every route.
+         *
+         * POO-2173: `Toaster` is the render target of the imperative `toast(...)` API (fund builder
+         * "Draft saved", strategy manage view, drafts list). It was never mounted, so every toast was
+         * silently dropped. It is mounted ONCE, here, because a toast can be raised from any route and
+         * a second Toaster would draw every toast twice. It needs no provider and is wallet-free, so
+         * it stays out of the `(auth)` tree. sonner injects its own `<style>` at runtime, which the
+         * existing `style-src 'unsafe-inline'` allows; there is no nonce to forward.
          */}
         <NextIntlClientProvider>
           {children}
           <ConsentBanner />
           <AnalyticsListener />
+          <Toaster
+            containerAriaLabel={tShell("toaster.ariaLabel")}
+            className={TOASTER_CLASS_NAME}
+            offset={{ bottom: TOASTER_BOTTOM_OFFSET }}
+            mobileOffset={{ bottom: TOASTER_BOTTOM_OFFSET }}
+            style={{ zIndex: TOASTER_Z_INDEX }}
+          />
         </NextIntlClientProvider>
       </body>
     </html>

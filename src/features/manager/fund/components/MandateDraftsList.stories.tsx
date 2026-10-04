@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-044
  * @name MandateDraftsList.stories
- * @implements-rules-version v1 (POO-2127 rules v1)
+ * @implements-rules-version v3 (POO-2127 rules v1, POO-2167 rules v3)
  * @analytics-events none, a story file. The card emits its own open and delete events; a story that
  *   emitted them would put workbench noise in the GA4 series
  *
@@ -42,7 +42,8 @@ function draft(
   withPools = false,
 ): MandateDraft {
   const base = createEmptyDraft(ago(minutesAgo + 60), id);
-  const shaped = withPools ? withProtocols(base, [...REQUIRED_PROTOCOLS, "uniswap-v3"]) : base;
+  // Uniswap v4: the position protocol the buildathon scope offers (R20 v3, POO-2167).
+  const shaped = withPools ? withProtocols(base, [...REQUIRED_PROTOCOLS, "uniswap-v4"]) : base;
   return {
     ...shaped,
     name,

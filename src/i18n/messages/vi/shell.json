@@ -82,5 +82,8 @@
     "v1": "V1",
     "v2": "V2",
     "tooltip": "Chuyển giữa trình tạo hiện tại (V1) và bản xem trước hợp đồng quỹ (V2)."
+  },
+  "toaster": {
+    "ariaLabel": "Thông báo"
   }
 }

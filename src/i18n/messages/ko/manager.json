@@ -846,6 +846,165 @@
       "summaryTokens": "토큰",
       "summaryPools": "풀",
       "summaryLimits": "한도"
+    },
+    "canvas": {
+      "title": "전략 구성하기",
+      "subtitle": "블록으로 전략을 구성하세요. 블록을 끌어다 놓고 오른쪽에서 설정하세요. 블록은 운용 방침이 허용하는 범위만 사용합니다.",
+      "hint": "Ctrl + 스크롤로 확대/축소 (Mac은 Cmd + 스크롤) · 드래그로 이동 · 더블클릭으로 화면 맞춤",
+      "zoom": {
+        "in": "확대",
+        "out": "축소",
+        "fit": "화면에 맞추기",
+        "readout": "{pct}%",
+        "readoutLabel": "확대/축소 {pct}%"
+      },
+      "bar": {
+        "back": "이전: 운용 방침",
+        "next": "다음: 검토"
+      },
+      "palette": {
+        "fromMandate": "운용 방침에서",
+        "flowBlocks": "플로우 블록",
+        "comingSoon": "출시 예정",
+        "caption": "블록을 캔버스로 끌어다 놓으세요. 비어 있는 상태로 추가됩니다. 풀, 자산 또는 마켓은 오른쪽에서 선택하세요.",
+        "soon": "예정",
+        "soonTooltip": "출시 예정"
+      },
+      "blocks": {
+        "uniswapV4Pool": {
+          "protocol": "Uniswap v4",
+          "type": "유동성 포지션"
+        },
+        "uniswapV3Pool": {
+          "protocol": "Uniswap v3",
+          "type": "유동성 포지션"
+        },
+        "aaveSupply": {
+          "protocol": "Aave v3",
+          "type": "공급"
+        },
+        "aaveBorrow": {
+          "protocol": "Aave v3",
+          "type": "차입"
+        },
+        "pendle": {
+          "protocol": "Pendle",
+          "type": "일드 포지션"
+        },
+        "gmxPerp": {
+          "protocol": "GMX",
+          "type": "무기한 포지션"
+        }
+      },
+      "card": {
+        "poolTitle": "{token0} / {token1}",
+        "poolCaption": "{protocol} · {fee}%",
+        "supplyTitle": "{symbol} 공급",
+        "borrowTitle": "{symbol} 차입",
+        "aaveCaption": "Aave v3",
+        "aaveCaptionOnNetwork": "Aave v3 · {network}",
+        "emptySupply": "Aave v3 공급",
+        "emptyBorrow": "Aave v3 차입",
+        "pickPool": "풀 선택",
+        "pickAsset": "자산 선택",
+        "invalid": "더 이상 운용 방침에 없음",
+        "accessibleName": "{title}, {caption}, {network}, 자본의 {pct}%"
+      },
+      "spine": {
+        "deposit": {
+          "title": "입금",
+          "caption": "USDC · Arbitrum"
+        },
+        "idleInput": {
+          "title": "대기 자금 (입력)",
+          "caption": "허브에서 대기 중인 USDC"
+        },
+        "idleOutput": {
+          "title": "대기 자금 (출력)",
+          "caption": "허브로 돌아온 USDC"
+        },
+        "income": {
+          "title": "수익 (수수료)",
+          "caption": "USDC · Arbitrum"
+        },
+        "withdraw": {
+          "title": "출금",
+          "caption": "USDC · Arbitrum"
+        },
+        "lockTooltip": "고정: Arbitrum의 USDC"
+      },
+      "flow": {
+        "swapAuto": "스왑 · 자동",
+        "swap": "스왑",
+        "collectFees": "수수료 수령",
+        "bridgeAuto": "브리지 · 자동"
+      },
+      "tooltip": {
+        "addProtocol": "{network}에 프로토콜 추가",
+        "addNetwork": "네트워크 추가",
+        "portBefore": "플로우 블록 삽입: 스왑",
+        "portAfterPool": "플로우 블록 삽입: 수수료 수령",
+        "portAfterSupply": "블록 삽입: 차입, 스왑",
+        "portAfterBorrow": "플로우 블록 삽입: 스왑",
+        "swapAuto": "앱이 자동으로 스왑합니다: {token} → 풀 토큰",
+        "swapAutoSupply": "앱이 자동으로 스왑합니다: {token} → {asset}",
+        "swap": "운용 방침의 다른 토큰으로 스왑합니다",
+        "bridgeAuto": "{token}을(를) {network}(으)로 옮깁니다",
+        "collectFees": "풀 수수료를 수령해 수익 (수수료) 블록으로 보냅니다",
+        "share": "전략 자본의 {pct}%"
+      },
+      "empty": {
+        "addProtocol": "프로토콜 추가",
+        "addNetwork": "네트워크 추가",
+        "startHere": "여기서 시작하세요: Arbitrum에 프로토콜을 추가하거나(원) 네트워크를 추가하세요(상자)."
+      },
+      "menu": {
+        "protocols": {
+          "title": "{network}의 프로토콜",
+          "footer": "{network}에서 쓸 수 있는 운용 방침의 프로토콜입니다.",
+          "none": "{network}에서 사용할 수 있는 운용 방침의 프로토콜이 없습니다.",
+          "borrowDisabled": "차입 · 공급 블록 아래에 추가하세요"
+        },
+        "comingSoonType": "{type} · 출시 예정",
+        "link": {
+          "protocols": "운용 방침 편집 · 프로토콜",
+          "networks": "운용 방침 편집 · 네트워크"
+        },
+        "networks": {
+          "title": "운용 방침의 네트워크",
+          "option": "스포크 · 브리지 추가",
+          "placed": "{count, plural, =1 {{names}은(는) 이미 캔버스에 있습니다.} other {{names}은(는) 이미 캔버스에 있습니다.}}",
+          "none": "운용 방침에 다른 네트워크가 없습니다."
+        },
+        "port": {
+          "before": "{title} 앞",
+          "after": "{title} 뒤",
+          "borrowOption": "이 공급을 담보로 차입",
+          "flowOption": "플로우 블록",
+          "footerAfterSupply": "이 공급 뒤에 놓을 수 있는 운용 방침의 블록입니다.",
+          "footer": "여기에 놓을 수 있는 운용 방침의 블록입니다."
+        }
+      },
+      "panel": {
+        "overline": "블록 설정",
+        "nothingTitle": "선택된 항목 없음",
+        "nothingBody": "캔버스에 프로토콜이나 네트워크를 추가하거나 왼쪽에서 블록을 끌어오세요. 새 블록은 비어 있는 상태로 추가되며, 풀, 자산 또는 마켓은 여기서 선택합니다.",
+        "remove": "블록 제거",
+        "typeNoPool": "{type} · 아직 풀 없음",
+        "typeNoAsset": "{type} · 아직 자산 없음",
+        "menuOpen": "메뉴에서 프로토콜을 선택하세요. 블록은 {network}에 추가되고 여기에서 열립니다.",
+        "menuOpenNetwork": "메뉴에서 네트워크를 선택하세요. 네트워크는 브리지와 함께 캔버스에 추가됩니다.",
+        "portMenuOpenSupply": "{title} 뒤에 올 항목을 선택하세요. 차입 블록은 그 공급을 담보로 사용합니다.",
+        "portMenuOpenBefore": "{title} 앞에 올 항목을 선택하세요.",
+        "portMenuOpenAfter": "{title} 뒤에 올 항목을 선택하세요."
+      },
+      "network": {
+        "remove": "{network} 제거"
+      },
+      "toast": {
+        "removed": "블록을 제거했습니다",
+        "undo": "실행 취소"
+      }
     }
   }
 }

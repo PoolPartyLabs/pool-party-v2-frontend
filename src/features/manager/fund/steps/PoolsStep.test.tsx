@@ -1,10 +1,15 @@
 /**
  * @id PP-MGR-CMP-038
  * @name PoolsStep.test
- * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v3 (POO-2142 rules v2, POO-2167 rules v3)
  * @analytics-events none, the shell emits
  *
  * POO-2125 [R11] / [R13] / [R29] to [R38], epic POO-2119. Mandate step 4.
+ *
+ * Rules v3 (POO-2167): Uniswap v3 positions are unavailable, so these cases run on Uniswap v4. The
+ * protocol tabs are the one place the Uniswap v3 path itself is under test, and they run on a
+ * test-only catalog that turns it back on, the mock-mode world this code returns to when the
+ * protocol does.
  *
  * The data adapter is `mandatePoolSource` and it has its own tests, so it is mocked here: these
  * cases are about what the SCREEN decides, and five of them carry the weight.
@@ -56,7 +61,7 @@ vi.mock("../mandatePoolSource", () => ({
   findMandatePoolByAddress: vi.fn(),
 }));
 
-import { buildMandateCatalog } from "../mandateCatalog";
+import { buildMandateCatalog, type MandateCatalog } from "../mandateCatalog";
 import {
   addPool,
   addToken,
@@ -77,6 +82,17 @@ import { PoolsStep } from "./PoolsStep";
 
 const catalog = buildMandateCatalog();
 
+/**
+ * Test-only: the real catalog with Uniswap v3 positions available again (R20 v3 turns them off).
+ * Only the cases that exercise the v3 path itself use it, together with {@link draftWithV3}.
+ */
+const catalogV3On: MandateCatalog = {
+  ...catalog,
+  protocols: catalog.protocols.map((protocol) =>
+    protocol.id === "uniswap-v3" ? { ...protocol, available: true } : protocol,
+  ),
+};
+
 /** Real Arbitrum addresses, so a pool's tokens resolve against the bundled token lists. */
 const USDC = "0xaf88d065e77c8cc2239327c5edb3a432268e5831";
 const WETH = "0x82af49447d8a07e3bd95bd0d56f35241523fbab1";
@@ -95,7 +111,15 @@ function draftOn(spokes: NetworkId[] = []): MandateDraft {
     spokes,
     catalog,
   );
-  return withProtocols(base, [...REQUIRED_PROTOCOLS, "uniswap-v3", "uniswap-v4"]);
+  return withProtocols(base, [...REQUIRED_PROTOCOLS, "uniswap-v4"]);
+}
+
+/**
+ * {@link draftOn} naming both position protocols, for {@link catalogV3On}. Built by hand, because
+ * `withProtocols` refuses Uniswap v3 positions whatever catalog the screen holds (R20 v3).
+ */
+function draftWithV3(): MandateDraft {
+  return { ...draftOn(), protocols: [...REQUIRED_PROTOCOLS, "uniswap-v3", "uniswap-v4"] };
 }
 
 /** One side of a pool, named the way the adapter names it. */
@@ -109,7 +133,7 @@ function pool(overrides: Partial<MandatePoolRef> = {}): MandatePoolRef {
     id: "arb-weth-usdc-30",
     address: "0xc6962004f452be9203591991d15f6b388e09e8d0",
     network: "arbitrum",
-    protocol: "uniswap-v3",
+    protocol: "uniswap-v4",
     token0: side(WETH, "WETH"),
     token1: side(USDC, "USDC"),
     feeBps: 30,
@@ -409,7 +433,7 @@ describe("PoolsStep", () => {
       network: "arbitrum",
       tokenAddress: draft.tokens[0]?.address,
       secondTokenAddress: undefined,
-      protocols: ["uniswap-v3", "uniswap-v4"],
+      protocols: ["uniswap-v4"],
     });
     // Deduped by pool id: both searches answered the same two pools. In `waitFor` because the
     // publish is a passive effect: it runs AFTER the commit the results head above matched, so a
@@ -701,10 +725,7 @@ describe("PoolsStep", () => {
     // The lookup being CALLED is one commit earlier than the card the resolution renders, so both
     // reads wait: the first wait proved only that the request went out.
     await waitFor(() =>
-      expect(findMandatePoolByAddress).toHaveBeenCalledWith("arbitrum", PASTED, [
-        "uniswap-v3",
-        "uniswap-v4",
-      ]),
+      expect(findMandatePoolByAddress).toHaveBeenCalledWith("arbitrum", PASTED, ["uniswap-v4"]),
     );
     await waitFor(() => expect(resultCard("pasted")).toBeInTheDocument());
   });
@@ -875,7 +896,7 @@ describe("PoolsStep", () => {
     expect(await screen.findByText("1 pool with at least one of your tokens")).toBeInTheDocument();
   });
 
-  // @rule R31
+  // @rule R31 (the Uniswap v3 path, on the test-only catalog that turns it back on)
   it("counts the results per protocol in the tabs and filters on the chosen one", async () => {
     searchAnswers([
       pool({ id: "v3-a", protocol: "uniswap-v3" }),
@@ -883,7 +904,7 @@ describe("PoolsStep", () => {
       pool({ id: "v4-a", protocol: "uniswap-v4" }),
     ]);
     const user = userEvent.setup();
-    renderStep();
+    renderStep(draftWithV3(), { source: catalogV3On });
 
     expect(await screen.findByRole("tab", { name: "All · 3" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Uniswap v3 · 2" })).toBeInTheDocument();
@@ -914,8 +935,10 @@ describe("PoolsStep", () => {
 
   // @rule R31
   it("shows the catalog empty state in real mode instead of the superseded pending notice", async () => {
+    // R20 v3 (POO-2167): Uniswap v4 is the only position protocol, so a real-mode read answers no
+    // Uniswap v3 pool. An empty v4 catalog answer is the list's own empty state (POO-2133).
     services.mockMode = false;
-    searchAnswers([pool({ id: "v3-a", protocol: "uniswap-v3" })]);
+    searchAnswers([]);
     const user = userEvent.setup();
     renderStep();
 
@@ -963,7 +986,7 @@ describe("PoolsStep", () => {
     await waitFor(() => resultCard("arb-weth-usdc-30"));
     const card = within(resultCard("arb-weth-usdc-30"));
     expect(card.getByText("WETH/ARB")).toBeInTheDocument();
-    expect(card.getByText("Uniswap v3")).toBeInTheDocument();
+    expect(card.getByText("Uniswap v4")).toBeInTheDocument();
     expect(card.getByText(/0\.30%/)).toBeInTheDocument();
     expect(card.getByText(/31% selected/)).toBeInTheDocument();
     // The pool would pull a token into the mandate, and says so before it is added (R32).

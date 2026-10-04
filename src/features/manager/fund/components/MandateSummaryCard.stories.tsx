@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-026
  * @name MandateSummaryCard.stories
- * @implements-rules-version v2 (POO-2127 rules v1, POO-2142 rules v2)
+ * @implements-rules-version v3 (POO-2127 rules v1, POO-2142 rules v2, POO-2167 rules v3)
  * @analytics-events none, a story file over a read-only card that emits nothing
  *
  * Storybook coverage for the mandate summary (POO-2127 [B1]).
@@ -45,13 +45,13 @@ function token(symbol: string, network: NetworkId): MandateTokenRef {
   };
 }
 
-/** A pool fixture with the fields the summary reads. */
+/** A pool fixture with the fields the summary reads. Uniswap v4 only (R20 v3, POO-2167). */
 function pool(index: number, symbol: string, feeBps: number): MandatePoolRef {
   return {
     id: `p-${index}`,
     address: `0x${String(index).padStart(40, "0")}`,
     network: "arbitrum",
-    protocol: index % 2 === 0 ? "uniswap-v4" : "uniswap-v3",
+    protocol: "uniswap-v4",
     token0: { address: `0x${symbol}`, symbol, name: symbol, logoUrl: null },
     token1: { address: "0xusdc", symbol: "USDC", name: "USD Coin", logoUrl: null },
     feeBps,
