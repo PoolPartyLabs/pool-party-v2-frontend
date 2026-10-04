@@ -114,6 +114,38 @@ export const positionDetailSchema = record.extend({
     })
     .nullable(),
 });
+export const fundHistorySchema = record.extend({
+  coreVault: addressSchema,
+  events: z.array(
+    record.extend({
+      type: z.string(),
+      kind: z.string(),
+      eventName: z.string(),
+      chainId: z.enum(["42161", "4663"]),
+      vault: addressSchema,
+      transactionHash: poolIdSchema,
+      blockNumber: uint,
+      logIndex: z.number().int().nonnegative(),
+      timestamp: z.string().datetime(),
+      account: addressSchema.optional(),
+      amounts: z.record(z.string()).optional(),
+      details: z.record(z.unknown()).optional(),
+    }),
+  ),
+  nextCursor: z
+    .string()
+    .regex(/^\d{1,16}:\d{1,32}:0x[0-9a-f]{64}:\d{1,10}$/)
+    .nullable(),
+  indexing: z.array(
+    record.extend({
+      chainId: z.enum(["42161", "4663"]),
+      vault: addressSchema,
+      nextBlock: uint,
+      updatedAt: z.string().datetime(),
+    }),
+  ),
+});
+export type FundHistory = z.infer<typeof fundHistorySchema>;
 export const transitSchema = record.extend({
   transitId: poolIdSchema,
   direction: z.string(),

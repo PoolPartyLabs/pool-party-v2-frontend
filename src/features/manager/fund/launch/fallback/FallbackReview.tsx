@@ -12,7 +12,6 @@ import { formatUnits, parseUnits } from "viem";
 import { Button } from "@/components/ui/Button";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { isMockMode } from "@/lib/services";
-import { useV2MandateCatalog } from "../../useV2MandateCatalog";
 import { type FundLaunchDraft, startFundLaunch, useV2ReviewDraft } from "../index";
 import { validateLogo } from "../review";
 import { type AllocationEdits, fallbackAllocations } from "./allocation";
@@ -36,7 +35,7 @@ export function FallbackReview({ draftId }: { draftId: string }) {
 function RealFallbackReview({ draftId }: { draftId: string }) {
   // PP-INTEGRATION-POINT: POO-2177 owns Review persistence, seed preview, validation and staged upload.
   const binding = useV2ReviewDraft(draftId);
-  const catalog = useV2MandateCatalog();
+  const catalog = binding.catalog;
   const translate = useTranslations("manager");
   const [edits, setEdits] = useState<FallbackEdits>({});
   const [allocationEdits, setAllocationEdits] = useState<AllocationEdits>({});
@@ -333,7 +332,13 @@ function RealFallbackReview({ draftId }: { draftId: string }) {
           <li key={`${blocker.code}-${blocker.field ?? ""}`}>{translate(blocker.messageKey)}</li>
         ))}
         {preview.blockers.map((blocker) => (
-          <li key={blocker}>{translate("fallbackReview.executionBlocked")}</li>
+          <li key={blocker}>
+            {translate(
+              blocker === "DUPLICATE_AAVE_RESERVE"
+                ? "fundLaunch.duplicateAaveReserve"
+                : "fallbackReview.executionBlocked",
+            )}
+          </li>
         ))}
         {feeInputInvalid ? <li>{translate("fundLaunch.validation")}</li> : null}
       </ul>

@@ -60,6 +60,7 @@
     "launch": "Launch · {count} signatures"
   },
   "fundLaunch": {
+    "reportWait": "Waiting for an accepted report. Typically 14-19 minutes, sometimes longer. We keep checking until it arrives; pausing preserves your progress.",
     "journeyTitle": "Fund launch journey",
     "journeyWait": "Each transaction needs your confirmation. Bridge credits and reports may take minutes.",
     "receiptLabel": "Receipt",
@@ -77,6 +78,7 @@
     "returnManager": "Back to Manager Console",
     "uploadFailed": "Logo upload failed. Try another PNG or JPG.",
     "buildGap": "The Build plan needs execution details before launch. Return to Build to finish ranges and allocations.",
+    "duplicateAaveReserve": "Only one Aave Supply block per reserve is allowed on each network. Remove the duplicate before launch.",
     "validation": "Check your identity, fee bounds, minimum deposit and USDC balance.",
     "partialFailure": "Some steps succeeded. Retry resumes this step without creating another fund.",
     "realOnly": "Launch requires real mode. No signatures are requested with mock data.",
