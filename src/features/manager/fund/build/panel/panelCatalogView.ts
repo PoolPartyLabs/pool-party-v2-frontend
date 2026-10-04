@@ -21,6 +21,9 @@
  *   KEY's currency order (currency0 is the lower address), never by the order the catalog writes the
  *   pair in (`tokens`, `pairSymbols`). A bound the manager types is stored canonical plus a
  *   `displayInverted` flag, so everything downstream of this module speaks canonical.
+ * - **The price is derived from `sqrtPriceX96`, and the served price only checks it.** A disagreement
+ *   beyond {@link PRICE_CROSS_CHECK_TOLERANCE} (0.5%) refuses the read, so a panel never applies a
+ *   price that two fields of the same answer contradict.
  * - **`poolId` is the bare v4 PoolId** (bytes32, lowercase), the value a Pool block's `config.poolId`
  *   holds and the only id the live read accepts (decision A1). Mock mode has no PoolId (the mandate's
  *   mock Pools step lists slugs), so a mock row's `poolId` is its slug and the mock read answers to it.
@@ -42,6 +45,7 @@ import {
   type NetworkId,
   tokenKey,
 } from "../../mandateDraft";
+import type { LivePoolGrid } from "./poolRangeMath";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -179,13 +183,39 @@ export function priceFromSqrtPriceX96(
   return Number.isFinite(price) && price > 0 ? price : null;
 }
 
-/** The catalog's own price field when it is a positive number, else the one derived from the sqrt price. */
+/**
+ * How far the catalog's served price may sit from the price derived from `sqrtPriceX96` (relative to
+ * the derived one) before the whole read is refused: 0.5%. Wide enough for a served decimal that is
+ * rounded or a few seconds older than the sqrt price, narrow enough to catch a decimals slip, a coarse
+ * decimal on a low-priced pair or a price quoted the wrong way round.
+ */
+export const PRICE_CROSS_CHECK_TOLERANCE = 0.005;
+
+/**
+ * The canonical price of a pool: DERIVED from `sqrtPriceX96` and the decimals, with the catalog's
+ * `currentPrice.token1PerToken0` as a cross-check only.
+ *
+ * The sqrt price and the tick are the pool's own state, ordered by the pool key by Uniswap's
+ * definition. The served decimal is the API's field: its orientation and precision are pinned nowhere
+ * in this repo, and the range maths (which prefers `currentPrice` over the tick) would build presets,
+ * the status and the split from it. So the derived price is the one used, and a served price outside
+ * the tolerance (or one that is the reciprocal, or not a positive number) means the read cannot be
+ * trusted: it throws, and the hook answers `V2_INVALID_RESPONSE` with a retry instead of letting a
+ * panel apply a wrong price.
+ */
 function readCanonicalPrice(pool: CatalogPool, decimals0: number, decimals1: number): number {
-  const served = Number(pool.currentPrice.token1PerToken0);
-  if (Number.isFinite(served) && served > 0) return served;
   const derived = priceFromSqrtPriceX96(pool.sqrtPriceX96, decimals0, decimals1);
   if (derived === null) throw new Error("catalog pool price unavailable");
-  return derived;
+  const served = Number(pool.currentPrice.token1PerToken0);
+  if (Number.isFinite(served) && served > 0) {
+    const within = (target: number) =>
+      Math.abs(served - target) / target <= PRICE_CROSS_CHECK_TOLERANCE;
+    if (within(derived)) return derived;
+    if (within(1 / derived)) {
+      throw new Error("catalog pool price is inverted: it is the reciprocal of its sqrt price");
+    }
+  }
+  throw new Error("catalog pool price disagrees with its sqrt price");
 }
 
 // ---------------------------------------------------------------------------
@@ -240,7 +270,25 @@ export function toPanelPoolView(pool: CatalogPool): PanelPoolView {
       !ZERO_ADDRESS.test(pool.poolKey.currency0) &&
       !ZERO_ADDRESS.test(pool.poolKey.currency1) &&
       pool.tokens.every((token) => token.hubPriced),
-    hasActiveLiquidity: BigInt(pool.liquidity) > ZERO,
+    // The same test as `eligiblePool` (a string compare with "0"), so the two never disagree.
+    hasActiveLiquidity: pool.liquidity !== "0",
+  };
+}
+
+/**
+ * A pool view as the range maths' grid (`LivePoolGrid`, PP-MGR-LIB-029): the pool's own decimals,
+ * tick spacing, canonical price and current tick, in the names that module uses, so the panels never
+ * hand-map the two decimals (token0's goes first).
+ */
+export function toLivePoolGrid(
+  view: Pick<PanelPoolView, "token0" | "token1" | "tickSpacing" | "price" | "currentTick">,
+): LivePoolGrid {
+  return {
+    decimals0: view.token0.decimals,
+    decimals1: view.token1.decimals,
+    tickSpacing: view.tickSpacing,
+    currentPrice: view.price,
+    currentTick: view.currentTick,
   };
 }
 
@@ -322,20 +370,29 @@ export function reserveUsability(reserve: CatalogReserve): {
  * network. A reserve whose token the mandate does not hold is left out (P1: the mandate only); one
  * the mandate holds but Aave cannot take is listed with its reason, so the panel can show it
  * disabled. Aave is on the hub alone, so a spoke has no row. The catalog's order is kept.
+ *
+ * `selected` is the mandate's own Aave reserve selection (`MandateDraft.aaveV3Reserves`, token
+ * addresses): when the draft names its reserves, only those can ever be supplied to, because the
+ * fund's mandate carries that list (the launch refuses another after the fund exists). `undefined`
+ * means the draft names none and the mandate defaults to the available ones, so nothing is narrowed.
  */
 export function selectPanelReserves(
   reserves: readonly CatalogReserve[],
   tokens: readonly MandateTokenRef[],
   chainId: V2ChainId,
+  selected?: readonly string[],
 ): PanelReserveRow[] {
   const network = networkOfChain(chainId);
   const held = new Map<string, MandateTokenRef>();
   for (const token of tokens) {
     if (token.network === network) held.set(token.address.toLowerCase(), token);
   }
+  const chosen =
+    selected === undefined ? null : new Set(selected.map((address) => address.toLowerCase()));
   const rows: PanelReserveRow[] = [];
   for (const reserve of reserves) {
     if (reserve.chainId !== String(chainId)) continue;
+    if (chosen && !chosen.has(reserve.token.address.toLowerCase())) continue;
     const token = held.get(reserve.token.address.toLowerCase());
     if (!token) continue;
     const { usable, reason } = reserveUsability(reserve);

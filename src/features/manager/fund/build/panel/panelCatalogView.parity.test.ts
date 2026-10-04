@@ -14,11 +14,20 @@
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CatalogPool, CatalogReserve, CatalogToken } from "@/lib/api/v2/schemas";
-import { findPanelPoolFixture, panelReserveFixtures } from "@/mocks/data/buildPanelFixtures";
+import {
+  findPanelPoolFixture,
+  panelPoolFixtures,
+  panelReserveFixtures,
+} from "@/mocks/data/buildPanelFixtures";
 import { createEmptyDraft, depositTokenRefFor, withProtocols } from "../../mandateDraft";
 import { mapV2Pool, searchMandatePools } from "../../mandatePoolSource";
 import { buildRealCatalog, toV2MandateSelection } from "../../v2Mandate";
-import { panelPoolsFor, reserveUsability, toPanelPoolView } from "./panelCatalogView";
+import {
+  panelPoolsFor,
+  reserveUsability,
+  selectPanelReserves,
+  toPanelPoolView,
+} from "./panelCatalogView";
 
 const mocks = vi.hoisted(() => ({ list: vi.fn(), lookup: vi.fn() }));
 vi.mock("@/lib/services", () => ({ isMockMode: false }));
@@ -75,6 +84,14 @@ const VARIANTS: Array<[string, (pool: CatalogPool) => void]> = [
       pool.liquidity = "0";
     },
   ],
+  [
+    // Passes the uint schema. Both checks compare the string with "0", so both read it as non-zero:
+    // pinned here so that changing one of them shows up as a failure of the other.
+    "its liquidity is written 00",
+    (pool) => {
+      pool.liquidity = "00";
+    },
+  ],
 ];
 
 describe("eligibility parity with the Mandate step's pool search [R3]", () => {
@@ -97,13 +114,10 @@ describe("eligibility parity with the Mandate step's pool search [R3]", () => {
 });
 
 describe("row and live view share one PoolId [R4]", () => {
-  it.each([
-    [42161, "arb-v4-weth-usdc-5"],
-    [42161, "arb-v4-weth-usdc-30"],
-    [4663, "rbh-v4-weth-usdg-5"],
-  ] as const)("a draft row of %s %s names the pool the live read answers for", (chainId, id) => {
-    const pool = findPanelPoolFixture(chainId, id);
-    if (!pool) throw new Error("fixture missing");
+  it.each(
+    panelPoolFixtures().map(({ mockId, pool }) => [mockId, pool] as const),
+  )("a draft row of %s names the pool the live read answers for", (_id, pool) => {
+    const chainId = pool.chainId === "42161" ? 42161 : 4663;
     const [row] = panelPoolsFor({ pools: [mapV2Pool(pool)] }, chainId);
     const view = toPanelPoolView(pool);
     expect(row?.poolId).toBe(view.poolId);
@@ -174,5 +188,45 @@ describe("reserve usability parity with the Mandate step's validation [R7]", () 
   >)("agrees on a reserve that is %s", (_name, patch) => {
     const reserve = { ...base(), ...patch };
     expect(reserveUsability(reserve).usable).toBe(mandateAccepts(reserve));
+  });
+});
+
+describe("reserve selection parity with the Mandate step's validation [R7]", () => {
+  const usdc = depositTokenRefFor("arbitrum");
+  if (!usdc) throw new Error("missing deposit token");
+  const [usdcReserve, cappedReserve] = panelReserveFixtures();
+  if (!usdcReserve || !cappedReserve) throw new Error("fixture missing");
+  const catalogToken: CatalogToken = { ...usdcReserve.token, address: usdc.address };
+  const reserves: CatalogReserve[] = [{ ...usdcReserve, token: catalogToken }, cappedReserve];
+
+  /** A real draft on the hub that supplies to Aave, optionally naming its reserves. */
+  function draftNaming(aaveV3Reserves?: string[]) {
+    const draft = {
+      ...createEmptyDraft("2026-10-03", "real"),
+      dataMode: "real" as const,
+      catalogVersion: "v2-catalog-v1" as const,
+    };
+    const supplying = withProtocols(draft, ["aave-v3"]);
+    return aaveV3Reserves === undefined ? supplying : { ...supplying, aaveV3Reserves };
+  }
+
+  it("lists exactly the reserves the mandate selection carries, when the draft names them", () => {
+    const catalog = buildRealCatalog([catalogToken], reserves);
+    const draft = draftNaming([usdc.address]);
+    const selection = toV2MandateSelection(draft, catalog);
+    const rows = selectPanelReserves(reserves, draft.tokens, 42161, draft.aaveV3Reserves);
+    expect(rows.map((row) => row.token.address)).toEqual(
+      selection.aaveV3Reserves.map((address) => address.toLowerCase()),
+    );
+  });
+
+  it("lists exactly the reserves the mandate selection carries, when the draft names none", () => {
+    const catalog = buildRealCatalog([catalogToken], reserves);
+    const draft = draftNaming();
+    const selection = toV2MandateSelection(draft, catalog);
+    const rows = selectPanelReserves(reserves, draft.tokens, 42161, draft.aaveV3Reserves);
+    expect(rows.map((row) => row.token.address)).toEqual(
+      selection.aaveV3Reserves.map((address) => address.toLowerCase()),
+    );
   });
 });

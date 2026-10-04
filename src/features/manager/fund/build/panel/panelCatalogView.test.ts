@@ -7,25 +7,33 @@
  * Rules under test (POO-2185 rules v1):
  *   [R1] a catalog pool maps to a panel view: bare PoolId, chain, both tokens with decimals and logo,
  *        fee percent, tick spacing, current tick, canonical price, quote orientation
- *   [R2] the canonical price is the catalog's; the sqrt price with the decimals is the fallback
+ *   [R2] the canonical price is derived from sqrtPriceX96 and the decimals; the price the catalog
+ *        serves is only a cross-check, and a disagreement beyond 0.5% refuses the read
  *   [R3] eligibility and active liquidity are re-checked; TVL and APR are never exposed
  *   [R4] the mandate's Uniswap v4 pools of one network become list rows, with no fetch
  *   [R7] reserves join the draft tokens of the network, and an unusable one is listed with a reason
  */
 import { describe, expect, it } from "vitest";
 import type { CatalogPool, CatalogReserve } from "@/lib/api/v2/schemas";
-import { findPanelPoolFixture, panelReserveFixtures } from "@/mocks/data/buildPanelFixtures";
+import {
+  findPanelPoolFixture,
+  panelPoolFixtures,
+  panelReserveFixtures,
+} from "@/mocks/data/buildPanelFixtures";
 import { fundPoolFixtures } from "@/mocks/data/fundPools";
 import type { MandatePoolRef, MandateTokenRef } from "../../mandateDraft";
 import {
   networkOfChain,
   type PanelPoolView,
+  PRICE_CROSS_CHECK_TOLERANCE,
   panelPoolsFor,
   priceFromSqrtPriceX96,
   reserveUsability,
   selectPanelReserves,
+  toLivePoolGrid,
   toPanelPoolView,
 } from "./panelCatalogView";
+import { presetRange } from "./poolRangeMath";
 
 const ARB_WETH_USDC_5 = "arb-v4-weth-usdc-5";
 const ARB_WETH_USDC_30 = "arb-v4-weth-usdc-30";
@@ -183,11 +191,8 @@ describe("toPanelPoolView [R1]", () => {
       expect(view.pairLabel).toBe("WETH / USDC");
     });
 
-    it("quotes USDG per WETH on Robinhood Chain although the catalog writes the pair USDG / WETH", () => {
-      const pool = fixture(4663, RBH_WETH_USDG_5);
-      expect(pool.pairSymbols).toEqual(["USDG", "WETH"]);
-      expect(pool.tokens[0]?.symbol).toBe("USDG");
-      const view = viewOf(pool);
+    it("quotes USDG per WETH on Robinhood Chain: WETH is currency0, USDG currency1", () => {
+      const view = viewOf(fixture(4663, RBH_WETH_USDG_5));
       expect(view.token0.symbol).toBe("WETH");
       expect(view.token1.symbol).toBe("USDG");
       expect(view.orientation.base.symbol).toBe("WETH");
@@ -197,53 +202,134 @@ describe("toPanelPoolView [R1]", () => {
       expect(view.token1.decimals).toBe(6);
     });
 
-    it("follows the key when the catalog lists the tokens the other way round", () => {
-      const pool = withPool(fixture(42161, ARB_WETH_USDC_5), {});
+    it.each([
+      [42161, ARB_WETH_USDC_5, "WETH", "USDC"],
+      [4663, RBH_WETH_USDG_5, "WETH", "USDG"],
+    ] as const)("follows the pool key, not the order the catalog lists the tokens in (%s %s)", (chainId, id, base, quote) => {
+      // Defensive: the catalog lists tokens[i] as currency i, but the key is what decides.
+      const pool = withPool(fixture(chainId, id), {});
       pool.tokens = [...pool.tokens].reverse() as CatalogPool["tokens"];
-      pool.pairSymbols = ["USDC", "WETH"];
+      pool.pairSymbols = [...pool.pairSymbols].reverse();
       const view = viewOf(pool);
-      expect(view.token0.symbol).toBe("WETH");
-      expect(view.token1.symbol).toBe("USDC");
+      expect(view.token0.symbol).toBe(base);
+      expect(view.token1.symbol).toBe(quote);
+      expect(view.token0.decimals).toBe(18);
+      expect(view.token1.decimals).toBe(6);
+      expect(view.orientation.quote.symbol).toBe(quote);
     });
 
     it("keeps the canonical price as token1 per token0 on a stable-first pool", () => {
-      // currency0 is the 6-decimal stable, so the canonical price is the small token1 per token0.
-      const pool = withPool(fixture(42161, ARB_WETH_USDC_5), {});
-      const [weth, usdc] = pool.tokens;
-      if (!weth || !usdc) throw new Error("tokens");
-      pool.poolKey.currency0 = usdc.address;
-      pool.poolKey.currency1 = weth.address;
-      pool.currentPrice.token1PerToken0 = "0.000327824494043";
-      pool.currentPrice.token0PerToken1 = "3050.4127";
+      // currency0 is the 6-decimal USDC, so the canonical price is the small LINK per USDC.
+      const pool = fixture(42161, "arb-v4-usdc-link-30");
       const view = viewOf(pool);
       expect(view.token0.symbol).toBe("USDC");
-      expect(view.orientation.quote.symbol).toBe("WETH");
-      expect(view.price).toBeCloseTo(0.000327824494043, 15);
+      expect(view.token1.symbol).toBe("LINK");
+      expect(view.orientation.quote.symbol).toBe("LINK");
+      expect(view.price).toBeGreaterThan(0.05);
+      expect(view.price).toBeLessThan(0.08);
+      expect(view.price).toBeCloseTo(Number(pool.currentPrice.token1PerToken0), 6);
     });
   });
 
   describe("canonical price (token1 per token0) [R2]", () => {
-    it("is the catalog's price field", () => {
-      expect(viewOf(fixture(42161, ARB_WETH_USDC_5)).price).toBeCloseTo(3050.4127, 6);
+    it("is derived from sqrtPriceX96 and the decimals, and the served price confirms it", () => {
+      const arbitrum = fixture(42161, ARB_WETH_USDC_5);
+      expect(viewOf(arbitrum).price).toBe(
+        priceFromSqrtPriceX96(arbitrum.sqrtPriceX96, 18, 6) ?? Number.NaN,
+      );
+      expect(viewOf(arbitrum).price).toBeCloseTo(3050.4127, 6);
       expect(viewOf(fixture(4663, RBH_WETH_USDG_5)).price).toBeCloseTo(3052.9061, 6);
     });
 
-    it("falls back to sqrtPriceX96 and the decimals when the catalog field is not a usable number", () => {
-      const pool = withPool(fixture(42161, ARB_WETH_USDC_5), {});
-      pool.currentPrice.token1PerToken0 = "0";
-      expect(viewOf(pool).price).toBeCloseTo(3050.4127, 4);
+    it("every fixture's served price agrees with the price derived from its sqrt price", () => {
+      for (const { mockId, pool } of panelPoolFixtures()) {
+        const served = Number(pool.currentPrice.token1PerToken0);
+        expect(Math.abs(viewOf(pool).price - served) / served, mockId).toBeLessThan(1e-9);
+      }
     });
 
-    it("prefers the catalog field when both are readable", () => {
+    it("keeps the derived price, not the served digits, when the two agree within the tolerance", () => {
+      const pool = withPool(fixture(42161, ARB_WETH_USDC_5), {});
+      pool.currentPrice.token1PerToken0 = "3040";
+      const view = viewOf(pool);
+      expect(view.price).toBeCloseTo(3050.4127, 6);
+      expect(view.price).not.toBe(3040);
+    });
+
+    it("sets the tolerance at 0.5%", () => {
+      expect(PRICE_CROSS_CHECK_TOLERANCE).toBe(0.005);
+    });
+
+    it.each([
+      ["0.4% under", 0.996, true],
+      ["0.4% over", 1.004, true],
+      ["0.6% under", 0.994, false],
+      ["0.6% over", 1.006, false],
+    ])("a served price %s the derived one is %s", (_label, factor, accepted) => {
+      const pool = withPool(fixture(42161, ARB_WETH_USDC_5), {});
+      pool.currentPrice.token1PerToken0 = String(3050.4127 * factor);
+      if (accepted) expect(viewOf(pool).price).toBeCloseTo(3050.4127, 6);
+      else expect(() => viewOf(pool)).toThrow(/disagree/i);
+    });
+
+    it("refuses a served price that disagrees with sqrtPriceX96", () => {
       const pool = withPool(fixture(42161, ARB_WETH_USDC_5), {});
       pool.currentPrice.token1PerToken0 = "3000";
-      expect(viewOf(pool).price).toBe(3000);
+      expect(() => viewOf(pool)).toThrow(/disagree/i);
     });
 
-    it("refuses a pool with no readable price at all", () => {
+    it("refuses a served price quoted the other way round (the reciprocal)", () => {
+      const pool = withPool(fixture(4663, RBH_WETH_USDG_5), {});
+      pool.currentPrice.token1PerToken0 = pool.currentPrice.token0PerToken1;
+      expect(() => viewOf(pool)).toThrow(/inverted/i);
+    });
+
+    it("refuses a served price that is not a positive number, since it can confirm nothing", () => {
+      for (const served of ["0", "-3050.4127"]) {
+        const pool = withPool(fixture(42161, ARB_WETH_USDC_5), {});
+        pool.currentPrice.token1PerToken0 = served;
+        expect(() => viewOf(pool), served).toThrow(/disagree/i);
+      }
+    });
+
+    it("refuses a pool whose sqrt price is zero: there is no price to derive", () => {
       const pool = withPool(fixture(42161, ARB_WETH_USDC_5), { sqrtPriceX96: "0" });
-      pool.currentPrice.token1PerToken0 = "0";
       expect(() => viewOf(pool)).toThrow(/price/i);
+    });
+
+    it("refuses a pool whose decimals make the served price wrong (a decimals slip)", () => {
+      const pool = withPool(fixture(42161, ARB_WETH_USDC_5), {});
+      const [weth] = pool.tokens;
+      if (!weth) throw new Error("tokens");
+      weth.decimals = 6;
+      expect(() => viewOf(pool)).toThrow(/disagree/i);
+    });
+  });
+
+  describe("toLivePoolGrid: the range maths' view of the pool", () => {
+    it("hands over the pool's own decimals, spacing, price and tick", () => {
+      const view = viewOf(fixture(42161, ARB_WETH_USDC_5));
+      expect(toLivePoolGrid(view)).toEqual({
+        decimals0: 18,
+        decimals1: 6,
+        tickSpacing: 10,
+        currentPrice: view.price,
+        currentTick: -196090,
+      });
+    });
+
+    it.each(
+      panelPoolFixtures().map(({ mockId, pool }) => [mockId, pool] as const),
+    )("the 10 percent preset on %s is aligned to the pool's own spacing and brackets its tick", (_id, pool) => {
+      const view = viewOf(pool);
+      const range = presetRange(toLivePoolGrid(view), 10);
+      expect(range).not.toBeNull();
+      if (!range) return;
+      expect(Math.abs(range.tickLower % view.tickSpacing)).toBe(0);
+      expect(Math.abs(range.tickUpper % view.tickSpacing)).toBe(0);
+      expect(range.tickLower).toBeLessThan(view.currentTick);
+      expect(range.tickUpper).toBeGreaterThan(view.currentTick);
+      expect(range.tickUpper - range.tickLower).toBeGreaterThanOrEqual(2 * view.tickSpacing);
     });
   });
 
@@ -511,6 +597,35 @@ describe("selectPanelReserves [R7]", () => {
   it("is empty on a spoke: Aave is on the hub only", () => {
     const both = [...tokens, draftToken(usdcAddress, "USDC", "robinhood")];
     expect(selectPanelReserves(panelReserveFixtures(), both, 4663)).toEqual([]);
+  });
+
+  describe("the mandate's own Aave reserve selection", () => {
+    it("lists only the reserves the draft selected when it names them", () => {
+      const rows = selectPanelReserves(panelReserveFixtures(), tokens, 42161, [usdcAddress]);
+      expect(rows.map((row) => row.token.symbol)).toEqual(["USDC"]);
+    });
+
+    it("lists a selected reserve even when Aave cannot take it, disabled with its reason", () => {
+      const rows = selectPanelReserves(panelReserveFixtures(), tokens, 42161, [wethAddress]);
+      expect(rows.map((row) => [row.token.symbol, row.usable, row.reason])).toEqual([
+        ["WETH", false, "supplyCapReached"],
+      ]);
+    });
+
+    it("lists nothing when the draft selected no reserve", () => {
+      expect(selectPanelReserves(panelReserveFixtures(), tokens, 42161, [])).toEqual([]);
+    });
+
+    it("lists every reserve of the mandate's tokens when the draft names none (undefined)", () => {
+      expect(selectPanelReserves(panelReserveFixtures(), tokens, 42161, undefined)).toHaveLength(2);
+    });
+
+    it("matches the selection regardless of letter case", () => {
+      const rows = selectPanelReserves(panelReserveFixtures(), tokens, 42161, [
+        usdcAddress.toUpperCase().replace("0X", "0x"),
+      ]);
+      expect(rows.map((row) => row.token.symbol)).toEqual(["USDC"]);
+    });
   });
 
   it("keeps the catalog's order and is empty when the catalog has no reserve", () => {
