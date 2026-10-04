@@ -53,8 +53,8 @@ vi.mock("@/i18n/navigation", () => ({
   ),
 }));
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(mocks.query) }));
-vi.mock("./FundTechnicalDetail", () => ({
-  FundTechnicalDetail: () => <div data-testid="technical-manager" />,
+vi.mock("@/features/manager/fund/manage/ManageEntry", () => ({
+  ManageEntry: () => <div data-testid="v2-manage" />,
 }));
 
 import { FundDetail } from "./FundDetail";
@@ -140,9 +140,11 @@ describe("investor V2 details", () => {
     });
     renderWithProviders(<FundDetail core={mockFund.coreVault} />);
     await screen.findByRole("heading", { name: "Balanced Income" });
-    expect(screen.queryByTestId("technical-manager")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("v2-manage")).not.toBeInTheDocument();
   });
-  it("retains an explicit manager entry", async () => {
+  it("routes manager entry independently of investor reads", async () => {
+    mocks.personal.mockClear();
+    mocks.public.mockClear();
     mocks.wallet = mockFund.manager;
     mocks.query = "view=manager";
     mocks.personal.mockResolvedValue({
@@ -150,7 +152,9 @@ describe("investor V2 details", () => {
       data: { holder: mockHolder, wallet: mockFund.manager },
     });
     renderWithProviders(<FundDetail core={mockFund.coreVault} />);
-    expect(await screen.findByTestId("technical-manager")).toBeInTheDocument();
+    expect(await screen.findByTestId("v2-manage")).toBeInTheDocument();
+    expect(mocks.personal).not.toHaveBeenCalled();
+    expect(mocks.public).not.toHaveBeenCalled();
   });
   it("never resumes another wallet's funding amount", async () => {
     mocks.query = `invest=100&account=${mockFund.manager}`;

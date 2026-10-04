@@ -469,3 +469,24 @@ it("POO-2209 follows effective in-page phase without changing URL or saved prefe
   expect(screen.getByTestId("build-body").parentElement).toHaveClass("max-w-7xl");
   expect(screen.getByRole("button", { name: "Collapse" })).toHaveAttribute("aria-expanded", "true");
 });
+
+it("POO-2226 widens an active authorized Manage canvas and restores saved layout on leave", async () => {
+  localStorage.setItem("pp.sidebar.collapsed", "false");
+  nav.pathname = "/funds/0x123";
+  const view = renderWithProviders(
+    <AppShell>
+      <PhaseHarness />
+    </AppShell>,
+  );
+  expect(screen.getByTestId("build-body").parentElement).toHaveClass("max-w-7xl");
+  await userEvent.click(screen.getByText("Enter Build"));
+  expect(screen.getByTestId("build-body").parentElement).not.toHaveClass("max-w-7xl");
+  expect(screen.getByRole("button", { name: "Expand" })).toBeDisabled();
+  expect(localStorage.getItem("pp.sidebar.collapsed")).toBe("false");
+  view.rerender(
+    <AppShell>
+      <div data-testid="normal-body" />
+    </AppShell>,
+  );
+  expect(screen.getByTestId("normal-body").parentElement).toHaveClass("max-w-7xl");
+});

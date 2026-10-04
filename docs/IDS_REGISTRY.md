@@ -901,7 +901,7 @@ Existing IDs retained: PP-STR-MOD-001 (`InvestModal`, discriminated unavailable 
 | PP-STR-CMP-039 | Existing Details frame extracted for V1/V2 reuse | POO-2216 v1 | `src/features/strategies/components/StrategyDetailFrame.tsx` |
 | PP-STR-SCR-006 | Investor V2 Details | POO-2216 v1 | `src/features/funds/FundDetail.tsx` |
 
-PP-STR-SCR-005 remains the preserved technical manager surface, now `FundTechnicalDetail.tsx`, reachable through explicit manager navigation. Existing Strategies, Portfolio, cards, ManagerCard and modal IDs are reused for their original artifacts.
+PP-STR-SCR-005 remains the preserved technical surface `FundTechnicalDetail.tsx`; explicit V2 manager navigation is now owned by PP-MGR-SCR-004 ManageEntry/ManageScreen. Existing Strategies, Portfolio, cards, ManagerCard and modal IDs are reused for their original artifacts.
 
 | PP-STR-CMP-040 | Fund composition donut and token/protocol/network legend | POO-2223 v1 | `src/features/funds/FundComposition.tsx` |
 
@@ -909,11 +909,13 @@ PP-STR-SCR-005 remains the preserved technical manager surface, now `FundTechnic
 
 | ID | Name | Type | Reference | Status | Issue | Implementation |
 |---|---|---|---|---|---|---|
-| `PP-MGR-CMP-085` | ManageCanvas | Component | Figma 8335:2708 | In Progress | POO-2226 | `src/features/manager/fund/manage/ManageCanvas.tsx` |
-| `PP-MGR-CMP-086` | ManageBlockPanel, V2 states of PP-MGR-CMP-001/002 | Component | Figma 8291:2563 / 8334:2692 | In Progress | POO-2227 | `src/features/manager/fund/manage/ManageBlockPanel.tsx` |
-| `PP-MGR-LIB-051` | Manage read model | Lib | Manager handoff 2026-10-04 | In Progress | POO-2226 | `src/features/manager/fund/manage/manageModel.ts` |
-| `PP-MGR-LIB-052` | Manage graph geometry | Lib | Figma 8335:2708 | In Progress | POO-2226 | `src/features/manager/fund/manage/manageLayout.ts` |
-| `PP-MGR-LIB-053` | Manage canonical range drafts | Lib | Manager handoff R06-R12 | In Progress | POO-2227 | `src/features/manager/fund/manage/manageDraft.ts` |
-| `PP-MGR-LIB-054` | Manage position metadata read | Lib | Typed V2 position detail | In Progress | POO-2227 | `src/features/manager/fund/manage/useManagePosition.ts` |
-| `PP-MGR-LIB-055` | Manager position and Move range schemas | Lib | API POO-2139 | In Progress | POO-2228 | `src/lib/api/v2/manageSchemas.ts` |
-| `PP-MGR-LIB-056` | Authorized Manage actions | Lib | API POO-2139/2145 | In Progress | POO-2228 | `src/lib/api/v2/manageActions.ts` |
+| `PP-MGR-CMP-085` | ManageCanvas | Component | Figma 8335:2708 | Implemented (supported slice) | POO-2226 | `src/features/manager/fund/manage/ManageCanvas.tsx` |
+| `PP-MGR-CMP-086` | ManageBlockPanel, V2 states of PP-MGR-CMP-001/002 | Component | Figma 8291:2563 / 8334:2692 | Implemented (supported slice) | POO-2227 | `src/features/manager/fund/manage/ManageBlockPanel.tsx` |
+| `PP-MGR-LIB-051` | Manage read model | Lib | Manager handoff 2026-10-04 | Implemented (supported slice) | POO-2226 | `src/features/manager/fund/manage/manageModel.ts` |
+| `PP-MGR-LIB-052` | Manage graph geometry | Lib | Figma 8335:2708 | Implemented (supported slice) | POO-2226 | `src/features/manager/fund/manage/manageLayout.ts` |
+| `PP-MGR-LIB-053` | Manage canonical range drafts | Lib | Manager handoff R06-R12 | Implemented (supported slice) | POO-2227 | `src/features/manager/fund/manage/manageDraft.ts` |
+| `PP-MGR-LIB-054` | Manage position metadata read | Lib | Typed V2 position detail | Implemented (supported slice) | POO-2227 | `src/features/manager/fund/manage/useManagePosition.ts` |
+| `PP-MGR-LIB-055` | Manager position and Move range schemas | Lib | API POO-2139 | Implemented (supported slice) | POO-2228 | `src/lib/api/v2/manageSchemas.ts` |
+| `PP-MGR-LIB-056` | Authorized Manage actions | Lib | API POO-2139/2145 | Implemented (supported slice) | POO-2228 | `src/lib/api/v2/manageActions.ts` |
+
+PP-MGR-SCR-004 V2 entry is implemented in `ManageEntry.tsx` / `ManageScreen.tsx`. Its explicit unavailable write/data capabilities remain POO-2229/2230/2231, not an execution-complete status.

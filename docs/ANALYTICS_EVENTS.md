@@ -338,3 +338,15 @@ PP-STR-MOD-001 reuses `strategy_invest_started` on open, `tx_amount_blocked` wit
 POO-2215 reuses Strategies list/filter/sort/navigation events and `portfolio_viewed` through TrackView in PP-STR-CMP-038. PP-STR-SCR-006 (POO-2216) emits `strategy_detail_viewed`, `app_error_shown` for sanitized public/personal read failures, and `app_cta_blocked` for unavailable actions. Its operations use the shared Invest host; no unavailable action emits a financial completion. No raw wallet is added.
 
 POO-2223: `FundComposition` (PP-STR-CMP-040) is passive and reuses the parent `strategy_detail_viewed`. The owner-approved local Follow/Following interaction creates no server-side relationship and emits no persistent-follow or financial completion event. Existing Details error/blocked transaction events are unchanged.
+
+## Manager Manage V2 supported boundary (POO-2226/2227/2228)
+
+| Existing event | Emitter | Trigger / parameters |
+|---|---|---|
+| `strategy_manage_viewed` | PP-MGR-SCR-004 ManageScreen | Authorized screen mount; `family=v2`, `surface=manager`, hub `chain_id`. |
+| `strategy_move_range_started` | PP-MGR-CMP-086 ManageBlockPanel | First choice of Move for the current draft; `flow=moveRange`, chain and family. |
+| `tx_flow_abandoned` | PP-MGR-CMP-086 | Leaving the selected position or unmounting a started Move before any submission. |
+| `app_cta_blocked` | PP-MGR-SCR-004, PP-MGR-CMP-086 | Owner requirement or unavailable Move/future-policy/allocation capability; classified reason only. |
+| `app_error_shown` | PP-MGR-SCR-004, PP-MGR-CMP-086 | Sanitized entry/position/review read error. No upstream message, raw wallet or payload. |
+
+No submitted/completed event exists in this slice because no financial action or persisted future policy is executable. Do not emit completion when a draft is edited or review is shown. Execution instrumentation belongs with POO-2229/2231 wiring and must remain receipt/persistence driven.

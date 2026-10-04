@@ -3,7 +3,7 @@
  * @name FundDetail
  * @implements-rules-version v1 (POO-2216); v1 (POO-2220); v1 (POO-2223); v1 (POO-2224)
  * @analytics-events strategy_detail_viewed, app_cta_blocked, app_error_shown
- * Investor V2 projection in the existing Details frame; technical manager view is separate.
+ * Investor V2 projection in the existing Details frame; authorized manager canvas is separate.
  */
 "use client";
 import { useSearchParams } from "next/navigation";
@@ -12,6 +12,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { formatUnits } from "viem";
 import { StrategyLogo } from "@/components/data-display/StrategyLogo";
 import { LocalManagerFollow } from "@/features/manager/components/LocalManagerFollow";
+import { ManageEntry } from "@/features/manager/fund/manage/ManageEntry";
 import { InvestModal } from "@/features/strategies/components/InvestModal";
 import { ManagerCard } from "@/features/strategies/components/ManagerCard";
 import { StrategyDetailFrame } from "@/features/strategies/components/StrategyDetailFrame";
@@ -26,7 +27,6 @@ import { isMockMode } from "@/lib/services";
 import { readErc20Balance } from "@/lib/tokens/readErc20";
 import { formatPercent, formatTokenAmount } from "@/lib/utils/format";
 import { FundComposition } from "./FundComposition";
-import { FundTechnicalDetail } from "./FundTechnicalDetail";
 import { loadPersonalFundDetailsAction, loadPublicFundDetailsAction } from "./fundDetailsActions";
 import { fundResumeAmount, hasFundInterest, type PersonalFundState } from "./fundDetailsModel";
 
@@ -37,8 +37,14 @@ export function FundDetail({ core }: FundDetailProps) {
   const t = useTranslations("strategies.funds");
   const { isEnabled } = useFeatureFlags();
   const { family, hydrated } = useContractFamily();
+  const query = useSearchParams();
   if (!isEnabled("fundContracts") || (hydrated && family !== "v2")) return <p>{t("switchV2")}</p>;
-  return hydrated ? <FundInvestorDetails core={core} /> : <p role="status">{t("loading")}</p>;
+  if (!hydrated) return <p role="status">{t("loading")}</p>;
+  return query.get("view") === "manager" ? (
+    <ManageEntry core={core} />
+  ) : (
+    <FundInvestorDetails core={core} />
+  );
 }
 function FundInvestorDetails({ core }: FundDetailProps) {
   const t = useTranslations("strategies.DetailsV2");
@@ -162,10 +168,6 @@ export function FundDetailsPresenter({
   const [resume, setResume] = useState<number | null>(null);
   const fromPortfolio = query.get("from") === "portfolio";
   const withdrawalRequested = query.get("withdraw") === "1";
-  const managerView =
-    query.get("view") === "manager" &&
-    personal.status === "ready" &&
-    personal.wallet.toLowerCase() === fund.manager.toLowerCase();
   useEffect(() => {
     const amount = fundResumeAmount(query, personal);
     if (amount !== null) {
@@ -284,7 +286,6 @@ export function FundDetailsPresenter({
       }
     />
   );
-  if (managerView) return <FundTechnicalDetail core={fund.coreVault} />;
   return (
     <StrategyDetailFrame
       backHref={fromPortfolio ? "/portfolio" : "/strategies"}

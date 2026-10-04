@@ -233,3 +233,11 @@ Investor list reads (POO-2215) use the existing discovered-funds/holder service 
 ## Investor composition and local Follow (POO-2223)
 
 `FundComposition` (PP-STR-CMP-040) consumes the existing public `positionsSummary`, preserving supplied 0-100 NAV weights and unknown coverage. No new endpoint. Historical share-price samples remain absent (POO-2219), so the history slot uses the Figma no-history state. `LocalManagerFollow` now accepts controlled state for the two responsive Details mounts; it remains local and makes no API call or follower-count claim. A future persistent relationship service must replace this state explicitly.
+
+## Manager Manage V2 (POO-2226/2227/2228)
+
+`manageActions` (PP-MGR-LIB-056) verifies the server session against `users/me`, fund manager, core and exact chain/vault/position identity. Fund loading is independent of holder/transit reads; optional balance failures are isolated. `useManagePosition` keeps last good same-position metadata for display, disables actions during stale/error reads and ignores obsolete responses.
+
+`ManageEntry` mounts PP-MGR-SCR-004 only for V2 and the connected verified owner. Identity changes discard old authorization/preview state. `ManageBlockPanel` uses served canonical Uniswap V4 ticks plus the existing live pool catalog. Review rereads metadata and invalidates mismatched baselines; it returns unavailable capability details only. No transaction builder or signature path is exported by this integration.
+
+Missing Move budget/cost/impact and continuation: POO-2229. Missing chain cash split, withdrawal queue and actual hub USDC Income: POO-2230. Missing persisted future-deposit policy, allocation executor and position lineage: POO-2231. Current holdings are never substituted for post-close budgets; collection-round heldDollars is never substituted for total Income. See [implementation and acceptance plan](manager-manage-v2-implementation-2026-10-04.md).

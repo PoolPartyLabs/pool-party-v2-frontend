@@ -272,7 +272,8 @@ export function AppShell({ children, className }: AppShellProps) {
   // Collapsed sidebar is a simple, non-sensitive UI preference — fine in localStorage (POO-283 R2).
   const [savedCollapsed, setCollapsed] = usePersistentState<boolean>("pp.sidebar.collapsed", false);
   const [effectiveBuild, setEffectiveBuild] = useState(false);
-  const buildArea = pathname === "/manager/new" && effectiveBuild;
+  const buildArea =
+    (pathname === "/manager/new" || pathname.startsWith("/funds/")) && effectiveBuild;
   const collapsed = buildArea || savedCollapsed;
 
   // Literal t() calls per key (the i18n usage scan is static — no dynamic keys).
