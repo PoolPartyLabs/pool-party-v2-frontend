@@ -345,23 +345,22 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     );
     expect(journal.arrival).toBe("39500000");
   });
-  it("shows real report jobs and permits a failed job to be retriggered", async () => {
-    const { driver, journal } = setup();
+  it("waits for the keeper's accepted report without an admin trigger, including legacy jobs", async () => {
+    const { driver, journal, wallet } = setup();
     const step: LaunchStep = { id: "report", kind: "report", chain: 42161, dependencies: [] };
     mocks.fund.mockResolvedValue({ ok: true, data: { lastReport: null } });
     mocks.trigger.mockResolvedValue({ ok: true, data: { jobId: "job" } });
-    expect(await driver.build(step, journal)).toEqual({ data: { jobId: "job" } });
+    expect(await driver.build(step, journal)).toEqual({});
     journal.checkpoints.report = {
       stepId: "report",
       chain: 42161,
       status: "waiting",
       data: { jobId: "job" },
     };
-    mocks.report.mockResolvedValueOnce({ ok: true, data: { status: "pending" } });
-    expect(await driver.build(step, journal)).toEqual({ data: { jobId: "job" } });
-    mocks.report.mockResolvedValueOnce({ ok: true, data: { status: "failed" } });
-    await expect(driver.build(step, journal)).rejects.toThrow("REPORT_FAILED");
-    expect(journal.checkpoints.report.data).not.toHaveProperty("jobId");
+    expect(await driver.build(step, journal)).toEqual({});
+    expect(mocks.trigger).not.toHaveBeenCalled();
+    expect(mocks.report).not.toHaveBeenCalled();
+    expect(wallet.send).not.toHaveBeenCalled();
     mocks.fund.mockResolvedValueOnce({ ok: true, data: { lastReport: {} } });
     expect(await driver.build(step, journal)).toEqual({ complete: true });
   });

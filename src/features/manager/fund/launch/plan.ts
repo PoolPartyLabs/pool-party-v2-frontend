@@ -62,6 +62,12 @@ export interface LaunchStep {
   config?: { poolId?: string; assetKey?: string } & ExecutionConfig;
 }
 
+export function launchPlanError(error: unknown) {
+  return error instanceof Error && error.message === "DUPLICATE_AAVE_RESERVE"
+    ? { code: "DUPLICATE_AAVE_RESERVE", messageKey: "fundLaunch.duplicateAaveReserve" as const }
+    : { code: "BUILD_EXECUTION_GAP", messageKey: "fundLaunch.buildGap" as const };
+}
+
 function percent(value: number): number {
   if (!Number.isInteger(value) || value < 0 || value > 100) throw new Error("INVALID_ALLOCATION");
   return value;
@@ -122,6 +128,7 @@ export function deriveLaunchSteps(
   const hubShare = plan.hub.chains.reduce((sum, chain) => sum + chain.sharePct, 0);
   if (hubShare > 0) add("allocate", "allocate", 42161, ["profile"], { sharePct: hubShare });
   const ids = new Set<string>();
+  const aaveReserves = new Set<string>();
   const positions = (
     chains: CanvasChain[],
     chainId: LaunchStep["chain"],
@@ -151,6 +158,11 @@ export function deriveLaunchSteps(
         )
           throw new Error("UNSUPPORTED_POSITION");
         const settings = { ...block.config, ...execution[block.id] };
+        if (block.kind === "aaveSupply" && settings.assetKey) {
+          const reserve = `${chainId}:${settings.assetKey.toLowerCase()}`;
+          if (aaveReserves.has(reserve)) throw new Error("DUPLICATE_AAVE_RESERVE");
+          aaveReserves.add(reserve);
+        }
         if (settings.maxLossBps === undefined && typeof settings.slippagePct === "number")
           settings.maxLossBps = Math.round(settings.slippagePct * 100);
         if (leaves.length > 1 && settings.leafSharePct === undefined)

@@ -50,4 +50,30 @@ describe("server-only launch transport [R8]", () => {
       message: "v2 request failed",
     });
   });
+  it("preserves explicit deferred responses but not arbitrary 503 errors", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ response: { deferred: true, message: "secret" } }), {
+        status: 503,
+      }),
+    );
+    await expect(launchFetch("/funds/core", "GET", schema)).rejects.toMatchObject({
+      status: 503,
+      code: "V2_DEFERRED",
+      message: "v2 request failed",
+    });
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: "secret" }), { status: 503 }),
+    );
+    await expect(launchFetch("/funds/core", "GET", schema)).rejects.toMatchObject({
+      status: 503,
+      code: "V2_REQUEST_FAILED",
+    });
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ deferred: true }), { status: 401 }),
+    );
+    await expect(launchFetch("/funds/core", "GET", schema)).rejects.toMatchObject({
+      status: 401,
+      code: "V2_REQUEST_FAILED",
+    });
+  });
 });

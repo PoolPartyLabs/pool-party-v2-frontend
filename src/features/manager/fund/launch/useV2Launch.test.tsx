@@ -82,6 +82,27 @@ const options = () => ({
   pollInterval: 1,
 });
 describe("headless launch binding [R3, R4, R6]", () => {
+  it("polls an explicitly advanced report until accepted, without signing the following bridge", async () => {
+    const journal = createJournal("draft", manager, frozen, [
+      { id: "report", kind: "report", chain: 42161, dependencies: [] },
+      { id: "bridge", kind: "bridge", chain: 42161, dependencies: ["report"] },
+    ]);
+    localStorage.setItem(journalKey("draft", manager), JSON.stringify(journal));
+    mocks.build
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ complete: true });
+    const { result } = renderHook(() => useV2LaunchBinding(options()));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    await act(async () => {
+      await result.current.sign();
+    });
+    expect(mocks.build).toHaveBeenCalledTimes(3);
+    expect(result.current.checkpoints.report?.status).toBe("confirmed");
+    expect(result.current.checkpoints.bridge).toBeUndefined();
+    expect(result.current.error).toBeNull();
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();

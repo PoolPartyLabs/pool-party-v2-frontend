@@ -4,7 +4,12 @@ import { FundLaunchJourney } from "./FundLaunchJourney";
 
 const hash = `0x${"ab".repeat(32)}`;
 const core = `0x${"12".repeat(20)}`;
-const state = vi.hoisted(() => ({ outcome: "in-progress", error: false, mock: false }));
+const state = vi.hoisted(() => ({
+  outcome: "in-progress",
+  error: false,
+  mock: false,
+  reportWaiting: false,
+}));
 vi.mock("@/lib/services", () => ({
   get isMockMode() {
     return state.mock;
@@ -20,6 +25,9 @@ vi.mock("./useV2Launch", () => ({
     journey: { draft: { review: { name: "Income fund demo" } } },
     addresses: { coreVault: core },
     steps: [
+      ...(state.reportWaiting
+        ? [{ id: "report", kind: "report", chainId: 42161, status: "waiting" }]
+        : []),
       {
         id: "create",
         kind: "create",
@@ -68,6 +76,15 @@ describe("launch Journey outcomes [R3, R6]", () => {
     state.outcome = "in-progress";
     state.error = false;
     state.mock = false;
+    state.reportWaiting = false;
+  });
+  it("shows an honest finalized-report wait estimate without a failure", () => {
+    state.reportWaiting = true;
+    renderWithProviders(<FundLaunchJourney journeyId="journey" />);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Waiting for an accepted report. Typically 14-19 minutes",
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
   it("shows broadcast hashes as explorer links immediately, receipt status and existing fund", () => {
     renderWithProviders(<FundLaunchJourney journeyId="journey" />);

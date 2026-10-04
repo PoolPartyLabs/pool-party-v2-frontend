@@ -60,6 +60,7 @@
     "launch": "Lançar · {count} assinaturas"
   },
   "fundLaunch": {
+    "reportWait": "Aguardando um relatório aceito. Normalmente 14-19 minutos, às vezes mais. Continuamos verificando até chegar; pausar preserva seu progresso.",
     "journeyTitle": "Jornada de lançamento do fundo",
     "journeyWait": "Cada transação precisa da sua confirmação. Pontes e relatórios podem levar minutos.",
     "receiptLabel": "Recibo",
@@ -77,6 +78,7 @@
     "returnManager": "Voltar ao Console do Gestor",
     "uploadFailed": "Falha no upload. Tente outro PNG ou JPG.",
     "buildGap": "O plano Build precisa de detalhes de execução. Volte para concluir os intervalos e as alocações.",
+    "duplicateAaveReserve": "Só é permitido um bloco Aave Supply por reserva em cada rede. Remova o duplicado antes do lançamento.",
     "validation": "Confira a identidade, os limites das taxas, o depósito mínimo e seu saldo USDC.",
     "partialFailure": "Algumas etapas foram concluídas. A tentativa retoma esta etapa sem criar outro fundo.",
     "realOnly": "O lançamento exige modo real. Nenhuma assinatura é solicitada com dados mock.",
