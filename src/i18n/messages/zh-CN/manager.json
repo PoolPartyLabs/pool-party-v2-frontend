@@ -1070,6 +1070,12 @@
         "comingSoon": "请移除即将推出的区块。",
         "emptyBlock": "请先配置每个区块，再进行核对。",
         "overShare": "各份额之和超过了其上层的资金。",
+        "incompleteBlock": "请先为每个池设置价格区间和最大滑点，再进行核对。",
+        "zeroShare": "请为每个区块设置大于 0% 的份额，或将其移除。",
+        "unusedSpokeShare": "某个网络预留的资金多于其区块所用。请将该份额分配给其区块，或移除该网络。",
+        "stackedPositions": "请移除放在供应区块下方的区块：它们暂时无法启动。",
+        "duplicateReserve": "每种资产只能在一个区块中供应。请移除同一资产的第二个供应区块。",
+        "unsupportedSwap": "池外的 Swap 暂时无法启动。请供应到达的代币，或移除该 Swap。",
         "unavailable": "核对功能暂不可用。"
       }
     }

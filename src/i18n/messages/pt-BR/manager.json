@@ -1070,6 +1070,12 @@
         "comingSoon": "Remova os blocos marcados como Em breve.",
         "emptyBlock": "Configure todos os blocos antes da Revisão.",
         "overShare": "As porcentagens somam mais do que o capital acima delas.",
+        "incompleteBlock": "Defina uma faixa de preço e um slippage máximo para cada pool antes da Revisão.",
+        "zeroShare": "Dê a cada bloco uma porcentagem acima de 0% ou remova-o.",
+        "unusedSpokeShare": "Uma rede reserva mais capital do que os blocos dela usam. Dê essa porcentagem aos blocos dela ou remova a rede.",
+        "stackedPositions": "Remova os blocos colocados abaixo de um bloco Fornecer: eles ainda não podem ser lançados.",
+        "duplicateReserve": "Forneça cada ativo em um único bloco. Remova o segundo bloco Fornecer do mesmo ativo.",
+        "unsupportedSwap": "Swaps fora de um pool ainda não podem ser lançados. Forneça o token que chega ou remova o Swap.",
         "unavailable": "A Revisão ainda não está disponível."
       }
     }

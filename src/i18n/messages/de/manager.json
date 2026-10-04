@@ -1070,6 +1070,12 @@
         "comingSoon": "Entfernen Sie die Blöcke, die demnächst verfügbar sind.",
         "emptyBlock": "Konfigurieren Sie vor der Überprüfung jeden Block.",
         "overShare": "Die Anteile ergeben zusammen mehr als das Kapital darüber.",
+        "incompleteBlock": "Legen Sie vor der Überprüfung für jeden Pool eine Preisspanne und einen maximalen Slippage fest.",
+        "zeroShare": "Geben Sie jedem Block einen Anteil über 0 %, oder entfernen Sie ihn.",
+        "unusedSpokeShare": "Ein Netzwerk reserviert mehr Kapital, als seine Blöcke nutzen. Geben Sie diesen Anteil seinen Blöcken, oder entfernen Sie das Netzwerk.",
+        "stackedPositions": "Entfernen Sie die Blöcke unter einem Bereitstellen-Block: Diese können noch nicht gestartet werden.",
+        "duplicateReserve": "Stellen Sie jedes Asset nur in einem Block bereit. Entfernen Sie den zweiten Bereitstellen-Block desselben Assets.",
+        "unsupportedSwap": "Swaps außerhalb eines Pools können noch nicht gestartet werden. Stellen Sie den ankommenden Token bereit, oder entfernen Sie den Swap.",
         "unavailable": "Die Überprüfung ist noch nicht verfügbar."
       }
     }
