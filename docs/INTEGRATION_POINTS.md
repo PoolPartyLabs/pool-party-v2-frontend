@@ -1,5 +1,11 @@
 # Integration Points
 
+## Launch report countdown (POO-2233, rules v1)
+
+`launch/useLaunchReportWait.ts` records first report building/waiting observation in browser-local metadata keyed by normalized manager, draft and report step, separate from the execution journal. `useV2Launch.ts` projects this optional timestamp to `FundLaunchJourney`; an isolated display clock derives a 19-minute estimate. Polling, retry and reopening preserve the timestamp. Storage failure uses an in-memory fallback.
+
+Readiness remains `readLaunchFundAction(core).lastReport` in `driver.ts`, polled by the existing binding every 10 seconds. A received report advances the active serial run immediately; zero on the display clock only shows the delayed message. No new endpoint, admin trigger, wallet operation or analytics event. Closing pauses continuation; reopening requires explicit Resume.
+
 ## Conditional fallback Review (POO-2183, rules v1)
 
 `fallback/allocation.ts` resolves today's zero-share canvas into launch-only `chain.sharePct` (whole-fund percentages) and `launchExecution[blockId].leafSharePct` (percentage of its chain). Missing position shares split remaining 100% equally, integer remainder to the first; flow blocks have no shares. Root defaults split remaining hub/spoke budgets, preserving positive written root/leaf shares read-only. A missing spoke root uses only the explicit Mandate `spokeCapPercent` / selected network percentage, never an invented network split. Final root budgets and leaf sums are validated; fractional whole-fund leaf budgets remain blockers. `applyFallbackExecutionAtLaunch` applies config and allocation together without writing canvas or storage. The fund #2 zero-share/empty-config test produces the exact 11-signature hub/Aave/spoke journey without signing.

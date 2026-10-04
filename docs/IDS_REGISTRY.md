@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 668 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 669 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -919,3 +919,11 @@ PP-STR-SCR-005 remains the preserved technical surface `FundTechnicalDetail.tsx`
 | `PP-MGR-LIB-056` | Authorized Manage actions | Lib | API POO-2139/2145 | Implemented (supported slice) | POO-2228 | `src/lib/api/v2/manageActions.ts` |
 
 PP-MGR-SCR-004 V2 entry is implemented in `ManageEntry.tsx` / `ManageScreen.tsx`. Its explicit unavailable write/data capabilities remain POO-2229/2230/2231, not an execution-complete status.
+
+## Single-step launch modal (POO-2233, rules v1)
+
+| ID | Artifact | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-MGR-HOK-022` | Persistent report wait estimate and isolated countdown (`src/features/manager/fund/launch/useLaunchReportWait.ts`) | Hook | Provisioning 6550:615 / owner screenshot | Implemented | [POO-2233](https://linear.app/yeildbay/issue/POO-2233) | Separate browser metadata; absolute 19-minute display clock, no execution effects; @rules-v1 |
+
+POO-2233 updates PP-MGR-CMP-081 to one current-step card, current evidence and a pinned action footer. PP-MGR-HOK-019 projects an optional report wait start from PP-MGR-HOK-022; accepted-report polling and all signing/recovery rules remain in the existing runner.

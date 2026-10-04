@@ -1,5 +1,13 @@
 # Fund Review data and launch journey
 
+## Single-step launch and report estimate (POO-2233, rules v1)
+
+The provisioning-style dialog displays one current step. Active signing/submitted/building operations take priority over an earlier report wait; then failed/waiting/idle or the last confirmed step is shown. Current transaction hash, receipt, indexing/error details and the created-fund link remain available. The body scrolls while actions stay in the footer.
+
+Report waiting starts a persistent 19:00 estimate on first observation, scoped to manager/draft/report. The timestamp lives separately from the execution journal and survives retry, close/reopen and reload. Legacy waits begin at first observation. If storage fails, memory preserves timing during the page session. A one-second display clock uses elapsed wall time and catches up on visibility changes. At 00:00 it explains the delay and continues waiting. The accepted report, never the estimate, allows the runner to advance immediately.
+
+No signing on mount, reopening or countdown expiry; close still pauses and Resume remains explicit. Screen readers announce step changes, not every second. Storybook covers a long plan, signing, report wait, delay, concurrent independent signing, failure and completion. See the [implementation plan and validation](../../../../../docs/strategy-launch-single-step-2026-10-04.md).
+
 ## Lost submission hashes (POO-2222, rules v1)
 
 Wallet-returned hashes persist synchronously before signature analytics and receipt polling, even if the page unmounts during send. A durable submission-attempt marker prevents replay of ambiguous signing failures; definitive wallet rejection or cancellation before broadcast remains explicitly retryable.

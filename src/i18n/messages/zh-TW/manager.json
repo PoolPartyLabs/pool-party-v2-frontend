@@ -103,7 +103,9 @@
     "waiting": "等待驗證",
     "confirmed": "已確認",
     "failed": "失敗",
-    "stepProgress": "第 {n} 步，共 {total} 步"
+    "stepProgress": "第 {n} 步，共 {total} 步",
+    "reportCountdown": "Wormhole 報告。預估剩餘時間：{time}",
+    "reportDelayed": "等待時間已超過預估。正在等待 Wormhole 報告。"
   },
   "entry": {
     "become": "成為管理人",
