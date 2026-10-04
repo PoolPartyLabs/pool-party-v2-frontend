@@ -60,6 +60,7 @@
     "launch": "Starten · {count} handtekeningen"
   },
   "fundLaunch": {
+    "reportWait": "Wachten op een geaccepteerd rapport. Meestal 14-19 minuten, soms langer. We blijven controleren tot het binnenkomt; pauzeren bewaart uw voortgang.",
     "journeyTitle": "Fondsstart",
     "journeyWait": "Elke transactie vereist bevestiging. Bridges en rapporten kunnen minuten duren.",
     "receiptLabel": "Ontvangstbewijs",
@@ -77,6 +78,7 @@
     "returnManager": "Terug naar managerconsole",
     "uploadFailed": "Upload mislukt. Probeer een andere PNG of JPG.",
     "buildGap": "Het Build-plan heeft uitvoeringsdetails nodig. Voltooi bereiken en toewijzingen in Build.",
+    "duplicateAaveReserve": "Per netwerk is slechts één Aave Supply-blok per reserve toegestaan. Verwijder het duplicaat vóór de lancering.",
     "validation": "Controleer uw identiteit, kostenlimieten, minimumstorting en USDC-saldo.",
     "partialFailure": "Sommige stappen zijn geslaagd. Opnieuw proberen hervat deze stap zonder een ander fonds te maken.",
     "realOnly": "Lanceren vereist echte modus. Er worden geen handtekeningen gevraagd met mockgegevens.",

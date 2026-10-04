@@ -35,6 +35,8 @@ Types exported there:
 
 `startFundLaunch` is the only Review Launch entry point. It validates a fresh draft against real balance/catalog, freezes it under the cross-tab lock, reuses an existing journal/journey and navigates to `/<locale>/manager/fund-launch/<journeyId>`. It never signs on entry. Resume uses the frozen request, never edits a known creation into another fund.
 
+Journey persistence keeps the raw `<lowercase-manager>:<draft-id>` identity. `readJourney` accepts that identity or the once-percent-encoded route parameter emitted by Next, resolving both to the same stored journey and wallet-scoped checkpoint. Exact stored identities take precedence; malformed encoding fails closed and reads never create or replace a journal. POO-2191 fixes the encoded colon missing storage immediately after Launch for real Privy/injected wallets as well as the rehearsal wallet. Wallet matching remains case-insensitive and reconnect rehydrates the same checkpoint.
+
 `useV2Launch(journeyId)` returns `{ steps, current, sign, retry, resume, cancel, outcome }`, plus journal, addresses, readiness, busy and safe errors. Steps expose status, txHash, explorerUrl, receiptStatus, error and off-chain result. Sign advances at most one ready step; retry/resume reconcile and continue until waiting/failure/completion. Cancel pauses future work, not already broadcast transactions. Hydration never signs. Outcome is in-progress / failed / completed. The original wallet must connect. Mount wallet hooks only inside real Privy/wagmi providers; the Journey component guards mock mode.
 
 POO-2177, rules v1: Murilo owns Review PAGE (POO-2172), Mandate/Build pages and visual polish. This slice owns Review DATA, API access, launch execution and the Journey screen/outcomes. No builder page or shell is changed. Existing fundContracts feature flag applies. Mock mode never signs.
@@ -52,7 +54,7 @@ Per-draft/per-manager journal stores frozen Review/request, step IDs, chains, ha
 
 Creation includes seed atomically. Actual FundSeeded shares define deployable principal. At the labelled 25 bps fallback, gross 100 USDC estimates 99 whole shares, 99 USDC principal, 0.25 USDC fee and 0.75 USDC wallet remainder. Actual receipt is authoritative.
 
-Builders execute just in time. Swap/open reread unallocated balances; Decimal range composition honors token decimals and loss bound. Hub allocation is aggregate. Bridge quote refreshes before send; transits prove credited arrival before spoke work. Reports expose real pending/failed/expired waits, not invented countdowns. TVL/APR null stays unavailable.
+Builders execute just in time. Swap/open reread unallocated balances; Decimal range composition honors token decimals and loss bound. Hub allocation is aggregate. Bridge quote refreshes before send; transits prove credited arrival before spoke work. Reports observe explicit null or validated accepted report data, not admin job states or invented countdowns. TVL/APR null stays unavailable.
 
 Journey displays every broadcast hash immediately and receipt status afterward. Arbitrum uses arbiscan.io; Robinhood uses robinhoodchain.blockscout.com. Created/discovered contracts use same-chain address links. Off-chain profile/discover results never masquerade as transactions.
 
@@ -65,6 +67,8 @@ Actions verify bearer session via authenticated users/me with no caching/public-
 `useV2ReviewBinding({draft,catalog,balance,initial?,upload?,flowFeeBps?})` and `useV2LaunchBinding({draftId,manager,wallet,plan,execution,spoke,prepare?,frozen?,storage?,pollInterval?})` are injectable lower-level implementation/test bindings, not the agreed page seam. `useV2LaunchWallet()` binds Privy/wagmi, chain proof, receipts and hub balance. No signatures on mount. Logo upload reuses useUploadMedia("logo"), wallet-scoped presigned S3 POST without a v1 strategy UUID; deployment needs media/session/CORS configuration.
 
 ## Known gaps and validation
+
+- Accepted reports are observed through the manager-authenticated fund detail read, not an admin report trigger. A null report stays waiting, with a 14-19 minute typical finalized-report estimate and no journey deadline. Single-step actions poll the selected waiting step and stop before the next signature. Explicitly deferred reads and throttling wait; real API errors still fail and preserve Retry checkpoints. The enabled API keeper owns report publication and delivery.
 
 - POO-2172 connects its Launch button; POO-2144/2171 supply typed panel configuration. Only our separate Journey route is installed.
 - Non-base two-conversion pairs, non-base Aave assets and standalone manual swaps fail closed. No speculative routes.

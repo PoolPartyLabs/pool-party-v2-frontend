@@ -60,6 +60,7 @@
     "launch": "시작 · 서명 {count}개"
   },
   "fundLaunch": {
+    "reportWait": "승인된 보고서를 기다리고 있습니다. 보통 14-19분이며 더 걸릴 수 있습니다. 도착할 때까지 확인합니다. 일시 중지해도 진행 상황은 유지됩니다.",
     "journeyTitle": "펀드 출시 진행",
     "journeyWait": "각 거래에 확인이 필요해요. 브리지와 보고서는 몇 분 걸릴 수 있어요.",
     "receiptLabel": "영수증",
@@ -77,6 +78,7 @@
     "returnManager": "관리자 콘솔로",
     "uploadFailed": "로고 업로드에 실패했어요. 다른 PNG 또는 JPG를 시도해 주세요.",
     "buildGap": "Build 계획에 실행 세부 정보가 필요해요. Build로 돌아가 범위와 배분을 완료해 주세요.",
+    "duplicateAaveReserve": "각 네트워크에서 준비금당 Aave Supply 블록은 하나만 허용됩니다. 출시 전에 중복 블록을 제거하세요.",
     "validation": "기본 정보, 수수료 한도, 최소 입금액과 USDC 잔액을 확인해 주세요.",
     "partialFailure": "일부 단계가 완료됐어요. 새 펀드를 만들지 않고 이 단계부터 재개해요.",
     "realOnly": "출시에는 실제 모드가 필요해요. 모의 데이터에서는 서명을 요청하지 않아요.",

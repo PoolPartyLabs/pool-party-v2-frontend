@@ -10,6 +10,7 @@ import { apiFetch } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
 import {
   fundBuildSchema,
+  fundHistorySchema,
   reportJobSchema,
   reportStartSchema,
   uint,
@@ -17,6 +18,7 @@ import {
 import {
   readBalances,
   readFund,
+  readFundHistory,
   readFunds,
   readHolder,
   readPosition,
@@ -66,6 +68,24 @@ async function walletIdentity() {
   if (!owner || owner.walletAddress.toLowerCase() !== wallet.toLowerCase())
     throw new ApiError(401, "V2_SESSION", "unverified session");
   return wallet;
+}
+export async function loadFundHistoryAction(core: string, cursor?: string) {
+  return resultOf(async () => {
+    addressSchema.parse(core);
+    if (cursor !== undefined) fundHistorySchema.shape.nextCursor.unwrap().parse(cursor);
+    const history = isMockMode
+      ? {
+          protocolVersion: "v2" as const,
+          coreVault: core,
+          events: [],
+          nextCursor: null,
+          indexing: [],
+        }
+      : await readFundHistory(core, cursor);
+    if (history.coreVault.toLowerCase() !== core.toLowerCase())
+      throw new ApiError(502, "V2_INVALID_RESPONSE", "history fund mismatch");
+    return history;
+  });
 }
 export async function loadFundsAction(view: "explore" | "holder" | "manager") {
   return resultOf(async () => {

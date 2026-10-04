@@ -40,7 +40,16 @@ export function journeyKey(journeyId: string): string {
 }
 export function readJourney(journeyId: string): LaunchJourney | null {
   if (typeof window === "undefined") return null;
-  const raw = localStorage.getItem(journeyKey(journeyId));
+  let storedId = journeyId;
+  let raw = localStorage.getItem(journeyKey(storedId));
+  if (raw === null) {
+    try {
+      storedId = decodeURIComponent(journeyId);
+    } catch {
+      throw new Error("INVALID_JOURNAL");
+    }
+    raw = localStorage.getItem(journeyKey(storedId));
+  }
   if (raw === null) return null;
   const data = z
     .object({
@@ -53,7 +62,7 @@ export function readJourney(journeyId: string): LaunchJourney | null {
     })
     .passthrough()
     .parse(JSON.parse(raw));
-  if (data.journeyId !== journeyId || data.draft.id !== data.draftId)
+  if (data.journeyId !== storedId || data.draft.id !== data.draftId)
     throw new Error("INVALID_JOURNAL");
   const journey = data as unknown as LaunchJourney;
   const journal = loadJournal(localStorage, journey.draftId, journey.manager);

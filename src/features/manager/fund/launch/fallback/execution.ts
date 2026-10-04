@@ -5,7 +5,7 @@
  */
 import type { FundLaunchDraft } from "../contracts";
 import { getLaunchSteps } from "../journey";
-import type { CanvasChain } from "../plan";
+import { type CanvasChain, launchPlanError } from "../plan";
 import { type AllocationEdits, fallbackAllocations } from "./allocation";
 
 export type FallbackSettings = NonNullable<CanvasChain["steps"][number]["config"]>;
@@ -172,7 +172,7 @@ export function fallbackLaunchPreview(
   }
   try {
     return { steps: getLaunchSteps(snapshot), blockers: [] };
-  } catch {
-    return { steps: [], blockers: ["BUILD_EXECUTION_GAP"] };
+  } catch (error) {
+    return { steps: [], blockers: [launchPlanError(error).code] };
   }
 }

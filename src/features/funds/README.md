@@ -1,5 +1,11 @@
 # V2 fund pages
 
+## Fund-wide history (POO-2182 / POO-2186)
+
+`FundHistory` reads `GET /api/v2/funds/:core/history?limit=20&cursor=...` through the server-only v2 client and `fundHistorySchema`. It keeps the API's newest-first ordering, uses opaque keyset cursors, deduplicates by chain/transaction/log index, and preserves investor events, raw amounts and details. Each row uses its actual chain for transaction and vault explorer links. Refresh and pagination are explicit to avoid continuous indexer reads. Indexed history is not claimed to be complete. Fund changes invalidate in-flight reads. Position history remains a separate surface.
+
+Wire contract checked against API commit `c8e8ce6`: `V2FundHistoryService.list`, `V2FundPositionStore.historyPage/historyProgress` and recursive `tagV2Response`. The local API checkout predates that commit and is deliberately untouched. Eleven locales include the new labels; non-English copy needs native review. Unit tests cover schema rejection, routing, pagination, links, retry, stale identity and same-fund validation. Deployment validation is still pending; no deployment performed.
+
 ## Created fund lists (POO-2181, rules v2)
 
 The existing `FundFamilySwitch` selects the v2-only explorer and Manager Console; no V1 page, Strategy model, toggle, canvas or Review page is changed. List identities are enriched by `readFund` in batches of six. A failed individual detail keeps its identity and unavailable metrics. Manager filtering uses authoritative detail/identity manager and a verified session; the client hides results whose verified wallet differs from the connected wallet.

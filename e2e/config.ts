@@ -6,19 +6,28 @@
  * fine for connect / SIWE / portfolio (read) specs — those cost nothing — but WRITE ops will
  * fail for lack of funds. Point RPCs at your own nodes via `E2E_<CHAIN>_RPC_URL` for reliability.
  */
-import type { Chain } from "viem";
+import { type Chain, defineChain } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import { arbitrum, base, polygon } from "viem/chains";
 
-export type ChainKey = "arbitrum" | "base" | "polygon";
+export type ChainKey = "arbitrum" | "base" | "polygon" | "robinhood";
 
-export const CHAINS: Record<ChainKey, Chain> = { arbitrum, base, polygon };
+export const robinhood = defineChain({
+  id: 4663,
+  name: "Robinhood Chain",
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+  rpcUrls: { default: { http: ["https://rpc.mainnet.chain.robinhood.com"] } },
+  blockExplorers: { default: { name: "Blockscout", url: "https://robinhoodchain.blockscout.com" } },
+});
+export const CHAINS: Record<ChainKey, Chain> = { arbitrum, base, polygon, robinhood };
+export const ROBINHOOD_USDG = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
 
 /** Public fallbacks; override per chain with E2E_ARBITRUM_RPC_URL / E2E_BASE_RPC_URL / E2E_POLYGON_RPC_URL. */
 const RPC_FALLBACK: Record<ChainKey, string> = {
   arbitrum: "https://arb1.arbitrum.io/rpc",
   base: "https://mainnet.base.org",
   polygon: "https://polygon-bor-rpc.publicnode.com",
+  robinhood: "https://rpc.mainnet.chain.robinhood.com",
 };
 
 export function rpcUrl(key: ChainKey): string {
@@ -29,8 +38,8 @@ export function rpcUrl(key: ChainKey): string {
 /** The chain a spec targets by default. */
 export function chainKey(): ChainKey {
   const k = (process.env.E2E_CHAIN ?? "arbitrum").toLowerCase();
-  if (k === "arbitrum" || k === "base" || k === "polygon") return k;
-  throw new Error(`E2E_CHAIN must be arbitrum|base|polygon, got "${k}"`);
+  if (k === "arbitrum" || k === "base" || k === "polygon" || k === "robinhood") return k;
+  throw new Error("E2E_CHAIN must be arbitrum|base|polygon|robinhood");
 }
 
 let ephemeral: `0x${string}` | null = null;

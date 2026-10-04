@@ -13,7 +13,7 @@ import { toV2MandateSelection } from "../v2Mandate";
 import type { FundLaunchDraft } from "./contracts";
 import { loadJournal } from "./journal";
 import { getLaunchSteps } from "./journey";
-import type { CanvasPlan } from "./plan";
+import { type CanvasPlan, launchPlanError } from "./plan";
 import { useV2LaunchWallet } from "./useV2LaunchWallet";
 import { useV2ReviewBinding } from "./useV2ReviewBinding";
 
@@ -100,12 +100,13 @@ export function useV2ReviewDraft(draftId: string) {
       toV2MandateSelection(draft, catalog);
       if (!draft.plan) throw new Error("BUILD_EXECUTION_GAP");
       getLaunchSteps({ ...draft, review: binding.review } as FundLaunchDraft);
-    } catch {
-      launchBlockers.push({ code: "BUILD_EXECUTION_GAP", messageKey: "fundLaunch.buildGap" });
+    } catch (error) {
+      launchBlockers.push(launchPlanError(error));
     }
   }
   return {
     ...binding,
+    catalog,
     draft,
     manager: wallet.manager,
     setField: <Field extends keyof typeof binding.review>(

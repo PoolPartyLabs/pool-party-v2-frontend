@@ -14,6 +14,13 @@
 | `PP-MGR-CMP-068` | PanelPickList: Modes 2 and 3, the heading with the network total, the filter over the mandate's rows only, rows with `Use`, the caption, the link row back to the Mandate step, the no-match box (a pasted address shortened), the empty mandate's box, skeleton rows and the inline retry (P13); a row with a `disabledReason` shows it and cannot be used. Pool rows carry no TVL and APR stack (A3) | Component | Draft | In Review | [POO-2187](https://linear.app/yeildbay/issue/POO-2187), [POO-2171](https://linear.app/yeildbay/issue/POO-2171) | (code-only; `src/features/manager/fund/build/panel/PanelPickList.tsx`) @rules-v1 |
 | `PP-MGR-HOK-014` | usePanelDraft: the draft of the selected block, `{ applied, draft, dirty, leaveBlocked }` (P3, P5, P6), `use` (the kind's defaults at 0%, DP1), `apply` through `useBuildPlan().applyBlockConfig`, `discard`, the config and share setters and a quiet `reset` for the remove confirm; it registers the selection guard, keeps a refused change as the pending resume and runs it once Apply changes or Discard changes settled (finding 10); `panelTarget` reads what it edits from the applied plan; `refusal` keeps the reason of a refused Use or Apply until the next edit. Reports through `onEvent`, never the dataLayer | Hook | n/a (code) | In Review | [POO-2187](https://linear.app/yeildbay/issue/POO-2187), [POO-2171](https://linear.app/yeildbay/issue/POO-2171) | (code-only; `src/features/manager/fund/build/panel/usePanelDraft.ts`) @rules-v1 |
 
+## V2 launch rehearsal (POO-2182)
+
+| ID | Artifact | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-STR-CMP-036` | Paginated fund-wide investor and lifecycle history with per-chain explorer links | Component | n/a (code) | In Review | POO-2182 | `src/features/funds/FundHistory.tsx` @rules-v1 |
+| `PP-E2E-V2-002` | Non-spending Mandate / Build / fallback Review rehearsal and fund-history assertions | Test | n/a (code) | In Review | POO-2182 | `e2e/specs/v2-launch-rehearsal.spec.ts` @rules-v1 |
+
 ## Build configuration panels: config contract, ceilings and readiness (POO-2184, slice PA1 of POO-2171)
 
 | ID | Artifact | Type | Design | Impl | Linear | Reference |
@@ -74,7 +81,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 643 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 645 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -685,19 +692,19 @@ _Reserved. No artifacts yet._
 | `PP-MGR-LIB-036` | Review validation and net seed arithmetic (`src/features/manager/fund/launch/review.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1 |
 | `PP-MGR-LIB-037` | Canvas BuildPlan launch adapter (`src/features/manager/fund/launch/plan.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1 |
 | `PP-MGR-LIB-038` | Launch request and transaction schemas (`src/lib/api/v2/launchSchemas.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1 |
-| `PP-MGR-LIB-039` | Server-only launch transport (`src/lib/api/v2/launch.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1 |
+| `PP-MGR-LIB-039` | Server-only launch transport (`src/lib/api/v2/launch.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1; POO-2192 accepted-report polling and private browser recovery @rules-v3 |
 | `PP-MGR-LIB-040` | Canonical EIP-191 fund profile message (`src/features/manager/fund/launch/profile.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1 |
 | `PP-MGR-LIB-041` | Range-derived v4 launch composition (`src/features/manager/fund/launch/composition.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1 |
-| `PP-MGR-LIB-042` | Just-in-time launch execution driver (`src/features/manager/fund/launch/driver.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1 |
+| `PP-MGR-LIB-042` | Just-in-time launch execution driver (`src/features/manager/fund/launch/driver.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1; POO-2192 accepted-report polling and private browser recovery @rules-v3 |
 | `PP-MGR-LIB-043` | Receipt-derived seed and transit identities (`src/features/manager/fund/launch/receipt.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1 |
 | `PP-MGR-LIB-044` | Agreed Review and launch public types (`src/features/manager/fund/launch/contracts.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Consumed by POO-2172; @rules-v1 |
 | `PP-MGR-LIB-045` | Pure signature preview, journey storage and explorer links (`src/features/manager/fund/launch/journey.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | @rules-v1 |
 | `PP-MGR-LIB-046` | Explicit launch entry point and resume navigation (`src/features/manager/fund/launch/startFundLaunch.ts`) | Lib | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | @rules-v1 |
-| `PP-MGR-CMP-081` | Launch journey screen and outcomes (`src/features/manager/fund/launch/FundLaunchJourney.tsx`) | Component | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Owns manager/fund-launch/[journeyId], not Review; @rules-v1 |
-| `PP-MGR-STO-002` | Per-draft launch checkpoint journal (`src/features/manager/fund/launch/journal.ts`) | Store | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1 |
+| `PP-MGR-CMP-081` | Launch journey screen and outcomes (`src/features/manager/fund/launch/FundLaunchJourney.tsx`) | Component | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Owns manager/fund-launch/[journeyId], not Review; @rules-v1; POO-2192 accepted-report polling and private browser recovery @rules-v3 |
+| `PP-MGR-STO-002` | Per-draft launch checkpoint journal (`src/features/manager/fund/launch/journal.ts`) | Store | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1; POO-2192 accepted-report polling and private browser recovery @rules-v3 |
 | `PP-MGR-ACT-013` | Session-authorized v2 launch actions (`src/lib/api/v2/launchActions.ts`) | Action | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Review frame 8225:2391; @rules-v1 |
 | `PP-MGR-HOK-018` | Headless Review mapping, validation and staged logo (`src/features/manager/fund/launch/useV2ReviewDraft.ts`) | Hook | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Consumed by Murilo's POO-2172 page; @rules-v1 |
-| `PP-MGR-HOK-019` | Headless launch state, signatures and explicit recovery actions (`src/features/manager/fund/launch/useV2Launch.ts`) | Hook | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Consumed by Murilo's POO-2172 page; @rules-v1 |
+| `PP-MGR-HOK-019` | Headless launch state, signatures and explicit recovery actions (`src/features/manager/fund/launch/useV2Launch.ts`) | Hook | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Consumed by Murilo's POO-2172 page; @rules-v1; POO-2192 accepted-report polling and private browser recovery @rules-v3 |
 | `PP-MGR-HOK-020` | Real wallet, hub balance and chain receipt binding (`src/features/manager/fund/launch/useV2LaunchWallet.ts`) | Hook | n/a (code) | In Review | [POO-2177](https://linear.app/yeildbay/issue/POO-2177) | Mount under real Privy/wagmi providers only; @rules-v1 |
 
 ## PROF · Profile and account / settings

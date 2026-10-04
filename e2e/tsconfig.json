@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "incremental": false
+  },
+  "include": ["./**/*.ts", "../src/lib/analytics/useAnalytics.ts"],
+  "exclude": ["../node_modules"]
+}
