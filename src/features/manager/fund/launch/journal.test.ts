@@ -29,6 +29,47 @@ const setup = () => {
 };
 
 describe("launch checkpoint state machine [R3, R6]", () => {
+  it("clears a previous error when Retry reconciles the completed step", async () => {
+    const { journal, storage, driver } = setup();
+    journal.steps = [{ id: "profile", kind: "profile", chain: 42161, dependencies: [] }];
+    journal.checkpoints.profile = {
+      stepId: "profile",
+      chain: 42161,
+      status: "failed",
+      error: "V2_UNAVAILABLE",
+    };
+    vi.mocked(driver.reconcile).mockResolvedValueOnce(true);
+    await runLaunch(journal, storage, driver);
+    expect(journal.checkpoints.profile?.status).toBe("confirmed");
+    expect(journal.checkpoints.profile?.error).toBeUndefined();
+    expect(driver.build).not.toHaveBeenCalled();
+  });
+  it.each([
+    "V2_DEFERRED",
+    "V2_RATE_LIMITED",
+  ])("waits for an explicitly deferred report read: %s", async (code) => {
+    const { journal, storage, driver } = setup();
+    journal.steps = [{ id: "report", kind: "report", chain: 42161, dependencies: [] }];
+    vi.mocked(driver.build).mockRejectedValueOnce(new Error(code));
+    await runLaunch(journal, storage, driver);
+    expect(journal.checkpoints.report?.status).toBe("waiting");
+    expect(journal.checkpoints.report?.error).toBeUndefined();
+    vi.mocked(driver.build).mockResolvedValueOnce({ complete: true });
+    await runLaunch(journal, storage, driver);
+    expect(journal.checkpoints.report?.status).toBe("confirmed");
+    expect(driver.send).not.toHaveBeenCalled();
+  });
+  it("does not hide real report failures as normal waits", async () => {
+    const { journal, storage, driver } = setup();
+    journal.steps = [{ id: "report", kind: "report", chain: 42161, dependencies: [] }];
+    vi.mocked(driver.build).mockRejectedValueOnce(new Error("V2_UNAVAILABLE"));
+    await runLaunch(journal, storage, driver);
+    expect(journal.checkpoints.report).toMatchObject({ status: "failed", error: "V2_UNAVAILABLE" });
+    vi.mocked(driver.build).mockResolvedValueOnce({});
+    await runLaunch(journal, storage, driver);
+    expect(journal.checkpoints.report?.status).toBe("waiting");
+    expect(journal.checkpoints.report?.error).toBeUndefined();
+  });
   it("R5 notifies mounted lists after a completed journal is persisted", async () => {
     const { journal, driver } = setup();
     const listener = vi.fn();
