@@ -896,5 +896,10 @@
     "transitFill": "Ausführung",
     "transitAcknowledgement": "Empfangsbestätigung",
     "decodedError": "Entschlüsselter Fehler: {name}"
+  },
+  "investV2": {
+    "notAvailable": "Nicht verfügbar",
+    "balanceUnavailable": "Guthaben: nicht verfügbar",
+    "target": "USDC auf Arbitrum"
   }
 }

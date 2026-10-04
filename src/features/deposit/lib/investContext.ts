@@ -1,7 +1,7 @@
 /**
  * @id PP-DEP-LIB-003 (POO-494, POO-520)
  * @name deposit invest-context params
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2217 V2 unavailable host/context); v1
  *
  * Parses the "Deposit & invest" deep-link params (`/deposit?strategy=<id>&amount=<shortfall>&invest=<chosen>`)
  * into a validated top-up context. The context is built from the URL alone (POO-494 R1) — the strategy
@@ -22,6 +22,7 @@ export type InvestOrigin = "investor" | "manager";
 
 /** The validated deep-link params (name-less; the page decorates the banner name separately). */
 export interface ParsedInvestParams {
+  family?: "v1";
   /** Strategy id to return to after a successful top-up. */
   strategyId: string;
   /** Shortfall to prefill; `0` when absent or invalid (no prefill, POO-494 R2). */
@@ -32,8 +33,48 @@ export interface ParsedInvestParams {
   origin: InvestOrigin;
 }
 
+/** V2 top-ups retain the fund and account independently of the legacy strategy catalogue. */
+export interface ParsedFundInvestParams {
+  family: "v2";
+  core: string;
+  wallet: string;
+  shortfall: number;
+  investAmount?: number;
+  origin: InvestOrigin;
+  fromPortfolio: boolean;
+}
+
+export type InvestReturnContext = ParsedInvestParams | ParsedFundInvestParams;
+
+function fundAmount(value: SearchParams[string]): number | undefined {
+  if (typeof value !== "string" || !/^\d{1,9}(\.\d{1,6})?$/.test(value)) return;
+  const amount = Number(value);
+  return amount > 0 ? amount : undefined;
+}
+
 /** Parse + validate the top-up deep-link params; `null` when there is no strategy id. */
-export function parseInvestParams(sp: SearchParams): ParsedInvestParams | null {
+export function parseInvestParams(sp: SearchParams): InvestReturnContext | null {
+  if (sp.family === "v2") {
+    if (
+      typeof sp.core !== "string" ||
+      !/^0x[\da-fA-F]{40}$/.test(sp.core) ||
+      typeof sp.account !== "string" ||
+      !/^0x[\da-fA-F]{40}$/.test(sp.account)
+    )
+      return null;
+    const shortfall = fundAmount(sp.amount) ?? 0;
+    const chosen = fundAmount(sp.invest);
+    return {
+      family: "v2",
+      core: sp.core,
+      wallet: sp.account,
+      shortfall,
+      investAmount: chosen !== undefined && chosen >= shortfall ? chosen : undefined,
+      origin: sp.origin === "manager" ? "manager" : "investor",
+      fromPortfolio: sp.from === "portfolio",
+    };
+  }
+  if (sp.family !== undefined && sp.family !== "v1") return null;
   const strategyId = typeof sp.strategy === "string" && sp.strategy.length > 0 ? sp.strategy : null;
   if (!strategyId) return null;
 
@@ -49,4 +90,30 @@ export function parseInvestParams(sp: SearchParams): ParsedInvestParams | null {
   const origin: InvestOrigin = sp.origin === "manager" ? "manager" : "investor";
 
   return { strategyId, shortfall, investAmount, origin };
+}
+
+/** Locale is supplied by the existing next-intl Link/router. This URL never authorizes signing. */
+export function buildInvestReturnHref(
+  context:
+    | (Omit<ParsedInvestParams, "origin"> & { origin?: InvestOrigin })
+    | ParsedFundInvestParams
+    | null
+    | undefined,
+  connectedWallet?: string | null,
+): string | null {
+  if (!context) return null;
+  const hasAmount = Boolean(context.investAmount && context.investAmount > 0);
+  if (context.family === "v2") {
+    if (connectedWallet?.toLowerCase() !== context.wallet.toLowerCase()) return null;
+    const params = new URLSearchParams();
+    if (hasAmount) params.set("invest", String(context.investAmount));
+    params.set("account", context.wallet);
+    if (context.fromPortfolio) params.set("from", "portfolio");
+    if (context.origin === "manager") params.set("origin", "manager");
+    return `/funds/${context.core}?${params}`;
+  }
+  if (context.origin === "manager") {
+    return `/manager?manage=${context.strategyId}${hasAmount ? `&invest=${context.investAmount}` : ""}`;
+  }
+  return `/strategies/${context.strategyId}${hasAmount ? `?invest=${context.investAmount}` : ""}`;
 }

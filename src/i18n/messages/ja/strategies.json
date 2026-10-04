@@ -896,5 +896,10 @@
     "transitFill": "約定",
     "transitAcknowledgement": "受領確認",
     "decodedError": "解析されたエラー: {name}"
+  },
+  "investV2": {
+    "notAvailable": "利用できません",
+    "balanceUnavailable": "残高：利用できません",
+    "target": "Arbitrum上のUSDC"
   }
 }

@@ -896,5 +896,10 @@
     "transitFill": "Khớp lệnh",
     "transitAcknowledgement": "Xác nhận nhận",
     "decodedError": "Lỗi đã giải mã: {name}"
+  },
+  "investV2": {
+    "notAvailable": "Chưa có dữ liệu",
+    "balanceUnavailable": "Số dư: chưa có dữ liệu",
+    "target": "USDC trên Arbitrum"
   }
 }

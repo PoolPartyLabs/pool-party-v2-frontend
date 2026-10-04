@@ -350,6 +350,8 @@ export const ANALYTICS_BLOCK_REASONS = [
    v1 position to prove it, and these are proxies running the current implementation.
    */
   "position_version_unsupported",
+  /** POO-2217: the investor V2 preview and execution contract is not available. */
+  "v2_execution_unavailable",
 ] as const;
 
 export type AnalyticsBlockReason = (typeof ANALYTICS_BLOCK_REASONS)[number];

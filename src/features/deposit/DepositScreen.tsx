@@ -67,7 +67,7 @@
  * PROVIDER-NEUTRAL and never rail-aware, because Privy auto-routes between four providers and our
  * captured outcome does not record which one served.
  *
- * @implements-rules-version v17 (POO-1904 rules v1: no Paybis method surface, no Paybis floor and no
+ * @implements-rules-version v1 (POO-2217 V2 unavailable host/context); v17 (POO-1904 rules v1: no Paybis method surface, no Paybis floor and no
  *   vendor named on the Privy rail) · v16 (POO-1813 rules v1: the purchase funnel's settled row and
  *   the two-value `deposit_method` on this rail) · v15 (POO-1807 rules v1: the Privy rail host, its
  *   baseline gate, its coverage refusal and its two released-screen exits) · v14 (POO-1794 rules v1) · v13 (POO-1786 rules v1) · v3 (POO-1137 / POO-1129 rules v3) · v4 (POO-727/728/729 rules v1) · v5 (POO-1174 rules v2) · v6 (POO-1573 rules v2) · v7 (POO-1513 rules v1) · v8 (POO-1609 rules v2) · v9 (POO-1614 rules v1) · v10 (POO-1617 rules v1) · v11 (POO-1642 rules v1) · v12 (POO-1624 rules v1)
@@ -342,6 +342,7 @@ import {
   DEPOSIT_CHAIN_IDS,
   type DepositNetwork,
 } from "./lib/depositNetworks";
+import { buildInvestReturnHref, type ParsedFundInvestParams } from "./lib/investContext";
 import { buildStandaloneOnRampPlan, readBaseNativeEth } from "./lib/standaloneOnRampPlan";
 
 /**
@@ -416,7 +417,8 @@ function Row({ label, value, sub }: { label: string; value: string; sub?: string
 }
 
 /** The invest-top-up context passed from "Deposit & invest". */
-export interface DepositInvestContext {
+interface LegacyDepositInvestContext {
+  family?: "v1";
   /** Strategy id to return to after a successful top-up. */
   strategyId: string;
   /** Strategy display name for the banner; null when the lookup missed (POO-494 R1) — the banner
@@ -432,6 +434,10 @@ export interface DepositInvestContext {
   origin?: "investor" | "manager";
 }
 
+export type DepositInvestContext =
+  | LegacyDepositInvestContext
+  | (ParsedFundInvestParams & { strategyName: string | null });
+
 /** Public props for {@link DepositScreen}. */
 export interface DepositScreenProps {
   /** Optional invest-top-up context (pre-fills the amount + shows a banner + reroutes on success). */
@@ -444,7 +450,7 @@ export interface DepositScreenProps {
 
 /** The deposit on-ramp wizard. */
 export function DepositScreen({
-  investContext,
+  investContext: suppliedInvestContext,
   cryptoDepositAvailable = true,
   initialCrypto = false,
 }: DepositScreenProps) {
@@ -465,6 +471,11 @@ export function DepositScreen({
   // checksummed for display. Null when no wallet is connected (guarded in the receive step);
   // `walletLoading` covers the real-mode Privy/wagmi handshake so we don't flash the empty state.
   const { address, isLoading: walletLoading } = useAuth();
+  const investContext =
+    suppliedInvestContext?.family === "v2" &&
+    suppliedInvestContext.wallet.toLowerCase() !== address?.toLowerCase()
+      ? null
+      : suppliedInvestContext;
   const connectedAddress = address ? getDepositAddress(address) : null;
   // Deep link (wallet modal "Receive") opens straight on the crypto-receive step when available.
   const [step, setStep] = useState<Step>(
@@ -1125,16 +1136,7 @@ export function DepositScreen({
   // (POO-281 R3). A manager-console origin returns to that strategy's manage view, where the
   // add-liquidity modal re-arms from the same param (POO-520 R1); the investor origin keeps the
   // strategy-detail return (POO-520 R2).
-  const hasInvestAmount = Boolean(investContext?.investAmount && investContext.investAmount > 0);
-  const investHref = investContext
-    ? investContext.origin === "manager"
-      ? hasInvestAmount
-        ? `/manager?manage=${investContext.strategyId}&invest=${investContext.investAmount}`
-        : `/manager?manage=${investContext.strategyId}`
-      : hasInvestAmount
-        ? `/strategies/${investContext.strategyId}?invest=${investContext.investAmount}`
-        : `/strategies/${investContext.strategyId}`
-    : "/strategies";
+  const investHref = buildInvestReturnHref(investContext, address) ?? "/strategies";
   // The top-up banner, shared by the fiat amount step and the crypto path (POO-494 R5). Name-less
   // fallback copy when the strategy lookup missed (POO-494 R1): never fabricate data in real mode.
   const investBanner =

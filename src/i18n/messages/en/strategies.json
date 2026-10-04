@@ -896,5 +896,10 @@
     "transitFill": "Fill",
     "transitAcknowledgement": "Acknowledgement",
     "decodedError": "Decoded error: {name}"
+  },
+  "investV2": {
+    "notAvailable": "Not available",
+    "balanceUnavailable": "Balance: Not available",
+    "target": "USDC on Arbitrum"
   }
 }
