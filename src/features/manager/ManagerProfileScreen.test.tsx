@@ -17,6 +17,10 @@ import {
 } from "../../../tests/utils/renderWithProviders";
 import { ManagerProfileScreen } from "./ManagerProfileScreen";
 
+const family = vi.hoisted(() => ({ value: "v2" }));
+vi.mock("@/lib/hooks/useContractFamily", () => ({
+  useContractFamily: () => ({ family: family.value }),
+}));
 vi.mock("@/i18n/navigation", () => ({
   Link: ({
     href,
@@ -260,4 +264,14 @@ describe("ManagerProfileScreen", () => {
       expect(writeText).toHaveBeenCalledWith(`https://app.pool-party.xyz/m/${DEV_MANAGER_ADDRESS}`),
     );
   });
+});
+
+it("POO-2209 toggles local V2 Follow and keeps V1 unchanged", () => {
+  family.value = "v2";
+  const view = renderWithProviders(<ManagerProfileScreen profile={devManager()} strategies={[]} />);
+  fireEvent.click(screen.getByRole("button", { name: "Follow" }));
+  expect(screen.getByRole("button", { name: "Following" })).toHaveAttribute("aria-pressed", "true");
+  family.value = "v1";
+  view.rerender(<ManagerProfileScreen profile={devManager()} strategies={[]} />);
+  expect(screen.queryByRole("button", { name: "Following" })).toBeNull();
 });

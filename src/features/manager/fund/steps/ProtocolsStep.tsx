@@ -1,5 +1,6 @@
 /**
  * @id PP-MGR-CMP-036
+ * @implements-rules-version v1 (POO-2209)
  * @name ProtocolsStep
  * @implements-rules-version v4 (POO-2143 rules v2, POO-2167 rules v4)
  * @analytics-events none, the shell emits
@@ -274,7 +275,10 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
           </p>
         ) : null}
 
-        {operable.map(operableRow)}
+        {[
+          ...operable.filter(canSelect),
+          ...operable.filter((protocol) => !canSelect(protocol)),
+        ].map(operableRow)}
 
         <p className="text-muted-foreground text-xs">{t("fundBuilder.protocols.onFootnote")}</p>
       </div>

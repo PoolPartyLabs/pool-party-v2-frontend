@@ -1,5 +1,6 @@
 /**
  * @id PP-MGR-SCR-005
+ * @implements-rules-version v1 (POO-2209)
  * @name ManagerProfileScreen
  * @implements-rules-version v3
  *
@@ -28,6 +29,7 @@
  * (whoever is signed in and taps Share) [R3]. This Server Component now passes only the profile
  * slug; {@link ShareProfileButton} resolves the code client-side and builds the URL.
  */
+
 import { BadgeCheck, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
@@ -37,6 +39,7 @@ import { Link } from "@/i18n/navigation";
 import type { ManagerProfile, Strategy } from "@/lib/schemas";
 import { maskAddress } from "@/lib/utils/address";
 import { formatPercent, formatUsdCompact } from "@/lib/utils/format";
+import { LocalManagerFollow } from "./components/LocalManagerFollow";
 import { ShareProfileButton } from "./components/ShareProfileButton";
 import { SocialChips } from "./components/SocialChips";
 
@@ -136,6 +139,7 @@ export function ManagerProfileScreen({ profile, strategies, isOwner }: ManagerPr
               investor-hub Edit-profile precedent restyled to the Share pill's header sizing) beside
               the Share action (POO-288 R1, unchanged for everyone [R3]). */}
           <div className="flex shrink-0 items-center gap-2 sm:mb-1 sm:ml-auto">
+            <LocalManagerFollow key={profile.address || profile.handle} />
             {isOwner ? (
               <Link
                 href="/manager?tab=profile"

@@ -374,7 +374,9 @@
       "body": "Deze link gaat naar {domain}, een externe site die we niet hebben geverifieerd. Doorgaan?",
       "continue": "Doorgaan",
       "cancel": "Annuleren"
-    }
+    },
+    "follow": "Volgen",
+    "following": "Volgend"
   },
   "operate": {
     "title": "Live-positie",

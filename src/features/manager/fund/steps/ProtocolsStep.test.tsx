@@ -596,3 +596,18 @@ it("preserves real catalog failure with retry and loading status (POO-2167)", as
   );
   expect(screen.getByRole("status")).toBeInTheDocument();
 });
+
+it("POO-2209 renders available protocols before Coming soon", () => {
+  renderWithProviders(
+    <ProtocolsStep
+      draft={draftWith(["arbitrum"], [])}
+      catalog={catalog}
+      update={vi.fn()}
+      block={null}
+      onBlocked={vi.fn()}
+    />,
+  );
+  const available = screen.getByRole("checkbox", { name: "Aave v3" });
+  const soon = screen.getByRole("checkbox", { name: "Uniswap v3" });
+  expect(available.compareDocumentPosition(soon) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});

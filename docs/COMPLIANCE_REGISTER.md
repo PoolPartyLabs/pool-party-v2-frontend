@@ -70,3 +70,7 @@ paragraph used the same Aave reserve snapshot as SupplyBlockPanel; CR-MGR-024 re
 ## Verification record: pools with deferred allocation
 
 2026-10-04, POO-2204, PP-MGR-CMP-069: zero allocation preserves the pool's immutable permission without opening a position or routing funds to it at launch. Range estimates are hidden until the manager allocates capital; positive allocations still require current eligibility and range checks. Verify that later management offers the operation when capital is allocated. This fix makes no claim that a position already exists or earns yield at 0%. Existing venue/range disclosures and custody questions remain open. A wholly idle launch retains its previous restriction pending Murilo's decision.
+
+### CR-MGR-POO2209, 2026-10-04, local Follow demonstration
+
+Status: RESOLVED. V2 Follow/Following is local UI state scoped to one viewed manager during the mounted session. No personal data is transmitted or persisted, no follower count or backend relationship is claimed, and no wallet operation occurs. Reassess before real social-follow wiring ships.

@@ -374,7 +374,9 @@
       "body": "Ce lien mène à {domain}, un site externe que nous n'avons pas vérifié. Continuer ?",
       "continue": "Continuer",
       "cancel": "Annuler"
-    }
+    },
+    "follow": "Suivre",
+    "following": "Abonné"
   },
   "operate": {
     "title": "Position en direct",

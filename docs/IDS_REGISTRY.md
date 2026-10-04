@@ -873,3 +873,5 @@ Protocol design v1.1 and the current UI-only delivery are versioned in `docs/fea
 | `PP-TOOLS-LIB-006` | Scan contract shared by client and server (chains, job snapshot) | Lib | n/a (code) | Done |  | (code-only) |
 
 > **The scan runs the real toolchain or it fails loudly.** There is no mock branch: a fabricated risk report is worse than no page. Without `forge`, `slither`, a built `hookrisk/cli/dist/cli.js` or `ETHERSCAN_API_KEY`, the job fails fast naming exactly what is missing, and the screen prints that instead of a report.
+
+POO-2209 rules v1 updates PP-CORE-LAY-001, PP-MGR-SCR-005 (including its private LocalManagerFollow client child) and PP-MGR-CMP-036: desktop navigation simplification, temporary Build shell layout, local V2 Follow, stable available-first protocol ordering.

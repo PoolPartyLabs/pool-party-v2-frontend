@@ -374,7 +374,9 @@
       "body": "此連結將前往 {domain}，一個我們尚未驗證的外部網站。是否繼續？",
       "continue": "繼續",
       "cancel": "取消"
-    }
+    },
+    "follow": "關注",
+    "following": "已關注"
   },
   "operate": {
     "title": "即時部位",

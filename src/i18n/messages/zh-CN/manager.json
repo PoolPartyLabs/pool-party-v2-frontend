@@ -374,7 +374,9 @@
       "body": "此链接将前往 {domain}，一个我们尚未验证的外部网站。是否继续？",
       "continue": "继续",
       "cancel": "取消"
-    }
+    },
+    "follow": "关注",
+    "following": "已关注"
   },
   "operate": {
     "title": "实时仓位",

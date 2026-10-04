@@ -18,7 +18,11 @@ import {
 import { AppShell, isNavItemVisible, type NavItem } from "./AppShell";
 
 // Mutable so a test can drive a different route (POO-760 regression). Defaults to "/portfolio".
-const nav = vi.hoisted(() => ({ pathname: "/portfolio" }));
+const nav = vi.hoisted(() => ({ pathname: "/portfolio", phase: "" }));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams({ phase: nav.phase }),
+}));
 
 vi.mock("@/i18n/navigation", () => ({
   usePathname: () => nav.pathname,
@@ -95,6 +99,7 @@ describe("AppShell", () => {
   // reset it around each test so per-test `vi.stubEnv` flag changes resolve fresh.
   beforeEach(() => {
     nav.pathname = "/portfolio";
+    nav.phase = "";
     __resetDevOverridesForTests();
   });
   afterEach(() => {
@@ -113,13 +118,7 @@ describe("AppShell", () => {
       </AppShell>,
     );
     const { sidebar, tabbar } = getNavs();
-    expect(within(sidebar).getByRole("link", { name: "Cash+" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    const links = within(sidebar).getAllByRole("link");
-    const strategyIndex = links.findIndex((link) => link.textContent === "Strategies");
-    expect(links[strategyIndex + 1]).toHaveTextContent("Cash+");
+    expect(within(sidebar).queryByRole("link", { name: "Cash+" })).toBeNull();
     expect(within(tabbar).getByRole("link", { name: "Cash+" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -400,4 +399,26 @@ describe("AppShell", () => {
     await user.click(screen.getByText("content"));
     expect(screen.queryByRole("switch", { name: "Manager mode" })).toBeNull();
   });
+});
+
+it("POO-2209 keeps Build collapsed and wide without changing the saved preference", () => {
+  localStorage.setItem("pp.sidebar.collapsed", JSON.stringify(false));
+  nav.pathname = "/manager/new";
+  nav.phase = "build";
+  const view = renderWithProviders(
+    <AppShell>
+      <div data-testid="build-body">Build</div>
+    </AppShell>,
+  );
+  expect(screen.getByRole("button", { name: "Expand" })).toHaveAttribute("aria-expanded", "false");
+  expect(screen.getByTestId("build-body").parentElement).not.toHaveClass("max-w-7xl");
+  expect(localStorage.getItem("pp.sidebar.collapsed")).toBe("false");
+  nav.pathname = "/portfolio";
+  nav.phase = "";
+  view.rerender(
+    <AppShell>
+      <div data-testid="build-body">Other</div>
+    </AppShell>,
+  );
+  expect(screen.getByTestId("build-body").parentElement).toHaveClass("max-w-7xl");
 });
