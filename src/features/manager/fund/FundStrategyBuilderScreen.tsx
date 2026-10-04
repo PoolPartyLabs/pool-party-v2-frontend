@@ -1,11 +1,12 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen
- * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2197 rules v2)
+ * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2195 rules v1, POO-2197 rules v2)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
  *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
  *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
- *   builder_build_abandoned, builder_build_error (the Build canvas emits its own: `BuildScreen`)
+ *   builder_build_abandoned, builder_build_error, builder_build_submitted, builder_build_completed,
+ *   builder_review_error (the Build canvas and ReviewPhase own their view/interaction events)
  *
  * The fund-contracts strategy builder: the shell the five Mandate steps live in (POO-2122, epic
  * POO-2119). Page header, the three-phase stepper, the collapsible sub-step header, the step body,
@@ -98,6 +99,15 @@
  *    `builder_build_abandoned` (whether unsaved plan edits were left behind, and how many blocks),
  *    and a save that fails from Build is `builder_build_error`. A Build session is never also counted
  *    as a Mandate abandonment: the mandate it plans over is already closed.
+ *
+ * ## The Review phase (POO-2195 rules v1)
+ *
+ * Next: Review first passes the Build selection guard and readiness check, then saves the plan
+ * with `lastPhase: "review"` before opening ReviewPhase. The stored phase and `?phase=review`
+ * resume a completed mandate directly in Review; an incomplete mandate still resumes Mandate.
+ * Save & exit preserves `review`, while Back: Build restores `build` and can reveal the selected
+ * readiness blocker without changing the canvas selection. ReviewPhase owns the review fields,
+ * launch gates and the existing launch journey; this shell owns phase persistence and navigation.
  */
 "use client";
 
@@ -119,7 +129,9 @@ import { BuildScreen, type LeaveGuard } from "./build/BuildScreen";
 import type { MandateEditStep } from "./build/blocks/useBuildCanvas";
 import { planCounts } from "./build/buildAnalytics";
 import { type BuilderPhase, planOf } from "./build/plan/buildPlan";
+import type { ReadinessTarget } from "./build/plan/planReadiness";
 import { BuilderActionBar } from "./components/BuilderActionBar";
+import { MandateCatalogStatus } from "./components/MandateCatalogStatus";
 import { MandateSubStepHeader } from "./components/MandateSubStepHeader";
 import { NameDraftDialog } from "./components/NameDraftDialog";
 import { getLaunchStatusForDraft } from "./launch/journey";
@@ -142,6 +154,7 @@ import {
   validateStep,
   visibleSteps,
 } from "./mandateDraft";
+import { ReviewPhase } from "./review/ReviewPhase";
 import { LimitsStep } from "./steps/LimitsStep";
 import { NetworksStep } from "./steps/NetworksStep";
 import { PoolsStep } from "./steps/PoolsStep";
@@ -272,18 +285,26 @@ export function FundStrategyBuilderScreen() {
   // after draft hydration; an existing frozen journey always retains its original resume path.
   const existingJourney = hydrated ? getLaunchStatusForDraft(draft.id, address ?? null) : null;
   const hasExistingJourney = existingJourney !== null;
+  const awaitingWallet = hydrated && draft.completedAt !== null && walletLoading;
+  const awaitingCatalog =
+    hydrated &&
+    draft.completedAt !== null &&
+    !hasExistingJourney &&
+    catalog.dataMode === "real" &&
+    Boolean(catalog.loading || catalog.error);
+  const resumePending = awaitingWallet || awaitingCatalog;
   const revisedLimitsBlock = useMemo(
     () =>
-      hydrated && draft.completedAt !== null && !hasExistingJourney
+      hydrated && draft.completedAt !== null && !hasExistingJourney && !resumePending
         ? validateStep(draft, "limits", catalog)
         : null,
-    [hydrated, draft, hasExistingJourney, catalog],
+    [hydrated, draft, hasExistingJourney, resumePending, catalog],
   );
   const [revisitedMandate, setRevisitedMandate] = useState(false);
   const step =
     revisedLimitsBlock &&
     !revisitedMandate &&
-    (requestedPhase === "build" || requestedPhase === "review")
+    ["build", "review"].includes(requestedPhase ?? draft.lastPhase ?? "")
       ? "limits"
       : resumeStep(draft);
   const steps = visibleSteps(draft);
@@ -296,11 +317,15 @@ export function FundStrategyBuilderScreen() {
    * derivation below correct on the very first render that has the stored draft. See the file
    * header for why this is not an effect.
    */
+  const [reviewRevealTarget, setReviewRevealTarget] = useState<ReadinessTarget | null>(null);
   const [phaseChoice, setPhaseChoice] = useState<BuilderPhase | null>(null);
   const phase: BuilderPhase = revisedLimitsBlock
     ? "mandate"
     : (phaseChoice ??
-      (requestedPhase === "build" && draft.completedAt !== null ? "build" : "mandate"));
+      (["build", "review"].includes(requestedPhase ?? draft.lastPhase ?? "") &&
+      draft.completedAt !== null
+        ? ((requestedPhase ?? draft.lastPhase) as BuilderPhase)
+        : "mandate"));
 
   const [dialog, setDialog] = useState<"exit" | "complete" | null>(null);
   const [shellBlock, setShellBlock] = useState<StepBlock | null>(null);
@@ -308,7 +333,7 @@ export function FundStrategyBuilderScreen() {
 
   // The block the step body renders: the shell's own (a refused Next) takes precedence over the
   // hook's, which records a reducer that refused a selection.
-  const activeBlock = revisedLimitsBlock ?? shellBlock ?? lastBlock;
+  const activeBlock = shellBlock ?? lastBlock ?? revisedLimitsBlock;
 
   // R9 / handoff: the browser warns before losing a mandate, from the first selection onward.
   // `exiting` disarms it on the way out, so Save & exit does not prompt about work it just saved.
@@ -470,6 +495,10 @@ export function FundStrategyBuilderScreen() {
   const reportSaveFailure = useCallback(() => {
     // A save that fails from the Build canvas is Build's error: the mandate is already closed, and a
     // Mandate error row would put a Build failure on the Limits step's count.
+    if (phaseRef.current === "review") {
+      track("builder_review_error", { error_code: "REVIEW_SAVE_FAILED" });
+      return;
+    }
     if (phaseRef.current === "build") {
       track("builder_build_error", { error_code: "DRAFT_SAVE_FAILED", error_origin: "app" });
       return;
@@ -493,7 +522,7 @@ export function FundStrategyBuilderScreen() {
    */
   const resumed = useRef(false);
   useEffect(() => {
-    if (!hydrated || resumed.current) return;
+    if (!hydrated || resumePending || resumed.current) return;
     resumed.current = true;
     const current = draftRef.current;
 
@@ -508,7 +537,7 @@ export function FundStrategyBuilderScreen() {
     const wanted = requestedStep ?? current.lastStep;
     const target = isStepReachable(current, wanted) ? wanted : firstUnpassedStep(current);
     if (target !== current.lastStep) update((d) => ({ ...d, lastStep: target }));
-  }, [hydrated, initialDraftId, requestedStep, update]);
+  }, [hydrated, resumePending, initialDraftId, requestedStep, update]);
 
   /**
    * One view per step VISIT, not per render and not per mount.
@@ -519,10 +548,10 @@ export function FundStrategyBuilderScreen() {
    */
   const viewedStep = useRef<MandateStepKey | null>(null);
   useEffect(() => {
-    if (!hydrated || phase !== "mandate" || viewedStep.current === step) return;
+    if (!hydrated || resumePending || phase !== "mandate" || viewedStep.current === step) return;
     viewedStep.current = step;
     track("builder_mandate_step_viewed", { step });
-  }, [hydrated, phase, step, track]);
+  }, [hydrated, resumePending, phase, step, track]);
 
   /**
    * From the first save on, the URL names the draft, the step and the phase, so a reload restores
@@ -530,10 +559,10 @@ export function FundStrategyBuilderScreen() {
    * means the default, and a Back from Build has to leave the URL as it was before it.
    */
   useEffect(() => {
-    if (!hydrated || draft.savedAt === null) return;
-    const query = `?draft=${draft.id}&step=${step}${phase === "build" ? "&phase=build" : ""}`;
+    if (!hydrated || resumePending || draft.savedAt === null) return;
+    const query = `?draft=${draft.id}&step=${step}${phase !== "mandate" ? `&phase=${phase}` : ""}`;
     routerRef.current.replace(`${pathname}${query}`, { scroll: false });
-  }, [hydrated, draft.savedAt, draft.id, step, phase, pathname]);
+  }, [hydrated, resumePending, draft.savedAt, draft.id, step, phase, pathname]);
 
   // Every step transition starts at the top: the steps are tall, and advancing otherwise drops the
   // manager mid-scroll into a list they have not seen the top of. Instant, per the 2026-06-26 rule.
@@ -553,6 +582,7 @@ export function FundStrategyBuilderScreen() {
       // A session that ends on the Build canvas is Build's to report (POO-2157): the mandate under
       // it already closed. Only a Save & exit parks it; everything else is an abandonment, and what
       // it lost is a plan edit made since the last save.
+      if (phaseRef.current === "review") return;
       if (phaseRef.current === "build") {
         if (exitedRef.current) return;
         trackRef.current("builder_build_abandoned", {
@@ -644,7 +674,10 @@ export function FundStrategyBuilderScreen() {
       // a dead end on a screen with nothing to fix. The navigation goes FIRST, because `update`
       // clears `shellBlock` on any write that settles, so reporting before it would hand the
       // manager the right screen with no notice on it.
-      if (blocked.step !== step) update((d) => ({ ...d, lastStep: blocked.step }));
+      if (blocked.step !== step) {
+        setRevisitedMandate(true);
+        update((d) => ({ ...d, lastStep: blocked.step }));
+      }
       reportBlocked(blocked);
       return;
     }
@@ -782,7 +815,34 @@ export function FundStrategyBuilderScreen() {
     });
   }, [step, track]);
 
-  if (!hydrated) return <BuilderSkeleton />;
+  const handleOpenReview = useCallback(async () => {
+    track("builder_build_submitted", { family: "v2" });
+    stampPhase("review");
+    const result = await save();
+    if (!result.ok) {
+      stampPhase("build");
+      reportSaveFailure();
+      return;
+    }
+    track("builder_build_completed", { family: "v2" });
+    setPhaseChoice("review");
+  }, [save, stampPhase, reportSaveFailure, track]);
+  const handleReviewBack = useCallback(
+    (target?: ReadinessTarget | null) => {
+      stampPhase("build");
+      setPhaseChoice("build");
+      setReviewRevealTarget(target ?? null);
+    },
+    [stampPhase],
+  );
+
+  if (!hydrated || awaitingWallet) return <BuilderSkeleton />;
+  if (awaitingCatalog)
+    return (
+      <section className="mx-auto w-full max-w-3xl">
+        <MandateCatalogStatus catalog={catalog} draft={draft} />
+      </section>
+    );
 
   const Body = STEP_BODIES[step];
   const counts = selectionCounts(draft);
@@ -792,7 +852,7 @@ export function FundStrategyBuilderScreen() {
       className={cn(
         "mx-auto flex w-full flex-col gap-6",
         // D23: the Build canvas takes the full content width; the Mandate keeps its columns.
-        phase === "build" ? null : WIDE_STEPS.includes(step) ? "max-w-[1100px]" : "max-w-3xl",
+        phase !== "mandate" ? null : WIDE_STEPS.includes(step) ? "max-w-[1100px]" : "max-w-3xl",
       )}
     >
       <div className="flex items-baseline gap-4">
@@ -817,13 +877,23 @@ export function FundStrategyBuilderScreen() {
           [B4] Review stays unreachable: the stepper only makes an EARLIER phase clickable. Its
           Mandate pill is a way out of Build, so it asks the canvas's guard (HU3). */}
       <BuilderStepper
-        active={phase === "build" ? "build" : "mandate"}
+        active={phase}
         onStepClick={(target) => {
           if (target === "mandate") guardBuildExit(handleBackToMandate);
+          if (target === "build" && phase === "review") {
+            stampPhase("build");
+            setPhaseChoice("build");
+          }
         }}
       />
 
-      {phase === "build" ? (
+      {phase === "review" ? (
+        <ReviewPhase
+          draftId={draft.id}
+          onBackToBuild={handleReviewBack}
+          onEditMandate={() => handleEditMandate("networks", null)}
+        />
+      ) : phase === "build" ? (
         <BuildScreen
           draft={draft}
           catalog={catalog}
@@ -832,6 +902,8 @@ export function FundStrategyBuilderScreen() {
           onEditMandate={handleEditMandate}
           initialSelectedId={buildReturnBlock}
           leaveGuardRef={buildLeaveRef}
+          onReview={() => void handleOpenReview()}
+          initialRevealTarget={reviewRevealTarget}
         />
       ) : (
         <>

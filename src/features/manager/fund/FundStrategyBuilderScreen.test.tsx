@@ -21,7 +21,7 @@ import {
   userEvent,
   waitFor,
 } from "../../../../tests/utils/renderWithProviders";
-import { buildMandateCatalog } from "./mandateCatalog";
+import { buildMandateCatalog, type MandateCatalog } from "./mandateCatalog";
 import {
   addPool,
   createEmptyDraft,
@@ -48,6 +48,16 @@ vi.mock("next/navigation", () => ({ useSearchParams: () => nav.params }));
 
 const auth = vi.hoisted(() => ({ address: undefined as string | undefined, isLoading: false }));
 vi.mock("@/lib/auth/useAuth", () => ({ useAuth: () => auth }));
+const catalogOverride = vi.hoisted(() => ({ current: null as MandateCatalog | null }));
+vi.mock("./useV2MandateCatalog", async (importOriginal) => {
+  const real = await importOriginal<typeof import("./useV2MandateCatalog")>();
+  return {
+    useV2MandateCatalog: () => {
+      const catalog = real.useV2MandateCatalog();
+      return catalogOverride.current ?? catalog;
+    },
+  };
+});
 const launchStatus = vi.hoisted(() => ({ read: vi.fn((..._args: unknown[]) => null as unknown) }));
 vi.mock("./launch/journey", () => ({
   getLaunchStatusForDraft: (...args: unknown[]) => launchStatus.read(...args),
@@ -219,6 +229,7 @@ function withPools(id: string, over: Partial<MandateDraft> = {}): MandateDraft {
 beforeEach(() => {
   auth.address = undefined;
   auth.isLoading = false;
+  catalogOverride.current = null;
   launchStatus.read.mockReturnValue(null);
   nav.push.mockClear();
   nav.replace.mockClear();
@@ -1098,6 +1109,65 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
 
 describe("Limits revised completion guards (POO-2197)", () => {
   // @rule POO-2197 R3
+  it("reveals an earlier invalid Pools step when resumed Limits is also invalid", async () => {
+    nav.params = new URLSearchParams("draft=two-blocks&phase=build");
+    upsertDraft({ ...lostItsPools("two-blocks"), completedAt: "2026-10-02" });
+    renderWithProviders(<FundStrategyBuilderScreen />);
+    await userEvent.click(await screen.findByRole("button", { name: "Next: Build strategy" }));
+    expect(screen.getByText("MANDATE · STEP 4 OF 5")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).not.toHaveTextContent("Add another token in Tokens");
+  });
+
+  // @rule POO-2197 R3
+  it.each([
+    "loading",
+    "error",
+  ] as const)("preserves a completed draft while its catalog is %s and exposes retry on failure", async (state) => {
+    nav.params = new URLSearchParams("draft=catalog-resume&phase=build");
+    upsertDraft({ ...wholeMandate("catalog-resume"), completedAt: "2026-10-02" });
+    const retry = vi.fn();
+    catalogOverride.current = {
+      ...buildMandateCatalog(),
+      dataMode: "real",
+      loading: state === "loading",
+      error: state === "error",
+      retry,
+    };
+    const original = localStorage.getItem(MANDATE_DRAFTS_KEY);
+    renderWithProviders(<FundStrategyBuilderScreen />);
+    if (state === "loading") {
+      expect(await screen.findByRole("status", { name: /loading/i })).toBeInTheDocument();
+    } else {
+      expect(await screen.findByText("The v2 catalog is unavailable.")).toBeInTheDocument();
+      await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+      expect(retry).toHaveBeenCalledOnce();
+    }
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(nav.replace).not.toHaveBeenCalled();
+    expect(localStorage.getItem(MANDATE_DRAFTS_KEY)).toBe(original);
+    expect(emitted("builder_mandate_blocked")).toHaveLength(0);
+  });
+
+  // @rule POO-2197 R3
+  it("keeps a resumed draft on Limits after correcting its token until Next is pressed", async () => {
+    nav.params = new URLSearchParams("draft=correct-limit&phase=build");
+    const draft = wholeMandate("correct-limit");
+    const token = draft.tokens.find((entry) => !entry.locked);
+    if (!token) throw new Error("missing extra token");
+    upsertDraft({
+      ...draft,
+      completedAt: "2026-10-02",
+      caps: { ...draft.caps, tokens: { [tokenKey(token)]: { noCap: false, pct: 0 } } },
+    });
+    renderWithProviders(<FundStrategyBuilderScreen />);
+    await screen.findByRole("button", { name: "Next: Build strategy" });
+    await userEvent.click(screen.getByRole("checkbox", { name: /No cap.*Arbitrum/i }));
+    expect(screen.getByRole("button", { name: "Next: Build strategy" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Build your strategy" })).not.toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /No cap.*Arbitrum/i })).toBeChecked();
+  });
+
+  // @rule POO-2197 R3
   it("refuses a zero second-token allowance with guidance and blocked intent", async () => {
     nav.params = new URLSearchParams("draft=zero-limit&step=limits");
     const draft = wholeMandate("zero-limit");
@@ -1153,7 +1223,10 @@ it("preserves launch recovery while the wallet loads and restores the existing j
   });
   const original = localStorage.getItem(MANDATE_DRAFTS_KEY);
   const { rerender } = renderWithProviders(<FundStrategyBuilderScreen />);
-  await screen.findByRole("button", { name: "Next: Build strategy" });
+  await waitFor(() => expect(launchStatus.read).toHaveBeenCalled());
+  expect(screen.queryByRole("button", { name: "Next: Build strategy" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+  expect(nav.replace).not.toHaveBeenCalled();
   expect(getDraft("wallet-arrival")?.completedAt).toBe("2026-10-02");
   expect(getDraft("wallet-arrival")?.lastPhase).toBe("build");
   expect(emitted("builder_mandate_blocked")).toHaveLength(0);

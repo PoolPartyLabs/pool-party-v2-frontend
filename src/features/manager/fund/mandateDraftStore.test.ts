@@ -392,7 +392,7 @@ describe("the Build plan inside a draft", () => {
 
   it("drops a phase it does not know, which then reads as the mandate", () => {
     // @rule Storage
-    storeRaw({ odd: { ...draft("odd", "2026-10-01T00:00:00.000Z"), lastPhase: "review" } });
+    storeRaw({ odd: { ...draft("odd", "2026-10-01T00:00:00.000Z"), lastPhase: "unknown" } });
     expect(getDraft("odd")).not.toHaveProperty("lastPhase");
   });
 });

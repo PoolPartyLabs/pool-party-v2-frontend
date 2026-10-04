@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-044
  * @name MandateDraftsList
- * @implements-rules-version v3 (POO-2127 rules v1, POO-2167 rules v3, POO-2151 rules v1)
+ * @implements-rules-version v3 (POO-2127 rules v1, POO-2167 rules v3, POO-2151 rules v1, POO-2195 rules v1)
  * @analytics-events builder_draft_opened, builder_draft_deleted, builder_mandate_error
  *
  * POO-2127 [D1] / [D3], epic POO-2119 (handoff blast radius item 1). The Manager Console's Drafts
@@ -39,7 +39,9 @@
  * `lastStep` raw: a stored draft parked on Pools that lost its only position protocol on load (R20
  * v3, POO-2167) keeps `lastStep: "pools"` on a draft with no Pools step, which read "step 0 of 4".
  * The Open link is {@link draftResumeHref}, which also resumes a completed draft last saved in the
- * Build phase on Build (POO-2151, D16). Nothing writes that phase until the Build screen lands.
+ * Build phase on Build (POO-2151, D16), or `lastPhase: "review"` directly in Review after the
+ * Build handoff has saved the plan (POO-2195 rules v1). Incomplete mandates resume Mandate even
+ * when a stored phase says Build or Review.
  *
  * PP-INTEGRATION-POINT: the drafts move to the backend draft API with the store itself
  * (`PP-MGR-STO-001`, wiring issue POO-2132); this card changes nothing when they do, because it
@@ -60,12 +62,15 @@ import { deleteDraft, listDrafts, subscribe } from "../mandateDraftStore";
 
 /**
  * Where Open takes a draft: the builder on the step the draft is resumed on (`resumeStep`), plus
- * `&phase=build` iff the mandate is complete AND the draft was last saved in the Build phase
- * (POO-2151, coordinator default D16). No `lastPhase` reads as the mandate. The builder trusts
- * `phase=build` only for a completed mandate anyway; checking it here too keeps the link honest.
+ * `&phase=build` or `&phase=review` iff the mandate is complete AND the draft was last saved in
+ * that phase (POO-2151 D16, POO-2195 rules v1). No `lastPhase` reads as Mandate. The builder trusts
+ * Build and Review phase links only for a completed mandate; checking here keeps the link honest.
  */
 export function draftResumeHref(draft: MandateDraft): string {
-  const phase = draft.completedAt !== null && draft.lastPhase === "build" ? "&phase=build" : "";
+  const phase =
+    draft.completedAt !== null && (draft.lastPhase === "build" || draft.lastPhase === "review")
+      ? `&phase=${draft.lastPhase}`
+      : "";
   return `/manager/new?draft=${draft.id}&step=${resumeStep(draft)}${phase}`;
 }
 
