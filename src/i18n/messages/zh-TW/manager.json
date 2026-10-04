@@ -1210,7 +1210,11 @@
       "launchPreviewTitle": "啟動步驟",
       "upToSignatures": "最多{count}次簽署",
       "signatureKinds": "{transactions}筆交易與{messages}則個人資料訊息",
-      "launchPreviewBlocked": "完成已套用的Build以預覽啟動步驟。"
+      "launchPreviewBlocked": "完成已套用的Build以預覽啟動步驟。",
+      "fixedTitle": "啟動時固定",
+      "fixedSummary": "授權範圍、最低首次入金與即時提領費在啟動時固定。",
+      "decreaseTitle": "只能調降",
+      "decreaseSummary": "績效費與管理費在啟動後只能調降。"
     }
   }
 }

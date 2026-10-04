@@ -1210,7 +1210,11 @@
       "launchPreviewTitle": "Lanceringsstappen",
       "upToSignatures": "Tot {count} handtekeningen",
       "signatureKinds": "{transactions} transacties en {messages} profielberichten",
-      "launchPreviewBlocked": "Voltooi de toegepaste Build om de lanceringsstappen te zien."
+      "launchPreviewBlocked": "Voltooi de toegepaste Build om de lanceringsstappen te zien.",
+      "fixedTitle": "Vastgelegd bij de lancering",
+      "fixedSummary": "Mandaat, minimale eerste storting en kosten voor directe opname worden bij de lancering vastgelegd.",
+      "decreaseTitle": "Kunnen alleen dalen",
+      "decreaseSummary": "Prestatie- en beheervergoedingen kunnen na de lancering alleen dalen."
     }
   }
 }

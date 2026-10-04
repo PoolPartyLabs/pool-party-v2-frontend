@@ -1210,7 +1210,11 @@
       "launchPreviewTitle": "Các bước khởi chạy",
       "upToSignatures": "Tối đa {count} chữ ký",
       "signatureKinds": "{transactions} giao dịch và {messages} thông điệp hồ sơ",
-      "launchPreviewBlocked": "Hoàn tất Build đã áp dụng để xem các bước khởi chạy."
+      "launchPreviewBlocked": "Hoàn tất Build đã áp dụng để xem các bước khởi chạy.",
+      "fixedTitle": "Cố định khi khởi chạy",
+      "fixedSummary": "Phạm vi, khoản nạp đầu tiên tối thiểu và phí rút tức thì được cố định khi khởi chạy.",
+      "decreaseTitle": "Chỉ có thể giảm",
+      "decreaseSummary": "Phí hiệu suất và quản lý chỉ có thể giảm sau khi khởi chạy."
     }
   }
 }

@@ -59,6 +59,12 @@ export function ReviewPlanSummary({ draft, onEditMandate, onEditBuild }: ReviewP
       </div>
       <p className="text-sm">{t("positionCount", { count: positions.length })}</p>
       <p className="text-xs text-muted-foreground">{t("allocationIntent")}</p>
+      <div className="space-y-2 border-t border-border pt-4 text-xs">
+        <h4 className="font-medium">{t("fixedTitle")}</h4>
+        <p className="text-muted-foreground">{t("fixedSummary")}</p>
+        <h4 className="font-medium">{t("decreaseTitle")}</h4>
+        <p className="text-muted-foreground">{t("decreaseSummary")}</p>
+      </div>
     </Card>
   );
 }

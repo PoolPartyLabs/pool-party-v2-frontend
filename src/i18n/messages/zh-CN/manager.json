@@ -1210,7 +1210,11 @@
       "launchPreviewTitle": "启动步骤",
       "upToSignatures": "最多{count}次签名",
       "signatureKinds": "{transactions}笔交易和{messages}条资料消息",
-      "launchPreviewBlocked": "完成已应用的Build以预览启动步骤。"
+      "launchPreviewBlocked": "完成已应用的Build以预览启动步骤。",
+      "fixedTitle": "启动时固定",
+      "fixedSummary": "授权范围、最低首次入金和即时提款费在启动时固定。",
+      "decreaseTitle": "只能降低",
+      "decreaseSummary": "业绩费和管理费在启动后只能降低。"
     }
   }
 }

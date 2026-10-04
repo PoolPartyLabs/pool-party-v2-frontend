@@ -1210,7 +1210,11 @@
       "launchPreviewTitle": "開始の手順",
       "upToSignatures": "最大{count}回の署名",
       "signatureKinds": "トランザクション{transactions}件とプロフィールメッセージ{messages}件",
-      "launchPreviewBlocked": "適用済みBuildを完成させると開始の手順が表示されます。"
+      "launchPreviewBlocked": "適用済みBuildを完成させると開始の手順が表示されます。",
+      "fixedTitle": "開始時に固定",
+      "fixedSummary": "マンデート、初回最低入金額、即時出金手数料は開始時に固定されます。",
+      "decreaseTitle": "引き下げのみ可能",
+      "decreaseSummary": "成功報酬と管理手数料は開始後に引き下げることだけができます。"
     }
   }
 }

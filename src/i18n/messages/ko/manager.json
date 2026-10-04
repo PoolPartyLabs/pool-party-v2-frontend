@@ -1210,7 +1210,11 @@
       "launchPreviewTitle": "출시 단계",
       "upToSignatures": "최대 {count}개의 서명",
       "signatureKinds": "트랜잭션 {transactions}개와 프로필 메시지 {messages}개",
-      "launchPreviewBlocked": "적용된 Build를 완료하면 출시 단계를 볼 수 있어요."
+      "launchPreviewBlocked": "적용된 Build를 완료하면 출시 단계를 볼 수 있어요.",
+      "fixedTitle": "출시 시 고정",
+      "fixedSummary": "운용 지침, 최소 첫 입금액, 즉시 출금 수수료는 출시 시 고정돼요.",
+      "decreaseTitle": "낮출 수만 있음",
+      "decreaseSummary": "성과 수수료와 관리 수수료는 출시 후 낮출 수만 있어요."
     }
   }
 }

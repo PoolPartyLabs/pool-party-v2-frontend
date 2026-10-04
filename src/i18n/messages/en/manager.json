@@ -1210,7 +1210,11 @@
       "launchPreviewTitle": "Launch steps",
       "upToSignatures": "Up to {count} signatures",
       "signatureKinds": "{transactions} transactions and {messages} profile messages",
-      "launchPreviewBlocked": "Finish the applied Build to preview launch steps."
+      "launchPreviewBlocked": "Finish the applied Build to preview launch steps.",
+      "fixedTitle": "Fixed at launch",
+      "fixedSummary": "Mandate, minimum first deposit and instant withdrawal fee are fixed at launch.",
+      "decreaseTitle": "Can only go down",
+      "decreaseSummary": "Performance and management fees can only decrease after launch."
     }
   }
 }

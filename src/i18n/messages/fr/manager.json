@@ -1210,7 +1210,11 @@
       "launchPreviewTitle": "Étapes du lancement",
       "upToSignatures": "Jusqu’à {count} signatures",
       "signatureKinds": "{transactions} transactions et {messages} messages de profil",
-      "launchPreviewBlocked": "Terminez le Build appliqué pour voir les étapes du lancement."
+      "launchPreviewBlocked": "Terminez le Build appliqué pour voir les étapes du lancement.",
+      "fixedTitle": "Fixés au lancement",
+      "fixedSummary": "Le mandat, le premier dépôt minimum et les frais de retrait instantané sont fixés au lancement.",
+      "decreaseTitle": "Peuvent uniquement diminuer",
+      "decreaseSummary": "Les frais de performance et de gestion peuvent uniquement diminuer après le lancement."
     }
   }
 }

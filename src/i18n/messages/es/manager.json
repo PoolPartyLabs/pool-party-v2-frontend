@@ -1210,7 +1210,11 @@
       "launchPreviewTitle": "Pasos del lanzamiento",
       "upToSignatures": "Hasta {count} firmas",
       "signatureKinds": "{transactions} transacciones y {messages} mensajes de perfil",
-      "launchPreviewBlocked": "Complete el Build aplicado para ver los pasos del lanzamiento."
+      "launchPreviewBlocked": "Complete el Build aplicado para ver los pasos del lanzamiento.",
+      "fixedTitle": "Fijos al lanzar",
+      "fixedSummary": "El mandato, el mínimo del primer depósito y la comisión de retiro instantáneo quedan fijos al lanzar.",
+      "decreaseTitle": "Solo pueden bajar",
+      "decreaseSummary": "Las comisiones de rendimiento y gestión solo pueden disminuir tras el lanzamiento."
     }
   }
 }

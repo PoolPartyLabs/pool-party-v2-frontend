@@ -1210,7 +1210,11 @@
       "launchPreviewTitle": "Etapas do lançamento",
       "upToSignatures": "Até {count} assinaturas",
       "signatureKinds": "{transactions} transações e {messages} mensagens de perfil",
-      "launchPreviewBlocked": "Conclua o Build aplicado para ver as etapas do lançamento."
+      "launchPreviewBlocked": "Conclua o Build aplicado para ver as etapas do lançamento.",
+      "fixedTitle": "Fixos no lançamento",
+      "fixedSummary": "O mandato, o mínimo do primeiro depósito e a taxa de saída instantânea são fixos no lançamento.",
+      "decreaseTitle": "Só podem diminuir",
+      "decreaseSummary": "As taxas de performance e gestão só podem diminuir após o lançamento."
     }
   }
 }
