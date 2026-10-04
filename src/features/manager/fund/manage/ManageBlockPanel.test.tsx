@@ -17,6 +17,7 @@ vi.mock("../build/panel/usePanelPool", () => ({ usePanelPool: mocks.pool }));
 vi.mock("@/lib/api/v2/manageActions", () => ({ reviewManageMoveRangeAction: mocks.review }));
 
 import { ManageBlockPanel } from "./ManageBlockPanel";
+import { ManageCanvas } from "./ManageCanvas";
 
 const fixture = PANEL_POOL_FIXTURES[0];
 if (!fixture) throw new Error("Pool fixture missing");
@@ -63,22 +64,42 @@ beforeEach(() => {
 });
 describe("Manage block inline", () => {
   it("[R3,R4,R6] binds the two timings to actions, preserves Back and keeps review inline", async () => {
-    renderWithProviders(<ManageBlockPanel fund={mockFund} position={liquidity} active />);
+    renderWithProviders(
+      <>
+        <ManageCanvas model={model} selectedId={liquidity.id} onSelect={vi.fn()} />
+        <ManageBlockPanel fund={mockFund} position={liquidity} active />
+      </>,
+    );
+    const graphBoxes = () =>
+      [...document.querySelectorAll("[data-manage-node]")].map((node) =>
+        node.getAttribute("style"),
+      );
+    const initialBoxes = graphBoxes();
+    const expectCurrentPositionUnchanged = () => {
+      // POO-2232 R1/R5: draft presets, Move/review and future policy do not move or recolor live cards.
+      expect(graphBoxes()).toEqual(initialBoxes);
+      expect(document.querySelector("[data-manage-range]")).toHaveTextContent("In range");
+      expect(document.querySelector("[data-manage-range]")).toHaveClass("text-success");
+    };
     const user = userEvent.setup();
     expect(screen.queryByRole("button", { name: "Move range" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "±5%" }));
+    expectCurrentPositionUnchanged();
     expect(screen.getByText("Apply now")).toBeInTheDocument();
     expect(screen.getByText("New deposits only")).toBeInTheDocument();
     expect(screen.queryByText("When to apply")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Move range" }));
+    expectCurrentPositionUnchanged();
     expect(screen.queryByRole("button", { name: "Create new position" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Review move range" }));
     expect(await screen.findByRole("button", { name: "Confirm & move range" })).toBeDisabled();
+    expectCurrentPositionUnchanged();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getAllByText("Not available").length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: "Back to settings" }));
     await user.click(screen.getByRole("button", { name: "Back to actions" }));
     await user.click(screen.getByRole("button", { name: "Create new position" }));
+    expectCurrentPositionUnchanged();
     expect(screen.getByRole("button", { name: "Save for new deposits" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Review move range" })).not.toBeInTheDocument();
   });

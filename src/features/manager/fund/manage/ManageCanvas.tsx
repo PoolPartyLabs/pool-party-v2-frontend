@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-085
  * @name ManageCanvas
- * @implements-rules-version v1 (POO-2226)
+ * @implements-rules-version v1 (POO-2226, POO-2232)
  * @analytics-events none, position presses report through onSelect; ManageScreen owns the view.
  *
  * Read-only live graph built from the shared Build pieces. Cash belongs to one chain and every
@@ -9,7 +9,7 @@
  */
 "use client";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useMemo, useRef } from "react";
+import { type ReactNode, useId, useMemo, useRef } from "react";
 import { NetworkLogo } from "@/components/data-display/NetworkLogo";
 import { TokenLogo } from "@/components/data-display/TokenLogo";
 import { formatPercent, formatTokenAmount, formatUsdTile } from "@/lib/utils/format";
@@ -87,6 +87,37 @@ function PositionHoldings({ position }: { position: ManagePosition }) {
     </div>
   );
 }
+/** Decorative status track. Its fixed center marker conveys no price, allocation or percentage. */
+function PositionRangeStatus({
+  status,
+  id,
+}: {
+  status: ManagePosition["rangeStatus"];
+  id: string;
+}) {
+  const operate = useTranslations("manager.operate");
+  const t = useTranslations("manager.manageV2");
+  const available = status.status === "available";
+  const inRange = available && status.value === "in";
+  return (
+    <div
+      data-manage-range=""
+      className={`mx-auto mt-auto mb-3 flex w-[148px] shrink-0 flex-col gap-1.5 ${available ? (inRange ? "text-success" : "text-destructive") : "text-muted-foreground"}`}
+    >
+      <span id={id} className="flex items-center gap-1.5 text-foreground text-xs">
+        <span
+          aria-hidden="true"
+          className={`size-1.5 rounded-full ${available ? (inRange ? "bg-success" : "bg-destructive") : "bg-muted-foreground"}`}
+        />
+        {available ? operate(inRange ? "inRange" : "outOfRange") : t("notAvailable")}
+      </span>
+      <svg aria-hidden="true" width={148} height={10} viewBox="0 0 148 10">
+        <rect data-range-track="" y={3} width={148} height={4} rx={2} fill="currentColor" />
+        <rect data-range-marker="" x={73} width={2} height={10} fill="var(--color-foreground)" />
+      </svg>
+    </div>
+  );
+}
 function PositionNode({
   position,
   selected,
@@ -97,6 +128,7 @@ function PositionNode({
   onSelect(keyboard?: boolean): void;
 }) {
   const t = useTranslations("manager.manageV2");
+  const statusId = useId();
   const tokens = position.tokens.map((token) => token.symbol).join(" / ");
   const title =
     position.kind === "supply" ? t("supplyToken", { token: tokens }) : tokens || position.protocol;
@@ -111,9 +143,10 @@ function PositionNode({
       data-canvas-interactive=""
       data-manage-position={position.id}
       aria-label={name}
+      aria-describedby={position.kind === "liquidity" ? statusId : undefined}
       aria-pressed={selected}
       onClick={(event) => onSelect(event.detail === 0)}
-      className="relative flex size-full cursor-pointer flex-col overflow-hidden rounded-2xl bg-surface text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="relative flex size-full cursor-pointer flex-col overflow-hidden rounded-lg bg-surface text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <PieceStroke
         width={selected ? 2 : 1}
@@ -133,6 +166,9 @@ function PositionNode({
         <CardCopy title={title} caption={position.protocol} captionTone="text-muted-foreground" />
       </div>
       <PositionHoldings position={position} />
+      {position.kind === "liquidity" ? (
+        <PositionRangeStatus id={statusId} status={position.rangeStatus} />
+      ) : null}
     </button>
   );
 }
@@ -140,7 +176,7 @@ function BalanceCard({ title, children }: { title: string; children: ReactNode }
   return (
     <div
       data-canvas-interactive=""
-      className="relative flex size-full flex-col gap-3 overflow-hidden rounded-2xl bg-surface p-3"
+      className="relative flex size-full flex-col gap-3 overflow-hidden rounded-lg bg-surface p-3"
     >
       <PieceStroke width={1} radius={16} className="text-border" />
       <h3 className="whitespace-nowrap font-medium text-foreground text-xs">{title}</h3>
@@ -156,7 +192,7 @@ function CashNode({ model, chainId }: { model: ManageModel; chainId: number }) {
     <div
       data-manage-cash={chainId}
       data-canvas-interactive=""
-      className="relative flex size-full flex-col gap-2 overflow-hidden rounded-2xl bg-surface p-3"
+      className="relative flex size-full flex-col gap-2 overflow-hidden rounded-lg bg-surface p-3"
     >
       <div
         aria-hidden="true"

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-051
  * @name manageModel
- * @implements-rules-version v1 (POO-2226)
+ * @implements-rules-version v1 (POO-2226, POO-2232)
  * @analytics-events none, normalized read data consumed by ManageScreen.
  *
  * One read model for cards and panels. Position identity is independent of pool and plan identity.
@@ -47,6 +47,7 @@ export interface ManagePosition {
   tokens: ManageToken[];
   valueUsd: ManageRead<string>;
   allocationPct: ManageRead<string>;
+  rangeStatus: ManageRead<"in" | "out">;
   source: FundPosition;
 }
 export interface ManageChain {
@@ -151,6 +152,13 @@ function positionOf(core: string, source: FundPosition): ManagePosition {
       "positionsSummary.currentValueUsd",
     ),
     allocationPct: decimalRead(source.shareOfNav, "positionsSummary.shareOfNav"),
+    // Current position metadata only. Draft ticks and future-deposit policy never change this read.
+    rangeStatus:
+      kind === "liquidity" &&
+      source.status === "open" &&
+      typeof source.uniswap?.inRange === "boolean"
+        ? available(source.uniswap.inRange ? "in" : "out", "positionsSummary.uniswap.inRange")
+        : unavailable("missing_current_range_status"),
     source,
   };
 }

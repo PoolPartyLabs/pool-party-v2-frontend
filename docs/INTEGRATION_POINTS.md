@@ -51,7 +51,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 489 markers across 282 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 501 markers across 289 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -241,3 +241,5 @@ Investor list reads (POO-2215) use the existing discovered-funds/holder service 
 `ManageEntry` mounts PP-MGR-SCR-004 only for V2 and the connected verified owner. Identity changes discard old authorization/preview state. `ManageBlockPanel` uses served canonical Uniswap V4 ticks plus the existing live pool catalog. Review rereads metadata and invalidates mismatched baselines; it returns unavailable capability details only. No transaction builder or signature path is exported by this integration.
 
 Missing Move budget/cost/impact and continuation: POO-2229. Missing chain cash split, withdrawal queue and actual hub USDC Income: POO-2230. Missing persisted future-deposit policy, allocation executor and position lineage: POO-2231. Current holdings are never substituted for post-close budgets; collection-round heldDollars is never substituted for total Income. See [implementation and acceptance plan](manager-manage-v2-implementation-2026-10-04.md).
+
+POO-2232 reuses the authorized `positionsSummary.positions[].uniswap.inRange` read for a current open liquidity position, bound to core + chainId + positionKey. No new endpoint, RPC, mock seam or calculation was added. Missing metadata, closed and unsupported positions normalize to unavailable. Editing range presets or future policy never changes this status.

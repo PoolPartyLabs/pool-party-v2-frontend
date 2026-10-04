@@ -48,6 +48,9 @@ describe("Manage shell", () => {
     const list = document.querySelectorAll<HTMLElement>("[data-manage-list-position]");
     await userEvent.click(list[1] as HTMLElement);
     await userEvent.type(screen.getByRole("textbox", { name: "Uniswap v4 draft" }), "edited");
+    // POO-2232 R5: an inline position draft does not replace the current on-chain status.
+    expect(document.querySelector("[data-manage-range]")).toHaveTextContent("In range");
+    expect(document.querySelector("[data-manage-range]")).toHaveClass("text-success");
     expect(document.querySelectorAll('[data-manage-position][aria-pressed="true"]')).toHaveLength(
       1,
     );
@@ -55,6 +58,7 @@ describe("Manage shell", () => {
     expect(screen.queryByRole("textbox", { name: "Uniswap v4 draft" })).not.toBeInTheDocument();
     await userEvent.click(list[1] as HTMLElement);
     expect(screen.getByRole("textbox", { name: "Uniswap v4 draft" })).toHaveValue("edited");
+    expect(document.querySelector("[data-manage-range]")).toHaveTextContent("In range");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(document.querySelector("[data-manage-grid]")?.className).toContain("grid-cols-1");
   });
