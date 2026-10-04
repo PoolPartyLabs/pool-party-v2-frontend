@@ -30,6 +30,7 @@ import { networkStableSymbol } from "@/lib/chains/config";
 import { formatPercent } from "@/lib/utils/format";
 import { HUB_NETWORK, type MandateDraft, type NetworkId, tokenKey } from "../../mandateDraft";
 import type { BlockContent, BlockIcon, FlowContent } from "../pieces/pieceTypes";
+import { findMandatePool } from "../plan/blockConfig";
 import {
   BLOCK_KIND_PROTOCOL,
   BLOCK_KIND_STATUS,
@@ -156,7 +157,8 @@ function titleAndCaption(
   const protocol = copy.protocolName(block.kind);
   if (isPoolKind(block.kind)) {
     const config = block.config as { poolId: string } | null;
-    const pool = config ? draft.pools.find((p) => p.id === config.poolId) : undefined;
+    // The bare PoolId of a real-mode row (or a mock row's id), inside the block's network.
+    const pool = config ? findMandatePool(draft.pools, network, config.poolId) : undefined;
     if (!pool) return { title: protocol, caption: copy.card.pickPool };
     return {
       title: copy.card.poolTitle(pool.token0.symbol, pool.token1.symbol),

@@ -24,6 +24,7 @@
  * `not_in_mandate`, so `PlanBlockReason` gains no value for it.
  */
 import { HUB_NETWORK, type NetworkId, tokenKey } from "../../mandateDraft";
+import { configShapeOfKind, findMandatePool, isConfigFor } from "./blockConfig";
 import {
   type AaveBlockConfig,
   BLOCK_KIND_PROTOCOL,
@@ -346,29 +347,14 @@ export function removeBlock(plan: BuildPlan, ctx: PlanContext, blockId: string):
   return reconcileAutoBlocks(withSteps(plan, chain.id, steps), ctx);
 }
 
-/** Which config a value is by shape: a pool's, an Aave block's, or neither. */
-function configShape(config: unknown): "pool" | "aave" | null {
-  if (typeof config !== "object" || config === null) return null;
-  const pool = typeof (config as Partial<PoolBlockConfig>).poolId === "string";
-  const aave = typeof (config as Partial<AaveBlockConfig>).assetKey === "string";
-  if (pool && !aave) return "pool";
-  if (aave && !pool) return "aave";
-  return null;
-}
-
-/** Which config a kind takes. Pendle and GMX take none yet (BlockConfigByKind is `never`). */
-function configShapeOf(kind: BlockKind): "pool" | "aave" | null {
-  if (isPoolKind(kind)) return "pool";
-  if (kind === "aaveSupply" || kind === "aaveBorrow") return "aave";
-  return null;
-}
-
 /**
  * HU2, C13: set (or clear, with null) a card's configuration, then reconcile its Swap · auto.
  *
- * The pool must be a mandate pool of the block's network and protocol, the asset a mandate token
- * of the block's network (`not_in_mandate`, C6). A config whose shape does not match the block's
- * kind, a flow block or an unknown id is `unknown_target`. Null always succeeds: it empties the
+ * The pool must be a mandate pool of the block's network and protocol, named by its bare PoolId
+ * (or a mock row's id, `findMandatePool`), the asset a mandate token of the block's network
+ * (`not_in_mandate`, C6). A config whose shape does not match the block's kind, or that the stored
+ * plan could not read back (`isConfigFor`: a field of the panel contract with a wrong type or out of
+ * range), a flow block or an unknown id is `unknown_target`. Null always succeeds: it empties the
  * block. The config is stored as given (a copy), so fields the panel batch adds survive.
  */
 export function setBlockConfig(
@@ -381,18 +367,11 @@ export function setBlockConfig(
   if (found?.block.family !== "position") return blocked("unknown_target", blockId);
   const block = found.block;
   if (config !== null) {
-    const shape = configShape(config);
-    if (shape === null || shape !== configShapeOf(block.kind)) {
-      return blocked("unknown_target", blockId);
-    }
-    if (shape === "pool") {
+    if (!isConfigFor(block.kind, config)) return blocked("unknown_target", blockId);
+    if (configShapeOfKind(block.kind) === "pool") {
       const poolId = (config as PoolBlockConfig).poolId;
-      const pool = ctx.draft.pools.find((p) => p.id === poolId);
-      if (
-        !pool ||
-        pool.network !== found.network ||
-        pool.protocol !== BLOCK_KIND_PROTOCOL[block.kind]
-      ) {
+      const pool = findMandatePool(ctx.draft.pools, found.network, poolId);
+      if (pool?.protocol !== BLOCK_KIND_PROTOCOL[block.kind]) {
         return blocked("not_in_mandate", blockId);
       }
     } else {
