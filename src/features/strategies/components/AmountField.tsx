@@ -1,7 +1,7 @@
 /**
  * @id PP-DEP-CMP-002
  * @name AmountField
- * @implements-rules-version v1 (POO-2217 V2 unavailable host/context); v1
+ * @implements-rules-version v1 (POO-2217 V2 unavailable host/context); v1 (POO-2221)
  *
  * Prominent USD amount entry shared by the invest and withdraw flows: a large editable figure plus
  * "discreet" (ghost) increment chips that ADD to the current amount, and a Max chip that sets the
@@ -61,9 +61,9 @@ export function AmountField({
   const current = Number.parseFloat(value) || 0;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-center gap-1 text-foreground">
-        <span className="font-bold text-3xl">$</span>
+    <div className="flex w-full min-w-0 flex-col gap-4 [container-type:inline-size]">
+      <div className="flex min-w-0 items-center justify-center gap-1 text-foreground">
+        <span className="shrink-0 font-bold text-3xl">$</span>
         <input
           type="text"
           inputMode="decimal"
@@ -71,7 +71,13 @@ export function AmountField({
           value={value}
           onChange={(event) => onValueChange(sanitizeNumericInput(event.target.value))}
           placeholder="0"
-          className="w-40 bg-transparent text-center font-bold text-4xl text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline-none"
+          // Fit normal six-decimal amounts to the actual container without changing their value.
+          // Keep at least 16px for mobile input; exceptionally long text can still scroll natively.
+          style={{
+            fontSize: `clamp(1rem, calc(100cqi / ${value.length + 1}), 2.25rem)`,
+            width: `max(10rem, ${value.length + 1}ch)`,
+          }}
+          className="min-w-0 max-w-full bg-transparent text-center font-bold text-4xl text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline-none"
         />
       </div>
       <div className="flex flex-wrap justify-center gap-2">
