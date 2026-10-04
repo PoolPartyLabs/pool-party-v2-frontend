@@ -1259,3 +1259,23 @@ describe("BuildGraph, invalid networks are always handed in (F8)", () => {
     expect(element.props).not.toHaveProperty("invalidNetworks");
   });
 });
+
+describe("POO-2210 removable graph blocks", () => {
+  it("exposes interactive X controls for positions and user flows, excluding automatic steps", async () => {
+    const onRemoveBlock = vi.fn();
+    const { props } = renderGraph(canvasC, { onRemoveBlock });
+    const buttons = screen.getAllByRole("button", { name: /^Remove block:/ });
+    const removable = props.layout.blocks.filter(
+      (block) => block.family === "position" || !block.auto,
+    );
+    expect(buttons).toHaveLength(removable.length);
+    for (const button of buttons) {
+      expect(isCanvasBackground(button, screen.getByTestId("canvas"))).toBe(false);
+      await userEvent.click(button);
+    }
+    expect(onRemoveBlock.mock.calls.map(([id]) => id).sort()).toEqual(
+      removable.map((block) => block.id).sort(),
+    );
+    expect(props.onTarget).not.toHaveBeenCalled();
+  });
+});

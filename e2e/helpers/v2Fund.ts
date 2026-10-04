@@ -119,7 +119,10 @@ export const test = walletTest.extend<{ safeWallet: undefined }>({
         if (response.request().method() !== "POST") return;
         const body = await response.text().catch(() => "");
         const error = body.match(/"error":\{"status":\d+,"code":"[A-Za-z0-9_]+"\}/)?.[0];
-        if (error) writeFileSync("e2e/.auth/last-server-error.json", error);
+        if (error) {
+          mkdirSync("e2e/.auth", { recursive: true });
+          writeFileSync("e2e/.auth/last-server-error.json", error);
+        }
       });
       const original = page.exposeFunction.bind(page);
       page.exposeFunction = async (name, callback) =>

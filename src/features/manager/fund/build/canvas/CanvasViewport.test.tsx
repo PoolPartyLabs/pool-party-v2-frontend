@@ -100,7 +100,7 @@ describe("CanvasViewport: the container", () => {
   it("[AN5] is a 640 high box with radius 20 on the background token, clipping its content", () => {
     renderViewport();
 
-    expect(canvas().className).toContain("h-[640px]");
+    expect(canvas().className).toContain("h-[max(640px,calc(100dvh-280px))]");
     expect(canvas().className).toContain("rounded-xl");
     expect(canvas().className).toContain("bg-background");
   });

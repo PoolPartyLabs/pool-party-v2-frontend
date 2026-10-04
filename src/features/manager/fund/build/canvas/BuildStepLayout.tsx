@@ -69,10 +69,10 @@ export function BuildStepLayout({
 
       <div
         data-build-grid=""
-        className="grid min-h-[640px] grid-cols-[220px_minmax(0,1fr)_360px] gap-6"
+        className="grid min-h-[640px] grid-cols-[180px_minmax(0,1fr)_360px] gap-4 xl:grid-cols-[220px_minmax(0,1fr)_360px] xl:gap-6"
       >
         <div className="min-h-0">{palette}</div>
-        <div className="h-[640px] min-h-0 min-w-0 self-start">{canvas}</div>
+        <div className="h-[max(640px,calc(100dvh-280px))] min-h-0 min-w-0 self-start">{canvas}</div>
         <div className="self-start">{panel}</div>
       </div>
 

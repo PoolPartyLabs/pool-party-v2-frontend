@@ -454,7 +454,7 @@ describe("BuildScreen: building the plan (I1 to I7, I10, AE2 to AE6)", () => {
     await userEvent.click(card(/^Uniswap v4 · no pool yet/));
     await userEvent.keyboard("{Delete}");
     // DP11: Delete asks first; an empty block's confirm says only "Remove this block?".
-    expect(await screen.findByText("Remove this block?")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Remove this block?" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: /^Uniswap v4 · no pool yet/ })).toBeNull(),
@@ -527,11 +527,11 @@ describe("BuildScreen: building the plan (I1 to I7, I10, AE2 to AE6)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
 
     // Remove always asks, and says what goes with the block: nothing is removed yet.
-    expect(screen.getByText("Remove WETH / USDC?")).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Remove WETH / USDC?" })).toBeInTheDocument();
     expect(
       screen.getByText("Its 60% goes back to Idle input. Its Swap · auto step is removed with it."),
     ).toBeInTheDocument();
-    expect(card(/^WETH \/ USDC/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^WETH \/ USDC/, hidden: true })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
     await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
 
@@ -542,6 +542,30 @@ describe("BuildScreen: building the plan (I1 to I7, I10, AE2 to AE6)", () => {
     ]);
     // DP11: the Undo toast is gone with the confirm that replaced it.
     expect(toasts.toast).not.toHaveBeenCalled();
+  });
+
+  it("[R2, R3] an unselected card X opens a modal and only confirmation removes its cascade", async () => {
+    seedBuild(hubMandate("d-remove-x"), poolPlan());
+    await openBuild();
+    const remove = () => screen.getByRole("button", { name: "Remove block: WETH / USDC" });
+    await userEvent.click(remove());
+    const dialog = screen.getByRole("dialog", { name: "Remove WETH / USDC?" });
+    expect(
+      within(dialog).getByText(
+        "Its 60% goes back to Idle input. Its Swap · auto step is removed with it.",
+      ),
+    ).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(card(/^WETH \/ USDC/)).toHaveAttribute("aria-pressed", "false");
+    expect(emitted("builder_block_removed")).toHaveLength(0);
+    await userEvent.click(remove());
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Remove block" }),
+    );
+    await waitFor(() => expect(screen.queryByRole("button", { name: /^WETH \/ USDC/ })).toBeNull());
+    expect(emitted("builder_block_removed")).toEqual([
+      { block_kind: "uniswapV4Pool", cascade_count: 1 },
+    ]);
   });
 
   it("[P10] Cancel keeps the block, its share and the selection", async () => {
@@ -565,8 +589,8 @@ describe("BuildScreen: building the plan (I1 to I7, I10, AE2 to AE6)", () => {
     await userEvent.click(card(/^WETH \/ USDC/));
     await userEvent.keyboard("{Delete}");
 
-    expect(await screen.findByText("Remove WETH / USDC?")).toBeInTheDocument();
-    expect(card(/^WETH \/ USDC/)).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Remove WETH / USDC?" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^WETH \/ USDC/, hidden: true })).toBeInTheDocument();
     expect(emitted("builder_block_removed")).toEqual([]);
     await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
     await waitFor(() => expect(screen.queryByRole("button", { name: /^WETH \/ USDC/ })).toBeNull());
@@ -591,6 +615,13 @@ describe("BuildScreen: building the plan (I1 to I7, I10, AE2 to AE6)", () => {
     expect(emitted("builder_network_added")).toEqual([{ network: "robinhood" }]);
 
     await userEvent.click(screen.getByRole("button", { name: "Remove Robinhood Chain" }));
+    expect(screen.getByRole("dialog", { name: "Remove Robinhood Chain?" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(
+      screen.getByRole("button", { name: "Add protocol on Robinhood Chain" }),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Remove Robinhood Chain" }));
+    await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: "Add protocol on Robinhood Chain" })).toBeNull(),
     );
@@ -1397,7 +1428,7 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
     await userEvent.click(card(/^Uniswap v4 · no pool yet/));
     await userEvent.keyboard("{Delete}");
     // DP11: Delete asks first; an empty block's confirm says only "Remove this block?".
-    expect(await screen.findByText("Remove this block?")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Remove this block?" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Remove block" }));
     await waitFor(() =>
       expect(screen.queryByRole("button", { name: /^Uniswap v4 · no pool yet/ })).toBeNull(),

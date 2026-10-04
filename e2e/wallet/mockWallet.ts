@@ -64,6 +64,12 @@ export async function installMockWallet(
   const bridge = async (req: { method: string; params?: any[] }): Promise<any> => {
     const method = req.method;
     const params = req.params ?? [];
+    if (
+      process.env.E2E_V2_NO_SIGN === "1" &&
+      /^(personal_sign|eth_sign.*|eth_send.*|wallet_send.*)$/.test(method)
+    ) {
+      throw new Error("E2E wallet signing and broadcasting are disarmed");
+    }
     if (process.env.E2E_DEBUG) {
       // biome-ignore lint/suspicious/noConsole: harness diagnostics
       console.error(`[wallet:req] ${method}`);

@@ -374,3 +374,31 @@ describe("describeRemoval: the remove confirm, read off the real remove (R1)", (
     expect(describeRemoval(hubPoolPlan(), makeTestContext(), "gone")).toBeNull();
   });
 });
+
+describe("automatic Collect fees on pool Apply (POO-2210)", () => {
+  // @rule R1, R6
+  it("adds fees once on new selection at zero and respects deliberate removal", () => {
+    const initial = hubPoolPlan();
+    const ctx = makeTestContext();
+    const found = chainsWithNetwork(initial)[0]?.chain.steps.find(
+      (step) => step.family === "position",
+    );
+    if (found?.family !== "position" || !found.config) throw new Error("fixture");
+    const first = applyBlockConfig(initial, ctx, found.id, null, 0);
+    if (isPlanBlocked(first)) throw new Error("fixture");
+    const applied = applyBlockConfig(first, ctx, found.id, found.config, 0);
+    if (isPlanBlocked(applied)) throw new Error("fixture");
+    const fees = applied.hub.chains[0]?.steps.filter((step) => step.kind === "collectFees") ?? [];
+    expect(fees).toHaveLength(1);
+    const repeated = applyBlockConfig(applied, ctx, found.id, found.config, 0);
+    if (isPlanBlocked(repeated)) throw new Error("fixture");
+    expect(
+      repeated.hub.chains[0]?.steps.filter((step) => step.kind === "collectFees"),
+    ).toHaveLength(1);
+    const removed = removeBlock(repeated, ctx, fees[0]?.id ?? "");
+    if (isPlanBlocked(removed)) throw new Error("fixture");
+    const again = applyBlockConfig(removed, ctx, found.id, found.config, 0);
+    if (isPlanBlocked(again)) throw new Error("fixture");
+    expect(again.hub.chains[0]?.steps.some((step) => step.kind === "collectFees")).toBe(false);
+  });
+});

@@ -16,6 +16,14 @@ step list without clicking Launch. Dry mode blocks every financial signature/bro
 only narrowly allowlisted SIWE authentication messages are permitted in Review-only mode. Without `E2E_V2_SIGNED=1`
 the spec skips. Review must use the authorized manager address and seed plus displayed flow fee
 must not exceed 2.1 USDC. Panel-written settings/shares remain authoritative.
+
+`prepareV2Launch` drives the merged Build panels and builder Review by default:
+Arbitrum USDC/WETH 30% with ±10% range and 0.5% slippage, Arbitrum Aave USDC
+Supply 30%, and Robinhood liquidity 40% with ±20% range and 1% slippage.
+Limits are explicitly selected through the UI. Set `E2E_V2_REVIEW_ENTRY=fallback`
+to check Console → Review & launch drafts (v2) instead. Use `E2E_V2_SIGNED_DRY=1`
+for that entry to stop before Launch; launch-dry checks the builder Review's
+frozen journey preserves panel shares, ticks and slippage without signing.
 Use a fresh `RUN_OUTPUT` and the same `--output`/report settings for each Review-only run too.
 
 Set `E2E_V2_SIGNED_DRY=launch` to click Launch, assert all 15 expected journey rows in order

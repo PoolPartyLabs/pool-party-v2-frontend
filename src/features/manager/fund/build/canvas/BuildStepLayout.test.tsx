@@ -75,8 +75,8 @@ describe("BuildStepLayout: grid", () => {
     expect(grid).not.toBeNull();
     for (const token of [
       "grid",
-      "grid-cols-[220px_minmax(0,1fr)_360px]",
-      "gap-6",
+      "xl:grid-cols-[220px_minmax(0,1fr)_360px]",
+      "xl:gap-6",
       "min-h-[640px]",
     ]) {
       expect(grid?.className).toContain(token);
@@ -108,7 +108,7 @@ describe("BuildStepLayout: expanding configuration panel (POO-2202)", () => {
     const canvasColumn = grid?.children[1];
     expect(grid).toHaveClass("min-h-[640px]");
     expect(grid).not.toHaveClass("h-[640px]");
-    expect(canvasColumn).toHaveClass("h-[640px]", "self-start");
+    expect(canvasColumn).toHaveClass("h-[max(640px,calc(100dvh-280px))]", "self-start");
     expect(
       (grid?.compareDocumentPosition(bar(container)) ?? 0) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();

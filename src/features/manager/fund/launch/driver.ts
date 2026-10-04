@@ -3,6 +3,7 @@
  * @name launchDriver
  * @implements-rules-version v3 (POO-2192)
  * @implements-rules-version v1 (POO-2208)
+ * @implements-rules-version v1 (POO-2211)
  * Just-in-time API builders and receipt reconciliation. No wallet broadcast occurs on import.
  */
 
@@ -109,7 +110,85 @@ function budget(step: LaunchStep, journal: LaunchJournal): bigint {
   if (!principal) throw new Error("PRINCIPAL_UNAVAILABLE");
   if (step.group && step.kind !== "bridge")
     return (BigInt(principal) * BigInt(step.sharePct ?? 0)) / BigInt(step.shareDenominator ?? 100);
+  const allocate = journal.steps.find((entry) => entry.kind === "allocate");
+  if (allocate && step.chain === 42161 && ["swap", "open"].includes(step.kind)) {
+    const receipt = journal.checkpoints[allocate.id]?.data?.receipt;
+    const allocated = receipt && record(receipt).allocated;
+    if (typeof allocated !== "string" || !/^\d+$/.test(allocated))
+      throw new Error("BALANCES_UNAVAILABLE");
+    if (String(record(receipt).allocatedVault).toLowerCase() !== coreOf(journal).toLowerCase())
+      throw new Error("BALANCES_UNAVAILABLE");
+    const net = BigInt(allocated);
+    const share = allocate.sharePct ?? 0;
+    if (share <= 0 || net !== allocationRaw(BigInt(principal), share))
+      throw new Error("BALANCE_CHANGED");
+    return (net * BigInt(step.sharePct ?? 0)) / BigInt(share);
+  }
   return allocationRaw(BigInt(principal), step.sharePct ?? 0);
+}
+function swapOf(step: LaunchStep, journal: LaunchJournal) {
+  return journal.steps.find(
+    (entry) =>
+      entry.kind === "swap" &&
+      entry.chain === step.chain &&
+      (entry.id === step.id ||
+        (step.blockId ? entry.blockId === step.blockId : step.dependencies.includes(entry.id))),
+  );
+}
+function conversion(step: LaunchStep, journal: LaunchJournal) {
+  const swap = swapOf(step, journal);
+  const checkpoint = swap && journal.checkpoints[swap.id];
+  const data = checkpoint?.status === "confirmed" ? checkpoint.data?.receipt : undefined;
+  if (!data || !record(data).swapped) {
+    if (checkpoint?.status === "confirmed" && checkpoint.data?.swapSkipped !== true)
+      throw new Error("BALANCES_UNAVAILABLE");
+    return null;
+  }
+  return z
+    .object({
+      tokenIn: addressSchema,
+      tokenOut: addressSchema,
+      vault: addressSchema,
+      amountIn: z.string().regex(/^\d+$/),
+      amountOut: z.string().regex(/^\d+$/),
+    })
+    .parse(record(data).swapped);
+}
+function leafBalances(
+  step: LaunchStep,
+  journal: LaunchJournal,
+  available: Record<string, bigint>,
+  base: string,
+) {
+  const scoped = { ...available };
+  const baseKey = base.toLowerCase();
+  let reserved = BigInt(0);
+  for (const sibling of journal.steps.filter(
+    (entry) =>
+      entry.kind === "open" &&
+      entry.chain === step.chain &&
+      entry.group === step.group &&
+      entry.id !== step.id &&
+      (!step.blockId || entry.blockId !== step.blockId) &&
+      swapOf(entry, journal)?.id !== step.id &&
+      !step.dependencies.includes(entry.id) &&
+      journal.checkpoints[entry.id]?.status !== "confirmed",
+  )) {
+    const swapped = conversion(sibling, journal);
+    const spent = swapped?.tokenIn.toLowerCase() === baseKey ? BigInt(swapped.amountIn) : BigInt(0);
+    const planned = budget(sibling, journal);
+    if (spent > planned) throw new Error("BALANCE_CHANGED");
+    reserved += planned - spent;
+    if (swapped) {
+      if (swapped.tokenIn.toLowerCase() !== baseKey) throw new Error("BALANCE_CHANGED");
+      const token = swapped.tokenOut.toLowerCase();
+      scoped[token] = (scoped[token] ?? BigInt(0)) - BigInt(swapped.amountOut);
+      if (scoped[token]! < BigInt(0)) throw new Error("BALANCE_CHANGED");
+    }
+  }
+  scoped[baseKey] = (scoped[baseKey] ?? BigInt(0)) - reserved;
+  if (scoped[baseKey]! < BigInt(0)) throw new Error("BALANCE_CHANGED");
+  return scoped;
 }
 function remainderAmount(planned: bigint, available: bigint, step: LaunchStep): bigint {
   const toleranceBps = BigInt(Math.min(500, Math.max(step.config?.maxLossBps ?? 100, 100)));
@@ -274,7 +353,45 @@ export function createLaunchDriver(
         );
         return { transaction: transaction(built, 42161, from) };
       }
-      const available = await balances(core, step.chain);
+      for (const entry of journal.steps.filter(
+        (entry) =>
+          (entry.kind === "allocate" && step.chain === 42161) ||
+          (entry.kind === "swap" &&
+            entry.chain === step.chain &&
+            (entry.id === swapOf(step, journal)?.id ||
+              journal.steps.some(
+                (leaf) =>
+                  leaf.kind === "open" &&
+                  leaf.chain === step.chain &&
+                  leaf.group === step.group &&
+                  journal.checkpoints[leaf.id]?.status !== "confirmed" &&
+                  swapOf(leaf, journal)?.id === entry.id,
+              ))),
+      )) {
+        const checkpoint = journal.checkpoints[entry.id];
+        const receipt = checkpoint?.data?.receipt;
+        const field = entry.kind === "allocate" ? "allocated" : "swapped";
+        const evidence = receipt ? record(receipt) : {};
+        const missing =
+          entry.kind === "allocate"
+            ? !evidence.allocated || !evidence.allocatedVault
+            : !evidence.swapped || !record(evidence.swapped).vault;
+        if (checkpoint?.status === "confirmed" && checkpoint.txHash && missing) {
+          const mined = await wallet.receipt(entry.chain, checkpoint.txHash);
+          if (
+            !mined ||
+            mined.status !== "success" ||
+            mined.transactionHash.toLowerCase() !== checkpoint.txHash.toLowerCase()
+          )
+            throw new Error("BALANCES_UNAVAILABLE");
+          checkpoint.data = {
+            ...checkpoint.data,
+            receipt: { ...(receipt ? record(receipt) : {}), ...decodeLaunchReceipt(mined) },
+          };
+          if (!record(checkpoint.data.receipt)[field]) throw new Error("BALANCES_UNAVAILABLE");
+        }
+      }
+      const actual = await balances(core, step.chain);
       const fund = unwrap(await readLaunchFundAction(core));
       const chains = z
         .array(
@@ -290,12 +407,23 @@ export function createLaunchDriver(
         .parse(fund.chains);
       const chain = chains.find((entry) => entry.chainId === String(step.chain));
       if (!chain) throw new Error("CHAIN_UNAVAILABLE");
+      for (const leaf of journal.steps.filter(
+        (entry) =>
+          entry.chain === step.chain &&
+          (entry.id === step.id ||
+            (entry.kind === "open" && journal.checkpoints[entry.id]?.status !== "confirmed")),
+      )) {
+        const swapped = conversion(leaf, journal);
+        if (swapped && swapped.vault.toLowerCase() !== chain.spokeVault.toLowerCase())
+          throw new Error("BALANCES_UNAVAILABLE");
+      }
       const base = frozen.request.chains.find((entry) => entry.chainId === step.chain)?.tokens[0];
       if (!base) throw new Error("BASE_TOKEN_UNAVAILABLE");
       if (step.protocol === "aave-v3") {
         const asset = step.config?.assetKey?.split(":")[1];
         if (!asset || asset.toLowerCase() !== base.toLowerCase())
           throw new Error("UNSUPPORTED_AAVE_ASSET");
+        const available = leafBalances(step, journal, actual, base);
         const amount = remainderAmount(
           budget(step, journal),
           available[base.toLowerCase()] ?? BigInt(0),
@@ -325,6 +453,20 @@ export function createLaunchDriver(
           ?.uniswapV4PoolIds.includes(pool.poolId)
       )
         throw new Error("POOL_UNAVAILABLE");
+      const available = leafBalances(step, journal, actual, base);
+      const swapped = conversion(step, journal);
+      if (
+        swapped &&
+        (swapped.tokenIn.toLowerCase() !== base.toLowerCase() ||
+          swapped.tokenOut.toLowerCase() === base.toLowerCase() ||
+          !pool.tokens.some(
+            (token) => token.address.toLowerCase() === swapped.tokenOut.toLowerCase(),
+          ))
+      )
+        throw new Error("BALANCE_CHANGED");
+      if (swapped && BigInt(swapped.amountIn) > budget(step, journal))
+        throw new Error("BALANCE_CHANGED");
+      if (step.kind === "swap" && swapped) return { complete: true };
       const amounts = positionAmounts(
         pool,
         available,
@@ -332,9 +474,10 @@ export function createLaunchDriver(
         base,
         step.config?.priceLower ?? tickPrice(step.config?.tickLower, pool),
         step.config?.priceUpper ?? tickPrice(step.config?.tickUpper, pool),
+        BigInt(swapped?.amountIn ?? "0"),
       );
       if (step.kind === "swap") {
-        if (amounts.swapRaw === BigInt(0)) return { complete: true };
+        if (amounts.swapRaw === BigInt(0)) return { complete: true, data: { swapSkipped: true } };
         const swapRaw = remainderAmount(
           amounts.swapRaw,
           available[base.toLowerCase()] ?? BigInt(0),
@@ -388,6 +531,8 @@ export function createLaunchDriver(
     async receipt(chain, hash) {
       const receipt = await wallet.receipt(chain, hash);
       if (!receipt) return { status: "unknown" };
+      if (receipt.transactionHash.toLowerCase() !== hash.toLowerCase())
+        throw new Error("BALANCES_UNAVAILABLE");
       return { status: receipt.status, data: { receipt: decodeLaunchReceipt(receipt) } };
     },
     async reconcile(step, checkpoint, journal) {

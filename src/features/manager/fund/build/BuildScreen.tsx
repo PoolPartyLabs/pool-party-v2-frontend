@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name BuildScreen
- * @implements-rules-version v1 (POO-2157 rules v1; the configuration panel of POO-2187 rules v1)
+ * @implements-rules-version v1 (POO-2157 rules v1; the configuration panel of POO-2187 rules v1; POO-2210 rules v1)
  * @analytics-events builder_build_viewed, builder_build_started, builder_block_added,
  *   builder_network_added, builder_network_removed, builder_flow_block_inserted,
  *   builder_block_removed (with cascade_count), builder_block_configured, builder_block_applied,
@@ -44,12 +44,13 @@
  *   guard, so with changes not applied every exit above (another block, the background, the Edit
  *   mandate links, Back, Next, Save & exit, the stepper) keeps the selection and shows the notice;
  *   Apply changes or Discard changes then completes the exit (P6). Remove block and the Delete key
- *   open the panel's confirm (P10, DP11); there is no Undo toast. An Edit mandate link names the
+ *   open the removal modal (P10, DP11; POO-2210); there is no Undo toast. An Edit mandate link names the
  *   selected block, and `initialSelectedId` brings it back selected (finding 19). The panel's events
  *   (configured, applied, discarded, leave blocked, limit hit) go through `buildAnalytics.ts` too.
  *
  * Wiring notes: the renderer's spoke removal is `onRemoveSpoke` and the controller's is
- * `removeSpoke`; `invalidNetworks` (required) is built from the violations whose code is
+ * `removeSpoke`; user block X controls use `onRemoveBlock` / `requestRemove`. All paths ask
+ * in one modal; removing an unselected block preserves the selected panel draft. `invalidNetworks` (required) is built from the violations whose code is
  * `network_not_in_mandate` (their `targetId` is the spoke's network). "Draft saved" uses the
  * `<Toaster />` the locale layout already mounts once.
  *
@@ -59,8 +60,9 @@
  */
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/Dialog";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useTrackView } from "@/lib/analytics/useTrackView";
 import { useUnsavedChanges } from "@/lib/hooks/unsavedChanges";
@@ -98,10 +100,14 @@ import { BuildGraph } from "./graph/BuildGraph";
 import { useDraftGraphLayout } from "./graph/useGraphLayout";
 import type { GraphLayout } from "./layout/graphTypes";
 import { BlockPanel } from "./panel/BlockPanel";
+import { usePanelCopy } from "./panel/panelCopy";
+import { RemoveBlockConfirm, removalText } from "./panel/RemoveBlockConfirm";
 import { type PanelDraftEvent, panelTarget, usePanelDraft } from "./panel/usePanelDraft";
 import type { AllocationCeilingReason } from "./plan/allocationCeiling";
 import type { BlockKind, BuildPlan } from "./plan/buildPlan";
 import { planOf } from "./plan/buildPlan";
+import { findBlock } from "./plan/planDerive";
+import { describeRemoval } from "./plan/planReducers";
 import { planFingerprint } from "./plan/planStorage";
 import { useBuildPlan } from "./plan/useBuildPlan";
 
@@ -174,6 +180,8 @@ export function BuildScreen({
   initialRevealTarget,
 }: BuildScreenProps) {
   const t = useTranslations("manager");
+  const locale = useLocale();
+  const panelCopy = usePanelCopy();
   const reviewCopy = useReviewCopy();
   const { track } = useAnalytics();
 
@@ -315,6 +323,36 @@ export function BuildScreen({
   // [I9] After a change, reveal the new or newly selected block with the minimum pan. The first
   // layout is not a change: the viewport opens at fit on its own.
   const selectedId = selection.selectedId;
+  const removal = useMemo(() => {
+    const network = controller.removeSpokeConfirm;
+    if (network)
+      return {
+        title: panelCopy.confirm.title(controller.context.copy.networkName(network)),
+        sentence: null,
+      };
+    const blockId = controller.removeConfirmId;
+    if (!blockId) return null;
+    let id = 0;
+    const ctx = controller.context;
+    const found = findBlock(plan, blockId);
+    const description = describeRemoval(
+      plan,
+      { draft, catalog, newId: () => `remove-preview-${++id}` },
+      blockId,
+    );
+    if (!found || !description) return null;
+    return removalText({
+      description,
+      blockTitle:
+        found.block.family === "flow"
+          ? controller.describeFlow(blockId).text
+          : controller.describeBlock(blockId).title,
+      stepTitle: (step) => controller.describeBlock(step.id).title,
+      copy: panelCopy.confirm,
+      listNames: ctx.copy.listNames,
+      locale,
+    });
+  }, [controller, panelCopy, plan, draft, catalog, locale]);
   const shown = useRef<{ layout: GraphLayout; selectedId: string | null } | null>(null);
   useEffect(() => {
     const before = shown.current;
@@ -397,6 +435,7 @@ export function BuildScreen({
               activeTargetKeys={controller.activeTargetKeys}
               onTarget={controller.onTarget}
               onRemoveSpoke={controller.removeSpoke}
+              onRemoveBlock={controller.requestRemove}
               invalidNetworks={invalidNetworks}
             />
           </CanvasViewport>
@@ -408,7 +447,7 @@ export function BuildScreen({
               selectedId={selectedId}
               menuSentence={controller.menuSentence}
               panel={panel}
-              removeConfirmOpen={controller.removeConfirmId !== null}
+              removeConfirmOpen={false}
               onRemoveRequest={() => {
                 if (selectedId) controller.requestRemove(selectedId);
               }}
@@ -424,6 +463,24 @@ export function BuildScreen({
         notice={noticeText}
       />
 
+      <Dialog
+        open={removal !== null}
+        onOpenChange={(open) => {
+          if (!open) controller.cancelRemove();
+        }}
+      >
+        <DialogContent aria-describedby={undefined}>
+          <DialogTitle className="sr-only">{removal?.title}</DialogTitle>
+          <RemoveBlockConfirm
+            title={removal?.title ?? panelCopy.confirm.titleEmpty}
+            sentence={removal?.sentence ?? null}
+            cancelLabel={panelCopy.confirm.cancel}
+            removeLabel={t("fundBuilder.canvas.panel.remove")}
+            onCancel={controller.cancelRemove}
+            onConfirm={controller.confirmRemove}
+          />
+        </DialogContent>
+      </Dialog>
       <CanvasMenu {...controller.menuProps} />
     </div>
   );
