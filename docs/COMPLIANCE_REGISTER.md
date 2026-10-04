@@ -97,3 +97,9 @@ POO-2215/2216 verification: V2 current principal is displayed separately from ab
 ## Investor mobile verification, 2026-10-04
 
 POO-2220/2221: responsive presentation must preserve the exact underlying amount and manager identity, with no new balance, income, fee or settlement claim. Existing amount/Max tests protect precision; source review verifies wrapping and width constraints without changing calculation, routing or custody. Closed-only history stays accessible, and genuinely empty history is distinguished from unavailable/unloaded data. No new fee, asset, venue or personal-data use is introduced. Existing disclosure entries and POO-2219 execution restrictions remain applicable; this note does not resolve them.
+
+## Investor composition and local Follow verification, 2026-10-04
+
+POO-2223: the donut visualizes supplied NAV weights without renormalizing incomplete coverage. The remainder is labelled not detailed, never cash or idle assets. Missing, negative, duplicate-identity or over-100 coverage produces no chart. History has no fabricated price series. Verify position valuation meaning and data completeness before extending these semantics. Follow is an owner-approved local UI toggle with no persistence, transmission, count, notification or wallet action; no social relationship or backend completion is recorded. Existing financial disclosures and POO-2219 remain applicable.
+
+POO-2224 verification: public balance visibility does not establish ownership of fund shares or authorize a transaction. Reads use the connected account; stale session/account and late response guards prevent showing a previous wallet. ETH/WETH valuation is not guessed and is never added to the USDC balance. Existing custody and transaction disclosures remain unchanged.
