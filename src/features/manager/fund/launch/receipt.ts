@@ -19,6 +19,12 @@ export function decodeLaunchReceipt(receipt: TransactionReceipt): Record<string,
   for (const log of receipt.logs) {
     try {
       const decoded = decodeEventLog({ abi: events, data: log.data, topics: log.topics });
+      if (
+        receipt.to &&
+        ["AllocatedToHubSpokeVault", "Swapped"].includes(decoded.eventName) &&
+        log.address.toLowerCase() !== receipt.to.toLowerCase()
+      )
+        continue;
       if (decoded.eventName === "FundSeeded") {
         const principal = decoded.args.usdcAmount;
         if (principal <= BigInt(0)) throw new Error("INVALID_SEED_RECEIPT");

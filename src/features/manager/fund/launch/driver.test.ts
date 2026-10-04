@@ -193,6 +193,7 @@ describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
   it.each([
     { principal: "2000000", allocation: "1200000", budget: "600000" },
     { principal: "1995000", allocation: "1197000", budget: "598500" },
+    { principal: "1000000", allocation: "600000", budget: "300000" },
   ])("R3 preserves Aave after the real range/price swap and open with net $principal", async ({
     principal,
     allocation,
@@ -294,6 +295,28 @@ describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
     balances(BigInt("914170"), BigInt("105810000000000"));
     expect(await driver.build(swap, journal)).toEqual({ complete: true });
     expect(mocks.swap).not.toHaveBeenCalled();
+  });
+  it("R2 ignores stale swap receipt data on a reverted checkpoint", async () => {
+    const { driver, journal, swap, balances } = liveSetup();
+    journal.checkpoints[swap.id] = {
+      stepId: swap.id,
+      chain: 42161,
+      status: "failed",
+      receiptStatus: "reverted",
+      data: {
+        receipt: {
+          swapped: {
+            tokenIn: liveUsdc,
+            tokenOut: liveWeth,
+            amountIn: "285830",
+            amountOut: "105810000000000",
+          },
+        },
+      },
+    };
+    balances(BigInt("1200000"), BigInt(0));
+    await driver.build(swap, journal);
+    expect(mocks.swap).toHaveBeenLastCalledWith(expect.objectContaining({ amountIn: "285830" }));
   });
 });
 

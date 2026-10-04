@@ -129,12 +129,14 @@ function swapOf(step: LaunchStep, journal: LaunchJournal) {
     (entry) =>
       entry.kind === "swap" &&
       entry.chain === step.chain &&
-      (step.blockId ? entry.blockId === step.blockId : step.dependencies.includes(entry.id)),
+      (entry.id === step.id ||
+        (step.blockId ? entry.blockId === step.blockId : step.dependencies.includes(entry.id))),
   );
 }
 function conversion(step: LaunchStep, journal: LaunchJournal) {
   const swap = swapOf(step, journal);
-  const data = swap && journal.checkpoints[swap.id]?.data?.receipt;
+  const checkpoint = swap && journal.checkpoints[swap.id];
+  const data = checkpoint?.status === "confirmed" ? checkpoint.data?.receipt : undefined;
   if (!data || !record(data).swapped) return null;
   return z
     .object({
@@ -161,6 +163,7 @@ function leafBalances(
       entry.group === step.group &&
       entry.id !== step.id &&
       (!step.blockId || entry.blockId !== step.blockId) &&
+      swapOf(entry, journal)?.id !== step.id &&
       !step.dependencies.includes(entry.id) &&
       journal.checkpoints[entry.id]?.status !== "confirmed",
   )) {
@@ -170,6 +173,7 @@ function leafBalances(
     if (spent > planned) throw new Error("BALANCE_CHANGED");
     reserved += planned - spent;
     if (swapped) {
+      if (swapped.tokenIn.toLowerCase() !== baseKey) throw new Error("BALANCE_CHANGED");
       const token = swapped.tokenOut.toLowerCase();
       scoped[token] = (scoped[token] ?? BigInt(0)) - BigInt(swapped.amountOut);
       if (scoped[token]! < BigInt(0)) throw new Error("BALANCE_CHANGED");
@@ -177,6 +181,12 @@ function leafBalances(
   }
   scoped[baseKey] = (scoped[baseKey] ?? BigInt(0)) - reserved;
   if (scoped[baseKey]! < BigInt(0)) throw new Error("BALANCE_CHANGED");
+  const own = conversion(step, journal);
+  if (own) {
+    const token = own.tokenOut.toLowerCase();
+    const output = BigInt(own.amountOut);
+    if ((scoped[token] ?? BigInt(0)) > output) scoped[token] = output;
+  }
   return scoped;
 }
 function remainderAmount(planned: bigint, available: bigint, step: LaunchStep): bigint {
@@ -417,7 +427,16 @@ export function createLaunchDriver(
         throw new Error("POOL_UNAVAILABLE");
       const available = leafBalances(step, journal, actual, base);
       const swapped = conversion(step, journal);
-      if (swapped && swapped.tokenIn.toLowerCase() !== base.toLowerCase())
+      if (
+        swapped &&
+        (swapped.tokenIn.toLowerCase() !== base.toLowerCase() ||
+          swapped.tokenOut.toLowerCase() === base.toLowerCase() ||
+          !pool.tokens.some(
+            (token) => token.address.toLowerCase() === swapped.tokenOut.toLowerCase(),
+          ))
+      )
+        throw new Error("BALANCE_CHANGED");
+      if (swapped && BigInt(swapped.amountIn) > budget(step, journal))
         throw new Error("BALANCE_CHANGED");
       if (step.kind === "swap" && swapped) return { complete: true };
       const amounts = positionAmounts(
