@@ -483,6 +483,34 @@ Inventory of all screens, modals, and components swept from the Pool Party V2 Fi
 - Mobile: [`4643:2030`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=4643-2030)
 
 
+## MGR · Strategy builder for the fund contracts, Build canvas (Drafts page)
+
+Added 2026-10-04 (POO-2158). These frames are on the Figma Drafts page, section "Strategy Builder · fund contracts", of the same file, not on the three pages listed at the top, and they are not counted in the coverage summary (swept 2026-05-29). They are not promoted to the Manager Console page yet. The `PP-MGR-SCR-002` entry in the section above predates the re-IDing of 2026-06-11 (the public manager profile is `PP-MGR-SCR-005` today): `IDS_REGISTRY.md` is the authority for the id.
+
+### PP-MGR-SCR-002 - Strategy builder (fund contracts), Build phase
+- Type: Screen (a phase of the shared artifact; its components are `PP-MGR-CMP-045` to `059`) · Status: Draft
+- Desktop only: the builder has no mobile layout
+- The four reference canvases are drawn at 100% zoom and are the measurement source; the Build states embed the same graph scaled to fit. In states 3 and 5 the right-hand panel shows next-batch content (POO-2171) and is not part of the canvas.
+
+| Frame | Node | Fixture (`src/mocks/data/buildCanvasFixtures.ts`) | Shown by |
+|---|---|---|---|
+| Build, state 1: first visit, empty canvas | [`8130:2726`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8130-2726) | `canvasD` (the same empty graph) | `PP-MGR-CMP-045`, `046`, `055`, `059` |
+| Build, state 2: Add protocol menu open, with its disabled rows | [`8130:3408`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8130-3408) | none (a menu, not a graph) | `PP-MGR-CMP-056`, `057` |
+| Build, state 3: block added, empty, selected | [`8130:4133`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8130-4133) | `buildState3` | `PP-MGR-CMP-045`, `046`, `049`, `056`, `058` |
+| Build, state 5: one configured chain with Collect fees | [`8145:2061`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8145-2061) | `buildState5` | `PP-MGR-CMP-045`, `049`, `059` |
+| Reference canvas A: complex, 3 networks, 10 positions, network menu open, tooltips | [`8099:2757`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8099-2757) | `canvasA` | `PP-MGR-CMP-048` to `055`, `057`, `059` |
+| Reference canvas B: intermediate, Aave on three networks, no pool | [`8119:2723`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8119-2723) | `canvasB` | `PP-MGR-CMP-053`, `059` |
+| Reference canvas C: simple, one pool and one Aave block on the hub | [`8119:2921`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8119-2921) | `canvasC` (worked example 1) | `PP-MGR-CMP-048` to `055`, `059` |
+| Reference canvas D: empty, templates only | [`8119:3062`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8119-3062) | `canvasD` | `PP-MGR-CMP-055`, `059` |
+| Insert port menu "AFTER SUPPLY WETH" | [`8181:2110`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8181-2110) | none (a menu) | `PP-MGR-CMP-052`, `057`, `058` |
+| Disabled Borrow option of the Add protocol menu, with the coming-soon rows | [`8182:2145`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8182-2145) | none (a menu) | `PP-MGR-CMP-057` |
+| One chain with three positions and a single return level | [`8187:2356`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8187-2356) | none | `PP-MGR-CMP-059` |
+| DEV NOTES of the Build (the rules as written beside the drawings) | [`8025:1819`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8025-1819) | none | rules C1 to C22 |
+| Reference board: edge hover, label click, tooltip copy | [`8035:1688`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8035-1688) | none | `PP-MGR-CMP-051`, `054` |
+
+Context only, drawn by the panel batch (POO-2171): Uniswap panel options [`8156:2097`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=8156-2097).
+
+
 ## PROF · Profile & account / settings
 
 ### PP-PROF-CMP-001 - Profile Header
