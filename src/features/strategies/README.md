@@ -338,6 +338,12 @@ than a retry, because with no hash there is nothing safe to re-send. Design:
 
 ## Analytics
 
+POO-2198 (rules v1): `ProvisioningPanel` keeps the shared price-impact gate active while the
+gas-only auxiliary screen is visible. A catastrophic gas quote emits `tx_impact_gate_blocked`,
+requires explicit acknowledgement, and leaves execution to the separate Confirm action. Leaving
+the screen resets consent; a worsened quote uses the shared immediate CTA block and consent reset.
+The focused regressions live in `components/ProvisioningPanel.priceImpact.test.tsx`.
+
 `strategy_*` events per `docs/ANALYTICS_EVENTS.md`, including the share funnel:
 `strategy_share_opened`, `strategy_share_period_changed`, `strategy_share_target_clicked`,
 `strategy_share_link_copied`, `strategy_share_card_saved`.

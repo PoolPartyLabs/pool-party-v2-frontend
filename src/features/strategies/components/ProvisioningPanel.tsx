@@ -2,9 +2,9 @@
  * @id PP-CORE-CMP-046 (POO-1135, POO-1136, POO-1153, POO-1155, POO-1166, POO-1384, POO-1390,
  *   POO-1501, POO-1502, POO-1503, POO-1504, POO-1505, POO-1506, POO-1507, POO-1508, POO-1509,
  *   POO-1525, POO-1526, POO-1527, POO-1528, POO-1541, POO-1543, POO-1564, POO-1568, POO-1570,
- *   POO-1573, POO-1596, POO-1641, POO-1808, POO-1811, POO-1812)
+ *   POO-1573, POO-1596, POO-1641, POO-1808, POO-1811, POO-1812, POO-2198)
  * @name ProvisioningPanel
- * @implements-rules-version v41 (POO-1927 rules v1) · v40 (POO-1808 rules v1)
+ * @implements-rules-version v1 (POO-2198) · v41 (POO-1927 rules v1) · v40 (POO-1808 rules v1)
  *   · v39 (POO-1812 rules v1: ONE buffer rate per run, derived from the
  *   slippage that run allows and spent by the seed, the route targets and the copy, with the
  *   ledger's budget pinned to the rate the run was SEEDED with)
@@ -1742,11 +1742,17 @@ export const ProvisioningPanel = forwardRef<ProvisioningPanelHandle, Provisionin
      * `active` in the hook, so the auto-start effect below cannot outrun the gate arming.
      */
     const priceImpactPct = useMemo(() => (plan ? planPriceImpactPct(plan) : undefined), [plan]);
-    const impactGate = usePriceImpactGate(priceImpactPct, startRequested, {
-      // Same conversion boundary as the funnel above: `operation.kind` is the provisioning spelling.
-      ...(operation?.kind ? { flow: PROVISIONING_OP_TO_FLOW[operation.kind] } : {}),
-      ...(operation?.strategyId ? { strategyId: operation.strategyId } : {}),
-    });
+    // POO-2198 R1/R2: gas-only has its own CTA and never requests the normal auto-start. Its visible
+    // sources screen is the consent boundary; leaving it resets the gate through the existing hook.
+    const impactGate = usePriceImpactGate(
+      priceImpactPct,
+      gasOnly ? phase === "sources" : startRequested,
+      {
+        // Same conversion boundary as the funnel above: `operation.kind` is the provisioning spelling.
+        ...(operation?.kind ? { flow: PROVISIONING_OP_TO_FLOW[operation.kind] } : {}),
+        ...(operation?.strategyId ? { strategyId: operation.strategyId } : {}),
+      },
+    );
 
     // [R6] What the rail will REALLY run: one approval per ERC-20 leg, then the leg. Only in real mode
     // — the mock settle runs the plan's own steps, and a fixture plan carries no legs to approve.
