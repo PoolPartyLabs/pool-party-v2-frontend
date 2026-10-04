@@ -1071,6 +1071,7 @@
         "overShare": "Los porcentajes suman más que el capital que tienen por encima.",
         "incompleteBlock": "Defina un rango de precios y un slippage máximo para cada pool antes de la Revisión.",
         "zeroShare": "Asigne a cada bloque un porcentaje mayor que 0% o quítelo.",
+        "unusedSpokeShare": "Una red reserva más capital del que usan sus bloques. Asigne ese porcentaje a sus bloques o quite la red.",
         "stackedPositions": "Quite los bloques colocados debajo de un bloque Suministrar: todavía no se pueden lanzar.",
         "duplicateReserve": "Suministre cada activo en un solo bloque. Quite el segundo bloque Suministrar del mismo activo.",
         "unsupportedSwap": "Los swaps fuera de un pool todavía no se pueden lanzar. Suministre el token que llega o quite el Swap.",

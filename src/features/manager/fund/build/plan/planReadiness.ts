@@ -26,10 +26,14 @@
  * 6. a pool picked but not finished: no range or no slippage yet (`isPoolConfigComplete`);
  * 7. a chain whose share is not a whole percent above 0 (the launch refuses `INVALID_ALLOCATION`;
  *    the panels write whole percents only, so in practice this is the 0% a block gets on Use, P7);
- * 8. a chain with more than one position, or anything under a Supply (the launch runs one position
+ * 8. a spoke holding more than the sum of its chains, an emptied spoke that kept its share
+ *    included (review M1 of PR #51): the launch bridges the spoke's whole share and deploys only
+ *    its chains, and refuses a share that is not whole (`INVALID_ALLOCATION`). A spoke holding
+ *    LESS than its chains is check 5;
+ * 9. a chain with more than one position, or anything under a Supply (the launch runs one position
  *    per chain: `BUILD_EXECUTION_GAP`, `UNSUPPORTED_POSITION` for a Borrow);
- * 9. a second Supply of the same reserve on one network (one Aave open per reserve);
- * 10. a Swap in a chain with no pool: a Supply of a token other than the one that arrives (its
+ * 10. a second Supply of the same reserve on one network (one Aave open per reserve);
+ * 11. a Swap in a chain with no pool: a Supply of a token other than the one that arrives (its
  *     Swap · auto) or a manager Swap. The launch runs no swap outside a pool yet
  *     (`BUILD_EXECUTION_GAP`), so the Supply's asset must be the token that arrives.
  *
@@ -50,6 +54,7 @@ export const PLAN_READINESS_REFUSALS = [
   "review_over_share",
   "review_incomplete_block",
   "review_zero_share",
+  "review_unused_spoke_share",
   "review_stacked_positions",
   "review_duplicate_reserve",
   "review_unsupported_swap",
@@ -176,6 +181,18 @@ export function planReadiness(
     ({ chain }) => !(Number.isInteger(chain.sharePct) && chain.sharePct > 0),
   );
   if (unshared) return refuse("review_zero_share", positionsOf(unshared.chain)[0]?.id ?? null);
+
+  const unused = plan.spokes.find(
+    (spoke) =>
+      spoke.sharePct > spoke.chains.reduce((total, chain) => total + chain.sharePct, 0) + 1e-9,
+  );
+  if (unused) {
+    return {
+      ready: false,
+      refusal: "review_unused_spoke_share",
+      target: { kind: "network", network: unused.network },
+    };
+  }
 
   for (const { chain } of chains) {
     const stacked = stackedStep(chain);

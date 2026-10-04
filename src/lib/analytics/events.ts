@@ -563,8 +563,8 @@ export type AnalyticsMandateBlockReason = (typeof ANALYTICS_MANDATE_BLOCK_REASON
  * (`PlanBlockReason` in `src/features/manager/fund/build/plan/buildPlan.ts`), mirrored here rather
  * than imported for the reason {@link ANALYTICS_MANDATE_STEPS} gives: this file is a leaf. The mirror
  * is checked at compile time anyway, because `buildAnalytics.ts` maps them through a total
- * `Record<PlanBlockReason, AnalyticsBuildBlockReason>`. The last eleven are Next: Review's ordered
- * checks (D19; S7's six, with the five launch readiness checks of POO-2184 before the last), one
+ * `Record<PlanBlockReason, AnalyticsBuildBlockReason>`. The last twelve are Next: Review's ordered
+ * checks (D19; S7's six, with the six launch readiness checks of POO-2184 before the last), one
  * per inline notice, so "which check stops managers at the Review door" is one dimension with one
  * value per notice.
  *
@@ -606,6 +606,8 @@ export const ANALYTICS_BUILD_BLOCK_REASONS = [
   "review_incomplete_block",
   /** Next: Review on a chain with no whole share above 0% (POO-2184). */
   "review_zero_share",
+  /** Next: Review on a spoke holding more than its chains take, an emptied one included. */
+  "review_unused_spoke_share",
   /** Next: Review on a chain with more than one position, or anything under a Supply. */
   "review_stacked_positions",
   /** Next: Review on a plan supplying the same reserve twice on one network (POO-2184). */
