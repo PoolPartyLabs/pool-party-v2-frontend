@@ -65,7 +65,10 @@ import { deleteDraft, listDrafts, subscribe } from "../mandateDraftStore";
  * `phase=build` only for a completed mandate anyway; checking it here too keeps the link honest.
  */
 export function draftResumeHref(draft: MandateDraft): string {
-  const phase = draft.completedAt !== null && draft.lastPhase === "build" ? "&phase=build" : "";
+  const phase =
+    draft.completedAt !== null && (draft.lastPhase === "build" || draft.lastPhase === "review")
+      ? `&phase=${draft.lastPhase}`
+      : "";
   return `/manager/new?draft=${draft.id}&step=${resumeStep(draft)}${phase}`;
 }
 

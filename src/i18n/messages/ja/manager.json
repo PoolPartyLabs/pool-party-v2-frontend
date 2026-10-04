@@ -1185,7 +1185,32 @@
         "seedOverBalance": "初回入金額が利用可能なUSDC残高を超えています。",
         "seedNoShare": "プロトコル手数料控除後に最低1持分を受け取れるよう、初回入金額を増やしてください。",
         "balanceUnread": "開始する前にUSDC残高の読み込みをお待ちください。"
-      }
+      },
+      "title": "ストラテジーを確認",
+      "caption": "署名前に基本情報、手数料、投資家条件、初回入金を確認してください。",
+      "draftUnavailable": "保存した下書きを読み込めませんでした。再試行するかBuildに戻ってください。",
+      "retry": "再試行",
+      "catalogUnavailable": "最新カタログを読み込めませんでした。開始前に再試行してください。",
+      "retryBalance": "残高を再取得",
+      "launch": "ストラテジーを開始",
+      "launchFailed": "開始できませんでした。再試行してください。",
+      "backBuild": "Buildに戻る",
+      "resumeLaunch": "開始を再開",
+      "viewLaunch": "開始状況を見る",
+      "mockUnavailable": "開始にはリアルモードと接続済みwalletが必要です。",
+      "investorPreviewTitle": "投資家向けプレビュー",
+      "previewInvalid": "項目を修正すると投資家向けプレビューが表示されます。",
+      "mandateSummary": "マンデートの概要",
+      "editMandate": "マンデートを編集",
+      "selectionSummary": "トークン{tokens}件、pool{pools}件、プロトコル{protocols}件",
+      "buildSummary": "適用済みBuild",
+      "editBuild": "Buildを編集",
+      "positionCount": "{count}ポジション",
+      "allocationIntent": "配分は計画上の意図を表します。実行とbridgeの決済によって実際の金額が決まります。",
+      "launchPreviewTitle": "開始の手順",
+      "upToSignatures": "最大{count}回の署名",
+      "signatureKinds": "トランザクション{transactions}件とプロフィールメッセージ{messages}件",
+      "launchPreviewBlocked": "適用済みBuildを完成させると開始の手順が表示されます。"
     }
   }
 }

@@ -1185,7 +1185,32 @@
         "seedOverBalance": "Khoản nạp đầu tiên vượt số dư USDC khả dụng.",
         "seedNoShare": "Tăng khoản nạp đầu tiên để nhận ít nhất một đơn vị phần vốn nguyên sau phí giao thức.",
         "balanceUnread": "Đợi tải số dư USDC trước khi khởi chạy."
-      }
+      },
+      "title": "Xem lại chiến lược",
+      "caption": "Xác nhận thông tin, phí, điều khoản và khoản nạp đầu tiên trước khi ký.",
+      "draftUnavailable": "Không thể tải bản nháp đã lưu. Thử lại hoặc quay về Build.",
+      "retry": "Thử lại",
+      "catalogUnavailable": "Không thể tải danh mục trực tiếp. Thử lại trước khi khởi chạy.",
+      "retryBalance": "Tải lại số dư",
+      "launch": "Khởi chạy chiến lược",
+      "launchFailed": "Không thể bắt đầu khởi chạy. Vui lòng thử lại.",
+      "backBuild": "Quay về Build",
+      "resumeLaunch": "Tiếp tục khởi chạy",
+      "viewLaunch": "Xem khởi chạy",
+      "mockUnavailable": "Khởi chạy cần chế độ thực và wallet đã kết nối.",
+      "investorPreviewTitle": "Xem trước cho nhà đầu tư",
+      "previewInvalid": "Sửa các trường để xem trước cho nhà đầu tư.",
+      "mandateSummary": "Tóm tắt phạm vi",
+      "editMandate": "Sửa phạm vi",
+      "selectionSummary": "{tokens} token, {pools} pool, {protocols} giao thức",
+      "buildSummary": "Build đã áp dụng",
+      "editBuild": "Sửa Build",
+      "positionCount": "{count} vị thế",
+      "allocationIntent": "Phân bổ mô tả ý định của bạn. Thực thi và quyết toán bridge xác định số tiền thực tế.",
+      "launchPreviewTitle": "Các bước khởi chạy",
+      "upToSignatures": "Tối đa {count} chữ ký",
+      "signatureKinds": "{transactions} giao dịch và {messages} thông điệp hồ sơ",
+      "launchPreviewBlocked": "Hoàn tất Build đã áp dụng để xem các bước khởi chạy."
     }
   }
 }

@@ -1185,7 +1185,32 @@
         "seedOverBalance": "첫 입금액이 사용 가능한 USDC 잔액을 초과해요.",
         "seedNoShare": "프로토콜 수수료 차감 후 최소 1개의 정수 지분을 받도록 첫 입금액을 늘려 주세요.",
         "balanceUnread": "출시 전에 USDC 잔액이 로드될 때까지 기다려 주세요."
-      }
+      },
+      "title": "전략 검토",
+      "caption": "서명 전에 정보, 수수료, 투자자 조건, 첫 입금을 확인해 주세요.",
+      "draftUnavailable": "저장한 초안을 불러올 수 없어요. 다시 시도하거나 Build로 돌아가 주세요.",
+      "retry": "다시 시도",
+      "catalogUnavailable": "실시간 카탈로그를 불러올 수 없어요. 출시 전에 다시 시도해 주세요.",
+      "retryBalance": "잔액 새로고침",
+      "launch": "전략 출시",
+      "launchFailed": "출시를 시작할 수 없어요. 다시 시도해 주세요.",
+      "backBuild": "Build로 돌아가기",
+      "resumeLaunch": "출시 재개",
+      "viewLaunch": "출시 보기",
+      "mockUnavailable": "출시하려면 실제 모드와 연결된 wallet이 필요해요.",
+      "investorPreviewTitle": "투자자 미리보기",
+      "previewInvalid": "필드를 수정하면 투자자 미리보기를 볼 수 있어요.",
+      "mandateSummary": "운용 지침 요약",
+      "editMandate": "운용 지침 편집",
+      "selectionSummary": "토큰 {tokens}개, pool {pools}개, 프로토콜 {protocols}개",
+      "buildSummary": "적용된 Build",
+      "editBuild": "Build 편집",
+      "positionCount": "포지션 {count}개",
+      "allocationIntent": "배분은 계획상의 의도를 나타내요. 실행과 bridge 정산이 실제 금액을 결정해요.",
+      "launchPreviewTitle": "출시 단계",
+      "upToSignatures": "최대 {count}개의 서명",
+      "signatureKinds": "트랜잭션 {transactions}개와 프로필 메시지 {messages}개",
+      "launchPreviewBlocked": "적용된 Build를 완료하면 출시 단계를 볼 수 있어요."
     }
   }
 }

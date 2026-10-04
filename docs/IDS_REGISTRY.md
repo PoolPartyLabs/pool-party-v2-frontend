@@ -1,5 +1,14 @@
 # IDs Registry
 
+## Review assembly (POO-2195, RB2)
+
+| ID | Artifact | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-MGR-CMP-077` | ReviewPhase: saved form and launch/resume assembly | Component | Review frame 8225:2391 | In Review | [POO-2195](https://linear.app/yeildbay/issue/POO-2195) | `src/features/manager/fund/review/` @rules-v1 |
+| `PP-MGR-CMP-078` | ReviewInvestorPreview: valid current form projection | Component | Review frame 8225:2391 | In Review | [POO-2195](https://linear.app/yeildbay/issue/POO-2195) | `src/features/manager/fund/review/` @rules-v1 |
+| `PP-MGR-CMP-079` | ReviewPlanSummary: mandate and applied Build summaries | Component | Review frame 8225:2391 | In Review | [POO-2195](https://linear.app/yeildbay/issue/POO-2195) | `src/features/manager/fund/review/` @rules-v1 |
+| `PP-MGR-CMP-080` | ReviewLaunchPreview: existing getLaunchSteps grouped by network | Component | Review frame 8225:2391 | In Review | [POO-2195](https://linear.app/yeildbay/issue/POO-2195) | `src/features/manager/fund/review/` @rules-v1 |
+
 ## Review form cards (POO-2188, RB1)
 
 | ID | Artifact | Type | Design | Impl | Linear | Reference |
@@ -90,7 +99,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 650 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 654 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 

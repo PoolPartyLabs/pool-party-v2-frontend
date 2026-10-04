@@ -291,6 +291,14 @@ export const ANALYTICS_EVENTS = [
   "builder_mandate_abandoned",
   "builder_draft_saved",
   "builder_mandate_error",
+  "builder_review_view",
+  "builder_review_field_changed",
+  "builder_review_abandoned",
+  "builder_review_error",
+  "builder_launch_clicked",
+  "builder_launch_blocked",
+  "builder_build_submitted",
+  "builder_build_completed",
   "builder_launch_signature",
   "builder_launch_completed",
   "builder_launch_failed",
@@ -969,6 +977,8 @@ export function joinAnalyticsMultiValue(values: readonly string[]): string {
 }
 
 export interface AnalyticsParams {
+  /** Review field identifier only; never form values or wallet details. */
+  review_field?: string;
   /** Monetary value, denominated in {@link currency} (GA4 standard). Exact values are allowed. */
   value?: number;
   /**

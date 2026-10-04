@@ -1185,7 +1185,32 @@
         "seedOverBalance": "您的首次入金超过可用USDC余额。",
         "seedNoShare": "请增加首次入金，以在扣除协议费用后获得至少一个整数份额。",
         "balanceUnread": "启动前请等待USDC余额加载完成。"
-      }
+      },
+      "title": "审核您的策略",
+      "caption": "签名前确认信息、费用、投资者条款和首次入金。",
+      "draftUnavailable": "无法加载保存的草稿。请重试或返回Build。",
+      "retry": "重试",
+      "catalogUnavailable": "无法加载实时目录。启动前请重试。",
+      "retryBalance": "刷新余额",
+      "launch": "启动策略",
+      "launchFailed": "无法开始启动。请重试。",
+      "backBuild": "返回Build",
+      "resumeLaunch": "继续启动",
+      "viewLaunch": "查看启动",
+      "mockUnavailable": "启动需要真实模式和已连接的wallet。",
+      "investorPreviewTitle": "投资者预览",
+      "previewInvalid": "修正字段以查看投资者预览。",
+      "mandateSummary": "授权范围摘要",
+      "editMandate": "编辑授权范围",
+      "selectionSummary": "{tokens}个代币、{pools}个pool、{protocols}个协议",
+      "buildSummary": "已应用的Build",
+      "editBuild": "编辑Build",
+      "positionCount": "{count}个仓位",
+      "allocationIntent": "分配表示您的计划意图。执行和bridge结算决定实际金额。",
+      "launchPreviewTitle": "启动步骤",
+      "upToSignatures": "最多{count}次签名",
+      "signatureKinds": "{transactions}笔交易和{messages}条资料消息",
+      "launchPreviewBlocked": "完成已应用的Build以预览启动步骤。"
     }
   }
 }

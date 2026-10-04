@@ -645,3 +645,18 @@ estimate. These are estimates before signing; the creation receipt confirms char
 amounts. Identity remains editable after launch, fees may only decrease, and minimum and
 instant withdrawal fee are fixed. Access is Public. Operating cash, risk, return and gas
 figures are absent. The RB2 assembly owns persistence, launch gating and analytics.
+
+
+### Review assembly (POO-2195, RB2, rules v1)
+
+A guarded, ready Build saves the applied plan and `lastPhase: review`, then opens Review.
+`ReviewPhase` (PP-MGR-CMP-077) binds the RB1 cards to `useV2ReviewDraft`; Back, mandate edits,
+Save & exit and reload preserve its stored fields. Mock mode renders a reason without
+mounting real wallet hooks. Investor, mandate/Build and launch previews (CMP-078..080)
+derive from current valid fields, saved selections, applied positions and `getLaunchSteps`.
+Signature counts say up to and distinguish transactions from profile messages.
+
+Launch stays enabled to reveal the first field or Build reason in screen order. A ready
+click calls `startFundLaunch` once; an existing checkpoint offers Resume without changing
+the journal. Fallback Review remains available. Borrow, unsupported catalog data and
+nonexecutable continuations fail closed. All new copy is present in 11 locales.

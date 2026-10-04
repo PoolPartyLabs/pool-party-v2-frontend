@@ -118,6 +118,7 @@ import { BuildScreen, type LeaveGuard } from "./build/BuildScreen";
 import type { MandateEditStep } from "./build/blocks/useBuildCanvas";
 import { planCounts } from "./build/buildAnalytics";
 import { type BuilderPhase, planOf } from "./build/plan/buildPlan";
+import type { ReadinessTarget } from "./build/plan/planReadiness";
 import { BuilderActionBar } from "./components/BuilderActionBar";
 import { MandateSubStepHeader } from "./components/MandateSubStepHeader";
 import { NameDraftDialog } from "./components/NameDraftDialog";
@@ -140,6 +141,7 @@ import {
   validateStep,
   visibleSteps,
 } from "./mandateDraft";
+import { ReviewPhase } from "./review/ReviewPhase";
 import { LimitsStep } from "./steps/LimitsStep";
 import { NetworksStep } from "./steps/NetworksStep";
 import { PoolsStep } from "./steps/PoolsStep";
@@ -277,7 +279,11 @@ export function FundStrategyBuilderScreen() {
    */
   const [phaseChoice, setPhaseChoice] = useState<BuilderPhase | null>(null);
   const phase: BuilderPhase =
-    phaseChoice ?? (requestedPhase === "build" && draft.completedAt !== null ? "build" : "mandate");
+    phaseChoice ??
+    (["build", "review"].includes(requestedPhase ?? draft.lastPhase ?? "") &&
+    draft.completedAt !== null
+      ? ((requestedPhase ?? draft.lastPhase) as BuilderPhase)
+      : "mandate");
 
   const [dialog, setDialog] = useState<"exit" | "complete" | null>(null);
   const [shellBlock, setShellBlock] = useState<StepBlock | null>(null);
@@ -435,6 +441,10 @@ export function FundStrategyBuilderScreen() {
   const reportSaveFailure = useCallback(() => {
     // A save that fails from the Build canvas is Build's error: the mandate is already closed, and a
     // Mandate error row would put a Build failure on the Limits step's count.
+    if (phaseRef.current === "review") {
+      track("builder_review_error", { error_code: "REVIEW_SAVE_FAILED" });
+      return;
+    }
     if (phaseRef.current === "build") {
       track("builder_build_error", { error_code: "DRAFT_SAVE_FAILED", error_origin: "app" });
       return;
@@ -496,7 +506,7 @@ export function FundStrategyBuilderScreen() {
    */
   useEffect(() => {
     if (!hydrated || draft.savedAt === null) return;
-    const query = `?draft=${draft.id}&step=${step}${phase === "build" ? "&phase=build" : ""}`;
+    const query = `?draft=${draft.id}&step=${step}${phase !== "mandate" ? `&phase=${phase}` : ""}`;
     routerRef.current.replace(`${pathname}${query}`, { scroll: false });
   }, [hydrated, draft.savedAt, draft.id, step, phase, pathname]);
 
@@ -518,6 +528,7 @@ export function FundStrategyBuilderScreen() {
       // A session that ends on the Build canvas is Build's to report (POO-2157): the mandate under
       // it already closed. Only a Save & exit parks it; everything else is an abandonment, and what
       // it lost is a plan edit made since the last save.
+      if (phaseRef.current === "review") return;
       if (phaseRef.current === "build") {
         if (exitedRef.current) return;
         trackRef.current("builder_build_abandoned", {
@@ -745,6 +756,39 @@ export function FundStrategyBuilderScreen() {
     });
   }, [step, track]);
 
+  const handleOpenReview = useCallback(async () => {
+    track("builder_build_submitted", { family: "v2" });
+    stampPhase("review");
+    const result = await save();
+    if (!result.ok) {
+      stampPhase("build");
+      reportSaveFailure();
+      return;
+    }
+    track("builder_build_completed", { family: "v2" });
+    setPhaseChoice("review");
+  }, [save, stampPhase, reportSaveFailure, track]);
+  const handleReviewBack = useCallback(
+    (target?: ReadinessTarget | null) => {
+      stampPhase("build");
+      setPhaseChoice("build");
+      if (target)
+        requestAnimationFrame(() => {
+          const id =
+            target.kind === "block"
+              ? target.blockId
+              : target.kind === "chain"
+                ? target.chainId
+                : target.network;
+          const element = document.querySelector<HTMLElement>(
+            `[data-block-id="${CSS.escape(id)}"]`,
+          );
+          element?.scrollIntoView?.({ block: "center" });
+        });
+    },
+    [stampPhase],
+  );
+
   if (!hydrated) return <BuilderSkeleton />;
 
   const Body = STEP_BODIES[step];
@@ -755,7 +799,7 @@ export function FundStrategyBuilderScreen() {
       className={cn(
         "mx-auto flex w-full flex-col gap-6",
         // D23: the Build canvas takes the full content width; the Mandate keeps its columns.
-        phase === "build" ? null : WIDE_STEPS.includes(step) ? "max-w-[1100px]" : "max-w-3xl",
+        phase !== "mandate" ? null : WIDE_STEPS.includes(step) ? "max-w-[1100px]" : "max-w-3xl",
       )}
     >
       <div className="flex items-baseline gap-4">
@@ -780,13 +824,23 @@ export function FundStrategyBuilderScreen() {
           [B4] Review stays unreachable: the stepper only makes an EARLIER phase clickable. Its
           Mandate pill is a way out of Build, so it asks the canvas's guard (HU3). */}
       <BuilderStepper
-        active={phase === "build" ? "build" : "mandate"}
+        active={phase}
         onStepClick={(target) => {
           if (target === "mandate") guardBuildExit(handleBackToMandate);
+          if (target === "build" && phase === "review") {
+            stampPhase("build");
+            setPhaseChoice("build");
+          }
         }}
       />
 
-      {phase === "build" ? (
+      {phase === "review" ? (
+        <ReviewPhase
+          draftId={draft.id}
+          onBackToBuild={handleReviewBack}
+          onEditMandate={() => handleEditMandate("networks")}
+        />
+      ) : phase === "build" ? (
         <BuildScreen
           draft={draft}
           catalog={catalog}
@@ -795,6 +849,7 @@ export function FundStrategyBuilderScreen() {
           onEditMandate={handleEditMandate}
           initialSelectedId={buildReturnBlock}
           leaveGuardRef={buildLeaveRef}
+          onReview={() => void handleOpenReview()}
         />
       ) : (
         <>

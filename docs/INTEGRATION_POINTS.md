@@ -47,7 +47,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 478 markers across 275 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 468 markers across 272 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -201,3 +201,11 @@ supplies `useV2ReviewDraft` values, validated cropped-logo upload, hub USDC bala
 `feeConfiguration`. `reviewForm` reuses the existing `rawUsdc` contract, and the deposit
 card displays the supplied `previewSeed` result. The protocol rate is explicitly estimated
 when its source is fallback. RB2 owns the connected seam and launch-entry analytics.
+
+
+### Review assembly (POO-2195, RB2)
+
+PP-MGR-CMP-077 connects the existing `useV2ReviewDraft`, read-only `useV2LaunchStatus`,
+and `startFundLaunch` seams. It never reconstructs launch transactions or writes a journal.
+The mock branch does not mount Privy hooks or substitute fixtures into real Review.
+`getLaunchSteps` remains the source of the grouped signature preview.

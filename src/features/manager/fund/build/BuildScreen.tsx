@@ -132,6 +132,8 @@ export interface BuildScreenProps {
    * (Save & exit, the stepper's Mandate pill) pass it too (HU3). Cleared on unmount.
    */
   leaveGuardRef?: MutableRefObject<LeaveGuard | null>;
+  /** Opens Review after readiness and the selected-panel leave guard pass. */
+  onReview?: () => void;
 }
 
 /** The twelve Next: Review notices, through literal keys so the i18n usage scan sees each one. */
@@ -165,6 +167,7 @@ export function BuildScreen({
   onEditMandate,
   initialSelectedId = null,
   leaveGuardRef,
+  onReview,
 }: BuildScreenProps) {
   const t = useTranslations("manager");
   const reviewCopy = useReviewCopy();
@@ -335,12 +338,16 @@ export function BuildScreen({
     guardLeave(() => {
       const { plan: current, violations: broken, layout: drawn } = latest.current;
       const verdict = reviewVerdict(current, broken);
+      if (verdict.refusal === "review_unavailable" && onReview) {
+        onReview();
+        return;
+      }
       refuse(verdict.refusal);
       if (verdict.refusal === "review_unavailable") return;
       const rect = targetRect(drawn, verdict.target);
       if (rect) viewportRef.current?.revealRect(rect);
     });
-  }, [guardLeave, refuse]);
+  }, [guardLeave, refuse, onReview]);
 
   const handleBack = useCallback(() => guardLeave(onBackToMandate), [guardLeave, onBackToMandate]);
 
