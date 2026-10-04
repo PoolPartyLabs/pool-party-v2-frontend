@@ -17,6 +17,7 @@ import { arbitrum } from "viem/chains";
 import { rpcUrl } from "../config";
 import { expect, test as walletTest } from "../fixtures";
 import { connectAndSignIn } from "./connect";
+import { reserveBroadcast } from "./v2Journal";
 
 export const BURNER = "0x3A3ea619C0f37a7D2fF07FF442d863f316A99A7a";
 export const FUNDS = [
@@ -49,6 +50,7 @@ export const client = createPublicClient({
 });
 const statePath = "e2e/.auth/v2-run.json";
 export interface RunState {
+  pendingBroadcast?: string;
   fund?: Hex;
   sharesBefore?: string;
   sharesAfter?: string;
@@ -189,6 +191,7 @@ export const test = walletTest.extend<{ safeWallet: undefined }>({
           if (balance.usdc < budget) throw new Error("Insufficient burner USDC");
           run.initialUsdc ??= balance.usdc.toString();
           run.initialEth ??= balance.eth.toString();
+          reserveBroadcast(run, action);
           run.spent = (BigInt(run.spent) + budget).toString();
           save(run);
           let hash: Hex;
@@ -205,6 +208,7 @@ export const test = walletTest.extend<{ safeWallet: undefined }>({
             explorer: `${EXPLORERS[42161]}/tx/${hash}`,
             budget: budget.toString(),
           });
+          delete run.pendingBroadcast;
           save(run);
           void (async () => {
             const link = page.locator(`a[href="${EXPLORERS[42161]}/tx/${hash}"]`).first();

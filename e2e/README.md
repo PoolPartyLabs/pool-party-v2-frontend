@@ -1,6 +1,6 @@
 # V2 deployed mainnet checks (PP-E2E-V2-001)
 
-Run `E2E_BASE_URL=https://v2.dev.pool-party.xyz E2E_CHAIN=arbitrum pnpm exec playwright test --grep '@v2' --workers=1`.
+Run read-only checks with `E2E_BASE_URL=https://v2.dev.pool-party.xyz E2E_CHAIN=arbitrum pnpm exec playwright test --grep '@v2-read' --workers=1`.
 Read specs reuse the EIP-6963 wallet and SIWE helper. Fund #2 discovery depends on deployed POO-2181.
 
 Writes require the funded dev burner in `E2E_PRIVATE_KEY` **in the shell only** and explicit
@@ -22,6 +22,9 @@ filter only `POOL_PARTY_DEV_BURNER_WALLET` into shell `E2E_PRIVATE_KEY`, never s
 Serial, one worker, no retries. `e2e/.auth/v2-run.json` is an ignored public-transaction journal:
 it prevents duplicate deposits across reruns and preserves broadcast hashes even if UI assertions fail.
 Do not delete it after a broadcast or retry a transaction on a receipt timeout. Review the wallet first.
+An unresolved `pendingBroadcast` is persisted before the wallet request and blocks every later write,
+including when the RPC loses the response after accepting a transaction. Reconcile the nonce and receipt
+manually before clearing that marker; never clear it merely to rerun a spec.
 Receipt verification uses both viem and `cast`; RPC error details are suppressed. Keys stay Node-side.
 Screenshot/receipt attachments live under `test-results/`; retain failure artifacts, remove passing
 reports after copying non-secret evidence. No local server is needed in deployed-dev mode.
