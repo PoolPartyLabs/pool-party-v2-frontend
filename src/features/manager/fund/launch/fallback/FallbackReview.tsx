@@ -10,10 +10,12 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { formatUnits, parseUnits } from "viem";
 import { Button } from "@/components/ui/Button";
+import { Link } from "@/i18n/navigation";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { isMockMode } from "@/lib/services";
 import { type FundLaunchDraft, startFundLaunch, useV2ReviewDraft } from "../index";
 import { validateLogo } from "../review";
+import { useV2LaunchStatus } from "../useV2LaunchStatus";
 import { type AllocationEdits, fallbackAllocations } from "./allocation";
 import {
   applyFallbackExecutionAtLaunch,
@@ -35,6 +37,7 @@ export function FallbackReview({ draftId }: { draftId: string }) {
 function RealFallbackReview({ draftId }: { draftId: string }) {
   // PP-INTEGRATION-POINT: POO-2177 owns Review persistence, seed preview, validation and staged upload.
   const binding = useV2ReviewDraft(draftId);
+  const status = useV2LaunchStatus(draftId);
   const catalog = binding.catalog;
   const translate = useTranslations("manager");
   const [edits, setEdits] = useState<FallbackEdits>({});
@@ -52,6 +55,19 @@ function RealFallbackReview({ draftId }: { draftId: string }) {
     return bps >= BigInt(minimum) && bps <= BigInt(maximum);
   };
   const feeInputInvalid = Object.entries(feeText).some(([field, value]) => !feeValid(field, value));
+  if (status)
+    return (
+      <section className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
+        <h1>{translate("fallbackReview.title")}</h1>
+        <Link href={`/manager/fund-launch/${encodeURIComponent(status.journeyId)}`}>
+          {translate(
+            status.status === "complete"
+              ? "fundBuilder.review.viewLaunch"
+              : "fundBuilder.review.resumeLaunch",
+          )}
+        </Link>
+      </section>
+    );
   if (!binding.draft) return <p role="status">{translate("fallbackReview.draftUnavailable")}</p>;
   const draft = { ...binding.draft, review: binding.review } as FundLaunchDraft;
   const base = catalog.depositTokenFor("arbitrum");

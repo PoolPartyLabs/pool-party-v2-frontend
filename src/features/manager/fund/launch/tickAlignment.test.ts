@@ -24,4 +24,15 @@ describe("catalog tick alignment POO-2181", () => {
       "BUILD_TICK_ALIGNMENT",
     );
   });
+  it("requires Full to carry the exact finite aligned extremes", () => {
+    expect(() =>
+      plan.validateTickAlignment({ tickLower: -887270, tickUpper: 887270, fullRange: true }, 10),
+    ).not.toThrow();
+    expect(() =>
+      plan.validateTickAlignment({ tickLower: -100, tickUpper: 100, fullRange: true }, 10),
+    ).toThrow("BUILD_TICK_ALIGNMENT");
+    expect(() => plan.validateTickAlignment({ fullRange: true }, 10)).toThrow(
+      "BUILD_TICK_ALIGNMENT",
+    );
+  });
 });

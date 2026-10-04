@@ -11,6 +11,7 @@ const state = vi.hoisted(() => ({
   rootShare: 100,
   leafShare: 0,
   duplicate: false,
+  status: null as null | { journeyId: string; status: "paused" | "complete" },
 }));
 const start = vi.hoisted(() => vi.fn(async (_draft: unknown) => ({ journeyId: "journey" })));
 const setField = vi.hoisted(() => vi.fn());
@@ -91,6 +92,12 @@ vi.mock("../index", () => ({
     uploadLogo,
   }),
 }));
+vi.mock("../useV2LaunchStatus", () => ({ useV2LaunchStatus: () => state.status }));
+vi.mock("@/i18n/navigation", () => ({
+  Link: ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <a href={`/en${href}`}>{children}</a>
+  ),
+}));
 vi.mock("../../useV2MandateCatalog", () => ({
   useV2MandateCatalog: () => {
     throw new Error("Fallback must reuse the Review binding catalog, not load a second copy");
@@ -107,6 +114,7 @@ describe("fallback Review [R1, R5]", () => {
       rootShare: 100,
       leafShare: 0,
       duplicate: false,
+      status: null,
     });
     vi.clearAllMocks();
   });
@@ -124,6 +132,18 @@ describe("fallback Review [R1, R5]", () => {
         hub: { chains: [{ steps: [{ config: { assetKey: `arbitrum:0x${"12".repeat(20)}` } }] }] },
       },
     });
+  });
+  it.each([
+    "paused",
+    "complete",
+  ] as const)("opens the existing %s journey instead of editing or relaunching", (status) => {
+    state.status = { journeyId: "manager:draft", status };
+    renderWithProviders(<FallbackReview draftId="draft" />);
+    expect(
+      screen.getByRole("link", { name: status === "complete" ? "View launch" : "Resume launch" }),
+    ).toHaveAttribute("href", "/en/manager/fund-launch/manager%3Adraft");
+    expect(screen.queryByRole("button", { name: /Launch ·/ })).not.toBeInTheDocument();
+    expect(start).not.toHaveBeenCalled();
   });
   it("shows the duplicate reserve blocker and disables Launch", () => {
     state.duplicate = true;

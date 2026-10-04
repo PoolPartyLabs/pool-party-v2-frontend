@@ -14,7 +14,7 @@ import {
   waitFor,
   within,
 } from "../../../../../tests/utils/renderWithProviders";
-import { createEmptyDraft, depositTokenRefFor, withProtocols } from "../mandateDraft";
+import { createEmptyDraft, depositTokenRefFor, tokenKey, withProtocols } from "../mandateDraft";
 import { buildRealCatalog, toV2MandateSelection } from "../v2Mandate";
 import type { FundLaunchDraft } from "./contracts";
 import type { FrozenLaunch } from "./driver";
@@ -97,6 +97,15 @@ const token: CatalogToken = {
   priceProvenance: "fixed-1:1",
   priceUnavailableReason: null,
 };
+const permitted = {
+  network: "arbitrum" as const,
+  address: core,
+  symbol: "WETH",
+  name: "Wrapped Ether",
+  logoUrl: null,
+  locked: false,
+};
+const additionalToken: CatalogToken = { ...token, address: core, symbol: "WETH" };
 const reserve: CatalogReserve = {
   protocolVersion: "v2",
   chainId: "42161",
@@ -127,6 +136,12 @@ const draft: FundLaunchDraft = {
     },
     ["aave-v3"],
   ),
+  tokens: [usdc, permitted],
+  caps: {
+    networks: {},
+    protocols: {},
+    tokens: { [tokenKey(permitted)]: { noCap: true, pct: 100 } },
+  },
   review: {
     name: "Income fund demo",
     description: "",
@@ -163,7 +178,7 @@ const frozen: FrozenLaunch = {
   plan: draft.plan,
   review: draft.review,
   request: {
-    ...toV2MandateSelection(draft, buildRealCatalog([token], [reserve])),
+    ...toV2MandateSelection(draft, buildRealCatalog([token, additionalToken], [reserve])),
     manager: lowerManager,
     performanceFeeBps: 2000,
     managementFeeBps: 0,
@@ -232,7 +247,10 @@ describe("real launch navigation component regressions (POO-2191)", () => {
     localStorage.clear();
     vi.resetAllMocks();
     mocks.manager = checksumManager;
-    mocks.tokens.mockImplementation(async () => ({ ok: true, data: { tokens: [token] } }));
+    mocks.tokens.mockImplementation(async () => ({
+      ok: true,
+      data: { tokens: [token, additionalToken] },
+    }));
     mocks.reserves.mockResolvedValue({ ok: true, data: { reserves: [reserve] } });
     mocks.build.mockResolvedValue({ complete: true });
     mocks.send.mockResolvedValue(hash);

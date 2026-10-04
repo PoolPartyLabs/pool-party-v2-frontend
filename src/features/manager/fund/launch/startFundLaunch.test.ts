@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createEmptyDraft } from "../mandateDraft";
+import { createEmptyDraft, tokenKey } from "../mandateDraft";
 import type { FundLaunchDraft } from "./contracts";
 import { createJournal, loadJournal, saveJournal } from "./journal";
 import { readJourney } from "./journey";
@@ -25,15 +25,33 @@ vi.mock("@/lib/api/v2/actions", () => ({
 }));
 vi.mock("../v2Mandate", () => ({
   buildRealCatalog: vi.fn(),
-  toV2MandateSelection: () => ({ chains: [], aaveV3Reserves: [], spokeCapPercent: null }),
+  toV2MandateSelection: () => ({
+    chains: [{ chainId: 42161, tokens: [`0x${"34".repeat(20)}`], uniswapV4PoolIds: [] }],
+    aaveV3Reserves: [],
+    spokeCapPercent: null,
+  }),
 }));
 vi.mock("./lock", () => ({
   withLaunchLock: async (_key: string, work: () => Promise<unknown>) => work(),
 }));
 const manager = `0x${"34".repeat(20)}`;
+const permitted = {
+  network: "arbitrum" as const,
+  address: manager,
+  symbol: "WETH",
+  name: "Wrapped Ether",
+  logoUrl: null,
+  locked: false,
+};
 const draft: FundLaunchDraft = {
   ...createEmptyDraft("2026-10-04", "entry"),
   networks: ["arbitrum"],
+  tokens: [permitted],
+  caps: {
+    networks: {},
+    protocols: {},
+    tokens: { [tokenKey(permitted)]: { noCap: true, pct: 100 } },
+  },
   review: {
     name: "Income fund demo",
     description: "",
@@ -110,5 +128,33 @@ describe("Review launch entry point [R3, R4, V5]", () => {
     await expect(startFundLaunch(draft)).rejects.toThrow("INVALID_DEPOSIT");
     expect(loadJournal(localStorage, draft.id, manager)).toBeNull();
     expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+  it("rejects a Limits bypass before balance, catalog or persistence", async () => {
+    await expect(startFundLaunch({ ...draft, tokens: [] })).rejects.toThrow(
+      "LIMITS_TOKEN_ALLOWANCE_REQUIRED",
+    );
+    expect(mocks.balance).not.toHaveBeenCalled();
+    expect(mocks.catalog).not.toHaveBeenCalled();
+    expect(loadJournal(localStorage, draft.id, manager)).toBeNull();
+  });
+  it("recovers an orphan checkpoint from the frozen plan despite an edited invalid draft", async () => {
+    const journal = createJournal(
+      draft.id,
+      manager,
+      { plan: draft.plan, review: draft.review, request: { manager } },
+      deriveLaunchSteps(draft.plan, {}, true, false),
+    );
+    saveJournal(localStorage, journal);
+    const result = await startFundLaunch({
+      ...draft,
+      tokens: [],
+      plan: { ...draft.plan, hub: { chains: [] } },
+      review: { ...draft.review, name: "edited" },
+    });
+    expect(readJourney(result.journeyId)?.draft.plan).toEqual(draft.plan);
+    expect(readJourney(result.journeyId)?.draft.review).toEqual(draft.review);
+    expect(loadJournal(localStorage, draft.id, manager)).toEqual(journal);
+    expect(mocks.balance).not.toHaveBeenCalled();
+    expect(mocks.catalog).not.toHaveBeenCalled();
   });
 });

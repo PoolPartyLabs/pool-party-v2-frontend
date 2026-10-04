@@ -6,7 +6,7 @@
 import type { MandateCatalog } from "../../mandateCatalog";
 import type { MandateDraft } from "../../mandateDraft";
 import type { FundLaunchDraft } from "../contracts";
-import { reviewSchema, validateReview } from "../review";
+import { hasLaunchTokenAllowance, reviewSchema, validateReview } from "../review";
 import { fallbackLaunchPreview } from "./execution";
 
 export function draftReadiness(
@@ -15,7 +15,16 @@ export function draftReadiness(
   balance: bigint | null,
 ) {
   const blockers: ("catalog" | "balance" | "review" | "execution")[] = [];
-  if (catalog.loading || catalog.error || !catalog.validateDraft?.(draft)) blockers.push("catalog");
+  if (
+    catalog.loading ||
+    catalog.error ||
+    !catalog.validateDraft?.(draft) ||
+    !hasLaunchTokenAllowance(draft) ||
+    draft.networks.some(
+      (network) => draft.tokens.filter((token) => token.network === network).length > 2,
+    )
+  )
+    blockers.push("catalog");
   if (balance === null) blockers.push("balance");
   try {
     if (balance === null) reviewSchema.parse(draft.review);

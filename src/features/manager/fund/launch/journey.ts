@@ -7,7 +7,7 @@ import { z } from "zod";
 import { getChainById } from "@/lib/chains";
 import type { FundLaunchDraft, LaunchJourney, LaunchStepPreview } from "./contracts";
 import { journalKey, loadJournal } from "./journal";
-import { deriveLaunchSteps } from "./plan";
+import { deriveLaunchSteps, validateTickAlignment } from "./plan";
 
 export { explorerAddressUrl, explorerTxUrl } from "@/lib/chain/explorer";
 export function getLaunchSteps(draft: FundLaunchDraft): LaunchStepPreview[] {
@@ -16,12 +16,23 @@ export function getLaunchSteps(draft: FundLaunchDraft): LaunchStepPreview[] {
     draft.plan.spokes.some((spoke) => spoke.chains.some((chain) => chain.sharePct <= 0))
   )
     throw new Error("INVALID_ALLOCATION");
-  return deriveLaunchSteps(
+  const steps = deriveLaunchSteps(
     draft.plan,
     draft.launchExecution ?? {},
     true,
     draft.networks.includes("robinhood"),
-  ).map((step) => ({
+  );
+  for (const step of steps.filter(
+    (entry) => entry.protocol === "uniswap-v4" && entry.kind === "open",
+  )) {
+    const pool = draft.pools.find(
+      (entry) =>
+        entry.network === (step.chain === 42161 ? "arbitrum" : "robinhood") &&
+        entry.poolId?.toLowerCase() === step.config?.poolId?.toLowerCase(),
+    );
+    if (pool?.poolKey) validateTickAlignment(step.config ?? {}, pool.poolKey.tickSpacing);
+  }
+  return steps.map((step) => ({
     id: step.id,
     chainId: step.chain,
     kind: step.kind,
@@ -73,14 +84,22 @@ export function persistJourney(draft: FundLaunchDraft, manager: string): LaunchJ
   const journeyId = `${manager.toLowerCase()}:${draft.id}`;
   const previous = readJourney(journeyId);
   if (previous) return previous;
-  getLaunchSteps(draft);
   const journal = loadJournal(localStorage, draft.id, manager);
+  if (!journal) getLaunchSteps(draft);
+  const frozen = journal?.frozen as
+    | { plan?: FundLaunchDraft["plan"]; review?: FundLaunchDraft["review"] }
+    | undefined;
+  const snapshot = {
+    ...draft,
+    ...(frozen?.plan ? { plan: frozen.plan } : {}),
+    ...(frozen?.review ? { review: frozen.review } : {}),
+  };
   const journey: LaunchJourney = {
     version: 1,
     journeyId,
     draftId: draft.id,
     manager: manager.toLowerCase(),
-    draft: structuredClone(draft),
+    draft: structuredClone(snapshot),
     createdAt: new Date().toISOString(),
     ...(journal ? { journal } : {}),
   };

@@ -11,6 +11,7 @@ import {
   getCatalogReservesAction,
   getCatalogTokensAction,
 } from "@/lib/api/v2/actions";
+import { createRequestSchema } from "@/lib/api/v2/launchSchemas";
 import { getChainById, getUsdcAddress } from "@/lib/chains";
 import { isFeatureEnabled } from "@/lib/features";
 import { isMockMode } from "@/lib/services";
@@ -20,7 +21,7 @@ import { createJournal, journalKey, loadJournal, saveJournal } from "./journal";
 import { getLaunchSteps, journeyPath, persistJourney } from "./journey";
 import { withLaunchLock } from "./lock";
 import { deriveLaunchSteps, validateTickAlignment } from "./plan";
-import { rawUsdc, validateReview } from "./review";
+import { hasLaunchTokenAllowance, rawUsdc, validateReview } from "./review";
 
 export async function startFundLaunch(draft: FundLaunchDraft): Promise<{ journeyId: string }> {
   if (isMockMode || !isFeatureEnabled("fundContracts")) throw new Error("V2_UNAVAILABLE");
@@ -29,6 +30,7 @@ export async function startFundLaunch(draft: FundLaunchDraft): Promise<{ journey
   const journey = await withLaunchLock(journalKey(draft.id, manager), async () => {
     const existing = loadJournal(localStorage, draft.id, manager);
     if (!existing) {
+      if (!hasLaunchTokenAllowance(draft)) throw new Error("LIMITS_TOKEN_ALLOWANCE_REQUIRED");
       getLaunchSteps(draft);
       const steps = deriveLaunchSteps(
         draft.plan,
@@ -63,21 +65,22 @@ export async function startFundLaunch(draft: FundLaunchDraft): Promise<{ journey
         draft,
         buildRealCatalog([...hub.data.tokens, ...spoke.data.tokens], aave.data.reserves),
       );
+      const request = createRequestSchema.parse({
+        ...selection,
+        manager,
+        performanceFeeBps: review.performanceFeeBps,
+        managementFeeBps: review.managementFeeBps,
+        payoutFeeBps: review.payoutFeeBps,
+        minFirstDeposit: rawUsdc(review.minimum).toString(),
+        seedAmount: rawUsdc(review.seed).toString(),
+      });
       const journal = createJournal(
         draft.id,
         manager,
         {
           plan: draft.plan,
           review,
-          request: {
-            ...selection,
-            manager,
-            performanceFeeBps: review.performanceFeeBps,
-            managementFeeBps: review.managementFeeBps,
-            payoutFeeBps: review.payoutFeeBps,
-            minFirstDeposit: rawUsdc(review.minimum).toString(),
-            seedAmount: rawUsdc(review.seed).toString(),
-          },
+          request,
         },
         steps,
       );

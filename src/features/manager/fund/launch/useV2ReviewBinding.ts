@@ -6,6 +6,7 @@
 "use client";
 import { useCallback, useState } from "react";
 import { formatUnits } from "viem";
+import { createRequestSchema } from "@/lib/api/v2/launchSchemas";
 import { type MediaUploadFn, useUploadMedia } from "@/lib/media/useUploadMedia";
 import type { MandateCatalog } from "../mandateCatalog";
 import type { MandateDraft } from "../mandateDraft";
@@ -14,6 +15,7 @@ import type { FrozenLaunch } from "./driver";
 import type { CanvasPlan } from "./plan";
 import {
   type FundReview,
+  hasLaunchTokenAllowance,
   previewSeed,
   rawUsdc,
   reviewSchema,
@@ -82,11 +84,12 @@ export function useV2ReviewBinding({
     setReview((current) => ({ ...current, [field]: value }));
   const prepare = (manager: string): FrozenLaunch => {
     if (balance === null || uploading) throw new Error("INVALID_DEPOSIT");
+    if (!hasLaunchTokenAllowance(draft)) throw new Error("LIMITS_TOKEN_ALLOWANCE_REQUIRED");
     const validated = validateReview(review, balance);
     return {
       plan: draft.plan,
       review: validated,
-      request: {
+      request: createRequestSchema.parse({
         ...toV2MandateSelection(draft, catalog),
         manager,
         performanceFeeBps: validated.performanceFeeBps,
@@ -94,7 +97,7 @@ export function useV2ReviewBinding({
         payoutFeeBps: validated.payoutFeeBps,
         minFirstDeposit: rawUsdc(validated.minimum).toString(),
         seedAmount: rawUsdc(validated.seed).toString(),
-      },
+      }),
     };
   };
   return {

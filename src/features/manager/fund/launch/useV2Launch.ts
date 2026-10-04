@@ -6,11 +6,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import { getCatalogReservesAction, getCatalogTokensAction } from "@/lib/api/v2/actions";
+import { createRequestSchema } from "@/lib/api/v2/launchSchemas";
 import { buildRealCatalog, toV2MandateSelection } from "../v2Mandate";
 import type { LaunchJourney } from "./contracts";
 import type { FrozenLaunch } from "./driver";
 import { explorerTxUrl, readJourney } from "./journey";
-import { rawUsdc } from "./review";
+import { hasLaunchTokenAllowance, rawUsdc } from "./review";
 import { useV2LaunchBinding } from "./useV2LaunchBinding";
 import { useV2LaunchWallet } from "./useV2LaunchWallet";
 
@@ -43,6 +44,8 @@ export function useV2Launch(journeyId: string) {
         .then(([hub, spoke, reserves]) => {
           if (!active) return;
           if (!hub.ok || !spoke.ok || !reserves.ok) throw new Error("CATALOG_UNAVAILABLE");
+          if (!hasLaunchTokenAllowance(found.draft))
+            throw new Error("LIMITS_TOKEN_ALLOWANCE_REQUIRED");
           const request = toV2MandateSelection(
             found.draft,
             buildRealCatalog([...hub.data.tokens, ...spoke.data.tokens], reserves.data.reserves),
@@ -50,7 +53,7 @@ export function useV2Launch(journeyId: string) {
           setFrozen({
             plan: found.draft.plan,
             review: found.draft.review,
-            request: {
+            request: createRequestSchema.parse({
               ...request,
               manager: found.manager,
               performanceFeeBps: found.draft.review.performanceFeeBps,
@@ -58,7 +61,7 @@ export function useV2Launch(journeyId: string) {
               payoutFeeBps: found.draft.review.payoutFeeBps,
               minFirstDeposit: rawUsdc(found.draft.review.minimum).toString(),
               seedAmount: rawUsdc(found.draft.review.seed).toString(),
-            },
+            }),
           });
         })
         .catch(() => {

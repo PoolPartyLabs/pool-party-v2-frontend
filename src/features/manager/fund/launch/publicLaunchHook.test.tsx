@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createEmptyDraft } from "../mandateDraft";
+import { createEmptyDraft, tokenKey } from "../mandateDraft";
 import type { FundLaunchDraft } from "./contracts";
 import { createJournal, saveJournal } from "./journal";
 import { persistJourney } from "./journey";
@@ -22,11 +22,29 @@ vi.mock("@/lib/api/v2/actions", () => ({
 }));
 vi.mock("../v2Mandate", () => ({
   buildRealCatalog: vi.fn(),
-  toV2MandateSelection: () => ({ chains: [], aaveV3Reserves: [], spokeCapPercent: null }),
+  toV2MandateSelection: () => ({
+    chains: [{ chainId: 42161, tokens: [`0x${"34".repeat(20)}`], uniswapV4PoolIds: [] }],
+    aaveV3Reserves: [],
+    spokeCapPercent: null,
+  }),
 }));
 const manager = `0x${"34".repeat(20)}`;
+const permitted = {
+  network: "arbitrum" as const,
+  address: manager,
+  symbol: "WETH",
+  name: "Wrapped Ether",
+  logoUrl: null,
+  locked: false,
+};
 const draft: FundLaunchDraft = {
   ...createEmptyDraft("2026-10-04", "hook"),
+  tokens: [permitted],
+  caps: {
+    networks: {},
+    protocols: {},
+    tokens: { [tokenKey(permitted)]: { noCap: true, pct: 100 } },
+  },
   review: {
     name: "Income fund demo",
     description: "",
@@ -125,6 +143,13 @@ describe("public launch hook seam [R3, R4, R6]", () => {
   it("reports failed catalog hydration without requesting signatures", async () => {
     mocks.catalog.mockResolvedValue({ ok: false });
     const journey = persistJourney(draft, manager);
+    const { result } = renderHook(() => useV2Launch(journey.journeyId));
+    await waitFor(() => expect(result.current.outcome).toBe("failed"));
+    await result.current.sign();
+    expect(mocks.binding.mock.results.at(-1)?.value.sign).not.toHaveBeenCalled();
+  });
+  it("rejects a legacy unfrozen journey that bypasses Limits", async () => {
+    const journey = persistJourney({ ...draft, tokens: [] }, manager);
     const { result } = renderHook(() => useV2Launch(journey.journeyId));
     await waitFor(() => expect(result.current.outcome).toBe("failed"));
     await result.current.sign();
