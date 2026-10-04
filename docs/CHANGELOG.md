@@ -1,5 +1,16 @@
 # Documentation CHANGELOG
 
+## 2026-10-04: Mandate Protocols Figma correction (POO-2167 v4)
+
+- Remove the extra real-mode helper, Aave APY and duplicate network checkboxes. The designed
+  protocol rows synchronize supported per-network selections in both data modes.
+- Show GMX and Pendle as disabled Coming soon options alongside Uniswap v3 positions, with
+  committed protocol logos including Aave. Future protocols are excluded from saved drafts
+  and executable selections.
+- Record rules, regression coverage, brand-asset sources and pending Linear synchronization in
+  [the correction record](MANDATE_PROTOCOLS_FIGMA_2026-10-04.md). Update the existing artifact
+  registry rows, Manager README, compliance verification and all 11 locales.
+
 ## 2026-10-04: Arbitrum Open House Singapore submission README (POO-2141)
 
 - Put the current event, Pool Party logo and supplied banner first. Replace the Mandate-only
