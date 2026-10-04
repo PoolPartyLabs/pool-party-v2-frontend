@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-039 (POO-2177)
  * @name v2LaunchApi
- * @implements-rules-version v1
+ * @implements-rules-version v3 (POO-2192)
  * Server-only writes, independent of the shared read client.
  */
 import "server-only";

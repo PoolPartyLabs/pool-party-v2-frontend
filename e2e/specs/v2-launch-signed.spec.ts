@@ -1,7 +1,7 @@
 /**
  * @id PP-E2E-V2-003
  * @name opt-in v2 launch E2E
- * @implements-rules-version v1
+ * @implements-rules-version v3 (POO-2192)
  */
 import { chmod, mkdir, open, readFile, writeFile } from "node:fs/promises";
 import type { Page } from "@playwright/test";

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-081 (POO-2177)
  * @name FundLaunchJourney
- * @implements-rules-version v1
+ * @implements-rules-version v3 (POO-2192)
  */
 "use client";
 import { useTranslations } from "next-intl";

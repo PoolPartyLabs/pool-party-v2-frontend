@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-019 (POO-2177)
  * @name useV2LaunchBinding
- * @implements-rules-version v2 (POO-2181)
+ * @implements-rules-version v3 (POO-2192)
  * @analytics-events builder_launch_signature, builder_launch_completed, builder_launch_failed
  */
 "use client";

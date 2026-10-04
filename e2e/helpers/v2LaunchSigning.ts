@@ -1,7 +1,7 @@
 /**
  * @id PP-E2E-V2-003
  * @name v2 launch signing boundary
- * @implements-rules-version v1
+ * @implements-rules-version v3 (POO-2192)
  */
 import { z } from "zod";
 import { loadJournal } from "../../src/features/manager/fund/launch/journal";
