@@ -362,7 +362,12 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     );
     const storage = { getItem: vi.fn(() => null), setItem: vi.fn() };
     journal.steps = [{ ...step, id: "v4:open", kind: "open" }, aave];
-    journal.checkpoints["v4:open"] = { status: "confirmed", txHash: "confirmed-v4" };
+    journal.checkpoints["v4:open"] = {
+      stepId: "v4:open",
+      chain: 42161,
+      status: "confirmed",
+      txHash: "confirmed-v4",
+    };
     mocks.balances.mockResolvedValue({
       ok: true,
       data: {
@@ -390,6 +395,8 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     );
     expect(journal.checkpoints[aave.id]?.status).toBe("waiting");
     expect(journal.checkpoints["v4:open"]).toEqual({
+      stepId: "v4:open",
+      chain: 42161,
       status: "confirmed",
       txHash: "confirmed-v4",
     });
