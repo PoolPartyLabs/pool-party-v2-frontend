@@ -366,16 +366,16 @@ describe("real launch navigation component regressions (POO-2191)", () => {
       expect(mocks.receipt).toHaveBeenCalledWith(42161, hash);
       expect(screen.getByText("Waiting for verification")).toBeInTheDocument();
     });
+    expect(screen.getByRole("link", { name: hash })).toHaveAttribute(
+      "href",
+      `https://arbiscan.io/tx/${hash}`,
+    );
     await user.click(screen.getByRole("button", { name: "Pause journey" }));
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Resume journey" })).toBeEnabled(),
     );
     expectNoFinancialIO();
     expect(mocks.reconcile).not.toHaveBeenCalled();
-    expect(screen.getByRole("link", { name: hash })).toHaveAttribute(
-      "href",
-      `https://arbiscan.io/tx/${hash}`,
-    );
     expect(loadJournal(localStorage, draft.id, checksumManager)?.checkpoints.create).toMatchObject({
       status: "waiting",
       txHash: hash,

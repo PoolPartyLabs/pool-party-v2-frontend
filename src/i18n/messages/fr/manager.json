@@ -82,6 +82,7 @@
     "duplicateAaveReserve": "Un seul bloc Aave Supply par réserve est autorisé sur chaque réseau. Supprimez le doublon avant le lancement.",
     "validation": "Vérifiez votre identité, les limites des frais, le dépôt minimum et votre solde USDC.",
     "partialFailure": "Certaines étapes ont réussi. Réessayez cette étape sans créer un autre fonds.",
+    "submissionReconciliation": "Le wallet a peut-être soumis cette transaction. La récupération n’a pas pu vérifier une correspondance unique. Aucune transaction de remplacement ne sera envoyée ; reprenez pour vérifier à nouveau.",
     "realOnly": "Le lancement nécessite le mode réel. Aucune signature n’est demandée avec des données simulées.",
     "walletOrJournal": "Connectez le wallet original du gestionnaire. Si un checkpoint enregistré est illisible, ne recommencez pas la création.",
     "approve": "Approuver USDC",

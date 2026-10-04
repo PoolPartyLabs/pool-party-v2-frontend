@@ -277,6 +277,10 @@ async function submissionBoundary(
       if (
         mined?.status === "success" &&
         mined.transactionHash.toLowerCase() === previous.txHash.toLowerCase() &&
+        mined.from.toLowerCase() === journal.manager &&
+        (dependency.kind !== "allocate" ||
+          (mined.to?.toLowerCase() === coreOf(journal).toLowerCase() &&
+            decodeLaunchReceipt(mined).allocated === budget(dependency, journal).toString())) &&
         (boundary === null || mined.blockNumber > boundary)
       )
         boundary = mined.blockNumber;
@@ -307,6 +311,25 @@ async function submissionIdentity(
   if (step.kind === "allocate" || step.kind === "bridge") {
     identity.vault = coreOf(journal);
     identity.amount = budget(step, journal).toString();
+    if (step.kind === "bridge" && !built) {
+      const provision = createData(journal);
+      const mandate = record(provision.mandate);
+      identity.tokenIn = addressSchema.parse(mandate.usdc);
+      identity.tokenOut = z
+        .array(z.object({ chainId: z.string(), spokeToken: addressSchema }).passthrough())
+        .parse(mandate.spokes)
+        .find((spoke) => spoke.chainId === "4663")?.spokeToken;
+      identity.adapter = z
+        .array(
+          z
+            .object({ chainId: z.string(), spokeChainId: z.string(), adapter: addressSchema })
+            .passthrough(),
+        )
+        .parse(mandate.bridgeAdapters)
+        .find((adapter) => adapter.chainId === "42161" && adapter.spokeChainId === "4663")?.adapter;
+      if (!identity.tokenOut || !identity.adapter)
+        throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+    }
     return identity;
   }
   if (step.kind === "create" || step.kind === "approve" || step.kind === "spoke") {
@@ -340,6 +363,7 @@ async function submissionIdentity(
     return identity;
   }
   const fund = unwrap(await readLaunchFundAction(coreOf(journal)));
+  if (!built) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
   const chain = z
     .array(
       z
@@ -698,12 +722,38 @@ export function createLaunchDriver(
       }
       if (!hasUnresolvedSubmission(step, checkpoint)) return false;
       try {
-        const boundary = await submissionBoundary(step, checkpoint, journal, wallet);
+        const deadline = Date.now() + 30_000;
+        const read = async <Result>(work: () => Promise<Result>): Promise<Result> => {
+          const remaining = deadline - Date.now();
+          if (remaining <= 0) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          try {
+            return await Promise.race([
+              work(),
+              new Promise<never>((_, reject) => {
+                timer = setTimeout(
+                  () => reject(new Error("SUBMISSION_RECONCILIATION_REQUIRED")),
+                  remaining,
+                );
+              }),
+            ]);
+          } finally {
+            if (timer !== undefined) clearTimeout(timer);
+          }
+        };
+        const reader: LaunchWallet = {
+          ...wallet,
+          receipt: (chain, hash) => read(() => wallet.receipt(chain, hash)),
+        };
+        const boundary = await submissionBoundary(step, checkpoint, journal, reader);
         if (boundary === null) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
-        const identity = await submissionIdentity(step, checkpoint, journal, boundary);
+        const identity = await read(() => submissionIdentity(step, checkpoint, journal, boundary));
         const saved = (checkpoint.data?.submission as { transaction?: unknown } | undefined)
           ?.transaction;
         const built = saved ? launchTransactionSchema.parse(saved) : undefined;
+        if (!built && step.kind === "bridge") {
+          if (!wallet.transaction) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
+        }
         const provision = ["create", "approve"].includes(step.kind)
           ? record(checkpoint.data?.provision)
           : undefined;
@@ -712,14 +762,17 @@ export function createLaunchDriver(
           addressSchema.parse(record(provision?.predictedAddresses).coreVault);
         const found = new Map<string, { hash: string; data: Record<string, unknown> }>();
         for (const mode of ["api", "rpc"] as const) {
-          const candidates = await readLaunchSubmissionCandidatesAction(core, {
-            chainId: step.chain,
-            address: identity.vault,
-            fromBlock: boundary.toString(),
-            mode,
-            preCreation: ["create", "approve"].includes(step.kind),
-          });
+          const candidates = await read(() =>
+            readLaunchSubmissionCandidatesAction(core, {
+              chainId: step.chain,
+              address: identity.vault,
+              fromBlock: boundary.toString(),
+              mode,
+              preCreation: ["create", "approve"].includes(step.kind),
+            }),
+          );
           if (!candidates.ok) continue;
+          let unavailable = false;
           for (const hash of candidates.data.hashes) {
             if (
               Object.values(journal.checkpoints).some(
@@ -728,15 +781,51 @@ export function createLaunchDriver(
               )
             )
               continue;
-            const mined = await wallet.receipt(step.chain, hash);
-            if (!mined || mined.transactionHash.toLowerCase() !== hash.toLowerCase()) continue;
+            const mined = await reader.receipt(step.chain, hash);
+            if (!mined) {
+              unavailable = true;
+              continue;
+            }
+            if (mined.transactionHash.toLowerCase() !== hash.toLowerCase()) {
+              unavailable = true;
+              continue;
+            }
             const evidence = matchLaunchSubmission(step, mined, identity);
             if (!evidence) continue;
-            if (built) {
-              if (!wallet.transaction) continue;
-              const submitted = await wallet.transaction(step.chain, hash);
+            if (!built && step.kind === "bridge") {
+              const submitted = await read(() => wallet.transaction!(step.chain, hash));
+              if (!submitted) {
+                unavailable = true;
+                continue;
+              }
+              const sent = decodeFunctionData({
+                abi: parseAbi([
+                  "function sendToSpoke(uint256 spokeIndex, uint256 usdcAmount, uint256 bridgeRank, bytes bridgeData) returns (bytes32 transitId)",
+                ]),
+                data: submitted.input as Hex,
+              });
               if (
-                !submitted ||
+                submitted.from.toLowerCase() !== journal.manager ||
+                submitted.to?.toLowerCase() !== identity.vault.toLowerCase() ||
+                submitted.value !== BigInt(0) ||
+                sent.args[0] !== BigInt(0) ||
+                sent.args[1].toString() !== identity.amount ||
+                sent.args[2] !== BigInt(0) ||
+                sent.args[3] !== "0x"
+              )
+                continue;
+            }
+            if (built) {
+              if (!wallet.transaction) {
+                unavailable = true;
+                continue;
+              }
+              const submitted = await read(() => wallet.transaction!(step.chain, hash));
+              if (!submitted) {
+                unavailable = true;
+                continue;
+              }
+              if (
                 submitted.from.toLowerCase() !== journal.manager ||
                 submitted.to?.toLowerCase() !== built.to.toLowerCase() ||
                 submitted.input.toLowerCase() !== built.data.toLowerCase() ||
@@ -749,6 +838,7 @@ export function createLaunchDriver(
               data: { ...evidence, blockNumber: mined.blockNumber.toString() },
             });
           }
+          if (unavailable) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");
           if (found.size > 0) break;
         }
         if (found.size !== 1) throw new Error("SUBMISSION_RECONCILIATION_REQUIRED");

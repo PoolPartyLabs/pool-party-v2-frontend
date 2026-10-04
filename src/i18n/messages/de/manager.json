@@ -82,6 +82,7 @@
     "duplicateAaveReserve": "Pro Netzwerk ist nur ein Aave-Supply-Block je Reserve erlaubt. Entfernen Sie das Duplikat vor dem Start.",
     "validation": "Prüfen Sie Identität, Gebührenlimits, Mindesteinzahlung und USDC-Guthaben.",
     "partialFailure": "Einige Schritte waren erfolgreich. Der erneute Versuch setzt hier fort, ohne einen weiteren Fonds anzulegen.",
+    "submissionReconciliation": "Die Wallet hat diese Transaktion möglicherweise übermittelt. Die Wiederherstellung konnte keine eindeutige Übereinstimmung bestätigen. Es wird keine Ersatztransaktion gesendet; setzen Sie fort, um erneut zu prüfen.",
     "realOnly": "Der Start benötigt den Echtmodus. Mit Mock-Daten werden keine Signaturen angefordert.",
     "walletOrJournal": "Verbinden Sie das ursprüngliche Manager-Wallet. Bei unlesbaren Checkpoints starten Sie die Erstellung nicht erneut.",
     "approve": "USDC freigeben",

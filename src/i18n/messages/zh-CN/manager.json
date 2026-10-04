@@ -82,6 +82,7 @@
     "duplicateAaveReserve": "每个网络的同一储备资产仅允许一个 Aave Supply 区块。请在启动前删除重复区块。",
     "validation": "请检查身份信息、费率限制、最低存款和USDC余额。",
     "partialFailure": "部分步骤已成功。重试会恢复此步骤，不会创建另一个基金。",
+    "submissionReconciliation": "wallet 可能已提交此交易。恢复过程无法确认唯一匹配项。不会发送替代交易；请继续以再次检查。",
     "realOnly": "启动需要真实模式。模拟数据不会请求签名。",
     "walletOrJournal": "请连接原管理人钱包。如果无法读取已保存的检查点，请勿重新创建。",
     "approve": "授权USDC",

@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   build: vi.fn(),
   send: vi.fn(),
   receipt: vi.fn(),
+  reconcile: vi.fn(),
+  sign: vi.fn(),
 }));
 vi.mock("@/lib/features/useFeatureFlags", () => ({
   useFeatureFlags: () => ({ isEnabled: () => mocks.enabled }),
@@ -22,7 +24,7 @@ vi.mock("./driver", () => ({
     build: mocks.build,
     send: mocks.send,
     receipt: mocks.receipt,
-    reconcile: async () => false,
+    reconcile: mocks.reconcile,
     complete: async () => {},
   }),
 }));
@@ -82,6 +84,56 @@ const options = () => ({
   pollInterval: 1,
 });
 describe("headless launch binding [R3, R4, R6]", () => {
+  it.each([
+    "signing",
+    "failed",
+  ] as const)("automatically reconciles hydrated %s without a hash or wallet prompts", async (status) => {
+    const journal = createJournal("draft", manager, frozen, [
+      { id: "lost", kind: "open", chain: 42161, dependencies: [] },
+      { id: "next", kind: "open", chain: 42161, dependencies: ["lost"] },
+    ]);
+    journal.checkpoints.lost = { stepId: "lost", chain: 42161, status, submissionAttempted: true };
+    localStorage.setItem(journalKey("draft", manager), JSON.stringify(journal));
+    mocks.reconcile.mockResolvedValueOnce(true);
+    const { result } = renderHook(() =>
+      useV2LaunchBinding({
+        ...options(),
+        wallet: { send: mocks.send, sign: mocks.sign, receipt: mocks.receipt },
+      }),
+    );
+    await waitFor(() => expect(result.current.checkpoints.lost?.status).toBe("confirmed"));
+    expect(mocks.reconcile).toHaveBeenCalledTimes(1);
+    expect(mocks.build).not.toHaveBeenCalled();
+    expect(mocks.send).not.toHaveBeenCalled();
+    expect(mocks.sign).not.toHaveBeenCalled();
+    expect(result.current.checkpoints.next).toBeUndefined();
+  });
+  it("retries unmatched no-hash submissions read-only without rebuilding or prompting", async () => {
+    const journal = createJournal("draft", manager, frozen, [
+      { id: "lost", kind: "open", chain: 42161, dependencies: [] },
+    ]);
+    journal.checkpoints.lost = {
+      stepId: "lost",
+      chain: 42161,
+      status: "failed",
+      submissionAttempted: true,
+    };
+    localStorage.setItem(journalKey("draft", manager), JSON.stringify(journal));
+    const { result, unmount } = renderHook(() =>
+      useV2LaunchBinding({
+        ...options(),
+        pollInterval: 20,
+        wallet: { send: mocks.send, sign: mocks.sign, receipt: mocks.receipt },
+      }),
+    );
+    await waitFor(() => expect(mocks.reconcile.mock.calls.length).toBeGreaterThanOrEqual(2));
+    expect(result.current.checkpoints.lost?.error).toBe("SUBMISSION_RECONCILIATION_REQUIRED");
+    expect(result.current.error?.messageKey).toBe("fundLaunch.submissionReconciliation");
+    expect(mocks.build).not.toHaveBeenCalled();
+    expect(mocks.send).not.toHaveBeenCalled();
+    expect(mocks.sign).not.toHaveBeenCalled();
+    unmount();
+  });
   it("does not repeatedly persist a blocked waiting leaf whose retry timestamp has expired", async () => {
     const journal = createJournal("draft", manager, frozen, [
       { id: "bad", kind: "open", chain: 42161, dependencies: [] },
@@ -92,6 +144,7 @@ describe("headless launch binding [R3, R4, R6]", () => {
       chain: 42161,
       status: "failed",
       error: "V2_REQUEST_FAILED",
+      submissionAttempted: false,
     };
     journal.checkpoints.leaf = {
       stepId: "leaf",
@@ -186,6 +239,7 @@ describe("headless launch binding [R3, R4, R6]", () => {
     mocks.build.mockResolvedValue({ complete: true });
     mocks.send.mockResolvedValue(`0x${"ab".repeat(32)}`);
     mocks.receipt.mockResolvedValue({ status: "success" });
+    mocks.reconcile.mockReset().mockResolvedValue(false);
     window.dataLayer = [];
   });
   it("R9 emits completion once and failure with no identifying payload", async () => {

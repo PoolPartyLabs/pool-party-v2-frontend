@@ -60,7 +60,10 @@ export function matchLaunchSubmission(
           event.args.hubChainId === BigInt(42161) &&
           event.args.transit.destinationChainId === BigInt(4663) &&
           event.args.transit.kind === 0 &&
-          event.args.transit.amountSent.toString() === identity.amount;
+          event.args.transit.amountSent.toString() === identity.amount &&
+          (!identity.tokenIn || same(event.args.transit.inputToken, identity.tokenIn)) &&
+          (!identity.tokenOut || same(event.args.transit.outputToken, identity.tokenOut)) &&
+          (!identity.adapter || same(event.args.transit.bridgeAdapter, identity.adapter));
       if (step.kind === "swap" && event.eventName === "Swapped")
         matched =
           same(event.args.adapter, identity.adapter) &&
@@ -91,5 +94,5 @@ export function matchLaunchSubmission(
       if (matched) matches.push(decodeLaunchReceipt({ ...receipt, logs: [log] }));
     } catch {}
   }
-  return matches.length === 1 ? matches[0]! : null;
+  return matches.length === 1 ? (matches[0] ?? null) : null;
 }
