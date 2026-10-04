@@ -329,9 +329,8 @@ export const ANALYTICS_EVENTS = [
   // button is never disabled, so a refusal leaves no other trace. `abandoned` closes the phase's
   // arithmetic and `error` is a draft that could not be written from Build.
   //
-  // `builder_build_submitted` and `builder_build_completed` are NOT declared: Review does not exist
-  // yet, so there is nothing to submit to and no save that opens it (D20). They arrive with the
-  // Review handoff, `completed` on the write that opens Review, never on the click.
+  // POO-2195 adds submitted and completed above. Completion fires on the successful save
+  // opening Review, never on the click.
   //
   // POO-2187 (the configuration panel, POO-2171) RETIRED `builder_block_restored`: Remove now asks
   // in the panel first (handoff P10, decision DP11), so the Undo toast it counted is gone, and

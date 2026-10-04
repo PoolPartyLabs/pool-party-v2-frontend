@@ -5,7 +5,8 @@
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
  *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
  *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
- *   builder_build_abandoned, builder_build_error (the Build canvas emits its own: `BuildScreen`)
+ *   builder_build_abandoned, builder_build_error, builder_build_submitted, builder_build_completed,
+ *   builder_review_error (the Build canvas and ReviewPhase own their view/interaction events)
  *
  * The fund-contracts strategy builder: the shell the five Mandate steps live in (POO-2122, epic
  * POO-2119). Page header, the three-phase stepper, the collapsible sub-step header, the step body,

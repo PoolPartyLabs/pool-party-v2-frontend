@@ -149,6 +149,7 @@ function ConnectedReviewPhase({ draftId, onBackToBuild, onEditMandate }: ReviewP
       return;
     }
     started.current = true;
+    concluded.current = true;
     setBusy(true);
     setFailure(false);
     try {
@@ -157,6 +158,7 @@ function ConnectedReviewPhase({ draftId, onBackToBuild, onEditMandate }: ReviewP
       concluded.current = true;
     } catch {
       started.current = false;
+      concluded.current = false;
       setBusy(false);
       setFailure(true);
       track("builder_review_error", { error_code: "REVIEW_LAUNCH_ENTRY_FAILED" });

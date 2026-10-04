@@ -24,7 +24,19 @@ export function ReviewInvestorPreview({ review }: ReviewInvestorPreviewProps) {
       <h3 className="text-sm font-medium">{t("investorPreviewTitle")}</h3>
       {value ? (
         <>
-          <h4 className="text-lg font-semibold">{value.name}</h4>
+          <div className="flex items-center gap-3">
+            {value.imageUrl && (
+              // biome-ignore lint/performance/noImgElement: trusted uploaded logo URL mirrors the form.
+              <img
+                src={value.imageUrl}
+                alt=""
+                width={40}
+                height={40}
+                className="size-10 rounded-full object-cover"
+              />
+            )}
+            <h4 className="text-lg font-semibold">{value.name}</h4>
+          </div>
           {value.description && (
             <p className="text-sm text-muted-foreground">{value.description}</p>
           )}
