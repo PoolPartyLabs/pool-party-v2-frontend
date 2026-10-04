@@ -45,7 +45,7 @@ Run focused new tests and relevant V1/Invest/Build regressions, lint, typecheck,
 - [POO-2230](https://linear.app/yeildbay/issue/POO-2230), Rafael: native/stable operating cash per chain, eligible withdrawal queue and actual hub USDC Income. `payoutReserve` is usable; `incomeCollection.heldDollars` is collection-round state, not proven total Income.
 - [POO-2231](https://linear.app/yeildbay/issue/POO-2231), Rafael: persisted future-deposit policy, version/conflict/consumption semantics, allocation executor and block-to-position/replacement lineage.
 
-Implementation PRs are split into: (1) authorized API reads/review boundary, (2) pure model/layout and shared viewport, (3) rendered canvas/screen and translations, (4) inline panel plus route/shell activation. This keeps each dependency reviewable before the live entry changes.
+Implementation PRs are split into: (1) authorized API reads/review boundary, (2) pure model/layout and shared viewport, (3) rendered canvas/screen and translations, (4) inline panel and range state, (5) authorized route/shell activation and final documentation. This keeps each dependency reviewable before the live entry changes.
 
 ## Acceptance status of this supported slice
 
@@ -61,3 +61,18 @@ Implementation PRs are split into: (1) authorized API reads/review boundary, (2)
 | AC21-AC23 | Loading/error/retry/empty and account/core guards, stacked small-screen layout, touch/keyboard controls, translations and focused regression evidence. Browser smoke and financial execution are not claimed. |
 
 Drafts live in mounted panels keyed by core + chain + position key. Switching selected blocks preserves edits. Same-position refresh errors preserve last good metadata while disabling dependent actions and offering Retry. A 30-second watchdog prevents indefinite position/entry loading. Leaving the route ends these in-memory, unsubmitted drafts; no persisted policy is claimed.
+
+## Implementation evidence, 2026-10-04
+
+Source frames: [initial actions](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8335-2708), [Move](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8291-2563), [future deposits](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8334-2692).
+
+- [PR #98](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/98): authorized API boundary.
+- [PR #99](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/99): holdings model and graph geometry.
+- [PR #100](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/100): rendered canvas, selection and translations.
+- [PR #101](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/101): inline block/range state. Route activation and documentation follow in the final integration PR.
+
+Verification: 134 distinct focused tests across 14 files passed across the final Manage/shared-controls and entry/investor/shell runs (87 and 50 test executions, with three prior entry cases overlapping). Tests use one worker and no file parallelism. Scope includes exact identity, malformed API DTOs, metadata retry, stale review, per-position drafts, keyboard focus, zero/missing values, fixed geometry, Build control defaults, account switches, sign-out/reauthentication, investor Details and shell layout restoration.
+
+Scoped TypeScript for changed sources/tests and their imports passed. Repository lint passed with 112 existing warnings and one info; all 11 locales passed parity, ICU and usage; config check passed. Full local TypeScript exceeded the 2 GB heap limit. Remote lint/typecheck/i18n/config passed for the first two dependency PRs; audit reports existing package vulnerabilities, with package.json and pnpm-lock.yaml unchanged. No full local test suite, coverage, build, browser walkthrough, wallet signature or mainnet transaction was performed. Remote heavy jobs are independent CI checks, not local execution evidence.
+
+Independent review found and corrected retained-metadata retry visibility, read-capability review invalidation, request watchdogs and baseline validation. The coordinator additionally locked same-wallet sign-out/reauthentication with a red-to-green regression. This delivers the supported frontend slice; AC11-14 and missing data sources remain dependent on the issues above.

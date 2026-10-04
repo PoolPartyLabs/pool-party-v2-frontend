@@ -7,7 +7,7 @@ import { FundDetailsPresenter } from "./FundDetail";
 
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams() }));
 vi.mock("@/lib/hooks/useContractFamily", () => ({ useContractFamily: () => ({ family: "v2" }) }));
-vi.mock("./FundTechnicalDetail", () => ({ FundTechnicalDetail: () => null }));
+vi.mock("@/features/manager/fund/manage/ManageEntry", () => ({ ManageEntry: () => null }));
 vi.mock("@/features/strategies/components/InvestModal", () => ({ InvestModal: () => null }));
 vi.mock("@/i18n/navigation", () => ({
   Link: ({

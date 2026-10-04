@@ -1,7 +1,8 @@
 /**
  * @id PP-CORE-LAY-001 (private context)
  * @name BuildShellLayout
- * @implements-rules-version v1 (POO-2209)
+ * @implements-rules-version v1 (POO-2209); v1 (POO-2226)
+ * Build and authorized Manage share temporary canvas layout; cleanup restores the saved sidebar.
  * @analytics-events none, effective layout state only
  */
 "use client";

@@ -686,3 +686,11 @@ remain visible as Coming soon, excluded from selection and executable drafts. Ev
 a committed brand logo. [Rules, sources and regressions](../../../docs/MANDATE_PROTOCOLS_FIGMA_2026-10-04.md).
 
 POO-2209 rules v1: V2 public profiles expose a Follow/Following demonstration scoped to the viewed manager and mounted page session. It does not write to an API, navigate, sign, claim follower counts or emit a backend follow outcome. V1 remains unchanged. The effective builder phase, including in-page transitions, temporarily collapses the desktop sidebar and removes the shell width cap without changing the saved preference. Desktop Cash+ and Tools links are hidden; mobile navigation and routes remain intact. Available operable protocols precede unavailable rows in stable catalog order.
+
+## Manage V2
+
+`/funds/{core}?view=manager` selects the V2 manager entry while the fund feature flag and V2 family are active. The independent server loader verifies fund ownership before mounting the live-position canvas. Current position identity is core + chain + positionKey; no launch block is inferred from token symbols.
+
+The position list, graph and inline Manage block share selection. Per-position in-memory drafts survive selection changes and failed metadata refreshes. The Build range editor supplies canonical ticks/inversion/presets. Move and future-deposit actions have distinct inline states. Current allocation is read-only. Missing financial integrations display Not available and have no signing/save path.
+
+See the [delivery and acceptance plan](../../../docs/manager-manage-v2-implementation-2026-10-04.md). Data dependencies are POO-2229 (Move preview/recovery), POO-2230 (cash/queue/Income), POO-2231 (future-policy/allocation/lineage). The sidebar uses a temporary expanded-canvas layout without changing the saved preference. Small screens stack list, canvas and panel; focused tests are code-level evidence, not browser verification.
