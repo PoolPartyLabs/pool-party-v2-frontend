@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-LIB-021 (POO-2133)
+ * @id PP-MGR-LIB-025 (POO-2133)
  * @name v2MandateTests
  * @implements-rules-version v1
  * Real-mode capability and provisioning payload regressions.
