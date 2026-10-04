@@ -947,6 +947,10 @@
     "management": "Verwaltung",
     "faster": "Schnellere Auszahlung",
     "networkCost": "Netzwerkkosten",
-    "closing": "Wird geschlossen"
+    "closing": "Wird geschlossen",
+    "noHistory": "Noch kein Verlauf",
+    "noHistoryDescription": "Der Preisverlauf dieser Anlage ist noch nicht verfügbar.",
+    "currentPositions": "Aktuelle Positionen · USD",
+    "detailed": "Aufgeschlüsselt"
   }
 }

@@ -53,6 +53,10 @@
   --color-error-surface: #231414;
   --color-error-border: #3a2020;
 
+  /* Investor composition, Figma 8284:2655/2656 (POO-2223). */
+  --color-chart-periwinkle: #8aa0ff;
+  --color-chart-grape-soft: #d963c0;
+
   /* Risk levels 1 (very conservative) to 5 (very aggressive) */
   --color-risk-1: #22c55e;
   --color-risk-2: #84cc16;

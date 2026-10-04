@@ -947,6 +947,10 @@
     "management": "Gestion",
     "faster": "Retrait accéléré",
     "networkCost": "Coût du réseau",
-    "closing": "Fermeture en cours"
+    "closing": "Fermeture en cours",
+    "noHistory": "Pas encore d’historique",
+    "noHistoryDescription": "L’historique des prix de cet investissement n’est pas encore disponible.",
+    "currentPositions": "Positions actuelles · USD",
+    "detailed": "Détaillé"
   }
 }

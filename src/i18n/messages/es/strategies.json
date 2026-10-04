@@ -947,6 +947,10 @@
     "management": "Gestión",
     "faster": "Retiro más rápido",
     "networkCost": "Coste de red",
-    "closing": "En cierre"
+    "closing": "En cierre",
+    "noHistory": "Aún no hay historial",
+    "noHistoryDescription": "El historial de precios de esta inversión aún no está disponible.",
+    "currentPositions": "Posiciones actuales · USD",
+    "detailed": "Detallado"
   }
 }
