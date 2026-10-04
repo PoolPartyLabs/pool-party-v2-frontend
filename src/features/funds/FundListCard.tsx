@@ -7,6 +7,7 @@
 import { useTranslations } from "next-intl";
 import { StrategyLogo } from "@/components/data-display/StrategyLogo";
 import { Link } from "@/i18n/navigation";
+import { ExplorerFields } from "./ExplorerFields";
 import { type FundListEntry, fundListModel } from "./fundListModel";
 
 export interface FundListCardProps {
@@ -20,9 +21,18 @@ export function FundListCard({ fund }: FundListCardProps) {
       <header className="flex items-start gap-3">
         <StrategyLogo url={card.image} name={card.name} className="size-10" />
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold">{card.name}</h2>
+          <h2 className="font-semibold">
+            <Link
+              className="hover:underline focus-visible:outline-2"
+              href={`/funds/${fund.coreVault}`}
+            >
+              {card.name}
+            </Link>
+          </h2>
           <p className="break-all text-sm text-muted-foreground" title={card.manager}>
-            {t("manager")}: {card.managerName}
+            {t("manager")}:{" "}
+            {card.managerName !== card.manager ? <span>{card.managerName} · </span> : null}
+            <ExplorerFields value={card.manager} chainId={42161} />
           </p>
         </div>
         <span className="rounded border border-border px-2 py-1 text-xs">

@@ -42,6 +42,10 @@ describe("v2 fund lists POO-2181", () => {
       "href",
       `/funds/${mockFund.coreVault}`,
     );
+    expect(screen.getByRole("link", { name: mockFund.manager })).toHaveAttribute(
+      "href",
+      `https://arbiscan.io/address/${mockFund.manager}`,
+    );
   });
   it("R6 renders loading then empty", async () => {
     mocks.load.mockResolvedValue({ ok: true, data: { funds: [], holders: {}, wallet: null } });
