@@ -43,12 +43,9 @@ import { BlockMark } from "./BlockMark";
 import type { PaletteDragItem, PaletteItem, PaletteModel, PaletteSection } from "./blockRegistry";
 
 /**
- * The attribute S6 renders on every drop target, holding `targetKey(target)`. It lives beside
- * `targetKey` (`layout/graphTypes.ts`), so the renderer and the palette read the one constant.
+ * I3: the key of the graph target under a point, or null. The attribute is `GRAPH_TARGET_ATTR`,
+ * the one constant the renderer (S6) writes too, beside `targetKey` in `layout/graphTypes.ts`.
  */
-export { GRAPH_TARGET_ATTR };
-
-/** I3: the key of the graph target under a point, or null. */
 export function resolveDropKey(x: number, y: number): string | null {
   if (typeof document.elementFromPoint !== "function") return null;
   const hit = document.elementFromPoint(x, y)?.closest(`[${GRAPH_TARGET_ATTR}]`);
