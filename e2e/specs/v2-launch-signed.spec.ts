@@ -5,18 +5,10 @@ import { parseUnits } from "viem";
 import manager from "../../src/i18n/messages/en/manager.json";
 import { test as base, expect } from "../fixtures";
 import { prepareV2Launch } from "../flows/v2Launch";
-import { rehearsalSignInAllowed } from "../helpers/rehearsalSignIn";
+import { assertV2LaunchSigningAllowed, v2LaunchMode } from "../helpers/v2LaunchSigning";
 
 const burner = "0x3A3ea619C0f37a7D2fF07FF442d863f316A99A7a";
-const dry = process.env.E2E_V2_SIGNED_DRY === "1";
-const signingMethods = new Set([
-  "eth_sendTransaction",
-  "eth_sendRawTransaction",
-  "eth_sign",
-  "eth_signTypedData",
-  "eth_signTypedData_v3",
-  "eth_signTypedData_v4",
-]);
+const mode = v2LaunchMode(process.env.E2E_V2_SIGNED_DRY);
 type Kind = keyof Pick<
   typeof manager.fundLaunch,
   | "approve"
@@ -54,17 +46,15 @@ const test = base.extend<{ signingGuard: Guard }>({
         expose(name, async (...args: unknown[]) => {
           if (name === "__ppWalletBridge") {
             const request = args[0] as { method: string; params?: unknown[] };
-            const authentication =
-              request.method === "personal_sign" &&
-              rehearsalSignInAllowed(String(request.params?.[0] ?? ""), burner);
             if (
-              !authentication &&
-              (signingMethods.has(request.method) || request.method === "personal_sign")
+              assertV2LaunchSigningAllowed(
+                request,
+                burner,
+                mode,
+                guard.armed,
+                process.env.E2E_V2_SIGNED,
+              )
             ) {
-              if (dry || !guard.armed || process.env.E2E_V2_SIGNED !== "1")
-                throw new Error("Launch signing is disarmed (dry mode never signs transactions)");
-              if (request.method === "eth_sendRawTransaction")
-                throw new Error("Only Node-side eth_sendTransaction signing is permitted");
               await guard.beforeSignature();
             }
           }
@@ -169,7 +159,7 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
   test.describe.configure({ mode: "serial", timeout: 90 * 60_000 });
   test.skip(process.env.E2E_V2_SIGNED !== "1", "Human operator must explicitly opt in");
 
-  test("launch with evidence, reload and Resume (or stop at Review in dry mode)", async ({
+  test("launch with evidence, reload and Resume (or stop before signing in dry modes)", async ({
     page,
     wallet,
     signingGuard,
@@ -181,6 +171,8 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
       finishedAt?: string;
       review?: Awaited<ReturnType<typeof assertReviewSafety>>;
       launchButton?: string;
+      launchClickedAt?: string;
+      signNextEnabled?: boolean;
       draftId?: string;
       name?: string;
       steps: Step[];
@@ -192,13 +184,16 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
       error?: string;
       uiError?: string;
     } = {
-      mode: dry ? "dry" : "signed",
+      mode,
       outcome: "preparing",
       startedAt: new Date().toISOString(),
       steps: [],
       observations: [],
     };
-    const evidencePath = path.resolve("test-results/v2-launch-signed-evidence.json");
+    const evidencePath =
+      mode === "dry-launch"
+        ? info.outputPath("v2-launch-dry-launch-evidence.json")
+        : path.resolve("test-results/v2-launch-signed-evidence.json");
     await mkdir(path.dirname(evidencePath), { recursive: true });
     const persist = async () => writeFile(evidencePath, JSON.stringify(evidence, null, 2));
     const snapshot = async (clicked = false) => {
@@ -241,8 +236,52 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
       await expect(launch).toBeEnabled();
       evidence.launchButton = await launch.innerText();
       await snapshot();
-      if (dry) {
+      if (mode === "dry") {
         evidence.outcome = "dry-completed-without-launch";
+        return;
+      }
+      if (mode === "dry-launch") {
+        const expectedSteps: Array<[Kind, number]> = [
+          ["approve", 42161],
+          ["create", 42161],
+          ["discover", 42161],
+          ["spoke", 4663],
+          ["discover", 4663],
+          ["profile", 42161],
+          ["allocate", 42161],
+          ["swap", 42161],
+          ["open", 42161],
+          ["open", 42161],
+          ["report", 42161],
+          ["bridge", 42161],
+          ["arrival", 4663],
+          ["swap", 4663],
+          ["open", 4663],
+        ];
+        expect(evidence.steps.map((step) => [step.kind, step.chainId])).toEqual(expectedSteps);
+        const expectedLabels = evidence.steps.map((step) => step.label);
+        expect(signingGuard.armed).toBe(false);
+        await launch.click();
+        evidence.launchClickedAt = new Date().toISOString();
+        await expect(page).toHaveURL(/\/manager\/fund-launch\/[^/?]+/);
+        await expect(
+          page.getByRole("heading", { name: "Fund launch journey", exact: true }),
+        ).toBeVisible();
+        const rows = page.locator("main section > ol > li");
+        await expect(rows).toHaveCount(expectedSteps.length);
+        await expect(rows.locator("h2")).toHaveText(expectedLabels);
+        const sign = page.getByRole("button", { name: "Sign next step", exact: true });
+        await expect(sign).toBeEnabled();
+        evidence.signNextEnabled = true;
+        await snapshot();
+        expect(evidence.steps.map((step) => [step.kind, step.chainId])).toEqual(expectedSteps);
+        for (const step of evidence.steps) {
+          expect(step.status).toBe(manager.fundLaunch.idle);
+          expect(step.txHash).toBeNull();
+          expect(step.clickedAt).toBeNull();
+        }
+        expect(signingGuard.armed).toBe(false);
+        evidence.outcome = "dry-launch-completed-without-signing";
         return;
       }
       signingGuard.beforeSignature = async () => {

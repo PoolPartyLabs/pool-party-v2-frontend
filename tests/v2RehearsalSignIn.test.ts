@@ -20,6 +20,39 @@ describe("non-spending rehearsal sign-in boundary", () => {
     });
     expect(rehearsalSignInAllowed(message, address)).toBe(true);
   });
+  it("allows exact localhost:3000 SIWE and Privy authentication only", () => {
+    const message = buildSiweMessage({
+      address,
+      domain: "localhost:3000",
+      uri: "http://localhost:3000",
+      chainId: 42161,
+      nonce: "nonce12345",
+      statement: "Sign in to Pool Party",
+    });
+    const privy = message
+      .replace(
+        "Sign in to Pool Party",
+        "By signing, you are proving you own this wallet and logging in. This does not initiate a transaction or cost any fees.",
+      )
+      .replace(/\nExpiration Time: [^\n]+$/, "\nResources:\n- https://privy.io");
+    for (const authentication of [message, privy]) {
+      expect(rehearsalSignInAllowed(authentication, address)).toBe(true);
+      expect(
+        rehearsalSignInAllowed(`0x${Buffer.from(authentication).toString("hex")}`, address),
+      ).toBe(true);
+      for (const unsafe of [
+        authentication.replaceAll("localhost:3000", "localhost:3001"),
+        authentication.replace("URI: http://localhost:3000", "URI: https://v2.dev.pool-party.xyz"),
+        authentication.replace("http://localhost:3000", "http://localhost:3000/authorize"),
+        authentication.replace(address, `0x${"1".repeat(40)}`),
+        authentication.replace("Chain ID: 42161", "Chain ID: 1"),
+        authentication.replace(/\n\n[^\n]+\n\nURI:/, "\n\nAuthorize a fund launch\n\nURI:"),
+        `${authentication}\nResources:\n- http://localhost:3000/launch`,
+      ]) {
+        expect(rehearsalSignInAllowed(unsafe, address)).toBe(false);
+      }
+    }
+  });
   it("rejects profile signatures, malformed authentication and another wallet", () => {
     expect(rehearsalSignInAllowed(`Launch fund with manager ${address}`, address)).toBe(false);
     expect(

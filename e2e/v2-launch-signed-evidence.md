@@ -52,3 +52,33 @@ authorized human operator. Do not infer transaction success from this dry rehear
 No app-source changes, merge, deployment, local server or backend stack. Other worktrees
 were left untouched. The dedicated worktree and dry evidence/screenshots are retained for
 the operator; see `e2e/README.md` for the signed command and failure-resumption warning.
+
+## October 4, 2026: PR #61 safe launch mode follow-up
+
+This section records static validation only. The earlier operator/browser observations remain
+unchanged. No browser, burner secret loading, financial signing, broadcast or deployment occurred
+during this follow-up. Existing `test-results/`, reports and screenshots were not read or modified.
+The retained authorized worktree was not removed, reset or replaced. No launch app/panel files changed.
+
+Rules for this follow-up:
+- R1: `E2E_V2_SIGNED_DRY=1` retains Review-only behavior; signed mode retains explicit opt-in and arming.
+- R2: `E2E_V2_SIGNED_DRY=launch` keeps the financial guard disarmed and blocks every financial method, even if armed accidentally.
+- R3: Launch-only clicks Launch, requires the 15 expected ordered step/chain pairs, enables Sign next step, and stops without Sign or Resume.
+- R4: Allow authentication only for the authorized wallet and exact deployed or localhost:3000 SIWE domain/URI pairs. Reject financial statements, other ports/origins and appended resources.
+- R5: Launch-only evidence uses isolated Playwright test output, not the retained signed/review JSON. Orchestration must select fresh output/report directories.
+
+The guard/mode regressions were observed failing before implementation. The localhost SIWE
+regression also failed before the narrow allowlist update. After implementation:
+- Vitest: **18 tests passed across three files** (`v2LaunchSigning`, `v2RehearsalSignIn`, `v2FundJournal`).
+- `pnpm exec tsc -p e2e/tsconfig.json --noEmit`: passed.
+- Biome check and lint for E2E plus changed tests: no errors; five pre-existing unused-suppression warnings in E2E.
+- Companion `scripts/e2e-secrets-check.ts`: changed-path scan passed with no credential literals. This public checkout has no `e2e:secrets-check` package script.
+- The full tracked-root companion scan failed on two pre-existing findings in `e2e/helpers/embeddedLogin.ts:18` (test-account literal and OTP assignment). That unrelated file was not changed; no credential values are repeated here.
+
+Dependencies were already usable in this retained worktree; no install, symlink replacement or
+lockfile edit was required. The suggested companion dependency directory and protected hackathon
+dependency directory also exist; neither was modified. Git hooks remain enabled.
+
+The launch-only browser flow is **not validated here**. Main orchestration owns that run against
+`http://localhost:3000`, including any API tunnel. The separate journey-ID storage fix belongs to
+its owner's worktree, not this E2E change. Use the isolated-output command in `e2e/README.md`.
