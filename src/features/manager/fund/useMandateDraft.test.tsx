@@ -24,7 +24,12 @@ import {
   withNetworks,
   withProtocols,
 } from "./mandateDraft";
-import { MANDATE_DRAFTS_KEY, MANDATE_DRAFTS_VERSION, upsertDraft } from "./mandateDraftStore";
+import {
+  getDraft,
+  MANDATE_DRAFTS_KEY,
+  MANDATE_DRAFTS_VERSION,
+  upsertDraft,
+} from "./mandateDraftStore";
 import { useMandateDraft } from "./useMandateDraft";
 
 const flags = vi.hoisted(() => ({ robinhoodChain: false }));
@@ -157,6 +162,66 @@ describe("update", () => {
       result.current.update((d) => withProtocols(d, [...REQUIRED_PROTOCOLS, "aave-v3"]));
     });
     expect(window.localStorage.getItem(MANDATE_DRAFTS_KEY)).toBeNull();
+  });
+});
+
+/**
+ * The Review data the launch journey stores on the draft (#43: `useV2ReviewDraft.persistReview`
+ * calls `upsertDraft({ ...getDraft(id), review })`). This hook never edits it.
+ */
+function reviewData(name: string): NonNullable<MandateDraft["review"]> {
+  return {
+    name,
+    description: "A fund on Arbitrum",
+    imageUrl: "",
+    performanceFeeBps: 2000,
+    managementFeeBps: 0,
+    payoutFeeBps: 200,
+    minimum: "100",
+    seed: "100",
+  };
+}
+
+describe("save keeps the review data another writer stored (POO-2157)", () => {
+  // `upsertDraft` REPLACES the stored draft, and this hook reads the draft once: a save from an
+  // instance that loaded the draft before `review` existed used to write it away silently.
+  it("keeps a review stored after this hook loaded the draft", async () => {
+    // @rule A8
+    seed("reviewed", { name: "ETH and BTC on Arbitrum" });
+    const { result } = renderHook(() => useMandateDraft("reviewed"));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    expect(result.current.draft.review).toBeUndefined();
+
+    // Another writer (the Review screen) stores its data on the same draft.
+    const latest = getDraft("reviewed");
+    if (!latest) throw new Error("fixture: the seeded draft is gone");
+    upsertDraft({ ...latest, review: reviewData("ETH and BTC fund") });
+
+    let outcome: Awaited<ReturnType<typeof result.current.save>> | undefined;
+    await act(async () => {
+      outcome = await result.current.save();
+    });
+
+    expect(outcome).toEqual({ ok: true });
+    expect(getDraft("reviewed")?.review).toEqual(reviewData("ETH and BTC fund"));
+  });
+
+  it("never writes an older review over the one stored since", async () => {
+    // @rule A8
+    seed("re-reviewed", { name: "ETH and BTC on Arbitrum", review: reviewData("First version") });
+    const { result } = renderHook(() => useMandateDraft("re-reviewed"));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    expect(result.current.draft.review?.name).toBe("First version");
+
+    const latest = getDraft("re-reviewed");
+    if (!latest) throw new Error("fixture: the seeded draft is gone");
+    upsertDraft({ ...latest, review: reviewData("Second version") });
+
+    await act(async () => {
+      await result.current.save();
+    });
+
+    expect(getDraft("re-reviewed")?.review?.name).toBe("Second version");
   });
 });
 

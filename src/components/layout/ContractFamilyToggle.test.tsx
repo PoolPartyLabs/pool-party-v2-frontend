@@ -1,12 +1,17 @@
 /**
  * @id PP-CORE-CMP-075
  * @name ContractFamilyToggle - tests
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2120 rules v1, POO-2157 rules v1)
+ * @analytics-events none, `contract_family_toggled` is ASSERTED here; a test is never an emitter
  *
  * POO-2120 [R3] / [R5]. Behaviour: the control does not exist while the `fundContracts` flag is
  * off, it is a labelled group of two `aria-pressed` buttons whose pressed state follows the chosen
  * family, pressing the other segment chooses it AND reports it, pressing the selected one does
  * neither, and before hydration it shows V1 so there is no flash of V2.
+ *
+ * POO-2157 (review F2 of PR #41): switching the family unmounts the builder on screen, so with
+ * unsaved work registered (the Build canvas's plan, a Mandate selection) the press asks first,
+ * through the same unsaved-changes guard as every other way out, and switches only on Leave.
  *
  * `useContractFamily` is mocked here on purpose. This file is about the CONTROL: what it renders,
  * what it calls, and what it reports. Persistence, validation, cross-tab sync and the storage
@@ -16,6 +21,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetDevOverridesForTests } from "@/lib/features/devOverrides";
+import { UnsavedChangesProvider, useUnsavedChanges } from "@/lib/hooks/unsavedChanges";
 import type { ContractFamily } from "@/lib/hooks/useContractFamily";
 import { renderWithProviders, screen, userEvent } from "../../../tests/utils/renderWithProviders";
 import { ContractFamilyToggle } from "./ContractFamilyToggle";
@@ -155,5 +161,87 @@ describe("ContractFamilyToggle", () => {
     renderWithProviders(<ContractFamilyToggle />);
     const group = screen.getByRole("group", { name: "Builder version" });
     expect(group).toHaveClass("hidden", "md:inline-flex", "h-9");
+  });
+});
+
+/** A screen holding work that would be lost, registered the way the fund builder registers it. */
+function UnsavedWork({ dirty }: { dirty: boolean }) {
+  useUnsavedChanges(dirty);
+  return null;
+}
+
+/** The toggle inside the app's unsaved-changes guard, beside a screen that is or is not dirty. */
+function renderGuarded(dirty: boolean) {
+  return renderWithProviders(
+    <UnsavedChangesProvider>
+      <UnsavedWork dirty={dirty} />
+      <ContractFamilyToggle />
+    </UnsavedChangesProvider>,
+  );
+}
+
+describe("ContractFamilyToggle, unsaved work (POO-2157, review F2 of PR #41)", () => {
+  beforeEach(() => {
+    window.dataLayer = [];
+    familyState.family = "v2";
+    familyState.hydrated = true;
+    familyState.setFamily = vi.fn();
+    __resetDevOverridesForTests();
+    enableFlag();
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    __resetDevOverridesForTests();
+  });
+
+  // @rule HU3 (POO-2157): switching the family unmounts the builder, so it is a way out of Build.
+  it("asks first while a builder holds unsaved work, and switches only on Leave", async () => {
+    const user = userEvent.setup();
+    renderGuarded(true);
+
+    await user.click(screen.getByRole("button", { name: "V1" }));
+
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(familyState.setFamily).not.toHaveBeenCalled();
+    expect(toggleEvents()).toHaveLength(0);
+
+    await user.click(screen.getByRole("button", { name: "Leave" }));
+
+    expect(familyState.setFamily).toHaveBeenCalledWith("v1");
+    expect(toggleEvents()).toHaveLength(1);
+    expect(toggleEvents()[0]).toMatchObject({ family: "v1" });
+  });
+
+  // @rule HU3 (POO-2157)
+  it("keeps the family and reports nothing when the manager keeps editing", async () => {
+    const user = userEvent.setup();
+    renderGuarded(true);
+
+    await user.click(screen.getByRole("button", { name: "V1" }));
+    await user.click(screen.getByRole("button", { name: "Keep editing" }));
+
+    expect(screen.queryByText("Unsaved changes")).toBeNull();
+    expect(familyState.setFamily).not.toHaveBeenCalled();
+    expect(toggleEvents()).toHaveLength(0);
+  });
+
+  // @rule R5: with nothing at stake the press is the decision, exactly as before.
+  it("switches at once while nothing is unsaved", async () => {
+    const user = userEvent.setup();
+    renderGuarded(false);
+
+    await user.click(screen.getByRole("button", { name: "V1" }));
+
+    expect(screen.queryByText("Unsaved changes")).toBeNull();
+    expect(familyState.setFamily).toHaveBeenCalledWith("v1");
+    expect(toggleEvents()).toHaveLength(1);
+  });
+
+  // @rule R3: V1 is untouched. With the flag off there is no control, so nothing can ask.
+  it("is still absent with the flag off, whatever is unsaved", () => {
+    vi.unstubAllEnvs();
+    __resetDevOverridesForTests();
+    renderGuarded(true);
+    expect(screen.queryByRole("group", { name: "Builder version" })).toBeNull();
   });
 });

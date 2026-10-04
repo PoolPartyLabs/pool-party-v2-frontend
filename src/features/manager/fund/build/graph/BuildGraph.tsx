@@ -80,7 +80,7 @@ import { NetworkLogo } from "@/components/data-display/NetworkLogo";
 import { networkStableSymbol } from "@/lib/chains/config";
 import { CANVAS_INTERACTIVE_ATTR } from "../canvas/useCanvasViewport";
 import type { GraphLayout, GraphTarget, SpineRole } from "../layout/graphTypes";
-import { targetKey } from "../layout/graphTypes";
+import { GRAPH_TARGET_ATTR, targetKey } from "../layout/graphTypes";
 import { LAYOUT } from "../layout/layoutConstants";
 import { AddNetworkTemplate, AddProtocolTemplate } from "../pieces/CanvasTemplate";
 import { FlowPill } from "../pieces/FlowPill";
@@ -320,7 +320,7 @@ function wrapperProps(item: GraphItem, motion: boolean): Record<string, unknown>
   };
   return {
     "data-graph-node": item.key,
-    ...(target ? { "data-graph-target": targetKey(target) } : {}),
+    ...(target ? { [GRAPH_TARGET_ATTR]: targetKey(target) } : {}),
     ...(INTERACTIVE_TYPES.has(item.type) ? { [CANVAS_INTERACTIVE_ATTR]: "" } : {}),
     className: item.type === "group" ? GROUP_CHIP_LAYER : undefined,
     style,

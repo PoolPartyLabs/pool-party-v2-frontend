@@ -1,9 +1,12 @@
 /**
  * @id PP-MGR-SCR-002
  * @name BuilderRouteSwitch - header toggle integration tests
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2120 rules v1, POO-2157 rules v1)
  * @analytics-events none, the names are ASSERTED nowhere here; this file is about what the press
  *   RENDERS. A test is never an emitter
+ *
+ * POO-2157 (review F2 of PR #41): the press is also a way out of the builder on screen, so with
+ * unsaved work in it the toggle asks first and the builder stays until Leave.
  *
  * POO-2120 [R6], epic POO-2119. The one claim `BuilderRouteSwitch.test.tsx` cannot make: the header
  * control and the switch are two components with no props between them, so the only thing that
@@ -21,6 +24,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetDevOverridesForTests } from "@/lib/features/devOverrides";
+import { UnsavedChangesProvider } from "@/lib/hooks/unsavedChanges";
 import { __resetContractFamilyStoreForTests } from "@/lib/hooks/useContractFamily";
 import {
   renderWithProviders,
@@ -30,9 +34,17 @@ import {
 import { ContractFamilyToggle } from "../../../components/layout/ContractFamilyToggle";
 import { BuilderRouteSwitch } from "./BuilderRouteSwitch";
 
-vi.mock("./FundStrategyBuilderScreen", () => ({
-  FundStrategyBuilderScreen: () => <p>the fund builder</p>,
-}));
+/** Whether the stand-in fund builder holds unsaved work, registered the way the real one does. */
+const fundBuilder = vi.hoisted(() => ({ dirty: false }));
+
+vi.mock("./FundStrategyBuilderScreen", async () => {
+  const { useUnsavedChanges } = await import("@/lib/hooks/unsavedChanges");
+  function StandInFundBuilder() {
+    useUnsavedChanges(fundBuilder.dirty);
+    return <p>the fund builder</p>;
+  }
+  return { FundStrategyBuilderScreen: StandInFundBuilder };
+});
 
 /** A cheap stand-in for the V1 element the page passes in. */
 function V1Stub() {
@@ -48,6 +60,7 @@ describe("ContractFamilyToggle and BuilderRouteSwitch, wired by the real store",
   beforeEach(() => {
     window.dataLayer = [];
     window.localStorage.clear();
+    fundBuilder.dirty = false;
     __resetContractFamilyStoreForTests();
     __resetDevOverridesForTests();
   });
@@ -103,5 +116,38 @@ describe("ContractFamilyToggle and BuilderRouteSwitch, wired by the real store",
     renderWithProviders(<BuilderRouteSwitch v1={<V1Stub />} />);
 
     expect(await screen.findByText("the fund builder")).toBeInTheDocument();
+  });
+
+  // @rule HU3 (POO-2157, review F2 of PR #41): the toggle is a way out of the builder on screen.
+  it("[HU3] asks before leaving a builder with unsaved work, and keeps it until Leave", async () => {
+    const user = userEvent.setup();
+    enableFlag();
+    fundBuilder.dirty = true;
+    renderWithProviders(
+      <UnsavedChangesProvider>
+        <ContractFamilyToggle />
+        <BuilderRouteSwitch v1={<V1Stub />} />
+      </UnsavedChangesProvider>,
+    );
+
+    // V1 holds nothing unsaved, so entering V2 is immediate, as before.
+    await user.click(screen.getByRole("button", { name: "V2" }));
+    expect(screen.getByText("the fund builder")).toBeInTheDocument();
+    expect(screen.queryByText("Unsaved changes")).toBeNull();
+
+    // Leaving V2 with its work unsaved asks first, and the builder stays on screen meanwhile.
+    await user.click(screen.getByRole("button", { name: "V1" }));
+    expect(screen.getByText("Unsaved changes")).toBeInTheDocument();
+    expect(screen.getByText("the fund builder")).toBeInTheDocument();
+    // The modal hides the page from assistive technology while it is open, hence `hidden`.
+    expect(screen.getByRole("button", { name: "V2", hidden: true })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    await user.click(screen.getByRole("button", { name: "Leave" }));
+
+    expect(screen.getByText("the v1 builder")).toBeInTheDocument();
+    expect(screen.queryByText("the fund builder")).toBeNull();
   });
 });

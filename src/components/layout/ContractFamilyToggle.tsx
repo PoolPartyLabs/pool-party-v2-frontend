@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-CMP-075
  * @name ContractFamilyToggle
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2120 rules v1, POO-2157 rules v1)
  * @analytics-events contract_family_toggled
  *
  * POO-2120 [R3] / [R4] / [R5], epic POO-2119. The header's "V1 | V2" segmented control: which
@@ -26,6 +26,18 @@
  *
  * Desktop only (`hidden md:inline-flex`): the strategy builder it switches between is desktop only,
  * so offering the switch on a phone would lead to a screen that is not built for it.
+ *
+ * ## A switch is a way out (POO-2157, review F2 of PR #41)
+ *
+ * On `/manager/new` choosing the other family unmounts the builder on screen, and with it any work
+ * that was never saved: a Build canvas plan, a Mandate selection. So the choice goes through the
+ * app's unsaved-changes guard ({@link useNavigationGuard}), like the sidebar links and every other
+ * way out of the builder: with unsaved work registered it asks first and switches only on Leave;
+ * with none it switches at once, as before. The event fires only when the switch happens.
+ *
+ * PP-NOTE: the guard asks about ANY unsaved form on the page. On a screen whose dirty form the
+ * switch does not unmount (the manager profile, the personal info form) it asks too, and Leave
+ * there loses nothing: a needless question in a rare case, against silent loss in the common one.
  */
 "use client";
 
@@ -33,6 +45,7 @@ import { useTranslations } from "next-intl";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
+import { useNavigationGuard } from "@/lib/hooks/unsavedChanges";
 import { type ContractFamily, useContractFamily } from "@/lib/hooks/useContractFamily";
 import { cn } from "@/lib/utils/cn";
 
@@ -61,6 +74,8 @@ export function ContractFamilyToggle({ className }: ContractFamilyToggleProps) {
   const { isEnabled } = useFeatureFlags();
   const { family, setFamily } = useContractFamily();
   const { track } = useAnalytics();
+  // Called before the flag check: a hook cannot sit behind an early return.
+  const guard = useNavigationGuard();
 
   // Off is absent: no segment, no tooltip, no group in the accessibility tree.
   if (!isEnabled("fundContracts")) return null;
@@ -75,9 +90,12 @@ export function ContractFamilyToggle({ className }: ContractFamilyToggleProps) {
     // Pressing the selected segment is not a decision: no state write and no event, so the series
     // counts builders entered rather than clicks on a control.
     if (next === family) return;
-    setFamily(next);
-    // [R5] The family switched TO. No from/to pair: the previous family is the previous row.
-    track("contract_family_toggled", { family: next });
+    // A switch unmounts the builder on screen: with unsaved work it asks first (see the header).
+    guard(() => {
+      setFamily(next);
+      // [R5] The family switched TO. No from/to pair: the previous family is the previous row.
+      track("contract_family_toggled", { family: next });
+    });
   }
 
   return (
