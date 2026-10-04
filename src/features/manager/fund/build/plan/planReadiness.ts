@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-028
  * @name planReadiness
- * @implements-rules-version v1 (POO-2184 rules v1)
+ * @implements-rules-version v1 (POO-2184 rules v1); POO-2204 rules v1
  * @analytics-events none, a pure domain module. It names the refusal; the Build screen
  *   (PP-MGR-SCR-002) emits `builder_build_blocked` with it through `buildAnalytics.ts`, and the
  *   Review page (POO-2172) shows it among the Launch blockers.
@@ -174,13 +174,30 @@ export function planReadiness(
     };
   }
 
-  const unfinished = cards.find(isUnfinishedPool);
+  const deferredPoolChains = new Set(
+    chains
+      .filter(
+        ({ chain }) =>
+          chain.sharePct === 0 && positionsOf(chain).some((card) => isPoolKind(card.kind)),
+      )
+      .map(({ chain }) => chain.id),
+  );
+  const activeCards = chains
+    .filter(({ chain }) => !deferredPoolChains.has(chain.id))
+    .flatMap(({ chain }) => positionsOf(chain));
+  const unfinished = activeCards.find(isUnfinishedPool);
   if (unfinished) return refuse("review_incomplete_block", unfinished.id);
 
   const unshared = chains.find(
-    ({ chain }) => !(Number.isInteger(chain.sharePct) && chain.sharePct > 0),
+    ({ chain }) =>
+      !deferredPoolChains.has(chain.id) &&
+      !(Number.isInteger(chain.sharePct) && chain.sharePct > 0),
   );
   if (unshared) return refuse("review_zero_share", positionsOf(unshared.chain)[0]?.id ?? null);
+
+  if (!chains.some(({ chain }) => chain.sharePct > 0)) {
+    return refuse("review_zero_share", cards[0]?.id ?? null);
+  }
 
   const unused = plan.spokes.find(
     (spoke) =>

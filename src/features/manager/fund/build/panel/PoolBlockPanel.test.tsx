@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-069
  * @name PoolBlockPanel tests
- * @implements-rules-version v1 (POO-2189)
+ * @implements-rules-version v1 (POO-2189); POO-2204 rules v1
  * @analytics-events none (the panel shell emits)
  */
 
@@ -202,5 +202,80 @@ describe("PoolBlockPanel", () => {
     await waitFor(() => expect(result.current.status).toBe("error"));
     result.current.onRetry?.();
     await waitFor(() => expect(result.current.status).toBe("ready"));
+  });
+});
+
+describe("deferred allocation draft (POO-2204)", () => {
+  // @rule R1, R2, R5
+  it("hides range at zero, keeps earlier ticks, and restores the positive live gate", async () => {
+    live.mockReturnValue({
+      pool: null,
+      status: "error",
+      applicable: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    renderWithProviders(
+      <PanelHarness
+        draft={draft}
+        plan={{
+          version: 1,
+          hub: {
+            chains: [
+              {
+                id: "c",
+                sharePct: 40,
+                steps: [{ id: "b", family: "position", kind: "uniswapV4Pool", config }],
+              },
+            ],
+          },
+          spokes: [],
+        }}
+        selectedId="b"
+        bodies={{ uniswapV4Pool: poolBlockPanel }}
+      >
+        {(api) => <output data-testid="saved">{JSON.stringify(api.plan)}</output>}
+      </PanelHarness>,
+    );
+    const slider = screen.getByRole("slider", { name: "Allocation" });
+    slider.focus();
+    await userEvent.setup().keyboard("{Home}");
+    expect(
+      screen.queryByLabelText(manager.fundBuilder.canvas.panel.pool.loading),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeEnabled();
+    expect(live.mock.lastCall?.[1]).toBeNull();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Apply changes" }));
+    const saved = JSON.parse(screen.getByTestId("saved").textContent ?? "{}").hub.chains[0];
+    expect(saved.sharePct).toBe(0);
+    expect(saved.steps.find((step: { id: string }) => step.id === "b").config).toEqual(config);
+    slider.focus();
+    await userEvent.setup().keyboard("{ArrowRight}");
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeDisabled();
+    expect(live.mock.lastCall?.[1]).toBe(config.poolId);
+  });
+});
+
+describe("deferred reads (POO-2204)", () => {
+  // @rule R1, R3
+  it("mounts a configured zero pool without requesting range data", async () => {
+    action.mockClear();
+    renderWithProviders(
+      <PoolPanelProvider context={context} config={config} sharePct={0}>
+        <PoolBlockPanel
+          context={context}
+          applied={config}
+          config={config}
+          sharePct={0}
+          onConfigChange={vi.fn()}
+          allocation={<span>Allocation 0%</span>}
+        />
+      </PoolPanelProvider>,
+    );
+    expect(
+      screen.queryByLabelText(manager.fundBuilder.canvas.panel.pool.loading),
+    ).not.toBeInTheDocument();
+    expect(action).not.toHaveBeenCalled();
+    expect(live.mock.lastCall?.[1]).toBeNull();
   });
 });

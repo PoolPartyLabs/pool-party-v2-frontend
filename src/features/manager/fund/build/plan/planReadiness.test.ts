@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-028
  * @name planReadiness tests
- * @implements-rules-version v1 (POO-2184 rules v1)
+ * @implements-rules-version v1 (POO-2184 rules v1); POO-2204 rules v1
  * @analytics-events none, a test of a pure function; the reasons it returns are asserted, not
  *   emitted.
  *
@@ -33,6 +33,7 @@ import {
   spokePoolPlan,
   supplyBorrowPlan,
   TEST_ASSET_KEYS,
+  TEST_POOL_IDS,
   withCompletePools,
 } from "./planTestKit";
 
@@ -102,15 +103,11 @@ describe("planReadiness: what the launch needs before Review (RD1 to RD5)", () =
     });
   });
 
-  it("[RD2] refuses a chain with a 0% share, and reveals its first block", () => {
+  it("[R4] accepts a deferred pool beside an executable position", () => {
     // @rule RD2
     const plan = readyPlan();
     firstChain(plan).sharePct = 0;
-    expect(readinessOf(plan)).toEqual({
-      ready: false,
-      refusal: "review_zero_share",
-      target: { kind: "block", blockId: "hub-pool-pool" },
-    });
+    expect(readinessOf(plan)).toEqual({ ready: true });
   });
 
   it("[RD2] refuses a share that is not a whole percent", () => {
@@ -237,7 +234,7 @@ describe("planReadiness: order (finding 4, A2)", () => {
       { ...firstChain(hubPoolPlan()), sharePct: 0 },
       supplyChain("s", 0, TEST_ASSET_KEYS.usdcArbitrum),
     );
-    expect(readinessOf(incomplete)).toMatchObject({ refusal: "review_incomplete_block" });
+    expect(readinessOf(incomplete)).toMatchObject({ refusal: "review_zero_share" });
     const zero = hubOf(
       firstChain(supplyBorrowPlan()),
       supplyChain("s", 0, TEST_ASSET_KEYS.usdcArbitrum),
@@ -255,5 +252,32 @@ describe("planReadiness: order (finding 4, A2)", () => {
       refusal: "review_incomplete_block",
       target: { kind: "block", blockId: "hub-pool-pool" },
     });
+  });
+});
+
+describe("deferred pool Review (POO-2204)", () => {
+  // @rule R2, R4
+  it("keeps a selected range-less pool at zero beside an executable Supply", () => {
+    const plan = readyPlan();
+    const pool = plan.hub.chains[0];
+    if (!pool) throw new Error("fixture");
+    pool.sharePct = 0;
+    const position = pool.steps.find((step) => step.family === "position");
+    if (position?.family !== "position") throw new Error("fixture");
+    position.config = { poolId: TEST_POOL_IDS.arbitrum };
+    expect(readinessOf(plan)).toEqual({ ready: true });
+  });
+});
+
+describe("deferred pool authorization (POO-2204)", () => {
+  // @rule R2
+  it("still rejects an unauthorized pool at zero", () => {
+    const plan = readyPlan();
+    const chain = firstChain(plan);
+    chain.sharePct = 0;
+    const block = chain.steps.find((step) => step.family === "position");
+    if (block?.family !== "position") throw new Error("fixture");
+    block.config = { poolId: "unauthorized" };
+    expect(readinessOf(plan)).toMatchObject({ ready: false, refusal: "review_invalid_block" });
   });
 });
