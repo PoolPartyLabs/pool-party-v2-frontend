@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-042 (POO-2177)
  * @name launchDriver
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2181)
  * Just-in-time API builders and receipt reconciliation. No wallet broadcast occurs on import.
  */
 
@@ -33,7 +33,7 @@ import {
 import { addressSchema, catalogPoolSchema } from "@/lib/api/v2/schemas";
 import { positionAmounts } from "./composition";
 import type { Checkpoint, LaunchDriver, LaunchJournal } from "./journal";
-import { allocationRaw, type LaunchStep } from "./plan";
+import { allocationRaw, type LaunchStep, validateTickAlignment } from "./plan";
 import { canonicalProfile, type LaunchProfile, profileMessage } from "./profile";
 import { decodeLaunchReceipt } from "./receipt";
 import type { FundReview } from "./review";
@@ -126,11 +126,29 @@ function launchProfile(journal: LaunchJournal): LaunchProfile {
   };
 }
 
-export function createLaunchDriver(wallet: LaunchWallet): LaunchDriver {
+export function createLaunchDriver(
+  wallet: LaunchWallet,
+  onSignature: (step: LaunchStep) => void = () => {},
+): LaunchDriver {
   const driver: LaunchDriver = {
     async build(step, journal) {
       const frozen = journal.frozen as FrozenLaunch;
       if (step.kind === "approve" || step.kind === "create") {
+        if (step.kind === "create") {
+          for (const position of journal.steps.filter(
+            (entry) => entry.protocol === "uniswap-v4" && entry.kind === "open",
+          )) {
+            const pool = catalogPoolSchema.parse(
+              unwrap(
+                await getCatalogPoolAction(
+                  position.chain,
+                  z.string().parse(position.config?.poolId),
+                ),
+              ),
+            );
+            validateTickAlignment(position.config ?? {}, pool.poolKey.tickSpacing);
+          }
+        }
         const provision = unwrap(await buildCreateFundAction(frozen.request));
         const approval = typeof provision.nextAction === "string";
         if (step.kind === "approve" && !approval) return { complete: true };
@@ -188,6 +206,7 @@ export function createLaunchDriver(wallet: LaunchWallet): LaunchDriver {
         const nonce = crypto.randomUUID();
         const expiresAt = String(Math.floor(Date.now() / 1000) + 900);
         const signature = await wallet.sign(profileMessage(core, profile, nonce, expiresAt));
+        onSignature(step);
         unwrap(
           await putLaunchProfileAction(core, {
             chainId: 42161,
@@ -278,6 +297,7 @@ export function createLaunchDriver(wallet: LaunchWallet): LaunchDriver {
       const pool = catalogPoolSchema.parse(
         unwrap(await getCatalogPoolAction(step.chain, z.string().parse(step.config?.poolId))),
       );
+      validateTickAlignment(step.config ?? {}, pool.poolKey.tickSpacing);
       if (
         !pool.eligible ||
         pool.chainId !== String(step.chain) ||
@@ -339,7 +359,9 @@ export function createLaunchDriver(wallet: LaunchWallet): LaunchDriver {
     async send(step, input) {
       const built = launchTransactionSchema.parse(input);
       if (built.chainId !== step.chain) throw new Error("UNSAFE_TRANSACTION");
-      return wallet.send(built);
+      const hash = await wallet.send(built);
+      onSignature(step);
+      return hash;
     },
     async receipt(chain, hash) {
       const receipt = await wallet.receipt(chain, hash);

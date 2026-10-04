@@ -785,6 +785,17 @@
     }
   },
   "funds": {
+    "protocols": "协议",
+    "noPositions": "暂无持仓",
+    "viewDetails": "查看详情",
+    "dormant": "V2 基金暂不可用。请稍后重试。",
+    "launchJourneys": "启动流程",
+    "noJourneys": "此设备暂无启动记录。",
+    "journeysUnavailable": "无法从此浏览器读取启动记录。您的基金仍可使用。",
+    "journeyCompleted": "已完成",
+    "journeyInProgress": "进行中",
+    "viewJourney": "查看流程",
+    "resumeLaunch": "继续启动",
     "title": "基金",
     "holdings": "您的基金持仓",
     "managerView": "基金管理",

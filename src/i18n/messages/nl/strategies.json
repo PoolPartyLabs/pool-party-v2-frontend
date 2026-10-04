@@ -785,6 +785,17 @@
     }
   },
   "funds": {
+    "protocols": "Protocollen",
+    "noPositions": "Nog geen posities",
+    "viewDetails": "Details bekijken",
+    "dormant": "V2-fondsen zijn nog niet beschikbaar. Probeer het later opnieuw.",
+    "launchJourneys": "Fondsstarts",
+    "noJourneys": "Nog geen fondsstarts op dit apparaat.",
+    "journeysUnavailable": "Fondsstarts kunnen niet worden gelezen in deze browser. Uw fondsen blijven beschikbaar.",
+    "journeyCompleted": "Voltooid",
+    "journeyInProgress": "In uitvoering",
+    "viewJourney": "Fondsstart bekijken",
+    "resumeLaunch": "Fondsstart hervatten",
     "title": "Fondsen",
     "holdings": "Uw fondsbezit",
     "managerView": "Fondsbeheer",
