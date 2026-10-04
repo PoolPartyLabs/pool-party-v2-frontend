@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen
- * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2195 rules v1)
+ * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2195 rules v1, POO-2197 rules v2)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
  *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
  *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
@@ -113,7 +113,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { type ComponentType, useCallback, useEffect, useRef, useState } from "react";
+import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { toast } from "@/components/ui/Toast";
@@ -121,6 +121,7 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 import type { AnalyticsMandateBlockReason } from "@/lib/analytics/events";
 import type { AnalyticsBlockReason } from "@/lib/analytics/txFlowKit";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
+import { useAuth } from "@/lib/auth/useAuth";
 import { useUnsavedChanges } from "@/lib/hooks/unsavedChanges";
 import { cn } from "@/lib/utils/cn";
 import { BuilderStepper } from "../components/BuilderStepper";
@@ -130,8 +131,10 @@ import { planCounts } from "./build/buildAnalytics";
 import { type BuilderPhase, planOf } from "./build/plan/buildPlan";
 import type { ReadinessTarget } from "./build/plan/planReadiness";
 import { BuilderActionBar } from "./components/BuilderActionBar";
+import { MandateCatalogStatus } from "./components/MandateCatalogStatus";
 import { MandateSubStepHeader } from "./components/MandateSubStepHeader";
 import { NameDraftDialog } from "./components/NameDraftDialog";
+import { getLaunchStatusForDraft } from "./launch/journey";
 import type { MandateCatalog } from "./mandateCatalog";
 import {
   firstUnpassedStep,
@@ -187,6 +190,7 @@ export const MANDATE_BLOCK_REASON_EVENT: Record<
 > = {
   nothing_selected: "nothing_selected",
   cap_missing: "cap_missing",
+  token_allowance_required: "token_allowance_required",
   no_slots: "no_slots",
   has_hook: "has_hook",
   coming_soon: "coming_soon",
@@ -276,7 +280,33 @@ export function FundStrategyBuilderScreen() {
 
   // Through `resumeStep`, not `lastStep` raw: a stored draft can name a step it no longer has (see
   // the file header), and the resume effect below only corrects `lastStep` one render later.
-  const step = resumeStep(draft);
+  const { address, isLoading: walletLoading } = useAuth();
+  // POO-2197: derive the displayed phase without rewriting recovery state. The wallet can arrive
+  // after draft hydration; an existing frozen journey always retains its original resume path.
+  const existingJourney = hydrated ? getLaunchStatusForDraft(draft.id, address ?? null) : null;
+  const hasExistingJourney = existingJourney !== null;
+  const awaitingWallet = hydrated && draft.completedAt !== null && walletLoading;
+  const awaitingCatalog =
+    hydrated &&
+    draft.completedAt !== null &&
+    !hasExistingJourney &&
+    catalog.dataMode === "real" &&
+    Boolean(catalog.loading || catalog.error);
+  const resumePending = awaitingWallet || awaitingCatalog;
+  const revisedLimitsBlock = useMemo(
+    () =>
+      hydrated && draft.completedAt !== null && !hasExistingJourney && !resumePending
+        ? validateStep(draft, "limits", catalog)
+        : null,
+    [hydrated, draft, hasExistingJourney, resumePending, catalog],
+  );
+  const [revisitedMandate, setRevisitedMandate] = useState(false);
+  const step =
+    revisedLimitsBlock &&
+    !revisitedMandate &&
+    ["build", "review"].includes(requestedPhase ?? draft.lastPhase ?? "")
+      ? "limits"
+      : resumeStep(draft);
   const steps = visibleSteps(draft);
   const position = stepIndex(draft, step);
 
@@ -289,12 +319,13 @@ export function FundStrategyBuilderScreen() {
    */
   const [reviewRevealTarget, setReviewRevealTarget] = useState<ReadinessTarget | null>(null);
   const [phaseChoice, setPhaseChoice] = useState<BuilderPhase | null>(null);
-  const phase: BuilderPhase =
-    phaseChoice ??
-    (["build", "review"].includes(requestedPhase ?? draft.lastPhase ?? "") &&
-    draft.completedAt !== null
-      ? ((requestedPhase ?? draft.lastPhase) as BuilderPhase)
-      : "mandate");
+  const phase: BuilderPhase = revisedLimitsBlock
+    ? "mandate"
+    : (phaseChoice ??
+      (["build", "review"].includes(requestedPhase ?? draft.lastPhase ?? "") &&
+      draft.completedAt !== null
+        ? ((requestedPhase ?? draft.lastPhase) as BuilderPhase)
+        : "mandate"));
 
   const [dialog, setDialog] = useState<"exit" | "complete" | null>(null);
   const [shellBlock, setShellBlock] = useState<StepBlock | null>(null);
@@ -302,7 +333,7 @@ export function FundStrategyBuilderScreen() {
 
   // The block the step body renders: the shell's own (a refused Next) takes precedence over the
   // hook's, which records a reducer that refused a selection.
-  const activeBlock = shellBlock ?? lastBlock;
+  const activeBlock = shellBlock ?? lastBlock ?? revisedLimitsBlock;
 
   // R9 / handoff: the browser warns before losing a mandate, from the first selection onward.
   // `exiting` disarms it on the way out, so Save & exit does not prompt about work it just saved.
@@ -430,6 +461,18 @@ export function FundStrategyBuilderScreen() {
     [track],
   );
 
+  const reportedRevisionBlock = useRef<string | null>(null);
+  useEffect(() => {
+    if (!revisedLimitsBlock || walletLoading) return;
+    const key = `${draft.id}:${revisedLimitsBlock.reason}:${revisedLimitsBlock.rowId}`;
+    if (reportedRevisionBlock.current === key) return;
+    reportedRevisionBlock.current = key;
+    track("builder_mandate_blocked", {
+      step: "limits",
+      block_reason: MANDATE_BLOCK_REASON_EVENT[revisedLimitsBlock.reason],
+    });
+  }, [draft.id, revisedLimitsBlock, track, walletLoading]);
+
   /**
    * The Pools step could not read its catalog (POO-2125 [R30]).
    *
@@ -479,7 +522,7 @@ export function FundStrategyBuilderScreen() {
    */
   const resumed = useRef(false);
   useEffect(() => {
-    if (!hydrated || resumed.current) return;
+    if (!hydrated || resumePending || resumed.current) return;
     resumed.current = true;
     const current = draftRef.current;
 
@@ -494,7 +537,7 @@ export function FundStrategyBuilderScreen() {
     const wanted = requestedStep ?? current.lastStep;
     const target = isStepReachable(current, wanted) ? wanted : firstUnpassedStep(current);
     if (target !== current.lastStep) update((d) => ({ ...d, lastStep: target }));
-  }, [hydrated, initialDraftId, requestedStep, update]);
+  }, [hydrated, resumePending, initialDraftId, requestedStep, update]);
 
   /**
    * One view per step VISIT, not per render and not per mount.
@@ -505,10 +548,10 @@ export function FundStrategyBuilderScreen() {
    */
   const viewedStep = useRef<MandateStepKey | null>(null);
   useEffect(() => {
-    if (!hydrated || phase !== "mandate" || viewedStep.current === step) return;
+    if (!hydrated || resumePending || phase !== "mandate" || viewedStep.current === step) return;
     viewedStep.current = step;
     track("builder_mandate_step_viewed", { step });
-  }, [hydrated, phase, step, track]);
+  }, [hydrated, resumePending, phase, step, track]);
 
   /**
    * From the first save on, the URL names the draft, the step and the phase, so a reload restores
@@ -516,10 +559,10 @@ export function FundStrategyBuilderScreen() {
    * means the default, and a Back from Build has to leave the URL as it was before it.
    */
   useEffect(() => {
-    if (!hydrated || draft.savedAt === null) return;
+    if (!hydrated || resumePending || draft.savedAt === null) return;
     const query = `?draft=${draft.id}&step=${step}${phase !== "mandate" ? `&phase=${phase}` : ""}`;
     routerRef.current.replace(`${pathname}${query}`, { scroll: false });
-  }, [hydrated, draft.savedAt, draft.id, step, phase, pathname]);
+  }, [hydrated, resumePending, draft.savedAt, draft.id, step, phase, pathname]);
 
   // Every step transition starts at the top: the steps are tall, and advancing otherwise drops the
   // manager mid-scroll into a list they have not seen the top of. Instant, per the 2026-06-26 rule.
@@ -631,7 +674,10 @@ export function FundStrategyBuilderScreen() {
       // a dead end on a screen with nothing to fix. The navigation goes FIRST, because `update`
       // clears `shellBlock` on any write that settles, so reporting before it would hand the
       // manager the right screen with no notice on it.
-      if (blocked.step !== step) update((d) => ({ ...d, lastStep: blocked.step }));
+      if (blocked.step !== step) {
+        setRevisitedMandate(true);
+        update((d) => ({ ...d, lastStep: blocked.step }));
+      }
       reportBlocked(blocked);
       return;
     }
@@ -688,6 +734,7 @@ export function FundStrategyBuilderScreen() {
   const handleBack = useCallback(() => {
     const previous = previousStep(draft, step);
     if (!previous) return;
+    setRevisitedMandate(true);
     setShellBlock(null);
     clearBlock();
     update((d) => ({ ...d, lastStep: previous }));
@@ -696,6 +743,7 @@ export function FundStrategyBuilderScreen() {
   const handleNavigate = useCallback(
     (target: MandateStepKey) => {
       if (!isStepReachable(draft, target)) return;
+      setRevisitedMandate(true);
       setShellBlock(null);
       clearBlock();
       update((d) => ({ ...d, lastStep: target }));
@@ -788,7 +836,13 @@ export function FundStrategyBuilderScreen() {
     [stampPhase],
   );
 
-  if (!hydrated) return <BuilderSkeleton />;
+  if (!hydrated || awaitingWallet) return <BuilderSkeleton />;
+  if (awaitingCatalog)
+    return (
+      <section className="mx-auto w-full max-w-3xl">
+        <MandateCatalogStatus catalog={catalog} draft={draft} />
+      </section>
+    );
 
   const Body = STEP_BODIES[step];
   const counts = selectionCounts(draft);

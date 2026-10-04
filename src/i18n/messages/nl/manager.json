@@ -870,7 +870,9 @@
         "lending": "Uitlenen",
         "dex": "Liquidity positions",
         "perps": "Perpetuals"
-      }
+      },
+      "positiveTokenRequired": "Sta minstens één token naast USDC toe met meer dan 0% of kies Geen limiet.",
+      "addPositiveToken": "Voeg in Tokens een ander token toe en stel de limiet boven 0% in of kies Geen limiet. USDC is al inbegrepen."
     },
     "draft": {
       "title": "Geef uw concept een naam",

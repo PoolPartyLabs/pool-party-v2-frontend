@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-039
  * @name LimitsStep.test
- * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v2 (POO-2142 rules v2, POO-2197 rules v2)
  * @analytics-events none, the shell emits
  *
  * POO-2126 [R6] / [R39] to [R43], epic POO-2119. Mandate step 5.
@@ -129,6 +129,48 @@ afterEach(() => {
 });
 
 describe("LimitsStep", () => {
+  // @rule POO-2197 R1/R2
+  it.each([
+    ["robinhood", "networks", 40],
+    ["aave-v3", "protocols", 60],
+    [tokenKey(WETH), "tokens", 60],
+  ] as const)("100 percent selects No cap for %s and keeps the prior numeric cap", (id, scope, pct) => {
+    const { capsAfterUpdate } = renderStep();
+    fireEvent.change(within(row(id)).getByRole("slider"), { target: { value: "100" } });
+    expect(capsAfterUpdate()[scope][id as never]).toEqual({ noCap: true, pct });
+  });
+
+  // @rule POO-2197 R1/R2
+  it("hides a focused slider at 100%, focuses No cap and restores the prior value on untick", async () => {
+    let draft = figmaDraft();
+    const update = vi.fn();
+    const step = () => (
+      <LimitsStep
+        draft={draft}
+        catalog={catalog}
+        update={update}
+        block={null}
+        onBlocked={vi.fn()}
+      />
+    );
+    const { rerender } = renderWithProviders(step());
+    const apply = () => {
+      draft = update.mock.calls.at(-1)?.[0](draft);
+      rerender(step());
+    };
+    const slider = within(row("robinhood")).getByRole("slider");
+    slider.focus();
+    fireEvent.change(slider, { target: { value: "100" } });
+    apply();
+    expect(within(row("robinhood")).queryByRole("slider")).not.toBeInTheDocument();
+    const noCap = within(row("robinhood")).getByRole("checkbox");
+    expect(noCap).toHaveAttribute("aria-checked", "true");
+    expect(noCap).toHaveFocus();
+    await userEvent.setup().click(noCap);
+    apply();
+    expect(within(row("robinhood")).getByRole("slider")).toHaveValue("40");
+  });
+
   // @rule R39
   it("renders the three groups with their heads and captions", () => {
     renderStep();

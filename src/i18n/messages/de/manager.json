@@ -870,7 +870,9 @@
         "lending": "Verleih",
         "dex": "Liquidity positions",
         "perps": "Perpetuals"
-      }
+      },
+      "positiveTokenRequired": "Erlaube mindestens einen Token neben USDC mit mehr als 0 % oder wähle Kein Limit.",
+      "addPositiveToken": "Füge unter Tokens einen weiteren Token hinzu und setze sein Limit über 0 % oder wähle Kein Limit. USDC ist bereits enthalten."
     },
     "draft": {
       "title": "Benennen Sie Ihren Entwurf",

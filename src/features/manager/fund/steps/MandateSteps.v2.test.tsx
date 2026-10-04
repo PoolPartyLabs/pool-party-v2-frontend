@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-025 (POO-2133)
  * @name RealMandateStepTests
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2197 rules v2)
  * The real-mode Networks, Protocols, Tokens and Limits contract.
  */
 import { useState } from "react";
@@ -18,6 +18,7 @@ import {
   depositTokenRefFor,
   isBlocked,
   type MandateDraft,
+  tokenKey,
   validateStep,
   withProtocols,
 } from "../mandateDraft";
@@ -152,7 +153,14 @@ describe("real Mandate step contract", () => {
   });
   // @rule R7
   it("Limits discloses client-only allocation aids and permits them to remain unset", () => {
-    const current = withProtocols(draft(), ["aave-v3"]);
+    const current = {
+      ...withProtocols(draft(), ["aave-v3"]),
+      tokens: [...draft().tokens, { ...weth, network: "arbitrum" as const, locked: false }],
+      caps: {
+        ...draft().caps,
+        tokens: { [tokenKey({ ...weth, network: "arbitrum" })]: { noCap: true, pct: 0 } },
+      },
+    };
     renderWithProviders(<Harness step="limits" initial={current} />);
     expect(screen.getAllByText(/not enforced on chain until POO-2169/).length).toBeGreaterThan(0);
     expect(validateStep(current, "limits", catalog)).toBeNull();
@@ -164,5 +172,35 @@ describe("real Mandate step contract", () => {
       <Harness step="networks" initial={createEmptyDraft("2026-10-03", "old")} />,
     );
     expect(screen.getByRole("alert")).toHaveTextContent("stale or mock data");
+  });
+});
+
+describe("real Limits positive token allowances (POO-2197)", () => {
+  function limitsDraft(cap?: { noCap: boolean; pct: number }): MandateDraft {
+    const current = withProtocols(draft(), ["aave-v3"]);
+    return {
+      ...current,
+      tokens: [...current.tokens, { ...weth, network: "arbitrum", locked: false }],
+      caps: {
+        ...current.caps,
+        protocols: { "aave-v3": { noCap: true, pct: 0 } },
+        tokens: cap ? { [tokenKey({ ...weth, network: "arbitrum" })]: cap } : {},
+      },
+    };
+  }
+  // @rule POO-2197 R3
+  it("counts an unset token as no positive allowance without requiring other real caps", () => {
+    expect(validateStep(limitsDraft(), "limits", catalog)).toMatchObject({
+      reason: "token_allowance_required",
+      rowId: tokenKey({ ...weth, network: "arbitrum" }),
+    });
+  });
+  // @rule POO-2197 R3
+  it("blocks zero and accepts positive or No cap in real mode", () => {
+    expect(validateStep(limitsDraft({ noCap: false, pct: 0 }), "limits", catalog)).toMatchObject({
+      reason: "token_allowance_required",
+    });
+    expect(validateStep(limitsDraft({ noCap: false, pct: 5 }), "limits", catalog)).toBeNull();
+    expect(validateStep(limitsDraft({ noCap: true, pct: 0 }), "limits", catalog)).toBeNull();
   });
 });

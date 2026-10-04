@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-039
  * @name LimitsStep
- * @implements-rules-version v2 (POO-2143 rules v2)
+ * @implements-rules-version v2 (POO-2143 rules v2, POO-2197 rules v2)
  * @analytics-events none, the shell emits
  *
  * POO-2126 [R6] / [R39] / [R40] / [R41] / [R42] / [R43], epic POO-2119. Mandate step 5: how much of
@@ -23,6 +23,10 @@
  * leave a manager staring at a row that already reads 0% while the product says a cap is missing.
  * The first interaction, slider or checkbox, is what creates the record.
  *
+ * POO-2197 rules v2: reaching 100% selects No cap while retaining the prior numeric value for an
+ * untick. A focused slider hands focus to that row's surviving checkbox. Limits now requires USDC
+ * plus another editable token with No cap or a percentage above zero; zero and unset do not count.
+ *
  * ## The refusal is the shell's, and the row is this screen's
  *
  * Nothing here can refuse a click, so this step never calls `onBlocked`: the only refusal on step 5
@@ -39,7 +43,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { TokenLogo } from "@/components/data-display/TokenLogo";
 import { cn } from "@/lib/utils/cn";
 import { MandateCheckbox, MandateRow } from "../components/MandateRow";
@@ -145,18 +149,32 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
   const protocolsById = new Map(catalog.protocols.map((protocol) => [protocol.id, protocol]));
 
   const ownBlock = block?.step === STEP ? block : null;
+  const focusNoCapRow = useRef<string | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a controlled draft update removes the slider before focus can move to its surviving checkbox.
+  useEffect(() => {
+    const id = focusNoCapRow.current;
+    if (!id) return;
+    const checkbox = document.querySelector<HTMLButtonElement>(
+      `[data-mandate-row="${id}"] button[role="checkbox"]`,
+    );
+    if (checkbox?.getAttribute("aria-checked") === "true") {
+      checkbox.focus();
+      focusNoCapRow.current = null;
+    }
+  }, [draft]);
   const [highlighted, setHighlighted] = useState<string | null>(null);
 
   // R6: find the row the shell is pointing at, then ring it for a moment. Both halves are needed:
   // the scroll answers "where", the ring answers "which one", and a long list gives neither for free.
+  const blockedRowId = ownBlock?.rowId;
   useEffect(() => {
-    const rowId = ownBlock?.rowId;
+    const rowId = blockedRowId;
     if (!rowId) return;
     document.querySelector(`[data-mandate-row="${rowId}"]`)?.scrollIntoView({ block: "center" });
     setHighlighted(rowId);
     const timer = window.setTimeout(() => setHighlighted(null), HIGHLIGHT_MS);
     return () => window.clearTimeout(timer);
-  }, [ownBlock]);
+  }, [blockedRowId]);
 
   /** The cap stored for a row, or undefined while the row is still unset. */
   function capFor(scope: CapScope, id: string): MandateCap | undefined {
@@ -236,7 +254,24 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
               // draft's own number and the move would silently write back what was there.
               onChange={(event) => {
                 const next = Number(event.target.value);
-                update((current) => setCap(current, scope, id, { noCap: false, pct: next }));
+                if (next === 100 && document.activeElement === event.currentTarget)
+                  focusNoCapRow.current = id;
+                update((current) => {
+                  const prior =
+                    scope === "networks"
+                      ? current.caps.networks[id as NetworkId]
+                      : scope === "protocols"
+                        ? current.caps.protocols[id as ProtocolId]
+                        : current.caps.tokens[id];
+                  return setCap(
+                    current,
+                    scope,
+                    id,
+                    next === 100
+                      ? { noCap: true, pct: prior?.pct ?? 0 }
+                      : { noCap: false, pct: next },
+                  );
+                });
               }}
               className="h-1 w-20 shrink-0 cursor-pointer appearance-none rounded-full accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-56"
               // The filled part of the track is the value, which `accent-color` alone does not draw
@@ -299,7 +334,13 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
           role="alert"
           className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive text-sm"
         >
-          {t("fundBuilder.limits.capMissing")}
+          {ownBlock.reason === "token_allowance_required"
+            ? t(
+                rows.tokens.length === 0
+                  ? "fundBuilder.limits.addPositiveToken"
+                  : "fundBuilder.limits.positiveTokenRequired",
+              )
+            : t("fundBuilder.limits.capMissing")}
         </p>
       ) : null}
 

@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE (SETUP-014 / POO-82)
  * @name analytics events
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2197 rules v2)
  *
  * Typed event catalog for Pool Party analytics. The living source of truth is
  * `docs/ANALYTICS_EVENTS.md`; this list must stay in sync with it (the `consistency-checker` skill
@@ -544,6 +544,8 @@ export const ANALYTICS_MANDATE_BLOCK_REASONS = [
    * and this count is what says whether Limits asks for more decisions than it is worth.
    */
   "cap_missing",
+  /** USDC needs another selected token with a positive effective allowance (POO-2197). */
+  "token_allowance_required",
   /**
    * A token could not be added because the mandate's 16 network slots are full (R27).
    *

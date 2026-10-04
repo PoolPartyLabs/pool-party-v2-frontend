@@ -870,7 +870,9 @@
         "lending": "借貸",
         "dex": "Liquidity positions",
         "perps": "永續"
-      }
+      },
+      "positiveTokenRequired": "請將至少一種 USDC 以外的代幣上限設為高於 0%，或選擇無上限。",
+      "addPositiveToken": "請在 Tokens 中新增另一種代幣，然後將其上限設為高於 0%，或選擇無上限。USDC 已包含在內。"
     },
     "draft": {
       "title": "為您的草稿命名",
