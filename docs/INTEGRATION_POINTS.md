@@ -47,7 +47,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 478 markers across 275 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 484 markers across 278 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -192,3 +192,30 @@ Hackathon, 2026-09-13. The `/tools` page (PP-TOOLS-SCR-001) takes a chain and a 
 | Block explorer (verified source) | `src/lib/tools/hookrisk/explorer.ts` (PP-TOOLS-LIB-002) | **REAL.** `GET https://api.etherscan.io/v2/api?chainid=…&module=contract&action=getsourcecode`, one V2 endpoint covering all five chains. Server-only; the key is read at call time in `jobs.ts` (PP-TOOLS-LIB-005) so an unset key fails one job rather than the module | `ETHERSCAN_API_KEY`, server-only, no `NEXT_PUBLIC_` prefix ever. An unverified contract returns `NOT_VERIFIED`, a named result, not an empty source set |
 | hookrisk toolchain (`forge`, then the CLI) | `src/lib/tools/hookrisk/run.ts` (PP-TOOLS-LIB-004), driven by `jobs.ts` (PP-TOOLS-LIB-005) | **REAL.** A child process on the Node runtime: `forge build`, then `node $HOOKRISK_HOME/cli/dist/cli.js init` and `scan <File.sol>:<Contract> --out <job dir>`. `spawn` without a shell, so an explorer-supplied contract name can never become a shell metacharacter | Needs foundry, slither and a built `hookrisk/cli/dist/cli.js` on the host (`make setup` inside `hookrisk/`, or the `WITH_HOOKRISK=1` image). **Exit 2 is a RESULT** (gate failed, report written), 10+ means it could not run |
 | Job registry | `src/lib/tools/hookrisk/jobs.ts` (PP-TOOLS-LIB-005) | **REAL, and in process memory.** One running job per `(chainId, address)`; a second start joins it. Reports are cached on disk for 24 h under `$HOOKRISK_WORK_DIR/hookrisk/<sha256>/`, swept by each request rather than by a cron | **PP-INTEGRATION-POINT:** the registry is per replica and per restart, so a second instance does not see the first's running job. The disk cache is what actually survives, so the worst case is a wasted rerun. A durable queue replaces it if this leaves hackathon scope |
+
+
+### Review form cards (POO-2188, RB1)
+
+The props-only PP-MGR-CMP-073..076 cards add no service or wallet calls. Their parent
+supplies `useV2ReviewDraft` values, validated cropped-logo upload, hub USDC balance and
+`feeConfiguration`. `reviewForm` reuses the existing `rawUsdc` contract, and the deposit
+card displays the supplied `previewSeed` result. The protocol rate is explicitly estimated
+when its source is fallback. RB2 owns the connected seam and launch-entry analytics.
+
+
+### Review assembly (POO-2195, RB2)
+
+PP-MGR-CMP-077 connects the existing `useV2ReviewDraft`, read-only `useV2LaunchStatus`,
+and `startFundLaunch` seams. It never reconstructs launch transactions or writes a journal.
+The mock branch does not mount Privy hooks or substitute fixtures into real Review.
+`getLaunchSteps` remains the source of the grouped signature preview.
+| Uniswap v4 pool panel defaults | `src/features/manager/fund/build/panel/PoolBlockPanel.tsx` | Mount read through `getCatalogPoolsAction`, MCK-005 in mock mode; missing, unread or ineligible rows disable Use. `usePanelPool` gates Apply on the latest live read. POO-2189 @rules-v1. |
+## Aave Supply configuration (POO-2194, rules v1)
+
+`SupplyBlockPanel.tsx` reads `usePanelReserves` against the shell's catalog, sourced from
+`GET /api/v2/catalog/aave-v3/reserves`. Network, mandate tokens and selected reserves intersect
+before rendering. Only USDC on Arbitrum is executable in the alpha; other rows remain disabled.
+`assetKey` is canonical and APY is the served snapshot. Catalog loading/error or an unusable
+selection prevents Use/Apply. There is no second fetch, fixture fallback in real mode, automatic
+reserve refresh or USDC-to-USDC swap. Token logos use the shared resolver; the shell draws network
+and protocol logos. Shared shell analytics cover this body without duplicate emitters.
