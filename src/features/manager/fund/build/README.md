@@ -66,6 +66,13 @@ Making a coming-soon kind placeable takes more than step 1: Uniswap v3 positions
 offer `uniswap-v3` again (`UNAVAILABLE_PROTOCOLS` in `mandateDraft.ts`, read by `mandateCatalog.ts`), and Pendle and GMX
 have no `ProtocolId`.
 
+The Uniswap v4 configuration body (`PoolBlockPanel`, POO-2189, rules v1) is registered for `uniswapV4Pool`. Use seeds an aligned ±10% range, slippage 2% and share 0 from a mount catalog read. Apply requires the current pool read to be applicable, complete and aligned. The price controls keep canonical ticks while displaying either quote orientation, and pool changes reset only the range. Pool rows expose no TVL or APR.
+
+The pool body uses `PanelBodyDefinition.Provider` to share one `usePanelPool` snapshot between
+its fields and its Apply gate. A Retry updates both; each configured pool has one polling
+lifecycle. This prevents the visible price and Apply permission from diverging after a failed
+read. A component regression reproduces the old failure before the provider fix. Other bodies
+may omit the provider when their hooks are pure catalog selectors.
 ## Aave Supply panel (POO-2194, rules v1)
 
 `panel/SupplyBlockPanel.tsx` (`PP-MGR-CMP-072`) registers `aaveSupply` in `PANEL_BODIES`.

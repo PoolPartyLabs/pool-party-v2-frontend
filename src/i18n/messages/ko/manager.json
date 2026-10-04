@@ -1125,6 +1125,40 @@
           "notInMandate": "이 풀 또는 자산은 이 네트워크의 운용 방침에 더 이상 포함되어 있지 않습니다. 다른 항목을 선택하거나 운용 방침을 편집하세요.",
           "shareExceedsParent": "이 비율이 이 블록 위에 남은 여유분보다 큽니다. 값을 낮춘 뒤 다시 적용하세요.",
           "other": "이 변경 사항을 적용할 수 없습니다. 값을 확인한 뒤 다시 시도하세요."
+        },
+        "range": {
+          "label": "가격 범위",
+          "help": "현재 가격이 이 범위 안에 있는 동안 포지션이 수수료를 얻습니다.",
+          "quote": "{base}당 {quote}",
+          "full": "전체",
+          "min": "최저 가격",
+          "max": "최고 가격",
+          "increase": "{label} 높이기",
+          "decrease": "{label} 낮추기",
+          "current": "현재 {price} · {status}",
+          "always": "항상 범위 내",
+          "in": "범위 내",
+          "below": "설정 범위 미만",
+          "above": "설정 범위 초과",
+          "oneToken": "포지션은 100% {token}으로 시작하며 가격이 범위 안에 들어올 때까지 수수료를 얻지 못합니다."
+        },
+        "pool": {
+          "label": "Pool",
+          "help": "{network}의 운용 지침에 포함된 Uniswap v4 풀입니다.",
+          "heading": "운용 지침의 풀",
+          "filter": "토큰 또는 주소로 필터링",
+          "caption": "운용 지침(4단계)에서 선택한 {network}의 Uniswap v4 풀만 표시합니다. 풀은 출시 시 고정됩니다.",
+          "needAnother": "다른 풀이 필요하신가요?",
+          "noMatch": "운용 지침에 {typed}을 포함한 풀이 없습니다",
+          "noMatchCaption": "풀은 운용 지침 4단계에서 선택합니다. 편집하는 동안 구성은 저장됩니다.",
+          "empty": "운용 지침의 풀이 {network}에 없습니다",
+          "loading": "풀 가격을 기다리는 중입니다.",
+          "failed": "풀 읽기에 실패했습니다. 계속하려면 다시 시도하세요.",
+          "retry": "다시 시도",
+          "unread": "이 풀을 읽을 수 없습니다.",
+          "ineligible": "이 풀은 적격하지 않습니다.",
+          "noLiquidity": "이 풀에는 활성 유동성이 없습니다.",
+          "incomplete": "풀 설정이 완료되지 않았습니다."
         }
       },
       "network": {

@@ -155,7 +155,19 @@ function useAlwaysReady(): PanelApplyGate {
  * Mode 4 below the head (M1): the body's fields, the status row and Apply changes. A component of
  * its own, keyed on the block by the caller, so the body's `useApplyGate` hook keeps its identity.
  */
-function ConfiguredBody({
+function ConfiguredBody(props: Parameters<typeof ConfiguredBodyContent>[0]) {
+  const Provider = props.definition.Provider;
+  const content = <ConfiguredBodyContent {...props} />;
+  return Provider ? (
+    <Provider context={props.context} config={props.config}>
+      {content}
+    </Provider>
+  ) : (
+    content
+  );
+}
+
+function ConfiguredBodyContent({
   definition,
   context,
   panel,

@@ -47,7 +47,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 479 markers across 276 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 481 markers across 277 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -193,6 +193,7 @@ Hackathon, 2026-09-13. The `/tools` page (PP-TOOLS-SCR-001) takes a chain and a 
 | hookrisk toolchain (`forge`, then the CLI) | `src/lib/tools/hookrisk/run.ts` (PP-TOOLS-LIB-004), driven by `jobs.ts` (PP-TOOLS-LIB-005) | **REAL.** A child process on the Node runtime: `forge build`, then `node $HOOKRISK_HOME/cli/dist/cli.js init` and `scan <File.sol>:<Contract> --out <job dir>`. `spawn` without a shell, so an explorer-supplied contract name can never become a shell metacharacter | Needs foundry, slither and a built `hookrisk/cli/dist/cli.js` on the host (`make setup` inside `hookrisk/`, or the `WITH_HOOKRISK=1` image). **Exit 2 is a RESULT** (gate failed, report written), 10+ means it could not run |
 | Job registry | `src/lib/tools/hookrisk/jobs.ts` (PP-TOOLS-LIB-005) | **REAL, and in process memory.** One running job per `(chainId, address)`; a second start joins it. Reports are cached on disk for 24 h under `$HOOKRISK_WORK_DIR/hookrisk/<sha256>/`, swept by each request rather than by a cron | **PP-INTEGRATION-POINT:** the registry is per replica and per restart, so a second instance does not see the first's running job. The disk cache is what actually survives, so the worst case is a wasted rerun. A durable queue replaces it if this leaves hackathon scope |
 
+| Uniswap v4 pool panel defaults | `src/features/manager/fund/build/panel/PoolBlockPanel.tsx` | Mount read through `getCatalogPoolsAction`, MCK-005 in mock mode; missing, unread or ineligible rows disable Use. `usePanelPool` gates Apply on the latest live read. POO-2189 @rules-v1. |
 ## Aave Supply configuration (POO-2194, rules v1)
 
 `SupplyBlockPanel.tsx` reads `usePanelReserves` against the shell's catalog, sourced from

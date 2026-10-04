@@ -1125,6 +1125,40 @@
           "notInMandate": "Este pool ou ativo não está mais no seu mandato nesta rede. Escolha outro ou edite o mandato.",
           "shareExceedsParent": "Este percentual é maior do que o espaço disponível acima deste bloco. Reduza-o e aplique de novo.",
           "other": "Não foi possível aplicar esta alteração. Confira os valores e tente de novo."
+        },
+        "range": {
+          "label": "Faixa de preço",
+          "help": "A posição ganha taxas enquanto o preço atual estiver dentro desta faixa.",
+          "quote": "{quote} por {base}",
+          "full": "Completa",
+          "min": "Preço mín.",
+          "max": "Preço máx.",
+          "increase": "Aumentar {label}",
+          "decrease": "Diminuir {label}",
+          "current": "Atual {price} · {status}",
+          "always": "sempre na faixa",
+          "in": "na faixa",
+          "below": "abaixo da sua faixa",
+          "above": "acima da sua faixa",
+          "oneToken": "A posição começa 100% em {token} e não ganha taxas até o preço entrar na faixa."
+        },
+        "pool": {
+          "label": "Pool",
+          "help": "Pools Uniswap v4 do seu mandato na rede {network}.",
+          "heading": "Pools no seu mandato",
+          "filter": "Filtrar por token ou endereço",
+          "caption": "Somente os pools Uniswap v4 na rede {network} escolhidos no mandato (etapa 4). Os pools são fixados no lançamento.",
+          "needAnother": "Precisa de outro pool?",
+          "noMatch": "Nenhum pool do seu mandato tem {typed}",
+          "noMatchCaption": "Os pools são escolhidos no mandato, etapa 4. Sua configuração fica salva enquanto você edita.",
+          "empty": "Nenhum pool do seu mandato está na rede {network}",
+          "loading": "Aguardando o preço do pool.",
+          "failed": "Falha ao consultar o pool. Tente novamente para continuar.",
+          "retry": "Tentar novamente",
+          "unread": "Não foi possível consultar este pool.",
+          "ineligible": "Este pool não é elegível.",
+          "noLiquidity": "Este pool não tem liquidez ativa.",
+          "incomplete": "A configuração do pool está incompleta."
         }
       },
       "network": {
