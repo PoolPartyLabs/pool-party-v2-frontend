@@ -58,3 +58,6 @@ not answer the existing roadmap/disclosure question. Verify that the three plann
 are acceptable before exposing the builder to real users. Regressions verify disabled intent,
 Select all exclusion, saved-draft sanitization and the real serializer's refusal. The removed APY
 paragraph used the same Aave reserve snapshot as SupplyBlockPanel; CR-MGR-024 remains open there.
+## Verification record: configuration actions visibility
+
+2026-10-04, POO-2202, PP-MGR-CMP-045: the layout now reserves the full height of a long configuration panel above Back/Next. Existing allocation/range disclosures, Apply/Discard consent and blocked-leave rules are unchanged. The fix adds no fees, routes, assets, credentials or claims. Existing compliance questions remain open; this is an engineering visibility correction.
