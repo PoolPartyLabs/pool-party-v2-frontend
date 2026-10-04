@@ -7,6 +7,11 @@ import { rehearsalSignInAllowed } from "./rehearsalSignIn";
 
 export type V2LaunchMode = "dry" | "dry-launch" | "signed";
 
+export function v2LaunchStepLabel(title: string, chainId: number): string {
+  if (chainId !== 42161 && chainId !== 4663) throw new Error("V2_LAUNCH_UNKNOWN_CHAIN");
+  return `${title} · ${chainId === 42161 ? "Arbitrum" : "Robinhood Chain"}`;
+}
+
 export function v2LaunchMode(dry: string | undefined): V2LaunchMode {
   return dry === "1" ? "dry" : dry === "launch" ? "dry-launch" : "signed";
 }

@@ -4,6 +4,7 @@ import {
   safeV2WalletCall,
   v2LaunchFailure,
   v2LaunchMode,
+  v2LaunchStepLabel,
 } from "../e2e/helpers/v2LaunchSigning";
 import { buildLegacySiweMessage } from "../src/lib/auth/siweMessage";
 
@@ -19,6 +20,13 @@ const financialMethods = [
 ];
 
 describe("v2 launch signing safety", () => {
+  it("R4 normalizes numeric Review chains into journey heading names", () => {
+    expect(v2LaunchStepLabel("Approve USDC", 42161)).toBe("Approve USDC · Arbitrum");
+    expect(v2LaunchStepLabel("Create Robinhood spoke", 4663)).toBe(
+      "Create Robinhood spoke · Robinhood Chain",
+    );
+    expect(() => v2LaunchStepLabel("Approve USDC", 1)).toThrow("V2_LAUNCH_UNKNOWN_CHAIN");
+  });
   it("keeps review-only and signed modes and recognizes launch-only dry mode", () => {
     expect(v2LaunchMode("1")).toBe("dry");
     expect(v2LaunchMode("launch")).toBe("dry-launch");

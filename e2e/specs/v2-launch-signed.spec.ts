@@ -14,6 +14,7 @@ import {
   safeV2WalletCall,
   v2LaunchFailure,
   v2LaunchMode,
+  v2LaunchStepLabel,
 } from "../helpers/v2LaunchSigning";
 
 const burner = "0x3A3ea619C0f37a7D2fF07FF442d863f316A99A7a";
@@ -278,7 +279,9 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
           ["open", 4663],
         ];
         expect(evidence.steps.map((step) => [step.kind, step.chainId])).toEqual(expectedSteps);
-        const expectedLabels = evidence.steps.map((step) => step.label);
+        const expectedLabels = evidence.steps.map((step) =>
+          v2LaunchStepLabel(manager.fundLaunch[step.kind], step.chainId),
+        );
         expect(signingGuard.armed).toBe(false);
         await launch.click();
         evidence.launchClickedAt = new Date().toISOString();
