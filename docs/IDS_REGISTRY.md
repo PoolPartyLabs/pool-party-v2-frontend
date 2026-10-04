@@ -880,3 +880,5 @@ POO-2209 rules v1 updates PP-CORE-LAY-001, PP-MGR-SCR-005 (including its private
 > POO-2210, 2026-10-04, rules v1: PP-MGR-LIB-021 applies pool selection and its initial Collect fees atomically. PP-MGR-CMP-059 exposes user-block X callbacks. PP-MGR-HOK-010 / PP-MGR-SCR-002 own a shared removal modal using PP-MGR-CMP-066, including empty spoke removal, preserving unrelated pending drafts. PP-MGR-CMP-045 / 046 expand the viewport while keeping configuration actions in document flow. Existing mandatory derived steps remain fixed; no new IDs or API seams.
 
 POO-2212 rules v1 updates PP-MGR-CMP-081: centered provisioning-style fund launch modal, explicit resume, close-to-pause, current action and confirmed-checkpoint progress. Runner and journal remain unchanged.
+
+POO-2213 rules v1 updates PP-MGR-CMP-059, PP-MGR-LIB-023 and graph model: derived fee conversion nodes, split income/principal paths, no persisted execution or user controls.

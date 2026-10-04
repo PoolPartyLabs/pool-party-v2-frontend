@@ -83,3 +83,7 @@ Status: RESOLVED. V2 Follow/Following is local UI state scoped to one viewed man
 ### CR-MGR-POO2212, 2026-10-04, launch modal presentation
 
 Status: RESOLVED. This changes signing presentation only. Fund identity and progress reflect the existing journal; progress advances only for confirmed checkpoints, and completed remains settlement-driven. No fee, asset, custody, signing payload or backend behavior changes. Closing pauses future prompts, with no claim of cancelling an already submitted transaction.
+
+### CR-MGR-POO2213, 2026-10-04, derived income conversion diagram
+
+Status: RESOLVED for visual scope. The automatic fee-swap pill describes the intended income path to the network stable; it is not a submitted swap, quote or execution guarantee. No persisted plan step, transaction payload, fee or supported asset changes. Real income-conversion wiring requires its own backend/contract validation before claiming execution.

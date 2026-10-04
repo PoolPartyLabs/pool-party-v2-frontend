@@ -1025,6 +1025,7 @@
         "bridgeAuto": "Bridge · auto"
       },
       "tooltip": {
+        "feeSwap": "Convierte las comisiones cobradas en {token}",
         "addProtocol": "Agregar protocolo en {network}",
         "addNetwork": "Agregar red",
         "portBefore": "Insertar un bloque de flujo: Swap",

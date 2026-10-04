@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name graphTypes
- * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v1 (POO-2153 rules v1); POO-2213 rules v1
  * @analytics-events none, type declarations and one pure key function: nothing here is rendered.
  *
  * The shapes the Build canvas layout reads and returns (coordinator plan, section 3.3). The names
@@ -150,6 +150,14 @@ export interface BridgeNode {
   rect: Rect;
 }
 
+/** Derived fee conversion on the income branch, never a stored or editable plan block. */
+export interface FeeSwapNode {
+  sourceBlockId: string;
+  chainId: string;
+  network: string;
+  rect: Rect;
+}
+
 /** A spoke's dashed box. `chipAnchor` is the chip's left edge on the box's top border. */
 export interface GroupNode {
   network: string;
@@ -208,6 +216,7 @@ export interface GraphLayout {
   /** Hub chains left to right, then each spoke's; each chain top to bottom. */
   blocks: BlockNode[];
   bridges: BridgeNode[];
+  feeSwaps?: FeeSwapNode[];
   groups: GroupNode[];
   /** The hub circle, each spoke's circle, then the Add network box. */
   templates: TemplateNode[];

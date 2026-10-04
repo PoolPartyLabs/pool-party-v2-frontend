@@ -71,6 +71,7 @@ export function nodeRects(layout: GraphLayout): Record<string, Rect> {
   };
   for (const n of layout.spine) put(n.role, n.rect);
   for (const n of layout.blocks) put(n.id, n.rect);
+  for (const n of layout.feeSwaps ?? []) put(`fee-swap:${n.sourceBlockId}`, n.rect);
   for (const n of layout.bridges) put(`bridge:${n.network}`, n.rect);
   for (const n of layout.groups) put(`group:${n.network}`, n.rect);
   for (const n of layout.templates) put(targetKey(n.target), n.rect);

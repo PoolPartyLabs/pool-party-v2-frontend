@@ -1025,6 +1025,7 @@
         "bridgeAuto": "Bridge · auto"
       },
       "tooltip": {
+        "feeSwap": "Zet geïnde vergoedingen om in {token}",
         "addProtocol": "Protocol toevoegen op {network}",
         "addNetwork": "Netwerk toevoegen",
         "portBefore": "Een flowblok invoegen: Swap",

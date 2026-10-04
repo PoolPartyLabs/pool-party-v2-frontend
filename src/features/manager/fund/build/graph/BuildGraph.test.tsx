@@ -157,6 +157,12 @@ describe.each(FIXTURE_NAMES)("BuildGraph on %s", (name) => {
       }
       expected += 1;
     }
+    for (const swap of layout.feeSwaps ?? []) {
+      const element = node(`fee-swap:${swap.sourceBlockId}`);
+      expectBox(element, swap.rect.x, swap.rect.y, swap.rect.w, swap.rect.h);
+      expect(element.querySelector("button")).toBeNull();
+      expected += 1;
+    }
     for (const bridge of layout.bridges) {
       const element = node(`bridge:${bridge.network}`);
       expectBox(element, bridge.rect.x, bridge.rect.y, bridge.rect.w, bridge.rect.h);
@@ -313,6 +319,7 @@ describe("BuildGraph, reading order", () => {
       blockKey("c-pool-swap"),
       blockKey("c-pool-pool"),
       blockKey("c-pool-fees"),
+      "fee-swap:c-pool-fees",
       label("c-supply", "arbitrum", "c-supply-supply"),
       port("before", "c-supply-supply"),
       blockKey("c-supply-supply"),
@@ -332,12 +339,14 @@ describe("BuildGraph, reading order", () => {
       blockKey("a-hub-1-swap"),
       blockKey("a-hub-1-pool"),
       blockKey("a-hub-1-fees"),
+      "fee-swap:a-hub-1-fees",
       label("a-hub-2", "arbitrum", "a-hub-2-supply"),
       port("before", "a-hub-2-supply"),
       blockKey("a-hub-2-supply"),
       blockKey("a-hub-2-swap"),
       blockKey("a-hub-2-pool"),
       blockKey("a-hub-2-fees"),
+      "fee-swap:a-hub-2-fees",
       label("a-hub-3", "arbitrum", "a-hub-3-supply"),
       blockKey("a-hub-3-swap"),
       blockKey("a-hub-3-supply"),
@@ -351,10 +360,12 @@ describe("BuildGraph, reading order", () => {
       blockKey("a-base-1-swap"),
       blockKey("a-base-1-pool"),
       blockKey("a-base-1-fees"),
+      "fee-swap:a-base-1-fees",
       label("a-base-2", "base", "a-base-2-pool"),
       blockKey("a-base-2-swap"),
       blockKey("a-base-2-pool"),
       blockKey("a-base-2-fees"),
+      "fee-swap:a-base-2-fees",
       label("a-base-3", "base", "a-base-3-supply"),
       port("before", "a-base-3-supply"),
       blockKey("a-base-3-supply"),
@@ -367,10 +378,12 @@ describe("BuildGraph, reading order", () => {
       blockKey("a-rh-1-swap"),
       blockKey("a-rh-1-pool"),
       blockKey("a-rh-1-fees"),
+      "fee-swap:a-rh-1-fees",
       label("a-rh-2", "robinhood", "a-rh-2-pool"),
       blockKey("a-rh-2-swap"),
       blockKey("a-rh-2-pool"),
       blockKey("a-rh-2-fees"),
+      "fee-swap:a-rh-2-fees",
       addProtocol("robinhood"),
       targetKey({ kind: "addNetwork" }),
       "spine:withdraw",
@@ -1221,7 +1234,7 @@ describe("BuildGraph, literal positions from the reference numbers (F7)", () => 
     const after = targetKey({ kind: "port", side: "after", blockId: "c-supply-supply" });
     expectBox(node(after), 312, 298, 16, 16);
     expectBox(node(targetKey({ kind: "addNetwork" })), 520, 228, 64, 72);
-    expectBox(node("spine:withdraw"), 186, 588, 236, 62);
+    expectBox(node("spine:withdraw"), 186, 638, 236, 62);
     const sixty = node(
       targetKey({
         kind: "shareLabel",
@@ -1237,7 +1250,7 @@ describe("BuildGraph, literal positions from the reference numbers (F7)", () => 
   // @rule ST7
   it("[F7, ST7] canvas A: the Base group and the hub's Borrow", () => {
     renderGraph(canvasA);
-    expectBox(node("group:base"), 728, 228, 696, 292);
+    expectBox(node("group:base"), 728, 228, 696, 342);
     expectBox(node(blockKey("a-hub-3-borrow")), 440, 380, 176, 62);
   });
 
@@ -1245,7 +1258,7 @@ describe("BuildGraph, literal positions from the reference numbers (F7)", () => 
   // @rule ST6
   it("[F7, ST6] Build state 5: Idle output and the pool, after the shift of 76", () => {
     renderGraph(buildState5);
-    expectBox(node("spine:idleOutput"), 24, 454, 236, 62);
+    expectBox(node("spine:idleOutput"), 24, 528, 236, 62);
     expectBox(node(blockKey("s5-pool")), 100, 294, 176, 62);
   });
 });

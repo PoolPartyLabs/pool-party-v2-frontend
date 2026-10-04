@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name graphModel
- * @implements-rules-version v1 (POO-2156 rules v1)
+ * @implements-rules-version v1 (POO-2156 rules v1); POO-2213 rules v1
  * @analytics-events none, pure helpers of the graph renderer: activations leave the renderer through
  *   `onTarget` and the Build screen (PP-MGR-SCR-002, S7) owns every event.
  *
@@ -37,6 +37,7 @@ import type {
   BlockNode,
   BridgeNode,
   EdgeKind,
+  FeeSwapNode,
   GraphLayout,
   GraphTarget,
   GroupNode,
@@ -57,6 +58,7 @@ export type GraphItem =
   | { type: "spine"; key: string; node: SpineNode }
   | { type: "block"; key: string; node: BlockNode }
   | { type: "bridge"; key: string; node: BridgeNode }
+  | { type: "feeSwap"; key: string; node: FeeSwapNode }
   | { type: "group"; key: string; node: GroupNode }
   | { type: "template"; key: string; node: TemplateNode }
   | { type: "port"; key: string; node: PortNode }
@@ -106,6 +108,9 @@ function collect(layout: GraphLayout): GraphItem[] {
   for (const node of layout.blocks) {
     items.push({ type: "block", key: targetKey({ kind: "block", blockId: node.id }), node });
   }
+  for (const node of layout.feeSwaps ?? []) {
+    items.push({ type: "feeSwap", key: `fee-swap:${part(node.sourceBlockId)}`, node });
+  }
   for (const node of layout.bridges) {
     items.push({ type: "bridge", key: `bridge:${part(node.network)}`, node });
   }
@@ -154,6 +159,7 @@ export function readingPoint(item: GraphItem): { top: number; x: number } {
     case "spine":
     case "block":
     case "bridge":
+    case "feeSwap":
     case "template": {
       const { rect } = item.node;
       return { top: rect.y, x: rect.x + rect.w / 2 };
@@ -240,6 +246,7 @@ export function graphItems(layout: GraphLayout): GraphItem[] {
         ).push(item);
         break;
       case "block":
+      case "feeSwap":
         toChain(item.node.chainId, item);
         break;
       case "port": {

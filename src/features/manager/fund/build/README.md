@@ -122,3 +122,5 @@ stays in normal document flow above Back/Next. POO-2209 owns the collapsed sideb
 shell width. The existing ReferenceCanvasC story demonstrates X controls and the modal; component
 and controller tests cover cancellation, confirmation, cascade and draft preservation. Browser
 acceptance is performed by Murilo.
+
+POO-2213 rules v1, 2026-10-04: each Collect fees derives an automatic income conversion pill immediately below it. Income flows through that pill into the network stable-token return, while principal bypasses it on the left. These nodes are layout-only, have no insertion/removal controls, and never become plan steps or launch transactions. Original Figma coordinate oracles retain their source measurements plus explicit dated overrides for the added 50px row; where the bypass prevents the former shared bus level, income uses the next 24px level.

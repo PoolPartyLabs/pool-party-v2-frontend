@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph
- * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v1 (POO-2153 rules v1); POO-2213 rules v1
  * @analytics-events none, a pure geometry module: the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event; nothing here is rendered or tracked.
  *
@@ -90,6 +90,7 @@ function newDraft(spineCentreX: number): Draft {
     spine: [],
     blocks: [],
     bridges: [],
+    feeSwaps: [],
     groups: [],
     templates: [],
     ports: [],
@@ -196,6 +197,15 @@ function placeChain(
     nodes.push(node);
     d.blocks.push(node);
     y += h + L.LINK;
+    if (step.kind === "collectFees") {
+      d.feeSwaps?.push({
+        sourceBlockId: step.id,
+        chainId: chain.id,
+        network,
+        rect: rect(centre - L.PILL_W / 2, y, L.PILL_W, L.PILL_H),
+      });
+      y += L.PILL_H + L.LINK;
+    }
   }
   // C17: where the ports sit is S1's rule, read here and never re-derived.
   for (const slot of portSlotsOf(chain.steps)) {
@@ -215,7 +225,7 @@ function placeChain(
     }
   }
   const last = nodes[nodes.length - 1];
-  return { chain, centre, nodes, bottom: last ? bottomOf(last.rect) : top };
+  return { chain, centre, nodes, bottom: last ? y - L.LINK : top };
 }
 
 /** The stub from a bus to a chain's first block, with the chain's share label on it (C8). */
@@ -331,8 +341,17 @@ function placeReturns(d: Draft, chains: PlacedChain[], deepest: number): void {
   let outputTop = deepest + L.EMPTY_OUTPUT_GAP;
   if (chains.length > 0) {
     const principalY = deepest + L.LINK;
-    const drops = chains.map((p) => ({ p, x: endsInFees(p) ? p.centre - L.PAIR : p.centre }));
-    const incomeDrops = fees.map(({ p, n }) => ({ n, x: p.centre + L.PAIR }));
+    const drops = chains.map((p) => ({
+      p,
+      x: endsInFees(p) ? p.centre - L.PILL_W / 2 - L.PAIR : p.centre,
+    }));
+    const incomeDrops = fees.map(({ p, n }) => ({
+      n,
+      swap: d.feeSwaps?.find(
+        (entry) => entry.sourceBlockId === n.id && entry.chainId === p.chain.id,
+      ),
+      x: p.centre,
+    }));
     const [only] = chains;
     const [onlyDrop] = drops;
     const [onlyIncome] = incomeDrops;
@@ -349,7 +368,22 @@ function placeReturns(d: Draft, chains: PlacedChain[], deepest: number): void {
     outputTop = (income ? Math.max(principalY, incomeY) : principalY) + L.LINK;
 
     for (const { p, x } of drops) {
-      d.edges.push(vertical(`principal:chain:${p.chain.id}`, "principal", x, p.bottom, principalY));
+      const last = p.nodes[p.nodes.length - 1];
+      let start = p.bottom;
+      if (endsInFees(p) && last) {
+        start = bottomOf(last.rect) + L.LINK / 2;
+        d.edges.push(
+          vertical(
+            `principal:fees:${last.id}`,
+            "principal",
+            p.centre - L.PAIR,
+            bottomOf(last.rect),
+            start,
+          ),
+          horizontal(`principal:bypass:${last.id}`, "principal", start, x, p.centre - L.PAIR),
+        );
+      }
+      d.edges.push(vertical(`principal:chain:${p.chain.id}`, "principal", x, start, principalY));
     }
     d.edges.push(
       ...spanning("principal:line", "principal", principalY, [
@@ -359,8 +393,15 @@ function placeReturns(d: Draft, chains: PlacedChain[], deepest: number): void {
       vertical("principal:out", "principal", outputCentre, principalY, outputTop),
     );
     if (income) {
-      for (const { n, x } of incomeDrops) {
-        d.edges.push(vertical(`income:block:${n.id}`, "income", x, bottomOf(n.rect), incomeY));
+      for (const { n, x, swap } of incomeDrops) {
+        if (!swap) continue;
+        const split = bottomOf(n.rect) + L.LINK / 2;
+        d.edges.push(
+          vertical(`income:block:${n.id}`, "income", x + L.PAIR, bottomOf(n.rect), split),
+          horizontal(`income:turn:${n.id}`, "income", split, x, x + L.PAIR),
+          vertical(`income:swap:${n.id}`, "income", x, split, swap.rect.y),
+          vertical(`income:converted:${n.id}`, "income", x, bottomOf(swap.rect), incomeY),
+        );
       }
       d.edges.push(
         ...spanning("income:line", "income", incomeY, [
@@ -493,6 +534,7 @@ function normalise(d: Draft): GraphLayout {
     ...d.spine.map((n) => n.rect),
     ...d.blocks.map((n) => n.rect),
     ...d.bridges.map((n) => n.rect),
+    ...(d.feeSwaps ?? []).map((n) => n.rect),
     ...d.groups.map((n) => n.rect),
     ...d.templates.map((n) => n.rect),
     ...(d.emptyCaptions ? [d.emptyCaptions.startHere] : []),
@@ -508,6 +550,7 @@ function normalise(d: Draft): GraphLayout {
     spine: d.spine.map((n) => ({ ...n, rect: moveRect(n.rect, dx) })),
     blocks: d.blocks.map((n) => ({ ...n, rect: moveRect(n.rect, dx) })),
     bridges: d.bridges.map((n) => ({ ...n, rect: moveRect(n.rect, dx) })),
+    feeSwaps: (d.feeSwaps ?? []).map((n) => ({ ...n, rect: moveRect(n.rect, dx) })),
     groups: d.groups.map((n) => ({
       ...n,
       rect: moveRect(n.rect, dx),
