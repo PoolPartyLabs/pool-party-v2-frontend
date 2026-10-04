@@ -192,3 +192,12 @@ Hackathon, 2026-09-13. The `/tools` page (PP-TOOLS-SCR-001) takes a chain and a 
 | Block explorer (verified source) | `src/lib/tools/hookrisk/explorer.ts` (PP-TOOLS-LIB-002) | **REAL.** `GET https://api.etherscan.io/v2/api?chainid=…&module=contract&action=getsourcecode`, one V2 endpoint covering all five chains. Server-only; the key is read at call time in `jobs.ts` (PP-TOOLS-LIB-005) so an unset key fails one job rather than the module | `ETHERSCAN_API_KEY`, server-only, no `NEXT_PUBLIC_` prefix ever. An unverified contract returns `NOT_VERIFIED`, a named result, not an empty source set |
 | hookrisk toolchain (`forge`, then the CLI) | `src/lib/tools/hookrisk/run.ts` (PP-TOOLS-LIB-004), driven by `jobs.ts` (PP-TOOLS-LIB-005) | **REAL.** A child process on the Node runtime: `forge build`, then `node $HOOKRISK_HOME/cli/dist/cli.js init` and `scan <File.sol>:<Contract> --out <job dir>`. `spawn` without a shell, so an explorer-supplied contract name can never become a shell metacharacter | Needs foundry, slither and a built `hookrisk/cli/dist/cli.js` on the host (`make setup` inside `hookrisk/`, or the `WITH_HOOKRISK=1` image). **Exit 2 is a RESULT** (gate failed, report written), 10+ means it could not run |
 | Job registry | `src/lib/tools/hookrisk/jobs.ts` (PP-TOOLS-LIB-005) | **REAL, and in process memory.** One running job per `(chainId, address)`; a second start joins it. Reports are cached on disk for 24 h under `$HOOKRISK_WORK_DIR/hookrisk/<sha256>/`, swept by each request rather than by a cron | **PP-INTEGRATION-POINT:** the registry is per replica and per restart, so a second instance does not see the first's running job. The disk cache is what actually survives, so the worst case is a wasted rerun. A durable queue replaces it if this leaves hackathon scope |
+
+
+### Review form cards (POO-2188, RB1)
+
+The props-only PP-MGR-CMP-073..076 cards add no service or wallet calls. Their parent
+supplies `useV2ReviewDraft` values, validated cropped-logo upload, hub USDC balance and
+`feeConfiguration`. `reviewForm` reuses the existing `rawUsdc` contract, and the deposit
+card displays the supplied `previewSeed` result. The protocol rate is explicitly estimated
+when its source is fallback. RB2 owns the connected seam and launch-entry analytics.

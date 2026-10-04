@@ -629,3 +629,19 @@ here. The oracle file records no delta between a handoff number and a frame.
   (`portfolio.service.ts:561-571`, and Polygon's `getWETHContract` sentinel); until it does, the field
   is a no-op on the server. **Live-verify TODO (POO-882):** confirm the Polygon path end-to-end
   (POL-only + WPOL-only wallets) once the BE half lands.
+
+
+### Review form cards (POO-2188, RB1, rules v1)
+
+`fund/review/` supplies props-only identity, fee, investor-term and first-deposit cards
+(PP-MGR-CMP-073..076). `reviewForm` (PP-MGR-LIB-033) sanitizes fee and USDC input, clamps
+fees before calling the parent, formats raw integer amounts, and returns field reasons in
+screen order. Minimum precedes instant withdrawal fee. Stories use `reviewStoryKit`, with
+no wallet provider and no new mock artifact. New copy exists in all 11 configured locales;
+the eight machine-translated locales retain the POO-231 native-review policy.
+
+The cards accept the existing Review hook's balance, fee provenance and `previewSeed`
+estimate. These are estimates before signing; the creation receipt confirms charged
+amounts. Identity remains editable after launch, fees may only decrease, and minimum and
+instant withdrawal fee are fixed. Access is Public. Operating cash, risk, return and gas
+figures are absent. The RB2 assembly owns persistence, launch gating and analytics.

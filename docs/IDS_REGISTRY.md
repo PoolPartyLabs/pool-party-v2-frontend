@@ -1,5 +1,14 @@
 # IDs Registry
 
+## Review form cards (POO-2188, RB1)
+
+| ID | Artifact | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-MGR-CMP-073` | ReviewIdentityCard | Component | Review frame 8225:2391 | In Review | [POO-2188](https://linear.app/yeildbay/issue/POO-2188) | `src/features/manager/fund/review/` @rules-v1 |
+| `PP-MGR-CMP-074` | ReviewFeesCard | Component | Review frame 8225:2391 | In Review | [POO-2188](https://linear.app/yeildbay/issue/POO-2188) | `src/features/manager/fund/review/` @rules-v1 |
+| `PP-MGR-CMP-075` | ReviewTermsCard | Component | Review frame 8225:2391 | In Review | [POO-2188](https://linear.app/yeildbay/issue/POO-2188) | `src/features/manager/fund/review/` @rules-v1 |
+| `PP-MGR-CMP-076` | ReviewFirstDepositCard | Component | Review frame 8225:2391 | In Review | [POO-2188](https://linear.app/yeildbay/issue/POO-2188) | `src/features/manager/fund/review/` @rules-v1 |
+| `PP-MGR-LIB-033` | reviewForm: bounded fee inputs, exact USDC and field reasons in screen order | Lib | Review frame 8225:2391 | In Review | [POO-2188](https://linear.app/yeildbay/issue/POO-2188) | `src/features/manager/fund/review/` @rules-v1 |
 ## Build configuration panels: the panel shell, its shared controls and the panel live in Build (POO-2187, slice PD of POO-2171)
 
 | ID | Artifact | Type | Design | Impl | Linear | Reference |
@@ -81,7 +90,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 645 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 650 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
