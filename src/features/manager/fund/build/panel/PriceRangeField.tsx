@@ -33,11 +33,17 @@ import {
 import { RangeSplitBar } from "./RangeSplitBar";
 
 export interface PriceRangeFieldProps {
+  touchTargets?: boolean;
   pool: PanelPoolView;
   range: PoolRange;
   onChange(next: PoolRange): void;
 }
-export function PriceRangeField({ pool, range, onChange }: PriceRangeFieldProps) {
+export function PriceRangeField({
+  pool,
+  range,
+  onChange,
+  touchTargets = false,
+}: PriceRangeFieldProps) {
   const t = useTranslations("manager.fundBuilder.canvas.panel");
   const fmt = useFormatter();
   const locale = useLocale();
@@ -115,7 +121,8 @@ export function PriceRangeField({ pool, range, onChange }: PriceRangeFieldProps)
               send(invertRange(range));
             }}
             className={cn(
-              "flex h-[26px] items-center gap-1 rounded-full border border-border px-2.5 text-xs",
+              "flex items-center gap-1 rounded-full border border-border px-2.5 text-xs",
+              touchTargets ? "min-h-11" : "h-[26px]",
               PANEL_FOCUS_RING,
             )}
           >
@@ -132,7 +139,8 @@ export function PriceRangeField({ pool, range, onChange }: PriceRangeFieldProps)
             aria-pressed={preset === item}
             onClick={() => choose(item)}
             className={cn(
-              "h-[29px] rounded-full border text-xs lining-nums tabular-nums",
+              "rounded-full border text-xs lining-nums tabular-nums",
+              touchTargets ? "min-h-11" : "h-[29px]",
               preset === item
                 ? "border-foreground bg-surface-raised text-foreground"
                 : "border-border text-muted-foreground",
@@ -163,7 +171,11 @@ export function PriceRangeField({ pool, range, onChange }: PriceRangeFieldProps)
                   aria-label={t("range.decrease", { label })}
                   disabled={!down}
                   onClick={() => step(bound, -1)}
-                  className={cn("shrink-0 disabled:opacity-40", PANEL_FOCUS_RING)}
+                  className={cn(
+                    "shrink-0 disabled:opacity-40",
+                    touchTargets && "flex min-h-11 min-w-11 items-center justify-center",
+                    PANEL_FOCUS_RING,
+                  )}
                 >
                   <Minus aria-hidden="true" className="size-3.5" />
                 </button>
@@ -207,7 +219,11 @@ export function PriceRangeField({ pool, range, onChange }: PriceRangeFieldProps)
                   aria-label={t("range.increase", { label })}
                   disabled={!up}
                   onClick={() => step(bound, 1)}
-                  className={cn("shrink-0 disabled:opacity-40", PANEL_FOCUS_RING)}
+                  className={cn(
+                    "shrink-0 disabled:opacity-40",
+                    touchTargets && "flex min-h-11 min-w-11 items-center justify-center",
+                    PANEL_FOCUS_RING,
+                  )}
                 >
                   <Plus aria-hidden="true" className="size-3.5" />
                 </button>
