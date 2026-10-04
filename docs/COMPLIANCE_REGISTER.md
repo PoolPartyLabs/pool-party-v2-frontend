@@ -14,6 +14,17 @@ Status: `OPEN` (asked, not answered), `BLOCKING` (must be answered before the la
 `ANSWERED` (the answer is in the last column). If a launch checklist disagrees with this file, this
 file wins.
 
+## Verification record: gas-only risk acknowledgement
+
+2026-10-04, POO-2198, PP-CORE-CMP-046: reviewed the existing loss-percentage disclosure before
+the gas-only funding route reaches a real user. The displayed quote must retain its explicit risk
+acknowledgement, a worsened quote must require fresh consent, and acknowledgement alone must not
+start execution. Component regressions verify these conditions, the existing blocked-intent event,
+and consent reset when the auxiliary screen is left. This correction uses the existing quote,
+10% threshold and disclosure copy; it introduces no fee, venue, asset or personal-data field.
+The engineering defect is tracked in POO-2198. This verification does not answer the register's
+existing product or legal disclosure questions.
+
 ## Manager (fund-contracts builder)
 
 | ID | Question | Why it matters | Raised | Owner | Status | Answer |
