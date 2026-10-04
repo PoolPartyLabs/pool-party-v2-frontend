@@ -1,6 +1,15 @@
 import { EXPLORERS, expect, FUNDS, login, openFund, test } from "../helpers/v2Fund";
 
 test.describe.configure({ mode: "serial" });
+test("@v2 @v2-read optional fund #2 discovery", async ({ page, wallet }) => {
+  await login(page, wallet.address);
+  await page.goto("/en/strategies");
+  await page.getByRole("button", { name: /^V2$/ }).click();
+  await expect(page.locator(`a[href$="/funds/${FUNDS[0]}"]`)).toBeVisible({ timeout: 60_000 });
+  const second = page.locator(`a[href$="/funds/${FUNDS[1]}"]`);
+  test.skip((await second.count()) === 0, "Fund #2 discovery requires deployed POO-2181");
+  await expect(second).toBeVisible();
+});
 test("@v2 @v2-read fund discovery, valuation, positions and explorer addresses", async ({
   page,
   wallet,
