@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-041 (POO-2177)
  * @name launchComposition
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2211)
  * Range-derived v4 composition using decimal arithmetic and actual balances.
  */
 import Decimal from "decimal.js";
@@ -29,6 +30,7 @@ export function positionAmounts(
   base: string,
   lower: string,
   upper: string,
+  spentBaseRaw = BigInt(0),
 ) {
   const split = composition(pool, lower, upper);
   const price = new Decimal(pool.currentPrice.token1PerToken0);
@@ -36,7 +38,9 @@ export function positionAmounts(
     (token) => token.address.toLowerCase() === base.toLowerCase(),
   );
   if (baseIndex < 0) throw new Error("UNSUPPORTED_PAIR");
+  if (spentBaseRaw < BigInt(0) || spentBaseRaw > budgetRaw) throw new Error("BALANCE_CHANGED");
   const budget = new Decimal(formatUnits(budgetRaw, 6));
+  const remaining = new Decimal(formatUnits(budgetRaw - spentBaseRaw, 6));
   const price0 = baseIndex === 0 ? new Decimal(1) : price;
   const price1 = baseIndex === 1 ? new Decimal(1) : new Decimal(1).div(price);
   const target0 = budget.mul(split.share0).div(price0);
@@ -46,6 +50,7 @@ export function positionAmounts(
     (token) =>
       new Decimal(formatUnits(balances[token.address.toLowerCase()] ?? BigInt(0), token.decimals)),
   );
+  available[baseIndex] = Decimal.min(available[baseIndex]!, remaining);
   const factor = Decimal.min(
     1,
     ...targets.map((target, index) =>
@@ -62,7 +67,7 @@ export function positionAmounts(
     ? new Decimal(0)
     : Decimal.max(0, requiredOther.minus(available[other]!).div(requiredOther));
   const swapRaw = parseUnits(
-    budget.mul(swapShare).mul(deficitRatio).toFixed(6, Decimal.ROUND_DOWN),
+    Decimal.min(remaining, budget.mul(swapShare).mul(deficitRatio)).toFixed(6, Decimal.ROUND_DOWN),
     6,
   );
   return {

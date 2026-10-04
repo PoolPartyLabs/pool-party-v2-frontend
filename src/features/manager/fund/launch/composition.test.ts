@@ -69,4 +69,17 @@ describe("range-derived launch composition [R2, R3]", () => {
       "UNSUPPORTED_PAIR",
     );
   });
+  it("R1 caps base deposits by the unspent leaf budget even after a price change", () => {
+    const amounts = positionAmounts(
+      pool,
+      { [base]: BigInt("900000"), [other]: BigInt("2000000000000000000") },
+      BigInt("600000"),
+      base,
+      "1",
+      "9",
+      BigInt("500000"),
+    );
+    expect(Number(amounts.amount0)).toBeLessThanOrEqual(0.1);
+    expect(amounts.swapRaw).toBe(BigInt(0));
+  });
 });
