@@ -82,5 +82,8 @@
     "v1": "V1",
     "v2": "V2",
     "tooltip": "Cambie entre el constructor actual (V1) y la vista previa de los contratos de fondo (V2)."
+  },
+  "toaster": {
+    "ariaLabel": "Notificaciones"
   }
 }

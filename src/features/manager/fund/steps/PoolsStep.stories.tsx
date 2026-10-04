@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-038
  * @name PoolsStep.stories
- * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v3 (POO-2142 rules v2, POO-2167 rules v3)
  *
  * Storybook coverage for Mandate step 4 (POO-2125 [R29] to [R38]).
  *
@@ -42,10 +42,10 @@ import { PoolsStep } from "./PoolsStep";
 
 const catalog = buildMandateCatalog();
 
-/** A mandate that can hold liquidity positions, so step 4 exists at all (R29). */
+/** A mandate that can hold liquidity positions (Uniswap v4, R20 v3), so step 4 exists (R29). */
 function draftOn(spokes: "robinhood"[] = []): MandateDraft {
   const base = withNetworks(createEmptyDraft("2026-10-03T00:00:00.000Z", "story"), spokes, catalog);
-  return withProtocols(base, [...REQUIRED_PROTOCOLS, "uniswap-v3", "uniswap-v4"]);
+  return withProtocols(base, [...REQUIRED_PROTOCOLS, "uniswap-v4"]);
 }
 
 /** Every priced token the catalog offers, which is one of the two halves of the Broad flag (R13). */

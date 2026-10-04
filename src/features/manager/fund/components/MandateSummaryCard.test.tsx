@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-026
  * @name MandateSummaryCard tests
- * @implements-rules-version v2 (POO-2127 rules v1, POO-2142 rules v2)
+ * @implements-rules-version v3 (POO-2127 rules v1, POO-2142 rules v2, POO-2167 rules v3)
  * @analytics-events none, a read-only card emits nothing; the landing that renders it owns the view
  *   event (PP-MGR-SCR-002)
  *
@@ -54,13 +54,16 @@ function unlocked(symbol: string, network: NetworkId): MandateTokenRef {
   };
 }
 
-/** A pool fixture: enough of the shape for the row, with the fields the card actually reads. */
+/**
+ * A pool fixture: enough of the shape for the row, with the fields the card actually reads. On
+ * Uniswap v4, the position protocol the buildathon scope offers (R20 v3, POO-2167).
+ */
 function pool(index: number, over: Partial<MandatePoolRef> = {}): MandatePoolRef {
   return {
     id: `p-${index}`,
     address: `0x${String(index).padStart(40, "0")}`,
     network: "arbitrum",
-    protocol: "uniswap-v3",
+    protocol: "uniswap-v4",
     token0: { address: "0xaaa", symbol: "ETH", name: "Ether", logoUrl: null },
     token1: { address: "0xbbb", symbol: "USDC", name: "USD Coin", logoUrl: null },
     feeBps: 5,
@@ -139,19 +142,19 @@ describe("MandateSummaryCard", () => {
 
   // @rule B1
   it("prints each pool as its pair, its protocol and its fee tier", () => {
-    const draft = withProtocols(base(), [...REQUIRED_PROTOCOLS, "uniswap-v3"]);
+    const draft = withProtocols(base(), [...REQUIRED_PROTOCOLS, "uniswap-v4"]);
 
     renderCard({ ...draft, pools: [pool(1)] });
 
     const pools = screen.getByTestId("mandate-summary-pools");
     expect(pools).toHaveTextContent("ETH/USDC");
-    expect(pools).toHaveTextContent("Uniswap v3");
+    expect(pools).toHaveTextContent("Uniswap v4");
     expect(pools).toHaveTextContent("0.05% fee tier");
   });
 
   // @rule B1
   it("shows the first four pools and counts the rest", () => {
-    const draft = withProtocols(base(), [...REQUIRED_PROTOCOLS, "uniswap-v3"]);
+    const draft = withProtocols(base(), [...REQUIRED_PROTOCOLS, "uniswap-v4"]);
     const pools = [1, 2, 3, 4, 5, 6].map((index) =>
       pool(index, {
         token0: { address: `0x${index}`, symbol: `T${index}`, name: `T${index}`, logoUrl: null },

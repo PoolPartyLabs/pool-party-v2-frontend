@@ -82,5 +82,8 @@
     "v1": "V1",
     "v2": "V2",
     "tooltip": "Alterne entre o construtor atual (V1) e a prévia dos contratos de fundo (V2)."
+  },
+  "toaster": {
+    "ariaLabel": "Notificações"
   }
 }

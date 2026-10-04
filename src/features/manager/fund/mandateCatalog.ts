@@ -1,7 +1,8 @@
 /**
  * @id PP-MGR-LIB-018
  * @name mandateCatalog
- * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2)
+ * @implements-rules-version v3 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
+ *   POO-2167 rules v3)
  * @analytics-events none, a data catalog. The builder shell (PP-MGR-SCR-002) owns every mandate
  *   event; nothing here touches the dataLayer.
  *
@@ -17,9 +18,10 @@
  * disabled with "Coming soon". {@link withNetworks} refuses anything this catalog has not turned on,
  * so a disabled row cannot be reached around the UI.
  *
- * The protocols follow the same rule (R20 v2, R21 v2, POO-2143): Aave v3, Uniswap v3 and Uniswap v4
- * to operate, beside the required two. GMX and its `perps` kind are commented out, not deleted; the
- * mechanism that disables a protocol (`available`, or no network in common with step 1) stays.
+ * The protocols follow the same rule (R20 v3, R21 v2): Aave v3 and Uniswap v4 to operate, beside the
+ * required two. Uniswap v3 positions stay listed with `available: false`, so the row renders "Coming
+ * soon" (POO-2167). GMX and its `perps` kind are commented out, not deleted (POO-2143); the mechanism
+ * that disables a protocol (`available`, or no network in common with step 1) stays.
  *
  * PP-NOTE: buildathon scope (2026-10-03, POO-2142, POO-2143): the locale keys of the commented-out
  * networks and protocol stay in all 11 locales, because a locale JSON cannot hold a comment:
@@ -165,11 +167,13 @@ const PROTOCOL_NAME_KEYS: Record<ProtocolId, string> = {
 const ALL_NETWORKS: readonly NetworkId[] = NETWORK_ORDER;
 
 /**
- * R20 v2 / R21 v2: the protocols, and where each one runs.
+ * R20 v3 / R21 v2: the protocols, and where each one runs.
  *
  * On chain today: Uniswap v4 positions and Aave v3 supply (hub only), with Uniswap v3 present as
- * the swap adapter. The buildathon scope operates Aave v3 (Arbitrum only), Uniswap v3 and Uniswap v4
- * (Arbitrum, Robinhood Chain); GMX is commented out (POO-2143). Each is scoped so the Protocols step
+ * the swap adapter. The buildathon scope operates Aave v3 (Arbitrum only) and Uniswap v4 (Arbitrum,
+ * Robinhood Chain). Uniswap v3 positions keep their row and their networks but are unavailable
+ * (`UNAVAILABLE_PROTOCOLS`, POO-2167): the fund contracts have no Uniswap v3 position adapter. GMX is
+ * commented out (POO-2143). Each is scoped so the Protocols step
  * can show honest network dots. Copy never says "via Across" outside that row (R22), and nothing
  * here promises a per-protocol guarantee the contracts do not make.
  */

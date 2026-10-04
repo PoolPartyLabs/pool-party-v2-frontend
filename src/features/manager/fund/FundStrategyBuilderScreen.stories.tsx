@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen.stories
- * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v3 (POO-2142 rules v2, POO-2167 rules v3)
  *
  * Storybook coverage for the fund-contracts builder shell (POO-2122, epic POO-2119).
  *
@@ -56,12 +56,13 @@ function clearDrafts(): void {
 }
 
 /**
- * A mandate carried to the last step: hub plus one spoke, lending and liquidity positions added on
- * top of the required two, and the four earlier steps marked passed so they are reachable.
+ * A mandate carried to the last step: hub plus one spoke, lending and liquidity positions (Uniswap
+ * v4, R20 v3) added on top of the required two, and the four earlier steps marked passed so they are
+ * reachable.
  */
 function progressedDraft(): MandateDraft {
   const networks = withNetworks(createEmptyDraft(SEEDED_AT, SEEDED_ID), ["robinhood"], catalog);
-  const protocols = withProtocols(networks, [...networks.protocols, "aave-v3", "uniswap-v3"]);
+  const protocols = withProtocols(networks, [...networks.protocols, "aave-v3", "uniswap-v4"]);
   return {
     ...protocols,
     lastStep: "limits",

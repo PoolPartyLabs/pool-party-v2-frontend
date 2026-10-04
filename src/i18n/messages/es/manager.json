@@ -846,6 +846,165 @@
       "summaryTokens": "Tokens",
       "summaryPools": "Pools",
       "summaryLimits": "Límites"
+    },
+    "canvas": {
+      "title": "Arme su estrategia",
+      "subtitle": "Arme la estrategia con bloques. Arrastre uno y luego configúrelo a la derecha. Los bloques solo usan lo que el mandato permite.",
+      "hint": "Ctrl + rueda para hacer zoom (Cmd + rueda en Mac) · arrastre para mover · doble clic para ajustar",
+      "zoom": {
+        "in": "Acercar",
+        "out": "Alejar",
+        "fit": "Ajustar a la vista",
+        "readout": "{pct}%",
+        "readoutLabel": "Zoom {pct}%"
+      },
+      "bar": {
+        "back": "Atrás: Mandato",
+        "next": "Siguiente: Revisión"
+      },
+      "palette": {
+        "fromMandate": "De su mandato",
+        "flowBlocks": "Bloques de flujo",
+        "comingSoon": "Próximamente",
+        "caption": "Arrastre un bloque al canvas. Llega vacío: elija la pool, el activo o el mercado a la derecha.",
+        "soon": "Pronto",
+        "soonTooltip": "Próximamente"
+      },
+      "blocks": {
+        "uniswapV4Pool": {
+          "protocol": "Uniswap v4",
+          "type": "Posición de liquidez"
+        },
+        "uniswapV3Pool": {
+          "protocol": "Uniswap v3",
+          "type": "Posición de liquidez"
+        },
+        "aaveSupply": {
+          "protocol": "Aave v3",
+          "type": "Suministro"
+        },
+        "aaveBorrow": {
+          "protocol": "Aave v3",
+          "type": "Préstamo"
+        },
+        "pendle": {
+          "protocol": "Pendle",
+          "type": "Posición de yield"
+        },
+        "gmxPerp": {
+          "protocol": "GMX",
+          "type": "Posición perp"
+        }
+      },
+      "card": {
+        "poolTitle": "{token0} / {token1}",
+        "poolCaption": "{protocol} · {fee}%",
+        "supplyTitle": "Suministrar {symbol}",
+        "borrowTitle": "Pedir prestado {symbol}",
+        "aaveCaption": "Aave v3",
+        "aaveCaptionOnNetwork": "Aave v3 · {network}",
+        "emptySupply": "Suministro Aave v3",
+        "emptyBorrow": "Préstamo Aave v3",
+        "pickPool": "Elija una pool",
+        "pickAsset": "Elija un activo",
+        "invalid": "Ya no está en su mandato",
+        "accessibleName": "{title}, {caption}, en {network}, {pct}% del capital"
+      },
+      "spine": {
+        "deposit": {
+          "title": "Depósito",
+          "caption": "USDC · Arbitrum"
+        },
+        "idleInput": {
+          "title": "Entrada inactiva",
+          "caption": "USDC esperando en el hub"
+        },
+        "idleOutput": {
+          "title": "Salida inactiva",
+          "caption": "USDC de vuelta en el hub"
+        },
+        "income": {
+          "title": "Ingresos (comisiones)",
+          "caption": "USDC · Arbitrum"
+        },
+        "withdraw": {
+          "title": "Retiro",
+          "caption": "USDC · Arbitrum"
+        },
+        "lockTooltip": "Fijo: USDC en Arbitrum"
+      },
+      "flow": {
+        "swapAuto": "Swap · auto",
+        "swap": "Swap",
+        "collectFees": "Cobrar comisiones",
+        "bridgeAuto": "Bridge · auto"
+      },
+      "tooltip": {
+        "addProtocol": "Agregar protocolo en {network}",
+        "addNetwork": "Agregar red",
+        "portBefore": "Insertar un bloque de flujo: Swap",
+        "portAfterPool": "Insertar un bloque de flujo: Cobrar comisiones",
+        "portAfterSupply": "Insertar un bloque: Préstamo, Swap",
+        "portAfterBorrow": "Insertar un bloque de flujo: Swap",
+        "swapAuto": "La app hace swap de {token} a los tokens de la pool",
+        "swapAutoSupply": "La app hace swap de {token} a {asset}",
+        "swap": "Hace swap a otro token de su mandato",
+        "bridgeAuto": "Mueve {token} a {network}",
+        "collectFees": "Cobra las comisiones de la pool en Ingresos (comisiones)",
+        "share": "{pct}% del capital de la estrategia"
+      },
+      "empty": {
+        "addProtocol": "Agregar protocolo",
+        "addNetwork": "Agregar red",
+        "startHere": "Empiece aquí: agregue un protocolo en Arbitrum (círculo) o agregue una red (caja)."
+      },
+      "menu": {
+        "protocols": {
+          "title": "Protocolos en {network}",
+          "footer": "Protocolos de su mandato en {network}.",
+          "none": "Ningún protocolo de su mandato está disponible en {network}.",
+          "borrowDisabled": "Préstamo · agréguelo debajo de un bloque de Suministro"
+        },
+        "comingSoonType": "{type} · próximamente",
+        "link": {
+          "protocols": "Editar mandato · Protocolos",
+          "networks": "Editar mandato · Redes"
+        },
+        "networks": {
+          "title": "Redes de su mandato",
+          "option": "spoke · agrega un bridge",
+          "placed": "{count, plural, =1 {{names} ya está en el canvas.} other {{names} ya están en el canvas.}}",
+          "none": "Su mandato no tiene otra red."
+        },
+        "port": {
+          "before": "Antes de {title}",
+          "after": "Después de {title}",
+          "borrowOption": "Pedir prestado contra este suministro",
+          "flowOption": "Bloque de flujo",
+          "footerAfterSupply": "Bloques de su mandato que encajan después de este suministro.",
+          "footer": "Bloques de su mandato que encajan aquí."
+        }
+      },
+      "panel": {
+        "overline": "Configurar bloque",
+        "nothingTitle": "Nada seleccionado",
+        "nothingBody": "Agregue un protocolo o una red en el canvas, o arrastre un bloque desde la izquierda. Un bloque nuevo llega vacío; aquí elige su pool, activo o mercado.",
+        "remove": "Quitar bloque",
+        "typeNoPool": "{type} · aún sin pool",
+        "typeNoAsset": "{type} · aún sin activo",
+        "menuOpen": "Elija un protocolo en el menú. El bloque se agrega en {network} y se abre aquí.",
+        "menuOpenNetwork": "Elija una red en el menú. La red se agrega al canvas con su bridge.",
+        "portMenuOpenSupply": "Elija qué va después de {title}. Un bloque de Préstamo usa ese suministro como garantía.",
+        "portMenuOpenBefore": "Elija qué va antes de {title}.",
+        "portMenuOpenAfter": "Elija qué va después de {title}."
+      },
+      "network": {
+        "remove": "Quitar {network}"
+      },
+      "toast": {
+        "removed": "Bloque quitado",
+        "undo": "Deshacer"
+      }
     }
   }
 }

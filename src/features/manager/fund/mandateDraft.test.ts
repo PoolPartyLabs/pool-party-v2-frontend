@@ -1,13 +1,16 @@
 /**
  * @id PP-MGR-LIB-019
  * @name mandateDraft tests
- * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2)
+ * @implements-rules-version v3 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
+ *   POO-2167 rules v3)
  * @analytics-events none, a pure domain; the builder shell owns the mandate events.
  *
  * One `it()` per rule in the S1 brief. Every reducer is also checked for immutability: a draft
  * handed in must come back untouched, because the React hook keeps the previous draft on a block.
  * Rules v2 (buildathon scope): the mandate names Arbitrum and Robinhood Chain only (POO-2142), and
- * GMX is no longer a protocol it can name (POO-2143).
+ * GMX is no longer a protocol it can name (POO-2143). Rules v3 (POO-2167): Uniswap v3 positions are
+ * listed but unavailable, so the position protocol these cases select is Uniswap v4, and a draft
+ * that still names Uniswap v3 is built by hand, the way an older stored draft arrives.
  */
 import { describe, expect, it } from "vitest";
 import { buildMandateCatalog, type MandateCatalogToken } from "./mandateCatalog";
@@ -31,12 +34,14 @@ import {
   type MandatePoolRef,
   type NetworkId,
   nextStep,
+  PROTOCOL_ORDER,
   type ProtocolId,
   previousStep,
   REQUIRED_PROTOCOLS,
   removePool,
   removeToken,
   removeTokenSymbol,
+  resumeStep,
   type StepBlock,
   selectionCounts,
   selectionFingerprint,
@@ -44,9 +49,11 @@ import {
   slotsUsed,
   stepIndex,
   tokenKey,
+  UNAVAILABLE_PROTOCOLS,
   validateStep,
   visibleSteps,
   withNetworks,
+  withoutUnavailableProtocols,
   withProtocols,
 } from "./mandateDraft";
 
@@ -87,7 +94,7 @@ function pool(over: Partial<MandatePoolRef> = {}): MandatePoolRef {
     id: "arb-eth-usdc-5",
     address: "0xc6962004f452be9203591991d15f6b388e09e8d0",
     network: "arbitrum",
-    protocol: "uniswap-v3",
+    protocol: "uniswap-v4",
     token0: { address: eth.address, symbol: eth.symbol, name: eth.name, logoUrl: eth.logoUrl },
     token1: { address: usdc.address, symbol: usdc.symbol, name: usdc.name, logoUrl: usdc.logoUrl },
     feeBps: 5,
@@ -100,9 +107,30 @@ function pool(over: Partial<MandatePoolRef> = {}): MandatePoolRef {
   };
 }
 
-/** A draft with a DEX protocol, so the Pools step exists. */
+/** A draft with a DEX protocol, so the Pools step exists. Uniswap v4: v3 positions are off (R20 v3). */
 function withDex(): MandateDraft {
-  return draftOf(withProtocols(empty(), [...REQUIRED_PROTOCOLS, "uniswap-v3"]));
+  return draftOf(withProtocols(empty(), [...REQUIRED_PROTOCOLS, "uniswap-v4"]));
+}
+
+/**
+ * A draft that still names Uniswap v3 positions, with a pool of each position protocol and a cap row
+ * for each. No reducer can produce it since rules v3 (POO-2167), so it is built by hand, which is
+ * exactly how a draft stored before that change reaches the screens.
+ */
+function storedWithV3(): MandateDraft {
+  const base = withDex();
+  return {
+    ...base,
+    protocols: [...REQUIRED_PROTOCOLS, "uniswap-v3", "uniswap-v4"],
+    pools: [pool({ id: "arb-eth-usdc-v3", protocol: "uniswap-v3" }), pool()],
+    caps: {
+      ...base.caps,
+      protocols: {
+        "uniswap-v3": { noCap: false, pct: 40 },
+        "uniswap-v4": { noCap: false, pct: 30 },
+      },
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -115,6 +143,13 @@ describe("constants", () => {
     expect(MANDATE_STEP_ORDER).toEqual(["networks", "protocols", "tokens", "pools", "limits"]);
     expect(MAX_TOKEN_SLOTS).toBe(16);
     expect(REQUIRED_PROTOCOLS).toEqual(["uniswap-v3-swap", "across"]);
+  });
+
+  it("lists Uniswap v3 positions but marks them unavailable, and never the v3 swap", () => {
+    // @rule R20 v3 @rule R19
+    expect(PROTOCOL_ORDER).toContain("uniswap-v3");
+    expect(UNAVAILABLE_PROTOCOLS).toEqual(["uniswap-v3"]);
+    expect(UNAVAILABLE_PROTOCOLS).not.toContain("uniswap-v3-swap");
   });
 
   it("keys a token by network and lowercased address", () => {
@@ -285,6 +320,14 @@ describe("withProtocols", () => {
   //   expect(next.protocols).toContain("aave-v3");
   // });
 
+  it("refuses Uniswap v3 positions, which are listed but unavailable", () => {
+    // @rule R20 v3 (POO-2167): no Uniswap v3 position adapter on the fund contracts yet.
+    const next = draftOf(
+      withProtocols(empty(), [...REQUIRED_PROTOCOLS, "uniswap-v3", "aave-v3", "uniswap-v4"]),
+    );
+    expect(next.protocols).toEqual(["uniswap-v3-swap", "across", "aave-v3", "uniswap-v4"]);
+  });
+
   it("ignores a protocol id the catalog does not know", () => {
     // @rule R21 v2: a stale draft can still carry GMX, which the buildathon scope dropped (POO-2143).
     const ids = [...REQUIRED_PROTOCOLS, "gmx", "aave-v3"] as unknown as ProtocolId[];
@@ -317,19 +360,14 @@ describe("withProtocols", () => {
   it("drops the pools of the position protocol it removed and keeps the rest", () => {
     // @rule R29 @rule R13 - a mandate is a closed list, so a reducer that drops something drops
     // everything downstream of it. Keeping the v3 pools after Uniswap v3 left described a fund that
-    // cannot exist, and it inflated the pool count the Broad mandate flag divides by.
-    let draft = draftOf(
-      withProtocols(empty(), [...REQUIRED_PROTOCOLS, "uniswap-v3", "uniswap-v4"]),
-    );
-    draft = draftOf(addPool(draft, pool(), catalog));
-    draft = draftOf(
-      addPool(draft, pool({ id: "arb-eth-usdc-v4", protocol: "uniswap-v4" }), catalog),
-    );
+    // cannot exist, and it inflated the pool count the Broad mandate flag divides by. Two position
+    // protocols in one draft now only arrive from storage (R20 v3), hence the hand-built draft.
+    const draft = storedWithV3();
     expect(draft.pools).toHaveLength(2);
 
     const next = draftOf(withProtocols(draft, [...REQUIRED_PROTOCOLS, "uniswap-v4"]));
 
-    expect(next.pools.map((p) => p.id)).toEqual(["arb-eth-usdc-v4"]);
+    expect(next.pools.map((p) => p.id)).toEqual(["arb-eth-usdc-5"]);
     // The step still exists, so passing it is still true.
     expect(hasDexProtocol(next)).toBe(true);
   });
@@ -543,11 +581,8 @@ describe("addPool", () => {
     // @rule R34 @rule R13 - a pasted address can find a pool on a protocol nobody chose, and a
     // mandate that holds a position on a protocol it does not name is as invalid as one on a
     // network it does not name. Same refusal, for the same reason.
-    const result = addPool(
-      withDex(),
-      pool({ id: "arb-eth-usdc-v4", protocol: "uniswap-v4" }),
-      catalog,
-    );
+    const aaveOnly = draftOf(withProtocols(empty(), [...REQUIRED_PROTOCOLS, "aave-v3"]));
+    const result = addPool(aaveOnly, pool({ id: "arb-eth-usdc-v4" }), catalog);
     expect(isBlocked(result)).toBe(true);
     if (isBlocked(result)) {
       expect(result.blocked).toEqual({
@@ -556,6 +591,23 @@ describe("addPool", () => {
         rowId: "arb-eth-usdc-v4",
       });
     }
+  });
+
+  it("refuses a Uniswap v3 position pool even on a draft that still names the protocol", () => {
+    // @rule R20 v3 - an unavailable protocol is refused by every reducer, so a stale draft that
+    // still carries Uniswap v3 cannot grow a v3 position either.
+    const stale = { ...storedWithV3(), pools: [] };
+    const snapshot = JSON.stringify(stale);
+    const result = addPool(stale, pool({ id: "arb-eth-usdc-v3", protocol: "uniswap-v3" }), catalog);
+    expect(isBlocked(result)).toBe(true);
+    if (isBlocked(result)) {
+      expect(result.blocked).toEqual({
+        step: "pools",
+        reason: "coming_soon",
+        rowId: "arb-eth-usdc-v3",
+      });
+    }
+    expect(JSON.stringify(stale)).toBe(snapshot);
   });
 
   it("blocks a pool whose other token has no price feed", () => {
@@ -749,12 +801,12 @@ describe("capRows", () => {
   it("lists spokes only, chosen protocols only and unlocked tokens only", () => {
     // @rule R40 @rule R43
     let draft = withNetworks(withDex(), ["robinhood"], catalog);
-    draft = draftOf(withProtocols(draft, [...REQUIRED_PROTOCOLS, "aave-v3", "uniswap-v3"]));
+    draft = draftOf(withProtocols(draft, [...REQUIRED_PROTOCOLS, "aave-v3", "uniswap-v4"]));
     draft = draftOf(addToken(draft, catalogToken("arbitrum", "ARB"), catalog));
 
     const rows = capRows(draft, catalog);
     expect(rows.networks).toEqual(["robinhood"]);
-    expect(rows.protocols).toEqual(["aave-v3", "uniswap-v3"]);
+    expect(rows.protocols).toEqual(["aave-v3", "uniswap-v4"]);
     expect(rows.tokens.map((t) => t.symbol)).toEqual(["ARB"]);
     expect(rows.tokens.every((t) => !t.locked)).toBe(true);
   });
@@ -840,6 +892,28 @@ describe("firstUnpassedStep and isStepReachable", () => {
       passedSteps: ["networks", "protocols", "tokens"],
     } as MandateDraft;
     expect(isStepReachable(draft, "pools")).toBe(false);
+  });
+});
+
+describe("resumeStep", () => {
+  it("is the parked step while that step exists", () => {
+    // @rule R9
+    expect(resumeStep({ ...withDex(), lastStep: "pools" })).toBe("pools");
+    expect(resumeStep({ ...empty(), lastStep: "tokens" })).toBe("tokens");
+  });
+
+  it("falls back to the first unpassed step when the parked step is hidden", () => {
+    // @rule R9 @rule R29 @rule R20 v3 - a stored draft parked on Pools whose only position protocol
+    // was Uniswap v3 keeps `lastStep: "pools"` after the load drops the protocol.
+    const parked = withoutUnavailableProtocols({
+      ...empty(),
+      protocols: [...REQUIRED_PROTOCOLS, "uniswap-v3"],
+      passedSteps: ["networks", "protocols", "tokens"],
+      lastStep: "pools",
+    });
+    expect(parked.lastStep).toBe("pools");
+    expect(resumeStep(parked)).toBe("limits");
+    expect(stepIndex(parked, resumeStep(parked))).toEqual({ index: 4, count: 4 });
   });
 });
 
@@ -957,9 +1031,7 @@ describe("isBroadMandate", () => {
 
   it("selecting every protocol alone raises nothing", () => {
     // @rule R13
-    const draft = draftOf(
-      withProtocols(empty(), [...REQUIRED_PROTOCOLS, "aave-v3", "uniswap-v3", "uniswap-v4"]),
-    );
+    const draft = draftOf(withProtocols(empty(), [...REQUIRED_PROTOCOLS, "aave-v3", "uniswap-v4"]));
     expect(isBroadMandate(draft, catalog, 1)).toBe(false);
   });
 
@@ -1054,7 +1126,7 @@ describe("poolUniverseCount, the Broad mandate denominator kept on the draft", (
     // @rule R13
     const draft = measured(withDex(), 11);
     expect(
-      draftOf(withProtocols(draft, [...REQUIRED_PROTOCOLS, "uniswap-v3", "uniswap-v4"]))
+      draftOf(withProtocols(draft, [...REQUIRED_PROTOCOLS, "aave-v3", "uniswap-v4"]))
         .poolUniverseCount,
     ).toBeNull();
   });
@@ -1111,9 +1183,9 @@ describe("poolUniverseCount, the Broad mandate denominator kept on the draft", (
     expect(removePool(added, "arb-eth-usdc-5").poolUniverseCount).toBe(11);
     expect(clearPools(added).poolUniverseCount).toBe(11);
 
-    const capped = setCap(draft, "protocols", "uniswap-v3", { noCap: false, pct: 40 });
+    const capped = setCap(draft, "protocols", "uniswap-v4", { noCap: false, pct: 40 });
     expect(capped.poolUniverseCount).toBe(11);
-    expect(clearCap(capped, "protocols", "uniswap-v3").poolUniverseCount).toBe(11);
+    expect(clearCap(capped, "protocols", "uniswap-v4").poolUniverseCount).toBe(11);
   });
 
   it("survives a call that changes nothing", () => {
@@ -1143,5 +1215,69 @@ describe("poolUniverseCount, the Broad mandate denominator kept on the draft", (
     expect(draft.poolUniverseCount).toBeNull();
     expect(withNetworks(draft, ["robinhood"], catalog).poolUniverseCount).toBeNull();
     expect(draftOf(addPool(draft, pool(), catalog)).poolUniverseCount).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// withoutUnavailableProtocols, what a stored draft goes through on load (R20 v3)
+// ---------------------------------------------------------------------------
+
+describe("withoutUnavailableProtocols", () => {
+  it("drops an unavailable protocol, its pools and its cap row from a stored draft", () => {
+    // @rule R20 v3 (POO-2167)
+    const next = withoutUnavailableProtocols(storedWithV3());
+    expect(next.protocols).toEqual(["uniswap-v3-swap", "across", "uniswap-v4"]);
+    expect(next.pools.map((p) => p.id)).toEqual(["arb-eth-usdc-5"]);
+    expect(next.caps.protocols).toEqual({ "uniswap-v4": { noCap: false, pct: 30 } });
+  });
+
+  it("changes nothing else on the draft", () => {
+    // @rule R20 v3 - the bookkeeping, the tokens, the other caps and the completion stamp stay.
+    const stored: MandateDraft = {
+      ...storedWithV3(),
+      name: "Blue chips on Arbitrum",
+      savedAt: NOW,
+      completedAt: NOW,
+      lastStep: "limits",
+      passedSteps: ["networks", "protocols", "tokens", "pools", "limits"],
+      poolUniverseCount: 7,
+    };
+    const next = withoutUnavailableProtocols(stored);
+    const { protocols: _p, pools: _l, caps: nextCaps, ...rest } = next;
+    const { protocols: _sp, pools: _sl, caps: storedCaps, ...storedRest } = stored;
+    expect(rest).toEqual(storedRest);
+    expect(nextCaps.networks).toEqual(storedCaps.networks);
+    expect(nextCaps.tokens).toEqual(storedCaps.tokens);
+  });
+
+  it("keeps the required rows, the Uniswap v3 swap being a different protocol", () => {
+    // @rule R19
+    const next = withoutUnavailableProtocols(storedWithV3());
+    expect(next.protocols.slice(0, 2)).toEqual(["uniswap-v3-swap", "across"]);
+  });
+
+  it("returns the same draft when it names no unavailable protocol", () => {
+    // @rule R20 v3
+    const draft = draftOf(addPool(withDex(), pool(), catalog));
+    expect(withoutUnavailableProtocols(draft)).toBe(draft);
+  });
+
+  it("drops a stray pool or cap row of an unavailable protocol the list no longer names", () => {
+    // @rule R20 v3 - a hand-edited or half-migrated entry can carry either without the protocol.
+    const stray: MandateDraft = {
+      ...storedWithV3(),
+      protocols: [...REQUIRED_PROTOCOLS, "uniswap-v4"],
+    };
+    const next = withoutUnavailableProtocols(stray);
+    expect(next.pools.map((p) => p.id)).toEqual(["arb-eth-usdc-5"]);
+    expect(next.caps.protocols["uniswap-v3"]).toBeUndefined();
+  });
+
+  it("leaves the input draft untouched", () => {
+    // @rule R9
+    const stored = storedWithV3();
+    const snapshot = JSON.stringify(stored);
+    withoutUnavailableProtocols(stored);
+    expect(JSON.stringify(stored)).toBe(snapshot);
   });
 });

@@ -846,6 +846,165 @@
       "summaryTokens": "Tokens",
       "summaryPools": "Pools",
       "summaryLimits": "Limieten"
+    },
+    "canvas": {
+      "title": "Bouw uw strategie",
+      "subtitle": "Stel de strategie samen uit blokken. Sleep er een naar binnen en configureer het rechts. Blokken gebruiken alleen wat het mandaat toestaat.",
+      "hint": "Ctrl + scrollen om te zoomen (Cmd + scrollen op Mac) · slepen om te verplaatsen · dubbelklikken om passend te maken",
+      "zoom": {
+        "in": "Inzoomen",
+        "out": "Uitzoomen",
+        "fit": "Passend maken",
+        "readout": "{pct}%",
+        "readoutLabel": "Zoom {pct}%"
+      },
+      "bar": {
+        "back": "Terug: Mandaat",
+        "next": "Volgende: Controleren"
+      },
+      "palette": {
+        "fromMandate": "Uit uw mandaat",
+        "flowBlocks": "Flowblokken",
+        "comingSoon": "Binnenkort",
+        "caption": "Sleep een blok naar het canvas. Het komt leeg aan: kies rechts de pool, het asset of de markt.",
+        "soon": "Binnenkort",
+        "soonTooltip": "Binnenkort"
+      },
+      "blocks": {
+        "uniswapV4Pool": {
+          "protocol": "Uniswap v4",
+          "type": "Liquiditeitspositie"
+        },
+        "uniswapV3Pool": {
+          "protocol": "Uniswap v3",
+          "type": "Liquiditeitspositie"
+        },
+        "aaveSupply": {
+          "protocol": "Aave v3",
+          "type": "Aanbod"
+        },
+        "aaveBorrow": {
+          "protocol": "Aave v3",
+          "type": "Lening"
+        },
+        "pendle": {
+          "protocol": "Pendle",
+          "type": "Yieldpositie"
+        },
+        "gmxPerp": {
+          "protocol": "GMX",
+          "type": "Perppositie"
+        }
+      },
+      "card": {
+        "poolTitle": "{token0} / {token1}",
+        "poolCaption": "{protocol} · {fee}%",
+        "supplyTitle": "{symbol} aanbieden",
+        "borrowTitle": "{symbol} lenen",
+        "aaveCaption": "Aave v3",
+        "aaveCaptionOnNetwork": "Aave v3 · {network}",
+        "emptySupply": "Aave v3 Aanbod",
+        "emptyBorrow": "Aave v3 Lening",
+        "pickPool": "Kies een pool",
+        "pickAsset": "Kies een asset",
+        "invalid": "Niet langer in uw mandaat",
+        "accessibleName": "{title}, {caption}, op {network}, {pct}% van het kapitaal"
+      },
+      "spine": {
+        "deposit": {
+          "title": "Storting",
+          "caption": "USDC · Arbitrum"
+        },
+        "idleInput": {
+          "title": "Inactieve invoer",
+          "caption": "USDC wacht op de hub"
+        },
+        "idleOutput": {
+          "title": "Inactieve uitvoer",
+          "caption": "USDC terug op de hub"
+        },
+        "income": {
+          "title": "Inkomsten (fees)",
+          "caption": "USDC · Arbitrum"
+        },
+        "withdraw": {
+          "title": "Opname",
+          "caption": "USDC · Arbitrum"
+        },
+        "lockTooltip": "Vast: USDC op Arbitrum"
+      },
+      "flow": {
+        "swapAuto": "Swap · auto",
+        "swap": "Swap",
+        "collectFees": "Fees innen",
+        "bridgeAuto": "Bridge · auto"
+      },
+      "tooltip": {
+        "addProtocol": "Protocol toevoegen op {network}",
+        "addNetwork": "Netwerk toevoegen",
+        "portBefore": "Een flowblok invoegen: Swap",
+        "portAfterPool": "Een flowblok invoegen: Fees innen",
+        "portAfterSupply": "Een blok invoegen: Lening, Swap",
+        "portAfterBorrow": "Een flowblok invoegen: Swap",
+        "swapAuto": "De app swapt {token} naar de pooltokens",
+        "swapAutoSupply": "De app swapt {token} naar {asset}",
+        "swap": "Swapt naar een andere token uit uw mandaat",
+        "bridgeAuto": "Verplaatst {token} naar {network}",
+        "collectFees": "Int de poolfees in Inkomsten (fees)",
+        "share": "{pct}% van het kapitaal van de strategie"
+      },
+      "empty": {
+        "addProtocol": "Protocol toevoegen",
+        "addNetwork": "Netwerk toevoegen",
+        "startHere": "Begin hier: voeg een protocol toe op Arbitrum (cirkel) of voeg een netwerk toe (vak)."
+      },
+      "menu": {
+        "protocols": {
+          "title": "Protocollen op {network}",
+          "footer": "Protocollen uit uw mandaat op {network}.",
+          "none": "Geen protocol uit uw mandaat is beschikbaar op {network}.",
+          "borrowDisabled": "Lening · voeg het toe onder een Aanbod-blok"
+        },
+        "comingSoonType": "{type} · binnenkort",
+        "link": {
+          "protocols": "Mandaat bewerken · Protocollen",
+          "networks": "Mandaat bewerken · Netwerken"
+        },
+        "networks": {
+          "title": "Netwerken uit uw mandaat",
+          "option": "spoke · voegt een bridge toe",
+          "placed": "{count, plural, =1 {{names} staat al op het canvas.} other {{names} staan al op het canvas.}}",
+          "none": "Uw mandaat heeft geen ander netwerk."
+        },
+        "port": {
+          "before": "Vóór {title}",
+          "after": "Na {title}",
+          "borrowOption": "Lenen tegen dit aanbod",
+          "flowOption": "Flowblok",
+          "footerAfterSupply": "Blokken uit uw mandaat die na dit aanbod passen.",
+          "footer": "Blokken uit uw mandaat die hier passen."
+        }
+      },
+      "panel": {
+        "overline": "Blok configureren",
+        "nothingTitle": "Niets geselecteerd",
+        "nothingBody": "Voeg een protocol of een netwerk toe op het canvas, of sleep een blok vanaf links. Een nieuw blok komt leeg aan; hier kiest u de pool, het asset of de markt.",
+        "remove": "Blok verwijderen",
+        "typeNoPool": "{type} · nog geen pool",
+        "typeNoAsset": "{type} · nog geen asset",
+        "menuOpen": "Kies een protocol in het menu. Het blok wordt toegevoegd op {network} en opent hier.",
+        "menuOpenNetwork": "Kies een netwerk in het menu. Het netwerk wordt met zijn bridge aan het canvas toegevoegd.",
+        "portMenuOpenSupply": "Kies wat er na {title} komt. Een Lening-blok gebruikt dat aanbod als onderpand.",
+        "portMenuOpenBefore": "Kies wat er vóór {title} komt.",
+        "portMenuOpenAfter": "Kies wat er na {title} komt."
+      },
+      "network": {
+        "remove": "{network} verwijderen"
+      },
+      "toast": {
+        "removed": "Blok verwijderd",
+        "undo": "Ongedaan maken"
+      }
     }
   }
 }

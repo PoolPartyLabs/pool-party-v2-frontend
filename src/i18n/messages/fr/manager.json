@@ -846,6 +846,165 @@
       "summaryTokens": "Jetons",
       "summaryPools": "Pools",
       "summaryLimits": "Limites"
+    },
+    "canvas": {
+      "title": "Construisez votre stratégie",
+      "subtitle": "Assemblez la stratégie à partir de blocs. Faites-en glisser un, puis configurez-le à droite. Les blocs n'utilisent que ce que le mandat autorise.",
+      "hint": "Ctrl + molette pour zoomer (Cmd + molette sur Mac) · glisser pour déplacer · double-clic pour ajuster",
+      "zoom": {
+        "in": "Zoom avant",
+        "out": "Zoom arrière",
+        "fit": "Ajuster à la vue",
+        "readout": "{pct}%",
+        "readoutLabel": "Zoom {pct}%"
+      },
+      "bar": {
+        "back": "Précédent : Mandat",
+        "next": "Suivant : Vérification"
+      },
+      "palette": {
+        "fromMandate": "De votre mandat",
+        "flowBlocks": "Blocs de flux",
+        "comingSoon": "Bientôt disponible",
+        "caption": "Faites glisser un bloc sur le canvas. Il arrive vide : choisissez le pool, l'actif ou le marché à droite.",
+        "soon": "Bientôt",
+        "soonTooltip": "Bientôt disponible"
+      },
+      "blocks": {
+        "uniswapV4Pool": {
+          "protocol": "Uniswap v4",
+          "type": "Position de liquidité"
+        },
+        "uniswapV3Pool": {
+          "protocol": "Uniswap v3",
+          "type": "Position de liquidité"
+        },
+        "aaveSupply": {
+          "protocol": "Aave v3",
+          "type": "Fourniture"
+        },
+        "aaveBorrow": {
+          "protocol": "Aave v3",
+          "type": "Emprunt"
+        },
+        "pendle": {
+          "protocol": "Pendle",
+          "type": "Position de yield"
+        },
+        "gmxPerp": {
+          "protocol": "GMX",
+          "type": "Position perp"
+        }
+      },
+      "card": {
+        "poolTitle": "{token0} / {token1}",
+        "poolCaption": "{protocol} · {fee}%",
+        "supplyTitle": "Fournir {symbol}",
+        "borrowTitle": "Emprunter {symbol}",
+        "aaveCaption": "Aave v3",
+        "aaveCaptionOnNetwork": "Aave v3 · {network}",
+        "emptySupply": "Fourniture Aave v3",
+        "emptyBorrow": "Emprunt Aave v3",
+        "pickPool": "Choisir un pool",
+        "pickAsset": "Choisir un actif",
+        "invalid": "Ne fait plus partie de votre mandat",
+        "accessibleName": "{title}, {caption}, sur {network}, {pct}% du capital"
+      },
+      "spine": {
+        "deposit": {
+          "title": "Dépôt",
+          "caption": "USDC · Arbitrum"
+        },
+        "idleInput": {
+          "title": "Entrée inactive",
+          "caption": "USDC en attente sur le hub"
+        },
+        "idleOutput": {
+          "title": "Sortie inactive",
+          "caption": "USDC de retour sur le hub"
+        },
+        "income": {
+          "title": "Revenus (frais)",
+          "caption": "USDC · Arbitrum"
+        },
+        "withdraw": {
+          "title": "Retrait",
+          "caption": "USDC · Arbitrum"
+        },
+        "lockTooltip": "Fixe : USDC sur Arbitrum"
+      },
+      "flow": {
+        "swapAuto": "Swap · auto",
+        "swap": "Swap",
+        "collectFees": "Collecter les frais",
+        "bridgeAuto": "Bridge · auto"
+      },
+      "tooltip": {
+        "addProtocol": "Ajouter un protocole sur {network}",
+        "addNetwork": "Ajouter un réseau",
+        "portBefore": "Insérer un bloc de flux : Swap",
+        "portAfterPool": "Insérer un bloc de flux : Collecter les frais",
+        "portAfterSupply": "Insérer un bloc : Emprunt, Swap",
+        "portAfterBorrow": "Insérer un bloc de flux : Swap",
+        "swapAuto": "L'app swappe {token} vers les jetons du pool",
+        "swapAutoSupply": "L'app swappe {token} vers {asset}",
+        "swap": "Swappe vers un autre jeton de votre mandat",
+        "bridgeAuto": "Déplace {token} vers {network}",
+        "collectFees": "Collecte les frais du pool dans Revenus (frais)",
+        "share": "{pct}% du capital de la stratégie"
+      },
+      "empty": {
+        "addProtocol": "Ajouter un protocole",
+        "addNetwork": "Ajouter un réseau",
+        "startHere": "Commencez ici : ajoutez un protocole sur Arbitrum (cercle) ou ajoutez un réseau (boîte)."
+      },
+      "menu": {
+        "protocols": {
+          "title": "Protocoles sur {network}",
+          "footer": "Protocoles de votre mandat sur {network}.",
+          "none": "Aucun protocole de votre mandat n'est disponible sur {network}.",
+          "borrowDisabled": "Emprunt · à ajouter sous un bloc de Fourniture"
+        },
+        "comingSoonType": "{type} · bientôt disponible",
+        "link": {
+          "protocols": "Modifier le mandat · Protocoles",
+          "networks": "Modifier le mandat · Réseaux"
+        },
+        "networks": {
+          "title": "Réseaux de votre mandat",
+          "option": "spoke · ajoute un bridge",
+          "placed": "{count, plural, =1 {{names} est déjà sur le canvas.} other {{names} sont déjà sur le canvas.}}",
+          "none": "Votre mandat n'a pas d'autre réseau."
+        },
+        "port": {
+          "before": "Avant {title}",
+          "after": "Après {title}",
+          "borrowOption": "Emprunter contre cette fourniture",
+          "flowOption": "Bloc de flux",
+          "footerAfterSupply": "Blocs de votre mandat qui s'insèrent après cette fourniture.",
+          "footer": "Blocs de votre mandat qui s'insèrent ici."
+        }
+      },
+      "panel": {
+        "overline": "Configurer le bloc",
+        "nothingTitle": "Aucune sélection",
+        "nothingBody": "Ajoutez un protocole ou un réseau sur le canvas, ou faites glisser un bloc depuis la gauche. Un nouveau bloc arrive vide ; vous choisissez ici son pool, son actif ou son marché.",
+        "remove": "Retirer le bloc",
+        "typeNoPool": "{type} · pas encore de pool",
+        "typeNoAsset": "{type} · pas encore d'actif",
+        "menuOpen": "Choisissez un protocole dans le menu. Le bloc est ajouté sur {network} et s'ouvre ici.",
+        "menuOpenNetwork": "Choisissez un réseau dans le menu. Le réseau est ajouté au canvas avec son bridge.",
+        "portMenuOpenSupply": "Choisissez ce qui vient après {title}. Un bloc d'Emprunt utilise cette fourniture comme garantie.",
+        "portMenuOpenBefore": "Choisissez ce qui vient avant {title}.",
+        "portMenuOpenAfter": "Choisissez ce qui vient après {title}."
+      },
+      "network": {
+        "remove": "Retirer {network}"
+      },
+      "toast": {
+        "removed": "Bloc retiré",
+        "undo": "Annuler"
+      }
     }
   }
 }
