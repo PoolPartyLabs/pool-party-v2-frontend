@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FrozenLaunch, LaunchWallet } from "./driver";
 import { createJournal, journalKey } from "./journal";
-import { useV2Launch } from "./useV2Launch";
+import { useV2LaunchBinding } from "./useV2LaunchBinding";
 
 const mocks = vi.hoisted(() => ({
   enabled: true,
@@ -91,7 +91,7 @@ describe("headless launch binding [R3, R4, R6]", () => {
     mocks.receipt.mockResolvedValue({ status: "success" });
   });
   it("exposes dynamic chain signatures and starts only after explicit launch", async () => {
-    const { result } = renderHook(() => useV2Launch(options()));
+    const { result } = renderHook(() => useV2LaunchBinding(options()));
     await waitFor(() => expect(result.current.hydrated).toBe(true));
     expect(mocks.build).not.toHaveBeenCalled();
     expect(result.current.signatures.some((entry) => entry.type === "message")).toBe(true);
@@ -113,7 +113,7 @@ describe("headless launch binding [R3, R4, R6]", () => {
       receiptStatus: "success",
     };
     localStorage.setItem(journalKey("draft", manager), JSON.stringify(journal));
-    const { result } = renderHook(() => useV2Launch(options()));
+    const { result } = renderHook(() => useV2LaunchBinding(options()));
     await waitFor(() => expect(result.current.hydrated).toBe(true));
     expect(result.current.currentStep?.id).toBe("discover");
     await act(async () => {
@@ -124,7 +124,7 @@ describe("headless launch binding [R3, R4, R6]", () => {
   });
   it("keeps partial failure resumable and refuses corrupt journals and disabled flags", async () => {
     mocks.build.mockRejectedValueOnce(new Error("BALANCE_CHANGED"));
-    const { result, unmount } = renderHook(() => useV2Launch(options()));
+    const { result, unmount } = renderHook(() => useV2LaunchBinding(options()));
     await waitFor(() => expect(result.current.hydrated).toBe(true));
     await act(async () => {
       await result.current.launch();
@@ -136,19 +136,19 @@ describe("headless launch binding [R3, R4, R6]", () => {
     expect(result.current.status).toBe("complete");
     unmount();
     localStorage.setItem(journalKey("draft", manager), "corrupt");
-    const corrupt = renderHook(() => useV2Launch(options()));
+    const corrupt = renderHook(() => useV2LaunchBinding(options()));
     await waitFor(() => expect(corrupt.result.current.error?.code).toBe("INVALID_JOURNAL"));
     corrupt.unmount();
     localStorage.clear();
     mocks.enabled = false;
-    const disabled = renderHook(() => useV2Launch(options()));
+    const disabled = renderHook(() => useV2LaunchBinding(options()));
     await act(async () => {
       await disabled.result.current.launch();
     });
     expect(disabled.result.current.error?.code).toBe("V2_UNAVAILABLE");
   });
   it("advances exactly one ready step for next and sign without running the full plan", async () => {
-    const { result } = renderHook(() => useV2Launch(options()));
+    const { result } = renderHook(() => useV2LaunchBinding(options()));
     await waitFor(() => expect(result.current.hydrated).toBe(true));
     await act(async () => {
       await result.current.next();
@@ -163,7 +163,7 @@ describe("headless launch binding [R3, R4, R6]", () => {
   });
   it("exposes honest waits, polls and pauses without rebuilding confirmed work", async () => {
     mocks.build.mockResolvedValue({});
-    const { result } = renderHook(() => useV2Launch({ ...options(), pollInterval: 1 }));
+    const { result } = renderHook(() => useV2LaunchBinding({ ...options(), pollInterval: 1 }));
     await waitFor(() => expect(result.current.hydrated).toBe(true));
     let pending: Promise<void>;
     await act(async () => {
@@ -180,21 +180,21 @@ describe("headless launch binding [R3, R4, R6]", () => {
   });
   it("refuses missing wallet/plan and missing or mismatched frozen review", async () => {
     const missingWallet = renderHook(() =>
-      useV2Launch({ ...options(), manager: null, wallet: null }),
+      useV2LaunchBinding({ ...options(), manager: null, wallet: null }),
     );
     await act(async () => {
       await missingWallet.result.current.launch();
     });
     expect(missingWallet.result.current.error?.messageKey).toBe("fundLaunch.walletOrJournal");
     missingWallet.unmount();
-    const noPlan = renderHook(() => useV2Launch({ ...options(), plan: undefined }));
+    const noPlan = renderHook(() => useV2LaunchBinding({ ...options(), plan: undefined }));
     await waitFor(() => expect(noPlan.result.current.hydrated).toBe(true));
     await act(async () => {
       await noPlan.result.current.launch();
     });
     expect(noPlan.result.current.error?.code).toBe("BUILD_EXECUTION_GAP");
     noPlan.unmount();
-    const noReview = renderHook(() => useV2Launch({ ...options(), frozen: undefined }));
+    const noReview = renderHook(() => useV2LaunchBinding({ ...options(), frozen: undefined }));
     await waitFor(() => expect(noReview.result.current.hydrated).toBe(true));
     await act(async () => {
       await noReview.result.current.resume();
@@ -206,7 +206,7 @@ describe("headless launch binding [R3, R4, R6]", () => {
     expect(noReview.result.current.error?.code).toBe("INVALID_REVIEW");
     noReview.unmount();
     const prepare = vi.fn(() => ({ ...frozen, request: { ...frozen.request, manager: base } }));
-    const mismatch = renderHook(() => useV2Launch({ ...options(), prepare }));
+    const mismatch = renderHook(() => useV2LaunchBinding({ ...options(), prepare }));
     await waitFor(() => expect(mismatch.result.current.hydrated).toBe(true));
     expect(prepare).not.toHaveBeenCalled();
     await act(async () => {
@@ -216,13 +216,13 @@ describe("headless launch binding [R3, R4, R6]", () => {
   });
   it("validates unreadable plan and redacts non-code prepare errors", async () => {
     const badPlan = renderHook(() =>
-      useV2Launch({ ...options(), plan: { ...plan, version: 2 } as unknown as typeof plan }),
+      useV2LaunchBinding({ ...options(), plan: { ...plan, version: 2 } as unknown as typeof plan }),
     );
     await waitFor(() => expect(badPlan.result.current.hydrated).toBe(true));
     expect(badPlan.result.current.gap).toBe(true);
     badPlan.unmount();
     const invalid = renderHook(() =>
-      useV2Launch({
+      useV2LaunchBinding({
         ...options(),
         prepare: () => {
           throw new Error("sensitive private data");

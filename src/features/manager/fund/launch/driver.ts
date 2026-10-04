@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-LIB-031 (POO-2177)
+ * @id PP-MGR-LIB-042 (POO-2177)
  * @name launchDriver
  * @implements-rules-version v1
  * Just-in-time API builders and receipt reconciliation. No wallet broadcast occurs on import.
@@ -57,6 +57,16 @@ function unwrap<Data>(
 }
 function record(value: unknown): Record<string, unknown> {
   return z.record(z.unknown()).parse(value);
+}
+function tickPrice(
+  tick: number | undefined,
+  pool: import("@/lib/api/v2/schemas").CatalogPool,
+): string {
+  if (tick === undefined || !Number.isInteger(tick)) throw new Error("BUILD_EXECUTION_GAP");
+  return new Decimal("1.0001")
+    .pow(tick)
+    .mul(new Decimal(10).pow((pool.tokens[0]?.decimals ?? 0) - (pool.tokens[1]?.decimals ?? 0)))
+    .toFixed();
 }
 function coreOf(journal: LaunchJournal): string {
   return addressSchema.parse(journal.addresses.coreVault);
@@ -281,8 +291,8 @@ export function createLaunchDriver(wallet: LaunchWallet): LaunchDriver {
         available,
         budget(step, journal),
         base,
-        z.string().parse(step.config?.priceLower),
-        z.string().parse(step.config?.priceUpper),
+        step.config?.priceLower ?? tickPrice(step.config?.tickLower, pool),
+        step.config?.priceUpper ?? tickPrice(step.config?.tickUpper, pool),
       );
       if (step.kind === "swap") {
         if (amounts.swapRaw === BigInt(0)) return { complete: true };
@@ -314,6 +324,8 @@ export function createLaunchDriver(wallet: LaunchWallet): LaunchDriver {
           amount1: amounts.amount1,
           priceLower: step.config?.priceLower,
           priceUpper: step.config?.priceUpper,
+          tickLower: step.config?.tickLower,
+          tickUpper: step.config?.tickUpper,
           amount0Min: new Decimal(amounts.amount0)
             .mul(loss)
             .toFixed(pool.tokens[0]?.decimals ?? 6, Decimal.ROUND_DOWN),

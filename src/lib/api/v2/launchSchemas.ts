@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-LIB-027 (POO-2177)
+ * @id PP-MGR-LIB-038 (POO-2177)
  * @name v2LaunchSchemas
  * @implements-rules-version v1
  * Narrow allow-listed request and wallet transaction contracts.
@@ -93,6 +93,8 @@ export const openPositionSchema = z
     amount1Min: decimal.optional(),
     priceLower: decimal.optional(),
     priceUpper: decimal.optional(),
+    tickLower: z.number().int().min(-887272).max(887272).optional(),
+    tickUpper: z.number().int().min(-887272).max(887272).optional(),
   })
   .strict();
 export const versionedRecordSchema = z.object({ protocolVersion: z.literal("v2") }).passthrough();

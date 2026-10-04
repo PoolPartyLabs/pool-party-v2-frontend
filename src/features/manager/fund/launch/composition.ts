@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-LIB-030 (POO-2177)
+ * @id PP-MGR-LIB-041 (POO-2177)
  * @name launchComposition
  * @implements-rules-version v1
  * Range-derived v4 composition using decimal arithmetic and actual balances.

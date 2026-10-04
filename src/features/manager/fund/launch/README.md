@@ -1,57 +1,66 @@
-# Fund Review and launch
+# Fund Review data and launch journey
 
-POO-2177, rules v1. Integration only: Murilo owns the full Review page (POO-2172), Build canvas and visual layout. This slice supplies API access, execution and headless React contracts. No page or shell is changed. The existing `fundContracts` gate applies. Mock mode never signs.
+## Public seam (agreed October 4, 2026)
 
-## Integration
+Import from `src/features/manager/fund/launch/index.ts`:
 
-- `useV2Launch` reads the canvas owner's `draft.plan` (`BuildPlan` v1 from frontend PR #31, `feat/mgr-poo-2151-build-plan-model`, `src/features/manager/fund/build/plan/buildPlan.ts`). `CanvasPlan` is a structural read adapter, not a competing store or reducer. Until that model lands, launch reports an execution gap without guessing trades.
-- `draft.launchExecution[blockId]` is an owned extension adapter: v4 requires `priceLower`, `priceUpper` (human token1/token0) and `maxLossBps` (1..500). Serial drawings with multiple positions require `leafSharePct` for each independent leaf. Configuration panels currently persist only `poolId`/`assetKey`; their owner must supply these missing fields. They are not added to canvas files here.
-- Canvas spoke child percentages are percentages of root principal. The adapter divides each child by the group's root share, then applies that fraction to actual net destination credit. Aave is always an independent leaf, never the funding source of a later pool.
-- API PR #180 (`uBits-Capital/pool-party-api`, merged October 4, 2026) supplies configurable `payoutFeeBps`, transits and spoke balances. Deployment must include that release; if unavailable, launch fails visibly, never falls back to mock calldata.
+```ts
+startFundLaunch(draft: FundLaunchDraft): Promise<{ journeyId: string }>;
+getLaunchSteps(draft: FundLaunchDraft): LaunchStepPreview[];
+useV2ReviewDraft(draftId: string);
+useV2Launch(journeyId: string);
+FundLaunchJourney({ journeyId: string });
+explorerTxUrl(chainId: number, hash: string): string | null;
+explorerAddressUrl(chainId: number, address: string): string | null;
+```
+
+Types exported there:
+- `FundLaunchDraft`: Mandate draft plus required `plan: CanvasPlan`, `review: ReviewDraft` and optional `launchExecution` adapter configuration.
+- `ReviewDraft`: name, description, imageUrl, performanceFeeBps, managementFeeBps, payoutFeeBps, minimum, seed. Amounts are human USDC strings; fees are integer basis points.
+- `LaunchStepPreview`: id, chainId, kind, label (full i18n key), signer (`manager-wallet` / `manager-message` / `server`), countsAsSignature.
+- `LaunchJourney`: version, journeyId, draftId, manager, createdAt, frozen draft and latest checkpoint journal.
+
+`useV2ReviewDraft(draftId)` returns `{ review, setField, errors, launchBlockers, isReady }`, plus setFeePercent, setMax, preview, terms, feeConfiguration, uploadLogo/upload state, draft, manager, balanceDecimal, refreshBalance and preparation. Every setter persists `MandateDraft.review` beside the Build plan, rereading the latest draft so canvas updates are preserved. Errors identify fields; launchBlockers provides code, optional field and relative `fundLaunch.*` message key. POO-2172 keeps Launch enabled to scroll to these reasons, not an unexplained disabled state. Uploading blocks readiness. Flow fee comes from an existing fund's `fees.flowFeeBps` when available; otherwise feeConfiguration labels its 25 bps fallback. Default payout is 200 bps until explicitly configured. The page must label fallbacks and seed previews as estimates. Operating Cash is fixed zero; access public and payout term 72h are fixed.
+
+`getLaunchSteps` is pure and may throw a Build readiness error. Approval/swap descriptors are conditional maxima, not a promise every listed signature is needed. Server reads/waits never count as signatures. No Base step exists.
+
+`startFundLaunch` is the only Review Launch entry point. It validates a fresh draft against real balance/catalog, freezes it under the cross-tab lock, reuses an existing journal/journey and navigates to `/<locale>/manager/fund-launch/<journeyId>`. It never signs on entry. Resume uses the frozen request, never edits a known creation into another fund.
+
+`useV2Launch(journeyId)` returns `{ steps, current, sign, retry, resume, cancel, outcome }`, plus journal, addresses, readiness, busy and safe errors. Steps expose status, txHash, explorerUrl, receiptStatus, error and off-chain result. Sign advances at most one ready step; retry/resume reconcile and continue until waiting/failure/completion. Cancel pauses future work, not already broadcast transactions. Hydration never signs. Outcome is in-progress / failed / completed. The original wallet must connect. Mount wallet hooks only inside real Privy/wagmi providers; the Journey component guards mock mode.
+
+POO-2177, rules v1: Murilo owns Review PAGE (POO-2172), Mandate/Build pages and visual polish. This slice owns Review DATA, API access, launch execution and the Journey screen/outcomes. No builder page or shell is changed. Existing fundContracts feature flag applies. Mock mode never signs.
+
+## Build adapter and dependencies
+
+- Read-only structural adapter for `src/features/manager/fund/build/plan/buildPlan.ts` on `origin/feat/mgr-poo-2144-canvas-integration` (roll-up of PR #31 / POO-2151). No competing reducer/store and no canvas edits.
+- V4 needs canonical tickLower/tickUpper or human token1/token0 priceLower/priceUpper, and maxLossBps 1..500. Flat panel slippagePct maps to bps. Display inversion does not invert canonical execution values. Optional `draft.launchExecution[blockId]` supplies these fields until POO-2171 panels do. Full-range flags without canonical ticks, empty/untyped config and Aave Borrow fail closed.
+- Multiple positions drawn serially require explicit leafSharePct for independent leaves; Aave is always a parallel leaf, never the funding source for a later pool. Spoke child root percentages normalize to group percentages of actual destination credit.
+- API #180 is merged (October 3 UTC / October 4 Lisbon): build-create payoutFeeBps, transits and spoke balances. Deployment must include it. API #181 adds fund detail fees; absence remains visibly labelled fallback. Existing saved drafts have no invented ranges.
 
 ## Safety and recovery
 
-The per-draft, per-manager journal stores the frozen Review/request, derived steps, transaction hashes, receipt statuses and discovered core. Successful or uncertain creation is never rebuilt. Reconcile the same hash first; unknown receipts wait. A wallet submission with no known hash requires reconciliation, not an automatic second send. Checkpoints are written before each signing operation. Profile is reconciled before signing a fresh canonical nonce.
+Per-draft/per-manager journal stores frozen Review/request, step IDs, chains, hashes, receipt states, discovered data, net principal and actual arrival. Successful or uncertain creation is never rebuilt. Reconcile the same hash first; unknown receipts wait. No-hash wallet submission requires operator reconciliation, not a second send. Checkpoints persist before signing. Profile is reconciled before signing a canonical EIP-191 nonce.
 
-Creation is atomic with seed. Actual `FundSeeded.shares` defines the deployable net principal. Gross 100 USDC at 25 bps previews 99 whole shares, 99 USDC deployable principal, 0.25 USDC fee and 0.75 USDC remaining in the wallet. No fractional-share promise is made.
+Creation includes seed atomically. Actual FundSeeded shares define deployable principal. At the labelled 25 bps fallback, gross 100 USDC estimates 99 whole shares, 99 USDC principal, 0.25 USDC fee and 0.75 USDC wallet remainder. Actual receipt is authoritative.
 
-Builds happen just in time. Swap/open reread actual unallocated balances; range-derived composition uses Decimal and token decimals. V4 minimum amounts reflect the chosen loss bound. Allocation is aggregate on the hub. Bridge quotes are refreshed before send; transit reads prove credit before spoke execution. Reports expose pending/failed/expired jobs, not invented countdowns. No TVL/APR values are fabricated.
+Builders execute just in time. Swap/open reread unallocated balances; Decimal range composition honors token decimals and loss bound. Hub allocation is aggregate. Bridge quote refreshes before send; transits prove credited arrival before spoke work. Reports expose real pending/failed/expired waits, not invented countdowns. TVL/APR null stays unavailable.
 
-API writes run in new server-only files, separate from the shared v2 read client. Server actions verify the bearer session against authenticated `users/me` without caching or public-profile fallback, then compare that verified wallet with the on-chain manager before privileged work. `PP_API_KEY` is sent as `x-api-key`; `PP_API_ADMIN_KEY` is sent as `x-admin-key`, as required by the actual API guards. Report triggers have bounded process-local per-wallet/core throttling; upstream throttling remains necessary across replicas. Keys and upstream messages never return to clients.
+Journey displays every broadcast hash immediately and receipt status afterward. Arbitrum uses arbiscan.io; Robinhood uses robinhoodchain.blockscout.com. Created/discovered contracts use same-chain address links. Off-chain profile/discover results never masquerade as transactions.
 
-Logo upload reuses `useUploadMedia("logo")`, wallet-scoped presigned S3 POST, without a v1 strategy UUID. Deployment must provide media configuration, session authentication and CORS.
+## Server boundary and lower-level bindings
 
-## Known limitations
+New `src/lib/api/v2/launch.ts`, `launchSchemas.ts`, `launchActions.ts` leave shared client/actions/schemas untouched. Actions cover build-create/build-spoke, discover, canonical profile GET/PUT, generic capital and positions/build, unsigned swap/bridge quotes, privileged signed swaps, balances/transits, reports/job reads. Return `{ ok: true, data }` or `{ ok: false, error: { status, code } }`; raw upstream messages never reach clients.
 
-- Page navigation and execution fields must be connected by POO-2172/POO-2144/POO-2171 owners. No new Review page or builder routing is installed here. Existing saved drafts have no invented ranges.
-- Only base-token pairs from the supported catalog are executed. Two-conversion non-base pairs and standalone manual swaps fail closed.
-- An ambiguous no-hash submission requires operator/wallet reconciliation; no transaction-history API exists to resolve it automatically.
-- Journal storage is browser-local, not a cross-device durable API launch plan. Web Locks prevent two tabs from launching the same draft; unsupported browsers fail closed. Alpha reorg handling and cross-device coordination need the later durable API.
-- Report wait observations (14..19 minutes) are not SLAs. Keeper/operator funding remains an environment gate.
-- Fee decreases have no API builder; Review shows the contract fact, not an edit control.
-- No deploy, signature or broadcast is performed by tests, build, or this development session.
+Actions verify bearer session via authenticated users/me with no caching/public-profile fallback, then compare verified wallet to on-chain manager. API guards require PP_API_KEY as x-api-key AND PP_API_ADMIN_KEY as x-admin-key on privileged routes. Neither key is public-prefixed. Report triggers have bounded process-local per-wallet/core throttling; multi-replica upstream throttling remains necessary. Signed swap maxLossBps is always 1..500.
 
-## Validation
+`useV2ReviewBinding({draft,catalog,balance,initial?,upload?,flowFeeBps?})` and `useV2LaunchBinding({draftId,manager,wallet,plan,execution,spoke,prepare?,frozen?,storage?,pollInterval?})` are injectable lower-level implementation/test bindings, not the agreed page seam. `useV2LaunchWallet()` binds Privy/wagmi, chain proof, receipts and hub balance. No signatures on mount. Logo upload reuses useUploadMedia("logo"), wallet-scoped presigned S3 POST without a v1 strategy UUID; deployment needs media/session/CORS configuration.
 
-Focused tests cover Review bounds and deposit arithmetic, supported Build fixtures, partial failure and uncertain receipts, canonical profile serialization, real receipt decoding, strict transaction validation, headless bindings and admin-key redaction/rate limiting. All 11 configured locales carry only `manager.fundLaunch.*` error/status messages needed by these contracts. Visual components and stories are intentionally absent.
+## Known gaps and validation
 
-## Headless page contracts
-
-`useV2ReviewDraft({ draft, catalog, balance, initial?, upload? })` returns `review`, typed `setField`, `setFeePercent`, `setMax`, `valid`, field `errors` (translation keys), `preview` (raw fee/principal/shares/remainder), fixed `terms`, `prepare(manager)`, and `uploadLogo`/upload state. Monetary fields remain human USDC strings until `prepare` creates raw API units; fees are integer bps. `setFeePercent` accepts at most two decimal places. `initial` seeds the local form on mount: the page should key its form by draft/wallet or remount with the saved journal's frozen Review. `prepare` must run at explicit launch, never on render. Logo staging uses the existing signature-free wallet-scoped media path.
-
-`useV2LaunchWallet()` returns `{ manager, wallet, balance, balanceError, refreshBalance }`. It binds Privy, chain switching, real USDC reads and receipt lookup. Mount **only under real-mode Privy/wagmi providers** (the existing mock gate is the parent's responsibility). No wallet signature is requested on mount. The page may provide its own `LaunchWallet` instead.
-
-`useV2Launch({ draftId, manager, wallet, plan: draft.plan, execution: draft.launchExecution, spoke, prepare, storage?, pollInterval? })` returns `{ steps, signatures, currentStep, checkpoints, journal, addresses, hydrated, busy, gap, status, error, launch, next, sign, retry, resume, pause }`. Use `prepare: () => review.prepare(manager)` to freeze validated data only when the user explicitly starts. `frozen` is an alternative for an already validated snapshot. Default storage is browser-local; default polling is 10 seconds. Neither hydration nor reload signs automatically.
-
-- `launch`: acquire the draft lock, reread persisted state and run ready dependencies, including real waits.
-- `next` / `sign`: advance at most one ready step (a discovery/wait may require no wallet signature). Every transaction still requires the wallet's own confirmation. These methods never accept arbitrary calldata.
-- `resume` / `retry`: require an existing journal, reconcile known receipts/profile first, skip every confirmed step, then continue until waiting/completed/failed.
-- `pause`: abort future work/polling; an already submitted transaction is not cancelled and its hash remains journaled.
-- `signatures`: ordered per-chain transaction/message descriptors with checkpoint status and conditional flags; approval/swap/profile can be skipped on reconciliation. No Base descriptor exists.
-- `error`: safe uppercase code plus a `manager.fundLaunch.*` translation key (keys are relative to `useTranslations("manager")`). Raw upstream messages and credentials never reach it.
-
-The page owns labels, layout, immutable-field controls after a journal exists, confirmation UX, navigation and final success linking. `status` is idle/paused/running/failed/complete; checkpoint statuses additionally expose building/signing/submitted/waiting/confirmed. `currentStep` is the first unfinished step, not a promise that a parallel leaf must await it. TVL/APR are not produced by the launch layer: the page must preserve null as unavailable.
-
-## API access contract
-
-New `launchActions.ts` exports create/spoke/discover/profile, capital/position builders, unsigned `quoteLaunchSwapAction`, bridge quote, actual balances/transits and report trigger/job reads. Every action returns `{ ok: true, data }` or `{ ok: false, error: { status, code } }`. Normal swap quotes use the existing GET `/funds/:core/swap/quote`; signed execution uses privileged POST `/funds/:core/build-swap`, generated just in time rather than storing a 120-second signed route. Query values are validated and encoded, never caller-provided paths. The durable launch-plan can later replace storage without changing step identities.
+- POO-2172 connects its Launch button; POO-2144/2171 supply typed panel configuration. Only our separate Journey route is installed.
+- Non-base two-conversion pairs, non-base Aave assets and standalone manual swaps fail closed. No speculative routes.
+- Journal is browser-local, not cross-device durable launch-plan. Web Locks guard duplicate tabs; unsupported browsers fail closed. Alpha reorg handling and cross-device coordination need the later API.
+- Ambiguous no-hash submission has no transaction-history API for automatic resolution.
+- Keeper funding is an environment gate; observed report/bridge timings are not SLAs. Fee decreases have no builder yet; show contract copy, no post-launch editor.
+- Requested external SC spec directory was unavailable locally; API source/README and handoff analyses were read instead.
+- Tests mock dev-host-only API, signatures and receipts. Review persistence, validation/math, graph shapes, partial failure/resume, strict payloads, canonical profile, admin redaction/rate limit and explorer wiring are covered. All 11 configured locales translate error/status/Journey keys. This development session never signs, broadcasts or deploys.

@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-LIB-032 (POO-2177)
+ * @id PP-MGR-LIB-043 (POO-2177)
  * @name launchReceipt
  * @implements-rules-version v1
  * Decode authoritative seed, transit and position identities from mined logs.

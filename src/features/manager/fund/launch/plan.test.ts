@@ -20,6 +20,20 @@ const fixture = (
 ): CanvasPlan => ({ version: 1, hub: { chains: hub }, spokes });
 
 describe("Build to launch adapter [R2, R4, R5]", () => {
+  it("consumes typed panel canonical ticks and clamped slippage without another model", () => {
+    const plan = fixture([chain("pool", "uniswapV4Pool")]);
+    const block = plan.hub.chains[0]?.steps[0];
+    if (!block) throw new Error("missing fixture");
+    block.config = { poolId: "pool", tickLower: -100, tickUpper: 100, slippagePct: 0.5 };
+    const steps = deriveLaunchSteps(plan, {}, false, false);
+    expect(steps.find((step) => step.kind === "open")?.config).toMatchObject({
+      tickLower: -100,
+      tickUpper: 100,
+      maxLossBps: 50,
+    });
+    block.kind = "aaveBorrow";
+    expect(() => deriveLaunchSteps(plan, {}, false, false)).toThrow("UNSUPPORTED_POSITION");
+  });
   it("creates an included empty spoke without bridging zero capital", () => {
     const plan = fixture(
       [chain("aave", "aaveSupply")],

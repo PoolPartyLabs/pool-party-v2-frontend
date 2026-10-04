@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-LIB-025 (POO-2177)
+ * @id PP-MGR-LIB-036 (POO-2177)
  * @name fundReview
  * @implements-rules-version v1
  * Review validation and integer seed accounting.
@@ -31,6 +31,7 @@ export const reviewSchema = z.object({
   seed: usdc,
 });
 export type FundReview = z.infer<typeof reviewSchema>;
+export type ReviewDraft = FundReview;
 
 export function rawUsdc(value: string): bigint {
   const validated = usdc.parse(value);
@@ -38,9 +39,11 @@ export function rawUsdc(value: string): bigint {
   return BigInt(whole) * BigInt("1000000") + BigInt(fraction.padEnd(6, "0"));
 }
 
-export function previewSeed(gross: bigint) {
+export function previewSeed(gross: bigint, flowFeeBps = 25) {
   if (gross <= BigInt("0")) throw new Error("INVALID_SEED");
-  const fee = (gross * BigInt("25")) / BigInt("10000");
+  if (!Number.isInteger(flowFeeBps) || flowFeeBps < 0 || flowFeeBps >= 10000)
+    throw new Error("INVALID_FEE");
+  const fee = (gross * BigInt(flowFeeBps)) / BigInt("10000");
   const shares = (gross - fee) / BigInt("1000000");
   const principal = shares * BigInt("1000000");
   return { fee, shares, principal, charged: principal + fee, remainder: gross - principal - fee };

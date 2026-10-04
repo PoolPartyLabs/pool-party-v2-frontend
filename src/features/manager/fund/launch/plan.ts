@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-LIB-026 (POO-2177)
+ * @id PP-MGR-LIB-037 (POO-2177)
  * @name launchPlanAdapter
  * @implements-rules-version v1
  * Owned structural adapter for the canvas BuildPlan v1.
@@ -17,7 +17,17 @@ export interface CanvasChain {
     id: string;
     family: "position" | "flow";
     kind: string;
-    config?: { poolId?: string; assetKey?: string } | null;
+    config?: {
+      poolId?: string;
+      assetKey?: string;
+      priceLower?: string;
+      priceUpper?: string;
+      tickLower?: number;
+      tickUpper?: number;
+      fullRange?: boolean;
+      slippagePct?: number;
+      displayInverted?: boolean;
+    } | null;
   }[];
 }
 export interface ExecutionConfig {
@@ -25,6 +35,8 @@ export interface ExecutionConfig {
   priceLower?: string;
   priceUpper?: string;
   maxLossBps?: number;
+  tickLower?: number;
+  tickUpper?: number;
 }
 export interface LaunchStep {
   id: string;
@@ -119,7 +131,9 @@ export function deriveLaunchSteps(
           !block.config
         )
           throw new Error("UNSUPPORTED_POSITION");
-        const settings = execution[block.id] ?? {};
+        const settings = { ...block.config, ...execution[block.id] };
+        if (settings.maxLossBps === undefined && typeof settings.slippagePct === "number")
+          settings.maxLossBps = Math.round(settings.slippagePct * 100);
         if (leaves.length > 1 && settings.leafSharePct === undefined)
           throw new Error("BUILD_EXECUTION_GAP");
         const leafShare = percent(settings.leafSharePct ?? 100);
@@ -135,13 +149,20 @@ export function deriveLaunchSteps(
           config: { ...block.config, ...settings },
         };
         if (block.kind === "uniswapV4Pool") {
+          const ticks =
+            Number.isInteger(settings.tickLower) &&
+            Number.isInteger(settings.tickUpper) &&
+            (settings.tickLower ?? 0) >= -887272 &&
+            (settings.tickUpper ?? 0) <= 887272 &&
+            (settings.tickLower ?? 0) < (settings.tickUpper ?? 0);
           if (
-            !settings.priceLower ||
-            !settings.priceUpper ||
-            !/^\d+(\.\d+)?$/.test(settings.priceLower) ||
-            !/^\d+(\.\d+)?$/.test(settings.priceUpper) ||
-            Number(settings.priceLower) <= 0 ||
-            Number(settings.priceUpper) <= Number(settings.priceLower)
+            !ticks &&
+            (!settings.priceLower ||
+              !settings.priceUpper ||
+              !/^\d+(\.\d+)?$/.test(settings.priceLower) ||
+              !/^\d+(\.\d+)?$/.test(settings.priceUpper) ||
+              Number(settings.priceLower) <= 0 ||
+              Number(settings.priceUpper) <= Number(settings.priceLower))
           )
             throw new Error("BUILD_EXECUTION_GAP");
           if (

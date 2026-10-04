@@ -1,220 +1,118 @@
 /**
- * @id PP-MGR-HOK-012 (POO-2177)
+ * @id PP-MGR-HOK-019 (POO-2177)
  * @name useV2Launch
  * @implements-rules-version v1
  */
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
-import { isMockMode } from "@/lib/services";
-import { createLaunchDriver, type FrozenLaunch, type LaunchWallet } from "./driver";
-import {
-  createJournal,
-  type JournalStorage,
-  journalKey,
-  type LaunchJournal,
-  loadJournal,
-  runLaunch,
-} from "./journal";
-import { withLaunchLock } from "./lock";
-import { type CanvasPlan, deriveLaunchSteps, type ExecutionConfig, type LaunchStep } from "./plan";
+import { useEffect, useState } from "react";
+import { getCatalogReservesAction, getCatalogTokensAction } from "@/lib/api/v2/actions";
+import { buildRealCatalog, toV2MandateSelection } from "../v2Mandate";
+import type { LaunchJourney } from "./contracts";
+import type { FrozenLaunch } from "./driver";
+import { explorerTxUrl, readJourney } from "./journey";
+import { rawUsdc } from "./review";
+import { useV2LaunchBinding } from "./useV2LaunchBinding";
+import { useV2LaunchWallet } from "./useV2LaunchWallet";
 
-export interface V2LaunchOptions {
-  draftId: string;
-  manager: string | null;
-  plan?: CanvasPlan;
-  execution?: Record<string, ExecutionConfig>;
-  spoke: boolean;
-  frozen?: FrozenLaunch;
-  prepare?: () => FrozenLaunch;
-  wallet: LaunchWallet | null;
-  storage?: JournalStorage;
-  pollInterval?: number;
-}
-export interface V2LaunchError {
-  code: string;
-  messageKey:
-    | "fundLaunch.partialFailure"
-    | "fundLaunch.buildGap"
-    | "fundLaunch.walletOrJournal"
-    | "fundLaunch.realOnly";
-}
-export interface LaunchSignature {
-  stepId: string;
-  chain: 42161 | 4663;
-  type: "transaction" | "message";
-  status: string;
-  conditional: boolean;
-}
-export function useV2Launch(options: V2LaunchOptions) {
-  // PP-INTEGRATION-POINT: Murilo's Review page consumes headless launch state and explicit actions.
-  const { isEnabled } = useFeatureFlags();
-  const [journal, setJournal] = useState<LaunchJournal | null>(null);
-  const [hydrated, setHydrated] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<V2LaunchError | null>(null);
-  const running = useRef(false);
-  const abort = useRef<AbortController | null>(null);
+export function useV2Launch(journeyId: string) {
+  const wallet = useV2LaunchWallet();
+  const [journey, setJourney] = useState<LaunchJourney | null>(null);
+  const [frozen, setFrozen] = useState<FrozenLaunch | undefined>();
+  const [loadingError, setLoadingError] = useState(false);
   useEffect(() => {
-    setJournal(null);
-    setHydrated(false);
-    setError(null);
-    if (!options.manager) return;
+    let active = true;
+    setJourney(null);
+    setFrozen(undefined);
+    setLoadingError(false);
     try {
-      setJournal(loadJournal(options.storage ?? localStorage, options.draftId, options.manager));
-      setHydrated(true);
+      const found = readJourney(journeyId);
+      if (!found) {
+        setLoadingError(true);
+        return;
+      }
+      setJourney(found);
+      if (found.journal) {
+        setFrozen(found.journal.frozen as FrozenLaunch);
+        return;
+      }
+      Promise.all([
+        getCatalogTokensAction(42161),
+        getCatalogTokensAction(4663),
+        getCatalogReservesAction(),
+      ])
+        .then(([hub, spoke, reserves]) => {
+          if (!active) return;
+          if (!hub.ok || !spoke.ok || !reserves.ok) throw new Error("CATALOG_UNAVAILABLE");
+          const request = toV2MandateSelection(
+            found.draft,
+            buildRealCatalog([...hub.data.tokens, ...spoke.data.tokens], reserves.data.reserves),
+          );
+          setFrozen({
+            plan: found.draft.plan,
+            review: found.draft.review,
+            request: {
+              ...request,
+              manager: found.manager,
+              performanceFeeBps: found.draft.review.performanceFeeBps,
+              managementFeeBps: found.draft.review.managementFeeBps,
+              payoutFeeBps: found.draft.review.payoutFeeBps,
+              minFirstDeposit: rawUsdc(found.draft.review.minimum).toString(),
+              seedAmount: rawUsdc(found.draft.review.seed).toString(),
+            },
+          });
+        })
+        .catch(() => {
+          if (active) setLoadingError(true);
+        });
     } catch {
-      setError({ code: "INVALID_JOURNAL", messageKey: "fundLaunch.walletOrJournal" });
+      setLoadingError(true);
     }
     return () => {
-      abort.current?.abort();
-    };
-  }, [options.draftId, options.manager, options.storage]);
-  let steps: LaunchStep[] = [];
-  let gap = false;
-  try {
-    if (journal) steps = journal.steps;
-    else if (options.plan)
-      steps = deriveLaunchSteps(options.plan, options.execution ?? {}, true, options.spoke);
-    else gap = true;
-  } catch {
-    gap = true;
-  }
-  const execute = async (resume: boolean, once: boolean) => {
-    if (running.current) return;
-    if (isMockMode || !isEnabled("fundContracts")) {
-      setError({ code: "V2_UNAVAILABLE", messageKey: "fundLaunch.realOnly" });
-      return;
-    }
-    if (!hydrated || !options.manager || !options.wallet) {
-      setError({ code: "INVALID_JOURNAL", messageKey: "fundLaunch.walletOrJournal" });
-      return;
-    }
-    if (gap) {
-      setError({ code: "BUILD_EXECUTION_GAP", messageKey: "fundLaunch.buildGap" });
-      return;
-    }
-    const manager = options.manager;
-    const wallet = options.wallet;
-    const storage = options.storage ?? localStorage;
-    const controller = new AbortController();
-    abort.current = controller;
-    running.current = true;
-    setBusy(true);
-    setError(null);
-    let active = true;
-    const changed = (value: LaunchJournal) => {
-      if (active && !controller.signal.aborted) setJournal(value);
-    };
-    try {
-      await withLaunchLock(journalKey(options.draftId, manager), async () => {
-        let current = loadJournal(storage, options.draftId, manager);
-        if (!current) {
-          if (resume) throw new Error("INVALID_JOURNAL");
-          const frozen = options.prepare ? options.prepare() : options.frozen;
-          if (!frozen || frozen.request.manager.toLowerCase() !== manager.toLowerCase())
-            throw new Error("INVALID_REVIEW");
-          current = createJournal(options.draftId, manager, frozen, steps);
-        }
-        const driver = createLaunchDriver({
-          send: async (transaction) => {
-            if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
-            return wallet.send(transaction);
-          },
-          sign: async (message) => {
-            if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
-            return wallet.sign(message);
-          },
-          receipt: (chain, hash) => wallet.receipt(chain, hash),
-        });
-        do {
-          await runLaunch(
-            current,
-            storage,
-            driver,
-            changed,
-            controller.signal,
-            once ? 1 : Number.POSITIVE_INFINITY,
-          );
-          const failed = Object.values(current.checkpoints).find(
-            (checkpoint) => checkpoint.status === "failed",
-          );
-          if (failed) {
-            setError({
-              code: failed.error ?? "LAUNCH_STEP_FAILED",
-              messageKey: "fundLaunch.partialFailure",
-            });
-            break;
-          }
-          if (
-            once ||
-            current.steps.every((step) => current?.checkpoints[step.id]?.status === "confirmed")
-          )
-            break;
-          await new Promise<void>((resolve) => {
-            const finish = () => {
-              clearTimeout(timeout);
-              controller.signal.removeEventListener("abort", finish);
-              resolve();
-            };
-            const timeout = setTimeout(finish, options.pollInterval ?? 10_000);
-            controller.signal.addEventListener("abort", finish, { once: true });
-            if (controller.signal.aborted) finish();
-          });
-        } while (!controller.signal.aborted);
-      });
-    } catch (failure) {
-      if (!controller.signal.aborted)
-        setError({
-          code:
-            failure instanceof Error && /^[A-Z][A-Z0-9_]*$/.test(failure.message)
-              ? failure.message
-              : "LAUNCH_STEP_FAILED",
-          messageKey: "fundLaunch.partialFailure",
-        });
-    } finally {
       active = false;
-      running.current = false;
-      setBusy(false);
-    }
-  };
-  const currentStep =
-    steps.find((step) => journal?.checkpoints[step.id]?.status !== "confirmed") ?? null;
-  const signatures: LaunchSignature[] = steps
-    .filter((step) => !["discover", "report", "arrival"].includes(step.kind))
-    .map((step) => ({
-      stepId: step.id,
-      chain: step.chain,
-      type: step.kind === "profile" ? "message" : "transaction",
-      status: journal?.checkpoints[step.id]?.status ?? "idle",
-      conditional: ["approve", "swap", "profile"].includes(step.kind),
-    }));
+    };
+  }, [journeyId]);
+  const originalWallet = journey?.manager.toLowerCase() === wallet.manager?.toLowerCase();
+  const binding = useV2LaunchBinding({
+    draftId: journey?.draftId ?? journeyId,
+    manager: originalWallet ? wallet.manager : null,
+    plan: journey?.draft.plan,
+    execution: journey?.draft.launchExecution,
+    spoke: journey?.draft.networks.includes("robinhood") ?? false,
+    wallet: originalWallet ? wallet.wallet : null,
+    frozen,
+  });
+  const steps = binding.steps.map((step) => {
+    const checkpoint = binding.checkpoints[step.id];
+    return {
+      ...step,
+      chainId: step.chain,
+      label: `manager.fundLaunch.${step.kind}`,
+      status: checkpoint?.status ?? "idle",
+      txHash: checkpoint?.txHash ?? null,
+      explorerUrl: checkpoint?.txHash ? explorerTxUrl(step.chain, checkpoint.txHash) : null,
+      receiptStatus: checkpoint?.receiptStatus ?? null,
+      error: checkpoint?.error ?? null,
+      result: checkpoint?.data ?? null,
+    };
+  });
   return {
-    journal,
-    hydrated,
-    busy,
-    gap,
-    error,
+    ...binding,
+    journey,
     steps,
-    currentStep,
-    signatures,
-    checkpoints: journal?.checkpoints ?? {},
-    addresses: journal?.addresses ?? {},
-    status: busy
-      ? "running"
-      : error
-        ? "failed"
-        : journal && !currentStep
-          ? "complete"
-          : journal
-            ? "paused"
-            : "idle",
-    launch: () => execute(false, false),
-    resume: () => execute(true, false),
-    retry: () => execute(true, false),
-    next: () => execute(journal !== null, true),
-    sign: () => execute(journal !== null, true),
-    pause: () => abort.current?.abort(),
+    current: steps.find((step) => step.status !== "confirmed") ?? null,
+    sign: async () => {
+      if (frozen || binding.journal) await binding.sign();
+    },
+    retry: binding.retry,
+    resume: binding.resume,
+    cancel: binding.pause,
+    outcome:
+      binding.status === "complete"
+        ? ("completed" as const)
+        : loadingError || binding.error
+          ? ("failed" as const)
+          : ("in-progress" as const),
+    ready: !!frozen && originalWallet && !loadingError,
+    loadingError,
   };
 }
-export type V2Launch = ReturnType<typeof useV2Launch>;

@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-HOK-013 (POO-2177)
+ * @id PP-MGR-HOK-020 (POO-2177)
  * @name useV2LaunchWallet
  * @implements-rules-version v1
  */

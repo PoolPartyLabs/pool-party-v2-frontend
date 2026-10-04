@@ -1,145 +1,154 @@
 /**
- * @id PP-MGR-HOK-011 (POO-2177)
+ * @id PP-MGR-HOK-018 (POO-2177)
  * @name useV2ReviewDraft
  * @implements-rules-version v1
  */
 "use client";
-import { useState } from "react";
-import { formatUnits } from "viem";
-import { type MediaUploadFn, useUploadMedia } from "@/lib/media/useUploadMedia";
-import type { MandateCatalog } from "../mandateCatalog";
+import { useEffect, useState } from "react";
+import { readLaunchFundAction } from "@/lib/api/v2/launchActions";
 import type { MandateDraft } from "../mandateDraft";
+import { getDraft, subscribe, upsertDraft } from "../mandateDraftStore";
+import { useV2MandateCatalog } from "../useV2MandateCatalog";
 import { toV2MandateSelection } from "../v2Mandate";
-import type { FrozenLaunch } from "./driver";
+import type { FundLaunchDraft } from "./contracts";
+import { loadJournal } from "./journal";
+import { getLaunchSteps } from "./journey";
 import type { CanvasPlan } from "./plan";
-import {
-  type FundReview,
-  previewSeed,
-  rawUsdc,
-  reviewSchema,
-  validateLogo,
-  validateReview,
-} from "./review";
+import { useV2LaunchWallet } from "./useV2LaunchWallet";
+import { useV2ReviewBinding } from "./useV2ReviewBinding";
 
-export interface V2ReviewDraftOptions {
-  draft: MandateDraft & { plan?: CanvasPlan };
-  catalog: MandateCatalog;
-  balance: bigint | null;
-  initial?: FundReview;
-  upload?: MediaUploadFn;
-}
-export interface ReviewFieldError {
-  field: keyof FundReview | "balance";
-  messageKey: "fundLaunch.validation";
-}
-export function useV2ReviewDraft({
-  draft,
-  catalog,
-  balance,
-  initial,
-  upload,
-}: V2ReviewDraftOptions) {
-  const stagedUpload = useUploadMedia("logo");
-  const [review, setReview] = useState<FundReview>(
-    () =>
-      initial ?? {
-        name: draft.name ?? "",
-        description: "",
-        imageUrl: "",
-        performanceFeeBps: 2000,
-        managementFeeBps: 0,
-        payoutFeeBps: 200,
-        minimum: "100",
-        seed: "100",
-      },
-  );
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<"fundLaunch.uploadFailed" | null>(null);
-  const errors: ReviewFieldError[] = [];
-  let preview: ReturnType<typeof previewSeed> | null = null;
-  try {
-    preview = previewSeed(rawUsdc(review.seed));
-  } catch {}
-  try {
-    if (balance === null) errors.push({ field: "balance", messageKey: "fundLaunch.validation" });
-    else validateReview(review, balance);
-  } catch (failure) {
-    const issues =
-      failure !== null && typeof failure === "object" && "issues" in failure
-        ? (failure as { issues: { path: string[] }[] }).issues
-        : [];
-    for (const issue of issues)
-      errors.push({
-        field: (issue.path[0] ?? "seed") as keyof FundReview,
-        messageKey: "fundLaunch.validation",
-      });
-    if (!issues.length) errors.push({ field: "seed", messageKey: "fundLaunch.validation" });
-  }
-  const setField = <Field extends keyof FundReview>(field: Field, value: FundReview[Field]) =>
-    setReview((current) => ({ ...current, [field]: value }));
-  const prepare = (manager: string): FrozenLaunch => {
-    if (balance === null || uploading) throw new Error("INVALID_DEPOSIT");
-    const validated = validateReview(review, balance);
-    return {
-      plan: draft.plan,
-      review: validated,
-      request: {
-        ...toV2MandateSelection(draft, catalog),
-        manager,
-        performanceFeeBps: validated.performanceFeeBps,
-        managementFeeBps: validated.managementFeeBps,
-        payoutFeeBps: validated.payoutFeeBps,
-        minFirstDeposit: rawUsdc(validated.minimum).toString(),
-        seedAmount: rawUsdc(validated.seed).toString(),
-      },
+export function useV2ReviewDraft(draftId: string) {
+  const catalog = useV2MandateCatalog();
+  const wallet = useV2LaunchWallet();
+  const [draft, setDraft] = useState<(MandateDraft & { plan?: CanvasPlan }) | null>(null);
+  const [storageError, setStorageError] = useState(false);
+  const [flowFeeBps, setFlowFeeBps] = useState<number | null>(null);
+  useEffect(() => {
+    let active = true;
+    setFlowFeeBps(null);
+    if (!wallet.manager) return;
+    try {
+      const core = loadJournal(localStorage, draftId, wallet.manager)?.addresses.coreVault;
+      if (core)
+        void readLaunchFundAction(core).then((result) => {
+          if (!active || !result.ok) return;
+          const fees = result.data.fees as { flowFeeBps?: unknown } | undefined;
+          const fee = fees?.flowFeeBps;
+          if (typeof fee === "number" && Number.isInteger(fee) && fee >= 0 && fee <= 10000)
+            setFlowFeeBps(fee);
+        });
+    } catch {}
+    return () => {
+      active = false;
     };
+  }, [draftId, wallet.manager]);
+  useEffect(() => {
+    const read = () => setDraft(getDraft(draftId));
+    read();
+    return subscribe(read);
+  }, [draftId]);
+  const placeholder = { id: draftId, name: null } as MandateDraft;
+  const binding = useV2ReviewBinding({
+    draft: draft ?? placeholder,
+    catalog,
+    balance: wallet.balance,
+    initial: draft?.review,
+    flowFeeBps: flowFeeBps ?? 25,
+  });
+  const persistReview = (review: typeof binding.review) => {
+    const latest = getDraft(draftId);
+    if (!latest) {
+      setStorageError(true);
+      return;
+    }
+    const stored = upsertDraft({ ...latest, review });
+    setStorageError(stored === null);
+    if (stored) binding.replaceReview(review);
   };
+  useEffect(() => {
+    if (draft)
+      binding.replaceReview(
+        draft.review ?? {
+          name: draft.name ?? "",
+          description: "",
+          imageUrl: "",
+          performanceFeeBps: 2000,
+          managementFeeBps: 0,
+          payoutFeeBps: 200,
+          minimum: "100",
+          seed: "100",
+        },
+      );
+  }, [draft, binding.replaceReview]);
+  const launchBlockers: { code: string; field?: string; messageKey: string }[] = binding.errors.map(
+    (error) => ({ code: "INVALID_REVIEW", field: error.field, messageKey: error.messageKey }),
+  );
+  if (!draft)
+    launchBlockers.push({ code: "DRAFT_UNAVAILABLE", messageKey: "fundLaunch.walletOrJournal" });
+  if (storageError)
+    launchBlockers.push({ code: "STORAGE_UNAVAILABLE", messageKey: "fundLaunch.walletOrJournal" });
+  if (binding.uploading)
+    launchBlockers.push({
+      code: "LOGO_UPLOADING",
+      field: "imageUrl",
+      messageKey: "fundLaunch.uploadFailed",
+    });
+  if (draft) {
+    try {
+      toV2MandateSelection(draft, catalog);
+      if (!draft.plan) throw new Error("BUILD_EXECUTION_GAP");
+      getLaunchSteps({ ...draft, review: binding.review } as FundLaunchDraft);
+    } catch {
+      launchBlockers.push({ code: "BUILD_EXECUTION_GAP", messageKey: "fundLaunch.buildGap" });
+    }
+  }
   return {
-    review,
-    setField,
-    errors,
-    valid: errors.length === 0 && !uploading,
-    preview,
-    balance,
-    balanceDecimal: balance === null ? null : formatUnits(balance, 6),
+    ...binding,
+    draft,
+    manager: wallet.manager,
+    setField: <Field extends keyof typeof binding.review>(
+      field: Field,
+      value: (typeof binding.review)[Field],
+    ) => {
+      if (!draft) return;
+      persistReview({ ...binding.review, [field]: value });
+    },
     setMax: () => {
-      if (balance !== null) setField("seed", formatUnits(balance, 6));
+      if (wallet.balance !== null)
+        persistReview({ ...binding.review, seed: binding.balanceDecimal ?? "0" });
     },
     setFeePercent: (
       field: "performanceFeeBps" | "managementFeeBps" | "payoutFeeBps",
       value: string,
     ) => {
       if (!/^\d+(\.\d{0,2})?$/.test(value)) throw new Error("INVALID_FEE");
-      setField(field, Math.round(Number(value) * 100));
+      const bounds =
+        field === "performanceFeeBps"
+          ? [1000, 9000]
+          : field === "managementFeeBps"
+            ? [0, 500]
+            : [0, 1000];
+      persistReview({
+        ...binding.review,
+        [field]: Math.max(
+          bounds[0] ?? 0,
+          Math.min(bounds[1] ?? 0, Math.round(Number(value) * 100)),
+        ),
+      });
     },
-    terms: {
-      operatingCash: "0",
-      payoutHours: 72,
-      access: "public",
-      protocolFeeBps: 25,
-      feesCanOnlyDecrease: true,
-      managementFeePaidAtClosure: true,
-      launchTermsImmutable: true,
-    } as const,
-    prepare,
-    uploading,
-    uploadError,
     uploadLogo: async (file: File) => {
-      setUploadError(null);
-      setUploading(true);
-      try {
-        validateLogo(file);
-        const imageUrl = await (upload ?? stagedUpload)(file);
-        reviewSchema.shape.imageUrl.parse(imageUrl);
-        setField("imageUrl", imageUrl);
-        return imageUrl;
-      } catch {
-        setUploadError("fundLaunch.uploadFailed");
-        throw new Error("INVALID_LOGO");
-      } finally {
-        setUploading(false);
-      }
+      const imageUrl = await binding.uploadLogo(file);
+      persistReview({ ...binding.review, imageUrl });
+      return imageUrl;
     },
+    launchBlockers,
+    isReady: launchBlockers.length === 0,
+    feeConfiguration: {
+      payoutFeeBps: binding.review.payoutFeeBps,
+      flowFeeBps: flowFeeBps ?? 25,
+      payoutSource: "draft" as const,
+      flowSource: flowFeeBps === null ? ("fallback" as const) : ("fund-detail" as const),
+    },
+    refreshBalance: wallet.refreshBalance,
   };
 }
-export type V2ReviewDraft = ReturnType<typeof useV2ReviewDraft>;

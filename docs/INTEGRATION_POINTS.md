@@ -17,7 +17,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 469 markers across 267 files (2026-10-04)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 468 markers across 266 files (2026-10-04)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -38,8 +38,9 @@ git grep -n 'PP-INTEGRATION-POINT' -- src   # 469 markers across 267 files (2026
 |------|------------|------------------------------------|
 | Just-in-time launch builders | `src/lib/api/v2/launch.ts` | Server-only v2 API writes with `x-api-key`; admin routes additionally require server-only `PP_API_ADMIN_KEY` as `x-admin-key`. API PR #180 provides payoutFeeBps/transits/balances. |
 | Real wallet/receipts | `src/features/manager/fund/launch/useV2LaunchWallet.ts` | Headless Privy/wagmi binding, chain proof, mined receipts and hub USDC balance. Real-only provider mount; mock mode never signs. |
-| Review page binding | `src/features/manager/fund/launch/useV2Launch.ts` | Murilo's POO-2172 page consumes steps/signatures/status and explicit launch/next/sign/retry/resume/pause. `useV2ReviewDraft` supplies validated fields, fixed terms, net preview and staged wallet-scoped S3 logo. No page/shell changes here. |
-| Canvas BuildPlan v1 | `src/features/manager/fund/launch/plan.ts` | Reads `draft.plan` from PR #31 (POO-2151) through an owned structural adapter, no competing reducers. POO-2144/2171 must provide range/loss/leaf execution fields; POO-2172 owns Review navigation. Missing details refuse launch. |
+| Agreed public seam | `src/features/manager/fund/launch/index.ts` | `startFundLaunch(draft: FundLaunchDraft): Promise<{journeyId: string}>`; pure `getLaunchSteps(draft): LaunchStepPreview[]`; `useV2ReviewDraft(draftId)` => review/setField/errors/launchBlockers/isReady; `useV2Launch(journeyId)` => steps/current/sign/retry/resume/cancel/outcome; `FundLaunchJourney`; `explorerTxUrl(chainId, hash)`. Exports ReviewDraft/FundLaunchDraft/LaunchStepPreview/LaunchJourney types. |
+| Review DATA / Launch JOURNEY split | `src/features/manager/fund/launch/useV2ReviewDraft.ts`, `FundLaunchJourney.tsx` | Murilo owns Review PAGE (POO-2172). Review setters preserve latest MandateDraft.review beside plan. Our start entry freezes/resumes and navigates to manager/fund-launch/[journeyId]; Journey owns outcomes and immediate explorer hashes/receipt statuses. No builder page/shell edits. Flow fee fallback is labelled until detail fees exist. |
+| Canvas BuildPlan v1 | `src/features/manager/fund/launch/plan.ts` | Reads `draft.plan` from origin/feat/mgr-poo-2144-canvas-integration (PR #31/POO-2151 roll-up) through owned structural adapter, no competing reducers. POO-2144/2171 must provide canonical range/loss/leaf execution fields; empty config/Borrow fail closed. |
 | Browser checkpoint journal | `src/features/manager/fund/launch/journal.ts` | Per manager/draft immutable steps, hashes, receipt state, addresses and actual net principal. Durable API launch-plan and cross-device coordination are later work. |
 
 See `src/features/manager/fund/launch/README.md` for the adapter gaps, recovery rules and operational waits.
