@@ -101,7 +101,8 @@
     "submitted": "Đã gửi",
     "waiting": "Đang chờ xác minh",
     "confirmed": "Đã xác nhận",
-    "failed": "Thất bại"
+    "failed": "Thất bại",
+    "stepProgress": "Bước {n} trên {total}"
   },
   "entry": {
     "become": "Trở thành người quản lý",

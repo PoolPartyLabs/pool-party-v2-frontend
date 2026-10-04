@@ -124,12 +124,12 @@ describe("launch Journey outcomes [R3, R6]", () => {
     expect(screen.getByRole("button", { name: "Sign next step" })).toBeEnabled();
   });
   it("R5 keeps signing and Pause in an adjacent controls region before the long steps list", () => {
-    const { container } = renderWithProviders(<FundLaunchJourney journeyId="journey" />);
+    renderWithProviders(<FundLaunchJourney journeyId="journey" />);
     const controls = screen.getByRole("complementary", { name: "Sign next step" });
     expect(
       within(controls).getByRole("heading", { name: "Create and seed fund" }),
     ).toBeInTheDocument();
-    const list = container.querySelector("ol");
+    const list = screen.getByRole("dialog").querySelector("ol");
     expect(
       list && controls.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
@@ -161,4 +161,21 @@ describe("launch Journey outcomes [R3, R6]", () => {
     renderWithProviders(<FundLaunchJourney journeyId="journey" />);
     expect(screen.getByRole("alert")).toHaveTextContent("Launch requires real mode");
   });
+});
+
+it("POO-2212 opens a modal without signing and close pauses, reopening needs explicit Resume", () => {
+  state.mock = false;
+  state.outcome = "in-progress";
+  state.busy = false;
+  vi.clearAllMocks();
+  renderWithProviders(<FundLaunchJourney journeyId="journey" />);
+  expect(screen.getByRole("dialog", { name: "Fund launch journey" })).toBeInTheDocument();
+  expect(state.sign).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Close" }));
+  expect(state.cancel).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole("dialog")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Resume journey" }));
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+  expect(state.sign).not.toHaveBeenCalled();
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "2");
 });

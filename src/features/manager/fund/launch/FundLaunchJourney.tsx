@@ -1,12 +1,14 @@
 /**
  * @id PP-MGR-CMP-081 (POO-2177)
  * @name FundLaunchJourney
- * @implements-rules-version v1 (POO-2203), preserves v3 (POO-2192)
+ * @implements-rules-version v1 (POO-2212, POO-2203), preserves v3 (POO-2192)
  * @analytics-events none, useV2LaunchBinding owns launch lifecycle events
  */
 "use client";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/Dialog";
 import { Link } from "@/i18n/navigation";
 import { isMockMode } from "@/lib/services";
 import { explorerAddressUrl } from "./journey";
@@ -19,6 +21,12 @@ export function FundLaunchJourney({ journeyId }: { journeyId: string }) {
 }
 function RealJourney({ journeyId }: { journeyId: string }) {
   const launch = useV2Launch(journeyId);
+  const [open, setOpen] = useState(true);
+  const setModalOpen = (next: boolean) => {
+    if (!next) launch.cancel();
+    setOpen(next);
+  };
+  const confirmed = launch.steps.filter((step) => step.status === "confirmed").length;
   const t = useTranslations("manager");
   const currentStep = launch.steps.find((step) => step.status !== "confirmed");
   const core = launch.addresses.coreVault;
@@ -51,128 +59,160 @@ function RealJourney({ journeyId }: { journeyId: string }) {
     unknown: t("fundLaunch.receipt_unknown"),
   };
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
-      <header>
-        <h1 className="font-semibold text-2xl">{t("fundLaunch.journeyTitle")}</h1>
-        <p>{launch.journey?.draft.review.name}</p>
-        <p>{t("fundLaunch.journeyWait")}</p>
-      </header>
-      {launch.loadingError || (!launch.ready && !launch.busy) ? (
-        <p role="alert">{t("fundLaunch.walletOrJournal")}</p>
-      ) : null}
-      {launch.error ? (
-        <p role="alert">
-          {t(launch.error.messageKey)} · {launch.error.code}
-        </p>
-      ) : null}
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
-        <aside
-          aria-label={t("fundLaunch.signNext")}
-          className="rounded-xl border border-border bg-surface p-4 lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
-        >
-          {currentStep ? (
-            <div className="mb-4" aria-live="polite">
-              <h2 className="font-medium">{labels[currentStep.kind]}</h2>
-              <p>
-                {currentStep.chainId === 42161 ? "Arbitrum" : "Robinhood Chain"} ·{" "}
-                {statuses[currentStep.status]}
+    <section className="mx-auto flex w-full flex-col gap-4 p-6">
+      <Button variant="secondary" onClick={() => setOpen(true)}>
+        {t("fundLaunch.resumeJourney")}
+      </Button>
+      <Dialog open={open} onOpenChange={setModalOpen}>
+        <DialogContent className="flex max-h-[90dvh] max-w-xl flex-col gap-4 overflow-hidden">
+          <header>
+            <DialogTitle>{t("fundLaunch.journeyTitle")}</DialogTitle>
+            <p>{launch.journey?.draft.review.name}</p>
+            <DialogDescription>{t("fundLaunch.journeyWait")}</DialogDescription>
+          </header>
+          {launch.loadingError || (!launch.ready && !launch.busy) ? (
+            <p role="alert">{t("fundLaunch.walletOrJournal")}</p>
+          ) : null}
+          {launch.error ? (
+            <p role="alert">
+              {t(launch.error.messageKey)} · {launch.error.code}
+            </p>
+          ) : null}
+          <div className="flex min-h-0 flex-1 flex-col gap-4">
+            <aside
+              aria-label={t("fundLaunch.signNext")}
+              className="shrink-0 rounded-xl border border-border bg-surface p-4"
+            >
+              <p className="mb-2 text-sm text-muted-foreground">
+                {t("fundLaunch.stepProgress", {
+                  n: currentStep ? launch.steps.indexOf(currentStep) + 1 : launch.steps.length,
+                  total: launch.steps.length,
+                })}
               </p>
-            </div>
-          ) : null}
-          {launch.outcome === "completed" ? (
-            <p role="status">{t("fundLaunch.journeyComplete")}</p>
-          ) : (
-            <div className="flex flex-wrap gap-3 lg:flex-col lg:items-stretch">
-              <Button disabled={!launch.ready || launch.busy} onClick={() => void launch.sign()}>
-                {t("fundLaunch.signNext")}
-              </Button>
-              <Button
-                variant="secondary"
-                disabled={!launch.journal || launch.busy}
-                onClick={() => void launch.resume()}
+              <div
+                role="progressbar"
+                aria-label={t("fundLaunch.journeyTitle")}
+                aria-valuemin={0}
+                aria-valuemax={Math.max(1, launch.steps.length)}
+                aria-valuenow={confirmed}
+                className="mb-4 h-1 rounded bg-surface-raised"
               >
-                {t("fundLaunch.resumeJourney")}
-              </Button>
-              {launch.error ? (
-                <Button
-                  variant="secondary"
-                  disabled={!launch.journal || launch.busy}
-                  onClick={() => void launch.retry()}
-                >
-                  {t("fundLaunch.retryJourney")}
-                </Button>
+                <div
+                  className="h-full rounded bg-primary"
+                  style={{
+                    width: `${launch.steps.length ? (confirmed / launch.steps.length) * 100 : 0}%`,
+                  }}
+                />
+              </div>
+              {currentStep ? (
+                <div className="mb-4" aria-live="polite">
+                  <h2 className="font-medium">{labels[currentStep.kind]}</h2>
+                  <p>
+                    {currentStep.chainId === 42161 ? "Arbitrum" : "Robinhood Chain"} ·{" "}
+                    {statuses[currentStep.status]}
+                  </p>
+                </div>
               ) : null}
-              <Button variant="ghost" onClick={launch.cancel}>
-                {t("fundLaunch.pauseJourney")}
-              </Button>
-            </div>
-          )}
-        </aside>
-        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-          <ol aria-live="polite" className="flex flex-col gap-4">
-            {launch.steps.map((step) => (
-              <li key={step.id} className="rounded-xl border border-border bg-surface p-4">
-                <h2 className="font-medium">
-                  {labels[step.kind]} · {step.chainId === 42161 ? "Arbitrum" : "Robinhood Chain"}
-                </h2>
-                <p>{statuses[step.status]}</p>
-                {step.status === "waiting" && step.waitReason === "discovery" ? (
-                  <p role="status">{t("fundLaunch.discoveryWait")}</p>
-                ) : null}
-                {step.kind === "report" && step.status === "waiting" ? (
-                  <p role="status">{t("fundLaunch.reportWait")}</p>
-                ) : null}
-                {step.explorerUrl && step.txHash ? (
-                  <a
-                    className="break-all underline"
-                    href={step.explorerUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+              {launch.outcome === "completed" ? (
+                <p role="status">{t("fundLaunch.journeyComplete")}</p>
+              ) : (
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    disabled={!launch.ready || launch.busy}
+                    onClick={() => void launch.sign()}
                   >
-                    {step.txHash}
-                  </a>
-                ) : null}
-                {step.receiptStatus ? (
-                  <p>
-                    {t("fundLaunch.receiptLabel")}: {receipts[step.receiptStatus]}
-                  </p>
-                ) : null}
-                {step.error ? (
-                  <p role="alert">
-                    {t("fundLaunch.partialFailure")} · {step.error}
-                  </p>
-                ) : null}
-                {!step.txHash && step.status === "confirmed" ? (
-                  <p>
-                    {labels[step.kind]}: {t("fundLaunch.offchainComplete")}
-                  </p>
-                ) : null}
-                {step.kind === "discover" && step.result?.discovered ? (
-                  <DiscoveredContracts result={step.result.discovered} />
-                ) : null}
-              </li>
-            ))}
-          </ol>
-          {core ? (
-            <div className="rounded-xl border border-border p-4">
-              <p>{t("fundLaunch.fundExists")}</p>
-              {addressUrl ? (
-                <a
-                  href={addressUrl}
-                  className="break-all underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {core}
-                </a>
+                    {t("fundLaunch.signNext")}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    disabled={!launch.journal || launch.busy}
+                    onClick={() => void launch.resume()}
+                  >
+                    {t("fundLaunch.resumeJourney")}
+                  </Button>
+                  {launch.error ? (
+                    <Button
+                      variant="secondary"
+                      disabled={!launch.journal || launch.busy}
+                      onClick={() => void launch.retry()}
+                    >
+                      {t("fundLaunch.retryJourney")}
+                    </Button>
+                  ) : null}
+                  <Button variant="ghost" onClick={() => setModalOpen(false)}>
+                    {t("fundLaunch.pauseJourney")}
+                  </Button>
+                </div>
+              )}
+            </aside>
+            <div className="min-h-0 overflow-y-auto">
+              <ol aria-live="polite" className="flex flex-col gap-4">
+                {launch.steps.map((step) => (
+                  <li key={step.id} className="rounded-xl border border-border bg-surface p-4">
+                    <h2 className="font-medium">
+                      {labels[step.kind]} ·{" "}
+                      {step.chainId === 42161 ? "Arbitrum" : "Robinhood Chain"}
+                    </h2>
+                    <p>{statuses[step.status]}</p>
+                    {step.status === "waiting" && step.waitReason === "discovery" ? (
+                      <p role="status">{t("fundLaunch.discoveryWait")}</p>
+                    ) : null}
+                    {step.kind === "report" && step.status === "waiting" ? (
+                      <p role="status">{t("fundLaunch.reportWait")}</p>
+                    ) : null}
+                    {step.explorerUrl && step.txHash ? (
+                      <a
+                        className="break-all underline"
+                        href={step.explorerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {step.txHash}
+                      </a>
+                    ) : null}
+                    {step.receiptStatus ? (
+                      <p>
+                        {t("fundLaunch.receiptLabel")}: {receipts[step.receiptStatus]}
+                      </p>
+                    ) : null}
+                    {step.error ? (
+                      <p role="alert">
+                        {t("fundLaunch.partialFailure")} · {step.error}
+                      </p>
+                    ) : null}
+                    {!step.txHash && step.status === "confirmed" ? (
+                      <p>
+                        {labels[step.kind]}: {t("fundLaunch.offchainComplete")}
+                      </p>
+                    ) : null}
+                    {step.kind === "discover" && step.result?.discovered ? (
+                      <DiscoveredContracts result={step.result.discovered} />
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+              {core ? (
+                <div className="rounded-xl border border-border p-4">
+                  <p>{t("fundLaunch.fundExists")}</p>
+                  {addressUrl ? (
+                    <a
+                      href={addressUrl}
+                      className="break-all underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {core}
+                    </a>
+                  ) : null}
+                  <Link href={`/funds/${core}`} className="ml-3 underline">
+                    {t("fundLaunch.viewFund")}
+                  </Link>
+                </div>
               ) : null}
-              <Link href={`/funds/${core}`} className="ml-3 underline">
-                {t("fundLaunch.viewFund")}
-              </Link>
             </div>
-          ) : null}
-        </div>
-      </div>
+          </div>
+        </DialogContent>
+      </Dialog>
       <Link href="/manager" className="underline">
         {t("fundLaunch.returnManager")}
       </Link>

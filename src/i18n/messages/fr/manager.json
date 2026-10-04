@@ -101,7 +101,8 @@
     "submitted": "Soumis",
     "waiting": "Vérification en attente",
     "confirmed": "Confirmé",
-    "failed": "Échec"
+    "failed": "Échec",
+    "stepProgress": "Étape {n} sur {total}"
   },
   "entry": {
     "become": "Devenir gestionnaire",
