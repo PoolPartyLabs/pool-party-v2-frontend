@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   error: false,
   mock: false,
   reportWaiting: false,
+  discoveryWaiting: false,
 }));
 vi.mock("@/lib/services", () => ({
   get isMockMode() {
@@ -25,6 +26,9 @@ vi.mock("./useV2Launch", () => ({
     journey: { draft: { review: { name: "Income fund demo" } } },
     addresses: { coreVault: core },
     steps: [
+      ...(state.discoveryWaiting
+        ? [{ id: "open", kind: "open", chainId: 42161, status: "waiting", waitReason: "discovery" }]
+        : []),
       ...(state.reportWaiting
         ? [{ id: "report", kind: "report", chainId: 42161, status: "waiting" }]
         : []),
@@ -77,6 +81,15 @@ describe("launch Journey outcomes [R3, R6]", () => {
     state.error = false;
     state.mock = false;
     state.reportWaiting = false;
+    state.discoveryWaiting = false;
+  });
+  it("shows indexing copy for discovery waits instead of a failure", () => {
+    state.discoveryWaiting = true;
+    renderWithProviders(<FundLaunchJourney journeyId="journey" />);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Waiting for indexing. This step will retry automatically.",
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
   it("shows an honest finalized-report wait estimate without a failure", () => {
     state.reportWaiting = true;

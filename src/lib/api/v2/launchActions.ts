@@ -10,6 +10,7 @@ import { apiFetch } from "@/lib/api/client";
 import { getAuthHeader, getSessionWallet } from "@/lib/auth/session";
 import { isFeatureEnabled } from "@/lib/features";
 import { ApiError } from "../errors";
+import { V2DiscoveryPendingError } from "./discovery";
 import { launchFetch } from "./launch";
 import {
   balancesSchema,
@@ -45,6 +46,14 @@ async function result<ResponseData>(work: () => Promise<ResponseData>) {
       error: {
         status: error instanceof ApiError ? error.status : 400,
         code: error instanceof ApiError ? error.code : "V2_INVALID_REQUEST",
+        ...(error instanceof V2DiscoveryPendingError
+          ? {
+              ...(error.retryAfterSeconds !== undefined
+                ? { retryAfterSeconds: error.retryAfterSeconds }
+                : {}),
+              ...(error.progress ? { progress: error.progress } : {}),
+            }
+          : {}),
       },
     };
   }
@@ -146,6 +155,31 @@ export async function readLaunchFundAction(core: string) {
   return result(async () => {
     await manager(core);
     return launchFetch(`/funds/${core}`, "GET", launchFundReadSchema);
+  });
+}
+export async function readLaunchPositionsAction(core: string) {
+  return result(async () => {
+    await manager(core);
+    return launchFetch(
+      `/funds/${core}/positions`,
+      "GET",
+      versionedRecordSchema.extend({
+        positions: z.array(
+          z
+            .object({
+              positionKey: poolIdSchema,
+              chainId: z.union([
+                z.literal(42161),
+                z.literal(4663),
+                z.literal("42161"),
+                z.literal("4663"),
+              ]),
+              status: z.string(),
+            })
+            .passthrough(),
+        ),
+      }),
+    );
   });
 }
 export async function buildLaunchCapitalAction(core: string, input: unknown) {

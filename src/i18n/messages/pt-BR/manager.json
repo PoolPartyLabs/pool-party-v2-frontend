@@ -61,6 +61,7 @@
   },
   "fundLaunch": {
     "reportWait": "Aguardando um relatório aceito. Normalmente 14-19 minutos, às vezes mais. Continuamos verificando até chegar; pausar preserva seu progresso.",
+    "discoveryWait": "Aguardando a indexação. Esta etapa será repetida automaticamente.",
     "journeyTitle": "Jornada de lançamento do fundo",
     "journeyWait": "Cada transação precisa da sua confirmação. Pontes e relatórios podem levar minutos.",
     "receiptLabel": "Recibo",

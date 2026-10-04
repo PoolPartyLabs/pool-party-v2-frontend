@@ -70,6 +70,9 @@ function RealJourney({ journeyId }: { journeyId: string }) {
               {labels[step.kind]} · {step.chainId === 42161 ? "Arbitrum" : "Robinhood Chain"}
             </h2>
             <p>{statuses[step.status]}</p>
+            {step.status === "waiting" && step.waitReason === "discovery" ? (
+              <p role="status">{t("fundLaunch.discoveryWait")}</p>
+            ) : null}
             {step.kind === "report" && step.status === "waiting" ? (
               <p role="status">{t("fundLaunch.reportWait")}</p>
             ) : null}

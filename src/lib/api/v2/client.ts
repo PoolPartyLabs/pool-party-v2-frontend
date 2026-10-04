@@ -7,6 +7,7 @@
 import "server-only";
 import type { ZodType } from "zod";
 import { ApiError, ApiParseError, parseApiErrorBody } from "../errors";
+import { discoveryPendingError } from "./discovery";
 
 function assertVersion(value: unknown, path: string): void {
   if (Array.isArray(value)) {
@@ -50,6 +51,12 @@ export async function v2Fetch<ResponseData>(
     body = {};
   }
   if (!response.ok) {
+    const pending = discoveryPendingError(
+      response.status,
+      body,
+      response.headers.get("retry-after"),
+    );
+    if (pending) throw pending;
     const envelope = recordOf(body);
     const nested = recordOf(envelope.response);
     const parsed = parseApiErrorBody(response.status, body);

@@ -15,6 +15,7 @@ import {
   getFundLimits,
   getFunds,
 } from "./catalog";
+import { V2DiscoveryPendingError } from "./discovery";
 import type { V2ChainId } from "./schemas";
 
 async function resultOf<ResponseData>(read: () => Promise<ResponseData>) {
@@ -26,6 +27,14 @@ async function resultOf<ResponseData>(read: () => Promise<ResponseData>) {
       error: {
         status: error instanceof ApiError ? error.status : 502,
         code: error instanceof ApiError ? error.code : "V2_INVALID_RESPONSE",
+        ...(error instanceof V2DiscoveryPendingError
+          ? {
+              ...(error.retryAfterSeconds !== undefined
+                ? { retryAfterSeconds: error.retryAfterSeconds }
+                : {}),
+              ...(error.progress ? { progress: error.progress } : {}),
+            }
+          : {}),
       },
     };
   }

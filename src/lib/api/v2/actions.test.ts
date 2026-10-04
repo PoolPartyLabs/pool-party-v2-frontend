@@ -15,6 +15,7 @@ import {
   getFundLimitsAction,
   getFundsAction,
 } from "./actions";
+import { V2DiscoveryPendingError } from "./discovery";
 
 const reads = vi.hoisted(() => ({
   tokens: vi.fn(),
@@ -36,6 +37,20 @@ vi.mock("./catalog", () => ({
 }));
 const core = `0x${"11".repeat(20)}`;
 describe("v2 server actions", () => {
+  it("preserves safe discovery backoff on catalog reads", async () => {
+    reads.pool.mockRejectedValue(
+      new V2DiscoveryPendingError(409, 2, { cursor: "10", target: "20" }),
+    );
+    await expect(getCatalogPoolAction(42161, core)).resolves.toEqual({
+      ok: false,
+      error: {
+        status: 409,
+        code: "V2_DISCOVERY_PENDING",
+        retryAfterSeconds: 2,
+        progress: { cursor: "10", target: "20" },
+      },
+    });
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     for (const read of Object.values(reads)) read.mockResolvedValue({ protocolVersion: "v2" });

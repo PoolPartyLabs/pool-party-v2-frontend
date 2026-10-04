@@ -53,6 +53,19 @@ POO-2177, rules v1: Murilo owns Review PAGE (POO-2172), Mandate/Build pages and 
 
 ## Safety and recovery
 
+POO-2200 rules v1 (R6-R8): `V2_DISCOVERY_PENDING` is a normal indexing wait. Launch/catalog
+transports retain safe `retryAfterSeconds` and `progress.cursor/target` metadata through server
+actions, including the nested API `response` envelope and numeric `Retry-After` header.
+Retry checkpoints persist a not-before timestamp and use bounded exponential backoff without
+server timing. Real errors remain failures. Background reconciliation never signs or broadcasts,
+honors Pause, and continues submitted/unknown receipt polling despite failed independent siblings.
+
+A mined open is confirmed only once the manager-authorized positions read contains its receipt's
+`positionKey` on the same chain. Positions are read directly, without requiring pool registration,
+positive USD value, or complete optional portfolio fields. Missing positions wait and retry the
+same transaction; they never rebuild or rebroadcast. Bridges also guard old persisted journals
+against proceeding while any hub swap/open leaf is unconfirmed.
+
 Per-draft/per-manager journal stores frozen Review/request, step IDs, chains, hashes, receipt states, discovered data, net principal and actual arrival. Successful or uncertain creation is never rebuilt. Reconcile the same hash first; unknown receipts wait. No-hash wallet submission requires operator reconciliation, not a second send. Checkpoints persist before signing. Profile is reconciled before signing a canonical EIP-191 nonce.
 
 Creation includes seed atomically. Actual FundSeeded shares define deployable principal. At the labelled 25 bps fallback, gross 100 USDC estimates 99 whole shares, 99 USDC principal, 0.25 USDC fee and 0.75 USDC wallet remainder. Actual receipt is authoritative.
