@@ -4,45 +4,59 @@
  * @implements-rules-version v1 (POO-2185 rules v1, slice PC of POO-2171)
  * @analytics-events none (data hooks): a data fixture, nothing here is rendered or tracked.
  *
- * PP-MOCK. What the Build configuration panels read in MOCK mode: three Uniswap v4 pools and two
- * Aave v3 reserves, in the exact WIRE shape of the v2 catalog (`CatalogPool`, `CatalogReserve`), so
- * the mock path goes through the same mapping as the real one (`panelCatalogView`, PP-MGR-LIB-031)
- * and a fixture that drifts from the contract fails `catalogPoolSchema` in `buildPanelFixtures.test`.
- * There is no sample data in real mode (P13): these serve mock mode, tests and Storybook only.
+ * PP-MOCK. What the Build configuration panels read in MOCK mode: every hookless Uniswap v4 pool the
+ * mandate's mock Pools step can offer (`fundPools.ts`, PP-MGR-MCK-003) and two Aave v3 reserves, in
+ * the exact WIRE shape of the v2 catalog (`CatalogPool`, `CatalogReserve`), so the mock path goes
+ * through the same mapping as the real one (`panelCatalogView`, PP-MGR-LIB-031) and a fixture that
+ * drifts from the contract fails `catalogPoolSchema` in `buildPanelFixtures.test`. There is no sample
+ * data in real mode (P13): these serve mock mode, tests and Storybook only.
+ *
+ * Which pools: three are written out (WETH / USDC at 0.05% and 0.3% on Arbitrum, WETH / USDG on
+ * Robinhood Chain), and {@link panelPoolFixtures} adds one GENERATED pool for every other hookless row
+ * of the mock universe, built from the row itself, so a pool a mock mandate holds always answers and
+ * `Use` can enable in mock mode. A pool with a hook has no fixture: no mandate can hold one (R38).
  *
  * Realism, per docs/05_MOCK_STRATEGY.md:
  *
- * - **Real identities.** Token addresses, decimals and logos are the bundled token lists' own, and
- *   the Aave addresses are the deployed Aave v3 Arbitrum ones. Each `poolId` is the real v4 PoolId,
- *   `keccak256(abi.encode(poolKey))`, which the test recomputes, so the key and the id cannot drift.
- * - **Coherent numbers.** `currentTick`, `sqrtPriceX96` and both price strings come from one price
- *   (about 3,050 USD per ETH), with the decimals applied (WETH 18, USDC and USDG 6), so a mapper that
- *   reads either source lands on the same price.
- * - **Currency order is the chain's, not taste.** `currency0` is the lower address. On Robinhood
- *   Chain the WETH address sorts below USDG's, so the canonical price there is USDG per WETH, while
- *   the catalog WRITES that pair as `USDG / WETH` (`tokens` and `pairSymbols`). The mapper must
- *   follow the pool key, never the written order (handoff v1.2, "Range bounds"), and this pool is
- *   the one that proves it.
+ * - **Real identities.** Token addresses and logos are the bundled token lists' own, decimals and
+ *   names are the tokens' own, and the Aave addresses are the deployed Aave v3 Arbitrum ones. Each
+ *   `poolId` is the real v4 PoolId, `keccak256(abi.encode(poolKey))`, which the test recomputes (and
+ *   pins with golden values for the generated ones), so the key and the id cannot drift.
+ * - **Coherent numbers.** `currentTick`, `sqrtPriceX96` and both price strings come from one price,
+ *   with the decimals applied. A hand-written pool is about 3,050 USD per ETH; a generated pool takes
+ *   the ratio of its two tokens' reference USD prices with a tiny deterministic spread per pool, so
+ *   WBTC / WETH agrees with WBTC / USDC over WETH / USDC and a stable pair sits at parity.
+ * - **Currency order is the chain's, and `tokens` and `pairSymbols` follow it.** `currency0` is the
+ *   lower address, and the catalog lists `tokens[i]` as currency i (the launch composition reads it
+ *   that way, `launch/composition.ts`), so the canonical price is token1 per token0 in that order.
  * - **TVL and APR are null with a reason**, as the alpha serves them: the panels never print a number
  *   for them (decision A3) and never show active liquidity as TVL.
- * - **Diverse states.** The Aave USDC reserve is usable; the WETH reserve has reached its supply
- *   cap, so a list row is disabled with its reason (P1, P13). The alpha lists USDC alone, so that
- *   second reserve is the one invented row, and it exists to exercise the disabled state.
+ * - **Diverse states.** The Aave USDC reserve is usable; the WETH reserve has reached its supply cap,
+ *   so a list row is disabled with its reason (P1, P13). The alpha lists USDC alone, so that second
+ *   reserve is invented, and it exists to exercise the disabled state. The Robinhood NVDA token is
+ *   unpriced, as the mock Pools step makes it, so its pool is ineligible (a pool the panel cannot
+ *   apply), though no mandate can hold it.
  *
- * Mock-mode ids: the mandate's mock Pools step (`fundPools.ts`, PP-MGR-MCK-003) has no PoolId (its
- * rows are slugs such as `arb-v4-weth-usdc-5`), and a Pool block of a mock-mode plan holds that slug
- * as its `poolId`. Each fixture therefore carries its `mockId` and {@link findPanelPoolFixture}
- * answers to either the real PoolId or the slug. A slug with no fixture is a not-found, never an
- * invented pool.
+ * Mock-mode ids: the mandate's mock Pools step has no PoolId (its rows are slugs such as
+ * `arb-v4-weth-usdc-5`), and a Pool block of a mock-mode plan holds that slug as its `poolId`. Each
+ * fixture therefore carries its `mockId`, and {@link findPanelPoolFixture} answers to either the real
+ * PoolId or the slug. A slug with no fixture is a not-found, never an invented pool.
  *
- * The only invented values: the oracle addresses on Robinhood Chain (no registry is public yet), the
- * reserve key (a hash of the reserve identity) and the pool liquidity figures.
+ * Built on first use, never at import: the generated pools resolve the bundled token lists through
+ * `fundPoolFixtures()`, which throws when one is missing (see `fundPools.ts`).
+ *
+ * The only invented values: the price-feed addresses of non-stable tokens on Robinhood Chain and of
+ * the generated pools' tokens (no registry is public; they derive from the token address), the
+ * reference USD prices, the reserve supply figures of the WETH reserve and the pool liquidity.
  *
  * PP-INTEGRATION-POINT: replaced in real mode by `GET /api/v2/catalog/uniswap-v4/pools/{poolId}` and
  * `GET /api/v2/catalog/aave-v3/reserves` (server actions `getCatalogPoolAction` and
  * `getCatalogReservesAction`, POO-2133); the panels' hooks pick the source, never these files.
  */
+import { encodeAbiParameters, keccak256, toHex } from "viem";
+import type { MandatePoolRef } from "@/features/manager/fund/mandateDraft";
 import type { CatalogPool, CatalogReserve, CatalogToken, V2ChainId } from "@/lib/api/v2/schemas";
+import { fundPoolFixtures } from "./fundPools";
 
 /** Mock latency band for a panel read, in ms: wide enough that the skeleton is visible in review. */
 export const PANEL_MOCK_LATENCY_MS: readonly [number, number] = [120, 320];
@@ -55,8 +69,11 @@ const NO_HOOKS = "0x0000000000000000000000000000000000000000";
 /** A recent unix second, so a price reads as fresh (2026-10-04 03:00 UTC). */
 const PRICE_UPDATED_AT = "1791082800";
 
+const TVL_REASON = "TVL is not indexed for v4 pools yet.";
+const APR_REASON = "Fees APR is not indexed for v4 pools yet.";
+
 // ---------------------------------------------------------------------------
-// Tokens
+// Tokens (hand-written pools)
 // ---------------------------------------------------------------------------
 
 const WETH_ARBITRUM: CatalogToken = {
@@ -77,6 +94,7 @@ const WETH_ARBITRUM: CatalogToken = {
   priceUnavailableReason: null,
 };
 
+/** Stables are fixed 1:1 and name themselves as the price source, in every fixture. */
 const USDC_ARBITRUM: CatalogToken = {
   protocolVersion: "v2",
   chainId: "42161",
@@ -88,8 +106,7 @@ const USDC_ARBITRUM: CatalogToken = {
   hubPriced: true,
   priceUsd: "1",
   priceUpdatedAt: PRICE_UPDATED_AT,
-  // Chainlink USDC / USD on Arbitrum One.
-  priceSource: "0x50834f3163758fcc1df9973b6e91f0f0f0434ad3",
+  priceSource: "0xaf88d065e77c8cc2239327c5edb3a432268e5831",
   priceProvenance: "fixed-1:1",
   priceUnavailableReason: null,
 };
@@ -122,8 +139,7 @@ const USDG_ROBINHOOD: CatalogToken = {
   hubPriced: true,
   priceUsd: "1",
   priceUpdatedAt: PRICE_UPDATED_AT,
-  // Invented, as above.
-  priceSource: "0x7a2e5f1c9d3b8a40e6c1f2d3b4a5968778695a4b",
+  priceSource: "0x5fc5360d0400a0fd4f2af552add042d716f1d168",
   priceProvenance: "fixed-1:1",
   priceUnavailableReason: null,
 };
@@ -131,9 +147,6 @@ const USDG_ROBINHOOD: CatalogToken = {
 // ---------------------------------------------------------------------------
 // Pools
 // ---------------------------------------------------------------------------
-
-const TVL_REASON = "TVL is not indexed for v4 pools yet.";
-const APR_REASON = "Fees APR is not indexed for v4 pools yet.";
 
 /** One fixture pool plus the slug the mandate's mock Pools step knows it by. */
 export interface PanelPoolFixture {
@@ -143,12 +156,13 @@ export interface PanelPoolFixture {
 }
 
 /**
- * The pool fixtures, deepest first. Prices are token1 per token0, the canonical orientation.
+ * The hand-written pools, deepest first. Prices are token1 per token0, the canonical orientation,
+ * and `tokens` and `pairSymbols` follow the pool key's currency order.
  *
  * - Arbitrum WETH / USDC 0.05%, spacing 10, about 3,050.
  * - Arbitrum WETH / USDC 0.3%, spacing 60, a few ticks away (a different book of the same pair).
- * - Robinhood Chain WETH / USDG 0.05%, WRITTEN `USDG / WETH` by the catalog, with the pool key in
- *   the chain's order (WETH is currency0), see the file header.
+ * - Robinhood Chain WETH / USDG 0.05%, spacing 10: WETH is currency0 (its address sorts below
+ *   USDG's), so the canonical price there is USDG per WETH.
  */
 export const PANEL_POOL_FIXTURES: readonly PanelPoolFixture[] = [
   {
@@ -234,9 +248,8 @@ export const PANEL_POOL_FIXTURES: readonly PanelPoolFixture[] = [
         tickSpacing: 10,
         hooks: NO_HOOKS,
       },
-      // The catalog WRITES this pair stable first. The pool key above is the chain's order.
-      tokens: [USDG_ROBINHOOD, WETH_ROBINHOOD],
-      pairSymbols: ["USDG", "WETH"],
+      tokens: [WETH_ROBINHOOD, USDG_ROBINHOOD],
+      pairSymbols: ["WETH", "USDG"],
       hooked: false,
       currentTick: -196082,
       sqrtPriceX96: "4377602332131435572646444",
@@ -256,14 +269,292 @@ export const PANEL_POOL_FIXTURES: readonly PanelPoolFixture[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Generated pools: one per other hookless Uniswap v4 row of the mock Pools step
+// ---------------------------------------------------------------------------
+
+/** What a generated pool needs to know about a token: its own facts and a reference price. */
+interface MockTokenSpec {
+  symbol: string;
+  name: string;
+  decimals: number;
+  /** Reference USD price. A stable is exactly 1. */
+  usd: number;
+  stable: boolean;
+  /** Whether the hub can price it: the same answer `isPricedSymbol` gives the Mandate step. */
+  priced: boolean;
+}
+
+/** The tokens of the mock universe's hookless v4 rows, by lowercase address. */
+const MOCK_TOKEN_SPECS: Readonly<Record<string, MockTokenSpec>> = {
+  // Arbitrum One.
+  "0x82af49447d8a07e3bd95bd0d56f35241523fbab1": {
+    symbol: "WETH",
+    name: "Wrapped Ether",
+    decimals: 18,
+    usd: 3050.4127,
+    stable: false,
+    priced: true,
+  },
+  "0xaf88d065e77c8cc2239327c5edb3a432268e5831": {
+    symbol: "USDC",
+    name: "USD Coin",
+    decimals: 6,
+    usd: 1,
+    stable: true,
+    priced: true,
+  },
+  "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f": {
+    symbol: "WBTC",
+    name: "Wrapped BTC",
+    decimals: 8,
+    usd: 94850.5,
+    stable: false,
+    priced: true,
+  },
+  "0x912ce59144191c1204e64559fe8253a0e49e6548": {
+    symbol: "ARB",
+    name: "Arbitrum",
+    decimals: 18,
+    usd: 0.624,
+    stable: false,
+    priced: true,
+  },
+  "0xf97f4df75117a78c1a5a0dbb814af92458539fb4": {
+    symbol: "LINK",
+    name: "ChainLink Token",
+    decimals: 18,
+    usd: 15.82,
+    stable: false,
+    priced: true,
+  },
+  "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9": {
+    symbol: "USDT",
+    name: "Tether USD",
+    decimals: 6,
+    usd: 1,
+    stable: true,
+    priced: true,
+  },
+  "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1": {
+    symbol: "DAI",
+    name: "Dai Stablecoin",
+    decimals: 18,
+    usd: 1,
+    stable: true,
+    priced: true,
+  },
+  // Robinhood Chain. The equity token is unpriced on purpose, as in the mock Pools step.
+  "0x0bd7d308f8e1639fab988df18a8011f41eacad73": {
+    symbol: "WETH",
+    name: "Wrapped Ether",
+    decimals: 18,
+    usd: 3052.9061,
+    stable: false,
+    priced: true,
+  },
+  "0x5fc5360d0400a0fd4f2af552add042d716f1d168": {
+    symbol: "USDG",
+    name: "Global Dollar",
+    decimals: 6,
+    usd: 1,
+    stable: true,
+    priced: true,
+  },
+  "0xd0601ce157db5bdc3162bbac2a2c8af5320d9eec": {
+    symbol: "NVDA",
+    name: "NVIDIA (tokenised)",
+    decimals: 18,
+    usd: 187.35,
+    stable: false,
+    priced: false,
+  },
+};
+
+/** The standard Uniswap v4 tick spacing of each fee tier the mock universe uses. */
+const V4_SPACING_OF_FEE: Readonly<Record<number, number>> = {
+  100: 1,
+  500: 10,
+  3000: 60,
+  10000: 200,
+};
+
+// The compile target is ES2017, which has no BigInt literals: the constants use the function.
+const ONE = BigInt(1);
+const TWO = BigInt(2);
+const TEN = BigInt(10);
+/** 2^192: the square of the Q64.96 scale. */
+const Q192 = ONE << BigInt(192);
+
+/** Integer square root (Newton), rounded down. */
+function isqrt(value: bigint): bigint {
+  if (value < TWO) return value;
+  let x = value;
+  let y = (x + ONE) / TWO;
+  while (y < x) {
+    x = y;
+    y = (x + value / x) / TWO;
+  }
+  return x;
+}
+
+/** A plain decimal string for the catalog's `decimal` fields: 12 significant digits, no exponent. */
+function decimalString(value: number): string {
+  const text = value.toPrecision(12);
+  return text.includes("e") ? value.toFixed(20) : text;
+}
+
+/** `sqrtPriceX96` of a human price (token1 per token0, a plain decimal string) at the two decimals. */
+function sqrtPriceX96For(price: string, decimals0: number, decimals1: number): bigint {
+  const [whole = "0", fraction = ""] = price.split(".");
+  const numerator = BigInt(`${whole}${fraction}`) * TEN ** BigInt(decimals1);
+  const denominator = TEN ** BigInt(fraction.length + decimals0);
+  return isqrt((numerator * Q192) / denominator);
+}
+
+/** A small, deterministic spread between the pools of one pair (within +/-0.016%), from the slug. */
+function spreadFor(id: string): number {
+  let hash = 0;
+  for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) % 9973;
+  return ((hash % 9) - 4) * 0.00004;
+}
+
+/** The real v4 PoolId of a pool key: `keccak256(abi.encode(poolKey))`. */
+function poolIdOf(key: CatalogPool["poolKey"]): string {
+  return keccak256(
+    encodeAbiParameters(
+      [
+        { type: "address" },
+        { type: "address" },
+        { type: "uint24" },
+        { type: "int24" },
+        { type: "address" },
+      ],
+      [
+        key.currency0 as `0x${string}`,
+        key.currency1 as `0x${string}`,
+        key.fee,
+        key.tickSpacing,
+        key.hooks as `0x${string}`,
+      ],
+    ),
+  );
+}
+
+interface MockSide {
+  address: string;
+  spec: MockTokenSpec;
+  logoUrl: string | null;
+}
+
+/** One side of a mock row, with the facts the table holds. Throws for a token the table lacks. */
+function sideOf(ref: MandatePoolRef["token0"]): MockSide {
+  const address = ref.address.toLowerCase();
+  const spec = MOCK_TOKEN_SPECS[address];
+  if (!spec) {
+    throw new Error(`buildPanelFixtures: no reference price for ${ref.symbol} (${address})`);
+  }
+  return { address, spec, logoUrl: ref.logoUrl };
+}
+
+function catalogTokenOf(chainId: "42161" | "4663", side: MockSide): CatalogToken {
+  const { address, spec } = side;
+  return {
+    protocolVersion: "v2",
+    chainId,
+    address,
+    symbol: spec.symbol,
+    name: spec.name,
+    decimals: spec.decimals,
+    logoUrl: side.logoUrl,
+    hubPriced: spec.priced,
+    priceUsd: spec.priced ? String(spec.usd) : null,
+    priceUpdatedAt: spec.priced ? PRICE_UPDATED_AT : null,
+    // Invented for a non-stable token, derived from its address so it never changes.
+    priceSource: spec.stable
+      ? address
+      : `0x${keccak256(toHex(`pp-mock-feed:${address}`)).slice(-40)}`,
+    priceProvenance: spec.stable ? "fixed-1:1" : "chainlink",
+    priceUnavailableReason: spec.priced ? null : "No hub price feed for this token yet.",
+  };
+}
+
+/** One pool of the mock universe as a catalog pool. */
+function generatedPool(row: MandatePoolRef): CatalogPool {
+  const chainId = row.network === "arbitrum" ? "42161" : "4663";
+  const side0 = sideOf(row.token0);
+  const side1 = sideOf(row.token1);
+  const spacing = V4_SPACING_OF_FEE[row.feeTier];
+  if (spacing === undefined) {
+    throw new Error(`buildPanelFixtures: no tick spacing for fee ${row.feeTier} (${row.id})`);
+  }
+  const token0 = catalogTokenOf(chainId, side0);
+  const token1 = catalogTokenOf(chainId, side1);
+  const poolKey: CatalogPool["poolKey"] = {
+    protocolVersion: "v2",
+    currency0: side0.address,
+    currency1: side1.address,
+    fee: row.feeTier,
+    tickSpacing: spacing,
+    hooks: NO_HOOKS,
+  };
+  const price = decimalString((side0.spec.usd / side1.spec.usd) * (1 + spreadFor(row.id)));
+  const raw = Number(price) * 10 ** (side1.spec.decimals - side0.spec.decimals);
+  return {
+    protocolVersion: "v2",
+    chainId,
+    adapterKind: "uniswap-v4",
+    poolId: poolIdOf(poolKey),
+    poolKey,
+    tokens: [token0, token1],
+    pairSymbols: [token0.symbol, token1.symbol],
+    hooked: false,
+    currentTick: Math.floor(Math.log(raw) / Math.log(1.0001)),
+    sqrtPriceX96: sqrtPriceX96For(price, side0.spec.decimals, side1.spec.decimals).toString(),
+    currentPrice: {
+      protocolVersion: "v2",
+      token1PerToken0: price,
+      token0PerToken1: decimalString(1 / Number(price)),
+    },
+    // Scaled from the mock row's own depth, so a deeper book has more liquidity.
+    liquidity: String(Math.round(row.tvlUsd ?? 1_000_000) * 120_000_000),
+    eligible: token0.hubPriced && token1.hubPriced,
+    registration: "at-fund-creation",
+    tvlUsd: null,
+    feesApr: null,
+    tvlUnavailableReason: TVL_REASON,
+    feesAprUnavailableReason: APR_REASON,
+  };
+}
+
+let allPools: readonly PanelPoolFixture[] | null = null;
+
+/**
+ * Every pool a mock mandate can hold: the hand-written fixtures, then one generated pool for each
+ * other hookless Uniswap v4 row of the mock Pools step, in that step's order. Built on first use and
+ * handed back by reference; callers read it and must not write through it (`findPanelPoolFixture`
+ * hands out copies).
+ */
+export function panelPoolFixtures(): readonly PanelPoolFixture[] {
+  allPools ??= [
+    ...PANEL_POOL_FIXTURES,
+    ...fundPoolFixtures()
+      .uniswapV4.filter(
+        (row) => !row.hasHook && !PANEL_POOL_FIXTURES.some(({ mockId }) => mockId === row.id),
+      )
+      .map((row) => ({ mockId: row.id, pool: generatedPool(row) })),
+  ];
+  return allPools;
+}
+
 /**
  * The pool of a mock-mode Pool block, by real PoolId (case-insensitive) or by the mock Pools step's
- * slug, on one network. A copy, so a caller can never write through the module constant. Null when
- * no fixture matches: the mock never invents a pool for an id it does not know.
+ * slug, on one network. A copy, so a caller can never write through the module's data. Null when no
+ * fixture matches: the mock never invents a pool for an id it does not know.
  */
 export function findPanelPoolFixture(chainId: V2ChainId, poolId: string): CatalogPool | null {
   const wanted = poolId.toLowerCase();
-  const hit = PANEL_POOL_FIXTURES.find(
+  const hit = panelPoolFixtures().find(
     ({ mockId, pool }) =>
       pool.chainId === String(chainId) &&
       (pool.poolId.toLowerCase() === wanted || mockId.toLowerCase() === wanted),
@@ -281,6 +572,11 @@ const AAVE_V3_ARBITRUM = {
   dataProviderAddress: "0x69fa688f1dc47d4b5d8029d5a35fb7a548310654",
 } as const;
 
+/** The reserve key the launch builds for an Aave pool: the asset address, left-padded to 32 bytes. */
+function reserveKeyOf(token: CatalogToken): string {
+  return `0x${token.address.slice(2).padStart(64, "0")}`;
+}
+
 /**
  * The reserve fixtures. USDC is usable at a plausible 4.12% supply APY. WETH has reached its supply
  * cap, so it is listed but disabled: a reserve that fails any of the mandate step's checks (available,
@@ -293,7 +589,7 @@ export const PANEL_RESERVE_FIXTURES: readonly CatalogReserve[] = [
     adapterKind: "aave-v3",
     mode: "supply",
     token: USDC_ARBITRUM,
-    poolKey: "0x2b1f6b0a8c3d4e5f7081928374655647382910afbecdc1d2e3f405162738495a",
+    poolKey: reserveKeyOf(USDC_ARBITRUM),
     ...AAVE_V3_ARBITRUM,
     // aArbUSDCn
     aTokenAddress: "0x724dc807b04555b71ed48a6896b6f41593b8c637",
@@ -315,7 +611,7 @@ export const PANEL_RESERVE_FIXTURES: readonly CatalogReserve[] = [
     adapterKind: "aave-v3",
     mode: "supply",
     token: WETH_ARBITRUM,
-    poolKey: "0x9d3e0c1b2a4f5e6d7c8b9a0f1e2d3c4b5a69788796a5b4c3d2e1f00a1b2c3d4e",
+    poolKey: reserveKeyOf(WETH_ARBITRUM),
     ...AAVE_V3_ARBITRUM,
     // aArbWETH
     aTokenAddress: "0xe50fa9b3c56ffb159cb0fca61f5c9d750e8128c8",
