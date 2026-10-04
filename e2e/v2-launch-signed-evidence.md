@@ -101,3 +101,12 @@ Validation after these fixes: **25 tests passed across four focused suites**, ex
 passed, Biome check/lint passed with the same five existing warnings, and all seven changed paths
 passed the companion credential-literal scanner. The previously recorded full-root findings remain
 unrelated and unresolved. No browser or financial run was performed.
+
+### Local orchestration label correction, October 4, 2026
+
+The operator reports that the local dry run reached all 15 journey rows with Sign and Resume
+enabled, but the assertion compared numeric Review chain labels against named journey chains.
+Expected headings now derive the translated step title and Arbitrum/Robinhood Chain name.
+A focused regression covers both chains and rejects unknown chains. This is an assertion fix,
+not a claim that the complete browser test passed. Operator output at
+`/tmp/pp-pr61-launch-local.N7fJLX` remains untouched; main orchestration owns the rerun.
