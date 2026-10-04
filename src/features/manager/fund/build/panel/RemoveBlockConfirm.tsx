@@ -1,12 +1,12 @@
 /**
  * @id PP-MGR-CMP-066
  * @name RemoveBlockConfirm
- * @implements-rules-version v1 (POO-2187 rules v1)
+ * @implements-rules-version v1 (POO-2187 rules v1; POO-2210 rules v1)
  * @analytics-events none, presentational. The confirmed remove reports `builder_block_removed`
  *   (with `cascade_count`) through the canvas controller; the Build screen (PP-MGR-SCR-002) emits it.
  *
- * The remove confirm of the configuration panel (handoff P10, decision DP11): the "Remove block" text
- * button is replaced, in place, by this box (radius 12, `surface-raised`, padding 16, gap 8): the
+ * Shared removal content (handoff P10, decision DP11), shown in the BuildScreen modal since
+ * POO-2210. Standalone panel stories may also render this box (radius 12, `surface-raised`, padding 16, gap 8): the
  * title "Remove <block title>?", a sentence saying what happens to its share and to what depends on
  * it, and two pills, "Cancel" (outline) and "Remove block" (outline in `destructive`, as drawn).
  * Remove ALWAYS asks, from the panel and from the Delete key; the canvas batch's Undo toast is gone.
@@ -84,7 +84,7 @@ export interface RemoveBlockConfirmProps {
   onConfirm(): void;
 }
 
-/** The in-place remove confirm (P10). */
+/** The shared remove confirmation content (P10, POO-2210). */
 export function RemoveBlockConfirm({
   title,
   sentence,

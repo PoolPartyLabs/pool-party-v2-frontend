@@ -17,6 +17,9 @@
  * - `PlanUnreadable`: a draft whose stored plan this build cannot read (D18): the notice over the
  *   empty canvas.
  *
+ * POO-2210: ReferenceCanvasC exposes X controls on positions and Collect fees. Click any X
+ * to inspect the shared modal, released allocation and cascade; Cancel preserves the graph.
+ *
  * No story picks a Uniswap v3 position: they are coming soon (C22, POO-2167).
  * Back: Mandate and the Edit mandate links belong to the shell; here they do nothing.
  */

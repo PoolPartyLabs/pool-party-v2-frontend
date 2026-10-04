@@ -110,7 +110,7 @@ export function CanvasViewport({
       // sits outside the visible box (keyboard Tab) would scroll the box itself and drift the graph
       // and the zoom controls away from the view the transform describes. `clip` cannot scroll.
       className={cn(
-        "relative h-[640px] w-full touch-none select-none overflow-clip rounded-xl bg-background",
+        "relative h-[max(640px,calc(100dvh-280px))] w-full touch-none select-none overflow-clip rounded-xl bg-background",
         panning ? "cursor-grabbing" : "cursor-grab",
       )}
       {...bind}

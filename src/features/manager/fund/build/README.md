@@ -93,7 +93,7 @@ empty mandate and unavailable reserve. `CR-MGR-024` tracks the displayed APY sna
 
 ## Panel actions and navigation (POO-2202, rules v1)
 
-The canvas viewport stays 640px high. The three-column grid has a minimum height of 640px,
+The canvas viewport has a 640px minimum height (extended to available viewport height by POO-2210). The three-column grid has a minimum height of 640px,
 so a configuration panel with long fields, apply errors or the blocked-leave warning increases
 its row's height. Apply, Discard and Remove remain in normal reading and tab order before the
 sticky Back / Next bar. No panel-specific scroll region or state changes are introduced.
@@ -101,3 +101,24 @@ sticky Back / Next bar. No panel-specific scroll region or state changes are int
 The CSS sizing regression and existing BlockPanel interaction tests cover the layout contract,
 apply gates, blocked leave, discard and removal. Storybook's `LongPanelWithLeaveNotice` is a
 visual inspection fixture. See `docs/BUILD_PANEL_ACTIONS_2026-10-04.md` for validation limits.
+
+
+## Canvas actions and space (POO-2210, rules v1)
+
+Applying a different Uniswap pool selection atomically adds its Collect fees step if absent,
+including at 0% allocation. Reapplying the same pool or adjusting its range does not duplicate
+fees or restore a deliberately removed fees step. Discard and refused Apply leave the graph intact.
+The existing fee, range and launch rules remain; a deferred pool still executes nothing at launch.
+
+User position blocks and non-automatic flow steps expose a top-right X. Every removal request,
+including Delete, panel removal and an empty spoke's X, opens the shared confirmation modal.
+Cancel is focused first. The modal explains the actual released share and dependent steps from
+`describeRemoval`; confirm uses the existing cascade reducer and analytics. Removing an unselected
+block preserves another block's pending panel changes. Mandatory automatic Swap/Bridge and spine
+nodes remain fixed because they are derived from the plan.
+
+The canvas uses `max(640px, calc(100dvh - 280px))`; its palette narrows below xl while the panel
+stays in normal document flow above Back/Next. POO-2209 owns the collapsed sidebar and uncapped
+shell width. The existing ReferenceCanvasC story demonstrates X controls and the modal; component
+and controller tests cover cancellation, confirmation, cascade and draft preservation. Browser
+acceptance is performed by Murilo.

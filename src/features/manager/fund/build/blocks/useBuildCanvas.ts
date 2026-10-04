@@ -2,7 +2,7 @@
  * @id PP-MGR-HOK-010
  * @name useBuildCanvas
  * @implements-rules-version v1 (POO-2155 rules v1; the remove confirm and the widened Edit mandate
- *   of POO-2187 rules v1)
+ *   of POO-2187 rules v1; POO-2210 rules v1)
  * @analytics-events none emitted here: every outcome leaves through `onEvent` as a
  *   {@link BuildCanvasEvent} (blockAdded with its `via`, networkAdded, networkRemoved, flowInserted,
  *   blockRemoved with its cascade count, blocked with its reason). The Build screen
@@ -148,7 +148,8 @@ export interface BuildCanvasController {
   cancelRemove(): void;
   /** The block whose remove confirm is open, or null. */
   removeConfirmId: string | null;
-  /** Remove a spoke with no chain, from the close control on its chip (I7, D5). */
+  removeSpokeConfirm: NetworkId | null;
+  /** Ask to remove an empty spoke, from the close control on its chip (I7, D5). */
   removeSpoke(network: NetworkId): void;
   /** Follow an "Edit mandate" link, through the leave guard (C6, HU3, P6). */
   editMandate(step: MandateEditStep): void;
@@ -201,7 +202,7 @@ function isEditable(target: EventTarget | null): boolean {
 
 /** The Build canvas controller. */
 export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasController {
-  const { draft, catalog, buildPlan, selection } = input;
+  const { draft, catalog, buildPlan } = input;
   const copy = useBlockCopy();
   const plan = buildPlan.plan;
   const ctx: MenuContext = useMemo(
@@ -212,15 +213,14 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
   const [menu, setMenu] = useState<{ anchor: HTMLElement; target: GraphTarget } | null>(null);
   const [dragging, setDragging] = useState<PaletteDragItem | null>(null);
   const [removeConfirm, setRemoveConfirm] = useState<string | null>(null);
-  // The confirm belongs to the block it was opened for: another selection closes it for good.
-  if (removeConfirm !== null && removeConfirm !== selection.selectedId) setRemoveConfirm(null);
-  const removeConfirmId =
-    removeConfirm !== null && removeConfirm === selection.selectedId ? removeConfirm : null;
+  // The modal targets the requested block, which need not be the selected panel.
+  const removeConfirmId = removeConfirm;
 
   // Handlers read the latest values through refs: a guarded way out resumes after the panel
   // settled, long after the render that created the handler.
-  const latest = useRef({ input, ctx, menu, removeConfirmId });
-  latest.current = { input, ctx, menu, removeConfirmId };
+  const [removeSpokeConfirm, setRemoveSpokeConfirm] = useState<NetworkId | null>(null);
+  const latest = useRef({ input, ctx, menu, removeConfirmId, removeSpokeConfirm });
+  latest.current = { input, ctx, menu, removeConfirmId, removeSpokeConfirm };
 
   const emit = useCallback((event: BuildCanvasEvent) => latest.current.input.onEvent(event), []);
 
@@ -344,16 +344,26 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
         emit({ type: "blocked", reason: "auto_owned" });
         return;
       }
-      // [P10, DP11] Remove always asks: the panel shows its confirm for this block.
+      // [P10, DP11] Remove always asks: the shared modal asks for this block.
       setMenu(null);
+      setRemoveSpokeConfirm(null);
       setRemoveConfirm(blockId);
     },
     [emit],
   );
 
-  const cancelRemove = useCallback(() => setRemoveConfirm(null), []);
+  const cancelRemove = useCallback(() => {
+    setRemoveConfirm(null);
+    setRemoveSpokeConfirm(null);
+  }, []);
 
   const confirmRemove = useCallback(() => {
+    const network = latest.current.removeSpokeConfirm;
+    if (network) {
+      setRemoveSpokeConfirm(null);
+      if (run((p, c) => removeSpoke(p, c, network))) emit({ type: "networkRemoved", network });
+      return;
+    }
     const blockId = latest.current.removeConfirmId;
     if (!blockId) return;
     setRemoveConfirm(null);
@@ -363,11 +373,17 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
     // Review L7 of PR #54: nothing is dropped for a remove the reducer would refuse.
     let preview = 0;
     const previewIds = () => `remove-check-${++preview}`;
-    if (describeRemoval(plan, { draft, catalog, newId: previewIds }, blockId) === null) return;
+    const description = describeRemoval(plan, { draft, catalog, newId: previewIds }, blockId);
+    if (description === null) return;
     const io = latest.current.input;
     // The block takes its unapplied changes with it, so the panel's guard lets the selection go.
-    io.beforeRemove?.();
-    if (io.selection.selectedId !== null && !io.selection.select(null)) return;
+    const selectedId = io.selection.selectedId;
+    const removesSelection =
+      selectedId === blockId || description.removedWith.some((step) => step.id === selectedId);
+    if (removesSelection) {
+      io.beforeRemove?.();
+      if (selectedId !== null && !io.selection.select(null)) return;
+    }
     const removal: { described: RemovalDescription | null } = { described: null };
     const done = run((p, c) => {
       removal.described = describeRemoval(p, c, blockId);
@@ -378,12 +394,11 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
     emit({ type: "blockRemoved", kind: found.block.kind, cascadeCount });
   }, [run, emit]);
 
-  const removeSpokeFromChip = useCallback(
-    (network: NetworkId) => {
-      if (run((p, c) => removeSpoke(p, c, network))) emit({ type: "networkRemoved", network });
-    },
-    [run, emit],
-  );
+  const removeSpokeFromChip = useCallback((network: NetworkId) => {
+    setMenu(null);
+    setRemoveConfirm(null);
+    setRemoveSpokeConfirm(network);
+  }, []);
 
   const editMandate = useCallback((step: MandateEditStep) => {
     setMenu(null);
@@ -488,6 +503,7 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
     confirmRemove,
     cancelRemove,
     removeConfirmId,
+    removeSpokeConfirm,
     removeSpoke: removeSpokeFromChip,
     editMandate,
     describeBlock: describeBlockNow,

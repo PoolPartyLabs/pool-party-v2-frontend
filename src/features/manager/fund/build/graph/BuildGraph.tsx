@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name BuildGraph
- * @implements-rules-version v1 (POO-2156 rules v1)
+ * @implements-rules-version v1 (POO-2156 rules v1; POO-2210 rules v1)
  * @analytics-events none, a controlled renderer: every activation leaves through `onTarget` (and a
  *   spoke removal through `onRemoveSpoke`); the Build screen (PP-MGR-SCR-002, S7) maps them to the
  *   builder events, so nothing here tracks.
@@ -122,8 +122,10 @@ export interface BuildGraphProps {
   activeTargetKeys: ReadonlySet<string>;
   /** Every activation: a template, a port, a card or a chain's share label, with the pressed element. */
   onTarget(target: GraphTarget, anchor: HTMLElement): void;
-  /** Removes a spoke with no chain (I7, D5). Without it no group offers the close control. */
+  /** Requests removal of an empty spoke (I7, D5); the caller confirms. */
   onRemoveSpoke?(network: string): void;
+  /** Requests removal of a user block; mandatory automatic steps expose no X. */
+  onRemoveBlock?(blockId: string): void;
   /**
    * Spoke networks no longer in the mandate (D6), drawn as invalid groups (addition to plan section
    * 3.5). The caller builds it from `validatePlan(plan, ctx)` (`build/plan/planInvariants.ts`): the
@@ -190,6 +192,7 @@ function useGraphCopy() {
       spine,
       port,
       lock: t("fundBuilder.canvas.spine.lockTooltip"),
+      removeBlock: t("fundBuilder.canvas.panel.remove"),
       bridge: t("fundBuilder.canvas.flow.bridgeAuto"),
       addNetwork: t("fundBuilder.canvas.tooltip.addNetwork"),
       emptyAddProtocol: t("fundBuilder.canvas.empty.addProtocol"),
@@ -333,11 +336,15 @@ function CardSlot({
   content,
   selected,
   onSelect,
+  onRemove,
+  removeLabel,
 }: {
   wrapper: Record<string, unknown>;
   content: BlockContent;
   selected: boolean;
   onSelect(anchor: HTMLElement): void;
+  onRemove?: () => void;
+  removeLabel: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const select = useCallback(() => {
@@ -348,6 +355,20 @@ function CardSlot({
   return (
     <div ref={ref} {...wrapper}>
       <PositionCard content={content} selected={selected} onSelect={select} />
+      {onRemove ? (
+        <button
+          type="button"
+          aria-label={`${removeLabel}: ${content.title}`}
+          data-canvas-interactive=""
+          onClick={(event) => {
+            event.stopPropagation();
+            onRemove();
+          }}
+          className="absolute -top-1 -right-1 z-10 flex size-6 items-center justify-center rounded-full bg-surface text-muted-foreground focus-visible:outline focus-visible:outline-primary"
+        >
+          ×
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -362,6 +383,7 @@ export const BuildGraph = memo(function BuildGraph({
   activeTargetKeys,
   onTarget,
   onRemoveSpoke,
+  onRemoveBlock,
   invalidNetworks,
 }: BuildGraphProps) {
   const copy = useGraphCopy();
@@ -427,6 +449,8 @@ export const BuildGraph = memo(function BuildGraph({
                 key={item.key}
                 wrapper={wrapper}
                 content={content}
+                removeLabel={copy.removeBlock}
+                onRemove={onRemoveBlock ? () => onRemoveBlock(block.id) : undefined}
                 selected={block.id === selectedId}
                 onSelect={(anchor) => report({ kind: "block", blockId: block.id }, anchor)}
               />,
@@ -436,6 +460,20 @@ export const BuildGraph = memo(function BuildGraph({
               item.key,
               <div key={item.key} {...wrapper}>
                 <FlowPill content={describeFlow(block.id)} />
+                {!block.auto && onRemoveBlock ? (
+                  <button
+                    type="button"
+                    aria-label={`${copy.removeBlock}: ${describeFlow(block.id).text}`}
+                    data-canvas-interactive=""
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onRemoveBlock(block.id);
+                    }}
+                    className="absolute -top-1 -right-1 z-10 flex size-6 items-center justify-center rounded-full bg-surface focus-visible:outline focus-visible:outline-primary"
+                  >
+                    ×
+                  </button>
+                ) : null}
               </div>,
             );
           }
@@ -560,6 +598,7 @@ export const BuildGraph = memo(function BuildGraph({
     activeTargetKeys,
     invalidNetworks,
     canRemoveSpoke,
+    onRemoveBlock,
     report,
   ]);
 
