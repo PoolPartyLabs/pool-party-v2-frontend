@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-042 (POO-2177)
  * @name launchDriver
- * @implements-rules-version v2 (POO-2181)
+ * @implements-rules-version v3 (POO-2192)
  * Just-in-time API builders and receipt reconciliation. No wallet broadcast occurs on import.
  */
 
@@ -21,9 +21,7 @@ import {
   readLaunchBalancesAction,
   readLaunchFundAction,
   readLaunchProfileAction,
-  readLaunchReportAction,
   readLaunchTransitAction,
-  triggerLaunchReportAction,
 } from "@/lib/api/v2/launchActions";
 import {
   type CreateFundRequest,
@@ -221,18 +219,7 @@ export function createLaunchDriver(
       if (step.kind === "report") {
         const fund = unwrap(await readLaunchFundAction(core));
         if (fund.lastReport !== null && fund.lastReport !== undefined) return { complete: true };
-        const jobId = journal.checkpoints[step.id]?.data?.jobId;
-        if (typeof jobId === "string") {
-          const job = unwrap(await readLaunchReportAction(core, jobId));
-          if (job.status === "failed" || job.status === "expired") {
-            const checkpoint = journal.checkpoints[step.id];
-            if (checkpoint?.data) delete checkpoint.data.jobId;
-            throw new Error("REPORT_FAILED");
-          }
-          return { data: { jobId } };
-        }
-        const job = unwrap(await triggerLaunchReportAction(core));
-        return { data: { jobId: job.jobId } };
+        return {};
       }
       if (step.kind === "arrival") {
         const transitId = z.string().parse(journal.checkpoints.bridge?.data?.transitId);

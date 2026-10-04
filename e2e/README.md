@@ -13,7 +13,7 @@ E2E_V2_SIGNED=1 E2E_V2_SIGNED_DRY=0 E2E_BASE_URL=https://v2.dev.pool-party.xyz E
 
 Set `E2E_V2_SIGNED_DRY=1` instead to run through Review and assert the Launch button and
 step list without clicking Launch. Dry mode blocks every financial signature/broadcast in Node;
-only narrowly allowlisted SIWE authentication messages are permitted. Without `E2E_V2_SIGNED=1`
+only narrowly allowlisted SIWE authentication messages are permitted in Review-only mode. Without `E2E_V2_SIGNED=1`
 the spec skips. Review must use the authorized manager address and seed plus displayed flow fee
 must not exceed 2.1 USDC. Panel-written settings/shares remain authoritative.
 Use a fresh `RUN_OUTPUT` and the same `--output`/report settings for each Review-only run too.
@@ -22,6 +22,14 @@ Set `E2E_V2_SIGNED_DRY=launch` to click Launch, assert all 15 expected journey r
 with their chain IDs, and assert **Sign next step** is enabled. The financial guard stays disarmed.
 Every `eth_sendTransaction` throws, even if the guard is accidentally armed; all other financial
 signatures and broadcasts are blocked too. This mode returns without clicking Sign or Resume.
+Launch-only dry mode also blocks SIWE, even when armed. Set
+`E2E_V2_AUTH_STATE=/absolute/path/to/authenticated-storage-state.json` to load existing
+authenticated cookies/localStorage, without requesting a new authentication signature.
+The shared `prepareV2Launch` flow skips `connectAndSignIn` when this variable is set,
+requires the authenticated cookie and connected-wallet UI, and never falls back to SIWE.
+Set `E2E_V2_NO_SIGN=1` for agent-operated validation: it rejects every signature/broadcast,
+including SIWE, in every mode, even if signed mode is opted in and armed.
+Expired/revoked auth state must fail, not fall back to SIWE. Never print cookie values or keys.
 The rows must remain Not started, with no transaction hashes or signature-click timestamps.
 SIWE permits only the existing deployed origin or exactly `http://localhost:3000`, with matching
 domain/URI, the authorized wallet, chains 42161/4663 and the fixed authentication statements.
@@ -47,7 +55,30 @@ each signature. No automatic failed-step retry occurs. JSON evidence accumulates
 at `info.outputPath("v2-launch-signed-evidence.json")`, with per-step screenshots in the test output folder.
 Timestamps denote UI observations, not block timestamps; off-chain steps have null hashes and
 may have null click timestamps. Retain this evidence and checkpoints after a failed signed run;
-do not rerun blindly, because a new browser creates a new draft rather than resuming old funds.
+do not rerun blindly without `E2E_V2_RESUME_STATE`, because a fresh browser creates a new draft.
+Storage snapshots are sensitive local evidence, not public attachments: `storage-evidence/`
+in the test output has mode `0700`; `storage-state.json` and numbered step/status-specific
+snapshots have mode `0600`. The latest state is updated on journal status transitions,
+every observed confirmation, before resume/retry, and finally on success or failure.
+Keep the complete storage state private. It includes authenticated cookies and wallet-local drafts.
+
+For a future **human-operated** resume, export the authorized key in the shell only and use:
+
+```bash
+RESUME_STATE=/absolute/path/to/previous/results/test-output/storage-evidence/storage-state.json
+RUN_OUTPUT=$(mktemp -d /tmp/pp-pr61-resume.XXXXXX)
+E2E_V2_SIGNED=1 E2E_V2_SIGNED_DRY=0 E2E_V2_RESUME_STATE="$RESUME_STATE" E2E_BASE_URL=https://v2.dev.pool-party.xyz E2E_CHAIN=arbitrum PLAYWRIGHT_HTML_OUTPUT_DIR="$RUN_OUTPUT/report" pnpm exec playwright test e2e/specs/v2-launch-signed.spec.ts --workers=1 --output="$RUN_OUTPUT/results"
+```
+
+Resume selects exactly one unfinished journey for the authorized burner at the configured origin,
+requires its existing launch journal, and navigates to
+`/en/manager/fund-launch/{encodeURIComponent(wallet:draftId)}`. Persisted review metadata supplies
+the name/draft ID. It never calls `prepareV2Launch`, creates a fund/draft, or reconstructs a journal.
+Missing/corrupt/wrong-wallet state or multiple unfinished journeys fail closed. Completed journeys
+are excluded. A persisted failure requires **Retry failed step**; otherwise it uses **Resume journey**.
+If the appropriate control is unavailable, it fails instead of signing a new step.
+Set `E2E_V2_SIGNED_DRY=launch` with the resume state to inspect it without Sign, Retry, or Resume.
+`E2E_V2_RESUME_STATE` takes precedence over `E2E_V2_AUTH_STATE`. No cross-device reconstruction exists.
 The original non-spending rehearsal still stops before Launch and asserts existing fund history.
 
 The wallet boundary denies unknown methods in every mode. Only the original rehearsal's explicit

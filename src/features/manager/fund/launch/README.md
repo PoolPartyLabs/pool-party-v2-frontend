@@ -54,7 +54,7 @@ Per-draft/per-manager journal stores frozen Review/request, step IDs, chains, ha
 
 Creation includes seed atomically. Actual FundSeeded shares define deployable principal. At the labelled 25 bps fallback, gross 100 USDC estimates 99 whole shares, 99 USDC principal, 0.25 USDC fee and 0.75 USDC wallet remainder. Actual receipt is authoritative.
 
-Builders execute just in time. Swap/open reread unallocated balances; Decimal range composition honors token decimals and loss bound. Hub allocation is aggregate. Bridge quote refreshes before send; transits prove credited arrival before spoke work. Reports expose real pending/failed/expired waits, not invented countdowns. TVL/APR null stays unavailable.
+Builders execute just in time. Swap/open reread unallocated balances; Decimal range composition honors token decimals and loss bound. Hub allocation is aggregate. Bridge quote refreshes before send; transits prove credited arrival before spoke work. Reports observe explicit null or validated accepted report data, not admin job states or invented countdowns. TVL/APR null stays unavailable.
 
 Journey displays every broadcast hash immediately and receipt status afterward. Arbitrum uses arbiscan.io; Robinhood uses robinhoodchain.blockscout.com. Created/discovered contracts use same-chain address links. Off-chain profile/discover results never masquerade as transactions.
 
@@ -67,6 +67,8 @@ Actions verify bearer session via authenticated users/me with no caching/public-
 `useV2ReviewBinding({draft,catalog,balance,initial?,upload?,flowFeeBps?})` and `useV2LaunchBinding({draftId,manager,wallet,plan,execution,spoke,prepare?,frozen?,storage?,pollInterval?})` are injectable lower-level implementation/test bindings, not the agreed page seam. `useV2LaunchWallet()` binds Privy/wagmi, chain proof, receipts and hub balance. No signatures on mount. Logo upload reuses useUploadMedia("logo"), wallet-scoped presigned S3 POST without a v1 strategy UUID; deployment needs media/session/CORS configuration.
 
 ## Known gaps and validation
+
+- Accepted reports are observed through the manager-authenticated fund detail read, not an admin report trigger. A null report stays waiting, with a 14-19 minute typical finalized-report estimate and no journey deadline. Single-step actions poll the selected waiting step and stop before the next signature. Explicitly deferred reads and throttling wait; real API errors still fail and preserve Retry checkpoints. The enabled API keeper owns report publication and delivery.
 
 - POO-2172 connects its Launch button; POO-2144/2171 supply typed panel configuration. Only our separate Journey route is installed.
 - Non-base two-conversion pairs, non-base Aave assets and standalone manual swaps fail closed. No speculative routes.

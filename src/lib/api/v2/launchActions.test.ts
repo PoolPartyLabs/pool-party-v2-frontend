@@ -28,6 +28,36 @@ const response = (data: unknown, status = 200) =>
   new Response(JSON.stringify({ data }), { status, headers: { "x-pool-party-protocol": "v2" } });
 
 describe("launch server-only admin boundary [R8]", () => {
+  it.each([
+    undefined,
+    false,
+    "accepted",
+    {},
+  ])("rejects a malformed accepted-report read: %j", async (lastReport) => {
+    mocks.fetch.mockImplementation(async () =>
+      response({ protocolVersion: "v2", manager: wallet, lastReport }),
+    );
+    expect(await actions.readLaunchFundAction(core)).toMatchObject({ ok: false });
+  });
+  it.each([
+    null,
+    {
+      protocolVersion: "v2",
+      ageSeconds: "1",
+      acceptedAt: "1",
+      wormholeSequence: "1",
+      report: { protocolVersion: "v2", sequence: "1", timestamp: "1" },
+    },
+  ])("reads a pending or validated accepted report without an admin key: %j", async (lastReport) => {
+    vi.stubEnv("PP_API_ADMIN_KEY", "");
+    mocks.fetch.mockImplementation(async () =>
+      response({ protocolVersion: "v2", manager: wallet, lastReport }),
+    );
+    expect(await actions.readLaunchFundAction(core)).toMatchObject({
+      ok: true,
+      data: { lastReport },
+    });
+  });
   beforeEach(() => {
     vi.resetAllMocks();
     vi.stubGlobal("fetch", mocks.fetch);
@@ -38,7 +68,7 @@ describe("launch server-only admin boundary [R8]", () => {
     mocks.auth.mockResolvedValue({ Authorization: "Bearer session-token" });
     mocks.verified.mockResolvedValue({ walletAddress: wallet });
     mocks.fetch.mockImplementation(async () =>
-      response({ protocolVersion: "v2", manager: wallet }),
+      response({ protocolVersion: "v2", manager: wallet, lastReport: null }),
     );
   });
   it("refuses 8% custom loss before any API call", async () => {

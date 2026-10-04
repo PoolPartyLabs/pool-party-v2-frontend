@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-081 (POO-2177)
  * @name FundLaunchJourney
- * @implements-rules-version v1
+ * @implements-rules-version v3 (POO-2192)
  */
 "use client";
 import { useTranslations } from "next-intl";
@@ -70,6 +70,9 @@ function RealJourney({ journeyId }: { journeyId: string }) {
               {labels[step.kind]} · {step.chainId === 42161 ? "Arbitrum" : "Robinhood Chain"}
             </h2>
             <p>{statuses[step.status]}</p>
+            {step.kind === "report" && step.status === "waiting" ? (
+              <p role="status">{t("fundLaunch.reportWait")}</p>
+            ) : null}
             {step.explorerUrl && step.txHash ? (
               <a
                 className="break-all underline"

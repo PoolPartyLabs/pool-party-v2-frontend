@@ -12,7 +12,16 @@ export async function prepareV2Launch(
   capture: (label: string) => Promise<void> = async () => {},
   mark: (phase: string) => void = () => {},
 ) {
-  await connectAndSignIn(page);
+  if (process.env.E2E_V2_AUTH_STATE) {
+    expect(
+      (await page.context().cookies()).some((cookie) => cookie.name === "pp_access_token"),
+      "E2E_V2_AUTH_STATE must contain an authenticated cookie; no SIWE fallback",
+    ).toBe(true);
+    await page.goto("/en/manager");
+    await expect(page).not.toHaveURL(/sign-in/);
+  } else {
+    await connectAndSignIn(page);
+  }
   await expect
     .poll(
       async () =>
