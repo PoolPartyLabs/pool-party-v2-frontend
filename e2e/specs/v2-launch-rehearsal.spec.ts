@@ -61,10 +61,85 @@ const test = base.extend<{ nonSpending: undefined }>({
 });
 
 test.describe("@v2-launch non-spending demo rehearsal", () => {
+  test.use({ viewport: { width: 1920, height: 1080 } });
   test.describe.configure({ mode: "serial", timeout: 900_000 });
   test.skip(process.env.E2E_V2_REHEARSAL !== "1", "Opt in to the non-spending deployed rehearsal");
 
   test("Mandate → Build → fallback Review, stops before Launch", async ({ page, wallet }, info) => {
+    const diagnostics: unknown[] = [];
+    const pending: Promise<void>[] = [];
+    page.on("pageerror", (error) => diagnostics.push({ kind: "pageerror", name: error.name }));
+    page.on("console", (message) => {
+      if (message.type() === "error")
+        diagnostics.push({
+          kind: "console",
+          type: "error",
+          path: message.location().url ? new URL(message.location().url).pathname : null,
+        });
+    });
+    page.on("requestfailed", (request) =>
+      diagnostics.push({
+        kind: "requestfailed",
+        path: new URL(request.url()).pathname,
+        method: request.method(),
+        failure: request.failure()?.errorText,
+      }),
+    );
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame())
+        diagnostics.push({ kind: "navigation", path: new URL(frame.url()).pathname });
+    });
+    page.on("response", (response) => {
+      if (response.request().method() !== "POST" && response.status() < 400) return;
+      const operation = response
+        .text()
+        .then((body) => {
+          diagnostics.push({
+            kind: "response",
+            path: new URL(response.url()).pathname,
+            status: response.status(),
+            fields:
+              body.match(
+                /"(?:ok|status|code|reason|step|error)":(?:true|false|\d+|"[A-Za-z0-9_ -]{0,100}"|\{"status":\d+,"code":"[A-Za-z0-9_]+"\})/g,
+              ) ?? [],
+          });
+        })
+        .catch(() => {});
+      pending.push(operation);
+    });
+    const capture = async (label: string) => {
+      await Promise.all(pending);
+      diagnostics.push({
+        kind: "snapshot",
+        label,
+        path: new URL(page.url()).pathname,
+        sessionCookie: (await page.context().cookies()).some(
+          (cookie) => cookie.name === "pp_access_token",
+        ),
+        ...(await page.evaluate(() => ({
+          nextButtons: [...document.querySelectorAll("button")]
+            .filter((button) => button.textContent?.includes("Next:"))
+            .map((button) => ({
+              text: button.textContent,
+              disabled: button.disabled,
+              ariaDisabled: button.getAttribute("aria-disabled"),
+            })),
+          messages: [...document.querySelectorAll('[role="alert"], [role="status"]')].map(
+            (element) => ({
+              text: element.textContent?.slice(0, 200),
+              label: element.getAttribute("aria-label"),
+            }),
+          ),
+          funnel: (window.dataLayer ?? [])
+            .filter((entry) => String(entry.event).startsWith("builder_mandate"))
+            .map(({ event, step, reason }) => ({ event, step, reason })),
+        }))),
+      });
+      await info.attach(`mandate-${label}`, {
+        body: JSON.stringify(diagnostics, null, 2),
+        contentType: "application/json",
+      });
+    };
     expect(wallet.address.toLowerCase()).toBe(burner.toLowerCase());
     const timings: Array<{ phase: string; seconds: number }> = [];
     let started = Date.now();
@@ -85,9 +160,15 @@ test.describe("@v2-launch non-spending demo rehearsal", () => {
     await page.getByRole("button", { name: "V2", exact: true }).click();
     await page.goto("/en/manager/new");
     await page.getByRole("checkbox", { name: "Robinhood Chain", exact: true }).click();
-    await expect(page.getByText("Loading v2 catalog", { exact: true })).toHaveCount(0);
+    await capture("before-next");
+    await expect(page.getByRole("status", { name: "Loading v2 catalog", exact: true })).toHaveCount(
+      0,
+      { timeout: 60000 },
+    );
+    await capture("catalog-ready");
     await expect(page.getByText("The v2 catalog is unavailable.", { exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Next: Protocols", exact: true }).click();
+    await capture("after-next");
     await expect(page.locator('[data-mandate-step="protocols"]')).toBeVisible();
     const aave = page.getByRole("checkbox", { name: "Aave v3", exact: true });
     if ((await aave.getAttribute("aria-checked")) !== "true") await aave.click();
@@ -137,6 +218,7 @@ test.describe("@v2-launch non-spending demo rehearsal", () => {
       await page.getByRole("button", { name: "Add protocol on Arbitrum", exact: true }).click();
       await page.getByRole("menuitem", { name: kind }).click();
     }
+    await page.getByRole("button", { name: "Fit to view", exact: true }).click();
     await page.getByRole("button", { name: "Add network", exact: true }).click();
     await page.getByRole("menuitem", { name: /^Robinhood Chain/ }).click();
     await page
@@ -144,7 +226,7 @@ test.describe("@v2-launch non-spending demo rehearsal", () => {
       .click();
     await page.getByRole("menuitem", { name: /Uniswap v4 Liquidity position/ }).click();
     await page.getByRole("button", { name: "Save & exit", exact: true }).click();
-    await page.getByRole("button", { name: "Save and exit", exact: true }).click();
+    await expect(page).toHaveURL(/\/manager(?:\?|$)/);
     mark("Build");
     const draft = await page.evaluate(() => {
       const payload = JSON.parse(localStorage.getItem("pp.manager.mandateDrafts.v1") ?? "{}");
@@ -161,6 +243,15 @@ test.describe("@v2-launch non-spending demo rehearsal", () => {
       usdc.toLowerCase(),
     ]);
     expect(draft.spokeCapPercent).toBe(50);
+    await info.attach("saved-mandate-plan", {
+      body: JSON.stringify(draft, null, 2),
+      contentType: "application/json",
+    });
+    const cooldown = Number(process.env.E2E_CATALOG_COOLDOWN_MS ?? 0);
+    if (Number.isFinite(cooldown) && cooldown > 0) {
+      await page.waitForTimeout(Math.min(cooldown, 120_000));
+      mark("Catalog throttle cooldown (not launch waiting)");
+    }
     await page.goto("/en/manager");
     await page.getByRole("link", { name: "Review & launch drafts (v2)", exact: true }).click();
     await page.locator(`a[href*="/${draft.id}"]`).filter({ hasText: "Review" }).click();
@@ -170,6 +261,11 @@ test.describe("@v2-launch non-spending demo rehearsal", () => {
     await page.getByLabel("Management fee (%)", { exact: true }).fill("0");
     await page.getByLabel("Minimum first deposit (USDC)", { exact: true }).fill("2");
     await page.getByLabel("First deposit / seed (USDC)", { exact: true }).fill("2");
+    await capture("review");
+    await info.attach("review-text", {
+      body: await page.locator("main").innerText(),
+      contentType: "text/plain",
+    });
     await expect(page.getByRole("button", { name: /^Launch · \d+ signatures$/ })).toBeEnabled();
     await page.reload();
     await expect(page.getByLabel("Name (10-50 characters)", { exact: true })).toHaveValue(name);
