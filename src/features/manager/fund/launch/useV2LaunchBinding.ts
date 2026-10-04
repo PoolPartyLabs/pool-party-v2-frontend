@@ -258,6 +258,22 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
     if (!hydrated || busy || paused || !journal || !options.wallet) return;
     const pending = Object.values(journal.checkpoints).filter(
       (checkpoint) =>
+        journal.steps.some(
+          (step) =>
+            step.id === checkpoint.stepId &&
+            (checkpoint.txHash ||
+              (step.kind !== "profile" &&
+                step.dependencies.every(
+                  (dependency) => journal.checkpoints[dependency]?.status === "confirmed",
+                ) &&
+                (step.kind !== "bridge" ||
+                  !journal.steps.some(
+                    (sibling) =>
+                      sibling.chain === 42161 &&
+                      ["open", "swap"].includes(sibling.kind) &&
+                      journal.checkpoints[sibling.id]?.status !== "confirmed",
+                  )))),
+        ) &&
         checkpoint.status !== "confirmed" &&
         checkpoint.receiptStatus !== "reverted" &&
         (checkpoint.status === "waiting" ||

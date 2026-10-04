@@ -82,6 +82,31 @@ const options = () => ({
   pollInterval: 1,
 });
 describe("headless launch binding [R3, R4, R6]", () => {
+  it("does not repeatedly persist a blocked waiting leaf whose retry timestamp has expired", async () => {
+    const journal = createJournal("draft", manager, frozen, [
+      { id: "bad", kind: "open", chain: 42161, dependencies: [] },
+      { id: "leaf", kind: "open", chain: 42161, dependencies: ["bad"] },
+    ]);
+    journal.checkpoints.bad = {
+      stepId: "bad",
+      chain: 42161,
+      status: "failed",
+      error: "V2_REQUEST_FAILED",
+    };
+    journal.checkpoints.leaf = {
+      stepId: "leaf",
+      chain: 42161,
+      status: "waiting",
+      retryAt: Date.now() - 1,
+    };
+    localStorage.setItem(journalKey("draft", manager), JSON.stringify(journal));
+    const writes = vi.spyOn(Storage.prototype, "setItem");
+    const { result } = renderHook(() => useV2LaunchBinding(options()));
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(writes).not.toHaveBeenCalled();
+    writes.mockRestore();
+  });
   it("honors Pause for hydrated receipt polling until explicit resume", async () => {
     const journal = createJournal("draft", manager, frozen, [
       { id: "aave", kind: "open", chain: 42161, dependencies: [] },

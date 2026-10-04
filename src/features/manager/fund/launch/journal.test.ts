@@ -29,6 +29,43 @@ const setup = () => {
 };
 
 describe("launch checkpoint state machine [R3, R6]", () => {
+  it.each([
+    "soon",
+    -1,
+    null,
+  ])("rejects corrupt persisted discovery retry timestamps: %s", (retryAt) => {
+    const { journal, storage } = setup();
+    journal.checkpoints.create = {
+      stepId: "create",
+      chain: 42161,
+      status: "waiting",
+      retryAt: retryAt as number,
+    };
+    storage.value = JSON.stringify(journal);
+    expect(() => loadJournal(storage, "draft", "0xManager")).toThrow("INVALID_JOURNAL");
+  });
+  it("continues read-only receipt polling after an independent sibling reverts", async () => {
+    const { journal, storage, driver } = setup();
+    journal.steps = [
+      { id: "bad", kind: "open", chain: 42161, dependencies: [] },
+      { id: "leaf", kind: "open", chain: 42161, dependencies: [] },
+    ];
+    for (const step of journal.steps)
+      journal.checkpoints[step.id] = {
+        stepId: step.id,
+        chain: step.chain,
+        status: "waiting",
+        txHash: `0x${step.id}`,
+        receiptStatus: "unknown",
+      };
+    vi.mocked(driver.receipt)
+      .mockResolvedValueOnce({ status: "reverted" })
+      .mockResolvedValueOnce({ status: "success" });
+    await runLaunch(journal, storage, driver, undefined, undefined, undefined, true);
+    expect(journal.checkpoints.bad?.status).toBe("failed");
+    expect(journal.checkpoints.leaf?.status).toBe("confirmed");
+    expect(driver.send).not.toHaveBeenCalled();
+  });
   it("backoffs pending without metadata and never signs a recovered builder in read-only polling", async () => {
     const { journal, storage, driver } = setup();
     journal.steps = [{ id: "leaf", kind: "open", chain: 42161, dependencies: [] }];
@@ -108,6 +145,7 @@ describe("launch checkpoint state machine [R3, R6]", () => {
     journal.checkpoints.leaf.retryAt = 0;
     await runLaunch(journal, storage, driver);
     expect(journal.checkpoints.leaf?.status).toBe("confirmed");
+    expect(driver.receipt).toHaveBeenCalledTimes(1);
     expect(driver.build).not.toHaveBeenCalled();
     expect(driver.send).not.toHaveBeenCalled();
   });

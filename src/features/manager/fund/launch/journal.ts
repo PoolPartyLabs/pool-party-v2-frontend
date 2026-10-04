@@ -113,6 +113,17 @@ export function loadJournal(
       !ids.has(id) ||
       checkpoint.stepId !== id ||
       ![42161, 4663].includes(checkpoint.chain) ||
+      (checkpoint.retryAt !== undefined &&
+        (typeof checkpoint.retryAt !== "number" ||
+          !Number.isFinite(checkpoint.retryAt) ||
+          checkpoint.retryAt < 0)) ||
+      (checkpoint.retryAfterSeconds !== undefined &&
+        (typeof checkpoint.retryAfterSeconds !== "number" ||
+          !Number.isFinite(checkpoint.retryAfterSeconds) ||
+          checkpoint.retryAfterSeconds < 0)) ||
+      (checkpoint.retryCount !== undefined &&
+        (!Number.isSafeInteger(checkpoint.retryCount) || checkpoint.retryCount < 0)) ||
+      (checkpoint.waitReason !== undefined && checkpoint.waitReason !== "discovery") ||
       !["idle", "building", "signing", "submitted", "waiting", "confirmed", "failed"].includes(
         checkpoint.status,
       )
@@ -201,11 +212,23 @@ export async function runLaunch(
     processed += 1;
     try {
       if (checkpoint.txHash && checkpoint.receiptStatus !== "reverted") {
+        if (step.kind === "open" && checkpoint.receiptStatus === "success") {
+          await driver.complete(step, checkpoint, journal);
+          checkpoint.status = "confirmed";
+          delete checkpoint.error;
+          delete checkpoint.waitReason;
+          delete checkpoint.retryAt;
+          delete checkpoint.retryAfterSeconds;
+          delete checkpoint.retryCount;
+          persist();
+          continue;
+        }
         const receipt = await driver.receipt(step.chain, checkpoint.txHash);
         checkpoint.receiptStatus = receipt.status;
         checkpoint.data = { ...checkpoint.data, ...receipt.data };
         if (receipt.status === "unknown") {
           checkpoint.status = "waiting";
+          delete checkpoint.retryAt;
           persist();
           continue;
         }
@@ -223,6 +246,7 @@ export async function runLaunch(
         checkpoint.status = "failed";
         checkpoint.error = "TRANSACTION_REVERTED";
         persist();
+        if (readOnly) continue;
         return journal;
       }
       if (
@@ -257,6 +281,8 @@ export async function runLaunch(
       }
       if (!built.transaction) {
         checkpoint.status = "waiting";
+        delete checkpoint.retryAt;
+        delete checkpoint.waitReason;
         persist();
         continue;
       }
@@ -265,6 +291,8 @@ export async function runLaunch(
         checkpoint.status = "idle";
         delete checkpoint.waitReason;
         delete checkpoint.retryAt;
+        delete checkpoint.retryAfterSeconds;
+        delete checkpoint.retryCount;
         persist();
         continue;
       }
