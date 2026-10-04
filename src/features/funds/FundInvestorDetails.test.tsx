@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   personal: vi.fn(),
   wallet: `0x${"4".repeat(40)}`,
   query: "",
+  signedIn: true,
 }));
 vi.mock("@/lib/services", () => ({ isMockMode: false }));
 vi.mock("@/lib/tokens/readErc20", () => ({ readErc20Balance: mocks.balance }));
@@ -28,10 +29,16 @@ vi.mock("@/lib/hooks/useContractFamily", () => ({
   useContractFamily: () => ({ family: "v2", hydrated: true }),
 }));
 vi.mock("@/lib/auth/useAuth", () => ({ useAuth: () => ({ address: mocks.wallet }) }));
-vi.mock("@/lib/auth/useSiweSession", () => ({ useSiweSession: () => ({ isSignedIn: true }) }));
+vi.mock("@/lib/auth/useSiweSession", () => ({
+  useSiweSession: () => ({ isSignedIn: mocks.signedIn }),
+}));
 vi.mock("@/features/strategies/components/InvestModal", () => ({
-  InvestModal: (props: { open: boolean }) => (
-    <div data-testid="invest-host" data-open={String(props.open)} />
+  InvestModal: (props: { open: boolean; balance: number | null }) => (
+    <div
+      data-testid="invest-host"
+      data-open={String(props.open)}
+      data-balance={String(props.balance)}
+    />
   ),
 }));
 vi.mock("@/i18n/navigation", () => ({
@@ -56,6 +63,7 @@ describe("investor V2 details", () => {
   beforeEach(() => {
     mocks.wallet = `0x${"4".repeat(40)}`;
     mocks.query = "";
+    mocks.signedIn = true;
     mocks.balance.mockReset().mockResolvedValue(BigInt(25000001));
     mocks.public.mockResolvedValue({ ok: true, fund: mockFund });
     mocks.personal.mockResolvedValue({ ok: false, error: { code: "V2_SESSION" } });
@@ -65,6 +73,49 @@ describe("investor V2 details", () => {
     expect(await screen.findByRole("heading", { name: "Balanced Income" })).toBeInTheDocument();
     expect(await screen.findAllByText("Your position could not be loaded.")).toHaveLength(2);
     expect(screen.queryByText("Your position")).not.toBeInTheDocument();
+  });
+  it("POO-2224 R2 reads connected hub USDC despite holder API failure", async () => {
+    renderWithProviders(<FundDetail core={mockFund.coreVault} />);
+    await waitFor(() =>
+      expect(mocks.balance).toHaveBeenCalledWith(mockFund.mandate.usdc, mocks.wallet, 42161),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("invest-host")).toHaveAttribute("data-balance", "25.000001"),
+    );
+  });
+  it("POO-2224 R1 reads public USDC before SIWE without loading holder data", async () => {
+    mocks.signedIn = false;
+    mocks.personal.mockClear();
+    renderWithProviders(<FundDetail core={mockFund.coreVault} />);
+    await waitFor(() =>
+      expect(screen.getByTestId("invest-host")).toHaveAttribute("data-balance", "25.000001"),
+    );
+    expect(mocks.personal).not.toHaveBeenCalled();
+  });
+  it("POO-2224 R2 a failed public balance stays unavailable rather than zero", async () => {
+    mocks.balance.mockRejectedValue(new Error("RPC failed"));
+    renderWithProviders(<FundDetail core={mockFund.coreVault} />);
+    await waitFor(() => expect(mocks.balance).toHaveBeenCalled());
+    expect(screen.getByTestId("invest-host")).toHaveAttribute("data-balance", "null");
+  });
+  it("POO-2224 R2 ignores a late prior-wallet balance", async () => {
+    let resolveOld!: (balance: bigint) => void;
+    mocks.balance.mockImplementationOnce(
+      () =>
+        new Promise<bigint>((resolve) => {
+          resolveOld = resolve;
+        }),
+    );
+    const view = renderWithProviders(<FundDetail core={mockFund.coreVault} />);
+    await waitFor(() => expect(mocks.balance).toHaveBeenCalledTimes(1));
+    mocks.wallet = `0x${"5".repeat(40)}`;
+    mocks.balance.mockResolvedValue(3000000n);
+    view.rerender(<FundDetail core={mockFund.coreVault} />);
+    await waitFor(() =>
+      expect(screen.getByTestId("invest-host")).toHaveAttribute("data-balance", "3"),
+    );
+    await act(async () => resolveOld(90000000n));
+    expect(screen.getByTestId("invest-host")).toHaveAttribute("data-balance", "3");
   });
   it("R3 R4 shows exact-unit values and unproven actions unavailable", async () => {
     mocks.personal.mockResolvedValue({

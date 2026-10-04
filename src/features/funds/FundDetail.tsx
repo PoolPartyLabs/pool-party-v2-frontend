@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-SCR-006
  * @name FundDetail
- * @implements-rules-version v1 (POO-2216); v1 (POO-2220)
+ * @implements-rules-version v1 (POO-2216); v1 (POO-2220); v1 (POO-2224)
  * @analytics-events strategy_detail_viewed, app_cta_blocked, app_error_shown
  * Investor V2 projection in the existing Details frame; technical manager view is separate.
  */
@@ -88,12 +88,12 @@ function FundInvestorDetails({ core }: FundDetailProps) {
     };
   }, [core, address, isSignedIn, key]);
   useEffect(() => {
-    if (isMockMode || !publicRead?.ok || personal.status !== "ready" || identity !== key) return;
+    if (isMockMode || !publicRead?.ok || !address || identity !== key) return;
     let active = true;
     // PP-INTEGRATION-POINT: same existing ERC20 balance reader as provisioning, hub USDC only.
     void readErc20Balance(
       publicRead.fund.mandate.usdc as `0x${string}`,
-      personal.wallet as `0x${string}`,
+      address as `0x${string}`,
       42161,
     )
       .then((raw) => {
@@ -105,7 +105,7 @@ function FundInvestorDetails({ core }: FundDetailProps) {
     return () => {
       active = false;
     };
-  }, [identity, key, publicRead, personal]);
+  }, [identity, key, publicRead, address]);
   const errorCode =
     publicRead && !publicRead.ok
       ? publicRead.code

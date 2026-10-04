@@ -1,7 +1,7 @@
 /**
  * @id PP-BALANCES (POO-238, POO-239, POO-808)
  * @name useTokenBalances
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2224)
  * Client hook that loads the connected wallet's token balances across every supported network and
  * the total USD value. Real mode reads on-chain USDC for the connected address (getRealTokenBalances,
  * POO-239); mock mode reads the static fixtures. The total always reflects every chain (the modal
@@ -65,7 +65,7 @@ export function useTokenBalances(): WalletBalances {
   const read = useCallback(async (): Promise<TokenBalance[]> => {
     if (isMockMode) return getTokenBalances();
     if (!address) return [];
-    const holdings = await getWalletHoldingsAction();
+    const holdings = await getWalletHoldingsAction(address);
     return holdings ?? getRealTokenBalances(address);
   }, [address]);
 
@@ -77,7 +77,10 @@ export function useTokenBalances(): WalletBalances {
   // First load, and reload on address change: show the skeleton until the first read resolves.
   useEffect(() => {
     const runId = ++runIdRef.current;
+    setBalances([]);
     setIsLoading(true);
+    refreshingRef.current = false;
+    setIsRefreshing(false);
     read()
       .then((next) => {
         if (runIdRef.current !== runId) return;
@@ -85,7 +88,7 @@ export function useTokenBalances(): WalletBalances {
         setIsLoading(false);
       })
       .catch(() => {
-        // Keep whatever we had; surface no error boundary. Stop the skeleton so the UI is usable.
+        // An unavailable new-account read must never expose the previous account's balances.
         if (runIdRef.current === runId) setIsLoading(false);
       });
     // Invalidate any in-flight read on unmount / address change.
