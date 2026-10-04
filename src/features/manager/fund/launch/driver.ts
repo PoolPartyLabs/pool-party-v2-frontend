@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-042 (POO-2177)
  * @name launchDriver
  * @implements-rules-version v3 (POO-2192)
+ * @implements-rules-version v1 (POO-2208)
  * Just-in-time API builders and receipt reconciliation. No wallet broadcast occurs on import.
  */
 
@@ -109,6 +110,15 @@ function budget(step: LaunchStep, journal: LaunchJournal): bigint {
   if (step.group && step.kind !== "bridge")
     return (BigInt(principal) * BigInt(step.sharePct ?? 0)) / BigInt(step.shareDenominator ?? 100);
   return allocationRaw(BigInt(principal), step.sharePct ?? 0);
+}
+function remainderAmount(planned: bigint, available: bigint, step: LaunchStep): bigint {
+  const toleranceBps = BigInt(Math.min(500, Math.max(step.config?.maxLossBps ?? 100, 100)));
+  if (
+    available <= BigInt(0) ||
+    available * BigInt(10_000) < planned * (BigInt(10_000) - toleranceBps)
+  )
+    throw new Error("BALANCE_CHANGED");
+  return available < planned ? available : planned;
 }
 async function balances(core: string, chain: 42161 | 4663): Promise<Record<string, bigint>> {
   const response = unwrap(await readLaunchBalancesAction(core, chain));
@@ -286,9 +296,11 @@ export function createLaunchDriver(
         const asset = step.config?.assetKey?.split(":")[1];
         if (!asset || asset.toLowerCase() !== base.toLowerCase())
           throw new Error("UNSUPPORTED_AAVE_ASSET");
-        const amount = budget(step, journal);
-        if ((available[base.toLowerCase()] ?? BigInt(0)) < amount)
-          throw new Error("BALANCE_CHANGED");
+        const amount = remainderAmount(
+          budget(step, journal),
+          available[base.toLowerCase()] ?? BigInt(0),
+          step,
+        );
         const built = unwrap(
           await buildLaunchPositionAction(core, {
             action: "open",
@@ -323,15 +335,18 @@ export function createLaunchDriver(
       );
       if (step.kind === "swap") {
         if (amounts.swapRaw === BigInt(0)) return { complete: true };
-        if ((available[base.toLowerCase()] ?? BigInt(0)) < amounts.swapRaw)
-          throw new Error("BALANCE_CHANGED");
+        const swapRaw = remainderAmount(
+          amounts.swapRaw,
+          available[base.toLowerCase()] ?? BigInt(0),
+          step,
+        );
         const built = unwrap(
           await buildLaunchSwapAction({
             core,
             side,
             tokenIn: base,
             tokenOut: amounts.otherToken,
-            amountIn: amounts.swapRaw.toString(),
+            amountIn: swapRaw.toString(),
             maxLossBps: step.config?.maxLossBps,
           }),
         );

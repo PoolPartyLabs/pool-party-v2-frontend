@@ -72,6 +72,8 @@ Creation includes seed atomically. Actual FundSeeded shares define deployable pr
 
 Builders execute just in time. Swap/open reread unallocated balances; Decimal range composition honors token decimals and loss bound. Hub allocation is aggregate. Bridge quote refreshes before send; transits prove credited arrival before spoke work. Reports observe explicit null or validated accepted report data, not admin job states or invented countdowns. TVL/APR null stays unavailable.
 
+POO-2208 (rules v1): Aave supply and nonzero v4 swap inputs clamp to the live base-token remainder only when its shortfall is within `max(maxLossBps ?? 100, 100)`, capped at 500 bps. Exact integer comparisons preserve the boundary; zero balances and larger shortfalls still fail with `BALANCE_CHANGED`. V4 open composition already scales both legs to actual balances, and its zero-leg guard remains fail-closed. Failed builds store no amount or transaction in the journal: Retry rebuilds against fresh balances while confirmed siblings remain skipped. No journal/checkpoint migration is needed.
+
 Journey displays every broadcast hash immediately and receipt status afterward. Arbitrum uses arbiscan.io; Robinhood uses robinhoodchain.blockscout.com. Created/discovered contracts use same-chain address links. Off-chain profile/discover results never masquerade as transactions.
 
 ## Server boundary and lower-level bindings
