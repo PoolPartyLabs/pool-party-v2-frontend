@@ -775,7 +775,10 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
         ],
       },
     });
-    expect(await driver.build(step, journal)).toMatchObject({ complete: true });
+    expect(await driver.build(step, journal)).toEqual({
+      complete: true,
+      data: { swapSkipped: true },
+    });
     await driver.build({ ...step, id: "v4:open", kind: "open" }, journal);
     expect(mocks.open).toHaveBeenLastCalledWith(
       core,
@@ -976,7 +979,7 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     expect(mocks.report).not.toHaveBeenCalled();
     expect(wallet.send).not.toHaveBeenCalled();
     mocks.fund.mockResolvedValueOnce({ ok: true, data: { lastReport: {} } });
-    expect(await driver.build(step, journal)).toMatchObject({ complete: true });
+    expect(await driver.build(step, journal)).toEqual({ complete: true });
   });
   it("signs canonical server-computed profile intent and reconciles it without recreation", async () => {
     const { driver, journal, wallet } = setup();
@@ -1014,7 +1017,7 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     mocks.profile.mockResolvedValueOnce({ ok: true, data: { profile: null } });
     mocks.putProfile.mockResolvedValue({ ok: true, data: {} });
     const step: LaunchStep = { id: "profile", kind: "profile", chain: 42161, dependencies: [] };
-    expect(await driver.build(step, journal)).toMatchObject({ complete: true });
+    expect(await driver.build(step, journal)).toEqual({ complete: true });
     expect(wallet.sign).toHaveBeenCalledWith(
       expect.stringContaining("Pool Party v2 fund profile\n"),
     );
@@ -1023,7 +1026,7 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     expect(
       await driver.reconcile(step, { stepId: "profile", chain: 42161, status: "failed" }, journal),
     ).toBe(true);
-    expect(await driver.build(step, journal)).toMatchObject({ complete: true });
+    expect(await driver.build(step, journal)).toEqual({ complete: true });
   });
   it("quotes bridge from net seed, stores transit identity and decodes successful seed completion", async () => {
     const { driver, journal } = setup();
