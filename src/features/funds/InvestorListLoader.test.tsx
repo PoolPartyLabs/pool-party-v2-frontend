@@ -50,6 +50,7 @@ vi.mock("@/features/portfolio/PortfolioView", () => ({
   PortfolioView: ({ totalValue, positions, paged }: PortfolioViewProps) => (
     <div>
       <p>{totalValue === null ? "absent-total" : "bad-total"}</p>
+      <p>{paged?.closed.entries === null ? "lazy-history" : "known-history"}</p>
       <p>
         {positions.length} active / {paged?.closed.entries?.length ?? 0} exited
       </p>
@@ -159,5 +160,15 @@ describe("V2 list loader", () => {
     await waitFor(() => expect(screen.getByText("1 active / 0 exited")).toBeInTheDocument());
     fireEvent.click(screen.getByText("Closed"));
     expect(screen.getByText("1 active / 0 exited")).toBeInTheDocument();
+  });
+  // @rule R3 (POO-2220)
+  it("marks a genuinely empty wallet history known empty before any reveal", async () => {
+    mocks.load.mockResolvedValue({
+      ok: true,
+      data: { funds: [], holders: {}, wallet: mockWallet },
+    });
+    renderWithProviders(<InvestorListLoader view="holder" />);
+    await waitFor(() => expect(screen.getByText("known-history")).toBeInTheDocument());
+    expect(screen.getByText("0 active / 0 exited")).toBeInTheDocument();
   });
 });

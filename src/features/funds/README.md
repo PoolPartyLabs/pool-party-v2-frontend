@@ -45,3 +45,5 @@ Transits/balances depend on API PR #180. Authoritative previews/fees follow API 
 ## Investor handoff, 2026-10-04
 
 POO-2214 supersedes the separate technical investor presentation with the existing Strategies/Portfolio and Details hosts. See [the phased delivery plan](../../../docs/investor/V2_DELIVERY_PLAN.md). Missing data/actions use Not available per Murilo. POO-2217 prepares the existing Invest amount host and account-bound funding return without enabling unverified V2 execution. Manager technical fund operations remain separate. POO-2219 tracks API enablement for Rafael.
+
+POO-2220, rules v1: the existing family selector has a separate mobile row on Strategies, Portfolio and fund-detail routes. Details wraps the price below the identity on narrow screens and contains long names, addresses and metrics. A Portfolio with only exited positions keeps its history reveal; a known-empty history still shows the existing empty state. These are presentation/access fixes and do not enable V2 transactions.
