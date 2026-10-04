@@ -38,8 +38,8 @@ export function reportFreshness(age: number | null, maximum: number, elapsed = 0
 }
 export function fundErrorKey(code: string) {
   if (code === "TX_CONFIRMATION_UNKNOWN") return "confirmationTimeout";
-  if (/BelowMinFirstDeposit|DepositBelowOneShare|SharesBelowMinimum|PayoutBelowOneShare/.test(code))
-    return "minimum";
+  if (/PayoutBelowOneShare/.test(code)) return "payoutWholeShares";
+  if (/BelowMinFirstDeposit|DepositBelowOneShare|SharesBelowMinimum/.test(code)) return "minimum";
   if (/FUND_LIMIT_EXCEEDED|SpokeCapExceeded/.test(code)) return "limit";
   if (code === "V2_DEFERRED") return "deferred";
   if (/StaleSpokeReport|ReportUnavailable|StalePrice/.test(code)) return "refreshing";
