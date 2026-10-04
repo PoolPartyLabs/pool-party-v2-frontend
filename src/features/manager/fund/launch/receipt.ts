@@ -37,9 +37,13 @@ export function decodeLaunchReceipt(receipt: TransactionReceipt): Record<string,
           shares: decoded.args.shares.toString(),
         };
       } else if (decoded.eventName === "AllocatedToHubSpokeVault")
-        result.allocated = decoded.args.amount.toString();
+        Object.assign(result, {
+          allocated: decoded.args.amount.toString(),
+          allocatedVault: log.address,
+        });
       else if (decoded.eventName === "Swapped")
         result.swapped = {
+          vault: log.address,
           tokenIn: decoded.args.tokenIn,
           tokenOut: decoded.args.tokenOut,
           amountIn: decoded.args.amountIn.toString(),

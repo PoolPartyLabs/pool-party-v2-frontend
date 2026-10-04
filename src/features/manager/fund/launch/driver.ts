@@ -116,6 +116,8 @@ function budget(step: LaunchStep, journal: LaunchJournal): bigint {
     const allocated = receipt && record(receipt).allocated;
     if (typeof allocated !== "string" || !/^\d+$/.test(allocated))
       throw new Error("BALANCES_UNAVAILABLE");
+    if (String(record(receipt).allocatedVault).toLowerCase() !== coreOf(journal).toLowerCase())
+      throw new Error("BALANCES_UNAVAILABLE");
     const net = BigInt(allocated);
     const share = allocate.sharePct ?? 0;
     if (share <= 0 || net !== allocationRaw(BigInt(principal), share))
@@ -137,11 +139,16 @@ function conversion(step: LaunchStep, journal: LaunchJournal) {
   const swap = swapOf(step, journal);
   const checkpoint = swap && journal.checkpoints[swap.id];
   const data = checkpoint?.status === "confirmed" ? checkpoint.data?.receipt : undefined;
-  if (!data || !record(data).swapped) return null;
+  if (!data || !record(data).swapped) {
+    if (checkpoint?.status === "confirmed" && checkpoint.data?.swapSkipped !== true)
+      throw new Error("BALANCES_UNAVAILABLE");
+    return null;
+  }
   return z
     .object({
       tokenIn: addressSchema,
       tokenOut: addressSchema,
+      vault: addressSchema,
       amountIn: z.string().regex(/^\d+$/),
       amountOut: z.string().regex(/^\d+$/),
     })
@@ -364,13 +371,19 @@ export function createLaunchDriver(
         const checkpoint = journal.checkpoints[entry.id];
         const receipt = checkpoint?.data?.receipt;
         const field = entry.kind === "allocate" ? "allocated" : "swapped";
-        if (
-          checkpoint?.status === "confirmed" &&
-          checkpoint.txHash &&
-          (!receipt || !record(receipt)[field])
-        ) {
+        const evidence = receipt ? record(receipt) : {};
+        const missing =
+          entry.kind === "allocate"
+            ? !evidence.allocated || !evidence.allocatedVault
+            : !evidence.swapped || !record(evidence.swapped).vault;
+        if (checkpoint?.status === "confirmed" && checkpoint.txHash && missing) {
           const mined = await wallet.receipt(entry.chain, checkpoint.txHash);
-          if (!mined || mined.status !== "success") throw new Error("BALANCES_UNAVAILABLE");
+          if (
+            !mined ||
+            mined.status !== "success" ||
+            mined.transactionHash.toLowerCase() !== checkpoint.txHash.toLowerCase()
+          )
+            throw new Error("BALANCES_UNAVAILABLE");
           checkpoint.data = {
             ...checkpoint.data,
             receipt: { ...(receipt ? record(receipt) : {}), ...decodeLaunchReceipt(mined) },
@@ -394,6 +407,16 @@ export function createLaunchDriver(
         .parse(fund.chains);
       const chain = chains.find((entry) => entry.chainId === String(step.chain));
       if (!chain) throw new Error("CHAIN_UNAVAILABLE");
+      for (const leaf of journal.steps.filter(
+        (entry) =>
+          entry.chain === step.chain &&
+          (entry.id === step.id ||
+            (entry.kind === "open" && journal.checkpoints[entry.id]?.status !== "confirmed")),
+      )) {
+        const swapped = conversion(leaf, journal);
+        if (swapped && swapped.vault.toLowerCase() !== chain.spokeVault.toLowerCase())
+          throw new Error("BALANCES_UNAVAILABLE");
+      }
       const base = frozen.request.chains.find((entry) => entry.chainId === step.chain)?.tokens[0];
       if (!base) throw new Error("BASE_TOKEN_UNAVAILABLE");
       if (step.protocol === "aave-v3") {
@@ -454,7 +477,7 @@ export function createLaunchDriver(
         BigInt(swapped?.amountIn ?? "0"),
       );
       if (step.kind === "swap") {
-        if (amounts.swapRaw === BigInt(0)) return { complete: true };
+        if (amounts.swapRaw === BigInt(0)) return { complete: true, data: { swapSkipped: true } };
         const swapRaw = remainderAmount(
           amounts.swapRaw,
           available[base.toLowerCase()] ?? BigInt(0),
@@ -508,6 +531,8 @@ export function createLaunchDriver(
     async receipt(chain, hash) {
       const receipt = await wallet.receipt(chain, hash);
       if (!receipt) return { status: "unknown" };
+      if (receipt.transactionHash.toLowerCase() !== hash.toLowerCase())
+        throw new Error("BALANCES_UNAVAILABLE");
       return { status: receipt.status, data: { receipt: decodeLaunchReceipt(receipt) } };
     },
     async reconcile(step, checkpoint, journal) {

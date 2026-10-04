@@ -150,7 +150,7 @@ function liveSetup(principal = "2000000", allocation = "1200000", share = 30) {
     stepId: allocate.id,
     chain: 42161,
     status: "confirmed",
-    data: { receipt: { allocated: allocation } },
+    data: { receipt: { allocated: allocation, allocatedVault: core } },
   };
   mocks.pool.mockResolvedValue({ ok: true, data: livePool });
   mocks.fund.mockResolvedValue({
@@ -214,6 +214,7 @@ describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
       data: {
         receipt: {
           swapped: {
+            vault: core,
             tokenIn: liveUsdc,
             tokenOut: liveWeth,
             amountIn: spent.toString(),
@@ -251,7 +252,7 @@ describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
     const { driver, journal, swap, allocate, balances } = liveSetup();
     allocate.sharePct = 30;
     journal.steps = journal.steps.filter((step) => step.protocol !== "aave-v3");
-    journal.checkpoints.allocate!.data = { receipt: { allocated: "600000" } };
+    journal.checkpoints.allocate!.data = { receipt: { allocated: "600000", allocatedVault: core } };
     balances(BigInt("600000"), BigInt(0));
     await driver.build(swap, journal);
     expect(mocks.swap).toHaveBeenLastCalledWith(expect.objectContaining({ amountIn: "285830" }));
@@ -275,6 +276,56 @@ describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
     expect(wallet.receipt).toHaveBeenCalledWith(42161, "historical-allocation");
     expect(wallet.send).not.toHaveBeenCalled();
   });
+  it("R2 refuses missing evidence for a confirmed nonzero conversion", async () => {
+    const { driver, journal, open, swap, balances } = liveSetup();
+    journal.checkpoints[swap.id] = { stepId: swap.id, chain: 42161, status: "confirmed" };
+    balances(BigInt("914170"), BigInt("105810000000000"));
+    await expect(driver.build(open, journal)).rejects.toThrow("BALANCES_UNAVAILABLE");
+    expect(mocks.open).not.toHaveBeenCalled();
+  });
+  it("R2 preserves an explicitly recorded zero-swap completion", async () => {
+    const { driver, journal, open, swap, balances } = liveSetup();
+    journal.checkpoints[swap.id] = {
+      stepId: swap.id,
+      chain: 42161,
+      status: "confirmed",
+      data: { swapSkipped: true },
+    };
+    balances(BigInt("1200000"), BigInt("105810000000000"));
+    await driver.build(open, journal);
+    expect(mocks.open).toHaveBeenCalledTimes(1);
+  });
+  it("R2 refuses an allocation emitted by another core even when the amount matches", async () => {
+    const { driver, journal, swap, balances } = liveSetup();
+    journal.checkpoints.allocate!.data = {
+      receipt: { allocated: "1200000", allocatedVault: manager },
+    };
+    balances(BigInt("1200000"), BigInt(0));
+    await expect(driver.build(swap, journal)).rejects.toThrow("BALANCES_UNAVAILABLE");
+    expect(mocks.swap).not.toHaveBeenCalled();
+  });
+  it("R2 refuses another spoke's otherwise matching conversion receipt", async () => {
+    const { driver, journal, open, swap, balances } = liveSetup();
+    journal.checkpoints[swap.id] = {
+      stepId: swap.id,
+      chain: 42161,
+      status: "confirmed",
+      data: {
+        receipt: {
+          swapped: {
+            vault: manager,
+            tokenIn: liveUsdc,
+            tokenOut: liveWeth,
+            amountIn: "285830",
+            amountOut: "105810000000000",
+          },
+        },
+      },
+    };
+    balances(BigInt("914170"), BigInt("105810000000000"));
+    await expect(driver.build(open, journal)).rejects.toThrow("BALANCES_UNAVAILABLE");
+    expect(mocks.open).not.toHaveBeenCalled();
+  });
   it("R2 skips a confirmed conversion instead of spending again on a retry", async () => {
     const { driver, journal, swap, balances } = liveSetup();
     journal.checkpoints[swap.id] = {
@@ -284,6 +335,7 @@ describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
       data: {
         receipt: {
           swapped: {
+            vault: core,
             tokenIn: liveUsdc,
             tokenOut: liveWeth,
             amountIn: "285830",
@@ -306,6 +358,7 @@ describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
       data: {
         receipt: {
           swapped: {
+            vault: core,
             tokenIn: liveUsdc,
             tokenOut: liveWeth,
             amountIn: "285830",
@@ -322,7 +375,7 @@ describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
     const { driver, journal, open, allocate, swap, balances } = liveSetup();
     allocate.sharePct = 30;
     journal.steps = journal.steps.filter((step) => step.protocol !== "aave-v3");
-    journal.checkpoints.allocate!.data = { receipt: { allocated: "600000" } };
+    journal.checkpoints.allocate!.data = { receipt: { allocated: "600000", allocatedVault: core } };
     const inventory = BigInt("105000000000000");
     journal.checkpoints[swap.id] = {
       stepId: swap.id,
@@ -331,6 +384,7 @@ describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
       data: {
         receipt: {
           swapped: {
+            vault: core,
             tokenIn: liveUsdc,
             tokenOut: liveWeth,
             amountIn: "142915",
@@ -675,7 +729,7 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
         ],
       },
     });
-    expect(await driver.build(step, journal)).toEqual({ complete: true });
+    expect(await driver.build(step, journal)).toMatchObject({ complete: true });
     await driver.build({ ...step, id: "v4:open", kind: "open" }, journal);
     expect(mocks.open).toHaveBeenLastCalledWith(
       core,
@@ -876,7 +930,7 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     expect(mocks.report).not.toHaveBeenCalled();
     expect(wallet.send).not.toHaveBeenCalled();
     mocks.fund.mockResolvedValueOnce({ ok: true, data: { lastReport: {} } });
-    expect(await driver.build(step, journal)).toEqual({ complete: true });
+    expect(await driver.build(step, journal)).toMatchObject({ complete: true });
   });
   it("signs canonical server-computed profile intent and reconciles it without recreation", async () => {
     const { driver, journal, wallet } = setup();
@@ -914,7 +968,7 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     mocks.profile.mockResolvedValueOnce({ ok: true, data: { profile: null } });
     mocks.putProfile.mockResolvedValue({ ok: true, data: {} });
     const step: LaunchStep = { id: "profile", kind: "profile", chain: 42161, dependencies: [] };
-    expect(await driver.build(step, journal)).toEqual({ complete: true });
+    expect(await driver.build(step, journal)).toMatchObject({ complete: true });
     expect(wallet.sign).toHaveBeenCalledWith(
       expect.stringContaining("Pool Party v2 fund profile\n"),
     );
@@ -923,7 +977,7 @@ describe("just-in-time launch driver [R2, R3, R6]", () => {
     expect(
       await driver.reconcile(step, { stepId: "profile", chain: 42161, status: "failed" }, journal),
     ).toBe(true);
-    expect(await driver.build(step, journal)).toEqual({ complete: true });
+    expect(await driver.build(step, journal)).toMatchObject({ complete: true });
   });
   it("quotes bridge from net seed, stores transit identity and decodes successful seed completion", async () => {
     const { driver, journal } = setup();
