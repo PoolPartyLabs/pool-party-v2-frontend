@@ -1,3 +1,4 @@
+import { fireEvent, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders, screen } from "../../../../../tests/utils/renderWithProviders";
 import { FundLaunchJourney } from "./FundLaunchJourney";
@@ -5,6 +6,9 @@ import { FundLaunchJourney } from "./FundLaunchJourney";
 const hash = `0x${"ab".repeat(32)}`;
 const core = `0x${"12".repeat(20)}`;
 const state = vi.hoisted(() => ({
+  sign: vi.fn(),
+  cancel: vi.fn(),
+  busy: false,
   outcome: "in-progress",
   error: false,
   mock: false,
@@ -66,17 +70,19 @@ vi.mock("./useV2Launch", () => ({
       ? { messageKey: "fundLaunch.partialFailure", code: "BALANCE_CHANGED" }
       : null,
     ready: true,
-    busy: false,
+    busy: state.busy,
     journal: {},
     outcome: state.outcome,
-    sign: vi.fn(),
+    sign: state.sign,
     retry: vi.fn(),
     resume: vi.fn(),
-    cancel: vi.fn(),
+    cancel: state.cancel,
   }),
 }));
 describe("launch Journey outcomes [R3, R6]", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
+    state.busy = false;
     state.outcome = "in-progress";
     state.error = false;
     state.mock = false;
@@ -116,6 +122,24 @@ describe("launch Journey outcomes [R3, R6]", () => {
       `https://robinhoodchain.blockscout.com/address/${core}`,
     );
     expect(screen.getByRole("button", { name: "Sign next step" })).toBeEnabled();
+  });
+  it("R5 keeps signing and Pause in an adjacent controls region before the long steps list", () => {
+    const { container } = renderWithProviders(<FundLaunchJourney journeyId="journey" />);
+    const controls = screen.getByRole("complementary", { name: "Sign next step" });
+    const list = container.querySelector("ol");
+    expect(
+      list && controls.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    fireEvent.click(within(controls).getByRole("button", { name: "Sign next step" }));
+    expect(state.sign).toHaveBeenCalledTimes(1);
+    fireEvent.click(within(controls).getByRole("button", { name: "Pause journey" }));
+    expect(state.cancel).toHaveBeenCalledTimes(1);
+  });
+  it("R3 disables another signing prompt while keeping Pause reachable", () => {
+    state.busy = true;
+    renderWithProviders(<FundLaunchJourney journeyId="journey" />);
+    expect(screen.getByRole("button", { name: "Sign next step" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Pause journey" })).toBeEnabled();
   });
   it("renders partial failure and retry while preserving the created fund", () => {
     state.error = true;

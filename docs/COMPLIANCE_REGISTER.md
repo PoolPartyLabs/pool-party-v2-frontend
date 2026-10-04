@@ -58,6 +58,11 @@ not answer the existing roadmap/disclosure question. Verify that the three plann
 are acceptable before exposing the builder to real users. Regressions verify disabled intent,
 Select all exclusion, saved-draft sanitization and the real serializer's refusal. The removed APY
 paragraph used the same Aave reserve snapshot as SupplyBlockPanel; CR-MGR-024 remains open there.
+
 ## Verification record: configuration actions visibility
 
 2026-10-04, POO-2202, PP-MGR-CMP-045: the layout now reserves the full height of a long configuration panel above Back/Next. Existing allocation/range disclosures, Apply/Discard consent and blocked-leave rules are unchanged. The fix adds no fees, routes, assets, credentials or claims. Existing compliance questions remain open; this is an engineering visibility correction.
+
+## Verification record: continuous launch prompts
+
+2026-10-04, POO-2203, PP-MGR-HOK-019 and PP-MGR-CMP-081: explicit Sign now continues sequential wallet prompts after prerequisites settle. Verify each wallet still presents the actual transaction/message, Pause stops future prompts, and rejection or uncertain broadcasts never authorize replay. Existing driver validation, wallet/chain checks, journal reconciliation and settlement-only completion analytics are retained. Regression tests cover these transitions with mocks; no live transaction or browser signing test was performed. The change does not add venues, fees, custody or return claims and does not resolve the existing launch disclosure entries.

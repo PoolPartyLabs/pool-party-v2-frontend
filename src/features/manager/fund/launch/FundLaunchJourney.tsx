@@ -1,7 +1,8 @@
 /**
  * @id PP-MGR-CMP-081 (POO-2177)
  * @name FundLaunchJourney
- * @implements-rules-version v3 (POO-2192)
+ * @implements-rules-version v1 (POO-2203), preserves v3 (POO-2192)
+ * @analytics-events none, useV2LaunchBinding owns launch lifecycle events
  */
 "use client";
 import { useTranslations } from "next-intl";
@@ -49,7 +50,7 @@ function RealJourney({ journeyId }: { journeyId: string }) {
     unknown: t("fundLaunch.receipt_unknown"),
   };
   return (
-    <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
+    <section className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
       <header>
         <h1 className="font-semibold text-2xl">{t("fundLaunch.journeyTitle")}</h1>
         <p>{launch.journey?.draft.review.name}</p>
@@ -63,96 +64,105 @@ function RealJourney({ journeyId }: { journeyId: string }) {
           {t(launch.error.messageKey)} · {launch.error.code}
         </p>
       ) : null}
-      <ol aria-live="polite" className="flex flex-col gap-4">
-        {launch.steps.map((step) => (
-          <li key={step.id} className="rounded-xl border border-border bg-surface p-4">
-            <h2 className="font-medium">
-              {labels[step.kind]} · {step.chainId === 42161 ? "Arbitrum" : "Robinhood Chain"}
-            </h2>
-            <p>{statuses[step.status]}</p>
-            {step.status === "waiting" && step.waitReason === "discovery" ? (
-              <p role="status">{t("fundLaunch.discoveryWait")}</p>
-            ) : null}
-            {step.kind === "report" && step.status === "waiting" ? (
-              <p role="status">{t("fundLaunch.reportWait")}</p>
-            ) : null}
-            {step.explorerUrl && step.txHash ? (
-              <a
-                className="break-all underline"
-                href={step.explorerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <aside
+          aria-label={t("fundLaunch.signNext")}
+          className="rounded-xl border border-border bg-surface p-4 lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1"
+        >
+          {launch.outcome === "completed" ? (
+            <p role="status">{t("fundLaunch.journeyComplete")}</p>
+          ) : (
+            <div className="flex flex-wrap gap-3 lg:flex-col lg:items-stretch">
+              <Button disabled={!launch.ready || launch.busy} onClick={() => void launch.sign()}>
+                {t("fundLaunch.signNext")}
+              </Button>
+              <Button
+                variant="secondary"
+                disabled={!launch.journal || launch.busy}
+                onClick={() => void launch.resume()}
               >
-                {step.txHash}
-              </a>
-            ) : null}
-            {step.receiptStatus ? (
-              <p>
-                {t("fundLaunch.receiptLabel")}: {receipts[step.receiptStatus]}
-              </p>
-            ) : null}
-            {step.error ? (
-              <p role="alert">
-                {t("fundLaunch.partialFailure")} · {step.error}
-              </p>
-            ) : null}
-            {!step.txHash && step.status === "confirmed" ? (
-              <p>
-                {labels[step.kind]}: {t("fundLaunch.offchainComplete")}
-              </p>
-            ) : null}
-            {step.kind === "discover" && step.result?.discovered ? (
-              <DiscoveredContracts result={step.result.discovered} />
-            ) : null}
-          </li>
-        ))}
-      </ol>
-      {core ? (
-        <div className="rounded-xl border border-border p-4">
-          <p>{t("fundLaunch.fundExists")}</p>
-          {addressUrl ? (
-            <a
-              href={addressUrl}
-              className="break-all underline"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {core}
-            </a>
+                {t("fundLaunch.resumeJourney")}
+              </Button>
+              {launch.error ? (
+                <Button
+                  variant="secondary"
+                  disabled={!launch.journal || launch.busy}
+                  onClick={() => void launch.retry()}
+                >
+                  {t("fundLaunch.retryJourney")}
+                </Button>
+              ) : null}
+              <Button variant="ghost" onClick={launch.cancel}>
+                {t("fundLaunch.pauseJourney")}
+              </Button>
+            </div>
+          )}
+        </aside>
+        <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+          <ol aria-live="polite" className="flex flex-col gap-4">
+            {launch.steps.map((step) => (
+              <li key={step.id} className="rounded-xl border border-border bg-surface p-4">
+                <h2 className="font-medium">
+                  {labels[step.kind]} · {step.chainId === 42161 ? "Arbitrum" : "Robinhood Chain"}
+                </h2>
+                <p>{statuses[step.status]}</p>
+                {step.status === "waiting" && step.waitReason === "discovery" ? (
+                  <p role="status">{t("fundLaunch.discoveryWait")}</p>
+                ) : null}
+                {step.kind === "report" && step.status === "waiting" ? (
+                  <p role="status">{t("fundLaunch.reportWait")}</p>
+                ) : null}
+                {step.explorerUrl && step.txHash ? (
+                  <a
+                    className="break-all underline"
+                    href={step.explorerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {step.txHash}
+                  </a>
+                ) : null}
+                {step.receiptStatus ? (
+                  <p>
+                    {t("fundLaunch.receiptLabel")}: {receipts[step.receiptStatus]}
+                  </p>
+                ) : null}
+                {step.error ? (
+                  <p role="alert">
+                    {t("fundLaunch.partialFailure")} · {step.error}
+                  </p>
+                ) : null}
+                {!step.txHash && step.status === "confirmed" ? (
+                  <p>
+                    {labels[step.kind]}: {t("fundLaunch.offchainComplete")}
+                  </p>
+                ) : null}
+                {step.kind === "discover" && step.result?.discovered ? (
+                  <DiscoveredContracts result={step.result.discovered} />
+                ) : null}
+              </li>
+            ))}
+          </ol>
+          {core ? (
+            <div className="rounded-xl border border-border p-4">
+              <p>{t("fundLaunch.fundExists")}</p>
+              {addressUrl ? (
+                <a
+                  href={addressUrl}
+                  className="break-all underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {core}
+                </a>
+              ) : null}
+              <Link href={`/funds/${core}`} className="ml-3 underline">
+                {t("fundLaunch.viewFund")}
+              </Link>
+            </div>
           ) : null}
-          <Link href={`/funds/${core}`} className="ml-3 underline">
-            {t("fundLaunch.viewFund")}
-          </Link>
         </div>
-      ) : null}
-      {launch.outcome === "completed" ? (
-        <p role="status">{t("fundLaunch.journeyComplete")}</p>
-      ) : (
-        <div className="flex flex-wrap gap-3">
-          <Button disabled={!launch.ready || launch.busy} onClick={() => void launch.sign()}>
-            {t("fundLaunch.signNext")}
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={!launch.journal || launch.busy}
-            onClick={() => void launch.resume()}
-          >
-            {t("fundLaunch.resumeJourney")}
-          </Button>
-          {launch.error ? (
-            <Button
-              variant="secondary"
-              disabled={!launch.journal || launch.busy}
-              onClick={() => void launch.retry()}
-            >
-              {t("fundLaunch.retryJourney")}
-            </Button>
-          ) : null}
-          <Button variant="ghost" onClick={launch.cancel}>
-            {t("fundLaunch.pauseJourney")}
-          </Button>
-        </div>
-      )}
+      </div>
       <Link href="/manager" className="underline">
         {t("fundLaunch.returnManager")}
       </Link>

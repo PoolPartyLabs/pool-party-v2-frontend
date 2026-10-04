@@ -93,3 +93,9 @@ Actions verify bearer session via authenticated users/me with no caching/public-
 - Keeper funding is an environment gate; observed report/bridge timings are not SLAs. Fee decreases have no builder yet; show contract copy, no post-launch editor.
 - Requested external SC spec directory was unavailable locally; API source/README and handoff analyses were read instead.
 - Tests mock dev-host-only API, signatures and receipts. Review persistence, validation/math, graph shapes, partial failure/resume, strict payloads, canonical profile, admin redaction/rate limit and explorer wiring are covered. All 11 configured locales translate error/status/Journey keys. This development session never signs, broadcasts or deploys.
+
+## Continuous prompts and visible controls (POO-2203, rules v1)
+
+An explicit Sign next step starts the existing serial runner. It requests the next ready wallet signature after its prerequisites settle, including receipt/discovery/report waits. `next()` remains a one-step headless action. Pause, rejection, failures, unmount and manager changes stop continuation; reload reconciliation remains read-only and a confirmed or unresolved broadcast is never repeated.
+
+Journey controls precede the step list in DOM/mobile order and sit in a sticky adjacent column on desktop. Signing controls disable while running and Pause stays reachable. Existing receipt, explorer, discovered-address and settlement analytics behavior is preserved. No new locale keys or API payloads are introduced. Focused regression coverage exercises serial prompts, receipts, double click, rejection/retry, pause/resume, wallet change/unmount and control accessibility. Murilo performs browser acceptance.
