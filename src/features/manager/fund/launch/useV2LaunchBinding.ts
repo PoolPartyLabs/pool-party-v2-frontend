@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-019 (POO-2177)
  * @name useV2LaunchBinding
- * @implements-rules-version v3 (POO-2192)
+ * @implements-rules-version v1 (POO-2203), preserves v3 (POO-2192)
  * @analytics-events builder_launch_signature, builder_launch_completed, builder_launch_failed
  */
 "use client";
@@ -327,7 +327,8 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
     resume: () => execute(true, false),
     retry: () => execute(true, false),
     next: () => execute(journal !== null, true),
-    sign: () => execute(journal !== null, true),
+    // Explicit consent starts serial continuation; every prerequisite settles before its dependent.
+    sign: () => execute(journal !== null, false),
     pause: () => {
       setPaused(true);
       abort.current?.abort();

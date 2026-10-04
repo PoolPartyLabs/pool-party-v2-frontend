@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-045
  * @name BuildStepLayout.stories
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2152 and POO-2202 rules v1)
  * @analytics-events none, a story file of a presentational layout
  *
  * The frame of the Build step (POO-2152, handoff v1.2 [AN2], [AN3], [AN4]) with its three columns:
@@ -66,4 +66,31 @@ export const ThreeColumns: Story = {};
  */
 export const WithNotice: Story = {
   args: { notice: "Add a block before Review." },
+};
+
+/** POO-2202: translated fields and a leave warning must push navigation below actions. */
+export const LongPanelWithLeaveNotice: Story = {
+  args: {
+    panel: (
+      <BuildPanelSlot>
+        <div className="flex flex-col gap-4">
+          {Array.from({ length: 14 }, (_, index) => `field-${index + 1}`).map((field) => (
+            <p key={field} className="text-sm">
+              Configuration {field}. Longer translated explanations wrap within the panel.
+            </p>
+          ))}
+          <div role="alert" className="rounded-lg border border-warning p-3 text-sm">
+            <p>Changes not applied. Apply or discard these changes before leaving this block.</p>
+            <button type="button" className="underline">
+              Discard changes
+            </button>
+          </div>
+          <button type="button" className="rounded-lg bg-primary p-3 text-primary-foreground">
+            Apply changes
+          </button>
+          <button type="button">Remove block</button>
+        </div>
+      </BuildPanelSlot>
+    ),
+  },
 };
