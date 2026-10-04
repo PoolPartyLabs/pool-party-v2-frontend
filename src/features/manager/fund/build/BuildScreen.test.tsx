@@ -406,6 +406,25 @@ describe("BuildScreen: building the plan (I1 to I7, I10, AE2 to AE6)", () => {
     );
   });
 
+  // Review F10 of PR #41: the latch, not the empty plan, decides. A plan emptied and filled again in
+  // the same visit does not start the phase twice.
+  it("[AE1] starts the phase once per visit, even when the plan is emptied and filled again", async () => {
+    // @rule AE1
+    seedBuild(hubMandate("d-started-once"));
+    await openBuild();
+
+    await addPoolFromMenu();
+    await userEvent.click(card(/^Uniswap v4 · no pool yet/));
+    await userEvent.keyboard("{Delete}");
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: /^Uniswap v4 · no pool yet/ })).toBeNull(),
+    );
+    await addPoolFromMenu();
+
+    expect(emitted("builder_build_started")).toHaveLength(1);
+    expect(emitted("builder_block_added")).toHaveLength(2);
+  });
+
   it("[I3, AE2] adds a position dropped from the palette onto the Add protocol circle", async () => {
     // @rule I3
     // @rule AE2
@@ -979,5 +998,23 @@ describe("BuildScreen: the view follows the change (I9)", () => {
     await addPoolFromMenu();
 
     await waitFor(() => expect(inView(boxOf(card(/^Uniswap v4 · no pool yet/)))).toBe(true));
+  });
+
+  // Review F10 of PR #41: a flow block is never selected, so the reveal follows the new block itself.
+  it("[I9] reveals a flow block inserted at a port, even when the view was moved away", async () => {
+    // @rule I9
+    measureCanvas();
+    seedBuild(hubMandate("d-reveal-insert"), poolPlan());
+    await openBuild();
+    panAway();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Insert a flow block: Collect fees" }),
+    );
+    const menu = await screen.findByRole("menu", { name: "After WETH / USDC" });
+    await userEvent.click(within(menu).getByRole("menuitem", { name: /^Collect fees/ }));
+
+    const pill = await within(graph()).findByText("Collect fees");
+    await waitFor(() => expect(inView(boxOf(pill))).toBe(true));
   });
 });
