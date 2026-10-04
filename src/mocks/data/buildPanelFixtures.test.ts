@@ -21,6 +21,7 @@ import {
   PANEL_MOCK_LATENCY_MS,
   PANEL_POOL_FIXTURES,
   PANEL_RESERVE_FIXTURES,
+  panelPoolAtPrice,
   panelPoolFixtures,
   panelReserveFixtures,
 } from "./buildPanelFixtures";
@@ -284,6 +285,59 @@ describe("[MCK-005] findPanelPoolFixture", () => {
       expect(row?.token0.address.toLowerCase()).toBe(pool.poolKey.currency0);
       expect(row?.token1.address.toLowerCase()).toBe(pool.poolKey.currency1);
     }
+  });
+});
+
+describe("[MCK-005] panelPoolAtPrice", () => {
+  const original = () => {
+    const pool = findPanelPoolFixture(42161, "arb-v4-weth-usdc-5");
+    if (!pool) throw new Error("fixture missing");
+    return pool;
+  };
+
+  it.each([
+    2400, 3050.4127, 3100, 4200.55,
+  ])("moves the market to %s with one coherent price: strings, sqrt price and tick", (price) => {
+    const moved = panelPoolAtPrice(original(), price);
+    expect(catalogPoolSchema.safeParse(moved).success).toBe(true);
+    expect(Math.abs(Number(moved.currentPrice.token1PerToken0) - price) / price).toBeLessThan(1e-9);
+    expect(Math.abs(humanPriceFromSqrt(moved.sqrtPriceX96, 18, 6) - price) / price).toBeLessThan(
+      1e-9,
+    );
+    expect(Math.abs(1 / Number(moved.currentPrice.token0PerToken1) - price) / price).toBeLessThan(
+      1e-9,
+    );
+    const raw = price * 10 ** (6 - 18);
+    expect(1.0001 ** moved.currentTick).toBeLessThanOrEqual(raw * (1 + 1e-12));
+    expect(1.0001 ** (moved.currentTick + 1)).toBeGreaterThan(raw * (1 - 1e-12));
+  });
+
+  it("keeps everything else of the pool and never writes through the original", () => {
+    const before = original();
+    const moved = panelPoolAtPrice(before, 3300);
+    expect(moved.poolId).toBe(before.poolId);
+    expect(moved.poolKey).toEqual(before.poolKey);
+    expect(moved.tokens).toEqual(before.tokens);
+    expect(moved.liquidity).toBe(before.liquidity);
+    expect(original().currentTick).toBe(-196090);
+    expect(before.currentPrice.token1PerToken0).toBe("3050.4127");
+    moved.poolKey.fee = 1;
+    expect(before.poolKey.fee).toBe(500);
+  });
+
+  it("moves a pool whose token0 has fewer decimals, as well as one whose token0 has more", () => {
+    const stableFirst = findPanelPoolFixture(42161, "arb-v4-usdc-link-30");
+    if (!stableFirst) throw new Error("fixture missing");
+    const moved = panelPoolAtPrice(stableFirst, 0.08);
+    expect(Math.abs(humanPriceFromSqrt(moved.sqrtPriceX96, 6, 18) - 0.08) / 0.08).toBeLessThan(
+      1e-9,
+    );
+  });
+
+  it("refuses a pool whose key names a currency its tokens do not carry", () => {
+    const broken = original();
+    broken.poolKey.currency1 = `0x${"9".repeat(40)}`;
+    expect(() => panelPoolAtPrice(broken, 3000)).toThrow(/currency/i);
   });
 });
 

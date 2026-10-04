@@ -419,6 +419,43 @@ function spreadFor(id: string): number {
   return ((hash % 9) - 4) * 0.00004;
 }
 
+/**
+ * The four fields that carry a pool's price, kept coherent: the tick, the sqrt price and both
+ * served price strings, all from one price (token1 per token0) at the two decimals.
+ */
+function priceFieldsOf(
+  price: number,
+  decimals0: number,
+  decimals1: number,
+): Pick<CatalogPool, "currentTick" | "sqrtPriceX96" | "currentPrice"> {
+  const text = decimalString(price);
+  const raw = Number(text) * 10 ** (decimals1 - decimals0);
+  return {
+    currentTick: Math.floor(Math.log(raw) / Math.log(1.0001)),
+    sqrtPriceX96: sqrtPriceX96For(text, decimals0, decimals1).toString(),
+    currentPrice: {
+      protocolVersion: "v2",
+      token1PerToken0: text,
+      token0PerToken1: decimalString(1 / Number(text)),
+    },
+  };
+}
+
+/**
+ * A copy of `pool` with the market moved to `price` (token1 per token0): the sqrt price, the tick and
+ * both price strings move together, so the copy is still one coherent answer of the catalog. For tests
+ * and stories that need a refresh to change the price, or a price outside a range.
+ */
+export function panelPoolAtPrice(pool: CatalogPool, price: number): CatalogPool {
+  const token0 = pool.tokens.find((token) => token.address === pool.poolKey.currency0);
+  const token1 = pool.tokens.find((token) => token.address === pool.poolKey.currency1);
+  if (!token0 || !token1) throw new Error("buildPanelFixtures: pool currency missing");
+  return {
+    ...structuredClone(pool),
+    ...priceFieldsOf(price, token0.decimals, token1.decimals),
+  };
+}
+
 /** The real v4 PoolId of a pool key: `keccak256(abi.encode(poolKey))`. */
 function poolIdOf(key: CatalogPool["poolKey"]): string {
   return keccak256(
@@ -498,8 +535,7 @@ function generatedPool(row: MandatePoolRef): CatalogPool {
     tickSpacing: spacing,
     hooks: NO_HOOKS,
   };
-  const price = decimalString((side0.spec.usd / side1.spec.usd) * (1 + spreadFor(row.id)));
-  const raw = Number(price) * 10 ** (side1.spec.decimals - side0.spec.decimals);
+  const price = (side0.spec.usd / side1.spec.usd) * (1 + spreadFor(row.id));
   return {
     protocolVersion: "v2",
     chainId,
@@ -509,13 +545,7 @@ function generatedPool(row: MandatePoolRef): CatalogPool {
     tokens: [token0, token1],
     pairSymbols: [token0.symbol, token1.symbol],
     hooked: false,
-    currentTick: Math.floor(Math.log(raw) / Math.log(1.0001)),
-    sqrtPriceX96: sqrtPriceX96For(price, side0.spec.decimals, side1.spec.decimals).toString(),
-    currentPrice: {
-      protocolVersion: "v2",
-      token1PerToken0: price,
-      token0PerToken1: decimalString(1 / Number(price)),
-    },
+    ...priceFieldsOf(price, side0.spec.decimals, side1.spec.decimals),
     // Scaled from the mock row's own depth, so a deeper book has more liquidity.
     liquidity: String(Math.round(row.tvlUsd ?? 1_000_000) * 120_000_000),
     eligible: token0.hubPriced && token1.hubPriced,
