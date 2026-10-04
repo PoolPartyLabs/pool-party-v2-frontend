@@ -1,5 +1,3 @@
-import { investorHref } from "@/features/funds/investorListModel";
-
 /**
  * @id PP-PORT (POO-159)
  * @name PositionLink
@@ -10,9 +8,10 @@ import { investorHref } from "@/features/funds/investorListModel";
  * PositionCard and the positions table as Server Components — only this leaf is client. Tracking
  * goes through `useAnalytics()`; never gtag/dataLayer directly.
  */
-("use client");
+"use client";
 
 import type { ReactNode } from "react";
+import { investorHref } from "@/features/funds/investorListModel";
 import { Link } from "@/i18n/navigation";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 

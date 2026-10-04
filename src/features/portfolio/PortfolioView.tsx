@@ -1,10 +1,3 @@
-import {
-  type InvestorPosition,
-  type InvestorStrategy,
-  investorHref,
-} from "@/features/funds/investorListModel";
-import type { Position, Strategy } from "@/lib/schemas";
-
 /**
  * @id PP-PORT-SCR-001
  * @name Portfolio
@@ -44,7 +37,7 @@ import type { Position, Strategy } from "@/lib/schemas";
  * (metric dropdown + direction toggle, lg:hidden, mirroring Explore's POO-843 pattern) writing the
  * SAME sort state as the desktop headers.
  */
-("use client");
+"use client";
 
 import {
   ArrowDown,
@@ -65,6 +58,11 @@ import { StrategyLogo } from "@/components/data-display/StrategyLogo";
 import { AprTooltip } from "@/components/ui/AprTooltip";
 import { EyeToggle } from "@/components/ui/EyeToggle";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
+import {
+  type InvestorPosition,
+  type InvestorStrategy,
+  investorHref,
+} from "@/features/funds/investorListModel";
 import { ManagerLink } from "@/features/manager/components/ManagerLink";
 import { RiskMeter } from "@/features/strategies/components/RiskMeter";
 import { Link } from "@/i18n/navigation";
@@ -72,6 +70,7 @@ import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { INVESTOR_HIDE_VALUES_KEY, PersistedMaskProvider } from "@/lib/hooks/maskValue";
 // Type-only: fetchPortfolioPage is server-only, but its sort TYPES are erased at compile time.
 import type { PortfolioSort, PortfolioSortKey } from "@/lib/portfolio/fetchPortfolioPage";
+import type { Position, Strategy } from "@/lib/schemas";
 import { cn } from "@/lib/utils/cn";
 import {
   formatPercent,

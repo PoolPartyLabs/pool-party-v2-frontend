@@ -1,5 +1,3 @@
-import { type InvestorStrategy, investorHref } from "@/features/funds/investorListModel";
-
 /**
  * @id PP-STR-SCR-001
  * @name Strategies · Explore
@@ -57,7 +55,7 @@ import { type InvestorStrategy, investorHref } from "@/features/funds/investorLi
  * card/row routes to the strategy detail, which renders the Discovery or Owned state. The row/card
  * "Invest" stays gold per the explore-list exception.
  */
-("use client");
+"use client";
 
 import {
   ArrowDown,
@@ -85,6 +83,7 @@ import { StrategyLogo } from "@/components/data-display/StrategyLogo";
 import { AprTooltip } from "@/components/ui/AprTooltip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterDropdown, type FilterOption } from "@/components/ui/FilterDropdown";
+import { type InvestorStrategy, investorHref } from "@/features/funds/investorListModel";
 import { ManagerLink } from "@/features/manager/components/ManagerLink";
 import { Link } from "@/i18n/navigation";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
