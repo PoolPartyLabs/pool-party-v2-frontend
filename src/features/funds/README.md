@@ -12,7 +12,7 @@ Confirmed receipts show the mined block. Failed receipts immediately show revert
 
 New artifacts: PP-STR-LIB-031/032 and PP-STR-CMP-033/034. All new `strategies.funds` strings exist in eleven locales. Non-English translations follow the existing pending-native-review policy. No Murilo builder/canvas/Review page is changed.
 
-The panel mounts an isolated named themed toaster because the current app shell does not mount one. Its `toasterId` prevents duplicate notifications when the independent global toaster work lands; identity cleanup dismisses the panel's notifications only.
+The panel mounts an isolated named themed toaster alongside the global toaster added by the canvas integration. Its `toasterId` prevents duplicate notifications; identity cleanup dismisses the panel's notifications only.
 
 POO-2175, rules v2. The existing `fundContracts` flag and `useContractFamily` preference select fund discovery, holder portfolio and manager read views. V1 elements remain unchanged; Murilo's toggle and builder switch are not edited. Fund detail uses `/funds/:core`, never V1 strategy IDs.
 
