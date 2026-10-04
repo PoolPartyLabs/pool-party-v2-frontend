@@ -1,7 +1,7 @@
 /**
  * @id PP-STR-CMP-038
  * @name InvestorListLoader
- * @implements-rules-version v1 (POO-2215)
+ * @implements-rules-version v1 (POO-2215); POO-2220 rules v1
  * @analytics-events strategy_list_viewed (presenter), portfolio_viewed; navigation from existing presenters
  */
 "use client";
@@ -197,7 +197,7 @@ export function InvestorListLoader({ view }: { view: "explore" | "holder" }) {
             },
           },
           closed: {
-            entries: closedCount ? exited.slice(0, closedCount) : null,
+            entries: exited.length === 0 ? [] : closedCount ? exited.slice(0, closedCount) : null,
             hasMore: closedCount < exited.length,
             loading: false,
             onReveal: () => setClosedCount(5),

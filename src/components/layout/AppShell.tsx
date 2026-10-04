@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-LAY-001
  * @name AppShell
- * @implements-rules-version v1; POO-2209 rules v1
+ * @implements-rules-version v1; POO-2209 rules v1; POO-2220 rules v1
  *
  * Authenticated app shell. Desktop (lg+): a persistent left sidebar (brand + nav) and a top bar
  * (Dev menu + rewards pill + locale switch + wallet menu). Mobile: a top brand bar (brand +
@@ -416,6 +416,17 @@ export function AppShell({ children, className }: AppShellProps) {
           </div>
         </header>
 
+        {isEnabled("fundContracts") &&
+        (pathname === "/strategies" ||
+          pathname === "/portfolio" ||
+          pathname.startsWith("/funds/")) ? (
+          <div
+            data-testid="investor-mobile-family"
+            className="flex justify-end px-4 pb-2 md:hidden"
+          >
+            <ContractFamilyToggle mobile />
+          </div>
+        ) : null}
         {/* Content is capped + centered so it never stretches on large monitors. */}
         <main className="min-w-0 flex-1">
           <div className={cn(buildArea ? "w-full" : CONTENT_WIDTH, "p-4 lg:p-6")}>

@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-CMP-075
  * @name ContractFamilyToggle
- * @implements-rules-version v1 (POO-2120 rules v1, POO-2157 rules v1)
+ * @implements-rules-version v1 (POO-2120 rules v1, POO-2157 rules v1); POO-2220 rules v1
  * @analytics-events contract_family_toggled
  *
  * POO-2120 [R3] / [R4] / [R5], epic POO-2119. The header's "V1 | V2" segmented control: which
@@ -24,8 +24,8 @@
  * single tab stop with arrow-key movement, and these are native buttons with no roving tabindex, so
  * claiming the role would describe a keyboard contract the control does not honour.
  *
- * Desktop only (`hidden md:inline-flex`): the strategy builder it switches between is desktop only,
- * so offering the switch on a phone would lead to a screen that is not built for it.
+ * Default placement is desktop (`hidden md:inline-flex`), preserving the manager builder.
+ * The explicit mobile variant is mounted in a separate row on investor list and fund routes.
  *
  * ## A switch is a way out (POO-2157, review F2 of PR #41)
  *
@@ -53,6 +53,8 @@ import { cn } from "@/lib/utils/cn";
 export interface ContractFamilyToggleProps {
   /** Extra classes merged onto the group. */
   className?: string;
+  /** Explicit investor placement below md; the default remains the desktop control. */
+  mobile?: boolean;
 }
 
 /** The two segments, in display order. V1 first: it is the default and the live builder. */
@@ -69,7 +71,7 @@ function segmentClass(selected: boolean): string {
 }
 
 /** Header control choosing which contract family `/manager/new` builds against. */
-export function ContractFamilyToggle({ className }: ContractFamilyToggleProps) {
+export function ContractFamilyToggle({ className, mobile = false }: ContractFamilyToggleProps) {
   const t = useTranslations("shell");
   const { isEnabled } = useFeatureFlags();
   const { family, setFamily } = useContractFamily();
@@ -109,8 +111,8 @@ export function ContractFamilyToggle({ className }: ContractFamilyToggleProps) {
             role="group"
             aria-label={t("contractFamily.label")}
             className={cn(
-              "hidden h-9 shrink-0 items-center gap-1 rounded-full border border-border px-1",
-              "md:inline-flex",
+              "h-9 shrink-0 items-center gap-1 rounded-full border border-border px-1",
+              mobile ? "inline-flex md:hidden" : "hidden md:inline-flex",
               className,
             )}
           >
