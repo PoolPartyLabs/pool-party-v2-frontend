@@ -57,7 +57,8 @@ describe("fund detail views", () => {
     });
     renderWithProviders(<FundDetail core={mockFund.coreVault} />);
     await screen.findByRole("heading", { name: "Balanced Income" });
-    for (const identifier of [liveReport.unallocated[0].token, liveReport.positions[0].adapter]) {
+    for (const identifier of [liveReport.unallocated[0]?.token, liveReport.positions[0]?.adapter]) {
+      if (!identifier) throw new Error("Captured Report identifier missing");
       for (const link of screen.getAllByRole("link", { name: identifier }))
         expect(link).toHaveAttribute(
           "href",

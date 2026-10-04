@@ -33,7 +33,8 @@ describe("fund explorer fields", () => {
         value={{ ...report, spokeChainId: 42161, sourceChainId: 4663 }}
       />,
     );
-    const token = liveReport.unallocated[0].token;
+    const token = liveReport.unallocated[0]?.token;
+    if (!token) throw new Error("Captured Report token missing");
     expect(screen.getAllByRole("link", { name: token })[0]).toHaveAttribute(
       "href",
       `https://robinhoodchain.blockscout.com/address/${token}`,
