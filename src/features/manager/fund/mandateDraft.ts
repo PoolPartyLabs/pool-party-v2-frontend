@@ -107,9 +107,11 @@ export const DEX_PROTOCOL_IDS: readonly DexProtocolId[] = ["uniswap-v3", "uniswa
  *
  * R20 v3 (2026-10-03, POO-2167): Uniswap v3 POSITIONS are here because the fund contracts have no
  * Uniswap v3 position adapter yet. The required `uniswap-v3-swap` is a different id and never here
- * (R19). Every piece of Uniswap v3 position code (the pool source's real path, the Pools tabs, the
- * mapping) stays in place and unreachable through the UI, so restoring the protocol is removing it
- * from this list.
+ * (R19). In mock mode every piece of Uniswap v3 position code (the pool source's mock path, the
+ * Pools tabs, the mapping) stays in place and unreachable through the UI, so restoring the protocol
+ * there is removing it from this list. Real mode (POO-2133) has no Uniswap v3 path to restore:
+ * `buildRealCatalog` pins it unavailable, `withProtocols` refuses it, `toV2MandateSelection`
+ * allow-lists the other four ids and `searchReal` reads only the v4 catalog.
  */
 export const UNAVAILABLE_PROTOCOLS: readonly ProtocolId[] = [
   "uniswap-v3",

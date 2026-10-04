@@ -293,7 +293,8 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
   USDG / Global Dollar, amending the handoff's literal default (R18, see "Coordinator defaults" and
   `docs/COMPLIANCE_REGISTER.md` `CR-MGR-013`).
 - **Protocols (R19 to R22).** The swap adapter and Across are locked above a divider, "Required"
-  (R19); "Protocols to operate" lists Aave v3 (Arbitrum only) and Uniswap v4 (Arbitrum, Robinhood
+  (R19); in real mode Across is shown and held only while Robinhood Chain is selected (POO-2133);
+  "Protocols to operate" lists Aave v3 (Arbitrum only) and Uniswap v4 (Arbitrum, Robinhood
   Chain) with "Select all" and an "On" column of per-network dots, while Uniswap v3 positions stay
   listed but disabled, "Coming soon", because the fund contracts have no Uniswap v3 position adapter
   (R20 v3, POO-2167; the required Uniswap v3 swap is a different row and stays); no reducer accepts

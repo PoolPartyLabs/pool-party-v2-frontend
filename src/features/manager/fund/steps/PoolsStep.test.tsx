@@ -8,7 +8,8 @@
  *
  * Rules v3 (POO-2167): Uniswap v3 positions are unavailable, so these cases run on Uniswap v4. The
  * protocol tabs are the one place the Uniswap v3 path itself is under test, and they run on a
- * test-only catalog that turns it back on, the world this code returns to when the protocol does.
+ * test-only catalog that turns it back on, the mock-mode world this code returns to when the
+ * protocol does.
  *
  * The data adapter is `mandatePoolSource` and it has its own tests, so it is mocked here: these
  * cases are about what the SCREEN decides, and five of them carry the weight.
