@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-028
  * @name launch agreement tests
- * @implements-rules-version v1 (POO-2184 rules v1)
+ * @implements-rules-version v1 (POO-2184 rules v1); POO-2204 rules v1
  * @analytics-events none, a contract test of pure functions.
  *
  * The canvas and the launch read one plan (POO-2184; verification findings 1, 2 and 4). The launch
@@ -391,6 +391,7 @@ describe("[AG2] agreement: every plan readiness calls ready, the launch accepts"
         "pool 100",
         "pool 35 (not a multiple of 5)",
         "pool 60 + supply 40",
+        "pool at 0",
         "pool with Collect fees",
         "spoke pool 40",
         "spoke pool 40 + hub pool 60",
@@ -415,7 +416,6 @@ describe("[AG3] each new refusal stands for a plan the launch rejects", () => {
   const cases: Array<[PlanReadinessRefusal, string, string | null]> = [
     ["review_incomplete_block", "hubPoolPlan", "BUILD_EXECUTION_GAP"],
     ["review_incomplete_block", "pool with no slippage", "INVALID_SLIPPAGE"],
-    ["review_zero_share", "pool at 0", "INVALID_ALLOCATION"],
     ["review_zero_share", "spoke pool at 0", "INVALID_ALLOCATION"],
     ["review_stacked_positions", "supplyBorrowPlan", "BUILD_EXECUTION_GAP"],
     ["review_stacked_positions", "supply then manager swap", "BUILD_EXECUTION_GAP"],

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-061
  * @name panelBodies
- * @implements-rules-version v1 (POO-2187 rules v1)
+ * @implements-rules-version v1 (POO-2187 rules v1); POO-2204 rules v1
  * @analytics-events none, a registry of types and components; the shell (BlockPanel) reports what
  *   a body does through the panel's draft.
  *
@@ -101,6 +101,8 @@ export interface PanelPickModel<C> {
 
 /** What Mode 4's fields receive. */
 export interface PanelFieldsProps<C> {
+  /** Current draft allocation, not the applied allocation. */
+  sharePct?: number | null;
   context: PanelBodyContext;
   /** What the plan holds for the block (the canvas shows this). */
   applied: C;
@@ -121,6 +123,7 @@ export interface PanelApplyGate {
 
 /** A configured body's provider shares live data between fields and the Apply gate. */
 export interface PanelConfiguredProviderProps<C> {
+  sharePct?: number | null;
   context: PanelBodyContext;
   config: C;
   children: ReactNode;
@@ -138,7 +141,7 @@ export interface PanelBodyDefinition<C> {
    * P13 (review M1 of PR #54), optional: whether Apply changes may run for the draft `config`. A
    * hook, called on every render of Mode 4 in a component keyed on the block. Omitted: always ok.
    */
-  useApplyGate?(context: PanelBodyContext, config: C): PanelApplyGate;
+  useApplyGate?(context: PanelBodyContext, config: C, sharePct?: number | null): PanelApplyGate;
 }
 
 /** The registry: a body per kind, typed by the config that kind carries. */

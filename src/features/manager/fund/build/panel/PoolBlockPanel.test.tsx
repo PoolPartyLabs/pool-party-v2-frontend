@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-069
  * @name PoolBlockPanel tests
- * @implements-rules-version v1 (POO-2189)
+ * @implements-rules-version v1 (POO-2189); POO-2204 rules v1
  * @analytics-events none (the panel shell emits)
  */
 
@@ -202,5 +202,219 @@ describe("PoolBlockPanel", () => {
     await waitFor(() => expect(result.current.status).toBe("error"));
     result.current.onRetry?.();
     await waitFor(() => expect(result.current.status).toBe("ready"));
+  });
+});
+
+describe("deferred allocation draft (POO-2204)", () => {
+  // @rule R1, R2, R5
+  it("hides range at zero, keeps earlier ticks, and restores the positive live gate", async () => {
+    live.mockReturnValue({
+      pool: null,
+      status: "error",
+      applicable: false,
+      error: null,
+      retry: vi.fn(),
+    });
+    renderWithProviders(
+      <PanelHarness
+        draft={draft}
+        plan={{
+          version: 1,
+          hub: {
+            chains: [
+              {
+                id: "c",
+                sharePct: 40,
+                steps: [{ id: "b", family: "position", kind: "uniswapV4Pool", config }],
+              },
+            ],
+          },
+          spokes: [],
+        }}
+        selectedId="b"
+        bodies={{ uniswapV4Pool: poolBlockPanel }}
+      >
+        {(api) => <output data-testid="saved">{JSON.stringify(api.plan)}</output>}
+      </PanelHarness>,
+    );
+    const slider = screen.getByRole("slider", { name: "Allocation" });
+    slider.focus();
+    await userEvent.setup().keyboard("{Home}");
+    expect(
+      screen.queryByLabelText(manager.fundBuilder.canvas.panel.pool.loading),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeEnabled();
+    expect(live.mock.lastCall?.[1]).toBeNull();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Apply changes" }));
+    const saved = JSON.parse(screen.getByTestId("saved").textContent ?? "{}").hub.chains[0];
+    expect(saved.sharePct).toBe(0);
+    expect(saved.steps.find((step: { id: string }) => step.id === "b").config).toEqual(config);
+    slider.focus();
+    await userEvent.setup().keyboard("{ArrowRight}");
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeDisabled();
+    expect(live.mock.lastCall?.[1]).toBe(config.poolId);
+  });
+});
+
+describe("deferred reads (POO-2204)", () => {
+  // @rule R1, R3
+  it("mounts a configured zero pool without requesting range data", async () => {
+    action.mockClear();
+    renderWithProviders(
+      <PoolPanelProvider context={context} config={config} sharePct={0}>
+        <PoolBlockPanel
+          context={context}
+          applied={config}
+          config={config}
+          sharePct={0}
+          onConfigChange={vi.fn()}
+          allocation={<span>Allocation 0%</span>}
+        />
+      </PoolPanelProvider>,
+    );
+    expect(
+      screen.queryByLabelText(manager.fundBuilder.canvas.panel.pool.loading),
+    ).not.toBeInTheDocument();
+    expect(action).not.toHaveBeenCalled();
+    expect(live.mock.lastCall?.[1]).toBeNull();
+  });
+});
+
+describe("deferred range initialization (POO-2204)", () => {
+  // @rule R1, R5
+  it.each([
+    false,
+    true,
+  ])("offers usable range controls after a range-less deferred pool becomes positive (explicit undefined: %s)", async (explicitUndefined) => {
+    action.mockResolvedValue({ ok: false, error: { code: "FAILED" } });
+    const deferred = {
+      poolId: config.poolId,
+      slippagePct: 2,
+      ...(explicitUndefined ? { tickLower: undefined } : {}),
+    };
+    renderWithProviders(
+      <PanelHarness
+        draft={draft}
+        plan={{
+          version: 1,
+          hub: {
+            chains: [
+              {
+                id: "c",
+                sharePct: 0,
+                steps: [{ id: "b", family: "position", kind: "uniswapV4Pool", config: deferred }],
+              },
+            ],
+          },
+          spokes: [],
+        }}
+        selectedId="b"
+        bodies={{ uniswapV4Pool: poolBlockPanel }}
+      />,
+    );
+    const slider = screen.getByRole("slider", { name: "Allocation" });
+    slider.focus();
+    await userEvent.setup().keyboard("{ArrowRight}");
+    await waitFor(() =>
+      expect(
+        screen.queryByLabelText(manager.fundBuilder.canvas.panel.pool.loading),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole("group", { name: manager.fundBuilder.canvas.panel.range.label }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeEnabled();
+  });
+});
+
+describe("zero pool picker (POO-2204)", () => {
+  // @rule R1, R2
+  it("offers authorized pools at zero without fetching defaults", () => {
+    action.mockClear();
+    const zeroContext = {
+      ...context,
+      blockId: "b",
+      plan: {
+        version: 1 as const,
+        hub: {
+          chains: [
+            {
+              id: "c",
+              sharePct: 0,
+              steps: [
+                {
+                  id: "b",
+                  family: "position" as const,
+                  kind: "uniswapV4Pool" as const,
+                  config: null,
+                },
+              ],
+            },
+          ],
+        },
+        spokes: [],
+      },
+    };
+    const { result } = renderHook(() => poolBlockPanel.usePick(zeroContext), { wrapper });
+    expect(result.current.status).toBe("ready");
+    expect(result.current.rows[0]?.config).toEqual({ poolId: raw.poolId, slippagePct: 2 });
+    expect(action).not.toHaveBeenCalled();
+  });
+});
+
+describe("missing deferred range recovery (POO-2204)", () => {
+  // @rule R1, R5
+  it("shows failure and Retry, then initializes range from the recovered single-pool read", async () => {
+    live.mockImplementation(function useRecoverableRead() {
+      const [ready, setReady] = useState(false);
+      return {
+        pool: ready ? pool : null,
+        status: ready ? "ready" : "error",
+        applicable: ready,
+        error: null,
+        retry: () => setReady(true),
+      };
+    });
+    action.mockResolvedValue({ ok: false, error: { code: "FAILED" } });
+    renderWithProviders(
+      <PanelHarness
+        draft={draft}
+        plan={{
+          version: 1,
+          hub: {
+            chains: [
+              {
+                id: "c",
+                sharePct: 40,
+                steps: [
+                  {
+                    id: "b",
+                    family: "position",
+                    kind: "uniswapV4Pool",
+                    config: { poolId: config.poolId, slippagePct: 2 },
+                  },
+                ],
+              },
+            ],
+          },
+          spokes: [],
+        }}
+        selectedId="b"
+        bodies={{ uniswapV4Pool: poolBlockPanel }}
+      />,
+    );
+    expect(
+      screen.queryByLabelText(manager.fundBuilder.canvas.panel.pool.loading),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeDisabled();
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: manager.fundBuilder.canvas.panel.pool.retry }));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("group", { name: manager.fundBuilder.canvas.panel.range.label }),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeEnabled();
   });
 });

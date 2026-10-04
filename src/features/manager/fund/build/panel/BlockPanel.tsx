@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-061
  * @name BlockPanel
- * @implements-rules-version v1 (POO-2187 rules v1)
+ * @implements-rules-version v1 (POO-2187 rules v1); POO-2204 rules v1
  * @analytics-events none emitted here. What the panel does leaves through its draft
  *   (`usePanelDraft`: configured, applied, discarded, leave blocked), the canvas controller (the
  *   confirmed remove) and `onLimitHit` (the Allocation at its ceiling); the Build screen
@@ -159,7 +159,7 @@ function ConfiguredBody(props: Parameters<typeof ConfiguredBodyContent>[0]) {
   const Provider = props.definition.Provider;
   const content = <ConfiguredBodyContent {...props} />;
   return Provider ? (
-    <Provider context={props.context} config={props.config}>
+    <Provider context={props.context} config={props.config} sharePct={props.panel.draft?.sharePct}>
       {content}
     </Provider>
   ) : (
@@ -187,7 +187,7 @@ function ConfiguredBodyContent({
   onConfigChange(next: PanelBlockConfig): void;
 }) {
   const useApplyGate = definition.useApplyGate ?? useAlwaysReady;
-  const gate = useApplyGate(context, config);
+  const gate = useApplyGate(context, config, panel.draft?.sharePct);
   const note = panel.refusal
     ? { tone: "refused" as const, text: refusalText(panel.refusal, copy) }
     : panel.dirty && !gate.ok && gate.reason
@@ -202,6 +202,7 @@ function ConfiguredBodyContent({
           config={config}
           onConfigChange={onConfigChange}
           allocation={allocation}
+          sharePct={panel.draft?.sharePct}
         />
       </div>
       <PanelStatusRow

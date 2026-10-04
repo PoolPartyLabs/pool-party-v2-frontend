@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-045 (POO-2177)
  * @name FundLaunchJourneyStore
- * @implements-rules-version v2 (POO-2181)
+ * @implements-rules-version v2 (POO-2181); POO-2204 rules v1
  */
 import { z } from "zod";
 import { createRequestSchema } from "@/lib/api/v2/launchSchemas";
@@ -14,8 +14,24 @@ import { rawUsdc, reviewSchema } from "./review";
 export { explorerAddressUrl, explorerTxUrl } from "@/lib/chain/explorer";
 export function getLaunchSteps(draft: FundLaunchDraft): LaunchStepPreview[] {
   if (
-    draft.plan.hub.chains.some((chain) => chain.sharePct <= 0) ||
-    draft.plan.spokes.some((spoke) => spoke.chains.some((chain) => chain.sharePct <= 0))
+    draft.plan.hub.chains.some(
+      (chain) =>
+        chain.sharePct <= 0 &&
+        !(
+          chain.sharePct === 0 &&
+          chain.steps.some((step) => step.family === "position" && step.kind === "uniswapV4Pool")
+        ),
+    ) ||
+    draft.plan.spokes.some((spoke) =>
+      spoke.chains.some(
+        (chain) =>
+          chain.sharePct <= 0 &&
+          !(
+            chain.sharePct === 0 &&
+            chain.steps.some((step) => step.family === "position" && step.kind === "uniswapV4Pool")
+          ),
+      ),
+    )
   )
     throw new Error("INVALID_ALLOCATION");
   const steps = deriveLaunchSteps(

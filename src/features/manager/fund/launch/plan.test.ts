@@ -271,3 +271,49 @@ describe("Build to launch adapter [R2, R4, R5]", () => {
     expect(allocationRaw(BigInt("39500001"), 50)).toBe(BigInt("19750000"));
   });
 });
+
+describe("deferred pool execution (POO-2204)", () => {
+  // @rule R3, R4
+  it("omits zero pools and zero spokes while preserving positive execution", () => {
+    const plan = fixture(
+      [chain("idle", "uniswapV4Pool", 0), chain("active", "aaveSupply", 100)],
+      [{ network: "robinhood", sharePct: 0, chains: [chain("rh-idle", "uniswapV4Pool", 0)] }],
+    );
+    const steps = deriveLaunchSteps(plan, {}, false, true);
+    expect(steps.filter((step) => ["swap", "bridge", "arrival"].includes(step.kind))).toHaveLength(
+      0,
+    );
+    expect(steps.filter((step) => step.kind === "open").map((step) => step.blockId)).toEqual([
+      "active-position",
+    ]);
+    expect(plan.hub.chains[0]?.steps[0]?.config).toEqual({ poolId: "pool" });
+  });
+  // @rule R4
+  it("keeps all-idle launch blocked", () => {
+    expect(() =>
+      deriveLaunchSteps(fixture([chain("idle", "uniswapV4Pool", 0)]), {}, false, false),
+    ).toThrow("INVALID_ALLOCATION");
+  });
+});
+
+describe("deferred pool safety (POO-2204)", () => {
+  // @rule R2, R3
+  it.each([-1, Number.NaN, 0.5])("rejects invalid deferred allocation %s", (sharePct) => {
+    expect(() =>
+      deriveLaunchSteps(
+        fixture([chain("idle", "uniswapV4Pool", sharePct), chain("active", "aaveSupply", 40)]),
+        {},
+        false,
+        false,
+      ),
+    ).toThrow("INVALID_ALLOCATION");
+  });
+  // @rule R2
+  it("rejects a malformed deferred pool config", () => {
+    const plan = fixture([chain("idle", "uniswapV4Pool", 0), chain("active", "aaveSupply", 40)]);
+    const position = plan.hub.chains[0]?.steps[0];
+    if (!position) throw new Error("fixture");
+    position.config = { poolId: "pool", tickLower: 12, tickUpper: 5 };
+    expect(() => deriveLaunchSteps(plan, {}, false, false)).toThrow("INVALID_BUILD");
+  });
+});
