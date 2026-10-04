@@ -48,6 +48,47 @@ const draft: FundLaunchDraft = {
 };
 describe("public journey contracts [R3, R4, R6]", () => {
   beforeEach(() => localStorage.clear());
+  it("R1 reads the route-encoded journey id from the original persisted key", () => {
+    const journey = persistJourney(draft, manager);
+    expect(readJourney(encodeURIComponent(journey.journeyId))).toEqual(
+      readJourney(journey.journeyId),
+    );
+  });
+  it("R3 rejects malformed encoding without creating or replacing a checkpoint", () => {
+    const journey = persistJourney(draft, manager);
+    const stored = localStorage.getItem(journeyStore.journeyKey(journey.journeyId));
+    expect(() => readJourney("%not-an-escape")).toThrow("INVALID_JOURNAL");
+    expect(localStorage.getItem(journeyStore.journeyKey(journey.journeyId))).toBe(stored);
+  });
+  it("R3 prefers an exact persisted identity over a different decoded identity", () => {
+    const decoded = persistJourney(draft, manager);
+    const exactId = encodeURIComponent(decoded.journeyId);
+    const exact = { ...decoded, journeyId: exactId, createdAt: "exact-entry" };
+    localStorage.setItem(journeyStore.journeyKey(exactId), JSON.stringify(exact));
+    expect(readJourney(exactId)).toEqual(exact);
+  });
+  it("R3 does not bypass a corrupt exact entry through a valid decoded entry", () => {
+    const journey = persistJourney(draft, manager);
+    const encoded = encodeURIComponent(journey.journeyId);
+    localStorage.setItem(journeyStore.journeyKey(encoded), "{");
+    const before = Object.entries(localStorage);
+    expect(() => readJourney(encoded)).toThrow();
+    expect(Object.entries(localStorage)).toEqual(before);
+  });
+  it("R3 decodes only once and does not recursively resolve a double-encoded id", () => {
+    const journey = persistJourney(draft, manager);
+    expect(readJourney(encodeURIComponent(encodeURIComponent(journey.journeyId)))).toBeNull();
+    expect(readJourney(journey.journeyId)).toEqual(journey);
+    expect(localStorage.length).toBe(1);
+  });
+  it("R3 rejects a persisted identity that differs from the resolved storage key", () => {
+    const journey = persistJourney(draft, manager);
+    const key = journeyStore.journeyKey(journey.journeyId);
+    const raw = JSON.stringify({ ...journey, journeyId: "another-identity" });
+    localStorage.setItem(key, raw);
+    expect(() => readJourney(encodeURIComponent(journey.journeyId))).toThrow("INVALID_JOURNAL");
+    expect(localStorage.getItem(key)).toBe(raw);
+  });
   it("R4 enumerates only the connected wallet's valid persisted journeys", () => {
     persistJourney(draft, manager);
     persistJourney({ ...draft, id: "other" }, base);
