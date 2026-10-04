@@ -874,5 +874,7 @@ Protocol design v1.1 and the current UI-only delivery are versioned in `docs/fea
 
 > **The scan runs the real toolchain or it fails loudly.** There is no mock branch: a fabricated risk report is worse than no page. Without `forge`, `slither`, a built `hookrisk/cli/dist/cli.js` or `ETHERSCAN_API_KEY`, the job fails fast naming exactly what is missing, and the screen prints that instead of a report.
 
+POO-2209 rules v1 updates PP-CORE-LAY-001, PP-MGR-SCR-005 (including its private LocalManagerFollow client child) and PP-MGR-CMP-036: desktop navigation simplification, temporary Build shell layout, local V2 Follow, stable available-first protocol ordering.
+
 
 > POO-2210, 2026-10-04, rules v1: PP-MGR-LIB-021 applies pool selection and its initial Collect fees atomically. PP-MGR-CMP-059 exposes user-block X callbacks. PP-MGR-HOK-010 / PP-MGR-SCR-002 own a shared removal modal using PP-MGR-CMP-066, including empty spoke removal, preserving unrelated pending drafts. PP-MGR-CMP-045 / 046 expand the viewport while keeping configuration actions in document flow. Existing mandatory derived steps remain fixed; no new IDs or API seams.

@@ -114,6 +114,7 @@
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { type ComponentType, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBuildShellLayout } from "@/components/layout/BuildShellLayout";
 import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { toast } from "@/components/ui/Toast";
@@ -327,6 +328,7 @@ export function FundStrategyBuilderScreen() {
         ? ((requestedPhase ?? draft.lastPhase) as BuilderPhase)
         : "mandate"));
 
+  useBuildShellLayout(phase === "build");
   const [dialog, setDialog] = useState<"exit" | "complete" | null>(null);
   const [shellBlock, setShellBlock] = useState<StepBlock | null>(null);
   const [exiting, setExiting] = useState(false);

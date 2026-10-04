@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-LAY-001
  * @name AppShell
- * @implements-rules-version v1
+ * @implements-rules-version v1; POO-2209 rules v1
  *
  * Authenticated app shell. Desktop (lg+): a persistent left sidebar (brand + nav) and a top bar
  * (Dev menu + rewards pill + locale switch + wallet menu). Mobile: a top brand bar (brand +
@@ -35,7 +35,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PieChart,
-  ShieldCheck,
   Smile,
   TrendingUp,
   User,
@@ -57,6 +56,7 @@ import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import { isMockMode } from "@/lib/services";
 import { cn } from "@/lib/utils/cn";
 import { AppFooter } from "./AppFooter";
+import { BuildShellLayoutContext } from "./BuildShellLayout";
 import { ContractFamilyToggle } from "./ContractFamilyToggle";
 import { DevMenu } from "./DevMenu";
 import { GuardedLink } from "./GuardedLink";
@@ -147,12 +147,9 @@ const DESKTOP_NAV_ITEMS: readonly NavItem[] = [
   { labelKey: "home", href: "/", icon: House, flag: "home" },
   { labelKey: "portfolio", href: "/portfolio", icon: PieChart, flag: "portfolio" },
   { labelKey: "strategies", href: "/strategies", icon: TrendingUp, flag: "strategies" },
-  { labelKey: "cashPlus", href: "/cash-plus", icon: CircleDollarSign, flag: "cashPlus" },
   { labelKey: "cards", href: "/cards", icon: CreditCard, flag: "cards", mockOnly: true },
   { labelKey: "deposit", href: "/deposit", icon: ArrowDownToLine, flag: "deposit" },
-  // Developer tooling (hookrisk). Desktop only: it renders a long Markdown report and asks for a
-  // contract address, neither of which belongs in a five-tab mobile footer.
-  { labelKey: "tools", href: "/tools", icon: ShieldCheck, flag: "hookTools" },
+
   { labelKey: "profile", href: "/profile", icon: User, flag: "profile" },
   // Manager-only incentive program, then Rubber Rush pinned LAST (both desktop-only, rewards-gated).
   {
@@ -273,7 +270,10 @@ export function AppShell({ children, className }: AppShellProps) {
   // Skeleton the manager entry only in real mode while the owner profile read resolves (mock is instant).
   const managerLoading = !isMockMode && realIsManagerLoading;
   // Collapsed sidebar is a simple, non-sensitive UI preference — fine in localStorage (POO-283 R2).
-  const [collapsed, setCollapsed] = usePersistentState<boolean>("pp.sidebar.collapsed", false);
+  const [savedCollapsed, setCollapsed] = usePersistentState<boolean>("pp.sidebar.collapsed", false);
+  const [effectiveBuild, setEffectiveBuild] = useState(false);
+  const buildArea = pathname === "/manager/new" && effectiveBuild;
+  const collapsed = buildArea || savedCollapsed;
 
   // Literal t() calls per key (the i18n usage scan is static — no dynamic keys).
   const navLabels: Record<NavLabelKey, string> = {
@@ -351,7 +351,10 @@ export function AppShell({ children, className }: AppShellProps) {
           {/* Collapse / expand the sidebar to an icon rail (POO-283 R2). Pinned to the bottom. */}
           <button
             type="button"
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => {
+              if (!buildArea) setCollapsed(!collapsed);
+            }}
+            disabled={buildArea}
             aria-expanded={!collapsed}
             title={collapsed ? t("nav.expand") : t("nav.collapse")}
             aria-label={collapsed ? t("nav.expand") : t("nav.collapse")}
@@ -415,14 +418,16 @@ export function AppShell({ children, className }: AppShellProps) {
 
         {/* Content is capped + centered so it never stretches on large monitors. */}
         <main className="min-w-0 flex-1">
-          <div className={cn(CONTENT_WIDTH, "p-4 lg:p-6")}>
+          <div className={cn(buildArea ? "w-full" : CONTENT_WIDTH, "p-4 lg:p-6")}>
             {/* POO-1055 (hackathon POO-1022): a funding route interrupted mid-flight. Mounted on the
                 shell rather than on any one screen because a bridge takes minutes and the user comes
                 back wherever they like, including to a screen that has nothing to do with the
                 operation. Renders nothing unless the connected wallet actually has a route in
                 flight, which is every load but a handful. */}
             <FundingRecoveryBanner />
-            {children}
+            <BuildShellLayoutContext.Provider value={setEffectiveBuild}>
+              {children}
+            </BuildShellLayoutContext.Provider>
           </div>
         </main>
 

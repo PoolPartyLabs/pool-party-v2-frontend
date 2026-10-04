@@ -374,7 +374,9 @@
       "body": "Este enlace lleva a {domain}, un sitio externo que no hemos verificado. ¿Continuar?",
       "continue": "Continuar",
       "cancel": "Cancelar"
-    }
+    },
+    "follow": "Seguir",
+    "following": "Siguiendo"
   },
   "operate": {
     "title": "Posición en vivo",

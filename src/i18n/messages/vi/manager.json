@@ -374,7 +374,9 @@
       "body": "Liên kết này dẫn đến {domain}, một trang web bên ngoài mà chúng tôi chưa xác minh. Tiếp tục?",
       "continue": "Tiếp tục",
       "cancel": "Hủy"
-    }
+    },
+    "follow": "Theo dõi",
+    "following": "Đang theo dõi"
   },
   "operate": {
     "title": "Vị thế trực tiếp",

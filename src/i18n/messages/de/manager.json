@@ -374,7 +374,9 @@
       "body": "Dieser Link führt zu {domain}, einer externen Website, die wir nicht verifiziert haben. Fortfahren?",
       "continue": "Fortfahren",
       "cancel": "Abbrechen"
-    }
+    },
+    "follow": "Folgen",
+    "following": "Gefolgt"
   },
   "operate": {
     "title": "Live-Position",

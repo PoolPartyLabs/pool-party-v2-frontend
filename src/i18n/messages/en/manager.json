@@ -374,7 +374,9 @@
       "body": "This link goes to {domain}, an external site we haven't verified. Continue?",
       "continue": "Continue",
       "cancel": "Cancel"
-    }
+    },
+    "follow": "Follow",
+    "following": "Following"
   },
   "operate": {
     "title": "Live position",

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep
- * @implements-rules-version v4 (POO-2143 rules v2, POO-2167 rules v4)
+ * @implements-rules-version v4 (POO-2143 rules v2, POO-2167 rules v4); POO-2209 rules v1
  * @analytics-events none, the shell emits
  *
  * POO-2123 [R12] / [R19] / [R20] / [R21] / [R22], epic POO-2119. Mandate step 2: the protocols this
@@ -274,7 +274,10 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
           </p>
         ) : null}
 
-        {operable.map(operableRow)}
+        {[
+          ...operable.filter(canSelect),
+          ...operable.filter((protocol) => !canSelect(protocol)),
+        ].map(operableRow)}
 
         <p className="text-muted-foreground text-xs">{t("fundBuilder.protocols.onFootnote")}</p>
       </div>

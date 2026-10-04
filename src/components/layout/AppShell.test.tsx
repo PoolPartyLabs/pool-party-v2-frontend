@@ -6,7 +6,7 @@
  * matched by path segment (mobile "Invest" also owns /portfolio).
  */
 import { CreditCard } from "lucide-react";
-import type { AnchorHTMLAttributes, ReactNode } from "react";
+import { type AnchorHTMLAttributes, type ReactNode, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetDevOverridesForTests } from "@/lib/features/devOverrides";
 import {
@@ -16,9 +16,14 @@ import {
   within,
 } from "../../../tests/utils/renderWithProviders";
 import { AppShell, isNavItemVisible, type NavItem } from "./AppShell";
+import { useBuildShellLayout } from "./BuildShellLayout";
 
 // Mutable so a test can drive a different route (POO-760 regression). Defaults to "/portfolio".
-const nav = vi.hoisted(() => ({ pathname: "/portfolio" }));
+const nav = vi.hoisted(() => ({ pathname: "/portfolio", phase: "" }));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams({ phase: nav.phase }),
+}));
 
 vi.mock("@/i18n/navigation", () => ({
   usePathname: () => nav.pathname,
@@ -95,6 +100,7 @@ describe("AppShell", () => {
   // reset it around each test so per-test `vi.stubEnv` flag changes resolve fresh.
   beforeEach(() => {
     nav.pathname = "/portfolio";
+    nav.phase = "";
     __resetDevOverridesForTests();
   });
   afterEach(() => {
@@ -113,13 +119,7 @@ describe("AppShell", () => {
       </AppShell>,
     );
     const { sidebar, tabbar } = getNavs();
-    expect(within(sidebar).getByRole("link", { name: "Cash+" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    const links = within(sidebar).getAllByRole("link");
-    const strategyIndex = links.findIndex((link) => link.textContent === "Strategies");
-    expect(links[strategyIndex + 1]).toHaveTextContent("Cash+");
+    expect(within(sidebar).queryByRole("link", { name: "Cash+" })).toBeNull();
     expect(within(tabbar).getByRole("link", { name: "Cash+" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -400,4 +400,37 @@ describe("AppShell", () => {
     await user.click(screen.getByText("content"));
     expect(screen.queryByRole("switch", { name: "Manager mode" })).toBeNull();
   });
+});
+
+function PhaseHarness() {
+  const [phase, setPhase] = useState("mandate");
+  useBuildShellLayout(phase === "build");
+  return (
+    <div data-testid="build-body">
+      <button type="button" onClick={() => setPhase("build")}>
+        Enter Build
+      </button>
+      <button type="button" onClick={() => setPhase("review")}>
+        Enter Review
+      </button>
+    </div>
+  );
+}
+it("POO-2209 follows effective in-page phase without changing URL or saved preference", async () => {
+  localStorage.setItem("pp.sidebar.collapsed", "false");
+  nav.pathname = "/manager/new";
+  nav.phase = "mandate";
+  renderWithProviders(
+    <AppShell>
+      <PhaseHarness />
+    </AppShell>,
+  );
+  expect(screen.getByTestId("build-body").parentElement).toHaveClass("max-w-7xl");
+  await userEvent.click(screen.getByText("Enter Build"));
+  expect(screen.getByRole("button", { name: "Expand" })).toHaveAttribute("aria-expanded", "false");
+  expect(screen.getByTestId("build-body").parentElement).not.toHaveClass("max-w-7xl");
+  expect(localStorage.getItem("pp.sidebar.collapsed")).toBe("false");
+  await userEvent.click(screen.getByText("Enter Review"));
+  expect(screen.getByTestId("build-body").parentElement).toHaveClass("max-w-7xl");
+  expect(screen.getByRole("button", { name: "Collapse" })).toHaveAttribute("aria-expanded", "true");
 });
