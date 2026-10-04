@@ -213,6 +213,10 @@ describe("launch server-only admin boundary [R8]", () => {
   it("reads fund, quote, credited transit and actual balances through owned paths", async () => {
     expect(await actions.readLaunchFundAction(core)).toMatchObject({ ok: true });
     expect(await actions.quoteLaunchBridgeAction(core, "100")).toMatchObject({ ok: true });
+    expect(mocks.fetch).toHaveBeenLastCalledWith(
+      `https://api.example.test/api/v2/funds/${core}/bridge/quote?direction=hub-to-spoke&amount=100&bridgeRank=0`,
+      expect.objectContaining({ method: "GET", body: undefined }),
+    );
     mocks.fetch
       .mockResolvedValueOnce(response({ protocolVersion: "v2", manager: wallet }))
       .mockResolvedValueOnce(

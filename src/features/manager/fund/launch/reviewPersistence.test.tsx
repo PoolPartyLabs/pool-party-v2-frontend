@@ -36,7 +36,7 @@ describe("agreed Review draft seam [V1, V2, V5, V8, V9]", () => {
     localStorage.clear();
     vi.clearAllMocks();
     mocks.upload.mockResolvedValue("https://cdn.test/logo.png");
-    mocks.fund.mockResolvedValue({ ok: true, data: { fees: { flowFeeBps: 50 } } });
+    mocks.fund.mockResolvedValue({ ok: true, data: { fees: { flowFeeBps: "50" } } });
     upsertDraft({
       ...createEmptyDraft("2026-10-04", "review"),
       name: review.name,

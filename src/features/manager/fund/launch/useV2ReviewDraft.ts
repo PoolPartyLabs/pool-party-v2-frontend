@@ -33,8 +33,10 @@ export function useV2ReviewDraft(draftId: string) {
         void readLaunchFundAction(core).then((result) => {
           if (!active || !result.ok) return;
           const fees = result.data.fees as { flowFeeBps?: unknown } | undefined;
-          const fee = fees?.flowFeeBps;
-          if (typeof fee === "number" && Number.isInteger(fee) && fee >= 0 && fee <= 10000)
+          const rawFee = fees?.flowFeeBps;
+          const fee =
+            typeof rawFee === "string" && /^\d{1,5}$/.test(rawFee) ? Number(rawFee) : rawFee;
+          if (typeof fee === "number" && Number.isInteger(fee) && fee >= 0 && fee < 10000)
             setFlowFeeBps(fee);
         });
     } catch {}

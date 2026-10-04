@@ -181,11 +181,14 @@ export async function quoteLaunchBridgeAction(core: string, amount: string) {
     z.string()
       .regex(/^[1-9]\d{0,77}$/)
       .parse(amount);
-    return launchFetch(`/funds/${core}/bridge-quote`, "POST", versionedRecordSchema, {
-      direction: "hub-to-spoke",
-      amount,
-      bridgeRank: 0,
-    });
+    return launchFetch(
+      `/funds/${core}/bridge/quote`,
+      "GET",
+      versionedRecordSchema,
+      undefined,
+      false,
+      { direction: "hub-to-spoke", amount, bridgeRank: "0" },
+    );
   });
 }
 export async function quoteLaunchSwapAction(input: unknown) {
