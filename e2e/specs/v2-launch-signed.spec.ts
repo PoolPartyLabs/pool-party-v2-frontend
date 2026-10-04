@@ -6,6 +6,8 @@
 import { chmod, mkdir, open, readFile, writeFile } from "node:fs/promises";
 import type { Page } from "@playwright/test";
 import { parseUnits } from "viem";
+import type { FundLaunchDraft } from "../../src/features/manager/fund/launch/contracts";
+import { deriveLaunchSteps } from "../../src/features/manager/fund/launch/plan";
 import manager from "../../src/i18n/messages/en/manager.json";
 import { test as base, expect } from "../fixtures";
 import { prepareV2Launch } from "../flows/v2Launch";
@@ -83,6 +85,30 @@ const test = base.extend<{ signingGuard: Guard }>({
 });
 
 async function readSteps(page: Page): Promise<Step[]> {
+  if (await page.getByRole("heading", { name: "Review your strategy", exact: true }).count()) {
+    const draft = await page.evaluate(() => {
+      const payload = JSON.parse(localStorage.getItem("pp.manager.mandateDrafts.v1") ?? "{}");
+      return Object.values(payload.drafts ?? {}).at(-1) as FundLaunchDraft;
+    });
+    return deriveLaunchSteps(
+      draft.plan,
+      draft.launchExecution ?? {},
+      true,
+      draft.networks.includes("robinhood"),
+    ).map((step) => ({
+      label: v2LaunchStepLabel(manager.fundLaunch[step.kind], step.chain),
+      kind: step.kind,
+      chainId: step.chain,
+      txHash: null,
+      explorerHref: null,
+      status: "Review preview",
+      clickedAt: null,
+      hashShownAt: null,
+      confirmedAt: null,
+      observedAt: new Date().toISOString(),
+      screenshot: null,
+    }));
+  }
   const rows = await page.locator("main section > ol > li").all();
   const steps: Step[] = [];
   for (const row of rows) {
@@ -136,13 +162,20 @@ async function assertReviewSafety(page: Page, address: string) {
     return bridge({ method: "eth_accounts" });
   });
   expect(connected.map((account) => account.toLowerCase())).toEqual([burner.toLowerCase()]);
-  const seed = await page.getByLabel("First deposit / seed (USDC)", { exact: true }).inputValue();
-  const preview = await page
-    .locator("p[aria-live='polite']")
-    .filter({ hasText: "Seed preview:" })
-    .innerText();
-  const fee = preview.match(/, ([\d.]+) USDC fee,/);
-  const principal = preview.match(/, ([\d.]+) USDC principal,/);
+  const muriloReview = await page.getByLabel("First deposit amount", { exact: true }).count();
+  const seed = await page
+    .getByLabel(muriloReview ? "First deposit amount" : "First deposit / seed (USDC)", {
+      exact: true,
+    })
+    .inputValue();
+  const preview = muriloReview
+    ? await page
+        .locator('[aria-live="polite"]')
+        .filter({ hasText: "Estimate before signing" })
+        .innerText()
+    : await page.locator("p[aria-live='polite']").filter({ hasText: "Seed preview:" }).innerText();
+  const fee = preview.match(muriloReview ? /Protocol fee\s+([\d.]+) USDC/ : /, ([\d.]+) USDC fee,/);
+  const principal = muriloReview ? ["", seed] : preview.match(/, ([\d.]+) USDC principal,/);
   if (!fee?.[1] || !principal?.[1])
     throw new Error("Cannot establish seed and flow fee from Review");
   const total = parseUnits(seed, 6) + parseUnits(fee[1], 6);
@@ -307,10 +340,13 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
           step.screenshot = info.outputPath(
             `step-${index + 1}-${step.kind}-${step.status.replace(/\W+/g, "-")}.png`,
           );
-          await page
-            .locator("main section > ol > li")
-            .nth(index)
-            .screenshot({ path: step.screenshot });
+          const rows = page.locator("main section > ol > li");
+          const isReview = await page
+            .getByRole("heading", { name: "Review your strategy", exact: true })
+            .count();
+          await (isReview ? page.locator("main") : rows.nth(index)).screenshot({
+            path: step.screenshot,
+          });
         }
       }
       evidence.steps = current;
@@ -351,7 +387,9 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
         evidence.review = await assertReviewSafety(page, wallet.address);
         await checkpoint("review-ready");
       }
-      const launch = page.getByRole("button", { name: /^Launch · \d+ signatures$/ });
+      const launch = page.getByRole("button", {
+        name: /^Launch · \d+ signatures$|^Launch strategy$/,
+      });
       if (!resumed) {
         await expect(launch).toBeEnabled();
         evidence.launchButton = await launch.innerText();
@@ -397,6 +435,43 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
         await expect(sign).toBeEnabled();
         evidence.signNextEnabled = true;
         await snapshot();
+        const frozenDraft = await page.evaluate(() => {
+          const journeyId = decodeURIComponent(location.pathname.split("/").at(-1) ?? "");
+          return JSON.parse(localStorage.getItem(`pp:v2:journey:1:${journeyId}`) ?? "{}")
+            .draft as FundLaunchDraft;
+        });
+        const configuredSteps = deriveLaunchSteps(
+          frozenDraft.plan,
+          frozenDraft.launchExecution ?? {},
+          true,
+          frozenDraft.networks.includes("robinhood"),
+        );
+        expect(frozenDraft.plan.hub.chains.map((chain) => chain.sharePct)).toEqual([30, 30]);
+        expect(frozenDraft.plan.spokes[0]?.sharePct).toBe(40);
+        const pools = configuredSteps.filter(
+          (step) => step.kind === "open" && step.protocol === "uniswap-v4",
+        );
+        expect(pools.map((step) => step.config?.maxLossBps)).toEqual([50, 100]);
+        for (const pool of pools) {
+          const chains =
+            pool.chain === 42161
+              ? frozenDraft.plan.hub.chains
+              : (frozenDraft.plan.spokes[0]?.chains ?? []);
+          const panelStep = chains
+            .flatMap((chain) => chain.steps)
+            .find((step) => step.id === pool.blockId);
+          const panelConfig =
+            panelStep?.family === "position" && panelStep.kind === "uniswapV4Pool"
+              ? panelStep.config
+              : undefined;
+          expect(pool.config?.tickLower).toBe(panelConfig?.tickLower);
+          expect(pool.config?.tickUpper).toBe(panelConfig?.tickUpper);
+          expect(pool.config?.tickLower).toBeLessThan(pool.config?.tickUpper ?? 0);
+        }
+        await info.attach("panel-derived-launch-steps", {
+          body: JSON.stringify(configuredSteps, null, 2),
+          contentType: "application/json",
+        });
         expect(evidence.steps.map((step) => [step.kind, step.chainId])).toEqual(expectedSteps);
         for (const step of evidence.steps) {
           expect(step.status).toBe(manager.fundLaunch.idle);
