@@ -74,6 +74,7 @@ export function NetworksStep({ draft, catalog, update, block, onBlocked }: Manda
         nothing_selected: t("fundBuilder.common.nothingSelected"),
         coming_soon: null,
         cap_missing: null,
+        token_allowance_required: null,
         no_slots: null,
         has_hook: null,
         not_priced: null,

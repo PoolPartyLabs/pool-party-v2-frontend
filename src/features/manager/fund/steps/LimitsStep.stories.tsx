@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-039
  * @name LimitsStep.stories
- * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v2 (POO-2142 rules v2, POO-2197 rules v2)
  *
  * Storybook coverage for Mandate step 5 (POO-2126 [R6] / [R39] to [R43]).
  *
@@ -170,6 +170,32 @@ export const Blocked: Story = {
       catalog={catalog}
       initial={selections(UNSET_CAPS)}
       block={{ step: "limits", reason: "cap_missing", rowId: "robinhood" }}
+    />
+  ),
+};
+
+/** POO-2197 R1/R2: drag any 95% slider to 100% to select No cap, then untick to restore 95%. */
+export const HundredSelectsNoCap: Story = {
+  render: () => (
+    <Harness
+      catalog={catalog}
+      initial={selections({
+        ...FIGMA_CAPS,
+        networks: { ...FIGMA_CAPS.networks, robinhood: { noCap: false, pct: 95 } },
+        protocols: { ...FIGMA_CAPS.protocols, "aave-v3": { noCap: false, pct: 95 } },
+        tokens: { ...FIGMA_CAPS.tokens, [tokenKey(WETH)]: { noCap: false, pct: 95 } },
+      })}
+    />
+  ),
+};
+
+/** POO-2197 R3: USDC alone needs another token, with guidance that names Tokens. */
+export const AnotherTokenRequired: Story = {
+  render: () => (
+    <Harness
+      catalog={catalog}
+      initial={createEmptyDraft("2026-10-03", "story")}
+      block={{ step: "limits", reason: "token_allowance_required", rowId: null }}
     />
   ),
 };

@@ -795,6 +795,7 @@ export function PoolsStep({
         not_priced: t("fundBuilder.tokens.noPrice"),
         coming_soon: t("fundBuilder.common.comingSoon"),
         cap_missing: null,
+        token_allowance_required: null,
         name_length: null,
       }[ownBlock.reason] ?? null)
     : null;

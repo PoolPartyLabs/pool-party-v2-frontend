@@ -870,7 +870,9 @@
         "lending": "Préstamo",
         "dex": "Liquidity positions",
         "perps": "Perpetuos"
-      }
+      },
+      "positiveTokenRequired": "Permite al menos un token además de USDC por encima del 0% o selecciona Sin límite.",
+      "addPositiveToken": "Añade otro token en Tokens y establece su límite por encima del 0% o selecciona Sin límite. USDC ya está incluido."
     },
     "draft": {
       "title": "Ponga nombre a su borrador",

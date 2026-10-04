@@ -870,7 +870,9 @@
         "lending": "Cho vay",
         "dex": "Liquidity positions",
         "perps": "Vĩnh cửu"
-      }
+      },
+      "positiveTokenRequired": "Cho phép ít nhất một token ngoài USDC có giới hạn trên 0% hoặc chọn Không giới hạn.",
+      "addPositiveToken": "Thêm một token khác trong Tokens, rồi đặt giới hạn trên 0% hoặc chọn Không giới hạn. USDC đã được bao gồm."
     },
     "draft": {
       "title": "Đặt tên cho bản nháp của bạn",

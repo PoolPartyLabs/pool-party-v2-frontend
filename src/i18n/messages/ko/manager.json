@@ -870,7 +870,9 @@
         "lending": "대출",
         "dex": "Liquidity positions",
         "perps": "무기한"
-      }
+      },
+      "positiveTokenRequired": "USDC 외에 최소 한 개의 토큰 한도를 0%보다 높게 설정하거나 한도 없음을 선택하세요.",
+      "addPositiveToken": "Tokens에서 다른 토큰을 추가한 다음 한도를 0%보다 높게 설정하거나 한도 없음을 선택하세요. USDC는 이미 포함되어 있습니다."
     },
     "draft": {
       "title": "초안 이름 지정",
