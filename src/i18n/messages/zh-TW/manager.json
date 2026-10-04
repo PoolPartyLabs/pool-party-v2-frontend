@@ -837,10 +837,7 @@
       "unnamed": "未命名草稿"
     },
     "build": {
-      "title": "建構",
-      "pending": "基金合約的建構畫布仍在設計中。您的授權範圍已儲存，上線後請再回來查看。",
       "summary": "您的授權範圍",
-      "backMandate": "上一步：授權範圍",
       "summaryNetworks": "網路",
       "summaryProtocols": "協議",
       "summaryTokens": "代幣",
@@ -1004,6 +1001,15 @@
       "toast": {
         "removed": "已移除區塊",
         "undo": "復原"
+      },
+      "planUnreadable": "此草稿包含目前版本應用程式無法開啟的計畫。該計畫會原樣保留；新增區塊將開始一個新計畫，並在儲存時取代它。",
+      "review": {
+        "emptyPlan": "請先新增一個區塊，再進行審核。",
+        "invalidBlock": "請移除已不在您授權範圍內的區塊，或編輯授權範圍。",
+        "comingSoon": "請移除即將推出的區塊。",
+        "emptyBlock": "請先設定每個區塊，再進行審核。",
+        "overShare": "各份額之和超過了其上層的資金。",
+        "unavailable": "審核功能尚未開放。"
       }
     }
   }

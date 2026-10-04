@@ -1,7 +1,8 @@
 /**
  * @id PP-MGR-HOK-006
  * @name useMandateDraft
- * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2151 rules v1)
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2151 rules v1,
+ *   POO-2157 rules v1)
  * @analytics-events none, this hook owns draft STATE rather than instrumentation. It surfaces
  *   `lastBlock` and the save outcome, and the builder shell (PP-MGR-SCR-002) turns those into
  *   `builder_mandate_blocked` and the save/abandon events. A hook that emitted them itself would
@@ -166,11 +167,17 @@ export function useMandateDraft(draftId?: string): UseMandateDraftResult {
         // The completion stamp rides on THIS write and is committed to state only when the write
         // landed. A `completedAt` set before the save survives a failed one, and the draft then
         // claims a mandate nothing recorded: no `builder_mandate_completed` fired for it, yet the
-        // next Save & exit persists it as finished and a `?phase=build` link opens its Build landing.
+        // next Save & exit persists it as finished and a `?phase=build` link opens its canvas.
         // The first stamp wins, so re-saving a completed mandate does not move its completion time.
         completedAt: options?.complete ? (current.completedAt ?? now) : current.completedAt,
       };
-      const stored = upsertDraft(next);
+      // The Review data belongs to the launch journey, which stores it with `upsertDraft` (#43) and
+      // which this hook never edits. `upsertDraft` REPLACES the stored draft and this hook read it
+      // once, so the stored `review` wins: the copy in memory can only be missing or older.
+      const storedReview = getDraft(next.id)?.review;
+      const stored = upsertDraft(
+        storedReview === undefined ? next : { ...next, review: storedReview },
+      );
       if (!stored) return { ok: false, error: "storage" };
       draftRef.current = stored;
       setDraft(stored);

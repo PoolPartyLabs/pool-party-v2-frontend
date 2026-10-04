@@ -837,10 +837,7 @@
       "unnamed": "Borrador sin nombre"
     },
     "build": {
-      "title": "Construir",
-      "pending": "El área de construcción de los contratos de fondo está en diseño. Su mandato está guardado; vuelva cuando esté disponible.",
       "summary": "Su mandato",
-      "backMandate": "Atrás: Mandato",
       "summaryNetworks": "Redes",
       "summaryProtocols": "Protocolos",
       "summaryTokens": "Tokens",
@@ -1004,6 +1001,15 @@
       "toast": {
         "removed": "Bloque quitado",
         "undo": "Deshacer"
+      },
+      "planUnreadable": "Este borrador tiene un plan que esta versión de la app no puede abrir. Se conserva tal como está; agregar un bloque inicia un plan nuevo, que lo reemplaza cuando guarde.",
+      "review": {
+        "emptyPlan": "Agregue un bloque antes de la Revisión.",
+        "invalidBlock": "Quite los bloques que ya no están en su mandato o edite el mandato.",
+        "comingSoon": "Quite los bloques marcados como Próximamente.",
+        "emptyBlock": "Configure todos los bloques antes de la Revisión.",
+        "overShare": "Los porcentajes suman más que el capital que tienen por encima.",
+        "unavailable": "La Revisión todavía no está disponible."
       }
     }
   }

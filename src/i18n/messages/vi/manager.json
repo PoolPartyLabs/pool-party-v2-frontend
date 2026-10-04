@@ -837,10 +837,7 @@
       "unnamed": "Bản nháp chưa đặt tên"
     },
     "build": {
-      "title": "Xây dựng",
-      "pending": "Khung xây dựng cho các hợp đồng quỹ vẫn đang trong giai đoạn thiết kế. Nhiệm vụ của bạn đã được lưu; hãy quay lại khi tính năng này ra mắt.",
       "summary": "Nhiệm vụ của bạn",
-      "backMandate": "Quay lại: Nhiệm vụ",
       "summaryNetworks": "Mạng",
       "summaryProtocols": "Giao thức",
       "summaryTokens": "Token",
@@ -1004,6 +1001,15 @@
       "toast": {
         "removed": "Đã xóa khối",
         "undo": "Hoàn tác"
+      },
+      "planUnreadable": "Bản nháp này chứa một kế hoạch mà phiên bản ứng dụng này không mở được. Kế hoạch được giữ nguyên; thêm một khối sẽ bắt đầu một kế hoạch mới, và kế hoạch mới sẽ thay thế kế hoạch cũ khi bạn lưu.",
+      "review": {
+        "emptyPlan": "Hãy thêm một khối trước khi xem lại.",
+        "invalidBlock": "Hãy xóa các khối không còn trong nhiệm vụ của bạn, hoặc sửa nhiệm vụ.",
+        "comingSoon": "Hãy xóa các khối sắp ra mắt.",
+        "emptyBlock": "Hãy cấu hình mọi khối trước khi xem lại.",
+        "overShare": "Tổng các tỷ trọng vượt quá số vốn phía trên chúng.",
+        "unavailable": "Chức năng xem lại chưa khả dụng."
       }
     }
   }

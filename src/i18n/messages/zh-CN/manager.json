@@ -837,10 +837,7 @@
       "unnamed": "未命名草稿"
     },
     "build": {
-      "title": "构建",
-      "pending": "基金合约的构建画布仍在设计中。您的授权范围已保存，上线后请再回来查看。",
       "summary": "您的授权范围",
-      "backMandate": "上一步：授权范围",
       "summaryNetworks": "网络",
       "summaryProtocols": "协议",
       "summaryTokens": "代币",
@@ -1004,6 +1001,15 @@
       "toast": {
         "removed": "区块已移除",
         "undo": "撤销"
+      },
+      "planUnreadable": "此草稿包含当前版本应用无法打开的计划。该计划会原样保留；添加区块将开始一个新计划，并在保存时替换它。",
+      "review": {
+        "emptyPlan": "请先添加一个区块，再进行核对。",
+        "invalidBlock": "请移除已不在您授权范围内的区块，或编辑授权范围。",
+        "comingSoon": "请移除即将推出的区块。",
+        "emptyBlock": "请先配置每个区块，再进行核对。",
+        "overShare": "各份额之和超过了其上层的资金。",
+        "unavailable": "核对功能暂不可用。"
       }
     }
   }
