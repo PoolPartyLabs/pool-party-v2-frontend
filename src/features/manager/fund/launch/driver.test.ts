@@ -318,6 +318,42 @@ describe("receipt-backed leaf isolation [POO-2211 R1, R2, R3]", () => {
     await driver.build(swap, journal);
     expect(mocks.swap).toHaveBeenLastCalledWith(expect.objectContaining({ amountIn: "285830" }));
   });
+  it("R3 preserves pre-existing other-token inventory for a single-leaf open", async () => {
+    const { driver, journal, open, allocate, swap, balances } = liveSetup();
+    allocate.sharePct = 30;
+    journal.steps = journal.steps.filter((step) => step.protocol !== "aave-v3");
+    journal.checkpoints.allocate!.data = { receipt: { allocated: "600000" } };
+    const inventory = BigInt("105000000000000");
+    journal.checkpoints[swap.id] = {
+      stepId: swap.id,
+      chain: 42161,
+      status: "confirmed",
+      data: {
+        receipt: {
+          swapped: {
+            tokenIn: liveUsdc,
+            tokenOut: liveWeth,
+            amountIn: "142915",
+            amountOut: "53000000000000",
+          },
+        },
+      },
+    };
+    balances(BigInt("457085"), inventory);
+    await driver.build(open, journal);
+    const deposited = parseUnits(mocks.open.mock.lastCall![1].amount0, 18);
+    expect(deposited).toBeGreaterThan(BigInt("53000000000000"));
+    const expected = positionAmounts(
+      livePool,
+      { [liveUsdc]: BigInt("457085"), [liveWeth]: inventory },
+      BigInt("600000"),
+      liveUsdc,
+      "2430.8903048091282472",
+      "2972.0368371156287845",
+      BigInt("142915"),
+    );
+    expect(mocks.open.mock.lastCall![1].amount0).toBe(expected.amount0);
+  });
 });
 
 describe("just-in-time launch driver [R2, R3, R6]", () => {

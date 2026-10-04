@@ -181,12 +181,6 @@ function leafBalances(
   }
   scoped[baseKey] = (scoped[baseKey] ?? BigInt(0)) - reserved;
   if (scoped[baseKey]! < BigInt(0)) throw new Error("BALANCE_CHANGED");
-  const own = conversion(step, journal);
-  if (own) {
-    const token = own.tokenOut.toLowerCase();
-    const output = BigInt(own.amountOut);
-    if ((scoped[token] ?? BigInt(0)) > output) scoped[token] = output;
-  }
   return scoped;
 }
 function remainderAmount(planned: bigint, available: bigint, step: LaunchStep): bigint {
@@ -354,7 +348,18 @@ export function createLaunchDriver(
       }
       for (const entry of journal.steps.filter(
         (entry) =>
-          entry.kind === "allocate" || (entry.kind === "swap" && entry.chain === step.chain),
+          (entry.kind === "allocate" && step.chain === 42161) ||
+          (entry.kind === "swap" &&
+            entry.chain === step.chain &&
+            (entry.id === swapOf(step, journal)?.id ||
+              journal.steps.some(
+                (leaf) =>
+                  leaf.kind === "open" &&
+                  leaf.chain === step.chain &&
+                  leaf.group === step.group &&
+                  journal.checkpoints[leaf.id]?.status !== "confirmed" &&
+                  swapOf(leaf, journal)?.id === entry.id,
+              ))),
       )) {
         const checkpoint = journal.checkpoints[entry.id];
         const receipt = checkpoint?.data?.receipt;
