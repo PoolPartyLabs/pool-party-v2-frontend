@@ -40,7 +40,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 620 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 624 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -62,6 +62,15 @@ They are recorded together so a reader can tell a disclosed repeat from an undet
 | `PP-MGR-LIB-025` | v2Mandate: real v2 catalog/Mandate slice A | Lib | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/v2Mandate.ts` @rules-v1 |
 | `PP-MGR-HOK-011` | useV2MandateCatalog: real v2 catalog/Mandate slice A | Hook | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/useV2MandateCatalog.ts` @rules-v1 |
 | `PP-MGR-CMP-060` | MandateCatalogStatus: real v2 catalog/Mandate slice A | Component | n/a (code) | In Review | POO-2133 | code-only; `src/features/manager/fund/components/MandateCatalogStatus.tsx` @rules-v1 |
+
+## V2 Build configuration panel data (POO-2185, slice PC of POO-2171)
+
+| ID | Artifact | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-MGR-LIB-031` | panelCatalogView: a catalog pool as the pool panel's view (bare PoolId, fee percent, the pool's own tick spacing and decimals, canonical price, quote orientation from the pool key, eligibility re-checked), the mandate's v4 pool list, and the Aave reserve rows with usability | Lib | n/a (code) | In Review | [POO-2185](https://linear.app/yeildbay/issue/POO-2185) | code-only; `src/features/manager/fund/build/panel/panelCatalogView.ts` @rules-v1 |
+| `PP-MGR-HOK-012` | usePanelPool: the live read of one Uniswap v4 pool, on mount and every 15 s while a panel is open, stale-answer guard, error with retry, no fixture fallback in real mode | Hook | n/a (code) | In Review | [POO-2185](https://linear.app/yeildbay/issue/POO-2185) | code-only; `src/features/manager/fund/build/panel/usePanelPool.ts` @rules-v1 |
+| `PP-MGR-HOK-013` | usePanelReserves: the Supply panel's reserve rows, a selector over the catalog hook's reserves joined to the draft tokens, an unusable reserve listed disabled with its reason | Hook | n/a (code) | In Review | [POO-2185](https://linear.app/yeildbay/issue/POO-2185) | code-only; `src/features/manager/fund/build/panel/usePanelReserves.ts` @rules-v1 |
+| `PP-MGR-MCK-005` | buildPanelFixtures: three Uniswap v4 pools and two Aave v3 reserves in the catalog's wire shape (PP-MOCK) | Mock | n/a (code) | In Review | [POO-2185](https://linear.app/yeildbay/issue/POO-2185) | code-only; `src/mocks/data/buildPanelFixtures.ts` @rules-v1 |
 
 ## CORE · Design system, primitives, generic reusable components and modals
 
