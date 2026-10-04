@@ -599,6 +599,45 @@ describe("FundStrategyBuilderScreen", () => {
     ]);
   });
 
+  /**
+   * POO-2157 (review F3 of PR #41): `draft_saved` says whether everything on screen had reached
+   * storage. A draft saved once and edited since, then left, lost the edits: it says false. One
+   * left untouched since its save lost nothing: true.
+   */
+  // @rule R7
+  it("[R7] a saved draft left with an unsaved edit reports the work as lost", async () => {
+    nav.params = new URLSearchParams("draft=d-left-dirty&step=limits");
+    seed("d-left-dirty", {
+      name: "ETH and BTC on Arbitrum",
+      networks: ["arbitrum", "robinhood"],
+      passedSteps: ["networks", "protocols", "tokens"],
+      lastStep: "limits",
+    });
+    const view = renderWithProviders(<FundStrategyBuilderScreen />);
+    await screen.findByText("MANDATE · STEP 4 OF 4");
+    await userEvent.click(screen.getByRole("checkbox", { name: "No cap for Robinhood Chain" }));
+
+    view.unmount();
+
+    expect(emitted("builder_mandate_abandoned")).toEqual([{ step: "limits", draft_saved: false }]);
+  });
+
+  // @rule R7
+  it("[R7] a saved draft left untouched since its save reports it parked", async () => {
+    nav.params = new URLSearchParams("draft=d-left-clean&step=limits");
+    seed("d-left-clean", {
+      name: "ETH and BTC on Arbitrum",
+      passedSteps: ["networks", "protocols", "tokens"],
+      lastStep: "limits",
+    });
+    const view = renderWithProviders(<FundStrategyBuilderScreen />);
+    await screen.findByText("MANDATE · STEP 4 OF 4");
+
+    view.unmount();
+
+    expect(emitted("builder_mandate_abandoned")).toEqual([{ step: "limits", draft_saved: true }]);
+  });
+
   // @rule R7
   it("[R7] a session that saved and left reports no abandonment", async () => {
     nav.params = new URLSearchParams("draft=d-left&step=networks");

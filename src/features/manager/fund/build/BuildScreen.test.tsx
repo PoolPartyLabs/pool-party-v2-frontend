@@ -815,6 +815,24 @@ describe("BuildScreen: leaving (leave guard, AE abandonment and error)", () => {
     expect(emitted("builder_mandate_abandoned")).toHaveLength(0);
   });
 
+  /**
+   * Review F3 of PR #41: after Back: Mandate the session is the Mandate's to report, and a block
+   * added on the canvas and never saved is work lost, so `draft_saved` cannot say true.
+   */
+  it("[AE] Back: Mandate with an unsaved plan edit, then leaving, reports the work as lost", async () => {
+    // @rule AE1
+    seedBuild(hubMandate("d-leave-back"));
+    const rendered = await openBuild();
+    await addPoolFromMenu();
+    await userEvent.click(screen.getByRole("button", { name: "Back: Mandate" }));
+    await screen.findByText("MANDATE · STEP 5 OF 5");
+
+    rendered.unmount();
+
+    expect(emitted("builder_mandate_abandoned")).toEqual([{ step: "limits", draft_saved: false }]);
+    expect(emitted("builder_build_abandoned")).toHaveLength(0);
+  });
+
   it("[AE] Save & exit from Build is not an abandonment", async () => {
     // @rule AE1
     seedBuild(hubMandate("d-leave-saved"));

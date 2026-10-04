@@ -1099,12 +1099,15 @@ export interface AnalyticsParams {
   tokens_count?: number;
   pools_count?: number;
   /**
-   * On `builder_mandate_abandoned`: whether the mandate the manager walked away from had ever
-   * reached storage (POO-2122).
+   * On `builder_mandate_abandoned`: whether the mandate the manager walked away from had reached
+   * storage with nothing left unsaved (POO-2122; sharpened by POO-2157, review F3 of PR #41).
    *
-   * The difference between the two abandonments is the whole point of carrying it. An UNSAVED one
-   * lost work, and the count is a product defect we can act on; a SAVED one is a manager who will
-   * probably come back, and counting the two together would hide the first inside the second.
+   * The difference between the two abandonments is the whole point of carrying it. One that LOST
+   * work, and the count is a product defect we can act on; one that left a SAVED draft is a manager
+   * who will probably come back, and counting the two together would hide the first inside the
+   * second. Until POO-2157 it meant "ever saved", so a draft saved once and edited afterwards (a
+   * selection, or a Build plan edit before a Back: Mandate) read true while its edits were lost; it
+   * now reads false then. The series is not continuous across that change.
    *
    * On `builder_build_abandoned` (POO-2157) the same question one phase later: whether everything
    * on screen had reached storage. A Build draft was always saved once (the mandate completed on a

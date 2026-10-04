@@ -523,7 +523,9 @@ export function FundStrategyBuilderScreen() {
       if (concludedRef.current) return;
       trackRef.current("builder_mandate_abandoned", {
         step: draftRef.current.lastStep,
-        draft_saved: draftRef.current.savedAt !== null,
+        // Saved AND nothing unsaved since (POO-2157, review F3 of PR #41): a draft saved once and
+        // edited afterwards (a selection, or a plan edit before a Back: Mandate) lost those edits.
+        draft_saved: draftRef.current.savedAt !== null && !isDirtyRef.current,
       });
     },
     [],
