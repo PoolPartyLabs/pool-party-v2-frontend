@@ -433,6 +433,10 @@ test.describe("@v2-launch-signed opt-in mainnet launch", () => {
         await expect(rows.locator("h2")).toHaveText(expectedLabels);
         const sign = page.getByRole("button", { name: "Sign next step", exact: true });
         await expect(sign).toBeEnabled();
+        await page.screenshot({
+          path: info.outputPath("murilo-launch-journey.png"),
+          fullPage: true,
+        });
         evidence.signNextEnabled = true;
         await snapshot();
         const frozenDraft = await page.evaluate(() => {
