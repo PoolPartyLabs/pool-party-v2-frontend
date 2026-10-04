@@ -90,3 +90,14 @@ validators still reject unsupported continuations and duplicate reserve opens.
 The shell owns all configuration/Apply/Discard/blocked-intent analytics. Seven stories and the
 component regression suite cover picking, configured and pending allocation, loading, failure,
 empty mandate and unavailable reserve. `CR-MGR-024` tracks the displayed APY snapshot claim.
+
+## Panel actions and navigation (POO-2202, rules v1)
+
+The canvas viewport stays 640px high. The three-column grid has a minimum height of 640px,
+so a configuration panel with long fields, apply errors or the blocked-leave warning increases
+its row's height. Apply, Discard and Remove remain in normal reading and tab order before the
+sticky Back / Next bar. No panel-specific scroll region or state changes are introduced.
+
+The CSS sizing regression and existing BlockPanel interaction tests cover the layout contract,
+apply gates, blocked leave, discard and removal. Storybook's `LongPanelWithLeaveNotice` is a
+visual inspection fixture. See `docs/BUILD_PANEL_ACTIONS_2026-10-04.md` for validation limits.
