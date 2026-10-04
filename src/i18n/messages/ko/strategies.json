@@ -785,6 +785,17 @@
     }
   },
   "funds": {
+    "protocols": "프로토콜",
+    "noPositions": "아직 포지션이 없어요",
+    "viewDetails": "상세 보기",
+    "dormant": "V2 펀드는 아직 이용할 수 없어요. 나중에 다시 시도해 주세요.",
+    "launchJourneys": "출시 진행 과정",
+    "noJourneys": "이 기기에 출시 기록이 아직 없어요.",
+    "journeysUnavailable": "이 브라우저에서 출시 기록을 읽을 수 없어요. 펀드는 계속 이용할 수 있어요.",
+    "journeyCompleted": "완료",
+    "journeyInProgress": "진행 중",
+    "viewJourney": "진행 과정 보기",
+    "resumeLaunch": "출시 재개",
     "title": "펀드",
     "holdings": "보유 펀드",
     "managerView": "펀드 관리",

@@ -29,6 +29,17 @@ const setup = () => {
 };
 
 describe("launch checkpoint state machine [R3, R6]", () => {
+  it("R5 notifies mounted lists after a completed journal is persisted", async () => {
+    const { journal, driver } = setup();
+    const listener = vi.fn();
+    window.addEventListener("pp:v2:launch-changed", listener);
+    try {
+      await runLaunch(journal, localStorage, driver);
+      expect(listener).toHaveBeenCalled();
+    } finally {
+      window.removeEventListener("pp:v2:launch-changed", listener);
+    }
+  });
   it("advances one ready step for an explicit sign/next action", async () => {
     const { journal, storage, driver } = setup();
     await runLaunch(journal, storage, driver, undefined, undefined, 1);

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-STO-002 (POO-2177)
  * @name launchJournal
- * @implements-rules-version v1
+ * @implements-rules-version v2 (POO-2181)
  * Durable checkpoints: uncertain receipts always reconcile before rebuilding.
  */
 import type { LaunchStep } from "./plan";
@@ -25,6 +25,7 @@ export interface LaunchJournal {
   addresses: Record<string, string>;
   principal?: string;
   arrival?: string;
+  analyticsCompleted?: boolean;
 }
 export interface JournalStorage {
   // PP-INTEGRATION-POINT: browser checkpoint journal becomes a durable API launch-plan later.
@@ -35,7 +36,27 @@ export function journalKey(draftId: string, manager: string): string {
   return `pp:v2:launch:1:${manager.toLowerCase()}:${draftId}`;
 }
 export function saveJournal(storage: JournalStorage, journal: LaunchJournal): void {
+  let previouslyCompleted = false;
+  try {
+    const previous = JSON.parse(
+      storage.getItem(journalKey(journal.draftId, journal.manager)) ?? "null",
+    ) as LaunchJournal | null;
+    previouslyCompleted =
+      !!previous?.steps.length &&
+      previous.steps.every((step) => previous.checkpoints[step.id]?.status === "confirmed");
+  } catch {}
   storage.setItem(journalKey(journal.draftId, journal.manager), JSON.stringify(journal));
+  if (typeof window !== "undefined" && storage === window.localStorage)
+    window.dispatchEvent(
+      new CustomEvent("pp:v2:launch-changed", {
+        detail: {
+          completed:
+            !previouslyCompleted &&
+            journal.steps.length > 0 &&
+            journal.steps.every((step) => journal.checkpoints[step.id]?.status === "confirmed"),
+        },
+      }),
+    );
 }
 export function loadJournal(
   storage: JournalStorage,

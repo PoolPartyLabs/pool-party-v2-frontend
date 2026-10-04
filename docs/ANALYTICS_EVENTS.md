@@ -1,5 +1,15 @@
 # Analytics Events
 
+## V2 launch journey (POO-2181, rules v2)
+
+| Event | When it fires | Key params | Emitting artifact |
+|-------|---------------|-----------|-------------------|
+| `builder_launch_signature` | Successful wallet transaction broadcast or profile message signature; never server-only work or rejected prompts | `chain_id`, `step_kind` | PP-MGR-HOK-019, launch driver observer |
+| `builder_launch_completed` | All journal steps confirmed; persisted completion marker prevents repeats on resume | none | PP-MGR-HOK-019 |
+| `builder_launch_failed` | A launch step or execution attempt fails | `step_kind`, sanitized `error_code`, `error_origin` | PP-MGR-HOK-019 |
+
+Review owns its launch-click event. This journey does not emit it. These events carry no addresses, transaction hashes, draft IDs or amounts. The existing consent-gated pseudonymous analytics identity is unchanged.
+
 Living catalog of every tracked event in the Pool Party Frontend. Kept in sync with the typed `AnalyticsEvent` union in `src/lib/analytics/events.ts` (the `consistency-checker` skill enforces this). Taxonomy and rules: `docs/09_ANALYTICS.md` + the `analytics-tracking` skill. Naming: `02_NAMING_CONVENTION.md` Part H.
 
 Convention: `<area>_<object>_<action>`, snake_case, max 40 chars. Transactional flows use `started` then `submitted` then `completed` (or `failed`). "Emitting artifact" is the `PP-` ID that fires the event; filled in as features are built.
