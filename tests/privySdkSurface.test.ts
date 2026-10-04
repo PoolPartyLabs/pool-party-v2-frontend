@@ -22,7 +22,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import ts from "typescript";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 /** The worktree root: vitest runs from it, and the installed tree hangs off it. */
 const ROOT = process.cwd();
@@ -61,27 +61,15 @@ function typesEntry(pkg: string): string {
   return path.join(ROOT, "node_modules", pkg, entry);
 }
 
-/** Every name the module exports, resolved the way a consumer's import would resolve it. */
-function exportedNames(pkg: string): Set<string> {
+/** Every name the module exports, resolved through the shared consumer compilation. */
+function exportedNames(pkg: string, program: ts.Program): Set<string> {
   const entry = typesEntry(pkg);
-  const program = ts.createProgram([entry], {
-    target: ts.ScriptTarget.ESNext,
-    module: ts.ModuleKind.ESNext,
-    moduleResolution: ts.ModuleResolutionKind.Bundler,
-    skipLibCheck: true,
-    noEmit: true,
-    allowJs: false,
-  });
   const source = program.getSourceFile(entry);
   if (!source) throw new Error(`${pkg}: could not load ${entry}`);
-  const moduleSymbol = program.getTypeChecker().getSymbolAtLocation(source);
+  const checker = program.getTypeChecker();
+  const moduleSymbol = checker.getSymbolAtLocation(source);
   if (!moduleSymbol) throw new Error(`${pkg}: ${entry} is not a module`);
-  return new Set(
-    program
-      .getTypeChecker()
-      .getExportsOfModule(moduleSymbol)
-      .map((symbol) => symbol.getName()),
-  );
+  return new Set(checker.getExportsOfModule(moduleSymbol).map((symbol) => symbol.getName()));
 }
 
 /**
@@ -113,6 +101,24 @@ const CONSUMED: Record<string, readonly string[]> = {
 };
 
 describe("Privy SDK surface (POO-1798)", () => {
+  const exportsByPackage = new Map<string, Set<string>>();
+  // POO-1883: both packages share a large declaration graph. Creating a Program per assertion
+  // rereads that graph and makes the second test exceed 30s on coverage runners. Compile once,
+  // then keep every export/version assertion. The 90s budget bounds compiler setup only; the
+  // global 30s assertion budget and the no-retry policy remain unchanged.
+  beforeAll(() => {
+    const packages = Object.keys(CONSUMED);
+    const program = ts.createProgram(packages.map(typesEntry), {
+      target: ts.ScriptTarget.ESNext,
+      module: ts.ModuleKind.ESNext,
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+      skipLibCheck: true,
+      noEmit: true,
+      allowJs: false,
+    });
+    for (const pkg of packages) exportsByPackage.set(pkg, exportedNames(pkg, program));
+  }, 90_000);
+
   // @rule R2
   it("has the exact pinned versions installed, not a caret range's drift", () => {
     expect(installed("@privy-io/react-auth").version).toBe("3.42.0");
@@ -148,7 +154,8 @@ describe("Privy SDK surface (POO-1798)", () => {
   for (const [pkg, symbols] of Object.entries(CONSUMED)) {
     // @rule R1
     it(`still exports every symbol the app imports from ${pkg}`, () => {
-      const exported = exportedNames(pkg);
+      const exported = exportsByPackage.get(pkg);
+      if (!exported) throw new Error(`${pkg}: declaration exports were not prepared`);
       const missing = symbols.filter((symbol) => !exported.has(symbol));
       expect(missing).toEqual([]);
     });
