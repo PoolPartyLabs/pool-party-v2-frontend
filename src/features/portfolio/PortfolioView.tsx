@@ -651,7 +651,9 @@ export function PortfolioView(props: PortfolioViewProps | InvestorPortfolioViewP
                             <PositionLink
                               positionId={position.id}
                               strategyId={strategy.id}
-                              protocolVersion={strategy.protocolVersion}
+                              protocolVersion={
+                                "protocolVersion" in strategy ? strategy.protocolVersion : undefined
+                              }
                               from="portfolio"
                               className="font-medium text-foreground hover:underline"
                             >
@@ -660,7 +662,7 @@ export function PortfolioView(props: PortfolioViewProps | InvestorPortfolioViewP
                             {/* Strategies the investor manages (PP-INTEGRATION-POINT:
                                 position.isPoolManager) get the "Owned" badge here too — mirrors Home
                                 and the Strategies list. */}
-                            {strategy.protocolVersion === "v2" ? (
+                            {"protocolVersion" in strategy && strategy.protocolVersion === "v2" ? (
                               <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
                                 V2
                               </span>
