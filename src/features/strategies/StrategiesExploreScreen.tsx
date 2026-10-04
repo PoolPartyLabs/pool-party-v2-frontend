@@ -161,7 +161,9 @@ function sortValue(strategy: InvestorStrategy, key: SortKey): number {
       return strategy.minInvestment ?? 0;
     case "tvl":
       // Investor TVL sort is by the Uniswap pool TVL (POO-390 R2); missing/zero sorts to the bottom.
-      return strategy.uniswapPoolTvlUsd ?? 0;
+      return (
+        (strategy.protocolVersion === "v2" ? strategy.tvlUsd : strategy.uniswapPoolTvlUsd) ?? 0
+      );
     case "investors":
       return strategy.investors ?? 0;
     case "return":
@@ -806,9 +808,13 @@ export function StrategiesExploreScreen({
                         : formatUsd(strategy.minInvestment)}
                     </td>
                     <td className="px-4 py-3 text-right text-foreground">
-                      {strategy.protocolVersion === "v2" && strategy.uniswapPoolTvlUsd === undefined
+                      {strategy.protocolVersion === "v2" && strategy.tvlUsd === undefined
                         ? tv2("unavailable")
-                        : formatPoolTvl(strategy.uniswapPoolTvlUsd)}
+                        : formatPoolTvl(
+                            strategy.protocolVersion === "v2"
+                              ? strategy.tvlUsd
+                              : strategy.uniswapPoolTvlUsd,
+                          )}
                     </td>
                     <td className="px-4 py-3 text-right text-foreground">
                       {strategy.investors === null

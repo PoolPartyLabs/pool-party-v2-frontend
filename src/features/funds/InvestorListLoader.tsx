@@ -83,8 +83,8 @@ export function InvestorListLoader({ view }: { view: "explore" | "holder" }) {
         return rank(a.name) - rank(b.name);
       });
     return filtered.sort((a, b) => {
-      const av = sort.key === "min" ? a.minInvestment : a.uniswapPoolTvlUsd;
-      const bv = sort.key === "min" ? b.minInvestment : b.uniswapPoolTvlUsd;
+      const av = sort.key === "min" ? a.minInvestment : a.tvlUsd;
+      const bv = sort.key === "min" ? b.minInvestment : b.tvlUsd;
       if (av == null) return bv == null ? 0 : 1;
       if (bv == null) return -1;
       return (av - bv) * (sort.dir === "asc" ? 1 : -1);
@@ -113,19 +113,21 @@ export function InvestorListLoader({ view }: { view: "explore" | "holder" }) {
       </div>
     );
   const reset = () => setCount(5);
+  const personalMatches =
+    isSignedIn && !!address && result.data.wallet?.toLowerCase() === address.toLowerCase();
   if (view === "explore")
     return (
       <StrategiesExploreScreen
         investorV2
         strategies={rows.slice(0, count)}
         ownedIds={
-          result.data.wallet
+          personalMatches
             ? result.data.funds
                 .filter((f) => f.manager.toLowerCase() === result.data.wallet?.toLowerCase())
                 .map((f) => f.coreVault)
             : []
         }
-        investedIds={Object.keys(result.data.holders)}
+        investedIds={personalMatches ? Object.keys(result.data.holders) : []}
         paged={{
           total: rows.length,
           hasMore: count < rows.length,
@@ -167,9 +169,7 @@ export function InvestorListLoader({ view }: { view: "explore" | "holder" }) {
     active.sort(
       (a, b) => (a.position.currentValue - b.position.currentValue) * (sort.dir === "asc" ? 1 : -1),
     );
-  const exited = entries.filter(
-    (e) => e.position.currentValue === 0 && e.position.status === "closed",
-  );
+  const exited = entries.filter((e) => !active.includes(e));
   const totalValue = null; // API discovery has no completeness signal; do not print a partial total.
   return (
     <>

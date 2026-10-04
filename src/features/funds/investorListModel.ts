@@ -28,7 +28,7 @@ export interface InvestorV2Strategy extends IdentityFields {
   lifecycleAvailable: boolean;
   riskLevel: null;
   minInvestment: number | null;
-  uniswapPoolTvlUsd: number | undefined;
+  tvlUsd: number | undefined;
   investors: null;
   estReturn: null;
   rateType: null;
@@ -40,7 +40,7 @@ export type InvestorPosition =
       protocolVersion: "v2";
       id: string;
       strategyId: string;
-      status: Position["status"];
+      status: Position["status"] | "unavailable";
       invested: null;
       currentValue: number;
       totalYield: null;
@@ -73,7 +73,7 @@ export function projectInvestorFund(fund: FundListEntry): InvestorV2Strategy {
     logoUrl: fund.profile?.imageUrl || fund.profile?.image || undefined,
     riskLevel: null,
     minInvestment: fund.mandate ? usd(fund.mandate.minFirstDeposit) : null,
-    uniswapPoolTvlUsd: fund.shareAssets === undefined ? undefined : usd(fund.shareAssets),
+    tvlUsd: fund.shareAssets === undefined ? undefined : usd(fund.shareAssets),
     investors: null,
     estReturn: null,
     rateType: null,
@@ -88,7 +88,14 @@ export function projectInvestorHolding(
     protocolVersion: "v2",
     id: `v2:${fund.coreVault}`,
     strategyId: fund.coreVault,
-    status: fund.state === "Closed" ? "closed" : fund.state === "Closing" ? "paused" : "active",
+    status:
+      fund.state === undefined
+        ? "unavailable"
+        : fund.state === "Closed"
+          ? "closed"
+          : fund.state === "Closing"
+            ? "paused"
+            : "active",
     invested: null,
     currentValue: usd(holder.value),
     totalYield: null,

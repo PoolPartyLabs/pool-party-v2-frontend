@@ -20,4 +20,11 @@ describe("investor list projection", () => {
     expect(position.totalYield).toBeNull();
     expect(position.currentValue).toBe(10000);
   });
+  // @rule R3 R5
+  it("marks unknown lifecycle unavailable and keeps fund TVL distinct from pool TVL", () => {
+    const { state, ...partial } = mockFund;
+    expect(projectInvestorHolding(partial, mockHolder, mockWallet).status).toBe("unavailable");
+    expect(projectInvestorFund(mockFund).tvlUsd).toBe(1000000);
+    expect(projectInvestorFund(mockFund)).not.toHaveProperty("uniswapPoolTvlUsd");
+  });
 });

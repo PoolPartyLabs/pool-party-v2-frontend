@@ -23,12 +23,20 @@ vi.mock("@/lib/auth/useSiweSession", () => ({
 }));
 vi.mock("@/lib/services", () => ({ isMockMode: false }));
 vi.mock("@/features/strategies/StrategiesExploreScreen", () => ({
-  StrategiesExploreScreen: ({ strategies, paged }: StrategiesExploreScreenProps) => (
+  StrategiesExploreScreen: ({
+    strategies,
+    paged,
+    ownedIds,
+    investedIds,
+  }: StrategiesExploreScreenProps) => (
     <div>
       {strategies.map((s) => (
         <p key={s.id}>{s.name}</p>
       ))}
       <p>{paged?.total} scope</p>
+      <p>
+        {ownedIds.length} owned / {investedIds.length} invested
+      </p>
       <button type="button" onClick={paged?.onLoadMore}>
         More
       </button>
@@ -39,8 +47,16 @@ vi.mock("@/features/strategies/StrategiesExploreScreen", () => ({
   ),
 }));
 vi.mock("@/features/portfolio/PortfolioView", () => ({
-  PortfolioView: ({ totalValue }: PortfolioViewProps) => (
-    <p>{totalValue === null ? "absent-total" : "bad-total"}</p>
+  PortfolioView: ({ totalValue, positions, paged }: PortfolioViewProps) => (
+    <div>
+      <p>{totalValue === null ? "absent-total" : "bad-total"}</p>
+      <p>
+        {positions.length} active / {paged?.closed.entries?.length ?? 0} exited
+      </p>
+      <button type="button" onClick={paged?.closed.onReveal}>
+        Closed
+      </button>
+    </div>
   ),
 }));
 
@@ -106,5 +122,42 @@ describe("V2 list loader", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(mocks.load).toHaveBeenCalledTimes(2));
+  });
+  // @rule R5
+  it("keeps public rows but rejects badges from another server wallet", async () => {
+    mocks.load.mockResolvedValue({
+      ok: true,
+      data: {
+        funds: [mockFund],
+        holders: { [mockFund.coreVault]: mockHolder },
+        wallet: "0x0000000000000000000000000000000000000002",
+      },
+    });
+    renderWithProviders(<InvestorListLoader view="explore" />);
+    await waitFor(() => expect(screen.getByText("0 owned / 0 invested")).toBeInTheDocument());
+    expect(screen.getByText(mockFund.profile.name)).toBeInTheDocument();
+  });
+  // @rule R5
+  it("keeps closed income and payout pending rows exclusively active", async () => {
+    mocks.load.mockResolvedValue({
+      ok: true,
+      data: {
+        funds: [{ ...mockFund, state: "Closed" }],
+        holders: {
+          [mockFund.coreVault]: {
+            ...mockHolder,
+            value: "0",
+            shares: "0",
+            incomeOwed: "1",
+            payout: { ...mockHolder.payout, open: true },
+          },
+        },
+        wallet: mockWallet,
+      },
+    });
+    renderWithProviders(<InvestorListLoader view="holder" />);
+    await waitFor(() => expect(screen.getByText("1 active / 0 exited")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Closed"));
+    expect(screen.getByText("1 active / 0 exited")).toBeInTheDocument();
   });
 });
