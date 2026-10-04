@@ -629,3 +629,21 @@ here. The oracle file records no delta between a handoff number and a frame.
   (`portfolio.service.ts:561-571`, and Polygon's `getWETHContract` sentinel); until it does, the field
   is a no-op on the server. **Live-verify TODO (POO-882):** confirm the Polygon path end-to-end
   (POL-only + WPOL-only wallets) once the BE half lands.
+
+
+## Mandate Limits boundaries (POO-2197, rules v2)
+
+Every editable Limits slider selects No cap at 100% and hides, retaining its prior stored numeric
+value for unticking. Values below 100% retain 5% steps and the distinction between unset and an
+explicit zero. Keyboard focus moves from a disappearing slider to its row's No cap checkbox.
+
+Before Limits completes, required USDC plus another selected editable token must have positive
+allowance. No cap or a percentage above zero counts; unset and zero do not. Additional locked deposit
+entries do not count as another token. Mock missing-cap priority remains network, protocol, token;
+real mode retains its spoke-cap and catalog checks before this new allowance check. The shell emits
+`builder_mandate_blocked` with `token_allowance_required` and shows translated guidance.
+
+A completed draft that no longer meets Limits opens Mandate rather than Build/Review. This is a
+display guard, with no mount-time draft or checkpoint rewrite. Wallet-scoped existing launch journeys
+keep their original recovery path, including when the wallet arrives after draft hydration. The
+launch driver and frozen journal remain unchanged. Murilo owns browser verification.
