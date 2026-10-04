@@ -293,16 +293,23 @@ describe("presets", () => {
   });
 
   it("keeps a grid so coarse the band collapses at two spacings, around the current price", () => {
-    // @rule R4 (P4: a preset is never narrower than the minimum)
-    const coarse: LivePoolGrid = { ...WETH_USDC, tickSpacing: 2000 };
-    for (const pct of RANGE_PRESETS) {
-      for (const inverted of [false, true]) {
-        const range = presetRange(coarse, pct, inverted) as PoolRange;
-        expectValid(range, coarse);
-        expect(rangeStatus(range, coarse), `±${pct}`).toBe("in");
+    // @rule R4 (P4: a preset is never narrower than the minimum), up to v4's maximum spacing
+    for (const spacing of [2000, 16383, 32767]) {
+      for (const price of [3050, 1e-9, 1e9]) {
+        const coarse: LivePoolGrid = { ...WETH_USDC, tickSpacing: spacing, currentPrice: price };
+        for (const pct of RANGE_PRESETS) {
+          for (const inverted of [false, true]) {
+            const range = presetRange(coarse, pct, inverted) as PoolRange;
+            const label = `spacing ${spacing} price ${price} ±${pct} inverted ${inverted}`;
+            expectValid(range, coarse);
+            expect(rangeStatus(range, coarse), label).toBe("in");
+          }
+        }
       }
     }
-    expect(presetRange(coarse, 5)).toEqual(ticks(-198000, -194000));
+    expect(presetRange({ ...WETH_USDC, tickSpacing: 2000 }, 5)).toEqual(ticks(-198000, -194000));
+    // At 32767 the minimum range is the two spacings around the usable tick nearest 3,050.
+    expect(presetRange({ ...WETH_USDC, tickSpacing: 32767 }, 5)).toEqual(ticks(-229369, -163835));
   });
 
   it("stays on the grid at its ends", () => {
@@ -604,7 +611,7 @@ describe("clamp (P4)", () => {
   it("never leaves a valid range over a long random walk of every operation", () => {
     // @rule R1 to R4 (P4: there is never an invalid result)
     const random = seeded(2180);
-    for (const spacing of [1, 10, 50, 60, 200, 2000]) {
+    for (const spacing of [1, 10, 50, 60, 200, 2000, 16383, 32767]) {
       const pool: LivePoolGrid = { ...WETH_USDC, tickSpacing: spacing };
       let range = presetRange(pool, DEFAULT_RANGE_PRESET) as PoolRange;
       for (let i = 0; i < 400; i += 1) {
