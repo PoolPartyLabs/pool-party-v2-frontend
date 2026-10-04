@@ -409,3 +409,15 @@ describe("CanvasViewport: the handle", () => {
     expect(screen.getByText("100%")).toBeInTheDocument();
   });
 });
+
+it("[POO-2226 R4] Manage can open at 100% while Fit remains available", async () => {
+  renderWithProviders(
+    <CanvasViewport graphSize={WORKED_EXAMPLE_1} initialScale={1}>
+      <Graph />
+    </CanvasViewport>,
+  );
+  expect(layer().style.transform).toContain("scale(1)");
+  expect(screen.getByText("100%")).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Fit to view" }));
+  expect(screen.getByText("87%")).toBeInTheDocument();
+});

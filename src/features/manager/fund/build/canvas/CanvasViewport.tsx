@@ -50,6 +50,8 @@ export interface CanvasViewportHandle {
 export interface CanvasViewportProps {
   /** The laid-out graph size, or null until it exists. The first size opens the canvas at fit. */
   graphSize: Size | null;
+  /** Optional opening scale for Manage. Build defaults to fit. */
+  initialScale?: number;
   /** A press on the background that did not pan (I5: clears the selection, in S5). */
   onBackgroundClick?: () => void;
   /** Receives {@link CanvasViewportHandle}. */
@@ -86,6 +88,7 @@ function ZoomButton({
 /** The Build canvas: clipped container, pan and zoom layer, zoom controls, hint line. */
 export function CanvasViewport({
   graphSize,
+  initialScale,
   onBackgroundClick,
   viewportRef,
   children,
@@ -95,6 +98,7 @@ export function CanvasViewport({
   const hintId = useId();
   const { view, readoutPct, zoomIn, zoomOut, fit, revealRect, panning, bind } = useCanvasViewport({
     graphSize,
+    initialScale,
     canvasRef,
     onBackgroundClick,
   });
