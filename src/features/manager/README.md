@@ -415,7 +415,8 @@ sits beside the code, in `src/features/manager/fund/build/README.md`.
 | `canvas/` | `PP-MGR-CMP-045` to `047`, `PP-MGR-LIB-022`, `PP-MGR-HOK-008` | The Build step frame (`BuildStepLayout`), the clipped canvas with zoom, pan and fit (`CanvasViewport`, `useCanvasViewport`, `viewportMath`) and the panel slot (`BuildPanelSlot`) |
 | `layout/` | `PP-MGR-LIB-023` | The pure layout function, its types and `GRAPH_TARGET_ATTR`, its constants (`LAYOUT`), `toLayoutInput` and test support `layoutTestKit` |
 | `pieces/` | `PP-MGR-CMP-048` to `055` | The presentational pieces: spine card, position card, flow pill, share label, insert port, spoke group, edges, the two templates. Strings arrive as props; they import nothing from `plan/`, `layout/`, `blocks/` or `graph/` |
-| `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056` to `058`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu and its popover, the panel stub, the selection guard and the controller (`useBuildCanvas`) |
+| `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056`, `057`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu and its popover, the selection guard and the controller (`useBuildCanvas`); the panel stub `PP-MGR-CMP-058` is removed |
+| `panel/` | `PP-MGR-CMP-061` to `068`, `PP-MGR-HOK-014`, `PP-MGR-LIB-029`, `PP-MGR-LIB-030` | The configuration panel shell (POO-2187), its kind to body registry, its shared controls and its draft, and the range and slippage maths |
 | `graph/` | `PP-MGR-CMP-059` | The renderer `BuildGraph` (layout, pieces, selection and active targets in, presses out), its reading-order model, `useGraphLayout` and `useTextWidth` |
 
 The reference canvases live in `src/mocks/data/buildCanvasFixtures.ts` (`PP-MGR-MCK-004`). The components have
@@ -506,11 +507,13 @@ Two readings in code are the coordinator's, not the handoff's: INV5 reads "nothi
 Collect fees" as "a pool, or its Collect fees, ends the chain" (`plan/planInvariants.ts`), and normalisation
 (L4) only ever shifts the graph to the right (`layout/layoutGraph.ts`).
 
-**What is NOT done.** The configuration panel: pool, price range, allocation, slippage and the Aave fields
-(handoff POO-2171); the panel is a slot filled by a stub (`PanelStub`) that only shows the selected block's head
-and Remove block, so every block a manager adds stays empty and configured blocks exist only in fixtures and
-stories. So Next: Review refuses every plan a manager can build today, and "Review is not available yet" is
-reachable only for a stored plan whose blocks are configured. The Review page (POO-2172). Aave Borrow as coming soon (decided 2026-10-04, see D29; pending slice PA0). Real data for a block: the
+**What is NOT done.** The bodies of the configuration panel: the pool and price range fields and the Aave
+fields (handoff POO-2171, the slices after POO-2187). The panel shell itself is in (POO-2187, `build/panel/`): the
+modes, Use, the Allocation, Max slippage, the status row with Apply changes and its leave guard, and the remove
+confirm; but its kind to body registry is empty, so a selected block shows its head and Remove block only, every
+block a manager adds stays empty and configured blocks exist only in fixtures and stories. So Next: Review refuses
+every plan a manager can build today, and "Review is not available yet" is reachable only for a stored plan whose
+blocks are configured. The Review page (POO-2172). Aave Borrow as coming soon (decided 2026-10-04, see D29; pending slice PA0). Real data for a block: the
 Mandate reads the v4 pools and the Aave reserves from the backend catalog since POO-2133, but the canvas lists
 none of them (the panel will), and it reads no quote for the Swap or the Bridge (POO-2148). The canvas itself calls
 no API and requests no transaction; the launch journey (POO-2177) compiles a stored plan into builder calls. Backend
@@ -561,8 +564,9 @@ the `BuildGraph` stories pin only the graph's outer box against the layout's siz
 Figma where a review measured them (the pill stroke, nodes 8220:2482 and 8220:2501; the share label, node
 8220:2556), not as a set. The canvas column is about 604 wide at the app's content width against 656 in Figma
 (D23). Build state 2 (the Add protocol menu, 8130-3408) has no geometry oracle: its rows are asserted by the menu
-model tests and drawn by the `CanvasMenu` and `PanelStub` stories. The right-hand panel of states 3 and 5 is
-next-batch content and is not compared. The oracle file records no delta between a handoff number and a frame.
+model tests and drawn by the `CanvasMenu` and `BlockPanel` stories (the panel stub `PanelStub` that first drew it
+was removed by POO-2187). The right-hand panel of states 3 and 5 is the configuration panel's and is not compared
+here. The oracle file records no delta between a handoff number and a frame.
 
 ## IDs
 
