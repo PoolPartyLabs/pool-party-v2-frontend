@@ -5,6 +5,37 @@ import { ExplorerFields } from "./ExplorerFields";
 const hash = `0x${"a".repeat(64)}`;
 const address = `0x${"b".repeat(40)}`;
 describe("fund explorer fields", () => {
+  it("uses a fund report source chain for nested token and adapter addresses without changing delivery context", () => {
+    const token = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
+    renderWithProviders(
+      <ExplorerFields
+        chainId={42161}
+        chainByField={{ deliveryTxHash: 42161 }}
+        value={{
+          sourceChainId: "4663",
+          sequence: "26115832",
+          tokens: [{ token }],
+          positions: [{ adapter: address }],
+          publishTxHash: hash,
+          deliveryTxHash: hash,
+        }}
+      />,
+    );
+    expect(screen.getByRole("link", { name: token })).toHaveAttribute(
+      "href",
+      `https://robinhoodchain.blockscout.com/address/${token}`,
+    );
+    expect(screen.getByRole("link", { name: address })).toHaveAttribute(
+      "href",
+      `https://robinhoodchain.blockscout.com/address/${address}`,
+    );
+    expect(
+      screen.getAllByRole("link", { name: hash }).map((link) => link.getAttribute("href")),
+    ).toEqual([
+      `https://robinhoodchain.blockscout.com/tx/${hash}`,
+      `https://arbiscan.io/tx/${hash}`,
+    ]);
+  });
   // @rule R4 @rule R5
   it("uses explicit nested chains and never mistakes position keys or fund ids for transaction hashes", () => {
     renderWithProviders(
