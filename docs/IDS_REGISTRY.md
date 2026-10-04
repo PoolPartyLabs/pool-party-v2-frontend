@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 660 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 668 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -909,10 +909,10 @@ PP-STR-SCR-005 remains the preserved technical surface `FundTechnicalDetail.tsx`
 
 | ID | Name | Type | Reference | Status | Issue | Implementation |
 |---|---|---|---|---|---|---|
-| `PP-MGR-CMP-085` | ManageCanvas | Component | Figma 8335:2708 | Implemented (supported slice) | POO-2226 | `src/features/manager/fund/manage/ManageCanvas.tsx` |
+| `PP-MGR-CMP-085` | ManageCanvas | Component | Figma 8335:2708 | Implemented (supported slice) | POO-2226, POO-2232 (rules v1) | `src/features/manager/fund/manage/ManageCanvas.tsx` |
 | `PP-MGR-CMP-086` | ManageBlockPanel, V2 states of PP-MGR-CMP-001/002 | Component | Figma 8291:2563 / 8334:2692 | Implemented (supported slice) | POO-2227 | `src/features/manager/fund/manage/ManageBlockPanel.tsx` |
-| `PP-MGR-LIB-051` | Manage read model | Lib | Manager handoff 2026-10-04 | Implemented (supported slice) | POO-2226 | `src/features/manager/fund/manage/manageModel.ts` |
-| `PP-MGR-LIB-052` | Manage graph geometry | Lib | Figma 8335:2708 | Implemented (supported slice) | POO-2226 | `src/features/manager/fund/manage/manageLayout.ts` |
+| `PP-MGR-LIB-051` | Manage read model | Lib | Manager handoff 2026-10-04 | Implemented (supported slice) | POO-2226, POO-2232 (rules v1) | `src/features/manager/fund/manage/manageModel.ts` |
+| `PP-MGR-LIB-052` | Manage graph geometry | Lib | Figma 8335:2708 | Implemented (supported slice) | POO-2226, POO-2232 (rules v1) | `src/features/manager/fund/manage/manageLayout.ts` |
 | `PP-MGR-LIB-053` | Manage canonical range drafts | Lib | Manager handoff R06-R12 | Implemented (supported slice) | POO-2227 | `src/features/manager/fund/manage/manageDraft.ts` |
 | `PP-MGR-LIB-054` | Manage position metadata read | Lib | Typed V2 position detail | Implemented (supported slice) | POO-2227 | `src/features/manager/fund/manage/useManagePosition.ts` |
 | `PP-MGR-LIB-055` | Manager position and Move range schemas | Lib | API POO-2139 | Implemented (supported slice) | POO-2228 | `src/lib/api/v2/manageSchemas.ts` |
