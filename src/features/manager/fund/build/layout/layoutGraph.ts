@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph
- * @implements-rules-version v1 (POO-2153 rules v1); POO-2213 rules v1
+ * @implements-rules-version v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1
  * @analytics-events none, a pure geometry module: the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event; nothing here is rendered or tracked.
  *
@@ -151,7 +151,7 @@ function spineNode(role: SpineRole, centre: number, top: number): SpineNode {
   return {
     role,
     rect: rect(centre - HALF_SPINE, top, L.SPINE_W, L.CARD_H),
-    locked: role === "deposit" || role === "withdraw",
+    locked: true,
   };
 }
 
@@ -422,7 +422,7 @@ function placeReturns(d: Draft, chains: PlacedChain[], deepest: number): void {
     withdrawTop = mergeY + L.LINK;
     d.edges.push(
       vertical("output:idleOutput", "structural", outputCentre, outputBottom, mergeY),
-      vertical("output:income", "income", incomeCentre, outputBottom, mergeY),
+      vertical("output:income", "structural", incomeCentre, outputBottom, mergeY),
       ...spanning("merge:line", "structural", mergeY, [outputCentre, incomeCentre]),
       vertical("merge:withdraw", "structural", c, mergeY, withdrawTop),
     );
@@ -576,5 +576,120 @@ function normalise(d: Draft): GraphLayout {
  */
 export function layoutGraph(input: LayoutInput, options: LayoutOptions): GraphLayout {
   const empty = input.hub.chains.length === 0 && input.spokes.length === 0;
-  return normalise(empty ? layoutEmpty(input, options) : layoutPlan(input));
+  const graph = normalise(empty ? layoutEmpty(input, options) : layoutPlan(input));
+  // Junctions use the horizontal stroke center, while endpoints at blocks stay exact.
+  const horizontals = graph.edges.filter((edge) => edge.points[0]?.y === edge.points[1]?.y);
+  graph.edges = graph.edges.map((edge) => {
+    if (edge.points[0]?.x !== edge.points[1]?.x) return edge;
+    return {
+      ...edge,
+      points: edge.points.map((point) => {
+        const run = horizontals.find((entry) => {
+          const [a, b] = entry.points;
+          return (
+            a &&
+            b &&
+            a.y - point.y === HALF_LINE &&
+            point.x >= Math.min(a.x, b.x) &&
+            point.x <= Math.max(a.x, b.x)
+          );
+        });
+        return run ? { ...point, y: run.points[0]?.y ?? point.y } : point;
+      }),
+    };
+  });
+  graph.connections = connectionPaths(graph);
+  return graph;
+}
+
+/** Block-to-block paths. Shared runs are clipped, so hovering one branch cannot light siblings. */
+function connectionPaths(graph: GraphLayout): EdgeNode[] {
+  const byId = new Map(graph.edges.map((edge) => [edge.id, edge]));
+  const out: EdgeNode[] = [];
+  const used = new Set<string>();
+  const join = (id: string, ids: string[], kind?: EdgeKind) => {
+    const entries = ids.flatMap((key) => {
+      const edge = byId.get(key);
+      return edge ? [edge] : [];
+    });
+    if (!entries.length) return;
+    const points: Point[] = [];
+    for (const entry of entries) {
+      let next = [...entry.points];
+      const last = points.at(-1);
+      if (last && next.length === 2 && next[0]?.y === next[1]?.y) {
+        const following = entries[entries.indexOf(entry) + 1]?.points[0];
+        next = [last, { x: following?.x ?? next[1]?.x ?? last.x, y: last.y }];
+      }
+      for (const point of next) {
+        const previous = points.at(-1);
+        if (!previous || previous.x !== point.x || previous.y !== point.y) points.push(point);
+      }
+      used.add(entry.id);
+    }
+    out.push({ id, kind: kind ?? entries[0]?.kind ?? "structural", points });
+  };
+  for (const label of graph.shareLabels) {
+    const group =
+      label.target.chainId === null
+        ? undefined
+        : graph.groups.find(
+            (entry) =>
+              entry.network === label.target.network &&
+              label.center.x >= entry.rect.x &&
+              label.center.x <= entry.rect.x + entry.rect.w,
+          );
+    join(label.edgeId, [
+      group ? `bridge:${group.network}` : "spine:idleInput",
+      group ? `bus:spoke:${group.network}` : "bus:idleInput",
+      label.edgeId,
+    ]);
+  }
+  for (const template of graph.templates) {
+    const edge = graph.edges.find(
+      (entry) =>
+        entry.id.startsWith("template:") &&
+        entry.points.at(-1)?.x === template.rect.x + template.rect.w / 2,
+    );
+    if (!edge) continue;
+    const group = graph.groups.find(
+      (entry) =>
+        entry.network === (template.target.kind === "addProtocol" ? template.target.network : ""),
+    );
+    join(edge.id, [
+      group ? `bridge:${group.network}` : "spine:idleInput",
+      group ? `bus:spoke:${group.network}` : "bus:idleInput",
+      edge.id,
+    ]);
+  }
+  for (const edge of graph.edges.filter((entry) => entry.id.startsWith("principal:chain:"))) {
+    const chainId = edge.id.slice("principal:chain:".length);
+    const last = graph.blocks.filter((block) => block.chainId === chainId).at(-1);
+    join(edge.id, [
+      ...(last?.kind === "collectFees"
+        ? [`principal:fees:${last.id}`, `principal:bypass:${last.id}`]
+        : []),
+      edge.id,
+      "principal:line",
+      "principal:out",
+    ]);
+  }
+  for (const swap of graph.feeSwaps ?? []) {
+    const id = swap.sourceBlockId;
+    join(
+      `income:block:${id}`,
+      [`income:block:${id}`, `income:turn:${id}`, `income:swap:${id}`],
+      "income",
+    );
+    join(
+      `income:converted:${id}`,
+      [`income:converted:${id}`, "income:line", "income:out"],
+      "income",
+    );
+  }
+  for (const id of ["output:idleOutput", "output:income"]) {
+    join(id, [id, "merge:line", "merge:withdraw"], "structural");
+  }
+  for (const edge of graph.edges) if (!used.has(edge.id)) out.push(edge);
+  return out;
 }

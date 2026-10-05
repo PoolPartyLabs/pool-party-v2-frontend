@@ -315,6 +315,7 @@ describe("BuildGraph, reading order", () => {
     renderGraph(canvasC);
     expect(tabOrder()).toEqual([
       "spine:deposit",
+      "spine:idleInput",
       label("c-pool", "arbitrum", "c-pool-pool"),
       blockKey("c-pool-swap"),
       blockKey("c-pool-pool"),
@@ -326,6 +327,8 @@ describe("BuildGraph, reading order", () => {
       port("after", "c-supply-supply"),
       addProtocol("arbitrum"),
       targetKey({ kind: "addNetwork" }),
+      "spine:idleOutput",
+      "spine:income",
       "spine:withdraw",
     ]);
   });
@@ -335,6 +338,7 @@ describe("BuildGraph, reading order", () => {
     renderGraph(canvasA);
     expect(tabOrder()).toEqual([
       "spine:deposit",
+      "spine:idleInput",
       label("a-hub-1", "arbitrum", "a-hub-1-pool"),
       blockKey("a-hub-1-swap"),
       blockKey("a-hub-1-pool"),
@@ -386,6 +390,8 @@ describe("BuildGraph, reading order", () => {
       "fee-swap:a-rh-2-fees",
       addProtocol("robinhood"),
       targetKey({ kind: "addNetwork" }),
+      "spine:idleOutput",
+      "spine:income",
       "spine:withdraw",
     ]);
   });
@@ -629,7 +635,7 @@ describe("BuildGraph, tooltips", () => {
   // @rule C19
   it("[C19] the locks and the network chips explain themselves", () => {
     renderGraph(canvasA);
-    expect(screen.getAllByRole("img", { name: "Fixed: USDC on Arbitrum" })).toHaveLength(2);
+    expect(screen.getAllByRole("img", { name: "Fixed: USDC on Arbitrum" })).toHaveLength(5);
     const chip = node("group:robinhood").querySelector<HTMLElement>("[data-network-chip]");
     expect(chip).toHaveAttribute("title", "Robinhood Chain");
     expect(chip).toHaveAccessibleDescription("Robinhood Chain");

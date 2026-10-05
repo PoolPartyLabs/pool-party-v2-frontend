@@ -100,6 +100,7 @@ import {
   itemLayer,
   itemTarget,
   type PortTooltipKey,
+  pieceConnections,
   pieceEdges,
   portTooltipKey,
   SPINE_ICON,
@@ -407,6 +408,7 @@ export const BuildGraph = memo(function BuildGraph({
 
   const items = useMemo(() => graphItems(layout), [layout]);
   const edges = useMemo(() => pieceEdges(layout), [layout]);
+  const connections = useMemo(() => pieceConnections(layout), [layout]);
   const shares = useMemo(() => chainShares(layout), [layout]);
   const kinds = useMemo(
     () => new Map(layout.blocks.map((block) => [block.id, block.kind])),
@@ -641,6 +643,7 @@ export const BuildGraph = memo(function BuildGraph({
           width={layout.width}
           height={layout.height}
           edges={edges}
+          connections={connections}
           highlightedId={hoveredEdge}
           onEdgeHoverChange={setHoveredEdge}
         />
