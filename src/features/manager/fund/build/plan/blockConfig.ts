@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-026
  * @name blockConfig
- * @implements-rules-version v1 (POO-2184 rules v1)
+ * @implements-rules-version v1 (POO-2184 rules v1); POO-2237 rules v1
  * @analytics-events none, a pure domain module: it types and checks a block's configuration and
  *   emits nothing.
  *
@@ -42,7 +42,7 @@ import {
   FUND_SLIPPAGE_MAX_PCT,
   FUND_SLIPPAGE_MIN_PCT,
 } from "../panel/fundSlippage";
-import type { PoolBlockConfig } from "./buildPlan";
+import type { ManualSwapConfig, PoolBlockConfig } from "./buildPlan";
 
 export type { AaveBlockConfig, PoolBlockConfig } from "./buildPlan";
 
@@ -75,6 +75,18 @@ function isSlippage(value: unknown): value is number {
     Number.isFinite(value) &&
     value >= BLOCK_SLIPPAGE_MIN_PCT &&
     value <= BLOCK_SLIPPAGE_MAX_PCT
+  );
+}
+
+/** Structural read gate; the write gate additionally checks mandate membership and distinctness. */
+export function isManualSwapConfig(value: unknown): value is ManualSwapConfig {
+  return (
+    isRecord(value) &&
+    typeof value.tokenInKey === "string" &&
+    typeof value.tokenOutKey === "string" &&
+    isSlippage(value.slippagePct) &&
+    !("poolId" in value) &&
+    !("assetKey" in value)
   );
 }
 

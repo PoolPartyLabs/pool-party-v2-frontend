@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name buildAnalytics
- * @implements-rules-version v1 (POO-2157 rules v1; the panel events of POO-2187 rules v1)
+ * @implements-rules-version v1 (POO-2157 rules v1; the panel events of POO-2187 rules v1); POO-2237 rules v1
  * @analytics-events none emitted here: a pure mapping. The Build screen (`BuildScreen.tsx`) and the
  *   builder shell (`FundStrategyBuilderScreen.tsx`) emit through `useAnalytics().track()` what this
  *   module names (builder_block_added, builder_network_added, builder_network_removed,
@@ -75,7 +75,7 @@ export const REVIEW_REFUSAL_EVENT: Readonly<Record<ReviewRefusal, AnalyticsBuild
 
 /** A block kind, as `block_kind`. */
 export const BUILD_BLOCK_KIND_EVENT: Readonly<
-  Record<BlockKind | FlowKind, AnalyticsBuildBlockKind>
+  Record<BlockKind | FlowKind | "spoke", AnalyticsBuildBlockKind>
 > = {
   uniswapV4Pool: "uniswapV4Pool",
   aaveSupply: "aaveSupply",
@@ -84,6 +84,7 @@ export const BUILD_BLOCK_KIND_EVENT: Readonly<
   pendle: "pendle",
   gmxPerp: "gmxPerp",
   swap: "swap",
+  spoke: "spoke",
   collectFees: "collectFees",
 };
 
@@ -96,6 +97,8 @@ export const BUILD_NETWORK_EVENT: Readonly<Record<NetworkId, AnalyticsBuildNetwo
 /** A panel field, as `fields_changed` names it (POO-2187). The identity, checked for totality. */
 export const PANEL_FIELD_EVENT: Readonly<Record<PanelField, AnalyticsBuildPanelField>> = {
   pool: "pool",
+  tokenIn: "tokenIn",
+  tokenOut: "tokenOut",
   asset: "asset",
   range: "range",
   quote: "quote",

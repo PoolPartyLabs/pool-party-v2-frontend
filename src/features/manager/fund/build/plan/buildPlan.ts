@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-021
  * @name buildPlan
- * @implements-rules-version v1 (POO-2151 rules v1)
+ * @implements-rules-version v1 (POO-2151 rules v1); POO-2237 rules v1
  * @analytics-events none, a pure domain module. A refusal returns a {@link PlanBlock} and the Build
  *   screen (PP-MGR-SCR-002, slice S7) turns it into `builder_build_blocked`. Nothing here touches
  *   the dataLayer.
@@ -105,7 +105,21 @@ export interface FlowBlock {
   family: "flow";
   kind: FlowKind;
   auto: boolean;
+  /** Manual Swap only (POO-2237). A saved instruction, never an executable route. */
+  config?: ManualSwapConfig;
 }
+
+export interface ManualSwapConfig {
+  tokenInKey: string;
+  tokenOutKey: string;
+  slippagePct: number;
+}
+
+/** Panel-only discriminator. The spoke stores its share, not this value. */
+export interface SpokePanelConfig {
+  spoke: true;
+}
+export type PanelConfig = PoolBlockConfig | AaveBlockConfig | ManualSwapConfig | SpokePanelConfig;
 
 export type Step = PositionBlock | FlowBlock;
 

@@ -124,3 +124,11 @@ and controller tests cover cancellation, confirmation, cascade and draft preserv
 acceptance is performed by Murilo.
 
 POO-2213 rules v1, 2026-10-04: each Collect fees derives an automatic income conversion pill immediately below it. Income flows through that pill into the network stable-token return, while principal bypasses it on the left. These nodes are layout-only, have no insertion/removal controls, and never become plan steps or launch transactions. Original Figma coordinate oracles retain their source measurements plus explicit dated overrides for the added 50px row; where the bypass prevents the former shared bus level, income uses the next 24px level.
+
+## Canvas corrections (POO-2235/2236/2237, rules v1)
+
+Build entry and canvas resize fit the full graph above the zoom controls. The sidebar begins collapsed for each visit and can expand without changing the saved app preference. Exceptionally short screens retain 240px of canvas with outer-page scrolling; side columns scroll independently. Manage keeps its prior viewport behavior.
+
+Layout exposes complete block-to-block connection paths with clipped shared buses. Hover/focus of a percentage highlights its entire incoming path; only relevant branch spans light up. All five fixed spine cards carry locks. Income output is neutral; Collect fees → Swap · auto → Income stays green until Income.
+
+Manual Swap and spoke percentage select AuxiliaryBlockPanel and reuse the existing Apply/Discard/leave guard. Token keys are canonical network/address references from the mandate; pairs must differ. Spoke allocations cannot exceed root/network room or fall below allocated children. No child is silently rescaled. Manual Swap execution is unavailable, including inside a pool chain, until POO-2238. See [delivery record](../../../../../docs/build-canvas-polish-2026-10-05.md).

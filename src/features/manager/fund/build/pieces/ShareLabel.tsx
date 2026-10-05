@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-051
  * @name ShareLabel
- * @implements-rules-version v1 (POO-2154 rules v1)
+ * @implements-rules-version v1 (POO-2154 rules v1); POO-2235 rules v1; POO-2237 rules v1
  * @analytics-events none, a presentational piece; a press is reported through `onActivate` and the
  *   Build screen (PP-MGR-SCR-002, S7) owns every event
  *
@@ -22,7 +22,7 @@
  *
  * With `onActivate` it is a button named by its tooltip (I10: "60% of the strategy's capital"); a
  * press hands the element to the renderer as the anchor (I5: a hub chain's label selects the block
- * it feeds). Without it (a spoke's label selects nothing, D26) it only explains itself, so under the
+ * it feeds). Without it it only explains itself, so under the
  * review's focus policy it is an `Explained` element: a tab stop, not a button, described by its
  * tooltip. Either way the tooltip opens on hover and on focus ([C19]), and the label carries
  * `data-canvas-interactive`.
@@ -92,7 +92,7 @@ export function ShareLabel({
   );
 
   if (!onActivate) {
-    // A spoke's label only explains itself (D26): focusable, not a button (focus policy).
+    // Non-actionable story variants only explain themselves; allocation labels are buttons.
     return (
       <Explained tooltip={tooltip} {...marks} {...hoverHandlers} className={LABEL_BOX}>
         {face}

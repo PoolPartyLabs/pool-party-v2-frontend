@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-014
  * @name usePanelDraft
- * @implements-rules-version v1 (POO-2187 rules v1)
+ * @implements-rules-version v1 (POO-2187 rules v1); POO-2237 rules v1
  * @analytics-events none emitted here: every outcome leaves through `onEvent` as a
  *   {@link PanelDraftEvent} (configured, applied with the fields changed, discarded, leaveBlocked,
  *   blocked with the reducer's reason). The Build screen (PP-MGR-SCR-002) maps them to
@@ -38,10 +38,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NetworkId } from "../../mandateDraft";
 import type { RefusedChange, SelectionGuard } from "../blocks/useBlockSelection";
+import { spokePanelId } from "../plan/auxiliaryConfig";
+import { BLOCK_DEFAULT_SLIPPAGE_PCT } from "../plan/blockConfig";
 import type {
   AaveBlockConfig,
   BlockKind,
   BuildPlan,
+  PanelConfig,
   PlanBlockReason,
   PoolBlockConfig,
 } from "../plan/buildPlan";
@@ -50,20 +53,31 @@ import type { UseBuildPlanResult } from "../plan/useBuildPlan";
 
 /** A block's configuration, either shape. */
 export type PanelBlockConfig = PoolBlockConfig | AaveBlockConfig;
+export type PanelTargetKind = BlockKind | "swap" | "spoke";
 
 /** What the panel edits for one block. */
 export interface PanelValues {
   /** Null for an empty block (Modes 2 and 3). */
-  config: PanelBlockConfig | null;
+  config: PanelConfig | null;
   /** The chain's share when this block carries its Allocation (P8); null otherwise. */
   sharePct: number | null;
 }
 
 /** A field of the panel, as `builder_block_applied` names it. */
-export type PanelField = "pool" | "asset" | "range" | "quote" | "slippage" | "allocation";
+export type PanelField =
+  | "pool"
+  | "asset"
+  | "range"
+  | "quote"
+  | "slippage"
+  | "allocation"
+  | "tokenIn"
+  | "tokenOut";
 
 /** The order `fields` is reported in. */
 const FIELD_ORDER: readonly PanelField[] = [
+  "tokenIn",
+  "tokenOut",
   "pool",
   "asset",
   "range",
@@ -74,6 +88,8 @@ const FIELD_ORDER: readonly PanelField[] = [
 
 /** Which panel field a config key belongs to. A key a body adds later counts as no field. */
 const FIELD_OF_KEY: Readonly<Record<string, PanelField>> = {
+  tokenInKey: "tokenIn",
+  tokenOutKey: "tokenOut",
   poolId: "pool",
   assetKey: "asset",
   tickLower: "range",
@@ -85,16 +101,16 @@ const FIELD_OF_KEY: Readonly<Record<string, PanelField>> = {
 
 /** What happened in the panel, for the Build screen to map to analytics. */
 export type PanelDraftEvent =
-  | { type: "configured"; kind: BlockKind; network: NetworkId }
-  | { type: "applied"; kind: BlockKind; fields: PanelField[] }
-  | { type: "discarded"; kind: BlockKind }
-  | { type: "leaveBlocked"; kind: BlockKind }
+  | { type: "configured"; kind: PanelTargetKind; network: NetworkId }
+  | { type: "applied"; kind: PanelTargetKind; fields: PanelField[] }
+  | { type: "discarded"; kind: PanelTargetKind }
+  | { type: "leaveBlocked"; kind: PanelTargetKind }
   | { type: "blocked"; reason: PlanBlockReason };
 
 /** The selected block, as the panel needs it. */
 export interface PanelDraftTarget {
   blockId: string;
-  kind: BlockKind;
+  kind: PanelTargetKind;
   network: NetworkId;
   /** What the plan holds for it now. */
   applied: PanelValues;
@@ -121,10 +137,10 @@ export interface UsePanelDraftResult {
   leaveAttempt: number;
   /** Why the last Use or Apply was refused, until the next edit, Apply, Discard or reset (M4). */
   refusal: PlanBlockReason | null;
-  setConfig(config: PanelBlockConfig): void;
+  setConfig(config: PanelConfig): void;
   setShare(pct: number): void;
   /** P7, DP1: Use writes the kind's defaults as applied, share 0%. True when the plan took it. */
-  use(config: PanelBlockConfig): boolean;
+  use(config: PanelConfig): boolean;
   /** Apply changes. True when the plan took it. */
   apply(): boolean;
   /** Discard changes. */
@@ -134,7 +150,7 @@ export interface UsePanelDraftResult {
 }
 
 /** Two configs hold the same values (every field is a primitive). */
-function sameConfig(a: PanelBlockConfig | null, b: PanelBlockConfig | null): boolean {
+function sameConfig(a: PanelConfig | null, b: PanelConfig | null): boolean {
   if (a === null || b === null) return a === b;
   const left = a as unknown as Record<string, unknown>;
   const right = b as unknown as Record<string, unknown>;
@@ -171,7 +187,30 @@ export function changedFields(before: PanelValues, after: PanelValues): PanelFie
  */
 export function panelTarget(plan: BuildPlan, blockId: string | null): PanelDraftTarget | null {
   if (blockId === null) return null;
+  const spoke = plan.spokes.find((entry) => spokePanelId(entry.network) === blockId);
+  if (spoke)
+    return {
+      blockId,
+      kind: "spoke",
+      network: spoke.network,
+      applied: { config: { spoke: true }, sharePct: spoke.sharePct },
+    };
   const found = findBlock(plan, blockId);
+  if (found?.block.family === "flow" && found.block.kind === "swap" && !found.block.auto) {
+    return {
+      blockId,
+      kind: "swap",
+      network: found.network,
+      applied: {
+        config: found.block.config ?? {
+          tokenInKey: "",
+          tokenOutKey: "",
+          slippagePct: BLOCK_DEFAULT_SLIPPAGE_PCT,
+        },
+        sharePct: null,
+      },
+    };
+  }
   if (found?.block.family !== "position") return null;
   const first = found.chain.steps.find((step) => step.family === "position");
   return {
@@ -278,7 +317,7 @@ export function usePanelDraft(input: UsePanelDraftInput): UsePanelDraftResult {
   }, []);
 
   const setConfig = useCallback(
-    (config: PanelBlockConfig) => edit((values) => ({ ...values, config })),
+    (config: PanelConfig) => edit((values) => ({ ...values, config })),
     [edit],
   );
 
@@ -289,7 +328,7 @@ export function usePanelDraft(input: UsePanelDraftInput): UsePanelDraftResult {
   );
 
   const use = useCallback(
-    (config: PanelBlockConfig): boolean => {
+    (config: PanelConfig): boolean => {
       const { target: current, input: io } = latest.current;
       if (!current) return false;
       const share = current.applied.sharePct === null ? undefined : 0;

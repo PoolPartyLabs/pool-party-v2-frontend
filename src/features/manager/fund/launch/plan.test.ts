@@ -20,6 +20,13 @@ const fixture = (
 ): CanvasPlan => ({ version: 1, hub: { chains: hub }, spokes });
 
 describe("Build to launch adapter [R2, R4, R5]", () => {
+  it("refuses a manual Swap inside a valid pool chain instead of ignoring its intent (POO-2237)", () => {
+    const plan = fixture([chain("pool", "uniswapV4Pool")]);
+    plan.hub.chains[0]?.steps.unshift({ id: "manual", family: "flow", kind: "swap" });
+    expect(() => deriveLaunchSteps(plan, { "pool-position": config }, false, false)).toThrow(
+      "BUILD_EXECUTION_GAP",
+    );
+  });
   it("surfaces a clear duplicate reserve reason without leaking unknown errors", () => {
     expect(launchPlanError(new Error("DUPLICATE_AAVE_RESERVE"))).toEqual({
       code: "DUPLICATE_AAVE_RESERVE",

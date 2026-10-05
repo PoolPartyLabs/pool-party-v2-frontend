@@ -18,6 +18,7 @@ export interface CanvasChain {
   steps: {
     id: string;
     family: "position" | "flow";
+    auto?: boolean;
     kind: string;
     config?: {
       poolId?: string;
@@ -156,7 +157,10 @@ export function deriveLaunchSteps(
         if (block.family === "flow") {
           if (block.kind !== "collectFees" && block.kind !== "swap")
             throw new Error("INVALID_BUILD");
-          if (block.kind === "swap" && !chain.steps.some((entry) => entry.kind === "uniswapV4Pool"))
+          if (
+            block.kind === "swap" &&
+            (block.auto !== true || !chain.steps.some((entry) => entry.kind === "uniswapV4Pool"))
+          )
             throw new Error("BUILD_EXECUTION_GAP");
           continue;
         }

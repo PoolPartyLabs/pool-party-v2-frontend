@@ -1171,6 +1171,15 @@
           "ineligible": "Pool này không đủ điều kiện.",
           "noLiquidity": "Pool này không có thanh khoản đang hoạt động.",
           "incomplete": "Cấu hình pool chưa hoàn chỉnh."
+        },
+        "auxiliary": {
+          "swap": "Swap",
+          "spoke": "Phân bổ spoke",
+          "tokenIn": "Token đầu vào",
+          "tokenOut": "Token đầu ra",
+          "empty": "Thêm ít nhất hai token trên mạng này vào phạm vi ủy quyền.",
+          "invalidPair": "Chọn hai token khác nhau được phép trong phạm vi ủy quyền trên mạng này.",
+          "bounds": "Phân bổ: từ {min}% đến {max}% chiến lược. Mức tối thiểu giữ nguyên phân bổ của các khối hiện có."
         }
       },
       "network": {
@@ -1188,7 +1197,7 @@
         "unusedSpokeShare": "Một mạng giữ nhiều vốn hơn mức các khối của nó sử dụng. Hãy giao tỷ trọng đó cho các khối, hoặc xóa mạng.",
         "stackedPositions": "Hãy xóa các khối đặt dưới một khối Cung cấp: chúng chưa thể khởi chạy.",
         "duplicateReserve": "Chỉ cung cấp mỗi tài sản trong một khối. Hãy xóa khối Cung cấp thứ hai của cùng tài sản.",
-        "unsupportedSwap": "Swap bên ngoài pool chưa thể khởi chạy. Hãy cung cấp token đến nơi, hoặc xóa Swap.",
+        "unsupportedSwap": "Swap này chưa khả dụng khi khởi chạy. Hãy xóa hoặc dùng token nhận được cho Supply.",
         "unavailable": "Chức năng xem lại chưa khả dụng."
       }
     },

@@ -35,6 +35,75 @@ import {
   usePanelDraft,
 } from "./usePanelDraft";
 
+describe("POO-2237 auxiliary targets", () => {
+  it("stages manual tokens, blocks navigation, then applies once and resumes selection", () => {
+    const plan = hubPoolPlan();
+    const swap = plan.hub.chains[0]?.steps[0];
+    if (swap?.family !== "flow") throw new Error("Expected swap");
+    swap.auto = false;
+    const { result, events } = mount(plan, swap.id);
+    const config = {
+      tokenInKey: TEST_ASSET_KEYS.usdcArbitrum,
+      tokenOutKey: TEST_ASSET_KEYS.wethArbitrum,
+      slippagePct: 2,
+    };
+    act(() => result.current.panel.setConfig(config));
+    expect(result.current.plan.hub.chains[0]?.steps[0]).not.toHaveProperty("config");
+    act(() => {
+      expect(result.current.selection.select("hub-pool-pool")).toBe(false);
+    });
+    expect(result.current.panel.leaveBlocked).toBe(true);
+    act(() => {
+      expect(result.current.panel.apply()).toBe(true);
+    });
+    expect(result.current.plan.hub.chains[0]?.steps[0]).toMatchObject({ config });
+    expect(result.current.selection.selectedId).toBe("hub-pool-pool");
+    expect(events).toContainEqual({
+      type: "applied",
+      kind: "swap",
+      fields: ["tokenIn", "tokenOut"],
+    });
+  });
+  it("discards staged spoke allocation and permits the pending exit", () => {
+    const plan: BuildPlan = {
+      version: 1,
+      hub: { chains: [] },
+      spokes: [{ network: "robinhood", sharePct: 0, chains: [] }],
+    };
+    const { result } = mount(plan, "spoke:robinhood");
+    act(() => result.current.panel.setShare(30));
+    act(() => {
+      expect(result.current.selection.select(null)).toBe(false);
+    });
+    act(() => result.current.panel.discard());
+    expect(result.current.selection.selectedId).toBeNull();
+    expect(result.current.plan.spokes[0]?.sharePct).toBe(0);
+  });
+  it("selects a manual Swap with an empty staged token pair and default slippage", () => {
+    const plan = hubPoolPlan();
+    const swap = plan.hub.chains[0]?.steps[0];
+    if (swap?.family !== "flow") throw new Error("Expected swap");
+    swap.auto = false;
+    expect(panelTarget(plan, swap.id)).toMatchObject({
+      kind: "swap",
+      network: "arbitrum",
+      applied: { config: { tokenInKey: "", tokenOutKey: "", slippagePct: 2 }, sharePct: null },
+    });
+  });
+  it("selects the spoke percentage independently of its child positions", () => {
+    const plan: BuildPlan = {
+      version: 1,
+      hub: { chains: [] },
+      spokes: [{ network: "robinhood", sharePct: 20, chains: [] }],
+    };
+    expect(panelTarget(plan, "spoke:robinhood")).toMatchObject({
+      kind: "spoke",
+      network: "robinhood",
+      applied: { config: { spoke: true }, sharePct: 20 },
+    });
+  });
+});
+
 /** The plan hook, the selection and the panel draft over an in-memory mandate draft. */
 function useHarness(plan: BuildPlan, selected: string | null, events: PanelDraftEvent[]) {
   const [draft, setDraft] = useState<MandateDraft>(() => ({ ...makeTestDraft(), plan }));

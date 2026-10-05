@@ -56,6 +56,25 @@ describe("allocation stops (P8, P9)", () => {
 });
 
 describe("AllocationSlider (P8, P9)", () => {
+  it("exposes and enforces a spoke child minimum including fractional endpoints (POO-2237)", async () => {
+    const onChange = vi.fn();
+    render(
+      <AllocationSlider
+        value={40}
+        minimum={37.5}
+        ceiling={42.5}
+        copy={COPY}
+        onChange={onChange}
+        ceilingSentence={null}
+        ceilingLink={null}
+      />,
+    );
+    const slider = screen.getByRole("slider");
+    expect(slider).toHaveAttribute("aria-valuemin", "37.5");
+    slider.focus();
+    await userEvent.keyboard("{Home}{End}");
+    expect(onChange.mock.calls).toEqual([[37.5], [42.5]]);
+  });
   it("[P9] is a slider named by its label, moved one step by the arrows", async () => {
     // @rule P9
     render(<Controlled start={40} ceiling={100} />);

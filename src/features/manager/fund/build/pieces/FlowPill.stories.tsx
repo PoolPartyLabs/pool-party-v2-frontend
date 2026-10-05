@@ -88,3 +88,12 @@ export const TooltipOnFocus: Story = {
     await expect(within(canvasElement).queryByRole("button")).toBeNull();
   },
 };
+
+/** Owner-configured Swap is a selectable flow pill. */
+export const SelectedManualSwap: Story = {
+  args: {
+    content: { text: storyT("flow.swap"), tooltip: storyT("tooltip.swap"), icon: "swap" },
+    selected: true,
+    onActivate: () => {},
+  },
+};

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-007
  * @name useBuildPlan
- * @implements-rules-version v1 (POO-2151 rules v1)
+ * @implements-rules-version v1 (POO-2151 rules v1); POO-2237 rules v1
  * @analytics-events none, this hook owns plan STATE rather than instrumentation. `apply` returns the
  *   refusal, and the Build screen (PP-MGR-SCR-002, slice S7) turns it into `builder_build_blocked`;
  *   a hook that emitted it would fire once per consumer and could not say how the manager got there.
@@ -29,19 +29,18 @@ import type { MandateCatalog } from "../../mandateCatalog";
 import type { MandateDraft } from "../../mandateDraft";
 import { newDraftId } from "../../mandateDraftStore";
 import type { UseMandateDraftResult } from "../../useMandateDraft";
+import { applyPanelConfig } from "./auxiliaryConfig";
 import {
-  type AaveBlockConfig,
   type BuildPlan,
   createEmptyPlan,
   isPlanBlocked,
+  type PanelConfig,
   type PlanBlock,
   type PlanContext,
   type PlanReducerResult,
-  type PoolBlockConfig,
   planOf,
 } from "./buildPlan";
 import { type PlanViolation, validatePlan } from "./planInvariants";
-import { applyBlockConfig } from "./planReducers";
 
 /** What one `apply` did: the plan changed, or the reducer refused and nothing changed. */
 export type PlanApplyResult = { ok: true } | { ok: false; blocked: PlanBlock };
@@ -56,11 +55,7 @@ export interface UseBuildPlanResult {
    * The panel's Apply changes (POO-2184): `applyBlockConfig` as ONE `apply`, so the config, the
    * chain's share and, on a spoke, the spoke's share land in one draft update or not at all.
    */
-  applyBlockConfig(
-    blockId: string,
-    config: PoolBlockConfig | AaveBlockConfig | null,
-    sharePct?: number,
-  ): PlanApplyResult;
+  applyBlockConfig(blockId: string, config: PanelConfig | null, sharePct?: number): PlanApplyResult;
 }
 
 /** Read and edit the Build plan of the draft the mandate hook holds. */
@@ -98,12 +93,8 @@ export function useBuildPlan(input: {
   );
 
   const applyConfig = useCallback(
-    (
-      blockId: string,
-      config: PoolBlockConfig | AaveBlockConfig | null,
-      sharePct?: number,
-    ): PlanApplyResult =>
-      apply((current, ctx) => applyBlockConfig(current, ctx, blockId, config, sharePct)),
+    (blockId: string, config: PanelConfig | null, sharePct?: number): PlanApplyResult =>
+      apply((current, ctx) => applyPanelConfig(current, ctx, blockId, config, sharePct)),
     [apply],
   );
 

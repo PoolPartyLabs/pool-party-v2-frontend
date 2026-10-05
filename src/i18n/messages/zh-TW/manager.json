@@ -1171,6 +1171,15 @@
           "ineligible": "此池不符合資格。",
           "noLiquidity": "此池沒有活躍流動性。",
           "incomplete": "池設定不完整。"
+        },
+        "auxiliary": {
+          "swap": "Swap",
+          "spoke": "Spoke 配置",
+          "tokenIn": "輸入代幣",
+          "tokenOut": "輸出代幣",
+          "empty": "請將此網路上的至少兩種代幣新增至授權範圍。",
+          "invalidPair": "請選擇此網路上授權範圍允許的兩種不同代幣。",
+          "bounds": "配置範圍為策略的 {min}% 至 {max}%。最低值保留現有區塊的配置。"
         }
       },
       "network": {
@@ -1188,7 +1197,7 @@
         "unusedSpokeShare": "某個網路預留的資金多於其區塊所用。請將該份額分配給其區塊，或移除該網路。",
         "stackedPositions": "請移除放在供應區塊下方的區塊：它們暫時無法啟動。",
         "duplicateReserve": "每種資產只能在一個區塊中供應。請移除同一資產的第二個供應區塊。",
-        "unsupportedSwap": "池外的 Swap 暫時無法啟動。請供應抵達的代幣，或移除該 Swap。",
+        "unsupportedSwap": "此 Swap 暫不可用於啟動。請移除它，或使用收到的代幣進行 Supply。",
         "unavailable": "審核功能尚未開放。"
       }
     },

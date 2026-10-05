@@ -1,5 +1,12 @@
 # Documentation CHANGELOG
 
+## 2026-10-05: Build canvas corrections (POO-2235/2236/2237)
+
+- Restore continuous connections, full-path hover, neutral Income output and all fixed locks.
+- Fit the graph to measured available space and allow temporary sidebar expansion.
+- Add staged manual Swap token/spoke allocation panels. Explicitly refuse unsupported manual Swap execution rather than ignoring its configured pair. Follow-up POO-2238.
+- Record Figma references, focused validation, integration limits and review findings in [the delivery record](build-canvas-polish-2026-10-05.md).
+
 ## 2026-10-04: Mandate Protocols Figma correction (POO-2167 v4)
 
 - Remove the extra real-mode helper, Aave APY and duplicate network checkboxes. The designed

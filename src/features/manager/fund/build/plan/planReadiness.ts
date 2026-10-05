@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-028
  * @name planReadiness
- * @implements-rules-version v1 (POO-2184 rules v1); POO-2204 rules v1
+ * @implements-rules-version v1 (POO-2184 rules v1); POO-2204 rules v1; POO-2237 rules v1
  * @analytics-events none, a pure domain module. It names the refusal; the Build screen
  *   (PP-MGR-SCR-002) emits `builder_build_blocked` with it through `buildAnalytics.ts`, and the
  *   Review page (POO-2172) shows it among the Launch blockers.
@@ -140,6 +140,10 @@ function stackedStep(chain: Chain): Step | null {
 
 /** [10] The block to reveal for a Swap outside a pool: the Supply its Swap · auto feeds, else it. */
 function swapWithoutPool(chain: Chain): string | null {
+  const manual = chain.steps.find(
+    (step) => step.family === "flow" && step.kind === "swap" && !step.auto,
+  );
+  if (manual) return manual.id;
   if (chain.steps.some((step) => step.family === "position" && isPoolKind(step.kind))) return null;
   const index = chain.steps.findIndex((step) => step.family === "flow" && step.kind === "swap");
   const swap = chain.steps[index];

@@ -1171,6 +1171,15 @@
           "ineligible": "此池不符合条件。",
           "noLiquidity": "此池没有活跃流动性。",
           "incomplete": "池配置不完整。"
+        },
+        "auxiliary": {
+          "swap": "Swap",
+          "spoke": "Spoke 分配",
+          "tokenIn": "输入代币",
+          "tokenOut": "输出代币",
+          "empty": "请将此网络上的至少两种代币添加到授权范围。",
+          "invalidPair": "请选择此网络上授权范围允许的两种不同代币。",
+          "bounds": "分配范围为策略的 {min}% 至 {max}%。最低值保留现有区块的分配。"
         }
       },
       "network": {
@@ -1188,7 +1197,7 @@
         "unusedSpokeShare": "某个网络预留的资金多于其区块所用。请将该份额分配给其区块，或移除该网络。",
         "stackedPositions": "请移除放在供应区块下方的区块：它们暂时无法启动。",
         "duplicateReserve": "每种资产只能在一个区块中供应。请移除同一资产的第二个供应区块。",
-        "unsupportedSwap": "池外的 Swap 暂时无法启动。请供应到达的代币，或移除该 Swap。",
+        "unsupportedSwap": "此 Swap 暂不可用于启动。请移除它，或使用收到的代币进行 Supply。",
         "unavailable": "核对功能暂不可用。"
       }
     },

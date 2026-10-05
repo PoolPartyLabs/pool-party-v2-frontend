@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-010
  * @name useBuildCanvas
- * @implements-rules-version v1 (POO-2155 rules v1; the remove confirm and the widened Edit mandate
+ * @implements-rules-version v1 (POO-2155 rules v1; the remove confirm and the widened Edit mandate; POO-2237 rules v1
  *   of POO-2187 rules v1; POO-2210 rules v1)
  * @analytics-events none emitted here: every outcome leaves through `onEvent` as a
  *   {@link BuildCanvasEvent} (blockAdded with its `via`, networkAdded, networkRemoved, flowInserted,
@@ -41,6 +41,7 @@ import type { MandateCatalog } from "../../mandateCatalog";
 import type { MandateDraft, NetworkId } from "../../mandateDraft";
 import { type GraphTarget, targetKey } from "../layout/graphTypes";
 import type { BlockContent, FlowContent } from "../pieces/pieceTypes";
+import { spokePanelId } from "../plan/auxiliaryConfig";
 import {
   type BlockKind,
   type BuildPlan,
@@ -302,15 +303,22 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
       const { ctx: current, menu: open, input: io } = latest.current;
       if (target.kind === "block") {
         setMenu(null);
-        if (findBlock(current.plan, target.blockId)?.block.family === "position") {
+        const block = findBlock(current.plan, target.blockId)?.block;
+        if (
+          block?.family === "position" ||
+          (block?.family === "flow" && block.kind === "swap" && !block.auto)
+        ) {
           io.selection.select(target.blockId);
         }
         return;
       }
       if (target.kind === "shareLabel") {
         setMenu(null);
-        // D26: a spoke's label feeds its Bridge, which is not selectable.
         if (target.feedsBlockId) io.selection.select(target.feedsBlockId);
+        else if (target.chainId === null) {
+          const spoke = current.plan.spokes.find((entry) => entry.network === target.network);
+          if (spoke) io.selection.select(spokePanelId(spoke.network));
+        }
         return;
       }
       if (open && targetKey(open.target) === targetKey(target)) {
@@ -361,7 +369,26 @@ export function useBuildCanvas(input: UseBuildCanvasInput): BuildCanvasControlle
     const network = latest.current.removeSpokeConfirm;
     if (network) {
       setRemoveSpokeConfirm(null);
-      if (run((p, c) => removeSpoke(p, c, network))) emit({ type: "networkRemoved", network });
+      const current = latest.current.ctx;
+      const preview = removeSpoke(
+        current.plan,
+        { draft: current.draft, catalog: current.catalog, newId: () => "remove-preview" },
+        network,
+      );
+      if (isPlanBlocked(preview)) {
+        emit({ type: "blocked", reason: preview.blocked.reason });
+        return;
+      }
+      const io = latest.current.input;
+      const selected = io.selection.selectedId;
+      const performRemove = () => {
+        if (run((p, c) => removeSpoke(p, c, network))) emit({ type: "networkRemoved", network });
+      };
+      if (selected === spokePanelId(network)) {
+        io.beforeRemove?.();
+        if (!io.selection.select(null)) return;
+        performRemove();
+      } else io.selection.guardLeave(performRemove);
       return;
     }
     const blockId = latest.current.removeConfirmId;

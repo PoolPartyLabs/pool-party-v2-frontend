@@ -200,3 +200,20 @@ describe("FlowPill", () => {
     expect(visibleText(container)).toBe("P1");
   });
 });
+
+it("selects a manual swap through an accessible selected button (POO-2237)", async () => {
+  let anchor: HTMLElement | null = null;
+  render(
+    <FlowPill
+      content={{ text: "Swap", tooltip: "Configure Swap", icon: "swap" }}
+      selected
+      onActivate={(element) => {
+        anchor = element;
+      }}
+    />,
+  );
+  const button = screen.getByRole("button", { name: "Configure Swap" });
+  expect(button).toHaveAttribute("aria-pressed", "true");
+  await userEvent.setup().click(button);
+  expect(anchor).toBe(button);
+});

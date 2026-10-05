@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-064
  * @name AllocationSlider
- * @implements-rules-version v1 (POO-2187 rules v1)
+ * @implements-rules-version v1 (POO-2187 rules v1); POO-2237 rules v1
  * @analytics-events none emitted here. `onReachCeiling` tells the caller a gesture of the manager
  *   brought the share to its ceiling, and the Build screen (PP-MGR-SCR-002) reports it as
  *   `builder_block_limit_hit` with the ceiling's reason.
@@ -62,6 +62,8 @@ export interface AllocationSliderProps {
   value: number;
   /** The highest stop, a whole percent from 0 to 100 (P8). */
   ceiling: number;
+  /** Minimum allocation retained by existing child blocks (POO-2237). */
+  minimum?: number;
   onChange(value: number): void;
   /** A gesture brought the value to the ceiling from below it (and the ceiling is under 100). */
   onReachCeiling?(): void;
@@ -83,6 +85,7 @@ export interface AllocationSliderProps {
 export function AllocationSlider({
   value,
   ceiling,
+  minimum = 0,
   onChange,
   onReachCeiling,
   copy,
@@ -102,6 +105,7 @@ export function AllocationSlider({
   current.current = value;
 
   const move = (next: number) => {
+    next = Math.max(minimum, Math.min(ceiling, next));
     const before = current.current;
     if (next === before) return;
     current.current = next;
@@ -121,7 +125,7 @@ export function AllocationSlider({
       ArrowUp: () => stepUp(value, ceiling),
       ArrowLeft: () => stepDown(value, ceiling),
       ArrowDown: () => stepDown(value, ceiling),
-      Home: () => 0,
+      Home: () => minimum,
       End: () => ceiling,
     };
     const next = keys[event.key];
@@ -144,7 +148,7 @@ export function AllocationSlider({
         role="slider"
         tabIndex={0}
         aria-labelledby={labelId}
-        aria-valuemin={0}
+        aria-valuemin={minimum}
         aria-valuemax={ceiling}
         aria-valuenow={value}
         aria-valuetext={`${value}%`}

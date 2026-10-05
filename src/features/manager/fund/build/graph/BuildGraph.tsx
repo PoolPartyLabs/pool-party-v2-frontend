@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name BuildGraph
- * @implements-rules-version v1 (POO-2156 rules v1; POO-2210 rules v1); POO-2213 rules v1
+ * @implements-rules-version v1 (POO-2156 rules v1; POO-2210 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2237 rules v1
  * @analytics-events none, a controlled renderer: every activation leaves through `onTarget` (and a
  *   spoke removal through `onRemoveSpoke`); the Build screen (PP-MGR-SCR-002, S7) maps them to the
  *   builder events, so nothing here tracks.
@@ -480,7 +480,15 @@ export const BuildGraph = memo(function BuildGraph({
             out.set(
               item.key,
               <div key={item.key} {...wrapper}>
-                <FlowPill content={describeFlow(block.id)} />
+                <FlowPill
+                  content={describeFlow(block.id)}
+                  selected={block.id === selectedId}
+                  onActivate={
+                    block.kind === "swap" && !block.auto
+                      ? (anchor) => report({ kind: "block", blockId: block.id }, anchor)
+                      : undefined
+                  }
+                />
                 {!block.auto && onRemoveBlock ? (
                   <button
                     type="button"
@@ -659,10 +667,8 @@ export const BuildGraph = memo(function BuildGraph({
               text={formatShare(label.pct)}
               tooltip={copy.share(shareNumber(label.pct))}
               highlighted={hoveredEdge === edgeId}
-              // D26: a spoke's label feeds its Bridge, which is not selectable: it only explains.
-              onActivate={
-                label.target.chainId === null ? undefined : (anchor) => report(label.target, anchor)
-              }
+              // POO-2237: a spoke label opens its allocation editor through the existing target.
+              onActivate={(anchor) => report(label.target, anchor)}
               onHoverChange={(hovered) => hoverLabel(edgeId, hovered)}
             />
           </div>

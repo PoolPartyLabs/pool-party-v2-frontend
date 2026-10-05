@@ -305,6 +305,26 @@ describe("useBuildCanvas: insert ports (I4)", () => {
 });
 
 describe("useBuildCanvas: selection (I5, HU3)", () => {
+  it("selects user-added Swap for configuration (POO-2237)", async () => {
+    const plan = hubPoolPlan();
+    const swap = plan.hub.chains[0]?.steps[0];
+    if (swap?.family !== "flow") throw new Error("Expected swap");
+    swap.auto = false;
+    const { result } = await mount(plan);
+    press(result, { kind: "block", blockId: swap.id });
+    expect(result.current.selection.selectedId).toBe(swap.id);
+  });
+  it("clears a selected spoke only after confirmed removal (POO-2237)", async () => {
+    const beforeRemove = vi.fn();
+    const { result } = await mount(emptySpokePlan(), {}, { beforeRemove });
+    press(result, { kind: "shareLabel", chainId: null, network: "robinhood", feedsBlockId: null });
+    act(() => result.current.canvas.removeSpoke("robinhood"));
+    expect(result.current.selection.selectedId).toBe("spoke:robinhood");
+    act(() => result.current.canvas.confirmRemove());
+    expect(result.current.selection.selectedId).toBeNull();
+    expect(beforeRemove).toHaveBeenCalledOnce();
+  });
+
   it("selects a card, a share label's block, and clears on the background", async () => {
     // @rule I5
     const { result } = await mount(hubPoolPlan());
@@ -322,14 +342,14 @@ describe("useBuildCanvas: selection (I5, HU3)", () => {
     expect(result.current.canvas.menuSentence).toBeNull();
   });
 
-  it("selects nothing from a spoke's share label, or from a pill", async () => {
+  it("selects spoke allocation but leaves automatic pills uneditable", async () => {
     // @rule D26
     // @rule I5
     const { result } = await mount(spokePoolPlan());
     press(result, { kind: "shareLabel", chainId: null, network: "robinhood", feedsBlockId: null });
-    expect(result.current.selection.selectedId).toBeNull();
+    expect(result.current.selection.selectedId).toBe("spoke:robinhood");
     press(result, { kind: "block", blockId: "rh-pool-swap" });
-    expect(result.current.selection.selectedId).toBeNull();
+    expect(result.current.selection.selectedId).toBe("spoke:robinhood");
   });
 
   it("lets a vetoing guard block a card, a share label, the background and leaving", async () => {
