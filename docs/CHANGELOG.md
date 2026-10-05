@@ -1,5 +1,11 @@
 # Documentation CHANGELOG
 
+## 2026-10-05: Restore sidebar destinations (POO-2241)
+
+- Restore Cash+ after Strategies and Tools after Deposit with their existing icons, routes and feature flags.
+- Supersede only POO-2209's temporary sidebar hiding. Preserve mobile navigation and the Build canvas sidebar behavior.
+- Reuse existing translated labels and guarded navigation; no API, wallet or destination-page changes.
+
 ## 2026-10-05: Build canvas corrections (POO-2235/2236/2237)
 
 - Restore continuous connections, full-path hover, neutral Income output and all fixed locks.

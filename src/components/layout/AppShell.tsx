@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-LAY-001
  * @name AppShell
- * @implements-rules-version v1 (POO-2236 rules v1); v1; POO-2209 rules v1; POO-2220 rules v1
+ * @implements-rules-version v1 (POO-2241, POO-2236, POO-2220); POO-2209 v1 except superseded R1
  *
  * Authenticated app shell. Desktop (lg+): a persistent left sidebar (brand + nav) and a top bar
  * (Dev menu + rewards pill + locale switch + wallet menu). Mobile: a top brand bar (brand +
@@ -10,7 +10,7 @@
  *
  * Desktop and mobile use SEPARATE nav sets ({@link DESKTOP_NAV_ITEMS} / {@link MOBILE_NAV_ITEMS}):
  * the mobile tab bar mirrors the 5-tab mobile design (Home · Invest · Cards · Deposit · Profile),
- * while the desktop sidebar has room for Home · Portfolio · Strategies · Deposit · Tools · Profile. The
+ * while the desktop sidebar has room for Home · Portfolio · Strategies · Cash+ · Deposit · Tools · Profile. The
  * active item is matched by the leading path segment via `usePathname` (a tab may also own extra
  * segments via {@link NavItem.activeFor}). A {@link ManagerEntry} row is always pinned to the top
  * of the sidebar (the manager area ships in v1, not feature-flagged, murilo 2026-06-11); its
@@ -35,6 +35,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PieChart,
+  ShieldCheck,
   Smile,
   TrendingUp,
   User,
@@ -147,9 +148,10 @@ const DESKTOP_NAV_ITEMS: readonly NavItem[] = [
   { labelKey: "home", href: "/", icon: House, flag: "home" },
   { labelKey: "portfolio", href: "/portfolio", icon: PieChart, flag: "portfolio" },
   { labelKey: "strategies", href: "/strategies", icon: TrendingUp, flag: "strategies" },
+  { labelKey: "cashPlus", href: "/cash-plus", icon: CircleDollarSign, flag: "cashPlus" },
   { labelKey: "cards", href: "/cards", icon: CreditCard, flag: "cards", mockOnly: true },
   { labelKey: "deposit", href: "/deposit", icon: ArrowDownToLine, flag: "deposit" },
-
+  { labelKey: "tools", href: "/tools", icon: ShieldCheck, flag: "hookTools" },
   { labelKey: "profile", href: "/profile", icon: User, flag: "profile" },
   // Manager-only incentive program, then Rubber Rush pinned LAST (both desktop-only, rewards-gated).
   {
