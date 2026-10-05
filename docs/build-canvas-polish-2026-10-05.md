@@ -36,3 +36,10 @@ Independent review (GPT-6.1-sol) found and resolved: a 1px viewport on exception
 The explicit manual-swap gate now protects both Review and the launch compiler. [POO-2238](https://linear.app/yeildbay/issue/POO-2238) tracks execution wiring and the missing amount/route/recovery rules. No backend quote delivery is claimed missing: POO-2148 is already Done.
 
 Delivery PR links are recorded below as each slice merges.
+
+
+- Viewport and sidebar: [PR #105](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/105), merge b6df4ae9.
+- Connections and fixed locks: [PR #106](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/106), merge 941958bd.
+- Manual Swap and spoke configuration: [PR #107](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/107).
+
+Public CI lint, typecheck, i18n and config checks passed for the first slice. Remote dependency audit reports pre-existing vulnerabilities; no dependency or lockfile changes are included. Remaining full CI jobs were still running at merge; focused local verification is the validation claimed here.
