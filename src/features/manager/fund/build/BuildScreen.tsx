@@ -422,6 +422,8 @@ export function BuildScreen({
         palette={<BuildPalette {...controller.paletteProps} />}
         canvas={
           <CanvasViewport
+            fillContainer
+            fitOnResize
             graphSize={graphSize}
             onBackgroundClick={controller.onBackgroundClick}
             viewportRef={viewportRef}

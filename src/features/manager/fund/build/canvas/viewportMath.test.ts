@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-022
  * @name viewportMath tests
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 rules v1)
  * @analytics-events none, pure geometry; the Build screen (PP-MGR-SCR-002, S7) owns every event
  *
  * The geometry of the Build canvas viewport (handoff v1.2 [I8], [I9], default D8): fit, zoom around a
@@ -42,6 +42,7 @@ describe("ZOOM constants", () => {
       FIT_PAD_X: 24,
       FIT_PAD_Y: 56,
       FIT_TOP: 16,
+      FIT_CONTROLS: 128,
       PAN_THRESHOLD: 4,
     });
   });
@@ -371,4 +372,14 @@ describe("formatZoom", () => {
     expect(formatZoom(1.5)).toBe(150);
     expect(formatZoom(0.255)).toBe(26);
   });
+});
+
+it("POO-2236 centers a complete Build graph above the controls on a short screen", () => {
+  const canvas = { width: 700, height: 320 };
+  const graph = { width: 1600, height: 900 };
+  const view = computeFit(canvas, graph, true);
+  expect(view.x + (graph.width * view.scale) / 2).toBeCloseTo(canvas.width / 2);
+  expect(view.y + (graph.height * view.scale) / 2).toBeCloseTo((canvas.height - 128) / 2);
+  expect(view.y).toBeGreaterThanOrEqual(12);
+  expect(view.y + graph.height * view.scale).toBeLessThanOrEqual(canvas.height - 124);
 });

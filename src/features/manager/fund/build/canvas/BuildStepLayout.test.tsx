@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-045
  * @name BuildStepLayout tests
- * @implements-rules-version v1 (POO-2152 and POO-2202 rules v1)
+ * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 and POO-2202 rules v1)
  * @analytics-events none, the layout reports presses through its props; the Build screen
  *   (PP-MGR-SCR-002, S7) owns every event
  *
@@ -68,7 +68,7 @@ describe("BuildStepLayout: heading", () => {
 
 describe("BuildStepLayout: grid", () => {
   // @rule AN3
-  it("[AN3] lays palette, canvas and panel in a 220 / flexible / 360 grid, gap 24, at least 640 high", () => {
+  it("[AN3] lays palette, canvas and panel in a 220 / flexible / 360 grid, gap 24", () => {
     const { container } = renderLayout();
 
     const grid = container.querySelector<HTMLElement>("[data-build-grid]");
@@ -77,7 +77,7 @@ describe("BuildStepLayout: grid", () => {
       "grid",
       "xl:grid-cols-[220px_minmax(0,1fr)_360px]",
       "xl:gap-6",
-      "min-h-[640px]",
+      "min-h-0",
     ]) {
       expect(grid?.className).toContain(token);
     }
@@ -89,11 +89,11 @@ describe("BuildStepLayout: grid", () => {
   });
 
   // @rule AN3
-  it("[AN3] the panel column is top aligned and hugs its content; the canvas column can shrink", () => {
+  it("[AN3] the side columns scroll while the canvas column can shrink", () => {
     const { container } = renderLayout();
 
     const columns = Array.from(container.querySelector("[data-build-grid]")?.children ?? []);
-    expect(columns[2]?.className).toContain("self-start");
+    expect(columns[2]?.className).toContain("overflow-y-auto");
     expect(columns[1]?.className).toContain("min-w-0");
   });
 });
@@ -102,13 +102,14 @@ describe("BuildStepLayout: expanding configuration panel (POO-2202)", () => {
   // @rule R1, R2: intrinsic panel content must reserve space before navigation,
   // while the canvas retains its intended 640px viewport. JSDOM has no layout
   // engine, so this guards the CSS sizing contract rather than fake rectangles.
-  it("reserves the panel's full height above navigation without growing the canvas", () => {
+  it("keeps panel content scrollable above navigation without growing the canvas", () => {
     const { container } = renderLayout();
     const grid = container.querySelector<HTMLElement>("[data-build-grid]");
     const canvasColumn = grid?.children[1];
-    expect(grid).toHaveClass("min-h-[640px]");
+    expect(grid).toHaveClass("min-h-0");
     expect(grid).not.toHaveClass("h-[640px]");
-    expect(canvasColumn).toHaveClass("h-[max(640px,calc(100dvh-280px))]", "self-start");
+    expect(canvasColumn).toHaveClass("h-full", "min-h-0");
+    expect(grid?.children[2]).toHaveClass("overflow-y-auto");
     expect(
       (grid?.compareDocumentPosition(bar(container)) ?? 0) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
@@ -172,4 +173,43 @@ describe("BuildStepLayout: the sticky bar", () => {
     // The notice precedes Next in reading order.
     expect(notice.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
+});
+
+it("POO-2236 measures canvas room before the action bar and scrolls side columns", () => {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return {
+      top: this.hasAttribute("data-build-grid") ? 300 : 0,
+      height: this.hasAttribute("data-builder-action-bar") ? 80 : 0,
+    } as DOMRect;
+  });
+  vi.stubGlobal("innerHeight", 700);
+  const { container } = renderLayout();
+  const grid = container.querySelector<HTMLElement>("[data-build-grid]");
+  expect(grid?.style.height).toBe("272px");
+  expect(grid?.children[0]).toHaveClass("overflow-y-auto");
+  expect(grid?.children[2]).toHaveClass("overflow-y-auto");
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+
+it("preserves 240px of usable canvas on a short scrolled page (POO-2236)", () => {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return {
+      top: this.hasAttribute("data-build-grid") ? 300 : 0,
+      height: this.hasAttribute("data-builder-action-bar") ? 80 : 0,
+    } as DOMRect;
+  });
+  vi.stubGlobal("innerHeight", 300);
+  vi.stubGlobal("scrollY", 0);
+  try {
+    const { container } = renderLayout();
+    expect(container.querySelector<HTMLElement>("[data-build-grid]")?.style.height).toBe("240px");
+  } finally {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  }
 });

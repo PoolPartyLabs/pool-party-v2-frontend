@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-046
  * @name CanvasViewport
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 rules v1)
  * @analytics-events none, a presentational container; the Build screen (PP-MGR-SCR-002, S7) owns
  *   every event, and a background click is reported through `onBackgroundClick`
  *
@@ -52,6 +52,10 @@ export interface CanvasViewportProps {
   graphSize: Size | null;
   /** Optional opening scale for Manage. Build defaults to fit. */
   initialScale?: number;
+  /** Build sizes the canvas from the measured room in its step layout. */
+  fillContainer?: boolean;
+  /** Refit and center when Build canvas dimensions change. */
+  fitOnResize?: boolean;
   /** A press on the background that did not pan (I5: clears the selection, in S5). */
   onBackgroundClick?: () => void;
   /** Receives {@link CanvasViewportHandle}. */
@@ -89,6 +93,8 @@ function ZoomButton({
 export function CanvasViewport({
   graphSize,
   initialScale,
+  fillContainer = false,
+  fitOnResize = false,
   onBackgroundClick,
   viewportRef,
   children,
@@ -99,6 +105,7 @@ export function CanvasViewport({
   const { view, readoutPct, zoomIn, zoomOut, fit, revealRect, panning, bind } = useCanvasViewport({
     graphSize,
     initialScale,
+    fitOnResize,
     canvasRef,
     onBackgroundClick,
   });
@@ -114,7 +121,8 @@ export function CanvasViewport({
       // sits outside the visible box (keyboard Tab) would scroll the box itself and drift the graph
       // and the zoom controls away from the view the transform describes. `clip` cannot scroll.
       className={cn(
-        "relative h-[max(640px,calc(100dvh-280px))] w-full touch-none select-none overflow-clip rounded-xl bg-background",
+        "relative w-full touch-none select-none overflow-clip rounded-xl bg-background",
+        fillContainer ? "h-full min-h-0" : "h-[max(640px,calc(100dvh-280px))]",
         panning ? "cursor-grabbing" : "cursor-grab",
       )}
       {...bind}

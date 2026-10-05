@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-008
  * @name useCanvasViewport
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 rules v1)
  * @analytics-events none, a viewport hook; the Build screen (PP-MGR-SCR-002, S7) owns every event
  *
  * Pan, zoom and fit for the Build canvas (handoff v1.2 [I8], [I5] part, [I9] part). The geometry is
@@ -119,6 +119,8 @@ export interface UseCanvasViewportInput {
   graphSize: Size | null;
   /** Optional opening scale, preserving fit as the default for Build. */
   initialScale?: number;
+  /** Build refits when its available canvas room changes, with a centered opening view. */
+  fitOnResize?: boolean;
   /** The canvas container: measured, and the target of the native wheel listener. */
   canvasRef: RefObject<HTMLElement | null>;
   /** A background press that did not pan (handoff [I5]: clears the selection, in S5). */
@@ -152,6 +154,7 @@ function isMeasured(size: Size | null): size is Size {
 export function useCanvasViewport({
   graphSize,
   initialScale,
+  fitOnResize = false,
   canvasRef,
   onBackgroundClick,
 }: UseCanvasViewportInput): UseCanvasViewportResult {
@@ -168,6 +171,7 @@ export function useCanvasViewport({
   onBackgroundClickRef.current = onBackgroundClick;
   const dragRef = useRef<DragState | null>(null);
   const fittedRef = useRef(false);
+  const fittedSizeRef = useRef<Size | null>(null);
 
   // Measure the canvas, and keep measuring it: the column is flexible (handoff [AN3]).
   useIsomorphicLayoutEffect(() => {
@@ -188,21 +192,25 @@ export function useCanvasViewport({
     return () => observer.disconnect();
   }, [canvasRef]);
 
-  // [I8] The canvas opens at fit when the graph size first arrives. Later sizes are re-flows, and
-  // [I9] says the viewport does not jump on a re-flow, so this runs once.
+  // [I8] Fit on arrival. Build also refits when available canvas dimensions change (POO-2236);
+  // [I9] graph-only reflows retain the current view and use the screen's minimal reveal.
   useIsomorphicLayoutEffect(() => {
-    if (fittedRef.current || !graphSize || !isMeasured(canvasSize)) return;
+    if (!graphSize || !isMeasured(canvasSize)) return;
+    const before = fittedSizeRef.current;
+    const resized = before?.width !== canvasSize.width || before?.height !== canvasSize.height;
+    if (fittedRef.current && (!fitOnResize || !resized)) return;
     fittedRef.current = true;
+    fittedSizeRef.current = canvasSize;
     setView(
       initialScale === undefined
-        ? computeFit(canvasSize, graphSize)
+        ? computeFit(canvasSize, graphSize, fitOnResize)
         : {
             scale: Math.max(0.25, Math.min(1.5, initialScale)),
             x: Math.max(0, (canvasSize.width - graphSize.width * initialScale) / 2),
             y: 0,
           },
     );
-  }, [graphSize, canvasSize, initialScale]);
+  }, [graphSize, canvasSize, initialScale, fitOnResize]);
 
   // [I8] The wheel, native and non-passive (see the file header).
   useEffect(() => {
@@ -248,8 +256,8 @@ export function useCanvasViewport({
     const graph = graphSizeRef.current;
     const canvas = canvasSizeRef.current;
     if (!graph || !isMeasured(canvas)) return;
-    setView(computeFit(canvas, graph));
-  }, []);
+    setView(computeFit(canvas, graph, fitOnResize));
+  }, [fitOnResize]);
 
   const revealRect = useCallback((rect: ViewRect) => {
     const canvas = canvasSizeRef.current;

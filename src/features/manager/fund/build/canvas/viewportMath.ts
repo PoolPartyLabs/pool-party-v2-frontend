@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-022
  * @name viewportMath
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 rules v1)
  * @analytics-events none, pure geometry; the Build screen (PP-MGR-SCR-002, S7) owns every event
  *
  * The geometry of the Build canvas viewport (handoff v1.2 [I8], [I9], coordinator default D8).
@@ -61,6 +61,8 @@ export const ZOOM = {
   FIT_PAD_X: 24,
   FIT_PAD_Y: 56,
   FIT_TOP: 16,
+  /** 116px zoom stack plus its 12px bottom inset. */
+  FIT_CONTROLS: 128,
   PAN_THRESHOLD: 4,
 } as const;
 
@@ -83,7 +85,24 @@ const GRID_EPSILON = 1e-6;
  * An empty graph, or a canvas not measured yet (a side at or under its padding), fits at 100%
  * rather than at zero or a negative scale.
  */
-export function computeFit(canvas: Size, graph: Size): ViewTransform {
+export function computeFit(canvas: Size, graph: Size, center = false): ViewTransform {
+  if (center) {
+    // Build reserves the bottom control stack; Manage retains its original fit geometry.
+    const roomHeight = Math.max(1, canvas.height - ZOOM.FIT_CONTROLS);
+    const scale = Math.max(
+      Number.EPSILON,
+      Math.min(
+        1,
+        graph.width > 0 ? Math.max(1, canvas.width - 24) / graph.width : 1,
+        graph.height > 0 ? Math.max(1, roomHeight - 24) / graph.height : 1,
+      ),
+    );
+    return {
+      scale,
+      x: (canvas.width - graph.width * scale) / 2,
+      y: (roomHeight - graph.height * scale) / 2,
+    };
+  }
   const byWidth = graph.width > 0 ? (canvas.width - ZOOM.FIT_PAD_X) / graph.width : 1;
   const byHeight = graph.height > 0 ? (canvas.height - ZOOM.FIT_PAD_Y) / graph.height : 1;
   const raw = Math.min(1, byWidth, byHeight);
