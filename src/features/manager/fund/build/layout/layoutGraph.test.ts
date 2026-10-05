@@ -196,10 +196,7 @@ describe("[C2] the spine", () => {
         ? ["deposit", "idleInput", "idleOutput", "income", "withdraw"]
         : ["deposit", "idleInput", "idleOutput", "withdraw"],
     );
-    expect(layout.spine.filter((n) => n.locked).map((n) => n.role)).toEqual([
-      "deposit",
-      "withdraw",
-    ]);
+    expect(layout.spine.every((node) => node.locked)).toBe(true);
     for (const n of layout.spine)
       expect([n.rect.w, n.rect.h]).toEqual([LAYOUT.SPINE_W, LAYOUT.CARD_H]);
   });
@@ -471,7 +468,10 @@ describe("[C20] a spoke is symmetric about its own centre", () => {
       const c = centreX(group.rect);
       const bridge = layout.bridges.find((b) => b.network === group.network);
       expect(bridge && centreX(bridge.rect)).toBe(c);
-      expect(verticalsAt(layout, "structural", c)).toContainEqual([LAYOUT.BUS_Y, LAYOUT.ROW_TOP]);
+      expect(verticalsAt(layout, "structural", c)).toContainEqual([
+        LAYOUT.BUS_Y + LAYOUT.LINE_W / 2,
+        LAYOUT.ROW_TOP,
+      ]);
       const label = layout.shareLabels.find(
         (l) => l.target.chainId === null && l.target.network === group.network,
       );
@@ -901,7 +901,17 @@ describe("[A3] one spacing rule set", () => {
       const first = blockRect(layout, chain.steps[0]?.id ?? "");
       const bus = network === f.input.hubNetwork ? LAYOUT.BUS_Y : LAYOUT.INNER_BUS_Y;
       expect(first.y - bus).toBe(LAYOUT.STUB);
-      expect(verticalsAt(layout, "structural", centreX(first))).toContainEqual([bus, first.y]);
+      expect(verticalsAt(layout, "structural", centreX(first))).toContainEqual([
+        bus +
+          (layout.edges.some(
+            (edge) =>
+              edge.points[0]?.y === bus + LAYOUT.LINE_W / 2 &&
+              edge.points[1]?.y === bus + LAYOUT.LINE_W / 2,
+          )
+            ? LAYOUT.LINE_W / 2
+            : 0),
+        first.y,
+      ]);
     }
   });
 
@@ -955,7 +965,9 @@ describe("[L3] [L4] [L10] on every fixture", () => {
     const layout = layoutGraph(f.input, EN);
     const stubs = layout.edges
       .filter(
-        (e) => e.points.every((p) => p.x === e.points[0]?.x) && e.points[0]?.y === LAYOUT.BUS_Y,
+        (e) =>
+          e.points.every((p) => p.x === e.points[0]?.x) &&
+          e.points[0]?.y === LAYOUT.BUS_Y + LAYOUT.LINE_W / 2,
       )
       .map((e) => e.points[0]?.x ?? 0);
     const xs = [...stubs, layout.spineCentreX];

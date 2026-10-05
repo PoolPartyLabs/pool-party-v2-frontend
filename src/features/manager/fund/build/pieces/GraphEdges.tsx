@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-054
  * @name GraphEdges
- * @implements-rules-version v1 (POO-2154 rules v1)
+ * @implements-rules-version v1 (POO-2154 rules v1); POO-2235 rules v1
  * @analytics-events none, a presentational piece; a hover is reported through `onEdgeHoverChange`
  *   and the Build screen (PP-MGR-SCR-002, S7) owns every event
  *
@@ -50,6 +50,8 @@ export interface GraphEdgesProps {
   edges: ReadonlyArray<PieceEdge>;
   /** The edge drawn 2 px `primary`, or none. */
   highlightedId: string | null;
+  /** Complete hover paths; resting segments remain independently toned. */
+  connections?: ReadonlyArray<PieceEdge>;
   /** Reports the edge under the pointer (its id) and `null` when it leaves. */
   onEdgeHoverChange?(edgeId: string | null): void;
 }
@@ -116,6 +118,7 @@ export function GraphEdges({
   edges,
   highlightedId,
   onEdgeHoverChange,
+  connections,
 }: GraphEdgesProps) {
   // The ends that meet another line, closed once per set of edges (not on every hover).
   const drawn = useMemo(
@@ -138,11 +141,11 @@ export function GraphEdges({
       className="pointer-events-none block overflow-visible"
     >
       {ordered.map((edge) => {
-        const highlighted = edge.id === highlightedId;
+        const highlighted = !connections && edge.id === highlightedId;
         return (
           <polyline
             key={edge.id}
-            data-edge-id={edge.id}
+            data-edge-id={connections && edge.id === highlightedId ? undefined : edge.id}
             data-edge-tone={edge.tone}
             data-highlighted={highlighted ? "" : undefined}
             points={drawn.get(edge.id)}
@@ -162,12 +165,29 @@ export function GraphEdges({
           />
         );
       })}
+      {connections
+        ?.filter((edge) => edge.id === highlightedId)
+        .map((edge) => (
+          <polyline
+            key={`connection:${edge.id}`}
+            data-connection-id={edge.id}
+            data-edge-id={edge.id}
+            data-highlighted=""
+            points={pointsOf(edge.points)}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinejoin="miter"
+            strokeLinecap="butt"
+            className="text-primary"
+          />
+        ))}
       {onEdgeHoverChange
-        ? edges.map((edge) => (
+        ? (connections ?? edges).map((edge) => (
             <polyline
               key={`hit:${edge.id}`}
               data-edge-hit={edge.id}
-              points={drawn.get(edge.id)}
+              points={connections ? pointsOf(edge.points) : drawn.get(edge.id)}
               fill="none"
               stroke="transparent"
               strokeWidth={HIT_WIDTH}

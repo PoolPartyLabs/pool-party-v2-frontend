@@ -44,3 +44,36 @@ describe("fee conversion return path (POO-2213)", () => {
     expect(rebuilt.edges.some((edge) => edge.id.includes("c-pool-fees"))).toBe(false);
   });
 });
+
+describe("Build connection polish (POO-2235)", () => {
+  it("locks every fixed spine and keeps Income outgoing capital neutral", () => {
+    const graph = layoutGraph(BUILD_CANVAS_FIXTURES.canvasC.input, { startHereWidth: 420 });
+    expect(graph.spine).toHaveLength(5);
+    expect(graph.spine.every((node) => node.locked)).toBe(true);
+    expect(graph.edges.find((edge) => edge.id === "output:income")?.kind).toBe("structural");
+  });
+  it("joins bus centerlines and exposes clipped block-to-block connections", () => {
+    const graph = layoutGraph(BUILD_CANVAS_FIXTURES.canvasC.input, { startHereWidth: 420 });
+    const bus = graph.edges.find((edge) => edge.id === "bus:idleInput");
+    const stub = graph.edges.find((edge) => edge.id === "stub:chain:c-pool");
+    expect(bus).toBeDefined();
+    expect(stub?.points[0]?.y).toBe(bus?.points[0]?.y);
+    const connection = graph.connections?.find((entry) => entry.id === "stub:chain:c-pool");
+    expect(connection?.points.length).toBeGreaterThan(2);
+    expect(connection?.points.at(-1)?.y).toBe(graph.blocks[0]?.rect.y);
+    expect(connection?.points[0]?.x).toBe(graph.spineCentreX);
+  });
+});
+
+it("clips sibling principal paths and links income conversion as two separate connections (POO-2235)", () => {
+  const graph = layoutGraph(BUILD_CANVAS_FIXTURES.canvasC.input, { startHereWidth: 420 });
+  const pool = graph.connections?.find((entry) => entry.id === "principal:chain:c-pool");
+  const supply = graph.connections?.find((entry) => entry.id === "principal:chain:c-supply");
+  const output = graph.spine.find((entry) => entry.role === "idleOutput");
+  expect(pool?.points.at(-1)).toEqual({ x: (output?.rect.x ?? 0) + 118, y: output?.rect.y });
+  expect(supply?.points.at(-1)).toEqual(pool?.points.at(-1));
+  expect(pool?.points.some((point) => point.x === 320)).toBe(false);
+  expect(
+    graph.connections?.find((entry) => entry.id === "income:block:c-pool-fees")?.points.at(-1)?.y,
+  ).toBe(graph.feeSwaps?.[0]?.rect.y);
+});

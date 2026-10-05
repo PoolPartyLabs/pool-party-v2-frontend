@@ -681,7 +681,30 @@ describe.each(FIGMA_ORACLES)("$name against $source", (oracle) => {
 
   // @rule A1 @rule L5 @rule L10
   it("draws every line segment, and no other", () => {
-    expect(figmaEdges(layout)).toEqual(updated?.edges ?? toFigma(oracle.edges));
+    // POO-2235: move nominal vertical junction endpoints onto horizontal centerlines.
+    const expected = updated?.edges ?? toFigma(oracle.edges);
+    const horizontal = expected.filter((entry) => entry[3] !== 1.5);
+    const adjusted = expected.map(([kind, x, y, w, h]): FigmaEdge => {
+      if (w !== 1.5) return [kind, x, y, w, h];
+      const joins = (at: number) =>
+        horizontal.some(
+          (run) =>
+            Math.abs(run[2] - at) < 0.01 && x + 0.75 >= run[1] && x + 0.75 <= run[1] + run[3],
+        );
+      const top = joins(y) ? y + 0.75 : y;
+      const bottom = joins(y + h) ? y + h + 0.75 : y + h;
+      return [
+        kind === "income" &&
+        y === (layout.spine.find((node) => node.role === "income")?.rect.y ?? -1000) + 62
+          ? "structural"
+          : kind,
+        x,
+        top,
+        w,
+        bottom - top,
+      ];
+    });
+    expect(figmaEdges(layout)).toEqual(sortEdges(adjusted));
   });
 
   // @rule L10 @rule C8
@@ -759,9 +782,9 @@ describe("worked example 1, POO-2213 fee-return override of handoff (canvas C)",
   // @rule L8 @rule C10
   it("[L8, POO-2213] keeps the spine centered and routes the drops around fee conversion", () => {
     expect(layout.spineCentreX).toBe(304);
-    expect(verticalsAt(layout, "principal", 100)).toEqual([[406, 418]]);
-    expect(verticalsAt(layout, "income", 124)).toEqual([[406, 418]]);
-    expect(verticalsAt(layout, "principal", 320)).toEqual([[306, 480]]);
+    expect(verticalsAt(layout, "principal", 100)).toEqual([[406, 418.75]]);
+    expect(verticalsAt(layout, "income", 124)).toEqual([[406, 418.75]]);
+    expect(verticalsAt(layout, "principal", 320)).toEqual([[306, 480.75]]);
   });
 });
 
@@ -818,7 +841,7 @@ describe("worked example 2, POO-2213 fee-return override of handoff numbers (one
   it("[L9, POO-2213] draws principal below fee conversion and income 24 under it", () => {
     expect(horizontalRuns(layout, "principal", 578)).toEqual([[12, 624]]);
     expect(verticalXs(layout, "principal")).toEqual([12, 100, 316, 330, 404, 624]);
-    expect(verticalsAt(layout, "principal", 330)).toEqual([[578, 626]]);
+    expect(verticalsAt(layout, "principal", 330)).toEqual([[578.75, 626]]);
     expect(horizontalRuns(layout, "income", 602)).toEqual([[112, 598]]);
     expect(verticalXs(layout, "income")).toEqual([112, 124, 416, 428, 598]);
   });

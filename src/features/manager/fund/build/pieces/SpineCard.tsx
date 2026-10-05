@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-048
  * @name SpineCard
- * @implements-rules-version v1 (POO-2154 rules v1)
+ * @implements-rules-version v1 (POO-2154 rules v1); POO-2235 rules v1
  * @analytics-events none, a presentational piece that reports nothing; the Build screen
  *   (PP-MGR-SCR-002, S7) owns every event
  *
@@ -10,7 +10,7 @@
  * (S6 reads the `spine.*` keys); this piece only draws.
  *
  * 236 x 62 with the position card's anatomy (radius 20, `surface`, a 1 px `border` stroke drawn
- * inside, padding 11 / 13, gap 10, the 28 x 28 icon box, title over caption). Deposit and Withdraw
+ * inside, padding 11 / 13, gap 10, the 28 x 28 icon box, title over caption). All fixed spine roles
  * carry a 14 px lock in `muted-foreground` at the right end, with the tooltip "Fixed: USDC on
  * Arbitrum" on hover and on focus ([C19]).
  *
@@ -40,7 +40,7 @@ export interface SpineCardProps {
   title: string;
   caption: string;
   icon: BlockIcon;
-  /** Deposit and Withdraw: cannot be removed, moved or configured (C2). */
+  /** Fixed spine roles cannot be removed, moved or configured (POO-2235). */
   locked: boolean;
   /** The lock's tooltip and accessible name ("Fixed: USDC on Arbitrum"). */
   lockTooltip?: string;

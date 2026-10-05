@@ -410,3 +410,13 @@ export function shareNumber(pct: number): string {
 export function formatShare(pct: number): string {
   return formatPercent(pct, shareDigits(pct));
 }
+
+/** Complete hover paths mapped with the same tone and stable id contract as resting edges. */
+export function pieceConnections(layout: GraphLayout): PieceEdge[] {
+  const unique = occurrences();
+  return (layout.connections ?? layout.edges).map((edge) => ({
+    id: unique(edge.id),
+    tone: edgeTone(edge.kind),
+    points: edge.points,
+  }));
+}

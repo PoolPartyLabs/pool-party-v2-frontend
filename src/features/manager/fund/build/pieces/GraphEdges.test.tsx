@@ -278,3 +278,40 @@ describe("GraphEdges", () => {
     expect(container.textContent).toBe("");
   });
 });
+
+it("highlights the complete clipped connection while retaining neutral resting branches (POO-2235)", () => {
+  const resting: PieceEdge[] = [
+    {
+      id: "bus",
+      tone: "muted",
+      points: [
+        { x: 0, y: 20 },
+        { x: 100, y: 20 },
+      ],
+    },
+  ];
+  const connection: PieceEdge = {
+    id: "branch",
+    tone: "muted",
+    points: [
+      { x: 50, y: 0 },
+      { x: 50, y: 20 },
+      { x: 0, y: 20 },
+      { x: 0, y: 40 },
+    ],
+  };
+  const { container } = render(
+    <GraphEdges
+      width={100}
+      height={40}
+      edges={resting}
+      connections={[connection]}
+      highlightedId="branch"
+    />,
+  );
+  expect(container.querySelector("[data-connection-id=branch]")).toHaveAttribute(
+    "points",
+    "50,0 50,20 0,20 0,40",
+  );
+  expect(lineOf(container, "bus")).not.toHaveAttribute("data-highlighted");
+});
