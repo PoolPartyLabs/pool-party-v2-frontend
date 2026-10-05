@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-045
  * @name BuildStepLayout.stories
- * @implements-rules-version v1 (POO-2152 and POO-2202 rules v1)
+ * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 and POO-2202 rules v1)
  * @analytics-events none, a story file of a presentational layout
  *
  * The frame of the Build step (POO-2152, handoff v1.2 [AN2], [AN3], [AN4]) with its three columns:
@@ -44,7 +44,7 @@ const meta = {
   args: {
     palette: <PlaceholderPalette />,
     canvas: (
-      <CanvasViewport graphSize={CANVAS_C_SIZE}>
+      <CanvasViewport graphSize={CANVAS_C_SIZE} fillContainer fitOnResize>
         <PlaceholderGraph {...CANVAS_C_SIZE} />
       </CanvasViewport>
     ),
@@ -68,7 +68,7 @@ export const WithNotice: Story = {
   args: { notice: "Add a block before Review." },
 };
 
-/** POO-2202: translated fields and a leave warning must push navigation below actions. */
+/** POO-2202: translated fields and a leave warning stay reachable in the scrolling panel. */
 export const LongPanelWithLeaveNotice: Story = {
   args: {
     panel: (

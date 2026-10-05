@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-LAY-001
  * @name AppShell
- * @implements-rules-version v1; POO-2209 rules v1; POO-2220 rules v1
+ * @implements-rules-version v1 (POO-2236 rules v1); v1; POO-2209 rules v1; POO-2220 rules v1
  *
  * Authenticated app shell. Desktop (lg+): a persistent left sidebar (brand + nav) and a top bar
  * (Dev menu + rewards pill + locale switch + wallet menu). Mobile: a top brand bar (brand +
@@ -40,7 +40,7 @@ import {
   User,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { LocaleSwitcher } from "@/components/ui/LocaleSwitcher";
 import { MobileLocaleSheet } from "@/components/ui/MobileLocaleSheet";
 import { ManagerEntry } from "@/features/manager/components/ManagerEntry";
@@ -274,7 +274,12 @@ export function AppShell({ children, className }: AppShellProps) {
   const [effectiveBuild, setEffectiveBuild] = useState(false);
   const buildArea =
     (pathname === "/manager/new" || pathname.startsWith("/funds/")) && effectiveBuild;
-  const collapsed = buildArea || savedCollapsed;
+  const expandableBuild = buildArea && pathname === "/manager/new";
+  const [buildCollapsed, setBuildCollapsed] = useState(true);
+  useEffect(() => {
+    if (!expandableBuild) setBuildCollapsed(true);
+  }, [expandableBuild]);
+  const collapsed = expandableBuild ? buildCollapsed : buildArea || savedCollapsed;
 
   // Literal t() calls per key (the i18n usage scan is static — no dynamic keys).
   const navLabels: Record<NavLabelKey, string> = {
@@ -353,9 +358,10 @@ export function AppShell({ children, className }: AppShellProps) {
           <button
             type="button"
             onClick={() => {
-              if (!buildArea) setCollapsed(!collapsed);
+              if (expandableBuild) setBuildCollapsed(!collapsed);
+              else if (!buildArea) setCollapsed(!collapsed);
             }}
-            disabled={buildArea}
+            disabled={buildArea && !expandableBuild}
             aria-expanded={!collapsed}
             title={collapsed ? t("nav.expand") : t("nav.collapse")}
             aria-label={collapsed ? t("nav.expand") : t("nav.collapse")}

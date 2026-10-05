@@ -490,3 +490,21 @@ it("POO-2226 widens an active authorized Manage canvas and restores saved layout
   );
   expect(screen.getByTestId("normal-body").parentElement).toHaveClass("max-w-7xl");
 });
+
+it("POO-2236 opens Build collapsed, permits expansion, and resets on reentry without saving it", async () => {
+  localStorage.setItem("pp.sidebar.collapsed", "false");
+  nav.pathname = "/manager/new";
+  renderWithProviders(
+    <AppShell>
+      <PhaseHarness />
+    </AppShell>,
+  );
+  await userEvent.click(screen.getByText("Enter Build"));
+  await userEvent.click(screen.getByRole("button", { name: "Expand" }));
+  expect(screen.getByRole("button", { name: "Collapse" })).toHaveAttribute("aria-expanded", "true");
+  expect(localStorage.getItem("pp.sidebar.collapsed")).toBe("false");
+  await userEvent.click(screen.getByText("Enter Review"));
+  await userEvent.click(screen.getByText("Enter Build"));
+  expect(screen.getByRole("button", { name: "Expand" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Expand" })).toHaveAttribute("aria-expanded", "false");
+});

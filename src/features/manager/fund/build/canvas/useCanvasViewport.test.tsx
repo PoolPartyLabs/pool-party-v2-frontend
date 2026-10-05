@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-008
  * @name useCanvasViewport tests
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 rules v1)
  * @analytics-events none, a viewport hook; the Build screen (PP-MGR-SCR-002, S7) owns every event
  *
  * The behaviour of the Build canvas viewport (handoff v1.2 [I8], [I5] part, [I9] part):
@@ -54,12 +54,14 @@ function fitView(): void {
 function Harness({
   graphSize,
   onBackgroundClick,
+  fitOnResize = false,
 }: {
   graphSize: Size | null;
   onBackgroundClick?: () => void;
+  fitOnResize?: boolean;
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const viewport = useCanvasViewport({ graphSize, canvasRef, onBackgroundClick });
+  const viewport = useCanvasViewport({ graphSize, canvasRef, onBackgroundClick, fitOnResize });
   current = viewport;
   return (
     <div ref={canvasRef} data-testid="canvas" {...viewport.bind}>
@@ -639,4 +641,36 @@ describe("isCanvasBackground", () => {
     expect(isCanvasBackground(document.body, container)).toBe(false);
     expect(isCanvasBackground(null, container)).toBe(false);
   });
+});
+
+it("POO-2236 refits and centers Build after available canvas space changes", () => {
+  let measure: ResizeObserverCallback | undefined;
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(callback: ResizeObserverCallback) {
+        measure = callback;
+      }
+      observe() {}
+      disconnect() {}
+    },
+  );
+  let size = { width: 900, height: 480 };
+  vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockImplementation(() =>
+    rect(0, 0, size.width, size.height),
+  );
+  const graph = { width: 1200, height: 800 };
+  const view = render(<Harness graphSize={graph} fitOnResize />);
+  expect(result().view).toEqual(computeFit(size, graph, true));
+  act(() => result().zoomIn());
+  size = { width: 600, height: 320 };
+  act(() => measure?.([], {} as ResizeObserver));
+  expect(result().view).toEqual(computeFit(size, graph, true));
+  const resized = result().view;
+  view.rerender(<Harness graphSize={{ width: 1400, height: 800 }} fitOnResize />);
+  expect(result().view).toEqual(resized);
+  view.unmount();
+  render(<Harness graphSize={graph} fitOnResize />);
+  expect(result().view).toEqual(computeFit(size, graph, true));
+  vi.unstubAllGlobals();
 });

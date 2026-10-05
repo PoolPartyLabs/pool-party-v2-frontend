@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-046
  * @name CanvasViewport.stories
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 rules v1)
  * @analytics-events none, a story file of a presentational container
  *
  * The Build canvas container (POO-2152, handoff v1.2 [AN5], [AN6], [AN7], [I8]) around a stand-in

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-046
  * @name CanvasViewport tests
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 rules v1)
  * @analytics-events none, a presentational container; the Build screen (PP-MGR-SCR-002, S7) owns
  *   every event
  *
