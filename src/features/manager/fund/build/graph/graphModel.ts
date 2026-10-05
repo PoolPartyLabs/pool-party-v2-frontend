@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name graphModel
- * @implements-rules-version v1 (POO-2156 rules v1); POO-2213 rules v1
+ * @implements-rules-version v1 (POO-2156 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2237 rules v1
  * @analytics-events none, pure helpers of the graph renderer: activations leave the renderer through
  *   `onTarget` and the Build screen (PP-MGR-SCR-002, S7) owns every event.
  *
@@ -342,7 +342,9 @@ export function itemTarget(item: GraphItem): GraphTarget | null {
     case "label":
       return item.node.target;
     case "block":
-      return item.node.family === "position" ? { kind: "block", blockId: item.node.id } : null;
+      return item.node.family === "position" || (item.node.kind === "swap" && !item.node.auto)
+        ? { kind: "block", blockId: item.node.id }
+        : null;
     default:
       return null;
   }

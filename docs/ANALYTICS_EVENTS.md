@@ -350,3 +350,7 @@ POO-2223: `FundComposition` (PP-STR-CMP-040) is passive and reuses the parent `s
 | `app_error_shown` | PP-MGR-SCR-004, PP-MGR-CMP-086 | Sanitized entry/position/review read error. No upstream message, raw wallet or payload. |
 
 No submitted/completed event exists in this slice because no financial action or persisted future policy is executable. Do not emit completion when a draft is edited or review is shown. Execution instrumentation belongs with POO-2229/2231 wiring and must remain receipt/persistence driven.
+
+### Build auxiliary configuration (POO-2237, 2026-10-05)
+
+Emitter PP-MGR-SCR-002 reuses builder_block_applied, builder_block_discarded, builder_block_leave_blocked and builder_build_blocked via PP-MGR-HOK-014. The bounded block_kind union adds spoke; fields_changed adds tokenIn and tokenOut. These describe local draft edits only. No new funnel or settlement event is introduced. PP-MGR-CMP-087 delegates outcomes to the existing draft controller; no hover, zoom or per-field token identity is transmitted.

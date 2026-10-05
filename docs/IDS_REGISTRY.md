@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 669 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 671 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -927,3 +927,12 @@ PP-MGR-SCR-004 V2 entry is implemented in `ManageEntry.tsx` / `ManageScreen.tsx`
 | `PP-MGR-HOK-022` | Persistent report wait estimate and isolated countdown (`src/features/manager/fund/launch/useLaunchReportWait.ts`) | Hook | Provisioning 6550:615 / owner screenshot | Implemented | [POO-2233](https://linear.app/yeildbay/issue/POO-2233) | Separate browser metadata; absolute 19-minute display clock, no execution effects; @rules-v1 |
 
 POO-2233 updates PP-MGR-CMP-081 to one current-step card, current evidence and a pinned action footer. PP-MGR-HOK-019 projects an optional report wait start from PP-MGR-HOK-022; accepted-report polling and all signing/recovery rules remain in the existing runner.
+
+## Build canvas corrections, 2026-10-05
+
+| ID | Artifact | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-MGR-CMP-087` | AuxiliaryBlockPanel | Component | Figma DEV NOTES 8025:1819 plus owner request | Implemented | POO-2237 | `src/features/manager/fund/build/panel/AuxiliaryBlockPanel.tsx` @rules-v1 |
+| `PP-MGR-LIB-057` | auxiliaryConfig | Lib | Mandate token and spoke allocation rules | Implemented | POO-2237 | `src/features/manager/fund/build/plan/auxiliaryConfig.ts` @rules-v1 |
+
+POO-2235 updates existing graph/layout/pieces with continuous full-path hover, neutral Income output and five fixed locks. POO-2236 updates the existing AppShell/viewport with temporary sidebar state and fitted usable canvas space. See [delivery record](build-canvas-polish-2026-10-05.md).

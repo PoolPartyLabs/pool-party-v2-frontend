@@ -1171,6 +1171,15 @@
           "ineligible": "Ce pool n’est pas éligible.",
           "noLiquidity": "Ce pool n’a pas de liquidité active.",
           "incomplete": "La configuration du pool est incomplète."
+        },
+        "auxiliary": {
+          "swap": "Swap",
+          "spoke": "Allocation de la spoke",
+          "tokenIn": "Token source",
+          "tokenOut": "Token cible",
+          "empty": "Ajoutez au moins deux tokens de ce réseau au mandat.",
+          "invalidPair": "Choisissez deux tokens différents autorisés par le mandat sur ce réseau.",
+          "bounds": "Allocation : de {min}% à {max}% de la stratégie. Le minimum préserve les allocations des blocs existants."
         }
       },
       "network": {
@@ -1188,7 +1197,7 @@
         "unusedSpokeShare": "Un réseau réserve plus de capital que ses blocs n'en utilisent. Attribuez cette part à ses blocs, ou retirez le réseau.",
         "stackedPositions": "Retirez les blocs placés sous un bloc Fournir : ils ne peuvent pas encore être lancés.",
         "duplicateReserve": "Fournissez chaque actif dans un seul bloc. Retirez le second bloc Fournir du même actif.",
-        "unsupportedSwap": "Les swaps hors d'un pool ne peuvent pas encore être lancés. Fournissez le jeton qui arrive, ou retirez le Swap.",
+        "unsupportedSwap": "Ce Swap ne peut pas encore être lancé. Supprimez-le ou utilisez le token reçu dans Supply.",
         "unavailable": "La vérification n'est pas encore disponible."
       }
     },

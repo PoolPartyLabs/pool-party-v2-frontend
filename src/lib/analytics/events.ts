@@ -654,6 +654,7 @@ export const ANALYTICS_BUILD_BLOCK_KINDS = [
   "gmxPerp",
   "swap",
   "collectFees",
+  "spoke",
 ] as const;
 
 export type AnalyticsBuildBlockKind = (typeof ANALYTICS_BUILD_BLOCK_KINDS)[number];
@@ -673,6 +674,8 @@ export type AnalyticsBuildNetwork = (typeof ANALYTICS_BUILD_NETWORKS)[number];
  * reason above; `buildAnalytics.ts` maps them through a total `Record`.
  */
 export const ANALYTICS_BUILD_PANEL_FIELDS = [
+  "tokenIn",
+  "tokenOut",
   "pool",
   "asset",
   "range",

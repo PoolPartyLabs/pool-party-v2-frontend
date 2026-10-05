@@ -1171,6 +1171,15 @@
           "ineligible": "Deze pool komt niet in aanmerking.",
           "noLiquidity": "Deze pool heeft geen actieve liquiditeit.",
           "incomplete": "De poolconfiguratie is onvolledig."
+        },
+        "auxiliary": {
+          "swap": "Swap",
+          "spoke": "Spoke-allocatie",
+          "tokenIn": "Brontoken",
+          "tokenOut": "Doeltoken",
+          "empty": "Voeg minstens twee tokens van dit netwerk toe aan het mandaat.",
+          "invalidPair": "Kies twee verschillende tokens die het mandaat op dit netwerk toestaat.",
+          "bounds": "Allocatie: {min}% tot {max}% van de strategie. Het minimum behoudt de allocaties van bestaande blokken."
         }
       },
       "network": {
@@ -1188,7 +1197,7 @@
         "unusedSpokeShare": "Een netwerk reserveert meer kapitaal dan zijn blokken gebruiken. Geef dat aandeel aan zijn blokken, of verwijder het netwerk.",
         "stackedPositions": "Verwijder de blokken onder een Aanbieden-blok: die kunnen nog niet worden gelanceerd.",
         "duplicateReserve": "Bied elk asset in één blok aan. Verwijder het tweede Aanbieden-blok van hetzelfde asset.",
-        "unsupportedSwap": "Swaps buiten een pool kunnen nog niet worden gelanceerd. Bied de token aan die binnenkomt, of verwijder de Swap.",
+        "unsupportedSwap": "Deze Swap is nog niet beschikbaar bij de lancering. Verwijder hem of gebruik de ontvangen token voor Supply.",
         "unavailable": "Controleren is nog niet beschikbaar."
       }
     },

@@ -179,6 +179,20 @@ describe("planCounts: what the view and the abandonment carry (AE1)", () => {
 });
 
 describe("panelEventToAnalytics: the configuration panel (POO-2187)", () => {
+  it("reports only bounded field names for auxiliary edits (POO-2237)", () => {
+    expect(
+      panelEventToAnalytics({ type: "applied", kind: "swap", fields: ["tokenIn", "tokenOut"] }),
+    ).toEqual({
+      event: "builder_block_applied",
+      params: { block_kind: "swap", fields_changed: "tokenIn,tokenOut" },
+    });
+    expect(
+      panelEventToAnalytics({ type: "applied", kind: "spoke", fields: ["allocation"] }),
+    ).toEqual({
+      event: "builder_block_applied",
+      params: { block_kind: "spoke", fields_changed: "allocation" },
+    });
+  });
   it.each([
     [
       { type: "configured", kind: "uniswapV4Pool", network: "robinhood" },

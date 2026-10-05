@@ -267,7 +267,10 @@ describe("itemTarget", () => {
       const target = itemTarget(item);
       if (item.type === "template" || item.type === "port" || item.type === "label") {
         expect(target).toEqual(item.node.target);
-      } else if (item.type === "block" && item.node.family === "position") {
+      } else if (
+        item.type === "block" &&
+        (item.node.family === "position" || (item.node.kind === "swap" && !item.node.auto))
+      ) {
         expect(target).toEqual({ kind: "block", blockId: item.node.id });
       } else {
         expect(target).toBeNull();

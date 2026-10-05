@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name BuildScreen
- * @implements-rules-version v1 (POO-2157 rules v1; the configuration panel of POO-2187 rules v1; POO-2210 rules v1)
+ * @implements-rules-version v1 (POO-2157 rules v1; the configuration panel of POO-2187 rules v1; POO-2210 rules v1); POO-2237 rules v1
  * @analytics-events builder_build_viewed, builder_build_started, builder_block_added,
  *   builder_network_added, builder_network_removed, builder_flow_block_inserted,
  *   builder_block_removed (with cascade_count), builder_block_configured, builder_block_applied,
@@ -99,6 +99,7 @@ import { CanvasViewport, type CanvasViewportHandle } from "./canvas/CanvasViewpo
 import { BuildGraph } from "./graph/BuildGraph";
 import { useDraftGraphLayout } from "./graph/useGraphLayout";
 import type { GraphLayout } from "./layout/graphTypes";
+import { AuxiliaryBlockPanel } from "./panel/AuxiliaryBlockPanel";
 import { BlockPanel } from "./panel/BlockPanel";
 import { usePanelCopy } from "./panel/panelCopy";
 import { RemoveBlockConfirm, removalText } from "./panel/RemoveBlockConfirm";
@@ -444,20 +445,34 @@ export function BuildScreen({
         }
         panel={
           <BuildPanelSlot>
-            <BlockPanel
-              ctx={controller.context}
-              selectedId={selectedId}
-              menuSentence={controller.menuSentence}
-              panel={panel}
-              removeConfirmOpen={false}
-              onRemoveRequest={() => {
-                if (selectedId) controller.requestRemove(selectedId);
-              }}
-              onRemoveCancel={controller.cancelRemove}
-              onRemoveConfirm={controller.confirmRemove}
-              onEditMandate={controller.editMandate}
-              onLimitHit={onLimitHit}
-            />
+            {target && (target.kind === "swap" || target.kind === "spoke") ? (
+              <AuxiliaryBlockPanel
+                target={target}
+                panel={panel}
+                ctx={controller.context}
+                onEditMandate={controller.editMandate}
+                onRemoveRequest={() =>
+                  target.kind === "spoke"
+                    ? controller.removeSpoke(target.network)
+                    : controller.requestRemove(target.blockId)
+                }
+              />
+            ) : (
+              <BlockPanel
+                ctx={controller.context}
+                selectedId={selectedId}
+                menuSentence={controller.menuSentence}
+                panel={panel}
+                removeConfirmOpen={false}
+                onRemoveRequest={() => {
+                  if (selectedId) controller.requestRemove(selectedId);
+                }}
+                onRemoveCancel={controller.cancelRemove}
+                onRemoveConfirm={controller.confirmRemove}
+                onEditMandate={controller.editMandate}
+                onLimitHit={onLimitHit}
+              />
+            )}
           </BuildPanelSlot>
         }
         onBack={handleBack}

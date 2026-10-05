@@ -1171,6 +1171,15 @@
           "ineligible": "This pool is not eligible.",
           "noLiquidity": "This pool has no active liquidity.",
           "incomplete": "The pool configuration is incomplete."
+        },
+        "auxiliary": {
+          "swap": "Swap",
+          "spoke": "Spoke allocation",
+          "tokenIn": "Token in",
+          "tokenOut": "Token out",
+          "empty": "Add at least two tokens on this network to the mandate.",
+          "invalidPair": "Choose two different tokens permitted by the mandate on this network.",
+          "bounds": "Allocation: {min}% to {max}% of the strategy. The minimum preserves existing block allocations."
         }
       },
       "network": {
@@ -1188,7 +1197,7 @@
         "unusedSpokeShare": "A network holds more of the capital than its blocks use. Give its blocks that share, or remove the network.",
         "stackedPositions": "Remove the blocks placed under a Supply block: they cannot launch yet.",
         "duplicateReserve": "Supply each asset in one block only. Remove the second Supply of the same asset.",
-        "unsupportedSwap": "Swaps outside a pool cannot launch yet. Supply the token that arrives, or remove the Swap.",
+        "unsupportedSwap": "This Swap is not available for launch yet. Remove it, or supply the token that arrives.",
         "unavailable": "Review is not available yet."
       }
     },

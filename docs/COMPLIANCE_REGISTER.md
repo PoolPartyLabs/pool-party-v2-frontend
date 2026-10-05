@@ -117,3 +117,9 @@ POO-2232 verification: In range / Out of range is a claim about the current open
 Verification: the visible 19-minute Wormhole countdown must read as an estimate, never a settlement promise or transaction deadline. Status: RESOLVED for this presentation scope. All 11 locales explicitly call it estimated time remaining; expiry shows that the report is taking longer and keeps waiting. Only the accepted report can advance execution. No fees, amounts or routing change, and no per-second analytics are emitted.
 
 Local timing metadata contains the normalized manager address in its browser storage key plus draft/report identifiers and a timestamp. It stays on the device, separate from the existing execution journal; this feature does not send it to analytics or a new endpoint. Clearing browser data removes it. In-memory fallback cannot persist across a full reload when browser storage is unavailable.
+
+## Build canvas and manual Swap configuration, 2026-10-05
+
+POO-2235/2236/2237: fixed locks describe structural canvas roles, not capital safety or guaranteed withdrawals. Green traces fee flow into Income only; neutral outgoing paths do not assert settlement. Swap token selection and spoke percentages are local draft configuration, not quotes, approved routes, current holdings or transaction receipts. Existing venue/custody disclosures remain applicable.
+
+Verification: RESOLVED for this editor-only scope. Independent review identified and corrected a pool-chain bypass that could ignore a manual token pair. Review and launch compilation now refuse manual swaps. POO-2238 must establish amount provenance, price/impact/fees, authorization and recovery before enabling execution. Analytics receives bounded field/kind names only, never token addresses, amounts or wallet data.

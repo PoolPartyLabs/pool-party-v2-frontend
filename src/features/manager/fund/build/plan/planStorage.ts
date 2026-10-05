@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-021
  * @name planStorage
- * @implements-rules-version v1 (POO-2151 rules v1)
+ * @implements-rules-version v1 (POO-2151 rules v1); POO-2237 rules v1
  * @analytics-events none, a pure storage helper; the store and the builder shell own the events.
  *
  * The plan rides inside the mandate draft (same store, same Save & exit, same resume on reload, as
@@ -21,7 +21,7 @@
  * (`mandateDraftStore`, PP-MGR-STO-001). When drafts move to the backend draft API (wiring issue
  * POO-2132) the plan travels in the same payload, and this read check stays the gate it passes.
  */
-import { isConfigFor } from "./blockConfig";
+import { isConfigFor, isManualSwapConfig } from "./blockConfig";
 import {
   type BlockKind,
   BUILD_PLAN_VERSION,
@@ -73,7 +73,9 @@ function isStep(value: unknown): boolean {
     return (
       typeof value.kind === "string" &&
       FLOW_KINDS.has(value.kind) &&
-      typeof value.auto === "boolean"
+      typeof value.auto === "boolean" &&
+      (value.config === undefined ||
+        (value.kind === "swap" && value.auto === false && isManualSwapConfig(value.config)))
     );
   }
   return false;

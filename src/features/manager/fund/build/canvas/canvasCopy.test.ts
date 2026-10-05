@@ -85,13 +85,14 @@ describe("canvas copy: one tree in every locale", () => {
   });
 
   // @rule G7
-  it("[G7] lands 180 keys, the twelve review.* keys of slices S7 and PA1 among them", () => {
+  it("[G7] lands 188 keys, the twelve review.* keys of slices S7 and PA1 among them", () => {
     // 100 from S2, plus `panel.menuOpenNetwork` (review F3 of PR #36, POO-2155), plus seven from S7
     // (POO-2157): the six Next: Review notices (D19) and `planUnreadable` (D18), plus the six
     // launch readiness notices of PA1 (POO-2184), plus the 38 `panel.*` keys of the configuration
     // panel shell (POO-2187, the three `panel.refused.*` of its review M4 among them), minus the two
     // `toast.*` keys its remove confirm retired (DP11).
-    expect(EN.size).toBe(180);
+    // POO-2210 select state plus seven POO-2237 auxiliary panel labels.
+    expect(EN.size).toBe(188);
     expect([...EN.keys()].filter((key) => key.startsWith("toast."))).toEqual([]);
     expect([...EN.keys()].filter((key) => key.startsWith("review.")).sort()).toEqual([
       "review.comingSoon",
@@ -284,7 +285,7 @@ describe("canvas copy: the handoff's English, verbatim", () => {
     ],
     [
       "review.unsupportedSwap",
-      "Swaps outside a pool cannot launch yet. Supply the token that arrives, or remove the Swap.",
+      "This Swap is not available for launch yet. Remove it, or supply the token that arrives.",
     ],
     ["review.unavailable", "Review is not available yet."],
   ])("[AN4] the Next: Review notice %s reads %j", (key, english) => {

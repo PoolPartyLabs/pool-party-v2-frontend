@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-050
  * @name FlowPill
- * @implements-rules-version v1 (POO-2154 rules v1)
+ * @implements-rules-version v1 (POO-2154 rules v1); POO-2235 rules v1; POO-2237 rules v1
  * @analytics-events none, a presentational piece that reports nothing; the Build screen
  *   (PP-MGR-SCR-002, S7) owns every event
  *
@@ -21,24 +21,56 @@
  * the content starts at 1 + 10 = 11. The card is different (its stroke does not count in layout,
  * so it is an overlay there). The pill never changes its stroke, so nothing moves.
  *
- * A pill selects nothing in this batch (I5) and only explains itself, so under the review's focus
+ * Manual Swap is a selectable button (POO-2237). Automatic flows only explain themselves; their focus
  * policy it is an `Explained` element: focusable (a keyboard reaches its tooltip, [C19]) but not a
- * button, its tooltip on hover and focus and wired as its description. Its name is its text.
+ * button, with a tooltip on hover/focus wired as its description. Its name is its text.
  */
 "use client";
 
-import { BlockIconGlyph, canvasInteractive, Explained } from "./pieceParts";
+import {
+  BlockIconGlyph,
+  canvasInteractive,
+  Explained,
+  FOCUS_RING,
+  PieceTooltip,
+} from "./pieceParts";
 import type { FlowContent } from "./pieceTypes";
 
 /** Public props for {@link FlowPill}. */
 export interface FlowPillProps {
   /** Text, tooltip and icon, from the registry (S5) or, for the Bridge, the renderer (S6). */
   content: FlowContent;
+  selected?: boolean;
+  onActivate?(anchor: HTMLElement): void;
 }
 
 /** A flow block on the Build canvas, 176 x 26. */
-export function FlowPill({ content }: FlowPillProps) {
+export function FlowPill({ content, selected = false, onActivate }: FlowPillProps) {
   const { text, tooltip, icon } = content;
+  const face = (
+    <>
+      <BlockIconGlyph icon={icon} size={12} className="text-muted-foreground" />
+      <span className="truncate whitespace-nowrap text-muted-foreground text-xs leading-normal">
+        {text}
+      </span>
+    </>
+  );
+  if (onActivate)
+    return (
+      <PieceTooltip content={tooltip}>
+        <button
+          type="button"
+          {...canvasInteractive}
+          data-flow-pill=""
+          aria-label={tooltip}
+          aria-pressed={selected}
+          onClick={(event) => onActivate(event.currentTarget)}
+          className={`box-border flex h-[26px] w-[176px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border ${selected ? "border-primary" : "border-border"} bg-surface px-2.5 cursor-pointer ${FOCUS_RING}`}
+        >
+          {face}
+        </button>
+      </PieceTooltip>
+    );
   return (
     <Explained
       tooltip={tooltip}

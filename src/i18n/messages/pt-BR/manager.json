@@ -1171,6 +1171,15 @@
           "ineligible": "Este pool não é elegível.",
           "noLiquidity": "Este pool não tem liquidez ativa.",
           "incomplete": "A configuração do pool está incompleta."
+        },
+        "auxiliary": {
+          "swap": "Swap",
+          "spoke": "Alocação da spoke",
+          "tokenIn": "Token de origem",
+          "tokenOut": "Token de destino",
+          "empty": "Adicione pelo menos dois tokens desta rede ao mandato.",
+          "invalidPair": "Escolha dois tokens diferentes permitidos pelo mandato nesta rede.",
+          "bounds": "Alocação: de {min}% a {max}% da estratégia. O mínimo preserva as alocações dos blocos existentes."
         }
       },
       "network": {
@@ -1188,7 +1197,7 @@
         "unusedSpokeShare": "Uma rede reserva mais capital do que os blocos dela usam. Dê essa porcentagem aos blocos dela ou remova a rede.",
         "stackedPositions": "Remova os blocos colocados abaixo de um bloco Fornecer: eles ainda não podem ser lançados.",
         "duplicateReserve": "Forneça cada ativo em um único bloco. Remova o segundo bloco Fornecer do mesmo ativo.",
-        "unsupportedSwap": "Swaps fora de um pool ainda não podem ser lançados. Forneça o token que chega ou remova o Swap.",
+        "unsupportedSwap": "Este Swap ainda não está disponível para lançamento. Remova-o ou use em Supply o token que chega.",
         "unavailable": "A Revisão ainda não está disponível."
       }
     },

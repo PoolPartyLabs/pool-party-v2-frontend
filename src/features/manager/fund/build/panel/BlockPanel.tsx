@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-061
  * @name BlockPanel
- * @implements-rules-version v1 (POO-2187 rules v1); POO-2204 rules v1
+ * @implements-rules-version v1 (POO-2187 rules v1); POO-2204 rules v1; POO-2237 rules v1
  * @analytics-events none emitted here. What the panel does leaves through its draft
  *   (`usePanelDraft`: configured, applied, discarded, leave blocked), the canvas controller (the
  *   confirmed remove) and `onLimitHit` (the Allocation at its ceiling); the Build screen
@@ -400,6 +400,12 @@ export function BlockPanel({
 
   const kind = block.kind;
   const definition = bodies[kind] as AnyBody | undefined;
+  const positionConfig = (value: typeof panel.draft): PanelBlockConfig | null => {
+    const config = value?.config;
+    return config && ("poolId" in config || "assetKey" in config) ? config : null;
+  };
+  const appliedPosition = positionConfig(panel.applied);
+  const draftPosition = positionConfig(panel.draft);
   const configured = panel.applied?.config !== null && panel.applied?.config !== undefined;
   const mode = !definition ? "head" : configured ? "configured" : "pick";
   const context: PanelBodyContext = {
@@ -476,14 +482,14 @@ export function BlockPanel({
         </>
       ) : null}
 
-      {mode === "configured" && definition && panel.applied?.config && panel.draft?.config ? (
+      {mode === "configured" && definition && appliedPosition && draftPosition ? (
         <ConfiguredBody
           key={selectedId}
           definition={definition}
           context={context}
           panel={panel}
-          applied={panel.applied.config}
-          config={panel.draft.config}
+          applied={appliedPosition}
+          config={draftPosition}
           allocation={allocation}
           copy={copy}
           onConfigChange={(next) => panel.setConfig(canonical(next))}

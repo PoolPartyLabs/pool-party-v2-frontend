@@ -610,7 +610,7 @@ describe("BuildGraph, tooltips", () => {
   });
 
   // @rule C19
-  it("[C19] share labels say their share of the capital; a spoke's label explains and selects nothing", () => {
+  it("[C19] share labels say their share of the capital; a spoke's label opens allocation", () => {
     renderGraph(canvasA);
     const hub = node(
       targetKey({
@@ -628,8 +628,8 @@ describe("BuildGraph, tooltips", () => {
     const spoke = node(
       targetKey({ kind: "shareLabel", chainId: null, network: "base", feedsBlockId: null }),
     ).querySelector<HTMLElement>("[data-share-label]");
-    expect(spoke?.tagName).toBe("SPAN");
-    expect(spoke).toHaveAccessibleDescription("35% of the strategy's capital");
+    expect(spoke?.tagName).toBe("BUTTON");
+    expect(spoke).toHaveAccessibleName("35% of the strategy's capital");
   });
 
   // @rule C19
@@ -683,7 +683,7 @@ describe("BuildGraph, activations", () => {
   });
 
   // @rule I5
-  it("[I5] the spine, the pills, the Bridge and a spoke's label report nothing", async () => {
+  it("[I5, POO-2237] fixed nodes explain and the spoke label opens allocation", async () => {
     const user = userEvent.setup();
     const { props } = renderGraph(canvasA);
     await user.click(screen.getByText("Deposit"));
@@ -693,8 +693,12 @@ describe("BuildGraph, activations", () => {
       targetKey({ kind: "shareLabel", chainId: null, network: "base", feedsBlockId: null }),
     ).querySelector("[data-share-label]");
     if (!spokeLabel) throw new Error("no spoke label");
-    await user.click(spokeLabel);
     expect(props.onTarget).not.toHaveBeenCalled();
+    await user.click(spokeLabel);
+    expect(props.onTarget).toHaveBeenCalledWith(
+      { kind: "shareLabel", chainId: null, network: "base", feedsBlockId: null },
+      spokeLabel,
+    );
   });
 
   // @rule I7
@@ -1297,4 +1301,15 @@ describe("POO-2210 removable graph blocks", () => {
     );
     expect(props.onTarget).not.toHaveBeenCalled();
   });
+});
+
+it("opens allocation from a spoke share label (POO-2237)", async () => {
+  const { props } = renderGraph(canvasA);
+  const target = props.layout.shareLabels.find((label) => label.target.chainId === null)?.target;
+  if (!target) throw new Error("Missing spoke label");
+  const label = node(targetKey(target)).querySelector("button");
+  expect(label).not.toBeNull();
+  if (!label) throw new Error("Missing allocation control");
+  await userEvent.setup().click(label);
+  expect(props.onTarget).toHaveBeenCalledWith(target, label);
 });

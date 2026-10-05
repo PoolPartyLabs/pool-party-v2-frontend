@@ -1171,6 +1171,15 @@
           "ineligible": "Dieser Pool ist nicht zulässig.",
           "noLiquidity": "Dieser Pool hat keine aktive Liquidität.",
           "incomplete": "Die Poolkonfiguration ist unvollständig."
+        },
+        "auxiliary": {
+          "swap": "Swap",
+          "spoke": "Spoke-Allokation",
+          "tokenIn": "Eingabe-Token",
+          "tokenOut": "Ausgabe-Token",
+          "empty": "Fügen Sie dem Mandat mindestens zwei Token dieses Netzwerks hinzu.",
+          "invalidPair": "Wählen Sie zwei verschiedene Token, die das Mandat in diesem Netzwerk erlaubt.",
+          "bounds": "Allokation: {min}% bis {max}% der Strategie. Das Minimum erhält die Allokationen bestehender Blöcke."
         }
       },
       "network": {
@@ -1188,7 +1197,7 @@
         "unusedSpokeShare": "Ein Netzwerk reserviert mehr Kapital, als seine Blöcke nutzen. Geben Sie diesen Anteil seinen Blöcken, oder entfernen Sie das Netzwerk.",
         "stackedPositions": "Entfernen Sie die Blöcke unter einem Bereitstellen-Block: Diese können noch nicht gestartet werden.",
         "duplicateReserve": "Stellen Sie jedes Asset nur in einem Block bereit. Entfernen Sie den zweiten Bereitstellen-Block desselben Assets.",
-        "unsupportedSwap": "Swaps außerhalb eines Pools können noch nicht gestartet werden. Stellen Sie den ankommenden Token bereit, oder entfernen Sie den Swap.",
+        "unsupportedSwap": "Dieser Swap ist noch nicht für den Start verfügbar. Entfernen Sie ihn oder nutzen Sie den ankommenden Token für Supply.",
         "unavailable": "Die Überprüfung ist noch nicht verfügbar."
       }
     },

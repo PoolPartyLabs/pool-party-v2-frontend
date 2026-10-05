@@ -59,6 +59,18 @@ function broken(edit: (raw: RawPlan) => void): unknown {
 }
 
 describe("normalizePlan", () => {
+  it("rejects malformed stored manual Swap config without discarding the original raw value", () => {
+    const raw = broken((plan) => {
+      stepAt(plan, 0).auto = false;
+      stepAt(plan, 0).config = { tokenInKey: 42, tokenOutKey: "", slippagePct: 2 };
+    });
+    expect(normalizePlan(raw)).toBeNull();
+    expect(stepAt(raw as RawPlan, 0).config).toEqual({
+      tokenInKey: 42,
+      tokenOutKey: "",
+      slippagePct: 2,
+    });
+  });
   for (const [name, build] of Object.entries(VALID_TEST_PLANS)) {
     it(`reads ${name} back deep-equal`, () => {
       // @rule Storage

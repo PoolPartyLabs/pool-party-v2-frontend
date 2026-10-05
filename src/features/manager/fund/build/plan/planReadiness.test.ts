@@ -214,6 +214,19 @@ describe("planReadiness: what the launch needs before Review (RD1 to RD5)", () =
     // @rule RD5
     expect(readinessOf(readyPlan())).toEqual({ ready: true });
   });
+  it("refuses a manual Swap even when it feeds a pool (POO-2237)", () => {
+    const plan = readyPlan();
+    const swap = plan.hub.chains
+      .flatMap((chain) => chain.steps)
+      .find((step) => step.family === "flow" && step.kind === "swap");
+    if (swap?.family !== "flow") throw new Error("Expected fixture swap");
+    swap.auto = false;
+    expect(planReadiness(plan, [])).toMatchObject({
+      ready: false,
+      refusal: "review_unsupported_swap",
+      target: { kind: "block", blockId: swap.id },
+    });
+  });
 });
 
 describe("planReadiness: order (finding 4, A2)", () => {
