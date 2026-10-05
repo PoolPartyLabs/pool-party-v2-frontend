@@ -685,7 +685,7 @@ APY paragraphs and duplicate network checkboxes are removed. GMX, Pendle and Uni
 remain visible as Coming soon, excluded from selection and executable drafts. Every protocol uses
 a committed brand logo. [Rules, sources and regressions](../../../docs/MANDATE_PROTOCOLS_FIGMA_2026-10-04.md).
 
-POO-2209 rules v1: V2 public profiles expose a Follow/Following demonstration scoped to the viewed manager and mounted page session. It does not write to an API, navigate, sign, claim follower counts or emit a backend follow outcome. V1 remains unchanged. The effective builder phase, including in-page transitions, temporarily collapses the desktop sidebar and removes the shell width cap without changing the saved preference. Desktop Cash+ and Tools links are hidden; mobile navigation and routes remain intact. Available operable protocols precede unavailable rows in stable catalog order.
+POO-2209 rules v1: V2 public profiles expose a Follow/Following demonstration scoped to the viewed manager and mounted page session. It does not write to an API, navigate, sign, claim follower counts or emit a backend follow outcome. V1 remains unchanged. The effective builder phase, including in-page transitions, temporarily collapses the desktop sidebar and removes the shell width cap without changing the saved preference. POO-2241 rules v1 supersedes the temporary desktop navigation hiding: Cash+ appears after Strategies and Tools after Deposit, under their existing feature flags. Mobile navigation and routes remain intact. Available operable protocols precede unavailable rows in stable catalog order.
 
 ## Manage V2
 

@@ -123,3 +123,7 @@ Local timing metadata contains the normalized manager address in its browser sto
 POO-2235/2236/2237: fixed locks describe structural canvas roles, not capital safety or guaranteed withdrawals. Green traces fee flow into Income only; neutral outgoing paths do not assert settlement. Swap token selection and spoke percentages are local draft configuration, not quotes, approved routes, current holdings or transaction receipts. Existing venue/custody disclosures remain applicable.
 
 Verification: RESOLVED for this editor-only scope. Independent review identified and corrected a pool-chain bypass that could ignore a manual token pair. Review and launch compilation now refuse manual swaps. POO-2238 must establish amount provenance, price/impact/fees, authorization and recovery before enabling execution. Analytics receives bounded field/kind names only, never token addresses, amounts or wallet data.
+
+## Sidebar destination restoration, 2026-10-05 (POO-2241)
+
+Verification: RESOLVED for navigation scope. Cash+ and Tools reuse their existing feature flags, guarded routes and labels. The links introduce no return/security claim, fee, wallet request or new data collection. Existing destination-specific disclosures and launch conditions remain applicable.

@@ -936,3 +936,5 @@ POO-2233 updates PP-MGR-CMP-081 to one current-step card, current evidence and a
 | `PP-MGR-LIB-057` | auxiliaryConfig | Lib | Mandate token and spoke allocation rules | Implemented | POO-2237 | `src/features/manager/fund/build/plan/auxiliaryConfig.ts` @rules-v1 |
 
 POO-2235 updates existing graph/layout/pieces with continuous full-path hover, neutral Income output and five fixed locks. POO-2236 updates the existing AppShell/viewport with temporary sidebar state and fitted usable canvas space. See [delivery record](build-canvas-polish-2026-10-05.md).
+
+POO-2241 rules v1 updates PP-CORE-LAY-001: restore the Cash+ and Tools desktop sidebar links under the existing feature flags, superseding POO-2209 R1. No new artifacts or integration seams.

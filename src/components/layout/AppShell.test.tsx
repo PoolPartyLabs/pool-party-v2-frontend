@@ -152,7 +152,10 @@ describe("AppShell", () => {
       </AppShell>,
     );
     const { sidebar, tabbar } = getNavs();
-    expect(within(sidebar).queryByRole("link", { name: "Cash+" })).toBeNull();
+    expect(within(sidebar).getByRole("link", { name: "Cash+" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
     expect(within(tabbar).getByRole("link", { name: "Cash+" })).toHaveAttribute(
       "aria-current",
       "page",
@@ -172,16 +175,26 @@ describe("AppShell", () => {
     expect(screen.queryByRole("link", { name: "Cash+" })).toBeNull();
   });
 
-  it("renders the desktop sidebar set (Home, Portfolio, Strategies, Deposit, Profile)", () => {
+  it("renders the desktop sidebar set with Cash+ and Tools in their original positions", () => {
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_CASH_PLUS", "on");
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_HOOK_TOOLS", "on");
     renderWithProviders(
       <AppShell>
         <div>content</div>
       </AppShell>,
     );
     const { sidebar } = getNavs();
-    for (const label of ["Home", "Portfolio", "Strategies", "Deposit", "Profile"]) {
+    const labels = ["Home", "Portfolio", "Strategies", "Cash+", "Deposit", "Tools", "Profile"];
+    for (const label of labels) {
       expect(within(sidebar).getByRole("link", { name: label })).toBeInTheDocument();
     }
+    expect(
+      within(sidebar)
+        .getAllByRole("link")
+        .map((link) => link.textContent)
+        .filter((label) => labels.includes(label ?? "")),
+    ).toEqual(labels);
+    expect(within(sidebar).getByRole("link", { name: "Tools" })).toHaveAttribute("href", "/tools");
     // Invest is a mobile-only label; Cards is flag-gated (off in v1) → absent here.
     expect(within(sidebar).queryByRole("link", { name: "Invest" })).toBeNull();
     expect(within(sidebar).queryByRole("link", { name: "Cards" })).toBeNull();
