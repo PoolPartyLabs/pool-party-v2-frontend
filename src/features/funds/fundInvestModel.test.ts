@@ -19,7 +19,14 @@ describe("POO-2248 deposit boundary", () => {
   });
   it("[R4,R5] permits only exact core deposit intent or exact token approval", () => {
     expect(() =>
-      validateFundDepositBuild({ transactions: [], preview }, core, wallet, wallet, "2000000", "0"),
+      validateFundDepositBuild(
+        { protocolVersion: "v2", transactions: [], preview },
+        core,
+        wallet,
+        wallet,
+        "2000000",
+        "0",
+      ),
     ).toThrow();
   });
 });

@@ -339,3 +339,158 @@ it("[R7] unauthenticated open stays actionable without loading forever", () => {
   expect(result.current.phase).toBe("idle");
   expect(result.current.snapshot).toBeNull();
 });
+
+it("[R4,R5] confirms approval then rebuilds original budget into fresh deposit review", async () => {
+  localStorage.clear();
+  mocks.wallet = mockFund.manager;
+  mocks.send.mockReset();
+  mocks.load.mockResolvedValue({
+    ok: true,
+    data: {
+      wallet: mocks.wallet,
+      holder: mockHolder,
+      fund: { ...mockFund, mandate: { ...mockFund.mandate, spokes: [] } },
+    },
+  });
+  const { encodeFunctionData, erc20Abi } = await import("viem");
+  const { depositAbi } = await import("./fundInvestModel");
+  const preview = {
+    sharesMinted: "1000000000000000000",
+    usdcCharged: "1005000",
+    flowFee: "5000",
+    refundToCaller: "995000",
+    sharePrice: "1000000000000000000000000",
+  };
+  const base = {
+    protocolVersion: "v2",
+    chainId: 42161,
+    to: mockFund.coreVault,
+    from: mocks.wallet,
+    value: "0",
+  };
+  const approval = {
+    ok: true,
+    data: {
+      protocolVersion: "v2",
+      transactions: [
+        {
+          ...base,
+          to: mockFund.mandate.usdc,
+          data: encodeFunctionData({
+            abi: erc20Abi,
+            functionName: "approve",
+            args: [mockFund.coreVault as `0x${string}`, 2000000n],
+          }),
+        },
+      ],
+      preview: null,
+      nextAction: "approve",
+    },
+  };
+  const deposit = {
+    ok: true,
+    data: {
+      protocolVersion: "v2",
+      transactions: [
+        {
+          ...base,
+          data: encodeFunctionData({
+            abi: depositAbi,
+            functionName: "deposit",
+            args: [2000000n, 0n],
+          }),
+        },
+      ],
+      preview,
+    },
+  };
+  mocks.build
+    .mockReset()
+    .mockResolvedValueOnce(approval)
+    .mockResolvedValueOnce(approval)
+    .mockResolvedValueOnce(deposit);
+  mocks.send.mockImplementation(async (_provider, _tx, _wallet, action, observe) =>
+    observe({ chainId: 42161, hash: `0x${"c".repeat(64)}`, action, status: "confirmed" }),
+  );
+  const onSettled = vi.fn();
+  const { result } = renderHook(() =>
+    useFundInvest({ core: mockFund.coreVault, enabled: true, onSettled }),
+  );
+  await waitFor(() => expect(result.current.snapshot).not.toBeNull());
+  await act(async () => result.current.prepare("2000000"));
+  expect(result.current.approvalRequired).toBe(true);
+  await act(async () => result.current.confirm());
+  expect(result.current.phase).toBe("review");
+  expect(result.current.approvalRequired).toBe(false);
+  expect(result.current.preview).toEqual(preview);
+  expect(result.current.amountRaw).toBe("2000000");
+  expect(mocks.send).toHaveBeenCalledTimes(1);
+  expect(mocks.send.mock.calls[0]?.[3]).toBe("approve");
+  expect(onSettled).not.toHaveBeenCalled();
+  expect(mocks.build.mock.calls.every((call) => call[1].amount === "2000000")).toBe(true);
+});
+
+it("[R5] reviews a changed same-kind preview before sending with updated exact share protection", async () => {
+  localStorage.clear();
+  mocks.wallet = mockFund.manager;
+  mocks.send.mockReset();
+  mocks.load.mockResolvedValue({
+    ok: true,
+    data: {
+      wallet: mocks.wallet,
+      holder: mockHolder,
+      fund: { ...mockFund, mandate: { ...mockFund.mandate, spokes: [] } },
+    },
+  });
+  const { encodeFunctionData } = await import("viem");
+  const { depositAbi } = await import("./fundInvestModel");
+  const old = {
+    sharesMinted: "1000000000000000000",
+    usdcCharged: "1005000",
+    flowFee: "5000",
+    refundToCaller: "1995000",
+    sharePrice: "1000000000000000000000000",
+  };
+  const next = {
+    sharesMinted: "2000000000000000000",
+    usdcCharged: "2005000",
+    flowFee: "5000",
+    refundToCaller: "995000",
+    sharePrice: "1000000000000000000000000",
+  };
+  let call = 0;
+  mocks.build.mockReset().mockImplementation(async (_core, intent) => ({
+    ok: true,
+    data: {
+      protocolVersion: "v2",
+      transactions: [
+        {
+          protocolVersion: "v2",
+          chainId: 42161,
+          to: mockFund.coreVault,
+          from: mocks.wallet,
+          value: "0",
+          data: encodeFunctionData({
+            abi: depositAbi,
+            functionName: "deposit",
+            args: [3000000n, BigInt(intent.minShares)],
+          }),
+        },
+      ],
+      preview: call++ === 0 ? old : next,
+    },
+  }));
+  mocks.send.mockImplementation(async (_p, _tx, _w, action, observe) =>
+    observe({ chainId: 42161, hash: `0x${"d".repeat(64)}`, action, status: "confirmed" }),
+  );
+  const { result } = renderHook(() => useFundInvest({ core: mockFund.coreVault, enabled: true }));
+  await waitFor(() => expect(result.current.snapshot).not.toBeNull());
+  await act(async () => result.current.prepare("3000000"));
+  await act(async () => result.current.confirm());
+  expect(result.current.phase).toBe("review");
+  expect(result.current.preview).toEqual(next);
+  expect(mocks.send).not.toHaveBeenCalled();
+  await act(async () => result.current.confirm());
+  expect(mocks.send).toHaveBeenCalledTimes(1);
+  expect(mocks.build.mock.calls.at(-1)?.[1].minShares).toBe(next.sharesMinted);
+});
