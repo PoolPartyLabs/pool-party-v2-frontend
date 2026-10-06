@@ -158,6 +158,8 @@ const directives: Record<string, string[]> = {
     "https://polygon-bor-rpc.publicnode.com",
     // PP-SECURITY [R3] (POO-1776): Robinhood Chain RPC. Explorer deliberately absent, see `csp.test.ts`.
     "https://rpc.mainnet.chain.robinhood.com",
+    "https://api.mainnet-beta.solana.com",
+    "wss://api.mainnet-beta.solana.com",
     // Third-party services
     "https://api.hyperliquid.xyz",
     "wss://api.hyperliquid.xyz",

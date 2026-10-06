@@ -94,6 +94,8 @@ function envOverride(key: FeatureKey): string | undefined {
       return process.env.NEXT_PUBLIC_FEATURE_HOOK_TOOLS;
     case "fundContracts":
       return process.env.NEXT_PUBLIC_FEATURE_FUND_CONTRACTS;
+    case "solanaSpoke":
+      return process.env.NEXT_PUBLIC_FEATURE_SOLANA_SPOKE;
     default:
       return undefined;
   }

@@ -21,8 +21,10 @@ import { SiweSessionProvider } from "@/lib/auth/useSiweSession";
 import { WalletChainProbe } from "@/lib/auth/WalletChainProbe";
 import { WalletSwitchGuard } from "@/lib/auth/WalletSwitchGuard";
 import { defaultChain, supportedChains, transportMap } from "@/lib/chains/config";
+import { isFeatureEnabled } from "@/lib/features";
 import { OwnerProfileSessionProvider } from "@/lib/profile/useOwnerProfileSession";
 import { isMockMode } from "@/lib/services/index";
+import { solanaPrivyConfig } from "@/lib/solana/config";
 
 // ---------------------------------------------------------------------------
 // Wagmi config — uses @privy-io/wagmi createConfig (NOT plain wagmi) so Privy's
@@ -73,6 +75,8 @@ export function Providers({ children }: { children: ReactNode }) {
   }
 
   const queryClient = getQueryClient();
+  const solanaEnabled = isFeatureEnabled("solanaSpoke");
+  const { connectors, solana } = solanaPrivyConfig(solanaEnabled);
 
   return (
     <PrivyProvider
@@ -100,8 +104,11 @@ export function Providers({ children }: { children: ReactNode }) {
         },
         externalWallets: {
           coinbaseWallet: { config: { preference: { options: "eoaOnly" } } },
+          ...(connectors ? { solana: { connectors } } : {}),
         },
+        ...(solana ? { solana } : {}),
         appearance: {
+          walletChainType: solanaEnabled ? "ethereum-and-solana" : "ethereum-only",
           showWalletLoginFirst: false,
           theme: "dark",
           landingHeader: "Welcome to Pool Party",
@@ -114,7 +121,6 @@ export function Providers({ children }: { children: ReactNode }) {
             "wallet_connect",
             "coinbase_wallet",
           ],
-          walletChainType: "ethereum-only",
         },
       }}
     >

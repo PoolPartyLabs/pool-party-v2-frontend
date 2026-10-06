@@ -41,7 +41,8 @@ export type FeatureKey =
   | "virtualize"
   | "strategyCategoryFilter"
   | "hookTools"
-  | "fundContracts";
+  | "fundContracts"
+  | "solanaSpoke";
 
 /**
  * Lifecycle stage of an area:
@@ -402,6 +403,14 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
     envVar: "NEXT_PUBLIC_FEATURE_HOOK_TOOLS",
     description:
       "The Tools page at `/tools`: paste a deployed Uniswap v4 hook address and get the hookrisk report for it. Route-guarded (404 while off) and gates the sidebar entry. The scan runs server-side and needs the hookrisk toolchain plus ETHERSCAN_API_KEY on the host; without them the page reports what is missing rather than a clean bill of health.",
+  },
+  solanaSpoke: {
+    key: "solanaSpoke",
+    area: "Solana spoke integration",
+    defaultEnabled: false,
+    stage: "next",
+    envVar: "NEXT_PUBLIC_FEATURE_SOLANA_SPOKE",
+    description: "DEC-188, DEC-190: opt-in dual wallets and new-Fund Solana launch integration.",
   },
   fundContracts: {
     key: "fundContracts",
