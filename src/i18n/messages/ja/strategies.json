@@ -900,7 +900,15 @@
   "investV2": {
     "notAvailable": "利用できません",
     "balanceUnavailable": "残高：利用できません",
-    "target": "Arbitrum上のUSDC"
+    "target": "Arbitrum上のUSDC",
+    "sessionRequired": "投資を続けるにはログインしてください。",
+    "fundingUnavailable": "必要な資金を準備できませんでした。このウィンドウを閉じて「投資」を開き直し、もう一度お試しください。資金はまだ投資されていません。",
+    "approvalReview": "選択したUSDCの金額をこのファンドが使用することを許可します。確定する前に投資内容を確認できます。",
+    "protectedShares": "以下に表示された口数以上を受け取れる場合にのみ、取引が実行されます。",
+    "networkCost": "ネットワーク手数料はETHで別途支払われ、確定前にウォレットに表示されます。",
+    "preparing": "投資を準備し、最新のファンド価値を確認しています。ネットワーク間の更新には数分かかる場合があります。",
+    "recoveryPending": "再度投資する前に、前回の取引状況を確認する必要があります。リンクが表示されない場合は、ウォレットの履歴を確認してください。",
+    "checkTransaction": "取引状況を確認"
   },
   "investorV2": {
     "unavailable": "利用できません",

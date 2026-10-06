@@ -135,3 +135,9 @@ Verification: RESOLVED for this read/editor scope. Operating cash displays nativ
 ## Manager Overview V2, 2026-10-06 (POO-2245 v1)
 
 Verification: RESOLVED for the supported read/navigation scope. Real-mode AUM, ready-strategy counts and history remain Not available until POO-2247 defines financial meaning and coverage. Open lifecycle and a completed browser journal do not certify investment readiness. The illustrative curve/values live in explicit mock/demo fixtures, with no real-mode fallback or return claim. Existing public manager profile editing reuses its signing and personal-data controls. Device-local drafts are labelled as such and are not assigned wallet ownership; corruption is reported without overwriting stored data. No new custody, fee or transaction capability is enabled.
+
+## Investor V2 deposit continuation, 2026-10-06 (POO-2248 v1)
+
+Verification: RESOLVED for these engineering disclosure boundaries. The UI separately shows shares, USDC charged, flow fee, refund and share price from the complete API simulation. Approval is capped to the selected budget. Confirmation protects at least the reviewed share quantity. Gas is disclosed as a separate ETH payment shown by the wallet; the frontend does not invent a gas estimate or call simulation output a settled receipt. Funding/approval completion does not mean capital was invested.
+
+The existing fund/protocol/custody disclosures and any existing launch blockers continue to apply. The local recovery journal contains wallet/core addresses, requested budget and transaction evidence only on the device. It is not an analytics payload. Pending/unknown submissions remain locked until verified; loss of browser storage loses this device-local recovery evidence. Separate tabs do not have an atomic distributed submission lock. No public-audit or safety guarantee is added.

@@ -900,7 +900,15 @@
   "investV2": {
     "notAvailable": "Chưa có dữ liệu",
     "balanceUnavailable": "Số dư: chưa có dữ liệu",
-    "target": "USDC trên Arbitrum"
+    "target": "USDC trên Arbitrum",
+    "sessionRequired": "Đăng nhập để tiếp tục đầu tư.",
+    "fundingUnavailable": "Không thể chuẩn bị số tiền cần thiết. Hãy đóng cửa sổ này và mở lại Đầu tư để thử lại. Tiền của bạn chưa được đầu tư.",
+    "approvalReview": "Cho phép quỹ này sử dụng số USDC bạn đã chọn. Bạn sẽ xem lại khoản đầu tư trước khi xác nhận.",
+    "protectedShares": "Giao dịch chỉ được thực hiện nếu bạn nhận được ít nhất số chứng chỉ quỹ hiển thị bên dưới.",
+    "networkCost": "Phí mạng được thanh toán riêng bằng ETH và hiển thị trong ví trước khi bạn xác nhận.",
+    "preparing": "Đang chuẩn bị khoản đầu tư và kiểm tra giá trị mới nhất của quỹ. Việc cập nhật giữa các mạng có thể mất vài phút.",
+    "recoveryPending": "Chúng tôi cần xác nhận trạng thái giao dịch trước đó trước khi bạn đầu tư tiếp. Nếu không có liên kết, hãy kiểm tra lịch sử hoạt động của ví.",
+    "checkTransaction": "Kiểm tra trạng thái giao dịch"
   },
   "investorV2": {
     "unavailable": "Không có sẵn",

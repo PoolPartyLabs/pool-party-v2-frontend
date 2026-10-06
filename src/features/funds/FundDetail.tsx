@@ -139,6 +139,7 @@ function FundInvestorDetails({ core }: FundDetailProps) {
       fund={publicRead.fund}
       personal={personal}
       balance={balanceRead?.identity === key ? balanceRead.value : null}
+      balanceWallet={address ?? undefined}
       onRetry={() => setRevision((v) => v + 1)}
     />
   );
@@ -147,11 +148,13 @@ export function FundDetailsPresenter({
   fund,
   personal,
   balance = null,
+  balanceWallet,
   onRetry,
 }: {
   fund: FundView;
   personal: PersonalFundState;
   balance?: number | null;
+  balanceWallet?: string;
   onRetry?: () => void;
 }) {
   const t = useTranslations("strategies.DetailsV2");
@@ -312,7 +315,9 @@ export function FundDetailsPresenter({
           onOpenChange={setInvestOpen}
           resumeAmount={resume}
           fromPortfolio={fromPortfolio}
-          walletAddress={personal.status === "ready" ? personal.wallet : undefined}
+          walletAddress={
+            balanceWallet ?? (personal.status === "ready" ? personal.wallet : undefined)
+          }
         />
       }
     >

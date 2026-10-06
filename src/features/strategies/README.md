@@ -424,3 +424,9 @@ the live `buildWalletSignSteps` output. Source: `src/app/[locale]/dev/wallet-ste
 ### Responsive amount and loading presentation (POO-2221, rules v1)
 
 AmountField grows within its available width and fits ordinary six-decimal input with container-relative type, retaining a 16px minimum font and the exact raw value. Short values keep the previous centered minimum width; exceptional lengths remain natively scrollable. Increment and Max behavior are unchanged. The provisioning loading subtitle is capped to its parent width. Existing amount, deposit and provisioning tests pass (53 focused cases); no V2 execution is enabled.
+
+### V2 Invest provisioning and deposit (POO-2248, 2026-10-06)
+
+The shared InvestModal now dispatches V2 to FundInvestModal and useFundInvest. A valid amount larger than the current hub USDC balance opens the existing ProvisioningPanel; completion preserves that amount and prepares a fresh V2 deposit. It never triggers investment success or automatic deposit signing. Max and first-deposit minima stay distinct.
+
+Exact-budget approval, complete raw-unit review, protected reviewed-share `minShares`, confirmed receipts and wallet/core-scoped pending recovery are described in `docs/investor/V2_DELIVERY_PLAN.md`. Funding callbacks are invalidated on session change and unmount. Missing balances/session/build data remain actionable errors rather than guessed values. No change to the V1 Permit2/runner or investor list experience.

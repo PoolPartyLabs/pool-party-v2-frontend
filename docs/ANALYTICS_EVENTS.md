@@ -366,3 +366,20 @@ Emitter PP-MGR-SCR-002 reuses builder_block_applied, builder_block_discarded, bu
 | app_cta_blocked | PP-MGR-SCR-001 ManagerOverviewV2 | Manager session needed. |
 
 Page view remains route-owned. The read/navigation surface starts no financial transaction, so submitted/completed/transaction abandonment are intentionally not emitted here. Existing profile and launch destinations own their funnels. No wallet, draft name, raw error or financial amount is added to these events.
+
+## Investor V2 execution, 2026-10-06 (POO-2248 v1)
+
+Emitter: PP-STR-MOD-001, `FundInvestModal.tsx`. Existing event names only.
+
+| Event | Trigger |
+|---|---|
+| strategy_invest_started | Open the V2 Invest host. |
+| tx_amount_blocked | Invalid precision/value, first-deposit minimum, or missing verified execution session. |
+| tx_review_reached | Prepared approval/deposit review is visible. |
+| strategy_invest_submitted | Explicit deposit confirmation intent, before protected rebuild; approval is excluded. This is not settlement. |
+| tx_signature_requested | Wallet submission begins for approval/deposit, with bounded step kind. |
+| strategy_invest_failed | Sanitized controller error. |
+| strategy_invest_completed | Confirmed deposit receipt only; no simulated amount/value parameter. Funding and approval are excluded. |
+| tx_flow_abandoned | Close/unmount before terminal outcome; unknown transaction uses pending exit. |
+
+The shared provisioning gate/panel retain their existing funnel. Raw previews, wallet addresses, signed payloads and journal contents are not sent to analytics.
