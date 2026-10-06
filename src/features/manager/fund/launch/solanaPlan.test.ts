@@ -48,3 +48,31 @@ it("leaves legacy EVM plans unchanged and rejects Solana when disabled", () => {
     "SOLANA_DISABLED",
   );
 });
+it("carries the Manager impact bound into both swap and LP execution configs", () => {
+  const steps = withSolanaLaunchSteps(evm, {
+    sharePct: 50,
+    kamino: false,
+    raydiumPool: SOLANA_LP_CHOICES[0]?.poolId,
+    maxPriceImpactBps: 75,
+  });
+  expect(
+    steps.filter((step) => step.group === "solana" && step.config).map((step) => step.config),
+  ).toEqual([
+    { poolId: SOLANA_LP_CHOICES[0]?.poolId, maxPriceImpactBps: 75 },
+    { poolId: SOLANA_LP_CHOICES[0]?.poolId, maxPriceImpactBps: 75 },
+  ]);
+});
+it.each([
+  0, 501, 1.5,
+])("rejects Manager impact %s without constructing a plan", (maxPriceImpactBps) => {
+  expect(() =>
+    withSolanaLaunchSteps(evm, { sharePct: 50, kamino: true, maxPriceImpactBps }),
+  ).toThrow("SOLANA_PRICE_IMPACT_INVALID");
+});
+it("refuses extra quote/reference fields on the Manager selection", () => {
+  expect(() =>
+    withSolanaLaunchSteps(evm, { sharePct: 50, kamino: true, quote: "100" } as Parameters<
+      typeof withSolanaLaunchSteps
+    >[1]),
+  ).toThrow("INVALID_SOLANA_PLAN");
+});

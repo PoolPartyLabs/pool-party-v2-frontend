@@ -1,11 +1,31 @@
 import { isFeatureEnabled } from "@/lib/features";
 import { requireSolanaLpChoice } from "@/lib/solana/lpChoices";
+import { resolveMaxPriceImpactBps } from "@/lib/solana/swap";
 import type { ChainLaunchStep, LaunchStep, SolanaLaunchStep } from "./plan";
 
 export interface SolanaLaunchSelection {
   sharePct: number;
   kamino: boolean;
   raydiumPool?: string;
+  maxPriceImpactBps?: number;
+}
+
+export function normalizeSolanaLaunchSelection(
+  selection: SolanaLaunchSelection,
+): SolanaLaunchSelection {
+  if (
+    Object.keys(selection).some(
+      (key) => !["sharePct", "kamino", "raydiumPool", "maxPriceImpactBps"].includes(key),
+    )
+  )
+    throw new Error("INVALID_SOLANA_PLAN");
+  if (selection.raydiumPool) requireSolanaLpChoice(selection.raydiumPool);
+  return {
+    sharePct: selection.sharePct,
+    kamino: selection.kamino,
+    raydiumPool: selection.raydiumPool,
+    maxPriceImpactBps: resolveMaxPriceImpactBps(selection.maxPriceImpactBps),
+  };
 }
 
 /** DEC-188, DEC-190, DEC-191, DEC-193: append without changing either EVM spoke. */
@@ -15,7 +35,7 @@ export function withSolanaLaunchSteps(
 ): ChainLaunchStep[] {
   if (!selection) return evmSteps;
   if (!isFeatureEnabled("solanaSpoke")) throw new Error("SOLANA_DISABLED");
-  if (selection.raydiumPool) requireSolanaLpChoice(selection.raydiumPool);
+  selection = normalizeSolanaLaunchSelection(selection);
   if (
     !Number.isInteger(selection.sharePct) ||
     selection.sharePct <= 0 ||
@@ -60,11 +80,11 @@ export function withSolanaLaunchSteps(
   if (selection.raydiumPool) {
     result.push({
       ...step("ratio", "swap-to-ratio", [arrival.id]),
-      config: { poolId: selection.raydiumPool },
+      config: { poolId: selection.raydiumPool, maxPriceImpactBps: selection.maxPriceImpactBps },
     });
     result.push({
       ...step("open", "raydium-open", ["solana:ratio"]),
-      config: { poolId: selection.raydiumPool },
+      config: { poolId: selection.raydiumPool, maxPriceImpactBps: selection.maxPriceImpactBps },
     });
   }
   return result;
