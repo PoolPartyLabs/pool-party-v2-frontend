@@ -131,3 +131,7 @@ Verification: RESOLVED for navigation scope. Cash+ and Tools reuse their existin
 ## Manager Manage delta, 2026-10-06 (POO-2246 v2)
 
 Verification: RESOLVED for this read/editor scope. Operating cash displays native assets only; stable metadata requires chain/address identity. Missing quantity/metadata remains Not available and existing served holdings are preserved. Preparation timeout does not assert transaction failure or success, and no new fee, custody action or route is enabled. Authoritative cash, queue and hub Income disclosure remains POO-2230; Move/Future financial reviews remain POO-2229/2231 before execution can launch.
+
+## Manager Overview V2, 2026-10-06 (POO-2245 v1)
+
+Verification: RESOLVED for the supported read/navigation scope. Real-mode AUM, ready-strategy counts and history remain Not available until POO-2247 defines financial meaning and coverage. Open lifecycle and a completed browser journal do not certify investment readiness. The illustrative curve/values live in explicit mock/demo fixtures, with no real-mode fallback or return claim. Existing public manager profile editing reuses its signing and personal-data controls. Device-local drafts are labelled as such and are not assigned wallet ownership; corruption is reported without overwriting stored data. No new custody, fee or transaction capability is enabled.

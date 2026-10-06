@@ -949,3 +949,5 @@ POO-2246 rules v2 updates PP-MGR-SCR-004, PP-MGR-CMP-085/086 and PP-MGR-LIB-051:
 | PP-MGR-HOK-023 | Local setup snapshot subscription | Implemented | `src/features/manager/fund/overview/useOverviewSetup.ts` |
 
 POO-2245 extends PP-MGR-STO-001 and PP-MGR-LIB-045 with additive read-status APIs. Existing consumers retain their semantics. Invalid records are reported without overwriting stored data, and only validated identities are resumable. Presentation and profile composition follow in a separate PR.
+
+POO-2245 presentation integrates PP-MGR-SCR-001 in `overview/ManagerOverviewV2.tsx` and `OverviewProfile.tsx`, retaining the existing profile editor. PP-CORE-LAY-001 adds temporary 248px Overview expansion; PP-MGR-CMP-010/031 accept optional Coming soon labels with unchanged V1 defaults. The four states have explicit Storybook scenarios.

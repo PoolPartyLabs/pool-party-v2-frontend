@@ -257,3 +257,10 @@ POO-2237 introduces no endpoint or wallet operation. Manual Swap tokens are cano
 ## Manager Manage refinements, 2026-10-06 (POO-2246 v2)
 
 `manageModel.ts` accepts configured stable metadata only for the actual mandate address on that chain. Unknown metadata requires a served identity under POO-2230. Native Operating cash remains unavailable until an authoritative native balance is supplied; the scalar accounting bucket is not a token balance. `ManageBlockPanel.tsx` times out review preparation without manufacturing an execution result. POO-2229 and POO-2231 remain the write-enablement dependencies.
+
+## Manager Overview V2, 2026-10-06
+
+- PP-MGR-SCR-001: `ManagerOverviewV2.tsx` consumes existing `loadFundsAction("manager")`, checks the returned wallet and scopes late responses. This is discovery, not authoritative readiness/history/AUM. POO-2247 owns the missing aggregate and coverage contract.
+- PP-MGR-HOK-023 / PP-MGR-STO-001 / PP-MGR-LIB-045: explicit local draft/journey read statuses preserve recoverable records. Drafts are device-local; no wallet ownership or backend persistence is asserted.
+- `actions.ts:getManagerProfileAction` and `OverviewProfile.tsx`: read the existing public manager registry independently of V1 financials. Reuse ManagerProfileTabView and existing signed-save/upload flow.
+- AUM values and 30-point series in `src/mocks/data/managerOverviewV2.ts` are explicitly mock/demo-only. Production has no fixture fallback.

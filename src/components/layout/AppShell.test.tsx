@@ -9,6 +9,7 @@ import { CreditCard } from "lucide-react";
 import { type AnchorHTMLAttributes, type ReactNode, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { __resetDevOverridesForTests } from "@/lib/features/devOverrides";
+import { __resetContractFamilyStoreForTests } from "@/lib/hooks/useContractFamily";
 import {
   renderWithProviders,
   screen,
@@ -464,6 +465,41 @@ function PhaseHarness() {
     </div>
   );
 }
+
+it("POO-2245 opens V2 Overview expanded at 248px and preserves other sidebar preferences", async () => {
+  __resetContractFamilyStoreForTests();
+  vi.stubEnv("NEXT_PUBLIC_FEATURE_FUND_CONTRACTS", "on");
+  localStorage.setItem("pp.contractFamily", '"v2"');
+  localStorage.setItem("pp.sidebar.collapsed", "true");
+  nav.pathname = "/manager";
+  const view = renderWithProviders(
+    <AppShell>
+      <p>overview body</p>
+    </AppShell>,
+  );
+  expect(screen.getByRole("button", { name: "Collapse" })).toHaveAttribute("aria-expanded", "true");
+  expect(getNavs().sidebar.closest("aside")).toHaveClass("w-[248px]");
+  await userEvent.click(screen.getByRole("button", { name: "Collapse" }));
+  expect(screen.getByRole("button", { name: "Expand" })).toBeEnabled();
+  expect(localStorage.getItem("pp.sidebar.collapsed")).toBe("true");
+  nav.pathname = "/portfolio";
+  view.rerender(
+    <AppShell>
+      <p>portfolio body</p>
+    </AppShell>,
+  );
+  expect(screen.getByRole("button", { name: "Expand" })).toHaveAttribute("aria-expanded", "false");
+  nav.pathname = "/manager";
+  view.rerender(
+    <AppShell>
+      <p>overview body</p>
+    </AppShell>,
+  );
+  expect(screen.getByRole("button", { name: "Collapse" })).toHaveAttribute("aria-expanded", "true");
+  view.unmount();
+  __resetContractFamilyStoreForTests();
+  vi.unstubAllEnvs();
+});
 it("POO-2209 follows effective in-page phase without changing URL or saved preference", async () => {
   localStorage.setItem("pp.sidebar.collapsed", "false");
   nav.pathname = "/manager/new";

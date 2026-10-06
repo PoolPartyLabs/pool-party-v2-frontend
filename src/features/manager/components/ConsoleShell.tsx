@@ -1,5 +1,6 @@
 /**
  * @id PP-MGR-CMP-031
+ * POO-2245 rules v1 adds the V2 Overview presentation without changing V1 defaults.
  * @name ConsoleShell
  * @implements-rules-version v1
  *
@@ -34,6 +35,7 @@ export interface ConsoleShellProps {
   /** POO-704: the owner's PUBLIC `displayName` (`/users/me`), resolved server-side and forwarded to
    * the greeting; blank/absent falls back to the masked wallet. */
   displayName?: string;
+  comingSoonLabel?: string;
 }
 
 /** Manager console chrome: persistent greeting + create CTA + tabs, above the panel body. */
@@ -43,6 +45,7 @@ export function ConsoleShell({
   children,
   profileHref,
   displayName,
+  comingSoonLabel,
 }: ConsoleShellProps) {
   const t = useTranslations("manager");
   const router = useRouter();
@@ -61,7 +64,11 @@ export function ConsoleShell({
           {t("dashboard.createNew")}
         </Button>
       </div>
-      <ConsoleTabs active={active} onSelect={(tab) => guard(() => onSelectTab(tab))} />
+      <ConsoleTabs
+        comingSoonLabel={comingSoonLabel}
+        active={active}
+        onSelect={(tab) => guard(() => onSelectTab(tab))}
+      />
       {children}
     </div>
   );

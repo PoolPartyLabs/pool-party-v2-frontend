@@ -1,5 +1,6 @@
 /**
  * @id PP-MGR-CMP-010
+ * POO-2245 rules v1 adds the V2 Overview presentation without changing V1 defaults.
  * @name ConsoleTabs
  * @implements-rules-version v1
  *
@@ -35,10 +36,11 @@ export interface ConsoleTabsProps {
   active: ConsoleTab;
   /** Called with the tab the user opened (only built tabs are clickable). */
   onSelect: (tab: SelectableConsoleTab) => void;
+  comingSoonLabel?: string;
 }
 
 /** Borderless underline tab bar for the manager console. */
-export function ConsoleTabs({ active, onSelect }: ConsoleTabsProps) {
+export function ConsoleTabs({ active, onSelect, comingSoonLabel }: ConsoleTabsProps) {
   const t = useTranslations("manager");
   // Literal t() calls (the i18n usage scan is static — no dynamic keys).
   const tabs: { key: ConsoleTab; label: string }[] = [
@@ -83,6 +85,9 @@ export function ConsoleTabs({ active, onSelect }: ConsoleTabsProps) {
               className={cn(classes, "text-muted-foreground/50")}
             >
               {label}
+              {comingSoonLabel ? (
+                <span className="block text-[0.625rem]">{comingSoonLabel}</span>
+              ) : null}
             </span>
           );
         }
