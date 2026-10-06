@@ -21,7 +21,7 @@ function setup() {
   const evm: LaunchDriver<LaunchStep> = {
     build: vi.fn(async () => ({ complete: true })),
     send: vi.fn(async () => "0xhash"),
-    receipt: vi.fn(async () => ({ status: "success" })),
+    receipt: vi.fn(async () => ({ status: "success" as const })),
     reconcile: vi.fn(async () => false),
     complete: vi.fn(async () => {}),
   };
