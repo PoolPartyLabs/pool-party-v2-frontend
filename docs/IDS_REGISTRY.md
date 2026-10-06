@@ -959,3 +959,5 @@ POO-2245 presentation integrates PP-MGR-SCR-001 in `overview/ManagerOverviewV2.t
 | PP-STR-HOK-023 | Authenticated V2 investment preparation, confirmation and recovery | POO-2248 v1 | `src/features/funds/useFundInvest.ts` |
 | PP-STR-LIB-038 | Exact deposit preview/calldata validation | POO-2248 v1 | `src/features/funds/fundInvestModel.ts` |
 | PP-STR-LIB-039 | Wallet/core-scoped transaction journal | POO-2248 v1 | `src/features/funds/fundInvestJournal.ts` |
+
+PP-STR-MOD-001 retains ownership of the shared Invest host; `FundInvestModal.tsx` implements its typed V2 branch. Existing AmountField, StrategyMiniHeader and ProvisioningPanel remain reused. No new exploratory modal or V1 schema coercion.

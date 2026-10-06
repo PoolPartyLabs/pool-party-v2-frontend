@@ -900,7 +900,15 @@
   "investV2": {
     "notAvailable": "暫不可用",
     "balanceUnavailable": "餘額：暫不可用",
-    "target": "Arbitrum 上的 USDC"
+    "target": "Arbitrum 上的 USDC",
+    "sessionRequired": "請登入以繼續投資。",
+    "fundingUnavailable": "無法準備所需資金。請關閉此視窗並重新開啟「投資」以重試。您的資金尚未投入。",
+    "approvalReview": "授權此基金使用您選擇的 USDC 金額。確認前，您可以檢視投資詳情。",
+    "protectedShares": "只有在您獲得的單位數不少於下方所示數量時，交易才會執行。",
+    "networkCost": "網路費用以 ETH 另外支付，並在您確認前顯示於錢包中。",
+    "preparing": "正在準備您的投資並確認基金的最新價值。跨鏈更新可能需要幾分鐘。",
+    "recoveryPending": "再次投資前，我們必須確認您上一筆交易的狀態。如果沒有顯示連結，請查看錢包活動紀錄。",
+    "checkTransaction": "查看交易狀態"
   },
   "investorV2": {
     "unavailable": "暫不可用",

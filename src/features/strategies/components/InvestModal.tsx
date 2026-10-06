@@ -125,6 +125,7 @@ import {
   buildMaxSlippageRow,
   buildPriceImpactRow,
 } from "./FeeBreakdown";
+import { FundInvestModal } from "./FundInvestModal";
 import { PriceImpactGate, usePriceImpactGate } from "./PriceImpactGate";
 import { ProvisioningPanel } from "./ProvisioningPanel";
 import { StrategyMiniHeader } from "./StrategyMiniHeader";
@@ -296,6 +297,13 @@ export type InvestModalProps = LegacyInvestModalProps | FundInvestModalProps;
 
 /** The existing invest amount, review and provisioning host for both contract families. */
 export function InvestModal(props: InvestModalProps) {
+  if (props.family === "v2") {
+    return <FundInvestModal key={`${props.fund.core}:${props.walletAddress ?? ""}`} {...props} />;
+  }
+  return <LegacyInvestModal {...props} />;
+}
+
+function LegacyInvestModal(props: InvestModalProps) {
   const { open, onOpenChange, balance, resumeAmount, depositOrigin } = props;
   const isV2 = props.family === "v2";
   const buildInvestSteps = props.family === "v2" ? undefined : props.buildInvestSteps;

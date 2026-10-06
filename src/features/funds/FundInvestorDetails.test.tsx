@@ -33,11 +33,12 @@ vi.mock("@/lib/auth/useSiweSession", () => ({
   useSiweSession: () => ({ isSignedIn: mocks.signedIn }),
 }));
 vi.mock("@/features/strategies/components/InvestModal", () => ({
-  InvestModal: (props: { open: boolean; balance: number | null }) => (
+  InvestModal: (props: { open: boolean; balance: number | null; walletAddress?: string }) => (
     <div
       data-testid="invest-host"
       data-open={String(props.open)}
       data-balance={String(props.balance)}
+      data-wallet={props.walletAddress}
     />
   ),
 }));
@@ -72,6 +73,7 @@ describe("investor V2 details", () => {
     renderWithProviders(<FundDetail core={mockFund.coreVault} />);
     expect(await screen.findByRole("heading", { name: "Balanced Income" })).toBeInTheDocument();
     expect(await screen.findAllByText("Your position could not be loaded.")).toHaveLength(2);
+    expect(screen.getByTestId("invest-host")).toHaveAttribute("data-wallet", mocks.wallet);
     expect(screen.queryByText("Your position")).not.toBeInTheDocument();
   });
   it("POO-2224 R2 reads connected hub USDC despite holder API failure", async () => {

@@ -31,6 +31,23 @@ import type { FlowStep } from "../hooks/useWalletSignFlow";
 import { InvestModal } from "./InvestModal";
 import { settleDeployedUsd, settleOutcome, settleSwapInfo, settleTxError } from "./settle";
 
+vi.mock("@/features/funds/useFundInvest", () => ({
+  useFundInvest: () => ({
+    snapshot: null,
+    phase: "idle",
+    preview: null,
+    records: [],
+    errorCode: null,
+    amountRaw: "",
+    approvalRequired: false,
+    prepare: vi.fn(),
+    confirm: vi.fn(),
+    refresh: vi.fn(),
+    reset: vi.fn(),
+    reconcile: vi.fn(),
+  }),
+}));
+
 vi.mock("@/lib/strategies/revalidateStrategies", () => ({
   revalidateStrategiesAction: vi.fn(async () => {}),
 }));
@@ -174,8 +191,9 @@ describe("InvestModal", () => {
       />,
     );
     expect(screen.getByText("V2 fund")).toBeInTheDocument();
+    expect(screen.getByText("Sign in to continue investing.")).toBeInTheDocument();
     expect(screen.getByLabelText("Amount to invest")).toHaveValue("25.123456");
-    expect(screen.getByRole("button", { name: "Not available" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Invest" })).toBeDisabled();
     expect(screen.queryByText("Confirm investment")).not.toBeInTheDocument();
     expect(screen.queryByText(/Permit2/)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /settings/i })).not.toBeInTheDocument();

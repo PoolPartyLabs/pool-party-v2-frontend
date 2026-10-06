@@ -900,7 +900,15 @@
   "investV2": {
     "notAvailable": "Niet beschikbaar",
     "balanceUnavailable": "Saldo: niet beschikbaar",
-    "target": "USDC op Arbitrum"
+    "target": "USDC op Arbitrum",
+    "sessionRequired": "Log in om verder te investeren.",
+    "fundingUnavailable": "We konden het benodigde saldo niet voorbereiden. Sluit dit venster en open Investeren opnieuw om het nogmaals te proberen. Je geld is niet geïnvesteerd.",
+    "approvalReview": "Geef dit fonds toestemming om het gekozen USDC-bedrag te gebruiken. Je controleert de investering voordat je deze bevestigt.",
+    "protectedShares": "De transactie wordt alleen uitgevoerd als je ten minste het hieronder getoonde aantal participaties ontvangt.",
+    "networkCost": "De netwerkkosten worden apart in ETH betaald en vóór bevestiging in je wallet getoond.",
+    "preparing": "Je investering wordt voorbereid en de actuele fondswaarde wordt gecontroleerd. Updates tussen netwerken kunnen enkele minuten duren.",
+    "recoveryPending": "We moeten de status van je vorige transactie bevestigen voordat je opnieuw kunt investeren. Controleer de activiteit van je wallet als er geen link wordt getoond.",
+    "checkTransaction": "Transactiestatus controleren"
   },
   "investorV2": {
     "unavailable": "Niet beschikbaar",

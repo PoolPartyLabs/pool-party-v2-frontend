@@ -900,7 +900,15 @@
   "investV2": {
     "notAvailable": "Not available",
     "balanceUnavailable": "Balance: Not available",
-    "target": "USDC on Arbitrum"
+    "target": "USDC on Arbitrum",
+    "sessionRequired": "Sign in to continue investing.",
+    "fundingUnavailable": "We could not prepare funding. Close this window and reopen Invest to try again. Your funds have not been invested.",
+    "approvalReview": "Allow this fund to use your selected USDC amount. You will review the investment before confirming it.",
+    "protectedShares": "The transaction will only proceed if you receive at least the number of shares shown below.",
+    "networkCost": "The network fee is paid separately in ETH and shown in your wallet before you confirm.",
+    "preparing": "Preparing your investment and checking the latest fund value. Cross-chain updates can take several minutes.",
+    "recoveryPending": "We must confirm the status of your previous transaction before you can invest again. If no link is shown, check your wallet activity.",
+    "checkTransaction": "Check transaction status"
   },
   "investorV2": {
     "unavailable": "Not available",

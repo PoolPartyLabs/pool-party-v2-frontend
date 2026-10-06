@@ -4,6 +4,10 @@ Owner decision: Murilo, 2026-10-04. Coordination: [POO-2214](https://linear.app/
 Baseline: public `PoolPartyLabs/pool-party-v2-frontend` main `d292d83f8b888cddcc1d578d0169bc25fff2d7de`.
 Primary reference: `PoolPartyV2Design/docs/handoff-investor-v2-2026-10-04.md` v1.0, read in full (686 lines).
 
+## Current status, 2026-10-06
+
+POO-2248 supersedes the original S3 unavailable execution boundary for **deposit only**. The current API provides the complete post-allowance deposit preview. Shared provisioning now continues into typed V2 review/signing with exact reviewed-share protection and transaction recovery. The dated Oct 4 rows and validation records below describe the historical presentation delivery. Payout, income, persistent social API and unsupported metrics remain separate capabilities.
+
 ## Precedence and scope
 
 1. Murilo's decisions, including the explicit `Not available` fallback on 2026-10-04.
@@ -79,3 +83,18 @@ S0-S4 and S8 are covered by PRs #90, #91 and #92. S5-S7 ship their explicit unav
 [POO-2224](https://linear.app/yeildbay/issue/POO-2224) separates public hub USDC wallet reads from SIWE/holder success when opening V2 Invest. No-session holdings returns unavailable so the public fallback can run; session/account mismatches cannot supply another wallet’s data. ETH and WETH remain distinct API assets, not spendable USDC. No independent ETH USD price exists in the stable-only public fallback, so it is not fabricated. V2 financial execution restrictions remain unchanged.
 
 Verification: POO-2223 passed 29 focused presentation/model/profile tests after seven regression failures demonstrated the missing behavior. POO-2224 passed 62 focused Details/balance/onramp tests, including the stale refresh latch regression. A local typecheck exceeded the Node heap limit, so typing validation runs in GitHub CI. No full local suite, production build or browser acceptance was run.
+
+## Deposit/provisioning enablement, 2026-10-06 (POO-2248 v1)
+
+Evidence: API main `a8299b147eef1ab9b6ae9bc8c5498168006149e7`, deposit builder in `src/v2-alpha/v2-alpha.builders.ts`. Insufficient allowance returns exact-budget approval with `nextAction` and no preview. After allowance, a pinned-block simulation supplies `sharesMinted`, `usdcCharged`, `flowFee`, `refundToCaller`, and `sharePrice`. This replaces the earlier deposit-preview blocker without asserting support for unrelated operations.
+
+1. **Amount/funding:** shared InvestModal dispatches to its typed FundInvestModal branch. A 15 USDC request with 2.01632 USDC available opens the existing ProvisioningPanel. Max remains below the 10 USDC first-deposit minimum. Holder status and balance ownership are independently verified; a failed Details holder read does not hide a known wallet address from the controller's fresh session read.
+2. **Prepare/review:** funding completion retains the original raw6 budget and only prepares. Approval is exact-budget and has its own confirmation; confirmed approval rebuilds the deposit and pauses for review. All five preview fields are shown with their exact raw units. Gas is separately paid in ETH, quoted by the existing funding/wallet flows.
+3. **Confirm:** the server builds again with `minShares` equal to the reviewed raw18 whole-share quantity. A changed preview or operation kind returns to review. The unprotected discovery simulation is never broadcast. A protected build failure needs a fresh review; no silent tolerance or V1 swap slippage is applied to shares.
+4. **Recovery:** local wallet/core journal reserves before send and retains pending/unknown hashes. Duplicate confirms and remount resubmits are blocked. Explicit rejected signatures can be retried; uncertain sends require receipt reconciliation. Without a hash the UI directs the user to wallet activity and keeps the lock. No atomic cross-tab locking is claimed.
+5. **Settlement:** confirmed approval/funding is not investment success. A confirmed deposit receipt shows confirmation and explorer evidence; the preview is never presented as an executed monetary receipt. Existing Details refreshes after settlement.
+6. **Identity/errors:** account/core/session changes and unmount invalidate funding callbacks immediately. Late reads/builds cannot overwrite another session. Bounded reads/builds and actionable retry prevent indefinite loading. V1 remains behind its unchanged runner.
+
+Validation is focused and serial, max one Vitest worker. No complete suite, coverage, build, browser journey or live wallet transaction was run for this fix. Browser acceptance remains with Murilo; deployment remains with Rafael.
+
+POO-2248 local validation: 15 controller/model tests and 86 shared Invest/provisioning/Details regressions passed (101 tests across eight files). Scoped Biome, locale parity/ICU/usage and config checks passed. Independent GPT-6.1-sol review verified controller and funding-identity boundaries; coordinator added the unmount-callback regression.

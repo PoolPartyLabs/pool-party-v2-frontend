@@ -900,7 +900,15 @@
   "investV2": {
     "notAvailable": "Nicht verfügbar",
     "balanceUnavailable": "Guthaben: nicht verfügbar",
-    "target": "USDC auf Arbitrum"
+    "target": "USDC auf Arbitrum",
+    "sessionRequired": "Melde dich an, um weiter zu investieren.",
+    "fundingUnavailable": "Die benötigten Mittel konnten nicht bereitgestellt werden. Schließe dieses Fenster und öffne Investieren erneut. Dein Geld wurde nicht investiert.",
+    "approvalReview": "Erlaube diesem Fonds, den gewählten USDC-Betrag zu verwenden. Du prüfst die Investition, bevor du sie bestätigst.",
+    "protectedShares": "Die Transaktion wird nur ausgeführt, wenn du mindestens die unten angezeigte Anzahl an Anteilen erhältst.",
+    "networkCost": "Die Netzwerkgebühr wird separat in ETH bezahlt und vor der Bestätigung in deiner Wallet angezeigt.",
+    "preparing": "Deine Investition wird vorbereitet und der aktuelle Fondswert geprüft. Aktualisierungen zwischen Netzwerken können mehrere Minuten dauern.",
+    "recoveryPending": "Wir müssen den Status deiner vorherigen Transaktion bestätigen, bevor du erneut investieren kannst. Wird kein Link angezeigt, prüfe die Aktivitäten deiner Wallet.",
+    "checkTransaction": "Transaktionsstatus prüfen"
   },
   "investorV2": {
     "unavailable": "Nicht verfügbar",
