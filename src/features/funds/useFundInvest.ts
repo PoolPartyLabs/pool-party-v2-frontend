@@ -210,7 +210,7 @@ export function useFundInvest({
       const next = await read();
       if (next.fund.state !== "Open") throw new Error("FundNotOpen");
       if (
-        BigInt(next.holder.shares) === 0n &&
+        BigInt(next.holder.shares) === BigInt("0") &&
         BigInt(amountRaw) < BigInt(next.fund.mandate.minFirstDeposit)
       )
         throw new Error("BelowMinFirstDeposit");

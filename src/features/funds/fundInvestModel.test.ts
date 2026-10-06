@@ -20,7 +20,7 @@ describe("POO-2248 deposit boundary", () => {
   it("[R4,R5] permits only exact core deposit intent or exact token approval", () => {
     expect(() =>
       validateFundDepositBuild(
-        { protocolVersion: "v2", transactions: [], preview },
+        { protocolVersion: "v2", transactions: [], preview: { ...preview, protocolVersion: "v2" } },
         core,
         wallet,
         wallet,
@@ -43,12 +43,12 @@ it("[R4,R5] validates exact raw deposit protection and approval spender", async 
     data: encodeFunctionData({
       abi: depositAbi,
       functionName: "deposit",
-      args: [2000000n, 1000000000000000000n],
+      args: [BigInt("2000000"), BigInt("1000000000000000000")],
     }),
   };
   expect(
     validateFundDepositBuild(
-      { protocolVersion: "v2", transactions: [tx], preview },
+      { protocolVersion: "v2", transactions: [tx], preview: { ...preview, protocolVersion: "v2" } },
       core,
       wallet,
       wallet,
@@ -58,7 +58,7 @@ it("[R4,R5] validates exact raw deposit protection and approval spender", async 
   ).toEqual(preview);
   expect(() =>
     validateFundDepositBuild(
-      { protocolVersion: "v2", transactions: [tx], preview },
+      { protocolVersion: "v2", transactions: [tx], preview: { ...preview, protocolVersion: "v2" } },
       core,
       wallet,
       wallet,
@@ -72,7 +72,7 @@ it("[R4,R5] validates exact raw deposit protection and approval spender", async 
     data: encodeFunctionData({
       abi: erc20Abi,
       functionName: "approve",
-      args: [core as `0x${string}`, 2000000n],
+      args: [core as `0x${string}`, BigInt("2000000")],
     }),
   };
   expect(

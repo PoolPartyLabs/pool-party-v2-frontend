@@ -26,9 +26,9 @@ export function validateDepositPreview(value: unknown, budget: string): FundDepo
     result[key] = raw;
   }
   if (
-    BigInt(result.sharesMinted) <= 0n ||
-    BigInt(result.sharesMinted) % 10n ** 18n !== 0n ||
-    BigInt(result.sharePrice) <= 0n ||
+    BigInt(result.sharesMinted) <= BigInt("0") ||
+    BigInt(result.sharesMinted) % BigInt("10") ** BigInt("18") !== BigInt("0") ||
+    BigInt(result.sharePrice) <= BigInt("0") ||
     BigInt(result.usdcCharged) + BigInt(result.refundToCaller) !== BigInt(budget) ||
     BigInt(result.flowFee) > BigInt(result.usdcCharged)
   )

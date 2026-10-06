@@ -191,7 +191,11 @@ it("[R4,R5] requires another review when deposit rebuild becomes approval", asyn
     to: mockFund.coreVault,
     from: mocks.wallet,
     value: "0",
-    data: encodeFunctionData({ abi: depositAbi, functionName: "deposit", args: [2000000n, 0n] }),
+    data: encodeFunctionData({
+      abi: depositAbi,
+      functionName: "deposit",
+      args: [BigInt("2000000"), BigInt("0")],
+    }),
   };
   mocks.build
     .mockReset()
@@ -210,7 +214,7 @@ it("[R4,R5] requires another review when deposit rebuild becomes approval", asyn
             data: encodeFunctionData({
               abi: erc20Abi,
               functionName: "approve",
-              args: [mockFund.coreVault as `0x${string}`, 2000000n],
+              args: [mockFund.coreVault as `0x${string}`, BigInt("2000000")],
             }),
           },
         ],
@@ -379,7 +383,7 @@ it("[R4,R5] confirms approval then rebuilds original budget into fresh deposit r
           data: encodeFunctionData({
             abi: erc20Abi,
             functionName: "approve",
-            args: [mockFund.coreVault as `0x${string}`, 2000000n],
+            args: [mockFund.coreVault as `0x${string}`, BigInt("2000000")],
           }),
         },
       ],
@@ -397,7 +401,7 @@ it("[R4,R5] confirms approval then rebuilds original budget into fresh deposit r
           data: encodeFunctionData({
             abi: depositAbi,
             functionName: "deposit",
-            args: [2000000n, 0n],
+            args: [BigInt("2000000"), BigInt("0")],
           }),
         },
       ],
@@ -473,7 +477,7 @@ it("[R5] reviews a changed same-kind preview before sending with updated exact s
           data: encodeFunctionData({
             abi: depositAbi,
             functionName: "deposit",
-            args: [3000000n, BigInt(intent.minShares)],
+            args: [BigInt("3000000"), BigInt(intent.minShares)],
           }),
         },
       ],
