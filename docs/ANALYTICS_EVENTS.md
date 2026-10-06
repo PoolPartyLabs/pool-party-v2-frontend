@@ -354,3 +354,15 @@ No submitted/completed event exists in this slice because no financial action or
 ### Build auxiliary configuration (POO-2237, 2026-10-05)
 
 Emitter PP-MGR-SCR-002 reuses builder_block_applied, builder_block_discarded, builder_block_leave_blocked and builder_build_blocked via PP-MGR-HOK-014. The bounded block_kind union adds spoke; fields_changed adds tokenIn and tokenOut. These describe local draft edits only. No new funnel or settlement event is introduced. PP-MGR-CMP-087 delegates outcomes to the existing draft controller; no hover, zoom or per-field token identity is transmitted.
+
+## Manager Overview V2, 2026-10-06 (POO-2245 v1)
+
+| Event | Emitter | Trigger |
+|---|---|---|
+| builder_draft_opened | PP-MGR-SCR-001 ManagerOverviewV2 | Existing local draft resume navigation, with step only. |
+| builder_draft_deleted | PP-MGR-SCR-001 ManagerOverviewV2 | Confirmed successful local deletion. |
+| builder_mandate_error | PP-MGR-SCR-001 ManagerOverviewV2 | Failed local deletion, bounded error code. |
+| app_error_shown | PP-MGR-SCR-001 ManagerOverviewV2 / OverviewProfile | Sanitized read failure or timeout. |
+| app_cta_blocked | PP-MGR-SCR-001 ManagerOverviewV2 | Manager session needed. |
+
+Page view remains route-owned. The read/navigation surface starts no financial transaction, so submitted/completed/transaction abandonment are intentionally not emitted here. Existing profile and launch destinations own their funnels. No wallet, draft name, raw error or financial amount is added to these events.

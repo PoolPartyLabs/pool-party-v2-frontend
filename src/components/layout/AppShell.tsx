@@ -1,5 +1,6 @@
 /**
  * @id PP-CORE-LAY-001
+ * POO-2245 rules v1 adds the V2 Overview presentation without changing V1 defaults.
  * @name AppShell
  * @implements-rules-version v1 (POO-2241, POO-2236, POO-2220); POO-2209 v1 except superseded R1
  *
@@ -53,6 +54,7 @@ import { useIsManager } from "@/lib/account/useIsManager";
 import type { FeatureKey } from "@/lib/features";
 import { isDevPanelEnabled } from "@/lib/features/devOverrides";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
+import { useContractFamily } from "@/lib/hooks/useContractFamily";
 import { usePersistentState } from "@/lib/hooks/usePersistentState";
 import { isMockMode } from "@/lib/services";
 import { cn } from "@/lib/utils/cn";
@@ -273,6 +275,14 @@ export function AppShell({ children, className }: AppShellProps) {
   const managerLoading = !isMockMode && realIsManagerLoading;
   // Collapsed sidebar is a simple, non-sensitive UI preference — fine in localStorage (POO-283 R2).
   const [savedCollapsed, setCollapsed] = usePersistentState<boolean>("pp.sidebar.collapsed", false);
+  const { family, hydrated } = useContractFamily();
+  const overviewArea =
+    pathname === "/manager" && isEnabled("fundContracts") && hydrated && family === "v2";
+  // POO-2245: Overview starts expanded without replacing the user's sidebar preference elsewhere.
+  const [overviewCollapsed, setOverviewCollapsed] = useState(false);
+  useEffect(() => {
+    if (!overviewArea) setOverviewCollapsed(false);
+  }, [overviewArea]);
   const [effectiveBuild, setEffectiveBuild] = useState(false);
   const buildArea =
     (pathname === "/manager/new" || pathname.startsWith("/funds/")) && effectiveBuild;
@@ -281,7 +291,11 @@ export function AppShell({ children, className }: AppShellProps) {
   useEffect(() => {
     if (!expandableBuild) setBuildCollapsed(true);
   }, [expandableBuild]);
-  const collapsed = expandableBuild ? buildCollapsed : buildArea || savedCollapsed;
+  const collapsed = overviewArea
+    ? overviewCollapsed
+    : expandableBuild
+      ? buildCollapsed
+      : buildArea || savedCollapsed;
 
   // Literal t() calls per key (the i18n usage scan is static — no dynamic keys).
   const navLabels: Record<NavLabelKey, string> = {
@@ -321,7 +335,7 @@ export function AppShell({ children, className }: AppShellProps) {
       <aside
         className={cn(
           "hidden shrink-0 flex-col bg-surface lg:sticky lg:top-0 lg:flex lg:h-svh lg:self-start lg:overflow-y-auto",
-          collapsed ? "w-[76px]" : "w-64",
+          collapsed ? "w-[76px]" : overviewArea ? "w-[248px]" : "w-64",
         )}
       >
         <div className={cn("flex h-16 items-center justify-center", collapsed ? "px-2" : "px-5")}>
@@ -360,7 +374,8 @@ export function AppShell({ children, className }: AppShellProps) {
           <button
             type="button"
             onClick={() => {
-              if (expandableBuild) setBuildCollapsed(!collapsed);
+              if (overviewArea) setOverviewCollapsed(!collapsed);
+              else if (expandableBuild) setBuildCollapsed(!collapsed);
               else if (!buildArea) setCollapsed(!collapsed);
             }}
             disabled={buildArea && !expandableBuild}

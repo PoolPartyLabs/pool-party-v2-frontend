@@ -7,7 +7,9 @@ vi.mock("@/lib/features/useFeatureFlags", () => ({
 }));
 vi.mock("@/lib/hooks/useContractFamily", () => ({ useContractFamily: () => mocks }));
 vi.mock("./InvestorListLoader", () => ({ InvestorListLoader: () => <p>investor-presenters</p> }));
-vi.mock("./FundExplorer", () => ({ FundExplorer: () => <p>isolated-v2-funds</p> }));
+vi.mock("@/features/manager/fund/overview/ManagerOverviewV2", () => ({
+  ManagerOverviewV2: () => <p>isolated-v2-funds</p>,
+}));
 
 import { FundFamilySwitch } from "./FundFamilySwitch";
 

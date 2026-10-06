@@ -41,7 +41,7 @@ This plan implements the supported delta from the consolidated owner handoff `ha
 
 Worker 1 owns C-D. Worker 2 owns B. The coordinator owns A/E, independent profile loading, shared documentation/translations, cross-checks and all Slack/Linear/GitHub writes. Tests run in one process at a time. Work stays in clean isolated worktrees; unrelated checkout edits are preserved.
 
-Small PR order: B first, C-D/E second. F/G/H remain separately tracked, capability-gated work. Do not combine unrelated API or contract changes into these frontend PRs.
+Small PR order: B first, C source model second, D/E presentation third. F/G/H remain separately tracked, capability-gated work. Do not combine unrelated API or contract changes into these frontend PRs.
 
 ## 4. Overview business and data contract
 
@@ -86,3 +86,17 @@ Current Move builder returns `protocolVersion` and an ordered `transactions` arr
 - General local TypeScript hit its existing 2 GB heap limit. This is not a passing check; use scoped imports and remote CI, without increasing local workload.
 - Overview source/presentation, locale and family-boundary results will be appended after implementation.
 - Coordinator independently reviews source and tests before a small PR/merge. Deployment and browser acceptance are separate from merge.
+
+## Implementation and review update
+
+Stage B is merged as [PR #109](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/109), main `c71e27763842f64e315959a36f3f7232ac9a7fce`. CI lint/typecheck/i18n/config passed on its exact source head; heavy CI jobs were pending at merge. Existing dependency audit findings remain POO-249.
+
+Stages C-D are implemented for the supported contracts. Root independently reviewed the source and a second GPT-6.1-sol worker cross-reviewed identity/dedup. Review corrected initial disconnected rendering, stalled reads, mismatched local draft IDs, invalid display dates and a second-read storage race. Raw corrupt payloads remain preserved, while only valid records are resumable. Shared Profile reads never load the V1 financial dashboard. All 11 locales configured in this public repository have actual translations; its config does not currently enable pt-PT. The fixture uses currently supported Arbitrum/Robinhood DTO identities rather than asserting live Base availability.
+
+Stages F-H remain explicit API dependencies; this delivery does not claim their financial acceptance criteria are complete.
+
+Validation after final source review: 13 source/storage/hook tests and 78 presentation/profile/actions/family/shell tests passed, one worker at a time. All 11 configured locales pass parity, ICU and usage; config check passes. File lint passes with the existing AppShell img warning. Scoped TypeScript reports no new-source error; its imported PortfolioView generic error is reproducible unchanged on the baseline checkout. CI is the general TypeScript gate. No browser/funding/signing or full local suite/build/coverage was run.
+
+POO-2230 source verification: the backend returns the vault's scalar operatingCash ledger getter, not a native balance+decimals read. Public contract main `9e32ba98bd1dbc14de0256723336f93a40ad302a`, SpokeVaultBase.sol:250, marks native top-up disabled under DEC-187; ISpokeVault.sol:349 says the hub SpokeVault has no Operating Cash. This confirms that the current scalar must not be labelled ETH wei. The detailed evidence is linked in POO-2230.
+
+Stage C is merged as [PR #110](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/110), main `4217ab80a059d1b6a3e124384d67d71f55b8e826`, after passing CI lint/typecheck/i18n/config. Stage D/E is the separate presentation change on top. Repository lint passes with 112 existing warnings and one info.

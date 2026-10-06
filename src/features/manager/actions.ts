@@ -98,6 +98,24 @@ async function loadConsoleManagerProfile(
   return profile;
 }
 
+/**
+ * POO-2245 R9: shared editable profile without reading the V1 portfolio, AUM or catalog.
+ * PP-INTEGRATION-POINT: session-selected public registry profile; the existing editor owns writes.
+ * A missing real session has no fallback identity. Registry absence creates an empty editable form.
+ */
+export async function getManagerProfileAction(): Promise<ManagerProfile | null> {
+  try {
+    const wallet = await getSessionWallet();
+    if (!isMockMode) {
+      if (!wallet) return null;
+      return (await fetchManagerProfile(wallet)) ?? synthesizeManagerProfile(wallet, []);
+    }
+    return await loadConsoleManagerProfile(await managerService.getDashboard(), wallet);
+  } catch {
+    throw new Error("MANAGER_PROFILE_UNAVAILABLE");
+  }
+}
+
 /** The dashboard identity terms the "Share your strategies" card and the invite/greeting fallback use. */
 interface ManagerIdentity {
   managerName: string;

@@ -52,6 +52,8 @@ const mocks = vi.hoisted(() => ({
   // existing scoped-read suites are unchanged; the R5 mock-mode test flips it to `true` to prove the
   // console gates the FULL mock catalog to the manager's own `isPoolManager` position (not all fixtures).
   isMockMode: false as boolean,
+  profileMissing: false,
+  profileError: null as Error | null,
 }));
 
 vi.mock("next-intl/server", () => ({ getLocale: async () => "en" }));
@@ -78,6 +80,8 @@ vi.mock("@/lib/services", () => ({
 vi.mock("@/lib/manager/profile/fetchManagerProfile", () => ({
   fetchManagerProfile: async () => {
     mocks.callLog.push("profile");
+    if (mocks.profileError) throw mocks.profileError;
+    if (mocks.profileMissing) return null;
     if (mocks.gateProfile) await mocks.gateProfile.promise;
     return { handle: mocks.profileHandle, name: mocks.profileName, address: DEV_MANAGER_ADDRESS };
   },
@@ -144,6 +148,7 @@ import { fetchDexPoolByAddress } from "@/lib/manager/fetchDexPoolByAddress";
 import {
   getDexPoolByAddressAction,
   getManagerConsoleAction,
+  getManagerProfileAction,
   getManagerStrategyDetailAction,
 } from "./actions";
 
@@ -163,6 +168,36 @@ beforeEach(() => {
   mocks.callLog = [];
   mocks.gateProfile = null;
   mocks.isMockMode = false;
+  mocks.profileMissing = false;
+  mocks.profileError = null;
+});
+
+describe("getManagerProfileAction", () => {
+  // POO-2245 R9: profile must not invoke V1 financial/catalog reads.
+  it("loads the session profile independently of the dashboard", async () => {
+    mocks.profileName = "Manager";
+    expect(await getManagerProfileAction()).toMatchObject({ name: "Manager" });
+    expect(mocks.callLog).toEqual(["profile"]);
+  });
+  it("returns null without a real session rather than using a mock identity", async () => {
+    mocks.wallet = null;
+    expect(await getManagerProfileAction()).toBeNull();
+    expect(mocks.callLog).toEqual([]);
+  });
+  it("opens an editable profile when the registry has no record", async () => {
+    mocks.profileMissing = true;
+    expect(await getManagerProfileAction()).toMatchObject({ address: mocks.wallet, handle: "" });
+    expect(mocks.callLog).toEqual(["profile"]);
+  });
+  it("uses explicit mock mode without making real reads", async () => {
+    mocks.isMockMode = true;
+    expect(await getManagerProfileAction()).toMatchObject({ address: DEV_MANAGER_ADDRESS });
+    expect(mocks.callLog).toEqual([]);
+  });
+  it("sanitizes read errors without exposing upstream detail", async () => {
+    mocks.profileError = new Error("internal upstream detail");
+    await expect(getManagerProfileAction()).rejects.toThrow("MANAGER_PROFILE_UNAVAILABLE");
+  });
 });
 
 /** A manually-released deferred promise, for the POO-781 R3 concurrency gate. */

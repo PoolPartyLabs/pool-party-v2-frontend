@@ -704,3 +704,5 @@ The launch modal now follows provisioning with one current-step card and a pinne
 ## Overview + Manage consolidation, 2026-10-06
 
 See [phased delivery plan](../../../docs/manager-overview-manage-v2-delivery-2026-10-06.md). POO-2246 v2 refines existing Manage with native-only cash, chain/address token verification, shell skeleton and bounded inline preparation recovery. No additional execution capability is enabled.
+
+POO-2245 v1 supplies the V2-only Overview: shared console hierarchy, AUM/history availability states, unified Continue setup, lifecycle table and existing profile/resume/Manage destinations. The sidebar starts expanded at 248px for V2 Overview without changing the saved preference elsewhere. Pure identity and storage status models distinguish drafts, journeys, corrupt reads and incomplete discovery. Production financial aggregates remain POO-2247; four explicit stories cover Ready/Loading/Empty/Error.
