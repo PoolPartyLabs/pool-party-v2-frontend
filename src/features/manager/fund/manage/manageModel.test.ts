@@ -1,10 +1,11 @@
 /**
  * @id PP-MGR-LIB-051
  * @name manageModel tests
- * @implements-rules-version v1 (POO-2226)
+ * @implements-rules-version v2 (POO-2226)
  * @analytics-events none, focused read normalization tests.
  */
 import { describe, expect, it } from "vitest";
+import { supportedChainMetas } from "@/lib/chains/config";
 import { mockFund, mockSpokeBalances } from "@/mocks/data/v2Funds";
 import { manageProtocolMark, normalizeManageModel } from "./manageModel";
 
@@ -59,10 +60,15 @@ describe("Manage reads", () => {
     expect(position?.valueUsd.status).toBe("unavailable");
   });
   it("[R5,R6] never converts scalar cash, holder income, uncollected fees or an absent queue into balances", () => {
-    const model = normalizeManageModel(mockFund, mockSpokeBalances);
+    const stable = supportedChainMetas.find((m) => m.chain.id === 42161)?.usdc;
+    if (!stable) throw new Error("Arbitrum stable fixture missing");
+    const model = normalizeManageModel(
+      { ...mockFund, mandate: { ...mockFund.mandate, usdc: stable.address } },
+      mockSpokeBalances,
+    );
     expect(
       model.chains.every(
-        (c) => c.cash.length === 2 && c.cash.every((t) => t.amount.status === "unavailable"),
+        (c) => c.cash.length === 1 && c.cash.every((t) => t.amount.status === "unavailable"),
       ),
     ).toBe(true);
     expect(model.withdrawal.requested.status).toBe("unavailable");
@@ -129,4 +135,39 @@ describe("POO-2232 current position status", () => {
     }
     expect(normalizeManageModel(mockFund).positions[0]?.rangeStatus.status).toBe("unavailable");
   });
+});
+
+// @rule R1: Operating cash is native-only and no scalar cash is reinterpreted.
+it("POO-2246 [R1] keeps one native token per chain without stable cash", () => {
+  const model = normalizeManageModel(mockFund, mockSpokeBalances);
+  for (const chain of model.chains) {
+    expect(chain.cash).toHaveLength(1);
+    expect(chain.cash[0]).toMatchObject({
+      address: null,
+      symbol: "ETH",
+      amount: { status: "unavailable" },
+    });
+  }
+});
+// @rule R4: Stable metadata requires a matching mandate address.
+it("POO-2246 [R4] rejects mismatched stable identity and accepts case-insensitive known identity", () => {
+  const unknown = normalizeManageModel(mockFund);
+  expect(unknown.chains[0]?.idle).toMatchObject({
+    symbol: "",
+    decimals: -1,
+    amount: { status: "unavailable" },
+  });
+  expect(unknown.withdrawal.reserved.status).toBe("unavailable");
+  const stable = supportedChainMetas.find((m) => m.chain.id === 42161)?.usdc;
+  if (!stable) throw new Error("Arbitrum stable fixture missing");
+  const known = normalizeManageModel({
+    ...mockFund,
+    mandate: { ...mockFund.mandate, usdc: stable.address.toUpperCase() },
+  });
+  expect(known.chains[0]?.idle).toMatchObject({
+    symbol: "USDC",
+    decimals: 6,
+    amount: { status: "available" },
+  });
+  expect(known.positions[1]?.tokens.map((t) => t.symbol)).toEqual(["USDC", "WETH"]);
 });

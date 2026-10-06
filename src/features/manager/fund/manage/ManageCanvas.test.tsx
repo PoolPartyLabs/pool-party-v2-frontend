@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-085
  * @name ManageCanvas tests
- * @implements-rules-version v1 (POO-2226)
+ * @implements-rules-version v2 (POO-2226)
  * @analytics-events none, read-only graph tests.
  */
 import { describe, expect, it, vi } from "vitest";
@@ -94,4 +94,18 @@ describe("Manage canvas", () => {
     expect(document.querySelector("[data-manage-range]")).toHaveTextContent("Not available");
     expect(document.querySelector("[data-manage-range]")).not.toHaveClass("text-success");
   });
+});
+
+// @rule R1,R2: The renderer does not expose stable cash even from an older mixed model.
+it("POO-2246 [R1,R2] renders only native cash from a mixed model at the unchanged size", () => {
+  const model = normalizeManageModel(mockFund);
+  for (const chain of model.chains) chain.cash.push(chain.idle);
+  renderWithProviders(<ManageCanvas model={model} selectedId={null} onSelect={vi.fn()} />);
+  for (const cash of document.querySelectorAll<HTMLElement>("[data-manage-cash]")) {
+    expect(cash).toHaveTextContent("ETH");
+    expect(cash).not.toHaveTextContent("USDC");
+    expect(cash).not.toHaveTextContent("USDG");
+    expect(cash.parentElement?.style.width).toBe("160px");
+    expect(cash.parentElement?.style.height).toBe("136px");
+  }
 });

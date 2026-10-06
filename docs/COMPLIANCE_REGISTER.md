@@ -127,3 +127,7 @@ Verification: RESOLVED for this editor-only scope. Independent review identified
 ## Sidebar destination restoration, 2026-10-05 (POO-2241)
 
 Verification: RESOLVED for navigation scope. Cash+ and Tools reuse their existing feature flags, guarded routes and labels. The links introduce no return/security claim, fee, wallet request or new data collection. Existing destination-specific disclosures and launch conditions remain applicable.
+
+## Manager Manage delta, 2026-10-06 (POO-2246 v2)
+
+Verification: RESOLVED for this read/editor scope. Operating cash displays native assets only; stable metadata requires chain/address identity. Missing quantity/metadata remains Not available and existing served holdings are preserved. Preparation timeout does not assert transaction failure or success, and no new fee, custody action or route is enabled. Authoritative cash, queue and hub Income disclosure remains POO-2230; Move/Future financial reviews remain POO-2229/2231 before execution can launch.

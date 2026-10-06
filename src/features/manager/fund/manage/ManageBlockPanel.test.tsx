@@ -1,8 +1,9 @@
-/** @id PP-MGR-CMP-086 @implements-rules-version v1 (POO-2227) */
-import { beforeEach, describe, expect, it, vi } from "vitest";
+/** @id PP-MGR-CMP-086 @implements-rules-version v2 (POO-2227) */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PANEL_POOL_FIXTURES } from "@/mocks/data/buildPanelFixtures";
 import { mockFund } from "@/mocks/data/v2Funds";
 import {
+  act,
   renderWithProviders,
   screen,
   userEvent,
@@ -12,7 +13,10 @@ import { toPanelPoolView } from "../build/panel/panelCatalogView";
 import { normalizeManageModel } from "./manageModel";
 
 const mocks = vi.hoisted(() => ({ metadata: vi.fn(), pool: vi.fn(), review: vi.fn() }));
-vi.mock("./useManagePosition", () => ({ useManagePosition: mocks.metadata }));
+vi.mock("./useManagePosition", () => ({
+  MANAGE_READ_TIMEOUT_MS: 30_000,
+  useManagePosition: mocks.metadata,
+}));
 vi.mock("../build/panel/usePanelPool", () => ({ usePanelPool: mocks.pool }));
 vi.mock("@/lib/api/v2/manageActions", () => ({ reviewManageMoveRangeAction: mocks.review }));
 
@@ -152,4 +156,32 @@ describe("Manage block inline", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Not available"));
     expect(screen.queryByRole("button", { name: "Confirm & move range" })).not.toBeInTheDocument();
   });
+});
+
+afterEach(() => vi.useRealTimers());
+// @rule R7: Timeout keeps draft, offers explicit retry, and ignores a late response.
+it("POO-2246 [R7,R9] times out preparation without losing the draft or accepting a late review", async () => {
+  let resolveOld: (value: unknown) => void = () => {};
+  const reply = await mocks.review();
+  mocks.review.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveOld = resolve;
+      }),
+  );
+  renderWithProviders(<ManageBlockPanel fund={mockFund} position={liquidity} active />);
+  await userEvent.click(screen.getByRole("button", { name: "±5%" }));
+  await userEvent.click(screen.getByRole("button", { name: "Move range" }));
+  vi.useFakeTimers();
+  await act(async () => screen.getByRole("button", { name: "Review move range" }).click());
+  await act(async () => {
+    vi.advanceTimersByTime(30_000);
+  });
+  expect(screen.getByRole("alert")).toHaveTextContent("Not available");
+  expect(screen.getByRole("button", { name: "Review move range" })).toBeEnabled();
+  await act(async () => resolveOld(reply));
+  expect(screen.queryByRole("button", { name: "Confirm & move range" })).not.toBeInTheDocument();
+  vi.useRealTimers();
+  await userEvent.click(screen.getByRole("button", { name: "Review move range" }));
+  expect(await screen.findByRole("button", { name: "Confirm & move range" })).toBeDisabled();
 });

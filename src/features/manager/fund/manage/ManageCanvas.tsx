@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-085
  * @name ManageCanvas
- * @implements-rules-version v1 (POO-2226, POO-2232)
+ * @implements-rules-version v2 (POO-2246; extends POO-2226, POO-2232)
  * @analytics-events none, position presses report through onSelect; ManageScreen owns the view.
  *
  * Read-only live graph built from the shared Build pieces. Cash belongs to one chain and every
@@ -207,9 +207,15 @@ function CashNode({ model, chainId }: { model: ManageModel; chainId: number }) {
           <NetworkLogo network={chain.network} name={chain.name} size={12} />
           {chain.name}
         </div>
-        {chain.cash.map((token) => (
-          <ManageTokenRow key={`${token.chainId}:${token.address}:${token.symbol}`} token={token} />
-        ))}
+        {chain.cash
+          .filter((token) => token.address === null && token.chainId === chainId)
+          .slice(0, 1)
+          .map((token) => (
+            <ManageTokenRow
+              key={`${token.chainId}:${token.address}:${token.symbol}`}
+              token={token}
+            />
+          ))}
       </div>
     </div>
   );

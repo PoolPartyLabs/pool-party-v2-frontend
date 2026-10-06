@@ -938,3 +938,5 @@ POO-2233 updates PP-MGR-CMP-081 to one current-step card, current evidence and a
 POO-2235 updates existing graph/layout/pieces with continuous full-path hover, neutral Income output and five fixed locks. POO-2236 updates the existing AppShell/viewport with temporary sidebar state and fitted usable canvas space. See [delivery record](build-canvas-polish-2026-10-05.md).
 
 POO-2241 rules v1 updates PP-CORE-LAY-001: restore the Cash+ and Tools desktop sidebar links under the existing feature flags, superseding POO-2209 R1. No new artifacts or integration seams.
+
+POO-2246 rules v2 updates PP-MGR-SCR-004, PP-MGR-CMP-085/086 and PP-MGR-LIB-051: native-only 160x136 Operating cash, address-verified stable metadata, shell loading and 30-second preparation recovery. Existing execution dependencies remain open.

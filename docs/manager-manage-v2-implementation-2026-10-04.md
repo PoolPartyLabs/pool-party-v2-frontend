@@ -42,7 +42,7 @@ Run focused new tests and relevant V1/Invest/Build regressions, lint, typecheck,
 ## Dependency decisions and delivery sequence
 
 - [POO-2229](https://linear.app/yeildbay/issue/POO-2229), Rafael: authoritative post-close budgets, effect/fee/impact preview and continuation after partial Move execution. Initial `eth_simulateV1` success and transaction calldata alone do not supply these contracts.
-- [POO-2230](https://linear.app/yeildbay/issue/POO-2230), Rafael: native/stable operating cash per chain, eligible withdrawal queue and actual hub USDC Income. `payoutReserve` is usable; `incomeCollection.heldDollars` is collection-round state, not proven total Income.
+- [POO-2230](https://linear.app/yeildbay/issue/POO-2230), Rafael: native-only operating cash per chain (superseded by the 2026-10-06 handoff), eligible withdrawal queue and actual hub USDC Income. `payoutReserve` is usable; `incomeCollection.heldDollars` is collection-round state, not proven total Income.
 - [POO-2231](https://linear.app/yeildbay/issue/POO-2231), Rafael: persisted future-deposit policy, version/conflict/consumption semantics, allocation executor and block-to-position/replacement lineage.
 
 Implementation PRs are split into: (1) authorized API reads/review boundary, (2) pure model/layout and shared viewport, (3) rendered canvas/screen and translations, (4) inline panel and range state, (5) authorized route/shell activation and final documentation. This keeps each dependency reviewable before the live entry changes.
@@ -76,3 +76,5 @@ Verification: 134 distinct focused tests across 14 files passed across the final
 Scoped TypeScript for changed sources/tests and their imports passed. Repository lint passed with 112 existing warnings and one info; all 11 locales passed parity, ICU and usage; config check passed. Full local TypeScript exceeded the 2 GB heap limit. Remote lint/typecheck/i18n/config passed for the first two dependency PRs; audit reports existing package vulnerabilities, with package.json and pnpm-lock.yaml unchanged. No full local test suite, coverage, build, browser walkthrough, wallet signature or mainnet transaction was performed. Remote heavy jobs are independent CI checks, not local execution evidence.
 
 Independent review found and corrected retained-metadata retry visibility, read-capability review invalidation, request watchdogs and baseline validation. The coordinator additionally locked same-wallet sign-out/reauthentication with a red-to-green regression. This delivers the supported frontend slice; AC11-14 and missing data sources remain dependent on the issues above.
+
+The [2026-10-06 consolidated plan](manager-overview-manage-v2-delivery-2026-10-06.md) adds Overview and supersedes Operating cash with native-only display. Manage remains 160 x 136 px.

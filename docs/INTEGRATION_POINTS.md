@@ -253,3 +253,7 @@ POO-2232 reuses the authorized `positionsSummary.positions[].uniswap.inRange` re
 ## Build auxiliary configuration, 2026-10-05
 
 POO-2237 introduces no endpoint or wallet operation. Manual Swap tokens are canonical references from the explicit mandate list on the block network; configuration persists in the existing draft store. No unrestricted-token flag exists in the current draft shape. Spoke percentage reuses the plan reducer with root/network ceilings and the existing child floor. Manual Swap is explicitly unavailable in both Review and launch compilation, including inside pool chains; executable wiring is tracked by [POO-2238](https://linear.app/yeildbay/issue/POO-2238). Backend quote delivery POO-2148 is already Done and is not reopened here.
+
+## Manager Manage refinements, 2026-10-06 (POO-2246 v2)
+
+`manageModel.ts` accepts configured stable metadata only for the actual mandate address on that chain. Unknown metadata requires a served identity under POO-2230. Native Operating cash remains unavailable until an authoritative native balance is supplied; the scalar accounting bucket is not a token balance. `ManageBlockPanel.tsx` times out review preparation without manufacturing an execution result. POO-2229 and POO-2231 remain the write-enablement dependencies.

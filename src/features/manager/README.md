@@ -700,3 +700,7 @@ POO-2232 refines this canvas with straight spokes, symmetric branch anchors, fix
 ## Strategy creation signing (POO-2233)
 
 The launch modal now follows provisioning with one current-step card and a pinned action footer. The Wormhole report wait shows a persistent 19-minute estimate while the existing report polling controls progression. Expiry explains the delay without signing or declaring settlement. See the [plan, dependencies and validation](../../../docs/strategy-launch-single-step-2026-10-04.md) and [launch module contract](fund/launch/README.md).
+
+## Overview + Manage consolidation, 2026-10-06
+
+See [phased delivery plan](../../../docs/manager-overview-manage-v2-delivery-2026-10-06.md). POO-2246 v2 refines existing Manage with native-only cash, chain/address token verification, shell skeleton and bounded inline preparation recovery. No additional execution capability is enabled.

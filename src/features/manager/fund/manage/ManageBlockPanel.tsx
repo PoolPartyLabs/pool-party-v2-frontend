@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-086
  * @name ManageBlockPanel
- * @implements-rules-version v1 (POO-2227)
+ * @implements-rules-version v2 (POO-2246; extends POO-2227)
  * @analytics-events strategy_move_range_started, tx_flow_abandoned, app_cta_blocked, app_error_shown
  * Inline V2 states of PP-MGR-CMP-001/002; no wallet call is exposed without a verified preview.
  */
@@ -29,7 +29,7 @@ import {
   validManageRange,
 } from "./manageDraft";
 import { type ManagePosition, manageProtocolMark } from "./manageModel";
-import { useManagePosition } from "./useManagePosition";
+import { MANAGE_READ_TIMEOUT_MS, useManagePosition } from "./useManagePosition";
 
 export function ManageBlockPanel({
   fund,
@@ -361,6 +361,18 @@ function RangeSettings({
     const current = ++run.current;
     setStage("building");
     setError(false);
+    const timer = setTimeout(() => {
+      if (run.current !== current) return;
+      run.current += 1;
+      setError(true);
+      setStage("edit");
+      track("app_error_shown", {
+        family: "v2",
+        surface: "manager",
+        error_code: "MANAGE_READ_TIMEOUT",
+        error_origin: "upstream",
+      });
+    }, MANAGE_READ_TIMEOUT_MS);
     try {
       // PP-INTEGRATION-POINT: re-read exact identity and supported preview fields; no client-built calldata.
       const result = await reviewManageMoveRangeAction(fund.coreVault, {
@@ -413,6 +425,8 @@ function RangeSettings({
           error_origin: "upstream",
         });
       }
+    } finally {
+      clearTimeout(timer);
     }
   };
   const rangeText = (range: PoolRange) => {
