@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-051
  * @name manageModel
- * @implements-rules-version v1 (POO-2226, POO-2232)
+ * @implements-rules-version v2 (POO-2246; extends POO-2226, POO-2232)
  * @analytics-events none, normalized read data consumed by ManageScreen.
  *
  * One read model for cards and panels. Position identity is independent of pool and plan identity.
@@ -168,12 +168,13 @@ function stableToken(fund: FundView, chainId: number): Omit<ManageToken, "amount
     chainId === Number(fund.mandate.hubChainId)
       ? fund.mandate.usdc
       : fund.mandate.spokes.find((s) => Number(s.chainId) === chainId)?.spokeToken;
-  // Token metadata is configured identity, never inferred from a token symbol or a USD balance.
+  const verified = address != null && meta?.usdc.address.toLowerCase() === address.toLowerCase();
+  // PP-INTEGRATION-POINT: unknown mandate token identity needs served metadata, never a network-label guess.
   return {
     chainId,
     address: address ?? null,
-    symbol: meta?.usdc.symbol ?? "",
-    decimals: meta?.usdc.decimals ?? -1,
+    symbol: verified ? meta.usdc.symbol : "",
+    decimals: verified ? meta.usdc.decimals : -1,
   };
 }
 
@@ -224,11 +225,8 @@ export function normalizeManageModel(fund: FundView, balances: FundBalances[] = 
       positions: positions.filter((position) => position.chainId === chainId),
       idle: { ...stable, amount: idleAmount },
       idleSharePct,
-      // Scalar operatingCash does not identify both native and stable balances.
-      cash: [
-        { ...native, amount: unavailable("missing_native_cash") },
-        { ...stable, amount: unavailable("missing_stable_cash") },
-      ],
+      // Scalar operatingCash does not identify native operating resources. Stable stays in idle/holdings.
+      cash: [{ ...native, amount: unavailable("missing_native_cash") }],
     };
   });
   const hubStable = stableToken(fund, hubChainId);

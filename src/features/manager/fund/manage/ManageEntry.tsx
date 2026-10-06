@@ -1,14 +1,16 @@
 /**
  * @id PP-MGR-SCR-004
  * @name ManageEntry
- * @implements-rules-version v1 (POO-2226)
+ * @implements-rules-version v2 (POO-2246; extends POO-2226)
  * @analytics-events app_error_shown, app_cta_blocked
  * Authorized V2 entry, independent of investor holder reads.
  */
 "use client";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { useBuildShellLayout } from "@/components/layout/BuildShellLayout";
 import { Button } from "@/components/ui/Button";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { loadManageFundAction } from "@/lib/api/v2/manageActions";
 import { useAuth } from "@/lib/auth/useAuth";
@@ -16,6 +18,31 @@ import { useSiweSession } from "@/lib/auth/useSiweSession";
 import { ManageBlockPanel } from "./ManageBlockPanel";
 import { ManageScreen } from "./ManageScreen";
 import { MANAGE_READ_TIMEOUT_MS } from "./useManagePosition";
+
+function ManageLoading() {
+  useBuildShellLayout(true);
+  const t = useTranslations("manager.manageV2");
+  return (
+    <article data-manage-loading="" aria-busy="true" className="flex min-w-0 flex-col gap-6">
+      <p role="status" className="sr-only">
+        {t("loading")}
+      </p>
+      <Skeleton width="16rem" height="2rem" />
+      <div
+        data-manage-grid=""
+        className="grid min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[180px_minmax(0,1fr)_360px] xl:grid-cols-[220px_minmax(0,1fr)_360px]"
+      >
+        <div className="flex flex-col gap-3">
+          <Skeleton height="1rem" />
+          <Skeleton height="4rem" />
+          <Skeleton height="4rem" />
+        </div>
+        <Skeleton height="48rem" className="motion-reduce:animate-none" />
+        <Skeleton height="32rem" className="motion-reduce:animate-none" />
+      </div>
+    </article>
+  );
+}
 export function ManageEntry({ core }: { core: string }) {
   const t = useTranslations("manager.manageV2");
   const { address } = useAuth();
@@ -84,7 +111,7 @@ export function ManageEntry({ core }: { core: string }) {
       });
   }, [forbidden, code, track]);
   if (forbidden) return <p role="status">{t("forbidden")}</p>;
-  if (!result) return <p role="status">{t("loading")}</p>;
+  if (!result) return <ManageLoading />;
   if (!result.ok)
     return (
       <div role="alert">

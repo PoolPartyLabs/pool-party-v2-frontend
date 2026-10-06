@@ -1,4 +1,4 @@
-/** @id PP-MGR-SCR-004 @implements-rules-version v1 (POO-2226) */
+/** @id PP-MGR-SCR-004 @implements-rules-version v2 (POO-2226) */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockFund } from "@/mocks/data/v2Funds";
 import {
@@ -81,4 +81,15 @@ describe("authorized Manage entry", () => {
     view.rerender(<ManageEntry core={mockFund.coreVault} />);
     expect(screen.queryByTestId("manage")).not.toBeInTheDocument();
   });
+});
+
+// @rule R6: Authorized loading stays in the Manage shell with skeleton placeholders.
+it("POO-2246 [R6] shows a shell skeleton while authorized reads are pending", () => {
+  mocks.wallet = mockFund.manager;
+  mocks.signedIn = true;
+  mocks.load.mockImplementation(() => new Promise(() => {}));
+  renderWithProviders(<ManageEntry core={mockFund.coreVault} />);
+  expect(document.querySelector("[data-manage-loading]")).toHaveAttribute("aria-busy", "true");
+  expect(document.querySelector("[data-manage-grid]")).toBeInTheDocument();
+  expect(screen.queryByTestId("manage")).not.toBeInTheDocument();
 });
