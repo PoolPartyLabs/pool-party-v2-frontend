@@ -87,6 +87,8 @@ export function createChainLaunchDriver(input: {
     async receipt(chain, hash) {
       if (chain !== "solana:mainnet") return input.evm.receipt(chain, hash);
       requireEnabled();
+      if ((await input.rpc.genesisHash()) !== "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp")
+        throw new Error("SOLANA_CLUSTER_MISMATCH");
       return { status: await input.rpc.status(hash) };
     },
     async reconcile(step, checkpoint, journal) {

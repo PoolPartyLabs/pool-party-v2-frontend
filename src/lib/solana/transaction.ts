@@ -1,4 +1,5 @@
 import {
+  assertIsFullySignedTransaction,
   getBase58Decoder,
   getCompiledTransactionMessageDecoder,
   getSignatureFromTransaction,
@@ -39,6 +40,7 @@ export async function sendSolanaTransaction(input: {
     throw new Error("UNSAFE_SOLANA_TRANSACTION");
   const signedBytes = await input.sign(unsignedBytes);
   const signed = getTransactionDecoder().decode(signedBytes);
+  assertIsFullySignedTransaction(signed);
   if (
     unsigned.messageBytes.length !== signed.messageBytes.length ||
     unsigned.messageBytes.some((byte, index) => byte !== signed.messageBytes[index])

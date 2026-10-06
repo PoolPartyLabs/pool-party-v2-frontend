@@ -34,7 +34,7 @@ function setup() {
     complete: vi.fn(async () => {}),
   };
   const rpc = {
-    genesisHash: vi.fn(async () => "mainnet"),
+    genesisHash: vi.fn(async () => "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"),
     latestBlockhash: vi.fn(),
     send: vi.fn(),
     status: vi.fn(async () => "unknown" as const),
