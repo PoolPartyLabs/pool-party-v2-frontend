@@ -95,6 +95,7 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
             {
               ...options.frozen,
               solanaBinding: options.binding,
+              solanaSelection: options.selection,
             },
             steps,
           );

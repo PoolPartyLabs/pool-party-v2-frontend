@@ -1,4 +1,5 @@
 import { isFeatureEnabled } from "@/lib/features";
+import { requireSolanaLpChoice } from "@/lib/solana/lpChoices";
 import type { ChainLaunchStep, LaunchStep, SolanaLaunchStep } from "./plan";
 
 export interface SolanaLaunchSelection {
@@ -14,6 +15,7 @@ export function withSolanaLaunchSteps(
 ): ChainLaunchStep[] {
   if (!selection) return evmSteps;
   if (!isFeatureEnabled("solanaSpoke")) throw new Error("SOLANA_DISABLED");
+  if (selection.raydiumPool) requireSolanaLpChoice(selection.raydiumPool);
   if (
     !Number.isInteger(selection.sharePct) ||
     selection.sharePct <= 0 ||
