@@ -26,6 +26,7 @@ import {
   type CanvasPlan,
   deriveLaunchSteps,
   type ExecutionConfig,
+  isEvmLaunchStep,
   type LaunchStep,
   launchPlanError,
 } from "./plan";
@@ -90,8 +91,10 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
   let gap = false;
   let planError = launchPlanError(null);
   try {
-    if (journal) steps = journal.steps;
-    else if (options.plan)
+    if (journal) {
+      if (!journal.steps.every(isEvmLaunchStep)) throw new Error("SOLANA_DRIVER_REQUIRED");
+      steps = journal.steps;
+    } else if (options.plan)
       steps = deriveLaunchSteps(options.plan, options.execution ?? {}, true, options.spoke);
     else gap = true;
   } catch (error) {
@@ -196,7 +199,7 @@ export function useV2LaunchBinding(options: V2LaunchOptions) {
                 ? failed.error
                 : "LAUNCH_STEP_FAILED";
             track("builder_launch_failed", {
-              step_kind: current.steps.find((step) => step.id === failed.stepId)?.kind,
+              step_kind: steps.find((step) => step.id === failed.stepId)?.kind,
               error_code: code,
               error_origin: code === "USER_REJECTED" ? "user" : "app",
             });

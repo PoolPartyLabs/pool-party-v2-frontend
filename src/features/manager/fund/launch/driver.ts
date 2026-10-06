@@ -42,7 +42,13 @@ import {
   type LaunchDriver,
   type LaunchJournal,
 } from "./journal";
-import { allocationRaw, type LaunchStep, validateTickAlignment } from "./plan";
+import {
+  allocationRaw,
+  type ChainLaunchStep,
+  isEvmLaunchStep,
+  type LaunchStep,
+  validateTickAlignment,
+} from "./plan";
 import { canonicalProfile, type LaunchProfile, profileMessage } from "./profile";
 import { decodeLaunchReceipt } from "./receipt";
 import { matchLaunchSubmission, type SubmissionIdentity } from "./reconciliation";
@@ -52,6 +58,11 @@ export interface FrozenLaunch {
   request: CreateFundRequest;
   review: FundReview;
   plan?: import("./plan").CanvasPlan;
+}
+
+function evmChain(chain: ChainLaunchStep["chain"]): 42161 | 4663 {
+  if (chain === "solana:mainnet") throw new Error("UNSAFE_TRANSACTION");
+  return chain;
 }
 export interface LaunchWallet {
   send(
@@ -127,7 +138,7 @@ function transaction(
     throw new Error("UNSAFE_TRANSACTION");
   return built;
 }
-function budget(step: LaunchStep, journal: LaunchJournal): bigint {
+function budget(step: ChainLaunchStep, journal: LaunchJournal): bigint {
   const principal = step.group && step.kind !== "bridge" ? journal.arrival : journal.principal;
   if (!principal) throw new Error("PRINCIPAL_UNAVAILABLE");
   if (step.group && step.kind !== "bridge")
@@ -148,7 +159,7 @@ function budget(step: LaunchStep, journal: LaunchJournal): bigint {
   }
   return allocationRaw(BigInt(principal), step.sharePct ?? 0);
 }
-function swapOf(step: LaunchStep, journal: LaunchJournal) {
+function swapOf(step: ChainLaunchStep, journal: LaunchJournal) {
   return journal.steps.find(
     (entry) =>
       entry.kind === "swap" &&
@@ -157,7 +168,7 @@ function swapOf(step: LaunchStep, journal: LaunchJournal) {
         (step.blockId ? entry.blockId === step.blockId : step.dependencies.includes(entry.id))),
   );
 }
-function conversion(step: LaunchStep, journal: LaunchJournal) {
+function conversion(step: ChainLaunchStep, journal: LaunchJournal) {
   const swap = swapOf(step, journal);
   const checkpoint = swap && journal.checkpoints[swap.id];
   const data = checkpoint?.status === "confirmed" ? checkpoint.data?.receipt : undefined;
@@ -423,9 +434,10 @@ async function submissionIdentity(
 export function createLaunchDriver(
   wallet: LaunchWallet,
   onSignature: (step: LaunchStep) => void = () => {},
-): LaunchDriver {
-  const driver: LaunchDriver = {
+): LaunchDriver<LaunchStep> {
+  const driver: LaunchDriver<LaunchStep> = {
     async build(step, journal) {
+      if (!isEvmLaunchStep(step)) throw new Error("SOLANA_DRIVER_REQUIRED");
       const frozen = journal.frozen as FrozenLaunch;
       if (step.kind === "approve" || step.kind === "create") {
         if (step.kind === "create") {
@@ -435,7 +447,7 @@ export function createLaunchDriver(
             const pool = catalogPoolSchema.parse(
               unwrap(
                 await getCatalogPoolAction(
-                  position.chain,
+                  evmChain(position.chain),
                   z.string().parse(position.config?.poolId),
                 ),
               ),
@@ -564,7 +576,7 @@ export function createLaunchDriver(
             ? !evidence.allocated || !evidence.allocatedVault
             : !evidence.swapped || !record(evidence.swapped).vault;
         if (checkpoint?.status === "confirmed" && checkpoint.txHash && missing) {
-          const mined = await wallet.receipt(entry.chain, checkpoint.txHash);
+          const mined = await wallet.receipt(evmChain(entry.chain), checkpoint.txHash);
           if (
             !mined ||
             mined.status !== "success" ||
@@ -709,6 +721,7 @@ export function createLaunchDriver(
       return { transaction: transaction(built, step.chain, from) };
     },
     async send(step, input, onSubmitted) {
+      if (!isEvmLaunchStep(step)) throw new Error("SOLANA_DRIVER_REQUIRED");
       const built = launchTransactionSchema.parse(input);
       if (built.chainId !== step.chain) throw new Error("UNSAFE_TRANSACTION");
       const hash = await wallet.send(built, onSubmitted);
@@ -732,6 +745,7 @@ export function createLaunchDriver(
       };
     },
     async reconcile(step, checkpoint, journal) {
+      if (!isEvmLaunchStep(step)) throw new Error("SOLANA_DRIVER_REQUIRED");
       if (step.kind === "profile") {
         const current = unwrap(await readLaunchProfileAction(coreOf(journal)));
         return (
@@ -874,6 +888,7 @@ export function createLaunchDriver(
       }
     },
     async complete(step, checkpoint, journal) {
+      if (!isEvmLaunchStep(step)) throw new Error("SOLANA_DRIVER_REQUIRED");
       if (step.kind === "open") {
         const positionKey = z
           .object({ positionKey: z.string().regex(/^0x[0-9a-fA-F]{64}$/) })

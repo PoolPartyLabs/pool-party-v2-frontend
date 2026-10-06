@@ -57,6 +57,7 @@ export interface LaunchStep {
     | "swap"
     | "open";
   chain: 42161 | 4663;
+  chainKind?: "evm" | "svm";
   dependencies: string[];
   sharePct?: number;
   shareDenominator?: number;
@@ -64,6 +65,26 @@ export interface LaunchStep {
   blockId?: string;
   protocol?: "aave-v3" | "uniswap-v4";
   config?: { poolId?: string; assetKey?: string } & ExecutionConfig;
+}
+
+export interface SolanaLaunchStep extends Omit<LaunchStep, "kind" | "chain"> {
+  kind:
+    | "bind-solana"
+    | "init-solana"
+    | "cctp-fast"
+    | "solana-arrival"
+    | "kamino-supply"
+    | "swap-to-ratio"
+    | "raydium-open"
+    | "report";
+  chain: 42161 | "solana:mainnet";
+  chainKind: "evm" | "svm";
+  group: "solana";
+}
+export type ChainLaunchStep = LaunchStep | SolanaLaunchStep;
+
+export function isEvmLaunchStep(step: ChainLaunchStep): step is LaunchStep {
+  return step.group !== "solana" && step.chain !== "solana:mainnet";
 }
 
 export function launchPlanError(error: unknown) {
