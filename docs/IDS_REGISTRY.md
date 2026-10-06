@@ -951,3 +951,11 @@ POO-2246 rules v2 updates PP-MGR-SCR-004, PP-MGR-CMP-085/086 and PP-MGR-LIB-051:
 POO-2245 extends PP-MGR-STO-001 and PP-MGR-LIB-045 with additive read-status APIs. Existing consumers retain their semantics. Invalid records are reported without overwriting stored data, and only validated identities are resumable. Presentation and profile composition follow in a separate PR.
 
 POO-2245 presentation integrates PP-MGR-SCR-001 in `overview/ManagerOverviewV2.tsx` and `OverviewProfile.tsx`, retaining the existing profile editor. PP-CORE-LAY-001 adds temporary 248px Overview expansion; PP-MGR-CMP-010/031 accept optional Coming soon labels with unchanged V1 defaults. The four states have explicit Storybook scenarios.
+
+## Investor V2 funding and execution, 2026-10-06 (POO-2248)
+
+| ID | Artifact | Rules | Source |
+|---|---|---|---|
+| PP-STR-HOK-023 | Authenticated V2 investment preparation, confirmation and recovery | POO-2248 v1 | `src/features/funds/useFundInvest.ts` |
+| PP-STR-LIB-038 | Exact deposit preview/calldata validation | POO-2248 v1 | `src/features/funds/fundInvestModel.ts` |
+| PP-STR-LIB-039 | Wallet/core-scoped transaction journal | POO-2248 v1 | `src/features/funds/fundInvestJournal.ts` |
