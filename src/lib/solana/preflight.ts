@@ -42,6 +42,8 @@ export async function checkSolanaPrelaunch(input: {
     throw new Error("SOLANA_BINDING_MISMATCH");
   const code = await input.evmCode(input.manager);
   if (code !== undefined && code !== "0x") throw new Error("SOLANA_MANAGER_EOA_REQUIRED");
+  if (BigInt(input.binding.authorization.expiry) < BigInt(Math.floor(Date.now() / 1000)))
+    throw new Error("SOLANA_BINDING_EXPIRED");
   if (!(await verifyManagerSolanaBinding(input.binding, input.codec)))
     throw new Error("SOLANA_BINDING_INVALID");
   const requiredLamports = requiredManagerLamports(input.costs);
