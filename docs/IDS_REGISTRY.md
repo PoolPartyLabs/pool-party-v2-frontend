@@ -940,3 +940,12 @@ POO-2235 updates existing graph/layout/pieces with continuous full-path hover, n
 POO-2241 rules v1 updates PP-CORE-LAY-001: restore the Cash+ and Tools desktop sidebar links under the existing feature flags, superseding POO-2209 R1. No new artifacts or integration seams.
 
 POO-2246 rules v2 updates PP-MGR-SCR-004, PP-MGR-CMP-085/086 and PP-MGR-LIB-051: native-only 160x136 Operating cash, address-verified stable metadata, shell loading and 30-second preparation recovery. Existing execution dependencies remain open.
+
+## Manager Overview V2 sources, 2026-10-06 (POO-2245 v1)
+
+| ID | Artifact | Status | Implementation |
+|---|---|---|---|
+| PP-MGR-LIB-058 | Overview identity and setup projection | Implemented | `src/features/manager/fund/overview/overviewModel.ts` |
+| PP-MGR-HOK-023 | Local setup snapshot subscription | Implemented | `src/features/manager/fund/overview/useOverviewSetup.ts` |
+
+POO-2245 extends PP-MGR-STO-001 and PP-MGR-LIB-045 with additive read-status APIs. Existing consumers retain their semantics. Invalid records are reported without overwriting stored data, and only validated identities are resumable. Presentation and profile composition follow in a separate PR.

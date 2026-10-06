@@ -1,5 +1,6 @@
 /**
  * @id PP-MGR-STO-001
+ * POO-2245 rules v1 adds read-status snapshots without altering the legacy API.
  * @name mandateDraftStore
  * @implements-rules-version v3 (POO-2121 rules v1, POO-2167 rules v3, POO-2151 rules v1)
  * @analytics-events none, a storage module. The builder shell (PP-MGR-SCR-002) emits the save and
@@ -212,6 +213,44 @@ export function listDrafts(): MandateDraft[] {
   return Object.values(readStore().drafts).sort(
     (a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt),
   );
+}
+
+/** POO-2245 R5: explicit read status; legacy consumers retain listDrafts semantics. */
+export function listDraftsSnapshot(): {
+  drafts: MandateDraft[];
+  status: "available" | "unavailable" | "corrupt";
+} {
+  const store = storage();
+  if (!store) return { drafts: [], status: "unavailable" };
+  let raw: string | null;
+  try {
+    raw = store.getItem(MANDATE_DRAFTS_KEY);
+  } catch {
+    return { drafts: [], status: "unavailable" };
+  }
+  try {
+    if (raw === null) return { drafts: [], status: "available" };
+    const parsed: unknown = JSON.parse(raw);
+    if (!isRecord(parsed) || parsed.version !== MANDATE_DRAFTS_VERSION || !isRecord(parsed.drafts))
+      return { drafts: [], status: "corrupt" };
+    const drafts: MandateDraft[] = [];
+    let invalid = false;
+    for (const [id, value] of Object.entries(parsed.drafts)) {
+      const draft = normalizeDraft(value);
+      if (
+        !draft ||
+        draft.id !== id ||
+        !Number.isFinite(Date.parse(draft.updatedAt)) ||
+        !Number.isFinite(Date.parse(draft.createdAt))
+      ) {
+        invalid = true;
+      } else drafts.push(draft);
+    }
+    drafts.sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+    return { drafts, status: invalid ? "corrupt" : "available" };
+  } catch {
+    return { drafts: [], status: "corrupt" };
+  }
 }
 
 /** One draft by id, or null when it is not stored (a deleted draft, or a link to someone else's). */

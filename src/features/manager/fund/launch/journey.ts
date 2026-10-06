@@ -1,5 +1,6 @@
 /**
  * @id PP-MGR-LIB-045 (POO-2177)
+ * POO-2245 rules v1 adds read-status snapshots without altering the legacy API.
  * @name FundLaunchJourneyStore
  * @implements-rules-version v2 (POO-2181); POO-2204 rules v1
  */
@@ -243,6 +244,25 @@ export function listLaunchJourneys(manager: string | null | undefined): {
     return { journeys: [], unavailable: true };
   }
 }
+/** POO-2245 R5: report invalid entries without changing the legacy list. */
+export function listLaunchJourneysSnapshot(manager: string | undefined) {
+  const legacy = listLaunchJourneys(manager);
+  if (legacy.unavailable) return { ...legacy, status: "unavailable" as const };
+  if (!manager || typeof window === "undefined") return { ...legacy, status: "available" as const };
+  try {
+    const prefix = `pp:v2:journey:1:${manager.toLowerCase()}:`;
+    let entries = 0;
+    for (let index = 0; index < localStorage.length; index++)
+      if (localStorage.key(index)?.startsWith(prefix)) entries++;
+    return {
+      ...legacy,
+      status: entries === legacy.journeys.length ? ("available" as const) : ("corrupt" as const),
+    };
+  } catch {
+    return { ...legacy, status: "unavailable" as const };
+  }
+}
+
 export function launchStatus(journey: LaunchJourney) {
   const steps =
     journey.journal?.steps ??
