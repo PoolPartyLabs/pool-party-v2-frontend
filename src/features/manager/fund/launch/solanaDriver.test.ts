@@ -254,7 +254,7 @@ it("fails closed when the independent intent validator is absent or rejects", as
 
 function swapSetup() {
   const state = setup();
-  const pool = SOLANA_LP_CHOICES[0];
+  const pool = SOLANA_LP_CHOICES[2];
   if (!pool) throw new Error("FIXTURE_MISSING");
   const step: SolanaLaunchStep = {
     ...arrival,
@@ -318,6 +318,7 @@ it.each([
       expiresAt: failure === "stale" ? 1 : 2000000000,
       marketOpen: failure !== "closed",
     }));
+  if (failure === "closed" && step.config) step.config.poolId = SOLANA_LP_CHOICES[0]?.poolId;
   await driver.build(step, journal);
   await expect(driver.send(step, {}, vi.fn())).rejects.toThrow();
   expect(backend.quoteSwap).not.toHaveBeenCalled();
@@ -329,7 +330,7 @@ it("refuses an edited LP-open pool before building or signing", async () => {
   step.kind = "raydium-open";
   if (step.config) step.config.poolId = SOLANA_LP_CHOICES[1]?.poolId;
   await driver.build(step, journal);
-  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("SOLANA_API_QUOTE_REQUIRED");
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("STOCK_DATA_UNAVAILABLE");
   expect(backend.build).not.toHaveBeenCalled();
 });
 

@@ -23,5 +23,15 @@ it("preserves unavailable reasons and refuses stale or closed-market data", () =
       true,
       100,
     ),
-  ).toEqual({ status: "unavailable", reason: "SOLANA_ORACLE_MARKET_CLOSED" });
+  ).toEqual({ status: "unavailable", reason: "STOCK_DATA_UNAVAILABLE" });
+});
+
+it("keeps stock references unavailable while the production Scope switch is off", () => {
+  expect(
+    solanaReferenceAvailability(
+      { status: "available", expiresAt: 200, marketOpen: true },
+      true,
+      100,
+    ),
+  ).toEqual({ status: "unavailable", reason: "STOCK_DATA_UNAVAILABLE" });
 });

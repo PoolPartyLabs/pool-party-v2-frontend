@@ -7,6 +7,8 @@ export function solanaReferenceAvailability(
   stockMarketHoursRequired: boolean,
   now = Math.floor(Date.now() / 1000),
 ): { status: "available" } | { status: "unavailable"; reason: string } {
+  if (stockMarketHoursRequired && !SOLANA_SPOKE_RELEASE.scopeEnabled)
+    return { status: "unavailable", reason: "STOCK_DATA_UNAVAILABLE" };
   if (!reference) return { status: "unavailable", reason: "SOLANA_ORACLE_REFERENCE_MISSING" };
   if (reference.status === "unavailable")
     return {
@@ -28,3 +30,5 @@ export function requireSolanaOracleReference(
   const availability = solanaReferenceAvailability(reference, stockMarketHoursRequired);
   if (availability.status === "unavailable") throw new Error(availability.reason);
 }
+
+import { SOLANA_SPOKE_RELEASE } from "./release";
