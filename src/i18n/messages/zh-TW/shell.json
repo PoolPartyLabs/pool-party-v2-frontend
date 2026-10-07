@@ -81,7 +81,9 @@
     "label": "搭建器版本",
     "v1": "V1",
     "v2": "V2",
-    "tooltip": "在目前搭建器（V1）與基金合約預覽（V2）之間切換。"
+    "tooltip": "在目前搭建器（V1）與基金合約預覽（V2）之間切換。",
+    "v2Solana": "V2 Solana",
+    "solanaTooltip": "Solana策略本機預覽。點擊V2 Solana返回EVM編輯器。"
   },
   "toaster": {
     "ariaLabel": "通知"
