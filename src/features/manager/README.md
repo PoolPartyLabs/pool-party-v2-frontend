@@ -6,6 +6,13 @@ public manager profile, and the strategy **manage detail** (`PP-MGR-SCR-004`) wi
 (`src/lib/services` → `managerService`, `positionService`); mock-by-default with real seams marked
 `PP-INTEGRATION-POINT`.
 
+## Restricted Solana preparation
+
+Restricted Solana preparation is documented in the
+[multi-account delivery plan](../../../docs/solana-preview-preparation-plan-2026-10-07.md).
+POO-2281 adds unmounted access/preference helpers only. The public manager toggle, EVM drafts and
+launch flow remain unchanged; activation depends on POO-2282 and the separate POO-2262 integration.
+
 ## i18n namespace
 
 `manager.*` (`src/i18n/messages/{locale}/manager.json`). Manager Console keeps DeFi terms in English

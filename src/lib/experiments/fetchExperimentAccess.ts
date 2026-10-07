@@ -35,7 +35,8 @@ export async function loadSolanaPreviewAccess(): Promise<ExperimentAccess> {
       headers: { Authorization: `Bearer ${token}` },
       revalidate: 0,
     });
-    // A read that outlives logout/account replacement cannot transfer the earlier grant.
+    // Defense in depth if this request's token source changes. Next cookies are request snapshots:
+    // a future client host must also discard late results using its session/account generation.
     if ((await getSessionToken()) !== token) return deniedExperimentAccess();
     return resolveExperimentAccess(response);
   } catch {

@@ -1,6 +1,7 @@
 /**
  * @id PP-CORE-LIB-011
  * @name feature flag resolution
+ * @implements-rules-version v1 (POO-2281)
  *
  * Resolves a {@link FeatureKey} to an on/off boolean. Precedence (highest first):
  *   1. (future) dev/QA session override — added with the dev panel (POO-136)

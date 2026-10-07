@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 672 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 676 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -136,6 +136,15 @@ They are recorded together so a reader can tell a disclosed repeat from an undet
 | `PP-MGR-HOK-012` | usePanelPool: the live read of one Uniswap v4 pool, on mount and 15 s after each read settles while a panel is open (no overlapping reads, a 30 s watchdog), the `applicable` gate Use and Apply need, idle with no pool, stale-answer guard, error with retry, no fixture fallback in real mode | Hook | n/a (code) | In Review | [POO-2185](https://linear.app/yeildbay/issue/POO-2185) | code-only; `src/features/manager/fund/build/panel/usePanelPool.ts` @rules-v1 |
 | `PP-MGR-HOK-013` | usePanelReserves: the Supply panel's reserve rows, a selector over the shell's catalog (passed in, no second load) joined to the draft tokens and the draft's own Aave reserve selection, an unusable reserve listed disabled with its reason | Hook | n/a (code) | In Review | [POO-2185](https://linear.app/yeildbay/issue/POO-2185) | code-only; `src/features/manager/fund/build/panel/usePanelReserves.ts` @rules-v1 |
 | `PP-MGR-MCK-005` | buildPanelFixtures: every hookless Uniswap v4 pool of the mock Pools step (three hand-written, nine generated) and two Aave v3 reserves in the catalog's wire shape, plus `panelPoolAtPrice` for tests and stories (PP-MOCK) | Mock | n/a (code) | In Review | [POO-2185](https://linear.app/yeildbay/issue/POO-2185) | code-only; `src/mocks/data/buildPanelFixtures.ts` @rules-v1 |
+
+## Restricted Solana access foundation, 2026-10-07 (POO-2281)
+
+| ID | Title | Type | Design | Impl | Linear | Figma |
+|---|---|---|---|---|---|---|
+| `PP-CORE-LIB-122` | ExperimentAccess: strict versioned permission DTO, minimal denial, expiry and explicit preview/catalog/execute checks | Lib | n/a (code) | In Review, unmounted | [POO-2281](https://linear.app/yeildbay/issue/POO-2281), [POO-2282](https://linear.app/yeildbay/issue/POO-2282) | `src/lib/experiments/access.ts` @rules-v1 |
+| `PP-CORE-LIB-123` | FetchExperimentAccess: server-only, uncached multi-account grant loader; server gates and Bearer forwarding; failure denies | Lib | n/a (code) | In Review, unmounted | [POO-2281](https://linear.app/yeildbay/issue/POO-2281), [POO-2282](https://linear.app/yeildbay/issue/POO-2282) | `src/lib/experiments/fetchExperimentAccess.ts` @rules-v1 |
+| `PP-CORE-LIB-124` | SolanaPreviewMode: pure in-memory three-press reveal model, independent of V1/V2 family and EVM draft storage | Lib | n/a (code) | In Review, unmounted | [POO-2281](https://linear.app/yeildbay/issue/POO-2281) | `src/lib/experiments/solanaPreviewMode.ts` @rules-v1 |
+| `PP-MGR-DOC-002` | RestrictedSolanaPreviewDeliveryPlan: phases, file ownership, API/catalog/wallet dependencies and validation gates | Document | n/a (plan) | Planning complete, later phases pending | [POO-2281](https://linear.app/yeildbay/issue/POO-2281), [POO-2252](https://linear.app/yeildbay/issue/POO-2252) | [Delivery plan](solana-preview-preparation-plan-2026-10-07.md) @rules-v1 |
 
 ## CORE · Design system, primitives, generic reusable components and modals
 

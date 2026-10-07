@@ -14,6 +14,23 @@ Status: `OPEN` (asked, not answered), `BLOCKING` (must be answered before the la
 `ANSWERED` (the answer is in the last column). If a launch checklist disagrees with this file, this
 file wins.
 
+## CR-MGR-POO2281, 2026-10-07, restricted Solana preparation
+
+Status: OPEN for future activation; this foundation has no mounted experiment entry or wallet
+operation. Verify authenticated multi-account grant/revoke behavior, retention/admin access to cohort
+membership and immediate client clearing on session changes before the preview reaches testers.
+The frontend DTO carries capability and expiry only; no identity, member list or credential is
+serialized. The hidden gesture does not conceal public source or on-chain transaction evidence.
+
+Existing asset, venue, custody and jurisdiction entries remain applicable. Before enabling any
+tokenized equity, check asset eligibility and disclosures; before Solana routing/execution, verify
+native SOL versus WSOL, price provenance, costs, signer binding and settlement/recovery meanings.
+Catalog discovery does not authorize execution. No existing BLOCKING item is resolved. Owner:
+Murilo/API owner for access administration and the relevant disclosure owners for later activation.
+Evidence: [POO-2281](https://linear.app/yeildbay/issue/POO-2281),
+[POO-2282](https://linear.app/yeildbay/issue/POO-2282),
+[delivery plan](solana-preview-preparation-plan-2026-10-07.md).
+
 ## Verification record: gas-only risk acknowledgement
 
 2026-10-04, POO-2198, PP-CORE-CMP-046: reviewed the existing loss-percentage disclosure before

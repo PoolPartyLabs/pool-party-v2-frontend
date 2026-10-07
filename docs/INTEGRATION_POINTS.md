@@ -1,5 +1,22 @@
 # Integration Points
 
+## Restricted Solana preview access (POO-2281, rules v1)
+
+`src/lib/experiments/fetchExperimentAccess.ts` (`PP-CORE-LIB-123`) is an unmounted server-only
+read seam for proposed `GET /api/v1/experiments/solana-preview/access`, through the existing API
+transport. It forwards the current Bearer, requires real mode and both server flags `fundContracts`
+and `solanaSpoke`, and disables Data Cache. The strict versioned DTO is `PP-CORE-LIB-122`; any
+missing session/endpoint, denial, expiry, contract drift or transport error returns minimal denial.
+
+API membership, cryptographic session validation, short grant lifetime, private responses and
+list/direct-read protection remain [POO-2282](https://linear.app/yeildbay/issue/POO-2282).
+No permission comes from a decoded JWT, profile role, local wallet list or QA flag override.
+The future host must reject earlier-session responses using account/session generation; same-request
+cookie rereads cannot detect logout performed in another request. `PP-CORE-LIB-124` is a pure
+preference model, not a mounted switch or permission boundary. No Solana provider, catalog, draft
+or execution is activated. See the [plan](solana-preview-preparation-plan-2026-10-07.md) and
+[package contract](../src/lib/experiments/README.md). Reuse POO-2262's separate wallet/launch integration.
+
 ## Launch report countdown (POO-2233, rules v1)
 
 `launch/useLaunchReportWait.ts` records first report building/waiting observation in browser-local metadata keyed by normalized manager, draft and report step, separate from the execution journal. `useV2Launch.ts` projects this optional timestamp to `FundLaunchJourney`; an isolated display clock derives a 19-minute estimate. Polling, retry and reopening preserve the timestamp. Storage failure uses an in-memory fallback.
@@ -57,7 +74,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 506 markers across 292 files (2026-10-07)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 507 markers across 293 files (2026-10-07)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap

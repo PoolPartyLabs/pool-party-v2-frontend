@@ -144,11 +144,12 @@ describe("server experiment access", () => {
     expect(await loadSolanaPreviewAccess()).toEqual(deniedExperimentAccess());
   });
 
-  // @rule R3: a changed or signed-out session cannot inherit the previous account's read.
+  // @rule R3: changing the token source within one request denies that request's grant.
+  // This mocked getter is not evidence of detecting cross-request logout in Next cookies.
   it.each([
     null,
     "session-b",
-  ])("denies when the session becomes %j during the request", async (nextToken) => {
+  ])("denies when the request token source returns %j on its second read", async (nextToken) => {
     mocks.getSessionToken.mockResolvedValueOnce("session-a").mockResolvedValue(nextToken);
     expect(await loadSolanaPreviewAccess()).toEqual(deniedExperimentAccess());
   });
