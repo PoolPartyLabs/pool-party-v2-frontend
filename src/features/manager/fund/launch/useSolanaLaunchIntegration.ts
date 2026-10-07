@@ -78,6 +78,8 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
     setPreflight(null);
     setCostBreakdown(null);
     if (!enabled) throw new Error("SOLANA_DISABLED");
+    const selectionSnapshot = JSON.stringify(normalizeSolanaLaunchSelection(options.selection));
+    const bindingSnapshot = JSON.stringify(options.binding);
     const steps = withSolanaLaunchSteps(options.evmSteps, options.selection);
     if (options.selection.raydiumPool) {
       const choice = requireSolanaLpChoice(options.selection.raydiumPool);
@@ -102,6 +104,13 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
       balance: readManagerSolanaBalance,
       evmCode: options.evmCode,
     });
+    if (
+      addressRef.current !== options.binding.solanaAddress ||
+      JSON.stringify(options.binding) !== bindingSnapshot
+    )
+      throw new Error("SOLANA_BINDING_MISMATCH");
+    if (JSON.stringify(normalizeSolanaLaunchSelection(options.selection)) !== selectionSnapshot)
+      throw new Error("SOLANA_SELECTION_MISMATCH");
     setPreflight(checked);
     return checked;
   };

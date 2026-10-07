@@ -179,6 +179,20 @@ it("refuses missing oracle references before estimating or creating a journal", 
   expect(mocks.estimate).not.toHaveBeenCalled();
   expect(input.storage?.setItem).not.toHaveBeenCalled();
 });
+it("rejects selection changes during asynchronous preflight before journaling", async () => {
+  const input = options();
+  mocks.estimate.mockImplementation(async () => {
+    input.selection.sharePct = 40;
+    return [{ stepId: "solana:init", rentLamports: BigInt(5), feeLamports: BigInt(5) }];
+  });
+  const { result } = renderHook(() => useSolanaLaunchIntegration(input));
+  await act(async () => {
+    await result.current.launch();
+  });
+  expect(result.current.error).toBe("SOLANA_SELECTION_MISMATCH");
+  expect(result.current.preflight).toBeNull();
+  expect(input.storage?.setItem).not.toHaveBeenCalled();
+});
 it("refuses the integration while Solana is off", async () => {
   mocks.enabled = false;
   const input = options();

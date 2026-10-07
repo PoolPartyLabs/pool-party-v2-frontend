@@ -138,11 +138,12 @@ API-provided `{message, attestation}` and receive-and-credit, never direct unres
   the bound `authority: Signer` on `initialize_fund`, not an implemented off-chain
   Ed25519 acceptance envelope. Do not present the test-only digest countersign codec
   as production wire format. Backend must map countersign evidence to actual init.
-- TODO(decision): R6.1 requests Mandate-hash PDA seeds and no extra Hub message,
-  while the inspected program derives `[fund, hub_core, spoke_index]` and retains
-  `authenticate_hub_creation()` as an authentication gate. Frontend matches the
-  merged digest rather than inventing a different bootstrap; coordinator/contract
-  owner must reconcile this before enabling transactions.
+- Snapshot clarification: program `fb37976` derives
+  `[fund, hub_core, spoke_index, mandate_hash]` and verifies native bootstrap
+  consent, replacing the older creation-message gate. The frontend EIP-712 codec
+  remains pinned to `16e6f68`; authoritative provisioning must reconcile the
+  production binding revision before enabling transactions. This estimator patch
+  does not claim to migrate binding wire formats.
 - TODO(interface): creation payload containing committed Solana binding/Mandate and
   multi-spoke indexing, init/Kamino/Raydium instruction builders, cost estimation,
   report evidence and authenticated attestation/receive endpoints. They are injectable
@@ -167,8 +168,9 @@ API-provided `{message, attestation}` and receive-and-credit, never direct unres
   API/program must enforce feed freshness, stock multiplier/market-hours checks,
   signed min-out, exact input/output vaults, Jupiter V2 decoding and real deltas.
   `referenceAmountOut` is API-signed evidence, not independent feed verification
-  by this frontend. TODO(decision): oracle selection and exact impact rounding/
-  semantics remain with the oracle/API owners; no unsupported formula is invented.
+  by this frontend. DEC-203 fixes no-maximum and stricter-minimum semantics;
+  TODO(decision): stock oracle selection and precise feed rounding remain with
+  oracle/API owners; no unsupported frontend formula is invented.
 - DEC-203/204 replace the temporary 1–500 bps/default policy; there is no default.
 - TODO(decision): the priority-margin magnitude and retry allowance are unspecified.
   Require a deliberate positive estimator margin rather than inventing a protocol
