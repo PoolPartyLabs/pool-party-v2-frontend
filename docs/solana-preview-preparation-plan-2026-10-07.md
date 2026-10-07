@@ -1,163 +1,122 @@
 <!--
 @id PP-MGR-DOC-002
-@name RestrictedSolanaPreviewDeliveryPlan
-@implements-rules-version v1 (POO-2281)
-@analytics-events none, preparation plan with no mounted product surface.
+@name LocalSolanaPreviewDeliveryPlan
+@implements-rules-version v2 (POO-2281)
+@analytics-events none, durable delivery reference.
 -->
 
-# Restricted Solana preview: delivery plan
+# Local Solana strategy preview: delivery plan
 
-Date: October 7, 2026. Owner: Murilo's Codex coordinator. Rules: POO-2281 v1.
-Epic: [POO-2252](https://linear.app/yeildbay/issue/POO-2252), related to Manager
-[POO-2116](https://linear.app/yeildbay/issue/POO-2116). This is a durable implementation reference.
+Date: October 7, 2026. Owner: Murilo's Codex coordinator. Rules: POO-2281 v2.
+Epic: [POO-2252](https://linear.app/yeildbay/issue/POO-2252), Manager [POO-2116](https://linear.app/yeildbay/issue/POO-2116).
+Delivery: [frontend PR #120](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/120).
 
-Murilo authorized preparing a V2 Solana mode that can be revealed by approved testers and later
-opened to more accounts. The cohort is managed by the API, with no personal wallet hard-coded in
-the frontend. Preparation does not activate a public Solana product or authorize a mainnet operation.
+The owner explicitly replaced API-dependent restricted access with a frontend-only local editor.
+This plan describes that final implementation. The earlier grant proposal is historical v1,
+retired before release. [ADR 0009](adr/0009-local-solana-visual-preview.md) records the change;
+[ADR 0008](adr/0008-server-authorized-experiment-access.md) remains immutable decision history.
 
-## 1. Verified starting point
+## 1. Starting point and constraints
 
-| Source inspected | State and consequence |
-|---|---|
-| Public frontend main, `627237c84f4fd2b2ce7d1e99ef1eb8fa899512cf` | V1/V2 family; EVM-only provider configuration and fund schemas. No Solana preview host. |
-| Frontend integration `feat/fe-poo-2252-solana-spoke`, `59a1a34f4671ff2cf3e9b453a745bf290034423c` | Separate dual-wallet, per-fund binding, chain-aware launch/journal and quote scaffolding. [PR #115](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/115) merged into that integration branch, not main. Reuse under POO-2262. |
-| API authentication inspection, October 7 | `SessionTokenGuard` verifies signature and expiry. Existing user profile has no experiment grants; permissive legacy `AccessTokenGuard` must not protect this preview. Solana route and public discovery entitlement still need POO-2282. |
-| Contract integration inspection, October 7 | Kamino/Jupiter/Raydium code exists on the separate Solana branch; no Orca implementation was found. This is source evidence, not a deployment or execution claim. |
-| Solana Build handoff, October 5 | [Build draft](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-2725), [graph](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8370-2816), [Configure](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-3089). Visual reference with incomplete data/execution rules. |
+Public main at `627237c84f4fd2b2ce7d1e99ef1eb8fa899512cf` has the V1/V2 family selector, strict EVM
+mandate types and reusable presentation-only canvas pieces. Separate Solana integration exists on
+`feat/fe-poo-2252-solana-spoke`, including wallet/binding/launch scaffolding, under POO-2262. It is
+not imported or activated by this visual editor. `solanaSpoke` stays default off for real integration.
 
-The integration branch's `src/features/manager/fund/launch/SOLANA_INTEGRATION.md` lists remaining
-bootstrap, acceptance codec, oracle, bounds/cost and real-execution gates. Preserve those gates.
-Public source and on-chain evidence remain public even when app entry points are restricted.
+The local editor requires only the existing `fundContracts` release gate and Manager builder route.
+No new API endpoint, personal account allowlist or deployment configuration is required. A hidden
+gesture can be discovered; it is a UI preference with no authentication or transaction authority.
 
-## 2. Phase A: access foundation, implemented in this PR
+## 2. Stage A: guarded entry and isolated state
 
-[POO-2281](https://linear.app/yeildbay/issue/POO-2281), branch
-`feat/core-poo-2281-solana-preview-access`.
-
-| Files | Implemented responsibility | Validation |
+| Files | Responsibility | Focused checks |
 |---|---|---|
-| `src/lib/experiments/access.ts` and tests, `PP-CORE-LIB-122` | Strict proposed version-1 DTO; minimal denial; expiry; explicit preview/catalog/execute capabilities. | Allowed/denied, field/schema drift, unknown/duplicate capabilities, exact expiry and invalid clock. |
-| `src/lib/experiments/fetchExperimentAccess.ts` and tests, `PP-CORE-LIB-123` | Server-only read seam; both feature gates; current Bearer; no Data Cache; failure returns denial. | Anonymous/mock/off, independent session tokens, API errors, rejected payloads, expiry during read and changed local token source. |
-| `src/lib/experiments/solanaPreviewMode.ts` and tests, `PP-CORE-LIB-124` | In-memory reveal preference. Three V2 presses within 1,000 ms, grant and clean draft required. | Window boundary, dirty draft, account/family reset, denied/expired grant, pure inputs. |
-| `src/lib/features/{registry,resolve}.ts` and tests | Add default-off `solanaSpoke`, reusing Rafael's key. | Default, explicit on/off and existing registry invariants. |
-| Package README, feature/integration/ID registers, ADR 0008 and this plan | Document implemented/planned boundaries and ownership. | Registry/census check and source review. |
+| `src/lib/experiments/solanaPreviewMode.ts`, PP-CORE-LIB-124 | Pure three-press gesture, 1,000 ms window | Boundary, slow/backwards/non-finite clock, immutable input |
+| `src/lib/experiments/solanaPreviewStore.ts`, PP-CORE-LIB-125 | In-memory sibling store, route/account and intent generation, SSR standard snapshot | Multiple accounts, reactive readers, absent host, delayed confirmation, unmount/reset, no storage writes |
+| `src/components/layout/ContractFamilyToggle.tsx`, PP-CORE-CMP-075 | Selected V2 reveal and accessible exit, existing navigation guard | Normal V1/V2 semantics, no extra family event/write, Stay/Leave |
+| `src/features/manager/fund/BuilderRouteSwitch.tsx`, PP-MGR-SCR-002 | Register host only in the hydrated V2 route; mount isolated editor | Flag-off V1 markup, family hydration, account/route reset |
 
-No Server Action, provider, toggle handler, catalog, draft migration or transaction is mounted.
-Existing `ContractFamily`, its storage key, EVM drafts, investor lists and launch drivers are unchanged.
-Infrastructure declares analytics `none` because it introduces no product interaction.
+Usage: open `/manager/new`, select V2, then press the selected V2 button three times within one
+second. The label becomes V2 Solana. Click it once, or Back to EVM builder, to leave. Dirty work uses
+the existing confirmation. Selecting V1 also exits. No sequence exists on investor/list/detail pages.
 
-## 3. Phase B: API authority and discovery, pending Rafael
+`ContractFamily` remains `v1 | v2`, with the original `pp.contractFamily` key. EVM drafts remain in
+their original storage. Preview configuration is in component memory and is discarded on leaving
+or reload. The existing warning protects this discard. No preview schema is serialized as an EVM fund.
 
-Reuse [POO-2282](https://linear.app/yeildbay/issue/POO-2282), currently Needs Rules. Owner: Rafael/API.
-The [package contract proposal](../src/lib/experiments/README.md#api-proposal-pending-poo-2282)
-defines `GET /api/v1/experiments/solana-preview/access` through the existing transport.
+## 3. Stage B: local model, canvas and panels
 
-Before Ready, confirm:
+| Files | Responsibility | Focused checks |
+|---|---|---|
+| `solana-preview/previewModel.ts`, PP-MGR-LIB-059 | Local blocks, applied edits, selection/removal, integer allocations | 0..100, total <=100, invalid input, preserve other drafts, no market identity |
+| `solana-preview/SolanaStrategyPreviewScreen.tsx`, PP-MGR-SCR-009 | Protocol palette, configure/apply, removal/discard confirmation, local dirty guard | Select/edit/apply, blocked validation, preserve pending work, exit/abandonment |
+| `solana-preview/SolanaPreviewCanvas.tsx`, PP-MGR-CMP-088 | Solana spoke with presentation pieces and fitted pan/zoom | Continuous principal/fee paths, neutral Income output, local card interactions |
+| `solana-preview/SolanaPreviewBlockPanel.tsx`, PP-MGR-CMP-089 | Protocol-specific local choices and unavailable financial fields | Native/wrapped distinction, correct Supply-only and LP labels, focus and narrow layout |
+| `solana-preview/SolanaPreviewErrorBoundary.tsx` | Actual render failure and explicit retry | No invented error event or transaction outcome |
+| `public/protocols/solana-preview/` | Original protocol/network marks | Exact source attribution, no generated/imitation mark |
 
-1. Cryptographic session guard, DTO/capability names and server-owned multi-account cohort.
-2. Grant/revoke administration and expiry bounded by session lifetime. A maximum 60-second grant
-   is a reviewer recommendation, not a confirmed rule or frontend limit.
-3. Private no-store responses and live membership checks for every protected read/build/resume.
-4. Public list exclusion and direct-link protection for experimental funds. Frontend filtering
-   alone cannot protect discovery or detail endpoints.
-5. Canonical EVM manager identity plus the existing per-fund Solana signer binding under POO-2262.
+Raydium CLMM and Orca Whirlpools are local liquidity-block choices. Kamino Lend is Supply-only.
+Jupiter Swap is a local conversion choice. Blocks start at 0% allocation. Applied allocations are
+whole percentages, with a total of at most 100%. Add/select/remove actions protect unapplied edits.
+Each removable user block has an X and a confirmation. A liquidity block derives Collect fees and
+automatic conversion. Principal and Kamino principal/interest return to Idle; converted LP fees pass
+through the return Bridge to Income on the hub. Fee paths are green until hub Income; its output and
+principal stay neutral. Each complete node-to-node route highlights together when hovered. Operating
+cash is 144 × 96, centered to the right of Idle; reused fixed spine cards are 236 × 62.
 
-API tests: two approved accounts; third unlisted account; revocation; malformed/forged/expired
-session; anonymous and direct-read bypass; private cache isolation; unknown capability/schema.
-Missing support keeps the frontend denied. Do not invent endpoint availability from source inspection.
+SOL/USDC is a drawing label; the pool asset is WSOL when a real market is later connected. Native
+Operating cash is SOL, never WSOL/stables. No mint/pool ID, price, APY, account balance, fee, health
+factor, quote or transaction is fabricated. Missing financial fields and execution show Not available.
+The latest protocol research supersedes historical screenshot fixtures; none become production data.
 
-## 4. Phase C: guarded host, hidden gesture and draft isolation
+The canvas fits on entry and resize. Configuration uses a 360 px desktop panel that stacks on narrow
+screens. Pan/zoom controls reserve space and remain inside the visible container. Reuse CanvasViewport,
+SpineCard, SpokeGroup, FlowPill, GraphEdges, Button, Input and ConfirmDialog rather than alternate primitives.
+An optional ConfirmDialog close-focus callback restores the editable field on cancel and a replacement
+panel heading after a confirmed block switch. Existing callers retain the primitive's default behavior.
 
-Frontend owner: Murilo's coordinator. Dependency: confirmed Phase B, reusable Solana integration
-and a usable restricted catalog. Deliver as a separate small PR with versioned issue rules.
+## 4. Stage C: translations, analytics and documentation
 
-Files to extend: `src/components/layout/ContractFamilyToggle.tsx`, a new client host in
-`src/lib/experiments/`, its separate server action over `loadSolanaPreviewAccess`, and isolated Solana
-draft storage alongside `src/features/manager/fund/mandateDraftStore.ts`. Preserve
-`src/lib/hooks/useContractFamily.ts` and existing EVM storage semantics.
+All copy ships in the current 11 configured locales. Product/token identifiers remain literal brands.
+The mode label and tooltip live in `shell.json`; local screen copy lives in `manager.solanaPreview`.
+Instrument entered/exited, view, first local add, applied configuration, abandonment, blocked intent
+and actual render errors. Payloads contain bounded protocol/reason names and a boolean dirty state;
+no raw identity/mint/amount or transaction completion. See [analytics catalog](ANALYTICS_EVENTS.md).
 
-- Capture session/account generation at grant-read start. Immediately clear grant/mode on logout
-  or account change; reject late responses with an older generation. Next request cookies are
-  snapshots, so the current loader's second read is not protection against cross-request logout.
-- Revalidate on focus/session change and expire the active mode when the grant elapses. Determine
-  refresh cadence after API lifetime confirmation; no stale grant may authorize a real operation.
-- Apply the tested triple-press only to already selected V2. Add an accessible authorized exit.
-  Use an explicit dirty-work guard before switching drafts; silent EVM draft replacement is forbidden.
-- Keep Solana drafts account- and environment-scoped. Do not rewrite or reinterpret launched EVM
-  funds. Revocation closes the preview while preserving recoverable local draft data.
-- Ship view, activation/exit, abandonment, blocked-intent and error analytics in this mounted PR.
-  Never emit raw wallets, grants, credentials or token mints.
+Sync IDs, integration points, feature flags, Manager/package READMEs, Figma references, compliance
+and third-party notices. POO-2281 rules v2 is the current delivery. POO-2282 is canceled for this scope.
 
-Tests: delayed account-A response after switching to B/logout; expiry while active; denied/allowed
-gesture; focus revalidation; dirty-work preservation; storage isolation; unchanged V1/V2 behavior.
-The foundation's changed-getter test does not prove this future host behavior.
+## 5. Stage D: review and delivery
 
-## 5. Phase D: Solana Mandate, spoke and protocol catalog
+Two GPT-6.1-sol workers maximum: editor/model/assets and translations. The coordinator owns toggle,
+route/store, rule versions, docs, review and GitHub/Linear/Slack. Review every worker change before
+committing. Publish frequent coherent commits to PR #120 on the public PoolPartyLabs frontend.
+Keep the PR draft while its scope changes, then mark ready after focused checks and review.
 
-Dependencies: [POO-2239](https://linear.app/yeildbay/issue/POO-2239) token discovery,
-[POO-2240](https://linear.app/yeildbay/issue/POO-2240) markets, confirmed Figma intake/rules,
-Phase C. Frontend: existing `mandateCatalog.ts`, `mandatePoolSource.ts`, V2 catalog boundary,
-Build graph/palette and Configure panels. Keep the EVM schemas strict; add an explicit Solana
-representation for base58 mint/program identities instead of passing them through EVM address types.
+Run focused single-worker tests, changed-file Biome, scoped TypeScript over the real import graph,
+locale parity, config/documentation checks. Do not run local full suite, coverage, build or browser
+journey, per Murilo. Report scoped validation accurately. Historical full CI on the superseded v1
+preparation had failures in existing Build/launch tests and dependency audit; final CI must be assessed
+at the final head, not inherited from that result.
 
-- Show a Solana spoke and protocol choices for Kamino lend, Jupiter, Raydium and Orca according to
-  the served capability matrix. Available entries come first; unsupported execution is Not available.
-- Search name/symbol/mint through the confirmed API; results are not limited to the first loaded page.
-  Validate network, mint, decimals, pools, permitted mandate assets and quote freshness.
-- Use canonical catalog logo metadata with existing local protocol-logo fallbacks. No invented
-  mint, pool identifier, balance or price. Missing logos use the existing neutral fallback.
-- Operating cash is native SOL. SOL/USDC pool asset means WSOL when served as such; keep that
-  distinction in holdings, balances and builders. TSLAx/NVDAx and other tokenized assets require
-  eligibility, price support and appropriate disclosures before enablement.
-- Treat the integration's three LP choices as its current constraint, not support for every new
-  catalog asset. Market discovery does not establish permission to execute.
+## 6. Real integration remains separate
 
-Tests: search pagination/mint results; chain isolation; malformed metadata; permitted asset/range
-validation; logo fallbacks; unsupported-protocol states; native-versus-wrapped precision. Figma
-fixtures stay in mocks/stories; no values from screenshots become real holdings.
+[POO-2262](https://linear.app/yeildbay/issue/POO-2262) owns dual wallets, per-fund signer binding,
+authoritative quotes/builders and launch recovery. [POO-2261](https://linear.app/yeildbay/issue/POO-2261)
+owns relay/report integration. [POO-2239](https://linear.app/yeildbay/issue/POO-2239) and
+[POO-2240](https://linear.app/yeildbay/issue/POO-2240) track live token/market discovery. This editor
+does not claim these operations are executable or that any new Solana fund was created.
 
-## 6. Phase E: reuse wallet, provisioning, launch and recovery
+Future wiring must review market identity/decimals, native SOL costs, binding, receipt-driven steps,
+partial execution and recovery against the real integration branch. A local pair/allocation cannot
+be accepted as a quote, entitlement, immutable mandate or chain transaction input.
 
-Owner: coordinate with Rafael under [POO-2262](https://linear.app/yeildbay/issue/POO-2262)
-and [POO-2261](https://linear.app/yeildbay/issue/POO-2261). Dependencies: actual builders,
-binding/acceptance and oracle support, measured costs, funded account and explicit execution grant.
-Do not recreate or concurrently edit Rafael's Providers, wallet binding or launch drivers.
+## 7. Design references
 
-Integrate the reviewed `SOLANA_INTEGRATION.md` boundary into the existing provisioning/modal
-presentation and chain-aware journal. Recheck live membership and per-fund identity before every
-build, launch and resume. A client `execute` capability never substitutes for server authorization.
-Preserve one-step signing, receipt-driven continuation and uncertain-broadcast recovery; never
-resend automatically after timeout. Capital in transit, accepted reports and final settlement remain
-separate states. No completion event on click or broadcast.
+- [Build](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-2725)
+- [Graph detail](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8370-2816)
+- [Configure Raydium](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-3089)
 
-Tests: wallet/chain mismatch, revoked execution, failed funding, rejected signature, stale report,
-partial receipt, resume/account isolation and settlement-driven completion. Mainnet validation is
-a separate authorized activity; this preparation submits no transaction.
-
-## 7. Phase F: restricted rollout, then cohort expansion
-
-Release condition: Phases B-E accepted; public lists and direct reads restricted; compliance
-conditions recorded; existing V1/V2 regression checks pass. Start with several approved accounts
-under the same API cohort. Observe denied-account, revocation and recovery behavior before adding
-more accounts. Grant/revoke is an API administration operation, not a frontend deployment.
-
-The global `solanaSpoke` flag remains a release switch; membership remains a per-account permission.
-Turning the flag off denies new protected access. A public Solana launch requires a separate release
-decision. It is not implied by expanding the tester cohort or by the hidden gesture.
-
-## 8. Validation and current limitations
-
-For this foundation, run only focused single-worker experiment/flag/toggle/hook tests, the existing
-registry/census assertions, scoped Biome, TypeScript and locale parity. No full suite, coverage,
-Next build or complete browser journey, per Murilo's instruction. A future mounted server/client
-integration must complete its appropriate release checks on suitable infrastructure.
-
-The first PR delivers Phase A only. API permissions/discovery, mounted switch, Solana draft UI,
-protocol catalog and executable Solana flow remain the later phases above. POO-2282 and the existing
-integration issues track those dependencies; preparation is not a claim that testers can already
-create a Solana fund on the public website.
-
-Foundation checks on October 7: 145 tests passed in eight focused files, scoped Biome passed and
-locale parity passed. The repository-wide TypeScript command exhausted its default Node heap;
-a scoped TypeScript project including every changed experiment/flag module, its tests and real
-transitive imports passed. This is scoped validation, not a whole-repository typecheck pass.
+Owner handoffs and October 7 protocol research define presentation references. The current local
+scope intentionally keeps unsupported data unavailable. The live Configure frame was read through
+Figma design context on October 7: surface tokens, 16 px padding, 20 px radius and right network chip.

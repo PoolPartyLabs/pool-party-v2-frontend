@@ -6,12 +6,22 @@ public manager profile, and the strategy **manage detail** (`PP-MGR-SCR-004`) wi
 (`src/lib/services` → `managerService`, `positionService`); mock-by-default with real seams marked
 `PP-INTEGRATION-POINT`.
 
-## Restricted Solana preparation
+## Local Solana strategy preview
 
-Restricted Solana preparation is documented in the
-[multi-account delivery plan](../../../docs/solana-preview-preparation-plan-2026-10-07.md).
-POO-2281 adds unmounted access/preference helpers only. The public manager toggle, EVM drafts and
-launch flow remain unchanged; activation depends on POO-2282 and the separate POO-2262 integration.
+[POO-2281](https://linear.app/yeildbay/issue/POO-2281), rules v2, adds an isolated local editor on
+`/manager/new` under the existing `fundContracts` release gate. Select V2, then press the selected
+V2 button three times within one second to reveal V2 Solana. The hidden mode is a UI preference;
+all accounts using this route can reveal it. It has no separate API or wallet allowlist.
+
+The editor adds Kamino Lend, Jupiter Swap, Raydium CLMM and Orca Whirlpools blocks with official
+logos, local pair/allocation choices and guarded Apply/discard/removal. Preview configuration lives
+only in component memory. EVM family storage and saved drafts retain their existing semantics.
+Market data and execution say Not available. No wallet, RPC, builder or launch operation is imported.
+
+See the [delivery plan](../../../docs/solana-preview-preparation-plan-2026-10-07.md),
+[feature reference](fund/solana-preview/README.md) and [ADR 0009](../../../docs/adr/0009-local-solana-visual-preview.md).
+POO-2282 is canceled for this owner-approved visual scope. Real token/market and wallet/launch
+integration remains POO-2239/2240/2261/2262, with `solanaSpoke` default off.
 
 ## i18n namespace
 

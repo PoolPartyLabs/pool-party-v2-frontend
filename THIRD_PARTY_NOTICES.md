@@ -34,6 +34,26 @@ for unchanged licensed material in future distributions.
 The Uniswap Foundation does not review, audit, endorse or certify Hookrisk,
 the framework port or any score. Upstream attribution is not endorsement.
 
+## Solana preview protocol marks
+
+The five static SVGs in `public/protocols/solana-preview/` identify protocols/networks in the local
+editor added by POO-2281. They are third-party marks and are excluded from any first-party ownership
+claim. Their copyright/trademark rights remain with their owners. The source-available root policy
+does not relicense these assets or imply endorsement or permission to use the trademarks commercially.
+
+| Asset | Official source, retrieved through design intake on October 5 or directly on October 7, 2026 | Adaptation |
+|---|---|---|
+| `solana.svg` | [Solana mark in Raydium UI](https://raw.githubusercontent.com/raydium-io/raydium-ui/master/src/assets/icons/solana-text-logo.svg) | Wordmark cropped by design intake; three original paths/gradients retained |
+| `raydium.svg` | [Raydium UI](https://raw.githubusercontent.com/raydium-io/raydium-ui/master/src/assets/icons/logo.svg) | Original mark |
+| `orca.svg` | [Orca official site](https://www.orca.so) | SVG mark extracted by design intake |
+| `kamino.svg` | [Kamino documentation](https://mintcdn.com/kamino-3d73a151/EHpt5rRzyV5R3dXt/images/logo/dark.svg) | K mark retained by design intake |
+| `jupiter.svg` | [Jupiter official site](https://jup.ag/svg/jupiter-logo.svg) | Original SVG |
+
+Display sizing and the provenance record are in the
+[preview feature README](src/features/manager/fund/solana-preview/README.md). These files are static;
+no script, event handler, external resource reference or foreignObject is introduced.
+
+
 ## Application dependencies
 
 The dependency manifest is [package.json](package.json); resolutions and

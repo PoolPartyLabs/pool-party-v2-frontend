@@ -1,21 +1,17 @@
 # Integration Points
 
-## Restricted Solana preview access (POO-2281, rules v1)
+## Local Solana visual editor (POO-2281, rules v2)
 
-`src/lib/experiments/fetchExperimentAccess.ts` (`PP-CORE-LIB-123`) is an unmounted server-only
-read seam for proposed `GET /api/v1/experiments/solana-preview/access`, through the existing API
-transport. It forwards the current Bearer, requires real mode and both server flags `fundContracts`
-and `solanaSpoke`, and disables Data Cache. The strict versioned DTO is `PP-CORE-LIB-122`; any
-missing session/endpoint, denial, expiry, contract drift or transport error returns minimal denial.
+The route-scoped store in `src/lib/experiments/solanaPreviewStore.ts` (PP-CORE-LIB-125) shares only
+visual mode. The editor in `src/features/manager/fund/solana-preview/` has no API/RPC/wallet/launch
+imports. No new entitlement endpoint is required. POO-2282 and the earlier unmounted grant modules
+were canceled/removed before release when Murilo simplified the scope.
 
-API membership, cryptographic session validation, short grant lifetime, private responses and
-list/direct-read protection remain [POO-2282](https://linear.app/yeildbay/issue/POO-2282).
-No permission comes from a decoded JWT, profile role, local wallet list or QA flag override.
-The future host must reject earlier-session responses using account/session generation; same-request
-cookie rereads cannot detect logout performed in another request. `PP-CORE-LIB-124` is a pure
-preference model, not a mounted switch or permission boundary. No Solana provider, catalog, draft
-or execution is activated. See the [plan](solana-preview-preparation-plan-2026-10-07.md) and
-[package contract](../src/lib/experiments/README.md). Reuse POO-2262's separate wallet/launch integration.
+Future real wiring remains POO-2239/2240 (tokens/markets), POO-2262 (binding/quotes/launch) and POO-2261
+(relays/reports). Local token/pair/percentage choices are not financial or transaction inputs. Missing
+prices, amounts, reserve data, quotes and execution stay Not available. `solanaSpoke` remains off.
+See the [current delivery plan](solana-preview-preparation-plan-2026-10-07.md) and
+[ADR 0009](adr/0009-local-solana-visual-preview.md).
 
 ## Launch report countdown (POO-2233, rules v1)
 
@@ -74,7 +70,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 507 markers across 293 files (2026-10-07)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 506 markers across 292 files (2026-10-07)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
