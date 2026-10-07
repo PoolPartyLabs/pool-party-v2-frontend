@@ -71,6 +71,17 @@ Build these UI pieces:
 
 ### #47/#48 bootstrap revision
 
+Preflight requires both `bootstrapState` and an independent
+`validateTransactionIntent` adapter before any Fund creation. Bootstrap messages
+are additionally decoded locally for pinned program, exact append bytes/accounts,
+staged init `[2]`, one native operation and limited compute-budget auxiliaries.
+Lookup-table bootstrap messages fail closed until resolved validation is delivered.
+The adapter verifies complete init account identities and all nonbootstrap SVM
+operations. Persisted steps must match the frozen canonical graph exactly.
+Unknown submitted bootstrap receipts reconcile through verified account state,
+preserving signature/submission records; missing evidence never triggers signing.
+Live Manager identity follows the existing Privy EVM launch-wallet source.
+
 Contract source: `origin/feat/pp-sc-feat-solana-spoke` at
 `4239d10883d95e867b0bfd6108cf801da6dafcdd`, including merged #47 and #48.
 Legacy `ManagerSolanaBinding` stays supported for existing callers; its typed data

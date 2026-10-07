@@ -53,6 +53,19 @@ pending, not delivered. The contract remote head remains the audited #48 SHA.
 
 ### #47/#48 bootstrap contract and owner adapter requirements
 
+Review hardening: the hook refuses prelaunch without `bootstrapState` and an
+independent `validateTransactionIntent` adapter. Native staging messages are
+decoded locally: one pinned program operation, exact frozen append bytes and
+canonical stage accounts; staged initialization must carry `[2]` and the stage.
+Only compute-budget limit/price auxiliaries are admitted. Lookup-table bootstrap
+messages are unsupported until independently resolved/validated by the owner;
+they fail closed, not silently trusted. The independent adapter must validate
+the complete init account set and every other SVM operation before signing.
+Stored step graphs must exactly equal the canonical frozen plan. Unknown native
+receipts may advance only through matching account evidence without re-signing.
+Live EVM Manager identity uses the same Privy EVM wallet source as the existing
+launch wallet; identity changes block prompts, not read-only reconciliation.
+
 Retain legacy `ManagerSolanaBinding` and its existing signing/verifying helpers
 for existing callers and frozen legacy drafts. It is **not** the new bootstrap
 authorization, and its native Config hash must not be relabeled `policyHash`.
