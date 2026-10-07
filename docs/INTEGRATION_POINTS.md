@@ -70,7 +70,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 511 markers across 295 files (2026-10-07)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 513 markers across 296 files (2026-10-07)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -336,3 +336,8 @@ Existing authorized position and pool reads stay active after first inspection o
 ### Collect fees read presenter, POO-2276 v1
 
 ManageCollectFeesPanel accepts an injected authorized position read with explicit freshness. It displays only ordered uncollectedIncome.amount0/amount1 after canonical origin, token address/decimals/currency order and exact raw-decimal consistency validation. Current position DTO lacks authoritative freshness evidence, so the eventual live host must pass unknown, not infer fresh from a completed request. Unknown freshness is generic unavailable; stale copy requires explicit stale evidence. This presenter is not mounted yet and never reads, signs or collects. POO-2277/2278 own preview, costs, signing and recovery; swap/transit/hub Income settlement remains separate.
+
+
+### Idle output injected queue presenter, POO-2275 v1
+
+PP-MGR-LIB-066 / PP-MGR-CMP-093 consume a presentation-only contract with canonical core/hub token, source timezone/asOf, freshness and independent cohort quantities. POO-2230 must confirm the real API shape before a host maps it. Missing/unknown/stale states never expose cached amounts; authoritative zero and complete empty confirmation stay distinct. The summary is supplied, never summed from buckets, and reserved/requested coverage requires the same cohort. No cutoff, allocation, reserve assignment or USD total is inferred. Duplicate bucket identity suppresses unreliable groups while preserving independent summary; fractional deadlines retain their supplied precision. This presenter is not mounted yet; Retry/Back are host callbacks and cannot reserve or sign.

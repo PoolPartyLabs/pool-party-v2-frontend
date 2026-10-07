@@ -11,7 +11,7 @@
 
 # Manager canvas and inline panels: delivery plan, October 7, 2026
 
-Status: **v2 plan complete; graph foundation, Review transaction fees, Solana S1 catalog and inline Manage header merged; supported Manage route/card slice merged; canvas chrome merged in PR #131; draft visibility reviewed-ready; all-node panels and remaining local Solana slices in progress**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main before the draft-visibility PR: `2a50839926a60bfc48944c3d48cf9b0a941f6db0`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
+Status: **v2 plan complete; graph foundation, Review transaction fees, Solana S1 catalog and inline Manage header merged; supported Manage route/card slice merged; canvas chrome merged in PR #131; draft visibility and Collect read presenter merged; Idle output presenter ready for review; all-node panels and remaining local Solana slices in progress**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main before the Idle-output presenter PR: `6928ca45ed7753331020636c68b8a32f22545264`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
 
 ## Current v2 contract and implementation sequence
 
@@ -398,3 +398,8 @@ The read-preparation slice passed 27 focused tests covering first-visit activati
 ### Collect read presenter evidence, POO-2276 v1
 
 Five-module injected presenter passed 40 focused tests and scoped TypeScript/Biome; unknown-freshness regressions were added RED and the four affected unknown/stale cases passed after correction. All 11 locales are included. Independent review found no blocker. Canonical fees never use holdings/Income or a guessed USD total. The presenter is not mounted in this slice, no existing DTO proves freshness, and Collect is unavailable. POO-2274 host/Back and POO-2277/2278 execution remain distinct work.
+
+
+### Idle output presenter evidence, POO-2275 v1
+
+Five-module injected queue presenter and all 11 locales. Coordinator reproduced duplicate-bucket and fractional-deadline display failures RED, then corrected them; 43 focused projection/presenter tests pass, including zero versus absent, independent same-cohort coverage, no sum/assignment, supplied date/timezone/rollover and unknown/stale/error suppression. Scoped TypeScript and changed-file Biome pass. Twelve stories are authored, not browser captures. The presenter is not mounted in this slice; the live queue DTO/source remains POO-2230 and host/draft/Back/focus remains POO-2274.
