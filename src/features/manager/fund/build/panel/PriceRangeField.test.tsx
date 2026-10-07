@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-070
  * @name PriceRangeField tests
- * @implements-rules-version v1 (POO-2189)
+ * @implements-rules-version v1 (POO-2284; extends POO-2189)
  * @analytics-events none (the panel shell emits)
  */
 import { NextIntlClientProvider } from "next-intl";
@@ -60,6 +60,21 @@ describe("PriceRangeField", () => {
       expect(screen.getByRole("button", { name: `Increase ${label}` })).toHaveClass("min-w-11");
     }
   });
+  // @rule POO-2284 R1: a long price remains fully readable at rest without shrinking the text.
+  it("provides a wrapping complete value for very small prices (POO-2284)", () => {
+    const small = { ...pool, price: 0.00000000000000035 };
+    const smallRange = presetRange(toLivePoolGrid(small), 10);
+    if (!smallRange) throw new Error("Tiny range required");
+    renderWithProviders(
+      <PriceRangeField pool={small} range={smallRange} onChange={vi.fn()} touchTargets />,
+    );
+    const input = screen.getByRole("textbox", { name: "Min price" });
+    const visibleValue = screen.getByText(input.getAttribute("title") ?? "");
+    expect(visibleValue).toHaveClass("break-all");
+    expect(visibleValue).toHaveAttribute("aria-hidden", "true");
+    expect(visibleValue.textContent).not.toMatch(/[eE]/);
+    expect(visibleValue.textContent).not.toBe("0");
+  });
   // @rule POO-2284 R2: repeated edits retain the locale decimal and commit only on blur.
   it.each([
     "pt-BR",
@@ -104,6 +119,49 @@ describe("PriceRangeField", () => {
     expect(changed).toHaveBeenLastCalledWith(
       commitBoundInput(start, toLivePoolGrid(pool), "min", "0.00035"),
     );
+  });
+  // @rule POO-2284 R2: existing grouping is removed once, with no untouched blur drift.
+  it("keeps a localized existing bound unchanged on focus/blur and accepts a grouped paste (POO-2284)", async () => {
+    const changed = vi.fn();
+    renderWithProviders(
+      <NextIntlClientProvider locale="pt-BR" messages={{ manager: managerMessages }}>
+        <Controlled onChange={changed} />
+      </NextIntlClientProvider>,
+    );
+    const user = userEvent.setup();
+    const input = screen.getByRole("textbox", { name: "Min price" });
+    const shown = (input as HTMLInputElement).value;
+    expect(shown).toMatch(/\d\.\d{3},\d+/);
+    await user.click(input);
+    expect(input).toHaveValue(shown.replaceAll(".", ""));
+    await user.tab();
+    expect(changed).not.toHaveBeenCalled();
+    await user.clear(input);
+    await user.paste("2.600,125");
+    expect(input).toHaveValue("2600,125");
+    await user.tab();
+    expect(changed).toHaveBeenLastCalledWith(
+      commitBoundInput(initial, toLivePoolGrid(pool), "min", "2600.125"),
+    );
+  });
+  // @rule POO-2284 R3: the actual v4 grid, including non-v3 spacings, reaches every UI control.
+  it("uses spacing 50 for both quote orientations without a fee-tier fallback (POO-2284)", async () => {
+    const oddPool = { ...pool, tickSpacing: 50, feeTier: 500 };
+    const start = presetRange(toLivePoolGrid(oddPool), 10);
+    if (!start) throw new Error("Odd-spacing range required");
+    const changed = vi.fn();
+    renderWithProviders(<Controlled start={start} selectedPool={oddPool} onChange={changed} />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Increase Min price" }));
+    const stepped = { ...start, tickLower: start.tickLower + 50 };
+    expect(changed).toHaveBeenLastCalledWith(stepped);
+    await user.click(screen.getByRole("button", { name: "USDC per WETH" }));
+    await user.click(screen.getByRole("button", { name: "Increase Min price" }));
+    expect(changed).toHaveBeenLastCalledWith({
+      ...stepped,
+      tickUpper: stepped.tickUpper - 50,
+      displayInverted: true,
+    });
   });
   it("[R4] snaps presets, steps one usable tick and makes Full inert", async () => {
     const changed = vi.fn();

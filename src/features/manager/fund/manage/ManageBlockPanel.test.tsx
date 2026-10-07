@@ -1,4 +1,4 @@
-/** @id PP-MGR-CMP-086 @implements-rules-version v2 (POO-2227) */
+/** @id PP-MGR-CMP-086 @implements-rules-version v2 (POO-2246; extends POO-2227), v1 (POO-2284) */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PANEL_POOL_FIXTURES } from "@/mocks/data/buildPanelFixtures";
 import { mockFund } from "@/mocks/data/v2Funds";

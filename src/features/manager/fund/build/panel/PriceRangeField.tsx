@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-070
  * @name PriceRangeField
- * @implements-rules-version v1 (POO-2189)
+ * @implements-rules-version v1 (POO-2284; extends POO-2189)
  * @analytics-events none (the panel shell emits)
  * The pool's price range in the manager's quote orientation; all stored bounds stay canonical.
  */
@@ -58,6 +58,9 @@ export function PriceRangeField({
       ?.value ?? ".";
   const priceText = (value: number) =>
     fmt.number(value, { maximumSignificantDigits: 6, maximumFractionDigits: 20 });
+  // Editing text stays in the user's locale. Feeding a canonical dot back into a comma-locale
+  // sanitizer on the next keystroke would drop the decimal and change the price's magnitude.
+  const editingText = (text: string) => sanitizeBoundInput(text, separator).replace(".", separator);
   const initialPreset = (): RangePreset | null => {
     if (range.fullRange) return "full";
     return (
@@ -151,36 +154,34 @@ export function PriceRangeField({
           </button>
         ))}
       </fieldset>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,8.5rem),1fr))] gap-2">
         {(["min", "max"] as const).map((bound) => {
           const label = t(bound === "min" ? "range.min" : "range.max");
           const shown = range.fullRange ? (bound === "min" ? "0" : "∞") : priceText(bounds[bound]);
           const down = bound === "min" ? steppers.minDown : steppers.maxDown;
           const up = bound === "min" ? steppers.minUp : steppers.maxUp;
+          const isEditing = editing?.bound === bound;
+          const value = isEditing ? editing.text : shown;
           return (
-            <div key={bound} className="rounded-xl border border-border bg-input px-3 py-2">
+            <div key={bound} className="min-w-0 rounded-xl border border-border bg-input px-3 py-2">
               <label
                 className="block text-muted-foreground text-xs"
                 htmlFor={`${labelId}-${bound}`}
               >
                 {label}
               </label>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  aria-label={t("range.decrease", { label })}
-                  disabled={!down}
-                  onClick={() => step(bound, -1)}
+              <div className="relative mt-1 min-w-0">
+                {/* Native inputs cannot wrap. At rest, this matching text layer shows every digit
+                    at the normal font size; focus exposes the full-width native editor. */}
+                <span
+                  aria-hidden="true"
                   className={cn(
-                    "shrink-0 disabled:opacity-40",
-                    touchTargets && "flex min-h-11 min-w-11 items-center justify-center",
-                    PANEL_FOCUS_RING,
+                    "block min-h-6 break-all py-0.5 text-center font-semibold text-foreground text-sm lining-nums tabular-nums",
+                    isEditing && "invisible",
                   )}
                 >
-                  <Minus aria-hidden="true" className="size-3.5" />
-                </button>
-                <span aria-hidden="true" className="text-sm">
                   {range.fullRange ? "" : symbol}
+                  {value}
                 </span>
                 <input
                   id={`${labelId}-${bound}`}
@@ -188,21 +189,33 @@ export function PriceRangeField({
                   inputMode="decimal"
                   autoComplete="off"
                   readOnly={range.fullRange}
-                  value={editing?.bound === bound ? editing.text : shown}
+                  value={value}
+                  title={`${range.fullRange ? "" : symbol}${value}`}
                   onFocus={() => {
-                    if (!range.fullRange) setEditing({ bound, text: shown, shown });
+                    if (!range.fullRange) {
+                      const text = editingText(shown);
+                      setEditing({ bound, text, shown: sanitizeBoundInput(shown, separator) });
+                    }
                   }}
                   onChange={(event) => {
                     setPreset(null);
                     setEditing({
                       bound,
-                      text: sanitizeBoundInput(event.target.value, separator),
-                      shown: editing?.shown ?? shown,
+                      text: editingText(event.target.value),
+                      shown: editing?.shown ?? sanitizeBoundInput(shown, separator),
                     });
                   }}
                   onBlur={() => {
                     if (editing?.bound === bound) {
-                      send(commitBoundInput(range, grid, bound, editing.text, editing.shown));
+                      send(
+                        commitBoundInput(
+                          range,
+                          grid,
+                          bound,
+                          sanitizeBoundInput(editing.text, separator),
+                          editing.shown,
+                        ),
+                      );
                       setEditing(null);
                     }
                   }}
@@ -210,18 +223,34 @@ export function PriceRangeField({
                     if (event.key === "Enter") event.currentTarget.blur();
                   }}
                   className={cn(
-                    "min-w-0 flex-1 bg-transparent text-center text-foreground text-sm lining-nums tabular-nums",
+                    "absolute inset-0 min-h-6 w-full min-w-0 bg-transparent py-0.5 text-center font-semibold text-sm lining-nums tabular-nums",
+                    isEditing ? "text-foreground" : "text-transparent caret-transparent",
                     PANEL_FOCUS_RING,
                   )}
                 />
+              </div>
+              <div className="mt-1 flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  aria-label={t("range.decrease", { label })}
+                  disabled={!down}
+                  onClick={() => step(bound, -1)}
+                  className={cn(
+                    "flex h-6 min-w-6 items-center justify-center rounded-md disabled:opacity-40",
+                    touchTargets && "min-h-11 min-w-11",
+                    PANEL_FOCUS_RING,
+                  )}
+                >
+                  <Minus aria-hidden="true" className="size-3.5" />
+                </button>
                 <button
                   type="button"
                   aria-label={t("range.increase", { label })}
                   disabled={!up}
                   onClick={() => step(bound, 1)}
                   className={cn(
-                    "shrink-0 disabled:opacity-40",
-                    touchTargets && "flex min-h-11 min-w-11 items-center justify-center",
+                    "flex h-6 min-w-6 items-center justify-center rounded-md disabled:opacity-40",
+                    touchTargets && "min-h-11 min-w-11",
                     PANEL_FOCUS_RING,
                   )}
                 >

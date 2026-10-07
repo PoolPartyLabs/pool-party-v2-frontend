@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-070
  * @name PriceRangeField stories
- * @implements-rules-version v1 (POO-2189)
+ * @implements-rules-version v1 (POO-2284; extends POO-2189)
  * @analytics-events none (the panel shell emits)
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
@@ -10,7 +10,7 @@ import { PANEL_POOL_FIXTURES, panelPoolAtPrice } from "@/mocks/data/buildPanelFi
 import { withManagerMessages } from "../canvas/canvasStorySupport";
 import { PriceRangeField } from "./PriceRangeField";
 import { toLivePoolGrid, toPanelPoolView } from "./panelCatalogView";
-import { type PoolRange, presetRange } from "./poolRangeMath";
+import { fullPoolRange, type PoolRange, presetRange } from "./poolRangeMath";
 
 const fixture = PANEL_POOL_FIXTURES[0];
 if (!fixture) throw new Error("Pool fixture required");
@@ -47,3 +47,25 @@ export const OutOfRange: Story = {
   args: { pool: toPanelPoolView(panelPoolAtPrice(rawPool, 2000)) },
 };
 export const Inverted: Story = { args: { range: { ...range, displayInverted: true } } };
+export const ManageTouchTargets: Story = {
+  args: { touchTargets: true },
+};
+export const NarrowManage: Story = {
+  args: { touchTargets: true },
+  decorators: [
+    (Story) => (
+      <div className="w-[240px] [&>div]:max-w-full">
+        <Story />
+      </div>
+    ),
+  ],
+};
+export const FullManage: Story = {
+  args: { touchTargets: true, range: fullPoolRange(toLivePoolGrid(pool)) },
+};
+const tinyPool = toPanelPoolView(panelPoolAtPrice(rawPool, 0.00000000000000035));
+const tinyRange = presetRange(toLivePoolGrid(tinyPool), 10);
+if (!tinyRange) throw new Error("Tiny priced range required");
+export const LongPriceManage: Story = {
+  args: { touchTargets: true, pool: tinyPool, range: tinyRange },
+};

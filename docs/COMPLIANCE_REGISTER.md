@@ -177,3 +177,9 @@ Verification pending before runtime enablement:
 - Native physical balances, aggregate hub Income and financial chart metrics require provenance/units/freshness. Figma amounts stay in explicit story fixtures. Functional Charts/Activity waits for POO-2279 definitions, including incomplete history and financial event labels.
 
 Status: OPEN for these future product disclosures and financial integration meanings. The planning-only PR enables no wallet operation and introduces no new financial claim on screen. Each implementation slice records its evidence and remaining launch conditions here before exposure.
+
+## Manager range readability, 2026-10-07 (POO-2284 v1)
+
+Verification: RESOLVED for this editor/display correction. Complete readable bound values and locale-safe decimals do not change the meaning of a reviewed range, create a price source or bypass canonical tick validation. The marker represents current price within the draft's displayed price interval; token percentages are estimated liquidity value shares, not live holdings, guaranteed execution amounts or returns. Authoritative current-position range status remains separate. Existing inclusive boundary and Full 50/50 display conventions are retained.
+
+Full is recovered only from verified position ticks matching the actual pool's aligned usable extremes. Inline Move/Create capability gates, preview and recovery controls remain in force; this correction enables no transaction or public-audit claim. Existing financial/custody disclosures and launch blockers remain open under POO-2229/2230/2231 and CR-MGR-POO2270. Source evidence: [POO-2284](https://linear.app/yeildbay/issue/POO-2284), `PriceRangeField`, `RangeSplitBar`, `ManageBlockPanel` and focused tick/draft regressions. Browser acceptance remains with Murilo.
