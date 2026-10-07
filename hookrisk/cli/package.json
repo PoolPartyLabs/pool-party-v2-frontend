@@ -13,7 +13,7 @@
     "invariant-testing",
     "sarif"
   ],
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "engines": {
     "node": ">=20"

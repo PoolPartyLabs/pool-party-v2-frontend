@@ -35,6 +35,16 @@ Default `NEXT_PUBLIC_MOCK_MODE` serves fixtures from `src/mocks/` through 12 dom
 9. **Keep GitHub current** per PR (IDS_REGISTRY, INTEGRATION_POINTS, feature READMEs). See `git-workflow` + `docs-sync-workflow`.
 10. **Gate not-yet-launched areas behind a feature flag** via `src/lib/features` (never read `process.env.NEXT_PUBLIC_FEATURE_*` directly). Feature flag (is it launched?) ≠ `isManager` role (does this user get it?) ≠ `isMockMode` (mock vs real data). See `feature-flags-workflow` + `docs/FEATURE_FLAGS.md`.
 
+## Source licensing
+
+All rights-cleared Pool Party-authored current and future material follows the
+root Pool Party Source-Available License 1.0, including work in progress and
+independent tools. Do not add MIT notices by default. Preserve existing upstream
+and historical license rights, and read LICENSING.md, THIRD_PARTY_NOTICES.md and
+CONTRIBUTING.md before changing notices or importing source. Copied components,
+AGPL detectors, font software and other listed exceptions keep their own terms.
+A source notice does not prove contributor copyright ownership.
+
 ## Commands
 
 ```bash

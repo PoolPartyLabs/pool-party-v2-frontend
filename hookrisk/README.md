@@ -5,8 +5,9 @@
 > repository at commit `d256e91ae3574f7ea5c90c26389b3f8a531252b4` (2026-09-13) so the work can
 > be presented alongside the Pool Party front-end. It is a standalone toolchain (Python + Foundry +
 > its own Node CLI) with **no link to the Next.js app**: nothing under `src/` imports it, and the
-> app's lint, typecheck, test and Docker build all exclude this folder. Licensing is unchanged and
-> per directory: MIT, except `detectors/` which is AGPL-3.0-only (see `NOTICE`). The hackathon
+> app's lint, typecheck, test and Docker build all exclude this folder. The current first-party
+> policy is Pool Party Source-Available License 1.0; previous MIT grants survive.
+> `detectors/` remains AGPL-3.0-only, and upstream rights remain separate (see `NOTICE`). The hackathon
 > narrative for the whole submission is in the repository root `README.md` and `docs/_hackathon_hookrisk/`.
 
 **The Uniswap Hooks Security Framework, made executable.**
@@ -303,10 +304,13 @@ Stated here rather than discovered later.
 
 ## Licence
 
-MIT, **except `detectors/`**, which is AGPL-3.0-only because it links Slither.
-The CLI, harness, schema and action never link either AGPL component; BlockSec's
-HookScan runs as a separate process and no part of it is redistributed here. See
-[NOTICE](NOTICE).
+Current independently authored material uses
+[Pool Party Source-Available License 1.0](LICENSE), with all valid prior MIT
+permissions preserved. **`detectors/` remains AGPL-3.0-only** because it links
+Slither. BlockSec HookScan is invoked as a separate process and its source is not
+redistributed here. Harness dependencies and reproduced framework text retain
+separate rights; see [NOTICE](NOTICE) and the
+[repository scope map](../LICENSING.md).
 
 > The Uniswap Foundation does not review, endorse or certify this tool, nor any
 > score derived from its framework.
