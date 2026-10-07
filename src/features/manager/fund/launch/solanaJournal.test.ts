@@ -1,5 +1,10 @@
 import { beforeEach, expect, it, vi } from "vitest";
-import { bootstrapManifestFixture } from "@/lib/solana/bootstrap.fixture";
+import { solanaBootstrapDigest } from "@/lib/solana/binding";
+import { bootstrapChunks } from "@/lib/solana/bootstrap";
+import {
+  bootstrapAuthorizationFixture,
+  bootstrapManifestFixture,
+} from "@/lib/solana/bootstrap.fixture";
 import { SOLANA_LP_CHOICES } from "@/lib/solana/lpChoices";
 import {
   createJournal,
@@ -10,6 +15,7 @@ import {
   saveJournal,
 } from "./journal";
 import type { LaunchStep, SolanaLaunchStep } from "./plan";
+import { createChainLaunchDriver, type SolanaLaunchBackend } from "./solanaDriver";
 import { withSolanaLaunchSteps as buildSteps } from "./solanaPlan";
 
 const withSolanaLaunchSteps: typeof buildSteps = (steps, selection) =>
@@ -121,4 +127,119 @@ it("combines Hub, Robinhood and Solana without replacing EVM steps", () => {
   expect(() => withSolanaLaunchSteps(evm, { sharePct: 41, kamino: true })).toThrow(
     "INVALID_ALLOCATION",
   );
+});
+
+it.each([
+  "stage-solana-config",
+  "seal-solana-config",
+  "init-solana",
+] as const)("reconciles an unknown submitted %s through the real chain driver without replacement", async (kind) => {
+  const managerSolana = "11111111111111111111111111111111";
+  const chunk = bootstrapChunks(bootstrapManifestFixture)[kind === "seal-solana-config" ? 2 : 0];
+  if (!chunk) throw new Error("FIXTURE_MISSING");
+  const step: SolanaLaunchStep = {
+    ...svm,
+    id:
+      kind === "init-solana"
+        ? svm.id
+        : kind === "seal-solana-config"
+          ? "solana:seal"
+          : "solana:stage:0",
+    kind,
+    ...(kind !== "init-solana" ? { bootstrapChunk: chunk } : {}),
+  };
+  const store = storage();
+  const journal = createJournal(
+    "recovery",
+    "manager",
+    {
+      solanaBootstrap: bootstrapManifestFixture,
+      solanaBinding: {
+        solanaAddress: managerSolana,
+        bootstrapAuthorization: bootstrapAuthorizationFixture,
+        bootstrapSignature: "0x01",
+      },
+    },
+    [step],
+  );
+  journal.checkpoints[step.id] = {
+    stepId: step.id,
+    chain: step.chain,
+    chainKind: "svm",
+    status: "submitted",
+    txHash: "persisted-signature",
+    submissionAttempted: true,
+    receiptStatus: "unknown",
+  };
+  saveJournal(store, journal);
+  const recovered = loadJournal(store, "recovery", "manager");
+  if (!recovered) throw new Error("FIXTURE_MISSING");
+  const state = {
+    policyHash: bootstrapManifestFixture.policyHash,
+    fundPda: bootstrapAuthorizationFixture.fundPda,
+    managerSolana,
+    totalLength: 1250,
+    payload: kind === "stage-solana-config" ? chunk.chunk : bootstrapManifestFixture.payload,
+    sealed: kind !== "stage-solana-config",
+    initialized: kind === "init-solana",
+    bootstrapDigest: solanaBootstrapDigest(managerSolana, bootstrapAuthorizationFixture),
+  };
+  const backend: SolanaLaunchBackend = {
+    bootstrapState: vi.fn(async () => state),
+    validateTransactionIntent: vi.fn(),
+    build: vi.fn(),
+    credited: vi.fn(),
+    reportReady: vi.fn(),
+    attestation: vi.fn(),
+    receiveAndCredit: vi.fn(),
+    complete: vi.fn(),
+  };
+  const sign = vi.fn();
+  const rpc = {
+    genesisHash: vi.fn(async () => "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"),
+    latestBlockhash: vi.fn(),
+    send: vi.fn(),
+    status: vi.fn(async () => "unknown" as const),
+  };
+  const chain = createChainLaunchDriver({
+    evm: driver(),
+    solanaAddress: managerSolana,
+    rpc,
+    backend,
+    signTransaction: sign,
+    verifyBinding: vi.fn(async () => {}),
+  });
+  const build = vi.spyOn(chain, "build");
+  const send = vi.spyOn(chain, "send");
+  const reconcile = vi.spyOn(chain, "reconcile");
+  await runLaunch(recovered, store, chain, undefined, undefined, 1, true);
+  expect(recovered.checkpoints[step.id]).toMatchObject({
+    status: "confirmed",
+    txHash: "persisted-signature",
+    submissionAttempted: true,
+    receiptStatus: "unknown",
+  });
+  expect(reconcile).toHaveBeenCalledOnce();
+  expect(backend.complete).toHaveBeenCalledOnce();
+  expect(build).not.toHaveBeenCalled();
+  expect(send).not.toHaveBeenCalled();
+  expect(backend.build).not.toHaveBeenCalled();
+  expect(sign).not.toHaveBeenCalled();
+  expect(rpc.send).not.toHaveBeenCalled();
+  expect(loadJournal(store, "recovery", "manager")?.checkpoints[step.id]?.txHash).toBe(
+    "persisted-signature",
+  );
+  const checkpoint = recovered.checkpoints[step.id];
+  const bootstrapState = backend.bootstrapState;
+  if (!checkpoint || !bootstrapState) throw new Error("FIXTURE_MISSING");
+  for (const evidence of [null, { ...state, policyHash: `0x${"ff".repeat(32)}` }]) {
+    checkpoint.status = "submitted";
+    vi.mocked(bootstrapState).mockResolvedValue(evidence);
+    await runLaunch(recovered, store, chain);
+    expect(recovered.checkpoints[step.id]?.status).not.toBe("confirmed");
+    expect(recovered.checkpoints[step.id]?.txHash).toBe("persisted-signature");
+    expect(build).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+    expect(sign).not.toHaveBeenCalled();
+  }
 });
