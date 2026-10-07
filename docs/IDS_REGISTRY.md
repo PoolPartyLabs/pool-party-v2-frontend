@@ -953,6 +953,14 @@ POO-2245 extends PP-MGR-STO-001 and PP-MGR-LIB-045 with additive read-status API
 
 POO-2245 presentation integrates PP-MGR-SCR-001 in `overview/ManagerOverviewV2.tsx` and `OverviewProfile.tsx`, retaining the existing profile editor. PP-CORE-LAY-001 adds temporary 248px Overview expansion; PP-MGR-CMP-010/031 accept optional Coming soon labels with unchanged V1 defaults. The four states have explicit Storybook scenarios.
 
+## Manager canvas/panels planning, 2026-10-07
+
+| ID | Artifact | Type | State | Reference |
+|---|---|---|---|---|
+| PP-MGR-DOC-001 | ManagerCanvasPanelsDeliveryPlan | Document | Planning complete, implementation pending | [Delivery plan](manager-canvas-panels-plan-2026-10-07.md), [POO-2270](https://linear.app/yeildbay/issue/POO-2270)..[POO-2279](https://linear.app/yeildbay/issue/POO-2279), issue-scoped rules v1 |
+
+PP-MGR-SCR-004, PP-MGR-CMP-085/086 and PP-MGR-LIB-052 are reused for the seven Manage states. PP-MGR-SCR-002/PP-MGR-LIB-023 cover separate Build parity. Shared primitives remain opt-in where Manage dimensions differ. New subordinate Idle/Collect component/model/hook IDs are reserved before implementation. This entry changes no runtime artifact status or existing rule version. Financial dependencies remain POO-2230/2277 and POO-2229/2231; POO-2279 is Needs Rules.
+
 ## Investor V2 funding and execution, 2026-10-06 (POO-2248)
 
 | ID | Artifact | Rules | Source |

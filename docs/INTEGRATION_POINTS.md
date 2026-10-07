@@ -264,3 +264,14 @@ POO-2237 introduces no endpoint or wallet operation. Manual Swap tokens are cano
 - PP-MGR-HOK-023 / PP-MGR-STO-001 / PP-MGR-LIB-045: explicit local draft/journey read statuses preserve recoverable records. Drafts are device-local; no wallet ownership or backend persistence is asserted.
 - `actions.ts:getManagerProfileAction` and `OverviewProfile.tsx`: read the existing public manager registry independently of V1 financials. Reuse ManagerProfileTabView and existing signed-save/upload flow.
 - AUM values and 30-point series in `src/mocks/data/managerOverviewV2.ts` are explicitly mock/demo-only. Production has no fixture fallback.
+
+## Manager canvas and inline panels plan, 2026-10-07
+
+[Delivery plan](manager-canvas-panels-plan-2026-10-07.md), POO-2270..2279. No integration or runtime code is added by this planning entry.
+
+- POO-2276 reuses `loadManagePositionAction` and ordered `uncollectedIncome.amount0/amount1` for real Collect details. Principal holdings and absent USD are not fee substitutes.
+- API source main `06a03b046ecba22204e44b201adb9e06a36a21f6` already has `positions/build` action `collect-income`, a simulated origin `vault.collectIncome(adapter, positionKey)` transaction. POO-2277 extends its preview/capability/costs/freshness/expiry/operation/recovery contract; POO-2278 adds frontend integration only after the corresponding gate is complete.
+- Collect does not atomically build Swap/Bridge or prove hub Income settlement. Existing swap, Income-return, history and transit reads are separate capabilities; generic `send-to-hub` is Principal. Typed correlation, token/chain/class/cohort compatibility and deployed evidence are required for continuation.
+- POO-2230 remains the authoritative physical native cash, eligible queue/reservation deadlines/timezone/asOf and aggregate current hub Income dependency. POO-2275 may first deliver an inline presenter with real Not available, never guessed daily reserves or fixture values.
+- POO-2279 owns Charts/Activity readiness. Activity can reuse `readFundHistory` with authorized Manage access and indexing/pagination; a current snapshot is not a chart history source. Functional tabs wait for content/sidebar/data definitions.
+- Return Bridges are explanatory noninteractive graph nodes. They do not add a wallet operation, provider/ETA, token relabel, atomicity or settlement guarantee. Existing Move/future-policy gates remain POO-2229/2231.

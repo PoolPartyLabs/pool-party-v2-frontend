@@ -1,5 +1,7 @@
 # Manager Overview + Manage V2 delivery plan
 
+> October 7 canvas/panel changes are planned in [Manager canvas and inline panels](manager-canvas-panels-plan-2026-10-07.md), POO-2270..2279. Its latest Bridge supplement supersedes direct cross-network returns and the older 136px compact-card references. The Overview delivery and execution dependencies documented here remain applicable.
+
 Updated: 2026-10-06. Owner: Murilo. Coordinator: Codex, with at most two GPT-6.1-sol workers. Epic: [POO-2116](https://linear.app/yeildbay/issue/POO-2116).
 
 This plan implements the supported delta from the consolidated owner handoff `handoff-manager-overview-manage-v2-2026-10-06.md`. It builds on the existing Manage implementation, not a new fund executor. Source baseline: public frontend `PoolPartyLabs/pool-party-v2-frontend` main `d4fb6904d937aee22b7d534672084ca2cb10a1a1`. Backend source checked at `a8299b147eef1ab9b6ae9bc8c5498168006149e7`; source inspection does not certify a deployment.
