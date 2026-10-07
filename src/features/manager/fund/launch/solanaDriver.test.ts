@@ -229,6 +229,20 @@ it("rejects a matching prefix outside the frozen chunk boundaries", async () => 
   await expect(driver.build(step, journal)).rejects.toThrow("SOLANA_BOOTSTRAP_MISMATCH");
 });
 
+it("rejects a substituted send-time reader response before preparing a transaction", async () => {
+  const { driver, backend, step, journal, onchain } = bootstrapSetup();
+  onchain.payload = "0x";
+  backend.bootstrapState = vi
+    .fn()
+    .mockResolvedValueOnce(onchain)
+    .mockResolvedValue({ ...onchain, managerSolana: "different" });
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("SOLANA_BOOTSTRAP_MISMATCH");
+  expect(backend.bootstrapState).toHaveBeenCalledTimes(2);
+  expect(backend.build).not.toHaveBeenCalled();
+  expect(transport.send).not.toHaveBeenCalled();
+});
+
 it("fails closed when the independent intent validator is absent or rejects", async () => {
   const { driver, backend, journal, step } = swapSetup();
   delete backend.validateTransactionIntent;
