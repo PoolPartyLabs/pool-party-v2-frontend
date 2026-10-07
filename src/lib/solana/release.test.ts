@@ -99,3 +99,14 @@ it("reconciles account allocation sizes against the production IDL", () => {
     expect(8 + size({ defined: { name } }, name), name).toBe(bytes);
   }
 });
+
+it.each([
+  -1, 65536, 0.5,
+])("refuses aliased spoke index %s in PDA derivation", async (spokeIndex) => {
+  await expect(
+    deriveSolanaBootstrapPdas(
+      { ...bootstrapAuthorizationFixture, spokeIndex },
+      "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    ),
+  ).rejects.toThrow("SOLANA_BOOTSTRAP_INVALID");
+});

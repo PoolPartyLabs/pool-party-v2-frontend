@@ -33,6 +33,16 @@ export async function deriveSolanaBootstrapPdas(
   manager: string,
 ) {
   requireSolanaSpokeProgram(authorization.program);
+  if (
+    authorization.hubChainId !== 42161 ||
+    !Number.isInteger(authorization.spokeIndex) ||
+    authorization.spokeIndex < 0 ||
+    authorization.spokeIndex > 65535 ||
+    !/^0x[0-9a-fA-F]{40}$/.test(authorization.fund) ||
+    !/^0x[0-9a-fA-F]{64}$/.test(authorization.policyHash) ||
+    /^0x0{64}$/.test(authorization.policyHash)
+  )
+    throw new Error("SOLANA_BOOTSTRAP_INVALID");
   const hubChain = new Uint8Array(8);
   new DataView(hubChain.buffer).setBigUint64(0, BigInt(authorization.hubChainId), true);
   const spokeIndex = new Uint8Array(2);
