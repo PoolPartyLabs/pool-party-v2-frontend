@@ -992,3 +992,11 @@ PP-CORE-STY-001 globals: native dark scheme, scoped Build scrollbar tracks/corne
 system forced-colors rendering and panel width containment. No new IDs, API seams,
 events, copy or execution capability. Implementation is in review; native browser
 painting is an owner acceptance check. See the Build README.
+
+## V2 Review transaction fee information, 2026-10-07 (POO-2289, rules v1)
+
+| ID | Title | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-MGR-CMP-090` | ReviewTransactionFeesCard, separate read-only Entry/Exit rows with unavailable semantics and keyboard help | Component | Transaction fees card | In Review | [POO-2289](https://linear.app/yeildbay/issue/POO-2289) | [Figma 8670:2855](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8670-2855); `src/features/manager/fund/review/ReviewTransactionFeesCard.tsx` @rules-v1 |
+
+The mounted ReviewPhase retains its current PP-MGR-CMP-077 ID (the issue's PP-MGR-CMP-072 pointer is historical). PP-MGR-CMP-074 ReviewFeesCard keeps its existing management/performance controls. This information card adds no fee, draft field, signer, launch condition or financial event. English copy and all 11 configured locales are included; semantic wiring remains unavailable.

@@ -31,6 +31,7 @@ import { ReviewInvestorPreview } from "./ReviewInvestorPreview";
 import { ReviewLaunchPreview } from "./ReviewLaunchPreview";
 import { ReviewPlanSummary } from "./ReviewPlanSummary";
 import { ReviewTermsCard } from "./ReviewTermsCard";
+import { ReviewTransactionFeesCard } from "./ReviewTransactionFeesCard";
 import { type FeeField, listReviewReasons } from "./reviewForm";
 export interface ReviewPhaseProps {
   /** Persisted mandate draft identifier. */ draftId: string;
@@ -216,6 +217,7 @@ function ConnectedReviewPhase({ draftId, onBackToBuild, onEditMandate }: ReviewP
               managementFeeBps: errorFor("managementFeeBps"),
             }}
           />
+          <ReviewTransactionFeesCard />
           <ReviewTermsCard
             {...binding.review}
             feeConfiguration={binding.feeConfiguration}

@@ -1211,6 +1211,13 @@
       "cropZoom": "Thu phóng",
       "nameHelp": "10 đến 50 ký tự.",
       "descriptionLabel": "Mô tả (không bắt buộc)",
+      "transactionFees": {
+        "title": "Phí giao dịch",
+        "helper": "Thông tin chi tiết về phí hiện không có.",
+        "entry": "Phí tham gia",
+        "exit": "Phí thoát",
+        "unavailable": "Không có sẵn"
+      },
       "feesTitle": "Phí của bạn",
       "feesCaption": "Phí bạn thu để quản lý chiến lược. Sau khi khởi chạy, phí chỉ có thể giảm.",
       "performanceLabel": "Phí hiệu suất",

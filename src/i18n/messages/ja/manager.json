@@ -1211,6 +1211,13 @@
       "cropZoom": "ズーム",
       "nameHelp": "10〜50文字。",
       "descriptionLabel": "説明（任意）",
+      "transactionFees": {
+        "title": "取引手数料",
+        "helper": "手数料の詳細は利用できません。",
+        "entry": "エントリー手数料",
+        "exit": "エグジット手数料",
+        "unavailable": "利用できません"
+      },
       "feesTitle": "管理者の手数料",
       "feesCaption": "ストラテジー管理に対して請求する手数料です。開始後は引き下げのみ可能です。",
       "performanceLabel": "成功報酬",
