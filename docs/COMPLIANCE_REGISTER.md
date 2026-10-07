@@ -144,13 +144,16 @@ The existing fund/protocol/custody disclosures and any existing launch blockers 
 
 ## Repository license transition, 2026-10-07 (POO-2268 v2)
 
-Status: OPEN for legal/provenance review of the proposed licensing transition.
-This record gates approval of the new licensing notices, not the already
-published MIT material or documented use of the unchanged official platform.
+Status: OPEN for legal/provenance verification. Murilo expressly authorized
+merging the completed frontend distribution policy on October 7, 2026.
+That owner approval is recorded as delivery authorization, not evidence that
+the rights-verification questions below have been answered. Existing MIT grants
+and documented use of the unchanged official platform remain effective.
 
 The owner requested a current-and-future first-party source-available policy
-covering all authored frontend/tool material. Before merging that policy,
-confirm the contracting entity/signatory, contributor copyright assignments or
+covering all authored frontend/tool material. Before asserting exclusive rights
+or granting separate commercial sublicenses, confirm the contracting
+entity/signatory, contributor copyright assignments or
 sufficient grants, the new explicit contribution permission, actual current
 grant/hackathon/audit commitments, and upstream compatibility. Hookrisk detector
 AGPL, font/upstream notices and copied protocol content keep their own rights.

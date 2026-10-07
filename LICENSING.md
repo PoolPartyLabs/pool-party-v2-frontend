@@ -99,10 +99,12 @@ provenance record before treating it as first-party. The applicable outbound
 terms and inbound contributor permissions must both be satisfied; see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Required review before merging this transition
+## Transition approval and remaining rights verification
 
-This PR contains the complete proposed text. The following legal/provenance
-questions are not answered by a Git author name:
+On October 7, 2026, Murilo expressly authorized merging the completed frontend
+policy. That delivery approval does not establish ownership of third-party
+material or resolve the following legal/provenance questions. The license
+applies only to rights Pool Party owns or is authorized to license:
 
 1. Confirm the legal entity represented by "Pool Party Labs" and the signatory
    authorized to grant commercial permissions.
@@ -118,8 +120,10 @@ questions are not answered by a Git author name:
 
 Tracked in [POO-2268](https://linear.app/yeildbay/issue/POO-2268), rules v2, and
 [the compliance record](docs/COMPLIANCE_REGISTER.md#repository-license-transition-2026-10-07-poo-2268-v2).
-This review gates the licensing transition, not previously authorized official
-platform usage or deployment of the unchanged historical code.
+Do not treat the owner-approved distribution policy as a completed rights audit.
+Exclusive restrictions and separate commercial sublicenses remain limited to
+rights actually controlled by Pool Party. Documented official-platform use and
+valid previous grants retain their existing permissions.
 
 The backend implementation is not distributed or licensed by this repository.
 No private implementation or source repository is incorporated by these notices.
