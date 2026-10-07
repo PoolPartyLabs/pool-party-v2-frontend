@@ -4,8 +4,10 @@
  * @implements-rules-version v1 (POO-2189)
  * @analytics-events none (the panel shell emits)
  */
+import { NextIntlClientProvider } from "next-intl";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
+import managerMessages from "@/i18n/messages/en/manager.json";
 import { PANEL_POOL_FIXTURES, panelPoolAtPrice } from "@/mocks/data/buildPanelFixtures";
 import {
   renderWithProviders,
@@ -13,8 +15,8 @@ import {
   userEvent,
 } from "../../../../../../tests/utils/renderWithProviders";
 import { PriceRangeField } from "./PriceRangeField";
-import { toLivePoolGrid, toPanelPoolView } from "./panelCatalogView";
-import { displayBounds, type PoolRange, presetRange } from "./poolRangeMath";
+import { type PanelPoolView, toLivePoolGrid, toPanelPoolView } from "./panelCatalogView";
+import { commitBoundInput, displayBounds, type PoolRange, presetRange } from "./poolRangeMath";
 
 const fixture = PANEL_POOL_FIXTURES[0];
 if (!fixture) throw new Error("Pool fixture required");
@@ -26,15 +28,20 @@ const initial = candidate;
 function Controlled({
   start = initial,
   onChange = vi.fn(),
+  selectedPool = pool,
+  touchTargets = false,
 }: {
   start?: PoolRange;
   onChange?: (range: PoolRange) => void;
+  selectedPool?: PanelPoolView;
+  touchTargets?: boolean;
 }) {
   const [range, setRange] = useState(start);
   return (
     <PriceRangeField
-      pool={pool}
+      pool={selectedPool}
       range={range}
+      touchTargets={touchTargets}
       onChange={(next) => {
         setRange(next);
         onChange(next);
@@ -43,6 +50,61 @@ function Controlled({
   );
 }
 describe("PriceRangeField", () => {
+  // @rule POO-2284 R1: the readable numeric line is separate from 44px adjustment targets.
+  it("keeps complete Min/Max values on their own line in Manage (POO-2284)", () => {
+    renderWithProviders(<Controlled touchTargets />);
+    for (const label of ["Min price", "Max price"]) {
+      const input = screen.getByRole("textbox", { name: label });
+      expect(input.parentElement?.querySelectorAll("button")).toHaveLength(0);
+      expect(input).toHaveClass("w-full");
+      expect(screen.getByRole("button", { name: `Increase ${label}` })).toHaveClass("min-w-11");
+    }
+  });
+  // @rule POO-2284 R2: repeated edits retain the locale decimal and commit only on blur.
+  it.each([
+    "pt-BR",
+    "de",
+    "fr",
+  ])("preserves tiny decimal input in %s instead of turning it into an integer (POO-2284)", async (locale) => {
+    const tinyPool = { ...pool, price: 0.00035 };
+    const tinyRange = presetRange(toLivePoolGrid(tinyPool), 20);
+    if (!tinyRange) throw new Error("Tiny priced range required");
+    const changed = vi.fn();
+    renderWithProviders(
+      <NextIntlClientProvider locale={locale} messages={{ manager: managerMessages }}>
+        <Controlled start={tinyRange} selectedPool={tinyPool} onChange={changed} />
+      </NextIntlClientProvider>,
+    );
+    const user = userEvent.setup();
+    const input = screen.getByRole("textbox", { name: "Min price" });
+    await user.clear(input);
+    await user.type(input, "0,0003");
+    expect(input).toHaveValue("0,0003");
+    expect(changed).not.toHaveBeenCalled();
+    await user.tab();
+    expect(changed).toHaveBeenLastCalledWith(
+      commitBoundInput(tinyRange, toLivePoolGrid(tinyPool), "min", "0.0003"),
+    );
+  });
+  // @rule POO-2284 R2/R3: decimal handling follows the displayed orientation, not the token order.
+  it("preserves a comma decimal while typing an inverted quote (POO-2284)", async () => {
+    const start = { ...initial, displayInverted: true };
+    const changed = vi.fn();
+    renderWithProviders(
+      <NextIntlClientProvider locale="pt-BR" messages={{ manager: managerMessages }}>
+        <Controlled start={start} onChange={changed} />
+      </NextIntlClientProvider>,
+    );
+    const user = userEvent.setup();
+    const input = screen.getByRole("textbox", { name: "Min price" });
+    await user.clear(input);
+    await user.type(input, "0,00035");
+    expect(input).toHaveValue("0,00035");
+    await user.keyboard("{Enter}");
+    expect(changed).toHaveBeenLastCalledWith(
+      commitBoundInput(start, toLivePoolGrid(pool), "min", "0.00035"),
+    );
+  });
   it("[R4] snaps presets, steps one usable tick and makes Full inert", async () => {
     const changed = vi.fn();
     renderWithProviders(<Controlled onChange={changed} />);
