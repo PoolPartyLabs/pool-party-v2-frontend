@@ -1,3 +1,5 @@
+import { SOLANA_SPOKE_RELEASE } from "./release";
+
 export type SolanaOracleReference =
   | { status: "unavailable"; reason: string }
   | { status: "available"; expiresAt: number; marketOpen: boolean };
@@ -30,5 +32,3 @@ export function requireSolanaOracleReference(
   const availability = solanaReferenceAvailability(reference, stockMarketHoursRequired);
   if (availability.status === "unavailable") throw new Error(availability.reason);
 }
-
-import { SOLANA_SPOKE_RELEASE } from "./release";
