@@ -1,0 +1,5040 @@
+{
+  "address": "7PptZ653uyn5eoAFKqs4DXR1ijxH6sf49f2YAGMLTfCx",
+  "metadata": {
+    "name": "pp_spoke",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Pool Party v2 per-Fund Solana spoke"
+  },
+  "instructions": [
+    {
+      "name": "build_report",
+      "docs": [
+        "DEC-093, DEC-120, DEC-121, DEC-122, DEC-192: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        180,
+        185,
+        115,
+        28,
+        220,
+        131,
+        99,
+        42
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "wormhole_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "collect_income_all",
+      "docs": [
+        "DEC-188, DEC-190, DEC-195: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        78,
+        237,
+        31,
+        90,
+        3,
+        251,
+        95,
+        26
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "execute_close_order",
+      "docs": [
+        "DEC-093, DEC-120, DEC-121, DEC-122, DEC-192: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        254,
+        191,
+        233,
+        154,
+        140,
+        72,
+        226,
+        152
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "wormhole_program"
+        },
+        {
+          "name": "posted_vaa"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "execute_collect_order",
+      "docs": [
+        "DEC-093, DEC-120, DEC-121, DEC-122, DEC-192: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        60,
+        53,
+        128,
+        184,
+        61,
+        224,
+        156,
+        74
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "wormhole_program"
+        },
+        {
+          "name": "posted_vaa"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "execute_order",
+      "docs": [
+        "DEC-093, DEC-120, DEC-121, DEC-122, DEC-192: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        115,
+        61,
+        180,
+        24,
+        168,
+        32,
+        215,
+        20
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "wormhole_program"
+        },
+        {
+          "name": "posted_vaa"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "execute_unwind_order",
+      "docs": [
+        "DEC-093, DEC-120, DEC-121, DEC-122, DEC-192: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        59,
+        51,
+        82,
+        28,
+        123,
+        251,
+        181,
+        4
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "wormhole_program"
+        },
+        {
+          "name": "posted_vaa"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "initialize_adapter",
+      "docs": [
+        "DEC-190, DEC-193: materialize only a sealed adapter admission."
+      ],
+      "discriminator": [
+        220,
+        38,
+        219,
+        51,
+        46,
+        10,
+        185,
+        59
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "venue_program"
+        },
+        {
+          "name": "venue"
+        },
+        {
+          "name": "position_or_policy",
+          "writable": true
+        },
+        {
+          "name": "collateral_or_ledger",
+          "writable": true
+        },
+        {
+          "name": "collateral_mint"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "ata_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "initialize_fund",
+      "docs": [
+        "DEC-188, DEC-190, DEC-195: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        212,
+        42,
+        24,
+        245,
+        146,
+        141,
+        78,
+        198
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault"
+        },
+        {
+          "name": "usdc_mint",
+          "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        },
+        {
+          "name": "tslax_mint",
+          "address": "XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB"
+        },
+        {
+          "name": "wsol_mint",
+          "address": "So11111111111111111111111111111111111111112"
+        },
+        {
+          "name": "usdc_ata",
+          "writable": true
+        },
+        {
+          "name": "tslax_ata",
+          "writable": true
+        },
+        {
+          "name": "wsol_ata",
+          "writable": true
+        },
+        {
+          "name": "usdc_ledger",
+          "writable": true
+        },
+        {
+          "name": "tslax_ledger",
+          "writable": true
+        },
+        {
+          "name": "wsol_ledger",
+          "writable": true
+        },
+        {
+          "name": "cctp_route",
+          "writable": true
+        },
+        {
+          "name": "cctp_ledger",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "token_2022_program"
+        },
+        {
+          "name": "ata_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "kamino_collect_income",
+      "docs": [
+        "DEC-068, DEC-193: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        194,
+        13,
+        231,
+        223,
+        58,
+        12,
+        86,
+        13
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "kamino_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "kamino_redeem",
+      "docs": [
+        "DEC-068, DEC-193: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        143,
+        225,
+        240,
+        130,
+        123,
+        5,
+        160,
+        84
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  117,
+                  110,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_chain_id",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_core",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.spoke_index",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.policy_hash",
+                "account": "FundState"
+              }
+            ]
+          },
+          "relations": [
+            "position",
+            "token_ledger"
+          ]
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  179,
+                  202,
+                  137,
+                  111,
+                  221,
+                  158,
+                  115,
+                  25,
+                  162,
+                  110,
+                  6,
+                  205,
+                  249,
+                  173,
+                  95,
+                  238,
+                  78,
+                  35,
+                  242,
+                  73,
+                  187,
+                  64,
+                  103,
+                  200,
+                  157,
+                  91,
+                  96,
+                  42,
+                  205,
+                  34,
+                  224,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "venue",
+          "accounts": [
+            {
+              "name": "kamino_program",
+              "address": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD"
+            },
+            {
+              "name": "market",
+              "address": "7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF"
+            },
+            {
+              "name": "reserve",
+              "writable": true,
+              "address": "D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59"
+            },
+            {
+              "name": "market_authority"
+            },
+            {
+              "name": "liquidity_mint",
+              "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+            },
+            {
+              "name": "collateral_mint",
+              "writable": true,
+              "address": "B8V6WVjPxW1UGwVDfxH2d2r8SyT4cqn7dQRK6XneVa7D"
+            },
+            {
+              "name": "liquidity_supply",
+              "writable": true,
+              "address": "Bgq7trRgVMeq33yt235zM2onQ4bRDBsY5EWiTetF4qw6"
+            },
+            {
+              "name": "vault_usdc",
+              "writable": true
+            },
+            {
+              "name": "vault_collateral",
+              "writable": true
+            },
+            {
+              "name": "token_program",
+              "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+            },
+            {
+              "name": "instructions_sysvar",
+              "address": "Sysvar1nstructions1111111111111111111111111"
+            }
+          ]
+        },
+        {
+          "name": "token_ledger",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  100,
+                  103,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  198,
+                  250,
+                  122,
+                  243,
+                  190,
+                  219,
+                  173,
+                  58,
+                  61,
+                  101,
+                  243,
+                  106,
+                  171,
+                  201,
+                  116,
+                  49,
+                  177,
+                  187,
+                  228,
+                  194,
+                  210,
+                  246,
+                  224,
+                  228,
+                  124,
+                  166,
+                  2,
+                  3,
+                  69,
+                  47,
+                  93,
+                  97
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "kamino_refresh",
+      "docs": [
+        "DEC-068, DEC-193: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        170,
+        8,
+        236,
+        163,
+        138,
+        43,
+        47,
+        224
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  117,
+                  110,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_chain_id",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_core",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.spoke_index",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.policy_hash",
+                "account": "FundState"
+              }
+            ]
+          },
+          "relations": [
+            "position"
+          ]
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  179,
+                  202,
+                  137,
+                  111,
+                  221,
+                  158,
+                  115,
+                  25,
+                  162,
+                  110,
+                  6,
+                  205,
+                  249,
+                  173,
+                  95,
+                  238,
+                  78,
+                  35,
+                  242,
+                  73,
+                  187,
+                  64,
+                  103,
+                  200,
+                  157,
+                  91,
+                  96,
+                  42,
+                  205,
+                  34,
+                  224,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_collateral"
+        },
+        {
+          "name": "kamino_program"
+        },
+        {
+          "name": "market"
+        },
+        {
+          "name": "reserve",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "kamino_supply",
+      "docs": [
+        "DEC-068, DEC-193: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        145,
+        46,
+        142,
+        2,
+        176,
+        57,
+        162,
+        159
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  117,
+                  110,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_chain_id",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_core",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.spoke_index",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.policy_hash",
+                "account": "FundState"
+              }
+            ]
+          },
+          "relations": [
+            "position",
+            "token_ledger"
+          ]
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "position",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  179,
+                  202,
+                  137,
+                  111,
+                  221,
+                  158,
+                  115,
+                  25,
+                  162,
+                  110,
+                  6,
+                  205,
+                  249,
+                  173,
+                  95,
+                  238,
+                  78,
+                  35,
+                  242,
+                  73,
+                  187,
+                  64,
+                  103,
+                  200,
+                  157,
+                  91,
+                  96,
+                  42,
+                  205,
+                  34,
+                  224,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "venue",
+          "accounts": [
+            {
+              "name": "kamino_program",
+              "address": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD"
+            },
+            {
+              "name": "market",
+              "address": "7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF"
+            },
+            {
+              "name": "reserve",
+              "writable": true,
+              "address": "D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59"
+            },
+            {
+              "name": "market_authority"
+            },
+            {
+              "name": "liquidity_mint",
+              "address": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+            },
+            {
+              "name": "collateral_mint",
+              "writable": true,
+              "address": "B8V6WVjPxW1UGwVDfxH2d2r8SyT4cqn7dQRK6XneVa7D"
+            },
+            {
+              "name": "liquidity_supply",
+              "writable": true,
+              "address": "Bgq7trRgVMeq33yt235zM2onQ4bRDBsY5EWiTetF4qw6"
+            },
+            {
+              "name": "vault_usdc",
+              "writable": true
+            },
+            {
+              "name": "vault_collateral",
+              "writable": true
+            },
+            {
+              "name": "token_program",
+              "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+            },
+            {
+              "name": "instructions_sysvar",
+              "address": "Sysvar1nstructions1111111111111111111111111"
+            }
+          ]
+        },
+        {
+          "name": "token_ledger",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  100,
+                  103,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  198,
+                  250,
+                  122,
+                  243,
+                  190,
+                  219,
+                  173,
+                  58,
+                  61,
+                  101,
+                  243,
+                  106,
+                  171,
+                  201,
+                  116,
+                  49,
+                  177,
+                  187,
+                  228,
+                  194,
+                  210,
+                  246,
+                  224,
+                  228,
+                  124,
+                  166,
+                  2,
+                  3,
+                  69,
+                  47,
+                  93,
+                  97
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "prune_registry",
+      "docs": [
+        "DEC-151/191: remove only proved empty position inventory, never pending claims."
+      ],
+      "discriminator": [
+        107,
+        28,
+        24,
+        254,
+        214,
+        63,
+        17,
+        2
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "publish_report",
+      "docs": [
+        "DEC-093, DEC-120, DEC-121, DEC-122, DEC-192: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        5,
+        33,
+        230,
+        243,
+        220,
+        209,
+        218,
+        101
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "wormhole_program",
+          "address": "worm2ZoG2kUd4vFXhvjh93UUH596ayRfgQ2MgjNMTth"
+        },
+        {
+          "name": "emitter",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  109,
+                  105,
+                  116,
+                  116,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bridge",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  66,
+                  114,
+                  105,
+                  100,
+                  103,
+                  101
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                14,
+                10,
+                88,
+                154,
+                65,
+                165,
+                95,
+                189,
+                102,
+                197,
+                42,
+                71,
+                95,
+                45,
+                146,
+                166,
+                211,
+                220,
+                155,
+                71,
+                71,
+                17,
+                76,
+                185,
+                175,
+                130,
+                90,
+                152,
+                181,
+                69,
+                211,
+                206
+              ]
+            }
+          }
+        },
+        {
+          "name": "sequence",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  83,
+                  101,
+                  113,
+                  117,
+                  101,
+                  110,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "emitter"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                14,
+                10,
+                88,
+                154,
+                65,
+                165,
+                95,
+                189,
+                102,
+                197,
+                42,
+                71,
+                95,
+                45,
+                146,
+                166,
+                211,
+                220,
+                155,
+                71,
+                71,
+                17,
+                76,
+                185,
+                175,
+                130,
+                90,
+                152,
+                181,
+                69,
+                211,
+                206
+              ]
+            }
+          }
+        },
+        {
+          "name": "fee_collector",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  101,
+                  101,
+                  95,
+                  99,
+                  111,
+                  108,
+                  108,
+                  101,
+                  99,
+                  116,
+                  111,
+                  114
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                14,
+                10,
+                88,
+                154,
+                65,
+                165,
+                95,
+                189,
+                102,
+                197,
+                42,
+                71,
+                95,
+                45,
+                146,
+                166,
+                211,
+                220,
+                155,
+                71,
+                71,
+                17,
+                76,
+                185,
+                175,
+                130,
+                90,
+                152,
+                181,
+                69,
+                211,
+                206
+              ]
+            }
+          }
+        },
+        {
+          "name": "message",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "clock",
+          "address": "SysvarC1ock11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "raydium_close_position",
+      "docs": [
+        "DEC-193, DEC-194: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        26,
+        183,
+        7,
+        8,
+        189,
+        159,
+        57,
+        67
+      ],
+      "accounts": [
+        {
+          "name": "operation",
+          "accounts": [
+            {
+              "name": "authority",
+              "signer": true
+            },
+            {
+              "name": "fund",
+              "writable": true,
+              "relations": [
+                "ledger"
+              ]
+            },
+            {
+              "name": "vault",
+              "writable": true
+            },
+            {
+              "name": "raydium_program"
+            },
+            {
+              "name": "system_program",
+              "address": "11111111111111111111111111111111"
+            },
+            {
+              "name": "position_record",
+              "writable": true,
+              "pda": {
+                "seeds": [
+                  {
+                    "kind": "const",
+                    "value": [
+                      112,
+                      111,
+                      115,
+                      105,
+                      116,
+                      105,
+                      111,
+                      110
+                    ]
+                  },
+                  {
+                    "kind": "account",
+                    "path": "fund"
+                  },
+                  {
+                    "kind": "account",
+                    "path": "personal_position"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "ledger",
+              "writable": true,
+              "pda": {
+                "seeds": [
+                  {
+                    "kind": "const",
+                    "value": [
+                      114,
+                      97,
+                      121,
+                      100,
+                      105,
+                      117,
+                      109,
+                      95,
+                      108,
+                      101,
+                      100,
+                      103,
+                      101,
+                      114
+                    ]
+                  },
+                  {
+                    "kind": "account",
+                    "path": "fund"
+                  },
+                  {
+                    "kind": "account",
+                    "path": "pool"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "token_ledger_0",
+              "writable": true
+            },
+            {
+              "name": "token_ledger_1",
+              "writable": true
+            },
+            {
+              "name": "nft_account",
+              "writable": true
+            },
+            {
+              "name": "personal_position",
+              "writable": true
+            },
+            {
+              "name": "pool",
+              "writable": true,
+              "relations": [
+                "ledger"
+              ]
+            },
+            {
+              "name": "protocol_position"
+            },
+            {
+              "name": "token_vault_0",
+              "writable": true
+            },
+            {
+              "name": "token_vault_1",
+              "writable": true
+            },
+            {
+              "name": "tick_array_lower",
+              "writable": true
+            },
+            {
+              "name": "tick_array_upper",
+              "writable": true
+            },
+            {
+              "name": "token_account_0",
+              "writable": true
+            },
+            {
+              "name": "token_account_1",
+              "writable": true
+            },
+            {
+              "name": "token_program",
+              "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+            },
+            {
+              "name": "token_program_2022"
+            },
+            {
+              "name": "memo_program",
+              "address": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
+            },
+            {
+              "name": "mint_0"
+            },
+            {
+              "name": "mint_1"
+            },
+            {
+              "name": "bitmap",
+              "writable": true
+            },
+            {
+              "name": "reward_vault_0",
+              "writable": true,
+              "optional": true
+            },
+            {
+              "name": "reward_quarantine_0",
+              "writable": true,
+              "optional": true
+            },
+            {
+              "name": "reward_mint_0",
+              "optional": true
+            },
+            {
+              "name": "reward_vault_1",
+              "writable": true,
+              "optional": true
+            },
+            {
+              "name": "reward_quarantine_1",
+              "writable": true,
+              "optional": true
+            },
+            {
+              "name": "reward_mint_1",
+              "optional": true
+            },
+            {
+              "name": "reward_vault_2",
+              "writable": true,
+              "optional": true
+            },
+            {
+              "name": "reward_quarantine_2",
+              "writable": true,
+              "optional": true
+            },
+            {
+              "name": "reward_mint_2",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "nft_mint",
+          "writable": true
+        },
+        {
+          "name": "rent_payer",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "raydium_collect_fees",
+      "docs": [
+        "DEC-193, DEC-194: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        205,
+        50,
+        6,
+        138,
+        141,
+        127,
+        188,
+        238
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true,
+          "relations": [
+            "ledger"
+          ]
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "raydium_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "position_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "account",
+                "path": "personal_position"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ledger",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  97,
+                  121,
+                  100,
+                  105,
+                  117,
+                  109,
+                  95,
+                  108,
+                  101,
+                  100,
+                  103,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_ledger_0",
+          "writable": true
+        },
+        {
+          "name": "token_ledger_1",
+          "writable": true
+        },
+        {
+          "name": "nft_account",
+          "writable": true
+        },
+        {
+          "name": "personal_position",
+          "writable": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "relations": [
+            "ledger"
+          ]
+        },
+        {
+          "name": "protocol_position"
+        },
+        {
+          "name": "token_vault_0",
+          "writable": true
+        },
+        {
+          "name": "token_vault_1",
+          "writable": true
+        },
+        {
+          "name": "tick_array_lower",
+          "writable": true
+        },
+        {
+          "name": "tick_array_upper",
+          "writable": true
+        },
+        {
+          "name": "token_account_0",
+          "writable": true
+        },
+        {
+          "name": "token_account_1",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "token_program_2022"
+        },
+        {
+          "name": "memo_program",
+          "address": "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
+        },
+        {
+          "name": "mint_0"
+        },
+        {
+          "name": "mint_1"
+        },
+        {
+          "name": "bitmap",
+          "writable": true
+        },
+        {
+          "name": "reward_vault_0",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "reward_quarantine_0",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "reward_mint_0",
+          "optional": true
+        },
+        {
+          "name": "reward_vault_1",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "reward_quarantine_1",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "reward_mint_1",
+          "optional": true
+        },
+        {
+          "name": "reward_vault_2",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "reward_quarantine_2",
+          "writable": true,
+          "optional": true
+        },
+        {
+          "name": "reward_mint_2",
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "raydium_decrease_position",
+      "docs": [
+        "DEC-193, DEC-194: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        154,
+        49,
+        58,
+        11,
+        34,
+        52,
+        230,
+        209
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "raydium_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "raydium_increase_position",
+      "docs": [
+        "DEC-193, DEC-194: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        96,
+        154,
+        76,
+        245,
+        93,
+        166,
+        5,
+        188
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "raydium_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "raydium_open_position",
+      "docs": [
+        "DEC-193, DEC-194: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        250,
+        136,
+        87,
+        252,
+        126,
+        159,
+        209,
+        30
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true,
+          "relations": [
+            "ledger"
+          ]
+        },
+        {
+          "name": "vault"
+        },
+        {
+          "name": "raydium_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "policy"
+        },
+        {
+          "name": "ledger",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  97,
+                  121,
+                  100,
+                  105,
+                  117,
+                  109,
+                  95,
+                  108,
+                  101,
+                  100,
+                  103,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "account",
+                "path": "pool"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_ledger_0",
+          "writable": true
+        },
+        {
+          "name": "token_ledger_1",
+          "writable": true
+        },
+        {
+          "name": "position_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  115,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "account",
+                "path": "personal_position"
+              }
+            ]
+          }
+        },
+        {
+          "name": "nft_mint",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "nft_account",
+          "writable": true
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "relations": [
+            "ledger"
+          ]
+        },
+        {
+          "name": "protocol_position"
+        },
+        {
+          "name": "tick_array_lower",
+          "writable": true
+        },
+        {
+          "name": "tick_array_upper",
+          "writable": true
+        },
+        {
+          "name": "personal_position",
+          "writable": true
+        },
+        {
+          "name": "token_account_0",
+          "writable": true
+        },
+        {
+          "name": "token_account_1",
+          "writable": true
+        },
+        {
+          "name": "token_vault_0",
+          "writable": true
+        },
+        {
+          "name": "token_vault_1",
+          "writable": true
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "token_program_2022"
+        },
+        {
+          "name": "mint_0"
+        },
+        {
+          "name": "mint_1"
+        },
+        {
+          "name": "bitmap",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "receive_and_credit",
+      "docs": [
+        "DEC-191: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        68,
+        71,
+        135,
+        22,
+        209,
+        28,
+        224,
+        134
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  117,
+                  110,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_chain_id",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_core",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.spoke_index",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.policy_hash",
+                "account": "FundState"
+              }
+            ]
+          },
+          "relations": [
+            "route",
+            "ledger",
+            "token_ledger"
+          ]
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "route",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  99,
+                  116,
+                  112,
+                  95,
+                  114,
+                  111,
+                  117,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ledger",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  99,
+                  116,
+                  112,
+                  95,
+                  108,
+                  101,
+                  100,
+                  103,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "transit",
+          "writable": true
+        },
+        {
+          "name": "usdc_ata",
+          "writable": true
+        },
+        {
+          "name": "token_ledger",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  100,
+                  103,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  198,
+                  250,
+                  122,
+                  243,
+                  190,
+                  219,
+                  173,
+                  58,
+                  61,
+                  101,
+                  243,
+                  106,
+                  171,
+                  201,
+                  116,
+                  49,
+                  177,
+                  187,
+                  228,
+                  194,
+                  210,
+                  246,
+                  224,
+                  228,
+                  124,
+                  166,
+                  2,
+                  3,
+                  69,
+                  47,
+                  93,
+                  97
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "recognize_refund",
+      "docs": [
+        "DEC-191: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        130,
+        224,
+        171,
+        133,
+        149,
+        121,
+        49,
+        62
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "cctp_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "refresh_income_results",
+      "docs": [
+        "DEC-188, DEC-190, DEC-195: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        157,
+        181,
+        97,
+        124,
+        154,
+        171,
+        121,
+        141
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "resume_command",
+      "docs": [
+        "DEC-120/122/151: resume one authenticated command step without dropping pending custody."
+      ],
+      "discriminator": [
+        209,
+        148,
+        117,
+        25,
+        51,
+        1,
+        58,
+        243
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true,
+          "relations": [
+            "command",
+            "usdc_ledger"
+          ]
+        },
+        {
+          "name": "command",
+          "writable": true
+        },
+        {
+          "name": "usdc_ledger",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  100,
+                  103,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  198,
+                  250,
+                  122,
+                  243,
+                  190,
+                  219,
+                  173,
+                  58,
+                  61,
+                  101,
+                  243,
+                  106,
+                  171,
+                  201,
+                  116,
+                  49,
+                  177,
+                  187,
+                  228,
+                  194,
+                  210,
+                  246,
+                  224,
+                  228,
+                  124,
+                  166,
+                  2,
+                  3,
+                  69,
+                  47,
+                  93,
+                  97
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "spoke_program",
+          "address": "7PptZ653uyn5eoAFKqs4DXR1ijxH6sf49f2YAGMLTfCx"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "retry_receive",
+      "docs": [
+        "DEC-191: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        33,
+        173,
+        126,
+        131,
+        8,
+        165,
+        249,
+        189
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  117,
+                  110,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_chain_id",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_core",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.spoke_index",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.policy_hash",
+                "account": "FundState"
+              }
+            ]
+          },
+          "relations": [
+            "route",
+            "ledger",
+            "token_ledger"
+          ]
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "route",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  99,
+                  116,
+                  112,
+                  95,
+                  114,
+                  111,
+                  117,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ledger",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  99,
+                  116,
+                  112,
+                  95,
+                  108,
+                  101,
+                  100,
+                  103,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "transit",
+          "writable": true
+        },
+        {
+          "name": "usdc_ata",
+          "writable": true
+        },
+        {
+          "name": "token_ledger",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  100,
+                  103,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  198,
+                  250,
+                  122,
+                  243,
+                  190,
+                  219,
+                  173,
+                  58,
+                  61,
+                  101,
+                  243,
+                  106,
+                  171,
+                  201,
+                  116,
+                  49,
+                  177,
+                  187,
+                  228,
+                  194,
+                  210,
+                  246,
+                  224,
+                  228,
+                  124,
+                  166,
+                  2,
+                  3,
+                  69,
+                  47,
+                  93,
+                  97
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "send_to_hub",
+      "docs": [
+        "DEC-191: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        201,
+        122,
+        202,
+        2,
+        75,
+        213,
+        164,
+        105
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  117,
+                  110,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_chain_id",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_core",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.spoke_index",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.policy_hash",
+                "account": "FundState"
+              }
+            ]
+          },
+          "relations": [
+            "route",
+            "ledger",
+            "token_ledger"
+          ]
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "route",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  99,
+                  116,
+                  112,
+                  95,
+                  114,
+                  111,
+                  117,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ledger",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  99,
+                  116,
+                  112,
+                  95,
+                  108,
+                  101,
+                  100,
+                  103,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "transit",
+          "writable": true
+        },
+        {
+          "name": "usdc_ata",
+          "writable": true
+        },
+        {
+          "name": "token_ledger",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  100,
+                  103,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  198,
+                  250,
+                  122,
+                  243,
+                  190,
+                  219,
+                  173,
+                  58,
+                  61,
+                  101,
+                  243,
+                  106,
+                  171,
+                  201,
+                  116,
+                  49,
+                  177,
+                  187,
+                  228,
+                  194,
+                  210,
+                  246,
+                  224,
+                  228,
+                  124,
+                  166,
+                  2,
+                  3,
+                  69,
+                  47,
+                  93,
+                  97
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "event_account",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "stage_swap_policy",
+      "discriminator": [
+        195,
+        229,
+        155,
+        190,
+        25,
+        242,
+        10,
+        131
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund"
+        },
+        {
+          "name": "stage",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "swap_exact_in",
+      "docs": [
+        "DEC-136, DEC-193: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        104,
+        104,
+        131,
+        86,
+        161,
+        189,
+        180,
+        216
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund"
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "swap_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "swap_to_ratio",
+      "docs": [
+        "DEC-136, DEC-193: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        103,
+        17,
+        237,
+        141,
+        44,
+        47,
+        227,
+        206
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  117,
+                  110,
+                  100
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_chain_id",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.hub_core",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.spoke_index",
+                "account": "FundState"
+              },
+              {
+                "kind": "account",
+                "path": "fund.policy_hash",
+                "account": "FundState"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fund"
+              }
+            ]
+          }
+        },
+        {
+          "name": "swap_program",
+          "address": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "sweep_excess",
+      "docs": [
+        "DEC-188, DEC-190, DEC-195: fail-closed track-owned scaffold; payload is not a stable wire API."
+      ],
+      "discriminator": [
+        255,
+        74,
+        219,
+        182,
+        1,
+        126,
+        233,
+        6
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "fund",
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "payload",
+          "type": "bytes"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "CctpLedger",
+      "discriminator": [
+        145,
+        188,
+        250,
+        102,
+        67,
+        129,
+        113,
+        154
+      ]
+    },
+    {
+      "name": "CctpRoute",
+      "discriminator": [
+        150,
+        123,
+        78,
+        64,
+        44,
+        213,
+        142,
+        100
+      ]
+    },
+    {
+      "name": "FundState",
+      "discriminator": [
+        3,
+        254,
+        145,
+        43,
+        146,
+        96,
+        162,
+        104
+      ]
+    },
+    {
+      "name": "HubCommand",
+      "discriminator": [
+        156,
+        97,
+        168,
+        201,
+        117,
+        144,
+        227,
+        201
+      ]
+    },
+    {
+      "name": "KaminoPosition",
+      "discriminator": [
+        86,
+        17,
+        7,
+        116,
+        197,
+        32,
+        16,
+        230
+      ]
+    },
+    {
+      "name": "RaydiumLedger",
+      "discriminator": [
+        109,
+        74,
+        224,
+        233,
+        20,
+        34,
+        200,
+        241
+      ]
+    },
+    {
+      "name": "RaydiumPolicy",
+      "discriminator": [
+        33,
+        197,
+        204,
+        96,
+        163,
+        75,
+        84,
+        193
+      ]
+    },
+    {
+      "name": "RaydiumPosition",
+      "discriminator": [
+        135,
+        72,
+        77,
+        56,
+        67,
+        238,
+        22,
+        1
+      ]
+    },
+    {
+      "name": "TokenLedger",
+      "discriminator": [
+        156,
+        247,
+        9,
+        188,
+        54,
+        108,
+        85,
+        77
+      ]
+    },
+    {
+      "name": "Transit",
+      "discriminator": [
+        152,
+        210,
+        161,
+        15,
+        63,
+        138,
+        171,
+        165
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "CctpTransitRecorded",
+      "discriminator": [
+        185,
+        255,
+        218,
+        128,
+        73,
+        33,
+        136,
+        39
+      ]
+    },
+    {
+      "name": "CoreFundInitialized",
+      "discriminator": [
+        251,
+        57,
+        135,
+        92,
+        5,
+        88,
+        27,
+        252
+      ]
+    },
+    {
+      "name": "FundInitialized",
+      "discriminator": [
+        253,
+        64,
+        136,
+        81,
+        179,
+        19,
+        1,
+        155
+      ]
+    },
+    {
+      "name": "HubArrivalAcknowledged",
+      "discriminator": [
+        225,
+        84,
+        192,
+        139,
+        226,
+        97,
+        139,
+        179
+      ]
+    },
+    {
+      "name": "HubCommandAccepted",
+      "discriminator": [
+        47,
+        120,
+        6,
+        134,
+        116,
+        205,
+        173,
+        134
+      ]
+    },
+    {
+      "name": "KaminoRedeemed",
+      "discriminator": [
+        104,
+        75,
+        201,
+        55,
+        70,
+        17,
+        55,
+        137
+      ]
+    },
+    {
+      "name": "KaminoSupplied",
+      "discriminator": [
+        13,
+        235,
+        187,
+        106,
+        94,
+        31,
+        116,
+        178
+      ]
+    },
+    {
+      "name": "KaminoValued",
+      "discriminator": [
+        49,
+        166,
+        148,
+        33,
+        94,
+        228,
+        70,
+        66
+      ]
+    },
+    {
+      "name": "KaminoWithdrawalPending",
+      "discriminator": [
+        244,
+        219,
+        155,
+        82,
+        162,
+        248,
+        77,
+        202
+      ]
+    },
+    {
+      "name": "LedgerChanged",
+      "discriminator": [
+        127,
+        142,
+        36,
+        243,
+        240,
+        196,
+        106,
+        254
+      ]
+    },
+    {
+      "name": "NativeReportPublished",
+      "discriminator": [
+        155,
+        84,
+        46,
+        45,
+        92,
+        162,
+        101,
+        103
+      ]
+    },
+    {
+      "name": "OracleCrossCheckUnavailable",
+      "discriminator": [
+        202,
+        74,
+        241,
+        34,
+        228,
+        117,
+        15,
+        227
+      ]
+    },
+    {
+      "name": "OracleDeviation",
+      "discriminator": [
+        75,
+        106,
+        95,
+        95,
+        114,
+        68,
+        163,
+        114
+      ]
+    },
+    {
+      "name": "RaydiumFeesCollected",
+      "discriminator": [
+        19,
+        229,
+        125,
+        86,
+        197,
+        191,
+        48,
+        204
+      ]
+    },
+    {
+      "name": "RaydiumPositionClosed",
+      "discriminator": [
+        12,
+        13,
+        4,
+        10,
+        166,
+        97,
+        47,
+        131
+      ]
+    },
+    {
+      "name": "RaydiumRewardQuarantined",
+      "discriminator": [
+        154,
+        125,
+        119,
+        132,
+        82,
+        51,
+        223,
+        204
+      ]
+    },
+    {
+      "name": "ReportPublished",
+      "discriminator": [
+        2,
+        113,
+        153,
+        1,
+        101,
+        123,
+        112,
+        132
+      ]
+    },
+    {
+      "name": "SignedSwapExecuted",
+      "discriminator": [
+        45,
+        124,
+        121,
+        63,
+        167,
+        73,
+        82,
+        15
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidSignature"
+    },
+    {
+      "code": 6001,
+      "name": "Expired"
+    },
+    {
+      "code": 6002,
+      "name": "Replay"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidQuote"
+    }
+  ],
+  "types": [
+    {
+      "name": "Asset",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "accounting_id",
+            "type": {
+              "array": [
+                "u8",
+                20
+              ]
+            }
+          },
+          {
+            "name": "stock",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CctpLedger",
+      "docs": [
+        "DEC-191: isolated accounting interface for T1; never infer principal from donations."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "principal",
+            "type": "u64"
+          },
+          {
+            "name": "outbound_gross",
+            "type": "u64"
+          },
+          {
+            "name": "outbound_in_flight",
+            "type": "u64"
+          },
+          {
+            "name": "received_principal",
+            "type": "u64"
+          },
+          {
+            "name": "fee_surplus_principal",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CctpRoute",
+      "docs": [
+        "DEC-188, DEC-190, DEC-191: created and sealed only by verified Fund initialization."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "mandate_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "hub_connector",
+            "type": {
+              "array": [
+                "u8",
+                20
+              ]
+            }
+          },
+          {
+            "name": "solana_chain_id",
+            "type": "u64"
+          },
+          {
+            "name": "max_fee_bps_scaled",
+            "docs": [
+              "TODO(decision): numeric immutable ceiling; no production default (DEC-191)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "sealed",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CctpTransitRecorded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "transit_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "outbound",
+            "type": "bool"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "max_fee",
+            "type": "u64"
+          },
+          {
+            "name": "credited",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CoreFundInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "hub_core",
+            "type": {
+              "array": [
+                "u8",
+                20
+              ]
+            }
+          },
+          {
+            "name": "manager_evm",
+            "type": {
+              "array": [
+                "u8",
+                20
+              ]
+            }
+          },
+          {
+            "name": "manager_solana",
+            "type": "pubkey"
+          },
+          {
+            "name": "native_mandate_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "binding_digest",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "FundInitialized",
+      "docs": [
+        "DEC-190: emitted only after both Manager authorizations are verified by T1."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "mandate_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "manager_solana",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FundState",
+      "docs": [
+        "DEC-188, DEC-190: immutable per-Fund identity and sealed native configuration."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "hub_core",
+            "type": {
+              "array": [
+                "u8",
+                20
+              ]
+            }
+          },
+          {
+            "name": "spoke_index",
+            "type": "u16"
+          },
+          {
+            "name": "fund_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "mandate_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "manager_evm",
+            "type": {
+              "array": [
+                "u8",
+                20
+              ]
+            }
+          },
+          {
+            "name": "manager_solana",
+            "type": "pubkey"
+          },
+          {
+            "name": "report_sequence",
+            "type": "u64"
+          },
+          {
+            "name": "order_sequence",
+            "type": "u64"
+          },
+          {
+            "name": "closed",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          },
+          {
+            "name": "emitter_bump",
+            "type": "u8"
+          },
+          {
+            "name": "hub_chain_id",
+            "type": "u64"
+          },
+          {
+            "name": "factory",
+            "type": {
+              "array": [
+                "u8",
+                20
+              ]
+            }
+          },
+          {
+            "name": "spoke_chain_id",
+            "type": "u64"
+          },
+          {
+            "name": "native_mandate_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "binding_nonce",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "binding_digest",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "binding_expiry",
+            "type": "u64"
+          },
+          {
+            "name": "hub_emitter",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "hub_emitter_chain",
+            "type": "u16"
+          },
+          {
+            "name": "cumulative_received",
+            "type": "u128"
+          },
+          {
+            "name": "cumulative_sent_home",
+            "type": "u128"
+          },
+          {
+            "name": "active_positions",
+            "type": "u16"
+          },
+          {
+            "name": "pending_transits",
+            "type": "u16"
+          },
+          {
+            "name": "pending_results",
+            "type": "u16"
+          },
+          {
+            "name": "assets",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Asset"
+                }
+              }
+            }
+          },
+          {
+            "name": "venues",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Venue"
+                }
+              }
+            }
+          },
+          {
+            "name": "transport",
+            "type": {
+              "defined": {
+                "name": "Transport"
+              }
+            }
+          },
+          {
+            "name": "position_registry",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "transit_registry",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "policy_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "hub_policy_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "active_command",
+            "type": "pubkey"
+          },
+          {
+            "name": "close_requested",
+            "type": "bool"
+          },
+          {
+            "name": "command_registry",
+            "type": {
+              "vec": "pubkey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "HubArrivalAcknowledged",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "transit_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "sequence",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "HubCommand",
+      "docs": [
+        "DEC-120/122/151: retain execution evidence and reserved custody across retries."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "order_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "request_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "kind",
+            "type": "u8"
+          },
+          {
+            "name": "attempt",
+            "type": "u32"
+          },
+          {
+            "name": "sequence",
+            "type": "u64"
+          },
+          {
+            "name": "reserved",
+            "type": "u64"
+          },
+          {
+            "name": "amount_sent",
+            "type": "u64"
+          },
+          {
+            "name": "amount_to_arrive",
+            "type": "u64"
+          },
+          {
+            "name": "transit_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "delivered",
+            "type": "u64"
+          },
+          {
+            "name": "excluded",
+            "type": "u64"
+          },
+          {
+            "name": "completed",
+            "type": "bool"
+          },
+          {
+            "name": "rent_payer",
+            "type": "pubkey"
+          },
+          {
+            "name": "payload",
+            "type": {
+              "array": [
+                "u8",
+                352
+              ]
+            }
+          },
+          {
+            "name": "delivered_steps",
+            "type": {
+              "vec": "pubkey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "HubCommandAccepted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "order_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "kind",
+            "type": "u8"
+          },
+          {
+            "name": "reserved",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KaminoPosition",
+      "docs": [
+        "DEC-068, DEC-080, DEC-193: only credited principal and recorded cTokens are Share Assets.",
+        "T1 creates this PDA and credits it atomically with authenticated USDC arrivals.",
+        "TODO(decision): coordinate the final shared ledger interface; no public credit setter exists."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "reserve",
+            "type": "pubkey"
+          },
+          {
+            "name": "enabled",
+            "type": "bool"
+          },
+          {
+            "name": "units",
+            "type": "u64"
+          },
+          {
+            "name": "principal",
+            "type": "u64"
+          },
+          {
+            "name": "idle_principal",
+            "type": "u64"
+          },
+          {
+            "name": "idle_income",
+            "type": "u64"
+          },
+          {
+            "name": "cumulative_realized_income",
+            "type": "u64"
+          },
+          {
+            "name": "pending_units",
+            "type": "u64"
+          },
+          {
+            "name": "pending_min_liquidity",
+            "type": "u64"
+          },
+          {
+            "name": "last_value",
+            "type": "u64"
+          },
+          {
+            "name": "last_principal",
+            "type": "u64"
+          },
+          {
+            "name": "last_income",
+            "type": "u64"
+          },
+          {
+            "name": "last_refresh_slot",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KaminoRedeemed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "units",
+            "type": "u64"
+          },
+          {
+            "name": "principal",
+            "type": "u64"
+          },
+          {
+            "name": "income",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KaminoSupplied",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "liquidity",
+            "type": "u64"
+          },
+          {
+            "name": "collateral",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KaminoValue",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "units",
+            "type": "u64"
+          },
+          {
+            "name": "value",
+            "type": "u64"
+          },
+          {
+            "name": "principal",
+            "type": "u64"
+          },
+          {
+            "name": "income",
+            "type": "u64"
+          },
+          {
+            "name": "slot",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KaminoValued",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "value",
+            "type": {
+              "defined": {
+                "name": "KaminoValue"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "KaminoWithdrawalPending",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "units",
+            "type": "u64"
+          },
+          {
+            "name": "expected_liquidity",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LedgerChanged",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "principal",
+            "type": "u64"
+          },
+          {
+            "name": "collected_income",
+            "type": "u64"
+          },
+          {
+            "name": "cumulative_income",
+            "type": "u128"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NativeReportPublished",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "report_sequence",
+            "type": "u64"
+          },
+          {
+            "name": "wormhole_sequence",
+            "type": "u64"
+          },
+          {
+            "name": "message",
+            "type": "pubkey"
+          },
+          {
+            "name": "slot",
+            "type": "u64"
+          },
+          {
+            "name": "consistency",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OracleCrossCheckUnavailable",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "feed",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OracleDeviation",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "deviation_bps",
+            "type": "u128"
+          },
+          {
+            "name": "bound_bps",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RaydiumFeesCollected",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "position",
+            "type": "pubkey"
+          },
+          {
+            "name": "fees_0",
+            "type": "u64"
+          },
+          {
+            "name": "fees_1",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RaydiumLedger",
+      "docs": [
+        "DEC-079, DEC-193: authenticated allocations, never raw balances, fund entries.",
+        "TODO(decision): T1 must credit/debit this ledger atomically across all adapters."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "idle_principal_0",
+            "type": "u64"
+          },
+          {
+            "name": "idle_principal_1",
+            "type": "u64"
+          },
+          {
+            "name": "idle_income_0",
+            "type": "u64"
+          },
+          {
+            "name": "idle_income_1",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RaydiumPolicy",
+      "docs": [
+        "DEC-190, DEC-193, DEC-194: T1 creates this immutable admission at Fund creation.",
+        "TODO(decision): coordinator must authenticate its contents against the Hub Mandate."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "mandate_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "minimum_tick",
+            "type": "i32"
+          },
+          {
+            "name": "maximum_tick",
+            "type": "i32"
+          },
+          {
+            "name": "enabled",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RaydiumPosition",
+      "docs": [
+        "DEC-193, DEC-195: fees are separate from principal; rent belongs to the payer."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "personal_position",
+            "type": "pubkey"
+          },
+          {
+            "name": "nft_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "rent_payer",
+            "type": "pubkey"
+          },
+          {
+            "name": "tick_lower",
+            "type": "i32"
+          },
+          {
+            "name": "tick_upper",
+            "type": "i32"
+          },
+          {
+            "name": "liquidity",
+            "type": "u128"
+          },
+          {
+            "name": "collected_fees_0",
+            "type": "u64"
+          },
+          {
+            "name": "collected_fees_1",
+            "type": "u64"
+          },
+          {
+            "name": "closed",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RaydiumPositionClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "position",
+            "type": "pubkey"
+          },
+          {
+            "name": "rent_payer",
+            "type": "pubkey"
+          },
+          {
+            "name": "rent",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RaydiumRewardQuarantined",
+      "docs": [
+        "DEC-206: incidental exit rewards stay outside principal, income and NAV."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReportPublished",
+      "docs": [
+        "DEC-192: publishing is not evidence that guardians have finalized the VAA."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "sequence",
+            "type": "u64"
+          },
+          {
+            "name": "wormhole_sequence",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SignedSwapExecuted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "input_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "output_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "input_units",
+            "type": "u64"
+          },
+          {
+            "name": "output_units",
+            "type": "u64"
+          },
+          {
+            "name": "minimum_out",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenLedger",
+      "docs": [
+        "DEC-055, DEC-080: observations never authorize credits; adapters mutate recorded buckets."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "principal",
+            "type": "u64"
+          },
+          {
+            "name": "collected_income",
+            "type": "u64"
+          },
+          {
+            "name": "cumulative_income",
+            "type": "u128"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Transit",
+      "docs": [
+        "DEC-191, DEC-195: persistent business-id receipt/claim and original rent payer."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fund",
+            "type": "pubkey"
+          },
+          {
+            "name": "transit_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "outbound",
+            "type": "bool"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "max_fee",
+            "type": "u64"
+          },
+          {
+            "name": "in_flight",
+            "type": "u64"
+          },
+          {
+            "name": "credited",
+            "type": "u64"
+          },
+          {
+            "name": "fee_executed",
+            "type": "u64"
+          },
+          {
+            "name": "fee_surplus_principal",
+            "type": "u64"
+          },
+          {
+            "name": "nonce",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "message_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "event_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "rent_payer",
+            "type": "pubkey"
+          },
+          {
+            "name": "received",
+            "type": "bool"
+          },
+          {
+            "name": "transfer_kind",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Transport",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "hub_usdc",
+            "type": {
+              "array": [
+                "u8",
+                20
+              ]
+            }
+          },
+          {
+            "name": "token_messenger",
+            "type": {
+              "array": [
+                "u8",
+                20
+              ]
+            }
+          },
+          {
+            "name": "message_transmitter",
+            "type": {
+              "array": [
+                "u8",
+                20
+              ]
+            }
+          },
+          {
+            "name": "destination_domain",
+            "type": "u32"
+          },
+          {
+            "name": "mint_recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "destination_caller",
+            "type": "pubkey"
+          },
+          {
+            "name": "remote_token_messenger",
+            "type": "pubkey"
+          },
+          {
+            "name": "remote_vault_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "fast_fee_ceiling",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Venue",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "program",
+            "type": "pubkey"
+          },
+          {
+            "name": "pool",
+            "type": "pubkey"
+          },
+          {
+            "name": "reserve",
+            "type": "pubkey"
+          },
+          {
+            "name": "token0",
+            "type": "pubkey"
+          },
+          {
+            "name": "token1",
+            "type": "pubkey"
+          }
+        ]
+      }
+    }
+  ]
+}
