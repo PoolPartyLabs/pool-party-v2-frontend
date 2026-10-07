@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-045
  * @name BuildStepLayout tests
- * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 and POO-2202 rules v1)
+ * @implements-rules-version v1 (POO-2287 and POO-2236 rules v1); v1 (POO-2152 and POO-2202 rules v1)
  * @analytics-events none, the layout reports presses through its props; the Build screen
  *   (PP-MGR-SCR-002, S7) owns every event
  *
@@ -89,11 +89,14 @@ describe("BuildStepLayout: grid", () => {
   });
 
   // @rule AN3
-  it("[AN3] the side columns scroll while the canvas column can shrink", () => {
+  it("[AN3, POO-2287 R2/R3/R4] keeps side columns scrollable in the dark theme without clipping controls", () => {
     const { container } = renderLayout();
 
     const columns = Array.from(container.querySelector("[data-build-grid]")?.children ?? []);
-    expect(columns[2]?.className).toContain("overflow-y-auto");
+    for (const index of [0, 2]) {
+      expect(columns[index]).toHaveClass("overflow-y-auto", "scrollbar-dark", "min-w-0");
+      expect(columns[index]).not.toHaveClass("overflow-x-hidden", "overflow-hidden");
+    }
     expect(columns[1]?.className).toContain("min-w-0");
   });
 });

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-056
  * @name BuildPalette tests
- * @implements-rules-version v1 (POO-2155 rules v1)
+ * @implements-rules-version v1 (POO-2287 and POO-2155 rules v1)
  * @analytics-events none, a presentational palette under test
  *
  * The left column of the Build step (slice S5, POO-2155; handoff AN8, I3, ST10, D22, D25): the
@@ -103,11 +103,13 @@ describe("BuildPalette", () => {
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it("scrolls inside its column when taller than 640", () => {
+  it("[D25, POO-2287 R2/R3] scrolls inside its column in the dark theme when taller than 640", () => {
     // @rule D25
     render(<BuildPalette {...props()} />);
     expect(screen.getByTestId("build-palette").className).toContain("max-h-[640px]");
     expect(screen.getByTestId("build-palette").className).toContain("overflow-y-auto");
+    expect(screen.getByTestId("build-palette")).toHaveClass("scrollbar-dark");
+    expect(screen.getByTestId("build-palette")).not.toHaveClass("overflow-hidden");
   });
 
   it("starts a drag only after the pointer moves more than 4 px", () => {
