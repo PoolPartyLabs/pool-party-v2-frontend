@@ -705,4 +705,10 @@ The launch modal now follows provisioning with one current-step card and a pinne
 
 See [phased delivery plan](../../../docs/manager-overview-manage-v2-delivery-2026-10-06.md). POO-2246 v2 refines existing Manage with native-only cash, chain/address token verification, shell skeleton and bounded inline preparation recovery. No additional execution capability is enabled.
 
+### October 7 canvas and inline-panel plan
+
+[Manager canvas and inline panels](../../../docs/manager-canvas-panels-plan-2026-10-07.md) maps the latest seven Figma states to POO-2270..2279 in POO-2116. Planned changes include compact cash/Idle, lateral principal returns, separated return Bridges, full-path hover, a fixed Hub overlay, responsive inline headers and draft-preserving Idle/Collect selection. These changes are not yet implemented by this planning package.
+
+Collect details reuse the authorized position fees read. The API already builds origin Collect; POO-2277 adds the preview/recovery contract and POO-2278 owns separate preparation, signing and continuation PRs. POO-2230 supplies queue/reserves/native cash/current hub Income. Charts/Activity destinations remain Needs Rules under POO-2279. Existing Move, future-deposit and investor behavior is preserved.
+
 POO-2245 v1 supplies the V2-only Overview: shared console hierarchy, AUM/history availability states, unified Continue setup, lifecycle table and existing profile/resume/Manage destinations. The sidebar starts expanded at 248px for V2 Overview without changing the saved preference elsewhere. Pure identity and storage status models distinguish drafts, journeys, corrupt reads and incomplete discovery. Production financial aggregates remain POO-2247; four explicit stories cover Ready/Loading/Empty/Error.

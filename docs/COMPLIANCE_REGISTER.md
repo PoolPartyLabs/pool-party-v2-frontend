@@ -141,3 +141,16 @@ Verification: RESOLVED for the supported read/navigation scope. Real-mode AUM, r
 Verification: RESOLVED for these engineering disclosure boundaries. The UI separately shows shares, USDC charged, flow fee, refund and share price from the complete API simulation. Approval is capped to the selected budget. Confirmation protects at least the reviewed share quantity. Gas is disclosed as a separate ETH payment shown by the wallet; the frontend does not invent a gas estimate or call simulation output a settled receipt. Funding/approval completion does not mean capital was invested.
 
 The existing fund/protocol/custody disclosures and any existing launch blockers continue to apply. The local recovery journal contains wallet/core addresses, requested budget and transaction evidence only on the device. It is not an analytics payload. Pending/unknown submissions remain locked until verified; loss of browser storage loses this device-local recovery evidence. Separate tabs do not have an atomic distributed submission lock. No public-audit or safety guarantee is added.
+
+## CR-MGR-POO2270, 2026-10-07, canvas and inline-panel plan
+
+Scope: documentation/planning only, [POO-2270](https://linear.app/yeildbay/issue/POO-2270)..[POO-2279](https://linear.app/yeildbay/issue/POO-2279). Existing CR-MGR-015/019/020 and venue/custody disclosures remain applicable; no existing blocking item is resolved. See [delivery plan](manager-canvas-panels-plan-2026-10-07.md).
+
+Verification pending before runtime enablement:
+
+- Principal and fee Bridges describe separate routes; auto does not assert execution, provider, ETA, token conversion, atomicity or hub settlement. USDG must not be relabelled USDC. Fixed locks describe structural roles rather than asset safety or withdrawal guarantees.
+- Today/tomorrow/day-after deadlines, reservation coverage, eligibility and timezone must come from the authoritative queue. These labels cannot become an unsupported payout-time promise. POO-2230 must define their financial meaning, complete coverage and freshness before real values are shown; missing/partial data stays explicit.
+- Collect token amounts are uncollected fees of the selected position, not principal or settled hub Income. Manual execution requires validated preview/costs/capability and origin recovery under POO-2277/2278. Origin collection and hub settlement are separate completion scopes. No financial completion event fires on click, broadcast or an unrelated receipt.
+- Native physical balances, aggregate hub Income and financial chart metrics require provenance/units/freshness. Figma amounts stay in explicit story fixtures. Functional Charts/Activity waits for POO-2279 definitions, including incomplete history and financial event labels.
+
+Status: OPEN for these future product disclosures and financial integration meanings. The planning-only PR enables no wallet operation and introduces no new financial claim on screen. Each implementation slice records its evidence and remaining launch conditions here before exposure.
