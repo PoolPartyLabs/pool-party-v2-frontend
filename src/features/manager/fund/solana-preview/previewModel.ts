@@ -1,11 +1,13 @@
 /**
  * @id PP-MGR-LIB-059
  * @name solanaPreviewModel
- * @implements-rules-version v2
+ * @implements-rules-version v2 (POO-2281); v1 (POO-2291 catalog consumption)
  * @analytics-events none, pure local drawing state; the preview screen owns events.
  */
-export const PREVIEW_PROTOCOLS = ["kamino", "jupiter", "raydium", "orca"] as const;
-export type PreviewProtocol = (typeof PREVIEW_PROTOCOLS)[number];
+import { SOLANA_LOCAL_PROTOCOLS, type SolanaLocalProtocol } from "./solanaCatalog";
+
+export const PREVIEW_PROTOCOLS = SOLANA_LOCAL_PROTOCOLS;
+export type PreviewProtocol = SolanaLocalProtocol;
 export type PreviewPair = "SOL / USDC" | "USDC / SOL";
 export interface PreviewBlock {
   id: string;

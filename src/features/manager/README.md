@@ -737,6 +737,14 @@ Collect details reuse the authorized position fees read. The API already builds 
 POO-2245 v1 supplies the V2-only Overview: shared console hierarchy, AUM/history availability states, unified Continue setup, lifecycle table and existing profile/resume/Manage destinations. The sidebar starts expanded at 248px for V2 Overview without changing the saved preference elsewhere. Pure identity and storage status models distinguish drafts, journeys, corrupt reads and incomplete discovery. Production financial aggregates remain POO-2247; four explicit stories cover Ready/Loading/Empty/Error.
 
 
+### Solana catalog and read contracts, POO-2291 S1
+
+PP-MGR-LIB-063 `solana-preview/solanaSchemas.ts` preserves case-sensitive 32-byte base58 identity by cluster/resource, native SOL lamports versus SPL mints, and exact string amount conversion. Available, stale, unavailable, not-applicable and confirmed-zero states retain declared source/time/slot. Confirmed-zero requires raw zero and observed confirmed/finalized commitment. These are structural contracts, not attestation of an account, owner, allowlist or live freshness.
+
+PP-MGR-LIB-064 `solana-preview/solanaCatalog.ts` narrows Kamino to mainnet USDC Supply and keeps Jupiter, Raydium CLMM and Orca Whirlpools separate. The existing previewModel consumes the same four choices and order. Holding is a descriptor only until its own slice. Catalog financial/program/position reads and execution stay strictly unavailable. Native SOL is not WSOL Operating cash, and no Solana identity enters an EVM registry or launch payload. Jupiter managed order/execute and composable build inspection preserve separate quote and blockhash validity fields; neither enables signing.
+
+Validation: 77 focused tests in five schema/catalog/model/screen/route files, scoped Biome and one TypeScript check passed. No full local suite, coverage, build or browser journey. POO-2291 remains in progress for Kamino/Orca/Raydium/Holding/local Manage; live discovery, custody, quotes and execution remain POO-2239/2240/2261/2262.
+
 ### Manage inline identity header, POO-2272 v2
 
 PP-MGR-CMP-091 `manage/ManageBlockHeader.tsx` keeps the selected protocol and subtype/pair on the left with its network alongside, vertically centered at the nominal 12px gap. It reuses canonical protocol/network marks and existing translations, preserves full text with natural wrapping and adds no fixed panel height. ManageBlockPanel consumes the same header for Supply and Liquidity states; a later Collect panel may pass its pair context without changing the origin.
