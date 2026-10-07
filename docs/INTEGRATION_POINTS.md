@@ -316,3 +316,7 @@ execution capability, quote correctness, Bridge settlement or authoritative data
 PP-MGR-LIB-063/064 are pure local schemas/descriptors. The two marked seams in solanaCatalog bind discovery/read models (POO-2239/2240) and Jupiter quote/transaction validity/executor (POO-2261/2262). No network call, program deployment, wallet read or signer is added. Canonical USDC/WSOL mint metadata is cited from official Jupiter documentation in the schema header.
 
 The local catalog rejects both fixture and observed values in financial/capability fields. Generic read models may represent declared provenance, but cannot attest external ownership or freshness. Confirmed zero is explicit; missing remains unavailable. Holding stays contract-only; all six POO-2291 slices are not complete.
+
+## Manage inline identity header, October 7, 2026 (POO-2272 v2)
+
+PP-MGR-CMP-091 consumes the canonical ManagePosition already selected by the host and optional display pair context. It performs no read, write, mock call or transaction. Current position/network provenance and the existing authorized Manage seams are unchanged. This header slice does not enable Move, Collect or future-policy persistence.
