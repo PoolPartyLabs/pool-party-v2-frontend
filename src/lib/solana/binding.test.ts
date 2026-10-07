@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { generateKeyPairSync, sign } from "node:crypto";
-import { getAddressDecoder } from "@solana/kit";
+import { address, getAddressDecoder, getAddressEncoder } from "@solana/kit";
 import { bytesToHex, concatHex, encodeAbiParameters, hexToBytes, keccak256, toHex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { expect, it } from "vitest";
@@ -10,7 +10,6 @@ import {
   type SolanaBindingAuthorization,
   signManagerSolanaBinding,
   solanaBootstrapDigest,
-  solanaBootstrapTypedData,
   verifyManagerSolanaBinding,
 } from "./binding";
 import { bootstrapAuthorizationFixture } from "./bootstrap.fixture";
@@ -98,7 +97,6 @@ const bootstrapAuthorization = {
 };
 
 it("matches #47/#48 Rust fixture bootstrap using independent Solidity ABI words", () => {
-  const data = solanaBootstrapTypedData(solanaAddress, bootstrapAuthorization);
   const domain = keccak256(
     encodeAbiParameters(
       [
@@ -154,13 +152,17 @@ it("matches #47/#48 Rust fixture bootstrap using independent Solidity ABI words"
         bootstrapAuthorization.mandateHash,
         bootstrapAuthorization.policyHash,
         0,
-        data.message.program,
-        data.message.fundPda,
-        data.message.solanaKey,
-        data.message.usdcAta,
-        data.message.tslaxAta,
-        data.message.nvdaxAta,
-        data.message.wsolAta,
+        bytesToHex(
+          new Uint8Array(getAddressEncoder().encode(address(bootstrapAuthorization.program))),
+        ),
+        bytesToHex(
+          new Uint8Array(getAddressEncoder().encode(address(bootstrapAuthorization.fundPda))),
+        ),
+        `0x${"04".repeat(32)}`,
+        "0x9c4f8416484d86c2d7a6d9cb5746f4289926c7d7bc61a5caa0f296b438ed5fcb",
+        "0x09c0ea5663bc4af78d751afbbb3ec31b37ca50130e95f9620856208400fb668a",
+        "0x3e3af4a212d25668a7ec6963d097580ec5ca12dd0c600fc8711d06fc7175466e",
+        "0x579f23ccf99a178122b56905dffdddf7aa776cfd8230d154ca3254a06f1c41a8",
         authorization.nativeMandateHash,
         bootstrapAuthorization.fundId,
         BigInt(9),
