@@ -96,6 +96,37 @@ function Controlled({ context = rangeTestContext() }: { context?: SolanaRangeCon
   return <SolanaRangePresenter context={context} range={range} onChange={setRange} />;
 }
 const initialRange: SolanaRangeDraft = { tickLower: -128, tickUpper: 128, displayInverted: false };
+// @rule R3,R8: losing editing capability discards text without committing a change or error intent.
+it("discards pending text when the host changes the same context to read-only", async () => {
+  const context = rangeTestContext();
+  const onChange = vi.fn();
+  const onInvalid = vi.fn();
+  const view = renderWithProviders(
+    <SolanaRangePresenter
+      context={context}
+      range={initialRange}
+      onChange={onChange}
+      onInvalid={onInvalid}
+    />,
+  );
+  const initial = screen.getByRole("textbox", { name: "Min price" }).getAttribute("value");
+  await userEvent.clear(screen.getByRole("textbox", { name: "Min price" }));
+  await userEvent.type(screen.getByRole("textbox", { name: "Min price" }), "995");
+  view.rerender(
+    <SolanaRangePresenter
+      context={context}
+      range={initialRange}
+      onChange={onChange}
+      onInvalid={onInvalid}
+      readOnly
+    />,
+  );
+  await userEvent.tab();
+  expect(onChange).not.toHaveBeenCalled();
+  expect(onInvalid).not.toHaveBeenCalled();
+  expect(screen.getByRole("textbox", { name: "Min price" })).toHaveValue(initial);
+  expect(screen.getByRole("button", { name: "Increase Min price" })).toBeDisabled();
+});
 // @rule POO-2291 R2,R8: leaving an origin discards uncommitted field text, including a null interval.
 it.each([
   "another-position",
@@ -196,6 +227,34 @@ it("does not invalidate an untouched tiny canonical price on focus and blur", as
   await userEvent.click(screen.getByRole("textbox", { name: "Min price" }));
   await userEvent.tab();
   expect(screen.queryByRole("alert")).toBeNull();
+});
+
+// @rule R2,R5: a native input must not hide the digits of a very small displayed price at rest.
+it("shows every displayed digit in a wrapping mirror while keeping a labeled native editor", () => {
+  const context = rangeTestContext();
+  renderWithProviders(
+    <SolanaRangePresenter
+      context={{
+        ...context,
+        cluster: "devnet",
+        tokenA: {
+          ...context.tokenA,
+          cluster: "devnet",
+          decimals: 0,
+          mint: "11111111111111111111111111111111",
+        },
+        tokenB: { ...context.tokenB, cluster: "devnet", decimals: 255 },
+      }}
+      range={initialRange}
+      onChange={vi.fn()}
+    />,
+  );
+  const input = screen.getByRole("textbox", { name: "Min price" });
+  const mirror = input.parentElement?.querySelector("[data-solana-price-mirror]");
+  expect(mirror).toHaveTextContent(input.getAttribute("value") ?? "missing price");
+  expect(mirror).toHaveAttribute("aria-hidden", "true");
+  expect(mirror).toHaveClass("break-all");
+  expect(input.getAttribute("value")?.length).toBeGreaterThan(255);
 });
 // @rule R3,R5: null absence does not become price/ticks/composition fixtures.
 it("shows unavailable live context without editable or invented range state", () => {

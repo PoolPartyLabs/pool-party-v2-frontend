@@ -5,14 +5,14 @@
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-3089
  * @linear https://linear.app/yeildbay/issue/POO-2281
  * @i18n-namespace manager.solanaPreview
- * @implements-rules-version v2 (POO-2281), v1 (POO-2290)
+ * @implements-rules-version v2 (POO-2281), v1 (POO-2290/2291)
  * @analytics-events none, form intent is owned by PP-MGR-SCR-009.
  */
 "use client";
 
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ManageLendingRiskSection } from "../manage/ManageLendingRiskSection";
@@ -22,8 +22,11 @@ import {
   type PreviewEdit,
   type PreviewError,
   type PreviewPair,
+  parseAllocation,
 } from "./previewModel";
 import { PreviewLogo } from "./SolanaPreviewCanvas";
+import { SolanaRangePresenter } from "./SolanaRangePresenter";
+import type { SolanaRangeContext, SolanaRangeDraft } from "./solanaRangeModel";
 
 export interface SolanaPreviewBlockPanelProps {
   block: PreviewBlock;
@@ -35,6 +38,10 @@ export interface SolanaPreviewBlockPanelProps {
   onDiscard(): void;
   onClose(): void;
   onUnavailable(): void;
+  /** A verified protocol snapshot/draft supplied by the host. No live context exists by default. */
+  rangeContext?: SolanaRangeContext | null;
+  rangeDraft?: SolanaRangeDraft | null;
+  onRangeChange?(range: SolanaRangeDraft): void;
 }
 
 /** Static drawing choices and unavailable market fields, never pool discovery or transaction input. */
@@ -48,6 +55,9 @@ export function SolanaPreviewBlockPanel({
   onDiscard,
   onClose,
   onUnavailable,
+  rangeContext = null,
+  rangeDraft = null,
+  onRangeChange,
 }: SolanaPreviewBlockPanelProps) {
   const t = useTranslations("manager");
   const protocolNames = {
@@ -57,11 +67,14 @@ export function SolanaPreviewBlockPanel({
     orca: t("solanaPreview.protocols.orca"),
   };
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const rangeId = useId();
   useEffect(() => {
     const frame = requestAnimationFrame(() => headingRef.current?.focus());
     return () => cancelAnimationFrame(frame);
   }, []);
   const lp = isLiquidityBlock(block.protocol);
+  const showRange = lp && (parseAllocation(edit.allocation) ?? 0) > 0;
+  const verifiedRange = rangeContext?.protocol === block.protocol ? rangeContext : null;
   const fields =
     block.protocol === "kamino"
       ? [
@@ -80,8 +93,6 @@ export function SolanaPreviewBlockPanel({
             t("solanaPreview.pool"),
             t("solanaPreview.price"),
             t("solanaPreview.feeModel"),
-            t("solanaPreview.range"),
-            t("solanaPreview.composition"),
             t("solanaPreview.liquidityTolerance"),
           ];
   return (
@@ -169,6 +180,21 @@ export function SolanaPreviewBlockPanel({
             </div>
           ))}
         </dl>
+        {showRange ? (
+          <section aria-labelledby={rangeId} className="min-w-0 border-t border-border pt-4">
+            <h3 id={rangeId} className="mb-2 font-medium text-sm">
+              {t("solanaPreview.range")}
+            </h3>
+            {/* PP-INTEGRATION-POINT: POO-2240/2261 require same-snapshot pool/program/mint/grid evidence; no example prices or default ticks fill a missing context. */}
+            <SolanaRangePresenter
+              context={verifiedRange}
+              range={rangeDraft}
+              onChange={(range) => onRangeChange?.(range)}
+              onInvalid={() => onUnavailable()}
+              readOnly={!onRangeChange}
+            />
+          </section>
+        ) : null}
         {block.protocol === "kamino" ? (
           <>
             {/* PP-INTEGRATION-POINT: POO-2290/2240 require a full verified Kamino obligation; a local Supply drawing does not prove no debt. */}

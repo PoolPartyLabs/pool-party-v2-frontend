@@ -39,6 +39,8 @@ export interface SolanaRangePresenterProps {
   onChange(range: SolanaRangeDraft): void;
   /** Optional bounded invalid-input intent for the host's existing analytics taxonomy. */
   onInvalid?(reason: string): void;
+  /** A host without a draft change handler can display verified values without silent edits. */
+  readOnly?: boolean;
   className?: string;
 }
 export function SolanaRangePresenter({
@@ -46,6 +48,7 @@ export function SolanaRangePresenter({
   range,
   onChange,
   onInvalid,
+  readOnly = false,
   className,
 }: SolanaRangePresenterProps) {
   const t = useTranslations("manager.solanaPreview");
@@ -62,11 +65,12 @@ export function SolanaRangePresenter({
   // Any changed canonical context discards field-only text/error. The controlled draft stays with its host.
   return (
     <RangeFields
-      key={JSON.stringify(inspected.context)}
+      key={`${JSON.stringify(inspected.context)}:${readOnly}`}
       context={inspected.context}
       range={range}
       onChange={onChange}
       onInvalid={onInvalid}
+      readOnly={readOnly}
       className={className}
     />
   );
@@ -76,6 +80,7 @@ function RangeFields({
   range,
   onChange,
   onInvalid,
+  readOnly = false,
   className,
 }: Omit<SolanaRangePresenterProps, "context" | "range"> & {
   context: SolanaRangeContext;
@@ -95,7 +100,7 @@ function RangeFields({
     new Intl.NumberFormat(locale).formatToParts(1.1).find((part) => part.type === "decimal")
       ?.value ?? ".";
   const fullOnly = context.protocol === "orca" && context.tickSpacing >= 32768;
-  const editable = context.status === "available" && !fullOnly;
+  const editable = context.status === "available" && !fullOnly && !readOnly;
   const bounds = displaySolanaRange(context, range);
   const draftInvalid = validateSolanaRange(context, range) !== "valid";
   const identity = `${context.protocol}:${context.cluster}:${context.pool}:${context.position?.positionId ?? "draft"}`;
@@ -135,6 +140,7 @@ function RangeFields({
         <span className="font-medium text-sm">{field("range.label")}</span>
         <button
           type="button"
+          disabled={readOnly}
           onClick={() => {
             setEditing(null);
             onChange({ ...range, displayInverted: !range.displayInverted });
@@ -166,7 +172,7 @@ function RangeFields({
           <button
             key={preset}
             type="button"
-            disabled={context.status !== "available" || (fullOnly && preset !== "full")}
+            disabled={readOnly || context.status !== "available" || (fullOnly && preset !== "full")}
             onClick={() => send(presetSolanaRange(context, preset, range.displayInverted))}
             className={cn(
               "min-h-11 rounded-full border border-border text-xs tabular-nums disabled:opacity-40",
@@ -197,56 +203,70 @@ function RangeFields({
                 <label htmlFor={`${id}-${bound}`} className="block text-muted-foreground text-xs">
                   {label}
                 </label>
-                <input
-                  id={`${id}-${bound}`}
-                  inputMode="decimal"
-                  type="text"
-                  autoComplete="off"
-                  maxLength={SOLANA_RANGE_INPUT_MAX_LENGTH}
-                  readOnly={!editable}
-                  value={active ? editing.text : canonical ? priceText(canonical) : ""}
-                  title={canonical ?? t("marketUnavailable")}
-                  aria-invalid={!!error || draftInvalid}
-                  onFocus={() => {
-                    if (editable && canonical)
-                      setEditing({ bound, text: canonical.replace(".", separator), identity });
-                  }}
-                  onChange={(event) =>
-                    setEditing({
-                      bound,
-                      text: sanitizeNumericInput(event.target.value, {
-                        decimalSeparator: separator,
-                      })
-                        .slice(0, SOLANA_RANGE_INPUT_MAX_LENGTH)
-                        .replace(".", separator),
-                      identity,
-                    })
-                  }
-                  onBlur={() => {
-                    if (active && editing) {
-                      const next = snapSolanaRangePrice(
-                        context,
-                        range,
+                <div className="relative mt-1 min-w-0">
+                  {/* A wrapping mirror displays complete values at rest; focus retains the native editor. */}
+                  <span
+                    data-solana-price-mirror=""
+                    aria-hidden="true"
+                    className={cn(
+                      "block min-h-11 break-all py-2.5 text-right font-semibold text-foreground text-sm tabular-nums",
+                      active && "invisible",
+                    )}
+                  >
+                    {active ? editing.text : canonical ? priceText(canonical) : ""}
+                  </span>
+                  <input
+                    id={`${id}-${bound}`}
+                    inputMode="decimal"
+                    type="text"
+                    autoComplete="off"
+                    maxLength={SOLANA_RANGE_INPUT_MAX_LENGTH}
+                    readOnly={!editable}
+                    value={active ? editing.text : canonical ? priceText(canonical) : ""}
+                    title={canonical ?? t("marketUnavailable")}
+                    aria-invalid={!!error || draftInvalid}
+                    onFocus={() => {
+                      if (editable && canonical)
+                        setEditing({ bound, text: canonical.replace(".", separator), identity });
+                    }}
+                    onChange={(event) =>
+                      setEditing({
                         bound,
-                        sanitizeNumericInput(editing.text, {
+                        text: sanitizeNumericInput(event.target.value, {
                           decimalSeparator: separator,
-                        }),
-                      );
-                      send(next);
-                      setEditing(null);
+                        })
+                          .slice(0, SOLANA_RANGE_INPUT_MAX_LENGTH)
+                          .replace(".", separator),
+                        identity,
+                      })
                     }
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      event.currentTarget.blur();
-                    }
-                  }}
-                  className={cn(
-                    "mt-1 min-h-11 w-full min-w-0 bg-transparent text-right font-semibold text-sm tabular-nums",
-                    PANEL_FOCUS_RING,
-                  )}
-                />
+                    onBlur={() => {
+                      if (editable && active && editing) {
+                        const next = snapSolanaRangePrice(
+                          context,
+                          range,
+                          bound,
+                          sanitizeNumericInput(editing.text, {
+                            decimalSeparator: separator,
+                          }),
+                        );
+                        send(next);
+                        setEditing(null);
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        event.currentTarget.blur();
+                      }
+                    }}
+                    className={cn(
+                      "absolute inset-0 min-h-11 w-full min-w-0 bg-transparent py-2.5 text-right font-semibold text-sm tabular-nums",
+                      active ? "text-foreground" : "text-transparent caret-transparent",
+                      PANEL_FOCUS_RING,
+                    )}
+                  />
+                </div>
                 <div className="flex items-center justify-between gap-2">
                   {([-1, 1] as const).map((direction) => (
                     <button
