@@ -70,7 +70,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 509 markers across 294 files (2026-10-07)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 511 markers across 295 files (2026-10-07)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -332,3 +332,7 @@ PP-MGR-CMP-046 accepts an optional decorative overlay outside the transformed gr
 ### Manage review visibility, POO-2274 v2
 
 Existing authorized position and pool reads stay active after first inspection of an origin. Visibility no longer restarts the read or invalidates its review. Same-origin retained display metadata is not fresh execution evidence; actual failures and material snapshots invalidate review. No new API, wallet or mock seam is introduced.
+
+### Collect fees read presenter, POO-2276 v1
+
+ManageCollectFeesPanel accepts an injected authorized position read with explicit freshness. It displays only ordered uncollectedIncome.amount0/amount1 after canonical origin, token address/decimals/currency order and exact raw-decimal consistency validation. Current position DTO lacks authoritative freshness evidence, so the eventual live host must pass unknown, not infer fresh from a completed request. Unknown freshness is generic unavailable; stale copy requires explicit stale evidence. This presenter is not mounted yet and never reads, signs or collects. POO-2277/2278 own preview, costs, signing and recovery; swap/transit/hub Income settlement remains separate.

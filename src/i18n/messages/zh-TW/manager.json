@@ -1298,6 +1298,20 @@
     }
   },
   "manageV2": {
+    "collectFeesPanel": {
+      "title": "Collect fees",
+      "uncollectedFees": "尚未領取的fees",
+      "collect": "領取",
+      "back": "返回",
+      "loading": "正在載入尚未領取的fees…",
+      "readError": "無法讀取尚未領取的fees。",
+      "unavailable": "尚未領取的fees目前無法使用。",
+      "stale": "尚未領取的fees資訊已過時。請重新整理後繼續。",
+      "partial": "部分尚未領取的fees數量目前無法取得。",
+      "zero": "沒有可領取的fees。",
+      "executionUnavailable": "目前無法使用",
+      "routeDescription": "fees必須先轉換成USDC並抵達hub，才會以Income入帳。"
+    },
     "subtitle": "管理策略 · 選取區塊，查看餘額並管理部位。",
     "strategyBlocks": "策略區塊",
     "selectionHelp": "從畫布或這份清單選取部位。",

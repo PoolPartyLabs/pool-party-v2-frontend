@@ -1298,6 +1298,20 @@
     }
   },
   "manageV2": {
+    "collectFeesPanel": {
+      "title": "Collect fees",
+      "uncollectedFees": "Fees chưa thu",
+      "collect": "Thu",
+      "back": "Quay lại",
+      "loading": "Đang tải fees chưa thu…",
+      "readError": "Không thể đọc fees chưa thu.",
+      "unavailable": "Fees chưa thu chưa khả dụng.",
+      "stale": "Thông tin fees chưa thu đã cũ. Làm mới để tiếp tục.",
+      "partial": "Một số số lượng fees chưa thu chưa khả dụng.",
+      "zero": "Không có fees để thu.",
+      "executionUnavailable": "Chưa khả dụng",
+      "routeDescription": "Fees chỉ được nhận vào Income sau khi chuyển đổi sang USDC và đến hub."
+    },
     "subtitle": "Quản lý chiến lược · Chọn một khối để xem số dư và quản lý vị thế.",
     "strategyBlocks": "Các khối chiến lược",
     "selectionHelp": "Chọn một vị thế trên khung vẽ hoặc trong danh sách này.",

@@ -1298,6 +1298,20 @@
     }
   },
   "manageV2": {
+    "collectFeesPanel": {
+      "title": "Collect fees",
+      "uncollectedFees": "Fees sin cobrar",
+      "collect": "Cobrar",
+      "back": "Volver",
+      "loading": "Cargando fees sin cobrar…",
+      "readError": "No se pudieron leer las fees sin cobrar.",
+      "unavailable": "Las fees sin cobrar no están disponibles.",
+      "stale": "Las fees sin cobrar están desactualizadas. Actualice para continuar.",
+      "partial": "Algunas cantidades de fees sin cobrar no están disponibles.",
+      "zero": "No hay fees sin cobrar.",
+      "executionUnavailable": "No disponible",
+      "routeDescription": "Las fees se reciben en Income solo después de convertirse a USDC y llegar al hub."
+    },
     "subtitle": "Gestionar estrategia · Seleccione un bloque para ver sus saldos y gestionar la posición.",
     "strategyBlocks": "Bloques de la estrategia",
     "selectionHelp": "Seleccione una posición en el canvas o en esta lista.",

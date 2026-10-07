@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 686 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 688 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1022,3 +1022,6 @@ S1 provides structural identity, exact amount conversion and declared-provenance
 | ID | Title | Type | Design | Impl | Linear | Reference |
 |---|---|---|---|---|---|---|
 | `PP-MGR-CMP-091` | ManageBlockHeader, protocol/subtitle and inline network identity | Component | [Header 8614:2916](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8614-2916) | Implemented header slice | [POO-2272](https://linear.app/yeildbay/issue/POO-2272) | `src/features/manager/fund/manage/ManageBlockHeader.tsx` @rules-v2 |
+
+| `PP-MGR-LIB-065` | manageCollectFees, exact canonical-origin uncollected fees projection; missing, unknown, stale, zero and partial stay distinct; no holdings/Income inference | Lib | n/a (code) | Implemented, presenter slice | [POO-2276](https://linear.app/yeildbay/issue/POO-2276) | `src/features/manager/fund/manage/manageCollectFees.ts` @rules-v1 |
+| `PP-MGR-CMP-092` | ManageCollectFeesPanel, injected selected-origin read-only token fees/header/Retry/Back; manual Collect unavailable | Component | Draft | Implemented, presenter only | [POO-2276](https://linear.app/yeildbay/issue/POO-2276) | [Collect](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8614-2916); `src/features/manager/fund/manage/ManageCollectFeesPanel.tsx` @rules-v1 |

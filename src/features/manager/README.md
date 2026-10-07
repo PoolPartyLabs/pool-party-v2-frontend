@@ -768,3 +768,9 @@ Hub Idle input/output/Income carry14px locks, derived Swap/Bridge12px locks. Col
 A position read activates on its first visit and remains bound to that core/chain/position key while the editor is hidden. Hiding/reopening does not clear its draft or review, cancel an in-flight preparation, re-read merely because of visibility, or emit false abandonment. Real read failures and material position/pool/intent changes still invalidate review; retained display metadata cannot enable an action. Core changes reset the editor origin.
 
 This slice covers read preparation only. Current Move confirmation remains unavailable, and the existing DTO supplies no pending transaction journal or review-expiry contract. All-node selection/Back/focus integration is a separate slice.
+
+### Selected-origin Collect fees presenter, POO-2276 v1
+
+ManageCollectFeesPanel and projectManageCollectFees render canonical LP position fees with trusted token logos and exact raw quantities. Zero, missing, partial, read error, explicit stale and unknown freshness are separate. Principal holdings and hub Income never substitute for fees. Back/Retry are injected; Collect remains unavailable for every state. The initial slice is an unmounted presenter with stories and all 11 locale keys. Mounting and draft/Back/focus ownership remain POO-2274; authoritative freshness and execution remain separate integrations.
+
+Validation: 40 original focused tests passed; two added unknown-freshness regressions failed before the fix, and the four pertinent unknown/stale cases passed afterward. Scoped TypeScript and Biome passed. Independent GPT-6.1-sol review covered the original five-file presenter, and coordinator reviewed the corrective three-file delta. No browser/build/full local suite was run.
