@@ -9,6 +9,17 @@ import { describe, expect, it } from "vitest";
 import { FEATURE_KEYS, FEATURES } from "./registry";
 
 describe("feature registry", () => {
+  // @rule R1 (POO-2281): the integration gate is disabled by default, not an account grant.
+  it("registers Solana spoke infrastructure behind a default-off flag", () => {
+    expect(FEATURES).toHaveProperty(
+      "solanaSpoke",
+      expect.objectContaining({
+        defaultEnabled: false,
+        stage: "next",
+        envVar: "NEXT_PUBLIC_FEATURE_SOLANA_SPOKE",
+      }),
+    );
+  });
   // @rule CP-UI02 asked for a dark launch; the hackathon fork (public repository, 2026-09) ships the
   // area ON so a fresh clone shows both products of the submission. The env var still wins.
   it("registers Cash+ as a dedicated area, ON for the hackathon demo fork", () => {

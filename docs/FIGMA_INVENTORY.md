@@ -589,3 +589,20 @@ Context only, drawn by the panel batch (POO-2171): Uniswap panel options [`8156:
 ### PP-ACT-SCR-001 - Activity / history
 - Type: Screen · Status: Done
 - Desktop: [`4780:131`](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A/Pool-Party-V2?node-id=4780-131)
+
+## Local Solana editor intake, 2026-10-07
+
+POO-2281 rules v2 uses the existing Solana drawings as presentation references for a standalone,
+non-executable preview. It does not copy historical financial example values or claim production
+protocol support. The current cash reference is 144 × 96 nominal with native SOL lateral to Idle.
+The coordinator read live design context for Configure and graph detail on October 7. Browser
+visual verification was not performed; responsive/focus behavior has code and focused test evidence.
+
+| Artifact | Reference | Current scope |
+|---|---|---|
+| PP-MGR-SCR-009 | [Build 8359:2725](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-2725) | Hidden local editor with four protocol blocks, not the EVM launch wizard |
+| PP-MGR-CMP-088 | [Graph detail 8370:2816](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8370-2816) | Principal/LP-fees paths, native SOL cash and viewport fit |
+| PP-MGR-CMP-089 | [Configure 8359:3089](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-3089) | Local pair/allocation editing; unavailable market data and execution |
+
+Existing PP-CORE-CMP-075 and PP-MGR-SCR-002 retain the normal V1/V2 family behavior and own guarded
+preview entry. Complete delivery/limits: [plan](solana-preview-preparation-plan-2026-10-07.md).

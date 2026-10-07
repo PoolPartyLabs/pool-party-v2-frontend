@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 672 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 681 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -136,6 +136,22 @@ They are recorded together so a reader can tell a disclosed repeat from an undet
 | `PP-MGR-HOK-012` | usePanelPool: the live read of one Uniswap v4 pool, on mount and 15 s after each read settles while a panel is open (no overlapping reads, a 30 s watchdog), the `applicable` gate Use and Apply need, idle with no pool, stale-answer guard, error with retry, no fixture fallback in real mode | Hook | n/a (code) | In Review | [POO-2185](https://linear.app/yeildbay/issue/POO-2185) | code-only; `src/features/manager/fund/build/panel/usePanelPool.ts` @rules-v1 |
 | `PP-MGR-HOK-013` | usePanelReserves: the Supply panel's reserve rows, a selector over the shell's catalog (passed in, no second load) joined to the draft tokens and the draft's own Aave reserve selection, an unusable reserve listed disabled with its reason | Hook | n/a (code) | In Review | [POO-2185](https://linear.app/yeildbay/issue/POO-2185) | code-only; `src/features/manager/fund/build/panel/usePanelReserves.ts` @rules-v1 |
 | `PP-MGR-MCK-005` | buildPanelFixtures: every hookless Uniswap v4 pool of the mock Pools step (three hand-written, nine generated) and two Aave v3 reserves in the catalog's wire shape, plus `panelPoolAtPrice` for tests and stories (PP-MOCK) | Mock | n/a (code) | In Review | [POO-2185](https://linear.app/yeildbay/issue/POO-2185) | code-only; `src/mocks/data/buildPanelFixtures.ts` @rules-v1 |
+
+## Local Solana visual editor, 2026-10-07 (POO-2281, rules v2)
+
+| ID | Title | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-CORE-LIB-122` | ExperimentAccess, retired unmounted grant DTO after the owner simplified the scope | Lib | n/a (code) | Removed, ID retained | [POO-2281](https://linear.app/yeildbay/issue/POO-2281), canceled POO-2282 | Historical `src/lib/experiments/access.ts`; [ADR 0008](adr/0008-server-authorized-experiment-access.md) @rules-v1 |
+| `PP-CORE-LIB-123` | FetchExperimentAccess, retired unmounted server grant read | Lib | n/a (code) | Removed, ID retained | [POO-2281](https://linear.app/yeildbay/issue/POO-2281), canceled POO-2282 | Historical `src/lib/experiments/fetchExperimentAccess.ts`; [ADR 0008](adr/0008-server-authorized-experiment-access.md) @rules-v1 |
+| `PP-CORE-LIB-124` | SolanaPreviewMode, pure three-press gesture independent of EVM family/storage | Lib | n/a (code) | In Review | [POO-2281](https://linear.app/yeildbay/issue/POO-2281) | `src/lib/experiments/solanaPreviewMode.ts` @rules-v2 |
+| `PP-CORE-LIB-125` | SolanaPreviewStore, in-memory route/account host with stale-intent guards and standard SSR snapshot | Lib | n/a (code) | In Review | [POO-2281](https://linear.app/yeildbay/issue/POO-2281) | `src/lib/experiments/solanaPreviewStore.ts` @rules-v2 |
+| `PP-MGR-LIB-059` | SolanaPreviewModel, isolated local block/form reducer with integer and aggregate allocation bounds | Lib | n/a (code) | In Review | [POO-2281](https://linear.app/yeildbay/issue/POO-2281) | `src/features/manager/fund/solana-preview/previewModel.ts` @rules-v2 |
+| `PP-MGR-SCR-009` | SolanaStrategyPreviewScreen, local four-protocol editor with guarded discard/removal and render recovery | Screen | Solana Build reference | In Review | [POO-2281](https://linear.app/yeildbay/issue/POO-2281) | [Build 8359:2725](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-2725); `src/features/manager/fund/solana-preview/` @rules-v2 |
+| `PP-MGR-CMP-088` | SolanaPreviewCanvas, fitted principal/fees drawing and official protocol marks | Component | Solana graph reference | In Review | [POO-2281](https://linear.app/yeildbay/issue/POO-2281) | [Graph 8370:2816](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8370-2816); `src/features/manager/fund/solana-preview/SolanaPreviewCanvas.tsx` @rules-v2 |
+| `PP-MGR-CMP-089` | SolanaPreviewBlockPanel, local configuration with unavailable market/execution fields | Component | Configure reference | In Review | [POO-2281](https://linear.app/yeildbay/issue/POO-2281) | [Configure 8359:3089](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-3089); `src/features/manager/fund/solana-preview/SolanaPreviewBlockPanel.tsx` @rules-v2 |
+| `PP-MGR-DOC-002` | LocalSolanaPreviewDeliveryPlan, phases, ownership, validation and separate real integration | Document | n/a (plan) | In Review | [POO-2281](https://linear.app/yeildbay/issue/POO-2281), [POO-2252](https://linear.app/yeildbay/issue/POO-2252) | [Delivery plan](solana-preview-preparation-plan-2026-10-07.md) @rules-v2 |
+
+Existing PP-CORE-CMP-075 (ContractFamilyToggle) and PP-MGR-SCR-002 (BuilderRouteSwitch) own the guarded entry. The family remains `v1 | v2`. The local editor is available only on the existing gated builder route, contains no market/signing/launch integration, and does not change investor surfaces. ADR 0009 supersedes the unmounted v1 preparation for this delivery; removed IDs are never reused.
 
 ## CORE · Design system, primitives, generic reusable components and modals
 
@@ -970,3 +986,9 @@ PP-MGR-SCR-004, PP-MGR-CMP-085/086 and PP-MGR-LIB-052 are reused for the seven M
 | PP-STR-LIB-039 | Wallet/core-scoped transaction journal | POO-2248 v1 | `src/features/funds/fundInvestJournal.ts` |
 
 PP-STR-MOD-001 retains ownership of the shared Invest host; `FundInvestModal.tsx` implements its typed V2 branch. Existing AmountField, StrategyMiniHeader and ProvisioningPanel remain reused. No new exploratory modal or V1 schema coercion.
+
+POO-2287 rules v1, 2026-10-07 updates PP-MGR-CMP-045/047/056 and the existing
+PP-CORE-STY-001 globals: native dark scheme, scoped Build scrollbar tracks/corner/buttons,
+system forced-colors rendering and panel width containment. No new IDs, API seams,
+events, copy or execution capability. Implementation is in review; native browser
+painting is an owner acceptance check. See the Build README.

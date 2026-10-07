@@ -81,7 +81,9 @@
     "label": "Builder version",
     "v1": "V1",
     "v2": "V2",
-    "tooltip": "Switch between the live builder (V1) and the fund contracts preview (V2)."
+    "tooltip": "Switch between the live builder (V1) and the fund contracts preview (V2).",
+    "v2Solana": "V2 Solana",
+    "solanaTooltip": "Local Solana strategy preview. Click V2 Solana to return to the EVM builder."
   },
   "toaster": {
     "ariaLabel": "Notifications"

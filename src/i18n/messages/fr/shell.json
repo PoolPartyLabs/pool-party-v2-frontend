@@ -81,7 +81,9 @@
     "label": "Version du constructeur",
     "v1": "V1",
     "v2": "V2",
-    "tooltip": "Basculez entre le constructeur actuel (V1) et l'aperçu des contrats de fonds (V2)."
+    "tooltip": "Basculez entre le constructeur actuel (V1) et l'aperçu des contrats de fonds (V2).",
+    "v2Solana": "V2 Solana",
+    "solanaTooltip": "Aperçu local de stratégie Solana. Cliquez sur V2 Solana pour revenir à l’éditeur EVM."
   },
   "toaster": {
     "ariaLabel": "Notifications"

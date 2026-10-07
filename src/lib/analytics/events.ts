@@ -185,6 +185,15 @@ export const ANALYTICS_EVENTS = [
    * screen; which screen it was is already `page_location`.
    */
   "contract_family_toggled",
+  // POO-2281 v2: local editor only. These never claim wallet execution or settlement.
+  "solana_preview_entered",
+  "solana_preview_exited",
+  "solana_preview_viewed",
+  "solana_preview_started",
+  "solana_preview_applied",
+  "solana_preview_abandoned",
+  "solana_preview_blocked",
+  "solana_preview_error",
 
   // ===========================================================================================
   // POO-1171 (LANE-0): declared ahead of their emitters, each with an owner.
@@ -981,6 +990,12 @@ export function joinAnalyticsMultiValue(values: readonly string[]): string {
 }
 
 export interface AnalyticsParams {
+  /** Bounded presentation protocol, never a pool address or Solana mint. POO-2281 v2. */
+  preview_protocol?: "kamino" | "jupiter" | "raydium" | "orca";
+  /** Local editor validation/blocked cause. Never raw error text. */
+  preview_reason?: "allocation_invalid" | "allocation_total" | "unsupported" | "unapplied_changes";
+  /** Whether leaving the local visual editor discards any local configuration. */
+  has_local_changes?: boolean;
   /** Review field identifier only; never form values or wallet details. */
   review_field?: string;
   /** Monetary value, denominated in {@link currency} (GA4 standard). Exact values are allowed. */

@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-MOD-003
  * @name ConfirmDialog
- * @implements-rules-version v1
+ * @implements-rules-version v1; v2 (POO-2281, optional local-editor focus restoration)
  *
  * A reusable confirm dialog (icon + title + body + stacked confirm/cancel). Destructive by default
  * (Log out, Delete account); `tone="info"` renders a neutral, non-destructive notice (e.g. the
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import {
   Dialog,
   DialogContent,
+  type DialogContentProps,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -39,6 +40,8 @@ export interface ConfirmDialogProps {
   onConfirm: () => void | Promise<void>;
   /** Visual tone: red destructive confirm (default) or a neutral informational notice. */
   tone?: "destructive" | "info";
+  /** Restore focus to a replacement target when the original control was removed or replaced. */
+  onCloseAutoFocus?: DialogContentProps["onCloseAutoFocus"];
 }
 
 /** A confirmation dialog (destructive by default). */
@@ -51,11 +54,12 @@ export function ConfirmDialog({
   cancelLabel,
   onConfirm,
   tone = "destructive",
+  onCloseAutoFocus,
 }: ConfirmDialogProps) {
   const isInfo = tone === "info";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm" showClose={false}>
+      <DialogContent className="max-w-sm" showClose={false} onCloseAutoFocus={onCloseAutoFocus}>
         <DialogHeader className="items-center text-center sm:text-center">
           <span
             className={
