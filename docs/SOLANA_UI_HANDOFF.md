@@ -17,9 +17,9 @@ stories first. Do not enable real launch because a catalog entry or builder exis
 | --- | --- | --- |
 | Flag | Hidden unless `useFeatureFlags().isEnabled("solanaSpoke")` | Default `false`; `NEXT_PUBLIC_FEATURE_SOLANA_SPOKE=on` opts in. Stage `next`. Never read this variable directly in a component. |
 | Authentication | Keep the existing EVM/SIWE identity connected; add external Phantom through Privy | No change to canonical EVM identity; Solana is an additional signer. |
-| SOL gate | Display the actual estimated requirement and balance | **Not a hardcoded 0.3 SOL threshold.** Code sums supplied step rent + fees; no authoritative production cost-estimation endpoint was found. |
+| SOL gate | Display actual requirement, balance and `costBreakdown` | **Not a hardcoded 0.3 SOL threshold.** The rulings PR computes selected Manager transaction costs with RPC rent/message-fee queries and explicit priority margin. Complete production transaction manifests remain required. |
 | Three LP choices | Show TSLAx/USDC, NVDAx/USDC, SOL/USDC; no automatic selection | Catalog fixtures exist. NVDAx program admission is blocked. Stock price source remains unresolved, so **both stock options show “Unavailable”**. SOL is not automatically executable either. |
-| Impact input | Empty initially, **no default and no placeholder**; Manager may enter a maximum | DEC-203 makes the limit optional. The current frontend silently defaults to 1 bps and restricts to 1–500: **superseded, not compliant**. Do not convert empty to 1. |
+| Impact input | Empty initially, **no default and no placeholder**; explicitly enter a bounded or no-maximum value for LP submission | DEC-203/204: integer 0–65,535; explicit 0 or >=10,000 means no Manager maximum. Empty is not silently normalized. Missing reference still blocks. |
 | Bootstrap | Disable real three-chain creation until supported | API has no native initializer endpoint; native Mandate/emitter derivation cycle and provisioning integration are open. |
 | Swap / LP opening | Show disabled/release-blocked execution, with a reason | `/signed-quote` returns 503; production `swap_to_ratio` fails closed. A route is not an executable API-signed quote. |
 | Manual receive | “Complete transfer” after attestation; preserve pending until independently credited | Both manager-paid unsigned receive builder and admin keeper relay trigger exist. No admin key in browser. |
@@ -126,13 +126,15 @@ Run before any creation transaction or creation of a launch journal:
    TODO; the API/program does not provide a production codec.** No invented
    JSON-prefix/text signing scheme. Native initialize requires the actual bound
    signer; an off-chain acceptance signature is not its substitute.
-6. Read finalized SOL balance and call `integration.check()` with measured
-   `SolanaStepCost[]`; display loading, requirement, balance, shortfall or error.
+6. Call `integration.check()` with a complete `costEstimator`; it computes costs
+   from selected steps and reads finalized balance. Display loading, requirement,
+   balance, shortfall/error and `costBreakdown` account/fee details.
    `launch()` and `resume()` repeat preflight independently.
 
 ### Actual threshold — not 0.3 SOL
 
-`requiredManagerLamports(costs)` sums every supplied `rentLamports + feeLamports`.
+`estimateSolanaPlanCosts` derives Manager transactions from the chosen plan;
+`requiredManagerLamports(costs)` sums computed `rentLamports + feeLamports`.
 Costs must be nonempty, have unique nonempty `stepId`s, nonnegative rent and
 strictly positive fee. Balance **equal to** the sum passes. `1 SOL = 1_000_000_000`
 lamports; 0.3 SOL is 300,000,000 lamports, but **neither the code nor DEC-190/195
@@ -142,11 +144,24 @@ the separate deployer's budget, not this Manager gate.
 
 Use “Estimated SOL required: …” from real costs, not “You must have 0.3 SOL”.
 Missing estimates disable real launch (`SOLANA_COST_ESTIMATE_REQUIRED`). The
-function sums supplied estimates; it does not prove coverage of every planned
-step. Backend/integration owner must cover Manager init/position/transaction
-costs, including additional signer/account rent. Exclude keeper-funded receive
+hook requires messages for every selected Manager step, queries missing accounts
+with `getMinimumBalanceForRentExemption`, deduplicates creations and queries each
+message with `getFeeForMessage`. `costEstimator.transactions(step)` must cover all
+init/adapter/ATA/CPI creations, position NFT/mint/ATA, tick arrays and extra signers.
+Use program/IDL-derived `SOLANA_ACCOUNT_SPACES`; external sizes require a source,
+including actual Token-2022 extensions, never a made-up SPL size. Maximum sampled
+priority micro-lamports/CU at the actual CU limit are rounded up with a deliberately
+supplied positive `priorityFeeMarginBps`. TODO(decision): production margin magnitude
+and retry budget are not ruled; no default is invented. Exclude keeper-funded receive
 and Wormhole report jobs. Manager/keeper pay their own SOL outside the Fund;
 rent refunds go to the original payer and never NAV (DEC-195).
+
+`costBreakdown` exposes each step's account address/label/bytes/rent, transaction
+count, message fee, priority reserve, margin and total fee. It remains available
+after insufficient-balance rejection; `preflight` is null until a successful fresh
+check. Optional `costEstimator.rpc` allows a reviewed RPC proxy/local harness.
+The builder manifest is still a release dependency: this frontend cannot infer
+missing CPI accounts from a made-up budget. No estimation signs/submits transactions.
 
 With a bound address, the hook finds **only that address**. Switching Phantom
 accounts must show “Reconnect the Solana wallet bound to this Fund”; never
@@ -211,11 +226,18 @@ and principal validation remain backend responsibilities.
   encoding/rounding is owned upstream, not calculated from a UI spot price.
 - No stock source has been selected by DEC-203. Do not assume Chainlink/Pyth or
   replace a missing reference with a placeholder. Missing reference → unavailable.
-- **Current FE mismatch:** `maxPriceImpactBps?: number` normalizes empty to 1;
-  `resolveMaxPriceImpactBps` allows only 1–500. It rejects 0/10,000. Current API
-  request accepts integer 0–65,535 but `/signed-quote` always 503. Do not call the
-  real normalizer with empty input or pretend these contracts implement DEC-203.
-  Gate submission pending owner changes; keep the semantic UI state independently.
+- **Rulings PR FE contract:** `resolveMaxPriceImpactBps` accepts explicit integer
+  0–65,535, rejects empty/negative/fractional/overflow and has no default. LP plans
+  require explicit input; Kamino-only plans leave it absent. Explicit “No maximum”
+  may submit 0 after Manager action, never auto-convert an empty field. Current API
+  `/signed-quote` remains a production gate; frontend semantics do not prove backend
+  executable support. The stricter output minimum is enforced upstream, not UI math.
+- `useSolanaLpChoices(references)` adds `choice.availability` with available or
+  unavailable/reason. With no reference, all choices remain visibly unavailable.
+  `backend.referencePrice(poolId)` provides authenticated on-chain reference metadata
+  (`status`, `expiresAt`, `marketOpen` or unavailable `reason`). Preflight checks it
+  before creation and the driver refreshes before swap/LP build; stale/closed stock
+  market/missing references block, including when Manager chooses no maximum.
 - API `slippageBps` is a separate route-builder parameter (0–9,999), **not** this
   field. Do not wire one to the other. Browser never calls Jupiter or holds its key.
 
@@ -358,7 +380,7 @@ interface SolanaLaunchSelection {
   sharePct: number;
   kamino: boolean;
   raydiumPool?: string;
-  maxPriceImpactBps?: number; // current normalizer: 1–500, defaults 1; policy gap
+  maxPriceImpactBps?: number; // explicit u16 for LP; no default, 0/>=10000 = no maximum
 }
 
 type ManagerSolanaWallet = ReturnType<
@@ -410,7 +432,8 @@ interface SolanaLpChoice {
 
 ```ts
 import type { BindingCodec, ManagerSolanaBinding } from "@/lib/solana/binding";
-import type { SolanaStepCost } from "@/lib/solana/preflight";
+import type { SolanaPlanCostEstimator } from "@/lib/solana/costs";
+import type { SolanaOracleReference } from "@/lib/solana/oracle";
 import type { SolanaLifetime } from "@/lib/solana/transaction";
 import type { SolanaApiSignedQuote, SolanaSwapQuoteRequest } from "@/lib/solana/swap";
 import type { LaunchStep, SolanaLaunchStep } from "@/features/manager/fund/launch/plan";
@@ -421,6 +444,7 @@ import type { SolanaLaunchSelection } from "@/features/manager/fund/launch/solan
 import { useSolanaLaunchIntegration } from "@/features/manager/fund/launch/useSolanaLaunchIntegration";
 
 interface SolanaLaunchBackend {
+  referencePrice?(poolId: string): Promise<SolanaOracleReference>;
   build(step: SolanaLaunchStep, journal: LaunchJournal,
     lifetime?: SolanaLifetime, quote?: SolanaApiSignedQuote): Promise<Uint8Array | unknown>;
   quoteSwap?(request: SolanaSwapQuoteRequest, journal: LaunchJournal): Promise<unknown>;
@@ -438,7 +462,7 @@ interface SolanaLaunchIntegrationOptions {
   manager: Address;
   binding: ManagerSolanaBinding;
   codec: BindingCodec;
-  costs: readonly SolanaStepCost[];
+  costEstimator: SolanaPlanCostEstimator;
   evmCode: (manager: Address) => Promise<string | undefined>;
   evmSteps: LaunchStep[];
   selection: SolanaLaunchSelection;
@@ -453,6 +477,7 @@ interface SolanaLaunchIntegrationProps {
 }
 // Integration return:
 // enabled, wallet, preflight: {requiredLamports: bigint; balanceLamports: bigint}|null,
+// costBreakdown: readonly SolanaComputedStepCost[]|null,
 // journal: LaunchJournal|null, busy: boolean, error: string|null,
 // check(): Promise<{requiredLamports: bigint; balanceLamports: bigint}>,
 // launch(): Promise<void>, resume(): Promise<void>, pause(): void,
@@ -1005,8 +1030,8 @@ Unexpected chain exceptions become 503 `v2 chain service unavailable`.
 | `SOLANA_INSUFFICIENT_SOL` | Show estimated requirement/balance/shortfall; fund **Manager** wallet then recheck. | Fund vault SOL, invented flat threshold, optimistic pass. |
 | `SOLANA_COST_ESTIMATE_REQUIRED` | Missing/invalid estimates; block and show setup issue. | Substitute 0.3 SOL or local rehearsal cost as production budget. |
 | `INVALID_SOLANA_PLAN`, `INVALID_ALLOCATION`, `SOLANA_LP_POOL_NOT_ADMITTED` | Return to reviewed build; explain allocation/allowed pool. | Accept arbitrary pool or duplicate capital consumption. |
-| Empty impact / no maximum | Empty no-placeholder optional field; explicit “No maximum” helper. Submission blocked until contracts align. | Current silent 1-bps default or “reference not needed”. |
-| `SOLANA_PRICE_IMPACT_INVALID` | Current bounds mismatch error; do not claim 1–500 is founder policy. | Clamp 0/10,000 into 1/500 or confuse with slippage. |
+| Empty impact / no maximum | Empty no-placeholder input; explicit “No maximum” action submits 0. LP requires an explicit choice; Kamino does not. | Silent default or “reference not needed”. |
+| `SOLANA_PRICE_IMPACT_INVALID` | Require integer 0–65,535 and explain 0/>=10,000 no-maximum semantics. | Clamp values or confuse with slippage. |
 | Missing/stale stock oracle; closed market; invalid multiplier/freeze/hook | Stock choice + swap **Unavailable**, disabled, authoritative reason. | Mock price, arbitrary Pyth/Chainlink fallback, stale reference reuse. |
 | `/route` 429 or generic API throttling | Retry delay/correlation; disable retry while queued; no auto quote storm. | Jupiter browser call, server key exposure, optimistic signed quote. |
 | 503 signed policy/bootstrap/NVDA blocked | Disabled capability with specific engineering reason. | Retry-loop as though release code can recover or submit diagnostic route. |
@@ -1102,7 +1127,7 @@ Minimum story set:
 | Wallet connect / multiple keys / wrong bound key | No automatic first-key selection; disclose expected and actual key. |
 | SOL unknown / insufficient / exact threshold / funded | `null` loading; 12,019,999 fails; 12,020,000 passes; 50,000,000 passes the visual estimate. No 0.3 gate. |
 | Three pools, no stock source | Both stocks Unavailable; third SOL row visible but execution separately blocked. No selected LP. |
-| Empty / explicit 100 bps / explicit no maximum | No placeholder/default; 100 displays 1%; 0/10,000 mean no max by policy, not supported real FE submit yet. |
+| Empty / explicit 100 bps / explicit no maximum | No placeholder/default; 100 displays 1%; explicit 0/10,000 mean no max, but never bypass missing oracle/reference gates. |
 | CCTP pending / attested / submitted / credited | Null bytes pending; fixture hex attested; signature link only when fixture tx exists; credited amount must be supplied separately. |
 | Complete transfer rejected / retry / relay busy | Button-specific busy/error, no optimistic checkpoint completion. |
 | Jupiter 429 / no retry header / queue full | Structured delay when present, manual retry, no browser Jupiter request. |
@@ -1170,12 +1195,13 @@ and correlation IDs in details, with translated primary actions/descriptions.
   Manager-funded SOL/rent. Accessible copy/address buttons; correct chain explorers.
 - All choices rendered from catalog; unavailable choices cannot submit; reasons
   use text, not color alone; no placeholder/reference-price/quote fabrication.
-- No maximum prefill. Optional-limit semantics separate from current blocked
-  normalizer/API/program contract. No slippage/impact relabeling.
+- No maximum prefill. Explicit 0/>=10,000 no-maximum choice, independent of blocked
+  production API/program capabilities. No slippage/impact relabeling.
 - Timeline distinguishes keeper-funded waiting from wallet signing; SVM signatures
   get Solana links. Use `role="alert"` for actionable errors, `role="status"` for
   state changes, countdown `role="timer"` with `aria-live="off"`.
-- Check SOL with supplied authoritative costs; exact threshold passes. No launch
+- Check SOL with selected-step transaction manifests and RPC rent/fee queries;
+  expose breakdown; exact threshold passes. No launch
   from mount, no timer invokes signing resume, no second active launch tab.
 - Pending CCTP remains claim; manual receive never completes optimistically;
   unknown transactions never rebuild; existing Fund remains navigable on failure.
@@ -1186,14 +1212,14 @@ and correlation IDs in details, with translated primary actions/descriptions.
 ## 12. Verification boundary / questions already answered by evidence
 
 **Verified:** branch revisions, actual hook/prop/DTO names, exact catalog metadata,
-dynamic SOL threshold, current impact default/bounds and DEC-203/204 conflict,
+selected-plan RPC SOL estimator and explicit DEC-203/204 impact/availability semantics,
 dependency graph, journal/pause/resume limitations, controller methods/auth/effective
 URI paths, response wrapping/tagging, throttle defaults/Jupiter backoff, manual
 receive/relay paths, production blockers and local rehearsal scope.
 
 **Not verified and must not be implied:** production acceptance codec, complete
 native creation/discovery/init/Hub-CCTP adapter, production cost estimates or
-0.3-SOL policy, chosen stock oracle/provider/calendar, compliant optional-limit
+0.3-SOL policy, chosen stock oracle/provider/calendar, production optional-limit
 execution, live admitted three pools, credit-amount/public SVM balance adapter,
 extra-signer/lifetime orchestration, safe read-only Solana polling/hydration,
 deployed program/factories/authority revocation, actual key-specific throttle
