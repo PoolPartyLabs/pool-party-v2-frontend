@@ -14,6 +14,9 @@ export function normalizeSolanaLaunchSelection(
   selection: SolanaLaunchSelection,
 ): SolanaLaunchSelection {
   if (
+    typeof selection.kamino !== "boolean" ||
+    (selection.raydiumPool !== undefined &&
+      (typeof selection.raydiumPool !== "string" || selection.raydiumPool.length === 0)) ||
     Object.keys(selection).some(
       (key) => !["sharePct", "kamino", "raydiumPool", "maxPriceImpactBps"].includes(key),
     )

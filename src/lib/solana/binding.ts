@@ -32,7 +32,8 @@ export const MANAGER_SOLANA_BINDING_TYPES = {
 } as const;
 
 function uint256(value: string): bigint {
-  if (!/^(0|[1-9]\d*)$/.test(value)) throw new Error("SOLANA_BINDING_INVALID");
+  if (typeof value !== "string" || value.length > 78 || !/^(0|[1-9]\d*)$/.test(value))
+    throw new Error("SOLANA_BINDING_INVALID");
   const parsed = BigInt(value);
   if (parsed >= BigInt(2) ** BigInt(256)) throw new Error("SOLANA_BINDING_INVALID");
   return parsed;

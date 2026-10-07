@@ -20,6 +20,11 @@ it("exposes three distinct verified pools with their token programs and fees", (
   const { choices } = renderHook(() => useSolanaLpChoices()).result.current;
   expect(choices).toBe(SOLANA_LP_CHOICES);
   expect(choices.map((choice) => choice.label)).toEqual(["TSLAx/USDC", "NVDAx/USDC", "SOL/USDC"]);
+  expect(choices.map((choice) => choice.poolId)).toEqual([
+    "8aDaBQkTrS6HVMjyc6EZebgdiaXhLYGriDWKWWp1NpFF",
+    "49iMatQtoyabsYAQc8GafVq6aeBFVDxSRH44oiatyyw6",
+    "3ucNos4NbumPLZNWztqGHNFFgkHeRMBQAVemeeomsUxv",
+  ]);
   expect(new Set(choices.map((choice) => choice.poolId)).size).toBe(3);
   expect(choices.map((choice) => choice.feeTierBps)).toEqual([10, 10, 4]);
   expect(choices.map((choice) => choice.tokens[0].tokenProgram)).toEqual([

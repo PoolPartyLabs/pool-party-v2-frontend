@@ -76,3 +76,16 @@ it("refuses extra quote/reference fields on the Manager selection", () => {
     >[1]),
   ).toThrow("INVALID_SOLANA_PLAN");
 });
+
+it.each([
+  { kamino: "false" },
+  { kamino: 1 },
+  { raydiumPool: "" },
+  { raydiumPool: null },
+])("rejects malformed selection fields %j", (change) => {
+  expect(() =>
+    withSolanaLaunchSteps(evm, { sharePct: 50, kamino: true, ...change } as Parameters<
+      typeof withSolanaLaunchSteps
+    >[1]),
+  ).toThrow("INVALID_SOLANA_PLAN");
+});

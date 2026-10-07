@@ -120,11 +120,21 @@ it.each([
   "1.5",
   "01",
   "",
+  "9".repeat(79),
   (BigInt(2) ** BigInt(256)).toString(),
 ])("rejects invalid nonce %s", (nonce) => {
   expect(() => managerSolanaBindingTypedData(solanaAddress, { ...authorization, nonce })).toThrow(
     "SOLANA_BINDING_INVALID",
   );
+});
+
+it("rejects numeric JSON integers instead of coercing them", () => {
+  expect(() =>
+    managerSolanaBindingTypedData(solanaAddress, {
+      ...authorization,
+      nonce: 9 as unknown as string,
+    }),
+  ).toThrow("SOLANA_BINDING_INVALID");
 });
 
 it("preserves full-width unsigned integers without JSON bigint storage", () => {
