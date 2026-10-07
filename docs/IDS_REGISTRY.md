@@ -1000,3 +1000,12 @@ painting is an owner acceptance check. See the Build README.
 | `PP-MGR-CMP-090` | ReviewTransactionFeesCard, separate read-only Entry/Exit rows with unavailable semantics and keyboard help | Component | Transaction fees card | In Review | [POO-2289](https://linear.app/yeildbay/issue/POO-2289) | [Figma 8670:2855](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8670-2855); `src/features/manager/fund/review/ReviewTransactionFeesCard.tsx` @rules-v1 |
 
 The mounted ReviewPhase retains its current PP-MGR-CMP-077 ID (the issue's PP-MGR-CMP-072 pointer is historical). PP-MGR-CMP-074 ReviewFeesCard keeps its existing management/performance controls. This information card adds no fee, draft field, signer, launch condition or financial event. English copy and all 11 configured locales are included; semantic wiring remains unavailable.
+
+## Solana local catalog (POO-2291, rules v1)
+
+| ID | Title | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-MGR-LIB-063` | Solana local identity, amount and read-state schemas | Lib | n/a (code) | Implemented, S1 | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaSchemas.ts` |
+| `PP-MGR-LIB-064` | Solana local protocol catalog with explicit unavailable execution | Lib | n/a (code) | Implemented, S1 | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaCatalog.ts` |
+
+S1 provides structural identity, exact amount conversion and declared-provenance contracts. The catalog consumer retains the same four local choices. Holding remains contract-only. Financial catalog fields and all execution capabilities are unavailable; these types do not attest an external read, owner, allowlist or freshness. Remaining POO-2291 slices stay open.

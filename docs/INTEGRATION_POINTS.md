@@ -300,3 +300,10 @@ The current [plan v2](manager-canvas-panels-plan-2026-10-07.md) preserves the pr
 POO-2290 requires an authorized account/obligation risk source and separate After simulation: a Supply row cannot prove zero debt. POO-2289 shows unavailable Entry/Exit fees without substituting manager fees, flow charge or instant withdrawal fee. POO-2291 extends the existing local Solana editor; canceled POO-2282 grants do not block that scope. Solana mint/program identity, native SOL versus WSOL, real custody/market/discovery/execution remain explicit POO-2239/2240/2261/2262 boundaries.
 
 Charts screenshots are Market reference, not AUM/pool execution or LP valuation. Exact feed/history/license/engine and protected annotations remain POO-2279 readiness. Jev Gateway is isolated optional development tooling; it adds no frontend/API/RPC integration, and measured pilot results do not justify global enablement.
+
+
+## Solana local catalog contracts, October 7, 2026 (POO-2291 S1)
+
+PP-MGR-LIB-063/064 are pure local schemas/descriptors. The two marked seams in solanaCatalog bind discovery/read models (POO-2239/2240) and Jupiter quote/transaction validity/executor (POO-2261/2262). No network call, program deployment, wallet read or signer is added. Canonical USDC/WSOL mint metadata is cited from official Jupiter documentation in the schema header.
+
+The local catalog rejects both fixture and observed values in financial/capability fields. Generic read models may represent declared provenance, but cannot attest external ownership or freshness. Confirmed zero is explicit; missing remains unavailable. Holding stays contract-only; all six POO-2291 slices are not complete.
