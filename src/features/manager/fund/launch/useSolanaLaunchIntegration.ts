@@ -1,9 +1,11 @@
 "use client";
 
+import { useWallets } from "@privy-io/react-auth";
 import { useRef, useState } from "react";
 import type { Address } from "viem";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import type { BindingCodec, ManagerSolanaBinding } from "@/lib/solana/binding";
+import { bootstrapChunks, type SolanaBootstrapManifest } from "@/lib/solana/bootstrap";
 import {
   estimateSolanaPlanCosts,
   type SolanaComputedStepCost,
@@ -44,6 +46,7 @@ export interface SolanaLaunchIntegrationOptions {
   draftId: string;
   manager: Address;
   binding: ManagerSolanaBinding;
+  bootstrap: SolanaBootstrapManifest;
   codec: BindingCodec;
   costEstimator: SolanaPlanCostEstimator;
   evmCode: (manager: Address) => Promise<string | undefined>;
@@ -60,6 +63,9 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
   const { isEnabled } = useFeatureFlags();
   const enabled = isEnabled("solanaSpoke");
   const wallet = useManagerSolanaWallet(options.binding.solanaAddress);
+  const { wallets } = useWallets();
+  const evmAddressRef = useRef(wallets[0]?.address);
+  evmAddressRef.current = wallets[0]?.address;
   const addressRef = useRef(wallet.address);
   addressRef.current = wallet.address;
   const active = useRef(false);
@@ -78,9 +84,21 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
     setPreflight(null);
     setCostBreakdown(null);
     if (!enabled) throw new Error("SOLANA_DISABLED");
+    if (typeof options.backend.bootstrapState !== "function")
+      throw new Error("SOLANA_BOOTSTRAP_READER_REQUIRED");
+    if (typeof options.backend.validateTransactionIntent !== "function")
+      throw new Error("SOLANA_TRANSACTION_INTENT_VALIDATOR_REQUIRED");
+    if (!options.binding.bootstrapAuthorization || !options.binding.bootstrapSignature)
+      throw new Error("SOLANA_BOOTSTRAP_REQUIRED");
+    bootstrapChunks(options.bootstrap);
+    if (options.bootstrap.policyHash !== options.binding.bootstrapAuthorization.policyHash)
+      throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
+    const bootstrapSnapshot = JSON.stringify(options.bootstrap);
     const selectionSnapshot = JSON.stringify(normalizeSolanaLaunchSelection(options.selection));
     const bindingSnapshot = JSON.stringify(options.binding);
-    const steps = withSolanaLaunchSteps(options.evmSteps, options.selection);
+    const frozenSnapshot = JSON.stringify(options.frozen);
+    const steps = withSolanaLaunchSteps(options.evmSteps, options.selection, options.bootstrap);
+    const stepsSnapshot = JSON.stringify(steps);
     if (options.selection.raydiumPool) {
       const choice = requireSolanaLpChoice(options.selection.raydiumPool);
       requireSolanaOracleReference(
@@ -111,6 +129,16 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
       throw new Error("SOLANA_BINDING_MISMATCH");
     if (JSON.stringify(normalizeSolanaLaunchSelection(options.selection)) !== selectionSnapshot)
       throw new Error("SOLANA_SELECTION_MISMATCH");
+    if (JSON.stringify(options.bootstrap) !== bootstrapSnapshot)
+      throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
+    if (JSON.stringify(options.frozen) !== frozenSnapshot)
+      throw new Error("SOLANA_FROZEN_MISMATCH");
+    if (
+      JSON.stringify(
+        withSolanaLaunchSteps(options.evmSteps, options.selection, options.bootstrap),
+      ) !== stepsSnapshot
+    )
+      throw new Error("SOLANA_PLAN_MISMATCH");
     setPreflight(checked);
     return checked;
   };
@@ -127,45 +155,82 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
       await withLaunchLock(journalKey(options.draftId, options.manager), async () => {
         let current = loadJournal(storage, options.draftId, options.manager);
         const selection = normalizeSolanaLaunchSelection(options.selection);
+        const steps = withSolanaLaunchSteps(options.evmSteps, selection, options.bootstrap);
+        const frozen = {
+          ...options.frozen,
+          solanaBinding: options.binding,
+          solanaSelection: selection,
+          solanaBootstrap: options.bootstrap,
+        };
         if (!current) {
-          const steps = withSolanaLaunchSteps(options.evmSteps, selection);
-          current = createJournal(
-            options.draftId,
-            options.manager,
-            {
-              ...options.frozen,
-              solanaBinding: options.binding,
-              solanaSelection: selection,
-            },
-            steps,
-          );
+          current = createJournal(options.draftId, options.manager, frozen, steps);
           saveJournal(storage, current);
         }
         const snapshot = current.frozen as {
           solanaBinding?: ManagerSolanaBinding;
           solanaSelection?: SolanaLaunchSelection;
+          solanaBootstrap?: SolanaBootstrapManifest;
         };
         if (JSON.stringify(snapshot.solanaBinding) !== JSON.stringify(options.binding))
           throw new Error("SOLANA_BINDING_MISMATCH");
         if (JSON.stringify(snapshot.solanaSelection) !== JSON.stringify(selection))
           throw new Error("SOLANA_SELECTION_MISMATCH");
+        if (JSON.stringify(snapshot.solanaBootstrap) !== JSON.stringify(options.bootstrap))
+          throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
+        const frozenSnapshot = JSON.stringify(frozen);
+        const stepsSnapshot = JSON.stringify(steps);
+        const verifyFrozen = (saved: LaunchJournal) => {
+          if (
+            JSON.stringify(saved.frozen) !== frozenSnapshot ||
+            JSON.stringify({
+              ...options.frozen,
+              solanaBinding: options.binding,
+              solanaSelection: normalizeSolanaLaunchSelection(options.selection),
+              solanaBootstrap: options.bootstrap,
+            }) !== frozenSnapshot
+          )
+            throw new Error("SOLANA_FROZEN_MISMATCH");
+          if (
+            JSON.stringify(saved.steps) !== stepsSnapshot ||
+            JSON.stringify(
+              withSolanaLaunchSteps(options.evmSteps, options.selection, options.bootstrap),
+            ) !== stepsSnapshot
+          )
+            throw new Error("SOLANA_PLAN_MISMATCH");
+        };
+        verifyFrozen(current);
+        const signingJournal = current;
+        const verifySigner = () => {
+          if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
+          verifyFrozen(signingJournal);
+          if (
+            addressRef.current !== options.binding.solanaAddress ||
+            evmAddressRef.current?.toLowerCase() !== signingJournal.manager
+          )
+            throw new Error("SOLANA_BINDING_MISMATCH");
+        };
         const driver = createChainLaunchDriver({
-          evm: options.evmDriver,
+          evm: {
+            ...options.evmDriver,
+            build: async (step, saved) => {
+              verifyFrozen(saved);
+              return options.evmDriver.build(step, saved);
+            },
+            send: async (step, transaction, submitted) => {
+              verifySigner();
+              return options.evmDriver.send(step, transaction, submitted);
+            },
+          },
           solanaAddress: options.binding.solanaAddress,
           rpc: createManagerSolanaRpc(),
           signTransaction: async (bytes) => {
-            if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
-            if (addressRef.current !== options.binding.solanaAddress)
-              throw new Error("SOLANA_BINDING_MISMATCH");
+            verifySigner();
             const signed = await wallet.signTransaction(bytes);
             if (controller.signal.aborted) throw new Error("LAUNCH_CANCELLED");
             return signed;
           },
           backend: options.backend,
-          verifyBinding: async () => {
-            if (addressRef.current !== options.binding.solanaAddress)
-              throw new Error("SOLANA_BINDING_MISMATCH");
-          },
+          verifyBinding: async (saved) => verifyFrozen(saved),
         });
         await runLaunch(current, storage, driver, setJournal, controller.signal);
         setJournal(structuredClone(current));

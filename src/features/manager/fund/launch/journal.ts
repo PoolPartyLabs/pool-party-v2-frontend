@@ -107,6 +107,8 @@ export function loadJournal(
           "swap",
           "open",
           "bind-solana",
+          "stage-solana-config",
+          "seal-solana-config",
           "init-solana",
           "cctp-fast",
           "solana-arrival",
@@ -262,6 +264,20 @@ export async function runLaunch(
         checkpoint.receiptStatus = receipt.status;
         checkpoint.data = { ...checkpoint.data, ...receipt.data };
         if (receipt.status === "unknown") {
+          if (
+            ["stage-solana-config", "seal-solana-config", "init-solana"].includes(step.kind) &&
+            (await driver.reconcile(step, checkpoint, journal))
+          ) {
+            await driver.complete(step, checkpoint, journal);
+            checkpoint.status = "confirmed";
+            delete checkpoint.error;
+            delete checkpoint.waitReason;
+            delete checkpoint.retryAt;
+            delete checkpoint.retryAfterSeconds;
+            delete checkpoint.retryCount;
+            persist();
+            continue;
+          }
           checkpoint.status = "waiting";
           delete checkpoint.retryAt;
           persist();

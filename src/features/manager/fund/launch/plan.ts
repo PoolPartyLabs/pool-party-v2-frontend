@@ -4,6 +4,8 @@
  * @implements-rules-version v2 (POO-2181); POO-2204 rules v1
  * Owned structural adapter for the canvas BuildPlan v1.
  */
+
+import type { SolanaBootstrapChunk } from "@/lib/solana/bootstrap";
 import { isConfigFor } from "../build/plan/blockConfig";
 
 export interface CanvasPlan {
@@ -69,8 +71,11 @@ export interface LaunchStep {
 
 export interface SolanaLaunchStep extends Omit<LaunchStep, "kind" | "chain"> {
   config?: LaunchStep["config"] & { maxPriceImpactBps?: number };
+  bootstrapChunk?: SolanaBootstrapChunk;
   kind:
     | "bind-solana"
+    | "stage-solana-config"
+    | "seal-solana-config"
     | "init-solana"
     | "cctp-fast"
     | "solana-arrival"
