@@ -98,6 +98,17 @@ export function semanticConnectionId(
 ): string {
   return `connection:${part(sourcePortId)}:${part(targetPortId)}:${flowClass}:${originId === null ? "~" : part(originId)}`;
 }
+export function semanticJunctionId(
+  role: string,
+  network: string,
+  flowClass: FlowClass,
+  originId: string | null,
+): string {
+  return `junction:${part(role)}:${part(network)}:${flowClass}:${originId === null ? "~" : part(originId)}`;
+}
+export function semanticSegmentId(connectionId: string, role: string): string {
+  return `segment:${part(connectionId)}:${part(role)}`;
+}
 export function resolvePortPoint(node: SemanticNode, port: FinancialPort): Point {
   const { x, y, w, h } = node.rect;
   const horizontal = port.side === "top" || port.side === "bottom";
@@ -158,10 +169,19 @@ export function validateSemanticGraph(graph: SemanticGraph): SemanticIssue[] {
   }
   const endpoint = (ref: SemanticEndpoint) =>
     ref.kind === "port" ? ports.get(ref.id) : junctions.get(ref.id);
+  const endpointPoint = (ref: SemanticEndpoint): Point | undefined => {
+    if (ref.kind === "junction") return junctions.get(ref.id)?.point;
+    const port = ports.get(ref.id);
+    const node = port && nodes.get(port.nodeId);
+    return port && node ? resolvePortPoint(node, port) : undefined;
+  };
   for (const segment of graph.segments) {
     if (!connections.has(segment.connectionId)) add("dangling_segment", segment.id);
     for (const ref of [segment.from, segment.to])
       if (!endpoint(ref)) add("dangling_endpoint", segment.id);
+    const from = endpointPoint(segment.from);
+    const to = endpointPoint(segment.to);
+    if (from && to && from.x !== to.x && from.y !== to.y) add("route_break", segment.id);
   }
   const claimed = new Set<string>();
   for (const connection of graph.connections) {
@@ -182,7 +202,7 @@ export function validateSemanticGraph(graph: SemanticGraph): SemanticIssue[] {
       add("inconsistent_port", connection.id);
     let previous: SemanticEndpoint = { kind: "port", id: connection.sourcePortId };
     if (!connection.segmentIds.length) add("route_break", connection.id);
-    for (const id of connection.segmentIds) {
+    for (const [index, id] of connection.segmentIds.entries()) {
       const segment = segments.get(id);
       if (!segment) {
         add("dangling_segment", connection.id);
@@ -191,6 +211,9 @@ export function validateSemanticGraph(graph: SemanticGraph): SemanticIssue[] {
       if (claimed.has(id) || segment.connectionId !== connection.id) add("dangling_segment", id);
       claimed.add(id);
       if (endpointKey(previous) !== endpointKey(segment.from)) add("route_break", connection.id);
+      if (index > 0 && segment.from.kind === "port") add("route_break", connection.id);
+      if (index < connection.segmentIds.length - 1 && segment.to.kind === "port")
+        add("route_break", connection.id);
       previous = segment.to;
       for (const ref of [segment.from, segment.to]) {
         const value = endpoint(ref);
@@ -223,6 +246,10 @@ export function validateSemanticGraph(graph: SemanticGraph): SemanticIssue[] {
       incoming.some(
         (entry) =>
           !outgoing.some((exit) => exit.class === entry.class && exit.originId === entry.originId),
+      ) ||
+      outgoing.some(
+        (exit) =>
+          !incoming.some((entry) => entry.class === exit.class && entry.originId === exit.originId),
       )
     )
       add("type_conflict", node.id);

@@ -13,16 +13,18 @@ import {
   resolveSemanticGraph,
   type SemanticGraph,
   semanticConnectionId,
+  semanticJunctionId,
   semanticNodeId,
+  semanticSegmentId,
   validateSemanticGraph,
 } from "./semanticGraph";
 
-function localGraph(): SemanticGraph {
-  const source = semanticNodeId("block", "position:a");
-  const target = semanticNodeId("spine", "idleOutput");
+function localGraph(originId = "position:a", suffix = ""): SemanticGraph {
+  const source = semanticNodeId("block", originId);
+  const target = semanticNodeId("spine", `idleOutput${suffix}`);
   const sourcePortId = financialPortId(source, "principal-out");
   const targetPortId = financialPortId(target, "principal-in");
-  const id = semanticConnectionId(sourcePortId, targetPortId, "principal", "position:a");
+  const id = semanticConnectionId(sourcePortId, targetPortId, "principal", originId);
   return {
     nodes: [
       { id: source, kind: "position", network: "arbitrum", rect: { x: 10, y: 20, w: 120, h: 80 } },
@@ -40,7 +42,7 @@ function localGraph(): SemanticGraph {
         direction: "out",
         class: "principal",
         network: "arbitrum",
-        originId: "position:a",
+        originId,
         side: "bottom",
         offset: 0.5,
       },
@@ -50,7 +52,7 @@ function localGraph(): SemanticGraph {
         direction: "in",
         class: "principal",
         network: "arbitrum",
-        originId: "position:a",
+        originId,
         side: "top",
         offset: 0.5,
       },
@@ -68,7 +70,7 @@ function localGraph(): SemanticGraph {
       {
         id,
         class: "principal",
-        originId: "position:a",
+        originId,
         sourcePortId,
         targetPortId,
         segmentIds: [`${id}:segment:direct`],
@@ -76,9 +78,138 @@ function localGraph(): SemanticGraph {
     ],
   };
 }
+
+/** Cross-network transfer stays explicit even when both classes share one visual Bridge. */
+function bridgeGraph(network = "solana"): SemanticGraph {
+  const nodeId = semanticNodeId("bridge", network, "outbound");
+  const classes = ["principal", "income"] as const;
+  const ports = classes.flatMap((flowClass, index) => [
+    {
+      id: financialPortId(nodeId, `${flowClass}-source`),
+      nodeId,
+      direction: "out" as const,
+      class: flowClass,
+      network,
+      originId: "position:a",
+      side: "right" as const,
+      offset: 0.25 + index * 0.5,
+    },
+    {
+      id: financialPortId(nodeId, `${flowClass}-target`),
+      nodeId,
+      direction: "in" as const,
+      class: flowClass,
+      network: "arbitrum",
+      originId: "position:a",
+      side: "left" as const,
+      offset: 0.25 + index * 0.5,
+    },
+  ]);
+  const connections = classes.map((flowClass) => {
+    const sourcePortId = financialPortId(nodeId, `${flowClass}-source`);
+    const targetPortId = financialPortId(nodeId, `${flowClass}-target`);
+    const id = semanticConnectionId(sourcePortId, targetPortId, flowClass, "position:a");
+    return {
+      id,
+      class: flowClass,
+      originId: "position:a",
+      sourcePortId,
+      targetPortId,
+      segmentIds: [`${id}:transfer`],
+    };
+  });
+  return {
+    nodes: [
+      {
+        id: nodeId,
+        kind: "bridge",
+        network,
+        bridge: { fromNetwork: network, toNetwork: "arbitrum", direction: "outbound" },
+        rect: { x: 10, y: 20, w: 176, h: 26 },
+      },
+    ],
+    ports,
+    junctions: [],
+    connections,
+    segments: connections.map((connection) => ({
+      id: `${connection.id}:transfer`,
+      connectionId: connection.id,
+      from: { kind: "port", id: connection.sourcePortId },
+      to: { kind: "port", id: connection.targetPortId },
+    })),
+  };
+}
+function combineGraphs(first: SemanticGraph, second: SemanticGraph): SemanticGraph {
+  return {
+    nodes: [...first.nodes, ...second.nodes],
+    ports: [...first.ports, ...second.ports],
+    junctions: [...first.junctions, ...second.junctions],
+    segments: [...first.segments, ...second.segments],
+    connections: [...first.connections, ...second.connections],
+  };
+}
 const codes = (graph: SemanticGraph) => validateSemanticGraph(graph).map((issue) => issue.code);
 
 describe("explicit semantic financial graph", () => {
+  // @rule R4/R5: class-specific Bridge ports cannot merge by style or visible node identity.
+  it("keeps principal and income separate on one outbound Bridge and rejects mixed endpoints", () => {
+    const graph = bridgeGraph();
+    expect(validateSemanticGraph(graph)).toEqual([]);
+    const paths = resolveSemanticGraph(graph).connections;
+    expect(paths.map((path) => path.class)).toEqual(["principal", "income"]);
+    expect(paths[0]?.points).not.toEqual(paths[1]?.points);
+    const principal = graph.connections[0];
+    const income = graph.connections[1];
+    const segment = graph.segments[0];
+    if (!principal || !income || !segment) throw new Error("fixture missing");
+    const mixed = {
+      ...graph,
+      connections: [{ ...principal, targetPortId: income.targetPortId }, income],
+      segments: [
+        { ...segment, to: { kind: "port" as const, id: income.targetPortId } },
+        ...graph.segments.slice(1),
+      ],
+    };
+    expect(codes(mixed)).toContain("type_conflict");
+  });
+
+  // @rule R8: representative semantics, not 48 screenshots or financial reachability certification.
+  it.each([
+    "local",
+    "cross-chain",
+    "multi-position",
+    "debt",
+    "holding",
+    "solana",
+  ])("validates the representative %s contract", (variant) => {
+    const local = localGraph();
+    const graph =
+      variant === "cross-chain" || variant === "solana"
+        ? bridgeGraph(variant === "solana" ? "solana" : "base")
+        : variant === "multi-position"
+          ? combineGraphs(local, localGraph("position:b", "B"))
+          : variant === "holding"
+            ? {
+                ...local,
+                nodes: local.nodes.map((node, index) =>
+                  index === 0 ? { ...node, kind: "holding" as const } : node,
+                ),
+              }
+            : variant === "debt"
+              ? {
+                  ...local,
+                  ports: local.ports.map((port) => ({ ...port, class: "repayment" as const })),
+                  connections: local.connections.map((connection) => ({
+                    ...connection,
+                    class: "repayment" as const,
+                  })),
+                }
+              : local;
+    expect(validateSemanticGraph(graph)).toEqual([]);
+    expect(resolveSemanticGraph(graph).connections).toHaveLength(
+      variant === "multi-position" || variant === "cross-chain" || variant === "solana" ? 2 : 1,
+    );
+  });
   // @rule R1/R3: identity derives from role/context, never array order or coordinates.
   it("preserves identities when inputs reorder, another branch changes, or rects move", () => {
     const graph = localGraph();
@@ -91,12 +222,21 @@ describe("explicit semantic financial graph", () => {
     expect(resolveSemanticGraph(moved).connections.map((connection) => connection.id)).toEqual(
       before,
     );
+    const expanded = combineGraphs(moved, localGraph("position:b", "unrelated"));
+    expect(resolveSemanticGraph(expanded).connections[0]?.id).toBe(before[0]);
+    expect(resolveSemanticGraph(moved).connections.map((connection) => connection.id)).toEqual(
+      before,
+    );
     expect(semanticNodeId("bridge", "solana", "inbound")).not.toBe(
       semanticNodeId("bridge", "solana", "outbound"),
     );
     expect(semanticConnectionId("a:b", "c", "income", "~")).not.toBe(
       semanticConnectionId("a", "b:c", "income", null),
     );
+    expect(semanticJunctionId("return", "solana", "principal", null)).not.toBe(
+      semanticJunctionId("return", "solana", "income", null),
+    );
+    expect(semanticSegmentId("route:a", "leg:b")).not.toBe(semanticSegmentId("route", "a:leg:b"));
   });
 
   // @rule R2/R6: each side uses current outer bounds and an explicit fractional anchor.
@@ -208,6 +348,42 @@ describe("explicit semantic financial graph", () => {
     expect(codes(broken)).toContain("route_break");
   });
 
+  // @rule R2/R5/R7: ports terminate connections; only explicit junctions may join internal legs.
+  it("rejects an undeclared intermediate port and non-orthogonal route", () => {
+    const graph = localGraph();
+    const connection = graph.connections[0];
+    const source = graph.ports[0];
+    if (!connection || !source) throw new Error("fixture missing");
+    const intermediate = { ...source, id: "intermediate", offset: 0.25 };
+    const broken: SemanticGraph = {
+      ...graph,
+      ports: [...graph.ports, intermediate],
+      connections: [{ ...connection, segmentIds: ["first", "second"] }],
+      segments: [
+        {
+          id: "first",
+          connectionId: connection.id,
+          from: { kind: "port", id: source.id },
+          to: { kind: "port", id: intermediate.id },
+        },
+        {
+          id: "second",
+          connectionId: connection.id,
+          from: { kind: "port", id: intermediate.id },
+          to: { kind: "port", id: connection.targetPortId },
+        },
+      ],
+    };
+    expect(codes(broken)).toContain("route_break");
+    const diagonal = {
+      ...graph,
+      nodes: graph.nodes.map((node, index) =>
+        index === 1 ? { ...node, rect: { ...node.rect, x: 50 } } : node,
+      ),
+    };
+    expect(codes(diagonal)).toContain("route_break");
+  });
+
   // @rule R7: malformed graph declarations return diagnostic codes, not guessed endpoints.
   it("reports duplicate IDs, missing nodes, dangling segments and unused owned segments", () => {
     const graph = localGraph();
@@ -275,6 +451,136 @@ describe("explicit semantic financial graph", () => {
         ],
       }),
     ).toContain("orphan_conversion");
+  });
+
+  // @rule R5/R7: geometric crossings remain independent routes without a declared junction.
+  it("accepts crossing principal/income lines without creating a join", () => {
+    const principal = localGraph();
+    const other = localGraph("position:b", "B");
+    const income: SemanticGraph = {
+      ...other,
+      nodes: other.nodes.map((node, index) => ({
+        ...node,
+        rect: { x: index === 0 ? 0 : 100, y: 100, w: 20, h: 20 },
+      })),
+      ports: other.ports.map((port, index) => ({
+        ...port,
+        class: "income",
+        side: index === 0 ? "right" : "left",
+      })),
+      connections: other.connections.map((connection) => ({ ...connection, class: "income" })),
+    };
+    const graph = combineGraphs(principal, income);
+    expect(validateSemanticGraph(graph)).toEqual([]);
+    expect(graph.junctions).toEqual([]);
+    expect(resolveSemanticGraph(graph).connections.map((connection) => connection.class)).toEqual([
+      "principal",
+      "income",
+    ]);
+  });
+
+  // @rule R7: a conversion preserves class/origin on both sides and must connect onward.
+  it("accepts a connected fee conversion and reports an extra route with a different origin", () => {
+    const before = localGraph();
+    const after = localGraph("position:a", "after");
+    const conversionId = "fee-conversion:a";
+    const firstSource = before.nodes[0];
+    const lastTarget = after.nodes[1];
+    if (!firstSource || !lastTarget) throw new Error("fixture missing");
+    const graph: SemanticGraph = {
+      nodes: [
+        firstSource,
+        {
+          id: conversionId,
+          kind: "conversion",
+          network: "arbitrum",
+          rect: { x: 10, y: 120, w: 120, h: 20 },
+        },
+        lastTarget,
+      ],
+      ports: [
+        ...before.ports.map((port, index) => ({
+          ...port,
+          class: "income" as const,
+          ...(index === 1 ? { nodeId: conversionId, side: "top" as const } : {}),
+        })),
+        ...after.ports.map((port, index) => ({
+          ...port,
+          class: "income" as const,
+          ...(index === 0 ? { id: "converted-out", nodeId: conversionId } : {}),
+        })),
+      ],
+      junctions: [],
+      segments: [
+        ...before.segments,
+        ...after.segments.map((segment) => ({
+          ...segment,
+          from: { kind: "port" as const, id: "converted-out" },
+        })),
+      ],
+      connections: [
+        ...before.connections.map((connection) => ({ ...connection, class: "income" as const })),
+        ...after.connections.map((connection) => ({
+          ...connection,
+          class: "income" as const,
+          sourcePortId: "converted-out",
+        })),
+      ],
+    };
+    expect(validateSemanticGraph(graph)).toEqual([]);
+    const incompatible = {
+      ...graph,
+      connections: graph.connections.map((connection, index) =>
+        index === 1 ? { ...connection, originId: "different" } : connection,
+      ),
+    };
+    expect(codes(incompatible)).toContain("type_conflict");
+    const extra = localGraph("position:b", "extra");
+    const extraOutput = "converted-out-b";
+    const extraRoute: SemanticGraph = {
+      ...extra,
+      nodes: extra.nodes.slice(1),
+      ports: extra.ports.map((port, index) => ({
+        ...port,
+        class: "income" as const,
+        ...(index === 0 ? { id: extraOutput, nodeId: conversionId } : {}),
+      })),
+      segments: extra.segments.map((segment) => ({
+        ...segment,
+        from: { kind: "port" as const, id: extraOutput },
+      })),
+      connections: extra.connections.map((connection) => ({
+        ...connection,
+        class: "income" as const,
+        sourcePortId: extraOutput,
+      })),
+    };
+    expect(codes(combineGraphs(graph, extraRoute))).toContain("type_conflict");
+  });
+
+  // @rule R7: invalid endpoints, route order and segment ownership cannot hide in a valid drawing.
+  it("reports dangling junctions, wrong segment owners and non-finite rects/anchors", () => {
+    const graph = localGraph();
+    const segment = graph.segments[0];
+    if (!segment) throw new Error("fixture missing");
+    expect(
+      codes({
+        ...graph,
+        segments: [{ ...segment, to: { kind: "junction", id: "missing-junction" } }],
+      }),
+    ).toContain("dangling_endpoint");
+    expect(
+      codes({ ...graph, segments: [{ ...segment, connectionId: "another-connection" }] }),
+    ).toContain("dangling_segment");
+    expect(
+      codes({
+        ...graph,
+        nodes: graph.nodes.map((node) => ({ ...node, rect: { ...node.rect, w: 0 } })),
+      }),
+    ).toContain("inconsistent_port");
+    expect(
+      codes({ ...graph, ports: graph.ports.map((port) => ({ ...port, offset: Number.NaN })) }),
+    ).toContain("inconsistent_port");
   });
 
   // @rule R7: an empty contract is valid and introduces no data/transaction behavior.

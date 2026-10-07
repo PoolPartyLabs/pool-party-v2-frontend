@@ -288,3 +288,13 @@ POO-2237 introduces no endpoint or wallet operation. Manual Swap tokens are cano
 - POO-2230 remains the authoritative physical native cash, eligible queue/reservation deadlines/timezone/asOf and aggregate current hub Income dependency. POO-2275 may first deliver an inline presenter with real Not available, never guessed daily reserves or fixture values.
 - POO-2279 owns Charts/Activity readiness. Activity can reuse `readFundHistory` with authorized Manage access and indexing/pagination; a current snapshot is not a chart history source. Functional tabs wait for content/sidebar/data definitions.
 - Return Bridges are explanatory noninteractive graph nodes. They do not add a wallet operation, provider/ETA, token relabel, atomicity or settlement guarantee. Existing Move/future-policy gates remain POO-2229/2231.
+
+## Manager semantic graph foundation, 2026-10-07 (POO-2288 v1)
+
+`semanticGraph.ts` (PP-MGR-LIB-062) is a pure typed contract and deterministic validator.
+`GraphLayout.semantic` lets the existing `graphModel` edge/hover consumers read explicitly
+owned financial routes resolved against current outer rects. No endpoint, RPC, service,
+wallet call or new mock seam is introduced. Current layout producers retain their existing
+paths; adopting the contract and verifying the complete principal/income routes remains
+POO-2270/2271/2273. The validator proves declared graph integrity only. It does not prove
+execution capability, quote correctness, Bridge settlement or authoritative data coverage.

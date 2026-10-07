@@ -16,7 +16,7 @@ record against Figma are in `src/features/manager/README.md`, section "Build can
 | `layout/` | `PP-MGR-LIB-023` | The pure layout function, its types, its constants, `toLayoutInput` |
 | `pieces/` | `PP-MGR-CMP-048` to `055` | The presentational pieces; strings arrive as props |
 | `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056`, `057`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu, the selection guard (with its resume), the controller (with the remove confirm). The panel stub `PP-MGR-CMP-058` is removed |
-| `graph/` | `PP-MGR-CMP-059` | The renderer, its reading-order model, `useGraphLayout`, `useTextWidth` |
+| `graph/` | `PP-MGR-CMP-059`, `PP-MGR-LIB-062` | The renderer, its reading-order model, `useGraphLayout`, `useTextWidth`, explicit financial graph contract |
 | `panel/` | `PP-MGR-CMP-061` to `068`, `PP-MGR-HOK-014`, `PP-MGR-LIB-029`, `PP-MGR-LIB-030` | The configuration panel (POO-2171): the shell `BlockPanel` and its kind to body registry `panelBodies.ts`, the shared controls, the draft `usePanelDraft`, the range and slippage maths; fixture bodies and a harness for stories and tests |
 
 The reference canvases used as test oracles and story data are in `src/mocks/data/buildCanvasFixtures.ts`.
@@ -147,3 +147,34 @@ Focused component tests cover the styling/width contracts and existing interacti
 Native painting in Chrome/Edge, Firefox and Safari with always-visible scrollbars remains
 the owner's browser acceptance check. The separate POO-2284 range fix (PR #122) handles
 the range controls' width. No API, transaction, new copy or analytics emitter is introduced.
+
+## Semantic graph foundation (POO-2288, rules v1, first slice)
+
+`graph/semanticGraph.ts` (`PP-MGR-LIB-062`) defines stable node, financial-port,
+connection, segment and junction identities. Financial ports name their owner, direction,
+flow class, network and origin; their anchor is resolved on the current outer rect. The
+existing insertion controls and `targetKey` contract remain separate. Node keys used by
+`graphModel` preserve the existing block, Add and drop identities; an outbound Bridge can
+receive a distinct role key without occurrence-based renaming.
+
+`GraphLayout.semantic` is an optional explicit contract. When supplied, `pieceEdges` reads
+owned segments and `pieceConnections` reads complete routes, so a financial connection's
+hover identity does not depend on coincident geometry or array order. The deterministic
+validator rejects duplicate IDs, missing endpoints/segments, invalid anchors, mixed
+classes/origins, undeclared network transitions, same-chain Bridges, broken ordered routes
+and conversions without compatible input/output legs. Principal and income can share a
+visual Bridge using separate ports; a crossing or equal color does not create a junction.
+
+This first slice adds the contract and renderer-consumer boundary. Current layout producers
+still use their existing edges and connection paths. It does not certify current Build,
+Manage or Solana financial reachability, recalculate content bounds, change canvas routing
+or resize nodes. POO-2270/2271/2273 own the producer/layout adoption and acceptance steps.
+The 48-frame handoff is a geometric reference, separate from semantic validation; its five
+hidden legacy graphs are not final topology oracles. Focused tests cover local Arbitrum,
+cross-chain and shared-Bridge flows, multiple positions, debt, Holding and Solana plus
+explicit junctions, independent crossings and conversion continuity. These are contract
+fixtures, with no transaction simulation or financial-settlement claim.
+
+No API, RPC, mock-service call, copy or analytics emitter is introduced. Build and Manage
+hosts retain event ownership. The compliance register records the remaining financial
+meaning and launch conditions before this contract is adopted on real product routes.

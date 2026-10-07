@@ -221,3 +221,19 @@ financial claim, personal-data collection or signing behavior changes. Existing
 financial launch conditions remain in force. Focused component contracts and interaction
 tests pass; native scrollbar painting in the affected browsers remains Murilo's
 acceptance check, without any inference about transaction availability or settlement.
+
+## Manager semantic graph foundation, 2026-10-07 (POO-2288 v1)
+
+Verification: RESOLVED for the internal contract slice. PP-MGR-LIB-062 adds typed
+financial endpoints and deterministic route-integrity checks without creating a transfer,
+changing existing canvas topology, exposing a new financial claim or enabling signing.
+Focused tests cover class/origin separation, same-chain Bridge rejection, explicit
+junction ownership, conversion continuity and stable edge/hover identities.
+
+Status: OPEN for future product adoption under POO-2270/2271/2273. Before these routes
+reach real users, verify that served principal, fee, repayment, Holding and native-cash
+meanings match the displayed flow and actual origin/network. A valid declared graph is not
+evidence of executable capability, a provider/ETA, atomic conversion or hub settlement.
+The 48 Figma references are geometric evidence only. Existing CR-MGR-015/019/020,
+CR-MGR-POO2270 and the POO-2229/2230/2231 launch conditions remain applicable; this
+slice resolves none of those financial or custody questions.

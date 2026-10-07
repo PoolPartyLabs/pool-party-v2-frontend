@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name graphTypes
- * @implements-rules-version v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1
+ * @implements-rules-version v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2288 rules v1
  * @analytics-events none, type declarations and one pure key function: nothing here is rendered.
  *
  * The shapes the Build canvas layout reads and returns (coordinator plan, section 3.3). The names
