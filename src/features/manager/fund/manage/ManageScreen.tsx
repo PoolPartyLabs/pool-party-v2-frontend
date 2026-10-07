@@ -1,8 +1,8 @@
 /**
  * @id PP-MGR-SCR-004
  * @name ManageScreen
- * @implements-rules-version v1 (POO-2226)
- * @analytics-events strategy_manage_viewed
+ * @implements-rules-version v2 (POO-2274); v1 (POO-2226)
+ * @analytics-events strategy_manage_viewed, strategy_block_selected
  *
  * Controlled V2 shell. The authorized route loader supplies reads, and each identity keeps a
  * mounted inline panel so changing selection cannot silently lose its draft.
@@ -13,44 +13,118 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useBuildShellLayout } from "@/components/layout/BuildShellLayout";
 import { Button } from "@/components/ui/Button";
 import { Link } from "@/i18n/navigation";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useTrackView } from "@/lib/analytics/useTrackView";
 import type { FundBalances, FundView } from "@/lib/api/v2/fundSchemas";
 import { cn } from "@/lib/utils/cn";
 import { BlockMark } from "../build/blocks/BlockMark";
 import { ManageCanvas } from "./ManageCanvas";
 import { type ManagePosition, manageProtocolMark, normalizeManageModel } from "./manageModel";
+import {
+  deriveManageInspection,
+  type ManageInspectableNode,
+  manageInspectionLabelKey,
+  resolveManageInspection,
+} from "./manageSelection";
 
 export interface ManageScreenProps {
   fund: FundView;
   balances?: FundBalances[];
-  panel(position: ManagePosition | null, active: boolean): ReactNode;
+  panel(
+    position: ManagePosition | null,
+    active: boolean,
+    inspection?: ManageInspectableNode | null,
+    onBack?: () => void,
+  ): ReactNode;
+  inspector?(node: ManageInspectableNode, onBack: () => void): ReactNode;
 }
-export function ManageScreen({ fund, balances, panel }: ManageScreenProps) {
+export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenProps) {
   useBuildShellLayout(true);
   const t = useTranslations("manager.manageV2");
   const model = useMemo(() => normalizeManageModel(fund, balances), [fund, balances]);
+  const snapshot = useMemo(() => deriveManageInspection(model), [model]);
+  const { track } = useAnalytics();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mandateOpen, setMandateOpen] = useState(false);
-  const selection = model.positions.some((position) => position.id === selectedId)
-    ? selectedId
-    : null;
+  const selectedCore = useRef(model.core);
+  const inspection =
+    selectedCore.current === model.core ? resolveManageInspection(snapshot, selectedId) : null;
+  const selection = inspection?.selectionId ?? null;
   const panelSlot = useRef<HTMLElement>(null);
+  const blocksHeading = useRef<HTMLHeadingElement>(null);
+  const history = useRef<
+    Array<{ id: string | null; trigger: HTMLElement | null; invalid?: boolean }>
+  >([]);
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const shouldReturnFocus = useRef(false);
   const focusPanel = useRef(false);
   const [focusRequest, setFocusRequest] = useState(0);
   const lastFocusRequest = useRef(-1);
   const selectionTrigger = useRef<HTMLElement | null>(null);
-  const selectPosition = (id: string | null, keyboard = false) => {
+  const selectNode = (id: string | null, keyboard = false) => {
+    const node = resolveManageInspection(snapshot, id);
+    if (id !== selection)
+      history.current.push({ id: selection, trigger: selectionTrigger.current });
     if (id !== null && document.activeElement instanceof HTMLElement)
       selectionTrigger.current = document.activeElement;
     focusPanel.current = keyboard && id !== null;
     if (keyboard && id !== null) setFocusRequest((request) => request + 1);
-    setSelectedId(id);
+    setSelectedId(node?.selectionId ?? null);
+    if (node)
+      track("strategy_block_selected", {
+        family: "v2",
+        surface: "manager",
+        node_kind: node.kind,
+        chain_id: node.chainId,
+      });
+  };
+  const backToBlocks = () => {
+    const previous = history.current.pop();
+    const previousNode = resolveManageInspection(snapshot, previous?.id ?? null);
+    setSelectedId(previousNode?.selectionId ?? null);
+    returnFocus.current = previousNode
+      ? (previous?.trigger ?? null)
+      : previous?.id || previous?.invalid
+        ? null
+        : selectionTrigger.current;
+    selectionTrigger.current = previousNode ? (previous?.trigger ?? null) : null;
+    shouldReturnFocus.current = true;
+    setFocusRequest((request) => request + 1);
   };
   useEffect(() => {
+    if (
+      selectedCore.current !== model.core ||
+      (selectedId !== null && !resolveManageInspection(snapshot, selectedId))
+    ) {
+      selectedCore.current = model.core;
+      history.current = [];
+      selectionTrigger.current = null;
+      returnFocus.current = null;
+      shouldReturnFocus.current = selectedId !== null;
+      focusPanel.current = false;
+      if (selectedId !== null) setFocusRequest((request) => request + 1);
+      setSelectedId(null);
+    } else {
+      history.current = history.current.map((entry) =>
+        entry.id && !resolveManageInspection(snapshot, entry.id)
+          ? { id: null, trigger: null, invalid: true }
+          : entry,
+      );
+    }
+  }, [model.core, snapshot, selectedId]);
+  useEffect(() => {
+    if (shouldReturnFocus.current) {
+      shouldReturnFocus.current = false;
+      const target = returnFocus.current;
+      (target?.isConnected ? target : blocksHeading.current)?.focus();
+      return;
+    }
     if (!selection || !focusPanel.current || lastFocusRequest.current === focusRequest) return;
     lastFocusRequest.current = focusRequest;
     focusPanel.current = false;
-    const heading = panelSlot.current?.querySelector<HTMLElement>("[data-active-manage-panel] h2");
+    const heading = [
+      ...(panelSlot.current?.querySelectorAll<HTMLElement>("[data-active-manage-panel] h2") ?? []),
+    ].find((candidate) => !candidate.closest("[hidden]"));
     if (heading) {
       heading.tabIndex = -1;
       heading.focus();
@@ -80,44 +154,68 @@ export function ManageScreen({ fund, balances, panel }: ManageScreenProps) {
         className="grid min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[180px_minmax(0,1fr)_360px] xl:grid-cols-[220px_minmax(0,1fr)_360px]"
       >
         <aside className="flex min-w-0 flex-col gap-3">
-          <h2 className="font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+          <h2
+            ref={blocksHeading}
+            tabIndex={-1}
+            className="font-semibold text-muted-foreground text-xs uppercase tracking-wide"
+          >
             {t("strategyBlocks")}
           </h2>
           <div className="flex flex-col gap-2">
-            {model.positions.map((position) => {
-              const tokens = position.tokens.map((token) => token.symbol).join(" / ");
-              return (
-                <button
-                  key={position.id}
-                  type="button"
-                  data-manage-list-position={position.id}
-                  aria-pressed={selection === position.id}
-                  onClick={(event) => selectPosition(position.id, event.detail === 0)}
-                  className={cn(
-                    "flex min-h-16 items-center gap-3 rounded-xl border bg-surface px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                    selection === position.id ? "border-primary" : "border-border",
-                  )}
-                >
-                  <BlockMark
-                    logo="protocol"
-                    markId={manageProtocolMark(position.source.adapterKind)}
-                    name={position.protocol}
-                    size={24}
-                  />
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium text-foreground text-sm">
-                      {position.protocol}
-                    </span>
-                    <span className="block truncate text-muted-foreground text-xs">
-                      {tokens}
-                      {position.kind !== "unsupported"
-                        ? ` · ${position.kind === "supply" ? t("supplyType") : t("liquidityType")}`
-                        : ""}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
+            {snapshot.networks.map((network) => (
+              <div
+                key={network.chainId}
+                data-manage-network={network.chainId}
+                className="flex flex-col gap-2"
+              >
+                <h3 className="text-muted-foreground text-xs">
+                  {network.name} · {t(network.hub ? "inspection.hub" : "inspection.spoke")}
+                </h3>
+                {network.nodes.map((node) => {
+                  const position = node.kind === "position" ? node.position : null;
+                  const tokens = position?.tokens.map((token) => token.symbol).join(" / ");
+                  const label =
+                    position?.protocol ??
+                    (node.kind !== "position"
+                      ? t(manageInspectionLabelKey[node.kind])
+                      : t("notAvailable"));
+                  return (
+                    <button
+                      key={node.id}
+                      type="button"
+                      data-manage-list-node={node.id}
+                      data-manage-list-position={position?.id}
+                      aria-pressed={selection === node.selectionId}
+                      onClick={(event) => selectNode(node.selectionId, event.detail === 0)}
+                      className={cn(
+                        "flex min-h-16 items-center gap-3 rounded-xl border bg-surface px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                        selection === node.selectionId ? "border-primary" : "border-border",
+                      )}
+                    >
+                      {position ? (
+                        <BlockMark
+                          logo="protocol"
+                          markId={manageProtocolMark(position.source.adapterKind)}
+                          name={position.protocol}
+                          size={24}
+                        />
+                      ) : null}
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium text-foreground text-sm">
+                          {label}
+                        </span>
+                        <span className="block truncate text-muted-foreground text-xs">
+                          {tokens}
+                          {position && position.kind !== "unsupported"
+                            ? ` · ${position.kind === "supply" ? t("supplyType") : t("liquidityType")}`
+                            : ""}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
             {model.positions.length === 0 ? (
               <p role="status" className="text-muted-foreground text-sm">
                 {fund.positionsSummary ? t("emptyPositions") : t("positionsUnavailable")}
@@ -142,7 +240,7 @@ export function ManageScreen({ fund, balances, panel }: ManageScreenProps) {
           ) : null}
         </aside>
         <div className="min-w-0">
-          <ManageCanvas model={model} selectedId={selection} onSelect={selectPosition} />
+          <ManageCanvas model={model} selectedId={selection} onSelect={selectNode} />
         </div>
         <section
           ref={panelSlot}
@@ -151,7 +249,7 @@ export function ManageScreen({ fund, balances, panel }: ManageScreenProps) {
           className="min-w-0 self-start"
           onKeyDown={(event) => {
             if (event.key === "Escape" && !event.defaultPrevented) {
-              selectionTrigger.current?.focus();
+              backToBlocks();
               event.stopPropagation();
             }
           }}
@@ -160,12 +258,37 @@ export function ManageScreen({ fund, balances, panel }: ManageScreenProps) {
           {model.positions.map((position) => (
             <div
               key={position.id}
-              hidden={selection !== position.id}
-              data-active-manage-panel={selection === position.id ? "" : undefined}
+              hidden={inspection?.position?.id !== position.id}
+              data-active-manage-panel={inspection?.position?.id === position.id ? "" : undefined}
             >
-              {panel(position, selection === position.id)}
+              {panel(
+                position,
+                inspection?.position?.id === position.id,
+                inspection?.position?.id === position.id ? inspection : null,
+                backToBlocks,
+              )}
             </div>
           ))}
+          {inspection && !inspection.position ? (
+            <div data-active-manage-panel="">
+              {inspector ? (
+                inspector(inspection, backToBlocks)
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <h2 className="font-semibold text-foreground text-lg">{t("manageBlock")}</h2>
+                  <p>
+                    {inspection.kind !== "position"
+                      ? t(manageInspectionLabelKey[inspection.kind])
+                      : t("notAvailable")}
+                  </p>
+                  <p className="text-muted-foreground text-sm">{t("notAvailable")}</p>
+                  <Button variant="ghost" onClick={backToBlocks}>
+                    {t("inspection.backToBlocks")}
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : null}
         </section>
       </div>
     </article>

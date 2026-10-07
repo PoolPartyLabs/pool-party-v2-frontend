@@ -1314,7 +1314,7 @@
     },
     "subtitle": "Strategie verwalten · Wählen Sie einen Block aus, um seine Guthaben anzuzeigen und die Position zu verwalten.",
     "strategyBlocks": "Strategieblöcke",
-    "selectionHelp": "Wählen Sie eine Position auf der Arbeitsfläche oder in dieser Liste aus.",
+    "selectionHelp": "Wähle einen Block auf dem Canvas oder in dieser Liste.",
     "viewMandate": "Mandat anzeigen",
     "viewInvestor": "Als Anleger ansehen",
     "noSelection": "Wählen Sie einen Block aus, um seine Guthaben anzuzeigen und die Position zu verwalten.",
@@ -1405,6 +1405,20 @@
       "dateUnavailable": "Das Fristdatum ist nicht verfügbar.",
       "metadataUnavailable": "Verifizierte Metadaten des Hub-Tokens sind nicht verfügbar.",
       "unknown": "Die Aktualität der Auszahlungsfristen ist nicht verfügbar. Versuche es erneut, um die Daten zu prüfen."
+    },
+    "inspection": {
+      "deposit": "Einzahlung",
+      "withdraw": "Auszahlung",
+      "swap": "Swap · auto",
+      "collectFees": "Collect fees",
+      "feeSwap": "Swap · auto",
+      "bridge": "Bridge · auto",
+      "backToBlocks": "Zurück zu den Blöcken",
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "unavailable": "Nicht verfügbar",
+      "inbound": "Eingehende Bridge",
+      "outbound": "Ausgehende Bridge"
     }
   },
   "overviewV2": {

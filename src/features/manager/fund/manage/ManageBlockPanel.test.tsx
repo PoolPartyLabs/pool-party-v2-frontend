@@ -413,3 +413,98 @@ it("POO-2246 [R7,R9] times out preparation without losing the draft or accepting
   await userEvent.click(screen.getByRole("button", { name: "Review move range" }));
   expect(await screen.findByRole("button", { name: "Confirm & move range" })).toBeDisabled();
 });
+
+// @rule POO-2274 R4/R5, POO-2276: inspecting a position-owned Collect preserves the LP editor lifetime.
+it("shows the selected Collect inspector without discarding the original range draft", async () => {
+  const back = vi.fn();
+  const inspection = {
+    id: `collect:${liquidity.id}`,
+    selectionId: `collect:${liquidity.id}`,
+    kind: "collectFees" as const,
+    chainId: liquidity.chainId,
+    position: liquidity,
+  };
+  const view = renderWithProviders(
+    <ManageBlockPanel fund={mockFund} position={liquidity} active />,
+  );
+  await userEvent.click(screen.getByRole("button", { name: "±5%" }));
+  view.rerender(
+    <ManageBlockPanel
+      fund={mockFund}
+      position={liquidity}
+      active
+      inspection={inspection}
+      onBack={back}
+    />,
+  );
+  expect(screen.getByRole("heading", { name: "Collect fees" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "±5%" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Collect" })).toBeDisabled();
+  expect(screen.queryByText("No uncollected fees.")).not.toBeInTheDocument();
+  const collectHeading = screen.getByRole("heading", { name: "Collect fees" });
+  const collectOwner = collectHeading.closest("section");
+  expect(collectOwner).not.toBeNull();
+  await userEvent.click(screen.getByRole("button", { name: "Back" }));
+  expect(back).toHaveBeenCalledOnce();
+  view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active />);
+  expect(collectOwner).toBeInTheDocument();
+  expect(collectOwner).not.toBeVisible();
+  expect(screen.getByRole("button", { name: "±5%" })).toHaveAttribute("aria-pressed", "true");
+  view.rerender(
+    <ManageBlockPanel
+      fund={mockFund}
+      position={liquidity}
+      active
+      inspection={inspection}
+      onBack={back}
+    />,
+  );
+  expect(screen.getByRole("heading", { name: "Collect fees" }).closest("section")).toBe(
+    collectOwner,
+  );
+  expect((window.dataLayer ?? []).some((event) => event.event === "tx_flow_abandoned")).toBe(false);
+});
+
+it("never shows a Collect read for a different selected canonical origin", () => {
+  const inspection = {
+    id: `collect:${liquidity.id}`,
+    selectionId: `collect:${liquidity.id}`,
+    kind: "collectFees" as const,
+    chainId: liquidity.chainId,
+    position: { ...liquidity, id: "another-position" },
+  };
+  renderWithProviders(
+    <ManageBlockPanel
+      fund={mockFund}
+      position={liquidity}
+      active
+      inspection={inspection}
+      onBack={vi.fn()}
+    />,
+  );
+  expect(screen.getByRole("heading", { name: "Collect fees" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Collect" })).toBeDisabled();
+  expect(mocks.review).not.toHaveBeenCalled();
+});
+
+it("does not expose LP Collect controls for a Supply row even if inspection is mismatched", () => {
+  mocks.metadata.mockClear();
+  const inspection = {
+    id: `collect:${supply.id}`,
+    selectionId: `collect:${supply.id}`,
+    kind: "collectFees" as const,
+    chainId: supply.chainId,
+    position: supply,
+  };
+  renderWithProviders(
+    <ManageBlockPanel
+      fund={mockFund}
+      position={supply}
+      active
+      inspection={inspection}
+      onBack={vi.fn()}
+    />,
+  );
+  expect(screen.queryByRole("button", { name: "Collect" })).not.toBeInTheDocument();
+  expect(mocks.metadata).not.toHaveBeenCalled();
+});

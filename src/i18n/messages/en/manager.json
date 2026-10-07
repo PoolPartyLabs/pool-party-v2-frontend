@@ -1314,7 +1314,7 @@
     },
     "subtitle": "Manage strategy · Select a block to view its balances and manage the position.",
     "strategyBlocks": "Strategy blocks",
-    "selectionHelp": "Select a position on the canvas or from this list.",
+    "selectionHelp": "Select a block on the canvas or from this list.",
     "viewMandate": "View mandate",
     "viewInvestor": "View as investor",
     "noSelection": "Select a block to view its balances and manage the position.",
@@ -1405,6 +1405,20 @@
       "dateUnavailable": "Deadline date is not available.",
       "metadataUnavailable": "Verified hub token metadata is not available.",
       "unknown": "Withdrawal deadline freshness is not available. Try again to verify the snapshot."
+    },
+    "inspection": {
+      "deposit": "Deposit",
+      "withdraw": "Withdraw",
+      "swap": "Swap · auto",
+      "collectFees": "Collect fees",
+      "feeSwap": "Swap · auto",
+      "bridge": "Bridge · auto",
+      "backToBlocks": "Back to blocks",
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "unavailable": "Not available",
+      "inbound": "Inbound bridge",
+      "outbound": "Outbound bridge"
     }
   },
   "overviewV2": {

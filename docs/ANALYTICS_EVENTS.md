@@ -363,9 +363,10 @@ POO-2223: `FundComposition` (PP-STR-CMP-040) is passive and reuses the parent `s
 | Existing event | Emitter | Trigger / parameters |
 |---|---|---|
 | `strategy_manage_viewed` | PP-MGR-SCR-004 ManageScreen | Authorized screen mount; `family=v2`, `surface=manager`, hub `chain_id`. |
+| `strategy_block_selected` | PP-MGR-SCR-004 ManageScreen | Selects an actual canvas/sidebar node; `family=v2`, `surface=manager`, bounded `node_kind`, `chain_id`. No node, position, token, core or wallet identity. |
 | `strategy_move_range_started` | PP-MGR-CMP-086 ManageBlockPanel | First choice of Move for the current draft; `flow=moveRange`, chain and family. |
-| `tx_flow_abandoned` | PP-MGR-CMP-086 | Leaving the selected position or unmounting a started Move before any submission. |
-| `app_cta_blocked` | PP-MGR-SCR-004, PP-MGR-CMP-086 | Owner requirement or unavailable Move/future-policy/allocation capability; classified reason only. |
+| `tx_flow_abandoned` | PP-MGR-CMP-086 | Removing/unmounting an origin with a started Move before submission. Inspecting another node keeps the origin mounted and emits no abandonment. |
+| `app_cta_blocked` | PP-MGR-SCR-004, PP-MGR-CMP-086 | Owner requirement or unavailable Move/future-policy/allocation/queue capability; classified reason only. Queue Retry does not reload the authorized screen. |
 | `app_error_shown` | PP-MGR-SCR-004, PP-MGR-CMP-086 | Sanitized entry/position/review read error. No upstream message, raw wallet or payload. |
 
 No submitted/completed event exists in this slice because no financial action or persisted future policy is executable. Do not emit completion when a draft is edited or review is shown. Execution instrumentation belongs with POO-2229/2231 wiring and must remain receipt/persistence driven.
