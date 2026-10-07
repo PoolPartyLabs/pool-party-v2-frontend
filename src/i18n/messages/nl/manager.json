@@ -1298,6 +1298,20 @@
     }
   },
   "manageV2": {
+    "collectFeesPanel": {
+      "title": "Collect fees",
+      "uncollectedFees": "Niet geïnde fees",
+      "collect": "Innen",
+      "back": "Terug",
+      "loading": "Niet geïnde fees worden geladen…",
+      "readError": "Niet geïnde fees konden niet worden gelezen.",
+      "unavailable": "Niet geïnde fees zijn niet beschikbaar.",
+      "stale": "Niet geïnde fees zijn verouderd. Vernieuw om door te gaan.",
+      "partial": "Sommige bedragen van niet geïnde fees zijn niet beschikbaar.",
+      "zero": "Geen fees om te innen.",
+      "executionUnavailable": "Niet beschikbaar",
+      "routeDescription": "Fees worden pas als Income ontvangen na omzetting naar USDC en aankomst op de hub."
+    },
     "subtitle": "Strategie beheren · Selecteer een blok om de saldi te bekijken en de positie te beheren.",
     "strategyBlocks": "Strategieblokken",
     "selectionHelp": "Selecteer een positie op het canvas of in deze lijst.",

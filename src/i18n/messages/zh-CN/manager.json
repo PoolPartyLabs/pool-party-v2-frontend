@@ -1298,6 +1298,20 @@
     }
   },
   "manageV2": {
+    "collectFeesPanel": {
+      "title": "Collect fees",
+      "uncollectedFees": "未领取的fees",
+      "collect": "领取",
+      "back": "返回",
+      "loading": "正在加载未领取的fees…",
+      "readError": "无法读取未领取的fees。",
+      "unavailable": "未领取的fees暂不可用。",
+      "stale": "未领取的fees信息已过期。请刷新后继续。",
+      "partial": "部分未领取的fees数量暂不可用。",
+      "zero": "没有可领取的fees。",
+      "executionUnavailable": "暂不可用",
+      "routeDescription": "fees只有在转换为USDC并到达hub后，才会作为Income到账。"
+    },
     "subtitle": "管理策略 · 选择一个区块，查看余额并管理仓位。",
     "strategyBlocks": "策略区块",
     "selectionHelp": "从画布或此列表中选择仓位。",

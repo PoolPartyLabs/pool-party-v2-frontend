@@ -1298,6 +1298,20 @@
     }
   },
   "manageV2": {
+    "collectFeesPanel": {
+      "title": "Collect fees",
+      "uncollectedFees": "未回収のfees",
+      "collect": "回収",
+      "back": "戻る",
+      "loading": "未回収のfeesを読み込んでいます…",
+      "readError": "未回収のfeesを読み込めませんでした。",
+      "unavailable": "未回収のfeesは利用できません。",
+      "stale": "未回収のfeesの情報が古くなっています。更新して続行してください。",
+      "partial": "一部の未回収のfees数量は利用できません。",
+      "zero": "回収できるfeesはありません。",
+      "executionUnavailable": "利用できません",
+      "routeDescription": "feesはUSDCに変換され、hubに到着してからIncomeとして受け取られます。"
+    },
     "subtitle": "戦略の管理 · ブロックを選択して残高を確認し、ポジションを管理できます。",
     "strategyBlocks": "戦略のブロック",
     "selectionHelp": "キャンバスまたはこの一覧からポジションを選択してください。",

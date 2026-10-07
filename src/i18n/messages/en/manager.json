@@ -1298,6 +1298,20 @@
     }
   },
   "manageV2": {
+    "collectFeesPanel": {
+      "title": "Collect fees",
+      "uncollectedFees": "Uncollected fees",
+      "collect": "Collect",
+      "back": "Back",
+      "loading": "Loading uncollected fees…",
+      "readError": "Uncollected fees could not be read.",
+      "unavailable": "Uncollected fees are unavailable.",
+      "stale": "Uncollected fees are stale. Refresh to continue.",
+      "partial": "Some uncollected fee amounts are unavailable.",
+      "zero": "No uncollected fees.",
+      "executionUnavailable": "Not available",
+      "routeDescription": "Fees are received as Income only after conversion to USDC and arrival on the hub."
+    },
     "subtitle": "Manage strategy · Select a block to view its balances and manage the position.",
     "strategyBlocks": "Strategy blocks",
     "selectionHelp": "Select a position on the canvas or from this list.",

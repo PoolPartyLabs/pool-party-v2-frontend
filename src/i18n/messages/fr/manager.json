@@ -1298,6 +1298,20 @@
     }
   },
   "manageV2": {
+    "collectFeesPanel": {
+      "title": "Collect fees",
+      "uncollectedFees": "Fees non collectés",
+      "collect": "Collecter",
+      "back": "Retour",
+      "loading": "Chargement des fees non collectés…",
+      "readError": "Impossible de lire les fees non collectés.",
+      "unavailable": "Les fees non collectés sont indisponibles.",
+      "stale": "Les fees non collectés ne sont plus à jour. Actualisez pour continuer.",
+      "partial": "Certains montants de fees non collectés sont indisponibles.",
+      "zero": "Aucun fee à collecter.",
+      "executionUnavailable": "Indisponible",
+      "routeDescription": "Les fees sont reçus dans Income uniquement après leur conversion en USDC et leur arrivée sur le hub."
+    },
     "subtitle": "Gérer la stratégie · Sélectionnez un bloc pour consulter ses soldes et gérer la position.",
     "strategyBlocks": "Blocs de la stratégie",
     "selectionHelp": "Sélectionnez une position dans le canevas ou dans cette liste.",

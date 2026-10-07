@@ -1298,6 +1298,20 @@
     }
   },
   "manageV2": {
+    "collectFeesPanel": {
+      "title": "Collect fees",
+      "uncollectedFees": "Nicht eingezogene Fees",
+      "collect": "Einziehen",
+      "back": "Zurück",
+      "loading": "Nicht eingezogene Fees werden geladen…",
+      "readError": "Nicht eingezogene Fees konnten nicht gelesen werden.",
+      "unavailable": "Nicht eingezogene Fees sind nicht verfügbar.",
+      "stale": "Nicht eingezogene Fees sind veraltet. Aktualisieren Sie, um fortzufahren.",
+      "partial": "Einige Beträge nicht eingezogener Fees sind nicht verfügbar.",
+      "zero": "Keine Fees zum Einziehen.",
+      "executionUnavailable": "Nicht verfügbar",
+      "routeDescription": "Fees werden erst nach der Umwandlung in USDC und der Ankunft am Hub als Income empfangen."
+    },
     "subtitle": "Strategie verwalten · Wählen Sie einen Block aus, um seine Guthaben anzuzeigen und die Position zu verwalten.",
     "strategyBlocks": "Strategieblöcke",
     "selectionHelp": "Wählen Sie eine Position auf der Arbeitsfläche oder in dieser Liste aus.",
