@@ -1,4 +1,10 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import { solanaBootstrapDigest } from "@/lib/solana/binding";
+import { bootstrapChunks } from "@/lib/solana/bootstrap";
+import {
+  bootstrapAuthorizationFixture,
+  bootstrapManifestFixture,
+} from "@/lib/solana/bootstrap.fixture";
 import { SOLANA_LP_CHOICES } from "@/lib/solana/lpChoices";
 import type { SolanaApiSignedQuote } from "@/lib/solana/swap";
 import { createJournal, type LaunchDriver } from "./journal";
@@ -106,6 +112,114 @@ it("fails closed when the feature flag is off", async () => {
   flags.enabled = false;
   const { driver, journal } = setup();
   await expect(driver.build(arrival, journal)).rejects.toThrow("SOLANA_DISABLED");
+});
+
+function bootstrapSetup() {
+  const state = setup();
+  const managerSolana = "11111111111111111111111111111111";
+  const chunk = bootstrapChunks(bootstrapManifestFixture)[0];
+  if (!chunk) throw new Error("FIXTURE_MISSING");
+  const step: SolanaLaunchStep = {
+    ...arrival,
+    id: "solana:stage:0",
+    kind: "stage-solana-config",
+    bootstrapChunk: chunk,
+  };
+  state.journal.frozen = {
+    solanaBootstrap: bootstrapManifestFixture,
+    solanaBinding: {
+      solanaAddress: managerSolana,
+      bootstrapAuthorization: bootstrapAuthorizationFixture,
+      bootstrapSignature: "0x01",
+    },
+  };
+  const onchain = {
+    policyHash: bootstrapManifestFixture.policyHash,
+    fundPda: bootstrapAuthorizationFixture.fundPda,
+    managerSolana,
+    totalLength: 1250,
+    payload: chunk.chunk,
+    sealed: false,
+    initialized: false,
+  };
+  state.backend.bootstrapState = vi.fn(async () => onchain);
+  const driver = createChainLaunchDriver({
+    evm: state.evm,
+    backend: state.backend,
+    rpc: state.rpc,
+    solanaAddress: managerSolana,
+    signTransaction: vi.fn(),
+    verifyBinding: vi.fn(async () => {}),
+  });
+  return { ...state, driver, step, onchain };
+}
+
+it("reconciles a matching staged prefix without signing or resending", async () => {
+  const { driver, step, journal, backend } = bootstrapSetup();
+  expect(await driver.build(step, journal)).toEqual({ complete: true });
+  expect(
+    await driver.reconcile(
+      step,
+      { stepId: step.id, chain: step.chain, status: "submitted" },
+      journal,
+    ),
+  ).toBe(true);
+  expect(backend.build).not.toHaveBeenCalled();
+  expect(transport.send).not.toHaveBeenCalled();
+});
+
+it.each([
+  "policyHash",
+  "fundPda",
+  "managerSolana",
+  "payload",
+] as const)("rejects substituted staged %s", async (field) => {
+  const { driver, step, journal, onchain } = bootstrapSetup();
+  onchain[field] = "0xchanged";
+  await expect(driver.build(step, journal)).rejects.toThrow("SOLANA_BOOTSTRAP_MISMATCH");
+});
+
+it("does not mark sealing complete from a full but unsealed payload", async () => {
+  const { driver, step, journal, onchain } = bootstrapSetup();
+  step.kind = "seal-solana-config";
+  step.bootstrapChunk = bootstrapChunks(bootstrapManifestFixture).at(-1);
+  onchain.payload = bootstrapManifestFixture.payload;
+  expect(
+    await driver.reconcile(
+      step,
+      { stepId: step.id, chain: step.chain, status: "submitted" },
+      journal,
+    ),
+  ).toBe(false);
+});
+
+it("reconciles initialized identity after the staging account has been consumed", async () => {
+  const { driver, step, journal, backend, onchain } = bootstrapSetup();
+  step.kind = "init-solana";
+  delete step.bootstrapChunk;
+  backend.bootstrapState = vi.fn(async () => ({
+    ...onchain,
+    payload: "0x",
+    totalLength: 0,
+    initialized: true,
+    bootstrapDigest: solanaBootstrapDigest(onchain.managerSolana, bootstrapAuthorizationFixture),
+  }));
+  expect(await driver.build(step, journal)).toEqual({ complete: true });
+});
+
+it("fails closed without an authoritative bootstrap account reader", async () => {
+  const { driver, step, journal, backend } = bootstrapSetup();
+  delete backend.bootstrapState;
+  await expect(driver.build(step, journal)).rejects.toThrow("SOLANA_BOOTSTRAP_READER_REQUIRED");
+});
+
+it("refuses initialize while the last chunk is not sealed", async () => {
+  const { driver, step, journal } = bootstrapSetup();
+  step.kind = "init-solana";
+  delete step.bootstrapChunk;
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("SOLANA_BOOTSTRAP_ORDER_REQUIRED");
+  expect(transport.send).not.toHaveBeenCalled();
 });
 
 function swapSetup() {

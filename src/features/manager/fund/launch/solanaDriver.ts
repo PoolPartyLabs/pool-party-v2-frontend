@@ -1,5 +1,6 @@
 import { isFeatureEnabled } from "@/lib/features";
-import type { ManagerSolanaBinding } from "@/lib/solana/binding";
+import { type ManagerSolanaBinding, solanaBootstrapDigest } from "@/lib/solana/binding";
+import { bootstrapChunks, type SolanaBootstrapManifest } from "@/lib/solana/bootstrap";
 import { requireSolanaLpChoice } from "@/lib/solana/lpChoices";
 import { requireSolanaOracleReference, type SolanaOracleReference } from "@/lib/solana/oracle";
 import {
@@ -18,6 +19,17 @@ import { isEvmLaunchStep, type LaunchStep, type SolanaLaunchStep } from "./plan"
 import type { SolanaLaunchSelection } from "./solanaPlan";
 
 export interface SolanaLaunchBackend {
+  /** TODO(interface): read owner/PDA-verified accounts, never infer success from a submitted signature. */
+  bootstrapState?(journal: LaunchJournal): Promise<{
+    policyHash: string;
+    fundPda: string;
+    managerSolana: string;
+    totalLength: number;
+    payload: string;
+    sealed: boolean;
+    initialized: boolean;
+    bootstrapDigest?: string;
+  } | null>;
   referencePrice?(poolId: string): Promise<SolanaOracleReference>;
   /** TODO(interface): authenticated API builders must pin programs, accounts and Fund amounts. */
   build(
@@ -56,6 +68,54 @@ export function createChainLaunchDriver(input: {
   const requireEnabled = () => {
     if (!isFeatureEnabled("solanaSpoke")) throw new Error("SOLANA_DISABLED");
   };
+  const bootstrapReady = async (step: SolanaLaunchStep, journal: LaunchJournal) => {
+    if (!input.backend.bootstrapState) throw new Error("SOLANA_BOOTSTRAP_READER_REQUIRED");
+    const frozen = journal.frozen as {
+      solanaBootstrap?: SolanaBootstrapManifest;
+      solanaBinding?: ManagerSolanaBinding;
+    };
+    const manifest = frozen.solanaBootstrap;
+    const binding = frozen.solanaBinding;
+    if (!manifest || !binding?.bootstrapAuthorization || !binding.bootstrapSignature)
+      throw new Error("SOLANA_BOOTSTRAP_REQUIRED");
+    const chunks = bootstrapChunks(manifest);
+    const authorization = binding.bootstrapAuthorization;
+    if (
+      manifest.policyHash !== authorization.policyHash ||
+      binding.solanaAddress !== input.solanaAddress
+    )
+      throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
+    const chunk = step.bootstrapChunk;
+    if (
+      step.kind !== "init-solana" &&
+      (!chunk || !chunks.some((entry) => JSON.stringify(entry) === JSON.stringify(chunk)))
+    )
+      throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
+    const state = await input.backend.bootstrapState(journal);
+    if (!state) return false;
+    if (
+      state.policyHash !== manifest.policyHash ||
+      state.fundPda !== authorization.fundPda ||
+      state.managerSolana !== input.solanaAddress
+    )
+      throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
+    if (state.initialized) {
+      if (state.bootstrapDigest !== solanaBootstrapDigest(input.solanaAddress, authorization))
+        throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
+      return true;
+    }
+    if (
+      state.totalLength !== (manifest.payload.length - 2) / 2 ||
+      !/^0x(?:[0-9a-fA-F]{2})*$/.test(state.payload) ||
+      !manifest.payload.toLowerCase().startsWith(state.payload.toLowerCase()) ||
+      (state.sealed && state.payload.length !== manifest.payload.length)
+    )
+      throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
+    if (step.kind === "init-solana") return false;
+    if (!chunk) throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
+    const end = (chunk.offset + (chunk.chunk.length - 2) / 2) * 2 + 2;
+    return state.payload.length >= end && (!chunk.seal || state.sealed);
+  };
   return {
     async build(step, journal) {
       if (isEvmLaunchStep(step)) return input.evm.build(step, journal);
@@ -70,6 +130,9 @@ export function createChainLaunchDriver(input: {
           throw new Error("SOLANA_CREDIT_EVIDENCE_REQUIRED");
         return { complete: arrival.credited, data: { credited: arrival.amount } };
       }
+      if (["stage-solana-config", "seal-solana-config", "init-solana"].includes(step.kind)) {
+        if (await bootstrapReady(step, journal)) return { complete: true };
+      }
       if (step.chainKind === "svm") return { transaction: { deferred: true } };
       const transaction = await input.backend.build(step, journal);
       return { transaction };
@@ -80,6 +143,17 @@ export function createChainLaunchDriver(input: {
       const journal = routed.get(step.id);
       if (!journal) throw new Error("SOLANA_BUILD_REQUIRED");
       await input.verifyBinding(journal);
+      if (["stage-solana-config", "seal-solana-config", "init-solana"].includes(step.kind)) {
+        if (await bootstrapReady(step, journal))
+          throw new Error("SOLANA_BOOTSTRAP_ALREADY_APPLIED");
+        const state = await input.backend.bootstrapState?.(journal);
+        if (
+          (step.kind === "init-solana" && !state?.sealed) ||
+          (step.bootstrapChunk &&
+            (state ? (state.payload.length - 2) / 2 : 0) !== step.bootstrapChunk.offset)
+        )
+          throw new Error("SOLANA_BOOTSTRAP_ORDER_REQUIRED");
+      }
       if (step.chainKind === "evm") {
         return input.evm.send(
           { ...step, kind: "bridge", chain: 42161, group: undefined },
@@ -157,11 +231,18 @@ export function createChainLaunchDriver(input: {
       }
       if (step.kind === "report") return input.backend.reportReady(journal);
       if (step.kind === "solana-arrival") return false;
+      if (["stage-solana-config", "seal-solana-config", "init-solana"].includes(step.kind)) {
+        await input.verifyBinding(journal);
+        return bootstrapReady(step, journal);
+      }
       return false;
     },
     async complete(step, checkpoint, journal) {
       if (isEvmLaunchStep(step)) return input.evm.complete(step, checkpoint, journal);
       requireEnabled();
+      if (["stage-solana-config", "seal-solana-config", "init-solana"].includes(step.kind)) {
+        if (!(await bootstrapReady(step, journal))) throw new Error("SOLANA_BOOTSTRAP_NOT_APPLIED");
+      }
       if (step.kind !== "bind-solana") await input.backend.complete(step, checkpoint, journal);
     },
   };

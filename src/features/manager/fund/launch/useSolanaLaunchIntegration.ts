@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import type { Address } from "viem";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import type { BindingCodec, ManagerSolanaBinding } from "@/lib/solana/binding";
+import { bootstrapChunks, type SolanaBootstrapManifest } from "@/lib/solana/bootstrap";
 import {
   estimateSolanaPlanCosts,
   type SolanaComputedStepCost,
@@ -44,6 +45,7 @@ export interface SolanaLaunchIntegrationOptions {
   draftId: string;
   manager: Address;
   binding: ManagerSolanaBinding;
+  bootstrap: SolanaBootstrapManifest;
   codec: BindingCodec;
   costEstimator: SolanaPlanCostEstimator;
   evmCode: (manager: Address) => Promise<string | undefined>;
@@ -78,9 +80,15 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
     setPreflight(null);
     setCostBreakdown(null);
     if (!enabled) throw new Error("SOLANA_DISABLED");
+    if (!options.binding.bootstrapAuthorization || !options.binding.bootstrapSignature)
+      throw new Error("SOLANA_BOOTSTRAP_REQUIRED");
+    bootstrapChunks(options.bootstrap);
+    if (options.bootstrap.policyHash !== options.binding.bootstrapAuthorization.policyHash)
+      throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
+    const bootstrapSnapshot = JSON.stringify(options.bootstrap);
     const selectionSnapshot = JSON.stringify(normalizeSolanaLaunchSelection(options.selection));
     const bindingSnapshot = JSON.stringify(options.binding);
-    const steps = withSolanaLaunchSteps(options.evmSteps, options.selection);
+    const steps = withSolanaLaunchSteps(options.evmSteps, options.selection, options.bootstrap);
     if (options.selection.raydiumPool) {
       const choice = requireSolanaLpChoice(options.selection.raydiumPool);
       requireSolanaOracleReference(
@@ -111,6 +119,8 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
       throw new Error("SOLANA_BINDING_MISMATCH");
     if (JSON.stringify(normalizeSolanaLaunchSelection(options.selection)) !== selectionSnapshot)
       throw new Error("SOLANA_SELECTION_MISMATCH");
+    if (JSON.stringify(options.bootstrap) !== bootstrapSnapshot)
+      throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
     setPreflight(checked);
     return checked;
   };
@@ -128,7 +138,7 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
         let current = loadJournal(storage, options.draftId, options.manager);
         const selection = normalizeSolanaLaunchSelection(options.selection);
         if (!current) {
-          const steps = withSolanaLaunchSteps(options.evmSteps, selection);
+          const steps = withSolanaLaunchSteps(options.evmSteps, selection, options.bootstrap);
           current = createJournal(
             options.draftId,
             options.manager,
@@ -136,6 +146,7 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
               ...options.frozen,
               solanaBinding: options.binding,
               solanaSelection: selection,
+              solanaBootstrap: options.bootstrap,
             },
             steps,
           );
@@ -144,11 +155,14 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
         const snapshot = current.frozen as {
           solanaBinding?: ManagerSolanaBinding;
           solanaSelection?: SolanaLaunchSelection;
+          solanaBootstrap?: SolanaBootstrapManifest;
         };
         if (JSON.stringify(snapshot.solanaBinding) !== JSON.stringify(options.binding))
           throw new Error("SOLANA_BINDING_MISMATCH");
         if (JSON.stringify(snapshot.solanaSelection) !== JSON.stringify(selection))
           throw new Error("SOLANA_SELECTION_MISMATCH");
+        if (JSON.stringify(snapshot.solanaBootstrap) !== JSON.stringify(options.bootstrap))
+          throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
         const driver = createChainLaunchDriver({
           evm: options.evmDriver,
           solanaAddress: options.binding.solanaAddress,
@@ -165,6 +179,10 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
           verifyBinding: async () => {
             if (addressRef.current !== options.binding.solanaAddress)
               throw new Error("SOLANA_BINDING_MISMATCH");
+            if (JSON.stringify(snapshot.solanaBinding) !== JSON.stringify(options.binding))
+              throw new Error("SOLANA_BINDING_MISMATCH");
+            if (JSON.stringify(snapshot.solanaBootstrap) !== JSON.stringify(options.bootstrap))
+              throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
           },
         });
         await runLaunch(current, storage, driver, setJournal, controller.signal);

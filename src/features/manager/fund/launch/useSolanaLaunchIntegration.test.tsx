@@ -1,6 +1,10 @@
 import { act, renderHook } from "@testing-library/react";
 import type { Address } from "viem";
 import { beforeEach, expect, it, vi } from "vitest";
+import {
+  bootstrapAuthorizationFixture,
+  bootstrapManifestFixture,
+} from "@/lib/solana/bootstrap.fixture";
 import { createJournal } from "./journal";
 import {
   type SolanaLaunchIntegrationOptions,
@@ -49,6 +53,7 @@ function options(): SolanaLaunchIntegrationOptions {
   return {
     draftId: "draft",
     manager: "0x1111111111111111111111111111111111111111" as Address,
+    bootstrap: bootstrapManifestFixture,
     binding: {
       manager: "0x1111111111111111111111111111111111111111",
       solanaAddress: "key",
@@ -65,6 +70,8 @@ function options(): SolanaLaunchIntegrationOptions {
       },
       evmSignature: "0x",
       acceptance: [],
+      bootstrapAuthorization: bootstrapAuthorizationFixture,
+      bootstrapSignature: "0x01",
     },
     codec: { acceptanceMessage: vi.fn() },
     costEstimator: { transactions: vi.fn(), priorityFeeMarginBps: 2000 },
