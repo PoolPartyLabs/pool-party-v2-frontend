@@ -1211,6 +1211,13 @@
       "cropZoom": "확대",
       "nameHelp": "10~50자.",
       "descriptionLabel": "설명 (선택 사항)",
+      "transactionFees": {
+        "title": "거래 수수료",
+        "helper": "수수료 세부 정보는 확인할 수 없어요.",
+        "entry": "입장 수수료",
+        "exit": "퇴장 수수료",
+        "unavailable": "확인할 수 없어요"
+      },
       "feesTitle": "관리자 수수료",
       "feesCaption": "전략 관리에 대해 청구하는 수수료예요. 출시 후에는 수수료를 낮출 수만 있어요.",
       "performanceLabel": "성과 수수료",

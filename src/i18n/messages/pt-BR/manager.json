@@ -1211,6 +1211,13 @@
       "cropZoom": "Zoom",
       "nameHelp": "De 10 a 50 caracteres.",
       "descriptionLabel": "Descrição (opcional)",
+      "transactionFees": {
+        "title": "Taxas de transação",
+        "helper": "Os detalhes das taxas não estão disponíveis.",
+        "entry": "Taxa de entrada",
+        "exit": "Taxa de saída",
+        "unavailable": "Não disponível"
+      },
       "feesTitle": "Suas taxas",
       "feesCaption": "O que você cobra para gerir a estratégia. Após o lançamento, as taxas só podem diminuir.",
       "performanceLabel": "Taxa de desempenho",

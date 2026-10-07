@@ -11,6 +11,7 @@ import {
   screen,
   userEvent,
   waitFor,
+  within,
 } from "../../../../../tests/utils/renderWithProviders";
 import {
   hubSupplyPlan,
@@ -73,6 +74,30 @@ function show() {
   );
 }
 describe("Review assembly [R1-R9]", () => {
+  // @rule POO-2289 R1/R2/R3/R5/R6: separate unavailable information never edits or gates launch.
+  it("orders transaction fees between manager fees and terms without changing fee edits or launch", async () => {
+    show();
+    const heading = await screen.findByRole("heading", { name: "Transaction fees" });
+    const previous = screen.getByRole("heading", { name: "Your fees" });
+    const next = screen.getByRole("heading", { name: "Investor terms" });
+    expect(
+      previous.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(heading.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const card = screen.getByRole("region", { name: "Transaction fees" });
+    expect(within(card).getAllByText("Not available")).toHaveLength(2);
+    await userEvent.click(within(card).getByRole("button", { name: "More about Entry fee" }));
+    expect(mocks.binding.setFeePercent).not.toHaveBeenCalled();
+    expect(mocks.binding.setField).not.toHaveBeenCalled();
+    expect(mocks.start).not.toHaveBeenCalled();
+    expect(mocks.track.mock.calls.map(([name]) => name)).toEqual(["builder_review_view"]);
+    await userEvent.click(screen.getByRole("button", { name: "Increase Performance fee" }));
+    expect(mocks.binding.setFeePercent).toHaveBeenCalledWith("performanceFeeBps", "21");
+    await userEvent.click(screen.getByRole("button", { name: "Increase Management fee" }));
+    expect(mocks.binding.setFeePercent).toHaveBeenCalledWith("managementFeeBps", "2");
+    await userEvent.click(screen.getByRole("button", { name: "Launch strategy" }));
+    expect(mocks.start).toHaveBeenCalledTimes(1);
+  });
   it("binds current form values and shows sourced summaries without invented metrics", async () => {
     show();
     expect(await screen.findByLabelText("Strategy name")).toHaveValue(reviewStoryKit.name);

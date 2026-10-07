@@ -1211,6 +1211,13 @@
       "cropZoom": "Zoom",
       "nameHelp": "10 bis 50 Zeichen.",
       "descriptionLabel": "Beschreibung (optional)",
+      "transactionFees": {
+        "title": "Transaktionsgebühren",
+        "helper": "Gebührendetails sind nicht verfügbar.",
+        "entry": "Eintrittsgebühr",
+        "exit": "Austrittsgebühr",
+        "unavailable": "Nicht verfügbar"
+      },
       "feesTitle": "Ihre Gebühren",
       "feesCaption": "Was Sie für die Verwaltung der Strategie berechnen. Nach dem Start können Gebühren nur sinken.",
       "performanceLabel": "Performancegebühr",

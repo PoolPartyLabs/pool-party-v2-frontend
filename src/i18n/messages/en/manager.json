@@ -1211,6 +1211,13 @@
       "cropZoom": "Zoom",
       "nameHelp": "10 to 50 characters.",
       "descriptionLabel": "Description (optional)",
+      "transactionFees": {
+        "title": "Transaction fees",
+        "helper": "Fee details are unavailable.",
+        "entry": "Entry fee",
+        "exit": "Exit fee",
+        "unavailable": "Not available"
+      },
       "feesTitle": "Your fees",
       "feesCaption": "What you charge for managing the strategy. After launch a fee can only go down.",
       "performanceLabel": "Performance fee",
