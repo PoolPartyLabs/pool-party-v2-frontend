@@ -1,4 +1,11 @@
 import { isFeatureEnabled } from "@/lib/features";
+import type { ManagerSolanaBinding } from "@/lib/solana/binding";
+import {
+  resolveMaxPriceImpactBps,
+  type SolanaApiSignedQuote,
+  type SolanaSwapQuoteRequest,
+  validateSolanaApiQuote,
+} from "@/lib/solana/swap";
 import {
   type SolanaLifetime,
   type SolanaTransactionRpc,
@@ -6,6 +13,7 @@ import {
 } from "@/lib/solana/transaction";
 import type { Checkpoint, LaunchDriver, LaunchJournal } from "./journal";
 import { isEvmLaunchStep, type LaunchStep, type SolanaLaunchStep } from "./plan";
+import type { SolanaLaunchSelection } from "./solanaPlan";
 
 export interface SolanaLaunchBackend {
   /** TODO(interface): authenticated API builders must pin programs, accounts and Fund amounts. */
@@ -13,7 +21,12 @@ export interface SolanaLaunchBackend {
     step: SolanaLaunchStep,
     journal: LaunchJournal,
     lifetime?: SolanaLifetime,
+    quote?: SolanaApiSignedQuote,
   ): Promise<Uint8Array | unknown>;
+  /** DEC-197: OUR authenticated/rate-limited API; never browser calls to Jupiter. */
+  quoteSwap?(request: SolanaSwapQuoteRequest, journal: LaunchJournal): Promise<unknown>;
+  /** TODO(interface): verify signature with pinned API signer over ALL DTO fields/payload. */
+  verifySwapQuote?(quote: SolanaApiSignedQuote, request: SolanaSwapQuoteRequest): Promise<boolean>;
   /** DEC-191: true only after atomic receive-and-credit, not attestation or mint alone. */
   credited(journal: LaunchJournal): Promise<{ credited: boolean; amount?: string }>;
   /** DEC-192: verify finalized reports with consistency 32 and the shared max-age rule. */
@@ -76,7 +89,43 @@ export function createChainLaunchDriver(input: {
         walletAddress: input.solanaAddress,
         rpc: input.rpc,
         build: async (lifetime) => {
-          const bytes = await input.backend.build(step, journal, lifetime);
+          let quote: SolanaApiSignedQuote | undefined;
+          let request: SolanaSwapQuoteRequest | undefined;
+          if (step.kind === "swap-to-ratio" || step.kind === "raydium-open") {
+            const frozen = journal.frozen as {
+              solanaBinding?: ManagerSolanaBinding;
+              solanaSelection?: SolanaLaunchSelection;
+            };
+            const binding = frozen.solanaBinding;
+            if (
+              !binding ||
+              binding.solanaAddress !== input.solanaAddress ||
+              binding.manager.toLowerCase() !== journal.manager ||
+              !step.config?.poolId ||
+              step.config.maxPriceImpactBps === undefined ||
+              frozen.solanaSelection?.raydiumPool !== step.config.poolId ||
+              frozen.solanaSelection?.maxPriceImpactBps !== step.config.maxPriceImpactBps
+            )
+              throw new Error("SOLANA_API_QUOTE_REQUIRED");
+            request = {
+              poolId: step.config.poolId,
+              fund: binding.authorization.fund,
+              solanaAddress: input.solanaAddress,
+              maxPriceImpactBps: resolveMaxPriceImpactBps(step.config.maxPriceImpactBps),
+            };
+            if (step.kind === "swap-to-ratio") {
+              if (!input.backend.quoteSwap || !input.backend.verifySwapQuote)
+                throw new Error("SOLANA_API_QUOTE_REQUIRED");
+              quote = validateSolanaApiQuote(
+                await input.backend.quoteSwap(request, journal),
+                request,
+              );
+              if (!(await input.backend.verifySwapQuote(quote, request)))
+                throw new Error("SOLANA_API_QUOTE_SIGNATURE_INVALID");
+            }
+          }
+          const bytes = await input.backend.build(step, journal, lifetime, quote);
+          if (quote && request) validateSolanaApiQuote(quote, request);
           if (!(bytes instanceof Uint8Array)) throw new Error("UNSAFE_SOLANA_TRANSACTION");
           return bytes;
         },

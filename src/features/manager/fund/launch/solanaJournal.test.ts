@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import { SOLANA_LP_CHOICES } from "@/lib/solana/lpChoices";
 import {
   createJournal,
   journalKey,
@@ -106,7 +107,7 @@ it("combines Hub, Robinhood and Solana without replacing EVM steps", () => {
   const plan = withSolanaLaunchSteps(evm, {
     sharePct: 40,
     kamino: true,
-    raydiumPool: "existing-pool",
+    raydiumPool: SOLANA_LP_CHOICES[0]?.poolId,
   });
   expect(plan.find((step) => step.id === "spoke")).toMatchObject(evm[2] ?? {});
   expect(plan.find((step) => step.id === "create")?.dependencies).toContain("solana:bind");

@@ -27,7 +27,11 @@ import {
   retrySolanaReceive,
   type SolanaLaunchBackend,
 } from "./solanaDriver";
-import { type SolanaLaunchSelection, withSolanaLaunchSteps } from "./solanaPlan";
+import {
+  normalizeSolanaLaunchSelection,
+  type SolanaLaunchSelection,
+  withSolanaLaunchSteps,
+} from "./solanaPlan";
 
 export interface SolanaLaunchIntegrationOptions {
   draftId: string;
@@ -87,22 +91,29 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
       const storage = options.storage ?? localStorage;
       await withLaunchLock(journalKey(options.draftId, options.manager), async () => {
         let current = loadJournal(storage, options.draftId, options.manager);
+        const selection = normalizeSolanaLaunchSelection(options.selection);
         if (!current) {
-          const steps = withSolanaLaunchSteps(options.evmSteps, options.selection);
+          const steps = withSolanaLaunchSteps(options.evmSteps, selection);
           current = createJournal(
             options.draftId,
             options.manager,
             {
               ...options.frozen,
               solanaBinding: options.binding,
+              solanaSelection: selection,
             },
             steps,
           );
           saveJournal(storage, current);
         }
-        const snapshot = current.frozen as { solanaBinding?: ManagerSolanaBinding };
+        const snapshot = current.frozen as {
+          solanaBinding?: ManagerSolanaBinding;
+          solanaSelection?: SolanaLaunchSelection;
+        };
         if (JSON.stringify(snapshot.solanaBinding) !== JSON.stringify(options.binding))
           throw new Error("SOLANA_BINDING_MISMATCH");
+        if (JSON.stringify(snapshot.solanaSelection) !== JSON.stringify(selection))
+          throw new Error("SOLANA_SELECTION_MISMATCH");
         const driver = createChainLaunchDriver({
           evm: options.evmDriver,
           solanaAddress: options.binding.solanaAddress,

@@ -1,6 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import type { Address } from "viem";
 import { beforeEach, expect, it, vi } from "vitest";
+import { createJournal } from "./journal";
 import {
   type SolanaLaunchIntegrationOptions,
   useSolanaLaunchIntegration,
@@ -23,7 +24,10 @@ vi.mock("./solanaDriver", () => ({
   createChainLaunchDriver: vi.fn(),
   retrySolanaReceive: vi.fn(),
 }));
-vi.mock("./solanaPlan", () => ({ withSolanaLaunchSteps: (steps: unknown) => steps }));
+vi.mock("./solanaPlan", async (original) => ({
+  ...(await original<typeof import("./solanaPlan")>()),
+  withSolanaLaunchSteps: (steps: unknown) => steps,
+}));
 vi.mock("./journal", async (original) => ({
   ...(await original<typeof import("./journal")>()),
   runLaunch: mocks.run,
@@ -36,10 +40,20 @@ function options(): SolanaLaunchIntegrationOptions {
       manager: "0x1111111111111111111111111111111111111111",
       solanaAddress: "key",
       fundContext: "draft",
+      authorization: {
+        hubChainId: 42161,
+        factory: "0x1111111111111111111111111111111111111111",
+        fund: "0x1111111111111111111111111111111111111111",
+        spokeAddress: "key",
+        spokeChainId: "1",
+        nativeMandateHash: `0x${"00".repeat(32)}`,
+        nonce: "0",
+        expiry: "2000000000",
+      },
       evmSignature: "0x",
       acceptance: [],
     },
-    codec: { typedData: vi.fn(), acceptanceMessage: vi.fn() },
+    codec: { acceptanceMessage: vi.fn() },
     costs: [],
     evmCode: vi.fn(),
     evmSteps: [{ id: "create", kind: "create", chain: 42161, dependencies: [] }],
@@ -88,6 +102,36 @@ it("stores binding in the frozen Fund before entering the driver", async () => {
   expect(mocks.check).toHaveBeenCalledBefore(mocks.run);
   expect(input.storage?.setItem).toHaveBeenCalled();
   expect(result.current.error).toBeNull();
+  if (!input.storage) throw new Error("FIXTURE_MISSING");
+  const serialized = vi.mocked(input.storage.setItem).mock.calls[0]?.[1];
+  if (!serialized) throw new Error("FIXTURE_MISSING");
+  const saved = JSON.parse(serialized);
+  expect(saved.frozen.solanaSelection).toEqual({
+    sharePct: 30,
+    kamino: true,
+    maxPriceImpactBps: 1,
+  });
+});
+it("rejects edited pool/impact choices when resuming a frozen journal", async () => {
+  const input = options();
+  const previous = createJournal(
+    input.draftId,
+    input.manager,
+    {
+      solanaBinding: input.binding,
+      solanaSelection: { ...input.selection, maxPriceImpactBps: 1 },
+    },
+    input.evmSteps,
+  );
+  if (!input.storage) throw new Error("FIXTURE_MISSING");
+  vi.mocked(input.storage.getItem).mockReturnValue(JSON.stringify(previous));
+  input.selection.maxPriceImpactBps = 50;
+  const { result } = renderHook(() => useSolanaLaunchIntegration(input));
+  await act(async () => {
+    await result.current.resume();
+  });
+  expect(result.current.error).toBe("SOLANA_SELECTION_MISMATCH");
+  expect(mocks.run).not.toHaveBeenCalled();
 });
 it("refuses the integration while Solana is off", async () => {
   mocks.enabled = false;

@@ -68,6 +68,7 @@ export interface LaunchStep {
 }
 
 export interface SolanaLaunchStep extends Omit<LaunchStep, "kind" | "chain"> {
+  config?: LaunchStep["config"] & { maxPriceImpactBps?: number };
   kind:
     | "bind-solana"
     | "init-solana"

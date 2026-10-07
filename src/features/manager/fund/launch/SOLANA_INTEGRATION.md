@@ -3,7 +3,8 @@
 Solana remains OFF by default (`NEXT_PUBLIC_FEATURE_SOLANA_SPOKE=on` enables
 the infrastructure). No deployment or mainnet transaction is authorized by this work.
 EVM SIWE identity, embedded Ethereum wallets and existing launch journeys remain unchanged.
-Rules: DEC-188, DEC-190, DEC-191, DEC-192, DEC-193, DEC-195, DEC-196.
+Rules: DEC-188, DEC-190, DEC-191, DEC-192, DEC-193, DEC-195, DEC-196, DEC-197, DEC-198,
+DEC-199, DEC-202.
 
 ## UI owner contract (Murilo)
 
@@ -19,7 +20,8 @@ Build these UI pieces:
   `refreshBalance`, `signMessage`, `signTransaction`. No arbitrary first-wallet selection
   when multiple keys are connected. EVM stays connected and remains canonical.
 - Binding disclosure/signatures BEFORE launch: call `signManagerSolanaBinding` with
-  EVM manager `signTypedData`, Solana `signMessage`, draft/Fund context and T2a codec.
+  EVM manager `signTypedData`, Solana `signMessage`, draft context, exact
+  `SolanaBindingAuthorization`, and the acceptance-only `BindingCodec`.
   Present both addresses and the per-Fund immutable authorization. Reusing a key for
   another Fund requires that Fund's signatures. Persist the binding in the draft owner.
 - Funded-wallet gate: call `integration.check()` and display exact
@@ -34,13 +36,31 @@ Build these UI pieces:
 - Arrival state: pending keeper/credit status and `retryReceive()` manual fallback.
   Attestation/mint is not principal credit. Retry never marks the journal complete.
 - Translate new labels/errors in all 11 locales. This integration adds no locale keys.
+- LP selector: `useSolanaLpChoices()` exposes `{ enabled, choices }`. Render
+  `choice.label` and configured `feeTierBps`; submit `choice.poolId` as
+  `selection.raydiumPool`. Options are TSLAx/USDC, NVDAx/USDC and SOL/USDC, not
+  arbitrary pool entry. `tokens` contains mints, decimals and each token program;
+  SOL denotes the WSOL mint, never Fund lamports. No pool is automatically chosen.
+  Stock choices require eligibility, market-hours and live multiplier/oracle checks
+  by the backend; the catalog is not proof these gates passed. Kamino remains separate.
+- Impact input: Manager sets **maximum price impact**, in integer bps, via
+  `selection.maxPriceImpactBps`; 100 bps = 1%. Read bounds/default from
+  `SOLANA_PRICE_IMPACT_CONFIG` (currently 1–500 bps, conservative 1 bps default).
+  Do not label this Jupiter slippage or let the Manager supply quotes, min-out,
+  route instructions or feed prices. These provisional UI bounds/default need
+  confirmation, not a new founder ruling. Display API errors/manual retry for
+  rate limits; never call Jupiter or handle its API key in the browser.
 
 ## Required implementation inputs
 
 `options` supplies manager, draft ID, binding, `BindingCodec`, costs, `evmCode`,
 existing EVM steps/driver, Solana selection, frozen request/plan and authenticated
 `SolanaLaunchBackend`. The frozen object retains the existing EVM request fields and
-adds `solanaBinding`; saved version-1 storage keys are unchanged. A plain EVM driver
+adds `solanaBinding` and normalized `solanaSelection`; saved version-1 storage keys
+are unchanged. Both ratio/open configs persist selected pool and maximum impact.
+Resume rejects a changed binding, pool or impact instead of rebuilding a new plan.
+Older provisional Solana journals without the tuple/selection fail closed and need
+an explicit reviewed migration; old EVM-only journal loading is unchanged. A plain EVM driver
 refuses Solana steps rather than accidentally using an EVM wallet.
 
 `withSolanaLaunchSteps` composes Hub + Robinhood + Solana into one journal, with
@@ -57,15 +77,61 @@ API-provided `{message, attestation}` and receive-and-credit, never direct unres
 
 ## Open interfaces and release gates
 
-- TODO(interface): exact T2a EIP-712 domain/types, Fund context and Solana acceptance
-  bytes. `BindingCodec` is mandatory; no made-up production signing schema is shipped.
+- EIP-712 is pinned to smartcontract integration commit
+  `16e6f68c9c52735d70e6cec21162d75c7b5dc878`:
+  `src/factory/FundFactoryV6.sol`, `src/factory/SolanaDeploymentV6.sol`,
+  `docs/SOLANA-REPORT-V6.md`, and `solana/programs/pp_spoke/src/instructions/core/binding.rs`.
+  Domain: `("PoolParty Solana Fund", "6", 42161, factory)`.
+  Type: `ManagerSolanaBinding(bytes32 solanaKey,address fund,bytes32 spoke,uint256 spokeChainId,bytes32 nativeMandateHash,uint256 nonce,uint256 expiry)`.
+  `fund` is predicted Hub Core; `spoke` is the full-width emitter key, NOT the
+  Fund-state/vault PDA. `nativeMandateHash` must come from the exact canonical
+  native Config ABI encoding; never substitute draft ID or the legacy Mandate hash.
+  Program, mints, venues, routes and accounts are bound through this Config hash;
+  do not append unsigned tuple fields to the contract-defined typed data.
+  Nonce/expiry/spoke chain are decimal strings in JSON, converted losslessly to
+  uint256 only for signing. Read nonce/factory/predicted Core/native hash from the
+  authoritative creation builder. Preflight refuses expired signatures.
+  Golden digest `0x7f0d0fe3056003fb4654f099f5bf8831906d1f6837fd70f880e0980f6d924dc4`
+  matches independent Solidity-style ABI encoding and the Rust fixture.
+- TODO(interface): off-chain Solana acceptance bytes remain an explicit
+  `BindingCodec.acceptanceMessage` dependency. The program currently accepts via
+  the bound `authority: Signer` on `initialize_fund`, not an implemented off-chain
+  Ed25519 acceptance envelope. Do not present the test-only digest countersign codec
+  as production wire format. Backend must map countersign evidence to actual init.
+- TODO(decision): R6.1 requests Mandate-hash PDA seeds and no extra Hub message,
+  while the inspected program derives `[fund, hub_core, spoke_index]` and retains
+  `authenticate_hub_creation()` as an authentication gate. Frontend matches the
+  merged digest rather than inventing a different bootstrap; coordinator/contract
+  owner must reconcile this before enabling transactions.
 - TODO(interface): creation payload containing committed Solana binding/Mandate and
   multi-spoke indexing, init/Kamino/Raydium instruction builders, cost estimation,
   report evidence and authenticated attestation/receive endpoints. They are injectable
   seams, not claims that today's API already supports them. Existing strict EVM
   `createRequestSchema` is deliberately not loosened without the API owner.
-- TODO(decision): swap venue/route and DEC-136 swap/LP overlap remain unresolved.
-  No Jupiter/Raydium route is selected. Backend must fail closed until decided.
+- DEC-197 resolves route venue: Jupiter V2 through OUR authenticated, rate-limited
+  API, server-side key only. No direct fallback or swap/LP pool-separation guard is
+  invented. DEC-198 adds the three Manager-selected LP options; DEC-199 caps CCTP
+  Fast fees at 5 bps with refusal above the cap, not silent Standard fallback.
+- TODO(interface): `SolanaApiSignedQuote` is provisional. Backend supplies
+  `quoteSwap(request, journal)` and `verifySwapQuote(quote, request)`; both are
+  required for swaps. `build(step, journal, lifetime, quote)` receives the verified
+  DTO immediately before wallet signing. Verification must pin the API signer and
+  bind ALL DTO fields to the signed payload, including Fund, Manager Solana Key,
+  pool, mint pair, amounts, reference output, impact, expiry and route. The frontend
+  validates structure/scope/expiry/bound but does not pretend an opaque signature
+  is cryptographically valid. Missing verifier, expired/over-impact/wrong-scope
+  quotes and rate limits fail before transaction building. Quote is never stored
+  as a Manager selection and is refreshed for fresh builds, not uncertain sends.
+- DEC-202 (R6.3): price impact compares output to an authenticated on-chain Solana feed
+  reference, not an unauthenticated Jupiter `priceImpactPct` or Manager reference.
+  API/program must enforce feed freshness, stock multiplier/market-hours checks,
+  signed min-out, exact input/output vaults, Jupiter V2 decoding and real deltas.
+  `referenceAmountOut` is API-signed evidence, not independent feed verification
+  by this frontend. TODO(decision): oracle selection and exact impact rounding/
+  semantics remain with the oracle/API owners; no unsupported formula is invented.
+- TODO(decision): confirm frontend 1–500 bps policy and 1 bps default; this is a
+  conservative temporary cap (matching the researched EVM API upper limit), not
+  a decided protocol limit. It may intentionally make demo swaps refuse execution.
 - TODO(decision): threshold contingency margin/retry allowance is not specified.
   Only measured rent and fee estimates are summed; authoritative budgets must include
   all expected manager steps and any approved safety margin.
@@ -75,5 +141,9 @@ API-provided `{message, attestation}` and receive-and-credit, never direct unres
   with matching explicit CSP hosts before enabling. Credentials never belong in client URLs.
 - T2a/backend must enforce CCTP Fast both directions, `amount - maxFee` in-flight,
   atomic receive/credit and destinationCaller; Wormhole consistency 32 and shared
-  report age; TSLAx Token-2022 eligibility/market-hours/pool checks (SOL/USDC fallback).
+  report age; TSLAx/NVDAx Token-2022 eligibility/market-hours/multiplier/pool checks.
+- Release gate: the inspected init account set includes TSLAx and WSOL but not
+  NVDAx; API/program support for all three catalog options must be verified before
+  presenting executable choices. This patch exposes the ruled UI catalog, not a
+  claim the complete NVDAx custody/valuation path is already deployed.
 - Keep management fee cap 500 bps for this MVP (DEC-196); no fee-cap changes here.
