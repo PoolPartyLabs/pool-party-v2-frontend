@@ -140,6 +140,11 @@ function swapSetup() {
     solanaSelection: { raydiumPool: pool.poolId, maxPriceImpactBps: 100 },
   };
   state.backend.quoteSwap = vi.fn(async () => quote);
+  state.backend.referencePrice = vi.fn(async () => ({
+    status: "available" as const,
+    expiresAt: 2000000000,
+    marketOpen: true,
+  }));
   state.backend.verifySwapQuote = vi.fn(async () => true);
   return { ...state, step, quote };
 }
@@ -155,6 +160,24 @@ it("fetches and verifies the API quote immediately before building the unsigned 
     { blockhash: "fresh", lastValidBlockHeight: BigInt(10) },
     quote,
   );
+});
+it.each([
+  "missing",
+  "stale",
+  "closed",
+])("blocks %s oracle data before swap building", async (failure) => {
+  const { driver, backend, journal, step } = swapSetup();
+  if (failure === "missing") backend.referencePrice = undefined;
+  else
+    backend.referencePrice = vi.fn(async () => ({
+      status: "available" as const,
+      expiresAt: failure === "stale" ? 1 : 2000000000,
+      marketOpen: failure !== "closed",
+    }));
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow();
+  expect(backend.quoteSwap).not.toHaveBeenCalled();
+  expect(backend.build).not.toHaveBeenCalled();
 });
 
 it("refuses an edited LP-open pool before building or signing", async () => {

@@ -7,7 +7,14 @@ import {
   useSolanaLaunchIntegration,
 } from "./useSolanaLaunchIntegration";
 
-const mocks = vi.hoisted(() => ({ check: vi.fn(), run: vi.fn(), enabled: true, address: "key" }));
+const mocks = vi.hoisted(() => ({
+  check: vi.fn(),
+  estimate: vi.fn(),
+  run: vi.fn(),
+  enabled: true,
+  address: "key",
+}));
+vi.mock("@/lib/solana/costs", () => ({ estimateSolanaPlanCosts: mocks.estimate }));
 vi.mock("@/lib/features/useFeatureFlags", () => ({
   useFeatureFlags: () => ({ isEnabled: () => mocks.enabled }),
 }));
@@ -16,7 +23,10 @@ vi.mock("@/lib/solana/useManagerSolanaWallet", () => ({
   readManagerSolanaBalance: vi.fn(),
   useManagerSolanaWallet: () => ({ address: mocks.address, signTransaction: vi.fn() }),
 }));
-vi.mock("@/lib/solana/rpc", () => ({ createManagerSolanaRpc: vi.fn() }));
+vi.mock("@/lib/solana/rpc", () => ({
+  createManagerSolanaRpc: vi.fn(),
+  createSolanaCostRpc: vi.fn(),
+}));
 vi.mock("./lock", () => ({
   withLaunchLock: async (_key: string, action: () => Promise<void>) => action(),
 }));
@@ -26,7 +36,10 @@ vi.mock("./solanaDriver", () => ({
 }));
 vi.mock("./solanaPlan", async (original) => ({
   ...(await original<typeof import("./solanaPlan")>()),
-  withSolanaLaunchSteps: (steps: unknown) => steps,
+  withSolanaLaunchSteps: (steps: unknown[]) => [
+    ...steps,
+    { id: "solana:init", group: "solana", chainKind: "svm", kind: "init-solana" },
+  ],
 }));
 vi.mock("./journal", async (original) => ({
   ...(await original<typeof import("./journal")>()),
@@ -54,7 +67,7 @@ function options(): SolanaLaunchIntegrationOptions {
       acceptance: [],
     },
     codec: { acceptanceMessage: vi.fn() },
-    costs: [],
+    costEstimator: { transactions: vi.fn(), priorityFeeMarginBps: 2000 },
     evmCode: vi.fn(),
     evmSteps: [{ id: "create", kind: "create", chain: 42161, dependencies: [] }],
     selection: { sharePct: 30, kamino: true },
@@ -80,6 +93,9 @@ function options(): SolanaLaunchIntegrationOptions {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.enabled = true;
+  mocks.estimate.mockResolvedValue([
+    { stepId: "solana:init", rentLamports: BigInt(5), feeLamports: BigInt(5) },
+  ]);
   mocks.check.mockResolvedValue({ requiredLamports: BigInt(10), balanceLamports: BigInt(20) });
 });
 it("does not start or persist a launch until funded bound-wallet preflight succeeds", async () => {
@@ -109,7 +125,6 @@ it("stores binding in the frozen Fund before entering the driver", async () => {
   expect(saved.frozen.solanaSelection).toEqual({
     sharePct: 30,
     kamino: true,
-    maxPriceImpactBps: 1,
   });
 });
 it("rejects edited pool/impact choices when resuming a frozen journal", async () => {
@@ -119,7 +134,7 @@ it("rejects edited pool/impact choices when resuming a frozen journal", async ()
     input.manager,
     {
       solanaBinding: input.binding,
-      solanaSelection: { ...input.selection, maxPriceImpactBps: 1 },
+      solanaSelection: { ...input.selection },
     },
     input.evmSteps,
   );
@@ -132,6 +147,51 @@ it("rejects edited pool/impact choices when resuming a frozen journal", async ()
   });
   expect(result.current.error).toBe("SOLANA_SELECTION_MISMATCH");
   expect(mocks.run).not.toHaveBeenCalled();
+});
+it("computes costs from the selected steps and exposes them before balance rejection", async () => {
+  const input = options();
+  mocks.check.mockRejectedValue(new Error("SOLANA_INSUFFICIENT_SOL"));
+  const { result } = renderHook(() => useSolanaLaunchIntegration(input));
+  await act(async () => {
+    await result.current.launch();
+  });
+  expect(mocks.estimate).toHaveBeenCalledWith(
+    [{ id: "solana:init", group: "solana", chainKind: "svm", kind: "init-solana" }],
+    input.costEstimator,
+    undefined,
+  );
+  expect(result.current.costBreakdown).toEqual(await mocks.estimate.mock.results[0]?.value);
+  expect(result.current.preflight).toBeNull();
+});
+it("refuses missing oracle references before estimating or creating a journal", async () => {
+  const input = options();
+  input.selection = {
+    sharePct: 30,
+    kamino: false,
+    raydiumPool: "3ucNos4NbumPLZNWztqGHNFFgkHeRMBQAVemeeomsUxv",
+    maxPriceImpactBps: 0,
+  };
+  const { result } = renderHook(() => useSolanaLaunchIntegration(input));
+  await act(async () => {
+    await result.current.launch();
+  });
+  expect(result.current.error).toBe("SOLANA_ORACLE_REFERENCE_MISSING");
+  expect(mocks.estimate).not.toHaveBeenCalled();
+  expect(input.storage?.setItem).not.toHaveBeenCalled();
+});
+it("rejects selection changes during asynchronous preflight before journaling", async () => {
+  const input = options();
+  mocks.estimate.mockImplementation(async () => {
+    input.selection.sharePct = 40;
+    return [{ stepId: "solana:init", rentLamports: BigInt(5), feeLamports: BigInt(5) }];
+  });
+  const { result } = renderHook(() => useSolanaLaunchIntegration(input));
+  await act(async () => {
+    await result.current.launch();
+  });
+  expect(result.current.error).toBe("SOLANA_SELECTION_MISMATCH");
+  expect(result.current.preflight).toBeNull();
+  expect(input.storage?.setItem).not.toHaveBeenCalled();
 });
 it("refuses the integration while Solana is off", async () => {
   mocks.enabled = false;

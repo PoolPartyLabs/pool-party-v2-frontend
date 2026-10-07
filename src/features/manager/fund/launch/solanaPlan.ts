@@ -27,7 +27,10 @@ export function normalizeSolanaLaunchSelection(
     sharePct: selection.sharePct,
     kamino: selection.kamino,
     raydiumPool: selection.raydiumPool,
-    maxPriceImpactBps: resolveMaxPriceImpactBps(selection.maxPriceImpactBps),
+    maxPriceImpactBps:
+      selection.raydiumPool || selection.maxPriceImpactBps !== undefined
+        ? resolveMaxPriceImpactBps(selection.maxPriceImpactBps)
+        : undefined,
   };
 }
 

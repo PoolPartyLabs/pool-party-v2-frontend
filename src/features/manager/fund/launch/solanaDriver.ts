@@ -1,5 +1,7 @@
 import { isFeatureEnabled } from "@/lib/features";
 import type { ManagerSolanaBinding } from "@/lib/solana/binding";
+import { requireSolanaLpChoice } from "@/lib/solana/lpChoices";
+import { requireSolanaOracleReference, type SolanaOracleReference } from "@/lib/solana/oracle";
 import {
   resolveMaxPriceImpactBps,
   type SolanaApiSignedQuote,
@@ -16,6 +18,7 @@ import { isEvmLaunchStep, type LaunchStep, type SolanaLaunchStep } from "./plan"
 import type { SolanaLaunchSelection } from "./solanaPlan";
 
 export interface SolanaLaunchBackend {
+  referencePrice?(poolId: string): Promise<SolanaOracleReference>;
   /** TODO(interface): authenticated API builders must pin programs, accounts and Fund amounts. */
   build(
     step: SolanaLaunchStep,
@@ -92,6 +95,11 @@ export function createChainLaunchDriver(input: {
           let quote: SolanaApiSignedQuote | undefined;
           let request: SolanaSwapQuoteRequest | undefined;
           if (step.kind === "swap-to-ratio" || step.kind === "raydium-open") {
+            const choice = requireSolanaLpChoice(step.config?.poolId ?? "");
+            requireSolanaOracleReference(
+              await input.backend.referencePrice?.(choice.poolId),
+              choice.stockMarketHoursRequired,
+            );
             const frozen = journal.frozen as {
               solanaBinding?: ManagerSolanaBinding;
               solanaSelection?: SolanaLaunchSelection;

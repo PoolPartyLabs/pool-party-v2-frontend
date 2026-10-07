@@ -4,8 +4,15 @@ import { useRef, useState } from "react";
 import type { Address } from "viem";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import type { BindingCodec, ManagerSolanaBinding } from "@/lib/solana/binding";
-import { checkSolanaPrelaunch, type SolanaStepCost } from "@/lib/solana/preflight";
-import { createManagerSolanaRpc } from "@/lib/solana/rpc";
+import {
+  estimateSolanaPlanCosts,
+  type SolanaComputedStepCost,
+  type SolanaPlanCostEstimator,
+} from "@/lib/solana/costs";
+import { requireSolanaLpChoice } from "@/lib/solana/lpChoices";
+import { requireSolanaOracleReference } from "@/lib/solana/oracle";
+import { checkSolanaPrelaunch } from "@/lib/solana/preflight";
+import { createManagerSolanaRpc, createSolanaCostRpc } from "@/lib/solana/rpc";
 import {
   readManagerSolanaBalance,
   useManagerSolanaWallet,
@@ -21,7 +28,7 @@ import {
   saveJournal,
 } from "./journal";
 import { withLaunchLock } from "./lock";
-import type { LaunchStep } from "./plan";
+import type { LaunchStep, SolanaLaunchStep } from "./plan";
 import {
   createChainLaunchDriver,
   retrySolanaReceive,
@@ -38,7 +45,7 @@ export interface SolanaLaunchIntegrationOptions {
   manager: Address;
   binding: ManagerSolanaBinding;
   codec: BindingCodec;
-  costs: readonly SolanaStepCost[];
+  costEstimator: SolanaPlanCostEstimator;
   evmCode: (manager: Address) => Promise<string | undefined>;
   evmSteps: LaunchStep[];
   selection: SolanaLaunchSelection;
@@ -60,22 +67,50 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
   const [journal, setJournal] = useState<LaunchJournal | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [costBreakdown, setCostBreakdown] = useState<readonly SolanaComputedStepCost[] | null>(
+    null,
+  );
   const [preflight, setPreflight] = useState<{
     requiredLamports: bigint;
     balanceLamports: bigint;
   } | null>(null);
   const verify = async () => {
+    setPreflight(null);
+    setCostBreakdown(null);
     if (!enabled) throw new Error("SOLANA_DISABLED");
+    const selectionSnapshot = JSON.stringify(normalizeSolanaLaunchSelection(options.selection));
+    const bindingSnapshot = JSON.stringify(options.binding);
+    const steps = withSolanaLaunchSteps(options.evmSteps, options.selection);
+    if (options.selection.raydiumPool) {
+      const choice = requireSolanaLpChoice(options.selection.raydiumPool);
+      requireSolanaOracleReference(
+        await options.backend.referencePrice?.(choice.poolId),
+        choice.stockMarketHoursRequired,
+      );
+    }
+    const costs = await estimateSolanaPlanCosts(
+      steps.filter((step): step is SolanaLaunchStep => step.group === "solana"),
+      options.costEstimator,
+      options.costEstimator.rpc ?? createSolanaCostRpc(),
+    );
+    setCostBreakdown(costs);
     const checked = await checkSolanaPrelaunch({
       manager: options.manager,
       fundContext: options.draftId,
       connectedAddress: addressRef.current,
       binding: options.binding,
       codec: options.codec,
-      costs: options.costs,
+      costs,
       balance: readManagerSolanaBalance,
       evmCode: options.evmCode,
     });
+    if (
+      addressRef.current !== options.binding.solanaAddress ||
+      JSON.stringify(options.binding) !== bindingSnapshot
+    )
+      throw new Error("SOLANA_BINDING_MISMATCH");
+    if (JSON.stringify(normalizeSolanaLaunchSelection(options.selection)) !== selectionSnapshot)
+      throw new Error("SOLANA_SELECTION_MISMATCH");
     setPreflight(checked);
     return checked;
   };
@@ -150,6 +185,7 @@ export function useSolanaLaunchIntegration(options: SolanaLaunchIntegrationOptio
     enabled,
     wallet,
     preflight,
+    costBreakdown,
     journal,
     busy,
     error,

@@ -18,7 +18,7 @@ it("offers no pools while the feature is disabled", () => {
 it("exposes three distinct verified pools with their token programs and fees", () => {
   flags.enabled = true;
   const { choices } = renderHook(() => useSolanaLpChoices()).result.current;
-  expect(choices).toBe(SOLANA_LP_CHOICES);
+  expect(choices.every((choice) => choice.availability.status === "unavailable")).toBe(true);
   expect(choices.map((choice) => choice.label)).toEqual(["TSLAx/USDC", "NVDAx/USDC", "SOL/USDC"]);
   expect(choices.map((choice) => choice.poolId)).toEqual([
     "8aDaBQkTrS6HVMjyc6EZebgdiaXhLYGriDWKWWp1NpFF",
@@ -36,4 +36,19 @@ it("exposes three distinct verified pools with their token programs and fees", (
     true,
   );
   expect(Object.isFrozen(choices[0]?.tokens[0])).toBe(true);
+});
+it("exposes available SOL and unavailable stock reference reasons", () => {
+  flags.enabled = true;
+  const sol = SOLANA_LP_CHOICES[2];
+  if (!sol) throw new Error("FIXTURE_MISSING");
+  const { choices } = renderHook(() =>
+    useSolanaLpChoices({
+      [sol.poolId]: { status: "available", expiresAt: 2000000000, marketOpen: true },
+    }),
+  ).result.current;
+  expect(choices[2]?.availability).toEqual({ status: "available" });
+  expect(choices[0]?.availability).toEqual({
+    status: "unavailable",
+    reason: "SOLANA_ORACLE_REFERENCE_MISSING",
+  });
 });

@@ -1,17 +1,15 @@
 import { z } from "zod";
 import { requireSolanaLpChoice } from "./lpChoices";
 
-/** TODO(decision): confirm API policy/default; 1 bps defaults to the strictest positive bound. */
+/** DEC-203/204: explicit u16 input; 0 or >= 10,000 disables only the Manager maximum. */
 export const SOLANA_PRICE_IMPACT_CONFIG = Object.freeze({
-  defaultBps: 1,
-  minimumBps: 1,
-  maximumBps: 500,
+  minimumBps: 0,
+  maximumBps: 65535,
 });
 
-export function resolveMaxPriceImpactBps(
-  value: number = SOLANA_PRICE_IMPACT_CONFIG.defaultBps,
-): number {
+export function resolveMaxPriceImpactBps(value: number | undefined): number {
   if (
+    value === undefined ||
     !Number.isInteger(value) ||
     value < SOLANA_PRICE_IMPACT_CONFIG.minimumBps ||
     value > SOLANA_PRICE_IMPACT_CONFIG.maximumBps
@@ -67,7 +65,7 @@ export function validateSolanaApiQuote(
     quote.fund.toLowerCase() !== request.fund.toLowerCase() ||
     quote.solanaAddress !== request.solanaAddress ||
     quote.maxPriceImpactBps !== maximum ||
-    quote.priceImpactBps > maximum ||
+    (maximum > 0 && maximum < 10000 && quote.priceImpactBps > maximum) ||
     quote.expiresAt <= now ||
     quote.tokenIn === quote.tokenOut ||
     !mints.includes(quote.tokenIn) ||
