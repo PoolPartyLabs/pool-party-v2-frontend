@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name graphModel tests
- * @implements-rules-version v1 (POO-2156 rules v1)
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2156 rules v1)
  * @analytics-events none, pure helpers of the graph renderer: nothing here is rendered or tracked.
  *
  * What the renderer derives from a laid-out graph before it draws anything (handoff v1.2 [L7],
@@ -197,7 +197,7 @@ describe("graphItems", () => {
     const items = graphItems(layout);
     expect(new Set(keys(items)).size).toBe(items.length);
     expect(items.filter((item) => item.type === "group")).toHaveLength(2);
-    expect(items.filter((item) => item.type === "bridge")).toHaveLength(2);
+    expect(items.filter((item) => item.type === "bridge")).toHaveLength(4);
     expect(items.filter((item) => item.type === "template")).toHaveLength(4);
     // Every node of the layout is an item: nothing silently dropped.
     expect(items).toHaveLength(

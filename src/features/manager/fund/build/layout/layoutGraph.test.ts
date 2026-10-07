@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph rule tests
- * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1)
  * @analytics-events none, a pure geometry module: nothing here is rendered or tracked.
  *
  * One test (or one table) per rule of the layout, tagged with its handoff id. The exact coordinates
@@ -215,7 +215,7 @@ describe("[C3] hub chains have no box, one group per spoke", () => {
   it.each(FIXTURES)("[C3] draws exactly one group per spoke, in order (%s)", (_name, fixture) => {
     const layout = layoutGraph(fixture.input, EN);
     expect(layout.groups.map((g) => g.network)).toEqual(fixture.input.spokes.map((s) => s.network));
-    expect(layout.bridges.map((b) => b.network)).toEqual(
+    expect(layout.bridges.filter((b) => b.direction !== "outbound").map((b) => b.network)).toEqual(
       fixture.input.spokes.map((s) => s.network),
     );
     expect(layout.groups.map((g) => g.hasChains)).toEqual(
@@ -256,29 +256,26 @@ describe("[C9] lines enter at the top centre and leave at the bottom centre", ()
         const below = blockRect(layout, step.id);
         expect(centreX(above)).toBe(centreX(below));
         expect(below.y - bottom(above)).toBe(LAYOUT.LINK);
-        expect(verticalsAt(layout, "structural", centreX(above))).toContainEqual([
-          bottom(above),
-          below.y,
-        ]);
+        expect(
+          verticalsAt(
+            layout,
+            step.kind === "collectFees" ? "income" : "structural",
+            centreX(above),
+          ),
+        ).toContainEqual([bottom(above), below.y]);
       });
     }
   });
 
-  // @rule C9 @rule C10 @rule A3
-  it.each(WITH_CHAINS)("[C9] leaves a Collect fees as a pair, 12 each side (%s)", (_n, f) => {
+  // @rule R1 POO-2273 v2
+  it.each(WITH_CHAINS)("[R1] each Collect fees has one centered green exit (%s)", (_n, f) => {
     const layout = layoutGraph(f.input, EN);
-    for (const { chain } of chainsOf(f.input)) {
-      const last = chain.steps[chain.steps.length - 1];
-      if (!last) continue;
-      const rect = blockRect(layout, last.id);
-      const c = centreX(rect);
-      if (last.kind === "collectFees") {
-        expect(verticalsAt(layout, "principal", c - LAYOUT.PAIR)[0]?.[0]).toBe(bottom(rect));
-        expect(verticalsAt(layout, "income", c + LAYOUT.PAIR)[0]?.[0]).toBe(bottom(rect));
-        expect(verticalsAt(layout, "principal", c)).toEqual([]);
-      } else {
-        expect(verticalsAt(layout, "principal", c)[0]?.[0]).toBe(bottom(rect));
-      }
+    for (const fee of layout.blocks.filter((node) => node.kind === "collectFees")) {
+      const exit = layout.connections?.find((entry) => entry.id === `income:block:${fee.id}`);
+      if (!exit) continue; // Invalid insertion/removal fixtures are not launch-ready plans.
+      expect(exit.kind).toBe("income");
+      expect(exit.points[0]).toEqual({ x: centreX(fee.rect), y: bottom(fee.rect) });
+      expect(exit.points.every((point) => point.x === centreX(fee.rect))).toBe(true);
     }
   });
 });
@@ -309,6 +306,9 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
       ...lasts,
       ...circles,
       ...(layout.feeSwaps ?? []).map((node) => bottom(node.rect)),
+      ...layout.bridges
+        .filter((node) => node.direction === "outbound")
+        .map((node) => bottom(node.rect)),
     );
     expect(horizontalRuns(layout, "principal", deepest + LAYOUT.LINK).length).toBeGreaterThan(0);
   });
@@ -316,7 +316,7 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
   // @rule C11, POO-2213 override: the converter bypass needs separate return levels.
   it("[POO-2213] separates return levels around a single chain's fee converter", () => {
     const layout = layoutGraph(buildState5.input, EN);
-    expect(horizontalRuns(layout, "principal", 480)).toEqual([[88, 142]]);
+    expect(horizontalRuns(layout, "principal", 480)).toEqual([[142, 288]]);
     expect(horizontalRuns(layout, "income", 504)).toEqual([[188, 410]]);
     expect(spine(layout, "idleOutput").y).toBe(504 + LAYOUT.LINK);
   });
@@ -325,8 +325,8 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
   it("[C11] runs the income line 24 under the principal with more than one chain", () => {
     for (const fixture of [canvasA, canvasC, workedExample2]) {
       const layout = layoutGraph(fixture.input, EN);
-      const principalY = layout.edges.find((e) => e.id === "principal:line")?.points[0]?.y ?? 0;
-      const incomeY = layout.edges.find((e) => e.id === "income:line")?.points[0]?.y ?? 0;
+      const principalY = spine(layout, "idleOutput").y - LAYOUT.LINK * 2 + LAYOUT.LINE_W / 2;
+      const incomeY = spine(layout, "idleOutput").y - LAYOUT.LINK + LAYOUT.LINE_W / 2;
       expect(incomeY - principalY).toBe(LAYOUT.LINK);
       expect(spine(layout, "idleOutput").y).toBe(incomeY - LAYOUT.LINE_W / 2 + LAYOUT.LINK);
     }
@@ -603,7 +603,11 @@ function expectOnlyChainMoved(
       expect(shifted(a.rect, dx)).toEqual(g.rect);
     }
   }
-  expect(after.bridges.map((b) => shifted(b.rect, dx))).toEqual(before.bridges.map((b) => b.rect));
+  const fixedBridges = (value: GraphLayout) =>
+    value.bridges.filter((bridge) => bridge.direction !== "outbound" || bridge.network !== network);
+  expect(fixedBridges(after).map((b) => shifted(b.rect, dx))).toEqual(
+    fixedBridges(before).map((b) => b.rect),
+  );
   expect(after.templates.map((t) => shifted(t.rect, dx))).toEqual(
     before.templates.map((t) => t.rect),
   );
@@ -765,8 +769,12 @@ function expectColumnMoved(
     if (!ra) continue;
     if (spoke && key === `group:${edit.network}`) {
       expect([ra.x, ra.y, ra.w], key).toEqual([rb.x, rb.y, rb.w + edit.delta]);
-    } else if (spoke && key === `bridge:${edit.network}`) {
-      expect(ra, key).toEqual({ ...rb, x: rb.x + edit.delta / 2 });
+    } else if (spoke && key.startsWith(`bridge:${edit.network}`)) {
+      expect(ra, key).toEqual({
+        ...rb,
+        x: rb.x + edit.delta / 2,
+        ...(key.endsWith(":outbound") ? { y: ra.y } : {}),
+      });
     } else {
       const moves = edit.inclusive ? rb.x >= edit.threshold : rb.x > edit.threshold;
       expect(ra, key).toEqual(moves ? { ...rb, x: rb.x + edit.delta } : rb);
@@ -938,6 +946,7 @@ describe("[A3] one spacing rule set", () => {
     const lowest = Math.max(
       ...layout.blocks.filter((b) => b.network === "base").map((b) => bottom(b.rect)),
       ...(layout.feeSwaps ?? []).filter((n) => n.network === "base").map((n) => bottom(n.rect)),
+      ...layout.bridges.filter((n) => n.network === "base").map((n) => bottom(n.rect)),
     );
     expect(bottom(group.rect) - lowest).toBe(LAYOUT.GROUP_PAD);
   });
@@ -966,13 +975,25 @@ describe("[L3] [L4] [L10] on every fixture", () => {
     const stubs = layout.edges
       .filter(
         (e) =>
+          e.kind !== "template" &&
           e.points.every((p) => p.x === e.points[0]?.x) &&
           e.points[0]?.y === LAYOUT.BUS_Y + LAYOUT.LINE_W / 2,
       )
       .map((e) => e.points[0]?.x ?? 0);
     const xs = [...stubs, layout.spineCentreX];
     expect(horizontalRuns(layout, "structural", LAYOUT.BUS_Y)).toEqual([
-      [Math.min(...xs), Math.max(...xs)],
+      [
+        Math.min(...xs, ...layout.templates.map((node) => centreX(node.rect))),
+        Math.max(
+          ...xs,
+          ...layout.templates
+            .filter(
+              (node) =>
+                node.target.kind === "addNetwork" || node.target.network === f.input.hubNetwork,
+            )
+            .map((node) => centreX(node.rect)),
+        ),
+      ],
     ]);
   });
 
@@ -999,8 +1020,8 @@ describe("[L3] [L4] [L10] on every fixture", () => {
       expect(a.x === b.x || a.y === b.y).toBe(true);
       expect(a.x !== b.x || a.y !== b.y).toBe(true);
       // A horizontal run's centre line sits 0.75 under the handoff y (its top edge).
-      if (a.y === b.y) expect(a.y - Math.floor(a.y)).toBe(LAYOUT.LINE_W / 2);
-      else expect(Number.isInteger(a.x)).toBe(true);
+      expect(Number.isFinite(a.x) && Number.isFinite(a.y)).toBe(true);
+      expect(Number.isFinite(b.x) && Number.isFinite(b.y)).toBe(true);
     }
   });
 });

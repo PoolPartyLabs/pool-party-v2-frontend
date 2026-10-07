@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name incomeSwap tests
- * @implements-rules-version v1 (POO-2213)
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2213)
  * @analytics-events none, pure canvas geometry
  */
 import { describe, expect, it } from "vitest";
@@ -54,10 +54,9 @@ describe("Build connection polish (POO-2235)", () => {
   });
   it("joins bus centerlines and exposes clipped block-to-block connections", () => {
     const graph = layoutGraph(BUILD_CANVAS_FIXTURES.canvasC.input, { startHereWidth: 420 });
-    const bus = graph.edges.find((edge) => edge.id === "bus:idleInput");
+    expect(graph.semantic).toBeDefined();
     const stub = graph.edges.find((edge) => edge.id === "stub:chain:c-pool");
-    expect(bus).toBeDefined();
-    expect(stub?.points[0]?.y).toBe(bus?.points[0]?.y);
+    expect(stub?.points[0]?.y).toBe(LAYOUT.BUS_Y + LAYOUT.LINE_W / 2);
     const connection = graph.connections?.find((entry) => entry.id === "stub:chain:c-pool");
     expect(connection?.points.length).toBeGreaterThan(2);
     expect(connection?.points.at(-1)?.y).toBe(graph.blocks[0]?.rect.y);

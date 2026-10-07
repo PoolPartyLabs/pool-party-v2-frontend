@@ -1,26 +1,14 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph oracle tests
- * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1)
  * @analytics-events none, a pure geometry module: nothing here is rendered or tracked.
  *
- * Table-driven oracles: the layout of a fixture must reproduce every coordinate of its source.
- *
- * Two kinds of source:
- *
- * 1. The handoff v1.2 tables and numbers: worked example 1 (canvas C, 608 x 674), worked example 2
- *    (928 x 772), Build state 5 (552 x 650) and canvas D (468 x 572 with a 420 px sentence). Each
- *    number is checked exactly; a handoff "line" is the union of the horizontal runs of that kind
- *    at that y (rule L10); a share label is centred within 0.5 px.
- * 2. The Figma frames, measured node by node (prerequisite task PT-1, file jjOf5DL9uVEB7WBR9nGb4A,
- *    read 2026-10-03): canvas A (graph 8219:2481), canvas B (8207:2481), canvas C (8220:2481),
- *    canvas D (8172:2110), Build state 3 (8130:4749) and Build state 5 (8145:2689). Every box is
- *    compared exactly, the full list of line rectangles is compared as a multiset (Figma draws each
- *    segment as a 1.5 px rectangle: x - 0.75 for a vertical, the top edge for a horizontal), share
- *    labels and network chips within 0.5 px (Figma centres a 45 px label at x + 22.5), ports exactly.
- *    Build state 5 is drawn scaled to fit (0.8981 = 495.77 / 552): its values are the Figma numbers
- *    divided back by that scale, each within 0.01 of the value written here.
+ * Fixed node positions, insertion ports, labels and chips retain the October 3 Figma oracles.
+ * POO-2273 v2 replaces historical return-edge snapshots with explicit origin/endpoints and
+ * shared return Bridge hull checks. The October 7 handoff takes precedence for these returns.
  */
+
 import { describe, expect, it } from "vitest";
 import {
   type BuildCanvasFixture,
@@ -32,19 +20,17 @@ import {
   canvasD,
   workedExample2,
 } from "@/mocks/data/buildCanvasFixtures";
-import type { EdgeKind } from "./graphTypes";
+import { validateSemanticGraph } from "../graph/semanticGraph";
 import { layoutGraph } from "./layoutGraph";
 import {
   box,
+  edgeAsFigmaRect,
   type FigmaEdge,
-  figmaEdges,
   horizontalRuns,
   K,
   labelKey,
   nodeRects,
   sortEdges,
-  verticalsAt,
-  verticalXs,
 } from "./layoutTestKit";
 
 const EN = { startHereWidth: 420 };
@@ -62,10 +48,6 @@ interface FigmaOracle {
   labels: Array<[string, number, number]>;
   ports: Array<["before" | "after", string, number, number]>;
   chips?: Array<[string, number, number]>;
-}
-
-function toFigma(rows: EdgeRow[]): FigmaEdge[] {
-  return sortEdges(rows.map(([k, x, y, w, h]): FigmaEdge => [K[k] as EdgeKind, x, y, w, h]));
 }
 
 // ---------------------------------------------------------------------------
@@ -435,240 +417,21 @@ const FIGMA_ORACLES: FigmaOracle[] = [
 
 // POO-2213, user override 2026-10-04: derived fee conversion adds a 50px row.
 // Return buses move below it; a left principal bypass can require separate income level (+24px).
-const FEE_RETURN_OVERRIDES: Record<
-  string,
-  { size: [number, number]; nodes: Record<string, Box>; edges: FigmaEdge[] }
-> = {
-  "canvas A": {
-    size: [2080, 822],
-    nodes: {
-      deposit: [922, 24, 236, 62],
-      idleInput: [922, 110, 236, 62],
-      idleOutput: [788, 626, 236, 62],
-      income: [1056, 626, 236, 62],
-      withdraw: [922, 736, 236, 62],
-      "a-hub-1-swap": [24, 244, 176, 26],
-      "a-hub-1-pool": [24, 294, 176, 62],
-      "a-hub-1-fees": [24, 380, 176, 26],
-      "a-hub-2-supply": [232, 244, 176, 62],
-      "a-hub-2-swap": [232, 330, 176, 26],
-      "a-hub-2-pool": [232, 380, 176, 62],
-      "a-hub-2-fees": [232, 466, 176, 26],
-      "a-hub-3-swap": [440, 244, 176, 26],
-      "a-hub-3-supply": [440, 294, 176, 62],
-      "a-hub-3-borrow": [440, 380, 176, 62],
-      "a-base-1-swap": [744, 342, 176, 26],
-      "a-base-1-pool": [744, 392, 176, 62],
-      "a-base-1-fees": [744, 478, 176, 26],
-      "a-base-2-swap": [952, 342, 176, 26],
-      "a-base-2-pool": [952, 392, 176, 62],
-      "a-base-2-fees": [952, 478, 176, 26],
-      "a-base-3-supply": [1160, 342, 176, 62],
-      "a-rh-1-swap": [1480, 342, 176, 26],
-      "a-rh-1-pool": [1480, 392, 176, 62],
-      "a-rh-1-fees": [1480, 478, 176, 26],
-      "a-rh-2-swap": [1688, 342, 176, 26],
-      "a-rh-2-pool": [1688, 392, 176, 62],
-      "a-rh-2-fees": [1688, 478, 176, 26],
-      "fee-swap:a-hub-1-fees": [24, 430, 176, 26],
-      "fee-swap:a-hub-2-fees": [232, 516, 176, 26],
-      "fee-swap:a-base-1-fees": [744, 528, 176, 26],
-      "fee-swap:a-base-2-fees": [952, 528, 176, 26],
-      "fee-swap:a-rh-1-fees": [1480, 528, 176, 26],
-      "fee-swap:a-rh-2-fees": [1688, 528, 176, 26],
-      "bridge:base": [988, 244, 176, 26],
-      "bridge:robinhood": [1620, 244, 176, 26],
-      "group:base": [728, 228, 696, 342],
-      "group:robinhood": [1464, 228, 488, 342],
-      "addProtocol:arbitrum": [648, 244, 40, 40],
-      "addProtocol:base": [1368, 342, 40, 40],
-      "addProtocol:robinhood": [1896, 342, 40, 40],
-      addNetwork: [1992, 228, 64, 72],
-    },
-    edges: [
-      ["income", 111.25, 418, 1.5, 12],
-      ["income", 111.25, 456, 1.5, 146],
-      ["income", 112, 418, 12, 1.5],
-      ["income", 112, 602, 1664, 1.5],
-      ["income", 123.25, 406, 1.5, 12],
-      ["income", 319.25, 504, 1.5, 12],
-      ["income", 319.25, 542, 1.5, 60],
-      ["income", 320, 504, 12, 1.5],
-      ["income", 331.25, 492, 1.5, 12],
-      ["income", 831.25, 516, 1.5, 12],
-      ["income", 831.25, 554, 1.5, 48],
-      ["income", 832, 516, 12, 1.5],
-      ["income", 843.25, 504, 1.5, 12],
-      ["income", 1039.25, 516, 1.5, 12],
-      ["income", 1039.25, 554, 1.5, 48],
-      ["income", 1040, 516, 12, 1.5],
-      ["income", 1051.25, 504, 1.5, 12],
-      ["income", 1173.25, 602, 1.5, 24],
-      ["income", 1173.25, 688, 1.5, 24],
-      ["income", 1567.25, 516, 1.5, 12],
-      ["income", 1567.25, 554, 1.5, 48],
-      ["income", 1568, 516, 12, 1.5],
-      ["income", 1579.25, 504, 1.5, 12],
-      ["income", 1775.25, 516, 1.5, 12],
-      ["income", 1775.25, 554, 1.5, 48],
-      ["income", 1776, 516, 12, 1.5],
-      ["income", 1787.25, 504, 1.5, 12],
-      ["principal", 11.25, 418, 1.5, 160],
-      ["principal", 12, 418, 88, 1.5],
-      ["principal", 12, 578, 1664, 1.5],
-      ["principal", 99.25, 406, 1.5, 12],
-      ["principal", 219.25, 504, 1.5, 74],
-      ["principal", 220, 504, 88, 1.5],
-      ["principal", 307.25, 492, 1.5, 12],
-      ["principal", 527.25, 442, 1.5, 136],
-      ["principal", 731.25, 516, 1.5, 62],
-      ["principal", 732, 516, 88, 1.5],
-      ["principal", 819.25, 504, 1.5, 12],
-      ["principal", 905.25, 578, 1.5, 48],
-      ["principal", 939.25, 516, 1.5, 62],
-      ["principal", 940, 516, 88, 1.5],
-      ["principal", 1027.25, 504, 1.5, 12],
-      ["principal", 1247.25, 404, 1.5, 174],
-      ["principal", 1467.25, 516, 1.5, 62],
-      ["principal", 1468, 516, 88, 1.5],
-      ["principal", 1555.25, 504, 1.5, 12],
-      ["principal", 1675.25, 516, 1.5, 62],
-      ["principal", 1676, 516, 88, 1.5],
-      ["principal", 1763.25, 504, 1.5, 12],
-      ["structural", 111.25, 196, 1.5, 48],
-      ["structural", 111.25, 270, 1.5, 24],
-      ["structural", 111.25, 356, 1.5, 24],
-      ["structural", 112, 196, 1912, 1.5],
-      ["structural", 319.25, 196, 1.5, 48],
-      ["structural", 319.25, 306, 1.5, 24],
-      ["structural", 319.25, 356, 1.5, 24],
-      ["structural", 319.25, 442, 1.5, 24],
-      ["structural", 527.25, 196, 1.5, 48],
-      ["structural", 527.25, 270, 1.5, 24],
-      ["structural", 527.25, 356, 1.5, 24],
-      ["structural", 831.25, 294, 1.5, 48],
-      ["structural", 831.25, 368, 1.5, 24],
-      ["structural", 831.25, 454, 1.5, 24],
-      ["structural", 832, 294, 556, 1.5],
-      ["structural", 905.25, 688, 1.5, 24],
-      ["structural", 906, 712, 268, 1.5],
-      ["structural", 1039.25, 86, 1.5, 24],
-      ["structural", 1039.25, 172, 1.5, 24],
-      ["structural", 1039.25, 294, 1.5, 48],
-      ["structural", 1039.25, 368, 1.5, 24],
-      ["structural", 1039.25, 454, 1.5, 24],
-      ["structural", 1039.25, 712, 1.5, 24],
-      ["structural", 1075.25, 196, 1.5, 48],
-      ["structural", 1075.25, 270, 1.5, 24],
-      ["structural", 1247.25, 294, 1.5, 48],
-      ["structural", 1567.25, 294, 1.5, 48],
-      ["structural", 1567.25, 368, 1.5, 24],
-      ["structural", 1567.25, 454, 1.5, 24],
-      ["structural", 1568, 294, 348, 1.5],
-      ["structural", 1707.25, 196, 1.5, 48],
-      ["structural", 1707.25, 270, 1.5, 24],
-      ["structural", 1775.25, 294, 1.5, 48],
-      ["structural", 1775.25, 368, 1.5, 24],
-      ["structural", 1775.25, 454, 1.5, 24],
-      ["template", 667.25, 196, 1.5, 48],
-      ["template", 1387.25, 294, 1.5, 48],
-      ["template", 1915.25, 294, 1.5, 48],
-      ["template", 2023.25, 196, 1.5, 32],
-    ],
-  },
-  "canvas C": {
-    size: [608, 724],
-    nodes: {
-      deposit: [186, 24, 236, 62],
-      idleInput: [186, 110, 236, 62],
-      idleOutput: [52, 528, 236, 62],
-      income: [320, 528, 236, 62],
-      withdraw: [186, 638, 236, 62],
-      "c-pool-swap": [24, 244, 176, 26],
-      "c-pool-pool": [24, 294, 176, 62],
-      "c-pool-fees": [24, 380, 176, 26],
-      "c-supply-supply": [232, 244, 176, 62],
-      "fee-swap:c-pool-fees": [24, 430, 176, 26],
-      "addProtocol:arbitrum": [440, 244, 40, 40],
-      addNetwork: [520, 228, 64, 72],
-    },
-    edges: [
-      ["income", 111.25, 418, 1.5, 12],
-      ["income", 111.25, 456, 1.5, 48],
-      ["income", 112, 418, 12, 1.5],
-      ["income", 112, 504, 326, 1.5],
-      ["income", 123.25, 406, 1.5, 12],
-      ["income", 437.25, 504, 1.5, 24],
-      ["income", 437.25, 590, 1.5, 24],
-      ["principal", 11.25, 418, 1.5, 62],
-      ["principal", 12, 418, 88, 1.5],
-      ["principal", 12, 480, 308, 1.5],
-      ["principal", 99.25, 406, 1.5, 12],
-      ["principal", 169.25, 480, 1.5, 48],
-      ["principal", 319.25, 306, 1.5, 174],
-      ["structural", 111.25, 196, 1.5, 48],
-      ["structural", 111.25, 270, 1.5, 24],
-      ["structural", 111.25, 356, 1.5, 24],
-      ["structural", 112, 196, 440, 1.5],
-      ["structural", 169.25, 590, 1.5, 24],
-      ["structural", 170, 614, 268, 1.5],
-      ["structural", 303.25, 86, 1.5, 24],
-      ["structural", 303.25, 172, 1.5, 24],
-      ["structural", 303.25, 614, 1.5, 24],
-      ["structural", 319.25, 196, 1.5, 48],
-      ["template", 459.25, 196, 1.5, 48],
-      ["template", 551.25, 196, 1.5, 32],
-    ],
-  },
-  "Build state 5": {
-    size: [552, 724],
-    nodes: {
-      deposit: [158, 24, 236, 62],
-      idleInput: [158, 110, 236, 62],
-      idleOutput: [24, 528, 236, 62],
-      income: [292, 528, 236, 62],
-      withdraw: [158, 638, 236, 62],
-      "s5-swap": [100, 244, 176, 26],
-      "s5-pool": [100, 294, 176, 62],
-      "s5-fees": [100, 380, 176, 26],
-      "fee-swap:s5-fees": [100, 430, 176, 26],
-      "addProtocol:arbitrum": [308, 244, 40, 40],
-      addNetwork: [388, 228, 64, 72],
-    },
-    edges: [
-      ["income", 187.25, 418, 1.5, 12],
-      ["income", 187.25, 456, 1.5, 48],
-      ["income", 188, 418, 12, 1.5],
-      ["income", 188, 504, 222, 1.5],
-      ["income", 199.25, 406, 1.5, 12],
-      ["income", 409.25, 504, 1.5, 24],
-      ["income", 409.25, 590, 1.5, 24],
-      ["principal", 87.25, 418, 1.5, 62],
-      ["principal", 88, 418, 88, 1.5],
-      ["principal", 88, 480, 54, 1.5],
-      ["principal", 141.25, 480, 1.5, 48],
-      ["principal", 175.25, 406, 1.5, 12],
-      ["structural", 141.25, 590, 1.5, 24],
-      ["structural", 142, 614, 268, 1.5],
-      ["structural", 187.25, 196, 1.5, 48],
-      ["structural", 187.25, 270, 1.5, 24],
-      ["structural", 187.25, 356, 1.5, 24],
-      ["structural", 188, 196, 232, 1.5],
-      ["structural", 275.25, 86, 1.5, 24],
-      ["structural", 275.25, 172, 1.5, 24],
-      ["structural", 275.25, 614, 1.5, 24],
-      ["template", 327.25, 196, 1.5, 48],
-      ["template", 419.25, 196, 1.5, 32],
-    ],
-  },
+/** October 7 V2 changes only derived returns, outputs and enclosing hull heights. */
+const V2_HEIGHT: Record<string, number> = {
+  "canvas A": 920,
+  "canvas B": 722,
+  "canvas C": 724,
+  "canvas D": 572,
+  "Build state 3": 576,
+  "Build state 5": 724,
 };
 describe.each(FIGMA_ORACLES)("$name against $source", (oracle) => {
   const layout = layoutGraph(oracle.fixture.input, EN);
-  const updated = FEE_RETURN_OVERRIDES[oracle.name];
 
   // @rule A1 @rule L10
   it("has the graph size", () => {
-    expect([layout.width, layout.height]).toEqual(updated?.size ?? oracle.size);
+    expect([layout.width, layout.height]).toEqual([oracle.size[0], V2_HEIGHT[oracle.name]]);
   });
 
   // @rule A1 @rule L2 @rule L3
@@ -676,35 +439,87 @@ describe.each(FIGMA_ORACLES)("$name against $source", (oracle) => {
     const actual = Object.fromEntries(
       Object.entries(nodeRects(layout)).map(([key, rect]) => [key, box(rect)]),
     );
-    expect(actual).toEqual(updated?.nodes ?? oracle.nodes);
+    const derived = (key: string) =>
+      ["idleOutput", "income", "withdraw"].includes(key) ||
+      key.startsWith("fee-swap:") ||
+      key.endsWith(":outbound");
+    const fixed = Object.fromEntries(
+      Object.entries(oracle.nodes)
+        .filter(([key]) => !derived(key))
+        .map(([key, value]) => [key, key.startsWith("group:") ? value?.slice(0, 3) : value]),
+    );
+    const fixedActual = Object.fromEntries(
+      Object.entries(actual)
+        .filter(([key]) => !derived(key))
+        .map(([key, value]) => [key, key.startsWith("group:") ? value?.slice(0, 3) : value]),
+    );
+    expect(fixedActual).toEqual(fixed);
+    for (const group of layout.groups) {
+      const outbound = layout.bridges.find(
+        (bridge) => bridge.network === group.network && bridge.direction === "outbound",
+      );
+      if (outbound)
+        expect(group.rect.y + group.rect.h).toBe(outbound.rect.y + outbound.rect.h + 16);
+    }
   });
 
-  // @rule A1 @rule L5 @rule L10
-  it("draws every line segment, and no other", () => {
-    // POO-2235: move nominal vertical junction endpoints onto horizontal centerlines.
-    const expected = updated?.edges ?? toFigma(oracle.edges);
-    const horizontal = expected.filter((entry) => entry[3] !== 1.5);
+  // @rule R1 R2 R3 POO-2273 v2. Historical financial edge snapshots are superseded.
+  it("preserves the fixed input segments and declares valid V2 financial endpoints", () => {
+    const fixed = layout.edges.filter(
+      (edge) =>
+        (edge.kind === "structural" || edge.kind === "template") &&
+        !edge.id.startsWith("output:") &&
+        !edge.id.startsWith("merge:"),
+    );
+    const feesSources = new Set(
+      layout.blocks
+        .filter((node) => node.kind === "collectFees")
+        .map((fee) => {
+          const previous = layout.blocks
+            .filter((node) => node.chainId === fee.chainId && node.rect.y < fee.rect.y)
+            .at(-1);
+          return previous
+            ? `${previous.rect.x + previous.rect.w / 2}:${previous.rect.y + previous.rect.h}`
+            : "";
+        }),
+    );
+    const outputYs = new Set(
+      [oracle.nodes.idleOutput?.[1], oracle.nodes.income?.[1]].flatMap((top) =>
+        top === undefined ? [] : [top + 62, top + 86],
+      ),
+    );
+    const expected = oracle.edges
+      .filter(
+        ([kind, x, y, w]) =>
+          (kind === "S" || kind === "T") &&
+          !outputYs.has(y) &&
+          !(w === 1.5 && feesSources.has(`${x + 0.75}:${y}`)),
+      )
+      .map(([kind, x, y, w, h]): FigmaEdge => [K[kind], x, y, w, h]);
+    const horizontals = expected.filter((edge) => edge[3] !== 1.5);
     const adjusted = expected.map(([kind, x, y, w, h]): FigmaEdge => {
       if (w !== 1.5) return [kind, x, y, w, h];
       const joins = (at: number) =>
-        horizontal.some(
+        horizontals.some(
           (run) =>
-            Math.abs(run[2] - at) < 0.01 && x + 0.75 >= run[1] && x + 0.75 <= run[1] + run[3],
+            run[0] === kind && run[2] === at && x + 0.75 >= run[1] && x + 0.75 <= run[1] + run[3],
         );
       const top = joins(y) ? y + 0.75 : y;
       const bottom = joins(y + h) ? y + h + 0.75 : y + h;
-      return [
-        kind === "income" &&
-        y === (layout.spine.find((node) => node.role === "income")?.rect.y ?? -1000) + 62
-          ? "structural"
-          : kind,
-        x,
-        top,
-        w,
-        bottom - top,
-      ];
+      return [kind, x, top, w, bottom - top];
     });
-    expect(figmaEdges(layout)).toEqual(sortEdges(adjusted));
+    expect(sortEdges(fixed.map(edgeAsFigmaRect))).toEqual(sortEdges(adjusted));
+    expect(layout.semantic).toBeDefined();
+    if (!layout.semantic) throw new Error("Missing financial graph");
+    expect(validateSemanticGraph(layout.semantic)).toEqual([]);
+    for (const position of layout.blocks.filter((node) => node.family === "position")) {
+      const route = layout.hoverRoutes?.find(
+        (entry) => entry.id === `principal:chain:${position.chainId}`,
+      );
+      expect(route?.connectionIds.length).toBe(
+        position.network === oracle.fixture.input.hubNetwork ? 1 : 2,
+      );
+    }
   });
 
   // @rule L10 @rule C8
@@ -770,7 +585,7 @@ describe("worked example 1, POO-2213 fee-return override of handoff (canvas C)",
     ]);
     expect(box(nodes["addProtocol:arbitrum"])).toEqual([440, 244, 40, 40]);
     expect(box(nodes.addNetwork)).toEqual([520, 228, 64, 72]);
-    expect(horizontalRuns(layout, "principal", 480)).toEqual([[12, 320]]);
+    expect(horizontalRuns(layout, "principal", 480)).toEqual([[170, 420]]);
     expect(horizontalRuns(layout, "income", 504)).toEqual([[112, 438]]);
     expect(box(nodes.idleOutput)).toEqual([52, 528, 236, 62]);
     expect(box(nodes.income)).toEqual([320, 528, 236, 62]);
@@ -782,9 +597,14 @@ describe("worked example 1, POO-2213 fee-return override of handoff (canvas C)",
   // @rule L8 @rule C10
   it("[L8, POO-2213] keeps the spine centered and routes the drops around fee conversion", () => {
     expect(layout.spineCentreX).toBe(304);
-    expect(verticalsAt(layout, "principal", 100)).toEqual([[406, 418.75]]);
-    expect(verticalsAt(layout, "income", 124)).toEqual([[406, 418.75]]);
-    expect(verticalsAt(layout, "principal", 320)).toEqual([[306, 480.75]]);
+    const principal = layout.connections?.find((entry) => entry.id === "principal:chain:c-pool");
+    expect(principal?.points[0]).toEqual({ x: 200, y: 325 });
+    expect(
+      layout.connections?.find((entry) => entry.id === "income:block:c-pool-fees")?.points,
+    ).toEqual([
+      { x: 112, y: 406 },
+      { x: 112, y: 430 },
+    ]);
   });
 });
 
@@ -804,7 +624,7 @@ describe("worked example 2, POO-2213 fee-return override of handoff numbers (one
   it("[L9] places the hub chain, the hub circle and the group", () => {
     expect(xRange("we2-hub-swap")).toEqual([24, 200]);
     expect(xRange("addProtocol:arbitrum")).toEqual([232, 272]);
-    expect(box(nodes["group:base"])).toEqual([312, 228, 488, 342]);
+    expect(box(nodes["group:base"])).toEqual([312, 228, 488, 440]);
   });
 
   // @rule L9
@@ -839,23 +659,36 @@ describe("worked example 2, POO-2213 fee-return override of handoff numbers (one
 
   // @rule L9 @rule C10 @rule C11
   it("[L9, POO-2213] draws principal below fee conversion and income 24 under it", () => {
-    expect(horizontalRuns(layout, "principal", 578)).toEqual([[12, 624]]);
-    expect(verticalXs(layout, "principal")).toEqual([12, 100, 316, 330, 404, 624]);
-    expect(verticalsAt(layout, "principal", 330)).toEqual([[578.75, 626]]);
-    expect(horizontalRuns(layout, "income", 602)).toEqual([[112, 598]]);
-    expect(verticalXs(layout, "income")).toEqual([112, 124, 416, 428, 598]);
+    const outbound = layout.bridges.find((node) => node.direction === "outbound");
+    expect(outbound?.rect).toEqual({ x: 468, y: 626, w: 176, h: 26 });
+    const principal = layout.hoverRoutes?.find(
+      (route) => route.id === "principal:chain:we2-base-a",
+    );
+    expect(principal?.connectionIds).toEqual([
+      "principal:chain:we2-base-a",
+      "principal:returned:we2-base-a",
+    ]);
+    const income = layout.hoverRoutes?.find(
+      (route) => route.id === "income:converted:we2-base-a-fees",
+    );
+    expect(income?.connectionIds).toEqual([
+      "link:we2-base-a-pool",
+      "income:block:we2-base-a-fees",
+      "income:converted:we2-base-a-fees",
+      "income:returned:we2-base-a-fees",
+    ]);
   });
 
   // @rule L9 @rule L5
   it("[L9] places the outputs, the merge line, Withdraw and the graph size", () => {
     expect(xRange("idleOutput")).toEqual([212, 448]);
     expect(xRange("income")).toEqual([480, 716]);
-    expect(yRange("idleOutput")).toEqual([626, 688]);
-    expect(yRange("income")).toEqual([626, 688]);
-    expect(horizontalRuns(layout, "structural", 712)).toEqual([[330, 598]]);
+    expect(yRange("idleOutput")).toEqual([724, 786]);
+    expect(yRange("income")).toEqual([724, 786]);
+    expect(horizontalRuns(layout, "structural", 810)).toEqual([[330, 598]]);
     expect(xRange("withdraw")).toEqual([346, 582]);
-    expect(yRange("withdraw")).toEqual([736, 798]);
-    expect([layout.width, layout.height]).toEqual([928, 822]);
+    expect(yRange("withdraw")).toEqual([834, 896]);
+    expect([layout.width, layout.height]).toEqual([928, 920]);
   });
 });
 
@@ -875,7 +708,7 @@ describe("Build state 5, POO-2213 fee-return override of handoff numbers", () =>
   it("[L4, POO-2213] preserves output widths and separates return levels below the converter", () => {
     expect(box(nodes.idleOutput)).toEqual([24, 528, 236, 62]);
     expect(box(nodes.income)).toEqual([292, 528, 236, 62]);
-    expect(horizontalRuns(layout, "principal", 480)).toEqual([[88, 142]]);
+    expect(horizontalRuns(layout, "principal", 480)).toEqual([[142, 288]]);
     expect(horizontalRuns(layout, "income", 504)).toEqual([[188, 410]]);
     expect(nodes.withdraw?.y).toBe(638);
     expect([layout.width, layout.height]).toEqual([552, 724]);
@@ -905,6 +738,6 @@ describe("canvas A as a plan", () => {
   // @rule L10
   it("[L10, POO-2213] is 2080 x 822 with fee conversion; menus and tooltips stay outside graph bounds", () => {
     const layout = layoutGraph(canvasA.input, EN);
-    expect([layout.width, layout.height]).toEqual([2080, 822]);
+    expect([layout.width, layout.height]).toEqual([2080, 920]);
   });
 });

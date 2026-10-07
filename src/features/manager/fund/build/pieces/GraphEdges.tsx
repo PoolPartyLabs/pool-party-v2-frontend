@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-054
  * @name GraphEdges
- * @implements-rules-version v1 (POO-2154 rules v1); POO-2235 rules v1
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2154 rules v1); POO-2235 rules v1
  * @analytics-events none, a presentational piece; a hover is reported through `onEdgeHoverChange`
  *   and the Build screen (PP-MGR-SCR-002, S7) owns every event
  *
@@ -50,6 +50,8 @@ export interface GraphEdgesProps {
   edges: ReadonlyArray<PieceEdge>;
   /** The edge drawn 2 px `primary`, or none. */
   highlightedId: string | null;
+  /** Additive complete-route highlight; omitted retains the single-edge behavior. */
+  highlightedIds?: ReadonlySet<string>;
   /** Complete hover paths; resting segments remain independently toned. */
   connections?: ReadonlyArray<PieceEdge>;
   /** Reports the edge under the pointer (its id) and `null` when it leaves. */
@@ -117,6 +119,7 @@ export function GraphEdges({
   height,
   edges,
   highlightedId,
+  highlightedIds,
   onEdgeHoverChange,
   connections,
 }: GraphEdgesProps) {
@@ -166,7 +169,7 @@ export function GraphEdges({
         );
       })}
       {connections
-        ?.filter((edge) => edge.id === highlightedId)
+        ?.filter((edge) => highlightedIds?.has(edge.id) ?? edge.id === highlightedId)
         .map((edge) => (
           <polyline
             key={`connection:${edge.id}`}

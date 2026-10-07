@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-054
  * @name GraphEdges tests
- * @implements-rules-version v1 (POO-2154 rules v1)
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2154 rules v1)
  * @analytics-events none, a presentational piece; the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event
  *
@@ -54,6 +54,53 @@ function lineOf(container: HTMLElement, id: string): SVGPolylineElement {
 }
 
 describe("GraphEdges", () => {
+  it("[R8] highlights both visible return legs while excluding the sibling and Bridge interior", () => {
+    const enter: PieceEdge = {
+      id: "principal:enter",
+      tone: "muted",
+      points: [
+        { x: 0, y: 0 },
+        { x: 10, y: 20 },
+      ],
+    };
+    const returned: PieceEdge = {
+      id: "principal:returned",
+      tone: "muted",
+      points: [
+        { x: 10, y: 46 },
+        { x: 0, y: 70 },
+      ],
+    };
+    const sibling: PieceEdge = {
+      id: "principal:sibling",
+      tone: "muted",
+      points: [
+        { x: 30, y: 0 },
+        { x: 20, y: 20 },
+      ],
+    };
+    const { container } = render(
+      <GraphEdges
+        width={100}
+        height={100}
+        edges={[enter, returned, sibling]}
+        connections={[enter, returned, sibling]}
+        highlightedId={enter.id}
+        highlightedIds={new Set([enter.id, returned.id])}
+      />,
+    );
+    expect(
+      [...container.querySelectorAll("[data-connection-id]")].map((line) =>
+        line.getAttribute("data-connection-id"),
+      ),
+    ).toEqual([enter.id, returned.id]);
+    expect(container.querySelector('[data-connection-id="principal:sibling"]')).toBeNull();
+    expect(
+      [...container.querySelectorAll("[data-highlighted]")].some((line) =>
+        line.getAttribute("points")?.includes("10,20 10,46"),
+      ),
+    ).toBe(false);
+  });
   // @rule BB8
   it("[BB8] one SVG of the graph's size, hidden from assistive technology", () => {
     const { container } = render(

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name BuildGraph tests
- * @implements-rules-version v1 (POO-2156 rules v1)
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2156 rules v1)
  * @analytics-events none, a controlled renderer: activations leave through `onTarget` and the Build
  *   screen (PP-MGR-SCR-002, S7) owns every event.
  *
@@ -164,7 +164,9 @@ describe.each(FIXTURE_NAMES)("BuildGraph on %s", (name) => {
       expected += 1;
     }
     for (const bridge of layout.bridges) {
-      const element = node(`bridge:${bridge.network}`);
+      const element = node(
+        `bridge:${bridge.network}${bridge.direction === "outbound" ? ":outbound" : ""}`,
+      );
       expectBox(element, bridge.rect.x, bridge.rect.y, bridge.rect.w, bridge.rect.h);
       expect(element.querySelector("[data-flow-pill]")).toHaveTextContent("Bridge · auto");
       expected += 1;
@@ -375,6 +377,7 @@ describe("BuildGraph, reading order", () => {
       blockKey("a-base-3-supply"),
       port("after", "a-base-3-supply"),
       addProtocol("base"),
+      "bridge:base:outbound",
       "group:robinhood",
       label(null, "robinhood", null),
       "bridge:robinhood",
@@ -389,6 +392,7 @@ describe("BuildGraph, reading order", () => {
       blockKey("a-rh-2-fees"),
       "fee-swap:a-rh-2-fees",
       addProtocol("robinhood"),
+      "bridge:robinhood:outbound",
       targetKey({ kind: "addNetwork" }),
       "spine:idleOutput",
       "spine:income",
@@ -532,6 +536,37 @@ describe("BuildGraph, reading order", () => {
 });
 
 describe("BuildGraph, tooltips", () => {
+  it("[R8] every green leg highlights the full fee origin while excluding sibling fees", () => {
+    renderGraph(canvasA);
+    const collectId = "income:block:a-base-1-fees";
+    const convertedId = "income:converted:a-base-1-fees";
+    const highlighted = () =>
+      [...document.querySelectorAll("[data-connection-id]")]
+        .map((element) => element.getAttribute("data-connection-id"))
+        .sort();
+    const enter = (id: string) => {
+      const hit = document.querySelector(`[data-edge-hit="${id}"]`);
+      if (!hit) throw new Error("Missing fee route hit");
+      fireEvent.pointerEnter(hit);
+    };
+    enter(collectId);
+    expect(highlighted()).toEqual(
+      ["link:a-base-1-pool", collectId, convertedId, "income:returned:a-base-1-fees"].sort(),
+    );
+    enter(convertedId);
+    expect(highlighted()).toEqual(
+      ["link:a-base-1-pool", collectId, convertedId, "income:returned:a-base-1-fees"].sort(),
+    );
+  });
+  it("[R2] return Bridge names the hub destination and keeps the inbound spoke description", () => {
+    renderGraph(canvasA);
+    expect(
+      node("bridge:robinhood:outbound").querySelector("[data-flow-pill]"),
+    ).toHaveAccessibleDescription("Moves USDC to Arbitrum");
+    expect(node("bridge:robinhood").querySelector("[data-flow-pill]")).toHaveAccessibleDescription(
+      "Moves USDG to Robinhood Chain",
+    );
+  });
   // @rule C19
   it("[C19] names the templates by their tooltip, with the row's network", () => {
     renderGraph(canvasA);
@@ -1203,7 +1238,7 @@ describe("BuildGraph, one network on two spokes (F6)", () => {
     expect(document.querySelectorAll("[data-spoke-group]")).toHaveLength(2);
     expect(node("bridge:robinhood")).not.toBe(node("bridge:robinhood#2"));
     expect(document.querySelectorAll("[data-card-state]")).toHaveLength(2);
-    expect(document.querySelectorAll("[data-flow-pill]")).toHaveLength(4);
+    expect(document.querySelectorAll("[data-flow-pill]")).toHaveLength(6);
     const lines = [...document.querySelectorAll("polyline[data-edge-id]")];
     expect(lines).toHaveLength(layout.edges.length);
     expect(new Set(lines.map((line) => line.getAttribute("data-edge-id"))).size).toBe(lines.length);
@@ -1260,7 +1295,7 @@ describe("BuildGraph, literal positions from the reference numbers (F7)", () => 
   // @rule ST7
   it("[F7, ST7] canvas A: the Base group and the hub's Borrow", () => {
     renderGraph(canvasA);
-    expectBox(node("group:base"), 728, 228, 696, 342);
+    expectBox(node("group:base"), 728, 228, 696, 440);
     expectBox(node(blockKey("a-hub-3-borrow")), 440, 380, 176, 62);
   });
 
