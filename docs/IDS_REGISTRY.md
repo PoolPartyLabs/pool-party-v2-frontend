@@ -973,7 +973,7 @@ POO-2245 presentation integrates PP-MGR-SCR-001 in `overview/ManagerOverviewV2.t
 
 | ID | Artifact | Type | State | Reference |
 |---|---|---|---|---|
-| PP-MGR-DOC-001 | ManagerCanvasPanelsDeliveryPlan | Document | Planning complete, implementation pending | [Delivery plan](manager-canvas-panels-plan-2026-10-07.md), [POO-2270](https://linear.app/yeildbay/issue/POO-2270)..[POO-2279](https://linear.app/yeildbay/issue/POO-2279), issue-scoped rules v1 |
+| PP-MGR-DOC-001 | ManagerCanvasPanelsDeliveryPlan | Document | Plan v2 complete; graph/Review slices in progress | [Delivery plan](manager-canvas-panels-plan-2026-10-07.md) @rules-v2; POO-2270/2271/2272/2273/2274 v2, POO-2275..2278 v1, POO-2279 Needs Rules; POO-2288/2289/2290/2291 v1. Preserves historical v1 and records current graph, Solana and optional Jev evidence. |
 
 PP-MGR-SCR-004, PP-MGR-CMP-085/086 and PP-MGR-LIB-052 are reused for the seven Manage states. PP-MGR-SCR-002/PP-MGR-LIB-023 cover separate Build parity. Shared primitives remain opt-in where Manage dimensions differ. New subordinate Idle/Collect component/model/hook IDs are reserved before implementation. This entry changes no runtime artifact status or existing rule version. Financial dependencies remain POO-2230/2277 and POO-2229/2231; POO-2279 is Needs Rules.
 
