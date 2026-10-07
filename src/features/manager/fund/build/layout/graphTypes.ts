@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name graphTypes
- * @implements-rules-version v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1
+ * @implements-rules-version v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2288 rules v1
  * @analytics-events none, type declarations and one pure key function: nothing here is rendered.
  *
  * The shapes the Build canvas layout reads and returns (coordinator plan, section 3.3). The names
@@ -28,6 +28,8 @@
  *
  * Menus and tooltips are overlays: they are not part of the graph and not part of its size.
  */
+
+import type { SemanticGraph } from "../graph/semanticGraph";
 
 export interface Point {
   x: number;
@@ -148,6 +150,8 @@ export interface BlockNode {
 export interface BridgeNode {
   network: string;
   rect: Rect;
+  /** Additive identity for the return Bridge; omitted retains the original inbound key. */
+  direction?: "inbound" | "outbound";
 }
 
 /** Derived fee conversion on the income branch, never a stored or editable plan block. */
@@ -225,5 +229,7 @@ export interface GraphLayout {
   edges: EdgeNode[];
   /** Complete block-to-block paths, with shared buses clipped to this connection. */
   connections?: EdgeNode[];
+  /** Explicit financial routes. Legacy layouts retain their existing edges until migrated. */
+  semantic?: SemanticGraph;
   emptyCaptions: EmptyCaptions | null;
 }

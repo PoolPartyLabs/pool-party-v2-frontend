@@ -301,6 +301,15 @@ POO-2290 requires an authorized account/obligation risk source and separate Afte
 
 Charts screenshots are Market reference, not AUM/pool execution or LP valuation. Exact feed/history/license/engine and protected annotations remain POO-2279 readiness. Jev Gateway is isolated optional development tooling; it adds no frontend/API/RPC integration, and measured pilot results do not justify global enablement.
 
+## Manager semantic graph foundation, 2026-10-07 (POO-2288 v1)
+
+`semanticGraph.ts` (PP-MGR-LIB-062) is a pure typed contract and deterministic validator.
+`GraphLayout.semantic` lets the existing `graphModel` edge/hover consumers read explicitly
+owned financial routes resolved against current outer rects. No endpoint, RPC, service,
+wallet call or new mock seam is introduced. Current layout producers retain their existing
+paths; adopting the contract and verifying the complete principal/income routes remains
+POO-2270/2271/2273. The validator proves declared graph integrity only. It does not prove
+execution capability, quote correctness, Bridge settlement or authoritative data coverage.
 
 ## Solana local catalog contracts, October 7, 2026 (POO-2291 S1)
 

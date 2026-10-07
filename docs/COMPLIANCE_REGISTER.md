@@ -236,6 +236,21 @@ Status: ANSWERED for the read-only unavailable-information scope. POO-2289 rules
 
 Status: BLOCKING before Entry/Exit values or charges are enabled. Confirm beneficiary, triggering operation, calculation base, gross/net treatment, caps/minima, currency, rounding, fee source/freshness, jurisdiction and required investor disclosure. These answers must come from the authoritative fee contract; an unavailable row is not zero or an approval of an existing charge. This entry clears no existing fee/custody/launch blocker. Owner: Murilo / product and legal owner. Evidence: [POO-2289](https://linear.app/yeildbay/issue/POO-2289), [Figma 8670:2855](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8670-2855), PP-MGR-CMP-090 and PP-MGR-CMP-077.
 
+## Manager semantic graph foundation, 2026-10-07 (POO-2288 v1)
+
+Verification: RESOLVED for the internal contract slice. PP-MGR-LIB-062 adds typed
+financial endpoints and deterministic route-integrity checks without creating a transfer,
+changing existing canvas topology, exposing a new financial claim or enabling signing.
+Focused tests cover class/origin separation, same-chain Bridge rejection, explicit
+junction ownership, conversion continuity and stable edge/hover identities.
+
+Status: OPEN for future product adoption under POO-2270/2271/2273. Before these routes
+reach real users, verify that served principal, fee, repayment, Holding and native-cash
+meanings match the displayed flow and actual origin/network. A valid declared graph is not
+evidence of executable capability, a provider/ETA, atomic conversion or hub settlement.
+The 48 Figma references are geometric evidence only. Existing CR-MGR-015/019/020,
+CR-MGR-POO2270 and the POO-2229/2230/2231 launch conditions remain applicable; this
+slice resolves none of those financial or custody questions.
 
 ## Solana local catalog, October 7, 2026 (POO-2291 S1)
 
