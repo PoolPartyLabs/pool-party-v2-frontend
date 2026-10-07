@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 671 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 672 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -961,3 +961,11 @@ POO-2245 presentation integrates PP-MGR-SCR-001 in `overview/ManagerOverviewV2.t
 | PP-STR-LIB-039 | Wallet/core-scoped transaction journal | POO-2248 v1 | `src/features/funds/fundInvestJournal.ts` |
 
 PP-STR-MOD-001 retains ownership of the shared Invest host; `FundInvestModal.tsx` implements its typed V2 branch. Existing AmountField, StrategyMiniHeader and ProvisioningPanel remain reused. No new exploratory modal or V1 schema coercion.
+
+## Solana Bootstrap Re-sync, 2026-10-07 (POO-2262)
+
+| ID | Artifact | Rules | Source |
+|---|---|---|---|
+| `PP-MGR-LIB-059` | Committed bootstrap manifest and signing guard | DEC-190, DEC-200, DEC-201 (unversioned founder rulings) | `src/lib/solana/bootstrap.ts` |
+
+The test-only bootstrap fixture and regression suite support this artifact; they do not claim separate executable components or invented business-rule versions.

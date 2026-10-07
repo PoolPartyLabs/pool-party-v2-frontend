@@ -1,3 +1,8 @@
+/**
+ * @supports PP-MGR-LIB-059 (POO-2262)
+ * @name Solana bootstrap test-only fixture
+ * @implements-rules-version DEC-200, DEC-201 (founder rulings, unversioned)
+ */
 import type { SolanaBootstrapAuthorization } from "./binding";
 import type { SolanaBootstrapManifest } from "./bootstrap";
 
