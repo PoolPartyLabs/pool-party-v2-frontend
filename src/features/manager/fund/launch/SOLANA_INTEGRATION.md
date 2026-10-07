@@ -6,6 +6,20 @@ EVM SIWE identity, embedded Ethereum wallets and existing launch journeys remain
 Rules: DEC-188, DEC-190, DEC-191, DEC-192, DEC-193, DEC-195, DEC-196, DEC-197, DEC-198,
 DEC-199, DEC-202, DEC-203, DEC-204.
 
+## Production interface (POO-2262)
+
+Program identity is pinned to `7PptZ653uyn5eoAFKqs4DXR1ijxH6sf49f2YAGMLTfCx`
+from smartcontract-v2 `f40f010` (PR #50). The checked-in final IDL and generated
+types live in `src/lib/solana/generated/`; its README records exact source and
+copy hashes. DEC-190/200: bootstrap consent rejects any other program and its
+transaction guard uses the released instruction discriminators. Fund/vault/stage
+derivation uses the production policy-hash namespace, not pre-release cached PDAs.
+
+DEC-204: the release's Scope switch stays OFF. TSLAx/USDC and NVDAx/USDC remain
+visible but unavailable, including when backend metadata claims a fresh stock
+reference. SOL/USDC still requires a valid reference; Kamino supply is unchanged.
+No oracle subscription, deployment or existing Fund migration is implied.
+
 ## UI owner contract (Murilo)
 
 Mount `SolanaLaunchIntegration` only in the authenticated wallet provider tree.
@@ -174,10 +188,11 @@ or account layouts fail closed. Optional `costEstimator.rpc` supports a reviewed
 RPC proxy/local harness; default RPC performs finalized read-only queries.
 
 Spoke account bytes, including discriminator, come from Anchor `INIT_SPACE` and
-`solana/target/idl/pp_spoke.json` at smartcontract snapshot `fb37976`: FundState 5105,
+`src/lib/solana/generated/pp_spoke.json` at smartcontract snapshot `f40f010`: FundState 5462,
 TokenLedger 105, CctpRoute 109, CctpLedger 80, KaminoPosition 161, RaydiumPolicy 113,
-RaydiumLedger 104, RaydiumPosition 210, Transit 250. These are allocation sizes, not
-rent amounts; reconcile before production wiring. External `layout: { kind:
+RaydiumLedger 104, RaydiumPosition 210, Transit 251. The release regression derives
+these allocation sizes from the IDL with upstream Rust vector bounds; they are not
+rent amounts. External `layout: { kind:
 'external', bytes, source }` comes from the actual instruction/mint-extension
 decoder. Never assume all Token-2022 accounts use SPL's 165 bytes.
 
