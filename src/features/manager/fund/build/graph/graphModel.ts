@@ -52,6 +52,7 @@ import type {
 import { targetKey } from "../layout/graphTypes";
 import { LAYOUT } from "../layout/layoutConstants";
 import type { BlockIcon, PieceEdge } from "../pieces/pieceTypes";
+import { resolveSemanticGraph, semanticNodeId } from "./semanticGraph";
 
 /** One thing the renderer places. `key` is unique within a layout and stable across re-flows. */
 export type GraphItem =
@@ -81,11 +82,6 @@ export const SPINE_ICON: Readonly<Record<SpineRole, BlockIcon>> = {
   withdraw: "withdrawOut",
 };
 
-/** A key part that cannot collide with a separator: percent-encoded, as `targetKey` does. */
-function part(value: string): string {
-  return encodeURIComponent(value);
-}
-
 /** A namer that returns `id` the first time, then `id#2`, `id#3` for each repeat. */
 function occurrences(): (id: string) => string {
   const seen = new Map<string, number>();
@@ -104,18 +100,23 @@ function occurrences(): (id: string) => string {
 function collect(layout: GraphLayout): GraphItem[] {
   const labelEdge = occurrences();
   const items: GraphItem[] = [];
-  for (const node of layout.spine) items.push({ type: "spine", key: `spine:${node.role}`, node });
+  for (const node of layout.spine)
+    items.push({ type: "spine", key: semanticNodeId("spine", node.role), node });
   for (const node of layout.blocks) {
     items.push({ type: "block", key: targetKey({ kind: "block", blockId: node.id }), node });
   }
   for (const node of layout.feeSwaps ?? []) {
-    items.push({ type: "feeSwap", key: `fee-swap:${part(node.sourceBlockId)}`, node });
+    items.push({ type: "feeSwap", key: semanticNodeId("fee-swap", node.sourceBlockId), node });
   }
   for (const node of layout.bridges) {
-    items.push({ type: "bridge", key: `bridge:${part(node.network)}`, node });
+    items.push({
+      type: "bridge",
+      key: semanticNodeId("bridge", node.network, node.direction),
+      node,
+    });
   }
   for (const node of layout.groups) {
-    items.push({ type: "group", key: `group:${part(node.network)}`, node });
+    items.push({ type: "group", key: semanticNodeId("group", node.network), node });
   }
   for (const node of layout.templates) {
     items.push({ type: "template", key: targetKey(node.target), node });
@@ -377,6 +378,12 @@ export function edgeTone(kind: EdgeKind): PieceEdge["tone"] {
  * one network repeat their stub ids) takes `#2`, `#3`, so every line keeps its own key.
  */
 export function pieceEdges(layout: GraphLayout): PieceEdge[] {
+  if (layout.semantic)
+    return resolveSemanticGraph(layout.semantic).segments.map((segment) => ({
+      id: segment.id,
+      tone: segment.class === "income" ? "income" : "muted",
+      points: segment.points,
+    }));
   const unique = occurrences();
   return layout.edges.map((edge) => ({
     id: unique(edge.id),
@@ -415,6 +422,12 @@ export function formatShare(pct: number): string {
 
 /** Complete hover paths mapped with the same tone and stable id contract as resting edges. */
 export function pieceConnections(layout: GraphLayout): PieceEdge[] {
+  if (layout.semantic)
+    return resolveSemanticGraph(layout.semantic).connections.map((connection) => ({
+      id: connection.id,
+      tone: connection.class === "income" ? "income" : "muted",
+      points: connection.points,
+    }));
   const unique = occurrences();
   return (layout.connections ?? layout.edges).map((edge) => ({
     id: unique(edge.id),

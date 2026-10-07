@@ -29,6 +29,8 @@
  * Menus and tooltips are overlays: they are not part of the graph and not part of its size.
  */
 
+import type { SemanticGraph } from "../graph/semanticGraph";
+
 export interface Point {
   x: number;
   y: number;
@@ -148,6 +150,8 @@ export interface BlockNode {
 export interface BridgeNode {
   network: string;
   rect: Rect;
+  /** Additive identity for the return Bridge; omitted retains the original inbound key. */
+  direction?: "inbound" | "outbound";
 }
 
 /** Derived fee conversion on the income branch, never a stored or editable plan block. */
@@ -225,5 +229,7 @@ export interface GraphLayout {
   edges: EdgeNode[];
   /** Complete block-to-block paths, with shared buses clipped to this connection. */
   connections?: EdgeNode[];
+  /** Explicit financial routes. Legacy layouts retain their existing edges until migrated. */
+  semantic?: SemanticGraph;
   emptyCaptions: EmptyCaptions | null;
 }
