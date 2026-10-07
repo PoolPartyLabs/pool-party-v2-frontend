@@ -177,3 +177,13 @@ Verification pending before runtime enablement:
 - Native physical balances, aggregate hub Income and financial chart metrics require provenance/units/freshness. Figma amounts stay in explicit story fixtures. Functional Charts/Activity waits for POO-2279 definitions, including incomplete history and financial event labels.
 
 Status: OPEN for these future product disclosures and financial integration meanings. The planning-only PR enables no wallet operation and introduces no new financial claim on screen. Each implementation slice records its evidence and remaining launch conditions here before exposure.
+
+## Build native scrollbar correction, 2026-10-07 (POO-2287 v1)
+
+Verification: RESOLVED for this visual scope. Native dark controls and scoped scrollbar
+styling preserve scrolling, panel action access, zoom and existing screen emitters;
+forced-colors mode yields to system rendering. No fee, routing, custody, asset,
+financial claim, personal-data collection or signing behavior changes. Existing
+financial launch conditions remain in force. Focused component contracts and interaction
+tests pass; native scrollbar painting in the affected browsers remains Murilo's
+acceptance check, without any inference about transaction availability or settlement.

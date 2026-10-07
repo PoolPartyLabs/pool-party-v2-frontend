@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-047
  * @name BuildPanelSlot
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2287 and POO-2152 rules v1)
  * @analytics-events none, a presentational frame; the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event
  *
@@ -39,7 +39,7 @@ export function BuildPanelSlot({ children }: BuildPanelSlotProps) {
     <section
       aria-labelledby={overlineId}
       data-build-panel-slot=""
-      className="flex w-[360px] max-w-full flex-col gap-4 rounded-xl border border-border bg-surface p-4"
+      className="flex w-[360px] min-w-0 max-w-full flex-col gap-4 rounded-xl border border-border bg-surface p-4"
     >
       <h3
         id={overlineId}

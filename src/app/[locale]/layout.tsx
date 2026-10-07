@@ -68,6 +68,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  // POO-2287 rules v1: announce native dark controls before the stylesheet loads.
+  colorScheme: "dark",
 };
 
 export function generateStaticParams() {

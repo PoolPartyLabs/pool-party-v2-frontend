@@ -970,3 +970,9 @@ PP-MGR-SCR-004, PP-MGR-CMP-085/086 and PP-MGR-LIB-052 are reused for the seven M
 | PP-STR-LIB-039 | Wallet/core-scoped transaction journal | POO-2248 v1 | `src/features/funds/fundInvestJournal.ts` |
 
 PP-STR-MOD-001 retains ownership of the shared Invest host; `FundInvestModal.tsx` implements its typed V2 branch. Existing AmountField, StrategyMiniHeader and ProvisioningPanel remain reused. No new exploratory modal or V1 schema coercion.
+
+POO-2287 rules v1, 2026-10-07 updates PP-MGR-CMP-045/047/056 and the existing
+PP-CORE-STY-001 globals: native dark scheme, scoped Build scrollbar tracks/corner/buttons,
+system forced-colors rendering and panel width containment. No new IDs, API seams,
+events, copy or execution capability. Implementation is in review; native browser
+painting is an owner acceptance check. See the Build README.

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-056
  * @name BuildPalette
- * @implements-rules-version v1 (POO-2155 rules v1)
+ * @implements-rules-version v1 (POO-2287 and POO-2155 rules v1)
  * @analytics-events none, a presentational palette. A drop is handed to the controller
  *   (`useBuildCanvas`), which applies the reducer and reports `blockAdded` (via "palette") or
  *   `flowInserted` through `onEvent`; the Build screen (PP-MGR-SCR-002, S7) owns every event.
@@ -206,7 +206,7 @@ export function BuildPalette({ model, onDragStart, onDrop, onDragCancel }: Build
     <div
       data-testid="build-palette"
       data-build-palette=""
-      className="flex max-h-[640px] w-full flex-col gap-5 overflow-y-auto"
+      className="scrollbar-dark flex max-h-[640px] w-full flex-col gap-5 overflow-y-auto"
     >
       {model.sections.map((section) => (
         <PaletteGroup
