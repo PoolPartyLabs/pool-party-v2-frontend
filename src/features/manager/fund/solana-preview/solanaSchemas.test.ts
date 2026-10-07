@@ -9,6 +9,7 @@
  */
 import { describe, expect, it } from "vitest";
 import {
+  type SolanaToken,
   solanaAddressSchema,
   solanaAmountSchema,
   solanaAmountToDecimal,
@@ -28,7 +29,7 @@ const native = {
   symbol: "SOL",
   decimals: 9,
   unit: "lamports",
-};
+} as const satisfies SolanaToken;
 const wsol = {
   network: "solana",
   cluster: "mainnet-beta",
@@ -37,8 +38,13 @@ const wsol = {
   mint: WSOL_MINT,
   decimals: 9,
   unit: "base-units",
-};
-const usdc = { ...wsol, symbol: "USDC", mint: USDC_MINT, decimals: 6 };
+} as const satisfies SolanaToken;
+const usdc = {
+  ...wsol,
+  symbol: "USDC",
+  mint: USDC_MINT,
+  decimals: 6,
+} as const satisfies SolanaToken;
 const observed = {
   kind: "observed",
   source: "account-read",
@@ -84,7 +90,7 @@ describe("Solana identity and amount contracts", () => {
       cluster: "mainnet-beta",
       kind: "pool",
       address: USDC_MINT,
-    };
+    } as const;
     const key = solanaIdentityKey(identity);
     expect(key).not.toBe(solanaIdentityKey({ ...identity, cluster: "devnet" }));
     expect(key).not.toBe(solanaIdentityKey({ ...identity, kind: "position" }));

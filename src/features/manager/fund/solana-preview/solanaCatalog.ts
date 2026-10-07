@@ -136,7 +136,7 @@ const lp = {
 /** Metadata uses the official mainnet mint. Financial reads remain unavailable.
  * PP-INTEGRATION-POINT: POO-2239/2240 will separately bind verified Solana discovery and read models.
  */
-export const SOLANA_LOCAL_CATALOG = [
+export const SOLANA_LOCAL_CATALOG: readonly SolanaCatalogEntry[] = [
   solanaCatalogEntrySchema.parse({
     ...context,
     id: "solana:mainnet-beta:kamino-supply",

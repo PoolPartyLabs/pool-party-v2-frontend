@@ -121,6 +121,9 @@ const observedSourceSchema = z
     commitment: z.enum(["processed", "confirmed", "finalized"]),
   })
   .strict();
+const confirmedSourceSchema = observedSourceSchema.extend({
+  commitment: z.enum(["confirmed", "finalized"]),
+});
 export const solanaSourceSchema = z.discriminatedUnion("kind", [
   observedSourceSchema,
   z
@@ -134,7 +137,9 @@ export const solanaSourceSchema = z.discriminatedUnion("kind", [
 ]);
 export type SolanaSource = z.infer<typeof solanaSourceSchema>;
 const reason = z.string().min(1).max(128);
-/** Provenance is retained even for stale/not-applicable values. No missing-data fallback. */
+/** Declared provenance is retained for stale/not-applicable values. This schema is not
+ * an attestation of an external read and supplies no missing-data fallback.
+ */
 export function solanaReadStateSchema<T extends z.ZodTypeAny>(value: T) {
   return z.discriminatedUnion("status", [
     z.object({ status: z.literal("available"), value, source: solanaSourceSchema }).strict(),
@@ -151,10 +156,7 @@ export function solanaReadStateSchema<T extends z.ZodTypeAny>(value: T) {
             typeof entry === "object" && entry !== null && "raw" in entry && entry.raw === "0",
           "Confirmed zero requires raw zero",
         ),
-        source: observedSourceSchema.refine(
-          (entry) => entry.commitment !== "processed",
-          "Confirmed source required",
-        ),
+        source: confirmedSourceSchema,
       })
       .strict(),
   ]);
@@ -164,4 +166,4 @@ export type SolanaReadState<T> =
   | { status: "stale"; value: T; source: SolanaSource; reason: string }
   | { status: "unavailable"; source: SolanaSource | null; reason: string }
   | { status: "not-applicable"; source: SolanaSource; reason: string }
-  | { status: "confirmed-zero"; value: T; source: z.infer<typeof observedSourceSchema> };
+  | { status: "confirmed-zero"; value: T; source: z.infer<typeof confirmedSourceSchema> };
