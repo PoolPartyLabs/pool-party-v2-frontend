@@ -328,3 +328,7 @@ PP-MGR-LIB-052 now resolves measured node rectangles and stable principal/Income
 ## Manage viewport chrome, POO-2272 v2
 
 PP-MGR-CMP-046 accepts an optional decorative overlay outside the transformed graph. PP-MGR-CMP-085 supplies the existing authorized model's Hub identity. PP-MGR-CMP-053's Manage chip and PP-MGR-CMP-050's auto lock are opt-in presentation; default Build behavior and current data/operation seams stay unchanged. These pieces introduce no network, wallet, mock, custody or financial read. POO-2274 separately makes every actual node inspectable and preserves drafts; a structural lock does not prove execution or settlement.
+
+### Manage review visibility, POO-2274 v2
+
+Existing authorized position and pool reads stay active after first inspection of an origin. Visibility no longer restarts the read or invalidates its review. Same-origin retained display metadata is not fresh execution evidence; actual failures and material snapshots invalidate review. No new API, wallet or mock seam is introduced.

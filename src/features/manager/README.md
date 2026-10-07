@@ -762,3 +762,9 @@ Supported runtime types are liquidity/supply/unsupported. Fifty focused tests ac
 ManageCanvas now consumes CanvasViewport's optional untransformed Hub overlay, using the authorized model chain's name/logo. Top/right inset24, full text and pointer-events-none preserve graph pan/zoom/controls. SpokeGroup opts into a natural32px chip with a real20px network mark and decorative0.035-opacity network watermark; Build keeps its original21px default.
 
 Hub Idle input/output/Income carry14px locks, derived Swap/Bridge12px locks. Collect and spoke Idle have no added lock; no mark disables the node. Existing models, financial reads and execution remain unchanged. The all-node inspection host is a later POO-2274 slice. Seventy-two focused tests passed and independent GPT-6.1-sol review found no blocking integrated change. Stories are authored; actual hit-testing/reflow and browser acceptance remain with Murilo.
+
+### Manage panel visibility, POO-2274 v2
+
+A position read activates on its first visit and remains bound to that core/chain/position key while the editor is hidden. Hiding/reopening does not clear its draft or review, cancel an in-flight preparation, re-read merely because of visibility, or emit false abandonment. Real read failures and material position/pool/intent changes still invalidate review; retained display metadata cannot enable an action. Core changes reset the editor origin.
+
+This slice covers read preparation only. Current Move confirmation remains unavailable, and the existing DTO supplies no pending transaction journal or review-expiry contract. All-node selection/Back/focus integration is a separate slice.
