@@ -573,9 +573,9 @@ interface SolanaCreatedAccount {
     | { kind: "external"; bytes: number; source: string };
 }
 // Original-audit allocation sizes, including discriminator; revalidate against #47/#48 IDL:
-// FundState 5105; TokenLedger 105; CctpRoute 109; CctpLedger 80;
+// FundState 5462; TokenLedger 105; CctpRoute 109; CctpLedger 80;
 // KaminoPosition 161; RaydiumPolicy 113; RaydiumLedger 104;
-// RaydiumPosition 210; Transit 250. Reconcile before production wiring.
+// RaydiumPosition 210; Transit 251. Reconciled against the f40f010 production IDL.
 // External CPI/Token-2022 account sizes require the actual builder/extension decoder.
 
 interface SolanaLaunchBackend {

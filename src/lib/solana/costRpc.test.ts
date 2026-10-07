@@ -26,10 +26,10 @@ beforeEach(() => {
 it("uses finalized read-only rent/account/message queries and priority samples", async () => {
   const rpc = createSolanaCostRpc();
   expect(await rpc.accountExists("account")).toBe(false);
-  expect(await rpc.minimumBalanceForRentExemption(5105)).toBe(BigInt(12345));
+  expect(await rpc.minimumBalanceForRentExemption(5462)).toBe(BigInt(12345));
   expect(await rpc.feeForMessage("message")).toBe(BigInt(5000));
   expect(await rpc.recentPriorityFees()).toEqual([BigInt(100)]);
-  expect(mocks.rent).toHaveBeenCalledWith(BigInt(5105), { commitment: "finalized" });
+  expect(mocks.rent).toHaveBeenCalledWith(BigInt(5462), { commitment: "finalized" });
   expect(mocks.account).toHaveBeenCalledWith("account", {
     encoding: "base64",
     commitment: "finalized",

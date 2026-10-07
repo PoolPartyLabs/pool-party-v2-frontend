@@ -3,16 +3,15 @@
  * @name Solana committed bootstrap manifest and signing guard
  * @implements-rules-version DEC-190, DEC-200, DEC-201 (founder rulings, unversioned)
  */
-import {
-  address,
-  getAddressEncoder,
-  getCompiledTransactionMessageDecoder,
-  getProgramDerivedAddress,
-  getTransactionDecoder,
-} from "@solana/kit";
+import { getCompiledTransactionMessageDecoder, getTransactionDecoder } from "@solana/kit";
 import type { Hex } from "viem";
 import { hexToBytes } from "viem";
 import type { SolanaBootstrapAuthorization } from "./binding";
+import {
+  deriveSolanaBootstrapPdas,
+  requireSolanaSpokeProgram,
+  solanaBootstrapDiscriminator,
+} from "./release";
 
 export interface SolanaBootstrapManifest {
   policyHash: Hex;
@@ -59,6 +58,7 @@ export async function validateBootstrapTransaction(input: {
   authorization: SolanaBootstrapAuthorization;
   chunk?: SolanaBootstrapChunk;
 }): Promise<void> {
+  requireSolanaSpokeProgram(input.authorization.program);
   const message = getCompiledTransactionMessageDecoder().decode(
     getTransactionDecoder().decode(input.bytes).messageBytes,
   );
@@ -68,21 +68,11 @@ export async function validateBootstrapTransaction(input: {
     message.staticAccounts[0] !== input.manager
   )
     throw new Error("UNSAFE_SOLANA_TRANSACTION");
-  const encoder = getAddressEncoder();
-  const [stage] = await getProgramDerivedAddress({
-    programAddress: address(input.authorization.program),
-    seeds: [
-      new TextEncoder().encode("swap_policy_stage"),
-      encoder.encode(address(input.authorization.fundPda)),
-      encoder.encode(address(input.manager)),
-    ],
-  });
-  const discriminator = new Uint8Array(
-    await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(`global:${input.chunk ? "stage_swap_policy" : "initialize_fund"}`),
-    ),
-  ).slice(0, 8);
+  const { fund, stage } = await deriveSolanaBootstrapPdas(input.authorization, input.manager);
+  if (fund !== input.authorization.fundPda) throw new Error("UNSAFE_SOLANA_TRANSACTION");
+  const discriminator = solanaBootstrapDiscriminator(
+    input.chunk ? "stage_swap_policy" : "initialize_fund",
+  );
   let operationCount = 0;
   for (const instruction of message.instructions) {
     const program = message.staticAccounts[instruction.programAddressIndex];

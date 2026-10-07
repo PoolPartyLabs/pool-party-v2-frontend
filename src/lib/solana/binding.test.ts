@@ -89,14 +89,14 @@ const bootstrapAuthorization = {
   ...authorization,
   spokeIndex: 0,
   policyHash: toHex(BigInt(11), { size: 32 }),
-  fundPda: "DtJ3wso5NbkQNWoeFrdYa4cv4Mb78coXkcV879zSf1vU",
-  usdcAta: "BXAvfHQx19AN9D7HFw9i8G23oCgg313YsJkvf6YNx4Hx",
-  tslaxAta: "f5HWTsoDVkawoGaRDv7SH1ery1stbJ3XKkTocsKfzR7",
-  nvdaxAta: "5BvREnYaFNQfTxNKk2rP56wUUDPq2oHSPjLQGGhv39sT",
-  wsolAta: "6u3DQCQw6LhfAgxeTacCM3ntvN9VhK3WzWws7RNAD5ef",
+  fundPda: "9qHz9JpvLwuv9VothPFmCPShQQ75BdhhcZiV3bHXXaJM",
+  usdcAta: "AK5xYTKS5P3biopu9YqQ8eihLbpFCBp8crcJg7DX82F1",
+  tslaxAta: "H7H2QZbeCkQ1SBdVp2szcsuySbpKgoHpfoAR8gAoCT8C",
+  nvdaxAta: "5t1Ww84P9VJptFAeHqNd8RbLxq6j1iLLipYvg6jU4YZ8",
+  wsolAta: "4RKx6vBrBFXzWP1Z6yiP7Pv6bZ7SCfF9R3sX9Rwp6ECG",
 };
 
-it("matches #47/#48 Rust fixture bootstrap using independent Solidity ABI words", () => {
+it("matches production bootstrap using independent Solidity ABI words", () => {
   const domain = keccak256(
     encodeAbiParameters(
       [
@@ -159,10 +159,10 @@ it("matches #47/#48 Rust fixture bootstrap using independent Solidity ABI words"
           new Uint8Array(getAddressEncoder().encode(address(bootstrapAuthorization.fundPda))),
         ),
         `0x${"04".repeat(32)}`,
-        "0x9c4f8416484d86c2d7a6d9cb5746f4289926c7d7bc61a5caa0f296b438ed5fcb",
-        "0x09c0ea5663bc4af78d751afbbb3ec31b37ca50130e95f9620856208400fb668a",
-        "0x3e3af4a212d25668a7ec6963d097580ec5ca12dd0c600fc8711d06fc7175466e",
-        "0x579f23ccf99a178122b56905dffdddf7aa776cfd8230d154ca3254a06f1c41a8",
+        "0x8a5b3e14e0cbe95aba0d465d82a95fbb883af06d2c021072ec3b646c46709cc8",
+        "0xef56982735ad049bc6cf11a2172d499d6d8e09843378c3071bd260b197a849c1",
+        "0x487ff3d7c8c990b90aeb07a77fbf7709e9288dc7dd4d24ecfde5adb6755c41cb",
+        "0x32ce6d546d3efe2e7da2da777bbda0b0f62b7b70d4afa5ff27d6d3e8ebf889d9",
         authorization.nativeMandateHash,
         bootstrapAuthorization.fundId,
         BigInt(9),
@@ -171,7 +171,7 @@ it("matches #47/#48 Rust fixture bootstrap using independent Solidity ABI words"
     ),
   );
   const digest = keccak256(concatHex(["0x1901", domain, message]));
-  expect(digest).toBe("0x05405ee3cbacda4303d6ed3404afc02f852fd0ffa09cb9c7e44ac3bb66249092");
+  expect(digest).toBe("0xa8cd16b93992f6b5199098ea80787725d3182a00cfd2f579f5949e1bbc400fb7");
   expect(solanaBootstrapDigest(solanaAddress, bootstrapAuthorization)).toBe(digest);
 });
 
@@ -184,7 +184,6 @@ it.each([
   "tslaxAta",
   "nvdaxAta",
   "wsolAta",
-  "program",
   "spokeIndex",
 ] as const)("binds bootstrap member %s independently of legacy consent", (field) => {
   const value =
@@ -196,6 +195,12 @@ it.each([
   expect(
     solanaBootstrapDigest(solanaAddress, { ...bootstrapAuthorization, [field]: value }),
   ).not.toBe(solanaBootstrapDigest(solanaAddress, bootstrapAuthorization));
+});
+
+it("refuses a substituted program before requesting bootstrap consent", () => {
+  expect(() =>
+    solanaBootstrapDigest(solanaAddress, { ...bootstrapAuthorization, program: solanaAddress }),
+  ).toThrow("SOLANA_PROGRAM_MISMATCH");
 });
 
 it("verifies real EOA and Ed25519 signatures and rejects tuple tampering", async () => {

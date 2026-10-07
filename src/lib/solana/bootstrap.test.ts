@@ -100,7 +100,7 @@ async function validBootstrapFixture(init = false) {
   const encoder = getAddressEncoder();
   const authorization = {
     ...bootstrapAuthorizationFixture,
-    fundPda: "DtJ3wso5NbkQNWoeFrdYa4cv4Mb78coXkcV879zSf1vU",
+    fundPda: bootstrapAuthorizationFixture.fundPda,
   };
   const [stage] = await getProgramDerivedAddress({
     programAddress: address(authorization.program),
@@ -185,9 +185,9 @@ it.each([
   const message = getCompiledTransactionMessageDecoder().decode(transaction.messageBytes);
   const instruction = message.instructions[0];
   if (!instruction) throw new Error("FIXTURE_MISSING");
-  if (mutation === "program") instruction.programAddressIndex = 0;
-  if (mutation === "account") instruction.accountIndices = [0];
-  if (mutation === "data") instruction.data = new Uint8Array([1]);
+  if (mutation === "program") message.instructions[0] = { ...instruction, programAddressIndex: 0 };
+  if (mutation === "account") message.instructions[0] = { ...instruction, accountIndices: [0] };
+  if (mutation === "data") message.instructions[0] = { ...instruction, data: new Uint8Array([1]) };
   if (mutation === "lookup")
     Object.assign(message, {
       addressTableLookups: [
@@ -205,8 +205,20 @@ it.each([
   fixture.bytes = new Uint8Array(
     getTransactionEncoder().encode({
       ...transaction,
-      messageBytes: getCompiledTransactionMessageEncoder().encode(message),
+      messageBytes: getCompiledTransactionMessageEncoder().encode(
+        message,
+      ) as typeof transaction.messageBytes,
     }),
   );
   await expect(validateBootstrapTransaction(fixture)).rejects.toThrow("UNSAFE_SOLANA_TRANSACTION");
+});
+
+it("rejects a backend-supplied Fund PDA outside the production policy namespace", async () => {
+  const fixture = await validBootstrapFixture();
+  await expect(
+    validateBootstrapTransaction({
+      ...fixture,
+      authorization: { ...fixture.authorization, fundPda: fixture.manager },
+    }),
+  ).rejects.toThrow("UNSAFE_SOLANA_TRANSACTION");
 });

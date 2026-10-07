@@ -16,7 +16,9 @@
       "!next-env.d.ts",
       "!**/*.css",
       "!drizzle",
-      "!hookrisk"
+      "!hookrisk",
+      "!src/lib/solana/generated/pp_spoke.json",
+      "!src/lib/solana/generated/pp_spoke.ts"
     ]
   },
   "formatter": {

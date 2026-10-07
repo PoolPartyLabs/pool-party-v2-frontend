@@ -5,6 +5,7 @@
  */
 import type { SolanaBootstrapAuthorization } from "./binding";
 import type { SolanaBootstrapManifest } from "./bootstrap";
+import { SOLANA_SPOKE_PROGRAM } from "./release";
 
 export const bootstrapManifestFixture: SolanaBootstrapManifest = {
   policyHash: `0x${"03".repeat(32)}`,
@@ -23,11 +24,11 @@ export const bootstrapAuthorizationFixture: SolanaBootstrapAuthorization = {
   mandateHash: `0x${"00".repeat(31)}02`,
   policyHash: bootstrapManifestFixture.policyHash,
   spokeIndex: 1,
-  program: "Fg6PaFpoGXkYsidMpWxTWqkZ7FEfcYkgMQHGfVNLusVw",
-  fundPda: "11111111111111111111111111111111",
-  usdcAta: "11111111111111111111111111111111",
-  tslaxAta: "11111111111111111111111111111111",
-  nvdaxAta: "11111111111111111111111111111111",
-  wsolAta: "11111111111111111111111111111111",
+  program: SOLANA_SPOKE_PROGRAM,
+  fundPda: "F7fwcaDdYUzGdF4tqextZqynGGYHce3SuFKVbtoy666s",
+  usdcAta: "6n7j2WD2Ydx4tdCsDguzrPRSiWzvYTNVZRsqNQoa7DFJ",
+  tslaxAta: "D1EzC79expdRrjPcWCa1k4DvZL1T8FxS1irhwhPcpWso",
+  nvdaxAta: "Cobx7xWobwmhh3KXE8f9Mb2CHojM5C32Fj18jJG5naGL",
+  wsolAta: "HFJ6LuzV7Q9yrMCv9CCL2bS4Yk1aZ29TD1sVntG2CSBc",
   fundId: `0x${"00".repeat(31)}01`,
 };

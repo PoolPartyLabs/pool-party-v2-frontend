@@ -7,6 +7,7 @@ import {
   type TypedDataDefinition,
   verifyTypedData,
 } from "viem";
+import { requireSolanaSpokeProgram } from "./release";
 
 export interface SolanaBindingAuthorization {
   hubChainId: number;
@@ -75,6 +76,7 @@ export function solanaBootstrapTypedData(
   authorization: SolanaBootstrapAuthorization,
 ) {
   const legacy = managerSolanaBindingTypedData(solanaAddress, authorization);
+  requireSolanaSpokeProgram(authorization.program);
   if (
     !Number.isInteger(authorization.spokeIndex) ||
     authorization.spokeIndex < 0 ||

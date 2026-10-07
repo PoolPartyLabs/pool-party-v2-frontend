@@ -49,6 +49,22 @@ it("exposes available SOL and unavailable stock reference reasons", () => {
   expect(choices[2]?.availability).toEqual({ status: "available" });
   expect(choices[0]?.availability).toEqual({
     status: "unavailable",
-    reason: "SOLANA_ORACLE_REFERENCE_MISSING",
+    reason: "STOCK_DATA_UNAVAILABLE",
   });
+});
+
+it("does not enable stock options from backend metadata while Scope is off", () => {
+  flags.enabled = true;
+  const references = Object.fromEntries(
+    SOLANA_LP_CHOICES.map((choice) => [
+      choice.poolId,
+      { status: "available" as const, expiresAt: 2000000000, marketOpen: true },
+    ]),
+  );
+  const { choices } = renderHook(() => useSolanaLpChoices(references)).result.current;
+  expect(choices.slice(0, 2).map((choice) => choice.availability)).toEqual([
+    { status: "unavailable", reason: "STOCK_DATA_UNAVAILABLE" },
+    { status: "unavailable", reason: "STOCK_DATA_UNAVAILABLE" },
+  ]);
+  expect(choices[2]?.availability).toEqual({ status: "available" });
 });
