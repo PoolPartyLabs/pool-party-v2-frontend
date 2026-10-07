@@ -229,6 +229,51 @@ it("verifies real EOA and Ed25519 signatures and rejects tuple tampering", async
   );
 });
 
+it("verifies both EVM consents and rejects a substituted bootstrap policy", async () => {
+  const { publicKey, privateKey } = generateKeyPairSync("ed25519");
+  const walletAddress = getAddressDecoder().decode(
+    publicKey.export({ type: "spki", format: "der" }).subarray(-32),
+  );
+  const account = privateKeyToAccount(`0x${"01".repeat(32)}`);
+  const binding = await signManagerSolanaBinding({
+    manager: account.address,
+    solanaAddress: walletAddress,
+    fundContext: "draft",
+    authorization,
+    bootstrapAuthorization,
+    codec: {
+      acceptanceMessage: (value) => {
+        if (!value.bootstrapAuthorization) throw new Error("FIXTURE_MISSING");
+        return hexToBytes(solanaBootstrapDigest(value.solanaAddress, value.bootstrapAuthorization));
+      },
+    },
+    signTypedData: (data) => account.signTypedData(data),
+    signMessage: async (message) => new Uint8Array(sign(null, message, privateKey)),
+  });
+  const codec = {
+    acceptanceMessage: (value: typeof binding) => {
+      if (!value.bootstrapAuthorization) throw new Error("FIXTURE_MISSING");
+      return hexToBytes(solanaBootstrapDigest(value.solanaAddress, value.bootstrapAuthorization));
+    },
+  };
+  expect(await verifyManagerSolanaBinding(binding, codec)).toBe(true);
+  expect(
+    await verifyManagerSolanaBinding(
+      {
+        ...binding,
+        bootstrapAuthorization: {
+          ...bootstrapAuthorization,
+          policyHash: toHex(BigInt(12), { size: 32 }),
+        },
+      },
+      codec,
+    ),
+  ).toBe(false);
+  expect(
+    await verifyManagerSolanaBinding({ ...binding, bootstrapSignature: undefined }, codec),
+  ).toBe(false);
+});
+
 it.each([
   "-1",
   "1.5",
