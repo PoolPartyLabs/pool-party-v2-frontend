@@ -1,4 +1,4 @@
-# Solana launch UI handoff — Manager Console
+# Solana launch UI handoff: Manager Console
 
 **Owner:** Murilo, frontend pages and visual components. **Build day:** Thursday,
 October 8, 2026. **Demo target:** Friday, October 9, 2026. **Audit:** October 7,
@@ -18,30 +18,101 @@ stories first. Do not enable real launch because a catalog entry or builder exis
 | Flag | Hidden unless `useFeatureFlags().isEnabled("solanaSpoke")` | Default `false`; `NEXT_PUBLIC_FEATURE_SOLANA_SPOKE=on` opts in. Stage `next`. Never read this variable directly in a component. |
 | Authentication | Keep the existing EVM/SIWE identity connected; add external Phantom through Privy | No change to canonical EVM identity; Solana is an additional signer. |
 | SOL gate | Display actual requirement, balance and `costBreakdown` | **Not a hardcoded 0.3 SOL threshold.** The rulings PR computes selected Manager transaction costs with RPC rent/message-fee queries and explicit priority margin. Complete production transaction manifests remain required. |
-| Three LP choices | Show TSLAx/USDC, NVDAx/USDC, SOL/USDC; no automatic selection | Catalog fixtures exist. NVDAx program admission is blocked. Stock price source remains unresolved, so **both stock options show “Unavailable”**. SOL is not automatically executable either. |
+| Three LP choices | Show TSLAx/USDC, NVDAx/USDC, SOL/USDC; no automatic selection | #48 includes NVDAx admission/custody and multiplier validation. Stock oracle remains unavailable, so **both stock options show “Unavailable”**. Admission is not deployment or executable API readiness. |
 | Impact input | Empty initially, **no default and no placeholder**; explicitly enter a bounded or no-maximum value for LP submission | DEC-203/204: integer 0–65,535; explicit 0 or >=10,000 means no Manager maximum. Empty is not silently normalized. Missing reference still blocks. |
-| Bootstrap | Disable real three-chain creation until supported | API has no native initializer endpoint; native Mandate/emitter derivation cycle and provisioning integration are open. |
-| Swap / LP opening | Show disabled/release-blocked execution, with a reason | `/signed-quote` returns 503; production `swap_to_ratio` fails closed. A route is not an executable API-signed quote. |
+| Bootstrap | Disable real three-chain creation until supported | #47 resolves the identity cycle with an identity-free `policyHash` and derived Fund/ATA identities. Authenticated creation, staging and reconciliation API seams remain pending. |
+| Swap / LP opening | Show disabled/release-blocked execution, with a reason | #48 wires signed swaps against sealed policy and nonce state. The committed API snapshot still returns 503 for `/signed-quote`; a route is not an executable API-signed quote. Stock execution remains gated. |
 | Manual receive | “Complete transfer” after attestation; preserve pending until independently credited | Both manager-paid unsigned receive builder and admin keeper relay trigger exist. No admin key in browser. |
 | Exit controls | Hide full liquidation, Hub-ordered close/unwind/collect and stock swaps | Local close/withdraw/burn evidence is not complete liquidation or Hub command delivery. |
 
 ### Source precedence and frozen revisions
 
-All repository content was fetched, then read from `git show origin/<ref>:<path>`.
+The original audit used fetched refs; the #47/#48 refresh reads local Git objects
+read-only and confirms the contract remote head with `git ls-remote`.
 Use these revisions to reproduce this handoff; do not infer present readiness from
 older descriptive “what code does today” paragraphs in the decisions.
 
 | Repository / ref | Audited commit |
 | --- | --- |
 | Frontend `PoolPartyLabs/pool-party-v2-frontend`, `feat/fe-poo-2252-solana-spoke` | `59a1a34f4671ff2cf3e9b453a745bf290034423c` |
-| API `uBits-Capital/pool-party-api`, `feat/be-poo-2252-solana-spoke` | `53dd816fa3b6b0a2000a12f7939b66fb06ce743a` |
-| Contracts `PoolPartyLabs/smartcontract-v2`, `feat/pp-sc-feat-solana-spoke` | `fb37976bb220b989d29f1f6aec14505f09458dcf` |
+| API `uBits-Capital/pool-party-api`, local `feat/be-poo-2261-solana-sync` | `53dd816fa3b6b0a2000a12f7939b66fb06ce743a`; continuation worktree exists, uncommitted work is not a delivered API contract |
+| Contracts `PoolPartyLabs/smartcontract-v2`, `origin/feat/pp-sc-feat-solana-spoke` | `4239d10883d95e867b0bfd6108cf801da6dafcdd`, includes merged #47 and #48 |
 | Spec PR #14, `0xmvercosa/PoolParty_SCs_v2`, `docs/solana-spoke-definitions` | `21a6df12ada267add4b060f5dc7ee815a0e444b3` |
 
 **Precedence:** DECs 188–206 specify policy; source specifies what exists. Newer
 DEC-203/204 supersede provisional impact guidance in
 `src/features/manager/fund/launch/SOLANA_INTEGRATION.md` and `src/lib/solana/swap.ts`.
 The UI must expose the gap, not implement a workaround disguised as policy.
+API response examples below describe the committed API snapshot, not missing
+contract functionality at the refreshed #47/#48 revision. In particular, old
+DEC-198/200/202 blocker messages are historical API diagnostics, not current
+contract admission, identity-cycle or sealed-policy findings.
+
+### #47/#48 bootstrap contract and owner adapter requirements
+
+Retain legacy `ManagerSolanaBinding` and its existing signing/verifying helpers
+for existing callers and frozen legacy drafts. It is **not** the new bootstrap
+authorization, and its native Config hash must not be relabeled `policyHash`.
+New native creation uses this separate exact EIP-712 primary type:
+
+```text
+SolanaBootstrap(uint256 hubChain,address core,bytes32 mandateHash,bytes32 policyHash,uint16 spokeIndex,bytes32 program,bytes32 fundPda,bytes32 solanaKey,bytes32 usdcAta,bytes32 tslaxAta,bytes32 nvdaxAta,bytes32 wsolAta,bytes32 nativeMandateHash,bytes32 fundId,uint256 nonce,uint256 expiry)
+```
+
+The domain is `PoolParty Solana Fund`, version `6`, Hub chain ID and authoritative
+factory verifying contract. The same Manager EVM authorization binds Hub creation
+and native bootstrap. `policyHash` is identity-free: derive the Fund PDA from
+`[fund, hubChain little-endian u64, core address bytes, spokeIndex little-endian
+u16, policyHash]` under the pinned program, then derive its vault and canonical
+USDC/TSLAx/NVDAx/WSOL ATAs with the correct token programs. Final Mandate/native
+hashes and every derived identity must match the authenticated creation result.
+Do not derive identities from the legacy Mandate hash or guess factory/nonce.
+
+Freeze the complete bootstrap authorization and canonical serialized Config
+payload manifest with the request **before** estimating, journaling or signing.
+Resume must reject changed hashes, identities, Manager key, chunk bytes/order,
+total length or selected configuration. TODO(interface): the backend must supply
+and validate this manifest, its unsigned messages, lifetime and account metadata;
+the frontend must not invent production payload bytes or API routes.
+The frontend extension retains `ManagerSolanaBinding` with
+`bootstrapAuthorization`/`bootstrapSignature`, exposes `solanaBootstrapTypedData`
+and `solanaBootstrapDigest`, and freezes `solanaBootstrap: { policyHash, payload }`.
+Its `stage-solana-config` and `seal-solana-config` step kinds both build
+`stage_swap_policy`; `seal-solana-config` means the final nonempty sealing chunk,
+not a new on-chain instruction. `SolanaLaunchBackend.bootstrapState` is the
+read-only reconciliation seam, not a claim an HTTP endpoint is delivered.
+
+Manager-signed native provisioning is ordered, not one atomic browser step:
+
+1. Stage contiguous chunks using `stage_swap_policy` at the canonical
+   `[swap_policy_stage, fundPda, managerSolana]` PDA. Each `StageRequest` binds
+   `policy_hash`, `total_len`, `offset`, nonempty `chunk` and `seal`.
+2. The **final nonempty chunk** seals using the **same instruction** with
+   `seal=true`; earlier chunks use `seal=false`. There is no separate seal
+   instruction or empty seal transaction. Each chunk is at most 600 bytes,
+   serialized stage payload at most 650 bytes, total payload at most 4,096 bytes;
+   unsigned transaction packet limits must also pass independently.
+3. Manager signs `initialize_fund` with staged-mode payload `[2]` and the sealed
+   stage account. Init validates complete payload/commitment, consumes the stage
+   and refunds its rent to the payer. Each stage/final-seal/init transaction
+   requires the bound Manager Solana signer; an off-chain acceptance signature
+   does not authorize a keeper to provision instead.
+
+TODO(interface): authenticated read-only backend reconciliation must verify the
+exact on-chain staged prefix against frozen bytes, matching Fund/Manager/hash/
+length, sealed status, and initialized Fund/config identity. Stage absence alone
+does not prove failure: successful init consumes it. Only verified matching
+evidence may advance checkpoints. Unknown submitted transactions must retain
+their signature/lifetime and reconcile; **never rebuild or request a new wallet
+signature merely because polling times out**. Read-only hydration must not sign.
+Cost manifests must include every Manager stage/final-seal/init message and stage
+rent, without counting an imaginary extra seal transaction or rent refunds as NAV.
+
+#48 adds NVDAx native custody/admission and signed swap policy integration; it is
+not an outstanding blocker to cite. `SwapPolicy.validate()` still requires
+`reference_mode=0` and `stock_enabled=false`: stock oracle selection/enablement is
+unavailable. Both stock choices stay disabled, including NVDAx. Feature stays OFF,
+no deployment is authorized, and local evidence is not live financial readiness.
 
 Primary evidence map (paths are relative to the named repository):
 
@@ -176,7 +247,7 @@ metadata; the static catalog alone still proves no admission/oracle validation.
 | ID / display | `poolId` | Fee | Token metadata | Live UI at audited snapshot |
 | --- | --- | --- | --- | --- |
 | `tslax-usdc` / TSLAx/USDC | `8aDaBQkTrS6HVMjyc6EZebgdiaXhLYGriDWKWWp1NpFF` | 10 bps (0.10%) | TSLAx: 8 decimals, Token-2022 | **Unavailable — stock price reference not configured**; builder-only is not stock swap readiness. |
-| `nvdax-usdc` / NVDAx/USDC | `49iMatQtoyabsYAQc8GafVq6aeBFVDxSRH44oiatyyw6` | 10 bps (0.10%) | NVDAx: 8 decimals, Token-2022 | **Unavailable — stock price reference not configured; program admission also pending**. |
+| `nvdax-usdc` / NVDAx/USDC | `49iMatQtoyabsYAQc8GafVq6aeBFVDxSRH44oiatyyw6` | 10 bps (0.10%) | NVDAx: 8 decimals, Token-2022 | **Unavailable: stock oracle not configured**; #48 admission does not enable stock execution. |
 | `sol-usdc` / SOL/USDC | `3ucNos4NbumPLZNWztqGHNFFgkHeRMBQAVemeeomsUxv` | 4 bps (0.04%) | WSOL: 9 decimals, original SPL Token | Present as the third ordinary LP choice, not merely a fallback. Execute only after live admission/reference + signed-swap/bootstrap gates pass. |
 
 Mints: TSLAx `XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB`;
@@ -261,13 +332,13 @@ Manager UI step. A report's publication, delivery and acceptance are distinct.
 | 9. `report` (existing Robinhood path) | Journal Hub; keeper publication/delivery | “Wait for accepted report.” Existing UI says typically **14–19 minutes, sometimes longer**. | Existing 19-minute countdown is estimate, not expiry/credit. Continue pending when zero. |
 | 10. `bridge` | Hub / EVM wallet | “Bridge to Robinhood” via existing Across path. | **Not CCTP.** Keep existing Across transfer/expiry/refund semantics; do not apply CCTP claim rules to it. |
 | 11. `arrival` + Robinhood leaf swap/open | Robinhood / keeper credit then Manager EVM execution | Wait for credited arrival, refresh actual balances, then swap/open its configured Uniswap V4 position. | No spend based on a source bridge hash or fill alone. Preserve existing EVM recovery. |
-| 12. `solana:init` (`init-solana`) | Solana / bound Phantom (Manager pays rent/gas) | “Initialize Solana spoke” with EVM consent, bound signer, exact Mandate/PDA/ATAs and sealed routes/emitter. | **No API initializer exists; bootstrap commitment cycle unresolved.** Must not synthesize tx/account configuration. |
+| 12. Native provisioning | Solana / bound Phantom (Manager pays rent/gas) | Ordered stage chunks, final sealing chunk, then `initialize_fund`, each Manager signed against frozen bootstrap/config. | #47 resolves commitment derivation; API builders/reconciliation remain TODO(interface). Never synthesize payload/account configuration. |
 | 13. `solana:report` (`report`) | Journal Hub 42161; keeper signs Solana post and Hub delivery | “Wait for accepted Solana report / registration verification.” Solana finalized report, Wormhole VAA consistency 32, shared age rule; actual Hub acceptance/registration, not just publish hash. | Minutes, no measured production SLA. Existing 14–19-minute copy is EVM baseline, not verified Solana promise. No Manager wallet prompt for keeper report. |
 | 14. `solana:send` (`cctp-fast`) | Hub 42161 / EVM wallet | “Send USDC to Solana — CCTP Fast.” Show raw amount/fee cap and source hash. Fast hard ceiling **5 bps**, rounded up; refuse above cap, no silent Standard fallback. | Expected Fast attestation is **seconds**, then separate receive/credit. Not a measured end-to-end mainnet duration. Source burn success means pending claim, not arrival. |
 | 15. `solana:arrival` (`solana-arrival`) | Solana / keeper receive-and-credit; Phantom only for manual fallback | Show “Awaiting attestation” → “Ready to receive” → “Receive submitted” → “Credited”. `credited()` must independently prove atomic authorized receive-and-credit and provide raw credited amount. | Retain claim indefinitely while pending. Manual “Complete transfer” builds/signs receive after attestation. Neither button click, attestation nor mint marks complete. |
 | 16a. `solana:supply` (if Kamino) | Solana / Phantom | “Supply USDC to Kamino”; actual available principal, Manager fee/rent, confirmed receipt/state. | Builder exists for already provisioned/admitted Funds. New-Fund prerequisites remain blocked. No uncredited spending. |
 | 16b. `solana:ratio` (if LP) | Solana / Phantom | “Prepare LP ratio”; fresh authenticated API-signed quote checked before build, stronger output minimum enforced. | **Production V2 swap blocked.** Missing/stale reference, stock market closed, quote expired, invalid signer or rate limit stops before tx signing. |
-| 17. `solana:open` (if LP) | Solana / Phantom plus fresh NFT signer | “Open Raydium position” with actual post-swap balances, admitted pool, aligned ticks and minima. | Depends on confirmed ratio; TSLA/SOL builders exist, NVDA blocked. Extra NFT signature orchestration is not implemented by the hook alone. |
+| 17. `solana:open` (if LP) | Solana / Phantom plus fresh NFT signer | “Open Raydium position” with actual post-swap balances, admitted pool, aligned ticks and minima. | #48 includes NVDAx admission; API continuation and stock oracle remain gated. Extra NFT signature orchestration is not implemented by the hook alone. |
 | 18. Completion / ongoing reporting | All chains / keeper | “Launch completed” only when every planned checkpoint is confirmed. Show Fund link and truthful balances/NAV after accepted reports. | Current plan has **no explicit post-Solana-position report step**. Ongoing keeper reports are separate; never claim displayed NAV already reflects a position solely because open confirmed. |
 
 ### Actual execution ordering is a dependency graph, not a strict wizard
@@ -393,7 +464,7 @@ type ManagerSolanaWallet = ReturnType<
 // signTransaction(Uint8Array): Promise<Uint8Array>.
 ```
 
-Binding EIP-712: domain `{ name: "PoolParty Solana Fund", version: "6",
+Legacy binding EIP-712 (retained, not new bootstrap): domain `{ name: "PoolParty Solana Fund", version: "6",
 chainId: 42161, verifyingContract: factory }`, primary type
 `ManagerSolanaBinding`; message fields `solanaKey: bytes32`, `fund: address`,
 `spoke: bytes32`, `spokeChainId: uint256`, `nativeMandateHash: bytes32`,
@@ -464,7 +535,7 @@ interface SolanaCreatedAccount {
   layout: { kind: "spoke"; name: keyof typeof SOLANA_ACCOUNT_SPACES }
     | { kind: "external"; bytes: number; source: string };
 }
-// Spoke allocation bytes at contracts fb37976, including discriminator:
+// Original-audit allocation sizes, including discriminator; revalidate against #47/#48 IDL:
 // FundState 5105; TokenLedger 105; CctpRoute 109; CctpLedger 80;
 // KaminoPosition 161; RaydiumPolicy 113; RaydiumLedger 104;
 // RaydiumPosition 210; Transit 250. Reconcile before production wiring.
@@ -522,7 +593,7 @@ Backend adapter mapping / explicit missing joins:
 
 | Method / step | Existing API evidence | Missing integration requirement |
 | --- | --- | --- |
-| `build(init-solana)` | None | Provisioned native identity, codec, initializer builder; blocked. |
+| Native stage/final-seal/init builds | None in committed API snapshot | Frozen bootstrap/config manifest, exact unsigned messages and verified prefix/sealed/init reconciliation; TODO(interface). |
 | `build(cctp-fast)` | Native v6 creation/transport contract path, not `/solana/build/send-home` | Hub outbound CCTP builder/amount/fee/transit mapping not delivered by this Solana API; `send-home` is reverse direction. |
 | `build(kamino-supply)` | `POST /api/v2/funds/:core/solana/build/kamino-supply` | Exact amount, authoritative account admission and lifecycle readiness. |
 | `build(swap-to-ratio)` / `quoteSwap` | `/route` is diagnostics; `/signed-quote` always 503 | Final signed envelope, pinned signer/domain/nonce/oracle, production ratio builder. |
@@ -712,7 +783,7 @@ Amounts are **raw**, never human decimal strings like `"1.5"`.
 | POST `/api/v2/funds/CORE/solana/build/send-home` | API key | Manager + positive `amount`, `maxFee`, nonzero `transitId`, fresh `eventAccount`; optional lookup tables | Unsigned v0 Solana CCTP burn **Solana → Hub**, Manager fee payer and additional event signer | 400 invalid amount, bound key or transit; 503 Fast fee ceiling/route/native config/packet overflow. Not Hub-to-Solana send. |
 | POST `/api/v2/funds/CORE/solana/build/kamino-supply` | API key | Manager + positive raw-USDC `amount`; optional lookup tables | Unsigned v0 supply in pinned reserve | 400 invalid amount/Manager/admission; 503 native/account/RPC unavailable. |
 | POST `/api/v2/funds/CORE/solana/build/kamino-withdraw` | API key | Manager + positive cToken `amount` + raw `minimumUsdc` | Unsigned v0 withdraw; amount `18446744073709551615` means all recorded collateral | 400 missing amount/minimum or unadmitted state; not full liquidation. |
-| POST `/api/v2/funds/CORE/solana/build/raydium-open` | API key | Manager, admitted `pool`, fresh `nftMint`, ticks, positive u128 liquidity/minimum, u64 amount maxima | Unsigned v0 open; all required signers returned | 400 unadmitted pool, invalid aligned ticks/NFT/liquidity; 503 NVDAx upstream integration (when present in admission), pool layout/packet issues. |
+| POST `/api/v2/funds/CORE/solana/build/raydium-open` | API key | Manager, admitted `pool`, fresh `nftMint`, ticks, positive u128 liquidity/minimum, u64 amount maxima | Unsigned v0 open; all required signers returned | 400 unadmitted pool, invalid aligned ticks/NFT/liquidity; historical API NVDAx 503 is not a current #48 contract blocker; pool layout/packet issues remain. |
 | POST `/api/v2/funds/CORE/solana/build/raydium-collect` | API key | Manager, admitted pool, program-owned `position` | Unsigned v0 fee collect; custody and rewards quarantine resolved from state | 400 invalid/closed/wrong-Fund position; no farm reward revenue. |
 | POST `/api/v2/funds/CORE/solana/build/raydium-close` | API key | Manager, admitted pool, position, `amount0`, `amount1` minima | Unsigned v0 position close; original rent payer from state | Same position/admission checks; not Hub close-order/full liquidation. |
 | POST `/api/v2/funds/CORE/solana/transits/TRANSIT/build-receive` | API key | Strict `{ "payer": "<bound Manager base58>" }` | Reads saved validated message/attestation; source domain 3 gives unsigned SVM receive-and-credit, source domain 5 unsigned Hub connector calldata | 400 bad transit/body, attestation not ready, wrong Solana payer/burn route; 503 native/RPC/packet unavailable. |
@@ -900,7 +971,10 @@ poll quotes on every keystroke. Queue-full may have no retry seconds. Do not
 assert the API sets a `Retry-After` header for every Jupiter error; payload has
 the verified structured delay. No direct/fabricated route fallback.
 
-Capabilities response (no body; this is not Fund existence/admission validation):
+Historical committed API capabilities response (no body; not Fund existence or
+admission validation). Its upstream blocker strings predate merged #47/#48 and
+must not be displayed as current contract findings. TODO(interface): refresh the
+API capabilities contract before using it to enable execution:
 
 ```json
 {
@@ -1061,7 +1135,7 @@ Unexpected chain exceptions become 503 `v2 chain service unavailable`.
 | `SOLANA_PRICE_IMPACT_INVALID` | Require integer 0–65,535 and explain 0/>=10,000 no-maximum semantics. | Clamp values or confuse with slippage. |
 | Missing/stale stock oracle; closed market; invalid multiplier/freeze/hook | Stock choice + swap **Unavailable**, disabled, authoritative reason. | Mock price, arbitrary Pyth/Chainlink fallback, stale reference reuse. |
 | `/route` 429 or generic API throttling | Retry delay/correlation; disable retry while queued; no auto quote storm. | Jupiter browser call, server key exposure, optimistic signed quote. |
-| 503 signed policy/bootstrap/NVDA blocked | Disabled capability with specific engineering reason. | Retry-loop as though release code can recover or submit diagnostic route. |
+| 503 API signed-quote/bootstrap unavailable; stock oracle unavailable | Disabled capability with specific engineering reason; distinguish stale API diagnostics from merged #47/#48 contract support. | Retry-loop as though release code can recover or submit diagnostic route. |
 | `SOLANA_API_QUOTE_REQUIRED`, `..._INVALID`, `..._SIGNATURE_INVALID` | Stop before build/sign; request fresh authenticated quote after gate resolves. | Persist expired quote, accept Manager quote or stub signature verifier. |
 | CCTP `pending` / `attested` / `submitted` | Preserve pending claim; complete-transfer action only with ready attestation; independently poll/reconcile credit. | Claim lost funds, write off, mark arrived from mint or button, allow close. |
 | Manual receive 400 “attestation not ready” | Remain pending; refresh evidence, retry later. | Override message/attestation body or call Circle mint directly. |
@@ -1161,24 +1235,26 @@ Minimum story set:
 | Report 14-minute / 19-minute / delayed / accepted | Countdown is estimate; zero stays pending. Finalized report label separate from tx receipt. |
 | Phantom rejected / reverted / unknown send | Prior successes stay visible; unknown never offers new creation/send shortcut. |
 | Paused and saved mixed-chain journal | Use real step/checkpoint types with fixture-only driver and **no signing callbacks**; confirm order/dependency badges. |
-| Blocked bootstrap / signed swap / NVDA / full exit | Disabled reasons mirror capability/release map; do not display “ready”. |
+| Pending bootstrap API / signed quote / stock oracle / full exit | Disabled reasons mirror capability/release map; merged NVDAx admission is not stock readiness. |
 
 ## 10. What is not ready and what to hide/disable
 
-1. **New native-Fund bootstrap:** circular native Mandate/emitter/PDA commitment,
-   provisioning DTO/discovery, exact authorization codec and init builder remain
-   integration gates. Existing `FundDraftDto` allows at most two EVM chain entries,
+1. **New native-Fund bootstrap API:** #47 resolves the circular commitment with
+   identity-free policy derivation. Provisioning DTO/discovery, frozen bootstrap
+   authorization/config manifest, stage/init builders and verified read-only
+   reconciliation remain TODO(interface). Existing `FundDraftDto` allows at most two EVM chain entries,
    exposes no native binding fields; sending FE frozen extras into old
    `/build-create` does not create a three-chain v6 Fund.
-2. **All production signed swaps, including stock swaps and ratio planning:**
-   sealed signer/domain/oracle/nonce policy absent; valid signed-quote request 503;
-   default program ratio `IntegrationPending`. Rehearsal's recorded Jupiter **V1**
-   leg is explicitly not DEC-201/202 production V2 acceptance. Hide “Swap stocks”
-   and disable LP execution until actual signed ratio path is available.
-3. **Stock source/session and NVDA admission:** unresolved reference provider,
-   holiday/DST/off-hours valuation policy, no complete NVDA initializer/admission.
-   Stock choices visible but unavailable; never fake price feeds. TSLAx local CPI
-   success does not lift reference-policy block.
+2. **Signed-swap API and deployment:** #48 wires signed swaps with sealed policy
+   and replay nonce; the committed API still returns signed-quote 503. Integration
+   and live execution are unverified. Historical V1 rehearsal is not production
+   V2 acceptance. Hide “Swap stocks” and disable LP execution until authenticated
+   signed ratio delivery, state validation and deployment are verified.
+3. **Stock source/session:** #48 includes NVDAx initializer/custody/admission and
+   multiplier checks, not an available stock oracle. Production policy requires
+   `reference_mode=0`, `stock_enabled=false`; stock oracle selection/enablement and
+   session evidence remain unavailable. Both stock choices stay disabled. Never
+   fake reference prices or describe admission as a missing #48 implementation.
 4. **Full liquidation, income settlement, Fund closure and Hub-ordered commands:**
    Hub unwind/close/collect execution/result dispatch fail closed. Local Raydium
    close, Kamino withdraw and USDC principal burn leave residual TSLAx/possible
@@ -1233,7 +1309,7 @@ and correlation IDs in details, with translated primary actions/descriptions.
 - Pending CCTP remains claim; manual receive never completes optimistically;
   unknown transactions never rebuild; existing Fund remains navigable on failure.
 - Pure stories cover all section 9 states without real signing/deploy/secret access.
-- Bootstrap/signed-swap/NVDA/full-exit/Hub-command release blockers are visible
+- Bootstrap API/signed-quote/stock-oracle/full-exit/Hub-command release blockers are visible
   engineering status, not hidden promises of an available financial operation.
 
 ## 12. Verification boundary / questions already answered by evidence
@@ -1244,7 +1320,8 @@ dependency graph, journal/pause/resume limitations, controller methods/auth/effe
 URI paths, response wrapping/tagging, throttle defaults/Jupiter backoff, manual
 receive/relay paths, production blockers and local rehearsal scope.
 
-**Not verified and must not be implied:** production acceptance codec, complete
+**Not verified and must not be implied:** production acceptance codec and frozen
+bootstrap/config API manifest, stage-prefix/sealed/init reconciliation, complete
 native creation/discovery/init/Hub-CCTP adapter, production cost estimates or
 0.3-SOL policy, chosen stock oracle/provider/calendar, production optional-limit
 execution, live admitted three pools, credit-amount/public SVM balance adapter,

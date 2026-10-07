@@ -19,11 +19,15 @@ Build these UI pieces:
   exposes `enabled`, `ready`, `address`, `balanceLamports`, `balanceError`, `connect`,
   `refreshBalance`, `signMessage`, `signTransaction`. No arbitrary first-wallet selection
   when multiple keys are connected. EVM stays connected and remains canonical.
-- Binding disclosure/signatures BEFORE launch: call `signManagerSolanaBinding` with
+- Legacy binding disclosure/signatures: retain `signManagerSolanaBinding` with
   EVM manager `signTypedData`, Solana `signMessage`, draft context, exact
   `SolanaBindingAuthorization`, and the acceptance-only `BindingCodec`.
   Present both addresses and the per-Fund immutable authorization. Reusing a key for
   another Fund requires that Fund's signatures. Persist the binding in the draft owner.
+- New native bootstrap: use the separate `SolanaBootstrap` authorization described
+  below, not a renamed legacy binding. Freeze its authorization and Config payload
+  manifest before launch. Display Manager signatures for every stage chunk, final
+  sealing chunk and init; none is a keeper-funded provisioning action.
 - Funded-wallet gate: call `integration.check()` and display exact
   `requiredLamports`, `balanceLamports`, errors and `costBreakdown`. The hook derives
   Manager transaction steps from the selected plan, queries rent for missing
@@ -65,11 +69,70 @@ Build these UI pieces:
 
 ## Required implementation inputs
 
+### #47/#48 bootstrap revision
+
+Contract source: `origin/feat/pp-sc-feat-solana-spoke` at
+`4239d10883d95e867b0bfd6108cf801da6dafcdd`, including merged #47 and #48.
+Legacy `ManagerSolanaBinding` stays supported for existing callers; its typed data
+and native Config hash are not the new bootstrap wire format. New native creation
+requires a frozen bootstrap authorization and canonical serialized Config payload
+manifest, supplied and verified through the authenticated backend seam.
+The frontend keeps `ManagerSolanaBinding.bootstrapAuthorization` and
+`bootstrapSignature` alongside legacy fields; `solanaBootstrapTypedData` and
+`solanaBootstrapDigest` implement the separate type. Freeze
+`solanaBootstrap: { policyHash, payload }` with the request. Step kinds
+`stage-solana-config`/`seal-solana-config` both map to `stage_swap_policy`, with the
+latter representing the final nonempty chunk, followed by `init-solana`.
+`SolanaLaunchBackend.bootstrapState` is the read-only verification seam, not a
+delivered API endpoint.
+
+```text
+SolanaBootstrap(uint256 hubChain,address core,bytes32 mandateHash,bytes32 policyHash,uint16 spokeIndex,bytes32 program,bytes32 fundPda,bytes32 solanaKey,bytes32 usdcAta,bytes32 tslaxAta,bytes32 nvdaxAta,bytes32 wsolAta,bytes32 nativeMandateHash,bytes32 fundId,uint256 nonce,uint256 expiry)
+```
+
+Domain: `PoolParty Solana Fund`, version `6`, authoritative Hub chain and factory.
+The same Manager EVM signature binds Hub creation/native bootstrap. `policyHash`
+is identity-free. Fund seeds are `[fund, hubChain little-endian u64, core address
+bytes, spokeIndex little-endian u16, policyHash]` under the pinned program; the
+vault and four canonical ATAs follow, respecting SPL/Token-2022 ownership. Final
+Mandate/native hashes, identities, nonce/expiry, program and bytes must come from
+the verified creation result. Never reuse the legacy Mandate hash as a PDA seed.
+
+Provision in order: each Manager-signed `stage_swap_policy` appends a contiguous
+nonempty chunk with the frozen hash, total length and offset. Earlier chunks set
+`seal=false`; the final nonempty chunk sets `seal=true` on that **same instruction**.
+No standalone seal instruction or empty seal transaction exists. Contract maxima
+are 600 chunk bytes, 650 serialized stage bytes and 4,096 total bytes; transaction
+packet limits still apply. Manager-signed `initialize_fund` uses staged payload
+`[2]`, validates the sealed stage, consumes it and refunds rent to the payer.
+
+Freeze authorization plus payload bytes/chunk order/config before estimating or
+journaling. Resume rejects any changed identity, policy, Manager or manifest.
+TODO(interface): provide production builder/Config manifest and authenticated
+read-only reconciliation of exact verified staged prefix, sealed state and
+initialized Fund/config identity. Stage disappearance can mean successful init,
+not failure. Unknown submitted transactions retain their signature/lifetime for
+reconciliation; do not rebuild or prompt another signature on a polling timeout.
+Estimate every Manager staging/final-seal/init message and stage rent, with no
+fictional extra seal transaction or keeper budget substitution.
+
+The local API branch `feat/be-poo-2261-solana-sync` exists at committed SHA
+`53dd816fa3b6b0a2000a12f7939b66fb06ce743a`. Its committed `API.md` still describes
+pre-#47/#48 blockers; concurrent uncommitted continuation is not API delivery.
+TODO(interface): creation/bootstrap/staging/reconciliation and signed-quote
+adapters remain pending verification. #48 adds NVDAx admission/custody and signed
+swap policy integration, but stock oracle is still unavailable: the production
+policy requires `reference_mode=0`, `stock_enabled=false`. Keep both stock choices
+unavailable and the feature OFF. No deployment or financial readiness is implied.
+
+### Existing adapter surface
+
 `options` supplies manager, draft ID, binding, `BindingCodec`, `costEstimator`, `evmCode`,
 existing EVM steps/driver, Solana selection, frozen request/plan and authenticated
 `SolanaLaunchBackend`. The frozen object retains the existing EVM request fields and
 adds `solanaBinding` and normalized `solanaSelection`; saved version-1 storage keys
-are unchanged. Both ratio/open configs persist selected pool and maximum impact.
+are unchanged. New bootstrap also requires frozen `solanaBootstrap` and the separate
+authorization/signature above. Both ratio/open configs persist selected pool and maximum impact.
 Resume rejects a changed binding, pool or impact instead of rebuilding a new plan.
 Older provisional Solana journals without the tuple/selection fail closed and need
 an explicit reviewed migration; old EVM-only journal loading is unchanged. A plain EVM driver
@@ -138,12 +201,11 @@ API-provided `{message, attestation}` and receive-and-credit, never direct unres
   the bound `authority: Signer` on `initialize_fund`, not an implemented off-chain
   Ed25519 acceptance envelope. Do not present the test-only digest countersign codec
   as production wire format. Backend must map countersign evidence to actual init.
-- Snapshot clarification: program `fb37976` derives
-  `[fund, hub_core, spoke_index, mandate_hash]` and verifies native bootstrap
-  consent, replacing the older creation-message gate. The frontend EIP-712 codec
-  remains pinned to `16e6f68`; authoritative provisioning must reconcile the
-  production binding revision before enabling transactions. This estimator patch
-  does not claim to migrate binding wire formats.
+- Revision clarification: #47/#48 use the identity-free policy derivation and
+  separate bootstrap type above. The legacy EIP-712 codec remains available;
+  its `16e6f68` fixture is legacy evidence, not a new creation authorization.
+  TODO(interface): validate the production frozen authorization/Config manifest
+  and provisioned identities before enabling transactions.
 - TODO(interface): creation payload containing committed Solana binding/Mandate and
   multi-spoke indexing, init/Kamino/Raydium instruction builders, cost estimation,
   report evidence and authenticated attestation/receive endpoints. They are injectable
@@ -182,8 +244,8 @@ API-provided `{message, attestation}` and receive-and-credit, never direct unres
 - T2a/backend must enforce CCTP Fast both directions, `amount - maxFee` in-flight,
   atomic receive/credit and destinationCaller; Wormhole consistency 32 and shared
   report age; TSLAx/NVDAx Token-2022 eligibility/market-hours/multiplier/pool checks.
-- Release gate: the inspected init account set includes TSLAx and WSOL but not
-  NVDAx; API/program support for all three catalog options must be verified before
-  presenting executable choices. This patch exposes the ruled UI catalog, not a
-  claim the complete NVDAx custody/valuation path is already deployed.
+- Release gate: #48 supports NVDAx native init/custody/admission, including its
+  multiplier witness. The stock oracle remains unavailable and API continuation
+  is not verified delivery. All three catalog entries may be visible, but neither
+  stock may become executable from admission alone; deployment is not authorized.
 - Keep management fee cap 500 bps for this MVP (DEC-196); no fee-cap changes here.
