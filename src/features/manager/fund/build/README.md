@@ -132,3 +132,18 @@ Build entry and canvas resize fit the full graph above the zoom controls. The si
 Layout exposes complete block-to-block connection paths with clipped shared buses. Hover/focus of a percentage highlights its entire incoming path; only relevant branch spans light up. All five fixed spine cards carry locks. Income output is neutral; Collect fees → Swap · auto → Income stays green until Income.
 
 Manual Swap and spoke percentage select AuxiliaryBlockPanel and reuse the existing Apply/Discard/leave guard. Token keys are canonical network/address references from the mandate; pairs must differ. Spoke allocations cannot exceed root/network room or fall below allocated children. No child is silently rescaled. Manual Swap execution is unavailable, including inside a pool chain, until POO-2238. See [delivery record](../../../../../docs/build-canvas-polish-2026-10-05.md).
+
+## Native dark scrollbars (POO-2287, rules v1)
+
+The document declares its dark native color scheme in CSS and Next viewport metadata.
+Both Build side columns and the palette's internal scroll area opt into the existing
+`scrollbar-dark` utility. Tracks, buttons and the two-axis corner stay transparent;
+thumbs use the design tokens. Forced-colors mode restores system rendering and sizing.
+Side columns and the panel frame retain zero minimum width so classic scrollbar gutters
+can reduce the available content width. Scrollbars remain native, with no overflow clipping
+or new scroll handlers; drag, canvas sizing, drafts and navigation retain their behavior.
+
+Focused component tests cover the styling/width contracts and existing interactions.
+Native painting in Chrome/Edge, Firefox and Safari with always-visible scrollbars remains
+the owner's browser acceptance check. The separate POO-2284 range fix (PR #122) handles
+the range controls' width. No API, transaction, new copy or analytics emitter is introduced.

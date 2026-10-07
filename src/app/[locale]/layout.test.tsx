@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE-CMP-016
  * @name LocaleLayout.toaster.test
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2173 and POO-2287 rules v1)
  * @analytics-events none (a regression test; it renders the layout and emits nothing)
  *
  * Regression for POO-2173: `toast(...)` was called from the fund builder, the strategy manage view
@@ -20,7 +20,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { toast } from "@/components/ui/Toast";
 import enShell from "@/i18n/messages/en/shell.json";
 import ptBrShell from "@/i18n/messages/pt-BR/shell.json";
-import LocaleLayout from "./layout";
+import LocaleLayout, { viewport } from "./layout";
 
 // Build-time and runtime plumbing the layout reaches for. None of it is under test here.
 vi.mock("next/font/local", () => ({ default: () => ({ variable: "font-poppins-test" }) }));
@@ -89,6 +89,11 @@ async function showToastAndGetList(message = "Draft saved") {
 
 const ROOT = process.cwd();
 const read = (path: string) => readFileSync(join(ROOT, path), "utf8");
+
+it("POO-2287 R1 declares native dark controls before CSS loads and preserves pinch zoom", () => {
+  expect(viewport.colorScheme).toBe("dark");
+  expect(viewport.maximumScale).toBe(5);
+});
 
 describe("LocaleLayout toaster mount (POO-2173)", () => {
   afterEach(() => {
