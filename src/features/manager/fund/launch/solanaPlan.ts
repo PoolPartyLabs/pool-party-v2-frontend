@@ -51,6 +51,7 @@ export function withSolanaLaunchSteps(
     (!selection.kamino && !selection.raydiumPool) ||
     !evmSteps.some((step) => step.id === "create") ||
     !evmSteps.some((step) => step.id === "profile") ||
+    !evmSteps.some((step) => step.id === "discover-hub" && step.kind === "discover") ||
     evmSteps.some((step) => step.id.startsWith("solana:"))
   )
     throw new Error("INVALID_SOLANA_PLAN");

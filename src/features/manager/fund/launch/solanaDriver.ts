@@ -1,6 +1,10 @@
 import { isFeatureEnabled } from "@/lib/features";
 import { type ManagerSolanaBinding, solanaBootstrapDigest } from "@/lib/solana/binding";
-import { bootstrapChunks, type SolanaBootstrapManifest } from "@/lib/solana/bootstrap";
+import {
+  bootstrapChunks,
+  type SolanaBootstrapManifest,
+  validateBootstrapTransaction,
+} from "@/lib/solana/bootstrap";
 import { requireSolanaLpChoice } from "@/lib/solana/lpChoices";
 import { requireSolanaOracleReference, type SolanaOracleReference } from "@/lib/solana/oracle";
 import {
@@ -19,6 +23,12 @@ import { isEvmLaunchStep, type LaunchStep, type SolanaLaunchStep } from "./plan"
 import type { SolanaLaunchSelection } from "./solanaPlan";
 
 export interface SolanaLaunchBackend {
+  /** TODO(interface): independent pinned decoder validates exact operation/accounts/data before signing. */
+  validateTransactionIntent?(
+    bytes: Uint8Array,
+    step: SolanaLaunchStep,
+    journal: LaunchJournal,
+  ): Promise<boolean>;
   /** TODO(interface): read owner/PDA-verified accounts, never infer success from a submitted signature. */
   bootstrapState?(journal: LaunchJournal): Promise<{
     policyHash: string;
@@ -68,7 +78,7 @@ export function createChainLaunchDriver(input: {
   const requireEnabled = () => {
     if (!isFeatureEnabled("solanaSpoke")) throw new Error("SOLANA_DISABLED");
   };
-  const bootstrapReady = async (step: SolanaLaunchStep, journal: LaunchJournal) => {
+  const bootstrapEvidence = async (step: SolanaLaunchStep, journal: LaunchJournal) => {
     if (!input.backend.bootstrapState) throw new Error("SOLANA_BOOTSTRAP_READER_REQUIRED");
     const frozen = journal.frozen as {
       solanaBootstrap?: SolanaBootstrapManifest;
@@ -92,7 +102,7 @@ export function createChainLaunchDriver(input: {
     )
       throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
     const state = await input.backend.bootstrapState(journal);
-    if (!state) return false;
+    if (!state) return { ready: false, state };
     if (
       state.policyHash !== manifest.policyHash ||
       state.fundPda !== authorization.fundPda ||
@@ -102,20 +112,25 @@ export function createChainLaunchDriver(input: {
     if (state.initialized) {
       if (state.bootstrapDigest !== solanaBootstrapDigest(input.solanaAddress, authorization))
         throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
-      return true;
+      return { ready: true, state };
     }
     if (
       state.totalLength !== (manifest.payload.length - 2) / 2 ||
       !/^0x(?:[0-9a-fA-F]{2})*$/.test(state.payload) ||
       !manifest.payload.toLowerCase().startsWith(state.payload.toLowerCase()) ||
+      ![0, ...chunks.map((entry) => entry.offset + (entry.chunk.length - 2) / 2)].includes(
+        (state.payload.length - 2) / 2,
+      ) ||
       (state.sealed && state.payload.length !== manifest.payload.length)
     )
       throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
-    if (step.kind === "init-solana") return false;
+    if (step.kind === "init-solana") return { ready: false, state };
     if (!chunk) throw new Error("SOLANA_BOOTSTRAP_MISMATCH");
     const end = (chunk.offset + (chunk.chunk.length - 2) / 2) * 2 + 2;
-    return state.payload.length >= end && (!chunk.seal || state.sealed);
+    return { ready: state.payload.length >= end && (!chunk.seal || state.sealed), state };
   };
+  const bootstrapReady = async (step: SolanaLaunchStep, journal: LaunchJournal) =>
+    (await bootstrapEvidence(step, journal)).ready;
   return {
     async build(step, journal) {
       if (isEvmLaunchStep(step)) return input.evm.build(step, journal);
@@ -144,9 +159,8 @@ export function createChainLaunchDriver(input: {
       if (!journal) throw new Error("SOLANA_BUILD_REQUIRED");
       await input.verifyBinding(journal);
       if (["stage-solana-config", "seal-solana-config", "init-solana"].includes(step.kind)) {
-        if (await bootstrapReady(step, journal))
-          throw new Error("SOLANA_BOOTSTRAP_ALREADY_APPLIED");
-        const state = await input.backend.bootstrapState?.(journal);
+        const { ready, state } = await bootstrapEvidence(step, journal);
+        if (ready) throw new Error("SOLANA_BOOTSTRAP_ALREADY_APPLIED");
         if (
           (step.kind === "init-solana" && !state?.sealed) ||
           (step.bootstrapChunk &&
@@ -209,6 +223,23 @@ export function createChainLaunchDriver(input: {
           const bytes = await input.backend.build(step, journal, lifetime, quote);
           if (quote && request) validateSolanaApiQuote(quote, request);
           if (!(bytes instanceof Uint8Array)) throw new Error("UNSAFE_SOLANA_TRANSACTION");
+          if (["stage-solana-config", "seal-solana-config", "init-solana"].includes(step.kind)) {
+            const binding = (journal.frozen as { solanaBinding?: ManagerSolanaBinding })
+              .solanaBinding;
+            if (!binding?.bootstrapAuthorization) throw new Error("SOLANA_BOOTSTRAP_REQUIRED");
+            await validateBootstrapTransaction({
+              bytes,
+              manager: input.solanaAddress,
+              authorization: binding.bootstrapAuthorization,
+              chunk: step.bootstrapChunk,
+            });
+          }
+          await input.verifyBinding(journal);
+          if (
+            !input.backend.validateTransactionIntent ||
+            !(await input.backend.validateTransactionIntent(bytes, step, journal))
+          )
+            throw new Error("UNSAFE_SOLANA_TRANSACTION");
           return bytes;
         },
         sign: input.signTransaction,

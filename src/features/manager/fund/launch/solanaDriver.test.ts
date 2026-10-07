@@ -36,6 +36,7 @@ function setup() {
     complete: vi.fn(async () => {}),
   };
   const backend: SolanaLaunchBackend = {
+    validateTransactionIntent: vi.fn(async () => true),
     build: vi.fn(async () => new Uint8Array()),
     credited: vi.fn(async () => ({ credited: false })),
     reportReady: vi.fn(async () => false),
@@ -220,6 +221,21 @@ it("refuses initialize while the last chunk is not sealed", async () => {
   await driver.build(step, journal);
   await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("SOLANA_BOOTSTRAP_ORDER_REQUIRED");
   expect(transport.send).not.toHaveBeenCalled();
+});
+
+it("rejects a matching prefix outside the frozen chunk boundaries", async () => {
+  const { driver, step, journal, onchain } = bootstrapSetup();
+  onchain.payload = `0x${"ab".repeat(601)}`;
+  await expect(driver.build(step, journal)).rejects.toThrow("SOLANA_BOOTSTRAP_MISMATCH");
+});
+
+it("fails closed when the independent intent validator is absent or rejects", async () => {
+  const { driver, backend, journal, step } = swapSetup();
+  delete backend.validateTransactionIntent;
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("UNSAFE_SOLANA_TRANSACTION");
+  backend.validateTransactionIntent = vi.fn(async () => false);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("UNSAFE_SOLANA_TRANSACTION");
 });
 
 function swapSetup() {

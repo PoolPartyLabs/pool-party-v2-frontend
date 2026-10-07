@@ -89,6 +89,15 @@ it("requires staging input and puts Manager-signed seal before initialize", () =
   expect(staging[2]?.dependencies).toContain("solana:stage:600");
   expect(steps.find((step) => step.id === "solana:init")?.dependencies).toEqual(["solana:seal"]);
 });
+
+it("requires the Hub discovery step before staging can be scheduled", () => {
+  expect(() =>
+    withSolanaLaunchSteps(
+      evm.filter((step) => step.id !== "discover-hub"),
+      { sharePct: 50, kamino: true },
+    ),
+  ).toThrow("INVALID_SOLANA_PLAN");
+});
 it.each([
   -1, 65536, 1.5,
 ])("rejects Manager impact %s without constructing a plan", (maxPriceImpactBps) => {
