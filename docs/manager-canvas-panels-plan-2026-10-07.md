@@ -11,7 +11,7 @@
 
 # Manager canvas and inline panels: delivery plan, October 7, 2026
 
-Status: **v2 plan complete; graph foundation and Review transaction-fee slices in progress**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main: `cabda27760d8190d81203ae87b77e01b94025f3b`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
+Status: **v2 plan complete; graph foundation, Review transaction fees, Solana S1 catalog and inline Manage header merged. Supported Manage route/card slice reviewed and ready; canvas chrome, all-node panels and remaining local Solana slices in progress**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main before this route PR: `55c209a731e1914caec32817cd3aa2b429426bc2`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
 
 ## Current v2 contract and implementation sequence
 
@@ -31,6 +31,10 @@ POO-2270/2271/2272/2273/2274 contain append-only numbered **v2** rules and match
 | POO-2287, [PR #124](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/124) | Merged: scoped dark native scrollbars/control scheme, forced-colors preserved. Murilo performs native browser acceptance. |
 | POO-2284, [PR #122](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/122) | Merged: full range values, locale-safe decimal editing, actual pool tick-spacing/Full recovery. Solana protocol math remains separate. |
 | POO-2281 v2, [PR #120](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/120) | Merged: guarded local Solana editor, three clicks on already-selected V2 within 1000ms in `/manager/new`. No real execution enabled. |
+| POO-2288, [PR #127](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/127) | Merged: stable semantic node/port/connection/junction contract and declared graph validation. Build routing adoption remains separate. |
+| POO-2289, [PR #126](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/126) | Merged: read-only Review Entry/Exit fees card with explicit unavailable values. No fee inference or new launch gate. |
+| POO-2291 S1, [PR #128](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/128) | Merged: typed Solana catalog/read contracts and unchanged protocol choices. S2-S6 UI and real execution remain pending. |
+| POO-2272 header, [PR #129](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/129) | Merged: canonical protocol/subtype left, network right, full text and natural wrapping. Hub overlay and locks remain pending. |
 | Existing Overview/Manage | Authorized entry/discovery/position reads, local drafts/launch continuation, current/draft range, inline Move/Create and existing unavailable gates remain. Ready visual foundation exists; aggregate history/readiness and complete execution/policy contracts remain pending. |
 
 Preserve V1, Strategies/Portfolio with V2 tags and **exactly the investor InvestModal/provisioning already implemented**. Manager Collect is not investor Collect income. Preserve mandate/owner/core checks, canonical token identity/decimals, current-position state, numeric precision and pending journals. Current licensing is source-available; no MIT/OSI claim is inferred from an older document.
@@ -65,6 +69,14 @@ Auto describes route context, not broadcasting, automatic conversion, atomicity,
 The sidebar lists **every actual node** by network/topology, including positions, Idle/cash, Collect, derived Swap/Bridge, Income/withdrawal where present. Sidebar/canvas/panel use the same stable identity/snapshot. Fixed nodes remain inspectable; same-pool positions have distinct canonical origins.
 
 Separate visible panel, per-origin draft and immutable pending-operation owner. LP -> Collect/Idle/Charts -> Back preserves draft/review/journal/viewport. Visibility is not position_changed abandonment or preview renewal. Material origin/authorization/snapshot/expiry changes still invalidate the applicable operation. Account changes prevent a new account signing an old operation, while recovery evidence remains scoped. Back/Escape restores live focus; hidden panels stay outside keyboard/a11y traversal.
+
+### Supported Manage geometry slice, reviewed October 7
+
+The route PR joins POO-2270/2271 because card measurement, final ports, hulls and the shared return Bridge must agree in one layout. It covers runtime liquidity, supply and unsupported positions only. Native cash is144x96 with separate quantity/USD, hub Idle236x104, spoke Idle176x104, output236x168 and Income236x102; natural measured content can grow. Gray principal leaves each position laterally, green fees use Collect -> centered Swap with24px gap -> Income, and the Income exit is gray. Actual cross-chain spokes have one inbound and one shared outbound Bridge with separate principal/Income ports; local Arbitrum/native cash do not gain a Bridge. Full-path hover paints visible route legs only, preserving sibling isolation and immutable internal Bridge transitions.
+
+Two review findings were reproduced before correction: widened Collect/Swap pills could intersect the principal bypass, and cash USD could render without native quantity. Final corridors/column widths/hulls/buses derive from measured rectangles; native amount and its independent available USD are both required. Fifty focused tests in four files, scoped TypeScript and Biome passed. The regression checks every visible route leg against all unrelated cards across hub/two spokes, five LP origins, widths240/320 and heights600/700. No browser, full suite, build, deployment or48-runtime claim.
+
+Holding/debt topology, shared Build route parity, all-node selection, fixed Hub/locks and authoritative queue/native valuation/Income sources are separate work. POO-2270/2271 remain In Progress for their broader matrix acceptance; a matching graph never enables a transfer.
 
 ### Ordered small PRs and tests
 

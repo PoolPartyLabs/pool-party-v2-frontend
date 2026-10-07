@@ -261,3 +261,9 @@ Existing real-launch gates remain: confirm canonical programs/accounts/owners, a
 ## Manage inline header, October 7, 2026 (POO-2272 v2)
 
 Status: ANSWERED for this presentation slice. The selected canonical protocol/network identity and existing Supply/Liquidity subtype are kept together. Trusted existing marks are reused, complete text wraps and no financial amount, venue support, rate, fee or custody permission is added. Optional pair context remains owned by the operation host. The existing financial, custody and execution gates remain unchanged. PP-MGR-CMP-091 adds no credential, personal-data or transaction flow. Header/panel tests and TypeScript pass; rendered narrow-width acceptance remains with Murilo.
+
+## CR-MGR-POO2270-ROUTES, 2026-10-07
+
+Scope: supported Manage graph/card presentation and route hover, POO-2270/2271 v2. Verify before financial enablement that actual Principal/Income origins and network transitions match displayed routes. A visual Collect/Swap/Bridge path does not prove conversion, atomicity or hub credit. Physical native quantity and independent USD valuation stay distinct; unavailable quantity must not carry an available USD label, and no reserve/Income value is guessed.
+
+Answer in this slice: explicit typed ports, measured final rectangles, no invented capability/read, and native/USD guard are implemented and covered by focused regression tests. Current authoritative integration/disclosure entries remain OPEN; no blocking item is resolved by geometry or hover. No signing or deployment is added.

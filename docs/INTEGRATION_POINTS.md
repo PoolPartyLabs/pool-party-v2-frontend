@@ -320,3 +320,7 @@ The local catalog rejects both fixture and observed values in financial/capabili
 ## Manage inline identity header, October 7, 2026 (POO-2272 v2)
 
 PP-MGR-CMP-091 consumes the canonical ManagePosition already selected by the host and optional display pair context. It performs no read, write, mock call or transaction. Current position/network provenance and the existing authorized Manage seams are unchanged. This header slice does not enable Move, Collect or future-policy persistence.
+
+## Manage measured routing, POO-2270/2271 v2
+
+PP-MGR-LIB-052 now resolves measured node rectangles and stable principal/Income ports through PP-MGR-LIB-062. Runtime Manage liquidity/supply/unsupported positions render compact native cash, gray position-origin returns, Collect -> Swap -> Income and one inbound/shared outbound Bridge per actual spoke. Complete-route hover uses visible legs; internal Bridge transition segments are semantic-only. No new API, wallet or mock seam is introduced. Authoritative native quantity/valuation, queue/reserves and hub Income remain POO-2230; `valueUsd` is an optional independent display read and normalization does not synthesize it. Known native amount and available valuation are required together. Build adoption, Holding/debt and all-node panel selection remain separate.
