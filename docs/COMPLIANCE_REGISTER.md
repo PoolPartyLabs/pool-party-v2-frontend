@@ -275,3 +275,7 @@ Status: ANSWERED for presentation only. Hub identity comes from the existing aut
 ## Manage hidden editor retention, October 7, 2026 (POO-2274 v2)
 
 Status: ANSWERED for navigation and read preparation only. Hiding an editor does not cancel an owned intent or transfer its authority. Retained display data cannot authorize a stale operation. Core/position changes and material read/snapshot changes invalidate review. Existing financial execution and recovery gates remain OPEN; this slice adds no signing, custody action or pending transaction journal.
+
+## Collect position fees disclosure, October 7, 2026 (POO-2276 v1)
+
+Status: ANSWERED for the read presenter only. Ordered uncollected position fees are distinct from principal balances, realized hub Income and available USD value. Missing metadata/freshness cannot authorize manual collection; stale copy requires actual stale evidence. A cross-chain route description does not claim current conversion/atomicity or hub credit. All Collect preview/execution/settlement disclosures remain OPEN under POO-2277/2278. No signing or money movement is added.

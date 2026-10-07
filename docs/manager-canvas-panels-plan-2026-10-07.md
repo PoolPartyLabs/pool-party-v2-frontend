@@ -394,3 +394,7 @@ This is a reviewed plan, not an implementation-complete claim. Runtime PRs, focu
 ### Draft visibility evidence, POO-2274 v2
 
 The read-preparation slice passed 27 focused tests covering first-visit activation, hide/show retention, no false abandonment/retransmission and real source/price/range/liquidity/status/core invalidation, including late replies. Scoped TypeScript and changed-file Biome passed. Shared hooks remain unchanged. There is no transaction journal or expiry DTO in this currently disabled Move flow, so this is not pending-wallet recovery evidence.
+
+### Collect read presenter evidence, POO-2276 v1
+
+Five-module injected presenter passed 40 focused tests and scoped TypeScript/Biome; unknown-freshness regressions were added RED and the four affected unknown/stale cases passed after correction. All 11 locales are included. Independent review found no blocker. Canonical fees never use holdings/Income or a guessed USD total. The presenter is not mounted in this slice, no existing DTO proves freshness, and Collect is unavailable. POO-2274 host/Back and POO-2277/2278 execution remain distinct work.
