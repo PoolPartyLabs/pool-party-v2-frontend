@@ -156,6 +156,40 @@ it("fetches and verifies the API quote immediately before building the unsigned 
     quote,
   );
 });
+
+it("refuses an edited LP-open pool before building or signing", async () => {
+  const { driver, backend, journal, step } = swapSetup();
+  step.kind = "raydium-open";
+  if (step.config) step.config.poolId = SOLANA_LP_CHOICES[1]?.poolId;
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow("SOLANA_API_QUOTE_REQUIRED");
+  expect(backend.build).not.toHaveBeenCalled();
+});
+
+it("builds the frozen LP-open selection without requesting a swap quote", async () => {
+  const { driver, backend, journal, step } = swapSetup();
+  step.kind = "raydium-open";
+  backend.quoteSwap = undefined;
+  backend.verifySwapQuote = undefined;
+  await driver.build(step, journal);
+  await driver.send(step, {}, vi.fn());
+  expect(backend.build).toHaveBeenCalledWith(
+    step,
+    journal,
+    { blockhash: "fresh", lastValidBlockHeight: BigInt(10) },
+    undefined,
+  );
+});
+
+it("prevents mutation of the verified quote during transaction building", async () => {
+  const { driver, backend, journal, step } = swapSetup();
+  vi.mocked(backend.build).mockImplementation(async (_step, _journal, _lifetime, quote) => {
+    if (quote) quote.amountIn = "999999999";
+    return new Uint8Array();
+  });
+  await driver.build(step, journal);
+  await expect(driver.send(step, {}, vi.fn())).rejects.toThrow(TypeError);
+});
 it.each([
   "missing",
   "signature",

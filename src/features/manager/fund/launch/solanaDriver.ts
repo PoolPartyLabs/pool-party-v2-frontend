@@ -91,7 +91,7 @@ export function createChainLaunchDriver(input: {
         build: async (lifetime) => {
           let quote: SolanaApiSignedQuote | undefined;
           let request: SolanaSwapQuoteRequest | undefined;
-          if (step.kind === "swap-to-ratio") {
+          if (step.kind === "swap-to-ratio" || step.kind === "raydium-open") {
             const frozen = journal.frozen as {
               solanaBinding?: ManagerSolanaBinding;
               solanaSelection?: SolanaLaunchSelection;
@@ -104,9 +104,7 @@ export function createChainLaunchDriver(input: {
               !step.config?.poolId ||
               step.config.maxPriceImpactBps === undefined ||
               frozen.solanaSelection?.raydiumPool !== step.config.poolId ||
-              frozen.solanaSelection?.maxPriceImpactBps !== step.config.maxPriceImpactBps ||
-              !input.backend.quoteSwap ||
-              !input.backend.verifySwapQuote
+              frozen.solanaSelection?.maxPriceImpactBps !== step.config.maxPriceImpactBps
             )
               throw new Error("SOLANA_API_QUOTE_REQUIRED");
             request = {
@@ -115,12 +113,16 @@ export function createChainLaunchDriver(input: {
               solanaAddress: input.solanaAddress,
               maxPriceImpactBps: resolveMaxPriceImpactBps(step.config.maxPriceImpactBps),
             };
-            quote = validateSolanaApiQuote(
-              await input.backend.quoteSwap(request, journal),
-              request,
-            );
-            if (!(await input.backend.verifySwapQuote(quote, request)))
-              throw new Error("SOLANA_API_QUOTE_SIGNATURE_INVALID");
+            if (step.kind === "swap-to-ratio") {
+              if (!input.backend.quoteSwap || !input.backend.verifySwapQuote)
+                throw new Error("SOLANA_API_QUOTE_REQUIRED");
+              quote = validateSolanaApiQuote(
+                await input.backend.quoteSwap(request, journal),
+                request,
+              );
+              if (!(await input.backend.verifySwapQuote(quote, request)))
+                throw new Error("SOLANA_API_QUOTE_SIGNATURE_INVALID");
+            }
           }
           const bytes = await input.backend.build(step, journal, lifetime, quote);
           if (quote && request) validateSolanaApiQuote(quote, request);

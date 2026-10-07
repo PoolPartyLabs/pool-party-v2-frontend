@@ -74,5 +74,5 @@ export function validateSolanaApiQuote(
     !mints.includes(quote.tokenOut)
   )
     throw new Error("SOLANA_API_QUOTE_INVALID");
-  return quote;
+  return Object.freeze(quote);
 }

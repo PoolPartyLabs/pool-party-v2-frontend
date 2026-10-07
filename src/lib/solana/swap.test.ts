@@ -38,6 +38,7 @@ it.each([0, -1, 501, 10000, 1.5, NaN, Infinity])("rejects unsafe impact %s", (va
 });
 it("consumes the API quote at the Manager's maximum without accepting a Manager quote", () => {
   expect(validateSolanaApiQuote(quote, request, 1999999999)).toEqual(quote);
+  expect(Object.isFrozen(validateSolanaApiQuote(quote, request, 1999999999))).toBe(true);
 });
 it.each([
   { signature: "" },

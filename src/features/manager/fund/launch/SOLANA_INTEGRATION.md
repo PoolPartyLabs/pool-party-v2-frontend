@@ -3,7 +3,8 @@
 Solana remains OFF by default (`NEXT_PUBLIC_FEATURE_SOLANA_SPOKE=on` enables
 the infrastructure). No deployment or mainnet transaction is authorized by this work.
 EVM SIWE identity, embedded Ethereum wallets and existing launch journeys remain unchanged.
-Rules: DEC-188, DEC-190, DEC-191, DEC-192, DEC-193, DEC-195, DEC-196.
+Rules: DEC-188, DEC-190, DEC-191, DEC-192, DEC-193, DEC-195, DEC-196, DEC-197, DEC-198,
+DEC-199, DEC-202.
 
 ## UI owner contract (Murilo)
 
@@ -121,7 +122,7 @@ API-provided `{message, attestation}` and receive-and-credit, never direct unres
   is cryptographically valid. Missing verifier, expired/over-impact/wrong-scope
   quotes and rate limits fail before transaction building. Quote is never stored
   as a Manager selection and is refreshed for fresh builds, not uncertain sends.
-- R6.3: price impact compares output to an authenticated on-chain Solana feed
+- DEC-202 (R6.3): price impact compares output to an authenticated on-chain Solana feed
   reference, not an unauthenticated Jupiter `priceImpactPct` or Manager reference.
   API/program must enforce feed freshness, stock multiplier/market-hours checks,
   signed min-out, exact input/output vaults, Jupiter V2 decoding and real deltas.
