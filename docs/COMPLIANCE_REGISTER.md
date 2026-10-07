@@ -251,3 +251,13 @@ evidence of executable capability, a provider/ETA, atomic conversion or hub sett
 The 48 Figma references are geometric evidence only. Existing CR-MGR-015/019/020,
 CR-MGR-POO2270 and the POO-2229/2230/2231 launch conditions remain applicable; this
 slice resolves none of those financial or custody questions.
+
+## Solana local catalog, October 7, 2026 (POO-2291 S1)
+
+Status: ANSWERED for this pure local-contract slice. The existing gesture/local-draft notice and unavailable market/execution state remain. USDC and WSOL are identity metadata; no rate, balance, venue outcome, custody or deployment is claimed. Declared source metadata is not verification or attestation. No new personal-data collection, credential flow or transaction occurs.
+
+Existing real-launch gates remain: confirm canonical programs/accounts/owners, asset and venue disclosures, price/source freshness, quote validity, custody/authority, fees and transaction details before enabling discovery or execution. This slice clears none of those gates. Evidence: [POO-2291](https://linear.app/yeildbay/issue/POO-2291), PP-MGR-LIB-063/064 and the [current delivery plan](manager-canvas-panels-plan-2026-10-07.md).
+
+## Manage inline header, October 7, 2026 (POO-2272 v2)
+
+Status: ANSWERED for this presentation slice. The selected canonical protocol/network identity and existing Supply/Liquidity subtype are kept together. Trusted existing marks are reused, complete text wraps and no financial amount, venue support, rate, fee or custody permission is added. Optional pair context remains owned by the operation host. The existing financial, custody and execution gates remain unchanged. PP-MGR-CMP-091 adds no credential, personal-data or transaction flow. Header/panel tests and TypeScript pass; rendered narrow-width acceptance remains with Murilo.

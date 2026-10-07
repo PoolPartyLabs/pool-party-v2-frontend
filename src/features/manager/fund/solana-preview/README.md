@@ -27,3 +27,12 @@ Official marks are shipped under `public/protocols/solana-preview/`. Solana, Ray
 | Orca | [Orca official site](https://www.orca.so) | SVG mark extracted during design intake. |
 | Kamino | [Kamino documentation logo](https://mintcdn.com/kamino-3d73a151/EHpt5rRzyV5R3dXt/images/logo/dark.svg) | The design intake retained the K mark. |
 | Jupiter | [Jupiter official logo](https://jup.ag/svg/jupiter-logo.svg) | Original SVG, displayed at the component's size. |
+
+
+## Typed catalog, POO-2291 S1
+
+`solanaSchemas.ts` (PP-MGR-LIB-063) validates case-sensitive 32-byte base58 identities, native SOL lamports versus SPL mint amounts and exact raw-to-decimal strings. Read states keep declared sourceAsOf/slot/provenance. Confirmed zero requires raw zero and observed confirmed/finalized commitment. The schema does not attest accounts, owners or freshness.
+
+`solanaCatalog.ts` (PP-MGR-LIB-064) keeps the same four local choices consumed by previewModel, narrows Kamino to mainnet USDC Supply and separates Orca/Raydium/Jupiter. Holding remains contract-only. Catalog reads and execution are unavailable; neither fixture nor observed values may promote that catalog. Jupiter inspection keeps managed order/execute distinct from composable build and quote expiry distinct from blockhash validity. No actual quote/signing is added.
+
+All 77 focused schema/catalog/model/screen/route tests, scoped Biome and TypeScript passed. Remaining five POO-2291 slices and POO-2239/2240/2261/2262 integration remain open.

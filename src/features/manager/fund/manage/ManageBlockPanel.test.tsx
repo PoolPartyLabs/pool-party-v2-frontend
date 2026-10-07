@@ -8,6 +8,7 @@ import {
   screen,
   userEvent,
   waitFor,
+  within,
 } from "../../../../../tests/utils/renderWithProviders";
 import { toLivePoolGrid, toPanelPoolView } from "../build/panel/panelCatalogView";
 import { fullPoolRange } from "../build/panel/poolRangeMath";
@@ -68,6 +69,19 @@ beforeEach(() => {
   });
 });
 describe("Manage block inline", () => {
+  // @rule POO-2272 R5: the panel consumes one identity header, with no separate network row.
+  it("keeps protocol, subtype and origin network in the selected block header", () => {
+    const { container } = renderWithProviders(
+      <ManageBlockPanel fund={mockFund} position={supply} active />,
+    );
+    const header = container.querySelector("header");
+    expect(header).not.toBeNull();
+    const content = within(header as HTMLElement);
+    expect(content.getByText(supply.protocol)).toBeVisible();
+    expect(content.getByText("Supply position")).toBeVisible();
+    expect(content.getByText("Arbitrum")).toBeVisible();
+    expect(screen.getAllByText("Arbitrum")).toHaveLength(1);
+  });
   // @rule POO-2284 R5: restore Full from the authoritative ticks and the actual pool spacing.
   it("recognizes an existing Full position without enabling inward steppers (POO-2284)", async () => {
     const full = fullPoolRange(toLivePoolGrid(pool));

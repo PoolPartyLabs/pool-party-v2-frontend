@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 682 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 686 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -997,7 +997,7 @@ painting is an owner acceptance check. See the Build README.
 
 | ID | Title | Type | Design | Impl | Linear | Reference |
 |---|---|---|---|---|---|---|
-| `PP-MGR-CMP-090` | ReviewTransactionFeesCard, separate read-only Entry/Exit rows with unavailable semantics and keyboard help | Component | Transaction fees card | In Review | [POO-2289](https://linear.app/yeildbay/issue/POO-2289) | [Figma 8670:2855](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8670-2855); `src/features/manager/fund/review/ReviewTransactionFeesCard.tsx` @rules-v1 |
+| `PP-MGR-CMP-090` | ReviewTransactionFeesCard, separate read-only Entry/Exit rows with unavailable semantics and keyboard help | Component | Transaction fees card | Merged #126 | [POO-2289](https://linear.app/yeildbay/issue/POO-2289) | [Figma 8670:2855](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8670-2855); `src/features/manager/fund/review/ReviewTransactionFeesCard.tsx` @rules-v1 |
 
 The mounted ReviewPhase retains its current PP-MGR-CMP-077 ID (the issue's PP-MGR-CMP-072 pointer is historical). PP-MGR-CMP-074 ReviewFeesCard keeps its existing management/performance controls. This information card adds no fee, draft field, signer, launch condition or financial event. English copy and all 11 configured locales are included; semantic wiring remains unavailable.
 
@@ -1005,4 +1005,20 @@ The mounted ReviewPhase retains its current PP-MGR-CMP-077 ID (the issue's PP-MG
 
 | ID | Title | Type | Design | Impl | Linear | Reference |
 |---|---|---|---|---|---|---|
-| `PP-MGR-LIB-062` | SemanticGraph, stable typed financial endpoints and deterministic integrity checks | Lib | n/a (code) | In Progress | [POO-2288](https://linear.app/yeildbay/issue/POO-2288) | `src/features/manager/fund/build/graph/semanticGraph.ts` @rules-v1 |
+| `PP-MGR-LIB-062` | SemanticGraph, stable typed financial endpoints and deterministic integrity checks | Lib | n/a (code) | Merged #127 | [POO-2288](https://linear.app/yeildbay/issue/POO-2288) | `src/features/manager/fund/build/graph/semanticGraph.ts` @rules-v1 |
+
+## Solana local catalog (POO-2291, rules v1)
+
+| ID | Title | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-MGR-LIB-063` | Solana local identity, amount and read-state schemas | Lib | n/a (code) | Implemented, S1 | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaSchemas.ts` |
+| `PP-MGR-LIB-064` | Solana local protocol catalog with explicit unavailable execution | Lib | n/a (code) | Implemented, S1 | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaCatalog.ts` |
+
+S1 provides structural identity, exact amount conversion and declared-provenance contracts. The catalog consumer retains the same four local choices. Holding remains contract-only. Financial catalog fields and all execution capabilities are unavailable; these types do not attest an external read, owner, allowlist or freshness. Remaining POO-2291 slices stay open.
+
+
+## Manager inline identity header (POO-2272, rules v2)
+
+| ID | Title | Type | Design | Impl | Linear | Reference |
+|---|---|---|---|---|---|---|
+| `PP-MGR-CMP-091` | ManageBlockHeader, protocol/subtitle and inline network identity | Component | [Header 8614:2916](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8614-2916) | Implemented header slice | [POO-2272](https://linear.app/yeildbay/issue/POO-2272) | `src/features/manager/fund/manage/ManageBlockHeader.tsx` @rules-v2 |
