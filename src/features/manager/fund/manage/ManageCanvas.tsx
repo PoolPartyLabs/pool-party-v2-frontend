@@ -1,13 +1,14 @@
 /**
  * @id PP-MGR-CMP-085
  * @name ManageCanvas
- * @implements-rules-version v2 (POO-2270, POO-2271; extends POO-2246, POO-2226, POO-2232)
+ * @implements-rules-version v2 (POO-2270, POO-2271, POO-2272; extends POO-2246, POO-2226, POO-2232)
  * @analytics-events none, position presses report through onSelect; ManageScreen owns the view.
  *
  * Read-only live graph built from the shared Build pieces. Cash belongs to one chain and every
  * balance has its own availability state. Selecting a position never alters graph geometry.
  */
 "use client";
+import { Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { NetworkLogo } from "@/components/data-display/NetworkLogo";
@@ -172,14 +173,33 @@ function PositionNode({
     </button>
   );
 }
-function BalanceCard({ title, children }: { title: string; children: ReactNode }) {
+function BalanceCard({
+  title,
+  locked = false,
+  children,
+}: {
+  title: string;
+  locked?: boolean;
+  children: ReactNode;
+}) {
   return (
     <div
       data-canvas-interactive=""
       className="relative flex w-full flex-col gap-3 rounded-lg bg-surface p-3"
     >
       <PieceStroke width={1} radius={16} className="text-border" />
-      <h3 className="break-words font-medium text-foreground text-xs">{title}</h3>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="min-w-0 break-words font-medium text-foreground text-xs">{title}</h3>
+        {locked ? (
+          <Lock
+            data-manage-lock=""
+            aria-hidden="true"
+            size={14}
+            strokeWidth={2.5}
+            className="shrink-0 text-muted-foreground"
+          />
+        ) : null}
+      </div>
       {children}
     </div>
   );
@@ -245,7 +265,7 @@ function WithdrawalNode({ model }: { model: ManageModel }) {
     [t("stillNeeded"), model.withdrawal.stillNeeded],
   ] as const;
   return (
-    <BalanceCard title={t("idleOutput")}>
+    <BalanceCard title={t("idleOutput")} locked>
       <dl className="flex flex-col gap-2 text-[11px]">
         {rows.map(([label, read]) => (
           <div key={label} className="flex items-center justify-between gap-2">
@@ -293,7 +313,7 @@ function GraphNode({
     return <CashNode model={model} chainId={node.chainId ?? model.hubChainId} />;
   if (node.kind === "idle")
     return chain ? (
-      <BalanceCard title={chain.hub ? t("idleInput") : t("idle")}>
+      <BalanceCard title={chain.hub ? t("idleInput") : t("idle")} locked={chain.hub}>
         <ManageTokenRow token={chain.idle} />
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="text-muted-foreground">{t("strategyValueShare")}</span>
@@ -311,14 +331,15 @@ function GraphNode({
         width={node.rect.w}
         height={node.rect.h}
         networkName={chain.name}
-        networkLogo={<NetworkLogo network={chain.network} name={chain.name} size={12} />}
+        context="manage"
+        networkLogo={<NetworkLogo network={chain.network} name={chain.name} size={20} />}
         chipTooltip={chain.name}
       />
     ) : null;
   if (node.kind === "withdrawal") return <WithdrawalNode model={model} />;
   if (node.kind === "income")
     return (
-      <BalanceCard title={t("income")}>
+      <BalanceCard title={t("income")} locked>
         <div className="text-muted-foreground text-xs">{hub?.name}</div>
         <ManageTokenRow token={model.income} />
       </BalanceCard>
@@ -333,6 +354,7 @@ function GraphNode({
           : build("fundBuilder.canvas.flow.swapAuto");
     return (
       <FlowPill
+        locked={flow !== "collectFees"}
         content={{
           text: label,
           tooltip: label,
@@ -355,6 +377,8 @@ function GraphNode({
   );
 }
 export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps) {
+  const t = useTranslations("manager");
+  const hub = model.chains.find((chain) => chain.chainId === model.hubChainId && chain.hub);
   const [measurements, setMeasurements] = useState<ManageMeasurements>({});
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const layout = useMemo(() => layoutManageGraph(model, measurements), [model, measurements]);
@@ -406,6 +430,25 @@ export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps)
       initialScale={1}
       viewportRef={viewport}
       onBackgroundClick={() => onSelect(null)}
+      overlay={
+        hub ? (
+          <div
+            data-manage-hub=""
+            className="absolute top-6 right-6 flex max-w-[calc(100%-3rem)] min-h-[33px] flex-wrap items-center justify-end gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-sm"
+          >
+            <NetworkLogo network={hub.network} name={hub.name} size={20} />
+            <span className="min-w-0 break-words font-semibold text-foreground">
+              {t("fundBuilder.networks.hub")} · {hub.name}
+            </span>
+            <Lock
+              aria-hidden="true"
+              size={14}
+              strokeWidth={2.5}
+              className="shrink-0 text-muted-foreground"
+            />
+          </div>
+        ) : undefined
+      }
     >
       <div
         ref={graph}

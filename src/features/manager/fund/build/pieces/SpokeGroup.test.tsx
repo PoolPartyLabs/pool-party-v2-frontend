@@ -55,6 +55,41 @@ function chip(): HTMLElement {
 }
 
 describe("SpokeGroup", () => {
+  it("[POO-2272 R3/R8] opts Manage into a naturally sized 32px network chip and decorative watermark", () => {
+    render(<SpokeGroup {...props({ context: "manage" })} />);
+    expect(chip().className).toContain("min-h-8");
+    expect(chip().className).toContain("px-3");
+    expect(chip().className).toContain("gap-2");
+    expect(chip().className).not.toContain("w-[130px]");
+    expect(chip().className).not.toContain("h-[21px]");
+    expect(screen.getByTestId("network-logo").parentElement?.className).toContain("size-5");
+    expect(nameOf().className).toContain("text-sm");
+    expect(nameOf().className).toContain("font-semibold");
+    const watermark = groupBox().querySelector("[data-spoke-watermark]");
+    expect(watermark).toHaveAttribute("aria-hidden", "true");
+    expect(watermark).toHaveTextContent("Robinhood Chain");
+    expect(watermark?.className).toContain("pointer-events-none");
+    expect(watermark?.className).toContain("opacity-[0.035]");
+    expect(watermark?.querySelector("img, svg, button")).toBeNull();
+  });
+
+  it("[POO-2272 R3] preserves the Build default and Manage removal from the keyboard", async () => {
+    const remove = vi.fn();
+    const user = userEvent.setup();
+    const rendered = render(<SpokeGroup {...props()} />);
+    expect(groupBox().querySelector("[data-spoke-watermark]")).toBeNull();
+    expect(chip().className).toContain("h-[21px]");
+    rendered.rerender(
+      <SpokeGroup
+        {...props({ context: "manage", onRemove: remove, removeLabel: "Remove Robinhood Chain" })}
+      />,
+    );
+    const button = screen.getByRole("button", { name: "Remove Robinhood Chain" });
+    button.focus();
+    await user.keyboard("{Enter}");
+    expect(remove).toHaveBeenCalledOnce();
+  });
+
   // @rule BB5
   it("[BB5] the box: the size it is given, radius 16, surface-raised, 1 px dashed 5 5 in border", () => {
     render(<SpokeGroup {...props()} />);

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-053
  * @name SpokeGroup
- * @implements-rules-version v1 (POO-2154 rules v1)
+ * @implements-rules-version v2 (POO-2272); v1 (POO-2154)
  * @analytics-events none, a presentational piece; a removal is reported through `onRemove` and the
  *   Build screen (PP-MGR-SCR-002, S7) owns every event
  *
@@ -48,6 +48,8 @@ export interface SpokeGroupProps {
   networkName: string;
   /** The 12 px network logo (decorative: the name is next to it). */
   networkLogo: ReactNode;
+  /** Manage opts into a natural 32px chip; Build keeps its original miniature. */
+  context?: "build" | "manage";
   /** The chip's tooltip and `title`: the network name. */
   chipTooltip: string;
   /** The network is no longer in the mandate (D6). */
@@ -69,6 +71,7 @@ export function SpokeGroup({
   height,
   networkName,
   networkLogo,
+  context = "build",
   chipTooltip,
   invalid = false,
   invalidLabel,
@@ -77,6 +80,7 @@ export function SpokeGroup({
 }: SpokeGroupProps) {
   const closable = onRemove !== undefined && removeLabel !== undefined;
   const saysInvalid = invalid && invalidLabel !== undefined;
+  const isManage = context === "manage";
   // The tooltip names the network and, when invalid, says why in the caller's words (F3).
   const tooltip = saysInvalid ? (
     <>
@@ -98,23 +102,39 @@ export function SpokeGroup({
         dash="5 5"
         className={invalid ? "text-destructive" : "text-border"}
       />
+      {isManage ? (
+        <span
+          data-spoke-watermark=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-4 flex items-center justify-center overflow-clip break-words text-center font-semibold text-foreground text-5xl opacity-[0.035]"
+        >
+          {networkName}
+        </span>
+      ) : null}
       <Explained
         tooltip={tooltip}
         {...canvasInteractive}
         data-network-chip=""
         title={chipTooltip}
-        className="absolute top-0 left-3 flex h-[21px] -translate-y-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-background py-0.5 pr-2 pl-1.5"
+        className={cn(
+          "absolute top-0 left-3 flex -translate-y-1/2 items-center whitespace-nowrap rounded-full bg-background",
+          isManage ? "min-h-8 gap-2 px-3 py-1.5" : "h-[21px] gap-1.5 py-0.5 pr-2 pl-1.5",
+        )}
       >
         <span
           aria-hidden="true"
-          className="flex size-3 shrink-0 items-center justify-center overflow-hidden rounded-full"
+          className={cn(
+            "flex shrink-0 items-center justify-center overflow-hidden rounded-full",
+            isManage ? "size-5" : "size-3",
+          )}
         >
           {networkLogo}
         </span>
         <span
           data-network-name=""
           className={cn(
-            "font-medium text-[11px] uppercase leading-normal",
+            "uppercase leading-normal",
+            isManage ? "font-semibold text-sm" : "font-medium text-[11px]",
             invalid ? "text-destructive" : "text-muted-foreground",
           )}
         >

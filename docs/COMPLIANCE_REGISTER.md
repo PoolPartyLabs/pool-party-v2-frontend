@@ -267,3 +267,7 @@ Status: ANSWERED for this presentation slice. The selected canonical protocol/ne
 Scope: supported Manage graph/card presentation and route hover, POO-2270/2271 v2. Verify before financial enablement that actual Principal/Income origins and network transitions match displayed routes. A visual Collect/Swap/Bridge path does not prove conversion, atomicity or hub credit. Physical native quantity and independent USD valuation stay distinct; unavailable quantity must not carry an available USD label, and no reserve/Income value is guessed.
 
 Answer in this slice: explicit typed ports, measured final rectangles, no invented capability/read, and native/USD guard are implemented and covered by focused regression tests. Current authoritative integration/disclosure entries remain OPEN; no blocking item is resolved by geometry or hover. No signing or deployment is added.
+
+## Manage Hub identity and fixed marks, October 7, 2026 (POO-2272 v2)
+
+Status: ANSWERED for presentation only. Hub identity comes from the existing authorized model chain, not a new network/provider claim. Locks communicate structural role and do not authorize an operation or prohibit inspection. Network watermarks use the chain name only; no external artwork, financial claim, tracking or credential flow is added. Current financial, custody and venue disclosure entries remain OPEN and no launch gate is cleared. Browser hit-testing/reflow acceptance remains with Murilo.

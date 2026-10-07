@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-046
  * @name CanvasViewport
- * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 rules v1)
+ * @implements-rules-version v2 (POO-2272); v1 (POO-2236, POO-2152)
  * @analytics-events none, a presentational container; the Build screen (PP-MGR-SCR-002, S7) owns
  *   every event, and a background click is reported through `onBackgroundClick`
  *
@@ -62,6 +62,8 @@ export interface CanvasViewportProps {
   viewportRef?: Ref<CanvasViewportHandle>;
   /** The graph, in graph coordinates. Interactive pieces carry `data-canvas-interactive`. */
   children?: ReactNode;
+  /** Untransformed viewport chrome. Decorative content lets canvas presses through. */
+  overlay?: ReactNode;
 }
 
 const layerAttr = { [CANVAS_LAYER_ATTR]: "" };
@@ -98,6 +100,7 @@ export function CanvasViewport({
   onBackgroundClick,
   viewportRef,
   children,
+  overlay,
 }: CanvasViewportProps) {
   const t = useTranslations("manager");
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -138,6 +141,12 @@ export function CanvasViewport({
       >
         {children}
       </div>
+
+      {overlay != null ? (
+        <div data-canvas-overlay="" className="pointer-events-none absolute inset-0 z-[5]">
+          {overlay}
+        </div>
+      ) : null}
 
       <div
         data-canvas-border=""

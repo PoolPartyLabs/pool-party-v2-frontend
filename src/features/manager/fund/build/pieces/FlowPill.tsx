@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-050
  * @name FlowPill
- * @implements-rules-version v1 (POO-2154 rules v1); POO-2235 rules v1; POO-2237 rules v1
+ * @implements-rules-version v2 (POO-2272); v1 (POO-2154, POO-2235, POO-2237)
  * @analytics-events none, a presentational piece that reports nothing; the Build screen
  *   (PP-MGR-SCR-002, S7) owns every event
  *
@@ -27,6 +27,8 @@
  */
 "use client";
 
+import { Lock } from "lucide-react";
+import { cn } from "@/lib/utils/cn";
 import {
   BlockIconGlyph,
   canvasInteractive,
@@ -41,11 +43,13 @@ export interface FlowPillProps {
   /** Text, tooltip and icon, from the registry (S5) or, for the Bridge, the renderer (S6). */
   content: FlowContent;
   selected?: boolean;
+  /** Structural auto route. The lock is decorative and does not disable inspection. */
+  locked?: boolean;
   onActivate?(anchor: HTMLElement): void;
 }
 
 /** A flow block on the Build canvas, 176 x 26. */
-export function FlowPill({ content, selected = false, onActivate }: FlowPillProps) {
+export function FlowPill({ content, selected = false, locked = false, onActivate }: FlowPillProps) {
   const { text, tooltip, icon } = content;
   const face = (
     <>
@@ -53,6 +57,15 @@ export function FlowPill({ content, selected = false, onActivate }: FlowPillProp
       <span className="truncate whitespace-nowrap text-muted-foreground text-xs leading-normal">
         {text}
       </span>
+      {locked ? (
+        <Lock
+          data-flow-lock=""
+          aria-hidden="true"
+          size={12}
+          strokeWidth={2.5}
+          className="ml-auto shrink-0 text-muted-foreground"
+        />
+      ) : null}
     </>
   );
   if (onActivate)
@@ -65,7 +78,10 @@ export function FlowPill({ content, selected = false, onActivate }: FlowPillProp
           aria-label={tooltip}
           aria-pressed={selected}
           onClick={(event) => onActivate(event.currentTarget)}
-          className={`box-border flex h-[26px] w-[176px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border ${selected ? "border-primary" : "border-border"} bg-surface px-2.5 cursor-pointer ${FOCUS_RING}`}
+          className={cn(
+            `box-border flex h-[26px] w-[176px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border ${selected ? "border-primary" : "border-border"} bg-surface px-2.5 cursor-pointer ${FOCUS_RING}`,
+            locked && "pr-3",
+          )}
         >
           {face}
         </button>
@@ -76,12 +92,12 @@ export function FlowPill({ content, selected = false, onActivate }: FlowPillProp
       tooltip={tooltip}
       {...canvasInteractive}
       data-flow-pill=""
-      className="box-border flex h-[26px] w-[176px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-2.5"
+      className={cn(
+        "box-border flex h-[26px] w-[176px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-border bg-surface px-2.5",
+        locked && "pr-3",
+      )}
     >
-      <BlockIconGlyph icon={icon} size={12} className="text-muted-foreground" />
-      <span className="truncate whitespace-nowrap text-muted-foreground text-xs leading-normal">
-        {text}
-      </span>
+      {face}
     </Explained>
   );
 }

@@ -11,7 +11,7 @@
 
 # Manager canvas and inline panels: delivery plan, October 7, 2026
 
-Status: **v2 plan complete; graph foundation, Review transaction fees, Solana S1 catalog and inline Manage header merged. Supported Manage route/card slice reviewed and ready; canvas chrome, all-node panels and remaining local Solana slices in progress**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main before this route PR: `55c209a731e1914caec32817cd3aa2b429426bc2`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
+Status: **v2 plan complete; graph foundation, Review transaction fees, Solana S1 catalog and inline Manage header merged; supported Manage route/card slice merged; canvas chrome reviewed and ready; all-node panels and remaining local Solana slices in progress**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main before the chrome PR: `8a350affcc9800f06f077709692cbfde3bcdd277`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
 
 ## Current v2 contract and implementation sequence
 
@@ -34,7 +34,8 @@ POO-2270/2271/2272/2273/2274 contain append-only numbered **v2** rules and match
 | POO-2288, [PR #127](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/127) | Merged: stable semantic node/port/connection/junction contract and declared graph validation. Build routing adoption remains separate. |
 | POO-2289, [PR #126](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/126) | Merged: read-only Review Entry/Exit fees card with explicit unavailable values. No fee inference or new launch gate. |
 | POO-2291 S1, [PR #128](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/128) | Merged: typed Solana catalog/read contracts and unchanged protocol choices. S2-S6 UI and real execution remain pending. |
-| POO-2272 header, [PR #129](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/129) | Merged: canonical protocol/subtype left, network right, full text and natural wrapping. Hub overlay and locks remain pending. |
+| POO-2272 header, [PR #129](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/129) | Merged: canonical protocol/subtype left, network right, full text and natural wrapping. Hub overlay and locks are reviewed-ready in the next small PR. |
+| POO-2270/2271 routes, [PR #130](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/130) | Merged: measured compact Manage cards/ports/hulls/buses, gray principal and Income exit, one shared outbound Bridge and full-path hover for the supported liquidity/supply slice. |
 | Existing Overview/Manage | Authorized entry/discovery/position reads, local drafts/launch continuation, current/draft range, inline Move/Create and existing unavailable gates remain. Ready visual foundation exists; aggregate history/readiness and complete execution/policy contracts remain pending. |
 
 Preserve V1, Strategies/Portfolio with V2 tags and **exactly the investor InvestModal/provisioning already implemented**. Manager Collect is not investor Collect income. Preserve mandate/owner/core checks, canonical token identity/decimals, current-position state, numeric precision and pending journals. Current licensing is source-available; no MIT/OSI claim is inferred from an older document.
@@ -76,7 +77,13 @@ The route PR joins POO-2270/2271 because card measurement, final ports, hulls an
 
 Two review findings were reproduced before correction: widened Collect/Swap pills could intersect the principal bypass, and cash USD could render without native quantity. Final corridors/column widths/hulls/buses derive from measured rectangles; native amount and its independent available USD are both required. Fifty focused tests in four files, scoped TypeScript and Biome passed. The regression checks every visible route leg against all unrelated cards across hub/two spokes, five LP origins, widths240/320 and heights600/700. No browser, full suite, build, deployment or48-runtime claim.
 
-Holding/debt topology, shared Build route parity, all-node selection, fixed Hub/locks and authoritative queue/native valuation/Income sources are separate work. POO-2270/2271 remain In Progress for their broader matrix acceptance; a matching graph never enables a transfer.
+Holding/debt topology, shared Build route parity, all-node selection and authoritative queue/native valuation/Income sources are separate work. POO-2270/2271 remain In Progress for their broader matrix acceptance; a matching graph never enables a transfer.
+
+### Manage viewport chrome, reviewed October 7
+
+POO-2272 v2: Manage consumes an optional untransformed viewport overlay for its authorized Hub identity. The badge follows the model hub chain and stays fixed during pan/zoom with top/right inset24 and complete wrapped text. Its pointer-events-none wrapper does not own canvas gestures. Manage opts into a natural32px spoke chip with a real20px mark and network-name-only decorative watermark. Build retains its21px chip and current removal/keyboard behavior.
+
+Hub Idle input/output/Income show14px locks; automatic Swap/Bridge routes show12px locks without extra Fixed copy. Collect and spoke Idle receive no lock. These marks describe structural roles and do not disable inspection. No new network read, source, signer or financial capability is introduced. Seventy-two focused viewport/piece/Manage tests passed; independent GPT-6.1-sol review found no blocking integrated change. Stories cover an overlay, locked keyboard route, Manage chip and narrow canvas. No browser or Storybook build was run. All-node activation remains POO-2274 and the vault link/Charts/Activity remain their separate gates.
 
 ### Ordered small PRs and tests
 
@@ -106,7 +113,7 @@ Paths below are relative to `src/features/manager/fund/` unless a repository-rel
 | 12, [POO-2279](https://linear.app/yeildbay/issue/POO-2279) | Controlled tabs, Charts/Activity controller/data | Needs Rules for renderer/license/feed/history/annotations and Activity event/status/filter/cursor semantics. Market reference meaning is settled. No fake functional bitmap/empty tab. |
 | 13, [POO-2291](https://linear.app/yeildbay/issue/POO-2291) v1 | Six local Solana slices below | Ready graph/state primitives reused; gesture/gates preserved; real discovery/custody/execution separate. |
 
-Stages 1 and the independent Review slice are the current two-worker assignments. Coordinator reviews code/evidence and integrates sequentially. Defined visual work can proceed with explicit Not available while exact financial sources are obtained. A finished presenter does not close its execution issue.
+The coordinator is finishing chrome integration while one worker isolates draft visibility and the second reviews independent read presenters. Coordinator reviews code/evidence and integrates sequentially. Defined visual work can proceed with explicit Not available while exact financial sources are obtained. A finished presenter does not close its execution issue.
 
 ### Sources, financial gates, Charts and links
 

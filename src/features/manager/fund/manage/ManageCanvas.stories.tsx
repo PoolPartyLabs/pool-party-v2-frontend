@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-085
  * @name ManageCanvas stories
- * @implements-rules-version v2 (POO-2270, POO-2271; extends POO-2226, POO-2232)
+ * @implements-rules-version v2 (POO-2270, POO-2271, POO-2272; extends POO-2226, POO-2232)
  * @analytics-events none, fixture stories.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
@@ -22,6 +22,25 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 export const NoSelection: Story = {};
+export const NarrowViewport: Story = {
+  decorators: [
+    (Story) => (
+      <div className="w-[320px] max-w-full">
+        <Story />
+      </div>
+    ),
+  ],
+};
+/** Inherited-font comparison only; root-font/browser reflow is verified by Murilo. */
+export const InheritedTextSize: Story = {
+  decorators: [
+    (Story) => (
+      <div style={{ fontSize: "24px" }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
 export const LiquiditySelected: Story = { args: { selectedId: model.positions[1]?.id ?? null } };
 export const SupplySelected: Story = { args: { selectedId: model.positions[0]?.id ?? null } };
 function withCurrentRange(inRange: boolean | null) {

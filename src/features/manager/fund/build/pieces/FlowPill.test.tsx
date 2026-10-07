@@ -12,7 +12,7 @@
  */
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { CANVAS_INTERACTIVE_ATTR, isCanvasBackground } from "../canvas/useCanvasViewport";
 import { FlowPill } from "./FlowPill";
 import type { FlowContent } from "./pieceTypes";
@@ -53,6 +53,35 @@ const PILLS: ReadonlyArray<[string, FlowContent]> = [
 ];
 
 describe("FlowPill", () => {
+  it("[POO-2272 R4] opts automatic routes into a 12px lock without changing their text", () => {
+    render(<FlowPill content={SWAP_AUTO} locked />);
+    const pill = pillOf("Swap · auto");
+    const lock = pill.querySelector("[data-flow-lock]");
+    expect(lock).toHaveAttribute("width", "12");
+    expect(lock).toHaveAttribute("height", "12");
+    expect(lock).toHaveAttribute("aria-hidden", "true");
+    expect(pill.className).toContain("pr-3");
+    expect(visibleText(pill)).toBe("Swap · auto");
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("[POO-2272 R4] keeps a locked pill inspectable with Enter and Space", async () => {
+    const onActivate = vi.fn();
+    const user = userEvent.setup();
+    render(<FlowPill content={SWAP_AUTO} locked onActivate={onActivate} />);
+    const button = screen.getByRole("button", { name: SWAP_AUTO.tooltip });
+    button.focus();
+    await user.keyboard("{Enter}");
+    await user.keyboard(" ");
+    expect(onActivate).toHaveBeenCalledTimes(2);
+    expect(button.querySelector("[data-flow-lock]")).not.toBeNull();
+  });
+
+  it("[POO-2272 R4] does not add a lock to the default Collect pill", () => {
+    render(<FlowPill content={COLLECT_FEES} />);
+    expect(pillOf("Collect fees").querySelector("[data-flow-lock]")).toBeNull();
+  });
+
   // @rule BB3
   it("[BB3] is 176 x 26, radius full, surface, 1 px border, padding 0 x 10, gap 6", () => {
     render(<FlowPill content={SWAP_AUTO} />);
