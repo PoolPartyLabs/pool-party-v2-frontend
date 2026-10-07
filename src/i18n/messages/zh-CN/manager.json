@@ -1211,6 +1211,13 @@
       "cropZoom": "缩放",
       "nameHelp": "10至50个字符。",
       "descriptionLabel": "描述（可选）",
+      "transactionFees": {
+        "title": "交易费用",
+        "helper": "费用详情暂不可用。",
+        "entry": "入场费",
+        "exit": "退出费",
+        "unavailable": "不可用"
+      },
       "feesTitle": "您的费用",
       "feesCaption": "您管理策略所收取的费用。启动后费用只能降低。",
       "performanceLabel": "业绩费",

@@ -1211,6 +1211,13 @@
       "cropZoom": "縮放",
       "nameHelp": "10至50個字元。",
       "descriptionLabel": "說明（選填）",
+      "transactionFees": {
+        "title": "交易費用",
+        "helper": "費用詳細資訊目前無法提供。",
+        "entry": "進場費",
+        "exit": "退場費",
+        "unavailable": "無法提供"
+      },
       "feesTitle": "您的費用",
       "feesCaption": "您管理策略所收取的費用。啟動後費用只能調降。",
       "performanceLabel": "績效費",

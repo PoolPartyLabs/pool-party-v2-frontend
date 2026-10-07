@@ -289,6 +289,10 @@ POO-2237 introduces no endpoint or wallet operation. Manual Swap tokens are cano
 - POO-2279 owns Charts/Activity readiness. Activity can reuse `readFundHistory` with authorized Manage access and indexing/pagination; a current snapshot is not a chart history source. Functional tabs wait for content/sidebar/data definitions.
 - Return Bridges are explanatory noninteractive graph nodes. They do not add a wallet operation, provider/ETA, token relabel, atomicity or settlement guarantee. Existing Move/future-policy gates remain POO-2229/2231.
 
+## V2 Review transaction fees, 2026-10-07 (POO-2289 v1)
+
+PP-MGR-CMP-090 `ReviewTransactionFeesCard.tsx` shows Entry fee and Exit fee as Not available. Their authoritative meaning, units, beneficiary, trigger, calculation base and fee provenance are not supplied to this card. The existing manager fees, instant withdrawal fee and protocol flow fee are separate; none is used as a fallback. The seam is informational and adds no API call, wallet operation, mock amount or launch gate. Real fee values and disclosures require a separately defined read contract and compliance answers before activation. PP-MGR-CMP-077 ReviewPhase mounts it after Your fees and before Investor terms; existing validation, Review events and provisioning remain unchanged.
+
 ## Manager per-area plan revision, 2026-10-07 (PP-MGR-DOC-001 v2)
 
 The current [plan v2](manager-canvas-panels-plan-2026-10-07.md) preserves the preceding source evidence and separates ready visual work from real enablement. POO-2270/2271/2273 adopt stable graph ports and one shared outbound Bridge with distinct Principal/Income origins; local Arbitrum has no artificial Bridge. POO-2288 adds an optional semantic contract/validator and real graph consumer, without claiming old layout routing is corrected.

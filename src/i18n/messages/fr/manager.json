@@ -1211,6 +1211,13 @@
       "cropZoom": "Zoom",
       "nameHelp": "10 à 50 caractères.",
       "descriptionLabel": "Description (facultative)",
+      "transactionFees": {
+        "title": "Frais de transaction",
+        "helper": "Les détails des frais ne sont pas disponibles.",
+        "entry": "Frais d’entrée",
+        "exit": "Frais de sortie",
+        "unavailable": "Non disponible"
+      },
       "feesTitle": "Vos frais",
       "feesCaption": "Ce que vous facturez pour gérer la stratégie. Après le lancement, les frais peuvent uniquement diminuer.",
       "performanceLabel": "Frais de performance",

@@ -1211,6 +1211,13 @@
       "cropZoom": "Zoom",
       "nameHelp": "De 10 a 50 caracteres.",
       "descriptionLabel": "Descripción (opcional)",
+      "transactionFees": {
+        "title": "Comisiones de transacción",
+        "helper": "Los detalles de las comisiones no están disponibles.",
+        "entry": "Comisión de entrada",
+        "exit": "Comisión de salida",
+        "unavailable": "No disponible"
+      },
       "feesTitle": "Tus comisiones",
       "feesCaption": "Lo que cobras por gestionar la estrategia. Tras el lanzamiento, las comisiones solo pueden bajar.",
       "performanceLabel": "Comisión de rendimiento",

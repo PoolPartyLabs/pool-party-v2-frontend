@@ -1211,6 +1211,13 @@
       "cropZoom": "Zoom",
       "nameHelp": "10 tot 50 tekens.",
       "descriptionLabel": "Beschrijving (optioneel)",
+      "transactionFees": {
+        "title": "Transactiekosten",
+        "helper": "De kostendetails zijn niet beschikbaar.",
+        "entry": "Instapkosten",
+        "exit": "Uitstapkosten",
+        "unavailable": "Niet beschikbaar"
+      },
       "feesTitle": "Uw kosten",
       "feesCaption": "Wat u rekent voor het beheren van de strategie. Na de lancering kunnen kosten alleen dalen.",
       "performanceLabel": "Prestatievergoeding",
