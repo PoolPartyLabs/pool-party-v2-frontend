@@ -1587,6 +1587,26 @@
       "jupiter": "Jupiter Swap",
       "raydium": "Raydium CLMM",
       "orca": "Orca Whirlpools"
+    },
+    "protocolRange": {
+      "currentRange": "Range hiện tại của vị thế",
+      "draftRange": "Range đề xuất",
+      "fullOnly": "Pool Orca này chỉ hỗ trợ range Full.",
+      "stale": "Dữ liệu pool đã cũ. Không thể chỉnh sửa range.",
+      "invalidRange": "Dùng giá hợp lệ theo tick spacing của pool này.",
+      "zeroLiquidity": "Vị thế này không có thanh khoản.",
+      "presets": {
+        "5": "±5%",
+        "10": "±10%",
+        "20": "±20%"
+      },
+      "source": "Nguồn",
+      "asOf": "Cập nhật lúc",
+      "slot": "Slot",
+      "commitment": "Mức xác nhận",
+      "program": "Chương trình",
+      "network": "Mạng",
+      "fixture": "Dữ liệu minh họa, không phải pool được quan sát."
     }
   }
 }

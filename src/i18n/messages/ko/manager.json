@@ -1587,6 +1587,26 @@
       "jupiter": "Jupiter Swap",
       "raydium": "Raydium CLMM",
       "orca": "Orca Whirlpools"
+    },
+    "protocolRange": {
+      "currentRange": "현재 포지션 범위",
+      "draftRange": "제안된 범위",
+      "fullOnly": "이 Orca 풀은 Full 범위만 지원합니다.",
+      "stale": "풀 데이터가 오래되어 범위를 편집할 수 없습니다.",
+      "invalidRange": "이 풀의 틱 간격에 맞는 유효한 가격을 입력하세요.",
+      "zeroLiquidity": "이 포지션에는 유동성이 없습니다.",
+      "presets": {
+        "5": "±5%",
+        "10": "±10%",
+        "20": "±20%"
+      },
+      "source": "출처",
+      "asOf": "기준 시각",
+      "slot": "슬롯",
+      "commitment": "확정 수준",
+      "program": "프로그램",
+      "network": "네트워크",
+      "fixture": "설명용 예시이며 관측된 풀이 아닙니다."
     }
   }
 }

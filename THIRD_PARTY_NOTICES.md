@@ -54,6 +54,27 @@ Display sizing and the provenance record are in the
 no script, event handler, external resource reference or foreignObject is introduced.
 
 
+## Adapted Solana tick math
+
+The Orca and Raydium tick-to-Q64 functions in
+`src/features/manager/fund/solana-preview/solanaRangeModel.ts` are adapted from
+these exact Apache-2.0 sources. They are separate algorithms with their own
+rounding and domain boundaries. Pool Party modified the Rust functions into
+TypeScript BigInt and added presentation validation; the upstream portions
+retain their original license and copyright.
+
+| Upstream material | Pinned source and preserved license |
+| --- | --- |
+| Orca Whirlpools tick math, copyright 2022 Orca Foundation | [Revision e528dd23](https://github.com/orca-so/whirlpools/blob/e528dd23bb41571f92cfdb49a2f15d4fa0b01bec/programs/whirlpool/src/math/tick_math.rs), February 26, 2025. [Original Apache notice](LICENSES/Orca-Apache-notice-e528dd23.txt) and [complete Apache-2.0 license](LICENSES/Apache-2.0.txt). |
+| Raydium CLMM tick math | [Revision ed1eb415](https://github.com/raydium-io/raydium-clmm/blob/ed1eb41519d5355755f7df52b43fa9610938b60b/programs/amm/src/libraries/tick_math.rs). [Original complete Apache license](LICENSES/Raydium-Apache-ed1eb415.txt). |
+
+The later Orca License is not the grant used for this adaptation. The Orca
+positive/negative sqrt functions in the Apache revision are identical to the
+reference functions checked during implementation. Neither pinned repository
+provided an additional NOTICE file. Preserve these notices and the complete
+Apache-2.0 text in source and built distributions containing the adapted code.
+No SDK, program binary, deployment authority or market feed is bundled here.
+
 ## Application dependencies
 
 The dependency manifest is [package.json](package.json); resolutions and
