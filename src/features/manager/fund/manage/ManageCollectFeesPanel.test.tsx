@@ -175,6 +175,22 @@ describe("POO-2276 Collect fees presenter", () => {
     expect(screen.queryByText("650")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Collect" })).toBeDisabled();
   });
+  // @rule POO-2276 R4/R5: unknown freshness withholds values without an unproven stale claim.
+  it("shows unknown freshness as unavailable without saying fees are stale (POO-2276)", () => {
+    const input = props();
+    renderWithProviders(
+      <ManageCollectFeesPanel {...input} read={{ ...input.read, freshness: "unknown" }} />,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Uncollected fees are unavailable.");
+    expect(
+      screen.queryByText("Uncollected fees are stale. Refresh to continue."),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("650")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Collect" })).toBeDisabled();
+    expect(input.onRetry).not.toHaveBeenCalled();
+    expect(input.onBack).not.toHaveBeenCalled();
+  });
   // @rule R4/R5/R7: stale quantities are withheld and receipt in hub Income is not promised.
   it("withholds stale fees and explains the cross-chain financial destination", () => {
     const input = props();

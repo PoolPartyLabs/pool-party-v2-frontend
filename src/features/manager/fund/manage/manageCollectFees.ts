@@ -67,7 +67,9 @@ export function projectManageCollectFees(
     return unavailable("identity");
   if (read.status === "loading" || read.status === "error")
     return { status: read.status, rows: [] };
-  if (read.freshness !== "fresh") return unavailable("stale");
+  if (read.freshness === "stale") return unavailable("stale");
+  // A completed read alone proves neither fresh nor stale fee quantities.
+  if (read.freshness !== "fresh") return { status: "unavailable", rows: [] };
   const detail = read.position;
   if (!detail) return unavailable("missing");
   if (

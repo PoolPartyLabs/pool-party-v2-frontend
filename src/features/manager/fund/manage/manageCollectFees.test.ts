@@ -133,10 +133,17 @@ describe("POO-2276 ordered Collect fee projection", () => {
     ).toEqual({ status, rows: [] });
   });
   // @rule R4: no invented TTL or inferred freshness.
-  it.each(["stale", "unknown"] as const)("withholds %s freshness", (freshness) => {
-    expect(projectManageCollectFees(origin, { ...read(), freshness })).toMatchObject({
+  it("withholds fees only as stale when freshness is explicitly stale", () => {
+    expect(projectManageCollectFees(origin, { ...read(), freshness: "stale" })).toMatchObject({
       status: "unavailable",
       reason: "stale",
+      rows: [],
+    });
+  });
+  // @rule POO-2276 R4: a completed read does not prove either freshness or staleness.
+  it("keeps unknown freshness generically unavailable without claiming stale fees (POO-2276)", () => {
+    expect(projectManageCollectFees(origin, { ...read(), freshness: "unknown" })).toEqual({
+      status: "unavailable",
       rows: [],
     });
   });
