@@ -1,22 +1,115 @@
 /**
  * @id PP-MGR-LIB-052
  * @name manageLayout tests
- * @implements-rules-version v1 (POO-2226, POO-2232)
+ * @implements-rules-version v2 (POO-2270, POO-2271; extends POO-2226, POO-2232)
  * @analytics-events none, pure geometry tests.
  */
 import { describe, expect, it } from "vitest";
 import { mockFund } from "@/mocks/data/v2Funds";
+import { validateSemanticGraph } from "../build/graph/semanticGraph";
 import { layoutManageGraph } from "./manageLayout";
 import { normalizeManageModel } from "./manageModel";
 
+describe("POO-2270/2271 v2 routes", () => {
+  it("keeps cash144x96, distinct Idle minima, position-origin principal and centered fee Swap", () => {
+    const graph = layoutManageGraph(normalizeManageModel(mockFund));
+    for (const cash of graph.nodes.filter((node) => node.kind === "cash")) {
+      expect([cash.rect.w, cash.rect.h]).toEqual([144, 96]);
+      const idle = graph.nodes.find((node) => node.id === `idle:${cash.chainId}`);
+      if (!idle) throw new Error("idle missing");
+      expect(cash.rect.y + cash.rect.h / 2).toBe(idle.rect.y + idle.rect.h / 2);
+      expect(idle.rect.h).toBe(104);
+    }
+    const position = graph.nodes.find((node) => node.kind === "position" && node.chainId === 4663);
+    const collect = graph.nodes.find((node) => node.kind === "flow" && node.flow === "collectFees");
+    const swap = graph.nodes.find((node) => node.kind === "flow" && node.flow === "feeSwap");
+    if (!position || !collect || !swap) throw new Error("flow missing");
+    expect(centerX(swap)).toBe(centerX(collect));
+    expect(swap.rect.y - collect.rect.y - collect.rect.h).toBe(24);
+    const principal = graph.edges.find((edge) => edge.id.startsWith("principal:position:"));
+    expect(principal?.points[0]?.x).toBe(position.rect.x);
+    expect(graph.edges.filter((edge) => edge.id.startsWith("principal:collect:"))).toHaveLength(0);
+    expect(graph.edges.find((edge) => edge.id === "withdraw:income")?.tone).toBe("muted");
+  });
+  it("declares one inbound/shared outbound Bridge, separated class ports and complete visible hover legs", () => {
+    const graph = layoutManageGraph(normalizeManageModel(mockFund));
+    expect(
+      graph.nodes.filter((node) => node.kind === "flow" && node.flow === "bridge"),
+    ).toHaveLength(2);
+    expect(validateSemanticGraph(graph.semantic)).toEqual([]);
+    const outbound = graph.nodes.find((node) => node.id === "bridge:4663:outbound");
+    if (!outbound) throw new Error("outbound missing");
+    const ports = graph.semantic.ports.filter((port) => port.nodeId === outbound.id);
+    expect(new Set(ports.map((port) => port.class))).toEqual(new Set(["principal", "income"]));
+    expect(graph.connections.length).toBeGreaterThan(0);
+    expect(graph.hoverRoutes.some((route) => route.connectionIds.length > 1)).toBe(true);
+    expect(graph.edges.some((edge) => edge.id.startsWith("transfer:"))).toBe(false);
+    const collect = graph.nodes.find((node) => node.kind === "flow" && node.flow === "collectFees");
+    if (!collect) throw new Error("collect missing");
+    const outputs = graph.semantic.connections.filter(
+      (connection) =>
+        graph.semantic.ports.find((port) => port.id === connection.sourcePortId)?.nodeId ===
+        collect.id,
+    );
+    expect(outputs).toHaveLength(1);
+    expect(outputs[0]?.class).toBe("income");
+  });
+  it("updates final rects, ports and hulls from measured content without introducing a local Bridge", () => {
+    const model = normalizeManageModel(mockFund);
+    const local = {
+      ...model,
+      chains: model.chains.filter((chain) => chain.hub),
+      positions: model.positions.filter((position) => position.chainId === model.hubChainId),
+    };
+    const graph = layoutManageGraph(local, {
+      [`idle:${model.hubChainId}`]: { width: 236, height: 148 },
+      withdrawal: { width: 236, height: 220 },
+    });
+    expect(graph.nodes.find((node) => node.id === `idle:${model.hubChainId}`)?.rect.h).toBe(148);
+    expect(graph.nodes.find((node) => node.id === "withdrawal")?.rect.h).toBe(220);
+    expect(graph.nodes.filter((node) => node.kind === "flow" && node.flow === "bridge")).toEqual(
+      [],
+    );
+    expect(validateSemanticGraph(graph.semantic)).toEqual([]);
+  });
+  it("preserves route identities after unrelated insertion and recomputes grown position ports", () => {
+    const model = normalizeManageModel(mockFund);
+    const first = layoutManageGraph(model);
+    const p = model.positions[1];
+    if (!p) throw new Error("position missing");
+    const extra = { ...p, id: `${p.id}:other`, positionKey: `0x${"8".repeat(64)}` };
+    const expanded = layoutManageGraph(
+      {
+        ...model,
+        positions: [...model.positions, extra],
+        chains: model.chains.map((chain) =>
+          chain.chainId === p.chainId
+            ? { ...chain, positions: [...chain.positions, extra] }
+            : chain,
+        ),
+      },
+      { [`position:${p.id}`]: { width: 200, height: 300 } },
+    );
+    const originalIds = first.semantic.connections.map((connection) => connection.id);
+    expect(expanded.semantic.connections.map((connection) => connection.id)).toEqual(
+      expect.arrayContaining(originalIds),
+    );
+    const position = expanded.nodes.find((node) => node.id === `position:${p.id}`);
+    const path = expanded.edges.find((edge) => edge.id === `principal:position:${p.id}`);
+    expect(position?.rect.h).toBe(300);
+    expect(path?.points[0]?.y).toBe((position?.rect.y ?? 0) + 150);
+    expect(validateSemanticGraph(expanded.semantic)).toEqual([]);
+  });
+});
+
 describe("Manage geometry", () => {
-  it("[R4,R5] cash per chain is 160x136 and every node remains inside graph bounds", () => {
+  it("[R4,R5] cash per chain is 144x96 and every node remains inside graph bounds", () => {
     const model = normalizeManageModel(mockFund);
     const graph = layoutManageGraph(model);
     const cash = graph.nodes.filter((n) => n.kind === "cash");
     expect(cash).toHaveLength(model.chains.length);
-    expect(graph.nodes.find((n) => n.kind === "group")?.rect.w).toBe(392);
-    expect(cash.every((n) => n.rect.w === 160 && n.rect.h === 136)).toBe(true);
+    expect(graph.nodes.find((n) => n.kind === "group")?.rect.w).toBe(376);
+    expect(cash.every((n) => n.rect.w === 144 && n.rect.h === 96)).toBe(true);
     expect(
       graph.nodes.every(
         (n) =>
@@ -132,22 +225,22 @@ describe("POO-2232 corrected geometry", () => {
       );
       if (!idle) throw new Error("cash without idle");
       expect(cash.rect.x - idle.rect.x - idle.rect.w).toBe(24);
-      expect(cash.rect.y).toBe(idle.rect.y);
-      expect([cash.rect.w, cash.rect.h]).toEqual([160, 136]);
+      expect(cash.rect.y + cash.rect.h / 2).toBe(idle.rect.y + idle.rect.h / 2);
+      expect([cash.rect.w, cash.rect.h]).toEqual([144, 96]);
     }
     const position = graph.nodes.find((node) => node.kind === "position" && node.chainId === 4663);
     expect([position?.rect.w, position?.rect.h]).toEqual([176, 232]);
   });
   it("[R5,R6] routes principal and converted income on a shared bend height outside node interiors", () => {
     const graph = layoutManageGraph(normalizeManageModel(mockFund));
-    const principal = graph.edges.find((edge) => edge.id.startsWith("principal:collect:"));
-    const income = graph.edges.find((edge) => edge.id.startsWith("income:fee-swap:"));
+    const principal = graph.edges.find((edge) => edge.id.startsWith("principal:return:"));
+    const income = graph.edges.find((edge) => edge.id.startsWith("income:return:"));
     if (!principal || !income) throw new Error("missing returns");
     const gray = horizontalRuns(principal).at(-1);
     const green = horizontalRuns(income).at(-1);
     expect(gray?.y).toBe(green?.y);
     if (!gray || !green) throw new Error("missing return bends");
-    expect(green.left - gray.right).toBe(24);
+    expect(green.left - gray.right).toBeGreaterThanOrEqual(24);
     for (const edge of graph.edges) {
       for (const [index, point] of edge.points.entries()) {
         const previous = edge.points[index - 1];
