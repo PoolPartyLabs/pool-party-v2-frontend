@@ -105,4 +105,20 @@ describe("local Solana drawing model", () => {
     expect(state.edit?.allocation).toBe("65");
     expect(hasUnappliedChanges(state)).toBe(true);
   });
+  // @rule POO-2291 R6,R8: custody has independent local instances without pool/range/collector identity.
+  it("adds and configures separate Holding custody blocks without LP routes", () => {
+    let state = previewReducer(createPreviewState(), { type: "add", protocol: "holding" });
+    state = previewReducer(state, {
+      type: "edit",
+      value: { allocation: "25", pair: "USDC / SOL" },
+    });
+    state = previewReducer(state, { type: "apply" });
+    state = previewReducer(state, { type: "add", protocol: "holding" });
+    expect(state.blocks).toEqual([
+      { id: "preview-1", protocol: "holding", allocationBps: 2500, pair: "USDC / SOL" },
+      { id: "preview-2", protocol: "holding", allocationBps: 0, pair: "SOL / USDC" },
+    ]);
+    expect(isLiquidityBlock("holding")).toBe(false);
+    expect(totalAllocationBps(state)).toBe(2500);
+  });
 });

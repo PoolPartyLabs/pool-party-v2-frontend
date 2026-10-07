@@ -14,6 +14,14 @@ Status: `OPEN` (asked, not answered), `BLOCKING` (must be answered before the la
 `ANSWERED` (the answer is in the last column). If a launch checklist disagrees with this file, this
 file wins.
 
+## CR-MGR-POO2291-S5, 2026-10-08, local custody and quote presentation
+
+ANSWERED for the current non-executable local scope: Holding is a custody drawing, separate from venues and LPs. The production host supplies no custody origin/read/Buy/Sell intention or quote, and no clock is fabricated. Native SOL and WSOL are distinct; compatible inputs bypass conversion; Sell follows principal Idle/Bridge, without Income or LP fee claims. No live balances, costs, asset movement or signer authority are asserted. Buy/Sell is disabled without origin and Confirm stays disabled for injected fixtures too.
+
+The injected inspector keeps custody, independent quantity/USD/allocation, source provenance, quote expiry, blockhash validity and declared included/additional costs separate. Review found included-input fees exceeding the input total and a future transaction timestamp; regressions now reject both. There is no editable financial amount form or execution in this slice. Official marks keep existing rights; Holding uses the generic Wallet icon.
+
+Real token/custody data, quote-cost disclosure, wrap/unwrap behavior, authority and settlement/recovery remain independently BLOCKING under POO-2239/2240/2261/2262 and existing register entries. This local answer does not clear them. Evidence: PP-MGR-LIB-070, PP-MGR-CMP-096, POO-2291 and77 focused tests; native browser acceptance remains with Murilo. Owner: Murilo / Codex coordinator.
+
 ## CR-MGR-POO2281, 2026-10-07, local Solana editor scope revision
 
 Answer for the current visual scope: Murilo replaced the unmounted API/cohort proposal with a

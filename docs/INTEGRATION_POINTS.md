@@ -17,6 +17,12 @@ See the [current delivery plan](solana-preview-preparation-plan-2026-10-07.md) a
 
 `solanaRangeModel.ts` and `SolanaRangePresenter.tsx` validate and display an injected same-snapshot Orca/Raydium context. `SolanaPreviewBlockPanel.tsx` passes no live context by default, mounts the section only for positive LP allocation and keeps a context without a draft handler read-only. POO-2240/2261 must provide verified cluster, program, pool, ordered mint bytes, token programs/extensions, decimals, protocol fee/grid configuration, current Q64/tick, position identity/liquidity and source metadata. A separate liquidity quote owns composition/amounts. Missing data never receives a default price, range, token split or execution capability.
 
+## Solana custody and Jupiter inspection (POO-2291 S5)
+
+`solanaHoldingModel.ts` and `SolanaHoldingPresenter.tsx` accept injected custody identities, exact quantities, Buy/Sell intentions, quotes and independent timestamp/block-height evidence. POO-2239/2240 supply verified tokens and custody reads; POO-2261/2262 supply origin/revision-bound quotes, costs, authority and transaction details. No API, RPC or wallet client is imported. Included-input costs cannot exceed total input, and unknown clocks cannot establish quote/blockhash validity.
+
+The live Configure host supplies null origins, reads, intentions, quotes and clock. Holding is a separate local custody drawing control, not a new protocol or LP. Same-token USDC bypasses conversion; the WSOL drawing shows gray principal conversions only. Drawing labels never manufacture mint, account, price or signing authority. Buy/Sell remains unavailable without custody identity, and Confirm stays disabled even with harness-injected data. Standalone review is inline; this bounded slice does not implement editable transaction amounts or live execution.
+
 ## Launch report countdown (POO-2233, rules v1)
 
 `launch/useLaunchReportWait.ts` records first report building/waiting observation in browser-local metadata keyed by normalized manager, draft and report step, separate from the execution journal. `useV2Launch.ts` projects this optional timestamp to `FundLaunchJourney`; an isolated display clock derives a 19-minute estimate. Polling, retry and reopening preserve the timestamp. Storage failure uses an in-memory fallback.
@@ -74,7 +80,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 520 markers across 299 files (2026-10-08)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 524 markers across 301 files (2026-10-08)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap

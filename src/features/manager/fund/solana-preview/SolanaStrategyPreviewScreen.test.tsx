@@ -58,6 +58,30 @@ beforeEach(() => {
 });
 
 describe("Solana local visual preview", () => {
+  it("adds independent custody blocks with local configuration and bounded Holding events", () => {
+    render(<SolanaStrategyPreviewScreen onExit={vi.fn()} />);
+    const addHolding = () =>
+      fireEvent.click(screen.getByRole("button", { name: "solanaPreview.holding.title" }));
+    addHolding();
+    expect(screen.getByRole("region", { name: "title" })).toHaveAttribute(
+      "data-holding-mode",
+      "choice",
+    );
+    expect(screen.getByRole("button", { name: "buy" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "sell" })).toBeDisabled();
+    expect(screen.queryByText("solanaPreview.collect")).toBeNull();
+    expect(track).toHaveBeenCalledWith("solana_preview_started", { preview_protocol: "holding" });
+    allocation("20");
+    fireEvent.click(screen.getByRole("button", { name: "solanaPreview.apply" }));
+    expect(track).toHaveBeenCalledWith("solana_preview_applied", {
+      preview_protocol: "holding",
+      has_local_changes: true,
+    });
+    addHolding();
+    expect(screen.getByTestId("preview-allocation-preview-1")).toHaveTextContent("20%");
+    expect(screen.getByTestId("preview-allocation-preview-2")).toHaveTextContent("0%");
+    expect(track).not.toHaveBeenCalledWith("solana_preview_completed", expect.anything());
+  });
   it("opens as a visual drawing with native SOL and no execution action", () => {
     render(<SolanaStrategyPreviewScreen onExit={vi.fn()} />);
     expect(screen.getByText("solanaPreview.visualOnly")).toBeVisible();

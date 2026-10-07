@@ -24,6 +24,7 @@ import {
   type PreviewPair,
   parseAllocation,
 } from "./previewModel";
+import { SolanaHoldingPresenter, SolanaJupiterInspector } from "./SolanaHoldingPresenter";
 import { PreviewLogo } from "./SolanaPreviewCanvas";
 import { SolanaRangePresenter } from "./SolanaRangePresenter";
 import type { SolanaRangeContext, SolanaRangeDraft } from "./solanaRangeModel";
@@ -65,6 +66,7 @@ export function SolanaPreviewBlockPanel({
     jupiter: t("solanaPreview.protocols.jupiter"),
     raydium: t("solanaPreview.protocols.raydium"),
     orca: t("solanaPreview.protocols.orca"),
+    holding: t("solanaPreview.holding.title"),
   };
   const headingRef = useRef<HTMLHeadingElement>(null);
   const rangeId = useId();
@@ -82,13 +84,8 @@ export function SolanaPreviewBlockPanel({
           t("solanaPreview.availableLiquidity"),
           t("solanaPreview.depositCapacity"),
         ]
-      : block.protocol === "jupiter"
-        ? [
-            t("solanaPreview.expectedOutput"),
-            t("solanaPreview.minimumReceived"),
-            t("solanaPreview.route"),
-            t("solanaPreview.swapSlippage"),
-          ]
+      : block.protocol === "jupiter" || block.protocol === "holding"
+        ? []
         : [
             t("solanaPreview.pool"),
             t("solanaPreview.price"),
@@ -128,7 +125,7 @@ export function SolanaPreviewBlockPanel({
         </Button>
       </div>
       <p className="mb-5 text-muted-foreground text-xs">{t("solanaPreview.drawingChoice")}</p>
-      {lp ? (
+      {lp || block.protocol === "holding" ? (
         <p className="mb-4 text-muted-foreground text-xs">{t("solanaPreview.wsSolDrawing")}</p>
       ) : null}
       <form
@@ -160,26 +157,61 @@ export function SolanaPreviewBlockPanel({
         ) : (
           <label className="block space-y-2">
             <span className="text-sm">
-              {t(lp ? "solanaPreview.pair" : "solanaPreview.conversion")}
+              {t(
+                block.protocol === "holding"
+                  ? "solanaPreview.holding.token"
+                  : lp
+                    ? "solanaPreview.pair"
+                    : "solanaPreview.conversion",
+              )}
             </span>
             <select
               value={edit.pair}
               onChange={(event) => onEdit({ pair: event.target.value as PreviewPair })}
               className="h-10 w-full rounded-md border border-border bg-surface px-3 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
             >
-              <option value="SOL / USDC">{lp ? "SOL / USDC" : "SOL → USDC"}</option>
-              <option value="USDC / SOL">{lp ? "USDC / SOL" : "USDC → SOL"}</option>
+              <option value="SOL / USDC">
+                {block.protocol === "holding" ? "WSOL" : lp ? "SOL / USDC" : "SOL → USDC"}
+              </option>
+              <option value="USDC / SOL">
+                {block.protocol === "holding" ? "USDC" : lp ? "USDC / SOL" : "USDC → SOL"}
+              </option>
             </select>
           </label>
         )}
-        <dl className="space-y-3 border-t border-border pt-4">
-          {fields.map((field) => (
-            <div key={field} className="flex items-start justify-between gap-4 text-xs">
-              <dt className="text-muted-foreground">{field}</dt>
-              <dd className="text-right">{t("solanaPreview.marketUnavailable")}</dd>
-            </div>
-          ))}
-        </dl>
+        {fields.length ? (
+          <dl className="space-y-3 border-t border-border pt-4">
+            {fields.map((field) => (
+              <div key={field} className="flex items-start justify-between gap-4 text-xs">
+                <dt className="text-muted-foreground">{field}</dt>
+                <dd className="text-right">{t("solanaPreview.marketUnavailable")}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+        {block.protocol === "holding" ? (
+          <>
+            {/* PP-INTEGRATION-POINT: POO-2239/2240/2261/2262 must supply custody identity, reads and intentions; a drawing token is not an account or balance. */}
+            <SolanaHoldingPresenter
+              origin={null}
+              read={null}
+              intent={null}
+              quote={null}
+              clock={{ now: null, blockHeight: null }}
+              mode="choice"
+              onMode={() => onUnavailable()}
+            />
+          </>
+        ) : block.protocol === "jupiter" ? (
+          <>
+            {/* PP-INTEGRATION-POINT: POO-2261/2262 provide intent-bound quote and independent blockhash/clock evidence. No quote or TTL is inferred locally. */}
+            <SolanaJupiterInspector
+              intent={null}
+              quote={null}
+              clock={{ now: null, blockHeight: null }}
+            />
+          </>
+        ) : null}
         {showRange ? (
           <section aria-labelledby={rangeId} className="min-w-0 border-t border-border pt-4">
             <h3 id={rangeId} className="mb-2 font-medium text-sm">
