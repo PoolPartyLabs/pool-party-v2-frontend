@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-085
  * @name ManageCanvas stories
- * @implements-rules-version v1 (POO-2226, POO-2232)
+ * @implements-rules-version v2 (POO-2270, POO-2271; extends POO-2226, POO-2232)
  * @analytics-events none, fixture stories.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
@@ -9,7 +9,7 @@ import { fn } from "storybook/test";
 import { mockFund } from "@/mocks/data/v2Funds";
 import { withManagerMessages } from "../build/canvas/canvasStorySupport";
 import { ManageCanvas } from "./ManageCanvas";
-import { normalizeManageModel } from "./manageModel";
+import { available, normalizeManageModel } from "./manageModel";
 
 const model = normalizeManageModel(mockFund);
 const meta = {
@@ -47,5 +47,61 @@ export const EmptyPositions: Story = {
       ...mockFund,
       positionsSummary: { protocolVersion: "v2", positions: [] },
     }),
+  },
+};
+
+function withCash(price: boolean) {
+  return {
+    ...model,
+    chains: model.chains.map((chain) => ({
+      ...chain,
+      cash: chain.cash.map((token) => ({
+        ...token,
+        amount: available(
+          {
+            chainId: token.chainId,
+            address: null,
+            symbol: token.symbol,
+            decimals: token.decimals,
+            raw: "25000000000000000",
+            decimal: "0.025",
+          },
+          "story-native",
+        ),
+        ...(price ? { valueUsd: available("75", "story-price") } : {}),
+      })),
+    })),
+  };
+}
+export const NativeAndUsd: Story = { args: { model: withCash(true) } };
+export const NativeWithoutUsd: Story = { args: { model: withCash(false) } };
+export const HubOnly: Story = {
+  args: {
+    model: {
+      ...model,
+      chains: model.chains.filter((chain) => chain.hub),
+      positions: model.positions.filter((position) => position.chainId === model.hubChainId),
+    },
+  },
+};
+export const LongAmounts: Story = {
+  args: {
+    model: {
+      ...withCash(false),
+      income: {
+        ...model.income,
+        amount: available(
+          {
+            chainId: model.income.chainId,
+            address: model.income.address,
+            symbol: model.income.symbol,
+            decimals: model.income.decimals,
+            raw: "123456789012345678901234567890",
+            decimal: "123456789012345678901234.567890",
+          },
+          "story-income",
+        ),
+      },
+    },
   },
 };

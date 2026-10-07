@@ -25,6 +25,8 @@ export interface ManageToken {
   symbol: string;
   decimals: number;
   amount: ManageRead<ManageTokenAmount>;
+  /** Independent authoritative USD valuation; POO-2230 has not supplied this cash read yet. */
+  valueUsd?: ManageRead<string>;
 }
 /** The protocol mark is resolved from the adapter identity, never inferred from position shape. */
 export function manageProtocolMark(adapterKind: string): string {
