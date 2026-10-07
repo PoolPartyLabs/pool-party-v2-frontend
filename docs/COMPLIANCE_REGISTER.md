@@ -271,3 +271,7 @@ Answer in this slice: explicit typed ports, measured final rectangles, no invent
 ## Manage Hub identity and fixed marks, October 7, 2026 (POO-2272 v2)
 
 Status: ANSWERED for presentation only. Hub identity comes from the existing authorized model chain, not a new network/provider claim. Locks communicate structural role and do not authorize an operation or prohibit inspection. Network watermarks use the chain name only; no external artwork, financial claim, tracking or credential flow is added. Current financial, custody and venue disclosure entries remain OPEN and no launch gate is cleared. Browser hit-testing/reflow acceptance remains with Murilo.
+
+## Manage hidden editor retention, October 7, 2026 (POO-2274 v2)
+
+Status: ANSWERED for navigation and read preparation only. Hiding an editor does not cancel an owned intent or transfer its authority. Retained display data cannot authorize a stale operation. Core/position changes and material read/snapshot changes invalidate review. Existing financial execution and recovery gates remain OPEN; this slice adds no signing, custody action or pending transaction journal.

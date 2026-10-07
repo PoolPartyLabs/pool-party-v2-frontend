@@ -11,7 +11,7 @@
 
 # Manager canvas and inline panels: delivery plan, October 7, 2026
 
-Status: **v2 plan complete; graph foundation, Review transaction fees, Solana S1 catalog and inline Manage header merged; supported Manage route/card slice merged; canvas chrome reviewed and ready; all-node panels and remaining local Solana slices in progress**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main before the chrome PR: `8a350affcc9800f06f077709692cbfde3bcdd277`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
+Status: **v2 plan complete; graph foundation, Review transaction fees, Solana S1 catalog and inline Manage header merged; supported Manage route/card slice merged; canvas chrome merged in PR #131; draft visibility reviewed-ready; all-node panels and remaining local Solana slices in progress**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main before the draft-visibility PR: `2a50839926a60bfc48944c3d48cf9b0a941f6db0`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
 
 ## Current v2 contract and implementation sequence
 
@@ -34,7 +34,7 @@ POO-2270/2271/2272/2273/2274 contain append-only numbered **v2** rules and match
 | POO-2288, [PR #127](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/127) | Merged: stable semantic node/port/connection/junction contract and declared graph validation. Build routing adoption remains separate. |
 | POO-2289, [PR #126](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/126) | Merged: read-only Review Entry/Exit fees card with explicit unavailable values. No fee inference or new launch gate. |
 | POO-2291 S1, [PR #128](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/128) | Merged: typed Solana catalog/read contracts and unchanged protocol choices. S2-S6 UI and real execution remain pending. |
-| POO-2272 header, [PR #129](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/129) | Merged: canonical protocol/subtype left, network right, full text and natural wrapping. Hub overlay and locks are reviewed-ready in the next small PR. |
+| POO-2272 header, [PR #129](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/129) | Merged: canonical protocol/subtype left, network right, full text and natural wrapping. Hub overlay and locks merged in [PR #131](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/131). |
 | POO-2270/2271 routes, [PR #130](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/130) | Merged: measured compact Manage cards/ports/hulls/buses, gray principal and Income exit, one shared outbound Bridge and full-path hover for the supported liquidity/supply slice. |
 | Existing Overview/Manage | Authorized entry/discovery/position reads, local drafts/launch continuation, current/draft range, inline Move/Create and existing unavailable gates remain. Ready visual foundation exists; aggregate history/readiness and complete execution/policy contracts remain pending. |
 
@@ -113,7 +113,7 @@ Paths below are relative to `src/features/manager/fund/` unless a repository-rel
 | 12, [POO-2279](https://linear.app/yeildbay/issue/POO-2279) | Controlled tabs, Charts/Activity controller/data | Needs Rules for renderer/license/feed/history/annotations and Activity event/status/filter/cursor semantics. Market reference meaning is settled. No fake functional bitmap/empty tab. |
 | 13, [POO-2291](https://linear.app/yeildbay/issue/POO-2291) v1 | Six local Solana slices below | Ready graph/state primitives reused; gesture/gates preserved; real discovery/custody/execution separate. |
 
-The coordinator is finishing chrome integration while one worker isolates draft visibility and the second reviews independent read presenters. Coordinator reviews code/evidence and integrates sequentially. Defined visual work can proceed with explicit Not available while exact financial sources are obtained. A finished presenter does not close its execution issue.
+The coordinator integrates all-node selection while one worker migrates Build returns and the second implements independent read presenters. Coordinator reviews code/evidence and integrates sequentially. Defined visual work can proceed with explicit Not available while exact financial sources are obtained. A finished presenter does not close its execution issue.
 
 ### Sources, financial gates, Charts and links
 
@@ -390,3 +390,7 @@ Completed for this planning package:
 - Registered intake, document ID, integration context and compliance verification for the planned work.
 
 This is a reviewed plan, not an implementation-complete claim. Runtime PRs, focused test results, screenshots, live endpoint examples, signing and deployment remain future delivery evidence.
+
+### Draft visibility evidence, POO-2274 v2
+
+The read-preparation slice passed 27 focused tests covering first-visit activation, hide/show retention, no false abandonment/retransmission and real source/price/range/liquidity/status/core invalidation, including late replies. Scoped TypeScript and changed-file Biome passed. Shared hooks remain unchanged. There is no transaction journal or expiry DTO in this currently disabled Move flow, so this is not pending-wallet recovery evidence.
