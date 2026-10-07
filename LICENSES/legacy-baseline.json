@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "repository": "PoolPartyLabs/pool-party-v2-frontend",
+  "baselineCommit": "410188eaf749dec8dcb1fcf3f5fb7e541aaccb51",
+  "baselinePurpose": "Public main immediately before this policy PR; not the first publication of MIT material.",
+  "mitIntroductionCommit": "36d4d4c67a30f01f7d3ac656417795427c5fb4b8",
+  "mitIntroductionTimestampUTC": "2026-07-26T06:29:00Z",
+  "legacyNotices": [
+    {
+      "sourcePath": "LICENSE",
+      "preservedPath": "LICENSES/MIT-legacy-frontend.txt",
+      "sha256": "55d6553812e7750f5c8e886a39a2ebb32f0d7aa90f96ed13cd1afaf18580b564"
+    },
+    {
+      "sourcePath": "hookrisk/LICENSE",
+      "preservedPath": "LICENSES/MIT-legacy-hookrisk.txt",
+      "sha256": "65efcc1e2866f0041348814eb15d2cd8f24842c9f26d129ab676e773e50e23e9"
+    },
+    {
+      "sourcePath": "hookrisk/NOTICE",
+      "preservedPath": "LICENSES/NOTICE-legacy-hookrisk.txt",
+      "sha256": "ddf615e85bfad4c454c2b224677aade27cd1ba9ae4449fffb554b434547239f0"
+    }
+  ],
+  "interpretation": "Valid prior grants survive. Root MIT covered first-party material subject to nested licenses, third-party rights and provenance. The new default is current and future first-party material with sufficient rights, not retroactive revocation.",
+  "currentLicense": "LicenseRef-PoolParty-Source-Available-1.0",
+  "separateLicenseOrProvenanceBoundaries": [
+    "hookrisk/detectors/",
+    "src/app/fonts/poppins/",
+    ".claude/skills/swap-integration/",
+    "hookrisk/schema/framework-rubric.json",
+    "hookrisk/contrib/uniswap-ai/fix-before-swap-returns-delta-bit.patch",
+    "third-party logos and starter artwork",
+    "third-party dependencies"
+  ]
+}
