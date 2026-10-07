@@ -9,8 +9,11 @@ import {
   managerSolanaBindingTypedData,
   type SolanaBindingAuthorization,
   signManagerSolanaBinding,
+  solanaBootstrapDigest,
+  solanaBootstrapTypedData,
   verifyManagerSolanaBinding,
 } from "./binding";
+import { bootstrapAuthorizationFixture } from "./bootstrap.fixture";
 
 const solanaAddress = getAddressDecoder().decode(new Uint8Array(32).fill(4));
 const authorization: SolanaBindingAuthorization = {
@@ -80,6 +83,117 @@ it("matches the independent Hub/Rust golden digest with Solidity ABI encoding", 
   const digest = keccak256(concatHex(["0x1901", domain, message]));
   expect(digest).toBe("0x7f0d0fe3056003fb4654f099f5bf8831906d1f6837fd70f880e0980f6d924dc4");
   expect(managerSolanaBindingDigest(solanaAddress, authorization)).toBe(digest);
+});
+
+const bootstrapAuthorization = {
+  ...bootstrapAuthorizationFixture,
+  ...authorization,
+  spokeIndex: 0,
+  policyHash: toHex(BigInt(11), { size: 32 }),
+  fundPda: "DtJ3wso5NbkQNWoeFrdYa4cv4Mb78coXkcV879zSf1vU",
+  usdcAta: "BXAvfHQx19AN9D7HFw9i8G23oCgg313YsJkvf6YNx4Hx",
+  tslaxAta: "f5HWTsoDVkawoGaRDv7SH1ery1stbJ3XKkTocsKfzR7",
+  nvdaxAta: "5BvREnYaFNQfTxNKk2rP56wUUDPq2oHSPjLQGGhv39sT",
+  wsolAta: "6u3DQCQw6LhfAgxeTacCM3ntvN9VhK3WzWws7RNAD5ef",
+};
+
+it("matches #47/#48 Rust fixture bootstrap using independent Solidity ABI words", () => {
+  const data = solanaBootstrapTypedData(solanaAddress, bootstrapAuthorization);
+  const domain = keccak256(
+    encodeAbiParameters(
+      [
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "uint256" },
+        { type: "address" },
+      ],
+      [
+        keccak256(
+          toHex(
+            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)",
+          ),
+        ),
+        keccak256(toHex("PoolParty Solana Fund")),
+        keccak256(toHex("6")),
+        BigInt(42161),
+        authorization.factory,
+      ],
+    ),
+  );
+  const typeHash = keccak256(
+    toHex(
+      "SolanaBootstrap(uint256 hubChain,address core,bytes32 mandateHash,bytes32 policyHash,uint16 spokeIndex,bytes32 program,bytes32 fundPda,bytes32 solanaKey,bytes32 usdcAta,bytes32 tslaxAta,bytes32 nvdaxAta,bytes32 wsolAta,bytes32 nativeMandateHash,bytes32 fundId,uint256 nonce,uint256 expiry)",
+    ),
+  );
+  const message = keccak256(
+    encodeAbiParameters(
+      [
+        { type: "bytes32" },
+        { type: "uint256" },
+        { type: "address" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "uint16" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "bytes32" },
+        { type: "uint256" },
+        { type: "uint256" },
+      ],
+      [
+        typeHash,
+        BigInt(42161),
+        authorization.fund,
+        bootstrapAuthorization.mandateHash,
+        bootstrapAuthorization.policyHash,
+        0,
+        data.message.program,
+        data.message.fundPda,
+        data.message.solanaKey,
+        data.message.usdcAta,
+        data.message.tslaxAta,
+        data.message.nvdaxAta,
+        data.message.wsolAta,
+        authorization.nativeMandateHash,
+        bootstrapAuthorization.fundId,
+        BigInt(9),
+        BigInt(2000000000),
+      ],
+    ),
+  );
+  const digest = keccak256(concatHex(["0x1901", domain, message]));
+  expect(digest).toBe("0x05405ee3cbacda4303d6ed3404afc02f852fd0ffa09cb9c7e44ac3bb66249092");
+  expect(solanaBootstrapDigest(solanaAddress, bootstrapAuthorization)).toBe(digest);
+});
+
+it.each([
+  "policyHash",
+  "mandateHash",
+  "fundId",
+  "fundPda",
+  "usdcAta",
+  "tslaxAta",
+  "nvdaxAta",
+  "wsolAta",
+  "program",
+  "spokeIndex",
+] as const)("binds bootstrap member %s independently of legacy consent", (field) => {
+  const value =
+    field === "spokeIndex"
+      ? 1
+      : field.endsWith("Hash") || field === "fundId"
+        ? toHex(BigInt(99), { size: 32 })
+        : solanaAddress;
+  expect(
+    solanaBootstrapDigest(solanaAddress, { ...bootstrapAuthorization, [field]: value }),
+  ).not.toBe(solanaBootstrapDigest(solanaAddress, bootstrapAuthorization));
 });
 
 it("verifies real EOA and Ed25519 signatures and rejects tuple tampering", async () => {
