@@ -2,7 +2,6 @@ import { expect, it } from "vitest";
 import { SOLANA_LP_CHOICES } from "./lpChoices";
 import {
   resolveMaxPriceImpactBps,
-  SOLANA_PRICE_IMPACT_CONFIG,
   type SolanaApiSignedQuote,
   validateSolanaApiQuote,
 } from "./swap";
@@ -28,13 +27,24 @@ const quote: SolanaApiSignedQuote = {
   signedPayload: "0x01",
   signature: "0x02",
 };
-it("uses configured defaults and accepts only bounded integer bps", () => {
-  expect(resolveMaxPriceImpactBps()).toBe(SOLANA_PRICE_IMPACT_CONFIG.defaultBps);
+it("requires explicit bounded u16 bps without a default", () => {
+  expect(() => resolveMaxPriceImpactBps(undefined)).toThrow("SOLANA_PRICE_IMPACT_INVALID");
+  expect(resolveMaxPriceImpactBps(0)).toBe(0);
   expect(resolveMaxPriceImpactBps(1)).toBe(1);
-  expect(resolveMaxPriceImpactBps(500)).toBe(500);
+  expect(resolveMaxPriceImpactBps(10000)).toBe(10000);
+  expect(resolveMaxPriceImpactBps(65535)).toBe(65535);
 });
-it.each([0, -1, 501, 10000, 1.5, NaN, Infinity])("rejects unsafe impact %s", (value) => {
+it.each([-1, 65536, 1.5, NaN, Infinity])("rejects unsafe impact %s", (value) => {
   expect(() => resolveMaxPriceImpactBps(value)).toThrow("SOLANA_PRICE_IMPACT_INVALID");
+});
+it.each([0, 10000, 65535])("accepts explicit no-maximum %s with a signed reference", (maximum) => {
+  expect(
+    validateSolanaApiQuote(
+      { ...quote, maxPriceImpactBps: maximum, priceImpactBps: 9000 },
+      { ...request, maxPriceImpactBps: maximum },
+      1999999999,
+    ).maxPriceImpactBps,
+  ).toBe(maximum);
 });
 it("consumes the API quote at the Manager's maximum without accepting a Manager quote", () => {
   expect(validateSolanaApiQuote(quote, request, 1999999999)).toEqual(quote);

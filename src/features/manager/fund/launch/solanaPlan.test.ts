@@ -19,6 +19,7 @@ it.each(SOLANA_LP_CHOICES)("persists $label into ratio/open steps and the journa
     sharePct: 50,
     kamino: false,
     raydiumPool: choice.poolId,
+    maxPriceImpactBps: 75,
   });
   const journal = createJournal("draft", "manager", {}, steps);
   let serialized = "";
@@ -63,11 +64,21 @@ it("carries the Manager impact bound into both swap and LP execution configs", (
   ]);
 });
 it.each([
-  0, 501, 1.5,
+  -1, 65536, 1.5,
 ])("rejects Manager impact %s without constructing a plan", (maxPriceImpactBps) => {
   expect(() =>
     withSolanaLaunchSteps(evm, { sharePct: 50, kamino: true, maxPriceImpactBps }),
   ).toThrow("SOLANA_PRICE_IMPACT_INVALID");
+});
+it("requires explicit impact for LP but leaves Kamino-only impact absent", () => {
+  expect(() =>
+    withSolanaLaunchSteps(evm, {
+      sharePct: 50,
+      kamino: false,
+      raydiumPool: SOLANA_LP_CHOICES[0]?.poolId,
+    }),
+  ).toThrow("SOLANA_PRICE_IMPACT_INVALID");
+  expect(withSolanaLaunchSteps(evm, { sharePct: 50, kamino: true })).toBeDefined();
 });
 it("refuses extra quote/reference fields on the Manager selection", () => {
   expect(() =>
