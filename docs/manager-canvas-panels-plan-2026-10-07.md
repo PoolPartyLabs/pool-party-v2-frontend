@@ -115,6 +115,8 @@ The label auto is a diagram description. It creates no new clickable Bridge, sig
 
 Current API source was examined read-only at `06a03b046ecba22204e44b201adb9e06a36a21f6`. The older local pre-V2 checkout was not used as capability evidence. This is source verification, not proof of a deployed endpoint or keeper.
 
+The latest inspected [deployment note from Rafael's session](https://pool-party-space.slack.com/archives/C0C43MK5EER/p1791289822219809) reports that the dev keeper was disabled on October 6 at 12:28 UTC, stopping periodic reports, order relays/acknowledgements and keeper-driven position-history refresh. This is a dated report, not a fresh status probe. Reconfirm the deployed status before report-dependent execution acceptance. No keeper restart or gas-spending action is part of this planning request.
+
 | Capability | Available evidence | Reuse / remaining gate |
 |---|---|---|
 | Position fees | GET `/api/v2/funds/{core}/positions/{chainId}/{positionKey}`: ordered tokens, raw uncollectedIncome.amount0/amount1 and independent USD | Reuse existing authorized Manage position action; never substitute holdings |
