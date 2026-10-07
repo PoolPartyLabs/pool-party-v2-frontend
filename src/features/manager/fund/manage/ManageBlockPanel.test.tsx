@@ -1,4 +1,4 @@
-/** @id PP-MGR-CMP-086 @implements-rules-version v2 (POO-2246; extends POO-2227), v1 (POO-2284) */
+/** @id PP-MGR-CMP-086 @implements-rules-version v2 (POO-2246; extends POO-2227), v2 (POO-2274), v1 (POO-2284) */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PANEL_POOL_FIXTURES } from "@/mocks/data/buildPanelFixtures";
 import { mockFund } from "@/mocks/data/v2Funds";
@@ -37,6 +37,8 @@ const range = {
   tickUpper: Math.ceil((pool.currentTick + 1000) / pool.tickSpacing) * pool.tickSpacing,
 };
 beforeEach(() => {
+  window.dataLayer = [];
+  mocks.review.mockClear();
   mocks.metadata.mockReturnValue({
     status: "ready",
     position: {
@@ -69,6 +71,195 @@ beforeEach(() => {
   });
 });
 describe("Manage block inline", () => {
+  // @rule POO-2274 R4: unvisited origins stay idle; activated origins keep their read lifetime.
+  it("activates an origin only on its first visible visit", () => {
+    const metadata = mocks.metadata();
+    const live = mocks.pool();
+    mocks.metadata.mockReturnValue({ ...metadata, status: "loading", position: null });
+    mocks.pool.mockReturnValue({ ...live, status: "idle", pool: null, applicable: false });
+    const view = renderWithProviders(
+      <ManageBlockPanel fund={mockFund} position={liquidity} active={false} />,
+    );
+    expect(mocks.metadata.mock.calls.at(-1)?.[3]).toBe(false);
+    expect(mocks.pool.mock.calls.at(-1)?.[1]).toBeNull();
+    mocks.metadata.mockReturnValue(metadata);
+    mocks.pool.mockReturnValue(live);
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active />);
+    expect(mocks.metadata.mock.calls.at(-1)?.[3]).toBe(true);
+    expect(mocks.pool.mock.calls.at(-1)?.[1]).toBe(pool.poolId);
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active={false} />);
+    expect(mocks.metadata.mock.calls.at(-1)?.[3]).toBe(true);
+    expect(mocks.pool.mock.calls.at(-1)?.[1]).toBe(pool.poolId);
+  });
+  // @rule POO-2274 R5: draft and review never transfer across a material core boundary.
+  it("keeps a new core idle and discards the previous core review and draft", async () => {
+    const view = renderWithProviders(
+      <ManageBlockPanel fund={mockFund} position={liquidity} active />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "±5%" }));
+    await userEvent.click(screen.getByRole("button", { name: "Move range" }));
+    await userEvent.click(screen.getByRole("button", { name: "Review move range" }));
+    await screen.findByRole("button", { name: "Confirm & move range" });
+    const nextFund = { ...mockFund, coreVault: `0x${"a".repeat(40)}` };
+    const metadata = mocks.metadata();
+    const live = mocks.pool();
+    mocks.metadata.mockReturnValue({ ...metadata, status: "loading", position: null });
+    mocks.pool.mockReturnValue({ ...live, status: "idle", pool: null, applicable: false });
+    view.rerender(<ManageBlockPanel fund={nextFund} position={liquidity} active={false} />);
+    expect(mocks.metadata.mock.calls.at(-1)?.[0]).toBe(nextFund.coreVault);
+    expect(mocks.metadata.mock.calls.at(-1)?.[3]).toBe(false);
+    expect(screen.queryByRole("button", { name: "Confirm & move range" })).not.toBeInTheDocument();
+    mocks.metadata.mockReturnValue(metadata);
+    mocks.pool.mockReturnValue(live);
+    view.rerender(<ManageBlockPanel fund={nextFund} position={liquidity} active />);
+    expect(screen.getByRole("button", { name: "±5%" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByRole("button", { name: "Move range" })).not.toBeInTheDocument();
+    expect(mocks.review).toHaveBeenCalledTimes(1);
+  });
+  // @rule POO-2274 R5: missing protocol metadata invalidates review without dropping a retained draft.
+  it("retains a draft when a real read no longer contains LP metadata", async () => {
+    const view = renderWithProviders(
+      <ManageBlockPanel fund={mockFund} position={liquidity} active />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "±5%" }));
+    await userEvent.click(screen.getByRole("button", { name: "Move range" }));
+    await userEvent.click(screen.getByRole("button", { name: "Review move range" }));
+    await screen.findByRole("button", { name: "Confirm & move range" });
+    const metadata = mocks.metadata();
+    mocks.metadata.mockReturnValue({
+      ...metadata,
+      position: { ...metadata.position, uniswap: null },
+    });
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active={false} />);
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active />);
+    expect(screen.queryByRole("button", { name: "Confirm & move range" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "±5%" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Review move range" })).toBeDisabled();
+  });
+  // @rule POO-2274 R5/R8: late preparation cannot revalidate a changed pool snapshot.
+  it("ignores a pending preparation after an actual hidden price change in the same tick", async () => {
+    const reply = await mocks.review();
+    mocks.review.mockClear();
+    let resolve: (value: unknown) => void = () => {};
+    mocks.review.mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    );
+    const view = renderWithProviders(
+      <ManageBlockPanel fund={mockFund} position={liquidity} active />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "±5%" }));
+    await userEvent.click(screen.getByRole("button", { name: "Move range" }));
+    await userEvent.click(screen.getByRole("button", { name: "Review move range" }));
+    mocks.pool.mockReturnValue({ ...mocks.pool(), pool: { ...pool, price: pool.price * 1.00001 } });
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active={false} />);
+    await act(async () => resolve(reply));
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active />);
+    expect(screen.queryByRole("button", { name: "Confirm & move range" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "±5%" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Review move range" })).toBeEnabled();
+    expect(mocks.review).toHaveBeenCalledTimes(1);
+  });
+  // @rule POO-2274 R5: source snapshot/status changes invalidate review and keep the edit origin.
+  it.each([
+    "range",
+    "liquidity",
+    "closed",
+    "fund-closed",
+  ])("invalidates a review on a real hidden %s change and keeps its edited range", async (change) => {
+    const view = renderWithProviders(
+      <ManageBlockPanel fund={mockFund} position={liquidity} active />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "±5%" }));
+    await userEvent.click(screen.getByRole("button", { name: "Move range" }));
+    await userEvent.click(screen.getByRole("button", { name: "Review move range" }));
+    await screen.findByRole("button", { name: "Confirm & move range" });
+    const metadata = mocks.metadata();
+    mocks.metadata.mockReturnValue({
+      ...metadata,
+      position: {
+        ...metadata.position,
+        status: change === "closed" ? "closed" : "open",
+        uniswap: {
+          ...metadata.position.uniswap,
+          liquidity: change === "liquidity" ? "0" : "100000",
+          tickLower: change === "range" ? range.tickLower - pool.tickSpacing : range.tickLower,
+        },
+      },
+    });
+    const fund = change === "fund-closed" ? { ...mockFund, state: "Closed" as const } : mockFund;
+    view.rerender(<ManageBlockPanel fund={fund} position={liquidity} active={false} />);
+    view.rerender(<ManageBlockPanel fund={fund} position={liquidity} active />);
+    expect(screen.queryByRole("button", { name: "Confirm & move range" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "±5%" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Review move range" })).toBeDisabled();
+  });
+  // @rule POO-2274 R4/R8: panel visibility is not intent abandonment or a new read identity.
+  it("preserves the same draft and review across hide/show without false abandonment or renewal", async () => {
+    const view = renderWithProviders(
+      <ManageBlockPanel fund={mockFund} position={liquidity} active />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "±5%" }));
+    await userEvent.click(screen.getByRole("button", { name: "Move range" }));
+    await userEvent.click(screen.getByRole("button", { name: "Review move range" }));
+    expect(await screen.findByRole("button", { name: "Confirm & move range" })).toBeDisabled();
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active={false} />);
+    expect(mocks.metadata.mock.calls.at(-1)?.[3]).toBe(true);
+    expect(mocks.pool.mock.calls.at(-1)?.[1]).toBe(pool.poolId);
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active />);
+    expect(screen.getByRole("button", { name: "Confirm & move range" })).toBeDisabled();
+    expect(mocks.review).toHaveBeenCalledTimes(1);
+    expect(window.dataLayer?.filter((event) => event.event === "tx_flow_abandoned")).toEqual([]);
+    await userEvent.click(screen.getByRole("button", { name: "Back to settings" }));
+    expect(screen.getByRole("button", { name: "±5%" })).toHaveAttribute("aria-pressed", "true");
+  });
+  // @rule POO-2274 R4/R8: in-flight preparation keeps its immutable owner while hidden, no replay.
+  it("accepts the same pending preparation after hide/show without retransmission", async () => {
+    const reply = await mocks.review();
+    mocks.review.mockClear();
+    let resolve: (value: unknown) => void = () => {};
+    mocks.review.mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    );
+    const view = renderWithProviders(
+      <ManageBlockPanel fund={mockFund} position={liquidity} active />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "±5%" }));
+    await userEvent.click(screen.getByRole("button", { name: "Move range" }));
+    await userEvent.click(screen.getByRole("button", { name: "Review move range" }));
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active={false} />);
+    await act(async () => resolve(reply));
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active />);
+    expect(await screen.findByRole("button", { name: "Confirm & move range" })).toBeDisabled();
+    expect(mocks.review).toHaveBeenCalledTimes(1);
+    expect(window.dataLayer?.filter((event) => event.event === "tx_flow_abandoned")).toEqual([]);
+  });
+  // @rule POO-2274 R5: genuine hidden source failure invalidates a review but retains its draft.
+  it("invalidates a review on a real hidden read failure while retaining the edited range", async () => {
+    const view = renderWithProviders(
+      <ManageBlockPanel fund={mockFund} position={liquidity} active />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "±5%" }));
+    await userEvent.click(screen.getByRole("button", { name: "Move range" }));
+    await userEvent.click(screen.getByRole("button", { name: "Review move range" }));
+    await screen.findByRole("button", { name: "Confirm & move range" });
+    mocks.metadata.mockReturnValue({
+      ...mocks.metadata(),
+      status: "error",
+      position: null,
+      error: "V2_UNAVAILABLE",
+    });
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active={false} />);
+    view.rerender(<ManageBlockPanel fund={mockFund} position={liquidity} active />);
+    expect(screen.queryByRole("button", { name: "Confirm & move range" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "±5%" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Review move range" })).toBeDisabled();
+  });
   // @rule POO-2272 R5: the panel consumes one identity header, with no separate network row.
   it("keeps protocol, subtype and origin network in the selected block header", () => {
     const { container } = renderWithProviders(

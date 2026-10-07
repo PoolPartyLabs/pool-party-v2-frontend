@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-086
  * @name ManageBlockPanel
- * @implements-rules-version v2 (POO-2246; extends POO-2227), v1 (POO-2284)
+ * @implements-rules-version v2 (POO-2246; extends POO-2227), v2 (POO-2274), v1 (POO-2284)
  * @analytics-events strategy_move_range_started, tx_flow_abandoned, app_cta_blocked, app_error_shown
  * Inline V2 states of PP-MGR-CMP-001/002; no wallet call is exposed without a verified preview.
  */
@@ -63,7 +63,12 @@ export function ManageBlockPanel({
           </div>
           <Allocation position={position} />
           {position.kind === "liquidity" ? (
-            <LiquiditySettings key={position.id} fund={fund} position={position} active={active} />
+            <LiquiditySettings
+              key={`${fund.coreVault.toLowerCase()}:${position.chainId}:${position.positionKey.toLowerCase()}`}
+              fund={fund}
+              position={position}
+              active={active}
+            />
           ) : position.kind === "supply" ? (
             <SupplySettings active={active} />
           ) : (
@@ -164,16 +169,36 @@ function LiquiditySettings({
 }) {
   const t = useTranslations("manager.manageV2");
   const { track } = useAnalytics();
-  const detail = useManagePosition(fund.coreVault, position.chainId, position.positionKey, active);
+  // Visibility starts reads once for this origin; hiding never cancels or renews them.
+  const activated = useRef(false);
+  if (active) activated.current = true;
+  const detail = useManagePosition(
+    fund.coreVault,
+    position.chainId,
+    position.positionKey,
+    activated.current,
+  );
+  const lastPosition = useRef(detail.position);
+  if (detail.position?.uniswap) lastPosition.current = detail.position;
+  const readPosition = detail.position?.uniswap ? detail.position : lastPosition.current;
   const chain = position.chainId === 4663 ? 4663 : 42161;
   const live = usePanelPool(
     chain,
-    active && detail.position?.uniswap ? detail.position.poolId : null,
+    activated.current && readPosition?.uniswap ? readPosition.poolId : null,
   );
   const lastPool = useRef<{ id: string; pool: PanelPoolView } | null>(null);
   if (live.pool) lastPool.current = { id: position.id, pool: live.pool };
   const pool = live.pool ?? (lastPool.current?.id === position.id ? lastPool.current.pool : null);
-  const metadata = detail.position?.uniswap;
+  // Retained metadata keeps the draft mounted; only a current, valid read enables review.
+  const metadata = readPosition?.uniswap;
+  const readable =
+    detail.status === "ready" &&
+    detail.position?.status === "open" &&
+    detail.position.uniswap !== null &&
+    detail.position.uniswap?.liquidity !== "0" &&
+    fund.state === "Open" &&
+    live.applicable;
+  const initialized = useRef(false);
   useEffect(() => {
     if (active && detail.status === "error")
       track("app_error_shown", {
@@ -204,12 +229,13 @@ function LiquiditySettings({
         ) : null}
       </div>
     );
-  if (metadata.liquidity === "0" || detail.position?.status !== "open" || fund.state !== "Open")
+  if (!initialized.current && !readable)
     return (
       <p role="status" className="text-muted-foreground text-sm">
         {t("notAvailable")}
       </p>
     );
+  initialized.current = true;
   const limits = usableTickBounds(pool.tickSpacing);
   return (
     <RangeSettings
@@ -223,7 +249,22 @@ function LiquiditySettings({
         fullRange: metadata.tickLower === limits.minTick && metadata.tickUpper === limits.maxTick,
       }}
       active={active}
-      readable={detail.status === "ready" && live.applicable}
+      readable={readable}
+      snapshotKey={JSON.stringify([
+        fund.state,
+        detail.position,
+        readPosition,
+        pool.chainId,
+        pool.poolId,
+        pool.currentTick,
+        pool.price,
+        pool.tickSpacing,
+        pool.feeTier,
+        pool.token0.address,
+        pool.token0.decimals,
+        pool.token1.address,
+        pool.token1.decimals,
+      ])}
       onRefresh={() => {
         detail.retry();
         live.retry();
@@ -238,6 +279,7 @@ function RangeSettings({
   original,
   active,
   readable,
+  snapshotKey,
   onRefresh,
 }: {
   fund: FundView;
@@ -246,6 +288,7 @@ function RangeSettings({
   original: PoolRange;
   active: boolean;
   readable: boolean;
+  snapshotKey: string;
   onRefresh: () => void;
 }) {
   const t = useTranslations("manager.manageV2");
@@ -266,7 +309,7 @@ function RangeSettings({
     original.tickLower !== draft.original.tickLower ||
     original.tickUpper !== draft.original.tickUpper;
   const valid = readable && !snapshotChanged && validManageRange(draft.range, pool.tickSpacing);
-  const invalidationKey = `${fingerprint}:${active}:${readable}:${pool.poolId}:${pool.currentTick}:${original.tickLower}:${original.tickUpper}`;
+  const invalidationKey = `${fingerprint}:${draft.action}:${readable}:${snapshotKey}`;
   const lastReviewContext = useRef(invalidationKey);
   useEffect(() => {
     if (lastReviewContext.current === invalidationKey) return;
@@ -294,17 +337,6 @@ function RangeSettings({
     },
     [track],
   );
-  useEffect(() => {
-    if (!active && started.current) {
-      track("tx_flow_abandoned", {
-        family: "v2",
-        surface: "manager",
-        flow: "moveRange",
-        reason: "position_changed",
-      });
-      started.current = false;
-    }
-  }, [active, track]);
   const back = () => {
     run.current += 1;
     setStage("edit");
@@ -369,7 +401,7 @@ function RangeSettings({
           onRefresh();
           return;
         }
-        setReview({ key: fingerprint, value: result.data });
+        setReview({ key: invalidationKey, value: result.data });
         setStage("review");
         track("app_cta_blocked", {
           family: "v2",
@@ -409,7 +441,7 @@ function RangeSettings({
     );
     return `${fmt.number(bounds.min, { maximumSignificantDigits: 6 })} - ${fmt.number(bounds.max, { maximumSignificantDigits: 6 })}`;
   };
-  if (stage === "review" && review?.key === fingerprint)
+  if (stage === "review" && review?.key === invalidationKey)
     return (
       <div className="flex flex-col gap-4">
         <h3 ref={phaseHeading} tabIndex={-1} className="font-semibold text-sm outline-none">
