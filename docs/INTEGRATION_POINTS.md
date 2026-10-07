@@ -70,7 +70,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 506 markers across 292 files (2026-10-07)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 509 markers across 294 files (2026-10-07)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -310,3 +310,9 @@ wallet call or new mock seam is introduced. Current layout producers retain thei
 paths; adopting the contract and verifying the complete principal/income routes remains
 POO-2270/2271/2273. The validator proves declared graph integrity only. It does not prove
 execution capability, quote correctness, Bridge settlement or authoritative data coverage.
+
+## Solana local catalog contracts, October 7, 2026 (POO-2291 S1)
+
+PP-MGR-LIB-063/064 are pure local schemas/descriptors. The two marked seams in solanaCatalog bind discovery/read models (POO-2239/2240) and Jupiter quote/transaction validity/executor (POO-2261/2262). No network call, program deployment, wallet read or signer is added. Canonical USDC/WSOL mint metadata is cited from official Jupiter documentation in the schema header.
+
+The local catalog rejects both fixture and observed values in financial/capability fields. Generic read models may represent declared provenance, but cannot attest external ownership or freshness. Confirmed zero is explicit; missing remains unavailable. Holding stays contract-only; all six POO-2291 slices are not complete.
