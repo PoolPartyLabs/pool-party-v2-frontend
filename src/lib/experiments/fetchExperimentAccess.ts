@@ -5,8 +5,41 @@
  * @analytics-events none, an unmounted read seam with no product entry point.
  */
 import "server-only";
-import { deniedExperimentAccess, type ExperimentAccess } from "./access";
 
+import { apiFetch } from "@/lib/api/client";
+import { getSessionToken } from "@/lib/auth/session";
+import { isFeatureEnabled } from "@/lib/features";
+import { isMockMode } from "@/lib/services";
+import {
+  deniedExperimentAccess,
+  type ExperimentAccess,
+  experimentAccessSchema,
+  resolveExperimentAccess,
+} from "./access";
+
+/**
+ * No wallet parameter or decoded JWT claim is trusted here. POO-2282's endpoint must verify
+ * the Bearer cryptographically and check live cohort membership before returning a grant.
+ * Missing endpoint/support denies access. No public-profile or stale-grant fallback.
+ */
 export async function loadSolanaPreviewAccess(): Promise<ExperimentAccess> {
-  return deniedExperimentAccess();
+  if (isMockMode || !isFeatureEnabled("fundContracts") || !isFeatureEnabled("solanaSpoke")) {
+    return deniedExperimentAccess();
+  }
+  try {
+    const token = await getSessionToken();
+    if (!token) return deniedExperimentAccess();
+    // PP-INTEGRATION-POINT: POO-2282, authenticated multi-account experiment grants.
+    const response = await apiFetch("experiments/solana-preview/access", {
+      schema: experimentAccessSchema,
+      headers: { Authorization: `Bearer ${token}` },
+      revalidate: 0,
+    });
+    // A read that outlives logout/account replacement cannot transfer the earlier grant.
+    if ((await getSessionToken()) !== token) return deniedExperimentAccess();
+    return resolveExperimentAccess(response);
+  } catch {
+    // No sensitive upstream error text or session data is exposed through this preview seam.
+    return deniedExperimentAccess();
+  }
 }

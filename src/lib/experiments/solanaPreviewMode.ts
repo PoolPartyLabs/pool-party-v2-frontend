@@ -5,7 +5,9 @@
  * @analytics-events none, an unmounted preference model.
  */
 import type { ContractFamily } from "@/lib/hooks/useContractFamily";
+import { hasExperimentCapability } from "./access";
 
+/** In-memory preference only. It never writes the existing EVM draft/family storage keys. */
 export interface SolanaPreviewState {
   mode: "standard" | "v2-solana";
   accountKey: string | null;
@@ -14,6 +16,7 @@ export interface SolanaPreviewState {
 }
 export interface SolanaPreviewContext {
   family: ContractFamily;
+  /** Session/account generation key for reset only, never evidence of authorization. */
   accountKey: string | null;
   access: unknown;
   dirty: boolean;
@@ -27,15 +30,41 @@ export function createSolanaPreviewState(): SolanaPreviewState {
 }
 
 export function syncSolanaPreview(
-  _state: SolanaPreviewState,
-  _context: SolanaPreviewContext,
+  state: SolanaPreviewState,
+  context: SolanaPreviewContext,
 ): SolanaPreviewState {
-  return createSolanaPreviewState();
+  if (
+    context.family !== "v2" ||
+    !context.accountKey ||
+    !hasExperimentCapability(context.access, "preview", context.now)
+  ) {
+    return createSolanaPreviewState();
+  }
+  if (state.accountKey !== context.accountKey) {
+    return { ...createSolanaPreviewState(), accountKey: context.accountKey };
+  }
+  return state;
 }
 
+/** One explicit press of the already-selected V2 segment, called only by a future guarded host. */
 export function pressSolanaPreview(
-  _state: SolanaPreviewState,
-  _context: SolanaPreviewContext,
+  state: SolanaPreviewState,
+  context: SolanaPreviewContext,
 ): SolanaPreviewState {
-  return createSolanaPreviewState();
+  const current = syncSolanaPreview(state, context);
+  if (!current.accountKey || current.mode === "v2-solana") return current;
+  if (context.dirty) {
+    return { ...current, pressCount: 0, firstPressAt: null };
+  }
+  const continuing =
+    current.firstPressAt !== null &&
+    context.now >= current.firstPressAt &&
+    context.now - current.firstPressAt <= SOLANA_PREVIEW_GESTURE_WINDOW_MS;
+  const pressCount = continuing ? current.pressCount + 1 : 1;
+  return {
+    ...current,
+    mode: pressCount === 3 ? "v2-solana" : "standard",
+    pressCount: pressCount === 3 ? 0 : pressCount,
+    firstPressAt: pressCount === 3 ? null : continuing ? current.firstPressAt : context.now,
+  };
 }

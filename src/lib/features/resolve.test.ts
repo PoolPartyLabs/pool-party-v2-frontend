@@ -33,6 +33,15 @@ describe("parseFlagValue", () => {
 });
 
 describe("resolveFeature precedence", () => {
+  // @rule R1 (POO-2281): infrastructure flag never implies account permission.
+  it("keeps Solana off by default and honors its explicit environment gate", () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_ENV", "production");
+    expect(resolveFeature("solanaSpoke")).toBe(false);
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_SOLANA_SPOKE", "on");
+    expect(resolveFeature("solanaSpoke")).toBe(true);
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_SOLANA_SPOKE", "off");
+    expect(resolveFeature("solanaSpoke")).toBe(false);
+  });
   // @rule CP-UI02: the explicit Cash+ environment setting controls the route gate. The hackathon fork
   // ships the registry default ON (see registry.ts); the env var still wins in both directions.
   it("resolves Cash+ on by default in this fork and honors the explicit environment switch", () => {

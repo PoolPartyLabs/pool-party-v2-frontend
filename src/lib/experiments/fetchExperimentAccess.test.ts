@@ -8,9 +8,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
   getSessionToken: vi.fn(),
+  isMockMode: false,
 }));
 vi.mock("@/lib/api/client", () => ({ apiFetch: mocks.apiFetch }));
 vi.mock("@/lib/auth/session", () => ({ getSessionToken: mocks.getSessionToken }));
+vi.mock("@/lib/services", () => ({
+  get isMockMode() {
+    return mocks.isMockMode;
+  },
+}));
 
 import { __resetDevOverridesForTests, setOverride } from "@/lib/features/devOverrides";
 import { deniedExperimentAccess, experimentAccessSchema } from "./access";
@@ -34,6 +40,7 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_FEATURE_SOLANA_SPOKE", "on");
   mocks.apiFetch.mockReset().mockResolvedValue(grant);
   mocks.getSessionToken.mockReset().mockResolvedValue("session-a");
+  mocks.isMockMode = false;
   __resetDevOverridesForTests();
 });
 afterEach(() => {
@@ -57,7 +64,7 @@ describe("server experiment access", () => {
 
   // @rule R3: test fixtures must never grant real access.
   it("denies in mock mode without reading a session", async () => {
-    vi.stubEnv("NEXT_PUBLIC_MOCK_MODE", "true");
+    mocks.isMockMode = true;
     expect(await loadSolanaPreviewAccess()).toEqual(deniedExperimentAccess());
     expect(mocks.getSessionToken).not.toHaveBeenCalled();
     expect(mocks.apiFetch).not.toHaveBeenCalled();
