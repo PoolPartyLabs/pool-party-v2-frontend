@@ -251,3 +251,8 @@ evidence of executable capability, a provider/ETA, atomic conversion or hub sett
 The 48 Figma references are geometric evidence only. Existing CR-MGR-015/019/020,
 CR-MGR-POO2270 and the POO-2229/2230/2231 launch conditions remain applicable; this
 slice resolves none of those financial or custody questions.
+
+
+## Manage inline header, October 7, 2026 (POO-2272 v2)
+
+Status: ANSWERED for this presentation slice. The selected canonical protocol/network identity and existing Supply/Liquidity subtype are kept together. Trusted existing marks are reused, complete text wraps and no financial amount, venue support, rate, fee or custody permission is added. Optional pair context remains owned by the operation host. The existing financial, custody and execution gates remain unchanged. PP-MGR-CMP-091 adds no credential, personal-data or transaction flow. Header/panel tests and TypeScript pass; rendered narrow-width acceptance remains with Murilo.

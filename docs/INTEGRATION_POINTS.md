@@ -310,3 +310,8 @@ wallet call or new mock seam is introduced. Current layout producers retain thei
 paths; adopting the contract and verifying the complete principal/income routes remains
 POO-2270/2271/2273. The validator proves declared graph integrity only. It does not prove
 execution capability, quote correctness, Bridge settlement or authoritative data coverage.
+
+
+## Manage inline identity header, October 7, 2026 (POO-2272 v2)
+
+PP-MGR-CMP-091 consumes the canonical ManagePosition already selected by the host and optional display pair context. It performs no read, write, mock call or transaction. Current position/network provenance and the existing authorized Manage seams are unchanged. This header slice does not enable Move, Collect or future-policy persistence.

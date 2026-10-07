@@ -8,18 +8,17 @@
 "use client";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useId, useReducer, useRef, useState } from "react";
-import { NetworkLogo } from "@/components/data-display/NetworkLogo";
 import { Button } from "@/components/ui/Button";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import type { FundView } from "@/lib/api/v2/fundSchemas";
 import { reviewManageMoveRangeAction } from "@/lib/api/v2/manageActions";
 import type { ManageMoveRangeReview } from "@/lib/api/v2/manageSchemas";
-import { BlockMark } from "../build/blocks/BlockMark";
 import { FundSlippageControl } from "../build/panel/FundSlippageControl";
 import { PriceRangeField } from "../build/panel/PriceRangeField";
 import { type PanelPoolView, toLivePoolGrid } from "../build/panel/panelCatalogView";
 import { displayBounds, type PoolRange, usableTickBounds } from "../build/panel/poolRangeMath";
 import { usePanelPool } from "../build/panel/usePanelPool";
+import { ManageBlockHeader } from "./ManageBlockHeader";
 import { ManageTokenRow, ManageUsd } from "./ManageCanvas";
 import {
   createManageDraft,
@@ -28,7 +27,7 @@ import {
   rangeFingerprint,
   validManageRange,
 } from "./manageDraft";
-import { type ManagePosition, manageProtocolMark } from "./manageModel";
+import type { ManagePosition } from "./manageModel";
 import { MANAGE_READ_TIMEOUT_MS, useManagePosition } from "./useManagePosition";
 
 export function ManageBlockPanel({
@@ -49,34 +48,7 @@ export function ManageBlockPanel({
       <h2 className="font-semibold text-sm">{t("manageBlock")}</h2>
       {position ? (
         <>
-          <header className="flex items-center gap-3">
-            <BlockMark
-              logo="protocol"
-              markId={manageProtocolMark(position.source.adapterKind)}
-              name={position.protocol}
-              size={24}
-            />
-            <div>
-              <p className="font-medium text-sm">{position.protocol}</p>
-              <p className="text-muted-foreground text-xs">
-                {t(
-                  position.kind === "supply"
-                    ? "supplyType"
-                    : position.kind === "liquidity"
-                      ? "liquidityType"
-                      : "notAvailable",
-                )}
-              </p>
-            </div>
-          </header>
-          <div className="flex items-center gap-2 text-xs">
-            <NetworkLogo network={position.network} name={position.network} className="size-4" />
-            {position.network === "arbitrum"
-              ? "Arbitrum"
-              : position.network === "robinhood"
-                ? "Robinhood"
-                : position.network}
-          </div>
+          <ManageBlockHeader position={position} />
           <div>
             <p className="mb-1 text-muted-foreground text-xs">{t("positionValue")}</p>
             <ManageUsd read={position.valueUsd} />

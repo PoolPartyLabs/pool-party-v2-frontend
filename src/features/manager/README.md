@@ -735,3 +735,10 @@ See [phased delivery plan](../../../docs/manager-overview-manage-v2-delivery-202
 Collect details reuse the authorized position fees read. The API already builds origin Collect; POO-2277 adds the preview/recovery contract and POO-2278 owns separate preparation, signing and continuation PRs. POO-2230 supplies queue/reserves/native cash/current hub Income. Charts/Activity destinations remain Needs Rules under POO-2279. Existing Move, future-deposit and investor behavior is preserved.
 
 POO-2245 v1 supplies the V2-only Overview: shared console hierarchy, AUM/history availability states, unified Continue setup, lifecycle table and existing profile/resume/Manage destinations. The sidebar starts expanded at 248px for V2 Overview without changing the saved preference elsewhere. Pure identity and storage status models distinguish drafts, journeys, corrupt reads and incomplete discovery. Production financial aggregates remain POO-2247; four explicit stories cover Ready/Loading/Empty/Error.
+
+
+### Manage inline identity header, POO-2272 v2
+
+PP-MGR-CMP-091 `manage/ManageBlockHeader.tsx` keeps the selected protocol and subtype/pair on the left with its network alongside, vertically centered at the nominal 12px gap. It reuses canonical protocol/network marks and existing translations, preserves full text with natural wrapping and adds no fixed panel height. ManageBlockPanel consumes the same header for Supply and Liquidity states; a later Collect panel may pass its pair context without changing the origin.
+
+Four focused header cases cover origin/subtype, operation pair and German identity replacement; the existing panel regression file plus assembly test covers the consumer and unchanged range/fee behavior, 13 tests total. One TypeScript check and scoped Biome pass. Narrow German and pair stories are authored; rendered browser acceptance remains with Murilo. This is only the header slice of POO-2272. Hub overlay, chip variants and locks remain tracked separately, with no operation or investor-flow change.
