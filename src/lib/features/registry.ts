@@ -410,8 +410,7 @@ export const FEATURES: Record<FeatureKey, FeatureDefinition> = {
     defaultEnabled: false,
     stage: "next",
     envVar: "NEXT_PUBLIC_FEATURE_SOLANA_SPOKE",
-    // POO-2281 reuses the integration branch's flag name. This global gate is not tester
-    // permission: private preview also needs a fresh server-verified experiment grant.
+    // Real integration only. POO-2281 local visual mode never enables this gate.
     description: "DEC-188, DEC-190: opt-in dual wallets and new-Fund Solana launch integration.",
   },
   fundContracts: {
