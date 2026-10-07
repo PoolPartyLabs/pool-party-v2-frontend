@@ -7,6 +7,7 @@
 import {
   address,
   appendTransactionMessageInstruction,
+  blockhash,
   compileTransaction,
   createTransactionMessage,
   getTransactionEncoder,
@@ -62,7 +63,10 @@ it("refuses an unrelated System transfer before any wallet signature", async () 
       (message) => setTransactionMessageFeePayer(manager, message),
       (message) =>
         setTransactionMessageLifetimeUsingBlockhash(
-          { blockhash: "11111111111111111111111111111111", lastValidBlockHeight: BigInt(1) },
+          {
+            blockhash: blockhash("11111111111111111111111111111111"),
+            lastValidBlockHeight: BigInt(1),
+          },
           message,
         ),
       (message) =>
