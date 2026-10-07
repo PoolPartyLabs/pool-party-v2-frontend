@@ -133,6 +133,72 @@ describe("POO-2270/2271 v2 routes", () => {
     expect(path?.points[0]?.y).toBe((position?.rect.y ?? 0) + 150);
     expect(validateSemanticGraph(expanded.semantic)).toEqual([]);
   });
+  // @rule R1/R5/R6: measured flow bounds own corridors; every visible leg avoids unrelated cards.
+  it.each([
+    240, 320,
+  ])("keeps widened %ipx fee pills clear of every hub and spoke route", (width) => {
+    const source = mockFund.positionsSummary?.positions[1];
+    if (!source) throw new Error("liquidity fixture missing");
+    const model = normalizeManageModel({
+      ...mockFund,
+      positionsSummary: {
+        protocolVersion: "v2",
+        positions: [
+          { ...source, chainId: "42161" },
+          { ...source, chainId: "42161", positionKey: `0x${"7".repeat(64)}` },
+          source,
+          { ...source, positionKey: `0x${"5".repeat(64)}` },
+          { ...source, chainId: "8453", positionKey: `0x${"6".repeat(64)}` },
+        ],
+      },
+    });
+    const measured = Object.fromEntries(
+      model.positions.flatMap((position, index) => [
+        [
+          `position:${position.id}`,
+          { width: 176, height: index === 0 ? 600 : index === 4 ? 700 : 232 },
+        ],
+        [`collect:${position.id}`, { width, height: 46 }],
+        [`fee-swap:${position.id}`, { width: width + 16, height: 42 }],
+      ]),
+    );
+    const graph = layoutManageGraph(model, measured);
+    expect(validateSemanticGraph(graph.semantic)).toEqual([]);
+    for (const edge of graph.connections)
+      for (const run of orthogonalRuns(edge))
+        for (const node of graph.nodes.filter((node) => node.kind !== "group")) {
+          const rect = node.rect;
+          const crosses =
+            run.axis === "horizontal"
+              ? run.fixed > rect.y &&
+                run.fixed < rect.y + rect.h &&
+                run.end > rect.x &&
+                run.start < rect.x + rect.w
+              : run.fixed > rect.x &&
+                run.fixed < rect.x + rect.w &&
+                run.end > rect.y &&
+                run.start < rect.y + rect.h;
+          expect(crosses, `${edge.id} crosses ${node.id} ${run.axis}`).toBe(false);
+        }
+    for (const position of model.positions) {
+      const flowNodes = graph.nodes.filter((node) => node.positionId === position.id);
+      const principal = graph.connections.find(
+        (edge) => edge.id === `principal:position:${position.id}`,
+      );
+      expect(principal?.points[1]?.x).toBe(Math.min(...flowNodes.map((node) => node.rect.x)) - 12);
+    }
+    for (const group of graph.nodes.filter((node) => node.kind === "group")) {
+      const owned = graph.nodes.filter(
+        (node) => node.chainId === group.chainId && node.kind !== "group",
+      );
+      expect(
+        owned.every(
+          (node) =>
+            node.rect.x >= group.rect.x && node.rect.x + node.rect.w <= group.rect.x + group.rect.w,
+        ),
+      ).toBe(true);
+    }
+  });
 });
 
 describe("Manage geometry", () => {

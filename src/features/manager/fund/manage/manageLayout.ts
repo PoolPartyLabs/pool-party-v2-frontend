@@ -240,39 +240,48 @@ export function layoutManageGraph(
 
   const hub = model.chains.find((chain) => chain.chainId === model.hubChainId);
   const spokes = model.chains.filter((chain) => chain.chainId !== model.hubChainId);
+  /** Each column reserves the widest measured member, including centered flow pills. */
+  const columnWidth = (id: string) => {
+    const p = model.positions.find((position) => position.id === id);
+    const width = size(`position:${id}`, LAYOUT.CARD_W, POSITION[p?.kind ?? "unsupported"]).w;
+    return p?.kind === "liquidity"
+      ? Math.max(
+          width,
+          ...[`swap:${id}`, `collect:${id}`, `fee-swap:${id}`].map(
+            (flowId) => size(flowId, LAYOUT.PILL_W, LAYOUT.PILL_H).w,
+          ),
+        )
+      : width;
+  };
   const rowWidth = (ids: string[]) =>
-    ids.reduce(
-      (sum, id, index) =>
-        sum +
-        size(
-          `position:${id}`,
-          LAYOUT.CARD_W,
-          POSITION[model.positions.find((p) => p.id === id)?.kind ?? "unsupported"],
-        ).w +
-        (index ? LAYOUT.SIBLING : 0),
-      0,
-    ) || LAYOUT.CARD_W;
+    ids.reduce((sum, id, index) => sum + columnWidth(id) + (index ? LAYOUT.SIBLING : 0), 0) ||
+    LAYOUT.CARD_W;
   const firstLeft = LAYOUT.CANVAS_PAD + LAYOUT.CARD_W / 2;
   let cursor = hub?.positions.length
     ? firstLeft + rowWidth(hub.positions.map((p) => p.id)) + LAYOUT.SIBLING
     : firstLeft - LAYOUT.GROUP_PAD;
   const slots = spokes.map((chain) => {
-    const width = rowWidth(chain.positions.map((p) => p.id));
-    const axis = cursor + LAYOUT.GROUP_PAD + width / 2;
     const idleSize = size(`idle:${chain.chainId}`, LAYOUT.CARD_W, 104);
+    const width = Math.max(
+      rowWidth(chain.positions.map((p) => p.id)),
+      idleSize.w,
+      size(`bridge:${chain.chainId}`, LAYOUT.PILL_W, LAYOUT.PILL_H).w,
+      size(`bridge:${chain.chainId}:outbound`, LAYOUT.PILL_W, LAYOUT.PILL_H).w,
+    );
+    const axis = cursor + LAYOUT.GROUP_PAD + width / 2;
     const cashSize = size(`cash:${chain.chainId}`, CASH.w, CASH.h);
     const groupWidth = Math.max(
       width + 2 * LAYOUT.GROUP_PAD,
       width / 2 + LAYOUT.GROUP_PAD + idleSize.w / 2 + LAYOUT.LINK + cashSize.w + LAYOUT.GROUP_PAD,
     );
-    const result = { chain, x: cursor, axis, width: groupWidth };
+    const result = { chain, x: cursor, axis, width: groupWidth, innerWidth: width };
     cursor += groupWidth + LAYOUT.SIBLING;
     return result;
   });
   const hubAxes: number[] = [];
   let hubCursor = firstLeft;
   for (const p of hub?.positions ?? []) {
-    const w = size(`position:${p.id}`, LAYOUT.CARD_W, POSITION[p.kind]).w;
+    const w = columnWidth(p.id);
     hubAxes.push(hubCursor + w / 2);
     hubCursor += w + LAYOUT.SIBLING;
   }
@@ -335,6 +344,7 @@ export function layoutManageGraph(
     const p = model.positions.find((item) => item.id === positionId);
     if (!p) return;
     const dim = size(`position:${p.id}`, LAYOUT.CARD_W, POSITION[p.kind]);
+    x += (columnWidth(p.id) - dim.w) / 2;
     const axis = x + dim.w / 2;
     const entryRoute = `entry:${p.id}`;
     let first: ManageNode | null = null;
@@ -436,8 +446,12 @@ export function layoutManageGraph(
       port(idle, "principal-out", "principal", p.id, "out", "bottom"),
       allocationY,
     );
-    hubCursor += size(`position:${p.id}`, LAYOUT.CARD_W, POSITION[p.kind]).w + LAYOUT.SIBLING;
+    hubCursor += columnWidth(p.id) + LAYOUT.SIBLING;
   }
+  const principalCorridor = (position: ManageNode) =>
+    Math.min(
+      ...nodes.filter((node) => node.positionId === position.positionId).map((node) => node.rect.x),
+    ) - LAYOUT.PAIR;
   const returned: {
     principal: FinancialPort;
     fee: FinancialPort | null;
@@ -448,12 +462,16 @@ export function layoutManageGraph(
   }[] = returns.map((r) => ({
     ...r,
     origin: r.position.positionId ?? r.position.id,
-    bypassX: r.position.rect.x - LAYOUT.PAIR,
+    bypassX: principalCorridor(r.position),
   }));
+  const spokeReturns: {
+    slot: (typeof slots)[number];
+    inbound: ManageNode;
+    local: (typeof returns)[number][];
+  }[] = [];
   for (const slot of slots) {
     const { chain } = slot;
     const axis = slot.axis + shift;
-    const start = nodes.length;
     const inboundSize = size(`bridge:${chain.chainId}`, LAYOUT.PILL_W, LAYOUT.PILL_H);
     const inbound = add({
       id: `bridge:${chain.chainId}`,
@@ -512,7 +530,11 @@ export function layoutManageGraph(
       entryRoute,
     );
     const before = returns.length;
-    let positionX = slot.x + shift + LAYOUT.GROUP_PAD;
+    let positionX =
+      slot.x +
+      shift +
+      LAYOUT.GROUP_PAD +
+      (slot.innerWidth - rowWidth(chain.positions.map((p) => p.id))) / 2;
     const innerBusY = Math.max(bottom(chainIdle), bottom(chainCash)) + LAYOUT.LINK;
     for (const p of chain.positions) {
       makePosition(
@@ -523,11 +545,17 @@ export function layoutManageGraph(
         port(chainIdle, "principal-out", "principal", p.id, "out", "bottom"),
         innerBusY,
       );
-      positionX += size(`position:${p.id}`, LAYOUT.CARD_W, POSITION[p.kind]).w + LAYOUT.SIBLING;
+      positionX += columnWidth(p.id) + LAYOUT.SIBLING;
     }
     const local = returns.slice(before);
-    const localBottom = Math.max(...nodes.slice(start).map(bottom));
-    const grayY = localBottom + LAYOUT.LINK;
+    spokeReturns.push({ slot, inbound, local });
+  }
+  // All content bounds are final before a return bus crosses columns of unequal height.
+  const contentBottom = Math.max(...nodes.map(bottom));
+  for (const { slot, inbound, local } of spokeReturns) {
+    const { chain } = slot;
+    const axis = slot.axis + shift;
+    const grayY = contentBottom + LAYOUT.LINK;
     const greenY = grayY + LAYOUT.LINK;
     const outboundSize = size(`bridge:${chain.chainId}:outbound`, LAYOUT.PILL_W, LAYOUT.PILL_H);
     const outbound = add({
@@ -550,7 +578,7 @@ export function layoutManageGraph(
         positionId,
         (LAYOUT.PILL_W / 2 - LAYOUT.PAIR) / LAYOUT.PILL_W,
       );
-      const bypass = r.position.rect.x - LAYOUT.PAIR;
+      const bypass = principalCorridor(r.position);
       connect(
         r.principalRoute,
         r.principal,
@@ -591,7 +619,7 @@ export function layoutManageGraph(
       });
     }
     const groupTop = inbound.rect.y - LAYOUT.GROUP_PAD;
-    const groupNodes = nodes.slice(start);
+    const groupNodes = nodes.filter((node) => node.chainId === chain.chainId);
     add({
       id: `group:${chain.chainId}`,
       kind: "group",

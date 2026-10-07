@@ -61,6 +61,26 @@ describe("POO-2270/2271 v2 canvas", () => {
     expect(cash).toHaveTextContent("0.025");
     expect(cash).not.toHaveTextContent("$75.00");
     expect(cash.querySelector("[data-cash-usd]")).toHaveClass("min-h-[18px]");
+    const stalePrice = {
+      ...unpriced,
+      chains: unpriced.chains.map((item) =>
+        item.chainId === chain.chainId
+          ? {
+              ...item,
+              cash: [
+                {
+                  ...native,
+                  amount: available(exact, "test-native"),
+                  valueUsd: { status: "unavailable" as const, reason: "stale-price" },
+                },
+              ],
+            }
+          : item,
+      ),
+    };
+    view.rerender(<ManageCanvas model={stalePrice} selectedId={null} onSelect={vi.fn()} />);
+    expect(cash).toHaveTextContent("0.025");
+    expect(cash).not.toHaveTextContent("$75.00");
     const zero = {
       ...unpriced,
       chains: unpriced.chains.map((item) =>
@@ -95,6 +115,71 @@ describe("POO-2270/2271 v2 canvas", () => {
     view.rerender(<ManageCanvas model={missing} selectedId={null} onSelect={vi.fn()} />);
     expect(cash).toHaveTextContent("Not available");
     expect(cash.querySelector("[title='0 ETH']")).toBeNull();
+  });
+  // @rule R2: USD requires a known native quantity and a separate available valuation.
+  it("hides independently available USD when native is unavailable and retains confirmed zero", () => {
+    const model = normalizeManageModel(mockFund);
+    const chain = model.chains[0];
+    const native = chain?.cash[0];
+    if (!chain || !native) throw new Error("native missing");
+    chain.cash = [{ ...native, valueUsd: available("75", "test-price") }];
+    const view = renderWithProviders(
+      <ManageCanvas model={model} selectedId={null} onSelect={vi.fn()} />,
+    );
+    const cash = document.querySelector<HTMLElement>(`[data-manage-cash="${chain.chainId}"]`);
+    if (!cash) throw new Error("cash missing");
+    expect(cash).toHaveTextContent("Not available");
+    expect(cash).not.toHaveTextContent("$75.00");
+    const zero = {
+      ...model,
+      chains: model.chains.map((item) =>
+        item.chainId === chain.chainId
+          ? {
+              ...item,
+              cash: [
+                {
+                  ...native,
+                  amount: available(
+                    {
+                      chainId: chain.chainId,
+                      address: null,
+                      symbol: native.symbol,
+                      decimals: native.decimals,
+                      raw: "0",
+                      decimal: "0",
+                    },
+                    "confirmed-native",
+                  ),
+                  valueUsd: available("0", "test-price"),
+                },
+              ],
+            }
+          : item,
+      ),
+    };
+    view.rerender(<ManageCanvas model={zero} selectedId={null} onSelect={vi.fn()} />);
+    expect(cash.querySelector("[title='0 ETH']")).toBeInTheDocument();
+    expect(cash).toHaveTextContent("$0.00");
+    const stale = {
+      ...model,
+      chains: model.chains.map((item) =>
+        item.chainId === chain.chainId
+          ? {
+              ...item,
+              cash: [
+                {
+                  ...native,
+                  amount: { status: "unavailable" as const, reason: "stale-native" },
+                  valueUsd: available("75", "test-price"),
+                },
+              ],
+            }
+          : item,
+      ),
+    };
+    view.rerender(<ManageCanvas model={stale} selectedId={null} onSelect={vi.fn()} />);
+    expect(cash).toHaveTextContent("Not available");
+    expect(cash).not.toHaveTextContent("$75.00");
   });
   it("highlights every visible leg of one principal route while siblings retain resting colors", () => {
     renderWithProviders(

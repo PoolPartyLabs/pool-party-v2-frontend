@@ -215,7 +215,9 @@ function CashNode({ model, chainId }: { model: ManageModel; chainId: number }) {
             className="min-h-[18px] text-right text-xs leading-[18px]"
             aria-live="polite"
           >
-            {native?.valueUsd?.status === "available" ? <ManageUsd read={native.valueUsd} /> : null}
+            {native?.amount.status === "available" && native.valueUsd?.status === "available" ? (
+              <ManageUsd read={native.valueUsd} />
+            ) : null}
           </div>
         </div>
       </div>
