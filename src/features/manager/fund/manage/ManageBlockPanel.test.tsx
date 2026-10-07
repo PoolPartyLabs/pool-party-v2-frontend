@@ -1,4 +1,4 @@
-/** @id PP-MGR-CMP-086 @implements-rules-version v2 (POO-2227) */
+/** @id PP-MGR-CMP-086 @implements-rules-version v2 (POO-2246; extends POO-2227), v1 (POO-2284) */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PANEL_POOL_FIXTURES } from "@/mocks/data/buildPanelFixtures";
 import { mockFund } from "@/mocks/data/v2Funds";
@@ -9,7 +9,8 @@ import {
   userEvent,
   waitFor,
 } from "../../../../../tests/utils/renderWithProviders";
-import { toPanelPoolView } from "../build/panel/panelCatalogView";
+import { toLivePoolGrid, toPanelPoolView } from "../build/panel/panelCatalogView";
+import { fullPoolRange } from "../build/panel/poolRangeMath";
 import { normalizeManageModel } from "./manageModel";
 
 const mocks = vi.hoisted(() => ({ metadata: vi.fn(), pool: vi.fn(), review: vi.fn() }));
@@ -67,6 +68,28 @@ beforeEach(() => {
   });
 });
 describe("Manage block inline", () => {
+  // @rule POO-2284 R5: restore Full from the authoritative ticks and the actual pool spacing.
+  it("recognizes an existing Full position without enabling inward steppers (POO-2284)", async () => {
+    const full = fullPoolRange(toLivePoolGrid(pool));
+    const metadata = mocks.metadata();
+    mocks.metadata.mockReturnValue({
+      ...metadata,
+      position: { ...metadata.position, uniswap: { ...full, liquidity: "100000" } },
+    });
+    renderWithProviders(<ManageBlockPanel fund={mockFund} position={liquidity} active />);
+    expect(screen.getByRole("button", { name: "Full" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("textbox", { name: "Min price" })).toHaveValue("0");
+    expect(screen.getByRole("textbox", { name: "Max price" })).toHaveValue("∞");
+    for (const label of ["Min price", "Max price"]) {
+      expect(screen.getByRole("textbox", { name: label })).toHaveAttribute("readonly");
+      expect(screen.getByRole("button", { name: `Decrease ${label}` })).toBeDisabled();
+      expect(screen.getByRole("button", { name: `Increase ${label}` })).toBeDisabled();
+    }
+    expect(document.querySelector("[data-range-marker]")).toHaveStyle({ left: "50%" });
+    await userEvent.click(screen.getByRole("button", { name: "Full" }));
+    expect(screen.queryByRole("button", { name: "Move range" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Create new position" })).not.toBeInTheDocument();
+  });
   it("[R3,R4,R6] binds the two timings to actions, preserves Back and keeps review inline", async () => {
     renderWithProviders(
       <>

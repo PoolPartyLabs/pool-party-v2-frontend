@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-086
  * @name ManageBlockPanel
- * @implements-rules-version v2 (POO-2246; extends POO-2227)
+ * @implements-rules-version v2 (POO-2246; extends POO-2227), v1 (POO-2284)
  * @analytics-events strategy_move_range_started, tx_flow_abandoned, app_cta_blocked, app_error_shown
  * Inline V2 states of PP-MGR-CMP-001/002; no wallet call is exposed without a verified preview.
  */
@@ -18,7 +18,7 @@ import { BlockMark } from "../build/blocks/BlockMark";
 import { FundSlippageControl } from "../build/panel/FundSlippageControl";
 import { PriceRangeField } from "../build/panel/PriceRangeField";
 import { type PanelPoolView, toLivePoolGrid } from "../build/panel/panelCatalogView";
-import { displayBounds, type PoolRange } from "../build/panel/poolRangeMath";
+import { displayBounds, type PoolRange, usableTickBounds } from "../build/panel/poolRangeMath";
 import { usePanelPool } from "../build/panel/usePanelPool";
 import { ManageTokenRow, ManageUsd } from "./ManageCanvas";
 import {
@@ -238,6 +238,7 @@ function LiquiditySettings({
         {t("notAvailable")}
       </p>
     );
+  const limits = usableTickBounds(pool.tickSpacing);
   return (
     <RangeSettings
       fund={fund}
@@ -247,7 +248,7 @@ function LiquiditySettings({
         tickLower: metadata.tickLower,
         tickUpper: metadata.tickUpper,
         displayInverted: false,
-        fullRange: false,
+        fullRange: metadata.tickLower === limits.minTick && metadata.tickUpper === limits.maxTick,
       }}
       active={active}
       readable={detail.status === "ready" && live.applicable}
