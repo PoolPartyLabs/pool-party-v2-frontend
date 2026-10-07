@@ -288,3 +288,11 @@ POO-2237 introduces no endpoint or wallet operation. Manual Swap tokens are cano
 - POO-2230 remains the authoritative physical native cash, eligible queue/reservation deadlines/timezone/asOf and aggregate current hub Income dependency. POO-2275 may first deliver an inline presenter with real Not available, never guessed daily reserves or fixture values.
 - POO-2279 owns Charts/Activity readiness. Activity can reuse `readFundHistory` with authorized Manage access and indexing/pagination; a current snapshot is not a chart history source. Functional tabs wait for content/sidebar/data definitions.
 - Return Bridges are explanatory noninteractive graph nodes. They do not add a wallet operation, provider/ETA, token relabel, atomicity or settlement guarantee. Existing Move/future-policy gates remain POO-2229/2231.
+
+## Manager per-area plan revision, 2026-10-07 (PP-MGR-DOC-001 v2)
+
+The current [plan v2](manager-canvas-panels-plan-2026-10-07.md) preserves the preceding source evidence and separates ready visual work from real enablement. POO-2270/2271/2273 adopt stable graph ports and one shared outbound Bridge with distinct Principal/Income origins; local Arbitrum has no artificial Bridge. POO-2288 adds an optional semantic contract/validator and real graph consumer, without claiming old layout routing is corrected.
+
+POO-2290 requires an authorized account/obligation risk source and separate After simulation: a Supply row cannot prove zero debt. POO-2289 shows unavailable Entry/Exit fees without substituting manager fees, flow charge or instant withdrawal fee. POO-2291 extends the existing local Solana editor; canceled POO-2282 grants do not block that scope. Solana mint/program identity, native SOL versus WSOL, real custody/market/discovery/execution remain explicit POO-2239/2240/2261/2262 boundaries.
+
+Charts screenshots are Market reference, not AUM/pool execution or LP valuation. Exact feed/history/license/engine and protected annotations remain POO-2279 readiness. Jev Gateway is isolated optional development tooling; it adds no frontend/API/RPC integration, and measured pilot results do not justify global enablement.
