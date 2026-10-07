@@ -169,9 +169,9 @@ silently rebind, change the frozen plan, or continue with a new key.
 
 ## 4. Allocation, LP selector, Kamino and price-impact semantics
 
-`useSolanaLpChoices()` returns `{ enabled, choices }`; flag off means `choices: []`.
-Its catalog has no live `available` property. Add a UI availability view-model,
-not a claim that these fixtures passed program/Mandate/oracle validation.
+`useSolanaLpChoices(references)` returns `{ enabled, choices }`; flag off means
+`choices: []`. Choices now include `availability` from supplied on-chain reference
+metadata; the static catalog alone still proves no admission/oracle validation.
 
 | ID / display | `poolId` | Fee | Token metadata | Live UI at audited snapshot |
 | --- | --- | --- | --- | --- |
@@ -425,7 +425,11 @@ interface SolanaLpChoice {
   tokens: readonly [SolanaLpToken, SolanaLpToken];
   stockMarketHoursRequired: boolean;
 }
-// useSolanaLpChoices(): { enabled: boolean; choices: readonly SolanaLpChoice[] }
+type SolanaOracleReference =
+  | { status: "unavailable"; reason: string }
+  | { status: "available"; expiresAt: number; marketOpen: boolean };
+// useSolanaLpChoices(references): choices include
+// availability: { status: "available" } | { status: "unavailable"; reason: string }
 ```
 
 ### Render prop and owner-supplied backend
@@ -442,6 +446,29 @@ import type {
 } from "@/features/manager/fund/launch/journal";
 import type { SolanaLaunchSelection } from "@/features/manager/fund/launch/solanaPlan";
 import { useSolanaLaunchIntegration } from "@/features/manager/fund/launch/useSolanaLaunchIntegration";
+
+// Types are exported from @/lib/solana/costs; these mirror the rulings PR.
+interface SolanaPlanCostEstimator {
+  transactions(step: SolanaLaunchStep): Promise<readonly SolanaCostTransaction[]>;
+  priorityFeeMarginBps: number; // explicitly configured, positive; no default
+  rpc?: SolanaCostRpc;
+}
+interface SolanaCostTransaction {
+  message: string; // actual unsigned base64 transaction message
+  computeUnitLimit: number;
+  createdAccounts: readonly SolanaCreatedAccount[];
+}
+interface SolanaCreatedAccount {
+  address: string;
+  label: string;
+  layout: { kind: "spoke"; name: keyof typeof SOLANA_ACCOUNT_SPACES }
+    | { kind: "external"; bytes: number; source: string };
+}
+// Spoke allocation bytes at contracts fb37976, including discriminator:
+// FundState 5105; TokenLedger 105; CctpRoute 109; CctpLedger 80;
+// KaminoPosition 161; RaydiumPolicy 113; RaydiumLedger 104;
+// RaydiumPosition 210; Transit 250. Reconcile before production wiring.
+// External CPI/Token-2022 account sizes require the actual builder/extension decoder.
 
 interface SolanaLaunchBackend {
   referencePrice?(poolId: string): Promise<SolanaOracleReference>;
