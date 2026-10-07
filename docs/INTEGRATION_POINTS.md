@@ -300,3 +300,13 @@ The current [plan v2](manager-canvas-panels-plan-2026-10-07.md) preserves the pr
 POO-2290 requires an authorized account/obligation risk source and separate After simulation: a Supply row cannot prove zero debt. POO-2289 shows unavailable Entry/Exit fees without substituting manager fees, flow charge or instant withdrawal fee. POO-2291 extends the existing local Solana editor; canceled POO-2282 grants do not block that scope. Solana mint/program identity, native SOL versus WSOL, real custody/market/discovery/execution remain explicit POO-2239/2240/2261/2262 boundaries.
 
 Charts screenshots are Market reference, not AUM/pool execution or LP valuation. Exact feed/history/license/engine and protected annotations remain POO-2279 readiness. Jev Gateway is isolated optional development tooling; it adds no frontend/API/RPC integration, and measured pilot results do not justify global enablement.
+
+## Manager semantic graph foundation, 2026-10-07 (POO-2288 v1)
+
+`semanticGraph.ts` (PP-MGR-LIB-062) is a pure typed contract and deterministic validator.
+`GraphLayout.semantic` lets the existing `graphModel` edge/hover consumers read explicitly
+owned financial routes resolved against current outer rects. No endpoint, RPC, service,
+wallet call or new mock seam is introduced. Current layout producers retain their existing
+paths; adopting the contract and verifying the complete principal/income routes remains
+POO-2270/2271/2273. The validator proves declared graph integrity only. It does not prove
+execution capability, quote correctness, Bridge settlement or authoritative data coverage.
