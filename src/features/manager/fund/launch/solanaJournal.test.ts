@@ -1,4 +1,5 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import { bootstrapManifestFixture } from "@/lib/solana/bootstrap.fixture";
 import { SOLANA_LP_CHOICES } from "@/lib/solana/lpChoices";
 import {
   createJournal,
@@ -9,7 +10,10 @@ import {
   saveJournal,
 } from "./journal";
 import type { LaunchStep, SolanaLaunchStep } from "./plan";
-import { withSolanaLaunchSteps } from "./solanaPlan";
+import { withSolanaLaunchSteps as buildSteps } from "./solanaPlan";
+
+const withSolanaLaunchSteps: typeof buildSteps = (steps, selection) =>
+  buildSteps(steps, selection, bootstrapManifestFixture);
 
 vi.mock("@/lib/features", () => ({ isFeatureEnabled: () => true }));
 const legacy =

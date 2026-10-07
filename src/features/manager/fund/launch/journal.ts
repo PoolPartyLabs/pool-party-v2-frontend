@@ -107,6 +107,8 @@ export function loadJournal(
           "swap",
           "open",
           "bind-solana",
+          "stage-solana-config",
+          "seal-solana-config",
           "init-solana",
           "cctp-fast",
           "solana-arrival",

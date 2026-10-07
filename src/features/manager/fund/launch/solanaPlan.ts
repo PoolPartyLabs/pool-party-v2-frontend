@@ -1,4 +1,5 @@
 import { isFeatureEnabled } from "@/lib/features";
+import { bootstrapChunks, type SolanaBootstrapManifest } from "@/lib/solana/bootstrap";
 import { requireSolanaLpChoice } from "@/lib/solana/lpChoices";
 import { resolveMaxPriceImpactBps } from "@/lib/solana/swap";
 import type { ChainLaunchStep, LaunchStep, SolanaLaunchStep } from "./plan";
@@ -38,6 +39,7 @@ export function normalizeSolanaLaunchSelection(
 export function withSolanaLaunchSteps(
   evmSteps: LaunchStep[],
   selection?: SolanaLaunchSelection,
+  bootstrap?: SolanaBootstrapManifest,
 ): ChainLaunchStep[] {
   if (!selection) return evmSteps;
   if (!isFeatureEnabled("solanaSpoke")) throw new Error("SOLANA_DISABLED");
@@ -77,11 +79,24 @@ export function withSolanaLaunchSteps(
     dependencies:
       entry.kind === "create" ? [...entry.dependencies, binding.id] : entry.dependencies,
   }));
-  const init = step("init", "init-solana", ["discover-hub", binding.id]);
+  if (!bootstrap) throw new Error("SOLANA_BOOTSTRAP_REQUIRED");
+  const staging: SolanaLaunchStep[] = [];
+  for (const chunk of bootstrapChunks(bootstrap)) {
+    const previous = staging.at(-1)?.id ?? "discover-hub";
+    staging.push({
+      ...step(
+        chunk.seal ? "seal" : `stage:${chunk.offset}`,
+        chunk.seal ? "seal-solana-config" : "stage-solana-config",
+        [previous, binding.id],
+      ),
+      bootstrapChunk: chunk,
+    });
+  }
+  const init = step("init", "init-solana", ["solana:seal"]);
   const report = step("report", "report", ["profile", init.id], false);
   const send = step("send", "cctp-fast", [report.id], false);
   const arrival = step("arrival", "solana-arrival", [send.id]);
-  const result: ChainLaunchStep[] = [binding, ...steps, init, report, send, arrival];
+  const result: ChainLaunchStep[] = [binding, ...steps, ...staging, init, report, send, arrival];
   if (selection.kamino) result.push(step("supply", "kamino-supply", [arrival.id]));
   if (selection.raydiumPool) {
     result.push({

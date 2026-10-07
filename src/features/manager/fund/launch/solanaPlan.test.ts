@@ -1,8 +1,15 @@
 import { beforeEach, expect, it, vi } from "vitest";
+import { bootstrapManifestFixture } from "@/lib/solana/bootstrap.fixture";
 import { SOLANA_LP_CHOICES } from "@/lib/solana/lpChoices";
 import { createJournal, loadJournal, saveJournal } from "./journal";
 import type { LaunchStep } from "./plan";
-import { withSolanaLaunchSteps } from "./solanaPlan";
+import { withSolanaLaunchSteps as buildSteps } from "./solanaPlan";
+
+const withSolanaLaunchSteps: typeof buildSteps = (
+  steps,
+  selection,
+  bootstrap = bootstrapManifestFixture,
+) => buildSteps(steps, selection, bootstrap);
 
 const flags = vi.hoisted(() => ({ enabled: true }));
 vi.mock("@/lib/features", () => ({ isFeatureEnabled: () => flags.enabled }));
@@ -62,6 +69,25 @@ it("carries the Manager impact bound into both swap and LP execution configs", (
     { poolId: SOLANA_LP_CHOICES[0]?.poolId, maxPriceImpactBps: 75 },
     { poolId: SOLANA_LP_CHOICES[0]?.poolId, maxPriceImpactBps: 75 },
   ]);
+});
+
+it("requires staging input and puts Manager-signed seal before initialize", () => {
+  expect(() => buildSteps(evm, { sharePct: 50, kamino: true })).toThrow(
+    "SOLANA_BOOTSTRAP_REQUIRED",
+  );
+  const steps = withSolanaLaunchSteps(evm, { sharePct: 50, kamino: true });
+  const staging = steps.filter(
+    (step) => step.kind === "stage-solana-config" || step.kind === "seal-solana-config",
+  );
+  expect(staging.map((step) => step.id)).toEqual([
+    "solana:stage:0",
+    "solana:stage:600",
+    "solana:seal",
+  ]);
+  expect(staging.every((step) => step.chainKind === "svm")).toBe(true);
+  expect(staging[1]?.dependencies).toContain("solana:stage:0");
+  expect(staging[2]?.dependencies).toContain("solana:stage:600");
+  expect(steps.find((step) => step.id === "solana:init")?.dependencies).toEqual(["solana:seal"]);
 });
 it.each([
   -1, 65536, 1.5,
