@@ -1,17 +1,170 @@
 <!--
 @id PP-MGR-DOC-001
 @name ManagerCanvasPanelsDeliveryPlan
-@description Staged delivery and verification plan for the October 7 Manager canvas and inline panels.
+@description Staged Manager delivery by area, semantic graph integrity, local Solana continuation and measured optional Jev tooling.
 @linear https://linear.app/yeildbay/issue/POO-2270
 @owner manager-team
 @since 2026-10-07
-@implements-rules-version v1
+@implements-rules-version v2
 @analytics-events none: documentation-only planning artifact; runtime emitters are specified per delivery slice.
 -->
 
 # Manager canvas and inline panels: delivery plan, October 7, 2026
 
-Status: **planning complete; implementation has not started in this package**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Source baseline: public frontend main `410188eaf749dec8dcb1fcf3f5fb7e541aaccb51`. A coordinator and two GPT-6.1-sol read-only audits reviewed code, current Figma and current API source. No application tests, build, wallet operation or browser investment journey was run for this plan.
+Status: **v2 plan complete; graph foundation and Review transaction-fee slices in progress**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main: `cabda27760d8190d81203ae87b77e01b94025f3b`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
+
+## Current v2 contract and implementation sequence
+
+This revision uses the complete owner handoff `handoff-manager-v2-por-areas-2026-10-07.md`, sections 0-18, and its matrix of 48 canvases. Precedence is current owner instructions, this consolidated handoff, inherited Manage/Overview/Charts-Holding flow contracts, matching current Figma context, then history. Historical v1 sections below remain for traceability; this revision overrides their cash dimensions, two visible outbound Bridges, position-only sidebar, Collect height and Charts meaning. Previous source baselines are dated evidence, not current main.
+
+### Revision history and current baseline
+
+| Revision | Record | Treatment |
+| --- | --- | --- |
+| v1, October 7 | Main 410188e, [PR #117](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/117), earlier panels/Bridge handoffs | Historical below. Its cash 160x104, separate visible principal/fees return Bridges, position-only sidebar and Collect 383px fixture are superseded. Financial integration gates and investor boundary remain. |
+| v2, October 7 | Consolidated per-area handoff, matrix 48, current main cabda277 and coordinator audits | Native cash 144x96, one shared outbound Bridge with separate typed ports, all-node sidebar, current Collect 563px comparison, lending account risk, Review fees and local Solana continuation. |
+
+POO-2270/2271/2272/2273/2274 contain append-only numbered **v2** rules and matching labels. POO-2275/2276/2277/2278 retain **v1**; POO-2279 retains its history and **Needs Rules**. New POO-2288/2289/2290/2291 use **v1**. Synchronize each affected issue, PR title and file header without applying a blanket new version to other artifacts.
+
+| Existing current-main delivery | Status and preserved behavior |
+| --- | --- |
+| POO-2287, [PR #124](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/124) | Merged: scoped dark native scrollbars/control scheme, forced-colors preserved. Murilo performs native browser acceptance. |
+| POO-2284, [PR #122](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/122) | Merged: full range values, locale-safe decimal editing, actual pool tick-spacing/Full recovery. Solana protocol math remains separate. |
+| POO-2281 v2, [PR #120](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/120) | Merged: guarded local Solana editor, three clicks on already-selected V2 within 1000ms in `/manager/new`. No real execution enabled. |
+| Existing Overview/Manage | Authorized entry/discovery/position reads, local drafts/launch continuation, current/draft range, inline Move/Create and existing unavailable gates remain. Ready visual foundation exists; aggregate history/readiness and complete execution/policy contracts remain pending. |
+
+Preserve V1, Strategies/Portfolio with V2 tags and **exactly the investor InvestModal/provisioning already implemented**. Manager Collect is not investor Collect income. Preserve mandate/owner/core checks, canonical token identity/decimals, current-position state, numeric precision and pending journals. Current licensing is source-available; no MIT/OSI claim is inferred from an older document.
+
+### Design geometry versus runtime acceptance
+
+The matrix covers 48 graphs, 837 connector primitives and 1,406 segments, 43 visible/five hidden. Twenty primitives were repaired in ten graphs in that sweep, separate from nine prior master repairs. This is design geometry evidence, not 48 runtime screenshots, a financial traversal of every graph or deployed adapter capability.
+
+Hidden legacy studies `8359:2865`, `8384:3243`, `8385:3492`, `8384:3467`, `8385:3716` omit current fee conversions/return Bridges and must not become final runtime topology. Approved local Arbitrum contexts `8674:15044` and `8678:37132` correctly have no cross-chain Bridge. Inactive connector layers remain excluded. The design detector's 1.1px tolerance cannot authorize visible gaps in the renderer.
+
+The contract explicitly identifies nodes/ports, directed endpoint-to-endpoint connections, ledger role, network/origin, segments and declared compatible junctions. Crossings never create adjacency. Derive geometry from final rectangles/ports, recalculate buses after participant/content changes and remove historical tails. An unfinished route ends only at a declared Add/template control. Internal port transitions model travel through a card without a line crossing its content. Verify directed destination, endpoints, occlusion and unrelated-card intersections separately.
+
+POO-2288 is **an additive semantic contract/validator with a real graphModel consumer**. Optional `GraphLayout.semantic` enables migration; existing layout stays the fallback. Stable identities apply independently. This first PR does not correct old Manage/Build routing; POO-2270/2271/2273 perform that adoption.
+
+### Current geometry, financial routes and state rules
+
+| Area | Required v2 behavior |
+| --- | --- |
+| Cash |144x96 graph pixels at a 16px root, 9x6rem; title 14px, matching-network native quantity/logo, independent USD 12px below, no internal network label. Known native remains when price is absent/stale. No stable/allocation cash. |
+| Cash/layout | Lateral satellite, outside allocation; Manage center alignment/gap 24 versus Holding same-top/gap 32 and Idle 236x88. Cash does not recenter the spine. |
+| Card variants | Manage input 236x104, spoke Idle 176x104, output 236x168, Income 236x102; LP 176x232/Supply 176x160 references. Full amounts/natural reflow update actual bounds; no universal card height. |
+| LP range | Current position status/marker independent of proposed draft; fine green/red track. Missing/no-liquidity state is explicit. |
+| Principal | Gray originates at position lateral port, never Collect; includes required conversion/debt repayment before matching Idle output. |
+| Fees | Position -> Collect -> centered Swap auto, nominal gap 24 -> Income. Collect has one green output. Cross-chain uses the matching fee port. No LP fees on Supply/Holding. |
+| Bridge | One inbound and **one shared visible outbound Bridge per actual spoke**. Separate principal/Income ports, connection/bus/provenance identities and ledger classes. Local Arbitrum has none. |
+| Withdrawal/debt | Income-to-Withdraw gray; independent output bottoms. Preserve Canvas E Pendle -> principal Swap -> Repay USDC -> Withdraw WETH -> collateral Swap -> Idle output. |
+| Chrome | Hub outside translated/scaled graph. Locks 14px on hub Idle input/output/Income and 12px on autos, no Fixed text; Collect/spoke Idle have no added lock. |
+| Header | Protocol/pair/subtitle FILL left, network HUG right, centered/gap 12, full text/natural height. Collect 563px is current fixture, not a CSS min-height. |
+
+Auto describes route context, not broadcasting, automatic conversion, atomicity, provider ETA or hub settlement. USDG never becomes USDC by relabeling. Keep context-specific Build gaps and spoke-chip variants rather than universal engine clearances. Layers remain hull/background, connectors, cards/labels.
+
+The sidebar lists **every actual node** by network/topology, including positions, Idle/cash, Collect, derived Swap/Bridge, Income/withdrawal where present. Sidebar/canvas/panel use the same stable identity/snapshot. Fixed nodes remain inspectable; same-pool positions have distinct canonical origins.
+
+Separate visible panel, per-origin draft and immutable pending-operation owner. LP -> Collect/Idle/Charts -> Back preserves draft/review/journal/viewport. Visibility is not position_changed abandonment or preview renewal. Material origin/authorization/snapshot/expiry changes still invalidate the applicable operation. Account changes prevent a new account signing an old operation, while recovery evidence remains scoped. Back/Escape restores live focus; hidden panels stay outside keyboard/a11y traversal.
+
+### Ordered small PRs and tests
+
+Paths below are relative to `src/features/manager/fund/` unless a repository-relative prefix is provided. Reserve new IDs; preserve existing ones. Reuse workers sequentially and avoid simultaneous edits to shared runtime files.
+
+| Order / Linear rule version | Owned files / concrete slice | Dependency and focused acceptance |
+| --- | --- | --- |
+| 1, [POO-2288](https://linear.app/yeildbay/issue/POO-2288) v1 | `build/graph/semanticGraph.ts`, tests, minimal `graphModel.ts`, additive `build/layout/graphTypes.ts` | Stable ports/connections, explicit junctions/roles/network, missing/duplicate/dangling endpoints, orphan conversions/broken routes; actual layouts remain fallback. |
+| Early independent, [POO-2289](https://linear.app/yeildbay/issue/POO-2289) v1 | `review/ReviewTransactionFeesCard.tsx`, tests/stories, `ReviewPhase.tsx`, locales | After Your fees/before Investor terms; Entry/Exit Not available, single helper, read-only/help keyboard/natural reflow. Preserve old fee callbacks/caps/launch; no fee inference/new gate. |
+| 2a, [POO-2270](https://linear.app/yeildbay/issue/POO-2270) v2 | `manage/manageLayout.ts`, `ManageCanvas.tsx`, tests | Foundation first; position principal, one green Collect/Swap gap, gray Income exit, correct cash/Idle/current range/bounds, no refit on nongeometry changes. |
+| 2b, [POO-2271](https://linear.app/yeildbay/issue/POO-2271) v2 | Manage ports/connections/shared Bridge, existing `GraphEdges` | After2a, separate PR. Two directed Bridges per actual spoke with disjoint outbound ports; local exemption, complete-path hover/sibling isolation, actual hull buses. |
+| 3, [POO-2273](https://linear.app/yeildbay/issue/POO-2273) v2 | `build/layout/layoutGraph.ts`, constants/types, graph connections/oracles | Shared semantics stable; master endpoints/occlusion, no tails, compatible local merges, Supply/no-LP-fees, Canvas E debt order; preserve controls and launch capabilities. |
+| 4, [POO-2272](https://linear.app/yeildbay/issue/POO-2272) v2 | Optional `CanvasViewport` overlay, context-specific `SpokeGroup`/FlowPill, Manage cards/header | Coordinate shared pieces after routes; overlay/drag, opt-in chips/locks, complete headers, native/USD separate, validated links/logos/long values. |
+| 5a, [POO-2274](https://linear.app/yeildbay/issue/POO-2274) v2 | Typed selection/snapshot model, `ManageScreen.tsx`, tests | Stable IDs; all-node network/topology sidebar, matching canvas identities, selecting inspector never executes. |
+| 5b, POO-2274 v2 | `ManageCanvas.tsx`, `ManageBlockPanel.tsx`, visibility/draft/journal boundary | Separate PR; LP -> other node -> Back retains review; no false abandonment/refit; real expiry/origin/owner changes, hidden focus, duplicate-pool identity. |
+| 6a, [POO-2275](https://linear.app/yeildbay/issue/POO-2275) v1 | `ManageIdleOutputPanel.tsx`, queue projection/story source | Selection first; read-only unavailable/loading/error/confirmed-empty/zero/partial, Retry/Back. No guessed daily reserves. |
+| 6b, POO-2275 + [POO-2230](https://linear.app/yeildbay/issue/POO-2230) | `src/lib/api/v2/manageSchemas.ts`, `manageActions.ts`, authorized queue/native/Income | Deployed contract first; same-cohort totals/coverage, timezone/cutoff/rollover, overdue/later/multiple deadlines, units/asOf/freshness, independent native quantity/USD. |
+| 7, [POO-2276](https://linear.app/yeildbay/issue/POO-2276) v1 | `ManageCollectFeesPanel.tsx`, existing position-fee projection | Current authorized read + selection/header; ordered amount0/1, metadata/zero/missing/stale/late-origin, no invented total USD. Execution remains separate. |
+| 8, [POO-2290](https://linear.app/yeildbay/issue/POO-2290) v1 | Typed account-risk model and Aave/Kamino presenter | Visual states ready; confirmed debt 0 -> No debt/Not applicable, missing/stale -> Not available; Current/After/scenario/oracle distinct. Real formula/projection requires verified source. |
+| 9a, [POO-2229](https://linear.app/yeildbay/issue/POO-2229) | Existing Move action/hook/journal and Manage panel | Complete budgets/range+allocation/costs/impact/freshness/capability/post-close preview, pending/unknown/partial recovery; never replay confirmed close. |
+| 9b, [POO-2231](https://linear.app/yeildbay/issue/POO-2231) | Future-policy authorized write/read/version/controller | Executor consumes persisted strategy/chain/block/pool/range/allocation version; accepted/in-flight deposits, conflict/idempotency/timeout. LocalStorage is not this contract. |
+| 10a, [POO-2277](https://linear.app/yeildbay/issue/POO-2277), Rafael | Existing Collect DTO/builder extension | Request/response/simulation/receipt examples, capability/freshness/costs/expiry/idempotency/recovery; origin and continuation scopes separate. |
+| 10b, [POO-2278](https://linear.app/yeildbay/issue/POO-2278) v1 | Dedicated Collect action/schema/inline review | After 7/10a; decoded owner/core/vault/chain/adapter/key/call/value, zero/stale/expired gates and explicit intent. |
+| 10c, POO-2278 | Origin signing/journal/recovery using existing wallet flow | Separate PR; journal before signing/hash when known, cancel versus pending/unknown, reload/revert/duplicate prevention and matching IncomeCollected receipt. |
+| 10d, POO-2278 | Supported swap/Income transit continuation | Separate PR after verified route/costs/minima/correlation; no Principal/Income mixing or replay. Hub credit independently proves hub completion. |
+| 11, [POO-2247](https://linear.app/yeildbay/issue/POO-2247) | `overview/ManagerOverviewV2.tsx`, setup model, authorized history/AUM | Existing UI retained; readiness differs from lifecycle, draft/journey/core dedup, closed identity, partial source failures, complete aggregate semantics/coverage. |
+| 12, [POO-2279](https://linear.app/yeildbay/issue/POO-2279) | Controlled tabs, Charts/Activity controller/data | Needs Rules for renderer/license/feed/history/annotations and Activity event/status/filter/cursor semantics. Market reference meaning is settled. No fake functional bitmap/empty tab. |
+| 13, [POO-2291](https://linear.app/yeildbay/issue/POO-2291) v1 | Six local Solana slices below | Ready graph/state primitives reused; gesture/gates preserved; real discovery/custody/execution separate. |
+
+Stages 1 and the independent Review slice are the current two-worker assignments. Coordinator reviews code/evidence and integrates sequentially. Defined visual work can proceed with explicit Not available while exact financial sources are obtained. A finished presenter does not close its execution issue.
+
+### Sources, financial gates, Charts and links
+
+API source reviewed at `06a03b046ecba22204e44b201adb9e06a36a21f6`; source is not deployed endpoint/keeper proof. Reuse server-only apiFetch/Zod and current authorized position reads. Position `uncollectedIncome.amount0/amount1` is available; holdings are not fees. `positions/build` action collect-income already exists, but bare transactions lack the complete preview/costs/freshness/idempotency/recovery envelope. Collect receipt does not prove Swap/Bridge/hub settlement. Generic send-to-hub is Principal; existing Income return and transit/history reads require exact correlation.
+
+POO-2230 owns physical native quantity, eligible queue/cohort/deadline/reserve/timezone/asOf and current aggregate hub USDC Income. Scalar buckets do not manufacture token balances/daily groups. Move builder exists but does not prove complete budget/impact/recovery; future policies need authorized versioned persistence and an executor consumer. Current AUM needs a defined ledger/debt/Income/reserve/in-flight inclusion and complete coverage. Never fill absent production data from Figma or fixtures.
+
+Lending risk belongs to account/market/obligation, not one Supply row. Supply can share a debt-bearing account; absence of a Borrow card is not No debt. Confirmed debt 0 yields Not applicable/No debt, missing/stale yields Not available. After is its own scenario/simulation. Kamino Supply USDC is authorized; Borrow/Multiply are not inferred. Capital/interest/rewards/APY/withdrawable and hub Income remain separate.
+
+Charts screenshots ETH/USDC and SOL/USDC Binance spot 1D are **Market reference**, not pool valuation/execution/AUM/liquidation. Advanced Charts plus exact feed is a recommendation, not a licensed dependency; data license and renderer eligibility are separate. Quotes/Jupiter/DEX Screener snapshots are not OHLCV evidence. Annotations/current/proposed LP overlays have separate IDs/state; Drag/Clear/Delete/undo never updates range/allocation/preview or deletes financial overlays. Changed instrument/mints/orientation cannot retain another chart silently. Activity needs its own defined source/status/history coverage.
+
+Links resolve verified native identities: View pool, View position, lending market, Open Jupiter, hub core/vault explorer. Homepage, wallet or DEX Screener is not a substitute position/vault link. POO-2250 keeps USDG logo/provenance ownership. Missing URL/data/capability stays explicitly unavailable.
+
+### Solana continuation with the existing three-click gesture
+
+POO-2281 v2/PR120 provides the owner-approved local scope and ADR 0009. POO-2282 API access grants is canceled, not a blocker. Preserve selected-V2 triple-click 1000ms, `/manager/new`, in-memory draft/reset/route/account guards and local-draft notice. A client gesture is discoverable UI, not server authorization.
+
+| POO-2291 small slice | Files / responsibility | Acceptance |
+| --- | --- | --- |
+| S1 catalog/read model | `solana-preview/previewModel.ts`, schemas/catalog/read model, explicit `src/mocks` fixtures | Case-sensitive base58 mint/program/pool/reserve/position, native SOL 9 decimals distinct from WSOL mint, raw-safe units, source slot/asOf, available/zero/stale/missing/capability states. |
+| S2 Kamino | Existing protocol panel/screen plus typed risk presenter | Supply USDC, market/reserve/capacity/APY/withdrawable, separate principal/interest/rewards and Current/After account risk; no Borrow/Multiply/LP Collect. |
+| S3 Orca | Protocol-specific range/model/presenter | SDK/program-verified grid/bounds/currentTick, full-range-only/adaptive fees, orientation/decimals/empty liquidity; no Uniswap domain/math fallback. |
+| S4 Raydium | Separate CLMM math/model/presenter | AmmConfig spacing/fee/SDK vectors, Token-2022/transfer fees, owed fees/rewards; Move path distinct from Orca reposition. |
+| S5 Holding/Jupiter | Custody presenter and separate quote inspector | Compatible input bypasses Swap, Buy/Sell principal routes, explicit SOL wrap/unwrap; no LP range/APY/green fees. Managed order/execute versus composable build and quote expiry versus blockhash validity. |
+| S6 local Manage | Canonical position/current/draft/After and shared graph/selection primitives | Two same-pool instances separate; exclusive modes, all-node inspection, draft/journal preservation. Transaction details unavailable until real contract. |
+
+WSOL mint is `So11111111111111111111111111111111111111112`, not native Operating cash. Solana never enters EVM wagmi arrays,0x registries, lowercased mint normalization or persisted EVM mandate/launch compilation. Verify protocol SDK/program bounds instead of copying Uniswap ±887272, inclusive display conventions or Full 50/50. No fixture/panel/logo enables real operations.
+
+Real discovery/tokens/markets/programs/PDA/authorities/token accounts/custody/quotes/signing remain POO-2239/2240/2261/2262. Local UI completion is recorded independently.
+
+### Jev Gateway installation, security and measurement
+
+Owner requested [vinilana/jev-gateway](https://github.com/vinilana/jev-gateway). Version 0.5.1/source `37ff982949f0cb9bb131963f82a6f34f8ba38edd` was inspected and installed as isolated optional local tooling through `jev-codex-safe`. No global provider/frontend dependency/API/deployment changed. Listener was stopped after measurement.
+
+Stock defaults were unsuitable for continuous use: unauthenticated loopback, direct synthesized tool calls and optional debug conversation dumps. The wrapper uses authenticated 127.0.0.1, approved provider/path only, unknown route/upstream/redirect denial, request-local Azure api-key, stripped injected credentials/cookies, metadata-only logs, no synthetic direct calls, confidence 0.85/onNone passthrough and preserved namespace/agent-message bypasses. Every provider/Jev attempt including fallback is metered. Source/tarball/provenance/signatures matched; pinned runtime dependencies had zero known audit findings at inspection, lifecycle scripts ignored, 35 focused security assertions passed.
+
+Residual boundary: Jev receives bounded conversation/tool state remotely, clipping is not privacy filtering, confidence is not correctness/permission, and bypass may reduce value in this multi-agent workflow. The active desktop conversation cannot be retrofitted through this CLI gateway. These are bounded security checks, not a guarantee.
+
+Two matched synthetic read-only tasks, once per mode with counterbalanced order, same gpt-6.1-sol/low effort/provider/prompt/fixtures, 4/4 runs correct against computed ground truth and all provider statuses 200. Earlier 401 transport failures/final smokes were recorded separately.
+
+| Combined measurement | Off | On |
+| --- | ---: | ---: |
+| Wall time |13,609ms|15,767ms|
+| Primary provider calls |5|5|
+| Primary input, cached included |74,317|74,361|
+| Cached input, subset above |43,345|43,238|
+| Primary output, reasoning included |164|167|
+| Jev calls |0|5|
+| Jev input/output |0/0|12,955/737|
+| Total input+output across providers |74,481|88,220|
+
+Wall time increased **15.86%**, unweighted total tokens increased **18.45%**. This corrects an earlier 17.82% summary calculation without changing raw counters. Do not double count cache/reasoning; tokens are not currency cost without verified account pricing. Accuracy 2/2 tasks in each mode and tiny synthetic sample do not establish coding-speed or broader correctness gain.
+
+Decision: **opt-in, no global enablement**. Bounded advisory semantic checks may use Jev; geometry/math/authorization/execution remain deterministic and coordinator-reviewed. Further useful measurements require repeated representative labeled pairs and actual failure/retry/cache/cost evidence. Do not run expensive probes in place of ready delivery. Local audit files retain raw results/security/package evidence; no credentials/conversation dumps/local paths are published to Slack.
+
+### Validation and completion boundaries
+
+Focused TDD for substantive geometry/state/models/hooks/forms/actions; changed-file Biome and applicable i18n/config/analytics/tokens checks with suitable TypeScript scope. One local test process at a time. No full local suite, coverage, app/Storybook build or browser journey per Murilo. Pure documentation needs no runtime test. Current main has 11 configured locales; translate all existing locales, no unrelated pt-PT migration. Actual package scripts govern available checks.
+
+Affected regression matrix: hub/local/cross-chain; RobinhoodUSDG/nativeETH/SOL; different branch heights/multiple same-pool positions; safe inverse/small-price/spacing; principal/fees/debt; zero/missing/stale; queue partial/overdue/later/rollover; expired/pending/unknown/partial operations; authorization/draft/selection/two tabs; chart instrument/Clear; missing links; V1 and exact investor provisioning. Every slice reports its tested scope. Runtime graph matrix records actual variants/ports/routes/findings rather than claiming 48 design contexts from one generic test. Murilo validates rendering/full bottom controls/long values at narrow and wide widths, larger root fonts and long locales.
+
+Wider CI baseline is not green: nine failures in two BuildScreen and seven launchNavigation cases existed on prior main and the three merged PRs; dependency audit was unchanged. [Baseline tests](https://github.com/PoolPartyLabs/pool-party-v2-frontend/actions/runs/37619980236/job/112787958755) and [baseline audit](https://github.com/PoolPartyLabs/pool-party-v2-frontend/actions/runs/37619980236/job/112787958212). Passing focused tests never means the complete suite passed; new failures/conflicts require investigation.
+
+Each PR carries current main/issue/rules, coordinator diff review, focused evidence, IDs/README/integration/compliance and applicable emitting analytics artifact. Completed events require authoritative settlement of their exact scope. Squash authorized verified heads; remove remote/unused local branches after merge while preserving unrelated WIP. Only coordinator posts English sanitized Slack updates/PR threads and registers reply ownership. A finished presenter, additive graph helper, disabled Confirm, bitmap, origin receipt or indexed core never proves full journey completion or deployment.
+
+## Historical v1 plan
+
+The following sections preserve the original October7 planning record. Read them only with the current v2 overrides above.
+
+Original status: planning complete; implementation had not started. Source baseline `410188eaf749dec8dcb1fcf3f5fb7e541aaccb51`. Two GPT-6.1-sol read-only audits inspected code, Figma and API source; no application tests/build/wallet/browser journey were run for that original plan.
 
 This document supersedes the October 6 plan only for the October 7 canvas/panel changes. The existing Overview delivery and investor boundary remain applicable.
 

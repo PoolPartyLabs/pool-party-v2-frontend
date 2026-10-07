@@ -730,7 +730,7 @@ See [phased delivery plan](../../../docs/manager-overview-manage-v2-delivery-202
 
 ### October 7 canvas and inline-panel plan
 
-[Manager canvas and inline panels](../../../docs/manager-canvas-panels-plan-2026-10-07.md) maps the latest seven Figma states to POO-2270..2279 in POO-2116. Planned changes include compact cash/Idle, lateral principal returns, separated return Bridges, full-path hover, a fixed Hub overlay, responsive inline headers and draft-preserving Idle/Collect selection. These changes are not yet implemented by this planning package.
+[Manager canvas and inline panels](../../../docs/manager-canvas-panels-plan-2026-10-07.md) v2 maps the consolidated per-area handoff and matrix48 to POO-2116. It supersedes the earlier cash/two-outbound-Bridge assumptions: native cash144x96, one shared outbound Bridge with separate principal/Income ports, full-path hover, fixed Hub overlay, natural inline headers and all-node selection with independent draft/operation ownership. Graph contract POO-2288 and read-only Review Entry/Exit fees POO-2289 are separate early runtime slices; old layouts are not certified by the new contract. POO-2290 covers lending account states, POO-2291 the six local Solana continuation slices, and real data/execution/Charts gates remain explicit. The planning revision itself changes no runtime code.
 
 Collect details reuse the authorized position fees read. The API already builds origin Collect; POO-2277 adds the preview/recovery contract and POO-2278 owns separate preparation, signing and continuation PRs. POO-2230 supplies queue/reserves/native cash/current hub Income. Charts/Activity destinations remain Needs Rules under POO-2279. Existing Move, future-deposit and investor behavior is preserved.
 
