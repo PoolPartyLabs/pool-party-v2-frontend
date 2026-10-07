@@ -141,7 +141,7 @@ function swapSetup() {
   };
   state.backend.quoteSwap = vi.fn(async () => quote);
   state.backend.referencePrice = vi.fn(async () => ({
-    status: "available",
+    status: "available" as const,
     expiresAt: 2000000000,
     marketOpen: true,
   }));
@@ -170,7 +170,7 @@ it.each([
   if (failure === "missing") backend.referencePrice = undefined;
   else
     backend.referencePrice = vi.fn(async () => ({
-      status: "available",
+      status: "available" as const,
       expiresAt: failure === "stale" ? 1 : 2000000000,
       marketOpen: failure !== "closed",
     }));

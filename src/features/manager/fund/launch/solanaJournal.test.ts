@@ -108,6 +108,7 @@ it("combines Hub, Robinhood and Solana without replacing EVM steps", () => {
     sharePct: 40,
     kamino: true,
     raydiumPool: SOLANA_LP_CHOICES[0]?.poolId,
+    maxPriceImpactBps: 100,
   });
   expect(plan.find((step) => step.id === "spoke")).toMatchObject(evm[2] ?? {});
   expect(plan.find((step) => step.id === "create")?.dependencies).toContain("solana:bind");
