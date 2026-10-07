@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 691 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 693 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1049,3 +1049,13 @@ This delivered slice does not add Operating cash to Build's plan, token/cohort c
 | `PP-MGR-LIB-067` | manageSelection, actual layout-node identity and network/topology inspection snapshot | Lib | n/a (code) | Implemented inspection slice | [POO-2274](https://linear.app/yeildbay/issue/POO-2274) | `src/features/manager/fund/manage/manageSelection.ts` @rules-v2 |
 
 PP-MGR-SCR-004 and PP-MGR-CMP-085/086 consume this identity without replacing position-origin drafts. PP-MGR-CMP-092/093 are mounted inside the existing authorized host; missing fee freshness/global queue remain unavailable. New strategy_block_selected emits bounded navigation only.
+
+
+## Full-account lending risk, October 7, 2026 (POO-2290 v1)
+
+| ID | Artifact | Type | Design | Status | Linear | File / rules |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-068` | manageLendingRisk, independent full-account Current/After projection and provenance | Lib | n/a (code) | Implemented presenter slice | [POO-2290](https://linear.app/yeildbay/issue/POO-2290) | `src/features/manager/fund/manage/manageLendingRisk.ts` @rules-v1 |
+| `PP-MGR-CMP-094` | ManageLendingRiskSection, inline Aave/Kamino account risk and scenario details | Component | Supply account risk | Implemented with unavailable live hosts | [POO-2290](https://linear.app/yeildbay/issue/POO-2290) | [Figma 8682:3708](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8682-3708); `src/features/manager/fund/manage/ManageLendingRiskSection.tsx` @rules-v1 |
+
+PP-MGR-CMP-086/089 mount this read-only section only for Aave Supply/local Kamino. Full account identity is absent until authorized account wiring; the host cannot infer a market, obligation or debt state from a position row.

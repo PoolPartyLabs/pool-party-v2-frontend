@@ -5,7 +5,7 @@
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-3089
  * @linear https://linear.app/yeildbay/issue/POO-2281
  * @i18n-namespace manager.solanaPreview
- * @implements-rules-version v2 (POO-2281)
+ * @implements-rules-version v2 (POO-2281), v1 (POO-2290)
  * @analytics-events none, form intent is owned by PP-MGR-SCR-009.
  */
 "use client";
@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ManageLendingRiskSection } from "../manage/ManageLendingRiskSection";
 import {
   isLiquidityBlock,
   type PreviewBlock,
@@ -67,8 +68,6 @@ export function SolanaPreviewBlockPanel({
           t("solanaPreview.supplyApy"),
           t("solanaPreview.availableLiquidity"),
           t("solanaPreview.depositCapacity"),
-          t("solanaPreview.healthFactor"),
-          t("solanaPreview.liquidationPrice"),
         ]
       : block.protocol === "jupiter"
         ? [
@@ -171,9 +170,15 @@ export function SolanaPreviewBlockPanel({
           ))}
         </dl>
         {block.protocol === "kamino" ? (
-          <p className="text-muted-foreground text-xs">
-            {t("solanaPreview.noDebtDrawing")} {t("solanaPreview.withdrawals")}
-          </p>
+          <>
+            {/* PP-INTEGRATION-POINT: POO-2290/2240 require a full verified Kamino obligation; a local Supply drawing does not prove no debt. */}
+            <ManageLendingRiskSection
+              origin={{ identity: null, preview: null }}
+              current={{ status: "unavailable", snapshot: null }}
+              after={{ status: "unavailable", snapshot: null }}
+            />
+            <p className="text-muted-foreground text-xs">{t("solanaPreview.withdrawals")}</p>
+          </>
         ) : null}
         <div className="flex flex-wrap gap-2">
           <Button type="submit" variant="primary" className="flex-1">
