@@ -1,11 +1,11 @@
 /**
  * @id PP-MGR-CMP-085
  * @name ManageCanvas
- * @implements-rules-version v2 (POO-2270, POO-2271, POO-2272; extends POO-2246, POO-2226, POO-2232)
- * @analytics-events none, position presses report through onSelect; ManageScreen owns the view.
+ * @implements-rules-version v2 (POO-2274, POO-2270, POO-2271, POO-2272; extends POO-2246, POO-2226, POO-2232)
+ * @analytics-events none, node presses report through onSelect; ManageScreen owns navigation.
  *
  * Read-only live graph built from the shared Build pieces. Cash belongs to one chain and every
- * balance has its own availability state. Selecting a position never alters graph geometry.
+ * balance has its own availability state. Inspecting a node never alters graph geometry.
  */
 "use client";
 import { Lock } from "lucide-react";
@@ -30,11 +30,16 @@ import {
   type ManageTokenAmount,
   manageProtocolMark,
 } from "./manageModel";
+import {
+  deriveManageInspection,
+  type ManageInspectableNode,
+  manageInspectionLabelKey,
+} from "./manageSelection";
 
 export interface ManageCanvasProps {
   model: ManageModel;
   selectedId: string | null;
-  onSelect(positionId: string | null, keyboard?: boolean): void;
+  onSelect(selectionId: string | null, keyboard?: boolean): void;
 }
 
 /** Display-only conversion; exact decimal amount remains accessible and no arithmetic uses Number. */
@@ -286,11 +291,13 @@ function WithdrawalNode({ model }: { model: ManageModel }) {
 }
 function GraphNode({
   node,
+  inspection,
   model,
   selectedId,
   onSelect,
 }: {
   node: ManageNode;
+  inspection: ManageInspectableNode | null;
   model: ManageModel;
   selectedId: string | null;
   onSelect(id: string, keyboard?: boolean): void;
@@ -299,6 +306,24 @@ function GraphNode({
   const build = useTranslations("manager");
   const chain = model.chains.find((item) => item.chainId === node.chainId);
   const hub = model.chains.find((item) => item.hub);
+  const keyboardActivation = useRef(false);
+  const selected = inspection?.selectionId === selectedId;
+  const selectable = (content: ReactNode) => (
+    <button
+      type="button"
+      data-canvas-interactive=""
+      aria-label={
+        inspection && inspection.kind !== "position"
+          ? t(manageInspectionLabelKey[inspection.kind])
+          : undefined
+      }
+      aria-pressed={selected}
+      onClick={(event) => onSelect(inspection?.selectionId ?? node.id, event.detail === 0)}
+      className={`relative block w-full cursor-pointer rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${selected ? "ring-2 ring-primary" : ""}`}
+    >
+      {content}
+    </button>
+  );
   if (node.kind === "position") {
     const p = model.positions.find((p) => p.id === node.positionId);
     return p ? (
@@ -310,21 +335,23 @@ function GraphNode({
     ) : null;
   }
   if (node.kind === "cash")
-    return <CashNode model={model} chainId={node.chainId ?? model.hubChainId} />;
+    return selectable(<CashNode model={model} chainId={node.chainId ?? model.hubChainId} />);
   if (node.kind === "idle")
-    return chain ? (
-      <BalanceCard title={chain.hub ? t("idleInput") : t("idle")} locked={chain.hub}>
-        <ManageTokenRow token={chain.idle} />
-        <div className="flex items-center justify-between gap-2 text-xs">
-          <span className="text-muted-foreground">{t("strategyValueShare")}</span>
-          <span className="font-semibold tabular-nums">
-            {chain.idleSharePct.status === "available"
-              ? formatPercent(Number(chain.idleSharePct.value), 1)
-              : t("notAvailable")}
-          </span>
-        </div>
-      </BalanceCard>
-    ) : null;
+    return chain
+      ? selectable(
+          <BalanceCard title={chain.hub ? t("idleInput") : t("idle")} locked={chain.hub}>
+            <ManageTokenRow token={chain.idle} />
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <span className="text-muted-foreground">{t("strategyValueShare")}</span>
+              <span className="font-semibold tabular-nums">
+                {chain.idleSharePct.status === "available"
+                  ? formatPercent(Number(chain.idleSharePct.value), 1)
+                  : t("notAvailable")}
+              </span>
+            </div>
+          </BalanceCard>,
+        )
+      : null;
   if (node.kind === "group")
     return chain ? (
       <SpokeGroup
@@ -336,13 +363,13 @@ function GraphNode({
         chipTooltip={chain.name}
       />
     ) : null;
-  if (node.kind === "withdrawal") return <WithdrawalNode model={model} />;
+  if (node.kind === "withdrawal") return selectable(<WithdrawalNode model={model} />);
   if (node.kind === "income")
-    return (
+    return selectable(
       <BalanceCard title={t("income")} locked>
         <div className="text-muted-foreground text-xs">{hub?.name}</div>
         <ManageTokenRow token={model.income} />
-      </BalanceCard>
+      </BalanceCard>,
     );
   if (node.kind === "flow") {
     const flow = node.flow;
@@ -353,17 +380,27 @@ function GraphNode({
           ? build("fundBuilder.canvas.flow.bridgeAuto")
           : build("fundBuilder.canvas.flow.swapAuto");
     return (
-      <FlowPill
-        locked={flow !== "collectFees"}
-        content={{
-          text: label,
-          tooltip: label,
-          icon: flow === "collectFees" ? "coins" : flow === "bridge" ? "bridge" : "swap",
+      <div
+        onClickCapture={(event) => {
+          keyboardActivation.current = event.detail === 0;
         }}
-      />
+      >
+        <FlowPill
+          selected={selected}
+          onActivate={() =>
+            onSelect(inspection?.selectionId ?? node.id, keyboardActivation.current)
+          }
+          locked={flow !== "collectFees"}
+          content={{
+            text: label,
+            tooltip: label,
+            icon: flow === "collectFees" ? "coins" : flow === "bridge" ? "bridge" : "swap",
+          }}
+        />
+      </div>
     );
   }
-  return (
+  return selectable(
     <SpineCard
       title={
         node.kind === "deposit"
@@ -373,7 +410,7 @@ function GraphNode({
       caption={`${hub?.idle.symbol ?? ""} · ${hub?.name ?? ""}`}
       icon={node.kind === "deposit" ? "depositIn" : "withdrawOut"}
       locked
-    />
+    />,
   );
 }
 export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps) {
@@ -382,6 +419,7 @@ export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps)
   const [measurements, setMeasurements] = useState<ManageMeasurements>({});
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const layout = useMemo(() => layoutManageGraph(model, measurements), [model, measurements]);
+  const inspection = useMemo(() => deriveManageInspection(model, layout), [model, layout]);
   const viewport = useRef<CanvasViewportHandle>(null);
   const graph = useRef<HTMLDivElement>(null);
   const measure = useCallback((entries: ResizeObserverEntry[] = []) => {
@@ -495,7 +533,7 @@ export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps)
             key={node.id}
             data-manage-node={node.id}
             onFocus={() => {
-              if (node.kind === "position") viewport.current?.revealRect(node.rect);
+              if (node.kind !== "group") viewport.current?.revealRect(node.rect);
             }}
             className={
               node.kind === "group" ? "absolute [&_[data-network-chip]]:z-[4]" : "absolute z-[2]"
@@ -532,6 +570,7 @@ export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps)
             >
               <GraphNode
                 node={node}
+                inspection={inspection.nodes.find((item) => item.id === node.id) ?? null}
                 model={model}
                 selectedId={selectedId}
                 onSelect={(id, keyboard) => (keyboard ? onSelect(id, true) : onSelect(id))}

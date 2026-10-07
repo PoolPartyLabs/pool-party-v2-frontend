@@ -1314,7 +1314,7 @@
     },
     "subtitle": "戦略の管理 · ブロックを選択して残高を確認し、ポジションを管理できます。",
     "strategyBlocks": "戦略のブロック",
-    "selectionHelp": "キャンバスまたはこの一覧からポジションを選択してください。",
+    "selectionHelp": "キャンバスまたはこの一覧からブロックを選択してください。",
     "viewMandate": "運用方針を表示",
     "viewInvestor": "投資家として表示",
     "noSelection": "ブロックを選択して残高を確認し、ポジションを管理できます。",
@@ -1405,6 +1405,20 @@
       "dateUnavailable": "期限の日付は利用できません。",
       "metadataUnavailable": "検証済みのハブトークンのメタデータは利用できません。",
       "unknown": "出金期限データの鮮度を確認できません。データを検証するにはもう一度お試しください。"
+    },
+    "inspection": {
+      "deposit": "入金",
+      "withdraw": "出金",
+      "swap": "Swap · auto",
+      "collectFees": "Collect fees",
+      "feeSwap": "Swap · auto",
+      "bridge": "Bridge · auto",
+      "backToBlocks": "ブロックに戻る",
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "unavailable": "利用できません",
+      "inbound": "入金ブリッジ",
+      "outbound": "出金ブリッジ"
     }
   },
   "overviewV2": {

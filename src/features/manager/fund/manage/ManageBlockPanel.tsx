@@ -20,6 +20,7 @@ import { displayBounds, type PoolRange, usableTickBounds } from "../build/panel/
 import { usePanelPool } from "../build/panel/usePanelPool";
 import { ManageBlockHeader } from "./ManageBlockHeader";
 import { ManageTokenRow, ManageUsd } from "./ManageCanvas";
+import { ManageCollectFeesPanel } from "./ManageCollectFeesPanel";
 import {
   createManageDraft,
   manageDraftReducer,
@@ -28,57 +29,160 @@ import {
   validManageRange,
 } from "./manageDraft";
 import type { ManagePosition } from "./manageModel";
+import { managePositionIdentity } from "./manageModel";
+import { type ManageInspectableNode, manageInspectionLabelKey } from "./manageSelection";
 import { MANAGE_READ_TIMEOUT_MS, useManagePosition } from "./useManagePosition";
 
 export function ManageBlockPanel({
   fund,
   position,
   active,
+  inspection,
+  onBack,
 }: {
   fund: FundView;
   position: ManagePosition | null;
   active: boolean;
+  inspection?: ManageInspectableNode | null;
+  onBack?: () => void;
 }) {
   const t = useTranslations("manager.manageV2");
+  const inspectingFlow = inspection != null && inspection.kind !== "position";
+  const sameOrigin =
+    position != null &&
+    position.id ===
+      managePositionIdentity(fund.coreVault, position.chainId, position.positionKey) &&
+    inspection?.position?.id === position.id &&
+    inspection.chainId === position.chainId &&
+    inspection.position.core.toLowerCase() === fund.coreVault.toLowerCase() &&
+    inspection.position.positionKey.toLowerCase() === position.positionKey.toLowerCase();
+  const collecting = inspectingFlow && inspection?.kind === "collectFees";
+  const collectVisited = useRef(false);
+  if (active && collecting && sameOrigin && position?.kind === "liquidity")
+    collectVisited.current = true;
   return (
-    <section
-      className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-surface p-5"
-      aria-label={t("manageBlock")}
-    >
-      <h2 className="font-semibold text-sm">{t("manageBlock")}</h2>
+    <>
+      <div hidden={inspectingFlow}>
+        <section
+          className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-surface p-5"
+          aria-label={t("manageBlock")}
+        >
+          <h2 className="font-semibold text-sm">{t("manageBlock")}</h2>
+          {position ? (
+            <>
+              <ManageBlockHeader position={position} />
+              <div>
+                <p className="mb-1 text-muted-foreground text-xs">{t("positionValue")}</p>
+                <ManageUsd read={position.valueUsd} />
+              </div>
+              <div className="flex flex-col gap-2">
+                {position.tokens.map((token) => (
+                  <ManageTokenRow
+                    key={`${token.chainId}:${token.address}:${token.symbol}`}
+                    token={token}
+                  />
+                ))}
+              </div>
+              <Allocation position={position} />
+              {position.kind === "liquidity" ? (
+                <LiquiditySettings
+                  key={`${fund.coreVault.toLowerCase()}:${position.chainId}:${position.positionKey.toLowerCase()}`}
+                  fund={fund}
+                  position={position}
+                  active={active && !inspectingFlow}
+                />
+              ) : position.kind === "supply" ? (
+                <SupplySettings active={active && !inspectingFlow} />
+              ) : (
+                <p role="status">{t("notAvailable")}</p>
+              )}
+            </>
+          ) : (
+            <p className="text-muted-foreground text-sm">{t("noSelection")}</p>
+          )}
+        </section>
+      </div>
       {position ? (
         <>
-          <ManageBlockHeader position={position} />
-          <div>
-            <p className="mb-1 text-muted-foreground text-xs">{t("positionValue")}</p>
-            <ManageUsd read={position.valueUsd} />
-          </div>
-          <div className="flex flex-col gap-2">
-            {position.tokens.map((token) => (
-              <ManageTokenRow
-                key={`${token.chainId}:${token.address}:${token.symbol}`}
-                token={token}
+          {position.kind === "liquidity" && (collectVisited.current || collecting) ? (
+            <div hidden={!collecting}>
+              <CollectInspector
+                key={`${fund.coreVault.toLowerCase()}:${position.id}`}
+                position={position}
+                active={active && collecting && sameOrigin}
+                sameOrigin={sameOrigin}
+                onBack={onBack ?? (() => {})}
               />
-            ))}
-          </div>
-          <Allocation position={position} />
-          {position.kind === "liquidity" ? (
-            <LiquiditySettings
-              key={`${fund.coreVault.toLowerCase()}:${position.chainId}:${position.positionKey.toLowerCase()}`}
-              fund={fund}
-              position={position}
-              active={active}
-            />
-          ) : position.kind === "supply" ? (
-            <SupplySettings active={active} />
-          ) : (
-            <p role="status">{t("notAvailable")}</p>
-          )}
+            </div>
+          ) : null}
+          {inspectingFlow && (!collecting || position.kind !== "liquidity") ? (
+            <section className="flex min-w-0 flex-col gap-4 rounded-2xl border border-border bg-surface p-5">
+              <h2 className="font-semibold text-sm">{t("manageBlock")}</h2>
+              <ManageBlockHeader position={position} />
+              <h3 className="font-semibold text-sm">
+                {inspection.kind !== "position"
+                  ? t(manageInspectionLabelKey[inspection.kind])
+                  : t("notAvailable")}
+              </h3>
+              <p role="status" className="text-muted-foreground text-sm">
+                {t("notAvailable")}
+              </p>
+              <Button variant="secondary" className="min-h-11 w-full" onClick={onBack}>
+                {t("inspection.backToBlocks")}
+              </Button>
+            </section>
+          ) : null}
         </>
-      ) : (
-        <p className="text-muted-foreground text-sm">{t("noSelection")}</p>
-      )}
-    </section>
+      ) : null}
+    </>
+  );
+}
+/** Selected-origin read lifetime is independent from the visible position editor. */
+function CollectInspector({
+  position,
+  active,
+  sameOrigin,
+  onBack,
+}: {
+  position: ManagePosition;
+  active: boolean;
+  sameOrigin: boolean;
+  onBack(): void;
+}) {
+  const activated = useRef(false);
+  if (active) activated.current = true;
+  const detail = useManagePosition(
+    position.core,
+    position.chainId,
+    position.positionKey,
+    activated.current,
+  );
+  const { track } = useAnalytics();
+  useEffect(() => {
+    if (active && detail.status === "error")
+      track("app_error_shown", {
+        family: "v2",
+        surface: "manager",
+        error_code: detail.error ?? "SYSTEM_UNAVAILABLE",
+        error_origin: "upstream",
+      });
+  }, [active, detail.status, detail.error, track]);
+  return (
+    <ManageCollectFeesPanel
+      position={position}
+      read={{
+        identity: sameOrigin
+          ? managePositionIdentity(position.core, position.chainId, position.positionKey)
+          : "unmatched-origin",
+        status: detail.status,
+        position: sameOrigin ? detail.position : null,
+        error: detail.error,
+        // PP-INTEGRATION-POINT: POO-2276/2277 requires authoritative source freshness. A completed current DTO does not prove it.
+        freshness: "unknown",
+      }}
+      onRetry={detail.retry}
+      onBack={onBack}
+    />
   );
 }
 function Allocation({ position }: { position: ManagePosition }) {

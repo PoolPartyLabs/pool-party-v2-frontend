@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-085
  * @name ManageCanvas tests
- * @implements-rules-version v2 (POO-2270, POO-2271; extends POO-2226)
+ * @implements-rules-version v2 (POO-2274, POO-2270, POO-2271; extends POO-2226)
  * @analytics-events none, read-only graph tests.
  */
 import { describe, expect, it, vi } from "vitest";
@@ -445,5 +445,49 @@ it("POO-2246 [R1,R2] renders only native cash from a mixed model at the unchange
     expect(cash).not.toHaveTextContent("USDG");
     expect(cash.closest<HTMLElement>("[data-manage-node]")?.style.width).toBe("144px");
     expect(cash.closest<HTMLElement>("[data-manage-node]")?.style.height).toBe("96px");
+  }
+});
+
+// @rule POO-2274 R1/R3/R6: every actual graph node, including structural/derived nodes, is inspectable.
+it("offers exactly one native selection button on every actual node and keeps groups decorative", async () => {
+  const model = normalizeManageModel(mockFund);
+  const select = vi.fn();
+  renderWithProviders(<ManageCanvas model={model} selectedId={null} onSelect={select} />);
+  const nodes = [...document.querySelectorAll<HTMLElement>("[data-manage-node]")];
+  for (const node of nodes) {
+    const buttons = node.querySelectorAll<HTMLButtonElement>("button");
+    if (node.dataset.manageNode?.startsWith("group:")) {
+      expect(buttons).toHaveLength(0);
+      continue;
+    }
+    expect(buttons, node.dataset.manageNode).toHaveLength(1);
+    const button = buttons[0];
+    expect(button?.querySelector("button")).toBeNull();
+    await userEvent.click(button as HTMLButtonElement);
+    const expected = node.dataset.manageNode?.startsWith("position:")
+      ? node.dataset.manageNode.slice("position:".length)
+      : node.dataset.manageNode;
+    expect(select).toHaveBeenLastCalledWith(expected);
+  }
+});
+
+it("keyboard activation reports inspection intent for structural and flow nodes", async () => {
+  const model = normalizeManageModel(mockFund);
+  const select = vi.fn();
+  renderWithProviders(<ManageCanvas model={model} selectedId={null} onSelect={select} />);
+  for (const id of [
+    "deposit",
+    `cash:${model.hubChainId}`,
+    "withdrawal",
+    "income",
+    "withdraw",
+    `collect:${model.positions[1]?.id}`,
+    "bridge:4663",
+  ]) {
+    const button = document.querySelector<HTMLButtonElement>(`[data-manage-node="${id}"] button`);
+    if (!button) throw new Error(`missing ${id} inspection button`);
+    button.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(select).toHaveBeenLastCalledWith(id, true);
   }
 });

@@ -1314,7 +1314,7 @@
     },
     "subtitle": "Gerenciar estratégia · Selecione um bloco para ver os saldos e gerenciar a posição.",
     "strategyBlocks": "Blocos da estratégia",
-    "selectionHelp": "Selecione uma posição no canvas ou nesta lista.",
+    "selectionHelp": "Selecione um bloco no canvas ou nesta lista.",
     "viewMandate": "Ver mandato",
     "viewInvestor": "Ver como investidor",
     "noSelection": "Selecione um bloco para ver os saldos e gerenciar a posição.",
@@ -1405,6 +1405,20 @@
       "dateUnavailable": "A data do prazo não está disponível.",
       "metadataUnavailable": "Os metadados verificados do token do hub não estão disponíveis.",
       "unknown": "A atualidade dos prazos de saque não está disponível. Tente novamente para verificar os dados."
+    },
+    "inspection": {
+      "deposit": "Depósito",
+      "withdraw": "Saque",
+      "swap": "Swap · auto",
+      "collectFees": "Collect fees",
+      "feeSwap": "Swap · auto",
+      "bridge": "Bridge · auto",
+      "backToBlocks": "Voltar aos blocos",
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "unavailable": "Não disponível",
+      "inbound": "Bridge de entrada",
+      "outbound": "Bridge de saída"
     }
   },
   "overviewV2": {

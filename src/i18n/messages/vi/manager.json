@@ -1314,7 +1314,7 @@
     },
     "subtitle": "Quản lý chiến lược · Chọn một khối để xem số dư và quản lý vị thế.",
     "strategyBlocks": "Các khối chiến lược",
-    "selectionHelp": "Chọn một vị thế trên khung vẽ hoặc trong danh sách này.",
+    "selectionHelp": "Chọn một khối trên canvas hoặc từ danh sách này.",
     "viewMandate": "Xem ủy nhiệm đầu tư",
     "viewInvestor": "Xem với vai trò nhà đầu tư",
     "noSelection": "Chọn một khối để xem số dư và quản lý vị thế.",
@@ -1405,6 +1405,20 @@
       "dateUnavailable": "Ngày đến hạn không khả dụng.",
       "metadataUnavailable": "Siêu dữ liệu đã xác minh của token hub không khả dụng.",
       "unknown": "Không thể xác nhận độ mới của hạn rút tiền. Hãy thử lại để xác minh dữ liệu."
+    },
+    "inspection": {
+      "deposit": "Nạp tiền",
+      "withdraw": "Rút tiền",
+      "swap": "Swap · auto",
+      "collectFees": "Collect fees",
+      "feeSwap": "Swap · auto",
+      "bridge": "Bridge · auto",
+      "backToBlocks": "Quay lại các khối",
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "unavailable": "Chưa khả dụng",
+      "inbound": "Bridge đầu vào",
+      "outbound": "Bridge đầu ra"
     }
   },
   "overviewV2": {

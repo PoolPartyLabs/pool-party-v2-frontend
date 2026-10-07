@@ -1314,7 +1314,7 @@
     },
     "subtitle": "Strategie beheren · Selecteer een blok om de saldi te bekijken en de positie te beheren.",
     "strategyBlocks": "Strategieblokken",
-    "selectionHelp": "Selecteer een positie op het canvas of in deze lijst.",
+    "selectionHelp": "Selecteer een blok op het canvas of in deze lijst.",
     "viewMandate": "Mandaat bekijken",
     "viewInvestor": "Als belegger bekijken",
     "noSelection": "Selecteer een blok om de saldi te bekijken en de positie te beheren.",
@@ -1405,6 +1405,20 @@
       "dateUnavailable": "De deadlinedatum is niet beschikbaar.",
       "metadataUnavailable": "Geverifieerde metadata van de hub-token zijn niet beschikbaar.",
       "unknown": "De actualiteit van de opnamedeadlines is niet beschikbaar. Probeer het opnieuw om de gegevens te verifiëren."
+    },
+    "inspection": {
+      "deposit": "Storten",
+      "withdraw": "Opnemen",
+      "swap": "Swap · auto",
+      "collectFees": "Collect fees",
+      "feeSwap": "Swap · auto",
+      "bridge": "Bridge · auto",
+      "backToBlocks": "Terug naar blokken",
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "unavailable": "Niet beschikbaar",
+      "inbound": "Inkomende bridge",
+      "outbound": "Uitgaande bridge"
     }
   },
   "overviewV2": {

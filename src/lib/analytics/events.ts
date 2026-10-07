@@ -250,6 +250,8 @@ export const ANALYTICS_EVENTS = [
   // unchanged pathname, so `page_viewed` cannot see it and every per-operation rate in LANE-9/10/11
   // is a numerator with no denominator.
   "strategy_manage_viewed",
+  // POO-2274: real node inspection only; no monetary settlement or identity data.
+  "strategy_block_selected",
   "wallet_action_blocked",
   // LANE-5, discovery (POO-1185). Never carries the query string: a free-text field can hold a
   // pasted address.
@@ -989,7 +991,23 @@ export function joinAnalyticsMultiValue(values: readonly string[]): string {
   return [...values].sort().join(",") || ANALYTICS_MULTI_VALUE_EMPTY;
 }
 
+/** Bounded actual Manage node kind; never a node/core/position/token identity. POO-2274 v2. */
+export type AnalyticsManageNodeKind =
+  | "position"
+  | "cash"
+  | "idleInput"
+  | "idleOutput"
+  | "income"
+  | "deposit"
+  | "withdraw"
+  | "swap"
+  | "collectFees"
+  | "feeSwap"
+  | "bridge";
+
 export interface AnalyticsParams {
+  /** Navigation type for strategy_block_selected. No wallet/core/position identifiers. */
+  node_kind?: AnalyticsManageNodeKind;
   /** Bounded presentation protocol, never a pool address or Solana mint. POO-2281 v2. */
   preview_protocol?: "kamino" | "jupiter" | "raydium" | "orca";
   /** Local editor validation/blocked cause. Never raw error text. */

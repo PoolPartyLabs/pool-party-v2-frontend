@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-085
  * @name ManageCanvas stories
- * @implements-rules-version v2 (POO-2270, POO-2271, POO-2272; extends POO-2226, POO-2232)
+ * @implements-rules-version v2 (POO-2274, POO-2270, POO-2271, POO-2272; extends POO-2226, POO-2232)
  * @analytics-events none, fixture stories.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
@@ -43,6 +43,9 @@ export const InheritedTextSize: Story = {
 };
 export const LiquiditySelected: Story = { args: { selectedId: model.positions[1]?.id ?? null } };
 export const SupplySelected: Story = { args: { selectedId: model.positions[0]?.id ?? null } };
+export const CashSelected: Story = { args: { selectedId: `cash:${model.hubChainId}` } };
+export const WithdrawalSelected: Story = { args: { selectedId: "withdrawal" } };
+export const FeeFlowSelected: Story = { args: { selectedId: `collect:${model.positions[1]?.id}` } };
 function withCurrentRange(inRange: boolean | null) {
   return normalizeManageModel({
     ...mockFund,

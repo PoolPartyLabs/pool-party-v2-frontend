@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-004
  * @name ManageScreen tests
- * @implements-rules-version v1 (POO-2226)
+ * @implements-rules-version v2 (POO-2274); v1 (POO-2226)
  * @analytics-events none, controlled screen tests.
  */
 import { type AnchorHTMLAttributes, useState } from "react";
@@ -13,7 +13,10 @@ import {
   userEvent,
 } from "../../../../../tests/utils/renderWithProviders";
 import { ManageScreen } from "./ManageScreen";
+import { layoutManageGraph } from "./manageLayout";
 import type { ManagePosition } from "./manageModel";
+import { normalizeManageModel } from "./manageModel";
+import type { ManageInspectableNode } from "./manageSelection";
 
 vi.mock("@/i18n/navigation", () => ({
   Link: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props} />,
@@ -92,4 +95,190 @@ describe("Manage shell", () => {
     await userEvent.keyboard("{Enter}");
     expect(screen.getByRole("heading", { name: "Manage test block" })).toHaveFocus();
   });
+});
+
+// POO-2274: selection is navigation across all real nodes, not a position operation.
+it("lists every actual node by canonical identity and network topology", () => {
+  const model = normalizeManageModel(mockFund);
+  const nodes = layoutManageGraph(model).nodes.filter((node) => node.kind !== "group");
+  renderWithProviders(<ManageScreen fund={mockFund} panel={() => null} />);
+  const selectors = [...document.querySelectorAll<HTMLElement>("[data-manage-list-node]")];
+  expect(new Set(selectors.map((item) => item.dataset.manageListNode))).toEqual(
+    new Set(nodes.map((node) => node.id)),
+  );
+  const hub = document.querySelector<HTMLElement>(`[data-manage-network="${model.hubChainId}"]`);
+  const hubIds = [...(hub?.querySelectorAll<HTMLElement>("[data-manage-list-node]") ?? [])].map(
+    (item) => item.dataset.manageListNode,
+  );
+  expect(hubIds.slice(0, 3)).toEqual([
+    "deposit",
+    `idle:${model.hubChainId}`,
+    `cash:${model.hubChainId}`,
+  ]);
+  expect(hubIds.slice(-3)).toEqual(["withdrawal", "income", "withdraw"]);
+});
+
+it("keeps an LP draft while cash is inspected and Back restores selection and live focus", async () => {
+  renderWithProviders(
+    <ManageScreen
+      fund={mockFund}
+      panel={(position, active) => <DraftPanel position={position} active={active} />}
+    />,
+  );
+  const list = document.querySelectorAll<HTMLElement>("[data-manage-list-position]");
+  const lp = list[1] as HTMLElement;
+  await userEvent.click(lp);
+  await userEvent.type(screen.getByRole("textbox", { name: "Uniswap v4 draft" }), "retained");
+  const cash = document.querySelector<HTMLElement>("[data-manage-list-node='cash:42161']");
+  expect(cash).not.toBeNull();
+  await userEvent.click(cash as HTMLElement);
+  expect(screen.queryByRole("textbox", { name: "Uniswap v4 draft" })).not.toBeInTheDocument();
+  expect(
+    document.querySelector('[data-manage-node="cash:42161"] [aria-pressed="true"]'),
+  ).not.toBeNull();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Back to blocks" }));
+  expect(screen.getByRole("textbox", { name: "Uniswap v4 draft" })).toHaveValue("retained");
+  expect(lp).toHaveFocus();
+});
+
+it("Escape from an inspector restores a previous position and only emits bounded navigation", async () => {
+  window.dataLayer = [];
+  renderWithProviders(
+    <ManageScreen
+      fund={mockFund}
+      panel={(position, active) => <DraftPanel position={position} active={active} />}
+    />,
+  );
+  const lp = document.querySelectorAll<HTMLElement>(
+    "[data-manage-list-position]",
+  )[1] as HTMLElement;
+  await userEvent.click(lp);
+  const idle = document.querySelector<HTMLElement>("[data-manage-list-node='withdrawal']");
+  expect(idle).not.toBeNull();
+  (idle as HTMLElement).focus();
+  await userEvent.keyboard("{Enter}");
+  expect(screen.getByRole("heading", { name: "Manage block" })).toHaveFocus();
+  await userEvent.keyboard("{Escape}");
+  expect(lp).toHaveAttribute("aria-pressed", "true");
+  expect(lp).toHaveFocus();
+  expect(window.dataLayer).toContainEqual(
+    expect.objectContaining({
+      event: "strategy_block_selected",
+      family: "v2",
+      surface: "manager",
+      node_kind: "idleOutput",
+      chain_id: 42161,
+    }),
+  );
+  const events = window.dataLayer.filter((item) => item.event === "strategy_block_selected");
+  expect(events.some((item) => JSON.stringify(item).includes(mockFund.coreVault))).toBe(false);
+  expect(window.dataLayer.some((item) => String(item.event).endsWith("_completed"))).toBe(false);
+});
+
+it("a disappeared prior origin returns safely to blocks and does not retain a detached selector", async () => {
+  const view = renderWithProviders(
+    <ManageScreen
+      fund={mockFund}
+      panel={(position, active) => <DraftPanel position={position} active={active} />}
+    />,
+  );
+  const lp = document.querySelectorAll<HTMLElement>(
+    "[data-manage-list-position]",
+  )[1] as HTMLElement;
+  await userEvent.click(lp);
+  const cash = document.querySelector<HTMLElement>("[data-manage-list-node='cash:42161']");
+  expect(cash).not.toBeNull();
+  await userEvent.click(cash as HTMLElement);
+  view.rerender(
+    <ManageScreen
+      fund={{ ...mockFund, positionsSummary: { protocolVersion: "v2", positions: [] } }}
+      panel={(position, active) => <DraftPanel position={position} active={active} />}
+    />,
+  );
+  await userEvent.click(screen.getByRole("button", { name: "Back to blocks" }));
+  expect(screen.getByText("No selection")).toBeVisible();
+  expect(lp.isConnected).toBe(false);
+  expect(screen.getByRole("heading", { name: "Strategy blocks" })).toHaveFocus();
+});
+
+it("a position-owned flow keeps only its exact origin panel active and retains that draft", async () => {
+  const states: Array<{
+    position: ManagePosition | null;
+    active: boolean;
+    inspection?: ManageInspectableNode | null;
+  }> = [];
+  renderWithProviders(
+    <ManageScreen
+      fund={mockFund}
+      panel={(position, active, inspection) => {
+        states.push({ position, active, inspection });
+        return <DraftPanel position={position} active={active} />;
+      }}
+    />,
+  );
+  const model = normalizeManageModel(mockFund);
+  const lp = model.positions.find((position) => position.kind === "liquidity");
+  if (!lp) throw new Error("missing liquidity origin");
+  await userEvent.click(
+    document.querySelector(`[data-manage-list-position="${lp.id}"]`) as HTMLElement,
+  );
+  await userEvent.type(screen.getByRole("textbox", { name: "Uniswap v4 draft" }), "owned");
+  states.length = 0;
+  await userEvent.click(
+    document.querySelector(`[data-manage-list-node="collect:${lp.id}"]`) as HTMLElement,
+  );
+  expect(screen.getByRole("textbox", { name: "Uniswap v4 draft" })).toHaveValue("owned");
+  const active = states.filter((state) => state.position && state.active);
+  expect(active).toHaveLength(1);
+  expect(active[0]?.position?.id).toBe(lp.id);
+  expect(active[0]?.inspection?.kind).toBe("collectFees");
+  expect(active[0]?.inspection?.position?.id).toBe(lp.id);
+});
+
+it("history cannot resurrect an origin after removal and reappearance", async () => {
+  const renderPanel = (position: ManagePosition | null, active: boolean) => (
+    <DraftPanel position={position} active={active} />
+  );
+  const view = renderWithProviders(<ManageScreen fund={mockFund} panel={renderPanel} />);
+  await userEvent.click(
+    document.querySelectorAll<HTMLElement>("[data-manage-list-position]")[1] as HTMLElement,
+  );
+  await userEvent.click(
+    document.querySelector("[data-manage-list-node='cash:42161']") as HTMLElement,
+  );
+  view.rerender(
+    <ManageScreen
+      fund={{ ...mockFund, positionsSummary: { protocolVersion: "v2", positions: [] } }}
+      panel={renderPanel}
+    />,
+  );
+  view.rerender(<ManageScreen fund={mockFund} panel={renderPanel} />);
+  await userEvent.click(screen.getByRole("button", { name: "Back to blocks" }));
+  expect(screen.getByText("No selection")).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Strategy blocks" })).toHaveFocus();
+});
+
+it("a core change clears inspection history even when structural IDs survive", async () => {
+  const renderPanel = (position: ManagePosition | null, active: boolean) => (
+    <DraftPanel position={position} active={active} />
+  );
+  const view = renderWithProviders(<ManageScreen fund={mockFund} panel={renderPanel} />);
+  await userEvent.click(
+    document.querySelectorAll<HTMLElement>("[data-manage-list-position]")[1] as HTMLElement,
+  );
+  await userEvent.click(
+    document.querySelector("[data-manage-list-node='cash:42161']") as HTMLElement,
+  );
+  view.rerender(
+    <ManageScreen
+      fund={{ ...mockFund, coreVault: "0x0000000000000000000000000000000000000042" }}
+      panel={renderPanel}
+    />,
+  );
+  expect(screen.getByText("No selection")).toBeVisible();
+  expect(document.querySelector('[data-manage-list-node="cash:42161"]')).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
 });

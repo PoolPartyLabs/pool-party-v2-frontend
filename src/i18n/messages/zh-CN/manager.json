@@ -1314,7 +1314,7 @@
     },
     "subtitle": "管理策略 · 选择一个区块，查看余额并管理仓位。",
     "strategyBlocks": "策略区块",
-    "selectionHelp": "从画布或此列表中选择仓位。",
+    "selectionHelp": "在画布或此列表中选择一个区块。",
     "viewMandate": "查看投资授权",
     "viewInvestor": "以投资者身份查看",
     "noSelection": "选择一个区块，查看余额并管理仓位。",
@@ -1405,6 +1405,20 @@
       "dateUnavailable": "期限日期不可用。",
       "metadataUnavailable": "已验证的 hub 代币元数据不可用。",
       "unknown": "无法确认提现期限数据的新鲜度。请重试以验证数据。"
+    },
+    "inspection": {
+      "deposit": "存入",
+      "withdraw": "提取",
+      "swap": "Swap · auto",
+      "collectFees": "Collect fees",
+      "feeSwap": "Swap · auto",
+      "bridge": "Bridge · auto",
+      "backToBlocks": "返回区块",
+      "hub": "Hub",
+      "spoke": "Spoke",
+      "unavailable": "暂不可用",
+      "inbound": "入站跨链桥",
+      "outbound": "出站跨链桥"
     }
   },
   "overviewV2": {

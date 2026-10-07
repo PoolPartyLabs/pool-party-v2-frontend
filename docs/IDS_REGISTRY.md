@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 690 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 691 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1041,3 +1041,11 @@ The presentation contract is injected and is not the unconfirmed POO-2230 API DT
 PP-MGR-LIB-023, PP-MGR-CMP-059 and PP-MGR-CMP-054 retain their artifact identities. Build declares financial endpoints after node/hull placement, gray principal leaves the position laterally and preserves trailing manual conversion, and one shared outbound Bridge per nonempty spoke uses class/origin-specific ports. Collect has one centered green output through the existing fee Swap. Internal Bridge transfers remain semantic-only; full-route hover includes the position, Collect, conversion and return without highlighting siblings. Input/template structural geometry, block/drop IDs, ordering, controls and nominal Build dimensions are preserved.
 
 This delivered slice does not add Operating cash to Build's plan, token/cohort compatibility, explicit Repay/Withdraw debt steps or adapter/launch capability. The 48 design references are not 48 runtime acceptance results. Those boundaries remain tracked in the delivery plan and Linear. Validation: 522 focused tests, scoped TypeScript and changed-file Biome passed; independent reviewer findings for complete Income hover and trailing manual principal conversion were fixed and re-reviewed.
+
+## Manager all-node inspection, October 7, 2026 (POO-2274 v2)
+
+| ID | Artifact | Type | Design | Status | Linear | File / rules |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-067` | manageSelection, actual layout-node identity and network/topology inspection snapshot | Lib | n/a (code) | Implemented inspection slice | [POO-2274](https://linear.app/yeildbay/issue/POO-2274) | `src/features/manager/fund/manage/manageSelection.ts` @rules-v2 |
+
+PP-MGR-SCR-004 and PP-MGR-CMP-085/086 consume this identity without replacing position-origin drafts. PP-MGR-CMP-092/093 are mounted inside the existing authorized host; missing fee freshness/global queue remain unavailable. New strategy_block_selected emits bounded navigation only.

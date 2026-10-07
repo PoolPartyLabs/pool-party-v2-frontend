@@ -8,7 +8,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { assetTagSchema } from "@/lib/schemas";
-import { ANALYTICS_MULTI_VALUE_EMPTY, joinAnalyticsMultiValue } from "./events";
+import { ANALYTICS_EVENTS, ANALYTICS_MULTI_VALUE_EMPTY, joinAnalyticsMultiValue } from "./events";
 
 describe("joinAnalyticsMultiValue (POO-1882 [R4] [R6])", () => {
   // @rule R6: a comma-joined string of the identifiers, no spaces. GA4 event params accept only
@@ -55,4 +55,9 @@ describe("joinAnalyticsMultiValue (POO-1882 [R4] [R6])", () => {
     const everyTag = [...assetTagSchema.options];
     expect(joinAnalyticsMultiValue(everyTag).length).toBeLessThanOrEqual(100);
   });
+});
+
+// @rule POO-2274 R1/R6: block navigation has a real event, independent from financial settlement.
+it("declares the bounded V2 block selection event", () => {
+  expect(ANALYTICS_EVENTS).toContain("strategy_block_selected");
 });

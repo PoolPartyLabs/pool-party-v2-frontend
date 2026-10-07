@@ -292,3 +292,9 @@ Status: OPEN before production queue enablement under POO-2230. Confirm eligible
 Status: ANSWERED for the pure layout/rendering slice. Principal and position fees use separate origin/class ports, required existing manual conversion remains visible, and sharing one Bridge card does not represent a token/cohort merge, atomic conversion, transit receipt or hub settlement. Figma-only debt/Pendle/reference networks enable no protocol permission or transaction. No new monetary amount, fee, credential flow or custody action is introduced. Full-route hover is diagram navigation only.
 
 Status: OPEN for broader Build capability adoption. Operating cash requires its own native quantity/valuation source; token/cohort compatibility and explicit repayment/withdrawal sequence require a supported plan/executor contract. Current POO-2229/2230/2231 and CR-MGR financial/venue disclosures remain in force. Unit geometry and semantic validators are not mainnet settlement or48runtime acceptance evidence.
+
+## Manage all-node inspectors, October 7, 2026 (POO-2274 v2)
+
+Status: ANSWERED for read/navigation presentation. Actual block, network and canonical origin identity determine inspection. Available normalized hub Idle may be shown; absent cash/Income/global queue and unknown fee freshness remain explicit. No new personal-data identifier is emitted: selection analytics carries bounded node family and numeric chain only. Back/Retry/selection preserve draft ownership without signing or authorizing a money movement.
+
+Existing financial/custody/source/freshness/disclosure gates remain OPEN under POO-2230/2277/2278/2229/2231. Neither read success nor a visual route proves fee conversion, reserve assignment, account risk or hub settlement. This slice clears no execution or pending-recovery gate. Native browser acceptance remains with Murilo.
