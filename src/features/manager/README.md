@@ -756,3 +756,9 @@ Four focused header cases cover origin/subtype, operation pair and German identi
 POO-2270/2271 v2, PP-MGR-LIB-052/PP-MGR-CMP-085: measured natural card/pill rectangles own ports/hulls/buses. Position principal returns are gray, LP fees pass through centered Collect -> Swap -> Income with24px gap, Income exits gray, and actual cross-chain spokes share one outbound Bridge with disjoint principal/Income ports. Complete-path hover paints visible legs only. Widened flow pills and unequal branch heights cannot cross unrelated cards in the focused regression matrix. Cash144x96 requires known native quantity before an independent USD valuation appears.
 
 Supported runtime types are liquidity/supply/unsupported. Fifty focused tests across layout/canvas/model/GraphEdges, scoped TypeScript and Biome passed; no full suite/build/browser/deployment. Holding/debt, Build parity, all-node panels and real financial sources remain tracked separately.
+
+### Manage viewport chrome, POO-2272 v2
+
+ManageCanvas now consumes CanvasViewport's optional untransformed Hub overlay, using the authorized model chain's name/logo. Top/right inset24, full text and pointer-events-none preserve graph pan/zoom/controls. SpokeGroup opts into a natural32px chip with a real20px network mark and decorative0.035-opacity network watermark; Build keeps its original21px default.
+
+Hub Idle input/output/Income carry14px locks, derived Swap/Bridge12px locks. Collect and spoke Idle have no added lock; no mark disables the node. Existing models, financial reads and execution remain unchanged. The all-node inspection host is a later POO-2274 slice. Seventy-two focused tests passed and independent GPT-6.1-sol review found no blocking integrated change. Stories are authored; actual hit-testing/reflow and browser acceptance remain with Murilo.

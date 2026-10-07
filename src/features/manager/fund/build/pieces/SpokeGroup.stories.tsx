@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-053
  * @name SpokeGroup.stories
- * @implements-rules-version v1 (POO-2154 rules v1)
+ * @implements-rules-version v2 (POO-2272); v1 (POO-2154)
  * @analytics-events none, a story file of a presentational piece
  *
  * The spoke group and its network chip (POO-2154, handoff v1.2 [BB5], [I7], D5): a group with
@@ -40,6 +40,24 @@ type Story = StoryObj<typeof meta>;
 
 /** A spoke with two chains (canvas A): no close control, a spoke with chains cannot be removed. */
 export const WithChains: Story = {};
+
+/** Manage owns a natural 32px chip, its real 20px mark and a decorative network watermark. */
+export const ManageNetwork: Story = {
+  args: {
+    context: "manage",
+    networkLogo: <NetworkLogo network="robinhood" name={robinhood} size={20} />,
+  },
+};
+
+/** Long identity at the normal root size; browser root-font acceptance remains separate. */
+export const ManageLongNetwork: Story = {
+  args: {
+    context: "manage",
+    networkName: "Robinhood Chain",
+    networkLogo: <NetworkLogo network="robinhood" name="Robinhood Chain" size={20} />,
+    chipTooltip: "Robinhood Chain",
+  },
+};
 
 /** A new spoke with no chain yet: the close control on its chip (I7, D5). */
 export const EmptyWithClose: Story = {

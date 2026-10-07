@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-046
  * @name CanvasViewport.stories
- * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 rules v1)
+ * @implements-rules-version v2 (POO-2272); v1 (POO-2236, POO-2152)
  * @analytics-events none, a story file of a presentational container
  *
  * The Build canvas container (POO-2152, handoff v1.2 [AN5], [AN6], [AN7], [I8]) around a stand-in
@@ -104,6 +104,23 @@ export const Panning: Story = {
 /** No graph yet: the canvas, the controls at 100% and the hint, waiting for the layout. */
 export const WaitingForTheGraph: Story = {
   args: { graphSize: null, children: null },
+};
+
+/** Viewport identity stays outside the graph transform while the controls zoom the graph. */
+export const WithUntransformedOverlay: Story = {
+  args: {
+    overlay: (
+      <span className="absolute top-6 right-6 rounded-full border border-border bg-surface px-3 py-1.5 text-sm text-foreground">
+        Arbitrum
+      </span>
+    ),
+  },
+  play: async ({ canvasElement, userEvent }) => {
+    const overlay = canvasElement.querySelector("[data-canvas-overlay]");
+    await expect(overlay?.closest("[data-canvas-layer]")).toBeNull();
+    await userEvent.click(within(canvasElement).getByRole("button", { name: "Zoom in" }));
+    await expect(overlay).toHaveClass("pointer-events-none");
+  },
 };
 
 /**

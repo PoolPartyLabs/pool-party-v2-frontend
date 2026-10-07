@@ -22,7 +22,11 @@ import {
   screen,
   userEvent,
 } from "../../../../../../tests/utils/renderWithProviders";
-import { CanvasViewport, type CanvasViewportHandle } from "./CanvasViewport";
+import {
+  CanvasViewport,
+  type CanvasViewportHandle,
+  type CanvasViewportProps,
+} from "./CanvasViewport";
 import type { Size } from "./viewportMath";
 
 const WORKED_EXAMPLE_1: Size = { width: 608, height: 674 };
@@ -65,18 +69,13 @@ function Graph() {
   );
 }
 
-function renderViewport(
-  props: Partial<{
-    graphSize: Size | null;
-    onBackgroundClick: () => void;
-    viewportRef: React.Ref<CanvasViewportHandle>;
-  }> = {},
-) {
+function renderViewport(props: Partial<CanvasViewportProps> = {}) {
   return renderWithProviders(
     <CanvasViewport
       graphSize={props.graphSize === undefined ? WORKED_EXAMPLE_1 : props.graphSize}
       onBackgroundClick={props.onBackgroundClick}
       viewportRef={props.viewportRef}
+      overlay={props.overlay}
     >
       <Graph />
     </CanvasViewport>,
@@ -96,6 +95,31 @@ function layer(): HTMLElement {
 }
 
 describe("CanvasViewport: the container", () => {
+  it("[POO-2272 R1/R2] keeps an optional overlay outside the moving layer through pan, zoom and fit", async () => {
+    renderViewport({ overlay: <span data-testid="hub-overlay">Hub · Arbitrum</span> });
+    const badge = screen.getByTestId("hub-overlay");
+    const overlay = badge.closest<HTMLElement>("[data-canvas-overlay]");
+    expect(overlay).not.toBeNull();
+    expect(layer()).not.toContainElement(badge);
+    expect(canvas()).toContainElement(badge);
+    expect(overlay?.className).toContain("pointer-events-none");
+    const originalTransform = layer().style.transform;
+    fireEvent.pointerDown(canvas(), { button: 0, pointerId: 1, clientX: 200, clientY: 200 });
+    fireEvent.pointerMove(canvas(), { pointerId: 1, clientX: 240, clientY: 220 });
+    fireEvent.pointerUp(canvas(), { pointerId: 1, clientX: 240, clientY: 220 });
+    expect(layer().style.transform).not.toBe(originalTransform);
+    await userEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+    await userEvent.click(screen.getByRole("button", { name: "Fit to view" }));
+    expect(overlay?.style.transform).toBe("");
+    expect(screen.getByTestId("hub-overlay")).toBe(badge);
+  });
+
+  it("[POO-2272 R2] leaves Build without an overlay when the option is omitted", () => {
+    renderViewport();
+    expect(canvas().querySelector("[data-canvas-overlay]")).toBeNull();
+    expect(layer()).toContainElement(screen.getByTestId("graph"));
+  });
+
   // @rule AN5
   it("[AN5] is a 640 high box with radius 20 on the background token, clipping its content", () => {
     renderViewport();

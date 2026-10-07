@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-050
  * @name FlowPill.stories
- * @implements-rules-version v1 (POO-2154 rules v1)
+ * @implements-rules-version v2 (POO-2272); v1 (POO-2154)
  * @analytics-events none, a story file of a presentational piece
  *
  * The flow pills of the Build canvas (POO-2154, handoff v1.2 [BB3], [C7]): Swap · auto, Swap,
@@ -95,5 +95,17 @@ export const SelectedManualSwap: Story = {
     content: { text: storyT("flow.swap"), tooltip: storyT("tooltip.swap"), icon: "swap" },
     selected: true,
     onActivate: () => {},
+  },
+};
+
+/** An auto lock explains structure while the route remains keyboard inspectable. */
+export const LockedAutoRoute: Story = {
+  args: { locked: true, onActivate: () => {} },
+  play: async ({ canvasElement, userEvent }) => {
+    const route = within(canvasElement).getByRole("button");
+    await expect(route.querySelector("[data-flow-lock]")).toHaveAttribute("width", "12");
+    await userEvent.tab();
+    await expect(route).toHaveFocus();
+    await expect(route).toBeEnabled();
   },
 };

@@ -18,6 +18,45 @@ import { ManageCanvas } from "./ManageCanvas";
 import { available, normalizeManageModel } from "./manageModel";
 
 describe("POO-2270/2271 v2 canvas", () => {
+  it("[POO-2272 R1/R4] keeps canonical Hub chrome outside the moving graph and applies locks by role", async () => {
+    const model = normalizeManageModel(mockFund);
+    renderWithProviders(<ManageCanvas model={model} selectedId={null} onSelect={vi.fn()} />);
+    const badge = document.querySelector<HTMLElement>("[data-manage-hub]");
+    if (!badge) throw new Error("Hub overlay missing");
+    expect(badge).toHaveTextContent("Hub");
+    expect(badge).toHaveTextContent(model.chains.find((chain) => chain.hub)?.name ?? "missing");
+    expect(badge).not.toHaveTextContent("Fixed");
+    expect(badge.closest("[data-canvas-layer]")).toBeNull();
+    expect(badge.closest("[data-canvas-overlay]")).not.toBeNull();
+    const graph = document.querySelector<HTMLElement>("[data-canvas-layer]");
+    const original = graph?.style.transform;
+    await userEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+    expect(graph?.style.transform).not.toBe(original);
+    expect(badge.style.transform).toBe("");
+    for (const id of [`idle:${model.hubChainId}`, "withdrawal", "income"]) {
+      const lock = document.querySelector(`[data-manage-node='${id}'] [data-manage-lock]`);
+      expect(lock).toHaveAttribute("width", "14");
+      expect(lock).toHaveAttribute("aria-hidden", "true");
+    }
+    for (const chain of model.chains.filter((chain) => !chain.hub)) {
+      expect(
+        document.querySelector(`[data-manage-node='idle:${chain.chainId}'] [data-manage-lock]`),
+      ).toBeNull();
+      const chip = document.querySelector(
+        `[data-manage-node='group:${chain.chainId}'] [data-network-chip]`,
+      );
+      expect(chip?.className).toContain("min-h-8");
+      expect(chip?.querySelector("img")).toHaveAttribute("width", "20");
+    }
+    const flowNodes = [...document.querySelectorAll<HTMLElement>("[data-flow-pill]")];
+    for (const pill of flowNodes) {
+      const isCollect = pill.textContent?.includes("Collect fees");
+      const lock = pill.querySelector("[data-flow-lock]");
+      if (isCollect) expect(lock).toBeNull();
+      else expect(lock).toHaveAttribute("width", "12");
+    }
+  });
+
   it("shows compact native cash without an internal network label and keeps USD independent", () => {
     const model = normalizeManageModel(mockFund);
     const chain = model.chains[0];
