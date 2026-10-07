@@ -376,6 +376,12 @@ export function inspectJupiterQuote(
     )
   )
     return empty;
+  const includedInput = q.costs.reduce(
+    (total, entry) =>
+      entry.inclusion === "included-in-input" ? total + BigInt(entry.amount.raw) : total,
+    BigInt(0),
+  );
+  if (includedInput > BigInt(q.input.raw)) return empty;
   const view: JupiterQuoteView = { ...empty, quote: q };
   if (q.status !== "available" || !confirmed(q.source)) return view;
   const expiry = q.inspection.quoteValidity;

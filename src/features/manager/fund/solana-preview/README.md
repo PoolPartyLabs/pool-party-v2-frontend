@@ -33,7 +33,7 @@ Official marks are shipped under `public/protocols/solana-preview/`. Solana, Ray
 
 `solanaSchemas.ts` (PP-MGR-LIB-063) validates case-sensitive 32-byte base58 identities, native SOL lamports versus SPL mint amounts and exact raw-to-decimal strings. Read states keep declared sourceAsOf/slot/provenance. Confirmed zero requires raw zero and observed confirmed/finalized commitment. The schema does not attest accounts, owners or freshness.
 
-`solanaCatalog.ts` (PP-MGR-LIB-064) keeps the same four local choices consumed by previewModel, narrows Kamino to mainnet USDC Supply and separates Orca/Raydium/Jupiter. Holding remains contract-only. Catalog reads and execution are unavailable; neither fixture nor observed values may promote that catalog. Jupiter inspection keeps managed order/execute distinct from composable build and quote expiry distinct from blockhash validity. No actual quote/signing is added.
+`solanaCatalog.ts` (PP-MGR-LIB-064) keeps the same four venue choices consumed by previewModel, narrows Kamino to mainnet USDC Supply and separates Orca/Raydium/Jupiter. Holding was contract-only in S1; S5 adds a separate custody drawing control without changing the venue list. Catalog reads and execution are unavailable; neither fixture nor observed values may promote that catalog. Jupiter inspection keeps managed order/execute distinct from composable build and quote expiry distinct from blockhash validity. No actual quote/signing is added.
 
 All 77 focused schema/catalog/model/screen/route tests, scoped Biome and TypeScript passed. Remaining five POO-2291 slices and POO-2239/2240/2261/2262 integration remain open.
 
@@ -51,3 +51,13 @@ The local Supply panel reuses PP-MGR-CMP-094 for full-account Current/After risk
 The Configure host mounts this section only for positive LP allocation. Zero or invalid allocation defers it. A missing or mismatched protocol context stays Not available; the production host seeds no prices or ticks. A verified context without a change handler is read-only. Estimated composition remains unavailable without a verified liquidity quote, rather than assuming a token split.
 
 The pinned Rust-to-TypeScript math ports retain Apache-2.0 grants and upstream notices in `LICENSES/` and `THIRD_PARTY_NOTICES.md`. No protocol SDK proves Pool Party execution capability. Thirty-one focused range/model/host/screen tests pass. Scoped TypeScript and changed-file Biome are the validation scope; native browser acceptance stays with Murilo.
+
+## Holding and Jupiter, POO-2291 S5
+
+`solanaHoldingModel.ts` (PP-MGR-LIB-070) validates injected custody identities, exact u64 quantities, Buy/Sell intentions and separately inspected Jupiter quotes. Native SOL and WSOL remain distinct; explicit wrap/unwrap plans never become implicit swaps. Compatible input bypasses conversion. Sell destinations are Idle output and its principal Bridge, without LP fees or Income routing. Prices, USD valuation and allocation remain independently sourced.
+
+`SolanaHoldingPresenter.tsx` (PP-MGR-CMP-096) keeps choice, Buy/Sell and review inline, with complete values and source provenance. `SolanaJupiterInspector` presents the quote independently: managed order/execute versus composable build, quote expiry versus blockhash validity, measured costs and their declared inclusion. Unknown, stale, unconfirmed and future-dated sources do not establish valid execution. Included-input fees are summed with BigInt and cannot exceed the total input. Confirm is always disabled.
+
+The hidden local editor adds Holding separately from its four venue choices, using a generic custody icon. Its USDC drawing bypasses conversion; its WSOL drawing receives automatic input/output conversions on gray principal paths. No LP range, APY, Collect or account risk is added to custody. Configure passes null custody origin, reads, intentions, quotes and clock; drawing labels confer no financial identity. The standalone presenter accepts injected intentions but this slice contains no editable transaction amount form, market discovery, RPC or wallet operation.
+
+Independent review caught a future transaction timestamp and included-input costs exceeding the input; both were reproduced before correction. Seventy-seven focused tests across model, presenter, catalog and hosts passed, along with scoped TypeScript, changed-file Biome and all11 locales. Test/Storybook fixtures remain isolated. Real custody, token discovery, quotes and execution stay POO-2239/2240/2261/2262; browser acceptance remains with Murilo.

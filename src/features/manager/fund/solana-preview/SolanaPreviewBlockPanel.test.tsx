@@ -7,6 +7,50 @@ import {
 } from "../../../../../tests/utils/renderWithProviders";
 import { SolanaPreviewBlockPanel } from "./SolanaPreviewBlockPanel";
 
+describe("local Holding and Jupiter hosts", () => {
+  const handlers = {
+    onEdit: vi.fn(),
+    onApply: vi.fn(),
+    onDiscard: vi.fn(),
+    onClose: vi.fn(),
+    onUnavailable: vi.fn(),
+  };
+  it("mounts custody inspection without inventing an origin, balance, risk or LP fields", () => {
+    renderWithProviders(
+      <SolanaPreviewBlockPanel
+        block={{ id: "local-holding", protocol: "holding", allocationBps: 0, pair: "SOL / USDC" }}
+        edit={{ allocation: "0", pair: "SOL / USDC" }}
+        error={null}
+        applied={false}
+        {...handlers}
+      />,
+    );
+    const holding = screen.getByRole("region", { name: "Holding" });
+    expect(within(holding).getAllByText("Not available").length).toBeGreaterThan(0);
+    expect(within(holding).getByRole("button", { name: "Buy" })).toBeDisabled();
+    expect(within(holding).getByRole("button", { name: "Sell" })).toBeDisabled();
+    expect(screen.queryByRole("region", { name: "Price range" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Account risk" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Collect" })).toBeNull();
+    expect(screen.queryByText("Supply APY")).toBeNull();
+  });
+  it("mounts a separate Jupiter inspection without a fabricated quote or validity", () => {
+    renderWithProviders(
+      <SolanaPreviewBlockPanel
+        block={{ id: "local-jupiter", protocol: "jupiter", allocationBps: 0, pair: "SOL / USDC" }}
+        edit={{ allocation: "0", pair: "SOL / USDC" }}
+        error={null}
+        applied={false}
+        {...handlers}
+      />,
+    );
+    const quote = screen.getByRole("region", { name: "Jupiter Swap" });
+    expect(within(quote).getByText("Quote details are unavailable.")).toBeVisible();
+    expect(within(quote).queryByText("Valid")).toBeNull();
+    expect(screen.queryByRole("region", { name: "Holding" })).toBeNull();
+  });
+});
+
 describe("local Kamino lending risk host", () => {
   it("shows unavailable full-account risk without no-debt or LP controls", () => {
     renderWithProviders(

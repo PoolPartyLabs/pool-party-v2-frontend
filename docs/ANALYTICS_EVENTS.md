@@ -13,7 +13,9 @@
 | `solana_preview_blocked` | Invalid individual/aggregate allocation, unapplied edits or unavailable execution blocks intent | `preview_protocol` when applicable, `preview_reason`, `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
 | `solana_preview_error` | A genuine child-render error reaches the retry boundary | bounded `error_code`, `error_origin`, `has_local_changes` | PP-MGR-SCR-009, SolanaPreviewErrorBoundary |
 
-Protocol parameters are limited to `kamino`, `jupiter`, `raydium`, `orca`. Reasons are bounded enums.
+POO-2291 S5 extends the bounded `preview_protocol` vocabulary to `holding` alongside `kamino`, `jupiter`, `raydium` and `orca`. Holding identifies a custody drawing, not a venue. No mint, pool, account, quantity or quote is tracked. Local Apply is a drawing event and never financial settlement.
+
+Block parameters are limited to `kamino`, `jupiter`, `raydium`, `orca`, `holding`. Reasons are bounded enums.
 All emissions use the existing consent-aware `useAnalytics().track()` path. No wallet, mint, local
 amount, pair, exception text or transaction data is emitted. Apply describes a local drawing change;
 there is no submitted/completed financial funnel because the editor cannot submit an operation.

@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 695 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 697 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1014,7 +1014,7 @@ The mounted ReviewPhase retains its current PP-MGR-CMP-077 ID (the issue's PP-MG
 | `PP-MGR-LIB-063` | Solana local identity, amount and read-state schemas | Lib | n/a (code) | Implemented, S1 | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaSchemas.ts` |
 | `PP-MGR-LIB-064` | Solana local protocol catalog with explicit unavailable execution | Lib | n/a (code) | Implemented, S1 | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaCatalog.ts` |
 
-S1 provides structural identity, exact amount conversion and declared-provenance contracts. The catalog consumer retains the same four local choices. Holding remains contract-only. Financial catalog fields and all execution capabilities are unavailable; these types do not attest an external read, owner, allowlist or freshness. Remaining POO-2291 slices stay open.
+S1 provides structural identity, exact amount conversion and declared-provenance contracts. The catalog consumer retains the same four venue choices. Holding was contract-only in S1; S5 adds a separate custody drawing/presenter. Financial catalog fields and all execution capabilities are unavailable; these types do not attest an external read, owner, allowlist or freshness. Remaining POO-2291 slices stay open.
 
 
 ## Manager inline identity header (POO-2272, rules v2)
@@ -1066,5 +1066,14 @@ PP-MGR-CMP-086/089 mount this read-only section only for Aave Supply/local Kamin
 | --- | --- | --- | --- | --- | --- | --- |
 | `PP-MGR-LIB-069` | solanaRangeModel, separate Orca/Raydium Q64 math, canonical mint/grid/price validation | Lib | n/a (code) | Implemented local range slice | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaRangeModel.ts` @rules-v1 |
 | `PP-MGR-CMP-095` | SolanaRangePresenter, Current/draft range, wrapping prices, provenance and read-only states | Component | [Orca 8679:382](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8679-382), [Raydium 8679:2](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8679-2) | Integrated with unavailable live context | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/SolanaRangePresenter.tsx` @rules-v1 |
+
+## Solana Holding and Jupiter inspection, POO-2291 S5
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-070` | solanaHoldingModel, exact custody/read/intention and distinct Jupiter validity/cost projection | Lib | n/a (code) | Implemented local inspection slice | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaHoldingModel.ts` @rules-v1 |
+| `PP-MGR-CMP-096` | SolanaHoldingPresenter and SolanaJupiterInspector, separate injected custody/quote presentation and inline Buy/Sell review | Component | [Holding 8678:202](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-202) | Integrated with unavailable live identity/reads | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/SolanaHoldingPresenter.tsx` @rules-v1 |
+
+PP-MGR-CMP-088/089 and PP-MGR-SCR-009 add a separate custody drawing control while retaining the four venue choices. Same-token USDC bypasses conversion; WSOL uses gray automatic principal conversions without LP fees, range or account risk. New APIs and signing authority remain unavailable.
 
 PP-MGR-CMP-089 mounts range inspection only for positive LP allocation. Same-snapshot protocol/program/mints/grid and liquidity composition remain POO-2240/2261. The separate upstream Apache-2.0 grants are preserved.

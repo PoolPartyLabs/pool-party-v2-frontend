@@ -20,7 +20,7 @@ import { useUnsavedChanges } from "@/lib/hooks/unsavedChanges";
 import {
   createPreviewState,
   hasUnappliedChanges,
-  PREVIEW_PROTOCOLS,
+  PREVIEW_BLOCKS,
   type PreviewAction,
   previewReducer,
   totalAllocationBps,
@@ -43,6 +43,7 @@ export function SolanaStrategyPreviewScreen({ onExit }: SolanaStrategyPreviewScr
     jupiter: t("solanaPreview.protocols.jupiter"),
     raydium: t("solanaPreview.protocols.raydium"),
     orca: t("solanaPreview.protocols.orca"),
+    holding: t("solanaPreview.holding.title"),
   };
   const [state, dispatch] = useReducer(previewReducer, undefined, createPreviewState);
   const [pending, setPending] = useState<PreviewAction | null>(null);
@@ -136,7 +137,7 @@ export function SolanaStrategyPreviewScreen({ onExit }: SolanaStrategyPreviewScr
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <span className="mr-2 text-muted-foreground text-sm">{t("solanaPreview.addBlock")}</span>
-        {PREVIEW_PROTOCOLS.map((protocol) => (
+        {PREVIEW_BLOCKS.map((protocol) => (
           <Button
             key={protocol}
             variant="secondary"

@@ -73,6 +73,52 @@ const protocols: PreviewBlock[] = ["kamino", "jupiter", "raydium", "orca"].map(
   }),
 );
 describe("canvas geometry regressions", () => {
+  // @rule POO-2291 R6: Holding routes use conversion when required, gray principal and no LP fees.
+  it("routes Holding principal through its own automatic conversions without LP collection", () => {
+    const graph = getPreviewGeometry([
+      { id: "holding-a", protocol: "holding", allocationBps: 3000, pair: "SOL / USDC" },
+    ]);
+    expect(graph.nodes["holding-a-input-swap"]).toBeDefined();
+    expect(graph.nodes["holding-a-output-swap"]).toBeDefined();
+    expect(graph.nodes["holding-a-collect"]).toBeUndefined();
+    expect(graph.connections.find((edge) => edge.id === "holding-a-entry")).toMatchObject({
+      source: "solana-idle",
+      target: "holding-a-input-swap",
+      tone: "muted",
+    });
+    expect(graph.connections.find((edge) => edge.id === "holding-a-principal")).toMatchObject({
+      source: "holding-a",
+      target: "holding-a-output-swap",
+      tone: "muted",
+    });
+    expect(graph.connections.find((edge) => edge.id === "holding-a-return-idle")).toMatchObject({
+      source: "holding-a-output-swap",
+      target: "solana-idle-output",
+      tone: "muted",
+    });
+    expect(
+      graph.connections.some(
+        (edge) => edge.source.startsWith("holding-a") && edge.tone === "income",
+      ),
+    ).toBe(false);
+  });
+  it("bypasses conversion when a Holding drawing uses the same USDC as Idle", () => {
+    const graph = getPreviewGeometry([
+      { id: "holding-usdc", protocol: "holding", allocationBps: 3000, pair: "USDC / SOL" },
+    ]);
+    expect(graph.nodes["holding-usdc-input-swap"]).toBeUndefined();
+    expect(graph.nodes["holding-usdc-output-swap"]).toBeUndefined();
+    expect(graph.connections.find((edge) => edge.id === "holding-usdc-entry")).toMatchObject({
+      source: "solana-idle",
+      target: "holding-usdc",
+      tone: "muted",
+    });
+    expect(graph.connections.find((edge) => edge.id === "holding-usdc-principal")).toMatchObject({
+      source: "holding-usdc",
+      target: "solana-idle-output",
+      tone: "muted",
+    });
+  });
   // @rule R8: every drawing size includes native cash centered to the right of Idle.
   it.each([
     { blocks: [] },
@@ -124,7 +170,12 @@ describe("canvas geometry regressions", () => {
     ]);
   });
   it("aligns complete orthogonal connection endpoints to the actual source/target boundaries", () => {
-    const graph = getPreviewGeometry(protocols);
+    const mixedBlocks: PreviewBlock[] = [
+      ...protocols,
+      { id: "holding-converted", protocol: "holding", allocationBps: 0, pair: "SOL / USDC" },
+      { id: "holding-direct", protocol: "holding", allocationBps: 0, pair: "USDC / SOL" },
+    ];
+    const graph = getPreviewGeometry(mixedBlocks);
     expect(graph.connections.length).toBeGreaterThan(10);
     for (const connection of graph.connections) {
       const boundary = (id: string, point: { x: number; y: number }) => {
@@ -150,18 +201,24 @@ describe("canvas geometry regressions", () => {
         expect(point.x === previous.x || point.y === previous.y).toBe(true);
       });
     }
-    for (const block of protocols) {
+    for (const block of mixedBlocks) {
       const path = graph.connections.find(
         (connection) => connection.id === `${block.id}-principal`,
       );
       expect(path).toBeDefined();
       expect(path?.points[0]?.x).toBe(getPreviewNode(graph.nodes, block.id).x);
-      expect(path?.target).toBe("solana-idle-output");
+      expect(path?.target).toBe(
+        block.id === "holding-converted" ? `${block.id}-output-swap` : "solana-idle-output",
+      );
       expect(path?.tone).toBe("muted");
     }
   });
   it("never shares a collinear segment between gray principal and green fees", () => {
-    const graph = getPreviewGeometry(protocols);
+    const graph = getPreviewGeometry([
+      ...protocols,
+      { id: "holding-converted", protocol: "holding", allocationBps: 0, pair: "SOL / USDC" },
+      { id: "holding-direct", protocol: "holding", allocationBps: 0, pair: "USDC / SOL" },
+    ]);
     expect(graph.edges.some((edge) => edge.tone === "income")).toBe(true);
     const segments = (tone: string) =>
       graph.edges

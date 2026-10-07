@@ -7,7 +7,9 @@
 import { SOLANA_LOCAL_PROTOCOLS, type SolanaLocalProtocol } from "./solanaCatalog";
 
 export const PREVIEW_PROTOCOLS = SOLANA_LOCAL_PROTOCOLS;
-export type PreviewProtocol = SolanaLocalProtocol;
+/** Holding is a custody block, separate from the four venue/protocol choices. */
+export type PreviewProtocol = SolanaLocalProtocol | "holding";
+export const PREVIEW_BLOCKS: readonly PreviewProtocol[] = [...PREVIEW_PROTOCOLS, "holding"];
 export type PreviewPair = "SOL / USDC" | "USDC / SOL";
 export interface PreviewBlock {
   id: string;

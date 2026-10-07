@@ -1008,8 +1008,8 @@ export type AnalyticsManageNodeKind =
 export interface AnalyticsParams {
   /** Navigation type for strategy_block_selected. No wallet/core/position identifiers. */
   node_kind?: AnalyticsManageNodeKind;
-  /** Bounded presentation protocol, never a pool address or Solana mint. POO-2281 v2. */
-  preview_protocol?: "kamino" | "jupiter" | "raydium" | "orca";
+  /** Bounded local block kind (Holding is custody), never a pool address or mint. POO-2291 v1. */
+  preview_protocol?: "kamino" | "jupiter" | "raydium" | "orca" | "holding";
   /** Local editor validation/blocked cause. Never raw error text. */
   preview_reason?: "allocation_invalid" | "allocation_total" | "unsupported" | "unapplied_changes";
   /** Whether leaving the local visual editor discards any local configuration. */

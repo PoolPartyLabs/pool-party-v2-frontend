@@ -10,7 +10,7 @@
  */
 "use client";
 
-import { X } from "lucide-react";
+import { Wallet, X } from "lucide-react";
 import Image from "next/image";
 import { useFormatter, useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
@@ -22,7 +22,7 @@ import { SpineCard } from "../build/pieces/SpineCard";
 import { SpokeGroup } from "../build/pieces/SpokeGroup";
 import { isLiquidityBlock, type PreviewBlock, type PreviewProtocol } from "./previewModel";
 
-/** Official marks are decorative wherever a visible protocol name accompanies them. */
+/** Venue marks and the generic custody icon accompany visible block names. */
 export function PreviewLogo({
   protocol,
   className = "size-5",
@@ -30,6 +30,7 @@ export function PreviewLogo({
   protocol: PreviewProtocol | "solana";
   className?: string;
 }) {
+  if (protocol === "holding") return <Wallet aria-hidden="true" className={className} />;
   return (
     <Image
       src={`/protocols/solana-preview/${protocol}.svg`}
@@ -167,31 +168,49 @@ export function getPreviewGeometry(blocks: PreviewBlock[]): {
     const x = 1090 + index * 250;
     const cx = x + 88;
     const lp = isLiquidityBlock(block.protocol);
+    // Local drawing compatibility only. SOL in this custody choice denotes WSOL, not cash.
+    const custodyConversion = block.protocol === "holding" && block.pair === "SOL / USDC";
+    const inputSwap = lp || custodyConversion;
     nodes[block.id] = rect(x, 400, 176, 62);
+    if (inputSwap) nodes[`${block.id}-input-swap`] = rect(x, 335, 176, 26);
+    if (custodyConversion) nodes[`${block.id}-output-swap`] = rect(x, 505, 176, 26);
     if (lp) {
-      nodes[`${block.id}-input-swap`] = rect(x, 335, 176, 26);
       nodes[`${block.id}-collect`] = rect(x, 610, 176, 26);
       nodes[`${block.id}-auto-swap`] = rect(x, 655, 176, 26);
     }
-    const target = lp ? `${block.id}-input-swap` : block.id;
+    const target = inputSwap ? `${block.id}-input-swap` : block.id;
     connect(`${block.id}-entry`, "muted", "solana-idle", target, [
       point("solana-idle", "bottom"),
       [718, 305],
       [cx, 305],
       point(target, "top"),
     ]);
-    if (lp)
+    if (inputSwap)
       connect(`${block.id}-swap-entry`, "muted", target, block.id, [
         point(target, "bottom"),
         point(block.id, "top"),
       ]);
     // Principal exits laterally. Kamino interest follows principal, never the LP fee bus.
-    connect(`${block.id}-principal`, "muted", block.id, "solana-idle-output", [
-      point(block.id, "left"),
-      [x - 24, 431],
-      [x - 24, 561],
-      point("solana-idle-output", "right"),
-    ]);
+    if (custodyConversion) {
+      connect(`${block.id}-principal`, "muted", block.id, `${block.id}-output-swap`, [
+        point(block.id, "left"),
+        [x - 24, 431],
+        [x - 24, 518],
+        point(`${block.id}-output-swap`, "left"),
+      ]);
+      connect(`${block.id}-return-idle`, "muted", `${block.id}-output-swap`, "solana-idle-output", [
+        point(`${block.id}-output-swap`, "bottom"),
+        [cx, 561],
+        point("solana-idle-output", "right"),
+      ]);
+    } else {
+      connect(`${block.id}-principal`, "muted", block.id, "solana-idle-output", [
+        point(block.id, "left"),
+        [x - 24, 431],
+        [x - 24, 561],
+        point("solana-idle-output", "right"),
+      ]);
+    }
     if (lp) {
       connect(`${block.id}-fees`, "income", block.id, `${block.id}-collect`, [
         point(block.id, "right"),
@@ -237,6 +256,7 @@ export function SolanaPreviewCanvas({
     jupiter: t("solanaPreview.protocols.jupiter"),
     raydium: t("solanaPreview.protocols.raydium"),
     orca: t("solanaPreview.protocols.orca"),
+    holding: t("solanaPreview.holding.title"),
   };
   const geometry = useMemo(() => getPreviewGeometry(blocks), [blocks]);
   const { width, height, nodes, edges, connections, spoke } = geometry;
@@ -398,15 +418,28 @@ export function SolanaPreviewCanvas({
         {blocks.map((block) => {
           const x = getPreviewNode(nodes, block.id).x;
           const name = protocolNames[block.protocol];
-          const title = block.protocol === "kamino" ? t("solanaPreview.supplyUsdc") : block.pair;
+          const title =
+            block.protocol === "kamino"
+              ? t("solanaPreview.supplyUsdc")
+              : block.protocol === "holding"
+                ? block.pair === "SOL / USDC"
+                  ? "WSOL"
+                  : "USDC"
+                : block.pair;
           const lp = isLiquidityBlock(block.protocol);
+          const inputSwap = Boolean(nodes[`${block.id}-input-swap`]);
+          const outputSwap = Boolean(nodes[`${block.id}-output-swap`]);
           return (
             <div key={block.id}>
-              {lp ? (
+              {inputSwap ? (
                 <At x={x} y={getPreviewNode(nodes, `${block.id}-input-swap`).y}>
                   <FlowPill
                     content={{
-                      text: t("solanaPreview.swap"),
+                      text: t(
+                        block.protocol === "holding"
+                          ? "solanaPreview.autoSwap"
+                          : "solanaPreview.swap",
+                      ),
                       tooltip: t("solanaPreview.fixed"),
                       icon: "swap",
                     }}
@@ -449,6 +482,17 @@ export function SolanaPreviewCanvas({
                   </span>
                 </div>
               </At>
+              {outputSwap ? (
+                <At x={x} y={getPreviewNode(nodes, `${block.id}-output-swap`).y}>
+                  <FlowPill
+                    content={{
+                      text: t("solanaPreview.autoSwap"),
+                      tooltip: t("solanaPreview.fixed"),
+                      icon: "swap",
+                    }}
+                  />
+                </At>
+              ) : null}
               {lp ? (
                 <>
                   <At x={x} y={getPreviewNode(nodes, `${block.id}-collect`).y}>

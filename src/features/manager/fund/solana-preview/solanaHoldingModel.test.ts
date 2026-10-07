@@ -211,6 +211,34 @@ describe("Holding injected custody and intents", () => {
   });
 });
 describe("Jupiter quote inspection is not execution", () => {
+  // @rule R7: a fee already included in total input cannot exceed that input, alone or in aggregate.
+  it.each([
+    "single",
+    "aggregate",
+  ] as const)("rejects %s included fees above total input", (kind) => {
+    const q = quote();
+    const cost = (id: string, raw: string) => ({
+      id,
+      category: "platform" as const,
+      amount: { token: q.input.token, raw },
+      inclusion: "included-in-input" as const,
+    });
+    q.costs =
+      kind === "single"
+        ? [cost("fee-a", "1500000001")]
+        : [cost("fee-a", "1000000000"), cost("fee-b", "500000001")];
+    expect(inspectJupiterQuote(buy(), q, at).quote).toBeNull();
+  });
+  it("keeps explicit included fees up to input total separate from additional network cost", () => {
+    const q = quote();
+    q.costs.push({
+      id: "fee-a",
+      category: "platform",
+      amount: { token: q.input.token, raw: q.input.raw },
+      inclusion: "included-in-input",
+    });
+    expect(inspectJupiterQuote(buy(), q, at).quote).not.toBeNull();
+  });
   it("R7 keeps quote time and BigInt blockhash validity independent at exact expiry", () => {
     const q = quote();
     expect(inspectJupiterQuote(buy(), q, at)).toMatchObject({
