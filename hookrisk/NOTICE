@@ -1,77 +1,71 @@
 hookrisk
 Copyright (c) 2026 hookrisk contributors
 
-================================================================================
-Licensing, per directory
-================================================================================
+Current first-party distribution policy
+======================================
 
-This repository is MIT licensed with one deliberate exception. Mixing licences
-within a project is worth avoiding when possible, but here it is the honest
-description of what the code actually does.
+Pool Party-authored CLI, harness, corpus, action and other independent tooling
+are offered under Pool Party Source-Available License 1.0, subject to the
+Licensor having sufficient rights. See LICENSE and the repository LICENSING.md.
+The policy covers current work and future first-party changes, not only a final
+release. Existing contributors retain their ownership unless separately assigned.
 
-  detectors/            AGPL-3.0-only        (see detectors/LICENSE)
-  everything else       MIT                  (see LICENSE)
+All valid earlier MIT, AGPL and other grants remain effective, including for
+unchanged licensed portions in later versions. Exact previous notices are kept
+at ../LICENSES/MIT-legacy-hookrisk.txt and ../LICENSES/NOTICE-legacy-hookrisk.txt.
+Changing a notice cannot withdraw those grants.
 
-Why detectors/ is AGPL-3.0-only
--------------------------------
-`slither-hookrisk` imports `slither.detectors.abstract_detector` and subclasses
-it. Slither is AGPL-3.0-only, and a plugin that links against it and depends on
-its internals is a derivative work. Publishing that subdirectory under a
-permissive licence would be a claim we cannot support.
+The Slither-linked detectors/ plugin remains AGPL-3.0-only. Its LICENSE and
+package declaration are unchanged. This exception also applies to modifications
+required to retain AGPL; it is not subject to incompatible commercial restrictions.
 
-Why the rest is MIT
--------------------
-The CLI, harness, schema, corpus and GitHub Action never link Slither. They
-invoke `slither` as a separate process and parse its JSON output. That is mere
-aggregation, so the AGPL does not propagate to them.
+Third-party components and combined work
+=======================================
 
-================================================================================
-Third-party components
-================================================================================
+BlockSec HookScan: https://github.com/blocksecteam/hookscan
+  AGPL component invoked as an isolated process/container. No HookScan source is
+  redistributed here; users obtain the engine separately. Attribution in reports
+  remains intact.
 
-BlockSec HookScan — https://github.com/blocksecteam/hookscan
-  AGPL-3.0. Invoked as an isolated container process and never linked. **No
-  HookScan code is redistributed in this repository**; users obtain the image
-  themselves with `docker pull futuretech6/hookscan`, and the engine is opt-in.
-  Findings it produces are attributed to BlockSec in the report, the manifest and
-  the SARIF output.
+Slither: https://github.com/crytic/slither
+  AGPL-3.0-only. The detectors/ plugin links its internals. The independent CLI
+  invokes analysis through external processes; source permissions remain separate.
 
-Slither — https://github.com/crytic/slither
-  AGPL-3.0. Runtime dependency of detectors/, installed by the user. Not vendored.
+Uniswap V4 Core/Periphery, OpenZeppelin, Forge Standard Library and Solmate:
+  Retrieved at revisions in harness/deps.lock. Licenses differ by repository and
+  source file, including MIT, Apache, BUSL, AGPL and UNLICENSED declarations.
+  Some harness files import Solmate mocks and Uniswap test contracts; probes use
+  the upstream Pool library. At the Solmate pin, imported MockERC20/ERC20 files
+  declare MIT. The V4 Pool library declares BUSL, and upstream test routers and
+  deployers declare UNLICENSED. Do not infer uniform MIT or an absent linkage
+  from the old broad repository notice. The detector's Slither AGPL is separate.
+  Custom notices on independently authored files do not relicense upstream source
+  or compiled combined artifacts. Their redistribution/use requires the actual
+  upstream rights and compatible terms. This policy change does not establish
+  permission for a dependency whose upstream grant is missing or uncertain.
 
-Uniswap v4-core, v4-periphery — https://github.com/Uniswap
-  MIT. Fetched at pinned commits by `make deps`. Not vendored; see
-  harness/deps.lock.
+ajv: https://github.com/ajv-validator/ajv
+  MIT. The CLI runtime dependency retains its package license and attribution.
 
-OpenZeppelin uniswap-hooks, openzeppelin-contracts — https://github.com/OpenZeppelin
-  MIT. Fetched at pinned commits. The production hooks are compiled into the
-  negative corpus as a false-positive gate.
-
-forge-std — https://github.com/foundry-rs/forge-std
-  MIT/Apache-2.0. Fetched at a pinned commit.
-
-solmate — https://github.com/transmissions11/solmate
-  AGPL-3.0. Test-only transitive dependency of v4-core; not linked by any
-  hookrisk component and not redistributed.
-
-ajv — https://github.com/ajv-validator/ajv
-  MIT. The CLI's only runtime dependency, used to validate the manifest against
-  its published schema.
-
-================================================================================
 Framework attribution
-================================================================================
+=====================
 
 The scoring rubric in schema/framework-rubric.json is a port of the Uniswap Hooks
-Security Framework (https://github.com/uniswapfoundation/security-framework),
-pinned at commit e7e8da52fd5717b6eb4517ea779b766f63148c41.
+Security Framework: https://github.com/uniswapfoundation/security-framework
+Revision: e7e8da52fd5717b6eb4517ea779b766f63148c41.
 
-Where the framework is unambiguous, the port reproduces it. Where it is not, the
-port makes an interpretation and marks it `interpretation: true` with a pointer
-to the FEEDBACK.md item reporting the gap upstream. That distinction is
-load-bearing: a reader must be able to tell which values carry the Foundation's
-authority and which carry ours.
+Upstream text keeps its attribution and separate rights. Permission covering
+reproduced prose was not established by this licensing review; the root policy
+does not claim exclusive ownership of it. Original interpretations are marked
+as such and do not carry the Foundation's authority.
 
-The Uniswap Foundation does not review, audit, endorse or certify this tool, this
-port, or any score derived from either. Use of the framework is voluntary and
-self-directed, and scores are not security assurances.
+The Uniswap Foundation does not review, audit, endorse or certify this tool,
+the framework port or any score derived from it. A score is not a security audit.
+
+More information
+================
+
+Repository scope: ../LICENSING.md
+Third-party record: ../THIRD_PARTY_NOTICES.md
+Contribution rights: ../CONTRIBUTING.md
+Public source: https://github.com/PoolPartyLabs/pool-party-v2-frontend

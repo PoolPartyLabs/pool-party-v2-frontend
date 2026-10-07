@@ -12,6 +12,22 @@
 
 The demo entry is the authenticated Manager Console. Select **V2** in the header to open the new builder. This is an **internal alpha**; the frontend, API and contracts are separate deployments. A merged PR records code delivery, while the deployed revision and transaction receipts record a working live deployment.
 
+## Source availability and licensing
+
+**All Pool Party-authored frontend code, tools, tests, scripts, documentation and
+original assets, including the current implementation and future changes, follow
+[Pool Party Source-Available License 1.0](LICENSE).** Reading, local tests, security
+audits and contribution forks are permitted. Separate production deployments,
+SaaS/white labels and commercial redistribution of restricted material require
+prior express written authorization. Official-platform use and independent
+adapters/integrations are permitted as specified in the license.
+
+**Earlier MIT/AGPL grants and third-party licenses remain valid.** They cannot be
+revoked by this policy, including for unchanged portions in future versions. This
+repository is publicly readable source-available software; the current restricted
+license is not OSI-approved open source. Read the [scope/history map](LICENSING.md),
+[third-party notices](THIRD_PARTY_NOTICES.md) and [contribution policy](CONTRIBUTING.md).
+
 ## Which parts of your code have been produced during the Buildathon?
 
 **All new Fund Contracts V2 frontend functionality submitted here was developed during the Arbitrum Open House Singapore Buildathon.** The current work covers **Mandate → Build → Review → Launch**, the V2 API integration and fund views. Implementation and publication commits are dated **October 3–4, 2026**. Pool Party's application foundation and earlier hackathon projects already existed and are identified separately below.

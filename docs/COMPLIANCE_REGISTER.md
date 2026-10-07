@@ -142,6 +142,29 @@ Verification: RESOLVED for these engineering disclosure boundaries. The UI separ
 
 The existing fund/protocol/custody disclosures and any existing launch blockers continue to apply. The local recovery journal contains wallet/core addresses, requested budget and transaction evidence only on the device. It is not an analytics payload. Pending/unknown submissions remain locked until verified; loss of browser storage loses this device-local recovery evidence. Separate tabs do not have an atomic distributed submission lock. No public-audit or safety guarantee is added.
 
+## Repository license transition, 2026-10-07 (POO-2268 v2)
+
+Status: OPEN for legal/provenance verification. Murilo expressly authorized
+merging the completed frontend distribution policy on October 7, 2026.
+That owner approval is recorded as delivery authorization, not evidence that
+the rights-verification questions below have been answered. Existing MIT grants
+and documented use of the unchanged official platform remain effective.
+
+The owner requested a current-and-future first-party source-available policy
+covering all authored frontend/tool material. Before asserting exclusive rights
+or granting separate commercial sublicenses, confirm the contracting
+entity/signatory, contributor copyright assignments or
+sufficient grants, the new explicit contribution permission, actual current
+grant/hackathon/audit commitments, and upstream compatibility. Hookrisk detector
+AGPL, font/upstream notices and copied protocol content keep their own rights.
+Framework-prose permission and harness combined-work obligations require review.
+
+Valid previous MIT/AGPL grants cannot be revoked. No product fee, custody,
+transaction behavior, personal-data use or deployed artifact changes in this PR.
+The complete scope, history and review questions are in [LICENSING.md](../LICENSING.md)
+and [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md). Owner: Murilo / authorized
+legal representative. Evidence: [POO-2268](https://linear.app/yeildbay/issue/POO-2268).
+
 ## CR-MGR-POO2270, 2026-10-07, canvas and inline-panel plan
 
 Scope: documentation/planning only, [POO-2270](https://linear.app/yeildbay/issue/POO-2270)..[POO-2279](https://linear.app/yeildbay/issue/POO-2279). Existing CR-MGR-015/019/020 and venue/custody disclosures remain applicable; no existing blocking item is resolved. See [delivery plan](manager-canvas-panels-plan-2026-10-07.md).
