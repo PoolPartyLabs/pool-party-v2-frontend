@@ -207,6 +207,14 @@ Verification pending before runtime enablement:
 
 Status: OPEN for these future product disclosures and financial integration meanings. The planning-only PR enables no wallet operation and introduces no new financial claim on screen. Each implementation slice records its evidence and remaining launch conditions here before exposure.
 
+### CR-MGR-POO2270 revision v2, October7, per-area Manager plan
+
+Status: OPEN; no prior launch blocker is resolved. The latest plan replaces two visible outbound Bridges with one shared node and separately typed Principal/Income ports. Diagram convergence is not ledger convergence, conversion, atomicity or settlement. Native cash quantity and independent USD estimate require their own sources; USDG and native SOL identities must not be relabelled USDC/WSOL.
+
+Lending Current/After requires account/obligation debt, collateral/oracle and scenario provenance. Confirmed no debt is not inferred from a Supply-only diagram. Charts Market reference attribution and data/renderer license must be verified before integrated charts expose a claim; annotations cannot change financial settings. Entry/Exit fees remain unavailable until their base/currency/timing/recipient/conditions and authoritative source are defined, separately from existing manager/protocol charges.
+
+The owner-approved Solana local editor is a client preview, not server authorization or proof of deployed programs/custody/execution. Asset legal character, venue terms and transaction disclosure remain verified per real integration. Isolated optional Jev development tooling sends bounded model state remotely; metadata-only logs are not content redaction. It adds no product personal-data flow or financial capability, and current credentials/conversation material must not enter public docs/Slack. Evidence and delivery gates: [plan v2](manager-canvas-panels-plan-2026-10-07.md), POO-2288/2289/2290/2291 and existing POO-2229/2230/2231/2277/2278/2279.
+
 ## Manager range readability, 2026-10-07 (POO-2284 v1)
 
 Verification: RESOLVED for this editor/display correction. Complete readable bound values and locale-safe decimals do not change the meaning of a reviewed range, create a price source or bypass canonical tick validation. The marker represents current price within the draft's displayed price interval; token percentages are estimated liquidity value shares, not live holdings, guaranteed execution amounts or returns. Authoritative current-position range status remains separate. Existing inclusive boundary and Full 50/50 display conventions are retained.

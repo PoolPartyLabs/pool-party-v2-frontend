@@ -292,3 +292,11 @@ POO-2237 introduces no endpoint or wallet operation. Manual Swap tokens are cano
 ## V2 Review transaction fees, 2026-10-07 (POO-2289 v1)
 
 PP-MGR-CMP-090 `ReviewTransactionFeesCard.tsx` shows Entry fee and Exit fee as Not available. Their authoritative meaning, units, beneficiary, trigger, calculation base and fee provenance are not supplied to this card. The existing manager fees, instant withdrawal fee and protocol flow fee are separate; none is used as a fallback. The seam is informational and adds no API call, wallet operation, mock amount or launch gate. Real fee values and disclosures require a separately defined read contract and compliance answers before activation. PP-MGR-CMP-077 ReviewPhase mounts it after Your fees and before Investor terms; existing validation, Review events and provisioning remain unchanged.
+
+## Manager per-area plan revision, 2026-10-07 (PP-MGR-DOC-001 v2)
+
+The current [plan v2](manager-canvas-panels-plan-2026-10-07.md) preserves the preceding source evidence and separates ready visual work from real enablement. POO-2270/2271/2273 adopt stable graph ports and one shared outbound Bridge with distinct Principal/Income origins; local Arbitrum has no artificial Bridge. POO-2288 adds an optional semantic contract/validator and real graph consumer, without claiming old layout routing is corrected.
+
+POO-2290 requires an authorized account/obligation risk source and separate After simulation: a Supply row cannot prove zero debt. POO-2289 shows unavailable Entry/Exit fees without substituting manager fees, flow charge or instant withdrawal fee. POO-2291 extends the existing local Solana editor; canceled POO-2282 grants do not block that scope. Solana mint/program identity, native SOL versus WSOL, real custody/market/discovery/execution remain explicit POO-2239/2240/2261/2262 boundaries.
+
+Charts screenshots are Market reference, not AUM/pool execution or LP valuation. Exact feed/history/license/engine and protected annotations remain POO-2279 readiness. Jev Gateway is isolated optional development tooling; it adds no frontend/API/RPC integration, and measured pilot results do not justify global enablement.
