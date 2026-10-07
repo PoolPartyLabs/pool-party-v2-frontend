@@ -324,3 +324,13 @@ it("rejects a 24-hour deadline instead of converting it to tomorrow", () => {
   expect(view.status).toBe("partial");
   expect(view.buckets[0]?.deadlines).toEqual([]);
 });
+
+// @rule R4: duplicate bucket identity cannot identify reliable groups across refreshes.
+it("keeps independent summary but suppresses buckets with duplicated identities", () => {
+  const value = read();
+  const view = projectManageIdleOutput(origin, {
+    ...value,
+    snapshot: { ...snapshot(), buckets: [firstBucket(), { ...firstBucket(), relation: "later" }] },
+  });
+  expect(view).toMatchObject({ status: "partial", summary: { requested: "25000" }, buckets: [] });
+});

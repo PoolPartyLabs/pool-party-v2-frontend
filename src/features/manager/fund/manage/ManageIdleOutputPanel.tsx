@@ -55,17 +55,27 @@ export function ManageIdleOutputPanel({
       month: "short",
       day: "numeric",
     }).format(new Date(`${value}T00:00:00Z`));
-  const timestamp = (value: string) =>
-    new Intl.DateTimeFormat(locale, {
+  const timestamp = (value: string) => {
+    const fraction = value.match(/\.(\d+)(?:Z|[+-]\d{2}:\d{2})$/)?.[1];
+    const parts = new Intl.DateTimeFormat(locale, {
       timeZone: view.timezone ?? "UTC",
       year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-      second: value.slice(17, 19) !== "00" || /\.\d+/.test(value) ? "2-digit" : undefined,
+      second: value.slice(17, 19) !== "00" || fraction ? "2-digit" : undefined,
       hourCycle: "h23",
-    }).format(new Date(value));
+    }).formatToParts(new Date(value));
+    const separator =
+      new Intl.NumberFormat(locale).formatToParts(1.1).find((part) => part.type === "decimal")
+        ?.value ?? ".";
+    return parts
+      .map((part) =>
+        part.type === "second" && fraction ? `${part.value}${separator}${fraction}` : part.value,
+      )
+      .join("");
+  };
   const number = (value: string) => {
     const [whole = "0", fraction] = value.split(".");
     const integer = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(

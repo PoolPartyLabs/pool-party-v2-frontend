@@ -108,6 +108,18 @@ export function projectManageIdleOutput(
     return { ...identified, reason: "missing" };
   const source = { ...identified, asOf: snapshot.asOf, timezone: snapshot.timezone };
   const summary = snapshot.summary ? projectAmounts(snapshot.summary, origin.token.decimals) : null;
+  const bucketIds = new Set<string>();
+  for (const bucket of snapshot.buckets) {
+    if (!bucket.id.trim() || bucketIds.has(bucket.id))
+      return {
+        ...source,
+        status: "partial",
+        summary,
+        summaryIsSubtotal: !snapshot.complete,
+        buckets: [],
+      };
+    bucketIds.add(bucket.id);
+  }
   let partial = !snapshot.complete;
   const buckets = snapshot.buckets.map((bucket): IdleOutputBucketView => {
     const date = validDate(bucket.date) ? bucket.date : null;

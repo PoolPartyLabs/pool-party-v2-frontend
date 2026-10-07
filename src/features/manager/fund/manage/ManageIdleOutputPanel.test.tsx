@@ -210,6 +210,22 @@ it("preserves supplied sub-minute deadlines", () => {
   expect(screen.getByText("Reserve by Oct 7, 2026, 18:00:59")).toBeInTheDocument();
 });
 
+// @rule R1/R4: distinct fractional deadlines must not collapse into one displayed time.
+it("keeps fractional deadline precision supplied by the queue", () => {
+  const value = read();
+  const first = value.snapshot?.buckets[0];
+  if (!value.snapshot || !first) throw new Error("fixture");
+  render({
+    ...value,
+    snapshot: {
+      ...value.snapshot,
+      buckets: [{ ...first, deadlines: ["2026-10-07T18:00:00.125Z", "2026-10-07T18:00:00.7501Z"] }],
+    },
+  });
+  expect(screen.getByText("Reserve by Oct 7, 2026, 18:00:00.125")).toBeInTheDocument();
+  expect(screen.getByText("Reserve by Oct 7, 2026, 18:00:00.7501")).toBeInTheDocument();
+});
+
 // @rule R4: unknown freshness is not a stale snapshot or a confirmed read.
 it("shows unknown freshness separately without exposing quantities", () => {
   const value = read();

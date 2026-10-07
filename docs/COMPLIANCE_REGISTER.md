@@ -279,3 +279,10 @@ Status: ANSWERED for navigation and read preparation only. Hiding an editor does
 ## Collect position fees disclosure, October 7, 2026 (POO-2276 v1)
 
 Status: ANSWERED for the read presenter only. Ordered uncollected position fees are distinct from principal balances, realized hub Income and available USD value. Missing metadata/freshness cannot authorize manual collection; stale copy requires actual stale evidence. A cross-chain route description does not claim current conversion/atomicity or hub credit. All Collect preview/execution/settlement disclosures remain OPEN under POO-2277/2278. No signing or money movement is added.
+
+
+## Idle output read presenter, October 7, 2026 (POO-2275 v1)
+
+Status: ANSWERED for the injected read-only presenter. Queue dates, deadline timezone, snapshot freshness, requested/reserved/still-needed cohorts and complete-empty confirmation are supplied rather than inferred from browser time or payoutReserve. Coverage is a same-cohort display ratio, not reserve allocation or eligibility. No USD total, cutoff, withdrawal guarantee, signing or payout action is introduced. Unknown/stale reads hide their quantities. Test fixtures remain outside real data paths.
+
+Status: OPEN before production queue enablement under POO-2230. Confirm eligible-cohort inclusion, cancellation/partial-payment/in-flight treatment, authoritative deadlines and timezone, assigned reserves, completeness, snapshot freshness and required withdrawal disclosures. The presenter clears no financial/custody blocker; host focus/Back and native-browser rendering remain separate acceptance.
