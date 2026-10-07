@@ -305,3 +305,9 @@ Existing financial/custody/source/freshness/disclosure gates remain OPEN under P
 Status: ANSWERED for source-preserving read-only presentation. No protocol safety guarantee or financial advice is asserted. Missing full-account identity remains unavailable. No debt requires a complete fresh confirmed zero, not a Supply row. Health factor and estimated liquidation price retain declared scenario, units, assets, method, assumptions and oracle evidence; positive price is scenario-specific. Fixture evidence is visibly labeled and never fills a production source.
 
 Status: OPEN before live account risk enablement. Confirm adapter-derived effective Aave eMode/isolation and Kamino elevation-group parameters, accrued debt, fresh oracle rules, Current/After hypothesis consistency, scenario validity/expiry and venue disclosures. Current financial/custody gates remain. The local Kamino host has no account read; it does not authorize Borrow or Multiply.
+
+## Solana LP range presentation, October 8, 2026 (POO-2291 S3/S4)
+
+Status: ANSWERED for local read/draft presentation. Current position and edited range remain separate; neither In range nor a protocol grid implies a yield or safety guarantee. Complete prices preserve precision, mint orientation and provenance. Unknown/stale/liquidity-zero states remain distinct, and a missing liquidity quote supplies no composition. The production host receives no sample pool, price or ticks. The pinned Orca/Raydium math ports preserve upstream Apache-2.0 notices and their independent licensing boundary.
+
+Status: OPEN before live protocol or execution enablement under POO-2240/2261/2262. Verify deployed programs, pool/mint/token-program restrictions, transfer fees/extensions, position authority, actual adapter capabilities, fresh quotes and operation-specific min/max/fees disclosures. Tick math or a local Apply action clears no custody, venue or signing gate.

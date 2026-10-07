@@ -1587,6 +1587,26 @@
       "jupiter": "Jupiter Swap",
       "raydium": "Raydium CLMM",
       "orca": "Orca Whirlpools"
+    },
+    "protocolRange": {
+      "currentRange": "Range actual de la posición",
+      "draftRange": "Range propuesto",
+      "fullOnly": "Esta pool de Orca solo admite el range Full.",
+      "stale": "Los datos de la pool están desactualizados. La edición del range no está disponible.",
+      "invalidRange": "Usa precios válidos alineados con el tick spacing de esta pool.",
+      "zeroLiquidity": "Esta posición no tiene liquidez.",
+      "presets": {
+        "5": "±5%",
+        "10": "±10%",
+        "20": "±20%"
+      },
+      "source": "Fuente",
+      "asOf": "Actualizado el",
+      "slot": "Slot",
+      "commitment": "Nivel de confirmación",
+      "program": "Programa",
+      "network": "Red",
+      "fixture": "Ejemplo ilustrativo, no es una pool observada."
     }
   }
 }

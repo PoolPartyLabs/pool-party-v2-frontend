@@ -41,3 +41,13 @@ All 77 focused schema/catalog/model/screen/route tests, scoped Biome and TypeScr
 ## Kamino account risk, POO-2290
 
 The local Supply panel reuses PP-MGR-CMP-094 for full-account Current/After risk. Its account identity and reads are unavailable. Neither the USDC Supply drawing nor the absence of a Borrow block establishes No debt. Principal, interest and rewards remain separate data contracts. LP range/Collect, Borrow and Multiply are not added. The shared presenter retains verified scenarios/provenance when injected in a test harness; those fixtures do not become catalog or production data.
+
+## Orca and Raydium ranges, POO-2291 S3/S4
+
+`solanaRangeModel.ts` (PP-MGR-LIB-069) uses separate official protocol Q64 tick math. Orca and Raydium keep their own rounding, extreme-price rules and grids; canonical mint ordering compares the decoded public-key bytes. Human prices include the pool token decimals. Local inversion changes display orientation, while the saved ticks and current position remain canonical. Orca full-range-only pools reject custom ranges. A confirmed zero-liquidity position is distinct from an unavailable or stale read.
+
+`SolanaRangePresenter.tsx` (PP-MGR-CMP-095) renders verified Current separately from the controlled draft, with grid-aligned presets, adjustments and locale-aware blur commits. Complete values wrap at rest and retain native labeled inputs for editing. Changing the canonical snapshot or losing editing capability clears pending field text without committing it. Sources, timestamps, slot, commitment and program are explicit; fixture provenance stays visible.
+
+The Configure host mounts this section only for positive LP allocation. Zero or invalid allocation defers it. A missing or mismatched protocol context stays Not available; the production host seeds no prices or ticks. A verified context without a change handler is read-only. Estimated composition remains unavailable without a verified liquidity quote, rather than assuming a token split.
+
+The pinned Rust-to-TypeScript math ports retain Apache-2.0 grants and upstream notices in `LICENSES/` and `THIRD_PARTY_NOTICES.md`. No protocol SDK proves Pool Party execution capability. Thirty-one focused range/model/host/screen tests pass. Scoped TypeScript and changed-file Biome are the validation scope; native browser acceptance stays with Murilo.

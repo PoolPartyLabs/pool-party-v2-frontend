@@ -31,3 +31,47 @@ describe("local Kamino lending risk host", () => {
     expect(screen.queryByText(/Borrow|Multiply/)).not.toBeInTheDocument();
   });
 });
+
+describe("local Solana protocol range host", () => {
+  it.each([
+    "orca",
+    "raydium",
+  ] as const)("mounts %s range presentation without seeding a pool, price or tick draft", (protocol) => {
+    renderWithProviders(
+      <SolanaPreviewBlockPanel
+        block={{ id: `local-${protocol}`, protocol, allocationBps: 500, pair: "SOL / USDC" }}
+        edit={{ allocation: "5", pair: "SOL / USDC" }}
+        error={null}
+        applied={false}
+        onEdit={vi.fn()}
+        onApply={vi.fn()}
+        onDiscard={vi.fn()}
+        onClose={vi.fn()}
+        onUnavailable={vi.fn()}
+      />,
+    );
+    const range = screen.getByRole("region", { name: "Price range" });
+    expect(within(range).getByRole("status")).toHaveTextContent("Not available");
+    expect(within(range).queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Account risk" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Full" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Tick spacing: 64|0\.3%|1\.0000/)).not.toBeInTheDocument();
+  });
+  it("defers the range section when the local LP allocation is zero", () => {
+    renderWithProviders(
+      <SolanaPreviewBlockPanel
+        block={{ id: "deferred-orca", protocol: "orca", allocationBps: 0, pair: "SOL / USDC" }}
+        edit={{ allocation: "0", pair: "SOL / USDC" }}
+        error={null}
+        applied={false}
+        onEdit={vi.fn()}
+        onApply={vi.fn()}
+        onDiscard={vi.fn()}
+        onClose={vi.fn()}
+        onUnavailable={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("region", { name: "Price range" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Composition")).not.toBeInTheDocument();
+  });
+});

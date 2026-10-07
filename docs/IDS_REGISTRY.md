@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 693 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 695 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1059,3 +1059,12 @@ PP-MGR-SCR-004 and PP-MGR-CMP-085/086 consume this identity without replacing po
 | `PP-MGR-CMP-094` | ManageLendingRiskSection, inline Aave/Kamino account risk and scenario details | Component | Supply account risk | Implemented with unavailable live hosts | [POO-2290](https://linear.app/yeildbay/issue/POO-2290) | [Figma 8682:3708](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8682-3708); `src/features/manager/fund/manage/ManageLendingRiskSection.tsx` @rules-v1 |
 
 PP-MGR-CMP-086/089 mount this read-only section only for Aave Supply/local Kamino. Full account identity is absent until authorized account wiring; the host cannot infer a market, obligation or debt state from a position row.
+
+## Solana protocol ranges, October 8, 2026 (POO-2291 S3/S4)
+
+| ID | Artifact | Type | Design | Status | Linear | File / rules |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-069` | solanaRangeModel, separate Orca/Raydium Q64 math, canonical mint/grid/price validation | Lib | n/a (code) | Implemented local range slice | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaRangeModel.ts` @rules-v1 |
+| `PP-MGR-CMP-095` | SolanaRangePresenter, Current/draft range, wrapping prices, provenance and read-only states | Component | [Orca 8679:382](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8679-382), [Raydium 8679:2](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8679-2) | Integrated with unavailable live context | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/SolanaRangePresenter.tsx` @rules-v1 |
+
+PP-MGR-CMP-089 mounts range inspection only for positive LP allocation. Same-snapshot protocol/program/mints/grid and liquidity composition remain POO-2240/2261. The separate upstream Apache-2.0 grants are preserved.

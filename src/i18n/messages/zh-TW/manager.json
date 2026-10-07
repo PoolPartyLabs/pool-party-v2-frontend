@@ -1587,6 +1587,26 @@
       "jupiter": "Jupiter Swap",
       "raydium": "Raydium CLMM",
       "orca": "Orca Whirlpools"
+    },
+    "protocolRange": {
+      "currentRange": "目前倉位範圍",
+      "draftRange": "擬議範圍",
+      "fullOnly": "此 Orca 池僅支援 Full 範圍。",
+      "stale": "池資料已過期，無法編輯範圍。",
+      "invalidRange": "請使用符合此池 tick spacing 的有效價格。",
+      "zeroLiquidity": "此倉位沒有流動性。",
+      "presets": {
+        "5": "±5%",
+        "10": "±10%",
+        "20": "±20%"
+      },
+      "source": "來源",
+      "asOf": "更新於",
+      "slot": "Slot",
+      "commitment": "確認層級",
+      "program": "程式",
+      "network": "網路",
+      "fixture": "說明用範例，並非觀測到的池。"
     }
   }
 }

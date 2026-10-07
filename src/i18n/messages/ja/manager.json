@@ -1587,6 +1587,26 @@
       "jupiter": "Jupiter Swap",
       "raydium": "Raydium CLMM",
       "orca": "Orca Whirlpools"
+    },
+    "protocolRange": {
+      "currentRange": "現在のポジション範囲",
+      "draftRange": "提案された範囲",
+      "fullOnly": "このOrcaプールはFull範囲のみ対応しています。",
+      "stale": "プールデータが古いため、範囲を編集できません。",
+      "invalidRange": "このプールのティック間隔に合う有効な価格を入力してください。",
+      "zeroLiquidity": "このポジションには流動性がありません。",
+      "presets": {
+        "5": "±5%",
+        "10": "±10%",
+        "20": "±20%"
+      },
+      "source": "ソース",
+      "asOf": "更新日時",
+      "slot": "スロット",
+      "commitment": "確認レベル",
+      "program": "プログラム",
+      "network": "ネットワーク",
+      "fixture": "説明用サンプルであり、実測プールではありません。"
     }
   }
 }

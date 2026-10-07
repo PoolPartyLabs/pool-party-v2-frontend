@@ -13,6 +13,10 @@ prices, amounts, reserve data, quotes and execution stay Not available. `solanaS
 See the [current delivery plan](solana-preview-preparation-plan-2026-10-07.md) and
 [ADR 0009](adr/0009-local-solana-visual-preview.md).
 
+## Solana protocol range context (POO-2291 S3/S4)
+
+`solanaRangeModel.ts` and `SolanaRangePresenter.tsx` validate and display an injected same-snapshot Orca/Raydium context. `SolanaPreviewBlockPanel.tsx` passes no live context by default, mounts the section only for positive LP allocation and keeps a context without a draft handler read-only. POO-2240/2261 must provide verified cluster, program, pool, ordered mint bytes, token programs/extensions, decimals, protocol fee/grid configuration, current Q64/tick, position identity/liquidity and source metadata. A separate liquidity quote owns composition/amounts. Missing data never receives a default price, range, token split or execution capability.
+
 ## Launch report countdown (POO-2233, rules v1)
 
 `launch/useLaunchReportWait.ts` records first report building/waiting observation in browser-local metadata keyed by normalized manager, draft and report step, separate from the execution journal. `useV2Launch.ts` projects this optional timestamp to `FundLaunchJourney`; an isolated display clock derives a 19-minute estimate. Polling, retry and reopening preserve the timestamp. Storage failure uses an in-memory fallback.
@@ -70,7 +74,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 518 markers across 298 files (2026-10-07)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 520 markers across 299 files (2026-10-08)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
