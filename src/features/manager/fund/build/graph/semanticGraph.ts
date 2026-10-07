@@ -192,6 +192,13 @@ export function validateSemanticGraph(graph: SemanticGraph): SemanticIssue[] {
       add("inconsistent_port", connection.id);
     const crossingBridge =
       source && target && source.nodeId === target.nodeId && nodes.get(source.nodeId)?.bridge;
+    if (
+      source &&
+      target &&
+      source.nodeId === target.nodeId &&
+      nodes.get(source.nodeId)?.kind === "conversion"
+    )
+      add("route_break", connection.id);
     if (source && target && source.network !== target.network && !crossingBridge)
       add("type_conflict", connection.id);
     if (
@@ -236,10 +243,14 @@ export function validateSemanticGraph(graph: SemanticGraph): SemanticIssue[] {
     if (!claimed.has(segment.id)) add("dangling_segment", segment.id);
   for (const node of graph.nodes.filter((node) => node.kind === "conversion")) {
     const incoming = graph.connections.filter(
-      (connection) => ports.get(connection.targetPortId)?.nodeId === node.id,
+      (connection) =>
+        ports.get(connection.targetPortId)?.nodeId === node.id &&
+        ports.get(connection.sourcePortId)?.nodeId !== node.id,
     );
     const outgoing = graph.connections.filter(
-      (connection) => ports.get(connection.sourcePortId)?.nodeId === node.id,
+      (connection) =>
+        ports.get(connection.sourcePortId)?.nodeId === node.id &&
+        ports.get(connection.targetPortId)?.nodeId !== node.id,
     );
     if (!incoming.length || !outgoing.length) add("orphan_conversion", node.id);
     else if (

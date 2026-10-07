@@ -453,6 +453,28 @@ describe("explicit semantic financial graph", () => {
     ).toContain("orphan_conversion");
   });
 
+  // @rule R7: a conversion self-loop is neither an external input nor an onward route.
+  it("rejects an isolated conversion whose own ports form its only connection", () => {
+    const base = localGraph();
+    const owner = base.nodes[0];
+    if (!owner) throw new Error("fixture missing");
+    const conversion: SemanticGraph = {
+      ...base,
+      nodes: [{ ...owner, kind: "conversion" }],
+      ports: base.ports.map((port) => ({ ...port, nodeId: owner.id, class: "income" as const })),
+      connections: base.connections.map((connection) => ({
+        ...connection,
+        class: "income" as const,
+      })),
+    };
+    expect(validateSemanticGraph(conversion)).toContainEqual({
+      code: "orphan_conversion",
+      id: owner.id,
+    });
+    expect(codes(conversion)).toContain("route_break");
+    expect(validateSemanticGraph(bridgeGraph())).toEqual([]);
+  });
+
   // @rule R5/R7: geometric crossings remain independent routes without a declared junction.
   it("accepts crossing principal/income lines without creating a join", () => {
     const principal = localGraph();
