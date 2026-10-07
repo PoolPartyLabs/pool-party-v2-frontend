@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-086
  * @name ManageBlockPanel
- * @implements-rules-version v2 (POO-2246; extends POO-2227), v2 (POO-2274), v1 (POO-2284)
+ * @implements-rules-version v2 (POO-2246; extends POO-2227), v2 (POO-2274), v1 (POO-2284), v1 (POO-2290)
  * @analytics-events strategy_move_range_started, tx_flow_abandoned, app_cta_blocked, app_error_shown
  * Inline V2 states of PP-MGR-CMP-001/002; no wallet call is exposed without a verified preview.
  */
@@ -21,6 +21,7 @@ import { usePanelPool } from "../build/panel/usePanelPool";
 import { ManageBlockHeader } from "./ManageBlockHeader";
 import { ManageTokenRow, ManageUsd } from "./ManageCanvas";
 import { ManageCollectFeesPanel } from "./ManageCollectFeesPanel";
+import { ManageLendingRiskSection } from "./ManageLendingRiskSection";
 import {
   createManageDraft,
   manageDraftReducer,
@@ -92,7 +93,15 @@ export function ManageBlockPanel({
                   active={active && !inspectingFlow}
                 />
               ) : position.kind === "supply" ? (
-                <SupplySettings active={active && !inspectingFlow} />
+                <>
+                  {/* PP-INTEGRATION-POINT: POO-2290 needs a full authorized account and valid preview; Supply-row metadata cannot establish account risk or zero debt. */}
+                  <ManageLendingRiskSection
+                    origin={{ identity: null, preview: null }}
+                    current={{ status: "unavailable", snapshot: null }}
+                    after={{ status: "unavailable", snapshot: null }}
+                  />
+                  <SupplySettings active={active && !inspectingFlow} />
+                </>
               ) : (
                 <p role="status">{t("notAvailable")}</p>
               )}

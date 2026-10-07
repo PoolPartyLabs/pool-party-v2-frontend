@@ -508,3 +508,21 @@ it("does not expose LP Collect controls for a Supply row even if inspection is m
   expect(screen.queryByRole("button", { name: "Collect" })).not.toBeInTheDocument();
   expect(mocks.metadata).not.toHaveBeenCalled();
 });
+
+// @rule POO-2290 R1/R2: Supply rows do not prove a complete account or no debt.
+it("shows unavailable full-account risk for Supply without a fabricated no-debt claim", () => {
+  renderWithProviders(<ManageBlockPanel fund={mockFund} position={supply} active />);
+  const risk = screen.getByRole("region", { name: "Account risk" });
+  expect(within(risk).getByText("Health factor")).toBeInTheDocument();
+  expect(within(risk).getByText("Estimated liquidation price")).toBeInTheDocument();
+  expect(within(risk).getByText("Verified account risk is not available.")).toBeInTheDocument();
+  expect(within(risk).queryByText("No debt")).not.toBeInTheDocument();
+  expect(screen.queryByRole("textbox", { name: /Min price|Max price/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Collect" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Save for new deposits" })).toBeDisabled();
+});
+
+it("keeps the lending account presenter out of an LP position", () => {
+  renderWithProviders(<ManageBlockPanel fund={mockFund} position={liquidity} active />);
+  expect(screen.queryByRole("region", { name: "Account risk" })).not.toBeInTheDocument();
+});

@@ -298,3 +298,10 @@ Status: OPEN for broader Build capability adoption. Operating cash requires its 
 Status: ANSWERED for read/navigation presentation. Actual block, network and canonical origin identity determine inspection. Available normalized hub Idle may be shown; absent cash/Income/global queue and unknown fee freshness remain explicit. No new personal-data identifier is emitted: selection analytics carries bounded node family and numeric chain only. Back/Retry/selection preserve draft ownership without signing or authorizing a money movement.
 
 Existing financial/custody/source/freshness/disclosure gates remain OPEN under POO-2230/2277/2278/2229/2231. Neither read success nor a visual route proves fee conversion, reserve assignment, account risk or hub settlement. This slice clears no execution or pending-recovery gate. Native browser acceptance remains with Murilo.
+
+
+## Full-account lending risk disclosures, October 7, 2026 (POO-2290 v1)
+
+Status: ANSWERED for source-preserving read-only presentation. No protocol safety guarantee or financial advice is asserted. Missing full-account identity remains unavailable. No debt requires a complete fresh confirmed zero, not a Supply row. Health factor and estimated liquidation price retain declared scenario, units, assets, method, assumptions and oracle evidence; positive price is scenario-specific. Fixture evidence is visibly labeled and never fills a production source.
+
+Status: OPEN before live account risk enablement. Confirm adapter-derived effective Aave eMode/isolation and Kamino elevation-group parameters, accrued debt, fresh oracle rules, Current/After hypothesis consistency, scenario validity/expiry and venue disclosures. Current financial/custody gates remain. The local Kamino host has no account read; it does not authorize Borrow or Multiply.

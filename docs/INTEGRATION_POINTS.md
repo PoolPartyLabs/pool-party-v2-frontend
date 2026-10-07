@@ -70,7 +70,7 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 515 markers across 296 files (2026-10-07)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 518 markers across 298 files (2026-10-07)
 ```
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
@@ -349,3 +349,10 @@ PP-MGR-LIB-023 uses PP-MGR-LIB-062 to declare stable typed financial endpoints a
 ## Manage all-node host, October 7, 2026 (POO-2274 v2)
 
 `ManageEntry` mounts PP-MGR-CMP-092/093 via the existing authorized owner/core boundary. `ManageBlockPanel` uses useManagePosition for the exact LP Collect origin, keeping freshness unknown because the existing DTO supplies no authoritative freshness evidence. The manual Collect action stays disabled (POO-2277/2278). The global eligible queue, cohorts, reserves, deadlines/timezone and freshness remain POO-2230; its Retry callback reports unavailable intent rather than reloading the whole editor. Generic cash/Idle/Income inspectors reuse normalizeManageModel only and do not add a production source or infer zero. Selection IDs confer no execution authority.
+
+
+## Account risk Current/After, POO-2290 v1
+
+PP-MGR-LIB-068 / PP-MGR-CMP-094 accept presentation-only full-account identity and supplied risk/context/provenance. These are not an assumed Aave/Kamino RPC or API DTO. Aave requires effective collateral thresholds and supplied metrics without a Kamino borrow-factor requirement; Kamino debt factors remain required. A scenario may identify a collateral or debt asset. Current/After values and source precision are retained without frontend financial arithmetic.
+
+PP-MGR-CMP-086 Aave and PP-MGR-CMP-089 Kamino pass null account identity and unavailable reads. POO-2290 must supply canonical authorized core/account/market or cluster/program/account/market/obligation, complete fresh debt/asset/oracle/parameter snapshot and a successful preview tied to the base. No position metadata, absent Borrow block or local fixture implies no debt. Known zero requires fresh complete evidence. No execution or borrowing adapter is introduced.
