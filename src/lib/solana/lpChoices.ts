@@ -26,7 +26,7 @@ const usdc: SolanaLpToken = Object.freeze({
   decimals: 6,
 });
 
-/** DEC-193, DEC-198: researched fixtures, not runtime proof of Mandate admission. */
+/** DEC-193, DEC-198: #48 NVDAx custody matches this catalog; admission/oracles are runtime gates. */
 export const SOLANA_LP_CHOICES: readonly SolanaLpChoice[] = Object.freeze(
   (
     [
