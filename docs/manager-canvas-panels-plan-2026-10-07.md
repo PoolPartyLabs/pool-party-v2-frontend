@@ -11,7 +11,7 @@
 
 # Manager canvas and inline panels: delivery plan, October 7, 2026
 
-Status: **v2 plan complete; graph foundation, Review transaction fees, Solana S1 catalog and inline Manage header merged; supported Manage route/card slice merged; canvas chrome merged in PR #131; draft visibility and Collect read presenter merged; Idle output presenter ready for review; all-node panels and remaining local Solana slices in progress**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main before the Idle-output presenter PR: `6928ca45ed7753331020636c68b8a32f22545264`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
+Status: **v2 plan complete; graph foundation, Review transaction fees, Solana S1 catalog and inline Manage header merged; supported Manage route/card slice merged; canvas chrome merged in PR #131; draft visibility and Collect read presenter merged; Idle output presenter merged; Build return topology reviewed for publication; all-node panels and remaining local Solana slices in progress**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main before the Build return PR: `0f46a840f1cddd88987d0a4775198afb343c3e83`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
 
 ## Current v2 contract and implementation sequence
 
@@ -403,3 +403,11 @@ Five-module injected presenter passed 40 focused tests and scoped TypeScript/Bio
 ### Idle output presenter evidence, POO-2275 v1
 
 Five-module injected queue presenter and all 11 locales. Coordinator reproduced duplicate-bucket and fractional-deadline display failures RED, then corrected them; 43 focused projection/presenter tests pass, including zero versus absent, independent same-cohort coverage, no sum/assignment, supplied date/timezone/rollover and unknown/stale/error suppression. Scoped TypeScript and changed-file Biome pass. Twelve stories are authored, not browser captures. The presenter is not mounted in this slice; the live queue DTO/source remains POO-2230 and host/draft/Back/focus remains POO-2274.
+
+### Build return topology evidence, POO-2273 v2
+
+The existing Build layout now declares stable financial nodes/ports/junctions and routes after final bounds. Principal leaves the position's lateral port, including any trailing manual Swap before returning. LP Collect has one green centered exit through fee conversion. Cross-chain spokes share one visible outbound Bridge with independently typed principal/Income origin ports; internal transfers are unpainted. Local hub returns remain Bridge-free. Full Income hover includes position -> Collect -> Swap -> Bridge -> Income and excludes sibling origins. Existing insertion/drop controls, block IDs, nominal sizes and structural input/template oracles are retained; obsolete return coordinates are superseded by endpoint/hull/identity tests.
+
+The worker passed 522 focused tests in7files, scoped TypeScript of 14 changed modules and their dependencies, and changed-file Biome. An independent GPT-6.1-sol review found two additional regressions, partial Income hover and an omitted trailing manual principal conversion; both were fixed with failing tests and re-reviewed. No browser, application build or full TypeScript/test suite was completed.
+
+Remaining boundaries are explicit: Build's plan/input/layout/renderer currently have no Operating cash field; toLayoutInput discards token/cohort configuration; CanvasE's explicit RepayUSDC -> WithdrawWETH debt sequence is not expressible. This PR enables no Borrow, Pendle, repayment adapter or launch capability and does not certify all 48 runtime graphs. Wider POO-2273 acceptance remains in progress.

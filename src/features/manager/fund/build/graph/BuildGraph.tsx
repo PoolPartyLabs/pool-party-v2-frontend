@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name BuildGraph
- * @implements-rules-version v1 (POO-2156 rules v1; POO-2210 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2237 rules v1
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2156 rules v1; POO-2210 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2237 rules v1
  * @analytics-events none, a controlled renderer: every activation leaves through `onTarget` (and a
  *   spoke removal through `onRemoveSpoke`); the Build screen (PP-MGR-SCR-002, S7) maps them to the
  *   builder events, so nothing here tracks.
@@ -509,7 +509,10 @@ export const BuildGraph = memo(function BuildGraph({
           break;
         }
         case "bridge": {
-          const { network } = item.node;
+          const network =
+            item.node.direction === "outbound"
+              ? (layout.hubNetwork ?? "arbitrum")
+              : item.node.network;
           out.set(
             item.key,
             <div key={item.key} {...wrapper}>
@@ -616,6 +619,7 @@ export const BuildGraph = memo(function BuildGraph({
     return out;
   }, [
     items,
+    layout.hubNetwork,
     motion,
     copy,
     describeBlock,
@@ -652,6 +656,12 @@ export const BuildGraph = memo(function BuildGraph({
           height={layout.height}
           edges={edges}
           connections={connections}
+          highlightedIds={
+            new Set(
+              layout.hoverRoutes?.find((route) => route.connectionIds.includes(hoveredEdge ?? ""))
+                ?.connectionIds ?? (hoveredEdge ? [hoveredEdge] : []),
+            )
+          }
           highlightedId={hoveredEdge}
           onEdgeHoverChange={setHoveredEdge}
         />

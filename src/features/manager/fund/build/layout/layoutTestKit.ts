@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutTestKit
- * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1)
  * @analytics-events none, test support: it reads layouts and emits nothing.
  *
  * TEST SUPPORT for the layout tests (and for the Figma parity checks of S8): it reads a
@@ -72,7 +72,8 @@ export function nodeRects(layout: GraphLayout): Record<string, Rect> {
   for (const n of layout.spine) put(n.role, n.rect);
   for (const n of layout.blocks) put(n.id, n.rect);
   for (const n of layout.feeSwaps ?? []) put(`fee-swap:${n.sourceBlockId}`, n.rect);
-  for (const n of layout.bridges) put(`bridge:${n.network}`, n.rect);
+  for (const n of layout.bridges)
+    put(`bridge:${n.network}${n.direction === "outbound" ? ":outbound" : ""}`, n.rect);
   for (const n of layout.groups) put(`group:${n.network}`, n.rect);
   for (const n of layout.templates) put(targetKey(n.target), n.rect);
   return out;

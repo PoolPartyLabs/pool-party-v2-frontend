@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name graphTypes
- * @implements-rules-version v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2288 rules v1
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2288 rules v1
  * @analytics-events none, type declarations and one pure key function: nothing here is rendered.
  *
  * The shapes the Build canvas layout reads and returns (coordinator plan, section 3.3). The names
@@ -212,6 +212,8 @@ export interface EmptyCaptions {
 }
 
 export interface GraphLayout {
+  /** The existing core network, also the destination of derived return Bridges. */
+  hubNetwork?: string;
   width: number;
   height: number;
   spineCentreX: number;
@@ -231,5 +233,7 @@ export interface GraphLayout {
   connections?: EdgeNode[];
   /** Explicit financial routes. Legacy layouts retain their existing edges until migrated. */
   semantic?: SemanticGraph;
+  /** Visible legs of one financial route; Bridge transfers remain semantic and unpainted. */
+  hoverRoutes?: { id: string; connectionIds: string[] }[];
   emptyCaptions: EmptyCaptions | null;
 }

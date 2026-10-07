@@ -286,3 +286,9 @@ Status: ANSWERED for the read presenter only. Ordered uncollected position fees 
 Status: ANSWERED for the injected read-only presenter. Queue dates, deadline timezone, snapshot freshness, requested/reserved/still-needed cohorts and complete-empty confirmation are supplied rather than inferred from browser time or payoutReserve. Coverage is a same-cohort display ratio, not reserve allocation or eligibility. No USD total, cutoff, withdrawal guarantee, signing or payout action is introduced. Unknown/stale reads hide their quantities. Test fixtures remain outside real data paths.
 
 Status: OPEN before production queue enablement under POO-2230. Confirm eligible-cohort inclusion, cancellation/partial-payment/in-flight treatment, authoritative deadlines and timezone, assigned reserves, completeness, snapshot freshness and required withdrawal disclosures. The presenter clears no financial/custody blocker; host focus/Back and native-browser rendering remain separate acceptance.
+
+## Build financial route disclosure, October 7, 2026 (POO-2273 v2)
+
+Status: ANSWERED for the pure layout/rendering slice. Principal and position fees use separate origin/class ports, required existing manual conversion remains visible, and sharing one Bridge card does not represent a token/cohort merge, atomic conversion, transit receipt or hub settlement. Figma-only debt/Pendle/reference networks enable no protocol permission or transaction. No new monetary amount, fee, credential flow or custody action is introduced. Full-route hover is diagram navigation only.
+
+Status: OPEN for broader Build capability adoption. Operating cash requires its own native quantity/valuation source; token/cohort compatibility and explicit repayment/withdrawal sequence require a supported plan/executor contract. Current POO-2229/2230/2231 and CR-MGR financial/venue disclosures remain in force. Unit geometry and semantic validators are not mainnet settlement or48runtime acceptance evidence.

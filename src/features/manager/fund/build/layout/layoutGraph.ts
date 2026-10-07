@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph
- * @implements-rules-version v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1
+ * @implements-rules-version v2 (POO-2273); POO-2153 rules v1; POO-2213 rules v1; POO-2235 rules v1
  * @analytics-events none, a pure geometry module: the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event; nothing here is rendered or tracked.
  *
@@ -10,44 +10,32 @@
  * centres of the share labels and the ports, the groups, the templates, the empty-canvas captions
  * and the graph size. Same input, same output: no DOM, no React, no clock, no randomness.
  *
- * Rules (handoff v1.2, "Layout rules"), all distances from {@link LAYOUT} (C21):
- *
- * - L2, vertical: Deposit 24, Idle input 110, bus 196, row 244 (hub labels on 220); a group from
- *   228 with its Bridge 244 to 270, its inner bus 294, its row 342 (labels on 318) and its label on
- *   212; each next block 24 under the previous; a group ends 16 under its lowest content.
- * - L3, horizontal: from x 24, each hub chain 176 then 32; the hub circle; 40; each group (16,
- *   chains with 32 between, 32, its circle, 16; a group with no chain is 176 inside, circle
- *   centred); 40 between groups; 40; the Add network box. The spine centre is (24 + the box's right
- *   edge) / 2, never less than 142. The buses span their stubs.
- * - L5, return lines: `deepest` is the lowest of the chains' last blocks and the circles (a group's
- *   lowest content, its circle included). Principal line at deepest + 24; each chain drops to it from
- *   its last block, 12 left of the centre under a Collect fees, which also drops its income 12 right.
- *   The income line runs 24 under the principal, except C11: a single chain ending in Collect fees
- *   whose principal runs left and income runs right turns both at one level. Idle output (and Income,
- *   134 each side of the spine when a Collect fees exists) start 24 under the lower line; a merge line
- *   24 under them, then Withdraw 24 under it. With no chain, no return line and Idle output 48 under
- *   the deepest content.
- * - L6, the empty canvas: spine at 202, templates 60 each side, captions 22 under the circle and 6
- *   under the box, the sentence 28 under the captions' top, Idle output 48 under the sentence.
- * - L4, normalisation, LAST: translate the whole graph RIGHT until the leftmost content sits at x
- *   24; it never moves left.
- *
- * PP-NOTE (L4, the coordinator's reading, review of PR #33): the handoff says "translate the whole
- * graph to the right until the leftmost content sits at x = 24", and for the empty canvas "the
- * whole graph shifts right until the sentence starts at the canvas padding". So the shift is
- * `max(0, 24 - leftmost)`. Outside the empty canvas the leftmost content is never right of 24 (the
- * row starts there), so nothing changes. On an empty canvas whose start-here sentence is narrower
- * than 356 px (a short locale), nothing shifts: the spine stays at 202 and Deposit, the leftmost
- * content, starts at 84. A left padding larger than 24 on a narrow empty canvas is the accepted
- * consequence; the right and bottom paddings stay 24. Every drawn reference is unchanged (English
- * canvas D, 420 px, shifts by 32; Build state 5 by 76).
- *
- * The measured sentence width is rounded UP to an even integer first, so the sentence, centred on a
- * whole spine, keeps every x of the empty graph whole (a measured 419.64 lays out as 420).
- *
- * Every edge is ONE straight segment with a stable id, so a share label names its stub (`edgeId`)
- * and the renderer can highlight it. Ports come from `portSlotsOf` (S1, C17), never re-derived.
+ * POO-2273 v2 supersedes the historical return geometry. Principal leaves the last position
+ * laterally and bypasses Collect. Collect has one centered green exit through its derived
+ * feeSwap. Nonlocal spokes contain one shared return Bridge with class/origin-specific ports.
+ * Nodes and enclosing hulls are final before financial endpoints and junctions are declared.
+ * Structural input/template segments retain their approved Build geometry. Visible route legs
+ * exclude internal Bridge transfers, while hoverRoutes associates all visible legs of one origin.
+ * This layout does not infer token compatibility, repayment, operating cash or launch capability.
+ * Stored block IDs, insertion/drop ports, chain order and nominal Build sizes remain unchanged.
  */
+
+import {
+  type FinancialPort,
+  type FlowClass,
+  financialPortId,
+  resolvePortPoint,
+  resolveSemanticGraph,
+  type SemanticConnection,
+  type SemanticEndpoint,
+  type SemanticGraph,
+  type SemanticJunction,
+  type SemanticNode,
+  type SemanticSegment,
+  semanticJunctionId,
+  semanticNodeId,
+  semanticSegmentId,
+} from "../graph/semanticGraph";
 import { portSlotsOf } from "../plan/planRules";
 import type {
   BlockNode,
@@ -69,6 +57,10 @@ import type {
 import { LAYOUT } from "./layoutConstants";
 
 const L = LAYOUT;
+function required<T>(value: T | undefined, label: string): T {
+  if (value === undefined) throw new Error(`Missing layout ${label}`);
+  return value;
+}
 /** A horizontal run's centre line sits half a stroke under its handoff y (its top edge). */
 const HALF_LINE = L.LINE_W / 2;
 const HALF_SPINE = L.SPINE_W / 2;
@@ -182,7 +174,13 @@ function placeChain(
     const previous = nodes[nodes.length - 1];
     if (previous) {
       d.edges.push(
-        vertical(`link:${previous.id}`, "structural", centre, bottomOf(previous.rect), y),
+        vertical(
+          `link:${previous.id}`,
+          step.kind === "collectFees" ? "income" : "structural",
+          centre,
+          bottomOf(previous.rect),
+          y,
+        ),
       );
     }
     const node: BlockNode = {
@@ -297,7 +295,7 @@ function placeSpoke(d: Draft, spoke: LayoutSpoke, left: number): PlacedSpoke {
 
   // C20: the Bridge, the stub that enters the box and the spoke's label sit on its centre.
   const bridge = rect(centre - L.PILL_W / 2, L.ROW_TOP, L.PILL_W, L.PILL_H);
-  d.bridges.push({ network: spoke.network, rect: bridge });
+  d.bridges.push({ network: spoke.network, rect: bridge, direction: "inbound" });
   const stubId = `stub:spoke:${spoke.network}`;
   d.edges.push(
     vertical(stubId, "structural", centre, L.BUS_Y, L.ROW_TOP),
@@ -315,7 +313,13 @@ function placeSpoke(d: Draft, spoke: LayoutSpoke, left: number): PlacedSpoke {
     edgeId: stubId,
   });
 
-  const box = rect(left, L.GROUP_TOP, right - left, lowest + L.GROUP_PAD - L.GROUP_TOP);
+  let contentBottom = lowest;
+  if (chains.some((chain) => chain.nodes.some((node) => node.family === "position"))) {
+    const outbound = rect(centre - L.PILL_W / 2, lowest + L.RETURN_BRIDGE_GAP, L.PILL_W, L.PILL_H);
+    d.bridges.push({ network: spoke.network, rect: outbound, direction: "outbound" });
+    contentBottom = bottomOf(outbound);
+  }
+  const box = rect(left, L.GROUP_TOP, right - left, contentBottom + L.GROUP_PAD - L.GROUP_TOP);
   const group: GroupNode = {
     network: spoke.network,
     rect: box,
@@ -323,14 +327,12 @@ function placeSpoke(d: Draft, spoke: LayoutSpoke, left: number): PlacedSpoke {
     hasChains: chains.length > 0,
   };
   d.groups.push(group);
-  return { chains, group, lowest };
+  return { chains, group, lowest: contentBottom };
 }
 
 /** The return lines, Idle output, Income (fees) and Withdraw, under `deepest` (L5, C10, C11). */
 function placeReturns(d: Draft, chains: PlacedChain[], deepest: number): void {
   const c = d.spineCentreX;
-  const endsInFees = (p: PlacedChain) =>
-    p.chain.steps[p.chain.steps.length - 1]?.kind === "collectFees";
   const fees = chains.flatMap((p) =>
     p.nodes.filter((n) => n.kind === "collectFees").map((n) => ({ p, n })),
   );
@@ -341,76 +343,8 @@ function placeReturns(d: Draft, chains: PlacedChain[], deepest: number): void {
   let outputTop = deepest + L.EMPTY_OUTPUT_GAP;
   if (chains.length > 0) {
     const principalY = deepest + L.LINK;
-    const drops = chains.map((p) => ({
-      p,
-      x: endsInFees(p) ? p.centre - L.PILL_W / 2 - L.PAIR : p.centre,
-    }));
-    const incomeDrops = fees.map(({ p, n }) => ({
-      n,
-      swap: d.feeSwaps?.find(
-        (entry) => entry.sourceBlockId === n.id && entry.chainId === p.chain.id,
-      ),
-      x: p.centre,
-    }));
-    const [only] = chains;
-    const [onlyDrop] = drops;
-    const [onlyIncome] = incomeDrops;
-    // C11: one chain on the canvas, ending in Collect fees, principal running left, income right.
-    const oneLevel =
-      chains.length === 1 &&
-      only !== undefined &&
-      endsInFees(only) &&
-      onlyDrop !== undefined &&
-      onlyIncome !== undefined &&
-      outputCentre <= onlyDrop.x &&
-      onlyIncome.x <= incomeCentre;
-    const incomeY = oneLevel ? principalY : principalY + L.LINK;
-    outputTop = (income ? Math.max(principalY, incomeY) : principalY) + L.LINK;
-
-    for (const { p, x } of drops) {
-      const last = p.nodes[p.nodes.length - 1];
-      let start = p.bottom;
-      if (endsInFees(p) && last) {
-        start = bottomOf(last.rect) + L.LINK / 2;
-        d.edges.push(
-          vertical(
-            `principal:fees:${last.id}`,
-            "principal",
-            p.centre - L.PAIR,
-            bottomOf(last.rect),
-            start,
-          ),
-          horizontal(`principal:bypass:${last.id}`, "principal", start, x, p.centre - L.PAIR),
-        );
-      }
-      d.edges.push(vertical(`principal:chain:${p.chain.id}`, "principal", x, start, principalY));
-    }
-    d.edges.push(
-      ...spanning("principal:line", "principal", principalY, [
-        outputCentre,
-        ...drops.map((x) => x.x),
-      ]),
-      vertical("principal:out", "principal", outputCentre, principalY, outputTop),
-    );
-    if (income) {
-      for (const { n, x, swap } of incomeDrops) {
-        if (!swap) continue;
-        const split = bottomOf(n.rect) + L.LINK / 2;
-        d.edges.push(
-          vertical(`income:block:${n.id}`, "income", x + L.PAIR, bottomOf(n.rect), split),
-          horizontal(`income:turn:${n.id}`, "income", split, x, x + L.PAIR),
-          vertical(`income:swap:${n.id}`, "income", x, split, swap.rect.y),
-          vertical(`income:converted:${n.id}`, "income", x, bottomOf(swap.rect), incomeY),
-        );
-      }
-      d.edges.push(
-        ...spanning("income:line", "income", incomeY, [
-          incomeCentre,
-          ...incomeDrops.map((x) => x.x),
-        ]),
-        vertical("income:out", "income", incomeCentre, incomeY, outputTop),
-      );
-    }
+    const incomeY = principalY + L.LINK;
+    outputTop = (income ? incomeY : principalY) + L.LINK;
   }
 
   d.spine.push(spineNode("idleOutput", outputCentre, outputTop));
@@ -577,119 +511,602 @@ function normalise(d: Draft): GraphLayout {
 export function layoutGraph(input: LayoutInput, options: LayoutOptions): GraphLayout {
   const empty = input.hub.chains.length === 0 && input.spokes.length === 0;
   const graph = normalise(empty ? layoutEmpty(input, options) : layoutPlan(input));
-  // Junctions use the horizontal stroke center, while endpoints at blocks stay exact.
+  graph.hubNetwork = input.hubNetwork;
   const horizontals = graph.edges.filter((edge) => edge.points[0]?.y === edge.points[1]?.y);
-  graph.edges = graph.edges.map((edge) => {
-    if (edge.points[0]?.x !== edge.points[1]?.x) return edge;
-    return {
-      ...edge,
-      points: edge.points.map((point) => {
-        const run = horizontals.find((entry) => {
-          const [a, b] = entry.points;
-          return (
-            a &&
-            b &&
-            a.y - point.y === HALF_LINE &&
-            point.x >= Math.min(a.x, b.x) &&
-            point.x <= Math.max(a.x, b.x)
-          );
-        });
-        return run ? { ...point, y: run.points[0]?.y ?? point.y } : point;
-      }),
-    };
-  });
-  graph.connections = connectionPaths(graph);
+  graph.edges = graph.edges.map((edge) =>
+    edge.points[0]?.x !== edge.points[1]?.x
+      ? edge
+      : {
+          ...edge,
+          points: edge.points.map((point) => {
+            const run = horizontals.find(
+              (entry) =>
+                entry.kind === edge.kind &&
+                entry.points[0]?.y === point.y + HALF_LINE &&
+                point.x >=
+                  Math.min(entry.points[0]?.x ?? Number.NaN, entry.points[1]?.x ?? Number.NaN) &&
+                point.x <=
+                  Math.max(entry.points[0]?.x ?? Number.NaN, entry.points[1]?.x ?? Number.NaN),
+            );
+            return run ? { ...point, y: run.points[0]?.y ?? point.y } : point;
+          }),
+        },
+  );
+  declareRoutes(graph, input);
   return graph;
 }
 
-/** Block-to-block paths. Shared runs are clipped, so hovering one branch cannot light siblings. */
-function connectionPaths(graph: GraphLayout): EdgeNode[] {
-  const byId = new Map(graph.edges.map((edge) => [edge.id, edge]));
-  const out: EdgeNode[] = [];
-  const used = new Set<string>();
-  const join = (id: string, ids: string[], kind?: EdgeKind) => {
-    const entries = ids.flatMap((key) => {
-      const edge = byId.get(key);
-      return edge ? [edge] : [];
-    });
-    if (!entries.length) return;
-    const points: Point[] = [];
-    for (const entry of entries) {
-      let next = [...entry.points];
-      const last = points.at(-1);
-      if (last && next.length === 2 && next[0]?.y === next[1]?.y) {
-        const following = entries[entries.indexOf(entry) + 1]?.points[0];
-        next = [last, { x: following?.x ?? next[1]?.x ?? last.x, y: last.y }];
-      }
-      for (const point of next) {
-        const previous = points.at(-1);
-        if (!previous || previous.x !== point.x || previous.y !== point.y) points.push(point);
-      }
-      used.add(entry.id);
+/** Explicit endpoints are declared after node/hull bounds and normalization are final. */
+function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
+  const trailingLinks = new Set<string>();
+  for (const chain of [...input.hub.chains, ...input.spokes.flatMap((spoke) => spoke.chains)]) {
+    const lastPosition = chain.steps.findLastIndex((step) => step.family === "position");
+    for (
+      let index = lastPosition + 1;
+      lastPosition >= 0 && index < chain.steps.length;
+      index += 1
+    ) {
+      if (chain.steps[index]?.kind === "swap")
+        trailingLinks.add(`link:${chain.steps[index - 1]?.id}`);
     }
-    out.push({ id, kind: kind ?? entries[0]?.kind ?? "structural", points });
+  }
+  const existingEdges = graph.edges.filter(
+    (edge) =>
+      (edge.kind === "structural" || edge.kind === "template") && !trailingLinks.has(edge.id),
+  );
+  const nodes: SemanticNode[] = [];
+  const ports: FinancialPort[] = [];
+  const junctions: SemanticJunction[] = [];
+  const segments: SemanticSegment[] = [];
+  const connections: SemanticConnection[] = [];
+  const hidden = new Set<string>();
+  const routes: { id: string; connectionIds: string[] }[] = [];
+  const hub = input.hubNetwork;
+  const addNode = (
+    id: string,
+    kind: SemanticNode["kind"],
+    network: string,
+    rect: Rect,
+    bridge?: SemanticNode["bridge"],
+  ): SemanticNode => {
+    const node = { id, kind, network, rect, ...(bridge ? { bridge } : {}) };
+    nodes.push(node);
+    return node;
   };
-  for (const label of graph.shareLabels) {
-    const group =
-      label.target.chainId === null
-        ? undefined
-        : graph.groups.find(
+  const spine = new Map(
+    graph.spine.map((node) => [
+      node.role,
+      addNode(`node:${semanticNodeId("spine", node.role)}`, "structural", hub, node.rect),
+    ]),
+  );
+  const blocks = new Map(
+    graph.blocks.map((node) => [
+      node.id,
+      addNode(
+        semanticNodeId("block", node.id),
+        node.family === "position" ? "position" : "structural",
+        node.network,
+        node.rect,
+      ),
+    ]),
+  );
+  const swaps = new Map(
+    (graph.feeSwaps ?? []).map((node) => [
+      node.sourceBlockId,
+      addNode(
+        semanticNodeId("fee-swap", node.sourceBlockId),
+        chainHasPosition(input, node.chainId) ? "conversion" : "structural",
+        node.network,
+        node.rect,
+      ),
+    ]),
+  );
+  const seenBridges = new Map<string, number>();
+  const bridges = new Map(
+    graph.bridges.map((node) => {
+      const direction = node.direction ?? "inbound";
+      const baseId = semanticNodeId("bridge", node.network, direction);
+      const occurrence = seenBridges.get(baseId) ?? 0;
+      seenBridges.set(baseId, occurrence + 1);
+      const id = `${baseId}${occurrence ? `#${occurrence + 1}` : ""}`;
+      return [
+        id,
+        addNode(id, "bridge", node.network, node.rect, {
+          direction,
+          fromNetwork: direction === "inbound" ? hub : node.network,
+          toNetwork: direction === "inbound" ? node.network : hub,
+        }),
+      ];
+    }),
+  );
+  const seenTemplates = new Map<string, number>();
+  const templateNodes = graph.templates.map((node) => {
+    const baseId = `node:template:${node.target.kind === "addNetwork" ? "addNetwork" : node.target.network}`;
+    const occurrence = seenTemplates.get(baseId) ?? 0;
+    seenTemplates.set(baseId, occurrence + 1);
+    return addNode(
+      `${baseId}${occurrence ? `#${occurrence + 1}` : ""}`,
+      "structural",
+      node.target.kind === "addNetwork" ? hub : node.target.network,
+      node.rect,
+    );
+  });
+  // Spoke ownership comes from the plan, never from node proximity or the enclosing hull.
+  const spokeOccurrences = new Map<string, number>();
+  const spokeKeys = new Map<LayoutSpoke, string>();
+  for (const spoke of input.spokes) {
+    const occurrence = spokeOccurrences.get(spoke.network) ?? 0;
+    spokeOccurrences.set(spoke.network, occurrence + 1);
+    spokeKeys.set(spoke, occurrence ? `#${occurrence + 1}` : "");
+  }
+  const bridgeFor = (network: string, direction: "inbound" | "outbound", occurrence = "") =>
+    bridges.get(`${semanticNodeId("bridge", network, direction)}${occurrence}`);
+  const port = (
+    node: SemanticNode,
+    role: string,
+    flowClass: FlowClass,
+    originId: string | null,
+    direction: FinancialPort["direction"],
+    side: FinancialPort["side"],
+    offset: number = L.PORT_CENTER,
+    network = node.network,
+  ): FinancialPort => {
+    const value = {
+      id: financialPortId(node.id, role),
+      nodeId: node.id,
+      direction,
+      class: flowClass,
+      network,
+      originId,
+      side,
+      offset,
+    };
+    const existing = ports.find((entry) => entry.id === value.id);
+    if (existing) return existing;
+    ports.push(value);
+    return value;
+  };
+  const point = (value: FinancialPort): Point => {
+    const node = nodes.find((entry) => entry.id === value.nodeId);
+    if (!node) throw new Error(`Missing financial node ${value.nodeId}`);
+    return resolvePortPoint(node, value);
+  };
+  const connect = (
+    id: string,
+    source: FinancialPort,
+    target: FinancialPort,
+    bends: Point[] = [],
+    invisible = false,
+  ): string => {
+    const connection: SemanticConnection = {
+      id,
+      class: source.class,
+      originId: source.originId,
+      sourcePortId: source.id,
+      targetPortId: target.id,
+      segmentIds: [],
+    };
+    const refs: SemanticEndpoint[] = [{ kind: "port", id: source.id }];
+    for (const [index, value] of bends.entries()) {
+      const junction = {
+        id: semanticJunctionId(
+          `${id}:bend:${index}`,
+          source.network,
+          source.class,
+          source.originId,
+        ),
+        class: source.class,
+        network: source.network,
+        originId: source.originId,
+        point: value,
+      };
+      junctions.push(junction);
+      refs.push({ kind: "junction", id: junction.id });
+    }
+    refs.push({ kind: "port", id: target.id });
+    const segmentIds: string[] = [];
+    for (let index = 0; index < refs.length - 1; index += 1) {
+      const segmentId = semanticSegmentId(id, `leg:${index}`);
+      segments.push({
+        id: segmentId,
+        connectionId: id,
+        from: required(refs[index], "segment start"),
+        to: required(refs[index + 1], "segment end"),
+      });
+      segmentIds.push(segmentId);
+    }
+    connection.segmentIds = segmentIds;
+    connections.push(connection);
+    if (invisible) hidden.add(id);
+    return id;
+  };
+  const structural = (
+    id: string,
+    source: SemanticNode,
+    target: SemanticNode,
+    bends: Point[] = [],
+    flowClass: FlowClass = "structural",
+    origin: string | null = null,
+  ) =>
+    connect(
+      id,
+      port(source, `out:${id}`, flowClass, origin, "out", "bottom"),
+      port(target, `in:${id}`, flowClass, origin, "in", "top"),
+      bends,
+    );
+  const bridgePorts = (
+    node: SemanticNode,
+    role: string,
+    flowClass: FlowClass,
+    origin: string | null,
+    offset: number,
+  ) => {
+    const incoming = port(
+      node,
+      `${role}:incoming`,
+      flowClass,
+      origin,
+      "in",
+      "top",
+      offset,
+      required(node.bridge, "bridge metadata").fromNetwork,
+    );
+    const transferOut = port(
+      node,
+      `${role}:transfer-out`,
+      flowClass,
+      origin,
+      "out",
+      "top",
+      offset,
+      required(node.bridge, "bridge metadata").fromNetwork,
+    );
+    const transferIn = port(
+      node,
+      `${role}:transfer-in`,
+      flowClass,
+      origin,
+      "in",
+      "bottom",
+      offset,
+      required(node.bridge, "bridge metadata").toNetwork,
+    );
+    const outgoing = port(
+      node,
+      `${role}:outgoing`,
+      flowClass,
+      origin,
+      "out",
+      "bottom",
+      offset,
+      required(node.bridge, "bridge metadata").toNetwork,
+    );
+    const transferId = `bridge-transfer:${node.id}:${role}`;
+    if (!connections.some((entry) => entry.id === transferId))
+      connect(transferId, transferOut, transferIn, [], true);
+    return { incoming, outgoing };
+  };
+  const idle = required(spine.get("idleInput"), "node");
+  structural("spine:deposit", required(spine.get("deposit"), "node"), idle);
+  const chainEntries = [
+    ...input.hub.chains.map((chain) => ({ chain, network: hub, spokeKey: "" })),
+    ...input.spokes.flatMap((spoke) =>
+      spoke.chains.map((chain) => ({
+        chain,
+        network: spoke.network,
+        spokeKey: spokeKeys.get(spoke) ?? "",
+      })),
+    ),
+  ];
+  for (const { chain, network, spokeKey } of chainEntries) {
+    const members = chain.steps.flatMap((step) => {
+      const node = blocks.get(step.id);
+      return node ? [node] : [];
+    });
+    const first = members[0];
+    if (!first) continue;
+    const origin = null;
+    const legIds: string[] = [];
+    let source = port(idle, `entry:${chain.id}`, "structural", origin, "out", "bottom");
+    if (network !== hub) {
+      const inbound = required(bridgeFor(network, "inbound", spokeKey), "bridge");
+      const bridge = bridgePorts(inbound, `entry:${chain.id}`, "structural", origin, L.PORT_CENTER);
+      const targetPoint = point(bridge.incoming);
+      legIds.push(
+        connect(`entry:bridge:${chain.id}`, source, bridge.incoming, [
+          { x: point(source).x, y: L.BUS_Y + HALF_LINE },
+          { x: targetPoint.x, y: L.BUS_Y + HALF_LINE },
+        ]),
+      );
+      source = bridge.outgoing;
+    }
+    const rowY = network === hub ? L.BUS_Y + HALF_LINE : L.INNER_BUS_Y + HALF_LINE;
+    const target = port(first, `entry:${chain.id}`, "structural", origin, "in", "top");
+    legIds.push(
+      connect(`stub:chain:${chain.id}`, source, target, [
+        { x: point(source).x, y: rowY },
+        { x: point(target).x, y: rowY },
+      ]),
+    );
+    routes.push({ id: `stub:chain:${chain.id}`, connectionIds: legIds });
+    for (let index = 1; index < members.length; index += 1) {
+      const previous = required(members[index - 1], "previous member");
+      const next = required(members[index], "next member");
+      const fees = chain.steps[index]?.kind === "collectFees";
+      const lastPosition = chain.steps.findLastIndex((step) => step.family === "position");
+      if (index > lastPosition && lastPosition >= 0 && chain.steps[index]?.kind === "swap")
+        continue;
+      structural(
+        `link:${required(chain.steps[index - 1], "previous step").id}`,
+        previous,
+        next,
+        [],
+        fees ? "income" : "structural",
+        fees ? previous.id.slice("block:".length) : null,
+      );
+    }
+  }
+  for (const template of templateNodes) {
+    let source = port(idle, `entry:${template.id}`, "template", null, "out", "bottom");
+    const legIds: string[] = [];
+    if (template.network !== hub) {
+      const inbound = required(
+        bridgeFor(
+          template.network,
+          "inbound",
+          template.id.includes("#") ? template.id.slice(template.id.indexOf("#")) : "",
+        ),
+        "bridge",
+      );
+      const bridge = bridgePorts(inbound, template.id, "template", null, L.PORT_CENTER);
+      legIds.push(
+        connect(`entry:${template.id}`, source, bridge.incoming, [
+          { x: point(source).x, y: L.BUS_Y + HALF_LINE },
+          { x: point(bridge.incoming).x, y: L.BUS_Y + HALF_LINE },
+        ]),
+      );
+      source = bridge.outgoing;
+    }
+    const rowY = template.network === hub ? L.BUS_Y + HALF_LINE : L.INNER_BUS_Y + HALF_LINE;
+    const target = port(template, "entry", "template", null, "in", "top");
+    legIds.push(
+      connect(template.id.slice("node:".length), source, target, [
+        { x: point(source).x, y: rowY },
+        { x: point(target).x, y: rowY },
+      ]),
+    );
+    routes.push({ id: template.id.slice("node:".length), connectionIds: legIds });
+  }
+  // The spoke share label still names its original inbound connection.
+  const spokeLabels = graph.shareLabels.filter((entry) => entry.target.chainId === null);
+  for (const [index, label] of spokeLabels.entries()) {
+    const spoke = required(input.spokes[index], "spoke");
+    const inbound = required(
+      bridgeFor(spoke.network, "inbound", spokeKeys.get(spoke) ?? ""),
+      "bridge",
+    );
+    const bridge = bridgePorts(inbound, "share", "structural", null, L.PORT_CENTER);
+    const labelId = `${label.edgeId}${inbound.id.includes("#") ? inbound.id.slice(inbound.id.indexOf("#")) : ""}`;
+    connect(labelId, port(idle, labelId, "structural", null, "out", "bottom"), bridge.incoming, [
+      { x: centreOf(idle.rect), y: L.BUS_Y + HALF_LINE },
+      { x: centreOf(inbound.rect), y: L.BUS_Y + HALF_LINE },
+    ]);
+  }
+  const output = required(spine.get("idleOutput"), "node");
+  const income = spine.get("income");
+  const principalY = output.rect.y - (income ? L.LINK * 2 : L.LINK) + HALF_LINE;
+  const incomeY = output.rect.y - L.LINK + HALF_LINE;
+  for (const { chain, network, spokeKey } of chainEntries) {
+    const position = [...chain.steps].reverse().find((step) => step.family === "position");
+    if (!position) continue;
+    const node = required(blocks.get(position.id), "node");
+    const source = port(node, "principal", "principal", position.id, "out", "right");
+    const laneX = rightOf(node.rect) + L.PAIR;
+    const outbound = bridgeFor(network, "outbound", spokeKey);
+    const principalIds: string[] = [];
+    let principalSource = source;
+    const positionIndex = chain.steps.findIndex((step) => step.id === position.id);
+    for (const conversion of chain.steps
+      .slice(positionIndex + 1)
+      .filter((step) => step.kind === "swap")) {
+      const swap = required(blocks.get(conversion.id), "principal conversion");
+      swap.kind = chain.steps.slice(positionIndex + 1).every((step) => step.kind === "swap")
+        ? "conversion"
+        : "structural";
+      const target = port(
+        swap,
+        `principal-in:${position.id}`,
+        "principal",
+        position.id,
+        "in",
+        "top",
+      );
+      principalIds.push(
+        connect(`principal:conversion:${conversion.id}`, principalSource, target, [
+          { x: laneX, y: point(principalSource).y },
+          { x: laneX, y: swap.rect.y - L.LINK / 2 },
+          { x: point(target).x, y: swap.rect.y - L.LINK / 2 },
+        ]),
+      );
+      principalSource = port(
+        swap,
+        `principal-out:${position.id}`,
+        "principal",
+        position.id,
+        "out",
+        "bottom",
+      );
+    }
+    const returnSource = principalSource;
+    if (outbound) {
+      const own = chainEntries
+        .filter(
+          (entry) =>
+            entry.network === network &&
+            entry.chain.steps.some((step) => step.family === "position"),
+        )
+        .map((entry) => entry.chain.id);
+      const offset = ((own.indexOf(chain.id) + 1) / (own.length + 1)) * L.PRINCIPAL_PORT_SPAN;
+      const bridge = bridgePorts(
+        outbound,
+        `principal:${position.id}`,
+        "principal",
+        position.id,
+        offset,
+      );
+      const busY = outbound.rect.y - L.LINK * 2 + HALF_LINE;
+      principalIds.push(
+        connect(`principal:chain:${chain.id}`, returnSource, bridge.incoming, [
+          { x: laneX, y: point(returnSource).y },
+          { x: laneX, y: busY },
+          { x: point(bridge.incoming).x, y: busY },
+        ]),
+      );
+      principalSource = bridge.outgoing;
+    }
+    const target = port(output, `principal:${position.id}`, "principal", position.id, "in", "top");
+    principalIds.push(
+      connect(
+        outbound ? `principal:returned:${chain.id}` : `principal:chain:${chain.id}`,
+        principalSource,
+        target,
+        outbound
+          ? [
+              { x: point(principalSource).x, y: principalY },
+              { x: point(target).x, y: principalY },
+            ]
+          : [
+              { x: laneX, y: point(returnSource).y },
+              { x: laneX, y: principalY },
+              { x: point(target).x, y: principalY },
+            ],
+      ),
+    );
+    routes.push({ id: `principal:chain:${chain.id}`, connectionIds: principalIds });
+    for (const fee of chain.steps.filter((step) => step.kind === "collectFees")) {
+      const collect = required(blocks.get(fee.id), "node");
+      const swap = required(swaps.get(fee.id), "node");
+      structural(`income:block:${fee.id}`, collect, swap, [], "income", position.id);
+      const feeSource = port(swap, "income", "income", position.id, "out", "bottom");
+      const feeIndex = chain.steps.findIndex((step) => step.id === fee.id);
+      const previous = chain.steps[feeIndex - 1];
+      const incomeIds: string[] = [
+        ...(previous ? [`link:${previous.id}`] : []),
+        `income:block:${fee.id}`,
+      ];
+      let incomeSource = feeSource;
+      if (outbound) {
+        const fees = chainEntries
+          .filter(
             (entry) =>
-              entry.network === label.target.network &&
-              label.center.x >= entry.rect.x &&
-              label.center.x <= entry.rect.x + entry.rect.w,
-          );
-    join(label.edgeId, [
-      group ? `bridge:${group.network}` : "spine:idleInput",
-      group ? `bus:spoke:${group.network}` : "bus:idleInput",
-      label.edgeId,
-    ]);
+              entry.network === network &&
+              entry.chain.steps.some((step) => step.kind === "collectFees"),
+          )
+          .map((entry) => entry.chain.id);
+        const offset =
+          L.INCOME_PORT_START +
+          ((fees.indexOf(chain.id) + 1) / (fees.length + 1)) * L.PRINCIPAL_PORT_SPAN;
+        const bridge = bridgePorts(
+          outbound,
+          `income:${position.id}`,
+          "income",
+          position.id,
+          offset,
+        );
+        const busY = outbound.rect.y - L.LINK + HALF_LINE;
+        incomeIds.push(
+          connect(`income:converted:${fee.id}`, feeSource, bridge.incoming, [
+            { x: point(feeSource).x, y: busY },
+            { x: point(bridge.incoming).x, y: busY },
+          ]),
+        );
+        incomeSource = bridge.outgoing;
+      }
+      if (income) {
+        const target = port(income, `income:${position.id}`, "income", position.id, "in", "top");
+        incomeIds.push(
+          connect(
+            outbound ? `income:returned:${fee.id}` : `income:converted:${fee.id}`,
+            incomeSource,
+            target,
+            [
+              { x: point(incomeSource).x, y: incomeY },
+              { x: point(target).x, y: incomeY },
+            ],
+          ),
+        );
+      }
+      routes.push({ id: `income:converted:${fee.id}`, connectionIds: incomeIds });
+    }
   }
-  for (const template of graph.templates) {
-    const edge = graph.edges.find(
-      (entry) =>
-        entry.id.startsWith("template:") &&
-        entry.points.at(-1)?.x === template.rect.x + template.rect.w / 2,
+  const withdraw = required(spine.get("withdraw"), "node");
+  for (const node of [output, ...(income ? [income] : [])]) {
+    const role = node === output ? "idleOutput" : "income";
+    const mergeY = bottomOf(output.rect) + L.LINK + HALF_LINE;
+    structural(
+      `output:${role}`,
+      node,
+      withdraw,
+      income
+        ? [
+            { x: centreOf(node.rect), y: mergeY },
+            { x: centreOf(withdraw.rect), y: mergeY },
+          ]
+        : [],
     );
-    if (!edge) continue;
-    const group = graph.groups.find(
-      (entry) =>
-        entry.network === (template.target.kind === "addProtocol" ? template.target.network : ""),
-    );
-    join(edge.id, [
-      group ? `bridge:${group.network}` : "spine:idleInput",
-      group ? `bus:spoke:${group.network}` : "bus:idleInput",
-      edge.id,
-    ]);
   }
-  for (const edge of graph.edges.filter((entry) => entry.id.startsWith("principal:chain:"))) {
-    const chainId = edge.id.slice("principal:chain:".length);
-    const last = graph.blocks.filter((block) => block.chainId === chainId).at(-1);
-    join(edge.id, [
-      ...(last?.kind === "collectFees"
-        ? [`principal:fees:${last.id}`, `principal:bypass:${last.id}`]
-        : []),
-      edge.id,
-      "principal:line",
-      "principal:out",
-    ]);
-  }
-  for (const swap of graph.feeSwaps ?? []) {
-    const id = swap.sourceBlockId;
-    join(
-      `income:block:${id}`,
-      [`income:block:${id}`, `income:turn:${id}`, `income:swap:${id}`],
-      "income",
-    );
-    join(
-      `income:converted:${id}`,
-      [`income:converted:${id}`, "income:line", "income:out"],
-      "income",
-    );
-  }
-  for (const id of ["output:idleOutput", "output:income"]) {
-    join(id, [id, "merge:line", "merge:withdraw"], "structural");
-  }
-  for (const edge of graph.edges) if (!used.has(edge.id)) out.push(edge);
-  return out;
+  const model: SemanticGraph = { nodes, ports, junctions, segments, connections };
+  const resolved = resolveSemanticGraph(model);
+  const visible = resolved.connections.filter((connection) => !hidden.has(connection.id));
+  const visibleIds = new Set(visible.map((entry) => entry.id));
+  graph.semantic = model;
+  graph.hoverRoutes = routes;
+  graph.connections = visible.map((entry) => ({
+    id: entry.id,
+    kind: entry.class as EdgeKind,
+    points: entry.points.filter(
+      (point, index) =>
+        index === 0 ||
+        point.x !== entry.points[index - 1]?.x ||
+        point.y !== entry.points[index - 1]?.y,
+    ),
+  }));
+  graph.edges = [
+    ...existingEdges,
+    ...resolved.segments
+      .filter(
+        (segment) =>
+          (segment.class === "principal" || segment.class === "income") &&
+          (segment.points[0]?.x !== segment.points[1]?.x ||
+            segment.points[0]?.y !== segment.points[1]?.y) &&
+          visibleIds.has(
+            required(
+              segments.find((entry) => entry.id === segment.id),
+              "segment",
+            ).connectionId,
+          ),
+      )
+      .map((entry) => {
+        const segment = required(
+          segments.find((value) => value.id === entry.id),
+          "segment",
+        );
+        const connection = required(
+          connections.find((value) => value.id === segment.connectionId),
+          "connection",
+        );
+        const index = connection.segmentIds.indexOf(entry.id);
+        return {
+          id: index === 0 ? connection.id : `${connection.id}:leg:${index}`,
+          kind: entry.class as EdgeKind,
+          points: entry.points,
+        };
+      }),
+  ];
+}
+
+function chainHasPosition(input: LayoutInput, chainId: string): boolean {
+  return [...input.hub.chains, ...input.spokes.flatMap((spoke) => spoke.chains)].some(
+    (chain) => chain.id === chainId && chain.steps.some((step) => step.family === "position"),
+  );
 }

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name graphModel
- * @implements-rules-version v1 (POO-2156 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2237 rules v1; POO-2288 rules v1
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2156 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2237 rules v1; POO-2288 rules v1
  * @analytics-events none, pure helpers of the graph renderer: activations leave the renderer through
  *   `onTarget` and the Build screen (PP-MGR-SCR-002, S7) owns every event.
  *
@@ -197,6 +197,7 @@ interface SpokeSlot {
   group: GraphItem[];
   labels: GraphItem[];
   bridges: GraphItem[];
+  returnBridges: GraphItem[];
   chains: string[];
   tail: GraphItem[];
 }
@@ -211,6 +212,7 @@ export function graphItems(layout: GraphLayout): GraphItem[] {
     group: [],
     labels: [],
     bridges: [],
+    returnBridges: [],
     chains: [],
     tail: [],
   }));
@@ -275,7 +277,8 @@ export function graphItems(layout: GraphLayout): GraphItem[] {
       }
       case "bridge": {
         const spoke = spokeAt(readingPoint(item).x);
-        if (spoke) spoke.bridges.push(item);
+        if (spoke)
+          (item.node.direction === "outbound" ? spoke.returnBridges : spoke.bridges).push(item);
         else leftover.push(item);
         break;
       }
@@ -309,6 +312,7 @@ export function graphItems(layout: GraphLayout): GraphItem[] {
       ...spoke.bridges,
       ...spoke.chains.flatMap(chainItems),
       ...spoke.tail,
+      ...spoke.returnBridges,
     ]),
     ...end,
     ...byPosition(leftover),
@@ -378,7 +382,7 @@ export function edgeTone(kind: EdgeKind): PieceEdge["tone"] {
  * one network repeat their stub ids) takes `#2`, `#3`, so every line keeps its own key.
  */
 export function pieceEdges(layout: GraphLayout): PieceEdge[] {
-  if (layout.semantic)
+  if (layout.semantic && !layout.hoverRoutes)
     return resolveSemanticGraph(layout.semantic).segments.map((segment) => ({
       id: segment.id,
       tone: segment.class === "income" ? "income" : "muted",
@@ -422,7 +426,7 @@ export function formatShare(pct: number): string {
 
 /** Complete hover paths mapped with the same tone and stable id contract as resting edges. */
 export function pieceConnections(layout: GraphLayout): PieceEdge[] {
-  if (layout.semantic)
+  if (layout.semantic && !layout.hoverRoutes)
     return resolveSemanticGraph(layout.semantic).connections.map((connection) => ({
       id: connection.id,
       tone: connection.class === "income" ? "income" : "muted",

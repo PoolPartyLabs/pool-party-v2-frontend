@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutConstants
- * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1)
  * @analytics-events none, constants of a pure geometry module: nothing here is rendered or tracked.
  *
  * Every distance the Build canvas layout uses, in px at 100% zoom (handoff v1.2, "Layout rules").
@@ -39,6 +39,10 @@ export const LAYOUT = Object.freeze({
   /** From the bus down to the top of the Add network box (GROUP_TOP - BUS_Y). */
   NETBOX_STUB: 32,
   PAIR: 12,
+  RETURN_BRIDGE_GAP: 72,
+  PORT_CENTER: 0.5,
+  PRINCIPAL_PORT_SPAN: 0.45,
+  INCOME_PORT_START: 0.55,
   SPINE_GAP: 32,
 
   // Building-block sizes the layout places.
