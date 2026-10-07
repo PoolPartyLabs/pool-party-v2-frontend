@@ -45,8 +45,16 @@ it.each([
   ["changed key", { connectedAddress: "other" }, "SOLANA_BINDING_MISMATCH"],
   ["changed fund", { fundContext: "other" }, "SOLANA_BINDING_MISMATCH"],
   ["unfunded", { balance: async () => BigInt(204) }, "SOLANA_INSUFFICIENT_SOL"],
-  ["smart wallet", { evmCode: async () => "0xef0100" }, "SOLANA_MANAGER_EOA_REQUIRED"],
-  ["unknown code", { evmCode: async () => undefined }, "SOLANA_MANAGER_CODE_REQUIRED"],
+  [
+    "smart wallet",
+    { evmCode: async (): Promise<string> => "0xef0100" },
+    "SOLANA_MANAGER_EOA_REQUIRED",
+  ],
+  [
+    "unknown code",
+    { evmCode: async (): Promise<undefined> => undefined },
+    "SOLANA_MANAGER_CODE_REQUIRED",
+  ],
 ] as const)("rejects %s before launching", async (_label, overrides, error) => {
   await expect(checkSolanaPrelaunch({ ...input(), ...overrides })).rejects.toThrow(error);
 });
