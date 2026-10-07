@@ -221,3 +221,9 @@ financial claim, personal-data collection or signing behavior changes. Existing
 financial launch conditions remain in force. Focused component contracts and interaction
 tests pass; native scrollbar painting in the affected browsers remains Murilo's
 acceptance check, without any inference about transaction availability or settlement.
+
+## CR-MGR-POO2289, 2026-10-07, Review Entry/Exit transaction fee information
+
+Status: ANSWERED for the read-only unavailable-information scope. POO-2289 rules v1 introduces two labels with Not available and the shared helper Fee details are unavailable. No amount, rate, beneficiary or charging trigger is claimed; existing manager fees, protocol flow fee and instant withdrawal fee remain separate. The rows cannot edit the draft or authorize a fee, and existing launch validation/provisioning is preserved. Focused tests verify order, keyboard help, plain text values and preserved manager-fee editing. Browser reflow acceptance remains with Murilo.
+
+Status: BLOCKING before Entry/Exit values or charges are enabled. Confirm beneficiary, triggering operation, calculation base, gross/net treatment, caps/minima, currency, rounding, fee source/freshness, jurisdiction and required investor disclosure. These answers must come from the authoritative fee contract; an unavailable row is not zero or an approval of an existing charge. This entry clears no existing fee/custody/launch blocker. Owner: Murilo / product and legal owner. Evidence: [POO-2289](https://linear.app/yeildbay/issue/POO-2289), [Figma 8670:2855](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8670-2855), PP-MGR-CMP-090 and PP-MGR-CMP-077.
