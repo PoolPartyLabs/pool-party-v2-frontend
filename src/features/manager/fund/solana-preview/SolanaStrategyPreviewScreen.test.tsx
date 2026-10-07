@@ -130,7 +130,9 @@ describe("Solana local visual preview", () => {
     render(<SolanaStrategyPreviewScreen onExit={vi.fn()} />);
     add("kamino");
     expect(screen.queryByText("solanaPreview.collect")).not.toBeInTheDocument();
-    expect(screen.getByText(/solanaPreview.noDebtDrawing/)).toBeVisible();
+    // A local Supply drawing cannot establish an account's debt or liquidation state.
+    expect(screen.getByText("accountUnavailable")).toBeVisible();
+    expect(screen.queryByText("noDebt")).not.toBeInTheDocument();
     add("jupiter");
     expect(screen.queryByText("solanaPreview.collect")).not.toBeInTheDocument();
     add("orca");
