@@ -1,8 +1,8 @@
 /**
  * @id PP-CORE-CMP-075
  * @name ContractFamilyToggle
- * @implements-rules-version v1 (POO-2120 rules v1, POO-2157 rules v1); POO-2220 rules v1
- * @analytics-events contract_family_toggled
+ * @implements-rules-version v2 (POO-2281); POO-2120/2157/2220 rules v1
+ * @analytics-events contract_family_toggled, solana_preview_entered, solana_preview_exited
  *
  * POO-2120 [R3] / [R4] / [R5], epic POO-2119. The header's "V1 | V2" segmented control: which
  * family of contracts the manager console is addressing. V1 is the live Uniswap v3 single-pool
@@ -44,6 +44,11 @@
 import { useTranslations } from "next-intl";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
+import {
+  captureSolanaPreviewExit,
+  requestSolanaPreview,
+  useSolanaPreviewMode,
+} from "@/lib/experiments/solanaPreviewStore";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { useNavigationGuard } from "@/lib/hooks/unsavedChanges";
 import { type ContractFamily, useContractFamily } from "@/lib/hooks/useContractFamily";
@@ -75,6 +80,7 @@ export function ContractFamilyToggle({ className, mobile = false }: ContractFami
   const t = useTranslations("shell");
   const { isEnabled } = useFeatureFlags();
   const { family, setFamily } = useContractFamily();
+  const preview = useSolanaPreviewMode();
   const { track } = useAnalytics();
   // Called before the flag check: a hook cannot sit behind an early return.
   const guard = useNavigationGuard();
@@ -85,15 +91,28 @@ export function ContractFamilyToggle({ className, mobile = false }: ContractFami
   // Literal t() calls per segment (the i18n usage scan is static, no dynamic keys).
   const labels: Record<ContractFamily, string> = {
     v1: t("contractFamily.v1"),
-    v2: t("contractFamily.v2"),
+    v2: preview === "v2-solana" ? t("contractFamily.v2Solana") : t("contractFamily.v2"),
   };
 
   function choose(next: ContractFamily) {
-    // Pressing the selected segment is not a decision: no state write and no event, so the series
-    // counts builders entered rather than clicks on a control.
-    if (next === family) return;
+    if (next === family) {
+      if (next !== "v2") return;
+      // A host exists only on the V2 builder route. The gesture never changes ContractFamily.
+      if (preview === "v2-solana") {
+        const exit = captureSolanaPreviewExit();
+        guard(() => {
+          if (exit()) track("solana_preview_exited");
+        });
+      } else {
+        requestSolanaPreview(guard, Date.now(), () => track("solana_preview_entered"));
+      }
+      return;
+    }
+    const exit = captureSolanaPreviewExit();
     // A switch unmounts the builder on screen: with unsaved work it asks first (see the header).
     guard(() => {
+      if (!exit()) return;
+      if (preview === "v2-solana") track("solana_preview_exited");
       setFamily(next);
       // [R5] The family switched TO. No from/to pair: the previous family is the previous row.
       track("contract_family_toggled", { family: next });
@@ -130,7 +149,9 @@ export function ContractFamilyToggle({ className, mobile = false }: ContractFami
           </div>
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-xs">
-          {t("contractFamily.tooltip")}
+          {preview === "v2-solana"
+            ? t("contractFamily.solanaTooltip")
+            : t("contractFamily.tooltip")}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

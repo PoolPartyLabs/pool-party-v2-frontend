@@ -14,6 +14,35 @@ Status: `OPEN` (asked, not answered), `BLOCKING` (must be answered before the la
 `ANSWERED` (the answer is in the last column). If a launch checklist disagrees with this file, this
 file wins.
 
+## CR-MGR-POO2281, 2026-10-07, local Solana editor scope revision
+
+Answer for the current visual scope: Murilo replaced the unmounted API/cohort proposal with a
+frontend-only editor, POO-2281 rules v2. No account list, access administration, credential read,
+wallet request or persistence is introduced. All accounts using the existing gated builder route
+can reveal the same mode. The gesture is discoverable and is not an access-control promise.
+POO-2282 is canceled for this delivery. The original entry described the superseded v1 foundation.
+
+The screen explicitly describes local configuration, discarded on exit/reload; market data and
+execution remain Not available. Allocation and SOL/USDC labels are drawing choices. Native cash
+identifies native SOL; pool SOL represents WSOL, not native operating cash. Kamino Supply describes
+this drawing only, without a claim about a real user's debt, liquidation safety or APY. Principal
+and LP-fee routes/automatic bridges explain intended architecture, with no provider, cost, timing,
+transaction or settlement guarantee. No fee, real asset routing, custody or tokenized equity is enabled.
+
+Official Solana/Kamino/Jupiter/Raydium/Orca marks identify protocol blocks. Their rights remain with
+the owners and attribution implies neither endorsement nor a trademark grant. Source inventory:
+[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) and the
+[feature README](../src/features/manager/fund/solana-preview/README.md).
+
+Status: ANSWERED for this local, non-executable visual scope. Existing BLOCKING entries remain
+applicable. Real integration must independently verify native/WSOL semantics, market identity,
+price provenance, measured costs, signer binding, venue disclosures, settlement and recovery before
+activation under POO-2239/2240/2261/2262. This answer does not clear those future operations.
+Owner: Murilo / Codex coordinator. Evidence: [POO-2281](https://linear.app/yeildbay/issue/POO-2281),
+[delivery plan](solana-preview-preparation-plan-2026-10-07.md),
+[ADR 0009](adr/0009-local-solana-visual-preview.md), focused guard/editor tests and code review.
+Browser visual verification remains with Murilo; it was not performed in this implementation.
+
 ## Verification record: gas-only risk acknowledgement
 
 2026-10-04, POO-2198, PP-CORE-CMP-046: reviewed the existing loss-percentage disclosure before

@@ -1,5 +1,18 @@
 # Integration Points
 
+## Local Solana visual editor (POO-2281, rules v2)
+
+The route-scoped store in `src/lib/experiments/solanaPreviewStore.ts` (PP-CORE-LIB-125) shares only
+visual mode. The editor in `src/features/manager/fund/solana-preview/` has no API/RPC/wallet/launch
+imports. No new entitlement endpoint is required. POO-2282 and the earlier unmounted grant modules
+were canceled/removed before release when Murilo simplified the scope.
+
+Future real wiring remains POO-2239/2240 (tokens/markets), POO-2262 (binding/quotes/launch) and POO-2261
+(relays/reports). Local token/pair/percentage choices are not financial or transaction inputs. Missing
+prices, amounts, reserve data, quotes and execution stay Not available. `solanaSpoke` remains off.
+See the [current delivery plan](solana-preview-preparation-plan-2026-10-07.md) and
+[ADR 0009](adr/0009-local-solana-visual-preview.md).
+
 ## Launch report countdown (POO-2233, rules v1)
 
 `launch/useLaunchReportWait.ts` records first report building/waiting observation in browser-local metadata keyed by normalized manager, draft and report step, separate from the execution journal. `useV2Launch.ts` projects this optional timestamp to `FundLaunchJourney`; an isolated display clock derives a 19-minute estimate. Polling, retry and reopening preserve the timestamp. Storage failure uses an in-memory fallback.

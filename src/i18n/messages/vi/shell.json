@@ -81,7 +81,9 @@
     "label": "Phiên bản trình tạo",
     "v1": "V1",
     "v2": "V2",
-    "tooltip": "Chuyển giữa trình tạo hiện tại (V1) và bản xem trước hợp đồng quỹ (V2)."
+    "tooltip": "Chuyển giữa trình tạo hiện tại (V1) và bản xem trước hợp đồng quỹ (V2).",
+    "v2Solana": "V2 Solana",
+    "solanaTooltip": "Bản xem trước chiến lược Solana cục bộ. Nhấn V2 Solana để quay lại trình tạo EVM."
   },
   "toaster": {
     "ariaLabel": "Thông báo"

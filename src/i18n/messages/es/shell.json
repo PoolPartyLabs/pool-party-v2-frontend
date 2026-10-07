@@ -81,7 +81,9 @@
     "label": "Versión del constructor",
     "v1": "V1",
     "v2": "V2",
-    "tooltip": "Cambie entre el constructor actual (V1) y la vista previa de los contratos de fondo (V2)."
+    "tooltip": "Cambie entre el constructor actual (V1) y la vista previa de los contratos de fondo (V2).",
+    "v2Solana": "V2 Solana",
+    "solanaTooltip": "Vista previa local de estrategia Solana. Pulsa V2 Solana para volver al editor EVM."
   },
   "toaster": {
     "ariaLabel": "Notificaciones"

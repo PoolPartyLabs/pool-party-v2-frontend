@@ -1,5 +1,24 @@
 # Analytics Events
 
+## Local Solana editor (POO-2281, rules v2)
+
+| Event | When it fires | Key params | Emitting artifact |
+|---|---|---|---|
+| `solana_preview_entered` | Guarded selected-V2 gesture enters the local editor on the registered builder route | none | PP-CORE-CMP-075, ContractFamilyToggle |
+| `solana_preview_exited` | Explicit label, Back to EVM builder or family switch exits the active local editor after the guard | none | PP-CORE-CMP-075, ContractFamilyToggle; PP-MGR-SCR-002, BuilderRouteSwitch |
+| `solana_preview_viewed` | Local editor mounts once | none | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_started` | First local block is added in this editor session | `preview_protocol` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_applied` | Valid local configuration is applied to the drawing | `preview_protocol`, `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_abandoned` | An edited drawing unmounts without persistence | `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_blocked` | Invalid individual/aggregate allocation, unapplied edits or unavailable execution blocks intent | `preview_protocol` when applicable, `preview_reason`, `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_error` | A genuine child-render error reaches the retry boundary | bounded `error_code`, `error_origin`, `has_local_changes` | PP-MGR-SCR-009, SolanaPreviewErrorBoundary |
+
+Protocol parameters are limited to `kamino`, `jupiter`, `raydium`, `orca`. Reasons are bounded enums.
+All emissions use the existing consent-aware `useAnalytics().track()` path. No wallet, mint, local
+amount, pair, exception text or transaction data is emitted. Apply describes a local drawing change;
+there is no submitted/completed financial funnel because the editor cannot submit an operation.
+
+
 ## V2 launch journey (POO-2181, rules v2)
 
 | Event | When it fires | Key params | Emitting artifact |

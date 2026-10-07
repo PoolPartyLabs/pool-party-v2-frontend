@@ -21,10 +21,22 @@ companion to **Product Rules — v1**. Code: [`src/lib/features`](../src/lib/fea
 | **Feature flag** | Is this *area* switched on in this environment? | this registry + env |
 | **Role gate** (`isManager`) | Does *this user* get to see it? | backend identity (mock today) |
 | **Mock mode** (`isMockMode`) | Mock or real data? | `NEXT_PUBLIC_MOCK_MODE` |
+| **Real experiment authorization** | May this account execute a protected experiment? | Separate future API/contract integration; canceled grant proposal is historical |
+| **Preview preference** | Which visual preview is selected locally? | In-memory UI state; never permission or a new contract family |
 
 The Manager area ships in v1 and is **not** feature-flagged (murilo 2026-06-11): the sidebar
 entry is always visible and `/manager/*` always resolves; only the **role** decides which state
 shows ("Become a manager" vs "Manager"), via `isManager` (mocked by the Dev-menu toggle today).
+
+## Local Solana visual preview (POO-2281, rules v2)
+
+The local editor sits beneath the existing `fundContracts` release gate and a `/manager/new` host.
+Three presses of selected V2 reveal V2 Solana. State is in memory, shared only inside the tab; it is
+not authentication and is cleared on route/account/family change. There is no new API cohort or
+runtime configuration. `solanaSpoke` stays default off for the separate real wallet/launch integration.
+The gesture does not enable that flag or any financial operation. See the
+[delivery plan](solana-preview-preparation-plan-2026-10-07.md) and
+[ADR 0009](adr/0009-local-solana-visual-preview.md).
 
 ## Resolution precedence (highest wins)
 
@@ -69,6 +81,7 @@ tests can `vi.stubEnv(...)` without resetting modules.
 | `strategyCategoryFilter` | `NEXT_PUBLIC_FEATURE_STRATEGY_CATEGORY_FILTER` | ⛔ off | next | Presentational **control** gate for the whole POO-830 category-tags surface. **Investor (PR2):** the multi-select asset-category filter (Bitcoin / Ethereum / Stablecoins / Altcoins / Meme coins) on the already-launched Strategies Explore screen. **Manager (PR3):** the read-only asset + objective tag rows in the strategy builder's `DerivedMandateCard` preview. **Not a route gate**, not `isManager`, not `isMockMode` - it only decides whether these controls show. Off = today's Explore + builder behavior; on reveals both (Explore filters client-side, OR semantics, over the loaded strategies). POO-830 PR2 + PR3. |
 | `hookTools` | `NEXT_PUBLIC_FEATURE_HOOK_TOOLS` | ✅ **on** | next | The Tools page at `/tools` (Uniswap v4 hook risk scan, hackathon) **and** its sidebar entry. Route-guarded: off = a deep link 404s. **The one `next` flag that ships ON, and only on this hackathon demo fork**: the page is the submission's front door, so a judge must not have to set an env var to find it. That also makes it the removal seam (same role `activeReserve` plays): exactly two places read it, the route guard and the nav item, so turning it off leaves no trace anywhere else. The scan runs a real toolchain server-side and needs `ETHERSCAN_API_KEY` plus foundry, slither and a built `hookrisk/cli/dist/cli.js` on the host (`HOOKRISK_HOME`, `HOOKRISK_WORK_DIR`, `HOOKRISK_SLITHER_BIN`). Missing any of them, the page names what is absent; it never renders an empty report. See `docs/_hackathon_hookrisk/04_TOOLS_PAGE.md`. |
 | `fundContracts` | `NEXT_PUBLIC_FEATURE_FUND_CONTRACTS` | ⛔ off | next | Enables the V2 header toggle, the V2 choice of builder at `/manager/new`, fund discovery/portfolio views and the dedicated fund/launch routes. `/manager/new` itself always resolves: flag off or the V1 preference renders the existing V1 builder. Dedicated `/funds/:core` and `/manager/fund-launch/*` routes check the flag; the temporary fallback Review also requires real mode. The selected contract family is a UI preference, not a role or permission. Mandate and Build persist browser-local drafts. In real mode, Review reads the existing API/balance/upload seams and its Launch action enters the existing transaction journey. Mock mode shows an explicit unavailable notice for real Review. Set `NEXT_PUBLIC_FEATURE_FUND_CONTRACTS=on` before building the dev image for `v2.dev.pool-party.xyz`; public flags are baked into the bundle. Default remains off. See [Strategy Builder delivery](./STRATEGY_BUILDER_DELIVERY_2026-10-04.md). |
+| `solanaSpoke` | `NEXT_PUBLIC_FEATURE_SOLANA_SPOKE` | off | next | Default-off real Solana wallet/launch integration gate. The POO-2281 local visual editor uses only fundContracts and never enables this flag. Real execution remains POO-2262. |
 | ~~`financialsV2`~~ | ~~`NEXT_PUBLIC_FEATURE_FINANCIALS_V2`~~ | **REMOVED** | — | **Retired (POO-990 / PP-CORE-LIB-048).** Was the POO-936 data-source switch for the analytics `/financials` cutover. The flag + its legacy OFF branch (the `/metrics` path, the `invested ?? balance` / `feesEarned ?? collectedFees` fallbacks, the cross-backend Total-Yield join, the FE `Math.max` re-clamps) were DELETED — FE v2 now reads the C1 `/financials` endpoint UNCONDITIONALLY in real mode (a null read renders "not available yet", never a legacy figure). No env override exists any more. Do NOT re-introduce a flag-gated legacy financials fallback. |
 
 **core** = on by default, nav-level kill-switch only (route is *not* 404-guarded) · **live** =

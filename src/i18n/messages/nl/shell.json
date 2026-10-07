@@ -81,7 +81,9 @@
     "label": "Builderversie",
     "v1": "V1",
     "v2": "V2",
-    "tooltip": "Schakel tussen de huidige builder (V1) en de preview van de fondscontracten (V2)."
+    "tooltip": "Schakel tussen de huidige builder (V1) en de preview van de fondscontracten (V2).",
+    "v2Solana": "V2 Solana",
+    "solanaTooltip": "Lokale preview van een Solana-strategie. Klik op V2 Solana om terug te gaan naar de EVM-editor."
   },
   "toaster": {
     "ariaLabel": "Meldingen"

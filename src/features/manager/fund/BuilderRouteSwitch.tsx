@@ -1,8 +1,8 @@
 /**
  * @id PP-MGR-SCR-002
  * @name BuilderRouteSwitch
- * @implements-rules-version v1
- * @analytics-events none, the switch renders one of two builders and emits nothing. A view event
+ * @implements-rules-version v2 (POO-2281)
+ * @analytics-events solana_preview_exited, emitted on the preview's guarded exit. A view event
  *   here would fire on every render of either builder and belong to neither; the screens own their
  *   own views (S2 for the fund builder), and the choice itself is reported by the control the user
  *   pressed, `ContractFamilyToggle` (`PP-CORE-CMP-075`).
@@ -33,9 +33,17 @@
 
 import type { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { useAnalytics } from "@/lib/analytics/useAnalytics";
+import { useAuth } from "@/lib/auth/useAuth";
+import {
+  captureSolanaPreviewExit,
+  useSolanaPreviewHost,
+} from "@/lib/experiments/solanaPreviewStore";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
+import { useNavigationGuard } from "@/lib/hooks/unsavedChanges";
 import { useContractFamily } from "@/lib/hooks/useContractFamily";
 import { FundStrategyBuilderScreen } from "./FundStrategyBuilderScreen";
+import { SolanaStrategyPreviewScreen } from "./solana-preview/SolanaStrategyPreviewScreen";
 
 /** Public props for {@link BuilderRouteSwitch}. */
 export interface BuilderRouteSwitchProps {
@@ -77,5 +85,25 @@ export function BuilderRouteSwitch({ v1 }: BuilderRouteSwitchProps): ReactNode {
   // [R6] Flag on, family not read yet: hold the space rather than guess and flash.
   if (!hydrated) return <BuilderSkeleton />;
 
-  return family === "v2" ? <FundStrategyBuilderScreen /> : v1;
+  return family === "v2" ? <V2BuilderHost /> : v1;
+}
+
+/** Mounted only in V2 after hydration. Route/account disposal resets the local preview. */
+function V2BuilderHost() {
+  const { address, isAuthenticated } = useAuth();
+  const accountKey = `${isAuthenticated ? "signed-in" : "signed-out"}:${address ?? "none"}`;
+  const preview = useSolanaPreviewHost(accountKey, true);
+  const guard = useNavigationGuard();
+  const { track } = useAnalytics();
+  if (preview !== "v2-solana") return <FundStrategyBuilderScreen />;
+  return (
+    <SolanaStrategyPreviewScreen
+      onExit={() => {
+        const exit = captureSolanaPreviewExit();
+        guard(() => {
+          if (exit()) track("solana_preview_exited");
+        });
+      }}
+    />
+  );
 }

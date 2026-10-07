@@ -81,7 +81,9 @@
     "label": "ビルダーのバージョン",
     "v1": "V1",
     "v2": "V2",
-    "tooltip": "現在のビルダー（V1）とファンドコントラクトのプレビュー（V2）を切り替えます。"
+    "tooltip": "現在のビルダー（V1）とファンドコントラクトのプレビュー（V2）を切り替えます。",
+    "v2Solana": "V2 Solana",
+    "solanaTooltip": "Solana戦略のローカルプレビュー。V2 SolanaをクリックするとEVMビルダーに戻ります。"
   },
   "toaster": {
     "ariaLabel": "通知"

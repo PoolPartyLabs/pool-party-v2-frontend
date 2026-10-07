@@ -81,7 +81,9 @@
     "label": "빌더 버전",
     "v1": "V1",
     "v2": "V2",
-    "tooltip": "현재 빌더(V1)와 펀드 컨트랙트 미리보기(V2)를 전환합니다."
+    "tooltip": "현재 빌더(V1)와 펀드 컨트랙트 미리보기(V2)를 전환합니다.",
+    "v2Solana": "V2 Solana",
+    "solanaTooltip": "Solana 전략의 로컬 미리보기입니다. V2 Solana를 클릭하면 EVM 빌더로 돌아갑니다."
   },
   "toaster": {
     "ariaLabel": "알림"
