@@ -47,6 +47,9 @@ API response examples below describe the committed API snapshot, not missing
 contract functionality at the refreshed #47/#48 revision. In particular, old
 DEC-198/200/202 blocker messages are historical API diagnostics, not current
 contract admission, identity-cycle or sealed-policy findings.
+Follow-up remote check: `feat/be-poo-2261-solana-sync` is not published; its local
+commit remains `53dd816fa3b6b0a2000a12f7939b66fb06ce743a`. API continuation stays
+pending, not delivered. The contract remote head remains the audited #48 SHA.
 
 ### #47/#48 bootstrap contract and owner adapter requirements
 
@@ -77,10 +80,16 @@ the frontend must not invent production payload bytes or API routes.
 The frontend extension retains `ManagerSolanaBinding` with
 `bootstrapAuthorization`/`bootstrapSignature`, exposes `solanaBootstrapTypedData`
 and `solanaBootstrapDigest`, and freezes `solanaBootstrap: { policyHash, payload }`.
+`SolanaLaunchIntegrationOptions.bootstrap` is required, not an optional fallback;
+the hook validates it and stores it as frozen `solanaBootstrap`.
 Its `stage-solana-config` and `seal-solana-config` step kinds both build
 `stage_swap_policy`; `seal-solana-config` means the final nonempty sealing chunk,
 not a new on-chain instruction. `SolanaLaunchBackend.bootstrapState` is the
 read-only reconciliation seam, not a claim an HTTP endpoint is delivered.
+Golden bootstrap digest:
+`0x05405ee3cbacda4303d6ed3404afc02f852fd0ffa09cb9c7e44ac3bb66249092`,
+using the Rust binding fixture tuple and independently encoded Solidity ABI words
+in `src/lib/solana/binding.test.ts`. The legacy binding digest is separate evidence.
 
 Manager-signed native provisioning is ordered, not one atomic browser step:
 
@@ -105,6 +114,11 @@ does not prove failure: successful init consumes it. Only verified matching
 evidence may advance checkpoints. Unknown submitted transactions must retain
 their signature/lifetime and reconcile; **never rebuild or request a new wallet
 signature merely because polling times out**. Read-only hydration must not sign.
+When `initialized=true`, the driver verifies Fund/Manager/policy identities and
+the exact `bootstrapDigest`; it does not require the consumed stage's payload,
+length or sealed flag to remain available. Before init, prefix/length/seal checks
+are required against the frozen manifest. The response shape still carries those
+fields, but initialized evidence must not be rejected for absent historical bytes.
 Cost manifests must include every Manager stage/final-seal/init message and stage
 rent, without counting an imaginary extra seal transaction or rent refunds as NAV.
 
@@ -303,6 +317,10 @@ and principal validation remain backend responsibilities.
   may submit 0 after Manager action, never auto-convert an empty field. Current API
   `/signed-quote` remains a production gate; frontend semantics do not prove backend
   executable support. The stricter output minimum is enforced upstream, not UI math.
+- #48's callable oracle minimum supports explicit `0` or `>=10,000` no-maximum
+  semantics with `require_manager_bound=false`; bounded values are 1–9,999.
+  This is implemented contract behavior, not an outstanding optional-limit
+  implementation blocker. API delivery, stock oracle and deployment remain gated.
 - `useSolanaLpChoices(references)` adds `choice.availability` with available or
   unavailable/reason. With no reference, all choices remain visibly unavailable.
   `backend.referencePrice(poolId)` provides authenticated on-chain reference metadata
@@ -343,12 +361,15 @@ Manager UI step. A report's publication, delivery and acceptance are distinct.
 
 ### Actual execution ordering is a dependency graph, not a strict wizard
 
-`withSolanaLaunchSteps()` returns `[solana:bind, ...evmSteps, solana:init,
+`withSolanaLaunchSteps()` returns `[solana:bind, ...evmSteps, ...staging, solana:init,
 solana:report, solana:send, solana:arrival, optional supply, optional ratio,
 optional open]`. EVM `create` adds a dependency on binding. Solana dependencies:
 
 ```text
-solana:init    <- discover-hub, solana:bind
+first stage   <- discover-hub, solana:bind
+next stage    <- previous stage, solana:bind
+solana:seal   <- previous stage (or discover-hub for one chunk), solana:bind
+solana:init    <- solana:seal
 solana:report  <- profile, solana:init
 solana:send    <- solana:report
 solana:arrival <- solana:send
@@ -361,7 +382,9 @@ EVM plan order is optional approval → create → Hub discovery → Robinhood c
 discovery → profile → Hub allocation/leaf operations → report → Across bridge →
 arrival/Robinhood leaves. `runLaunch()` scans once per invocation, skips unmet
 dependencies, and can pass a waiting branch to process another eligible branch.
-Solana init depends on Hub discovery, **not Robinhood completion**. Solana send
+Solana init depends on the final sealing chunk, transitively Hub discovery,
+**not Robinhood completion**. Nonfinal IDs are `solana:stage:<offset>`; the final
+chunk ID is `solana:seal` even for a one-chunk payload. Solana send
 does not inherit the runner's special hold of EVM `bridge` behind Hub swap/open.
 Render returned order, but do not claim it enforces the exact serial order above
 or that closing a modal changes dependencies. Any stricter scheduling belongs to
@@ -507,6 +530,7 @@ type SolanaOracleReference =
 
 ```ts
 import type { BindingCodec, ManagerSolanaBinding } from "@/lib/solana/binding";
+import type { SolanaBootstrapManifest } from "@/lib/solana/bootstrap";
 import type { SolanaPlanCostEstimator } from "@/lib/solana/costs";
 import type { SolanaOracleReference } from "@/lib/solana/oracle";
 import type { SolanaLifetime } from "@/lib/solana/transaction";
@@ -542,6 +566,16 @@ interface SolanaCreatedAccount {
 // External CPI/Token-2022 account sizes require the actual builder/extension decoder.
 
 interface SolanaLaunchBackend {
+  bootstrapState?(journal: LaunchJournal): Promise<{
+    policyHash: string;
+    fundPda: string;
+    managerSolana: string;
+    totalLength: number;
+    payload: string;
+    sealed: boolean;
+    initialized: boolean;
+    bootstrapDigest?: string;
+  } | null>;
   referencePrice?(poolId: string): Promise<SolanaOracleReference>;
   build(step: SolanaLaunchStep, journal: LaunchJournal,
     lifetime?: SolanaLifetime, quote?: SolanaApiSignedQuote): Promise<Uint8Array | unknown>;
@@ -559,6 +593,7 @@ interface SolanaLaunchIntegrationOptions {
   draftId: string;
   manager: Address;
   binding: ManagerSolanaBinding;
+  bootstrap: SolanaBootstrapManifest;
   codec: BindingCodec;
   costEstimator: SolanaPlanCostEstimator;
   evmCode: (manager: Address) => Promise<string | undefined>;
@@ -674,7 +709,7 @@ Canonical step types and `LaunchDriver` are exported from `plan.ts` / `journal.t
 `SolanaLaunchStep` extends the EVM shared step fields (ID/dependencies/share/group/
 block/protocol/config), replaces kind/chain, requires `group: "solana"` and
 `chainKind`, and adds `config.maxPriceImpactBps`. Kinds are `bind-solana`,
-`init-solana`, `cctp-fast`, `solana-arrival`, `kamino-supply`, `swap-to-ratio`,
+`stage-solana-config`, `seal-solana-config`, `init-solana`, `cctp-fast`, `solana-arrival`, `kamino-supply`, `swap-to-ratio`,
 `raydium-open`, `report`. `ChainLaunchStep = LaunchStep | SolanaLaunchStep`.
 Use `isEvmLaunchStep`, not numerical-chain assumptions. `createChainLaunchDriver`
 routes EVM unchanged; a plain EVM driver rejects SVM steps. `createManagerSolanaRpc`
@@ -1323,8 +1358,8 @@ receive/relay paths, production blockers and local rehearsal scope.
 **Not verified and must not be implied:** production acceptance codec and frozen
 bootstrap/config API manifest, stage-prefix/sealed/init reconciliation, complete
 native creation/discovery/init/Hub-CCTP adapter, production cost estimates or
-0.3-SOL policy, chosen stock oracle/provider/calendar, production optional-limit
-execution, live admitted three pools, credit-amount/public SVM balance adapter,
+0.3-SOL policy, chosen stock oracle/provider/calendar, deployed optional-limit
+execution evidence (contract semantics are implemented), live admitted three pools, credit-amount/public SVM balance adapter,
 extra-signer/lifetime orchestration, safe read-only Solana polling/hydration,
 deployed program/factories/authority revocation, actual key-specific throttle
 configuration or proxy alias for the CCTP URI, mainnet transaction/bridge/report

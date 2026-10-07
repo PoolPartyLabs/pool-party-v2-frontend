@@ -85,6 +85,15 @@ The frontend keeps `ManagerSolanaBinding.bootstrapAuthorization` and
 latter representing the final nonempty chunk, followed by `init-solana`.
 `SolanaLaunchBackend.bootstrapState` is the read-only verification seam, not a
 delivered API endpoint.
+`SolanaLaunchIntegrationOptions.bootstrap: SolanaBootstrapManifest` is required;
+the hook validates it and persists it as frozen `solanaBootstrap`.
+The first staging step depends on `discover-hub` and `solana:bind`; later chunks
+depend on their preceding chunk and binding. Final chunk ID is `solana:seal`,
+including a one-chunk payload, and `solana:init` depends on `solana:seal`.
+Golden bootstrap digest
+`0x05405ee3cbacda4303d6ed3404afc02f852fd0ffa09cb9c7e44ac3bb66249092`
+matches the Rust binding fixture tuple and independent Solidity ABI encoding in
+`src/lib/solana/binding.test.ts`, not the legacy binding fixture below.
 
 ```text
 SolanaBootstrap(uint256 hubChain,address core,bytes32 mandateHash,bytes32 policyHash,uint16 spokeIndex,bytes32 program,bytes32 fundPda,bytes32 solanaKey,bytes32 usdcAta,bytes32 tslaxAta,bytes32 nvdaxAta,bytes32 wsolAta,bytes32 nativeMandateHash,bytes32 fundId,uint256 nonce,uint256 expiry)
@@ -111,7 +120,13 @@ journaling. Resume rejects any changed identity, policy, Manager or manifest.
 TODO(interface): provide production builder/Config manifest and authenticated
 read-only reconciliation of exact verified staged prefix, sealed state and
 initialized Fund/config identity. Stage disappearance can mean successful init,
-not failure. Unknown submitted transactions retain their signature/lifetime for
+not failure. `bootstrapState` returns `policyHash`, `fundPda`, `managerSolana`,
+`totalLength`, `payload`, `sealed`, `initialized` and optional `bootstrapDigest`,
+or `null`. Before init, exact prefix/length/seal verification applies. When
+`initialized=true`, matching Fund/Manager/policy and the exact bootstrap digest
+are required; the consumed stage's payload/length/seal no longer prove init and
+are not checked. `bootstrapDigest` is optional in the type but required for
+initialized evidence. Unknown submitted transactions retain their signature/lifetime for
 reconciliation; do not rebuild or prompt another signature on a polling timeout.
 Estimate every Manager staging/final-seal/init message and stage rent, with no
 fictional extra seal transaction or keeper budget substitution.
@@ -119,6 +134,8 @@ fictional extra seal transaction or keeper budget substitution.
 The local API branch `feat/be-poo-2261-solana-sync` exists at committed SHA
 `53dd816fa3b6b0a2000a12f7939b66fb06ce743a`. Its committed `API.md` still describes
 pre-#47/#48 blockers; concurrent uncommitted continuation is not API delivery.
+Remote `feat/be-poo-2261-solana-sync` is absent at this follow-up check; do not
+describe the local continuation as a published or delivered API contract.
 TODO(interface): creation/bootstrap/staging/reconciliation and signed-quote
 adapters remain pending verification. #48 adds NVDAx admission/custody and signed
 swap policy integration, but stock oracle is still unavailable: the production
@@ -127,7 +144,7 @@ unavailable and the feature OFF. No deployment or financial readiness is implied
 
 ### Existing adapter surface
 
-`options` supplies manager, draft ID, binding, `BindingCodec`, `costEstimator`, `evmCode`,
+`options` supplies manager, draft ID, binding, required `bootstrap`, `BindingCodec`, `costEstimator`, `evmCode`,
 existing EVM steps/driver, Solana selection, frozen request/plan and authenticated
 `SolanaLaunchBackend`. The frozen object retains the existing EVM request fields and
 adds `solanaBinding` and normalized `solanaSelection`; saved version-1 storage keys
@@ -180,7 +197,7 @@ API-provided `{message, attestation}` and receive-and-credit, never direct unres
 
 ## Open interfaces and release gates
 
-- EIP-712 is pinned to smartcontract integration commit
+- Legacy binding EIP-712 fixture is pinned to smartcontract integration commit
   `16e6f68c9c52735d70e6cec21162d75c7b5dc878`:
   `src/factory/FundFactoryV6.sol`, `src/factory/SolanaDeploymentV6.sol`,
   `docs/SOLANA-REPORT-V6.md`, and `solana/programs/pp_spoke/src/instructions/core/binding.rs`.
@@ -234,6 +251,10 @@ API-provided `{message, attestation}` and receive-and-credit, never direct unres
   TODO(decision): stock oracle selection and precise feed rounding remain with
   oracle/API owners; no unsupported frontend formula is invented.
 - DEC-203/204 replace the temporary 1–500 bps/default policy; there is no default.
+  #48 implements explicit 0/>=10,000 no-maximum semantics in the callable oracle
+  minimum with `require_manager_bound=false`; 1–9,999 remains bounded. No-maximum
+  implementation is not a remaining contract blocker, but API delivery, stock
+  oracle and deployed execution remain unverified.
 - TODO(decision): the priority-margin magnitude and retry allowance are unspecified.
   Require a deliberate positive estimator margin rather than inventing a protocol
   constant; the production owner must choose it and supply complete transaction manifests.
