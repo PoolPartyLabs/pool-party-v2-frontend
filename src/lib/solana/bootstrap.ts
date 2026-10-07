@@ -13,6 +13,7 @@ import {
 import type { Hex } from "viem";
 import { hexToBytes } from "viem";
 import type { SolanaBootstrapAuthorization } from "./binding";
+import { requireSolanaSpokeProgram, solanaBootstrapDiscriminator } from "./release";
 
 export interface SolanaBootstrapManifest {
   policyHash: Hex;
@@ -59,6 +60,7 @@ export async function validateBootstrapTransaction(input: {
   authorization: SolanaBootstrapAuthorization;
   chunk?: SolanaBootstrapChunk;
 }): Promise<void> {
+  requireSolanaSpokeProgram(input.authorization.program);
   const message = getCompiledTransactionMessageDecoder().decode(
     getTransactionDecoder().decode(input.bytes).messageBytes,
   );
@@ -77,12 +79,9 @@ export async function validateBootstrapTransaction(input: {
       encoder.encode(address(input.manager)),
     ],
   });
-  const discriminator = new Uint8Array(
-    await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(`global:${input.chunk ? "stage_swap_policy" : "initialize_fund"}`),
-    ),
-  ).slice(0, 8);
+  const discriminator = solanaBootstrapDiscriminator(
+    input.chunk ? "stage_swap_policy" : "initialize_fund",
+  );
   let operationCount = 0;
   for (const instruction of message.instructions) {
     const program = message.staticAccounts[instruction.programAddressIndex];

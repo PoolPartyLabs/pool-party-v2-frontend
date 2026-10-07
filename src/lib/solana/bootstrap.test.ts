@@ -100,7 +100,7 @@ async function validBootstrapFixture(init = false) {
   const encoder = getAddressEncoder();
   const authorization = {
     ...bootstrapAuthorizationFixture,
-    fundPda: "DtJ3wso5NbkQNWoeFrdYa4cv4Mb78coXkcV879zSf1vU",
+    fundPda: bootstrapAuthorizationFixture.fundPda,
   };
   const [stage] = await getProgramDerivedAddress({
     programAddress: address(authorization.program),

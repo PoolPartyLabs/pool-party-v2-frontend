@@ -58,14 +58,14 @@ it("queries program account rent plus transaction and priority fees, excluding k
   expect(estimator.transactions).toHaveBeenCalledTimes(1);
   expect(rpc.minimumBalanceForRentExemption).toHaveBeenCalledWith(SOLANA_ACCOUNT_SPACES.FundState);
   expect(result[0]).toMatchObject({
-    rentLamports: BigInt(51050),
+    rentLamports: BigInt(54620),
     baseFeeLamports: BigInt(5000),
     priorityFeeLamports: BigInt(100),
     priorityMarginLamports: BigInt(1020),
     feeLamports: BigInt(6120),
     transactionCount: 1,
   });
-  expect(result[0]?.accounts[0]).toMatchObject({ bytes: 5105, rentLamports: BigInt(51050) });
+  expect(result[0]?.accounts[0]).toMatchObject({ bytes: 5462, rentLamports: BigInt(54620) });
 });
 it("changes the budget with selected steps without charging shared or existing account rent twice", async () => {
   const { rpc, estimator } = fixture();
@@ -89,7 +89,7 @@ it("changes the budget with selected steps without charging shared or existing a
     estimator,
     rpc,
   );
-  expect(costs.map((cost) => cost.rentLamports)).toEqual([BigInt(51050), BigInt(2100)]);
+  expect(costs.map((cost) => cost.rentLamports)).toEqual([BigInt(54620), BigInt(2100)]);
   expect(rpc.accountExists).toHaveBeenCalledTimes(3);
   expect(costs[1]?.feeLamports).toBe(BigInt(6120));
 });

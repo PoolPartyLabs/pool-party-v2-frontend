@@ -3,13 +3,13 @@ import type { SolanaLaunchStep } from "@/features/manager/fund/launch/plan";
 export const SOLANA_ACCOUNT_SPACES = Object.freeze({
   CctpLedger: 80,
   CctpRoute: 109,
-  FundState: 5105,
+  FundState: 5462,
   KaminoPosition: 161,
   RaydiumLedger: 104,
   RaydiumPolicy: 113,
   RaydiumPosition: 210,
   TokenLedger: 105,
-  Transit: 250,
+  Transit: 251,
 });
 
 export interface SolanaCreatedAccount {
