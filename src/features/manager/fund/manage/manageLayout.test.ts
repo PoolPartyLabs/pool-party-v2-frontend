@@ -72,6 +72,39 @@ describe("POO-2270/2271 v2 routes", () => {
     );
     expect(validateSemanticGraph(graph.semantic)).toEqual([]);
   });
+  it("groups both visible legs of an inbound allocation without painting through the Bridge", () => {
+    const graph = layoutManageGraph(normalizeManageModel(mockFund));
+    const route = graph.hoverRoutes.find((item) => item.id === "entry:chain:4663");
+    expect(route?.connectionIds).toEqual(["spoke:allocation:4663", "bridge:idle:4663"]);
+    expect(
+      route?.connectionIds.every((id) => graph.connections.some((edge) => edge.id === id)),
+    ).toBe(true);
+    expect(route?.connectionIds.some((id) => id.startsWith("transfer:"))).toBe(false);
+  });
+  it("reflows observed Bridge and fee-pill content before deriving their ports and neighboring bounds", () => {
+    const model = normalizeManageModel(mockFund);
+    const position = model.positions.find((item) => item.kind === "liquidity");
+    if (!position) throw new Error("liquidity missing");
+    const graph = layoutManageGraph(model, {
+      "bridge:4663": { width: 176, height: 50 },
+      "bridge:4663:outbound": { width: 176, height: 44 },
+      [`collect:${position.id}`]: { width: 176, height: 46 },
+      [`fee-swap:${position.id}`]: { width: 176, height: 42 },
+    });
+    const inbound = graph.nodes.find((node) => node.id === "bridge:4663");
+    const idle = graph.nodes.find((node) => node.id === "idle:4663");
+    const collect = graph.nodes.find((node) => node.id === `collect:${position.id}`);
+    const swap = graph.nodes.find((node) => node.id === `fee-swap:${position.id}`);
+    const outbound = graph.nodes.find((node) => node.id === "bridge:4663:outbound");
+    if (!inbound || !idle || !collect || !swap || !outbound) throw new Error("flow missing");
+    expect(inbound.rect.h).toBe(50);
+    expect(idle.rect.y - inbound.rect.y - inbound.rect.h).toBe(24);
+    expect(collect.rect.h).toBe(46);
+    expect(swap.rect.h).toBe(42);
+    expect(swap.rect.y - collect.rect.y - collect.rect.h).toBe(24);
+    expect(outbound.rect.h).toBe(44);
+    expect(validateSemanticGraph(graph.semantic)).toEqual([]);
+  });
   it("preserves route identities after unrelated insertion and recomputes grown position ports", () => {
     const model = normalizeManageModel(mockFund);
     const first = layoutManageGraph(model);

@@ -339,13 +339,14 @@ export function layoutManageGraph(
     const entryRoute = `entry:${p.id}`;
     let first: ManageNode | null = null;
     if (p.kind === "liquidity") {
+      const swapSize = size(`swap:${p.id}`, LAYOUT.PILL_W, LAYOUT.PILL_H);
       first = add({
         id: `swap:${p.id}`,
         kind: "flow",
         flow: "swap",
         chainId,
         positionId,
-        rect: { x: axis - LAYOUT.PILL_W / 2, y: top, w: LAYOUT.PILL_W, h: LAYOUT.PILL_H },
+        rect: { x: axis - swapSize.w / 2, y: top, ...swapSize },
       });
       top = bottom(first) + LAYOUT.LINK;
     }
@@ -381,6 +382,7 @@ export function layoutManageGraph(
     const principal = port(node, "principal-out", "principal", p.id, "out", "left");
     let fee: FinancialPort | null = null;
     if (p.kind === "liquidity") {
+      const collectSize = size(`collect:${p.id}`, LAYOUT.PILL_W, LAYOUT.PILL_H);
       const collect = add({
         id: `collect:${p.id}`,
         kind: "flow",
@@ -388,12 +390,12 @@ export function layoutManageGraph(
         chainId,
         positionId,
         rect: {
-          x: axis - LAYOUT.PILL_W / 2,
+          x: axis - collectSize.w / 2,
           y: bottom(node) + LAYOUT.LINK,
-          w: LAYOUT.PILL_W,
-          h: LAYOUT.PILL_H,
+          ...collectSize,
         },
       });
+      const swapSize = size(`fee-swap:${p.id}`, LAYOUT.PILL_W, LAYOUT.PILL_H);
       const swap = add({
         id: `fee-swap:${p.id}`,
         kind: "flow",
@@ -401,10 +403,9 @@ export function layoutManageGraph(
         chainId,
         positionId,
         rect: {
-          x: axis - LAYOUT.PILL_W / 2,
+          x: axis - swapSize.w / 2,
           y: bottom(collect) + LAYOUT.LINK,
-          w: LAYOUT.PILL_W,
-          h: LAYOUT.PILL_H,
+          ...swapSize,
         },
       });
       connect(
@@ -453,6 +454,7 @@ export function layoutManageGraph(
     const { chain } = slot;
     const axis = slot.axis + shift;
     const start = nodes.length;
+    const inboundSize = size(`bridge:${chain.chainId}`, LAYOUT.PILL_W, LAYOUT.PILL_H);
     const inbound = add({
       id: `bridge:${chain.chainId}`,
       kind: "flow",
@@ -460,10 +462,9 @@ export function layoutManageGraph(
       direction: "inbound",
       chainId: chain.chainId,
       rect: {
-        x: axis - LAYOUT.PILL_W / 2,
+        x: axis - inboundSize.w / 2,
         y: allocationY + LAYOUT.STUB,
-        w: LAYOUT.PILL_W,
-        h: LAYOUT.PILL_H,
+        ...inboundSize,
       },
     });
     const dim = size(`idle:${chain.chainId}`, LAYOUT.CARD_W, 104);
@@ -492,14 +493,23 @@ export function layoutManageGraph(
     const origin = `chain:${chain.chainId}`;
     const entryBridge = bridgePorts(inbound, "principal", origin, 0.5);
     const hubPort = port(idle, `spoke-out:${chain.chainId}`, "principal", origin, "out", "bottom");
-    connect(`spoke:allocation:${chain.chainId}`, hubPort, entryBridge.incoming, [
-      { x: point(hubPort).x, y: allocationY },
-      { x: axis, y: allocationY },
-    ]);
+    const entryRoute = `entry:${origin}`;
+    connect(
+      `spoke:allocation:${chain.chainId}`,
+      hubPort,
+      entryBridge.incoming,
+      [
+        { x: point(hubPort).x, y: allocationY },
+        { x: axis, y: allocationY },
+      ],
+      entryRoute,
+    );
     connect(
       `bridge:idle:${chain.chainId}`,
       entryBridge.outgoing,
       port(chainIdle, "principal-in", "principal", origin, "in", "top"),
+      [],
+      entryRoute,
     );
     const before = returns.length;
     let positionX = slot.x + shift + LAYOUT.GROUP_PAD;
@@ -519,6 +529,7 @@ export function layoutManageGraph(
     const localBottom = Math.max(...nodes.slice(start).map(bottom));
     const grayY = localBottom + LAYOUT.LINK;
     const greenY = grayY + LAYOUT.LINK;
+    const outboundSize = size(`bridge:${chain.chainId}:outbound`, LAYOUT.PILL_W, LAYOUT.PILL_H);
     const outbound = add({
       id: `bridge:${chain.chainId}:outbound`,
       kind: "flow",
@@ -526,10 +537,9 @@ export function layoutManageGraph(
       direction: "outbound",
       chainId: chain.chainId,
       rect: {
-        x: axis - LAYOUT.PILL_W / 2,
+        x: axis - outboundSize.w / 2,
         y: (local.some((r) => r.fee) ? greenY : grayY) + LAYOUT.LINK,
-        w: LAYOUT.PILL_W,
-        h: LAYOUT.PILL_H,
+        ...outboundSize,
       },
     });
     for (const r of local) {

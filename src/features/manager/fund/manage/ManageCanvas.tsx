@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-085
  * @name ManageCanvas
- * @implements-rules-version v2 (POO-2246; extends POO-2226, POO-2232)
+ * @implements-rules-version v2 (POO-2270, POO-2271; extends POO-2246, POO-2226, POO-2232)
  * @analytics-events none, position presses report through onSelect; ManageScreen owns the view.
  *
  * Read-only live graph built from the shared Build pieces. Cash belongs to one chain and every
@@ -9,7 +9,7 @@
  */
 "use client";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useId, useMemo, useRef } from "react";
+import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { NetworkLogo } from "@/components/data-display/NetworkLogo";
 import { TokenLogo } from "@/components/data-display/TokenLogo";
 import { formatPercent, formatTokenAmount, formatUsdTile } from "@/lib/utils/format";
@@ -20,7 +20,7 @@ import { GraphEdges } from "../build/pieces/GraphEdges";
 import { CardCopy, PieceStroke } from "../build/pieces/pieceParts";
 import { SpineCard } from "../build/pieces/SpineCard";
 import { SpokeGroup } from "../build/pieces/SpokeGroup";
-import { layoutManageGraph, type ManageNode } from "./manageLayout";
+import { layoutManageGraph, type ManageMeasurements, type ManageNode } from "./manageLayout";
 import {
   type ManageModel,
   type ManagePosition,
@@ -54,7 +54,7 @@ export function ManageTokenRow({ token }: { token: ManageToken }) {
       </span>
       <span
         title={exact}
-        className="min-w-0 truncate text-right font-semibold text-foreground tabular-nums"
+        className="min-w-0 break-all text-right font-semibold text-foreground tabular-nums"
       >
         <span aria-hidden="true">{text}</span>
         <span className="sr-only">{exact}</span>
@@ -146,7 +146,7 @@ function PositionNode({
       aria-describedby={position.kind === "liquidity" ? statusId : undefined}
       aria-pressed={selected}
       onClick={(event) => onSelect(event.detail === 0)}
-      className="relative flex size-full cursor-pointer flex-col overflow-hidden rounded-lg bg-surface text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="relative flex w-full cursor-pointer flex-col rounded-lg bg-surface text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <PieceStroke
         width={selected ? 2 : 1}
@@ -155,7 +155,7 @@ function PositionNode({
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none flex h-[62px] w-full shrink-0 items-center gap-2.5 px-[13px] py-[11px]"
+        className="pointer-events-none flex min-h-[62px] w-full shrink-0 items-center gap-2.5 px-[13px] py-[11px]"
       >
         <BlockMark
           logo="protocol"
@@ -176,10 +176,10 @@ function BalanceCard({ title, children }: { title: string; children: ReactNode }
   return (
     <div
       data-canvas-interactive=""
-      className="relative flex size-full flex-col gap-3 overflow-hidden rounded-lg bg-surface p-3"
+      className="relative flex w-full flex-col gap-3 rounded-lg bg-surface p-3"
     >
       <PieceStroke width={1} radius={16} className="text-border" />
-      <h3 className="whitespace-nowrap font-medium text-foreground text-xs">{title}</h3>
+      <h3 className="break-words font-medium text-foreground text-xs">{title}</h3>
       {children}
     </div>
   );
@@ -188,11 +188,12 @@ function CashNode({ model, chainId }: { model: ManageModel; chainId: number }) {
   const t = useTranslations("manager.manageV2");
   const chain = model.chains.find((item) => item.chainId === chainId);
   if (!chain) return null;
+  const native = chain.cash.find((token) => token.address === null && token.chainId === chainId);
   return (
     <div
       data-manage-cash={chainId}
       data-canvas-interactive=""
-      className="relative flex size-full flex-col gap-2 overflow-hidden rounded-lg bg-surface p-3"
+      className="relative flex w-full flex-col gap-2 rounded-lg bg-surface p-3"
     >
       <div
         aria-hidden="true"
@@ -200,22 +201,23 @@ function CashNode({ model, chainId }: { model: ManageModel; chainId: number }) {
       />
       <PieceStroke width={1} radius={16} className="text-chart-periwinkle/42" />
       <div className="relative flex flex-col gap-2">
-        <h3 className="whitespace-nowrap font-medium text-foreground text-xs">
+        <h3 className="break-words font-medium text-foreground text-sm leading-[21px]">
           {t("operatingCash")}
         </h3>
-        <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-          <NetworkLogo network={chain.network} name={chain.name} size={12} />
-          {chain.name}
+        <div className="flex flex-col gap-1">
+          {native ? (
+            <div className="min-h-[21px]">
+              <ManageTokenRow token={native} />
+            </div>
+          ) : null}
+          <div
+            data-cash-usd=""
+            className="min-h-[18px] text-right text-xs leading-[18px]"
+            aria-live="polite"
+          >
+            {native?.valueUsd?.status === "available" ? <ManageUsd read={native.valueUsd} /> : null}
+          </div>
         </div>
-        {chain.cash
-          .filter((token) => token.address === null && token.chainId === chainId)
-          .slice(0, 1)
-          .map((token) => (
-            <ManageTokenRow
-              key={`${token.chainId}:${token.address}:${token.symbol}`}
-              token={token}
-            />
-          ))}
       </div>
     </div>
   );
@@ -224,7 +226,7 @@ function AmountLabel({ read }: { read: ManageRead<ManageTokenAmount> }) {
   const t = useTranslations("manager.manageV2");
   return (
     <span
-      className="min-w-0 truncate font-semibold text-right tabular-nums"
+      className="min-w-0 break-all font-semibold text-right tabular-nums"
       title={read.status === "available" ? `${read.value.decimal} ${read.value.symbol}` : undefined}
     >
       {read.status === "available"
@@ -351,8 +353,51 @@ function GraphNode({
   );
 }
 export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps) {
-  const layout = useMemo(() => layoutManageGraph(model), [model]);
+  const [measurements, setMeasurements] = useState<ManageMeasurements>({});
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const layout = useMemo(() => layoutManageGraph(model, measurements), [model, measurements]);
   const viewport = useRef<CanvasViewportHandle>(null);
+  const graph = useRef<HTMLDivElement>(null);
+  const measure = useCallback((entries: ResizeObserverEntry[] = []) => {
+    const values: Record<string, { width: number; height: number }> = {};
+    for (const element of graph.current?.querySelectorAll<HTMLElement>("[data-manage-measure]") ??
+      []) {
+      const id = element.dataset.manageMeasure;
+      if (!id) continue;
+      const entry = entries.find((value) => value.target === element);
+      const box = entry?.borderBoxSize?.[0];
+      // client/scroll dimensions and ResizeObserver boxes are in unscaled CSS pixels.
+      const width = Math.max(box?.inlineSize ?? element.clientWidth, element.scrollWidth);
+      const height = Math.max(box?.blockSize ?? element.clientHeight, element.scrollHeight);
+      if (width > 0 && height > 0)
+        values[id] = { width: Math.ceil(width), height: Math.ceil(height) };
+    }
+    setMeasurements((previous) => {
+      const changed = Object.entries(values).some(
+        ([id, value]) =>
+          previous[id]?.width !== value.width || previous[id]?.height !== value.height,
+      );
+      return changed ? { ...previous, ...values } : previous;
+    });
+  }, []);
+  const nodeIds = layout.nodes
+    .filter((node) => node.kind !== "group")
+    .map((node) => node.id)
+    .join("|");
+  useEffect(() => {
+    if (!nodeIds) return;
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver((entries) => measure(entries));
+    for (const element of graph.current?.querySelectorAll<HTMLElement>("[data-manage-measure]") ??
+      [])
+      observer.observe(element);
+    return () => observer.disconnect();
+  }, [measure, nodeIds]);
+  const hovered = layout.hoverRoutes.find((route) => route.connectionIds.includes(hoveredId ?? ""));
+  const highlighted = layout.connections.filter((connection) =>
+    hovered?.connectionIds.includes(connection.id),
+  );
   return (
     <CanvasViewport
       graphSize={{ width: layout.width, height: layout.height }}
@@ -361,6 +406,7 @@ export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps)
       onBackgroundClick={() => onSelect(null)}
     >
       <div
+        ref={graph}
         data-manage-graph=""
         className="relative"
         style={{ width: layout.width, height: layout.height }}
@@ -371,7 +417,32 @@ export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps)
             height={layout.height}
             edges={layout.edges}
             highlightedId={null}
+            connections={layout.connections}
+            onEdgeHoverChange={setHoveredId}
           />
+          <svg
+            aria-hidden="true"
+            focusable="false"
+            width={layout.width}
+            height={layout.height}
+            className="pointer-events-none absolute inset-0 overflow-visible"
+          >
+            {highlighted.map((connection) => (
+              <polyline
+                key={connection.id}
+                data-manage-route-highlight=""
+                data-connection-id={connection.id}
+                data-edge-tone={connection.tone}
+                points={connection.points.map((point) => `${point.x},${point.y}`).join(" ")}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinejoin="miter"
+                strokeLinecap="butt"
+                className="text-primary"
+              />
+            ))}
+          </svg>
         </div>
         {layout.nodes.map((node) => (
           // biome-ignore lint/a11y/noStaticElementInteractions: Observes descendant focus to reveal its card; the wrapper has no action.
@@ -386,12 +457,41 @@ export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps)
             }
             style={{ left: node.rect.x, top: node.rect.y, width: node.rect.w, height: node.rect.h }}
           >
-            <GraphNode
-              node={node}
-              model={model}
-              selectedId={selectedId}
-              onSelect={(id, keyboard) => (keyboard ? onSelect(id, true) : onSelect(id))}
-            />
+            <div
+              data-manage-measure={node.kind === "group" ? undefined : node.id}
+              style={
+                node.kind === "group"
+                  ? { height: node.rect.h }
+                  : {
+                      minHeight:
+                        node.kind === "cash"
+                          ? 96
+                          : node.kind === "idle"
+                            ? 104
+                            : node.kind === "withdrawal"
+                              ? 168
+                              : node.kind === "income"
+                                ? 102
+                                : node.kind === "position"
+                                  ? model.positions.find(
+                                      (position) => position.id === node.positionId,
+                                    )?.kind === "liquidity"
+                                    ? 232
+                                    : 160
+                                  : node.kind === "flow"
+                                    ? 26
+                                    : 62,
+                    }
+              }
+              className="w-full [&>button]:min-h-[inherit] [&>div]:min-h-[inherit] [&_.truncate]:overflow-visible [&_.truncate]:text-clip [&_.truncate]:break-words [&_.truncate]:whitespace-normal [&_[data-flow-pill]]:h-auto [&_[data-flow-pill]]:min-h-[26px] [&_[data-flow-pill]]:w-full [&_[data-flow-pill]]:whitespace-normal [&_[data-spine-card]]:h-auto [&_[data-spine-card]]:min-h-[62px] [&_[data-spine-card]]:w-full"
+            >
+              <GraphNode
+                node={node}
+                model={model}
+                selectedId={selectedId}
+                onSelect={(id, keyboard) => (keyboard ? onSelect(id, true) : onSelect(id))}
+              />
+            </div>
           </div>
         ))}
       </div>
