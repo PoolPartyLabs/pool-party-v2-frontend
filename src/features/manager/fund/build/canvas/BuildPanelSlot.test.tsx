@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-047
  * @name BuildPanelSlot tests
- * @implements-rules-version v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2287 and POO-2152 rules v1)
  * @analytics-events none, a presentational frame; the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event
  *
@@ -38,6 +38,8 @@ describe("BuildPanelSlot", () => {
     const region = screen.getByRole("region", { name: "Configure block" });
     for (const token of [
       "w-[360px]",
+      "min-w-0",
+      "max-w-full",
       "rounded-xl",
       "bg-surface",
       "border",

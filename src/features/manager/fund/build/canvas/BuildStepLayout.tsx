@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-045
  * @name BuildStepLayout
- * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 and POO-2202 rules v1)
+ * @implements-rules-version v1 (POO-2287 and POO-2236 rules v1); v1 (POO-2152 and POO-2202 rules v1)
  * @analytics-events none, the layout reports presses through its props; the Build screen
  *   (PP-MGR-SCR-002, S7) decides what a press meant and owns every event
  *
@@ -100,9 +100,9 @@ export function BuildStepLayout({
         style={{ height }}
         className="grid min-h-0 grid-cols-[180px_minmax(0,1fr)_360px] gap-4 xl:grid-cols-[220px_minmax(0,1fr)_360px] xl:gap-6"
       >
-        <div className="min-h-0 overflow-y-auto">{palette}</div>
+        <div className="scrollbar-dark min-h-0 min-w-0 overflow-y-auto">{palette}</div>
         <div className="h-full min-h-0 min-w-0">{canvas}</div>
-        <div className="min-h-0 overflow-y-auto">{panel}</div>
+        <div className="scrollbar-dark min-h-0 min-w-0 overflow-y-auto">{panel}</div>
       </div>
 
       {/* The Mandate bar's markup contract (BuilderActionBar), with phase labels and a notice. */}
