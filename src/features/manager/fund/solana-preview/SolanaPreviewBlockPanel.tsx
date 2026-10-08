@@ -25,6 +25,7 @@ import {
   parseAllocation,
 } from "./previewModel";
 import { SolanaHoldingPresenter, SolanaJupiterInspector } from "./SolanaHoldingPresenter";
+import { SolanaKaminoReadSection } from "./SolanaKaminoReadSection";
 import { PreviewLogo } from "./SolanaPreviewCanvas";
 import { SolanaRangePresenter } from "./SolanaRangePresenter";
 import type { SolanaRangeContext, SolanaRangeDraft } from "./solanaRangeModel";
@@ -78,20 +79,30 @@ export function SolanaPreviewBlockPanel({
   const showRange = lp && (parseAllocation(edit.allocation) ?? 0) > 0;
   const verifiedRange = rangeContext?.protocol === block.protocol ? rangeContext : null;
   const fields =
-    block.protocol === "kamino"
-      ? [
-          t("solanaPreview.supplyApy"),
-          t("solanaPreview.availableLiquidity"),
-          t("solanaPreview.depositCapacity"),
-        ]
-      : block.protocol === "jupiter" || block.protocol === "holding"
-        ? []
-        : [
-            t("solanaPreview.pool"),
-            t("solanaPreview.price"),
-            t("solanaPreview.feeModel"),
-            t("solanaPreview.liquidityTolerance"),
-          ];
+    block.protocol === "kamino" || block.protocol === "jupiter" || block.protocol === "holding"
+      ? []
+      : [
+          t("solanaPreview.pool"),
+          t("solanaPreview.price"),
+          t("solanaPreview.feeModel"),
+          t("solanaPreview.liquidityTolerance"),
+        ];
+  const allocation = (
+    <Input
+      label={t("solanaPreview.allocation")}
+      inputMode="numeric"
+      autoComplete="off"
+      value={edit.allocation}
+      onChange={(event) => onEdit({ allocation: event.target.value })}
+      error={
+        error === "allocation_invalid"
+          ? t("solanaPreview.allocationInvalid")
+          : error === "allocation_total"
+            ? t("solanaPreview.allocationExceeded")
+            : undefined
+      }
+    />
+  );
   return (
     <aside
       aria-labelledby="solana-preview-configure"
@@ -135,49 +146,43 @@ export function SolanaPreviewBlockPanel({
         }}
         className="space-y-5"
       >
-        <Input
-          label={t("solanaPreview.allocation")}
-          inputMode="numeric"
-          autoComplete="off"
-          value={edit.allocation}
-          onChange={(event) => onEdit({ allocation: event.target.value })}
-          error={
-            error === "allocation_invalid"
-              ? t("solanaPreview.allocationInvalid")
-              : error === "allocation_total"
-                ? t("solanaPreview.allocationExceeded")
-                : undefined
-          }
-        />
         {block.protocol === "kamino" ? (
-          <div>
-            <span className="text-muted-foreground text-xs">{t("solanaPreview.reserve")}</span>
-            <p className="mt-1 text-sm">{t("solanaPreview.supplyUsdc")}</p>
-          </div>
+          <>
+            {/* PP-INTEGRATION-POINT: POO-2240/2261 supply Kamino Market/Reserve and independent metrics; Supply USDC drawing is not a selected reserve or observation. */}
+            <SolanaKaminoReadSection
+              mode="configure"
+              origin={null}
+              read={null}
+              allocation={allocation}
+            />
+          </>
         ) : (
-          <label className="block space-y-2">
-            <span className="text-sm">
-              {t(
-                block.protocol === "holding"
-                  ? "solanaPreview.holding.token"
-                  : lp
-                    ? "solanaPreview.pair"
-                    : "solanaPreview.conversion",
-              )}
-            </span>
-            <select
-              value={edit.pair}
-              onChange={(event) => onEdit({ pair: event.target.value as PreviewPair })}
-              className="h-10 w-full rounded-md border border-border bg-surface px-3 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
-            >
-              <option value="SOL / USDC">
-                {block.protocol === "holding" ? "WSOL" : lp ? "SOL / USDC" : "SOL → USDC"}
-              </option>
-              <option value="USDC / SOL">
-                {block.protocol === "holding" ? "USDC" : lp ? "USDC / SOL" : "USDC → SOL"}
-              </option>
-            </select>
-          </label>
+          <>
+            {allocation}
+            <label className="block space-y-2">
+              <span className="text-sm">
+                {t(
+                  block.protocol === "holding"
+                    ? "solanaPreview.holding.token"
+                    : lp
+                      ? "solanaPreview.pair"
+                      : "solanaPreview.conversion",
+                )}
+              </span>
+              <select
+                value={edit.pair}
+                onChange={(event) => onEdit({ pair: event.target.value as PreviewPair })}
+                className="h-10 w-full rounded-md border border-border bg-surface px-3 text-base text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+              >
+                <option value="SOL / USDC">
+                  {block.protocol === "holding" ? "WSOL" : lp ? "SOL / USDC" : "SOL → USDC"}
+                </option>
+                <option value="USDC / SOL">
+                  {block.protocol === "holding" ? "USDC" : lp ? "USDC / SOL" : "USDC → SOL"}
+                </option>
+              </select>
+            </label>
+          </>
         )}
         {fields.length ? (
           <dl className="space-y-3 border-t border-border pt-4">

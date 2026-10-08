@@ -1739,6 +1739,10 @@
       "reviewNow": "Kiểm tra thay đổi",
       "confirmNow": "Xác nhận thay đổi",
       "allocationDescription": "Kiểm tra các thay đổi đối với phân bổ hiện tại."
+    },
+    "kaminoRead": {
+      "supplied": "Đã cung cấp",
+      "availableToWithdraw": "Có thể rút"
     }
   }
 }

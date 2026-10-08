@@ -52,6 +52,30 @@ describe("local Holding and Jupiter hosts", () => {
 });
 
 describe("local Kamino lending risk host", () => {
+  // @rule R3/R4: Configure supplies unavailable market/reserve reads, distinct from Supply USDC.
+  it("mounts Market and Reserve metadata before allocation without invented options", () => {
+    renderWithProviders(
+      <SolanaPreviewBlockPanel
+        block={{ id: "local-kamino", protocol: "kamino", allocationBps: 0, pair: "SOL / USDC" }}
+        edit={{ allocation: "0", pair: "SOL / USDC" }}
+        error={null}
+        applied={false}
+        onEdit={vi.fn()}
+        onApply={vi.fn()}
+        onDiscard={vi.fn()}
+        onClose={vi.fn()}
+        onUnavailable={vi.fn()}
+      />,
+    );
+    const section = screen.getByRole("region", { name: "Supply USDC" });
+    expect(within(section).getByText("Market")).toBeVisible();
+    expect(within(section).getByText("Reserve")).toBeVisible();
+    expect(within(section).getAllByText("Not available")).toHaveLength(8);
+    const labels = section.textContent ?? "";
+    expect(labels.indexOf("Reserve")).toBeLessThan(labels.indexOf("Allocation (%)"));
+    expect(labels.indexOf("Allocation (%)")).toBeLessThan(labels.indexOf("Supply APY"));
+    expect(within(section).queryByRole("combobox")).toBeNull();
+  });
   it("shows unavailable full-account risk without no-debt or LP controls", () => {
     renderWithProviders(
       <SolanaPreviewBlockPanel

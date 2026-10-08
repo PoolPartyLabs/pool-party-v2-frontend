@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils/cn";
 import { sanitizeNumericInput } from "@/lib/utils/numericInput";
 import { parseAllocation } from "./previewModel";
+import { SolanaKaminoReadSection } from "./SolanaKaminoReadSection";
 import { SolanaRangePresenter } from "./SolanaRangePresenter";
 import type {
   SolanaManageAction,
@@ -308,6 +309,10 @@ function ManageContent({
         {t("localOnly")}
       </p>
       <Snapshot label="current" read={view.current} />
+      {protocol === "kamino" ? (
+        // PP-INTEGRATION-POINT: POO-2240/2261 and POO-2290 supply canonical Kamino reads and full-obligation risk independently; local Manage never manufactures them from a draft.
+        <SolanaKaminoReadSection mode="manage" origin={null} read={null} />
+      ) : null}
       <section
         aria-labelledby={`${id}-draft`}
         className="flex min-w-0 flex-col gap-3 rounded-lg border border-border p-3"
@@ -358,11 +363,6 @@ function ManageContent({
             readOnly={review}
             onChange={(range) => onAction({ type: "edit", localId, patch: { range } })}
           />
-        ) : null}
-        {protocol === "kamino" ? (
-          <p role="status" className="text-sm">
-            {t("lendingUnavailable")}
-          </p>
         ) : null}
         {view.conflict ? (
           <>

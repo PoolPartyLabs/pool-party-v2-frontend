@@ -1739,6 +1739,10 @@
       "reviewNow": "检查更改",
       "confirmNow": "确认更改",
       "allocationDescription": "检查对当前配置比例的更改。"
+    },
+    "kaminoRead": {
+      "supplied": "已供应",
+      "availableToWithdraw": "可提取"
     }
   }
 }

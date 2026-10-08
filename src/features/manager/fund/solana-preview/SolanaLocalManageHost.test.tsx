@@ -24,6 +24,32 @@ async function allocation(value: string) {
   await userEvent.clear(input);
   await userEvent.type(input, value);
 }
+// @rule R3/R4/R8: unavailable Kamino reads never replace independent local drafts or inline Review.
+it("retains two Kamino drafts and inline review while financial reads remain unavailable", async () => {
+  const supplies: PreviewBlock[] = blocks.map((block) => ({ ...block, protocol: "kamino" }));
+  const host = { ...base, blocks: supplies };
+  const view = renderWithProviders(<SolanaLocalManageHost {...host} />);
+  expect(screen.getByRole("region", { name: "Supply USDC" })).toBeVisible();
+  await allocation("40");
+  await userEvent.click(screen.getByRole("button", { name: "Apply now" }));
+  await userEvent.click(screen.getByRole("button", { name: "Review changes" }));
+  expect(screen.getByRole("button", { name: "Confirm changes" })).toBeDisabled();
+  view.rerender(<SolanaLocalManageHost {...host} selectedId="b" />);
+  expect(screen.getByRole("textbox", { name: "Allocation (%)" })).toHaveValue("30");
+  await allocation("45");
+  view.rerender(<SolanaLocalManageHost {...host} active={false} />);
+  expect(screen.queryByRole("region", { name: "Supply USDC" })).toBeNull();
+  view.rerender(<SolanaLocalManageHost {...host} />);
+  expect(screen.getByRole("textbox", { name: "Allocation (%)" })).toHaveValue("40");
+  expect(screen.getByRole("button", { name: "Confirm changes" })).toBeDisabled();
+  expect(screen.getByRole("region", { name: "Account risk" })).toHaveTextContent(
+    "Verified account risk is not available.",
+  );
+  expect(screen.queryByText("No debt")).toBeNull();
+  expect(screen.queryByRole("textbox", { name: "Min price" })).toBeNull();
+  view.rerender(<SolanaLocalManageHost {...host} selectedId="b" />);
+  expect(screen.getByRole("textbox", { name: "Allocation (%)" })).toHaveValue("45");
+});
 // @rule R3/R8: drawing allocation is a local draft, never Current or After.
 it("renders an editable local instance with unavailable financial snapshots", () => {
   renderWithProviders(<SolanaLocalManageHost {...base} />);

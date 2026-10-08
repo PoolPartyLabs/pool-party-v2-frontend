@@ -1739,6 +1739,10 @@
       "reviewNow": "Wijzigingen controleren",
       "confirmNow": "Wijzigingen bevestigen",
       "allocationDescription": "Controleer de wijzigingen in de huidige allocatie."
+    },
+    "kaminoRead": {
+      "supplied": "Verstrekt",
+      "availableToWithdraw": "Beschikbaar om op te nemen"
     }
   }
 }

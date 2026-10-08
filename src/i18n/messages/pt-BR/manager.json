@@ -1739,6 +1739,10 @@
       "reviewNow": "Revisar alterações",
       "confirmNow": "Confirmar alterações",
       "allocationDescription": "Revise as alterações na alocação atual."
+    },
+    "kaminoRead": {
+      "supplied": "Fornecido",
+      "availableToWithdraw": "Disponível para sacar"
     }
   }
 }

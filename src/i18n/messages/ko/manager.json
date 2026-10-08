@@ -1739,6 +1739,10 @@
       "reviewNow": "변경 검토",
       "confirmNow": "변경 확인",
       "allocationDescription": "현재 배분의 변경 사항을 검토해요."
+    },
+    "kaminoRead": {
+      "supplied": "공급됨",
+      "availableToWithdraw": "출금 가능"
     }
   }
 }

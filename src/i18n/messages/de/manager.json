@@ -1739,6 +1739,10 @@
       "reviewNow": "Änderungen prüfen",
       "confirmNow": "Änderungen bestätigen",
       "allocationDescription": "Prüfen Sie die Änderungen der aktuellen Zuweisung."
+    },
+    "kaminoRead": {
+      "supplied": "Bereitgestellt",
+      "availableToWithdraw": "Zum Abheben verfügbar"
     }
   }
 }

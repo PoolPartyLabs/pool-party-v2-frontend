@@ -284,8 +284,43 @@ it.each(["kamino", "holding", "jupiter"] as const)("does not give %s LP controls
   expect(screen.queryByRole("textbox", { name: "Min price" })).toBeNull();
   expect(screen.queryByRole("button", { name: /Collect/ })).toBeNull();
   if (protocol === "kamino")
-    expect(screen.getByText("Lending account data is unavailable.")).toBeVisible();
+    expect(screen.getByRole("region", { name: "Account risk" })).toHaveTextContent(
+      "Verified account risk is not available.",
+    );
 });
+// @rule R4/R8: allocation changes in lending are not presented as LP range operations.
+it("mounts Kamino supplied, market and full-account risk reads before local settings", () => {
+  renderWithProviders(<SolanaManagePresenter {...props(initial("kamino"))} protocol="kamino" />);
+  const supply = screen.getByRole("region", { name: "Supply USDC" });
+  const fields = within(supply);
+  for (const label of [
+    "Market",
+    "Reserve",
+    "Position",
+    "Obligation",
+    "Supplied",
+    "Principal",
+    "Interest",
+    "Rewards",
+    "Supply APY",
+    "Available to withdraw",
+  ]) {
+    expect(fields.getByText(label, { exact: true })).toBeVisible();
+  }
+  expect(fields.getByRole("region", { name: "Account risk" })).toHaveTextContent(
+    "Verified account risk is not available.",
+  );
+  expect(fields.queryByText("No debt")).toBeNull();
+  expect(fields.queryByRole("combobox")).toBeNull();
+  expect(fields.queryByRole("button")).toBeNull();
+  expect(fields.getAllByText("Not available").length).toBeGreaterThan(0);
+  const panel = screen.getByRole("region", { name: "Manage block" }).textContent ?? "";
+  expect(panel.indexOf("Supplied")).toBeLessThan(panel.indexOf("Supply APY"));
+  expect(panel.indexOf("Supply APY")).toBeLessThan(panel.indexOf("Available to withdraw"));
+  expect(panel.indexOf("Available to withdraw")).toBeLessThan(panel.indexOf("Health factor"));
+  expect(panel.indexOf("Health factor")).toBeLessThan(panel.indexOf("Allocation (%)"));
+});
+
 // @rule R4/R8: allocation changes in lending are not presented as LP range operations.
 it("reviews a Kamino allocation with Apply now labels and keeps confirmation unavailable", async () => {
   const s = solanaManageReducer(edited(initial("kamino")), {

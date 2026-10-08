@@ -1739,6 +1739,10 @@
       "reviewNow": "Revisar cambios",
       "confirmNow": "Confirmar cambios",
       "allocationDescription": "Revise los cambios en la asignación actual."
+    },
+    "kaminoRead": {
+      "supplied": "Suministrado",
+      "availableToWithdraw": "Disponible para retirar"
     }
   }
 }
