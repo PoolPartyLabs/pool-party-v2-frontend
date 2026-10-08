@@ -79,6 +79,56 @@ describe("local Solana drawing model", () => {
     state = previewReducer(state, { type: "apply" });
     expect(totalAllocationBps(state)).toBe(10000);
   });
+  // @rule POO-2291 R8: local Manage writes only its drawing instance, not another editor.
+  it("applies one Manage drawing baseline without losing another selected draft", () => {
+    let state = previewReducer(createPreviewState(), { type: "add", protocol: "orca" });
+    state = previewReducer(state, { type: "edit", value: { allocation: "60" } });
+    state = previewReducer(state, { type: "apply" });
+    state = previewReducer(state, { type: "add", protocol: "orca" });
+    state = previewReducer(state, { type: "edit", value: { allocation: "40" } });
+    const sibling = state.blocks[1];
+    const next = previewReducer(state, {
+      type: "apply-drawing",
+      id: "preview-1",
+      value: { allocation: "30", pair: "USDC / SOL" },
+    });
+    expect(next.blocks[0]).toMatchObject({ allocationBps: 3000, pair: "USDC / SOL" });
+    expect(next.blocks[1]).toBe(sibling);
+    expect(next.selectedId).toBe("preview-2");
+    expect(next.edit).toEqual(state.edit);
+    expect(hasUnappliedChanges(next)).toBe(true);
+    expect(state.blocks[0]?.allocationBps).toBe(6000);
+  });
+  it("acknowledges only valid Manage allocations within applied drawing capacity", () => {
+    let state = previewReducer(createPreviewState(), { type: "add", protocol: "raydium" });
+    state = previewReducer(state, { type: "edit", value: { allocation: "60" } });
+    state = previewReducer(state, { type: "apply" });
+    state = previewReducer(state, { type: "add", protocol: "holding" });
+    for (const allocation of ["", "-1", "40.1", "101", "41"]) {
+      expect(
+        previewReducer(state, {
+          type: "apply-drawing",
+          id: "preview-2",
+          value: { allocation, pair: "SOL / USDC" },
+        }),
+      ).toBe(state);
+    }
+    expect(
+      previewReducer(state, {
+        type: "apply-drawing",
+        id: "removed-instance",
+        value: { allocation: "10", pair: "SOL / USDC" },
+      }),
+    ).toBe(state);
+    const next = previewReducer(state, {
+      type: "apply-drawing",
+      id: "preview-2",
+      value: { allocation: "40", pair: "USDC / SOL" },
+    });
+    expect(totalAllocationBps(next)).toBe(10000);
+    expect(next.edit).toEqual({ allocation: "40", pair: "USDC / SOL" });
+    expect(hasUnappliedChanges(next)).toBe(false);
+  });
   // @rule R6: discard retains the last applied configuration; removal is an explicit local action.
   it("discards edits and removes only the requested block", () => {
     let state = previewReducer(createPreviewState(), { type: "add", protocol: "jupiter" });

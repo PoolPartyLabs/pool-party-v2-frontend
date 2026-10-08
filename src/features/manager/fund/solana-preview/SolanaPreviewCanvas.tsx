@@ -1,23 +1,24 @@
 /**
  * @id PP-MGR-CMP-088
  * @name SolanaPreviewCanvas
- * @description Local drawing with independent principal and converted-fee routes.
+ * @description Local Configure/Manage drawing with independent routes and all-node inspection.
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8370-2816
  * @linear https://linear.app/yeildbay/issue/POO-2281
  * @i18n-namespace manager.solanaPreview
- * @implements-rules-version v2 (POO-2281)
+ * @implements-rules-version v2 (POO-2281), v1 (POO-2291)
  * @analytics-events none, presentational drawing; PP-MGR-SCR-009 owns local intent events.
  */
 "use client";
 
-import { Wallet, X } from "lucide-react";
+import { Lock, Wallet, X } from "lucide-react";
 import Image from "next/image";
 import { useFormatter, useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { NetworkLogo } from "@/components/data-display/NetworkLogo";
 import { CanvasViewport, type CanvasViewportHandle } from "../build/canvas/CanvasViewport";
 import { FlowPill } from "../build/pieces/FlowPill";
 import { GraphEdges } from "../build/pieces/GraphEdges";
-import type { PieceEdge } from "../build/pieces/pieceTypes";
+import type { BlockIcon, PieceEdge } from "../build/pieces/pieceTypes";
 import { SpineCard } from "../build/pieces/SpineCard";
 import { SpokeGroup } from "../build/pieces/SpokeGroup";
 import { isLiquidityBlock, type PreviewBlock, type PreviewProtocol } from "./previewModel";
@@ -42,9 +43,19 @@ export function PreviewLogo({
   );
 }
 
-function At({ x, y, children }: { x: number; y: number; children: ReactNode }) {
+function At({
+  x,
+  y,
+  nodeId,
+  children,
+}: {
+  x: number;
+  y: number;
+  nodeId?: string;
+  children: ReactNode;
+}) {
   return (
-    <div className="absolute" style={{ left: x, top: y }}>
+    <div data-preview-node={nodeId} className="absolute" style={{ left: x, top: y }}>
       {children}
     </div>
   );
@@ -52,8 +63,10 @@ function At({ x, y, children }: { x: number; y: number; children: ReactNode }) {
 
 export interface SolanaPreviewCanvasProps {
   blocks: PreviewBlock[];
+  /** Manage inspects every node; Configure preserves the original position-only behavior. */
+  context?: "configure" | "manage";
   selectedId: string | null;
-  onSelect(id: string | null): void;
+  onSelect(id: string | null, anchor?: HTMLElement): void;
   onRemove(id: string): void;
 }
 
@@ -245,6 +258,7 @@ export function getPreviewGeometry(blocks: PreviewBlock[]): {
 /** A drawing with independent principal and LP-fee buses. All geometry stays local. */
 export function SolanaPreviewCanvas({
   blocks,
+  context = "configure",
   selectedId,
   onSelect,
   onRemove,
@@ -273,6 +287,55 @@ export function SolanaPreviewCanvas({
       fitView?.();
     }
   }, [width]);
+  const managing = context === "manage";
+  const inspect = (id: string, label: string, face: ReactNode) =>
+    managing ? (
+      <button
+        type="button"
+        data-canvas-interactive=""
+        aria-label={label}
+        aria-pressed={selectedId === id}
+        onClick={(event) => onSelect(id, event.currentTarget)}
+        className={`block rounded-[20px] text-left outline-none focus-visible:ring-2 focus-visible:ring-ring ${selectedId === id ? "ring-2 ring-primary" : ""}`}
+      >
+        {face}
+      </button>
+    ) : (
+      face
+    );
+  const fixedCards: { id: string; title: string; icon: BlockIcon }[] = [
+    { id: "hub-deposit", title: t("solanaPreview.deposit"), icon: "depositIn" },
+    {
+      id: "hub-idle",
+      title: t(managing ? "manageV2.idleInput" : "solanaPreview.idle"),
+      icon: "hourglass",
+    },
+    {
+      id: "hub-idle-output",
+      title: t(managing ? "manageV2.idleOutput" : "solanaPreview.idle"),
+      icon: "hourglass",
+    },
+    { id: "hub-income", title: t("solanaPreview.income"), icon: "coins" },
+    { id: "hub-withdraw", title: t("solanaPreview.withdraw"), icon: "withdrawOut" },
+    {
+      id: "solana-idle",
+      title: t(managing ? "manageV2.idleInput" : "solanaPreview.idle"),
+      icon: "hourglass",
+    },
+    {
+      id: "solana-idle-output",
+      title: t(managing ? "manageV2.idleOutput" : "solanaPreview.idle"),
+      icon: "hourglass",
+    },
+  ];
+  const flow = (id: string, text: string, icon: BlockIcon, locked = true) => (
+    <FlowPill
+      content={{ text, tooltip: managing ? text : t("solanaPreview.fixed"), icon }}
+      locked={managing && locked}
+      selected={selectedId === id}
+      onActivate={managing ? (anchor) => onSelect(id, anchor) : undefined}
+    />
+  );
 
   return (
     <div className="h-[min(760px,75dvh)] min-h-[460px] min-w-0">
@@ -282,12 +345,25 @@ export function SolanaPreviewCanvas({
         fitOnResize
         viewportRef={viewportRef}
         onBackgroundClick={() => onSelect(null)}
+        overlay={
+          managing ? (
+            <div
+              data-preview-hub=""
+              className="absolute top-6 right-6 flex min-h-[33px] max-w-[calc(100%-3rem)] flex-wrap items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5 text-sm"
+            >
+              <NetworkLogo network="arbitrum" name="Arbitrum" size={20} />
+              <span className="font-semibold">{t("fundBuilder.networks.hub")} · Arbitrum</span>
+              <Lock aria-hidden="true" className="size-3.5 shrink-0 text-muted-foreground" />
+            </div>
+          ) : undefined
+        }
       >
         <At x={spoke.x} y={spoke.y}>
           <SpokeGroup
             width={spoke.width}
             height={spoke.height}
             networkName="Solana"
+            context={managing ? "manage" : "build"}
             networkLogo={<PreviewLogo protocol="solana" className="size-3" />}
             chipTooltip="Solana"
           />
@@ -303,112 +379,64 @@ export function SolanaPreviewCanvas({
           highlightedId={highlightedId}
           onEdgeHoverChange={setHoveredId}
         />
-        <At x={getPreviewNode(nodes, "hub-deposit").x} y={getPreviewNode(nodes, "hub-deposit").y}>
-          <SpineCard
-            title={t("solanaPreview.deposit")}
-            caption="USDC"
-            icon="depositIn"
-            locked
-            lockTooltip={t("solanaPreview.fixed")}
-          />
-        </At>
-        <At x={getPreviewNode(nodes, "hub-idle").x} y={getPreviewNode(nodes, "hub-idle").y}>
-          <SpineCard
-            title={t("solanaPreview.idle")}
-            caption="USDC"
-            icon="hourglass"
-            locked
-            lockTooltip={t("solanaPreview.fixed")}
-          />
-        </At>
-        <At x={getPreviewNode(nodes, "hub-income").x} y={getPreviewNode(nodes, "hub-income").y}>
-          <SpineCard
-            title={t("solanaPreview.income")}
-            caption="USDC"
-            icon="coins"
-            locked
-            lockTooltip={t("solanaPreview.fixed")}
-          />
-        </At>
+        {fixedCards.map((card) => (
+          <At
+            key={card.id}
+            nodeId={card.id}
+            x={getPreviewNode(nodes, card.id).x}
+            y={getPreviewNode(nodes, card.id).y}
+          >
+            {inspect(
+              card.id,
+              `${card.title} · ${card.id.startsWith("hub-") ? "Arbitrum" : "Solana"}`,
+              <SpineCard
+                title={card.title}
+                caption="USDC"
+                icon={card.icon}
+                locked
+                lockTooltip={managing ? undefined : t("solanaPreview.fixed")}
+              />,
+            )}
+          </At>
+        ))}
         <At
-          x={getPreviewNode(nodes, "hub-idle-output").x}
-          y={getPreviewNode(nodes, "hub-idle-output").y}
+          nodeId="bridge-in"
+          x={getPreviewNode(nodes, "bridge-in").x}
+          y={getPreviewNode(nodes, "bridge-in").y}
         >
-          <SpineCard
-            title={t("solanaPreview.idle")}
-            caption="USDC"
-            icon="hourglass"
-            locked
-            lockTooltip={t("solanaPreview.fixed")}
-          />
-        </At>
-        <At x={getPreviewNode(nodes, "hub-withdraw").x} y={getPreviewNode(nodes, "hub-withdraw").y}>
-          <SpineCard
-            title={t("solanaPreview.withdraw")}
-            caption="USDC"
-            icon="withdrawOut"
-            locked
-            lockTooltip={t("solanaPreview.fixed")}
-          />
-        </At>
-        <At x={getPreviewNode(nodes, "bridge-in").x} y={getPreviewNode(nodes, "bridge-in").y}>
-          <FlowPill
-            content={{
-              text: t("solanaPreview.bridgeIn"),
-              tooltip: t("solanaPreview.fixed"),
-              icon: "bridge",
-            }}
-          />
-        </At>
-        <At x={getPreviewNode(nodes, "bridge-out").x} y={getPreviewNode(nodes, "bridge-out").y}>
-          <FlowPill
-            content={{
-              text: t("solanaPreview.bridgeOut"),
-              tooltip: t("solanaPreview.fixed"),
-              icon: "bridge",
-            }}
-          />
-        </At>
-        <At x={getPreviewNode(nodes, "solana-idle").x} y={getPreviewNode(nodes, "solana-idle").y}>
-          <SpineCard
-            title={t("solanaPreview.idle")}
-            caption="USDC"
-            icon="hourglass"
-            locked
-            lockTooltip={t("solanaPreview.fixed")}
-          />
+          {flow("bridge-in", t("solanaPreview.bridgeIn"), "bridge")}
         </At>
         <At
-          x={getPreviewNode(nodes, "solana-idle-output").x}
-          y={getPreviewNode(nodes, "solana-idle-output").y}
+          nodeId="bridge-out"
+          x={getPreviewNode(nodes, "bridge-out").x}
+          y={getPreviewNode(nodes, "bridge-out").y}
         >
-          <SpineCard
-            title={t("solanaPreview.idle")}
-            caption="USDC"
-            icon="hourglass"
-            locked
-            lockTooltip={t("solanaPreview.fixed")}
-          />
+          {flow("bridge-out", t("solanaPreview.bridgeOut"), "bridge")}
         </At>
         <At
+          nodeId="operating-cash"
           x={getPreviewNode(nodes, "operating-cash").x}
           y={getPreviewNode(nodes, "operating-cash").y}
         >
-          <div
-            data-canvas-interactive=""
-            className="flex h-24 w-36 flex-col justify-center gap-1 rounded-2xl border border-border bg-surface px-3 text-sm"
-          >
-            <span className="text-muted-foreground text-xs">
-              {t("solanaPreview.operatingCash")}
-            </span>
-            <span className="flex items-center gap-2 font-medium">
-              <PreviewLogo protocol="solana" className="size-4" />
-              {t("solanaPreview.nativeSol")}
-            </span>
-            <span className="text-muted-foreground text-xs">
-              {t("solanaPreview.marketUnavailable")}
-            </span>
-          </div>
+          {inspect(
+            "operating-cash",
+            t("solanaPreview.operatingCash"),
+            <div
+              data-canvas-interactive=""
+              className="flex h-24 w-36 flex-col justify-center gap-1 rounded-2xl border border-border bg-surface px-3 text-sm"
+            >
+              <span className="text-muted-foreground text-xs">
+                {t("solanaPreview.operatingCash")}
+              </span>
+              <span className="flex items-center gap-2 font-medium">
+                <PreviewLogo protocol="solana" className="size-4" />
+                {t("solanaPreview.nativeSol")}
+              </span>
+              <span className="text-muted-foreground text-xs">
+                {t("solanaPreview.marketUnavailable")}
+              </span>
+            </div>,
+          )}
         </At>
         {blocks.length === 0 ? (
           <At x={1090} y={400}>
@@ -432,27 +460,29 @@ export function SolanaPreviewCanvas({
           return (
             <div key={block.id}>
               {inputSwap ? (
-                <At x={x} y={getPreviewNode(nodes, `${block.id}-input-swap`).y}>
-                  <FlowPill
-                    content={{
-                      text: t(
-                        block.protocol === "holding"
-                          ? "solanaPreview.autoSwap"
-                          : "solanaPreview.swap",
-                      ),
-                      tooltip: t("solanaPreview.fixed"),
-                      icon: "swap",
-                    }}
-                  />
+                <At
+                  nodeId={`${block.id}-input-swap`}
+                  x={x}
+                  y={getPreviewNode(nodes, `${block.id}-input-swap`).y}
+                >
+                  {flow(
+                    `${block.id}-input-swap`,
+                    t(
+                      block.protocol === "holding"
+                        ? "solanaPreview.autoSwap"
+                        : "solanaPreview.swap",
+                    ),
+                    "swap",
+                  )}
                 </At>
               ) : null}
-              <At x={x} y={getPreviewNode(nodes, block.id).y}>
+              <At nodeId={block.id} x={x} y={getPreviewNode(nodes, block.id).y}>
                 <div data-canvas-interactive="" className="relative">
                   <button
                     type="button"
-                    aria-label={`${t("solanaPreview.configure")} ${name}`}
+                    aria-label={`${t(managing ? "solanaPreview.localManage.title" : "solanaPreview.configure")} ${name}`}
                     aria-pressed={selectedId === block.id}
-                    onClick={() => onSelect(block.id)}
+                    onClick={(event) => onSelect(block.id, event.currentTarget)}
                     className={`flex h-[62px] w-44 items-center gap-2.5 rounded-[20px] border bg-surface px-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring ${selectedId === block.id ? "border-primary ring-1 ring-primary" : "border-border hover:border-muted-foreground"}`}
                   >
                     <PreviewLogo protocol={block.protocol} />
@@ -483,35 +513,29 @@ export function SolanaPreviewCanvas({
                 </div>
               </At>
               {outputSwap ? (
-                <At x={x} y={getPreviewNode(nodes, `${block.id}-output-swap`).y}>
-                  <FlowPill
-                    content={{
-                      text: t("solanaPreview.autoSwap"),
-                      tooltip: t("solanaPreview.fixed"),
-                      icon: "swap",
-                    }}
-                  />
+                <At
+                  nodeId={`${block.id}-output-swap`}
+                  x={x}
+                  y={getPreviewNode(nodes, `${block.id}-output-swap`).y}
+                >
+                  {flow(`${block.id}-output-swap`, t("solanaPreview.autoSwap"), "swap")}
                 </At>
               ) : null}
               {lp ? (
                 <>
-                  <At x={x} y={getPreviewNode(nodes, `${block.id}-collect`).y}>
-                    <FlowPill
-                      content={{
-                        text: t("solanaPreview.collect"),
-                        tooltip: t("solanaPreview.fixed"),
-                        icon: "coins",
-                      }}
-                    />
+                  <At
+                    nodeId={`${block.id}-collect`}
+                    x={x}
+                    y={getPreviewNode(nodes, `${block.id}-collect`).y}
+                  >
+                    {flow(`${block.id}-collect`, t("solanaPreview.collect"), "coins", false)}
                   </At>
-                  <At x={x} y={getPreviewNode(nodes, `${block.id}-auto-swap`).y}>
-                    <FlowPill
-                      content={{
-                        text: t("solanaPreview.autoSwap"),
-                        tooltip: t("solanaPreview.fixed"),
-                        icon: "swap",
-                      }}
-                    />
+                  <At
+                    nodeId={`${block.id}-auto-swap`}
+                    x={x}
+                    y={getPreviewNode(nodes, `${block.id}-auto-swap`).y}
+                  >
+                    {flow(`${block.id}-auto-swap`, t("solanaPreview.autoSwap"), "swap")}
                   </At>
                 </>
               ) : null}

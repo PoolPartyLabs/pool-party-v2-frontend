@@ -3,7 +3,7 @@
  * @name SolanaPreviewCanvas tests
  * @implements-rules-version v2 (POO-2281)
  */
-import { fireEvent, render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { PreviewBlock } from "./previewModel";
@@ -14,11 +14,76 @@ vi.mock("next-intl", () => ({
   useFormatter: () => ({ number: (value: number) => `${value * 100}%` }),
 }));
 vi.mock("../build/canvas/CanvasViewport", () => ({
-  CanvasViewport: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  CanvasViewport: ({ children, overlay }: { children: ReactNode; overlay?: ReactNode }) => (
+    <div>
+      <div data-testid="viewport-overlay">{overlay}</div>
+      {children}
+    </div>
+  ),
 }));
 vi.mock("../build/pieces/SpokeGroup", () => ({ SpokeGroup: () => null }));
 vi.mock("../build/pieces/SpineCard", () => ({ SpineCard: () => null }));
-vi.mock("../build/pieces/FlowPill", () => ({ FlowPill: () => null }));
+vi.mock("../build/pieces/FlowPill", () => ({
+  FlowPill: ({
+    content,
+    onActivate,
+  }: {
+    content: { text: string; tooltip: string };
+    onActivate?: (anchor: HTMLElement) => void;
+  }) =>
+    onActivate ? (
+      <button
+        type="button"
+        aria-label={content.tooltip}
+        onClick={(event) => onActivate(event.currentTarget)}
+      >
+        {content.text}
+      </button>
+    ) : (
+      <span>{content.text}</span>
+    ),
+}));
+
+// @rule POO-2291 R8/R9: every visible local Manage node is inspectable with its own identity.
+it("selects every fixed/automatic/position node in Manage without nested controls", () => {
+  const select = vi.fn();
+  const blocks: PreviewBlock[] = [
+    { id: "lp", protocol: "orca", allocationBps: 2000, pair: "SOL / USDC" },
+    { id: "custody", protocol: "holding", allocationBps: 2000, pair: "SOL / USDC" },
+  ];
+  const { container } = render(
+    <SolanaPreviewCanvas
+      blocks={blocks}
+      context="manage"
+      selectedId={null}
+      onSelect={select}
+      onRemove={vi.fn()}
+    />,
+  );
+  const graph = getPreviewGeometry(blocks);
+  for (const id of Object.keys(graph.nodes)) {
+    const owner = container.querySelector(`[data-preview-node="${id}"]`);
+    expect(owner, `${id} inspector`).not.toBeNull();
+    const button = owner?.querySelector("button");
+    expect(button, `${id} selectable`).not.toBeNull();
+    fireEvent.click(button as HTMLElement);
+    expect(select).toHaveBeenLastCalledWith(id, button);
+  }
+  expect(container.querySelector("button button, button [tabindex='0']")).toBeNull();
+  expect(screen.getByTestId("viewport-overlay")).toHaveTextContent("fundBuilder.networks.hub");
+});
+
+// @rule POO-2291 R8: Configure remains position-only; inspection must not change its default.
+it("keeps fixed-node inspection exclusive to Manage and marks the selected fixed node", () => {
+  const props = { blocks: [], selectedId: "hub-income", onSelect: vi.fn(), onRemove: vi.fn() };
+  const view = render(<SolanaPreviewCanvas {...props} />);
+  expect(view.container.querySelector('[data-preview-node="hub-income"] button')).toBeNull();
+  view.rerender(<SolanaPreviewCanvas {...props} context="manage" />);
+  expect(view.container.querySelector('[data-preview-node="hub-income"] button')).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
 
 it("keeps LP fee paths green through the return bridge until hub Income, then gray", () => {
   const { container } = render(
