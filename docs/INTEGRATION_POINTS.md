@@ -23,6 +23,12 @@ See the [current delivery plan](solana-preview-preparation-plan-2026-10-07.md) a
 
 The live Configure host supplies null origins, reads, intentions, quotes and clock. Holding is a separate local custody drawing control, not a new protocol or LP. Same-token USDC bypasses conversion; the WSOL drawing shows gray principal conversions only. Drawing labels never manufacture mint, account, price or signing authority. Buy/Sell remains unavailable without custody identity, and Confirm stays disabled even with harness-injected data. Standalone review is inline; this bounded slice does not implement editable transaction amounts or live execution.
 
+## Solana local Manage model (POO-2291 S6)
+
+`solanaManageModel.ts` (PP-MGR-LIB-071) separates local instance/configuration/draft, canonical Current, bound After, selection and operation journal. Case-sensitive identities, native SOL versus WSOL, exact u64 quantities and independently supplied source/freshness remain explicit. An After read must match identity, base snapshot, draft revision, mode and validity clock. Drawing synchronization and local Apply cannot supply a financial observation or erase journal checkpoints.
+
+This pure model has no API, RPC, wallet or analytics emitter. The seam census remains 524 markers across 301 files. Presenters, the mounted local host and Screen/Canvas integration are subsequent PRs. Authorized reads, protocol context, independent simulations, custody/quote/transaction details and journal reconciliation remain POO-2239/2240/2261/2262.
+
 ## Launch report countdown (POO-2233, rules v1)
 
 `launch/useLaunchReportWait.ts` records first report building/waiting observation in browser-local metadata keyed by normalized manager, draft and report step, separate from the execution journal. `useV2Launch.ts` projects this optional timestamp to `FundLaunchJourney`; an isolated display clock derives a 19-minute estimate. Polling, retry and reopening preserve the timestamp. Storage failure uses an in-memory fallback.

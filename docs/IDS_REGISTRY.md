@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 697 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 698 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1077,3 +1077,11 @@ PP-MGR-CMP-086/089 mount this read-only section only for Aave Supply/local Kamin
 PP-MGR-CMP-088/089 and PP-MGR-SCR-009 add a separate custody drawing control while retaining the four venue choices. Same-token USDC bypasses conversion; WSOL uses gray automatic principal conversions without LP fees, range or account risk. New APIs and signing authority remain unavailable.
 
 PP-MGR-CMP-089 mounts range inspection only for positive LP allocation. Same-snapshot protocol/program/mints/grid and liquidity composition remain POO-2240/2261. The separate upstream Apache-2.0 grants are preserved.
+
+## Solana local Manage model, October 8, 2026 (POO-2291 S6)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-071` | solanaManageModel, independent local configuration/draft, canonical Current, bound After and operation journal | Lib | n/a (code) | Implemented, pure foundation model | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaManageModel.ts` @rules-v1 |
+
+The model preserves separate same-pool instances, exact u64 observations and canonical source identity. Local drawing synchronization cannot write Current or erase the operation journal. After remains bound to snapshot, identity, draft revision, mode and explicit clock. Presenters, mounted host, locales and Screen/Canvas integration are subsequent PRs; this slice changes no runtime product surface or execution capability.
