@@ -23,11 +23,16 @@ See the [current delivery plan](solana-preview-preparation-plan-2026-10-07.md) a
 
 The live Configure host supplies null origins, reads, intentions, quotes and clock. Holding is a separate local custody drawing control, not a new protocol or LP. Same-token USDC bypasses conversion; the WSOL drawing shows gray principal conversions only. Drawing labels never manufacture mint, account, price or signing authority. Buy/Sell remains unavailable without custody identity, and Confirm stays disabled even with harness-injected data. Standalone review is inline; this bounded slice does not implement editable transaction amounts or live execution.
 
-## Solana local Manage model (POO-2291 S6)
+## Solana local Manage foundation (POO-2291 S6)
 
-`solanaManageModel.ts` (PP-MGR-LIB-071) separates local instance/configuration/draft, canonical Current, bound After, selection and operation journal. Case-sensitive identities, native SOL versus WSOL, exact u64 quantities and independently supplied source/freshness remain explicit. An After read must match identity, base snapshot, draft revision, mode and validity clock. Drawing synchronization and local Apply cannot supply a financial observation or erase journal checkpoints.
+| Artifact / seam | Foundation contract | Remaining integration |
+| --- | --- | --- |
+| PP-MGR-LIB-071, `solanaManageModel.ts` | Case-sensitive canonical identity and local instance identity are separate. Local configuration, draft/revision/mode, Current, After, selection and journal have independent ownership. Current/After physical token quantities fit u64; absent observations remain absent. After binds to identity, base snapshot, revision, mode and host clock. | Authorized canonical reads, source/freshness evidence, separate simulation and journal reconciliation under POO-2239/2240/2261/2262. The model cannot attest external ownership or submit transactions. |
+| PP-MGR-CMP-097, `SolanaManagePresenter.tsx` | Injected Current, complete source/slot/commitment metadata and independently valid After. Inline exclusive modes and Review expose local intentions. Current range context must match the canonical Current ticks and identity. Confirm is disabled. | Supply verified canonical reads/context, preview and operation journal. No financial value or execution capability is inferred from a drawing or fixture. |
+| PP-MGR-CMP-098, `SolanaLocalManageHost.tsx`, host read/context seam | The standalone host keeps each presenter mounted through selection/hiding and synchronizes drawing baselines without resetting another draft. It supplies unavailable Current/After and null context/clock. | Subsequent Screen/Canvas selector and analytics integration; then separately verified canonical reads/context/clock. The foundation does not mount this host in the screen. |
+| PP-MGR-CMP-098, local range/apply seam | Non-null ranges fail closed without verified protocol context. Whole-percent drafts must stay within 100%. Applying one block checks other blocks' applied baselines, not unapplied reductions, and requires `onApplyDrawing(localId, config) === true` before local state/success changes. | Parent drawing owner acknowledges accepted writes. Verified protocol domain/grid context is required before ranges can be applied. This callback confers no signing capability. |
 
-This pure model has no API, RPC, wallet or analytics emitter. The seam census remains 524 markers across 301 files. Presenters, the mounted local host and Screen/Canvas integration are subsequent PRs. Authorized reads, protocol context, independent simulations, custody/quote/transaction details and journal reconciliation remain POO-2239/2240/2261/2262.
+Drawing Apply never writes canonical Current or the operation journal. Rejected acknowledgement retains draft and Review; a synchronized baseline that reaches the draft ends its obsolete mode/review binding and invalidates After without altering Current/journal. Bounded callbacks contain protocol/action only; the config callback is application data, not analytics. The foundation declares analytics `none` with host ownership reasons; screen emitters remain in the subsequent integration PR. Real discovery, custody, quotation, authority, transaction details, signing and settlement remain unavailable under POO-2239/2240/2261/2262.
 
 ## Launch report countdown (POO-2233, rules v1)
 
@@ -86,8 +91,10 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 524 markers across 301 files (2026-10-08)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 527 markers across 303 files (2026-10-08 foundation tree)
 ```
+
+This foundation tree contains the model merged in PR #140 plus CMP097/CMP098 and 11 locale additions. The model retains the base 524 markers in 301 files; CMP097 adds one marker and CMP098 adds two. Screen/Canvas/previewModel/analytics integration follows in a separate PR.
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
 > `isMockMode` or each service implementation there and callers stay untouched.
