@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 698 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 700 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1078,10 +1078,14 @@ PP-MGR-CMP-088/089 and PP-MGR-SCR-009 add a separate custody drawing control whi
 
 PP-MGR-CMP-089 mounts range inspection only for positive LP allocation. Same-snapshot protocol/program/mints/grid and liquidity composition remain POO-2240/2261. The separate upstream Apache-2.0 grants are preserved.
 
-## Solana local Manage model, October 8, 2026 (POO-2291 S6)
+## Solana local Manage foundation, October 8, 2026 (POO-2291 S6)
 
 | ID | Name | Type | Design | Status | Linear | Source |
 | --- | --- | --- | --- | --- | --- | --- |
-| `PP-MGR-LIB-071` | solanaManageModel, independent local configuration/draft, canonical Current, bound After and operation journal | Lib | n/a (code) | Implemented, pure foundation model | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaManageModel.ts` @rules-v1 |
+| `PP-MGR-LIB-071` | solanaManageModel, independent local configuration/draft, canonical Current, bound After and operation journal | Lib | n/a (code) | Implemented, model merged in PR #140 | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaManageModel.ts` @rules-v1 |
+| `PP-MGR-CMP-097` | SolanaManagePresenter, inline exclusive Move/Apply now or Create/New deposits review, complete values and visible provenance | Component | [Orca 8679:382](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8679-382), [Holding 8678:202](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-202) | In Review, injected presenter | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/SolanaManagePresenter.tsx` @rules-v1 |
+| `PP-MGR-CMP-098` | SolanaLocalManageHost, mounted per-instance draft/review retention, drawing budget and acknowledged local Apply | Component | [Build 8359:2725](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-2725) | In Review, standalone host | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/SolanaLocalManageHost.tsx` @rules-v1 |
 
-The model preserves separate same-pool instances, exact u64 observations and canonical source identity. Local drawing synchronization cannot write Current or erase the operation journal. After remains bound to snapshot, identity, draft revision, mode and explicit clock. Presenters, mounted host, locales and Screen/Canvas integration are subsequent PRs; this slice changes no runtime product surface or execution capability.
+The foundation extends main `526ab318` ([PR #139](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/139)) with these three artifacts and 60 `localManage` keys in each of the 11 configured locales. Same-pool local instances retain independent drafts and inline review while the host or another instance is hidden. Physical Current/After quantities are bounded to u64; local drawing labels supply no financial snapshot. The host supplies null context/clock, unavailable Current/After and no signing capability. Local Apply checks the selected draft against other applied drawing baselines and requires a boolean acknowledgement before clearing dirty state or reporting success.
+
+Screen/Canvas selection and analytics integration belong to the subsequent PR. This registry describes the foundation only; S6 integration and POO-2239/2240/2261/2262 real wiring remain pending. The foundation census is 700 registry rows and 527 integration markers across 303 files. The model was merged separately in [PR #140](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/140); pending Screen/Canvas integration is excluded.
