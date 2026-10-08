@@ -7,6 +7,7 @@
 | `solana_preview_entered` | Guarded selected-V2 gesture enters the local editor on the registered builder route | none | PP-CORE-CMP-075, ContractFamilyToggle |
 | `solana_preview_exited` | Explicit label, Back to EVM builder or family switch exits the active local editor after the guard | none | PP-CORE-CMP-075, ContractFamilyToggle; PP-MGR-SCR-002, BuilderRouteSwitch |
 | `solana_preview_viewed` | Local editor mounts once | none | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_interacted` | Configure/Manage mode, Manage node selection/close or local edit/choice/review/discard/rebase; local Apply after drawing acceptance | bounded `preview_mode`, `preview_action`, `preview_protocol`, `node_kind`, `has_local_changes` when applicable | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
 | `solana_preview_started` | First local block is added in this editor session | `preview_protocol` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
 | `solana_preview_applied` | Valid local configuration is applied to the drawing | `preview_protocol`, `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
 | `solana_preview_abandoned` | An edited drawing unmounts without persistence | `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
@@ -14,6 +15,8 @@
 | `solana_preview_error` | A genuine child-render error reaches the retry boundary | bounded `error_code`, `error_origin`, `has_local_changes` | PP-MGR-SCR-009, SolanaPreviewErrorBoundary |
 
 POO-2291 S5 extends the bounded `preview_protocol` vocabulary to `holding` alongside `kamino`, `jupiter`, `raydium` and `orca`. Holding identifies a custody drawing, not a venue. No mint, pool, account, quantity or quote is tracked. Local Apply is a drawing event and never financial settlement.
+
+POO-2291 S6 adds `preview_mode` (`configure`, `manage`) and `preview_action` (`mode`, `select`, `close`, `edit`, `choose`, `review`, `apply`, `discard`, `rebase`). Only the screen emits these via the consent-aware hook. The persistent host reports bounded intentions to that owner; it never tracks configuration arguments. Rejected drawing acceptance emits blocked intent and no applied event. Node family describes inspection only, without node/local/canonical identifiers. No financial completion is introduced.
 
 Block parameters are limited to `kamino`, `jupiter`, `raydium`, `orca`, `holding`. Reasons are bounded enums.
 All emissions use the existing consent-aware `useAnalytics().track()` path. No wallet, mint, local

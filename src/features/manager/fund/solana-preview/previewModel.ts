@@ -35,6 +35,8 @@ export type PreviewAction =
   | { type: "select"; id: string | null }
   | { type: "edit"; value: Partial<PreviewEdit> }
   | { type: "apply" }
+  /** Manager's bounded Apply updates the drawing only, independently from financial state. */
+  | { type: "apply-drawing"; id: string; value: PreviewEdit }
   | { type: "discard" }
   | { type: "remove"; id: string };
 export function createPreviewState(): PreviewState {
@@ -117,6 +119,26 @@ export function previewReducer(state: PreviewState, action: PreviewAction): Prev
         edit: editFor(state.blocks.find((item) => item.id === state.selectedId)),
         error: null,
       };
+    case "apply-drawing": {
+      const block = state.blocks.find((item) => item.id === action.id);
+      const allocationBps = parseAllocation(action.value.allocation);
+      if (
+        !block ||
+        allocationBps === null ||
+        !["SOL / USDC", "USDC / SOL"].includes(action.value.pair)
+      )
+        return state;
+      if (totalAllocationBps(state) - block.allocationBps + allocationBps > 10000) return state;
+      const updated = { ...block, allocationBps, pair: action.value.pair };
+      return {
+        ...state,
+        blocks: state.blocks.map((item) => (item.id === block.id ? updated : item)),
+        edit: state.selectedId === block.id ? editFor(updated) : state.edit,
+        changed:
+          state.changed || block.allocationBps !== allocationBps || block.pair !== updated.pair,
+        error: null,
+      };
+    }
     case "remove": {
       if (!state.blocks.some((item) => item.id === action.id)) return state;
       const selectedRemoved = state.selectedId === action.id;

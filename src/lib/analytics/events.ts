@@ -189,6 +189,7 @@ export const ANALYTICS_EVENTS = [
   "solana_preview_entered",
   "solana_preview_exited",
   "solana_preview_viewed",
+  "solana_preview_interacted",
   "solana_preview_started",
   "solana_preview_applied",
   "solana_preview_abandoned",
@@ -1010,6 +1011,18 @@ export interface AnalyticsParams {
   node_kind?: AnalyticsManageNodeKind;
   /** Bounded local block kind (Holding is custody), never a pool address or mint. POO-2291 v1. */
   preview_protocol?: "kamino" | "jupiter" | "raydium" | "orca" | "holding";
+  /** Local inspection/intention only. No financial state, addresses or raw input. */
+  preview_mode?: "configure" | "manage";
+  preview_action?:
+    | "mode"
+    | "select"
+    | "close"
+    | "edit"
+    | "choose"
+    | "review"
+    | "apply"
+    | "discard"
+    | "rebase";
   /** Local editor validation/blocked cause. Never raw error text. */
   preview_reason?: "allocation_invalid" | "allocation_total" | "unsupported" | "unapplied_changes";
   /** Whether leaving the local visual editor discards any local configuration. */
