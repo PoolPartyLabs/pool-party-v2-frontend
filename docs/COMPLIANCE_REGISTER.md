@@ -14,6 +14,12 @@ Status: `OPEN` (asked, not answered), `BLOCKING` (must be answered before the la
 `ANSWERED` (the answer is in the last column). If a launch checklist disagrees with this file, this
 file wins.
 
+## CR-MGR-POO2291-S2, 2026-10-08, Kamino Supply read separation
+
+ANSWERED for the pure injected read model only. Program, market, reserve, position/obligation and mainnet USDC identity are separate from a local drawing label. Metadata, supplied amount, deposited principal, accrued interest, rewards, APY, liquidity, deposit capacity, available-to-withdraw quantity and each USD value retain independent source states. An invalid field becomes unavailable without removing other valid reads or exposing the rejected text. Physical quantities fit u64; confirmed decimal zero requires observed confirmed/finalized provenance. Empty rewards represent declared absence, while null is unknown. No APY guarantee, protocol maximum, price conversion or claim about custody is inferred.
+
+BLOCKING before real market/account data or operations are enabled: verify program/deployment, reserve/market/obligation ownership, underlying versus receipt exchange-rate semantics, principal/interest accounting, variable base APY versus incentives, quote-bound withdrawable amount, independent valuation and source freshness. Full-obligation risk and scenario identity remain POO-2290. Supply/Withdraw/Claim policy, authority, costs, settlement and recovery remain POO-2239/2240/2261/2262 and existing register gates. The unmounted model clears none of these requirements. Owner: Murilo / Codex coordinator.
+
 ## CR-MGR-POO2291-S6, 2026-10-08, local Manage foundation and drawing acknowledgement
 
 Status: ANSWERED for the reviewed non-executable foundation only. Local instance identity, canonical position identity, applied drawing configuration, draft, Current, After and operation journal remain separate. Two same-pool instances do not share drafts or review state. The standalone host keeps its presenters mounted while hidden, supplies no canonical Current/After, protocol context or clock, and cannot manufacture freshness, custody or a transaction capability. Current/After quantities injected into the model must fit physical u64 limits; null is not zero and native SOL remains distinct from WSOL.

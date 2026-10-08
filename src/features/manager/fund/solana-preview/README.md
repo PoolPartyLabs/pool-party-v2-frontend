@@ -38,7 +38,9 @@ Official marks are shipped under `public/protocols/solana-preview/`. Solana, Ray
 At S1 delivery, all 77 focused schema/catalog/model/screen/route tests, scoped Biome and TypeScript passed. Later delivered slices are recorded below; local Manage screen integration and POO-2239/2240/2261/2262 real wiring remain open.
 
 
-## Kamino account risk, POO-2290
+## Kamino reads and account risk, POO-2291 S2 / POO-2290
+
+`solanaKaminoReadModel.ts` (PP-MGR-LIB-072, POO-2291 S2) adds a separate pure Supply USDC read contract. It validates canonical local/program/market/reserve/position/obligation identity globally, then validates metadata and each quantity, USD, APY and reward stream independently. A malformed field becomes unavailable without erasing compatible siblings or exposing its raw text. Physical quantities fit u64; decimal zero uses its own shape and observed confirmed/finalized source. An empty rewards array is distinct from unknown rewards. No protocol APY ceiling or valuation is manufactured. The foundation model is unmounted; read-only Configure/Manage presentation follows separately, and real reads/operations keep their existing gates.
 
 The local Supply panel reuses PP-MGR-CMP-094 for full-account Current/After risk. Its account identity and reads are unavailable. Neither the USDC Supply drawing nor the absence of a Borrow block establishes No debt. Principal, interest and rewards remain separate data contracts. LP range/Collect, Borrow and Multiply are not added. The shared presenter retains verified scenarios/provenance when injected in a test harness; those fixtures do not become catalog or production data.
 

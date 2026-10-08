@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 700 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 701 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1089,3 +1089,11 @@ PP-MGR-CMP-089 mounts range inspection only for positive LP allocation. Same-sna
 The foundation extends main `526ab318` ([PR #139](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/139)) with these three artifacts and 60 `localManage` keys in each of the 11 configured locales. Same-pool local instances retain independent drafts and inline review while the host or another instance is hidden. Physical Current/After quantities are bounded to u64; local drawing labels supply no financial snapshot. The host supplies null context/clock, unavailable Current/After and no signing capability. Local Apply checks the selected draft against other applied drawing baselines and requires a boolean acknowledgement before clearing dirty state or reporting success.
 
 The model and panels were merged separately in [PR #140](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/140) and [PR #141](https://github.com/PoolPartyLabs/pool-party-v2-frontend/pull/141). Screen/Canvas now mounts the host, exposes Configure/Manage, guards Configure edits and inspects all actual nodes with stable identities, anchors and focus recovery. Consent-aware interactions contain bounded protocol/mode/action/node family only. The census remains 700 registry rows and reaches 529 integration markers across 304 files. Canonical reads/context/clock and POO-2239/2240/2261/2262 real wiring remain unavailable; Kamino market/read presentation remains a separate ready slice.
+
+## Kamino independent read model, October 8, 2026 (POO-2291 S2)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-072` | solanaKaminoReadModel, canonical Supply USDC origin and independent metadata, quantity, USD, APY and rewards validation | Lib | n/a (code) | Reviewed pure model, no live reads | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaKaminoReadModel.ts` @rules-v1 |
+
+Canonical origin/envelope mismatch rejects the envelope. Invalid individual fields become unavailable without erasing compatible siblings. Physical quantities fit u64; USD and percent confirmed-zero use their own decimal shapes and require observed confirmed/finalized sources. Null rewards are unknown, while an empty array is declared absence. No protocol APY ceiling, oracle conversion, custody read or transaction capability is invented. Presentation and Configure/Manage mounting are a separate slice.
