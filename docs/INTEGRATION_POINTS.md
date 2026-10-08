@@ -13,6 +13,10 @@ prices, amounts, reserve data, quotes and execution stay Not available. `solanaS
 See the [current delivery plan](solana-preview-preparation-plan-2026-10-07.md) and
 [ADR 0009](adr/0009-local-solana-visual-preview.md).
 
+## Kamino independent reads (POO-2291 S2)
+
+Kamino's separate pure read model, `solanaKaminoReadModel.ts` (PP-MGR-LIB-072), validates the selected local/canonical program, market, reserve, position/obligation and mainnet USDC identity before accepting an envelope. Metadata, quantity, USD, APY and each reward stream have independent validation. Malformed fields become unavailable without exposing rejected values or erasing valid siblings. Decimal confirmed-zero requires observed confirmed/finalized provenance; USD is not inferred from a USDC quantity. This model is unmounted in its foundation slice and adds no integration marker or API/RPC/wallet call. POO-2240/2261/2262 and POO-2290 still own verified market/account reads, custody and execution.
+
 ## Solana protocol range context (POO-2291 S3/S4)
 
 `solanaRangeModel.ts` and `SolanaRangePresenter.tsx` validate and display an injected same-snapshot Orca/Raydium context. `SolanaPreviewBlockPanel.tsx` passes no live context by default, mounts the section only for positive LP allocation and keeps a context without a draft handler read-only. POO-2240/2261 must provide verified cluster, program, pool, ordered mint bytes, token programs/extensions, decimals, protocol fee/grid configuration, current Q64/tick, position identity/liquidity and source metadata. A separate liquidity quote owns composition/amounts. Missing data never receives a default price, range, token split or execution capability.
