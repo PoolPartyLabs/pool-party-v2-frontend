@@ -1739,6 +1739,10 @@
       "reviewNow": "変更を確認",
       "confirmNow": "変更を確定",
       "allocationDescription": "現在の配分への変更を確認します。"
+    },
+    "kaminoRead": {
+      "supplied": "供給済み",
+      "availableToWithdraw": "引き出し可能"
     }
   }
 }

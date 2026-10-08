@@ -15,7 +15,9 @@ See the [current delivery plan](solana-preview-preparation-plan-2026-10-07.md) a
 
 ## Kamino independent reads (POO-2291 S2)
 
-Kamino's separate pure read model, `solanaKaminoReadModel.ts` (PP-MGR-LIB-072), validates the selected local/canonical program, market, reserve, position/obligation and mainnet USDC identity before accepting an envelope. Metadata, quantity, USD, APY and each reward stream have independent validation. Malformed fields become unavailable without exposing rejected values or erasing valid siblings. Decimal confirmed-zero requires observed confirmed/finalized provenance; USD is not inferred from a USDC quantity. This model is unmounted in its foundation slice and adds no integration marker or API/RPC/wallet call. POO-2240/2261/2262 and POO-2290 still own verified market/account reads, custody and execution.
+Kamino's separate pure read model, `solanaKaminoReadModel.ts` (PP-MGR-LIB-072), validates the selected local/canonical program, market, reserve, position/obligation and mainnet USDC identity before accepting an envelope. Metadata, quantity, USD, APY and each reward stream have independent validation. Malformed fields become unavailable without exposing rejected values or erasing valid siblings. Decimal confirmed-zero requires observed confirmed/finalized provenance; USD is not inferred from a USDC quantity. The pure model is merged in PR #143; the read-only section now mounts in Configure and local Manage without any API/RPC/wallet call. POO-2240/2261/2262 and POO-2290 still own verified market/account reads, custody and execution.
+
+`SolanaKaminoReadSection.tsx` (PP-MGR-CMP-099) receives independently verified metadata, amounts, rates and full-account risk. Configure and local Manage host seams pass null origin/read until POO-2240/2261 supplies program/market/reserve/obligation and fresh metric envelopes. POO-2290 provides independently scoped Current/After account risk; a missing APY or market metric does not erase a compatible obligation read. Physical quantities, independent USD, zero/stale/unknown states and empty rewards remain separate. No selector, backend contract or execution capability is invented. Existing local drafts/Review remain mounted, and no financial completion is emitted.
 
 ## Solana protocol range context (POO-2291 S3/S4)
 
@@ -97,10 +99,10 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 529 markers across 304 files (2026-10-08)
+git grep -n 'PP-INTEGRATION-POINT' -- src   # 532 markers across 305 files (2026-10-08)
 ```
 
-The model and panels are merged in PRs #140/#141. Their foundation has 527 markers across 303 files; Screen/Canvas integration adds two screen markers, reaching 529 across 304 files. Current/After/context/clock stay unavailable in the local host.
+The model and panels are merged in PRs #140/#141. Their foundation has 527 markers across 303 files; Screen/Canvas integration adds two screen markers, reaching 529 across 304 files. Current/After/context/clock stay unavailable in the local host. Kamino S2 adds three presentation/host seams, reaching 532 markers across 305 files.
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
 > `isMockMode` or each service implementation there and callers stay untouched.

@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 701 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 702 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1097,3 +1097,12 @@ The model and panels were merged separately in [PR #140](https://github.com/Pool
 | `PP-MGR-LIB-072` | solanaKaminoReadModel, canonical Supply USDC origin and independent metadata, quantity, USD, APY and rewards validation | Lib | n/a (code) | Reviewed pure model, no live reads | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/solanaKaminoReadModel.ts` @rules-v1 |
 
 Canonical origin/envelope mismatch rejects the envelope. Invalid individual fields become unavailable without erasing compatible siblings. Physical quantities fit u64; USD and percent confirmed-zero use their own decimal shapes and require observed confirmed/finalized sources. Null rewards are unknown, while an empty array is declared absence. No protocol APY ceiling, oracle conversion, custody read or transaction capability is invented. Presentation and Configure/Manage mounting are a separate slice.
+
+
+## Kamino read-only section, October 8, 2026 (POO-2291 S2)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-CMP-099` | SolanaKaminoReadSection, source-preserving Configure/Manage metadata, supplied/principal/interest/rewards, APY/withdrawable and independent full-account risk | Component | [Configure8677:271](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8677-271), [Manage8677:408](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8677-408) | Integrated with null live origins/reads | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/SolanaKaminoReadSection.tsx` @rules-v1 |
+
+The pure model is merged in PR #143. Configure and local Manage now mount this section without source defaults or execution. Current/After risk binds to the validated canonical obligation independently from market metrics. Null rewards remain unknown; empty rewards are omitted. Existing per-instance draft/inline Review ownership and all11 locales are preserved. Current census: 702 registry rows and 532 integration markers across 305 files.

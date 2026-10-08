@@ -1739,6 +1739,10 @@
       "reviewNow": "Review changes",
       "confirmNow": "Confirm changes",
       "allocationDescription": "Review changes to the current allocation."
+    },
+    "kaminoRead": {
+      "supplied": "Supplied",
+      "availableToWithdraw": "Available to withdraw"
     }
   }
 }
