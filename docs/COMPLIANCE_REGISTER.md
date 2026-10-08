@@ -14,6 +14,14 @@ Status: `OPEN` (asked, not answered), `BLOCKING` (must be answered before the la
 `ANSWERED` (the answer is in the last column). If a launch checklist disagrees with this file, this
 file wins.
 
+## CR-MGR-POO2291-S6, 2026-10-08, local Manage model
+
+Status: ANSWERED for the pure non-executable model only. Drawing configuration, draft, canonical Current, bound After and journal retain independent ownership. Missing observations remain missing; native SOL differs from WSOL and physical Current/After quantities fit u64. Local Apply and synchronization cannot claim asset movement, settlement, freshness or authority. No new product surface, personal data or credential flow is exposed by this slice.
+
+Status: BLOCKING before real data or operation enablement under POO-2239/2240/2261/2262. Verify canonical programs/accounts/assets and token-program restrictions, position/account authority, observation provenance/freshness, protocol context, simulation identity/revision/expiry and operation-specific fees/quote/transaction disclosures. Verify broadcast, settlement and recovery evidence before enabling signing. The local model resolves none of these live gates.
+
+Evidence: PP-MGR-LIB-071 and 47 focused model tests pass on the isolated tree based on public main `526ab318` (PR #139). Presenters, mounted host, locales and Screen/Canvas integration remain subsequent slices. No browser, full-suite, build or deployment acceptance is asserted. Owner: Murilo / Codex coordinator.
+
 ## CR-MGR-POO2291-S5, 2026-10-08, local custody and quote presentation
 
 ANSWERED for the current non-executable local scope: Holding is a custody drawing, separate from venues and LPs. The production host supplies no custody origin/read/Buy/Sell intention or quote, and no clock is fabricated. Native SOL and WSOL are distinct; compatible inputs bypass conversion; Sell follows principal Idle/Bridge, without Income or LP fee claims. No live balances, costs, asset movement or signer authority are asserted. Buy/Sell is disabled without origin and Confirm stays disabled for injected fixtures too.

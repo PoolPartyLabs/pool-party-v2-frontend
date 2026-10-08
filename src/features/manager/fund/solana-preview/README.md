@@ -35,7 +35,7 @@ Official marks are shipped under `public/protocols/solana-preview/`. Solana, Ray
 
 `solanaCatalog.ts` (PP-MGR-LIB-064) keeps the same four venue choices consumed by previewModel, narrows Kamino to mainnet USDC Supply and separates Orca/Raydium/Jupiter. Holding was contract-only in S1; S5 adds a separate custody drawing control without changing the venue list. Catalog reads and execution are unavailable; neither fixture nor observed values may promote that catalog. Jupiter inspection keeps managed order/execute distinct from composable build and quote expiry distinct from blockhash validity. No actual quote/signing is added.
 
-All 77 focused schema/catalog/model/screen/route tests, scoped Biome and TypeScript passed. Remaining five POO-2291 slices and POO-2239/2240/2261/2262 integration remain open.
+At S1 delivery, all 77 focused schema/catalog/model/screen/route tests, scoped Biome and TypeScript passed. Later delivered slices are recorded below; local Manage screen integration and POO-2239/2240/2261/2262 real wiring remain open.
 
 
 ## Kamino account risk, POO-2290
@@ -61,3 +61,11 @@ The pinned Rust-to-TypeScript math ports retain Apache-2.0 grants and upstream n
 The hidden local editor adds Holding separately from its four venue choices, using a generic custody icon. Its USDC drawing bypasses conversion; its WSOL drawing receives automatic input/output conversions on gray principal paths. No LP range, APY, Collect or account risk is added to custody. Configure passes null custody origin, reads, intentions, quotes and clock; drawing labels confer no financial identity. The standalone presenter accepts injected intentions but this slice contains no editable transaction amount form, market discovery, RPC or wallet operation.
 
 Independent review caught a future transaction timestamp and included-input costs exceeding the input; both were reproduced before correction. Seventy-seven focused tests across model, presenter, catalog and hosts passed, along with scoped TypeScript, changed-file Biome and all11 locales. Test/Storybook fixtures remain isolated. Real custody, token discovery, quotes and execution stay POO-2239/2240/2261/2262; browser acceptance remains with Murilo.
+
+## Local Manage model, POO-2291 S6
+
+`solanaManageModel.ts` (PP-MGR-LIB-071) retains independent local instance/configuration/draft, canonical Current, bound After, selection and operation journal. Two instances of the same pool do not share drafts or modes. Raw physical quantities fit u64 and preserve exact decimal strings; native SOL and WSOL remain distinct. Current source/identity and After snapshot/revision/mode/expiry must match independently supplied evidence. Null clock or absent observations cannot produce available After.
+
+Drawing synchronization adds/removes only the corresponding instance and preserves unrelated drafts, Current and journal. When the applied baseline reaches a dirty draft, its obsolete mode/review binding ends, revision increments and After invalidates. Clean config/draft copies stay separate. Local Apply changes drawing configuration only; it cannot erase checkpoints or write financial observations.
+
+Forty-seven focused model tests pass on the isolated tree based on public main `526ab318` (PR #139). This first S6 slice mounts no panel, changes no translation and exposes no execution. Presenters, mounted host/locales and Screen/Canvas/analytics integration follow separately. Real reads, context, quotes, authority and execution remain POO-2239/2240/2261/2262.
