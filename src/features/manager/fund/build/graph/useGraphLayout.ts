@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-059
  * @name useGraphLayout
  * @implements-rules-version v1 (POO-2156 rules v1)
+ * @implements-rules-version v1 (POO-2301 local Solana context)
  * @analytics-events none, a layout hook: nothing here is rendered or tracked.
  *
  * The join between a plan and the pure layout, for the graph renderer ({@link BuildGraph}):
@@ -51,6 +52,10 @@ export function useGraphLayout(input: LayoutInput): GraphLayout {
 /** The graph of a draft's plan; no plan, or an unreadable one, is the empty canvas (D18). */
 export function useDraftGraphLayout(draft: MandateDraft): GraphLayout {
   const plan = draft.plan;
-  const input = useMemo(() => toLayoutInput(plan ?? createEmptyPlan()), [plan]);
+  const runtime = draft.runtime;
+  const input = useMemo(
+    () => toLayoutInput(plan ?? createEmptyPlan(), { runtime }),
+    [plan, runtime],
+  );
   return useGraphLayout(input);
 }

@@ -91,6 +91,7 @@ import { FlowPill } from "../pieces/FlowPill";
 import { GraphEdges } from "../pieces/GraphEdges";
 import { InsertPort } from "../pieces/InsertPort";
 import { PositionCard } from "../pieces/PositionCard";
+import { PieceStroke } from "../pieces/pieceParts";
 import type { BlockContent, FlowContent } from "../pieces/pieceTypes";
 import { ShareLabel } from "../pieces/ShareLabel";
 import { SpineCard } from "../pieces/SpineCard";
@@ -209,6 +210,9 @@ function useGraphCopy() {
     return {
       spine,
       port,
+      idle: t("manageV2.idle"),
+      operatingCash: t("manageV2.operatingCash"),
+      notAvailable: t("manageV2.notAvailable"),
       lock: t("fundBuilder.canvas.spine.lockTooltip"),
       removeBlock: t("fundBuilder.canvas.panel.remove"),
       bridge: t("fundBuilder.canvas.flow.bridgeAuto"),
@@ -294,6 +298,8 @@ const INTERACTIVE_TYPES: ReadonlySet<GraphItem["type"]> = new Set([
   "block",
   "bridge",
   "feeSwap",
+  "spokeIdle",
+  "operatingCash",
   "template",
   "port",
   "label",
@@ -312,6 +318,8 @@ function placement(item: GraphItem): CSSProperties {
     case "block":
     case "bridge":
     case "feeSwap":
+    case "spokeIdle":
+    case "operatingCash":
     case "template":
     case "group": {
       const { x, y, w, h } = item.node.rect;
@@ -353,7 +361,9 @@ function wrapperProps(
           left: 0,
           top: 0,
           height: undefined,
-          minHeight: ["spine", "block", "bridge", "feeSwap", "template"].includes(item.type)
+          minHeight: ["spine", "block", "bridge", "feeSwap", "template", "spokeIdle"].includes(
+            item.type,
+          )
             ? (placement(item).height as number)
             : undefined,
         }
@@ -419,6 +429,7 @@ function financialItemId(item: GraphItem): string | null {
   if (item.type === "spine") return `node:${item.key}`;
   if (item.type === "block") return semanticNodeId("block", item.node.id);
   if (item.type === "bridge" || item.type === "feeSwap") return item.key;
+  if (item.type === "spokeIdle") return item.node.id;
   if (item.type === "template") {
     const suffix = item.key.match(/#\d+$/)?.[0] ?? "";
     return `node:template:${item.node.target.kind === "addNetwork" ? "addNetwork" : item.node.target.network}${suffix}`;
@@ -483,6 +494,63 @@ export const BuildGraph = memo(function BuildGraph({
                 locked={locked}
                 lockTooltip={locked ? copy.lock : undefined}
               />
+            </div>,
+          );
+          break;
+        }
+        case "spokeIdle": {
+          out.set(
+            item.key,
+            <div key={item.key} {...wrapper}>
+              <SpineCard
+                title={copy.idle}
+                caption={item.node.stableSymbol}
+                icon="hourglass"
+                locked={false}
+              />
+            </div>,
+          );
+          break;
+        }
+        case "operatingCash": {
+          out.set(
+            item.key,
+            <div key={item.key} {...wrapper}>
+              <div
+                data-canvas-interactive=""
+                data-operating-cash=""
+                className="relative flex size-full flex-col gap-2 rounded-lg bg-surface p-3"
+              >
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 rounded-[inherit] bg-chart-periwinkle/16"
+                />
+                <PieceStroke width={1} radius={16} className="text-chart-periwinkle/42" />
+                <h3 className="relative whitespace-nowrap font-medium text-foreground text-sm leading-[21px]">
+                  {copy.operatingCash}
+                </h3>
+                <div className="relative flex items-center gap-1 text-xs">
+                  <BlockMark
+                    logo="network"
+                    markId={item.context.network}
+                    name={item.node.nativeSymbol}
+                    size={20}
+                  />
+                  <span className="text-muted-foreground">{item.node.nativeSymbol}</span>
+                  <span
+                    data-native-amount=""
+                    className="ml-auto whitespace-nowrap text-[10px] text-foreground"
+                  >
+                    {copy.notAvailable}
+                  </span>
+                </div>
+                <div
+                  data-native-value=""
+                  className="relative min-h-[18px] text-right text-[11px] text-muted-foreground leading-[18px]"
+                >
+                  {copy.notAvailable}
+                </div>
+              </div>
             </div>,
           );
           break;

@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-059
  * @name graphModel
  * @implements-rules-version v2 (POO-2273); v1 (POO-2156 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2237 rules v1; POO-2288 rules v1
+ * @implements-rules-version v1 (POO-2301 local Solana context)
  * @analytics-events none, pure helpers of the graph renderer: activations leave the renderer through
  *   `onTarget` and the Build screen (PP-MGR-SCR-002, S7) owns every event.
  *
@@ -13,7 +14,7 @@
  *    way the money flows: Deposit and Idle input; each hub chain left to right (its share label,
  *    then its ports and blocks top to bottom, so a before-port precedes its card and an after-port
  *    follows it); the hub's Add protocol; each spoke as a whole (its chip, its share label, its
- *    Bridge, its chains in the same order, its Add protocol); Add network; then Idle output, Income
+ *    Bridge, optional local Idle/cash context, its chains in the same order, its Add protocol); Add network; then Idle output, Income
  *    (fees) and Withdraw. The DOM follows this order, so the tab order is the reading order and
  *    nothing needs a positive `tabIndex`. On the empty canvas each caption follows its template and
  *    the start-here sentence follows them. Where an item sits (hub or which spoke) is read from the
@@ -47,6 +48,7 @@ import type {
   ShareLabelNode,
   SpineNode,
   SpineRole,
+  SpokeContextNode,
   TemplateNode,
 } from "../layout/graphTypes";
 import { targetKey } from "../layout/graphTypes";
@@ -60,6 +62,13 @@ export type GraphItem =
   | { type: "block"; key: string; node: BlockNode }
   | { type: "bridge"; key: string; node: BridgeNode }
   | { type: "feeSwap"; key: string; node: FeeSwapNode }
+  | { type: "spokeIdle"; key: string; node: SpokeContextNode["idle"]; context: SpokeContextNode }
+  | {
+      type: "operatingCash";
+      key: string;
+      node: SpokeContextNode["cash"];
+      context: SpokeContextNode;
+    }
   | { type: "group"; key: string; node: GroupNode }
   | { type: "template"; key: string; node: TemplateNode }
   | { type: "port"; key: string; node: PortNode }
@@ -115,6 +124,12 @@ function collect(layout: GraphLayout): GraphItem[] {
       node,
     });
   }
+  for (const context of layout.spokeContexts ?? []) {
+    items.push(
+      { type: "spokeIdle", key: context.idle.id, node: context.idle, context },
+      { type: "operatingCash", key: context.cash.id, node: context.cash, context },
+    );
+  }
   for (const node of layout.groups) {
     items.push({ type: "group", key: semanticNodeId("group", node.network), node });
   }
@@ -161,6 +176,8 @@ export function readingPoint(item: GraphItem): { top: number; x: number } {
     case "block":
     case "bridge":
     case "feeSwap":
+    case "spokeIdle":
+    case "operatingCash":
     case "template": {
       const { rect } = item.node;
       return { top: rect.y, x: rect.x + rect.w / 2 };
@@ -197,6 +214,7 @@ interface SpokeSlot {
   group: GraphItem[];
   labels: GraphItem[];
   bridges: GraphItem[];
+  context: GraphItem[];
   returnBridges: GraphItem[];
   chains: string[];
   tail: GraphItem[];
@@ -212,6 +230,7 @@ export function graphItems(layout: GraphLayout): GraphItem[] {
     group: [],
     labels: [],
     bridges: [],
+    context: [],
     returnBridges: [],
     chains: [],
     tail: [],
@@ -239,6 +258,16 @@ export function graphItems(layout: GraphLayout): GraphItem[] {
     }
     list.push(item);
   };
+  const contextOwner = (context: SpokeContextNode): SpokeSlot | undefined => {
+    // Context IDs carry the same explicit network occurrence as their owning Bridge/group.
+    const suffix = context.idle.id.match(/#\d+$/)?.[0] ?? "";
+    const occurrence = suffix ? Number(suffix.slice(1)) - 1 : 0;
+    const groups = layout.groups
+      .map((group, index) => ({ group, index }))
+      .filter(({ group }) => group.network === context.network);
+    const owner = groups[occurrence];
+    return owner ? spokes[owner.index] : undefined;
+  };
 
   for (const item of collect(layout)) {
     switch (item.type) {
@@ -252,6 +281,13 @@ export function graphItems(layout: GraphLayout): GraphItem[] {
       case "feeSwap":
         toChain(item.node.chainId, item);
         break;
+      case "spokeIdle":
+      case "operatingCash": {
+        const spoke = contextOwner(item.context);
+        if (spoke) spoke.context.push(item);
+        else leftover.push(item);
+        break;
+      }
       case "port": {
         const chainId = chainOf.get(item.node.target.blockId);
         if (chainId === undefined) leftover.push(item);
@@ -310,6 +346,7 @@ export function graphItems(layout: GraphLayout): GraphItem[] {
       ...spoke.group,
       ...spoke.labels,
       ...spoke.bridges,
+      ...spoke.context,
       ...spoke.chains.flatMap(chainItems),
       ...spoke.tail,
       ...spoke.returnBridges,

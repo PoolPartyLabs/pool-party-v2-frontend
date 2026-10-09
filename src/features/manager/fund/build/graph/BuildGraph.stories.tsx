@@ -18,7 +18,9 @@
  * play functions only pin the graph's outer box.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { createTranslator } from "next-intl";
 import { expect, fn } from "storybook/test";
+import enManager from "@/i18n/messages/en/manager.json";
 import {
   type BuildCanvasFixture,
   buildState3,
@@ -31,9 +33,22 @@ import {
   newSpokeNoChain,
   workedExample2,
 } from "@/mocks/data/buildCanvasFixtures";
+import { addToken, withNetworks, withProtocols } from "../../mandateDraft";
+import {
+  buildSolanaBuilderCatalog,
+  createSolanaBuilderDraft,
+  SOLANA_LOCAL_CONFIGS,
+} from "../../solana-preview/solanaBuilderRuntime";
+import { BlockMark } from "../blocks/BlockMark";
+import { type ManagerTranslate, makeBlockCopy } from "../blocks/blockCopy";
+import { describeBlock, describeFlow } from "../blocks/blockRegistry";
 import { CanvasViewport } from "../canvas/CanvasViewport";
 import { withManagerMessages } from "../canvas/canvasStorySupport";
 import { targetKey } from "../layout/graphTypes";
+import { layoutGraph } from "../layout/layoutGraph";
+import { toLayoutInput } from "../layout/toLayoutInput";
+import type { BuildPlan, Step } from "../plan/buildPlan";
+import { validatePlan } from "../plan/planInvariants";
 import { BuildGraph, type BuildGraphProps } from "./BuildGraph";
 import { type FixtureGraphOptions, fixtureGraphProps, fixtureT } from "./graphFixtureKit";
 
@@ -42,6 +57,73 @@ const NO_KEYS: ReadonlySet<string> = new Set();
 function argsOf(fixture: BuildCanvasFixture, options?: FixtureGraphOptions): BuildGraphProps {
   return {
     ...fixtureGraphProps(fixture, options),
+    activeTargetKeys: NO_KEYS,
+    invalidNetworks: NO_KEYS,
+    onTarget: fn(),
+    onRemoveSpoke: fn(),
+  };
+}
+
+/** Descriptor intent only: allocations are local choices; market and balance data stay absent. */
+function localSolanaArgs(): BuildGraphProps {
+  const catalog = buildSolanaBuilderCatalog();
+  const networks = withNetworks(
+    createSolanaBuilderDraft("2026-10-09T00:00:00Z", "storybook-local-solana"),
+    ["solana"],
+    catalog,
+  );
+  const protocols = withProtocols(networks, ["kamino", "jupiter", "raydium", "orca"]);
+  const wsol = catalog.tokensFor(["solana"], protocols.protocols)[0];
+  if (!wsol) throw new Error("local Solana token metadata missing");
+  const draft = addToken(protocols, wsol, catalog);
+  if ("blocked" in draft) throw new Error("local Solana token metadata refused");
+
+  const kinds = [
+    "solanaKaminoSupply",
+    "solanaOrcaPool",
+    "solanaRaydiumPool",
+    "solanaHolding",
+  ] as const;
+  const plan: BuildPlan = {
+    version: 1,
+    hub: { chains: [] },
+    spokes: [
+      {
+        network: "solana",
+        sharePct: 100,
+        chains: kinds.map((kind) => {
+          const descriptor = SOLANA_LOCAL_CONFIGS[kind];
+          if (!descriptor) throw new Error(`local Solana descriptor missing: ${kind}`);
+          const config =
+            kind === "solanaHolding" ? { ...descriptor, pair: "SOL / USDC" as const } : descriptor;
+          const steps: Step[] = [];
+          if (kind !== "solanaKaminoSupply")
+            steps.push({ id: `${kind}-swap`, family: "flow", kind: "swap", auto: true });
+          steps.push({ id: kind, family: "position", kind, config });
+          if (kind === "solanaOrcaPool" || kind === "solanaRaydiumPool")
+            steps.push({ id: `${kind}-fees`, family: "flow", kind: "collectFees", auto: false });
+          return { id: `${kind}-chain`, sharePct: 25, steps };
+        }),
+      },
+    ],
+  };
+  const translator = createTranslator({ locale: "en", messages: enManager });
+  const copy = makeBlockCopy(translator as unknown as ManagerTranslate, "en");
+  const context = { plan, draft, copy, violations: validatePlan(plan, { draft, catalog }) };
+  return {
+    layout: layoutGraph(toLayoutInput(plan, { runtime: "solana-local" }), { startHereWidth: 0 }),
+    describeBlock: (id) => describeBlock(id, context),
+    describeFlow: (id) => describeFlow(id, context),
+    networkName: copy.networkName,
+    networkPresentation: (network) =>
+      network === "solana"
+        ? {
+            stableSymbol: "USDC",
+            nativeSymbol: "SOL",
+            logo: <BlockMark logo="network" markId="solana" name={copy.networkName(network)} />,
+          }
+        : undefined,
+    selectedId: null,
     activeTargetKeys: NO_KEYS,
     invalidNetworks: NO_KEYS,
     onTarget: fn(),
@@ -178,6 +260,18 @@ export const ReactFlowFinancialCanvas: Story = {
         fitOnResize
         graphSize={{ width: args.layout.width, height: args.layout.height }}
       >
+        <BuildGraph {...args} />
+      </CanvasViewport>
+    </div>
+  ),
+};
+
+/** POO-2301 R3/R5: local Idle 236 x 62 and native SOL cash 144 x 96, without balance claims. */
+export const LocalSolanaIdleAndOperatingCash: Story = {
+  args: localSolanaArgs(),
+  render: (args) => (
+    <div className="h-[640px] w-[1100px] max-w-full">
+      <CanvasViewport engine="react-flow" fillContainer fitOnResize graphSize={args.layout}>
         <BuildGraph {...args} />
       </CanvasViewport>
     </div>

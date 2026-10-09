@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-023
  * @name toLayoutInput tests
  * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a pure mapping: nothing here is rendered or tracked.
  *
  * `toLayoutInput` is the only bridge from the stored plan (S1) to the layout: it keeps order, ids and
@@ -29,6 +30,16 @@ import { toLayoutInput } from "./toLayoutInput";
 const OPTIONS = { startHereWidth: 420 };
 
 describe("toLayoutInput", () => {
+  it("opts in only the local Solana spoke context without changing the stored plan", () => {
+    const plan = emptySpokePlan();
+    plan.spokes.push({ network: "solana", sharePct: 0, chains: [] });
+    const before = structuredClone(plan);
+    const local = toLayoutInput(plan, { runtime: "solana-local" });
+    expect(local.spokes[0]).not.toHaveProperty("context");
+    expect(local.spokes[1]?.context).toBe("solana-local");
+    expect(toLayoutInput(plan).spokes.every((spoke) => !("context" in spoke))).toBe(true);
+    expect(plan).toEqual(before);
+  });
   it("names the hub network", () => {
     expect(toLayoutInput(emptyPlan()).hubNetwork).toBe(HUB_NETWORK);
   });
@@ -157,4 +168,52 @@ describe("toLayoutInput", () => {
       ["after", "hub-supply-supply"],
     ]);
   });
+});
+
+// @rule POO-2301 R3: WSOL Holding converts principal back before its stable return; USDC is direct.
+it("keeps WSOL Holding return conversion without creating LP fee income", () => {
+  const plan: BuildPlan = {
+    version: 1,
+    hub: { chains: [] },
+    spokes: [
+      {
+        network: "solana",
+        sharePct: 100,
+        chains: [
+          {
+            id: "holding-chain",
+            sharePct: 100,
+            steps: [
+              {
+                id: "holding",
+                family: "position",
+                kind: "solanaHolding",
+                config: { catalogId: "solana:mainnet-beta:holding", pair: "SOL / USDC" },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  const input = toLayoutInput(plan);
+  expect(input.spokes[0]?.chains[0]?.steps.map((step) => step.kind)).toEqual([
+    "solanaHolding",
+    "swap",
+  ]);
+  const layout = layoutGraph(input, OPTIONS);
+  expect(layout.semantic?.nodes.some((node) => node.kind === "conversion")).toBe(true);
+  expect(
+    layout.semantic?.connections.some(
+      (connection) => connection.class === "income" && connection.originId === "holding",
+    ),
+  ).toBe(false);
+  expect(plan.spokes[0]?.chains[0]?.steps).toHaveLength(1);
+  const holding = plan.spokes[0]?.chains[0]?.steps[0];
+  if (holding?.family !== "position" || holding.kind !== "solanaHolding")
+    throw new Error("holding fixture");
+  holding.config = { catalogId: "solana:mainnet-beta:holding", pair: "USDC / SOL" };
+  expect(toLayoutInput(plan).spokes[0]?.chains[0]?.steps.map((step) => step.kind)).toEqual([
+    "solanaHolding",
+  ]);
 });
