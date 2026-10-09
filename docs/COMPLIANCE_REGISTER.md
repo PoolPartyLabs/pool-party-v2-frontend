@@ -416,3 +416,13 @@ CR-MGR-POO2301-DOMAIN and CR-MGR-POO2301-CONTEXT remain in force. Owner: Murilo 
 ANSWERED for dormant local Configure/Manage/Review presentation. Local descriptor selections, allocations, fees, minimum and seed are editable intentions only. Shared Review prints Not available for live capability statements, wallet balance and launch; it does not assert an initial share price, Arbitrum-only seed, exit deadline, post-launch economics or public investor access. Blocked upload, Max and Launch neither read files nor call financial actions. Exact SPL mint identity and native SOL/WSOL separation remain preserved.
 
 BLOCKING before live data, public launch or financial operations: verify canonical pool/reserve/program and custody identities, fresh independent balances/prices/quotes, fee/exit/public-access terms, third-party venue and asset disclosures, authority, signing, settlement/recovery and upload/privacy contracts under POO-2239/2240/2261/2262. Memory acknowledgement clears no financial/compliance gate. Owner: Murilo / Codex coordinator.
+
+## CR-MGR-POO2309, October 9, 2026, external market chart
+
+Owner: Murilo / Codex coordinator. Scope: owner-authorized free Advanced Chart market-reference widget in gated V2 Build/Manage and local Solana; no trade execution, asset custody or own price feed.
+
+**Answered for this slice:** the native TradingView branding and visible attribution are retained. Pair and Binance venue identify exchange reference data; the selected pool may have a different price. Exact contract/mint lookup does not claim pool OHLCV, liquidity/range/AUM or lending risk. Missing embed data/pairs are unavailable. No current financial or launch blocker is closed by this widget.
+
+**External disclosure:** the vendor's widget FAQ describes IP, page/symbol/widget metadata collection and states no cookies. The implementation uses no-referrer and sends only public market configuration plus an opaque embed ID, with no app URL/fund/pool/wallet identity, and executes code in the vendor origin rather than the wallet page. Vendor-controlled behavior inside that origin is not independently certified. No user-provided address/query is passed or tracked. The lazy frame opens only after chart intent.
+
+**Remaining OPEN before expanding this claim:** own-feed or financial overlays and modified branding/data entitlement require separate source/license/disclosure review under POO-2279. Widget availability is not proven merely because the same symbol exists on the TradingView site. Current approved references keep graceful no-data and retry; Murilo owns browser acceptance. Existing CR-MGR-POO2270 and financial launch disclosures remain applicable.

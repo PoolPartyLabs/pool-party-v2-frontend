@@ -97,3 +97,8 @@ A misconfigured CORS (`Access-Control-Allow-Origin: *` with credentials, or refl
 ## How to add a new external dependency
 
 Adding any third-party script, RPC, iframe, or API means updating the CSP allowlist in `frontend-security`. Default-deny: a new `connect-src`/`script-src`/`frame-src` entry is a reviewed change, not an afterthought. This is the control that limits blast radius if a dependency is compromised.
+
+
+### TradingView market-reference iframe (POO-2309, October 9)
+
+The parent allows only `https://www.tradingview-widget.com` in frame-src. TradingView has no parent script-src/connect-src entry or wildcard. The public Advanced Chart runs in a cross-origin sandboxed iframe, with no-referrer and only scripts/same-origin/popups. Parent code validates origin, source window and opaque instance ID for boot/no-data and discards all vendor payload data; it never accepts commands/prices or exposes wallet providers. The direct embed URL reproduces the official loader protocol without executing that loader in the parent. Loader-protocol changes are an integration risk, handled by timeout/no-data/retry and the constructor/message tests. See CR-MGR-POO2309 for external disclosure and the separate exact-feed/branding/license boundary.

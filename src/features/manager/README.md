@@ -786,7 +786,7 @@ See [phased delivery plan](../../../docs/manager-overview-manage-v2-delivery-202
 
 [Manager canvas and inline panels](../../../docs/manager-canvas-panels-plan-2026-10-07.md) v2 maps the consolidated per-area handoff and matrix48 to POO-2116. It supersedes the earlier cash/two-outbound-Bridge assumptions: native cash144x96, one shared outbound Bridge with separate principal/Income ports, full-path hover, fixed Hub overlay, natural inline headers and all-node selection with independent draft/operation ownership. Graph contract POO-2288 and read-only Review Entry/Exit fees POO-2289 are separate early runtime slices; old layouts are not certified by the new contract. POO-2290 covers lending account states, POO-2291 the six local Solana continuation slices, and real data/execution/Charts gates remain explicit. The planning revision itself changes no runtime code.
 
-Collect details reuse the authorized position fees read. The API already builds origin Collect; POO-2277 adds the preview/recovery contract and POO-2278 owns separate preparation, signing and continuation PRs. POO-2230 supplies queue/reserves/native cash/current hub Income. Charts/Activity destinations remain Needs Rules under POO-2279. Existing Move, future-deposit and investor behavior is preserved.
+Collect details reuse the authorized position fees read. The API already builds origin Collect; POO-2277 adds the preview/recovery contract and POO-2278 owns separate preparation, signing and continuation PRs. POO-2230 supplies queue/reserves/native cash/current hub Income. Exact pool feeds, financial chart overlays and Activity remain Needs Rules under POO-2279; POO-2309 delivers the bounded market-reference Charts surface described below. Existing Move, future-deposit and investor behavior is preserved.
 
 POO-2245 v1 supplies the V2-only Overview: shared console hierarchy, AUM/history availability states, unified Continue setup, lifecycle table and existing profile/resume/Manage destinations. The sidebar starts expanded at 248px for V2 Overview without changing the saved preference elsewhere. Pure identity and storage status models distinguish drafts, journeys, corrupt reads and incomplete discovery. Production financial aggregates remain POO-2247; four explicit stories cover Ready/Loading/Empty/Error.
 
@@ -904,3 +904,18 @@ Intrinsic measurements occur after the actual surface commit. A token label shri
 ### Launch-consumer boundary follow-up, October 9, 2026
 
 The fallback index retains both saved Mandate drafts and orphaned EVM launch snapshots with their actual plan types. Readiness validates mandate metadata separately from the execution plan, preserving independent Review and execution blockers. Launch agreement tests and Review stories narrow their plans at the existing runtime boundary. This fixes three PR #153 CI consumer type errors; no allocation, execution, wallet/API capability or live Solana gate changes. Validation is reported in the follow-up PR, with no deploy or browser acceptance claim.
+
+## Contextual market Charts (POO-2309, rules v1)
+
+Build and Manage share `fund/charts/StrategyChartSurface.tsx`. Strategy flow/Charts change presentation only: the React Flow canvas stays mounted/dimensioned and inaccessible while covered, and every Configure/Manage draft or operation owner stays in its original parent. The same surface covers the existing local Solana wizard; it does not change Configure/Manage mode or local financial capability.
+
+The genuine TradingView Advanced Chart drawing toolbar is on the left (`hide_side_toolbar:false`), with dark theme, daily candles, autosize and its top toolbar. Symbol changes are disabled. `chartContext.ts` resolves the current unapplied Build pool/swap choice or the current Manage position; `chartModel.ts` approves exact Arbitrum/Base ETH/WETH+USDC and Solana WSOL+USDC identities. Binance ETH/USDC and SOL/USDC are explicitly labeled **Market reference**, with canonical pair/venue and attribution, never pool prices/execution quotes/AUM/range. Lending, Holding and unknown pairs stay unavailable.
+
+The remote iframe is lazy-mounted on chart intent and isolated from the wallet origin. No vendor script in parent, no app/private identity passed. Locale/origin/retry have separate widget instances. Startup timeout/no-data supports inline retry; old messages are inert. Same-instance drawings remain when returning to the flow, with no reload-persistence promise. All configured locales translate the app chrome; Dutch widget content falls back to vendor-supported English.
+
+Chart controls contain Delete/Backspace/Escape so they cannot remove the selected Build block.
+Canvas shortcuts still work inside the canvas. The reference header can scroll on short screens
+while preserving attribution and a nonzero chart. Screenshot export is disabled because the
+sandbox does not allow downloads; native drawing tools remain enabled.
+
+Bounded chart view/close/blocked/failure/retry events emit from PP-MGR-CMP-103. No financial submitted/completed event is introduced. Pure identity/embed/message tests and Build/Manage/local-draft preservation tests are focused and serial; the browser journey is Murilo's. Exact pool-feed/history/annotation and Activity integration remains POO-2279. See [integration contract](../../../docs/INTEGRATION_POINTS.md) and CR-MGR-POO2309.

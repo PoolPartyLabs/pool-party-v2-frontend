@@ -1744,5 +1744,24 @@
       "supplied": "Bereitgestellt",
       "availableToWithdraw": "Zum Abheben verfügbar"
     }
+  },
+  "marketChart": {
+    "tabsLabel": "Strategieansicht",
+    "flow": "Strategieablauf",
+    "charts": "Charts",
+    "referenceTitle": "Marktreferenz",
+    "referenceDescription": "Marktdaten einer Börse zur Analyse. Der ausgewählte Pool kann einen anderen Preis haben.",
+    "frameTitle": "Marktreferenzchart für {pair}",
+    "loading": "Chart wird geladen...",
+    "noData": "Diese Marktreferenz ist bei TradingView nicht verfügbar.",
+    "loadError": "Der Chart konnte nicht geladen werden. Bitte erneut versuchen.",
+    "retry": "Erneut versuchen",
+    "attribution": "Chart von TradingView",
+    "notAvailable": "Nicht verfügbar",
+    "noSelection": "Wähle einen konfigurierten Pool oder einen manuellen Swap, um die Marktreferenz zu sehen.",
+    "unconfigured": "Wähle den Pool oder beide Swap-Token, bevor du den Chart öffnest.",
+    "unsupportedBlock": "Dieser Block hat keine unterstützte Marktreferenz.",
+    "lendingReference": "Ein Marktpreischart zeigt weder den Lending-APY noch das Kontorisiko.",
+    "unsupportedPair": "Für diese Token ist keine Chartreferenz verfügbar."
   }
 }

@@ -1744,5 +1744,24 @@
       "supplied": "Supplied",
       "availableToWithdraw": "Available to withdraw"
     }
+  },
+  "marketChart": {
+    "tabsLabel": "Strategy view",
+    "flow": "Strategy flow",
+    "charts": "Charts",
+    "referenceTitle": "Market reference",
+    "referenceDescription": "Exchange market data for analysis. The selected pool may have a different price.",
+    "frameTitle": "{pair} market reference chart",
+    "loading": "Loading chart...",
+    "noData": "This market reference is unavailable from TradingView.",
+    "loadError": "The chart could not load. Try again.",
+    "retry": "Try again",
+    "attribution": "Chart by TradingView",
+    "notAvailable": "Not available",
+    "noSelection": "Select a configured pool or a manual swap to view its market reference.",
+    "unconfigured": "Choose the pool or both swap tokens before opening its chart.",
+    "unsupportedBlock": "This block has no supported market reference.",
+    "lendingReference": "A market price chart does not show lending APY or account risk.",
+    "unsupportedPair": "A chart reference is not available for these token identities."
   }
 }

@@ -57,11 +57,8 @@ const directives: Record<string, string[]> = {
     // for ordinary JavaScript and is the thing this policy exists to forbid.
     "'wasm-unsafe-eval'",
     "https://www.googletagmanager.com",
-    // PP-SECURITY (POO-1451, found in POO-1189): `https://*.tradingview.com` was REMOVED from here
-    // and from frame-src.
-    // It was a dead entry: nothing in src/, public/ or package.json ever loaded TradingView. This
-    // file's own header says every entry is a reviewed decision, so a stale one weakens that claim
-    // for every entry beside it. Guarded by an inverted assertion in `csp.test.ts`.
+    // POO-1451 removed the unused TradingView wildcard. POO-2309 deliberately allows only
+    // its real cross-origin frame below; no TradingView script executes in the wallet page.
     // PP-SECURITY [R5] (POO-1138): the Paybis fiat on-ramp widget loads its client script from
     // widget.paybis.com (prod) / widget.sandbox.paybis.com (sandbox). script-src is an explicit host
     // allowlist and we deliberately do NOT use 'strict-dynamic', so the widget loader (added in
@@ -178,7 +175,8 @@ const directives: Record<string, string[]> = {
   ],
   "frame-src": [
     SELF,
-    // POO-1451: the TradingView entry that stood here is gone; see the note in script-src above.
+    // POO-2309: the market widget runs cross-origin; no TradingView code executes in the parent.
+    "https://www.tradingview-widget.com",
     "https://*.paybis.com",
     // Privy login / embedded-wallet iframe (rendered from auth.privy.io).
     "https://auth.privy.io",
