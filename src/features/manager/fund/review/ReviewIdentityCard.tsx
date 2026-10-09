@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-073 (POO-2188)
  * @name ReviewIdentityCard
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none: the Review page emits field events.
  * @i18n-namespace manager
  * Editable profile fields and validated, cropped PNG logo upload.
@@ -23,6 +24,9 @@ export interface ReviewIdentityCardProps {
   /** Saved HTTPS upload URL. */ imageUrl: string;
   /** Parent upload state. */ uploading?: boolean;
   /** Already translated parent upload error. */ uploadError?: string;
+  /** Missing upload capability; prevents file reading and cropping. */ uploadUnavailable?: string;
+  /** Local intent has no post-launch identity capability. */ localVisual?: boolean;
+  /** Reports an attempt to use the unavailable upload capability. */ onUploadBlocked?: () => void;
   /** Already translated name reason. */ nameError?: string;
   /** Already translated description reason. */ descriptionError?: string;
   /** Controlled name edit. */ onNameChange: (value: string) => void;
@@ -36,6 +40,9 @@ export function ReviewIdentityCard({
   imageUrl,
   uploading = false,
   uploadError,
+  uploadUnavailable,
+  localVisual = false,
+  onUploadBlocked,
   nameError,
   descriptionError,
   onNameChange,
@@ -55,7 +62,7 @@ export function ReviewIdentityCard({
   const [failed, setFailed] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const pick = (file: File | undefined) => {
-    if (!file) return;
+    if (!file || uploadUnavailable) return;
     try {
       validateLogo(file);
     } catch {
@@ -73,6 +80,7 @@ export function ReviewIdentityCard({
     reader.readAsDataURL(file);
   };
   const apply = async (url: string) => {
+    if (uploadUnavailable) return;
     const file = dataUrlToFile(url);
     setCrop(null);
     if (!file) {
@@ -99,7 +107,9 @@ export function ReviewIdentityCard({
       <div>
         <h3 className="text-sm font-medium">{t("fundBuilder.review.identityTitle")}</h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          {t("fundBuilder.review.identityCaption")}
+          {localVisual
+            ? t("solanaPreview.marketUnavailable")
+            : t("fundBuilder.review.identityCaption")}
         </p>
       </div>
       <div id="review-imageUrl" tabIndex={-1} className="flex items-center gap-4">
@@ -112,28 +122,34 @@ export function ReviewIdentityCard({
           )}
         </div>
         <div className="space-y-1">
-          <input
-            ref={fileInput}
-            type="file"
-            accept="image/png,image/jpeg"
-            aria-label={t("mandate.logoAdd")}
-            className="hidden"
-            onChange={(event) => {
-              pick(event.target.files?.[0]);
-              event.target.value = "";
-            }}
-          />
+          {!uploadUnavailable && (
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/png,image/jpeg"
+              aria-label={t("mandate.logoAdd")}
+              className="hidden"
+              onChange={(event) => {
+                pick(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
+          )}
           <Button
             variant="secondary"
             size="sm"
             className="rounded-full"
             type="button"
             disabled={loading}
+            blocked={!!uploadUnavailable}
+            onBlockedClick={onUploadBlocked}
             onClick={() => fileInput.current?.click()}
           >
             {t(image ? "mandate.logoChange" : "mandate.logoAdd")}
           </Button>
-          <p className="text-xs text-muted-foreground">{t("fundBuilder.review.logoHelp")}</p>
+          <p className="text-xs text-muted-foreground">
+            {uploadUnavailable ?? t("fundBuilder.review.logoHelp")}
+          </p>
           <div aria-live="polite">
             {loading && (
               <p className="text-xs text-muted-foreground">{t("mandate.logoUploading")}</p>

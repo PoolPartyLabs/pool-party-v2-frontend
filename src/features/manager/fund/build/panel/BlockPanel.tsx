@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-061
  * @name BlockPanel
  * @implements-rules-version v1 (POO-2187 rules v1); POO-2204 rules v1; POO-2237 rules v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none emitted here. What the panel does leaves through its draft
  *   (`usePanelDraft`: configured, applied, discarded, leave blocked), the canvas controller (the
  *   confirmed remove) and `onLimitHit` (the Allocation at its ceiling); the Build screen
@@ -402,7 +403,9 @@ export function BlockPanel({
   const definition = bodies[kind] as AnyBody | undefined;
   const positionConfig = (value: typeof panel.draft): PanelBlockConfig | null => {
     const config = value?.config;
-    return config && ("poolId" in config || "assetKey" in config) ? config : null;
+    return config && ("poolId" in config || "assetKey" in config || "catalogId" in config)
+      ? config
+      : null;
   };
   const appliedPosition = positionConfig(panel.applied);
   const draftPosition = positionConfig(panel.draft);

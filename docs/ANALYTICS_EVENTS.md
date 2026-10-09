@@ -408,3 +408,8 @@ Emitter: PP-STR-MOD-001, `FundInvestModal.tsx`. Existing event names only.
 | tx_flow_abandoned | Close/unmount before terminal outcome; unknown transaction uses pending exit. |
 
 The shared provisioning gate/panel retain their existing funnel. Raw previews, wallet addresses, signed payloads and journal contents are not sent to analytics.
+
+
+### Shared local Solana Review capability intents (POO-2301 v1, October 9, 2026)
+
+PP-MGR-CMP-102 LocalSolanaReview emits solana_preview_viewed on entry, solana_preview_interacted on an accepted field edit, and solana_preview_blocked for unavailable Add logo, Max and Launch. These controls are focusable/tappable through the existing soft-blocked Button; no file or wallet action occurs. The future shared route owner retains session abandonment/error and local acknowledgement events. No financial completed event is emitted. Standard Review retains its existing event owners.

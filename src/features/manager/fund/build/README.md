@@ -210,3 +210,12 @@ Default planReadiness refuses local Solana cards/spokes even when a USDC-only po
 Explicit local runtime mapping adds a236x62 USDC Idle surface after each Solana inbound Bridge and a144x96 native SOL cash decoration to its right, separated by32px and vertically centered. The layout expands hull/bounds for cash without moving the financial axis and places branch buses below both surfaces. Idle owns declared Bridge-to-Idle-to-branch handles; cash owns none. Amount and independent USD readings remain Not available, never zero. Standard EVM layouts and the shared palette/viewport are unchanged.
 
 Complete IDs survive graph reading order, grouped surfaces and duplicate occurrences. Removing the spoke clears its local context. The LocalSolanaIdleAndOperatingCash story uses the same BuildGraph / React Flow engine with descriptor intent only. The shared route activation follows separately.
+
+
+## Shared local Solana panel and Review foundation (POO-2301 v1, October 9, 2026)
+
+The shared BlockPanel registry now contains Kamino, Raydium, Orca and Holding bodies. These reuse Allocation, PanelSelect, Apply/Discard, removal confirmation and the delivered protocol presenters. LP/Holding controls use the same V2 selector; Jupiter uses exact Base58 IDs and native/WSOL protocol logos. Local EVM choices have unavailable bodies and do not mount live EVM providers. Zero LP allocation still defers range.
+
+A pure Build/Manage adapter validates the whole candidate against the current mandate, preserves exact instance identity and only lets the first position edit a chain allocation. Independent hidden drafts and Review remain in the mounted local Manage host; an Apply acknowledgement precedes clearing dirty state. The local draft hook supplies session memory only.
+
+LocalSolanaReview reuses the standard layout and cards, preserving editable intentions without EVM signing/economic/access promises. Missing live upload, wallet Max, quote and launch remain Not available and emit blocked intent; no file input or wallet/launch driver is mounted. EVM defaults and investor provisioning are unchanged. Storybook covers the shared local bodies and Review. Shared-wizard activation and its retained Build host follow separately.

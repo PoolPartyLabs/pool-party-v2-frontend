@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-063
  * @name PanelSelect tests
  * @implements-rules-version v1 (POO-2187 rules v1)
+ * @implements-rules-version v1 (POO-2301 exact local token identity)
  * @analytics-events none, a presentational control under test
  *
  * The select of the panels (handoff P11): it lists only the options it is handed, opens a popover
@@ -24,6 +25,19 @@ const OPTIONS: PanelSelectOption[] = [
     label: "WBTC / USDC · 0.30%",
     logos: [{ symbol: "WBTC" }, { symbol: "USDC" }],
     metric: { label: "Supply APY", value: "4.1%" },
+  },
+];
+
+const BASE58_OPTIONS: PanelSelectOption[] = [
+  {
+    id: "solana:So11111111111111111111111111111111111111112",
+    label: "WSOL",
+    logos: [{ symbol: "WSOL", network: "solana" }],
+  },
+  {
+    id: "solana:so11111111111111111111111111111111111111112",
+    label: "Case variant",
+    logos: [{ symbol: "TEST", network: "solana" }],
   },
 ];
 
@@ -102,6 +116,53 @@ describe("PanelSelect (P11)", () => {
       </>,
     );
     expect(screen.getByRole("button", { name: "Pool" })).toHaveTextContent("WETH / USDC · 0.05%");
+  });
+
+  it("[R4] keeps the exact Base58 value and checks only its row", async () => {
+    render(
+      <>
+        <span id="token-label">Token</span>
+        <PanelSelect
+          labelId="token-label"
+          options={BASE58_OPTIONS}
+          value={BASE58_OPTIONS[1]?.id ?? null}
+          idComparison="exact"
+          onChange={vi.fn()}
+        />
+      </>,
+    );
+    const button = screen.getByRole("button", { name: "Token" });
+    expect(button).toHaveTextContent("Case variant");
+    await userEvent.click(button);
+    const first = screen.getByRole("option", { name: "WSOL" });
+    const second = screen.getByRole("option", { name: "Case variant" });
+    expect(first).toHaveAttribute("aria-selected", "false");
+    expect(first.querySelector(".lucide-check")).toBeNull();
+    expect(second).toHaveAttribute("aria-selected", "true");
+    expect(second.querySelector(".lucide-check")).not.toBeNull();
+    expect(screen.getByRole("listbox")).toHaveAttribute("aria-activedescendant", second.id);
+  });
+
+  it("[R4] keyboard chooses another exact Base58 id even when only its case differs", async () => {
+    const onChange = vi.fn();
+    render(
+      <>
+        <span id="token-label">Token</span>
+        <PanelSelect
+          labelId="token-label"
+          options={BASE58_OPTIONS}
+          value={BASE58_OPTIONS[1]?.id ?? null}
+          idComparison="exact"
+          onChange={onChange}
+        />
+      </>,
+    );
+    const button = screen.getByRole("button", { name: "Token" });
+    button.focus();
+    await userEvent.keyboard("{ArrowDown}{ArrowUp}{Enter}");
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(BASE58_OPTIONS[0]?.id);
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(button).toHaveFocus();
   });
 
   it("[M2] a disabled option shows its reason, the arrows skip it and it cannot be chosen", async () => {

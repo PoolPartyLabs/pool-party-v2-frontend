@@ -29,6 +29,7 @@ import { ReviewFirstDepositCard } from "./ReviewFirstDepositCard";
 import { ReviewIdentityCard } from "./ReviewIdentityCard";
 import { ReviewInvestorPreview } from "./ReviewInvestorPreview";
 import { ReviewLaunchPreview } from "./ReviewLaunchPreview";
+import { ReviewLayout } from "./ReviewLayout";
 import { ReviewPlanSummary } from "./ReviewPlanSummary";
 import { ReviewTermsCard } from "./ReviewTermsCard";
 import { ReviewTransactionFeesCard } from "./ReviewTransactionFeesCard";
@@ -179,11 +180,7 @@ function ConnectedReviewPhase({ draftId, onBackToBuild, onEditMandate }: ReviewP
       </div>
     );
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold">{t("title")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t("caption")}</p>
-      </div>
+    <ReviewLayout>
       {binding.catalog.loading && <Skeleton height={40} />}
       {binding.catalog.error && (
         <div role="alert">
@@ -288,6 +285,6 @@ function ConnectedReviewPhase({ draftId, onBackToBuild, onEditMandate }: ReviewP
           )}
         </div>
       </div>
-    </div>
+    </ReviewLayout>
   );
 }

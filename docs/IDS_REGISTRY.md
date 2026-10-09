@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 702 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 709 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1140,3 +1140,15 @@ Existing mandate, plan, registry, logo and analytics artifacts retain their IDs.
 ## Local Solana Idle and operating cash, October 9, 2026 (POO-2301 v1)
 
 Existing PP-MGR-LIB-023 / PP-MGR-CMP-059 artifacts gain an explicitly local layout context. Idle is 236x62, native SOL cash is 144x96 with a32px lateral gap and shared vertical center. Bridge connects through Idle to branches/templates; cash is handleless decoration with no financial edges. Stable complete IDs retain duplicate occurrences. Standard EVM layouts have no local context or cash addition. BuildGraph and its Storybook variant reuse the existing React Flow renderer and Pool Party surfaces. No new artifact or monetary source is introduced.
+
+
+## Shared local Solana panels and Review, October 9, 2026 (POO-2301 v1)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-HOK-024` | useSolanaBuilderDraft, acknowledged session memory for the shared V2 shell | Hook | n/a (code) | Implemented dormant local binding | [POO-2301](https://linear.app/yeildbay/issue/POO-2301) | `src/features/manager/fund/solana-preview/useSolanaBuilderDraft.ts` @rules-v1 |
+| `PP-MGR-LIB-076` | solanaBuildManageBinding, exact local instances and current whole-plan Apply validation | Lib | n/a (code) | Implemented dormant local binding | [POO-2301](https://linear.app/yeildbay/issue/POO-2301) | `src/features/manager/fund/solana-preview/solanaBuildManageBinding.ts` @rules-v1 |
+| `PP-MGR-CMP-101` | SolanaBuilderPanelBodies, existing local protocol presenters within the common Configure shell | Component | [Configure8359:3089](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8359-3089) | Implemented shared bodies | [POO-2301](https://linear.app/yeildbay/issue/POO-2301) | `src/features/manager/fund/solana-preview/SolanaBuilderPanelBodies.tsx` @rules-v1 |
+| `PP-MGR-CMP-102` | LocalSolanaReview, same V2 cards with editable intentions and unavailable live capabilities | Component | Existing V2 Review | Implemented dormant local Review | [POO-2301](https://linear.app/yeildbay/issue/POO-2301) | `src/features/manager/fund/review/LocalSolanaReview.tsx` @rules-v1 |
+
+Existing PanelSelect, BlockPanel and Review artifacts retain their IDs. Jupiter options compare exact Base58 identities; default EVM comparison remains unchanged. LP/Holding reuse PanelSelect and shipped protocol/token logos. Local Review preserves the same cards and inputs but does not promise signing, EVM seed economics, exit timing or public access; unavailable upload, Max and Launch record blocked intent without execution. Wizard activation and its retained Build/Manage host are a separate dependent slice. The earlier React Flow/domain/context entries remain historical delivery records.

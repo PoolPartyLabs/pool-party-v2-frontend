@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-074 (POO-2188)
  * @name ReviewFeesCard
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2301 local intent presentation)
  * @analytics-events none: the Review page emits field events.
  * @i18n-namespace manager
  * Bounded management and performance fees, committed only after clamping.
@@ -93,6 +94,7 @@ export function FeeStepper({ field, value, label, error, onChange }: FeeStepperP
   );
 }
 export interface ReviewFeesCardProps {
+  /** Editable fee intentions, with no payout or post-launch capability claim. */ localVisual?: boolean;
   /** Stored performance fee. */ performanceFeeBps: number;
   /** Stored annual management fee. */ managementFeeBps: number;
   /** Bounded percent text for the parent hook. */ onFeePercentChange: FeeStepperProps["onChange"];
@@ -105,13 +107,17 @@ export function ReviewFeesCard({
   onFeePercentChange,
   errors,
   className,
+  localVisual = false,
 }: ReviewFeesCardProps) {
   const t = useTranslations("manager.fundBuilder.review");
+  const all = useTranslations("manager");
   return (
     <Card className={cn("flex flex-col gap-4 rounded-[20px] p-4", className)}>
       <div>
         <h3 className="text-sm font-medium">{t("feesTitle")}</h3>
-        <p className="mt-1 text-xs text-muted-foreground">{t("feesCaption")}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {localVisual ? all("solanaPreview.marketUnavailable") : t("feesCaption")}
+        </p>
       </div>
       {(
         [
@@ -140,7 +146,9 @@ export function ReviewFeesCard({
             <label htmlFor={`review-${row.field}`} className="text-sm font-medium">
               {t(row.label)}
             </label>
-            <p className="mt-1 text-xs text-muted-foreground">{t(row.help)}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {localVisual ? all("solanaPreview.marketUnavailable") : t(row.help)}
+            </p>
           </div>
           <FeeStepper
             field={row.field}

@@ -48,6 +48,8 @@ export interface SolanaManagePresenterProps {
   onAction(action: SolanaManageAction): void;
   /** Host aggregate/capability guard, separate from the model's syntactic validation. */
   actionAllowed?: boolean;
+  /** Shared Build chains expose allocation only on their first position. */
+  allocationReadOnly?: boolean;
   /** Reports a bounded blocked intent before a mode or Review transition. */
   onBlocked?(): void;
   /** Notifies the host only when a local inline Review is opened. */
@@ -220,6 +222,7 @@ function ManageContent({
   rangeContext,
   onAction,
   actionAllowed = true,
+  allocationReadOnly = false,
   onBlocked,
   onReviewIntent,
   className,
@@ -333,7 +336,7 @@ function ManageContent({
             inputMode="numeric"
             autoComplete="off"
             maxLength={3}
-            readOnly={review}
+            readOnly={review || allocationReadOnly}
             value={view.draft.config.allocation}
             aria-invalid={parseAllocation(view.draft.config.allocation) === null}
             onChange={(event) =>

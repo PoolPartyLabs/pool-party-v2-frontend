@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-078 (POO-2195)
  * @name ReviewInvestorPreview
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2301 local intent presentation)
  * @analytics-events none: read-only preview inside ReviewPhase.
  */
 import { useLocale, useTranslations } from "next-intl";
@@ -10,9 +11,12 @@ import { type ReviewDraft, reviewSchema } from "../launch/review";
 import { bpsToPercentText, formatUsdc, parseUsdc } from "./reviewForm";
 export interface ReviewInvestorPreviewProps {
   review: ReviewDraft;
+  /** Preview of local fields, with no public investor access or post-launch capability. */ localVisual?: boolean;
 }
-export function ReviewInvestorPreview({ review }: ReviewInvestorPreviewProps) {
+export function ReviewInvestorPreview({ review, localVisual = false }: ReviewInvestorPreviewProps) {
   const t = useTranslations("manager.fundBuilder.review");
+  const all = useTranslations("manager");
+  const unavailable = all("solanaPreview.marketUnavailable");
   const locale = useLocale();
   const valid = reviewSchema.safeParse(review);
   const value = valid.success ? valid.data : null;
@@ -49,7 +53,7 @@ export function ReviewInvestorPreview({ review }: ReviewInvestorPreviewProps) {
                 value: minimum === null ? t("unavailable") : `${formatUsdc(minimum, locale)} USDC`,
               },
               { key: "instantLabel", value: percent(value.payoutFeeBps) },
-              { key: "accessLabel", value: t("public") },
+              { key: "accessLabel", value: localVisual ? unavailable : t("public") },
             ].map((row) => (
               <div key={row.key} className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">{t(row.key)}</dt>
@@ -61,7 +65,9 @@ export function ReviewInvestorPreview({ review }: ReviewInvestorPreviewProps) {
       ) : (
         <p className="text-sm text-muted-foreground">{t("previewInvalid")}</p>
       )}
-      <p className="text-xs text-muted-foreground">{t("identityCaption")}</p>
+      <p className="text-xs text-muted-foreground">
+        {localVisual ? unavailable : t("identityCaption")}
+      </p>
     </Card>
   );
 }
