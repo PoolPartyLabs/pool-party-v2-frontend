@@ -178,3 +178,12 @@ fixtures, with no transaction simulation or financial-settlement claim.
 No API, RPC, mock-service call, copy or analytics emitter is introduced. Build and Manage
 hosts retain event ownership. The compliance register records the remaining financial
 meaning and launch conditions before this contract is adopted on real product routes.
+
+
+## React Flow infrastructure (POO-2302 v1, October 9, 2026)
+
+`reactFlowProjection` (PP-MGR-LIB-074) projects only declared financial nodes, handles and routes. Invalid references and nonfinite coordinates fail closed. `ReactFlowGraph` (PP-MGR-CMP-100) wraps existing Pool Party surfaces in custom nodes and measured handles, renders custom orthogonal edges and owns one pan/zoom transform. Native drag, connect, reconnect, selection and Delete mutation are disabled. Handles remain nonzero inside painted borders; moved endpoints preserve safe interior bends and simplify a single elbow without backtracking.
+
+CanvasViewport exposes `engine="react-flow"`; the default remains native in this infrastructure slice. Build and Manage renderer adoption is delivered separately. Existing controls, fit, reveal, overlays and event ownership are retained. Only upstream base CSS is loaded; no React Flow UI cards are copied. The pinned MIT dependency and its notices are recorded in THIRD_PARTY_NOTICES and ADR 0010.
+
+Focused regressions cover projection integrity, measured endpoints, single-transform pan/zoom, invalid dimensions, fitting, measurement-cache retention and disabled native mutations. Real browser geometry acceptance remains with Murilo.

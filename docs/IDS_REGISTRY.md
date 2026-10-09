@@ -1106,3 +1106,13 @@ Canonical origin/envelope mismatch rejects the envelope. Invalid individual fiel
 | `PP-MGR-CMP-099` | SolanaKaminoReadSection, source-preserving Configure/Manage metadata, supplied/principal/interest/rewards, APY/withdrawable and independent full-account risk | Component | [Configure8677:271](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8677-271), [Manage8677:408](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8677-408) | Integrated with null live origins/reads | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/SolanaKaminoReadSection.tsx` @rules-v1 |
 
 The pure model is merged in PR #143. Configure and local Manage now mount this section without source defaults or execution. Current/After risk binds to the validated canonical obligation independently from market metrics. Null rewards remain unknown; empty rewards are omitted. Existing per-instance draft/inline Review ownership and all11 locales are preserved. Current census: 702 registry rows and 532 integration markers across 305 files.
+
+
+## React Flow connection infrastructure, October 9, 2026 (POO-2302 v1)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-074` | reactFlowProjection, declared financial nodes/ports and measured orthogonal routes | Lib | n/a (code) | Implemented optional infrastructure | [POO-2302](https://linear.app/yeildbay/issue/POO-2302) | `src/features/manager/fund/build/graph/reactFlowProjection.ts` @rules-v1 |
+| `PP-MGR-CMP-100` | ReactFlowGraph, existing surfaces with custom measured handles/edges and one engine viewport | Component | Existing Build/Manage graph | Implemented optional infrastructure | [POO-2302](https://linear.app/yeildbay/issue/POO-2302) | `src/features/manager/fund/build/graph/ReactFlowGraph.tsx` @rules-v1 |
+
+CanvasViewport (PP-MGR-CMP-046) adds an explicit `engine="react-flow"` option. Native remains the default; production Build/Manage adoption follows separately. No transaction, live source or new funnel is added. The two new rows bring the registry row census to 703, including historical repeated IDs.

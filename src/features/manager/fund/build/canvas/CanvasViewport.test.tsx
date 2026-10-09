@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-046
  * @name CanvasViewport tests
  * @implements-rules-version v1 (POO-2236 rules v1); v1 (POO-2152 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a presentational container; the Build screen (PP-MGR-SCR-002, S7) owns
  *   every event
  *
@@ -21,6 +22,7 @@ import {
   renderWithProviders,
   screen,
   userEvent,
+  waitFor,
 } from "../../../../../../tests/utils/renderWithProviders";
 import {
   CanvasViewport,
@@ -56,6 +58,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 function Graph() {
@@ -95,6 +98,67 @@ function layer(): HTMLElement {
 }
 
 describe("CanvasViewport: the container", () => {
+  // @rule POO-2302 R1/R2: the engine owns one transform and retains the Pool Party viewport shell.
+  it("mounts the React Flow engine without a second native transform", () => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    renderWithProviders(
+      <CanvasViewport engine="react-flow" graphSize={WORKED_EXAMPLE_1}>
+        <Graph />
+      </CanvasViewport>,
+    );
+    expect(canvas()).toHaveAttribute("data-canvas-engine", "react-flow");
+    expect(canvas().querySelector("[data-canvas-layer]")).toBeNull();
+    expect(screen.getByRole("button", { name: "Fit to view" })).toBeVisible();
+  });
+  // @rule POO-2302 R2/R4: native controls and wheel gestures drive the engine transform alone.
+  it("fits and reveals through the engine and preserves wheel pan and pinch zoom", async () => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    const viewportRef = createRef<CanvasViewportHandle>();
+    const background = vi.fn();
+    renderWithProviders(
+      <CanvasViewport
+        engine="react-flow"
+        graphSize={WORKED_EXAMPLE_1}
+        viewportRef={viewportRef}
+        onBackgroundClick={background}
+      >
+        <Graph />
+      </CanvasViewport>,
+    );
+    const viewport = canvas().querySelector<HTMLElement>(".react-flow__viewport");
+    if (!viewport) throw new Error("engine viewport missing");
+    await waitFor(() => expect(viewport.style.transform).toContain("scale(0.866"));
+    const initial = viewport.style.transform;
+    await userEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+    expect(viewport.style.transform).not.toBe(initial);
+    expect(background).not.toHaveBeenCalled();
+    act(() => viewportRef.current?.fit());
+    expect(viewport.style.transform).toBe(initial);
+    act(() => viewportRef.current?.revealRect({ x: 1000, y: 1000, w: 100, h: 100 }));
+    expect(viewport.style.transform).not.toBe(initial);
+    const zoomPane = canvas().querySelector<HTMLElement>(".react-flow__renderer");
+    if (!zoomPane) throw new Error("engine gesture layer missing");
+    const beforePan = viewport.style.transform;
+    fireEvent.wheel(zoomPane, { deltaY: 30, deltaX: 10 });
+    expect(viewport.style.transform).not.toBe(beforePan);
+    const beforePinch = viewport.style.transform;
+    fireEvent.wheel(zoomPane, { deltaY: -20, ctrlKey: true, clientX: 200, clientY: 100 });
+    expect(viewport.style.transform).not.toBe(beforePinch);
+  });
   it("[POO-2272 R1/R2] keeps an optional overlay outside the moving layer through pan, zoom and fit", async () => {
     renderViewport({ overlay: <span data-testid="hub-overlay">Hub · Arbitrum</span> });
     const badge = screen.getByTestId("hub-overlay");

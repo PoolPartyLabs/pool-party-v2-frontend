@@ -1,5 +1,9 @@
 # Compliance register
 
+## React Flow financial presentation infrastructure, October 9, 2026 (POO-2302 v1)
+
+Status: ANSWERED for optional presentation only. Gray principal, green fees and gray Income output retain their existing meanings. Measured handles and route geometry prove neither conversion, bridge delivery, reserve assignment nor financial settlement. This dependency adds no custody, rate, market data, credentials or transaction capability. Existing source/execution gates remain in force before production adoption.
+
 What must be verified before a surface reaches a real user, written down where the code is.
 
 This file arrived in this repository with the fund-contracts strategy builder (epic POO-2119). The
