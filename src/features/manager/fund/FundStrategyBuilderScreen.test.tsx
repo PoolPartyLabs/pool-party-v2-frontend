@@ -205,8 +205,6 @@ describe("shared local Solana binding", () => {
           name: "USD Coin",
           logoUrl: null,
           locked: true,
-          priced: false,
-          visualEligible: true,
         },
       ],
       caps: {
