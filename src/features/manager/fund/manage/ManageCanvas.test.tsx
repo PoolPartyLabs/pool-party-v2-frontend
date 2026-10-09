@@ -267,6 +267,38 @@ describe("POO-2270/2271 v2 canvas", () => {
       ),
     ).toEqual(["spoke:allocation:4663", "bridge:idle:4663"]);
   });
+  // @rule POO-2302 R3: the painted card surface owns the measured minimum, not an empty wrapper.
+  it.each([null, "75"])("fills painted surfaces with withdrawal coverage %s", (coverage) => {
+    const model = normalizeManageModel(mockFund);
+    renderWithProviders(
+      <ManageCanvas
+        model={{
+          ...model,
+          withdrawal: {
+            ...model.withdrawal,
+            coveragePct:
+              coverage === null
+                ? { status: "unavailable", reason: "no-coverage-observation" }
+                : available(coverage, "test-coverage"),
+          },
+        }}
+        selectedId={null}
+        onSelect={vi.fn()}
+      />,
+    );
+    for (const [id, minimum] of [
+      ["withdrawal", "168px"],
+      ["income", "102px"],
+      [`idle:${model.hubChainId}`, "104px"],
+      [`cash:${model.hubChainId}`, "96px"],
+    ]) {
+      const root = document.querySelector<HTMLElement>(`[data-manage-node='${id}']`);
+      const surface = root?.querySelector<HTMLElement>("[data-manage-surface]");
+      expect(surface?.style.minHeight).toBe(minimum);
+      expect(surface?.querySelector("[data-piece-stroke]")).not.toBeNull();
+    }
+  });
+
   it("measures unscaled natural content and preserves viewport when only selection changes", () => {
     const callbacks: ResizeObserverCallback[] = [];
     vi.stubGlobal(
@@ -284,7 +316,9 @@ describe("POO-2270/2271 v2 canvas", () => {
     const view = renderWithProviders(
       <ManageCanvas model={model} selectedId={null} onSelect={vi.fn()} />,
     );
-    const content = document.querySelector<HTMLElement>("[data-manage-measure='withdrawal']");
+    const content = document.querySelector<HTMLElement>(
+      "[data-manage-measure='withdrawal'] [data-manage-natural]",
+    );
     if (!content || !callbacks.length) throw new Error("measurement missing");
     const transform = document.querySelector<HTMLElement>("[data-canvas-layer]")?.style.transform;
     act(() =>
@@ -346,6 +380,58 @@ describe("POO-2270/2271 v2 canvas", () => {
       }),
     );
     expect(box?.style.height).toBe("168px");
+    vi.unstubAllGlobals();
+  });
+
+  // @rule POO-2302 R3/R4: the observed content must not inherit the last resolved card height.
+  it("shrinks a previously expanded card from its natural content without unlocking the painted floor", () => {
+    const callbacks: ResizeObserverCallback[] = [];
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          callbacks.push(callback);
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    const model = normalizeManageModel(mockFund);
+    renderWithProviders(<ManageCanvas model={model} selectedId={null} onSelect={vi.fn()} />);
+    const outer = document.querySelector<HTMLElement>("[data-manage-measure='withdrawal']");
+    const surface = outer?.querySelector<HTMLElement>("[data-manage-surface]");
+    if (!outer || !surface) throw new Error("withdrawal card missing");
+    const natural = outer.querySelector<HTMLElement>("[data-manage-natural]") ?? outer;
+    let contentHeight = 240;
+    // Model browser layout: an observed resolved box cannot report less than its own minimum.
+    const actualHeight = () =>
+      Math.max(contentHeight, Number.parseFloat(natural.style.minHeight) || 0);
+    Object.defineProperties(natural, {
+      clientHeight: { configurable: true, get: actualHeight },
+      scrollHeight: { configurable: true, get: actualHeight },
+      clientWidth: { configurable: true, value: 236 },
+      scrollWidth: { configurable: true, value: 236 },
+    });
+    const observe = () =>
+      act(() =>
+        callbacks.forEach((callback) => {
+          callback(
+            [
+              {
+                target: natural,
+                borderBoxSize: [{ inlineSize: 236, blockSize: actualHeight() }],
+              } as unknown as ResizeObserverEntry,
+            ],
+            {} as ResizeObserver,
+          );
+        }),
+      );
+    observe();
+    expect(surface.style.minHeight).toBe("240px");
+    contentHeight = 168;
+    observe();
+    expect(surface.style.minHeight).toBe("168px");
     vi.unstubAllGlobals();
   });
 });

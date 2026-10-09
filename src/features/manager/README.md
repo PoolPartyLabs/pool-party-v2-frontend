@@ -800,3 +800,22 @@ Native buttons support Enter/Space. Keyboard activation focuses the visible insp
 `manageLendingRisk` / `ManageLendingRiskSection` project a full Aave account or Kamino obligation, retaining exact amounts, canonical identity, source, oracle/effective parameter context and supplied scenarios. After is bound to a valid preview of the verified Current base. Fresh complete zero debt is No debt / Not applicable; unavailable, stale, partial or conflicting snapshots never show infinity or fake zero. Aave does not require Kamino borrow factors. A declared collateral or debt asset can define the supplied liquidation scenario; no formula is calculated.
 
 Aave Supply and local Kamino panels mount the section with null account identity and unavailable reads, because existing Supply position metadata is not a full account source. LP positions never receive it. The section adds no Borrow, Multiply, LP Collect or transaction capability. Live account/scenario wiring remains POO-2290. Independent model/presenter review findings were fixed with regressions; 84 focused tests passed. Eleven locales and illustrative stories accompany the section; production never uses their fixtures.
+
+### Manage painted bounds and direct returns, POO-2302 v1
+
+Idle, Idle output, Income, cash and position cards now paint to the final minimum height used by
+their financial ports. Natural content is measured independently of that resolved minimum, so a
+card can shrink after a longer value or extra coverage row disappears. Flow and spine surfaces
+inherit the measured height while their content determines the natural size. Coverage being
+present or absent cannot leave a short card inside a taller endpoint wrapper. Unavailable text
+wraps at words; exact token quantities retain their complete accessible value.
+
+Return paths remove duplicate and monotonic collinear points. The router uses one direct return
+bus when principal and Income spans are separated by at least 24px and every orthogonal run
+clears painted card interiors. Multi-column overlapping spans retain separate safe corridors.
+Connection identities and whole-route hover ownership are preserved. Income output remains gray.
+These rendering changes introduce no balance, price, reserve, custody or execution capability.
+
+Validation: 32 focused Manage layout/component tests passed, including coverage present/absent,
+natural content growth/shrink, full route hover, semantic references, shared Bridge ports and clear-card
+corridors. Browser layout acceptance remains with Murilo.

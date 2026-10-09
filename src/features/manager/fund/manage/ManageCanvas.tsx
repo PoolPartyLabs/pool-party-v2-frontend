@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-085
  * @name ManageCanvas
  * @implements-rules-version v2 (POO-2274, POO-2270, POO-2271, POO-2272; extends POO-2246, POO-2226, POO-2232)
+ * @implements-rules-version v1 (POO-2302, painted surface bounds)
  * @analytics-events none, node presses report through onSelect; ManageScreen owns navigation.
  *
  * Read-only live graph built from the shared Build pieces. Cash belongs to one chain and every
@@ -10,7 +11,16 @@
 "use client";
 import { Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { NetworkLogo } from "@/components/data-display/NetworkLogo";
 import { TokenLogo } from "@/components/data-display/TokenLogo";
 import { formatPercent, formatTokenAmount, formatUsdTile } from "@/lib/utils/format";
@@ -60,7 +70,7 @@ export function ManageTokenRow({ token }: { token: ManageToken }) {
       </span>
       <span
         title={exact}
-        className="min-w-0 break-all text-right font-semibold text-foreground tabular-nums"
+        className={`min-w-0 text-right font-semibold text-foreground tabular-nums ${amount.status === "available" ? "break-all" : "break-words"}`}
       >
         <span aria-hidden="true">{text}</span>
         <span className="sr-only">{exact}</span>
@@ -128,10 +138,12 @@ function PositionNode({
   position,
   selected,
   onSelect,
+  minimumHeight,
 }: {
   position: ManagePosition;
   selected: boolean;
   onSelect(keyboard?: boolean): void;
+  minimumHeight: number;
 }) {
   const t = useTranslations("manager.manageV2");
   const statusId = useId();
@@ -148,6 +160,8 @@ function PositionNode({
       type="button"
       data-canvas-interactive=""
       data-manage-position={position.id}
+      data-manage-surface=""
+      style={{ minHeight: minimumHeight }}
       aria-label={name}
       aria-describedby={position.kind === "liquidity" ? statusId : undefined}
       aria-pressed={selected}
@@ -160,21 +174,27 @@ function PositionNode({
         className={selected ? "text-primary" : "text-border"}
       />
       <div
-        aria-hidden="true"
-        className="pointer-events-none flex min-h-[62px] w-full shrink-0 items-center gap-2.5 px-[13px] py-[11px]"
+        data-manage-natural=""
+        className="flex w-full flex-col"
+        style={{ minHeight: position.kind === "liquidity" ? 232 : 160 }}
       >
-        <BlockMark
-          logo="protocol"
-          markId={manageProtocolMark(position.source.adapterKind)}
-          name={position.protocol}
-          size={28}
-        />
-        <CardCopy title={title} caption={position.protocol} captionTone="text-muted-foreground" />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none flex min-h-[62px] w-full shrink-0 items-center gap-2.5 px-[13px] py-[11px]"
+        >
+          <BlockMark
+            logo="protocol"
+            markId={manageProtocolMark(position.source.adapterKind)}
+            name={position.protocol}
+            size={28}
+          />
+          <CardCopy title={title} caption={position.protocol} captionTone="text-muted-foreground" />
+        </div>
+        <PositionHoldings position={position} />
+        {position.kind === "liquidity" ? (
+          <PositionRangeStatus id={statusId} status={position.rangeStatus} />
+        ) : null}
       </div>
-      <PositionHoldings position={position} />
-      {position.kind === "liquidity" ? (
-        <PositionRangeStatus id={statusId} status={position.rangeStatus} />
-      ) : null}
     </button>
   );
 }
@@ -182,34 +202,48 @@ function BalanceCard({
   title,
   locked = false,
   children,
+  minimumHeight,
 }: {
   title: string;
   locked?: boolean;
   children: ReactNode;
+  minimumHeight: number;
 }) {
   return (
     <div
       data-canvas-interactive=""
-      className="relative flex w-full flex-col gap-3 rounded-lg bg-surface p-3"
+      data-manage-surface=""
+      style={{ minHeight: minimumHeight }}
+      className="relative w-full rounded-lg bg-surface"
     >
       <PieceStroke width={1} radius={16} className="text-border" />
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="min-w-0 break-words font-medium text-foreground text-xs">{title}</h3>
-        {locked ? (
-          <Lock
-            data-manage-lock=""
-            aria-hidden="true"
-            size={14}
-            strokeWidth={2.5}
-            className="shrink-0 text-muted-foreground"
-          />
-        ) : null}
+      <div data-manage-natural="" className="flex w-full flex-col gap-3 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="min-w-0 break-words font-medium text-foreground text-xs">{title}</h3>
+          {locked ? (
+            <Lock
+              data-manage-lock=""
+              aria-hidden="true"
+              size={14}
+              strokeWidth={2.5}
+              className="shrink-0 text-muted-foreground"
+            />
+          ) : null}
+        </div>
+        {children}
       </div>
-      {children}
     </div>
   );
 }
-function CashNode({ model, chainId }: { model: ManageModel; chainId: number }) {
+function CashNode({
+  model,
+  chainId,
+  minimumHeight,
+}: {
+  model: ManageModel;
+  chainId: number;
+  minimumHeight: number;
+}) {
   const t = useTranslations("manager.manageV2");
   const chain = model.chains.find((item) => item.chainId === chainId);
   if (!chain) return null;
@@ -217,15 +251,17 @@ function CashNode({ model, chainId }: { model: ManageModel; chainId: number }) {
   return (
     <div
       data-manage-cash={chainId}
+      data-manage-surface=""
+      style={{ minHeight: minimumHeight }}
       data-canvas-interactive=""
-      className="relative flex w-full flex-col gap-2 rounded-lg bg-surface p-3"
+      className="relative w-full rounded-lg bg-surface"
     >
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 rounded-[inherit] bg-chart-periwinkle/16"
       />
       <PieceStroke width={1} radius={16} className="text-chart-periwinkle/42" />
-      <div className="relative flex flex-col gap-2">
+      <div data-manage-natural="" className="relative flex w-full flex-col gap-2 p-3">
         <h3 className="break-words font-medium text-foreground text-sm leading-[21px]">
           {t("operatingCash")}
         </h3>
@@ -253,7 +289,7 @@ function AmountLabel({ read }: { read: ManageRead<ManageTokenAmount> }) {
   const t = useTranslations("manager.manageV2");
   return (
     <span
-      className="min-w-0 break-all font-semibold text-right tabular-nums"
+      className={`min-w-0 font-semibold text-right tabular-nums ${read.status === "available" ? "break-all" : "break-words"}`}
       title={read.status === "available" ? `${read.value.decimal} ${read.value.symbol}` : undefined}
     >
       {read.status === "available"
@@ -262,7 +298,7 @@ function AmountLabel({ read }: { read: ManageRead<ManageTokenAmount> }) {
     </span>
   );
 }
-function WithdrawalNode({ model }: { model: ManageModel }) {
+function WithdrawalNode({ model, minimumHeight }: { model: ManageModel; minimumHeight: number }) {
   const t = useTranslations("manager.manageV2");
   const rows = [
     [t("withdrawalRequests"), model.withdrawal.requested],
@@ -270,7 +306,7 @@ function WithdrawalNode({ model }: { model: ManageModel }) {
     [t("stillNeeded"), model.withdrawal.stillNeeded],
   ] as const;
   return (
-    <BalanceCard title={t("idleOutput")} locked>
+    <BalanceCard title={t("idleOutput")} locked minimumHeight={minimumHeight}>
       <dl className="flex flex-col gap-2 text-[11px]">
         {rows.map(([label, read]) => (
           <div key={label} className="flex items-center justify-between gap-2">
@@ -330,16 +366,27 @@ function GraphNode({
       <PositionNode
         position={p}
         selected={p.id === selectedId}
+        minimumHeight={node.rect.h}
         onSelect={(keyboard) => onSelect(p.id, keyboard)}
       />
     ) : null;
   }
   if (node.kind === "cash")
-    return selectable(<CashNode model={model} chainId={node.chainId ?? model.hubChainId} />);
+    return selectable(
+      <CashNode
+        model={model}
+        chainId={node.chainId ?? model.hubChainId}
+        minimumHeight={node.rect.h}
+      />,
+    );
   if (node.kind === "idle")
     return chain
       ? selectable(
-          <BalanceCard title={chain.hub ? t("idleInput") : t("idle")} locked={chain.hub}>
+          <BalanceCard
+            title={chain.hub ? t("idleInput") : t("idle")}
+            locked={chain.hub}
+            minimumHeight={node.rect.h}
+          >
             <ManageTokenRow token={chain.idle} />
             <div className="flex items-center justify-between gap-2 text-xs">
               <span className="text-muted-foreground">{t("strategyValueShare")}</span>
@@ -363,10 +410,11 @@ function GraphNode({
         chipTooltip={chain.name}
       />
     ) : null;
-  if (node.kind === "withdrawal") return selectable(<WithdrawalNode model={model} />);
+  if (node.kind === "withdrawal")
+    return selectable(<WithdrawalNode model={model} minimumHeight={node.rect.h} />);
   if (node.kind === "income")
     return selectable(
-      <BalanceCard title={t("income")} locked>
+      <BalanceCard title={t("income")} locked minimumHeight={node.rect.h}>
         <div className="text-muted-foreground text-xs">{hub?.name}</div>
         <ManageTokenRow token={model.income} />
       </BalanceCard>,
@@ -428,11 +476,33 @@ export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps)
       []) {
       const id = element.dataset.manageMeasure;
       if (!id) continue;
-      const entry = entries.find((value) => value.target === element);
+      const natural = element.querySelector<HTMLElement>("[data-manage-natural]") ?? element;
+      const entry = entries.find((value) => value.target === natural);
       const box = entry?.borderBoxSize?.[0];
       // client/scroll dimensions and ResizeObserver boxes are in unscaled CSS pixels.
-      const width = Math.max(box?.inlineSize ?? element.clientWidth, element.scrollWidth);
-      const height = Math.max(box?.blockSize ?? element.clientHeight, element.scrollHeight);
+      const width = Math.max(box?.inlineSize ?? natural.clientWidth, natural.scrollWidth);
+      let height = Math.max(box?.blockSize ?? natural.clientHeight, natural.scrollHeight);
+      if (natural === element) {
+        const piece = element.querySelector<HTMLElement>("[data-flow-pill], [data-spine-card]");
+        if (piece) {
+          const style = getComputedStyle(piece);
+          const extra = [
+            style.paddingTop,
+            style.paddingBottom,
+            style.borderTopWidth,
+            style.borderBottomWidth,
+          ].reduce((total, value) => total + (Number.parseFloat(value) || 0), 0);
+          // Pill/spine rows stretch to the resolved rect. Their direct content remains natural.
+          const children = [...piece.children].filter(
+            (child) => getComputedStyle(child).position !== "absolute",
+          );
+          height =
+            Math.max(
+              0,
+              ...children.map((child) => Math.max(child.clientHeight, child.scrollHeight)),
+            ) + extra;
+        }
+      }
       if (width > 0 && height > 0)
         values[id] = { width: Math.ceil(width), height: Math.ceil(height) };
     }
@@ -454,8 +524,15 @@ export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps)
     if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver((entries) => measure(entries));
     for (const element of graph.current?.querySelectorAll<HTMLElement>("[data-manage-measure]") ??
-      [])
-      observer.observe(element);
+      []) {
+      const natural = element.querySelector<HTMLElement>("[data-manage-natural]");
+      if (natural) observer.observe(natural);
+      else {
+        const piece = element.querySelector<HTMLElement>("[data-flow-pill], [data-spine-card]");
+        if (piece) for (const child of piece.children) observer.observe(child);
+        else observer.observe(element);
+      }
+    }
     return () => observer.disconnect();
   }, [measure, nodeIds]);
   const hovered = layout.hoverRoutes.find((route) => route.connectionIds.includes(hoveredId ?? ""));
@@ -545,28 +622,12 @@ export function ManageCanvas({ model, selectedId, onSelect }: ManageCanvasProps)
               style={
                 node.kind === "group"
                   ? { height: node.rect.h }
-                  : {
-                      minHeight:
-                        node.kind === "cash"
-                          ? 96
-                          : node.kind === "idle"
-                            ? 104
-                            : node.kind === "withdrawal"
-                              ? 168
-                              : node.kind === "income"
-                                ? 102
-                                : node.kind === "position"
-                                  ? model.positions.find(
-                                      (position) => position.id === node.positionId,
-                                    )?.kind === "liquidity"
-                                    ? 232
-                                    : 160
-                                  : node.kind === "flow"
-                                    ? 26
-                                    : 62,
-                    }
+                  : ({
+                      minHeight: node.rect.h,
+                      "--manage-surface-height": `${node.rect.h}px`,
+                    } as CSSProperties)
               }
-              className="w-full [&>button]:min-h-[inherit] [&>div]:min-h-[inherit] [&_.truncate]:overflow-visible [&_.truncate]:text-clip [&_.truncate]:break-words [&_.truncate]:whitespace-normal [&_[data-flow-pill]]:h-auto [&_[data-flow-pill]]:min-h-[26px] [&_[data-flow-pill]]:w-full [&_[data-flow-pill]]:whitespace-normal [&_[data-spine-card]]:h-auto [&_[data-spine-card]]:min-h-[62px] [&_[data-spine-card]]:w-full"
+              className="w-full [&>button]:min-h-[inherit] [&>div]:min-h-[inherit] [&_.truncate]:overflow-visible [&_.truncate]:text-clip [&_.truncate]:break-words [&_.truncate]:whitespace-normal [&_[data-flow-pill]]:h-auto [&_[data-flow-pill]]:min-h-[var(--manage-surface-height)] [&_[data-flow-pill]]:w-full [&_[data-flow-pill]]:whitespace-normal [&_[data-spine-card]]:h-auto [&_[data-spine-card]]:min-h-[var(--manage-surface-height)] [&_[data-spine-card]]:w-full"
             >
               <GraphNode
                 node={node}

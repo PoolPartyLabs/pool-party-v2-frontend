@@ -11,6 +11,13 @@ import { layoutManageGraph } from "./manageLayout";
 import { normalizeManageModel } from "./manageModel";
 
 describe("POO-2270/2271 v2 routes", () => {
+  // @rule POO-2302 R4: below all cards, a return uses one clear bus without an out-and-back detour.
+  it("returns to Income without a gratuitous second horizontal bus", () => {
+    const graph = layoutManageGraph(normalizeManageModel(mockFund));
+    const returns = graph.connections.filter((edge) => edge.id.startsWith("income:return:"));
+    expect(returns.length).toBeGreaterThan(0);
+    for (const edge of returns) expect(horizontalRuns(edge)).toHaveLength(1);
+  });
   it("keeps cash144x96, distinct Idle minima, position-origin principal and centered fee Swap", () => {
     const graph = layoutManageGraph(normalizeManageModel(mockFund));
     for (const cash of graph.nodes.filter((node) => node.kind === "cash")) {

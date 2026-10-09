@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-052
  * @name manageLayout
  * @implements-rules-version v2 (POO-2270, POO-2271; extends POO-2226, POO-2232)
+ * @implements-rules-version v1 (POO-2302, safe direct return corridors)
  * @analytics-events none, pure read-only layout and hover identities.
  * Final outer rects own every port. Diagram routes enable no transfer or financial capability.
  */
@@ -53,6 +54,53 @@ const POSITION = { supply: 160, liquidity: 232, unsupported: 160 };
 const center = (node: ManageNode) => node.rect.x + node.rect.w / 2;
 const bottom = (node: ManageNode) => node.rect.y + node.rect.h;
 const right = (node: ManageNode) => node.rect.x + node.rect.w;
+
+/** Remove only redundant orthogonal points; a real turn or reversal remains explicit. */
+function simplifyPath(path: readonly Point[]): Point[] {
+  const result: Point[] = [];
+  for (const point of path) {
+    const previous = result.at(-1);
+    if (previous?.x === point.x && previous.y === point.y) continue;
+    result.push(point);
+    while (result.length >= 3) {
+      const a = result.at(-3);
+      const b = result.at(-2);
+      const c = result.at(-1);
+      if (!a || !b || !c) break;
+      const redundant =
+        (a.x === b.x && b.x === c.x && b.y >= Math.min(a.y, c.y) && b.y <= Math.max(a.y, c.y)) ||
+        (a.y === b.y && b.y === c.y && b.x >= Math.min(a.x, c.x) && b.x <= Math.max(a.x, c.x));
+      if (!redundant) break;
+      result.splice(result.length - 2, 1);
+    }
+  }
+  return result;
+}
+
+/** A direct corridor is usable only when every run stays outside actual card interiors. */
+function clearsCards(path: readonly Point[], nodes: readonly ManageNode[]): boolean {
+  return path.slice(1).every((point, index) => {
+    const previous = path[index];
+    if (!previous || (previous.x !== point.x && previous.y !== point.y)) return false;
+    return nodes.every((node) => {
+      if (node.kind === "group") return true;
+      const { x, y, w, h } = node.rect;
+      return previous.x === point.x
+        ? !(
+            point.x > x &&
+            point.x < x + w &&
+            Math.max(previous.y, point.y) > y &&
+            Math.min(previous.y, point.y) < y + h
+          )
+        : !(
+            point.y > y &&
+            point.y < y + h &&
+            Math.max(previous.x, point.x) > x &&
+            Math.min(previous.x, point.x) < x + w
+          );
+    });
+  });
+}
 
 /** Layout consumes observed positions only; unsupported adapters gain no LP/debt/Holding assumptions. */
 export function layoutManageGraph(
@@ -150,11 +198,12 @@ export function layoutManageGraph(
     routeId = id,
     visible = true,
   ) => {
-    const path = [point(source), ...bends, point(target)];
+    const path = simplifyPath([point(source), ...bends, point(target)]);
+    const finalBends = path.slice(1, -1);
     const refs: Array<SemanticGraph["segments"][number]["from"]> = [
       { kind: "port", id: source.id },
     ];
-    for (const [index, at] of bends.entries()) {
+    for (const [index, at] of finalBends.entries()) {
       const junctionId = semanticJunctionId(
         `${id}:bend:${index}`,
         source.network,
@@ -661,36 +710,61 @@ export function layoutManageGraph(
   );
   const rightTrunk =
     Math.max(incomeX, ...returned.flatMap((r) => (r.fee ? [point(r.fee).x] : []))) + LAYOUT.LINK;
+  // If the complete gray and green spans are disjoint, both can turn on the same final bus
+  // without the historical left/right detour. Multi-column spans retain separate corridors.
+  const principalRight = Math.max(
+    outputX,
+    ...returned.map((r) => r.bypassX ?? point(r.principal).x),
+  );
+  const incomeLeft = Math.min(incomeX, ...returned.flatMap((r) => (r.fee ? [point(r.fee).x] : [])));
+  const directSpansSeparated = incomeLeft - principalRight >= LAYOUT.LINK;
   for (const r of returned) {
     const source = point(r.principal);
     const bypass = r.bypassX ?? source.x;
     const bends = r.bypassX ? [{ x: bypass, y: source.y }] : [];
+    const directPrincipal = [...bends, { x: bypass, y: finalY }, { x: outputX, y: finalY }];
+    const target = port(output, "principal-in", "principal", r.origin, "in", "top");
+    const useDirectPrincipal =
+      directSpansSeparated && clearsCards([source, ...directPrincipal, point(target)], nodes);
     connect(
       r.bypassX ? r.principalRoute : `principal:return:${r.origin}`,
       r.principal,
-      port(output, "principal-in", "principal", r.origin, "in", "top"),
-      [
-        ...bends,
-        { x: bypass, y: grayY },
-        { x: leftTrunk, y: grayY },
-        { x: leftTrunk, y: finalY },
-        { x: outputX, y: finalY },
-      ],
+      target,
+      useDirectPrincipal
+        ? directPrincipal
+        : [
+            ...bends,
+            { x: bypass, y: grayY },
+            { x: leftTrunk, y: grayY },
+            { x: leftTrunk, y: finalY },
+            { x: outputX, y: finalY },
+          ],
       r.principalRoute,
     );
-    if (r.fee)
+    if (r.fee) {
+      const feeSource = point(r.fee);
+      const feeTarget = port(income, "income-in", "income", r.origin, "in", "top");
+      const directIncome = [
+        { x: feeSource.x, y: finalY },
+        { x: incomeX, y: finalY },
+      ];
+      const useDirectIncome =
+        directSpansSeparated && clearsCards([feeSource, ...directIncome, point(feeTarget)], nodes);
       connect(
         `income:return:${r.origin}`,
         r.fee,
-        port(income, "income-in", "income", r.origin, "in", "top"),
-        [
-          { x: point(r.fee).x, y: greenY },
-          { x: rightTrunk, y: greenY },
-          { x: rightTrunk, y: finalY },
-          { x: incomeX, y: finalY },
-        ],
+        feeTarget,
+        useDirectIncome
+          ? directIncome
+          : [
+              { x: point(r.fee).x, y: greenY },
+              { x: rightTrunk, y: greenY },
+              { x: rightTrunk, y: finalY },
+              { x: incomeX, y: finalY },
+            ],
         r.feeRoute,
       );
+    }
   }
   const withdrawalY = Math.max(bottom(output), bottom(income)) + LAYOUT.LINK;
   const withdrawDim = size("withdraw", LAYOUT.SPINE_W, LAYOUT.CARD_H);
