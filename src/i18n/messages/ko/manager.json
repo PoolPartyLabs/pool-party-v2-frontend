@@ -1744,5 +1744,24 @@
       "supplied": "공급됨",
       "availableToWithdraw": "출금 가능"
     }
+  },
+  "marketChart": {
+    "tabsLabel": "전략 보기",
+    "flow": "전략 흐름",
+    "charts": "차트",
+    "referenceTitle": "시장 참고 정보",
+    "referenceDescription": "분석용 거래소 시장 데이터입니다. 선택한 풀의 가격은 다를 수 있습니다.",
+    "frameTitle": "{pair} 시장 참고 차트",
+    "loading": "차트 로딩 중...",
+    "noData": "TradingView에서 이 시장 참고 정보를 이용할 수 없습니다.",
+    "loadError": "차트를 불러오지 못했습니다. 다시 시도하세요.",
+    "retry": "다시 시도",
+    "attribution": "TradingView 제공 차트",
+    "notAvailable": "이용 불가",
+    "noSelection": "설정된 풀이나 수동 swap을 선택하여 시장 참고 정보를 확인하세요.",
+    "unconfigured": "차트를 열기 전에 풀 또는 swap의 두 토큰을 선택하세요.",
+    "unsupportedBlock": "이 블록에는 지원되는 시장 참고 정보가 없습니다.",
+    "lendingReference": "시장 가격 차트에는 lending APY나 계정 위험이 표시되지 않습니다.",
+    "unsupportedPair": "이 토큰들에 대한 참고 차트는 이용할 수 없습니다."
   }
 }

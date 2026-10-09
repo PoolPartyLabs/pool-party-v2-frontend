@@ -114,16 +114,15 @@ describe("buildContentSecurityPolicy", () => {
     expect(directive(csp, "script-src")).toContain("https://www.googletagmanager.com");
   });
 
-  // POO-1451 (found in POO-1189): INVERTED, same shape as the POO-1211 guard above.
-  // `https://*.tradingview.com` sat in script-src AND frame-src as a dead allowlist entry: nothing
-  // in `src/`, `public/` or `package.json` ever loaded TradingView, and grep found it only in this
-  // file and `csp.ts`. `csp.ts` opens by stating that every entry is a reviewed decision, so a stale
-  // one quietly weakens that claim for every other entry beside it. Re-adding it means a TradingView
-  // widget actually shipped; add the loader AND this entry back together, deliberately, rather than
-  // restoring the allowlist on its own.
-  it("does NOT allow any tradingview origin in script-src or frame-src (POO-1451)", () => {
+  // @rule R6 (POO-2309): a real widget now runs in one isolated frame. POO-1451's
+  // no-script/no-wildcard guard remains, even though the exact frame origin is now intentional.
+  it("allows only the actual TradingView frame origin, without parent scripts or connections", () => {
     expect(directive(csp, "script-src")).not.toMatch(/tradingview/);
-    expect(directive(csp, "frame-src")).not.toMatch(/tradingview/);
+    expect(directive(csp, "connect-src")).not.toMatch(/tradingview/);
+    const frames = directive(csp, "frame-src").split(" ");
+    expect(frames.filter((origin) => origin.includes("tradingview"))).toEqual([
+      "https://www.tradingview-widget.com",
+    ]);
   });
 
   /**

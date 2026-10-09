@@ -1744,5 +1744,24 @@
       "supplied": "供給済み",
       "availableToWithdraw": "引き出し可能"
     }
+  },
+  "marketChart": {
+    "tabsLabel": "戦略の表示",
+    "flow": "戦略フロー",
+    "charts": "チャート",
+    "referenceTitle": "市場参考情報",
+    "referenceDescription": "分析用の取引所市場データです。選択したプールの価格とは異なる場合があります。",
+    "frameTitle": "{pair}の市場参考チャート",
+    "loading": "チャートを読み込み中...",
+    "noData": "この市場参考情報はTradingViewで利用できません。",
+    "loadError": "チャートを読み込めませんでした。もう一度お試しください。",
+    "retry": "再試行",
+    "attribution": "TradingView提供のチャート",
+    "notAvailable": "利用できません",
+    "noSelection": "設定済みのプールまたは手動swapを選択して市場参考情報を表示してください。",
+    "unconfigured": "チャートを開く前にプールまたはswapの両方のトークンを選択してください。",
+    "unsupportedBlock": "このブロックに対応する市場参考情報はありません。",
+    "lendingReference": "市場価格チャートにはlendingのAPYや口座リスクは表示されません。",
+    "unsupportedPair": "これらのトークンに対応する参考チャートは利用できません。"
   }
 }

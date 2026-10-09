@@ -1744,5 +1744,24 @@
       "supplied": "已供应",
       "availableToWithdraw": "可提取"
     }
+  },
+  "marketChart": {
+    "tabsLabel": "策略视图",
+    "flow": "策略流程",
+    "charts": "图表",
+    "referenceTitle": "市场参考",
+    "referenceDescription": "用于分析的交易所市场数据。所选资金池的价格可能不同。",
+    "frameTitle": "{pair}市场参考图表",
+    "loading": "正在加载图表...",
+    "noData": "TradingView暂不提供此市场参考。",
+    "loadError": "无法加载图表，请重试。",
+    "retry": "重试",
+    "attribution": "图表由TradingView提供",
+    "notAvailable": "暂不可用",
+    "noSelection": "请选择已配置的资金池或手动swap以查看市场参考。",
+    "unconfigured": "打开图表前，请选择资金池或swap的两个代币。",
+    "unsupportedBlock": "此区块没有受支持的市场参考。",
+    "lendingReference": "市场价格图表不显示lending APY或账户风险。",
+    "unsupportedPair": "这些代币暂无可用的参考图表。"
   }
 }

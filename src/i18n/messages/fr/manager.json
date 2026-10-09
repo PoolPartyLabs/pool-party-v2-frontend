@@ -1744,5 +1744,24 @@
       "supplied": "Fourni",
       "availableToWithdraw": "Disponible au retrait"
     }
+  },
+  "marketChart": {
+    "tabsLabel": "Vue de la stratégie",
+    "flow": "Flux de la stratégie",
+    "charts": "Graphiques",
+    "referenceTitle": "Référence de marché",
+    "referenceDescription": "Données de marché d’une plateforme d’échange pour analyse. Le pool sélectionné peut avoir un prix différent.",
+    "frameTitle": "Graphique de référence de marché {pair}",
+    "loading": "Chargement du graphique...",
+    "noData": "Cette référence de marché n’est pas disponible sur TradingView.",
+    "loadError": "Impossible de charger le graphique. Réessayez.",
+    "retry": "Réessayer",
+    "attribution": "Graphique par TradingView",
+    "notAvailable": "Non disponible",
+    "noSelection": "Sélectionnez un pool configuré ou un swap manuel pour voir sa référence de marché.",
+    "unconfigured": "Choisissez le pool ou les deux tokens du swap avant d’ouvrir le graphique.",
+    "unsupportedBlock": "Ce bloc n’a pas de référence de marché prise en charge.",
+    "lendingReference": "Un graphique des prix de marché ne montre ni l’APY de lending ni le risque du compte.",
+    "unsupportedPair": "Aucune référence de graphique n’est disponible pour ces tokens."
   }
 }

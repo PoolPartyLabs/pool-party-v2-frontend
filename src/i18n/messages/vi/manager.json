@@ -1744,5 +1744,24 @@
       "supplied": "Đã cung cấp",
       "availableToWithdraw": "Có thể rút"
     }
+  },
+  "marketChart": {
+    "tabsLabel": "Chế độ xem chiến lược",
+    "flow": "Luồng chiến lược",
+    "charts": "Biểu đồ",
+    "referenceTitle": "Tham chiếu thị trường",
+    "referenceDescription": "Dữ liệu thị trường từ sàn giao dịch để phân tích. Pool được chọn có thể có mức giá khác.",
+    "frameTitle": "Biểu đồ tham chiếu thị trường {pair}",
+    "loading": "Đang tải biểu đồ...",
+    "noData": "Tham chiếu thị trường này không có trên TradingView.",
+    "loadError": "Không thể tải biểu đồ. Vui lòng thử lại.",
+    "retry": "Thử lại",
+    "attribution": "Biểu đồ do TradingView cung cấp",
+    "notAvailable": "Chưa khả dụng",
+    "noSelection": "Chọn pool đã cấu hình hoặc swap thủ công để xem tham chiếu thị trường.",
+    "unconfigured": "Chọn pool hoặc cả hai token swap trước khi mở biểu đồ.",
+    "unsupportedBlock": "Khối này không có tham chiếu thị trường được hỗ trợ.",
+    "lendingReference": "Biểu đồ giá thị trường không thể hiện APY lending hoặc rủi ro tài khoản.",
+    "unsupportedPair": "Chưa có biểu đồ tham chiếu cho các token này."
   }
 }
