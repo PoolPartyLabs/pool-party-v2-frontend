@@ -411,3 +411,9 @@ Only toLayoutInput(plan, { runtime: 'solana-local' }) opts the Solana spoke into
 
 
 Current materialized panel/Review release census: 537 markers across 310 files in src, including tests/stories, derived from this tree. Historical counts above describe earlier releases.
+
+## EVM launch plan boundary repair, October 9, 2026 (POO-2301 v1)
+
+The shared Build plan includes local Solana descriptor configurations, while the EVM launch adapter continues to consume only `CanvasPlan`. `FundLaunchDraft` (PP-MGR-LIB-044) now uses `Omit<MandateDraft, "plan"> & { plan: CanvasPlan; ... }`, replacing the optional drawing plan rather than intersecting both array contracts. PR #152 CI reproduced three TypeScript errors in fallback allocation/execution after the Build union expanded; this repair resolves the type boundary without adding Solana execution fields or casts.
+
+Mandate selection and token-allowance helpers accept only their existing mandate inputs, independent of the Build plan. Fallback Review validates the original stored mandate. Allocation, default execution settings, preview behavior and financial gates are unchanged. The contract regression reproduces the incorrect intersection before the fix, asserts the launch plan/chain types, excludes local descriptor configuration and checks that local Solana position kinds and spokes still fail closed before execution steps are returned. Scoped boundary TypeScript and 122 focused tests in eight fallback/V2 suites passed. No API, wallet permission, monetary claim, source marker or new analytics event is introduced.
