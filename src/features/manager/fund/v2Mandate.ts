@@ -82,7 +82,7 @@ export function buildRealCatalog(
   return catalog;
 }
 
-export function toV2MandateSelection(draft: MandateDraft, catalog: MandateCatalog) {
+export function toV2MandateSelection(draft: Omit<MandateDraft, "plan">, catalog: MandateCatalog) {
   if (
     draft.dataMode !== "real" ||
     draft.catalogVersion !== "v2-catalog-v1" ||

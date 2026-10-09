@@ -78,7 +78,8 @@ function RealFallbackReview({ draftId }: { draftId: string }) {
   const blockers = binding.launchBlockers.filter(
     (blocker) => blocker.code !== "BUILD_EXECUTION_GAP",
   );
-  const catalogInvalid = catalog.loading || catalog.error || !catalog.validateDraft?.(draft);
+  const catalogInvalid =
+    catalog.loading || catalog.error || !catalog.validateDraft?.(binding.draft);
   const disabled =
     busy ||
     binding.uploading ||

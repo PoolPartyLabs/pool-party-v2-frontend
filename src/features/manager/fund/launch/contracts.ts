@@ -8,7 +8,8 @@ import type { LaunchJournal } from "./journal";
 import type { CanvasPlan, ExecutionConfig, LaunchStep } from "./plan";
 import type { ReviewDraft } from "./review";
 
-export type FundLaunchDraft = MandateDraft & {
+// Replace the drawing plan instead of intersecting its local descriptor union with execution.
+export type FundLaunchDraft = Omit<MandateDraft, "plan"> & {
   plan: CanvasPlan;
   review: ReviewDraft;
   launchExecution?: Record<string, ExecutionConfig>;
