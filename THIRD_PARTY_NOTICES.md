@@ -77,6 +77,12 @@ No SDK, program binary, deployment authority or market feed is bundled here.
 
 ## Application dependencies
 
+`@xyflow/react@12.12.0` and its `@xyflow/system@0.0.83` dependency retain **MIT**,
+copyright 2019-2025 webkid GmbH. The complete upstream notice is preserved at
+[LICENSES/xyflow-MIT-12.12.0.txt](LICENSES/xyflow-MIT-12.12.0.txt). Pool Party's custom
+financial graph adapter does not relicense the engine. No React Flow UI registry components
+are copied into this repository.
+
 The dependency manifest is [package.json](package.json); resolutions and
 integrity data are in [pnpm-lock.yaml](pnpm-lock.yaml). Every installed package
 retains its actual license at that pinned version. This inventory highlights

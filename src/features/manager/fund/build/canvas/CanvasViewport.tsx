@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-046
  * @name CanvasViewport
  * @implements-rules-version v2 (POO-2272); v1 (POO-2236, POO-2152)
+ * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a presentational container; the Build screen (PP-MGR-SCR-002, S7) owns
  *   every event, and a background click is reported through `onBackgroundClick`
  *
@@ -35,6 +36,7 @@ import { Minus, Plus, Scan } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, type Ref, useId, useImperativeHandle, useRef } from "react";
 import { cn } from "@/lib/utils/cn";
+import { ReactFlowGraph } from "../graph/ReactFlowGraph";
 import { CANVAS_LAYER_ATTR, useCanvasViewport } from "./useCanvasViewport";
 import type { Size, ViewRect } from "./viewportMath";
 
@@ -48,6 +50,8 @@ export interface CanvasViewportHandle {
 
 /** Public props for {@link CanvasViewport}. */
 export interface CanvasViewportProps {
+  /** Migrated financial canvases use measured React Flow handles and one engine transform. */
+  engine?: "native" | "react-flow";
   /** The laid-out graph size, or null until it exists. The first size opens the canvas at fit. */
   graphSize: Size | null;
   /** Optional opening scale for Manage. Build defaults to fit. */
@@ -92,7 +96,7 @@ function ZoomButton({
 }
 
 /** The Build canvas: clipped container, pan and zoom layer, zoom controls, hint line. */
-export function CanvasViewport({
+function NativeCanvasViewport({
   graphSize,
   initialScale,
   fillContainer = false,
@@ -186,5 +190,85 @@ export function CanvasViewport({
         </ZoomButton>
       </div>
     </div>
+  );
+}
+
+/** Keep the Pool Party viewport chrome while selecting the transform owner. */
+export function CanvasViewport(props: CanvasViewportProps) {
+  return props.engine === "react-flow" ? (
+    <FinancialCanvasViewport {...props} />
+  ) : (
+    <NativeCanvasViewport {...props} />
+  );
+}
+function FinancialCanvasViewport({
+  graphSize,
+  initialScale,
+  fillContainer = false,
+  fitOnResize = false,
+  onBackgroundClick,
+  viewportRef,
+  children,
+  overlay,
+}: CanvasViewportProps) {
+  const t = useTranslations("manager");
+  const hintId = useId();
+  return (
+    <ReactFlowGraph
+      graphSize={graphSize}
+      initialScale={initialScale}
+      fitOnResize={fitOnResize}
+      onBackgroundClick={onBackgroundClick}
+      viewportRef={viewportRef}
+      hintId={hintId}
+      className={cn(
+        "relative w-full touch-none select-none overflow-clip rounded-xl bg-background",
+        fillContainer ? "h-full min-h-0" : "h-[max(640px,calc(100dvh-280px))]",
+      )}
+      chrome={({ readoutPct, zoomIn, zoomOut, fit }) => (
+        <>
+          {overlay != null ? (
+            <div data-canvas-overlay="" className="pointer-events-none absolute inset-0 z-[5]">
+              {overlay}
+            </div>
+          ) : null}
+          <div
+            data-canvas-border=""
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-[5] rounded-xl border border-border"
+          />
+          <p
+            id={hintId}
+            className="pointer-events-none absolute right-[62px] bottom-3 left-3 z-[5] text-muted-foreground text-xs"
+          >
+            {t("fundBuilder.canvas.hint")}
+          </p>
+          <div
+            data-canvas-zoom-controls=""
+            className="absolute right-3 bottom-3 z-[5] flex w-[38px] cursor-default flex-col items-center gap-0.5 rounded-md border border-border bg-surface p-1"
+          >
+            <ZoomButton label={t("fundBuilder.canvas.zoom.in")} onClick={zoomIn}>
+              <Plus className="size-3.5" aria-hidden="true" />
+            </ZoomButton>
+            <span className="whitespace-nowrap font-medium text-[11px] text-muted-foreground leading-4 tabular-nums">
+              <span aria-hidden="true">
+                {t("fundBuilder.canvas.zoom.readout", { pct: readoutPct })}
+              </span>
+              <span className="sr-only">
+                {t("fundBuilder.canvas.zoom.readoutLabel", { pct: readoutPct })}
+              </span>
+            </span>
+            <ZoomButton label={t("fundBuilder.canvas.zoom.out")} onClick={zoomOut}>
+              <Minus className="size-3.5" aria-hidden="true" />
+            </ZoomButton>
+            <ZoomButton label={t("fundBuilder.canvas.zoom.fit")} onClick={fit}>
+              <Scan className="size-3.5" aria-hidden="true" />
+            </ZoomButton>
+          </div>
+        </>
+      )}
+    >
+      {children}
+    </ReactFlowGraph>
   );
 }
