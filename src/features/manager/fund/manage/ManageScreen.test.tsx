@@ -5,9 +5,11 @@
  * @analytics-events none, controlled screen tests.
  */
 import { type AnchorHTMLAttributes, useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getUsdcAddress, supportedChainMetas } from "@/lib/chains/config";
 import { mockFund } from "@/mocks/data/v2Funds";
 import {
+  cleanup,
   renderWithProviders,
   screen,
   userEvent,
@@ -22,6 +24,28 @@ vi.mock("@/i18n/navigation", () => ({
   Link: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props} />,
 }));
 vi.mock("@/lib/analytics/useTrackView", () => ({ useTrackView: vi.fn() }));
+// jsdom lacks the browser measurement APIs used by the production React Flow host.
+beforeEach(() => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  vi.stubGlobal(
+    "DOMMatrixReadOnly",
+    class {
+      m22 = 1;
+    },
+  );
+});
+afterEach(async () => {
+  cleanup();
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  vi.unstubAllGlobals();
+});
 function DraftPanel({ position, active }: { position: ManagePosition | null; active: boolean }) {
   const [draft, setDraft] = useState("");
   return (
@@ -41,6 +65,58 @@ function DraftPanel({ position, active }: { position: ManagePosition | null; act
   );
 }
 describe("Manage shell", () => {
+  // @rule R4, R5 (POO-2309): inline operation/draft ownership survives Charts navigation.
+  it("keeps the selected panel active and its draft and viewport mounted across Charts", async () => {
+    const owners = vi.fn();
+    const arbitrum = supportedChainMetas.find((chain) => chain.apiNetworkId === "arbitrum");
+    if (!arbitrum || !mockFund.positionsSummary) throw new Error("Missing chart fixture");
+    const fund = {
+      ...mockFund,
+      positionsSummary: {
+        ...mockFund.positionsSummary,
+        positions: mockFund.positionsSummary.positions.map((position) =>
+          position.adapterKind === "uniswap-v4"
+            ? {
+                ...position,
+                chainId: "42161",
+                tokens: position.tokens.map((token, index) => ({
+                  ...token,
+                  address: index === 0 ? getUsdcAddress(42161) : arbitrum.wrappedNative,
+                })),
+              }
+            : position,
+        ),
+      },
+    };
+    renderWithProviders(
+      <ManageScreen
+        fund={fund}
+        panel={(position, active) => {
+          owners(position?.id, active);
+          return <DraftPanel position={position} active={active} />;
+        }}
+      />,
+    );
+    const selector = document.querySelectorAll<HTMLElement>("[data-manage-list-position]")[1];
+    await userEvent.click(selector as HTMLElement);
+    const input = screen.getByRole("textbox", { name: "Uniswap v4 draft" });
+    await userEvent.type(input, "pending operation");
+    const viewport = document.querySelector(".react-flow__viewport");
+    const transform = viewport?.getAttribute("style");
+    const calls = owners.mock.calls.length;
+    await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
+    expect(screen.getByText("ETH / USDC · Binance")).toBeInTheDocument();
+    expect(input).toHaveValue("pending operation");
+    expect(selector).toHaveAttribute("aria-pressed", "true");
+    expect(owners.mock.calls).toHaveLength(calls);
+    expect(document.querySelector(".react-flow__viewport")).toBe(viewport);
+    expect(viewport?.getAttribute("style")).toBe(transform);
+    await userEvent.click(screen.getByRole("tab", { name: "Strategy flow" }));
+    expect(screen.getByRole("textbox", { name: "Uniswap v4 draft" })).toBe(input);
+    expect(owners.mock.calls).toHaveLength(calls);
+    expect(viewport?.getAttribute("style")).toBe(transform);
+  });
+
   it("[R3,R8] synchronizes list and canvas while preserving each position draft in an inline panel", async () => {
     renderWithProviders(
       <ManageScreen

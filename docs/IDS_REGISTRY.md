@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 709 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 712 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1178,3 +1178,18 @@ native-browser visual acceptance, financial reachability or live Solana capabili
 ## Launch-consumer boundary follow-up, October 9, 2026
 
 Existing PP-MGR-CMP-084 and PP-MGR-LIB-048 now accept both saved Mandate drafts and orphaned EVM launch snapshots without coercing their plans into one type. The draft-index readiness check validates mandate metadata separately and verifies the execution-plan runtime shape before preview. Missing Review remains its own blocker. Existing PP-MGR-LIB-028 and PP-MGR-CMP-078 test/story fixtures validate launch shape only at the execution preview. No IDs or source markers are added; live Solana execution remains unavailable. PR #153 CI identified these three consumer type errors after its boundary repair.
+
+## TradingView market-reference Charts, October 9, 2026 (POO-2309 v1)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-077` | chartModel, exact approved market identities, public embed configuration and current-frame messages | Lib | n/a (code) | Implemented market-reference model | [POO-2309](https://linear.app/yeildbay/issue/POO-2309) | `src/features/manager/fund/charts/chartModel.ts` @rules-v1 |
+| `PP-MGR-LIB-078` | chartContext, private selected-block/draft context independent of financial values | Lib | n/a (code) | Implemented Build/Manage context | [POO-2309](https://linear.app/yeildbay/issue/POO-2309) | `src/features/manager/fund/charts/chartContext.ts` @rules-v1 |
+| `PP-MGR-CMP-103` | StrategyChartSurface, retained canvas and isolated Advanced Chart with left drawing tools | Component | [Manage Charts8678:37675](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-37675) | Implemented shared Build/Manage surface | [POO-2309](https://linear.app/yeildbay/issue/POO-2309) | `src/features/manager/fund/charts/StrategyChartSurface.tsx` @rules-v1 |
+
+Existing Build/Manage artifacts retain their IDs. ETH/USDC and SOL/USDC are Binance references, resolved by approved token identity. Pool prices, valuation, LP-range overlays, lending metrics and Activity are excluded. Browser acceptance remains with Murilo.
+
+Current chart-delivery census: 712 registry rows and 707 unique IDs, 2,306 files under `src/`,
+with 539 markers across 312 files. The five disclosed historical duplicate IDs remain unchanged.
+These figures include tests, stories and source documentation. The earlier materialized-tree
+census describes its named historical release and remains unchanged.

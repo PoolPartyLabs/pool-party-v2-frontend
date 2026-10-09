@@ -114,6 +114,16 @@ it("retains independent local Manage drafts and Review across shared card select
   await setAllocation("40");
   await userEvent.click(screen.getByRole("button", { name: "Apply now" }));
   await userEvent.click(screen.getByRole("button", { name: "Review changes" }));
+  // @rule POO-2309 R3/R4: chart visibility does not change local operation/draft ownership.
+  const host = document.querySelector("[data-solana-local-manage-host]");
+  await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
+  expect(
+    screen.getByText("A market price chart does not show lending APY or account risk."),
+  ).toBeVisible();
+  expect(screen.getByRole("button", { name: "Confirm changes" })).toBeDisabled();
+  expect(document.querySelector("[data-solana-local-manage-host]")).toBe(host);
+  expect(screen.getByRole("textbox", { name: "Allocation (%)" })).toHaveValue("40");
+  await userEvent.click(screen.getByRole("tab", { name: "Strategy flow" }));
   await userEvent.click(screen.getByRole("button", { name: "Card B" }));
   expect(screen.getByRole("textbox", { name: "Allocation (%)" })).toHaveValue("30");
   await setAllocation("45");

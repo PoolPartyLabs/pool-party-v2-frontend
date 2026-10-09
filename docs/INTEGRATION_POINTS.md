@@ -510,3 +510,22 @@ native-browser visual acceptance, financial reachability or live Solana capabili
 The fallback index preserves saved Mandate drafts and orphaned FundLaunchDraft snapshots as distinct plan contracts. Catalogue validation consumes only mandate metadata, while fallback preview first validates the existing runtime CanvasPlan shape. Missing or invalid Review fields remain separate blockers and no snapshot or drawing is written. Launch agreement tests and Review stories validate their plan at the existing execution boundary.
 
 PR #153 CI identified three consumer type errors in FallbackReviewIndex, launchAgreement.test and ReviewSummary.stories after the FundLaunchDraft plan replacement. This follow-up repairs those consumers without altering allocation, execution settings, wallet/API permissions or live Solana gates. No new IDs, source markers, analytics events or compliance claims are introduced. Focused validation and independent review are recorded in its PR; no deployment or browser acceptance is asserted.
+
+## TradingView market reference, October 9, 2026 (POO-2309 v1)
+
+`src/features/manager/fund/charts/chartModel.ts` (PP-MGR-LIB-077) builds the public Advanced Chart URL. `src/features/manager/fund/charts/StrategyChartSurface.tsx` (PP-MGR-CMP-103) mounts that remote frame only after Charts intent. ETH/USDC on Arbitrum/Base and canonical WSOL/USDC in the local Solana mandate resolve to the documented Binance exchange references. The displayed canonical pair/venue is explicit even when the pool/configuration reverses quote orientation. No selected LP ticks or money amounts are overlaid.
+
+**Isolation decision:** render the exact cross-origin URL/query/hash produced by the official `embed-widget-advanced-chart.js` loader, avoiding third-party script execution in the wallet origin and the loader's parent-query symbol override. The iframe protocol is observed vendor implementation, not an independently guaranteed stable API. Only `https://www.tradingview-widget.com` is allowed in parent frame-src; TradingView remains absent from parent script-src/connect-src. Keep native branding plus attribution, no-referrer, and scripts/same-origin/popups sandbox permissions. The frame receives only the public reference symbol/settings and an opaque embed ID, never a fund/pool/wallet identity or app URL. Its own outbound telemetry/network behavior remains vendor-controlled.
+
+Load/no-data messages require the current frame window, exact origin and instance ID; arbitrary vendor payload data is discarded. Boot only removes the app's startup indicator, never certifies candles or financial execution. Missing boot after 20 seconds and vendor no-data expose retry. Identity/locale/retry recreate the instance and remove old listeners/timers. Same-identity drawings may remain for the current mounted visit; reload persistence is not promised. Dutch app copy remains Dutch; the widget has no Dutch locale and uses English.
+
+Unsupported pairs/lending/Holding/fixed nodes show localized Not available without fallback candles. Widgets cannot consume Pool Party OHLCV or serve as its price API. Exact pool feeds/financial overlays/Activity remain under POO-2279. No API, wallet, execution or dependency-manifest contract changes. See CR-MGR-POO2309.
+
+Chart chrome contains Delete/Backspace/Escape without changing the canvas keyboard controls.
+On short screens the reference header can scroll while the chart and attribution retain space.
+Screenshot export is disabled (`save_image:false`) because the isolated frame does not receive
+download permission; the provider's drawing toolbar remains enabled.
+
+Current chart-delivery census: 2,306 files under `src/`, with 539 markers across 312 files,
+including tests, stories and source documentation. Registry totals are 712 rows and 707 unique
+IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.

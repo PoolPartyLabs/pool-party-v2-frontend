@@ -2,6 +2,7 @@
  * @id PP-MGR-SCR-004
  * @name ManageScreen
  * @implements-rules-version v2 (POO-2274); v1 (POO-2226)
+ * @implements-rules-version v1 (POO-2309 market-reference chart)
  * @analytics-events strategy_manage_viewed, strategy_block_selected
  *
  * Controlled V2 shell. The authorized route loader supplies reads, and each identity keeps a
@@ -18,6 +19,8 @@ import { useTrackView } from "@/lib/analytics/useTrackView";
 import type { FundBalances, FundView } from "@/lib/api/v2/fundSchemas";
 import { cn } from "@/lib/utils/cn";
 import { BlockMark } from "../build/blocks/BlockMark";
+import { manageChartSelection } from "../charts/chartContext";
+import { StrategyChartSurface } from "../charts/StrategyChartSurface";
 import { ManageCanvas } from "./ManageCanvas";
 import { type ManagePosition, manageProtocolMark, normalizeManageModel } from "./manageModel";
 import {
@@ -240,7 +243,12 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
           ) : null}
         </aside>
         <div className="min-w-0">
-          <ManageCanvas model={model} selectedId={selection} onSelect={selectNode} />
+          <StrategyChartSurface
+            selection={manageChartSelection(inspection?.position ?? null)}
+            context="manage"
+          >
+            <ManageCanvas model={model} selectedId={selection} onSelect={selectNode} />
+          </StrategyChartSurface>
         </div>
         <section
           ref={panelSlot}

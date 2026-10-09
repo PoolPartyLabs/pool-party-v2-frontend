@@ -1523,6 +1523,39 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
 });
 
 describe("BuildScreen: the view follows the change (I9)", () => {
+  // @rule R4, R5 (POO-2309): Chart navigation is not a leave/apply/discard action.
+  it("preserves an unapplied Configure edit, selection and the same viewport across Charts", async () => {
+    seedBuild(hubMandate("chart-draft"), poolPlan());
+    await openBuild();
+    await dirtyFirstCard();
+    const input = within(panelRegion()).getByRole("slider", { name: "Allocation" });
+    const flow = document.querySelector(".react-flow__viewport");
+    const transform = flow?.getAttribute("style");
+    const selected = selectionSpy.current?.selectedId;
+    const applied = emitted("builder_block_applied").length;
+    await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
+    // Chart controls are presentation, not canvas removal/selection shortcuts.
+    screen.getByRole("tab", { name: "Charts" }).focus();
+    await userEvent.keyboard("{Delete}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await userEvent.keyboard("{Backspace}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText("ETH / USDC · Binance")).toBeInTheDocument();
+    expect(selectionSpy.current?.selectedId).toBe(selected);
+    expect(input).toHaveAttribute("aria-valuenow", "55");
+    expect(document.querySelector(".react-flow__viewport")).toBe(flow);
+    expect(flow?.getAttribute("style")).toBe(transform);
+    expect(emitted("builder_block_applied")).toHaveLength(applied);
+    expect(screen.queryByText(/Apply or discard/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Strategy flow" }));
+    expect(input).toHaveAttribute("aria-valuenow", "55");
+    expect(selectionSpy.current?.selectedId).toBe(selected);
+    expect(document.querySelector(".react-flow__viewport")).toBe(flow);
+    expect(flow?.getAttribute("style")).toBe(transform);
+  });
+
   it("[I9] reveals the block just added, even when the view was moved away", async () => {
     // @rule I9
     seedBuild(hubMandate("d-reveal-add"));

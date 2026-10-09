@@ -3,6 +3,7 @@
  * @name BuildScreen
  * @implements-rules-version v1 (POO-2157 rules v1; the configuration panel of POO-2187 rules v1; POO-2210 rules v1); POO-2237 rules v1
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2309 market-reference chart)
  * @analytics-events builder_build_viewed, builder_build_started, builder_block_added,
  *   builder_network_added, builder_network_removed, builder_flow_block_inserted,
  *   builder_block_removed (with cascade_count), builder_block_configured, builder_block_applied,
@@ -69,6 +70,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/Dialog";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useTrackView } from "@/lib/analytics/useTrackView";
 import { useUnsavedChanges } from "@/lib/hooks/unsavedChanges";
+import { buildChartSelection } from "../charts/chartContext";
+import { StrategyChartSurface } from "../charts/StrategyChartSurface";
 import type { MandateCatalog } from "../mandateCatalog";
 import { isBlocked, type MandateDraft } from "../mandateDraft";
 import { LOCAL_PANEL_BODIES } from "../solana-preview/SolanaBuilderPanelBodies";
@@ -312,6 +315,7 @@ export function BuildScreen({
     applyBlockConfig: buildPlan.applyBlockConfig,
     onEvent: onPanelEvent,
   });
+  const chartSelection = buildChartSelection(draft, target, panel.draft?.config ?? null);
   // [P6] Browser back, reload and closing the tab get the browser's own prompt while the panel
   // holds changes not applied, as the shell does for a draft not saved (the in-app exits ask the
   // selection guard instead).
@@ -498,35 +502,42 @@ export function BuildScreen({
       <BuildStepLayout
         palette={<BuildPalette {...controller.paletteProps} />}
         canvas={
-          <CanvasViewport
-            engine="react-flow"
+          <StrategyChartSurface
+            selection={chartSelection}
+            context={local ? "solana-local" : "build"}
             fillContainer
-            fitOnResize
-            graphSize={graphSize}
-            onBackgroundClick={controller.onBackgroundClick}
-            viewportRef={viewportRef}
+            active={active}
           >
-            <BuildGraph
-              layout={layout}
-              networkPresentation={
-                local
-                  ? (network) =>
-                      network === "solana"
-                        ? { stableSymbol: "USDC", nativeSymbol: "SOL" }
-                        : undefined
-                  : undefined
-              }
-              describeBlock={controller.describeBlock}
-              describeFlow={controller.describeFlow}
-              networkName={controller.networkName}
-              selectedId={selectedId}
-              activeTargetKeys={controller.activeTargetKeys}
-              onTarget={controller.onTarget}
-              onRemoveSpoke={controller.removeSpoke}
-              onRemoveBlock={controller.requestRemove}
-              invalidNetworks={invalidNetworks}
-            />
-          </CanvasViewport>
+            <CanvasViewport
+              engine="react-flow"
+              fillContainer
+              fitOnResize
+              graphSize={graphSize}
+              onBackgroundClick={controller.onBackgroundClick}
+              viewportRef={viewportRef}
+            >
+              <BuildGraph
+                layout={layout}
+                networkPresentation={
+                  local
+                    ? (network) =>
+                        network === "solana"
+                          ? { stableSymbol: "USDC", nativeSymbol: "SOL" }
+                          : undefined
+                    : undefined
+                }
+                describeBlock={controller.describeBlock}
+                describeFlow={controller.describeFlow}
+                networkName={controller.networkName}
+                selectedId={selectedId}
+                activeTargetKeys={controller.activeTargetKeys}
+                onTarget={controller.onTarget}
+                onRemoveSpoke={controller.removeSpoke}
+                onRemoveBlock={controller.requestRemove}
+                invalidNetworks={invalidNetworks}
+              />
+            </CanvasViewport>
+          </StrategyChartSurface>
         }
         panel={
           <BuildPanelSlot>

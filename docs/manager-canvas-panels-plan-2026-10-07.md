@@ -523,3 +523,12 @@ for the current host/intent generation. Account/route reset remains abandonment.
 
 Source-available first-party licensing, upstream notices and CR-MGR-POO2301-DOMAIN/CONTEXT plus
 PANELS-WIZARD remain in force. No real financial permission or complete-48-graph claim is added.
+
+
+## Charts delivery update, October 9, 2026 (POO-2309 v1)
+
+Murilo explicitly requested the official Advanced Chart widget with its drawing tools on the left. The bounded market-reference slice is now implemented in the shared Build/Manage center, including current local Solana Build, through Strategy flow/Charts. The React Flow canvas stays mounted and dimensioned under the chart; panel draft and operation owners are untouched.
+
+The official loader's isolated iframe URL is used without parent script execution. Known ETH/USDC and SOL/USDC references use the October 7 design manifest's Binance symbols. Exact approved contract/mint identity determines availability; actual displayed pair/venue/reference meaning stays explicit. Inverted pool orientation does not invert the exchange reference or create an LP overlay. The genuine left/top toolbars are visible; unsupported pairs and lending/Holding show Not available. Loading/no-data/retry, current-frame messages, all 11 app locales and native attribution are covered.
+
+This update supersedes the earlier absence of a functional Charts destination for **market reference only**. It does not implement own OHLCV, position/financial overlays, AUM history, drawing persistence across reload or Activity. POO-2279 remains Needs Rules for that broader source/content/license scope. CR-MGR-POO2309 records this limited integration decision. Focused tests stay serial; full typecheck/build use remote CI and browser acceptance belongs to Murilo.
