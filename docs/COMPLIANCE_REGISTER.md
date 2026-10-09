@@ -350,3 +350,10 @@ Status: OPEN before live protocol or execution enablement under POO-2240/2261/22
 ANSWERED for dormant local drawing metadata and validation only. A protocol descriptor or exact token mint does not establish custody, an active market, liquidity, price-feed support, quoted returns or an execution permission. Native SOL and WSOL remain separate. Standard catalogs exclude the local choices and execution readiness refuses local cards/spokes. No real-user screen, money movement or financial-completion event is activated by this domain slice.
 
 BLOCKING before real Solana data or operations under POO-2239/2240/2261/2262: verify canonical programs/pools/reserves, token programs/extensions, custody and authority, fresh independent balances/valuation, venue disclosures, quote/cost semantics and settlement/recovery. A local-visual ready result clears none of these gates. Owner: Murilo / Codex coordinator.
+
+
+## CR-MGR-POO2301-CONTEXT, October 9, 2026
+
+ANSWERED for local canvas presentation only. USDC Idle denotes the financial flow; SOL operating cash is native-network context and has no financial connection. Missing native quantity and independent USD valuation are printed as Not available. No balance, conversion, reserve assignment, custody permission or transaction is inferred from the connected graph.
+
+BLOCKING before real balance/data enablement: verify native-account ownership and selected-network scope, observed quantity, independent USD valuation/freshness and the separation of native SOL from wrapped SPL assets. Existing POO-2239/2240/2261/2262 and compliance gates remain. Owner: Murilo / Codex coordinator.

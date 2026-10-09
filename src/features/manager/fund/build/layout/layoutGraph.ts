@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-023
  * @name layoutGraph
  * @implements-rules-version v2 (POO-2273); POO-2153 rules v1; POO-2213 rules v1; POO-2235 rules v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a pure geometry module: the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event; nothing here is rendered or tracked.
  *
@@ -17,6 +18,8 @@
  * Structural input/template segments retain their approved Build geometry. Visible route legs
  * exclude internal Bridge transfers, while hoverRoutes associates all visible legs of one origin.
  * This layout does not infer token compatibility, repayment, operating cash or launch capability.
+ * POO-2301 explicitly opts local Solana spokes into an Idle/cash presentation context; no balances
+ * or cash financial adjacency are inferred from that declaration.
  * Stored block IDs, insertion/drop ports, chain order and nominal Build sizes remain unchanged.
  */
 
@@ -185,6 +188,7 @@ function placeChain(
     }
     const node: BlockNode = {
       id: step.id,
+      ...(step.returnConversionOf ? { returnConversionOf: step.returnConversionOf } : {}),
       chainId: chain.id,
       network,
       family: step.family,
@@ -271,36 +275,105 @@ function placeNetbox(d: Draft, left: number): Rect {
 interface PlacedSpoke {
   chains: PlacedChain[];
   group: GroupNode;
+  axisX: number;
+  satelliteWidth: number;
   /** The lowest content inside the box, its circle included (not the border). */
   lowest: number;
 }
 
 /** A spoke's group: its chains, its circle, its Bridge, its inner bus and its label (C3, C20). */
-function placeSpoke(d: Draft, spoke: LayoutSpoke, left: number): PlacedSpoke {
+function placeSpoke(d: Draft, spoke: LayoutSpoke, left: number, occurrence: string): PlacedSpoke {
+  const local = spoke.context === "solana-local" && spoke.network === "solana";
+  const circleLeft =
+    spoke.chains.length > 0
+      ? left + L.GROUP_PAD + spoke.chains.length * (L.CARD_W + L.SIBLING)
+      : left + L.GROUP_PAD + (L.CARD_W - L.CIRCLE) / 2;
+  const innerRight =
+    spoke.chains.length > 0 ? circleLeft + L.CIRCLE : left + L.GROUP_PAD + L.CARD_W;
+  const financialRight = local
+    ? Math.max(innerRight + L.GROUP_PAD, left + L.LOCAL_IDLE_W + L.GROUP_PAD * 2)
+    : innerRight + L.GROUP_PAD;
+  const centre = (left + financialRight) / 2;
+  const bridge = rect(centre - L.PILL_W / 2, L.ROW_TOP, L.PILL_W, L.PILL_H);
+  let busY: number = L.INNER_BUS_Y;
+  let rowTop: number = L.INNER_ROW_TOP;
+  let labelY: number = L.INNER_LABEL_Y;
+  let right = financialRight;
+  if (local) {
+    const idle = rect(
+      centre - L.LOCAL_IDLE_W / 2,
+      bottomOf(bridge) + L.LINK,
+      L.LOCAL_IDLE_W,
+      L.LOCAL_IDLE_H,
+    );
+    const cash = rect(
+      rightOf(idle) + L.LOCAL_CASH_GAP,
+      idle.y + (idle.h - L.LOCAL_CASH_H) / 2,
+      L.LOCAL_CASH_W,
+      L.LOCAL_CASH_H,
+    );
+    d.spokeContexts ??= [];
+    // PP-INTEGRATION-POINT: POO-2301 local context has no authoritative Idle/native amount or valuation source.
+    d.spokeContexts.push({
+      network: spoke.network,
+      axisX: centre,
+      idle: {
+        id: `spoke-idle:${encodeURIComponent(spoke.network)}${occurrence}`,
+        rect: idle,
+        stableSymbol: "USDC",
+        amount: null,
+        valueUsd: null,
+      },
+      cash: {
+        id: `operating-cash:${encodeURIComponent(spoke.network)}${occurrence}`,
+        rect: cash,
+        nativeSymbol: "SOL",
+        mint: null,
+        amount: null,
+        valueUsd: null,
+      },
+    });
+    busY = Math.max(bottomOf(idle), bottomOf(cash)) + L.LINK;
+    rowTop = busY + L.STUB;
+    labelY = rowTop - L.LINK;
+    right = Math.max(financialRight, rightOf(cash) + L.GROUP_PAD);
+  }
   const chains: PlacedChain[] = [];
   let x = left + L.GROUP_PAD;
   for (const chain of spoke.chains) {
-    const placed = placeChain(d, chain, spoke.network, x, L.INNER_ROW_TOP);
-    hangChain(d, placed, spoke.network, L.INNER_BUS_Y, L.INNER_ROW_TOP, L.INNER_LABEL_Y);
+    const placed = placeChain(d, chain, spoke.network, x, rowTop);
+    hangChain(d, placed, spoke.network, busY, rowTop, labelY);
     chains.push(placed);
     x += L.CARD_W + L.SIBLING;
   }
   // C16: with no chain the group is one card wide inside its padding, the circle centred in it.
-  const circleLeft = chains.length > 0 ? x : left + L.GROUP_PAD + (L.CARD_W - L.CIRCLE) / 2;
-  const circle = placeCircle(d, spoke.network, circleLeft, L.INNER_BUS_Y, L.INNER_ROW_TOP);
-  const innerRight = chains.length > 0 ? rightOf(circle) : left + L.GROUP_PAD + L.CARD_W;
-  const right = innerRight + L.GROUP_PAD;
-  const centre = (left + right) / 2;
+  const circle = placeCircle(d, spoke.network, circleLeft, busY, rowTop);
   const lowest = Math.max(bottomOf(circle), ...chains.map((c) => c.bottom));
 
   // C20: the Bridge, the stub that enters the box and the spoke's label sit on its centre.
-  const bridge = rect(centre - L.PILL_W / 2, L.ROW_TOP, L.PILL_W, L.PILL_H);
   d.bridges.push({ network: spoke.network, rect: bridge, direction: "inbound" });
   const stubId = `stub:spoke:${spoke.network}`;
   d.edges.push(
     vertical(stubId, "structural", centre, L.BUS_Y, L.ROW_TOP),
-    vertical(`bridge:${spoke.network}`, "structural", centre, bottomOf(bridge), L.INNER_BUS_Y),
-    ...spanning(`bus:spoke:${spoke.network}`, "structural", L.INNER_BUS_Y, [
+    ...(local
+      ? [
+          vertical(
+            `bridge:${spoke.network}`,
+            "structural",
+            centre,
+            bottomOf(bridge),
+            bottomOf(bridge) + L.LINK,
+          ),
+          vertical(
+            `idle:spoke:${spoke.network}`,
+            "structural",
+            centre,
+            bottomOf(bridge) + L.LINK + L.LOCAL_IDLE_H,
+            busY,
+          ),
+        ]
+      : [vertical(`bridge:${spoke.network}`, "structural", centre, bottomOf(bridge), busY)]),
+    ...spanning(`bus:spoke:${spoke.network}`, "structural", busY, [
       centre,
       centreOf(circle),
       ...chains.map((c) => c.centre),
@@ -327,7 +400,13 @@ function placeSpoke(d: Draft, spoke: LayoutSpoke, left: number): PlacedSpoke {
     hasChains: chains.length > 0,
   };
   d.groups.push(group);
-  return { chains, group, lowest: contentBottom };
+  return {
+    chains,
+    group,
+    lowest: contentBottom,
+    axisX: centre,
+    satelliteWidth: right - financialRight,
+  };
 }
 
 /** The return lines, Idle output, Income (fees) and Withdraw, under `deepest` (L5, C10, C11). */
@@ -382,14 +461,23 @@ function layoutPlan(input: LayoutInput): Draft {
   x = rightOf(hubCircle) + L.GROUP_GAP;
 
   const spokes: PlacedSpoke[] = [];
+  const occurrences = new Map<string, number>();
   for (const spoke of input.spokes) {
-    const placed = placeSpoke(d, spoke, x);
+    const occurrence = occurrences.get(spoke.network) ?? 0;
+    occurrences.set(spoke.network, occurrence + 1);
+    const placed = placeSpoke(d, spoke, x, occurrence ? `#${occurrence + 1}` : "");
     spokes.push(placed);
     x = rightOf(placed.group.rect) + L.GROUP_GAP;
   }
   const netbox = placeNetbox(d, x);
 
-  const c = Math.max((L.CANVAS_PAD + rightOf(netbox)) / 2, L.SPINE_MIN_CENTRE);
+  const c = Math.max(
+    (L.CANVAS_PAD +
+      rightOf(netbox) -
+      spokes.reduce((sum, spoke) => sum + spoke.satelliteWidth, 0)) /
+      2,
+    L.SPINE_MIN_CENTRE,
+  );
   d.spineCentreX = c;
   placeSpineTop(d, c);
   d.edges.push(
@@ -398,7 +486,7 @@ function layoutPlan(input: LayoutInput): Draft {
       centreOf(hubCircle),
       centreOf(netbox),
       ...hub.map((p) => p.centre),
-      ...spokes.map((s) => centreOf(s.group.rect)),
+      ...spokes.map((s) => s.axisX),
     ]),
   );
 
@@ -470,6 +558,7 @@ function normalise(d: Draft): GraphLayout {
     ...d.bridges.map((n) => n.rect),
     ...(d.feeSwaps ?? []).map((n) => n.rect),
     ...d.groups.map((n) => n.rect),
+    ...(d.spokeContexts ?? []).flatMap((context) => [context.idle.rect, context.cash.rect]),
     ...d.templates.map((n) => n.rect),
     ...(d.emptyCaptions ? [d.emptyCaptions.startHere] : []),
   ];
@@ -481,6 +570,16 @@ function normalise(d: Draft): GraphLayout {
     width: right + L.CANVAS_PAD,
     height: bottom + L.CANVAS_PAD,
     spineCentreX: d.spineCentreX + dx,
+    ...(d.spokeContexts
+      ? {
+          spokeContexts: d.spokeContexts.map((context) => ({
+            ...context,
+            axisX: context.axisX + dx,
+            idle: { ...context.idle, rect: moveRect(context.idle.rect, dx) },
+            cash: { ...context.cash, rect: moveRect(context.cash.rect, dx) },
+          })),
+        }
+      : {}),
     spine: d.spine.map((n) => ({ ...n, rect: moveRect(n.rect, dx) })),
     blocks: d.blocks.map((n) => ({ ...n, rect: moveRect(n.rect, dx) })),
     bridges: d.bridges.map((n) => ({ ...n, rect: moveRect(n.rect, dx) })),
@@ -579,6 +678,18 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
       addNode(`node:${semanticNodeId("spine", node.role)}`, "structural", hub, node.rect),
     ]),
   );
+  const contextIdles = new Map(
+    (graph.spokeContexts ?? []).map((context) => [
+      context.idle.id,
+      addNode(context.idle.id, "structural", context.network, context.idle.rect),
+    ]),
+  );
+  const contextFor = (network: string, occurrence: string) => {
+    const id = `spoke-idle:${encodeURIComponent(network)}${occurrence}`;
+    const context = graph.spokeContexts?.find((entry) => entry.idle.id === id);
+    const node = contextIdles.get(id);
+    return context && node ? { context, node } : undefined;
+  };
   const blocks = new Map(
     graph.blocks.map((node) => [
       node.id,
@@ -808,6 +919,7 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
     const origin = null;
     const legIds: string[] = [];
     let source = port(idle, `entry:${chain.id}`, "structural", origin, "out", "bottom");
+    const localContext = contextFor(network, spokeKey);
     if (network !== hub) {
       const inbound = required(bridgeFor(network, "inbound", spokeKey), "bridge");
       const bridge = bridgePorts(inbound, `entry:${chain.id}`, "structural", origin, L.PORT_CENTER);
@@ -819,8 +931,36 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
         ]),
       );
       source = bridge.outgoing;
+      if (localContext) {
+        const contextIn = port(
+          localContext.node,
+          `entry:${chain.id}`,
+          "structural",
+          origin,
+          "in",
+          "top",
+        );
+        legIds.push(connect(`entry:idle:${chain.id}`, source, contextIn));
+        source = port(
+          localContext.node,
+          `branch:${chain.id}`,
+          "structural",
+          origin,
+          "out",
+          "bottom",
+        );
+      }
     }
-    const rowY = network === hub ? L.BUS_Y + HALF_LINE : L.INNER_BUS_Y + HALF_LINE;
+    const rowY = localContext
+      ? Math.max(
+          bottomOf(localContext.context.idle.rect),
+          bottomOf(localContext.context.cash.rect),
+        ) +
+        L.LINK +
+        HALF_LINE
+      : network === hub
+        ? L.BUS_Y + HALF_LINE
+        : L.INNER_BUS_Y + HALF_LINE;
     const target = port(first, `entry:${chain.id}`, "structural", origin, "in", "top");
     legIds.push(
       connect(`stub:chain:${chain.id}`, source, target, [
@@ -849,15 +989,10 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
   for (const template of templateNodes) {
     let source = port(idle, `entry:${template.id}`, "template", null, "out", "bottom");
     const legIds: string[] = [];
+    const occurrence = template.id.includes("#") ? template.id.slice(template.id.indexOf("#")) : "";
+    const localContext = contextFor(template.network, occurrence);
     if (template.network !== hub) {
-      const inbound = required(
-        bridgeFor(
-          template.network,
-          "inbound",
-          template.id.includes("#") ? template.id.slice(template.id.indexOf("#")) : "",
-        ),
-        "bridge",
-      );
+      const inbound = required(bridgeFor(template.network, "inbound", occurrence), "bridge");
       const bridge = bridgePorts(inbound, template.id, "template", null, L.PORT_CENTER);
       legIds.push(
         connect(`entry:${template.id}`, source, bridge.incoming, [
@@ -866,8 +1001,34 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
         ]),
       );
       source = bridge.outgoing;
+      if (localContext) {
+        legIds.push(
+          connect(
+            `entry:idle:${template.id}`,
+            source,
+            port(localContext.node, `entry:${template.id}`, "template", null, "in", "top"),
+          ),
+        );
+        source = port(
+          localContext.node,
+          `branch:${template.id}`,
+          "template",
+          null,
+          "out",
+          "bottom",
+        );
+      }
     }
-    const rowY = template.network === hub ? L.BUS_Y + HALF_LINE : L.INNER_BUS_Y + HALF_LINE;
+    const rowY = localContext
+      ? Math.max(
+          bottomOf(localContext.context.idle.rect),
+          bottomOf(localContext.context.cash.rect),
+        ) +
+        L.LINK +
+        HALF_LINE
+      : template.network === hub
+        ? L.BUS_Y + HALF_LINE
+        : L.INNER_BUS_Y + HALF_LINE;
     const target = port(template, "entry", "template", null, "in", "top");
     legIds.push(
       connect(template.id.slice("node:".length), source, target, [

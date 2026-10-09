@@ -11,7 +11,10 @@
  * at the layout's position and size, with the piece and the state the handoff prescribes, and every
  * edge is drawn. jsdom lays nothing out, so a position is the inline style the renderer wrote.
  */
+
+import { NextIntlClientProvider } from "next-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import frenchManager from "@/i18n/messages/fr/manager.json";
 import {
   BUILD_CANVAS_FIXTURES,
   type BuildCanvasFixture,
@@ -44,7 +47,9 @@ import {
   targetKey,
 } from "../layout/graphTypes";
 import { layoutGraph } from "../layout/layoutGraph";
+import { toLayoutInput } from "../layout/toLayoutInput";
 import type { BlockContent } from "../pieces/pieceTypes";
+import type { BuildPlan } from "../plan/buildPlan";
 import { BuildGraph, type BuildGraphProps } from "./BuildGraph";
 import { fixtureGraphProps } from "./graphFixtureKit";
 import { formatShare, GRAPH_LAYER } from "./graphModel";
@@ -113,9 +118,189 @@ function expectBox(element: HTMLElement, x: number, y: number, w: number, h: num
 
 const blockKey = (blockId: string) => targetKey({ kind: "block", blockId });
 
+function localContextProps(): BuildGraphProps {
+  const input: LayoutInput = {
+    hubNetwork: "arbitrum",
+    hub: { chains: [] },
+    spokes: [{ network: "solana", context: "solana-local", sharePct: 100, chains: [] }],
+  };
+  return propsFor(canvasA, {
+    layout: layoutGraph(input, { startHereWidth: 0 }),
+    networkName: (network) => (network === "solana" ? "Solana" : "Arbitrum"),
+    networkPresentation: (network) =>
+      network === "solana" ? { stableSymbol: "USDC", nativeSymbol: "SOL" } : undefined,
+  });
+}
+
+// @rule POO-2301 R3/R5: native cash is context, not a position or a fabricated balance.
+it("renders local spoke Idle and native cash at the declared Figma bounds", () => {
+  const props = localContextProps();
+  renderWithProviders(<BuildGraph {...props} />);
+  const context = props.layout.spokeContexts?.[0];
+  if (!context) throw new Error("missing local context");
+  const idle = node(context.idle.id);
+  const cash = node(context.cash.id);
+  for (const [element, rect] of [
+    [idle, context.idle.rect],
+    [cash, context.cash.rect],
+  ] as const)
+    expectBox(element, rect.x, rect.y, rect.w, rect.h);
+  expect(idle).toHaveTextContent("Idle");
+  expect(idle).toHaveTextContent("USDC");
+  expect(idle.querySelector('[data-block-icon="hourglass"]')).not.toBeNull();
+  expect(idle.querySelector("button")).toBeNull();
+  expect(cash).toHaveTextContent("Operating cash");
+  expect(cash).toHaveTextContent("SOL");
+  expect(cash).not.toHaveTextContent("WSOL");
+  expect(cash).not.toHaveTextContent("Solana");
+  expect(cash).not.toHaveAttribute("data-graph-target");
+  expect(cash.querySelector("img")).toHaveAttribute("src", "/protocols/solana-preview/solana.svg");
+  expect(cash.querySelector("[data-native-amount]")).toHaveTextContent("Not available");
+  expect(cash.querySelector("[data-native-value]")).toHaveTextContent("Not available");
+  expect(cash.querySelector("[data-native-value]")).not.toHaveTextContent("$");
+});
+
+// @rule POO-2301 R3/R5: translated cash labels stay inside the fixed 144x96 surface.
+it("wraps long French operating cash and unavailable labels within the compact surface", () => {
+  const props = localContextProps();
+  renderWithProviders(
+    <NextIntlClientProvider locale="fr" messages={{ manager: frenchManager }}>
+      <BuildGraph {...props} />
+    </NextIntlClientProvider>,
+  );
+  const cash = node("operating-cash:solana");
+  expect(cash.style.width).toBe("144px");
+  expect(cash.style.height).toBe("96px");
+  const heading = cash.querySelector("h3");
+  expect(heading).toHaveTextContent("Trésorerie opérationnelle");
+  expect(heading).toHaveClass("min-w-0", "break-words");
+  expect(heading).not.toHaveClass("whitespace-nowrap");
+  const amount = cash.querySelector("[data-native-amount]");
+  expect(amount).toHaveClass("min-w-0", "break-words");
+  expect(amount).not.toHaveClass("whitespace-nowrap");
+});
+
+// @rule POO-2301 R3/R6 and POO-2302 R2: cash has no financial handle or executable edge.
+it("registers the local Idle as a financial surface and cash as a handleless decoration", async () => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  vi.stubGlobal(
+    "DOMMatrixReadOnly",
+    class {
+      m22 = 1;
+    },
+  );
+  const props = localContextProps();
+  const mounted = renderWithProviders(
+    <CanvasViewport engine="react-flow" graphSize={props.layout}>
+      <BuildGraph {...props} />
+    </CanvasViewport>,
+  );
+  await waitFor(() =>
+    expect(document.querySelector('[data-financial-node="spoke-idle:solana"]')).not.toBeNull(),
+  );
+  const idle = document.querySelector('[data-financial-node="spoke-idle:solana"]');
+  expect(idle?.querySelectorAll("[data-financial-port]").length).toBeGreaterThan(0);
+  const cash = node("operating-cash:solana");
+  expect(cash.closest("[data-financial-node]")?.querySelector("[data-financial-port]")).toBeNull();
+  expect(props.layout.semantic?.nodes.some((node) => node.id === "operating-cash:solana")).toBe(
+    false,
+  );
+  expect(document.querySelectorAll("[data-financial-port]")).toHaveLength(
+    props.layout.semantic?.ports.length ?? 0,
+  );
+  const removed = layoutGraph(
+    { hubNetwork: "arbitrum", hub: { chains: [] }, spokes: [] },
+    { startHereWidth: 0 },
+  );
+  mounted.rerender(
+    <CanvasViewport engine="react-flow" graphSize={removed}>
+      <BuildGraph {...props} layout={removed} />
+    </CanvasViewport>,
+  );
+  await waitFor(() =>
+    expect(document.querySelector('[data-graph-node="operating-cash:solana"]')).toBeNull(),
+  );
+  expect(document.querySelector('[data-financial-node="spoke-idle:solana"]')).toBeNull();
+});
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+});
+
+// @rule POO-2301 R1/R3: local spoke uses committed logos and mandatory Holding exit in shared cards.
+it("keeps Solana logos and automatic Holding return in the existing Build pieces", () => {
+  const plan: BuildPlan = {
+    version: 1,
+    hub: { chains: [] },
+    spokes: [
+      {
+        network: "solana",
+        sharePct: 100,
+        chains: [
+          {
+            id: "local",
+            sharePct: 100,
+            steps: [
+              {
+                id: "holding",
+                family: "position",
+                kind: "solanaHolding",
+                config: { catalogId: "solana:mainnet-beta:holding", pair: "SOL / USDC" },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  plan.spokes[0]?.chains.push({
+    id: "orca",
+    sharePct: 0,
+    steps: [
+      {
+        id: "orca",
+        family: "position",
+        kind: "solanaOrcaPool",
+        config: { catalogId: "solana:mainnet-beta:orca-whirlpools", pair: "SOL / USDC" },
+      },
+    ],
+  });
+  const layout = layoutGraph(toLayoutInput(plan), { startHereWidth: 0 });
+  const props = propsFor(canvasA, {
+    layout,
+    networkName: () => "Solana",
+    networkPresentation: () => ({ stableSymbol: "USDC", nativeSymbol: "SOL" }),
+    describeBlock: () => ({
+      title: "Holding",
+      caption: "SOL / USDC",
+      icon: "hourglass",
+      state: "default",
+      accessibleName: "Holding",
+    }),
+    describeFlow: () => ({ text: "unavailable", tooltip: "unavailable", icon: "swap" }),
+  });
+  renderWithProviders(<BuildGraph {...props} />);
+  const chip = document.querySelector("[data-network-chip] img");
+  expect(chip).toHaveAttribute("src", "/protocols/solana-preview/solana.svg");
+  expect(node("block:orca").querySelector("img")).toHaveAttribute(
+    "src",
+    "/protocols/solana-preview/orca.svg",
+  );
+  const card = node("block:holding");
+  expect(card.querySelector("[data-card-state]")).toHaveAttribute("data-card-state", "default");
+  expect(card.querySelector("button")).toHaveClass("w-[176px]");
+  const exit = node("block:local-return%3Aholding");
+  expect(exit.querySelector("[data-flow-pill]")).toHaveTextContent("Swap · auto");
+  expect(exit.querySelector("button")).toBeNull();
+  expect(plan.spokes[0]?.chains[0]?.steps).toHaveLength(1);
 });
 
 // @rule POO-2302 R1/R2/R4: the engine reuses every card exactly once with declared handles.

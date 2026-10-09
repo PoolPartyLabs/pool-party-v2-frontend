@@ -20,7 +20,7 @@ import type { MandateDraft } from "../../mandateDraft";
 import type { LayoutInput } from "../layout/graphTypes";
 import { layoutGraph } from "../layout/layoutGraph";
 import { toLayoutInput } from "../layout/toLayoutInput";
-import { hubPoolPlan, makeTestDraft } from "../plan/planTestKit";
+import { emptySpokePlan, hubPoolPlan, makeTestDraft } from "../plan/planTestKit";
 import { START_HERE_FONT, useDraftGraphLayout, useGraphLayout } from "./useGraphLayout";
 
 function Messages({ children }: { children: ReactNode }) {
@@ -125,6 +125,19 @@ describe("useGraphLayout", () => {
 });
 
 describe("useDraftGraphLayout", () => {
+  it("opts into Solana contexts from runtime and restores default geometry for the same plan", () => {
+    const plan = emptySpokePlan();
+    plan.spokes[0] = { network: "solana", sharePct: 0, chains: [] };
+    const draft: MandateDraft = { ...makeTestDraft(), runtime: "solana-local", plan };
+    const { result, rerender } = renderHook(({ draft }) => useDraftGraphLayout(draft), {
+      wrapper: Messages,
+      initialProps: { draft },
+    });
+    expect(result.current.spokeContexts?.[0]?.idle.id).toBe("spoke-idle:solana");
+    rerender({ draft: { ...draft, runtime: undefined } });
+    expect(result.current).toEqual(layoutGraph(toLayoutInput(plan), { startHereWidth: 0 }));
+    expect(result.current.spokeContexts).toBeUndefined();
+  });
   it("lays out the draft's plan", () => {
     const draft: MandateDraft = { ...makeTestDraft(), plan: hubPoolPlan() };
     const { result } = renderHook(() => useDraftGraphLayout(draft), { wrapper: Messages });

@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-059
  * @name graphModel tests
  * @implements-rules-version v2 (POO-2273); v1 (POO-2156 rules v1)
+ * @implements-rules-version v1 (POO-2301 local Solana context)
  * @analytics-events none, pure helpers of the graph renderer: nothing here is rendered or tracked.
  *
  * What the renderer derives from a laid-out graph before it draws anything (handoff v1.2 [L7],
@@ -79,6 +80,99 @@ const TWIN_SPOKES: LayoutInput = {
 };
 
 describe("graphItems", () => {
+  it("reads explicit local Idle and native cash after the inbound Bridge and before its branches", () => {
+    const input: LayoutInput = {
+      hubNetwork: "arbitrum",
+      hub: { chains: [] },
+      spokes: [
+        {
+          network: "solana",
+          context: "solana-local",
+          sharePct: 100,
+          chains: [
+            {
+              id: "local-chain",
+              sharePct: 100,
+              steps: [
+                {
+                  id: "local-lp",
+                  family: "position",
+                  kind: "orcaPool",
+                  auto: false,
+                  configured: true,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const layout = layoutGraph(input, EN);
+    const context = layout.spokeContexts?.[0];
+    if (!context) throw new Error("missing local context");
+    const items = graphItems(layout);
+    const order = keys(items);
+    const bridgeIndex = order.indexOf("bridge:solana");
+    expect(order.slice(bridgeIndex + 1, bridgeIndex + 3)).toEqual([
+      context.idle.id,
+      context.cash.id,
+    ]);
+    expect(order.indexOf(context.cash.id)).toBeLessThan(order.indexOf(block("local-lp")));
+    const idle = items.find((item) => item.type === "spokeIdle");
+    const cash = items.find((item) => item.type === "operatingCash");
+    expect(idle).toMatchObject({
+      type: "spokeIdle",
+      key: context.idle.id,
+      node: context.idle,
+      context,
+    });
+    expect(cash).toMatchObject({
+      type: "operatingCash",
+      key: context.cash.id,
+      node: context.cash,
+      context,
+    });
+    if (!idle || !cash) throw new Error("missing context items");
+    expect(itemTarget(idle)).toBeNull();
+    expect(itemTarget(cash)).toBeNull();
+    expect(itemLayer(idle)).toBe(2);
+    expect(itemLayer(cash)).toBe(2);
+    expect(readingPoint(idle)).toEqual({ top: context.idle.rect.y, x: context.axisX });
+    expect(readingPoint(cash)).toEqual({
+      top: context.cash.rect.y,
+      x: context.cash.rect.x + context.cash.rect.w / 2,
+    });
+    expect(new Set(order).size).toBe(items.length);
+  });
+
+  it("uses declared context ownership and exact IDs even if the satellite lies beyond the group", () => {
+    const layout = layoutGraph(TWIN_SPOKES, EN);
+    layout.spokeContexts = layout.groups.map((group, index) => ({
+      network: group.network,
+      axisX: group.rect.x + group.rect.w / 2,
+      idle: {
+        id: `spoke-idle:${group.network}${index ? "#2" : ""}`,
+        rect: { x: group.rect.x, y: 310, w: 236, h: 62 },
+        stableSymbol: "USDC",
+        amount: null,
+        valueUsd: null,
+      },
+      cash: {
+        id: `operating-cash:${group.network}${index ? "#2" : ""}`,
+        rect: { x: 9999, y: 310, w: 144, h: 96 },
+        nativeSymbol: "SOL",
+        mint: null,
+        amount: null,
+        valueUsd: null,
+      },
+    }));
+    const order = keys(graphItems(layout));
+    for (const [index, context] of layout.spokeContexts.entries()) {
+      const bridge = `bridge:robinhood${index ? "#2" : ""}`;
+      const at = order.indexOf(bridge);
+      expect(order.slice(at + 1, at + 3)).toEqual([context.idle.id, context.cash.id]);
+    }
+  });
   it.each(
     Object.keys(BUILD_CANVAS_FIXTURES) as Array<keyof typeof BUILD_CANVAS_FIXTURES>,
   )("places every node of %s exactly once, under a unique key", (name) => {

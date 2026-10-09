@@ -203,3 +203,10 @@ Focused renderer and real-engine BuildScreen tests preserve gesture, fit, select
 An optional solana-local draft/catalog adds four position descriptors, chain-aware token keys, protocol marks and complete analytics mappings. Standard V2 catalogs exclude these choices. Configure reducers check the selected network, protocol and exact USDC/WSOL identities for both the position and its automatic Jupiter conversion before accepting a write. USDC Holding remains correctable when another chain is invalid.
 
 Default planReadiness refuses local Solana cards/spokes even when a USDC-only position needs no Swap. Explicit local-visual readiness allows an intention summary after structural/configuration/allocation checks; it grants no execution capability. The runtime factory supplies unpriced token metadata and bounded drawing descriptors only. The shared route, protocol bodies, local Review, Idle/native SOL cash and memory binding are separate dependent slices. Existing EVM launch adapters and investor provisioning remain unchanged.
+
+
+## Local Solana Idle and operating cash, October 9, 2026 (POO-2301 v1)
+
+Explicit local runtime mapping adds a236x62 USDC Idle surface after each Solana inbound Bridge and a144x96 native SOL cash decoration to its right, separated by32px and vertically centered. The layout expands hull/bounds for cash without moving the financial axis and places branch buses below both surfaces. Idle owns declared Bridge-to-Idle-to-branch handles; cash owns none. Amount and independent USD readings remain Not available, never zero. Standard EVM layouts and the shared palette/viewport are unchanged.
+
+Complete IDs survive graph reading order, grouped surfaces and duplicate occurrences. Removing the spoke clears its local context. The LocalSolanaIdleAndOperatingCash story uses the same BuildGraph / React Flow engine with descriptor intent only. The shared route activation follows separately.

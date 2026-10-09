@@ -44,6 +44,12 @@ export const LAYOUT = Object.freeze({
   PRINCIPAL_PORT_SPAN: 0.45,
   INCOME_PORT_START: 0.55,
   SPINE_GAP: 32,
+  /** POO-2301: Figma8370:2921 Build Idle, distinct from the Manage104px variant. */
+  LOCAL_IDLE_W: 236,
+  LOCAL_IDLE_H: 62,
+  LOCAL_CASH_W: 144,
+  LOCAL_CASH_H: 96,
+  LOCAL_CASH_GAP: 32,
 
   // Building-block sizes the layout places.
   LINE_W: 1.5,

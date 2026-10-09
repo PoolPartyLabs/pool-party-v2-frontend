@@ -394,3 +394,8 @@ PP-MGR-CMP-086 Aave and PP-MGR-CMP-089 Kamino pass null account identity and una
 `solanaBuilderRuntime.ts` (PP-MGR-LIB-075) extends the optional local catalog with Solana, Kamino, Jupiter, Raydium and Orca. Exact USDC/WSOL metadata is unpriced and visualEligible; native SOL never satisfies a WSOL mint requirement. Bounded catalog IDs describe drawing intent, not verified pools, reserves or programs. POO-2239/2240 retain real token/market discovery and POO-2261/2262 retain quotes, authority and execution.
 
 The ordinary mandate/catalog excludes local protocols. Reducers validate selected networks, exact mints and automatic Jupiter conversion dependencies before writing. The optional local-visual readiness path is distinct from default execution readiness, which refuses all Solana cards/spokes. This dormant domain does not mount the shared local route, API/RPC clients, wallet hooks or persistent local bindings. No live balance, price, APY, pool or transaction is supplied.
+
+
+## Local Solana Idle and operating cash, October 9, 2026 (POO-2301 v1)
+
+Only toLayoutInput(plan, { runtime: 'solana-local' }) opts the Solana spoke into Idle and native operating cash. Standard Build graphs do not gain cash. SOL cash is a144x96 decoration, separate from the236x62 semantic USDC Idle node; no financial handle/edge, balance, mint or USD amount is fabricated. Both monetary readings stay Not available. POO-2239/2240/2261/2262 retain canonical account, token-program, native balance and independent USD/freshness contracts.

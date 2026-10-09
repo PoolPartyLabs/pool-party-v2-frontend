@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-023
  * @name graphTypes
  * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2288 rules v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, type declarations and one pure key function: nothing here is rendered.
  *
  * The shapes the Build canvas layout reads and returns (coordinator plan, section 3.3). The names
@@ -45,6 +46,8 @@ export interface Rect {
 
 /** A plan step, as the layout needs it. `configured` is `config !== null` (a pill counts as true). */
 export interface LayoutStep {
+  /** Presentation-only mandatory exit conversion; never a stored or executable plan step. */
+  returnConversionOf?: string;
   id: string;
   family: "position" | "flow";
   kind: string;
@@ -60,6 +63,8 @@ export interface LayoutChain {
 }
 
 export interface LayoutSpoke {
+  /** Opt-in presentation context, never stored or executable plan data. */
+  context?: "solana-local";
   network: string;
   sharePct: number;
   /** Left to right. */
@@ -137,7 +142,6 @@ export interface SpineNode {
 
 /** A card or a pill of the plan. `network` is where it sits (C5). */
 export interface BlockNode {
-  /** Optional presentation-only conversion origin; never a stored plan block. */
   returnConversionOf?: string;
   id: string;
   chainId: string;
@@ -170,6 +174,30 @@ export interface GroupNode {
   rect: Rect;
   chipAnchor: Point;
   hasChains: boolean;
+}
+
+/** Local Build context identity is explicit; native cash never carries a pool mint or financial port. */
+export interface SpokeContextNode {
+  network: string;
+  /** Financial axis, independent of the asymmetric cash satellite and group bounds. */
+  axisX: number;
+  idle: {
+    /** Complete semantic node identity; renderers map this value directly. */
+    id: string;
+    rect: Rect;
+    stableSymbol: "USDC";
+    amount: null;
+    valueUsd: null;
+  };
+  cash: {
+    /** Complete handle-less decoration identity. */
+    id: string;
+    rect: Rect;
+    nativeSymbol: "SOL";
+    mint: null;
+    amount: null;
+    valueUsd: null;
+  };
 }
 
 /** The Add protocol circle of a row, or the Add network box (C15). */
@@ -214,6 +242,8 @@ export interface EmptyCaptions {
 }
 
 export interface GraphLayout {
+  /** Present only for explicitly opted-in local spokes. */
+  spokeContexts?: SpokeContextNode[];
   /** The existing core network, also the destination of derived return Bridges. */
   hubNetwork?: string;
   width: number;

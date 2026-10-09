@@ -1135,3 +1135,8 @@ PP-MGR-SCR-002, PP-MGR-CMP-059 and the existing Build pieces retain their artifa
 | `PP-MGR-LIB-075` | solanaBuilderRuntime, isolated local catalog and bounded protocol drawing descriptors | Lib | n/a (code) | Implemented dormant domain | [POO-2301](https://linear.app/yeildbay/issue/POO-2301) | `src/features/manager/fund/solana-preview/solanaBuilderRuntime.ts` @rules-v1 |
 
 Existing mandate, plan, registry, logo and analytics artifacts retain their IDs. Solana identities preserve Base58 case; EVM identities retain normalization. Default execution readiness explicitly refuses Solana cards/spokes, including USDC-only Holding and Kamino. The local-visual option reports drawing readiness only. The route, shared panels and canvas activation are separate dependent slices.
+
+
+## Local Solana Idle and operating cash, October 9, 2026 (POO-2301 v1)
+
+Existing PP-MGR-LIB-023 / PP-MGR-CMP-059 artifacts gain an explicitly local layout context. Idle is 236x62, native SOL cash is 144x96 with a32px lateral gap and shared vertical center. Bridge connects through Idle to branches/templates; cash is handleless decoration with no financial edges. Stable complete IDs retain duplicate occurrences. Standard EVM layouts have no local context or cash addition. BuildGraph and its Storybook variant reuse the existing React Flow renderer and Pool Party surfaces. No new artifact or monetary source is introduced.

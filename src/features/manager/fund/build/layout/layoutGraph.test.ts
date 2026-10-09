@@ -32,6 +32,7 @@ import {
   newSpokeNoChain,
   workedExample2,
 } from "@/mocks/data/buildCanvasFixtures";
+import { validateSemanticGraph } from "../graph/semanticGraph";
 import * as planRules from "../plan/planRules";
 import type { GraphLayout, LayoutChain, LayoutInput, LayoutStep, Rect } from "./graphTypes";
 import { LAYOUT } from "./layoutConstants";
@@ -1142,5 +1143,226 @@ describe("node order", () => {
       "addProtocol:robinhood",
       "addNetwork",
     ]);
+  });
+});
+
+function localSolanaInput(chainCount = 1): LayoutInput {
+  return {
+    hubNetwork: "arbitrum",
+    hub: { chains: [] },
+    spokes: [
+      {
+        network: "solana",
+        context: "solana-local",
+        sharePct: 100,
+        chains: Array.from({ length: chainCount }, (_, index) => ({
+          id: `solana-chain-${index}`,
+          sharePct: 100 / chainCount,
+          steps: [
+            { id: `swap-${index}`, family: "flow", kind: "swap", auto: true, configured: true },
+            {
+              id: `lp-${index}`,
+              family: "position",
+              kind: "orcaPool",
+              auto: false,
+              configured: true,
+            },
+            {
+              id: `fees-${index}`,
+              family: "flow",
+              kind: "collectFees",
+              auto: false,
+              configured: true,
+            },
+          ],
+        })),
+      },
+    ],
+  };
+}
+
+function segmentCrossesCard(a: { x: number; y: number }, b: { x: number; y: number }, r: Rect) {
+  if (a.x === b.x)
+    return (
+      a.x > r.x && a.x < right(r) && Math.max(a.y, b.y) > r.y && Math.min(a.y, b.y) < bottom(r)
+    );
+  if (a.y === b.y)
+    return (
+      a.y > r.y && a.y < bottom(r) && Math.max(a.x, b.x) > r.x && Math.min(a.x, b.x) < right(r)
+    );
+  return true;
+}
+
+describe("[POO-2301 R3] explicit local Solana spoke context", () => {
+  it("places the Figma Build Idle236x62 and native cash144x96 with32gap inside fit bounds", () => {
+    const layout = layoutGraph(localSolanaInput(), EN);
+    const context = layout.spokeContexts?.[0];
+    expect(context).toBeDefined();
+    if (!context) throw new Error("missing local context");
+    expect(context.network).toBe("solana");
+    expect(context.idle).toMatchObject({
+      id: "spoke-idle:solana",
+      stableSymbol: "USDC",
+      amount: null,
+      valueUsd: null,
+      rect: { w: 236, h: 62 },
+    });
+    expect(context.cash).toMatchObject({
+      id: "operating-cash:solana",
+      nativeSymbol: "SOL",
+      mint: null,
+      amount: null,
+      valueUsd: null,
+      rect: { w: 144, h: 96 },
+    });
+    expect(context.cash.rect.x - right(context.idle.rect)).toBe(32);
+    expect(context.cash.rect.y + context.cash.rect.h / 2).toBe(
+      context.idle.rect.y + context.idle.rect.h / 2,
+    );
+    const group = layout.groups[0];
+    expect(group).toBeDefined();
+    for (const rect of [context.idle.rect, context.cash.rect]) {
+      expect(rect.x).toBeGreaterThanOrEqual((group?.rect.x ?? 0) + 16);
+      expect(right(rect)).toBeLessThanOrEqual(right(group?.rect ?? rect) - 16);
+      expect(bottom(rect)).toBeLessThan(layout.height - 24);
+      expect(right(rect)).toBeLessThan(layout.width - 24);
+    }
+    const inbound = layout.bridges.find((bridge) => bridge.direction === "inbound");
+    expect(centreX(inbound?.rect ?? context.idle.rect)).toBe(context.axisX);
+    expect(centreX(context.idle.rect)).toBe(context.axisX);
+    expect(context.axisX).not.toBe(centreX(group?.rect ?? context.idle.rect));
+    expect(context.idle.rect.y - bottom(inbound?.rect ?? context.idle.rect)).toBe(24);
+  });
+
+  it("declares Bridge to Idle to each branch, while native cash has no financial ports or routes", () => {
+    const layout = layoutGraph(localSolanaInput(2), EN);
+    const graph = layout.semantic;
+    expect(graph?.nodes.find((node) => node.id === "spoke-idle:solana")).toBeDefined();
+    expect(graph?.nodes.some((node) => node.id === "operating-cash:solana")).toBe(false);
+    expect(graph?.ports.some((port) => port.nodeId === "operating-cash:solana")).toBe(false);
+    const ports = new Map(graph?.ports.map((port) => [port.id, port]));
+    for (const index of [0, 1]) {
+      const bridgeLeg = graph?.connections.find(
+        (connection) => connection.id === `entry:idle:solana-chain-${index}`,
+      );
+      expect(ports.get(bridgeLeg?.sourcePortId ?? "")?.nodeId).toBe("bridge:solana");
+      expect(ports.get(bridgeLeg?.targetPortId ?? "")?.nodeId).toBe("spoke-idle:solana");
+      const branch = graph?.connections.find(
+        (connection) => connection.id === `stub:chain:solana-chain-${index}`,
+      );
+      expect(ports.get(branch?.sourcePortId ?? "")?.nodeId).toBe("spoke-idle:solana");
+    }
+    expect(graph && validateSemanticGraph(graph)).toEqual([]);
+    expect(
+      graph?.connections
+        .filter((connection) => connection.class === "principal" || connection.class === "income")
+        .every(
+          (connection) =>
+            ports.get(connection.sourcePortId)?.nodeId !== "spoke-idle:solana" &&
+            ports.get(connection.targetPortId)?.nodeId !== "spoke-idle:solana",
+        ),
+    ).toBe(true);
+  });
+
+  it.each([
+    0, 1, 3,
+  ])("keeps all declared lines outside every card with %s Solana chains", (count) => {
+    const layout = layoutGraph(localSolanaInput(count), EN);
+    const context = layout.spokeContexts?.[0];
+    expect(context).toBeDefined();
+    const cards = [
+      ...layout.spine,
+      ...layout.blocks,
+      ...layout.bridges,
+      ...(layout.feeSwaps ?? []),
+    ].map((node) => node.rect);
+    if (context) cards.push(context.idle.rect, context.cash.rect);
+    for (const edge of [...layout.edges, ...(layout.connections ?? [])]) {
+      for (let index = 1; index < edge.points.length; index += 1) {
+        const a = edge.points[index - 1],
+          b = edge.points[index];
+        if (!a || !b) throw new Error("missing segment");
+        for (const rect of cards)
+          expect(segmentCrossesCard(a, b, rect), `${edge.id} crosses ${JSON.stringify(rect)}`).toBe(
+            false,
+          );
+      }
+    }
+  });
+
+  it("keeps stable context ids across branch edits and removes them with the spoke", () => {
+    const one = layoutGraph(localSolanaInput(), EN);
+    const many = layoutGraph(localSolanaInput(3), EN);
+    expect(one.spokeContexts?.map((context) => [context.idle.id, context.cash.id])).toEqual([
+      ["spoke-idle:solana", "operating-cash:solana"],
+    ]);
+    expect(many.spokeContexts?.map((context) => [context.idle.id, context.cash.id])).toEqual(
+      one.spokeContexts?.map((context) => [context.idle.id, context.cash.id]),
+    );
+    const removed = layoutGraph({ ...localSolanaInput(), spokes: [] }, EN);
+    expect(removed.spokeContexts).toBeUndefined();
+    expect(removed.semantic?.nodes.some((node) => node.id === "spoke-idle:solana")).toBe(false);
+  });
+
+  it.each([
+    "before",
+    "after",
+  ])("reserves cash clearance with hub chains and an EVM spoke %s Solana", (order) => {
+    const input = localSolanaInput(3);
+    const solana = input.spokes[0];
+    if (!solana) throw new Error("missing spoke");
+    const evm = {
+      network: "base",
+      sharePct: 20,
+      chains: solana.chains.slice(0, 2).map((chain) => ({
+        ...chain,
+        id: `base:${chain.id}`,
+        steps: chain.steps.map((step) => ({ ...step, id: `base:${step.id}` })),
+      })),
+    };
+    input.hub.chains = solana.chains.slice(0, 1).map((chain) => ({
+      ...chain,
+      id: `hub:${chain.id}`,
+      steps: chain.steps.map((step) => ({ ...step, id: `hub:${step.id}` })),
+    }));
+    input.spokes = order === "before" ? [evm, solana] : [solana, evm];
+    const layout = layoutGraph(input, EN);
+    expect(layout.spokeContexts).toHaveLength(1);
+    expect(layout.semantic && validateSemanticGraph(layout.semantic)).toEqual([]);
+    for (let index = 1; index < layout.groups.length; index += 1) {
+      expect(layout.groups[index]?.rect.x).toBeGreaterThanOrEqual(
+        right(layout.groups[index - 1]?.rect ?? { x: 0, y: 0, w: 0, h: 0 }) + 40,
+      );
+    }
+    const cards = [
+      ...layout.spine,
+      ...layout.blocks,
+      ...layout.bridges,
+      ...(layout.feeSwaps ?? []),
+      ...(layout.spokeContexts ?? []).flatMap((context) => [context.idle, context.cash]),
+    ].map((node) => node.rect);
+    for (const edge of [...layout.edges, ...(layout.connections ?? [])]) {
+      for (let index = 1; index < edge.points.length; index += 1) {
+        const a = edge.points[index - 1],
+          b = edge.points[index];
+        if (!a || !b) throw new Error("missing segment");
+        for (const rect of cards)
+          expect(segmentCrossesCard(a, b, rect), `${edge.id} crosses ${JSON.stringify(rect)}`).toBe(
+            false,
+          );
+      }
+    }
+  });
+
+  it("leaves every standard fixture free of local context and preserves Solana defaults without opt-in", () => {
+    for (const [, fixture] of FIXTURES)
+      expect(layoutGraph(fixture.input, EN)).not.toHaveProperty("spokeContexts");
+    const input = localSolanaInput();
+    const standard = {
+      ...input,
+      spokes: input.spokes.map(({ context: _context, ...spoke }) => spoke),
+    };
+    expect(layoutGraph(standard, EN)).not.toHaveProperty("spokeContexts");
+    expect(layoutGraph(standard, EN).blocks[0]?.rect.y).toBe(LAYOUT.INNER_ROW_TOP);
   });
 });
