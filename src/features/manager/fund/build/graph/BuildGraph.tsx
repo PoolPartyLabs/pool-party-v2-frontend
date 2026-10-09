@@ -519,17 +519,17 @@ export const BuildGraph = memo(function BuildGraph({
               <div
                 data-canvas-interactive=""
                 data-operating-cash=""
-                className="relative flex size-full flex-col gap-2 rounded-lg bg-surface p-3"
+                className="relative flex size-full min-w-0 flex-col gap-1 rounded-lg bg-surface p-2.5"
               >
                 <div
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-0 rounded-[inherit] bg-chart-periwinkle/16"
                 />
                 <PieceStroke width={1} radius={16} className="text-chart-periwinkle/42" />
-                <h3 className="relative whitespace-nowrap font-medium text-foreground text-sm leading-[21px]">
+                <h3 className="relative min-w-0 break-words font-medium text-foreground text-[11px] leading-[14px]">
                   {copy.operatingCash}
                 </h3>
-                <div className="relative flex items-center gap-1 text-xs">
+                <div className="relative flex min-w-0 items-center gap-1 text-xs">
                   <BlockMark
                     logo="network"
                     markId={item.context.network}
@@ -539,14 +539,14 @@ export const BuildGraph = memo(function BuildGraph({
                   <span className="text-muted-foreground">{item.node.nativeSymbol}</span>
                   <span
                     data-native-amount=""
-                    className="ml-auto whitespace-nowrap text-[10px] text-foreground"
+                    className="ml-auto min-w-0 break-words text-right text-[10px] text-foreground leading-3"
                   >
                     {copy.notAvailable}
                   </span>
                 </div>
                 <div
                   data-native-value=""
-                  className="relative min-h-[18px] text-right text-[11px] text-muted-foreground leading-[18px]"
+                  className="relative min-w-0 break-words text-right text-[10px] text-muted-foreground leading-3"
                 >
                   {copy.notAvailable}
                 </div>

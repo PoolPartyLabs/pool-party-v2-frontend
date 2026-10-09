@@ -11,7 +11,10 @@
  * at the layout's position and size, with the piece and the state the handoff prescribes, and every
  * edge is drawn. jsdom lays nothing out, so a position is the inline style the renderer wrote.
  */
+
+import { NextIntlClientProvider } from "next-intl";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import frenchManager from "@/i18n/messages/fr/manager.json";
 import {
   BUILD_CANVAS_FIXTURES,
   type BuildCanvasFixture,
@@ -155,6 +158,26 @@ it("renders local spoke Idle and native cash at the declared Figma bounds", () =
   expect(cash.querySelector("[data-native-amount]")).toHaveTextContent("Not available");
   expect(cash.querySelector("[data-native-value]")).toHaveTextContent("Not available");
   expect(cash.querySelector("[data-native-value]")).not.toHaveTextContent("$");
+});
+
+// @rule POO-2301 R3/R5: translated cash labels stay inside the fixed 144x96 surface.
+it("wraps long French operating cash and unavailable labels within the compact surface", () => {
+  const props = localContextProps();
+  renderWithProviders(
+    <NextIntlClientProvider locale="fr" messages={{ manager: frenchManager }}>
+      <BuildGraph {...props} />
+    </NextIntlClientProvider>,
+  );
+  const cash = node("operating-cash:solana");
+  expect(cash.style.width).toBe("144px");
+  expect(cash.style.height).toBe("96px");
+  const heading = cash.querySelector("h3");
+  expect(heading).toHaveTextContent("Trésorerie opérationnelle");
+  expect(heading).toHaveClass("min-w-0", "break-words");
+  expect(heading).not.toHaveClass("whitespace-nowrap");
+  const amount = cash.querySelector("[data-native-amount]");
+  expect(amount).toHaveClass("min-w-0", "break-words");
+  expect(amount).not.toHaveClass("whitespace-nowrap");
 });
 
 // @rule POO-2301 R3/R6 and POO-2302 R2: cash has no financial handle or executable edge.
