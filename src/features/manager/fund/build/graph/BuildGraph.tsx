@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-059
  * @name BuildGraph
  * @implements-rules-version v2 (POO-2273); v1 (POO-2156 rules v1; POO-2210 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2237 rules v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a controlled renderer: every activation leaves through `onTarget` (and a
  *   spoke removal through `onRemoveSpoke`); the Build screen (PP-MGR-SCR-002, S7) maps them to the
  *   builder events, so nothing here tracks.
@@ -67,8 +68,10 @@
 import { useTranslations } from "next-intl";
 import {
   type CSSProperties,
+  cloneElement,
   memo,
   type ReactElement,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
@@ -78,6 +81,7 @@ import {
 } from "react";
 import { NetworkLogo } from "@/components/data-display/NetworkLogo";
 import { networkStableSymbol } from "@/lib/chains/config";
+import { BlockMark } from "../blocks/BlockMark";
 import { CANVAS_INTERACTIVE_ATTR } from "../canvas/useCanvasViewport";
 import type { GraphLayout, GraphTarget, SpineRole } from "../layout/graphTypes";
 import { GRAPH_TARGET_ATTR, targetKey } from "../layout/graphTypes";
@@ -106,6 +110,9 @@ import {
   SPINE_ICON,
   shareNumber,
 } from "./graphModel";
+import { useFinancialGraphEngine, useFinancialGraphPresentation } from "./ReactFlowGraph";
+import type { FinancialGraphDecoration, FinancialGraphPresentation } from "./reactFlowProjection";
+import { semanticNodeId } from "./semanticGraph";
 
 /** Public props for {@link BuildGraph} (coordinator plan section 3.5). */
 export interface BuildGraphProps {
@@ -117,6 +124,16 @@ export interface BuildGraphProps {
   describeFlow(blockId: string): FlowContent;
   /** The translated name of a network ("Robinhood Chain"). */
   networkName(network: string): string;
+  /** Local network binding supplies non-EVM symbols and logos without a global fallback. */
+  networkPresentation?(network: string):
+    | {
+        stableSymbol: string;
+        nativeSymbol: string;
+        logo?: ReactNode;
+        nativeAmount?: string | null;
+        nativeValueUsd?: string | null;
+      }
+    | undefined;
   /** The selected block (I5), or null. */
   selectedId: string | null;
   /** The keys (`targetKey`) of the templates and ports drawn active (I3: a menu open, a drag). */
@@ -233,7 +250,11 @@ function cardContent(
 ): BlockContent {
   let { title, caption } = content;
   if (content.state === "empty") {
-    const pool = place.kind === "uniswapV4Pool" || place.kind === "uniswapV3Pool";
+    const pool =
+      place.kind === "uniswapV4Pool" ||
+      place.kind === "uniswapV3Pool" ||
+      place.kind === "solanaOrcaPool" ||
+      place.kind === "solanaRaydiumPool";
     title = pool ? copy.noPoolYet(title) : copy.noAssetYet(title);
   } else if (content.state === "comingSoon") {
     caption = copy.comingSoon(caption);
@@ -317,11 +338,26 @@ function placement(item: GraphItem): CSSProperties {
 }
 
 /** The attributes and style of an item's wrapper. */
-function wrapperProps(item: GraphItem, motion: boolean): Record<string, unknown> {
+function wrapperProps(
+  item: GraphItem,
+  motion: boolean,
+  engineSurface = false,
+): Record<string, unknown> {
   const target = itemTarget(item);
   const style: CSSProperties = {
     position: "absolute",
     ...placement(item),
+    ...(engineSurface
+      ? {
+          position: "relative",
+          left: 0,
+          top: 0,
+          height: undefined,
+          minHeight: ["spine", "block", "bridge", "feeSwap", "template"].includes(item.type)
+            ? (placement(item).height as number)
+            : undefined,
+        }
+      : {}),
     // A group sets no z-index: it must not trap its chip in a stacking context of its own.
     zIndex: item.type === "group" ? undefined : itemLayer(item),
     transition: motion ? MOVE : undefined,
@@ -378,12 +414,25 @@ function CardSlot({
   );
 }
 
+/** Match explicit renderer identities to semantic declarations, never by coordinate proximity. */
+function financialItemId(item: GraphItem): string | null {
+  if (item.type === "spine") return `node:${item.key}`;
+  if (item.type === "block") return semanticNodeId("block", item.node.id);
+  if (item.type === "bridge" || item.type === "feeSwap") return item.key;
+  if (item.type === "template") {
+    const suffix = item.key.match(/#\d+$/)?.[0] ?? "";
+    return `node:template:${item.node.target.kind === "addNetwork" ? "addNetwork" : item.node.target.network}${suffix}`;
+  }
+  return null;
+}
+
 /** The graph of the Build canvas, in graph coordinates (see the file header). */
 export const BuildGraph = memo(function BuildGraph({
   layout,
   describeBlock,
   describeFlow,
   networkName,
+  networkPresentation,
   selectedId,
   activeTargetKeys,
   onTarget,
@@ -391,6 +440,7 @@ export const BuildGraph = memo(function BuildGraph({
   onRemoveBlock,
   invalidNetworks,
 }: BuildGraphProps) {
+  const engine = useFinancialGraphEngine();
   const copy = useGraphCopy();
   const motion = useMotion();
   const [hoveredEdge, setHoveredEdge] = useState<string | null>(null);
@@ -417,9 +467,9 @@ export const BuildGraph = memo(function BuildGraph({
 
   // Every node but the share labels: they do not depend on the hover, so a hover keeps them.
   const nodes = useMemo(() => {
-    const out = new Map<string, ReactElement>();
+    const out = new Map<string, ReactElement<Record<string, unknown>>>();
     for (const item of items) {
-      const wrapper = wrapperProps(item, motion);
+      const wrapper = wrapperProps(item, motion, engine && financialItemId(item) !== null);
       switch (item.type) {
         case "spine": {
           const { role, locked } = item.node;
@@ -444,7 +494,10 @@ export const BuildGraph = memo(function BuildGraph({
               <FlowPill
                 content={{
                   text: copy.feeSwap,
-                  tooltip: copy.feeSwapTooltip(networkStableSymbol(item.node.network)),
+                  tooltip: copy.feeSwapTooltip(
+                    networkPresentation?.(item.node.network)?.stableSymbol ??
+                      networkStableSymbol(item.node.network),
+                  ),
                   icon: "swap",
                 }}
               />
@@ -456,7 +509,21 @@ export const BuildGraph = memo(function BuildGraph({
           const block = item.node;
           if (block.family === "position") {
             const content = cardContent(
-              describeBlock(block.id),
+              {
+                ...describeBlock(block.id),
+                ...(block.kind.startsWith("solana")
+                  ? {
+                      mark: (
+                        <BlockMark
+                          logo="protocol"
+                          markId={block.kind}
+                          name={describeBlock(block.id).title}
+                          size={16}
+                        />
+                      ),
+                    }
+                  : {}),
+              },
               {
                 kind: block.kind,
                 network: networkName(block.network),
@@ -481,7 +548,18 @@ export const BuildGraph = memo(function BuildGraph({
               item.key,
               <div key={item.key} {...wrapper}>
                 <FlowPill
-                  content={describeFlow(block.id)}
+                  content={
+                    block.returnConversionOf
+                      ? {
+                          text: copy.feeSwap,
+                          tooltip: copy.feeSwapTooltip(
+                            networkPresentation?.(block.network)?.stableSymbol ??
+                              networkStableSymbol(block.network),
+                          ),
+                          icon: "swap",
+                        }
+                      : describeFlow(block.id)
+                  }
                   selected={block.id === selectedId}
                   onActivate={
                     block.kind === "swap" && !block.auto
@@ -519,7 +597,10 @@ export const BuildGraph = memo(function BuildGraph({
               <FlowPill
                 content={{
                   text: copy.bridge,
-                  tooltip: copy.bridgeTooltip(networkStableSymbol(network), networkName(network)),
+                  tooltip: copy.bridgeTooltip(
+                    networkPresentation?.(network)?.stableSymbol ?? networkStableSymbol(network),
+                    networkName(network),
+                  ),
                   icon: "bridge",
                 }}
               />
@@ -535,10 +616,18 @@ export const BuildGraph = memo(function BuildGraph({
             item.key,
             <div key={item.key} {...wrapper}>
               <SpokeGroup
+                part={engine ? "body" : "all"}
                 width={group.rect.w}
                 height={group.rect.h}
                 networkName={name}
-                networkLogo={<NetworkLogo network={group.network} name={name} size={12} />}
+                networkLogo={
+                  networkPresentation?.(group.network)?.logo ??
+                  (group.network === "solana" ? (
+                    <BlockMark logo="network" markId="solana" name={name} size={12} />
+                  ) : (
+                    <NetworkLogo network={group.network} name={name} size={12} />
+                  ))
+                }
                 chipTooltip={name}
                 invalid={invalidNetworks.has(group.network)}
                 invalidLabel={copy.invalid}
@@ -547,6 +636,15 @@ export const BuildGraph = memo(function BuildGraph({
               />
             </div>,
           );
+          if (engine) {
+            const body = out.get(item.key);
+            if (body) {
+              const groupSurface = body.props.children as ReactElement<{
+                part?: "all" | "body" | "chip";
+              }>;
+              out.set(`chip:${item.key}`, cloneElement(groupSurface, { part: "chip" }));
+            }
+          }
           break;
         }
         case "template": {
@@ -619,6 +717,8 @@ export const BuildGraph = memo(function BuildGraph({
     return out;
   }, [
     items,
+    engine,
+    networkPresentation,
     layout.hubNetwork,
     motion,
     copy,
@@ -640,6 +740,97 @@ export const BuildGraph = memo(function BuildGraph({
     setHoveredEdge((current) => (hovered ? edgeId : current === edgeId ? null : current));
   }, []);
 
+  const renderedItems = useMemo(
+    () =>
+      items.map((item) => {
+        if (item.type !== "label") return nodes.get(item.key) ?? null;
+        const label = item.node;
+        const edgeId = item.edgeId;
+        return (
+          <div key={item.key} {...wrapperProps(item, motion)}>
+            <ShareLabel
+              text={formatShare(label.pct)}
+              tooltip={copy.share(shareNumber(label.pct))}
+              highlighted={hoveredEdge === edgeId}
+              onActivate={(anchor) => report(label.target, anchor)}
+              onHoverChange={(hovered) => hoverLabel(edgeId, hovered)}
+            />
+          </div>
+        );
+      }),
+    [items, nodes, copy, hoveredEdge, motion, report, hoverLabel],
+  );
+  const highlightedIds = useMemo(
+    () =>
+      new Set(
+        layout.hoverRoutes?.find((route) => route.connectionIds.includes(hoveredEdge ?? ""))
+          ?.connectionIds ?? (hoveredEdge ? [hoveredEdge] : []),
+      ),
+    [layout.hoverRoutes, hoveredEdge],
+  );
+  const presentation = useMemo<FinancialGraphPresentation>(() => {
+    const surfaces = new Map<string, ReactNode>();
+    const decorations: FinancialGraphDecoration[] = [];
+    const readingOrder: string[] = [];
+    for (const [index, item] of items.entries()) {
+      const surface = renderedItems[index];
+      if (!surface) continue;
+      const financialId = financialItemId(item);
+      if (financialId) {
+        surfaces.set(financialId, surface);
+        readingOrder.push(financialId);
+      } else {
+        const id = `decoration:${item.key}`;
+        // The positioned surface keeps its graph-coordinate wrapper; its engine origin is zero.
+        decorations.push({
+          id,
+          surface,
+          position: { x: 0, y: 0 },
+          width: 0,
+          height: 0,
+          zIndex: itemLayer(item),
+          interactive: INTERACTIVE_TYPES.has(item.type),
+        });
+        readingOrder.push(id);
+        if (item.type === "group") {
+          const chipSurface = nodes.get(`chip:${item.key}`);
+          if (chipSurface) {
+            const chipId = `decoration:chip:${item.key}`;
+            decorations.push({
+              id: chipId,
+              surface: chipSurface,
+              position: { x: item.node.rect.x, y: item.node.rect.y },
+              width: 0,
+              height: 0,
+              zIndex: GRAPH_LAYER.labels,
+              // Only the intrinsic chip occupies this zero-size decoration. A hull-sized
+              // wrapper here would intercept cards and prevent panning across the spoke.
+              interactive: true,
+            });
+            readingOrder.push(chipId);
+          }
+        }
+      }
+    }
+    return {
+      semantic: layout.semantic ?? {
+        nodes: [],
+        ports: [],
+        junctions: [],
+        segments: [],
+        connections: [],
+      },
+      paths: connections,
+      surfaces,
+      decorations,
+      readingOrder,
+      highlightedIds,
+      motion,
+      onEdgeHoverChange: setHoveredEdge,
+    };
+  }, [items, nodes, renderedItems, layout.semantic, connections, highlightedIds, motion]);
+  useFinancialGraphPresentation(presentation);
+  if (engine) return null;
   return (
     <div
       data-build-graph=""
@@ -656,34 +847,12 @@ export const BuildGraph = memo(function BuildGraph({
           height={layout.height}
           edges={edges}
           connections={connections}
-          highlightedIds={
-            new Set(
-              layout.hoverRoutes?.find((route) => route.connectionIds.includes(hoveredEdge ?? ""))
-                ?.connectionIds ?? (hoveredEdge ? [hoveredEdge] : []),
-            )
-          }
+          highlightedIds={highlightedIds}
           highlightedId={hoveredEdge}
           onEdgeHoverChange={setHoveredEdge}
         />
       </div>
-      {items.map((item) => {
-        if (item.type !== "label") return nodes.get(item.key) ?? null;
-        const label = item.node;
-        // The item's own stub: two spokes on one network each light their own line (F6).
-        const edgeId = item.edgeId;
-        return (
-          <div key={item.key} {...wrapperProps(item, motion)}>
-            <ShareLabel
-              text={formatShare(label.pct)}
-              tooltip={copy.share(shareNumber(label.pct))}
-              highlighted={hoveredEdge === edgeId}
-              // POO-2237: a spoke label opens its allocation editor through the existing target.
-              onActivate={(anchor) => report(label.target, anchor)}
-              onHoverChange={(hovered) => hoverLabel(edgeId, hovered)}
-            />
-          </div>
-        );
-      })}
+      {renderedItems}
     </div>
   );
 });
