@@ -19,6 +19,40 @@ const blocks: PreviewBlock[] = [
   { id: "b", protocol: "orca", allocationBps: 3000, pair: "SOL / USDC" },
 ];
 const base = { blocks, selectedId: "a", active: true, onClose: vi.fn() };
+
+// @rule POO-2301 R5/R8: a shared chain has one allocation owner and independent downstream drafts.
+it("counts a shared chain once and keeps downstream allocation read-only", async () => {
+  const shared = blocks.map((block) => ({ ...block, allocationBps: 6000 }));
+  renderWithProviders(
+    <SolanaLocalManageHost
+      {...base}
+      blocks={shared}
+      selectedId="b"
+      allocations={{
+        a: { groupId: "chain", editable: true },
+        b: { groupId: "chain", editable: false },
+      }}
+    />,
+  );
+  expect(screen.queryByText("The total allocation cannot exceed 100%.")).toBeNull();
+  const field = screen.getByRole("textbox", { name: "Allocation (%)" });
+  expect(field).toHaveAttribute("readonly");
+  expect(field).toHaveValue("60");
+  await userEvent.type(field, "9");
+  expect(field).toHaveValue("60");
+});
+
+// @rule POO-2301 R8: phase-leave discard is explicit; hiding alone preserves each draft.
+it("discards each draft only when the parent confirms a discard revision", async () => {
+  const view = renderWithProviders(<SolanaLocalManageHost {...base} />);
+  await allocation("40");
+  view.rerender(<SolanaLocalManageHost {...base} active={false} />);
+  view.rerender(<SolanaLocalManageHost {...base} />);
+  expect(screen.getByRole("textbox", { name: "Allocation (%)" })).toHaveValue("40");
+  view.rerender(<SolanaLocalManageHost {...base} active={false} discardRevision={1} />);
+  view.rerender(<SolanaLocalManageHost {...base} discardRevision={1} />);
+  expect(screen.getByRole("textbox", { name: "Allocation (%)" })).toHaveValue("30");
+});
 async function allocation(value: string) {
   const input = screen.getByRole("textbox", { name: "Allocation (%)" });
   await userEvent.clear(input);

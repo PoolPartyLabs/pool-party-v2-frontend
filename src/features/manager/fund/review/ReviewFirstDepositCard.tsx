@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-076 (POO-2188)
  * @name ReviewFirstDepositCard
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2301 local intent presentation)
  * @analytics-events none: the Review page emits field events.
  * @i18n-namespace manager
  * Precise USDC seed input, field reasons and pre-signing whole-share estimates.
@@ -9,6 +10,7 @@
 "use client";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils/cn";
@@ -23,6 +25,8 @@ import {
   seedReason,
 } from "./reviewForm";
 export interface ReviewFirstDepositCardProps {
+  /** Editable seed intention without wallet reads, signing or an initial share price. */ localVisual?: boolean;
+  /** Reports an attempt to use unavailable Max. */ onMaxBlocked?: () => void;
   /** Typed decimal USDC amount. */ seed: string;
   /** Decimal minimum first deposit. */ minimum: string;
   /** Raw wallet USDC, null until read. */ balance: bigint | null;
@@ -41,32 +45,62 @@ export function ReviewFirstDepositCard({
   onMax,
   error,
   className,
+  localVisual = false,
+  onMaxBlocked,
 }: ReviewFirstDepositCardProps) {
   const t = useTranslations("manager.fundBuilder.review");
   const all = useTranslations("manager");
   const locale = useLocale();
-  const reason = seedReason({ seed, minimum, balance, preview });
-  const message = error ?? (reason ? all(REVIEW_REASON_KEYS[reason]) : undefined);
+  const unavailable = all("solanaPreview.marketUnavailable");
+  const reason = seedReason({
+    seed,
+    minimum,
+    balance: localVisual ? null : balance,
+    preview: localVisual ? null : preview,
+  });
+  const message =
+    error ??
+    (reason && !(localVisual && reason === "balanceUnread")
+      ? all(REVIEW_REASON_KEYS[reason])
+      : undefined);
   const min = parseUsdc(minimum);
   return (
     <Card className={cn("flex flex-col gap-4 rounded-[20px] p-4", className)}>
       <div>
         <h3 className="text-sm font-medium">{t("firstDepositTitle")}</h3>
-        <p className="mt-1 text-xs text-muted-foreground">{t("firstDepositCaption")}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {localVisual ? unavailable : t("firstDepositCaption")}
+        </p>
       </div>
       <div aria-live="polite" className="flex items-center justify-end gap-2 text-xs">
         <span className="text-muted-foreground">{t("balance")}</span>
         <span className="font-mono tabular-nums">
-          {balance === null ? t("unavailable") : `${formatUsdc(balance, locale)} USDC`}
+          {localVisual
+            ? unavailable
+            : balance === null
+              ? t("unavailable")
+              : `${formatUsdc(balance, locale)} USDC`}
         </span>
-        <button
-          type="button"
-          className="font-medium text-primary focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-40"
-          onClick={onMax}
-          disabled={balance === null}
-        >
-          {t("max")}
-        </button>
+        {localVisual ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-auto p-0 font-medium text-primary"
+            blocked
+            onBlockedClick={onMaxBlocked}
+          >
+            {t("max")}
+          </Button>
+        ) : (
+          <button
+            type="button"
+            className="font-medium text-primary focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-40"
+            onClick={onMax}
+            disabled={balance === null}
+          >
+            {t("max")}
+          </button>
+        )}
       </div>
       <div className="relative">
         <div className="pointer-events-none absolute left-4 top-4 z-10 flex items-center gap-2">
@@ -86,9 +120,11 @@ export function ReviewFirstDepositCard({
         />
       </div>
       <p className="text-xs text-muted-foreground">
-        {t("seedHelp", { minimum: min === null ? t("unavailable") : formatUsdc(min, locale) })}
+        {localVisual
+          ? unavailable
+          : t("seedHelp", { minimum: min === null ? t("unavailable") : formatUsdc(min, locale) })}
       </p>
-      {preview && (
+      {!localVisual && preview && (
         <div aria-live="polite" className="rounded-xl bg-surface-raised p-3">
           <h4 className="mb-2 text-xs font-medium">{t("previewTitle")}</h4>
           <dl className="space-y-2 text-xs">

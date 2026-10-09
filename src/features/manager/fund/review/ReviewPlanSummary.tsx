@@ -12,10 +12,16 @@ import { planOf } from "../build/plan/buildPlan";
 import type { MandateDraft } from "../mandateDraft";
 export interface ReviewPlanSummaryProps {
   draft: MandateDraft;
+  /** A local plan establishes no settled amounts or post-launch constraints. */ localVisual?: boolean;
   onEditMandate: () => void;
   onEditBuild: () => void;
 }
-export function ReviewPlanSummary({ draft, onEditMandate, onEditBuild }: ReviewPlanSummaryProps) {
+export function ReviewPlanSummary({
+  draft,
+  onEditMandate,
+  onEditBuild,
+  localVisual = false,
+}: ReviewPlanSummaryProps) {
   const t = useTranslations("manager.fundBuilder.review");
   const all = useTranslations("manager");
   const locale = useLocale();
@@ -72,12 +78,18 @@ export function ReviewPlanSummary({ draft, onEditMandate, onEditBuild }: ReviewP
         </Button>
       </div>
       <p className="text-sm">{t("positionCount", { count: positions.length })}</p>
-      <p className="text-xs text-muted-foreground">{t("allocationIntent")}</p>
+      <p className="text-xs text-muted-foreground">
+        {localVisual ? all("solanaPreview.marketUnavailable") : t("allocationIntent")}
+      </p>
       <div className="space-y-2 border-t border-border pt-4 text-xs">
-        <h4 className="font-medium">{t("fixedTitle")}</h4>
-        <p className="text-muted-foreground">{t("fixedSummary")}</p>
-        <h4 className="font-medium">{t("decreaseTitle")}</h4>
-        <p className="text-muted-foreground">{t("decreaseSummary")}</p>
+        <h4 className="font-medium">{localVisual ? t("minimumLabel") : t("fixedTitle")}</h4>
+        <p className="text-muted-foreground">
+          {localVisual ? all("solanaPreview.marketUnavailable") : t("fixedSummary")}
+        </p>
+        <h4 className="font-medium">{localVisual ? t("managementLabel") : t("decreaseTitle")}</h4>
+        <p className="text-muted-foreground">
+          {localVisual ? all("solanaPreview.marketUnavailable") : t("decreaseSummary")}
+        </p>
       </div>
     </Card>
   );

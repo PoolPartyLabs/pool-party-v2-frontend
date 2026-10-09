@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-063
  * @name PanelSelect
  * @implements-rules-version v1 (POO-2187 rules v1)
+ * @implements-rules-version v1 (POO-2301 exact local token identity)
  * @analytics-events none, a presentational control. A choice changes the panel's draft only, and
  *   reaches analytics as a field of `builder_block_applied` (PP-MGR-SCR-002 emits it on Apply).
  *
@@ -22,8 +23,9 @@
  * active row, Home and End jump, Enter chooses, Escape closes and focus returns to the button. A
  * press outside closes it. Props only: the strings and the options arrive ready.
  *
- * Review of PR #54: ids are compared WITHOUT case (M3: the ids are hex keys, and the stored key is
- * the mandate row's canonical one), and an option can be disabled with the reason shown under its
+ * Review of PR #54: hex ids are compared WITHOUT case by default (M3: the stored key is the
+ * mandate row's canonical one). Base58 callers opt into exact identity (POO-2301 R4).
+ * An option can be disabled with the reason shown under its
  * name (M2: a reserve that is not usable); a disabled option cannot be chosen and the arrows skip it.
  *
  * {@link TokenLogos} (the one or two token logos of a row) lives here and is shared with the pick
@@ -41,6 +43,8 @@ import { NUMERIC_LABEL, PANEL_FOCUS_RING, PANEL_LINK } from "./panelStyles";
 export interface PanelTokenLogo {
   symbol: string;
   network?: string | null;
+  /** A known local mark; omit to use the existing symbol/network resolver. */
+  logoUrl?: string | null;
 }
 
 /** One or two token logos; the second overlaps the first with a ring of the surface under it. */
@@ -66,7 +70,12 @@ export function TokenLogos({
             index > 0 ? cn(size === 24 ? "-ml-2 ring-2" : "-ml-1.5 ring-[1.5px]", ringClass) : null,
           )}
         >
-          <TokenLogo symbol={logo.symbol} network={logo.network} className={box} />
+          {logo.logoUrl ? (
+            // biome-ignore lint/performance/noImgElement: decorative local mark supplied by the caller.
+            <img src={logo.logoUrl} alt="" className={cn("shrink-0 rounded-full", box)} />
+          ) : (
+            <TokenLogo symbol={logo.symbol} network={logo.network} className={box} />
+          )}
         </span>
       ))}
     </span>
@@ -95,9 +104,9 @@ export interface PanelSelectOption {
   disabledReason?: string;
 }
 
-/** Two option ids are the same key: hex keys are compared without case (review M3). */
-function sameId(a: string, b: string | null): boolean {
-  return b !== null && a.toLowerCase() === b.toLowerCase();
+/** Hex retains the legacy comparison; Base58 is an exact identity (POO-2301 R4). */
+function sameId(a: string, b: string | null, comparison: "case-insensitive" | "exact"): boolean {
+  return b !== null && (comparison === "exact" ? a === b : a.toLowerCase() === b.toLowerCase());
 }
 
 /** The next enabled option from `from`, stepping by `step`; `from` itself when none is left. */
@@ -115,6 +124,8 @@ export interface PanelSelectProps {
   options: readonly PanelSelectOption[];
   /** The selected option's id. */
   value: string | null;
+  /** Base58 keys require exact case; EVM callers keep the default hex comparison. */
+  idComparison?: "case-insensitive" | "exact";
   /** A row was chosen: write it to the draft (P11). */
   onChange(id: string): void;
   /** The footer link row: "Need another pool?" + "Edit mandate · Pools". */
@@ -145,12 +156,13 @@ export function PanelSelect({
   labelId,
   options,
   value,
+  idComparison = "case-insensitive",
   onChange,
   footer,
   defaultOpen = false,
 }: PanelSelectProps) {
   const [open, setOpen] = useState(defaultOpen);
-  const selectedIndex = options.findIndex((option) => sameId(option.id, value));
+  const selectedIndex = options.findIndex((option) => sameId(option.id, value, idComparison));
   const [active, setActive] = useState(Math.max(0, selectedIndex));
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -190,7 +202,7 @@ export function PanelSelect({
     const option = options[index];
     // A disabled option cannot be chosen (M2): the list stays open on it.
     if (!option || option.disabledReason) return;
-    if (!sameId(option.id, value)) onChange(option.id);
+    if (!sameId(option.id, value, idComparison)) onChange(option.id);
     close();
   };
 
@@ -269,7 +281,7 @@ export function PanelSelect({
             className="flex flex-col gap-0.5 outline-none"
           >
             {options.map((option, index) => {
-              const isSelected = sameId(option.id, value);
+              const isSelected = sameId(option.id, value, idComparison);
               const disabled = Boolean(option.disabledReason);
               return (
                 // biome-ignore lint/a11y/useKeyWithClickEvents: the listbox owns the keyboard (aria-activedescendant); a row is chosen with Enter there.

@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-075 (POO-2188)
  * @name ReviewTermsCard
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none: the Review page emits field events.
  * @i18n-namespace manager
  * Immutable investor terms and the separately sourced protocol flow fee.
@@ -15,10 +16,11 @@ import { cn } from "@/lib/utils/cn";
 import { FeeStepper, type FeeStepperProps } from "./ReviewFeesCard";
 import { bpsToPercentText, normalizeUsdcInput, sanitizeUsdcInput } from "./reviewForm";
 export interface ReviewTermsCardProps {
+  /** Local numerical intentions do not establish investor access or withdrawal terms. */ localVisual?: boolean;
   /** Decimal USDC minimum. */ minimum: string;
   /** Instant withdrawal fee in basis points. */ payoutFeeBps: number;
   /** Flow rate provenance from the headless Review hook. */ feeConfiguration: {
-    flowFeeBps: number;
+    flowFeeBps: number | null;
     flowSource: "fallback" | "fund-detail";
   };
   /** Receives sanitized USDC text. */ onMinimumChange: (value: string) => void;
@@ -36,19 +38,27 @@ export function ReviewTermsCard({
   minimumError,
   payoutError,
   className,
+  localVisual = false,
 }: ReviewTermsCardProps) {
   const t = useTranslations("manager.fundBuilder.review");
+  const all = useTranslations("manager");
+  const unavailable = all("solanaPreview.marketUnavailable");
   const locale = useLocale();
   const [text, setText] = useState(minimum);
   useEffect(() => setText(minimum), [minimum]);
-  const fee = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(
-    Number(bpsToPercentText(feeConfiguration.flowFeeBps)),
-  );
+  const fee =
+    feeConfiguration.flowFeeBps === null
+      ? t("unavailable")
+      : new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(
+          Number(bpsToPercentText(feeConfiguration.flowFeeBps)),
+        );
   return (
     <Card className={cn("flex flex-col gap-4 rounded-[20px] p-4", className)}>
       <div>
         <h3 className="text-sm font-medium">{t("termsTitle")}</h3>
-        <p className="mt-1 text-xs text-muted-foreground">{t("termsCaption")}</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {localVisual ? unavailable : t("termsCaption")}
+        </p>
       </div>
       <div>
         <div className="flex items-start justify-between gap-4">
@@ -56,7 +66,9 @@ export function ReviewTermsCard({
             <label htmlFor="review-minimum" className="text-sm font-medium">
               {t("minimumLabel")}
             </label>
-            <p className="mt-1 text-xs text-muted-foreground">{t("minimumHelp")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {localVisual ? unavailable : t("minimumHelp")}
+            </p>
           </div>
           <div className="relative w-44 shrink-0">
             <Input
@@ -88,7 +100,9 @@ export function ReviewTermsCard({
           <label htmlFor="review-payoutFeeBps" className="text-sm font-medium">
             {t("instantLabel")}
           </label>
-          <p className="mt-1 text-xs text-muted-foreground">{t("instantHelp")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {localVisual ? unavailable : t("instantHelp")}
+          </p>
         </div>
         <FeeStepper
           field="payoutFeeBps"
@@ -101,13 +115,21 @@ export function ReviewTermsCard({
       <div className="flex justify-between gap-4 border-t border-border pt-4">
         <div>
           <p className="text-sm font-medium">{t("accessLabel")}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{t("accessHelp")}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {localVisual ? unavailable : t("accessHelp")}
+          </p>
         </div>
-        <span className="text-sm">{t("public")}</span>
+        <span className="text-sm">{localVisual ? unavailable : t("public")}</span>
       </div>
       <div className="border-t border-border pt-4 text-xs text-muted-foreground">
-        <p>{t("flowFee", { fee })}</p>
-        {feeConfiguration.flowSource === "fallback" && (
+        <p>
+          {localVisual
+            ? unavailable
+            : feeConfiguration.flowFeeBps === null
+              ? t("unavailable")
+              : t("flowFee", { fee })}
+        </p>
+        {!localVisual && feeConfiguration.flowSource === "fallback" && (
           <p className="mt-1 font-medium">{t("estimatedRate")}</p>
         )}
       </div>

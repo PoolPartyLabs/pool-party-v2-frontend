@@ -47,6 +47,10 @@ export interface SolanaLocalManageHostProps {
   onDirtyChange?(dirty: boolean): void;
   /** Returns true only when the drawing owner accepts this config. Financial reads remain independent. */
   onApplyDrawing?(localId: string, config: SolanaManageConfig): boolean;
+  /** Shared Build allocation ownership; omitted retains standalone per-instance budgets. */
+  allocations?: Readonly<Record<string, { groupId: string; editable: boolean }>>;
+  /** Explicit phase-leave discard, never used by selection or visibility changes. */
+  discardRevision?: number;
 }
 export function SolanaLocalManageHost({
   blocks,
@@ -56,6 +60,8 @@ export function SolanaLocalManageHost({
   onIntent,
   onDirtyChange,
   onApplyDrawing,
+  allocations: allocationOwners,
+  discardRevision = 0,
 }: SolanaLocalManageHostProps) {
   const t = useTranslations("manager.solanaPreview");
   const root = useRef<HTMLElement>(null);
@@ -70,6 +76,12 @@ export function SolanaLocalManageHost({
     [blocks],
   );
   const [state, dispatch] = useReducer(solanaManageReducer, inputs, createSolanaManageState);
+  const discarded = useRef(discardRevision);
+  useEffect(() => {
+    if (discarded.current === discardRevision) return;
+    discarded.current = discardRevision;
+    for (const localId of Object.keys(state.instances)) dispatch({ type: "discard", localId });
+  }, [discardRevision, state.instances]);
   useEffect(() => {
     dispatch({ type: "sync-drawing", inputs });
   }, [inputs]);
@@ -93,9 +105,9 @@ export function SolanaLocalManageHost({
   useEffect(() => {
     onDirtyChange?.(dirty);
   }, [dirty, onDirtyChange]);
-  const allocations = instances.map((instance) =>
-    parseAllocation(instance.draft.config.allocation),
-  );
+  const allocations = instances
+    .filter((instance) => allocationOwners?.[instance.localId]?.editable !== false)
+    .map((instance) => parseAllocation(instance.draft.config.allocation));
   const allocationsValid = allocations.every((allocation) => allocation !== null);
   const aggregateAllowed =
     allocationsValid &&
@@ -105,6 +117,12 @@ export function SolanaLocalManageHost({
     if (!("localId" in action)) return;
     const owner = state.instances[action.localId];
     if (!owner) return;
+    if (
+      action.type === "edit" &&
+      allocationOwners?.[action.localId]?.editable === false &&
+      action.patch.allocation !== undefined
+    )
+      return;
     if (action.type === "choose" && !aggregateAllowed) {
       blocked(owner.protocol);
       return;
@@ -123,13 +141,15 @@ export function SolanaLocalManageHost({
     if (!selected || !onApplyDrawing) return;
     const view = selectSolanaManageView(state, selected.localId, "");
     // Apply writes one drawing instance; other unapplied drafts cannot fund that write.
-    const drawingAllocations = blocks.map((block) =>
-      parseAllocation(
-        block.id === selected.localId
-          ? selected.draft.config.allocation
-          : allocationText(block.allocationBps),
-      ),
-    );
+    const drawingAllocations = blocks
+      .filter((block) => allocationOwners?.[block.id]?.editable !== false)
+      .map((block) =>
+        parseAllocation(
+          block.id === selected.localId
+            ? selected.draft.config.allocation
+            : allocationText(block.allocationBps),
+        ),
+      );
     const drawingAllowed =
       blocks.some((block) => block.id === selected.localId) &&
       drawingAllocations.every((allocation) => allocation !== null) &&
@@ -198,6 +218,7 @@ export function SolanaLocalManageHost({
             rangeContext={null}
             onAction={act}
             actionAllowed={aggregateAllowed}
+            allocationReadOnly={allocationOwners?.[instance.localId]?.editable === false}
             onBlocked={() => blocked(instance.protocol)}
             onReviewIntent={() => onIntent?.(instance.protocol, "review")}
           />

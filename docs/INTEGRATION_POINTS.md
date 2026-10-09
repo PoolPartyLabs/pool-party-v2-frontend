@@ -399,3 +399,15 @@ The ordinary mandate/catalog excludes local protocols. Reducers validate selecte
 ## Local Solana Idle and operating cash, October 9, 2026 (POO-2301 v1)
 
 Only toLayoutInput(plan, { runtime: 'solana-local' }) opts the Solana spoke into Idle and native operating cash. Standard Build graphs do not gain cash. SOL cash is a144x96 decoration, separate from the236x62 semantic USDC Idle node; no financial handle/edge, balance, mint or USD amount is fabricated. Both monetary readings stay Not available. POO-2239/2240/2261/2262 retain canonical account, token-program, native balance and independent USD/freshness contracts.
+
+
+## Shared local Solana panels and Review, October 9, 2026 (POO-2301 v1)
+
+`SolanaBuilderPanelBodies.tsx` (PP-MGR-CMP-101) reuses the shared Configure shell, PanelSelect, Allocation and the delivered range/Holding/Kamino presenters. Descriptor choices are local intentions, with no pool, reserve, range, balance or APY source. Positive LP allocation displays unavailable range inspection; zero allocation defers it. Jupiter uses exact case-sensitive Base58 option identity and the existing token-logo presentation. Standard EVM bodies and selector defaults are preserved.
+
+`solanaBuildManageBinding.ts` (PP-MGR-LIB-076) maps applied local instances and validates the entire candidate plan against the current mandate before an acknowledged local Apply. Only the chain's first position owns its allocation. Hidden drafts cannot finance another write. `useSolanaBuilderDraft.ts` (PP-MGR-HOK-024) stores acknowledged state in component memory only; it imports the EVM hook contract as a type and performs no API, wallet or browser-storage operation.
+
+`LocalSolanaReview.tsx` (PP-MGR-CMP-102) reuses the V2 layout/cards with local numerical intentions. It never mounts the EVM launch driver, balance reads, upload/file-picker or signing actions. Unavailable upload, Max and Launch remain focusable blocked intents and emit solana_preview_blocked. EVM helper text and financial promises are retained only in the standard presentation. POO-2239/2240/2261/2262 retain canonical reads, prices/quotes, custody, authority, settlement and recovery. Route activation follows separately.
+
+
+Current materialized panel/Review release census: 537 markers across 310 files in src, including tests/stories, derived from this tree. Historical counts above describe earlier releases.

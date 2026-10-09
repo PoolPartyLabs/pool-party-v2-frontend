@@ -2,6 +2,7 @@
  * @id PP-MGR-HOK-014
  * @name usePanelDraft
  * @implements-rules-version v1 (POO-2187 rules v1); POO-2237 rules v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none emitted here: every outcome leaves through `onEvent` as a
  *   {@link PanelDraftEvent} (configured, applied with the fields changed, discarded, leaveBlocked,
  *   blocked with the reducer's reason). The Build screen (PP-MGR-SCR-002) maps them to
@@ -41,18 +42,17 @@ import type { RefusedChange, SelectionGuard } from "../blocks/useBlockSelection"
 import { spokePanelId } from "../plan/auxiliaryConfig";
 import { BLOCK_DEFAULT_SLIPPAGE_PCT } from "../plan/blockConfig";
 import type {
-  AaveBlockConfig,
   BlockKind,
   BuildPlan,
   PanelConfig,
   PlanBlockReason,
-  PoolBlockConfig,
+  PositionConfig,
 } from "../plan/buildPlan";
 import { findBlock } from "../plan/planDerive";
 import type { UseBuildPlanResult } from "../plan/useBuildPlan";
 
 /** A block's configuration, either shape. */
-export type PanelBlockConfig = PoolBlockConfig | AaveBlockConfig;
+export type PanelBlockConfig = PositionConfig;
 export type PanelTargetKind = BlockKind | "swap" | "spoke";
 
 /** What the panel edits for one block. */

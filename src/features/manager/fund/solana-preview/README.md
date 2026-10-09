@@ -92,3 +92,10 @@ The isolated panels tree passed 18 presenter and 13 host tests, scoped TypeScrip
 Production Configure and local Manage pass null origins/reads. There is no reserve selector, rate, amount, No debt claim or transaction inferred from the drawing. Supply/Withdraw/Claim and confirmation remain unavailable. Existing per-instance drafts, inline Review and hidden-pane retention remain unchanged; the Kamino-specific regression covers two independent drafts across selection/hiding. The section has no financial event or service call; the existing Screen/host owns bounded view/edit/blocked/error intents.
 
 The combined isolated tree passed 69 model/presenter/Configure/local-Manage tests, scoped TypeScript, changed-file Biome and all 11 locales. Two missing-Manage regressions reproduced failures on the preceding main before mounting. Independent GPT-6.1-sol review found no remaining blocker. Authored unavailable/narrow stories are not rendered browser acceptance. Live metrics, authority, risk projections and execution remain POO-2239/2240/2261/2262 and POO-2290; Murilo performs browser acceptance.
+
+
+## Shared V2 panel/Review foundation (POO-2301 v1, October 9, 2026)
+
+Murilo's October 8 correction supersedes the standalone preview described above. SolanaBuilderPanelBodies plugs the delivered protocol presenters into the same V2 Configure shell, using shared selectors and exact mint identity. LocalSolanaReview uses the same V2 cards and editable intention fields with unavailable live capability text. useSolanaBuilderDraft is an acknowledged in-memory binding, and solanaBuildManageBinding validates the current whole plan before local Apply. These artifacts are dormant until the separate shared Mandate/Build/Review route activation.
+
+The legacy independent preview is retained as a historical harness, not the final creation flow. Live data, wallet balances, quotes, upload and launch remain unavailable; this slice does not change the Solana mainnet gate. Default EVM selector/card behavior remains intact.

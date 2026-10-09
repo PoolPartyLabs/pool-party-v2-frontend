@@ -357,3 +357,10 @@ BLOCKING before real Solana data or operations under POO-2239/2240/2261/2262: ve
 ANSWERED for local canvas presentation only. USDC Idle denotes the financial flow; SOL operating cash is native-network context and has no financial connection. Missing native quantity and independent USD valuation are printed as Not available. No balance, conversion, reserve assignment, custody permission or transaction is inferred from the connected graph.
 
 BLOCKING before real balance/data enablement: verify native-account ownership and selected-network scope, observed quantity, independent USD valuation/freshness and the separation of native SOL from wrapped SPL assets. Existing POO-2239/2240/2261/2262 and compliance gates remain. Owner: Murilo / Codex coordinator.
+
+
+## CR-MGR-POO2301-PANELS, October 9, 2026
+
+ANSWERED for dormant local Configure/Manage/Review presentation. Local descriptor selections, allocations, fees, minimum and seed are editable intentions only. Shared Review prints Not available for live capability statements, wallet balance and launch; it does not assert an initial share price, Arbitrum-only seed, exit deadline, post-launch economics or public investor access. Blocked upload, Max and Launch neither read files nor call financial actions. Exact SPL mint identity and native SOL/WSOL separation remain preserved.
+
+BLOCKING before live data, public launch or financial operations: verify canonical pool/reserve/program and custody identities, fresh independent balances/prices/quotes, fee/exit/public-access terms, third-party venue and asset disclosures, authority, signing, settlement/recovery and upload/privacy contracts under POO-2239/2240/2261/2262. Memory acknowledgement clears no financial/compliance gate. Owner: Murilo / Codex coordinator.

@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-061
  * @name panelIds
  * @implements-rules-version v1 (POO-2187 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, pure functions over the mandate rows
  *
  * The ids a configuration panel body writes (review M3 of PR #54). Rides on PP-MGR-CMP-061
@@ -20,10 +21,11 @@ import {
   type MandatePoolRef,
   type MandateTokenRef,
   type NetworkId,
+  normalizeTokenIdentity,
   tokenKey,
 } from "../../mandateDraft";
 import { poolRefKey } from "../plan/blockConfig";
-import type { AaveBlockConfig, PoolBlockConfig } from "../plan/buildPlan";
+import type { PositionConfig } from "../plan/buildPlan";
 
 /** The `poolId` a body writes for a mandate pool row, and keys its option by. */
 export function panelPoolId(pool: Pick<MandatePoolRef, "id" | "poolId">): string {
@@ -42,7 +44,7 @@ export function panelAssetKey(token: Pick<MandateTokenRef, "network" | "address"
  * other networks never match. An id the mandate does not hold here is left as written, and the
  * reducer refuses it (`not_in_mandate`), which the panel says.
  */
-export function canonicalPanelConfig<C extends PoolBlockConfig | AaveBlockConfig>(
+export function canonicalPanelConfig<C extends PositionConfig>(
   config: C,
   where: { draft: Pick<MandateDraft, "pools" | "tokens">; network: NetworkId },
 ): C {
@@ -56,7 +58,7 @@ export function canonicalPanelConfig<C extends PoolBlockConfig | AaveBlockConfig
     return row ? { ...config, poolId: panelPoolId(row) } : config;
   }
   if ("assetKey" in config && typeof config.assetKey === "string") {
-    const wanted = config.assetKey.toLowerCase();
+    const wanted = normalizeTokenIdentity(where.network, config.assetKey);
     const token = where.draft.tokens.find(
       (candidate) => candidate.network === where.network && panelAssetKey(candidate) === wanted,
     );
