@@ -2,6 +2,7 @@
  * @id PP-MGR-SCR-002
  * @name buildScreenModel
  * @implements-rules-version v1 (POO-2157 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure module: it decides which refusal applies and what to reveal, and
  *   the Build screen ({@link BuildScreen}) emits `builder_build_blocked` with the matching reason
  *   through `buildAnalytics.ts`.
@@ -99,8 +100,9 @@ export interface ReviewVerdict {
 export function reviewVerdict(
   plan: BuildPlan,
   violations: readonly PlanViolation[],
+  mode: "execution" | "local-visual" = "execution",
 ): ReviewVerdict {
-  const readiness = planReadiness(plan, violations);
+  const readiness = planReadiness(plan, violations, mode);
   if (readiness.ready) return { refusal: "review_unavailable", target: null };
   return { refusal: readiness.refusal, target: readiness.target };
 }

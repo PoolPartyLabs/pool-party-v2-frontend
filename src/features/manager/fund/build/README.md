@@ -6,6 +6,65 @@ handoff in the description of Linear issue POO-2144. Everything here is behind t
 off) and the V2 toggle. The plan model in five lines, the coordinator defaults, what is not done and the parity
 record against Figma are in `src/features/manager/README.md`, section "Build canvas".
 
+## Shared local binding and React Flow adoption, October 8, 2026
+
+Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
+the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
+local Build/Manage host across phases and applies the route/account/exit guards described below.
+This wizard change is pre-merge code delivery, without a deployment or native-browser visual
+acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
+Not available; `solanaSpoke` stays off.
+
+POO-2301 rules v1 reuses the same Mandate → Build → Review shell for the hidden `solana-local`
+session. `BuildScreen` keeps its existing palette, templates, cards and Configure panel. Local
+Manage is an inline panel mode backed by the retained `SolanaLocalManageHost`, not another
+canvas. After first Build entry, the local shell hides the mounted Build on Mandate/Review;
+selection checkpoints, leave guards, dialogs and reveal effects run only while it is active.
+Pending Configure/Manage status is also reported while hidden to the local session owner.
+
+The local adapter writes the shared plan reducers against the current mandate. Case-sensitive
+USDC/WSOL mint identities and protocol selection remain required for the configured position
+and automatic conversion legs. Native SOL and WSOL remain distinct. PR #151 adds 236 × 62 USDC
+Idle and 144 × 96 native SOL cash, with a 32 px lateral gap and shared center, only through the
+explicit local runtime option. Cash is decoration with no financial handle/edge and unavailable
+quantity/USD readings; standard Build has no cash. Configure pending edits are resolved before
+entering Manage; per-instance Manage drafts and inline Review
+survive selection/hiding. Dirty phase exit requires explicit discard. One chain allocation is
+owned by its first position, with downstream allocations read-only. Local Apply validates the
+whole resulting plan and never writes canonical Current, an operation journal or a transaction.
+The session binding does not persist to `localStorage` or a backend. Real ranges, prices, custody,
+quotes, clock and launch remain unavailable under POO-2239/2240/2261/2262.
+
+The local owner remains outside the reused render boundary, retaining the applied shared draft
+and Review fields for retry. Genuine errors emit bounded metadata. Owner abandonment covers
+all local phases with draft-dirty or pending-edit status; explicit exit suppresses it. The owner
+keeps its unsaved-changes guard in fallback, although unapplied inner panel fields may be lost on
+render unmount. This local recovery does not alter standard EVM shell instrumentation.
+
+POO-2302 rules v1 is delivered in two boundaries. Infrastructure introduces
+`reactFlowProjection` (`PP-MGR-LIB-074`) and `ReactFlowGraph` (`PP-MGR-CMP-100`) plus dependency
+and scoped styling, before production adoption. PR #146 publishes that infrastructure with 43
+staged focused tests, scoped TypeScript and Biome passing. PRs #148/#149 adopt that engine from
+`CanvasViewport` for the shared Build and Manage hosts. Other callers keep the native default
+unless they opt into React Flow. Financial nodes reuse the painted
+surfaces and exact border handles; complete connections own hover. Nodes, handles and edges
+cannot be edited. Real pane/edge gestures retain background deselection and mouse pan, while
+pan/zoom/fit remain presentation state. Opening waits for a positive canvas size. Build fit
+reserves the controls; later graph changes use reveal rather than refitting.
+
+The semantic contract history below describes its first slice. Current Build layout now supplies
+that contract for the engine; actual producer/card routing is validated separately. The hidden
+legacy graphs and contract fixtures do not certify live financial reachability or browser painting.
+The real-engine `BuildScreen` regression suite passed 65 tests; this is focused component evidence,
+not full-suite, build or native-browser acceptance.
+
+Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+intent generation validate the user's consent. Stale acceptance cannot close a successor session.
+Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
+last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.
+Local Review keeps numeric fee/minimum/seed intentions but no EVM financial or signing promise.
+Upload, Max and Launch are observable blocked intents and perform no file/storage/wallet operation.
+
 ## What each folder owns
 
 | Folder | Ids | Owns |
@@ -16,7 +75,7 @@ record against Figma are in `src/features/manager/README.md`, section "Build can
 | `layout/` | `PP-MGR-LIB-023` | The pure layout function, its types, its constants, `toLayoutInput` |
 | `pieces/` | `PP-MGR-CMP-048` to `055` | The presentational pieces; strings arrive as props |
 | `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056`, `057`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu, the selection guard (with its resume), the controller (with the remove confirm). The panel stub `PP-MGR-CMP-058` is removed |
-| `graph/` | `PP-MGR-CMP-059`, `PP-MGR-LIB-062` | The renderer, its reading-order model, `useGraphLayout`, `useTextWidth`, explicit financial graph contract |
+| `graph/` | `PP-MGR-CMP-059`, `PP-MGR-CMP-100`, `PP-MGR-LIB-062`, `PP-MGR-LIB-074` | The renderer, reading order, layout/text hooks, explicit financial graph contract, fixed React Flow projection and engine |
 | `panel/` | `PP-MGR-CMP-061` to `068`, `PP-MGR-HOK-014`, `PP-MGR-LIB-029`, `PP-MGR-LIB-030` | The configuration panel (POO-2171): the shell `BlockPanel` and its kind to body registry `panelBodies.ts`, the shared controls, the draft `usePanelDraft`, the range and slippage maths; fixture bodies and a harness for stories and tests |
 
 The reference canvases used as test oracles and story data are in `src/mocks/data/buildCanvasFixtures.ts`.
@@ -28,7 +87,7 @@ The reference canvases used as test oracles and story data are in `src/mocks/dat
 - The layout is derived from the plan and never stored.
 - `pieces/` import nothing from `plan/`, `layout/`, `blocks/` or `graph/`; `BuildGraph` imports nothing from
   `plan/` or `blocks/`.
-- The canvas calls no API and requests no transaction: it writes the mandate draft and nothing else.
+- The canvas calls no API and requests no transaction: it writes the mandate draft through its binding. Standard V2 persists browser-local drafts; the hidden Solana binding acknowledges only in-memory state.
 - The configuration panel edits a DRAFT of the selected block; only Apply changes writes the plan
   (`useBuildPlan().applyBlockConfig`). Every remove goes through `removeBlockReleasingShare`, after the
   panel's confirm.
@@ -165,9 +224,10 @@ classes/origins, undeclared network transitions, same-chain Bridges, broken orde
 and conversions without compatible input/output legs. Principal and income can share a
 visual Bridge using separate ports; a crossing or equal color does not create a junction.
 
-This first slice adds the contract and renderer-consumer boundary. Current layout producers
-still use their existing edges and connection paths. It does not certify current Build,
-Manage or Solana financial reachability, recalculate content bounds, change canvas routing
+At the POO-2288 first-slice delivery, this added the contract and renderer-consumer boundary;
+layout producers still used their existing edges and connection paths. The October 8 adoption
+above records the later shared Build producer/engine integration. That first slice did not certify
+Build, Manage or Solana financial reachability, recalculate content bounds, change canvas routing
 or resize nodes. POO-2270/2271/2273 own the producer/layout adoption and acceptance steps.
 The 48-frame handoff is a geometric reference, separate from semantic validation; its five
 hidden legacy graphs are not final topology oracles. Focused tests cover local Arbitrum,
@@ -177,8 +237,10 @@ fixtures, with no transaction simulation or financial-settlement claim.
 
 No API, RPC, mock-service call, copy or analytics emitter is introduced. Build and Manage
 hosts retain event ownership. The compliance register records the remaining financial
-meaning and launch conditions before this contract is adopted on real product routes.
+meaning and launch conditions before this rendering contract can imply real product capability.
 
+> Delivery history: the following sections preserve the previously published contracts and
+> censuses. Their delivery-time future work is superseded by the current shared-binding notes above.
 
 ## React Flow infrastructure (POO-2302 v1, October 9, 2026)
 
@@ -219,3 +281,9 @@ The shared BlockPanel registry now contains Kamino, Raydium, Orca and Holding bo
 A pure Build/Manage adapter validates the whole candidate against the current mandate, preserves exact instance identity and only lets the first position edit a chain allocation. Independent hidden drafts and Review remain in the mounted local Manage host; an Apply acknowledgement precedes clearing dirty state. The local draft hook supplies session memory only.
 
 LocalSolanaReview reuses the standard layout and cards, preserving editable intentions without EVM signing/economic/access promises. Missing live upload, wallet Max, quote and launch remain Not available and emit blocked intent; no file input or wallet/launch driver is mounted. EVM defaults and investor provisioning are unchanged. Storybook covers the shared local bodies and Review. Shared-wizard activation and its retained Build host follow separately.
+
+Delivery continuation: this delivery connects the shared wizard route and retained Build/Manage
+host. The activation described as future work in the published foundation above is included here.
+Applied plan/Review survive retry; unapplied inner-panel fields can be lost after a render exception,
+while the last pending metadata continues guarding leave. No deployment, native-browser acceptance
+or live Solana capability is asserted.

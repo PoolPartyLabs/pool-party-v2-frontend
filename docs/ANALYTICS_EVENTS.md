@@ -1,28 +1,57 @@
 # Analytics Events
 
-## Local Solana editor (POO-2281, rules v2)
+## Shared V2 local Solana events, October 8, 2026 (POO-2301 rules v1)
+
+Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
+the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
+local Build/Manage host across phases and applies the route/account/exit guards described below.
+This wizard change is pre-merge code delivery, without a deployment or native-browser visual
+acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
+Not available; `solanaSpoke` stays off.
+
+This delivery connects the shared Mandate → Build → Review shell to the registered builder route. The event
+names from POO-2281 rules v2 remain bounded local intents; `PP-MGR-SCR-009` is a historical
+standalone harness, not the route emitter. Standard public V2 continues to emit its existing
+`builder_*` taxonomy. The local binding maps those shell/Build actions to `solana_preview_*`.
 
 | Event | When it fires | Key params | Emitting artifact |
 |---|---|---|---|
-| `solana_preview_entered` | Guarded selected-V2 gesture enters the local editor on the registered builder route | none | PP-CORE-CMP-075, ContractFamilyToggle |
-| `solana_preview_exited` | Explicit label, Back to EVM builder or family switch exits the active local editor after the guard | none | PP-CORE-CMP-075, ContractFamilyToggle; PP-MGR-SCR-002, BuilderRouteSwitch |
-| `solana_preview_viewed` | Local editor mounts once | none | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
-| `solana_preview_interacted` | Configure/Manage mode, Manage node selection/close or local edit/choice/review/discard/rebase; local Apply after drawing acceptance | bounded `preview_mode`, `preview_action`, `preview_protocol`, `node_kind`, `has_local_changes` when applicable | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
-| `solana_preview_started` | First local block is added in this editor session | `preview_protocol` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
-| `solana_preview_applied` | Valid local configuration is applied to the drawing | `preview_protocol`, `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
-| `solana_preview_abandoned` | An edited drawing unmounts without persistence | `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
-| `solana_preview_blocked` | Invalid individual/aggregate allocation, unapplied edits or unavailable execution blocks intent | `preview_protocol` when applicable, `preview_reason`, `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
-| `solana_preview_error` | A genuine child-render error reaches the retry boundary | bounded `error_code`, `error_origin`, `has_local_changes` | PP-MGR-SCR-009, SolanaPreviewErrorBoundary |
+| `solana_preview_entered` | The selected-V2 gesture passes the navigation guard on the registered builder route | none | PP-CORE-CMP-075, ContractFamilyToggle |
+| `solana_preview_exited` | Explicit hidden-mode exit or family switch passes the current route/session guard | none | PP-CORE-CMP-075, ContractFamilyToggle; PP-MGR-SCR-002, BuilderRouteSwitch |
+| `solana_preview_viewed` | Local mandate starts; Build mounts once per retained instance; local Review mounts | none | PP-MGR-SCR-002, FundStrategyBuilderScreen / BuildScreen; PP-MGR-CMP-102, LocalSolanaReview |
+| `solana_preview_interacted` | Shared mandate/Build/Review interaction or local Manage edit, choice, review, discard or rebase | none for mapped shell/Configure events; `preview_protocol`, `preview_action`, `preview_mode=manage` for Manage callbacks | PP-MGR-SCR-002, FundStrategyBuilderScreen / BuildScreen; PP-MGR-CMP-102, LocalSolanaReview |
+| `solana_preview_started` | First block added to an empty local Build session | none | PP-MGR-SCR-002, FundStrategyBuilderScreen / BuildScreen |
+| `solana_preview_applied` | A valid shared local save/Apply is acknowledged in session memory; Manage Apply receives accepted shared-plan acknowledgement | none for mapped shell/Configure events; `preview_protocol`, `preview_action=apply`, `preview_mode=manage` for Manage | PP-MGR-SCR-002, FundStrategyBuilderScreen / BuildScreen |
+| `solana_preview_abandoned` | The local session owner is disposed from Mandate, Build or Review without an explicit exit; render fallback/retry is not disposal | `has_local_changes`, derived from the shared draft dirty state or last-reported pending Configure/Manage edits | PP-MGR-SCR-002, FundStrategyBuilderScreen / LocalBuilderBinding |
+| `solana_preview_blocked` | Shared mandate/plan guards, unapplied edits, rejected Manage acknowledgement, unavailable logo upload, seed Max or Launch blocks intent | none for direct Build/Review blocks; bounded `error_code` for mapped shell blocks; `preview_protocol`, `preview_mode=manage` for Manage | PP-MGR-SCR-002, FundStrategyBuilderScreen / BuildScreen; PP-MGR-CMP-102, LocalSolanaReview |
+| `solana_preview_error` | Shared local save/Build error mapping reports a bounded failure, or a genuine local child-render error reaches the reused boundary | bounded `error_code`; render errors also carry `error_origin=app`, `has_local_changes` | PP-MGR-SCR-002, FundStrategyBuilderScreen / BuildScreen; PP-MGR-SCR-009, SolanaPreviewRenderBoundary |
 
-POO-2291 S5 extends the bounded `preview_protocol` vocabulary to `holding` alongside `kamino`, `jupiter`, `raydium` and `orca`. Holding identifies a custody drawing, not a venue. No mint, pool, account, quantity or quote is tracked. Local Apply is a drawing event and never financial settlement.
+Only the shared owners emit through `useAnalytics().track()` / `useTrackView`. The mounted Manage
+host reports bounded protocol/action intentions, never its configuration callback arguments.
+`preview_protocol` is `kamino`, `jupiter`, `raydium`, `orca` or `holding`; Holding identifies custody
+configuration rather than a venue. A rejected Apply emits blocked intent and no applied event.
+Local save and Apply acknowledge memory, not browser/backend persistence or financial settlement.
+No wallet, mint, pool, local/canonical ID, amount, pair, quote, exception text or transaction data is sent.
+There is no submitted/completed Solana execution event.
 
-POO-2291 S6 adds `preview_mode` (`configure`, `manage`) and `preview_action` (`mode`, `select`, `close`, `edit`, `choose`, `review`, `apply`, `discard`, `rebase`). Only the screen emits these via the consent-aware hook. The persistent host reports bounded intentions to that owner; it never tracks configuration arguments. Rejected drawing acceptance emits blocked intent and no applied event. Node family describes inspection only, without node/local/canonical identifiers. No financial completion is introduced.
+Historical POO-2291 S5/S6 presenters also support bounded mode/node vocabulary in their standalone
+harnesses. The shared route forwards protocol/action/manage-mode from Manage and no field-level
+parameters from Configure/Review. Standard EVM abandonment keeps its existing phase rules.
 
-Block parameters are limited to `kamino`, `jupiter`, `raydium`, `orca`, `holding`. Reasons are bounded enums.
-All emissions use the existing consent-aware `useAnalytics().track()` path. No wallet, mint, local
-amount, pair, exception text or transaction data is emitted. Apply describes a local drawing change;
-there is no submitted/completed financial funnel because the editor cannot submit an operation.
+The local session owner now records disposal from every phase, including Review, with truthful
+`dirty || pending` metadata. Explicit exit suppresses abandonment and disarms its guard. The reused
+`SolanaPreviewRenderBoundary` catches real local render errors without exception text. Because the
+shared draft owner stays outside it, retry retains applied plan and Review fields and does not emit
+abandonment. The owner keeps its unsaved-changes guard during fallback. Unapplied inner panel
+edits may be lost when a render exception unmounts the shell; the last reported pending state
+remains available to the guard/abandonment event, not as a promise to restore those fields.
 
+Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+intent generation validate the user's consent. Stale acceptance cannot close a successor session.
+Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
+last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.
+Local Review keeps numeric fee/minimum/seed intentions but no EVM financial or signing promise.
+Upload, Max and Launch are observable blocked intents and perform no file/storage/wallet operation.
 
 ## V2 launch journey (POO-2181, rules v2)
 
@@ -409,7 +438,38 @@ Emitter: PP-STR-MOD-001, `FundInvestModal.tsx`. Existing event names only.
 
 The shared provisioning gate/panel retain their existing funnel. Raw previews, wallet addresses, signed payloads and journal contents are not sent to analytics.
 
+> Delivery history: the following sections preserve the previously published contracts and
+> censuses. Their delivery-time future work is superseded by the current shared-binding notes above.
+
+## Local Solana editor (POO-2281, rules v2)
+
+| Event | When it fires | Key params | Emitting artifact |
+|---|---|---|---|
+| `solana_preview_entered` | Guarded selected-V2 gesture enters the local editor on the registered builder route | none | PP-CORE-CMP-075, ContractFamilyToggle |
+| `solana_preview_exited` | Explicit label, Back to EVM builder or family switch exits the active local editor after the guard | none | PP-CORE-CMP-075, ContractFamilyToggle; PP-MGR-SCR-002, BuilderRouteSwitch |
+| `solana_preview_viewed` | Local editor mounts once | none | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_interacted` | Configure/Manage mode, Manage node selection/close or local edit/choice/review/discard/rebase; local Apply after drawing acceptance | bounded `preview_mode`, `preview_action`, `preview_protocol`, `node_kind`, `has_local_changes` when applicable | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_started` | First local block is added in this editor session | `preview_protocol` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_applied` | Valid local configuration is applied to the drawing | `preview_protocol`, `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_abandoned` | An edited drawing unmounts without persistence | `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_blocked` | Invalid individual/aggregate allocation, unapplied edits or unavailable execution blocks intent | `preview_protocol` when applicable, `preview_reason`, `has_local_changes` | PP-MGR-SCR-009, SolanaStrategyPreviewScreen |
+| `solana_preview_error` | A genuine child-render error reaches the retry boundary | bounded `error_code`, `error_origin`, `has_local_changes` | PP-MGR-SCR-009, SolanaPreviewErrorBoundary |
+
+POO-2291 S5 extends the bounded `preview_protocol` vocabulary to `holding` alongside `kamino`, `jupiter`, `raydium` and `orca`. Holding identifies a custody drawing, not a venue. No mint, pool, account, quantity or quote is tracked. Local Apply is a drawing event and never financial settlement.
+
+POO-2291 S6 adds `preview_mode` (`configure`, `manage`) and `preview_action` (`mode`, `select`, `close`, `edit`, `choose`, `review`, `apply`, `discard`, `rebase`). Only the screen emits these via the consent-aware hook. The persistent host reports bounded intentions to that owner; it never tracks configuration arguments. Rejected drawing acceptance emits blocked intent and no applied event. Node family describes inspection only, without node/local/canonical identifiers. No financial completion is introduced.
+
+Block parameters are limited to `kamino`, `jupiter`, `raydium`, `orca`, `holding`. Reasons are bounded enums.
+All emissions use the existing consent-aware `useAnalytics().track()` path. No wallet, mint, local
+amount, pair, exception text or transaction data is emitted. Apply describes a local drawing change;
+there is no submitted/completed financial funnel because the editor cannot submit an operation.
 
 ### Shared local Solana Review capability intents (POO-2301 v1, October 9, 2026)
 
 PP-MGR-CMP-102 LocalSolanaReview emits solana_preview_viewed on entry, solana_preview_interacted on an accepted field edit, and solana_preview_blocked for unavailable Add logo, Max and Launch. These controls are focusable/tappable through the existing soft-blocked Button; no file or wallet action occurs. The future shared route owner retains session abandonment/error and local acknowledgement events. No financial completed event is emitted. Standard Review retains its existing event owners.
+
+Delivery continuation: this delivery connects the shared wizard route and retained Build/Manage
+host. The activation described as future work in the published foundation above is included here.
+Applied plan/Review survive retry; unapplied inner-panel fields can be lost after a render exception,
+while the last pending metadata continues guarding leave. No deployment, native-browser acceptance
+or live Solana capability is asserted.

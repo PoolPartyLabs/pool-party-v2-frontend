@@ -19,16 +19,42 @@ import {
 } from "../../../../tests/utils/renderWithProviders";
 import { BuilderRouteSwitch } from "./BuilderRouteSwitch";
 
-const local = vi.hoisted(() => ({ dirty: false, previewDirty: false, address: "account-a" }));
+const local = vi.hoisted(() => ({
+  dirty: false,
+  previewDirty: false,
+  address: "account-a",
+  exit: undefined as ((onAccepted: () => void) => void) | undefined,
+}));
 vi.mock("@/lib/auth/useAuth", () => ({
   useAuth: () => ({ address: local.address, isAuthenticated: true, session: null }),
 }));
 vi.mock("./FundStrategyBuilderScreen", async () => {
   const { useUnsavedChanges } = await import("@/lib/hooks/unsavedChanges");
+  const { useState } = await import("react");
   return {
-    FundStrategyBuilderScreen: () => {
-      useUnsavedChanges(local.dirty);
-      return <p>EVM builder</p>;
+    FundStrategyBuilderScreen: ({
+      runtime = "standard",
+      onExitPreview,
+    }: {
+      runtime?: string;
+      onExitPreview?: (onAccepted: () => void) => void;
+    }) => {
+      const [owner] = useState(() => local.address);
+      if (runtime === "solana-local") local.exit = onExitPreview;
+      useUnsavedChanges(runtime === "solana-local" ? local.previewDirty : local.dirty);
+      return runtime === "solana-local" ? (
+        <>
+          <p>Solana editor</p>
+          <button type="button" onClick={() => onExitPreview?.(() => {})}>
+            Exit preview
+          </button>
+        </>
+      ) : (
+        <>
+          <p>EVM builder</p>
+          <p data-testid="standard-owner">{owner}</p>
+        </>
+      );
     },
   };
 });
@@ -67,6 +93,7 @@ beforeEach(() => {
   local.dirty = false;
   local.previewDirty = false;
   local.address = "account-a";
+  local.exit = undefined;
   window.localStorage.clear();
   window.dataLayer = [];
   __resetSolanaPreviewForTests();
@@ -83,6 +110,17 @@ afterEach(() => {
 });
 
 describe("local preview activation through sibling toggle and builder", () => {
+  // @rule POO-2301 R2/R9: the next account starts a new standard owner, not the old checkpoint.
+  it("resets the standard builder owner when the authenticated account changes", async () => {
+    const user = userEvent.setup();
+    const view = renderWithProviders(<Host />);
+    await user.click(screen.getByRole("button", { name: "V2" }));
+    expect(screen.getByTestId("standard-owner")).toHaveTextContent("account-a");
+    local.address = "account-b";
+    view.rerender(<Host />);
+    expect(screen.getByTestId("standard-owner")).toHaveTextContent("account-b");
+  });
+
   // @rule R1/R3: selecting V2 normally doesn't count toward the gesture.
   it("keeps normal V2, then reveals only after three selected presses without a new family write", async () => {
     const user = userEvent.setup();
@@ -154,6 +192,24 @@ describe("local preview activation through sibling toggle and builder", () => {
     await user.click(screen.getByRole("button", { name: "Leave" }));
     expect(screen.getByText("EVM builder")).toBeInTheDocument();
     expect(window.localStorage.getItem("pp.contractFamily")).toBe('"v2"');
+  });
+
+  // @rule R4/R9: an asynchronous callback from a disposed local editor cannot close its successor.
+  it("ignores a previous local editor exit callback after an account change", async () => {
+    const user = userEvent.setup();
+    const view = renderWithProviders(<Host />);
+    await selectAndReveal(user);
+    const previousExit = local.exit;
+    local.address = "account-b";
+    view.rerender(<Host />);
+    await user.tripleClick(screen.getByRole("button", { name: "V2" }));
+    expect(screen.getByText("Solana editor")).toBeInTheDocument();
+    const acknowledge = vi.fn();
+    act(() => previousExit?.(acknowledge));
+    expect(acknowledge).not.toHaveBeenCalled();
+    expect(screen.getByText("Solana editor")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Exit preview" }));
+    expect(screen.getByText("EVM builder")).toBeInTheDocument();
   });
 
   // @rule R4: route disposal clears preview, not the persisted EVM preference.

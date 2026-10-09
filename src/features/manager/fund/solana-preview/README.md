@@ -1,18 +1,85 @@
-# Local Solana strategy preview
+# Local Solana binding for the shared V2 wizard
 
-`PP-MGR-SCR-009`, POO-2281 rules v2. The parent route owns the hidden entry and guarded exit. This feature owns an independent React reducer and drawing. Nothing here imports the EVM builder, mandate draft, network IDs, wallet clients or services.
+Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
+the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
+local Build/Manage host across phases and applies the route/account/exit guards described below.
+This wizard change is pre-merge code delivery, without a deployment or native-browser visual
+acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
+Not available; `solanaSpoke` stays off.
 
-The preview is temporary local state. Applying changes updates only the drawing's configuration. Leaving the preview discards it. The global unsaved-changes guard protects a changed drawing, while the local confirmation protects unapplied edits before another selection or addition. Every removable protocol has a separate X control and a confirmation.
+This POO-2301 rules v1 delivery replaces the separate production `SolanaStrategyPreviewScreen` entry with
+`FundStrategyBuilderScreen` (`PP-MGR-SCR-002`), preserving Mandate → Build → Review, the existing
+palette, cards and panels. `PP-MGR-SCR-009` and its standalone drawing remain historical test/story
+harnesses; the builder route does not mount them. The parent route owns hidden entry and exit.
+`solanaBuilderRuntime` (`PP-MGR-LIB-075`) and `useSolanaBuilderDraft` (`PP-MGR-HOK-024`) supply the
+local binding to the shared mandate and plan reducers.
 
-The fixed structure is Arbitrum Deposit, Idle input, Idle output, Income and Withdraw, plus one Solana spoke. Each direction has one bridge. Solana Idle holds a USDC label. Operating cash is native SOL, with no balance, in a 144 × 96 card centered to the right of Idle. Fixed spine cards retain the reused 236 × 62 geometry. Pool SOL labels represent wrapped SOL, distinct from native operating cash.
+The hidden mode is beneath `fundContracts` and the selected-V2 three-press gesture on `/manager/new`.
+The local session starts from a fresh mandate, not a predefined separate canvas. Selected Solana
+networks/protocols/tokens control which local Kamino Supply, Jupiter Swap, Raydium CLMM, Orca
+Whirlpools and Holding steps can be configured. The standard V2 session has its own checkpoint;
+local state never enters the EVM saved-draft payload or launch recovery. `save()` acknowledges a
+snapshot in session memory only. Leaving or disposing the local route/account/family loses that
+session. No browser/backend persistence or separate API/wallet allowlist is added.
 
-Principal routes are gray. Raydium CLMM and Orca Whirlpools add input Swap, Collect fees and Swap auto; their fees use a separate green bus through the return Bridge to Income on the hub. Outgoing Income is gray. Kamino Supply USDC receives USDC directly and returns principal and interest to Idle on the gray route. Jupiter Swap is a manual local conversion drawing and has no LP collector. Automatic swaps and bridges are fixed explanatory steps. Hover highlights one complete path between nodes, including all bends.
+Known USDC/WSOL metadata is unpriced and eligible for visual configuration only. Base58 mint
+matching remains case-sensitive; a similarly named or case-mutated mint cannot satisfy a plan
+requirement. Native SOL is distinct from WSOL SPL positions. PR #151 supplies the explicit local
+layout context: 236 × 62 USDC Idle and 144 × 96 native SOL cash with a 32 px gap and shared vertical
+center. Cash owns no financial handle/edge and its quantity/USD readings remain unavailable.
+Standard Build has no cash. LP and Holding WSOL
+conversions require the exact current mandate tokens and Jupiter selection. The shared graph keeps
+gray principal/return routes and a separate green LP-fee connection; Kamino/Holding do not acquire
+an LP collector. A label or semantic port never attests a pool, account or transaction capability.
 
-Allocation is a whole percentage from 0 to 100, represented as integer basis points internally. The sum across all blocks cannot exceed 100%. Pair and conversion choices are drawing labels only. No live pool, reserve, mint, price, balance, yield, fee model, range, grid, liquidity, route or transaction identity is invented. Unavailable fields say "Not available". Supply-only wording describes the drawing, not an actual wallet debt position.
+Build offers Configure and Manage inside one shared panel. Configure retains its pending-Apply
+guard. The mounted Manage host keeps independent local instance drafts, modes and inline Review
+across selection, close, panel mode and hidden Build phases. Dirty phase leave requires explicit
+discard. A chain's first position owns editable allocation; downstream positions share it read-only.
+`solanaBuildManageBinding` (`PP-MGR-LIB-076`) maps stable shared block IDs, retains all configured
+local positions and acknowledges one Apply only after validating the resulting plan against the
+current exact-mint/protocol mandate, conversion dependencies and allocation budgets. A rejected
+acknowledgement preserves draft/Review. Non-null ranges are blocked without verified context.
 
-No launch, signing, transaction broadcasting, approval, API discovery, data simulation or browser persistence exists here. A blocked execution affordance explains that execution is unavailable and reports bounded blocked intent. Analytics reports view, first start, local Apply, abandonment, blocked intent and genuine render failures. There is no completion event. The render boundary preserves the parent reducer and allows retry after a real rendering exception without recording exception text.
+`LocalSolanaReview` (`PP-MGR-CMP-102`) reuses the standard Review cards/columns for local
+identity, fee and seed intentions. Logo upload, canonical origins/pools/reserves, physical balances,
+prices, APY, custody, range context, liquidity quotes, source clock, authority, signing and launch
+remain unavailable. Confirm and blocked Launch never submit or settle an operation.
 
-Focused tests cover allocation validation and aggregate bounds, edit/application isolation, discard, removal, LP collector scope, global dirty registration, guarded transitions, bounded events and actual render failure recovery. Confirmation close restores the editable field on cancel and the current panel heading on a confirmed switch. Removing the selected block focuses the remaining screen controls. Storybook covers an empty drawing, mobile viewport and all protocol paths. Geometry and keyboard focus are reviewed through code and focused component tests. Browser visual verification was not performed and remains with Murilo.
+The local draft owner stays outside the reused `SolanaPreviewRenderBoundary`. Genuine render
+failures report bounded error metadata and retry retains the applied shared plan/Review fields.
+Unapplied inner panel fields may be lost when the shell unmounts after an exception. The owner
+retains last-reported pending status and its unsaved-changes guard during fallback. Its cleanup
+covers Mandate, Build and Review with truthful draft-dirty or pending metadata; explicit exit
+suppresses abandonment. Standard V2 instrumentation and recovery keep their existing semantics.
+The focused shell/boundary regression suites passed 57 tests after reproducing the failures.
+
+POO-2302 rules v1 first adds the isolated React Flow infrastructure and adopts it in the shared
+Build/Manage canvas hosts through PRs #148/#149. Other callers keep the optional native default.
+Infrastructure is published as PR #146 with 43 staged focused tests,
+scoped TypeScript and Biome passing. Painted financial cards supply measured border handles; fixed nodes and
+complete connections preserve reading order and full-route hover. Pan/zoom/fit are presentation
+controls. The engine does not authorize graph editing, change plan legality or create financial data.
+Analytics comes from the shared shell/Build (`PP-MGR-SCR-002`) and local Review (`PP-MGR-CMP-102`),
+using bounded local intents. Local Apply is never financial completion. Real wiring remains
+POO-2239/2240/2261/2262 with `solanaSpoke` default off.
+
+The October 8 shared adoption passed 65 real-engine Build screen tests and 29 focused local binding,
+host and Configure tests. These results cover components and reducers; they do not claim a full
+repository gate, build, native-browser visual acceptance or live Solana capability.
+
+## Delivery history
+
+The POO-2281/2291 slices below record the original isolated drawing and successive pure/presentation
+contracts. References to its independent reducer or standalone screen describe that earlier delivery,
+not the current `/manager/new` entry. Current shared binding and limitations are defined above.
+
+Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+intent generation validate the user's consent. Stale acceptance cannot close a successor session.
+Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
+last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.
+Local Review keeps numeric fee/minimum/seed intentions but no EVM financial or signing promise.
+Upload, Max and Launch are observable blocked intents and perform no file/storage/wallet operation.
 
 ## Design and brand sources
 
@@ -93,9 +160,33 @@ Production Configure and local Manage pass null origins/reads. There is no reser
 
 The combined isolated tree passed 69 model/presenter/Configure/local-Manage tests, scoped TypeScript, changed-file Biome and all 11 locales. Two missing-Manage regressions reproduced failures on the preceding main before mounting. Independent GPT-6.1-sol review found no remaining blocker. Authored unavailable/narrow stories are not rendered browser acceptance. Live metrics, authority, risk projections and execution remain POO-2239/2240/2261/2262 and POO-2290; Murilo performs browser acceptance.
 
+> Delivery history: the following sections preserve the previously published contracts and
+> censuses. Their delivery-time future work is superseded by the current shared-binding notes above.
+
+## Local Solana strategy preview, historical POO-2281 delivery
+
+`PP-MGR-SCR-009`, POO-2281 rules v2. The parent route owns the hidden entry and guarded exit. This feature owns an independent React reducer and drawing. Nothing here imports the EVM builder, mandate draft, network IDs, wallet clients or services.
+
+The preview is temporary local state. Applying changes updates only the drawing's configuration. Leaving the preview discards it. The global unsaved-changes guard protects a changed drawing, while the local confirmation protects unapplied edits before another selection or addition. Every removable protocol has a separate X control and a confirmation.
+
+The fixed structure is Arbitrum Deposit, Idle input, Idle output, Income and Withdraw, plus one Solana spoke. Each direction has one bridge. Solana Idle holds a USDC label. Operating cash is native SOL, with no balance, in a 144 × 96 card centered to the right of Idle. Fixed spine cards retain the reused 236 × 62 geometry. Pool SOL labels represent wrapped SOL, distinct from native operating cash.
+
+Principal routes are gray. Raydium CLMM and Orca Whirlpools add input Swap, Collect fees and Swap auto; their fees use a separate green bus through the return Bridge to Income on the hub. Outgoing Income is gray. Kamino Supply USDC receives USDC directly and returns principal and interest to Idle on the gray route. Jupiter Swap is a manual local conversion drawing and has no LP collector. Automatic swaps and bridges are fixed explanatory steps. Hover highlights one complete path between nodes, including all bends.
+
+Allocation is a whole percentage from 0 to 100, represented as integer basis points internally. The sum across all blocks cannot exceed 100%. Pair and conversion choices are drawing labels only. No live pool, reserve, mint, price, balance, yield, fee model, range, grid, liquidity, route or transaction identity is invented. Unavailable fields say "Not available". Supply-only wording describes the drawing, not an actual wallet debt position.
+
+No launch, signing, transaction broadcasting, approval, API discovery, data simulation or browser persistence exists here. A blocked execution affordance explains that execution is unavailable and reports bounded blocked intent. Analytics reports view, first start, local Apply, abandonment, blocked intent and genuine render failures. There is no completion event. The render boundary preserves the parent reducer and allows retry after a real rendering exception without recording exception text.
+
+Focused tests cover allocation validation and aggregate bounds, edit/application isolation, discard, removal, LP collector scope, global dirty registration, guarded transitions, bounded events and actual render failure recovery. Confirmation close restores the editable field on cancel and the current panel heading on a confirmed switch. Removing the selected block focuses the remaining screen controls. Storybook covers an empty drawing, mobile viewport and all protocol paths. Geometry and keyboard focus are reviewed through code and focused component tests. Browser visual verification was not performed and remains with Murilo.
 
 ## Shared V2 panel/Review foundation (POO-2301 v1, October 9, 2026)
 
 Murilo's October 8 correction supersedes the standalone preview described above. SolanaBuilderPanelBodies plugs the delivered protocol presenters into the same V2 Configure shell, using shared selectors and exact mint identity. LocalSolanaReview uses the same V2 cards and editable intention fields with unavailable live capability text. useSolanaBuilderDraft is an acknowledged in-memory binding, and solanaBuildManageBinding validates the current whole plan before local Apply. These artifacts are dormant until the separate shared Mandate/Build/Review route activation.
 
 The legacy independent preview is retained as a historical harness, not the final creation flow. Live data, wallet balances, quotes, upload and launch remain unavailable; this slice does not change the Solana mainnet gate. Default EVM selector/card behavior remains intact.
+
+Delivery continuation: this delivery connects the shared wizard route and retained Build/Manage
+host. The activation described as future work in the published foundation above is included here.
+Applied plan/Review survive retry; unapplied inner-panel fields can be lost after a render exception,
+while the last pending metadata continues guarding leave. No deployment, native-browser acceptance
+or live Solana capability is asserted.

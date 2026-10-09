@@ -11,6 +11,34 @@
 
 # Manager canvas and inline panels: delivery plan, October 7, 2026
 
+## October 8 owner correction: same V2 journey and connected card surfaces
+
+The owner reported visible connector gaps and unnecessary return bends on the live Manage
+canvas, then rejected the separate Solana creation screen. [POO-2302](https://linear.app/yeildbay/issue/POO-2302)
+and [POO-2301](https://linear.app/yeildbay/issue/POO-2301) record numbered rules v1 under the same
+Manager epic. These corrections override the standalone Solana presentation below.
+The reviewed starting public main is `cd1f8a328906898e444236d544acb8ff941512c3`, including PR #144.
+
+| Stage | Files and deliverable | Dependencies | Focused acceptance checks |
+| --- | --- | --- | --- |
+| 1. Reproduce and record | `manage/ManageCanvas.test.tsx`, `manage/manageLayout.test.ts`, `build/canvas/CanvasViewport.test.tsx`, Solana runtime/access regressions; ADR 0010/0011 and current intake | Current owner screenshot, existing financial graph and Figma 8370:2816 / 8359:3089 | Painted surface minima, no second transform, one clear return bus, Base58 identity, descriptor versus canonical pool |
+| 2. Engine and endpoint ownership | `build/graph/ReactFlowGraph.tsx`, graph projection utility, `build/canvas/CanvasViewport.tsx`, existing graph/pieces; pinned package, lockfile and MIT notice | Stable nodes/ports/connections from POO-2288; React Flow 12.12.0 audited | Declared source/target handles, invalid endpoints rejected, internal transfers unpainted, native mutations disabled, custom cards/colors unchanged |
+| 3. Canonical Build/Manage migration | `build/graph/BuildGraph.tsx`, `manage/ManageCanvas.tsx`, `manage/manageLayout.ts`, shared financial routing | Stage 2 adapter and final painted bounds | Resize/reflow keeps borders attached, clear routes have no outward/back detour, obstacles remain safe, shared Bridge ports and full-route hover, Fit/zoom/reveal/Hub controls retained |
+| 4. Shared wizard and isolated binding | `BuilderRouteSwitch.tsx`, `FundStrategyBuilderScreen.tsx`, common shell, local Solana draft/runtime binding, mandate identity/catalog seams | Existing guard/reset semantics; no live Solana source required for visual intent | Same Mandate/Build/Review and Save/exit, no EVM deep-link/storage overwrite, no EVM effects in local runtime, USDC plus another positive-cap token |
+| 5. Solana cards and inline Review | Shared plan/registry/palette/menu/panel extensions and Review presentation; existing Solana math/read presenters | Stage 4 binding plus Stage 3 graph; verified pool inputs only when supplied | Solana spoke, native SOL/WSOL distinction, Kamino/Jupiter/Raydium/Orca/Holding bodies, staged Apply/removal, local Review/back with execution unavailable |
+| 6. Review and delivery | Registry, integration/compliance/feature docs, small PRs and independent coordinator review | Focused tests green, same reviewed Git tree | Serial scoped TypeScript, changed-file Biome, configured-locale/config/docs guards; merge/delete only reviewed unused branches |
+
+The engine does not choose financial routes or authorize operations. Pool Party controls the
+graph and keeps gray principal, green LP fee collection/conversion and gray Income output.
+React Flow supplies node/handle identities, measured endpoints and a single viewport transform.
+Missing production holdings, reserves, prices, quotes and transactions remain unavailable.
+
+All checks run serially, with at most two GPT-6.1-sol workers. No full local suite, coverage,
+app/Storybook build or browser journey is run in this delivery. Murilo performs browser
+acceptance, including actual painted-border geometry under zoom and different browsers.
+Jev remains isolated opt-in advisory tooling; the earlier matched pilot measured slower time
+and higher token use, so no improvement or production routing dependency is claimed.
+
 Status: **v2 plan complete; graph foundation, Review transaction fees, Solana S1 catalog and inline Manage header merged; supported Manage route/card slice merged; canvas chrome merged in PR #131; draft visibility and Collect read presenter merged; Idle output presenter merged; Build return topology merged in PR #135; all-node panels mounted in PR #136; lending risk merged in PR #137; Orca/Raydium ranges merged in PR #138; Holding/Jupiter merged in PR #139; local Manage model/panels merged in PRs #140/#141, Screen/Canvas merged in PR #142; Kamino read model merged in PR #143; read-only panels integrated and reviewed**. Parent [POO-2116](https://linear.app/yeildbay/issue/POO-2116), project Manager Console. Current canonical public main after Kamino model PR #143: `e806025dcbfe1df499903fc4292f2eb01b8db750`, [PoolPartyLabs/pool-party-v2-frontend](https://github.com/PoolPartyLabs/pool-party-v2-frontend). Reconcile main again before each runtime PR. A coordinator owns review/integration, Linear and Slack with at most two GPT-6.1-sol workers.
 
 ## Current v2 contract and implementation sequence
@@ -468,3 +496,30 @@ The isolated read-model slice passes 23 focused tests and 22 existing documentat
 The shared section mounts with null production origin/read. Configure orders canonical metadata before allocation and market metrics; Manage orders supplied/principal/interest/rewards, APY, available-to-withdraw and independent full-obligation risk before local settings. Confirm stays unavailable. Empty rewards are omitted, unknown rewards remain unavailable, and a malformed metric cannot erase compatible independent reads or risk. No source, selector, rate, balance, No debt or execution capability is manufactured.
 
 Sixty-nine model/presenter/Configure/local-Manage tests passed on the combined isolated tree; two missing-Manage failures reproduced RED before mounting. Scoped TypeScript, changed-file Biome and all11 locales passed. Independent GPT-6.1-sol review found no remaining blocker. Existing per-instance mount/selection/draft/Review ownership is unchanged. The pure model is merged in PR #143; the panel slice updates registry, integration seams and compliance, with live market/account/execution gates still open. No browser, full-suite, build or deployment is claimed.
+
+### Shared V2 delivery reconciliation, October 9, 2026, POO-2301/2302 v1
+
+Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
+the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
+local Build/Manage host across phases and applies the route/account/exit guards described below.
+This wizard change is pre-merge code delivery, without a deployment or native-browser visual
+acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
+Not available; `solanaSpoke` stays off.
+
+Published HEAD already contains React Flow infrastructure #146, Manage/Build adoption #148/#149,
+dormant Solana domain #150, explicit local Idle/native SOL cash #151 and panel/Review foundation
+#152. The earlier statements
+that Build lacks cash describe their original delivery time. Standard Build still has no cash;
+only explicit solana-local mapping adds Idle236x62 and native SOL cash144x96, center-aligned with
+32px gap. Cash is handleless decoration and both monetary readings remain Not available.
+
+The shared Mandate/Build/Review shell and V2 controls replace the separate Add-toolbar production
+preview. Exact Base58 selectors, Configure/Manage pending guards and whole-plan Apply remain.
+Local Review fee/minimum/seed fields are editable intentions; upload, Max and Launch report blocked
+intent without file/storage/wallet effects. EVM signing/economics/public-launch promises are absent.
+Applied shared draft and Review survive retry, while unapplied inner field values can be lost; last
+pending metadata still protects leaving. Accepted Header/Save & exit disposal requires valid consent
+for the current host/intent generation. Account/route reset remains abandonment.
+
+Source-available first-party licensing, upstream notices and CR-MGR-POO2301-DOMAIN/CONTEXT plus
+PANELS-WIZARD remain in force. No real financial permission or complete-48-graph claim is added.

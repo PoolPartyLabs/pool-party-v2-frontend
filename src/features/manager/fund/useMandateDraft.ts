@@ -3,6 +3,7 @@
  * @name useMandateDraft
  * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2151 rules v1,
  *   POO-2157 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, this hook owns draft STATE rather than instrumentation. It surfaces
  *   `lastBlock` and the save outcome, and the builder shell (PP-MGR-SCR-002) turns those into
  *   `builder_mandate_blocked` and the save/abandon events. A hook that emitted them itself would
@@ -41,6 +42,16 @@ export type MandateSaveError = "empty" | "length" | "storage";
 
 /** The outcome of a save, which the Name-your-draft dialog renders inline (R7). */
 export type MandateSaveResult = { ok: true } | { ok: false; error: MandateSaveError };
+
+/** Route-owned memory only, for suspending the EVM binding while the local runtime is open. */
+export interface MandateDraftCheckpoint {
+  pristine: MandateDraft;
+  draft: MandateDraft;
+  saved: MandateDraft | null;
+  lastBlock: StepBlock | null;
+  phase?: "mandate" | "build" | "review";
+  selectedId?: string | null;
+}
 
 /** What the builder shell and the five steps read. */
 export interface UseMandateDraftResult {
@@ -82,7 +93,10 @@ function unsavedFingerprint(draft: MandateDraft): string {
  *   rather than an error screen: the Console link may point at a draft deleted in another tab, and
  *   "start here" is a better answer than a dead end.
  */
-export function useMandateDraft(draftId?: string): UseMandateDraftResult {
+export function useMandateDraft(
+  draftId?: string,
+  checkpoint?: { current: MandateDraftCheckpoint | null },
+): UseMandateDraftResult {
   // One catalog per mount, built from no flag (R17 v2, POO-2142: Robinhood Chain is always offered).
   // Steps compare catalog rows by identity in memos, so a fresh object on every render would
   // invalidate all of them.
@@ -91,22 +105,26 @@ export function useMandateDraft(draftId?: string): UseMandateDraftResult {
   // The pristine draft is built once, and it doubles as the dirty-check baseline before the first
   // save: `isDirty` then means "anything was selected", which is the condition the shell's
   // beforeunload prompt needs.
-  const [pristine] = useState<MandateDraft>(() =>
-    isMockMode
-      ? createEmptyDraft(new Date().toISOString(), draftId ?? newDraftId())
-      : {
-          ...createEmptyDraft(new Date().toISOString(), draftId ?? newDraftId()),
-          dataMode: "real",
-          catalogVersion: "v2-catalog-v1",
-          protocols: ["uniswap-v3-swap"],
-          positionProtocolsByChain: {},
-          aaveV3Reserves: [],
-          spokeCapPercent: null,
-        },
+  const [pristine] = useState<MandateDraft>(
+    () =>
+      checkpoint?.current?.pristine ??
+      (isMockMode
+        ? createEmptyDraft(new Date().toISOString(), draftId ?? newDraftId())
+        : {
+            ...createEmptyDraft(new Date().toISOString(), draftId ?? newDraftId()),
+            dataMode: "real",
+            catalogVersion: "v2-catalog-v1",
+            protocols: ["uniswap-v3-swap"],
+            positionProtocolsByChain: {},
+            aaveV3Reserves: [],
+            spokeCapPercent: null,
+          }),
   );
-  const [draft, setDraft] = useState<MandateDraft>(pristine);
-  const [saved, setSaved] = useState<MandateDraft | null>(null);
-  const [lastBlock, setLastBlock] = useState<StepBlock | null>(null);
+  const [draft, setDraft] = useState<MandateDraft>(() => checkpoint?.current?.draft ?? pristine);
+  const [saved, setSaved] = useState<MandateDraft | null>(() => checkpoint?.current?.saved ?? null);
+  const [lastBlock, setLastBlock] = useState<StepBlock | null>(
+    () => checkpoint?.current?.lastBlock ?? null,
+  );
   const [hydrated, setHydrated] = useState(false);
 
   // `update` reads the current draft through a ref rather than through a functional setState, so
@@ -118,13 +136,22 @@ export function useMandateDraft(draftId?: string): UseMandateDraftResult {
   // PP-INTEGRATION-POINT: the one client read of the draft store. When drafts move to the backend
   // API (wiring issue POO-2132) this becomes the fetch, and `hydrated` keeps its meaning.
   useEffect(() => {
+    if (checkpoint?.current) {
+      setHydrated(true);
+      return;
+    }
     const stored = draftId ? getDraft(draftId) : null;
     if (stored) {
       setDraft(stored);
       setSaved(stored);
     }
     setHydrated(true);
-  }, [draftId]);
+  }, [draftId, checkpoint]);
+
+  useEffect(() => {
+    if (checkpoint && hydrated)
+      checkpoint.current = { ...checkpoint.current, pristine, draft, saved, lastBlock };
+  }, [checkpoint, hydrated, pristine, draft, saved, lastBlock]);
 
   const update = useCallback(
     (fn: (current: MandateDraft) => MandateDraft | { blocked: StepBlock }) => {

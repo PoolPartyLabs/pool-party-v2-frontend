@@ -2,11 +2,14 @@
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen
  * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2195 rules v1, POO-2197 rules v2)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
  *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
  *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
  *   builder_build_abandoned, builder_build_error, builder_build_submitted, builder_build_completed,
- *   builder_review_error (the Build canvas and ReviewPhase own their view/interaction events)
+ *   builder_review_error (the Build canvas and ReviewPhase own their view/interaction events),
+ *   solana_preview_viewed, solana_preview_started, solana_preview_interacted,
+ *   solana_preview_applied, solana_preview_abandoned, solana_preview_blocked, solana_preview_error
  *
  * The fund-contracts strategy builder: the shell the five Mandate steps live in (POO-2122, epic
  * POO-2119). Page header, the three-phase stepper, the collapsible sub-step header, the step body,
@@ -123,7 +126,8 @@ import type { AnalyticsMandateBlockReason } from "@/lib/analytics/events";
 import type { AnalyticsBlockReason } from "@/lib/analytics/txFlowKit";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useAuth } from "@/lib/auth/useAuth";
-import { useUnsavedChanges } from "@/lib/hooks/unsavedChanges";
+import { useSolanaPreviewExitAcknowledgement } from "@/lib/experiments/solanaPreviewStore";
+import { useNavigationGuard, useUnsavedChanges } from "@/lib/hooks/unsavedChanges";
 import { cn } from "@/lib/utils/cn";
 import { BuilderStepper } from "../components/BuilderStepper";
 import { BuildScreen, type LeaveGuard } from "./build/BuildScreen";
@@ -155,14 +159,17 @@ import {
   validateStep,
   visibleSteps,
 } from "./mandateDraft";
+import { LocalSolanaReview } from "./review/LocalSolanaReview";
 import { ReviewPhase } from "./review/ReviewPhase";
+import { SolanaPreviewRenderBoundary } from "./solana-preview/SolanaPreviewErrorBoundary";
+import { useSolanaBuilderDraft } from "./solana-preview/useSolanaBuilderDraft";
 import { LimitsStep } from "./steps/LimitsStep";
 import { NetworksStep } from "./steps/NetworksStep";
 import { PoolsStep } from "./steps/PoolsStep";
 import { ProtocolsStep } from "./steps/ProtocolsStep";
 import type { MandateStepProps } from "./steps/stepProps";
 import { TokensStep } from "./steps/TokensStep";
-import { useMandateDraft } from "./useMandateDraft";
+import { type UseMandateDraftResult, useMandateDraft } from "./useMandateDraft";
 
 /** Which component renders each step. The shell knows the keys; the bodies know the mandate. */
 const STEP_BODIES: Record<MandateStepKey, ComponentType<MandateStepProps>> = {
@@ -249,25 +256,169 @@ function BuilderSkeleton() {
 }
 
 /** The fund-contracts strategy builder (V2). Renders the Mandate phase, then the Build canvas. */
-export function FundStrategyBuilderScreen() {
+export interface FundStrategyBuilderScreenProps {
+  runtime?: "standard" | "solana-local";
+  onExitPreview?: (onAccepted: () => void) => void;
+  standardCheckpoint?: { current: import("./useMandateDraft").MandateDraftCheckpoint | null };
+}
+export function FundStrategyBuilderScreen({
+  runtime = "standard",
+  onExitPreview,
+  standardCheckpoint,
+}: FundStrategyBuilderScreenProps = {}) {
+  return runtime === "solana-local" ? (
+    <LocalBuilderBinding onExitPreview={onExitPreview} />
+  ) : (
+    <StandardBuilderBinding checkpoint={standardCheckpoint} />
+  );
+}
+function StandardBuilderBinding({
+  checkpoint,
+}: {
+  checkpoint: FundStrategyBuilderScreenProps["standardCheckpoint"];
+}) {
+  const searchParams = useSearchParams();
+  const [initialDraftId] = useState(() => searchParams.get("draft") ?? undefined);
+  const [requestedStep] = useState(() =>
+    checkpoint?.current ? null : parseStepKey(searchParams.get("step")),
+  );
+  const [requestedPhase] = useState(() =>
+    checkpoint?.current ? (checkpoint.current.phase ?? null) : searchParams.get("phase"),
+  );
+  const state = useMandateDraft(initialDraftId, checkpoint);
+  const { address, isLoading: walletLoading } = useAuth();
+  const hasExistingJourney =
+    state.hydrated && getLaunchStatusForDraft(state.draft.id, address ?? null) !== null;
+  return (
+    <FundBuilderShell
+      binding={state}
+      initialDraftId={initialDraftId}
+      requestedStep={requestedStep}
+      requestedPhase={requestedPhase}
+      walletLoading={walletLoading}
+      hasExistingJourney={hasExistingJourney}
+      checkpoint={checkpoint}
+    />
+  );
+}
+function LocalBuilderBinding({
+  onExitPreview,
+}: {
+  onExitPreview?: FundStrategyBuilderScreenProps["onExitPreview"];
+}) {
+  const state = useSolanaBuilderDraft();
+  const t = useTranslations("manager");
+  const { track } = useAnalytics();
+  const router = useRouter();
+  const guard = useNavigationGuard();
+  const [pendingChanges, setPendingChanges] = useState(false);
+  const [didExit, setDidExit] = useState(false);
+  const latest = useRef({ dirty: state.isDirty, pending: pendingChanges, track });
+  latest.current = { dirty: state.isDirty, pending: pendingChanges, track };
+  const exited = useRef(false);
+  const acceptOwnerExit = useCallback(() => {
+    exited.current = true;
+    setDidExit(true);
+  }, []);
+  useSolanaPreviewExitAcknowledgement(acceptOwnerExit);
+  const exit = useCallback(
+    (onShellAccepted: () => void) => {
+      const accept = () => {
+        acceptOwnerExit();
+        onShellAccepted();
+      };
+      if (onExitPreview) onExitPreview(accept);
+      else
+        guard(() => {
+          accept();
+          router.push("/manager");
+        });
+    },
+    [acceptOwnerExit, guard, onExitPreview, router],
+  );
+  // A render failure removes inner guards; applied and last-reported pending changes remain owned here.
+  useUnsavedChanges(!didExit && (state.isDirty || pendingChanges));
+  // The owner survives render fallback/retry. Only disposing the local session is abandonment.
+  useEffect(
+    () => () => {
+      if (!exited.current)
+        latest.current.track("solana_preview_abandoned", {
+          has_local_changes: latest.current.dirty || latest.current.pending,
+        });
+    },
+    [],
+  );
+  return (
+    <SolanaPreviewRenderBoundary
+      hasLocalChanges={state.isDirty || pendingChanges}
+      fallback={(retry) => (
+        <div role="alert" className="rounded-2xl border border-border bg-surface p-5">
+          <p>{t("solanaPreview.unexpectedError")}</p>
+          <Button className="mt-3" onClick={retry}>
+            {t("solanaPreview.tryAgain")}
+          </Button>
+        </div>
+      )}
+    >
+      <FundBuilderShell
+        binding={state}
+        walletLoading={false}
+        hasExistingJourney={false}
+        onExitPreview={exit}
+        localExitAccepted={didExit}
+        onLocalPendingChangesChange={setPendingChanges}
+      />
+    </SolanaPreviewRenderBoundary>
+  );
+}
+/** One presentation and navigation shell; only its data/recovery binding differs. */
+function FundBuilderShell({
+  binding,
+  initialDraftId,
+  requestedStep = null,
+  requestedPhase = null,
+  walletLoading,
+  hasExistingJourney,
+  onExitPreview,
+  localExitAccepted = false,
+  onLocalPendingChangesChange,
+  checkpoint,
+}: {
+  binding: UseMandateDraftResult;
+  initialDraftId?: string;
+  requestedStep?: MandateStepKey | null;
+  requestedPhase?: string | null;
+  walletLoading: boolean;
+  hasExistingJourney: boolean;
+  onExitPreview?: (onAccepted: () => void) => void;
+  localExitAccepted?: boolean;
+  onLocalPendingChangesChange?: (dirty: boolean) => void;
+  checkpoint?: FundStrategyBuilderScreenProps["standardCheckpoint"];
+}) {
   const t = useTranslations("manager");
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const { track } = useAnalytics();
-
-  /**
-   * The deep link is read ONCE, at mount.
-   *
-   * Every step change rewrites the query string, and re-reading it would feed the hook a "new"
-   * draft id on each rewrite, re-running its storage read and overwriting unsaved selections with
-   * the last persisted copy. Where the manager landed is a question with one answer, asked on
-   * arrival.
-   */
-  const [initialDraftId] = useState(() => searchParams.get("draft") ?? undefined);
-  const [requestedStep] = useState(() => parseStepKey(searchParams.get("step")));
-  const [requestedPhase] = useState(() => searchParams.get("phase"));
-
+  const analytics = useAnalytics();
+  const local = binding.draft.runtime === "solana-local";
+  const track = useCallback<typeof analytics.track>(
+    (event, params) => {
+      if (!local) {
+        analytics.track(event, params);
+        return;
+      }
+      if (event.includes("abandoned")) return;
+      else if (event.includes("error"))
+        analytics.track("solana_preview_error", { error_code: "SOLANA_LOCAL_SAVE_FAILED" });
+      else if (event.includes("blocked"))
+        analytics.track("solana_preview_blocked", { error_code: "SOLANA_LOCAL_INTENT_BLOCKED" });
+      else if (event === "builder_mandate_started") analytics.track("solana_preview_viewed");
+      else if (event.includes("started")) analytics.track("solana_preview_started");
+      else if (event.includes("completed") || event === "builder_draft_saved")
+        analytics.track("solana_preview_applied");
+      else analytics.track("solana_preview_interacted");
+    },
+    [analytics.track, local],
+  );
   const {
     draft,
     catalog,
@@ -277,15 +428,7 @@ export function FundStrategyBuilderScreen() {
     lastBlock,
     clearBlock,
     isDirty,
-  } = useMandateDraft(initialDraftId);
-
-  // Through `resumeStep`, not `lastStep` raw: a stored draft can name a step it no longer has (see
-  // the file header), and the resume effect below only corrects `lastStep` one render later.
-  const { address, isLoading: walletLoading } = useAuth();
-  // POO-2197: derive the displayed phase without rewriting recovery state. The wallet can arrive
-  // after draft hydration; an existing frozen journey always retains its original resume path.
-  const existingJourney = hydrated ? getLaunchStatusForDraft(draft.id, address ?? null) : null;
-  const hasExistingJourney = existingJourney !== null;
+  } = binding;
   const awaitingWallet = hydrated && draft.completedAt !== null && walletLoading;
   const awaitingCatalog =
     hydrated &&
@@ -328,6 +471,13 @@ export function FundStrategyBuilderScreen() {
         ? ((requestedPhase ?? draft.lastPhase) as BuilderPhase)
         : "mandate"));
 
+  const localBuildEntered = useRef(false);
+  if (local && phase === "build") localBuildEntered.current = true;
+
+  useEffect(() => {
+    if (checkpoint?.current) checkpoint.current.phase = phase;
+  }, [checkpoint, phase]);
+
   useBuildShellLayout(phase === "build");
   const [dialog, setDialog] = useState<"exit" | "complete" | null>(null);
   const [shellBlock, setShellBlock] = useState<StepBlock | null>(null);
@@ -339,7 +489,7 @@ export function FundStrategyBuilderScreen() {
 
   // R9 / handoff: the browser warns before losing a mandate, from the first selection onward.
   // `exiting` disarms it on the way out, so Save & exit does not prompt about work it just saved.
-  useUnsavedChanges(isDirty && !exiting);
+  useUnsavedChanges(isDirty && !exiting && !localExitAccepted);
 
   // Refs for the values the unmount handler reads. A closure would report where the manager was
   // when the effect was created, which on an abandonment is never where they left.
@@ -374,7 +524,9 @@ export function FundStrategyBuilderScreen() {
    * [Finding 19, POO-2187] The block selected when an Edit mandate link left Build: the walk forward
    * brings Build back with it selected. Back: Mandate is not an edit and clears it.
    */
-  const [buildReturnBlock, setBuildReturnBlock] = useState<string | null>(null);
+  const [buildReturnBlock, setBuildReturnBlock] = useState<string | null>(
+    () => checkpoint?.current?.selectedId ?? null,
+  );
   const guardBuildExit = useCallback((proceed: () => void) => {
     const guard = phaseRef.current === "build" ? buildLeaveRef.current : null;
     if (guard) guard(proceed);
@@ -561,10 +713,10 @@ export function FundStrategyBuilderScreen() {
    * means the default, and a Back from Build has to leave the URL as it was before it.
    */
   useEffect(() => {
-    if (!hydrated || resumePending || draft.savedAt === null) return;
+    if (local || !hydrated || resumePending || draft.savedAt === null) return;
     const query = `?draft=${draft.id}&step=${step}${phase !== "mandate" ? `&phase=${phase}` : ""}`;
     routerRef.current.replace(`${pathname}${query}`, { scroll: false });
-  }, [hydrated, resumePending, draft.savedAt, draft.id, step, phase, pathname]);
+  }, [hydrated, resumePending, draft.savedAt, draft.id, step, phase, pathname, local]);
 
   // Every step transition starts at the top: the steps are tall, and advancing otherwise drops the
   // manager mid-scroll into a list they have not seen the top of. Instant, per the 2026-06-26 rule.
@@ -581,6 +733,8 @@ export function FundStrategyBuilderScreen() {
    */
   useEffect(
     () => () => {
+      // Local session abandonment belongs to the owner outside its retry boundary.
+      if (draftRef.current.runtime === "solana-local") return;
       // A session that ends on the Build canvas is Build's to report (POO-2157): the mandate under
       // it already closed. Only a Save & exit parks it; everything else is an abandonment, and what
       // it lost is a plan edit made since the last save.
@@ -754,11 +908,17 @@ export function FundStrategyBuilderScreen() {
   );
 
   const leaveForConsole = useCallback(() => {
-    concludedRef.current = true;
-    exitedRef.current = true;
-    setExiting(true);
-    router.push("/manager");
-  }, [router]);
+    const accept = () => {
+      concludedRef.current = true;
+      exitedRef.current = true;
+      setExiting(true);
+    };
+    if (local && onExitPreview) onExitPreview(accept);
+    else {
+      accept();
+      router.push("/manager");
+    }
+  }, [router, local, onExitPreview]);
 
   const handleSaveExit = useCallback(async () => {
     // R7: the first save is the one that needs a name, and the dialog is where it is asked for.
@@ -775,9 +935,9 @@ export function FundStrategyBuilderScreen() {
       return;
     }
     track("builder_draft_saved", { step, first_save: false });
-    toast(t("fundBuilder.draft.saved"));
+    toast(t(local ? "solanaPreview.localApplied" : "fundBuilder.draft.saved"));
     leaveForConsole();
-  }, [draft.name, leaveForConsole, reportSaveFailure, save, stampPhase, step, t, track]);
+  }, [draft.name, leaveForConsole, local, reportSaveFailure, save, stampPhase, step, t, track]);
 
   /**
    * The dialog's save. Wrapped so the shell reports the failure the dialog only renders.
@@ -806,9 +966,9 @@ export function FundStrategyBuilderScreen() {
       concludeCompletion();
       return;
     }
-    toast(t("fundBuilder.draft.saved"));
+    toast(t(local ? "solanaPreview.localApplied" : "fundBuilder.draft.saved"));
     leaveForConsole();
-  }, [concludeCompletion, dialog, leaveForConsole, step, t, track]);
+  }, [concludeCompletion, dialog, leaveForConsole, local, step, t, track]);
 
   const handleDialogBlocked = useCallback(() => {
     track("builder_mandate_blocked", {
@@ -875,6 +1035,12 @@ export function FundStrategyBuilderScreen() {
         </Button>
       </div>
 
+      {local ? (
+        <p role="status" className="text-muted-foreground text-sm">
+          {t("solanaPreview.visualOnly")}
+        </p>
+      ) : null}
+
       {/* R2: the V1 stepper, unchanged. Build is reachable only once the mandate is finished, and
           [B4] Review stays unreachable: the stepper only makes an EARLIER phase clickable. Its
           Mandate pill is a way out of Build, so it asks the canvas's guard (HU3). */}
@@ -889,25 +1055,45 @@ export function FundStrategyBuilderScreen() {
         }}
       />
 
-      {phase === "review" ? (
-        <ReviewPhase
-          draftId={draft.id}
-          onBackToBuild={handleReviewBack}
-          onEditMandate={() => handleEditMandate("networks", null)}
-        />
-      ) : phase === "build" ? (
+      {(local ? localBuildEntered.current : phase === "build") ? (
         <BuildScreen
+          active={phase === "build"}
           draft={draft}
           catalog={catalog}
           update={update}
           onBackToMandate={handleBackToMandate}
           onEditMandate={handleEditMandate}
           initialSelectedId={buildReturnBlock}
+          onSelectionChange={
+            checkpoint
+              ? (selectedId) => {
+                  if (checkpoint.current) checkpoint.current.selectedId = selectedId;
+                }
+              : undefined
+          }
           leaveGuardRef={buildLeaveRef}
+          onLocalPendingChangesChange={onLocalPendingChangesChange}
           onReview={() => void handleOpenReview()}
           initialRevealTarget={reviewRevealTarget}
         />
-      ) : (
+      ) : null}
+
+      {phase === "review" ? (
+        local ? (
+          <LocalSolanaReview
+            draft={draft}
+            update={update}
+            onBackToBuild={handleReviewBack}
+            onEditMandate={() => handleEditMandate("networks", null)}
+          />
+        ) : (
+          <ReviewPhase
+            draftId={draft.id}
+            onBackToBuild={handleReviewBack}
+            onEditMandate={() => handleEditMandate("networks", null)}
+          />
+        )
+      ) : phase === "mandate" ? (
         <>
           <MandateSubStepHeader
             steps={steps}
@@ -948,7 +1134,7 @@ export function FundStrategyBuilderScreen() {
             }}
           />
         </>
-      )}
+      ) : null}
 
       {dialog ? (
         <NameDraftDialog

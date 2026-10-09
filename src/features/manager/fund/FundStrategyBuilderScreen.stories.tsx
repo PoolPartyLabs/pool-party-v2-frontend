@@ -107,6 +107,11 @@ export const FirstStep: Story = {
   ],
 };
 
+/** The same shared wizard with an in-memory Solana binding. */
+export const SolanaLocalMandate: Story = {
+  args: { runtime: "solana-local" },
+};
+
 /** Resumed from the Console on the last step, the way "Open" and a refresh both arrive. */
 export const ResumedOnLastStep: Story = {
   decorators: [

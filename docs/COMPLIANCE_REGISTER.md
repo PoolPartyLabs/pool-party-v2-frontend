@@ -1,8 +1,25 @@
 # Compliance register
 
-## React Flow financial presentation infrastructure, October 9, 2026 (POO-2302 v1)
+## Manager connected surfaces and shared Solana journey, October 8, 2026 (POO-2301/2302)
 
-Status: ANSWERED for optional presentation only. Gray principal, green fees and gray Income output retain their existing meanings. Measured handles and route geometry prove neither conversion, bridge delivery, reserve assignment nor financial settlement. This dependency adds no custody, rate, market data, credentials or transaction capability. Existing source/execution gates remain in force before production adoption.
+Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
+the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
+local Build/Manage host across phases and applies the route/account/exit guards described below.
+This wizard change is pre-merge code delivery, without a deployment or native-browser visual
+acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
+Not available; `solanaSpoke` stays off.
+
+Status: ANSWERED for presentation only. Gray principal, green position-fee conversion and gray
+Income output identify financial roles; a connected diagram does not prove conversion, bridge
+receipt, reserve assignment or settlement. Card resizing and React Flow handle tracking introduce
+no rate, amount, custody permission or transaction. A local Solana descriptor is drawing intent,
+not a verified pool, reserve or executable adapter. Native SOL remains distinct from WSOL.
+
+Status: OPEN for existing real-source/execution enablement. Canonical programs/owners, source
+freshness, asset/venue disclosures, custody, quotes and transaction details retain their current
+POO-2230/2239/2240/2261/2262/2277/2278 and Manager launch gates. Local Save/Apply does not report
+financial settlement. The hidden gesture is discoverable client UI, not account authorization.
+No personal-data field, credential flow or new financial analytics parameter is introduced.
 
 What must be verified before a surface reaches a real user, written down where the code is.
 
@@ -344,6 +361,12 @@ Status: ANSWERED for local read/draft presentation. Current position and edited 
 
 Status: OPEN before live protocol or execution enablement under POO-2240/2261/2262. Verify deployed programs, pool/mint/token-program restrictions, transfer fees/extensions, position authority, actual adapter capabilities, fresh quotes and operation-specific min/max/fees disclosures. Tick math or a local Apply action clears no custody, venue or signing gate.
 
+> Delivery history: the following sections preserve the previously published contracts and
+> censuses. Their delivery-time future work is superseded by the current shared-binding notes above.
+
+## React Flow financial presentation infrastructure, October 9, 2026 (POO-2302 v1)
+
+Status: ANSWERED for optional presentation only. Gray principal, green fees and gray Income output retain their existing meanings. Measured handles and route geometry prove neither conversion, bridge delivery, reserve assignment nor financial settlement. This dependency adds no custody, rate, market data, credentials or transaction capability. Existing source/execution gates remain in force before production adoption.
 
 ## CR-MGR-POO2301-DOMAIN, October 9, 2026
 
@@ -358,6 +381,35 @@ ANSWERED for local canvas presentation only. USDC Idle denotes the financial flo
 
 BLOCKING before real balance/data enablement: verify native-account ownership and selected-network scope, observed quantity, independent USD valuation/freshness and the separation of native SOL from wrapped SPL assets. Existing POO-2239/2240/2261/2262 and compliance gates remain. Owner: Murilo / Codex coordinator.
 
+## CR-MGR-POO2301-PANELS-WIZARD, October 9, 2026
+
+Scope: PR #152 delivered the panels and Review foundation. This delivery connects their shared
+wizard route, retention and exit contracts. These answers cover local presentation intent; they
+do not certify deployment, native-browser acceptance or a real financial capability.
+
+ANSWERED for the shared local presentation only. Configure and Manage use the existing V2 controls;
+Base58 selectors distinguish exact case-sensitive mint identities. The local Review keeps editable
+fee percentages, minimum and seed as intentions while signing, initial share price, 72-hour exit,
+post-launch changes, public investment access, fee payout timing and future balance availability
+remain Not available. Upload, Max and Launch record bounded blocked intent through the shared Button
+without file reading, upload, wallet calls or browser/backend persistence. No new real financial
+permission, fee collection, public launch, custody or account authorization is introduced.
+
+Applied shared draft and Review fields survive render retry. Unapplied inner-panel field values can
+be lost after a render unmount; retained pending metadata protects leaving but does not restore fields.
+Accepted Header and Save & exit disposal is acknowledged only after generation-validated consent;
+route/account disposal remains abandonment/reset. The discoverable gesture remains a preference.
+
+ANSWERED for the existing licensing boundary: first-party changes follow the source-available root
+[LICENSE](../LICENSE). React Flow retains MIT, pinned Orca/Raydium ports retain Apache-2.0, and logos
+retain their owners' rights and recorded provenance in [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md).
+The local presentation grants no new upstream trademark or commercial license.
+
+BLOCKING before real investor access, fees, balances, quotes or operations under
+POO-2239/2240/2261/2262: confirm canonical program/account/asset identities and authority, independently
+observed native/SPL balances and valuation, venue/asset disclosures, quote/cost and fee semantics,
+jurisdiction/access requirements, transaction/settlement recovery and the existing launch gates.
+CR-MGR-POO2301-DOMAIN and CR-MGR-POO2301-CONTEXT remain in force. Owner: Murilo / Codex coordinator.
 
 ## CR-MGR-POO2301-PANELS, October 9, 2026
 

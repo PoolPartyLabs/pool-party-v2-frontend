@@ -6,22 +6,76 @@ public manager profile, and the strategy **manage detail** (`PP-MGR-SCR-004`) wi
 (`src/lib/services` → `managerService`, `positionService`); mock-by-default with real seams marked
 `PP-INTEGRATION-POINT`.
 
-## Local Solana strategy preview
+## Shared V2 wizard and hidden local Solana, October 8, 2026
 
-[POO-2281](https://linear.app/yeildbay/issue/POO-2281), rules v2, adds an isolated local editor on
-`/manager/new` under the existing `fundContracts` release gate. Select V2, then press the selected
-V2 button three times within one second to reveal V2 Solana. The hidden mode is a UI preference;
-all accounts using this route can reveal it. It has no separate API or wallet allowlist.
+Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
+the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
+local Build/Manage host across phases and applies the route/account/exit guards described below.
+This wizard change is pre-merge code delivery, without a deployment or native-browser visual
+acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
+Not available; `solanaSpoke` stays off.
 
-The editor adds Kamino Lend, Jupiter Swap, Raydium CLMM and Orca Whirlpools blocks with official
-logos, local pair/allocation choices and guarded Apply/discard/removal. Preview configuration lives
-only in component memory. EVM family storage and saved drafts retain their existing semantics.
-Market data and execution say Not available. No wallet, RPC, builder or launch operation is imported.
+POO-2301 rules v1 supersedes the separate POO-2281 preview entry with the existing
+`FundStrategyBuilderScreen` (`PP-MGR-SCR-002`) and its Mandate → Build → Review navigation.
+The default public V2 binding keeps its catalog, browser-local drafts and EVM launch recovery.
+The hidden `solana-local` binding uses the same step bodies, palette, cards and inline panel.
+It adds no separate editor page, canvas or Add toolbar.
 
-See the [delivery plan](../../../docs/solana-preview-preparation-plan-2026-10-07.md),
-[feature reference](fund/solana-preview/README.md) and [ADR 0009](../../../docs/adr/0009-local-solana-visual-preview.md).
-POO-2282 is canceled for this owner-approved visual scope. Real token/market and wallet/launch
-integration remains POO-2239/2240/2261/2262, with `solanaSpoke` default off.
+Under the existing `fundContracts` gate on `/manager/new`, three presses of the selected V2
+segment within one second reveal V2 Solana. This route/account-scoped in-memory preference is
+not an entitlement or contract family. Standard V2 selection, phase and unsaved draft are
+checkpointed while this local session is open; stale exit callbacks cannot close a successor
+route/account session. Route, account or family disposal clears the local session.
+
+`solanaBuilderRuntime` (`PP-MGR-LIB-075`) supplies local Kamino, Jupiter, Raydium and Orca
+choices plus a separate Holding block. Known mainnet USDC and WSOL mint metadata is eligible
+for drawing only and is never presented as a price feed. Exact case-sensitive Base58 mint and
+protocol selections guard Apply and reconciled conversions. Native SOL remains distinct from WSOL in an SPL position. The explicit local layout context from
+PR #151 adds 236 × 62 USDC Idle and 144 × 96 native SOL cash with a 32 px lateral gap and shared
+vertical center. Cash is handleless decoration with unavailable quantity/USD readings; standard
+Build remains without cash. The standard EVM catalog and launch payloads receive no local Solana identity.
+
+Build keeps Configure and local Manage in the same panel. The mounted per-instance Manage
+host preserves drafts and inline Review through selection and hiding; the local Build remains
+mounted after first entry while another wizard phase is visible. Configure protects pending
+Apply before opening Manage. Phase exit with dirty Manage settings requires explicit discard.
+Allocation belongs to the chain and is editable only on its first position; downstream inspectors
+share the applied allocation. `solanaBuildManageBinding` (`PP-MGR-LIB-076`) acknowledges Apply
+only after the whole resulting shared plan validates against the current mandate and budgets.
+
+`useSolanaBuilderDraft` (`PP-MGR-HOK-024`) acknowledges save in memory without browser/backend
+persistence. `LocalSolanaReview` (`PP-MGR-CMP-102`) reuses the Review cards and columns with local
+identity/fee/seed intentions. Upload, balances, authoritative fees, seed quote, canonical reads,
+range context, clock, signing and launch remain unavailable. Local Apply never emits financial
+completion. POO-2239/2240/2261/2262 remain the real wiring boundary; `solanaSpoke` stays off.
+
+The local session owner stays outside the reused render boundary. Genuine render failures emit
+bounded `solana_preview_error` and expose the existing translated retry. Retry preserves applied
+shared plan and Review fields; unapplied inner panel edits may be lost when the shell unmounts.
+The owner retains the last pending-edit status and its unsaved-changes guard during fallback.
+Owner disposal reports local abandonment in every phase, including Review, using draft dirty or
+pending edits. Explicit exit suppresses it and disarms the guard. Standard EVM events and recovery
+retain their existing behavior. The focused shell/boundary regression suites passed 57 tests.
+
+POO-2302 rules v1 first introduces the React Flow projection/engine (`PP-MGR-LIB-074`,
+`PP-MGR-CMP-100`) without changing production consumers. Infrastructure was published in PR #146
+with 43 staged focused tests, scoped TypeScript and Biome passing. PRs #148/#149 now adopt the engine in
+the shared Build and Manage canvas hosts with existing painted surfaces, financial
+border handles, complete-route hover and fixed graph placement. It enables pan/zoom/fit, not
+node movement, user connections or financial execution. Producer layout and measured-card
+corridors remain separate responsibilities from the engine contract.
+
+See the [Build reference](fund/build/README.md), [local binding reference](fund/solana-preview/README.md),
+[current canvas plan](../../../docs/manager-canvas-panels-plan-2026-10-07.md) and
+[ADR 0009](../../../docs/adr/0009-local-solana-visual-preview.md). The dated POO-2281/2291
+sections below retain delivery history; their standalone preview is a historical harness.
+
+Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+intent generation validate the user's consent. Stale acceptance cannot close a successor session.
+Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
+last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.
+Local Review keeps numeric fee/minimum/seed intentions but no EVM financial or signing promise.
+Upload, Max and Launch are observable blocked intents and perform no file/storage/wallet operation.
 
 ## i18n namespace
 
@@ -434,7 +488,7 @@ sits beside the code, in `src/features/manager/fund/build/README.md`.
 | `pieces/` | `PP-MGR-CMP-048` to `055` | The presentational pieces: spine card, position card, flow pill, share label, insert port, spoke group, edges, the two templates. Strings arrive as props; they import nothing from `plan/`, `layout/`, `blocks/` or `graph/` |
 | `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056`, `057`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu and its popover, the selection guard and the controller (`useBuildCanvas`); the panel stub `PP-MGR-CMP-058` is removed |
 | `panel/` | `PP-MGR-CMP-061` to `072`, `PP-MGR-HOK-014`, `PP-MGR-LIB-029`, `PP-MGR-LIB-030` | The configuration panel shell (POO-2187), its kind to body registry, its shared controls and draft, range/slippage maths, Uniswap v4 pool body and Aave USDC Supply body |
-| `graph/` | `PP-MGR-CMP-059` | The renderer `BuildGraph` (layout, pieces, selection and active targets in, presses out), its reading-order model, `useGraphLayout` and `useTextWidth` |
+| `graph/` | `PP-MGR-CMP-059`, `PP-MGR-CMP-100`, `PP-MGR-LIB-062`, `PP-MGR-LIB-074` | `BuildGraph`, reading order/layout/text hooks, explicit financial graph contract, fixed React Flow projection and engine; financial ports are presentation anchors, not plan editing controls |
 
 The reference canvases live in `src/mocks/data/buildCanvasFixtures.ts` (`PP-MGR-MCK-004`). The components have
 stories in their folders (the helpers `AnchoredPopover` and `BlockMark` are shown through the menu and palette
@@ -741,7 +795,7 @@ POO-2245 v1 supplies the V2-only Overview: shared console hierarchy, AUM/history
 
 PP-MGR-LIB-063 `solana-preview/solanaSchemas.ts` preserves case-sensitive 32-byte base58 identity by cluster/resource, native SOL lamports versus SPL mints, and exact string amount conversion. Available, stale, unavailable, not-applicable and confirmed-zero states retain declared source/time/slot. Confirmed-zero requires raw zero and observed confirmed/finalized commitment. These are structural contracts, not attestation of an account, owner, allowlist or live freshness.
 
-PP-MGR-LIB-064 `solana-preview/solanaCatalog.ts` narrows Kamino to mainnet USDC Supply and keeps Jupiter, Raydium CLMM and Orca Whirlpools separate. The existing previewModel consumes the same four choices and order. Holding is a descriptor only until its own slice. Catalog financial/program/position reads and execution stay strictly unavailable. Native SOL is not WSOL Operating cash, and no Solana identity enters an EVM registry or launch payload. Jupiter managed order/execute and composable build inspection preserve separate quote and blockhash validity fields; neither enables signing.
+PP-MGR-LIB-064 `solana-preview/solanaCatalog.ts` narrows Kamino to mainnet USDC Supply and keeps Jupiter, Raydium CLMM and Orca Whirlpools separate. At S1 delivery, previewModel consumed the same four choices and order, while Holding was a descriptor pending its own slice. The shared-wizard binding above records the later Holding/host adoption. Catalog financial/program/position reads and execution stay strictly unavailable. Native SOL operating cash is not WSOL, and no Solana identity enters an EVM registry or launch payload. Jupiter managed order/execute and composable build inspection preserve separate quote and blockhash validity fields; neither enables signing.
 
 Validation: 77 focused tests in five schema/catalog/model/screen/route files, scoped Biome and one TypeScript check passed. No full local suite, coverage, build or browser journey. POO-2291 remains in progress for Kamino/Orca/Raydium/Holding/local Manage; live discovery, custody, quotes and execution remain POO-2239/2240/2261/2262.
 
@@ -820,6 +874,25 @@ Validation: 32 focused Manage layout/component tests passed, including coverage 
 natural content growth/shrink, full route hover, semantic references, shared Bridge ports and clear-card
 corridors. Browser layout acceptance remains with Murilo.
 
+> Delivery history: the following sections preserve the previously published contracts and
+> censuses. Their delivery-time future work is superseded by the current shared-binding notes above.
+
+## Local Solana strategy preview
+
+[POO-2281](https://linear.app/yeildbay/issue/POO-2281), rules v2, adds an isolated local editor on
+`/manager/new` under the existing `fundContracts` release gate. Select V2, then press the selected
+V2 button three times within one second to reveal V2 Solana. The hidden mode is a UI preference;
+all accounts using this route can reveal it. It has no separate API or wallet allowlist.
+
+The editor adds Kamino Lend, Jupiter Swap, Raydium CLMM and Orca Whirlpools blocks with official
+logos, local pair/allocation choices and guarded Apply/discard/removal. Preview configuration lives
+only in component memory. EVM family storage and saved drafts retain their existing semantics.
+Market data and execution say Not available. No wallet, RPC, builder or launch operation is imported.
+
+See the [delivery plan](../../../docs/solana-preview-preparation-plan-2026-10-07.md),
+[feature reference](fund/solana-preview/README.md) and [ADR 0009](../../../docs/adr/0009-local-solana-visual-preview.md).
+POO-2282 is canceled for this owner-approved visual scope. Real token/market and wallet/launch
+integration remains POO-2239/2240/2261/2262, with `solanaSpoke` default off.
 
 ## Manage connections (POO-2302 v1, October 9, 2026)
 
