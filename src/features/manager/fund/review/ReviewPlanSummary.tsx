@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-079 (POO-2195)
  * @name ReviewPlanSummary
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none: derived mandate and applied Build summaries.
  */
 import { useLocale, useTranslations } from "next-intl";
@@ -44,10 +45,23 @@ export function ReviewPlanSummary({ draft, onEditMandate, onEditBuild }: ReviewP
       </p>
       <p className="text-sm">
         {draft.protocols
-          .map((protocol) =>
-            all(
-              `fundBuilder.protocolNames.${({ "uniswap-v3-swap": "uniswapV3Swap", "uniswap-v3": "uniswapV3", "uniswap-v4": "uniswapV4", "aave-v3": "aaveV3", across: "across", gmx: "gmx", pendle: "pendle" } as const)[protocol]}`,
-            ),
+          .map(
+            (protocol) =>
+              (
+                ({
+                  "uniswap-v3-swap": all("fundBuilder.protocolNames.uniswapV3Swap"),
+                  "uniswap-v3": all("fundBuilder.protocolNames.uniswapV3"),
+                  "uniswap-v4": all("fundBuilder.protocolNames.uniswapV4"),
+                  "aave-v3": all("fundBuilder.protocolNames.aaveV3"),
+                  across: all("fundBuilder.protocolNames.across"),
+                  gmx: all("fundBuilder.protocolNames.gmx"),
+                  pendle: all("fundBuilder.protocolNames.pendle"),
+                  kamino: all("solanaPreview.protocols.kamino"),
+                  jupiter: all("solanaPreview.protocols.jupiter"),
+                  raydium: all("solanaPreview.protocols.raydium"),
+                  orca: all("solanaPreview.protocols.orca"),
+                }) as const
+              )[protocol],
           )
           .join(", ")}
       </p>

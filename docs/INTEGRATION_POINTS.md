@@ -387,3 +387,10 @@ PP-MGR-LIB-023 uses PP-MGR-LIB-062 to declare stable typed financial endpoints a
 PP-MGR-LIB-068 / PP-MGR-CMP-094 accept presentation-only full-account identity and supplied risk/context/provenance. These are not an assumed Aave/Kamino RPC or API DTO. Aave requires effective collateral thresholds and supplied metrics without a Kamino borrow-factor requirement; Kamino debt factors remain required. A scenario may identify a collateral or debt asset. Current/After values and source precision are retained without frontend financial arithmetic.
 
 PP-MGR-CMP-086 Aave and PP-MGR-CMP-089 Kamino pass null account identity and unavailable reads. POO-2290 must supply canonical authorized core/account/market or cluster/program/account/market/obligation, complete fresh debt/asset/oracle/parameter snapshot and a successful preview tied to the base. No position metadata, absent Borrow block or local fixture implies no debt. Known zero requires fresh complete evidence. No execution or borrowing adapter is introduced.
+
+
+## Shared local Solana domain, October 9, 2026 (POO-2301 v1)
+
+`solanaBuilderRuntime.ts` (PP-MGR-LIB-075) extends the optional local catalog with Solana, Kamino, Jupiter, Raydium and Orca. Exact USDC/WSOL metadata is unpriced and visualEligible; native SOL never satisfies a WSOL mint requirement. Bounded catalog IDs describe drawing intent, not verified pools, reserves or programs. POO-2239/2240 retain real token/market discovery and POO-2261/2262 retain quotes, authority and execution.
+
+The ordinary mandate/catalog excludes local protocols. Reducers validate selected networks, exact mints and automatic Jupiter conversion dependencies before writing. The optional local-visual readiness path is distinct from default execution readiness, which refuses all Solana cards/spokes. This dormant domain does not mount the shared local route, API/RPC clients, wallet hooks or persistent local bindings. No live balance, price, APY, pool or transaction is supplied.

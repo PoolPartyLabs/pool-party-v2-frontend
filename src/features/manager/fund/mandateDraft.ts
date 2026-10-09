@@ -3,6 +3,7 @@
  * @name mandateDraft
  * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
  *   POO-2167 rules v4, POO-2151 rules v1, POO-2197 rules v2)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -49,7 +50,7 @@ export type NetworkId =
   // "base" |
   // "polygon" |
   // "unichain" |
-  "arbitrum" | "robinhood";
+  "arbitrum" | "robinhood" | "solana";
 
 /** A protocol displayed by the mandate. Future ids are never executable (POO-2167 v4). */
 export type ProtocolId =
@@ -59,7 +60,11 @@ export type ProtocolId =
   | "uniswap-v3"
   | "uniswap-v4"
   | "gmx"
-  | "pendle";
+  | "pendle"
+  | "kamino"
+  | "jupiter"
+  | "raydium"
+  | "orca";
 
 /** The protocols that make the Pools step meaningful: they hold liquidity positions. */
 export type DexProtocolId = "uniswap-v3" | "uniswap-v4";
@@ -80,6 +85,7 @@ export const MANDATE_STEP_ORDER: readonly MandateStepKey[] = [
 export const NETWORK_ORDER: readonly NetworkId[] = [
   "arbitrum",
   "robinhood",
+  "solana",
   // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
   // "base",
   // "polygon",
@@ -95,6 +101,10 @@ export const PROTOCOL_ORDER: readonly ProtocolId[] = [
   "uniswap-v4",
   "gmx",
   "pendle",
+  "kamino",
+  "jupiter",
+  "raydium",
+  "orca",
 ];
 
 /** The position protocols. A draft with none of these skips the Pools step (R29). */
@@ -215,6 +225,8 @@ export interface MandateCaps {
 
 /** The one object the five Mandate screens read and write. */
 export interface MandateDraft {
+  /** Local drawing intent only; never an executable V2 mandate. */
+  runtime?: "solana-local";
   review?: import("./launch/review").ReviewDraft;
   v2Selection?: {
     chains: { chainId: 42161 | 4663; tokens: string[]; uniswapV4PoolIds: string[] }[];
@@ -318,7 +330,12 @@ export function isBlocked(result: unknown): result is { blocked: StepBlock } {
 
 /** A token's identity inside a mandate: the same token on two networks is two entries. */
 export function tokenKey(t: Pick<MandateTokenRef, "network" | "address">): string {
-  return `${t.network}:${t.address.toLowerCase()}`;
+  return `${t.network}:${normalizeTokenIdentity(t.network, t.address)}`;
+}
+
+/** Base58 is case sensitive; only EVM identities normalize casing. */
+export function normalizeTokenIdentity(network: NetworkId, identity: string): string {
+  return network === "solana" ? identity : identity.toLowerCase();
 }
 
 /** Whether the hub price source can price this symbol (R28), case-insensitive. */
@@ -333,7 +350,11 @@ export function slotsUsed(draft: MandateDraft): number {
 
 /** Whether the mandate can hold liquidity positions, which is what makes Pools exist (R29). */
 export function hasDexProtocol(draft: MandateDraft): boolean {
-  return draft.protocols.some((p) => (DEX_PROTOCOL_IDS as readonly ProtocolId[]).includes(p));
+  return draft.protocols.some(
+    (p) =>
+      (DEX_PROTOCOL_IDS as readonly ProtocolId[]).includes(p) ||
+      (draft.runtime === "solana-local" && (p === "orca" || p === "raydium")),
+  );
 }
 
 /** The counts the Save and exit dialog and the drafts list print. */
@@ -407,6 +428,15 @@ function retainKeys<T>(
  * keeps the "Deposit token" caption. Murilo can overturn this; it is the one place to change.
  */
 export function depositTokenRefFor(network: NetworkId): MandateTokenRef | null {
+  if (network === "solana")
+    return {
+      address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      symbol: "USDC",
+      name: "USD Coin",
+      network,
+      logoUrl: null,
+      locked: true,
+    };
   const chainId = networkToChainId(network);
   if (chainId == null) return null;
   const address = getUsdcAddress(chainId);
@@ -531,6 +561,7 @@ export function validateStep(
   step: MandateStepKey,
   catalog: MandateCatalog,
 ): StepBlock | null {
+  if (draft.runtime === "solana-local" && step === "pools") return null;
   if (catalog.dataMode === "real") {
     if (
       catalog.loading ||
@@ -811,7 +842,10 @@ export function withNetworks(
  */
 export function withProtocols(draft: MandateDraft, protocols: ProtocolId[]): MandateDraft {
   const unavailable = new Set<string>(UNAVAILABLE_PROTOCOLS);
-  const known = new Set<string>(PROTOCOL_ORDER);
+  const localProtocols: readonly ProtocolId[] = ["kamino", "jupiter", "raydium", "orca"];
+  const known = new Set<string>(
+    PROTOCOL_ORDER.filter((id) => draft.runtime === "solana-local" || !localProtocols.includes(id)),
+  );
   const wanted = new Set<ProtocolId>(
     draft.dataMode === "real"
       ? draft.networks.includes("robinhood")
@@ -942,7 +976,7 @@ function addTokenRefs(
 
 function refFromCatalog(token: MandateCatalogToken): MandateTokenRef {
   return {
-    address: token.address.toLowerCase(),
+    address: normalizeTokenIdentity(token.network, token.address),
     symbol: token.symbol,
     name: token.name,
     network: token.network,
@@ -972,13 +1006,23 @@ export function addToken(
   catalog: MandateCatalog,
 ): MandateReducerResult {
   const rowId = tokenKey(token);
-  if (catalog.dataMode === "real" ? !token.priced : !isPricedSymbol(token.symbol)) {
+  if (
+    draft.runtime === "solana-local"
+      ? !(token.priced || token.visualEligible)
+      : catalog.dataMode === "real"
+        ? !token.priced
+        : !isPricedSymbol(token.symbol)
+  ) {
     return { blocked: { step: "tokens", reason: "not_priced", rowId } };
   }
   const wanted = token.symbol.toLowerCase();
   const refs = catalog
     .tokensFor(draft.networks, draft.protocols)
-    .filter((t) => t.priced && t.symbol.toLowerCase() === wanted)
+    .filter(
+      (t) =>
+        (t.priced || (draft.runtime === "solana-local" && t.visualEligible)) &&
+        t.symbol.toLowerCase() === wanted,
+    )
     .map(refFromCatalog);
   const result = addTokenRefs(draft, refs, rowId);
   return isBlocked(result) ? result : withUniverseExpiry(draft, result);

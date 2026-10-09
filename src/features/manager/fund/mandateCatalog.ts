@@ -3,6 +3,7 @@
  * @name mandateCatalog
  * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
  *   POO-2167 rules v4)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a data catalog. The builder shell (PP-MGR-SCR-002) owns every mandate
  *   event; nothing here touches the dataLayer.
  *
@@ -85,10 +86,13 @@ export interface MandateCatalogToken {
   logoUrl: string | null;
   /** Whether the hub price source can price it (R28). An unpriced token cannot be added. */
   priced: boolean;
+  /** Local descriptor eligibility, independent of any price-feed capability. */
+  visualEligible?: boolean;
 }
 
 /** The whole catalog. It reads no feature flag (rules v2, POO-2142). */
 export interface MandateCatalog {
+  runtime?: "solana-local";
   validateDraft?: (draft: import("./mandateDraft").MandateDraft) => boolean;
   dataMode?: "real";
   loading?: boolean;
@@ -111,6 +115,7 @@ export interface MandateCatalog {
 const BRAND_COLORS: Record<NetworkId, string> = {
   arbitrum: "#28A0F0",
   robinhood: "#00C805",
+  solana: "#9945FF",
   // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
   // base: "#0052FF",
   // polygon: "#8247E5",
@@ -129,12 +134,13 @@ function buildNetworks(): MandateNetwork[] {
   const available: Record<NetworkId, boolean> = {
     arbitrum: true,
     robinhood: true,
+    solana: false,
     // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
     // base: false,
     // polygon: false,
     // unichain: false,
   };
-  return NETWORK_ORDER.map((id) => ({
+  return NETWORK_ORDER.filter((id) => id !== "solana").map((id) => ({
     id,
     name: `fundBuilder.networkNames.${id}`,
     isHub: id === "arbitrum",
@@ -153,9 +159,13 @@ const PROTOCOL_NAME_KEYS: Record<ProtocolId, string> = {
   "uniswap-v4": "uniswapV4",
   gmx: "gmx",
   pendle: "pendle",
+  kamino: "kamino",
+  jupiter: "jupiter",
+  raydium: "raydium",
+  orca: "orca",
 };
 
-const ALL_NETWORKS: readonly NetworkId[] = NETWORK_ORDER;
+const ALL_NETWORKS: readonly NetworkId[] = NETWORK_ORDER.filter((network) => network !== "solana");
 
 /**
  * R20 v3 / R21 v2: the protocols, and where each one runs.
@@ -187,16 +197,22 @@ function buildProtocols(): MandateProtocol[] {
     "uniswap-v4": { kind: "dex", availableOn: ["arbitrum", "robinhood"] },
     gmx: { kind: "perps", availableOn: [] },
     pendle: { kind: "yield", availableOn: [] },
+    kamino: { kind: "lending", availableOn: [] },
+    jupiter: { kind: "swap", availableOn: [] },
+    raydium: { kind: "dex", availableOn: [] },
+    orca: { kind: "dex", availableOn: [] },
   };
-  return PROTOCOL_ORDER.map((id) => ({
-    id,
-    name: `fundBuilder.protocolNames.${PROTOCOL_NAME_KEYS[id]}`,
-    kind: spec[id].kind,
-    required: id === "uniswap-v3-swap" || id === "across",
-    availableOn: spec[id].availableOn,
-    available: !unavailable.has(id),
-    captionKey: `fundBuilder.protocolCaptions.${spec[id].kind}`,
-  }));
+  return PROTOCOL_ORDER.filter((id) => !["kamino", "jupiter", "raydium", "orca"].includes(id)).map(
+    (id) => ({
+      id,
+      name: `fundBuilder.protocolNames.${PROTOCOL_NAME_KEYS[id]}`,
+      kind: spec[id].kind,
+      required: id === "uniswap-v3-swap" || id === "across",
+      availableOn: spec[id].availableOn,
+      available: !unavailable.has(id),
+      captionKey: `fundBuilder.protocolCaptions.${spec[id].kind}`,
+    }),
+  );
 }
 
 /** R18: the deposit token as a catalog row, derived from the one place the draft also reads. */

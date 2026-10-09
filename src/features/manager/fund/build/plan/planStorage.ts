@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-021
  * @name planStorage
  * @implements-rules-version v1 (POO-2151 rules v1); POO-2237 rules v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure storage helper; the store and the builder shell own the events.
  *
  * The plan rides inside the mandate draft (same store, same Save & exit, same resume on reload, as
@@ -37,6 +38,10 @@ const POSITION_KINDS: ReadonlySet<string> = new Set<BlockKind>([
   "uniswapV3Pool",
   "pendle",
   "gmxPerp",
+  "solanaOrcaPool",
+  "solanaRaydiumPool",
+  "solanaKaminoSupply",
+  "solanaHolding",
 ]);
 
 const FLOW_KINDS: ReadonlySet<string> = new Set<FlowKind>(["swap", "collectFees"]);

@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-039
  * @name LimitsStep
  * @implements-rules-version v2 (POO-2143 rules v2, POO-2197 rules v2)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, the shell emits
  *
  * POO-2126 [R6] / [R39] / [R40] / [R41] / [R42] / [R43], epic POO-2119. Mandate step 5: how much of
@@ -129,6 +130,10 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
     "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
     gmx: t("fundBuilder.protocolNames.gmx"),
     pendle: t("fundBuilder.protocolNames.pendle"),
+    kamino: t("solanaPreview.protocols.kamino"),
+    jupiter: t("solanaPreview.protocols.jupiter"),
+    raydium: t("solanaPreview.protocols.raydium"),
+    orca: t("solanaPreview.protocols.orca"),
   };
   // The short form of the protocol caption (R39): "Lending", not "Lending · supply tokens to earn
   // interest". Only the kinds that can reach a cap row are listed; `capRows` drops the required two,

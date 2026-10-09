@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-021
  * @name planReducers
  * @implements-rules-version v1 (POO-2151 rules v1; POO-2210 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure domain module. A refusal returns `{ blocked }` and the Build
  *   screen (PP-MGR-SCR-002, slice S7) reports it as `builder_build_blocked`.
  *
@@ -43,15 +44,18 @@ import {
   type PlanReducerResult,
   type PoolBlockConfig,
   type PositionBlock,
+  type PositionConfig,
   type Spoke,
   type Step,
 } from "./buildPlan";
 import { allocatedPct, findBlock } from "./planDerive";
+import { validatePlan } from "./planInvariants";
 import {
   arrivingTokenAt,
   type InsertChoice,
   type InsertSlot,
   insertOptions,
+  isLiquidityKind,
   isPoolKind,
   kindAvailability,
   needsAutoSwap,
@@ -297,6 +301,14 @@ export function insertAt(
 ): PlanReducerResult {
   const found = findBlock(plan, slot.blockId);
   if (!found) return blocked("unknown_target", slot.blockId);
+  if (
+    choice.family === "flow" &&
+    choice.kind === "swap" &&
+    found.network === "solana" &&
+    ctx.draft.runtime === "solana-local" &&
+    !ctx.draft.protocols.includes("jupiter")
+  )
+    return blocked("not_in_mandate", slot.blockId);
   if (choice.family === "position" && choice.kind === "aaveBorrow") {
     const availability = kindAvailability("aaveBorrow", found.network, ctx);
     if (availability === "coming_soon") return blocked("coming_soon", slot.blockId);
@@ -339,7 +351,7 @@ export function removeBlock(plan: BuildPlan, ctx: PlanContext, blockId: string):
     const above = chain.steps[index - 1];
     const below = chain.steps[index + 1];
     if (above?.family === "flow" && above.auto) drop.add(index - 1);
-    if (isPoolKind(block.kind) && below?.family === "flow" && below.kind === "collectFees") {
+    if (isLiquidityKind(block.kind) && below?.family === "flow" && below.kind === "collectFees") {
       drop.add(index + 1);
     }
     if (
@@ -372,15 +384,19 @@ export function setBlockConfig(
   plan: BuildPlan,
   ctx: PlanContext,
   blockId: string,
-  config: PoolBlockConfig | AaveBlockConfig | null,
+  config: PositionConfig | null,
 ): PlanReducerResult {
   const found = findBlock(plan, blockId);
   if (found?.block.family !== "position") return blocked("unknown_target", blockId);
   const block = found.block;
-  let stored: PoolBlockConfig | AaveBlockConfig | null = null;
+  let stored: PositionConfig | null = null;
   if (config !== null) {
     if (!isConfigFor(block.kind, config)) return blocked("unknown_target", blockId);
-    if (configShapeOfKind(block.kind) === "pool") {
+    if (configShapeOfKind(block.kind) === "solana-local") {
+      if (ctx.draft.runtime !== "solana-local" || found.network !== "solana")
+        return blocked("not_in_mandate", blockId);
+      stored = { ...config };
+    } else if (configShapeOfKind(block.kind) === "pool") {
       const poolConfig = config as PoolBlockConfig;
       const pool = findMandatePool(ctx.draft.pools, found.network, poolConfig.poolId);
       if (!pool || pool.protocol !== BLOCK_KIND_PROTOCOL[block.kind]) {
@@ -402,7 +418,29 @@ export function setBlockConfig(
   }
   const next = { ...block, config: stored } as PositionBlock;
   const steps = found.chain.steps.map((step, i) => (i === found.index ? next : step));
-  return reconcileAutoBlocks(withSteps(plan, found.chain.id, steps), ctx);
+  const candidate = reconcileAutoBlocks(withSteps(plan, found.chain.id, steps), ctx);
+  if (stored !== null && configShapeOfKind(block.kind) === "solana-local") {
+    const selected = findBlock(candidate, blockId);
+    const dependencies = new Set([blockId]);
+    const previous = selected?.chain.steps[(selected?.index ?? 0) - 1];
+    const following = selected?.chain.steps[(selected?.index ?? 0) + 1];
+    if (previous?.family === "flow" && previous.kind === "swap" && previous.auto)
+      dependencies.add(previous.id);
+    if (following?.kind === "collectFees") dependencies.add(following.id);
+    // R3/R5/R6: validate the proposed local intent and its derived conversion dependencies before
+    // accepting it. Old errors in another block/chain must not prevent correcting this one.
+    const outsideMandate = validatePlan(candidate, ctx).some(
+      (violation) =>
+        (violation.invariant === 1 &&
+          violation.code === "network_not_in_mandate" &&
+          violation.targetId === found.network) ||
+        (violation.invariant === 2 &&
+          violation.targetId !== null &&
+          dependencies.has(violation.targetId)),
+    );
+    if (outsideMandate) return blocked("not_in_mandate", blockId);
+  }
+  return candidate;
 }
 
 // ---------------------------------------------------------------------------
@@ -506,7 +544,7 @@ export function applyBlockConfig(
   plan: BuildPlan,
   ctx: PlanContext,
   blockId: string,
-  config: PoolBlockConfig | AaveBlockConfig | null,
+  config: PositionConfig | null,
   sharePct?: number,
 ): PlanReducerResult {
   const found = findBlock(plan, blockId);
@@ -522,7 +560,9 @@ export function applyBlockConfig(
     : undefined;
   const nextPool = isPoolKind(found.block.kind)
     ? (config as PoolBlockConfig | null)?.poolId
-    : undefined;
+    : isLiquidityKind(found.block.kind) && config && "catalogId" in config
+      ? config.catalogId
+      : undefined;
   const configured = then(setBlockConfig(plan, ctx, blockId, config), (current) => {
     if (!nextPool || previousPool?.toLowerCase() === nextPool.toLowerCase()) return current;
     const selected = findBlock(current, blockId);

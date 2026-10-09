@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-024
  * @name blockRegistry
  * @implements-rules-version v1 (POO-2155 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure module. What the canvas does with a block is reported by
  *   `useBuildCanvas` through `onEvent`, and the Build screen (PP-MGR-SCR-002, S7) maps it to events.
  *
@@ -28,7 +29,13 @@
  */
 import { networkStableSymbol } from "@/lib/chains/config";
 import { formatPercent } from "@/lib/utils/format";
-import { HUB_NETWORK, type MandateDraft, type NetworkId, tokenKey } from "../../mandateDraft";
+import {
+  HUB_NETWORK,
+  type MandateDraft,
+  type NetworkId,
+  normalizeTokenIdentity,
+  tokenKey,
+} from "../../mandateDraft";
 import type { BlockContent, BlockIcon, FlowContent } from "../pieces/pieceTypes";
 import { findMandatePool } from "../plan/blockConfig";
 import {
@@ -42,7 +49,7 @@ import {
 } from "../plan/buildPlan";
 import { findBlock } from "../plan/planDerive";
 import type { PlanViolation } from "../plan/planInvariants";
-import { arrivingTokenKey, isPoolKind } from "../plan/planRules";
+import { arrivingTokenKey, isLiquidityKind, isPoolKind, isSolanaKind } from "../plan/planRules";
 import type { BlockCopy } from "./blockCopy";
 
 /** The share placeholder of a sentence that already prints "%": "60", "33.3" (through format.ts). */
@@ -108,6 +115,10 @@ export const BLOCK_REGISTRY: Readonly<Record<BlockKind, BlockDefinition>> = {
   uniswapV3Pool: definition("uniswapV3Pool", "layers", "newChain", "pool"),
   pendle: definition("pendle", "layers", "newChain", null),
   gmxPerp: definition("gmxPerp", "layers", "newChain", null),
+  solanaOrcaPool: definition("solanaOrcaPool", "layers", "newChain", null),
+  solanaRaydiumPool: definition("solanaRaydiumPool", "layers", "newChain", null),
+  solanaKaminoSupply: definition("solanaKaminoSupply", "bank", "newChain", null),
+  solanaHolding: definition("solanaHolding", "hourglass", "newChain", null),
 };
 
 /** The kinds in registry order (the order the palette and the menus list them). */
@@ -143,7 +154,7 @@ export function isBlockInvalid(
 
 /** The symbol of a mandate token of this network, or null when the draft does not hold it. */
 function tokenSymbol(draft: MandateDraft, network: NetworkId, key: string): string | null {
-  const lower = key.toLowerCase();
+  const lower = normalizeTokenIdentity(network, key);
   return draft.tokens.find((t) => t.network === network && tokenKey(t) === lower)?.symbol ?? null;
 }
 
@@ -155,6 +166,11 @@ function titleAndCaption(
 ): { title: string; caption: string } {
   const { copy, draft } = ctx;
   const protocol = copy.protocolName(block.kind);
+  if (isSolanaKind(block.kind))
+    return {
+      title: protocol,
+      caption: block.config && "pair" in block.config ? block.config.pair : copy.card.pickAsset,
+    };
   if (isPoolKind(block.kind)) {
     const config = block.config as { poolId: string } | null;
     // The bare PoolId of a real-mode row (or a mock row's id), inside the block's network.
@@ -249,7 +265,14 @@ export function describeFlow(blockId: string, ctx: DescribeContext): FlowContent
     return { text: copy.flow.collectFees, tooltip: copy.tooltip.collectFees, icon: "coins" };
   }
   if (!found.block.auto) {
-    return { text: copy.flow.swap, tooltip: copy.tooltip.swap, icon: "swap" };
+    return {
+      text:
+        ctx.draft.runtime === "solana-local" && found.network === "solana"
+          ? (copy.flow.jupiter ?? copy.flow.swap)
+          : copy.flow.swap,
+      tooltip: copy.tooltip.swap,
+      icon: "swap",
+    };
   }
   const next = found.chain.steps[found.index + 1];
   // `{token}` is the token that ACTUALLY arrives (a Borrow's asset after a Borrow), and the
@@ -258,7 +281,7 @@ export function describeFlow(blockId: string, ctx: DescribeContext): FlowContent
   const arrivingKey = next ? arrivingTokenKey(ctx.plan, ctx, next.id) : null;
   const token =
     (arrivingKey ? tokenSymbol(ctx.draft, found.network, arrivingKey) : null) ??
-    networkStableSymbol(found.network);
+    (found.network === "solana" ? "USDC" : networkStableSymbol(found.network));
   if (next?.family === "position" && next.kind === "aaveSupply" && next.config) {
     const asset = tokenSymbol(ctx.draft, found.network, next.config.assetKey);
     if (asset) {
@@ -319,12 +342,12 @@ export function describePanelHead(blockId: string, ctx: DescribeContext): PanelH
 /** What a palette row drags: a position kind, or a flow block the manager places. */
 export type PaletteDragItem =
   | { family: "position"; kind: BlockKind }
-  | { family: "flow"; kind: FlowKind };
+  | { family: "flow"; kind: FlowKind; network?: NetworkId };
 
 /** One palette row. `drag` null: not draggable (coming soon). */
 export interface PaletteItem {
   /** The kind it stands for, also the id of its logo or icon. */
-  id: BlockKind | FlowKind;
+  id: BlockKind | FlowKind | "jupiter";
   name: string;
   /** The block type under the name; null for a flow row. */
   caption: string | null;
@@ -356,6 +379,12 @@ export interface PaletteModel {
 export function paletteModel(draft: MandateDraft, copy: BlockCopy): PaletteModel {
   const inMandate = (kind: BlockKind) => {
     const protocol = BLOCK_KIND_PROTOCOL[kind];
+    if (isSolanaKind(kind))
+      return (
+        draft.runtime === "solana-local" &&
+        draft.networks.includes("solana") &&
+        (kind === "solanaHolding" || (protocol !== null && draft.protocols.includes(protocol)))
+      );
     return protocol !== null && draft.protocols.includes(protocol);
   };
   const mandate: PaletteItem[] = BLOCK_KINDS.filter(
@@ -367,11 +396,22 @@ export function paletteModel(draft: MandateDraft, copy: BlockCopy): PaletteModel
     drag: { family: "position", kind },
   }));
   const hasEnabledPool = BLOCK_KINDS.some(
-    (kind) => isPoolKind(kind) && BLOCK_REGISTRY[kind].status === "enabled" && inMandate(kind),
+    (kind) => isLiquidityKind(kind) && BLOCK_REGISTRY[kind].status === "enabled" && inMandate(kind),
   );
   const flow: PaletteItem[] = [
     { id: "swap", name: copy.flow.swap, caption: null, drag: { family: "flow", kind: "swap" } },
   ];
+  if (
+    draft.runtime === "solana-local" &&
+    draft.networks.includes("solana") &&
+    draft.protocols.includes("jupiter")
+  )
+    flow.push({
+      id: "jupiter",
+      name: copy.flow.jupiter ?? copy.flow.swap,
+      caption: copy.networkName("solana"),
+      drag: { family: "flow", kind: "swap", network: "solana" },
+    });
   if (hasEnabledPool) {
     flow.push({
       id: "collectFees",

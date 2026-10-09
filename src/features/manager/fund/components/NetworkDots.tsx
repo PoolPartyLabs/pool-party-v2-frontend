@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-042
  * @name NetworkDots
  * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, the shell emits
  *
  * POO-2123 [R10], epic POO-2119. Network logos that say which network they are.
@@ -46,6 +47,7 @@ export function useNetworkNames(): Record<NetworkId, string> {
   return {
     arbitrum: t("fundBuilder.networkNames.arbitrum"),
     robinhood: t("fundBuilder.networkNames.robinhood"),
+    solana: t("solanaPreview.holding.solana"),
     // PP-NOTE: buildathon scope (2026-10-03, POO-2142): commented out, restore when the fund contracts reach it.
     // base: t("fundBuilder.networkNames.base"),
     // polygon: t("fundBuilder.networkNames.polygon"),
@@ -91,13 +93,24 @@ export function NetworkLogoWithName({
             title={name}
             className={cn("inline-flex shrink-0 rounded-full", className)}
           >
-            <NetworkLogo
-              network={network}
-              name={name}
-              size={size}
-              fallbackColor={brandColor}
-              className="pointer-events-none"
-            />
+            {network === "solana" ? (
+              // biome-ignore lint/performance/noImgElement: committed third-party protocol mark.
+              <img
+                src="/protocols/solana-preview/solana.svg"
+                alt=""
+                width={size}
+                height={size}
+                className="pointer-events-none rounded-full"
+              />
+            ) : (
+              <NetworkLogo
+                network={network}
+                name={name}
+                size={size}
+                fallbackColor={brandColor}
+                className="pointer-events-none"
+              />
+            )}
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>

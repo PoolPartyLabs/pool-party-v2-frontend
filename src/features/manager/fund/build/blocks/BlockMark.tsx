@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-056
  * @name BlockMark
  * @implements-rules-version v1 (POO-2155 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, decorative
  *
  * The leading mark of a palette row, a menu row and the panel stub head (handoff v1.2 AN8, BB9,
@@ -33,6 +34,18 @@ export interface BlockMarkProps {
 
 /** A protocol, network or flow mark, decorative. */
 export function BlockMark({ logo, markId, name, size = 20 }: BlockMarkProps) {
+  if (markId === "jupiter") return <ProtocolMark id="jupiter" name={name} size={size} />;
+  if (logo === "network" && markId === "solana")
+    return (
+      // biome-ignore lint/performance/noImgElement: committed external protocol mark.
+      <img
+        src="/protocols/solana-preview/solana.svg"
+        alt=""
+        width={size}
+        height={size}
+        className="shrink-0 rounded-full"
+      />
+    );
   if (logo === "network") return <NetworkLogo network={markId} name={name} size={size} />;
   if (logo === "flow") {
     return (

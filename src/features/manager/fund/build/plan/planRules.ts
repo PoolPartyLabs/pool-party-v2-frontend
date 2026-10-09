@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-021
  * @name planRules
  * @implements-rules-version v1 (POO-2151 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure domain module.
  *
  * The rules of the canvas that are not reducers: which kinds a row may hold (C22, INV2), where the
@@ -59,6 +60,14 @@ export function isPoolKind(kind: string): kind is PoolBlockKind {
   return kind === "uniswapV4Pool" || kind === "uniswapV3Pool";
 }
 
+/** LP capability is distinct from the canonical Uniswap pool configuration. */
+export function isLiquidityKind(kind: string): boolean {
+  return isPoolKind(kind) || kind === "solanaOrcaPool" || kind === "solanaRaydiumPool";
+}
+export function isSolanaKind(kind: string): boolean {
+  return kind.startsWith("solana");
+}
+
 /** A plan step as the port rule reads it. A pill counts as configured: only cards can be empty. */
 export function toPortStepShape(step: Step): PortStepShape {
   return {
@@ -105,7 +114,7 @@ export function insertOptions(plan: BuildPlan, slot: InsertSlot): InsertChoice[]
   if (!port || !(slot.side === "before" ? port.top : port.bottom)) return [];
   if (slot.side === "before") return [{ family: "flow", kind: "swap" }];
   const kind = found.block.kind;
-  if (isPoolKind(kind)) return [{ family: "flow", kind: "collectFees" }];
+  if (isLiquidityKind(kind)) return [{ family: "flow", kind: "collectFees" }];
   if (kind === "aaveSupply") {
     return [
       { family: "position", kind: "aaveBorrow" },
@@ -133,6 +142,11 @@ export function kindAvailability(
   network: NetworkId,
   ctx: Pick<PlanContext, "draft" | "catalog">,
 ): KindAvailability {
+  if (isSolanaKind(kind)) {
+    if (ctx.draft.runtime !== "solana-local") return "not_in_mandate";
+    if (network !== "solana" || !ctx.draft.networks.includes("solana")) return "not_on_network";
+    if (kind === "solanaHolding") return "enabled";
+  }
   if (BLOCK_KIND_STATUS[kind] === "comingSoon") return "coming_soon";
   const protocol = BLOCK_KIND_PROTOCOL[kind];
   if (protocol === null || !ctx.draft.protocols.includes(protocol)) return "not_in_mandate";
@@ -193,7 +207,8 @@ export function arrivingTokenKey(
  * before anything else.
  */
 export function needsAutoSwap(block: PositionBlock, arriving: string | null): boolean {
-  if (isPoolKind(block.kind)) return true;
+  if (isLiquidityKind(block.kind)) return true;
+  if (block.kind === "solanaHolding") return block.config?.pair === "SOL / USDC";
   if (block.kind !== "aaveSupply" || block.config === null || arriving === null) return false;
   return block.config.assetKey.toLowerCase() !== arriving.toLowerCase();
 }

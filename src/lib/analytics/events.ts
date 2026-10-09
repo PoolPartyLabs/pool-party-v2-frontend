@@ -664,6 +664,10 @@ export const ANALYTICS_BUILD_BLOCK_KINDS = [
   "uniswapV3Pool",
   "pendle",
   "gmxPerp",
+  "solanaOrcaPool",
+  "solanaRaydiumPool",
+  "solanaKaminoSupply",
+  "solanaHolding",
   "swap",
   "collectFees",
   "spoke",
@@ -676,7 +680,7 @@ export type AnalyticsBuildBlockKind = (typeof ANALYTICS_BUILD_BLOCK_KINDS)[numbe
  * mirrored. The buildathon scope offers two; a network restored upstream stops compiling in
  * `buildAnalytics.ts` until it is added here, which is the failure mode worth having.
  */
-export const ANALYTICS_BUILD_NETWORKS = ["arbitrum", "robinhood"] as const;
+export const ANALYTICS_BUILD_NETWORKS = ["arbitrum", "robinhood", "solana"] as const;
 
 export type AnalyticsBuildNetwork = (typeof ANALYTICS_BUILD_NETWORKS)[number];
 

@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-028
  * @name planReadiness
  * @implements-rules-version v1 (POO-2184 rules v1); POO-2204 rules v1; POO-2237 rules v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure domain module. It names the refusal; the Build screen
  *   (PP-MGR-SCR-002) emits `builder_build_blocked` with it through `buildAnalytics.ts`, and the
  *   Review page (POO-2172) shows it among the Launch blockers.
@@ -39,11 +40,11 @@
  *
  * Reading order inside a check: the plan's own order, hub first, then the spokes, top to bottom.
  */
-import { isPoolConfigComplete } from "./blockConfig";
+import { isManualSwapConfig, isPoolConfigComplete } from "./blockConfig";
 import type { BuildPlan, Chain, PositionBlock, Step } from "./buildPlan";
 import { chainsWithNetwork, findBlock } from "./planDerive";
 import type { PlanViolation, PlanViolationCode } from "./planInvariants";
-import { isPoolKind } from "./planRules";
+import { isPoolKind, isSolanaKind } from "./planRules";
 
 /** The readiness refusals, in the order the checks run. */
 export const PLAN_READINESS_REFUSALS = [
@@ -156,6 +157,7 @@ function swapWithoutPool(chain: Chain): string | null {
 export function planReadiness(
   plan: BuildPlan,
   violations: readonly PlanViolation[],
+  mode: "execution" | "local-visual" = "execution",
 ): PlanReadiness {
   const chains = chainsWithNetwork(plan);
   const cards = chains.flatMap(({ chain }) => positionsOf(chain));
@@ -214,6 +216,32 @@ export function planReadiness(
       target: { kind: "network", network: unused.network },
     };
   }
+
+  // The local Review is an editable intention summary. Read/execution capabilities stay unavailable.
+  // It shares the structural, completeness and allocation checks above, never the EVM launch adapter.
+  if (mode === "local-visual") {
+    const manual = chains
+      .flatMap(({ chain }) => chain.steps)
+      .find(
+        (step) =>
+          step.family === "flow" &&
+          step.kind === "swap" &&
+          !step.auto &&
+          !isManualSwapConfig(step.config),
+      );
+    return manual ? refuse("review_incomplete_block", manual.id) : { ready: true };
+  }
+
+  // A drawing descriptor cannot become executable through a USDC-only position without a Swap.
+  const localCard = cards.find((card) => isSolanaKind(card.kind));
+  if (localCard) return refuse("review_invalid_block", localCard.id);
+  const localSpoke = plan.spokes.find((spoke) => spoke.network === "solana");
+  if (localSpoke)
+    return {
+      ready: false,
+      refusal: "review_invalid_block",
+      target: { kind: "network", network: localSpoke.network },
+    };
 
   for (const { chain } of chains) {
     const stacked = stackedStep(chain);

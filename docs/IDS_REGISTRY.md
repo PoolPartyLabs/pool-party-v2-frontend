@@ -1126,3 +1126,12 @@ PP-MGR-CMP-085 now selects the measured React Flow engine from PR #146, retainin
 ## Build React Flow adoption, October 9, 2026 (POO-2302 v1)
 
 PP-MGR-SCR-002, PP-MGR-CMP-059 and the existing Build pieces retain their artifact identities. BuildScreen explicitly selects React Flow; BuildGraph registers existing surfaces with declared handles, keeps native fallback for other callers, lifts spoke chips and retains current financial route/hover identities. Financial reducers remain the sole topology owner. No new source, transaction, locale key or artifact is introduced. Shared local Solana route activation remains a separate POO-2301 slice.
+
+
+## Shared local Solana domain, October 9, 2026 (POO-2301 v1)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-075` | solanaBuilderRuntime, isolated local catalog and bounded protocol drawing descriptors | Lib | n/a (code) | Implemented dormant domain | [POO-2301](https://linear.app/yeildbay/issue/POO-2301) | `src/features/manager/fund/solana-preview/solanaBuilderRuntime.ts` @rules-v1 |
+
+Existing mandate, plan, registry, logo and analytics artifacts retain their IDs. Solana identities preserve Base58 case; EVM identities retain normalization. Default execution readiness explicitly refuses Solana cards/spokes, including USDC-only Holding and Kamino. The local-visual option reports drawing readiness only. The route, shared panels and canvas activation are separate dependent slices.
