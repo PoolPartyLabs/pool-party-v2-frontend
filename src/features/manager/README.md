@@ -826,3 +826,8 @@ corridors. Browser layout acceptance remains with Murilo.
 ManageCanvas adopts the custom React Flow engine from PR #146, preserving existing cards, selection, financial routing and fixed Hub/zoom overlays. One engine transform owns pan/zoom. Identified handles use painted dimensions; native graph mutations remain disabled. Spoke chips use the same component above the background layer. Gray principal, green LP fees and gray Income output are unchanged.
 
 Intrinsic measurements occur after the actual surface commit. A token label shrinking during polling can reduce an expanded card without a border-box observer event, while restoring its intrinsic probe style and retaining the user's viewport and card identity. Focused tests cover painted handle endpoints, full-route hover, native cash/read states, reflow, selection and polling shrink; browser pixel acceptance remains with Murilo. This slice introduces no market data, custody or execution.
+
+
+### Launch-consumer boundary follow-up, October 9, 2026
+
+The fallback index retains both saved Mandate drafts and orphaned EVM launch snapshots with their actual plan types. Readiness validates mandate metadata separately from the execution plan, preserving independent Review and execution blockers. Launch agreement tests and Review stories narrow their plans at the existing runtime boundary. This fixes three PR #153 CI consumer type errors; no allocation, execution, wallet/API capability or live Solana gate changes. Validation is reported in the follow-up PR, with no deploy or browser acceptance claim.

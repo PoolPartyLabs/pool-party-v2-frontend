@@ -1152,3 +1152,8 @@ Existing PP-MGR-LIB-023 / PP-MGR-CMP-059 artifacts gain an explicitly local layo
 | `PP-MGR-CMP-102` | LocalSolanaReview, same V2 cards with editable intentions and unavailable live capabilities | Component | Existing V2 Review | Implemented dormant local Review | [POO-2301](https://linear.app/yeildbay/issue/POO-2301) | `src/features/manager/fund/review/LocalSolanaReview.tsx` @rules-v1 |
 
 Existing PanelSelect, BlockPanel and Review artifacts retain their IDs. Jupiter options compare exact Base58 identities; default EVM comparison remains unchanged. LP/Holding reuse PanelSelect and shipped protocol/token logos. Local Review preserves the same cards and inputs but does not promise signing, EVM seed economics, exit timing or public access; unavailable upload, Max and Launch record blocked intent without execution. Wizard activation and its retained Build/Manage host are a separate dependent slice. The earlier React Flow/domain/context entries remain historical delivery records.
+
+
+## Launch-consumer boundary follow-up, October 9, 2026
+
+Existing PP-MGR-CMP-084 and PP-MGR-LIB-048 now accept both saved Mandate drafts and orphaned EVM launch snapshots without coercing their plans into one type. The draft-index readiness check validates mandate metadata separately and verifies the execution-plan runtime shape before preview. Missing Review remains its own blocker. Existing PP-MGR-LIB-028 and PP-MGR-CMP-078 test/story fixtures validate launch shape only at the execution preview. No IDs or source markers are added; live Solana execution remains unavailable. PR #153 CI identified these three consumer type errors after its boundary repair.
