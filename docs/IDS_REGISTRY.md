@@ -1173,3 +1173,8 @@ this tree contains 709 registry rows and 704 unique IDs. The five disclosed hist
 IDs remain unchanged: PP-PORT-SCR-001, PP-PROF-HOOK-002 and PP-STR-LIB-005/006/007. This census
 supersedes earlier delivery-time counts for the shared-wizard release. It does not assert deployment,
 native-browser visual acceptance, financial reachability or live Solana capabilities.
+
+
+## Launch-consumer boundary follow-up, October 9, 2026
+
+Existing PP-MGR-CMP-084 and PP-MGR-LIB-048 now accept both saved Mandate drafts and orphaned EVM launch snapshots without coercing their plans into one type. The draft-index readiness check validates mandate metadata separately and verifies the execution-plan runtime shape before preview. Missing Review remains its own blocker. Existing PP-MGR-LIB-028 and PP-MGR-CMP-078 test/story fixtures validate launch shape only at the execution preview. No IDs or source markers are added; live Solana execution remains unavailable. PR #153 CI identified these three consumer type errors after its boundary repair.

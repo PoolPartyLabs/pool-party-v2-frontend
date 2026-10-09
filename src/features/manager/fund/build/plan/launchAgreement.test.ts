@@ -22,7 +22,7 @@
 import { describe, expect, it } from "vitest";
 import type { FundLaunchDraft } from "../../launch/contracts";
 import type * as LaunchIndex from "../../launch/index";
-import { getLaunchSteps as fromJourney } from "../../launch/journey";
+import { assertLaunchPlan, getLaunchSteps as fromJourney } from "../../launch/journey";
 import { deriveLaunchSteps, validateTickAlignment } from "../../launch/plan";
 import type { MandateDraft } from "../../mandateDraft";
 import { type PoolRange, presetRange, type RangePreset } from "../panel/poolRangeMath";
@@ -84,6 +84,7 @@ const REVIEW: FundLaunchDraft["review"] = {
 
 /** The minimal launch draft around a plan: the mandate draft, the plan and a Review. */
 function launchDraft(plan: BuildPlan, draft: MandateDraft = makeTestDraft()): FundLaunchDraft {
+  assertLaunchPlan(plan);
   return { ...draft, plan, review: REVIEW };
 }
 
@@ -175,6 +176,30 @@ const POOL_CASES: Array<[string, Omit<PoolBlockConfig, "poolId">, number]> = [
 ];
 
 describe("[AG1] the contract: a plan written by Apply is a plan the launch runs", () => {
+  it("[AG3] a local Solana descriptor never becomes an EVM launch position (POO-2301)", () => {
+    // @rule AG3: structural fixture validation does not grant local execution capability.
+    const plan: BuildPlan = {
+      ...createEmptyPlan(),
+      hub: {
+        chains: [
+          {
+            id: "local-chain",
+            sharePct: 100,
+            steps: [
+              {
+                id: "local-position",
+                family: "position",
+                kind: "solanaOrcaPool",
+                config: { catalogId: "local-orca", pair: "SOL / USDC" },
+              },
+            ],
+          },
+        ],
+      },
+    };
+    expect(launchOf(plan)).toEqual({ error: "UNSUPPORTED_POSITION" });
+  });
+
   for (const [name, pool, bps] of POOL_CASES) {
     it(`[AG1] accepts a hub v4 pool (${name}) and a Supply USDC`, () => {
       // @rule AG1

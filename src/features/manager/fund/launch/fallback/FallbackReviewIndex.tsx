@@ -14,10 +14,13 @@ import type { MandateCatalog } from "../../mandateCatalog";
 import type { MandateDraft } from "../../mandateDraft";
 import { listDrafts, subscribe } from "../../mandateDraftStore";
 import { useV2MandateCatalog } from "../../useV2MandateCatalog";
+import type { FundLaunchDraft } from "../contracts";
 import { listLaunchJourneys } from "../journey";
 import { useV2LaunchStatus } from "../useV2LaunchStatus";
 import { useV2LaunchWallet } from "../useV2LaunchWallet";
 import { draftReadiness } from "./draftReadiness";
+
+type IndexedDraft = MandateDraft | FundLaunchDraft;
 
 export function FallbackReviewIndex() {
   const translate = useTranslations("manager");
@@ -31,7 +34,7 @@ function SavedDrafts() {
   const translate = useTranslations("manager");
   const wallet = useV2LaunchWallet();
   const catalog = useV2MandateCatalog();
-  const [snapshot, setSnapshot] = useState<{ manager: string; drafts: MandateDraft[] } | null>(
+  const [snapshot, setSnapshot] = useState<{ manager: string; drafts: IndexedDraft[] } | null>(
     null,
   );
   useEffect(() => {
@@ -90,7 +93,7 @@ function DraftRow({
   catalog,
   balance,
 }: {
-  draft: MandateDraft;
+  draft: IndexedDraft;
   catalog: MandateCatalog;
   balance: bigint | null;
 }) {

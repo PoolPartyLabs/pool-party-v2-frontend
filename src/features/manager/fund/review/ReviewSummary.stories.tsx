@@ -7,8 +7,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { withManagerMessages } from "../build/canvas/canvasStorySupport";
 import { hubSupplyPlan, makeTestDraft } from "../build/plan/planTestKit";
-import type { FundLaunchDraft } from "../launch/contracts";
-import { getLaunchSteps } from "../launch/journey";
+import { assertLaunchPlan, getLaunchSteps } from "../launch/journey";
 import { ReviewInvestorPreview } from "./ReviewInvestorPreview";
 import { ReviewLaunchPreview } from "./ReviewLaunchPreview";
 import { ReviewPlanSummary } from "./ReviewPlanSummary";
@@ -18,7 +17,7 @@ const draft = {
   ...makeTestDraft(),
   plan: hubSupplyPlan(),
   review: reviewStoryKit,
-} as FundLaunchDraft;
+};
 const meta = {
   title: "Manager/Fund builder/Review/Summaries",
   component: ReviewInvestorPreview,
@@ -33,6 +32,10 @@ export const MandateAndBuild: Story = {
   render: () => <ReviewPlanSummary draft={draft} onEditMandate={() => {}} onEditBuild={() => {}} />,
 };
 export const Launch: Story = {
-  render: () => <ReviewLaunchPreview steps={getLaunchSteps(draft)} />,
+  render: () => {
+    const plan = draft.plan;
+    assertLaunchPlan(plan);
+    return <ReviewLaunchPreview steps={getLaunchSteps({ ...draft, plan })} />;
+  },
 };
 export const LaunchBlocked: Story = { render: () => <ReviewLaunchPreview steps={[]} /> };

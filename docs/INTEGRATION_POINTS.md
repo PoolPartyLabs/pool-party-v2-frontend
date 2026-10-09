@@ -503,3 +503,10 @@ this tree contains 709 registry rows and 704 unique IDs. The five disclosed hist
 IDs remain unchanged: PP-PORT-SCR-001, PP-PROF-HOOK-002 and PP-STR-LIB-005/006/007. This census
 supersedes earlier delivery-time counts for the shared-wizard release. It does not assert deployment,
 native-browser visual acceptance, financial reachability or live Solana capabilities.
+
+
+## Launch-consumer boundary follow-up, October 9, 2026
+
+The fallback index preserves saved Mandate drafts and orphaned FundLaunchDraft snapshots as distinct plan contracts. Catalogue validation consumes only mandate metadata, while fallback preview first validates the existing runtime CanvasPlan shape. Missing or invalid Review fields remain separate blockers and no snapshot or drawing is written. Launch agreement tests and Review stories validate their plan at the existing execution boundary.
+
+PR #153 CI identified three consumer type errors in FallbackReviewIndex, launchAgreement.test and ReviewSummary.stories after the FundLaunchDraft plan replacement. This follow-up repairs those consumers without altering allocation, execution settings, wallet/API permissions or live Solana gates. No new IDs, source markers, analytics events or compliance claims are introduced. Focused validation and independent review are recorded in its PR; no deployment or browser acceptance is asserted.
