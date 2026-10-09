@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-038
  * @name PoolsStep
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, the shell emits
  *
  * POO-2125 [R11] / [R13] / [R29] to [R38], epic POO-2119. Mandate step 4: the pools this strategy
@@ -319,7 +320,51 @@ export interface PoolsStepProps extends MandateStepProps {
 }
 
 /** Mandate step 4: the pool catalog on the left, the mandate's own pools on the right. */
-export function PoolsStep({
+/** Local descriptors have no pool discovery source; retain the step without mounting EVM reads. */
+export function PoolsStep(props: PoolsStepProps) {
+  const t = useTranslations("manager");
+  if (props.draft.runtime === "solana-local")
+    return (
+      <section data-mandate-step="pools" className="flex flex-col gap-6 pb-24">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <div className="flex gap-3">
+              <Input
+                disabled
+                placeholder={t("solanaPreview.marketUnavailable")}
+                aria-label={t("solanaPreview.pool")}
+              />
+            </div>
+            <div className="rounded-xl border border-border bg-surface p-4">
+              <h3 className="text-sm font-medium">{t("solanaPreview.pool")}</h3>
+              <p role="status" className="mt-2 text-sm text-muted-foreground">
+                {t("solanaPreview.marketUnavailable")}
+              </p>
+            </div>
+          </div>
+          <aside className="w-full shrink-0 rounded-xl border border-border bg-surface p-4 lg:sticky lg:top-6 lg:w-[340px]">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-medium text-foreground text-sm">
+                {t("fundBuilder.pools.yours", { count: 0 })}
+              </h3>
+              <Button variant="ghost" size="sm" disabled>
+                {t("fundBuilder.common.clearAll")}
+              </Button>
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              {t("solanaPreview.marketUnavailable")}
+            </p>
+            <div className="mt-4 border-border border-t pt-3">
+              <p className="text-xs text-muted-foreground">{t("fundBuilder.pools.fixed")}</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+    );
+  return <ConnectedPoolsStep {...props} />;
+}
+
+function ConnectedPoolsStep({
   draft,
   catalog,
   update,

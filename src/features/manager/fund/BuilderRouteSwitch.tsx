@@ -2,6 +2,7 @@
  * @id PP-MGR-SCR-002
  * @name BuilderRouteSwitch
  * @implements-rules-version v2 (POO-2281)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events solana_preview_exited, emitted on the preview's guarded exit. A view event
  *   here would fire on every render of either builder and belong to neither; the screens own their
  *   own views (S2 for the fund builder), and the choice itself is reported by the control the user
@@ -31,7 +32,7 @@
  */
 "use client";
 
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useAuth } from "@/lib/auth/useAuth";
@@ -43,7 +44,7 @@ import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { useNavigationGuard } from "@/lib/hooks/unsavedChanges";
 import { useContractFamily } from "@/lib/hooks/useContractFamily";
 import { FundStrategyBuilderScreen } from "./FundStrategyBuilderScreen";
-import { SolanaStrategyPreviewScreen } from "./solana-preview/SolanaStrategyPreviewScreen";
+import type { MandateDraftCheckpoint } from "./useMandateDraft";
 
 /** Public props for {@link BuilderRouteSwitch}. */
 export interface BuilderRouteSwitchProps {
@@ -93,15 +94,35 @@ function V2BuilderHost() {
   const { address, isAuthenticated } = useAuth();
   const accountKey = `${isAuthenticated ? "signed-in" : "signed-out"}:${address ?? "none"}`;
   const preview = useSolanaPreviewHost(accountKey, true);
+  const standard = useRef<{ accountKey: string; current: MandateDraftCheckpoint | null }>({
+    accountKey,
+    current: null,
+  });
+  if (standard.current.accountKey !== accountKey) standard.current = { accountKey, current: null };
+  if (preview !== "v2-solana")
+    return <FundStrategyBuilderScreen key={accountKey} standardCheckpoint={standard.current} />;
+  return <LocalV2Builder key={accountKey} />;
+}
+
+/** A disposed local session cannot run a late save/exit against its successor. */
+function LocalV2Builder() {
   const guard = useNavigationGuard();
   const { track } = useAnalytics();
-  if (preview !== "v2-solana") return <FundStrategyBuilderScreen />;
+  const active = useRef(false);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
   return (
-    <SolanaStrategyPreviewScreen
-      onExit={() => {
+    <FundStrategyBuilderScreen
+      runtime="solana-local"
+      onExitPreview={(onAccepted) => {
+        if (!active.current) return;
         const exit = captureSolanaPreviewExit();
         guard(() => {
-          if (exit()) track("solana_preview_exited");
+          if (exit(onAccepted)) track("solana_preview_exited");
         });
       }}
     />

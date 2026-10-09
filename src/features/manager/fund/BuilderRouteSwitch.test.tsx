@@ -68,6 +68,15 @@ function enableFlag() {
 
 describe("BuilderRouteSwitch", () => {
   beforeEach(() => {
+    // Routing mounts the real canvas; jsdom has no layout observer. Geometry is tested separately.
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
     familyState.family = "v1";
     familyState.hydrated = true;
     route.params = new URLSearchParams();
@@ -75,6 +84,7 @@ describe("BuilderRouteSwitch", () => {
   });
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
     __resetDevOverridesForTests();
     window.localStorage.clear();
   });

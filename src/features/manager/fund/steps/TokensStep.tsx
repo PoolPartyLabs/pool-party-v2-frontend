@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-037
  * @name TokensStep
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, the shell emits
  *
  * POO-2124 [R13] / [R23] / [R24] / [R25] / [R26] / [R27] / [R28], epic POO-2119. Mandate step 3:
@@ -114,7 +115,7 @@ function groupCatalog(entries: MandateCatalogToken[]): CatalogGroup[] {
         id: tokenKey(entry),
         symbol: entry.symbol,
         name: entry.name,
-        priced: entry.priced,
+        priced: entry.priced || entry.visualEligible === true,
         first: entry,
         networks: [entry.network],
         entries: [entry],
@@ -205,6 +206,7 @@ function TokenMark({
   const catalogLogo = safeHttpUrl(group.first?.logoUrl ?? group.logoUrl);
   if (catalogLogo)
     return (
+      // biome-ignore lint/performance/noImgElement: discovery logos can use any validated HTTPS CDN.
       <img
         src={catalogLogo}
         alt=""
@@ -412,6 +414,11 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
       {/* The catalog (R25, R26) */}
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <MandateCatalogStatus catalog={catalog} draft={draft} />
+        {draft.runtime === "solana-local" ? (
+          <p role="status" className="text-xs text-muted-foreground">
+            {t("solanaPreview.marketUnavailable")}
+          </p>
+        ) : null}
         <div className="flex items-center gap-3">
           <div className="relative min-w-0 flex-1">
             <Search

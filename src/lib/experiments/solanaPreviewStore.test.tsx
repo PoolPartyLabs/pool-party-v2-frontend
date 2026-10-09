@@ -113,4 +113,26 @@ describe("route-scoped local Solana preview", () => {
     act(stale);
     expect(result.current).toBe("v2-solana");
   });
+
+  // @rule POO-2301 R9: pending or stale exits cannot acknowledge disposal of a live local draft.
+  it("acknowledges an accepted exit before disposal and never acknowledges a stale host", () => {
+    registerSolanaPreviewHost("account-a");
+    const { result } = renderHook(useSolanaPreviewMode);
+    act(() => reveal());
+    const acknowledge = vi.fn(() => expect(result.current).toBe("v2-solana"));
+    const leave = captureSolanaPreviewExit();
+    expect(acknowledge).not.toHaveBeenCalled();
+    act(() => expect(leave(acknowledge)).toBe(true));
+    expect(acknowledge).toHaveBeenCalledOnce();
+    expect(result.current).toBe("standard");
+
+    act(() => reveal());
+    const stale = captureSolanaPreviewExit();
+    registerSolanaPreviewHost("account-b");
+    act(() => reveal());
+    acknowledge.mockClear();
+    act(() => expect(stale(acknowledge)).toBe(false));
+    expect(acknowledge).not.toHaveBeenCalled();
+    expect(result.current).toBe("v2-solana");
+  });
 });

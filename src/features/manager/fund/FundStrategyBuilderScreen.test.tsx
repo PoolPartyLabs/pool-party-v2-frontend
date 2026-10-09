@@ -14,12 +14,22 @@
  * phase is the canvas; this file keeps the shell's half of it (the phase in the URL, the view, the
  * way back, the phase each save records) and `build/BuildScreen.test.tsx` proves the canvas.
  */
+import { cleanup } from "@testing-library/react";
+import { type ComponentProps, useReducer } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  __resetSolanaPreviewForTests,
+  captureSolanaPreviewExit,
+  registerSolanaPreviewHost,
+  requestSolanaPreview,
+} from "@/lib/experiments/solanaPreviewStore";
+import {
+  act,
   renderWithProviders,
   screen,
   userEvent,
   waitFor,
+  within,
 } from "../../../../tests/utils/renderWithProviders";
 import { buildMandateCatalog, type MandateCatalog } from "./mandateCatalog";
 import {
@@ -62,8 +72,47 @@ const launchStatus = vi.hoisted(() => ({ read: vi.fn((..._args: unknown[]) => nu
 vi.mock("./launch/journey", () => ({
   getLaunchStatusForDraft: (...args: unknown[]) => launchStatus.read(...args),
 }));
+// This shell suite does not execute the real Privy Review, whose focus listeners own browser unload.
+vi.mock("./review/ReviewPhase", () => ({ ReviewPhase: () => <p>Real Review launch</p> }));
 const analytics = vi.hoisted(() => ({ track: vi.fn(), trackFailure: vi.fn() }));
 vi.mock("@/lib/analytics/useAnalytics", () => ({ useAnalytics: () => analytics }));
+
+const localRecovery = vi.hoisted(() => ({
+  seed: null as MandateDraft | null,
+  failReview: false,
+  failBuild: false,
+  rerenderBuild: null as (() => void) | null,
+}));
+vi.mock("./solana-preview/solanaBuilderRuntime", async (importOriginal) => {
+  const real = await importOriginal<typeof import("./solana-preview/solanaBuilderRuntime")>();
+  return {
+    ...real,
+    createSolanaBuilderDraft: (now: string, id: string) =>
+      localRecovery.seed ?? real.createSolanaBuilderDraft(now, id),
+  };
+});
+vi.mock("./review/ReviewIdentityCard", async (importOriginal) => {
+  const real = await importOriginal<typeof import("./review/ReviewIdentityCard")>();
+  return {
+    ...real,
+    ReviewIdentityCard: (props: import("./review/ReviewIdentityCard").ReviewIdentityCardProps) => {
+      if (localRecovery.failReview) throw new Error("sensitive local render text");
+      return <real.ReviewIdentityCard {...props} />;
+    },
+  };
+});
+vi.mock("./build/blocks/BuildPalette", async (importOriginal) => {
+  const real = await importOriginal<typeof import("./build/blocks/BuildPalette")>();
+  return {
+    ...real,
+    BuildPalette: (props: ComponentProps<typeof real.BuildPalette>) => {
+      const [, rerender] = useReducer((value: number) => value + 1, 0);
+      localRecovery.rerenderBuild = rerender;
+      if (localRecovery.failBuild) throw new Error("sensitive pending render text");
+      return <real.BuildPalette {...props} />;
+    },
+  };
+});
 
 vi.mock("@/lib/features/useFeatureFlags", () => ({
   useFeatureFlags: () => ({ flags: {}, isEnabled: () => false }),
@@ -88,11 +137,299 @@ vi.mock("./mandatePoolSource", () => poolSource);
 
 import { FundStrategyBuilderScreen } from "./FundStrategyBuilderScreen";
 
+describe("shared local Solana binding", () => {
+  // @rule POO-2301 R9: explicit Header exit acknowledges the real owner before it is disposed.
+  it("acknowledges confirmed header exit without reporting local abandonment", async () => {
+    const dispose = registerSolanaPreviewHost("account-a");
+    for (const now of [0, 200, 400]) requestSolanaPreview((proceed) => proceed(), now);
+    localRecovery.seed = localReviewDraft();
+    const view = renderWithProviders(<FundStrategyBuilderScreen runtime="solana-local" />);
+    try {
+      await userEvent.type(screen.getByLabelText("Strategy name"), " header exit");
+      const beforeAccepted = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(beforeAccepted);
+      expect(beforeAccepted.defaultPrevented).toBe(true);
+      const exit = captureSolanaPreviewExit();
+      act(() => expect(exit()).toBe(true));
+      const afterAccepted = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(afterAccepted);
+      expect(afterAccepted.defaultPrevented).toBe(false);
+      view.unmount();
+      expect(emitted("solana_preview_abandoned")).toHaveLength(0);
+    } finally {
+      view.unmount();
+      dispose();
+      __resetSolanaPreviewForTests();
+    }
+  });
+
+  // @rule POO-2301 R9: a cancelled outer navigation cannot disarm future edits or fallback protection.
+  it("keeps local changes guarded after an unaccepted exit and a later render failure", async () => {
+    localRecovery.seed = localReviewDraft();
+    const exit = vi.fn();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const view = renderWithProviders(
+      <FundStrategyBuilderScreen runtime="solana-local" onExitPreview={exit} />,
+    );
+    try {
+      await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+      await waitFor(() => expect(exit).toHaveBeenCalledOnce());
+      await userEvent.type(screen.getByLabelText("Strategy name"), " after cancelled exit");
+      localRecovery.failReview = true;
+      view.rerender(<FundStrategyBuilderScreen runtime="solana-local" onExitPreview={exit} />);
+      expect(screen.getByRole("alert")).toHaveTextContent("The preview could not be displayed.");
+      const beforeUnload = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(beforeUnload);
+      expect(beforeUnload.defaultPrevented).toBe(true);
+      view.unmount();
+      expect(emitted("solana_preview_abandoned")).toEqual([{ has_local_changes: true }]);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  // @rule POO-2301 R8/R9: pending per-instance edits reach the session owner before disposal.
+  it("keeps pending Manage changes visible to abandonment and the render fallback guard", async () => {
+    const base = localReviewDraft();
+    localRecovery.seed = {
+      ...base,
+      lastPhase: "build",
+      networks: ["arbitrum", "solana"],
+      protocols: [...REQUIRED_PROTOCOLS, "kamino"],
+      tokens: [
+        ...base.tokens,
+        {
+          address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          network: "solana",
+          symbol: "USDC",
+          name: "USD Coin",
+          logoUrl: null,
+          locked: true,
+          priced: false,
+          visualEligible: true,
+        },
+      ],
+      caps: {
+        ...base.caps,
+        networks: { ...base.caps.networks, solana: { noCap: true, pct: 0 } },
+        protocols: { kamino: { noCap: true, pct: 0 } },
+      },
+      plan: {
+        version: 1,
+        hub: { chains: [] },
+        spokes: [
+          {
+            network: "solana",
+            sharePct: 30,
+            chains: [
+              {
+                id: "local-chain",
+                sharePct: 30,
+                steps: [
+                  {
+                    id: "local-kamino",
+                    family: "position",
+                    kind: "solanaKaminoSupply",
+                    config: { catalogId: "solana:mainnet-beta:kamino-supply", pair: "USDC / SOL" },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const view = renderWithProviders(<FundStrategyBuilderScreen runtime="solana-local" />);
+    try {
+      await userEvent.click(screen.getByRole("button", { name: /^Kamino Lend.*30%/ }));
+      await userEvent.click(screen.getByRole("button", { name: "Manage block" }));
+      const allocation = screen.getByRole("textbox", { name: "Allocation (%)" });
+      await userEvent.clear(allocation);
+      await userEvent.type(allocation, "40");
+      localRecovery.failBuild = true;
+      act(() => localRecovery.rerenderBuild?.());
+      expect(screen.getByRole("alert")).toHaveTextContent("The preview could not be displayed.");
+      expect(emitted("solana_preview_error")).toEqual([
+        {
+          error_code: "SOLANA_PREVIEW_RENDER_FAILED",
+          error_origin: "app",
+          has_local_changes: true,
+        },
+      ]);
+      const beforeUnload = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(beforeUnload);
+      expect(beforeUnload.defaultPrevented).toBe(true);
+      view.unmount();
+      expect(emitted("solana_preview_abandoned")).toEqual([{ has_local_changes: true }]);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+  // @rule POO-2301 R8/R9: local exits report actual draft changes, including Review.
+  it.each([
+    false,
+    true,
+  ])("reports truthful local Review abandonment when edited=%s", async (edited) => {
+    localRecovery.seed = localReviewDraft();
+    const view = renderWithProviders(<FundStrategyBuilderScreen runtime="solana-local" />);
+    expect(screen.getByLabelText("Strategy name")).toHaveValue("Retained local strategy");
+    if (edited) await userEvent.type(screen.getByLabelText("Strategy name"), " edited");
+    view.unmount();
+    expect(emitted("solana_preview_abandoned")).toEqual([{ has_local_changes: edited }]);
+    expect(emitted("builder_mandate_abandoned")).toHaveLength(0);
+    expect(emitted("builder_launch_completed")).toHaveLength(0);
+  });
+
+  // @rule POO-2301 R9: a clean local session does not claim that draft edits were lost.
+  it("reports an untouched local Mandate exit with no local changes", () => {
+    const view = renderWithProviders(<FundStrategyBuilderScreen runtime="solana-local" />);
+    view.unmount();
+    expect(emitted("solana_preview_abandoned")).toEqual([{ has_local_changes: false }]);
+  });
+
+  // @rule POO-2301 R8/R9: genuine render retry preserves the applied shared local draft owner.
+  it("recovers the local Review draft after a genuine render error without abandonment or leaked text", async () => {
+    localRecovery.seed = localReviewDraft();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const view = renderWithProviders(<FundStrategyBuilderScreen runtime="solana-local" />);
+    try {
+      await userEvent.type(screen.getByLabelText("Strategy name"), " edited");
+      localRecovery.failReview = true;
+      view.rerender(<FundStrategyBuilderScreen runtime="solana-local" />);
+      expect(screen.getByRole("alert")).toHaveTextContent("The preview could not be displayed.");
+      expect(emitted("solana_preview_error")).toEqual([
+        {
+          error_code: "SOLANA_PREVIEW_RENDER_FAILED",
+          error_origin: "app",
+          has_local_changes: true,
+        },
+      ]);
+      expect(emitted("solana_preview_abandoned")).toHaveLength(0);
+      expect(JSON.stringify(analytics.track.mock.calls)).not.toContain(
+        "sensitive local render text",
+      );
+      localRecovery.failReview = false;
+      await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+      expect(screen.getByLabelText("Strategy name")).toHaveValue("Retained local strategy edited");
+      expect(emitted("solana_preview_error")).toHaveLength(1);
+      expect(emitted("solana_preview_abandoned")).toHaveLength(0);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  // @rule R1/R2/R3/R5/R8: same wizard controls, local descriptor intent and no EVM read/store.
+  it("uses the traditional wizard while ignoring EVM deep links, catalog and launch journal", async () => {
+    nav.params = new URLSearchParams("draft=evm-deep-link&step=limits&phase=review");
+    const catalogRead = vi.fn(() => buildMandateCatalog());
+    catalogOverride.current = { ...buildMandateCatalog(), loading: true, retry: catalogRead };
+    const write = vi.spyOn(Storage.prototype, "setItem");
+    const user = userEvent.setup();
+    renderWithProviders(<FundStrategyBuilderScreen runtime="solana-local" />);
+    expect(
+      await screen.findByRole("heading", { name: "Create new strategy", level: 1 }),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Save & exit" })).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Changes are discarded when you leave. Live market data and execution are not available.",
+    );
+    await user.click(screen.getByRole("checkbox", { name: "Solana" }));
+    await user.click(screen.getByRole("button", { name: "Next: Protocols" }));
+    expect(screen.getByText("Kamino Lend")).toBeVisible();
+    expect(screen.getByText("Jupiter Swap")).toBeVisible();
+    expect(screen.getByText("Raydium CLMM")).toBeVisible();
+    await user.click(screen.getByRole("checkbox", { name: "Orca Whirlpools" }));
+    await user.click(screen.getByRole("button", { name: "Next: Tokens" }));
+    expect(screen.getByText("WSOL")).toBeVisible();
+    expect(screen.getByText("Not available")).toBeVisible();
+    const wsol = screen.getByText("WSOL").closest("[data-mandate-row]");
+    if (!(wsol instanceof HTMLElement)) throw new Error("WSOL descriptor not rendered");
+    await user.click(within(wsol).getByRole("button", { name: "Add" }));
+    await user.click(screen.getByRole("button", { name: "Next: Pools" }));
+    expect(screen.getAllByText("Not available").length).toBeGreaterThan(0);
+    await user.click(screen.getByRole("button", { name: "Next: Limits" }));
+    for (const checkbox of screen.getAllByRole("checkbox", { name: /^No cap for/ }))
+      await user.click(checkbox);
+    await user.click(screen.getByRole("button", { name: "Next: Build strategy" }));
+    await screen.findByRole("heading", { name: "Name your draft" });
+    await user.type(screen.getByRole("textbox", { name: "Draft name" }), "Local Solana strategy");
+    await user.click(screen.getByRole("button", { name: "Save and continue" }));
+    await screen.findByTestId("build-palette");
+    expect(screen.getByText("Orca Whirlpools")).toBeVisible();
+    expect(catalogRead).not.toHaveBeenCalled();
+    expect(poolSource.searchMandatePools).not.toHaveBeenCalled();
+    expect(launchStatus.read).not.toHaveBeenCalled();
+    expect(write).not.toHaveBeenCalled();
+    expect(nav.replace).not.toHaveBeenCalled();
+    expect(
+      analytics.track.mock.calls.every((call) => String(call[0]).startsWith("solana_preview_")),
+    ).toBe(true);
+    const buildHost = document.querySelector("[data-build-screen]");
+    await user.click(screen.getByRole("button", { name: "Back: Mandate" }));
+    expect(document.querySelector("[data-build-screen]")).toBe(buildHost);
+    expect(buildHost).toHaveAttribute("hidden");
+    await user.click(screen.getByRole("button", { name: "Next: Build strategy" }));
+    expect(document.querySelector("[data-build-screen]")).toBe(buildHost);
+    expect(buildHost).not.toHaveAttribute("hidden");
+    write.mockRestore();
+  });
+
+  // @rule R8/R9: local naming uses the same dialog, while leaving explicitly discards session work.
+  it("keeps the local persistence notice and avoids a saved-draft claim on exit", async () => {
+    const exit = vi.fn((onAccepted: () => void) => onAccepted());
+    const write = vi.spyOn(Storage.prototype, "setItem");
+    const user = userEvent.setup();
+    const view = renderWithProviders(
+      <FundStrategyBuilderScreen runtime="solana-local" onExitPreview={exit} />,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Changes are discarded when you leave.");
+    await user.click(screen.getByRole("button", { name: "Save & exit" }));
+    await user.type(screen.getByRole("textbox", { name: "Draft name" }), "Local drawing");
+    await user.click(screen.getByRole("button", { name: "Save and exit" }));
+    await waitFor(() => expect(exit).toHaveBeenCalledOnce());
+    expect(toasts.toast).toHaveBeenCalledWith("Changes applied to this preview.");
+    expect(toasts.toast).not.toHaveBeenCalledWith("Draft saved");
+    expect(write).not.toHaveBeenCalled();
+    const beforeUnload = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(beforeUnload);
+    expect(beforeUnload.defaultPrevented).toBe(false);
+    view.unmount();
+    expect(emitted("solana_preview_abandoned")).toHaveLength(0);
+    write.mockRestore();
+  });
+});
+
 /** Every event of one name the screen pushed, newest last. */
 function emitted(event: string): Record<string, unknown>[] {
   return analytics.track.mock.calls
     .filter((call) => call[0] === event)
     .map((call) => (call[1] ?? {}) as Record<string, unknown>);
+}
+
+function localReviewDraft(): MandateDraft {
+  const base = createEmptyDraft("2026-10-09T00:00:00.000Z", "retained-local");
+  const token = {
+    address: "So11111111111111111111111111111111111111112",
+    network: "solana" as const,
+    symbol: "WSOL",
+    name: "Wrapped SOL",
+    logoUrl: null,
+    locked: false,
+    priced: false,
+    visualEligible: true,
+  };
+  return {
+    ...base,
+    runtime: "solana-local",
+    tokens: [...base.tokens, token],
+    caps: { ...base.caps, tokens: { [tokenKey(token)]: { noCap: true, pct: 0 } } },
+    name: "Retained local strategy",
+    completedAt: "2026-10-09T00:00:00.000Z",
+    passedSteps: ["networks", "protocols", "tokens", "limits"],
+    lastStep: "limits",
+    lastPhase: "review",
+  };
 }
 
 /**
@@ -227,6 +564,10 @@ function withPools(id: string, over: Partial<MandateDraft> = {}): MandateDraft {
 }
 
 beforeEach(() => {
+  localRecovery.seed = null;
+  localRecovery.failReview = false;
+  localRecovery.failBuild = false;
+  localRecovery.rerenderBuild = null;
   auth.address = undefined;
   auth.isLoading = false;
   catalogOverride.current = null;
@@ -243,9 +584,28 @@ beforeEach(() => {
   poolSource.findMandatePoolByAddress.mockResolvedValue({ pool: null, foundOn: null });
   window.localStorage.clear();
   vi.stubGlobal("scrollTo", vi.fn());
+  // jsdom lacks the browser APIs used by the real React Flow dependency.
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  vi.stubGlobal(
+    "DOMMatrixReadOnly",
+    class {
+      m22 = 1;
+    },
+  );
 });
 
-afterEach(() => {
+afterEach(async () => {
+  cleanup();
+  // Drain the engine's scheduled handle measurement before restoring browser API shims.
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 

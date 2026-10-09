@@ -9,7 +9,7 @@
  */
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { advanceSolanaPreviewGesture, createSolanaPreviewGesture } from "./solanaPreviewMode";
 
 export type SolanaPreviewMode = "standard" | "v2-solana";
@@ -21,6 +21,7 @@ let generation = 0;
 let intent = 0;
 let host: { generation: number; accountKey: string } | null = null;
 const listeners = new Set<() => void>();
+const acceptedExitListeners = new Set<{ generation: number; acknowledge: () => void }>();
 
 function emit() {
   for (const listener of listeners) listener();
@@ -64,15 +65,35 @@ export function requestSolanaPreview(guard: Guard, now = Date.now(), onEntered?:
 }
 
 /** Capture the current host so delayed confirmation cannot close a different route/account. */
-export function captureSolanaPreviewExit(): () => boolean {
+export function captureSolanaPreviewExit(): (onAccepted?: () => void) => boolean {
   const currentHost = host?.generation;
   const currentIntent = ++intent;
   gesture = createSolanaPreviewGesture();
-  return () => {
+  return (onAccepted) => {
     if (host?.generation !== currentHost || intent !== currentIntent) return false;
+    if (mode === "v2-solana") {
+      for (const listener of acceptedExitListeners)
+        if (listener.generation === currentHost) listener.acknowledge();
+    }
+    // Acknowledgement precedes disposal and only belongs to this accepted route/account intent.
+    onAccepted?.();
     reset();
     return true;
   };
+}
+
+/** The local draft owner observes accepted Header exits, never route/account resets or stale intent. */
+export function useSolanaPreviewExitAcknowledgement(onAccepted: () => void): void {
+  const latest = useRef(onAccepted);
+  latest.current = onAccepted;
+  useEffect(() => {
+    if (!host || mode !== "v2-solana") return;
+    const listener = { generation: host.generation, acknowledge: () => latest.current() };
+    acceptedExitListeners.add(listener);
+    return () => {
+      acceptedExitListeners.delete(listener);
+    };
+  }, []);
 }
 
 function subscribe(listener: () => void): () => void {

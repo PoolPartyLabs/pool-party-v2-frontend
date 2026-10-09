@@ -1105,8 +1105,10 @@ Canonical origin/envelope mismatch rejects the envelope. Invalid individual fiel
 | --- | --- | --- | --- | --- | --- | --- |
 | `PP-MGR-CMP-099` | SolanaKaminoReadSection, source-preserving Configure/Manage metadata, supplied/principal/interest/rewards, APY/withdrawable and independent full-account risk | Component | [Configure8677:271](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8677-271), [Manage8677:408](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8677-408) | Integrated with null live origins/reads | [POO-2291](https://linear.app/yeildbay/issue/POO-2291) | `src/features/manager/fund/solana-preview/SolanaKaminoReadSection.tsx` @rules-v1 |
 
-The pure model is merged in PR #143. Configure and local Manage now mount this section without source defaults or execution. Current/After risk binds to the validated canonical obligation independently from market metrics. Null rewards remain unknown; empty rewards are omitted. Existing per-instance draft/inline Review ownership and all11 locales are preserved. Current census: 702 registry rows and 532 integration markers across 305 files.
+The pure model is merged in PR #143. Configure and local Manage now mount this section without source defaults or execution. Current/After risk binds to the validated canonical obligation independently from market metrics. Null rewards remain unknown; empty rewards are omitted. Existing per-instance draft/inline Review ownership and all11 locales are preserved. Historical Kamino-delivery census: 702 registry rows and 532 integration markers across 305 files.
 
+> Delivery history: the following sections preserve the previously published contracts and
+> censuses. Their delivery-time future work is superseded by this shared-wizard delivery.
 
 ## React Flow connection infrastructure, October 9, 2026 (POO-2302 v1)
 
@@ -1152,3 +1154,22 @@ Existing PP-MGR-LIB-023 / PP-MGR-CMP-059 artifacts gain an explicitly local layo
 | `PP-MGR-CMP-102` | LocalSolanaReview, same V2 cards with editable intentions and unavailable live capabilities | Component | Existing V2 Review | Implemented dormant local Review | [POO-2301](https://linear.app/yeildbay/issue/POO-2301) | `src/features/manager/fund/review/LocalSolanaReview.tsx` @rules-v1 |
 
 Existing PanelSelect, BlockPanel and Review artifacts retain their IDs. Jupiter options compare exact Base58 identities; default EVM comparison remains unchanged. LP/Holding reuse PanelSelect and shipped protocol/token logos. Local Review preserves the same cards and inputs but does not promise signing, EVM seed economics, exit timing or public access; unavailable upload, Max and Launch record blocked intent without execution. Wizard activation and its retained Build/Manage host are a separate dependent slice. The earlier React Flow/domain/context entries remain historical delivery records.
+
+Delivery continuation: this delivery connects the shared wizard route and retained Build/Manage
+host. The activation described as future work in the published foundation above is included here.
+Applied plan/Review survive retry; unapplied inner-panel fields can be lost after a render exception,
+while the last pending metadata continues guarding leave. No deployment, native-browser acceptance
+or live Solana capability is asserted.
+
+## Shared-wizard materialized delivery census, October 9, 2026
+
+The exact staged/materialized tree `093eac74f8befb3d07378e9e18a7be4332760f14` contains 2,300
+files under `src/`, with 537 markers across 310 files. The census counts literal
+`PP-INTEGRATION-POINT` occurrences in all source files, including source documentation, tests and
+stories; it is not a count of unique live API contracts. Ignored scratch/build output is excluded.
+
+Using the exact `tests/hackathonDocs.test.ts` registry regex, `` /^\| `(PP-[A-Z0-9-]+)`/gm ``,
+this tree contains 709 registry rows and 704 unique IDs. The five disclosed historical duplicate
+IDs remain unchanged: PP-PORT-SCR-001, PP-PROF-HOOK-002 and PP-STR-LIB-005/006/007. This census
+supersedes earlier delivery-time counts for the shared-wizard release. It does not assert deployment,
+native-browser visual acceptance, financial reachability or live Solana capabilities.

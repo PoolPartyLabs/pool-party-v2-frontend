@@ -1,17 +1,63 @@
 # Integration Points
 
-## Local Solana visual editor (POO-2281, rules v2)
+## Shared V2 local Solana binding, October 8, 2026 (POO-2301 rules v1)
 
-The route-scoped store in `src/lib/experiments/solanaPreviewStore.ts` (PP-CORE-LIB-125) shares only
-visual mode. The editor in `src/features/manager/fund/solana-preview/` has no API/RPC/wallet/launch
-imports. No new entitlement endpoint is required. POO-2282 and the earlier unmounted grant modules
-were canceled/removed before release when Murilo simplified the scope.
+Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
+the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
+local Build/Manage host across phases and applies the route/account/exit guards described below.
+This wizard change is pre-merge code delivery, without a deployment or native-browser visual
+acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
+Not available; `solanaSpoke` stays off.
 
-Future real wiring remains POO-2239/2240 (tokens/markets), POO-2262 (binding/quotes/launch) and POO-2261
-(relays/reports). Local token/pair/percentage choices are not financial or transaction inputs. Missing
-prices, amounts, reserve data, quotes and execution stay Not available. `solanaSpoke` remains off.
-See the [current delivery plan](solana-preview-preparation-plan-2026-10-07.md) and
+This delivery binds `BuilderRouteSwitch` to `FundStrategyBuilderScreen` (`PP-MGR-SCR-002`) for both the standard
+V2 and hidden `solana-local` bindings. Mandate → Build → Review, palette, cards and panels are
+shared. The separate `SolanaStrategyPreviewScreen` (`PP-MGR-SCR-009`) is retained only as a
+historical test/story harness. The route/account-scoped `solanaPreviewStore` (`PP-CORE-LIB-125`)
+shares visual mode, not persistence or transaction authority. No new entitlement endpoint is
+required. POO-2282's earlier grant proposal remains canceled.
+
+| Artifact / seam | Current contract | Remaining real integration |
+| --- | --- | --- |
+| PP-MGR-LIB-075, `solanaBuilderRuntime.ts` | Extends the local mandate catalog with Solana and four protocol choices. Exact mainnet USDC/WSOL metadata is unpriced and `visualEligible`; native SOL is not WSOL. PR #151 supplies explicit local Idle/cash presentation without financial balance data; standard Build has no cash. | POO-2239/2240 own real token/market discovery and canonical identities. A known mint or drawing descriptor supplies no price feed, balance, pool or allowlist attestation. |
+| PP-MGR-HOK-024, `useSolanaBuilderDraft.ts` | Fresh local mandate/plan/review state; shared `save()` acknowledges an in-memory snapshot. No localStorage, API, upload, wallet or launch binding is mounted. | Persistence and real capabilities require separately authorized contracts. Standard V2 keeps its existing browser-local draft/launch recovery. |
+| PP-MGR-LIB-076, `solanaBuildManageBinding.ts`, consumed by PP-MGR-SCR-002 `BuildScreen` | Stable shared block IDs, all configured local positions, first-position chain allocation ownership, whole-plan Apply validation against current exact-mint/protocol selections and budgets. Manage Current/After/context/clock remain unavailable. | POO-2239/2240/2261/2262 supply verified origins/reads/context/clock, quotes, authority and execution. Apply changes only the shared local plan and never canonical Current or journal. |
+| PP-MGR-CMP-101, `SolanaBuilderPanelBodies.tsx` | Same V2 PanelSelect for pair/Holding choices, exact Base58 Jupiter Token in/out, known local logos and null independent market/range/read context. Configure writes only pending descriptor intent until Apply validates the current mandate. | POO-2240/2261/2262 own canonical markets, independent sources, ranges, quotes and execution. A selected label or known mint grants none of these. |
+| PP-MGR-CMP-102, `review/LocalSolanaReview.tsx` | Existing Review cards/columns edit local identity, fee and seed intentions. Upload, balance, authoritative fee configuration, seed preview and Launch are unavailable. | Real upload, fees, seed quotes and launch remain POO-2239/2240/2261/2262. No preview default is an authoritative amount, fee or quote. |
+
+Case-sensitive Base58 token identities and protocol selections guard configured positions and
+reconciled automatic conversion legs; native SOL never satisfies an exact WSOL SPL requirement.
+The mounted local Build/Manage host survives selection, hiding and phase navigation; dirty phase
+exit requires explicit discard. Pending Configure/Manage status reaches the owner even while
+Build is hidden. Local owner cleanup covers every phase with truthful draft-dirty or pending status;
+explicit exit suppresses abandonment. The owner stays outside the reused render boundary, which
+emits genuine bounded render errors and retries with applied shared plan/Review fields retained.
+Its unsaved-changes guard remains active in fallback. Unapplied inner fields can be lost when the
+shell unmounts after an error; last pending metadata does not restore them. Local session disposal
+loses the session rather than persisting it. Standard EVM instrumentation/recovery is unchanged.
+`solanaSpoke` remains off. See the [shared canvas plan](manager-canvas-panels-plan-2026-10-07.md),
+[feature reference](../src/features/manager/fund/solana-preview/README.md) and
 [ADR 0009](adr/0009-local-solana-visual-preview.md).
+
+Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+intent generation validate the user's consent. Stale acceptance cannot close a successor session.
+Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
+last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.
+Local Review keeps numeric fee/minimum/seed intentions but no EVM financial or signing promise.
+Upload, Max and Launch are observable blocked intents and perform no file/storage/wallet operation.
+
+## React Flow infrastructure and adoption, October 8, 2026 (POO-2302 rules v1)
+
+The infrastructure boundary introduces `reactFlowProjection` (`PP-MGR-LIB-074`) and
+`ReactFlowGraph` (`PP-MGR-CMP-100`), dependency and scoped styling before changing production
+consumers. PR #146 publishes this boundary with 43 staged focused tests, scoped TypeScript and
+Biome passing; those results describe that infrastructure slice. PRs #148/#149 adopt the engine
+from the shared `CanvasViewport` in Build and Manage. Other callers retain the native default
+unless they opt in. Existing painted financial nodes own measured border handles;
+complete connections own hover. Graph editing is disabled. Pan, zoom, fit and reveal are presentation
+state only. No API, wallet, mock service or financial-capability seam is created by the renderer.
+Producer topology, painted bounds and safe corridors have separate layout/card validation; the
+semantic contract or engine alone never certifies a financial route. Hidden legacy graphs remain
+historical fixtures rather than final topology oracles.
 
 ## Kamino independent reads (POO-2291 S2)
 
@@ -21,13 +67,13 @@ Kamino's separate pure read model, `solanaKaminoReadModel.ts` (PP-MGR-LIB-072), 
 
 ## Solana protocol range context (POO-2291 S3/S4)
 
-`solanaRangeModel.ts` and `SolanaRangePresenter.tsx` validate and display an injected same-snapshot Orca/Raydium context. `SolanaPreviewBlockPanel.tsx` passes no live context by default, mounts the section only for positive LP allocation and keeps a context without a draft handler read-only. POO-2240/2261 must provide verified cluster, program, pool, ordered mint bytes, token programs/extensions, decimals, protocol fee/grid configuration, current Q64/tick, position identity/liquidity and source metadata. A separate liquidity quote owns composition/amounts. Missing data never receives a default price, range, token split or execution capability.
+`solanaRangeModel.ts` and `SolanaRangePresenter.tsx` validate and display an injected same-snapshot Orca/Raydium context. `SolanaBuilderPanelBodies.tsx` supplies the shared Configure host with no live context, mounts the section only for positive LP allocation and keeps a context without a draft handler read-only. POO-2240/2261 must provide verified cluster, program, pool, ordered mint bytes, token programs/extensions, decimals, protocol fee/grid configuration, current Q64/tick, position identity/liquidity and source metadata. A separate liquidity quote owns composition/amounts. Missing data never receives a default price, range, token split or execution capability.
 
 ## Solana custody and Jupiter inspection (POO-2291 S5)
 
 `solanaHoldingModel.ts` and `SolanaHoldingPresenter.tsx` accept injected custody identities, exact quantities, Buy/Sell intentions, quotes and independent timestamp/block-height evidence. POO-2239/2240 supply verified tokens and custody reads; POO-2261/2262 supply origin/revision-bound quotes, costs, authority and transaction details. No API, RPC or wallet client is imported. Included-input costs cannot exceed total input, and unknown clocks cannot establish quote/blockhash validity.
 
-The live Configure host supplies null origins, reads, intentions, quotes and clock. Holding is a separate local custody drawing control, not a new protocol or LP. Same-token USDC bypasses conversion; the WSOL drawing shows gray principal conversions only. Drawing labels never manufacture mint, account, price or signing authority. Buy/Sell remains unavailable without custody identity, and Confirm stays disabled even with harness-injected data. Standalone review is inline; this bounded slice does not implement editable transaction amounts or live execution.
+The shared Configure host supplies null origins, reads, intentions, quotes and clock. Holding is a separate local custody drawing control, not a new protocol or LP. Same-token USDC bypasses conversion; the WSOL drawing shows gray principal conversions only. Drawing labels never manufacture mint, account, price or signing authority. Buy/Sell remains unavailable without custody identity, and Confirm stays disabled even with harness-injected data. The Holding presenter keeps its review inline; this bounded slice does not implement editable transaction amounts or live execution.
 
 ## Solana local Manage foundation (POO-2291 S6)
 
@@ -40,7 +86,7 @@ The live Configure host supplies null origins, reads, intentions, quotes and clo
 
 Drawing Apply never writes canonical Current or the operation journal. Rejected acknowledgement retains draft and Review; a synchronized baseline that reaches the draft ends its obsolete mode/review binding and invalidates After without altering Current/journal. Bounded callbacks contain protocol/action only; the config callback is application data, not analytics. The screen emits the consent-aware interaction taxonomy. Real discovery, custody, quotation, authority, transaction details, signing and settlement remain unavailable under POO-2239/2240/2261/2262.
 
-`SolanaStrategyPreviewScreen.tsx` guards unapplied Configure edits before entering Manage and maintains the mounted local host across mode/selection/close. All actual fixed, automatic and position nodes share stable geometry identity with their inspectors. The drawing owner revalidates the instance and applied aggregate budget before acknowledging Apply. Fixed-node inspectors supply protocol/pair/network or token/network/Bridge direction, never financial values. These two screen seams add no wallet, RPC or API execution.
+The original POO-2291 S6 `SolanaStrategyPreviewScreen.tsx` integration remains a historical harness. The current shared `BuildScreen.tsx` guards Configure before entering Manage and retains the mounted host through selection/hiding. `solanaBuildManageBinding.ts` revalidates the current mandate and whole resulting plan before acknowledgement; phase leave with dirty Manage edits requires explicit discard. Fixed-node inspectors retain owner/network context without invented financial values. Neither integration grants wallet, RPC or API execution.
 
 ## Launch report countdown (POO-2233, rules v1)
 
@@ -99,10 +145,10 @@ integration later. Each `// PP-INTEGRATION-POINT: <description>` comment in the 
 To list them all:
 
 ```bash
-git grep -n 'PP-INTEGRATION-POINT' -- src   # 532 markers across 305 files (2026-10-08)
+git grep -n 'PP-INTEGRATION-POINT' HEAD -- src   # committed HEAD only; include working/untracked files for WIP census
 ```
 
-The model and panels are merged in PRs #140/#141. Their foundation has 527 markers across 303 files; Screen/Canvas integration adds two screen markers, reaching 529 across 304 files. Current/After/context/clock stay unavailable in the local host. Kamino S2 adds three presentation/host seams, reaching 532 markers across 305 files.
+Historical delivered-tree census: the model/panels in PRs #140/#141 held 527 markers across 303 files; the original Screen/Canvas integration reached 529 across 304, and Kamino S2 reached 532 across 305. Those counts precede the shared-wizard WIP and are not a census of its staged release tree. Current/After/context/clock remain unavailable in the local host.
 
 > Most data-layer points funnel through the single service factory `src/lib/services/index.ts`: swap
 > `isMockMode` or each service implementation there and callers stay untouched.
@@ -157,6 +203,11 @@ Ported from the private repository for the hackathon (epic POO-1793 over the POO
 
 ## Fund contracts builder (Manager Console V2, epic POO-2119)
 
+Current boundary: the standard V2 shell reaches the existing Review and launch journey behind its
+real-mode, feature and readiness guards. The hidden Solana binding shares its presentation but
+acknowledges memory only and cannot execute. The October 3 foundation narrative below records
+the earlier state before the panel/Review slices landed; it is not the current release checklist.
+
 The Mandate step of the fund-contracts strategy builder (hub Arbitrum, spoke Robinhood Chain,
 PoolPartyLabs/smartcontract-v2): five list-picking screens, reached from the header's V1/V2
 `ContractFamilyToggle` (`PP-CORE-CMP-075`) behind the `fundContracts` flag, that persist a local
@@ -169,18 +220,19 @@ The Build canvas (epic POO-2144, `src/features/manager/fund/build/`, mounted by 
 since POO-2157) sits on the same draft. The canvas itself writes only the draft: it calls no API and requests no
 transaction. Its rows below say what each block becomes when a plan is launched. The launch journey of POO-2177
 (`src/features/manager/fund/launch/`, section above) already compiles a stored plan into API builder calls through
-its own structural adapter, but the Review page that starts it (POO-2172) and the panel that writes a block's
-range and slippage (POO-2171) are not built, so no manager can launch a plan from the canvas yet. The on-chain
+its own structural adapter. At the October 3 foundation checkpoint, the Review page that starts it
+(POO-2172) and the range/slippage panel (POO-2171) were still pending; those standard V2 slices now
+exist, while the local Solana binding remains execution-unavailable. The on-chain
 facts come from the block sheets POO-2160 to POO-2166 (read from the API v2 alpha specification and the contracts
-on 2026-10-03, not measured here), corrected where the API and this repository have moved since. The canvas rows
-carry no marker in code, except the plan storage row.
+on 2026-10-03, not measured here), corrected where the API and this repository have moved since.
+At that foundation delivery the canvas rows carried no marker in code except plan storage; later shared Solana host seams are cataloged above.
 
 | Marker | File | Mocked today | Expected real call |
 |---|---|---|---|
 | Mandate catalog (networks, protocols, tokens, price source) | `src/features/manager/fund/useV2MandateCatalog.ts`, `v2Mandate.ts`, `mandateCatalog.ts` | Mock fixtures unchanged; real mode resolved in POO-2133. In both modes Uniswap v3 positions are listed but unavailable, "Coming soon" (rules v3, POO-2167: the fund contracts have no Uniswap v3 position adapter; the required Uniswap v3 swap is unaffected) | Versioned Arbitrum/Robinhood capabilities plus server-only `/api/v2/catalog/tokens` and `/catalog/aave-v3/reserves`; `hubPriced` and live Aave supply availability. No generalized capability-registry route exists. |
 | Mandate draft persistence (draft API) | `src/features/manager/fund/mandateDraftStore.ts` (`PP-MGR-STO-001`); `src/features/manager/fund/useMandateDraft.ts` (`PP-MGR-HOK-006`); `src/features/manager/fund/components/MandateDraftsList.tsx` (`PP-MGR-CMP-044`) | A draft is read/written as versioned JSON in `localStorage` key `pp.manager.mandateDrafts.v1` (`{ version: 1, drafts: Record<id, MandateDraft> }`); every access in try/catch, a corrupt payload reads as empty and is left alone until the next real write (handoff open point 1) | the backend draft API: `listDrafts` becomes a fetch, `upsertDraft` a PUT, `deleteDraft` a DELETE, `subscribe` a cache invalidation. The store's six-function API is the seam and does not change shape. Wiring issue: POO-2132 |
-| Build canvas plan (rides the draft seam) | `src/features/manager/fund/build/plan/planStorage.ts` (`PP-MGR-LIB-021`, `normalizePlan`, `planFingerprint`) | The Build canvas plan is an OPTIONAL field of the mandate draft (`MandateDraft.plan?`, with `lastPhase?`), so it is stored in the same `localStorage` payload by the same `save()`, payload version unchanged (1); `useBuildPlan` (`PP-MGR-HOK-007`) only writes it through the draft hook and never touches storage. On read, `normalizePlan` checks its structure; an unreadable plan is left out of the draft, which is kept and marked `planUnreadable`, and the store writes the raw plan back untouched on every write until a save with a new plan replaces it. The canvas sends nothing on chain or to an API: product owner ruling 2026-10-03, no backend strategy drafts (POO-2151); fund creation through the API was decided for the demo the same day (POO-2147) and belongs to the launch journey, not to the canvas | travels inside the draft payload of the backend draft API, with no seam of its own. Wiring issue: POO-2132, not needed for the buildathon MVP (product owner ruling 2026-10-03: no backend strategy drafts). This is the only `PP-INTEGRATION-POINT` marker inside `src/features/manager/fund/build/`; the other canvas seams in the rows below carry none, because the canvas itself calls nothing |
-| Build canvas block configuration (`config`; no marker in code) | `src/features/manager/fund/build/plan/buildPlan.ts` (`PoolBlockConfig`, `AaveBlockConfig`, `PP-MGR-LIB-021`); `src/features/manager/fund/build/blocks/blockRegistry.ts` (`describeBlock`, `configField`, `PP-MGR-LIB-024`) | Every block a manager adds on the canvas is EMPTY (`config: null`, a dashed card, share 0%, "Pick a pool" or "Pick an asset"); a configured block exists only in the fixtures of `src/mocks/data/buildCanvasFixtures.ts` (`PP-MGR-MCK-004`), in stories, and in a stored plan edited by hand. The canvas-facing minimum is `{ poolId }` (the id of a pool in the mandate draft) for a pool and `{ assetKey }` (`network:address` of a mandate token) for Aave, coordinator default D14; a manager Swap has no config. The launch journey needs more (a price range and `maxLossBps` per v4 block, `leafSharePct` per leaf) and reads it from the optional `draft.launchExecution[blockId]` until the panel writes it | the configuration panel batch (handoff POO-2171) writes `config` through `setBlockConfig` and extends the two interfaces without renaming them, so a card's title and caption, the shares and the Swap · auto above it re-derive from it (HU2; block sheets POO-2160 and POO-2161) |
+| Build canvas plan (rides the draft seam) | `src/features/manager/fund/build/plan/planStorage.ts` (`PP-MGR-LIB-021`, `normalizePlan`, `planFingerprint`) | The Build canvas plan is an OPTIONAL field of the mandate draft (`MandateDraft.plan?`, with `lastPhase?`), so it is stored in the same `localStorage` payload by the same `save()`, payload version unchanged (1); `useBuildPlan` (`PP-MGR-HOK-007`) only writes it through the draft hook and never touches storage. On read, `normalizePlan` checks its structure; an unreadable plan is left out of the draft, which is kept and marked `planUnreadable`, and the store writes the raw plan back untouched on every write until a save with a new plan replaces it. The canvas sends nothing on chain or to an API: product owner ruling 2026-10-03, no backend strategy drafts (POO-2151); fund creation through the API was decided for the demo the same day (POO-2147) and belongs to the launch journey, not to the canvas | travels inside the draft payload of the backend draft API, with no seam of its own. Wiring issue: POO-2132, not needed for the buildathon MVP (product owner ruling 2026-10-03: no backend strategy drafts). This is the draft-storage marker; later shared Solana host/read seams are cataloged separately above. The canvas itself still calls no service |
+| Build canvas block configuration (`config`; no service call) | `src/features/manager/fund/build/plan/buildPlan.ts` (`PP-MGR-LIB-021`), `plan/planReducers.ts`, `panel/BlockPanel.tsx` and panel body registry | New positions begin with `config: null` and 0% allocation. Configure Use/Apply writes pool, asset, range and slippage configuration through the shared reducers; it is no longer fixture-only. Standard Review/launch consumes supported configuration through its existing readiness/structural adapter. Hidden Solana config retains a local `catalogId`/pair and exact-mint/protocol guards, with no canonical pool, range or execution identity. | Existing real catalog/launch seams supply standard V2 capabilities. Solana verified pool/range/custody/quote and execution contracts remain POO-2239/2240/2261/2262. The panel does not authorize unsupported launch steps. |
 | Build canvas pool and asset sources: Uniswap v4 pools and Aave v3 reserves (no marker in the canvas; the panel batch reads them) | `src/features/manager/fund/mandatePoolSource.ts`, `src/lib/api/v2/catalog.ts` and `src/mocks/data/fundPools.ts` (`PP-MGR-MCK-003`); the "Mandate pool catalog, Uniswap v4" row below | The canvas lists no pool and no reserve: a block's pool is a pool already in the mandate draft (`draft.pools`) and its asset a token already in it (`draft.tokens`). In real mode the Mandate reads the v4 pools and the Aave reserves from the backend catalog through server actions (POO-2133, backend POO-2146, both delivered), with TVL and APR left null when the API has none; in mock mode `fundPoolFixtures().uniswapV4` serves them. No sample data in real mode (product owner ruling 2026-10-03) | the configuration panel (handoff POO-2171) lists, for a block, the pools and tokens the Mandate already holds, so the canvas needs no catalog read of its own (block sheets POO-2160 and POO-2161) |
 | Build canvas block availability table (coming soon) | `src/features/manager/fund/build/plan/buildPlan.ts` (`BLOCK_KIND_STATUS`, `BLOCK_KIND_PROTOCOL`, `PP-MGR-LIB-021`) | Static data: `uniswapV4Pool`, `aaveSupply` and `aaveBorrow` are enabled, `uniswapV3Pool`, `pendle` and `gmxPerp` are coming soon and are never created (every reducer refuses them with `coming_soon`). `ProtocolId` has neither Pendle nor GMX, so these rows come from a table, not from the mandate. Aave Borrow is enabled as coordinator default D29 although the fund contracts are supply only; the Borrow row below records the decision of 2026-10-04 to make it coming soon, which the code does not do yet | a read of the fund contracts' adapter registry, so that enabling or disabling a kind is a data change rather than an edit of this table (wiring issue POO-2134; block sheets POO-2165 and POO-2166; compliance `CR-MGR-016` and `CR-MGR-017`) |
 | Block to on-chain builder: Uniswap v4 pool (`uniswapV4Pool`) | `src/features/manager/fund/build/blocks/blockRegistry.ts` (`BLOCK_REGISTRY`); compiled by `src/features/manager/fund/launch/plan.ts` and `driver.ts` (POO-2177) | The canvas stores the block and calls nothing; the launch journey turns a configured v4 block into a `swap` step and an `open` step, but needs a price range (ticks or prices) and `maxLossBps` that the canvas does not store (the optional `draft.launchExecution[blockId]` supplies them until the panel does), and no Review page starts it yet (POO-2172) | `POST /funds/{core}/positions/build` with `{ action: "open", side, adapter, poolKey (the bytes32 pool id), amount0, amount1, a tick or price range, amount0Min, amount1Min }`, simulated by the API and signed by the manager on that chain, event `PositionOpened`, on Arbitrum and on Robinhood Chain (block sheet POO-2160) |
@@ -346,7 +398,7 @@ execution capability, quote correctness, Bridge settlement or authoritative data
 
 PP-MGR-LIB-063/064 are pure local schemas/descriptors. The two marked seams in solanaCatalog bind discovery/read models (POO-2239/2240) and Jupiter quote/transaction validity/executor (POO-2261/2262). No network call, program deployment, wallet read or signer is added. Canonical USDC/WSOL mint metadata is cited from official Jupiter documentation in the schema header.
 
-The local catalog rejects both fixture and observed values in financial/capability fields. Generic read models may represent declared provenance, but cannot attest external ownership or freshness. Confirmed zero is explicit; missing remains unavailable. Holding stays contract-only; all six POO-2291 slices are not complete.
+At S1 delivery, the local catalog rejected fixture and observed values in financial/capability fields; Holding was contract-only and later slices were pending. Subsequent S2-S6 delivery and the current shared binding are recorded above. Generic read models can represent declared provenance but cannot attest external ownership or freshness. Confirmed zero is explicit; missing remains unavailable.
 
 ## Manage inline identity header, October 7, 2026 (POO-2272 v2)
 
@@ -388,6 +440,21 @@ PP-MGR-LIB-068 / PP-MGR-CMP-094 accept presentation-only full-account identity a
 
 PP-MGR-CMP-086 Aave and PP-MGR-CMP-089 Kamino pass null account identity and unavailable reads. POO-2290 must supply canonical authorized core/account/market or cluster/program/account/market/obligation, complete fresh debt/asset/oracle/parameter snapshot and a successful preview tied to the base. No position metadata, absent Borrow block or local fixture implies no debt. Known zero requires fresh complete evidence. No execution or borrowing adapter is introduced.
 
+> Delivery history: the following sections preserve the previously published contracts and
+> censuses. Their delivery-time future work is superseded by the current shared-binding notes above.
+
+## Local Solana visual editor (POO-2281, rules v2)
+
+The route-scoped store in `src/lib/experiments/solanaPreviewStore.ts` (PP-CORE-LIB-125) shares only
+visual mode. The editor in `src/features/manager/fund/solana-preview/` has no API/RPC/wallet/launch
+imports. No new entitlement endpoint is required. POO-2282 and the earlier unmounted grant modules
+were canceled/removed before release when Murilo simplified the scope.
+
+Future real wiring remains POO-2239/2240 (tokens/markets), POO-2262 (binding/quotes/launch) and POO-2261
+(relays/reports). Local token/pair/percentage choices are not financial or transaction inputs. Missing
+prices, amounts, reserve data, quotes and execution stay Not available. `solanaSpoke` remains off.
+See the [current delivery plan](solana-preview-preparation-plan-2026-10-07.md) and
+[ADR 0009](adr/0009-local-solana-visual-preview.md).
 
 ## Shared local Solana domain, October 9, 2026 (POO-2301 v1)
 
@@ -412,8 +479,27 @@ Only toLayoutInput(plan, { runtime: 'solana-local' }) opts the Solana spoke into
 
 Current materialized panel/Review release census: 537 markers across 310 files in src, including tests/stories, derived from this tree. Historical counts above describe earlier releases.
 
+Delivery continuation: this delivery connects the shared wizard route and retained Build/Manage
+host. The activation described as future work in the published foundation above is included here.
+Applied plan/Review survive retry; unapplied inner-panel fields can be lost after a render exception,
+while the last pending metadata continues guarding leave. No deployment, native-browser acceptance
+or live Solana capability is asserted.
+
 ## EVM launch plan boundary repair, October 9, 2026 (POO-2301 v1)
 
 The shared Build plan includes local Solana descriptor configurations, while the EVM launch adapter continues to consume only `CanvasPlan`. `FundLaunchDraft` (PP-MGR-LIB-044) now uses `Omit<MandateDraft, "plan"> & { plan: CanvasPlan; ... }`, replacing the optional drawing plan rather than intersecting both array contracts. PR #152 CI reproduced three TypeScript errors in fallback allocation/execution after the Build union expanded; this repair resolves the type boundary without adding Solana execution fields or casts.
 
 Mandate selection and token-allowance helpers accept only their existing mandate inputs, independent of the Build plan. Fallback Review validates the original stored mandate. Allocation, default execution settings, preview behavior and financial gates are unchanged. The contract regression reproduces the incorrect intersection before the fix, asserts the launch plan/chain types, excludes local descriptor configuration and checks that local Solana position kinds and spokes still fail closed before execution steps are returned. Scoped boundary TypeScript and 122 focused tests in eight fallback/V2 suites passed. No API, wallet permission, monetary claim, source marker or new analytics event is introduced.
+
+## Shared-wizard materialized delivery census, October 9, 2026
+
+The exact staged/materialized tree `093eac74f8befb3d07378e9e18a7be4332760f14` contains 2,300
+files under `src/`, with 537 markers across 310 files. The census counts literal
+`PP-INTEGRATION-POINT` occurrences in all source files, including source documentation, tests and
+stories; it is not a count of unique live API contracts. Ignored scratch/build output is excluded.
+
+Using the exact `tests/hackathonDocs.test.ts` registry regex, `` /^\| `(PP-[A-Z0-9-]+)`/gm ``,
+this tree contains 709 registry rows and 704 unique IDs. The five disclosed historical duplicate
+IDs remain unchanged: PP-PORT-SCR-001, PP-PROF-HOOK-002 and PP-STR-LIB-005/006/007. This census
+supersedes earlier delivery-time counts for the shared-wizard release. It does not assert deployment,
+native-browser visual acceptance, financial reachability or live Solana capabilities.

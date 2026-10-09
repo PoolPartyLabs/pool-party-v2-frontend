@@ -1,6 +1,6 @@
 # 0009. Frontend-only Solana visual preview
 
-- Status: Accepted
+- Status: Superseded by [ADR 0011](0011-shared-v2-builder-with-local-solana-binding.md) for presentation and local drawing state; gesture and frontend-only execution boundary retained
 - Date: 2026-10-07
 - Linear: [POO-2281](https://linear.app/yeildbay/issue/POO-2281), rules v2
 - Supersedes: [ADR 0008](0008-server-authorized-experiment-access.md) for the visual-preview delivery
@@ -43,3 +43,16 @@ define its authorization and discovery scope independently before wiring it.
 - New API cohort grants: deferred by the owner to avoid blocking visual testing.
 - A third ContractFamily value: conflates a visual experiment with persisted EVM contract identity.
 - Reusing the EVM draft controller: would query EVM catalogs and overwrite unrelated draft storage.
+
+## Superseding delivery reference, October 9, 2026
+
+The decision above remains history. [ADR 0011](0011-shared-v2-builder-with-local-solana-binding.md)
+now defines the shared V2 shell, isolated memory binding and exact selectors. PRs #146/#148/#149
+provide the adopted React Flow engine; #150 provides dormant Solana identity, and #151 provides
+explicit local Idle/native SOL cash. Other native viewport callers retain their default. Existing
+route/account reset and generation-validated exit consent remain; no live financial permission is added.
+
+Delivery boundary update, October 9, 2026: PR #152 delivered shared panel/Review foundations
+and PR #153 repaired the EVM launch type boundary. This delivery connects the shared wizard
+under ADR 0011. The architectural supersession and code delivery do not confirm deployment,
+native-browser acceptance or live Solana operations.
