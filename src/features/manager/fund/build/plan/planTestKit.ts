@@ -46,12 +46,13 @@ function depositRow(network: NetworkId): MandateTokenRef {
 }
 
 /** WETH, as the bundled token lists carry it on each network (lowercased addresses). */
-const WETH_ADDRESS: Record<NetworkId, string> = {
+const WETH_ADDRESS = {
   arbitrum: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
   robinhood: "0x0bd7d308f8e1639fab988df18a8011f41eacad73",
-};
+} as const;
 
 function wethRow(network: NetworkId): MandateTokenRef {
+  if (network === "solana") throw new Error("planTestKit: EVM fixtures do not contain Solana WETH");
   return {
     address: WETH_ADDRESS[network],
     symbol: "WETH",

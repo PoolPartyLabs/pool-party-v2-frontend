@@ -196,3 +196,10 @@ BuildScreen now selects the measured engine delivered in PR #146. BuildGraph reg
 React Flow owns the sole pan/zoom transform. The same Fit, reveal, background selection, keyboard controls, draft guards and palette/configuration interactions remain. Native dragging, connecting, reconnecting or Delete cannot bypass the app reducer. Default CanvasViewport callers remain native unless they opt in. Protocol marks and network presentation are optional presentation seams; this slice does not enable any Solana catalog, runtime, account or transaction.
 
 Focused renderer and real-engine BuildScreen tests preserve gesture, fit, selection, configuration/Apply, navigation, removals and storage behavior. No mock of the React Flow engine is used. Native browser pixel/scroll/zoom acceptance remains with Murilo. No full local suite, coverage or build is required by the current owner constraints.
+
+
+## Shared local Solana domain, October 9, 2026 (POO-2301 v1)
+
+An optional solana-local draft/catalog adds four position descriptors, chain-aware token keys, protocol marks and complete analytics mappings. Standard V2 catalogs exclude these choices. Configure reducers check the selected network, protocol and exact USDC/WSOL identities for both the position and its automatic Jupiter conversion before accepting a write. USDC Holding remains correctable when another chain is invalid.
+
+Default planReadiness refuses local Solana cards/spokes even when a USDC-only position needs no Swap. Explicit local-visual readiness allows an intention summary after structural/configuration/allocation checks; it grants no execution capability. The runtime factory supplies unpriced token metadata and bounded drawing descriptors only. The shared route, protocol bodies, local Review, Idle/native SOL cash and memory binding are separate dependent slices. Existing EVM launch adapters and investor provisioning remain unchanged.

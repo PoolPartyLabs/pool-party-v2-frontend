@@ -83,6 +83,10 @@ export const BUILD_BLOCK_KIND_EVENT: Readonly<
   uniswapV3Pool: "uniswapV3Pool",
   pendle: "pendle",
   gmxPerp: "gmxPerp",
+  solanaOrcaPool: "solanaOrcaPool",
+  solanaRaydiumPool: "solanaRaydiumPool",
+  solanaKaminoSupply: "solanaKaminoSupply",
+  solanaHolding: "solanaHolding",
   swap: "swap",
   spoke: "spoke",
   collectFees: "collectFees",
@@ -92,6 +96,7 @@ export const BUILD_BLOCK_KIND_EVENT: Readonly<
 export const BUILD_NETWORK_EVENT: Readonly<Record<NetworkId, AnalyticsBuildNetwork>> = {
   arbitrum: "arbitrum",
   robinhood: "robinhood",
+  solana: "solana",
 };
 
 /** A panel field, as `fields_changed` names it (POO-2187). The identity, checked for totality. */

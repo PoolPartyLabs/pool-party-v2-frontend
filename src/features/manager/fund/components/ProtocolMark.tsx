@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-036
  * @name ProtocolMark
  * @implements-rules-version v4 (POO-2167)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, decorative; the steps that render it emit through the shell
  *
  * A protocol's leading mark, shared by the Mandate steps that list protocols as rows (POO-2128,
@@ -24,6 +25,10 @@ const PROTOCOL_LOGOS: Record<ProtocolId, string> = {
   "aave-v3": "/tokens/aave.png",
   gmx: "/protocols/gmx.svg",
   pendle: "/protocols/pendle.png",
+  kamino: "/protocols/solana-preview/kamino.svg",
+  jupiter: "/protocols/solana-preview/jupiter.svg",
+  raydium: "/protocols/solana-preview/raydium.svg",
+  orca: "/protocols/solana-preview/orca.svg",
 };
 
 /** Public props for the decorative protocol logo. */

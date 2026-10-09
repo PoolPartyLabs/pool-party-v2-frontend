@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-026
  * @name MandateSummaryCard
  * @implements-rules-version v2 (POO-2127 rules v1, POO-2143 rules v2)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a read-only card. It shows what was already decided and offers no
  *   control, so there is no intent here to record; the screen that renders it owns the view event
  *   (PP-MGR-SCR-002)
@@ -159,6 +160,10 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
     "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
     gmx: t("fundBuilder.protocolNames.gmx"),
     pendle: t("fundBuilder.protocolNames.pendle"),
+    kamino: t("solanaPreview.protocols.kamino"),
+    jupiter: t("solanaPreview.protocols.jupiter"),
+    raydium: t("solanaPreview.protocols.raydium"),
+    orca: t("solanaPreview.protocols.orca"),
   };
 
   const noCapLabel = t("fundBuilder.common.noCap");

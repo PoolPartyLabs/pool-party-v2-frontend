@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-024
  * @name blockCopy
  * @implements-rules-version v1 (POO-2155 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, translated strings only; the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event
  *
@@ -55,7 +56,7 @@ export interface BlockCopy {
       pct: string;
     }): string;
   };
-  flow: { swapAuto: string; swap: string; collectFees: string };
+  flow: { swapAuto: string; swap: string; jupiter?: string; collectFees: string };
   tooltip: {
     swapAuto(token: string): string;
     swapAutoSupply(token: string, asset: string): string;
@@ -113,6 +114,7 @@ export function makeBlockCopy(t: ManagerTranslate, locale: string): BlockCopy {
   const networkNames: Record<string, string> = {
     arbitrum: t("fundBuilder.networkNames.arbitrum"),
     robinhood: t("fundBuilder.networkNames.robinhood"),
+    solana: t("solanaPreview.holding.solana"),
     base: t("fundBuilder.networkNames.base"),
     polygon: t("fundBuilder.networkNames.polygon"),
     unichain: t("fundBuilder.networkNames.unichain"),
@@ -124,6 +126,10 @@ export function makeBlockCopy(t: ManagerTranslate, locale: string): BlockCopy {
     aaveBorrow: t("fundBuilder.canvas.blocks.aaveBorrow.protocol"),
     pendle: t("fundBuilder.canvas.blocks.pendle.protocol"),
     gmxPerp: t("fundBuilder.canvas.blocks.gmxPerp.protocol"),
+    solanaOrcaPool: t("solanaPreview.protocols.orca"),
+    solanaRaydiumPool: t("solanaPreview.protocols.raydium"),
+    solanaKaminoSupply: t("solanaPreview.protocols.kamino"),
+    solanaHolding: t("solanaPreview.holding.title"),
   };
   const blockTypes: Record<BlockKind, string> = {
     uniswapV4Pool: t("fundBuilder.canvas.blocks.uniswapV4Pool.type"),
@@ -132,6 +138,10 @@ export function makeBlockCopy(t: ManagerTranslate, locale: string): BlockCopy {
     aaveBorrow: t("fundBuilder.canvas.blocks.aaveBorrow.type"),
     pendle: t("fundBuilder.canvas.blocks.pendle.type"),
     gmxPerp: t("fundBuilder.canvas.blocks.gmxPerp.type"),
+    solanaOrcaPool: t("fundBuilder.canvas.blocks.uniswapV4Pool.type"),
+    solanaRaydiumPool: t("fundBuilder.canvas.blocks.uniswapV4Pool.type"),
+    solanaKaminoSupply: t("fundBuilder.canvas.blocks.aaveSupply.type"),
+    solanaHolding: t("solanaPreview.holding.title"),
   };
   let listFormat: Intl.ListFormat | null = null;
   try {
@@ -163,6 +173,7 @@ export function makeBlockCopy(t: ManagerTranslate, locale: string): BlockCopy {
     flow: {
       swapAuto: t("fundBuilder.canvas.flow.swapAuto"),
       swap: t("fundBuilder.canvas.flow.swap"),
+      jupiter: t("solanaPreview.holding.jupiter"),
       collectFees: t("fundBuilder.canvas.flow.collectFees"),
     },
     tooltip: {

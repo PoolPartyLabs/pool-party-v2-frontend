@@ -2,12 +2,18 @@
  * @id PP-MGR-LIB-057
  * @name auxiliaryConfig
  * @implements-rules-version v1 (POO-2237)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, pure configuration reducers; usePanelDraft reports local edit outcomes.
  *
  * Manual Swap and spoke panel rules. No API, quotes, amounts or execution. The existing
  * launch adapter continues to refuse manual swaps. Token refs come from the explicit mandate.
  */
-import { type MandateDraft, type NetworkId, tokenKey } from "../../mandateDraft";
+import {
+  type MandateDraft,
+  type NetworkId,
+  normalizeTokenIdentity,
+  tokenKey,
+} from "../../mandateDraft";
 import { isManualSwapConfig } from "./blockConfig";
 import type { BuildPlan, Chain, PanelConfig, PlanContext, PlanReducerResult } from "./buildPlan";
 import { findBlock } from "./planDerive";
@@ -34,9 +40,14 @@ export function validManualSwapConfig(
   network: NetworkId,
 ): boolean {
   if (!isManualSwapConfig(value)) return false;
+  if (
+    network === "solana" &&
+    (draft.runtime !== "solana-local" || !draft.protocols.includes("jupiter"))
+  )
+    return false;
   const keys = new Set(manualSwapTokens(draft, network).map(tokenKey));
-  const input = value.tokenInKey.toLowerCase();
-  const output = value.tokenOutKey.toLowerCase();
+  const input = normalizeTokenIdentity(network, value.tokenInKey);
+  const output = normalizeTokenIdentity(network, value.tokenOutKey);
   return input !== output && keys.has(input) && keys.has(output);
 }
 
@@ -87,8 +98,8 @@ export function applyPanelConfig(
     if (found.block.auto) return refuse("auto_owned");
     if (!validManualSwapConfig(config, ctx.draft, found.network)) return refuse("not_in_mandate");
     const stored = {
-      tokenInKey: config.tokenInKey.toLowerCase(),
-      tokenOutKey: config.tokenOutKey.toLowerCase(),
+      tokenInKey: normalizeTokenIdentity(found.network, config.tokenInKey),
+      tokenOutKey: normalizeTokenIdentity(found.network, config.tokenOutKey),
       slippagePct: config.slippagePct,
     };
     const update = (chain: Chain): Chain =>

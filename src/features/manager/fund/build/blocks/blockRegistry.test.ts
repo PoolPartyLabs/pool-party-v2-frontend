@@ -45,6 +45,10 @@ const ALL_KINDS: BlockKind[] = [
   "uniswapV3Pool",
   "pendle",
   "gmxPerp",
+  "solanaOrcaPool",
+  "solanaRaydiumPool",
+  "solanaKaminoSupply",
+  "solanaHolding",
 ];
 
 /** A hub plan with one chain holding one empty card of `kind`. */

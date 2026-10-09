@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-021
  * @name buildPlan
  * @implements-rules-version v1 (POO-2151 rules v1); POO-2237 rules v1
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure domain module. A refusal returns a {@link PlanBlock} and the Build
  *   screen (PP-MGR-SCR-002, slice S7) turns it into `builder_build_blocked`. Nothing here touches
  *   the dataLayer.
@@ -40,7 +41,11 @@ export type BlockKind =
   | "aaveBorrow"
   | "uniswapV3Pool"
   | "pendle"
-  | "gmxPerp";
+  | "gmxPerp"
+  | "solanaOrcaPool"
+  | "solanaRaydiumPool"
+  | "solanaKaminoSupply"
+  | "solanaHolding";
 
 /** The two pool kinds: a Uniswap v3 position uses the same card and panel as a v4 one (C22). */
 export type PoolBlockKind = "uniswapV4Pool" | "uniswapV3Pool";
@@ -79,6 +84,12 @@ export interface AaveBlockConfig {
   slippagePct?: number;
 }
 
+/** Local descriptor choice, never a canonical pool/program/market address. */
+export interface SolanaLocalBlockConfig {
+  catalogId: string;
+  pair: "SOL / USDC" | "USDC / SOL";
+}
+
 /** Which configuration each kind carries. Pendle and GMX are not drawn yet, so they carry none. */
 export interface BlockConfigByKind {
   uniswapV4Pool: PoolBlockConfig;
@@ -87,6 +98,10 @@ export interface BlockConfigByKind {
   aaveBorrow: AaveBlockConfig;
   pendle: never;
   gmxPerp: never;
+  solanaOrcaPool: SolanaLocalBlockConfig;
+  solanaRaydiumPool: SolanaLocalBlockConfig;
+  solanaKaminoSupply: SolanaLocalBlockConfig;
+  solanaHolding: SolanaLocalBlockConfig;
 }
 
 /** A card. `config` null is an empty block (HU2). */
@@ -119,7 +134,8 @@ export interface ManualSwapConfig {
 export interface SpokePanelConfig {
   spoke: true;
 }
-export type PanelConfig = PoolBlockConfig | AaveBlockConfig | ManualSwapConfig | SpokePanelConfig;
+export type PositionConfig = PoolBlockConfig | AaveBlockConfig | SolanaLocalBlockConfig;
+export type PanelConfig = PositionConfig | ManualSwapConfig | SpokePanelConfig;
 
 export type Step = PositionBlock | FlowBlock;
 
@@ -170,6 +186,10 @@ export const BLOCK_KIND_STATUS: Readonly<Record<BlockKind, BlockKindStatus>> = {
   uniswapV3Pool: "comingSoon",
   pendle: "comingSoon",
   gmxPerp: "comingSoon",
+  solanaOrcaPool: "enabled",
+  solanaRaydiumPool: "enabled",
+  solanaKaminoSupply: "enabled",
+  solanaHolding: "enabled",
 };
 
 /**
@@ -183,6 +203,10 @@ export const BLOCK_KIND_PROTOCOL: Readonly<Record<BlockKind, ProtocolId | null>>
   aaveBorrow: "aave-v3",
   pendle: null,
   gmxPerp: null,
+  solanaOrcaPool: "orca",
+  solanaRaydiumPool: "raydium",
+  solanaKaminoSupply: "kamino",
+  solanaHolding: null,
 };
 
 /**

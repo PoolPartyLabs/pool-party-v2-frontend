@@ -343,3 +343,10 @@ Status: OPEN before live account risk enablement. Confirm adapter-derived effect
 Status: ANSWERED for local read/draft presentation. Current position and edited range remain separate; neither In range nor a protocol grid implies a yield or safety guarantee. Complete prices preserve precision, mint orientation and provenance. Unknown/stale/liquidity-zero states remain distinct, and a missing liquidity quote supplies no composition. The production host receives no sample pool, price or ticks. The pinned Orca/Raydium math ports preserve upstream Apache-2.0 notices and their independent licensing boundary.
 
 Status: OPEN before live protocol or execution enablement under POO-2240/2261/2262. Verify deployed programs, pool/mint/token-program restrictions, transfer fees/extensions, position authority, actual adapter capabilities, fresh quotes and operation-specific min/max/fees disclosures. Tick math or a local Apply action clears no custody, venue or signing gate.
+
+
+## CR-MGR-POO2301-DOMAIN, October 9, 2026
+
+ANSWERED for dormant local drawing metadata and validation only. A protocol descriptor or exact token mint does not establish custody, an active market, liquidity, price-feed support, quoted returns or an execution permission. Native SOL and WSOL remain separate. Standard catalogs exclude the local choices and execution readiness refuses local cards/spokes. No real-user screen, money movement or financial-completion event is activated by this domain slice.
+
+BLOCKING before real Solana data or operations under POO-2239/2240/2261/2262: verify canonical programs/pools/reserves, token programs/extensions, custody and authority, fresh independent balances/valuation, venue disclosures, quote/cost semantics and settlement/recovery. A local-visual ready result clears none of these gates. Owner: Murilo / Codex coordinator.

@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-021
  * @name planInvariants
  * @implements-rules-version v1 (POO-2151 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure domain module.
  *
  * The six plan invariants of the handoff ("Plan model"), as a list of what is broken. It changes
@@ -28,18 +29,28 @@
  * (canvas A's Supply, Swap · auto, pool).
  */
 import { HUB_NETWORK, type NetworkId, tokenKey } from "../../mandateDraft";
-import { findMandatePool } from "./blockConfig";
+import { USDC_MINT, WSOL_MINT } from "../../solana-preview/solanaSchemas";
+import { validManualSwapConfig } from "./auxiliaryConfig";
+import { findMandatePool, isConfigFor } from "./blockConfig";
 import {
   BLOCK_KIND_PROTOCOL,
   BLOCK_KIND_STATUS,
   type BuildPlan,
   type Chain,
+  type ManualSwapConfig,
   type PlanContext,
   type PositionBlock,
   type Step,
 } from "./buildPlan";
 import { chainsWithNetwork } from "./planDerive";
-import { arrivingTokenAt, isPoolKind, kindAvailability, needsAutoSwap } from "./planRules";
+import {
+  arrivingTokenAt,
+  isLiquidityKind,
+  isPoolKind,
+  isSolanaKind,
+  kindAvailability,
+  needsAutoSwap,
+} from "./planRules";
 
 export type PlanViolationCode =
   // INV1
@@ -75,6 +86,26 @@ function sum(values: readonly number[]): number {
   return values.reduce((total, value) => total + value, 0);
 }
 
+/** Local descriptor routes use these exact Base58 mints, never a case-folded token symbol. */
+function selectedSolanaMints(draft: PlanContext["draft"], needsWsol: boolean): boolean {
+  const mints = new Set(
+    draft.tokens.filter((token) => token.network === "solana").map((token) => token.address),
+  );
+  return mints.has(USDC_MINT) && (!needsWsol || mints.has(WSOL_MINT));
+}
+
+/** A config-less local conversion still has concrete USDC/WSOL and Jupiter dependencies. */
+function localConversionViolation(
+  draft: PlanContext["draft"],
+  config?: ManualSwapConfig,
+): PlanViolationCode | null {
+  if (!draft.protocols.includes("jupiter")) return "kind_not_in_mandate";
+  const valid = config
+    ? validManualSwapConfig(config, draft, "solana")
+    : selectedSolanaMints(draft, true);
+  return valid ? null : "config_not_in_mandate";
+}
+
 /** Whether a configured block names something the mandate holds on the block's network. */
 function configInMandate(
   block: PositionBlock,
@@ -83,6 +114,13 @@ function configInMandate(
 ): boolean {
   const config = block.config as Record<string, unknown> | null;
   if (config === null) return true;
+  if (isSolanaKind(block.kind))
+    return (
+      draft.runtime === "solana-local" &&
+      network === "solana" &&
+      isConfigFor(block.kind, config) &&
+      selectedSolanaMints(draft, isLiquidityKind(block.kind) || config.pair === "SOL / USDC")
+    );
   if (isPoolKind(block.kind)) {
     const poolId = config.poolId;
     if (typeof poolId !== "string") return false;
@@ -111,7 +149,11 @@ function kindViolation(
   const availability = kindAvailability(block.kind, network, ctx);
   if (availability === "not_in_mandate") return "kind_not_in_mandate";
   if (availability === "not_on_network") return "kind_not_on_network";
-  return configInMandate(block, network, ctx.draft) ? null : "config_not_in_mandate";
+  if (!configInMandate(block, network, ctx.draft)) return "config_not_in_mandate";
+  // WSOL Holding derives its return Swap in layout only; retain its dependency on the stored card.
+  if (block.kind === "solanaHolding" && block.config?.pair === "SOL / USDC")
+    return localConversionViolation(ctx.draft);
+  return null;
 }
 
 /** The next step after `index` that is not an app-owned auto block. */
@@ -125,7 +167,7 @@ function sequenceViolations(steps: readonly Step[]): string[] {
   steps.forEach((step, index) => {
     const before = steps[index - 1];
     if (step.family === "flow" && step.kind === "collectFees") {
-      if (!(before?.family === "position" && isPoolKind(before.kind))) out.push(step.id);
+      if (!(before?.family === "position" && isLiquidityKind(before.kind))) out.push(step.id);
     }
     if (step.family === "position" && step.kind === "aaveBorrow") {
       if (!(before?.family === "position" && before.kind === "aaveSupply")) out.push(step.id);
@@ -142,7 +184,7 @@ function sequenceViolations(steps: readonly Step[]): string[] {
     // its Collect fees": the pool, or its Collect fees, ends the chain, which matches C10 and C11
     // (a chain's last block drops into the return lines). So a position after the Collect fees and
     // a second Collect fees are both violations. The product owner may overturn this reading.
-    if (before?.family === "position" && isPoolKind(before.kind)) {
+    if (before?.family === "position" && isLiquidityKind(before.kind)) {
       if (!(step.family === "flow" && step.kind === "collectFees")) out.push(step.id);
     }
     const twoBack = steps[index - 2];
@@ -150,7 +192,7 @@ function sequenceViolations(steps: readonly Step[]): string[] {
       before?.family === "flow" &&
       before.kind === "collectFees" &&
       twoBack?.family === "position" &&
-      isPoolKind(twoBack.kind)
+      isLiquidityKind(twoBack.kind)
     ) {
       out.push(step.id);
     }
@@ -233,7 +275,35 @@ export function validatePlan(
       report({ invariant: 4, code: "chain_without_position", targetId: chain.id });
     }
     // INV2
-    for (const step of chain.steps) {
+    for (const [index, step] of chain.steps.entries()) {
+      if (
+        ctx.draft.runtime === "solana-local" &&
+        network === "solana" &&
+        step.family === "flow" &&
+        step.kind === "swap"
+      ) {
+        const code =
+          step.auto || step.config
+            ? localConversionViolation(ctx.draft, step.config)
+            : ctx.draft.protocols.includes("jupiter")
+              ? null
+              : "kind_not_in_mandate";
+        if (code) report({ invariant: 2, code, targetId: step.id });
+      }
+      const before = chain.steps[index - 1];
+      if (
+        ctx.draft.runtime === "solana-local" &&
+        network === "solana" &&
+        step.family === "flow" &&
+        step.kind === "collectFees" &&
+        before?.family === "position" &&
+        isSolanaKind(before.kind) &&
+        isLiquidityKind(before.kind)
+      ) {
+        // The collector's fee-return Swap is derived and has no separate stored plan step.
+        const code = localConversionViolation(ctx.draft);
+        if (code) report({ invariant: 2, code, targetId: step.id });
+      }
       if (step.family !== "position") continue;
       const code = kindViolation(step, network, ctx);
       if (code) report({ invariant: 2, code, targetId: step.id });

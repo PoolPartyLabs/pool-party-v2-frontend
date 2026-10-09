@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-024
  * @name menuModels
  * @implements-rules-version v1 (POO-2155 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure module. A choice, a refusal and a drop are reported by
  *   `useBuildCanvas` through `onEvent`; the Build screen (PP-MGR-SCR-002, S7) maps them to events.
  *
@@ -205,12 +206,20 @@ function insertOption(
   const { copy } = ctx;
   const id = `insert:${slot.side}:${slot.blockId}:${choice.kind}`;
   if (choice.family === "flow") {
+    const jupiter =
+      choice.kind === "swap" && network === "solana" && ctx.draft.runtime === "solana-local";
+    if (jupiter && !ctx.draft.protocols.includes("jupiter")) return null;
     return {
       id,
-      name: choice.kind === "swap" ? copy.flow.swap : copy.flow.collectFees,
+      name:
+        choice.kind === "swap"
+          ? jupiter
+            ? (copy.flow.jupiter ?? copy.flow.swap)
+            : copy.flow.swap
+          : copy.flow.collectFees,
       caption: copy.menu.portFlowOption,
       logo: "flow",
-      markId: choice.kind,
+      markId: jupiter ? "jupiter" : choice.kind,
       disabled: false,
       blockedReason: null,
       action: { kind: "insert", slot, choice },
@@ -338,6 +347,15 @@ export function dropTargets(item: PaletteDragItem, ctx: MenuContext): DropTarget
   }
   const out: DropTarget[] = [];
   for (const { slot, network } of portSlots(ctx)) {
+    if (item.family === "flow" && item.network && item.network !== network) continue;
+    if (
+      item.family === "flow" &&
+      item.kind === "swap" &&
+      network === "solana" &&
+      ctx.draft.runtime === "solana-local" &&
+      !ctx.draft.protocols.includes("jupiter")
+    )
+      continue;
     const option = insertOptions(ctx.plan, slot).find(
       (choice) => choice.family === item.family && choice.kind === item.kind,
     );
