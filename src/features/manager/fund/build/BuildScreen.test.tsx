@@ -51,6 +51,8 @@ import {
 import { getDraft, MANDATE_DRAFTS_KEY, upsertDraft } from "../mandateDraftStore";
 import type { SelectionGuard, UseBlockSelectionResult } from "./blocks/useBlockSelection";
 import { computeFit } from "./canvas/viewportMath";
+import { layoutGraph } from "./layout/layoutGraph";
+import { toLayoutInput } from "./layout/toLayoutInput";
 import type { BuildPlan, PositionBlock, Step } from "./plan/buildPlan";
 import { makeTestDraft, TEST_ASSET_KEYS } from "./plan/planTestKit";
 
@@ -254,16 +256,16 @@ function card(name: RegExp): HTMLElement {
 
 /** The rendered graph (cards, pills, templates), apart from the palette and the panel. */
 function graph(): HTMLElement {
-  const element = document.querySelector<HTMLElement>("[data-build-graph]");
+  const element = document.querySelector<HTMLElement>(".react-flow__viewport");
   if (!element) throw new Error("no graph");
   return element;
 }
 
 /** The graph layer's transform: translate(x, y) scale(s). */
 function view(): { x: number; y: number; scale: number } {
-  const layer = document.querySelector<HTMLElement>("[data-canvas-layer]");
+  const layer = graph();
   const match = layer?.style.transform.match(
-    /translate\((-?[\d.]+)px, (-?[\d.]+)px\) scale\(([\d.]+)\)/,
+    /translate\((-?[\d.e+]+)px,\s*(-?[\d.e+]+)px\)\s*scale\(([\d.e+]+)\)/,
   );
   if (!match) throw new Error(`no transform on the layer: ${layer?.style.transform}`);
   return { x: Number(match[1]), y: Number(match[2]), scale: Number(match[3]) };
@@ -271,37 +273,94 @@ function view(): { x: number; y: number; scale: number } {
 
 /** The graph-px box of a card, from its positioned wrapper. */
 function boxOf(element: HTMLElement): { x: number; y: number; w: number; h: number } {
-  const wrapper = element.closest<HTMLElement>("[data-graph-node]");
+  const wrapper = element.closest<HTMLElement>(".react-flow__node");
   if (!wrapper) throw new Error("no positioned wrapper");
+  const position = wrapper.style.transform.match(/translate\((-?[\d.e+]+)px,\s*(-?[\d.e+]+)px\)/);
+  if (!position) throw new Error(`no financial node position: ${wrapper.style.transform}`);
   return {
-    x: Number.parseFloat(wrapper.style.left),
-    y: Number.parseFloat(wrapper.style.top),
-    w: Number.parseFloat(wrapper.style.width),
-    h: Number.parseFloat(wrapper.style.height),
+    x: Number(position[1]),
+    y: Number(position[2]),
+    w: wrapper.offsetWidth,
+    h: wrapper.offsetHeight,
   };
 }
 
 const CANVAS = { width: 600, height: 640 };
 
-/** jsdom lays nothing out: give the canvas box a size so fit and reveal have something to do. */
+/** jsdom has no layout: supply physical dimensions while keeping the real React Flow engine. */
 function measureCanvas(): void {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  vi.stubGlobal(
+    "DOMMatrixReadOnly",
+    class {
+      m22 = 1;
+    },
+  );
+  const originalWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetWidth")?.get;
+  const originalHeight = Object.getOwnPropertyDescriptor(
+    HTMLElement.prototype,
+    "offsetHeight",
+  )?.get;
+  vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    if (this.closest("[hidden]")) return 0;
+    const width = Number.parseFloat(this.style.width);
+    if (Number.isFinite(width)) return width;
+    if (this.closest(".react-flow")) return CANVAS.width;
+    return originalWidth?.call(this) ?? 0;
+  });
+  vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    if (this.closest("[hidden]")) return 0;
+    const height = Number.parseFloat(this.style.height || this.style.minHeight);
+    if (Number.isFinite(height)) return height;
+    if (this.closest(".react-flow")) return CANVAS.height;
+    return originalHeight?.call(this) ?? 0;
+  });
   const original = HTMLElement.prototype.getBoundingClientRect;
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
     this: HTMLElement,
   ) {
-    if (!this.hasAttribute("data-canvas-viewport")) return original.call(this);
+    if (!this.hasAttribute("data-canvas-viewport") && !this.closest(".react-flow"))
+      return original.call(this);
+    const width = this.closest("[hidden]")
+      ? 0
+      : this.hasAttribute("data-canvas-viewport")
+        ? CANVAS.width
+        : this.offsetWidth;
+    const height = this.closest("[hidden]")
+      ? 0
+      : this.hasAttribute("data-canvas-viewport")
+        ? CANVAS.height
+        : this.offsetHeight;
     return {
       x: 0,
       y: 0,
       left: 0,
       top: 0,
-      width: CANVAS.width,
-      height: CANVAS.height,
-      right: CANVAS.width,
-      bottom: CANVAS.height,
+      width,
+      height,
+      right: width,
+      bottom: height,
       toJSON: () => ({}),
     } as DOMRect;
   });
+}
+
+/** d3 listens on event.view; jsdom 29 needs the Window proxy assigned after construction. */
+function mouse(target: Element | Window, type: string, init: MouseEventInit): void {
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true, ...init });
+  Object.defineProperty(event, "view", { value: window });
+  fireEvent(target, event);
 }
 
 /** Whether a graph box is inside the canvas under the current view. */
@@ -319,11 +378,13 @@ function inView(box: { x: number; y: number; w: number; h: number }): boolean {
 
 /** Drag the canvas background far to the left, so the graph leaves the view. */
 function panAway(): void {
-  const canvas = document.querySelector<HTMLElement>("[data-canvas-viewport]");
+  const canvas = document.querySelector<HTMLElement>(".react-flow__pane");
   if (!canvas) throw new Error("no canvas");
-  fireEvent.pointerDown(canvas, { button: 0, pointerId: 7, clientX: 500, clientY: 300 });
-  fireEvent.pointerMove(canvas, { pointerId: 7, clientX: -2500, clientY: 300 });
-  fireEvent.pointerUp(canvas, { pointerId: 7, clientX: -2500, clientY: 300 });
+  const before = view();
+  mouse(canvas, "mousedown", { button: 0, buttons: 1, clientX: 500, clientY: 300 });
+  mouse(window, "mousemove", { buttons: 1, clientX: -2500, clientY: 300 });
+  mouse(window, "mouseup", { button: 0, clientX: -2500, clientY: 300 });
+  expect(view().x).toBeLessThan(before.x);
 }
 
 /** A guard that refuses every change, as the panel will while it holds unapplied changes. */
@@ -340,6 +401,7 @@ function registerGuard(guard: SelectionGuard): void {
 }
 
 beforeEach(() => {
+  measureCanvas();
   nav.push.mockClear();
   nav.replace.mockClear();
   nav.params = new URLSearchParams();
@@ -407,15 +469,10 @@ describe("BuildScreen: the canvas replaces the Build landing (G2, AN1, D23, AE1)
 
   it("[I8] opens at fit", async () => {
     // @rule I8
-    measureCanvas();
     seedBuild(hubMandate("d-fit"), poolPlan());
     await openBuild();
-    const layer = document.querySelector<HTMLElement>("[data-canvas-layer]");
-    const graph = {
-      width: Number.parseFloat(layer?.style.width ?? "0"),
-      height: Number.parseFloat(layer?.style.height ?? "0"),
-    };
-    await waitFor(() => expect(view()).toEqual(computeFit(CANVAS, graph)));
+    const layout = layoutGraph(toLayoutInput(poolPlan()), { startHereWidth: 0 });
+    await waitFor(() => expect(view()).toEqual(computeFit(CANVAS, layout, true)));
   });
 });
 
@@ -760,7 +817,7 @@ const AAVE_REFUSALS: Array<[string, BuildPlan, string, string]> = [
       },
       spokes: [],
     },
-    "Swaps outside a pool cannot launch yet. Supply the token that arrives, or remove the Swap.",
+    "This Swap is not available for launch yet. Remove it, or supply the token that arrives.",
     "review_unsupported_swap",
   ],
   [
@@ -825,7 +882,6 @@ describe("BuildScreen: Next: Review (AN4, D19, AE6)", () => {
   it("[AN4, I9] brings the first offending block into view", async () => {
     // @rule AN4
     // @rule I9
-    measureCanvas();
     seedBuild(hubMandate("d-reveal-next"), poolPlan(60, null));
     await openBuild();
     panAway();
@@ -927,10 +983,11 @@ async function dirtyFirstCard(): Promise<void> {
 
 /** A press on the canvas background that does not pan (I5). */
 function clickBackground(): void {
-  const canvas = document.querySelector<HTMLElement>("[data-canvas-viewport]");
+  const canvas = document.querySelector<HTMLElement>(".react-flow__pane");
   if (!canvas) throw new Error("no canvas");
-  fireEvent.pointerDown(canvas, { button: 0, pointerId: 9, clientX: 20, clientY: 20 });
-  fireEvent.pointerUp(canvas, { pointerId: 9, clientX: 20, clientY: 20 });
+  mouse(canvas, "mousedown", { button: 0, clientX: 20, clientY: 20 });
+  mouse(window, "mouseup", { button: 0, clientX: 20, clientY: 20 });
+  fireEvent.click(canvas);
 }
 
 /** Every way out of a block or of the step (P6): how to take it, and how to see it was taken. */
@@ -1386,7 +1443,7 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
     expect(getDraft("d-unreadable")?.planUnreadable).toBe(true);
     await openBuild();
 
-    expect(screen.getByRole("status")).toHaveTextContent(
+    expect(document.querySelector("[data-build-plan-unreadable][role=status]")).toHaveTextContent(
       "This draft holds a plan this version of the app cannot open.",
     );
     // The empty canvas, never a guess at the plan.
@@ -1420,7 +1477,7 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
     await addPoolFromMenu();
     // A plan with a block in it: a save would replace the stored one, so the notice still says it
     // and the leave prompt is armed.
-    expect(screen.getByRole("status")).toHaveTextContent(
+    expect(document.querySelector("[data-build-plan-unreadable][role=status]")).toHaveTextContent(
       "This draft holds a plan this version of the app cannot open.",
     );
     await waitFor(() => expect(beforeUnloadPrevented()).toBe(true));
@@ -1436,7 +1493,7 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
 
     // Empty again: nothing to save, so no prompt, and the notice stays.
     await waitFor(() => expect(beforeUnloadPrevented()).toBe(false));
-    expect(screen.getByRole("status")).toHaveTextContent(
+    expect(document.querySelector("[data-build-plan-unreadable][role=status]")).toHaveTextContent(
       "This draft holds a plan this version of the app cannot open.",
     );
 
@@ -1461,14 +1518,13 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
     expect(raw.drafts["d-unreadable-new"].plan.version).toBe(1);
     expect(raw.drafts["d-unreadable-new"].plan.hub.chains).toHaveLength(1);
     expect(getDraft("d-unreadable-new")?.planUnreadable).toBeUndefined();
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(document.querySelector("[data-build-plan-unreadable]")).toBeNull();
   });
 });
 
 describe("BuildScreen: the view follows the change (I9)", () => {
   it("[I9] reveals the block just added, even when the view was moved away", async () => {
     // @rule I9
-    measureCanvas();
     seedBuild(hubMandate("d-reveal-add"));
     await openBuild();
     panAway();
@@ -1481,7 +1537,6 @@ describe("BuildScreen: the view follows the change (I9)", () => {
   // Review F10 of PR #41: a flow block is never selected, so the reveal follows the new block itself.
   it("[I9] reveals a flow block inserted at a port, even when the view was moved away", async () => {
     // @rule I9
-    measureCanvas();
     seedBuild(hubMandate("d-reveal-insert"), poolPlan());
     await openBuild();
     panAway();

@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-049
  * @name PositionCard
  * @implements-rules-version v1 (POO-2154 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a presentational piece; a selection is reported through `onSelect` and the
  *   Build screen (PP-MGR-SCR-002, S7) owns every event
  *
@@ -141,7 +142,16 @@ export function PositionCard({ content, selected, onSelect }: PositionCardProps)
   const body = (
     <>
       <PieceStroke {...stroke} radius={CARD_RADIUS} />
-      <CardIconBox icon={icon} tone={selected ? "text-primary" : "text-muted-foreground"} />
+      {content.mark ? (
+        <span
+          aria-hidden="true"
+          className="flex size-7 shrink-0 items-center justify-center rounded-md bg-surface-raised"
+        >
+          {content.mark}
+        </span>
+      ) : (
+        <CardIconBox icon={icon} tone={selected ? "text-primary" : "text-muted-foreground"} />
+      )}
       <CardCopy
         title={title}
         caption={caption}

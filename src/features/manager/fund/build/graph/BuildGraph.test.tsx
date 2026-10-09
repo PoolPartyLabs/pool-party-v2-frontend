@@ -118,6 +118,82 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+// @rule POO-2302 R1/R2/R4: the engine reuses every card exactly once with declared handles.
+it("renders the shared Build graph through real React Flow without exposing node mutations", async () => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  vi.stubGlobal(
+    "DOMMatrixReadOnly",
+    class {
+      m22 = 1;
+    },
+  );
+  const props = propsFor(canvasA);
+  const mounted = renderWithProviders(
+    <CanvasViewport
+      engine="react-flow"
+      graphSize={{ width: props.layout.width, height: props.layout.height }}
+    >
+      <BuildGraph {...props} />
+    </CanvasViewport>,
+  );
+  await waitFor(() =>
+    expect(document.querySelectorAll("[data-financial-port]")).toHaveLength(
+      props.layout.semantic?.ports.length ?? 0,
+    ),
+  );
+  expect(document.querySelectorAll("[data-card-state]")).toHaveLength(
+    props.layout.blocks.filter((block) => block.family === "position").length,
+  );
+  const handles = document.querySelectorAll<HTMLElement>("[data-financial-port]");
+  for (const handle of handles) {
+    expect(handle.style.opacity).toBe("0");
+    expect(handle.style.width).toBe("2px");
+    const port = props.layout.semantic?.ports.find(
+      (port) => port.id === handle.dataset.financialPort,
+    );
+    const expected = {
+      top: "translate(-50%, 0)",
+      bottom: "translate(-50%, -100%)",
+      left: "translate(0, -50%)",
+      right: "translate(-100%, -50%)",
+    };
+    if (!port) throw new Error("undeclared financial handle");
+    expect(handle.style.transform).toBe(expected[port.side]);
+    expect(handle.className).not.toContain("connectable");
+  }
+  expect(document.querySelector("[data-canvas-layer]")).toBeNull();
+  for (const chip of document.querySelectorAll<HTMLElement>("[data-network-chip]")) {
+    expect(chip.closest<HTMLElement>(".react-flow__node")?.style.zIndex).toBe("4");
+    // The elevated chip occupies only its intrinsic bounds, without a full-hull wrapper
+    // above the cards. The spoke background can pan while its remove control stays usable.
+    expect(chip.closest("[data-graph-node]")).toBeNull();
+    expect(chip).toHaveClass("pp-canvas-interactive");
+  }
+  for (const group of document.querySelectorAll<HTMLElement>("[data-spoke-group]")) {
+    expect(group.closest<HTMLElement>(".react-flow__node")?.style.zIndex).toBe("0");
+    expect(group.querySelector("[data-network-chip]")).toBeNull();
+  }
+  const cards = document.querySelectorAll<HTMLElement>(".react-flow__node");
+  for (const card of cards) {
+    expect(card.className).not.toContain("draggable");
+    expect(card.className).not.toContain("selectable");
+    expect(card).not.toHaveAttribute("tabindex");
+  }
+  fireEvent.keyDown(document, { key: "Delete" });
+  expect(document.querySelectorAll(".react-flow__node")).toHaveLength(cards.length);
+  await act(async () => {
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+  });
+  mounted.unmount();
+});
+
 describe.each(FIXTURE_NAMES)("BuildGraph on %s", (name) => {
   const fixture = BUILD_CANVAS_FIXTURES[name];
   const layout = layoutGraph(fixture.input, { startHereWidth: 420 });

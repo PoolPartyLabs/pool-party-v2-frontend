@@ -1,6 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name BuildScreen
+ * @implements-rules-version v1 (POO-2302 measured engine)
  * @implements-rules-version v1 (POO-2157 rules v1; the configuration panel of POO-2187 rules v1; POO-2210 rules v1); POO-2237 rules v1
  * @analytics-events builder_build_viewed, builder_build_started, builder_block_added,
  *   builder_network_added, builder_network_removed, builder_flow_block_inserted,
@@ -423,6 +424,7 @@ export function BuildScreen({
         palette={<BuildPalette {...controller.paletteProps} />}
         canvas={
           <CanvasViewport
+            engine="react-flow"
             fillContainer
             fitOnResize
             graphSize={graphSize}

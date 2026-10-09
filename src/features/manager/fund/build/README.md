@@ -187,3 +187,12 @@ meaning and launch conditions before this contract is adopted on real product ro
 CanvasViewport exposes `engine="react-flow"`; the default remains native in this infrastructure slice. Build and Manage renderer adoption is delivered separately. Existing controls, fit, reveal, overlays and event ownership are retained. Only upstream base CSS is loaded; no React Flow UI cards are copied. The pinned MIT dependency and its notices are recorded in THIRD_PARTY_NOTICES and ADR 0010.
 
 Focused regressions cover projection integrity, measured endpoints, single-transform pan/zoom, invalid dimensions, fitting, measurement-cache retention and disabled native mutations. Real browser geometry acceptance remains with Murilo.
+
+
+## Build React Flow adoption (POO-2302 v1, October 9, 2026)
+
+BuildScreen now selects the measured engine delivered in PR #146. BuildGraph registers the same Pool Party pieces as custom financial nodes, preserving stable drop/menu/block IDs, removal confirmation, full-route hover, gray principal/green fees/gray Income output and the existing reducer-owned layout. Ports remain anchored inside painted borders. Spoke bodies stay below lines/cards and their existing chips stay above them.
+
+React Flow owns the sole pan/zoom transform. The same Fit, reveal, background selection, keyboard controls, draft guards and palette/configuration interactions remain. Native dragging, connecting, reconnecting or Delete cannot bypass the app reducer. Default CanvasViewport callers remain native unless they opt in. Protocol marks and network presentation are optional presentation seams; this slice does not enable any Solana catalog, runtime, account or transaction.
+
+Focused renderer and real-engine BuildScreen tests preserve gesture, fit, selection, configuration/Apply, navigation, removals and storage behavior. No mock of the React Flow engine is used. Native browser pixel/scroll/zoom acceptance remains with Murilo. No full local suite, coverage or build is required by the current owner constraints.

@@ -1121,3 +1121,8 @@ CanvasViewport (PP-MGR-CMP-046) adds an explicit `engine="react-flow"` option. N
 ## Manage React Flow adoption, October 9, 2026 (POO-2302 v1)
 
 PP-MGR-CMP-085 now selects the measured React Flow engine from PR #146, retaining its existing cards, holdings, inspection IDs and financial routes. PP-MGR-CMP-053 can paint the same spoke body and chip separately for stable stacking. Content is measured after the actual engine surface commit: a polling text change can shrink a previously expanded card without a ResizeObserver border-box event. Card keys and viewport remain stable. No new artifact, source or transaction capability is introduced.
+
+
+## Build React Flow adoption, October 9, 2026 (POO-2302 v1)
+
+PP-MGR-SCR-002, PP-MGR-CMP-059 and the existing Build pieces retain their artifact identities. BuildScreen explicitly selects React Flow; BuildGraph registers existing surfaces with declared handles, keeps native fallback for other callers, lifts spoke chips and retains current financial route/hover identities. Financial reducers remain the sole topology owner. No new source, transaction, locale key or artifact is introduced. Shared local Solana route activation remains a separate POO-2301 slice.

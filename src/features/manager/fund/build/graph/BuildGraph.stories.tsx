@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-059
  * @name BuildGraph.stories
  * @implements-rules-version v1 (POO-2156 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a story file of a controlled renderer
  *
  * The graph of the Build canvas (POO-2156, handoff v1.2 [ST1], [ST5] to [ST9]) drawn from the
@@ -163,5 +164,22 @@ export const InViewportAtFit: Story = {
     <CanvasViewport graphSize={args.layout}>
       <BuildGraph {...args} />
     </CanvasViewport>
+  ),
+};
+
+/** POO-2302: actual measured financial handles, shared cards and the single engine viewport. */
+export const ReactFlowFinancialCanvas: Story = {
+  args: argsOf(canvasA),
+  render: (args) => (
+    <div className="h-[640px] w-[900px] max-w-full">
+      <CanvasViewport
+        engine="react-flow"
+        fillContainer
+        fitOnResize
+        graphSize={{ width: args.layout.width, height: args.layout.height }}
+      >
+        <BuildGraph {...args} />
+      </CanvasViewport>
+    </div>
   ),
 };

@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-049
  * @name pieceTypes
  * @implements-rules-version v1 (POO-2154 rules v1)
+ * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, types only; the Build screen (PP-MGR-SCR-002, S7) owns every event
  *
  * The shared contract of the Build canvas pieces (slice S4, POO-2154; coordinator plan section 3.4).
@@ -12,6 +13,8 @@
  * A card's title, caption and accessible name come from the block's `config` (heads-up HU2), so S5
  * computes them once in `describeBlock` and the card only draws them.
  */
+
+import type { ReactNode } from "react";
 
 /**
  * The icon of a block, a flow pill or a spine card. A closed set, so a renderer cannot ask a piece
@@ -36,6 +39,8 @@ export type CardState = "default" | "empty" | "invalid" | "comingSoon";
 
 /** What a position card shows. Built by S5 (`describeBlock`) from the block's `config`. */
 export interface BlockContent {
+  /** Optional protocol mark inside the existing icon box; decorative. */
+  mark?: ReactNode;
   /** One line: the pair ("WETH / USDC"), "Supply USDC", or the empty title ("Uniswap v4"). */
   title: string;
   /** One line: "Uniswap v4 · 0.05%", "Pick a pool", or "No longer in your mandate" when invalid. */

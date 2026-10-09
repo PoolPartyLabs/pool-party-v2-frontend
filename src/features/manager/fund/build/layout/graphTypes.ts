@@ -137,6 +137,8 @@ export interface SpineNode {
 
 /** A card or a pill of the plan. `network` is where it sits (C5). */
 export interface BlockNode {
+  /** Optional presentation-only conversion origin; never a stored plan block. */
+  returnConversionOf?: string;
   id: string;
   chainId: string;
   network: string;
