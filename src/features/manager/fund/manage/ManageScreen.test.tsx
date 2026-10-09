@@ -6,7 +6,7 @@
  */
 import { type AnchorHTMLAttributes, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getUsdcAddress, supportedChainMetas } from "@/lib/chains/config";
+import { supportedChainMetas } from "@/lib/chains/config";
 import { mockFund } from "@/mocks/data/v2Funds";
 import {
   cleanup,
@@ -81,7 +81,7 @@ describe("Manage shell", () => {
                 chainId: "42161",
                 tokens: position.tokens.map((token, index) => ({
                   ...token,
-                  address: index === 0 ? getUsdcAddress(42161) : arbitrum.wrappedNative,
+                  address: index === 0 ? arbitrum.usdc.address : arbitrum.wrappedNative,
                 })),
               }
             : position,
