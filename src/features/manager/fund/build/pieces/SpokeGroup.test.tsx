@@ -55,6 +55,26 @@ function chip(): HTMLElement {
 }
 
 describe("SpokeGroup", () => {
+  // @rule POO-2302 R1/R4: group chrome can paint above routes without lifting the background.
+  it("splits body and chip without duplicating network focus or removal", async () => {
+    const remove = vi.fn();
+    const body = render(
+      <SpokeGroup
+        {...props({ part: "body", onRemove: remove, removeLabel: "Remove Robinhood Chain" })}
+      />,
+    );
+    expect(body.container.querySelector("[data-network-chip]")).toBeNull();
+    body.unmount();
+    render(
+      <SpokeGroup
+        {...props({ part: "chip", onRemove: remove, removeLabel: "Remove Robinhood Chain" })}
+      />,
+    );
+    expect(document.querySelector("[data-spoke-group]")).toBeNull();
+    expect(document.querySelectorAll("[data-network-chip]")).toHaveLength(1);
+    await userEvent.click(screen.getByRole("button", { name: "Remove Robinhood Chain" }));
+    expect(remove).toHaveBeenCalledOnce();
+  });
   it("[POO-2272 R3/R8] opts Manage into a naturally sized 32px network chip and decorative watermark", () => {
     render(<SpokeGroup {...props({ context: "manage" })} />);
     expect(chip().className).toContain("min-h-8");

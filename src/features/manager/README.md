@@ -819,3 +819,10 @@ These rendering changes introduce no balance, price, reserve, custody or executi
 Validation: 32 focused Manage layout/component tests passed, including coverage present/absent,
 natural content growth/shrink, full route hover, semantic references, shared Bridge ports and clear-card
 corridors. Browser layout acceptance remains with Murilo.
+
+
+## Manage connections (POO-2302 v1, October 9, 2026)
+
+ManageCanvas adopts the custom React Flow engine from PR #146, preserving existing cards, selection, financial routing and fixed Hub/zoom overlays. One engine transform owns pan/zoom. Identified handles use painted dimensions; native graph mutations remain disabled. Spoke chips use the same component above the background layer. Gray principal, green LP fees and gray Income output are unchanged.
+
+Intrinsic measurements occur after the actual surface commit. A token label shrinking during polling can reduce an expanded card without a border-box observer event, while restoring its intrinsic probe style and retaining the user's viewport and card identity. Focused tests cover painted handle endpoints, full-route hover, native cash/read states, reflow, selection and polling shrink; browser pixel acceptance remains with Murilo. This slice introduces no market data, custody or execution.

@@ -1116,3 +1116,8 @@ The pure model is merged in PR #143. Configure and local Manage now mount this s
 | `PP-MGR-CMP-100` | ReactFlowGraph, existing surfaces with custom measured handles/edges and one engine viewport | Component | Existing Build/Manage graph | Implemented optional infrastructure | [POO-2302](https://linear.app/yeildbay/issue/POO-2302) | `src/features/manager/fund/build/graph/ReactFlowGraph.tsx` @rules-v1 |
 
 CanvasViewport (PP-MGR-CMP-046) adds an explicit `engine="react-flow"` option. Native remains the default; production Build/Manage adoption follows separately. No transaction, live source or new funnel is added. The two new rows bring the registry row census to 703, including historical repeated IDs.
+
+
+## Manage React Flow adoption, October 9, 2026 (POO-2302 v1)
+
+PP-MGR-CMP-085 now selects the measured React Flow engine from PR #146, retaining its existing cards, holdings, inspection IDs and financial routes. PP-MGR-CMP-053 can paint the same spoke body and chip separately for stable stacking. Content is measured after the actual engine surface commit: a polling text change can shrink a previously expanded card without a ResizeObserver border-box event. Card keys and viewport remain stable. No new artifact, source or transaction capability is introduced.

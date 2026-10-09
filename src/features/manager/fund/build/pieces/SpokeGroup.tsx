@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-053
  * @name SpokeGroup
  * @implements-rules-version v2 (POO-2272); v1 (POO-2154)
+ * @implements-rules-version v1 (POO-2302 lifted engine chip)
  * @analytics-events none, a presentational piece; a removal is reported through `onRemove` and the
  *   Build screen (PP-MGR-SCR-002, S7) owns every event
  *
@@ -41,6 +42,8 @@ import { canvasInteractive, Explained, FOCUS_RING, PieceStroke } from "./piecePa
 
 /** Public props for {@link SpokeGroup}. */
 export interface SpokeGroupProps {
+  /** Engine renderers lift the same chip independently from its background stacking context. */
+  part?: "all" | "body" | "chip";
   /** The box, from the layout (S3), in px. */
   width: number;
   height: number;
@@ -72,6 +75,7 @@ export function SpokeGroup({
   networkName,
   networkLogo,
   context = "build",
+  part = "all",
   chipTooltip,
   invalid = false,
   invalidLabel,
@@ -89,6 +93,54 @@ export function SpokeGroup({
   ) : (
     chipTooltip
   );
+  const chip = (
+    <Explained
+      tooltip={tooltip}
+      {...canvasInteractive}
+      data-network-chip=""
+      title={chipTooltip}
+      className={cn(
+        "absolute top-0 left-3 flex -translate-y-1/2 items-center whitespace-nowrap rounded-full bg-background",
+        isManage ? "min-h-8 gap-2 px-3 py-1.5" : "h-[21px] gap-1.5 py-0.5 pr-2 pl-1.5",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "flex shrink-0 items-center justify-center overflow-hidden rounded-full",
+          isManage ? "size-5" : "size-3",
+        )}
+      >
+        {networkLogo}
+      </span>
+      <span
+        data-network-name=""
+        className={cn(
+          "uppercase leading-normal",
+          isManage ? "font-semibold text-sm" : "font-medium text-[11px]",
+          invalid ? "text-destructive" : "text-muted-foreground",
+        )}
+      >
+        {networkName}
+      </span>
+      {saysInvalid ? <span className="sr-only">{invalidLabel}</span> : null}
+      {closable ? (
+        <button
+          type="button"
+          aria-label={removeLabel}
+          onClick={() => onRemove?.()}
+          // F4: the drawn control is 12 px; ::after extends the hit area by 8 on every side.
+          className={cn(
+            "relative flex size-3 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors after:absolute after:-inset-2 after:content-[''] hover:text-foreground motion-reduce:transition-none",
+            FOCUS_RING,
+          )}
+        >
+          <X aria-hidden="true" size={12} strokeWidth={1.5} absoluteStrokeWidth />
+        </button>
+      ) : null}
+    </Explained>
+  );
+  if (part === "chip") return chip;
   return (
     <div
       data-spoke-group=""
@@ -111,51 +163,7 @@ export function SpokeGroup({
           {networkName}
         </span>
       ) : null}
-      <Explained
-        tooltip={tooltip}
-        {...canvasInteractive}
-        data-network-chip=""
-        title={chipTooltip}
-        className={cn(
-          "absolute top-0 left-3 flex -translate-y-1/2 items-center whitespace-nowrap rounded-full bg-background",
-          isManage ? "min-h-8 gap-2 px-3 py-1.5" : "h-[21px] gap-1.5 py-0.5 pr-2 pl-1.5",
-        )}
-      >
-        <span
-          aria-hidden="true"
-          className={cn(
-            "flex shrink-0 items-center justify-center overflow-hidden rounded-full",
-            isManage ? "size-5" : "size-3",
-          )}
-        >
-          {networkLogo}
-        </span>
-        <span
-          data-network-name=""
-          className={cn(
-            "uppercase leading-normal",
-            isManage ? "font-semibold text-sm" : "font-medium text-[11px]",
-            invalid ? "text-destructive" : "text-muted-foreground",
-          )}
-        >
-          {networkName}
-        </span>
-        {saysInvalid ? <span className="sr-only">{invalidLabel}</span> : null}
-        {closable ? (
-          <button
-            type="button"
-            aria-label={removeLabel}
-            onClick={() => onRemove?.()}
-            // F4: the drawn control is 12 px; ::after extends the hit area by 8 on every side.
-            className={cn(
-              "relative flex size-3 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors after:absolute after:-inset-2 after:content-[''] hover:text-foreground motion-reduce:transition-none",
-              FOCUS_RING,
-            )}
-          >
-            <X aria-hidden="true" size={12} strokeWidth={1.5} absoluteStrokeWidth />
-          </button>
-        ) : null}
-      </Explained>
+      {part === "all" ? chip : null}
     </div>
   );
 }
