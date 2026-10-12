@@ -1,26 +1,40 @@
 /**
  * @id PP-MGR-LIB-078-TEST
  * @name chartContext tests
- * @description Build pending configuration and Manage position identity chart boundaries.
+ * @description Build and Manage selection to the exact DEX Screener pool or asset chart.
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8674-15508
- * @linear https://linear.app/yeildbay/issue/POO-2309
- * @implements-rules-version v1 (POO-2309)
+ * @linear https://linear.app/yeildbay/issue/POO-2338
+ * @implements-rules-version v1 (POO-2338)
  * @analytics-events none, pure context tests.
+ *
+ * Pool addresses are synthetic fixtures. The tests never fetch DEX Screener.
  */
 import { describe, expect, it } from "vitest";
+import { getWrappedNative } from "@/lib/chains/config";
+import { NATIVE_TOKEN_ADDRESS } from "@/lib/provisioning/types";
 import { mockFund } from "@/mocks/data/v2Funds";
 import type { PanelDraftTarget } from "../build/panel/usePanelDraft";
-import type { PanelConfig } from "../build/plan/buildPlan";
-import { makeTestDraft, TEST_POOL_IDS } from "../build/plan/planTestKit";
+import { makeTestDraft, TEST_ASSET_KEYS, TEST_POOL_IDS } from "../build/plan/planTestKit";
 import { type ManagePosition, normalizeManageModel } from "../manage/manageModel";
-import { type MandateDraft, tokenKey } from "../mandateDraft";
+import type { MandateDraft, MandatePoolRef } from "../mandateDraft";
 import { SOLANA_LOCAL_CONFIGS } from "../solana-preview/solanaBuilderRuntime";
-import { USDC_MINT, WSOL_MINT } from "../solana-preview/solanaSchemas";
-import { buildChartSelection, manageChartSelection } from "./chartContext";
+import { USDC_MINT } from "../solana-preview/solanaSchemas";
+import { buildChartSelection, type ChartSelection, manageChartSelection } from "./chartContext";
+import { buildChartUrl } from "./chartModel";
+
+const V4_POOL_ID = `0x${"d4".repeat(32)}`;
+const V3_POOL = `0x${"c3".repeat(20)}`;
+const QUERY =
+  "embed=1&theme=dark&trades=0&chartLeftToolbar=1&chartTheme=dark&chartStyle=1&chartType=usd&interval=60";
 
 function required<T>(value: T | undefined): T {
   if (value === undefined) throw new Error("Missing test fixture");
   return value;
+}
+function urlOf(selection: ChartSelection): string {
+  const { availability } = selection;
+  if (availability.status !== "available") throw new Error(`Unavailable: ${availability.reason}`);
+  return buildChartUrl(availability.market);
 }
 
 const unavailable = (reason: string) => ({ status: "unavailable", reason });
@@ -35,32 +49,30 @@ function target(
     applied: { config: { poolId: "applied-other-pool" }, sharePct: 25 },
   };
 }
-function solanaDraft(): MandateDraft {
-  const base = makeTestDraft();
-  return {
-    ...base,
-    runtime: "solana-local",
-    networks: [...base.networks, "solana"],
-    tokens: [
-      ...base.tokens,
-      {
-        address: WSOL_MINT,
-        symbol: "WSOL",
-        name: "Wrapped SOL",
-        network: "solana",
-        logoUrl: null,
-        locked: false,
-      },
-      {
-        address: USDC_MINT,
-        symbol: "USDC",
-        name: "USD Coin",
-        network: "solana",
-        logoUrl: null,
-        locked: true,
-      },
-    ],
+/** A real-mode v4 row, as `mapV2Pool` writes it: id `<chainId>:<poolId>`, address = PoolId. */
+function realV4Draft(): MandateDraft {
+  const draft = makeTestDraft();
+  const mock = required(draft.pools.find((pool) => pool.network === "arbitrum"));
+  const real: MandatePoolRef = {
+    ...mock,
+    id: `42161:${V4_POOL_ID}`,
+    poolId: V4_POOL_ID,
+    address: V4_POOL_ID,
   };
+  return { ...draft, pools: [real, ...draft.pools.filter((pool) => pool !== mock)] };
+}
+/** A real v3 row, as the dex mapper writes it: id = address = the pool contract. */
+function realV3Draft(): MandateDraft {
+  const draft = makeTestDraft();
+  const mock = required(draft.pools.find((pool) => pool.network === "arbitrum"));
+  const real: MandatePoolRef = {
+    ...mock,
+    id: V3_POOL,
+    poolId: undefined,
+    address: V3_POOL,
+    protocol: "uniswap-v3",
+  };
+  return { ...draft, pools: [real, ...draft.pools.filter((pool) => pool !== mock)] };
 }
 function position(): ManagePosition {
   const base = normalizeManageModel(mockFund).positions.find((item) => item.kind === "liquidity");
@@ -70,7 +82,7 @@ function position(): ManagePosition {
     ...base,
     id: "position-a",
     core: "core-a",
-    poolId: "pool-a",
+    poolId: V4_POOL_ID,
     chainId: 42161,
     network: "arbitrum",
     tokens: tokens.map((token) => ({
@@ -82,19 +94,59 @@ function position(): ManagePosition {
     })),
   };
 }
+function supplyPosition(address: string | null): ManagePosition {
+  const current = position();
+  const usdc = required(current.tokens.find((token) => token.symbol === "USDC"));
+  return {
+    ...current,
+    kind: "supply",
+    poolId: null,
+    source: { ...current.source, adapterKind: "aave-v3" },
+    tokens: [{ ...usdc, address }],
+  };
+}
 
 describe("Build chart context", () => {
-  // @rule R2: current panel choices determine the exact reference, before Apply.
-  it("uses the unapplied pool config rather than the target's applied pool", () => {
-    const result = buildChartSelection(makeTestDraft(), target(), {
-      poolId: TEST_POOL_IDS.arbitrum,
+  // @rule R2
+  it("opens the bare PoolId of a real Uniswap v4 row, from the unapplied panel config", () => {
+    const result = buildChartSelection(realV4Draft(), target(), { poolId: V4_POOL_ID });
+    expect(result.availability).toMatchObject({
+      status: "available",
+      market: { kind: "pool", chain: "arbitrum", address: V4_POOL_ID, venue: "Uniswap v4" },
     });
-    expect(result.availability).toMatchObject({ status: "available", market: { id: "eth-usdc" } });
-    expect(result.identity).toContain(TEST_POOL_IDS.arbitrum);
+    expect(urlOf(result)).toBe(`https://dexscreener.com/arbitrum/${V4_POOL_ID}?${QUERY}`);
     expect(result.identity).not.toContain("applied-other-pool");
   });
 
-  // @rule R3: missing selection and configuration never borrow a default market.
+  // @rule R2
+  it("opens the pool contract of a real Uniswap v3 row", () => {
+    const result = buildChartSelection(realV3Draft(), target("uniswapV3Pool"), {
+      poolId: V3_POOL,
+    });
+    expect(urlOf(result)).toBe(`https://dexscreener.com/arbitrum/${V3_POOL}?${QUERY}`);
+  });
+
+  // @rule R2
+  it("labels the pool with its two token symbols", () => {
+    const result = buildChartSelection(realV4Draft(), target(), { poolId: V4_POOL_ID });
+    expect(result.availability).toMatchObject({ market: { label: "WETH / USDC" } });
+  });
+
+  // @rule R5
+  it("keeps a mock pool with no real address or PoolId unconfigured", () => {
+    expect(
+      buildChartSelection(makeTestDraft(), target(), { poolId: TEST_POOL_IDS.arbitrum })
+        .availability,
+    ).toEqual(unavailable("unconfigured"));
+    const slugV3 = realV3Draft();
+    required(slugV3.pools[0]).id = "arb-weth-usdc-5";
+    expect(
+      buildChartSelection(slugV3, target("uniswapV3Pool"), { poolId: "arb-weth-usdc-5" })
+        .availability,
+    ).toEqual(unavailable("unconfigured"));
+  });
+
+  // @rule R5
   it("distinguishes no selection, no config and unknown pool", () => {
     expect(buildChartSelection(makeTestDraft(), null, null)).toEqual({
       identity: null,
@@ -108,157 +160,120 @@ describe("Build chart context", () => {
     ).toEqual(unavailable("unconfigured"));
   });
 
-  // @rule R2: symbols do not authorize a market, and protocol/network identity must match.
-  it("rejects forged labels, wrong pool protocol and wrong network", () => {
-    const draft = makeTestDraft();
-    required(draft.pools[0]).token0.address = `0x${"f".repeat(40)}`;
-    expect(
-      buildChartSelection(draft, target(), { poolId: TEST_POOL_IDS.arbitrum }).availability,
-    ).toEqual(unavailable("unsupported_pair"));
-    const wrongProtocol = makeTestDraft();
+  // @rule R5
+  it("rejects a pool row of the wrong protocol or on Solana", () => {
+    const wrongProtocol = realV4Draft();
     required(wrongProtocol.pools[0]).protocol = "uniswap-v3";
     expect(
-      buildChartSelection(wrongProtocol, target(), { poolId: TEST_POOL_IDS.arbitrum }).availability,
+      buildChartSelection(wrongProtocol, target(), { poolId: V4_POOL_ID }).availability,
     ).toEqual(unavailable("unsupported_pair"));
+    const solana = realV4Draft();
+    required(solana.pools[0]).network = "solana";
     expect(
-      buildChartSelection(makeTestDraft(), target("uniswapV4Pool", "robinhood"), {
-        poolId: TEST_POOL_IDS.arbitrum,
-      }).availability,
-    ).toEqual(unavailable("unconfigured"));
-  });
-
-  // @rule R2: an EVM pool kind cannot authorize a local Solana descriptor's token identities.
-  it("rejects a forged Solana pool carrying an EVM protocol", () => {
-    const draft = solanaDraft();
-    draft.pools = [
-      {
-        ...required(draft.pools[0]),
-        id: "forged-solana-pool",
-        network: "solana",
-        token0: { address: WSOL_MINT, symbol: "SOL", name: "SOL", logoUrl: null },
-        token1: { address: USDC_MINT, symbol: "USDC", name: "USDC", logoUrl: null },
-      },
-    ];
-    expect(
-      buildChartSelection(draft, target("uniswapV4Pool", "solana"), {
-        poolId: "forged-solana-pool",
-      }).availability,
-    ).toEqual(unavailable("unsupported_pair"));
-  });
-
-  // @rule R6: unrelated mandate assets do not recreate a selected local pair's drawings.
-  it("keeps Solana pair identity stable when another mandate token is added", () => {
-    const draft = solanaDraft();
-    const selected = target("solanaOrcaPool", "solana");
-    const config = required(SOLANA_LOCAL_CONFIGS.solanaOrcaPool);
-    const identity = buildChartSelection(draft, selected, config).identity;
-    draft.tokens.push({
-      address: "another-mint",
-      symbol: "OTHER",
-      name: "Other",
-      network: "solana",
-      logoUrl: null,
-      locked: false,
-    });
-    expect(buildChartSelection(draft, selected, config).identity).toBe(identity);
-  });
-
-  // @rule R2: manual swaps resolve exact mandate token keys, in either ordering.
-  it("resolves manual swap keys and rejects foreign or duplicate tokens", () => {
-    const draft = makeTestDraft();
-    const tokens = draft.tokens.filter((token) => token.network === "arbitrum");
-    const config = {
-      tokenInKey: tokenKey(required(tokens[0])),
-      tokenOutKey: tokenKey(required(tokens[1])),
-      slippagePct: 0.5,
-    };
-    expect(buildChartSelection(draft, target("swap"), config).availability).toMatchObject({
-      status: "available",
-    });
-    expect(
-      buildChartSelection(draft, target("swap"), {
-        ...config,
-        tokenInKey: config.tokenOutKey,
-        tokenOutKey: config.tokenInKey,
-      }).availability,
-    ).toMatchObject({ status: "available" });
-    expect(
-      buildChartSelection(draft, target("swap"), {
-        ...config,
-        tokenOutKey: tokenKey(
-          required(draft.tokens.find((token) => token.network === "robinhood")),
-        ),
-      }).availability,
-    ).toEqual(unavailable("unsupported_pair"));
-    expect(
-      buildChartSelection(draft, target("swap"), { ...config, tokenOutKey: config.tokenInKey })
+      buildChartSelection(solana, target("uniswapV4Pool", "solana"), { poolId: V4_POOL_ID })
         .availability,
     ).toEqual(unavailable("unsupported_pair"));
   });
 
-  // @rule R2: only local LP descriptors and exact case-sensitive mandate mints select SOL/USDC.
+  // @rule R3
+  it("opens the token chart of the Aave Supply and Aave Borrow asset", () => {
+    for (const kind of ["aaveSupply", "aaveBorrow"] as const) {
+      const result = buildChartSelection(makeTestDraft(), target(kind), {
+        assetKey: TEST_ASSET_KEYS.usdcArbitrum,
+      });
+      const address = TEST_ASSET_KEYS.usdcArbitrum.split(":")[1];
+      expect(result.availability, kind).toMatchObject({
+        status: "available",
+        market: { kind: "token", chain: "arbitrum", label: "USDC", venue: "Arbitrum" },
+      });
+      expect(urlOf(result), kind).toBe(`https://dexscreener.com/arbitrum/${address}?${QUERY}`);
+    }
+  });
+
+  // @rule R3
+  it("uses the wrapped native address for a native Aave asset", () => {
+    const draft = makeTestDraft();
+    draft.tokens.push({
+      address: NATIVE_TOKEN_ADDRESS,
+      symbol: "ETH",
+      name: "Ether",
+      network: "arbitrum",
+      logoUrl: null,
+      locked: false,
+    });
+    const result = buildChartSelection(draft, target("aaveSupply"), {
+      assetKey: `arbitrum:${NATIVE_TOKEN_ADDRESS}`,
+    });
+    expect(urlOf(result)).toBe(
+      `https://dexscreener.com/arbitrum/${getWrappedNative("arbitrum")?.toLowerCase()}?${QUERY}`,
+    );
+  });
+
+  // @rule R5
+  it("keeps an Aave block with no asset, or an asset not in the mandate, unconfigured", () => {
+    expect(buildChartSelection(makeTestDraft(), target("aaveSupply"), null).availability).toEqual(
+      unavailable("unconfigured"),
+    );
+    expect(
+      buildChartSelection(makeTestDraft(), target("aaveSupply"), {
+        assetKey: `arbitrum:0x${"e5".repeat(20)}`,
+      }).availability,
+    ).toEqual(unavailable("unconfigured"));
+  });
+
+  // @rule R3
+  it("opens the USDC mint chart for the Kamino Supply block", () => {
+    const config = required(SOLANA_LOCAL_CONFIGS.solanaKaminoSupply);
+    const result = buildChartSelection(
+      makeTestDraft(),
+      target("solanaKaminoSupply", "solana"),
+      config,
+    );
+    expect(urlOf(result)).toBe(`https://dexscreener.com/solana/${USDC_MINT}?${QUERY}`);
+    expect(
+      buildChartSelection(makeTestDraft(), target("solanaKaminoSupply", "solana"), null)
+        .availability,
+    ).toEqual(unavailable("unconfigured"));
+    expect(
+      buildChartSelection(makeTestDraft(), target("solanaKaminoSupply", "solana"), {
+        ...config,
+        catalogId: "other",
+      }).availability,
+    ).toEqual(unavailable("unsupported_pair"));
+  });
+
+  // @rule R5
   it.each([
     "solanaOrcaPool",
     "solanaRaydiumPool",
-  ] as const)("resolves %s and rejects wrong catalog, pair, runtime or mints", (kind) => {
+  ] as const)("keeps %s an unsupported pair, with no canonical pool address", (kind) => {
     const config = required(SOLANA_LOCAL_CONFIGS[kind]);
-    const selected = target(kind, "solana");
-    expect(buildChartSelection(solanaDraft(), selected, config).availability).toMatchObject({
-      status: "available",
-      market: { id: "sol-usdc" },
-    });
     expect(
-      buildChartSelection(solanaDraft(), selected, { ...config, pair: "USDC / SOL" }).availability,
-    ).toMatchObject({ status: "available" });
-    expect(
-      buildChartSelection(solanaDraft(), selected, { ...config, catalogId: "other" }).availability,
+      buildChartSelection(makeTestDraft(), target(kind, "solana"), config).availability,
     ).toEqual(unavailable("unsupported_pair"));
-    expect(
-      buildChartSelection(solanaDraft(), selected, {
-        ...config,
-        pair: "SOL / USDT",
-      } as unknown as PanelConfig).availability,
-    ).toEqual(unavailable("unsupported_pair"));
-    expect(buildChartSelection(makeTestDraft(), selected, config).availability).toEqual(
-      unavailable("unsupported_pair"),
-    );
-    const forged = solanaDraft();
-    required(forged.tokens.find((token) => token.address === WSOL_MINT)).address =
-      WSOL_MINT.toLowerCase();
-    expect(buildChartSelection(forged, selected, config).availability).toEqual(
-      unavailable("unsupported_pair"),
-    );
-    const missing = solanaDraft();
-    missing.tokens = missing.tokens.filter((token) => token.address !== USDC_MINT);
-    expect(buildChartSelection(missing, selected, config).availability).toEqual(
+    expect(buildChartSelection(makeTestDraft(), target(kind, "solana"), null).availability).toEqual(
       unavailable("unconfigured"),
     );
   });
 
-  // @rule R3: holdings select one asset and lending is not a liquidity pair.
+  // @rule R5
   it.each([
-    ["aaveSupply", "lending_reference"],
-    ["aaveBorrow", "lending_reference"],
-    ["solanaKaminoSupply", "lending_reference"],
-    ["solanaHolding", "unsupported_block"],
-    ["gmxPerp", "unsupported_block"],
-    ["spoke", "unsupported_block"],
-  ] as const)("keeps %s unavailable as %s", (kind, reason) => {
-    expect(buildChartSelection(solanaDraft(), target(kind), null).availability).toEqual(
-      unavailable(reason),
+    "swap",
+    "solanaHolding",
+    "pendle",
+    "gmxPerp",
+    "spoke",
+  ] as const)("keeps %s an unsupported block", (kind) => {
+    expect(buildChartSelection(makeTestDraft(), target(kind), null).availability).toEqual(
+      unavailable("unsupported_block"),
     );
   });
 
-  // @rule R6: drawing context excludes financial edits, but separates owner/block/market identities.
-  it("retains identity across ticks/slippage/allocation and changes it for draft/block/pool/addresses", () => {
-    const draft = makeTestDraft();
+  // @rule R6
+  it("keeps the identity across ticks, slippage and allocation, and changes it for draft, block or pool", () => {
+    const draft = realV4Draft();
     const selected = target();
-    const config = {
-      poolId: TEST_POOL_IDS.arbitrum,
-      tickLower: -10,
-      tickUpper: 10,
-      slippagePct: 1,
-    };
+    const config = { poolId: V4_POOL_ID, tickLower: -10, tickUpper: 10, slippagePct: 1 };
     const identity = buildChartSelection(draft, selected, config).identity;
     expect(
       buildChartSelection(
@@ -273,57 +288,52 @@ describe("Build chart context", () => {
     expect(
       buildChartSelection(draft, { ...selected, blockId: "another-block" }, config).identity,
     ).not.toBe(identity);
-    draft.pools.push({ ...required(draft.pools[0]), id: "another-pool" });
     expect(
-      buildChartSelection(draft, selected, { ...config, poolId: "another-pool" }).identity,
+      buildChartSelection(draft, selected, { ...config, poolId: TEST_POOL_IDS.arbitrum }).identity,
     ).not.toBe(identity);
-    required(draft.pools[0]).token0.address = `0x${"a".repeat(40)}`;
-    expect(buildChartSelection(draft, selected, config).identity).not.toBe(identity);
   });
 });
 
 describe("Manage chart context", () => {
-  // @rule R2: current liquidity token identities resolve independently of labels and financial reads.
-  it("resolves the exact current pair in either order", () => {
-    const current = position();
-    expect(manageChartSelection(current).availability).toMatchObject({
+  // @rule R2
+  it("opens the exact pool of a liquidity position from its poolId and chainId", () => {
+    const result = manageChartSelection(position());
+    expect(result.availability).toMatchObject({
       status: "available",
-      market: { id: "eth-usdc" },
+      market: { kind: "pool", chain: "arbitrum", address: V4_POOL_ID, venue: "Uniswap v4" },
     });
-    expect(
-      manageChartSelection({ ...current, tokens: [...current.tokens].reverse() }).availability,
-    ).toMatchObject({ status: "available" });
   });
 
-  // @rule R3: fixed nodes, supply and unsupported kinds never masquerade as an LP.
-  it("rejects fixed, lending, unsupported and incomplete positions", () => {
+  // @rule R3
+  it("opens the token chart of a supply position", () => {
+    const usdc = TEST_ASSET_KEYS.usdcArbitrum.split(":")[1] ?? "";
+    expect(urlOf(manageChartSelection(supplyPosition(usdc)))).toBe(
+      `https://dexscreener.com/arbitrum/${usdc}?${QUERY}`,
+    );
+  });
+
+  // @rule R5
+  it("keeps unsupported, incomplete and mismatched positions unavailable", () => {
     expect(manageChartSelection(null)).toEqual({
       identity: null,
       availability: unavailable("no_selection"),
     });
-    expect(manageChartSelection({ ...position(), kind: "supply" }).availability).toEqual(
-      unavailable("lending_reference"),
-    );
     expect(manageChartSelection({ ...position(), kind: "unsupported" }).availability).toEqual(
       unavailable("unsupported_block"),
     );
-    expect(manageChartSelection({ ...position(), tokens: [] }).availability).toEqual(
+    expect(manageChartSelection({ ...position(), poolId: null }).availability).toEqual(
       unavailable("unconfigured"),
     );
-  });
-
-  // @rule R2: position network, token chain and actual addresses must agree.
-  it("rejects forged symbols and mismatched chain identities", () => {
-    const current = position();
-    expect(
-      manageChartSelection({
-        ...current,
-        tokens: current.tokens.map((token) => ({ ...token, address: `0x${"f".repeat(40)}` })),
-      }).availability,
-    ).toEqual(unavailable("unsupported_pair"));
-    expect(manageChartSelection({ ...current, network: "base" }).availability).toEqual(
+    expect(manageChartSelection({ ...position(), poolId: "pool-a" }).availability).toEqual(
+      unavailable("unconfigured"),
+    );
+    expect(manageChartSelection(supplyPosition(null)).availability).toEqual(
+      unavailable("unconfigured"),
+    );
+    expect(manageChartSelection({ ...position(), network: "base" }).availability).toEqual(
       unavailable("unsupported_pair"),
     );
+    const current = position();
     expect(
       manageChartSelection({
         ...current,
@@ -332,8 +342,8 @@ describe("Manage chart context", () => {
     ).toEqual(unavailable("unsupported_pair"));
   });
 
-  // @rule R6: separate core/position/pool identities own separate drawings; reads do not recreate them.
-  it("preserves drawings through financial reads and isolates owner, position, pool and tokens", () => {
+  // @rule R6
+  it("keeps the identity through financial reads and isolates owner, position and pool", () => {
     const current = position();
     const identity = manageChartSelection(current).identity;
     expect(
@@ -344,14 +354,24 @@ describe("Manage chart context", () => {
     ).toBe(identity);
     for (const patch of [{ core: "core-b" }, { id: "position-b" }, { poolId: "pool-b" }])
       expect(manageChartSelection({ ...current, ...patch }).identity).not.toBe(identity);
-    expect(
-      manageChartSelection({
-        ...current,
-        tokens: [
-          { ...required(current.tokens[0]), address: `0x${"a".repeat(40)}` },
-          required(current.tokens[1]),
-        ],
-      }).identity,
-    ).not.toBe(identity);
+  });
+});
+
+describe("Build and Manage parity", () => {
+  // @rule R6
+  it("gives the same URL for the same v4 pool in Build and in Manage", () => {
+    const build = buildChartSelection(realV4Draft(), target(), { poolId: V4_POOL_ID });
+    const manage = manageChartSelection(position());
+    expect(urlOf(build)).toBe(urlOf(manage));
+  });
+
+  // @rule R6
+  it("gives the same URL for the same Aave asset in Build and in Manage", () => {
+    const build = buildChartSelection(makeTestDraft(), target("aaveSupply"), {
+      assetKey: TEST_ASSET_KEYS.usdcArbitrum,
+    });
+    const usdc = TEST_ASSET_KEYS.usdcArbitrum.split(":")[1] ?? "";
+    const manage = manageChartSelection(supplyPosition(usdc.toUpperCase().replace("0X", "0x")));
+    expect(urlOf(build)).toBe(urlOf(manage));
   });
 });

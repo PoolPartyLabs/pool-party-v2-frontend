@@ -1,25 +1,35 @@
 /**
  * @id PP-MGR-LIB-078
  * @name chartContext
- * @description Exact selected-block identity for approved market references without money fields.
+ * @description Exact selected-block pool or asset identity for the DEX Screener chart, without money fields.
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8674-15508
- * @linear https://linear.app/yeildbay/issue/POO-2309
- * @implements-rules-version v1 (POO-2309)
+ * @linear https://linear.app/yeildbay/issue/POO-2338
+ * @implements-rules-version v1 (POO-2338)
  * @analytics-events none, private pure selection context; chart hosts own bounded events.
+ *
+ * Build and Manage map the selection to the same chartModel resolvers (R6). A Uniswap block gives
+ * its exact pool (R2). A lending block gives the token of its asset (R3). Other blocks and mock
+ * pools stay unavailable (R5).
  */
 import { apiNetworkForChain } from "@/lib/chains/config";
 import type { PanelDraftTarget } from "../build/panel/usePanelDraft";
-import { findMandatePool } from "../build/plan/blockConfig";
+import { findMandatePool, poolRefKey } from "../build/plan/blockConfig";
 import type { PanelConfig } from "../build/plan/buildPlan";
 import type { ManagePosition } from "../manage/manageModel";
-import { type MandateDraft, normalizeTokenIdentity, tokenKey } from "../mandateDraft";
-import { SOLANA_LOCAL_CONFIGS } from "../solana-preview/solanaBuilderRuntime";
-import { USDC_MINT, WSOL_MINT } from "../solana-preview/solanaSchemas";
 import {
-  type ChartAsset,
+  type MandateDraft,
+  type MandatePoolRef,
+  normalizeTokenIdentity,
+  tokenKey,
+} from "../mandateDraft";
+import { SOLANA_LOCAL_CONFIGS } from "../solana-preview/solanaBuilderRuntime";
+import { USDC_MINT } from "../solana-preview/solanaSchemas";
+import {
   type ChartAvailability,
   type ChartBlockReason,
-  resolveChartMarket,
+  type ChartPoolProtocol,
+  resolvePoolChart,
+  resolveTokenChart,
 } from "./chartModel";
 
 export interface ChartSelection {
@@ -41,6 +51,20 @@ function configIdentity(config: PanelConfig | null): unknown[] {
   return [];
 }
 
+function pairLabel(symbols: readonly string[]): string {
+  return symbols.filter(Boolean).join(" / ");
+}
+
+/**
+ * The address that DEX Screener knows for a mandate pool row. v4 uses the bare PoolId. v3 uses the
+ * pool contract, but only when the row key is that contract: a mock row has a slug key and a fake
+ * address, and must not open a chart of an unrelated address.
+ */
+function chartPoolAddress(pool: MandatePoolRef, protocol: ChartPoolProtocol): string | null {
+  if (protocol === "uniswap-v4") return pool.poolId ?? null;
+  return poolRefKey(pool).toLowerCase() === pool.address.toLowerCase() ? pool.address : null;
+}
+
 /** Resolve current panel intent, independently from the applied plan and its financial fields. */
 export function buildChartSelection(
   draft: MandateDraft,
@@ -53,99 +77,79 @@ export function buildChartSelection(
     identity: JSON.stringify([...owner, ...details]),
     availability,
   });
-  if (
-    target.kind === "aaveSupply" ||
-    target.kind === "aaveBorrow" ||
-    target.kind === "solanaKaminoSupply"
-  ) {
-    return selected(configIdentity(config), unavailable("lending_reference"));
-  }
   if (target.kind === "uniswapV4Pool" || target.kind === "uniswapV3Pool") {
     const poolId = config && "poolId" in config ? config.poolId : null;
     if (!poolId) return selected([null], unavailable("unconfigured"));
     const pool = findMandatePool(draft.pools, target.network, poolId);
     if (!pool) return selected([poolId.toLowerCase()], unavailable("unconfigured"));
-    const tokens = [pool.token0, pool.token1].map(
-      (token): ChartAsset => ({
-        network: pool.network,
-        address: normalizeTokenIdentity(pool.network, token.address),
-      }),
-    );
-    const details = [poolId.toLowerCase(), pool.protocol, tokens];
-    const protocol = target.kind === "uniswapV4Pool" ? "uniswap-v4" : "uniswap-v3";
+    const protocol: ChartPoolProtocol =
+      target.kind === "uniswapV4Pool" ? "uniswap-v4" : "uniswap-v3";
+    const address = chartPoolAddress(pool, protocol);
+    const details = [poolId.toLowerCase(), pool.protocol, address?.toLowerCase() ?? null];
+    if (pool.network === "solana" || pool.protocol !== protocol) {
+      return selected(details, unavailable("unsupported_pair"));
+    }
     return selected(
       details,
-      pool.network !== "solana" && pool.protocol === protocol
-        ? resolveChartMarket(tokens)
-        : unavailable("unsupported_pair"),
+      resolvePoolChart({
+        network: pool.network,
+        protocol,
+        poolAddress: address,
+        label: pairLabel([pool.token0.symbol, pool.token1.symbol]),
+      }),
     );
   }
-  if (target.kind === "swap") {
-    if (!config || !("tokenInKey" in config) || !config.tokenInKey || !config.tokenOutKey) {
-      return selected([null], unavailable("unconfigured"));
-    }
-    const keys = [config.tokenInKey, config.tokenOutKey];
-    const rows = keys.map((key) => draft.tokens.find((token) => tokenKey(token) === key));
-    const tokens = rows.flatMap((token): ChartAsset[] =>
-      token
-        ? [
-            {
-              network: token.network,
-              address: normalizeTokenIdentity(token.network, token.address),
-            },
-          ]
-        : [],
+  if (target.kind === "aaveSupply" || target.kind === "aaveBorrow") {
+    const assetKey = config && "assetKey" in config ? config.assetKey : null;
+    if (!assetKey) return selected([null], unavailable("unconfigured"));
+    const wanted = normalizeTokenIdentity(target.network, assetKey);
+    const token = draft.tokens.find(
+      (row) => row.network === target.network && tokenKey(row) === wanted,
     );
-    if (rows.some((token) => !token)) return selected([keys, tokens], unavailable("unconfigured"));
+    const details = [wanted];
+    if (!token) return selected(details, unavailable("unconfigured"));
     return selected(
-      [keys, tokens],
-      rows.every((token) => token?.network === target.network)
-        ? resolveChartMarket(tokens)
-        : unavailable("unsupported_pair"),
+      details,
+      resolveTokenChart({ network: token.network, address: token.address, label: token.symbol }),
     );
   }
-  if (target.kind === "solanaOrcaPool" || target.kind === "solanaRaydiumPool") {
+  if (target.kind === "solanaKaminoSupply") {
+    const details = configIdentity(config);
     const catalogId = config && "catalogId" in config ? config.catalogId : null;
-    const pair = config && "pair" in config ? config.pair : null;
-    const tokens = draft.tokens
-      .filter((token) => token.network === "solana")
-      .map((token): ChartAsset => ({ network: token.network, address: token.address }));
-    const canonical = [WSOL_MINT, USDC_MINT].map((address) =>
-      tokens.find((token) => token.address === address),
-    );
-    const details = [catalogId, pair, canonical];
-    if (!catalogId || !pair) return selected(details, unavailable("unconfigured"));
+    if (!catalogId) return selected(details, unavailable("unconfigured"));
     if (
-      draft.runtime !== "solana-local" ||
       target.network !== "solana" ||
-      catalogId !== SOLANA_LOCAL_CONFIGS[target.kind]?.catalogId ||
-      (pair !== "SOL / USDC" && pair !== "USDC / SOL")
+      catalogId !== SOLANA_LOCAL_CONFIGS.solanaKaminoSupply?.catalogId
     ) {
       return selected(details, unavailable("unsupported_pair"));
     }
-    if (canonical.some((token) => !token)) {
-      return selected(
-        details,
-        unavailable(tokens.length < 2 ? "unconfigured" : "unsupported_pair"),
-      );
-    }
+    // The Kamino block supplies USDC, so its chart is the USDC mint.
     return selected(
       details,
-      resolveChartMarket(canonical.filter((token): token is ChartAsset => Boolean(token))),
+      resolveTokenChart({ network: "solana", address: USDC_MINT, label: "USDC" }),
     );
   }
+  if (target.kind === "solanaOrcaPool" || target.kind === "solanaRaydiumPool") {
+    const details = configIdentity(config);
+    const catalogId = config && "catalogId" in config ? config.catalogId : null;
+    // The app has no canonical Orca or Raydium pool address, so there is no exact pool chart.
+    return selected(details, unavailable(catalogId ? "unsupported_pair" : "unconfigured"));
+  }
   return selected(configIdentity(config), unavailable("unsupported_block"));
+}
+
+function manageProtocol(position: ManagePosition): ChartPoolProtocol | null {
+  const kind = position.source.adapterKind;
+  return kind === "uniswap-v4" || kind === "uniswap-v3" ? kind : null;
 }
 
 /** Current on-chain position identity owns drawings; values, ranges and drafts never do. */
 export function manageChartSelection(position: ManagePosition | null): ChartSelection {
   if (!position) return { identity: null, availability: unavailable("no_selection") };
-  const tokens = position.tokens.map(
-    (token): ChartAsset => ({
-      network: apiNetworkForChain(token.chainId) ?? String(token.chainId),
-      address: token.address?.toLowerCase() ?? "",
-    }),
-  );
+  const tokens = position.tokens.map((token) => ({
+    network: apiNetworkForChain(token.chainId) ?? String(token.chainId),
+    address: token.address?.toLowerCase() ?? "",
+  }));
   const identity = JSON.stringify([
     "manage",
     position.core,
@@ -156,17 +160,31 @@ export function manageChartSelection(position: ManagePosition | null): ChartSele
     position.poolId,
     tokens,
   ]);
-  if (position.kind === "supply")
-    return { identity, availability: unavailable("lending_reference") };
-  if (position.kind !== "liquidity")
-    return { identity, availability: unavailable("unsupported_block") };
-  if (tokens.length === 0) return { identity, availability: unavailable("unconfigured") };
-  const network = apiNetworkForChain(position.chainId);
+  const result = (availability: ChartAvailability): ChartSelection => ({ identity, availability });
+  if (position.kind !== "supply" && position.kind !== "liquidity") {
+    return result(unavailable("unsupported_block"));
+  }
   if (
-    position.network !== network ||
+    position.network !== apiNetworkForChain(position.chainId) ||
     position.tokens.some((token) => token.chainId !== position.chainId)
   ) {
-    return { identity, availability: unavailable("unsupported_pair") };
+    return result(unavailable("unsupported_pair"));
   }
-  return { identity, availability: resolveChartMarket(tokens) };
+  if (position.kind === "supply") {
+    const [asset] = position.tokens;
+    if (!asset) return result(unavailable("unconfigured"));
+    return result(
+      resolveTokenChart({ network: position.network, address: asset.address, label: asset.symbol }),
+    );
+  }
+  const protocol = manageProtocol(position);
+  if (!protocol) return result(unavailable("unsupported_block"));
+  return result(
+    resolvePoolChart({
+      network: position.network,
+      protocol,
+      poolAddress: position.poolId,
+      label: pairLabel(position.tokens.map((token) => token.symbol)),
+    }),
+  );
 }
