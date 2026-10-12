@@ -138,16 +138,16 @@ export const REQUIRED_PROTOCOLS: readonly ProtocolId[] = ["uniswap-v3-swap", "ac
 
 /**
  * POO-2333 R4: the selected protocols the manager cannot clear, the same set `withProtocols`
- * always keeps. That is the swap always, and the bridge while it can move money: a real draft keeps
- * Across only with Robinhood Chain, its one network that is not the hub. A mock draft keeps both,
- * as it always did, because the Solana preview runtime relies on that invariant.
+ * always keeps. That is the swap always, and the bridge only when the mandate has a network that
+ * is not the hub. The rule is the same in mock mode and in real mode. In real mode, Robinhood Chain
+ * is the one spoke that the bridge can reach.
  */
 export function lockedProtocols(draft: MandateDraft): Set<ProtocolId> {
-  return new Set<ProtocolId>(
-    draft.dataMode === "real" && !draft.networks.includes("robinhood")
-      ? ["uniswap-v3-swap"]
-      : REQUIRED_PROTOCOLS,
-  );
+  const bridged =
+    draft.dataMode === "real"
+      ? draft.networks.includes("robinhood")
+      : draft.networks.some((network) => network !== HUB_NETWORK);
+  return new Set<ProtocolId>(bridged ? REQUIRED_PROTOCOLS : ["uniswap-v3-swap"]);
 }
 
 /**
@@ -829,6 +829,11 @@ export function withNetworks(
         next.includes(key as NetworkId),
       );
     if (!next.includes("robinhood")) synced.spokeCapPercent = null;
+  } else if (next.some((id) => id !== HUB_NETWORK) && !synced.protocols.includes("across")) {
+    // POO-2333 R4: a mandate with a spoke needs its bridge back.
+    synced.protocols = PROTOCOL_ORDER.filter(
+      (id) => id === "across" || synced.protocols.includes(id),
+    );
   }
   return withUniverseExpiry(draft, synced);
 }
