@@ -8,13 +8,14 @@
  * operate first, Aave v3 and Uniswap v4; Swap and bridge below the divider, collapsed; the
  * protocols that the config does not enable are hidden).
  *
- * The story that earns its place is `HubAndSpoke` against `HubOnly`: the "On" dots change with the
- * networks of step 1, which is the whole point of that column and the thing a static mock-up cannot
- * show. Aave v3 keeps one dot in both, because it runs on the hub only.
-
+ * The story that earns its place is `HubAndSpoke` against `HubOnly`: the "Available on" dots
+ * change with the networks of step 1, which is the whole point of that column and the thing a
+ * static mock-up cannot show. Aave v3 keeps one dot in both, because it runs on the hub only.
+ * `SwapBridgeCollapsed` and `SwapBridgeOpen` show the two states of the Swap and bridge group.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
+import { userEvent, within } from "storybook/test";
 import { buildMandateCatalog, type MandateCatalog } from "../mandateCatalog";
 import {
   createEmptyDraft,
@@ -88,7 +89,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-/** A hub-only mandate: every On column is a single Arbitrum dot. */
+/** A hub-only mandate: every Available on column is a single Arbitrum dot. */
 export const HubOnly: Story = {
   render: () => <Harness catalog={catalog} initial={draftWith([], [])} />,
 };
@@ -103,4 +104,20 @@ export const EverythingChosen: Story = {
   render: () => (
     <Harness catalog={catalog} initial={draftWith(["robinhood"], ["aave-v3", "uniswap-v4"])} />
   ),
+};
+
+/** POO-2333 R3: Swap and bridge collapsed, which is the default. The head names both protocols. */
+export const SwapBridgeCollapsed: Story = {
+  render: () => <Harness catalog={catalog} initial={draftWith(["robinhood"], [])} />,
+};
+
+/**
+ * POO-2333 R3 and R4: Swap and bridge open on Show. With a spoke, the swap and the bridge rows are
+ * both locked, so a click on either shows its notice.
+ */
+export const SwapBridgeOpen: Story = {
+  render: () => <Harness catalog={catalog} initial={draftWith(["robinhood"], [])} />,
+  play: async ({ canvasElement }) => {
+    await userEvent.click(await within(canvasElement).findByRole("button", { name: "Show" }));
+  },
 };
