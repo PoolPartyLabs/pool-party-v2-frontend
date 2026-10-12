@@ -907,20 +907,7 @@ The fallback index retains both saved Mandate drafts and orphaned EVM launch sna
 
 ## Contextual market Charts (POO-2309, rules v1)
 
-POO-2338 replaces the TradingView and Binance reference below. See "DEX Screener pool and asset chart (POO-2338, rules v1)". The POO-2309 text stays as history.
-
-Build and Manage share `fund/charts/StrategyChartSurface.tsx`. Strategy flow/Charts change presentation only: the React Flow canvas stays mounted/dimensioned and inaccessible while covered, and every Configure/Manage draft or operation owner stays in its original parent. The same surface covers the existing local Solana wizard; it does not change Configure/Manage mode or local financial capability.
-
-The genuine TradingView Advanced Chart drawing toolbar is on the left (`hide_side_toolbar:false`), with dark theme, daily candles, autosize and its top toolbar. Symbol changes are disabled. `chartContext.ts` resolves the current unapplied Build pool/swap choice or the current Manage position; `chartModel.ts` approves exact Arbitrum/Base ETH/WETH+USDC and Solana WSOL+USDC identities. Binance ETH/USDC and SOL/USDC are explicitly labeled **Market reference**, with canonical pair/venue and attribution, never pool prices/execution quotes/AUM/range. Lending, Holding and unknown pairs stay unavailable.
-
-The remote iframe is lazy-mounted on chart intent and isolated from the wallet origin. No vendor script in parent, no app/private identity passed. Locale/origin/retry have separate widget instances. Startup timeout/no-data supports inline retry; old messages are inert. Same-instance drawings remain when returning to the flow, with no reload-persistence promise. All configured locales translate the app chrome; Dutch widget content falls back to vendor-supported English.
-
-Chart controls contain Delete/Backspace/Escape so they cannot remove the selected Build block.
-Canvas shortcuts still work inside the canvas. The reference header can scroll on short screens
-while preserving attribution and a nonzero chart. Screenshot export is disabled because the
-sandbox does not allow downloads; native drawing tools remain enabled.
-
-Bounded chart view/close/blocked/failure/retry events emit from PP-MGR-CMP-103. No financial submitted/completed event is introduced. Pure identity/embed/message tests and Build/Manage/local-draft preservation tests are focused and serial; the browser journey is Murilo's. Exact pool-feed/history/annotation and Activity integration remains POO-2279. See [integration contract](../../../docs/INTEGRATION_POINTS.md) and CR-MGR-POO2309.
+History: POO-2309 showed a TradingView chart with Binance ETH/USDC and SOL/USDC market references. POO-2338 replaces it. See "DEX Screener pool and asset chart (POO-2338, rules v1)" below and CR-MGR-POO2309.
 
 ### Charts unavailable state (POO-2336, rules v1)
 
@@ -950,5 +937,6 @@ The Charts tab shows the DEX Screener embed of the exact pool or asset of the se
 - The header says "Pool chart" or "Asset chart", then the pair or asset and the venue. The footer says "Chart by DEX Screener" and opens the public DEX Screener page.
 - The iframe `onLoad` stops the 20 s timeout. The surface reads no message from the frame. `onLoad` also fires for an error page, so it does not prove that candles loaded.
 - `chart_market` is `pool`, `token` or `unavailable`. No event holds an address.
+- Build and Manage share `StrategyChartSurface.tsx` (PP-MGR-CMP-103). Charts changes the visible tab only. The canvas stays mounted, and each Configure or Manage draft stays in its parent. Chart controls contain Delete, Backspace and Escape, so they cannot remove the selected Build block.
 
 See [integration contract](../../../docs/INTEGRATION_POINTS.md), [security](../../../docs/10_SECURITY.md) and CR-MGR-POO2338.

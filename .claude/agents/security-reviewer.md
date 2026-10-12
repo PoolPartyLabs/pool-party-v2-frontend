@@ -40,7 +40,7 @@ Always read:
 Verify `next.config.ts` / `src/middleware.ts` set: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'`, `Referrer-Policy`, `Permissions-Policy`, COOP `same-origin-allow-popups`, CORP, and HSTS (no `preload` until stable). Flag missing or weaker values.
 
 ### 2. CSP
-Check the CSP is present (Report-Only is acceptable pre-enforcement) and that `connect-src`/`script-src`/`frame-src` are an explicit allowlist covering only the services in use (Privy, WalletConnect, Base RPC, Hyperliquid, Polymarket, Kalshi, Paybis, CoinGecko, TradingView, GA/GTM). Hard-flag `*` in `connect-src`, `'unsafe-eval'`, or `'unsafe-inline'` in `script-src`. Confirm any newly added dependency was added to the allowlist.
+Check the CSP is present (Report-Only is acceptable pre-enforcement) and that `connect-src`/`script-src`/`frame-src` are an explicit allowlist covering only the services in use (Privy, WalletConnect, Base RPC, Hyperliquid, Polymarket, Kalshi, Paybis, CoinGecko, DEX Screener (`https://dexscreener.com` in `frame-src` only), GA/GTM). Hard-flag `*` in `connect-src`, `'unsafe-eval'`, or `'unsafe-inline'` in `script-src`. Confirm any newly added dependency was added to the allowlist.
 
 ### 3. Clickjacking
 Confirm `frame-ancestors 'none'` plus `X-Frame-Options: DENY`. No deprecated `ALLOW-FROM`.
