@@ -2,9 +2,9 @@
  * @id PP-MGR-LIB-090
  * @name manageSpineCopy
  * @implements-rules-version v1 (POO-2335)
- * @analytics-events none, pure copy decisions consumed by ManageScreen, ManageCanvas and ManageBlockPanel.
+ * @analytics-events none, pure copy decisions consumed by ManageScreen and ManageCanvas.
  *
- * The spine card title and subtitle, the range tone, the strategy links and the action timing.
+ * The spine card title and subtitle, the range tone and the strategy links.
  * Each value comes from the read model. A missing read shows "Not available", never a guess.
  */
 import { explorerAddressUrl } from "@/lib/chain/explorer";
@@ -22,7 +22,16 @@ export interface ManageSpineCopy {
 export interface ManageSpineReads {
   // PP-INTEGRATION-POINT: the Aave health factor read is not served yet. Until then the card shows "HF Not available".
   healthFactor?: ManageRead<string>;
+  // PP-INTEGRATION-POINT: the income and operating cash shares of strategy value are not served yet. Until then the cards show "Not available".
+  incomeSharePct?: ManageRead<string>;
+  cashSharePct?: Partial<Record<number, ManageRead<string>>>;
 }
+
+/** The percent format of the spine cards. Figma shows "42.875%", "0.245%" and "0.0075%". */
+export const MANAGE_PERCENT_FORMAT = {
+  style: "percent",
+  maximumFractionDigits: 4,
+} as const satisfies Intl.NumberFormatOptions;
 export type ManageRangeTone = "success" | "destructive" | "muted";
 export interface ManageSpineCard {
   title: string;
@@ -47,8 +56,6 @@ export const MANAGE_SPINE_KEYS = [
   "manageV2.strategyAddressUnavailable",
 ] as const;
 
-const SEPARATOR = " · ";
-
 /** R8: an unknown range status never uses the success tone. */
 export function manageRangeTone(status: ManageRead<"in" | "out">): {
   labelKey: string;
@@ -71,17 +78,10 @@ function usdOf(read: ManageRead<string>, copy: ManageSpineCopy): string {
     : copy.t("manageV2.notAvailable");
 }
 
-/** A chain share is the sum of its position shares and its idle share, when every read is available. */
-function chainShare(model: ManageModel, chainId: number): ManageRead<string> {
-  const chain = model.chains.find((item) => item.chainId === chainId);
-  if (!chain) return unavailable("missing_chain");
-  const reads = [...chain.positions.map((position) => position.allocationPct), chain.idleSharePct];
-  let total = 0;
-  for (const read of reads) {
-    if (read.status !== "available") return unavailable("missing_chain_share");
-    total += Number(read.value);
-  }
-  return { status: "available", value: String(total), source: "manageModel.chainShare" };
+const missing = unavailable<string>("missing_share");
+/** The idle share of strategy value on one chain. */
+function idleShare(model: ManageModel, chainId: number): ManageRead<string> {
+  return model.chains.find((item) => item.chainId === chainId)?.idleSharePct ?? missing;
 }
 
 function titleOf(node: ManageInspectableNode, model: ManageModel, copy: ManageSpineCopy): string {
@@ -135,16 +135,27 @@ function subtitleOf(
       return copy.t("manageV2.spine.routeEntry");
     case "withdraw":
       return copy.t("manageV2.spine.routeExit");
-    // R2
+    // R2: each route card takes its scope from the field that Figma describes.
     case "swap":
+      // Swap input: the spoke idle share.
+      return copy.t("manageV2.spine.routeScope", {
+        pct: percentOf(idleShare(model, node.chainId), copy),
+      });
     case "collectFees":
-    case "feeSwap":
+      // Collect fees: the share of the linked position.
       return copy.t("manageV2.spine.routeScope", {
         pct: position ? percentOf(position.allocationPct, copy) : na,
       });
-    case "bridge":
+    case "feeSwap":
+      // Swap fees: the income share of strategy value.
       return copy.t("manageV2.spine.routeScope", {
-        pct: percentOf(chainShare(model, node.chainId), copy),
+        pct: percentOf(reads.incomeSharePct ?? missing, copy),
+      });
+    case "bridge":
+      // Bridge entry: the spoke idle share.
+      // PP-INTEGRATION-POINT: no read gives the Bridge return scope yet. Until then the card shows "Not available".
+      return copy.t("manageV2.spine.routeScope", {
+        pct: node.direction === "outbound" ? na : percentOf(idleShare(model, node.chainId), copy),
       });
     // R3
     case "idleInput": {
@@ -166,13 +177,11 @@ function subtitleOf(
           copy.t("manageV2.spine.healthFactor", {
             value: hf.status === "available" ? hf.value : na,
           }),
-        ].join(SEPARATOR);
+        ].join(" · ");
       }
       // R8
       if (position.kind === "liquidity")
-        return [value, share, copy.t(manageRangeTone(position.rangeStatus).labelKey)].join(
-          SEPARATOR,
-        );
+        return [value, share, copy.t(manageRangeTone(position.rangeStatus).labelKey)].join(" · ");
       // R3: a position with no supported adapter still shows its share of strategy value.
       return copy.t("manageV2.spine.strategyShare", { pct: share });
     }
@@ -182,23 +191,29 @@ function subtitleOf(
       if (!token) return na;
       const amount = token.amount;
       if (amount.status !== "available") return na;
-      const parts = [`${copy.amount(amount.value.decimal)} ${token.symbol}`];
-      if (token.valueUsd?.status === "available") parts.push(usdOf(token.valueUsd, copy));
-      return parts.join(SEPARATOR);
+      return [
+        `${copy.amount(amount.value.decimal)} ${token.symbol}`,
+        usdOf(token.valueUsd ?? missing, copy),
+        percentOf(reads.cashSharePct?.[node.chainId] ?? missing, copy),
+      ].join(" · ");
     }
     case "idleOutput": {
       const { requested, coveragePct } = model.withdrawal;
       if (requested.status !== "available" || coveragePct.status !== "available") return na;
       return [
-        copy.t("manageV2.spine.requested", { amount: copy.amount(requested.value.decimal) }),
+        copy.t("manageV2.spine.requested", {
+          amount: `${copy.amount(requested.value.decimal)} ${requested.value.symbol}`,
+        }),
         copy.t("manageV2.spine.reserved", { pct: percentOf(coveragePct, copy) }),
-      ].join(SEPARATOR);
+      ].join(" · ");
     }
     case "income": {
       const amount = model.income.amount;
-      return amount.status === "available"
-        ? `${copy.amount(amount.value.decimal)} ${model.income.symbol}`
-        : na;
+      if (amount.status !== "available") return na;
+      return [
+        `${copy.amount(amount.value.decimal)} ${amount.value.symbol || model.income.symbol}`,
+        percentOf(reads.incomeSharePct ?? missing, copy),
+      ].join(" · ");
     }
   }
 }
@@ -226,35 +241,17 @@ export type ManageExplorerLink =
   | { status: "unavailable" };
 
 /**
- * R5 and R6: the Explorer link and the View mandate action.
+ * R5: the Explorer link. View mandate (R6) always shows below it.
  * PP-INTEGRATION-POINT: the deployed strategy address comes from the fund read. A draft or an invalid address has no link.
  */
 export function manageStrategyLinks(
   core: string,
   chainId: number,
-): { explorer: ManageExplorerLink; mandate: true } {
+): { explorer: ManageExplorerLink } {
   const href = core ? explorerAddressUrl(chainId, core) : null;
   return {
     explorer: href
       ? { status: "available", href, label: truncateAddress(core) }
       : { status: "unavailable" },
-    mandate: true,
   };
-}
-
-/** R7: each liquidity action has one fixed timing. No action shows a "When to apply" selector. */
-export function manageActionTiming(action: "move" | "future"): {
-  applies: "now" | "newDeposits";
-  timingKey: "applyNow" | "newDeposits";
-  submitKey: "reviewMove" | "saveFuture";
-  selector: false;
-} {
-  return action === "move"
-    ? { applies: "now", timingKey: "applyNow", submitKey: "reviewMove", selector: false }
-    : {
-        applies: "newDeposits",
-        timingKey: "newDeposits",
-        submitKey: "saveFuture",
-        selector: false,
-      };
 }

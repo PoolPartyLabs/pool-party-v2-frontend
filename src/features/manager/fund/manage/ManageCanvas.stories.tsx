@@ -2,7 +2,6 @@
  * @id PP-MGR-CMP-085
  * @name ManageCanvas stories
  * @implements-rules-version v2 (POO-2274, POO-2270, POO-2271, POO-2272; extends POO-2226, POO-2232)
- * @implements-rules-version v1 (POO-2335: InRange, OutOfRange and RangeUnavailable show the range tone)
  * @analytics-events none, fixture stories.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";

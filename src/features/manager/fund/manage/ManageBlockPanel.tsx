@@ -33,7 +33,6 @@ import {
 import type { ManagePosition } from "./manageModel";
 import { managePositionIdentity } from "./manageModel";
 import { type ManageInspectableNode, manageInspectionLabelKey } from "./manageSelection";
-import { manageActionTiming } from "./manageSpineCopy";
 import { MANAGE_READ_TIMEOUT_MS, useManagePosition } from "./useManagePosition";
 
 export function ManageBlockPanel({
@@ -408,9 +407,7 @@ function RangeSettings({
 }) {
   const t = useTranslations("manager.manageV2");
   const field = useTranslations("manager.fundBuilder.canvas.panel");
-  // R7 (POO-2335): Move range applies now. Create new position applies to new deposits.
-  const moveTiming = manageActionTiming("move");
-  const futureTiming = manageActionTiming("future");
+  // R7 (POO-2335): Move range applies now. Create new position applies to new deposits. Neither shows a "When to apply" selector.
   const fmt = useFormatter();
   const { track } = useAnalytics();
   const [draft, dispatch] = useReducer(manageDraftReducer, undefined, () =>
@@ -653,11 +650,9 @@ function RangeSettings({
             disabled={!valid || stage === "building"}
             onClick={() => void build()}
           >
-            {t(stage === "building" ? "preparing" : moveTiming.submitKey)}
+            {t(stage === "building" ? "preparing" : "reviewMove")}
           </Button>
-          <p className="-mt-2 text-center text-muted-foreground text-xs">
-            {t(moveTiming.timingKey)}
-          </p>
+          <p className="-mt-2 text-center text-muted-foreground text-xs">{t("applyNow")}</p>
           <Button
             variant="secondary"
             className="min-h-11 w-full"
@@ -674,14 +669,14 @@ function RangeSettings({
           <p className="text-muted-foreground text-xs">{t("selectedOperation")}</p>
           <div className="rounded-xl border border-border p-3">
             <h3 className="font-medium text-sm">{t("createPosition")}</h3>
-            <p className="mt-1 text-muted-foreground text-xs">{t(futureTiming.timingKey)}</p>
+            <p className="mt-1 text-muted-foreground text-xs">{t("newDeposits")}</p>
           </div>
           <p className="text-muted-foreground text-xs">{t("saveSettings")}</p>
           <p role="status" className="text-muted-foreground text-xs">
             {t("notAvailable")}
           </p>
           <Button disabled className="min-h-11 w-full">
-            {t(futureTiming.submitKey)}
+            {t("saveFuture")}
           </Button>
           <Button
             variant="secondary"
@@ -706,9 +701,7 @@ function RangeSettings({
                 >
                   {t("moveRange")}
                 </Button>
-                <p className="mt-2 text-center text-muted-foreground text-xs">
-                  {t(moveTiming.timingKey)}
-                </p>
+                <p className="mt-2 text-center text-muted-foreground text-xs">{t("applyNow")}</p>
               </div>
               <div>
                 <Button
@@ -719,9 +712,7 @@ function RangeSettings({
                 >
                   {t("createPosition")}
                 </Button>
-                <p className="mt-2 text-center text-muted-foreground text-xs">
-                  {t(futureTiming.timingKey)}
-                </p>
+                <p className="mt-2 text-center text-muted-foreground text-xs">{t("newDeposits")}</p>
               </div>
             </>
           ) : null}

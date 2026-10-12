@@ -29,7 +29,12 @@ import {
   manageInspectionLabelKey,
   resolveManageInspection,
 } from "./manageSelection";
-import { type ManageSpineCopy, manageSpineCard, manageStrategyLinks } from "./manageSpineCopy";
+import {
+  MANAGE_PERCENT_FORMAT,
+  type ManageSpineCopy,
+  manageSpineCard,
+  manageStrategyLinks,
+} from "./manageSpineCopy";
 
 export interface ManageScreenProps {
   fund: FundView;
@@ -49,7 +54,7 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
   const fmt = useFormatter();
   const spineCopy: ManageSpineCopy = {
     t: (key, values) => root(key, values),
-    percent: (value) => fmt.number(value / 100, { style: "percent", maximumFractionDigits: 2 }),
+    percent: (value) => fmt.number(value / 100, MANAGE_PERCENT_FORMAT),
     usd: (value) => fmt.number(value, { style: "currency", currency: "USD" }),
     amount: (decimal) => fmt.number(Number(decimal), { maximumFractionDigits: 4 }),
   };
@@ -204,13 +209,13 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
                       <span className="block truncate font-medium text-foreground text-sm">
                         {card.title}
                       </span>
-                      <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground text-xs">
+                      <span className="flex min-w-0 items-start gap-1.5 text-muted-foreground text-xs">
                         {card.range ? (
                           <span
                             aria-hidden="true"
                             data-manage-list-range={card.range.tone}
                             className={cn(
-                              "size-1.5 shrink-0 rounded-full",
+                              "mt-1.5 size-1.5 shrink-0 rounded-full",
                               card.range.tone === "success"
                                 ? "bg-success"
                                 : card.range.tone === "destructive"
@@ -219,7 +224,7 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
                             )}
                           />
                         ) : null}
-                        <span className="truncate">{card.subtitle}</span>
+                        <span className="line-clamp-2 min-w-0">{card.subtitle}</span>
                       </span>
                     </button>
                   );
@@ -253,18 +258,16 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
               <p className="text-muted-foreground">{t("strategyAddressUnavailable")}</p>
             ) : null}
           </div>
-          {/* R6: View mandate stays. */}
-          {links.mandate ? (
-            <Button
-              variant="ghost"
-              size="md"
-              aria-expanded={mandateOpen}
-              onClick={() => setMandateOpen((open) => !open)}
-              className="self-start px-0 text-primary hover:bg-transparent hover:text-primary"
-            >
-              {t("viewMandate")}
-            </Button>
-          ) : null}
+          {/* R6: View mandate always shows below the Explorer block. */}
+          <Button
+            variant="ghost"
+            size="md"
+            aria-expanded={mandateOpen}
+            onClick={() => setMandateOpen((open) => !open)}
+            className="self-start px-0 text-primary hover:bg-transparent hover:text-primary"
+          >
+            {t("viewMandate")}
+          </Button>
           {mandateOpen ? (
             <section className="rounded-xl border border-border p-3 text-xs">
               <h3 className="font-semibold">{t("mandateTitle")}</h3>
