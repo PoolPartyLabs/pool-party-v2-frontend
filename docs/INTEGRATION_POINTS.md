@@ -527,6 +527,11 @@ On short screens the reference header can scroll while the chart and attribution
 Screenshot export is disabled (`save_image:false`) because the isolated frame does not receive
 download permission; the provider's drawing toolbar remains enabled.
 
-Current chart-delivery census: 2,306 files under `src/`, with 539 markers across 312 files,
+Chart-delivery census: 2,306 files under `src/`, with 539 markers across 312 files,
 including tests, stories and source documentation. Registry totals are 712 rows and 707 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
+
+Current mandate token access census (POO-2332): 2,308 files under `src/`, with
+541 markers across 312 files, including tests, stories and source documentation. The 2 new
+markers are in `src/features/manager/fund/mandateDraft.ts`. Registry totals are 713 rows and 708
+unique IDs.
