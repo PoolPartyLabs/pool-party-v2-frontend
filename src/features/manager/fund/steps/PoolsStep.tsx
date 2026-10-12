@@ -325,11 +325,35 @@ export interface PoolsStepProps extends MandateStepProps {
  */
 export function PoolsStep(props: PoolsStepProps) {
   const t = useTranslations("manager");
-  const apiDraft = useMemo(() => withoutSolana(props.draft), [props.draft]);
+  const { draft } = props;
+  // The Solana-free view keeps the identity of every list the connected step keys its reads on, one
+  // list at a time. A fresh `tokens` or `protocols` array on each draft change (an Add that pulled
+  // no token in changes only `pools`) would re-run the universe read and the search for a mandate
+  // that did not move, which doubled the reads (R7 keeps those reads off Solana; this keeps them
+  // single).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the one list it reads.
+  const networks = useMemo(() => withoutSolana(draft).networks, [draft.networks]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the one list it reads.
+  const protocols = useMemo(() => withoutSolana(draft).protocols, [draft.protocols]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the one list it reads.
+  const tokens = useMemo(() => withoutSolana(draft).tokens, [draft.tokens]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the one list it reads.
+  const pools = useMemo(() => withoutSolana(draft).pools, [draft.pools]);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the one list it reads.
+  const positionProtocolsByChain = useMemo(
+    () => withoutSolana(draft).positionProtocolsByChain,
+    [draft.positionProtocolsByChain],
+  );
+  const apiDraft = useMemo(
+    () => ({ ...draft, networks, protocols, tokens, pools, positionProtocolsByChain }),
+    [draft, networks, protocols, tokens, pools, positionProtocolsByChain],
+  );
   const hasUniswapDex = apiDraft.protocols.some((id) =>
     (DEX_PROTOCOL_IDS as readonly string[]).includes(id),
   );
-  if (!hasUniswapDex)
+  // R8 applies when Raydium or Orca is the only DEX. A mandate with no DEX protocol at all has no
+  // Pools step to show, so it falls through to the connected step, which renders nothing (R29).
+  if (!hasUniswapDex && hasDexProtocol(draft))
     return (
       <section data-mandate-step="pools" className="flex flex-col gap-6 pb-24">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
