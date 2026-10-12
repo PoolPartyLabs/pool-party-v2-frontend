@@ -2,6 +2,8 @@
  * @id PP-MGR-CMP-072
  * @name SupplyBlockPanel
  * @implements-rules-version v1 (POO-2194)
+ * @implements-rules-version v1 (POO-2334 rules v1): R10 Supply APY, R12 collateral note and the
+ *   Lending risk block of frame 8189:2337
  * @analytics-events none, the panel shell emits configuration, Apply, Discard and blocked intent
  *
  * Aave v3 Supply body for the Build panel. The shell owns allocation and atomic Apply/Discard.
@@ -10,6 +12,10 @@
  *
  * PP-INTEGRATION-POINT: usePanelReserves selects the shell's GET /api/v2/catalog/aave-v3/reserves
  * data, intersected with the mandate. Loading, error and unusable reserves hold both Use and Apply.
+ *
+ * POO-2334: when a Borrow sits directly under this Supply, a note under the Allocation says that the
+ * asset is that Borrow's collateral (R12). The Lending risk block (PP-MGR-CMP-094) closes the body,
+ * as in the Figma; no account exists while the fund is built, so it reads "Not available".
  */
 "use client";
 
@@ -17,14 +23,20 @@ import { useTranslations } from "next-intl";
 import { useId } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { formatPercent } from "@/lib/utils/format";
+import { ManageLendingRiskSection } from "../../manage/ManageLendingRiskSection";
+import type { LendingRiskRead } from "../../manage/manageLendingRisk";
 import { depositTokenRefFor, tokenKey } from "../../mandateDraft";
 import type { AaveBlockConfig } from "../plan/buildPlan";
+import { hasBorrowBelow, supplyApyValue } from "./lendingPanelMath";
 import { PanelFieldLabel } from "./PanelFieldLabel";
 import { PanelSelect } from "./PanelSelect";
 import type { PanelBodyContext, PanelBodyDefinition, PanelFieldsProps } from "./panelBodies";
 import { usePanelCopy } from "./panelCopy";
 import { NUMERIC_BODY, OUTLINE_PILL } from "./panelStyles";
 import { usePanelReserves } from "./usePanelReserves";
+
+/** No account exists while the fund is built: the Lending risk block says "Not available". */
+const RISK_UNAVAILABLE: LendingRiskRead = { status: "unavailable", snapshot: null };
 
 /** One catalog read shared by the shell; deriving a view adds no requests. */
 function useSupplyRows(context: PanelBodyContext) {
@@ -53,14 +65,11 @@ function useSupplyRows(context: PanelBodyContext) {
           : context.network !== "arbitrum" || reserve.assetKey !== supportedKey
             ? t("unsupported")
             : undefined);
-      const rate = Number(reserve.supplyApy);
+      const rate = supplyApyValue(reserve.supplyApy);
       return {
         ...reserve,
         disabledReason,
-        apy:
-          reserve.supplyApy.trim() !== "" && Number.isFinite(rate) && rate >= 0
-            ? formatPercent(rate)
-            : t("unavailable"),
+        apy: rate === null ? t("unavailable") : formatPercent(rate),
       };
     }),
   };
@@ -139,6 +148,16 @@ export function SupplyBlockPanel({
         ) : null}
       </div>
       {allocation}
+      {hasBorrowBelow(context.plan, context.blockId) ? (
+        <p className="text-muted-foreground text-xs" data-supply-collateral-note="">
+          {t("collateralNote")}
+        </p>
+      ) : null}
+      <ManageLendingRiskSection
+        origin={{ identity: null, preview: null }}
+        current={RISK_UNAVAILABLE}
+        after={RISK_UNAVAILABLE}
+      />
     </>
   );
 }
