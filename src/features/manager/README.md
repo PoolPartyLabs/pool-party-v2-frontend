@@ -970,3 +970,23 @@ while preserving attribution and a nonzero chart. Screenshot export is disabled 
 sandbox does not allow downloads; native drawing tools remain enabled.
 
 Bounded chart view/close/blocked/failure/retry events emit from PP-MGR-CMP-103. No financial submitted/completed event is introduced. Pure identity/embed/message tests and Build/Manage/local-draft preservation tests are focused and serial; the browser journey is Murilo's. Exact pool-feed/history/annotation and Activity integration remains POO-2279. See [integration contract](../../../docs/INTEGRATION_POINTS.md) and CR-MGR-POO2309.
+
+### Charts unavailable state (POO-2336, rules v1)
+
+`fund/charts/chartUnavailable.ts` (PP-MGR-LIB-095) decides one state for every cause that cannot show price history. The title is "Charts are unavailable." The text is "Price history is unavailable for this selection." When a block is selected, the state shows its label and "The selection is preserved." BuildScreen and ManageScreen pass the label. The label is not sent to the widget or to analytics.
+
+Back returns to the Strategy flow tab and moves focus to that tab, as Manage Back does. It changes only the visible tab, so the selected block and the unapplied draft stay in the parent.
+
+The state fills the Charts panel (16px radius). It has no Market reference header and no attribution footer. Provider `no_data` arrives after the frame mounts, so the surface removes the frame and shows the same full-panel state as an alert. BuildScreen uses one block label for this state and for the removal dialog. ManageScreen uses the canvas row title.
+
+| Cause today | Source | State |
+| --- | --- | --- |
+| `no_selection` | chartContext | Unavailable, with no selection box |
+| `unconfigured` | chartModel | Unavailable |
+| `unsupported_block` | chartContext | Unavailable |
+| `lending_reference` | chartContext | Unavailable |
+| `unsupported_pair` | chartModel | Unavailable |
+| `no_data` | widget message | Unavailable, Back only |
+| `load_timeout` | widget timer | Load error with Try again (not changed) |
+
+`manager_chart_blocked` keeps the five reason values. `manager_chart_failed` keeps `no_data` and `load_timeout`. No flag is added. Stories: `StrategyChartSurface.stories.tsx`.

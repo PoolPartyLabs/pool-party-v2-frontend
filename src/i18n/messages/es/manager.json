@@ -1856,15 +1856,12 @@
     "referenceDescription": "Datos de mercado de un exchange para análisis. El pool seleccionado puede tener un precio distinto.",
     "frameTitle": "Gráfico de referencia de mercado de {pair}",
     "loading": "Cargando gráfico...",
-    "noData": "Esta referencia de mercado no está disponible en TradingView.",
     "loadError": "No se pudo cargar el gráfico. Inténtalo de nuevo.",
     "retry": "Intentar de nuevo",
     "attribution": "Gráfico de TradingView",
-    "notAvailable": "No disponible",
-    "noSelection": "Selecciona un pool configurado o un swap manual para ver su referencia de mercado.",
-    "unconfigured": "Elige el pool o los dos tokens del swap antes de abrir el gráfico.",
-    "unsupportedBlock": "Este bloque no tiene una referencia de mercado compatible.",
-    "lendingReference": "Un gráfico de precios de mercado no muestra el APY de lending ni el riesgo de la cuenta.",
-    "unsupportedPair": "No hay una referencia de gráfico disponible para estos tokens."
+    "unavailableTitle": "Los gráficos no están disponibles.",
+    "unavailableBody": "El historial de precios no está disponible para esta selección.",
+    "selectionPreserved": "La selección se conserva.",
+    "back": "Volver al flujo de la estrategia"
   }
 }

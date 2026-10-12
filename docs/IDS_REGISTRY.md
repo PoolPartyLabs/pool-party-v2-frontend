@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 718 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 719 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1228,5 +1228,18 @@ with 548 markers across 316 files. The five disclosed historical duplicate IDs r
 
 Existing PP-MGR-SCR-004, PP-MGR-CMP-085, PP-MGR-CMP-086, PP-MGR-SCR-001 and PP-MGR-LIB-058 keep their IDs. PP-MGR-LIB-058 adds `overviewStrategyRow`.
 
-Current Manage parity census: 718 registry rows and 713 unique IDs, 2,317 files under `src/`,
+Manage parity census: 718 registry rows and 713 unique IDs, 2,317 files under `src/`,
+with 552 markers across 317 files. The five disclosed historical duplicate IDs remain unchanged.
+
+## Charts unavailable state, October 12, 2026 (POO-2336 v1)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-095` | chartUnavailable, one full-panel unavailable state (Back only) for every chart cause, and the kept load-error retry | Lib | [Charts unavailable 8682:3253](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8682-3253) | Implemented view model | [POO-2336](https://linear.app/yeildbay/issue/POO-2336) | `src/features/manager/fund/charts/chartUnavailable.ts` @rules-v1 |
+
+Existing PP-MGR-CMP-103 shows this state with the selected block and Back. It also has stories now.
+BuildScreen and ManageScreen pass the selected block label only. The label is never sent to the widget or to analytics.
+The `manager_chart_blocked` reasons do not change. No markers are added or removed.
+
+Current charts-unavailable census: 719 registry rows and 714 unique IDs, 2,320 files under `src/`,
 with 552 markers across 317 files. The five disclosed historical duplicate IDs remain unchanged.

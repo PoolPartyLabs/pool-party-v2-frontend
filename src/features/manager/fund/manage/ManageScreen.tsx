@@ -58,6 +58,13 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
     usd: (value) => fmt.number(value, { style: "currency", currency: "USD" }),
     amount: (decimal) => fmt.number(Number(decimal), { maximumFractionDigits: 4 }),
   };
+  // The chart unavailable state names the position as its canvas row title does (ManageCanvas).
+  const positionRowTitle = (position: ManagePosition) => {
+    const tokens = position.tokens.map((token) => token.symbol).join(" / ");
+    return position.kind === "supply"
+      ? t("supplyToken", { token: tokens })
+      : tokens || position.protocol;
+  };
   const model = useMemo(() => normalizeManageModel(fund, balances), [fund, balances]);
   const snapshot = useMemo(() => deriveManageInspection(model), [model]);
   const links = manageStrategyLinks(model.core, model.hubChainId);
@@ -284,6 +291,13 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
         <div className="min-w-0">
           <StrategyChartSurface
             selection={manageChartSelection(inspection?.position ?? null)}
+            selectionLabel={
+              inspection?.position
+                ? positionRowTitle(inspection.position)
+                : inspection && inspection.kind !== "position"
+                  ? t(manageInspectionLabelKey[inspection.kind])
+                  : null
+            }
             context="manage"
           >
             <ManageCanvas model={model} selectedId={selection} onSelect={selectNode} />

@@ -480,7 +480,7 @@ or live Solana capability is asserted.
 | Event | When it fires | Key params | Emitting artifact |
 |---|---|---|---|
 | `manager_chart_viewed` | Charts opens for the current private origin/locale | `chart_context`, `chart_market` | PP-MGR-CMP-103, StrategyChartSurface |
-| `manager_chart_closed` | Return to Strategy flow, identity/locale change, phase hiding or unmount ends that visit | `chart_context`, `chart_market` | PP-MGR-CMP-103, StrategyChartSurface |
+| `manager_chart_closed` | Return to Strategy flow (tab or Back in the unavailable state, POO-2336), identity/locale change, phase hiding or unmount ends that visit | `chart_context`, `chart_market` | PP-MGR-CMP-103, StrategyChartSurface |
 | `manager_chart_blocked` | Unsupported/missing identity or non-price block prevents a chart | `chart_context`, `chart_market`, `chart_reason` | PP-MGR-CMP-103, StrategyChartSurface |
 | `manager_chart_failed` | Current provider frame has no data or no boot within 20 seconds | `chart_context`, `chart_market`, `chart_reason` | PP-MGR-CMP-103, StrategyChartSurface |
 | `manager_chart_retried` | Explicit Try again creates a new provider instance | `chart_context`, `chart_market` | PP-MGR-CMP-103, StrategyChartSurface |
