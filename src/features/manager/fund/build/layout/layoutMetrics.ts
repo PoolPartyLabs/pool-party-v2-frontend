@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-096
  * @name layoutMetrics
- * @implements-rules-version v1 (POO-2345)
+ * @implements-rules-version v1 (POO-2345), v2 (POO-2345)
  * @analytics-events none, a pure measuring module: nothing here is rendered or tracked.
  *
  * Counts how well the lines of a {@link GraphLayout} are routed. It reads only `layout.edges`.
@@ -16,10 +16,17 @@
  *   kind that end at the same point are one trunk (rule R7). A trunk is not an overlap.
  * - A BEND is a point where two consecutive segments of the same line meet and change direction.
  *
+ * - A FORCED CROSSING (rules v2, R2 and R8) is a crossing of an income line and a principal line
+ *   whose full paths start in one order and end in the opposite order. The principal leaves the
+ *   last position on the side. The income leaves the fee swap at the centre. They end at Idle
+ *   output and at Income. Return geometry R2 forces that inversion, so the crossing stays. Two
+ *   lines that pass the same return Bridge are not forced: the Bridge swaps them where no line is
+ *   drawn (rule R4).
+ *
  * Same input, same output: no DOM, no React, no clock, no randomness.
  */
 
-import type { EdgeNode, GraphLayout, Point } from "./graphTypes";
+import type { EdgeKind, EdgeNode, GraphLayout, Point, Rect } from "./graphTypes";
 
 export interface LayoutMetrics {
   crossings: number;
@@ -173,4 +180,101 @@ export function measureLayout(layout: GraphLayout): LayoutMetrics {
     totalBends: bends.reduce((sum, n) => sum + n, 0),
     maxBendsPerLeg: bends.reduce((max, n) => Math.max(max, n), 0),
   };
+}
+
+/** A family is every route of one chain and one class: its parts join at a Bridge or a swap. */
+interface Family {
+  kind: EdgeKind;
+  /** Where the family starts, and where it ends, over every route of the family. */
+  start: Point;
+  end: Point;
+  /** The index of the Bridge that the family passes, or -1 when it passes none. */
+  bridge: number;
+}
+
+const STAGES = ["block", "chain", "converted", "returned"] as const;
+const STAGE_ORDER: Record<(typeof STAGES)[number], number> = {
+  block: 0,
+  chain: 0,
+  converted: 1,
+  returned: 2,
+};
+
+/** `principal:chain:x` has the family `principal:x` and the stage `chain`; other ids have none. */
+function familyOf(line: string): { key: string; stage: (typeof STAGES)[number] } | null {
+  const [kind, stage, ...rest] = line.split(":");
+  if ((kind !== "principal" && kind !== "income") || rest.length === 0) return null;
+  const known = STAGES.find((name) => name === stage);
+  return known ? { key: `${kind}:${rest.join(":")}`, stage: known } : null;
+}
+
+function isInside(p: Point, rect: Rect): boolean {
+  return p.x >= rect.x - EPSILON && p.x <= rect.x + rect.w + EPSILON && near(p.y, rect.y);
+}
+
+/** The families of a layout, by key. A family has the full path of the chain and its class. */
+function familiesOf(layout: GraphLayout, segments: Segment[]): Map<string, Family> {
+  const staged = new Map<string, Map<number, Segment[]>>();
+  for (const s of segments) {
+    const family = familyOf(s.line);
+    if (!family) continue;
+    const stages = staged.get(family.key) ?? new Map<number, Segment[]>();
+    const rank = STAGE_ORDER[family.stage];
+    stages.set(rank, [...(stages.get(rank) ?? []), s]);
+    staged.set(family.key, stages);
+  }
+  const families = new Map<string, Family>();
+  for (const [key, stages] of staged) {
+    const ranks = [...stages.keys()].sort((p, q) => p - q);
+    const first = (stages.get(ranks[0] ?? 0) ?? []).find((s) => s.order === 0);
+    const lastParts = stages.get(ranks[ranks.length - 1] ?? 0) ?? [];
+    const last = lastParts.find((s) => s.last);
+    if (!first || !last) continue;
+    const returned = stages.get(2);
+    const entry = (stages.get(1) ?? stages.get(0) ?? []).find((s) => s.last);
+    const bridgeEntry = returned && entry ? entry.b : null;
+    families.set(key, {
+      kind: first.edge.kind,
+      start: first.a,
+      end: last.b,
+      bridge: bridgeEntry
+        ? layout.bridges.findIndex((bridge) => isInside(bridgeEntry, bridge.rect))
+        : -1,
+    });
+  }
+  return families;
+}
+
+/** The family key of an edge id, or null when the edge is not a return route. */
+function familyKeyOf(id: string): string | null {
+  return familyOf(lineOf(id).line)?.key ?? null;
+}
+
+/**
+ * True when the crossing of two edges is forced by rule R2: one line is income, the other is
+ * principal, their full paths start in one order and end in the opposite order, and they do not
+ * pass the same return Bridge.
+ */
+export function isForcedCrossing(layout: GraphLayout, pair: [string, string]): boolean {
+  const families = familiesOf(layout, segmentsOf(layout));
+  const first = familyKeyOf(pair[0]);
+  const second = familyKeyOf(pair[1]);
+  const a = first ? families.get(first) : undefined;
+  const b = second ? families.get(second) : undefined;
+  if (!a || !b || a.kind === b.kind) return false;
+  if (a.bridge >= 0 && a.bridge === b.bridge) return false;
+  const income = a.kind === "income" ? a : b;
+  const principal = a.kind === "income" ? b : a;
+  const began = Math.sign(income.start.x - principal.start.x);
+  const ended = Math.sign(income.end.x - principal.end.x);
+  return began !== 0 && ended !== 0 && began !== ended;
+}
+
+/** The crossings of a layout, apart: the ones that R2 forces, and the rest. */
+export function classifyCrossings(layout: GraphLayout): { forced: Pair[]; unforced: Pair[] } {
+  const forced: Pair[] = [];
+  const unforced: Pair[] = [];
+  for (const pair of findConflicts(layout).crossings)
+    (isForcedCrossing(layout, pair) ? forced : unforced).push(pair);
+  return { forced, unforced };
 }

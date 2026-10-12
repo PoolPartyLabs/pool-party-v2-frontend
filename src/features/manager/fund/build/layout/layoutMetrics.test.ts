@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-096
  * @name layoutMetrics tests
- * @implements-rules-version v1 (POO-2345)
+ * @implements-rules-version v1 (POO-2345), v2 (POO-2345)
  * @analytics-events none, a pure measuring module: nothing here is rendered or tracked.
  *
  * Unit tests of the metric on small hand-built layouts, and the R8 test that records the numbers
@@ -12,7 +12,13 @@ import { describe, expect, it } from "vitest";
 import { BUILD_CANVAS_FIXTURES, solanaTwoChainReturn } from "@/mocks/data/buildCanvasFixtures";
 import type { EdgeKind, EdgeNode, GraphLayout, Point } from "./graphTypes";
 import { layoutGraph } from "./layoutGraph";
-import { findConflicts, type LayoutMetrics, measureLayout } from "./layoutMetrics";
+import {
+  classifyCrossings,
+  findConflicts,
+  isForcedCrossing,
+  type LayoutMetrics,
+  measureLayout,
+} from "./layoutMetrics";
 
 const EN = { startHereWidth: 420 };
 
@@ -185,6 +191,95 @@ describe("measureLayout: bends", () => {
       edge("a:leg:1", "income", [0, 30], [0, 90]),
     ]);
     expect(measureLayout(layout).totalBends).toBe(0);
+  });
+});
+
+describe("isForcedCrossing (R2 and R8)", () => {
+  const RETURN = ["income:converted:f:leg:1", "principal:chain:p"] as [string, string];
+
+  it("forces a crossing when the income starts left and ends right of the principal", () => {
+    // Income: 10 -> 90. Principal: 60 -> 30. The order of the starts is the opposite of the ends.
+    const inverted = layoutOf([
+      edge("income:converted:f", "income", [10, 0], [10, 40]),
+      edge("income:converted:f:leg:1", "income", [10, 40], [90, 40]),
+      edge("principal:chain:p", "principal", [60, 0], [60, 80]),
+      edge("principal:chain:p:leg:1", "principal", [60, 80], [30, 80]),
+    ]);
+    expect(isForcedCrossing(inverted, RETURN)).toBe(true);
+    expect(isForcedCrossing(inverted, [RETURN[1], RETURN[0]])).toBe(true);
+  });
+
+  it("splits the crossings of a layout into forced and unforced", () => {
+    const layout = layoutOf([
+      edge("income:converted:f", "income", [10, 0], [10, 40]),
+      edge("income:converted:f:leg:1", "income", [10, 40], [90, 40]),
+      edge("principal:chain:p", "principal", [60, 0], [60, 80]),
+      edge("principal:chain:p:leg:1", "principal", [60, 80], [30, 80]),
+      edge("income:converted:g", "income", [70, 0], [70, 50]),
+    ]);
+    expect(classifyCrossings(layout)).toEqual({
+      forced: [["income:converted:f:leg:1", "principal:chain:p"]],
+      unforced: [["income:converted:f:leg:1", "income:converted:g"]],
+    });
+  });
+
+  it("does not force a crossing when both lines keep their order", () => {
+    // Income: 10 -> 30. Principal: 20 -> 60. The income stays left of the principal.
+    const keeps = layoutOf([
+      edge("income:converted:f", "income", [10, 0], [10, 40]),
+      edge("income:converted:f:leg:1", "income", [10, 40], [30, 40]),
+      edge("principal:chain:p", "principal", [20, 0], [20, 80]),
+      edge("principal:chain:p:leg:1", "principal", [20, 80], [60, 80]),
+    ]);
+    expect(isForcedCrossing(keeps, RETURN)).toBe(false);
+  });
+
+  it("does not force two lines of the same class", () => {
+    const same = layoutOf([
+      edge("principal:chain:a", "principal", [10, 0], [10, 40]),
+      edge("principal:chain:a:leg:1", "principal", [10, 40], [90, 40]),
+      edge("principal:chain:b", "principal", [60, 0], [60, 80]),
+      edge("principal:chain:b:leg:1", "principal", [60, 80], [30, 80]),
+    ]);
+    expect(isForcedCrossing(same, ["principal:chain:a:leg:1", "principal:chain:b"])).toBe(false);
+  });
+
+  it("does not force an edge that is not a return route", () => {
+    const link = layoutOf([
+      edge("link:x", "income", [10, 0], [10, 50]),
+      edge("principal:chain:p", "principal", [0, 25], [20, 25]),
+    ]);
+    expect(isForcedCrossing(link, ["link:x", "principal:chain:p"])).toBe(false);
+  });
+
+  /** An income of chain a and a principal of chain b, each through a Bridge (rects at y=10). */
+  function throughBridges(principalX: number): GraphLayout {
+    const layout = layoutOf([
+      edge("income:converted:a", "income", [10, 0], [10, 10]),
+      edge("income:returned:a", "income", [100, 20], [100, 60]),
+      edge("principal:chain:b", "principal", [principalX, 0], [principalX, 10]),
+      edge("principal:returned:b", "principal", [principalX, 20], [principalX, 40]),
+      edge("principal:returned:b:leg:1", "principal", [principalX, 40], [30, 40]),
+    ]);
+    layout.bridges = [
+      { network: "n", rect: { x: 0, y: 10, w: 120, h: 10 } },
+      { network: "m", rect: { x: 200, y: 10, w: 40, h: 10 } },
+    ];
+    return layout;
+  }
+
+  it("does not force two lines that pass the same Bridge", () => {
+    const layout = throughBridges(60);
+    expect(isForcedCrossing(layout, ["income:returned:a", "principal:returned:b:leg:1"])).toBe(
+      false,
+    );
+  });
+
+  it("forces the same two lines when they pass two Bridges", () => {
+    const layout = throughBridges(210);
+    expect(isForcedCrossing(layout, ["income:returned:a", "principal:returned:b:leg:1"])).toBe(
+      true,
+    );
   });
 });
 
