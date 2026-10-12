@@ -75,6 +75,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/** POO-2332: a stored cap needs a boolean `noCap` and a finite `pct`. */
+function isStoredCap(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.noCap === "boolean" &&
+    typeof value.pct === "number" &&
+    Number.isFinite(value.pct)
+  );
+}
+
 /**
  * One stored entry, as a draft the screens can render, or null when it is not one.
  *
@@ -101,6 +111,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * {@link readStore} and {@link upsertDraft}). An unknown phase is dropped and reads as the mandate
  * (D16). Neither moves {@link MANDATE_DRAFTS_VERSION}: a draft without them is exactly what this
  * store wrote before. A stored `planUnreadable` is ignored: the marker is derived on every read.
+ *
+ * POO-2332 (token access): `tokenMode` and `allTokensCap` are OPTIONAL and checked on their own. An
+ * unknown mode or a malformed cap is dropped, and the draft reads as Selected with the start cap.
  */
 function normalizeDraft(value: unknown): MandateDraft | null {
   if (!isRecord(value)) return null;
@@ -137,6 +150,12 @@ function normalizeDraft(value: unknown): MandateDraft | null {
   // D16: a phase this build does not know is dropped, and no phase reads as the mandate.
   if (storedPhase === "mandate" || storedPhase === "build" || storedPhase === "review")
     draft.lastPhase = storedPhase;
+  // POO-2332 R1: a token mode this build does not know reads as Selected, and a cap that is not a
+  // cap is dropped. Neither costs the draft.
+  if (draft.tokenMode !== undefined && draft.tokenMode !== "selected" && draft.tokenMode !== "all")
+    delete draft.tokenMode;
+  if (draft.allTokensCap !== undefined && !isStoredCap(draft.allTokensCap))
+    delete draft.allTokensCap;
   return withoutUnavailableProtocols(draft);
 }
 

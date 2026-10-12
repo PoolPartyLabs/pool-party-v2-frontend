@@ -1,13 +1,20 @@
 /**
  * @id PP-MGR-LIB-036 (POO-2177)
  * @name fundReview
- * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2332: the allowance of All tokens mode)
  * Review validation and integer seed accounting.
  */
 import { z } from "zod";
-import { type MandateDraft, tokenKey } from "../mandateDraft";
+import { allTokensCapOf, type MandateDraft, tokenKey, tokenModeOf } from "../mandateDraft";
 
-export function hasLaunchTokenAllowance(draft: Pick<MandateDraft, "tokens" | "caps">): boolean {
+export function hasLaunchTokenAllowance(
+  draft: Pick<MandateDraft, "tokens" | "caps" | "tokenMode" | "allTokensCap">,
+): boolean {
+  // POO-2332: in All tokens mode the one cap is the allowance (R10).
+  if (tokenModeOf(draft) === "all") {
+    const cap = allTokensCapOf(draft);
+    return cap.noCap || cap.pct > 0;
+  }
   return draft.tokens.some((token) => {
     const cap = draft.caps.tokens[tokenKey(token)];
     return !token.locked && (cap?.noCap === true || (cap?.pct ?? 0) > 0);
