@@ -5,10 +5,16 @@
  * Review validation and integer seed accounting.
  */
 import { z } from "zod";
-import { allTokensCapOf, type MandateDraft, tokenKey, tokenModeOf } from "../mandateDraft";
+import {
+  allTokensCapOf,
+  effectiveCap,
+  type MandateDraft,
+  tokenKey,
+  tokenModeOf,
+} from "../mandateDraft";
 
 export function hasLaunchTokenAllowance(
-  draft: Pick<MandateDraft, "tokens" | "caps" | "tokenMode" | "allTokensCap">,
+  draft: Pick<MandateDraft, "tokens" | "caps" | "tokenMode" | "allTokensCap" | "dataMode">,
 ): boolean {
   // POO-2332: in All tokens mode the one cap is the allowance (R10).
   if (tokenModeOf(draft) === "all") {
@@ -16,7 +22,8 @@ export function hasLaunchTokenAllowance(
     return cap.noCap || cap.pct > 0;
   }
   return draft.tokens.some((token) => {
-    const cap = draft.caps.tokens[tokenKey(token)];
+    // Same cap the Limits screen shows: a missing cap reads as its start value in mock mode.
+    const cap = effectiveCap(draft, "tokens", tokenKey(token));
     return !token.locked && (cap?.noCap === true || (cap?.pct ?? 0) > 0);
   });
 }

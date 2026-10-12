@@ -628,7 +628,7 @@ export function setAllTokensCap(draft: MandateDraft, cap: MandateCap): MandateDr
  * (R14): it returns the stored cap, or undefined, as it did before.
  */
 export function effectiveCap(
-  draft: MandateDraft,
+  draft: Pick<MandateDraft, "caps" | "dataMode" | "allTokensCap">,
   scope: "networks" | "protocols" | "tokens" | "all",
   key: string,
 ): MandateCap | undefined {

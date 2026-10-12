@@ -221,13 +221,27 @@ describe("MandateSummaryCard", () => {
   });
 
   // @rule B1
-  it("shows an unanswered cap as Not set rather than as zero", () => {
-    const draft = withNetworks(base(), ["arbitrum", "robinhood"], catalog);
+  it("shows an unanswered cap as Not set rather than as zero in real data mode", () => {
+    const draft = {
+      ...withNetworks(base(), ["arbitrum", "robinhood"], catalog),
+      dataMode: "real" as const,
+    };
 
     renderCard(draft);
 
     expect(screen.getByTestId("mandate-summary-limits")).toHaveTextContent(
       "Robinhood Chain · Not set",
+    );
+  });
+
+  // @rule R8
+  it("shows the start value of an unanswered network cap, as the Limits screen does", () => {
+    const draft = withNetworks(base(), ["arbitrum", "robinhood"], catalog);
+
+    renderCard(draft);
+
+    expect(screen.getByTestId("mandate-summary-limits")).toHaveTextContent(
+      "Robinhood Chain · No cap",
     );
   });
 
