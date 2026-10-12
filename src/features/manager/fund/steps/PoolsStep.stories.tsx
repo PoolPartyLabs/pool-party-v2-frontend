@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-038
  * @name PoolsStep.stories
- * @implements-rules-version v3 (POO-2142 rules v2, POO-2167 rules v3)
+ * @implements-rules-version v3 (POO-2142 rules v2, POO-2167 rules v3); POO-2343 rules v1 (Raydium)
  *
  * Storybook coverage for Mandate step 4 (POO-2125 [R29] to [R38]).
  *
@@ -24,6 +24,10 @@
  * protocol, the network icon and then the fee tier text (POO-2333 R9). Each result card shows the
  * fee tier and the share of LPs that chose it (R8).
  *
+ * `SolanaRaydiumPool` (POO-2343) starts with one Raydium CLMM pool from DEX Screener in "Your
+ * pools". The row shows no fee tier and no APR, because DEX Screener gives neither. The Solana
+ * search calls a server action, so it shows its error state with Retry when Storybook has no server.
+ *
  * Every story is live: the harness holds the draft and runs the real reducers, so adding, removing,
  * "Add all", "Show more" and "Clear all" behave as they will in the builder. The pools themselves
  * come from the real adapter running in mock mode, latency and rare failure included, so the loading
@@ -43,6 +47,8 @@ import {
   withNetworks,
   withProtocols,
 } from "../mandateDraft";
+import { type DexScreenerPair, raydiumPoolsFromPairs } from "../raydiumPools";
+import { buildSolanaBuilderCatalog } from "../solana-preview/solanaBuilderRuntime";
 import { PoolsStep } from "./PoolsStep";
 
 const catalog = buildMandateCatalog();
@@ -179,5 +185,41 @@ export const FeeTierAndNetwork: Story = {
   render: () => {
     const draft = draftOn(["robinhood"]);
     return <Harness catalog={catalog} initial={{ ...draft, pools: [spokePool] }} />;
+  },
+};
+
+const SOLANA_SOL = "So11111111111111111111111111111111111111112";
+const SOLANA_USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+
+/** A DEX Screener pair, mapped by the real code so the story cannot drift from POO-2343 R3. */
+const raydiumPair: DexScreenerPair = {
+  dexId: "raydium",
+  pairAddress: "3ucNos4NbumPLZNWztqGHNFFgkHeRMBQAVemeeomsUxv",
+  labels: ["CLMM"],
+  baseToken: { address: SOLANA_SOL, symbol: "SOL", name: "Wrapped SOL" },
+  quoteToken: { address: SOLANA_USDC, symbol: "USDC", name: "USD Coin" },
+  liquidity: { usd: 5_200_000 },
+  volume: { h24: 18_400_000 },
+};
+
+/**
+ * POO-2343 R3, R4 and R6. A mandate on Solana with Raydium chosen, and one Raydium pool in "Your
+ * pools". The row has no fee tier and no APR.
+ */
+export const SolanaRaydiumPool: Story = {
+  render: () => {
+    const solanaCatalog = buildSolanaBuilderCatalog();
+    const base = withNetworks(
+      createEmptyDraft("2026-10-12T00:00:00.000Z", "story"),
+      ["solana"],
+      solanaCatalog,
+    );
+    const draft = withProtocols(base, [...base.protocols, "raydium"]);
+    return (
+      <Harness
+        catalog={solanaCatalog}
+        initial={{ ...draft, pools: raydiumPoolsFromPairs([raydiumPair]) }}
+      />
+    );
   },
 };

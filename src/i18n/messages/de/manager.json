@@ -1644,6 +1644,7 @@
     "healthFactor": "Gesundheitsfaktor",
     "liquidationPrice": "Geschätzter Liquidationspreis",
     "marketUnavailable": "Nicht verfügbar",
+    "raydiumSource": "Die Pool- und Chartdaten stammen von DEX Screener.",
     "notApplicable": "Nicht zutreffend",
     "noDebt": "Keine Schulden",
     "noDebtDrawing": "Nur Bereitstellung im Entwurf. Keine Kreditaufnahme konfiguriert.",

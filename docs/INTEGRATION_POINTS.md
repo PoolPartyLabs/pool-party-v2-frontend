@@ -580,7 +580,7 @@ POO-2338 replaces the TradingView and Binance market reference. The Charts tab s
 
 - A Uniswap v3 block uses the pool contract address. A Uniswap v4 block uses the bare PoolId (bytes32). Build reads the pool with `findMandatePool`. Manage reads `position.poolId` and `chainId`.
 - Aave Supply and Aave Borrow use the token of `assetKey`. A Manage supply position uses its token. The native token uses the wrapped native address. Kamino Supply uses the USDC mint.
-- A mock pool with no real address or PoolId is `unconfigured`. Swap, Holding, Pendle, GMX and flow blocks are `unsupported_block`. Another network, and Solana Orca and Raydium, are `unsupported_pair`.
+- A mock pool with no real address or PoolId is `unconfigured`. Swap, Holding, Pendle, GMX and flow blocks are `unsupported_block`. Another network and Solana Orca are `unsupported_pair`. A Solana Raydium block with a pool address shows its pool (POO-2343).
 
 **Data sent.** The frame URL holds only the chain slug and the public pool or token address. It holds no wallet, fund, user or draft data. The parent reads no message from the frame. Analytics send only `pool`, `token` or `unavailable` as `chart_market`. DEX Screener controls its own telemetry inside the frame.
 
@@ -588,4 +588,25 @@ POO-2338 replaces the TradingView and Binance market reference. The Charts tab s
 
 Current census (POO-2342): 2,297 files under `src/`, with 542 markers across 313 files,
 including tests, stories and source documentation. Registry totals are 720 rows and 715 unique
+IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
+
+## DEX Screener Raydium CLMM pool reads, October 12, 2026 (POO-2343 v1)
+
+The Pools step searches Solana pools. A server action reads the public DEX Screener API for the token of the search. The browser does not call DEX Screener for data, so the CSP `connect-src` does not change. [POO-2344](https://linear.app/yeildbay/issue/POO-2344) moves these reads into the Pool Party API.
+
+| Marker | File | Status today | Remaining gap |
+|---|---|---|---|
+| DEX Screener read | `src/features/manager/fund/raydiumPoolsRead.ts` (PP-MGR-CMP-107) | Reads `GET https://api.dexscreener.com/token-pairs/v1/solana/{mint}` with a 10 s timeout, no key and no cookie. It checks the shape of each pair and drops a bad pair | The read is a third-party call with no contract and no SLA. POO-2344 replaces it with an API read |
+| Server action | `src/features/manager/fund/raydiumPoolsAction.ts` (PP-MGR-CMP-107) | Calls the read and returns a coded result, never a thrown error. The Pools step shows its error state with Retry when the read fails | The same gap as above |
+
+**Rules.** The pure logic keeps only the pairs with `dexId` "raydium" and the label "CLMM". It removes duplicate pair addresses and sorts by `liquidity.usd`, from high to low. Each pair becomes a `MandatePoolRef` with network "solana" and protocol "raydium". Liquidity and 24 h volume come from DEX Screener. Fee tier and APR stay empty, so the Pools step shows its empty-value display.
+
+**Block and chart.** The Raydium block takes its pool from the Raydium pools of the mandate and keeps `poolAddress` in its config. With no Raydium pool it uses SOL/USDC `3ucNos4NbumPLZNWztqGHNFFgkHeRMBQAVemeeomsUxv`. A Raydium block with a `poolAddress` shows the DEX Screener embed of POO-2338 with chain `solana`. Orca stays `unsupported_pair`.
+
+**Data sent.** The read holds only the public token mint. It holds no wallet, fund, user or draft data. No analytics event has a mint or a pool address. A failed read reuses `POOLS_FETCH_FAILED`.
+
+**Terms and limits.** DEX Screener public API terms and rate limits are not reviewed. See CR-MGR-POO2338.
+
+Current census (POO-2343): 2,309 files under `src/`, with 545 markers across 315 files,
+including tests, stories and source documentation. Registry totals are 721 rows and 716 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.

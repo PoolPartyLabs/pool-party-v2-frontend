@@ -12,6 +12,9 @@
  * (`fundPools.ts`), through the repo's latency helper and with the usual rare failure, so the step
  * has a loading state and an error state to render before any backend exists.
  *
+ * The Solana search (Raydium, POO-2343) has no mock: it calls the real DEX Screener action in mock
+ * mode too, so a mock session on Solana needs the network and shows the error state when it is down.
+ *
  * Real mode reads the v2 catalog only: eligible Uniswap v4 pools identified by bytes32 PoolId.
  * PoolKey and catalog token metadata are retained, and unavailable metrics stay null.
  *
@@ -36,6 +39,8 @@ import {
   NETWORK_ORDER,
   type NetworkId,
 } from "./mandateDraft";
+import { isSolanaMint } from "./raydiumPools";
+import { getRaydiumPoolsAction } from "./raydiumPoolsAction";
 
 /** What the Pools step asks for. One network, one or two tokens, the mandate's DEX protocols. */
 export interface PoolSearchInput {
@@ -285,14 +290,43 @@ export function mapV2Pool(pool: CatalogPool): MandatePoolRef {
 }
 
 /**
+ * POO-2343 R4: the Raydium CLMM pools for one Solana token, from the server action (R1).
+ *
+ * Raydium is the only Solana protocol with a pool search. Orca has none. A failure throws, so the
+ * Pools step shows its error state with Retry (R5). An empty list still means "no pools matched".
+ *
+ * An address that is not a Solana mint cannot name a pool here: it is the token of another network,
+ * and a pair across two networks has no pool. Both answer an empty list and no read is sent.
+ */
+async function searchSolana(input: PoolSearchInput): Promise<MandatePoolRef[]> {
+  if (!input.protocols.includes("raydium")) return [];
+  if (!isSolanaMint(input.tokenAddress)) return [];
+  if (input.secondTokenAddress !== undefined && !isSolanaMint(input.secondTokenAddress)) return [];
+  const result = await getRaydiumPoolsAction({
+    tokenAddress: input.tokenAddress,
+    ...(input.secondTokenAddress ? { secondTokenAddress: input.secondTokenAddress } : {}),
+  });
+  if (!result.ok)
+    throw new ApiError(
+      result.error.status ?? 0,
+      `RAYDIUM_${result.error.code.toUpperCase()}`,
+      "raydium pools unavailable",
+    );
+  return result.pools;
+}
+
+/**
  * The pools a mandate may add, for one network and one or two tokens.
  *
  * Deepest first, with `tierSharePct` filled across the result set, so the Pools step can render the
  * tier rows of a pair in the order a manager reads them.
  */
 export async function searchMandatePools(input: PoolSearchInput): Promise<MandatePoolRef[]> {
-  // POO-2342 R7: Solana has no pool search yet, and no read may name it.
-  if (input.network === "solana") return [];
+  // POO-2343 R4: Solana has its own source, already sorted by liquidity. It has no fee tier, so
+  // there is no tier share to fill.
+  if (input.network === "solana") return searchSolana(input);
+  // An address of another network is not a token of this one, and the API would answer a 400 for it.
+  if (isSolanaMint(input.tokenAddress)) return [];
   const found = isMockMode ? await searchMock(input) : await searchReal(input);
 
   const ordered = [...found].sort((a, b) => (b.tvlUsd ?? 0) - (a.tvlUsd ?? 0));
@@ -346,7 +380,7 @@ export async function findMandatePoolByAddress(
   protocols: DexProtocolId[],
 ): Promise<MandatePoolLocation> {
   const wanted = address.toLowerCase();
-  // POO-2342 R7: Solana has no pool lookup yet, and no read may name it.
+  // POO-2343 R4: a pasted address is an EVM pool id. Solana pools are found by token, not by address.
   if (network === "solana") return { pool: null, foundOn: null };
 
   if (isMockMode) {

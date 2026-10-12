@@ -1644,6 +1644,7 @@
     "healthFactor": "健全性係数",
     "liquidationPrice": "推定清算価格",
     "marketUnavailable": "利用できません",
+    "raydiumSource": "プールとチャートのデータは DEX Screener から取得しています。",
     "notApplicable": "該当しません",
     "noDebt": "債務なし",
     "noDebtDrawing": "供給のみの設計です。借入は設定されていません。",

@@ -86,10 +86,14 @@ export interface AaveBlockConfig {
   borrowPct?: number;
 }
 
-/** Local descriptor choice, never a canonical pool/program/market address. */
+/**
+ * Local descriptor choice. `poolAddress` is only for the Raydium block (POO-2343 R7): the DEX
+ * Screener pair address of a Raydium pool of the mandate, or the default SOL/USDC pool.
+ */
 export interface SolanaLocalBlockConfig {
   catalogId: string;
   pair: "SOL / USDC" | "USDC / SOL";
+  poolAddress?: string;
 }
 
 /** Which configuration each kind carries. Pendle and GMX are not drawn yet, so they carry none. */

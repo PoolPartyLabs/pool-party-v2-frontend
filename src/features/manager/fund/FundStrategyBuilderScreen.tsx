@@ -4,6 +4,7 @@
  * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2195 rules v1, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2342 one builder: Solana is a network of the mandate, not a mode)
  * @implements-rules-version v1 (POO-2332 token access: cap_zero on Next, the token mode event)
+ * @implements-rules-version v1 (POO-2343 R10: the Pools step error event carries `network: solana` for a Solana failure)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
  *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_token_mode_changed,
  *   builder_mandate_completed, builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
@@ -161,7 +162,7 @@ import { tokenModeEvent } from "./mandateTokenAccess";
 import { ReviewPhase } from "./review/ReviewPhase";
 import { LimitsStep } from "./steps/LimitsStep";
 import { NetworksStep } from "./steps/NetworksStep";
-import { PoolsStep } from "./steps/PoolsStep";
+import { type PoolsError, PoolsStep } from "./steps/PoolsStep";
 import { ProtocolsStep } from "./steps/ProtocolsStep";
 import type { MandateStepProps } from "./steps/stepProps";
 import { TokensStep } from "./steps/TokensStep";
@@ -529,11 +530,13 @@ function FundBuilderShell({
    * emits still leaves from one file.
    */
   const reportPoolsError = useCallback(
-    (error: { code: string }) => {
+    (error: PoolsError) => {
       track("builder_mandate_error", {
         step: "pools",
         error_code: error.code,
         error_origin: "upstream",
+        // R10: set for a Solana failure only; an EVM failure keeps its event.
+        ...(error.network ? { network: error.network } : {}),
       });
     },
     [track],

@@ -4,7 +4,7 @@
  * @description DEX Screener embed URL for the exact pool or asset of the selected block.
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-37675
  * @linear https://linear.app/yeildbay/issue/POO-2338
- * @implements-rules-version v1 (POO-2338)
+ * @implements-rules-version v1 (POO-2338); POO-2343 rules v1 (R8 Raydium CLMM pool chart)
  * @analytics-events none, pure market and embed helpers; the chart host owns events.
  *
  * POO-2338 replaces the POO-2309 TradingView and Binance reference. The chart shows public
@@ -25,7 +25,7 @@ export type ChartBlockReason =
 export const DEXSCREENER_CHAINS = ["arbitrum", "base", "polygon", "robinhood", "solana"] as const;
 export type DexScreenerChain = (typeof DEXSCREENER_CHAINS)[number];
 
-export type ChartPoolProtocol = "uniswap-v3" | "uniswap-v4";
+export type ChartPoolProtocol = "uniswap-v3" | "uniswap-v4" | "raydium";
 
 export interface ChartMarket {
   kind: "pool" | "token";
@@ -64,6 +64,7 @@ const SOLANA_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const POOL_VENUES: Record<ChartPoolProtocol, string> = {
   "uniswap-v3": "Uniswap v3",
   "uniswap-v4": "Uniswap v4",
+  raydium: "Raydium CLMM",
 };
 
 function chartChain(network: string): DexScreenerChain | null {
@@ -79,7 +80,10 @@ function unavailable(reason: ChartBlockReason): ChartAvailability {
 export interface PoolChartInput {
   network: string;
   protocol: ChartPoolProtocol;
-  /** v3: the pool contract address. v4: the bare PoolId (bytes32). */
+  /**
+   * v3: the pool contract address. v4: the bare PoolId (bytes32). Raydium: the DEX Screener pair
+   * address, a Solana address (R8 of POO-2343).
+   */
   poolAddress: string | null | undefined;
   label: string;
 }
@@ -89,8 +93,18 @@ export function resolvePoolChart(input: PoolChartInput): ChartAvailability {
   const address = input.poolAddress?.trim() ?? "";
   if (!address) return unavailable("unconfigured");
   const chain = chartChain(input.network);
-  // Solana pools (Orca, Raydium) have no canonical pool address in the app.
-  if (!chain || chain === "solana") return unavailable("unsupported_pair");
+  if (!chain) return unavailable("unsupported_pair");
+  // R8 of POO-2343: a Raydium pool is a Solana pool. The Solana address keeps its case. Orca has
+  // no pool chart, and a Uniswap protocol is never a Solana pool.
+  if (input.protocol === "raydium") {
+    if (chain !== "solana") return unavailable("unsupported_pair");
+    if (!SOLANA_ADDRESS.test(address)) return unavailable("unconfigured");
+    return {
+      status: "available",
+      market: { kind: "pool", chain, address, label: input.label, venue: POOL_VENUES.raydium },
+    };
+  }
+  if (chain === "solana") return unavailable("unsupported_pair");
   const pattern = input.protocol === "uniswap-v4" ? POOL_ID : EVM_ADDRESS;
   if (!pattern.test(address)) return unavailable("unconfigured");
   return {

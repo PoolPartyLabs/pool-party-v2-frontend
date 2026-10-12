@@ -198,7 +198,7 @@ describe("[MCK-005] generated pools cover the mandate's mock Pools step", () => 
     expect(pool?.poolKey.currency0).toBe(row.token0.address.toLowerCase());
     expect(pool?.poolKey.currency1).toBe(row.token1.address.toLowerCase());
     expect(pool?.poolKey.fee).toBe(row.feeTier);
-    expect(pool?.poolKey.tickSpacing).toBe(SPACING_OF_FEE[row.feeTier]);
+    expect(pool?.poolKey.tickSpacing).toBe(SPACING_OF_FEE[row.feeTier ?? 0]);
     expect(pool?.chainId).toBe(chainId === 42161 ? "42161" : "4663");
   });
 
