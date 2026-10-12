@@ -11,12 +11,15 @@
  */
 import { describe, expect, it } from "vitest";
 import { getWrappedNative } from "@/lib/chains/config";
+import type { DexPool } from "@/lib/manager/dexPoolsSchema";
 import { NATIVE_TOKEN_ADDRESS } from "@/lib/provisioning/types";
 import { mockFund } from "@/mocks/data/v2Funds";
+import { mapDexPool } from "../../mapDexPool";
 import type { PanelDraftTarget } from "../build/panel/usePanelDraft";
 import { makeTestDraft, TEST_ASSET_KEYS, TEST_POOL_IDS } from "../build/plan/planTestKit";
 import { type ManagePosition, normalizeManageModel } from "../manage/manageModel";
 import type { MandateDraft, MandatePoolRef } from "../mandateDraft";
+import { mapUniswapPoolToMandatePool } from "../mandatePoolSource";
 import { SOLANA_LOCAL_CONFIGS } from "../solana-preview/solanaBuilderRuntime";
 import { USDC_MINT } from "../solana-preview/solanaSchemas";
 import { buildChartSelection, type ChartSelection, manageChartSelection } from "./chartContext";
@@ -124,6 +127,34 @@ describe("Build chart context", () => {
       poolId: V3_POOL,
     });
     expect(urlOf(result)).toBe(`https://dexscreener.com/arbitrum/${V3_POOL}?${QUERY}`);
+  });
+
+  // @rule R2
+  it("opens the pool contract of a v3 row that the real dex mappers write", () => {
+    const draft = makeTestDraft();
+    const [weth, usdc] = ["WETH", "USDC"].map((symbol) =>
+      required(
+        draft.tokens.find((token) => token.network === "arbitrum" && token.symbol === symbol),
+      ),
+    );
+    const dexPool: DexPool = {
+      address: V3_POOL,
+      feeTier: 500,
+      tvlInUsd: "1000000",
+      baseTokenPriceQuoteToken: "1737.58",
+      currency0: { address: required(weth).address, symbol: "WETH" },
+      currency1: { address: required(usdc).address, symbol: "USDC" },
+    };
+    const row = mapUniswapPoolToMandatePool(mapDexPool(dexPool, "arbitrum"), "uniswap-v3");
+    const result = buildChartSelection(
+      { ...draft, pools: [row, ...draft.pools] },
+      target("uniswapV3Pool"),
+      { poolId: row.id },
+    );
+    expect(result.availability).toMatchObject({
+      status: "available",
+      market: { kind: "pool", chain: "arbitrum", address: V3_POOL, venue: "Uniswap v3" },
+    });
   });
 
   // @rule R2
@@ -302,6 +333,23 @@ describe("Manage chart context", () => {
       status: "available",
       market: { kind: "pool", chain: "arbitrum", address: V4_POOL_ID, venue: "Uniswap v4" },
     });
+  });
+
+  // @rule R2
+  it("opens the pool contract of a Uniswap v3 liquidity position", () => {
+    const current = position();
+    const v3 = {
+      ...current,
+      poolId: V3_POOL,
+      source: { ...current.source, adapterKind: "uniswap-v3" },
+    };
+    expect(manageChartSelection(v3).availability).toMatchObject({
+      status: "available",
+      market: { kind: "pool", chain: "arbitrum", address: V3_POOL, venue: "Uniswap v3" },
+    });
+    expect(urlOf(manageChartSelection(v3))).toBe(
+      `https://dexscreener.com/arbitrum/${V3_POOL}?${QUERY}`,
+    );
   });
 
   // @rule R3

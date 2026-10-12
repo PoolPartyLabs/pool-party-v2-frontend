@@ -57,8 +57,9 @@ function pairLabel(symbols: readonly string[]): string {
 
 /**
  * The address that DEX Screener knows for a mandate pool row. v4 uses the bare PoolId. v3 uses the
- * pool contract, but only when the row key is that contract: a mock row has a slug key and a fake
- * address, and must not open a chart of an unrelated address.
+ * pool contract, but only when the row key is that contract. A real v3 row has key = address
+ * (`mapDexPool`, then `mapUniswapPoolToMandatePool`). A mock row has a slug key and a fake address,
+ * and must not open a chart of an unrelated address.
  */
 function chartPoolAddress(pool: MandatePoolRef, protocol: ChartPoolProtocol): string | null {
   if (protocol === "uniswap-v4") return pool.poolId ?? null;
@@ -123,7 +124,8 @@ export function buildChartSelection(
     ) {
       return selected(details, unavailable("unsupported_pair"));
     }
-    // The Kamino block supplies USDC, so its chart is the USDC mint.
+    // The Kamino block supplies USDC, so its chart is the USDC mint. "USDC" is a proper name, not
+    // copy.
     return selected(
       details,
       resolveTokenChart({ network: "solana", address: USDC_MINT, label: "USDC" }),

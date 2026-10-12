@@ -21,7 +21,6 @@ import {
   type ChartMarket,
   chartAnalyticsMarket,
   chartPageUrl,
-  DEXSCREENER_CHAINS,
   resolvePoolChart,
   resolveTokenChart,
 } from "./chartModel";
@@ -82,18 +81,26 @@ describe("buildChartUrl", () => {
 
   // @rule R7
   it("puts only the chain slug and the public address in the URL", () => {
-    const market = marketOf(
-      resolvePoolChart({
-        network: "polygon",
-        protocol: "uniswap-v3",
-        poolAddress: V3_POOL,
-        label: "Private label wallet strategy",
-      }),
-    );
-    const url = new URL(buildChartUrl(market));
-    expect(url.pathname.split("/").filter(Boolean)).toEqual(["polygon", V3_POOL]);
-    expect(url.toString()).not.toContain("Private");
-    expect(url.toString()).not.toContain("wallet");
+    const wallet = `0x${"a1".repeat(20)}`;
+    const strategy = `0x${"b2".repeat(20)}`;
+    const selection = {
+      network: "polygon",
+      protocol: "uniswap-v3" as const,
+      poolAddress: V3_POOL,
+      label: "Private label",
+      wallet,
+      strategy,
+      userId: "user-4242",
+      blockId: "block-7777",
+    };
+    const market = marketOf(resolvePoolChart(selection));
+    const url = buildChartUrl({ ...market, ...selection, ...market });
+    const parsed = new URL(url);
+    expect(parsed.pathname.split("/").filter(Boolean)).toEqual(["polygon", V3_POOL]);
+    expect(parsed.search).toBe(`?${QUERY}`);
+    for (const value of [wallet, strategy, "user-4242", "block-7777", "Private"]) {
+      expect(url.toLowerCase(), value).not.toContain(value.toLowerCase());
+    }
   });
 
   // @rule R11
@@ -239,13 +246,23 @@ describe("resolveTokenChart", () => {
   });
 });
 
-describe("DEX Screener chain list", () => {
+describe("DEX Screener chain slug", () => {
   // @rule R2
-  it("uses the app apiNetworkId as the chain slug, plus solana", () => {
-    expect([...DEXSCREENER_CHAINS]).toEqual(["arbitrum", "base", "polygon", "robinhood", "solana"]);
-    const appNetworks = supportedChainMetas.map((meta) => meta.apiNetworkId);
-    for (const chain of DEXSCREENER_CHAINS.filter((item) => item !== "solana")) {
-      expect(appNetworks, chain).toContain(chain);
+  it("uses the app apiNetworkId of the pool chain as the URL chain slug", () => {
+    for (const network of ["arbitrum", "base", "polygon", "robinhood"]) {
+      const meta = supportedChainMetas.find((item) => item.apiNetworkId === network);
+      expect(meta, network).toBeDefined();
+      const url = buildChartUrl(
+        marketOf(
+          resolvePoolChart({
+            network: meta?.apiNetworkId ?? "",
+            protocol: "uniswap-v3",
+            poolAddress: V3_POOL,
+            label: "",
+          }),
+        ),
+      );
+      expect(new URL(url).pathname, network).toBe(`/${network}/${V3_POOL}`);
     }
   });
 });

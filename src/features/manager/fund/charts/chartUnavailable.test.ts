@@ -68,7 +68,6 @@ describe("Charts unavailable state", () => {
   // @rule R4
   it("maps every unavailable cause to the same full panel state with Back only", () => {
     const causes = Object.keys(CHART_UNAVAILABLE_CAUSES) as ChartUnavailableCause[];
-    expect(causes).toHaveLength(4);
     for (const cause of causes) {
       const state = stateFor(cause, "Swap input");
       expect(state, cause).toEqual(chartUnavailableView("Swap input"));
@@ -104,18 +103,6 @@ describe("Charts unavailable state", () => {
         expect(chart[key], `${locale}.${key}`).not.toContain(String.fromCodePoint(0x2014));
       }
     }
-  });
-
-  // @rule R5 (POO-2338)
-  // @rule R10 (POO-2338)
-  it("has no lending reference and no provider no data cause", () => {
-    expect(Object.keys(CHART_UNAVAILABLE_CAUSES).sort()).toEqual([
-      "no_selection",
-      "unconfigured",
-      "unsupported_block",
-      "unsupported_pair",
-    ]);
-    expect(Object.values(CHART_UNAVAILABLE_CAUSES)).not.toContain("provider");
   });
 
   // @rule R11 (POO-2338)

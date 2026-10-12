@@ -164,14 +164,27 @@ function arbPool(): MandatePoolRef {
   };
 }
 
+/** The bare v4 PoolId of {@link realArbPool}. */
+const REAL_POOL_ID = `0x${"d4".repeat(32)}`;
+
+/** The same pool as a real catalog row (`mapV2Pool`): id `<chainId>:<PoolId>`, address = PoolId. */
+function realArbPool(): MandatePoolRef {
+  return {
+    ...arbPool(),
+    id: `42161:${REAL_POOL_ID}`,
+    poolId: REAL_POOL_ID,
+    address: REAL_POOL_ID,
+  };
+}
+
 /**
  * A closed mandate on the hub: Uniswap v4 with one pool and every cap answered, so walking forward
  * through the five steps completes it again (built through the reducers, as the shell's tests do).
  */
-function hubMandate(id: string): MandateDraft {
+function hubMandate(id: string, pool: MandatePoolRef = arbPool()): MandateDraft {
   const catalog = buildMandateCatalog();
   const base = withProtocols(createEmptyDraft(SAVED_AT, id), [...REQUIRED_PROTOCOLS, "uniswap-v4"]);
-  const added = addPool(base, arbPool(), catalog);
+  const added = addPool(base, pool, catalog);
   if (isBlocked(added)) throw new Error(`fixture: the pool was refused, ${added.blocked.reason}`);
   const weth = added.tokens.find((token) => !token.locked);
   if (!weth) throw new Error("fixture: the pool brought no token in");
@@ -1525,7 +1538,7 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
 describe("BuildScreen: the view follows the change (I9)", () => {
   // @rule R4, R5 (POO-2309): Chart navigation is not a leave/apply/discard action.
   it("preserves an unapplied Configure edit, selection and the same viewport across Charts", async () => {
-    seedBuild(hubMandate("chart-draft"), poolPlan());
+    seedBuild(hubMandate("chart-draft", realArbPool()), poolPlan(60, REAL_POOL_ID));
     await openBuild();
     await dirtyFirstCard();
     const input = within(panelRegion()).getByRole("slider", { name: "Allocation" });
@@ -1542,7 +1555,8 @@ describe("BuildScreen: the view follows the change (I9)", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByText("ETH / USDC · Binance")).toBeInTheDocument();
+    // @rule R11
+    expect(screen.getByText("WETH / USDC · Uniswap v4")).toBeInTheDocument();
     expect(selectionSpy.current?.selectedId).toBe(selected);
     expect(input).toHaveAttribute("aria-valuenow", "55");
     expect(document.querySelector(".react-flow__viewport")).toBe(flow);

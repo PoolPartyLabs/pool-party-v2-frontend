@@ -60,6 +60,7 @@ const EVM_ADDRESS = /^0x[0-9a-f]{40}$/i;
 const POOL_ID = /^0x[0-9a-f]{64}$/i;
 const SOLANA_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
+// Venue names are proper names, not copy, so they stay in code and are not translated.
 const POOL_VENUES: Record<ChartPoolProtocol, string> = {
   "uniswap-v3": "Uniswap v3",
   "uniswap-v4": "Uniswap v4",
@@ -121,6 +122,7 @@ export function resolveTokenChart(input: TokenChartInput): ChartAvailability {
     if (!SOLANA_ADDRESS.test(raw)) return unavailable("unconfigured");
     return {
       status: "available",
+      // "Solana" is a proper name, not copy.
       market: { kind: "token", chain, address: raw, label: input.label, venue: "Solana" },
     };
   }

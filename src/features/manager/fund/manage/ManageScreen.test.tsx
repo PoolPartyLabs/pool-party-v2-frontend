@@ -79,6 +79,7 @@ describe("Manage shell", () => {
             ? {
                 ...position,
                 chainId: "42161",
+                poolKey: `0x${"d4".repeat(32)}`,
                 tokens: position.tokens.map((token, index) => ({
                   ...token,
                   address: index === 0 ? arbitrum.usdc.address : arbitrum.wrappedNative,
@@ -105,7 +106,8 @@ describe("Manage shell", () => {
     const transform = viewport?.getAttribute("style");
     const calls = owners.mock.calls.length;
     await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
-    expect(screen.getByText("ETH / USDC · Binance")).toBeInTheDocument();
+    // @rule R11
+    expect(screen.getByText("USDC / WETH · Uniswap v4")).toBeInTheDocument();
     expect(input).toHaveValue("pending operation");
     expect(selector).toHaveAttribute("aria-pressed", "true");
     expect(owners.mock.calls).toHaveLength(calls);
