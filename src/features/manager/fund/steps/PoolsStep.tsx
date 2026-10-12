@@ -840,6 +840,7 @@ function ConnectedPoolsStep({
         not_priced: t("fundBuilder.tokens.noPrice"),
         coming_soon: t("fundBuilder.common.comingSoon"),
         cap_missing: null,
+        cap_zero: null,
         token_allowance_required: null,
         name_length: null,
       }[ownBlock.reason] ?? null)
