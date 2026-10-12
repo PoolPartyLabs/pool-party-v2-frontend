@@ -586,6 +586,6 @@ POO-2338 replaces the TradingView and Binance market reference. The Charts tab s
 
 **Terms.** The embed is a third-party surface that we do not control. See CR-MGR-POO2338 for the terms risk.
 
-Current census (POO-2342): 2,302 files under `src/`, with 544 markers across 314 files,
+Current census (POO-2342): 2,297 files under `src/`, with 542 markers across 313 files,
 including tests, stories and source documentation. Registry totals are 720 rows and 715 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
