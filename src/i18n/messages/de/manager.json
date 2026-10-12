@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Andere Netzwerke"
+      "others": "Andere Netzwerke",
+      "othersCaption": "Jedes Netzwerk, das Sie hinzufügen, braucht eine Bridge und eine weitere Signatur beim Start."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,18 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Erforderlich",
-      "requiredSubtitle": "Jede Strategie braucht eine Möglichkeit, Token zu tauschen und Geld zwischen ihren Netzwerken zu bewegen.",
       "operate": "Protokolle für den Betrieb",
-      "on": "Auf",
-      "onFootnote": "„Auf“ zeigt die Netzwerke aus Schritt 1, auf denen jedes Protokoll verfügbar ist."
+      "on": "Verfügbar auf",
+      "onFootnote": "„Verfügbar auf“ zeigt, welche Ihrer Netzwerke aus Schritt 1 jedes Protokoll unterstützt.",
+      "swapBridge": "Swap und Bridge",
+      "swapBridgeCollapsed": "{names} · für Sie ausgewählt",
+      "swapBridgeOpen": "Für Sie ausgewählt. Behalten Sie mindestens einen Swap und eine Bridge, wenn Sie ein Netzwerk hinzufügen.",
+      "show": "Anzeigen",
+      "hide": "Ausblenden",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Swap",
+        "uniswapV3": "Uniswap v3 · Liquidität"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -845,7 +853,7 @@
       "results": "{count, plural, one {# Pool} other {# Pools}} mit mindestens einem Ihrer Token",
       "yours": "Ihre Pools · {count}",
       "feeTier": "{fee} Fee Tier",
-      "tierShare": "{pct}% ausgewählt",
+      "tierShare": "{fee} Fee Tier · von {pct} % der LPs gewählt",
       "addsToken": "fügt {symbol} zu Ihren Token hinzu",
       "hasHook": "hat einen Hook",
       "fixed": "Pools werden beim Launch festgelegt. Sie können später keinen weiteren hinzufügen.",
@@ -888,7 +896,7 @@
       "body": "Alles, was Sie bisher ausgewählt haben, wird gespeichert. Anhand des Namens finden Sie diesen Entwurf später unter Ihren Strategien wieder; Sie können ihn später unter Überprüfung ändern.",
       "nameLabel": "Entwurfsname",
       "namePlaceholder": "ETH und BTC auf Arbitrum",
-      "helper": "10 bis 50 Zeichen, dieselbe Regel wie beim Strategienamen.",
+      "helper": "10 bis 50 Zeichen.",
       "counter": "{count} / {max}",
       "progress": "Bisher gespeichert: {networks} Netzwerke, {protocols} Protokolle, {tokens} Token · Mandat, Schritt {n} von {count}",
       "keepEditing": "Weiter bearbeiten",

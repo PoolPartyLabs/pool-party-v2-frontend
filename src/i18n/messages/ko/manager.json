@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "기타 네트워크"
+      "others": "기타 네트워크",
+      "othersCaption": "추가하는 네트워크마다 브리지와 출시 시 서명 1회가 더 필요합니다."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,18 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "필수",
-      "requiredSubtitle": "모든 전략에는 토큰을 교환하고 네트워크 간에 자금을 이동할 방법이 필요합니다.",
       "operate": "운용에 사용할 프로토콜",
-      "on": "지원",
-      "onFootnote": "'지원'은 각 프로토콜을 사용할 수 있는 1단계의 네트워크를 보여줍니다."
+      "on": "지원 네트워크",
+      "onFootnote": "'지원 네트워크'는 1단계에서 선택한 네트워크 중 각 프로토콜이 지원하는 네트워크를 보여줍니다.",
+      "swapBridge": "스왑 및 브리지",
+      "swapBridgeCollapsed": "{names} · 자동 선택됨",
+      "swapBridgeOpen": "자동으로 선택되었습니다. 스왑을 하나 이상 유지하고, 네트워크를 추가하면 브리지도 하나 이상 유지하세요.",
+      "show": "보기",
+      "hide": "숨기기",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · 스왑",
+        "uniswapV3": "Uniswap v3 · 유동성"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -845,7 +853,7 @@
       "results": "{count, plural, other {보유한 토큰을 하나 이상 포함하는 풀이 #개}} 있습니다",
       "yours": "보유 풀 · {count}",
       "feeTier": "{fee} fee tier",
-      "tierShare": "{pct}% 선택됨",
+      "tierShare": "{fee} fee tier · LP의 {pct}%가 선택",
       "addsToken": "{symbol}을 토큰에 추가",
       "hasHook": "훅이 있습니다",
       "fixed": "풀은 출시 시점에 고정됩니다. 이후에는 추가할 수 없습니다.",
@@ -888,7 +896,7 @@
       "body": "지금까지 선택한 모든 내용이 저장됩니다. 이름은 전략 목록에서 이 초안을 찾는 데 사용됩니다. 나중에 '검토'에서 변경할 수 있습니다.",
       "nameLabel": "초안 이름",
       "namePlaceholder": "Arbitrum의 ETH와 BTC",
-      "helper": "10~50자, 전략 이름과 동일한 규칙이 적용됩니다.",
+      "helper": "10~50자.",
       "counter": "{count} / {max}",
       "progress": "지금까지 저장됨: 네트워크 {networks}개, 프로토콜 {protocols}개, 토큰 {tokens}개 · 운용 방침, {n}/{count} 단계",
       "keepEditing": "계속 편집",

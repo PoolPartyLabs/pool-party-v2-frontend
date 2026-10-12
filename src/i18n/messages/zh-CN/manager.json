@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "其他网络"
+      "others": "其他网络",
+      "othersCaption": "每添加一个网络，都需要一个跨链桥，并在启动时多签名一次。"
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,18 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "必需",
-      "requiredSubtitle": "每个策略都需要一种在代币之间兑换，并在其网络之间转移资金的方式。",
       "operate": "用于运营的协议",
       "on": "可用于",
-      "onFootnote": "“可用于”显示第 1 步中每个协议可用的网络。"
+      "onFootnote": "“可用于”显示每个协议支持您在第 1 步中选择的哪些网络。",
+      "swapBridge": "兑换与跨链桥",
+      "swapBridgeCollapsed": "{names} · 已为您选择",
+      "swapBridgeOpen": "已为您选择。请至少保留一个兑换协议；添加网络时，还需保留一个跨链桥。",
+      "show": "显示",
+      "hide": "隐藏",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · 兑换",
+        "uniswapV3": "Uniswap v3 · 流动性"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -845,7 +853,7 @@
       "results": "{count, plural, other {包含您至少一个代币的资金池有 # 个}}",
       "yours": "您的资金池 · {count}",
       "feeTier": "{fee} fee tier",
-      "tierShare": "已选 {pct}%",
+      "tierShare": "{fee} fee tier · {pct}% 的 LP 选择",
       "addsToken": "将 {symbol} 添加到您的代币",
       "hasHook": "带有 hook",
       "fixed": "资金池在启动时即被固定，之后无法再添加。",
@@ -888,7 +896,7 @@
       "body": "到目前为止您所做的所有选择都会保留。此名称用于在您的策略列表中找到该草稿，之后您可以在“核对”中修改。",
       "nameLabel": "草稿名称",
       "namePlaceholder": "Arbitrum 上的 ETH 和 BTC",
-      "helper": "10 到 50 个字符，与策略名称的规则相同。",
+      "helper": "10 到 50 个字符。",
       "counter": "{count} / {max}",
       "progress": "目前已保存：{networks} 个网络、{protocols} 个协议、{tokens} 个代币 · 授权范围，第 {n}/{count} 步",
       "keepEditing": "继续编辑",
