@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 712 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 714 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1186,6 +1186,8 @@ Existing PP-MGR-CMP-084 and PP-MGR-LIB-048 now accept both saved Mandate drafts 
 | `PP-MGR-LIB-077` | chartModel, exact approved market identities, public embed configuration and current-frame messages | Lib | n/a (code) | Implemented market-reference model | [POO-2309](https://linear.app/yeildbay/issue/POO-2309) | `src/features/manager/fund/charts/chartModel.ts` @rules-v1 |
 | `PP-MGR-LIB-078` | chartContext, private selected-block/draft context independent of financial values | Lib | n/a (code) | Implemented Build/Manage context | [POO-2309](https://linear.app/yeildbay/issue/POO-2309) | `src/features/manager/fund/charts/chartContext.ts` @rules-v1 |
 | `PP-MGR-CMP-103` | StrategyChartSurface, retained canvas and isolated Advanced Chart with left drawing tools | Component | [Manage Charts8678:37675](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-37675) | Implemented shared Build/Manage surface | [POO-2309](https://linear.app/yeildbay/issue/POO-2309) | `src/features/manager/fund/charts/StrategyChartSurface.tsx` @rules-v1 |
+| `PP-MGR-LIB-079` | mandateTokenAccess, pure view models of the Token access mode: the Tokens right column, the card action at 100 slots, the catalog states, the "All tokens" row value and the zero-cap Next label | Lib | n/a (code) | Implemented (mock mode) | [POO-2332](https://linear.app/yeildbay/issue/POO-2332) | `src/features/manager/fund/mandateTokenAccess.ts` @rules-v1 |
+| `PP-MGR-CMP-104` | TokenAccessControl, the "Selected tokens" / "All tokens" segmented control on the Tokens step | Component | [Tokens Selected 8013:1105](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8013-1105) · [Tokens All 9295:3](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=9295-3) | Implemented (mock mode) | [POO-2332](https://linear.app/yeildbay/issue/POO-2332) | `src/features/manager/fund/components/TokenAccessControl.tsx` @rules-v1 |
 
 Existing Build/Manage artifacts retain their IDs. ETH/USDC and SOL/USDC are Binance references, resolved by approved token identity. Pool prices, valuation, LP-range overlays, lending metrics and Activity are excluded. Browser acceptance remains with Murilo.
 

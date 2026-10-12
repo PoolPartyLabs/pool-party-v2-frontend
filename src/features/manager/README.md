@@ -379,8 +379,8 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
   left, "Your tokens" on the right (R23); the deposit token is a locked, one-row-per-network entry
   that cannot be removed (R24); the catalog lists only tokens available on the chosen networks and
   protocols (R25); a search field, a network filter and "Add all N" narrow or bulk-add the catalog
-  (R26); the mandate holds at most 16 token slots, one per network a token runs on, exceeding it
-  disables Add with "No slots left" (R27); only priced tokens (`PRICED_SYMBOLS`) are offered by
+  (R26); the mandate holds at most 16 token slots (100 in mock mode since POO-2332), one per network
+  a token runs on, exceeding it disables Add with "No slots left" (R27); only priced tokens (`PRICED_SYMBOLS`) are offered by
   default, an unpriced one is reachable by search, disabled, "No price feed yet" (R28).
 - **Pools (R29 to R38).** The step is skipped entirely with no DEX protocol chosen, and the header
   then reads "OF 4" (R29); search matches V1's own pattern, including pasting a pool address (R30);
@@ -397,6 +397,26 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
   guarantees (R41, see `CR-MGR-011`); the shared footnote states caps are checked when money moves
   and growth from price changes is not forced back (R42, see `CR-MGR-012`); rows come from the
   earlier steps minus their locked rows (R43).
+- **Token access and caps (POO-2332, mock mode).** The Tokens step has a "Token access" control:
+  "Selected tokens" or "All tokens" (`TokenAccessControl`, `PP-MGR-CMP-104`). The draft keeps the
+  mode in `tokenMode`, and a change of mode keeps the token list. Selected mode holds at most 100
+  token slots (`MAX_TOKEN_SLOTS`). At 100 of 100 each card shows "No free slots" and the count turns
+  to the warning colour. All mode has no slot cap: "Your tokens · All" shows the locked tokens and
+  "Every other token", and the footer says "No limit". The contracts hold 16 slots today, so real
+  data mode keeps 16 (`CONTRACT_TOKEN_SLOTS`) and has no Token access control.
+  - Start values: a token row starts at 0% with "No cap" not selected. A network or protocol row
+    starts at "No cap" (`effectiveCap`). Real mode keeps "Not set".
+  - Selected mode on Limits has an "All tokens" row that sets every token cap with one change. It
+    reads "Mixed" when the caps differ. All mode has one "Every token" row, the default cap for each
+    token on its own, except the deposit token.
+  - An enabled cap at 0% blocks Next (`cap_zero`). The control gets a warning border, Next shows the
+    reason ("Set the token cap above 0%") with `aria-disabled`, and a press scrolls to the row and
+    makes it blink 2 times. Next stays clickable, so the press still sends `builder_mandate_blocked`.
+  - Disclosure: All mode lets any token enter the strategy, also tokens with low liquidity or no
+    price history. The Limits step says so in a warning and shows the "All tokens" tag that
+    depositors see on the strategy card and page. This is a disclosure, not a new claim, so there is
+    no `COMPLIANCE_REGISTER` change.
+  - The view models are pure and tested in `mandateTokenAccess.ts` (`PP-MGR-LIB-079`).
 - **Name draft dialog.** Title "Name your draft", a body explaining why, a 10-to-50-character name
   field with a live counter and a progress line naming the draft's own counts ("Saved so far: 3
   networks, 4 protocols, 3 tokens, Mandate step 3 of 5"), "Keep editing" and "Save and exit".
