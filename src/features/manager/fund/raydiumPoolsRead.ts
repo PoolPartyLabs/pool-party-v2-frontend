@@ -17,6 +17,7 @@
  */
 import { z } from "zod";
 import {
+  isSolanaMint,
   parseDexScreenerPairs,
   type RaydiumPoolsErrorCode,
   type RaydiumPoolsResult,
@@ -27,9 +28,6 @@ const DEXSCREENER_PAIRS_URL = "https://api.dexscreener.com/token-pairs/v1/solana
 
 /** R5: the longest wait for DEX Screener, in ms. */
 export const RAYDIUM_READ_TIMEOUT_MS = 10_000;
-
-/** A Solana mint is a base58 string of 32 to 44 characters. This also keeps the URL path safe. */
-const MINT_PATTERN = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 const inputSchema = z.object({
   /** The token of the Pools search. */
@@ -57,8 +55,8 @@ export async function readRaydiumPools(
   const parsedInput = inputSchema.safeParse(rawInput);
   if (!parsedInput.success) return failure("invalid_input");
   const { tokenAddress, secondTokenAddress } = parsedInput.data;
-  if (!MINT_PATTERN.test(tokenAddress)) return failure("invalid_input");
-  if (secondTokenAddress !== undefined && !MINT_PATTERN.test(secondTokenAddress)) {
+  if (!isSolanaMint(tokenAddress)) return failure("invalid_input");
+  if (secondTokenAddress !== undefined && !isSolanaMint(secondTokenAddress)) {
     return failure("invalid_input");
   }
 

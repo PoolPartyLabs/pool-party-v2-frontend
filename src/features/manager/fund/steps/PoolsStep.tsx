@@ -4,6 +4,7 @@
  * @implements-rules-version v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2333 Figma parity: R8, R9)
+ * @implements-rules-version v1 (POO-2343 R4: Raydium CLMM pools from DEX Screener)
  * @analytics-events none, the shell emits
  *
  * POO-2125 [R11] / [R13] / [R29] to [R38], epic POO-2119. Mandate step 4: the pools this strategy
@@ -77,6 +78,13 @@
  * the manager is still reading. Which one a read reports is decided by whether it is also the list
  * when it lands, never by the view it started in.
  *
+ * ## Solana is searched in the same step (POO-2343 R4)
+ *
+ * The step takes the whole draft. A Solana mandate token is searched in the Raydium source and an
+ * EVM token in the API, so the EVM reads never name Solana and the Raydium read never names an EVM
+ * address (see `searchMandatePools`). A DEX Screener failure takes the same error state with Try
+ * again as any other failed read (R5). Orca has no pool search.
+ *
  * Pool catalog resolved by POO-2133: `mandatePoolSource` reads the real v4 catalog;
  * mock mode retains the existing fixtures.
  */
@@ -102,6 +110,7 @@ import { cn } from "@/lib/utils/cn";
 import { formatPercent, formatUsdCompact } from "@/lib/utils/format";
 import { CopyAddressChip } from "../components/CopyAddressChip";
 import { NetworkLogoWithName, useNetworkNames } from "../components/NetworkDots";
+import { ProtocolMark } from "../components/ProtocolMark";
 import type { MandateCatalog } from "../mandateCatalog";
 import {
   addPool,
@@ -111,18 +120,18 @@ import {
   hasDexProtocol,
   isBlocked,
   isBroadMandate,
-  isPricedSymbol,
   type MandateBlockReason,
   type MandateDraft,
   type MandatePoolRef,
   type MandateTokenRef,
   type NetworkId,
+  poolSideAddable,
   removePool,
+  SOLANA_NETWORK,
   type StepBlock,
   slotCeiling,
   slotsUsed,
   tokenKey,
-  withoutSolana,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
 import { poolFeeLabel, poolMeta } from "./mandateStepView";
@@ -261,20 +270,11 @@ function canEverAdd(draft: MandateDraft, pool: MandatePoolRef, catalog: MandateC
   if (!draft.networks.includes(pool.network)) return false;
   if (
     draft.dataMode === "real" &&
+    pool.network !== SOLANA_NETWORK &&
     !draft.positionProtocolsByChain?.[pool.network]?.includes("uniswap-v4")
   )
     return false;
-  return [pool.token0, pool.token1].every(
-    (side) =>
-      mandateHoldsSide(draft, pool, side.address) ||
-      (catalog.dataMode === "real"
-        ? catalog
-            .tokensFor([pool.network], draft.protocols)
-            .some(
-              (token) => token.address.toLowerCase() === side.address.toLowerCase() && token.priced,
-            )
-        : isPricedSymbol(side.symbol)),
-  );
+  return [pool.token0, pool.token1].every((side) => poolSideAddable(draft, pool, side, catalog));
 }
 
 /**
@@ -317,60 +317,15 @@ export interface PoolsStepProps extends MandateStepProps {
   onUniverseCount?: (count: number) => void;
 }
 
-/** Mandate step 4: the pool catalog on the left, the mandate's own pools on the right. */
 /**
- * POO-2342 R8: Raydium or Orca gives this step, and Solana has no pool discovery source yet. A draft
- * with Uniswap v4 mounts the connected step over its Arbitrum and Robinhood side only (the reads never
- * name Solana, R7). A draft with only Raydium or Orca shows the "Not available" layout.
+ * Mandate step 4: the pool catalog on the left, the mandate's own pools on the right.
+ *
+ * POO-2343 R4: Arbitrum, Robinhood and Solana pools are searched in this one step. The step takes
+ * the whole draft. The EVM reads still never name Solana: `searchMandatePools` sends a Solana token
+ * to the Raydium source only, and an EVM token to the API only. Orca has no pool search, so a
+ * mandate with Orca and no other DEX shows an empty list.
  */
-export function PoolsStep(props: PoolsStepProps) {
-  const t = useTranslations("manager");
-  const apiDraft = useMemo(() => withoutSolana(props.draft), [props.draft]);
-  const hasUniswapDex = apiDraft.protocols.some((id) =>
-    (DEX_PROTOCOL_IDS as readonly string[]).includes(id),
-  );
-  if (!hasUniswapDex)
-    return (
-      <section data-mandate-step="pools" className="flex flex-col gap-6 pb-24">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <div className="flex gap-3">
-              <Input
-                disabled
-                placeholder={t("solanaPreview.marketUnavailable")}
-                aria-label={t("solanaPreview.pool")}
-              />
-            </div>
-            <div className="rounded-xl border border-border bg-surface p-4">
-              <h3 className="text-sm font-medium">{t("solanaPreview.pool")}</h3>
-              <p role="status" className="mt-2 text-sm text-muted-foreground">
-                {t("solanaPreview.marketUnavailable")}
-              </p>
-            </div>
-          </div>
-          <aside className="w-full shrink-0 rounded-xl border border-border bg-surface p-4 lg:sticky lg:top-6 lg:w-[340px]">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="font-medium text-foreground text-sm">
-                {t("fundBuilder.pools.yours", { count: 0 })}
-              </h3>
-              <Button variant="ghost" size="sm" disabled>
-                {t("fundBuilder.common.clearAll")}
-              </Button>
-            </div>
-            <p className="mt-4 text-xs text-muted-foreground">
-              {t("solanaPreview.marketUnavailable")}
-            </p>
-            <div className="mt-4 border-border border-t pt-3">
-              <p className="text-xs text-muted-foreground">{t("fundBuilder.pools.fixed")}</p>
-            </div>
-          </aside>
-        </div>
-      </section>
-    );
-  return <ConnectedPoolsStep {...props} draft={apiDraft} />;
-}
-
-function ConnectedPoolsStep({
+export function PoolsStep({
   draft,
   catalog,
   update,
@@ -1065,16 +1020,7 @@ function ConnectedPoolsStep({
   function rowRefusal(pool: MandatePoolRef): { reason: MandateBlockReason; label: string } | null {
     if (pool.hasHook) return { reason: "has_hook", label: t("fundBuilder.pools.hasHook") };
     const unpriced = [pool.token0, pool.token1].some(
-      (side) =>
-        !mandateHoldsSide(draft, pool, side.address) &&
-        (catalog.dataMode === "real"
-          ? !catalog
-              .tokensFor([pool.network], draft.protocols)
-              .some(
-                (token) =>
-                  token.address.toLowerCase() === side.address.toLowerCase() && token.priced,
-              )
-          : !isPricedSymbol(side.symbol)),
+      (side) => !poolSideAddable(draft, pool, side, catalog),
     );
     if (unpriced) return { reason: "not_priced", label: t("fundBuilder.tokens.noPrice") };
     return null;
@@ -1130,6 +1076,15 @@ function ConnectedPoolsStep({
   function protocolBadge(protocol: DexProtocolId) {
     if (protocol === "uniswap-v3") {
       return <ProtocolBadge size={13} className="shrink-0 text-muted-foreground text-xs" />;
+    }
+    if (protocol === "raydium") {
+      // POO-2343 R4: the Raydium mark, with the name beside it, as the v4 badge does for Uniswap.
+      return (
+        <span className="inline-flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
+          <ProtocolMark id="raydium" name={protocolNames.raydium} size={13} />
+          <span>{protocolNames.raydium}</span>
+        </span>
+      );
     }
     return (
       <span className="inline-flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">

@@ -45,6 +45,17 @@ export type RaydiumPoolsResult =
   | { ok: true; pools: MandatePoolRef[] }
   | { ok: false; error: { code: RaydiumPoolsErrorCode; status?: number } };
 
+/** A Solana mint is a base58 string of 32 to 44 characters. It also keeps a URL path safe. */
+const MINT_PATTERN = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+/**
+ * Whether a value has the shape of a Solana mint. Base58 has no "0", so an EVM address (it starts
+ * with "0x") never matches. The Pools search uses this to keep each address on its own network.
+ */
+export function isSolanaMint(value: string): boolean {
+  return MINT_PATTERN.test(value);
+}
+
 /** The label that DEX Screener puts on a Raydium concentrated liquidity pool. */
 const CLMM_LABEL = "CLMM";
 const RAYDIUM_DEX_ID = "raydium";

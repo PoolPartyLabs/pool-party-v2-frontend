@@ -108,8 +108,14 @@ export const PROTOCOL_ORDER: readonly ProtocolId[] = [
   "orca",
 ];
 
-/** The position protocols. A draft with none of these skips the Pools step (R29). */
-export const DEX_PROTOCOL_IDS: readonly DexProtocolId[] = ["uniswap-v3", "uniswap-v4"];
+/**
+ * The protocols whose pools the Pools step can search (R29). POO-2343 R4 adds Raydium: its pools
+ * come from DEX Screener. Orca also gives the step but has no pool search, so it is not here.
+ */
+export const DEX_PROTOCOL_IDS: readonly DexProtocolId[] = ["uniswap-v3", "uniswap-v4", "raydium"];
+
+/** The Uniswap protocols. Only these make the Pools step ask for a pool (see `validateStep`). */
+const UNISWAP_PROTOCOL_IDS: readonly ProtocolId[] = ["uniswap-v3", "uniswap-v4"];
 
 /**
  * POO-2342 R4: the Solana network id, and the protocols that exist only on it. Manager V2 has one
@@ -120,9 +126,7 @@ export const SOLANA_PROTOCOL_IDS: readonly ProtocolId[] = ["kamino", "jupiter", 
 
 /** POO-2342 R8: the DEX protocols that give the draft a Pools step (Uniswap, Raydium and Orca). */
 function isPositionDexProtocol(id: ProtocolId): boolean {
-  return (
-    (DEX_PROTOCOL_IDS as readonly ProtocolId[]).includes(id) || id === "raydium" || id === "orca"
-  );
+  return (DEX_PROTOCOL_IDS as readonly ProtocolId[]).includes(id) || id === "orca";
 }
 
 /**
@@ -770,11 +774,11 @@ export function validateStep(
   }
   if (step === "pools") {
     if (!visibleSteps(draft).includes("pools")) return null;
-    if (draft.pools.length > 0) return null;
-    // POO-2342 R8: Raydium and Orca give the Pools step but need no Solana pool here (the Solana
-    // pool search is out of scope). Only a Uniswap protocol asks for a pool.
-    if (!draft.protocols.some((id) => (DEX_PROTOCOL_IDS as readonly ProtocolId[]).includes(id)))
-      return null;
+    // POO-2342 R8: Raydium and Orca give the Pools step but need no Solana pool here: a Raydium
+    // block falls back to SOL/USDC (POO-2343 R7). Only a Uniswap protocol asks for a pool, and a
+    // Raydium pool does not answer that.
+    if (!draft.protocols.some((id) => UNISWAP_PROTOCOL_IDS.includes(id))) return null;
+    if (draft.pools.some((pool) => UNISWAP_PROTOCOL_IDS.includes(pool.protocol))) return null;
     return { step: "pools", reason: "nothing_selected", rowId: null };
   }
   if (step === "limits") {
@@ -1269,6 +1273,37 @@ export function clearTokens(draft: MandateDraft): MandateDraft {
   return keys.reduce(removeToken, draft);
 }
 
+/**
+ * Whether the mandate can hold one side of a pool: it is a mandate token already, or it can enter.
+ *
+ * An EVM token must have a price (R28). A Solana token has no price feed (POO-2342 R4) and enters
+ * only from the Solana catalog, by its exact mint. The Pools step uses this for the row refusal and
+ * for the counts, so they agree with {@link addPool}.
+ */
+export function poolSideAddable(
+  draft: MandateDraft,
+  pool: MandatePoolRef,
+  side: MandatePoolRef["token0"],
+  catalog: MandateCatalog,
+): boolean {
+  const key = tokenKey({ network: pool.network, address: side.address });
+  if (draft.tokens.some((token) => tokenKey(token) === key)) return true;
+  if (pool.network === SOLANA_NETWORK)
+    return catalog
+      .tokensFor([SOLANA_NETWORK], draft.protocols)
+      .some(
+        (token) =>
+          token.network === SOLANA_NETWORK &&
+          token.address === side.address &&
+          token.visualEligible === true,
+      );
+  return catalog.dataMode === "real"
+    ? catalog
+        .tokensFor([pool.network], draft.protocols)
+        .some((token) => token.address.toLowerCase() === side.address.toLowerCase() && token.priced)
+    : isPricedSymbol(side.symbol);
+}
+
 /** Make sure one side of a pool is already a mandate token, adding it when it is not (R33). */
 function ensurePoolToken(
   draft: MandateDraft,
@@ -1282,8 +1317,18 @@ function ensurePoolToken(
   const address = side.address.toLowerCase();
   const fromCatalog = catalog
     .tokensFor(draft.networks, draft.protocols)
-    .find((t) => t.network === pool.network && t.address.toLowerCase() === address);
+    .find(
+      (t) =>
+        t.network === pool.network &&
+        normalizeTokenIdentity(t.network, t.address) ===
+          normalizeTokenIdentity(pool.network, side.address),
+    );
   if (fromCatalog) return addToken(draft, fromCatalog, catalog);
+
+  // POO-2343 R4: a Solana token enters from the Solana catalog only. A mint is case sensitive and
+  // has no price feed, so the lower-cased fallback below must never build a Solana entry.
+  if (pool.network === SOLANA_NETWORK)
+    return { blocked: { step: "tokens", reason: "not_priced", rowId: key } };
 
   if (catalog.dataMode === "real")
     return { blocked: { step: "tokens", reason: "not_priced", rowId: key } };
@@ -1347,8 +1392,10 @@ export function addPool(
   ) {
     return { blocked: { step: "pools", reason: "coming_soon", rowId: pool.id } };
   }
+  // The per-chain list is an API fact about Uniswap v4. Solana pools are not in the API view.
   if (
     draft.dataMode === "real" &&
+    pool.network !== SOLANA_NETWORK &&
     !draft.positionProtocolsByChain?.[pool.network]?.includes("uniswap-v4")
   )
     return { blocked: { step: "pools", reason: "coming_soon", rowId: pool.id } };
