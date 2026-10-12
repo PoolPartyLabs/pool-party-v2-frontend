@@ -810,11 +810,13 @@
       "swapBridge": "스왑 및 브리지",
       "swapBridgeCollapsed": "{names} · 자동 선택됨",
       "swapBridgeOpen": "자동으로 선택되었습니다. 스왑을 하나 이상 유지하고, 네트워크를 추가하면 브리지도 하나 이상 유지하세요.",
+      "swapBridgeOpenHub": "자동으로 선택되었습니다. 스왑을 하나 이상 유지하세요.",
+      "lockedSwap": "스왑을 하나 이상 유지하세요. 스왑할 수 없는 전략은 실행할 수 없습니다.",
+      "lockedBridge": "전략이 둘 이상의 네트워크를 사용하는 동안 브리지를 하나 유지하세요.",
       "show": "보기",
       "hide": "숨기기",
       "rowNames": {
-        "uniswapV3Swap": "Uniswap v3 · 스왑",
-        "uniswapV3": "Uniswap v3 · 유동성"
+        "uniswapV3Swap": "Uniswap v3 · 스왑"
       }
     },
     "protocolNames": {

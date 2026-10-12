@@ -810,11 +810,13 @@
       "swapBridge": "Intercambio y puente",
       "swapBridgeCollapsed": "{names} · seleccionados para usted",
       "swapBridgeOpen": "Seleccionados para usted. Mantenga al menos un intercambio, y un puente cuando añada una red.",
+      "swapBridgeOpenHub": "Seleccionados para usted. Mantenga al menos un intercambio.",
+      "lockedSwap": "Mantenga al menos un intercambio. Una estrategia que no puede intercambiar no puede operar.",
+      "lockedBridge": "Mantenga un puente mientras la estrategia use más de una red.",
       "show": "Mostrar",
       "hide": "Ocultar",
       "rowNames": {
-        "uniswapV3Swap": "Uniswap v3 · Intercambio",
-        "uniswapV3": "Uniswap v3 · Liquidez"
+        "uniswapV3Swap": "Uniswap v3 · Intercambio"
       }
     },
     "protocolNames": {

@@ -810,11 +810,13 @@
       "swapBridge": "兌換與跨鏈橋",
       "swapBridgeCollapsed": "{names} · 已為您選擇",
       "swapBridgeOpen": "已為您選擇。請至少保留一個兌換協議；新增網路時，還需保留一個跨鏈橋。",
+      "swapBridgeOpenHub": "已為您選擇。請至少保留一個兌換協議。",
+      "lockedSwap": "請至少保留一個兌換協議。無法兌換的策略無法執行。",
+      "lockedBridge": "策略使用多個網路時，請保留一個跨鏈橋。",
       "show": "顯示",
       "hide": "隱藏",
       "rowNames": {
-        "uniswapV3Swap": "Uniswap v3 · 兌換",
-        "uniswapV3": "Uniswap v3 · 流動性"
+        "uniswapV3Swap": "Uniswap v3 · 兌換"
       }
     },
     "protocolNames": {

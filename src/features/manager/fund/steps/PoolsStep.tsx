@@ -124,7 +124,7 @@ import {
   tokenKey,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
-import { POOL_META_ORDER } from "./mandateStepView";
+import { orderPoolMeta } from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -1273,19 +1273,22 @@ function ConnectedPoolsStep({
           <span className="truncate font-medium text-foreground text-sm">{pairLabel(pool)}</span>
           <span className="flex min-w-0 items-center gap-2">
             {/* POO-2333 R9: protocol, network icon, then fee tier. */}
-            {POOL_META_ORDER.map((part) => (
-              <Fragment key={part}>
-                {part === "protocol" ? protocolBadge(pool.protocol) : null}
-                {part === "network" ? (
-                  <NetworkLogoWithName network={pool.network} catalog={catalog} size={14} />
-                ) : null}
-                {part === "feeTier" ? (
-                  <span className="truncate text-muted-foreground text-xs">
-                    {t("fundBuilder.pools.feeTier", { fee: feeLabel(pool.feeBps) })}
-                  </span>
-                ) : null}
-              </Fragment>
-            ))}
+            {orderPoolMeta({
+              protocol: <Fragment key="protocol">{protocolBadge(pool.protocol)}</Fragment>,
+              network: (
+                <NetworkLogoWithName
+                  key="network"
+                  network={pool.network}
+                  catalog={catalog}
+                  size={14}
+                />
+              ),
+              feeTier: (
+                <span key="feeTier" className="truncate text-muted-foreground text-xs">
+                  {t("fundBuilder.pools.feeTier", { fee: feeLabel(pool.feeBps) })}
+                </span>
+              ),
+            })}
           </span>
         </span>
         <button

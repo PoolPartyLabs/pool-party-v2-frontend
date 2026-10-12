@@ -810,11 +810,13 @@
       "swapBridge": "スワップとブリッジ",
       "swapBridgeCollapsed": "{names} · 選択済み",
       "swapBridgeOpen": "自動で選択済みです。スワップを1つ以上、ネットワークを追加する場合はブリッジも1つ以上残してください。",
+      "swapBridgeOpenHub": "自動で選択済みです。スワップを1つ以上残してください。",
+      "lockedSwap": "スワップを1つ以上残してください。スワップできない戦略は実行できません。",
+      "lockedBridge": "戦略が複数のネットワークを使う間は、ブリッジを1つ残してください。",
       "show": "表示",
       "hide": "非表示",
       "rowNames": {
-        "uniswapV3Swap": "Uniswap v3 · スワップ",
-        "uniswapV3": "Uniswap v3 · 流動性"
+        "uniswapV3Swap": "Uniswap v3 · スワップ"
       }
     },
     "protocolNames": {

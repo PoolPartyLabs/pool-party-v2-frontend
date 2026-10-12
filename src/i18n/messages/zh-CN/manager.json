@@ -810,11 +810,13 @@
       "swapBridge": "兑换与跨链桥",
       "swapBridgeCollapsed": "{names} · 已为您选择",
       "swapBridgeOpen": "已为您选择。请至少保留一个兑换协议；添加网络时，还需保留一个跨链桥。",
+      "swapBridgeOpenHub": "已为您选择。请至少保留一个兑换协议。",
+      "lockedSwap": "请至少保留一个兑换协议。无法兑换的策略无法运行。",
+      "lockedBridge": "策略使用多个网络时，请保留一个跨链桥。",
       "show": "显示",
       "hide": "隐藏",
       "rowNames": {
-        "uniswapV3Swap": "Uniswap v3 · 兑换",
-        "uniswapV3": "Uniswap v3 · 流动性"
+        "uniswapV3Swap": "Uniswap v3 · 兑换"
       }
     },
     "protocolNames": {

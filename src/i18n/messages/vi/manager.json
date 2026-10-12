@@ -810,11 +810,13 @@
       "swapBridge": "Hoán đổi và cầu nối",
       "swapBridgeCollapsed": "{names} · đã chọn sẵn cho bạn",
       "swapBridgeOpen": "Đã chọn sẵn cho bạn. Giữ ít nhất một giao thức hoán đổi, và một cầu nối khi bạn thêm mạng.",
+      "swapBridgeOpenHub": "Đã chọn sẵn cho bạn. Giữ ít nhất một giao thức hoán đổi.",
+      "lockedSwap": "Giữ ít nhất một giao thức hoán đổi. Chiến lược không thể hoán đổi thì không thể chạy.",
+      "lockedBridge": "Giữ một cầu nối khi chiến lược dùng nhiều hơn một mạng.",
       "show": "Hiện",
       "hide": "Ẩn",
       "rowNames": {
-        "uniswapV3Swap": "Uniswap v3 · Hoán đổi",
-        "uniswapV3": "Uniswap v3 · Thanh khoản"
+        "uniswapV3Swap": "Uniswap v3 · Hoán đổi"
       }
     },
     "protocolNames": {
