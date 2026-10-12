@@ -96,6 +96,9 @@ const SKELETON_CARDS = ["s1", "s2", "s3", "s4", "s5", "s6"] as const;
 /** The one network-filter value that is not a network. */
 const ALL_NETWORKS = "all" as const;
 
+/** POO-2332 (Figma 9295:1116): "Your tokens" rows drawn before "and N more tokens". */
+const YOURS_VISIBLE = 4;
+
 type NetworkFilter = NetworkId | typeof ALL_NETWORKS;
 
 /** One catalog card: a symbol, and every entry of it the draft has not taken yet. */
@@ -711,7 +714,16 @@ export function TokensStep({
                 </button>
               </div>
 
-              <div className="mt-3 flex flex-col gap-2">{mandateGroups.map(mandateRow)}</div>
+              <div className="mt-3 flex flex-col gap-2">
+                {mandateGroups.slice(0, YOURS_VISIBLE).map(mandateRow)}
+              </div>
+              {mandateGroups.length > YOURS_VISIBLE ? (
+                <p className="mt-2 text-muted-foreground text-xs">
+                  {t("fundBuilder.tokens.andMoreTokens", {
+                    count: mandateGroups.length - YOURS_VISIBLE,
+                  })}
+                </p>
+              ) : null}
             </>
           )}
 
