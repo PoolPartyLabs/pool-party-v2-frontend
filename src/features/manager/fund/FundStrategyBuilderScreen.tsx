@@ -3,9 +3,10 @@
  * @name FundStrategyBuilderScreen
  * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2195 rules v1, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2332 token access: cap_zero on Next, the token mode event)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
- *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
- *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
+ *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_token_mode_changed,
+ *   builder_mandate_completed, builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
  *   builder_build_abandoned, builder_build_error, builder_build_submitted, builder_build_completed,
  *   builder_review_error (the Build canvas and ReviewPhase own their view/interaction events),
  *   solana_preview_viewed, solana_preview_started, solana_preview_interacted,
@@ -159,6 +160,7 @@ import {
   validateStep,
   visibleSteps,
 } from "./mandateDraft";
+import { tokenModeEvent } from "./mandateTokenAccess";
 import { LocalSolanaReview } from "./review/LocalSolanaReview";
 import { ReviewPhase } from "./review/ReviewPhase";
 import { SolanaPreviewRenderBoundary } from "./solana-preview/SolanaPreviewErrorBoundary";
@@ -198,6 +200,7 @@ export const MANDATE_BLOCK_REASON_EVENT: Record<
 > = {
   nothing_selected: "nothing_selected",
   cap_missing: "cap_missing",
+  cap_zero: "cap_zero",
   token_allowance_required: "token_allowance_required",
   no_slots: "no_slots",
   has_hook: "has_hook",
@@ -568,10 +571,13 @@ function FundBuilderShell({
   const update = useCallback(
     (fn: (current: MandateDraft) => MandateDraft | { blocked: StepBlock }) => {
       let settled = false;
+      // A holder object, so TypeScript does not narrow the closure write to `null`.
+      const outcome: { modeChange: ReturnType<typeof tokenModeEvent> } = { modeChange: null };
       applyReducer((current) => {
         const result = fn(current);
         if (isBlocked(result)) return result;
         settled = true;
+        outcome.modeChange = tokenModeEvent(current, result);
         if (current.completedAt === null) return result;
         return selectionFingerprint(result) === selectionFingerprint(current)
           ? result
@@ -579,8 +585,11 @@ function FundBuilderShell({
       });
       // `applyReducer` runs the reducer synchronously, so this reads THIS call's outcome.
       if (settled) setShellBlock(null);
+      // POO-2332 R15: one event per switch of the Token access control.
+      if (outcome.modeChange)
+        track("builder_mandate_token_mode_changed", { step: "tokens", ...outcome.modeChange });
     },
-    [applyReducer],
+    [applyReducer, track],
   );
 
   /**
@@ -1008,6 +1017,9 @@ function FundBuilderShell({
 
   const Body = STEP_BODIES[step];
   const counts = selectionCounts(draft);
+  // POO-2332 R12: an enabled 0% token cap leaves Next looking off. The press still lands (R13).
+  const capZeroPending =
+    step === "limits" && validateStep(draft, "limits", catalog)?.reason === "cap_zero";
 
   return (
     <section
@@ -1128,6 +1140,7 @@ function FundBuilderShell({
           <BuilderActionBar
             previous={previousStep(draft, step)}
             next={nextStep(draft, step)}
+            nextBlockedReason={capZeroPending ? "cap_zero" : null}
             onBack={handleBack}
             onNext={() => {
               void handleNext();

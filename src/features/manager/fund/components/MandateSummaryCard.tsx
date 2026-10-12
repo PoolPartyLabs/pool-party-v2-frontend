@@ -46,7 +46,9 @@ import { Card } from "@/components/ui/Card";
 import { formatCount } from "@/lib/utils/format";
 import type { MandateCatalog } from "../mandateCatalog";
 import {
+  allTokensCapOf,
   capRows,
+  effectiveCap,
   hasDexProtocol,
   type MandateCap,
   type MandateDraft,
@@ -55,6 +57,7 @@ import {
   type ProtocolId,
   REQUIRED_PROTOCOLS,
   tokenKey,
+  tokenModeOf,
 } from "../mandateDraft";
 import { NetworkDots, NetworkLogoWithName, useNetworkNames } from "./NetworkDots";
 
@@ -186,8 +189,10 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
   const protocols = orderedProtocols(draft);
   const showPools = hasDexProtocol(draft) && draft.pools.length > 0;
   const hiddenPools = Math.max(0, draft.pools.length - POOLS_SHOWN);
+  // POO-2332: the Limits screen shows one "Every token" row in All tokens mode, so this card does too.
+  const allMode = catalog.dataMode !== "real" && tokenModeOf(draft) === "all";
   const hasCapRows =
-    rows.networks.length > 0 || rows.protocols.length > 0 || rows.tokens.length > 0;
+    rows.networks.length > 0 || rows.protocols.length > 0 || rows.tokens.length > 0 || allMode;
 
   /** One sub-group of the Limits row, or nothing when the group has no rows at all (R43). */
   function capGroup(label: string, entries: string[]): ReactNode {
@@ -291,20 +296,22 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
               {capGroup(
                 t("fundBuilder.limits.perNetwork"),
                 rows.networks.map((network) =>
-                  capText(networkNames[network], draft.caps.networks[network]),
+                  capText(networkNames[network], effectiveCap(draft, "networks", network)),
                 ),
               )}
               {capGroup(
                 t("fundBuilder.limits.perProtocol"),
                 rows.protocols.map((protocol) =>
-                  capText(protocolNames[protocol], draft.caps.protocols[protocol]),
+                  capText(protocolNames[protocol], effectiveCap(draft, "protocols", protocol)),
                 ),
               )}
               {capGroup(
                 t("fundBuilder.limits.perToken"),
-                rows.tokens.map((token) =>
-                  capText(token.symbol, draft.caps.tokens[tokenKey(token)]),
-                ),
+                allMode
+                  ? [capText(t("fundBuilder.limits.everyTokenRow.title"), allTokensCapOf(draft))]
+                  : rows.tokens.map((token) =>
+                      capText(token.symbol, effectiveCap(draft, "tokens", tokenKey(token))),
+                    ),
               )}
             </span>
           ) : (

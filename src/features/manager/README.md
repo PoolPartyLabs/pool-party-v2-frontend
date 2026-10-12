@@ -379,8 +379,9 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
   left, "Your tokens" on the right (R23); the deposit token is a locked, one-row-per-network entry
   that cannot be removed (R24); the catalog lists only tokens available on the chosen networks and
   protocols (R25); a search field, a network filter and "Add all N" narrow or bulk-add the catalog
-  (R26); the mandate holds at most 16 token slots, one per network a token runs on, exceeding it
-  disables Add with "No slots left" (R27); only priced tokens (`PRICED_SYMBOLS`) are offered by
+  (R26); the mandate holds at most 100 token slots, one per network a token runs on (16 in real data
+  mode, where the contracts set the limit), and a full basket shows "No free slots" on each card and
+  turns "Add all" off (R27, POO-2332 rules v1); only priced tokens (`PRICED_SYMBOLS`) are offered by
   default, an unpriced one is reachable by search, disabled, "No price feed yet" (R28).
 - **Pools (R29 to R38).** The step is skipped entirely with no DEX protocol chosen, and the header
   then reads "OF 4" (R29); search matches V1's own pattern, including pasting a pool address (R30);
@@ -445,7 +446,7 @@ the drafts pair `builder_draft_opened` and `builder_draft_deleted`, and the Buil
 POO-2187), `builder_build_blocked`, `builder_build_abandoned` and `builder_build_error`, declared in
 `docs/ANALYTICS_EVENTS.md`), and the configuration panel's of POO-2187 (`builder_block_configured`,
 `builder_block_applied`, `builder_block_discarded`, `builder_block_leave_blocked`, `builder_block_limit_hit`);
-`builder_build_landing_viewed` and `builder_block_restored` are retired. `builder_mandate_blocked`'s five NEW reasons are `nothing_selected`,
+`builder_build_landing_viewed` and `builder_block_restored` are retired. `builder_mandate_token_mode_changed` (POO-2332, with `token_mode`) fires when the Token access control switches. `builder_mandate_blocked`'s five NEW reasons are `nothing_selected`,
 `cap_missing`, `no_slots`, `has_hook` and `coming_soon`; `price_unknown` (an unpriced token) and
 `name_invalid` (the draft name) REUSE the existing POO-1172 reason series rather than mint
 per-builder duplicates. A draft-save failure reports `builder_mandate_error { error_code:
@@ -709,6 +710,15 @@ allowance. No cap or a percentage above zero counts; unset and zero do not. Addi
 entries do not count as another token. Mock missing-cap priority remains network, protocol, token;
 real mode retains its spoke-cap and catalog checks before this new allowance check. The shell emits
 `builder_mandate_blocked` with `token_allowance_required` and shows translated guidance.
+
+**Token access mode and caps (POO-2332, rules v1).** The Tokens step has a "Token access" control:
+"Selected tokens" (default) or "All tokens". The draft keeps the mode (`tokenMode`) and the cap for
+every token (`allTokensCap`). A mode change keeps the token list. All tokens mode has no slot limit.
+The basket holds 100 slots (`BASKET_TOKEN_SLOTS`; `slotCeiling` returns 16 in real data mode). The view
+models live in `fund/mandateTokenAccess.ts` (`PP-MGR-LIB-079`). On Limits, a token starts at 0% with No
+cap off, and a network or protocol starts with No cap on (`effectiveCap`). An enabled 0% cap
+(`cap_zero`) makes Next `aria-disabled`; a press scrolls to the control, blinks it two times and
+sends `builder_mandate_blocked` with `cap_zero`. Real data mode keeps its earlier behavior.
 
 A completed draft that no longer meets Limits opens Mandate rather than Build/Review. This is a
 display guard, with no mount-time draft or checkpoint rewrite. Wallet-scoped existing launch journeys

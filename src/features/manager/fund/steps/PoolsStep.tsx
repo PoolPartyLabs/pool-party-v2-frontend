@@ -111,7 +111,6 @@ import {
   isBlocked,
   isBroadMandate,
   isPricedSymbol,
-  MAX_TOKEN_SLOTS,
   type MandateBlockReason,
   type MandateDraft,
   type MandatePoolRef,
@@ -119,6 +118,7 @@ import {
   type NetworkId,
   removePool,
   type StepBlock,
+  slotCeiling,
   slotsUsed,
   tokenKey,
 } from "../mandateDraft";
@@ -840,6 +840,7 @@ function ConnectedPoolsStep({
         not_priced: t("fundBuilder.tokens.noPrice"),
         coming_soon: t("fundBuilder.common.comingSoon"),
         cap_missing: null,
+        cap_zero: null,
         token_allowance_required: null,
         name_length: null,
       }[ownBlock.reason] ?? null)
@@ -1547,7 +1548,7 @@ function ConnectedPoolsStep({
                 {t("fundBuilder.common.slotsUsed")}
               </span>
               <span className="font-semibold text-foreground text-sm">
-                {t("fundBuilder.common.slotsCount", { used, max: MAX_TOKEN_SLOTS })}
+                {t("fundBuilder.common.slotsCount", { used, max: slotCeiling(draft) })}
               </span>
             </div>
             <p className="mt-2 text-muted-foreground text-xs">{t("fundBuilder.pools.fixed")}</p>
