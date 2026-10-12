@@ -3,7 +3,8 @@
  * @name TokensStep
  * @implements-rules-version v1
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
- * @analytics-events none, the shell emits
+ * @implements-rules-version v1 (POO-2332 rules v1: Token access mode and the 100-slot basket)
+ * @analytics-events none, the shell emits `builder_mandate_token_mode_changed` for the Token access control
  *
  * POO-2124 [R13] / [R23] / [R24] / [R25] / [R26] / [R27] / [R28], epic POO-2119. Mandate step 3:
  * the tokens this strategy may ever hold.
@@ -35,6 +36,17 @@
  * from the other side: it adds in order, stops at the first refusal, keeps everything it managed to
  * add, and reports that one refusal. It raises no warning of its own (R13): a wide token list is not
  * a Broad mandate until the pools are wide too, and that flag belongs to step 4.
+ *
+ * ## POO-2332: Token access mode and the 100-slot basket
+ *
+ * A "Token access" control above the columns (R1) switches between Selected tokens (the default) and
+ * All tokens. The switch keeps the list (R5). Selected mode has the two columns and the footer
+ * "Network slots used N of 100" (R2, R3). All tokens mode shows an info card and the right card
+ * "Your tokens · All" with "No limit" and no slot cap (R4). A full basket shows "100 of 100" in the
+ * warning color, "No free slots" on each card and "Add all" off, and the refusal stays `no_slots`
+ * (R7). The mock catalog shows skeleton cards while it loads and a box with "Try again" on an error;
+ * search and filters stay on and the list stays saved (R6). Real data mode keeps today's panel and
+ * its 16 slots (R14). The view models live in `mandateTokenAccess.ts` (PP-MGR-LIB-079).
  */
 "use client";
 
@@ -46,6 +58,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FilterDropdown } from "@/components/ui/FilterDropdown";
 import { Input } from "@/components/ui/Input";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/Tooltip";
 import { cn } from "@/lib/utils/cn";
 import { safeHttpUrl } from "@/lib/utils/sanitize";
@@ -56,19 +69,27 @@ import {
   addToken,
   clearTokens,
   isBlocked,
-  MAX_TOKEN_SLOTS,
   type MandateDraft,
   type MandateTokenRef,
   type NetworkId,
   removeTokenSymbol,
   type StepBlock,
-  slotsUsed,
+  setTokenMode,
+  type TokenMode,
   tokenKey,
+  tokenModeOf,
 } from "../mandateDraft";
+import { collapseRows, lockedRowCaption, slotsView, tokensViewState } from "../mandateTokenAccess";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
 const STEP = "tokens" as const;
+
+/** R7: how many "Your tokens" rows show before "and N more tokens" takes over. */
+const MANDATE_ROWS_SHOWN = 8;
+
+/** R6: how many skeleton cards stand in for the grid while the catalog loads. */
+const SKELETON_CARDS = 6;
 
 /** The one network-filter value that is not a network. */
 const ALL_NETWORKS = "all" as const;
@@ -230,7 +251,16 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   const [query, setQuery] = useState("");
   const [networkFilter, setNetworkFilter] = useState<NetworkFilter>(ALL_NETWORKS);
 
-  const used = slotsUsed(draft);
+  const slots = slotsView(draft);
+  const { used } = slots;
+  const mode = tokenModeOf(draft);
+  const allMode = catalog.dataMode !== "real" && mode === "all";
+  const viewState = tokensViewState({
+    loading: catalog.loading === true,
+    error: catalog.error === true,
+    dataMode: catalog.dataMode,
+  });
+  const [showAllRows, setShowAllRows] = useState(false);
 
   // R23: the catalog is what the draft has NOT taken, so adding a token removes its card and
   // removing the token brings it back, with no second list to keep in step.
@@ -262,6 +292,10 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   const addable = visible.filter((group) => group.priced);
 
   const mandateGroups = groupMandate(draft.tokens);
+  const collapsed = collapseRows(
+    mandateGroups,
+    showAllRows ? mandateGroups.length : MANDATE_ROWS_SHOWN,
+  );
   const hasRemovable = draft.tokens.some((token) => !token.locked);
 
   const ownBlock = block?.step === STEP ? block : null;
@@ -292,6 +326,12 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
    * draft, so they agree, and the step never reports a refusal the store did not actually make.
    */
   function handleAddAll() {
+    // R7: with a full basket the button is off; the press is reported, nothing is added.
+    if (!slots.addAllEnabled) {
+      const first = addable[0];
+      onBlocked({ step: STEP, reason: "no_slots", rowId: first?.id ?? null });
+      return;
+    }
     const preview = addAllTokens(draft, addable, catalog);
     if (preview.next !== draft) {
       update((current) => addAllTokens(current, addable, catalog).next);
@@ -330,7 +370,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
     }
 
     // R27: one slot per network this token runs on, so a two-network token needs two free.
-    const outOfSlots = used + group.entries.length > MAX_TOKEN_SLOTS;
+    const outOfSlots = used + group.entries.length > slots.ceiling;
 
     return (
       <div key={group.id} data-mandate-row={group.id} className={shell}>
@@ -349,8 +389,8 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
                   title={t("fundBuilder.common.noSlots")}
                   onClick={() => onBlocked({ step: STEP, reason: "no_slots", rowId: group.id })}
                 >
-                  <Plus className="size-4" aria-hidden="true" />
-                  {t("fundBuilder.common.add")}
+                  {slots.full ? null : <Plus className="size-4" aria-hidden="true" />}
+                  {slots.full ? t("fundBuilder.tokens.noFreeSlots") : t("fundBuilder.common.add")}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" sideOffset={4}>
@@ -372,6 +412,54 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
     );
   }
 
+  /** R4: "Deposit token" for the hub token, "Required by {network}" for the others. */
+  function lockedCaption(group: MandateGroup): string {
+    const caption = lockedRowCaption({ network: group.networks[0] ?? HUB_NETWORK });
+    return caption.kind === "depositToken"
+      ? t("fundBuilder.tokens.depositToken")
+      : t("fundBuilder.tokens.requiredBy", { network: networkNames[caption.network] });
+  }
+
+  /** R1: the Token access control. A switch keeps the list (R5) and the shell reports it (R15). */
+  function accessControl() {
+    const options: { value: TokenMode; label: string }[] = [
+      { value: "selected", label: t("fundBuilder.tokens.access.selected") },
+      { value: "all", label: t("fundBuilder.tokens.access.all") },
+    ];
+    return (
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <span className="font-medium text-foreground text-sm">
+          {t("fundBuilder.tokens.access.label")}
+        </span>
+        <fieldset className="m-0 flex min-w-0 items-center gap-1 rounded-full border-0 bg-surface p-1">
+          <legend className="sr-only">{t("fundBuilder.tokens.access.label")}</legend>
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={mode === option.value}
+              onClick={() => {
+                if (mode !== option.value) update((current) => setTokenMode(current, option.value));
+              }}
+              className={cn(
+                "rounded-full px-3 py-1 text-xs transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                mode === option.value
+                  ? "bg-surface-raised font-medium text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </fieldset>
+        {mode === "selected" ? (
+          <p className="text-muted-foreground text-xs">{t("fundBuilder.tokens.access.hint")}</p>
+        ) : null}
+      </div>
+    );
+  }
+
   /** One "Your tokens" row: the deposit token, locked, or a chosen token with its remove. */
   function mandateRow(group: MandateGroup) {
     return (
@@ -385,7 +473,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
           <span className="truncate font-medium text-foreground text-sm">{group.symbol}</span>
           <span className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-muted-foreground text-xs">
-              {group.locked ? t("fundBuilder.tokens.depositToken") : group.name}
+              {group.locked ? lockedCaption(group) : group.name}
             </span>
             <NetworkDots networks={group.networks} catalog={catalog} size={12} />
           </span>
@@ -407,125 +495,215 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   }
 
   return (
-    <section
-      data-mandate-step={STEP}
-      className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6"
-    >
-      {/* The catalog (R25, R26) */}
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <MandateCatalogStatus catalog={catalog} draft={draft} />
-        {draft.runtime === "solana-local" ? (
-          <p role="status" className="text-xs text-muted-foreground">
-            {t("solanaPreview.marketUnavailable")}
-          </p>
-        ) : null}
-        <div className="flex items-center gap-3">
-          <div className="relative min-w-0 flex-1">
-            <Search
-              className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 size-4 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t("fundBuilder.tokens.search")}
-              aria-label={t("fundBuilder.tokens.search")}
-              className="pl-9"
-            />
+    <section data-mandate-step={STEP} className="flex flex-col gap-6">
+      {/* R1: not in real data mode, which has no All tokens mode (R14). */}
+      {catalog.dataMode === "real" ? null : accessControl()}
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
+        {/* R4: All tokens mode has no catalog to browse, only the explanation. */}
+        {allMode ? (
+          <div className="flex min-w-0 flex-1 flex-col gap-2 rounded-xl border border-border bg-surface p-5">
+            <h3 className="font-medium text-foreground text-sm">
+              {t("fundBuilder.tokens.allInfo.title")}
+            </h3>
+            <p className="text-muted-foreground text-xs">{t("fundBuilder.tokens.allInfo.body")}</p>
           </div>
-          <FilterDropdown<NetworkFilter>
-            label={t("fundBuilder.common.networkFilter")}
-            options={[
-              { value: ALL_NETWORKS, label: t("fundBuilder.common.allNetworks") },
-              ...draft.networks.map((id) => ({ value: id, label: networkNames[id] })),
-            ]}
-            value={network}
-            onSelect={setNetworkFilter}
-          />
-        </div>
-        <p className="text-muted-foreground text-xs">{t("fundBuilder.tokens.caption")}</p>
+        ) : (
+          /* The catalog (R25, R26) */
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <MandateCatalogStatus catalog={catalog} draft={draft} />
+            {draft.runtime === "solana-local" ? (
+              <p role="status" className="text-xs text-muted-foreground">
+                {t("solanaPreview.marketUnavailable")}
+              </p>
+            ) : null}
+            <div className="flex items-center gap-3">
+              <div className="relative min-w-0 flex-1">
+                <Search
+                  className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 size-4 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <Input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder={t("fundBuilder.tokens.search")}
+                  aria-label={t("fundBuilder.tokens.search")}
+                  className="pl-9"
+                />
+              </div>
+              <FilterDropdown<NetworkFilter>
+                label={t("fundBuilder.common.networkFilter")}
+                options={[
+                  { value: ALL_NETWORKS, label: t("fundBuilder.common.allNetworks") },
+                  ...draft.networks.map((id) => ({ value: id, label: networkNames[id] })),
+                ]}
+                value={network}
+                onSelect={setNetworkFilter}
+              />
+            </div>
+            <p className="text-muted-foreground text-xs">{t("fundBuilder.tokens.caption")}</p>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-muted-foreground text-sm">
-            {t("fundBuilder.tokens.results", { count: visible.length })}
-          </p>
-          <div className="flex shrink-0 items-center gap-2">
-            {/* R26: one option today. PP-NOTE: a token carries no TVL of its own, so the second
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-muted-foreground text-sm">
+                {t("fundBuilder.tokens.results", { count: visible.length })}
+              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                {/* R26: one option today. PP-NOTE: a token carries no TVL of its own, so the second
                 sort (`fundBuilder.common.sortTvl`) belongs to the Pools step, not here.
 
                 `label` is the SECTION name alone. FilterDropdown composes its accessible name as
                 "<label>: <selection>", so a label that already carried the selection was announced
                 as "Sort: Name: Name". The visible "Sort:" prefix R26 draws rides on the option's
                 adornment instead, which the trigger renders and `aria-label` replaces. */}
-            <FilterDropdown<"name">
-              label={t("fundBuilder.common.sortFilter")}
-              options={[
-                {
-                  value: "name",
-                  label: t("fundBuilder.common.sortName"),
-                  adornment: <span className="-mr-1">{t("fundBuilder.common.sortPrefix")}</span>,
-                },
-              ]}
-              value="name"
-              onSelect={() => undefined}
-            />
-            {addable.length > 0 ? (
-              <Button variant="secondary" size="sm" onClick={handleAddAll}>
-                <Plus className="size-4" aria-hidden="true" />
-                {t("fundBuilder.common.addAll", { count: addable.length })}
-              </Button>
+                <FilterDropdown<"name">
+                  label={t("fundBuilder.common.sortFilter")}
+                  options={[
+                    {
+                      value: "name",
+                      label: t("fundBuilder.common.sortName"),
+                      adornment: (
+                        <span className="-mr-1">{t("fundBuilder.common.sortPrefix")}</span>
+                      ),
+                    },
+                  ]}
+                  value="name"
+                  onSelect={() => undefined}
+                />
+                {addable.length > 0 ? (
+                  <Button variant="secondary" size="sm" onClick={handleAddAll}>
+                    <Plus className="size-4" aria-hidden="true" />
+                    {t("fundBuilder.common.addAll", { count: addable.length })}
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+
+            {notice ? (
+              <p
+                role="alert"
+                className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive text-sm"
+              >
+                {notice}
+              </p>
+            ) : null}
+
+            {viewState.kind === "loading" ? (
+              // R6: skeleton cards and a status line. Search and filters above stay on.
+              <div
+                role="status"
+                aria-label={t("fundBuilder.tokens.loading")}
+                className="flex flex-col gap-2"
+              >
+                <p className="text-muted-foreground text-sm">{t("fundBuilder.tokens.loading")}</p>
+                <div className="grid grid-cols-2 gap-2" aria-hidden="true">
+                  {Array.from({ length: SKELETON_CARDS }, (_, index) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: a fixed count of identical placeholders.
+                    <Skeleton key={index} className="h-[62px] w-full rounded-xl" />
+                  ))}
+                </div>
+              </div>
+            ) : viewState.kind === "error" ? (
+              // R6: the list the manager already built stays saved, so the box says so and retries.
+              <div
+                role="alert"
+                className="flex flex-col items-center gap-2 rounded-xl border border-error-border bg-error-surface px-4 py-6 text-center"
+              >
+                <p className="text-destructive text-xs">
+                  {t("fundBuilder.tokens.loadError.title")}
+                </p>
+                <p className="font-medium text-foreground text-sm">
+                  {t("fundBuilder.tokens.loadError.heading")}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {t("fundBuilder.tokens.loadError.body")}
+                </p>
+                <Button variant="secondary" size="sm" onClick={() => catalog.retry?.()}>
+                  {t("fundBuilder.tokens.retry")}
+                </Button>
+              </div>
+            ) : viewState.kind === "real" &&
+              (catalog.loading || catalog.error) ? null : visible.length === 0 ? (
+              <EmptyState title={t("fundBuilder.tokens.empty")} />
+            ) : (
+              <div className="grid grid-cols-2 gap-2">{visible.map(catalogCard)}</div>
+            )}
+          </div>
+        )}
+
+        {/* The mandate (R24, R27) */}
+        <aside className="w-full shrink-0 rounded-xl border border-border bg-surface p-4 lg:sticky lg:top-6 lg:w-[340px]">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-medium text-foreground text-sm">
+              {allMode
+                ? t("fundBuilder.tokens.yoursAll")
+                : t("fundBuilder.tokens.yours", { count: draft.tokens.length })}
+            </h3>
+            {allMode ? null : (
+              <button
+                type="button"
+                disabled={!hasRemovable}
+                onClick={() => update(clearTokens)}
+                className="shrink-0 rounded-md text-muted-foreground text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {t("fundBuilder.common.clearAll")}
+              </button>
+            )}
+          </div>
+
+          <div className="mt-3 flex flex-col gap-2">
+            {/* R4: All tokens mode lists only the locked rows, then one line for the rest. */}
+            {(allMode ? mandateGroups.filter((group) => group.locked) : collapsed.shown).map(
+              mandateRow,
+            )}
+            {allMode ? (
+              <div className="flex flex-col rounded-xl bg-surface-raised px-3 py-2">
+                <span className="font-medium text-foreground text-sm">
+                  {t("fundBuilder.tokens.everyOther")}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  {t("fundBuilder.tokens.everyOtherCaption")}
+                </span>
+              </div>
+            ) : collapsed.hidden > 0 ? (
+              <button
+                type="button"
+                onClick={() => setShowAllRows(true)}
+                className="self-start rounded-md text-muted-foreground text-xs transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {t("fundBuilder.tokens.andMoreTokens", { count: collapsed.hidden })}
+              </button>
             ) : null}
           </div>
-        </div>
 
-        {notice ? (
-          <p
-            role="alert"
-            className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive text-sm"
-          >
-            {notice}
-          </p>
-        ) : null}
-
-        {catalog.loading || catalog.error ? null : visible.length === 0 ? (
-          <EmptyState title={t("fundBuilder.tokens.empty")} />
-        ) : (
-          <div className="grid grid-cols-2 gap-2">{visible.map(catalogCard)}</div>
-        )}
-      </div>
-
-      {/* The mandate (R24, R27) */}
-      <aside className="w-full shrink-0 rounded-xl border border-border bg-surface p-4 lg:sticky lg:top-6 lg:w-[340px]">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="font-medium text-foreground text-sm">
-            {t("fundBuilder.tokens.yours", { count: draft.tokens.length })}
-          </h3>
-          <button
-            type="button"
-            disabled={!hasRemovable}
-            onClick={() => update(clearTokens)}
-            className="shrink-0 rounded-md text-muted-foreground text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {t("fundBuilder.common.clearAll")}
-          </button>
-        </div>
-
-        <div className="mt-3 flex flex-col gap-2">{mandateGroups.map(mandateRow)}</div>
-
-        <div className="mt-4 border-border border-t pt-3">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-muted-foreground text-xs">
-              {t("fundBuilder.common.slotsUsed")}
-            </span>
-            <span className="font-semibold text-foreground text-sm">
-              {t("fundBuilder.common.slotsCount", { used, max: MAX_TOKEN_SLOTS })}
-            </span>
+          <div className="mt-4 border-border border-t pt-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-muted-foreground text-xs">
+                {allMode
+                  ? t("fundBuilder.tokens.slotsAllLabel")
+                  : t("fundBuilder.common.slotsUsed")}
+              </span>
+              <span
+                className={cn(
+                  "font-semibold text-sm",
+                  slots.full ? "text-warning" : "text-foreground",
+                )}
+              >
+                {allMode
+                  ? t("fundBuilder.tokens.slotsNoLimit")
+                  : t("fundBuilder.common.slotsCount", { used, max: slots.ceiling })}
+              </span>
+            </div>
+            <p
+              className={cn("mt-2 text-xs", slots.full ? "text-warning" : "text-muted-foreground")}
+            >
+              {allMode
+                ? t("fundBuilder.tokens.slotsAllCaption", { max: slots.ceiling })
+                : slots.full
+                  ? t("fundBuilder.tokens.slotsFull", { max: slots.ceiling })
+                  : t("fundBuilder.tokens.slotsCaption", { max: slots.ceiling })}
+            </p>
           </div>
-          <p className="mt-2 text-muted-foreground text-xs">
-            {t("fundBuilder.tokens.slotsCaption", { max: MAX_TOKEN_SLOTS })}
-          </p>
-        </div>
-      </aside>
+        </aside>
+      </div>
     </section>
   );
 }
