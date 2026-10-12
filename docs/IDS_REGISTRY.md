@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 717 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 718 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1217,5 +1217,16 @@ with 542 markers across 312 files. The five disclosed historical duplicate IDs r
 
 Existing `PP-MGR-CMP-072` (SupplyBlockPanel) keeps its ID. It now shows the collateral note when a Borrow sits directly under the Supply, and the Lending risk block (`PP-MGR-CMP-094`, not available while the fund is built). The Borrow formulas live in `PP-MGR-LIB-080` because `PP-MGR-LIB-068` assumes no protocol risk formula.
 
-Current Borrow-panel census: 717 registry rows and 712 unique IDs, 2,315 files under `src/`,
+Borrow-panel census: 717 registry rows and 712 unique IDs, 2,315 files under `src/`,
 with 548 markers across 316 files. The five disclosed historical duplicate IDs remain unchanged.
+
+## Manage and Overview Figma parity, October 12, 2026 (POO-2335 v1)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-090` | manageSpineCopy, spine card title and subtitle, range tone, percent format and Explorer link | Lib | n/a (code) | Implemented Manage spine copy | [POO-2335](https://linear.app/yeildbay/issue/POO-2335) | `src/features/manager/fund/manage/manageSpineCopy.ts` @rules-v1 |
+
+Existing PP-MGR-SCR-004, PP-MGR-CMP-085, PP-MGR-CMP-086, PP-MGR-SCR-001 and PP-MGR-LIB-058 keep their IDs. PP-MGR-LIB-058 adds `overviewStrategyRow`.
+
+Current Manage parity census: 718 registry rows and 713 unique IDs, 2,317 files under `src/`,
+with 552 markers across 317 files. The five disclosed historical duplicate IDs remain unchanged.

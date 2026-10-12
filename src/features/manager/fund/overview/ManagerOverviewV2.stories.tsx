@@ -1,4 +1,4 @@
-/** @id PP-MGR-SCR-001 @name ManagerOverviewV2 stories @implements-rules-version v1 (POO-2245) */
+/** @id PP-MGR-SCR-001 @name ManagerOverviewV2 stories @implements-rules-version v1 (POO-2245) @implements-rules-version v1 (POO-2335) */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { managerOverviewDemo } from "@/mocks/data/managerOverviewV2";
 import { withManagerMessages } from "../build/canvas/canvasStorySupport";
@@ -26,3 +26,12 @@ export const Empty: Story = {
   },
 };
 export const ReadError: Story = { args: { demo: { ...managerOverviewDemo, state: "error" } } };
+/** POO-2335: a Closing strategy uses the warning status pill. */
+export const ClosingStrategy: Story = {
+  args: {
+    demo: {
+      ...managerOverviewDemo,
+      funds: managerOverviewDemo.funds.map((fund) => ({ ...fund, state: "Closing" as const })),
+    },
+  },
+};

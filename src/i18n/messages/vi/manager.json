@@ -1403,6 +1403,8 @@
     "strategyBlocks": "Các khối chiến lược",
     "selectionHelp": "Chọn một khối trên canvas hoặc từ danh sách này.",
     "viewMandate": "Xem ủy nhiệm đầu tư",
+    "explorer": "Trình khám phá",
+    "strategyAddressUnavailable": "Địa chỉ chiến lược không khả dụng.",
     "viewInvestor": "Xem với vai trò nhà đầu tư",
     "noSelection": "Chọn một khối để xem số dư và quản lý vị thế.",
     "emptyPositions": "Chiến lược này chưa có vị thế nào.",
@@ -1545,6 +1547,19 @@
       "debt": "Khoản nợ",
       "fullAccount": "Rủi ro áp dụng cho toàn bộ tài khoản, gồm tất cả collateral và khoản nợ.",
       "tokenMetadata": "Siêu dữ liệu token"
+    },
+    "spine": {
+      "routeEntry": "Bối cảnh tuyến · Đầu vào",
+      "routeExit": "Bối cảnh tuyến · Đầu ra",
+      "routeScope": "Phạm vi tuyến · {pct}",
+      "strategyShare": "Trên giá trị chiến lược · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "Đã yêu cầu {amount}",
+      "reserved": "Đã dự trữ {pct}",
+      "bridgeEntry": "Cầu nối vào",
+      "bridgeReturn": "Cầu nối về",
+      "swapInput": "Đầu vào swap",
+      "swapFees": "Swap phí"
     }
   },
   "overviewV2": {
@@ -1580,6 +1595,7 @@
     "loadFailed": "Không thể tải chiến lược của bạn",
     "retryDescription": "Thử lại để cập nhật AUM và danh sách chiến lược.",
     "retry": "Thử lại",
+    "strategyListUnavailable": "Danh sách chiến lược của bạn không khả dụng.",
     "setupPreserved": "Thiết lập đã lưu của bạn vẫn có ở phía trên.",
     "localUnavailable": "Không thể đọc một phần thiết lập đã lưu. Dữ liệu của bạn đã được giữ lại.",
     "historyUnavailable": "Lịch sử AUM chưa khả dụng.",

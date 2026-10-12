@@ -1403,6 +1403,8 @@
     "strategyBlocks": "Bloques de la estrategia",
     "selectionHelp": "Selecciona un bloque en el canvas o en esta lista.",
     "viewMandate": "Ver mandato",
+    "explorer": "Explorador",
+    "strategyAddressUnavailable": "La dirección de la estrategia no está disponible.",
     "viewInvestor": "Ver como inversionista",
     "noSelection": "Seleccione un bloque para ver sus saldos y gestionar la posición.",
     "emptyPositions": "Esta estrategia aún no tiene posiciones.",
@@ -1545,6 +1547,19 @@
       "debt": "Deuda",
       "fullAccount": "El riesgo se aplica a toda la cuenta, incluyendo todo el collateral y todas las deudas.",
       "tokenMetadata": "Metadatos del token"
+    },
+    "spine": {
+      "routeEntry": "Contexto de ruta · Entrada",
+      "routeExit": "Contexto de ruta · Salida",
+      "routeScope": "Alcance de ruta · {pct}",
+      "strategyShare": "Del valor de la estrategia · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "{amount} solicitado",
+      "reserved": "{pct} reservado",
+      "bridgeEntry": "Entrada del puente",
+      "bridgeReturn": "Retorno del puente",
+      "swapInput": "Entrada del swap",
+      "swapFees": "Swap de comisiones"
     }
   },
   "overviewV2": {
@@ -1580,6 +1595,7 @@
     "loadFailed": "No pudimos cargar tus estrategias",
     "retryDescription": "Inténtalo de nuevo para actualizar tu AUM y tu lista de estrategias.",
     "retry": "Intentar de nuevo",
+    "strategyListUnavailable": "Tu lista de estrategias no está disponible.",
     "setupPreserved": "Tu configuración guardada sigue disponible arriba.",
     "localUnavailable": "No se pudo leer parte de la configuración guardada. Tus datos se han conservado.",
     "historyUnavailable": "El historial de AUM no está disponible.",

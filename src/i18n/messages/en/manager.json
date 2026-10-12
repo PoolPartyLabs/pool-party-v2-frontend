@@ -1403,6 +1403,8 @@
     "strategyBlocks": "Strategy blocks",
     "selectionHelp": "Select a block on the canvas or from this list.",
     "viewMandate": "View mandate",
+    "explorer": "Explorer",
+    "strategyAddressUnavailable": "Strategy address is unavailable.",
     "viewInvestor": "View as investor",
     "noSelection": "Select a block to view its balances and manage the position.",
     "emptyPositions": "This strategy has no positions yet.",
@@ -1545,6 +1547,19 @@
       "debt": "Debt",
       "fullAccount": "Risk applies to the full account, including all collateral and debt.",
       "tokenMetadata": "Token metadata"
+    },
+    "spine": {
+      "routeEntry": "Route context · Entry",
+      "routeExit": "Route context · Exit",
+      "routeScope": "Route scope · {pct}",
+      "strategyShare": "Of strategy value · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "{amount} requested",
+      "reserved": "{pct} reserved",
+      "bridgeEntry": "Bridge entry",
+      "bridgeReturn": "Bridge return",
+      "swapInput": "Swap input",
+      "swapFees": "Swap fees"
     }
   },
   "overviewV2": {
@@ -1580,6 +1595,7 @@
     "loadFailed": "We couldn't load your strategies",
     "retryDescription": "Try again to update your AUM and strategy list.",
     "retry": "Try again",
+    "strategyListUnavailable": "Your strategy list is unavailable.",
     "setupPreserved": "Your saved setup is still available above.",
     "localUnavailable": "Some saved setup could not be read. Your stored data has been preserved.",
     "historyUnavailable": "AUM history is not available.",

@@ -555,6 +555,19 @@ data and the fund's real capital when the API serves them. The health factor and
 price are single-collateral, single-debt estimates (PP-MGR-LIB-080); the account read stays with
 the Lending risk block (PP-MGR-CMP-094). A Borrow has no contract base, so launch is not wired.
 
-Current Borrow-panel census: 2,315 files under `src/`, with 548 markers across 316 files,
+Borrow-panel census: 2,315 files under `src/`, with 548 markers across 316 files,
 including tests, stories and source documentation. Registry totals are 717 rows and 712 unique
 IDs. Prior censuses describe their named releases.
+
+## Manage spine copy (POO-2335 v1)
+
+`manageSpineCopy.ts` adds 4 markers.
+
+- The Aave health factor read is not served yet, so the Supply card shows "HF Not available".
+- The income and operating cash shares of strategy value are not served yet. The Income, Operating cash and Swap fees cards show "Not available" in place of the share.
+- No read gives the Bridge return scope yet, so that card shows "Route scope · Not available".
+- The Explorer link uses the deployed strategy address from the fund read. An empty or invalid address shows "Explorer · Not available" and "Strategy address is unavailable."
+
+Current Manage parity census: 2,317 files under `src/`, with 552 markers across 317 files,
+including tests, stories and source documentation. Registry totals are 718 rows and 713 unique
+IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.

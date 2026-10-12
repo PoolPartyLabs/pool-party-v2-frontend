@@ -1403,6 +1403,8 @@
     "strategyBlocks": "Blocs de la stratégie",
     "selectionHelp": "Sélectionnez un bloc sur le canvas ou dans cette liste.",
     "viewMandate": "Voir le mandat",
+    "explorer": "Explorateur",
+    "strategyAddressUnavailable": "L’adresse de la stratégie n’est pas disponible.",
     "viewInvestor": "Voir en tant qu’investisseur",
     "noSelection": "Sélectionnez un bloc pour consulter ses soldes et gérer la position.",
     "emptyPositions": "Cette stratégie n’a pas encore de positions.",
@@ -1545,6 +1547,19 @@
       "debt": "Dette",
       "fullAccount": "Le risque concerne le compte entier, y compris tout le collateral et toutes les dettes.",
       "tokenMetadata": "Métadonnées du token"
+    },
+    "spine": {
+      "routeEntry": "Contexte de route · Entrée",
+      "routeExit": "Contexte de route · Sortie",
+      "routeScope": "Portée de route · {pct}",
+      "strategyShare": "De la valeur de la stratégie · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "{amount} demandé",
+      "reserved": "{pct} réservé",
+      "bridgeEntry": "Entrée du pont",
+      "bridgeReturn": "Retour du pont",
+      "swapInput": "Entrée du swap",
+      "swapFees": "Swap des frais"
     }
   },
   "overviewV2": {
@@ -1580,6 +1595,7 @@
     "loadFailed": "Impossible de charger vos stratégies",
     "retryDescription": "Réessayez pour actualiser votre AUM et votre liste de stratégies.",
     "retry": "Réessayer",
+    "strategyListUnavailable": "Votre liste de stratégies n’est pas disponible.",
     "setupPreserved": "Votre configuration enregistrée reste disponible ci-dessus.",
     "localUnavailable": "Une partie de la configuration enregistrée est illisible. Vos données ont été conservées.",
     "historyUnavailable": "L’historique AUM est indisponible.",

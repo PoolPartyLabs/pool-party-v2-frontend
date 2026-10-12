@@ -77,6 +77,24 @@ last pending metadata during fallback; retry restores applied draft/Review, not 
 Local Review keeps numeric fee/minimum/seed intentions but no EVM financial or signing promise.
 Upload, Max and Launch are observable blocked intents and perform no file/storage/wallet operation.
 
+## Manage and Overview Figma parity (POO-2335, rules v1)
+
+`manageSpineCopy` (`PP-MGR-LIB-090`) gives each Manage spine card its title and subtitle.
+Entry and Exit show "Route context". Each route card shows "Route scope" with its own field:
+Swap input and Bridge entry use the spoke idle share, Collect fees uses the position share and
+Swap fees uses the income share. Bridge return shows "Not available".
+Idle cards show "Of strategy value". Supply shows value, share and the health factor.
+Liquidity shows value, share and the range status. An unknown range status uses the muted tone.
+Operating cash shows amount, USD value and share. Idle output shows the requested amount and the
+reserved share. Income shows the amount and its share. Percents use up to 4 decimal places.
+Subtitles wrap to 2 lines. The Manage aside shows "Explorer" with the strategy address link, or
+"Not available". View mandate always shows below it. Move range applies now. Create new position
+applies to new deposits only. There is no "When to apply" selector. The Overview strategy table
+(`PP-MGR-SCR-001`) uses `overviewStrategyRow` (`PP-MGR-LIB-058`) for the avatar, the status pill
+and the network names. On a read error, the AUM card shows the retry and the table shows
+"Your strategy list is unavailable."
+No new feature flag is added. The 3-click Solana gate is unchanged.
+
 ## i18n namespace
 
 `manager.*` (`src/i18n/messages/{locale}/manager.json`). Manager Console keeps DeFi terms in English

@@ -1403,6 +1403,8 @@
     "strategyBlocks": "策略区块",
     "selectionHelp": "在画布或此列表中选择一个区块。",
     "viewMandate": "查看投资授权",
+    "explorer": "浏览器",
+    "strategyAddressUnavailable": "策略地址不可用。",
     "viewInvestor": "以投资者身份查看",
     "noSelection": "选择一个区块，查看余额并管理仓位。",
     "emptyPositions": "此策略尚无仓位。",
@@ -1545,6 +1547,19 @@
       "debt": "债务",
       "fullAccount": "风险适用于整个账户，包括所有 Collateral 和债务。",
       "tokenMetadata": "代币元数据"
+    },
+    "spine": {
+      "routeEntry": "路由上下文 · 入口",
+      "routeExit": "路由上下文 · 出口",
+      "routeScope": "路由范围 · {pct}",
+      "strategyShare": "占策略价值 · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "已申请 {amount}",
+      "reserved": "已预留 {pct}",
+      "bridgeEntry": "跨链桥入口",
+      "bridgeReturn": "跨链桥返回",
+      "swapInput": "兑换输入",
+      "swapFees": "手续费兑换"
     }
   },
   "overviewV2": {
@@ -1580,6 +1595,7 @@
     "loadFailed": "无法加载您的策略",
     "retryDescription": "请重试以更新 AUM 和策略列表。",
     "retry": "重试",
+    "strategyListUnavailable": "你的策略列表不可用。",
     "setupPreserved": "已保存的设置仍可在上方查看。",
     "localUnavailable": "部分已保存设置无法读取。您的数据已保留。",
     "historyUnavailable": "AUM 历史暂不可用。",
