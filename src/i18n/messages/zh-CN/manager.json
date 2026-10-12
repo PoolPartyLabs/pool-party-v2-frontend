@@ -847,14 +847,15 @@
       "requiredBy": "{network} 需要",
       "slotsShort": "网络槽位",
       "noLimit": "无限制",
-      "noLimitCaption": "100 个槽位的上限仅适用于已选代币。",
+      "noLimitCaption": "{max} 个槽位的上限仅适用于已选代币。",
       "fullCaption": "全部 {max} 个槽位已用完。移除一个代币后才能添加其他代币。",
       "noFreeSlots": "没有空闲槽位",
       "loading": "正在加载代币",
       "errorTitle": "代币未能加载",
       "errorHeading": "无法加载代币列表",
       "errorBody": "请检查网络连接后重试。你列表中的代币仍会保存。",
-      "retry": "重试"
+      "retry": "重试",
+      "moreTokens": "以及另外 {count} 个代币"
     },
     "pools": {
       "search": "代币、交易对或资金池地址",

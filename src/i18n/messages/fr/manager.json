@@ -847,14 +847,15 @@
       "requiredBy": "Requis par {network}",
       "slotsShort": "Slots réseau",
       "noLimit": "Aucune limite",
-      "noLimitCaption": "La limite de 100 slots s'applique seulement aux tokens sélectionnés.",
+      "noLimitCaption": "La limite de {max} slots s'applique seulement aux tokens sélectionnés.",
       "fullCaption": "Les {max} slots sont utilisés. Retirez un token pour en ajouter un autre.",
       "noFreeSlots": "Aucun slot libre",
       "loading": "Chargement des tokens",
       "errorTitle": "Les tokens n'ont pas chargé",
       "errorHeading": "Impossible de charger la liste des tokens",
       "errorBody": "Vérifiez votre connexion et réessayez. Les tokens de votre liste restent enregistrés.",
-      "retry": "Réessayer"
+      "retry": "Réessayer",
+      "moreTokens": "et {count, plural, one {# token de plus} other {# tokens de plus}}"
     },
     "pools": {
       "search": "Jeton, paire ou adresse de pool",

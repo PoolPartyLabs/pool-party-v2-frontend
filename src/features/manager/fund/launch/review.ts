@@ -7,7 +7,22 @@
 import { z } from "zod";
 import { type MandateDraft, tokenKey } from "../mandateDraft";
 
-export function hasLaunchTokenAllowance(draft: Pick<MandateDraft, "tokens" | "caps">): boolean {
+/**
+ * Whether the mandate allows at least one token beside the locked deposit token.
+ *
+ * POO-2332 R10: in All mode (mock data only) the default cap of the "Every token" row covers every
+ * other token, so the default cap decides and USDC alone is a valid list. An enabled 0% default
+ * cap, or no default cap, allows no token. Real data mode has no All mode (R14), so the per-token
+ * caps decide there.
+ */
+export function hasLaunchTokenAllowance(
+  draft: Pick<MandateDraft, "tokens" | "caps"> &
+    Partial<Pick<MandateDraft, "dataMode" | "tokenMode" | "defaultTokenCap">>,
+): boolean {
+  if (draft.dataMode !== "real" && draft.tokenMode === "all") {
+    const cap = draft.defaultTokenCap;
+    return cap?.noCap === true || (cap?.pct ?? 0) > 0;
+  }
   return draft.tokens.some((token) => {
     const cap = draft.caps.tokens[tokenKey(token)];
     return !token.locked && (cap?.noCap === true || (cap?.pct ?? 0) > 0);

@@ -847,14 +847,15 @@
       "requiredBy": "Erforderlich für {network}",
       "slotsShort": "Netzwerk-Slots",
       "noLimit": "Kein Limit",
-      "noLimitCaption": "Das Limit von 100 Slots gilt nur für ausgewählte Tokens.",
+      "noLimitCaption": "Das Limit von {max} Slots gilt nur für ausgewählte Tokens.",
       "fullCaption": "Alle {max} Slots sind belegt. Entfernen Sie einen Token, um einen anderen hinzuzufügen.",
       "noFreeSlots": "Keine freien Slots",
       "loading": "Tokens werden geladen",
       "errorTitle": "Tokens wurden nicht geladen",
       "errorHeading": "Die Token-Liste konnte nicht geladen werden",
       "errorBody": "Prüfen Sie Ihre Verbindung und versuchen Sie es erneut. Die Tokens in Ihrer Liste bleiben gespeichert.",
-      "retry": "Erneut versuchen"
+      "retry": "Erneut versuchen",
+      "moreTokens": "und {count, plural, one {# weiterer Token} other {# weitere Tokens}}"
     },
     "pools": {
       "search": "Token, Paar oder Pool-Adresse",

@@ -426,6 +426,17 @@ export function selectionFingerprint(draft: MandateDraft): string {
   ]);
 }
 
+/**
+ * POO-2332 R14: whether the builder runs on real data. The draft or the catalog can say so. Every
+ * POO-2332 rule that differs in real mode reads this one definition.
+ */
+export function isRealData(
+  draft: Pick<MandateDraft, "dataMode">,
+  catalog: Pick<MandateCatalog, "dataMode">,
+): boolean {
+  return draft.dataMode === "real" || catalog.dataMode === "real";
+}
+
 /** POO-2332 R1: the token access mode. Missing reads as "selected"; real mode is always "selected". */
 export function tokenModeOf(draft: MandateDraft): TokenMode {
   if (draft.dataMode === "real") return "selected";
@@ -477,7 +488,7 @@ export function firstZeroCapRow(
   draft: MandateDraft,
   catalog: MandateCatalog,
 ): { group: ZeroCapGroup; rowId: string } | null {
-  if (draft.dataMode === "real" || catalog.dataMode === "real") return null;
+  if (isRealData(draft, catalog)) return null;
   const isZero = (cap: MandateCap) => !cap.noCap && cap.pct <= 0;
   const rows = capRows(draft, catalog);
   for (const network of rows.networks) {

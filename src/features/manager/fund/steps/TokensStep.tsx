@@ -69,6 +69,7 @@ import {
   clearTokens,
   HUB_NETWORK,
   isBlocked,
+  isRealData,
   type MandateDraft,
   type MandateTokenRef,
   type NetworkId,
@@ -76,8 +77,14 @@ import {
   type StepBlock,
   setTokenMode,
   tokenKey,
+  tokenSlotCeiling,
 } from "../mandateDraft";
-import { catalogCardAction, tokenAccessPanel, tokenCatalogState } from "../mandateTokenAccess";
+import {
+  basketRowsView,
+  catalogCardAction,
+  tokenAccessPanel,
+  tokenCatalogState,
+} from "../mandateTokenAccess";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -249,7 +256,9 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   // POO-2332: what the right column shows (R3, R4, R7), and the catalog state (R6). Real data mode
   // keeps the shared MandateCatalogStatus notices (R14), so the mock states apply in mock mode only.
   const panel = tokenAccessPanel(draft, catalog);
-  const real = catalog.dataMode === "real";
+  const real = isRealData(draft, catalog);
+  // R7: a long basket shows 4 rows and "and N more tokens" (Figma 9295:1116) until it is opened.
+  const [basketOpen, setBasketOpen] = useState(false);
   const catalogState = real ? null : tokenCatalogState(catalog);
 
   // R23: the catalog is what the draft has NOT taken, so adding a token removes its card and
@@ -284,6 +293,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   const addable = panel.full && !real ? [] : visible.filter((group) => group.priced);
 
   const mandateGroups = groupMandate(draft.tokens);
+  const basketView = basketRowsView(mandateGroups.length, basketOpen);
   const hasRemovable = draft.tokens.some((token) => !token.locked);
 
   const ownBlock = block?.step === STEP ? block : null;
@@ -668,7 +678,19 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
                 </div>
               </div>
             ) : (
-              <div className="mt-3 flex flex-col gap-2">{mandateGroups.map(mandateRow)}</div>
+              <div className="mt-3 flex flex-col gap-2">
+                {mandateGroups.slice(0, basketView.shown).map(mandateRow)}
+                {basketView.hidden > 0 ? (
+                  <button
+                    type="button"
+                    data-basket-more=""
+                    onClick={() => setBasketOpen(true)}
+                    className="self-start rounded-md text-muted-foreground text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {t("fundBuilder.tokens.moreTokens", { count: basketView.hidden })}
+                  </button>
+                ) : null}
+              </div>
             )}
 
             <div className="mt-4 border-border border-t pt-3">
@@ -708,7 +730,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
                     </span>
                   </div>
                   <p className="mt-2 text-muted-foreground text-xs">
-                    {t("fundBuilder.tokens.noLimitCaption")}
+                    {t("fundBuilder.tokens.noLimitCaption", { max: tokenSlotCeiling(draft) })}
                   </p>
                 </>
               )}

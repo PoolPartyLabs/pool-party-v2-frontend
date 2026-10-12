@@ -401,17 +401,27 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
   "Selected tokens" or "All tokens" (`TokenAccessControl`, `PP-MGR-CMP-104`). The draft keeps the
   mode in `tokenMode`, and a change of mode keeps the token list. Selected mode holds at most 100
   token slots (`MAX_TOKEN_SLOTS`). At 100 of 100 each card shows "No free slots" and the count turns
-  to the warning colour. All mode has no slot cap: "Your tokens · All" shows the locked tokens and
-  "Every other token", and the footer says "No limit". The contracts hold 16 slots today, so real
-  data mode keeps 16 (`CONTRACT_TOKEN_SLOTS`) and has no Token access control.
+  to the warning color. All mode has no slot cap: "Your tokens · All" shows the locked tokens and
+  "Every other token", and the footer says "No limit". A long basket shows 4 rows, then "and N more
+  tokens" (Figma 9295:1116). The contracts hold 16 slots today, so real data mode keeps 16
+  (`CONTRACT_TOKEN_SLOTS`) and has no Token access control. `isRealData` is the one definition of
+  real data mode: the draft or the catalog can say so.
   - Start values: a token row starts at 0% with "No cap" not selected. A network or protocol row
     starts at "No cap" (`effectiveCap`). Real mode keeps "Not set".
   - Selected mode on Limits has an "All tokens" row that sets every token cap with one change. It
-    reads "Mixed" when the caps differ. All mode has one "Every token" row, the default cap for each
-    token on its own, except the deposit token.
+    reads "Mixed" when the caps differ. Its "No cap" box keeps the cap of each token, so a tick and
+    an untick give each token its own cap back. All mode has one "Every token" row, the default cap
+    for each token on its own, except the deposit token.
+  - In All mode the summary card lists the locked tokens and "Every other token", and its token cap
+    is the default cap. The launch allowance check reads the default cap in All mode, so USDC alone
+    is valid when the default cap is above 0% or "No cap".
   - An enabled cap at 0% blocks Next (`cap_zero`). The control gets a warning border, Next shows the
     reason ("Set the token cap above 0%") with `aria-disabled`, and a press scrolls to the row and
     makes it blink 2 times. Next stays clickable, so the press still sends `builder_mandate_blocked`.
+    The blink is a CSS animation (`animate-cap-zero-blink`) keyed on the row id and the press count,
+    so each press plays it once. With reduced motion the ring shows and does not blink.
+  - `builder_mandate_token_mode_changed` goes out only for a real change of the mode on the same
+    draft. A load or a resume sends nothing (`tokenModeChangedParams`).
   - Disclosure: All mode lets any token enter the strategy, also tokens with low liquidity or no
     price history. The Limits step says so in a warning and shows the "All tokens" tag that
     depositors see on the strategy card and page. This is a disclosure, not a new claim, so there is

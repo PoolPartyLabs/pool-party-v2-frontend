@@ -110,6 +110,33 @@ body {
 }
 
 /*
+ * POO-2332 R13: the zero-cap row of the Limits step blinks 2 times, then stays off. The ring shows,
+ * hides, shows and hides, 250 ms each. With reduced motion the ring shows and does not blink.
+ */
+@keyframes cap-zero-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  25%,
+  75%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-cap-zero-blink {
+  animation: cap-zero-blink 1s step-end 1 forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-cap-zero-blink {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/*
  * Dark, thin scrollbar for scrollable fields on the dark-only theme (e.g. the manager-profile
  * description textarea, whose default UA scrollbar renders white). Opt-in via the `scrollbar-dark`
  * class so there is no global blast radius. Covers Firefox (scrollbar-*) and WebKit.

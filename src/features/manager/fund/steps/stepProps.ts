@@ -8,7 +8,8 @@
  * step bodies (POO-2119, S2 to S6). A step receives the draft and the catalog, writes through
  * `update` (a reducer that may refuse with `{ blocked }`), renders the inline notice for `block` when
  * it is its own, and reports its own blocked intents through `onBlocked` so the shell owns every
- * `builder_mandate_blocked` emission. Nothing else crosses this boundary.
+ * `builder_mandate_blocked` emission. Limits also reads `blockPress` (POO-2332 R13). Nothing else
+ * crosses this boundary.
  */
 
 import type { MandateCatalog } from "../mandateCatalog";
@@ -26,4 +27,9 @@ export interface MandateStepProps {
   block: StepBlock | null;
   /** Report a blocked intent raised inside the step (a disabled row clicked, an add refused). */
   onBlocked: (block: StepBlock) => void;
+  /**
+   * POO-2332 R13: the count of refused presses of Next. Limits blinks its zero-cap row once for
+   * each new count. The other steps do not read it.
+   */
+  blockPress?: number;
 }

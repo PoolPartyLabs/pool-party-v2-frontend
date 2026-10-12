@@ -8,6 +8,7 @@
  * middle, and the next PHASE on the last one. POO-2332 R12 adds `CapZeroBlocked`.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { nextButtonView } from "../mandateTokenAccess";
 import { BuilderActionBar } from "./BuilderActionBar";
 
 const meta = {
@@ -31,5 +32,10 @@ export const LastStep: Story = { args: { previous: "pools", next: null } };
 
 /** POO-2332 R12: a cap at 0%. Next shows the reason, looks muted and stays clickable. */
 export const CapZeroBlocked: Story = {
-  args: { previous: "pools", next: null, blockedLabel: "Set the token cap above 0%" },
+  args: {
+    previous: "pools",
+    next: null,
+    nextView: nextButtonView({ group: "token" }),
+    blockedLabel: "Set the token cap above 0%",
+  },
 };

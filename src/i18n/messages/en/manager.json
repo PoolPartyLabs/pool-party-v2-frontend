@@ -847,14 +847,15 @@
       "requiredBy": "Required by {network}",
       "slotsShort": "Network slots",
       "noLimit": "No limit",
-      "noLimitCaption": "The 100-slot cap applies only to selected tokens.",
+      "noLimitCaption": "The {max}-slot cap applies only to selected tokens.",
       "fullCaption": "All {max} slots are used. Remove a token to add another.",
       "noFreeSlots": "No free slots",
       "loading": "Loading tokens",
       "errorTitle": "Tokens did not load",
       "errorHeading": "We could not load the token list",
       "errorBody": "Check your connection and try again. The tokens in your list stay saved.",
-      "retry": "Try again"
+      "retry": "Try again",
+      "moreTokens": "and {count, plural, one {# more token} other {# more tokens}}"
     },
     "pools": {
       "search": "Token, pair or pool address",

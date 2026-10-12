@@ -210,9 +210,24 @@ export const AnotherTokenRequired: Story = {
   ),
 };
 
-/** POO-2332 R9: the token caps differ, so the "All tokens" row reads "Mixed". One drag sets all. */
+/**
+ * POO-2332 R9: two capped tokens with different caps (WETH 25%, WBTC 10%), so the "All tokens" row
+ * reads "Mixed". One drag sets all. No cap on "All tokens", then off again, gives each token its own
+ * cap back.
+ */
 export const Mixed: Story = {
-  render: () => <Harness catalog={catalog} initial={selections(FIGMA_CAPS)} />,
+  render: () => (
+    <Harness
+      catalog={catalog}
+      initial={selections({
+        ...FIGMA_CAPS,
+        tokens: {
+          [tokenKey(WETH)]: { noCap: false, pct: 25 },
+          [tokenKey(WBTC)]: { noCap: false, pct: 10 },
+        },
+      })}
+    />
+  ),
 };
 
 /**

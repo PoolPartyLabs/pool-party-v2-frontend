@@ -847,14 +847,15 @@
       "requiredBy": "{network}で必須",
       "slotsShort": "ネットワークスロット",
       "noLimit": "上限なし",
-      "noLimitCaption": "100スロットの上限は選択したトークンにのみ適用されます。",
+      "noLimitCaption": "{max}スロットの上限は選択したトークンにのみ適用されます。",
       "fullCaption": "{max}スロットすべてが使用中です。別のトークンを追加するにはトークンを削除してください。",
       "noFreeSlots": "空きスロットなし",
       "loading": "トークンを読み込み中",
       "errorTitle": "トークンを読み込めませんでした",
       "errorHeading": "トークンリストを読み込めませんでした",
       "errorBody": "接続を確認して、もう一度お試しください。リスト内のトークンは保存されたままです。",
-      "retry": "再試行"
+      "retry": "再試行",
+      "moreTokens": "他{count}件のトークン"
     },
     "pools": {
       "search": "トークン、ペア、またはプールアドレス",

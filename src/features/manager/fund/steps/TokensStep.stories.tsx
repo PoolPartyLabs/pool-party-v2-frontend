@@ -145,7 +145,7 @@ export const SlotsNearlyFull: Story = {
 };
 
 /**
- * POO-2332 R7: 100 of 100. The count and its caption turn to the warning colour, every card shows
+ * POO-2332 R7: 100 of 100. The count and its caption turn to the warning color, every card shows
  * "No free slots", and "Add all" is disabled. A click on a card still reports the refusal.
  */
 export const SlotsFull: Story = {

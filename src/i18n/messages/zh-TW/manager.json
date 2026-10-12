@@ -847,14 +847,15 @@
       "requiredBy": "{network} 需要",
       "slotsShort": "網路槽位",
       "noLimit": "無限制",
-      "noLimitCaption": "100 個槽位的上限只適用於已選代幣。",
+      "noLimitCaption": "{max} 個槽位的上限只適用於已選代幣。",
       "fullCaption": "全部 {max} 個槽位已用完。移除一個代幣後才能加入其他代幣。",
       "noFreeSlots": "沒有空閒槽位",
       "loading": "正在載入代幣",
       "errorTitle": "代幣未能載入",
       "errorHeading": "無法載入代幣清單",
       "errorBody": "請檢查網路連線後重試。你清單中的代幣仍會保存。",
-      "retry": "重試"
+      "retry": "重試",
+      "moreTokens": "以及另外 {count} 個代幣"
     },
     "pools": {
       "search": "代幣、交易對或資金池地址",

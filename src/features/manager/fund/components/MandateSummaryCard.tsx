@@ -3,6 +3,7 @@
  * @name MandateSummaryCard
  * @implements-rules-version v2 (POO-2127 rules v1, POO-2143 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2332 R10: the All mode tokens and default cap)
  * @analytics-events none, a read-only card. It shows what was already decided and offers no
  *   control, so there is no intent here to record; the screen that renders it owns the view event
  *   (PP-MGR-SCR-002)
@@ -54,8 +55,8 @@ import {
   PROTOCOL_ORDER,
   type ProtocolId,
   REQUIRED_PROTOCOLS,
-  tokenKey,
 } from "../mandateDraft";
+import { mandateSummaryTokens } from "../mandateTokenAccess";
 import { NetworkDots, NetworkLogoWithName, useNetworkNames } from "./NetworkDots";
 
 /** How many pools are listed before the rest become a count. */
@@ -124,9 +125,11 @@ function Chip({ children }: { children: ReactNode }) {
  * Listing them separately would print "USDC, USDC, USDC" for a three-network mandate; one chip
  * carrying three network dots says the same thing and says it once.
  */
-function tokensBySymbol(draft: MandateDraft): { symbol: string; networks: NetworkId[] }[] {
+function tokensBySymbol(
+  tokens: MandateDraft["tokens"],
+): { symbol: string; networks: NetworkId[] }[] {
   const grouped: { symbol: string; networks: NetworkId[] }[] = [];
-  for (const token of draft.tokens) {
+  for (const token of tokens) {
     const existing = grouped.find((entry) => entry.symbol === token.symbol);
     if (existing) {
       if (!existing.networks.includes(token.network)) existing.networks.push(token.network);
@@ -182,12 +185,19 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
   }
 
   const rows = capRows(draft, catalog);
-  const tokens = tokensBySymbol(draft);
+  // POO-2332 R10: All mode lists the locked tokens and "Every other token", and its token cap is
+  // the default cap of the "Every token" row.
+  const summaryTokens = mandateSummaryTokens(draft, catalog);
+  const allMode = summaryTokens.mode === "all";
+  const tokens = tokensBySymbol(summaryTokens.tokens);
+  const tokenCapEntries = summaryTokens.defaultCap
+    ? [capText(t("fundBuilder.limits.everyToken"), summaryTokens.defaultCap)]
+    : (summaryTokens.tokenCaps ?? []).map((entry) => capText(entry.symbol, entry.cap));
   const protocols = orderedProtocols(draft);
   const showPools = hasDexProtocol(draft) && draft.pools.length > 0;
   const hiddenPools = Math.max(0, draft.pools.length - POOLS_SHOWN);
   const hasCapRows =
-    rows.networks.length > 0 || rows.protocols.length > 0 || rows.tokens.length > 0;
+    rows.networks.length > 0 || rows.protocols.length > 0 || tokenCapEntries.length > 0;
 
   /** One sub-group of the Limits row, or nothing when the group has no rows at all (R43). */
   function capGroup(label: string, entries: string[]): ReactNode {
@@ -242,7 +252,7 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
 
         <SummaryRow
           label={t("fundBuilder.build.summaryTokens")}
-          count={draft.tokens.length}
+          count={allMode ? undefined : draft.tokens.length}
           testId="mandate-summary-tokens"
         >
           {tokens.map((token) => (
@@ -258,6 +268,11 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
               <NetworkDots networks={token.networks} catalog={catalog} size={12} />
             </Chip>
           ))}
+          {allMode ? (
+            <Chip>
+              <span data-summary-token="every-other">{t("fundBuilder.tokens.everyOther")}</span>
+            </Chip>
+          ) : null}
         </SummaryRow>
 
         {/* R29: a mandate with no position protocol never had a Pools step, so there is no row. */}
@@ -300,12 +315,7 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
                   capText(protocolNames[protocol], draft.caps.protocols[protocol]),
                 ),
               )}
-              {capGroup(
-                t("fundBuilder.limits.perToken"),
-                rows.tokens.map((token) =>
-                  capText(token.symbol, draft.caps.tokens[tokenKey(token)]),
-                ),
-              )}
+              {capGroup(t("fundBuilder.limits.perToken"), tokenCapEntries)}
             </span>
           ) : (
             <span className="text-muted-foreground text-xs">{t("fundBuilder.limits.noRows")}</span>

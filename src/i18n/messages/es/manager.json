@@ -847,14 +847,15 @@
       "requiredBy": "Requerido por {network}",
       "slotsShort": "Slots de red",
       "noLimit": "Sin límite",
-      "noLimitCaption": "El límite de 100 slots aplica solo a los tokens seleccionados.",
+      "noLimitCaption": "El límite de {max} slots aplica solo a los tokens seleccionados.",
       "fullCaption": "Los {max} slots están en uso. Quita un token para agregar otro.",
       "noFreeSlots": "Sin slots libres",
       "loading": "Cargando tokens",
       "errorTitle": "Los tokens no cargaron",
       "errorHeading": "No pudimos cargar la lista de tokens",
       "errorBody": "Revisa tu conexión e inténtalo de nuevo. Los tokens de tu lista siguen guardados.",
-      "retry": "Intentar de nuevo"
+      "retry": "Intentar de nuevo",
+      "moreTokens": "y {count, plural, one {# token más} other {# tokens más}}"
     },
     "pools": {
       "search": "Token, par o dirección de la pool",

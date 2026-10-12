@@ -321,6 +321,32 @@ describe("the Build plan inside a draft", () => {
     expect(getDraft("none")).not.toHaveProperty("planUnreadable");
   });
 
+  it("keeps a valid token mode and default cap (POO-2332 R1, R10) and drops a bad one", () => {
+    // @rule Storage
+    const base = draft("modes", "2026-10-03T00:00:00.000Z");
+    storeRaw({
+      good: { ...base, id: "good", tokenMode: "all", defaultTokenCap: { noCap: false, pct: 15 } },
+      offGrid: {
+        ...base,
+        id: "offGrid",
+        tokenMode: "all",
+        defaultTokenCap: { noCap: false, pct: 17 },
+      },
+      bad: { ...base, id: "bad", tokenMode: "every", defaultTokenCap: { noCap: "yes", pct: 10 } },
+      junk: { ...base, id: "junk", tokenMode: 3, defaultTokenCap: { noCap: false, pct: "NaN" } },
+    });
+    expect(getDraft("good")?.tokenMode).toBe("all");
+    expect(getDraft("good")?.defaultTokenCap).toEqual({ noCap: false, pct: 15 });
+    // An off-grid value goes to the 5% grid, as `setDefaultTokenCap` does.
+    expect(getDraft("offGrid")?.defaultTokenCap).toEqual({ noCap: false, pct: 15 });
+    // A bad value is dropped and the draft reads as Selected mode with no default cap.
+    expect(getDraft("bad")).not.toHaveProperty("tokenMode");
+    expect(getDraft("bad")).not.toHaveProperty("defaultTokenCap");
+    expect(getDraft("junk")).not.toHaveProperty("tokenMode");
+    expect(getDraft("junk")).not.toHaveProperty("defaultTokenCap");
+    expect(getDraft("junk")?.id).toBe("junk");
+  });
+
   describe("an unreadable plan is never deleted silently", () => {
     /** A plan a newer build wrote: version 2 means nothing to this one. */
     const NEWER = { version: 2, hub: { chains: [] }, spokes: [], lanes: ["future"] };

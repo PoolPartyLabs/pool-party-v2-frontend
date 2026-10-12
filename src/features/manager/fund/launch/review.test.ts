@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { buildMandateCatalog } from "../mandateCatalog";
-import { createEmptyDraft, tokenKey, validateStep } from "../mandateDraft";
+import {
+  createEmptyDraft,
+  setDefaultTokenCap,
+  setTokenMode,
+  tokenKey,
+  validateStep,
+} from "../mandateDraft";
 import {
   hasLaunchTokenAllowance,
   previewSeed,
@@ -43,6 +49,25 @@ describe("fund Review [R1, R2]", () => {
     expect(hasLaunchTokenAllowance(draft)).toBe(allowed);
     expect(validateStep(draft, "limits", buildMandateCatalog()) === null).toBe(allowed);
     expect(hasLaunchTokenAllowance({ ...draft, tokens: [{ ...token, locked: true }] })).toBe(false);
+  });
+  it("gives All mode its allowance from the default cap, so USDC alone can launch", () => {
+    // @rule R10
+    const catalog = buildMandateCatalog();
+    const usdcOnly = setTokenMode(createEmptyDraft("2026-10-04", "all-mode"), "all");
+    expect(usdcOnly.tokens.every((token) => token.locked)).toBe(true);
+    const capped = setDefaultTokenCap(usdcOnly, { noCap: false, pct: 15 });
+    expect(hasLaunchTokenAllowance(capped)).toBe(true);
+    expect(validateStep(capped, "limits", catalog)).toBeNull();
+    expect(hasLaunchTokenAllowance(setDefaultTokenCap(usdcOnly, { noCap: true, pct: 0 }))).toBe(
+      true,
+    );
+    // An enabled 0% default cap, or no default cap at all, allows no token.
+    expect(hasLaunchTokenAllowance(setDefaultTokenCap(usdcOnly, { noCap: false, pct: 0 }))).toBe(
+      false,
+    );
+    expect(hasLaunchTokenAllowance(usdcOnly)).toBe(false);
+    // Real data mode has no All mode, so the per-token caps decide.
+    expect(hasLaunchTokenAllowance({ ...capped, dataMode: "real" })).toBe(false);
   });
   it("trims identity and validates the manager's first deposit", () => {
     expect(validateReview(review, BigInt("100000000")).name).toBe("Aave income fund");

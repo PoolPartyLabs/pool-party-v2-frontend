@@ -847,14 +847,15 @@
       "requiredBy": "Bắt buộc bởi {network}",
       "slotsShort": "Slot mạng",
       "noLimit": "Không giới hạn",
-      "noLimitCaption": "Giới hạn 100 slot chỉ áp dụng cho token đã chọn.",
+      "noLimitCaption": "Giới hạn {max} slot chỉ áp dụng cho token đã chọn.",
       "fullCaption": "Đã dùng hết {max} slot. Hãy xóa một token để thêm token khác.",
       "noFreeSlots": "Không còn slot trống",
       "loading": "Đang tải token",
       "errorTitle": "Không tải được token",
       "errorHeading": "Chúng tôi không thể tải danh sách token",
       "errorBody": "Kiểm tra kết nối và thử lại. Các token trong danh sách của bạn vẫn được lưu.",
-      "retry": "Thử lại"
+      "retry": "Thử lại",
+      "moreTokens": "và {count} token khác"
     },
     "pools": {
       "search": "Token, cặp hoặc địa chỉ pool",

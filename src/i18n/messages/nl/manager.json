@@ -847,14 +847,15 @@
       "requiredBy": "Vereist door {network}",
       "slotsShort": "Netwerkslots",
       "noLimit": "Geen limiet",
-      "noLimitCaption": "De limiet van 100 slots geldt alleen voor geselecteerde tokens.",
+      "noLimitCaption": "De limiet van {max} slots geldt alleen voor geselecteerde tokens.",
       "fullCaption": "Alle {max} slots zijn in gebruik. Verwijder een token om een andere toe te voegen.",
       "noFreeSlots": "Geen vrije slots",
       "loading": "Tokens laden",
       "errorTitle": "Tokens zijn niet geladen",
       "errorHeading": "We konden de tokenlijst niet laden",
       "errorBody": "Controleer je verbinding en probeer het opnieuw. De tokens in je lijst blijven bewaard.",
-      "retry": "Opnieuw proberen"
+      "retry": "Opnieuw proberen",
+      "moreTokens": "en nog {count, plural, one {# token} other {# tokens}}"
     },
     "pools": {
       "search": "Token, paar of pooladres",

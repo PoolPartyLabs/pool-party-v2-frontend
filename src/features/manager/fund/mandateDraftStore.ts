@@ -36,6 +36,7 @@ import {
   MANDATE_STEP_ORDER,
   type MandateDraft,
   type MandateStepKey,
+  setDefaultTokenCap,
   withoutUnavailableProtocols,
 } from "./mandateDraft";
 
@@ -121,12 +122,23 @@ function normalizeDraft(value: unknown): MandateDraft | null {
     plan: storedPlan,
     lastPhase: storedPhase,
     planUnreadable: _derivedOnRead,
+    tokenMode: storedTokenMode,
+    defaultTokenCap: storedDefaultCap,
     ...rest
   } = value;
-  const draft: MandateDraft = {
+  let draft: MandateDraft = {
     ...(rest as unknown as MandateDraft),
     poolUniverseCount: typeof universe === "number" ? universe : null,
   };
+  // POO-2332 R1/R10: both fields are optional. A value this build does not know is dropped, so the
+  // draft reads as Selected mode with no default cap. A default cap off the 5% grid is snapped.
+  if (storedTokenMode === "selected" || storedTokenMode === "all")
+    draft.tokenMode = storedTokenMode;
+  if (isRecord(storedDefaultCap)) {
+    const { noCap, pct } = storedDefaultCap;
+    if (typeof noCap === "boolean" && typeof pct === "number" && Number.isFinite(pct))
+      draft = setDefaultTokenCap(draft, { noCap, pct });
+  }
   // POO-2151: an unreadable plan costs the plan in memory, never the draft, and is never deleted
   // silently: the draft says so (`planUnreadable`) and the raw plan stays stored (readStore).
   if (storedPlan !== undefined) {

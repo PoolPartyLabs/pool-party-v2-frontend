@@ -27,7 +27,8 @@
  * An enabled cap at 0% blocks the step (R12). The control of that row gets the warning border and
  * its value shows in the warning color, and the shell gives Next the reason as its label. A press on
  * that Next comes back here as a `cap_zero` block: the step scrolls to the row and blinks it 2 times
- * (R13). In Selected mode an "All tokens" row on top of the token group sets one cap on every token
+ * (R13). The blink is a CSS animation keyed on the row id and the press count (`capZeroBlinkKey`),
+ * so each press plays it once and a re-render does not. Reduced motion shows a still ring. In Selected mode an "All tokens" row on top of the token group sets one cap on every token
  * row and shows "Mixed" when they differ (R9). In All mode the token group is one "Every token" row
  * with the default cap, and a warning box tells the manager that depositors see an "All tokens" tag
  * (R10).
@@ -70,6 +71,7 @@ import {
   EVERY_TOKEN_ROW_ID,
   effectiveCap,
   HUB_NETWORK,
+  isRealData,
   type MandateCap,
   type MandateDraft,
   type NetworkId,
@@ -80,7 +82,14 @@ import {
   tokenKey,
   tokenModeOf,
 } from "../mandateDraft";
-import { allTokensRowValue, nextBlockedLabelKey } from "../mandateTokenAccess";
+import {
+  allTokensRowValue,
+  type CapZeroLabelKey,
+  capZeroBlinkKey,
+  firstZeroCap,
+  nextBlockedLabelKey,
+  toggleAllTokensNoCap,
+} from "../mandateTokenAccess";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -88,9 +97,6 @@ const STEP = "limits" as const;
 
 /** How long a refused row keeps its ring (R6). Long enough to find it, short enough to not nag. */
 const HIGHLIGHT_MS = 1500;
-
-/** POO-2332 R13: a zero-cap row blinks 2 times. Each step of the blink lasts this long. */
-const BLINK_STEP_MS = 250;
 
 /** The `data-mandate-row` id of the "All tokens" row (R9). It is never a block target. */
 const ALL_TOKENS_ROW_ID = "tokens:all";
@@ -106,6 +112,8 @@ interface RowIo {
   read: (draft: MandateDraft) => MandateCap | undefined;
   write: (draft: MandateDraft, cap: MandateCap) => MandateDraft;
   clear: ((draft: MandateDraft) => MandateDraft) | null;
+  /** The No cap box, when the row needs its own (R9). Otherwise the box uses {@link toggleNoCap}. */
+  toggle?: (draft: MandateDraft) => MandateDraft;
 }
 
 /**
@@ -148,8 +156,23 @@ function GroupHead({ title, caption }: { title: string; caption: string }) {
   );
 }
 
+/**
+ * POO-2332 R12: the translated zero-cap reason for a key from `nextBlockedLabelKey`, or null. The
+ * builder shell (Next label) and this step (the notice) read the same labels. Literal keys, so the
+ * i18n usage scan sees each one.
+ */
+export function useCapZeroLabel(): (key: CapZeroLabelKey | null) => string | null {
+  const t = useTranslations("manager");
+  const labels: Record<CapZeroLabelKey, string> = {
+    "fundBuilder.limits.capZeroNetwork": t("fundBuilder.limits.capZeroNetwork"),
+    "fundBuilder.limits.capZeroProtocol": t("fundBuilder.limits.capZeroProtocol"),
+    "fundBuilder.limits.capZeroToken": t("fundBuilder.limits.capZeroToken"),
+  };
+  return (key) => (key ? labels[key] : null);
+}
+
 /** Mandate step 5: the per network, per protocol and per token caps. */
-export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) {
+export function LimitsStep({ draft, catalog, update, block, blockPress = 0 }: MandateStepProps) {
   const t = useTranslations("manager");
   const networkNames = useNetworkNames();
 
@@ -177,12 +200,7 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
     // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
     // perps: t("fundBuilder.limits.kind.perps"),
   };
-  // POO-2332 R12: the zero-cap reasons, as literal keys for the i18n usage scan.
-  const capZeroLabels: Record<string, string> = {
-    "fundBuilder.limits.capZeroNetwork": t("fundBuilder.limits.capZeroNetwork"),
-    "fundBuilder.limits.capZeroProtocol": t("fundBuilder.limits.capZeroProtocol"),
-    "fundBuilder.limits.capZeroToken": t("fundBuilder.limits.capZeroToken"),
-  };
+  const capZeroLabel = useCapZeroLabel();
 
   // The visible text. The accessible name adds the row (see the checkbox below).
   const noCapLabel = t("fundBuilder.common.noCap");
@@ -190,7 +208,7 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
   const noRowsLabel = t("fundBuilder.limits.noRows");
 
   // R14: real data mode keeps its stored caps, its "Not set" rows and its validation.
-  const real = catalog.dataMode === "real" || draft.dataMode === "real";
+  const real = isRealData(draft, catalog);
   const allMode = !real && tokenModeOf(draft) === "all";
 
   const rows = capRows(draft, catalog);
@@ -214,24 +232,22 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
 
   // R6: find the row the shell is pointing at, then ring it for a moment. Both halves are needed:
   // the scroll answers "where", the ring answers "which one", and a long list gives neither for free.
-  // POO-2332 R13: a zero-cap row blinks 2 times. Each Next press gives a new block, so each press
-  // blinks again.
+  // POO-2332 R13: a zero-cap row blinks 2 times in place of the ring. The keys hold the row id and
+  // the press count, so each press scrolls and blinks once and a re-render does neither.
+  const targetRowId = ownBlock?.rowId ?? null;
+  const blinkKey = capZeroBlinkKey(ownBlock, blockPress);
+  const ringRowId = targetRowId && ownBlock?.reason !== "cap_zero" ? targetRowId : null;
+  const focusKey = blinkKey ?? (ringRowId ? `${ringRowId}:${blockPress}` : null);
   useEffect(() => {
-    const rowId = ownBlock?.rowId;
-    if (!rowId) return;
-    document.querySelector(`[data-mandate-row="${rowId}"]`)?.scrollIntoView({ block: "center" });
-    if (ownBlock?.reason !== "cap_zero") {
-      setHighlighted(rowId);
-      const timer = window.setTimeout(() => setHighlighted(null), HIGHLIGHT_MS);
-      return () => window.clearTimeout(timer);
-    }
-    const timers = [rowId, null, rowId, null].map((value, index) =>
-      window.setTimeout(() => setHighlighted(value), index * BLINK_STEP_MS),
-    );
-    return () => {
-      for (const timer of timers) window.clearTimeout(timer);
-    };
-  }, [ownBlock]);
+    if (!focusKey || !targetRowId) return;
+    document
+      .querySelector(`[data-mandate-row="${targetRowId}"]`)
+      ?.scrollIntoView({ block: "center" });
+    if (!ringRowId) return;
+    setHighlighted(ringRowId);
+    const timer = window.setTimeout(() => setHighlighted(null), HIGHLIGHT_MS);
+    return () => window.clearTimeout(timer);
+  }, [focusKey, targetRowId, ringRowId]);
 
   /**
    * The cap a row shows. Mock mode reads the start value when no record exists (R8). Real mode
@@ -324,7 +340,7 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
         }}
         className="h-1 w-20 shrink-0 cursor-pointer appearance-none rounded-full accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-56"
         // The filled part of the track is the value, which `accent-color` alone does not draw
-        // on every engine. Both stops read from the token layer, so a partner theme recolours
+        // on every engine. Both stops read from the token layer, so a partner theme recolors
         // the slider with the rest of the app.
         style={{
           background: `linear-gradient(to right, var(--color-primary) ${pct}%, var(--color-surface-raised) ${pct}%)`,
@@ -347,10 +363,20 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
         key={id}
         data-mandate-row={id}
         className={cn(
-          "flex min-h-14 items-center gap-4 rounded-xl border border-border bg-surface px-4 py-3 transition-shadow",
-          highlighted === id && (zero ? "ring-2 ring-brand-mango" : "ring-2 ring-destructive/60"),
+          "relative flex min-h-14 items-center gap-4 rounded-xl border border-border bg-surface px-4 py-3 transition-shadow",
+          highlighted === id && "ring-2 ring-destructive/60",
         )}
       >
+        {/* R13: one blink for each press. A new key mounts a new ring, which plays the animation
+            again. `globals.css` holds the animation and its reduced-motion guard. */}
+        {blinkKey && targetRowId === id ? (
+          <span
+            key={blinkKey}
+            aria-hidden="true"
+            data-cap-zero-blink=""
+            className="pointer-events-none absolute inset-0 animate-cap-zero-blink rounded-xl ring-2 ring-brand-mango"
+          />
+        ) : null}
         {logo}
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="flex min-w-0 items-center gap-2">
@@ -391,7 +417,11 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
           // short because on screen the row it belongs to is right there.
           aria-label={t("fundBuilder.limits.noCapLabel", { name: accessibleName })}
           onClick={() =>
-            update((current) => toggleNoCap(current, io.read(current), io.write, io.clear))
+            update((current) =>
+              io.toggle
+                ? io.toggle(current)
+                : toggleNoCap(current, io.read(current), io.write, io.clear),
+            )
           }
           className={cn(
             "flex shrink-0 items-center gap-2 rounded-md text-sm transition-colors",
@@ -414,8 +444,11 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
   /** The step notice for a block. R12: a zero cap names its kind. */
   function noticeText(): string {
     if (!ownBlock) return "";
-    const capZeroKey = nextBlockedLabelKey(ownBlock);
-    if (capZeroKey) return capZeroLabels[capZeroKey] ?? t("fundBuilder.limits.capMissing");
+    if (ownBlock.reason === "cap_zero")
+      return (
+        capZeroLabel(nextBlockedLabelKey(firstZeroCap(draft, catalog))) ??
+        t("fundBuilder.limits.capMissing")
+      );
     if (ownBlock.reason === "token_allowance_required")
       return t(
         rows.tokens.length === 0
@@ -439,6 +472,8 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
     },
     write: setAllTokenCaps,
     clear: null,
+    // R9: the box keeps each token's own value, so ticking and unticking it changes nothing else.
+    toggle: (source) => toggleAllTokensNoCap(source, tokenKeys),
   };
 
   /** R10: the "Every token" row reads and writes the default cap. */

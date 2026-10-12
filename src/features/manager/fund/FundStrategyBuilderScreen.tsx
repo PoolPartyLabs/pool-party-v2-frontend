@@ -124,8 +124,6 @@ import { Button } from "@/components/ui/Button";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { toast } from "@/components/ui/Toast";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import type { AnalyticsMandateBlockReason } from "@/lib/analytics/events";
-import type { AnalyticsBlockReason } from "@/lib/analytics/txFlowKit";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useSolanaPreviewExitAcknowledgement } from "@/lib/experiments/solanaPreviewStore";
@@ -148,7 +146,6 @@ import {
   isBlocked,
   isStepReachable,
   MANDATE_STEP_ORDER,
-  type MandateBlockReason,
   type MandateDraft,
   type MandateStepKey,
   nextStep,
@@ -162,12 +159,19 @@ import {
   validateStep,
   visibleSteps,
 } from "./mandateDraft";
-import { nextBlockedLabelKey } from "./mandateTokenAccess";
+import {
+  firstZeroCap,
+  MANDATE_BLOCK_REASON_EVENT,
+  mandateBlockedParams,
+  nextButtonView,
+  type SeenTokenMode,
+  tokenModeChangedParams,
+} from "./mandateTokenAccess";
 import { LocalSolanaReview } from "./review/LocalSolanaReview";
 import { ReviewPhase } from "./review/ReviewPhase";
 import { SolanaPreviewRenderBoundary } from "./solana-preview/SolanaPreviewErrorBoundary";
 import { useSolanaBuilderDraft } from "./solana-preview/useSolanaBuilderDraft";
-import { LimitsStep } from "./steps/LimitsStep";
+import { LimitsStep, useCapZeroLabel } from "./steps/LimitsStep";
 import { NetworksStep } from "./steps/NetworksStep";
 import { PoolsStep } from "./steps/PoolsStep";
 import { ProtocolsStep } from "./steps/ProtocolsStep";
@@ -186,30 +190,6 @@ const STEP_BODIES: Record<MandateStepKey, ComponentType<MandateStepProps>> = {
 
 /** The two steps that render a second column, and therefore need the full content width. */
 const WIDE_STEPS: readonly MandateStepKey[] = ["tokens", "pools"];
-
-/**
- * Every refusal the mandate can raise, as the reason GA4 receives.
- *
- * Total by construction (a `Record` over the domain union), so a reason added upstream fails to
- * compile here rather than reaching the dataLayer as an unmapped string. Two fold into reasons that
- * already existed: a name that fails its length rule is `name_invalid`, which is what the V1 Review
- * already reports for the identical rule, and a token with no price feed is `price_unknown`. One
- * question, one series, across both builders.
- */
-export const MANDATE_BLOCK_REASON_EVENT: Record<
-  MandateBlockReason,
-  AnalyticsBlockReason | AnalyticsMandateBlockReason
-> = {
-  nothing_selected: "nothing_selected",
-  cap_missing: "cap_missing",
-  cap_zero: "cap_zero",
-  token_allowance_required: "token_allowance_required",
-  no_slots: "no_slots",
-  has_hook: "has_hook",
-  coming_soon: "coming_soon",
-  not_priced: "price_unknown",
-  name_length: "name_invalid",
-};
 
 /** The counts every funnel event carries, so a drop-off can be read against what was chosen. */
 function countParams(draft: MandateDraft) {
@@ -486,6 +466,8 @@ function FundBuilderShell({
   useBuildShellLayout(phase === "build");
   const [dialog, setDialog] = useState<"exit" | "complete" | null>(null);
   const [shellBlock, setShellBlock] = useState<StepBlock | null>(null);
+  /** POO-2332 R13: the count of refused presses, so LimitsStep can blink once for each. */
+  const [blockPress, setBlockPress] = useState(0);
   const [exiting, setExiting] = useState(false);
 
   // The block the step body renders: the shell's own (a refused Next) takes precedence over the
@@ -612,10 +594,9 @@ function FundBuilderShell({
   const reportBlocked = useCallback(
     (block: StepBlock) => {
       setShellBlock(block);
-      track("builder_mandate_blocked", {
-        step: block.step,
-        block_reason: MANDATE_BLOCK_REASON_EVENT[block.reason],
-      });
+      // R13: each refused press is a new blink of the zero-cap row, also for the same block.
+      setBlockPress((press) => press + 1);
+      track("builder_mandate_blocked", mandateBlockedParams(block));
     },
     [track],
   );
@@ -626,10 +607,7 @@ function FundBuilderShell({
     const key = `${draft.id}:${revisedLimitsBlock.reason}:${revisedLimitsBlock.rowId}`;
     if (reportedRevisionBlock.current === key) return;
     reportedRevisionBlock.current = key;
-    track("builder_mandate_blocked", {
-      step: "limits",
-      block_reason: MANDATE_BLOCK_REASON_EVENT[revisedLimitsBlock.reason],
-    });
+    track("builder_mandate_blocked", mandateBlockedParams(revisedLimitsBlock));
   }, [draft.id, revisedLimitsBlock, track, walletLoading]);
 
   /**
@@ -717,30 +695,24 @@ function FundBuilderShell({
    * draft only sets the baseline, so a load or a resume sends nothing.
    */
   const tokenMode = tokenModeOf(draft);
-  const seenTokenMode = useRef<{ id: string; mode: typeof tokenMode } | null>(null);
+  const seenTokenMode = useRef<SeenTokenMode | null>(null);
   useEffect(() => {
     if (!hydrated) return;
-    const seen = seenTokenMode.current;
-    seenTokenMode.current = { id: draft.id, mode: tokenMode };
-    if (!seen || seen.id !== draft.id || seen.mode === tokenMode) return;
-    track("builder_mandate_token_mode_changed", { token_mode: tokenMode });
+    const current = { draftId: draft.id, mode: tokenMode };
+    const params = tokenModeChangedParams(seenTokenMode.current, current);
+    seenTokenMode.current = current;
+    if (params) track("builder_mandate_token_mode_changed", params);
   }, [hydrated, draft.id, tokenMode, track]);
 
   /**
    * POO-2332 R12: on Limits, a cap at 0% puts its reason on Next. The press still goes through
    * `handleNext`, which reports the block, and LimitsStep scrolls to the row and blinks it (R13).
-   * Literal keys, so the i18n usage scan sees each one.
    */
-  const capZeroLabels: Record<string, string> = {
-    "fundBuilder.limits.capZeroNetwork": t("fundBuilder.limits.capZeroNetwork"),
-    "fundBuilder.limits.capZeroProtocol": t("fundBuilder.limits.capZeroProtocol"),
-    "fundBuilder.limits.capZeroToken": t("fundBuilder.limits.capZeroToken"),
-  };
-  const capZeroKey =
-    phase === "mandate" && step === "limits"
-      ? nextBlockedLabelKey(validateStep(draft, "limits", catalog))
-      : null;
-  const nextBlockedLabel = capZeroKey ? (capZeroLabels[capZeroKey] ?? null) : null;
+  const capZeroLabel = useCapZeroLabel();
+  const nextView = nextButtonView(
+    phase === "mandate" && step === "limits" ? firstZeroCap(draft, catalog) : null,
+  );
+  const nextBlockedLabel = capZeroLabel(nextView.labelKey);
 
   /**
    * From the first save on, the URL names the draft, the step and the phase, so a reload restores
@@ -1157,6 +1129,7 @@ function FundBuilderShell({
               update={update}
               block={activeBlock}
               onBlocked={reportBlocked}
+              blockPress={blockPress}
             />
           )}
 
@@ -1167,6 +1140,7 @@ function FundBuilderShell({
             onNext={() => {
               void handleNext();
             }}
+            nextView={nextView}
             blockedLabel={nextBlockedLabel}
           />
         </>
