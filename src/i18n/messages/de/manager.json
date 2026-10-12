@@ -834,7 +834,34 @@
       "depositToken": "Einzahlungstoken",
       "slotsCaption": "Ein Token belegt einen Slot auf jedem Netzwerk, auf dem er läuft. Das Mandat verfügt über {max} Slots.",
       "noPrice": "Noch kein Preis-Feed",
-      "empty": "Keine Token entsprechen Ihrer Suche."
+      "empty": "Keine Token entsprechen Ihrer Suche.",
+      "access": {
+        "label": "Token-Zugriff",
+        "selected": "Ausgewählte Token",
+        "all": "Alle Token",
+        "hint": "Mit „Alle Token“ kann die Strategie jeden Token auf Ihren Netzwerken und Protokollen handeln, auch Token, die später starten."
+      },
+      "allInfo": {
+        "title": "Die Strategie kann jeden Token handeln",
+        "body": "Das umfasst jeden Token auf Ihren Netzwerken und Protokollen, auch Token, die nach der Veröffentlichung starten. Sie wählen Token nicht einzeln aus. Jeder Token wird auf dem Hub bepreist."
+      },
+      "yoursAll": "Ihre Token · Alle",
+      "everyOther": "Jeder andere Token",
+      "everyOtherCaption": "Wird hinzugefügt, sobald er startet",
+      "requiredBy": "Erforderlich für {network}",
+      "slotsAllLabel": "Netzwerk-Slots",
+      "slotsNoLimit": "Kein Limit",
+      "slotsAllCaption": "Das Limit von {max} Slots gilt nur für ausgewählte Token.",
+      "noFreeSlots": "Keine freien Slots",
+      "slotsFull": "Alle {max} Slots sind belegt. Entfernen Sie einen Token, um einen weiteren hinzuzufügen.",
+      "andMoreTokens": "und {count, plural, one {# weiterer Token} other {# weitere Token}}",
+      "loading": "Token werden geladen",
+      "loadError": {
+        "title": "Token wurden nicht geladen",
+        "heading": "Die Token-Liste konnte nicht geladen werden",
+        "body": "Prüfen Sie Ihre Verbindung und versuchen Sie es erneut. Die Token in Ihrer Liste bleiben gespeichert."
+      },
+      "retry": "Erneut versuchen"
     },
     "pools": {
       "search": "Token, Paar oder Pool-Adresse",
@@ -881,7 +908,24 @@
         "perps": "Perpetuals"
       },
       "positiveTokenRequired": "Erlaube mindestens einen Token neben USDC mit mehr als 0 % oder wähle Kein Limit.",
-      "addPositiveToken": "Füge unter Tokens einen weiteren Token hinzu und setze sein Limit über 0 % oder wähle Kein Limit. USDC ist bereits enthalten."
+      "addPositiveToken": "Füge unter Tokens einen weiteren Token hinzu und setze sein Limit über 0 % oder wähle Kein Limit. USDC ist bereits enthalten.",
+      "perTokenAllCaption": "Standardlimit für jeden Token · 5-%-Schritte",
+      "allTokensRow": {
+        "title": "Alle Token",
+        "caption": "Legt ein Limit für jeden Token der Liste fest"
+      },
+      "mixed": "Gemischt",
+      "everyTokenRow": {
+        "title": "Jeder Token",
+        "caption": "Jeder Token einzeln, außer USDC"
+      },
+      "allWarning": {
+        "title": "Jeder Token kann in die Strategie gelangen",
+        "body": "Dazu gehören Token mit geringer Liquidität oder ohne Preisverlauf. Das Standardlimit gilt für jeden Token einzeln. Einzahler sehen dieses Label auf der Strategiekarte und der Strategieseite:",
+        "tag": "Alle Token"
+      },
+      "capZeroReason": "Legen Sie das Token-Limit über 0 % fest",
+      "capZero": "Legen Sie das Token-Limit über 0 % fest oder wählen Sie „Kein Limit“, um fortzufahren."
     },
     "draft": {
       "title": "Benennen Sie Ihren Entwurf",

@@ -834,7 +834,34 @@
       "depositToken": "입금 토큰",
       "slotsCaption": "토큰은 실행되는 각 네트워크에서 슬롯을 하나씩 사용합니다. 운용 방침에는 {max}개의 슬롯이 있습니다.",
       "noPrice": "아직 가격 피드가 없습니다",
-      "empty": "검색 결과에 해당하는 토큰이 없습니다."
+      "empty": "검색 결과에 해당하는 토큰이 없습니다.",
+      "access": {
+        "label": "토큰 접근",
+        "selected": "선택한 토큰",
+        "all": "모든 토큰",
+        "hint": "모든 토큰을 선택하면 전략이 네트워크와 프로토콜의 모든 토큰을 거래할 수 있습니다. 나중에 출시되는 토큰도 포함됩니다."
+      },
+      "allInfo": {
+        "title": "전략이 모든 토큰을 거래할 수 있습니다",
+        "body": "네트워크와 프로토콜의 모든 토큰이 포함되며, 게시 후 출시되는 토큰도 포함됩니다. 토큰을 하나씩 고르지 않아도 됩니다. 모든 토큰은 hub에서 가격이 책정됩니다."
+      },
+      "yoursAll": "내 토큰 · 전체",
+      "everyOther": "그 외 모든 토큰",
+      "everyOtherCaption": "출시되면 추가됩니다",
+      "requiredBy": "{network}에서 필요로 함",
+      "slotsAllLabel": "네트워크 슬롯",
+      "slotsNoLimit": "한도 없음",
+      "slotsAllCaption": "{max}개 슬롯 한도는 선택한 토큰에만 적용됩니다.",
+      "noFreeSlots": "남은 슬롯 없음",
+      "slotsFull": "슬롯 {max}개를 모두 사용했습니다. 다른 토큰을 추가하려면 토큰을 하나 제거하세요.",
+      "andMoreTokens": "외 {count, plural, other {#개 토큰}}",
+      "loading": "토큰 불러오는 중",
+      "loadError": {
+        "title": "토큰을 불러오지 못했습니다",
+        "heading": "토큰 목록을 불러오지 못했습니다",
+        "body": "연결을 확인하고 다시 시도하세요. 목록의 토큰은 저장된 상태로 유지됩니다."
+      },
+      "retry": "다시 시도"
     },
     "pools": {
       "search": "토큰, 페어 또는 풀 주소",
@@ -881,7 +908,24 @@
         "perps": "무기한"
       },
       "positiveTokenRequired": "USDC 외에 최소 한 개의 토큰 한도를 0%보다 높게 설정하거나 한도 없음을 선택하세요.",
-      "addPositiveToken": "Tokens에서 다른 토큰을 추가한 다음 한도를 0%보다 높게 설정하거나 한도 없음을 선택하세요. USDC는 이미 포함되어 있습니다."
+      "addPositiveToken": "Tokens에서 다른 토큰을 추가한 다음 한도를 0%보다 높게 설정하거나 한도 없음을 선택하세요. USDC는 이미 포함되어 있습니다.",
+      "perTokenAllCaption": "모든 토큰의 기본 한도 · 5% 단위",
+      "allTokensRow": {
+        "title": "모든 토큰",
+        "caption": "목록의 모든 토큰에 하나의 한도를 설정합니다"
+      },
+      "mixed": "혼합",
+      "everyTokenRow": {
+        "title": "모든 토큰",
+        "caption": "USDC를 제외하고 토큰별로 각각 적용"
+      },
+      "allWarning": {
+        "title": "어떤 토큰도 전략에 들어올 수 있습니다",
+        "body": "유동성이 낮거나 가격 이력이 없는 토큰도 포함됩니다. 기본 한도는 각 토큰에 개별로 적용됩니다. 예치자는 전략 카드와 페이지에서 이 태그를 볼 수 있습니다.",
+        "tag": "모든 토큰"
+      },
+      "capZeroReason": "토큰 한도를 0%보다 크게 설정하세요",
+      "capZero": "토큰 한도를 0%보다 크게 설정하거나 한도 없음을 선택해 계속하세요."
     },
     "draft": {
       "title": "초안 이름 지정",
