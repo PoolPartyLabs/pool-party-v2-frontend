@@ -12,6 +12,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { CatalogToken } from "@/lib/api/v2/schemas";
 import type { BuildPlan } from "./build/plan/buildPlan";
 import { planHasSolana } from "./build/plan/planReadiness";
 import { normalizePlan } from "./build/plan/planStorage";
@@ -20,6 +21,7 @@ import { type CanvasPlan, deriveLaunchSteps } from "./launch/plan";
 import { buildMandateCatalog } from "./mandateCatalog";
 import {
   createEmptyDraft,
+  depositTokenRefFor,
   type MandateDraft,
   stepIndex,
   validateStep,
@@ -37,6 +39,7 @@ import {
   SOLANA_LOCAL_CONFIGS,
   withSolanaCatalog,
 } from "./solana-preview/solanaBuilderRuntime";
+import { buildRealCatalog, toV2MandateSelection } from "./v2Mandate";
 
 const ROOT = process.cwd();
 const read = (path: string) => readFileSync(join(ROOT, path), "utf8");
@@ -141,20 +144,96 @@ describe("R5: no runtime flag on the draft, the catalog or the plan", () => {
 
 describe("R6: a Solana draft saves to local storage and reads back the same", () => {
   // @rule R6
-  it("[R6] round-trips networks, protocols and a Solana plan", () => {
-    const draft = { ...solanaDraft(), plan: solanaPlan() };
+  it("[R6] round-trips the whole draft: networks, protocols, tokens, pools, caps and plan", () => {
+    const base = solanaDraft();
+    const tokens = [
+      {
+        address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+        symbol: "USDC",
+        name: "USD Coin",
+        network: "solana" as const,
+        logoUrl: null,
+        locked: true,
+      },
+      {
+        address: "So11111111111111111111111111111111111111112",
+        symbol: "WSOL",
+        name: "Wrapped SOL",
+        network: "solana" as const,
+        logoUrl: "/protocols/solana-preview/solana.svg",
+        locked: false,
+      },
+    ];
+    const pool = {
+      poolId: `0x${"ab".repeat(32)}`,
+      id: "arb-pool",
+      address: `0x${"cd".repeat(20)}`,
+      network: "arbitrum" as const,
+      protocol: "uniswap-v4" as const,
+      token0: { address: tokens[0].address, symbol: "USDC", name: "USD Coin", logoUrl: null },
+      token1: { address: tokens[1].address, symbol: "WSOL", name: "Wrapped SOL", logoUrl: null },
+      feeBps: 30,
+      feeTier: 3000,
+      tvlUsd: 1000,
+      aprPct: 5,
+      tierSharePct: null,
+      hasHook: false,
+    };
+    const draft: MandateDraft = {
+      ...base,
+      tokens,
+      pools: [pool],
+      caps: {
+        networks: { solana: { noCap: false, pct: 25 }, arbitrum: { noCap: true, pct: 0 } },
+        protocols: { kamino: { noCap: false, pct: 10 }, orca: { noCap: true, pct: 0 } },
+        tokens: { [`solana:${tokens[1].address}`]: { noCap: false, pct: 5 } },
+      },
+      plan: solanaPlan(),
+    };
     const stored = upsertDraft(draft);
     expect(stored).not.toBeNull();
     const back = getDraft(draft.id);
-    expect(back?.networks).toEqual(draft.networks);
-    expect(back?.protocols).toEqual(draft.protocols);
-    expect(back?.plan).toEqual(solanaPlan());
+    expect(back?.networks).toEqual(["arbitrum", "solana"]);
+    // Only the save time changes on write; the rest is the draft the user built.
+    expect({ ...back, updatedAt: "" }).toEqual({ ...draft, updatedAt: "" });
   });
 
   // @rule R6
-  it("[R6] normalizePlan accepts the Solana block kinds and their config", () => {
-    const raw = JSON.parse(JSON.stringify(solanaPlan()));
-    expect(normalizePlan(raw)).toEqual(solanaPlan());
+  it("[R6] normalizePlan keeps the Solana blocks and their config", () => {
+    const plan: BuildPlan = {
+      version: 1,
+      hub: { chains: [] },
+      spokes: [
+        {
+          network: "solana",
+          sharePct: 100,
+          chains: [
+            {
+              id: "sol-chain",
+              sharePct: 100,
+              steps: (["solanaOrcaPool", "solanaRaydiumPool", "solanaKaminoSupply"] as const).map(
+                (kind) => ({
+                  id: `sol-${kind}`,
+                  family: "position" as const,
+                  kind,
+                  config: SOLANA_LOCAL_CONFIGS[kind] ?? null,
+                }),
+              ),
+            },
+          ],
+        },
+      ],
+    };
+    const kept = normalizePlan(JSON.parse(JSON.stringify(plan)));
+    expect(kept).toEqual(plan);
+    expect(kept?.spokes[0]?.chains[0]?.steps.map((step) => step.kind)).toEqual([
+      "solanaOrcaPool",
+      "solanaRaydiumPool",
+      "solanaKaminoSupply",
+    ]);
+    expect(kept?.spokes[0]?.chains[0]?.steps[0]?.config).toEqual(
+      SOLANA_LOCAL_CONFIGS.solanaOrcaPool,
+    );
   });
 
   // @rule R6
@@ -175,6 +254,125 @@ describe("R7: no API read names Solana", () => {
     expect(
       api.protocols.filter((id) => ["kamino", "jupiter", "raydium", "orca"].includes(id)),
     ).toEqual([]);
+  });
+
+  // @rule R7
+  it("[R7] sends a selection with no Solana network, protocol, token id or mint", () => {
+    const usdc = depositTokenRefFor("arbitrum");
+    if (!usdc) throw new Error("missing deposit token");
+    const weth = "0x82af49447d8a07e3bd95bd0d56f35241523fbab1";
+    const catalogToken = (address: string, symbol: string): CatalogToken => ({
+      protocolVersion: "v2",
+      chainId: "42161",
+      address,
+      symbol,
+      name: symbol,
+      decimals: 6,
+      logoUrl: null,
+      hubPriced: true,
+      priceUsd: "1",
+      priceUpdatedAt: null,
+      priceSource: address,
+      priceProvenance: "fixed-1:1",
+      priceUnavailableReason: null,
+    });
+    const real = buildRealCatalog(
+      [catalogToken(usdc.address, "USDC"), catalogToken(weth, "WETH")],
+      [],
+    );
+    const arbToken = (address: string, symbol: string, locked: boolean) => ({
+      address,
+      symbol,
+      name: symbol,
+      network: "arbitrum" as const,
+      logoUrl: null,
+      locked,
+    });
+    const [currency0, currency1] = [usdc.address.toLowerCase(), weth].sort();
+    const solanaUsdc = depositTokenRefFor("solana");
+    if (!solanaUsdc) throw new Error("missing Solana deposit token");
+    const base = withNetworks(
+      {
+        ...createEmptyDraft("2026-10-12T00:00:00.000Z", "solana-real"),
+        dataMode: "real" as const,
+        catalogVersion: "v2-catalog-v1" as const,
+      },
+      ["solana"],
+      buildSolanaBuilderCatalog(),
+    );
+    const draft: MandateDraft = {
+      ...base,
+      protocols: [...base.protocols, "uniswap-v4", "kamino", "jupiter", "raydium", "orca"],
+      tokens: [
+        arbToken(usdc.address, "USDC", true),
+        arbToken(weth, "WETH", false),
+        {
+          address: "So11111111111111111111111111111111111111112",
+          symbol: "WSOL",
+          name: "Wrapped SOL",
+          network: "solana",
+          logoUrl: null,
+          locked: false,
+        },
+        { ...solanaUsdc, locked: true },
+      ],
+      pools: [
+        {
+          poolId: `0x${"ab".repeat(32)}`,
+          poolKey: {
+            currency0: currency0 as string,
+            currency1: currency1 as string,
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: `0x${"0".repeat(40)}`,
+          },
+          id: "arb-pool",
+          address: `0x${"cd".repeat(20)}`,
+          network: "arbitrum",
+          protocol: "uniswap-v4",
+          token0: { address: currency0 as string, symbol: "A", name: "A", logoUrl: null },
+          token1: { address: currency1 as string, symbol: "B", name: "B", logoUrl: null },
+          feeBps: 30,
+          feeTier: 3000,
+          tvlUsd: 1000,
+          aprPct: 5,
+          tierSharePct: null,
+          hasHook: false,
+        },
+      ],
+      plan: solanaPlan(),
+    };
+    expect(draft.networks).toContain("solana");
+    const selection = toV2MandateSelection(draft, real);
+    expect(selection.chains.map((chain) => chain.chainId)).toEqual([42161]);
+    expect(selection.chains[0]?.tokens).toEqual([usdc.address.toLowerCase(), weth]);
+    const sent = JSON.stringify(selection).toLowerCase();
+    for (const word of ["solana", "kamino", "jupiter", "raydium", "orca", "wsol"]) {
+      expect(sent).not.toContain(word);
+    }
+    expect(sent).not.toContain("so11111111111111111111111111111111111111112");
+    expect(sent).not.toContain("epjfwdd5aufqssqem2qn1xzybapc8g4wegg");
+    // The same Solana draft gives the same selection once the Solana entries join the catalog.
+    expect(toV2MandateSelection(draft, withSolanaCatalog(real))).toEqual(selection);
+  });
+
+  // @rule R7
+  it("[R7] reads no Solana choice in the real-mode step checks", () => {
+    const real = buildRealCatalog([], []);
+    const draft: MandateDraft = {
+      ...solanaDraft(),
+      dataMode: "real",
+      catalogVersion: "v2-catalog-v1",
+    };
+    const apiView = withoutSolana(draft);
+    expect(apiView.networks).toEqual(["arbitrum"]);
+    // The Protocols step reads Uniswap v4 and Aave only. Solana protocols add nothing and cannot
+    // fail the "unavailable protocol" check of the API catalog.
+    expect(validateStep(draft, "protocols", real)).toEqual(
+      validateStep(apiView, "protocols", real),
+    );
+    expect(validateStep(draft, "tokens", real)).toEqual(validateStep(apiView, "tokens", real));
+    expect(validateStep(draft, "protocols", real)?.reason).toBe("nothing_selected");
   });
 
   // @rule R7
@@ -261,6 +459,50 @@ describe("R9: a plan with Solana cannot launch", () => {
     };
     expect(() => deriveLaunchSteps(hubSolana, {}, false, false)).toThrow("UNSUPPORTED_POSITION");
     expect(() => deriveLaunchSteps(solanaPlan() as CanvasPlan, {}, false, true)).toThrow(
+      "INVALID_BUILD",
+    );
+  });
+
+  // @rule R9
+  it("[R9] refuses a Solana spoke or a Solana block on every non-Review launch path", () => {
+    const solanaKinds = [
+      "solanaOrcaPool",
+      "solanaRaydiumPool",
+      "solanaKaminoSupply",
+      "solanaHolding",
+    ] as const;
+    const block = (kind: (typeof solanaKinds)[number]) => ({
+      id: `b-${kind}`,
+      family: "position" as const,
+      kind,
+      config: SOLANA_LOCAL_CONFIGS[kind] ?? {},
+    });
+    for (const kind of solanaKinds) {
+      // A Solana block on the hub, and the same block inside the one allowed Robinhood spoke.
+      const onHub = {
+        version: 1,
+        hub: { chains: [{ id: "h", sharePct: 100, steps: [block(kind)] }] },
+        spokes: [],
+      } as CanvasPlan;
+      const onSpoke = {
+        version: 1,
+        hub: { chains: [] },
+        spokes: [
+          {
+            network: "robinhood",
+            sharePct: 100,
+            chains: [{ id: "s", sharePct: 100, steps: [block(kind)] }],
+          },
+        ],
+      } as CanvasPlan;
+      expect(() => deriveLaunchSteps(onHub, {}, false, false)).toThrow(/UNSUPPORTED_POSITION/);
+      expect(() => deriveLaunchSteps(onSpoke, {}, false, true)).toThrow(/UNSUPPORTED_POSITION/);
+    }
+    // A Solana spoke is refused with or without the spoke flag.
+    expect(() => deriveLaunchSteps(solanaPlan() as CanvasPlan, {}, false, false)).toThrow(
+      "INVALID_BUILD",
+    );
+    expect(() => deriveLaunchSteps(solanaPlan() as CanvasPlan, {}, true, true)).toThrow(
       "INVALID_BUILD",
     );
   });

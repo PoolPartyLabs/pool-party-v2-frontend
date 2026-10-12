@@ -1289,8 +1289,14 @@ describe("one builder for Solana (POO-2342)", () => {
     renderWithProviders(<FundStrategyBuilderScreen />);
 
     expect(await screen.findByText("MANDATE · STEP 1 OF 4")).toBeInTheDocument();
+    // The three networks sit in the same Networks list: the Arbitrum hub, then Robinhood and Solana.
+    const networks = document.querySelector<HTMLElement>('[data-mandate-step="networks"]');
+    expect(networks).not.toBeNull();
+    expect(networks).toHaveTextContent("Arbitrum");
+    expect(networks).toHaveTextContent("Robinhood Chain");
+    expect(networks).toHaveTextContent("Solana");
     expect(screen.getByText("Solana")).toBeInTheDocument();
-    expect(getDraft("d-solana")?.networks).toContain("solana");
+    expect(getDraft("d-solana")?.networks).toEqual(["arbitrum", "solana"]);
   });
 
   // @rule R10

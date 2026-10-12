@@ -1,10 +1,10 @@
 # Local Solana binding for the shared V2 wizard
 
-Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
-the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
-local Build/Manage host across phases and applies the route/account/exit guards described below.
-This wizard change is pre-merge code delivery, without a deployment or native-browser visual
-acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
+Delivery boundary (POO-2342 rules v1): the Solana presenters, models and the Build/Manage host
+here serve the one V2 builder. Solana is a network of the mandate, not a mode. The builder keeps
+the retained local Build/Manage host across phases. This change is pre-merge code delivery, without
+a deployment or native-browser visual acceptance claim. Live Solana data, quotes, wallet
+operations and public launch remain
 Not available; `solanaSpoke` stays off.
 
 POO-2342 rules v1: Solana is a network of the one V2 builder (`FundStrategyBuilderScreen`,
@@ -62,12 +62,9 @@ The POO-2281/2291 slices below record the original isolated drawing and successi
 contracts. References to its independent reducer or standalone screen describe that earlier delivery,
 not the current `/manager/new` entry. Current shared binding and limitations are defined above.
 
-Accepted Header and Save and exit paths acknowledge local disposal only after route/account host and
-intent generation validate the user's consent. Stale acceptance cannot close a successor session.
-Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
-last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.
-Local Review keeps numeric fee/minimum/seed intentions but no EVM financial or signing promise.
-Upload, Max and Launch are observable blocked intents and perform no file/storage/wallet operation.
+The preview exit, the abandonment events and the exit acknowledgement were removed in POO-2342.
+Review shows the standard cards. A plan with Solana content cannot launch, and Review names Solana
+as the reason. No file, storage or wallet operation exists here.
 
 ## Design and brand sources
 
@@ -115,7 +112,7 @@ The pinned Rust-to-TypeScript math ports retain Apache-2.0 grants and upstream n
 
 `SolanaHoldingPresenter.tsx` (PP-MGR-CMP-096) keeps choice, Buy/Sell and review inline, with complete values and source provenance. `SolanaJupiterInspector` presents the quote independently: managed order/execute versus composable build, quote expiry versus blockhash validity, measured costs and their declared inclusion. Unknown, stale, unconfirmed and future-dated sources do not establish valid execution. Included-input fees are summed with BigInt and cannot exceed the total input. Confirm is always disabled.
 
-The hidden local editor adds Holding separately from its four venue choices, using a generic custody icon. Its USDC drawing bypasses conversion; its WSOL drawing receives automatic input/output conversions on gray principal paths. No LP range, APY, Collect or account risk is added to custody. Configure passes null custody origin, reads, intentions, quotes and clock; drawing labels confer no financial identity. The standalone presenter accepts injected intentions but this slice contains no editable transaction amount form, market discovery, RPC or wallet operation.
+The Solana editor adds Holding separately from its four venue choices, using a generic custody icon. Its USDC drawing bypasses conversion; its WSOL drawing receives automatic input/output conversions on gray principal paths. No LP range, APY, Collect or account risk is added to custody. Configure passes null custody origin, reads, intentions, quotes and clock; drawing labels confer no financial identity. The standalone presenter accepts injected intentions but this slice contains no editable transaction amount form, market discovery, RPC or wallet operation.
 
 Independent review caught a future transaction timestamp and included-input costs exceeding the input; both were reproduced before correction. Seventy-seven focused tests across model, presenter, catalog and hosts passed, along with scoped TypeScript, changed-file Biome and all11 locales. Test/Storybook fixtures remain isolated. Real custody, token discovery, quotes and execution stay POO-2239/2240/2261/2262; browser acceptance remains with Murilo.
 
@@ -153,7 +150,9 @@ The combined isolated tree passed 69 model/presenter/Configure/local-Manage test
 
 ## Local Solana strategy preview, historical POO-2281 delivery
 
-`PP-MGR-SCR-009`, POO-2281 rules v2. The parent route owns the hidden entry and guarded exit. This feature owns an independent React reducer and drawing. Nothing here imports the EVM builder, mandate draft, network IDs, wallet clients or services.
+Removed in POO-2342: `PP-MGR-SCR-009` (the standalone screen), its parent-route entry and exit,
+and the drawing and panel components. This section is history. The paragraphs below describe the
+earlier drawing model only.
 
 The preview is temporary local state. Applying changes updates only the drawing's configuration. Leaving the preview discards it. The global unsaved-changes guard protects a changed drawing, while the local confirmation protects unapplied edits before another selection or addition. Every removable protocol has a separate X control and a confirmation.
 
@@ -169,12 +168,9 @@ Focused tests cover allocation validation and aggregate bounds, edit/application
 
 ## Shared V2 panel/Review foundation (POO-2301 v1, October 9, 2026)
 
-Murilo's October 8 correction supersedes the standalone preview described above. SolanaBuilderPanelBodies plugs the delivered protocol presenters into the same V2 Configure shell, using shared selectors and exact mint identity. LocalSolanaReview uses the same V2 cards and editable intention fields with unavailable live capability text. useSolanaBuilderDraft is an acknowledged in-memory binding, and solanaBuildManageBinding validates the current whole plan before local Apply. These artifacts are dormant until the separate shared Mandate/Build/Review route activation.
+Murilo's October 8 correction supersedes the standalone preview described above. SolanaBuilderPanelBodies plugs the delivered protocol presenters into the same V2 Configure shell, using shared selectors and exact mint identity. solanaBuildManageBinding validates the current whole plan before local Apply. POO-2342 then merges this binding into the one V2 builder: the standalone preview, `LocalSolanaReview` and `useSolanaBuilderDraft` are removed.
 
-The legacy independent preview is retained as a historical harness, not the final creation flow. Live data, wallet balances, quotes, upload and launch remain unavailable; this slice does not change the Solana mainnet gate. Default EVM selector/card behavior remains intact.
+The legacy independent preview is removed, not retained as a harness. Live data, wallet balances, quotes, upload and launch remain unavailable; this slice does not change the Solana mainnet gate. Default EVM selector/card behavior remains intact.
 
-Delivery continuation: this delivery connects the shared wizard route and retained Build/Manage
-host. The activation described as future work in the published foundation above is included here.
-Applied plan/Review survive retry; unapplied inner-panel fields can be lost after a render exception,
-while the last pending metadata continues guarding leave. No deployment, native-browser acceptance
+POO-2342 delivery continuation: Solana drafts use the one V2 builder and its browser-local drafts. No deployment, native-browser acceptance
 or live Solana capability is asserted.

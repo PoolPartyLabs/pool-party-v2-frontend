@@ -17,6 +17,7 @@
  * - R6: Uniswap v3 has two rows, "Uniswap v3 · Swap" and "Uniswap v3 · Liquidity".
  * - R7: a protocol that the config does not enable is not shown at all, in either group.
  * - R9: the parts of a pool row: protocol, network, then fee tier.
+ * - POO-2342: the "Not available" market note of the Tokens step belongs to the Solana token list only.
  */
 import type { MandateCatalog, MandateNetwork, MandateProtocol } from "../mandateCatalog";
 import {
@@ -35,6 +36,19 @@ export type ManagerTranslate = (key: string, values?: Record<string, string | nu
 /** R2: the spokes that the config enables, in catalog order. */
 export function visibleSpokes(catalog: MandateCatalog): MandateNetwork[] {
   return catalog.networks.filter((network) => !network.isHub && network.available);
+}
+
+/**
+ * POO-2342: whether the Tokens step shows the Solana market note. The note speaks about Solana
+ * tokens, so it shows only when the list on screen holds one. An Arbitrum or Robinhood token list
+ * (the filter, or a draft with no Solana token in view) has no note.
+ */
+export function showsSolanaMarketNote(
+  groups: ReadonlyArray<{ networks: readonly NetworkId[] }>,
+  filter: NetworkId | "all",
+): boolean {
+  if (filter !== "all" && filter !== "solana") return false;
+  return groups.some((group) => group.networks.includes("solana"));
 }
 
 /** The two protocol groups of the Protocols step. */

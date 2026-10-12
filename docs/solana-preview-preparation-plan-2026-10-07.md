@@ -5,6 +5,8 @@
 @analytics-events none, durable delivery reference.
 -->
 
+> **Superseded by POO-2342 (rules v1).** The Solana preview mode and the preview files that this plan builds are removed. Solana now shows in the one V2 builder.
+
 # Local Solana strategy preview: delivery plan
 
 Date: October 7, 2026. Owner: Murilo's Codex coordinator. Rules: POO-2281 v2.

@@ -87,6 +87,7 @@ import {
   slotsView,
   tokensViewState,
 } from "../mandateTokenAccess";
+import { showsSolanaMarketNote } from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -529,7 +530,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
           /* The catalog (R25, R26) */
           <div className="flex min-w-0 flex-1 flex-col gap-3">
             <MandateCatalogStatus catalog={catalog} draft={draft} />
-            {draft.networks.includes("solana") ? (
+            {showsSolanaMarketNote(visible, network) ? (
               <p role="status" className="text-xs text-muted-foreground">
                 {t("solanaPreview.marketUnavailable")}
               </p>

@@ -9,6 +9,8 @@
 @analytics-events none: documentation-only planning artifact; runtime emitters are specified per delivery slice.
 -->
 
+> **Superseded by POO-2342 (rules v1).** The Solana preview mode and the preview files that this plan builds are removed. Solana now shows in the one V2 builder.
+
 # Manager canvas and inline panels: delivery plan, October 7, 2026
 
 ## October 8 owner correction: same V2 journey and connected card surfaces
