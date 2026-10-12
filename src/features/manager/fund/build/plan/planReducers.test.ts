@@ -5,7 +5,8 @@
  * @analytics-events none, a pure domain module; refusals are reported by the Build screen (S7).
  *
  * Covers I1, I2, I4, I6, I7, C3, C4, C8, C12, C13, C14, C18, C22, HU2, HU5, INV1, INV3 to INV6,
- * A6 and the purity rule (no mutation, no clock, no randomness, a refusal changes nothing).
+ * A6 and the purity rule (no mutation, no clock, no randomness, a refusal changes nothing). POO-2334
+ * R2 adds one test: a Borrow never borrows the asset of the Supply directly above it.
  *
  * The Aave v3 Borrow status is SET here (enabled by default, coming soon where a test says so)
  * instead of read from the table, so coordinator default D29 can flip without a test rewrite.
@@ -534,6 +535,35 @@ describe("setBlockConfig (HU2, C13)", () => {
     expect(labels(hubChain(usdc))).toEqual(["aaveSupply"]);
     const emptied = ok(setBlockConfig(weth, ctx, id, null));
     expect(labels(hubChain(emptied))).toEqual(["aaveSupply:empty"]);
+  });
+});
+
+describe("setBlockConfig keeps a Borrow off its own collateral (POO-2334 R2)", () => {
+  it("refuses a Borrow of the Supply's asset, and clears a Borrow when its Supply takes that asset", () => {
+    // @rule R2
+    const plan = supplyBorrowPlan();
+    expect(
+      reason(
+        setBlockConfig(plan, ctx, "hub-aave-borrow", { assetKey: TEST_ASSET_KEYS.wethArbitrum }),
+      ),
+    ).toBe("unknown_target");
+    const changed = ok(
+      setBlockConfig(plan, ctx, "hub-aave-supply", { assetKey: TEST_ASSET_KEYS.usdcArbitrum }),
+    );
+    const steps = hubChain(changed)?.steps ?? [];
+    expect(steps.find((step) => step.id === "hub-aave-supply")).toMatchObject({
+      config: { assetKey: TEST_ASSET_KEYS.usdcArbitrum },
+    });
+    expect(steps.find((step) => step.id === "hub-aave-borrow")).toMatchObject({ config: null });
+    const kept = ok(
+      setBlockConfig(plan, ctx, "hub-aave-borrow", {
+        assetKey: TEST_ASSET_KEYS.usdcArbitrum,
+        borrowPct: 40,
+      }),
+    );
+    expect(hubChain(kept)?.steps.at(-1)).toMatchObject({
+      config: { assetKey: TEST_ASSET_KEYS.usdcArbitrum, borrowPct: 40 },
+    });
   });
 });
 

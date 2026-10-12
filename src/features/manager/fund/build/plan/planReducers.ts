@@ -3,6 +3,7 @@
  * @name planReducers
  * @implements-rules-version v1 (POO-2151 rules v1; POO-2210 rules v1)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2334 rules v1: a Borrow never borrows its own collateral)
  * @analytics-events none, a pure domain module. A refusal returns `{ blocked }` and the Build
  *   screen (PP-MGR-SCR-002, slice S7) reports it as `builder_build_blocked`.
  *
@@ -52,6 +53,7 @@ import { allocatedPct, findBlock } from "./planDerive";
 import { validatePlan } from "./planInvariants";
 import {
   arrivingTokenAt,
+  borrowsOfOwnCollateral,
   type InsertChoice,
   type InsertSlot,
   insertOptions,
@@ -418,7 +420,18 @@ export function setBlockConfig(
   }
   const next = { ...block, config: stored } as PositionBlock;
   const steps = found.chain.steps.map((step, i) => (i === found.index ? next : step));
-  const candidate = reconcileAutoBlocks(withSteps(plan, found.chain.id, steps), ctx);
+  let candidate = reconcileAutoBlocks(withSteps(plan, found.chain.id, steps), ctx);
+  // POO-2334 R2: a Borrow never borrows its own collateral. Refuse it on the Borrow; on a Supply
+  // change, clear the Borrow under it so the manager picks its asset again.
+  const located = findBlock(candidate, blockId);
+  const ownCollateral = new Set(borrowsOfOwnCollateral(located?.chain.steps ?? []));
+  if (located && ownCollateral.size > 0) {
+    if (block.kind === "aaveBorrow") return blocked("unknown_target", blockId);
+    const cleared = located.chain.steps.map((step) =>
+      ownCollateral.has(step.id) ? ({ ...step, config: null } as PositionBlock) : step,
+    );
+    candidate = withSteps(candidate, located.chain.id, cleared);
+  }
   if (stored !== null && configShapeOfKind(block.kind) === "solana-local") {
     const selected = findBlock(candidate, blockId);
     const dependencies = new Set([blockId]);
