@@ -244,7 +244,8 @@ it("selects Solana, applies independent LP intent and derives LP-only Collect", 
   const next = addToken(draft, token!, catalog);
   if ("blocked" in next) throw new Error("token selection refused");
   draft = next;
-  expect(validateStep(draft, "limits", catalog)?.reason).toBe("cap_missing");
+  // POO-2332 R8/R12: a new token starts at 0% with No cap off, so Limits holds it as cap_zero.
+  expect(validateStep(draft, "limits", catalog)?.reason).toBe("cap_zero");
   let serial = 0;
   const ctx = { draft, catalog, newId: () => `id-${++serial}` };
   const spoke = addSpoke(createEmptyPlan(), ctx, "solana");
