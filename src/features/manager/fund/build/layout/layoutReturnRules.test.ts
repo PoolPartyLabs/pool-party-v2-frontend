@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import { BUILD_CANVAS_FIXTURES, solanaTwoChainReturn } from "@/mocks/data/buildCanvasFixtures";
 import type { BridgeNode, EdgeNode, GraphLayout, LayoutInput, Point } from "./graphTypes";
 import { layoutGraph } from "./layoutGraph";
+import { classifyCrossings, findConflicts } from "./layoutMetrics";
 
 const EN = { startHereWidth: 420 };
 const FIXTURES = { ...BUILD_CANVAS_FIXTURES, solanaTwoChainReturn };
@@ -161,5 +162,25 @@ describe("R4: the output ports of a return Bridge are grouped by class", () => {
         name,
       ).toEqual([]);
     }
+  });
+});
+
+describe("R5: each return line has its own lane", () => {
+  // @rule R5
+  it("[R5] draws no two lines on top of each other, in every fixture", () => {
+    for (const [name, , layout] of CASES) {
+      expect(findConflicts(layout).overlaps, name).toEqual([]);
+    }
+  });
+
+  // @rule R5
+  it("[R5] orders the lanes so that only the crossings that R2 forces stay", () => {
+    let forced = 0;
+    for (const [name, , layout] of CASES) {
+      const found = classifyCrossings(layout);
+      expect(found.unforced, name).toEqual([]);
+      forced += found.forced.length;
+    }
+    expect(forced).toBeGreaterThan(0);
   });
 });

@@ -69,6 +69,15 @@ function required<T>(value: T | undefined, label: string): T {
 }
 /** A horizontal run's centre line sits half a stroke under its handoff y (its top edge). */
 const HALF_LINE = L.LINE_W / 2;
+
+/** The bends of a return line above its target (R5, R6). A line without a lane runs straight. */
+function bottomBends(lane: number | undefined, fromX: number, toX: number): Point[] {
+  if (lane === undefined) return [];
+  return [
+    { x: fromX, y: lane + HALF_LINE },
+    { x: toX, y: lane + HALF_LINE },
+  ];
+}
 const HALF_SPINE = L.SPINE_W / 2;
 
 /** The layout under construction, before normalisation. */
@@ -1074,8 +1083,6 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
   const income = spine.get("income");
   const outputX = centreOf(output.rect);
   const incomeX = income ? centreOf(income.rect) : outputX;
-  const principalY = output.rect.y - (income ? L.LINK * 2 : L.LINK) + HALF_LINE;
-  const incomeY = output.rect.y - L.LINK + HALF_LINE;
   // Plan every return line before any is drawn: a port and a lane depend on the other lines.
   const returnLines = planReturnLines(
     chainEntries.flatMap(({ chain, network, spokeKey }) => {
@@ -1096,8 +1103,7 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
         },
       ];
     }),
-    outputX,
-    incomeX,
+    { outputX, incomeX, outputTop: output.rect.y, hasIncome: income !== undefined },
   );
   for (const { chain, network, spokeKey } of chainEntries) {
     const position = [...chain.steps].reverse().find((step) => step.family === "position");
@@ -1151,13 +1157,20 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
         principalLine.topOffset,
         principalLine.bottomOffset,
       );
-      const busY = outbound.rect.y - L.LINK * 2 + HALF_LINE;
+      const busY = (principalLine.topLane ?? 0) + HALF_LINE;
       principalIds.push(
-        connect(`principal:chain:${chain.id}`, returnSource, bridge.incoming, [
-          { x: laneX, y: point(returnSource).y },
-          { x: laneX, y: busY },
-          { x: point(bridge.incoming).x, y: busY },
-        ]),
+        connect(
+          `principal:chain:${chain.id}`,
+          returnSource,
+          bridge.incoming,
+          principalLine.topLane === undefined
+            ? [{ x: laneX, y: point(returnSource).y }]
+            : [
+                { x: laneX, y: point(returnSource).y },
+                { x: laneX, y: busY },
+                { x: point(bridge.incoming).x, y: busY },
+              ],
+        ),
       );
       principalSource = bridge.outgoing;
     }
@@ -1168,14 +1181,10 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
         principalSource,
         target,
         outbound
-          ? [
-              { x: point(principalSource).x, y: principalY },
-              { x: point(target).x, y: principalY },
-            ]
+          ? bottomBends(principalLine.bottomLane, point(principalSource).x, point(target).x)
           : [
               { x: laneX, y: point(returnSource).y },
-              { x: laneX, y: principalY },
-              { x: point(target).x, y: principalY },
+              ...bottomBends(principalLine.bottomLane, laneX, point(target).x),
             ],
       ),
     );
@@ -1202,12 +1211,19 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
           incomeLine.topOffset,
           incomeLine.bottomOffset,
         );
-        const busY = outbound.rect.y - L.LINK + HALF_LINE;
+        const busY = (incomeLine.topLane ?? 0) + HALF_LINE;
         incomeIds.push(
-          connect(`income:converted:${fee.id}`, feeSource, bridge.incoming, [
-            { x: point(feeSource).x, y: busY },
-            { x: point(bridge.incoming).x, y: busY },
-          ]),
+          connect(
+            `income:converted:${fee.id}`,
+            feeSource,
+            bridge.incoming,
+            incomeLine.topLane === undefined
+              ? []
+              : [
+                  { x: point(feeSource).x, y: busY },
+                  { x: point(bridge.incoming).x, y: busY },
+                ],
+          ),
         );
         incomeSource = bridge.outgoing;
       }
@@ -1218,10 +1234,11 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
             outbound ? `income:returned:${fee.id}` : `income:converted:${fee.id}`,
             incomeSource,
             target,
-            [
-              { x: point(incomeSource).x, y: incomeY },
-              { x: point(target).x, y: incomeY },
-            ],
+            bottomBends(
+              required(returnLines.get(`income:${fee.id}`), "return line").bottomLane,
+              point(incomeSource).x,
+              point(target).x,
+            ),
           ),
         );
       }

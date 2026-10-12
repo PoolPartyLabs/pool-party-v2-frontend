@@ -293,9 +293,7 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
   });
 
   // @rule C10 @rule L5
-  it.each(
-    WITH_CHAINS,
-  )("[L5] runs the principal line 24 under the deepest content (%s)", (_n, f) => {
+  it.each(WITH_CHAINS)("[L5] runs the principal lines under the deepest content (%s)", (_n, f) => {
     const layout = layoutGraph(f.input, EN);
     const lasts = chainsOf(f.input).map(({ chain }) =>
       bottom(blockRect(layout, chain.steps[chain.steps.length - 1]?.id ?? "")),
@@ -311,14 +309,26 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
         .filter((node) => node.direction === "outbound")
         .map((node) => bottom(node.rect)),
     );
-    // POO-2345 R4 and R6: a return line that leaves its Bridge in the column of Idle output goes
-    // straight down, so it has no run. Every other line still runs at this level.
+    // POO-2345 R5 and R6: the lines to Idle output share the band above it, each on its own lane,
+    // and no lane is higher than the margin under the deepest content. A line that leaves its
+    // Bridge in the column of Idle output goes straight down, so it has no lane.
+    const outputY = spine(layout, "idleOutput").y;
+    const lanes = layout.edges
+      .filter(
+        (edge) =>
+          edge.kind === "principal" &&
+          edge.points[0]?.y === edge.points[1]?.y &&
+          (edge.points[0]?.y ?? 0) > deepest,
+      )
+      .map((edge) => edge.points[0]?.y ?? 0);
     const straight = (layout.connections ?? []).filter(
       (edge) => edge.kind === "principal" && edge.points.every((p) => p.x === edge.points[0]?.x),
     );
-    expect(
-      horizontalRuns(layout, "principal", deepest + LAYOUT.LINK).length + straight.length,
-    ).toBeGreaterThan(0);
+    expect(lanes.length + straight.length).toBeGreaterThan(0);
+    for (const y of lanes) {
+      expect(y).toBeGreaterThanOrEqual(deepest + LAYOUT.LANE_MARGIN);
+      expect(y).toBeLessThanOrEqual(outputY - LAYOUT.LINK + LAYOUT.LINE_W / 2);
+    }
   });
 
   // @rule C11, POO-2213 override: the converter bypass needs separate return levels.

@@ -585,7 +585,9 @@ describe("worked example 1, POO-2213 fee-return override of handoff (canvas C)",
     ]);
     expect(box(nodes["addProtocol:arbitrum"])).toEqual([440, 244, 40, 40]);
     expect(box(nodes.addNetwork)).toEqual([520, 228, 64, 72]);
-    expect(horizontalRuns(layout, "principal", 480)).toEqual([[170, 420]]);
+    // POO-2345 R5: each principal line has its own lane, so the one run at 480 became two.
+    expect(horizontalRuns(layout, "principal", 462)).toEqual([[170, 212]]);
+    expect(horizontalRuns(layout, "principal", 483)).toEqual([[170, 420]]);
     expect(horizontalRuns(layout, "income", 504)).toEqual([[112, 438]]);
     expect(box(nodes.idleOutput)).toEqual([52, 528, 236, 62]);
     expect(box(nodes.income)).toEqual([320, 528, 236, 62]);

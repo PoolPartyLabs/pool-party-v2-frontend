@@ -132,6 +132,17 @@ export interface ReturnChainInput {
   fees: { id: string; x: number }[];
 }
 
+/** Where the lines end, and where the free band above Idle output is. */
+export interface ReturnGeometry {
+  /** The x of the Idle output port and of the Income port. */
+  outputX: number;
+  incomeX: number;
+  /** The y of the top of Idle output and Income. */
+  outputTop: number;
+  /** True when Income exists, so the band above Idle output is three LINK tall, not two. */
+  hasIncome: boolean;
+}
+
 /** One return line: where it starts, where it ends and the ports it uses on its Bridge. */
 export interface ReturnLine {
   cls: "principal" | "income";
@@ -146,6 +157,10 @@ export interface ReturnLine {
   /** The x and offset of the Bridge port the line leaves. */
   bottomX: number;
   bottomOffset: number;
+  /** The y of the lane above the Bridge, or nothing when the line enters its port straight. */
+  topLane?: number;
+  /** The y of the lane above its target, or nothing when the line ends straight. */
+  bottomLane?: number;
 }
 
 /**
@@ -157,12 +172,16 @@ export interface ReturnLine {
  * - R4: on the bottom of a Bridge the ports are grouped by class. The principal ports are on the
  *   left and the income ports on the right. Inside a class the order stays the one of the top.
  *   Each port stays near the x of its target, so a line goes straight when the Bridge allows it.
+ * - R5: each line that is not straight gets its own lane in each channel it crosses: above its
+ *   Bridge, and above Idle output and Income. {@link orderLanes} orders the lanes.
+ * - R6: a line is straight when the x where it starts is the x where it ends.
+ * - R7: lines of one class end at one port. They meet in one trunk, the last vertical.
  */
 export function planReturnLines(
   chains: readonly ReturnChainInput[],
-  outputX: number,
-  incomeX: number,
+  geometry: ReturnGeometry,
 ): Map<string, ReturnLine> {
+  const { outputX, incomeX } = geometry;
   const lines = new Map<string, ReturnLine>();
   const byBridge = new Map<string, { rect: Rect; keys: string[] }>();
   const add = (key: string, line: ReturnLine, bridge: ReturnChainInput["bridge"]) => {
@@ -233,5 +252,54 @@ export function planReturnLines(
       entry.line.bottomX = rect.x + rect.w * offset;
     }
   }
+  assignLanes(lines, byBridge, geometry);
   return lines;
+}
+
+/** Fills in `topLane` and `bottomLane` of every line (rule R5). */
+function assignLanes(
+  lines: Map<string, ReturnLine>,
+  byBridge: Map<string, { rect: Rect; keys: string[] }>,
+  geometry: ReturnGeometry,
+): void {
+  const order = [...lines.keys()];
+  const rankOf = (key: string) =>
+    (lines.get(key)?.cls === "income" ? order.length : 0) + order.indexOf(key);
+  const place = (
+    keys: string[],
+    ends: (line: ReturnLine) => { from: number; to: number },
+    lowest: number,
+    bandTop: number,
+  ): Map<string, number> => {
+    const lanes = orderLanes(
+      keys.map((key) => ({ ...ends(lines.get(key) as ReturnLine), rank: rankOf(key) })),
+    );
+    const used = lanes.filter((lane) => lane >= 0).length;
+    const ys = laneYs(used, lowest, bandTop);
+    return new Map(
+      keys.flatMap((key, index) => {
+        const lane = lanes[index] ?? -1;
+        return lane < 0 ? [] : [[key, ys[lane] ?? lowest] as const];
+      }),
+    );
+  };
+  for (const { rect, keys } of byBridge.values()) {
+    const found = place(
+      keys,
+      (line) => ({ from: line.from, to: line.topX }),
+      rect.y - LAYOUT.LINK,
+      rect.y - LAYOUT.RETURN_BRIDGE_GAP + LAYOUT.LANE_MARGIN,
+    );
+    for (const [key, y] of found) (lines.get(key) as ReturnLine).topLane = y;
+  }
+  const bottom = place(
+    order.filter((key) => geometry.hasIncome || lines.get(key)?.cls === "principal"),
+    (line) =>
+      line.bridgeId === undefined
+        ? { from: line.from, to: line.target }
+        : { from: line.bottomX, to: line.target },
+    geometry.outputTop - LAYOUT.LINK,
+    geometry.outputTop - (geometry.hasIncome ? 3 : 2) * LAYOUT.LINK + LAYOUT.LANE_MARGIN,
+  );
+  for (const [key, y] of bottom) (lines.get(key) as ReturnLine).bottomLane = y;
 }

@@ -92,6 +92,10 @@ describe("laneYs", () => {
   });
 });
 
+function geometry(outputX: number, incomeX: number) {
+  return { outputX, incomeX, outputTop: 598, hasIncome: true };
+}
+
 describe("planReturnLines", () => {
   const chains = [
     { chainId: "a", laneX: 120, bridge: BRIDGE, fees: [{ id: "a-fee", x: 110 }] },
@@ -100,7 +104,7 @@ describe("planReturnLines", () => {
 
   // @rule R3
   it("[R3] orders the top ports by start x, income left of principal", () => {
-    const lines = planReturnLines(chains, 40, 400);
+    const lines = planReturnLines(chains, geometry(40, 400));
     const income = lines.get("income:a-fee");
     const principal = lines.get("principal:a");
     const other = lines.get("principal:b");
@@ -110,7 +114,7 @@ describe("planReturnLines", () => {
 
   // @rule R4
   it("[R4] puts the principal bottom ports left of the income bottom ports", () => {
-    const lines = planReturnLines(chains, 400, 40);
+    const lines = planReturnLines(chains, geometry(400, 40));
     const income = lines.get("income:a-fee");
     expect(income?.bottomX).toBeGreaterThan(lines.get("principal:a")?.bottomX ?? Number.NaN);
     expect(income?.bottomX).toBeGreaterThan(lines.get("principal:b")?.bottomX ?? Number.NaN);
@@ -118,14 +122,14 @@ describe("planReturnLines", () => {
 
   // @rule R4
   it("[R4] keeps a bottom port as near its target as the Bridge allows", () => {
-    const lines = planReturnLines([chains[1] as (typeof chains)[number]], 150, 400);
+    const lines = planReturnLines([chains[1] as (typeof chains)[number]], geometry(150, 400));
     expect(lines.get("principal:b")?.bottomX).toBe(150);
-    const left = planReturnLines([chains[1] as (typeof chains)[number]], 0, 400);
+    const left = planReturnLines([chains[1] as (typeof chains)[number]], geometry(0, 400));
     expect(left.get("principal:b")?.bottomX).toBe(BRIDGE.rect.x + LAYOUT.PAIR);
   });
 
   it("gives a line with no Bridge no port", () => {
-    const lines = planReturnLines([{ chainId: "h", laneX: 5, fees: [] }], 40, 400);
+    const lines = planReturnLines([{ chainId: "h", laneX: 5, fees: [] }], geometry(40, 400));
     expect(lines.get("principal:h")?.bridgeId).toBeUndefined();
   });
 });

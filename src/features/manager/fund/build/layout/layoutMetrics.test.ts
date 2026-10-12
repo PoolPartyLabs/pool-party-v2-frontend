@@ -330,12 +330,13 @@ const BASELINE: Record<keyof typeof FIXTURES, LayoutMetrics> = {
 
 describe("R8: the numbers of each layout fixture", () => {
   // Interim form while rules R3 to R7 land one by one: crossings and bends are no worse than the
-  // baseline. The lane commit (R5) adds the overlap check, and the last commit the final numbers.
+  // baseline and no line overlaps another (R5). The last commit adds the final numbers.
   for (const [name, fixture] of Object.entries(FIXTURES)) {
     it(`${name} is no worse than its baseline`, () => {
       const layout = layoutGraph(fixture.input, EN);
       const base = BASELINE[name as keyof typeof FIXTURES];
       const now = measureLayout(layout);
+      expect(now.overlaps).toBe(0);
       expect(now.crossings).toBeLessThanOrEqual(base.crossings);
       expect(now.totalBends).toBeLessThanOrEqual(base.totalBends);
       expect(now.maxBendsPerLeg).toBeLessThanOrEqual(base.maxBendsPerLeg);

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutConstants tests
- * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v2 (POO-2345); v1 (POO-2153 rules v1)
  * @analytics-events none, a pure geometry module: nothing here is rendered or tracked.
  *
  * [L1] every constant of the handoff table (v1.2, "Layout rules · Constants") with its exact value,
@@ -30,6 +30,12 @@ describe("LAYOUT constants", () => {
     expect(LAYOUT.NETBOX_H).toBe(72);
     expect(LAYOUT.PAIR).toBe(12);
     expect(LAYOUT.SPINE_GAP).toBe(32);
+  });
+
+  // @rule R5
+  it("[R5] keeps a margin between the blocks and the top lane of a channel", () => {
+    expect(LAYOUT.LANE_MARGIN).toBe(6);
+    expect(LAYOUT.LANE_MARGIN).toBeLessThan(LAYOUT.LINK);
   });
 
   // @rule L1
