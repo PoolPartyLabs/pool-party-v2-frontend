@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-035
  * @name NetworksStep
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2333 Figma parity: R1, R2)
  * @analytics-events none, the shell emits
  *
  * POO-2123 [R10] / [R12] / [R15] / [R16] / [R17], epic POO-2119. Mandate step 1: the networks this
@@ -12,11 +13,11 @@
  * at all rather than as a ticked checkbox nobody is allowed to untick. The spokes (R16) are the
  * actual decision, in a two-column grid with a "Select all" at the group head.
  *
- * Availability is the catalog's (`PP-MGR-LIB-018`), never a branch here: a spoke the fund contracts
- * cannot reach yet renders disabled with "Coming soon" and still takes the click, which it reports
- * through `onBlocked` (R17). That is the only way the demand for a chain is ever counted: a row that
- * refuses the click produces no event, and a product that cannot see demand never builds for it
- * (CLAUDE.md premise 11, blocked intent).
+ * Availability is the catalog's (`PP-MGR-LIB-018`), never a branch here. POO-2333 R2 hides a spoke
+ * that the config does not enable (`visibleSpokes`, PP-MGR-LIB-081), so Solana shows only in its
+ * preview mode. This replaces the "Coming soon" spoke row of R17: the disabled branch in
+ * `spokeRow` stays only as a guard and is not reached. POO-2333 R1 adds a caption under "Other networks": each network that the manager
+ * adds needs a bridge and one more signature at launch.
  *
  * Every write goes through `withNetworks`, which keeps the hub, drops the tokens, pools and caps of
  * a removed network, and ignores an unavailable id. This screen therefore never has to reason about
@@ -38,6 +39,7 @@ import { MandateCheckbox, MandateRow } from "../components/MandateRow";
 import { NetworkLogoWithName, useNetworkNames } from "../components/NetworkDots";
 import type { MandateNetwork } from "../mandateCatalog";
 import { type NetworkId, withNetworks } from "../mandateDraft";
+import { visibleSpokes } from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -49,7 +51,8 @@ export function NetworksStep({ draft, catalog, update, block, onBlocked }: Manda
   const names = useNetworkNames();
 
   const hub = catalog.networks.find((network) => network.isHub);
-  const spokes = catalog.networks.filter((network) => !network.isHub);
+  // POO-2333 R2: a spoke that the config does not enable is not drawn.
+  const spokes = visibleSpokes(catalog);
   const availableSpokes = spokes.filter((network) => network.available);
   const selected = new Set<NetworkId>(draft.networks);
   // An empty set is not "all selected": with every spoke disabled, a ticked Select all would claim
@@ -177,6 +180,9 @@ export function NetworksStep({ draft, catalog, update, block, onBlocked }: Manda
             {notice}
           </p>
         ) : null}
+
+        {/* POO-2333 R1 */}
+        <p className="text-muted-foreground text-xs">{t("fundBuilder.networks.othersCaption")}</p>
 
         <div className="grid grid-cols-2 gap-2">{spokes.map(spokeRow)}</div>
       </div>
