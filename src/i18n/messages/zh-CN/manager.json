@@ -1653,6 +1653,7 @@
     "healthFactor": "健康因子",
     "liquidationPrice": "预估清算价格",
     "marketUnavailable": "不可用",
+    "raydiumSource": "池和图表数据来自 DEX Screener。",
     "notApplicable": "不适用",
     "noDebt": "无债务",
     "noDebtDrawing": "仅供应的设计。未配置借款。",

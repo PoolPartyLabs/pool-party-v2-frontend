@@ -1653,6 +1653,7 @@
     "healthFactor": "Factor de salud",
     "liquidationPrice": "Precio estimado de liquidación",
     "marketUnavailable": "No disponible",
+    "raydiumSource": "Los datos del pool y del gráfico provienen de DEX Screener.",
     "notApplicable": "No aplica",
     "noDebt": "Sin deuda",
     "noDebtDrawing": "Diseño solo de suministro. No se configura ningún préstamo.",

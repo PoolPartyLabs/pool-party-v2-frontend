@@ -1,8 +1,12 @@
 /**
  * @id PP-MGR-CMP-101
  * @name SolanaBuilderPanelBodies
- * @implements-rules-version v1 (POO-2301)
+ * @implements-rules-version v1 (POO-2301); POO-2343 rules v1 (R7 pool of the Raydium block, R9 source text)
  * @analytics-events none, traditional BlockPanel owns bounded intent events.
+ *
+ * POO-2343 R7: the Raydium block chooses one of the Raydium pools of the mandate, or the default
+ * SOL/USDC pool when the mandate has none (`raydiumBlockPool.ts`). The config keeps `poolAddress`
+ * and the pair label. R9: for Raydium, the panel names DEX Screener as the source of the pool data.
  */
 "use client";
 import { useTranslations } from "next-intl";
@@ -14,10 +18,16 @@ import type {
   PanelFieldsProps,
 } from "../build/panel/panelBodies";
 import type { PositionConfig, SolanaLocalBlockConfig } from "../build/plan/buildPlan";
+import { raydiumBlockConfig, raydiumBlockPools } from "./raydiumBlockPool";
 import { SolanaHoldingPresenter } from "./SolanaHoldingPresenter";
 import { SolanaKaminoReadSection } from "./SolanaKaminoReadSection";
 import { SolanaRangePresenter } from "./SolanaRangePresenter";
 import { SOLANA_LOCAL_CONFIGS } from "./solanaBuilderRuntime";
+
+/** The first and last four characters of an address, to tell two pools of one pair apart. */
+function shortAddress(address: string): string {
+  return address.length > 10 ? `${address.slice(0, 4)}...${address.slice(-4)}` : address;
+}
 
 function Fields({
   context,
@@ -28,6 +38,7 @@ function Fields({
 }: PanelFieldsProps<SolanaLocalBlockConfig>) {
   const t = useTranslations("manager");
   const holding = context.kind === "solanaHolding";
+  const raydium = context.kind === "solanaRaydiumPool";
   const labelId = useId();
   const nativeLogo = {
     symbol: holding ? "WSOL" : "SOL",
@@ -35,6 +46,34 @@ function Fields({
     logoUrl: "/protocols/solana-preview/solana.svg",
   };
   const stableLogo = { symbol: "USDC", network: "solana" };
+  const pairLogos = (pair: SolanaLocalBlockConfig["pair"]) =>
+    pair === "SOL / USDC" ? [nativeLogo, stableLogo] : [stableLogo, nativeLogo];
+  // R7: the pools of the mandate, plus the pool the block holds now when the mandate dropped it.
+  const raydiumPools = raydium ? raydiumBlockPools(context.draft) : [];
+  if (
+    raydium &&
+    config.poolAddress &&
+    !raydiumPools.some((pool) => pool.poolAddress === config.poolAddress)
+  )
+    raydiumPools.push({ poolAddress: config.poolAddress, pair: config.pair });
+  const selectOptions = raydium
+    ? raydiumPools.map((pool) => ({
+        id: pool.poolAddress,
+        label: `${pool.pair} ${shortAddress(pool.poolAddress)}`,
+        logos: pairLogos(pool.pair),
+      }))
+    : [
+        {
+          id: "SOL / USDC",
+          label: holding ? "WSOL" : "SOL / USDC",
+          logos: holding ? [nativeLogo] : [nativeLogo, stableLogo],
+        },
+        {
+          id: "USDC / SOL",
+          label: holding ? "USDC" : "USDC / SOL",
+          logos: holding ? [stableLogo] : [stableLogo, nativeLogo],
+        },
+      ];
   // PP-INTEGRATION-POINT: POO-2261/2262 own independent Solana market/reserve/balance reads;
   // descriptor intent grants no canonical origin, range, balance, quote or execution authority.
   return (
@@ -51,27 +90,27 @@ function Fields({
           {allocation}
           <div className="flex flex-col gap-2">
             <span id={labelId} className="text-foreground text-sm">
-              {t(holding ? "solanaPreview.holding.token" : "solanaPreview.pair")}
+              {t(
+                holding
+                  ? "solanaPreview.holding.token"
+                  : raydium
+                    ? "solanaPreview.pool"
+                    : "solanaPreview.pair",
+              )}
             </span>
             <PanelSelect
               labelId={labelId}
-              options={[
-                {
-                  id: "SOL / USDC",
-                  label: holding ? "WSOL" : "SOL / USDC",
-                  logos: holding ? [nativeLogo] : [nativeLogo, stableLogo],
-                },
-                {
-                  id: "USDC / SOL",
-                  label: holding ? "USDC" : "USDC / SOL",
-                  logos: holding ? [stableLogo] : [stableLogo, nativeLogo],
-                },
-              ]}
-              value={config.pair}
+              options={selectOptions}
+              value={raydium ? (config.poolAddress ?? "") : config.pair}
               idComparison="exact"
-              onChange={(pair) => {
-                if (pair === "SOL / USDC" || pair === "USDC / SOL")
-                  onConfigChange({ ...config, pair });
+              onChange={(id) => {
+                if (raydium) {
+                  const pool = raydiumPools.find((entry) => entry.poolAddress === id);
+                  if (pool) onConfigChange(raydiumBlockConfig(pool));
+                  return;
+                }
+                if (id === "SOL / USDC" || id === "USDC / SOL")
+                  onConfigChange({ ...config, pair: id });
               }}
             />
           </div>
@@ -88,7 +127,7 @@ function Fields({
           ) : (
             <>
               <p className="text-xs text-muted-foreground">
-                {t("solanaPreview.marketUnavailable")}
+                {t(raydium ? "solanaPreview.raydiumSource" : "solanaPreview.marketUnavailable")}
               </p>
               {(sharePct ?? 0) > 0 ? (
                 <SolanaRangePresenter
@@ -110,6 +149,7 @@ const body: PanelBodyDefinition<SolanaLocalBlockConfig> = {
   usePick(context) {
     const t = useTranslations("manager");
     const config = SOLANA_LOCAL_CONFIGS[context.kind] ?? null;
+    const raydium = context.kind === "solanaRaydiumPool";
     const names = {
       solanaHolding: t("solanaPreview.holding.title"),
       solanaOrcaPool: t("solanaPreview.protocols.orca"),
@@ -117,21 +157,32 @@ const body: PanelBodyDefinition<SolanaLocalBlockConfig> = {
       solanaKaminoSupply: t("solanaPreview.protocols.kamino"),
     };
     const name = names[context.kind as keyof typeof names] ?? t("solanaPreview.marketUnavailable");
+    // R7: one row for each Raydium pool of the mandate, or the default pool. R9: DEX Screener is the source.
+    const rows = raydium
+      ? raydiumBlockPools(context.draft).map((pool) => ({
+          id: pool.poolAddress,
+          title: `${pool.pair} ${shortAddress(pool.poolAddress)}`,
+          subtitle: t("solanaPreview.raydiumSource"),
+          logos: [],
+          searchText: `${name} ${pool.pair} ${pool.poolAddress}`,
+          config: raydiumBlockConfig(pool),
+        }))
+      : [
+          {
+            id: config?.catalogId ?? context.kind,
+            title: name,
+            subtitle: t("solanaPreview.marketUnavailable"),
+            logos: [],
+            searchText: name,
+            config,
+          },
+        ];
     return {
       heading: name,
-      count: 1,
+      count: rows.length,
       filterPlaceholder: t("solanaPreview.pair"),
-      rows: [
-        {
-          id: config?.catalogId ?? context.kind,
-          title: name,
-          subtitle: t("solanaPreview.marketUnavailable"),
-          logos: [],
-          searchText: name,
-          config,
-        },
-      ],
-      caption: t("solanaPreview.marketUnavailable"),
+      rows,
+      caption: t(raydium ? "solanaPreview.raydiumSource" : "solanaPreview.marketUnavailable"),
       link: { prompt: "", label: t("fundBuilder.canvas.menu.link.protocols"), step: "protocols" },
       noMatch: {
         title: () => t("solanaPreview.marketUnavailable"),
