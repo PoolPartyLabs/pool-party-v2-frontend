@@ -34,6 +34,7 @@ import {
   withNetworks,
   withProtocols,
 } from "./mandateDraft";
+import { getDraft, upsertDraft } from "./mandateDraftStore";
 import { searchMandatePools } from "./mandatePoolSource";
 import { type DexScreenerPair, raydiumPoolsFromPairs } from "./raydiumPools";
 import { getRaydiumPoolsAction } from "./raydiumPoolsAction";
@@ -75,6 +76,7 @@ function raydiumDraft(): MandateDraft {
 }
 
 beforeEach(() => {
+  window.localStorage.clear();
   vi.mocked(getRaydiumPoolsAction).mockReset();
   vi.mocked(getCatalogPoolsAction).mockReset();
 });
@@ -178,5 +180,23 @@ describe("R4: the Pools step searches Raydium pools on Solana", () => {
     expect(isBlocked(refused) && refused.blocked.reason).toBe("not_priced");
     // The SOL side is in the Solana catalog, so only the unknown side is refused.
     expect(poolSideAddable(draft, pool, pool.token0, catalog())).toBe(true);
+  });
+});
+
+describe("R6: selected Raydium pools save in the draft", () => {
+  // @rule R6
+  it("[R6] reads a saved Raydium pool back after a reload, with its empty fee and APR", () => {
+    const pool = refOf("PoolA");
+    const added = addPool(raydiumDraft(), pool, catalog());
+    if (isBlocked(added)) throw new Error("the pool was refused");
+
+    expect(upsertDraft(added)).not.toBeNull();
+    const reloaded = getDraft(added.id);
+
+    expect(reloaded?.pools).toEqual([pool]);
+    // Nothing is made up: DEX Screener gives no fee tier, so the fee stays null after a reload.
+    expect(reloaded?.pools[0]?.feeBps).toBeNull();
+    expect(reloaded?.pools[0]?.feeTier).toBeNull();
+    expect(reloaded?.protocols).toContain("raydium");
   });
 });
