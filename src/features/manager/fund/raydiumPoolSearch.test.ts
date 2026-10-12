@@ -1,0 +1,297 @@
+/**
+ * @id PP-MGR-CMP-107
+ * @name raydiumPoolSearch tests
+ * @implements-rules-version v1 (POO-2343)
+ * @analytics-events none, a data adapter and reducers
+ *
+ * Pure-logic proof of the rules of POO-2343 that need no render: the Solana pool search (R4), its
+ * error result (R5), the draft that holds Raydium pools (R6) and the events of the Solana search (R10). The DEX Screener
+ * action is a mock. There is no network. The block pool (R7) and the chart (R8) have their own
+ * test files.
+ */
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/services", () => ({ isMockMode: true }));
+vi.mock("@/features/manager/actions", () => ({
+  getDexPoolsAction: vi.fn(),
+  getDexPoolByAddressAction: vi.fn(),
+}));
+vi.mock("@/lib/api/v2/actions", () => ({
+  getCatalogPoolAction: vi.fn(),
+  getCatalogPoolsAction: vi.fn(),
+}));
+vi.mock("./raydiumPoolsAction", () => ({ getRaydiumPoolsAction: vi.fn() }));
+
+import { isAnalyticsErrorCodeShape } from "@/lib/analytics/events";
+import { ApiError } from "@/lib/api/errors";
+import { getCatalogPoolsAction } from "@/lib/api/v2/actions";
+import {
+  addPool,
+  createEmptyDraft,
+  isBlocked,
+  type MandateDraft,
+  type MandatePoolRef,
+  poolSideAddable,
+  removePool,
+  withNetworks,
+  withProtocols,
+} from "./mandateDraft";
+import { getDraft, upsertDraft } from "./mandateDraftStore";
+import { searchMandatePools } from "./mandatePoolSource";
+import { settlePoolSearches } from "./poolSearchSettle";
+import { type DexScreenerPair, raydiumPoolsFromPairs } from "./raydiumPools";
+import { getRaydiumPoolsAction } from "./raydiumPoolsAction";
+import { buildSolanaBuilderCatalog } from "./solana-preview/solanaBuilderRuntime";
+
+const SOL = "So11111111111111111111111111111111111111112";
+const USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const JUP = "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN";
+const EVM_ADDRESS = "0xaf88d065e77c8cc2239327c5edb3a432268e5831";
+
+const catalog = () => buildSolanaBuilderCatalog();
+
+function pair(address: string, quote: { address: string; symbol: string }): DexScreenerPair {
+  return {
+    dexId: "raydium",
+    pairAddress: address,
+    labels: ["CLMM"],
+    baseToken: { address: SOL, symbol: "SOL", name: "Wrapped SOL" },
+    quoteToken: { address: quote.address, symbol: quote.symbol, name: quote.symbol },
+    liquidity: { usd: 1000 },
+  };
+}
+
+/** A pool ref made by the real mapping, so the fixture cannot drift from R3. */
+function refOf(address: string, quote = { address: USDC, symbol: "USDC" }): MandatePoolRef {
+  const [pool] = raydiumPoolsFromPairs([pair(address, quote)]);
+  if (!pool) throw new Error("fixture pair was not a Raydium CLMM pool");
+  return pool;
+}
+
+/** A mandate that holds Arbitrum and Solana, with Raydium chosen. */
+function raydiumDraft(): MandateDraft {
+  const base = withNetworks(
+    createEmptyDraft("2026-10-12T00:00:00.000Z", "r"),
+    ["solana"],
+    catalog(),
+  );
+  return withProtocols(base, [...base.protocols, "raydium"]);
+}
+
+beforeEach(() => {
+  window.localStorage.clear();
+  vi.mocked(getRaydiumPoolsAction).mockReset();
+  vi.mocked(getCatalogPoolsAction).mockReset();
+});
+
+describe("R4: the Pools step searches Raydium pools on Solana", () => {
+  // @rule R4
+  it("[R4] returns the Raydium pools of the server action for a Solana token", async () => {
+    const pools = [refOf("PoolA")];
+    vi.mocked(getRaydiumPoolsAction).mockResolvedValue({ ok: true, pools });
+
+    const found = await searchMandatePools({
+      network: "solana",
+      tokenAddress: SOL,
+      secondTokenAddress: USDC,
+      protocols: ["raydium"],
+    });
+
+    expect(found).toEqual(pools);
+    expect(getRaydiumPoolsAction).toHaveBeenCalledWith({
+      tokenAddress: SOL,
+      secondTokenAddress: USDC,
+    });
+  });
+
+  // @rule R4
+  it("[R4] sends no read when the mandate did not choose Raydium (Orca has no pool search)", async () => {
+    await expect(
+      searchMandatePools({ network: "solana", tokenAddress: SOL, protocols: ["uniswap-v4"] }),
+    ).resolves.toEqual([]);
+    expect(getRaydiumPoolsAction).not.toHaveBeenCalled();
+  });
+
+  // @rule R4
+  it("[R4] keeps every address on its own network", async () => {
+    // An EVM token on the Solana network, and a pair across the two networks: no pool, no read.
+    await expect(
+      searchMandatePools({ network: "solana", tokenAddress: EVM_ADDRESS, protocols: ["raydium"] }),
+    ).resolves.toEqual([]);
+    await expect(
+      searchMandatePools({
+        network: "solana",
+        tokenAddress: SOL,
+        secondTokenAddress: EVM_ADDRESS,
+        protocols: ["raydium"],
+      }),
+    ).resolves.toEqual([]);
+    expect(getRaydiumPoolsAction).not.toHaveBeenCalled();
+
+    // A Solana mint on an EVM network: the API is not asked.
+    await expect(
+      searchMandatePools({ network: "arbitrum", tokenAddress: SOL, protocols: ["uniswap-v4"] }),
+    ).resolves.toEqual([]);
+    expect(getCatalogPoolsAction).not.toHaveBeenCalled();
+  });
+
+  // @rule R4
+  it("[R4] throws when DEX Screener fails, so the step shows its error state (R5)", async () => {
+    vi.mocked(getRaydiumPoolsAction).mockResolvedValue({
+      ok: false,
+      error: { code: "timeout" },
+    });
+
+    const failure = searchMandatePools({
+      network: "solana",
+      tokenAddress: SOL,
+      protocols: ["raydium"],
+    });
+
+    await expect(failure).rejects.toBeInstanceOf(ApiError);
+    await expect(failure).rejects.toMatchObject({ code: "RAYDIUM_TIMEOUT" });
+  });
+
+  // @rule R5
+  it("[R5] gives the error result of the action, with its status and a coded message", async () => {
+    vi.mocked(getRaydiumPoolsAction).mockResolvedValue({
+      ok: false,
+      error: { code: "unavailable", status: 429 },
+    });
+
+    const error = await searchMandatePools({
+      network: "solana",
+      tokenAddress: SOL,
+      protocols: ["raydium"],
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 429, code: "RAYDIUM_UNAVAILABLE" });
+  });
+
+  // @rule R5
+  it("[R5] a mixed mandate keeps the EVM pools when the real Solana read fails", async () => {
+    vi.mocked(getRaydiumPoolsAction).mockResolvedValue({
+      ok: false,
+      error: { code: "unavailable", status: 429 },
+    });
+    const evm = { ...refOf("EvmPool"), id: "arbitrum:0xpool", network: "arbitrum" as const };
+
+    const settled = await settlePoolSearches([
+      { network: "arbitrum", run: () => Promise.resolve([evm]) },
+      {
+        network: "solana",
+        run: () =>
+          searchMandatePools({ network: "solana", tokenAddress: SOL, protocols: ["raydium"] }),
+      },
+    ]);
+
+    expect(settled.pools).toEqual([evm]);
+    expect(settled.failedNetworks).toEqual(["solana"]);
+  });
+
+  // @rule R4
+  it("[R4] adds and removes a Raydium pool like an EVM pool", () => {
+    const pool = refOf("PoolA");
+    const added = addPool(raydiumDraft(), pool, catalog());
+    if (isBlocked(added)) throw new Error("the pool was refused");
+
+    expect(added.pools.map((entry) => entry.id)).toEqual(["solana:PoolA"]);
+    // The pool pulled its SOL side into the mandate. USDC is the locked deposit token already.
+    expect(added.tokens.some((token) => token.network === "solana" && token.address === SOL)).toBe(
+      true,
+    );
+    expect(removePool(added, pool.id).pools).toEqual([]);
+  });
+
+  // @rule R4
+  it("[R4] adds a Solana pool in real data mode, where no per-chain Uniswap list exists", () => {
+    const real: MandateDraft = { ...raydiumDraft(), dataMode: "real" };
+    const added = addPool(real, refOf("PoolA"), catalog());
+    expect(isBlocked(added)).toBe(false);
+  });
+
+  // @rule R4
+  it("[R4] refuses a pool with a Solana token the catalog does not know, and keeps its mint case", () => {
+    const draft = raydiumDraft();
+    const pool = refOf("PoolJup", { address: JUP, symbol: "JUP" });
+
+    expect(poolSideAddable(draft, pool, pool.token1, catalog())).toBe(false);
+    const refused = addPool(draft, pool, catalog());
+    expect(isBlocked(refused) && refused.blocked.reason).toBe("not_priced");
+    // The SOL side is in the Solana catalog, so only the unknown side is refused.
+    expect(poolSideAddable(draft, pool, pool.token0, catalog())).toBe(true);
+  });
+});
+
+describe("R6: selected Raydium pools save in the draft", () => {
+  // @rule R6
+  it("[R6] reads a saved Raydium pool back after a reload, with its empty fee and APR", () => {
+    const pool = refOf("PoolA");
+    const added = addPool(raydiumDraft(), pool, catalog());
+    if (isBlocked(added)) throw new Error("the pool was refused");
+
+    expect(upsertDraft(added)).not.toBeNull();
+    const reloaded = getDraft(added.id);
+
+    expect(reloaded?.pools).toEqual([pool]);
+    // Nothing is made up: DEX Screener gives no fee tier, so the fee stays null after a reload.
+    expect(reloaded?.pools[0]?.feeBps).toBeNull();
+    expect(reloaded?.pools[0]?.feeTier).toBeNull();
+    expect(reloaded?.protocols).toContain("raydium");
+  });
+});
+
+describe("R6: the whole Raydium pool ref survives the persisted draft", () => {
+  // @rule R6
+  it("[R6] saves a full Raydium pool to storage and reads back the same ref", () => {
+    const [pool] = raydiumPoolsFromPairs([
+      {
+        ...pair("PoolFull", { address: USDC, symbol: "USDC" }),
+        liquidity: { usd: 2_500_000 },
+        volume: { h24: 480_000 },
+      },
+    ]);
+    if (!pool) throw new Error("fixture pair was not a Raydium CLMM pool");
+    // The fixture is the case under test: no fee, protocol raydium, and a 24 h volume set.
+    expect(pool).toMatchObject({ feeBps: null, protocol: "raydium", volume24hUsd: 480_000 });
+
+    const added = addPool(raydiumDraft(), pool, catalog());
+    if (isBlocked(added)) throw new Error("the pool was refused");
+    expect(upsertDraft(added)).not.toBeNull();
+
+    // The raw JSON in storage: the null fee is written, not dropped.
+    const raw = Object.values(window.localStorage).join("\n");
+    expect(raw).toContain('"feeBps":null');
+    expect(raw).toContain('"protocol":"raydium"');
+
+    const reloaded = getDraft(added.id);
+    expect(reloaded?.pools).toHaveLength(1);
+    expect(reloaded?.pools[0]).toStrictEqual(pool);
+  });
+});
+
+describe("R10: the Solana search sends the pool search events of today", () => {
+  // @rule R10
+  it("[R10] fails with a coded error that holds no address, and the step reports a known code", async () => {
+    vi.mocked(getRaydiumPoolsAction).mockResolvedValue({
+      ok: false,
+      error: { code: "invalid_response" },
+    });
+
+    const error = await searchMandatePools({
+      network: "solana",
+      tokenAddress: SOL,
+      secondTokenAddress: USDC,
+      protocols: ["raydium"],
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(ApiError);
+    const { code, message } = error as ApiError;
+    // No mint reaches the error. The step maps it to the code of today, so no new value is sent.
+    expect(`${code} ${message}`).not.toContain(SOL);
+    expect(`${code} ${message}`).not.toContain(USDC);
+    expect(isAnalyticsErrorCodeShape(code)).toBe(true);
+    expect(isAnalyticsErrorCodeShape("POOLS_FETCH_FAILED")).toBe(true);
+  });
+});

@@ -4,6 +4,7 @@
  * @implements-rules-version v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2333 Figma parity: R8, R9)
+ * @implements-rules-version v1 (POO-2343 R4: Raydium CLMM pools from DEX Screener; R5: one failed network keeps the other networks' pools; R10: a Solana failure names its network)
  * @analytics-events none, the shell emits
  *
  * POO-2125 [R11] / [R13] / [R29] to [R38], epic POO-2119. Mandate step 4: the pools this strategy
@@ -77,6 +78,13 @@
  * the manager is still reading. Which one a read reports is decided by whether it is also the list
  * when it lands, never by the view it started in.
  *
+ * ## Solana is searched in the same step (POO-2343 R4)
+ *
+ * The step takes the whole draft. A Solana mandate token is searched in the Raydium source and an
+ * EVM token in the API, so the EVM reads never name Solana and the Raydium read never names an EVM
+ * address (see `searchMandatePools`). A DEX Screener failure takes the same error state with Try
+ * again as any other failed read (R5). Orca has no pool search.
+ *
  * Pool catalog resolved by POO-2133: `mandatePoolSource` reads the real v4 catalog;
  * mock mode retains the existing fixtures.
  */
@@ -102,6 +110,7 @@ import { cn } from "@/lib/utils/cn";
 import { formatPercent, formatUsdCompact } from "@/lib/utils/format";
 import { CopyAddressChip } from "../components/CopyAddressChip";
 import { NetworkLogoWithName, useNetworkNames } from "../components/NetworkDots";
+import { ProtocolMark } from "../components/ProtocolMark";
 import type { MandateCatalog } from "../mandateCatalog";
 import {
   addPool,
@@ -111,24 +120,25 @@ import {
   hasDexProtocol,
   isBlocked,
   isBroadMandate,
-  isPricedSymbol,
   type MandateBlockReason,
   type MandateDraft,
   type MandatePoolRef,
   type MandateTokenRef,
   type NetworkId,
+  poolSideAddable,
   removePool,
+  SOLANA_NETWORK,
   type StepBlock,
   slotCeiling,
   slotsUsed,
   tokenKey,
-  withoutSolanaNetworks,
-  withoutSolanaPools,
-  withoutSolanaPositionProtocols,
-  withoutSolanaProtocols,
-  withoutSolanaTokens,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
+import {
+  type SettledPoolSearches,
+  settlePoolSearches,
+  solanaFailureNetwork,
+} from "../poolSearchSettle";
 import { poolFeeLabel, poolMeta } from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
@@ -197,6 +207,11 @@ interface Resolution {
    * list a failure leaves behind. See {@link universeSignatureOf}.
    */
   signature: string | null;
+  /**
+   * Networks whose read failed while others answered (R5). Their pools are missing from the list, so
+   * the step shows an error with Retry above it. Absent or empty when every read worked.
+   */
+  failedNetworks?: NetworkId[];
 }
 
 /** A measured universe, and the mandate it was measured over. Never one without the other. */
@@ -265,20 +280,11 @@ function canEverAdd(draft: MandateDraft, pool: MandatePoolRef, catalog: MandateC
   if (!draft.networks.includes(pool.network)) return false;
   if (
     draft.dataMode === "real" &&
+    pool.network !== SOLANA_NETWORK &&
     !draft.positionProtocolsByChain?.[pool.network]?.includes("uniswap-v4")
   )
     return false;
-  return [pool.token0, pool.token1].every(
-    (side) =>
-      mandateHoldsSide(draft, pool, side.address) ||
-      (catalog.dataMode === "real"
-        ? catalog
-            .tokensFor([pool.network], draft.protocols)
-            .some(
-              (token) => token.address.toLowerCase() === side.address.toLowerCase() && token.priced,
-            )
-        : isPricedSymbol(side.symbol)),
-  );
+  return [pool.token0, pool.token1].every((side) => poolSideAddable(draft, pool, side, catalog));
 }
 
 /**
@@ -306,6 +312,15 @@ function addAllPools(
   return { next, blocked: null };
 }
 
+/**
+ * A failed read as the shell hears it. `network` is set to `solana` when Solana alone failed (R10).
+ * An EVM failure keeps the event it had before Solana joined.
+ */
+export interface PoolsError {
+  code: string;
+  network?: NetworkId;
+}
+
 /** Public props: the shared step contract, plus two optional reporting channels for the shell. */
 export interface PoolsStepProps extends MandateStepProps {
   /**
@@ -313,7 +328,7 @@ export interface PoolsStepProps extends MandateStepProps {
    * rendered on its own in Storybook and in its tests; absent, a failure is still shown and simply
    * not reported.
    */
-  onError?: (error: { code: string }) => void;
+  onError?: (error: PoolsError) => void;
   /**
    * The size of the pool universe this step resolved, which the Broad-mandate flag (R13) is measured
    * against. Published so Review asks the same question with the same number.
@@ -321,89 +336,15 @@ export interface PoolsStepProps extends MandateStepProps {
   onUniverseCount?: (count: number) => void;
 }
 
-/** Mandate step 4: the pool catalog on the left, the mandate's own pools on the right. */
 /**
- * POO-2342 R8: Raydium or Orca gives this step, and Solana has no pool discovery source yet. A draft
- * with Uniswap v4 mounts the connected step over its Arbitrum and Robinhood side only (the reads never
- * name Solana, R7). A draft with only Raydium or Orca shows the "Not available" layout.
+ * Mandate step 4: the pool catalog on the left, the mandate's own pools on the right.
+ *
+ * POO-2343 R4: Arbitrum, Robinhood and Solana pools are searched in this one step. The step takes
+ * the whole draft. The EVM reads still never name Solana: `searchMandatePools` sends a Solana token
+ * to the Raydium source only, and an EVM token to the API only. Orca has no pool search, so a
+ * mandate with Orca and no other DEX shows an empty list.
  */
-export function PoolsStep(props: PoolsStepProps) {
-  const t = useTranslations("manager");
-  const { draft } = props;
-  // Each Solana-free list keeps its identity until its own source list changes. An Add that pulls
-  // no token in changes only `pools`. The reads key on `tokens` and `protocols`. A new array there
-  // would run the universe read again for a mandate that did not move.
-  const networks = useMemo(() => withoutSolanaNetworks(draft.networks), [draft.networks]);
-  const protocols = useMemo(() => withoutSolanaProtocols(draft.protocols), [draft.protocols]);
-  const tokens = useMemo(() => withoutSolanaTokens(draft.tokens), [draft.tokens]);
-  const pools = useMemo(() => withoutSolanaPools(draft.pools), [draft.pools]);
-  const positionProtocolsByChain = useMemo(
-    () =>
-      draft.positionProtocolsByChain
-        ? withoutSolanaPositionProtocols(draft.positionProtocolsByChain)
-        : undefined,
-    [draft.positionProtocolsByChain],
-  );
-  const apiDraft = useMemo(
-    () => ({
-      ...draft,
-      networks,
-      protocols,
-      tokens,
-      pools,
-      // The key stays absent when the draft has none, as it does in `withoutSolana`.
-      ...(positionProtocolsByChain ? { positionProtocolsByChain } : {}),
-    }),
-    [draft, networks, protocols, tokens, pools, positionProtocolsByChain],
-  );
-  const hasUniswapDex = apiDraft.protocols.some((id) =>
-    (DEX_PROTOCOL_IDS as readonly string[]).includes(id),
-  );
-  // Raydium or Orca can be the only DEX. Then this step shows the "Not available" layout (R8).
-  // With no DEX protocol at all, the connected step runs and renders nothing (R29).
-  const solanaOnlyDex = !hasUniswapDex && hasDexProtocol(draft);
-  if (solanaOnlyDex)
-    return (
-      <section data-mandate-step="pools" className="flex flex-col gap-6 pb-24">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            <div className="flex gap-3">
-              <Input
-                disabled
-                placeholder={t("solanaPreview.marketUnavailable")}
-                aria-label={t("solanaPreview.pool")}
-              />
-            </div>
-            <div className="rounded-xl border border-border bg-surface p-4">
-              <h3 className="text-sm font-medium">{t("solanaPreview.pool")}</h3>
-              <p role="status" className="mt-2 text-sm text-muted-foreground">
-                {t("solanaPreview.marketUnavailable")}
-              </p>
-            </div>
-          </div>
-          <aside className="w-full shrink-0 rounded-xl border border-border bg-surface p-4 lg:sticky lg:top-6 lg:w-[340px]">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="font-medium text-foreground text-sm">
-                {t("fundBuilder.pools.yours", { count: 0 })}
-              </h3>
-              <Button variant="ghost" size="sm" disabled>
-                {t("fundBuilder.common.clearAll")}
-              </Button>
-            </div>
-            <p className="mt-4 text-xs text-muted-foreground">
-              {t("solanaPreview.marketUnavailable")}
-            </p>
-            <div className="mt-4 border-border border-t pt-3">
-              <p className="text-xs text-muted-foreground">{t("fundBuilder.pools.fixed")}</p>
-            </div>
-          </aside>
-        </div>
-      </section>
-    );
-  return <ConnectedPoolsStep {...props} draft={apiDraft} />;
-}
-
-function ConnectedPoolsStep({
+export function PoolsStep({
   draft,
   catalog,
   update,
@@ -597,6 +538,16 @@ function ConnectedPoolsStep({
    */
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
+  // The networks the measurement reads: one read per mandate token, so a network once per token.
+  const measureNetworks = useMemo(
+    () => mandateTokens.map((token) => token.network),
+    [mandateTokens],
+  );
+  // R10: a Solana failure carries `network: "solana"`, and no event carries an address.
+  const reportFailure = useCallback((code: string, networks: readonly NetworkId[]) => {
+    const network = solanaFailureNetwork(networks);
+    onErrorRef.current?.(network ? { code, network } : { code });
+  }, []);
   const onUniverseCountRef = useRef(onUniverseCount);
   onUniverseCountRef.current = onUniverseCount;
 
@@ -608,23 +559,20 @@ function ConnectedPoolsStep({
    * the search read below so that a token entering the mandate re-asks THIS question and leaves the
    * manager's own search alone.
    */
-  const measureUniverse = useCallback(async (): Promise<MandatePoolRef[]> => {
-    const answers = await Promise.all(
-      mandateTokens.map((token) =>
-        searchMandatePools({
-          network: token.network,
-          tokenAddress: token.address,
-          secondTokenAddress: undefined,
-          protocols,
-        }),
-      ),
+  const measureUniverse = useCallback(async (): Promise<SettledPoolSearches> => {
+    // R5: one failed network keeps the pools of the others; see `settlePoolSearches`.
+    return settlePoolSearches(
+      mandateTokens.map((token) => ({
+        network: token.network,
+        run: () =>
+          searchMandatePools({
+            network: token.network,
+            tokenAddress: token.address,
+            secondTokenAddress: undefined,
+            protocols,
+          }),
+      })),
     );
-    // Deduped by pool id: a pool holding two mandate tokens comes back from both searches.
-    const byId = new Map<string, MandatePoolRef>();
-    for (const found of answers) {
-      for (const pool of found) if (!byId.has(pool.id)) byId.set(pool.id, pool);
-    }
-    return [...byId.values()];
   }, [mandateTokens, protocols]);
 
   /**
@@ -657,22 +605,21 @@ function ConnectedPoolsStep({
     // The universe is not asked here; the measurement below owns it in every view.
     if (query.kind !== "token") return { pools: [], foundOn: null, signature: null };
 
-    const answers = await Promise.all(
-      fetchNetworks.map((id) =>
-        searchMandatePools({
-          network: id,
-          tokenAddress: query.address,
-          secondTokenAddress: query.second,
-          protocols,
-        }),
-      ),
+    // R5: one failed network keeps the pools of the others; see `settlePoolSearches`. A pair search
+    // run once per side of the pair returns the same rows twice, and the helper dedupes them by id.
+    const { pools, failedNetworks } = await settlePoolSearches(
+      fetchNetworks.map((id) => ({
+        network: id,
+        run: () =>
+          searchMandatePools({
+            network: id,
+            tokenAddress: query.address,
+            secondTokenAddress: query.second,
+            protocols,
+          }),
+      })),
     );
-    // Deduped by pool id: a pair search run once per side of the pair returns the same rows twice.
-    const byId = new Map<string, MandatePoolRef>();
-    for (const found of answers) {
-      for (const pool of found) if (!byId.has(pool.id)) byId.set(pool.id, pool);
-    }
-    return { pools: [...byId.values()], foundOn: null, signature: null };
+    return { pools, foundOn: null, signature: null, failedNetworks };
   }, [query, fetchNetworks, protocols, pasteNetworks]);
 
   const dex = hasDexProtocol(draft);
@@ -694,6 +641,9 @@ function ConnectedPoolsStep({
         if (ticket !== seq.current) return;
         setResolution(next);
         setVisibleCount(PAGE_SIZE);
+        // R5: some networks answered and some failed. The pools stay; the shell hears of the failure
+        // once, like any other failed read.
+        if (next.failedNetworks?.length) reportFailure("POOLS_FETCH_FAILED", next.failedNetworks);
       })
       .catch(() => {
         if (ticket !== seq.current) return;
@@ -701,12 +651,12 @@ function ConnectedPoolsStep({
         setResolution({ pools: [], foundOn: null, signature: null });
         // PP-INTEGRATION-POINT: the shell maps this to `builder_mandate_error`
         // { step: "pools", error_code: "POOLS_FETCH_FAILED", error_origin: "upstream" }.
-        onErrorRef.current?.({ code: "POOLS_FETCH_FAILED" });
+        reportFailure("POOLS_FETCH_FAILED", fetchNetworks);
       })
       .finally(() => {
         if (ticket === seq.current) setLoading(false);
       });
-  }, [dex, resolveSearch, query.kind, retryNonce]);
+  }, [dex, resolveSearch, query.kind, retryNonce, fetchNetworks, reportFailure]);
 
   /**
    * The measurement, which in the universe view is also the list.
@@ -758,11 +708,26 @@ function ConnectedPoolsStep({
       return claim !== null && claim.measureTicket === measureTicket ? claim.listTicket : null;
     };
     measureUniverse()
-      .then((pools) => {
+      .then(({ pools, failedNetworks }) => {
         if (measureTicket !== measureSeq.current) return;
-        setUniverse({ pools, signature });
         const ticket = listTicket();
-        if (ticket !== null && ticket === seq.current) {
+        const serves = ticket !== null && ticket === seq.current;
+        if (failedNetworks.length > 0) {
+          // R5: a partial read is not the universe. Publishing it would hand R13 a denominator that
+          // misses the failed network, so no count is written and the flag stays down. The list
+          // still shows what arrived, with an error and Retry for the failed part.
+          reportFailure(
+            serves ? "POOLS_FETCH_FAILED" : "POOLS_UNIVERSE_FETCH_FAILED",
+            failedNetworks,
+          );
+          if (serves) {
+            setResolution({ pools, foundOn: null, signature: null, failedNetworks });
+            setVisibleCount(PAGE_SIZE);
+          }
+          return;
+        }
+        setUniverse({ pools, signature });
+        if (serves) {
           setResolution({ pools, foundOn: null, signature });
           setVisibleCount(PAGE_SIZE);
         }
@@ -782,9 +747,10 @@ function ConnectedPoolsStep({
         if (measureTicket !== measureSeq.current) return;
         const ticket = listTicket();
         const serves = ticket !== null && ticket === seq.current;
-        onErrorRef.current?.({
-          code: serves ? "POOLS_FETCH_FAILED" : "POOLS_UNIVERSE_FETCH_FAILED",
-        });
+        reportFailure(
+          serves ? "POOLS_FETCH_FAILED" : "POOLS_UNIVERSE_FETCH_FAILED",
+          measureNetworks,
+        );
         // A background failure stops there: putting the error state over a search the manager is
         // reading would answer a question they did not ask. It is tried again on the next signature
         // change, when the view returns to the universe, and on "Try again".
@@ -801,7 +767,15 @@ function ConnectedPoolsStep({
         measureClaim.current = null;
         if (ticket !== null && ticket === seq.current) setLoading(false);
       });
-  }, [dex, measureUniverse, universeSignature, query.kind, retryNonce]);
+  }, [
+    dex,
+    measureUniverse,
+    universeSignature,
+    query.kind,
+    retryNonce,
+    measureNetworks,
+    reportFailure,
+  ]);
 
   /**
    * The denominator R13 divides by. Null until a universe has resolved for the mandate as it stands.
@@ -959,13 +933,20 @@ function ConnectedPoolsStep({
   const addableFound = resolution.pools.filter((pool) => canEverAdd(draft, pool, catalog)).length;
   const addableLeft = available.filter((pool) => canEverAdd(draft, pool, catalog)).length;
   const allSelected =
-    !loading && !failed && onScreenIsCurrent && addableFound > 0 && addableLeft === 0;
+    // R5: with a network missing, "everything is chosen" would be a claim about pools never read.
+    !loading &&
+    !failed &&
+    !resolution.failedNetworks?.length &&
+    onScreenIsCurrent &&
+    addableFound > 0 &&
+    addableLeft === 0;
   const broad = isBroadMandate(draft, catalog, universeCount ?? 0);
 
   const used = slotsUsed(draft);
   const protocolNames: Record<DexProtocolId, string> = {
     "uniswap-v3": t("fundBuilder.protocolNames.uniswapV3"),
     "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
+    raydium: t("solanaPreview.protocols.raydium"),
   };
 
   /**
@@ -1097,16 +1078,7 @@ function ConnectedPoolsStep({
   function rowRefusal(pool: MandatePoolRef): { reason: MandateBlockReason; label: string } | null {
     if (pool.hasHook) return { reason: "has_hook", label: t("fundBuilder.pools.hasHook") };
     const unpriced = [pool.token0, pool.token1].some(
-      (side) =>
-        !mandateHoldsSide(draft, pool, side.address) &&
-        (catalog.dataMode === "real"
-          ? !catalog
-              .tokensFor([pool.network], draft.protocols)
-              .some(
-                (token) =>
-                  token.address.toLowerCase() === side.address.toLowerCase() && token.priced,
-              )
-          : !isPricedSymbol(side.symbol)),
+      (side) => !poolSideAddable(draft, pool, side, catalog),
     );
     if (unpriced) return { reason: "not_priced", label: t("fundBuilder.tokens.noPrice") };
     return null;
@@ -1163,6 +1135,15 @@ function ConnectedPoolsStep({
     if (protocol === "uniswap-v3") {
       return <ProtocolBadge size={13} className="shrink-0 text-muted-foreground text-xs" />;
     }
+    if (protocol === "raydium") {
+      // POO-2343 R4: the Raydium mark, with the name beside it, as the v4 badge does for Uniswap.
+      return (
+        <span className="inline-flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
+          <ProtocolMark id="raydium" name={protocolNames.raydium} size={13} />
+          <span>{protocolNames.raydium}</span>
+        </span>
+      );
+    }
     return (
       <span className="inline-flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
         {/* Decorative; the "Uniswap v4" text carries the meaning, as in ProtocolBadge. */}
@@ -1202,6 +1183,7 @@ function ConnectedPoolsStep({
   /** One result card (R32), or the disabled variant a permanent refusal gets (R28, R38). */
   function resultCard(pool: MandatePoolRef) {
     const adds = tokensItWouldAdd(draft, pool);
+    const poolFee = poolFeeLabel(pool.feeBps);
     const refusal = rowRefusal(pool);
     return (
       <div
@@ -1225,12 +1207,11 @@ function ConnectedPoolsStep({
             {/* POO-2333 R8: "{fee} fee tier · chosen by {pct}% of LPs". R32: an absent share says
                 nothing, so the line shows only the fee tier. "0%" would read as a measured share of
                 nothing, which is a figure we never had (POO-1469). */}
-            {pool.tierSharePct === null
-              ? t("fundBuilder.pools.feeTier", { fee: poolFeeLabel(pool.feeBps) })
-              : t("fundBuilder.pools.tierShare", {
-                  fee: poolFeeLabel(pool.feeBps),
-                  pct: pool.tierSharePct,
-                })}
+            {poolFee === null
+              ? null
+              : pool.tierSharePct === null
+                ? t("fundBuilder.pools.feeTier", { fee: poolFee })
+                : t("fundBuilder.pools.tierShare", { fee: poolFee, pct: pool.tierSharePct })}
             {adds.map((symbol) => (
               <span key={symbol}>{` · ${t("fundBuilder.pools.addsToken", { symbol })}`}</span>
             ))}
@@ -1373,9 +1354,25 @@ function ConnectedPoolsStep({
         />
       );
     }
-    if (filtered.length === 0) return <EmptyState title={t("fundBuilder.pools.empty")} />;
+    const partialError = resolution.failedNetworks?.length ? (
+      // R5: the pools of the failed network are missing. Retry asks for the whole read again.
+      <ErrorState
+        title={t("fundBuilder.pools.error")}
+        onRetry={() => setRetryNonce((value) => value + 1)}
+        retryLabel={t("fundBuilder.pools.retry")}
+      />
+    ) : null;
+    if (filtered.length === 0) {
+      return (
+        <div className="flex flex-col gap-2">
+          {partialError}
+          <EmptyState title={t("fundBuilder.pools.empty")} />
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col gap-2">
+        {partialError}
         {visible.map(resultCard)}
         {remaining > 0 ? (
           <button

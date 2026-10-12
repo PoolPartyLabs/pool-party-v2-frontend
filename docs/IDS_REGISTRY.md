@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 721 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 722 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1263,6 +1263,20 @@ No IDs are added. The PP-INTEGRATION-POINT marker in chartModel stays.
 Current chart-delivery census (POO-2338): 719 registry rows and 714 unique IDs, 2,320 files under
 `src/`, with 552 markers across 317 files. The five disclosed historical duplicate IDs remain
 unchanged.
+
+## Raydium CLMM pools from DEX Screener, October 12, 2026 (POO-2343 v1)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-CMP-107` | RaydiumPools, Raydium CLMM pools from DEX Screener: a server action that reads the pairs of a Solana token, a pure filter, sort and map to `MandatePoolRef`, the Solana search in the Pools step, the Raydium block pool taken from the mandate, and the DEX Screener chart of that pool | Component | Existing Pools step and Charts tab | In Review | [POO-2343](https://linear.app/yeildbay/issue/POO-2343), [POO-2344](https://linear.app/yeildbay/issue/POO-2344) | `src/features/manager/fund/raydiumPools.ts`, `src/features/manager/fund/raydiumPoolsRead.ts`, `src/features/manager/fund/raydiumPoolsAction.ts`, `src/features/manager/fund/solana-preview/raydiumBlockPool.ts` @rules-v1 |
+
+The row keeps one ID for the whole slice, as the convention says. The Pools step, the draft, the
+Raydium block panel and the chart reuse their own IDs. The two PP-INTEGRATION-POINT markers of the
+DEX Screener reads are in `raydiumPoolsRead.ts` and `raydiumPoolsAction.ts`. POO-2344 moves the
+reads into the Pool Party API.
+
+Raydium pool census (POO-2343): 721 registry rows and 716 unique IDs, 2,309 files under `src/`,
+with 545 markers across 315 files. The five disclosed historical duplicate IDs remain unchanged.
 
 ## Build graph line routing, October 12, 2026 (POO-2345 v2)
 

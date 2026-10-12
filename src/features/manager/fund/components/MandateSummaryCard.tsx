@@ -79,8 +79,8 @@ export interface MandateSummaryCardProps {
 }
 
 /** The fee tier as the pools step writes it: basis points as a percentage, two decimals. */
-function feeLabel(bps: number): string {
-  return `${(bps / 100).toFixed(2)}%`;
+function feeLabel(bps: number | null): string | null {
+  return bps === null ? null : `${(bps / 100).toFixed(2)}%`;
 }
 
 /** One labelled row of the summary. */
@@ -264,16 +264,19 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
             count={draft.pools.length}
             testId="mandate-summary-pools"
           >
-            {draft.pools.slice(0, POOLS_SHOWN).map((pool) => (
-              <Chip key={pool.id}>
-                <span className="font-medium">{`${pool.token0.symbol}/${pool.token1.symbol}`}</span>
-                <span className="text-muted-foreground">
-                  {`${protocolNames[pool.protocol]} · ${t("fundBuilder.pools.feeTier", {
-                    fee: feeLabel(pool.feeBps),
-                  })}`}
-                </span>
-              </Chip>
-            ))}
+            {draft.pools.slice(0, POOLS_SHOWN).map((pool) => {
+              const fee = feeLabel(pool.feeBps);
+              return (
+                <Chip key={pool.id}>
+                  <span className="font-medium">{`${pool.token0.symbol}/${pool.token1.symbol}`}</span>
+                  <span className="text-muted-foreground">
+                    {fee === null
+                      ? protocolNames[pool.protocol]
+                      : `${protocolNames[pool.protocol]} · ${t("fundBuilder.pools.feeTier", { fee })}`}
+                  </span>
+                </Chip>
+              );
+            })}
             {hiddenPools > 0 ? (
               <span className="text-muted-foreground text-xs">
                 {t("fundBuilder.common.andMore", { count: hiddenPools })}

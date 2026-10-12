@@ -1644,6 +1644,7 @@
     "healthFactor": "Gezondheidsfactor",
     "liquidationPrice": "Geschatte liquidatieprijs",
     "marketUnavailable": "Niet beschikbaar",
+    "raydiumSource": "De pool- en grafiekgegevens komen van DEX Screener.",
     "notApplicable": "Niet van toepassing",
     "noDebt": "Geen schuld",
     "noDebtDrawing": "Ontwerp met alleen verstrekking. Er is geen lening geconfigureerd.",

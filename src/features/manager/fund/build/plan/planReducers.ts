@@ -4,6 +4,7 @@
  * @implements-rules-version v1 (POO-2151 rules v1; POO-2210 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2334 rules v1: a Borrow never borrows its own collateral)
+ * @implements-rules-version v1 (POO-2343 R7: a Raydium block whose pool left the mandate takes a pool of the mandate again)
  * @analytics-events none, a pure domain module. A refusal returns `{ blocked }` and the Build
  *   screen (PP-MGR-SCR-002, slice S7) reports it as `builder_build_blocked`.
  *
@@ -26,6 +27,7 @@
  * `not_in_mandate`, so `PlanBlockReason` gains no value for it.
  */
 import { HUB_NETWORK, type NetworkId, tokenKey } from "../../mandateDraft";
+import { rederivedRaydiumConfig } from "../../solana-preview/raydiumBlockPool";
 import {
   configShapeOfKind,
   findMandatePool,
@@ -134,6 +136,17 @@ function locateChain(
 // reconcileAutoBlocks
 // ---------------------------------------------------------------------------
 
+/**
+ * POO-2343 R7: a Raydium block whose pool left the mandate takes the pool the mandate offers first
+ * (or the default pool), rather than keeping an address the plan check would refuse. The same step
+ * comes back when nothing changes.
+ */
+function withRederivedRaydiumPool(step: Step, draft: PlanContext["draft"]): Step {
+  if (step.family !== "position" || step.kind !== "solanaRaydiumPool") return step;
+  const config = rederivedRaydiumConfig(draft, step.config);
+  return config ? ({ ...step, config } as Step) : step;
+}
+
 /** One chain's steps with its Swap · auto blocks exactly where C13 wants them. */
 function reconcileSteps(
   steps: Step[],
@@ -155,7 +168,7 @@ function reconcileSteps(
         out.push(kept ?? { id: ctx.newId(), family: "flow", kind: "swap", auto: true });
       }
     }
-    out.push(step);
+    out.push(step.family === "position" ? withRederivedRaydiumPool(step, ctx.draft) : step);
   });
   const unchanged = out.length === steps.length && out.every((step, i) => step === steps[i]);
   return unchanged ? steps : out;

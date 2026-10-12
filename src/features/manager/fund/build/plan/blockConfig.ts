@@ -102,6 +102,12 @@ function isBoolean(value: unknown): value is boolean {
   return typeof value === "boolean";
 }
 
+const SOLANA_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+function isSolanaAddress(value: unknown): boolean {
+  return typeof value === "string" && SOLANA_ADDRESS.test(value);
+}
+
 /** An optional field: absent, or present with a value the check accepts. */
 function optional(value: unknown, check: (value: unknown) => boolean): boolean {
   return value === undefined || check(value);
@@ -157,10 +163,14 @@ export function isConfigFor(kind: string, config: unknown): boolean {
       solanaKaminoSupply: "solana:mainnet-beta:kamino-supply",
       solanaHolding: "solana:mainnet-beta:holding",
     };
+    // POO-2343 R7: only the Raydium block keeps a pool address, and it is a Solana address.
+    const allowed =
+      kind === "solanaRaydiumPool" ? ["catalogId", "pair", "poolAddress"] : ["catalogId", "pair"];
     return (
       config.catalogId === ids[kind] &&
       (config.pair === "SOL / USDC" || config.pair === "USDC / SOL") &&
-      Object.keys(config).every((key) => key === "catalogId" || key === "pair")
+      optional(config.poolAddress, isSolanaAddress) &&
+      Object.keys(config).every((key) => allowed.includes(key))
     );
   }
   if (shape === "pool") return poolFieldsValid(config);

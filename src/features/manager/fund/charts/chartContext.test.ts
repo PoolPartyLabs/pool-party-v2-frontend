@@ -274,17 +274,22 @@ describe("Build chart context", () => {
   });
 
   // @rule R5
-  it.each([
-    "solanaOrcaPool",
-    "solanaRaydiumPool",
-  ] as const)("keeps %s an unsupported pair, with no canonical pool address", (kind) => {
-    const config = required(SOLANA_LOCAL_CONFIGS[kind]);
+  it("keeps solanaOrcaPool an unsupported pair, with no canonical pool address", () => {
+    const config = required(SOLANA_LOCAL_CONFIGS.solanaOrcaPool);
     expect(
-      buildChartSelection(makeTestDraft(), target(kind, "solana"), config).availability,
+      buildChartSelection(makeTestDraft(), target("solanaOrcaPool", "solana"), config).availability,
     ).toEqual(unavailable("unsupported_pair"));
-    expect(buildChartSelection(makeTestDraft(), target(kind, "solana"), null).availability).toEqual(
-      unavailable("unconfigured"),
-    );
+    expect(
+      buildChartSelection(makeTestDraft(), target("solanaOrcaPool", "solana"), null).availability,
+    ).toEqual(unavailable("unconfigured"));
+  });
+
+  // @rule R5
+  it("keeps a solanaRaydiumPool with no config unconfigured (the pool chart is POO-2343 R8)", () => {
+    expect(
+      buildChartSelection(makeTestDraft(), target("solanaRaydiumPool", "solana"), null)
+        .availability,
+    ).toEqual(unavailable("unconfigured"));
   });
 
   // @rule R5

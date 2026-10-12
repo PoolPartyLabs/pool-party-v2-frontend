@@ -1644,6 +1644,7 @@
     "healthFactor": "Hệ số sức khỏe",
     "liquidationPrice": "Giá thanh lý ước tính",
     "marketUnavailable": "Không khả dụng",
+    "raydiumSource": "Dữ liệu pool và biểu đồ lấy từ DEX Screener.",
     "notApplicable": "Không áp dụng",
     "noDebt": "Không có nợ",
     "noDebtDrawing": "Bản vẽ chỉ cung cấp. Không cấu hình khoản vay.",

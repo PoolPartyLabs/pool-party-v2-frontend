@@ -29,6 +29,7 @@
  * (canvas A's Supply, Swap · auto, pool).
  */
 import { HUB_NETWORK, type NetworkId, tokenKey } from "../../mandateDraft";
+import { raydiumPoolInMandate } from "../../solana-preview/raydiumBlockPool";
 import { USDC_MINT, WSOL_MINT } from "../../solana-preview/solanaSchemas";
 import { validManualSwapConfig } from "./auxiliaryConfig";
 import { findMandatePool, isConfigFor } from "./blockConfig";
@@ -118,7 +119,9 @@ function configInMandate(
     return (
       network === "solana" &&
       isConfigFor(block.kind, config) &&
-      selectedSolanaMints(draft, isLiquidityKind(block.kind) || config.pair === "SOL / USDC")
+      selectedSolanaMints(draft, isLiquidityKind(block.kind) || config.pair === "SOL / USDC") &&
+      // POO-2343 R7: a Raydium pool address names a Raydium pool of the mandate (or the default).
+      (typeof config.poolAddress !== "string" || raydiumPoolInMandate(draft, config.poolAddress))
     );
   if (isPoolKind(block.kind)) {
     const poolId = config.poolId;
