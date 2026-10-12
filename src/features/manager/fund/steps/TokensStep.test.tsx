@@ -293,8 +293,10 @@ describe("TokensStep", () => {
     expect(usdc.getByRole("img", { name: "Arbitrum" })).toBeInTheDocument();
 
     // R18 as the coordinator amended it: the spoke's own stable is USDG, never labelled "USDC".
+    // POO-2332 R4: a spoke's locked token names the network that needs it.
     const usdg = within(yoursRow("USDG"));
-    expect(usdg.getByText("Deposit token")).toBeInTheDocument();
+    expect(usdg.getByText("Required by Robinhood Chain")).toBeInTheDocument();
+    expect(usdg.queryByRole("button")).not.toBeInTheDocument();
     expect(usdg.getByRole("img", { name: "Robinhood Chain" })).toBeInTheDocument();
   });
 
