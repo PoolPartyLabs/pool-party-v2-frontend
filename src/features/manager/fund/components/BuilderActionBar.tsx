@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-040
  * @name BuilderActionBar
  * @implements-rules-version v1 (POO-2122 rules v1)
+ * @implements-rules-version v1 (POO-2332 rules v1)
  * @analytics-events none, the bar reports a press through its props; the shell decides what the
  *   press meant and owns every mandate event (PP-MGR-SCR-002)
  *
@@ -15,6 +16,8 @@
  * 2. **Next is never disabled** (R6, design rule P36). A disabled CTA generates no click, no error
  *    and no event, so a manager stuck on a step the product refuses leaves no trace at all. The
  *    press always lands; the shell answers it with an inline reason and a `builder_mandate_blocked`.
+ *    POO-2332 R12 adds a held state: with `holdLabel`, Next is `aria-disabled`, muted and shows the
+ *    reason, but the press still lands, so the refusal still leaves its event (R13).
  *
  * The bar is sticky INSIDE the content column rather than fixed to the viewport, so the app footer
  * scrolls below it instead of being covered by it.
@@ -34,10 +37,21 @@ export interface BuilderActionBarProps {
   next: MandateStepKey | null;
   onBack: () => void;
   onNext: () => void;
+  /**
+   * POO-2332 R12: why Next is held, as the text the button shows in place of its label. Absent or
+   * null means Next is not held. A held Next stays focusable and still calls `onNext`.
+   */
+  holdLabel?: string | null;
 }
 
 /** Sticky Back / Next bar for the Mandate steps. */
-export function BuilderActionBar({ previous, next, onBack, onNext }: BuilderActionBarProps) {
+export function BuilderActionBar({
+  previous,
+  next,
+  onBack,
+  onNext,
+  holdLabel = null,
+}: BuilderActionBarProps) {
   const t = useTranslations("manager");
   const titles = useMandateStepTitles();
 
@@ -54,10 +68,17 @@ export function BuilderActionBar({ previous, next, onBack, onNext }: BuilderActi
         // An empty cell rather than a conditional layout: Next stays pinned right on every step.
         <span />
       )}
-      <Button variant="primary" size="md" onClick={onNext}>
-        {next
-          ? t("fundBuilder.subStep.next", { step: titles[next] })
-          : t("fundBuilder.subStep.nextBuild")}
+      <Button
+        variant={holdLabel ? "secondary" : "primary"}
+        size="md"
+        blocked={Boolean(holdLabel)}
+        onBlockedClick={onNext}
+        onClick={onNext}
+      >
+        {holdLabel ??
+          (next
+            ? t("fundBuilder.subStep.next", { step: titles[next] })
+            : t("fundBuilder.subStep.nextBuild"))}
       </Button>
     </div>
   );

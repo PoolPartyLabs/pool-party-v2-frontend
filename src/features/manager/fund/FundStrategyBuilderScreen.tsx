@@ -3,9 +3,11 @@
  * @name FundStrategyBuilderScreen
  * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2195 rules v1, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2332 rules v1)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
  *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
  *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
+ *   builder_mandate_token_mode_changed,
  *   builder_build_abandoned, builder_build_error, builder_build_submitted, builder_build_completed,
  *   builder_review_error (the Build canvas and ReviewPhase own their view/interaction events),
  *   solana_preview_viewed, solana_preview_started, solana_preview_interacted,
@@ -149,6 +151,7 @@ import {
   type MandateBlockReason,
   type MandateDraft,
   type MandateStepKey,
+  type MandateTokenMode,
   nextStep,
   previousStep,
   resumeStep,
@@ -159,6 +162,7 @@ import {
   validateStep,
   visibleSteps,
 } from "./mandateDraft";
+import { nextHold, tokenModeChangedParams } from "./mandateTokenMode";
 import { LocalSolanaReview } from "./review/LocalSolanaReview";
 import { ReviewPhase } from "./review/ReviewPhase";
 import { SolanaPreviewRenderBoundary } from "./solana-preview/SolanaPreviewErrorBoundary";
@@ -198,6 +202,7 @@ export const MANDATE_BLOCK_REASON_EVENT: Record<
 > = {
   nothing_selected: "nothing_selected",
   cap_missing: "cap_missing",
+  cap_zero: "cap_zero",
   token_allowance_required: "token_allowance_required",
   no_slots: "no_slots",
   has_hook: "has_hook",
@@ -453,6 +458,9 @@ function FundBuilderShell({
       : resumeStep(draft);
   const steps = visibleSteps(draft);
   const position = stepIndex(draft, step);
+  // POO-2332 R12: an enabled 0% cap holds Next with a reason. The press still reaches `handleNext`.
+  const hold = nextHold(draft, catalog, step);
+  const holdLabel = hold ? t(`fundBuilder.limits.nextHold.${hold}`) : null;
 
   /**
    * The phase the manager NAVIGATED to, or null while nobody has moved between phases yet.
@@ -611,6 +619,14 @@ function FundBuilderShell({
         step: block.step,
         block_reason: MANDATE_BLOCK_REASON_EVENT[block.reason],
       });
+    },
+    [track],
+  );
+
+  /** POO-2332 R15: the Tokens step wrote a new token access mode. The shell owns the event. */
+  const reportTokenModeChange = useCallback(
+    (mode: MandateTokenMode) => {
+      track("builder_mandate_token_mode_changed", tokenModeChangedParams(mode));
     },
     [track],
   );
@@ -1122,6 +1138,7 @@ function FundBuilderShell({
               update={update}
               block={activeBlock}
               onBlocked={reportBlocked}
+              onTokenModeChange={reportTokenModeChange}
             />
           )}
 
@@ -1132,6 +1149,7 @@ function FundBuilderShell({
             onNext={() => {
               void handleNext();
             }}
+            holdLabel={holdLabel}
           />
         </>
       ) : null}

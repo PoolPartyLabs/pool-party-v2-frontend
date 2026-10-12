@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-040
  * @name BuilderActionBar.stories
  * @implements-rules-version v1 (POO-2122 rules v1)
+ * @implements-rules-version v1 (POO-2332 rules v1)
  * @analytics-events none, a presentational bar
  *
  * The three shapes the bar takes across the Mandate: no Back on the first step, both buttons in the
@@ -28,3 +29,8 @@ export const MidMandate: Story = { args: { previous: "protocols", next: "pools" 
 
 /** The last step: Next leaves the Mandate for the Build phase. */
 export const LastStep: Story = { args: { previous: "pools", next: null } };
+
+/** POO-2332 R12: a 0% cap holds Next. The button is muted and shows the reason, but a press still lands. */
+export const HeldByZeroCap: Story = {
+  args: { previous: "pools", next: null, holdLabel: "Set the token cap above 0%" },
+};

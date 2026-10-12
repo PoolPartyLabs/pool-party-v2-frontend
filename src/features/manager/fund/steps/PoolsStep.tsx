@@ -3,6 +3,7 @@
  * @name PoolsStep
  * @implements-rules-version v1
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2332 rules v1)
  * @analytics-events none, the shell emits
  *
  * POO-2125 [R11] / [R13] / [R29] to [R38], epic POO-2119. Mandate step 4: the pools this strategy
@@ -111,7 +112,6 @@ import {
   isBlocked,
   isBroadMandate,
   isPricedSymbol,
-  MAX_TOKEN_SLOTS,
   type MandateBlockReason,
   type MandateDraft,
   type MandatePoolRef,
@@ -123,6 +123,7 @@ import {
   tokenKey,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
+import { slotFooter } from "../mandateTokenMode";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -840,6 +841,7 @@ function ConnectedPoolsStep({
         not_priced: t("fundBuilder.tokens.noPrice"),
         coming_soon: t("fundBuilder.common.comingSoon"),
         cap_missing: null,
+        cap_zero: null,
         token_allowance_required: null,
         name_length: null,
       }[ownBlock.reason] ?? null)
@@ -922,6 +924,7 @@ function ConnectedPoolsStep({
   const broad = isBroadMandate(draft, catalog, universeCount ?? 0);
 
   const used = slotsUsed(draft);
+  const slots = slotFooter(draft);
   const protocolNames: Record<DexProtocolId, string> = {
     "uniswap-v3": t("fundBuilder.protocolNames.uniswapV3"),
     "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
@@ -1547,7 +1550,10 @@ function ConnectedPoolsStep({
                 {t("fundBuilder.common.slotsUsed")}
               </span>
               <span className="font-semibold text-foreground text-sm">
-                {t("fundBuilder.common.slotsCount", { used, max: MAX_TOKEN_SLOTS })}
+                {/* POO-2332 R2/R4: 100 slots in mock data mode, 16 in real, no limit in All mode. */}
+                {slots.kind === "unlimited"
+                  ? t("fundBuilder.tokens.noLimit")
+                  : t("fundBuilder.common.slotsCount", { used, max: slots.max })}
               </span>
             </div>
             <p className="mt-2 text-muted-foreground text-xs">{t("fundBuilder.pools.fixed")}</p>

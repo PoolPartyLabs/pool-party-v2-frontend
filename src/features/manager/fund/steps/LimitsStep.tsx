@@ -3,6 +3,7 @@
  * @name LimitsStep
  * @implements-rules-version v2 (POO-2143 rules v2, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2332 rules v1)
  * @analytics-events none, the shell emits
  *
  * POO-2126 [R6] / [R39] / [R40] / [R41] / [R42] / [R43], epic POO-2119. Mandate step 5: how much of
@@ -16,7 +17,20 @@
  * because it is the unit the caps are measured against. A row this screen invented for any of the
  * three would be a control a manager can move and nothing downstream reads.
  *
- * ## Unset is not zero
+ * ## POO-2332: start values, the bulk rows and the 0% hold (mock mode)
+ *
+ * In mock mode a row has no "Not set" state. `effectiveCap` (PP-MGR-LIB-019) gives the start value:
+ * a network or a protocol starts with No cap on, and a token starts at 0% with No cap off (R8). An
+ * enabled 0% cap holds Next (R12): the row and its control get the warning border, and the value
+ * shows in the warning color. A press on the held Next comes back as a `cap_zero` block, and this
+ * step scrolls to the row and blinks it `CAP_ZERO_BLINKS` times (R13).
+ *
+ * Selected mode adds an "All tokens" row above the token rows. It writes one cap on every token row
+ * and shows "Mixed" when the caps differ (R9). All mode replaces the token rows with the one "Every
+ * token" row, the warning box and the "All tokens" tag (R10). Real data mode keeps the rules below,
+ * with no bulk row and no hold (R14).
+ *
+ * ## Unset is not zero (real data mode)
  *
  * A row with no cap record yet shows "Not set" and a slider resting at 0, NOT "0%". The two are
  * different drafts: `validateStep("limits")` refuses Next on the first row with no record, and 0%
@@ -55,14 +69,24 @@ import {
   CAP_STEP_PCT,
   capRows,
   clearCap,
+  EVERY_TOKEN_ROW_ID,
+  effectiveCap,
   HUB_NETWORK,
+  isZeroCap,
   type MandateCap,
   type MandateDraft,
   type NetworkId,
   type ProtocolId,
   setCap,
   tokenKey,
+  tokenModeOf,
 } from "../mandateDraft";
+import {
+  bulkTokenCap,
+  CAP_ZERO_BLINKS,
+  withAllTokenCaps,
+  withEveryTokenCap,
+} from "../mandateTokenMode";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -70,6 +94,12 @@ const STEP = "limits" as const;
 
 /** How long a refused row keeps its ring (R6). Long enough to find it, short enough to not nag. */
 const HIGHLIGHT_MS = 1500;
+
+/** POO-2332 R13: the length of one blink on a `cap_zero` row, in ms. */
+const BLINK_MS = 600;
+
+/** POO-2332 R9: the `data-mandate-row` of the Selected-mode "All tokens" row. */
+const ALL_TOKENS_ROW_ID = "all-tokens";
 
 /** Logo edge, in px. The rows are taller than steps 1 and 2, so the mark grows with them. */
 const LOGO_SIZE = 28;
@@ -96,6 +126,9 @@ function toggleNoCap(
   const noCap = cap?.noCap ?? false;
   const pct = cap?.pct ?? 0;
   if (!noCap) return setCap(draft, scope, id, { noCap: true, pct });
+  // POO-2332 R8/R11: mock mode has no unset state, so an untick always gives a share back. A 0%
+  // share then holds Next (R12), which fails closed in the same way.
+  if (draft.dataMode !== "real") return setCap(draft, scope, id, { noCap: false, pct });
   // PP-NOTE: assumption (coordinator default). `pct > 0` also swallows a DELIBERATE 0%: capped at
   // 0%, ticked, then unticked, and the row is unset rather than back at 0%. `{ noCap: true, pct: 0 }`
   // is what both a chosen 0% and an untouched row leave behind, so the draft cannot tell them apart,
@@ -151,6 +184,9 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
   const noRowsLabel = t("fundBuilder.limits.noRows");
 
   const rows = capRows(draft, catalog);
+  // POO-2332: the start values, the bulk rows and the 0% hold are mock-mode only (R14).
+  const mock = catalog.dataMode !== "real";
+  const allMode = mock && tokenModeOf(draft) === "all";
   const protocolsById = new Map(catalog.protocols.map((protocol) => [protocol.id, protocol]));
 
   const ownBlock = block?.step === STEP ? block : null;
@@ -167,25 +203,75 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
       focusNoCapRow.current = null;
     }
   }, [draft]);
-  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const [highlighted, setHighlighted] = useState<{ rowId: string; blink: boolean } | null>(null);
 
   // R6: find the row the shell is pointing at, then ring it for a moment. Both halves are needed:
   // the scroll answers "where", the ring answers "which one", and a long list gives neither for free.
+  // POO-2332 R13: a `cap_zero` block blinks the row `CAP_ZERO_BLINKS` times in the warning color.
+  // The effect keys on the row and the reason, not on the block object: the shell can rebuild the
+  // block on each draft change, and a slider move must not scroll the page.
   const blockedRowId = ownBlock?.rowId;
+  const blink = ownBlock?.reason === "cap_zero";
   useEffect(() => {
     const rowId = blockedRowId;
     if (!rowId) return;
     document.querySelector(`[data-mandate-row="${rowId}"]`)?.scrollIntoView({ block: "center" });
-    setHighlighted(rowId);
-    const timer = window.setTimeout(() => setHighlighted(null), HIGHLIGHT_MS);
+    setHighlighted({ rowId, blink });
+    const timer = window.setTimeout(
+      () => setHighlighted(null),
+      blink ? BLINK_MS * CAP_ZERO_BLINKS : HIGHLIGHT_MS,
+    );
     return () => window.clearTimeout(timer);
-  }, [blockedRowId]);
+  }, [blockedRowId, blink]);
 
   /** The cap stored for a row, or undefined while the row is still unset. */
   function capFor(scope: CapScope, id: string): MandateCap | undefined {
     if (scope === "networks") return draft.caps.networks[id as NetworkId];
     if (scope === "protocols") return draft.caps.protocols[id as ProtocolId];
     return draft.caps.tokens[id];
+  }
+
+  /** The cap a scope row shows: the start value in mock mode (R8), the stored record in real mode. */
+  function shownCap(current: MandateDraft, scope: CapScope, id: string): MandateCap | undefined {
+    if (mock) return effectiveCap(current, scope, id) ?? undefined;
+    if (scope === "networks") return current.caps.networks[id as NetworkId];
+    if (scope === "protocols") return current.caps.protocols[id as ProtocolId];
+    return current.caps.tokens[id];
+  }
+
+  /** What one cap row reads and writes. The scope rows and the two bulk rows share the row view. */
+  type RowControl = {
+    /** The cap the row shows. Undefined is "Not set" (real data mode only). */
+    cap: MandateCap | undefined;
+    /** Shown in place of the value, for the "Mixed" bulk row (R9). */
+    valueLabel?: string;
+    /** Writes the slider value. */
+    write: (current: MandateDraft, cap: MandateCap) => MandateDraft;
+    /** The cap before the slider moved, for the share that 100% keeps (POO-2197). */
+    prior: (current: MandateDraft) => MandateCap | undefined;
+    /** Ticks or unticks No cap. */
+    toggle: (current: MandateDraft) => MandateDraft;
+  };
+
+  /** The control of a network, protocol or token row. */
+  function scopeControl(scope: CapScope, id: string): RowControl {
+    const cap = mock ? shownCap(draft, scope, id) : capFor(scope, id);
+    return {
+      cap,
+      write: (current, next) => setCap(current, scope, id, next),
+      prior: (current) => shownCap(current, scope, id),
+      toggle: (current) => toggleNoCap(current, scope, id, shownCap(current, scope, id)),
+    };
+  }
+
+  /** The bulk toggle: tick No cap, or untick it and keep the shared share. */
+  function bulkToggle(
+    current: MandateDraft,
+    cap: MandateCap | undefined,
+    write: (current: MandateDraft, cap: MandateCap) => MandateDraft,
+  ): MandateDraft {
+    const pct = cap?.pct ?? 0;
+    return write(current, { noCap: !(cap?.noCap ?? false), pct });
   }
 
   /**
@@ -200,38 +286,50 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
    * per-token group below.
    */
   function capRow({
-    scope,
     id,
     name,
     accessibleName = name,
     caption,
     logo,
     badge,
+    control,
   }: {
-    scope: CapScope;
     id: string;
     name: string;
     accessibleName?: string;
     caption?: string;
-    logo: ReactNode;
+    logo?: ReactNode;
     /** Drawn after the title, for whatever the name alone leaves ambiguous (the network). */
     badge?: ReactNode;
+    control: RowControl;
   }) {
-    const cap = capFor(scope, id);
+    const { cap } = control;
     const noCap = cap?.noCap ?? false;
     const pct = cap?.pct ?? 0;
     // Unset reads "Not set", never "0%": see the file header. The slider's `aria-valuetext` says the
     // same thing the sighted row says, so the two never disagree.
-    const valueText = cap ? `${pct}%` : unsetLabel;
+    const valueText = control.valueLabel ?? (cap ? `${pct}%` : unsetLabel);
+    // POO-2332 R12: an enabled 0% cap holds Next. The row and its control show the warning state.
+    const zero = mock && !control.valueLabel && isZeroCap(cap);
+    const lit = highlighted?.rowId === id ? highlighted : null;
+    const fill = control.valueLabel ? 0 : pct;
 
     return (
       <div
         key={id}
         data-mandate-row={id}
+        data-cap-zero={zero || undefined}
         className={cn(
-          "flex min-h-14 items-center gap-4 rounded-xl border border-border bg-surface px-4 py-3 transition-shadow",
-          highlighted === id && "ring-2 ring-destructive/60",
+          "flex min-h-14 items-center gap-4 rounded-xl border bg-surface px-4 py-3 transition-shadow",
+          zero ? "border-warning" : "border-border",
+          lit && !lit.blink && "ring-2 ring-destructive/60",
+          lit?.blink && "ring-2 ring-warning",
         )}
+        style={
+          lit?.blink
+            ? { animation: `pulse ${BLINK_MS}ms ease-in-out ${CAP_ZERO_BLINKS}` }
+            : undefined
+        }
       >
         {logo}
         <span className="flex min-w-0 flex-1 flex-col">
@@ -245,15 +343,21 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
         </span>
 
         {noCap ? null : (
-          <>
+          <span
+            className={cn(
+              "flex shrink-0 items-center gap-4",
+              zero && "rounded-lg border border-warning bg-warning/10 px-2 py-1",
+            )}
+          >
             <input
               type="range"
               min={0}
               max={100}
               step={CAP_STEP_PCT}
-              value={pct}
+              value={fill}
               aria-label={t("fundBuilder.limits.sliderLabel", { name: accessibleName })}
               aria-valuetext={valueText}
+              aria-invalid={zero || undefined}
               // The value is read HERE, not inside the reducer: the input is controlled, so by the
               // time a deferred reducer runs React has already reset `event.target.value` to the
               // draft's own number and the move would silently write back what was there.
@@ -261,40 +365,32 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
                 const next = Number(event.target.value);
                 if (next === 100 && document.activeElement === event.currentTarget)
                   focusNoCapRow.current = id;
-                update((current) => {
-                  const prior =
-                    scope === "networks"
-                      ? current.caps.networks[id as NetworkId]
-                      : scope === "protocols"
-                        ? current.caps.protocols[id as ProtocolId]
-                        : current.caps.tokens[id];
-                  return setCap(
+                update((current) =>
+                  control.write(
                     current,
-                    scope,
-                    id,
                     next === 100
-                      ? { noCap: true, pct: prior?.pct ?? 0 }
+                      ? { noCap: true, pct: control.prior(current)?.pct ?? 0 }
                       : { noCap: false, pct: next },
-                  );
-                });
+                  ),
+                );
               }}
               className="h-1 w-20 shrink-0 cursor-pointer appearance-none rounded-full accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-56"
               // The filled part of the track is the value, which `accent-color` alone does not draw
               // on every engine. Both stops read from the token layer, so a partner theme recolours
               // the slider with the rest of the app.
               style={{
-                background: `linear-gradient(to right, var(--color-primary) ${pct}%, var(--color-surface-raised) ${pct}%)`,
+                background: `linear-gradient(to right, var(--color-primary) ${fill}%, var(--color-surface-raised) ${fill}%)`,
               }}
             />
             <span
               className={cn(
                 "min-w-12 shrink-0 text-right font-medium text-sm",
-                cap ? "text-foreground" : "text-muted-foreground",
+                zero ? "text-warning" : cap ? "text-foreground" : "text-muted-foreground",
               )}
             >
               {valueText}
             </span>
-          </>
+          </span>
         )}
 
         {/* biome-ignore lint/a11y/useSemanticElements: the 20 px box the rest of the mandate uses (a button with role="checkbox"), so the cap rows read and behave like the selection rows on steps 1 to 4; a bare <input> would break that pairing for no gain. */}
@@ -306,7 +402,7 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
           // called "No cap" are twelve controls a rotor cannot tell apart; the visible text stays
           // short because on screen the row it belongs to is right there.
           aria-label={t("fundBuilder.limits.noCapLabel", { name: accessibleName })}
-          onClick={() => update((current) => toggleNoCap(current, scope, id, cap))}
+          onClick={() => update((current) => control.toggle(current))}
           className={cn(
             "flex shrink-0 items-center gap-2 rounded-md text-sm transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -317,6 +413,62 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
           {noCapLabel}
         </button>
       </div>
+    );
+  }
+
+  /** POO-2332 R9: the Selected-mode "All tokens" row. One cap for every token row. */
+  function allTokensRow() {
+    const bulk = bulkTokenCap(draft, catalog);
+    if (bulk === null) return null;
+    const cap = bulk === "mixed" ? undefined : bulk;
+    const write = (current: MandateDraft, next: MandateCap) =>
+      withAllTokenCaps(current, catalog, next);
+    return capRow({
+      id: ALL_TOKENS_ROW_ID,
+      name: t("fundBuilder.limits.allTokens"),
+      caption: t("fundBuilder.limits.allTokensCaption"),
+      control: {
+        cap: bulk === "mixed" ? { noCap: false, pct: 0 } : cap,
+        valueLabel: bulk === "mixed" ? t("fundBuilder.limits.mixed") : undefined,
+        write,
+        prior: () => cap,
+        toggle: (current) => bulkToggle(current, cap, write),
+      },
+    });
+  }
+
+  /** POO-2332 R10: the All-mode "Every token" row, its warning box and the "All tokens" tag. */
+  function everyTokenGroup() {
+    const cap = effectiveCap(draft, "everyToken", EVERY_TOKEN_ROW_ID) ?? undefined;
+    return (
+      <>
+        {capRow({
+          id: EVERY_TOKEN_ROW_ID,
+          name: t("fundBuilder.limits.everyToken"),
+          caption: t("fundBuilder.limits.everyTokenCaption"),
+          control: {
+            cap,
+            write: withEveryTokenCap,
+            prior: (current) =>
+              effectiveCap(current, "everyToken", EVERY_TOKEN_ROW_ID) ?? undefined,
+            toggle: (current) =>
+              bulkToggle(
+                current,
+                effectiveCap(current, "everyToken", EVERY_TOKEN_ROW_ID) ?? undefined,
+                withEveryTokenCap,
+              ),
+          },
+        })}
+        <div role="note" className="flex flex-col gap-2 rounded-xl border border-warning p-4">
+          <p className="font-medium text-sm text-warning">
+            {t("fundBuilder.limits.anyTokenTitle")}
+          </p>
+          <p className="text-muted-foreground text-xs">{t("fundBuilder.limits.anyTokenBody")}</p>
+          <span className="w-fit rounded-full bg-warning/10 px-2 py-0.5 font-medium text-warning text-xs">
+            {t("fundBuilder.limits.allTokensTag")}
+          </span>
+        </div>
+      </>
     );
   }
 
@@ -337,15 +489,22 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
       {ownBlock ? (
         <p
           role="alert"
-          className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive text-sm"
+          className={cn(
+            "rounded-lg border px-3 py-2 text-sm",
+            ownBlock.reason === "cap_zero"
+              ? "border-warning/40 bg-warning/10 text-warning"
+              : "border-destructive/40 bg-destructive/10 text-destructive",
+          )}
         >
-          {ownBlock.reason === "token_allowance_required"
-            ? t(
-                rows.tokens.length === 0
-                  ? "fundBuilder.limits.addPositiveToken"
-                  : "fundBuilder.limits.positiveTokenRequired",
-              )
-            : t("fundBuilder.limits.capMissing")}
+          {ownBlock.reason === "cap_zero"
+            ? t("fundBuilder.limits.capZero")
+            : ownBlock.reason === "token_allowance_required"
+              ? t(
+                  rows.tokens.length === 0
+                    ? "fundBuilder.limits.addPositiveToken"
+                    : "fundBuilder.limits.positiveTokenRequired",
+                )
+              : t("fundBuilder.limits.capMissing")}
         </p>
       ) : null}
 
@@ -380,8 +539,8 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
           ? emptyLine()
           : rows.networks.map((network) =>
               capRow({
-                scope: "networks",
                 id: network,
+                control: scopeControl("networks", network),
                 name: networkNames[network],
                 logo: <NetworkLogoWithName network={network} catalog={catalog} size={LOGO_SIZE} />,
               }),
@@ -402,8 +561,8 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
           ? emptyLine()
           : rows.protocols.map((protocol) =>
               capRow({
-                scope: "protocols",
                 id: protocol,
+                control: scopeControl("protocols", protocol),
                 name: protocolNames[protocol],
                 caption: kindCaptions[protocolsById.get(protocol)?.kind ?? "dex"],
                 logo: (
@@ -420,35 +579,45 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
           caption={
             catalog.dataMode === "real"
               ? t("fundBuilder.real.allocation")
-              : t("fundBuilder.limits.perTokenCaption")
+              : allMode
+                ? t("fundBuilder.limits.perTokenAllCaption")
+                : t("fundBuilder.limits.perTokenCaption")
           }
         />
+        {/* POO-2332 R10: All mode has the one "Every token" row in place of the token rows. */}
+        {allMode ? everyTokenGroup() : null}
+        {/* POO-2332 R9: Selected mode puts the "All tokens" row above the token rows. */}
+        {mock && !allMode ? allTokensRow() : null}
         {/* One row per token ENTRY, which means one per network the token runs on (R27). The two
             rows of the same token are different caps on different chains, so the network is in the
             row AND in the accessible name of both its controls: "WETH" named both, and a rotor
             listed four controls none of which said which chain it capped. */}
-        {rows.tokens.length === 0
-          ? emptyLine()
-          : rows.tokens.map((token) =>
-              capRow({
-                scope: "tokens",
-                id: tokenKey(token),
-                name: token.symbol,
-                accessibleName: t("fundBuilder.limits.tokenOnNetwork", {
-                  symbol: token.symbol,
-                  network: networkNames[token.network],
+        {allMode
+          ? null
+          : rows.tokens.length === 0
+            ? emptyLine()
+            : rows.tokens.map((token) =>
+                capRow({
+                  id: tokenKey(token),
+                  control: scopeControl("tokens", tokenKey(token)),
+                  name: token.symbol,
+                  accessibleName: t("fundBuilder.limits.tokenOnNetwork", {
+                    symbol: token.symbol,
+                    network: networkNames[token.network],
+                  }),
+                  caption: token.name,
+                  logo: (
+                    <TokenLogo
+                      symbol={token.symbol}
+                      network={token.network}
+                      className="size-7 text-xs"
+                    />
+                  ),
+                  badge: (
+                    <NetworkLogoWithName network={token.network} catalog={catalog} size={16} />
+                  ),
                 }),
-                caption: token.name,
-                logo: (
-                  <TokenLogo
-                    symbol={token.symbol}
-                    network={token.network}
-                    className="size-7 text-xs"
-                  />
-                ),
-                badge: <NetworkLogoWithName network={token.network} catalog={catalog} size={16} />,
-              }),
-            )}
+              )}
       </div>
 
       {/* R42 */}
