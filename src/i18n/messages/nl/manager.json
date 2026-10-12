@@ -843,7 +843,34 @@
       "depositToken": "Stortingstoken",
       "slotsCaption": "Een token neemt één slot in op elk netwerk waarop het draait. Het mandaat heeft {max} slots.",
       "noPrice": "Nog geen prijsfeed",
-      "empty": "Geen tokens komen overeen met uw zoekopdracht."
+      "empty": "Geen tokens komen overeen met uw zoekopdracht.",
+      "access": {
+        "label": "Toegang tot tokens",
+        "selected": "Geselecteerde tokens",
+        "all": "Alle tokens",
+        "hint": "Met Alle tokens kan de strategie elk token op je netwerken en protocollen verhandelen, ook tokens die later live gaan."
+      },
+      "allInfo": {
+        "title": "De strategie kan elk token verhandelen",
+        "body": "Dit omvat elk token op je netwerken en protocollen, ook tokens die live gaan na publicatie. Je kiest tokens niet één voor één. Elk token wordt geprijsd op de hub."
+      },
+      "yoursAll": "Je tokens · Alle",
+      "everyOther": "Elk ander token",
+      "everyOtherCaption": "Wordt toegevoegd bij de lancering",
+      "requiredBy": "Vereist door {network}",
+      "slotsAllLabel": "Netwerkslots",
+      "slotsNoLimit": "Geen limiet",
+      "slotsAllCaption": "De limiet van {max} slots geldt alleen voor geselecteerde tokens.",
+      "noFreeSlots": "Geen vrije slots",
+      "slotsFull": "Alle {max} slots zijn in gebruik. Verwijder een token om een ander toe te voegen.",
+      "andMoreTokens": "en {count, plural, one {# token meer} other {# tokens meer}}",
+      "loading": "Tokens laden",
+      "loadError": {
+        "title": "Tokens zijn niet geladen",
+        "heading": "We konden de tokenlijst niet laden",
+        "body": "Controleer je verbinding en probeer het opnieuw. De tokens in je lijst blijven opgeslagen."
+      },
+      "retry": "Opnieuw proberen"
     },
     "pools": {
       "search": "Token, paar of pooladres",
@@ -870,11 +897,11 @@
     },
     "limits": {
       "perNetwork": "Per netwerk",
-      "perNetworkCaption": "Maximaal kapitaalaandeel per netwerk · in stappen van 5%",
+      "perNetworkCaption": "Maximaal aandeel van de stortingen per netwerk · in stappen van 5%",
       "perProtocol": "Per protocol",
-      "perProtocolCaption": "Maximaal kapitaalaandeel per protocol · in stappen van 5%",
+      "perProtocolCaption": "Maximaal aandeel van de stortingen per protocol · in stappen van 5%",
       "perToken": "Per token",
-      "perTokenCaption": "Maximaal kapitaalaandeel aangehouden in elk token · in stappen van 5%",
+      "perTokenCaption": "Maximaal aandeel van de stortingen aangehouden in elk token · in stappen van 5%",
       "tokenOnNetwork": "{symbol} op {network}",
       "hubRow": "Geen limiet · de hub houdt aan wat niet ergens anders naartoe wordt gestuurd",
       "hubCaption": "Hub",
@@ -890,7 +917,24 @@
         "perps": "Perpetuals"
       },
       "positiveTokenRequired": "Sta minstens één token naast USDC toe met meer dan 0% of kies Geen limiet.",
-      "addPositiveToken": "Voeg in Tokens een ander token toe en stel de limiet boven 0% in of kies Geen limiet. USDC is al inbegrepen."
+      "addPositiveToken": "Voeg in Tokens een ander token toe en stel de limiet boven 0% in of kies Geen limiet. USDC is al inbegrepen.",
+      "perTokenAllCaption": "Standaardlimiet voor elk token · stappen van 5%",
+      "allTokensRow": {
+        "title": "Alle tokens",
+        "caption": "Stelt één limiet in voor elk token in de lijst"
+      },
+      "mixed": "Gemengd",
+      "everyTokenRow": {
+        "title": "Elk token",
+        "caption": "Elk token apart, behalve USDC"
+      },
+      "allWarning": {
+        "title": "Elk token kan in de strategie komen",
+        "body": "Dit omvat tokens met lage liquiditeit of zonder koershistorie. De standaardlimiet geldt voor elk token apart. Storters zien deze tag op de strategiekaart en de strategiepagina:",
+        "tag": "Alle tokens"
+      },
+      "capZeroReason": "Stel de tokenlimiet in boven 0%",
+      "capZero": "Stel de tokenlimiet in boven 0% of kies Geen limiet om door te gaan."
     },
     "draft": {
       "title": "Geef uw concept een naam",

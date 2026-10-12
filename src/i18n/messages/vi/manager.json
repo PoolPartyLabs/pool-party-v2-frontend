@@ -843,7 +843,34 @@
       "depositToken": "Token nạp tiền",
       "slotsCaption": "Mỗi token chiếm một slot trên mỗi mạng mà nó hoạt động. Nhiệm vụ này có {max} slot.",
       "noPrice": "Chưa có nguồn giá",
-      "empty": "Không có token nào khớp với tìm kiếm của bạn."
+      "empty": "Không có token nào khớp với tìm kiếm của bạn.",
+      "access": {
+        "label": "Quyền truy cập token",
+        "selected": "Token đã chọn",
+        "all": "Tất cả token",
+        "hint": "Tất cả token cho phép chiến lược giao dịch mọi token trên các mạng và giao thức của bạn, kể cả token ra mắt sau."
+      },
+      "allInfo": {
+        "title": "Chiến lược có thể giao dịch mọi token",
+        "body": "Mục này bao gồm mọi token trên các mạng và giao thức của bạn, kể cả token ra mắt sau khi bạn xuất bản. Bạn không cần chọn từng token. Mọi token đều được định giá trên hub."
+      },
+      "yoursAll": "Token của bạn · Tất cả",
+      "everyOther": "Mọi token khác",
+      "everyOtherCaption": "Được thêm khi token ra mắt",
+      "requiredBy": "Được {network} yêu cầu",
+      "slotsAllLabel": "Slot mạng",
+      "slotsNoLimit": "Không giới hạn",
+      "slotsAllCaption": "Mức tối đa {max} slot chỉ áp dụng cho token đã chọn.",
+      "noFreeSlots": "Hết slot trống",
+      "slotsFull": "Đã dùng hết {max} slot. Hãy xóa một token để thêm token khác.",
+      "andMoreTokens": "và {count, plural, other {# token nữa}}",
+      "loading": "Đang tải token",
+      "loadError": {
+        "title": "Không tải được token",
+        "heading": "Chúng tôi không thể tải danh sách token",
+        "body": "Hãy kiểm tra kết nối và thử lại. Các token trong danh sách của bạn vẫn được lưu."
+      },
+      "retry": "Thử lại"
     },
     "pools": {
       "search": "Token, cặp hoặc địa chỉ pool",
@@ -870,11 +897,11 @@
     },
     "limits": {
       "perNetwork": "Theo mạng",
-      "perNetworkCaption": "Tỷ lệ vốn tối đa trên mỗi mạng · mức tăng 5%",
+      "perNetworkCaption": "Tỷ lệ tiền gửi tối đa trên mỗi mạng · mức tăng 5%",
       "perProtocol": "Theo giao thức",
-      "perProtocolCaption": "Tỷ lệ vốn tối đa trong mỗi giao thức · mức tăng 5%",
+      "perProtocolCaption": "Tỷ lệ tiền gửi tối đa trong mỗi giao thức · mức tăng 5%",
       "perToken": "Theo token",
-      "perTokenCaption": "Tỷ lệ vốn tối đa được giữ trong mỗi token · mức tăng 5%",
+      "perTokenCaption": "Tỷ lệ tiền gửi tối đa được giữ trong mỗi token · mức tăng 5%",
       "tokenOnNetwork": "{symbol} trên {network}",
       "hubRow": "Không giới hạn · hub giữ phần không được gửi đến nơi khác",
       "hubCaption": "Hub",
@@ -890,7 +917,24 @@
         "perps": "Vĩnh cửu"
       },
       "positiveTokenRequired": "Cho phép ít nhất một token ngoài USDC có giới hạn trên 0% hoặc chọn Không giới hạn.",
-      "addPositiveToken": "Thêm một token khác trong Tokens, rồi đặt giới hạn trên 0% hoặc chọn Không giới hạn. USDC đã được bao gồm."
+      "addPositiveToken": "Thêm một token khác trong Tokens, rồi đặt giới hạn trên 0% hoặc chọn Không giới hạn. USDC đã được bao gồm.",
+      "perTokenAllCaption": "Mức tối đa mặc định cho mỗi token · bước 5%",
+      "allTokensRow": {
+        "title": "Tất cả token",
+        "caption": "Đặt một mức tối đa cho mọi token trong danh sách"
+      },
+      "mixed": "Hỗn hợp",
+      "everyTokenRow": {
+        "title": "Mỗi token",
+        "caption": "Từng token riêng lẻ, trừ USDC"
+      },
+      "allWarning": {
+        "title": "Mọi token đều có thể vào chiến lược",
+        "body": "Mục này gồm cả token có thanh khoản thấp hoặc chưa có lịch sử giá. Mức tối đa mặc định áp dụng cho từng token riêng lẻ. Người gửi tiền thấy nhãn này trên thẻ và trang của chiến lược:",
+        "tag": "Tất cả token"
+      },
+      "capZeroReason": "Đặt mức tối đa của token trên 0%",
+      "capZero": "Đặt mức tối đa của token trên 0% hoặc chọn Không giới hạn để tiếp tục."
     },
     "draft": {
       "title": "Đặt tên cho bản nháp của bạn",

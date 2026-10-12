@@ -305,6 +305,9 @@ export const ANALYTICS_EVENTS = [
   "builder_mandate_step_viewed",
   "builder_mandate_step_submitted",
   "builder_mandate_blocked",
+  // POO-2332: the manager switched the Token access control between Selected and All tokens. One
+  // event per switch, so the share of strategies that trade any token is a plain count.
+  "builder_mandate_token_mode_changed",
   "builder_mandate_completed",
   "builder_mandate_abandoned",
   "builder_draft_saved",
@@ -562,6 +565,12 @@ export const ANALYTICS_MANDATE_BLOCK_REASONS = [
    * and this count is what says whether Limits asks for more decisions than it is worth.
    */
   "cap_missing",
+  /**
+   * A token cap is on and at 0% (POO-2332 R12, R13). The cap lets no capital into that token, so the
+   * strategy would hold nothing in it. The manager clears it by raising the cap or ticking No cap.
+   * Sent when a press on Next finds the 0% cap, in Selected mode and in All tokens mode.
+   */
+  "cap_zero",
   /** USDC needs another selected token with a positive effective allowance (POO-2197). */
   "token_allowance_required",
   /**
@@ -1248,6 +1257,11 @@ export interface AnalyticsParams {
   protocols_count?: number;
   tokens_count?: number;
   pools_count?: number;
+  /**
+   * On `builder_mandate_token_mode_changed` (POO-2332 R15): the mode the manager switched TO. A closed
+   * pair, declared here for the same reason as {@link step}: this leaf never imports a feature module.
+   */
+  token_mode?: "selected" | "all";
   /**
    * On `builder_mandate_abandoned`: whether the mandate the manager walked away from had reached
    * storage with nothing left unsaved (POO-2122; sharpened by POO-2157, review F3 of PR #41).

@@ -24,9 +24,11 @@ import {
   userEvent,
   within,
 } from "../../../../../tests/utils/renderWithProviders";
-import { buildMandateCatalog } from "../mandateCatalog";
+import { buildMandateCatalog, type MandateCatalog } from "../mandateCatalog";
 import {
+  ALL_TOKENS_ROW_ID,
   createEmptyDraft,
+  EVERY_TOKEN_ROW_ID,
   type MandateDraft,
   type MandateTokenRef,
   type StepBlock,
@@ -91,14 +93,28 @@ function figmaDraft(overrides: Partial<MandateDraft> = {}): MandateDraft {
   };
 }
 
+/**
+ * POO-2332 R14: real data mode keeps the unset state and the untick that clears a cap. The mock
+ * builder has start values instead (R8), so the unset cases below run in real data mode.
+ */
+const realCatalog: MandateCatalog = { ...catalog, dataMode: "real" };
+
+function realDraft(overrides: Partial<MandateDraft> = {}): MandateDraft {
+  return figmaDraft({ dataMode: "real", catalogVersion: "v2-catalog-v1", ...overrides });
+}
+
 /** Render the step and expose the reducer the screen last handed to `update`. */
-function renderStep(draft: MandateDraft = figmaDraft(), block: StepBlock | null = null) {
+function renderStep(
+  draft: MandateDraft = figmaDraft(),
+  block: StepBlock | null = null,
+  source: MandateCatalog = catalog,
+) {
   const update = vi.fn();
   const onBlocked = vi.fn();
   const view = renderWithProviders(
     <LimitsStep
       draft={draft}
-      catalog={catalog}
+      catalog={source}
       update={update}
       block={block}
       onBlocked={onBlocked}
@@ -171,19 +187,34 @@ describe("LimitsStep", () => {
     expect(within(row("robinhood")).getByRole("slider")).toHaveValue("40");
   });
 
+  // @rule R10
+  it("gives the All tokens row and the Every token row their own row ids", () => {
+    const { unmount } = renderStep();
+    expect(row(ALL_TOKENS_ROW_ID)).toHaveTextContent("All tokens");
+    expect(document.querySelector(`[data-mandate-row="${EVERY_TOKEN_ROW_ID}"]`)).toBeNull();
+    unmount();
+
+    renderStep(figmaDraft({ tokenMode: "all" }));
+    expect(row(EVERY_TOKEN_ROW_ID)).toHaveTextContent("Every token");
+    expect(document.querySelector(`[data-mandate-row="${ALL_TOKENS_ROW_ID}"]`)).toBeNull();
+    expect(ALL_TOKENS_ROW_ID).not.toBe(EVERY_TOKEN_ROW_ID);
+  });
+
   // @rule R39
   it("renders the three groups with their heads and captions", () => {
     renderStep();
 
     expect(screen.getByText("Per network")).toBeInTheDocument();
-    expect(screen.getByText("Max share of capital on each network · 5% steps")).toBeInTheDocument();
+    expect(
+      screen.getByText("Max share of deposits on each network · 5% steps"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Per protocol")).toBeInTheDocument();
     expect(
-      screen.getByText("Max share of capital in each protocol · 5% steps"),
+      screen.getByText("Max share of deposits in each protocol · 5% steps"),
     ).toBeInTheDocument();
     expect(screen.getByText("Per token")).toBeInTheDocument();
     expect(
-      screen.getByText("Max share of capital held in each token · 5% steps"),
+      screen.getByText("Max share of deposits held in each token · 5% steps"),
     ).toBeInTheDocument();
   });
 
@@ -309,24 +340,27 @@ describe("LimitsStep", () => {
    * "0%", which is exactly the state this step's own rule says is not the same as unset.
    */
   // @rule R39
-  it("un-ticks a row that never had a share back to unset, not to 0%", async () => {
+  // @rule R14
+  it("un-ticks a row that never had a share back to unset, not to 0% (real data mode)", async () => {
     const user = userEvent.setup();
     // What the tick left behind: a record created by the checkbox on a row with no share.
     const { capsAfterUpdate, draftAfterUpdate } = renderStep(
-      figmaDraft({
+      realDraft({
         caps: {
           networks: { arbitrum: { noCap: true, pct: 0 }, robinhood: { noCap: true, pct: 0 } },
           protocols: {},
           tokens: {},
         },
       }),
+      null,
+      realCatalog,
     );
 
     await user.click(within(row("robinhood")).getByRole("checkbox"));
 
     expect(capsAfterUpdate().networks.robinhood).toBeUndefined();
     // And the step says so again on the next Next, rather than letting a 0% cap through.
-    expect(validateStep(draftAfterUpdate(), "limits", catalog)).toEqual({
+    expect(validateStep(draftAfterUpdate(), "limits", realCatalog)).toEqual({
       step: "limits",
       reason: "cap_missing",
       rowId: "robinhood",
@@ -347,14 +381,15 @@ describe("LimitsStep", () => {
    * later tidy-up of that comparison has to argue with a test rather than with a comment.
    */
   // @rule R39
-  it("forgets a deliberate 0% cap across a No cap round trip, so Next asks again", async () => {
+  // @rule R14
+  it("forgets a deliberate 0% cap across a No cap round trip, so Next asks again (real data mode)", async () => {
     const user = userEvent.setup();
     const update = vi.fn();
-    let draft = figmaDraft();
+    let draft = realDraft();
     const step = (current: MandateDraft) => (
       <LimitsStep
         draft={current}
-        catalog={catalog}
+        catalog={realCatalog}
         update={update}
         block={null}
         onBlocked={vi.fn()}
@@ -381,7 +416,7 @@ describe("LimitsStep", () => {
     apply();
 
     expect(draft.caps.networks.robinhood).toBeUndefined();
-    expect(validateStep(draft, "limits", catalog)).toEqual({
+    expect(validateStep(draft, "limits", realCatalog)).toEqual({
       step: "limits",
       reason: "cap_missing",
       rowId: "robinhood",
@@ -389,16 +424,19 @@ describe("LimitsStep", () => {
   });
 
   // @rule R39
-  it("un-ticks a protocol and a token row back to unset the same way", async () => {
+  // @rule R14
+  it("un-ticks a protocol and a token row back to unset the same way (real data mode)", async () => {
     const user = userEvent.setup();
     const { capsAfterUpdate, update } = renderStep(
-      figmaDraft({
+      realDraft({
         caps: {
           networks: { arbitrum: { noCap: true, pct: 0 } },
           protocols: { "aave-v3": { noCap: true, pct: 0 } },
           tokens: { [tokenKey(WETH)]: { noCap: true, pct: 0 } },
         },
       }),
+      null,
+      realCatalog,
     );
 
     await user.click(within(row("aave-v3")).getByRole("checkbox"));
@@ -472,27 +510,30 @@ describe("LimitsStep", () => {
   });
 
   // @rule R39
-  it("shows an unset row as Not set with the slider at zero and the box unticked", () => {
+  // @rule R8
+  it("shows a row with no stored cap at its start value (POO-2332)", () => {
     renderStep(
       figmaDraft({
         caps: { networks: { arbitrum: { noCap: true, pct: 0 } }, protocols: {}, tokens: {} },
       }),
     );
 
+    // A network starts with No cap on: the slider is hidden and the box is ticked.
     const robinhood = within(row("robinhood"));
-    expect(robinhood.getByText("Not set")).toBeInTheDocument();
-    expect(robinhood.queryByText("0%")).not.toBeInTheDocument();
-    expect(robinhood.getByRole("slider")).toHaveValue("0");
-    expect(robinhood.getByRole("slider")).toHaveAttribute("aria-valuetext", "Not set");
-    expect(robinhood.getByRole("checkbox")).toHaveAttribute("aria-checked", "false");
+    expect(robinhood.queryByText("Not set")).not.toBeInTheDocument();
+    expect(robinhood.queryByRole("slider")).not.toBeInTheDocument();
+    expect(robinhood.getByRole("checkbox")).toHaveAttribute("aria-checked", "true");
   });
 
   // @rule R39
-  it("creates the cap record on the first interaction with an unset row", () => {
+  // @rule R14
+  it("creates the cap record on the first interaction with an unset row (real data mode)", () => {
     const { capsAfterUpdate } = renderStep(
-      figmaDraft({
+      realDraft({
         caps: { networks: { arbitrum: { noCap: true, pct: 0 } }, protocols: {}, tokens: {} },
       }),
+      null,
+      realCatalog,
     );
 
     fireEvent.change(within(row("robinhood")).getByRole("slider"), { target: { value: "20" } });
@@ -567,6 +608,59 @@ describe("LimitsStep", () => {
     renderStep(figmaDraft(), { step: "pools", reason: "nothing_selected", rowId: null });
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  // @rule R13
+  it("scrolls to, focuses and blinks the All tokens row on cap_zero in Selected mode", () => {
+    vi.useFakeTimers();
+    const draft = figmaDraft({
+      caps: {
+        ...figmaDraft().caps,
+        tokens: {
+          [tokenKey(WETH)]: { noCap: false, pct: 0 },
+          [tokenKey(WBTC)]: { noCap: true, pct: 0 },
+        },
+      },
+    });
+    const block = validateStep(draft, "limits", catalog);
+    expect(block).toEqual({ step: "limits", reason: "cap_zero", rowId: tokenKey(WETH) });
+    const scroll = vi.mocked(Element.prototype.scrollIntoView);
+    scroll.mockClear();
+
+    renderStep(draft, block);
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    const target = row(ALL_TOKENS_ROW_ID);
+    expect(target).toHaveAttribute("data-mandate-row", "all-tokens");
+    expect(scroll).toHaveBeenCalledWith({ block: "center" });
+    expect(scroll.mock.contexts).toContain(target);
+    expect(target.contains(document.activeElement)).toBe(true);
+    expect(target.className).toContain("ring-warning");
+    expect(row(tokenKey(WETH)).className).not.toContain("ring-warning");
+  });
+
+  // @rule R13
+  it("scrolls to, focuses and blinks the Every token row on cap_zero in All mode", () => {
+    vi.useFakeTimers();
+    const draft = figmaDraft({ tokenMode: "all", allTokensCap: { noCap: false, pct: 0 } });
+    const block = validateStep(draft, "limits", catalog);
+    expect(block).toEqual({ step: "limits", reason: "cap_zero", rowId: EVERY_TOKEN_ROW_ID });
+    const scroll = vi.mocked(Element.prototype.scrollIntoView);
+    scroll.mockClear();
+
+    renderStep(draft, block);
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    const target = row(EVERY_TOKEN_ROW_ID);
+    expect(target).toHaveAttribute("data-mandate-row", "every-token");
+    expect(scroll).toHaveBeenCalledWith({ block: "center" });
+    expect(scroll.mock.contexts).toContain(target);
+    expect(target.contains(document.activeElement)).toBe(true);
+    expect(target.className).toContain("ring-warning");
   });
 
   // @rule R41

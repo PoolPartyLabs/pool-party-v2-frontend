@@ -843,7 +843,34 @@
       "depositToken": "Token de depósito",
       "slotsCaption": "Um token ocupa um slot em cada rede em que roda. O mandato tem {max} slots.",
       "noPrice": "Ainda sem feed de preço",
-      "empty": "Nenhum token corresponde à sua busca."
+      "empty": "Nenhum token corresponde à sua busca.",
+      "access": {
+        "label": "Acesso a tokens",
+        "selected": "Tokens selecionados",
+        "all": "Todos os tokens",
+        "hint": "Todos os tokens permite que a estratégia negocie qualquer token das suas redes e protocolos, inclusive tokens lançados depois."
+      },
+      "allInfo": {
+        "title": "A estratégia pode negociar qualquer token",
+        "body": "Isso cobre todos os tokens das suas redes e protocolos, inclusive os lançados depois da publicação. Você não escolhe os tokens um a um. Todo token é precificado no hub."
+      },
+      "yoursAll": "Seus tokens · Todos",
+      "everyOther": "Todos os outros tokens",
+      "everyOtherCaption": "Adicionado quando for lançado",
+      "requiredBy": "Exigido por {network}",
+      "slotsAllLabel": "Slots de rede",
+      "slotsNoLimit": "Sem limite",
+      "slotsAllCaption": "O teto de {max} slots vale apenas para tokens selecionados.",
+      "noFreeSlots": "Sem slots livres",
+      "slotsFull": "Todos os {max} slots estão em uso. Remova um token para adicionar outro.",
+      "andMoreTokens": "e {count, plural, one {mais # token} other {mais # tokens}}",
+      "loading": "Carregando tokens",
+      "loadError": {
+        "title": "Os tokens não carregaram",
+        "heading": "Não foi possível carregar a lista de tokens",
+        "body": "Verifique sua conexão e tente novamente. Os tokens da sua lista continuam salvos."
+      },
+      "retry": "Tentar novamente"
     },
     "pools": {
       "search": "Token, par ou endereço da pool",
@@ -870,11 +897,11 @@
     },
     "limits": {
       "perNetwork": "Por rede",
-      "perNetworkCaption": "Participação máxima do capital em cada rede · incrementos de 5%",
+      "perNetworkCaption": "Participação máxima dos depósitos em cada rede · incrementos de 5%",
       "perProtocol": "Por protocolo",
-      "perProtocolCaption": "Participação máxima do capital em cada protocolo · incrementos de 5%",
+      "perProtocolCaption": "Participação máxima dos depósitos em cada protocolo · incrementos de 5%",
       "perToken": "Por token",
-      "perTokenCaption": "Participação máxima do capital mantida em cada token · incrementos de 5%",
+      "perTokenCaption": "Participação máxima dos depósitos mantida em cada token · incrementos de 5%",
       "tokenOnNetwork": "{symbol} na rede {network}",
       "hubRow": "Sem limite · o hub mantém o que não é enviado a outro lugar",
       "hubCaption": "Hub",
@@ -890,7 +917,24 @@
         "perps": "Perpétuos"
       },
       "positiveTokenRequired": "Permita pelo menos um token além de USDC acima de 0% ou selecione Sem limite.",
-      "addPositiveToken": "Adicione outro token em Tokens e defina seu limite acima de 0% ou selecione Sem limite. USDC já está incluído."
+      "addPositiveToken": "Adicione outro token em Tokens e defina seu limite acima de 0% ou selecione Sem limite. USDC já está incluído.",
+      "perTokenAllCaption": "Teto padrão para cada token · passos de 5%",
+      "allTokensRow": {
+        "title": "Todos os tokens",
+        "caption": "Define um teto para todos os tokens da lista"
+      },
+      "mixed": "Misto",
+      "everyTokenRow": {
+        "title": "Cada token",
+        "caption": "Cada token por conta própria, exceto USDC"
+      },
+      "allWarning": {
+        "title": "Qualquer token pode entrar na estratégia",
+        "body": "Isso inclui tokens com pouca liquidez ou sem histórico de preço. O teto padrão vale para cada token por conta própria. Os depositantes veem esta etiqueta no card e na página da estratégia:",
+        "tag": "Todos os tokens"
+      },
+      "capZeroReason": "Defina o teto de tokens acima de 0%",
+      "capZero": "Defina o teto de tokens acima de 0% ou selecione Sem limite para continuar."
     },
     "draft": {
       "title": "Dê um nome ao seu rascunho",
