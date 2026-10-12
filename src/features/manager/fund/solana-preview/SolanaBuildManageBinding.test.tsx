@@ -117,7 +117,8 @@ it("retains independent local Manage drafts and Review across shared card select
   // @rule POO-2309 R3/R4: chart visibility does not change local operation/draft ownership.
   const host = document.querySelector("[data-solana-local-manage-host]");
   await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
-  expect(screen.getByText("Charts are unavailable.")).toBeVisible();
+  // @rule POO-2338 R3: the Kamino Supply block shows the token chart of the USDC mint.
+  expect(screen.getByTitle("USDC price chart")).toBeVisible();
   expect(screen.getByRole("button", { name: "Confirm changes" })).toBeDisabled();
   expect(document.querySelector("[data-solana-local-manage-host]")).toBe(host);
   expect(screen.getByRole("textbox", { name: "Allocation (%)" })).toHaveValue("40");

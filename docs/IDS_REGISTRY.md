@@ -1181,12 +1181,13 @@ Existing PP-MGR-CMP-084 and PP-MGR-LIB-048 now accept both saved Mandate drafts 
 
 ## TradingView market-reference Charts, October 9, 2026 (POO-2309 v1)
 
+Superseded by POO-2338 (section below). This section is history: the app no longer loads TradingView or Binance data. The rows of PP-MGR-LIB-077, PP-MGR-LIB-078 and PP-MGR-CMP-103 moved to the POO-2338 section.
+
+The row of PP-MGR-LIB-079 (POO-2332, Token access) is not a chart row. It stays in this table.
+
 | ID | Name | Type | Design | Status | Linear | Source |
 | --- | --- | --- | --- | --- | --- | --- |
-| `PP-MGR-LIB-077` | chartModel, exact approved market identities, public embed configuration and current-frame messages | Lib | n/a (code) | Implemented market-reference model | [POO-2309](https://linear.app/yeildbay/issue/POO-2309) | `src/features/manager/fund/charts/chartModel.ts` @rules-v1 |
-| `PP-MGR-LIB-078` | chartContext, private selected-block/draft context independent of financial values | Lib | n/a (code) | Implemented Build/Manage context | [POO-2309](https://linear.app/yeildbay/issue/POO-2309) | `src/features/manager/fund/charts/chartContext.ts` @rules-v1 |
 | `PP-MGR-LIB-079` | mandateTokenAccess, view models for the Token access mode, the 100-slot basket and the token caps | Lib | n/a (code) | Implemented | [POO-2332](https://linear.app/yeildbay/issue/POO-2332) | `src/features/manager/fund/mandateTokenAccess.ts` @rules-v1 |
-| `PP-MGR-CMP-103` | StrategyChartSurface, retained canvas and isolated Advanced Chart with left drawing tools | Component | [Manage Charts8678:37675](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-37675) | Implemented shared Build/Manage surface | [POO-2309](https://linear.app/yeildbay/issue/POO-2309) | `src/features/manager/fund/charts/StrategyChartSurface.tsx` @rules-v1 |
 
 Existing Build/Manage artifacts retain their IDs. ETH/USDC and SOL/USDC are Binance references, resolved by approved token identity. Pool prices, valuation, LP-range overlays, lending metrics and Activity are excluded. Browser acceptance remains with Murilo.
 
@@ -1235,11 +1236,29 @@ with 552 markers across 317 files. The five disclosed historical duplicate IDs r
 
 | ID | Name | Type | Design | Status | Linear | Source |
 | --- | --- | --- | --- | --- | --- | --- |
-| `PP-MGR-LIB-095` | chartUnavailable, one full-panel unavailable state (Back only) for every chart cause, and the kept load-error retry | Lib | [Charts unavailable 8682:3253](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8682-3253) | Implemented view model | [POO-2336](https://linear.app/yeildbay/issue/POO-2336) | `src/features/manager/fund/charts/chartUnavailable.ts` @rules-v1 |
+| `PP-MGR-LIB-095` | chartUnavailable, one full-panel unavailable state (Back only) for every chart cause, and the kept load-timeout retry (POO-2338 removes no_data and lending_reference) | Lib | [Charts unavailable 8682:3253](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8682-3253) | Implemented view model | [POO-2336](https://linear.app/yeildbay/issue/POO-2336) | `src/features/manager/fund/charts/chartUnavailable.ts` @rules-v1 |
 
 Existing PP-MGR-CMP-103 shows this state with the selected block and Back. It also has stories now.
 BuildScreen and ManageScreen pass the selected block label only. The label is never sent to the widget or to analytics.
 The `manager_chart_blocked` reasons do not change. No markers are added or removed.
 
-Current charts-unavailable census: 719 registry rows and 714 unique IDs, 2,320 files under `src/`,
+Charts-unavailable census: 719 registry rows and 714 unique IDs, 2,320 files under `src/`,
 with 552 markers across 317 files. The five disclosed historical duplicate IDs remain unchanged.
+
+## DEX Screener pool and asset Charts, October 12, 2026 (POO-2338 v1)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-077` | chartModel, DEX Screener embed URL for the exact pool (v3 address, v4 PoolId) or token, and the bounded chart_market value | Lib | n/a (code) | Implemented DEX Screener chart model (POO-2338 replaces the POO-2309 market reference) | [POO-2338](https://linear.app/yeildbay/issue/POO-2338) | `src/features/manager/fund/charts/chartModel.ts` @rules-v1 |
+| `PP-MGR-LIB-078` | chartContext, selected Build block or Manage position to the same pool or asset chart, independent of financial values | Lib | n/a (code) | Implemented Build/Manage context (POO-2338) | [POO-2338](https://linear.app/yeildbay/issue/POO-2338) | `src/features/manager/fund/charts/chartContext.ts` @rules-v1 |
+| `PP-MGR-CMP-103` | StrategyChartSurface, retained canvas and isolated DEX Screener chart with left drawing tools (POO-2338) | Component | [Manage Charts8678:37675](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-37675) | Implemented shared Build/Manage surface | [POO-2309](https://linear.app/yeildbay/issue/POO-2309), [POO-2338](https://linear.app/yeildbay/issue/POO-2338) | `src/features/manager/fund/charts/StrategyChartSurface.tsx` @rules-v1 |
+
+The three IDs keep their numbers. The Charts tab shows the DEX Screener embed of the exact pool
+(Uniswap v3 pool contract, Uniswap v4 bare PoolId) or of the lending asset. Mock pools and Solana
+pools with no canonical address show the unavailable state of PP-MGR-LIB-095. TradingView and
+Binance are removed. The `chart_market` analytics value is `pool`, `token` or `unavailable`.
+No IDs are added. The PP-INTEGRATION-POINT marker in chartModel stays.
+
+Current chart-delivery census (POO-2338): 719 registry rows and 714 unique IDs, 2,320 files under
+`src/`, with 552 markers across 317 files. The five disclosed historical duplicate IDs remain
+unchanged.

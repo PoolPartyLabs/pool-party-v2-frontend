@@ -114,15 +114,16 @@ describe("buildContentSecurityPolicy", () => {
     expect(directive(csp, "script-src")).toContain("https://www.googletagmanager.com");
   });
 
-  // @rule R6 (POO-2309): a real widget now runs in one isolated frame. POO-1451's
-  // no-script/no-wildcard guard remains, even though the exact frame origin is now intentional.
-  it("allows only the actual TradingView frame origin, without parent scripts or connections", () => {
-    expect(directive(csp, "script-src")).not.toMatch(/tradingview/);
-    expect(directive(csp, "connect-src")).not.toMatch(/tradingview/);
+  // @rule R8 (POO-2338): the chart is one isolated DEX Screener frame. POO-2338 removes the
+  // POO-2309 TradingView frame. POO-1451's no-script/no-wildcard guard remains.
+  it("allows only the exact DEX Screener frame origin, without parent scripts or connections", () => {
     const frames = directive(csp, "frame-src").split(" ");
-    expect(frames.filter((origin) => origin.includes("tradingview"))).toEqual([
-      "https://www.tradingview-widget.com",
+    expect(frames.filter((origin) => origin.includes("dexscreener"))).toEqual([
+      "https://dexscreener.com",
     ]);
+    expect(directive(csp, "script-src")).not.toMatch(/dexscreener/);
+    expect(directive(csp, "connect-src")).not.toMatch(/dexscreener/);
+    expect(csp).not.toMatch(/tradingview/);
   });
 
   /**

@@ -475,14 +475,14 @@ Applied plan/Review survive retry; unapplied inner-panel fields can be lost afte
 while the last pending metadata continues guarding leave. No deployment, native-browser acceptance
 or live Solana capability is asserted.
 
-## Manager market-reference Charts (POO-2309, rules v1)
+## Manager Charts (POO-2309 rules v1, POO-2338 rules v1)
 
 | Event | When it fires | Key params | Emitting artifact |
 |---|---|---|---|
-| `manager_chart_viewed` | Charts opens for the current private origin/locale | `chart_context`, `chart_market` | PP-MGR-CMP-103, StrategyChartSurface |
-| `manager_chart_closed` | Return to Strategy flow (tab or Back in the unavailable state, POO-2336), identity/locale change, phase hiding or unmount ends that visit | `chart_context`, `chart_market` | PP-MGR-CMP-103, StrategyChartSurface |
+| `manager_chart_viewed` | Charts opens for the current private origin | `chart_context`, `chart_market` | PP-MGR-CMP-103, StrategyChartSurface |
+| `manager_chart_closed` | Return to Strategy flow (tab or Back in the unavailable state, POO-2336), identity change, phase hiding or unmount ends that visit | `chart_context`, `chart_market` | PP-MGR-CMP-103, StrategyChartSurface |
 | `manager_chart_blocked` | Unsupported/missing identity or non-price block prevents a chart | `chart_context`, `chart_market`, `chart_reason` | PP-MGR-CMP-103, StrategyChartSurface |
-| `manager_chart_failed` | Current provider frame has no data or no boot within 20 seconds | `chart_context`, `chart_market`, `chart_reason` | PP-MGR-CMP-103, StrategyChartSurface |
+| `manager_chart_failed` | The current DEX Screener frame sends no iframe load event within 20 seconds | `chart_context`, `chart_market`, `chart_reason` | PP-MGR-CMP-103, StrategyChartSurface |
 | `manager_chart_retried` | Explicit Try again creates a new provider instance | `chart_context`, `chart_market` | PP-MGR-CMP-103, StrategyChartSurface |
 
-Context is `build`, `manage` or `solana-local`; market is `eth-usdc`, `sol-usdc` or `unavailable`. Reasons are bounded selection/configuration/block/pair/lending causes, `no_data` or `load_timeout`. Private origin identities, wallet/fund/pool addresses, mint, quantities, user text and vendor payloads are never emitted. Submitted/completed funnel: none, this is analysis only; closing is the presentation abandonment signal. Boot is not candle/financial confirmation.
+Context is `build`, `manage` or `solana-local`. Market is `pool`, `token` or `unavailable` (POO-2338 R9). Reasons are `no_selection`, `unconfigured`, `unsupported_block`, `unsupported_pair` or `load_timeout`. POO-2338 removes `eth-usdc`, `sol-usdc`, `lending_reference` and `no_data`. No event holds a pool address, a token address or a mint. Private origin identities, wallet and fund addresses, quantities, user text and vendor payloads are never emitted. Submitted/completed funnel: none, this is analysis only; closing is the presentation abandonment signal. The iframe load event is not candle or financial confirmation.

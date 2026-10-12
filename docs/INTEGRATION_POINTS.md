@@ -514,6 +514,8 @@ PR #153 CI identified three consumer type errors in FallbackReviewIndex, launchA
 
 ## TradingView market reference, October 9, 2026 (POO-2309 v1)
 
+Superseded by POO-2338 (section below). This section is history: the app no longer loads TradingView or Binance data.
+
 `src/features/manager/fund/charts/chartModel.ts` (PP-MGR-LIB-077) builds the public Advanced Chart URL. `src/features/manager/fund/charts/StrategyChartSurface.tsx` (PP-MGR-CMP-103) mounts that remote frame only after Charts intent. ETH/USDC on Arbitrum/Base and canonical WSOL/USDC in the local Solana mandate resolve to the documented Binance exchange references. The displayed canonical pair/venue is explicit even when the pool/configuration reverses quote orientation. No selected LP ticks or money amounts are overlaid.
 
 **Isolation decision:** render the exact cross-origin URL/query/hash produced by the official `embed-widget-advanced-chart.js` loader, avoiding third-party script execution in the wallet origin and the loader's parent-query symbol override. The iframe protocol is observed vendor implementation, not an independently guaranteed stable API. Only `https://www.tradingview-widget.com` is allowed in parent frame-src; TradingView remains absent from parent script-src/connect-src. Keep native branding plus attribution, no-referrer, and scripts/same-origin/popups sandbox permissions. The frame receives only the public reference symbol/settings and an opaque embed ID, never a fund/pool/wallet identity or app URL. Its own outbound telemetry/network behavior remains vendor-controlled.
@@ -568,6 +570,29 @@ IDs. Prior censuses describe their named releases.
 - No read gives the Bridge return scope yet, so that card shows "Route scope · Not available".
 - The Explorer link uses the deployed strategy address from the fund read. An empty or invalid address shows "Explorer · Not available" and "Strategy address is unavailable."
 
-Current Manage parity census: 2,317 files under `src/`, with 552 markers across 317 files,
+Manage parity census: 2,317 files under `src/`, with 552 markers across 317 files,
 including tests, stories and source documentation. Registry totals are 718 rows and 713 unique
+IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
+
+## DEX Screener pool and asset chart, October 12, 2026 (POO-2338 v1)
+
+POO-2338 replaces the TradingView and Binance market reference. The Charts tab shows the DEX Screener embed of the exact pool or asset of the selected block. It shows no TradingView or Binance data.
+
+| Marker | File | Status today | Remaining gap |
+|---|---|---|---|
+| `buildChartUrl` | `src/features/manager/fund/charts/chartModel.ts` (PP-MGR-LIB-077) | Builds `https://dexscreener.com/{chain}/{address}` with fixed embed parameters (`embed=1`, `theme=dark`, `trades=0`, `chartLeftToolbar=1`, `chartTheme=dark`, `chartStyle=1`, `chartType=usd`, `interval=60`). The chain is arbitrum, base, polygon, robinhood or solana | A Pool Party price feed or OHLCV stays under POO-2279 |
+| Chart frame | `src/features/manager/fund/charts/StrategyChartSurface.tsx` (PP-MGR-CMP-103) | Mounts the frame only after Charts intent, in a sandbox with no-referrer. The iframe `onLoad` stops the 20 s timeout. The retry makes a new frame | `onLoad` also fires for an error page, so it does not prove that candles loaded |
+
+**Identity.** `chartContext.ts` (PP-MGR-LIB-078) maps Build and Manage to the same resolvers, so the same pool or asset gives the same URL.
+
+- A Uniswap v3 block uses the pool contract address. A Uniswap v4 block uses the bare PoolId (bytes32). Build reads the pool with `findMandatePool`. Manage reads `position.poolId` and `chainId`.
+- Aave Supply and Aave Borrow use the token of `assetKey`. A Manage supply position uses its token. The native token uses the wrapped native address. Kamino Supply uses the USDC mint.
+- A mock pool with no real address or PoolId is `unconfigured`. Swap, Holding, Pendle, GMX and flow blocks are `unsupported_block`. Another network, and Solana Orca and Raydium, are `unsupported_pair`.
+
+**Data sent.** The frame URL holds only the chain slug and the public pool or token address. It holds no wallet, fund, user or draft data. The parent reads no message from the frame. Analytics send only `pool`, `token` or `unavailable` as `chart_market`. DEX Screener controls its own telemetry inside the frame.
+
+**Terms.** The embed is a third-party surface that we do not control. See CR-MGR-POO2338 for the terms risk.
+
+Current chart-delivery census (POO-2338): 2,320 files under `src/`, with 552 markers across 317 files,
+including tests, stories and source documentation. Registry totals are 719 rows and 714 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.

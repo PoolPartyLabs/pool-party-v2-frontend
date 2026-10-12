@@ -106,4 +106,5 @@ export const securityHeaders: SecurityHeader[] = [
 // SDKs, the Paybis widget and remote token logos, and we do not need SharedArrayBuffer.
 // POO-1451 (found in POO-1189) dropped TradingView from this list: it was cited here as a reason
 // while nothing in the app ever loaded it, and its CSP allowlist entries are gone. The remaining
-// three are real.
+// three are real. POO-2338: with `require-corp`, the cross-origin DEX Screener chart frame loads
+// only if that site sends its own CORP and COEP headers. We do not control those headers.

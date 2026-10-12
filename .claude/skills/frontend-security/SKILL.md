@@ -45,7 +45,7 @@ const securityHeaders = [
 
 `X-Frame-Options: DENY` plus CSP `frame-ancestors 'none'` are intentionally both present (old browsers use the former, modern ones the latter).
 
-**COOP nuance (critical):** use `same-origin-allow-popups`, never `same-origin`. Privy, WalletConnect, and OAuth open popups and rely on `window.opener`/`postMessage`; `same-origin` severs that handshake and breaks wallet connection. Do **not** set `Cross-Origin-Embedder-Policy: require-corp` (it blocks wallet SDK assets, TradingView, Paybis, and remote token logos) unless a feature genuinely needs `SharedArrayBuffer`. (Watch the newer COOP `restrict-properties`/`noopener-allow-popups` values as support grows.)
+**COOP nuance (critical):** use `same-origin-allow-popups`, never `same-origin`. Privy, WalletConnect, and OAuth open popups and rely on `window.opener`/`postMessage`; `same-origin` severs that handshake and breaks wallet connection. Do **not** set `Cross-Origin-Embedder-Policy: require-corp` (it blocks wallet SDK assets, the DEX Screener chart frame, Paybis, and remote token logos) unless a feature genuinely needs `SharedArrayBuffer`. (Watch the newer COOP `restrict-properties`/`noopener-allow-popups` values as support grows.)
 
 ## CSP recipe (wallet + RPC aware)
 
@@ -69,12 +69,12 @@ connect-src 'self'
   https://*.polymarket.com https://*.kalshi.com
   https://*.paybis.com https://api.coingecko.com
   https://*.google-analytics.com https://*.googletagmanager.com https://*.analytics.google.com;
-frame-src 'self' https://auth.privy.io https://*.tradingview.com https://*.paybis.com;
+frame-src 'self' https://auth.privy.io https://dexscreener.com https://*.paybis.com;
 report-to csp-endpoint;            // modern Reporting API (+ Reporting-Endpoints header)
 report-uri /api/csp-report;        // legacy fallback only
 ```
 
-- **`strict-dynamic`: the repo deliberately does NOT use it** (`src/lib/security/csp.ts`). It keeps explicit `script-src` host allowlists so GTM/gtag and TradingView load; `strict-dynamic` would make modern browsers **ignore** those host allowlists and break them. The chosen tradeoff is therefore to keep the host-allowlist in lockstep with reality. `strict-dynamic` is a valid Next 15/16 pattern in the abstract, but switching to it here is a breaking change, not a "fix". Add `'unsafe-eval'` **only in development**; never `'unsafe-inline'`/`'unsafe-eval'` in prod `script-src`.
+- **`strict-dynamic`: the repo deliberately does NOT use it** (`src/lib/security/csp.ts`). It keeps explicit `script-src` host allowlists so GTM/gtag and the Paybis widget load; `strict-dynamic` would make modern browsers **ignore** those host allowlists and break them. The chosen tradeoff is therefore to keep the host-allowlist in lockstep with reality. `strict-dynamic` is a valid Next 15/16 pattern in the abstract, but switching to it here is a breaking change, not a "fix". Add `'unsafe-eval'` **only in development**; never `'unsafe-inline'`/`'unsafe-eval'` in prod `script-src`.
 - **`connect-src` must enumerate every RPC + `wss://`.** The real surface is **3 chains (Arbitrum / Base / Polygon)** plus Privy, WalletConnect relay, the onramp, charts, and GA4. **Derive these from the single chain source** (`src/lib/chains/config.ts` exports `rpcOrigins`) so adding a chain can't silently leave `connect-src` behind; today `csp.ts` duplicates the origins as literals, which is a drift risk. `strict-dynamic` does NOT relax `connect-src`, so it stays your tightest lever. Every new RPC/onramp/pixel is a reviewed CSP edit, never silent.
 - **Styles:** the repo currently ships `style-src 'unsafe-inline'` (`csp.ts`), a deliberate, accepted tradeoff for now. Moving to `style-src 'self' 'nonce-<n>'` in prod is a possible future hardening (Next auto-nonces its inline styles), but re-test before switching and do not flip it casually; CSS injection that reads attribute values is a real, if lower, risk.
 - **`img-src https:`** allows any HTTPS host. This is a deliberate, temporary loosening; tighten to an explicit allowlist once the remote image hosts (token logos, avatars) are known, to shrink the tracking/exfiltration surface before enforcing.
