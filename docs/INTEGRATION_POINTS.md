@@ -540,6 +540,21 @@ Current mandate token access census (POO-2332): the 2 new markers are in
 | --- | --- | --- | --- |
 | LP share per fee tier ("chosen by {pct}% of LPs", R8) | `src/features/manager/fund/mandatePoolSource.ts` (`searchMandatePools`) | Mock mode computes the share from the fixture TVL of the fee tiers of a pair (`tierShare`). Real mode has no API field for it, so the share is null and the Pools step shows only the fee tier. | CoinGecko pool data per fee tier, or a backend field that carries the LP share of each fee tier. |
 
-Current Mandate parity census: 2,310 files under `src/`, with 542 markers across 312 files,
+Mandate parity census: 2,310 files under `src/`, with 542 markers across 312 files,
 including tests, stories and source documentation. Registry totals are 714 rows and 709 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
+
+## Build Borrow panel market data (POO-2334)
+
+`src/features/manager/fund/build/panel/BorrowBlockPanel.tsx` (PP-MGR-CMP-105) reads the Aave v3
+borrow market and the fund capital from `src/mocks/data/borrowMarketFixtures.ts` (PP-MGR-MCK-006)
+in mock mode only. The v2 catalog serves no borrow APY, max LTV, liquidation threshold or oracle
+price yet, and the Build plan holds shares, not amounts. In real mode the panel reads no figure and
+shows "Unavailable", and Apply stays held. Replace the fixture with the catalog's Aave v3 reserve
+data and the fund's real capital when the API serves them. The health factor and the liquidation
+price are single-collateral, single-debt estimates (PP-MGR-LIB-080); the account read stays with
+the Lending risk block (PP-MGR-CMP-094). A Borrow has no contract base, so launch is not wired.
+
+Current Borrow-panel census: 2,315 files under `src/`, with 548 markers across 316 files,
+including tests, stories and source documentation. Registry totals are 717 rows and 712 unique
+IDs. Prior censuses describe their named releases.

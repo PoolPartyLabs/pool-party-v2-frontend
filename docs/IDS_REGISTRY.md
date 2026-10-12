@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 714 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 717 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1204,5 +1204,18 @@ census describes its named historical release and remains unchanged.
 Existing PP-MGR-LIB-019 (`withProtocols`, `lockedProtocols`), PP-MGR-CMP-035 (NetworksStep),
 PP-MGR-CMP-036 (ProtocolsStep) and PP-MGR-CMP-038 (PoolsStep) keep their IDs and add POO-2333 v1.
 
-Current Mandate parity census: 714 registry rows and 709 unique IDs, 2,310 files under `src/`,
+Mandate parity census: 714 registry rows and 709 unique IDs, 2,310 files under `src/`,
 with 542 markers across 312 files. The five disclosed historical duplicate IDs remain unchanged.
+
+## Build Borrow panel and Supply panel parity, October 12, 2026 (POO-2334 v1)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-CMP-105` | BorrowBlockPanel, the Aave v3 Borrow body of the Build panel: read-only collateral of the Supply above, borrow asset select with the borrow APY, borrow amount from 0 to the max LTV, health factor tones, liquidation price and the Lending risk block | Component | [Aave Borrow 8189:2337](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8189-2337) | In Review | [POO-2334](https://linear.app/yeildbay/issue/POO-2334) | `src/features/manager/fund/build/panel/BorrowBlockPanel.tsx` @rules-v1 |
+| `PP-MGR-LIB-080` | lendingPanelMath, pure Borrow and Supply panel decisions: parent Supply, collateral value, borrow options, slider ceiling, health factor and tone, liquidation price and drop, Apply blockers, Supply APY value | Lib | n/a (code) | In Review | [POO-2334](https://linear.app/yeildbay/issue/POO-2334) | `src/features/manager/fund/build/panel/lendingPanelMath.ts` @rules-v1 |
+| `PP-MGR-MCK-006` | borrowMarketFixtures, the mock Aave v3 market (price, borrow APY, max LTV, liquidation threshold per symbol) and the mock fund capital, read only in mock mode (PP-MOCK) | Mock | n/a (code) | In Review | [POO-2334](https://linear.app/yeildbay/issue/POO-2334) | `src/mocks/data/borrowMarketFixtures.ts` @rules-v1 |
+
+Existing `PP-MGR-CMP-072` (SupplyBlockPanel) keeps its ID. It now shows the collateral note when a Borrow sits directly under the Supply, and the Lending risk block (`PP-MGR-CMP-094`, not available while the fund is built). The Borrow formulas live in `PP-MGR-LIB-080` because `PP-MGR-LIB-068` assumes no protocol risk formula.
+
+Current Borrow-panel census: 717 registry rows and 712 unique IDs, 2,315 files under `src/`,
+with 548 markers across 316 files. The five disclosed historical duplicate IDs remain unchanged.

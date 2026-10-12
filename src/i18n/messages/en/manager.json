@@ -985,7 +985,41 @@
         "frozen": "Reserve frozen",
         "paused": "Reserve paused",
         "supplyCapReached": "Supply cap reached",
-        "unavailable": "Unavailable"
+        "unavailable": "Unavailable",
+        "collateralNote": "Collateral of the Borrow block below. Changing the asset or the allocation changes what can be borrowed."
+      },
+      "borrowPanel": {
+        "heading": "Assets you can borrow",
+        "filter": "Filter by token or address",
+        "caption": "Tokens of your mandate that Aave v3 lends on {network}, against the Supply above.",
+        "needAsset": "Need another asset?",
+        "noMatch": "No asset in your mandate matches {typed}",
+        "noMatchCaption": "Tokens are chosen in the mandate, step 3. Your build stays saved while you edit it.",
+        "empty": "No asset in your mandate can be borrowed on {network}",
+        "collateral": "Collateral",
+        "collateralHelp": "The asset of the Supply block above. Aave v3 lends against it. Change it in that block.",
+        "supplyAbove": "Supply block above",
+        "collateralValue": "Collateral value",
+        "needSupply": "Configure the Supply block above first.",
+        "asset": "Asset",
+        "help": "Tokens of your mandate that Aave v3 lends on {network}.",
+        "apy": "Borrow APY",
+        "amount": "Borrow amount",
+        "amountHelp": "The share of the collateral value that you borrow. A higher share lowers the health factor.",
+        "amountCaption": "Share of the value of the {symbol} supplied above. Aave limit {limit}%.",
+        "atLimit": "Maximum reached. Aave v3 lends up to {limit}% of the value of {symbol}.",
+        "amountValue": "You borrow",
+        "healthFactor": "Health factor",
+        "noDebt": "No debt",
+        "liquidationPrice": "Liquidation price",
+        "liquidationSentence": "{symbol} is at {price} now. Liquidation if it falls about {drop}%.",
+        "unavailable": "Unavailable",
+        "blocked": {
+          "needSupply": "Configure the Supply block above first.",
+          "unavailable": "Choose an asset that Aave v3 lends.",
+          "needAmount": "Set a borrow amount over 0%.",
+          "overLimit": "The borrow amount is over the Aave limit."
+        }
       }
     },
     "canvas": {

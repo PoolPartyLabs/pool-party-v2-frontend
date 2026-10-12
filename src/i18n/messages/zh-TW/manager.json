@@ -985,7 +985,41 @@
         "frozen": "儲備已凍結",
         "paused": "儲備已暫停",
         "supplyCapReached": "已達 Supply 上限",
-        "unavailable": "無法使用"
+        "unavailable": "無法使用",
+        "collateralNote": "下方 Borrow 區塊的擔保品。變更資產或分配會改變可借入的金額。"
+      },
+      "borrowPanel": {
+        "heading": "可借入的資產",
+        "filter": "依代幣或地址篩選",
+        "caption": "{network} 上的 Aave v3 以上方 Supply 為擔保可借出的授權範圍內代幣。",
+        "needAsset": "需要其他資產？",
+        "noMatch": "授權範圍內沒有與 {typed} 相符的資產",
+        "noMatchCaption": "在授權範圍的第3步選擇代幣。編輯時會保留已儲存的設定。",
+        "empty": "授權範圍內沒有可在 {network} 上借入的資產",
+        "collateral": "擔保品",
+        "collateralHelp": "上方 Supply 區塊的資產。Aave v3 以其為擔保放貸。請在該區塊中變更。",
+        "supplyAbove": "上方 Supply 區塊",
+        "collateralValue": "擔保品價值",
+        "needSupply": "請先設定上方的 Supply 區塊。",
+        "asset": "資產",
+        "help": "{network} 上的 Aave v3 可借出的授權範圍內代幣。",
+        "apy": "借款 APY",
+        "amount": "借款金額",
+        "amountHelp": "借入的擔保品價值比例。比例越高，健康因子越低。",
+        "amountCaption": "佔上方存入的 {symbol} 價值的比例。Aave 上限 {limit}%。",
+        "atLimit": "已達上限。Aave v3 最多借出 {symbol} 價值的 {limit}%。",
+        "amountValue": "借入金額",
+        "healthFactor": "健康因子",
+        "noDebt": "無債務",
+        "liquidationPrice": "清算價格",
+        "liquidationSentence": "{symbol} 目前價格為 {price}。下跌約 {drop}% 時將被清算。",
+        "unavailable": "無法使用",
+        "blocked": {
+          "needSupply": "請先設定上方的 Supply 區塊。",
+          "unavailable": "請選擇 Aave v3 可借出的資產。",
+          "needAmount": "請設定大於 0% 的借款金額。",
+          "overLimit": "借款金額超過 Aave 上限。"
+        }
       }
     },
     "canvas": {

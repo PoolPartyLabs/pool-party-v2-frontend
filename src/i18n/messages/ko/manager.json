@@ -985,7 +985,41 @@
         "frozen": "동결된 리저브",
         "paused": "일시 중지된 리저브",
         "supplyCapReached": "Supply 한도 도달",
-        "unavailable": "사용 불가"
+        "unavailable": "사용 불가",
+        "collateralNote": "아래 Borrow 블록의 담보입니다. 자산이나 배분을 바꾸면 빌릴 수 있는 금액이 바뀝니다."
+      },
+      "borrowPanel": {
+        "heading": "빌릴 수 있는 자산",
+        "filter": "토큰 또는 주소로 필터링",
+        "caption": "위 Supply를 담보로 {network}의 Aave v3가 빌려주는 운용 지침의 토큰입니다.",
+        "needAsset": "다른 자산이 필요한가요?",
+        "noMatch": "운용 지침에 {typed}와 일치하는 자산이 없습니다",
+        "noMatchCaption": "토큰은 운용 지침의 3단계에서 선택합니다. 편집하는 동안 구성이 저장됩니다.",
+        "empty": "{network}에서 빌릴 수 있는 운용 지침의 자산이 없습니다",
+        "collateral": "담보",
+        "collateralHelp": "위 Supply 블록의 자산입니다. Aave v3는 이를 담보로 빌려줍니다. 해당 블록에서 변경하세요.",
+        "supplyAbove": "위 Supply 블록",
+        "collateralValue": "담보 가치",
+        "needSupply": "먼저 위 Supply 블록을 설정하세요.",
+        "asset": "자산",
+        "help": "{network}의 Aave v3가 빌려주는 운용 지침의 토큰입니다.",
+        "apy": "대출 APY",
+        "amount": "대출 금액",
+        "amountHelp": "빌리는 담보 가치의 비율입니다. 비율이 높을수록 건전성 지수가 낮아집니다.",
+        "amountCaption": "위에 예치한 {symbol} 가치의 비율입니다. Aave 한도 {limit}%.",
+        "atLimit": "최대치에 도달했습니다. Aave v3는 {symbol} 가치의 최대 {limit}%까지 빌려줍니다.",
+        "amountValue": "대출 금액",
+        "healthFactor": "건전성 지수",
+        "noDebt": "부채 없음",
+        "liquidationPrice": "청산 가격",
+        "liquidationSentence": "{symbol}은 현재 {price}입니다. 약 {drop}% 하락하면 청산됩니다.",
+        "unavailable": "사용 불가",
+        "blocked": {
+          "needSupply": "먼저 위 Supply 블록을 설정하세요.",
+          "unavailable": "Aave v3가 빌려주는 자산을 선택하세요.",
+          "needAmount": "0%보다 큰 대출 금액을 설정하세요.",
+          "overLimit": "대출 금액이 Aave 한도를 넘습니다."
+        }
       }
     },
     "canvas": {

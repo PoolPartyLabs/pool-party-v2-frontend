@@ -985,7 +985,41 @@
         "frozen": "Reserva congelada",
         "paused": "Reserva pausada",
         "supplyCapReached": "Límite de Supply alcanzado",
-        "unavailable": "No disponible"
+        "unavailable": "No disponible",
+        "collateralNote": "Garantía del bloque Borrow de abajo. Cambiar el activo o la asignación cambia lo que se puede pedir prestado."
+      },
+      "borrowPanel": {
+        "heading": "Activos que puedes pedir prestados",
+        "filter": "Filtrar por token o dirección",
+        "caption": "Tokens de tu mandato que Aave v3 presta en {network}, contra el Supply de arriba.",
+        "needAsset": "¿Necesitas otro activo?",
+        "noMatch": "Ningún activo de tu mandato coincide con {typed}",
+        "noMatchCaption": "Los tokens se eligen en el mandato, en el paso 3. Tu configuración permanece guardada mientras editas.",
+        "empty": "Ningún activo de tu mandato se puede pedir prestado en {network}",
+        "collateral": "Garantía",
+        "collateralHelp": "El activo del bloque Supply de arriba. Aave v3 presta contra él. Cámbialo en ese bloque.",
+        "supplyAbove": "Bloque Supply de arriba",
+        "collateralValue": "Valor de la garantía",
+        "needSupply": "Configura primero el bloque Supply de arriba.",
+        "asset": "Activo",
+        "help": "Tokens de tu mandato que Aave v3 presta en {network}.",
+        "apy": "APY de préstamo",
+        "amount": "Monto del préstamo",
+        "amountHelp": "La parte del valor de la garantía que pides prestada. Una parte mayor baja el factor de salud.",
+        "amountCaption": "Parte del valor del {symbol} depositado arriba. Límite de Aave {limit}%.",
+        "atLimit": "Máximo alcanzado. Aave v3 presta hasta el {limit}% del valor de {symbol}.",
+        "amountValue": "Pides prestado",
+        "healthFactor": "Factor de salud",
+        "noDebt": "Sin deuda",
+        "liquidationPrice": "Precio de liquidación",
+        "liquidationSentence": "{symbol} está a {price} ahora. Liquidación si baja cerca de un {drop}%.",
+        "unavailable": "No disponible",
+        "blocked": {
+          "needSupply": "Configura primero el bloque Supply de arriba.",
+          "unavailable": "Elige un activo que Aave v3 preste.",
+          "needAmount": "Define un monto de préstamo mayor que 0%.",
+          "overLimit": "El monto del préstamo supera el límite de Aave."
+        }
       }
     },
     "canvas": {

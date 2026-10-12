@@ -985,7 +985,41 @@
         "frozen": "Reserve eingefroren",
         "paused": "Reserve pausiert",
         "supplyCapReached": "Supply-Limit erreicht",
-        "unavailable": "Nicht verfügbar"
+        "unavailable": "Nicht verfügbar",
+        "collateralNote": "Sicherheit des Borrow-Blocks darunter. Eine Änderung des Assets oder der Allokation ändert, was geliehen werden kann."
+      },
+      "borrowPanel": {
+        "heading": "Assets, die du leihen kannst",
+        "filter": "Nach Token oder Adresse filtern",
+        "caption": "Token deines Mandats, die Aave v3 auf {network} verleiht, gegen den Supply oben.",
+        "needAsset": "Brauchst du einen anderen Vermögenswert?",
+        "noMatch": "Kein Vermögenswert deines Mandats passt zu {typed}",
+        "noMatchCaption": "Token werden im Mandat in Schritt 3 gewählt. Deine Konfiguration bleibt während der Bearbeitung gespeichert.",
+        "empty": "Kein Asset deines Mandats kann auf {network} geliehen werden",
+        "collateral": "Sicherheit",
+        "collateralHelp": "Das Asset des Supply-Blocks oben. Aave v3 verleiht dagegen. Ändere es in diesem Block.",
+        "supplyAbove": "Supply-Block oben",
+        "collateralValue": "Wert der Sicherheit",
+        "needSupply": "Konfiguriere zuerst den Supply-Block oben.",
+        "asset": "Vermögenswert",
+        "help": "Token deines Mandats, die Aave v3 auf {network} verleiht.",
+        "apy": "Borrow-APY",
+        "amount": "Kreditbetrag",
+        "amountHelp": "Der Anteil am Wert der Sicherheit, den du leihst. Ein höherer Anteil senkt den Health Factor.",
+        "amountCaption": "Anteil am Wert des oben hinterlegten {symbol}. Aave-Limit {limit} %.",
+        "atLimit": "Maximum erreicht. Aave v3 verleiht bis zu {limit} % des Werts von {symbol}.",
+        "amountValue": "Du leihst",
+        "healthFactor": "Health Factor",
+        "noDebt": "Keine Schulden",
+        "liquidationPrice": "Liquidationspreis",
+        "liquidationSentence": "{symbol} steht jetzt bei {price}. Liquidation, wenn der Preis um etwa {drop} % fällt.",
+        "unavailable": "Nicht verfügbar",
+        "blocked": {
+          "needSupply": "Konfiguriere zuerst den Supply-Block oben.",
+          "unavailable": "Wähle ein Asset, das Aave v3 verleiht.",
+          "needAmount": "Lege einen Kreditbetrag über 0 % fest.",
+          "overLimit": "Der Kreditbetrag liegt über dem Aave-Limit."
+        }
       }
     },
     "canvas": {
