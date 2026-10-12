@@ -91,22 +91,25 @@ function liquidityOf(pair: DexScreenerPair): number | null {
 /**
  * R2: the Raydium CLMM pairs for a search.
  *
- * With a second mint, a pair must hold both mints. A repeated pair address keeps its first row.
+ * With a second mint, a pair must hold both mints. A repeated pair address keeps the row with the
+ * highest liquidity, and the first row on a tie.
  * The result is sorted by liquidity in USD, high to low. A pair with no liquidity value goes last.
  */
 export function selectRaydiumClmmPairs(
   pairs: readonly DexScreenerPair[],
   secondMint?: string,
 ): DexScreenerPair[] {
-  const seen = new Set<string>();
-  const kept: DexScreenerPair[] = [];
+  const byAddress = new Map<string, DexScreenerPair>();
   for (const pair of pairs) {
     if (!isRaydiumClmm(pair)) continue;
     if (secondMint !== undefined && !holdsMint(pair, secondMint)) continue;
-    if (seen.has(pair.pairAddress)) continue;
-    seen.add(pair.pairAddress);
-    kept.push(pair);
+    const held = byAddress.get(pair.pairAddress);
+    // A repeated pair address keeps the row with the highest liquidity; on a tie, the first row.
+    if (!held || (liquidityOf(pair) ?? -1) > (liquidityOf(held) ?? -1)) {
+      byAddress.set(pair.pairAddress, pair);
+    }
   }
+  const kept = [...byAddress.values()];
   return kept.sort((a, b) => (liquidityOf(b) ?? -1) - (liquidityOf(a) ?? -1));
 }
 

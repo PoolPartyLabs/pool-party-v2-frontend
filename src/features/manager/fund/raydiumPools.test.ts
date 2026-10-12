@@ -58,13 +58,28 @@ describe("selectRaydiumClmmPairs", () => {
   });
 
   // @rule R2
-  it("removes duplicate pair addresses", () => {
-    const result = selectRaydiumClmmPairs([
+  it("removes duplicate pair addresses and keeps the row with the highest liquidity", () => {
+    const lowFirst = selectRaydiumClmmPairs([
       pair({ pairAddress: "a", liquidity: { usd: 5 } }),
       pair({ pairAddress: "a", liquidity: { usd: 9 } }),
     ]);
-    expect(result).toHaveLength(1);
-    expect(result[0]?.liquidity?.usd).toBe(5);
+    expect(lowFirst).toHaveLength(1);
+    expect(lowFirst[0]?.liquidity?.usd).toBe(9);
+
+    const highFirst = selectRaydiumClmmPairs([
+      pair({ pairAddress: "a", liquidity: { usd: 9 } }),
+      pair({ pairAddress: "a", liquidity: { usd: 5 } }),
+    ]);
+    expect(highFirst).toHaveLength(1);
+    expect(highFirst[0]?.liquidity?.usd).toBe(9);
+
+    // A row with a liquidity value beats a row with none, whichever comes first.
+    const noneFirst = selectRaydiumClmmPairs([
+      pair({ pairAddress: "a", liquidity: undefined }),
+      pair({ pairAddress: "a", liquidity: { usd: 1 } }),
+    ]);
+    expect(noneFirst).toHaveLength(1);
+    expect(noneFirst[0]?.liquidity?.usd).toBe(1);
   });
 
   // @rule R2
