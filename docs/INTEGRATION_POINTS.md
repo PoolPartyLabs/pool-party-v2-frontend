@@ -532,8 +532,13 @@ IDs. The five historical duplicates are unchanged; prior censuses describe their
 
 ## Manage spine copy (POO-2335 v1)
 
-`manageSpineCopy.ts` adds 2 markers. The Aave health factor read is not served yet, so the Supply card shows "HF Not available". The Explorer link uses the deployed strategy address from the fund read. An empty or invalid address shows "Explorer · Not available" and "Strategy address is unavailable."
+`manageSpineCopy.ts` adds 4 markers.
 
-Current Manage parity census: 2,308 files under `src/`, with 541 markers across 313 files,
+- The Aave health factor read is not served yet, so the Supply card shows "HF Not available".
+- The income and operating cash shares of strategy value are not served yet. The Income, Operating cash and Swap fees cards show "Not available" in place of the share.
+- No read gives the Bridge return scope yet, so that card shows "Route scope · Not available".
+- The Explorer link uses the deployed strategy address from the fund read. An empty or invalid address shows "Explorer · Not available" and "Strategy address is unavailable."
+
+Current Manage parity census: 2,308 files under `src/`, with 543 markers across 313 files,
 including tests, stories and source documentation. Registry totals are 713 rows and 708 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.

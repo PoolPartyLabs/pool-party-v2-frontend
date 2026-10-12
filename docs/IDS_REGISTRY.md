@@ -1198,9 +1198,9 @@ census describes its named historical release and remains unchanged.
 
 | ID | Name | Type | Design | Status | Linear | Source |
 | --- | --- | --- | --- | --- | --- | --- |
-| `PP-MGR-LIB-090` | manageSpineCopy, spine card title and subtitle, range tone, Explorer and View mandate links, and fixed liquidity action timing | Lib | n/a (code) | Implemented Manage spine copy | [POO-2335](https://linear.app/yeildbay/issue/POO-2335) | `src/features/manager/fund/manage/manageSpineCopy.ts` @rules-v1 |
+| `PP-MGR-LIB-090` | manageSpineCopy, spine card title and subtitle, range tone, percent format and Explorer link | Lib | n/a (code) | Implemented Manage spine copy | [POO-2335](https://linear.app/yeildbay/issue/POO-2335) | `src/features/manager/fund/manage/manageSpineCopy.ts` @rules-v1 |
 
 Existing PP-MGR-SCR-004, PP-MGR-CMP-085, PP-MGR-CMP-086, PP-MGR-SCR-001 and PP-MGR-LIB-058 keep their IDs. PP-MGR-LIB-058 adds `overviewStrategyRow`.
 
 Current Manage parity census: 713 registry rows and 708 unique IDs, 2,308 files under `src/`,
-with 541 markers across 313 files. The five disclosed historical duplicate IDs remain unchanged.
+with 543 markers across 313 files. The five disclosed historical duplicate IDs remain unchanged.
