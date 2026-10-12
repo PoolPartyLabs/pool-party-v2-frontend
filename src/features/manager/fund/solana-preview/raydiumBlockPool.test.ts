@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 import { isConfigFor } from "../build/plan/blockConfig";
 import type { BuildPlan } from "../build/plan/buildPlan";
 import { validatePlan } from "../build/plan/planInvariants";
+import { reconcileAutoBlocks } from "../build/plan/planReducers";
 import {
   addPool,
   createEmptyDraft,
@@ -185,5 +186,41 @@ describe("R7: the pool of the Raydium block", () => {
     expect(raydiumPoolInMandate(draft, POOL_B)).toBe(false);
     expect(violations(draft, config(POOL_A))).not.toContain("config_not_in_mandate");
     expect(violations(draft, config(POOL_B))).toContain("config_not_in_mandate");
+  });
+
+  // @rule R7
+  it("[R7] re-derives the pool of a block when its pool left the mandate, and keeps a pool that stayed", () => {
+    const config = (poolAddress: string) => ({
+      catalogId: "solana:mainnet-beta:raydium-clmm",
+      pair: "SOL / USDC",
+      poolAddress,
+    });
+    const poolOf = (plan: BuildPlan) => {
+      const step = plan.spokes[0]?.chains[0]?.steps.find((entry) => entry.id === "b");
+      return step && "config" in step ? (step.config as { poolAddress?: string }) : undefined;
+    };
+    const newId = () => "auto";
+    const stale = planWith(config(POOL_B));
+
+    // POOL_B left the mandate; POOL_A is the first pool that remains.
+    const onlyA = withPools(refOf(POOL_A, WSOL_MINT, USDC_MINT));
+    expect(poolOf(reconcileAutoBlocks(stale, { draft: onlyA, newId }))?.poolAddress).toBe(POOL_A);
+    expect(
+      violations(onlyA, poolOf(reconcileAutoBlocks(stale, { draft: onlyA, newId }))),
+    ).not.toContain("config_not_in_mandate");
+
+    // No Raydium pool is left: the default pool.
+    expect(poolOf(reconcileAutoBlocks(stale, { draft: solanaDraft(), newId }))?.poolAddress).toBe(
+      DEFAULT_RAYDIUM_POOL_ADDRESS,
+    );
+
+    // A pool that is still in the mandate keeps its block as the same object.
+    const both = withPools(
+      refOf(POOL_A, WSOL_MINT, USDC_MINT),
+      refOf(POOL_B, USDC_MINT, WSOL_MINT),
+    );
+    const keptConfig = config(POOL_B);
+    const kept = planWith(keptConfig);
+    expect(poolOf(reconcileAutoBlocks(kept, { draft: both, newId }))).toBe(keptConfig);
   });
 });

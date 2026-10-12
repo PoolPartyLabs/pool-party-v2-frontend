@@ -13,6 +13,9 @@
  *
  * The pair label is one of the two labels that the Solana block config allows. A mandate pool with
  * any other pair is not a choice for the block.
+ *
+ * When the pool of a block leaves the mandate, {@link rederivedRaydiumConfig} gives the config the
+ * block takes again. The plan reducers apply it on every plan edit.
  */
 import type { SolanaLocalBlockConfig } from "../build/plan/buildPlan";
 import type { MandateDraft } from "../mandateDraft";
@@ -78,4 +81,19 @@ export function raydiumPoolInMandate(
     poolAddress === DEFAULT_RAYDIUM_POOL_ADDRESS ||
     mandateRaydiumPools(draft).some((pool) => pool.poolAddress === poolAddress)
   );
+}
+
+/**
+ * The config a Raydium block must take when the pool it names left the mandate: the first Raydium
+ * pool of the mandate, or the default pool. Null when the block keeps its config, that is, when it
+ * has no pool address (an older plan) or its pool is still one the block may keep.
+ */
+export function rederivedRaydiumConfig(
+  draft: Pick<MandateDraft, "pools">,
+  config: unknown,
+): SolanaLocalBlockConfig | null {
+  if (typeof config !== "object" || config === null) return null;
+  const poolAddress = (config as { poolAddress?: unknown }).poolAddress;
+  if (typeof poolAddress !== "string" || raydiumPoolInMandate(draft, poolAddress)) return null;
+  return defaultRaydiumBlockConfig(draft);
 }
