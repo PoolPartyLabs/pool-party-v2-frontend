@@ -256,6 +256,8 @@ export interface MandatePoolRef {
   feeTier: number | null;
   tvlUsd: number | null;
   aprPct: number | null;
+  /** 24 h volume in USD. Only Raydium pools from DEX Screener set it. Absent or null means unknown. */
+  volume24hUsd?: number | null;
   /** Share of V1 managers who chose this tier, read from the API. Never invented; null when absent. */
   tierSharePct: number | null;
   /** Uniswap v4 hooks are not supported, so a pool with one cannot be added (R38). */

@@ -7,6 +7,7 @@
  * Rules R1 and R5 of the DEX Screener read. The fetch is a mock. There is no network.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { getRaydiumPoolsAction } from "./raydiumPoolsAction";
 import { RAYDIUM_READ_TIMEOUT_MS, readRaydiumPools } from "./raydiumPoolsRead";
 
 const SOL = "So11111111111111111111111111111111111111112";
@@ -102,6 +103,40 @@ describe("readRaydiumPools", () => {
       ok: false,
       error: { code: "invalid_response" },
     });
+  });
+
+  // @rule R5
+  it("keeps the good Raydium pool when the array has one bad pair", async () => {
+    const fetchImpl = mockFetch(async () =>
+      jsonResponse([{ dexId: "raydium", pairAddress: 7 }, validPair]),
+    );
+    const result = await readRaydiumPools({ tokenAddress: SOL }, fetchImpl);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.pools.map((p) => p.address)).toEqual(["PairAddr1"]);
+  });
+
+  // @rule R1
+  it("returns invalid_input and does not throw for a bad server action input", async () => {
+    const fetchImpl = mockFetch(async () => jsonResponse([]));
+    for (const bad of [
+      null,
+      undefined,
+      "x",
+      5,
+      {},
+      { tokenAddress: 1 },
+      { tokenAddress: SOL, secondTokenAddress: 2 },
+    ]) {
+      expect(await getRaydiumPoolsAction(bad)).toEqual({
+        ok: false,
+        error: { code: "invalid_input" },
+      });
+      expect(await readRaydiumPools(bad, fetchImpl)).toEqual({
+        ok: false,
+        error: { code: "invalid_input" },
+      });
+    }
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   // @rule R5

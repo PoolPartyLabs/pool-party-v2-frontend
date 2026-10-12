@@ -28,10 +28,8 @@ const pairSchema = z.object({
   baseToken: tokenSchema,
   quoteToken: tokenSchema,
   liquidity: z.object({ usd: z.number().finite().nullish() }).nullish(),
+  volume: z.object({ h24: z.number().finite().nullish() }).nullish(),
 });
-
-/** The response of `token-pairs/v1/solana/{mint}`: a list of pairs. */
-export const dexScreenerPairsSchema = z.array(pairSchema);
 
 export type DexScreenerPair = z.infer<typeof pairSchema>;
 
@@ -51,10 +49,20 @@ export type RaydiumPoolsResult =
 const CLMM_LABEL = "CLMM";
 const RAYDIUM_DEX_ID = "raydium";
 
-/** R5: returns the pairs when the shape is right, and null when it is not. */
+/**
+ * R5: returns the valid pairs of a response body, and null when the body is not a list.
+ *
+ * Each pair is checked on its own. A pair that fails the schema is skipped, so one bad pair does
+ * not fail the search.
+ */
 export function parseDexScreenerPairs(body: unknown): DexScreenerPair[] | null {
-  const parsed = dexScreenerPairsSchema.safeParse(body);
-  return parsed.success ? parsed.data : null;
+  if (!Array.isArray(body)) return null;
+  const pairs: DexScreenerPair[] = [];
+  for (const item of body) {
+    const parsed = pairSchema.safeParse(item);
+    if (parsed.success) pairs.push(parsed.data);
+  }
+  return pairs;
 }
 
 function isRaydiumClmm(pair: DexScreenerPair): boolean {
@@ -113,6 +121,7 @@ export function mapRaydiumPair(pair: DexScreenerPair): MandatePoolRef {
     feeTier: null,
     tvlUsd: liquidityOf(pair),
     aprPct: null,
+    volume24hUsd: pair.volume?.h24 ?? null,
     tierSharePct: null,
     hasHook: false,
   };

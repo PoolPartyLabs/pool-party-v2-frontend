@@ -13,11 +13,9 @@
  */
 "use server";
 import type { RaydiumPoolsResult } from "./raydiumPools";
-import { type RaydiumPoolsInput, readRaydiumPools } from "./raydiumPoolsRead";
+import { readRaydiumPools } from "./raydiumPoolsRead";
 
-export async function getRaydiumPoolsAction(input: RaydiumPoolsInput): Promise<RaydiumPoolsResult> {
-  return readRaydiumPools({
-    tokenAddress: input.tokenAddress,
-    secondTokenAddress: input.secondTokenAddress,
-  });
+/** A server action is a public endpoint, so the input is `unknown` until `readRaydiumPools` checks it. */
+export async function getRaydiumPoolsAction(input: unknown): Promise<RaydiumPoolsResult> {
+  return readRaydiumPools(input);
 }

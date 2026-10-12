@@ -15,6 +15,7 @@
  * PP-INTEGRATION-POINT: DEX Screener public API `GET /token-pairs/v1/solana/{mint}`. POO-2344
  * moves this read into the Pool Party API.
  */
+import { z } from "zod";
 import {
   parseDexScreenerPairs,
   type RaydiumPoolsErrorCode,
@@ -30,12 +31,14 @@ export const RAYDIUM_READ_TIMEOUT_MS = 10_000;
 /** A Solana mint is a base58 string of 32 to 44 characters. This also keeps the URL path safe. */
 const MINT_PATTERN = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
-export interface RaydiumPoolsInput {
+const inputSchema = z.object({
   /** The token of the Pools search. */
-  tokenAddress: string;
+  tokenAddress: z.string(),
   /** When present, each pool must hold both tokens. */
-  secondTokenAddress?: string;
-}
+  secondTokenAddress: z.string().optional(),
+});
+
+export type RaydiumPoolsInput = z.infer<typeof inputSchema>;
 
 function failure(code: RaydiumPoolsErrorCode, status?: number): RaydiumPoolsResult {
   return { ok: false, error: status === undefined ? { code } : { code, status } };
@@ -47,10 +50,13 @@ function failure(code: RaydiumPoolsErrorCode, status?: number): RaydiumPoolsResu
  * @param fetchImpl The fetch function. Tests pass a mock. The default is the global fetch.
  */
 export async function readRaydiumPools(
-  input: RaydiumPoolsInput,
+  rawInput: unknown,
   fetchImpl: typeof fetch = fetch,
 ): Promise<RaydiumPoolsResult> {
-  const { tokenAddress, secondTokenAddress } = input;
+  // The input comes from a public server action. A bad input is a typed failure, never a throw.
+  const parsedInput = inputSchema.safeParse(rawInput);
+  if (!parsedInput.success) return failure("invalid_input");
+  const { tokenAddress, secondTokenAddress } = parsedInput.data;
   if (!MINT_PATTERN.test(tokenAddress)) return failure("invalid_input");
   if (secondTokenAddress !== undefined && !MINT_PATTERN.test(secondTokenAddress)) {
     return failure("invalid_input");

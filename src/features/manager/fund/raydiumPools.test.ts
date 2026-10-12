@@ -92,6 +92,7 @@ describe("mapRaydiumPair", () => {
       feeTier: null,
       tvlUsd: 1234.5,
       aprPct: null,
+      volume24hUsd: null,
       tierSharePct: null,
       hasHook: false,
     });
@@ -103,6 +104,18 @@ describe("mapRaydiumPair", () => {
     expect(mapped.tvlUsd).toBeNull();
     expect(mapped.address).toBe("MixedCase");
     expect(mapped.token0.address).toBe(SOL);
+  });
+
+  // @rule R3
+  it("maps the 24 h volume from DEX Screener and keeps it null when missing", () => {
+    const withVolume = mapRaydiumPair(pair({ pairAddress: "v", volume: { h24: 987.6 } }));
+    expect(withVolume.volume24hUsd).toBe(987.6);
+    expect(
+      mapRaydiumPair(pair({ pairAddress: "n", volume: { h24: null } })).volume24hUsd,
+    ).toBeNull();
+    expect(mapRaydiumPair(pair({ pairAddress: "m" })).volume24hUsd).toBeNull();
+    const parsed = parseDexScreenerPairs([{ ...pair({ pairAddress: "p" }), volume: { h24: 5 } }]);
+    expect(parsed?.[0] && mapRaydiumPair(parsed[0]).volume24hUsd).toBe(5);
   });
 
   // @rule R3
@@ -123,13 +136,23 @@ describe("parseDexScreenerPairs", () => {
   });
 
   // @rule R5
-  it("returns null for a body with the wrong shape", () => {
+  it("returns null for a body that is not an array", () => {
     expect(parseDexScreenerPairs({ pairs: [] })).toBeNull();
     expect(parseDexScreenerPairs(null)).toBeNull();
-    expect(parseDexScreenerPairs([{ dexId: "raydium" }])).toBeNull();
-    expect(
-      parseDexScreenerPairs([{ ...pair({ pairAddress: "a" }), liquidity: { usd: "high" } }]),
-    ).toBeNull();
+    expect(parseDexScreenerPairs("pairs")).toBeNull();
+  });
+
+  // @rule R5
+  it("skips a pair that fails the schema and keeps the good pairs", () => {
+    const good = pair({ pairAddress: "good" });
+    const parsed = parseDexScreenerPairs([
+      { dexId: "raydium" },
+      { ...pair({ pairAddress: "badLiquidity" }), liquidity: { usd: "high" } },
+      { dexId: "orca", pairAddress: "otherDex" },
+      good,
+    ]);
+    expect(parsed?.map((p) => p.pairAddress)).toEqual(["good"]);
+    expect(raydiumPoolsFromPairs(parsed ?? []).map((p) => p.address)).toEqual(["good"]);
   });
 });
 
