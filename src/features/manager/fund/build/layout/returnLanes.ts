@@ -8,10 +8,11 @@
  *
  * - {@link placePorts} puts the ports of one Bridge edge in a row. A port stays as close as it can
  *   to the x it wants, the order of the row never changes and two ports keep a gap.
- * - {@link orderLanes} gives each line of a channel its own lane. A channel is the free band
- *   between the blocks and a row of ports. A line comes in from the top at `from`, runs along its
- *   lane and goes out at the bottom at `to`. The order of the lanes prevents every crossing that
- *   a lane order can prevent. A line with `from === to` runs straight and gets no lane.
+ * - {@link orderLanes} gives each line of a channel a lane. A channel is the free band between the
+ *   blocks and a row of ports. A line comes in from the top at `from`, runs along its lane and
+ *   goes out at the bottom at `to`. The order of the lanes prevents every crossing that a lane
+ *   order can prevent. A line with `from === to` runs straight and gets no lane. Two lines of
+ *   one class that end at one port and come from opposite sides share a lane (rule R7).
  * - {@link laneYs} turns the number of lanes into y values that fit the band.
  *
  * Same input, same output: no DOM, no React, no clock, no randomness.
@@ -48,9 +49,19 @@ export function placePorts(wanted: readonly number[], lo: number, hi: number): n
 /** The offset of a top or bottom port that resolves to exactly x, as `rectX + width * offset`. */
 export function offsetAt(rectX: number, width: number, x: number): number {
   let offset = (x - rectX) / width;
-  for (let step = 0; step < LAYOUT.PAIR && rectX + width * offset !== x; step += 1)
+  for (let step = 0; step < LAYOUT.OFFSET_ITERATIONS && rectX + width * offset !== x; step += 1)
     offset += (x - (rectX + width * offset)) / width;
   return offset;
+}
+
+/**
+ * True when two lines can use one lane: they end at the same x and come from opposite sides of it.
+ * Their horizontals then meet at that x and do not overlap, and their last verticals are one trunk.
+ */
+function sharesTrunk(a: LaneLine | undefined, b: LaneLine | undefined): boolean {
+  return (
+    a !== undefined && b !== undefined && a.to === b.to && (a.from - a.to) * (b.from - b.to) < 0
+  );
 }
 
 function strictlyInside(x: number, a: number, b: number): boolean {
@@ -64,7 +75,11 @@ function strictlyInside(x: number, a: number, b: number): boolean {
  * Take two lines i and j. When `from` of j is inside the run of i, j must lie above i, or its
  * vertical crosses the run. When `to` of j is inside the run of i, j must lie below i. When both
  * hold, one crossing is forced whatever the order is, so the pair is left out of the sort. Lines
- * that end at the same `to` need no rule: they form a trunk.
+ * that end at the same `to` need no rule: they form a trunk. Two such lines from opposite sides
+ * share one lane when nothing blocks the second one: their horizontals only meet at `to`.
+ *
+ * Each pick takes the line with the fewest lines still above it, then the lowest rank. The count
+ * of each line drops when a line gets its lane, so the sort costs O(n^2).
  */
 export function orderLanes(lines: readonly LaneLine[]): number[] {
   const lanes = lines.map(() => -1);
@@ -87,38 +102,69 @@ export function orderLanes(lines: readonly LaneLine[]): number[] {
         above.get(j)?.delete(i);
       }
   const waiting = new Set(members);
-  const blockers = (index: number) =>
-    [...waiting].filter((other) => above.get(other)?.has(index)).length;
+  // How many waiting lines must lie above each line. A line that gets its lane stops blocking.
+  const blocked = new Map<number, number>(members.map((index) => [index, 0]));
+  for (const upper of members)
+    for (const lower of above.get(upper) ?? []) blocked.set(lower, (blocked.get(lower) ?? 0) + 1);
+  const rankOf = (index: number) => lines[index]?.rank ?? 0;
+  const settle = (index: number, lane: number) => {
+    lanes[index] = lane;
+    waiting.delete(index);
+    for (const lower of above.get(index) ?? []) blocked.set(lower, (blocked.get(lower) ?? 1) - 1);
+  };
   let lane = 0;
   while (waiting.size > 0) {
     let pick: number | undefined;
     let fewest = Number.POSITIVE_INFINITY;
     for (const index of waiting) {
-      const count = blockers(index);
-      const rank = lines[index]?.rank ?? 0;
-      const best = pick === undefined ? Number.POSITIVE_INFINITY : (lines[pick]?.rank ?? 0);
-      if (count < fewest || (count === fewest && rank < best)) {
+      const count = blocked.get(index) ?? 0;
+      if (
+        count < fewest ||
+        (count === fewest && pick !== undefined && rankOf(index) < rankOf(pick))
+      ) {
         pick = index;
         fewest = count;
       }
     }
     if (pick === undefined) break;
-    lanes[pick] = lane;
+    settle(pick, lane);
+    // R7: a line from the other side of the same target shares the lane when nothing blocks it.
+    let partner: number | undefined;
+    for (const index of waiting)
+      if (
+        (blocked.get(index) ?? 0) === 0 &&
+        sharesTrunk(lines[pick], lines[index]) &&
+        (partner === undefined || rankOf(index) < rankOf(partner))
+      )
+        partner = index;
+    if (partner !== undefined) settle(partner, lane);
     lane += 1;
-    waiting.delete(pick);
   }
   return lanes;
+}
+
+/** The number of lanes that orderLanes used: the highest lane number plus 1. */
+export function laneCount(lanes: readonly number[]): number {
+  return lanes.reduce((count, lane) => Math.max(count, lane + 1), 0);
 }
 
 /**
  * The y of each of `count` lanes, top lane first. The lowest lane sits at `lowest`. The lanes
  * keep a LINK between them when the band allows it and get closer when it does not. A pitch is a
- * multiple of half a pixel, and never under a line width, so two lanes never share a y.
+ * multiple of half a pixel, so two lanes never share a y, and no lane is above `bandTop`.
  */
 export function laneYs(count: number, lowest: number, bandTop: number): number[] {
   const fit = count > 1 ? Math.floor(((lowest - bandTop) / (count - 1)) * 2) / 2 : 0;
-  const pitch = Math.max(LAYOUT.LINE_W, Math.min(LAYOUT.LINK, fit));
+  const pitch = Math.min(LAYOUT.LINK, fit);
   return Array.from({ length: count }, (_, index) => lowest - (count - 1 - index) * pitch);
+}
+
+/**
+ * The height a band is short of, in px, when `count` lanes keep the least pitch (LANE_PITCH)
+ * between them. It is 0 when the band holds them.
+ */
+export function bandShortfall(count: number, lowest: number, bandTop: number): number {
+  return Math.max(0, (count - 1) * LAYOUT.LANE_PITCH - (lowest - bandTop));
 }
 
 /** A chain that returns money, as the planner reads it. */
@@ -139,7 +185,7 @@ export interface ReturnGeometry {
   incomeX: number;
   /** The y of the top of Idle output and Income. */
   outputTop: number;
-  /** True when Income exists, so the band above Idle output is three LINK tall, not two. */
+  /** True when Income exists, so the band above Idle output is RETURN_BAND_INCOME tall. */
   hasIncome: boolean;
 }
 
@@ -274,8 +320,7 @@ function assignLanes(
     const lanes = orderLanes(
       keys.map((key) => ({ ...ends(lines.get(key) as ReturnLine), rank: rankOf(key) })),
     );
-    const used = lanes.filter((lane) => lane >= 0).length;
-    const ys = laneYs(used, lowest, bandTop);
+    const ys = laneYs(laneCount(lanes), lowest, bandTop);
     return new Map(
       keys.flatMap((key, index) => {
         const lane = lanes[index] ?? -1;
@@ -299,7 +344,9 @@ function assignLanes(
         ? { from: line.from, to: line.target }
         : { from: line.bottomX, to: line.target },
     geometry.outputTop - LAYOUT.LINK,
-    geometry.outputTop - (geometry.hasIncome ? 3 : 2) * LAYOUT.LINK + LAYOUT.LANE_MARGIN,
+    geometry.outputTop -
+      (geometry.hasIncome ? LAYOUT.RETURN_BAND_INCOME : LAYOUT.RETURN_BAND) +
+      LAYOUT.LANE_MARGIN,
   );
   for (const [key, y] of bottom) (lines.get(key) as ReturnLine).bottomLane = y;
 }

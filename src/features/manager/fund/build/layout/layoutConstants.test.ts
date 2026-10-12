@@ -38,6 +38,16 @@ describe("LAYOUT constants", () => {
     expect(LAYOUT.LANE_MARGIN).toBeLessThan(LAYOUT.LINK);
   });
 
+  // @rule R5
+  it("[R5] names the lane pitch, the two band heights above Idle output and the offset rounds", () => {
+    expect(LAYOUT.LANE_PITCH).toBe(6);
+    // A 2 px highlighted line still leaves clear space to its neighbour lane.
+    expect(LAYOUT.LANE_PITCH).toBeGreaterThanOrEqual(3 * LAYOUT.LINE_W);
+    expect(LAYOUT.RETURN_BAND).toBe(2 * LAYOUT.LINK);
+    expect(LAYOUT.RETURN_BAND_INCOME).toBe(3 * LAYOUT.LINK);
+    expect(LAYOUT.OFFSET_ITERATIONS).toBe(12);
+  });
+
   // @rule L1
   it("[L1] holds the building-block sizes the layout places (line, port, label, chip inset)", () => {
     expect(LAYOUT.LINE_W).toBe(1.5);

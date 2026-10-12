@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-MCK-004
  * @name buildCanvasFixtures
- * @implements-rules-version v1 (POO-2153 rules v1); v1 (POO-2345, one more fixture)
+ * @implements-rules-version v2 (POO-2345); v1 (POO-2153 rules v1)
  * @analytics-events none, a data fixture: nothing here is rendered on its own or tracked.
  *
  * PP-MOCK. The reference canvases of the Build canvas handoff (v1.2) as layout inputs, plus the
@@ -430,7 +430,8 @@ export const hubEmptyWithSpoke: BuildCanvasFixture = fixture(
 /**
  * POO-2345: one hub chain on Arbitrum and one Solana spoke with two chains, a Raydium CLMM chain
  * and a Kamino chain. Both Solana chains return through the shared return Bridge, so the fixture
- * covers the return lines of the local spoke beside a hub chain. Built from the rules, not drawn.
+ * covers the return lines of a spoke that is not local, beside a hub chain. Built from the rules,
+ * not drawn.
  */
 export const solanaTwoChainReturn: BuildCanvasFixture = fixture(
   [

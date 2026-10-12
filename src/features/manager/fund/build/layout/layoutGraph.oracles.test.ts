@@ -738,7 +738,9 @@ describe("canvas D, the handoff numbers (empty canvas, English sentence 420 wide
 
 describe("canvas A as a plan", () => {
   // @rule L10
-  it("[L10, POO-2213] is 2080 x 822 with fee conversion; menus and tooltips stay outside graph bounds", () => {
+  // The Figma frame of canvas A is 772 high. The POO-2213 fee-return override (fee conversion with
+  // its own return levels) makes the layout 920 high. The width stays 2080.
+  it("[L10, POO-2213] is 2080 x 920 with fee conversion; menus and tooltips stay outside graph bounds", () => {
     const layout = layoutGraph(canvasA.input, EN);
     expect([layout.width, layout.height]).toEqual([2080, 920]);
   });

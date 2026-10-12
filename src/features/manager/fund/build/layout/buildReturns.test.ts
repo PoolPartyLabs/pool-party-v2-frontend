@@ -165,13 +165,32 @@ describe("Build V2 financial returns (POO-2273 v2)", () => {
     const next = layout(changed);
     const model = semantic(graph);
     const after = semantic(next);
-    // POO-2345 R6: a line goes straight only when its ports share a column. A new chain can move
-    // the spoke, so the number of legs of a line can change. Its id and its first segment stay.
+    // POO-2345 R6: a line goes straight only when its ports share a column. A new chain moves the
+    // spoke, so one line (the returned income) changes its number of legs, from 1 to 3. Each id and
+    // each first segment stay, and the other lines keep their exact number of legs.
     const owned = (value: typeof model) =>
       value.connections
         .filter((entry) => entry.originId === "rh-a-pool")
         .map((entry) => [entry.id, entry.segmentIds[0]]);
     expect(owned(after)).toEqual(owned(model));
+    const legs = (value: typeof model) =>
+      Object.fromEntries(
+        value.connections
+          .filter((entry) => entry.originId === "rh-a-pool")
+          .map((entry) => [entry.id, entry.segmentIds.length]),
+      );
+    const before = {
+      "link:rh-a-pool": 1,
+      "bridge-transfer:bridge:robinhood:outbound:principal:rh-a-pool": 3,
+      "principal:chain:rh-a": 2,
+      "principal:returned:rh-a": 3,
+      "income:block:rh-a-fees": 1,
+      "bridge-transfer:bridge:robinhood:outbound:income:rh-a-pool": 3,
+      "income:converted:rh-a-fees": 3,
+      "income:returned:rh-a-fees": 1,
+    };
+    expect(legs(model)).toEqual(before);
+    expect(legs(after)).toEqual({ ...before, "income:returned:rh-a-fees": 3 });
     for (const [id, output] of [
       ["principal:chain:rh-a", "idleOutput"],
       ["income:converted:rh-a-fees", "income"],

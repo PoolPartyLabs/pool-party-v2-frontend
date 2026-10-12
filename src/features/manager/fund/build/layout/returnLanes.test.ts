@@ -9,7 +9,16 @@
 
 import { describe, expect, it } from "vitest";
 import { LAYOUT } from "./layoutConstants";
-import { laneYs, offsetAt, orderLanes, placePorts, planReturnLines } from "./returnLanes";
+import {
+  bandShortfall,
+  type LaneLine,
+  laneCount,
+  laneYs,
+  offsetAt,
+  orderLanes,
+  placePorts,
+  planReturnLines,
+} from "./returnLanes";
 
 const BRIDGE = { id: "bridge", rect: { x: 100, y: 500, w: 176, h: 26 } };
 
@@ -73,6 +82,102 @@ describe("orderLanes", () => {
     expect(new Set(lanes).size).toBe(3);
     expect(lanes.every((lane) => lane >= 0)).toBe(true);
   });
+
+  // @rule R7
+  it("[R7] lets two lines of one target share a lane when they come from opposite sides", () => {
+    const lanes = orderLanes([
+      { from: 0, to: 100, rank: 0 },
+      { from: 200, to: 100, rank: 1 },
+    ]);
+    expect(lanes).toEqual([0, 0]);
+  });
+
+  // @rule R7
+  it("[R7] keeps two lines from the same side apart, and two lines of different targets apart", () => {
+    expect(
+      orderLanes([
+        { from: 0, to: 100, rank: 0 },
+        { from: 50, to: 100, rank: 1 },
+      ]),
+    ).toEqual([1, 0]);
+    expect(
+      orderLanes([
+        { from: 0, to: 100, rank: 0 },
+        { from: 300, to: 200, rank: 1 },
+      ]),
+    ).toEqual([0, 1]);
+  });
+
+  // @rule R7
+  it("[R7] does not share a lane while another line must lie above the second line", () => {
+    // f starts inside the run of b and ends left of it, so f lies above b. a and f are a forced pair.
+    const lanes = orderLanes([
+      { from: 0, to: 100, rank: 0 },
+      { from: 400, to: 100, rank: 1 },
+      { from: 300, to: 50, rank: 2 },
+    ]);
+    expect(lanes).toEqual([0, 2, 1]);
+  });
+
+  it("counts lanes, not lines", () => {
+    expect(laneCount([0, 0, 1, -1])).toBe(2);
+    expect(laneCount([-1])).toBe(0);
+    expect(laneCount([])).toBe(0);
+  });
+
+  it("gives the same order as the plain pick by fewest blockers, for lines with no shared target", () => {
+    // Reference: the first version of the sort, which counted the blockers again at each pick.
+    const reference = (lines: readonly LaneLine[]): number[] => {
+      const inside = (x: number, a: number, b: number) => x > Math.min(a, b) && x < Math.max(a, b);
+      const members = lines.flatMap((line, index) => (line.from === line.to ? [] : [index]));
+      const above = new Map<number, Set<number>>(members.map((i) => [i, new Set<number>()]));
+      for (const i of members)
+        for (const j of members) {
+          const a = lines[i] as LaneLine;
+          const b = lines[j] as LaneLine;
+          if (i === j) continue;
+          if (inside(b.from, a.from, a.to)) above.get(j)?.add(i);
+          if (inside(b.to, a.from, a.to)) above.get(i)?.add(j);
+        }
+      for (const i of members)
+        for (const j of above.get(i) ?? [])
+          if (above.get(j)?.has(i)) {
+            above.get(i)?.delete(j);
+            above.get(j)?.delete(i);
+          }
+      const out = lines.map(() => -1);
+      const waiting = new Set(members);
+      for (let lane = 0; waiting.size > 0; lane += 1) {
+        let pick = -1;
+        let fewest = Number.POSITIVE_INFINITY;
+        for (const index of waiting) {
+          const count = [...waiting].filter((other) => above.get(other)?.has(index)).length;
+          const rank = (lines[index] as LaneLine).rank;
+          if (count < fewest || (count === fewest && rank < (lines[pick] as LaneLine).rank)) {
+            pick = index;
+            fewest = count;
+          }
+        }
+        out[pick] = lane;
+        waiting.delete(pick);
+      }
+      return out;
+    };
+    let seed = 7;
+    const next = () => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return seed / 2147483648;
+    };
+    for (let round = 0; round < 200; round += 1) {
+      const tos = Array.from({ length: 12 }, (_, index) => index * 10 + 5);
+      const lines = tos.map((to, index) => ({
+        from: Math.floor(next() * 12) * 10 + 5,
+        to,
+        rank: index,
+      }));
+      expect(orderLanes(lines)).toEqual(reference(lines));
+    }
+  });
 });
 
 describe("laneYs", () => {
@@ -84,11 +189,33 @@ describe("laneYs", () => {
     expect(laneYs(2, 100, 40)).toEqual([100 - LAYOUT.LINK, 100]);
   });
 
-  it("closes the lanes up to fit the band, and never to less than a line width", () => {
+  it("closes the lanes up to fit the band, and puts no lane above the top of the band", () => {
     const ys = laneYs(13, 100, 40);
-    expect(ys[0]).toBeGreaterThanOrEqual(40);
+    expect(ys[0]).toBe(40);
     expect(ys.at(-1)).toBe(100);
-    expect(laneYs(100, 100, 99).at(0)).toBe(100 - 99 * LAYOUT.LINE_W);
+    for (const count of [2, 5, 9, 14, 30]) {
+      const lanes = laneYs(count, 100, 58);
+      expect(Math.min(...lanes)).toBeGreaterThanOrEqual(58);
+      expect(new Set(lanes).size).toBe(count);
+    }
+  });
+
+  it("keeps at least LANE_PITCH between lanes whenever the band holds them", () => {
+    for (const count of [2, 3, 7, 8]) {
+      const ys = laneYs(count, 100, 58);
+      expect(bandShortfall(count, 100, 58)).toBe(0);
+      for (let index = 1; index < ys.length; index += 1)
+        expect((ys[index] ?? 0) - (ys[index - 1] ?? 0)).toBeGreaterThanOrEqual(LAYOUT.LANE_PITCH);
+    }
+  });
+});
+
+describe("bandShortfall", () => {
+  it("is 0 when the band holds the lanes at LANE_PITCH, and the missing height when it does not", () => {
+    // A band of 42 px holds 8 lanes at 6 px: 7 gaps.
+    expect(bandShortfall(8, 100, 58)).toBe(0);
+    expect(bandShortfall(10, 100, 58)).toBe(12);
+    expect(bandShortfall(1, 100, 100)).toBe(0);
   });
 });
 
@@ -126,6 +253,38 @@ describe("planReturnLines", () => {
     expect(lines.get("principal:b")?.bottomX).toBe(150);
     const left = planReturnLines([chains[1] as (typeof chains)[number]], geometry(0, 400));
     expect(left.get("principal:b")?.bottomX).toBe(BRIDGE.rect.x + LAYOUT.PAIR);
+  });
+
+  // @rule R7
+  it("[R7] gives two principal lines on opposite sides of Idle output one lane, and two on one side two", () => {
+    const apart = planReturnLines(
+      [
+        { chainId: "l", laneX: 20, fees: [] },
+        { chainId: "r", laneX: 380, fees: [] },
+      ],
+      geometry(200, 500),
+    );
+    expect(apart.get("principal:l")?.bottomLane).toBeDefined();
+    expect(apart.get("principal:l")?.bottomLane).toBe(apart.get("principal:r")?.bottomLane);
+    const near = planReturnLines(
+      [
+        { chainId: "l", laneX: 20, fees: [] },
+        { chainId: "m", laneX: 60, fees: [] },
+      ],
+      geometry(200, 500),
+    );
+    expect(near.get("principal:l")?.bottomLane).not.toBe(near.get("principal:m")?.bottomLane);
+  });
+
+  it("puts every lane of a band inside it", () => {
+    const wide = Array.from({ length: 6 }, (_, index) => ({
+      chainId: `c${index}`,
+      laneX: 20 + index * 40,
+      fees: [],
+    }));
+    const lines = planReturnLines(wide, geometry(400, 500));
+    const top = geometry(400, 500).outputTop - LAYOUT.RETURN_BAND_INCOME + LAYOUT.LANE_MARGIN;
+    for (const line of lines.values()) expect(line.bottomLane ?? top).toBeGreaterThanOrEqual(top);
   });
 
   it("gives a line with no Bridge no port", () => {

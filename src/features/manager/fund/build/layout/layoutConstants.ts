@@ -42,6 +42,14 @@ export const LAYOUT = Object.freeze({
   RETURN_BRIDGE_GAP: 72,
   /** POO-2345 R5: the free space kept between the blocks above a channel and its top lane. */
   LANE_MARGIN: 6,
+  /** POO-2345 R5: the least distance between two lanes, so that thick lines never nearly touch. */
+  LANE_PITCH: 6,
+  /** POO-2345 R5: the free height above Idle output without Income (2 LINK, see L5). */
+  RETURN_BAND: 48,
+  /** POO-2345 R5: the free height above Idle output and Income when Income exists (3 LINK). */
+  RETURN_BAND_INCOME: 72,
+  /** POO-2345 R3: the most rounds that `offsetAt` makes to hit an x exactly. */
+  OFFSET_ITERATIONS: 12,
   PORT_CENTER: 0.5,
   PRINCIPAL_PORT_SPAN: 0.45,
   INCOME_PORT_START: 0.55,

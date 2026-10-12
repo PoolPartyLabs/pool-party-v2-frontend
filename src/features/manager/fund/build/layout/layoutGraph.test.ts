@@ -281,6 +281,17 @@ describe("[C9] lines enter at the top centre and leave at the bottom centre", ()
   });
 });
 
+const L5_LANES: Record<string, { runs: number; heights: number; straight: number }> = {
+  canvasA: { runs: 8, heights: 6, straight: 0 },
+  canvasB: { runs: 3, heights: 2, straight: 1 },
+  canvasC: { runs: 2, heights: 2, straight: 0 },
+  workedExample2: { runs: 3, heights: 2, straight: 0 },
+  buildState3: { runs: 1, heights: 1, straight: 0 },
+  buildState5: { runs: 1, heights: 1, straight: 0 },
+  newSpokeNoChain: { runs: 1, heights: 1, straight: 0 },
+  hubEmptyWithSpoke: { runs: 0, heights: 0, straight: 1 },
+};
+
 describe("[C10] every chain returns; [C11] the return levels", () => {
   // @rule C10
   it.each(FIXTURES)("[C10] has income lines iff a Collect fees exists (%s)", (_name, fixture) => {
@@ -324,7 +335,13 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
     const straight = (layout.connections ?? []).filter(
       (edge) => edge.kind === "principal" && edge.points.every((p) => p.x === edge.points[0]?.x),
     );
-    expect(lanes.length + straight.length).toBeGreaterThan(0);
+    // The exact count of lane runs, of distinct lane heights (R7 lets two lines share one) and
+    // of straight lines. A change of routing must change this table on purpose.
+    expect({
+      runs: lanes.length,
+      heights: new Set(lanes).size,
+      straight: straight.length,
+    }).toEqual(L5_LANES[_n]);
     for (const y of lanes) {
       expect(y).toBeGreaterThanOrEqual(deepest + LAYOUT.LANE_MARGIN);
       expect(y).toBeLessThanOrEqual(outputY - LAYOUT.LINK + LAYOUT.LINE_W / 2);
