@@ -2,6 +2,7 @@
  * @id PP-MGR-SCR-001
  * @name ManagerOverviewV2
  * @implements-rules-version v1 (POO-2245)
+ * @implements-rules-version v1 (POO-2335 Figma 8427:2829 parity: avatar, status pill, network logos, text actions)
  * @analytics-events builder_draft_opened, builder_draft_deleted, builder_mandate_error, app_error_shown, app_cta_blocked
  * page_viewed is route-owned. This read/navigation surface never settles money.
  */
@@ -9,7 +10,9 @@
 import { useSearchParams } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { NetworkLogo } from "@/components/data-display/NetworkLogo";
 import { type ChartPoint, PerformanceChart } from "@/components/data-display/PerformanceChart";
+import { StrategyLogo } from "@/components/data-display/StrategyLogo";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -28,8 +31,22 @@ import { draftResumeHref } from "../components/MandateDraftsList";
 import { type MandateDraft, resumeStep, stepIndex } from "../mandateDraft";
 import { deleteDraft } from "../mandateDraftStore";
 import { OverviewProfile } from "./OverviewProfile";
-import { overviewModel, type SetupSnapshot } from "./overviewModel";
+import {
+  type OverviewStatusTone,
+  overviewModel,
+  overviewStrategyRow,
+  type SetupSnapshot,
+} from "./overviewModel";
 import { useOverviewSetup } from "./useOverviewSetup";
+
+/** Status pill classes. They are the same as StrategyStatusChip (PP-MGR-CMP-013). */
+const STATUS_PILL: Record<OverviewStatusTone, string> = {
+  success: "bg-success/10 text-success",
+  warning: "bg-warning/10 text-warning",
+  muted: "bg-surface-raised text-muted-foreground",
+};
+const TEXT_ACTION =
+  "inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline";
 
 export interface OverviewDemo {
   state: "ready" | "loading" | "empty" | "error";
@@ -263,7 +280,7 @@ export function ManagerOverviewV2({
                                   {t(item.completed ? "indexingPending" : "launchInProgress")}
                                 </p>
                                 <Link
-                                  className="mt-3 inline-flex min-h-11 items-center rounded-lg border border-border px-3 text-sm"
+                                  className={TEXT_ACTION}
                                   href={`/manager/fund-launch/${encodeURIComponent(item.journey.journeyId)}`}
                                 >
                                   {t("resumeLaunch")}
@@ -274,39 +291,13 @@ export function ManagerOverviewV2({
                                 key={item.draft.id}
                                 className="rounded-xl border border-border p-3"
                               >
-                                <p className="font-medium">
-                                  {item.draft.name ?? managerT("fundBuilder.drafts.unnamed")}
-                                </p>
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  {t("mandateStep", {
-                                    step: stepIndex(item.draft, resumeStep(item.draft)).index,
-                                    count: stepIndex(item.draft, resumeStep(item.draft)).count,
-                                  })}
-                                </p>
-                                <p className="text-xs text-muted-foreground">{t("savedDevice")}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {t("updated", {
-                                    when: format.relativeTime(
-                                      new Date(item.draft.updatedAt),
-                                      new Date(),
-                                    ),
-                                  })}
-                                </p>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  <Button
-                                    variant="secondary"
-                                    onClick={() => {
-                                      track("builder_draft_opened", {
-                                        step: resumeStep(item.draft),
-                                      });
-                                      router.push(draftResumeHref(item.draft));
-                                    }}
-                                  >
-                                    {t("resumeDraft")}
-                                  </Button>
-                                  <details className="relative ml-auto">
+                                <div className="flex items-center gap-2">
+                                  <p className="min-w-0 flex-1 truncate font-medium">
+                                    {item.draft.name ?? managerT("fundBuilder.drafts.unnamed")}
+                                  </p>
+                                  <details className="relative">
                                     <summary
-                                      className="flex min-h-11 cursor-pointer list-none items-center px-3"
+                                      className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center"
                                       aria-label={`${t("delete")}: ${item.draft.name ?? managerT("fundBuilder.drafts.unnamed")}`}
                                     >
                                       <span aria-hidden="true">⋯</span>
@@ -319,6 +310,37 @@ export function ManagerOverviewV2({
                                       {t("delete")}
                                     </Button>
                                   </details>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  {t("mandateStep", {
+                                    step: stepIndex(item.draft, resumeStep(item.draft)).index,
+                                    count: stepIndex(item.draft, resumeStep(item.draft)).count,
+                                  })}
+                                </p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {t("savedDevice")}
+                                </p>
+                                <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+                                  <button
+                                    type="button"
+                                    className={TEXT_ACTION}
+                                    onClick={() => {
+                                      track("builder_draft_opened", {
+                                        step: resumeStep(item.draft),
+                                      });
+                                      router.push(draftResumeHref(item.draft));
+                                    }}
+                                  >
+                                    {t("resumeDraft")}
+                                  </button>
+                                  <p className="text-xs text-muted-foreground">
+                                    {t("updated", {
+                                      when: format.relativeTime(
+                                        new Date(item.draft.updatedAt),
+                                        new Date(),
+                                      ),
+                                    })}
+                                  </p>
                                 </div>
                               </li>
                             ),
@@ -367,92 +389,124 @@ export function ManagerOverviewV2({
               </div>
             </>
           ) : null}
-          <Card className="overflow-hidden p-6">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold">{t("yourStrategies")}</h2>
+          <section className="flex flex-col gap-4" aria-labelledby="overview-strategies-heading">
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="overview-strategies-heading" className="text-xl font-semibold">
+                {t("yourStrategies")}
+              </h2>
               {tab === "overview" ? (
-                <Button variant="ghost" onClick={() => selectTab("strategies")}>
+                <button
+                  type="button"
+                  className={TEXT_ACTION}
+                  onClick={() => selectTab("strategies")}
+                >
                   {t("seeAll")}
-                </Button>
+                  <span aria-hidden="true">→</span>
+                </button>
               ) : null}
             </div>
-            {state === "loading" ? (
-              <div role="status">
-                <p className="mb-3">{t("loading")}</p>
-                <Skeleton height={120} />
-              </div>
-            ) : state === "error" ? (
-              <div role="alert">
-                <h3>{t("loadFailed")}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{t("retryDescription")}</p>
-                <Button variant="secondary" className="mt-4" onClick={() => setRetry((n) => n + 1)}>
-                  {t("retry")}
-                </Button>
-                <p className="mt-3 text-sm">{t("setupPreserved")}</p>
-              </div>
-            ) : state === "session" ? (
-              <p role="status">{t("session")}</p>
-            ) : rows.length === 0 ? (
-              <p>{t("noKnownStrategies")}</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="text-muted-foreground">
-                    <tr>
-                      {["strategy", "status", "networks", "aum"].map((key) => (
-                        <th key={key} scope="col" className="pb-4 font-medium">
-                          {t(key)}
-                        </th>
-                      ))}
-                      <th scope="col">
-                        <span className="sr-only">{t("manage")}</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((fund) => (
-                      <tr key={fund.coreVault} className="border-t border-border">
-                        <td className="py-4 font-medium">
-                          {fund.profile?.name?.trim() || `PP-${fund.creationNumber}`}
-                        </td>
-                        <td className="py-4">
-                          {fund.state === "Open"
-                            ? t("stateOpen")
-                            : fund.state === "Closing"
-                              ? t("stateClosing")
-                              : fund.state === "Closed"
-                                ? t("stateClosed")
-                                : t("notAvailable")}
-                        </td>
-                        <td className="py-4">
-                          {fund.chains
-                            .map((c) =>
-                              c.chainId === "42161"
-                                ? "Arbitrum"
-                                : c.chainId === "4663"
-                                  ? "Robinhood Chain"
-                                  : c.chainId,
-                            )
-                            .join(", ")}
-                        </td>
-                        <td className="py-4 tabular-nums">
-                          {source?.rowAum[fund.coreVault] ?? t("notAvailable")}
-                        </td>
-                        <td className="py-4 text-right">
-                          <Link
-                            className="inline-flex min-h-11 items-center rounded-lg border border-border px-4"
-                            href={`/funds/${fund.coreVault}?view=manager`}
+            <Card className="overflow-hidden p-0">
+              {state === "loading" ? (
+                <div role="status" className="p-6">
+                  <p className="mb-3">{t("loading")}</p>
+                  <Skeleton height={120} />
+                </div>
+              ) : state === "error" ? (
+                <div role="alert" className="p-6">
+                  <h3>{t("loadFailed")}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{t("retryDescription")}</p>
+                  <Button
+                    variant="secondary"
+                    className="mt-4"
+                    onClick={() => setRetry((n) => n + 1)}
+                  >
+                    {t("retry")}
+                  </Button>
+                  <p className="mt-3 text-sm">{t("setupPreserved")}</p>
+                </div>
+              ) : state === "session" ? (
+                <p role="status" className="p-6">
+                  {t("session")}
+                </p>
+              ) : rows.length === 0 ? (
+                <p className="p-6">{t("noKnownStrategies")}</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="text-muted-foreground">
+                      <tr>
+                        {["strategy", "status", "networks", "aum"].map((key) => (
+                          <th
+                            key={key}
+                            scope="col"
+                            className={`px-4 py-3 font-medium ${key === "aum" ? "text-right" : ""}`}
                           >
-                            {t("manage")}
-                          </Link>
-                        </td>
+                            {t(key)}
+                          </th>
+                        ))}
+                        <th scope="col" className="px-4 py-3">
+                          <span className="sr-only">{t("manage")}</span>
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
+                    </thead>
+                    <tbody>
+                      {rows.map((fund) => {
+                        const row = overviewStrategyRow(fund);
+                        return (
+                          <tr key={fund.coreVault} className="border-t border-border">
+                            <td className="px-4 py-5">
+                              <span className="flex items-center gap-2 font-medium">
+                                <StrategyLogo
+                                  url={row.logoUrl}
+                                  name={row.name}
+                                  initials={row.initials}
+                                  className="size-8 text-xs"
+                                />
+                                <span>{row.name}</span>
+                              </span>
+                            </td>
+                            <td className="px-4 py-5">
+                              <span
+                                data-overview-status={row.status.tone}
+                                className={`inline-flex items-center rounded-full px-3 py-1 font-medium text-xs ${STATUS_PILL[row.status.tone]}`}
+                              >
+                                {t(row.status.key)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-5">
+                              <ul className="flex flex-wrap items-center gap-3">
+                                {row.networks.map((network) => (
+                                  <li key={network.chainId} className="flex items-center gap-1.5">
+                                    <NetworkLogo
+                                      network={network.slug ?? network.chainId}
+                                      name={network.name}
+                                    />
+                                    <span>{network.name}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </td>
+                            <td className="px-4 py-5 text-right tabular-nums">
+                              {source?.rowAum[fund.coreVault] ?? t("notAvailable")}
+                            </td>
+                            <td className="px-4 py-5 text-right">
+                              <Link
+                                className={TEXT_ACTION}
+                                href={`/funds/${fund.coreVault}?view=manager`}
+                              >
+                                {t("manage")}
+                                <span aria-hidden="true">›</span>
+                              </Link>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </section>
         </>
       )}
       {pending ? (
