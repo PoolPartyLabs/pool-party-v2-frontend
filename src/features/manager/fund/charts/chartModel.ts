@@ -1,163 +1,157 @@
 /**
  * @id PP-MGR-LIB-077
  * @name chartModel
- * @description Approved market references, isolated widget configuration and trusted messages.
+ * @description DEX Screener embed URL for the exact pool or asset of the selected block.
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-37675
- * @linear https://linear.app/yeildbay/issue/POO-2309
- * @implements-rules-version v1 (POO-2309)
+ * @linear https://linear.app/yeildbay/issue/POO-2338
+ * @implements-rules-version v1 (POO-2338)
  * @analytics-events none, pure market and embed helpers; the chart host owns events.
  *
- * These references describe Binance exchange markets, never a pool price, execution quote,
- * position valuation or liquidity range. Contract/mint identity authorizes only the reference.
+ * POO-2338 replaces the POO-2309 TradingView and Binance reference. The chart shows public
+ * DEX Screener data for one pool or one token. It is not an execution quote, a position value or
+ * a range. The URL holds only the chain slug and the public pool or token address (R7).
+ * Build and Manage both use this file, so the same pool or asset gives the same URL (R6).
  */
-import type { Locale } from "@/i18n/config";
-import { supportedChainMetas } from "@/lib/chains/config";
+import { getWrappedNative, networkDisplayName } from "@/lib/chains/config";
 import { NATIVE_TOKEN_ADDRESS } from "@/lib/provisioning/types";
-import { USDC_MINT, WSOL_MINT } from "../solana-preview/solanaSchemas";
-
-export interface ChartAsset {
-  network: string;
-  address: string;
-}
 
 export type ChartBlockReason =
   | "no_selection"
   | "unconfigured"
   | "unsupported_block"
-  | "lending_reference"
   | "unsupported_pair";
 
+/** Chain slugs that DEX Screener uses. They are the same as the app apiNetworkId values. */
+export const DEXSCREENER_CHAINS = ["arbitrum", "base", "polygon", "robinhood", "solana"] as const;
+export type DexScreenerChain = (typeof DEXSCREENER_CHAINS)[number];
+
+export type ChartPoolProtocol = "uniswap-v3" | "uniswap-v4";
+
 export interface ChartMarket {
-  id: "eth-usdc" | "sol-usdc";
-  symbol: "BINANCE:ETHUSDC" | "BINANCE:SOLUSDC";
-  pair: "ETH / USDC" | "SOL / USDC";
-  venue: "Binance";
+  kind: "pool" | "token";
+  chain: DexScreenerChain;
+  /** Public pool address, bare v4 PoolId, token address or Solana mint. */
+  address: string;
+  /** Display only. It never goes into the URL or into analytics. */
+  label: string;
+  /** Display only: the pool protocol, or the network name of a token. */
+  venue: string;
 }
 
 export type ChartAvailability =
   | { status: "available"; market: ChartMarket }
   | { status: "unavailable"; reason: ChartBlockReason };
 
-export const CHART_WIDGET_ORIGIN = "https://www.tradingview-widget.com";
+export const CHART_EMBED_ORIGIN = "https://dexscreener.com";
 
-const ETH_MARKET: ChartMarket = {
-  id: "eth-usdc",
-  symbol: "BINANCE:ETHUSDC",
-  pair: "ETH / USDC",
-  venue: "Binance",
+/** The verified embed parameters, in URL order (R4). Do not add `info=0`. */
+export const CHART_EMBED_PARAMS = {
+  embed: "1",
+  theme: "dark",
+  trades: "0",
+  chartLeftToolbar: "1",
+  chartTheme: "dark",
+  chartStyle: "1",
+  chartType: "usd",
+  interval: "60",
+} as const satisfies Record<string, string>;
+
+const EVM_ADDRESS = /^0x[0-9a-f]{40}$/i;
+const POOL_ID = /^0x[0-9a-f]{64}$/i;
+const SOLANA_ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+const POOL_VENUES: Record<ChartPoolProtocol, string> = {
+  "uniswap-v3": "Uniswap v3",
+  "uniswap-v4": "Uniswap v4",
 };
-const SOL_MARKET: ChartMarket = {
-  id: "sol-usdc",
-  symbol: "BINANCE:SOLUSDC",
-  pair: "SOL / USDC",
-  venue: "Binance",
-};
 
-/** Both orderings deliberately display the same canonical exchange reference. */
-export function resolveChartMarket(tokens: readonly ChartAsset[]): ChartAvailability {
-  if (tokens.length === 0) return { status: "unavailable", reason: "no_selection" };
-  if (tokens.length < 2 || tokens.some((token) => !token.network.trim() || !token.address.trim())) {
-    return { status: "unavailable", reason: "unconfigured" };
-  }
-  const [first, second] = tokens;
-  if (tokens.length !== 2 || !first || !second || first.network !== second.network) {
-    return { status: "unavailable", reason: "unsupported_pair" };
-  }
-
-  if (first.network === "solana") {
-    if (
-      (first.address === WSOL_MINT && second.address === USDC_MINT) ||
-      (second.address === WSOL_MINT && first.address === USDC_MINT)
-    ) {
-      return { status: "available", market: { ...SOL_MARKET } };
-    }
-  } else if (first.network === "arbitrum" || first.network === "base") {
-    const chain = supportedChainMetas.find((meta) => meta.apiNetworkId === first.network);
-    if (chain?.usdc.symbol === "USDC" && chain.chain.nativeCurrency.symbol === "ETH") {
-      const usdc = chain.usdc.address.toLowerCase();
-      const weth = chain.wrappedNative.toLowerCase();
-      const isEth = (address: string) => address === weth || address === NATIVE_TOKEN_ADDRESS;
-      const a = first.address.toLowerCase();
-      const b = second.address.toLowerCase();
-      if ((a === usdc && isEth(b)) || (b === usdc && isEth(a))) {
-        return { status: "available", market: { ...ETH_MARKET } };
-      }
-    }
-  }
-  return { status: "unavailable", reason: "unsupported_pair" };
+function chartChain(network: string): DexScreenerChain | null {
+  return (DEXSCREENER_CHAINS as readonly string[]).includes(network)
+    ? (network as DexScreenerChain)
+    : null;
 }
 
-// Verified against the official Advanced Chart HTML locale and language bundle on 2026-10-09.
-// TradingView has no Dutch widget translation; surrounding app copy remains in Dutch.
-const WIDGET_LOCALES = {
-  en: "en",
-  "pt-BR": "br",
-  es: "es",
-  fr: "fr",
-  de: "de_DE",
-  nl: "en",
-  ja: "ja",
-  ko: "kr",
-  "zh-CN": "zh_CN",
-  "zh-TW": "zh_TW",
-  vi: "vi_VN",
-} as const satisfies Record<Locale, string>;
-
-/** Exact URL structure emitted by the official loader, without executing it in the wallet page. */
-export function buildChartUrl(market: ChartMarket, locale: string, instanceId: string): string {
-  const widgetLocale = Object.hasOwn(WIDGET_LOCALES, locale)
-    ? WIDGET_LOCALES[locale as Locale]
-    : "en";
-  // PP-INTEGRATION-POINT: public TradingView market reference; no custom OHLC/position feed is sent.
-  const url = new URL("/embed-widget/advanced-chart/", CHART_WIDGET_ORIGIN);
-  url.searchParams.set("locale", widgetLocale);
-  url.hash = encodeURIComponent(
-    JSON.stringify({
-      symbol: market.symbol,
-      interval: "D",
-      timezone: "Etc/UTC",
-      theme: "dark",
-      style: "1",
-      autosize: true,
-      hide_side_toolbar: false,
-      hide_top_toolbar: false,
-      allow_symbol_change: false,
-      save_image: false,
-      locale: widgetLocale,
-      frameElementId: instanceId,
-    }),
-  );
-  return url.toString();
+function unavailable(reason: ChartBlockReason): ChartAvailability {
+  return { status: "unavailable", reason };
 }
 
-/** Accept only the current remote frame's bounded boot/error envelope, never financial data. */
-export function readChartMessage(
-  event: { origin: string; source: unknown; data: unknown },
-  frameWindow: unknown,
-  instanceId: string,
-): "boot" | "no-data" | null {
-  if (
-    frameWindow === null ||
-    frameWindow === undefined ||
-    event.source === null ||
-    event.source === undefined ||
-    event.source !== frameWindow ||
-    event.origin !== CHART_WIDGET_ORIGIN
-  ) {
-    return null;
+export interface PoolChartInput {
+  network: string;
+  protocol: ChartPoolProtocol;
+  /** v3: the pool contract address. v4: the bare PoolId (bytes32). */
+  poolAddress: string | null | undefined;
+  label: string;
+}
+
+/** The exact Uniswap pool chart (R2). A mock pool with no real address is unconfigured (R5). */
+export function resolvePoolChart(input: PoolChartInput): ChartAvailability {
+  const address = input.poolAddress?.trim() ?? "";
+  if (!address) return unavailable("unconfigured");
+  const chain = chartChain(input.network);
+  // Solana pools (Orca, Raydium) have no canonical pool address in the app.
+  if (!chain || chain === "solana") return unavailable("unsupported_pair");
+  const pattern = input.protocol === "uniswap-v4" ? POOL_ID : EVM_ADDRESS;
+  if (!pattern.test(address)) return unavailable("unconfigured");
+  return {
+    status: "available",
+    market: {
+      kind: "pool",
+      chain,
+      address: address.toLowerCase(),
+      label: input.label,
+      venue: POOL_VENUES[input.protocol],
+    },
+  };
+}
+
+export interface TokenChartInput {
+  network: string;
+  /** EVM token address, the native sentinel address, or a Solana mint. */
+  address: string | null | undefined;
+  label: string;
+}
+
+/** The token chart of a lending asset (R3). The native token uses its wrapped address. */
+export function resolveTokenChart(input: TokenChartInput): ChartAvailability {
+  const raw = input.address?.trim() ?? "";
+  if (!raw) return unavailable("unconfigured");
+  const chain = chartChain(input.network);
+  if (!chain) return unavailable("unsupported_pair");
+  if (chain === "solana") {
+    if (!SOLANA_ADDRESS.test(raw)) return unavailable("unconfigured");
+    return {
+      status: "available",
+      market: { kind: "token", chain, address: raw, label: input.label, venue: "Solana" },
+    };
   }
-  let payload: unknown = event.data;
-  if (typeof payload === "string") {
-    try {
-      payload = JSON.parse(payload);
-    } catch {
-      return null;
-    }
-  }
-  if (typeof payload !== "object" || payload === null || Array.isArray(payload)) return null;
-  const envelope = payload as Record<string, unknown>;
-  if (envelope.frameElementId !== instanceId) return null;
-  if (envelope.name === "tv-widget-load") return "boot";
-  if (envelope.name === "tv-widget-no-data") return "no-data";
-  return null;
+  const address =
+    raw.toLowerCase() === NATIVE_TOKEN_ADDRESS.toLowerCase() ? getWrappedNative(chain) : raw;
+  if (!address || !EVM_ADDRESS.test(address)) return unavailable("unconfigured");
+  return {
+    status: "available",
+    market: {
+      kind: "token",
+      chain,
+      address: address.toLowerCase(),
+      label: input.label,
+      venue: networkDisplayName(chain) ?? chain,
+    },
+  };
+}
+
+/** The public DEX Screener page. The attribution link opens it. */
+export function chartPageUrl(market: ChartMarket): string {
+  return `${CHART_EMBED_ORIGIN}/${market.chain}/${market.address}`;
+}
+
+/** The iframe URL (R4). Only the chain slug and the public address change (R7). */
+export function buildChartUrl(market: ChartMarket): string {
+  return `${chartPageUrl(market)}?${new URLSearchParams(CHART_EMBED_PARAMS).toString()}`;
+}
+
+/** The bounded `chart_market` analytics value (R9). It never holds an address. */
+export function chartAnalyticsMarket(
+  availability: ChartAvailability,
+): "pool" | "token" | "unavailable" {
+  return availability.status === "available" ? availability.market.kind : "unavailable";
 }
