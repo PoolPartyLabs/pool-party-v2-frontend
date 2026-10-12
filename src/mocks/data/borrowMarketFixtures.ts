@@ -16,7 +16,7 @@
  *
  * PP-INTEGRATION-POINT: replace with the Aave v3 reserve data of the catalog (borrow APY, max LTV,
  * liquidation threshold, oracle price per asset) and the fund's real capital, when the API serves
- * them. In real mode the Borrow panel reads no figure from here and shows "Not available".
+ * them. In real mode the Borrow panel reads no figure from here and shows "Unavailable".
  */
 import type { BorrowMarket } from "@/features/manager/fund/build/panel/lendingPanelMath";
 

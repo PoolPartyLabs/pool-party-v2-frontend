@@ -529,3 +529,18 @@ download permission; the provider's drawing toolbar remains enabled.
 Current chart-delivery census: 2,306 files under `src/`, with 539 markers across 312 files,
 including tests, stories and source documentation. Registry totals are 712 rows and 707 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
+
+## Build Borrow panel market data (POO-2334)
+
+`src/features/manager/fund/build/panel/BorrowBlockPanel.tsx` (PP-MGR-CMP-105) reads the Aave v3
+borrow market and the fund capital from `src/mocks/data/borrowMarketFixtures.ts` (PP-MGR-MCK-006)
+in mock mode only. The v2 catalog serves no borrow APY, max LTV, liquidation threshold or oracle
+price yet, and the Build plan holds shares, not amounts. In real mode the panel reads no figure and
+shows "Unavailable", and Apply stays held. Replace the fixture with the catalog's Aave v3 reserve
+data and the fund's real capital when the API serves them. The health factor and the liquidation
+price are single-collateral, single-debt estimates (PP-MGR-LIB-080); the account read stays with
+the Lending risk block (PP-MGR-CMP-094). A Borrow has no contract base, so launch is not wired.
+
+Current Borrow-panel census: 2,311 files under `src/`, with 545 markers across 316 files,
+including tests, stories and source documentation. Registry totals are 715 rows and 710 unique
+IDs. Prior censuses describe their named releases.

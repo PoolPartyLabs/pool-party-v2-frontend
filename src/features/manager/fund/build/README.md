@@ -150,6 +150,28 @@ The shell owns all configuration/Apply/Discard/blocked-intent analytics. Seven s
 component regression suite cover picking, configured and pending allocation, loading, failure,
 empty mandate and unavailable reserve. `CR-MGR-024` tracks the displayed APY snapshot claim.
 
+## Aave Borrow panel and Supply parity (POO-2334, rules v1)
+
+`panel/BorrowBlockPanel.tsx` (`PP-MGR-CMP-105`) registers `aaveBorrow` in `PANEL_BODIES`. It
+follows Figma `8189:2337`. The collateral is the configured Supply directly above the Borrow. The
+panel shows it read-only, with the token, the amount and the USD value. The Asset select lists the
+mandate tokens of the network without the collateral, each with its borrow APY. A token that the
+market does not lend is disabled with a reason. The slider goes from 0 to the max LTV in steps of
+5, and shows the amount in the token and in USD.
+
+The health factor is 1.5 or more (success), 1.1 to under 1.5 (warning) or under 1.1
+(destructive). The panel also shows the liquidation price and the % drop to it.
+`panel/lendingPanelMath.ts` (`PP-MGR-LIB-080`) holds these formulas. They estimate one collateral
+and one debt from market figures, because a Build block has no account read yet.
+
+The market figures and the fund capital come from `src/mocks/data/borrowMarketFixtures.ts`
+(`PP-MGR-MCK-006`, `PP-INTEGRATION-POINT`). In real mode the panel shows "Unavailable" and
+Apply stays blocked. Apply also needs a Supply above, a lendable asset and a share over 0.
+
+The Supply panel now reads its APY with `supplyApyValue`. When a Borrow is directly under it, it
+shows a collateral note. Both panels show the Lending risk block (`PP-MGR-CMP-094`) as
+unavailable. The Uniswap panel already shows Max slippage, so it has no change.
+
 ## Panel actions and navigation (POO-2202, rules v1)
 
 The canvas viewport has a 640px minimum height (extended to available viewport height by POO-2210). The three-column grid has a minimum height of 640px,
