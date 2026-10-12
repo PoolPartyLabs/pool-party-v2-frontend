@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { mockFund } from "@/mocks/data/v2Funds";
 import type { LaunchJourney } from "../launch/contracts";
 import type { MandateDraft } from "../mandateDraft";
-import { overviewModel, type SetupSnapshot } from "./overviewModel";
+import { overviewModel, overviewStrategyRow, type SetupSnapshot } from "./overviewModel";
 
 vi.mock("../launch/journey", () => ({
   launchStatus: (j: { completed?: boolean }) => ({
@@ -55,5 +55,28 @@ describe("Overview source authority POO-2245", () => {
       "wallet",
     );
     expect(m.rows[0]?.state).toBe("Closed");
+  });
+});
+describe("Overview strategy row POO-2335", () => {
+  // @rule R9
+  it("gives the Figma row parts: avatar initials, a status pill tone and network names from config", () => {
+    const row = overviewStrategyRow({
+      ...mockFund,
+      profile: { ...mockFund.profile, name: "Balanced Income", imageUrl: undefined, image: null },
+      chains: [...mockFund.chains, { ...mockFund.chains[0], chainId: "999999" }],
+    } as typeof mockFund);
+    expect(row).toMatchObject({ name: "Balanced Income", initials: "BI", logoUrl: null });
+    expect(row.status).toEqual({ key: "stateOpen", tone: "success" });
+    expect(row.networks.map((n) => n.name)).toEqual(["Arbitrum", "Robinhood Chain", "999999"]);
+    expect(row.networks.map((n) => n.slug)).toEqual(["arbitrum", "robinhood", null]);
+    expect(overviewStrategyRow({ ...mockFund, state: "Closing" }).status).toEqual({
+      key: "stateClosing",
+      tone: "warning",
+    });
+    expect(overviewStrategyRow({ ...mockFund, state: "Closed" }).status.tone).toBe("muted");
+    expect(overviewStrategyRow({ ...mockFund, state: "Unknown" }).status).toEqual({
+      key: "notAvailable",
+      tone: "muted",
+    });
   });
 });
