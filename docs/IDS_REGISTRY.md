@@ -1198,7 +1198,7 @@ census describes its named historical release and remains unchanged.
 
 | ID | Name | Type | Design | Status | Linear | Source |
 | --- | --- | --- | --- | --- | --- | --- |
-| `PP-MGR-LIB-095` | chartUnavailable, one unavailable state for every chart cause, Back to Strategy flow and the kept load-error retry | Lib | [Charts unavailable 8682:3253](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8682-3253) | Implemented view model | [POO-2336](https://linear.app/yeildbay/issue/POO-2336) | `src/features/manager/fund/charts/chartUnavailable.ts` @rules-v1 |
+| `PP-MGR-LIB-095` | chartUnavailable, one full-panel unavailable state (Back only) for every chart cause, and the kept load-error retry | Lib | [Charts unavailable 8682:3253](https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8682-3253) | Implemented view model | [POO-2336](https://linear.app/yeildbay/issue/POO-2336) | `src/features/manager/fund/charts/chartUnavailable.ts` @rules-v1 |
 
 Existing PP-MGR-CMP-103 shows this state with the selected block and Back. It also has stories now.
 BuildScreen and ManageScreen pass the selected block label only. The label is never sent to the widget or to analytics.

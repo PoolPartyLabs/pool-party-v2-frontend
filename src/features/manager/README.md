@@ -924,7 +924,9 @@ Bounded chart view/close/blocked/failure/retry events emit from PP-MGR-CMP-103. 
 
 `fund/charts/chartUnavailable.ts` (PP-MGR-LIB-095) decides one state for every cause that cannot show price history. The title is "Charts are unavailable." The text is "Price history is unavailable for this selection." When a block is selected, the state shows its label and "The selection is preserved." BuildScreen and ManageScreen pass the label. The label is not sent to the widget or to analytics.
 
-Back returns to the Strategy flow tab. It changes only the visible tab, so the selected block and the unapplied draft stay in the parent.
+Back returns to the Strategy flow tab and moves focus to that tab, as Manage Back does. It changes only the visible tab, so the selected block and the unapplied draft stay in the parent.
+
+The state fills the Charts panel (16px radius). It has no Market reference header and no attribution footer. Provider `no_data` arrives after the frame mounts, so the surface removes the frame and shows the same full-panel state as an alert. BuildScreen uses one block label for this state and for the removal dialog. ManageScreen uses the canvas row title.
 
 | Cause today | Source | State |
 | --- | --- | --- |
@@ -933,7 +935,7 @@ Back returns to the Strategy flow tab. It changes only the visible tab, so the s
 | `unsupported_block` | chartContext | Unavailable |
 | `lending_reference` | chartContext | Unavailable |
 | `unsupported_pair` | chartModel | Unavailable |
-| `no_data` | widget message | Unavailable, with a secondary Try again |
+| `no_data` | widget message | Unavailable, Back only |
 | `load_timeout` | widget timer | Load error with Try again (not changed) |
 
 `manager_chart_blocked` keeps the five reason values. `manager_chart_failed` keeps `no_data` and `load_timeout`. No flag is added. Stories: `StrategyChartSurface.stories.tsx`.
