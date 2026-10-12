@@ -834,7 +834,27 @@
       "depositToken": "Stortingstoken",
       "slotsCaption": "Een token neemt één slot in op elk netwerk waarop het draait. Het mandaat heeft {max} slots.",
       "noPrice": "Nog geen prijsfeed",
-      "empty": "Geen tokens komen overeen met uw zoekopdracht."
+      "empty": "Geen tokens komen overeen met uw zoekopdracht.",
+      "access": "Tokentoegang",
+      "accessSelected": "Geselecteerde tokens",
+      "accessAll": "Alle tokens",
+      "accessHelper": "Met Alle tokens kan de strategie elk token op uw netwerken en protocollen verhandelen, ook tokens die later starten.",
+      "allTitle": "De strategie kan elk token verhandelen",
+      "allBody": "Dit dekt elk token op uw netwerken en protocollen, ook tokens die na publicatie starten. U kiest tokens niet een voor een. Elk token heeft een prijs op de hub.",
+      "yoursAll": "Uw tokens · Alle",
+      "requiredBy": "Vereist door {network}",
+      "everyOther": "Alle andere tokens",
+      "everyOtherCaption": "Toegevoegd bij de start",
+      "slots": "Netwerkslots",
+      "noLimit": "Onbeperkt",
+      "slotsAllCaption": "De limiet van {max} slots geldt alleen voor geselecteerde tokens.",
+      "loading": "Tokens laden",
+      "errorTitle": "Tokens zijn niet geladen",
+      "errorHeading": "We konden de tokenlijst niet laden",
+      "errorBody": "Controleer uw verbinding en probeer het opnieuw. De tokens in uw lijst blijven bewaard.",
+      "retry": "Opnieuw proberen",
+      "full": "Alle {max} slots zijn in gebruik. Verwijder een token om een ander toe te voegen.",
+      "noFreeSlots": "Geen vrije slots"
     },
     "pools": {
       "search": "Token, paar of pooladres",
@@ -881,7 +901,22 @@
         "perps": "Perpetuals"
       },
       "positiveTokenRequired": "Sta minstens één token naast USDC toe met meer dan 0% of kies Geen limiet.",
-      "addPositiveToken": "Voeg in Tokens een ander token toe en stel de limiet boven 0% in of kies Geen limiet. USDC is al inbegrepen."
+      "addPositiveToken": "Voeg in Tokens een ander token toe en stel de limiet boven 0% in of kies Geen limiet. USDC is al inbegrepen.",
+      "allTokens": "Alle tokens",
+      "allTokensCaption": "Stelt één limiet in voor elk token in de lijst",
+      "mixed": "Gemengd",
+      "everyToken": "Elk token",
+      "everyTokenCaption": "Elk token apart, behalve USDC",
+      "perTokenAllCaption": "Standaardlimiet voor elk token · stappen van 5%",
+      "anyTokenTitle": "Elk token kan de strategie in",
+      "anyTokenBody": "Dit omvat tokens met weinig liquiditeit of zonder prijsgeschiedenis. De standaardlimiet geldt voor elk token apart. Inleggers zien dit label op de kaart en de pagina van de strategie:",
+      "allTokensTag": "Alle tokens",
+      "capZero": "Een limiet staat op 0%. Zet deze boven 0% of selecteer Geen limiet om door te gaan.",
+      "nextHold": {
+        "network": "Zet de netwerklimiet boven 0%",
+        "protocol": "Zet de protocollimiet boven 0%",
+        "token": "Zet de tokenlimiet boven 0%"
+      }
     },
     "draft": {
       "title": "Geef uw concept een naam",

@@ -834,7 +834,27 @@
       "depositToken": "Jeton de dépôt",
       "slotsCaption": "Un jeton occupe un emplacement sur chaque réseau sur lequel il fonctionne. Le mandat dispose de {max} emplacements.",
       "noPrice": "Pas encore de flux de prix",
-      "empty": "Aucun jeton ne correspond à votre recherche."
+      "empty": "Aucun jeton ne correspond à votre recherche.",
+      "access": "Accès aux jetons",
+      "accessSelected": "Jetons sélectionnés",
+      "accessAll": "Tous les jetons",
+      "accessHelper": "Tous les jetons permet à la stratégie d'échanger n'importe quel jeton sur vos réseaux et protocoles, y compris les jetons lancés plus tard.",
+      "allTitle": "La stratégie peut échanger n'importe quel jeton",
+      "allBody": "Cela couvre tous les jetons sur vos réseaux et protocoles, y compris ceux lancés après la publication. Vous ne choisissez pas les jetons un par un. Chaque jeton a un prix sur le hub.",
+      "yoursAll": "Vos jetons · Tous",
+      "requiredBy": "Requis par {network}",
+      "everyOther": "Tous les autres jetons",
+      "everyOtherCaption": "Ajouté à son lancement",
+      "slots": "Emplacements réseau",
+      "noLimit": "Aucune limite",
+      "slotsAllCaption": "La limite de {max} emplacements s'applique seulement aux jetons sélectionnés.",
+      "loading": "Chargement des jetons",
+      "errorTitle": "Les jetons n'ont pas chargé",
+      "errorHeading": "Impossible de charger la liste des jetons",
+      "errorBody": "Vérifiez votre connexion et réessayez. Les jetons de votre liste restent enregistrés.",
+      "retry": "Réessayer",
+      "full": "Les {max} emplacements sont utilisés. Retirez un jeton pour en ajouter un autre.",
+      "noFreeSlots": "Aucun emplacement libre"
     },
     "pools": {
       "search": "Jeton, paire ou adresse de pool",
@@ -881,7 +901,22 @@
         "perps": "Perpétuels"
       },
       "positiveTokenRequired": "Autorisez au moins un token en plus de USDC au-delà de 0 % ou sélectionnez Aucun plafond.",
-      "addPositiveToken": "Ajoutez un autre token dans Tokens, puis fixez sa limite au-delà de 0 % ou sélectionnez Aucun plafond. USDC est déjà inclus."
+      "addPositiveToken": "Ajoutez un autre token dans Tokens, puis fixez sa limite au-delà de 0 % ou sélectionnez Aucun plafond. USDC est déjà inclus.",
+      "allTokens": "Tous les jetons",
+      "allTokensCaption": "Fixe un plafond pour chaque jeton de la liste",
+      "mixed": "Mixte",
+      "everyToken": "Chaque jeton",
+      "everyTokenCaption": "Chaque jeton séparément, sauf USDC",
+      "perTokenAllCaption": "Plafond par défaut pour chaque jeton · pas de 5 %",
+      "anyTokenTitle": "N'importe quel jeton peut entrer dans la stratégie",
+      "anyTokenBody": "Cela inclut des jetons à faible liquidité ou sans historique de prix. Le plafond par défaut s'applique à chaque jeton séparément. Les déposants voient cette étiquette sur la carte et la page de la stratégie :",
+      "allTokensTag": "Tous les jetons",
+      "capZero": "Un plafond est à 0 %. Réglez-le au-dessus de 0 % ou cochez Aucun plafond pour continuer.",
+      "nextHold": {
+        "network": "Réglez le plafond du réseau au-dessus de 0 %",
+        "protocol": "Réglez le plafond du protocole au-dessus de 0 %",
+        "token": "Réglez le plafond du jeton au-dessus de 0 %"
+      }
     },
     "draft": {
       "title": "Nommez votre brouillon",

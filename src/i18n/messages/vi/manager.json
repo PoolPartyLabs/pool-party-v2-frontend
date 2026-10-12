@@ -834,7 +834,27 @@
       "depositToken": "Token nạp tiền",
       "slotsCaption": "Mỗi token chiếm một slot trên mỗi mạng mà nó hoạt động. Nhiệm vụ này có {max} slot.",
       "noPrice": "Chưa có nguồn giá",
-      "empty": "Không có token nào khớp với tìm kiếm của bạn."
+      "empty": "Không có token nào khớp với tìm kiếm của bạn.",
+      "access": "Quyền truy cập token",
+      "accessSelected": "Token đã chọn",
+      "accessAll": "Tất cả token",
+      "accessHelper": "Tất cả token cho phép chiến lược giao dịch mọi token trên mạng và giao thức của bạn, kể cả token ra mắt sau này.",
+      "allTitle": "Chiến lược có thể giao dịch mọi token",
+      "allBody": "Điều này bao gồm mọi token trên mạng và giao thức của bạn, kể cả token ra mắt sau khi bạn xuất bản. Bạn không chọn từng token. Mọi token đều được định giá trên hub.",
+      "yoursAll": "Token của bạn · Tất cả",
+      "requiredBy": "Bắt buộc bởi {network}",
+      "everyOther": "Mọi token khác",
+      "everyOtherCaption": "Được thêm khi ra mắt",
+      "slots": "Slot mạng",
+      "noLimit": "Không giới hạn",
+      "slotsAllCaption": "Giới hạn {max} slot chỉ áp dụng cho token đã chọn.",
+      "loading": "Đang tải token",
+      "errorTitle": "Không tải được token",
+      "errorHeading": "Chúng tôi không tải được danh sách token",
+      "errorBody": "Kiểm tra kết nối và thử lại. Các token trong danh sách của bạn vẫn được lưu.",
+      "retry": "Thử lại",
+      "full": "Đã dùng hết {max} slot. Gỡ một token để thêm token khác.",
+      "noFreeSlots": "Không còn slot trống"
     },
     "pools": {
       "search": "Token, cặp hoặc địa chỉ pool",
@@ -881,7 +901,22 @@
         "perps": "Vĩnh cửu"
       },
       "positiveTokenRequired": "Cho phép ít nhất một token ngoài USDC có giới hạn trên 0% hoặc chọn Không giới hạn.",
-      "addPositiveToken": "Thêm một token khác trong Tokens, rồi đặt giới hạn trên 0% hoặc chọn Không giới hạn. USDC đã được bao gồm."
+      "addPositiveToken": "Thêm một token khác trong Tokens, rồi đặt giới hạn trên 0% hoặc chọn Không giới hạn. USDC đã được bao gồm.",
+      "allTokens": "Tất cả token",
+      "allTokensCaption": "Đặt một giới hạn cho mọi token trong danh sách",
+      "mixed": "Hỗn hợp",
+      "everyToken": "Mọi token",
+      "everyTokenCaption": "Từng token riêng, trừ USDC",
+      "perTokenAllCaption": "Giới hạn mặc định cho mọi token · bước 5%",
+      "anyTokenTitle": "Mọi token đều có thể vào chiến lược",
+      "anyTokenBody": "Điều này bao gồm token có thanh khoản thấp hoặc không có lịch sử giá. Giới hạn mặc định áp dụng cho từng token riêng. Người gửi tiền thấy nhãn này trên thẻ và trang chiến lược:",
+      "allTokensTag": "Tất cả token",
+      "capZero": "Một giới hạn đang ở 0%. Đặt trên 0% hoặc chọn Không giới hạn để tiếp tục.",
+      "nextHold": {
+        "network": "Đặt giới hạn mạng trên 0%",
+        "protocol": "Đặt giới hạn giao thức trên 0%",
+        "token": "Đặt giới hạn token trên 0%"
+      }
     },
     "draft": {
       "title": "Đặt tên cho bản nháp của bạn",

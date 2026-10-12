@@ -834,7 +834,27 @@
       "depositToken": "存款代币",
       "slotsCaption": "每个代币会在其运行的每个网络上占用一个名额。该授权范围共有 {max} 个名额。",
       "noPrice": "暂无价格数据源",
-      "empty": "没有符合搜索条件的代币。"
+      "empty": "没有符合搜索条件的代币。",
+      "access": "代币范围",
+      "accessSelected": "所选代币",
+      "accessAll": "全部代币",
+      "accessHelper": "选择全部代币后，策略可交易您的网络和协议上的任何代币，包括之后发行的代币。",
+      "allTitle": "策略可交易任何代币",
+      "allBody": "这涵盖您的网络和协议上的所有代币，包括发布后发行的代币。您无需逐个选择代币。所有代币都在枢纽上定价。",
+      "yoursAll": "您的代币 · 全部",
+      "requiredBy": "{network} 必需",
+      "everyOther": "所有其他代币",
+      "everyOtherCaption": "发行时加入",
+      "slots": "网络名额",
+      "noLimit": "无限制",
+      "slotsAllCaption": "{max} 个名额的上限仅适用于所选代币。",
+      "loading": "正在加载代币",
+      "errorTitle": "代币未能加载",
+      "errorHeading": "我们无法加载代币列表",
+      "errorBody": "请检查网络连接后重试。您列表中的代币仍会保留。",
+      "retry": "重试",
+      "full": "{max} 个名额已全部使用。请移除一个代币后再添加。",
+      "noFreeSlots": "没有空余名额"
     },
     "pools": {
       "search": "代币、交易对或资金池地址",
@@ -881,7 +901,22 @@
         "perps": "永续"
       },
       "positiveTokenRequired": "请将至少一种 USDC 以外的代币上限设为高于 0%，或选择无上限。",
-      "addPositiveToken": "请在 Tokens 中添加另一种代币，然后将其上限设为高于 0%，或选择无上限。USDC 已包含在内。"
+      "addPositiveToken": "请在 Tokens 中添加另一种代币，然后将其上限设为高于 0%，或选择无上限。USDC 已包含在内。",
+      "allTokens": "全部代币",
+      "allTokensCaption": "为列表中的每个代币设置同一上限",
+      "mixed": "不一致",
+      "everyToken": "每个代币",
+      "everyTokenCaption": "每个代币单独适用，USDC 除外",
+      "perTokenAllCaption": "每个代币的默认上限 · 5% 步长",
+      "anyTokenTitle": "任何代币都可能进入策略",
+      "anyTokenBody": "这包括流动性低或没有价格历史的代币。默认上限单独适用于每个代币。存款人会在策略卡片和页面上看到此标签：",
+      "allTokensTag": "全部代币",
+      "capZero": "有一个上限为 0%。请将其设为高于 0% 或选择无上限以继续。",
+      "nextHold": {
+        "network": "请将网络上限设为高于 0%",
+        "protocol": "请将协议上限设为高于 0%",
+        "token": "请将代币上限设为高于 0%"
+      }
     },
     "draft": {
       "title": "为您的草稿命名",

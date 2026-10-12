@@ -587,3 +587,25 @@ it("keeps other drafts readable when a stored chain-protocol entry is malformed 
   expect(getDraft("good")).not.toBeNull();
   expect(getDraft("bad-chain")?.protocols).not.toContain("gmx");
 });
+
+describe("token access mode (POO-2332)", () => {
+  it("keeps the token mode and the Every token cap, and drops a mode it does not know", () => {
+    // @rule R1
+    upsertDraft({
+      ...draft("a", "2026-10-01T00:00:00.000Z"),
+      tokenMode: "all",
+      caps: { ...draft("a", "x").caps, everyToken: { noCap: false, pct: 20 } },
+    });
+    expect(getDraft("a")?.tokenMode).toBe("all");
+    expect(getDraft("a")?.caps.everyToken).toEqual({ noCap: false, pct: 20 });
+
+    const stored = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");
+    stored.drafts.a.tokenMode = "everything";
+    stored.drafts.a.caps.everyToken = { noCap: "no" };
+    window.localStorage.setItem(MANDATE_DRAFTS_KEY, JSON.stringify(stored));
+    const read = getDraft("a");
+    expect(read).not.toBeNull();
+    expect(read?.tokenMode).toBeUndefined();
+    expect(read?.caps.everyToken).toBeUndefined();
+  });
+});

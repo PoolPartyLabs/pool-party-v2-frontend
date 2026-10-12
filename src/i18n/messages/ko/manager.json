@@ -834,7 +834,27 @@
       "depositToken": "입금 토큰",
       "slotsCaption": "토큰은 실행되는 각 네트워크에서 슬롯을 하나씩 사용합니다. 운용 방침에는 {max}개의 슬롯이 있습니다.",
       "noPrice": "아직 가격 피드가 없습니다",
-      "empty": "검색 결과에 해당하는 토큰이 없습니다."
+      "empty": "검색 결과에 해당하는 토큰이 없습니다.",
+      "access": "토큰 접근",
+      "accessSelected": "선택한 토큰",
+      "accessAll": "모든 토큰",
+      "accessHelper": "모든 토큰을 선택하면 전략이 네트워크와 프로토콜의 모든 토큰을 거래할 수 있습니다. 나중에 출시되는 토큰도 포함됩니다.",
+      "allTitle": "전략이 모든 토큰을 거래할 수 있습니다",
+      "allBody": "네트워크와 프로토콜의 모든 토큰이 포함됩니다. 게시 후 출시되는 토큰도 포함됩니다. 토큰을 하나씩 고르지 않습니다. 모든 토큰은 허브에서 가격이 정해집니다.",
+      "yoursAll": "보유 토큰 · 전체",
+      "requiredBy": "{network}에 필요",
+      "everyOther": "기타 모든 토큰",
+      "everyOtherCaption": "출시 시 추가됨",
+      "slots": "네트워크 슬롯",
+      "noLimit": "제한 없음",
+      "slotsAllCaption": "{max}개 슬롯 한도는 선택한 토큰에만 적용됩니다.",
+      "loading": "토큰 불러오는 중",
+      "errorTitle": "토큰을 불러오지 못했습니다",
+      "errorHeading": "토큰 목록을 불러오지 못했습니다",
+      "errorBody": "연결을 확인하고 다시 시도하세요. 목록의 토큰은 저장된 상태로 유지됩니다.",
+      "retry": "다시 시도",
+      "full": "{max}개 슬롯이 모두 사용 중입니다. 다른 토큰을 추가하려면 토큰을 제거하세요.",
+      "noFreeSlots": "빈 슬롯 없음"
     },
     "pools": {
       "search": "토큰, 페어 또는 풀 주소",
@@ -881,7 +901,22 @@
         "perps": "무기한"
       },
       "positiveTokenRequired": "USDC 외에 최소 한 개의 토큰 한도를 0%보다 높게 설정하거나 한도 없음을 선택하세요.",
-      "addPositiveToken": "Tokens에서 다른 토큰을 추가한 다음 한도를 0%보다 높게 설정하거나 한도 없음을 선택하세요. USDC는 이미 포함되어 있습니다."
+      "addPositiveToken": "Tokens에서 다른 토큰을 추가한 다음 한도를 0%보다 높게 설정하거나 한도 없음을 선택하세요. USDC는 이미 포함되어 있습니다.",
+      "allTokens": "모든 토큰",
+      "allTokensCaption": "목록의 모든 토큰에 하나의 한도를 설정합니다",
+      "mixed": "혼합",
+      "everyToken": "모든 토큰",
+      "everyTokenCaption": "USDC를 제외한 각 토큰에 개별 적용",
+      "perTokenAllCaption": "모든 토큰의 기본 한도 · 5% 단위",
+      "anyTokenTitle": "모든 토큰이 전략에 들어올 수 있습니다",
+      "anyTokenBody": "유동성이 낮거나 가격 기록이 없는 토큰도 포함됩니다. 기본 한도는 각 토큰에 개별 적용됩니다. 예치자는 전략 카드와 페이지에서 이 태그를 봅니다:",
+      "allTokensTag": "모든 토큰",
+      "capZero": "한도가 0%입니다. 0%보다 높게 설정하거나 한도 없음을 선택해 계속하세요.",
+      "nextHold": {
+        "network": "네트워크 한도를 0%보다 높게 설정하세요",
+        "protocol": "프로토콜 한도를 0%보다 높게 설정하세요",
+        "token": "토큰 한도를 0%보다 높게 설정하세요"
+      }
     },
     "draft": {
       "title": "초안 이름 지정",

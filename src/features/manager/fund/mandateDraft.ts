@@ -4,6 +4,7 @@
  * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
  *   POO-2167 rules v4, POO-2151 rules v1, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2332 rules v1)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -126,8 +127,23 @@ export const DEX_PROTOCOL_IDS: readonly DexProtocolId[] = ["uniswap-v3", "uniswa
  */
 export const UNAVAILABLE_PROTOCOLS: readonly ProtocolId[] = ["uniswap-v3", "gmx", "pendle"];
 
-/** The contract ceiling on token entries (DEC-030). A token takes one slot per network it runs on. */
+/**
+ * The contract ceiling on token entries (DEC-030). A token takes one slot per network it runs on.
+ * Real data mode (POO-2133) keeps this ceiling, because it writes a mandate the contracts read.
+ */
 export const MAX_TOKEN_SLOTS = 16;
+
+/**
+ * POO-2332 R2: the slot ceiling of a mock Selected-mode mandate. One slot per token per network.
+ *
+ * PP-INTEGRATION-POINT: the contracts hold {@link MAX_TOKEN_SLOTS} (16) entries today. The mock
+ * builder shows 100 because that is the product target. When the contracts hold 100, real mode can
+ * use this ceiling too and {@link maxTokenSlots} loses its real-mode branch.
+ */
+export const MAX_MANDATE_SLOTS = 100;
+
+/** POO-2332 R10: the `data-mandate-row` and block row id of the All-mode "Every token" cap row. */
+export const EVERY_TOKEN_ROW_ID = "every-token";
 
 /** The hub. Deposits and withdrawals happen here, and it can never leave a mandate (R15). */
 export const HUB_NETWORK: NetworkId = "arbitrum";
@@ -221,7 +237,21 @@ export interface MandateCaps {
   networks: Partial<Record<NetworkId, MandateCap>>;
   protocols: Partial<Record<ProtocolId, MandateCap>>;
   tokens: Record<string, MandateCap>;
+  /**
+   * POO-2332 R10: the default cap for every token in All mode, applied to each token on its own
+   * (USDC excluded). OPTIONAL: absent reads as 0% with No cap off ({@link effectiveCap}).
+   */
+  everyToken?: MandateCap;
 }
+
+/**
+ * POO-2332 R1: which tokens the strategy can trade. "selected" is the closed list the Tokens step
+ * builds. "all" is every token on the mandate networks and protocols, also tokens that launch later.
+ */
+export type MandateTokenMode = "selected" | "all";
+
+/** The cap scopes {@link effectiveCap} reads. `everyToken` has the one key {@link EVERY_TOKEN_ROW_ID}. */
+export type MandateCapScope = "networks" | "protocols" | "tokens" | "everyToken";
 
 /** The one object the five Mandate screens read and write. */
 export interface MandateDraft {
@@ -287,12 +317,18 @@ export interface MandateDraft {
    * reads as "mandate". Bookkeeping, like `lastStep`, so it is in no fingerprint.
    */
   lastPhase?: BuilderPhase;
+  /**
+   * POO-2332 R1: the token access mode. OPTIONAL: absent reads as "selected", so every draft written
+   * before this field stays valid. Real data mode ignores it ({@link tokenModeOf}).
+   */
+  tokenMode?: MandateTokenMode;
 }
 
 /** Why the product said no. Maps 1:1 to the blocked-intent reason the shell reports. */
 export type MandateBlockReason =
   | "nothing_selected"
   | "cap_missing"
+  | "cap_zero"
   | "token_allowance_required"
   | "no_slots"
   | "has_hook"
@@ -348,6 +384,81 @@ export function slotsUsed(draft: MandateDraft): number {
   return draft.tokens.length;
 }
 
+/** POO-2332 R1/R14: the token access mode. Real data mode is always "selected". */
+export function tokenModeOf(draft: MandateDraft): MandateTokenMode {
+  if (draft.dataMode === "real") return "selected";
+  return draft.tokenMode === "all" ? "all" : "selected";
+}
+
+/**
+ * POO-2332 R2/R4/R14: the slot ceiling for this draft. Real data mode keeps the 16 entries the
+ * contracts hold. All mode has no ceiling. A mock Selected-mode draft holds 100.
+ */
+export function maxTokenSlots(draft: MandateDraft): number {
+  if (draft.dataMode === "real") return MAX_TOKEN_SLOTS;
+  if (tokenModeOf(draft) === "all") return Number.POSITIVE_INFINITY;
+  return MAX_MANDATE_SLOTS;
+}
+
+/**
+ * POO-2332 R8: the cap a row has, with the start value when the draft has no record yet.
+ *
+ * Mock mode has no "Not set" state any more. A network or a protocol starts with No cap on. A token,
+ * and the All-mode "Every token" row, start at 0% with No cap off, which holds Next (R12) until the
+ * manager sets a share. Real data mode keeps its own rule: no record is "no cap set", so it returns
+ * null and the caller keeps today's behavior (R14).
+ */
+export function effectiveCap(
+  draft: MandateDraft,
+  scope: MandateCapScope,
+  key: string,
+): MandateCap | null {
+  const stored =
+    scope === "everyToken"
+      ? draft.caps.everyToken
+      : (draft.caps[scope] as Record<string, MandateCap | undefined>)[key];
+  if (stored) return stored;
+  if (draft.dataMode === "real") return null;
+  if (scope === "networks" || scope === "protocols") return { noCap: true, pct: 0 };
+  return { noCap: false, pct: 0 };
+}
+
+/** POO-2332 R12: a cap that is enabled (No cap off) and at 0%. */
+export function isZeroCap(cap: MandateCap | null | undefined): boolean {
+  return cap != null && !cap.noCap && cap.pct === 0;
+}
+
+/**
+ * POO-2332 R12/R13: the first enabled 0% cap row, in screen order (networks, protocols, tokens),
+ * or null. In All mode the token group is the one "Every token" row. Real data mode has no such
+ * hold and always returns null (R14).
+ */
+export function firstZeroCap(
+  draft: MandateDraft,
+  catalog: MandateCatalog,
+): { scope: MandateCapScope; rowId: string } | null {
+  if (draft.dataMode === "real" || catalog.dataMode === "real") return null;
+  const rows = capRows(draft, catalog);
+  for (const network of rows.networks) {
+    if (isZeroCap(effectiveCap(draft, "networks", network)))
+      return { scope: "networks", rowId: network };
+  }
+  for (const protocol of rows.protocols) {
+    if (isZeroCap(effectiveCap(draft, "protocols", protocol)))
+      return { scope: "protocols", rowId: protocol };
+  }
+  if (tokenModeOf(draft) === "all") {
+    return isZeroCap(effectiveCap(draft, "everyToken", EVERY_TOKEN_ROW_ID))
+      ? { scope: "everyToken", rowId: EVERY_TOKEN_ROW_ID }
+      : null;
+  }
+  for (const token of rows.tokens) {
+    const key = tokenKey(token);
+    if (isZeroCap(effectiveCap(draft, "tokens", key))) return { scope: "tokens", rowId: key };
+  }
+  return null;
+}
+
 /** Whether the mandate can hold liquidity positions, which is what makes Pools exist (R29). */
 export function hasDexProtocol(draft: MandateDraft): boolean {
   return draft.protocols.some(
@@ -394,6 +505,8 @@ export function selectionFingerprint(draft: MandateDraft): string {
     ...(draft.dataMode === "real"
       ? [draft.positionProtocolsByChain, draft.aaveV3Reserves, draft.spokeCapPercent]
       : []),
+    // POO-2332 R1: the mode is a choice. Only "all" is written, so older fingerprints do not move.
+    ...(tokenModeOf(draft) === "all" ? ["tokens:all"] : []),
   ]);
 }
 
@@ -555,6 +668,10 @@ export function capRows(
  * Networks, Protocols and Tokens never block in mock mode. USDC alone remains a valid token list
  * while selecting, but POO-2197 requires another positively allowed token before leaving Limits.
  * The slot ceiling is enforced when a token is ADDED (R27), not when the step is left, so there is nothing left to check here.
+ *
+ * POO-2332 R12/R13: in mock mode Limits refuses an enabled 0% cap with `cap_zero`, on the first such
+ * row in screen order. "Unset" no longer exists there: every row has a start value (R8). Real data
+ * mode keeps `cap_missing` on the spoke cap (R14).
  */
 export function validateStep(
   draft: MandateDraft,
@@ -632,22 +749,13 @@ export function validateStep(
       if (catalog.validateDraft && !catalog.validateDraft(draft))
         return { step, reason: "nothing_selected", rowId: null };
     } else {
-      for (const network of rows.networks) {
-        if (!draft.caps.networks[network]) {
-          return { step: "limits", reason: "cap_missing", rowId: network };
-        }
-      }
-      for (const protocol of rows.protocols) {
-        if (!draft.caps.protocols[protocol]) {
-          return { step: "limits", reason: "cap_missing", rowId: protocol };
-        }
-      }
-      for (const token of rows.tokens) {
-        const key = tokenKey(token);
-        if (!draft.caps.tokens[key]) {
-          return { step: "limits", reason: "cap_missing", rowId: key };
-        }
-      }
+      // POO-2332 R8/R12/R13: no row is unset in mock mode, every row has a start value. What holds
+      // Next is an enabled 0% cap, and the first one in screen order is the row the step points at.
+      const zero = firstZeroCap(draft, catalog);
+      if (zero) return { step: "limits", reason: "cap_zero", rowId: zero.rowId };
+      // POO-2332 R10: in All mode the "Every token" cap is above 0% or No cap by now, so it allows
+      // tokens besides USDC and the POO-2197 check below has nothing to add.
+      if (tokenModeOf(draft) === "all") return null;
     }
     if (
       !rows.tokens.some((token) => {
@@ -968,7 +1076,7 @@ function addTokenRefs(
     added.push(ref);
   }
   if (added.length === 0) return draft;
-  if (draft.tokens.length + added.length > MAX_TOKEN_SLOTS) {
+  if (draft.tokens.length + added.length > maxTokenSlots(draft)) {
     return { blocked: { step: "tokens", reason: "no_slots", rowId } };
   }
   return { ...draft, tokens: [...draft.tokens, ...added] };
@@ -993,7 +1101,7 @@ function refFromCatalog(token: MandateCatalogToken): MandateTokenRef {
  * PP-NOTE: assumption (coordinator default, handoff open point 4). A manager cannot keep a token off
  * one of its networks to free slots; a token always enters every selected network where it exists.
  * That is the reading that matches the Figma (one card per token with network dots, one Add) and it
- * is the conservative one for slots, since it can only consume more of the 16 than the alternative.
+ * is the conservative one for slots, since it can only consume more of the slots than the alternative.
  * {@link removeToken} takes a single entry back out, and {@link removeTokenSymbol} takes the whole
  * row out, so the UI can offer either without this function changing.
  *
@@ -1179,7 +1287,7 @@ export function clearPools(draft: MandateDraft): MandateDraft {
 }
 
 /** Round to the nearest 5% and clamp to 0..100 (R39). */
-function clampCapPct(pct: number): number {
+export function clampCapPct(pct: number): number {
   if (!Number.isFinite(pct)) return 0;
   const stepped = Math.round(pct / CAP_STEP_PCT) * CAP_STEP_PCT;
   return Math.min(100, Math.max(0, stepped));

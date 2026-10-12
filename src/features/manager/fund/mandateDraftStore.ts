@@ -3,6 +3,7 @@
  * POO-2245 rules v1 adds read-status snapshots without altering the legacy API.
  * @name mandateDraftStore
  * @implements-rules-version v3 (POO-2121 rules v1, POO-2167 rules v3, POO-2151 rules v1)
+ * @implements-rules-version v1 (POO-2332 rules v1)
  * @analytics-events none, a storage module. The builder shell (PP-MGR-SCR-002) emits the save and
  *   abandon events; a store that emitted its own would double-count every write.
  *
@@ -75,6 +76,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/** A stored cap that has the {@link MandateDraft} cap shape. */
+function isCapRecord(value: unknown): boolean {
+  return isRecord(value) && typeof value.noCap === "boolean" && typeof value.pct === "number";
+}
+
 /**
  * One stored entry, as a draft the screens can render, or null when it is not one.
  *
@@ -121,12 +127,20 @@ function normalizeDraft(value: unknown): MandateDraft | null {
     plan: storedPlan,
     lastPhase: storedPhase,
     planUnreadable: _derivedOnRead,
+    tokenMode: storedMode,
     ...rest
   } = value;
   const draft: MandateDraft = {
     ...(rest as unknown as MandateDraft),
     poolUniverseCount: typeof universe === "number" ? universe : null,
   };
+  // POO-2332 R1: keep a token mode this build knows. Anything else reads as Selected (no field).
+  if (storedMode === "all" || storedMode === "selected") draft.tokenMode = storedMode;
+  // POO-2332 R10: a malformed "Every token" cap is dropped, and the row reads its 0% start value.
+  if (caps.everyToken !== undefined && !isCapRecord(caps.everyToken)) {
+    const { everyToken: _malformed, ...validCaps } = draft.caps;
+    draft.caps = validCaps;
+  }
   // POO-2151: an unreadable plan costs the plan in memory, never the draft, and is never deleted
   // silently: the draft says so (`planUnreadable`) and the raw plan stays stored (readStore).
   if (storedPlan !== undefined) {

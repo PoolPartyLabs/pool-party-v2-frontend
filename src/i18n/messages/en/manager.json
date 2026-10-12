@@ -834,7 +834,27 @@
       "depositToken": "Deposit token",
       "slotsCaption": "A token takes one slot on each network it runs on. The mandate holds {max} slots.",
       "noPrice": "No price feed yet",
-      "empty": "No tokens match your search."
+      "empty": "No tokens match your search.",
+      "access": "Token access",
+      "accessSelected": "Selected tokens",
+      "accessAll": "All tokens",
+      "accessHelper": "All tokens lets the strategy trade any token on your networks and protocols, also tokens that launch later.",
+      "allTitle": "The strategy can trade any token",
+      "allBody": "This covers every token on your networks and protocols, also tokens that launch after you publish. You do not choose tokens one by one. Every token is priced on the hub.",
+      "yoursAll": "Your tokens · All",
+      "requiredBy": "Required by {network}",
+      "everyOther": "Every other token",
+      "everyOtherCaption": "Added when it launches",
+      "slots": "Network slots",
+      "noLimit": "No limit",
+      "slotsAllCaption": "The {max}-slot cap applies only to selected tokens.",
+      "loading": "Loading tokens",
+      "errorTitle": "Tokens did not load",
+      "errorHeading": "We could not load the token list",
+      "errorBody": "Check your connection and try again. The tokens in your list stay saved.",
+      "retry": "Try again",
+      "full": "All {max} slots are used. Remove a token to add another.",
+      "noFreeSlots": "No free slots"
     },
     "pools": {
       "search": "Token, pair or pool address",
@@ -881,7 +901,22 @@
         "perps": "Perpetuals"
       },
       "positiveTokenRequired": "Allow at least one token besides USDC above 0% or select No cap.",
-      "addPositiveToken": "Add another token in Tokens, then set its limit above 0% or select No cap. USDC is already included."
+      "addPositiveToken": "Add another token in Tokens, then set its limit above 0% or select No cap. USDC is already included.",
+      "allTokens": "All tokens",
+      "allTokensCaption": "Sets one cap for every token in the list",
+      "mixed": "Mixed",
+      "everyToken": "Every token",
+      "everyTokenCaption": "Each token on its own, except USDC",
+      "perTokenAllCaption": "Default cap for every token · 5% steps",
+      "anyTokenTitle": "Any token can enter the strategy",
+      "anyTokenBody": "This includes tokens with low liquidity or no price history. The default cap applies to each token on its own. Depositors see this tag on the strategy card and page:",
+      "allTokensTag": "All tokens",
+      "capZero": "A cap is at 0%. Set it above 0% or select No cap to continue.",
+      "nextHold": {
+        "network": "Set the network cap above 0%",
+        "protocol": "Set the protocol cap above 0%",
+        "token": "Set the token cap above 0%"
+      }
     },
     "draft": {
       "title": "Name your draft",

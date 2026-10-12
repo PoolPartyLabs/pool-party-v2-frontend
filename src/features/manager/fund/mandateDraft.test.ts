@@ -3,6 +3,7 @@
  * @name mandateDraft tests
  * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
  *   POO-2167 rules v4, POO-2197 rules v2)
+ * @implements-rules-version v1 (POO-2332 rules v1)
  * @analytics-events none, a pure domain; the builder shell owns the mandate events.
  *
  * One `it()` per rule in the S1 brief. Every reducer is also checked for immutability: a draft
@@ -32,6 +33,7 @@ import {
   MAX_TOKEN_SLOTS,
   type MandateDraft,
   type MandatePoolRef,
+  maxTokenSlots,
   type NetworkId,
   nextStep,
   PROTOCOL_ORDER,
@@ -423,7 +425,8 @@ describe("addToken", () => {
     const token = catalogToken("arbitrum", "ARB");
     let draft = empty();
     // Fill every remaining slot with synthetic entries, leaving no room for one more.
-    const filler = Array.from({ length: MAX_TOKEN_SLOTS - 1 }, (_, i) => ({
+    // POO-2332 R2: a mock draft holds 100 slots, not the 16 the contracts hold.
+    const filler = Array.from({ length: maxTokenSlots(draft) - 1 }, (_, i) => ({
       address: `0x${String(i).padStart(40, "0")}`,
       symbol: `FILL${i}`,
       name: `Filler ${i}`,
@@ -432,7 +435,7 @@ describe("addToken", () => {
       locked: false,
     }));
     draft = { ...draft, tokens: [...draft.tokens, ...filler] };
-    expect(slotsUsed(draft)).toBe(MAX_TOKEN_SLOTS);
+    expect(slotsUsed(draft)).toBe(maxTokenSlots(draft));
 
     const result = addToken(draft, token, catalog);
     expect(isBlocked(result)).toBe(true);
@@ -543,7 +546,8 @@ describe("addPool", () => {
   it("propagates the slot block instead of adding the pool", () => {
     // @rule R33
     let draft = withDex();
-    const filler = Array.from({ length: MAX_TOKEN_SLOTS - 1 }, (_, i) => ({
+    // POO-2332 R2: a mock draft holds 100 slots, not the 16 the contracts hold.
+    const filler = Array.from({ length: maxTokenSlots(draft) - 1 }, (_, i) => ({
       address: `0x${String(i).padStart(40, "0")}`,
       symbol: `FILL${i}`,
       name: `Filler ${i}`,
@@ -734,20 +738,16 @@ describe("clearCap", () => {
     expect(JSON.stringify(draft)).toBe(snapshot);
   });
 
-  it("takes the row back to the state validateStep refuses", () => {
-    // @rule R6
+  it("takes a mock row back to its start value, which is No cap for a network", () => {
+    // @rule R6 (POO-2332 R8 replaces "unset is not zero" in mock mode)
     let draft = withNetworks(empty(), ["robinhood"], catalog);
-    draft = setCap(draft, "networks", "robinhood", { noCap: true, pct: 0 });
-    expect(validateStep(draft, "limits", catalog)).toMatchObject({
-      reason: "token_allowance_required",
-    });
+    draft = setCap(draft, "networks", "robinhood", { noCap: false, pct: 0 });
+    expect(validateStep(draft, "limits", catalog)).toMatchObject({ reason: "cap_zero" });
 
     draft = clearCap(draft, "networks", "robinhood");
 
-    expect(validateStep(draft, "limits", catalog)).toEqual({
-      step: "limits",
-      reason: "cap_missing",
-      rowId: "robinhood",
+    expect(validateStep(draft, "limits", catalog)).toMatchObject({
+      reason: "token_allowance_required",
     });
   });
 });
@@ -952,22 +952,24 @@ describe("validateStep", () => {
     expect(validateStep(draft, "pools", catalog)).toBeNull();
   });
 
-  it("blocks Limits on the first row with no cap, networks before protocols before tokens", () => {
-    // @rule R6 @rule R43
+  it("blocks Limits on the first 0% row, networks before protocols before tokens", () => {
+    // @rule R6 @rule R43 (POO-2332 R13: cap_zero replaces cap_missing in mock mode)
     let draft = withNetworks(empty(), ["robinhood"], catalog);
     draft = draftOf(withProtocols(draft, [...REQUIRED_PROTOCOLS, "aave-v3"]));
     draft = draftOf(addToken(draft, catalogToken("arbitrum", "ARB"), catalog));
+    draft = setCap(draft, "networks", "robinhood", { noCap: false, pct: 0 });
+    draft = setCap(draft, "protocols", "aave-v3", { noCap: false, pct: 0 });
 
     expect(validateStep(draft, "limits", catalog)).toEqual({
       step: "limits",
-      reason: "cap_missing",
+      reason: "cap_zero",
       rowId: "robinhood",
     });
 
     draft = setCap(draft, "networks", "robinhood", { noCap: true, pct: 0 });
     expect(validateStep(draft, "limits", catalog)).toEqual({
       step: "limits",
-      reason: "cap_missing",
+      reason: "cap_zero",
       rowId: "aave-v3",
     });
 
@@ -975,7 +977,7 @@ describe("validateStep", () => {
     const arbRow = first(capRows(draft, catalog).tokens, "ARB cap row");
     expect(validateStep(draft, "limits", catalog)).toEqual({
       step: "limits",
-      reason: "cap_missing",
+      reason: "cap_zero",
       rowId: tokenKey(arbRow),
     });
 
@@ -1318,22 +1320,19 @@ describe("Limits positive token allowances (POO-2197)", () => {
     );
     expect(validateStep(draft, "limits", catalog)).toBeNull();
   });
-  // @rule POO-2197 R3
-  it("prioritizes a missing cap, then blocks an explicit zero cap", () => {
+  // @rule POO-2197 R3 (POO-2332 R8/R13: a token starts at 0%, which is cap_zero)
+  it("blocks a token at its 0% start value and at an explicit zero cap with cap_zero", () => {
     const token = catalogToken("arbitrum", "ARB");
     const draft = draftOf(addToken(empty(), token, catalog));
-    expect(validateStep(draft, "limits", catalog)).toEqual({
-      step: "limits",
-      reason: "cap_missing",
-      rowId: tokenKey(token),
-    });
+    const zero = { step: "limits", reason: "cap_zero", rowId: tokenKey(token) };
+    expect(validateStep(draft, "limits", catalog)).toEqual(zero);
     expect(
       validateStep(
         setCap(draft, "tokens", tokenKey(token), { noCap: false, pct: 0 }),
         "limits",
         catalog,
       ),
-    ).toEqual({ step: "limits", reason: "token_allowance_required", rowId: tokenKey(token) });
+    ).toEqual(zero);
   });
 });
 

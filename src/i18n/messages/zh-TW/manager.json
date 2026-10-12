@@ -834,7 +834,27 @@
       "depositToken": "存款代幣",
       "slotsCaption": "每個代幣會在其運作的每個網路上佔用一個名額。該授權範圍共有 {max} 個名額。",
       "noPrice": "暫無價格資料來源",
-      "empty": "沒有符合您搜尋的代幣。"
+      "empty": "沒有符合您搜尋的代幣。",
+      "access": "代幣範圍",
+      "accessSelected": "所選代幣",
+      "accessAll": "全部代幣",
+      "accessHelper": "選擇全部代幣後，策略可交易您的網路和協議上的任何代幣，包括之後發行的代幣。",
+      "allTitle": "策略可交易任何代幣",
+      "allBody": "這涵蓋您的網路和協議上的所有代幣，包括發布後發行的代幣。您無需逐一選擇代幣。所有代幣都在樞紐上定價。",
+      "yoursAll": "您的代幣 · 全部",
+      "requiredBy": "{network} 必需",
+      "everyOther": "所有其他代幣",
+      "everyOtherCaption": "發行時加入",
+      "slots": "網路名額",
+      "noLimit": "無限制",
+      "slotsAllCaption": "{max} 個名額的上限僅適用於所選代幣。",
+      "loading": "正在載入代幣",
+      "errorTitle": "代幣未能載入",
+      "errorHeading": "我們無法載入代幣清單",
+      "errorBody": "請檢查網路連線後重試。您清單中的代幣仍會保留。",
+      "retry": "重試",
+      "full": "{max} 個名額已全部使用。請移除一個代幣後再新增。",
+      "noFreeSlots": "沒有空餘名額"
     },
     "pools": {
       "search": "代幣、交易對或資金池地址",
@@ -881,7 +901,22 @@
         "perps": "永續"
       },
       "positiveTokenRequired": "請將至少一種 USDC 以外的代幣上限設為高於 0%，或選擇無上限。",
-      "addPositiveToken": "請在 Tokens 中新增另一種代幣，然後將其上限設為高於 0%，或選擇無上限。USDC 已包含在內。"
+      "addPositiveToken": "請在 Tokens 中新增另一種代幣，然後將其上限設為高於 0%，或選擇無上限。USDC 已包含在內。",
+      "allTokens": "全部代幣",
+      "allTokensCaption": "為清單中的每個代幣設定同一上限",
+      "mixed": "不一致",
+      "everyToken": "每個代幣",
+      "everyTokenCaption": "每個代幣單獨適用，USDC 除外",
+      "perTokenAllCaption": "每個代幣的預設上限 · 5% 級距",
+      "anyTokenTitle": "任何代幣都可能進入策略",
+      "anyTokenBody": "這包括流動性低或沒有價格歷史的代幣。預設上限單獨適用於每個代幣。存款人會在策略卡片和頁面上看到此標籤：",
+      "allTokensTag": "全部代幣",
+      "capZero": "有一個上限為 0%。請將其設為高於 0% 或選擇無上限以繼續。",
+      "nextHold": {
+        "network": "請將網路上限設為高於 0%",
+        "protocol": "請將協議上限設為高於 0%",
+        "token": "請將代幣上限設為高於 0%"
+      }
     },
     "draft": {
       "title": "為您的草稿命名",

@@ -834,7 +834,27 @@
       "depositToken": "Token de depósito",
       "slotsCaption": "Um token ocupa um slot em cada rede em que roda. O mandato tem {max} slots.",
       "noPrice": "Ainda sem feed de preço",
-      "empty": "Nenhum token corresponde à sua busca."
+      "empty": "Nenhum token corresponde à sua busca.",
+      "access": "Acesso a tokens",
+      "accessSelected": "Tokens selecionados",
+      "accessAll": "Todos os tokens",
+      "accessHelper": "Todos os tokens permite que a estratégia negocie qualquer token nas suas redes e protocolos, inclusive tokens lançados depois.",
+      "allTitle": "A estratégia pode negociar qualquer token",
+      "allBody": "Isso cobre todo token nas suas redes e protocolos, inclusive tokens lançados depois da publicação. Você não escolhe os tokens um a um. Todo token tem preço no hub.",
+      "yoursAll": "Seus tokens · Todos",
+      "requiredBy": "Exigido pela {network}",
+      "everyOther": "Todos os outros tokens",
+      "everyOtherCaption": "Adicionado quando for lançado",
+      "slots": "Slots de rede",
+      "noLimit": "Ilimitado",
+      "slotsAllCaption": "O limite de {max} slots vale só para tokens selecionados.",
+      "loading": "Carregando tokens",
+      "errorTitle": "Os tokens não carregaram",
+      "errorHeading": "Não conseguimos carregar a lista de tokens",
+      "errorBody": "Verifique sua conexão e tente de novo. Os tokens da sua lista continuam salvos.",
+      "retry": "Tentar novamente",
+      "full": "Todos os {max} slots estão em uso. Remova um token para adicionar outro.",
+      "noFreeSlots": "Sem slots livres"
     },
     "pools": {
       "search": "Token, par ou endereço da pool",
@@ -881,7 +901,22 @@
         "perps": "Perpétuos"
       },
       "positiveTokenRequired": "Permita pelo menos um token além de USDC acima de 0% ou selecione Sem limite.",
-      "addPositiveToken": "Adicione outro token em Tokens e defina seu limite acima de 0% ou selecione Sem limite. USDC já está incluído."
+      "addPositiveToken": "Adicione outro token em Tokens e defina seu limite acima de 0% ou selecione Sem limite. USDC já está incluído.",
+      "allTokens": "Todos os tokens",
+      "allTokensCaption": "Define um limite para todos os tokens da lista",
+      "mixed": "Misto",
+      "everyToken": "Todo token",
+      "everyTokenCaption": "Cada token por si, exceto USDC",
+      "perTokenAllCaption": "Limite padrão para todo token · passos de 5%",
+      "anyTokenTitle": "Qualquer token pode entrar na estratégia",
+      "anyTokenBody": "Isso inclui tokens com pouca liquidez ou sem histórico de preço. O limite padrão vale para cada token por si. Os depositantes veem esta etiqueta no card e na página da estratégia:",
+      "allTokensTag": "Todos os tokens",
+      "capZero": "Um limite está em 0%. Defina acima de 0% ou marque Sem limite para continuar.",
+      "nextHold": {
+        "network": "Defina o limite da rede acima de 0%",
+        "protocol": "Defina o limite do protocolo acima de 0%",
+        "token": "Defina o limite do token acima de 0%"
+      }
     },
     "draft": {
       "title": "Dê um nome ao seu rascunho",
