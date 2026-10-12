@@ -24,7 +24,7 @@ import {
   userEvent,
   within,
 } from "../../../../../tests/utils/renderWithProviders";
-import { buildMandateCatalog } from "../mandateCatalog";
+import { buildMandateCatalog, type MandateCatalog } from "../mandateCatalog";
 import {
   createEmptyDraft,
   type MandateDraft,
@@ -91,14 +91,28 @@ function figmaDraft(overrides: Partial<MandateDraft> = {}): MandateDraft {
   };
 }
 
+/**
+ * POO-2332 R14: real data mode keeps the unset state and the untick that clears a cap. The mock
+ * builder has start values instead (R8), so the unset cases below run in real data mode.
+ */
+const realCatalog: MandateCatalog = { ...catalog, dataMode: "real" };
+
+function realDraft(overrides: Partial<MandateDraft> = {}): MandateDraft {
+  return figmaDraft({ dataMode: "real", catalogVersion: "v2-catalog-v1", ...overrides });
+}
+
 /** Render the step and expose the reducer the screen last handed to `update`. */
-function renderStep(draft: MandateDraft = figmaDraft(), block: StepBlock | null = null) {
+function renderStep(
+  draft: MandateDraft = figmaDraft(),
+  block: StepBlock | null = null,
+  source: MandateCatalog = catalog,
+) {
   const update = vi.fn();
   const onBlocked = vi.fn();
   const view = renderWithProviders(
     <LimitsStep
       draft={draft}
-      catalog={catalog}
+      catalog={source}
       update={update}
       block={block}
       onBlocked={onBlocked}
@@ -309,24 +323,27 @@ describe("LimitsStep", () => {
    * "0%", which is exactly the state this step's own rule says is not the same as unset.
    */
   // @rule R39
-  it("un-ticks a row that never had a share back to unset, not to 0%", async () => {
+  // @rule R14
+  it("un-ticks a row that never had a share back to unset, not to 0% (real data mode)", async () => {
     const user = userEvent.setup();
     // What the tick left behind: a record created by the checkbox on a row with no share.
     const { capsAfterUpdate, draftAfterUpdate } = renderStep(
-      figmaDraft({
+      realDraft({
         caps: {
           networks: { arbitrum: { noCap: true, pct: 0 }, robinhood: { noCap: true, pct: 0 } },
           protocols: {},
           tokens: {},
         },
       }),
+      null,
+      realCatalog,
     );
 
     await user.click(within(row("robinhood")).getByRole("checkbox"));
 
     expect(capsAfterUpdate().networks.robinhood).toBeUndefined();
     // And the step says so again on the next Next, rather than letting a 0% cap through.
-    expect(validateStep(draftAfterUpdate(), "limits", catalog)).toEqual({
+    expect(validateStep(draftAfterUpdate(), "limits", realCatalog)).toEqual({
       step: "limits",
       reason: "cap_missing",
       rowId: "robinhood",
@@ -347,14 +364,15 @@ describe("LimitsStep", () => {
    * later tidy-up of that comparison has to argue with a test rather than with a comment.
    */
   // @rule R39
-  it("forgets a deliberate 0% cap across a No cap round trip, so Next asks again", async () => {
+  // @rule R14
+  it("forgets a deliberate 0% cap across a No cap round trip, so Next asks again (real data mode)", async () => {
     const user = userEvent.setup();
     const update = vi.fn();
-    let draft = figmaDraft();
+    let draft = realDraft();
     const step = (current: MandateDraft) => (
       <LimitsStep
         draft={current}
-        catalog={catalog}
+        catalog={realCatalog}
         update={update}
         block={null}
         onBlocked={vi.fn()}
@@ -381,7 +399,7 @@ describe("LimitsStep", () => {
     apply();
 
     expect(draft.caps.networks.robinhood).toBeUndefined();
-    expect(validateStep(draft, "limits", catalog)).toEqual({
+    expect(validateStep(draft, "limits", realCatalog)).toEqual({
       step: "limits",
       reason: "cap_missing",
       rowId: "robinhood",
@@ -389,16 +407,19 @@ describe("LimitsStep", () => {
   });
 
   // @rule R39
-  it("un-ticks a protocol and a token row back to unset the same way", async () => {
+  // @rule R14
+  it("un-ticks a protocol and a token row back to unset the same way (real data mode)", async () => {
     const user = userEvent.setup();
     const { capsAfterUpdate, update } = renderStep(
-      figmaDraft({
+      realDraft({
         caps: {
           networks: { arbitrum: { noCap: true, pct: 0 } },
           protocols: { "aave-v3": { noCap: true, pct: 0 } },
           tokens: { [tokenKey(WETH)]: { noCap: true, pct: 0 } },
         },
       }),
+      null,
+      realCatalog,
     );
 
     await user.click(within(row("aave-v3")).getByRole("checkbox"));
@@ -488,11 +509,14 @@ describe("LimitsStep", () => {
   });
 
   // @rule R39
-  it("creates the cap record on the first interaction with an unset row", () => {
+  // @rule R14
+  it("creates the cap record on the first interaction with an unset row (real data mode)", () => {
     const { capsAfterUpdate } = renderStep(
-      figmaDraft({
+      realDraft({
         caps: { networks: { arbitrum: { noCap: true, pct: 0 } }, protocols: {}, tokens: {} },
       }),
+      null,
+      realCatalog,
     );
 
     fireEvent.change(within(row("robinhood")).getByRole("slider"), { target: { value: "20" } });
