@@ -472,19 +472,19 @@ describe("LimitsStep", () => {
   });
 
   // @rule R39
-  it("shows an unset row as Not set with the slider at zero and the box unticked", () => {
+  // @rule R8
+  it("shows a row with no stored cap at its start value (POO-2332)", () => {
     renderStep(
       figmaDraft({
         caps: { networks: { arbitrum: { noCap: true, pct: 0 } }, protocols: {}, tokens: {} },
       }),
     );
 
+    // A network starts with No cap on: the slider is hidden and the box is ticked.
     const robinhood = within(row("robinhood"));
-    expect(robinhood.getByText("Not set")).toBeInTheDocument();
-    expect(robinhood.queryByText("0%")).not.toBeInTheDocument();
-    expect(robinhood.getByRole("slider")).toHaveValue("0");
-    expect(robinhood.getByRole("slider")).toHaveAttribute("aria-valuetext", "Not set");
-    expect(robinhood.getByRole("checkbox")).toHaveAttribute("aria-checked", "false");
+    expect(robinhood.queryByText("Not set")).not.toBeInTheDocument();
+    expect(robinhood.queryByRole("slider")).not.toBeInTheDocument();
+    expect(robinhood.getByRole("checkbox")).toHaveAttribute("aria-checked", "true");
   });
 
   // @rule R39

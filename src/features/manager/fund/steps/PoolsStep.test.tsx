@@ -177,7 +177,7 @@ function networksAsked(): NetworkId[] {
  * Every priced token the catalog offers, built straight from the catalog rather than through
  * `addToken`.
  *
- * `addToken` enforces the 16-slot cap, and a two-network mandate runs into it, so looping it would
+ * `addToken` enforces the 100-slot cap, and a two-network mandate runs into it, so looping it would
  * silently drop entries and leave the token half of R13 false, which would make a "the flag stays
  * down" assertion pass for the wrong reason.
  */
@@ -198,14 +198,14 @@ function withEveryToken(draft: MandateDraft): MandateDraft {
 }
 
 /**
- * A draft with all sixteen slots taken, so any pool bringing a new token is refused `no_slots`.
+ * A draft with all 100 slots taken, so any pool bringing a new token is refused `no_slots`.
  *
  * The cap is a BUDGET rather than a property of the pool, which is why {@link canEverAdd} ignores it
  * and the row still offers an Add: the refusal only exists at the moment it is pressed.
  */
 function fullSlots(): MandateDraft {
   const base = draftOn();
-  const fillers: MandateTokenRef[] = Array.from({ length: 15 }, (_, index) => ({
+  const fillers: MandateTokenRef[] = Array.from({ length: 99 }, (_, index) => ({
     address: `0x${index.toString(16).padStart(40, "f")}`,
     symbol: `FILL${index}`,
     name: `Filler ${index}`,
@@ -1165,7 +1165,7 @@ describe("PoolsStep", () => {
     renderStep(draftOn(["robinhood"]));
 
     expect(await screen.findByText("Network slots used")).toBeInTheDocument();
-    expect(screen.getByText("2 of 16")).toBeInTheDocument();
+    expect(screen.getByText("2 of 100")).toBeInTheDocument();
     expect(
       screen.getByText("Pools are fixed at launch. You cannot add one later."),
     ).toBeInTheDocument();

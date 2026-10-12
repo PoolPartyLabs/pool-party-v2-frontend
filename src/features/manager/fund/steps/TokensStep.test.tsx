@@ -15,8 +15,8 @@
  * priced only, and the unpriced ones are reachable through a search that names them.
  *
  * The second is the slot arithmetic. A token takes one slot per network it runs on (R27), so whether
- * an Add fits is not `used < 16`, it is `used + entries(symbol) <= 16`; ETH on two networks costs
- * two. One case builds a draft at 15 of 16 and asserts that ARB (one network) stays addable while
+ * an Add fits is not `used < 100`, it is `used + entries(symbol) <= 100`; ETH on two networks costs
+ * two. One case builds a draft at 99 of 100 and asserts that ARB (one network) stays addable while
  * ETH (two) does not, which is the only shape that tells the two readings apart.
  *
  * The third is that every refusal still takes its click. A hard-disabled Add would swallow the one
@@ -379,9 +379,9 @@ describe("TokensStep", () => {
   // @rule R27
   it("stops Add all at the first token that does not fit and reports the refusal", async () => {
     const user = userEvent.setup();
-    // 1 locked + 12 fillers = 13 of 16. ARB, DAI and ETH fit; LINK is the fourth and does not.
+    // 1 locked + 96 fillers = 97 of 100. ARB, DAI and ETH fit; LINK is the fourth and does not.
     const base = draftOn();
-    const draft = { ...base, tokens: [...base.tokens, ...fillers(12)] };
+    const draft = { ...base, tokens: [...base.tokens, ...fillers(96)] };
     const { draftAfterUpdate, onBlocked } = renderStep(draft);
 
     await user.click(screen.getByRole("button", { name: "Add all 7" }));
@@ -390,7 +390,7 @@ describe("TokensStep", () => {
     expect(
       next.tokens.filter((token) => !token.symbol.startsWith("FILL")).map((token) => token.symbol),
     ).toEqual(["USDC", "ARB", "DAI", "ETH"]);
-    expect(next.tokens).toHaveLength(16);
+    expect(next.tokens).toHaveLength(100);
     expect(onBlocked).toHaveBeenCalledWith({
       step: "tokens",
       reason: "no_slots",
@@ -404,10 +404,10 @@ describe("TokensStep", () => {
     renderStep({ ...base, tokens: [...base.tokens, entryRef(base, "ARB")] });
 
     expect(screen.getByText("Network slots used")).toBeInTheDocument();
-    expect(screen.getByText("3 of 16")).toBeInTheDocument();
+    expect(screen.getByText("3 of 100")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "A token takes one slot on each network it runs on. The mandate holds 16 slots.",
+        "A token takes one slot on each network it runs on. The mandate holds 100 slots.",
       ),
     ).toBeInTheDocument();
   });
@@ -415,9 +415,9 @@ describe("TokensStep", () => {
   // @rule R27
   it("counts one slot per network when it decides whether a token still fits", async () => {
     const user = userEvent.setup();
-    // 2 locked + 13 fillers = 15 of 16. ARB costs one slot and fits; ETH costs two and does not.
+    // 2 locked + 97 fillers = 99 of 100. ARB costs one slot and fits; ETH costs two and does not.
     const base = draftOn(["robinhood"]);
-    const draft = { ...base, tokens: [...base.tokens, ...fillers(13)] };
+    const draft = { ...base, tokens: [...base.tokens, ...fillers(97)] };
     const { update, onBlocked } = renderStep(draft);
 
     expect(within(catalogCard("ARB")).getByRole("button")).not.toHaveAttribute("aria-disabled");

@@ -141,15 +141,15 @@ describe("real Mandate step contract", () => {
     const { container } = renderWithProviders(<Harness step="tokens" source={source} />);
     expect(container.querySelector('img[src="https://example.test/weth.png"]')).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add all 1" })).toBeInTheDocument();
-    expect(screen.getByText("1 of 16")).toBeInTheDocument();
+    expect(screen.getByText("1 of 100")).toBeInTheDocument();
   });
   // @rule R2
   it("Tokens distinguishes failed catalog from empty and exposes retry", async () => {
     const retry = vi.fn();
     renderWithProviders(<Harness step="tokens" source={{ ...catalog, error: true, retry }} />);
-    await userEvent.setup().click(screen.getByRole("button", { name: "Retry" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "Try again" }));
     expect(retry).toHaveBeenCalledOnce();
-    expect(screen.getByRole("alert")).toHaveTextContent("The v2 catalog is unavailable.");
+    expect(screen.getByRole("alert")).toHaveTextContent("We could not load the token list");
   });
   // @rule R7
   it("Limits discloses client-only allocation aids and permits them to remain unset", () => {

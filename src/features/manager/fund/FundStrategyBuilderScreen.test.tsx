@@ -738,25 +738,29 @@ describe("FundStrategyBuilderScreen", () => {
   // @rule R6
   it("[R6] a refusal clears as soon as a selection answers it, without navigating", async () => {
     nav.params = new URLSearchParams("draft=d-clear&step=limits");
-    seed("d-clear", {
-      name: "ETH and BTC on Arbitrum",
-      networks: ["arbitrum", "robinhood"],
-      passedSteps: ["networks", "protocols", "tokens"],
-      lastStep: "limits",
+    const draft = wholeMandate("d-clear");
+    const token = draft.tokens.find((entry) => !entry.locked);
+    if (!token) throw new Error("missing extra token");
+    // POO-2332: a token cap on and at 0% is the refusal. The start value of a token is 0%.
+    upsertDraft({
+      ...draft,
+      caps: { ...draft.caps, tokens: { [tokenKey(token)]: { noCap: false, pct: 0 } } },
     });
     renderWithProviders(<FundStrategyBuilderScreen />);
     await screen.findByText("MANDATE · STEP 4 OF 4");
 
     await userEvent.click(screen.getByRole("button", { name: "Next: Build strategy" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("Set a cap or tick No cap to continue.");
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Set the token cap above 0% or select No cap to continue.",
+    );
 
-    await userEvent.click(screen.getByRole("checkbox", { name: "No cap for Robinhood Chain" }));
+    await userEvent.click(screen.getByRole("checkbox", { name: /No cap.*Arbitrum/i }));
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     // Still on the step: clearing the notice is not advancing.
     expect(screen.getByText("MANDATE · STEP 4 OF 4")).toBeInTheDocument();
     expect(emitted("builder_mandate_blocked")).toEqual([
-      { step: "limits", block_reason: "cap_missing" },
+      { step: "limits", block_reason: "cap_zero" },
     ]);
   });
 
@@ -1526,7 +1530,7 @@ describe("Limits revised completion guards (POO-2197)", () => {
   });
 
   // @rule POO-2197 R3
-  it("refuses a zero second-token allowance with guidance and blocked intent", async () => {
+  it("refuses a zero token cap with guidance and blocked intent (cap_zero since POO-2332)", async () => {
     nav.params = new URLSearchParams("draft=zero-limit&step=limits");
     const draft = wholeMandate("zero-limit");
     const token = draft.tokens.find((entry) => !entry.locked);
@@ -1539,11 +1543,11 @@ describe("Limits revised completion guards (POO-2197)", () => {
     await screen.findByRole("button", { name: "Next: Build strategy" });
     await userEvent.click(screen.getByRole("button", { name: "Next: Build strategy" }));
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Allow at least one token besides USDC above 0% or select No cap.",
+      "Set the token cap above 0% or select No cap to continue.",
     );
     expect(emitted("builder_mandate_blocked")).toContainEqual({
       step: "limits",
-      block_reason: "token_allowance_required",
+      block_reason: "cap_zero",
     });
     expect(emitted("builder_mandate_completed")).toHaveLength(0);
   });
