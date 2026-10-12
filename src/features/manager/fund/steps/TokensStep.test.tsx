@@ -400,6 +400,28 @@ describe("TokensStep", () => {
     });
   });
 
+  // @rule R7
+  it("turns Add all off on a full basket and reports no_slots on a press", async () => {
+    const user = userEvent.setup();
+    // 1 locked + 99 fillers = 100 of 100.
+    const base = draftOn();
+    const draft = { ...base, tokens: [...base.tokens, ...fillers(99)] };
+    const { update, onBlocked } = renderStep(draft);
+
+    expect(screen.getByText("100 of 100")).toBeInTheDocument();
+    const addAll = screen.getByRole("button", { name: "Add all 7" });
+    expect(addAll).toHaveAttribute("aria-disabled", "true");
+
+    await user.click(addAll);
+
+    expect(update).not.toHaveBeenCalled();
+    expect(onBlocked).toHaveBeenCalledWith({
+      step: "tokens",
+      reason: "no_slots",
+      rowId: tokenKey(entryFor(draft, "ARB")),
+    });
+  });
+
   // @rule R27
   it("prints the slot counter and its caption", () => {
     const base = draftOn(["robinhood"]);

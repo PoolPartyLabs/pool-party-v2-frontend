@@ -587,7 +587,15 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
                   onSelect={() => undefined}
                 />
                 {addable.length > 0 ? (
-                  <Button variant="secondary" size="sm" onClick={handleAddAll}>
+                  // R7: a full basket turns "Add all" off. `aria-disabled` keeps the press, and
+                  // the press reports the same `no_slots` refusal as an Add.
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    blocked={!real && !slots.addAllEnabled}
+                    onBlockedClick={handleAddAll}
+                    onClick={handleAddAll}
+                  >
                     <Plus className="size-4" aria-hidden="true" />
                     {t("fundBuilder.common.addAll", { count: addable.length })}
                   </Button>
