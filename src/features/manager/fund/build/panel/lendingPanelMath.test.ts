@@ -5,26 +5,29 @@
  * @analytics-events none, pure functions under test
  *
  * One test per rule of POO-2334 that has logic: the Borrow panel's collateral, options, amount,
- * health factor and liquidation price (R1 to R6), and the pins for the Borrow status, the Swap ·
- * auto before a pool, the Supply APY and the Supply remove cascade (R7, R9 to R12).
+ * health factor, liquidation price and Apply gate (R1 to R6), the Swap · auto before a pool (R9)
+ * and the Supply panel's APY and collateral note (R10), and the copy in 11 locales (R13). R7 is a
+ * constant of `BLOCK_KIND_STATUS`,
+ * and R11 is `planReducers.test.ts` ("takes a Supply's Swap · auto and the Borrow under it").
  */
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BORROW_MARKET_FIXTURES, MOCK_FUND_CAPITAL_USD } from "@/mocks/data/borrowMarketFixtures";
-import { BLOCK_KIND_STATUS, isPlanBlocked, type PositionBlock } from "../plan/buildPlan";
+import { locales } from "@/i18n/config";
+import type { PositionBlock } from "../plan/buildPlan";
 import { findBlock } from "../plan/planDerive";
-import { removeBlock } from "../plan/planReducers";
 import { needsAutoSwap } from "../plan/planRules";
 import {
   hubPoolPlan,
   hubSupplyPlan,
-  makeTestContext,
   makeTestDraft,
   supplyBorrowPlan,
   TEST_ASSET_KEYS,
 } from "../plan/planTestKit";
 import {
-  BORROW_STEP_PCT,
+  BORROW_DEFAULT_PCT,
   type BorrowMarket,
+  type BorrowMarketAsset,
   borrowAmount,
   borrowApplyBlocker,
   borrowCeilingPct,
@@ -38,6 +41,7 @@ import {
   healthTone,
   liquidationPriceUsd,
   parentSupplyOf,
+  readBorrowPct,
   supplyApyValue,
 } from "./lendingPanelMath";
 
@@ -96,16 +100,27 @@ describe("borrowOptions (R2)", () => {
 });
 
 describe("borrow amount (R3)", () => {
-  it("runs from 0 to the max LTV in steps of 5, and gives the amount in token and USD", () => {
+  it("runs from 0 to the max LTV, reads a stored share within it, and gives the amount", () => {
     // @rule R3
-    expect(BORROW_STEP_PCT).toBe(5);
     expect(borrowCeilingPct(80)).toBe(80);
     expect(borrowCeilingPct(77.5)).toBe(77);
     expect(borrowCeilingPct(140)).toBe(100);
-    expect(clampBorrowPct(43, 80)).toBe(45);
+    expect(clampBorrowPct(43, 80)).toBe(43);
     expect(clampBorrowPct(95, 80)).toBe(80);
     expect(clampBorrowPct(-5, 80)).toBe(0);
     expect(clampBorrowPct(Number.NaN, 80)).toBe(0);
+    // The default share over a low max LTV: the slider, the risk rows and Apply read the same value.
+    const lowLtv: BorrowMarketAsset = { ...(MARKET.WETH as BorrowMarketAsset), maxLtvPct: 33 };
+    const read = readBorrowPct(BORROW_DEFAULT_PCT, lowLtv);
+    expect(read).toBe(33);
+    expect(borrowRisk(lowLtv, read)).toMatchObject({ ceilingPct: 33, atLimit: true });
+    const option = { assetKey: "a", symbol: "USDC", apyPct: 5.6, priceUsd: 1 };
+    expect(
+      borrowApplyBlocker({ collateral: true, option, borrowPct: read, ceilingPct: 33 }),
+    ).toBeNull();
+    expect(readBorrowPct(45, MARKET.WETH ?? null)).toBe(45);
+    expect(readBorrowPct(undefined, MARKET.WETH ?? null)).toBe(0);
+    expect(readBorrowPct(45, null)).toBe(45);
     expect(borrowAmount(50_000, 40, 1)).toEqual({ usd: 20_000, amount: 20_000 });
     expect(borrowAmount(50_000, 40, 0)).toEqual({ usd: 20_000, amount: null });
   });
@@ -140,35 +155,9 @@ describe("liquidation price (R5)", () => {
   });
 });
 
-describe("the mock market (R6)", () => {
-  it("holds plausible Aave figures for every asset the panel reads", () => {
+describe("borrowApplyBlocker (R6)", () => {
+  it("holds Apply without a collateral, a market rate for the asset, or an amount in the limit", () => {
     // @rule R6
-    expect(MOCK_FUND_CAPITAL_USD).toBeGreaterThan(0);
-    for (const asset of Object.values(BORROW_MARKET_FIXTURES)) {
-      expect(asset.priceUsd).toBeGreaterThan(0);
-      expect(asset.maxLtvPct).toBeGreaterThanOrEqual(0);
-      expect(asset.liquidationThresholdPct).toBeGreaterThanOrEqual(asset.maxLtvPct);
-      expect(asset.liquidationThresholdPct).toBeLessThan(100);
-      if (asset.borrowApyPct !== null) {
-        expect(asset.borrowApyPct).toBeGreaterThan(0);
-        expect(asset.borrowApyPct).toBeLessThan(40);
-      }
-    }
-    expect(BORROW_MARKET_FIXTURES.WETH?.maxLtvPct).toBe(80);
-    expect(BORROW_MARKET_FIXTURES.USDC?.borrowApyPct).toBe(5.6);
-  });
-});
-
-describe("the Borrow status (R7)", () => {
-  it("keeps Aave v3 Borrow enabled", () => {
-    // @rule R7
-    expect(BLOCK_KIND_STATUS.aaveBorrow).toBe("enabled");
-  });
-});
-
-describe("borrowApplyBlocker (R3, R6)", () => {
-  it("holds Apply without a collateral, an asset with a rate, or an amount over 0", () => {
-    // @rule R3
     const option = { assetKey: "a", symbol: "USDC", apyPct: 5.6, priceUsd: 1 };
     expect(borrowApplyBlocker({ collateral: false, option, borrowPct: 40, ceilingPct: 80 })).toBe(
       "needSupply",
@@ -197,7 +186,7 @@ describe("borrowApplyBlocker (R3, R6)", () => {
 });
 
 describe("the Uniswap panel's swap (R9)", () => {
-  it("always puts a Swap · auto before a pool, whatever token arrives", () => {
+  it("puts a Swap · auto before a pool for USDC too, so Max slippage always shows", () => {
     // @rule R9
     const found = findBlock(hubPoolPlan(), "hub-pool-pool");
     const pool = found?.block as PositionBlock;
@@ -207,33 +196,54 @@ describe("the Uniswap panel's swap (R9)", () => {
   });
 });
 
-describe("supplyApyValue (R10)", () => {
-  it("reads the catalog's supply APY, and refuses an empty or negative one", () => {
+describe("the Supply panel (R10)", () => {
+  it("reads the catalog's supply APY, and shows the collateral note over a Borrow", () => {
     // @rule R10
     expect(supplyApyValue("4.12")).toBe(4.12);
     expect(supplyApyValue("0")).toBe(0);
     expect(supplyApyValue("")).toBeNull();
     expect(supplyApyValue("-1")).toBeNull();
     expect(supplyApyValue("n/a")).toBeNull();
-  });
-});
-
-describe("removing a Supply (R11)", () => {
-  it("removes the Borrow under it too", () => {
-    // @rule R11
-    const after = removeBlock(supplyBorrowPlan(), makeTestContext(), "hub-aave-supply");
-    if (isPlanBlocked(after)) throw new Error("refused");
-    const ids = after.hub.chains.flatMap((chain) => chain.steps.map((step) => step.id));
-    expect(ids).not.toContain("hub-aave-supply");
-    expect(ids).not.toContain("hub-aave-borrow");
-  });
-});
-
-describe("hasBorrowBelow (R12)", () => {
-  it("tells the Supply panel when its asset is a Borrow's collateral", () => {
-    // @rule R12
     expect(hasBorrowBelow(supplyBorrowPlan(), "hub-aave-supply")).toBe(true);
     expect(hasBorrowBelow(hubSupplyPlan(), "hub-supply-supply")).toBe(false);
     expect(hasBorrowBelow(supplyBorrowPlan(), "missing")).toBe(false);
+  });
+});
+
+/** The leaf keys of a copy object, as dotted paths. */
+function leafKeys(node: unknown, prefix = ""): string[] {
+  if (typeof node !== "object" || node === null) return [prefix];
+  return Object.entries(node).flatMap(([key, value]) =>
+    leafKeys(value, prefix ? `${prefix}.${key}` : key),
+  );
+}
+
+describe("the panel copy (R13)", () => {
+  it("has the Borrow panel and the collateral note in all 11 locales, with no em dash", () => {
+    // @rule R13
+    const read = (locale: string) =>
+      JSON.parse(
+        readFileSync(
+          join(process.cwd(), "src", "i18n", "messages", locale, "manager.json"),
+          "utf8",
+        ),
+      ).fundBuilder.build;
+    const english = read("en");
+    const englishKeys = leafKeys(english.borrowPanel).sort();
+    expect(locales).toHaveLength(11);
+    for (const locale of locales) {
+      const build = read(locale);
+      expect(leafKeys(build.borrowPanel).sort(), locale).toEqual(englishKeys);
+      const values = [
+        ...englishKeys.map((key) =>
+          key.split(".").reduce((node, part) => node?.[part], build.borrowPanel),
+        ),
+        build.supplyPanel.collateralNote,
+      ];
+      for (const value of values) {
+        expect(typeof value === "string" && value.trim() !== "", locale).toBe(true);
+        expect(value, locale).not.toContain("\u2014");
+      }
+    }
   });
 });

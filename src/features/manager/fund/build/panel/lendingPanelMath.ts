@@ -11,13 +11,16 @@
  *   auto in between is skipped). Its USD value is the chain's share of the fund capital.
  * - [R2] The borrow options are the mandate tokens of the block's network, the collateral excluded,
  *   each with its borrow APY (null when the market does not lend it).
- * - [R3] The borrow amount is a % of the collateral value, from 0 to the max LTV, in steps of 5.
+ * - [R3] The borrow amount is a % of the collateral value, from 0 to the max LTV. The slider steps
+ *   as the Allocation slider does. A stored share is read within the max LTV, so the slider, the
+ *   risk rows and Apply use the same value.
  * - [R4] Health factor = liquidation threshold / borrowed share. 1.5 or more is success, 1.1 to
  *   under 1.5 is warning, under 1.1 is destructive.
  * - [R5] Liquidation price = collateral price x borrowed share / liquidation threshold. The drop to
  *   it is 1 - borrowed share / liquidation threshold.
+ * - [R6] Apply is held without a collateral, a market rate or an amount within the max LTV.
  * - [R10] The Supply APY is the catalog's string, read as a number when it is one and not negative.
- * - [R12] A Supply with a Borrow directly under it is that Borrow's collateral.
+ *   A Supply with a Borrow directly under it is that Borrow's collateral (Figma 8194:2380).
  *
  * Why the formulas live here: `manage/manageLendingRisk.ts` (PP-MGR-LIB-068) supplies risk figures
  * from a full account read and calculates none ("no protocol risk formula is assumed"). A Build
@@ -44,9 +47,6 @@ export interface BorrowMarketAsset {
 
 /** The market, keyed by the uppercase token symbol. */
 export type BorrowMarket = Readonly<Record<string, BorrowMarketAsset>>;
-
-/** One step of the borrow amount slider, in percent (the Figma track, as the Allocation's). */
-export const BORROW_STEP_PCT = 5;
 
 /** The borrowed share that `Use` writes: a health factor near 2 at an 82.5% threshold. */
 export const BORROW_DEFAULT_PCT = 40;
@@ -97,11 +97,23 @@ export function borrowCeilingPct(maxLtvPct: number): number {
   return Math.min(100, Math.max(0, Math.floor(maxLtvPct)));
 }
 
-/** R3: a share snapped to a step and held between 0 and the ceiling (a stop of its own). */
+/** R3: a whole share held between 0 and the ceiling. */
 export function clampBorrowPct(pct: number, ceilingPct: number): number {
   if (!Number.isFinite(pct)) return 0;
-  const snapped = Math.round(pct / BORROW_STEP_PCT) * BORROW_STEP_PCT;
-  return Math.min(ceilingPct, Math.max(0, snapped));
+  return Math.min(ceilingPct, Math.max(0, Math.round(pct)));
+}
+
+/**
+ * R3: the share that the panel reads from a config: held to the collateral's max LTV when the
+ * market knows the collateral, else the stored value (Apply is then held for another reason).
+ */
+export function readBorrowPct(
+  configPct: number | undefined,
+  collateral: BorrowMarketAsset | null,
+): number {
+  const pct = configPct ?? 0;
+  if (!collateral) return Number.isFinite(pct) ? pct : 0;
+  return clampBorrowPct(pct, borrowCeilingPct(collateral.maxLtvPct));
 }
 
 /** R3: the borrowed value in USD, and in the borrowed token (null without a price). */
@@ -145,7 +157,7 @@ export function parentSupplyOf(plan: BuildPlan, blockId: string): PositionBlock 
   return null;
 }
 
-/** R12: whether a Borrow sits directly under this Supply (so the Supply is its collateral). */
+/** R10: whether a Borrow sits directly under this Supply (so the Supply is its collateral). */
 export function hasBorrowBelow(plan: BuildPlan, supplyId: string): boolean {
   const found = findBlock(plan, supplyId);
   const below = found?.chain.steps[found.index + 1];

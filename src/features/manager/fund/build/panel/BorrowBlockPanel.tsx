@@ -11,8 +11,10 @@
  *
  * Order, as frame 8189:2337 draws it: Collateral (read only, the Supply above, with a lock), Asset
  * (a select with the borrow APY of each option, then the Borrow APY row), Borrow amount (a slider
- * from 0 to the Aave limit in steps of 5, the track beyond the limit dimmed), the risk rows
- * (Health factor, Liquidation price and the drop sentence), then the Lending risk block.
+ * from 0 to the Aave limit in the Allocation slider's steps, the track beyond the limit dimmed), the
+ * risk rows (Health factor, Liquidation price and the drop sentence, the one polite live region),
+ * then the Lending risk block. The share is read within the limit (`readBorrowPct`), so the slider,
+ * the risk rows and Apply use the same value.
  *
  * The decisions are pure and tested in `lendingPanelMath.ts` (PP-MGR-LIB-080).
  *
@@ -24,7 +26,7 @@
 "use client";
 
 import { Lock } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useId } from "react";
 import { isMockMode } from "@/lib/services";
 import { cn } from "@/lib/utils/cn";
@@ -45,6 +47,7 @@ import {
   borrowOptions,
   borrowRisk,
   type HealthTone,
+  readBorrowPct,
 } from "./lendingPanelMath";
 import { PanelFieldLabel } from "./PanelFieldLabel";
 import { PanelSelect, TokenLogos } from "./PanelSelect";
@@ -92,7 +95,7 @@ function useBorrowModel(context: PanelBodyContext, config: AaveBlockConfig | nul
         : undefined,
   }));
   const selected = config ? rows.find((row) => row.assetKey === config.assetKey) : undefined;
-  const borrowPct = config?.borrowPct ?? 0;
+  const borrowPct = readBorrowPct(config?.borrowPct, collateral?.market ?? null);
   const risk = borrowRisk(collateral?.market ?? null, borrowPct);
   return { collateral, rows, selected, borrowPct, risk };
 }
@@ -105,6 +108,7 @@ export function BorrowBlockPanel({
 }: PanelFieldsProps<AaveBlockConfig>) {
   const t = useTranslations("manager.fundBuilder.build.borrowPanel");
   const copy = usePanelCopy();
+  const locale = useLocale();
   const collateralId = useId();
   const assetId = useId();
   const { collateral, rows, selected, borrowPct, risk } = useBorrowModel(context, config);
@@ -142,7 +146,9 @@ export function BorrowBlockPanel({
           helpLabel={copy.moreAbout(t("collateral"))}
           labelId={collateralId}
         />
-        <fieldset
+        {/* biome-ignore lint/a11y/useSemanticElements: a read-only value row, not a form section; a fieldset brings a legend and form styles the Figma row does not have. */}
+        <div
+          role="group"
           aria-labelledby={collateralId}
           data-borrow-collateral=""
           className="flex h-[43px] w-full min-w-0 items-center gap-2 rounded-xl border border-border bg-input px-3"
@@ -165,7 +171,7 @@ export function BorrowBlockPanel({
             )}
           </span>
           <Lock aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
-        </fieldset>
+        </div>
         {collateral ? (
           <div className="flex items-center justify-between gap-2 text-xs">
             <span className="text-muted-foreground">{t("collateralValue")}</span>
@@ -200,7 +206,7 @@ export function BorrowBlockPanel({
             onClick: () => context.onEditMandate("tokens"),
           }}
         />
-        <div className="flex items-center justify-between gap-2 text-xs" aria-live="polite">
+        <div className="flex items-center justify-between gap-2 text-xs">
           <span className="text-muted-foreground">{t("apy")}</span>
           <span className={cn(NUMERIC_BODY, "text-foreground")}>
             {selected?.apy ?? t("unavailable")}
@@ -212,7 +218,7 @@ export function BorrowBlockPanel({
       {risk ? (
         <div className="flex flex-col gap-2">
           <AllocationSlider
-            value={Math.min(borrowPct, ceiling)}
+            value={borrowPct}
             ceiling={ceiling}
             onChange={(next) => onConfigChange({ ...config, borrowPct: next })}
             copy={{
@@ -229,7 +235,7 @@ export function BorrowBlockPanel({
             </p>
           ) : null}
           {amount && selected ? (
-            <div className="flex items-center justify-between gap-2 text-xs" aria-live="polite">
+            <div className="flex items-center justify-between gap-2 text-xs">
               <span className="text-muted-foreground">{t("amountValue")}</span>
               <span className={cn(NUMERIC_BODY, "text-foreground")}>
                 {amount.amount === null
@@ -258,7 +264,10 @@ export function BorrowBlockPanel({
               ? t("unavailable")
               : risk.healthFactor === null
                 ? t("noDebt")
-                : risk.healthFactor.toFixed(2)}
+                : new Intl.NumberFormat(locale, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }).format(risk.healthFactor)}
           </span>
         </div>
         <div className="flex items-center justify-between gap-2">
@@ -294,7 +303,8 @@ export const borrowBlockBody: PanelBodyDefinition<AaveBlockConfig> = {
   usePick(context) {
     const t = useTranslations("manager.fundBuilder.build.borrowPanel");
     const copy = usePanelCopy();
-    const { rows } = useBorrowModel(context, null);
+    const { rows, collateral } = useBorrowModel(context, null);
+    const defaultPct = readBorrowPct(BORROW_DEFAULT_PCT, collateral?.market ?? null);
     return {
       heading: t("heading"),
       count: rows.length,
@@ -309,9 +319,7 @@ export const borrowBlockBody: PanelBodyDefinition<AaveBlockConfig> = {
         metric: { label: t("apy"), value: row.apy, tone: "foreground" },
         searchText: row.assetKey,
         disabledReason: row.disabledReason,
-        config: row.disabledReason
-          ? null
-          : { assetKey: row.assetKey, borrowPct: BORROW_DEFAULT_PCT },
+        config: row.disabledReason ? null : { assetKey: row.assetKey, borrowPct: defaultPct },
       })),
       caption: t("caption", { network: context.networkName }),
       link: { prompt: t("needAsset"), label: copy.link.tokens, step: "tokens" },

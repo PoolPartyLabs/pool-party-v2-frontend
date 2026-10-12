@@ -139,8 +139,8 @@ describe("isConfigFor: the shape and ranges of a stored config (K1, K2)", () => 
     }
   });
 
-  it("[R3] takes a Borrow amount from 0 to 100 percent of the collateral, on a Borrow only", () => {
-    // @rule R3
+  it("[K2] refuses a Borrow amount out of 0 to 100 percent, or on a non-Borrow (POO-2334)", () => {
+    // @rule K2
     for (const borrowPct of [0, 5, 40, 80, 100]) {
       expect(isConfigFor("aaveBorrow", { assetKey: "a", borrowPct })).toBe(true);
     }
