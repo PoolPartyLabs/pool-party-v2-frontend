@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-057
  * @name auxiliaryConfig
- * @implements-rules-version v1 (POO-2237)
+ * @implements-rules-version v1 (POO-2237) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, pure configuration reducers; usePanelDraft reports local edit outcomes.
  *
@@ -40,11 +40,7 @@ export function validManualSwapConfig(
   network: NetworkId,
 ): boolean {
   if (!isManualSwapConfig(value)) return false;
-  if (
-    network === "solana" &&
-    (draft.runtime !== "solana-local" || !draft.protocols.includes("jupiter"))
-  )
-    return false;
+  if (network === "solana" && !draft.protocols.includes("jupiter")) return false;
   const keys = new Set(manualSwapTokens(draft, network).map(tokenKey));
   const input = normalizeTokenIdentity(network, value.tokenInKey);
   const output = normalizeTokenIdentity(network, value.tokenOutKey);

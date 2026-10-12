@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-024
  * @name blockRegistry
- * @implements-rules-version v1 (POO-2155 rules v1)
+ * @implements-rules-version v1 (POO-2155 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure module. What the canvas does with a block is reported by
  *   `useBuildCanvas` through `onEvent`, and the Build screen (PP-MGR-SCR-002, S7) maps it to events.
@@ -266,10 +266,7 @@ export function describeFlow(blockId: string, ctx: DescribeContext): FlowContent
   }
   if (!found.block.auto) {
     return {
-      text:
-        ctx.draft.runtime === "solana-local" && found.network === "solana"
-          ? (copy.flow.jupiter ?? copy.flow.swap)
-          : copy.flow.swap,
+      text: found.network === "solana" ? (copy.flow.jupiter ?? copy.flow.swap) : copy.flow.swap,
       tooltip: copy.tooltip.swap,
       icon: "swap",
     };
@@ -381,7 +378,6 @@ export function paletteModel(draft: MandateDraft, copy: BlockCopy): PaletteModel
     const protocol = BLOCK_KIND_PROTOCOL[kind];
     if (isSolanaKind(kind))
       return (
-        draft.runtime === "solana-local" &&
         draft.networks.includes("solana") &&
         (kind === "solanaHolding" || (protocol !== null && draft.protocols.includes(protocol)))
       );
@@ -401,11 +397,7 @@ export function paletteModel(draft: MandateDraft, copy: BlockCopy): PaletteModel
   const flow: PaletteItem[] = [
     { id: "swap", name: copy.flow.swap, caption: null, drag: { family: "flow", kind: "swap" } },
   ];
-  if (
-    draft.runtime === "solana-local" &&
-    draft.networks.includes("solana") &&
-    draft.protocols.includes("jupiter")
-  )
+  if (draft.networks.includes("solana") && draft.protocols.includes("jupiter"))
     flow.push({
       id: "jupiter",
       name: copy.flow.jupiter ?? copy.flow.swap,

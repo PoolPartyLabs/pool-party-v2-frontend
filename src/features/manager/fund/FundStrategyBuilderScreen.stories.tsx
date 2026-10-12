@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name FundStrategyBuilderScreen.stories
- * @implements-rules-version v3 (POO-2142 rules v2, POO-2167 rules v3)
+ * @implements-rules-version v4 (POO-2142 rules v2, POO-2167 rules v3, POO-2342 rules v1)
  *
  * Storybook coverage for the fund-contracts builder shell (POO-2122, epic POO-2119).
  *
@@ -33,12 +33,16 @@ import { FundStrategyBuilderScreen } from "./FundStrategyBuilderScreen";
 import { buildMandateCatalog } from "./mandateCatalog";
 import { createEmptyDraft, type MandateDraft, withNetworks, withProtocols } from "./mandateDraft";
 import { MANDATE_DRAFTS_KEY, upsertDraft } from "./mandateDraftStore";
+import { buildSolanaBuilderCatalog } from "./solana-preview/solanaBuilderRuntime";
 
 /** Fixed so the seeded draft reads the same on every open; `upsertDraft` stamps `updatedAt` itself. */
 const SEEDED_AT = "2026-10-03T00:00:00.000Z";
 
 /** The id the seeded draft is stored under and the deep link points at. */
 const SEEDED_ID = "story-mandate-draft";
+
+/** The id of the draft that holds Solana. */
+const SOLANA_ID = "story-solana-draft";
 
 /**
  * The shell's own catalog, where Robinhood Chain is always available (R17 v2, POO-2142), so the
@@ -107,9 +111,26 @@ export const FirstStep: Story = {
   ],
 };
 
-/** The same shared wizard with an in-memory Solana binding. */
-export const SolanaLocalMandate: Story = {
-  args: { runtime: "solana-local" },
+/** One builder for every network: a stored draft that holds Solana resumes in the same wizard. */
+export const SolanaDraftMandate: Story = {
+  decorators: [
+    (Story) => {
+      clearDrafts();
+      const base = withNetworks(
+        createEmptyDraft(SEEDED_AT, SOLANA_ID),
+        ["solana"],
+        buildSolanaBuilderCatalog(),
+      );
+      upsertDraft({
+        ...base,
+        lastStep: "protocols",
+        passedSteps: ["networks"],
+        savedAt: SEEDED_AT,
+      });
+      setQuery(`draft=${SOLANA_ID}&step=protocols`);
+      return <Story />;
+    },
+  ],
 };
 
 /** Resumed from the Console on the last step, the way "Open" and a refresh both arrive. */

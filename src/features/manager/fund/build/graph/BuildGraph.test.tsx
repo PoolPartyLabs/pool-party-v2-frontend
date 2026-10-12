@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name BuildGraph tests
- * @implements-rules-version v2 (POO-2273); v1 (POO-2156 rules v1)
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2156 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, a controlled renderer: activations leave through `onTarget` and the Build
  *   screen (PP-MGR-SCR-002, S7) owns every event.
  *
@@ -122,7 +122,7 @@ function localContextProps(): BuildGraphProps {
   const input: LayoutInput = {
     hubNetwork: "arbitrum",
     hub: { chains: [] },
-    spokes: [{ network: "solana", context: "solana-local", sharePct: 100, chains: [] }],
+    spokes: [{ network: "solana", sharePct: 100, chains: [] }],
   };
   return propsFor(canvasA, {
     layout: layoutGraph(input, { startHereWidth: 0 }),

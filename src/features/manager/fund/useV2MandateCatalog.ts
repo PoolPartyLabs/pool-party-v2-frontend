@@ -3,6 +3,7 @@
  * @name useV2MandateCatalog
  * @implements-rules-version v1
  * Real-mode catalog loading with cancellation and explicit retry, never mock fallback.
+ * POO-2342 (rules-v1): the Solana entries ride on top of the catalog; the API reads stay Solana-free.
  */
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -10,6 +11,7 @@ import { getCatalogReservesAction, getCatalogTokensAction } from "@/lib/api/v2/a
 import type { CatalogReserve, CatalogToken } from "@/lib/api/v2/schemas";
 import { isMockMode } from "@/lib/services";
 import { buildMandateCatalog } from "./mandateCatalog";
+import { withSolanaCatalog } from "./solana-preview/solanaBuilderRuntime";
 import { buildRealCatalog } from "./v2Mandate";
 
 export function useV2MandateCatalog() {
@@ -51,15 +53,17 @@ export function useV2MandateCatalog() {
     };
   }, [attempt]);
   return useMemo(() => {
-    if (isMockMode) return buildMandateCatalog();
+    // POO-2342 R4: the Solana entries ride on top of either catalog. The API calls above never name
+    // Solana (R7), and the wrapper keeps `loading`, `error`, `retry` and `validateDraft` as they are.
+    if (isMockMode) return withSolanaCatalog(buildMandateCatalog());
     const catalog = buildRealCatalog(state.tokens, state.reserves);
-    return {
+    return withSolanaCatalog({
       ...catalog,
       loading: state.loading,
       error: state.error,
       retry,
       validateDraft: (draft: import("./mandateDraft").MandateDraft) =>
         !state.loading && !state.error && (catalog.validateDraft?.(draft) ?? false),
-    };
+    });
   }, [state, retry]);
 }

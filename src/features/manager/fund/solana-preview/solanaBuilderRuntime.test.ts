@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name Solana shared builder runtime regression tests
- * @implements-rules-version v1 (POO-2301)
+ * @implements-rules-version v1 (POO-2301) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, regression assertions.
  */
 import { describe, expect, it } from "vitest";
@@ -26,11 +26,7 @@ import {
   withNetworks,
   withProtocols,
 } from "../mandateDraft";
-import {
-  buildSolanaBuilderCatalog,
-  createSolanaBuilderDraft,
-  SOLANA_LOCAL_CONFIGS,
-} from "./solanaBuilderRuntime";
+import { buildSolanaBuilderCatalog, SOLANA_LOCAL_CONFIGS } from "./solanaBuilderRuntime";
 
 describe("shared Solana builder identity and visual configuration", () => {
   // @rule R4: Base58 mints remain case sensitive; EVM normalization stays unchanged.
@@ -61,11 +57,7 @@ it.each([
   "solanaKaminoSupply",
 ] as const)("keeps %s with USDC unavailable in default execution readiness", (kind) => {
   const catalog = buildSolanaBuilderCatalog();
-  const selected = withNetworks(
-    createSolanaBuilderDraft("now", "execution-gate"),
-    ["solana"],
-    catalog,
-  );
+  const selected = withNetworks(createEmptyDraft("now", "execution-gate"), ["solana"], catalog);
   const draft = withProtocols(selected, [...selected.protocols, "kamino"]);
   if ("blocked" in draft) throw new Error("protocol selection refused");
   const config = SOLANA_LOCAL_CONFIGS[kind];
@@ -104,11 +96,7 @@ describe("[R3/R5/R6] local Configure mandate gate", () => {
     kind: "solanaHolding" | "solanaOrcaPool" | "solanaRaydiumPool" = "solanaHolding",
   ) {
     const catalog = buildSolanaBuilderCatalog();
-    const networks = withNetworks(
-      createSolanaBuilderDraft("now", "configure"),
-      ["solana"],
-      catalog,
-    );
+    const networks = withNetworks(createEmptyDraft("now", "configure"), ["solana"], catalog);
     const wsol = catalog.tokensFor(["solana"], networks.protocols)[0];
     const initialConfig = SOLANA_LOCAL_CONFIGS[kind];
     if (!wsol || !initialConfig) throw new Error("local fixture missing");
@@ -226,7 +214,7 @@ describe("[R3/R5/R6] local Configure mandate gate", () => {
 // @rule R3/R5/R6: the standard mandate controls feed the shared plan without market fixtures.
 it("selects Solana, applies independent LP intent and derives LP-only Collect", () => {
   const catalog = buildSolanaBuilderCatalog();
-  let draft = createSolanaBuilderDraft("2026-10-08T00:00:00Z", "local");
+  let draft = createEmptyDraft("2026-10-08T00:00:00Z", "local");
   const networks = withNetworks(draft, ["solana"], catalog);
   if ("blocked" in networks) throw new Error("network selection refused");
   draft = networks;
@@ -289,7 +277,7 @@ it("selects Solana, applies independent LP intent and derives LP-only Collect", 
 // @rule R3/R4/R6: Jupiter owns manual conversion; Holding has no LP collector and mints retain case.
 it("requires Jupiter for manual Solana conversion and validates exact mint identity", () => {
   const catalog = buildSolanaBuilderCatalog();
-  const draft = withNetworks(createSolanaBuilderDraft("now", "local"), ["solana"], catalog);
+  const draft = withNetworks(createEmptyDraft("now", "local"), ["solana"], catalog);
   const wsol = catalog.tokensFor(["solana"], draft.protocols)[0]!;
   const tokenDraft = addToken(draft, wsol, catalog);
   if ("blocked" in tokenDraft) throw new Error("token refused");
@@ -339,7 +327,7 @@ it("keeps local Solana protocols out of the standard protocol reducer", () => {
 // @rule R3/R6: later mandate edits preserve the card and invalidate its obsolete instruction.
 it("invalidates local Jupiter after its protocol or exact output mint leaves the mandate", () => {
   const catalog = buildSolanaBuilderCatalog();
-  const networks = withNetworks(createSolanaBuilderDraft("now", "local"), ["solana"], catalog);
+  const networks = withNetworks(createEmptyDraft("now", "local"), ["solana"], catalog);
   const wsol = catalog.tokensFor(["solana"], networks.protocols)[0]!;
   const tokenDraft = addToken(networks, wsol, catalog);
   if ("blocked" in tokenDraft) throw new Error("token refused");
@@ -404,7 +392,7 @@ it("invalidates local Jupiter after its protocol or exact output mint leaves the
 // @rule R3/R6: removing a selected mint invalidates the position and blocks visual Review.
 it("invalidates LP and WSOL Holding after their exact selected mint leaves the mandate", () => {
   const catalog = buildSolanaBuilderCatalog();
-  const networks = withNetworks(createSolanaBuilderDraft("now", "local"), ["solana"], catalog);
+  const networks = withNetworks(createEmptyDraft("now", "local"), ["solana"], catalog);
   const wsol = catalog.tokensFor(["solana"], networks.protocols)[0]!;
   const selected = addToken(networks, wsol, catalog);
   if ("blocked" in selected) throw new Error("token refused");
@@ -464,7 +452,7 @@ it("invalidates LP and WSOL Holding after their exact selected mint leaves the m
 // @rule R3/R6: automatic Jupiter conversions retain their mandate dependency after edits.
 it("invalidates automatic local conversion when Jupiter is removed and keeps stable Holding direct", () => {
   const catalog = buildSolanaBuilderCatalog();
-  const networks = withNetworks(createSolanaBuilderDraft("now", "local"), ["solana"], catalog);
+  const networks = withNetworks(createEmptyDraft("now", "local"), ["solana"], catalog);
   const wsol = catalog.tokensFor(["solana"], networks.protocols)[0]!;
   const selected = addToken(networks, wsol, catalog);
   if ("blocked" in selected) throw new Error("token refused");
@@ -526,7 +514,7 @@ it("invalidates automatic local conversion when Jupiter is removed and keeps sta
 // @rule R3/R6: app-owned entry and fee-return routes depend on Jupiter and both exact mints.
 it("validates config-less automatic entry and derived fee conversion dependencies", () => {
   const catalog = buildSolanaBuilderCatalog();
-  const networks = withNetworks(createSolanaBuilderDraft("now", "local"), ["solana"], catalog);
+  const networks = withNetworks(createEmptyDraft("now", "local"), ["solana"], catalog);
   const wsol = catalog.tokensFor(["solana"], networks.protocols)[0]!;
   const selected = addToken(networks, wsol, catalog);
   if ("blocked" in selected) throw new Error("token refused");

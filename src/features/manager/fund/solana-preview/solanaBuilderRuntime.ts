@@ -7,7 +7,7 @@
 
 import type { BlockKind, SolanaLocalBlockConfig } from "../build/plan/buildPlan";
 import { buildMandateCatalog, type MandateCatalog } from "../mandateCatalog";
-import { createEmptyDraft, type MandateDraft, type ProtocolId } from "../mandateDraft";
+import type { ProtocolId } from "../mandateDraft";
 import { USDC_MINT, WSOL_MINT } from "./solanaSchemas";
 
 export const SOLANA_LOCAL_CONFIGS: Partial<Record<BlockKind, SolanaLocalBlockConfig>> = {
@@ -16,11 +16,16 @@ export const SOLANA_LOCAL_CONFIGS: Partial<Record<BlockKind, SolanaLocalBlockCon
   solanaKaminoSupply: { catalogId: "solana:mainnet-beta:kamino-supply", pair: "USDC / SOL" },
   solanaHolding: { catalogId: "solana:mainnet-beta:holding", pair: "USDC / SOL" },
 };
-/** Known token metadata is not a market, balance, price-feed or execution capability. */
-export function buildSolanaBuilderCatalog(): MandateCatalog {
+/**
+ * POO-2342 R4: add the Solana entries to a catalog. The API catalog (or the mock one) keeps every
+ * field it has, including `loading`, `error`, `retry` and `validateDraft`, so a Solana entry never
+ * hides the API load or error state. Added here: the Solana network, Kamino, Jupiter, Raydium and
+ * Orca (each available on Solana only), the WSOL token and the USDC deposit token of Solana.
+ * Known token metadata is not a market, balance, price-feed or execution capability.
+ */
+export function withSolanaCatalog(base: MandateCatalog): MandateCatalog {
   // PP-INTEGRATION-POINT: POO-2239/2240 own the real Solana mandate/catalog contract;
   // canonical WSOL/USDC metadata permits local drawing only and supplies no price-feed claim.
-  const base = buildMandateCatalog();
   const local: Array<{ id: ProtocolId; kind: "lending" | "swap" | "dex" }> = [
     { id: "kamino", kind: "lending" },
     { id: "jupiter", kind: "swap" },
@@ -29,7 +34,6 @@ export function buildSolanaBuilderCatalog(): MandateCatalog {
   ];
   return {
     ...base,
-    runtime: "solana-local",
     networks: [
       ...base.networks,
       {
@@ -88,6 +92,8 @@ export function buildSolanaBuilderCatalog(): MandateCatalog {
     },
   };
 }
-export function createSolanaBuilderDraft(now: string, id: string): MandateDraft {
-  return { ...createEmptyDraft(now, id), runtime: "solana-local" };
+
+/** The mock catalog with the Solana entries (tests and stories). */
+export function buildSolanaBuilderCatalog(): MandateCatalog {
+  return withSolanaCatalog(buildMandateCatalog());
 }

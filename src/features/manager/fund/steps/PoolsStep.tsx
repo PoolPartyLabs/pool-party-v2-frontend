@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-038
  * @name PoolsStep
- * @implements-rules-version v1
+ * @implements-rules-version v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2333 Figma parity: R8, R9)
  * @analytics-events none, the shell emits
@@ -122,6 +122,7 @@ import {
   slotCeiling,
   slotsUsed,
   tokenKey,
+  withoutSolana,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
 import { poolFeeLabel, poolMeta } from "./mandateStepView";
@@ -317,10 +318,18 @@ export interface PoolsStepProps extends MandateStepProps {
 }
 
 /** Mandate step 4: the pool catalog on the left, the mandate's own pools on the right. */
-/** Local descriptors have no pool discovery source; retain the step without mounting EVM reads. */
+/**
+ * POO-2342 R8: Raydium or Orca gives this step, and Solana has no pool discovery source yet. A draft
+ * with Uniswap v4 mounts the connected step over its Arbitrum and Robinhood side only (the reads never
+ * name Solana, R7). A draft with only Raydium or Orca shows the "Not available" layout.
+ */
 export function PoolsStep(props: PoolsStepProps) {
   const t = useTranslations("manager");
-  if (props.draft.runtime === "solana-local")
+  const apiDraft = useMemo(() => withoutSolana(props.draft), [props.draft]);
+  const hasUniswapDex = apiDraft.protocols.some((id) =>
+    (DEX_PROTOCOL_IDS as readonly string[]).includes(id),
+  );
+  if (!hasUniswapDex)
     return (
       <section data-mandate-step="pools" className="flex flex-col gap-6 pb-24">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
@@ -358,7 +367,7 @@ export function PoolsStep(props: PoolsStepProps) {
         </div>
       </section>
     );
-  return <ConnectedPoolsStep {...props} />;
+  return <ConnectedPoolsStep {...props} draft={apiDraft} />;
 }
 
 function ConnectedPoolsStep({

@@ -1,12 +1,10 @@
 /**
  * @id PP-MGR-SCR-002
  * @name BuilderRouteSwitch
- * @implements-rules-version v2 (POO-2281)
- * @implements-rules-version v1 (POO-2301 shared local runtime extension)
- * @analytics-events solana_preview_exited, emitted on the preview's guarded exit. A view event
- *   here would fire on every render of either builder and belong to neither; the screens own their
- *   own views (S2 for the fund builder), and the choice itself is reported by the control the user
- *   pressed, `ContractFamilyToggle` (`PP-CORE-CMP-075`).
+ * @implements-rules-version v3 (POO-2342 one builder for V2, no Solana mode)
+ * @analytics-events none. A view event here would fire on every render of either builder and
+ *   belong to neither; the screens own their own views (S2 for the fund builder), and the choice
+ *   itself is reported by the control the user pressed, `ContractFamilyToggle` (`PP-CORE-CMP-075`).
  *
  * POO-2120 [R6], epic POO-2119. Which builder `/manager/new` renders: the live V1 single-pool
  * builder (passed in as `v1`, already built by the page's server reads) or the fund-contracts one.
@@ -32,16 +30,10 @@
  */
 "use client";
 
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useRef } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useAuth } from "@/lib/auth/useAuth";
-import {
-  captureSolanaPreviewExit,
-  useSolanaPreviewHost,
-} from "@/lib/experiments/solanaPreviewStore";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
-import { useNavigationGuard } from "@/lib/hooks/unsavedChanges";
 import { useContractFamily } from "@/lib/hooks/useContractFamily";
 import { FundStrategyBuilderScreen } from "./FundStrategyBuilderScreen";
 import type { MandateDraftCheckpoint } from "./useMandateDraft";
@@ -89,42 +81,18 @@ export function BuilderRouteSwitch({ v1 }: BuilderRouteSwitchProps): ReactNode {
   return family === "v2" ? <V2BuilderHost /> : v1;
 }
 
-/** Mounted only in V2 after hydration. Route/account disposal resets the local preview. */
+/**
+ * Mounted only in V2 after hydration. One builder serves every network of the mandate (POO-2342 R3).
+ * An account change disposes the session, so a draft never leaks from one account to the next.
+ */
 function V2BuilderHost() {
   const { address, isAuthenticated } = useAuth();
   const accountKey = `${isAuthenticated ? "signed-in" : "signed-out"}:${address ?? "none"}`;
-  const preview = useSolanaPreviewHost(accountKey, true);
-  const standard = useRef<{ accountKey: string; current: MandateDraftCheckpoint | null }>({
+  const checkpoint = useRef<{ accountKey: string; current: MandateDraftCheckpoint | null }>({
     accountKey,
     current: null,
   });
-  if (standard.current.accountKey !== accountKey) standard.current = { accountKey, current: null };
-  if (preview !== "v2-solana")
-    return <FundStrategyBuilderScreen key={accountKey} standardCheckpoint={standard.current} />;
-  return <LocalV2Builder key={accountKey} />;
-}
-
-/** A disposed local session cannot run a late save/exit against its successor. */
-function LocalV2Builder() {
-  const guard = useNavigationGuard();
-  const { track } = useAnalytics();
-  const active = useRef(false);
-  useEffect(() => {
-    active.current = true;
-    return () => {
-      active.current = false;
-    };
-  }, []);
-  return (
-    <FundStrategyBuilderScreen
-      runtime="solana-local"
-      onExitPreview={(onAccepted) => {
-        if (!active.current) return;
-        const exit = captureSolanaPreviewExit();
-        guard(() => {
-          if (exit(onAccepted)) track("solana_preview_exited");
-        });
-      }}
-    />
-  );
+  if (checkpoint.current.accountKey !== accountKey)
+    checkpoint.current = { accountKey, current: null };
+  return <FundStrategyBuilderScreen key={accountKey} standardCheckpoint={checkpoint.current} />;
 }

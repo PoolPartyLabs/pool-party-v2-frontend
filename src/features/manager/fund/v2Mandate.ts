@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-025 (POO-2133)
  * @name v2Mandate
- * @implements-rules-version v1
+ * @implements-rules-version v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * Real catalog provenance, canonical provisioning selections and validation.
  */
 
@@ -16,7 +16,13 @@ import {
 } from "@/lib/api/v2/schemas";
 import type { MandateCatalog } from "./mandateCatalog";
 import { buildMandateCatalog } from "./mandateCatalog";
-import { depositTokenRefFor, type MandateDraft, type NetworkId, tokenKey } from "./mandateDraft";
+import {
+  depositTokenRefFor,
+  type MandateDraft,
+  type NetworkId,
+  tokenKey,
+  withoutSolana,
+} from "./mandateDraft";
 
 export const v2MandateSelectionSchema = z.object({
   chains: z
@@ -82,7 +88,13 @@ export function buildRealCatalog(
   return catalog;
 }
 
-export function toV2MandateSelection(draft: Omit<MandateDraft, "plan">, catalog: MandateCatalog) {
+export function toV2MandateSelection(
+  fullDraft: Omit<MandateDraft, "plan">,
+  catalog: MandateCatalog,
+) {
+  // POO-2342 R7: Solana is not an API network. The selection is built from the draft without its
+  // Solana network, tokens, protocols and pools, so no payload names Solana.
+  const draft = withoutSolana(fullDraft);
   if (
     draft.dataMode !== "real" ||
     draft.catalogVersion !== "v2-catalog-v1" ||

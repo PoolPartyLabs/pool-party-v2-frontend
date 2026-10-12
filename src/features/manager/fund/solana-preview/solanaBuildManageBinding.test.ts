@@ -1,27 +1,29 @@
 /**
  * @id PP-MGR-LIB-076
  * @name Shared Solana Build Manage binding tests
- * @implements-rules-version v1 (POO-2301)
+ * @implements-rules-version v1 (POO-2301) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, pure boundary regressions.
  */
 import { expect, it } from "vitest";
 import { type BuildPlan, isPlanBlocked, type PlanContext } from "../build/plan/buildPlan";
 import { addChain, addSpoke, applyBlockConfig } from "../build/plan/planReducers";
-import { addToken, isBlocked, withNetworks, withProtocols } from "../mandateDraft";
 import {
-  buildSolanaBuilderCatalog,
-  createSolanaBuilderDraft,
-  SOLANA_LOCAL_CONFIGS,
-} from "./solanaBuilderRuntime";
+  addToken,
+  createEmptyDraft,
+  isBlocked,
+  withNetworks,
+  withProtocols,
+} from "../mandateDraft";
+import { buildSolanaBuilderCatalog, SOLANA_LOCAL_CONFIGS } from "./solanaBuilderRuntime";
 import { applyLocalManageConfig, localManageBlocks } from "./solanaBuildManageBinding";
 import { USDC_MINT, WSOL_MINT } from "./solanaSchemas";
 
 function fixture() {
   const catalog = buildSolanaBuilderCatalog();
-  const base = withProtocols(
-    withNetworks(createSolanaBuilderDraft("now", "local"), ["solana"], catalog),
-    ["orca", "jupiter"],
-  );
+  const base = withProtocols(withNetworks(createEmptyDraft("now", "local"), ["solana"], catalog), [
+    "orca",
+    "jupiter",
+  ]);
   const token = catalog
     .tokensFor(["solana"], base.protocols)
     .find((value) => value.address === WSOL_MINT);

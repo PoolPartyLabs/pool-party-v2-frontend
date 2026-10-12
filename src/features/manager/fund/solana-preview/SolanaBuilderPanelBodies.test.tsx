@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-101
  * @name Shared local configuration panel regression tests
- * @implements-rules-version v1 (POO-2301)
+ * @implements-rules-version v1 (POO-2301) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, assertions over panel outcomes.
  */
 
@@ -17,16 +17,12 @@ import { AuxiliaryBlockPanel } from "../build/panel/AuxiliaryBlockPanel";
 import { PanelHarness } from "../build/panel/panelTestKit";
 import type { UsePanelDraftResult } from "../build/panel/usePanelDraft";
 import type { BuildPlan, ManualSwapConfig } from "../build/plan/buildPlan";
-import { addToken, tokenKey, withNetworks, withProtocols } from "../mandateDraft";
+import { addToken, createEmptyDraft, tokenKey, withNetworks, withProtocols } from "../mandateDraft";
 import { LOCAL_PANEL_BODIES } from "./SolanaBuilderPanelBodies";
-import {
-  buildSolanaBuilderCatalog,
-  createSolanaBuilderDraft,
-  SOLANA_LOCAL_CONFIGS,
-} from "./solanaBuilderRuntime";
+import { buildSolanaBuilderCatalog, SOLANA_LOCAL_CONFIGS } from "./solanaBuilderRuntime";
 
 const catalog = buildSolanaBuilderCatalog();
-const networks = withNetworks(createSolanaBuilderDraft("now", "local"), ["solana"], catalog);
+const networks = withNetworks(createEmptyDraft("now", "local"), ["solana"], catalog);
 const wsol = catalog.tokensFor(["solana"], networks.protocols)[0];
 const holdingConfig = SOLANA_LOCAL_CONFIGS.solanaHolding;
 if (!wsol || !holdingConfig) throw new Error("local fixture missing");

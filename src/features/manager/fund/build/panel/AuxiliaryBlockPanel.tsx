@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-087
  * @name AuxiliaryBlockPanel
- * @implements-rules-version v1 (POO-2237)
+ * @implements-rules-version v1 (POO-2237) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none emitted here; usePanelDraft owns applied/discarded/blocked outcomes.
  *
@@ -50,7 +50,7 @@ export function AuxiliaryBlockPanel({
   const inputId = useId();
   const outputId = useId();
   const swap = target.kind === "swap";
-  const jupiter = swap && target.network === "solana" && ctx.draft.runtime === "solana-local";
+  const jupiter = swap && target.network === "solana";
   const config = isManualSwapConfig(panel.draft?.config)
     ? panel.draft.config
     : { tokenInKey: "", tokenOutKey: "", slippagePct: BLOCK_DEFAULT_SLIPPAGE_PCT };

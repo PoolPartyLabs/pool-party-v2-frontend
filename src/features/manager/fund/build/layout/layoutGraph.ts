@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph
- * @implements-rules-version v2 (POO-2273); POO-2153 rules v1; POO-2213 rules v1; POO-2235 rules v1
+ * @implements-rules-version v2 (POO-2273); POO-2153 rules v1; POO-2213 rules v1; POO-2235 rules v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a pure geometry module: the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event; nothing here is rendered or tracked.
@@ -283,7 +283,7 @@ interface PlacedSpoke {
 
 /** A spoke's group: its chains, its circle, its Bridge, its inner bus and its label (C3, C20). */
 function placeSpoke(d: Draft, spoke: LayoutSpoke, left: number, occurrence: string): PlacedSpoke {
-  const local = spoke.context === "solana-local" && spoke.network === "solana";
+  const local = spoke.network === "solana";
   const circleLeft =
     spoke.chains.length > 0
       ? left + L.GROUP_PAD + spoke.chains.length * (L.CARD_W + L.SIBLING)

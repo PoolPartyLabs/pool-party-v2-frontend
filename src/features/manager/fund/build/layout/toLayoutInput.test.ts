@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name toLayoutInput tests
- * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v1 (POO-2153 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a pure mapping: nothing here is rendered or tracked.
  *
@@ -30,14 +30,14 @@ import { toLayoutInput } from "./toLayoutInput";
 const OPTIONS = { startHereWidth: 420 };
 
 describe("toLayoutInput", () => {
-  it("opts in only the local Solana spoke context without changing the stored plan", () => {
+  // @rule R5
+  it("[R5] carries a Solana spoke by its network alone, with no mode on the input", () => {
     const plan = emptySpokePlan();
     plan.spokes.push({ network: "solana", sharePct: 0, chains: [] });
     const before = structuredClone(plan);
-    const local = toLayoutInput(plan, { runtime: "solana-local" });
-    expect(local.spokes[0]).not.toHaveProperty("context");
-    expect(local.spokes[1]?.context).toBe("solana-local");
-    expect(toLayoutInput(plan).spokes.every((spoke) => !("context" in spoke))).toBe(true);
+    const input = toLayoutInput(plan);
+    expect(input.spokes[1]?.network).toBe("solana");
+    expect(input.spokes.every((spoke) => !("context" in spoke))).toBe(true);
     expect(plan).toEqual(before);
   });
   it("names the hub network", () => {

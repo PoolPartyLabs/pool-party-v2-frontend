@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-019
  * @name mandateDraft
- * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
+ * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2, + POO-2342 rules v1 (one V2 builder, Solana is a network)
  *   POO-2167 rules v4, POO-2151 rules v1, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2333 R4: the last swap and the last bridge are locked)
@@ -110,6 +110,20 @@ export const PROTOCOL_ORDER: readonly ProtocolId[] = [
 
 /** The position protocols. A draft with none of these skips the Pools step (R29). */
 export const DEX_PROTOCOL_IDS: readonly DexProtocolId[] = ["uniswap-v3", "uniswap-v4"];
+
+/**
+ * POO-2342 R4: the Solana network id, and the protocols that exist only on it. Manager V2 has one
+ * builder; a Solana choice is told apart by its network, never by a runtime flag on the draft.
+ */
+export const SOLANA_NETWORK: NetworkId = "solana";
+export const SOLANA_PROTOCOL_IDS: readonly ProtocolId[] = ["kamino", "jupiter", "raydium", "orca"];
+
+/** POO-2342 R8: the DEX protocols that give the draft a Pools step (Uniswap, Raydium and Orca). */
+function isPositionDexProtocol(id: ProtocolId): boolean {
+  return (
+    (DEX_PROTOCOL_IDS as readonly ProtocolId[]).includes(id) || id === "raydium" || id === "orca"
+  );
+}
 
 /**
  * Protocols the product lists but cannot operate (R21). An id listed here renders disabled with
@@ -279,8 +293,6 @@ export interface MandateCaps {
 
 /** The one object the five Mandate screens read and write. */
 export interface MandateDraft {
-  /** Local drawing intent only; never an executable V2 mandate. */
-  runtime?: "solana-local";
   review?: import("./launch/review").ReviewDraft;
   v2Selection?: {
     chains: { chainId: 42161 | 4663; tokens: string[]; uniswapV4PoolIds: string[] }[];
@@ -417,11 +429,7 @@ export function slotsUsed(draft: MandateDraft): number {
 
 /** Whether the mandate can hold liquidity positions, which is what makes Pools exist (R29). */
 export function hasDexProtocol(draft: MandateDraft): boolean {
-  return draft.protocols.some(
-    (p) =>
-      (DEX_PROTOCOL_IDS as readonly ProtocolId[]).includes(p) ||
-      (draft.runtime === "solana-local" && (p === "orca" || p === "raydium")),
-  );
+  return draft.protocols.some(isPositionDexProtocol);
 }
 
 /** The counts the Save and exit dialog and the drafts list print. */
@@ -698,8 +706,10 @@ export function validateStep(
   step: MandateStepKey,
   catalog: MandateCatalog,
 ): StepBlock | null {
-  if (draft.runtime === "solana-local" && step === "pools") return null;
   if (catalog.dataMode === "real") {
+    // POO-2342 R7: the API contract knows Arbitrum and Robinhood only. Every real-mode check reads
+    // the draft without its Solana choices, which the API never sees.
+    const api = withoutSolana(draft);
     if (
       catalog.loading ||
       catalog.error ||
@@ -710,45 +720,45 @@ export function validateStep(
     }
     if (
       step === "protocols" &&
-      !draft.protocols.some((id) => id === "uniswap-v4" || id === "aave-v3")
+      !api.protocols.some((id) => id === "uniswap-v4" || id === "aave-v3")
     ) {
       return { step, reason: "nothing_selected", rowId: null };
     }
     if (
       step === "protocols" &&
-      draft.protocols.some(
+      api.protocols.some(
         (id) => !catalog.protocols.some((protocol) => protocol.id === id && protocol.available),
       )
     )
       return { step, reason: "coming_soon", rowId: null };
     if (step === "tokens") {
       const allowed = [
-        ...catalog.tokensFor(draft.networks, draft.protocols),
-        ...draft.networks.flatMap((network) => {
+        ...catalog.tokensFor(api.networks, api.protocols),
+        ...api.networks.flatMap((network) => {
           const base = catalog.depositTokenFor(network);
           return base ? [base] : [];
         }),
       ];
       if (
-        draft.tokens.length > slotCeiling(draft) ||
-        draft.tokens.some(
+        api.tokens.length > slotCeiling(draft) ||
+        api.tokens.some(
           (token) => !allowed.some((entry) => tokenKey(entry) === tokenKey(token) && entry.priced),
         ) ||
-        draft.networks.some((network) => {
+        api.networks.some((network) => {
           const base = catalog.depositTokenFor(network);
-          return !base || !draft.tokens.some((entry) => tokenKey(entry) === tokenKey(base));
+          return !base || !api.tokens.some((entry) => tokenKey(entry) === tokenKey(base));
         })
       )
         return { step, reason: "not_priced", rowId: null };
     }
     if (step === "pools") {
-      for (const network of draft.networks) {
+      for (const network of api.networks) {
         const selected =
-          draft.positionProtocolsByChain?.[network] ??
-          (draft.protocols.includes("uniswap-v4") ? ["uniswap-v4"] : []);
+          api.positionProtocolsByChain?.[network] ??
+          (api.protocols.includes("uniswap-v4") ? ["uniswap-v4"] : []);
         if (
           selected.includes("uniswap-v4") &&
-          !draft.pools.some((pool) => pool.network === network && pool.protocol === "uniswap-v4")
+          !api.pools.some((pool) => pool.network === network && pool.protocol === "uniswap-v4")
         ) {
           return { step, reason: "nothing_selected", rowId: network };
         }
@@ -758,6 +768,10 @@ export function validateStep(
   if (step === "pools") {
     if (!visibleSteps(draft).includes("pools")) return null;
     if (draft.pools.length > 0) return null;
+    // POO-2342 R8: Raydium and Orca give the Pools step but need no Solana pool here (the Solana
+    // pool search is out of scope). Only a Uniswap protocol asks for a pool.
+    if (!draft.protocols.some((id) => (DEX_PROTOCOL_IDS as readonly ProtocolId[]).includes(id)))
+      return null;
     return { step: "pools", reason: "nothing_selected", rowId: null };
   }
   if (step === "limits") {
@@ -885,6 +899,47 @@ function withUniverseExpiry(before: MandateDraft, after: MandateDraft): MandateD
   return unchanged ? after : { ...after, poolUniverseCount: null };
 }
 
+/**
+ * POO-2342 R4: a Solana protocol is available on Solana only, so leaving Solana takes its protocols,
+ * their cap rows and the Pools step they gave (when no other DEX remains) with it. Mutates `draft`,
+ * which is always a fresh object from {@link syncNetworks}.
+ */
+function dropSolanaProtocols(draft: MandateDraft): void {
+  if (!draft.protocols.some((id) => SOLANA_PROTOCOL_IDS.includes(id))) return;
+  draft.protocols = draft.protocols.filter((id) => !SOLANA_PROTOCOL_IDS.includes(id));
+  const kept = new Set<string>(draft.protocols);
+  draft.caps = {
+    ...draft.caps,
+    protocols: retainKeys(draft.caps.protocols, (key) => kept.has(key)),
+  };
+  if (!draft.protocols.some(isPositionDexProtocol))
+    draft.passedSteps = draft.passedSteps.filter((step) => step !== "pools");
+}
+
+/**
+ * POO-2342 R7: the draft as the V2 API sees it. Solana is not an API network, so its network, its
+ * tokens, its protocols and their caps are left out. The API reads (`toV2MandateSelection`, the
+ * real-mode checks and the pool search) take this view and never name Solana.
+ */
+export function withoutSolana<T extends Omit<MandateDraft, "plan">>(draft: T): T {
+  const solanaProtocols = new Set<string>(SOLANA_PROTOCOL_IDS);
+  return {
+    ...draft,
+    networks: draft.networks.filter((network) => network !== SOLANA_NETWORK),
+    protocols: draft.protocols.filter((id) => !solanaProtocols.has(id)),
+    tokens: draft.tokens.filter((token) => token.network !== SOLANA_NETWORK),
+    pools: draft.pools.filter((pool) => pool.network !== SOLANA_NETWORK),
+    ...(draft.positionProtocolsByChain
+      ? {
+          positionProtocolsByChain: retainKeys(
+            draft.positionProtocolsByChain,
+            (key) => key !== SOLANA_NETWORK,
+          ),
+        }
+      : {}),
+  };
+}
+
 /** Re-derive everything that hangs off the network list. Assumes `networks` is already validated. */
 function syncNetworks(draft: MandateDraft, networks: NetworkId[]): MandateDraft {
   const keep = new Set<NetworkId>(networks);
@@ -938,6 +993,7 @@ export function withNetworks(
   const ordered = catalog.networks.filter((n) => wanted.has(n.id)).map((n) => n.id);
   const next = ordered.includes(HUB_NETWORK) ? ordered : [HUB_NETWORK, ...ordered];
   const synced = syncNetworks(draft, next);
+  if (!next.includes(SOLANA_NETWORK)) dropSolanaProtocols(synced);
   if (draft.dataMode === "real") {
     synced.protocols = synced.protocols.filter((id) => id !== "across");
     if (next.includes("robinhood"))
@@ -982,9 +1038,10 @@ export function withNetworks(
  */
 export function withProtocols(draft: MandateDraft, protocols: ProtocolId[]): MandateDraft {
   const unavailable = new Set<string>(UNAVAILABLE_PROTOCOLS);
-  const localProtocols: readonly ProtocolId[] = ["kamino", "jupiter", "raydium", "orca"];
+  // POO-2342 R4: a Solana protocol exists only while the draft names the Solana network.
+  const onSolana = draft.networks.includes(SOLANA_NETWORK);
   const known = new Set<string>(
-    PROTOCOL_ORDER.filter((id) => draft.runtime === "solana-local" || !localProtocols.includes(id)),
+    PROTOCOL_ORDER.filter((id) => onSolana || !SOLANA_PROTOCOL_IDS.includes(id)),
   );
   const wanted = lockedProtocols(draft);
   for (const id of protocols) {
@@ -1000,23 +1057,25 @@ export function withProtocols(draft: MandateDraft, protocols: ProtocolId[]): Man
   }
   const next = PROTOCOL_ORDER.filter((id) => wanted.has(id));
   const keptIds = new Set<string>(next);
-  const dex = next.some((p) => (DEX_PROTOCOL_IDS as readonly ProtocolId[]).includes(p));
+  const dex = next.some(isPositionDexProtocol);
   return withUniverseExpiry(draft, {
     ...draft,
     protocols: next,
     ...(draft.dataMode === "real"
       ? {
           positionProtocolsByChain: Object.fromEntries(
-            draft.networks.map((network) => [
-              network,
-              next.filter(
-                (id) =>
-                  (id === "uniswap-v4" &&
-                    (!draft.protocols.includes("uniswap-v4") ||
-                      draft.positionProtocolsByChain?.[network]?.includes("uniswap-v4"))) ||
-                  (id === "aave-v3" && network === "arbitrum"),
-              ),
-            ]),
+            draft.networks
+              .filter((network) => network !== SOLANA_NETWORK)
+              .map((network) => [
+                network,
+                next.filter(
+                  (id) =>
+                    (id === "uniswap-v4" &&
+                      (!draft.protocols.includes("uniswap-v4") ||
+                        draft.positionProtocolsByChain?.[network]?.includes("uniswap-v4"))) ||
+                    (id === "aave-v3" && network === "arbitrum"),
+                ),
+              ]),
           ),
         }
       : {}),
@@ -1140,13 +1199,15 @@ export function addToken(
   catalog: MandateCatalog,
 ): MandateReducerResult {
   const rowId = tokenKey(token);
-  if (
-    draft.runtime === "solana-local"
-      ? !(token.priced || token.visualEligible)
+  // POO-2342 R4: a Solana token needs only its local descriptor (no price feed); every other
+  // network keeps its pricing rule.
+  const accepts = (entry: MandateCatalogToken): boolean =>
+    entry.network === SOLANA_NETWORK
+      ? entry.visualEligible === true
       : catalog.dataMode === "real"
-        ? !token.priced
-        : !isPricedSymbol(token.symbol)
-  ) {
+        ? entry.priced
+        : isPricedSymbol(entry.symbol);
+  if (!accepts(token)) {
     return { blocked: { step: "tokens", reason: "not_priced", rowId } };
   }
   const wanted = token.symbol.toLowerCase();
@@ -1154,7 +1215,7 @@ export function addToken(
     .tokensFor(draft.networks, draft.protocols)
     .filter(
       (t) =>
-        (t.priced || (draft.runtime === "solana-local" && t.visualEligible)) &&
+        (t.network === SOLANA_NETWORK ? t.visualEligible === true : t.priced) &&
         t.symbol.toLowerCase() === wanted,
     )
     .map(refFromCatalog);

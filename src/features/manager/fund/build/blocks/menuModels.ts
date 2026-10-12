@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-024
  * @name menuModels
- * @implements-rules-version v1 (POO-2155 rules v1)
+ * @implements-rules-version v1 (POO-2155 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure module. A choice, a refusal and a drop are reported by
  *   `useBuildCanvas` through `onEvent`; the Build screen (PP-MGR-SCR-002, S7) maps them to events.
@@ -206,8 +206,7 @@ function insertOption(
   const { copy } = ctx;
   const id = `insert:${slot.side}:${slot.blockId}:${choice.kind}`;
   if (choice.family === "flow") {
-    const jupiter =
-      choice.kind === "swap" && network === "solana" && ctx.draft.runtime === "solana-local";
+    const jupiter = choice.kind === "swap" && network === "solana";
     if (jupiter && !ctx.draft.protocols.includes("jupiter")) return null;
     return {
       id,
@@ -352,7 +351,6 @@ export function dropTargets(item: PaletteDragItem, ctx: MenuContext): DropTarget
       item.family === "flow" &&
       item.kind === "swap" &&
       network === "solana" &&
-      ctx.draft.runtime === "solana-local" &&
       !ctx.draft.protocols.includes("jupiter")
     )
       continue;
