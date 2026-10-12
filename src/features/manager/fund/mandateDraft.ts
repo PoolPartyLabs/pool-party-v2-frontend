@@ -138,8 +138,17 @@ export const MAX_TOKEN_SLOTS = 16;
  */
 export const BASKET_TOKEN_SLOTS = 100;
 
-/** The row id the Limits step and `cap_zero` use for the one cap of All tokens mode (R10). */
+/**
+ * R9: the row id of the "All tokens" row in Selected mode. This row sets one cap on every token in
+ * the list.
+ */
 export const ALL_TOKENS_ROW_ID = "all-tokens";
+
+/**
+ * R10: the row id of the "Every token" row in All mode, and the `cap_zero` row id of that mode. The
+ * row reads and writes the one stored cap `allTokensCap`.
+ */
+export const EVERY_TOKEN_ROW_ID = "every-token";
 
 /** The hub. Deposits and withdrawals happen here, and it can never leave a mandate (R15). */
 export const HUB_NETWORK: NetworkId = "arbitrum";
@@ -623,8 +632,8 @@ export function setAllTokensCap(draft: MandateDraft, cap: MandateCap): MandateDr
 /**
  * POO-2332 R8: the cap a row reads, with its start value when nothing is stored.
  *
- * A token starts at 0% with No cap off. A network and a protocol start with No cap on. The All
- * tokens row ({@link ALL_TOKENS_ROW_ID}) starts like a token. Real data mode has no start values
+ * A token starts at 0% with No cap off. A network and a protocol start with No cap on. The Every
+ * token row ({@link EVERY_TOKEN_ROW_ID}) starts like a token. Real data mode has no start values
  * (R14): it returns the stored cap, or undefined, as it did before.
  */
 export function effectiveCap(
@@ -742,7 +751,7 @@ export function validateStep(
     // R12: a token cap that is on and at 0% stops Next. All tokens mode checks its one cap.
     if (tokenModeOf(draft) === "all") {
       return isCapZero(allTokensCapOf(draft))
-        ? { step: "limits", reason: "cap_zero", rowId: ALL_TOKENS_ROW_ID }
+        ? { step: "limits", reason: "cap_zero", rowId: EVERY_TOKEN_ROW_ID }
         : null;
     }
     for (const token of rows.tokens) {

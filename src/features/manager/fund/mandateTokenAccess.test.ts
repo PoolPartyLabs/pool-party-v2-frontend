@@ -13,13 +13,13 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ANALYTICS_EVENTS, ANALYTICS_MANDATE_BLOCK_REASONS } from "@/lib/analytics/events";
 import { buildMandateCatalog, type MandateCatalogToken } from "./mandateCatalog";
 import {
-  ALL_TOKENS_ROW_ID,
   addToken,
   BASKET_TOKEN_SLOTS,
   CAP_STEP_PCT,
   capRows,
   clearCap,
   createEmptyDraft,
+  EVERY_TOKEN_ROW_ID,
   effectiveCap,
   isBlocked,
   isCapZero,
@@ -358,7 +358,7 @@ describe("R10 the Every token row in All mode", () => {
   it("defaults to 0% with No cap off", () => {
     // @rule R10
     const draft = setTokenMode(empty(), "all");
-    expect(effectiveCap(draft, "all", ALL_TOKENS_ROW_ID)).toEqual({ noCap: false, pct: 0 });
+    expect(effectiveCap(draft, "all", EVERY_TOKEN_ROW_ID)).toEqual({ noCap: false, pct: 0 });
   });
 
   it("stores the one cap on the draft and leaves the token caps alone", () => {
@@ -434,7 +434,7 @@ describe("R12 an enabled 0% cap blocks Next", () => {
     expect(validateStep(draft, "limits", catalog)).toEqual({
       step: "limits",
       reason: "cap_zero",
-      rowId: ALL_TOKENS_ROW_ID,
+      rowId: EVERY_TOKEN_ROW_ID,
     });
     expect(
       validateStep(setAllTokensCap(draft, { noCap: false, pct: 5 }), "limits", catalog),

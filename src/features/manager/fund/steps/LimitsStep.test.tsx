@@ -26,7 +26,9 @@ import {
 } from "../../../../../tests/utils/renderWithProviders";
 import { buildMandateCatalog, type MandateCatalog } from "../mandateCatalog";
 import {
+  ALL_TOKENS_ROW_ID,
   createEmptyDraft,
+  EVERY_TOKEN_ROW_ID,
   type MandateDraft,
   type MandateTokenRef,
   type StepBlock,
@@ -183,6 +185,19 @@ describe("LimitsStep", () => {
     await userEvent.setup().click(noCap);
     apply();
     expect(within(row("robinhood")).getByRole("slider")).toHaveValue("40");
+  });
+
+  // @rule R10
+  it("gives the All tokens row and the Every token row their own row ids", () => {
+    const { unmount } = renderStep();
+    expect(row(ALL_TOKENS_ROW_ID)).toHaveTextContent("All tokens");
+    expect(document.querySelector(`[data-mandate-row="${EVERY_TOKEN_ROW_ID}"]`)).toBeNull();
+    unmount();
+
+    renderStep(figmaDraft({ tokenMode: "all" }));
+    expect(row(EVERY_TOKEN_ROW_ID)).toHaveTextContent("Every token");
+    expect(document.querySelector(`[data-mandate-row="${ALL_TOKENS_ROW_ID}"]`)).toBeNull();
+    expect(ALL_TOKENS_ROW_ID).not.toBe(EVERY_TOKEN_ROW_ID);
   });
 
   // @rule R39

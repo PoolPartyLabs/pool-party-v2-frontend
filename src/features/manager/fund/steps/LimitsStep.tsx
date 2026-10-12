@@ -68,6 +68,7 @@ import {
   CAP_STEP_PCT,
   capRows,
   clearCap,
+  EVERY_TOKEN_ROW_ID,
   effectiveCap,
   HUB_NETWORK,
   isCapZero,
@@ -226,8 +227,9 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
   }, [blockedRowId, blockedReason]);
 
   // R13: a refused Next with `cap_zero` scrolls to the token cap control and blinks it 2 times. The
-  // control is the "All tokens" row (Selected mode) or the "Every token" row (All mode); both carry
-  // the same row id. `ownBlock` is a new object on every press, so a second press blinks again.
+  // control is the "All tokens" row (Selected mode) or the "Every token" row (All mode). In All mode
+  // the block row id is the Every token row. `ownBlock` is a new object on every press, so a second
+  // press blinks again.
   useEffect(() => {
     if (ownBlock?.reason !== "cap_zero") return;
     const target =
@@ -456,7 +458,7 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
   function everyTokenRow() {
     const cap = allTokensCapOf(draft);
     return capRow({
-      id: ALL_TOKENS_ROW_ID,
+      id: EVERY_TOKEN_ROW_ID,
       name: t("fundBuilder.limits.everyTokenRow.title"),
       caption: t("fundBuilder.limits.everyTokenRow.caption"),
       logo: <AllTokensMark />,
