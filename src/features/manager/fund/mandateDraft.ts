@@ -385,18 +385,19 @@ export function slotsUsed(draft: MandateDraft): number {
 }
 
 /** POO-2332 R1/R14: the token access mode. Real data mode is always "selected". */
-export function tokenModeOf(draft: MandateDraft): MandateTokenMode {
+export function tokenModeOf(draft: Pick<MandateDraft, "dataMode" | "tokenMode">): MandateTokenMode {
   if (draft.dataMode === "real") return "selected";
   return draft.tokenMode === "all" ? "all" : "selected";
 }
 
 /**
- * POO-2332 R2/R4/R14: the slot ceiling for this draft. Real data mode keeps the 16 entries the
- * contracts hold. All mode has no ceiling. A mock Selected-mode draft holds 100.
+ * POO-2332 R2/R7/R14: the ceiling of the saved token list. Real data mode keeps the 16 entries the
+ * contracts hold. A mock draft holds 100 in both modes. All mode gives access to every token and
+ * shows "No limit" (R4), but the saved list stays at 100 or less. Thus a switch back to Selected
+ * cannot show more than 100 of 100.
  */
 export function maxTokenSlots(draft: MandateDraft): number {
   if (draft.dataMode === "real") return MAX_TOKEN_SLOTS;
-  if (tokenModeOf(draft) === "all") return Number.POSITIVE_INFINITY;
   return MAX_MANDATE_SLOTS;
 }
 

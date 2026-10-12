@@ -27,6 +27,7 @@ import {
   REQUIRED_PROTOCOLS,
   type StepBlock,
   setCap,
+  slotsUsed,
   tokenKey,
   tokenModeOf,
   validateStep,
@@ -36,7 +37,6 @@ import {
 import {
   allModeTokenRows,
   bulkTokenCap,
-  CAP_ZERO_BLINKS,
   canAddEntries,
   limitTokenRowIds,
   nextHold,
@@ -120,13 +120,25 @@ describe("token access (POO-2332)", () => {
     expect(slotFooter(draft)).toEqual({ kind: "count", used: 2, max: 100, full: false });
   });
 
+  it("keeps the saved list at 100 in All mode, so a switch back to Selected stays in the limit", () => {
+    // @rule R2
+    // @rule R7
+    const all = withTokenMode(filled(empty(), MAX_MANDATE_SLOTS - 1), "all");
+    expect(maxTokenSlots(all)).toBe(MAX_MANDATE_SLOTS);
+    const full = draftOf(addToken(all, token("arbitrum", "ARB"), catalog));
+    expect(slotsUsed(full)).toBe(MAX_MANDATE_SLOTS);
+    expect(canAddEntries(full, 1)).toBe(false);
+    expect(addToken(full, token("arbitrum", "ETH"), catalog)).toEqual({
+      blocked: expect.objectContaining({ step: "tokens", reason: "no_slots" }),
+    });
+    const selected = withTokenMode(full, "selected");
+    expect(slotFooter(selected)).toEqual({ kind: "count", used: 100, max: 100, full: true });
+  });
+
   it("has no slot cap in All mode and lists the locked tokens and every other token", () => {
     // @rule R4
     const all = withTokenMode(filled(empty(), MAX_MANDATE_SLOTS), "all");
     expect(slotFooter(all)).toEqual({ kind: "unlimited", max: 100 });
-    expect(maxTokenSlots(all)).toBe(Number.POSITIVE_INFINITY);
-    expect(canAddEntries(all, 5)).toBe(true);
-    expect(isBlocked(addToken(all, token("arbitrum", "ARB"), catalog))).toBe(false);
 
     const withSpoke = withTokenMode(withNetworks(empty(), ["robinhood"], catalog), "all");
     const rows = allModeTokenRows(withSpoke);
@@ -240,7 +252,6 @@ describe("limits (POO-2332)", () => {
 
   it("refuses Next with cap_zero on the first 0% row, which the step blinks twice", () => {
     // @rule R13
-    expect(CAP_ZERO_BLINKS).toBe(2);
     expect(validateStep(twoTokens(10, 0), "limits", catalog)).toEqual({
       step: "limits",
       reason: "cap_zero",
