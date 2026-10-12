@@ -10,7 +10,6 @@
 import { describe, expect, it } from "vitest";
 import { LAYOUT } from "./layoutConstants";
 import {
-  bandShortfall,
   type LaneLine,
   laneCount,
   laneYs,
@@ -203,19 +202,11 @@ describe("laneYs", () => {
   it("keeps at least LANE_PITCH between lanes whenever the band holds them", () => {
     for (const count of [2, 3, 7, 8]) {
       const ys = laneYs(count, 100, 58);
-      expect(bandShortfall(count, 100, 58)).toBe(0);
+      // A band of 42 px holds 7 gaps of 6 px. These counts need at most 7 gaps.
+      expect((count - 1) * LAYOUT.LANE_PITCH).toBeLessThanOrEqual(100 - 58);
       for (let index = 1; index < ys.length; index += 1)
         expect((ys[index] ?? 0) - (ys[index - 1] ?? 0)).toBeGreaterThanOrEqual(LAYOUT.LANE_PITCH);
     }
-  });
-});
-
-describe("bandShortfall", () => {
-  it("is 0 when the band holds the lanes at LANE_PITCH, and the missing height when it does not", () => {
-    // A band of 42 px holds 8 lanes at 6 px: 7 gaps.
-    expect(bandShortfall(8, 100, 58)).toBe(0);
-    expect(bandShortfall(10, 100, 58)).toBe(12);
-    expect(bandShortfall(1, 100, 100)).toBe(0);
   });
 });
 

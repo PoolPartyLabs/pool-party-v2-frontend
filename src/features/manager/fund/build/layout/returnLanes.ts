@@ -152,19 +152,14 @@ export function laneCount(lanes: readonly number[]): number {
  * The y of each of `count` lanes, top lane first. The lowest lane sits at `lowest`. The lanes
  * keep a LINK between them when the band allows it and get closer when it does not. A pitch is a
  * multiple of half a pixel, so two lanes never share a y, and no lane is above `bandTop`.
+ * This function does not grow the band. The nodes stay at the Figma positions, so a band that
+ * is too short gives a pitch under LANE_PITCH. The layout tests check that it stays at or above
+ * LANE_PITCH_MIN.
  */
 export function laneYs(count: number, lowest: number, bandTop: number): number[] {
   const fit = count > 1 ? Math.floor(((lowest - bandTop) / (count - 1)) * 2) / 2 : 0;
   const pitch = Math.min(LAYOUT.LINK, fit);
   return Array.from({ length: count }, (_, index) => lowest - (count - 1 - index) * pitch);
-}
-
-/**
- * The height a band is short of, in px, when `count` lanes keep the least pitch (LANE_PITCH)
- * between them. It is 0 when the band holds them.
- */
-export function bandShortfall(count: number, lowest: number, bandTop: number): number {
-  return Math.max(0, (count - 1) * LAYOUT.LANE_PITCH - (lowest - bandTop));
 }
 
 /** A chain that returns money, as the planner reads it. */

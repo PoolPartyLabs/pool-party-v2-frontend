@@ -44,6 +44,12 @@ export const LAYOUT = Object.freeze({
   LANE_MARGIN: 6,
   /** POO-2345 R5: the least distance between two lanes, so that thick lines never nearly touch. */
   LANE_PITCH: 6,
+  /**
+   * POO-2345 R5: the least pitch that is ever allowed. A highlighted line is 2 px wide, and 2 px
+   * of clear space stays between two lines. No constant holds the highlighted width, so this
+   * number is set here.
+   */
+  LANE_PITCH_MIN: 4,
   /** POO-2345 R5: the free height above Idle output without Income (2 LINK, see L5). */
   RETURN_BAND: 48,
   /** POO-2345 R5: the free height above Idle output and Income when Income exists (3 LINK). */

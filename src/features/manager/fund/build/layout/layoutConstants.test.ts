@@ -43,6 +43,9 @@ describe("LAYOUT constants", () => {
     expect(LAYOUT.LANE_PITCH).toBe(6);
     // A 2 px highlighted line still leaves clear space to its neighbour lane.
     expect(LAYOUT.LANE_PITCH).toBeGreaterThanOrEqual(3 * LAYOUT.LINE_W);
+    // No constant holds the width of a highlighted line. It is 2 px, so the least pitch is 4 px.
+    expect(LAYOUT.LANE_PITCH_MIN).toBe(4);
+    expect(LAYOUT.LANE_PITCH_MIN).toBeLessThanOrEqual(LAYOUT.LANE_PITCH);
     expect(LAYOUT.RETURN_BAND).toBe(2 * LAYOUT.LINK);
     expect(LAYOUT.RETURN_BAND_INCOME).toBe(3 * LAYOUT.LINK);
     expect(LAYOUT.OFFSET_ITERATIONS).toBe(12);

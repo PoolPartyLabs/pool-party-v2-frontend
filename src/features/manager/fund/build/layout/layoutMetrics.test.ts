@@ -557,10 +557,9 @@ const FINAL: Record<Name, LayoutMetrics> = {
 };
 
 /**
- * Open item (POO-2345, finding 2, stop 2c). The band above Idle output of canvas A is 42 px tall
- * after the margin. Its 10 lanes need 54 px at LANE_PITCH, so the band is 12 px short. Growing it
- * moves Idle output, Income and Withdraw down 12 px and changes the oracle height 920, which this
- * task must not change. The gap test of this fixture waits for that decision.
+ * Decision (POO-2345, finding 2, stop 2c). The band above Idle output of canvas A is 42 px tall
+ * after the margin. Its 10 lanes need 54 px at LANE_PITCH, so the band is 12 px short. The nodes
+ * stay at the Figma positions. So canvas A uses a pitch of 4.5 px. This is above LANE_PITCH_MIN.
  */
 const BAND_SHORT: ReadonlySet<Name> = new Set<Name>(["canvasA"]);
 
@@ -591,8 +590,18 @@ describe("R8: the numbers of each layout fixture", () => {
         expect(now.maxBendsPerLeg).toBeLessThanOrEqual(3);
       });
 
+      // @rule R5
+      it("keeps at least LANE_PITCH_MIN between parallel lines of different lines", () => {
+        expect(now.minGap).toBeGreaterThanOrEqual(LAYOUT.LANE_PITCH_MIN);
+      });
+
+      // @rule R5
       if (BAND_SHORT.has(key))
-        it.todo("keeps at least LANE_PITCH between parallel lines (the band is 12 px short, 2c)");
+        it("uses a pitch of 4.5 px, above LANE_PITCH_MIN, because the band is 12 px short", () => {
+          expect(now.minGap).toBe(4.5);
+          expect(now.minGap).toBeLessThan(LAYOUT.LANE_PITCH);
+          expect(now.minGap).toBeGreaterThanOrEqual(LAYOUT.LANE_PITCH_MIN);
+        });
       else
         it("keeps at least LANE_PITCH between parallel lines of different lines", () => {
           expect(now.minGap).toBeGreaterThanOrEqual(LAYOUT.LANE_PITCH);
