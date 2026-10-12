@@ -56,6 +56,12 @@ import {
   validateStep,
   visibleSteps,
   withNetworks,
+  withoutSolana,
+  withoutSolanaNetworks,
+  withoutSolanaPools,
+  withoutSolanaPositionProtocols,
+  withoutSolanaProtocols,
+  withoutSolanaTokens,
   withoutUnavailableProtocols,
   withProtocols,
 } from "./mandateDraft";
@@ -1414,5 +1420,53 @@ describe("protocol minimums (POO-2333)", () => {
       "uniswap-v3-swap",
       "across",
     ]);
+  });
+});
+
+describe("withoutSolana", () => {
+  // @rule R7
+  it("equals the draft built from the five per-list helpers, for a draft with Solana in each list", () => {
+    const solToken = {
+      address: "So11111111111111111111111111111111111111112",
+      symbol: "SOL",
+      name: "Solana",
+      network: "solana" as const,
+      logoUrl: null,
+      locked: false,
+    };
+    const base = empty();
+    const draft: MandateDraft = {
+      ...base,
+      networks: ["arbitrum", "solana"],
+      protocols: ["uniswap-v3-swap", "kamino", "raydium"],
+      tokens: [...base.tokens, solToken],
+      pools: [pool({ id: "evm-pool" }), pool({ id: "sol-pool", network: "solana" })],
+      positionProtocolsByChain: { arbitrum: ["uniswap-v4"], solana: ["aave-v3"] },
+    };
+
+    const byHelpers: MandateDraft = {
+      ...draft,
+      networks: withoutSolanaNetworks(draft.networks),
+      protocols: withoutSolanaProtocols(draft.protocols),
+      tokens: withoutSolanaTokens(draft.tokens),
+      pools: withoutSolanaPools(draft.pools),
+      positionProtocolsByChain: withoutSolanaPositionProtocols(
+        draft.positionProtocolsByChain ?? {},
+      ),
+    };
+    const api = withoutSolana(draft);
+
+    expect(api).toEqual(byHelpers);
+    expect(api.networks).toEqual(["arbitrum"]);
+    expect(api.protocols).not.toContain("kamino");
+    expect(api.protocols).not.toContain("raydium");
+    expect(api.tokens.some((token) => token.network === "solana")).toBe(false);
+    expect(api.pools.map((p) => p.id)).toEqual(["evm-pool"]);
+    expect(api.positionProtocolsByChain).toEqual({ arbitrum: ["uniswap-v4"] });
+  });
+
+  // @rule R7
+  it("keeps positionProtocolsByChain absent when the draft has none", () => {
+    expect("positionProtocolsByChain" in withoutSolana(empty())).toBe(false);
   });
 });
