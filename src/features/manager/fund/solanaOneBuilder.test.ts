@@ -170,8 +170,18 @@ describe("R6: a Solana draft saves to local storage and reads back the same", ()
       address: `0x${"cd".repeat(20)}`,
       network: "arbitrum" as const,
       protocol: "uniswap-v4" as const,
-      token0: { address: tokens[0].address, symbol: "USDC", name: "USD Coin", logoUrl: null },
-      token1: { address: tokens[1].address, symbol: "WSOL", name: "Wrapped SOL", logoUrl: null },
+      token0: {
+        address: tokens[0]?.address ?? "",
+        symbol: "USDC",
+        name: "USD Coin",
+        logoUrl: null,
+      },
+      token1: {
+        address: tokens[1]?.address ?? "",
+        symbol: "WSOL",
+        name: "Wrapped SOL",
+        logoUrl: null,
+      },
       feeBps: 30,
       feeTier: 3000,
       tvlUsd: 1000,
@@ -186,7 +196,7 @@ describe("R6: a Solana draft saves to local storage and reads back the same", ()
       caps: {
         networks: { solana: { noCap: false, pct: 25 }, arbitrum: { noCap: true, pct: 0 } },
         protocols: { kamino: { noCap: false, pct: 10 }, orca: { noCap: true, pct: 0 } },
-        tokens: { [`solana:${tokens[1].address}`]: { noCap: false, pct: 5 } },
+        tokens: { [`solana:${tokens[1]?.address ?? ""}`]: { noCap: false, pct: 5 } },
       },
       plan: solanaPlan(),
     };
