@@ -5,8 +5,9 @@
  * @analytics-events none, a data adapter and reducers
  *
  * Pure-logic proof of the rules of POO-2343 that need no render: the Solana pool search (R4), the
- * draft that holds Raydium pools (R6), the Raydium block pool (R7) and the chart (R8). The DEX
- * Screener action is a mock. There is no network.
+ * draft that holds Raydium pools (R6) and the events of the Solana search (R10). The DEX Screener
+ * action is a mock. There is no network. The block pool (R7) and the chart (R8) have their own
+ * test files.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -21,6 +22,7 @@ vi.mock("@/lib/api/v2/actions", () => ({
 }));
 vi.mock("./raydiumPoolsAction", () => ({ getRaydiumPoolsAction: vi.fn() }));
 
+import { isAnalyticsErrorCodeShape } from "@/lib/analytics/events";
 import { ApiError } from "@/lib/api/errors";
 import { getCatalogPoolsAction } from "@/lib/api/v2/actions";
 import {
@@ -198,5 +200,30 @@ describe("R6: selected Raydium pools save in the draft", () => {
     expect(reloaded?.pools[0]?.feeBps).toBeNull();
     expect(reloaded?.pools[0]?.feeTier).toBeNull();
     expect(reloaded?.protocols).toContain("raydium");
+  });
+});
+
+describe("R10: the Solana search sends the pool search events of today", () => {
+  // @rule R10
+  it("[R10] fails with a coded error that holds no address, and the step reports a known code", async () => {
+    vi.mocked(getRaydiumPoolsAction).mockResolvedValue({
+      ok: false,
+      error: { code: "bad_shape" },
+    });
+
+    const error = await searchMandatePools({
+      network: "solana",
+      tokenAddress: SOL,
+      secondTokenAddress: USDC,
+      protocols: ["raydium"],
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(ApiError);
+    const { code, message } = error as ApiError;
+    // No mint reaches the error. The step maps it to the code of today, so no new value is sent.
+    expect(`${code} ${message}`).not.toContain(SOL);
+    expect(`${code} ${message}`).not.toContain(USDC);
+    expect(isAnalyticsErrorCodeShape(code)).toBe(true);
+    expect(isAnalyticsErrorCodeShape("POOLS_FETCH_FAILED")).toBe(true);
   });
 });
