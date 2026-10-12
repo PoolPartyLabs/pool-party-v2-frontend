@@ -17,7 +17,6 @@ import {
   classifyCrossings,
   crossingLowerBound,
   findConflicts,
-  isForcedCrossing,
   type LayoutMetrics,
   measureLayout,
 } from "./layoutMetrics";
@@ -385,8 +384,9 @@ describe("crossingLowerBound (R2 and R8)", () => {
   });
 });
 
-describe("isForcedCrossing (R2 and R8)", () => {
-  const RETURN = ["income:converted:f:leg:1", "principal:chain:p"] as [string, string];
+describe("classifyCrossings (R2 and R8)", () => {
+  /** The pairs of crossing edges that R2 forces, and the bound of the layout. */
+  const forcedOf = (layout: GraphLayout) => classifyCrossings(layout).forced;
 
   it("forces a crossing when the income starts left and ends right of the principal", () => {
     // Income: 10 -> 90. Principal: 60 -> 30. The order of the starts is the opposite of the ends.
@@ -396,8 +396,9 @@ describe("isForcedCrossing (R2 and R8)", () => {
       edge("principal:chain:p", "principal", [60, 0], [60, 80]),
       edge("principal:chain:p:leg:1", "principal", [60, 80], [30, 80]),
     ]);
-    expect(isForcedCrossing(inverted, RETURN)).toBe(true);
-    expect(isForcedCrossing(inverted, [RETURN[1], RETURN[0]])).toBe(true);
+    expect(forcedOf(inverted)).toEqual([["income:converted:f:leg:1", "principal:chain:p"]]);
+    expect(classifyCrossings(inverted).unforced).toEqual([]);
+    expect(crossingLowerBound(inverted)).toBe(1);
   });
 
   it("splits the crossings of a layout into forced and unforced", () => {
@@ -422,7 +423,10 @@ describe("isForcedCrossing (R2 and R8)", () => {
       edge("principal:chain:p", "principal", [20, 0], [20, 80]),
       edge("principal:chain:p:leg:1", "principal", [20, 80], [60, 80]),
     ]);
-    expect(isForcedCrossing(keeps, RETURN)).toBe(false);
+    // The income horizontal (y 40, x 10 to 30) meets the principal vertical (x 20): one crossing.
+    expect(measureLayout(keeps).crossings).toBe(1);
+    expect(forcedOf(keeps)).toEqual([]);
+    expect(crossingLowerBound(keeps)).toBe(0);
   });
 
   it("does not force two lines of the same class", () => {
@@ -432,7 +436,9 @@ describe("isForcedCrossing (R2 and R8)", () => {
       edge("principal:chain:b", "principal", [60, 0], [60, 80]),
       edge("principal:chain:b:leg:1", "principal", [60, 80], [30, 80]),
     ]);
-    expect(isForcedCrossing(same, ["principal:chain:a:leg:1", "principal:chain:b"])).toBe(false);
+    expect(measureLayout(same).crossings).toBe(1);
+    expect(forcedOf(same)).toEqual([]);
+    expect(crossingLowerBound(same)).toBe(0);
   });
 
   it("does not force an edge that is not a return route", () => {
@@ -440,7 +446,8 @@ describe("isForcedCrossing (R2 and R8)", () => {
       edge("link:x", "income", [10, 0], [10, 50]),
       edge("principal:chain:p", "principal", [0, 25], [20, 25]),
     ]);
-    expect(isForcedCrossing(link, ["link:x", "principal:chain:p"])).toBe(false);
+    expect(measureLayout(link).crossings).toBe(1);
+    expect(forcedOf(link)).toEqual([]);
   });
 
   /** An income of chain a and a principal of chain b, each through a Bridge (rects at y=10). */
@@ -460,17 +467,16 @@ describe("isForcedCrossing (R2 and R8)", () => {
   }
 
   it("does not force two lines that pass the same Bridge", () => {
+    // The two lines start and end in opposite orders, but the Bridge swaps them: no forced pair.
     const layout = throughBridges(60);
-    expect(isForcedCrossing(layout, ["income:returned:a", "principal:returned:b:leg:1"])).toBe(
-      false,
-    );
+    expect(forcedOf(layout)).toEqual([]);
+    expect(crossingLowerBound(layout)).toBe(0);
   });
 
   it("forces the same two lines when they pass two Bridges", () => {
     const layout = throughBridges(210);
-    expect(isForcedCrossing(layout, ["income:returned:a", "principal:returned:b:leg:1"])).toBe(
-      true,
-    );
+    expect(measureLayout(layout).crossings).toBe(1);
+    expect(forcedOf(layout)).toEqual([["income:returned:a", "principal:returned:b:leg:1"]]);
   });
 });
 

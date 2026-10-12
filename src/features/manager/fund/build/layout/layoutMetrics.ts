@@ -4,8 +4,9 @@
  * @implements-rules-version v2 (POO-2345)
  * @analytics-events none, a pure measuring module: nothing here is rendered or tracked.
  *
- * Counts how well the lines of a {@link GraphLayout} are routed. It reads only `layout.edges`.
- * Each edge is one straight, orthogonal segment.
+ * Counts how well the lines of a {@link GraphLayout} are routed. It reads `layout.edges` and
+ * `layout.bridges` (the Bridges tell which lines pass the same Bridge). Each edge is one straight,
+ * orthogonal segment.
  *
  * - A LINE is one leg: the segments that share an edge id before the `:leg:<n>` suffix. A segment
  *   with no suffix is a line of its own (a stub, a bus, a link).
@@ -19,7 +20,9 @@
  *   A turn of 90 degrees is one bend. A reversal on the same axis is a U-turn and counts as two.
  * - The MINIMUM GAP is the least distance between two parallel segments of different lines that
  *   overlap when projected on their axis. A trunk does not count. A shared length that is not a
- *   trunk is a gap of 0.
+ *   trunk is a gap of 0. The gap does not measure two segments that meet at a right angle (a
+ *   near miss between a horizontal and a vertical), and it does not measure two collinear
+ *   segments that end one after the other with a space between them.
  *
  * - A FORCED CROSSING (rules v2, R2 and R8) is a crossing of an income line and a principal line
  *   whose full paths start in one order and end in the opposite order. The principal leaves the
@@ -314,11 +317,6 @@ function forcedPair(families: Map<string, Family>, pair: Pair): boolean {
   const a = first ? families.get(first) : undefined;
   const b = second ? families.get(second) : undefined;
   return a !== undefined && b !== undefined && forcedBetween(a, b);
-}
-
-/** True when the crossing of two edges is forced by rule R2 (see {@link forcedBetween}). */
-export function isForcedCrossing(layout: GraphLayout, pair: Pair): boolean {
-  return forcedPair(familiesOf(layout, segmentsOf(layout)), pair);
 }
 
 /**
