@@ -15,11 +15,8 @@ This wizard change is pre-merge code delivery, without a deployment or native-br
 acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
 Not available; `solanaSpoke` stays off.
 
-POO-2342 rules v1: Solana is a network of the one V2 builder, not a mode. `BuildScreen` keeps its existing palette, templates, cards and Configure panel. Local
-Manage is an inline panel mode backed by the retained `SolanaLocalManageHost`, not another
-canvas. After first Build entry, the shell hides the mounted Build on Mandate/Review;
+POO-2342 rules v1: Solana is a network of the one V2 builder, not a mode. `BuildScreen` keeps its existing palette, templates, cards and Configure panel. Rules v2 (R12): during fund creation the builder shows only Configure, on all networks. It has no Configure and Manage toggle and no Manage panel. Manage appears only after launch. After first Build entry, the shell hides the mounted Build on Mandate/Review;
 selection checkpoints, leave guards, dialogs and reveal effects run only while it is active.
-Pending Configure/Manage status is also reported while hidden to the local session owner.
 
 The local adapter writes the shared plan reducers against the current mandate. Case-sensitive
 USDC/WSOL mint identities and protocol selection remain required for the configured position

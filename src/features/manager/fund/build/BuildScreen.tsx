@@ -64,7 +64,6 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/Button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/Dialog";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useTrackView } from "@/lib/analytics/useTrackView";
@@ -74,12 +73,6 @@ import { StrategyChartSurface } from "../charts/StrategyChartSurface";
 import type { MandateCatalog } from "../mandateCatalog";
 import { isBlocked, type MandateDraft } from "../mandateDraft";
 import { LOCAL_PANEL_BODIES } from "../solana-preview/SolanaBuilderPanelBodies";
-import { SolanaLocalManageHost } from "../solana-preview/SolanaLocalManageHost";
-import {
-  applyLocalManageConfig,
-  localManageAllocations,
-  localManageBlocks,
-} from "../solana-preview/solanaBuildManageBinding";
 import type { UseMandateDraftResult } from "../useMandateDraft";
 import { BuildPalette } from "./blocks/BuildPalette";
 import { CanvasMenu } from "./blocks/CanvasMenu";
@@ -206,12 +199,6 @@ export function BuildScreen({
   const analytics = useAnalytics();
   // [POO-2342 R5] Solana is a network of the draft, not a mode of the builder.
   const local = draft.networks.includes("solana");
-  const [localPanelMode, setLocalPanelMode] = useState<"configure" | "manage">("configure");
-  const [manageDirty, setManageDirty] = useState(false);
-  const manageDirtyRef = useRef(manageDirty);
-  manageDirtyRef.current = manageDirty;
-  const [manageDiscardRevision, setManageDiscardRevision] = useState(0);
-  const [pendingLocalLeave, setPendingLocalLeave] = useState<(() => void) | null>(null);
   const { track } = analytics;
 
   // [D18] An unreadable stored plan is replaced only by a plan with something in it: a write that
@@ -239,8 +226,6 @@ export function BuildScreen({
   }, [active, onSelectionChange, selection.selectedId]);
   const plan = buildPlan.plan;
   const { violations } = buildPlan;
-  const manageBlocks = useMemo(() => localManageBlocks(plan), [plan]);
-  const manageAllocations = useMemo(() => localManageAllocations(plan), [plan]);
 
   // [AE1] One view per visit, with what the plan held on arrival.
   useTrackView("builder_build_viewed", planCounts(plan));
@@ -300,20 +285,7 @@ export function BuildScreen({
   // [P6] Browser back, reload and closing the tab get the browser's own prompt while the panel
   // holds changes not applied, as the shell does for a draft not saved (the in-app exits ask the
   // selection guard instead).
-  useUnsavedChanges(active && (panel.dirty || manageDirty));
-
-  const guardLocalLeave = useCallback(
-    (proceed: () => void) => {
-      if (local && manageDirtyRef.current) {
-        setPendingLocalLeave(() => proceed);
-      } else proceed();
-    },
-    [local],
-  );
-  const guardedEditMandate = useCallback<BuildScreenProps["onEditMandate"]>(
-    (step, id) => guardLocalLeave(() => onEditMandate(step, id)),
-    [guardLocalLeave, onEditMandate],
-  );
+  useUnsavedChanges(active && panel.dirty);
 
   const controller = useBuildCanvas({
     draft,
@@ -321,7 +293,7 @@ export function BuildScreen({
     buildPlan,
     selection,
     onEvent,
-    onEditMandate: guardedEditMandate,
+    onEditMandate,
     beforeRemove: panel.reset,
   });
 
@@ -335,8 +307,8 @@ export function BuildScreen({
 
   // [HU3] The shell's own exits read the guard while Build is on screen.
   const guardLeave = useCallback<LeaveGuard>(
-    (proceed) => selection.guardLeave(() => guardLocalLeave(proceed)),
-    [selection.guardLeave, guardLocalLeave],
+    (proceed) => selection.guardLeave(proceed),
+    [selection.guardLeave],
   );
   useEffect(() => {
     if (!active || !leaveGuardRef) return;
@@ -534,114 +506,41 @@ export function BuildScreen({
         }
         panel={
           <BuildPanelSlot>
-            {local ? (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant={localPanelMode === "configure" ? "secondary" : "ghost"}
-                  size="sm"
-                  aria-pressed={localPanelMode === "configure"}
-                  onClick={() => setLocalPanelMode("configure")}
-                >
-                  {t("solanaPreview.configure")}
-                </Button>
-                <Button
-                  variant={localPanelMode === "manage" ? "secondary" : "ghost"}
-                  size="sm"
-                  aria-pressed={localPanelMode === "manage"}
-                  onClick={() => selection.guardLeave(() => setLocalPanelMode("manage"))}
-                >
-                  {t("solanaPreview.localManage.title")}
-                </Button>
-              </div>
-            ) : null}
-            <div hidden={local && localPanelMode === "manage"}>
-              {target && (target.kind === "swap" || target.kind === "spoke") ? (
-                <AuxiliaryBlockPanel
-                  target={target}
-                  panel={panel}
-                  ctx={controller.context}
-                  onEditMandate={controller.editMandate}
-                  onRemoveRequest={() =>
-                    target.kind === "spoke"
-                      ? controller.removeSpoke(target.network)
-                      : controller.requestRemove(target.blockId)
-                  }
-                />
-              ) : (
-                <BlockPanel
-                  bodies={local ? LOCAL_PANEL_BODIES : undefined}
-                  ctx={controller.context}
-                  selectedId={selectedId}
-                  menuSentence={controller.menuSentence}
-                  panel={panel}
-                  removeConfirmOpen={false}
-                  onRemoveRequest={() => {
-                    if (selectedId) controller.requestRemove(selectedId);
-                  }}
-                  onRemoveCancel={controller.cancelRemove}
-                  onRemoveConfirm={controller.confirmRemove}
-                  onEditMandate={controller.editMandate}
-                  onLimitHit={onLimitHit}
-                />
-              )}
-            </div>
-            {local ? (
-              <>
-                <SolanaLocalManageHost
-                  blocks={manageBlocks}
-                  allocations={manageAllocations}
-                  selectedId={selectedId}
-                  active={active && localPanelMode === "manage"}
-                  onClose={() => void selection.select(null)}
-                  onDirtyChange={setManageDirty}
-                  discardRevision={manageDiscardRevision}
-                  onApplyDrawing={(id, config) =>
-                    buildPlan.apply((current, ctx) =>
-                      applyLocalManageConfig(current, ctx, id, config),
-                    ).ok
-                  }
-                />
-                {localPanelMode === "manage" &&
-                !manageBlocks.some((block) => block.id === selectedId) ? (
-                  <p role="status" className="text-sm text-muted-foreground">
-                    {t("solanaPreview.marketUnavailable")}
-                  </p>
-                ) : null}
-              </>
-            ) : null}
+            {target && (target.kind === "swap" || target.kind === "spoke") ? (
+              <AuxiliaryBlockPanel
+                target={target}
+                panel={panel}
+                ctx={controller.context}
+                onEditMandate={controller.editMandate}
+                onRemoveRequest={() =>
+                  target.kind === "spoke"
+                    ? controller.removeSpoke(target.network)
+                    : controller.requestRemove(target.blockId)
+                }
+              />
+            ) : (
+              <BlockPanel
+                bodies={local ? LOCAL_PANEL_BODIES : undefined}
+                ctx={controller.context}
+                selectedId={selectedId}
+                menuSentence={controller.menuSentence}
+                panel={panel}
+                removeConfirmOpen={false}
+                onRemoveRequest={() => {
+                  if (selectedId) controller.requestRemove(selectedId);
+                }}
+                onRemoveCancel={controller.cancelRemove}
+                onRemoveConfirm={controller.confirmRemove}
+                onEditMandate={controller.editMandate}
+                onLimitHit={onLimitHit}
+              />
+            )}
           </BuildPanelSlot>
         }
         onBack={handleBack}
         onNext={handleNext}
         notice={noticeText}
       />
-
-      <Dialog
-        open={active && pendingLocalLeave !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingLocalLeave(null);
-        }}
-      >
-        <DialogContent aria-describedby={undefined}>
-          <DialogTitle>{t("solanaPreview.unsavedTitle")}</DialogTitle>
-          <p className="text-sm text-muted-foreground">{t("solanaPreview.unsavedBody")}</p>
-          <Button variant="secondary" onClick={() => setPendingLocalLeave(null)}>
-            {t("solanaPreview.keepEditing")}
-          </Button>
-          <Button
-            onClick={() => {
-              const proceed = pendingLocalLeave;
-              setPendingLocalLeave(null);
-              setManageDiscardRevision((revision) => revision + 1);
-              manageDirtyRef.current = false;
-              setManageDirty(false);
-              proceed?.();
-            }}
-          >
-            {t("solanaPreview.discardContinue")}
-          </Button>
-        </DialogContent>
-      </Dialog>
 
       <Dialog
         open={active && removal !== null}

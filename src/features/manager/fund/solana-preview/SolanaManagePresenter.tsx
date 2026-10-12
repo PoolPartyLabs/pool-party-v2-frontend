@@ -4,6 +4,7 @@
  * @implements-rules-version v1
  * @i18n-namespace manager.solanaPreview.localManage
  * @analytics-events none, controlled presentation; host owns view/edit/mode/blocked intents
+ * Not mounted until a Solana fund can launch (reference for a future Solana Manage screen).
  * Independent Current, local draft, injected After and read-only operation journal.
  * PP-INTEGRATION-POINT: POO-2239/2240/2261/2262 inject verified canonical reads, protocol context,
  * preview and operation journal. This presenter exposes local intents only, with no signing API.

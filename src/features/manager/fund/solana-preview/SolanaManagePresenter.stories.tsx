@@ -3,6 +3,7 @@
  * @name SolanaManagePresenter stories
  * @implements-rules-version v1
  * @analytics-events none, isolated harness-only state and snapshot fixtures
+ * Not mounted until a Solana fund can launch (reference for a future Solana Manage screen).
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useReducer } from "react";
