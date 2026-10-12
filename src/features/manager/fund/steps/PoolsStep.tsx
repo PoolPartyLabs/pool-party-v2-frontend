@@ -3,6 +3,7 @@
  * @name PoolsStep
  * @implements-rules-version v1
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2333 Figma parity: R8, R9)
  * @analytics-events none, the shell emits
  *
  * POO-2125 [R11] / [R13] / [R29] to [R38], epic POO-2119. Mandate step 4: the pools this strategy
@@ -83,7 +84,7 @@
 
 import { Flag, Plus, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ProtocolBadge } from "@/components/data-display/ProtocolBadge";
 import { TokenLogo } from "@/components/data-display/TokenLogo";
 import { AprTooltip } from "@/components/ui/AprTooltip";
@@ -123,6 +124,7 @@ import {
   tokenKey,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
+import { poolFeeLabel, poolMeta } from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -219,11 +221,6 @@ function universeSignatureOf(
   tokens: readonly MandateTokenRef[],
 ): string {
   return [networks.join(","), protocols.join(","), tokens.map(tokenKey).join(",")].join("|");
-}
-
-/** `0.30%`, the fee tier the way V1 prints it. */
-function feeLabel(bps: number): string {
-  return `${(bps / 100).toFixed(2)}%`;
 }
 
 /** `WETH/USDC`, in the order the API returned the sides. Never inverted: there is no range here. */
@@ -843,6 +840,7 @@ function ConnectedPoolsStep({
         cap_zero: null,
         token_allowance_required: null,
         name_length: null,
+        required_protocol: null,
       }[ownBlock.reason] ?? null)
     : null;
 
@@ -1182,12 +1180,15 @@ function ConnectedPoolsStep({
           </span>
 
           <span className="text-muted-foreground text-xs">
-            {feeLabel(pool.feeBps)}
-            {/* R32: an absent share says nothing. "0% selected" would read as a measured share of
+            {/* POO-2333 R8: "{fee} fee tier · chosen by {pct}% of LPs". R32: an absent share says
+                nothing, so the line shows only the fee tier. "0%" would read as a measured share of
                 nothing, which is a figure we never had (POO-1469). */}
             {pool.tierSharePct === null
-              ? null
-              : ` · ${t("fundBuilder.pools.tierShare", { pct: pool.tierSharePct })}`}
+              ? t("fundBuilder.pools.feeTier", { fee: poolFeeLabel(pool.feeBps) })
+              : t("fundBuilder.pools.tierShare", {
+                  fee: poolFeeLabel(pool.feeBps),
+                  pct: pool.tierSharePct,
+                })}
             {adds.map((symbol) => (
               <span key={symbol}>{` · ${t("fundBuilder.pools.addsToken", { symbol })}`}</span>
             ))}
@@ -1268,10 +1269,23 @@ function ConnectedPoolsStep({
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate font-medium text-foreground text-sm">{pairLabel(pool)}</span>
           <span className="flex min-w-0 items-center gap-2">
-            {protocolBadge(pool.protocol)}
-            <span className="truncate text-muted-foreground text-xs">
-              {t("fundBuilder.pools.feeTier", { fee: feeLabel(pool.feeBps) })}
-            </span>
+            {/* POO-2333 R9: protocol, network icon, then fee tier. */}
+            {poolMeta(pool).map((meta) =>
+              meta.part === "protocol" ? (
+                <Fragment key="protocol">{protocolBadge(meta.protocol)}</Fragment>
+              ) : meta.part === "network" ? (
+                <NetworkLogoWithName
+                  key="network"
+                  network={meta.network}
+                  catalog={catalog}
+                  size={14}
+                />
+              ) : (
+                <span key="feeTier" className="truncate text-muted-foreground text-xs">
+                  {t("fundBuilder.pools.feeTier", { fee: meta.fee })}
+                </span>
+              ),
+            )}
           </span>
         </span>
         <button

@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Các mạng khác"
+      "others": "Các mạng khác",
+      "othersCaption": "Mỗi mạng bạn thêm cần một cầu nối và thêm một chữ ký khi khởi chạy."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Bắt buộc",
-      "requiredSubtitle": "Mọi chiến lược đều cần một cách để đổi token và chuyển tiền giữa các mạng của nó.",
       "operate": "Giao thức để vận hành",
-      "on": "Trên",
-      "onFootnote": "\"Trên\" hiển thị các mạng từ bước 1 nơi mỗi giao thức khả dụng."
+      "on": "Có trên",
+      "onFootnote": "\"Có trên\" cho biết mỗi giao thức hỗ trợ những mạng nào trong số các mạng bạn chọn ở bước 1.",
+      "swapBridge": "Hoán đổi và cầu nối",
+      "swapBridgeCollapsed": "{names} · đã chọn sẵn cho bạn",
+      "swapBridgeOpen": "Đã chọn sẵn cho bạn. Giữ ít nhất một giao thức hoán đổi, và một cầu nối khi bạn thêm mạng.",
+      "swapBridgeOpenHub": "Đã chọn sẵn cho bạn. Giữ ít nhất một giao thức hoán đổi.",
+      "show": "Hiện",
+      "hide": "Ẩn",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Hoán đổi",
+        "uniswapV3Liquidity": "Uniswap v3 · Thanh khoản"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -871,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, other {# pool}} có chứa ít nhất một token của bạn",
       "yours": "Pool của bạn · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "Đã chọn {pct}%",
+      "feeTier": "Bậc phí {fee}",
+      "tierShare": "Bậc phí {fee} · được {pct}% LP chọn",
       "addsToken": "thêm {symbol} vào token của bạn",
       "hasHook": "có hook",
       "fixed": "Pool được cố định khi ra mắt. Bạn không thể thêm pool sau đó.",
@@ -932,7 +941,7 @@
       "body": "Mọi lựa chọn của bạn từ trước đến nay đều được giữ lại. Tên này giúp bạn tìm lại bản nháp này trong các chiến lược của mình; bạn có thể đổi tên sau ở phần Xem lại.",
       "nameLabel": "Tên bản nháp",
       "namePlaceholder": "ETH và BTC trên Arbitrum",
-      "helper": "Từ 10 đến 50 ký tự, cùng quy tắc với tên chiến lược.",
+      "helper": "Từ 10 đến 50 ký tự.",
       "counter": "{count} / {max}",
       "progress": "Đã lưu đến hiện tại: {networks} mạng, {protocols} giao thức, {tokens} token · Nhiệm vụ, bước {n}/{count}",
       "keepEditing": "Tiếp tục chỉnh sửa",

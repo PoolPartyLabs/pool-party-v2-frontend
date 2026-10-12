@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Outras redes"
+      "others": "Outras redes",
+      "othersCaption": "Cada rede que você adicionar precisa de uma ponte e de mais uma assinatura no lançamento."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Obrigatório",
-      "requiredSubtitle": "Toda estratégia precisa de uma forma de trocar tokens e de mover dinheiro entre suas redes.",
       "operate": "Protocolos para operar",
-      "on": "Em",
-      "onFootnote": "\"Em\" mostra as redes da etapa 1 em que cada protocolo está disponível."
+      "on": "Disponível em",
+      "onFootnote": "\"Disponível em\" mostra quais das suas redes do passo 1 cada protocolo suporta.",
+      "swapBridge": "Swap e ponte",
+      "swapBridgeCollapsed": "{names} · selecionados para você",
+      "swapBridgeOpen": "Selecionados para você. Mantenha pelo menos um swap, e uma ponte quando adicionar uma rede.",
+      "swapBridgeOpenHub": "Selecionados para você. Mantenha pelo menos um swap.",
+      "show": "Mostrar",
+      "hide": "Ocultar",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Swap",
+        "uniswapV3Liquidity": "Uniswap v3 · Liquidez"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -871,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, one {# pool} other {# pools}} com pelo menos um dos seus tokens",
       "yours": "Suas pools · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "{pct}% selecionado",
+      "feeTier": "Faixa de taxa de {fee}",
+      "tierShare": "Faixa de taxa de {fee} · escolhida por {pct}% dos LPs",
       "addsToken": "adiciona {symbol} aos seus tokens",
       "hasHook": "tem um hook",
       "fixed": "As pools são fixadas no lançamento. Você não pode adicionar uma depois.",
@@ -932,7 +941,7 @@
       "body": "Tudo o que você escolheu até agora é mantido. O nome é como você vai encontrar este rascunho nas suas estratégias; você pode alterá-lo depois, na Revisão.",
       "nameLabel": "Nome do rascunho",
       "namePlaceholder": "ETH e BTC na Arbitrum",
-      "helper": "De 10 a 50 caracteres, a mesma regra do nome da estratégia.",
+      "helper": "De 10 a 50 caracteres.",
       "counter": "{count} / {max}",
       "progress": "Salvo até agora: {networks} redes, {protocols} protocolos, {tokens} tokens · Mandato, etapa {n} de {count}",
       "keepEditing": "Continuar editando",

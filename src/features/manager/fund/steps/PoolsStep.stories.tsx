@@ -20,6 +20,10 @@
  * tab counts and the results head, and leaves the universe alone, so adding every pool of one
  * network does not raise the flag for a mandate that holds none of the other's.
  *
+ * `FeeTierAndNetwork` starts with one Robinhood Chain pool in "Your pools". The row shows the
+ * protocol, the network icon and then the fee tier text (POO-2333 R9). Each result card shows the
+ * fee tier and the share of LPs that chose it (R8).
+ *
  * Every story is live: the harness holds the draft and runs the real reducers, so adding, removing,
  * "Add all", "Show more" and "Clear all" behave as they will in the builder. The pools themselves
  * come from the real adapter running in mock mode, latency and rare failure included, so the loading
@@ -33,6 +37,7 @@ import {
   createEmptyDraft,
   isBlocked,
   type MandateDraft,
+  type MandatePoolRef,
   REQUIRED_PROTOCOLS,
   type StepBlock,
   withNetworks,
@@ -148,4 +153,31 @@ export const NoDexProtocol: Story = {
   render: () => (
     <Harness catalog={catalog} initial={withProtocols(draftOn(), [...REQUIRED_PROTOCOLS])} />
   ),
+};
+
+/** One pool on the spoke, so the "Your pools" row has a network icon to show. */
+const spokePool: MandatePoolRef = {
+  id: "story-robinhood-eth-usdc",
+  address: `0x${"1".padStart(40, "0")}`,
+  network: "robinhood",
+  protocol: "uniswap-v4",
+  token0: { address: "0xeth", symbol: "ETH", name: "Ether", logoUrl: null },
+  token1: { address: "0xusdc", symbol: "USDC", name: "USD Coin", logoUrl: null },
+  feeBps: 30,
+  feeTier: 3000,
+  tvlUsd: 2_400_000,
+  aprPct: 14.2,
+  tierSharePct: 31,
+  hasHook: false,
+};
+
+/**
+ * POO-2333 R8 and R9. The "Your pools" row shows the protocol, the network icon and
+ * "0.30% fee tier". Each result card shows "{fee} fee tier · chosen by {pct}% of LPs".
+ */
+export const FeeTierAndNetwork: Story = {
+  render: () => {
+    const draft = draftOn(["robinhood"]);
+    return <Harness catalog={catalog} initial={{ ...draft, pools: [spokePool] }} />;
+  },
 };

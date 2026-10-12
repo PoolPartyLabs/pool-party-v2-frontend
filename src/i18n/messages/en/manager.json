@@ -734,7 +734,7 @@
       "poolId": "Paste a bytes32 PoolId"
     },
     "header": {
-      "saveExit": "Save & exit"
+      "saveExit": "Save and exit"
     },
     "subStep": {
       "overline": "MANDATE · STEP {n} OF {count}",
@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Other networks"
+      "others": "Other networks",
+      "othersCaption": "Each network that you add needs a bridge and one more signature at launch."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Required",
-      "requiredSubtitle": "Every strategy needs a way to swap tokens and to move money between its networks.",
       "operate": "Protocols to operate",
-      "on": "On",
-      "onFootnote": "\"On\" shows the networks from step 1 where each protocol is available."
+      "on": "Available on",
+      "onFootnote": "\"Available on\" shows which of your networks from step 1 each protocol supports.",
+      "swapBridge": "Swap and bridge",
+      "swapBridgeCollapsed": "{names} · selected for you",
+      "swapBridgeOpen": "Selected for you. Keep at least one swap, and one bridge when you add a network.",
+      "swapBridgeOpenHub": "Selected for you. Keep at least one swap.",
+      "show": "Show",
+      "hide": "Hide",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Swap",
+        "uniswapV3Liquidity": "Uniswap v3 · Liquidity"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -872,7 +881,7 @@
       "results": "{count, plural, one {# pool} other {# pools}} with at least one of your tokens",
       "yours": "Your pools · {count}",
       "feeTier": "{fee} fee tier",
-      "tierShare": "{pct}% selected",
+      "tierShare": "{fee} fee tier · chosen by {pct}% of LPs",
       "addsToken": "adds {symbol} to your tokens",
       "hasHook": "has a hook",
       "fixed": "Pools are fixed at launch. You cannot add one later.",
@@ -932,7 +941,7 @@
       "body": "Everything you chose so far is kept. The name is how you will find this draft in your strategies; you can change it later on Review.",
       "nameLabel": "Draft name",
       "namePlaceholder": "ETH and BTC on Arbitrum",
-      "helper": "10 to 50 characters, same rule as the strategy name.",
+      "helper": "10 to 50 characters.",
       "counter": "{count} / {max}",
       "progress": "Saved so far: {networks} networks, {protocols} protocols, {tokens} tokens · Mandate, step {n} of {count}",
       "keepEditing": "Keep editing",
@@ -949,7 +958,7 @@
       "delete": "Delete",
       "deleteTitle": "Delete this draft?",
       "deleteBody": "{name} and everything you chose in it will be removed. This cannot be undone.",
-      "empty": "No drafts yet. Start a strategy and use Save & exit to keep one.",
+      "empty": "No drafts yet. Start a strategy and use Save and exit to keep one.",
       "deleteFailed": "Couldn't delete the draft. Try again.",
       "unnamed": "Unnamed draft"
     },

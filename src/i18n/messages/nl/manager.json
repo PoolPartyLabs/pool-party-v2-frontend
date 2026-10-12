@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Andere netwerken"
+      "others": "Andere netwerken",
+      "othersCaption": "Elk netwerk dat u toevoegt, heeft een bridge en één extra handtekening nodig bij de lancering."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Verplicht",
-      "requiredSubtitle": "Elke strategie heeft een manier nodig om tokens te wisselen en geld tussen haar netwerken te verplaatsen.",
       "operate": "Te gebruiken protocollen",
-      "on": "Op",
-      "onFootnote": "\"Op\" toont de netwerken uit stap 1 waarop elk protocol beschikbaar is."
+      "on": "Beschikbaar op",
+      "onFootnote": "\"Beschikbaar op\" toont welke van uw netwerken uit stap 1 elk protocol ondersteunt.",
+      "swapBridge": "Swap en bridge",
+      "swapBridgeCollapsed": "{names} · voor u geselecteerd",
+      "swapBridgeOpen": "Voor u geselecteerd. Houd minstens één swap, en één bridge als u een netwerk toevoegt.",
+      "swapBridgeOpenHub": "Voor u geselecteerd. Houd minstens één swap.",
+      "show": "Tonen",
+      "hide": "Verbergen",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Swap",
+        "uniswapV3Liquidity": "Uniswap v3 · Liquiditeit"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -871,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, one {# pool} other {# pools}} met minstens één van uw tokens",
       "yours": "Uw pools · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "{pct}% geselecteerd",
+      "feeTier": "Kostenniveau van {fee}",
+      "tierShare": "Kostenniveau van {fee} · gekozen door {pct}% van de LP's",
       "addsToken": "voegt {symbol} toe aan uw tokens",
       "hasHook": "heeft een hook",
       "fixed": "Pools worden bij de lancering vastgelegd. U kunt er later geen meer toevoegen.",
@@ -932,7 +941,7 @@
       "body": "Alles wat u tot nu toe hebt gekozen, wordt bewaard. Aan de hand van de naam vindt u dit concept terug bij uw strategieën; u kunt deze later wijzigen bij Controleren.",
       "nameLabel": "Naam van het concept",
       "namePlaceholder": "ETH en BTC op Arbitrum",
-      "helper": "10 tot 50 tekens, dezelfde regel als bij de strategienaam.",
+      "helper": "10 tot 50 tekens.",
       "counter": "{count} / {max}",
       "progress": "Tot nu toe opgeslagen: {networks} netwerken, {protocols} protocollen, {tokens} tokens · Mandaat, stap {n} van {count}",
       "keepEditing": "Doorgaan met bewerken",

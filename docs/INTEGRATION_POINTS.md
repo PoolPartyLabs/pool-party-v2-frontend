@@ -38,7 +38,7 @@ loses the session rather than persisting it. Standard EVM instrumentation/recove
 [feature reference](../src/features/manager/fund/solana-preview/README.md) and
 [ADR 0009](adr/0009-local-solana-visual-preview.md).
 
-Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+Accepted Header and Save and exit paths acknowledge local disposal only after route/account host and
 intent generation validate the user's consent. Stale acceptance cannot close a successor session.
 Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
 last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.
@@ -531,7 +531,15 @@ Chart-delivery census: 2,306 files under `src/`, with 539 markers across 312 fil
 including tests, stories and source documentation. Registry totals are 712 rows and 707 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
 
-Current mandate token access census (POO-2332): 2,308 files under `src/`, with
-541 markers across 312 files, including tests, stories and source documentation. The 2 new
-markers are in `src/features/manager/fund/mandateDraft.ts`. Registry totals are 713 rows and 708
-unique IDs.
+Current mandate token access census (POO-2332): the 2 new markers are in
+`src/features/manager/fund/mandateDraft.ts`.
+
+## Mandate Figma parity, October 12, 2026 (POO-2333 v1)
+
+| Marker | File | Status today | Expected real call / remaining gap |
+| --- | --- | --- | --- |
+| LP share per fee tier ("chosen by {pct}% of LPs", R8) | `src/features/manager/fund/mandatePoolSource.ts` (`searchMandatePools`) | Mock mode computes the share from the fixture TVL of the fee tiers of a pair (`tierShare`). Real mode has no API field for it, so the share is null and the Pools step shows only the fee tier. | CoinGecko pool data per fee tier, or a backend field that carries the LP share of each fee tier. |
+
+Current Mandate parity census: 2,310 files under `src/`, with 542 markers across 312 files,
+including tests, stories and source documentation. Registry totals are 714 rows and 709 unique
+IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.

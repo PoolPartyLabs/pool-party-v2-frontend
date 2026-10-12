@@ -53,9 +53,8 @@ import {
   type MandateCap,
   type MandateDraft,
   type NetworkId,
-  PROTOCOL_ORDER,
   type ProtocolId,
-  REQUIRED_PROTOCOLS,
+  summaryProtocols,
   tokenKey,
   tokenModeOf,
 } from "../mandateDraft";
@@ -140,14 +139,6 @@ function tokensBySymbol(draft: MandateDraft): { symbol: string; networks: Networ
   return grouped;
 }
 
-/** The chosen protocols, the required two first: two of them were never a choice (R20). */
-function orderedProtocols(draft: MandateDraft): ProtocolId[] {
-  const chosen = new Set(draft.protocols);
-  const required = REQUIRED_PROTOCOLS.filter((id) => chosen.has(id));
-  const rest = PROTOCOL_ORDER.filter((id) => chosen.has(id) && !REQUIRED_PROTOCOLS.includes(id));
-  return [...required, ...rest];
-}
-
 /** Read-only summary of a mandate: networks, protocols, tokens, pools and caps. */
 export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCardProps) {
   const t = useTranslations("manager");
@@ -186,7 +177,8 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
 
   const rows = capRows(draft, catalog);
   const tokens = tokensBySymbol(draft);
-  const protocols = orderedProtocols(draft);
+  // POO-2333 R4: the lock follows `lockedProtocols`, so a hub-only mandate shows no lock on Across.
+  const protocols = summaryProtocols(draft);
   const showPools = hasDexProtocol(draft) && draft.pools.length > 0;
   const hiddenPools = Math.max(0, draft.pools.length - POOLS_SHOWN);
   // POO-2332: the Limits screen shows one "Every token" row in All tokens mode, so this card does too.
@@ -228,9 +220,9 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
           label={t("fundBuilder.build.summaryProtocols")}
           testId="mandate-summary-protocols"
         >
-          {protocols.map((protocol) => (
+          {protocols.map(({ id: protocol, locked }) => (
             <Chip key={protocol}>
-              {REQUIRED_PROTOCOLS.includes(protocol) ? (
+              {locked ? (
                 <span
                   data-testid="mandate-summary-protocol-locked"
                   className="inline-flex text-muted-foreground"

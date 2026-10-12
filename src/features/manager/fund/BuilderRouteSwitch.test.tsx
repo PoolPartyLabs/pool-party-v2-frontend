@@ -98,7 +98,7 @@ describe("BuilderRouteSwitch", () => {
     renderWithProviders(<BuilderRouteSwitch v1={<V1Stub />} />);
     expect(screen.getByText("the v1 builder")).toBeInTheDocument();
     expect(screen.queryByRole("presentation")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Save & exit" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save and exit" })).toBeNull();
   });
 
   // @rule R8: markup identity: the switch is a decision, not a wrapper. Compared against the same
@@ -140,7 +140,7 @@ describe("BuilderRouteSwitch", () => {
     expect(screen.queryByText("the v1 builder")).toBeNull();
     expect(screen.getByRole("heading", { name: "Create new strategy" })).toBeInTheDocument();
     // POO-2122: the shell replaced S0's placeholder, so the marker is the Mandate itself.
-    expect(screen.getByRole("button", { name: "Save & exit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save and exit" })).toBeInTheDocument();
     expect(screen.getByText("MANDATE · STEP 1 OF 4")).toBeInTheDocument();
   });
 
@@ -210,11 +210,11 @@ describe("BuilderRouteSwitch", () => {
     );
     expect(screen.getByRole("heading", { name: "Create new strategy" })).toBeInTheDocument();
     // The V1 builder has its own "Build your strategy" step, so the canvas is told apart by its
-    // own markers: none of them exists, and the fund builder's Save & exit is not there either.
+    // own markers: none of them exists, and the fund builder's Save and exit is not there either.
     expect(document.querySelector("[data-build-screen]")).toBeNull();
     expect(document.querySelector("[data-build-graph]")).toBeNull();
     expect(screen.queryByTestId("build-palette")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Save & exit" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save and exit" })).toBeNull();
   });
 
   // @rule G2

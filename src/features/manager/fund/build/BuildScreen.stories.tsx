@@ -7,7 +7,7 @@
  *
  * Storybook coverage for the Build phase of the fund builder (slice S7, POO-2157): the canvas as a
  * manager meets it, on a draft seeded in the real draft store and read back through the real draft
- * hook, which is how the shell hands it over (the shell's header, Save & exit and stepper are not
+ * hook, which is how the shell hands it over (the shell's header, Save and exit and stepper are not
  * here: `FundStrategyBuilderScreen.stories` covers them).
  *
  * - `EmptyCanvas`: a mandate just closed, no plan yet (Build state 1, reference canvas D).

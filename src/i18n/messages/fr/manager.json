@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Autres réseaux"
+      "others": "Autres réseaux",
+      "othersCaption": "Chaque réseau que vous ajoutez nécessite un pont et une signature de plus au lancement."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Obligatoire",
-      "requiredSubtitle": "Chaque stratégie a besoin d'un moyen d'échanger des jetons et de déplacer des fonds entre ses réseaux.",
       "operate": "Protocoles à utiliser",
-      "on": "Sur",
-      "onFootnote": "« Sur » indique les réseaux de l'étape 1 où chaque protocole est disponible."
+      "on": "Disponible sur",
+      "onFootnote": "« Disponible sur » indique lesquels de vos réseaux de l'étape 1 chaque protocole prend en charge.",
+      "swapBridge": "Échange et pont",
+      "swapBridgeCollapsed": "{names} · sélectionnés pour vous",
+      "swapBridgeOpen": "Sélectionnés pour vous. Gardez au moins un échange, et un pont quand vous ajoutez un réseau.",
+      "swapBridgeOpenHub": "Sélectionnés pour vous. Gardez au moins un échange.",
+      "show": "Afficher",
+      "hide": "Masquer",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Échange",
+        "uniswapV3Liquidity": "Uniswap v3 · Liquidité"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -871,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, one {# pool} other {# pools}} avec au moins un de vos jetons",
       "yours": "Vos pools · {count}",
-      "feeTier": "Fee tier de {fee}",
-      "tierShare": "{pct}% sélectionné",
+      "feeTier": "Palier de frais de {fee}",
+      "tierShare": "Palier de frais de {fee} · choisi par {pct} % des LP",
       "addsToken": "ajoute {symbol} à vos jetons",
       "hasHook": "a un hook",
       "fixed": "Les pools sont fixés au lancement. Vous ne pourrez pas en ajouter un plus tard.",
@@ -932,7 +941,7 @@
       "body": "Tout ce que vous avez choisi jusqu'ici est conservé. Le nom vous permettra de retrouver ce brouillon parmi vos stratégies ; vous pourrez le modifier plus tard dans Vérification.",
       "nameLabel": "Nom du brouillon",
       "namePlaceholder": "ETH et BTC sur Arbitrum",
-      "helper": "De 10 à 50 caractères, la même règle que pour le nom de la stratégie.",
+      "helper": "De 10 à 50 caractères.",
       "counter": "{count} / {max}",
       "progress": "Enregistré jusqu'ici : {networks} réseaux, {protocols} protocoles, {tokens} jetons · Mandat, étape {n} sur {count}",
       "keepEditing": "Continuer la modification",

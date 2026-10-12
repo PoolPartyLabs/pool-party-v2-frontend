@@ -83,7 +83,7 @@ export const ComingSoon: Story = {
   },
 };
 
-/** A protocol row: caption plus the trailing "On" column the Protocols step adds (R20). */
+/** A protocol row: caption plus the trailing "Available on" column the Protocols step adds (R20). */
 export const WithTrailingNetworks: Story = {
   args: {
     id: "uniswap-v4",

@@ -8,7 +8,7 @@
  * test cannot reach: that `uniswap-v4` contributes NOTHING in real mode (there is no v4 API yet, and
  * the alternative: quietly serving v3 pools labelled v4: would put a pool in a mandate the
  * contracts cannot hold), and that `tierShare` reproduces the V1 arithmetic exactly, because the
- * same "{pct}% selected" copy is about to appear on a second screen.
+ * same share appears on a second screen, as "chosen by {pct}% of LPs" (POO-2333 R8).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { UniswapPool } from "@/lib/schemas";
@@ -205,7 +205,7 @@ describe("tierShare", () => {
   });
 
   // @rule R-S5a-15: a pair with no liquidity has no share to report. V1 printed 0% here; a mandate
-  // row must not claim "0% selected" as a measured figure, so this answers null.
+  // row must not claim "chosen by 0% of LPs" as a measured figure, so this answers null.
   it("answers null for a pair whose total TVL is zero", () => {
     const pools = [ref({ id: "a", tvlUsd: 0 }), ref({ id: "b", tvlUsd: 0 })];
 

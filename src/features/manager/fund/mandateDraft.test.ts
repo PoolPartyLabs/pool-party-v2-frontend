@@ -30,6 +30,7 @@ import {
   isBlocked,
   isBroadMandate,
   isStepReachable,
+  lockedProtocols,
   MANDATE_STEP_ORDER,
   MAX_TOKEN_SLOTS,
   type MandateDraft,
@@ -304,10 +305,12 @@ describe("withNetworks", () => {
 // ---------------------------------------------------------------------------
 
 describe("withProtocols", () => {
-  it("never removes the two required protocols", () => {
-    // @rule R19
-    expect(draftOf(withProtocols(empty(), [])).protocols).toEqual(["uniswap-v3-swap", "across"]);
-    expect(draftOf(withProtocols(empty(), ["aave-v3"])).protocols).toEqual([
+  // @rule R19
+  it("never removes the two required protocols of a mandate with a spoke", () => {
+    // POO-2333 R4: on the hub alone, only the swap is required.
+    const spoke = withNetworks(empty(), ["robinhood"], catalog);
+    expect(draftOf(withProtocols(spoke, [])).protocols).toEqual(["uniswap-v3-swap", "across"]);
+    expect(draftOf(withProtocols(spoke, ["aave-v3"])).protocols).toEqual([
       "uniswap-v3-swap",
       "across",
       "aave-v3",
@@ -1378,7 +1381,38 @@ it.each([
   "real",
 ] as const)("refuses future protocols from direct %s reducer requests (POO-2167)", (dataMode) => {
   const current = { ...empty(), dataMode };
-  expect(withProtocols(current, ["aave-v3", "gmx", "pendle"] as ProtocolId[]).protocols).toEqual(
-    dataMode === "real" ? ["uniswap-v3-swap", "aave-v3"] : ["uniswap-v3-swap", "across", "aave-v3"],
-  );
+  expect(withProtocols(current, ["aave-v3", "gmx", "pendle"] as ProtocolId[]).protocols).toEqual([
+    "uniswap-v3-swap",
+    "aave-v3",
+  ]);
+});
+
+// ---------------------------------------------------------------------------
+// POO-2333: the swap and bridge minimums
+// ---------------------------------------------------------------------------
+
+describe("protocol minimums (POO-2333)", () => {
+  // @rule R4 (POO-2333): the manager cannot clear the last swap, or the bridge of a spoke mandate.
+  it.each([
+    undefined,
+    "real",
+  ] as const)("locks the swap always and the bridge only with a spoke (%s)", (dataMode) => {
+    const hub = { ...empty(), dataMode };
+    expect([...lockedProtocols(hub)]).toEqual(["uniswap-v3-swap"]);
+    expect(withProtocols(hub, []).protocols).toEqual(["uniswap-v3-swap"]);
+    const spoke = withNetworks(hub, ["robinhood"], catalog);
+    expect([...lockedProtocols(spoke)]).toEqual(["uniswap-v3-swap", "across"]);
+    // Clearing a locked protocol is a no-op: the reducer puts it back.
+    expect(withProtocols(spoke, []).protocols).toEqual(["uniswap-v3-swap", "across"]);
+  });
+
+  // @rule R4 (POO-2333): a mandate that gets a spoke gets its bridge back.
+  it("puts the bridge back when a hub-only mock draft adds a spoke", () => {
+    const hubOnly = withProtocols(empty(), ["uniswap-v3-swap"]);
+    expect(hubOnly.protocols).toEqual(["uniswap-v3-swap"]);
+    expect(withNetworks(hubOnly, ["robinhood"], catalog).protocols).toEqual([
+      "uniswap-v3-swap",
+      "across",
+    ]);
+  });
 });

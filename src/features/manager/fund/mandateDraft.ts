@@ -4,6 +4,7 @@
  * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
  *   POO-2167 rules v4, POO-2151 rules v1, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2333 R4: the last swap and the last bridge are locked)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -155,6 +156,35 @@ export const HUB_NETWORK: NetworkId = "arbitrum";
 
 /** Every strategy needs a way to swap and a way to move money between its networks (R19). */
 export const REQUIRED_PROTOCOLS: readonly ProtocolId[] = ["uniswap-v3-swap", "across"];
+
+/**
+ * POO-2333 R4: the selected protocols the manager cannot clear, the same set `withProtocols`
+ * always keeps. That is the swap always, and the bridge only when the mandate has a network that
+ * is not the hub. The rule is the same in mock mode and in real mode. In real mode, Robinhood Chain
+ * is the one spoke that the bridge can reach.
+ */
+export function lockedProtocols(draft: MandateDraft): Set<ProtocolId> {
+  const bridged =
+    draft.dataMode === "real"
+      ? draft.networks.includes("robinhood")
+      : draft.networks.some((network) => network !== HUB_NETWORK);
+  return new Set<ProtocolId>(bridged ? REQUIRED_PROTOCOLS : ["uniswap-v3-swap"]);
+}
+
+/**
+ * POO-2333 R4: the protocols of the draft for a read-only summary, the locked ones first. Each
+ * entry says if the protocol is locked, so a hub-only mandate shows no lock on the bridge.
+ */
+export function summaryProtocols(draft: MandateDraft): Array<{ id: ProtocolId; locked: boolean }> {
+  const chosen = new Set(draft.protocols);
+  const locked = lockedProtocols(draft);
+  const first = PROTOCOL_ORDER.filter((id) => chosen.has(id) && locked.has(id));
+  const rest = PROTOCOL_ORDER.filter((id) => chosen.has(id) && !locked.has(id));
+  return [
+    ...first.map((id) => ({ id, locked: true })),
+    ...rest.map((id) => ({ id, locked: false })),
+  ];
+}
 
 /**
  * The symbols the hub price source can price (R28), lowercased.
@@ -331,7 +361,9 @@ export type MandateBlockReason =
   | "has_hook"
   | "not_priced"
   | "coming_soon"
-  | "name_length";
+  | "name_length"
+  /** POO-2333 R4: a click tried to clear the last swap, or the bridge of a mandate with a spoke. */
+  | "required_protocol";
 
 /**
  * A refusal a step renders inline. `rowId` is the `data-mandate-row` of the first offending row, so
@@ -917,6 +949,11 @@ export function withNetworks(
         next.includes(key as NetworkId),
       );
     if (!next.includes("robinhood")) synced.spokeCapPercent = null;
+  } else if (next.some((id) => id !== HUB_NETWORK) && !synced.protocols.includes("across")) {
+    // POO-2333 R4: a mandate with a spoke needs its bridge back.
+    synced.protocols = PROTOCOL_ORDER.filter(
+      (id) => id === "across" || synced.protocols.includes(id),
+    );
   }
   return withUniverseExpiry(draft, synced);
 }
@@ -949,13 +986,7 @@ export function withProtocols(draft: MandateDraft, protocols: ProtocolId[]): Man
   const known = new Set<string>(
     PROTOCOL_ORDER.filter((id) => draft.runtime === "solana-local" || !localProtocols.includes(id)),
   );
-  const wanted = new Set<ProtocolId>(
-    draft.dataMode === "real"
-      ? draft.networks.includes("robinhood")
-        ? REQUIRED_PROTOCOLS
-        : ["uniswap-v3-swap"]
-      : REQUIRED_PROTOCOLS,
-  );
+  const wanted = lockedProtocols(draft);
   for (const id of protocols) {
     if (
       known.has(id) &&

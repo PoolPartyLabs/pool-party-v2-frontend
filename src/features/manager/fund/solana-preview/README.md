@@ -74,7 +74,7 @@ The POO-2281/2291 slices below record the original isolated drawing and successi
 contracts. References to its independent reducer or standalone screen describe that earlier delivery,
 not the current `/manager/new` entry. Current shared binding and limitations are defined above.
 
-Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+Accepted Header and Save and exit paths acknowledge local disposal only after route/account host and
 intent generation validate the user's consent. Stale acceptance cannot close a successor session.
 Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
 last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.

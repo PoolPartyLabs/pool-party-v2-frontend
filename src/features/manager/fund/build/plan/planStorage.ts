@@ -5,7 +5,7 @@
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure storage helper; the store and the builder shell own the events.
  *
- * The plan rides inside the mandate draft (same store, same Save & exit, same resume on reload, as
+ * The plan rides inside the mandate draft (same store, same Save and exit, same resume on reload, as
  * R9 of the Mandate handoff). These two helpers are what the draft store and the draft hook need to
  * carry it:
  *

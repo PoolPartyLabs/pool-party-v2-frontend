@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Otras redes"
+      "others": "Otras redes",
+      "othersCaption": "Cada red que añada necesita un puente y una firma más en el lanzamiento."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Obligatorio",
-      "requiredSubtitle": "Toda estrategia necesita una forma de intercambiar tokens y de mover dinero entre sus redes.",
       "operate": "Protocolos para operar",
-      "on": "En",
-      "onFootnote": "\"En\" muestra las redes del paso 1 en las que cada protocolo está disponible."
+      "on": "Disponible en",
+      "onFootnote": "\"Disponible en\" muestra cuáles de sus redes del paso 1 admite cada protocolo.",
+      "swapBridge": "Intercambio y puente",
+      "swapBridgeCollapsed": "{names} · seleccionados para usted",
+      "swapBridgeOpen": "Seleccionados para usted. Mantenga al menos un intercambio, y un puente cuando añada una red.",
+      "swapBridgeOpenHub": "Seleccionados para usted. Mantenga al menos un intercambio.",
+      "show": "Mostrar",
+      "hide": "Ocultar",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Intercambio",
+        "uniswapV3Liquidity": "Uniswap v3 · Liquidez"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -871,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, one {# pool} other {# pools}} con al menos uno de sus tokens",
       "yours": "Sus pools · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "{pct}% seleccionado",
+      "feeTier": "Nivel de comisión de {fee}",
+      "tierShare": "Nivel de comisión de {fee} · elegido por el {pct}% de los LP",
       "addsToken": "agrega {symbol} a sus tokens",
       "hasHook": "tiene un hook",
       "fixed": "Las pools quedan fijas en el lanzamiento. No podrá agregar una después.",
@@ -932,7 +941,7 @@
       "body": "Todo lo que eligió hasta ahora se conserva. El nombre es cómo encontrará este borrador entre sus estrategias; puede cambiarlo más adelante en Revisión.",
       "nameLabel": "Nombre del borrador",
       "namePlaceholder": "ETH y BTC en Arbitrum",
-      "helper": "De 10 a 50 caracteres, la misma regla que el nombre de la estrategia.",
+      "helper": "De 10 a 50 caracteres.",
       "counter": "{count} / {max}",
       "progress": "Guardado hasta ahora: {networks} redes, {protocols} protocolos, {tokens} tokens · Mandato, paso {n} de {count}",
       "keepEditing": "Seguir editando",

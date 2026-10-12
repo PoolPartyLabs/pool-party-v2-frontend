@@ -541,7 +541,7 @@ export type AnalyticsMandateStep = (typeof ANALYTICS_MANDATE_STEPS)[number];
  * carry reasons that cannot occur in it. {@link AnalyticsParams.block_reason} accepts both, so one
  * GA4 dimension still answers "why did the product say no" across the whole app.
  *
- * Five values where the mandate domain defines seven, because two were not distinct from reasons
+ * Seven values where the mandate domain defines nine, because two were not distinct from reasons
  * that already exist and inventing a synonym would split one question into two half-populated
  * series: `name_length` IS `name_invalid` (whose own doc reads "missing or fails its length rule"),
  * and `not_priced` IS `price_unknown`. The fold is explicit and total in
@@ -599,6 +599,14 @@ export const ANALYTICS_MANDATE_BLOCK_REASONS = [
    * is what does not exist yet.
    */
   "coming_soon",
+  /**
+   * The manager tried to clear a protocol that the mandate cannot lose (POO-2333 R4): the last
+   * swap, or the bridge of a mandate with a network that is not the hub.
+   *
+   * Not `nothing_selected`: the step has a selection, and the manager tried to remove a part of it.
+   * This count tells if managers try to run a strategy without the swap or the bridge.
+   */
+  "required_protocol",
 ] as const;
 
 export type AnalyticsMandateBlockReason = (typeof ANALYTICS_MANDATE_BLOCK_REASONS)[number];

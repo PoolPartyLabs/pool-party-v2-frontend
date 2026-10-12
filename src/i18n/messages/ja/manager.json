@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "その他のネットワーク"
+      "others": "その他のネットワーク",
+      "othersCaption": "追加するネットワークごとに、ブリッジとローンチ時の署名が1回ずつ追加で必要です。"
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "必須",
-      "requiredSubtitle": "どの戦略にも、トークンを交換し、ネットワーク間で資金を移動する手段が必要です。",
       "operate": "運用に使うプロトコル",
-      "on": "対応",
-      "onFootnote": "「対応」は、各プロトコルが利用できる、ステップ1のネットワークを示します。"
+      "on": "対応ネットワーク",
+      "onFootnote": "「対応ネットワーク」は、ステップ1で選んだネットワークのうち各プロトコルが対応するものを示します。",
+      "swapBridge": "スワップとブリッジ",
+      "swapBridgeCollapsed": "{names} · 選択済み",
+      "swapBridgeOpen": "自動で選択済みです。スワップを1つ以上、ネットワークを追加する場合はブリッジも1つ以上残してください。",
+      "swapBridgeOpenHub": "自動で選択済みです。スワップを1つ以上残してください。",
+      "show": "表示",
+      "hide": "非表示",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · スワップ",
+        "uniswapV3Liquidity": "Uniswap v3 · 流動性"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -871,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, other {保有トークンを1つ以上含むプールが#件}}あります",
       "yours": "保有プール · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "{pct}% 選択済み",
+      "feeTier": "{fee} の手数料ティア",
+      "tierShare": "{fee} の手数料ティア · LPの{pct}%が選択",
       "addsToken": "{symbol} をトークンに追加",
       "hasHook": "フックがあります",
       "fixed": "プールはローンチ時に確定します。後から追加することはできません。",
@@ -932,7 +941,7 @@
       "body": "これまでに選んだ内容はすべて保持されます。この名前で、戦略一覧からこのドラフトを見つけられます。後で「確認」画面から変更できます。",
       "nameLabel": "ドラフト名",
       "namePlaceholder": "ArbitrumのETHとBTC",
-      "helper": "10〜50文字で、戦略名と同じ規則です。",
+      "helper": "10〜50文字。",
       "counter": "{count} / {max}",
       "progress": "ここまでの保存内容: ネットワーク{networks}件、プロトコル{protocols}件、トークン{tokens}件 · マンデート、ステップ{n}/{count}",
       "keepEditing": "編集を続ける",
