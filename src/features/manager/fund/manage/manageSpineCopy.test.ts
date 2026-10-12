@@ -193,7 +193,7 @@ describe("Manage spine locales", () => {
       for (const key of MANAGE_SPINE_KEYS) {
         const value = lookup(messages, key);
         expect(value.length).toBeGreaterThan(0);
-        expect(value).not.toContain("—");
+        expect(value).not.toContain("\u2014");
       }
   });
 });
