@@ -277,11 +277,17 @@ describe("locales (POO-2333)", () => {
     expect(names["uniswap-v3-swap"]).not.toBe(names["uniswap-v3"]);
     const rows = protocolSections(catalog, draft).swapAndBridge;
     const spoke = withNetworks(draft, ["robinhood"], catalog);
+    const tierShare = t("fundBuilder.pools.tierShare", { fee: "0.30%", pct: 31 });
+    expect(tierShare).toContain("31");
     const texts = [
       ...Object.values(names),
       swapBridgeHeadText(t, swapBridgeHead(false, draft), selectedForYou(rows, draft)),
       swapBridgeHeadText(t, swapBridgeHead(true, draft), []),
       swapBridgeHeadText(t, swapBridgeHead(true, spoke), []),
+      tierShare,
+      t("fundBuilder.header.saveExit"),
+      t("fundBuilder.draft.helper"),
+      t("fundBuilder.networks.othersCaption"),
     ];
     for (const text of texts) {
       expect(text).not.toMatch(/^manager\./);

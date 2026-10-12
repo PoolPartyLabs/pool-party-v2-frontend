@@ -81,11 +81,17 @@ describe("NetworksStep", () => {
     expect(screen.queryByRole("checkbox", { name: "Arbitrum" })).not.toBeInTheDocument();
   });
 
-  // @rule R16 v2
+  // @rule R16 v2 @rule R1
   it("lists Robinhood Chain as the one spoke under its own group head", () => {
     renderStep();
 
     expect(screen.getByText("Other networks")).toBeInTheDocument();
+    // R1 (POO-2333): the caption states the cost of each network that the manager adds.
+    expect(
+      screen.getByText(
+        "Each network that you add needs a bridge and one more signature at launch.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Robinhood Chain" })).toBeInTheDocument();
     // Base, Polygon and Unichain are no longer offered (POO-2142).
     for (const name of ["Base", "Polygon", "Unichain"]) {
