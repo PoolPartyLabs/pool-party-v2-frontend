@@ -257,14 +257,18 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   const [query, setQuery] = useState("");
   const [networkFilter, setNetworkFilter] = useState<NetworkFilter>(ALL_NETWORKS);
 
-  const slots = slotsView(draft);
+  // R14: real data mode keeps today's screen, so every new view below is off when this is true.
+  const real = isRealData(draft, catalog);
+  const slots = slotsView(draft, catalog);
   const { used } = slots;
+  const showFull = slots.full && !real;
   const mode = tokenModeOf(draft);
-  const allMode = !isRealData(draft) && mode === "all";
+  const allMode = !real && mode === "all";
   const viewState = tokensViewState({
     loading: catalog.loading === true,
     error: catalog.error === true,
     draft,
+    catalog,
   });
   const [showAllRows, setShowAllRows] = useState(false);
 
@@ -300,7 +304,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   const mandateGroups = groupMandate(draft.tokens);
   const collapsed = collapseRows(
     mandateGroups,
-    showAllRows ? mandateGroups.length : MANDATE_ROWS_SHOWN,
+    real || showAllRows ? mandateGroups.length : MANDATE_ROWS_SHOWN,
   );
   const hasRemovable = draft.tokens.some((token) => !token.locked);
 
@@ -333,7 +337,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
    */
   function handleAddAll() {
     // R7: with a full basket the button is off; the press is reported, nothing is added.
-    if (!slots.addAllEnabled) {
+    if (!real && !slots.addAllEnabled) {
       const first = addable[0];
       onBlocked({ step: STEP, reason: "no_slots", rowId: first?.id ?? null });
       return;
@@ -395,8 +399,8 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
                   title={t("fundBuilder.common.noSlots")}
                   onClick={() => onBlocked({ step: STEP, reason: "no_slots", rowId: group.id })}
                 >
-                  {slots.full ? null : <Plus className="size-4" aria-hidden="true" />}
-                  {slots.full ? t("fundBuilder.tokens.noFreeSlots") : t("fundBuilder.common.add")}
+                  {showFull ? null : <Plus className="size-4" aria-hidden="true" />}
+                  {showFull ? t("fundBuilder.tokens.noFreeSlots") : t("fundBuilder.common.add")}
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="top" sideOffset={4}>
@@ -420,6 +424,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
 
   /** R4: "Deposit token" for the hub token, "Required by {network}" for the others. */
   function lockedCaption(group: MandateGroup): string {
+    if (real) return t("fundBuilder.tokens.depositToken");
     const caption = lockedRowCaption({ network: group.networks[0] ?? HUB_NETWORK });
     return caption.kind === "depositToken"
       ? t("fundBuilder.tokens.depositToken")
@@ -503,7 +508,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   return (
     <section data-mandate-step={STEP} className="flex flex-col gap-6">
       {/* R1: not in real data mode, which has no All tokens mode (R14). */}
-      {isRealData(draft) ? null : accessControl()}
+      {real ? null : accessControl()}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
         {/* R4: All tokens mode has no catalog to browse, only the explanation. */}
         {allMode ? (
@@ -690,7 +695,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
               <span
                 className={cn(
                   "font-semibold text-sm",
-                  slots.full ? "text-warning" : "text-foreground",
+                  showFull ? "text-warning" : "text-foreground",
                 )}
               >
                 {allMode
@@ -698,12 +703,10 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
                   : t("fundBuilder.common.slotsCount", { used, max: slots.ceiling })}
               </span>
             </div>
-            <p
-              className={cn("mt-2 text-xs", slots.full ? "text-warning" : "text-muted-foreground")}
-            >
+            <p className={cn("mt-2 text-xs", showFull ? "text-warning" : "text-muted-foreground")}>
               {allMode
                 ? t("fundBuilder.tokens.slotsAllCaption", { max: slots.ceiling })
-                : slots.full
+                : showFull
                   ? t("fundBuilder.tokens.slotsFull", { max: slots.ceiling })
                   : t("fundBuilder.tokens.slotsCaption", { max: slots.ceiling })}
             </p>

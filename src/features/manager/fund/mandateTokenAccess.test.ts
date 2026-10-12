@@ -242,10 +242,15 @@ describe("R6 loading and error", () => {
 describe("R14 one source for real data mode", () => {
   it("gives 16 slots and the real status panel together, or 100 slots and neither", () => {
     // @rule R14
-    for (const draft of [empty(), { ...empty(), dataMode: "real" as const }]) {
-      const real = isRealData(draft);
-      expect(tokensViewState({ loading: false, error: false, draft }).kind === "real").toBe(real);
-      expect(slotsView(draft).ceiling).toBe(real ? MAX_TOKEN_SLOTS : BASKET_TOKEN_SLOTS);
+    for (const draftMode of [undefined, "real" as const]) {
+      for (const catalogMode of [undefined, "real" as const]) {
+        const draft: MandateDraft = { ...empty(), dataMode: draftMode };
+        const source = { dataMode: catalogMode };
+        const real = isRealData(draft, source);
+        const view = tokensViewState({ loading: false, error: false, draft, catalog: source });
+        expect(view.kind === "real").toBe(real);
+        expect(slotsView(draft, source).ceiling).toBe(real ? MAX_TOKEN_SLOTS : BASKET_TOKEN_SLOTS);
+      }
     }
   });
 });
