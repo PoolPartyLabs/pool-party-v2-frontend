@@ -24,6 +24,7 @@ import {
   clearTokens,
   createEmptyDraft,
   draftNameError,
+  effectiveCap,
   firstUnpassedStep,
   hasDexProtocol,
   isBlocked,
@@ -986,6 +987,35 @@ describe("validateStep", () => {
 
     draft = setCap(draft, "tokens", tokenKey(arbRow), { noCap: false, pct: 30 });
     expect(validateStep(draft, "limits", catalog)).toBeNull();
+  });
+
+  it("sends an old completed draft with no token cap back to Limits with cap_zero", () => {
+    // @rule R12
+    // A draft saved before the token cap start value has no token mode and no stored token cap.
+    let draft = withNetworks(empty(), ["robinhood"], catalog);
+    draft = draftOf(withProtocols(draft, [...REQUIRED_PROTOCOLS, "aave-v3"]));
+    draft = draftOf(addToken(draft, catalogToken("arbitrum", "ARB"), catalog));
+    const arbKey = tokenKey(first(capRows(draft, catalog).tokens, "ARB cap row"));
+    const old: MandateDraft = {
+      ...draft,
+      caps: { ...draft.caps, tokens: {} },
+      passedSteps: [...MANDATE_STEP_ORDER],
+      lastStep: "limits",
+      lastPhase: "build",
+      completedAt: NOW,
+    };
+    expect(old.tokenMode).toBeUndefined();
+    expect(old.allTokensCap).toBeUndefined();
+
+    // The missing cap reads as an enabled 0% cap.
+    expect(effectiveCap(old, "tokens", arbKey)).toEqual({ noCap: false, pct: 0 });
+    // The Limits check refuses it, so the builder opens the draft on Limits.
+    expect(validateStep(old, "limits", catalog)).toEqual({
+      step: "limits",
+      reason: "cap_zero",
+      rowId: arbKey,
+    });
+    expect(resumeStep(old)).toBe("limits");
   });
 
   it("requires another positive token when the draft has no cap rows", () => {
