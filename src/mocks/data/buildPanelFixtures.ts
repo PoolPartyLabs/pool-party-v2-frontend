@@ -521,6 +521,9 @@ function generatedPool(row: MandatePoolRef): CatalogPool {
   const chainId = row.network === "arbitrum" ? "42161" : "4663";
   const side0 = sideOf(row.token0);
   const side1 = sideOf(row.token1);
+  if (row.feeTier === null) {
+    throw new Error(`buildPanelFixtures: pool ${row.id} has no fee tier`);
+  }
   const spacing = V4_SPACING_OF_FEE[row.feeTier];
   if (spacing === undefined) {
     throw new Error(`buildPanelFixtures: no tick spacing for fee ${row.feeTier} (${row.id})`);

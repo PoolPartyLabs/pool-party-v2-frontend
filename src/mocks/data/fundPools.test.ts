@@ -75,7 +75,7 @@ describe("fund pool fixtures", () => {
   it("carries only canonical fee tiers, consistent between feeBps and feeTier", () => {
     for (const pool of all) {
       expect(CANONICAL_FEE_BPS as readonly number[]).toContain(pool.feeBps);
-      expect(pool.feeTier).toBe(pool.feeBps * 100);
+      expect(pool.feeTier).toBe((pool.feeBps ?? 0) * 100);
     }
   });
 

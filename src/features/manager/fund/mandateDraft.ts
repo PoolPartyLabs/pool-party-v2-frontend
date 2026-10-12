@@ -68,7 +68,7 @@ export type ProtocolId =
   | "orca";
 
 /** The protocols that make the Pools step meaningful: they hold liquidity positions. */
-export type DexProtocolId = "uniswap-v3" | "uniswap-v4";
+export type DexProtocolId = "uniswap-v3" | "uniswap-v4" | "raydium";
 
 /** The five Mandate sub-steps. */
 export type MandateStepKey = "networks" | "protocols" | "tokens" | "pools" | "limits";
@@ -251,8 +251,9 @@ export interface MandatePoolRef {
   protocol: DexProtocolId;
   token0: Pick<MandateTokenRef, "address" | "symbol" | "name" | "logoUrl">;
   token1: Pick<MandateTokenRef, "address" | "symbol" | "name" | "logoUrl">;
-  feeBps: number;
-  feeTier: number;
+  /** Null when the source has no fee (Raydium pools from DEX Screener). A null fee shows no label. */
+  feeBps: number | null;
+  feeTier: number | null;
   tvlUsd: number | null;
   aprPct: number | null;
   /** Share of V1 managers who chose this tier, read from the API. Never invented; null when absent. */

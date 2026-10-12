@@ -312,19 +312,23 @@ export function panelPoolsFor(
       (pool: MandatePoolRef) =>
         pool.protocol === "uniswap-v4" && pool.network === network && !pool.hasHook,
     )
-    .map((pool) => {
+    .flatMap((pool): PanelPoolRow[] => {
       const feeTier = pool.poolKey?.fee ?? pool.feeTier;
-      return {
-        poolId: pool.poolId?.toLowerCase() ?? pool.id,
-        rowId: pool.id,
-        network,
-        token0: rowToken(pool.token0),
-        token1: rowToken(pool.token1),
-        pairLabel: `${pool.token0.symbol} / ${pool.token1.symbol}`,
-        feeTier,
-        feePct: feeTier / 10_000,
-        tickSpacing: pool.poolKey?.tickSpacing ?? null,
-      };
+      // A pool with no fee tier cannot be a v4 row. A damaged draft is skipped, as a hooked pool is.
+      if (feeTier === null) return [];
+      return [
+        {
+          poolId: pool.poolId?.toLowerCase() ?? pool.id,
+          rowId: pool.id,
+          network,
+          token0: rowToken(pool.token0),
+          token1: rowToken(pool.token1),
+          pairLabel: `${pool.token0.symbol} / ${pool.token1.symbol}`,
+          feeTier,
+          feePct: feeTier / 10_000,
+          tickSpacing: pool.poolKey?.tickSpacing ?? null,
+        },
+      ];
     });
 }
 

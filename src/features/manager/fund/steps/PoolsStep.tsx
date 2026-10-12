@@ -924,6 +924,7 @@ function ConnectedPoolsStep({
   const protocolNames: Record<DexProtocolId, string> = {
     "uniswap-v3": t("fundBuilder.protocolNames.uniswapV3"),
     "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
+    raydium: t("solanaPreview.protocols.raydium"),
   };
 
   /**
@@ -1160,6 +1161,7 @@ function ConnectedPoolsStep({
   /** One result card (R32), or the disabled variant a permanent refusal gets (R28, R38). */
   function resultCard(pool: MandatePoolRef) {
     const adds = tokensItWouldAdd(draft, pool);
+    const poolFee = poolFeeLabel(pool.feeBps);
     const refusal = rowRefusal(pool);
     return (
       <div
@@ -1183,12 +1185,11 @@ function ConnectedPoolsStep({
             {/* POO-2333 R8: "{fee} fee tier · chosen by {pct}% of LPs". R32: an absent share says
                 nothing, so the line shows only the fee tier. "0%" would read as a measured share of
                 nothing, which is a figure we never had (POO-1469). */}
-            {pool.tierSharePct === null
-              ? t("fundBuilder.pools.feeTier", { fee: poolFeeLabel(pool.feeBps) })
-              : t("fundBuilder.pools.tierShare", {
-                  fee: poolFeeLabel(pool.feeBps),
-                  pct: pool.tierSharePct,
-                })}
+            {poolFee === null
+              ? null
+              : pool.tierSharePct === null
+                ? t("fundBuilder.pools.feeTier", { fee: poolFee })
+                : t("fundBuilder.pools.tierShare", { fee: poolFee, pct: pool.tierSharePct })}
             {adds.map((symbol) => (
               <span key={symbol}>{` · ${t("fundBuilder.pools.addsToken", { symbol })}`}</span>
             ))}

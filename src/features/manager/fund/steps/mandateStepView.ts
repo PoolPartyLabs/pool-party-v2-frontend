@@ -159,18 +159,19 @@ export type PoolMetaPart =
   | { part: "network"; network: NetworkId }
   | { part: "feeTier"; fee: string };
 
-/** R8: a fee in basis points as the pool rows print it. `30` gives `0.30%`. */
-export function poolFeeLabel(bps: number): string {
-  return `${(bps / 100).toFixed(2)}%`;
+/** R8: a fee in basis points as the pool rows print it. `30` gives `0.30%`. A null fee has no label. */
+export function poolFeeLabel(bps: number | null): string | null {
+  return bps === null ? null : `${(bps / 100).toFixed(2)}%`;
 }
 
 /** R9: the parts of a pool row in reading order. The network icon comes before the fee tier. */
 export function poolMeta(
   pool: Pick<MandatePoolRef, "protocol" | "network" | "feeBps">,
 ): PoolMetaPart[] {
+  const fee = poolFeeLabel(pool.feeBps);
   return [
     { part: "protocol", protocol: pool.protocol },
     { part: "network", network: pool.network },
-    { part: "feeTier", fee: poolFeeLabel(pool.feeBps) },
+    ...(fee === null ? [] : [{ part: "feeTier", fee } as const]),
   ];
 }

@@ -178,7 +178,9 @@ function titleAndCaption(
     if (!pool) return { title: protocol, caption: copy.card.pickPool };
     return {
       title: copy.card.poolTitle(pool.token0.symbol, pool.token1.symbol),
-      caption: copy.card.poolCaption(protocol, feeNumber(pool.feeBps)),
+      // A null fee (Raydium) has no fee label: the caption is the protocol name alone.
+      caption:
+        pool.feeBps === null ? protocol : copy.card.poolCaption(protocol, feeNumber(pool.feeBps)),
     };
   }
   if (block.kind === "aaveSupply" || block.kind === "aaveBorrow") {

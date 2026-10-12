@@ -69,7 +69,7 @@ export const fixturePoolBody: PanelBodyDefinition<PoolBlockConfig> = {
       rows: pools.map((pool) => ({
         id: pool.id,
         title: `${pool.token0.symbol} / ${pool.token1.symbol}`,
-        subtitle: `${feeNumber(pool.feeBps)}%`,
+        subtitle: pool.feeBps === null ? "" : `${feeNumber(pool.feeBps)}%`,
         logos: [
           { symbol: pool.token0.symbol, network: pool.network },
           { symbol: pool.token1.symbol, network: pool.network },
@@ -106,7 +106,10 @@ export const fixturePoolBody: PanelBodyDefinition<PoolBlockConfig> = {
             labelId={labelId}
             options={pools.map((pool) => ({
               id: panelPoolId(pool),
-              label: `${pool.token0.symbol} / ${pool.token1.symbol} · ${feeNumber(pool.feeBps)}%`,
+              label:
+                pool.feeBps === null
+                  ? `${pool.token0.symbol} / ${pool.token1.symbol}`
+                  : `${pool.token0.symbol} / ${pool.token1.symbol} · ${feeNumber(pool.feeBps)}%`,
               logos: [
                 { symbol: pool.token0.symbol, network: pool.network },
                 { symbol: pool.token1.symbol, network: pool.network },
