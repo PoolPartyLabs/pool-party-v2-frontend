@@ -347,8 +347,13 @@ describe("shared local Solana binding", () => {
     await user.click(screen.getByRole("button", { name: "Next: Pools" }));
     expect(screen.getAllByText("Not available").length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: "Next: Limits" }));
-    for (const checkbox of screen.getAllByRole("checkbox", { name: /^No cap for/ }))
-      await user.click(checkbox);
+    // POO-2332 R8: networks and protocols start with No cap on. A token starts at 0% with No cap
+    // off, so Next stays held until the token cap is set (R12).
+    expect(screen.getByRole("button", { name: "Set the token cap above 0%" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    await user.click(screen.getByRole("checkbox", { name: "No cap for WSOL on Solana" }));
     await user.click(screen.getByRole("button", { name: "Next: Build strategy" }));
     await screen.findByRole("heading", { name: "Name your draft" });
     await user.type(screen.getByRole("textbox", { name: "Draft name" }), "Local Solana strategy");
@@ -747,9 +752,11 @@ describe("FundStrategyBuilderScreen", () => {
       caps: { ...draft.caps, tokens: { [tokenKey(token)]: { noCap: false, pct: 0 } } },
     });
     renderWithProviders(<FundStrategyBuilderScreen />);
-    await screen.findByText("MANDATE · STEP 4 OF 4");
+    // The whole mandate holds a pool, so the Pools step is in the count.
+    await screen.findByText("MANDATE · STEP 5 OF 5");
 
-    await userEvent.click(screen.getByRole("button", { name: "Next: Build strategy" }));
+    // POO-2332 R12: the held Next names its reason. The press still lands (R13).
+    await userEvent.click(screen.getByRole("button", { name: "Set the token cap above 0%" }));
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Set the token cap above 0% or select No cap to continue.",
     );
@@ -758,7 +765,7 @@ describe("FundStrategyBuilderScreen", () => {
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     // Still on the step: clearing the notice is not advancing.
-    expect(screen.getByText("MANDATE · STEP 4 OF 4")).toBeInTheDocument();
+    expect(screen.getByText("MANDATE · STEP 5 OF 5")).toBeInTheDocument();
     expect(emitted("builder_mandate_blocked")).toEqual([
       { step: "limits", block_reason: "cap_zero" },
     ]);
@@ -1522,9 +1529,12 @@ describe("Limits revised completion guards (POO-2197)", () => {
       caps: { ...draft.caps, tokens: { [tokenKey(token)]: { noCap: false, pct: 0 } } },
     });
     renderWithProviders(<FundStrategyBuilderScreen />);
-    await screen.findByRole("button", { name: "Next: Build strategy" });
+    // POO-2332 R12: the 0% token cap holds Next and names the reason.
+    await screen.findByRole("button", { name: "Set the token cap above 0%" });
     await userEvent.click(screen.getByRole("checkbox", { name: /No cap.*Arbitrum/i }));
-    expect(screen.getByRole("button", { name: "Next: Build strategy" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next: Build strategy" })).not.toHaveAttribute(
+      "aria-disabled",
+    );
     expect(screen.queryByRole("heading", { name: "Build your strategy" })).not.toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: /No cap.*Arbitrum/i })).toBeChecked();
   });
@@ -1540,8 +1550,9 @@ describe("Limits revised completion guards (POO-2197)", () => {
       caps: { ...draft.caps, tokens: { [tokenKey(token)]: { noCap: false, pct: 0 } } },
     });
     renderWithProviders(<FundStrategyBuilderScreen />);
-    await screen.findByRole("button", { name: "Next: Build strategy" });
-    await userEvent.click(screen.getByRole("button", { name: "Next: Build strategy" }));
+    // POO-2332 R12: the held Next names its reason. The press still lands (R13).
+    await screen.findByRole("button", { name: "Set the token cap above 0%" });
+    await userEvent.click(screen.getByRole("button", { name: "Set the token cap above 0%" }));
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Set the token cap above 0% or select No cap to continue.",
     );
