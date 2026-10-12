@@ -33,7 +33,7 @@ Instructions handed to the browser so it does not make dangerous decisions. A de
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Stops leaking full URLs (which may carry sensitive data) to third parties. |
 | `Permissions-Policy` | disable unused APIs (`camera=()`, `microphone=()`, `geolocation=()`, `usb=()`, `payment=()`) | Turn off browser APIs we do not use. |
 | `Cross-Origin-Opener-Policy` | `same-origin-allow-popups` | **Not `same-origin`.** Privy/WalletConnect/OAuth open popups and use `postMessage`; `same-origin` breaks that. `same-origin-allow-popups` isolates the page while keeping popups working. |
-| `Cross-Origin-Embedder-Policy` | leave unset (or `credentialless` only if required) | `require-corp` enables `crossOriginIsolated` but breaks cross-origin resources (wallet SDKs, TradingView, token logos). Do not enable unless a feature needs `SharedArrayBuffer`. |
+| `Cross-Origin-Embedder-Policy` | leave unset (or `credentialless` only if required) | `require-corp` enables `crossOriginIsolated` but breaks cross-origin resources (wallet SDKs, the DEX Screener chart frame, token logos). Do not enable unless a feature needs `SharedArrayBuffer`. |
 | `Cross-Origin-Resource-Policy` | `same-origin` on our own assets | Origin isolation for resources we serve. |
 
 **Rollout order:** `X-Content-Type-Options` + `X-Frame-Options`/`frame-ancestors` first (safe), then HSTS without preload, then CSP in Report-Only and tune before enforcing.
@@ -99,6 +99,10 @@ A misconfigured CORS (`Access-Control-Allow-Origin: *` with credentials, or refl
 Adding any third-party script, RPC, iframe, or API means updating the CSP allowlist in `frontend-security`. Default-deny: a new `connect-src`/`script-src`/`frame-src` entry is a reviewed change, not an afterthought. This is the control that limits blast radius if a dependency is compromised.
 
 
-### TradingView market-reference iframe (POO-2309, October 9)
+### DEX Screener chart iframe (POO-2338, October 12)
 
-The parent allows only `https://www.tradingview-widget.com` in frame-src. TradingView has no parent script-src/connect-src entry or wildcard. The public Advanced Chart runs in a cross-origin sandboxed iframe, with no-referrer and only scripts/same-origin/popups. Parent code validates origin, source window and opaque instance ID for boot/no-data and discards all vendor payload data; it never accepts commands/prices or exposes wallet providers. The direct embed URL reproduces the official loader protocol without executing that loader in the parent. Loader-protocol changes are an integration risk, handled by timeout/no-data/retry and the constructor/message tests. See CR-MGR-POO2309 for external disclosure and the separate exact-feed/branding/license boundary.
+POO-2338 replaces the POO-2309 TradingView market-reference frame. The parent allows only `https://dexscreener.com` in frame-src. DEX Screener has no parent script-src or connect-src entry and no wildcard. `https://www.tradingview-widget.com` is removed from frame-src.
+
+The chart runs in a cross-origin sandboxed iframe with `referrerPolicy="no-referrer"` and the sandbox `allow-scripts allow-same-origin allow-popups`. The URL holds only the chain slug and the public pool or token address, plus fixed display parameters. It holds no wallet, fund, user or draft data. The parent reads no message from the frame and sends none to it. The iframe `onLoad` event stops the 20 s timeout; it does not prove that candles loaded. The retry makes a new frame.
+
+The embed is a third-party surface that we do not control. A change to it is an integration risk, handled by the timeout and the retry. See CR-MGR-POO2338 for the terms risk and the external disclosure.

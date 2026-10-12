@@ -57,8 +57,8 @@ const directives: Record<string, string[]> = {
     // for ordinary JavaScript and is the thing this policy exists to forbid.
     "'wasm-unsafe-eval'",
     "https://www.googletagmanager.com",
-    // POO-1451 removed the unused TradingView wildcard. POO-2309 deliberately allows only
-    // its real cross-origin frame below; no TradingView script executes in the wallet page.
+    // POO-1451 removed the unused TradingView wildcard. POO-2338 replaces the POO-2309 chart frame
+    // with one DEX Screener frame in frame-src below; no DEX Screener script executes in the page.
     // PP-SECURITY [R5] (POO-1138): the Paybis fiat on-ramp widget loads its client script from
     // widget.paybis.com (prod) / widget.sandbox.paybis.com (sandbox). script-src is an explicit host
     // allowlist and we deliberately do NOT use 'strict-dynamic', so the widget loader (added in
@@ -175,8 +175,9 @@ const directives: Record<string, string[]> = {
   ],
   "frame-src": [
     SELF,
-    // POO-2309: the market widget runs cross-origin; no TradingView code executes in the parent.
-    "https://www.tradingview-widget.com",
+    // POO-2338 R8: the pool or asset chart runs cross-origin in a sandboxed frame. No DEX Screener
+    // code executes in the parent, and the parent sends it only the chain slug and a public address.
+    "https://dexscreener.com",
     "https://*.paybis.com",
     // Privy login / embedded-wallet iframe (rendered from auth.privy.io).
     "https://auth.privy.io",
