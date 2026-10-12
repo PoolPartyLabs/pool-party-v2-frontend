@@ -49,3 +49,13 @@ export async function settlePoolSearches(jobs: PoolSearchJob[]): Promise<Settled
   if (jobs.length > 0 && failures === jobs.length) throw firstError;
   return { pools: [...byId.values()], failedNetworks };
 }
+
+/**
+ * R10: the network for the error event of a failed Solana read. It is `solana` only when Solana is
+ * the one network that failed. The event of an EVM failure keeps the shape it had before Solana
+ * joined, and a failure that spans two networks has no single true value.
+ */
+export function solanaFailureNetwork(networks: readonly NetworkId[]): "solana" | undefined {
+  const distinct = [...new Set(networks)];
+  return distinct.length === 1 && distinct[0] === "solana" ? "solana" : undefined;
+}

@@ -4,7 +4,7 @@
  * @implements-rules-version v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2333 Figma parity: R8, R9)
- * @implements-rules-version v1 (POO-2343 R4: Raydium CLMM pools from DEX Screener; R5: one failed network keeps the other networks' pools)
+ * @implements-rules-version v1 (POO-2343 R4: Raydium CLMM pools from DEX Screener; R5: one failed network keeps the other networks' pools; R10: a Solana failure names its network)
  * @analytics-events none, the shell emits
  *
  * POO-2125 [R11] / [R13] / [R29] to [R38], epic POO-2119. Mandate step 4: the pools this strategy
@@ -134,7 +134,11 @@ import {
   tokenKey,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
-import { type SettledPoolSearches, settlePoolSearches } from "../poolSearchSettle";
+import {
+  type SettledPoolSearches,
+  settlePoolSearches,
+  solanaFailureNetwork,
+} from "../poolSearchSettle";
 import { poolFeeLabel, poolMeta } from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
@@ -308,6 +312,15 @@ function addAllPools(
   return { next, blocked: null };
 }
 
+/**
+ * A failed read as the shell hears it. `network` is set to `solana` when Solana alone failed (R10).
+ * An EVM failure keeps the event it had before Solana joined.
+ */
+export interface PoolsError {
+  code: string;
+  network?: NetworkId;
+}
+
 /** Public props: the shared step contract, plus two optional reporting channels for the shell. */
 export interface PoolsStepProps extends MandateStepProps {
   /**
@@ -315,7 +328,7 @@ export interface PoolsStepProps extends MandateStepProps {
    * rendered on its own in Storybook and in its tests; absent, a failure is still shown and simply
    * not reported.
    */
-  onError?: (error: { code: string }) => void;
+  onError?: (error: PoolsError) => void;
   /**
    * The size of the pool universe this step resolved, which the Broad-mandate flag (R13) is measured
    * against. Published so Review asks the same question with the same number.
@@ -525,6 +538,16 @@ export function PoolsStep({
    */
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
+  // The networks the measurement reads: one read per mandate token, so a network once per token.
+  const measureNetworks = useMemo(
+    () => mandateTokens.map((token) => token.network),
+    [mandateTokens],
+  );
+  // R10: a Solana failure carries `network: "solana"`, and no event carries an address.
+  const reportFailure = useCallback((code: string, networks: readonly NetworkId[]) => {
+    const network = solanaFailureNetwork(networks);
+    onErrorRef.current?.(network ? { code, network } : { code });
+  }, []);
   const onUniverseCountRef = useRef(onUniverseCount);
   onUniverseCountRef.current = onUniverseCount;
 
@@ -620,7 +643,7 @@ export function PoolsStep({
         setVisibleCount(PAGE_SIZE);
         // R5: some networks answered and some failed. The pools stay; the shell hears of the failure
         // once, like any other failed read.
-        if (next.failedNetworks?.length) onErrorRef.current?.({ code: "POOLS_FETCH_FAILED" });
+        if (next.failedNetworks?.length) reportFailure("POOLS_FETCH_FAILED", next.failedNetworks);
       })
       .catch(() => {
         if (ticket !== seq.current) return;
@@ -628,12 +651,12 @@ export function PoolsStep({
         setResolution({ pools: [], foundOn: null, signature: null });
         // PP-INTEGRATION-POINT: the shell maps this to `builder_mandate_error`
         // { step: "pools", error_code: "POOLS_FETCH_FAILED", error_origin: "upstream" }.
-        onErrorRef.current?.({ code: "POOLS_FETCH_FAILED" });
+        reportFailure("POOLS_FETCH_FAILED", fetchNetworks);
       })
       .finally(() => {
         if (ticket === seq.current) setLoading(false);
       });
-  }, [dex, resolveSearch, query.kind, retryNonce]);
+  }, [dex, resolveSearch, query.kind, retryNonce, fetchNetworks, reportFailure]);
 
   /**
    * The measurement, which in the universe view is also the list.
@@ -693,9 +716,10 @@ export function PoolsStep({
           // R5: a partial read is not the universe. Publishing it would hand R13 a denominator that
           // misses the failed network, so no count is written and the flag stays down. The list
           // still shows what arrived, with an error and Retry for the failed part.
-          onErrorRef.current?.({
-            code: serves ? "POOLS_FETCH_FAILED" : "POOLS_UNIVERSE_FETCH_FAILED",
-          });
+          reportFailure(
+            serves ? "POOLS_FETCH_FAILED" : "POOLS_UNIVERSE_FETCH_FAILED",
+            failedNetworks,
+          );
           if (serves) {
             setResolution({ pools, foundOn: null, signature: null, failedNetworks });
             setVisibleCount(PAGE_SIZE);
@@ -723,9 +747,10 @@ export function PoolsStep({
         if (measureTicket !== measureSeq.current) return;
         const ticket = listTicket();
         const serves = ticket !== null && ticket === seq.current;
-        onErrorRef.current?.({
-          code: serves ? "POOLS_FETCH_FAILED" : "POOLS_UNIVERSE_FETCH_FAILED",
-        });
+        reportFailure(
+          serves ? "POOLS_FETCH_FAILED" : "POOLS_UNIVERSE_FETCH_FAILED",
+          measureNetworks,
+        );
         // A background failure stops there: putting the error state over a search the manager is
         // reading would answer a question they did not ask. It is tried again on the next signature
         // change, when the view returns to the universe, and on "Try again".
@@ -742,7 +767,15 @@ export function PoolsStep({
         measureClaim.current = null;
         if (ticket !== null && ticket === seq.current) setLoading(false);
       });
-  }, [dex, measureUniverse, universeSignature, query.kind, retryNonce]);
+  }, [
+    dex,
+    measureUniverse,
+    universeSignature,
+    query.kind,
+    retryNonce,
+    measureNetworks,
+    reportFailure,
+  ]);
 
   /**
    * The denominator R13 divides by. Null until a universe has resolved for the mandate as it stands.

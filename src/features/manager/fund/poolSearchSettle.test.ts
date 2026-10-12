@@ -11,7 +11,7 @@
 import { describe, expect, it } from "vitest";
 import { ApiError } from "@/lib/api/errors";
 import type { MandatePoolRef } from "./mandateDraft";
-import { settlePoolSearches } from "./poolSearchSettle";
+import { settlePoolSearches, solanaFailureNetwork } from "./poolSearchSettle";
 
 function poolOf(id: string, network: MandatePoolRef["network"]): MandatePoolRef {
   const token = { address: "0x1", symbol: "T", name: "T", logoUrl: null };
@@ -61,5 +61,17 @@ describe("R5: a failed network read keeps the pools of the other networks", () =
     ]);
     expect(result.pools).toEqual([eth]);
     expect(result.failedNetworks).toEqual([]);
+  });
+});
+
+describe("R10: the error event names the network only for a Solana failure", () => {
+  // @rule R10
+  it("gives solana for a Solana failure, and nothing when two networks failed or none is known", () => {
+    expect(solanaFailureNetwork(["solana"])).toBe("solana");
+    expect(solanaFailureNetwork(["solana", "solana"])).toBe("solana");
+    // An EVM failure keeps the event it always had.
+    expect(solanaFailureNetwork(["arbitrum"])).toBeUndefined();
+    expect(solanaFailureNetwork(["arbitrum", "solana"])).toBeUndefined();
+    expect(solanaFailureNetwork([])).toBeUndefined();
   });
 });

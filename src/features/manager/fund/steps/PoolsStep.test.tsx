@@ -1582,3 +1582,51 @@ describe("PoolsStep", () => {
     expect(screen.queryByText("Pick at least one to continue.")).not.toBeInTheDocument();
   });
 });
+
+describe("PoolsStep: a failed Solana read (POO-2343)", () => {
+  const SOL = "So11111111111111111111111111111111111111112";
+
+  /** A mixed mandate: the hub token of every draft, and one Solana token. */
+  function mixedDraft(): MandateDraft {
+    // The test catalog does not offer Solana, so the network is added by hand.
+    const base = { ...draftOn(), networks: ["arbitrum", "solana"] as NetworkId[] };
+    const solToken: MandateTokenRef = {
+      address: SOL,
+      symbol: "SOL",
+      name: "Solana",
+      network: "solana",
+      logoUrl: null,
+      locked: false,
+    };
+    return { ...base, tokens: [...base.tokens, solToken] };
+  }
+
+  function solanaFails() {
+    vi.mocked(searchMandatePools).mockImplementation(async (input) => {
+      if (input.network === "solana") throw new Error("mock: raydium pools unavailable");
+      return pools(2);
+    });
+  }
+
+  // @rule R5
+  it("[R5] keeps the EVM pools and shows the error with Retry when only the Solana read fails", async () => {
+    solanaFails();
+    renderStep(mixedDraft());
+
+    expect(
+      await screen.findByText("Couldn't load the pools. Check your connection and try again."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    await waitFor(() => expect(resultCards()).toHaveLength(2));
+  });
+
+  // @rule R10
+  it("[R10] reports the failed read once, with network solana and no address", async () => {
+    solanaFails();
+    const { onError } = renderStep(mixedDraft());
+
+    await waitFor(() => expect(onError).toHaveBeenCalled());
+    expect(onError.mock.calls).toEqual([[{ code: "POOLS_FETCH_FAILED", network: "solana" }]]);
+    expect(JSON.stringify(onError.mock.calls)).not.toContain(SOL);
+  });
+});
