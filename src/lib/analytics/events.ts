@@ -2,6 +2,7 @@
  * @id PP-CORE (SETUP-014 / POO-82)
  * @name analytics events
  * @implements-rules-version v1 (POO-2197 rules v2)
+ * @implements-rules-version v1 (POO-2332)
  *
  * Typed event catalog for Pool Party analytics. The living source of truth is
  * `docs/ANALYTICS_EVENTS.md`; this list must stay in sync with it (the `consistency-checker` skill
@@ -307,6 +308,9 @@ export const ANALYTICS_EVENTS = [
   "builder_mandate_blocked",
   "builder_mandate_completed",
   "builder_mandate_abandoned",
+  // POO-2332 R15: the manager changed the Token access mode on the Tokens step. Sent once per real
+  // change, never on the first render, with `token_mode`.
+  "builder_mandate_token_mode_changed",
   "builder_draft_saved",
   "builder_mandate_error",
   "builder_review_view",
@@ -565,7 +569,16 @@ export const ANALYTICS_MANDATE_BLOCK_REASONS = [
   /** USDC needs another selected token with a positive effective allowance (POO-2197). */
   "token_allowance_required",
   /**
-   * A token could not be added because the mandate's 16 network slots are full (R27).
+   * POO-2332 R12/R13: an enabled cap (No cap not selected) is at 0%, so Limits cannot be left.
+   *
+   * Not `cap_missing`: in mock mode every row now has a start value, so the decision is not
+   * missing, it is a 0% cap that no money could pass. The count says how often the 0% start value
+   * of a token row stops a manager.
+   */
+  "cap_zero",
+  /**
+   * A token could not be added because the mandate's network slots are full (R27): 100 in mock
+   * mode (POO-2332 R2), 16 in real data mode.
    *
    * A CONTRACT ceiling rather than a product choice, which is what gives the number an audience: it
    * says how often the limit the fund contracts impose is the thing standing between a manager and
@@ -1229,6 +1242,12 @@ export interface AnalyticsParams {
    * compiling here, which is the failure mode worth having.
    */
   step?: AnalyticsMandateStep;
+  /**
+   * On `builder_mandate_token_mode_changed` (POO-2332 R15): the Token access mode the manager chose.
+   * "selected" is the chosen list; "all" lets the strategy trade any token on its networks and
+   * protocols. A closed pair, declared here for the same reason as {@link step}.
+   */
+  token_mode?: "selected" | "all";
   /**
    * What the draft held when the event fired (POO-2122): one count per selection list.
    *
