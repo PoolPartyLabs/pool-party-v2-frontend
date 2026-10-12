@@ -69,7 +69,7 @@ Upload, Max and Launch are observable blocked intents and perform no file/storag
 | `build/` (root) | `PP-MGR-SCR-002` | `BuildScreen.tsx` (the screen the Build phase renders), `buildScreenModel.ts` (the ordered Next: Review checks, pure), `buildAnalytics.ts` (the mapping to the analytics events); they take no id of their own |
 | `plan/` | `PP-MGR-LIB-021`, `PP-MGR-HOK-007` | The plan model, the rules, the pure reducers, `validatePlan`, storage inside the mandate draft, `useBuildPlan` |
 | `canvas/` | `PP-MGR-CMP-045` to `047`, `PP-MGR-LIB-022`, `PP-MGR-HOK-008` | The step frame, the clipped canvas with zoom, pan and fit, the panel slot |
-| `layout/` | `PP-MGR-LIB-023` | The pure layout function, its types, its constants, `toLayoutInput` |
+| `layout/` | `PP-MGR-LIB-023`, `PP-MGR-LIB-096` | The pure layout function, its types, its constants, `toLayoutInput`, the return lanes (`returnLanes.ts`) and the layout metric (`layoutMetrics.ts`) |
 | `pieces/` | `PP-MGR-CMP-048` to `055` | The presentational pieces; strings arrive as props |
 | `blocks/` | `PP-MGR-LIB-024`, `PP-MGR-CMP-056`, `057`, `PP-MGR-HOK-009`, `PP-MGR-HOK-010` | The block registry and its copy, the menu models, the palette, the menu, the selection guard (with its resume), the controller (with the remove confirm). The panel stub `PP-MGR-CMP-058` is removed |
 | `graph/` | `PP-MGR-CMP-059`, `PP-MGR-CMP-100`, `PP-MGR-LIB-062`, `PP-MGR-LIB-074` | The renderer, reading order, layout/text hooks, explicit financial graph contract, fixed React Flow projection and engine |
@@ -224,6 +224,18 @@ Build entry and canvas resize fit the full graph above the zoom controls. The si
 Layout exposes complete block-to-block connection paths with clipped shared buses. Hover/focus of a percentage highlights its entire incoming path; only relevant branch spans light up. All five fixed spine cards carry locks. Income output is neutral; Collect fees → Swap · auto → Income stays green until Income.
 
 Manual Swap and spoke percentage select AuxiliaryBlockPanel and reuse the existing Apply/Discard/leave guard. Token keys are canonical network/address references from the mandate; pairs must differ. Spoke allocations cannot exceed root/network room or fall below allocated children. No child is silently rescaled. Manual Swap execution is unavailable, including inside a pool chain, until POO-2238. See [delivery record](../../../../../docs/build-canvas-polish-2026-10-05.md).
+
+## Return line lanes (POO-2345, rules v2)
+
+The layout keeps the return geometry of POO-2273 v2. On the top of a return Bridge, the input ports have the same order as the sources of their lines. In each chain, the income port is on the left of the principal port. On the bottom of the Bridge, the principal port is on the left and goes to the idle output. The income port is on the right and goes to Income.
+
+`returnLanes.ts` gives each return line its own lane in the band above the idle output. The lane order prevents crossings, and two lines do not overlap. Lines of the same class that go to the same target share one trunk. A line goes straight when the target port is in the same column as the source port. A visible line leg has a maximum of 3 bends.
+
+The nodes stay at the Figma positions, so the band does not grow. The pitch between two lanes is `LAYOUT.LANE_PITCH` when the band has space, and it gets smaller when the band is too short. The layout tests check `LAYOUT.LANE_PITCH_MIN` for each fixture. Canvas A has a pitch of 4.5 px.
+
+`layoutMetrics.ts` (`PP-MGR-LIB-096`) is a pure metric. It counts the crossings, the overlaps, the bends of each line and the smallest gap between two lanes. A test records these numbers for each layout fixture.
+
+Each crossing must be forced. In a forced crossing, an income line and a principal line start in one order. The port order on the Bridge makes them end in the opposite order. React Flow and `graph/reactFlowProjection.ts` do not change.
 
 ## Native dark scrollbars (POO-2287, rules v1)
 

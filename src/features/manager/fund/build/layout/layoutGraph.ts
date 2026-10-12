@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph
- * @implements-rules-version v2 (POO-2273); POO-2153 rules v1; POO-2213 rules v1; POO-2235 rules v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
+ * @implements-rules-version v2 (POO-2273); v2 (POO-2345 return line routing); POO-2153 rules v1; POO-2213 rules v1; POO-2235 rules v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a pure geometry module: the Build screen (PP-MGR-SCR-002, S7) owns every
  *   event; nothing here is rendered or tracked.
@@ -20,6 +20,8 @@
  * This layout does not infer token compatibility, repayment, operating cash or launch capability.
  * POO-2301 explicitly opts local Solana spokes into an Idle/cash presentation context; no balances
  * or cash financial adjacency are inferred from that declaration.
+ * POO-2345 v2 routes the return lines with fewer crossings and bends, without changing that
+ * geometry: `returnLanes.ts` plans the Bridge ports and the lanes of the lines.
  * Stored block IDs, insertion/drop ports, chain order and nominal Build sizes remain unchanged.
  */
 
@@ -58,6 +60,7 @@ import type {
   SpineRole,
 } from "./graphTypes";
 import { LAYOUT } from "./layoutConstants";
+import { planReturnLines } from "./returnLanes";
 
 const L = LAYOUT;
 function required<T>(value: T | undefined, label: string): T {
@@ -66,6 +69,15 @@ function required<T>(value: T | undefined, label: string): T {
 }
 /** A horizontal run's centre line sits half a stroke under its handoff y (its top edge). */
 const HALF_LINE = L.LINE_W / 2;
+
+/** The bends of a return line above its target (R5, R6). A line without a lane runs straight. */
+function bottomBends(lane: number | undefined, fromX: number, toX: number): Point[] {
+  if (lane === undefined) return [];
+  return [
+    { x: fromX, y: lane + HALF_LINE },
+    { x: toX, y: lane + HALF_LINE },
+  ];
+}
 const HALF_SPINE = L.SPINE_W / 2;
 
 /** The layout under construction, before normalisation. */
@@ -851,6 +863,7 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
     flowClass: FlowClass,
     origin: string | null,
     offset: number,
+    bottomOffset: number = offset,
   ) => {
     const incoming = port(
       node,
@@ -879,7 +892,7 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
       origin,
       "in",
       "bottom",
-      offset,
+      bottomOffset,
       required(node.bridge, "bridge metadata").toNetwork,
     );
     const outgoing = port(
@@ -889,12 +902,25 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
       origin,
       "out",
       "bottom",
-      offset,
+      bottomOffset,
       required(node.bridge, "bridge metadata").toNetwork,
     );
     const transferId = `bridge-transfer:${node.id}:${role}`;
+    // The transfer inside the Bridge is hidden. It bends when the two ports are not in one column.
+    const middle = node.rect.y + node.rect.h / 2;
     if (!connections.some((entry) => entry.id === transferId))
-      connect(transferId, transferOut, transferIn, [], true);
+      connect(
+        transferId,
+        transferOut,
+        transferIn,
+        bottomOffset === offset
+          ? []
+          : [
+              { x: point(transferOut).x, y: middle },
+              { x: point(transferIn).x, y: middle },
+            ],
+        true,
+      );
     return { incoming, outgoing };
   };
   const idle = required(spine.get("idleInput"), "node");
@@ -1055,8 +1081,30 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
   }
   const output = required(spine.get("idleOutput"), "node");
   const income = spine.get("income");
-  const principalY = output.rect.y - (income ? L.LINK * 2 : L.LINK) + HALF_LINE;
-  const incomeY = output.rect.y - L.LINK + HALF_LINE;
+  const outputX = centreOf(output.rect);
+  const incomeX = income ? centreOf(income.rect) : outputX;
+  // Plan every return line before any is drawn: a port and a lane depend on the other lines.
+  const returnLines = planReturnLines(
+    chainEntries.flatMap(({ chain, network, spokeKey }) => {
+      const position = [...chain.steps].reverse().find((step) => step.family === "position");
+      const node = position ? blocks.get(position.id) : undefined;
+      if (!position || !node) return [];
+      return [
+        {
+          chainId: chain.id,
+          laneX: rightOf(node.rect) + L.PAIR,
+          bridge: bridgeFor(network, "outbound", spokeKey),
+          fees: chain.steps
+            .filter((step) => step.kind === "collectFees")
+            .map((fee) => ({
+              id: fee.id,
+              x: centreOf(required(swaps.get(fee.id), "node").rect),
+            })),
+        },
+      ];
+    }),
+    { outputX, incomeX, outputTop: output.rect.y, hasIncome: income !== undefined },
+  );
   for (const { chain, network, spokeKey } of chainEntries) {
     const position = [...chain.steps].reverse().find((step) => step.family === "position");
     if (!position) continue;
@@ -1099,29 +1147,30 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
       );
     }
     const returnSource = principalSource;
+    const principalLine = required(returnLines.get(`principal:${chain.id}`), "return line");
     if (outbound) {
-      const own = chainEntries
-        .filter(
-          (entry) =>
-            entry.network === network &&
-            entry.chain.steps.some((step) => step.family === "position"),
-        )
-        .map((entry) => entry.chain.id);
-      const offset = ((own.indexOf(chain.id) + 1) / (own.length + 1)) * L.PRINCIPAL_PORT_SPAN;
       const bridge = bridgePorts(
         outbound,
         `principal:${position.id}`,
         "principal",
         position.id,
-        offset,
+        principalLine.topOffset,
+        principalLine.bottomOffset,
       );
-      const busY = outbound.rect.y - L.LINK * 2 + HALF_LINE;
+      const busY = (principalLine.topLane ?? 0) + HALF_LINE;
       principalIds.push(
-        connect(`principal:chain:${chain.id}`, returnSource, bridge.incoming, [
-          { x: laneX, y: point(returnSource).y },
-          { x: laneX, y: busY },
-          { x: point(bridge.incoming).x, y: busY },
-        ]),
+        connect(
+          `principal:chain:${chain.id}`,
+          returnSource,
+          bridge.incoming,
+          principalLine.topLane === undefined
+            ? [{ x: laneX, y: point(returnSource).y }]
+            : [
+                { x: laneX, y: point(returnSource).y },
+                { x: laneX, y: busY },
+                { x: point(bridge.incoming).x, y: busY },
+              ],
+        ),
       );
       principalSource = bridge.outgoing;
     }
@@ -1132,14 +1181,10 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
         principalSource,
         target,
         outbound
-          ? [
-              { x: point(principalSource).x, y: principalY },
-              { x: point(target).x, y: principalY },
-            ]
+          ? bottomBends(principalLine.bottomLane, point(principalSource).x, point(target).x)
           : [
               { x: laneX, y: point(returnSource).y },
-              { x: laneX, y: principalY },
-              { x: point(target).x, y: principalY },
+              ...bottomBends(principalLine.bottomLane, laneX, point(target).x),
             ],
       ),
     );
@@ -1157,29 +1202,28 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
       ];
       let incomeSource = feeSource;
       if (outbound) {
-        const fees = chainEntries
-          .filter(
-            (entry) =>
-              entry.network === network &&
-              entry.chain.steps.some((step) => step.kind === "collectFees"),
-          )
-          .map((entry) => entry.chain.id);
-        const offset =
-          L.INCOME_PORT_START +
-          ((fees.indexOf(chain.id) + 1) / (fees.length + 1)) * L.PRINCIPAL_PORT_SPAN;
+        const incomeLine = required(returnLines.get(`income:${fee.id}`), "return line");
         const bridge = bridgePorts(
           outbound,
           `income:${position.id}`,
           "income",
           position.id,
-          offset,
+          incomeLine.topOffset,
+          incomeLine.bottomOffset,
         );
-        const busY = outbound.rect.y - L.LINK + HALF_LINE;
+        const busY = (incomeLine.topLane ?? 0) + HALF_LINE;
         incomeIds.push(
-          connect(`income:converted:${fee.id}`, feeSource, bridge.incoming, [
-            { x: point(feeSource).x, y: busY },
-            { x: point(bridge.incoming).x, y: busY },
-          ]),
+          connect(
+            `income:converted:${fee.id}`,
+            feeSource,
+            bridge.incoming,
+            incomeLine.topLane === undefined
+              ? []
+              : [
+                  { x: point(feeSource).x, y: busY },
+                  { x: point(bridge.incoming).x, y: busY },
+                ],
+          ),
         );
         incomeSource = bridge.outgoing;
       }
@@ -1190,10 +1234,11 @@ function declareRoutes(graph: GraphLayout, input: LayoutInput): void {
             outbound ? `income:returned:${fee.id}` : `income:converted:${fee.id}`,
             incomeSource,
             target,
-            [
-              { x: point(incomeSource).x, y: incomeY },
-              { x: point(target).x, y: incomeY },
-            ],
+            bottomBends(
+              required(returnLines.get(`income:${fee.id}`), "return line").bottomLane,
+              point(incomeSource).x,
+              point(target).x,
+            ),
           ),
         );
       }

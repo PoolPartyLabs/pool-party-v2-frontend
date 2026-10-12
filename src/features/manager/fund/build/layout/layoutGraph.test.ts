@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph rule tests
- * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
+ * @implements-rules-version v2 (POO-2345); v2 (POO-2273); v1 (POO-2153 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, a pure geometry module: nothing here is rendered or tracked.
  *
  * One test (or one table) per rule of the layout, tagged with its handoff id. The exact coordinates
@@ -281,6 +281,17 @@ describe("[C9] lines enter at the top centre and leave at the bottom centre", ()
   });
 });
 
+const L5_LANES: Record<string, { runs: number; heights: number; straight: number }> = {
+  canvasA: { runs: 8, heights: 6, straight: 0 },
+  canvasB: { runs: 3, heights: 2, straight: 1 },
+  canvasC: { runs: 2, heights: 2, straight: 0 },
+  workedExample2: { runs: 3, heights: 2, straight: 0 },
+  buildState3: { runs: 1, heights: 1, straight: 0 },
+  buildState5: { runs: 1, heights: 1, straight: 0 },
+  newSpokeNoChain: { runs: 1, heights: 1, straight: 0 },
+  hubEmptyWithSpoke: { runs: 0, heights: 0, straight: 1 },
+};
+
 describe("[C10] every chain returns; [C11] the return levels", () => {
   // @rule C10
   it.each(FIXTURES)("[C10] has income lines iff a Collect fees exists (%s)", (_name, fixture) => {
@@ -295,7 +306,7 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
   // @rule C10 @rule L5
   it.each(
     WITH_CHAINS,
-  )("[L5] runs the principal line 24 under the deepest content (%s)", (_n, f) => {
+  )("[L5] runs the principal lines under the deepest content (%s)", (fixtureName, f) => {
     const layout = layoutGraph(f.input, EN);
     const lasts = chainsOf(f.input).map(({ chain }) =>
       bottom(blockRect(layout, chain.steps[chain.steps.length - 1]?.id ?? "")),
@@ -311,7 +322,32 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
         .filter((node) => node.direction === "outbound")
         .map((node) => bottom(node.rect)),
     );
-    expect(horizontalRuns(layout, "principal", deepest + LAYOUT.LINK).length).toBeGreaterThan(0);
+    // POO-2345 R5 and R6: the lines to Idle output share the band above it, each on its own lane,
+    // and no lane is higher than the margin under the deepest content. A line that leaves its
+    // Bridge in the column of Idle output goes straight down, so it has no lane.
+    const outputY = spine(layout, "idleOutput").y;
+    const lanes = layout.edges
+      .filter(
+        (edge) =>
+          edge.kind === "principal" &&
+          edge.points[0]?.y === edge.points[1]?.y &&
+          (edge.points[0]?.y ?? 0) > deepest,
+      )
+      .map((edge) => edge.points[0]?.y ?? 0);
+    const straight = (layout.connections ?? []).filter(
+      (edge) => edge.kind === "principal" && edge.points.every((p) => p.x === edge.points[0]?.x),
+    );
+    // The exact count of lane runs, of distinct lane heights (R7 lets two lines share one) and
+    // of straight lines. A change of routing must change this table on purpose.
+    expect({
+      runs: lanes.length,
+      heights: new Set(lanes).size,
+      straight: straight.length,
+    }).toEqual(L5_LANES[fixtureName]);
+    for (const y of lanes) {
+      expect(y).toBeGreaterThanOrEqual(deepest + LAYOUT.LANE_MARGIN);
+      expect(y).toBeLessThanOrEqual(outputY - LAYOUT.LINK + LAYOUT.LINE_W / 2);
+    }
   });
 
   // @rule C11, POO-2213 override: the converter bypass needs separate return levels.

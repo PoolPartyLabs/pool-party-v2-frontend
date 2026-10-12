@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-MCK-004
  * @name buildCanvasFixtures
- * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v2 (POO-2345); v1 (POO-2153 rules v1)
  * @analytics-events none, a data fixture: nothing here is rendered on its own or tracked.
  *
  * PP-MOCK. The reference canvases of the Build canvas handoff (v1.2) as layout inputs, plus the
@@ -116,6 +116,20 @@ function borrow(id: string, symbol: string): Entry {
   return {
     step: { id, family: "position", kind: "aaveBorrow", auto: false, configured: true },
     content: { title: `Borrow ${symbol}`, caption: "Aave v3", icon: "bank", state: "default" },
+  };
+}
+
+function raydiumPool(id: string, pair: string): Entry {
+  return {
+    step: { id, family: "position", kind: "solanaRaydiumPool", auto: false, configured: true },
+    content: { title: pair, caption: "Raydium CLMM", icon: "layers", state: "default" },
+  };
+}
+
+function kaminoSupply(id: string, symbol: string): Entry {
+  return {
+    step: { id, family: "position", kind: "solanaKaminoSupply", auto: false, configured: true },
+    content: { title: `Supply ${symbol}`, caption: "Kamino", icon: "bank", state: "default" },
   };
 }
 
@@ -406,6 +420,49 @@ export const hubEmptyWithSpoke: BuildCanvasFixture = fixture(
           id: "hes-rh",
           sharePct: 40,
           entries: [swapAuto("hes-rh-swap"), pool("hes-rh-pool", "WETH / USDG", "0.05%")],
+        },
+      ],
+    },
+  ],
+  null,
+);
+
+/**
+ * POO-2345: one hub chain on Arbitrum and one Solana spoke with two chains, a Raydium CLMM chain
+ * and a Kamino chain. Both Solana chains return through the shared return Bridge, so the fixture
+ * covers the return lines of a spoke that is not local, beside a hub chain. Built from the rules,
+ * not drawn.
+ */
+export const solanaTwoChainReturn: BuildCanvasFixture = fixture(
+  [
+    {
+      id: "sol-hub",
+      sharePct: 30,
+      entries: [
+        swapAuto("sol-hub-swap"),
+        pool("sol-hub-pool", "WETH / USDC", "0.05%"),
+        collectFees("sol-hub-fees"),
+      ],
+    },
+  ],
+  [
+    {
+      network: "solana",
+      sharePct: 70,
+      chains: [
+        {
+          id: "sol-raydium",
+          sharePct: 40,
+          entries: [
+            swapAuto("sol-raydium-swap"),
+            raydiumPool("sol-raydium-pool", "SOL / USDC"),
+            collectFees("sol-raydium-fees"),
+          ],
+        },
+        {
+          id: "sol-kamino",
+          sharePct: 30,
+          entries: [kaminoSupply("sol-kamino-supply", "USDC")],
         },
       ],
     },

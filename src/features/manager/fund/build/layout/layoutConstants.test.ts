@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutConstants tests
- * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v2 (POO-2345); v1 (POO-2153 rules v1)
  * @analytics-events none, a pure geometry module: nothing here is rendered or tracked.
  *
  * [L1] every constant of the handoff table (v1.2, "Layout rules · Constants") with its exact value,
@@ -30,6 +30,25 @@ describe("LAYOUT constants", () => {
     expect(LAYOUT.NETBOX_H).toBe(72);
     expect(LAYOUT.PAIR).toBe(12);
     expect(LAYOUT.SPINE_GAP).toBe(32);
+  });
+
+  // @rule R5
+  it("[R5] keeps a margin between the blocks and the top lane of a channel", () => {
+    expect(LAYOUT.LANE_MARGIN).toBe(6);
+    expect(LAYOUT.LANE_MARGIN).toBeLessThan(LAYOUT.LINK);
+  });
+
+  // @rule R5
+  it("[R5] names the lane pitch, the two band heights above Idle output and the offset rounds", () => {
+    expect(LAYOUT.LANE_PITCH).toBe(6);
+    // A 2 px highlighted line still leaves clear space to its neighbour lane.
+    expect(LAYOUT.LANE_PITCH).toBeGreaterThanOrEqual(3 * LAYOUT.LINE_W);
+    // No constant holds the width of a highlighted line. It is 2 px, so the least pitch is 4 px.
+    expect(LAYOUT.LANE_PITCH_MIN).toBe(4);
+    expect(LAYOUT.LANE_PITCH_MIN).toBeLessThanOrEqual(LAYOUT.LANE_PITCH);
+    expect(LAYOUT.RETURN_BAND).toBe(2 * LAYOUT.LINK);
+    expect(LAYOUT.RETURN_BAND_INCOME).toBe(3 * LAYOUT.LINK);
+    expect(LAYOUT.OFFSET_ITERATIONS).toBe(12);
   });
 
   // @rule L1

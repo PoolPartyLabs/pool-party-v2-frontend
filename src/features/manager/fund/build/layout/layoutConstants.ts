@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutConstants
- * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1)
+ * @implements-rules-version v2 (POO-2345); v2 (POO-2273); v1 (POO-2153 rules v1)
  * @analytics-events none, constants of a pure geometry module: nothing here is rendered or tracked.
  *
  * Every distance the Build canvas layout uses, in px at 100% zoom (handoff v1.2, "Layout rules").
@@ -40,6 +40,26 @@ export const LAYOUT = Object.freeze({
   NETBOX_STUB: 32,
   PAIR: 12,
   RETURN_BRIDGE_GAP: 72,
+  /** POO-2345 R5: the free space kept between the blocks above a channel and its top lane. */
+  LANE_MARGIN: 6,
+  /**
+   * POO-2345 R5: the usual pitch between two lanes. The pitch at run time is the least of this
+   * number and the pitch that fits the band (see laneYs). LANE_PITCH_MIN is the floor that the
+   * tests check.
+   */
+  LANE_PITCH: 6,
+  /**
+   * POO-2345 R5: the floor that the layout tests check for the pitch. A highlighted line is 2 px wide, and 2 px
+   * of clear space stays between two lines. No constant holds the highlighted width, so this
+   * number is set here.
+   */
+  LANE_PITCH_MIN: 4,
+  /** POO-2345 R5: the free height above Idle output without Income (2 LINK, see L5). */
+  RETURN_BAND: 48,
+  /** POO-2345 R5: the free height above Idle output and Income when Income exists (3 LINK). */
+  RETURN_BAND_INCOME: 72,
+  /** POO-2345 R3: the most rounds that `offsetAt` makes to hit an x exactly. */
+  OFFSET_ITERATIONS: 12,
   PORT_CENTER: 0.5,
   PRINCIPAL_PORT_SPAN: 0.45,
   INCOME_PORT_START: 0.55,

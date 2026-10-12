@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph oracle tests
- * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1)
+ * @implements-rules-version v2 (POO-2345); v2 (POO-2273); v1 (POO-2153 rules v1)
  * @analytics-events none, a pure geometry module: nothing here is rendered or tracked.
  *
  * Fixed node positions, insertion ports, labels and chips retain the October 3 Figma oracles.
@@ -585,7 +585,9 @@ describe("worked example 1, POO-2213 fee-return override of handoff (canvas C)",
     ]);
     expect(box(nodes["addProtocol:arbitrum"])).toEqual([440, 244, 40, 40]);
     expect(box(nodes.addNetwork)).toEqual([520, 228, 64, 72]);
-    expect(horizontalRuns(layout, "principal", 480)).toEqual([[170, 420]]);
+    // POO-2345 R5: each principal line has its own lane, so the one run at 480 became two.
+    expect(horizontalRuns(layout, "principal", 462)).toEqual([[170, 212]]);
+    expect(horizontalRuns(layout, "principal", 483)).toEqual([[170, 420]]);
     expect(horizontalRuns(layout, "income", 504)).toEqual([[112, 438]]);
     expect(box(nodes.idleOutput)).toEqual([52, 528, 236, 62]);
     expect(box(nodes.income)).toEqual([320, 528, 236, 62]);
@@ -736,7 +738,9 @@ describe("canvas D, the handoff numbers (empty canvas, English sentence 420 wide
 
 describe("canvas A as a plan", () => {
   // @rule L10
-  it("[L10, POO-2213] is 2080 x 822 with fee conversion; menus and tooltips stay outside graph bounds", () => {
+  // The Figma frame of canvas A is 772 high. The POO-2213 fee-return override (fee conversion with
+  // its own return levels) makes the layout 920 high. The width stays 2080.
+  it("[L10, POO-2213] is 2080 x 920 with fee conversion; menus and tooltips stay outside graph bounds", () => {
     const layout = layoutGraph(canvasA.input, EN);
     expect([layout.width, layout.height]).toEqual([2080, 920]);
   });
