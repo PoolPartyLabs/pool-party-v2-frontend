@@ -184,3 +184,87 @@ describe("R5: each return line has its own lane", () => {
     expect(forced).toBeGreaterThan(0);
   });
 });
+
+/** The visible principal and income lines that are not links between blocks. */
+function returnLines(layout: GraphLayout): EdgeNode[] {
+  return (layout.connections ?? []).filter(
+    (edge) =>
+      (edge.kind === "principal" || edge.kind === "income") &&
+      (edge.id.startsWith("principal:") || edge.id.startsWith("income:")),
+  );
+}
+
+/** The number of direction changes in a polyline. */
+function bendsOf(points: readonly Point[]): number {
+  let bends = 0;
+  for (let index = 1; index + 1 < points.length; index += 1) {
+    const a = points[index - 1] as Point;
+    const b = points[index] as Point;
+    const c = points[index + 1] as Point;
+    if ((a.x === b.x) !== (b.x === c.x)) bends += 1;
+  }
+  return bends;
+}
+
+describe("R6: a line goes straight when the ports share a column", () => {
+  // @rule R6
+  it("[R6] draws a line with no bend when its two ports are in one column", () => {
+    let straight = 0;
+    for (const [name, , layout] of CASES) {
+      for (const edge of returnLines(layout)) {
+        const first = edge.points[0] as Point;
+        // A line that leaves a block on its side starts with a horizontal stretch: not in a column.
+        if (first.x !== lastPoint(edge).x || first.x !== edge.points[1]?.x) continue;
+        straight += 1;
+        expect(bendsOf(edge.points), `${name} ${edge.id}`).toBe(0);
+        expect(
+          edge.points.every((point) => point.x === first.x),
+          `${name} ${edge.id}`,
+        ).toBe(true);
+      }
+    }
+    expect(straight).toBeGreaterThan(0);
+  });
+
+  // @rule R6
+  it("[R6] gives a visible leg at most 3 bends", () => {
+    for (const [name, , layout] of CASES) {
+      for (const edge of layout.connections ?? []) {
+        expect(bendsOf(edge.points), `${name} ${edge.id}`).toBeLessThanOrEqual(3);
+      }
+    }
+  });
+});
+
+describe("R7: lines of one class to one target join in one trunk", () => {
+  // @rule R7
+  it("[R7] ends every line of one class at the same point, with a vertical last stretch", () => {
+    let joined = 0;
+    for (const [name, , layout] of CASES) {
+      for (const kind of ["principal", "income"] as const) {
+        const target = layout.spine.find((node) =>
+          kind === "principal" ? node.role === "idleOutput" : node.role === "income",
+        );
+        const ends = returnLines(layout).filter(
+          (edge) => edge.kind === kind && lastPoint(edge).y === target?.rect.y,
+        );
+        if (ends.length < 2) continue;
+        joined += 1;
+        const end = lastPoint(ends[0] as EdgeNode);
+        for (const edge of ends) {
+          expect(lastPoint(edge), `${name} ${edge.id}`).toEqual(end);
+          const before = edge.points[edge.points.length - 2] as Point;
+          expect(before.x, `${name} ${edge.id}`).toBe(end.x);
+        }
+      }
+    }
+    expect(joined).toBeGreaterThan(0);
+  });
+
+  // @rule R7
+  it("[R7] draws the trunk once: no two lines overlap before the target", () => {
+    for (const [name, , layout] of CASES) {
+      expect(findConflicts(layout).overlaps, name).toEqual([]);
+    }
+  });
+});
