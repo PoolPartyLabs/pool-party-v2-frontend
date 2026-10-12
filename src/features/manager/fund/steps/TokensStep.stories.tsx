@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-037
  * @name TokensStep.stories
- * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v3 (POO-2142 rules v2, POO-2332 rules v1)
  *
  * Storybook coverage for Mandate step 3 (POO-2124 [R23] to [R28]).
  *
@@ -10,6 +10,9 @@
  * hub-and-spoke mandate with one slot left ARB is still addable and ETH is not, and the two Add
  * buttons sit side by side in the same grid looking almost identical. `Default` and `HubAndSpoke`
  * are the before-and-after of that same arithmetic with room to spare.
+ *
+ * POO-2332 adds `AllTokens` (the mode with no slot limit), `SlotsFull` at 100 of 100, `Loading` and
+ * `LoadError`. The slot counts use the 100-slot basket of the mock builder.
  *
  * Every story is live: the harness holds the draft, runs the real reducers, and surfaces a refusal
  * as the inline notice, so adding, removing, searching and "Add all" all behave as they will in the
@@ -26,6 +29,7 @@ import {
   type MandateTokenRef,
   type NetworkId,
   type StepBlock,
+  setTokenMode,
   withNetworks,
 } from "../mandateDraft";
 import { TokensStep } from "./TokensStep";
@@ -106,7 +110,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Mandate step 3. The catalog on the left lists only the tokens the hub can price, with the rest reachable through the search; the card on the right is the mandate itself, with the deposit token locked and the slot counter under it. A token costs one slot on each network it runs on, so the Add of a token that would pass sixteen is disabled and reports the refusal instead of swallowing it.",
+          "Mandate step 3. The catalog on the left lists only the tokens the hub can price, with the rest reachable through the search; the card on the right is the mandate itself, with the deposit token locked and the slot counter under it. A token costs one slot on each network it runs on, so the Add of a token that would pass the 100 slots is disabled and reports the refusal instead of swallowing it.",
       },
     },
   },
@@ -129,24 +133,49 @@ export const HubAndSpoke: Story = {
   },
 };
 
-/** 15 of 16 slots: ARB costs one and is still addable, ETH costs two and is not. */
+/** 99 of 100 slots: ARB costs one and is still addable, ETH costs two and is not. */
 export const SlotsNearlyFull: Story = {
   render: () => {
     const base = draftOn(["robinhood"]);
     return (
-      <Harness catalog={catalog} initial={{ ...base, tokens: [...base.tokens, ...standIns(13)] }} />
+      <Harness catalog={catalog} initial={{ ...base, tokens: [...base.tokens, ...standIns(97)] }} />
     );
   },
 };
 
-/** 16 of 16: every Add is disabled, and every click on one still reports the refusal. */
+/** POO-2332 R7: 100 of 100. "No free slots" on each card, "Add all" off, and a click still reports `no_slots`. */
 export const SlotsFull: Story = {
   render: () => {
     const base = draftOn(["robinhood"]);
     return (
-      <Harness catalog={catalog} initial={{ ...base, tokens: [...base.tokens, ...standIns(14)] }} />
+      <Harness catalog={catalog} initial={{ ...base, tokens: [...base.tokens, ...standIns(98)] }} />
     );
   },
+};
+
+/** POO-2332 R4: All tokens mode. The info card, "Your tokens · All" and "No limit". The list is kept. */
+export const AllTokens: Story = {
+  render: () => (
+    <Harness
+      catalog={catalog}
+      initial={setTokenMode(withToken(draftOn(["robinhood"]), "ETH"), "all")}
+    />
+  ),
+};
+
+/** POO-2332 R6: the catalog is loading. Skeleton cards and "Loading tokens"; search and filters stay on. */
+export const Loading: Story = {
+  render: () => <Harness catalog={{ ...catalog, loading: true }} initial={draftOn()} />,
+};
+
+/** POO-2332 R6: the catalog failed. The box with "Try again", and the saved list stays as it is. */
+export const LoadError: Story = {
+  render: () => (
+    <Harness
+      catalog={{ ...catalog, error: true, retry: () => {} }}
+      initial={withToken(draftOn(), "ETH")}
+    />
+  ),
 };
 
 /** Every priced token already in the mandate, so the catalog has nothing left to offer. */

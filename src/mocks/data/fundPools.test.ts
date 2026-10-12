@@ -253,7 +253,7 @@ describe("fund pool fixtures, the hub Uniswap v3 set", () => {
     }
   });
 
-  // @rule R-C1-2 (fixtures): one pair across several tiers, so the step's "{pct}% selected" column
+  // @rule R-C1-2 (fixtures): one pair across several tiers, so the step's "chosen by {pct}% of LPs" text
   // has a share to divide on the hub's v3 tab and not only on its v4 one.
   it("offers at least one pair at two or more fee tiers", () => {
     const counts = new Map<string, number>();

@@ -321,7 +321,7 @@ describe("save", () => {
    * A completion is a WRITE, not a click, so the stamp rides on the write that settles it.
    *
    * Stamping the draft first and saving afterwards leaves a `completedAt` behind when the save fails:
-   * nothing recorded the completion, no event fired, and the next Save & exit would quietly persist a
+   * nothing recorded the completion, no event fired, and the next Save and exit would quietly persist a
    * mandate marked finished, which a `?phase=build` link then opens.
    */
   it("stamps completedAt on the save that completes the mandate", async () => {

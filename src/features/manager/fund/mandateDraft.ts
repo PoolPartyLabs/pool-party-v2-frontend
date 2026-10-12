@@ -4,6 +4,7 @@
  * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
  *   POO-2167 rules v4, POO-2151 rules v1, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2333 R4: the last swap and the last bridge are locked)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -129,11 +130,61 @@ export const UNAVAILABLE_PROTOCOLS: readonly ProtocolId[] = ["uniswap-v3", "gmx"
 /** The contract ceiling on token entries (DEC-030). A token takes one slot per network it runs on. */
 export const MAX_TOKEN_SLOTS = 16;
 
+/**
+ * POO-2332 R2: the basket holds 100 slots. This is the product number for the mock builder.
+ *
+ * PP-INTEGRATION-POINT: the contracts hold {@link MAX_TOKEN_SLOTS} (16) slots today. Real data mode
+ * keeps 16 (see {@link slotCeiling}). When the contracts hold 100, this seam goes away: remove the
+ * real-mode branch in `slotCeiling` and let both modes read this constant.
+ */
+export const BASKET_TOKEN_SLOTS = 100;
+
+/**
+ * R9: the row id of the "All tokens" row in Selected mode. This row sets one cap on every token in
+ * the list.
+ */
+export const ALL_TOKENS_ROW_ID = "all-tokens";
+
+/**
+ * R10: the row id of the "Every token" row in All mode, and the `cap_zero` row id of that mode. The
+ * row reads and writes the one stored cap `allTokensCap`.
+ */
+export const EVERY_TOKEN_ROW_ID = "every-token";
+
 /** The hub. Deposits and withdrawals happen here, and it can never leave a mandate (R15). */
 export const HUB_NETWORK: NetworkId = "arbitrum";
 
 /** Every strategy needs a way to swap and a way to move money between its networks (R19). */
 export const REQUIRED_PROTOCOLS: readonly ProtocolId[] = ["uniswap-v3-swap", "across"];
+
+/**
+ * POO-2333 R4: the selected protocols the manager cannot clear, the same set `withProtocols`
+ * always keeps. That is the swap always, and the bridge only when the mandate has a network that
+ * is not the hub. The rule is the same in mock mode and in real mode. In real mode, Robinhood Chain
+ * is the one spoke that the bridge can reach.
+ */
+export function lockedProtocols(draft: MandateDraft): Set<ProtocolId> {
+  const bridged =
+    draft.dataMode === "real"
+      ? draft.networks.includes("robinhood")
+      : draft.networks.some((network) => network !== HUB_NETWORK);
+  return new Set<ProtocolId>(bridged ? REQUIRED_PROTOCOLS : ["uniswap-v3-swap"]);
+}
+
+/**
+ * POO-2333 R4: the protocols of the draft for a read-only summary, the locked ones first. Each
+ * entry says if the protocol is locked, so a hub-only mandate shows no lock on the bridge.
+ */
+export function summaryProtocols(draft: MandateDraft): Array<{ id: ProtocolId; locked: boolean }> {
+  const chosen = new Set(draft.protocols);
+  const locked = lockedProtocols(draft);
+  const first = PROTOCOL_ORDER.filter((id) => chosen.has(id) && locked.has(id));
+  const rest = PROTOCOL_ORDER.filter((id) => chosen.has(id) && !locked.has(id));
+  return [
+    ...first.map((id) => ({ id, locked: true })),
+    ...rest.map((id) => ({ id, locked: false })),
+  ];
+}
 
 /**
  * The symbols the hub price source can price (R28), lowercased.
@@ -217,6 +268,9 @@ export interface MandateCap {
 }
 
 /** Caps per scope. Token keys are {@link tokenKey} (`network:address`), never a bare address. */
+/** POO-2332 R1: Selected tokens (the manager picks) or All tokens (the strategy trades any token). */
+export type TokenMode = "selected" | "all";
+
 export interface MandateCaps {
   networks: Partial<Record<NetworkId, MandateCap>>;
   protocols: Partial<Record<ProtocolId, MandateCap>>;
@@ -233,6 +287,14 @@ export interface MandateDraft {
     aaveV3Reserves: string[];
     spokeCapPercent: number | null;
   };
+  /**
+   * POO-2332 R1: how the strategy gets its tokens. OPTIONAL: no value reads as "selected"
+   * ({@link tokenModeOf}), so every draft written before the control existed is still valid.
+   * A change of mode never touches `tokens` or `caps` (R5).
+   */
+  tokenMode?: TokenMode;
+  /** POO-2332 R10: the one cap of All tokens mode. No value reads as 0% with No cap off. */
+  allTokensCap?: MandateCap;
   dataMode?: "real";
   catalogVersion?: "v2-catalog-v1";
   positionProtocolsByChain?: Partial<Record<NetworkId, ("uniswap-v4" | "aave-v3")[]>>;
@@ -293,12 +355,15 @@ export interface MandateDraft {
 export type MandateBlockReason =
   | "nothing_selected"
   | "cap_missing"
+  | "cap_zero"
   | "token_allowance_required"
   | "no_slots"
   | "has_hook"
   | "not_priced"
   | "coming_soon"
-  | "name_length";
+  | "name_length"
+  /** POO-2333 R4: a click tried to clear the last swap, or the bridge of a mandate with a spoke. */
+  | "required_protocol";
 
 /**
  * A refusal a step renders inline. `rowId` is the `data-mandate-row` of the first offending row, so
@@ -308,6 +373,8 @@ export type MandateBlockReason =
  * - networks: the {@link NetworkId}
  * - protocols: the {@link ProtocolId}
  * - tokens: {@link tokenKey} of the catalog entry the step handed to {@link addToken}
+ * - limits, Selected mode: the "All tokens" row is {@link ALL_TOKENS_ROW_ID} (`all-tokens`)
+ * - limits, All mode: the "Every token" row is {@link EVERY_TOKEN_ROW_ID} (`every-token`)
  * - pools: the pool's `id`
  */
 export interface StepBlock {
@@ -394,6 +461,9 @@ export function selectionFingerprint(draft: MandateDraft): string {
     ...(draft.dataMode === "real"
       ? [draft.positionProtocolsByChain, draft.aaveV3Reserves, draft.spokeCapPercent]
       : []),
+    // POO-2332: the mode and its cap count only in All mode, so a draft without them keeps the
+    // fingerprint it had before the mode existed.
+    ...(tokenModeOf(draft) === "all" ? [["all", allTokensCapOf(draft)]] : []),
   ]);
 }
 
@@ -549,12 +619,79 @@ export function capRows(
   };
 }
 
+/** POO-2332 R1: the mode of a draft. No value reads as Selected, the default. */
+export function tokenModeOf(draft: Pick<MandateDraft, "tokenMode">): TokenMode {
+  return draft.tokenMode === "all" ? "all" : "selected";
+}
+
+/**
+ * POO-2332 R1 and R5: change the mode and nothing else. The token list and every cap stay, so a
+ * manager can switch to All tokens and back without losing the list. The same mode returns the same
+ * draft.
+ */
+export function setTokenMode(draft: MandateDraft, mode: TokenMode): MandateDraft {
+  if (tokenModeOf(draft) === mode) return draft;
+  return { ...draft, tokenMode: mode };
+}
+
+/**
+ * POO-2332 R2: how many token slots this draft may fill.
+ *
+ * PP-INTEGRATION-POINT: real data mode stays at the contract ceiling of 16 slots until the
+ * contracts hold {@link BASKET_TOKEN_SLOTS}. The mock builder uses the basket of 100.
+ */
+export function slotCeiling(draft: Pick<MandateDraft, "dataMode">): number {
+  // The same field `isRealData` reads in mandateTokenAccess.ts, so the ceiling and the view agree.
+  return draft.dataMode === "real" ? MAX_TOKEN_SLOTS : BASKET_TOKEN_SLOTS;
+}
+
+/** POO-2332 R12: a cap that is on and at 0% lets no capital through. */
+export function isCapZero(cap: MandateCap | undefined): boolean {
+  return cap !== undefined && !cap.noCap && cap.pct === 0;
+}
+
+/** POO-2332 R10: the one cap of All tokens mode. No stored value reads as 0% with No cap off. */
+export function allTokensCapOf(draft: Pick<MandateDraft, "allTokensCap">): MandateCap {
+  return draft.allTokensCap ?? { noCap: false, pct: 0 };
+}
+
+/**
+ * POO-2332 R10: write the one cap of All tokens mode. Snapped to the 5% grid like every cap.
+ * Nothing else changes, so the token caps of Selected mode stay (R5).
+ */
+export function setAllTokensCap(draft: MandateDraft, cap: MandateCap): MandateDraft {
+  return { ...draft, allTokensCap: { noCap: cap.noCap, pct: clampCapPct(cap.pct) } };
+}
+
+/**
+ * POO-2332 R8: the cap a row reads, with its start value when nothing is stored.
+ *
+ * A token starts at 0% with No cap off. A network and a protocol start with No cap on. The Every
+ * token row ({@link EVERY_TOKEN_ROW_ID}) starts like a token. Real data mode has no start values
+ * (R14): it returns the stored cap, or undefined, as it did before.
+ */
+export function effectiveCap(
+  draft: Pick<MandateDraft, "caps" | "dataMode" | "allTokensCap">,
+  scope: "networks" | "protocols" | "tokens" | "all",
+  key: string,
+): MandateCap | undefined {
+  if (scope === "all") return allTokensCapOf(draft);
+  const stored = (draft.caps[scope] as Record<string, MandateCap | undefined>)[key];
+  if (stored) return stored;
+  if (draft.dataMode === "real") return undefined;
+  return scope === "tokens" ? { noCap: false, pct: 0 } : { noCap: true, pct: 0 };
+}
+
 /**
  * R6: what stops Next on this step, or null when nothing does.
  *
  * Networks, Protocols and Tokens never block in mock mode. USDC alone remains a valid token list
  * while selecting, but POO-2197 requires another positively allowed token before leaving Limits.
  * The slot ceiling is enforced when a token is ADDED (R27), not when the step is left, so there is nothing left to check here.
+ *
+ * POO-2332: on Limits in mock mode a row with no stored cap reads as its start value (R8), so
+ * `cap_missing` is gone there. An enabled 0% token cap, or an enabled 0% All tokens cap, stops Next
+ * with `cap_zero` (R12). Real data mode keeps its stored-cap rules (R14).
  */
 export function validateStep(
   draft: MandateDraft,
@@ -593,7 +730,7 @@ export function validateStep(
         }),
       ];
       if (
-        draft.tokens.length > MAX_TOKEN_SLOTS ||
+        draft.tokens.length > slotCeiling(draft) ||
         draft.tokens.some(
           (token) => !allowed.some((entry) => tokenKey(entry) === tokenKey(token) && entry.priced),
         ) ||
@@ -631,35 +768,33 @@ export function validateStep(
         return { step, reason: "cap_missing", rowId: "robinhood" };
       if (catalog.validateDraft && !catalog.validateDraft(draft))
         return { step, reason: "nothing_selected", rowId: null };
-    } else {
-      for (const network of rows.networks) {
-        if (!draft.caps.networks[network]) {
-          return { step: "limits", reason: "cap_missing", rowId: network };
-        }
-      }
-      for (const protocol of rows.protocols) {
-        if (!draft.caps.protocols[protocol]) {
-          return { step: "limits", reason: "cap_missing", rowId: protocol };
-        }
-      }
-      for (const token of rows.tokens) {
-        const key = tokenKey(token);
-        if (!draft.caps.tokens[key]) {
-          return { step: "limits", reason: "cap_missing", rowId: key };
-        }
-      }
+      if (
+        !rows.tokens.some((token) => {
+          const cap = draft.caps.tokens[tokenKey(token)];
+          return cap?.noCap || (cap?.pct ?? 0) > 0;
+        })
+      )
+        return {
+          step: "limits",
+          reason: "token_allowance_required",
+          rowId: rows.tokens[0] ? tokenKey(rows.tokens[0]) : null,
+        };
+      return null;
     }
-    if (
-      !rows.tokens.some((token) => {
-        const cap = draft.caps.tokens[tokenKey(token)];
-        return cap?.noCap || (cap?.pct ?? 0) > 0;
-      })
-    )
-      return {
-        step: "limits",
-        reason: "token_allowance_required",
-        rowId: rows.tokens[0] ? tokenKey(rows.tokens[0]) : null,
-      };
+    // POO-2332 R8: a row with no stored cap reads as its start value, so no row is ever "missing".
+    // R12: a token cap that is on and at 0% stops Next. All tokens mode checks its one cap.
+    if (tokenModeOf(draft) === "all") {
+      return isCapZero(allTokensCapOf(draft))
+        ? { step: "limits", reason: "cap_zero", rowId: EVERY_TOKEN_ROW_ID }
+        : null;
+    }
+    for (const token of rows.tokens) {
+      const key = tokenKey(token);
+      if (isCapZero(effectiveCap(draft, "tokens", key)))
+        return { step: "limits", reason: "cap_zero", rowId: key };
+    }
+    if (rows.tokens.length === 0)
+      return { step: "limits", reason: "token_allowance_required", rowId: null };
     return null;
   }
   return null;
@@ -814,6 +949,11 @@ export function withNetworks(
         next.includes(key as NetworkId),
       );
     if (!next.includes("robinhood")) synced.spokeCapPercent = null;
+  } else if (next.some((id) => id !== HUB_NETWORK) && !synced.protocols.includes("across")) {
+    // POO-2333 R4: a mandate with a spoke needs its bridge back.
+    synced.protocols = PROTOCOL_ORDER.filter(
+      (id) => id === "across" || synced.protocols.includes(id),
+    );
   }
   return withUniverseExpiry(draft, synced);
 }
@@ -846,13 +986,7 @@ export function withProtocols(draft: MandateDraft, protocols: ProtocolId[]): Man
   const known = new Set<string>(
     PROTOCOL_ORDER.filter((id) => draft.runtime === "solana-local" || !localProtocols.includes(id)),
   );
-  const wanted = new Set<ProtocolId>(
-    draft.dataMode === "real"
-      ? draft.networks.includes("robinhood")
-        ? REQUIRED_PROTOCOLS
-        : ["uniswap-v3-swap"]
-      : REQUIRED_PROTOCOLS,
-  );
+  const wanted = lockedProtocols(draft);
   for (const id of protocols) {
     if (
       known.has(id) &&
@@ -968,7 +1102,7 @@ function addTokenRefs(
     added.push(ref);
   }
   if (added.length === 0) return draft;
-  if (draft.tokens.length + added.length > MAX_TOKEN_SLOTS) {
+  if (draft.tokens.length + added.length > slotCeiling(draft)) {
     return { blocked: { step: "tokens", reason: "no_slots", rowId } };
   }
   return { ...draft, tokens: [...draft.tokens, ...added] };

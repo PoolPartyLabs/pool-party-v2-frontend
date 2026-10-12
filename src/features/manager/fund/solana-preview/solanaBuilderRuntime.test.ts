@@ -20,6 +20,7 @@ import {
 import {
   addToken,
   createEmptyDraft,
+  type ProtocolId,
   tokenKey,
   validateStep,
   withNetworks,
@@ -244,7 +245,7 @@ it("selects Solana, applies independent LP intent and derives LP-only Collect", 
   const next = addToken(draft, token!, catalog);
   if ("blocked" in next) throw new Error("token selection refused");
   draft = next;
-  expect(validateStep(draft, "limits", catalog)?.reason).toBe("cap_missing");
+  expect(validateStep(draft, "limits", catalog)?.reason).toBe("cap_zero");
   let serial = 0;
   const ctx = { draft, catalog, newId: () => `id-${++serial}` };
   const spoke = addSpoke(createEmptyPlan(), ctx, "solana");
@@ -330,9 +331,9 @@ it("requires Jupiter for manual Solana conversion and validates exact mint ident
 // @rule R2: widening the local palette does not widen an EVM mandate.
 it("keeps local Solana protocols out of the standard protocol reducer", () => {
   const draft = createEmptyDraft("now", "evm");
-  expect(withProtocols(draft, ["jupiter", "orca", "kamino", "raydium"]).protocols).toEqual(
-    draft.protocols,
-  );
+  // POO-2333 R4: a hub-only draft can clear the bridge, so the request keeps the current ids.
+  const local: ProtocolId[] = ["jupiter", "orca", "kamino", "raydium"];
+  expect(withProtocols(draft, [...draft.protocols, ...local]).protocols).toEqual(draft.protocols);
 });
 
 // @rule R3/R6: later mandate edits preserve the card and invalidate its obsolete instruction.

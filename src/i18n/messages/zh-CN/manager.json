@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "其他网络"
+      "others": "其他网络",
+      "othersCaption": "每添加一个网络，都需要一个跨链桥，并在启动时多签名一次。"
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "必需",
-      "requiredSubtitle": "每个策略都需要一种在代币之间兑换，并在其网络之间转移资金的方式。",
       "operate": "用于运营的协议",
       "on": "可用于",
-      "onFootnote": "“可用于”显示第 1 步中每个协议可用的网络。"
+      "onFootnote": "“可用于”显示每个协议支持您在第 1 步中选择的哪些网络。",
+      "swapBridge": "兑换与跨链桥",
+      "swapBridgeCollapsed": "{names} · 已为您选择",
+      "swapBridgeOpen": "已为您选择。请至少保留一个兑换协议；添加网络时，还需保留一个跨链桥。",
+      "swapBridgeOpenHub": "已为您选择。请至少保留一个兑换协议。",
+      "show": "显示",
+      "hide": "隐藏",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · 兑换",
+        "uniswapV3Liquidity": "Uniswap v3 · 流动性"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -834,7 +843,34 @@
       "depositToken": "存款代币",
       "slotsCaption": "每个代币会在其运行的每个网络上占用一个名额。该授权范围共有 {max} 个名额。",
       "noPrice": "暂无价格数据源",
-      "empty": "没有符合搜索条件的代币。"
+      "empty": "没有符合搜索条件的代币。",
+      "access": {
+        "label": "代币访问范围",
+        "selected": "所选代币",
+        "all": "所有代币",
+        "hint": "选择“所有代币”后，策略可以交易您的网络和协议上的任何代币，包括之后上线的代币。"
+      },
+      "allInfo": {
+        "title": "策略可以交易任何代币",
+        "body": "这涵盖您的网络和协议上的每个代币，包括发布后上线的代币。您无需逐个选择代币。每个代币都以 hub 定价。"
+      },
+      "yoursAll": "您的代币 · 全部",
+      "everyOther": "其他所有代币",
+      "everyOtherCaption": "上线时自动添加",
+      "requiredBy": "{network} 所需",
+      "slotsAllLabel": "网络名额",
+      "slotsNoLimit": "无上限",
+      "slotsAllCaption": "{max} 个名额的上限仅适用于所选代币。",
+      "noFreeSlots": "没有空闲名额",
+      "slotsFull": "{max} 个名额已全部用完。移除一个代币后才能添加其他代币。",
+      "andMoreTokens": "另有 {count, plural, other {# 个代币}}",
+      "loading": "正在加载代币",
+      "loadError": {
+        "title": "代币未能加载",
+        "heading": "无法加载代币列表",
+        "body": "请检查网络连接后重试。您列表中的代币仍已保存。"
+      },
+      "retry": "重试"
     },
     "pools": {
       "search": "代币、交易对或资金池地址",
@@ -844,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, other {包含您至少一个代币的资金池有 # 个}}",
       "yours": "您的资金池 · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "已选 {pct}%",
+      "feeTier": "{fee} 费率档位",
+      "tierShare": "{fee} 费率档位 · {pct}% 的 LP 选择",
       "addsToken": "将 {symbol} 添加到您的代币",
       "hasHook": "带有 hook",
       "fixed": "资金池在启动时即被固定，之后无法再添加。",
@@ -861,11 +897,11 @@
     },
     "limits": {
       "perNetwork": "按网络",
-      "perNetworkCaption": "每个网络的最大资金占比 · 以 5% 为单位",
+      "perNetworkCaption": "每个网络的存款最大占比 · 以 5% 为单位",
       "perProtocol": "按协议",
-      "perProtocolCaption": "每个协议的最大资金占比 · 以 5% 为单位",
+      "perProtocolCaption": "每个协议的存款最大占比 · 以 5% 为单位",
       "perToken": "按代币",
-      "perTokenCaption": "每个代币持有的最大资金占比 · 以 5% 为单位",
+      "perTokenCaption": "每个代币持有的存款最大占比 · 以 5% 为单位",
       "tokenOnNetwork": "{network} 上的 {symbol}",
       "hubRow": "无上限 · hub 持有未发送至其他地方的资金",
       "hubCaption": "Hub",
@@ -881,14 +917,31 @@
         "perps": "永续"
       },
       "positiveTokenRequired": "请将至少一种 USDC 以外的代币上限设为高于 0%，或选择无上限。",
-      "addPositiveToken": "请在 Tokens 中添加另一种代币，然后将其上限设为高于 0%，或选择无上限。USDC 已包含在内。"
+      "addPositiveToken": "请在 Tokens 中添加另一种代币，然后将其上限设为高于 0%，或选择无上限。USDC 已包含在内。",
+      "perTokenAllCaption": "每个代币的默认上限 · 以 5% 为单位",
+      "allTokensRow": {
+        "title": "所有代币",
+        "caption": "为列表中的每个代币设置同一个上限"
+      },
+      "mixed": "混合",
+      "everyTokenRow": {
+        "title": "每个代币",
+        "caption": "每个代币单独计算，USDC 除外"
+      },
+      "allWarning": {
+        "title": "任何代币都可能进入该策略",
+        "body": "这包括流动性较低或没有价格历史的代币。默认上限分别适用于每个代币。存款人会在策略卡片和页面上看到此标签：",
+        "tag": "所有代币"
+      },
+      "capZeroReason": "请将代币上限设置为高于 0%",
+      "capZero": "请将代币上限设置为高于 0%，或选择“无上限”以继续。"
     },
     "draft": {
       "title": "为您的草稿命名",
       "body": "到目前为止您所做的所有选择都会保留。此名称用于在您的策略列表中找到该草稿，之后您可以在“核对”中修改。",
       "nameLabel": "草稿名称",
       "namePlaceholder": "Arbitrum 上的 ETH 和 BTC",
-      "helper": "10 到 50 个字符，与策略名称的规则相同。",
+      "helper": "10 到 50 个字符。",
       "counter": "{count} / {max}",
       "progress": "目前已保存：{networks} 个网络、{protocols} 个协议、{tokens} 个代币 · 授权范围，第 {n}/{count} 步",
       "keepEditing": "继续编辑",

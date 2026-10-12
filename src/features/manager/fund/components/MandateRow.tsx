@@ -42,7 +42,7 @@ export interface MandateRowProps {
   title: string;
   /** Already-translated supporting line under the title. */
   caption?: string;
-  /** Already-built trailing content (the Protocols step's "On" dots, a cap slider). */
+  /** Already-built trailing content (the Protocols step's "Available on" dots, a cap slider). */
   trailing?: ReactNode;
   /** Whether the row is in the mandate. Ignored on a locked row, which always is. */
   selected?: boolean;

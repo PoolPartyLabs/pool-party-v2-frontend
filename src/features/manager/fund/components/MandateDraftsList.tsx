@@ -10,12 +10,12 @@
  * ## Why this card exists at all
  *
  * A mandate that was saved and left has no other door. The builder's own URL carries the draft id,
- * but nothing shows that URL to the manager, so without this card a Save & exit is indistinguishable
+ * but nothing shows that URL to the manager, so without this card a Save and exit is indistinguishable
  * from losing the work. "Open" is therefore not a convenience; it is the second half of R7.
  *
  * ## Why it reads the store instead of being handed a list
  *
- * The card subscribes. A Save & exit that happened a moment ago in the builder, or in another tab,
+ * The card subscribes. A Save and exit that happened a moment ago in the builder, or in another tab,
  * has to appear here without a reload, and the store already notifies on every write (and on this
  * key's `storage` event). A prop would make the Console responsible for re-reading storage, which
  * is a responsibility it has no reason to hold.

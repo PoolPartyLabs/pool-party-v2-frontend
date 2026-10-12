@@ -8,7 +8,7 @@
  *
  * React access to the Build plan inside one mandate draft. It owns no state of its own: the plan IS
  * `draft.plan`, written through the draft hook's `update`, so it follows the draft through Back to
- * Mandate, Save & exit and a reload (handoff acceptance 8), and it reaches storage only through the
+ * Mandate, Save and exit and a reload (handoff acceptance 8), and it reaches storage only through the
  * mandate's own `save()`.
  *
  * Two rules, both from the mandate hook and for the same reasons:

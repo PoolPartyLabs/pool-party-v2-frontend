@@ -397,7 +397,7 @@ permission, fee collection, public launch, custody or account authorization is i
 
 Applied shared draft and Review fields survive render retry. Unapplied inner-panel field values can
 be lost after a render unmount; retained pending metadata protects leaving but does not restore fields.
-Accepted Header and Save & exit disposal is acknowledged only after generation-validated consent;
+Accepted Header and Save and exit disposal is acknowledged only after generation-validated consent;
 route/account disposal remains abandonment/reset. The discoverable gesture remains a preference.
 
 ANSWERED for the existing licensing boundary: first-party changes follow the source-available root

@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Autres réseaux"
+      "others": "Autres réseaux",
+      "othersCaption": "Chaque réseau que vous ajoutez nécessite un pont et une signature de plus au lancement."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Obligatoire",
-      "requiredSubtitle": "Chaque stratégie a besoin d'un moyen d'échanger des jetons et de déplacer des fonds entre ses réseaux.",
       "operate": "Protocoles à utiliser",
-      "on": "Sur",
-      "onFootnote": "« Sur » indique les réseaux de l'étape 1 où chaque protocole est disponible."
+      "on": "Disponible sur",
+      "onFootnote": "« Disponible sur » indique lesquels de vos réseaux de l'étape 1 chaque protocole prend en charge.",
+      "swapBridge": "Échange et pont",
+      "swapBridgeCollapsed": "{names} · sélectionnés pour vous",
+      "swapBridgeOpen": "Sélectionnés pour vous. Gardez au moins un échange, et un pont quand vous ajoutez un réseau.",
+      "swapBridgeOpenHub": "Sélectionnés pour vous. Gardez au moins un échange.",
+      "show": "Afficher",
+      "hide": "Masquer",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Échange",
+        "uniswapV3Liquidity": "Uniswap v3 · Liquidité"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -834,7 +843,34 @@
       "depositToken": "Jeton de dépôt",
       "slotsCaption": "Un jeton occupe un emplacement sur chaque réseau sur lequel il fonctionne. Le mandat dispose de {max} emplacements.",
       "noPrice": "Pas encore de flux de prix",
-      "empty": "Aucun jeton ne correspond à votre recherche."
+      "empty": "Aucun jeton ne correspond à votre recherche.",
+      "access": {
+        "label": "Accès aux jetons",
+        "selected": "Jetons sélectionnés",
+        "all": "Tous les jetons",
+        "hint": "Avec « Tous les jetons », la stratégie peut échanger n'importe quel jeton de vos réseaux et protocoles, y compris les jetons lancés plus tard."
+      },
+      "allInfo": {
+        "title": "La stratégie peut échanger n'importe quel jeton",
+        "body": "Cela couvre chaque jeton de vos réseaux et protocoles, y compris ceux lancés après la publication. Vous ne choisissez pas les jetons un par un. Chaque jeton est évalué sur le hub."
+      },
+      "yoursAll": "Vos jetons · Tous",
+      "everyOther": "Tout autre jeton",
+      "everyOtherCaption": "Ajouté à son lancement",
+      "requiredBy": "Requis par {network}",
+      "slotsAllLabel": "Emplacements réseau",
+      "slotsNoLimit": "Aucune limite",
+      "slotsAllCaption": "Le plafond de {max} emplacements s'applique uniquement aux jetons sélectionnés.",
+      "noFreeSlots": "Aucun emplacement libre",
+      "slotsFull": "Les {max} emplacements sont utilisés. Retirez un jeton pour en ajouter un autre.",
+      "andMoreTokens": "et {count, plural, one {# jeton de plus} other {# jetons de plus}}",
+      "loading": "Chargement des jetons",
+      "loadError": {
+        "title": "Les jetons ne se sont pas chargés",
+        "heading": "Impossible de charger la liste des jetons",
+        "body": "Vérifiez votre connexion et réessayez. Les jetons de votre liste restent enregistrés."
+      },
+      "retry": "Réessayer"
     },
     "pools": {
       "search": "Jeton, paire ou adresse de pool",
@@ -844,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, one {# pool} other {# pools}} avec au moins un de vos jetons",
       "yours": "Vos pools · {count}",
-      "feeTier": "Fee tier de {fee}",
-      "tierShare": "{pct}% sélectionné",
+      "feeTier": "Palier de frais de {fee}",
+      "tierShare": "Palier de frais de {fee} · choisi par {pct} % des LP",
       "addsToken": "ajoute {symbol} à vos jetons",
       "hasHook": "a un hook",
       "fixed": "Les pools sont fixés au lancement. Vous ne pourrez pas en ajouter un plus tard.",
@@ -861,11 +897,11 @@
     },
     "limits": {
       "perNetwork": "Par réseau",
-      "perNetworkCaption": "Part maximale du capital par réseau · par paliers de 5 %",
+      "perNetworkCaption": "Part maximale des dépôts par réseau · par paliers de 5 %",
       "perProtocol": "Par protocole",
-      "perProtocolCaption": "Part maximale du capital par protocole · par paliers de 5 %",
+      "perProtocolCaption": "Part maximale des dépôts par protocole · par paliers de 5 %",
       "perToken": "Par jeton",
-      "perTokenCaption": "Part maximale du capital détenue dans chaque jeton · par paliers de 5 %",
+      "perTokenCaption": "Part maximale des dépôts détenue dans chaque jeton · par paliers de 5 %",
       "tokenOnNetwork": "{symbol} sur {network}",
       "hubRow": "Aucun plafond · le hub conserve ce qui n'est pas envoyé ailleurs",
       "hubCaption": "Hub",
@@ -881,14 +917,31 @@
         "perps": "Perpétuels"
       },
       "positiveTokenRequired": "Autorisez au moins un token en plus de USDC au-delà de 0 % ou sélectionnez Aucun plafond.",
-      "addPositiveToken": "Ajoutez un autre token dans Tokens, puis fixez sa limite au-delà de 0 % ou sélectionnez Aucun plafond. USDC est déjà inclus."
+      "addPositiveToken": "Ajoutez un autre token dans Tokens, puis fixez sa limite au-delà de 0 % ou sélectionnez Aucun plafond. USDC est déjà inclus.",
+      "perTokenAllCaption": "Plafond par défaut pour chaque jeton · paliers de 5 %",
+      "allTokensRow": {
+        "title": "Tous les jetons",
+        "caption": "Définit un plafond pour chaque jeton de la liste"
+      },
+      "mixed": "Mixte",
+      "everyTokenRow": {
+        "title": "Chaque jeton",
+        "caption": "Chaque jeton séparément, sauf USDC"
+      },
+      "allWarning": {
+        "title": "N'importe quel jeton peut entrer dans la stratégie",
+        "body": "Cela inclut des jetons à faible liquidité ou sans historique de prix. Le plafond par défaut s'applique à chaque jeton séparément. Les déposants voient cette étiquette sur la carte et la page de la stratégie :",
+        "tag": "Tous les jetons"
+      },
+      "capZeroReason": "Définissez le plafond des jetons au-dessus de 0 %",
+      "capZero": "Définissez le plafond des jetons au-dessus de 0 % ou choisissez Aucun plafond pour continuer."
     },
     "draft": {
       "title": "Nommez votre brouillon",
       "body": "Tout ce que vous avez choisi jusqu'ici est conservé. Le nom vous permettra de retrouver ce brouillon parmi vos stratégies ; vous pourrez le modifier plus tard dans Vérification.",
       "nameLabel": "Nom du brouillon",
       "namePlaceholder": "ETH et BTC sur Arbitrum",
-      "helper": "De 10 à 50 caractères, la même règle que pour le nom de la stratégie.",
+      "helper": "De 10 à 50 caractères.",
       "counter": "{count} / {max}",
       "progress": "Enregistré jusqu'ici : {networks} réseaux, {protocols} protocoles, {tokens} jetons · Mandat, étape {n} sur {count}",
       "keepEditing": "Continuer la modification",

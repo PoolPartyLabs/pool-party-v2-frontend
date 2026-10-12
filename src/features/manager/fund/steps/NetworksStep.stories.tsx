@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-035
  * @name NetworksStep.stories
  * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v1 (POO-2333 Figma parity: R1, R2)
  *
  * Storybook coverage for Mandate step 1 (POO-2123 [R15] to [R17]; rules v2, POO-2142: the hub and
  * Robinhood Chain only, both always available).
@@ -71,7 +72,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Mandate step 1. The hub is locked and has no control at all; the spokes are the decision. A spoke the fund contracts cannot reach yet is disabled with a Coming soon pill and still takes the click, which the shell reports as a blocked intent.",
+          "Mandate step 1. The hub is locked and has no control at all; the spokes are the decision. A caption under Other networks tells the cost of each network. A spoke that the config does not enable is not shown.",
       },
     },
   },

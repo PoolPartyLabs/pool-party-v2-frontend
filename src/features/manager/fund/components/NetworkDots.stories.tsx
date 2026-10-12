@@ -33,7 +33,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-/** What a protocol's "On" column shows for a hub-only mandate. */
+/** What a protocol's "Available on" column shows for a hub-only mandate. */
 export const HubOnly: Story = {
   args: { networks: ["arbitrum"] },
 };

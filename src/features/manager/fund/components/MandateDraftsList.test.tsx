@@ -332,7 +332,7 @@ describe("MandateDraftsList", () => {
     renderWithProviders(<MandateDraftsList />);
 
     expect(
-      await screen.findByText("No drafts yet. Start a strategy and use Save & exit to keep one."),
+      await screen.findByText("No drafts yet. Start a strategy and use Save and exit to keep one."),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Open" })).not.toBeInTheDocument();
   });
@@ -340,10 +340,10 @@ describe("MandateDraftsList", () => {
   // @rule D1
   it("picks up a draft saved elsewhere without a remount", async () => {
     renderWithProviders(<MandateDraftsList />);
-    await screen.findByText("No drafts yet. Start a strategy and use Save & exit to keep one.");
+    await screen.findByText("No drafts yet. Start a strategy and use Save and exit to keep one.");
 
     // The store notifies its subscribers on every write, which is how the Console reflects a
-    // Save & exit that happened in the builder a moment ago.
+    // Save and exit that happened in the builder a moment ago.
     const { upsertDraft } = await import("../mandateDraftStore");
     upsertDraft(saved("late", { name: "Saved from the builder" }));
 

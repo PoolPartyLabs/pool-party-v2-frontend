@@ -15,13 +15,13 @@
  * Availability is DATA, not a branch. Only Arbitrum (hub) and Robinhood Chain exist on the fund
  * contracts today (DEC-018), and the buildathon scope (rules v2, POO-2142) offers exactly those two,
  * both available (R16 v2, R17 v2). Base, Polygon and Unichain are commented out below rather than
- * deleted, so restoring one is uncommenting it, and its `available` entry decides whether it renders
- * disabled with "Coming soon". {@link withNetworks} refuses anything this catalog has not turned on,
- * so a disabled row cannot be reached around the UI.
+ * deleted, so restoring one is uncommenting it, and its `available` entry decides whether the
+ * Networks step shows it (POO-2333 R2 hides an unavailable spoke). {@link withNetworks} refuses
+ * anything this catalog has not turned on, so a hidden network cannot be reached around the UI.
  *
- * Rules v4 (POO-2167) list Aave v3 and Uniswap v4 to operate beside the required protocols.
- * Uniswap v3 positions, GMX and Pendle remain visible but unavailable. GMX and Pendle have no
- * supported fund-contract networks. The same availability mechanism disables each future row.
+ * Rules v4 (POO-2167) list Aave v3 and Uniswap v4 to operate beside the swap and the bridge.
+ * Uniswap v3 positions, GMX and Pendle are unavailable, so the Protocols step does not show them
+ * (POO-2333 R7). GMX and Pendle have no supported fund-contract networks.
  * The unused locale keys of the commented-out networks stay in all 11 locales for later restoration.
  *
  * NAMES ARE KEYS. `MandateNetwork.name` and `MandateProtocol.name` hold a translation key under the
@@ -172,11 +172,12 @@ const ALL_NETWORKS: readonly NetworkId[] = NETWORK_ORDER.filter((network) => net
  *
  * On chain today: Uniswap v4 positions and Aave v3 supply (hub only), with Uniswap v3 present as
  * the swap adapter. The buildathon scope operates Aave v3 (Arbitrum only) and Uniswap v4 (Arbitrum,
- * Robinhood Chain). Uniswap v3 positions keep their row and their networks but are unavailable
- * (`UNAVAILABLE_PROTOCOLS`, POO-2167). GMX and Pendle stay visible with no supported fund-contract
- * networks and are unavailable in both modes. Each is scoped so the Protocols step
- * can show honest network dots. Copy never says "via Across" outside that row (R22), and nothing
- * here promises a per-protocol guarantee the contracts do not make.
+ * Robinhood Chain). Uniswap v3 positions keep their networks but are unavailable
+ * (`UNAVAILABLE_PROTOCOLS`, POO-2167). GMX and Pendle have no supported fund-contract networks and
+ * are unavailable in both modes. The Protocols step hides all three (POO-2333 R7). Each available
+ * protocol is scoped so the Protocols step can show honest network dots. Copy never says
+ * "via Across" outside that row (R22), and nothing here promises a per-protocol guarantee the
+ * contracts do not make.
  */
 function buildProtocols(): MandateProtocol[] {
   const unavailable = new Set<string>(UNAVAILABLE_PROTOCOLS);
