@@ -1508,6 +1508,7 @@
     "loadFailed": "We couldn't load your strategies",
     "retryDescription": "Try again to update your AUM and strategy list.",
     "retry": "Try again",
+    "strategyListUnavailable": "Your strategy list is unavailable.",
     "setupPreserved": "Your saved setup is still available above.",
     "localUnavailable": "Some saved setup could not be read. Your stored data has been preserved.",
     "historyUnavailable": "AUM history is not available.",

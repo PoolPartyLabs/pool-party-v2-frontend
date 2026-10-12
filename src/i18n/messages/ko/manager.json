@@ -1508,6 +1508,7 @@
     "loadFailed": "전략을 불러오지 못했습니다",
     "retryDescription": "AUM과 전략 목록을 업데이트하려면 다시 시도하세요.",
     "retry": "다시 시도",
+    "strategyListUnavailable": "전략 목록을 사용할 수 없습니다.",
     "setupPreserved": "저장된 설정은 위에서 계속 확인할 수 있습니다.",
     "localUnavailable": "저장된 설정 일부를 읽지 못했습니다. 데이터는 보존되었습니다.",
     "historyUnavailable": "AUM 기록을 이용할 수 없습니다.",

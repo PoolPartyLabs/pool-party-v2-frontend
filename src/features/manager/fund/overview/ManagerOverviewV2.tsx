@@ -229,30 +229,47 @@ export function ManagerOverviewV2({
                       ))}
                     </div>
                   </div>
-                  {state === "loading" ? (
-                    <Skeleton height={48} />
+                  {state === "error" ? (
+                    // R9 (POO-2335): the AUM card shows the recovery, as in Figma 8427:2829.
+                    <div role="alert" className="flex flex-1 flex-col justify-center">
+                      <h3 className="font-semibold">{t("loadFailed")}</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">{t("retryDescription")}</p>
+                      <Button
+                        variant="secondary"
+                        className="mt-4 self-start"
+                        onClick={() => setRetry((n) => n + 1)}
+                      >
+                        {t("retry")}
+                      </Button>
+                    </div>
                   ) : (
-                    <p className="text-3xl font-semibold tabular-nums">
-                      {source?.state === "ready" ? source.aum : t("notAvailable")}
-                    </p>
-                  )}
-                  <p className="text-sm text-muted-foreground">
-                    {source
-                      ? t("acrossStrategies", { count: source.readyCount })
-                      : t("notAvailable")}
-                  </p>
-                  {source && state === "ready" ? (
-                    <PerformanceChart
-                      className="mt-auto h-48"
-                      ariaLabel={t("totalAum")}
-                      data={period === "7D" ? source.series.slice(-7) : source.series}
-                    />
-                  ) : state === "loading" ? (
-                    <Skeleton height={180} />
-                  ) : (
-                    <p role="status" className="m-auto text-sm text-muted-foreground">
-                      {t("historyUnavailable")}
-                    </p>
+                    <>
+                      {state === "loading" ? (
+                        <Skeleton height={48} />
+                      ) : (
+                        <p className="text-3xl font-semibold tabular-nums">
+                          {source?.state === "ready" ? source.aum : t("notAvailable")}
+                        </p>
+                      )}
+                      <p className="text-sm text-muted-foreground">
+                        {source
+                          ? t("acrossStrategies", { count: source.readyCount })
+                          : t("notAvailable")}
+                      </p>
+                      {source && state === "ready" ? (
+                        <PerformanceChart
+                          className="mt-auto h-48"
+                          ariaLabel={t("totalAum")}
+                          data={period === "7D" ? source.series.slice(-7) : source.series}
+                        />
+                      ) : state === "loading" ? (
+                        <Skeleton height={180} />
+                      ) : (
+                        <p role="status" className="m-auto text-sm text-muted-foreground">
+                          {t("historyUnavailable")}
+                        </p>
+                      )}
+                    </>
                   )}
                 </Card>
                 <Card className="flex flex-col gap-4 p-6">
@@ -412,17 +429,19 @@ export function ManagerOverviewV2({
                   <Skeleton height={120} />
                 </div>
               ) : state === "error" ? (
-                <div role="alert" className="p-6">
-                  <h3>{t("loadFailed")}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{t("retryDescription")}</p>
-                  <Button
-                    variant="secondary"
-                    className="mt-4"
-                    onClick={() => setRetry((n) => n + 1)}
-                  >
-                    {t("retry")}
-                  </Button>
-                  <p className="mt-3 text-sm">{t("setupPreserved")}</p>
+                <div role="status" className="p-6">
+                  <p>{t("strategyListUnavailable")}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{t("setupPreserved")}</p>
+                  {/* The Strategies tab has no AUM card, so the retry stays here. */}
+                  {tab === "overview" ? null : (
+                    <Button
+                      variant="secondary"
+                      className="mt-4"
+                      onClick={() => setRetry((n) => n + 1)}
+                    >
+                      {t("retry")}
+                    </Button>
+                  )}
                 </div>
               ) : state === "session" ? (
                 <p role="status" className="p-6">

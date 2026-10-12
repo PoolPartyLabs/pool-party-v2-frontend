@@ -1508,6 +1508,7 @@
     "loadFailed": "戦略を読み込めませんでした",
     "retryDescription": "再試行してAUMと戦略一覧を更新してください。",
     "retry": "再試行",
+    "strategyListUnavailable": "戦略リストを取得できません。",
     "setupPreserved": "保存した設定は引き続き上に表示されています。",
     "localUnavailable": "保存した設定の一部を読み込めませんでした。データは保持されています。",
     "historyUnavailable": "AUM履歴は利用できません。",

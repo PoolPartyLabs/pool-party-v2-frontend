@@ -1508,6 +1508,7 @@
     "loadFailed": "無法載入您的策略",
     "retryDescription": "請重試以更新 AUM 和策略清單。",
     "retry": "重試",
+    "strategyListUnavailable": "你的策略清單無法使用。",
     "setupPreserved": "已儲存的設定仍可在上方查看。",
     "localUnavailable": "部分已儲存設定無法讀取。您的資料已保留。",
     "historyUnavailable": "AUM 歷史暫不提供。",

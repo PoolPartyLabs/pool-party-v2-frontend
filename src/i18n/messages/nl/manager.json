@@ -1508,6 +1508,7 @@
     "loadFailed": "Je strategieën konden niet worden geladen",
     "retryDescription": "Probeer opnieuw om je AUM en strategielijst bij te werken.",
     "retry": "Opnieuw proberen",
+    "strategyListUnavailable": "Je strategielijst is niet beschikbaar.",
     "setupPreserved": "Je opgeslagen instellingen blijven hierboven beschikbaar.",
     "localUnavailable": "Een deel van de opgeslagen instellingen kon niet worden gelezen. Je gegevens zijn behouden.",
     "historyUnavailable": "AUM-geschiedenis is niet beschikbaar.",

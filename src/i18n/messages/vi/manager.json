@@ -1508,6 +1508,7 @@
     "loadFailed": "Không thể tải chiến lược của bạn",
     "retryDescription": "Thử lại để cập nhật AUM và danh sách chiến lược.",
     "retry": "Thử lại",
+    "strategyListUnavailable": "Danh sách chiến lược của bạn không khả dụng.",
     "setupPreserved": "Thiết lập đã lưu của bạn vẫn có ở phía trên.",
     "localUnavailable": "Không thể đọc một phần thiết lập đã lưu. Dữ liệu của bạn đã được giữ lại.",
     "historyUnavailable": "Lịch sử AUM chưa khả dụng.",

@@ -79,6 +79,9 @@ describe("Overview presenter POO-2245", () => {
     renderWithProviders(<ManagerOverviewV2 />);
     expect(await screen.findByText("We couldn't load your strategies")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    // R9 (POO-2335): the table shows the Figma 8427:2829 error copy.
+    expect(screen.getByText("Your strategy list is unavailable.")).toBeInTheDocument();
+    expect(screen.getByText("Your saved setup is still available above.")).toBeInTheDocument();
     expect(screen.getByText("Continue setup")).toBeInTheDocument();
     expect(JSON.stringify(window.dataLayer)).not.toContain("secret upstream");
     expect(window.dataLayer).toContainEqual(expect.objectContaining({ event: "app_error_shown" }));

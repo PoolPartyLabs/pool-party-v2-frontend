@@ -1508,6 +1508,7 @@
     "loadFailed": "Impossible de charger vos stratégies",
     "retryDescription": "Réessayez pour actualiser votre AUM et votre liste de stratégies.",
     "retry": "Réessayer",
+    "strategyListUnavailable": "Votre liste de stratégies n’est pas disponible.",
     "setupPreserved": "Votre configuration enregistrée reste disponible ci-dessus.",
     "localUnavailable": "Une partie de la configuration enregistrée est illisible. Vos données ont été conservées.",
     "historyUnavailable": "L’historique AUM est indisponible.",
