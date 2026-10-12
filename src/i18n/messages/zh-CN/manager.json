@@ -932,7 +932,41 @@
         "frozen": "储备已冻结",
         "paused": "储备已暂停",
         "supplyCapReached": "已达到 Supply 上限",
-        "unavailable": "不可用"
+        "unavailable": "不可用",
+        "collateralNote": "下方 Borrow 区块的抵押品。更改资产或分配会改变可借入的金额。"
+      },
+      "borrowPanel": {
+        "heading": "可借入的资产",
+        "filter": "按代币或地址筛选",
+        "caption": "{network} 上的 Aave v3 以上方 Supply 为抵押可借出的授权范围内代币。",
+        "needAsset": "需要其他资产？",
+        "noMatch": "授权范围内没有与 {typed} 匹配的资产",
+        "noMatchCaption": "在授权范围的第3步选择代币。编辑时会保留已保存的配置。",
+        "empty": "授权范围内没有可在 {network} 上借入的资产",
+        "collateral": "抵押品",
+        "collateralHelp": "上方 Supply 区块的资产。Aave v3 以其为抵押放贷。请在该区块中更改。",
+        "supplyAbove": "上方 Supply 区块",
+        "collateralValue": "抵押品价值",
+        "needSupply": "请先配置上方的 Supply 区块。",
+        "asset": "资产",
+        "help": "{network} 上的 Aave v3 可借出的授权范围内代币。",
+        "apy": "借款 APY",
+        "amount": "借款金额",
+        "amountHelp": "借入的抵押品价值比例。比例越高，健康因子越低。",
+        "amountCaption": "占上方存入的 {symbol} 价值的比例。Aave 上限 {limit}%。",
+        "atLimit": "已达上限。Aave v3 最多借出 {symbol} 价值的 {limit}%。",
+        "amountValue": "借入金额",
+        "healthFactor": "健康因子",
+        "noDebt": "无债务",
+        "liquidationPrice": "清算价格",
+        "liquidationSentence": "{symbol} 当前价格为 {price}。下跌约 {drop}% 时将被清算。",
+        "unavailable": "不可用",
+        "blocked": {
+          "needSupply": "请先配置上方的 Supply 区块。",
+          "unavailable": "请选择 Aave v3 可借出的资产。",
+          "needAmount": "请设置大于 0% 的借款金额。",
+          "overLimit": "借款金额超过 Aave 上限。"
+        }
       }
     },
     "canvas": {

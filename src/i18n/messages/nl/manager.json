@@ -932,7 +932,41 @@
         "frozen": "Reserve bevroren",
         "paused": "Reserve gepauzeerd",
         "supplyCapReached": "Supply-limiet bereikt",
-        "unavailable": "Niet beschikbaar"
+        "unavailable": "Niet beschikbaar",
+        "collateralNote": "Onderpand van het Borrow-blok hieronder. Een ander asset of een andere allocatie verandert wat je kunt lenen."
+      },
+      "borrowPanel": {
+        "heading": "Assets die je kunt lenen",
+        "filter": "Filter op token of adres",
+        "caption": "Tokens uit je mandaat die Aave v3 op {network} uitleent, tegen de Supply hierboven.",
+        "needAsset": "Een ander activum nodig?",
+        "noMatch": "Geen activum in je mandaat komt overeen met {typed}",
+        "noMatchCaption": "Tokens worden in stap 3 van het mandaat gekozen. Je configuratie blijft opgeslagen tijdens het bewerken.",
+        "empty": "Geen asset uit je mandaat kan op {network} worden geleend",
+        "collateral": "Onderpand",
+        "collateralHelp": "Het asset van het Supply-blok hierboven. Aave v3 leent daartegen uit. Wijzig het in dat blok.",
+        "supplyAbove": "Supply-blok hierboven",
+        "collateralValue": "Waarde onderpand",
+        "needSupply": "Configureer eerst het Supply-blok hierboven.",
+        "asset": "Activum",
+        "help": "Tokens uit je mandaat die Aave v3 op {network} uitleent.",
+        "apy": "Leen-APY",
+        "amount": "Leenbedrag",
+        "amountHelp": "Het deel van de waarde van het onderpand dat je leent. Een hoger deel verlaagt de health factor.",
+        "amountCaption": "Deel van de waarde van de {symbol} die hierboven is gestort. Aave-limiet {limit}%.",
+        "atLimit": "Maximum bereikt. Aave v3 leent tot {limit}% van de waarde van {symbol}.",
+        "amountValue": "Je leent",
+        "healthFactor": "Health factor",
+        "noDebt": "Geen schuld",
+        "liquidationPrice": "Liquidatieprijs",
+        "liquidationSentence": "{symbol} staat nu op {price}. Liquidatie als de prijs ongeveer {drop}% daalt.",
+        "unavailable": "Niet beschikbaar",
+        "blocked": {
+          "needSupply": "Configureer eerst het Supply-blok hierboven.",
+          "unavailable": "Kies een asset dat Aave v3 uitleent.",
+          "needAmount": "Stel een leenbedrag boven 0% in.",
+          "overLimit": "Het leenbedrag ligt boven de Aave-limiet."
+        }
       }
     },
     "canvas": {

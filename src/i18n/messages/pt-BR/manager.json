@@ -932,7 +932,41 @@
         "frozen": "Reserva congelada",
         "paused": "Reserva pausada",
         "supplyCapReached": "Limite de Supply atingido",
-        "unavailable": "Indisponível"
+        "unavailable": "Indisponível",
+        "collateralNote": "Garantia do bloco Borrow abaixo. Mudar o ativo ou a alocação muda o que pode ser tomado emprestado."
+      },
+      "borrowPanel": {
+        "heading": "Ativos que você pode tomar emprestado",
+        "filter": "Filtrar por token ou endereço",
+        "caption": "Tokens do seu mandato que a Aave v3 empresta em {network}, contra o Supply acima.",
+        "needAsset": "Precisa de outro ativo?",
+        "noMatch": "Nenhum ativo do seu mandato corresponde a {typed}",
+        "noMatchCaption": "Os tokens são escolhidos no mandato, na etapa 3. Sua configuração permanece salva enquanto você edita.",
+        "empty": "Nenhum ativo do seu mandato pode ser tomado emprestado em {network}",
+        "collateral": "Garantia",
+        "collateralHelp": "O ativo do bloco Supply acima. A Aave v3 empresta contra ele. Altere-o naquele bloco.",
+        "supplyAbove": "Bloco Supply acima",
+        "collateralValue": "Valor da garantia",
+        "needSupply": "Configure primeiro o bloco Supply acima.",
+        "asset": "Ativo",
+        "help": "Tokens do seu mandato que a Aave v3 empresta em {network}.",
+        "apy": "APY de empréstimo",
+        "amount": "Valor do empréstimo",
+        "amountHelp": "A parte do valor da garantia que você toma emprestado. Uma parte maior reduz o fator de saúde.",
+        "amountCaption": "Parte do valor do {symbol} depositado acima. Limite da Aave {limit}%.",
+        "atLimit": "Máximo atingido. A Aave v3 empresta até {limit}% do valor de {symbol}.",
+        "amountValue": "Você toma emprestado",
+        "healthFactor": "Fator de saúde",
+        "noDebt": "Sem dívida",
+        "liquidationPrice": "Preço de liquidação",
+        "liquidationSentence": "{symbol} está em {price} agora. Liquidação se cair cerca de {drop}%.",
+        "unavailable": "Indisponível",
+        "blocked": {
+          "needSupply": "Configure primeiro o bloco Supply acima.",
+          "unavailable": "Escolha um ativo que a Aave v3 empresta.",
+          "needAmount": "Defina um valor de empréstimo acima de 0%.",
+          "overLimit": "O valor do empréstimo passa do limite da Aave."
+        }
       }
     },
     "canvas": {

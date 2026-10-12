@@ -932,7 +932,41 @@
         "frozen": "Dự trữ bị đóng băng",
         "paused": "Dự trữ tạm dừng",
         "supplyCapReached": "Đã đạt giới hạn Supply",
-        "unavailable": "Không khả dụng"
+        "unavailable": "Không khả dụng",
+        "collateralNote": "Tài sản thế chấp của khối Borrow bên dưới. Thay đổi tài sản hoặc phân bổ sẽ thay đổi số tiền có thể vay."
+      },
+      "borrowPanel": {
+        "heading": "Tài sản bạn có thể vay",
+        "filter": "Lọc theo token hoặc địa chỉ",
+        "caption": "Các token trong ủy nhiệm mà Aave v3 cho vay trên {network}, dựa trên Supply ở trên.",
+        "needAsset": "Cần tài sản khác?",
+        "noMatch": "Không có tài sản nào trong ủy nhiệm khớp với {typed}",
+        "noMatchCaption": "Token được chọn ở bước 3 của ủy nhiệm. Cấu hình vẫn được lưu trong khi chỉnh sửa.",
+        "empty": "Không có tài sản nào trong ủy nhiệm có thể vay trên {network}",
+        "collateral": "Tài sản thế chấp",
+        "collateralHelp": "Tài sản của khối Supply ở trên. Aave v3 cho vay dựa trên tài sản này. Hãy thay đổi nó trong khối đó.",
+        "supplyAbove": "Khối Supply ở trên",
+        "collateralValue": "Giá trị thế chấp",
+        "needSupply": "Hãy cấu hình khối Supply ở trên trước.",
+        "asset": "Tài sản",
+        "help": "Các token trong ủy nhiệm mà Aave v3 cho vay trên {network}.",
+        "apy": "APY vay",
+        "amount": "Số tiền vay",
+        "amountHelp": "Phần giá trị thế chấp mà bạn vay. Phần càng cao thì hệ số sức khỏe càng thấp.",
+        "amountCaption": "Phần giá trị của {symbol} đã gửi ở trên. Giới hạn Aave {limit}%.",
+        "atLimit": "Đã đạt tối đa. Aave v3 cho vay tối đa {limit}% giá trị của {symbol}.",
+        "amountValue": "Bạn vay",
+        "healthFactor": "Hệ số sức khỏe",
+        "noDebt": "Không có nợ",
+        "liquidationPrice": "Giá thanh lý",
+        "liquidationSentence": "{symbol} hiện ở mức {price}. Thanh lý nếu giảm khoảng {drop}%.",
+        "unavailable": "Không khả dụng",
+        "blocked": {
+          "needSupply": "Hãy cấu hình khối Supply ở trên trước.",
+          "unavailable": "Hãy chọn tài sản mà Aave v3 cho vay.",
+          "needAmount": "Hãy đặt số tiền vay lớn hơn 0%.",
+          "overLimit": "Số tiền vay vượt quá giới hạn của Aave."
+        }
       }
     },
     "canvas": {

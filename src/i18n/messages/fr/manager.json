@@ -932,7 +932,41 @@
         "frozen": "Réserve gelée",
         "paused": "Réserve en pause",
         "supplyCapReached": "Plafond de Supply atteint",
-        "unavailable": "Indisponible"
+        "unavailable": "Indisponible",
+        "collateralNote": "Garantie du bloc Borrow ci-dessous. Changer l'actif ou l'allocation change ce qui peut être emprunté."
+      },
+      "borrowPanel": {
+        "heading": "Actifs que vous pouvez emprunter",
+        "filter": "Filtrer par token ou adresse",
+        "caption": "Tokens de votre mandat que Aave v3 prête sur {network}, contre le Supply ci-dessus.",
+        "needAsset": "Besoin d’un autre actif ?",
+        "noMatch": "Aucun actif de votre mandat ne correspond à {typed}",
+        "noMatchCaption": "Les tokens sont choisis dans le mandat, à l’étape 3. Votre configuration reste enregistrée pendant la modification.",
+        "empty": "Aucun actif de votre mandat ne peut être emprunté sur {network}",
+        "collateral": "Garantie",
+        "collateralHelp": "L'actif du bloc Supply ci-dessus. Aave v3 prête contre lui. Modifiez-le dans ce bloc.",
+        "supplyAbove": "Bloc Supply ci-dessus",
+        "collateralValue": "Valeur de la garantie",
+        "needSupply": "Configurez d'abord le bloc Supply ci-dessus.",
+        "asset": "Actif",
+        "help": "Tokens de votre mandat que Aave v3 prête sur {network}.",
+        "apy": "APY d'emprunt",
+        "amount": "Montant emprunté",
+        "amountHelp": "La part de la valeur de la garantie que vous empruntez. Une part plus élevée baisse le facteur de santé.",
+        "amountCaption": "Part de la valeur du {symbol} déposé ci-dessus. Limite Aave {limit} %.",
+        "atLimit": "Maximum atteint. Aave v3 prête jusqu'à {limit} % de la valeur de {symbol}.",
+        "amountValue": "Vous empruntez",
+        "healthFactor": "Facteur de santé",
+        "noDebt": "Aucune dette",
+        "liquidationPrice": "Prix de liquidation",
+        "liquidationSentence": "{symbol} est à {price} maintenant. Liquidation s'il baisse d'environ {drop} %.",
+        "unavailable": "Indisponible",
+        "blocked": {
+          "needSupply": "Configurez d'abord le bloc Supply ci-dessus.",
+          "unavailable": "Choisissez un actif que Aave v3 prête.",
+          "needAmount": "Définissez un montant emprunté supérieur à 0 %.",
+          "overLimit": "Le montant emprunté dépasse la limite Aave."
+        }
       }
     },
     "canvas": {

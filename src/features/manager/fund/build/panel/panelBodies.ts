@@ -3,6 +3,7 @@
  * @name panelBodies
  * @implements-rules-version v1 (POO-2187 rules v1); POO-2204 rules v1
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2334 rules v1): registers the Aave v3 Borrow body (R7)
  * @analytics-events none, a registry of types and components; the shell (BlockPanel) reports what
  *   a body does through the panel's draft.
  *
@@ -50,6 +51,7 @@ import type { MandateDraft, NetworkId } from "../../mandateDraft";
 import { SOLANA_PANEL_BODIES } from "../../solana-preview/SolanaBuilderPanelBodies";
 import type { MandateEditStep } from "../blocks/useBuildCanvas";
 import type { BlockConfigByKind, BlockKind, BuildPlan } from "../plan/buildPlan";
+import { borrowBlockBody } from "./BorrowBlockPanel";
 import type { PanelPickItem } from "./PanelPickList";
 import { poolBlockPanel } from "./PoolBlockPanel";
 import { supplyBlockBody } from "./SupplyBlockPanel";
@@ -158,4 +160,5 @@ export const PANEL_BODIES: PanelBodies = {
   ...SOLANA_PANEL_BODIES,
   uniswapV4Pool: poolBlockPanel,
   aaveSupply: supplyBlockBody,
+  aaveBorrow: borrowBlockBody,
 };
