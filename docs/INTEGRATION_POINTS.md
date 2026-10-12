@@ -607,6 +607,6 @@ The Pools step searches Solana pools. A server action reads the public DEX Scree
 
 **Terms and limits.** DEX Screener public API terms and rate limits are not reviewed. See CR-MGR-POO2338.
 
-Current census (POO-2343): 2,316 files under `src/`, with 551 markers across 317 files,
+Current census (POO-2343): 2,307 files under `src/`, with 545 markers across 315 files,
 including tests, stories and source documentation. Registry totals are 721 rows and 716 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
