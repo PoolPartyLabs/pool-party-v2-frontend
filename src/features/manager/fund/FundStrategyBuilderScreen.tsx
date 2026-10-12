@@ -3,9 +3,11 @@
  * @name FundStrategyBuilderScreen
  * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2195 rules v1, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2332)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
  *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
- *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
+ *   builder_mandate_abandoned, builder_mandate_token_mode_changed, builder_draft_saved,
+ *   builder_mandate_error,
  *   builder_build_abandoned, builder_build_error, builder_build_submitted, builder_build_completed,
  *   builder_review_error (the Build canvas and ReviewPhase own their view/interaction events),
  *   solana_preview_viewed, solana_preview_started, solana_preview_interacted,
@@ -156,9 +158,11 @@ import {
   selectionCounts,
   selectionFingerprint,
   stepIndex,
+  tokenModeOf,
   validateStep,
   visibleSteps,
 } from "./mandateDraft";
+import { nextBlockedLabelKey } from "./mandateTokenAccess";
 import { LocalSolanaReview } from "./review/LocalSolanaReview";
 import { ReviewPhase } from "./review/ReviewPhase";
 import { SolanaPreviewRenderBoundary } from "./solana-preview/SolanaPreviewErrorBoundary";
@@ -198,6 +202,7 @@ export const MANDATE_BLOCK_REASON_EVENT: Record<
 > = {
   nothing_selected: "nothing_selected",
   cap_missing: "cap_missing",
+  cap_zero: "cap_zero",
   token_allowance_required: "token_allowance_required",
   no_slots: "no_slots",
   has_hook: "has_hook",
@@ -708,6 +713,36 @@ function FundBuilderShell({
   }, [hydrated, resumePending, phase, step, track]);
 
   /**
+   * POO-2332 R15: one event for each real change of the Token access mode. The first render of a
+   * draft only sets the baseline, so a load or a resume sends nothing.
+   */
+  const tokenMode = tokenModeOf(draft);
+  const seenTokenMode = useRef<{ id: string; mode: typeof tokenMode } | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    const seen = seenTokenMode.current;
+    seenTokenMode.current = { id: draft.id, mode: tokenMode };
+    if (!seen || seen.id !== draft.id || seen.mode === tokenMode) return;
+    track("builder_mandate_token_mode_changed", { token_mode: tokenMode });
+  }, [hydrated, draft.id, tokenMode, track]);
+
+  /**
+   * POO-2332 R12: on Limits, a cap at 0% puts its reason on Next. The press still goes through
+   * `handleNext`, which reports the block, and LimitsStep scrolls to the row and blinks it (R13).
+   * Literal keys, so the i18n usage scan sees each one.
+   */
+  const capZeroLabels: Record<string, string> = {
+    "fundBuilder.limits.capZeroNetwork": t("fundBuilder.limits.capZeroNetwork"),
+    "fundBuilder.limits.capZeroProtocol": t("fundBuilder.limits.capZeroProtocol"),
+    "fundBuilder.limits.capZeroToken": t("fundBuilder.limits.capZeroToken"),
+  };
+  const capZeroKey =
+    phase === "mandate" && step === "limits"
+      ? nextBlockedLabelKey(validateStep(draft, "limits", catalog))
+      : null;
+  const nextBlockedLabel = capZeroKey ? (capZeroLabels[capZeroKey] ?? null) : null;
+
+  /**
    * From the first save on, the URL names the draft, the step and the phase, so a reload restores
    * all three. The phase is appended only in Build: `&phase=mandate` would be a parameter that
    * means the default, and a Back from Build has to leave the URL as it was before it.
@@ -1132,6 +1167,7 @@ function FundBuilderShell({
             onNext={() => {
               void handleNext();
             }}
+            blockedLabel={nextBlockedLabel}
           />
         </>
       ) : null}
