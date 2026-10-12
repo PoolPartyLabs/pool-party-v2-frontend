@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 720 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 721 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1263,3 +1263,12 @@ No IDs are added. The PP-INTEGRATION-POINT marker in chartModel stays.
 Current chart-delivery census (POO-2338): 719 registry rows and 714 unique IDs, 2,320 files under
 `src/`, with 552 markers across 317 files. The five disclosed historical duplicate IDs remain
 unchanged.
+
+## Build graph line routing, October 12, 2026 (POO-2345 v1)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-096` | layoutMetrics, a pure measure of the lines of a `GraphLayout`: crossings, overlaps, bends and the most bends of one leg | Lib | n/a (code) | Implemented measure (POO-2345) | [POO-2345](https://linear.app/yeildbay/issue/POO-2345) | `src/features/manager/fund/build/layout/layoutMetrics.ts` @rules-v1 |
+
+PP-MGR-LIB-023 and PP-MGR-MCK-004 keep their numbers. The metric reads only `layout.edges`. The test
+in `layoutMetrics.test.ts` records the numbers of every layout fixture.
