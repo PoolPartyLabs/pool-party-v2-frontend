@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph rule tests
- * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1)
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, a pure geometry module: nothing here is rendered or tracked.
  *
  * One test (or one table) per rule of the layout, tagged with its handoff id. The exact coordinates
@@ -1153,7 +1153,6 @@ function localSolanaInput(chainCount = 1): LayoutInput {
     spokes: [
       {
         network: "solana",
-        context: "solana-local",
         sharePct: 100,
         chains: Array.from({ length: chainCount }, (_, index) => ({
           id: `solana-chain-${index}`,
@@ -1193,7 +1192,7 @@ function segmentCrossesCard(a: { x: number; y: number }, b: { x: number; y: numb
   return true;
 }
 
-describe("[POO-2301 R3] explicit local Solana spoke context", () => {
+describe("[POO-2301 R3] Solana spoke context, told apart by the network", () => {
   it("places the Figma Build Idle236x62 and native cash144x96 with32gap inside fit bounds", () => {
     const layout = layoutGraph(localSolanaInput(), EN);
     const context = layout.spokeContexts?.[0];
@@ -1354,15 +1353,10 @@ describe("[POO-2301 R3] explicit local Solana spoke context", () => {
     }
   });
 
-  it("leaves every standard fixture free of local context and preserves Solana defaults without opt-in", () => {
+  // @rule R5
+  it("[R5] leaves every fixture without a Solana spoke free of Solana context and gives a Solana spoke its context", () => {
     for (const [, fixture] of FIXTURES)
       expect(layoutGraph(fixture.input, EN)).not.toHaveProperty("spokeContexts");
-    const input = localSolanaInput();
-    const standard = {
-      ...input,
-      spokes: input.spokes.map(({ context: _context, ...spoke }) => spoke),
-    };
-    expect(layoutGraph(standard, EN)).not.toHaveProperty("spokeContexts");
-    expect(layoutGraph(standard, EN).blocks[0]?.rect.y).toBe(LAYOUT.INNER_ROW_TOP);
+    expect(layoutGraph(localSolanaInput(), EN).spokeContexts).toHaveLength(1);
   });
 });

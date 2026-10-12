@@ -7,8 +7,7 @@
  * The decisions behind the Figma layout of the Networks, Protocols and Pools steps, kept out of
  * the components so that they are testable without a render:
  * - R2: a network that the config does not enable is not shown. The config is the catalog's
- *   `available` flag. Solana is out of the default catalog and only the Solana preview runtime
- *   adds it.
+ *   `available` flag. The API catalog does not list Solana. The V2 catalog adds it (POO-2342).
  * - R3: the protocols that the catalog marks `required` (the swap and the bridge) form the "Swap
  *   and bridge" group below the divider. Everything else is "Protocols to operate". The group
  *   starts collapsed, and its open copy speaks about the bridge only when the mandate has a spoke.

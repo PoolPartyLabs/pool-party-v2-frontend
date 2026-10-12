@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-077 (POO-2195)
  * @name ReviewPhase
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2342 rules v1: Solana plans show a launch reason)
  * @analytics-events builder_review_view, builder_review_field_changed, builder_launch_clicked,
  *   builder_launch_blocked, builder_review_abandoned, builder_review_error
  * @i18n-namespace manager
@@ -15,7 +16,6 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useRouter } from "@/i18n/navigation";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { isMockMode } from "@/lib/services";
-import { REVIEW_NOTICE_KEY } from "../build/buildScreenModel";
 import { planOf } from "../build/plan/buildPlan";
 import { validatePlan } from "../build/plan/planInvariants";
 import { planReadiness, type ReadinessTarget } from "../build/plan/planReadiness";
@@ -33,7 +33,7 @@ import { ReviewLayout } from "./ReviewLayout";
 import { ReviewPlanSummary } from "./ReviewPlanSummary";
 import { ReviewTermsCard } from "./ReviewTermsCard";
 import { ReviewTransactionFeesCard } from "./ReviewTransactionFeesCard";
-import { type FeeField, listReviewReasons } from "./reviewForm";
+import { type FeeField, listReviewReasons, planBuildReason } from "./reviewForm";
 export interface ReviewPhaseProps {
   /** Persisted mandate draft identifier. */ draftId: string;
   /** Returns to Build, optionally revealing its first blocker. */ onBackToBuild: (
@@ -87,17 +87,10 @@ function ConnectedReviewPhase({ draftId, onBackToBuild, onEditMandate }: ReviewP
   }, [binding.uploadError, track]);
   const draft = binding.draft;
   const plan = draft ? planOf(draft) : null;
-  const readiness =
-    plan && draft
-      ? planReadiness(plan, validatePlan(plan, { draft, catalog: binding.catalog }))
-      : null;
-  const buildReason =
-    readiness && !readiness.ready
-      ? {
-          code: readiness.refusal,
-          messageKey: `fundBuilder.canvas.review.${REVIEW_NOTICE_KEY[readiness.refusal]}`,
-        }
-      : null;
+  const violations = plan && draft ? validatePlan(plan, { draft, catalog: binding.catalog }) : null;
+  // Next to the reason, the block to reveal on Build: the first one the execution checks refuse.
+  const readiness = plan && violations ? planReadiness(plan, violations) : null;
+  const buildReason = plan && violations ? planBuildReason(plan, violations) : null;
   let steps: LaunchStepPreview[] = [];
   if (draft?.plan)
     try {

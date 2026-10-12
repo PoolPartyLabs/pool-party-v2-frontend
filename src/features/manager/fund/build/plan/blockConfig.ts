@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-026
  * @name blockConfig
- * @implements-rules-version v1 (POO-2184 rules v1); POO-2237 rules v1
+ * @implements-rules-version v1 (POO-2184 rules v1); POO-2237 rules v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension); POO-2334 rules v1
  * @analytics-events none, a pure domain module: it types and checks a block's configuration and
  *   emits nothing.
@@ -62,7 +62,7 @@ export const BLOCK_DEFAULT_SLIPPAGE_PCT = FUND_SLIPPAGE_DEFAULT_PCT;
 export type CompletePoolBlockConfig = Required<PoolBlockConfig>;
 
 /** Which configuration a value or a kind is: a pool's or an Aave block's. */
-export type BlockConfigShape = "pool" | "aave" | "solana-local";
+export type BlockConfigShape = "pool" | "aave" | "solana";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -109,7 +109,7 @@ function optional(value: unknown, check: (value: unknown) => boolean): boolean {
 
 /** The shape a kind takes. Pendle and GMX take none yet (`BlockConfigByKind` is `never`). */
 export function configShapeOfKind(kind: string): BlockConfigShape | null {
-  if (kind.startsWith("solana")) return "solana-local";
+  if (kind.startsWith("solana")) return "solana";
   if (kind === "uniswapV4Pool" || kind === "uniswapV3Pool") return "pool";
   if (kind === "aaveSupply" || kind === "aaveBorrow") return "aave";
   return null;
@@ -119,7 +119,7 @@ export function configShapeOfKind(kind: string): BlockConfigShape | null {
 export function configShapeOf(config: unknown): BlockConfigShape | null {
   if (!isRecord(config)) return null;
   if (typeof config.catalogId === "string" && !("poolId" in config) && !("assetKey" in config))
-    return "solana-local";
+    return "solana";
   const pool = typeof config.poolId === "string";
   const aave = typeof config.assetKey === "string";
   if (pool && !aave) return "pool";
@@ -150,7 +150,7 @@ export function isConfigFor(kind: string, config: unknown): boolean {
   if (config === null) return true;
   const shape = configShapeOfKind(kind);
   if (shape === null || configShapeOf(config) !== shape || !isRecord(config)) return false;
-  if (shape === "solana-local") {
+  if (shape === "solana") {
     const ids: Record<string, string> = {
       solanaOrcaPool: "solana:mainnet-beta:orca-whirlpools",
       solanaRaydiumPool: "solana:mainnet-beta:raydium-clmm",

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-076
  * @name solanaBuildManageBinding
- * @implements-rules-version v1 (POO-2301)
+ * @implements-rules-version v1 (POO-2301) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, pure adapter; the shared Build screen owns bounded local intents.
  */
 import { isConfigFor } from "../build/plan/blockConfig";
@@ -75,7 +75,6 @@ export function applyLocalManageConfig(
   const found = findBlock(plan, blockId);
   const share = parseAllocation(config.allocation);
   if (
-    ctx.draft.runtime !== "solana-local" ||
     found?.network !== "solana" ||
     found.block.family !== "position" ||
     !(found.block.kind in protocols) ||

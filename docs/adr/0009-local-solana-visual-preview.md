@@ -1,6 +1,6 @@
 # 0009. Frontend-only Solana visual preview
 
-- Status: Superseded by [ADR 0011](0011-shared-v2-builder-with-local-solana-binding.md) for presentation and local drawing state; gesture and frontend-only execution boundary retained
+- Status: Superseded by [ADR 0011](0011-shared-v2-builder-with-local-solana-binding.md) for presentation and local drawing state; the gesture was removed by POO-2342 (Solana is a network of the one V2 builder); the frontend-only execution boundary is retained
 - Date: 2026-10-07
 - Linear: [POO-2281](https://linear.app/yeildbay/issue/POO-2281), rules v2
 - Supersedes: [ADR 0008](0008-server-authorized-experiment-access.md) for the visual-preview delivery

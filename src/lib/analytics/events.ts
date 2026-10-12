@@ -1,7 +1,7 @@
 /**
  * @id PP-CORE (SETUP-014 / POO-82)
  * @name analytics events
- * @implements-rules-version v1 (POO-2197 rules v2)
+ * @implements-rules-version v1 (POO-2197 rules v2) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  *
  * Typed event catalog for Pool Party analytics. The living source of truth is
  * `docs/ANALYTICS_EVENTS.md`; this list must stay in sync with it (the `consistency-checker` skill
@@ -185,16 +185,6 @@ export const ANALYTICS_EVENTS = [
    * screen; which screen it was is already `page_location`.
    */
   "contract_family_toggled",
-  // POO-2281 v2: local editor only. These never claim wallet execution or settlement.
-  "solana_preview_entered",
-  "solana_preview_exited",
-  "solana_preview_viewed",
-  "solana_preview_interacted",
-  "solana_preview_started",
-  "solana_preview_applied",
-  "solana_preview_abandoned",
-  "solana_preview_blocked",
-  "solana_preview_error",
 
   // ===========================================================================================
   // POO-1171 (LANE-0): declared ahead of their emitters, each with an owner.
@@ -1035,7 +1025,7 @@ export type AnalyticsManageNodeKind =
 
 export interface AnalyticsParams {
   /** Bounded market chart presentation only. Never fund, pool, token, mint or wallet identity. */
-  chart_context?: "build" | "manage" | "solana-local";
+  chart_context?: "build" | "manage";
   /** POO-2338 R9: the chart kind only. It never holds a pool or token address. */
   chart_market?: "pool" | "token" | "unavailable";
   chart_reason?:
@@ -1046,24 +1036,6 @@ export interface AnalyticsParams {
     | "load_timeout";
   /** Navigation type for strategy_block_selected. No wallet/core/position identifiers. */
   node_kind?: AnalyticsManageNodeKind;
-  /** Bounded local block kind (Holding is custody), never a pool address or mint. POO-2291 v1. */
-  preview_protocol?: "kamino" | "jupiter" | "raydium" | "orca" | "holding";
-  /** Local inspection/intention only. No financial state, addresses or raw input. */
-  preview_mode?: "configure" | "manage";
-  preview_action?:
-    | "mode"
-    | "select"
-    | "close"
-    | "edit"
-    | "choose"
-    | "review"
-    | "apply"
-    | "discard"
-    | "rebase";
-  /** Local editor validation/blocked cause. Never raw error text. */
-  preview_reason?: "allocation_invalid" | "allocation_total" | "unsupported" | "unapplied_changes";
-  /** Whether leaving the local visual editor discards any local configuration. */
-  has_local_changes?: boolean;
   /** Review field identifier only; never form values or wallet details. */
   review_field?: string;
   /** Monetary value, denominated in {@link currency} (GA4 standard). Exact values are allowed. */

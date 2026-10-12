@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-SCR-002
  * @name Shared Build local Manage integration regressions
- * @implements-rules-version v1 (POO-2301)
+ * @implements-rules-version v1 (POO-2301) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, test assertions over bounded local host outcomes.
  */
 import { useCallback, useRef, useState } from "react";
@@ -14,13 +14,15 @@ import {
 } from "../../../../../tests/utils/renderWithProviders";
 import { BuildScreen } from "../build/BuildScreen";
 import type { BuildPlan } from "../build/plan/buildPlan";
-import { isBlocked, type MandateDraft, withNetworks, withProtocols } from "../mandateDraft";
-import type { UseMandateDraftResult } from "../useMandateDraft";
 import {
-  buildSolanaBuilderCatalog,
-  createSolanaBuilderDraft,
-  SOLANA_LOCAL_CONFIGS,
-} from "./solanaBuilderRuntime";
+  createEmptyDraft,
+  isBlocked,
+  type MandateDraft,
+  withNetworks,
+  withProtocols,
+} from "../mandateDraft";
+import type { UseMandateDraftResult } from "../useMandateDraft";
+import { buildSolanaBuilderCatalog, SOLANA_LOCAL_CONFIGS } from "./solanaBuilderRuntime";
 
 vi.mock("@/lib/analytics/useAnalytics", () => ({ useAnalytics: () => ({ track: vi.fn() }) }));
 vi.mock("../build/graph/BuildGraph", () => ({
@@ -47,10 +49,9 @@ vi.mock("../build/canvas/CanvasViewport", () => ({
 }));
 
 const catalog = buildSolanaBuilderCatalog();
-const start = withProtocols(
-  withNetworks(createSolanaBuilderDraft("now", "local"), ["solana"], catalog),
-  ["kamino"],
-);
+const start = withProtocols(withNetworks(createEmptyDraft("now", "local"), ["solana"], catalog), [
+  "kamino",
+]);
 const plan: BuildPlan = {
   version: 1,
   hub: { chains: [] },
@@ -109,18 +110,18 @@ async function setAllocation(value: string) {
 it("retains independent local Manage drafts and Review across shared card selection and hiding", async () => {
   renderWithProviders(<Harness />);
   await userEvent.click(screen.getByRole("button", { name: "Manage block" }));
-  expect(document.querySelectorAll("[data-solana-local-manage-host]")).toHaveLength(1);
+  expect(document.querySelectorAll("[data-solana-manage-host]")).toHaveLength(1);
   expect(screen.getAllByTestId("shared-graph")).toHaveLength(1);
   await setAllocation("40");
   await userEvent.click(screen.getByRole("button", { name: "Apply now" }));
   await userEvent.click(screen.getByRole("button", { name: "Review changes" }));
   // @rule POO-2309 R3/R4: chart visibility does not change local operation/draft ownership.
-  const host = document.querySelector("[data-solana-local-manage-host]");
+  const host = document.querySelector("[data-solana-manage-host]");
   await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
   // @rule POO-2338 R3: the Kamino Supply block shows the token chart of the USDC mint.
   expect(screen.getByTitle("USDC price chart")).toBeVisible();
   expect(screen.getByRole("button", { name: "Confirm changes" })).toBeDisabled();
-  expect(document.querySelector("[data-solana-local-manage-host]")).toBe(host);
+  expect(document.querySelector("[data-solana-manage-host]")).toBe(host);
   expect(screen.getByRole("textbox", { name: "Allocation (%)" })).toHaveValue("40");
   await userEvent.click(screen.getByRole("tab", { name: "Strategy flow" }));
   await userEvent.click(screen.getByRole("button", { name: "Card B" }));

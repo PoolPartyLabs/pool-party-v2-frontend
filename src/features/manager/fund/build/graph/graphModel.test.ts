@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name graphModel tests
- * @implements-rules-version v2 (POO-2273); v1 (POO-2156 rules v1)
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2156 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 local Solana context)
  * @analytics-events none, pure helpers of the graph renderer: nothing here is rendered or tracked.
  *
@@ -87,7 +87,6 @@ describe("graphItems", () => {
       spokes: [
         {
           network: "solana",
-          context: "solana-local",
           sharePct: 100,
           chains: [
             {

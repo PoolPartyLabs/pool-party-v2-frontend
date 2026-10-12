@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-HOK-006
  * @name useMandateDraft
- * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2151 rules v1,
+ * @implements-rules-version v2 (POO-2121 rules v1, POO-2142 rules v2, POO-2151 rules v1, + POO-2342 rules v1 (one V2 builder, Solana is a network)
  *   POO-2157 rules v1)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, this hook owns draft STATE rather than instrumentation. It surfaces
@@ -43,7 +43,7 @@ export type MandateSaveError = "empty" | "length" | "storage";
 /** The outcome of a save, which the Name-your-draft dialog renders inline (R7). */
 export type MandateSaveResult = { ok: true } | { ok: false; error: MandateSaveError };
 
-/** Route-owned memory only, for suspending the EVM binding while the local runtime is open. */
+/** Route-owned memory only: the builder returns to the same phase after a route change. */
 export interface MandateDraftCheckpoint {
   pristine: MandateDraft;
   draft: MandateDraft;

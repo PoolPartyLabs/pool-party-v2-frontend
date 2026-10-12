@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name BuildGraph.stories
- * @implements-rules-version v1 (POO-2156 rules v1)
+ * @implements-rules-version v1 (POO-2156 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a story file of a controlled renderer
  *
@@ -33,10 +33,9 @@ import {
   newSpokeNoChain,
   workedExample2,
 } from "@/mocks/data/buildCanvasFixtures";
-import { addToken, withNetworks, withProtocols } from "../../mandateDraft";
+import { addToken, createEmptyDraft, withNetworks, withProtocols } from "../../mandateDraft";
 import {
   buildSolanaBuilderCatalog,
-  createSolanaBuilderDraft,
   SOLANA_LOCAL_CONFIGS,
 } from "../../solana-preview/solanaBuilderRuntime";
 import { BlockMark } from "../blocks/BlockMark";
@@ -68,7 +67,7 @@ function argsOf(fixture: BuildCanvasFixture, options?: FixtureGraphOptions): Bui
 function localSolanaArgs(): BuildGraphProps {
   const catalog = buildSolanaBuilderCatalog();
   const networks = withNetworks(
-    createSolanaBuilderDraft("2026-10-09T00:00:00Z", "storybook-local-solana"),
+    createEmptyDraft("2026-10-09T00:00:00Z", "storybook-local-solana"),
     ["solana"],
     catalog,
   );
@@ -111,7 +110,7 @@ function localSolanaArgs(): BuildGraphProps {
   const copy = makeBlockCopy(translator as unknown as ManagerTranslate, "en");
   const context = { plan, draft, copy, violations: validatePlan(plan, { draft, catalog }) };
   return {
-    layout: layoutGraph(toLayoutInput(plan, { runtime: "solana-local" }), { startHereWidth: 0 }),
+    layout: layoutGraph(toLayoutInput(plan), { startHereWidth: 0 }),
     describeBlock: (id) => describeBlock(id, context),
     describeFlow: (id) => describeFlow(id, context),
     networkName: copy.networkName,

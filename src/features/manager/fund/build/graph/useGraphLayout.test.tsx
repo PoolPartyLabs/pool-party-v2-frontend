@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-059
  * @name useGraphLayout tests
- * @implements-rules-version v1 (POO-2156 rules v1)
+ * @implements-rules-version v1 (POO-2156 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, a layout hook: nothing here is rendered or tracked.
  *
  * The join between the plan and the pure layout ([L6], [C1], [I9]): the start-here sentence of the
@@ -125,16 +125,18 @@ describe("useGraphLayout", () => {
 });
 
 describe("useDraftGraphLayout", () => {
-  it("opts into Solana contexts from runtime and restores default geometry for the same plan", () => {
-    const plan = emptySpokePlan();
-    plan.spokes[0] = { network: "solana", sharePct: 0, chains: [] };
-    const draft: MandateDraft = { ...makeTestDraft(), runtime: "solana-local", plan };
+  // @rule R5
+  it("[R5] opts into Solana contexts from the network of the plan and restores default geometry", () => {
+    const solanaPlan = emptySpokePlan();
+    solanaPlan.spokes[0] = { network: "solana", sharePct: 0, chains: [] };
+    const draft: MandateDraft = { ...makeTestDraft(), plan: solanaPlan };
     const { result, rerender } = renderHook(({ draft }) => useDraftGraphLayout(draft), {
       wrapper: Messages,
       initialProps: { draft },
     });
     expect(result.current.spokeContexts?.[0]?.idle.id).toBe("spoke-idle:solana");
-    rerender({ draft: { ...draft, runtime: undefined } });
+    const plan = emptySpokePlan();
+    rerender({ draft: { ...draft, plan } });
     expect(result.current).toEqual(layoutGraph(toLayoutInput(plan), { startHereWidth: 0 }));
     expect(result.current.spokeContexts).toBeUndefined();
   });

@@ -2,11 +2,39 @@
  * @id PP-MGR-LIB-033 (POO-2188)
  * @name reviewForm
  * @implements-rules-version v1
+ * @implements-rules-version v1 (POO-2342 rules v1: the Solana launch reason)
  * @analytics-events none: pure helpers, the Review page emits.
  * Integer fee/USDC input handling and field-specific launch reasons in screen order.
  */
+import { REVIEW_NOTICE_KEY } from "../build/buildScreenModel";
+import type { BuildPlan } from "../build/plan/buildPlan";
+import type { PlanViolation } from "../build/plan/planInvariants";
+import { planHasSolana, planReadiness } from "../build/plan/planReadiness";
 import type { ReviewDraft } from "../launch/review";
 import { rawUsdc } from "../launch/review";
+
+/** [POO-2342 R9] Why a plan with Solana content cannot launch. The text names Solana. */
+export const SOLANA_LAUNCH_REASON = {
+  code: "SOLANA_LAUNCH_UNAVAILABLE",
+  messageKey: "fundBuilder.review.validation.solanaLaunchUnavailable",
+} as const;
+
+/**
+ * [POO-2342 R9] The Build reason on Review. A plan with a Solana block or spoke has no launch yet:
+ * the reason names Solana. A plan without Solana keeps the readiness refusal of the execution mode.
+ */
+export function planBuildReason(
+  plan: BuildPlan,
+  violations: readonly PlanViolation[],
+): { code: string; messageKey: string } | null {
+  if (planHasSolana(plan)) return SOLANA_LAUNCH_REASON;
+  const readiness = planReadiness(plan, violations);
+  if (readiness.ready) return null;
+  return {
+    code: readiness.refusal,
+    messageKey: `fundBuilder.canvas.review.${REVIEW_NOTICE_KEY[readiness.refusal]}`,
+  };
+}
 
 export const FEE_BOUNDS_PCT = {
   performanceFeeBps: { min: 10, max: 90 },

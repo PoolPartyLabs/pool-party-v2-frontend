@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-098 (POO-2291)
  * @name SolanaLocalManageHost
- * @implements-rules-version v1
+ * @implements-rules-version v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @i18n-namespace manager.solanaPreview, manager.solanaPreview.localManage
  * @analytics-events none, parent receives bounded local intents and owns analytics
  * Persistent local Manage ownership across hidden panels and selection changes.
@@ -179,7 +179,7 @@ export function SolanaLocalManageHost({
       ref={root}
       aria-label={t("localManage.title")}
       hidden={!visible}
-      data-solana-local-manage-host=""
+      data-solana-manage-host=""
       onKeyDown={(event) => {
         if (visible && event.key === "Escape") {
           event.preventDefault();

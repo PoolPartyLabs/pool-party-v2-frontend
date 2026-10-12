@@ -7,20 +7,17 @@ This wizard change is pre-merge code delivery, without a deployment or native-br
 acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
 Not available; `solanaSpoke` stays off.
 
-This POO-2301 rules v1 delivery replaces the separate production `SolanaStrategyPreviewScreen` entry with
-`FundStrategyBuilderScreen` (`PP-MGR-SCR-002`), preserving Mandate → Build → Review, the existing
-palette, cards and panels. `PP-MGR-SCR-009` and its standalone drawing remain historical test/story
-harnesses; the builder route does not mount them. The parent route owns hidden entry and exit.
-`solanaBuilderRuntime` (`PP-MGR-LIB-075`) and `useSolanaBuilderDraft` (`PP-MGR-HOK-024`) supply the
-local binding to the shared mandate and plan reducers.
+POO-2342 rules v1: Solana is a network of the one V2 builder (`FundStrategyBuilderScreen`,
+`PP-MGR-SCR-002`). There is no gesture, flag, hidden mode or preview route. The standalone
+`SolanaStrategyPreviewScreen` (`PP-MGR-SCR-009`), `LocalSolanaReview` (`PP-MGR-CMP-102`),
+`useSolanaBuilderDraft` (`PP-MGR-HOK-024`) and the render boundary were removed.
+`solanaBuilderRuntime` (`PP-MGR-LIB-075`) adds the Solana entries (network, Kamino, Jupiter,
+Raydium and Orca, WSOL and USDC) to the API catalog. The API reads send none of them.
 
-The hidden mode is beneath `fundContracts` and the selected-V2 three-press gesture on `/manager/new`.
-The local session starts from a fresh mandate, not a predefined separate canvas. Selected Solana
-networks/protocols/tokens control which local Kamino Supply, Jupiter Swap, Raydium CLMM, Orca
-Whirlpools and Holding steps can be configured. The standard V2 session has its own checkpoint;
-local state never enters the EVM saved-draft payload or launch recovery. `save()` acknowledges a
-snapshot in session memory only. Leaving or disposing the local route/account/family loses that
-session. No browser/backend persistence or separate API/wallet allowlist is added.
+A Solana draft starts in Mandate like any other. The selected Solana networks, protocols and
+tokens control which local Kamino Supply, Jupiter Swap, Raydium CLMM, Orca Whirlpools and Holding
+steps can be configured. A Solana draft saves to local storage and reads back the same, with the
+other V2 drafts. A plan with a Solana block or spoke cannot launch, and Review says so.
 
 Known USDC/WSOL metadata is unpriced and eligible for visual configuration only. Base58 mint
 matching remains case-sensitive; a similarly named or case-mutated mint cannot satisfy a plan
@@ -41,18 +38,9 @@ local positions and acknowledges one Apply only after validating the resulting p
 current exact-mint/protocol mandate, conversion dependencies and allocation budgets. A rejected
 acknowledgement preserves draft/Review. Non-null ranges are blocked without verified context.
 
-`LocalSolanaReview` (`PP-MGR-CMP-102`) reuses the standard Review cards/columns for local
-identity, fee and seed intentions. Logo upload, canonical origins/pools/reserves, physical balances,
+Review shows the standard cards. Logo upload, canonical origins/pools/reserves, physical balances,
 prices, APY, custody, range context, liquidity quotes, source clock, authority, signing and launch
-remain unavailable. Confirm and blocked Launch never submit or settle an operation.
-
-The local draft owner stays outside the reused `SolanaPreviewRenderBoundary`. Genuine render
-failures report bounded error metadata and retry retains the applied shared plan/Review fields.
-Unapplied inner panel fields may be lost when the shell unmounts after an exception. The owner
-retains last-reported pending status and its unsaved-changes guard during fallback. Its cleanup
-covers Mandate, Build and Review with truthful draft-dirty or pending metadata; explicit exit
-suppresses abandonment. Standard V2 instrumentation and recovery keep their existing semantics.
-The focused shell/boundary regression suites passed 57 tests after reproducing the failures.
+remain unavailable for Solana. Launch never submits or settles an operation.
 
 POO-2302 rules v1 first adds the isolated React Flow infrastructure and adopts it in the shared
 Build/Manage canvas hosts through PRs #148/#149. Other callers keep the optional native default.

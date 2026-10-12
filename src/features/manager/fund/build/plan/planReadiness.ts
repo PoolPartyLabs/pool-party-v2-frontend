@@ -2,7 +2,7 @@
  * @id PP-MGR-LIB-028
  * @name planReadiness
  * @implements-rules-version v1 (POO-2184 rules v1); POO-2204 rules v1; POO-2237 rules v1
- * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2342 rules v1: one builder; Solana plans reach Review)
  * @analytics-events none, a pure domain module. It names the refusal; the Build screen
  *   (PP-MGR-SCR-002) emits `builder_build_blocked` with it through `buildAnalytics.ts`, and the
  *   Review page (POO-2172) shows it among the Launch blockers.
@@ -153,6 +153,19 @@ function swapWithoutPool(chain: Chain): string | null {
   return swap.auto && fed ? fed.id : swap.id;
 }
 
+/**
+ * [POO-2342 R9] Whether the plan holds a Solana block or a Solana spoke. Such a plan can reach
+ * Review, but it cannot launch: Review names Solana as the reason.
+ */
+export function planHasSolana(plan: BuildPlan): boolean {
+  return (
+    plan.spokes.some((spoke) => spoke.network === "solana") ||
+    chainsWithNetwork(plan).some(({ chain }) =>
+      chain.steps.some((step) => step.family === "position" && isSolanaKind(step.kind)),
+    )
+  );
+}
+
 /** [AN4, D19, finding 4] Whether the plan is ready for Review, or the first check it fails. */
 export function planReadiness(
   plan: BuildPlan,
@@ -217,7 +230,7 @@ export function planReadiness(
     };
   }
 
-  // The local Review is an editable intention summary. Read/execution capabilities stay unavailable.
+  // A plan with Solana content gets the visual-only readiness: Review shows the Solana launch reason. Read and execution capabilities stay unavailable.
   // It shares the structural, completeness and allocation checks above, never the EVM launch adapter.
   if (mode === "local-visual") {
     const manual = chains
