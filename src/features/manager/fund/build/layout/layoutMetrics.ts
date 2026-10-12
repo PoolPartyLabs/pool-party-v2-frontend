@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-096
  * @name layoutMetrics
- * @implements-rules-version v1 (POO-2345), v2 (POO-2345)
+ * @implements-rules-version v2 (POO-2345)
  * @analytics-events none, a pure measuring module: nothing here is rendered or tracked.
  *
  * Counts how well the lines of a {@link GraphLayout} are routed. It reads only `layout.edges`.
@@ -11,10 +11,15 @@
  *   with no suffix is a line of its own (a stub, a bus, a link).
  * - A CROSSING is a place where the interiors of two segments of different lines meet. An end of
  *   one segment on another segment is a join. A join is not a crossing. Template edges are skipped.
- * - An OVERLAP is a length above 0 that two collinear segments of different lines share. It is
- *   reported apart from the crossings. One exception: the last segments of two lines of the same
- *   kind that end at the same point are one trunk (rule R7). A trunk is not an overlap.
+ * - An OVERLAP is a length above 0 that two collinear segments share. The segments can belong to
+ *   two lines or to one line that folds back on itself. It is reported apart from the crossings.
+ *   One exception: the last verticals of two lines of the same kind that reach the same end point
+ *   from the same side are one trunk (rule R7). A trunk is not an overlap.
  * - A BEND is a point where two consecutive segments of the same line meet and change direction.
+ *   A turn of 90 degrees is one bend. A reversal on the same axis is a U-turn and counts as two.
+ * - The MINIMUM GAP is the least distance between two parallel segments of different lines that
+ *   overlap when projected on their axis. A trunk does not count. A shared length that is not a
+ *   trunk is a gap of 0.
  *
  * - A FORCED CROSSING (rules v2, R2 and R8) is a crossing of an income line and a principal line
  *   whose full paths start in one order and end in the opposite order. The principal leaves the
@@ -35,6 +40,8 @@ export interface LayoutMetrics {
   totalBends: number;
   /** The most bends in one visible line (one leg). */
   maxBendsPerLeg: number;
+  /** The least distance between parallel segments of different lines, or Infinity if none. */
+  minGap: number;
 }
 
 /** A segment with its line, in a shape that is easy to compare. */
@@ -109,21 +116,32 @@ function sharedLength(p: Segment, q: Segment): number {
   return Math.max(0, Math.min(p1, q1) - Math.max(p0, q0));
 }
 
-function endOf(s: Segment): Point {
-  // The end of the last segment is the end that is farther along the line. The line goes from the
-  // first point to the second point of each edge, so the end is `b`.
-  return s.b;
+/** The sign of the travel of a segment along its axis: 1 for up or right, -1 for the other. */
+function direction(s: Segment): number {
+  return Math.sign(s.horizontal ? s.b.x - s.a.x : s.b.y - s.a.y);
 }
 
-/** Two last segments of the same kind that end at one point are a trunk (rule R7). */
+/**
+ * True for the trunk of rule R7: the last segments of two lines of one kind. Both are verticals
+ * that reach the same end point (the same port of the same node) from the same side.
+ */
 function sameTrunk(p: Segment, q: Segment): boolean {
   return (
     p.last &&
     q.last &&
+    !p.horizontal &&
+    !q.horizontal &&
     p.edge.kind === q.edge.kind &&
-    near(endOf(p).x, endOf(q).x) &&
-    near(endOf(p).y, endOf(q).y)
+    near(p.b.x, q.b.x) &&
+    near(p.b.y, q.b.y) &&
+    direction(p) === direction(q)
   );
+}
+
+/** The bends between two consecutive segments: 1 for a turn, 2 for a reversal on one axis. */
+function bendsBetween(p: Segment, q: Segment): number {
+  if (p.horizontal !== q.horizontal) return 1;
+  return direction(p) !== 0 && direction(q) !== 0 && direction(p) !== direction(q) ? 2 : 0;
 }
 
 /** The bends of every line: the direction changes between consecutive segments of one line. */
@@ -135,7 +153,9 @@ function bendsByLine(segments: Segment[]): Map<string, number> {
     const ordered = [...list].sort((p, q) => p.order - q.order);
     let count = 0;
     for (let i = 1; i < ordered.length; i += 1) {
-      if (ordered[i - 1]?.horizontal !== ordered[i]?.horizontal) count += 1;
+      const before = ordered[i - 1];
+      const after = ordered[i];
+      if (before && after) count += bendsBetween(before, after);
     }
     bends.set(line, count);
   }
@@ -144,32 +164,55 @@ function bendsByLine(segments: Segment[]): Map<string, number> {
 
 type Pair = [string, string];
 
-/** The pairs of segments that cross, and the pairs that overlap. */
-function conflicts(segments: Segment[]): { crossings: Pair[]; overlaps: Pair[] } {
+/** The length two parallel segments share when projected on their axis, or 0. */
+function projectedLength(p: Segment, q: Segment): number {
+  if (p.horizontal !== q.horizontal) return 0;
+  const [p0, p1] = span(p);
+  const [q0, q1] = span(q);
+  return Math.max(0, Math.min(p1, q1) - Math.max(p0, q0));
+}
+
+interface Conflicts {
+  crossings: Pair[];
+  overlaps: Pair[];
+  /** The least gap between parallel segments of different lines, or Infinity. */
+  minGap: number;
+}
+
+/** The pairs of segments that cross, the pairs that overlap and the least parallel gap. */
+function conflicts(segments: Segment[]): Conflicts {
   const crossings: Pair[] = [];
   const overlaps: Pair[] = [];
+  let minGap = Number.POSITIVE_INFINITY;
   for (let i = 0; i < segments.length; i += 1) {
     for (let j = i + 1; j < segments.length; j += 1) {
       const p = segments[i];
       const q = segments[j];
-      if (!p || !q || p.line === q.line) continue;
+      if (!p || !q) continue;
+      if (p.line === q.line) {
+        // A line that shares a length with itself folds back on itself: it is an overlap.
+        if (sharedLength(p, q) > EPSILON) overlaps.push([p.edge.id, q.edge.id]);
+        continue;
+      }
       if (p.horizontal !== q.horizontal) {
         if (cross(p.horizontal ? p : q, p.horizontal ? q : p))
           crossings.push([p.edge.id, q.edge.id]);
-      } else if (sharedLength(p, q) > EPSILON && !sameTrunk(p, q)) {
-        overlaps.push([p.edge.id, q.edge.id]);
+      } else if (projectedLength(p, q) > EPSILON && !sameTrunk(p, q)) {
+        minGap = Math.min(minGap, Math.abs(fixed(p) - fixed(q)));
+        if (sharedLength(p, q) > EPSILON) overlaps.push([p.edge.id, q.edge.id]);
       }
     }
   }
-  return { crossings, overlaps };
+  return { crossings, overlaps, minGap };
 }
 
 /** The pairs of edge ids behind the counts, for a test message that names the segments. */
 export function findConflicts(layout: GraphLayout): { crossings: Pair[]; overlaps: Pair[] } {
-  return conflicts(segmentsOf(layout));
+  const { crossings, overlaps } = conflicts(segmentsOf(layout));
+  return { crossings, overlaps };
 }
 
-/** Crossings, overlaps and bends of a layout. */
+/** Crossings, overlaps, bends and the least parallel gap of a layout. */
 export function measureLayout(layout: GraphLayout): LayoutMetrics {
   const segments = segmentsOf(layout);
   const found = conflicts(segments);
@@ -179,6 +222,7 @@ export function measureLayout(layout: GraphLayout): LayoutMetrics {
     overlaps: found.overlaps.length,
     totalBends: bends.reduce((sum, n) => sum + n, 0),
     maxBendsPerLeg: bends.reduce((max, n) => Math.max(max, n), 0),
+    minGap: found.minGap,
   };
 }
 
@@ -251,17 +295,11 @@ function familyKeyOf(id: string): string | null {
 }
 
 /**
- * True when the crossing of two edges is forced by rule R2: one line is income, the other is
- * principal, their full paths start in one order and end in the opposite order, and they do not
- * pass the same return Bridge.
+ * True when two families must cross by rule R2: one is income, the other is principal, their full
+ * paths start in one order and end in the opposite order, and they do not pass the same Bridge.
  */
-export function isForcedCrossing(layout: GraphLayout, pair: [string, string]): boolean {
-  const families = familiesOf(layout, segmentsOf(layout));
-  const first = familyKeyOf(pair[0]);
-  const second = familyKeyOf(pair[1]);
-  const a = first ? families.get(first) : undefined;
-  const b = second ? families.get(second) : undefined;
-  if (!a || !b || a.kind === b.kind) return false;
+function forcedBetween(a: Family, b: Family): boolean {
+  if (a.kind === b.kind) return false;
   if (a.bridge >= 0 && a.bridge === b.bridge) return false;
   const income = a.kind === "income" ? a : b;
   const principal = a.kind === "income" ? b : a;
@@ -270,11 +308,44 @@ export function isForcedCrossing(layout: GraphLayout, pair: [string, string]): b
   return began !== 0 && ended !== 0 && began !== ended;
 }
 
+function forcedPair(families: Map<string, Family>, pair: Pair): boolean {
+  const first = familyKeyOf(pair[0]);
+  const second = familyKeyOf(pair[1]);
+  const a = first ? families.get(first) : undefined;
+  const b = second ? families.get(second) : undefined;
+  return a !== undefined && b !== undefined && forcedBetween(a, b);
+}
+
+/** True when the crossing of two edges is forced by rule R2 (see {@link forcedBetween}). */
+export function isForcedCrossing(layout: GraphLayout, pair: Pair): boolean {
+  return forcedPair(familiesOf(layout, segmentsOf(layout)), pair);
+}
+
+/**
+ * The least number of crossings of a layout. Each pair of an income family and a principal family
+ * that start in one order, end in the opposite order and pass no common Bridge must cross at
+ * least once, whatever the lanes are. The bound reads the start and end of each family only. It
+ * does not read the lanes, so a routing cannot raise it.
+ */
+export function crossingLowerBound(layout: GraphLayout): number {
+  const families = [...familiesOf(layout, segmentsOf(layout)).values()];
+  let bound = 0;
+  for (let i = 0; i < families.length; i += 1)
+    for (let j = i + 1; j < families.length; j += 1) {
+      const a = families[i];
+      const b = families[j];
+      if (a && b && forcedBetween(a, b)) bound += 1;
+    }
+  return bound;
+}
+
 /** The crossings of a layout, apart: the ones that R2 forces, and the rest. */
 export function classifyCrossings(layout: GraphLayout): { forced: Pair[]; unforced: Pair[] } {
+  const segments = segmentsOf(layout);
+  const families = familiesOf(layout, segments);
   const forced: Pair[] = [];
   const unforced: Pair[] = [];
-  for (const pair of findConflicts(layout).crossings)
-    (isForcedCrossing(layout, pair) ? forced : unforced).push(pair);
+  for (const pair of conflicts(segments).crossings)
+    (forcedPair(families, pair) ? forced : unforced).push(pair);
   return { forced, unforced };
 }

@@ -1,19 +1,21 @@
 /**
  * @id PP-MGR-LIB-096
  * @name layoutMetrics tests
- * @implements-rules-version v1 (POO-2345), v2 (POO-2345)
+ * @implements-rules-version v2 (POO-2345)
  * @analytics-events none, a pure measuring module: nothing here is rendered or tracked.
  *
  * Unit tests of the metric on small hand-built layouts, and the R8 test that records the numbers
- * of every layout fixture.
+ * of every layout fixture and checks them against the bound that the metric derives.
  */
 
 import { describe, expect, it } from "vitest";
 import { BUILD_CANVAS_FIXTURES, solanaTwoChainReturn } from "@/mocks/data/buildCanvasFixtures";
 import type { EdgeKind, EdgeNode, GraphLayout, Point } from "./graphTypes";
+import { LAYOUT } from "./layoutConstants";
 import { layoutGraph } from "./layoutGraph";
 import {
   classifyCrossings,
+  crossingLowerBound,
   findConflicts,
   isForcedCrossing,
   type LayoutMetrics,
@@ -158,6 +160,62 @@ describe("measureLayout: overlaps", () => {
   });
 });
 
+describe("measureLayout: trunk (R7) and self overlap", () => {
+  it("does not report a trunk of two last verticals that reach one point from one side", () => {
+    const layout = layoutOf([
+      edge("a", "principal", [10, 0], [10, 100]),
+      edge("b", "principal", [10, 40], [10, 100]),
+    ]);
+    expect(findConflicts(layout).overlaps).toEqual([]);
+  });
+
+  it("reports two last horizontals that end at one point: only a vertical can be a trunk", () => {
+    const layout = layoutOf([
+      edge("a", "principal", [0, 50], [100, 50]),
+      edge("b", "principal", [40, 50], [100, 50]),
+    ]);
+    expect(findConflicts(layout).overlaps).toEqual([["a", "b"]]);
+  });
+
+  it("reports last verticals of one kind that come from opposite sides of one point", () => {
+    // They share no length: one is above the end point and one is below it. No overlap exists.
+    const layout = layoutOf([
+      edge("a", "principal", [10, 0], [10, 100]),
+      edge("b", "principal", [10, 200], [10, 100]),
+    ]);
+    expect(findConflicts(layout).overlaps).toEqual([]);
+  });
+
+  it("reports two verticals of one kind that end at different points, though one is last", () => {
+    const layout = layoutOf([
+      edge("a", "principal", [10, 0], [10, 100]),
+      edge("b", "principal", [10, 40], [10, 90]),
+    ]);
+    expect(findConflicts(layout).overlaps).toEqual([["a", "b"]]);
+  });
+
+  it("reports a line that overlaps itself", () => {
+    // The line runs right, loops under its own start and runs right again over the first run.
+    const layout = layoutOf([
+      edge("a", "income", [0, 0], [100, 0]),
+      edge("a:leg:1", "income", [100, 0], [100, 20]),
+      edge("a:leg:2", "income", [100, 20], [60, 20]),
+      edge("a:leg:3", "income", [60, 20], [60, 0]),
+      edge("a:leg:4", "income", [60, 0], [160, 0]),
+    ]);
+    expect(findConflicts(layout).overlaps).toEqual([["a", "a:leg:4"]]);
+    expect(measureLayout(layout).overlaps).toBe(1);
+  });
+
+  it("does not report two segments of one line that only meet at a corner", () => {
+    const layout = layoutOf([
+      edge("a", "income", [0, 0], [100, 0]),
+      edge("a:leg:1", "income", [100, 0], [100, 20]),
+    ]);
+    expect(measureLayout(layout).overlaps).toBe(0);
+  });
+});
+
 describe("measureLayout: bends", () => {
   it("counts the direction changes of one line", () => {
     const layout = layoutOf([
@@ -191,6 +249,139 @@ describe("measureLayout: bends", () => {
       edge("a:leg:1", "income", [0, 30], [0, 90]),
     ]);
     expect(measureLayout(layout).totalBends).toBe(0);
+  });
+
+  it("counts a reversal on one axis as two bends, a vertical one and a horizontal one", () => {
+    const vertical = layoutOf([
+      edge("a", "income", [0, 0], [0, 50]),
+      edge("a:leg:1", "income", [0, 50], [0, 20]),
+    ]);
+    expect(measureLayout(vertical)).toMatchObject({ totalBends: 2, maxBendsPerLeg: 2 });
+    const horizontal = layoutOf([
+      edge("a", "income", [0, 0], [50, 0]),
+      edge("a:leg:1", "income", [50, 0], [20, 0]),
+    ]);
+    expect(measureLayout(horizontal)).toMatchObject({ totalBends: 2, maxBendsPerLeg: 2 });
+  });
+
+  it("counts a turn as one bend and a continuation as none, on the same line", () => {
+    const layout = layoutOf([
+      edge("a", "income", [0, 0], [0, 50]),
+      edge("a:leg:1", "income", [0, 50], [0, 90]),
+      edge("a:leg:2", "income", [0, 90], [40, 90]),
+      edge("a:leg:3", "income", [40, 90], [90, 90]),
+    ]);
+    expect(measureLayout(layout).totalBends).toBe(1);
+  });
+});
+
+describe("measureLayout: minimum gap", () => {
+  it("is the distance of two parallel segments of different lines that overlap in projection", () => {
+    const layout = layoutOf([
+      edge("a", "principal", [0, 50], [100, 50]),
+      edge("b", "income", [60, 56], [200, 56]),
+      edge("c", "income", [0, 80], [100, 80]),
+    ]);
+    expect(measureLayout(layout).minGap).toBe(6);
+  });
+
+  it("is the distance of two verticals too", () => {
+    const layout = layoutOf([
+      edge("a", "principal", [10, 0], [10, 100]),
+      edge("b", "income", [14.5, 50], [14.5, 200]),
+    ]);
+    expect(measureLayout(layout).minGap).toBe(4.5);
+  });
+
+  it("ignores segments that do not overlap in projection, and perpendicular segments", () => {
+    const layout = layoutOf([
+      edge("a", "principal", [0, 50], [100, 50]),
+      edge("b", "income", [100, 52], [200, 52]),
+      edge("c", "income", [50, 0], [50, 40]),
+    ]);
+    expect(measureLayout(layout).minGap).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it("ignores two segments of one line and a trunk", () => {
+    const layout = layoutOf([
+      edge("a", "principal", [0, 50], [100, 50]),
+      edge("a:leg:1", "principal", [100, 50], [100, 90]),
+      edge("a:leg:2", "principal", [100, 90], [20, 90]),
+      edge("b", "principal", [200, 200], [200, 300]),
+      edge("c", "principal", [200, 240], [200, 300]),
+    ]);
+    expect(measureLayout(layout).minGap).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it("is 0 for a shared length that is not a trunk", () => {
+    const layout = layoutOf([
+      edge("a", "principal", [0, 50], [100, 50]),
+      edge("b", "income", [60, 50], [200, 50]),
+    ]);
+    expect(measureLayout(layout).minGap).toBe(0);
+  });
+});
+
+describe("crossingLowerBound (R2 and R8)", () => {
+  const inverted = layoutOf([
+    edge("income:converted:f", "income", [10, 0], [10, 40]),
+    edge("income:converted:f:leg:1", "income", [10, 40], [90, 40]),
+    edge("principal:chain:p", "principal", [60, 0], [60, 80]),
+    edge("principal:chain:p:leg:1", "principal", [60, 80], [30, 80]),
+  ]);
+
+  it("is 1 for one income and one principal that start and end in opposite orders", () => {
+    expect(crossingLowerBound(inverted)).toBe(1);
+    expect(measureLayout(inverted).crossings).toBe(1);
+  });
+
+  it("is 0 when the lines keep their order, and for two lines of one class", () => {
+    const keeps = layoutOf([
+      edge("income:converted:f", "income", [10, 0], [10, 40]),
+      edge("income:converted:f:leg:1", "income", [10, 40], [30, 40]),
+      edge("principal:chain:p", "principal", [20, 0], [20, 80]),
+      edge("principal:chain:p:leg:1", "principal", [20, 80], [60, 80]),
+    ]);
+    expect(crossingLowerBound(keeps)).toBe(0);
+    const same = layoutOf([
+      edge("principal:chain:a", "principal", [10, 0], [10, 40]),
+      edge("principal:chain:a:leg:1", "principal", [10, 40], [90, 40]),
+      edge("principal:chain:b", "principal", [60, 0], [60, 80]),
+      edge("principal:chain:b:leg:1", "principal", [60, 80], [30, 80]),
+    ]);
+    expect(crossingLowerBound(same)).toBe(0);
+  });
+
+  it("counts each pair of families once, not each crossing of their segments", () => {
+    // Two incomes (f at 10 and g at 20) both start left of the principal and end right of it.
+    const two = layoutOf([
+      ...inverted.edges,
+      edge("income:converted:g", "income", [20, 0], [20, 45]),
+      edge("income:converted:g:leg:1", "income", [20, 45], [95, 45]),
+    ]);
+    expect(crossingLowerBound(two)).toBe(2);
+  });
+
+  it("is 0 for two lines that pass one Bridge and 1 for two Bridges", () => {
+    const through = (principalX: number, bridges: number): GraphLayout => {
+      const layout = layoutOf([
+        edge("income:converted:a", "income", [10, 0], [10, 10]),
+        edge("income:returned:a", "income", [100, 20], [100, 60]),
+        edge("principal:chain:b", "principal", [principalX, 0], [principalX, 10]),
+        edge("principal:returned:b", "principal", [principalX, 20], [principalX, 40]),
+        edge("principal:returned:b:leg:1", "principal", [principalX, 40], [30, 40]),
+      ]);
+      layout.bridges =
+        bridges === 1
+          ? [{ network: "n", rect: { x: 0, y: 10, w: 300, h: 10 } }]
+          : [
+              { network: "n", rect: { x: 0, y: 10, w: 120, h: 10 } },
+              { network: "m", rect: { x: 200, y: 10, w: 40, h: 10 } },
+            ];
+      return layout;
+    };
+    expect(crossingLowerBound(through(210, 1))).toBe(0);
+    expect(crossingLowerBound(through(210, 2))).toBe(1);
   });
 });
 
@@ -311,23 +502,26 @@ describe("measureLayout: input checks", () => {
 /**
  * @rule R8
  * The numbers of every layout fixture. BASELINE is the routing of the base branch (POO-2342, head
- * d69cd06). FINAL is the routing of POO-2345 v2. FORCED is the least number of crossings that R2
- * forces: an income line and a principal line that start in one order and end in the opposite one.
+ * d69cd06), measured with this metric. FINAL is the routing of POO-2345 v2. FORCED is a record of
+ * the least number of crossings that R2 forces. A test derives it from the layout with
+ * `crossingLowerBound` and checks the record against it, so the record cannot drift from the rule.
  */
 const FIXTURES = { ...BUILD_CANVAS_FIXTURES, solanaTwoChainReturn } as const;
 type Name = keyof typeof FIXTURES;
 
+const NO_GAP = Number.POSITIVE_INFINITY;
+
 const BASELINE: Record<Name, LayoutMetrics> = {
-  canvasA: { crossings: 29, overlaps: 22, totalBends: 54, maxBendsPerLeg: 3 },
-  canvasB: { crossings: 0, overlaps: 3, totalBends: 16, maxBendsPerLeg: 3 },
-  canvasC: { crossings: 2, overlaps: 1, totalBends: 8, maxBendsPerLeg: 3 },
-  canvasD: { crossings: 0, overlaps: 0, totalBends: 0, maxBendsPerLeg: 0 },
-  workedExample2: { crossings: 5, overlaps: 1, totalBends: 19, maxBendsPerLeg: 3 },
-  buildState3: { crossings: 0, overlaps: 0, totalBends: 3, maxBendsPerLeg: 3 },
-  buildState5: { crossings: 1, overlaps: 0, totalBends: 5, maxBendsPerLeg: 3 },
-  newSpokeNoChain: { crossings: 0, overlaps: 0, totalBends: 3, maxBendsPerLeg: 3 },
-  hubEmptyWithSpoke: { crossings: 0, overlaps: 0, totalBends: 5, maxBendsPerLeg: 3 },
-  solanaTwoChainReturn: { crossings: 5, overlaps: 1, totalBends: 19, maxBendsPerLeg: 3 },
+  canvasA: { crossings: 29, overlaps: 22, totalBends: 54, maxBendsPerLeg: 3, minGap: 0 },
+  canvasB: { crossings: 0, overlaps: 3, totalBends: 16, maxBendsPerLeg: 3, minGap: 0 },
+  canvasC: { crossings: 2, overlaps: 1, totalBends: 8, maxBendsPerLeg: 3, minGap: 0 },
+  canvasD: { crossings: 0, overlaps: 0, totalBends: 0, maxBendsPerLeg: 0, minGap: NO_GAP },
+  workedExample2: { crossings: 5, overlaps: 1, totalBends: 19, maxBendsPerLeg: 3, minGap: 0 },
+  buildState3: { crossings: 0, overlaps: 0, totalBends: 3, maxBendsPerLeg: 3, minGap: 128.25 },
+  buildState5: { crossings: 1, overlaps: 0, totalBends: 5, maxBendsPerLeg: 3, minGap: 24 },
+  newSpokeNoChain: { crossings: 0, overlaps: 0, totalBends: 3, maxBendsPerLeg: 3, minGap: 128.25 },
+  hubEmptyWithSpoke: { crossings: 0, overlaps: 0, totalBends: 5, maxBendsPerLeg: 3, minGap: 98 },
+  solanaTwoChainReturn: { crossings: 5, overlaps: 1, totalBends: 19, maxBendsPerLeg: 3, minGap: 0 },
 };
 
 const FORCED: Record<Name, number> = {
@@ -344,17 +538,31 @@ const FORCED: Record<Name, number> = {
 };
 
 const FINAL: Record<Name, LayoutMetrics> = {
-  canvasA: { crossings: 19, overlaps: 0, totalBends: 48, maxBendsPerLeg: 3 },
-  canvasB: { crossings: 0, overlaps: 0, totalBends: 10, maxBendsPerLeg: 3 },
-  canvasC: { crossings: 2, overlaps: 0, totalBends: 8, maxBendsPerLeg: 3 },
-  canvasD: { crossings: 0, overlaps: 0, totalBends: 0, maxBendsPerLeg: 0 },
-  workedExample2: { crossings: 3, overlaps: 0, totalBends: 15, maxBendsPerLeg: 3 },
-  buildState3: { crossings: 0, overlaps: 0, totalBends: 3, maxBendsPerLeg: 3 },
-  buildState5: { crossings: 1, overlaps: 0, totalBends: 5, maxBendsPerLeg: 3 },
-  newSpokeNoChain: { crossings: 0, overlaps: 0, totalBends: 3, maxBendsPerLeg: 3 },
-  hubEmptyWithSpoke: { crossings: 0, overlaps: 0, totalBends: 1, maxBendsPerLeg: 1 },
-  solanaTwoChainReturn: { crossings: 3, overlaps: 0, totalBends: 15, maxBendsPerLeg: 3 },
+  canvasA: { crossings: 19, overlaps: 0, totalBends: 48, maxBendsPerLeg: 3, minGap: 4.5 },
+  canvasB: { crossings: 0, overlaps: 0, totalBends: 10, maxBendsPerLeg: 3, minGap: 18 },
+  canvasC: { crossings: 2, overlaps: 0, totalBends: 8, maxBendsPerLeg: 3, minGap: 21 },
+  canvasD: { crossings: 0, overlaps: 0, totalBends: 0, maxBendsPerLeg: 0, minGap: NO_GAP },
+  workedExample2: { crossings: 3, overlaps: 0, totalBends: 15, maxBendsPerLeg: 3, minGap: 12 },
+  buildState3: { crossings: 0, overlaps: 0, totalBends: 3, maxBendsPerLeg: 3, minGap: 128.25 },
+  buildState5: { crossings: 1, overlaps: 0, totalBends: 5, maxBendsPerLeg: 3, minGap: 24 },
+  newSpokeNoChain: { crossings: 0, overlaps: 0, totalBends: 3, maxBendsPerLeg: 3, minGap: 128.25 },
+  hubEmptyWithSpoke: { crossings: 0, overlaps: 0, totalBends: 1, maxBendsPerLeg: 1, minGap: 98 },
+  solanaTwoChainReturn: {
+    crossings: 3,
+    overlaps: 0,
+    totalBends: 15,
+    maxBendsPerLeg: 3,
+    minGap: 12,
+  },
 };
+
+/**
+ * Open item (POO-2345, finding 2, stop 2c). The band above Idle output of canvas A is 42 px tall
+ * after the margin. Its 10 lanes need 54 px at LANE_PITCH, so the band is 12 px short. Growing it
+ * moves Idle output, Income and Withdraw down 12 px and changes the oracle height 920, which this
+ * task must not change. The gap test of this fixture waits for that decision.
+ */
+const BAND_SHORT: ReadonlySet<Name> = new Set<Name>(["canvasA"]);
 
 describe("R8: the numbers of each layout fixture", () => {
   for (const [name, fixture] of Object.entries(FIXTURES)) {
@@ -368,15 +576,27 @@ describe("R8: the numbers of each layout fixture", () => {
         expect(findConflicts(layout).overlaps).toEqual([]);
       });
 
-      it("keeps only the crossings that R2 forces, and as few as the minimum", () => {
+      it("keeps only the crossings that R2 forces", () => {
         expect(classifyCrossings(layout).unforced).toEqual([]);
-        expect(now.crossings).toBe(FORCED[key]);
+      });
+
+      it("has exactly as many crossings as the bound derived from its own layout", () => {
+        const bound = crossingLowerBound(layout);
+        expect(now.crossings).toBe(bound);
+        expect(FORCED[key]).toBe(bound);
       });
 
       it("has no more bends than the baseline, and at most 3 in a visible leg", () => {
         expect(now.totalBends).toBeLessThanOrEqual(BASELINE[key].totalBends);
         expect(now.maxBendsPerLeg).toBeLessThanOrEqual(3);
       });
+
+      if (BAND_SHORT.has(key))
+        it.todo("keeps at least LANE_PITCH between parallel lines (the band is 12 px short, 2c)");
+      else
+        it("keeps at least LANE_PITCH between parallel lines of different lines", () => {
+          expect(now.minGap).toBeGreaterThanOrEqual(LAYOUT.LANE_PITCH);
+        });
 
       it("records the numbers", () => {
         expect(now).toEqual(FINAL[key]);
