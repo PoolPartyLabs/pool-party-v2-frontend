@@ -68,6 +68,7 @@ import type { MandateCatalog, MandateCatalogToken } from "../mandateCatalog";
 import {
   addToken,
   clearTokens,
+  HUB_NETWORK,
   isBlocked,
   type MandateDraft,
   type MandateTokenRef,
