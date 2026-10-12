@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-039
  * @name LimitsStep.stories
  * @implements-rules-version v2 (POO-2142 rules v2, POO-2197 rules v2)
+ * @implements-rules-version v1 (POO-2332)
  *
  * Storybook coverage for Mandate step 5 (POO-2126 [R6] / [R39] to [R43]).
  *
@@ -10,6 +11,11 @@
  * whether Next moves (`validateStep("limits")` refuses the first row with no record). `Blocked` is
  * the second: the notice alone does not say WHICH of twelve rows is missing, so the ring is the
  * message.
+ *
+ * POO-2332 changes `Unset`: in mock mode a row with no record shows its start value (R8), so the
+ * token rows read 0% with the warning border (R12) and the other rows read "No cap". `Mixed` shows
+ * the "All tokens" row (R9), `AllTokens` the "Every token" row and the warning (R10), and
+ * `ZeroCapBlocked` the 2 blinks on the row Next points at (R13).
  *
  * The drafts are seeded DIRECTLY rather than through `withNetworks` / `withProtocols`, because the
  * Limits step has to render a row for whatever the draft carries. The Figma frame also shows Base;
@@ -30,6 +36,7 @@ import {
   type MandateDraft,
   type MandateTokenRef,
   type StepBlock,
+  setTokenMode,
   tokenKey,
 } from "../mandateDraft";
 import { LimitsStep } from "./LimitsStep";
@@ -151,7 +158,10 @@ export const Figma: Story = {
   render: () => <Harness catalog={catalog} initial={selections(FIGMA_CAPS)} />,
 };
 
-/** Nothing answered: every row reads "Not set" with its slider at rest, and Next would refuse. */
+/**
+ * Nothing answered. POO-2332 R8: network and protocol rows start at "No cap", token rows at 0% with
+ * the warning border (R12), and Next would refuse on the first token row.
+ */
 export const Unset: Story = {
   render: () => <Harness catalog={catalog} initial={selections(UNSET_CAPS)} />,
 };
@@ -196,6 +206,34 @@ export const AnotherTokenRequired: Story = {
       catalog={catalog}
       initial={createEmptyDraft("2026-10-03", "story")}
       block={{ step: "limits", reason: "token_allowance_required", rowId: null }}
+    />
+  ),
+};
+
+/** POO-2332 R9: the token caps differ, so the "All tokens" row reads "Mixed". One drag sets all. */
+export const Mixed: Story = {
+  render: () => <Harness catalog={catalog} initial={selections(FIGMA_CAPS)} />,
+};
+
+/**
+ * POO-2332 R10: All tokens mode. One "Every token" row sets the default cap, and the warning shows
+ * the "All tokens" tag that depositors see. The default starts at 0%, so the row has the warning
+ * border until the cap is above 0% (R12).
+ */
+export const AllTokens: Story = {
+  render: () => <Harness catalog={catalog} initial={setTokenMode(selections(FIGMA_CAPS), "all")} />,
+};
+
+/** POO-2332 R12 and R13: Next refused on a token cap at 0%. The row has the border and blinks 2 times. */
+export const ZeroCapBlocked: Story = {
+  render: () => (
+    <Harness
+      catalog={catalog}
+      initial={selections({
+        ...FIGMA_CAPS,
+        tokens: { ...FIGMA_CAPS.tokens, [tokenKey(WETH)]: { noCap: false, pct: 0 } },
+      })}
+      block={{ step: "limits", reason: "cap_zero", rowId: tokenKey(WETH) }}
     />
   ),
 };

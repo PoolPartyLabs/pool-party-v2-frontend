@@ -1,11 +1,11 @@
 /**
  * @id PP-MGR-CMP-040
  * @name BuilderActionBar.stories
- * @implements-rules-version v1 (POO-2122 rules v1)
+ * @implements-rules-version v1 (POO-2122 rules v1), v1 (POO-2332)
  * @analytics-events none, a presentational bar
  *
  * The three shapes the bar takes across the Mandate: no Back on the first step, both buttons in the
- * middle, and the next PHASE on the last one.
+ * middle, and the next PHASE on the last one. POO-2332 R12 adds `CapZeroBlocked`.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { BuilderActionBar } from "./BuilderActionBar";
@@ -28,3 +28,8 @@ export const MidMandate: Story = { args: { previous: "protocols", next: "pools" 
 
 /** The last step: Next leaves the Mandate for the Build phase. */
 export const LastStep: Story = { args: { previous: "pools", next: null } };
+
+/** POO-2332 R12: a cap at 0%. Next shows the reason, looks muted and stays clickable. */
+export const CapZeroBlocked: Story = {
+  args: { previous: "pools", next: null, blockedLabel: "Set the token cap above 0%" },
+};
