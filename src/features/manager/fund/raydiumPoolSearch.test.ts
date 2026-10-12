@@ -4,8 +4,8 @@
  * @implements-rules-version v1 (POO-2343)
  * @analytics-events none, a data adapter and reducers
  *
- * Pure-logic proof of the rules of POO-2343 that need no render: the Solana pool search (R4), the
- * draft that holds Raydium pools (R6) and the events of the Solana search (R10). The DEX Screener
+ * Pure-logic proof of the rules of POO-2343 that need no render: the Solana pool search (R4), its
+ * error result (R5), the draft that holds Raydium pools (R6) and the events of the Solana search (R10). The DEX Screener
  * action is a mock. There is no network. The block pool (R7) and the chart (R8) have their own
  * test files.
  */
@@ -38,6 +38,7 @@ import {
 } from "./mandateDraft";
 import { getDraft, upsertDraft } from "./mandateDraftStore";
 import { searchMandatePools } from "./mandatePoolSource";
+import { settlePoolSearches } from "./poolSearchSettle";
 import { type DexScreenerPair, raydiumPoolsFromPairs } from "./raydiumPools";
 import { getRaydiumPoolsAction } from "./raydiumPoolsAction";
 import { buildSolanaBuilderCatalog } from "./solana-preview/solanaBuilderRuntime";
@@ -151,6 +152,44 @@ describe("R4: the Pools step searches Raydium pools on Solana", () => {
     await expect(failure).rejects.toMatchObject({ code: "RAYDIUM_TIMEOUT" });
   });
 
+  // @rule R5
+  it("[R5] gives the error result of the action, with its status and a coded message", async () => {
+    vi.mocked(getRaydiumPoolsAction).mockResolvedValue({
+      ok: false,
+      error: { code: "unavailable", status: 429 },
+    });
+
+    const error = await searchMandatePools({
+      network: "solana",
+      tokenAddress: SOL,
+      protocols: ["raydium"],
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 429, code: "RAYDIUM_UNAVAILABLE" });
+  });
+
+  // @rule R5
+  it("[R5] a mixed mandate keeps the EVM pools when the real Solana read fails", async () => {
+    vi.mocked(getRaydiumPoolsAction).mockResolvedValue({
+      ok: false,
+      error: { code: "unavailable", status: 429 },
+    });
+    const evm = { ...refOf("EvmPool"), id: "arbitrum:0xpool", network: "arbitrum" as const };
+
+    const settled = await settlePoolSearches([
+      { network: "arbitrum", run: () => Promise.resolve([evm]) },
+      {
+        network: "solana",
+        run: () =>
+          searchMandatePools({ network: "solana", tokenAddress: SOL, protocols: ["raydium"] }),
+      },
+    ]);
+
+    expect(settled.pools).toEqual([evm]);
+    expect(settled.failedNetworks).toEqual(["solana"]);
+  });
+
   // @rule R4
   it("[R4] adds and removes a Raydium pool like an EVM pool", () => {
     const pool = refOf("PoolA");
@@ -200,6 +239,35 @@ describe("R6: selected Raydium pools save in the draft", () => {
     expect(reloaded?.pools[0]?.feeBps).toBeNull();
     expect(reloaded?.pools[0]?.feeTier).toBeNull();
     expect(reloaded?.protocols).toContain("raydium");
+  });
+});
+
+describe("R6: the whole Raydium pool ref survives the persisted draft", () => {
+  // @rule R6
+  it("[R6] saves a full Raydium pool to storage and reads back the same ref", () => {
+    const [pool] = raydiumPoolsFromPairs([
+      {
+        ...pair("PoolFull", { address: USDC, symbol: "USDC" }),
+        liquidity: { usd: 2_500_000 },
+        volume: { h24: 480_000 },
+      },
+    ]);
+    if (!pool) throw new Error("fixture pair was not a Raydium CLMM pool");
+    // The fixture is the case under test: no fee, protocol raydium, and a 24 h volume set.
+    expect(pool).toMatchObject({ feeBps: null, protocol: "raydium", volume24hUsd: 480_000 });
+
+    const added = addPool(raydiumDraft(), pool, catalog());
+    if (isBlocked(added)) throw new Error("the pool was refused");
+    expect(upsertDraft(added)).not.toBeNull();
+
+    // The raw JSON in storage: the null fee is written, not dropped.
+    const raw = Object.values(window.localStorage).join("\n");
+    expect(raw).toContain('"feeBps":null');
+    expect(raw).toContain('"protocol":"raydium"');
+
+    const reloaded = getDraft(added.id);
+    expect(reloaded?.pools).toHaveLength(1);
+    expect(reloaded?.pools[0]).toStrictEqual(pool);
   });
 });
 

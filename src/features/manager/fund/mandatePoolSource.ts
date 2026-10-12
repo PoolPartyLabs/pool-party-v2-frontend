@@ -12,6 +12,9 @@
  * (`fundPools.ts`), through the repo's latency helper and with the usual rare failure, so the step
  * has a loading state and an error state to render before any backend exists.
  *
+ * The Solana search (Raydium, POO-2343) has no mock: it calls the real DEX Screener action in mock
+ * mode too, so a mock session on Solana needs the network and shows the error state when it is down.
+ *
  * Real mode reads the v2 catalog only: eligible Uniswap v4 pools identified by bytes32 PoolId.
  * PoolKey and catalog token metadata are retained, and unavailable metrics stay null.
  *
