@@ -72,6 +72,8 @@ export function BuilderActionBar({
         variant={holdLabel ? "secondary" : "primary"}
         size="md"
         blocked={Boolean(holdLabel)}
+        // Figma 9303:533 / 8016:2201: the held Next is a full-opacity secondary fill with muted text.
+        className={holdLabel ? "text-muted-foreground aria-disabled:opacity-100" : undefined}
         onBlockedClick={onNext}
         onClick={onNext}
       >
