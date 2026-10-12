@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Autres réseaux"
+      "others": "Autres réseaux",
+      "othersCaption": "Chaque réseau que vous ajoutez nécessite un pont et une signature de plus au lancement."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Obligatoire",
-      "requiredSubtitle": "Chaque stratégie a besoin d'un moyen d'échanger des jetons et de déplacer des fonds entre ses réseaux.",
       "operate": "Protocoles à utiliser",
-      "on": "Sur",
-      "onFootnote": "« Sur » indique les réseaux de l'étape 1 où chaque protocole est disponible."
+      "on": "Disponible sur",
+      "onFootnote": "« Disponible sur » indique lesquels de vos réseaux de l'étape 1 chaque protocole prend en charge.",
+      "swapBridge": "Échange et pont",
+      "swapBridgeCollapsed": "{names} · sélectionnés pour vous",
+      "swapBridgeOpen": "Sélectionnés pour vous. Gardez au moins un échange, et un pont quand vous ajoutez un réseau.",
+      "swapBridgeOpenHub": "Sélectionnés pour vous. Gardez au moins un échange.",
+      "show": "Afficher",
+      "hide": "Masquer",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Échange",
+        "uniswapV3Liquidity": "Uniswap v3 · Liquidité"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -834,7 +843,34 @@
       "depositToken": "Jeton de dépôt",
       "slotsCaption": "Un jeton occupe un emplacement sur chaque réseau sur lequel il fonctionne. Le mandat dispose de {max} emplacements.",
       "noPrice": "Pas encore de flux de prix",
-      "empty": "Aucun jeton ne correspond à votre recherche."
+      "empty": "Aucun jeton ne correspond à votre recherche.",
+      "access": {
+        "label": "Accès aux jetons",
+        "selected": "Jetons sélectionnés",
+        "all": "Tous les jetons",
+        "hint": "Avec « Tous les jetons », la stratégie peut échanger n'importe quel jeton de vos réseaux et protocoles, y compris les jetons lancés plus tard."
+      },
+      "allInfo": {
+        "title": "La stratégie peut échanger n'importe quel jeton",
+        "body": "Cela couvre chaque jeton de vos réseaux et protocoles, y compris ceux lancés après la publication. Vous ne choisissez pas les jetons un par un. Chaque jeton est évalué sur le hub."
+      },
+      "yoursAll": "Vos jetons · Tous",
+      "everyOther": "Tout autre jeton",
+      "everyOtherCaption": "Ajouté à son lancement",
+      "requiredBy": "Requis par {network}",
+      "slotsAllLabel": "Emplacements réseau",
+      "slotsNoLimit": "Aucune limite",
+      "slotsAllCaption": "Le plafond de {max} emplacements s'applique uniquement aux jetons sélectionnés.",
+      "noFreeSlots": "Aucun emplacement libre",
+      "slotsFull": "Les {max} emplacements sont utilisés. Retirez un jeton pour en ajouter un autre.",
+      "andMoreTokens": "et {count, plural, one {# jeton de plus} other {# jetons de plus}}",
+      "loading": "Chargement des jetons",
+      "loadError": {
+        "title": "Les jetons ne se sont pas chargés",
+        "heading": "Impossible de charger la liste des jetons",
+        "body": "Vérifiez votre connexion et réessayez. Les jetons de votre liste restent enregistrés."
+      },
+      "retry": "Réessayer"
     },
     "pools": {
       "search": "Jeton, paire ou adresse de pool",
@@ -844,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, one {# pool} other {# pools}} avec au moins un de vos jetons",
       "yours": "Vos pools · {count}",
-      "feeTier": "Fee tier de {fee}",
-      "tierShare": "{pct}% sélectionné",
+      "feeTier": "Palier de frais de {fee}",
+      "tierShare": "Palier de frais de {fee} · choisi par {pct} % des LP",
       "addsToken": "ajoute {symbol} à vos jetons",
       "hasHook": "a un hook",
       "fixed": "Les pools sont fixés au lancement. Vous ne pourrez pas en ajouter un plus tard.",
@@ -861,11 +897,11 @@
     },
     "limits": {
       "perNetwork": "Par réseau",
-      "perNetworkCaption": "Part maximale du capital par réseau · par paliers de 5 %",
+      "perNetworkCaption": "Part maximale des dépôts par réseau · par paliers de 5 %",
       "perProtocol": "Par protocole",
-      "perProtocolCaption": "Part maximale du capital par protocole · par paliers de 5 %",
+      "perProtocolCaption": "Part maximale des dépôts par protocole · par paliers de 5 %",
       "perToken": "Par jeton",
-      "perTokenCaption": "Part maximale du capital détenue dans chaque jeton · par paliers de 5 %",
+      "perTokenCaption": "Part maximale des dépôts détenue dans chaque jeton · par paliers de 5 %",
       "tokenOnNetwork": "{symbol} sur {network}",
       "hubRow": "Aucun plafond · le hub conserve ce qui n'est pas envoyé ailleurs",
       "hubCaption": "Hub",
@@ -881,14 +917,31 @@
         "perps": "Perpétuels"
       },
       "positiveTokenRequired": "Autorisez au moins un token en plus de USDC au-delà de 0 % ou sélectionnez Aucun plafond.",
-      "addPositiveToken": "Ajoutez un autre token dans Tokens, puis fixez sa limite au-delà de 0 % ou sélectionnez Aucun plafond. USDC est déjà inclus."
+      "addPositiveToken": "Ajoutez un autre token dans Tokens, puis fixez sa limite au-delà de 0 % ou sélectionnez Aucun plafond. USDC est déjà inclus.",
+      "perTokenAllCaption": "Plafond par défaut pour chaque jeton · paliers de 5 %",
+      "allTokensRow": {
+        "title": "Tous les jetons",
+        "caption": "Définit un plafond pour chaque jeton de la liste"
+      },
+      "mixed": "Mixte",
+      "everyTokenRow": {
+        "title": "Chaque jeton",
+        "caption": "Chaque jeton séparément, sauf USDC"
+      },
+      "allWarning": {
+        "title": "N'importe quel jeton peut entrer dans la stratégie",
+        "body": "Cela inclut des jetons à faible liquidité ou sans historique de prix. Le plafond par défaut s'applique à chaque jeton séparément. Les déposants voient cette étiquette sur la carte et la page de la stratégie :",
+        "tag": "Tous les jetons"
+      },
+      "capZeroReason": "Définissez le plafond des jetons au-dessus de 0 %",
+      "capZero": "Définissez le plafond des jetons au-dessus de 0 % ou choisissez Aucun plafond pour continuer."
     },
     "draft": {
       "title": "Nommez votre brouillon",
       "body": "Tout ce que vous avez choisi jusqu'ici est conservé. Le nom vous permettra de retrouver ce brouillon parmi vos stratégies ; vous pourrez le modifier plus tard dans Vérification.",
       "nameLabel": "Nom du brouillon",
       "namePlaceholder": "ETH et BTC sur Arbitrum",
-      "helper": "De 10 à 50 caractères, la même règle que pour le nom de la stratégie.",
+      "helper": "De 10 à 50 caractères.",
       "counter": "{count} / {max}",
       "progress": "Enregistré jusqu'ici : {networks} réseaux, {protocols} protocoles, {tokens} jetons · Mandat, étape {n} sur {count}",
       "keepEditing": "Continuer la modification",
@@ -932,7 +985,41 @@
         "frozen": "Réserve gelée",
         "paused": "Réserve en pause",
         "supplyCapReached": "Plafond de Supply atteint",
-        "unavailable": "Indisponible"
+        "unavailable": "Indisponible",
+        "collateralNote": "Garantie du bloc Borrow ci-dessous. Changer l'actif ou l'allocation change ce qui peut être emprunté."
+      },
+      "borrowPanel": {
+        "heading": "Actifs que vous pouvez emprunter",
+        "filter": "Filtrer par token ou adresse",
+        "caption": "Tokens de votre mandat que Aave v3 prête sur {network}, contre le Supply ci-dessus.",
+        "needAsset": "Besoin d’un autre actif ?",
+        "noMatch": "Aucun actif de votre mandat ne correspond à {typed}",
+        "noMatchCaption": "Les tokens sont choisis dans le mandat, à l’étape 3. Votre configuration reste enregistrée pendant la modification.",
+        "empty": "Aucun actif de votre mandat ne peut être emprunté sur {network}",
+        "collateral": "Garantie",
+        "collateralHelp": "L'actif du bloc Supply ci-dessus. Aave v3 prête contre lui. Modifiez-le dans ce bloc.",
+        "supplyAbove": "Bloc Supply ci-dessus",
+        "collateralValue": "Valeur de la garantie",
+        "needSupply": "Configurez d'abord le bloc Supply ci-dessus.",
+        "asset": "Actif",
+        "help": "Tokens de votre mandat que Aave v3 prête sur {network}.",
+        "apy": "APY d'emprunt",
+        "amount": "Montant emprunté",
+        "amountHelp": "La part de la valeur de la garantie que vous empruntez. Une part plus élevée baisse le facteur de santé.",
+        "amountCaption": "Part de la valeur du {symbol} déposé ci-dessus. Limite Aave {limit} %.",
+        "atLimit": "Maximum atteint. Aave v3 prête jusqu'à {limit} % de la valeur de {symbol}.",
+        "amountValue": "Vous empruntez",
+        "healthFactor": "Facteur de santé",
+        "noDebt": "Aucune dette",
+        "liquidationPrice": "Prix de liquidation",
+        "liquidationSentence": "{symbol} est à {price} maintenant. Liquidation s'il baisse d'environ {drop} %.",
+        "unavailable": "Indisponible",
+        "blocked": {
+          "needSupply": "Configurez d'abord le bloc Supply ci-dessus.",
+          "unavailable": "Choisissez un actif que Aave v3 prête.",
+          "needAmount": "Définissez un montant emprunté supérieur à 0 %.",
+          "overLimit": "Le montant emprunté dépasse la limite Aave."
+        }
       }
     },
     "canvas": {
@@ -1316,6 +1403,8 @@
     "strategyBlocks": "Blocs de la stratégie",
     "selectionHelp": "Sélectionnez un bloc sur le canvas ou dans cette liste.",
     "viewMandate": "Voir le mandat",
+    "explorer": "Explorateur",
+    "strategyAddressUnavailable": "L’adresse de la stratégie n’est pas disponible.",
     "viewInvestor": "Voir en tant qu’investisseur",
     "noSelection": "Sélectionnez un bloc pour consulter ses soldes et gérer la position.",
     "emptyPositions": "Cette stratégie n’a pas encore de positions.",
@@ -1458,6 +1547,19 @@
       "debt": "Dette",
       "fullAccount": "Le risque concerne le compte entier, y compris tout le collateral et toutes les dettes.",
       "tokenMetadata": "Métadonnées du token"
+    },
+    "spine": {
+      "routeEntry": "Contexte de route · Entrée",
+      "routeExit": "Contexte de route · Sortie",
+      "routeScope": "Portée de route · {pct}",
+      "strategyShare": "De la valeur de la stratégie · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "{amount} demandé",
+      "reserved": "{pct} réservé",
+      "bridgeEntry": "Entrée du pont",
+      "bridgeReturn": "Retour du pont",
+      "swapInput": "Entrée du swap",
+      "swapFees": "Swap des frais"
     }
   },
   "overviewV2": {
@@ -1493,6 +1595,7 @@
     "loadFailed": "Impossible de charger vos stratégies",
     "retryDescription": "Réessayez pour actualiser votre AUM et votre liste de stratégies.",
     "retry": "Réessayer",
+    "strategyListUnavailable": "Votre liste de stratégies n’est pas disponible.",
     "setupPreserved": "Votre configuration enregistrée reste disponible ci-dessus.",
     "localUnavailable": "Une partie de la configuration enregistrée est illisible. Vos données ont été conservées.",
     "historyUnavailable": "L’historique AUM est indisponible.",

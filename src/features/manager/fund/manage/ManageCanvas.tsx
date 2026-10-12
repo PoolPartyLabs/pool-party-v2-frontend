@@ -3,6 +3,7 @@
  * @name ManageCanvas
  * @implements-rules-version v2 (POO-2274, POO-2270, POO-2271, POO-2272; extends POO-2246, POO-2226, POO-2232)
  * @implements-rules-version v1 (POO-2302, painted surface bounds)
+ * @implements-rules-version v1 (POO-2335, range tone from manageSpineCopy)
  * @analytics-events none, node presses report through onSelect; ManageScreen owns navigation.
  *
  * Read-only live graph built from the shared Build pieces. Cash belongs to one chain and every
@@ -59,6 +60,7 @@ import {
   type ManageInspectableNode,
   manageInspectionLabelKey,
 } from "./manageSelection";
+import { manageRangeTone } from "./manageSpineCopy";
 
 export interface ManageCanvasProps {
   model: ManageModel;
@@ -125,21 +127,28 @@ function PositionRangeStatus({
   status: ManagePosition["rangeStatus"];
   id: string;
 }) {
-  const operate = useTranslations("manager.operate");
-  const t = useTranslations("manager.manageV2");
-  const available = status.status === "available";
-  const inRange = available && status.value === "in";
+  const t = useTranslations("manager");
+  // R8 (POO-2335): an unknown range status never uses the success color.
+  const range = manageRangeTone(status);
+  const text = {
+    success: "text-success",
+    destructive: "text-destructive",
+    muted: "text-muted-foreground",
+  };
+  const dot = {
+    success: "bg-success",
+    destructive: "bg-destructive",
+    muted: "bg-muted-foreground",
+  };
   return (
     <div
       data-manage-range=""
-      className={`mx-auto mt-auto mb-3 flex w-[148px] shrink-0 flex-col gap-1.5 ${available ? (inRange ? "text-success" : "text-destructive") : "text-muted-foreground"}`}
+      data-manage-range-tone={range.tone}
+      className={`mx-auto mt-auto mb-3 flex w-[148px] shrink-0 flex-col gap-1.5 ${text[range.tone]}`}
     >
       <span id={id} className="flex items-center gap-1.5 text-foreground text-xs">
-        <span
-          aria-hidden="true"
-          className={`size-1.5 rounded-full ${available ? (inRange ? "bg-success" : "bg-destructive") : "bg-muted-foreground"}`}
-        />
-        {available ? operate(inRange ? "inRange" : "outOfRange") : t("notAvailable")}
+        <span aria-hidden="true" className={`size-1.5 rounded-full ${dot[range.tone]}`} />
+        {t(range.labelKey)}
       </span>
       <svg aria-hidden="true" width={148} height={10} viewBox="0 0 148 10">
         <rect data-range-track="" y={3} width={148} height={4} rx={2} fill="currentColor" />

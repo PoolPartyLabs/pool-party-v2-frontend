@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep.test
- * @implements-rules-version v4 (POO-2142 rules v2, POO-2143 rules v2, POO-2167 rules v4)
+ * @implements-rules-version v4 (POO-2142 v2, POO-2143 v2, POO-2167 v4, POO-2333 rules v1)
  * @analytics-events none, the shell emits
  *
  * POO-2123 [R12] / [R19] / [R20] / [R21] / [R22], epic POO-2119. Mandate step 2. Rules v2
@@ -10,10 +10,15 @@
  * catalog where Uniswap v4 runs on Robinhood Chain only.
  *
  * As on step 1, the reducer is `PP-MGR-LIB-019`'s and tested there; these cases assert the screen's
- * own decisions. Two of them carry real weight: the "On" column must show the INTERSECTION with the
- * networks of step 1 (a protocol dot for a network the mandate does not hold is a promise the
- * contracts never made), and R22, which is asserted negatively because "via Across" is exactly the
- * kind of phrase that gets copy-pasted into a caption three slices later.
+ * own decisions. Two of them carry real weight: the "Available on" column (POO-2333 R5) must show
+ * the INTERSECTION with the networks of step 1 (a protocol dot for a network the mandate does not
+ * hold is a promise the contracts never made), and R22, which is asserted negatively because
+ * "via Across" is exactly the kind of phrase that gets copy-pasted into a caption three slices later.
+ *
+ * POO-2333 (rules v1) replaced the "Required" group with "Swap and bridge" below the divider:
+ * collapsed by default, open on Show, with checkbox rows. The last swap, and the bridge of a
+ * mandate with a spoke, are `aria-disabled` and report the click through `onBlocked` (R4). A
+ * protocol that the config does not enable is not drawn at all (R7).
  */
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -47,8 +52,7 @@ const catalogV4SpokeOnly: MandateCatalog = {
 };
 
 /**
- * The real catalog with Aave v3 marked unavailable as well, so a SECOND protocol the step lists but
- * cannot operate is exercised beside Uniswap v3 positions (R20 v3).
+ * The real catalog with Aave v3 marked unavailable, so the step hides it (POO-2333 R7).
  */
 const catalogAaveUnavailable: MandateCatalog = {
   ...catalog,
@@ -103,22 +107,120 @@ function row(id: string): HTMLElement {
 }
 
 describe("ProtocolsStep", () => {
-  // @rule R19
-  it("locks the two required protocols under their own head and subtitle", () => {
+  // @rule R3 (POO-2333)
+  it("collapses Swap and bridge below the protocols to operate, naming what it selected", () => {
     renderStep();
 
-    expect(screen.getByText("Required")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Every strategy needs a way to swap tokens and to move money between its networks.",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Swap and bridge")).toBeInTheDocument();
+    expect(screen.getByText("Uniswap v3 · Across · selected for you")).toBeInTheDocument();
+    const toggle = screen.getByRole("button", { name: "Show" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    // The region stays in the tree, so `aria-controls` always points at an element.
+    const region = document.getElementById(toggle.getAttribute("aria-controls") ?? "");
+    expect(region).not.toBeNull();
+    expect(region).not.toBeVisible();
+    expect(screen.queryByText("Required")).not.toBeInTheDocument();
+    expect(screen.queryByText("Always included")).not.toBeInTheDocument();
+  });
+
+  // @rule R3 (POO-2333)
+  it("opens Swap and bridge on Show to checkbox rows without an Available on column", async () => {
+    const user = userEvent.setup();
+    renderStep();
+
+    await user.click(screen.getByRole("button", { name: "Show" }));
+
+    expect(screen.getByRole("button", { name: "Hide" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("Selected for you. Keep at least one swap.")).toBeInTheDocument();
     expect(screen.getByText("Swaps · converts one token into another")).toBeInTheDocument();
     expect(screen.getByText("Bridge · moves money between your networks")).toBeInTheDocument();
-    // Locked rows have no control: the swap adapter and the bridge cannot be removed.
-    expect(screen.getAllByText("Always included")).toHaveLength(2);
-    expect(screen.queryByRole("checkbox", { name: "Across" })).not.toBeInTheDocument();
-    expect(within(row("across")).queryByRole("checkbox")).not.toBeInTheDocument();
+    for (const id of ["uniswap-v3-swap", "across"]) {
+      expect(within(row(id)).queryByText("Available on")).not.toBeInTheDocument();
+    }
+  });
+
+  // @rule R6 (POO-2333)
+  it("names the swap row Uniswap v3 · Swap", async () => {
+    renderStep();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Show" }));
+
+    expect(screen.getByRole("checkbox", { name: "Uniswap v3 · Swap" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Across" })).toBeInTheDocument();
+  });
+
+  // @rule R4 (POO-2333)
+  it("locks the last swap: the click reports a blocked intent and changes nothing", async () => {
+    const user = userEvent.setup();
+    const { update, onBlocked } = renderStep();
+    await user.click(screen.getByRole("button", { name: "Show" }));
+
+    const swap = screen.getByRole("checkbox", { name: "Uniswap v3 · Swap" });
+    expect(swap).toHaveAttribute("aria-checked", "true");
+    expect(swap).toHaveAttribute("aria-disabled", "true");
+    await user.click(swap);
+
+    expect(onBlocked).toHaveBeenCalledWith({
+      step: "protocols",
+      reason: "required_protocol",
+      rowId: "uniswap-v3-swap",
+    });
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  // @rule R4 (POO-2333)
+  it("lets a hub-only mandate clear the bridge", async () => {
+    const user = userEvent.setup();
+    const { protocolsAfterUpdate } = renderStep();
+    await user.click(screen.getByRole("button", { name: "Show" }));
+
+    const across = screen.getByRole("checkbox", { name: "Across" });
+    expect(across).not.toHaveAttribute("aria-disabled");
+    await user.click(across);
+    expect(protocolsAfterUpdate()).toEqual(["uniswap-v3-swap"]);
+  });
+
+  // @rule R4 (POO-2333)
+  it("locks the bridge of a mandate with a spoke, and the open head says why", async () => {
+    const user = userEvent.setup();
+    const draft = draftWith(["robinhood"], []);
+    const onBlocked = vi.fn();
+    const { rerender } = renderWithProviders(
+      <ProtocolsStep
+        draft={draft}
+        catalog={catalog}
+        update={vi.fn()}
+        block={null}
+        onBlocked={onBlocked}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Show" }));
+    expect(
+      screen.getByText(
+        "Selected for you. Keep at least one swap, and one bridge when you add a network.",
+      ),
+    ).toBeInTheDocument();
+
+    const across = screen.getByRole("checkbox", { name: "Across" });
+    expect(across).toHaveAttribute("aria-disabled", "true");
+    await user.click(across);
+    expect(onBlocked).toHaveBeenCalledWith({
+      step: "protocols",
+      reason: "required_protocol",
+      rowId: "across",
+    });
+
+    rerender(
+      <ProtocolsStep
+        draft={draft}
+        catalog={catalog}
+        update={vi.fn()}
+        block={{ step: "protocols", reason: "required_protocol", rowId: "across" }}
+        onBlocked={onBlocked}
+      />,
+    );
+    // The open head already states the minimums, so the refusal adds no second notice.
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByText("Pick at least one to continue.")).not.toBeInTheDocument();
   });
 
   // @rule R20
@@ -127,12 +229,12 @@ describe("ProtocolsStep", () => {
 
     expect(screen.getByText("Protocols to operate")).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Aave v3" })).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: "Uniswap v3" })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Uniswap v4" })).toBeInTheDocument();
     expect(screen.getByText("Lending · supply tokens to earn interest")).toBeInTheDocument();
+    // POO-2333 R7: Uniswap v3 positions are not enabled, so only Uniswap v4 has this caption.
     expect(
       screen.getAllByText("Liquidity positions · earn trading fees in a price range"),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     // PP-NOTE: buildathon scope (2026-10-03, POO-2143): commented out, restore when the fund contracts reach it.
     // expect(
     //   screen.getByText("Perpetuals · long and short positions with leverage"),
@@ -172,43 +274,26 @@ describe("ProtocolsStep", () => {
     expect(screen.queryByText(/USDC supply APY/)).not.toBeInTheDocument();
     expect(container.querySelector("fieldset")).toBeNull();
     expect(container.querySelector('input[type="checkbox"]')).toBeNull();
-    expect(screen.getByText("Required")).toBeInTheDocument();
+    expect(screen.getByText("Swap and bridge")).toBeInTheDocument();
   });
 
-  // @rule R2 @rule R3 (POO-2167 v4)
+  // @rule R2 @rule R3 (POO-2167 v4) @rule R7 (POO-2333)
   it.each([
     undefined,
     "real",
-  ] as const)("shows GMX and Pendle Coming soon and blocks their selection in %s mode (POO-2167)", async (dataMode) => {
+  ] as const)("hides GMX and Pendle, and Select all skips them, in %s mode", async (dataMode) => {
     const user = userEvent.setup();
-    const { update, onBlocked } = renderStep(
+    const { protocolsAfterUpdate } = renderStep(
       { ...draftWith([], []), dataMode, catalogVersion: "v2-catalog-v1" },
       { ...catalog, dataMode },
     );
-    for (const [id, name] of [
-      ["gmx", "GMX"],
-      ["pendle", "Pendle"],
-    ] as const) {
-      const control = screen.getByRole("checkbox", { name });
-      expect(control).toHaveAttribute("aria-disabled", "true");
-      expect(control).toHaveAttribute("aria-checked", "false");
-      expect(within(row(id)).getByText("Coming soon")).toBeInTheDocument();
-      expect(within(row(id)).queryByText("On")).not.toBeInTheDocument();
-      await user.click(control);
-      expect(onBlocked).toHaveBeenCalledWith({
-        step: "protocols",
-        reason: "coming_soon",
-        rowId: id,
-      });
+    for (const id of ["gmx", "pendle"]) {
+      expect(document.querySelector(`[data-mandate-row="${id}"]`)).toBeNull();
     }
-    expect(update).not.toHaveBeenCalled();
+    expect(screen.queryByText("Coming soon")).not.toBeInTheDocument();
     await user.click(screen.getByRole("checkbox", { name: "Select all" }));
-    expect(
-      update.mock.calls.at(-1)?.[0]({ ...draftWith([], []), dataMode }).protocols,
-    ).not.toContain("gmx");
-    expect(
-      update.mock.calls.at(-1)?.[0]({ ...draftWith([], []), dataMode }).protocols,
-    ).not.toContain("pendle");
+    expect(protocolsAfterUpdate()).not.toContain("gmx");
+    expect(protocolsAfterUpdate()).not.toContain("pendle");
   });
 
   // @rule R5 (POO-2167 v4)
@@ -268,47 +353,25 @@ describe("ProtocolsStep", () => {
     });
   });
 
-  // @rule R20 v3 (POO-2167)
-  it("lists Uniswap v3 positions as Coming soon and reports the click as a blocked intent", async () => {
-    const user = userEvent.setup();
-    const { update, onBlocked } = renderStep(draftWith(["robinhood"], []));
+  // @rule R7 (POO-2333)
+  it("does not show Uniswap v3 positions, which the config does not enable", () => {
+    renderStep(draftWith(["robinhood"], []));
 
-    const v3 = screen.getByRole("checkbox", { name: "Uniswap v3" });
-    expect(v3).toHaveAttribute("aria-disabled", "true");
-    expect(within(row("uniswap-v3")).getByText("Coming soon")).toBeInTheDocument();
-    // The only Coming soon row on the shipped catalog: Aave v3 and Uniswap v4 stay operable.
-    expect(screen.getAllByText("Coming soon")).toHaveLength(3);
+    expect(document.querySelector('[data-mandate-row="uniswap-v3"]')).toBeNull();
+    expect(screen.queryByText("Uniswap v3 · Liquidity")).not.toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: "Uniswap v4" })).not.toHaveAttribute(
       "aria-disabled",
       "true",
     );
-
-    await user.click(v3);
-
-    expect(onBlocked).toHaveBeenCalledWith({
-      step: "protocols",
-      reason: "coming_soon",
-      rowId: "uniswap-v3",
-    });
-    expect(update).not.toHaveBeenCalled();
-  });
-
-  // @rule R19 @rule R20 v3
-  it("keeps the required Uniswap v3 swap locked and included", () => {
-    renderStep();
-
-    const swap = row("uniswap-v3-swap");
-    expect(within(swap).getByText("Always included")).toBeInTheDocument();
-    expect(within(swap).queryByText("Coming soon")).not.toBeInTheDocument();
-    expect(within(swap).queryByRole("checkbox")).not.toBeInTheDocument();
   });
 
   // @rule R20
-  it("shows under On only the networks of step 1 where the protocol runs", () => {
+  it("shows under Available on only the networks of step 1 where the protocol runs", () => {
     // Hub plus Robinhood Chain: Uniswap v4 runs on both, Aave v3 only on the hub.
     renderStep(draftWith(["robinhood"], []));
 
     const v4 = within(row("uniswap-v4"));
+    expect(v4.getByText("Available on")).toBeInTheDocument();
     expect(v4.getByRole("img", { name: "Arbitrum" })).toBeInTheDocument();
     expect(v4.getByRole("img", { name: "Robinhood Chain" })).toBeInTheDocument();
 
@@ -319,11 +382,13 @@ describe("ProtocolsStep", () => {
   });
 
   // @rule R20
-  it("shows the On footnote once", () => {
+  it("shows the Available on footnote once", () => {
     renderStep();
 
     expect(
-      screen.getByText('"On" shows the networks from step 1 where each protocol is available.'),
+      screen.getByText(
+        '"Available on" shows which of your networks from step 1 each protocol supports.',
+      ),
     ).toBeInTheDocument();
   });
 
@@ -425,30 +490,12 @@ describe("ProtocolsStep", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
-  // @rule R21 v2: the `available: false` branch stays, exercised on a catalog that turns Aave v3 off.
-  it("marks a protocol the catalog turns off Coming soon and reports the click as a blocked intent", async () => {
-    const user = userEvent.setup();
-    const { update, onBlocked } = renderStep(draftWith([], []), catalogAaveUnavailable);
-
-    const aave = screen.getByRole("checkbox", { name: "Aave v3" });
-    expect(aave).toHaveAttribute("aria-disabled", "true");
-    expect(within(row("aave-v3")).getByText("Coming soon")).toBeInTheDocument();
-
-    await user.click(aave);
-
-    expect(onBlocked).toHaveBeenCalledWith({
-      step: "protocols",
-      reason: "coming_soon",
-      rowId: "aave-v3",
-    });
-    expect(update).not.toHaveBeenCalled();
-  });
-
-  // @rule R20 @rule R21 v2
-  it("keeps a protocol the catalog turns off out of Select all", async () => {
+  // @rule R7 (POO-2333): a protocol that the catalog turns off is not drawn at all.
+  it("hides a protocol the catalog turns off and keeps it out of Select all", async () => {
     const user = userEvent.setup();
     const { protocolsAfterUpdate } = renderStep(draftWith([], []), catalogAaveUnavailable);
 
+    expect(document.querySelector('[data-mandate-row="aave-v3"]')).toBeNull();
     await user.click(screen.getByRole("checkbox", { name: "Select all" }));
 
     expect(protocolsAfterUpdate()).toEqual(["uniswap-v3-swap", "across", "uniswap-v4"]);
@@ -598,16 +645,17 @@ it("preserves real catalog failure with retry and loading status (POO-2167)", as
 });
 
 it("POO-2209 renders available protocols before Coming soon", () => {
+  // Uniswap v4 on Robinhood Chain only is Coming soon on a hub-only mandate.
   renderWithProviders(
     <ProtocolsStep
       draft={draftWith(["arbitrum"], [])}
-      catalog={catalog}
+      catalog={catalogV4SpokeOnly}
       update={vi.fn()}
       block={null}
       onBlocked={vi.fn()}
     />,
   );
   const available = screen.getByRole("checkbox", { name: "Aave v3" });
-  const soon = screen.getByRole("checkbox", { name: "Uniswap v3" });
+  const soon = screen.getByRole("checkbox", { name: "Uniswap v4" });
   expect(available.compareDocumentPosition(soon) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });

@@ -32,7 +32,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The first Save & exit. Type fewer than ten characters to see the helper turn destructive. */
+/** The first Save and exit. Type fewer than ten characters to see the helper turn destructive. */
 export const Default: Story = {};
 
 /** Reached from the last step's Next instead: the same question, a different answer. */

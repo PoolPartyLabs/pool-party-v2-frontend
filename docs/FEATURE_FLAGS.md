@@ -67,7 +67,7 @@ The original infrastructure slice passed 43 staged focused tests, scoped TypeScr
 [ADR 0009](adr/0009-local-solana-visual-preview.md). POO-2281 rules v2 remains the historical
 entry/preference contract; POO-2301 supersedes its standalone-editor presentation.
 
-Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+Accepted Header and Save and exit paths acknowledge local disposal only after route/account host and
 intent generation validate the user's consent. Stale acceptance cannot close a successor session.
 Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
 last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.

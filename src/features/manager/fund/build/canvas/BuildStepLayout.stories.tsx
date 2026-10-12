@@ -8,7 +8,7 @@
  * a placeholder palette (S5 builds the real one), the canvas container with a stand-in graph, and
  * the empty panel slot. Two states of the bar: without a notice, and with one.
  *
- * The page header, Save & exit and the phase stepper belong to the shell and are absent here.
+ * The page header, Save and exit and the phase stepper belong to the shell and are absent here.
  * The 1232 wide wrapper is the app's content cap: the canvas column comes out about 604 wide
  * against 656 in the Figma frames (D23, decided before wave 4).
  */

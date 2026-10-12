@@ -322,6 +322,9 @@ describe("Manage block inline", () => {
     expect(screen.queryByText("When to apply")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Move range" }));
     expectCurrentPositionUnchanged();
+    // R7 (POO-2335): Move range applies now and shows no "When to apply" selector.
+    expect(screen.queryByText("When to apply")).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Create new position" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Review move range" }));
     expect(await screen.findByRole("button", { name: "Confirm & move range" })).toBeDisabled();
@@ -332,6 +335,9 @@ describe("Manage block inline", () => {
     await user.click(screen.getByRole("button", { name: "Back to actions" }));
     await user.click(screen.getByRole("button", { name: "Create new position" }));
     expectCurrentPositionUnchanged();
+    // R7 (POO-2335): Create new position applies to new deposits and shows no "When to apply" selector.
+    expect(screen.queryByText("When to apply")).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save for new deposits" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Review move range" })).not.toBeInTheDocument();
   });

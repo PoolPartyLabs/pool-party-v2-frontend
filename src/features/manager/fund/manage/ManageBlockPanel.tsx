@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-086
  * @name ManageBlockPanel
  * @implements-rules-version v2 (POO-2246; extends POO-2227), v2 (POO-2274), v1 (POO-2284), v1 (POO-2290)
+ * @implements-rules-version v1 (POO-2335, fixed action timing with no selector)
  * @analytics-events strategy_move_range_started, tx_flow_abandoned, app_cta_blocked, app_error_shown
  * Inline V2 states of PP-MGR-CMP-001/002; no wallet call is exposed without a verified preview.
  */
@@ -406,6 +407,7 @@ function RangeSettings({
 }) {
   const t = useTranslations("manager.manageV2");
   const field = useTranslations("manager.fundBuilder.canvas.panel");
+  // R7 (POO-2335): Move range applies now. Create new position applies to new deposits. Neither shows a "When to apply" selector.
   const fmt = useFormatter();
   const { track } = useAnalytics();
   const [draft, dispatch] = useReducer(manageDraftReducer, undefined, () =>
@@ -650,6 +652,7 @@ function RangeSettings({
           >
             {t(stage === "building" ? "preparing" : "reviewMove")}
           </Button>
+          <p className="-mt-2 text-center text-muted-foreground text-xs">{t("applyNow")}</p>
           <Button
             variant="secondary"
             className="min-h-11 w-full"
