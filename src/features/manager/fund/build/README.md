@@ -159,7 +159,8 @@ mandate tokens of the network without the collateral, each with its borrow APY. 
 market does not lend is disabled with a reason. The slider goes from 0 to the max LTV in the
 Allocation slider's steps, and shows the amount in the token and in USD. The panel reads the
 stored share within the max LTV (`readBorrowPct`), and `Use` writes the default share within it.
-So the slider, the risk rows and Apply always use the same value.
+Each change of the Asset or the slider writes the share that the panel reads (`borrowConfigWith`).
+So the slider, the risk rows, Apply and the stored config use the same value.
 
 A Borrow never borrows its own collateral (`borrowsOfOwnCollateral` in `plan/planRules.ts`). The
 plan refuses a Borrow config with the asset of the Supply above it. When the Supply changes to

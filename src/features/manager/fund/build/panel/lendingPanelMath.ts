@@ -13,7 +13,7 @@
  *   each with its borrow APY (null when the market does not lend it).
  * - [R3] The borrow amount is a % of the collateral value, from 0 to the max LTV. The slider steps
  *   as the Allocation slider does. A stored share is read within the max LTV, so the slider, the
- *   risk rows and Apply use the same value.
+ *   risk rows and Apply use the same value, and every config the panel writes carries that value.
  * - [R4] Health factor = liquidation threshold / borrowed share. 1.5 or more is success, 1.1 to
  *   under 1.5 is warning, under 1.1 is destructive.
  * - [R5] Liquidation price = collateral price x borrowed share / liquidation threshold. The drop to
@@ -30,7 +30,7 @@
  */
 import type { MandateTokenRef, NetworkId } from "../../mandateDraft";
 import { tokenKey } from "../../mandateDraft";
-import type { BuildPlan, PositionBlock } from "../plan/buildPlan";
+import type { AaveBlockConfig, BuildPlan, PositionBlock } from "../plan/buildPlan";
 import { findBlock } from "../plan/planDerive";
 
 /** The market figures of one asset (PP-INTEGRATION-POINT: the mock is PP-MGR-MCK-006). */
@@ -114,6 +114,20 @@ export function readBorrowPct(
   const pct = configPct ?? 0;
   if (!collateral) return Number.isFinite(pct) ? pct : 0;
   return clampBorrowPct(pct, borrowCeilingPct(collateral.maxLtvPct));
+}
+
+/**
+ * R3: the config that the panel writes when one field changes. It always carries the share that the
+ * panel reads (`readBorrowPct`), so a stored share above the new collateral's max LTV is never kept
+ * behind a changed asset. The input config is not changed.
+ */
+export function borrowConfigWith(
+  config: AaveBlockConfig,
+  change: Partial<AaveBlockConfig>,
+  collateral: BorrowMarketAsset | null,
+): AaveBlockConfig {
+  const next = { ...config, ...change };
+  return { ...next, borrowPct: readBorrowPct(next.borrowPct, collateral) };
 }
 
 /** R3: the borrowed value in USD, and in the borrowed token (null without a price). */

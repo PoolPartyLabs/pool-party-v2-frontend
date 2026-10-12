@@ -14,7 +14,8 @@
  * from 0 to the Aave limit in the Allocation slider's steps, the track beyond the limit dimmed), the
  * risk rows (Health factor, Liquidation price and the drop sentence, the one polite live region),
  * then the Lending risk block. The share is read within the limit (`readBorrowPct`), so the slider,
- * the risk rows and Apply use the same value.
+ * the risk rows and Apply use the same value, and each change the panel writes carries it
+ * (`borrowConfigWith`).
  *
  * The decisions are pure and tested in `lendingPanelMath.ts` (PP-MGR-LIB-080).
  *
@@ -44,6 +45,7 @@ import {
   borrowAmount,
   borrowApplyBlocker,
   borrowCollateral,
+  borrowConfigWith,
   borrowOptions,
   borrowRisk,
   type HealthTone,
@@ -198,7 +200,7 @@ export function BorrowBlockPanel({
           value={config.assetKey}
           onChange={(assetKey) => {
             if (rows.some((row) => row.assetKey === assetKey && !row.disabledReason))
-              onConfigChange({ ...config, assetKey });
+              onConfigChange(borrowConfigWith(config, { assetKey }, collateral?.market ?? null));
           }}
           footer={{
             prompt: t("needAsset"),
@@ -220,7 +222,11 @@ export function BorrowBlockPanel({
           <AllocationSlider
             value={borrowPct}
             ceiling={ceiling}
-            onChange={(next) => onConfigChange({ ...config, borrowPct: next })}
+            onChange={(next) =>
+              onConfigChange(
+                borrowConfigWith(config, { borrowPct: next }, collateral?.market ?? null),
+              )
+            }
             copy={{
               label: t("amount"),
               help: t("amountHelp"),

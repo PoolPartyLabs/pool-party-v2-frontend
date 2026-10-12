@@ -4,17 +4,26 @@
  * @implements-rules-version v1 (POO-2334 rules v1)
  * @analytics-events none, pure functions under test
  *
- * One test per rule of POO-2334 that has logic: the Borrow panel's collateral, options, amount,
- * health factor, liquidation price and Apply gate (R1 to R6), the Swap · auto before a pool (R9)
- * and the Supply panel's APY and collateral note (R10), and the copy in 11 locales (R13). R7 is a
- * constant of `BLOCK_KIND_STATUS`,
- * and R11 is `planReducers.test.ts` ("takes a Supply's Swap · auto and the Borrow under it").
+ * One test per rule of POO-2334 that has logic: the Borrow panel's collateral, options, amount
+ * and Apply gate (R1 to R3), the health factor (R4), the liquidation price (R5), the status of the
+ * Borrow kind (R7), the Swap · auto before a pool (R9), the Supply panel's APY and collateral note
+ * (R10), and the copy in 11 locales (R13). R6 is the mock seam, which is a marked constant in the
+ * panel. R11 is `planReducers.test.ts` ("takes a Supply's Swap · auto and the Borrow under it").
  */
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { locales } from "@/i18n/config";
-import type { PositionBlock } from "../plan/buildPlan";
+import de from "@/i18n/messages/de/manager.json";
+import en from "@/i18n/messages/en/manager.json";
+import es from "@/i18n/messages/es/manager.json";
+import fr from "@/i18n/messages/fr/manager.json";
+import ja from "@/i18n/messages/ja/manager.json";
+import ko from "@/i18n/messages/ko/manager.json";
+import nl from "@/i18n/messages/nl/manager.json";
+import ptBR from "@/i18n/messages/pt-BR/manager.json";
+import vi from "@/i18n/messages/vi/manager.json";
+import zhCN from "@/i18n/messages/zh-CN/manager.json";
+import zhTW from "@/i18n/messages/zh-TW/manager.json";
+import { BLOCK_KIND_STATUS, type PositionBlock } from "../plan/buildPlan";
 import { findBlock } from "../plan/planDerive";
 import { needsAutoSwap } from "../plan/planRules";
 import {
@@ -32,6 +41,7 @@ import {
   borrowApplyBlocker,
   borrowCeilingPct,
   borrowCollateral,
+  borrowConfigWith,
   borrowOptions,
   borrowRisk,
   clampBorrowPct,
@@ -126,6 +136,30 @@ describe("borrow amount (R3)", () => {
   });
 });
 
+describe("a Borrow config the panel writes (R3)", () => {
+  it("carries the share that the panel reads within the max LTV, whatever field changes", () => {
+    // @rule R3
+    const wbtc: BorrowMarketAsset = { ...(MARKET.WETH as BorrowMarketAsset), maxLtvPct: 73 };
+    // Supply WETH (80), Borrow at 80%, then the Supply takes WBTC (73): the panel reads 73.
+    const stored = { assetKey: "usdc", borrowPct: 80 };
+    expect(borrowConfigWith(stored, { assetKey: "dai" }, wbtc)).toEqual({
+      assetKey: "dai",
+      borrowPct: 73,
+    });
+    expect(borrowConfigWith(stored, { borrowPct: 50 }, wbtc)).toEqual({
+      assetKey: "usdc",
+      borrowPct: 50,
+    });
+    expect(borrowConfigWith(stored, { borrowPct: 99 }, wbtc).borrowPct).toBe(73);
+    expect(borrowConfigWith({ assetKey: "usdc" }, { assetKey: "dai" }, wbtc).borrowPct).toBe(0);
+    expect(borrowConfigWith(stored, { assetKey: "dai" }, null)).toEqual({
+      assetKey: "dai",
+      borrowPct: 80,
+    });
+    expect(stored).toEqual({ assetKey: "usdc", borrowPct: 80 });
+  });
+});
+
 describe("health factor (R4)", () => {
   it("is the liquidation threshold over the borrowed share, with three tones", () => {
     // @rule R4
@@ -155,9 +189,9 @@ describe("liquidation price (R5)", () => {
   });
 });
 
-describe("borrowApplyBlocker (R6)", () => {
+describe("borrowApplyBlocker (R3)", () => {
   it("holds Apply without a collateral, a market rate for the asset, or an amount in the limit", () => {
-    // @rule R6
+    // @rule R3
     const option = { assetKey: "a", symbol: "USDC", apyPct: 5.6, priceUsd: 1 };
     expect(borrowApplyBlocker({ collateral: false, option, borrowPct: 40, ceilingPct: 80 })).toBe(
       "needSupply",
@@ -182,6 +216,13 @@ describe("borrowApplyBlocker (R6)", () => {
     expect(
       borrowApplyBlocker({ collateral: true, option, borrowPct: 40, ceilingPct: 80 }),
     ).toBeNull();
+  });
+});
+
+describe("the Borrow kind status (R7)", () => {
+  it("keeps aaveBorrow enabled in BLOCK_KIND_STATUS", () => {
+    // @rule R7
+    expect(BLOCK_KIND_STATUS.aaveBorrow).toBe("enabled");
   });
 });
 
@@ -218,27 +259,41 @@ function leafKeys(node: unknown, prefix = ""): string[] {
   );
 }
 
+/** Every locale's manager copy, as the JSON files hold it. */
+const MESSAGES: Record<string, typeof en> = {
+  en,
+  "pt-BR": ptBR as typeof en,
+  es: es as typeof en,
+  fr: fr as typeof en,
+  de: de as typeof en,
+  nl: nl as typeof en,
+  ja: ja as typeof en,
+  ko: ko as typeof en,
+  "zh-CN": zhCN as typeof en,
+  "zh-TW": zhTW as typeof en,
+  vi: vi as typeof en,
+};
+
 describe("the panel copy (R13)", () => {
-  it("has the Borrow panel and the collateral note in all 11 locales, with no em dash", () => {
+  it("has the Borrow panel and the collateral note in every locale, with no em dash", () => {
     // @rule R13
-    const read = (locale: string) =>
-      JSON.parse(
-        readFileSync(
-          join(process.cwd(), "src", "i18n", "messages", locale, "manager.json"),
-          "utf8",
-        ),
-      ).fundBuilder.build;
+    const read = (locale: string) => MESSAGES[locale]?.fundBuilder.build;
     const english = read("en");
-    const englishKeys = leafKeys(english.borrowPanel).sort();
-    expect(locales).toHaveLength(11);
+    const englishKeys = leafKeys(english?.borrowPanel).sort();
     for (const locale of locales) {
       const build = read(locale);
-      expect(leafKeys(build.borrowPanel).sort(), locale).toEqual(englishKeys);
+      expect(build, locale).toBeDefined();
+      expect(leafKeys(build?.borrowPanel).sort(), locale).toEqual(englishKeys);
       const values = [
         ...englishKeys.map((key) =>
-          key.split(".").reduce((node, part) => node?.[part], build.borrowPanel),
+          key
+            .split(".")
+            .reduce<unknown>(
+              (node, part) => (node as Record<string, unknown> | undefined)?.[part],
+              build?.borrowPanel,
+            ),
         ),
-        build.supplyPanel.collateralNote,
+        build?.supplyPanel.collateralNote,
       ];
       for (const value of values) {
         expect(typeof value === "string" && value.trim() !== "", locale).toBe(true);
