@@ -1,13 +1,14 @@
 /**
  * @id PP-MGR-CMP-103
  * @name StrategyChartSurface tests
- * @description Widget isolation, lifecycle, keyboard boundaries and retained canvas behavior.
+ * @description DEX Screener frame isolation, lifecycle, keyboard boundaries and retained canvas behavior.
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-37675
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8682-3253
  * @linear https://linear.app/yeildbay/issue/POO-2309
  * @linear https://linear.app/yeildbay/issue/POO-2336
+ * @linear https://linear.app/yeildbay/issue/POO-2338
  * @i18n-namespace manager.marketChart
- * @implements-rules-version v1 (POO-2309), v1 (POO-2336)
+ * @implements-rules-version v1 (POO-2309), v1 (POO-2336), v1 (POO-2338)
  * @analytics-events none, assertions over the chart host and real analytics sink.
  */
 import { useState } from "react";
@@ -20,14 +21,16 @@ import {
   userEvent,
 } from "../../../../../tests/utils/renderWithProviders";
 import type { ChartSelection } from "./chartContext";
-import { CHART_WIDGET_ORIGIN, type ChartMarket } from "./chartModel";
+import { CHART_EMBED_ORIGIN, type ChartMarket } from "./chartModel";
 import { StrategyChartSurface } from "./StrategyChartSurface";
 
+const POOL_ID = `0x${"d4".repeat(32)}`;
 const market: ChartMarket = {
-  id: "eth-usdc",
-  symbol: "BINANCE:ETHUSDC",
-  pair: "ETH / USDC",
-  venue: "Binance",
+  kind: "pool",
+  chain: "arbitrum",
+  address: POOL_ID,
+  label: "WETH / USDC",
+  venue: "Uniswap v4",
 };
 const selected: ChartSelection = {
   identity: "private-fund:position:pool",
@@ -54,29 +57,9 @@ function surface(selection = selected, active = true) {
   );
 }
 function frame(): HTMLIFrameElement {
-  const element = document.querySelector<HTMLIFrameElement>("[data-tradingview-frame]");
+  const element = document.querySelector<HTMLIFrameElement>("[data-chart-frame]");
   if (!element) throw new Error("Chart frame was not mounted");
   return element;
-}
-function post(
-  iframe: HTMLIFrameElement,
-  name: string,
-  options: { origin?: string; source?: MessageEventSource | null; instance?: string } = {},
-) {
-  const config = JSON.parse(decodeURIComponent(new URL(iframe.src).hash.slice(1)));
-  act(() => {
-    window.dispatchEvent(
-      new MessageEvent("message", {
-        origin: options.origin ?? CHART_WIDGET_ORIGIN,
-        source: options.source === undefined ? iframe.contentWindow : options.source,
-        data: JSON.stringify({
-          name,
-          frameElementId: options.instance ?? config.frameElementId,
-          data: { wallet: "must-never-be-read" },
-        }),
-      }),
-    );
-  });
 }
 function events(name: string) {
   return window.dataLayer?.filter((event) => event.event === name) ?? [];
@@ -90,31 +73,55 @@ afterEach(() => {
 });
 
 describe("Market chart surface", () => {
-  // @rule R1, R6, R7: provider left toolbar, isolation and attribution.
-  it("loads on chart intent with the real left toolbar and safe frame attributes", async () => {
+  // @rule R1, R4, R7, R9, R11 (POO-2338): DEX Screener pool embed, isolation and attribution.
+  it("loads the exact pool on chart intent with the left toolbar and safe frame attributes", async () => {
     renderWithProviders(surface());
     expect(document.querySelector("iframe")).toBeNull();
-    expect(document.querySelector('script[src*="tradingview"]')).toBeNull();
     await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
     const iframe = frame();
     const url = new URL(iframe.src);
-    const config = JSON.parse(decodeURIComponent(url.hash.slice(1)));
-    expect(url.origin).toBe(CHART_WIDGET_ORIGIN);
-    expect(config.hide_side_toolbar).toBe(false);
-    expect(config.hide_top_toolbar).toBe(false);
-    expect(config.allow_symbol_change).toBe(false);
-    expect(config.interval).toBe("D");
-    expect(iframe).toHaveAttribute("title", "ETH / USDC market reference chart");
+    expect(url.origin).toBe(CHART_EMBED_ORIGIN);
+    expect(url.pathname).toBe(`/arbitrum/${POOL_ID}`);
+    expect(url.searchParams.get("chartLeftToolbar")).toBe("1");
+    expect(url.searchParams.has("info")).toBe(false);
+    expect(iframe).toHaveAttribute("title", "WETH / USDC price chart");
     expect(iframe).toHaveAttribute("referrerpolicy", "no-referrer");
     expect(iframe).toHaveAttribute("sandbox", "allow-scripts allow-same-origin allow-popups");
-    expect(screen.getByText("ETH / USDC · Binance")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Chart by TradingView" })).toHaveAttribute(
+    expect(screen.getByText("Pool chart")).toBeInTheDocument();
+    expect(screen.getByText("WETH / USDC · Uniswap v4")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Chart by DEX Screener" })).toHaveAttribute(
       "href",
-      "https://www.tradingview.com/symbols/ETHUSDC/?exchange=BINANCE",
+      `https://dexscreener.com/arbitrum/${POOL_ID}`,
     );
-    expect(JSON.stringify(config)).not.toContain("private-fund");
+    expect(iframe.src).not.toContain("private-fund");
     expect(events("manager_chart_viewed")).toEqual([
-      { event: "manager_chart_viewed", chart_context: "build", chart_market: "eth-usdc" },
+      { event: "manager_chart_viewed", chart_context: "build", chart_market: "pool" },
+    ]);
+  });
+
+  // @rule R3, R11 (POO-2338): a lending block shows the asset chart header.
+  it("names the asset for a token chart", async () => {
+    renderWithProviders(
+      surface({
+        identity: "supply-private",
+        availability: {
+          status: "available",
+          market: {
+            kind: "token",
+            chain: "arbitrum",
+            address: `0x${"af".repeat(20)}`,
+            label: "USDC",
+            venue: "Arbitrum",
+          },
+        },
+      }),
+    );
+    await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
+    expect(screen.getByText("Asset chart")).toBeInTheDocument();
+    expect(screen.getByText("USDC · Arbitrum")).toBeInTheDocument();
+    expect(frame()).toHaveAttribute("title", "USDC price chart");
+    expect(events("manager_chart_viewed")).toEqual([
+      { event: "manager_chart_viewed", chart_context: "build", chart_market: "token" },
     ]);
   });
 
@@ -154,15 +161,10 @@ describe("Market chart surface", () => {
     const chrome = [
       screen.getByRole("tab", { name: "Charts" }),
       screen.getByRole("tabpanel", { name: "Charts" }),
-      screen.getByRole("link", { name: "Chart by TradingView" }),
+      screen.getByRole("link", { name: "Chart by DEX Screener" }),
     ];
     for (const target of chrome) {
       for (const key of ["Delete", "Backspace", "Escape"]) fireEvent.keyDown(target, { key });
-    }
-    post(frame(), "tv-widget-no-data");
-    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
-    for (const key of ["Delete", "Backspace", "Escape"]) {
-      fireEvent.keyDown(screen.getByRole("button", { name: "Back to Strategy flow" }), { key });
     }
     expect(parentKeys).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole("tab", { name: "Strategy flow" }));
@@ -176,7 +178,7 @@ describe("Market chart surface", () => {
     renderWithProviders(
       surface({
         identity: "supply-private",
-        availability: { status: "unavailable", reason: "lending_reference" },
+        availability: { status: "unavailable", reason: "unsupported_block" },
       }),
     );
     await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
@@ -190,7 +192,7 @@ describe("Market chart surface", () => {
         event: "manager_chart_blocked",
         chart_context: "build",
         chart_market: "unavailable",
-        chart_reason: "lending_reference",
+        chart_reason: "unsupported_block",
       },
     ]);
   });
@@ -199,17 +201,17 @@ describe("Market chart surface", () => {
   it("returns to Strategy flow with the same selection and draft", async () => {
     const unavailable: ChartSelection = {
       identity: "supply-private",
-      availability: { status: "unavailable", reason: "lending_reference" },
+      availability: { status: "unavailable", reason: "unsupported_block" },
     };
     renderWithProviders(
-      <StrategyChartSurface selection={unavailable} selectionLabel="Supply USDC" context="build">
+      <StrategyChartSurface selection={unavailable} selectionLabel="Swap USDC" context="build">
         <CanvasDraft />
       </StrategyChartSurface>,
     );
     const input = screen.getByRole("textbox", { name: "Canvas draft" });
     await userEvent.type(input, " edited");
     await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
-    expect(screen.getByText("Supply USDC")).toBeInTheDocument();
+    expect(screen.getByText("Swap USDC")).toBeInTheDocument();
     expect(screen.getByText("The selection is preserved.")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Back to Strategy flow" }));
     const flowTab = screen.getByRole("tab", { name: "Strategy flow" });
@@ -220,43 +222,31 @@ describe("Market chart surface", () => {
     expect(events("manager_chart_closed")).toHaveLength(1);
   });
 
-  // @rule R8: boot is not a certificate of OHLCV or financial execution.
-  it("accepts only current-origin messages and keeps provider no-data as a failure", async () => {
+  // @rule R10 (POO-2338): the iframe load is the only load signal. No message is read.
+  it("clears the loading state on iframe load and ignores window messages", async () => {
     renderWithProviders(surface());
     await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
     const iframe = frame();
     expect(screen.getByRole("status")).toHaveTextContent("Loading chart...");
-    post(iframe, "tv-widget-load", { origin: "https://evil.example" });
-    post(iframe, "tv-widget-load", { source: window });
-    post(iframe, "tv-widget-load", { instance: "other-instance" });
-    fireEvent.load(iframe);
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          origin: CHART_EMBED_ORIGIN,
+          source: iframe.contentWindow,
+          data: JSON.stringify({ name: "no-data", data: { wallet: "must-never-be-read" } }),
+        }),
+      );
+    });
     expect(screen.getByRole("status")).toHaveTextContent("Loading chart...");
-    post(iframe, "tv-widget-load");
+    expect(screen.queryByRole("alert")).toBeNull();
+    fireEvent.load(iframe);
     expect(screen.queryByText("Loading chart...")).toBeNull();
     expect(events("manager_chart_failed")).toHaveLength(0);
-    post(iframe, "tv-widget-no-data");
-    // POO-2336 R4: provider no data is the full-panel unavailable state with Back only.
-    expect(screen.getByRole("alert")).toHaveTextContent("Charts are unavailable.");
-    expect(screen.getByRole("button", { name: "Back to Strategy flow" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
-    expect(screen.queryByText("ETH / USDC · Binance")).toBeNull();
-    expect(screen.queryByRole("link", { name: "Chart by TradingView" })).toBeNull();
-    expect(document.querySelector("[data-tradingview-frame]")).toBeNull();
-    post(iframe, "tv-widget-load");
-    expect(screen.getByRole("alert")).toBeInTheDocument();
-    expect(events("manager_chart_failed")).toEqual([
-      {
-        event: "manager_chart_failed",
-        chart_context: "build",
-        chart_market: "eth-usdc",
-        chart_reason: "no_data",
-      },
-    ]);
   });
 
-  // @rule R5, R8: retry and origin switches isolate listeners and timers.
+  // @rule R10 (POO-2338): retry makes a new frame with its own timer.
   // @rule R5 (POO-2336): the load error keeps its retry.
-  it("retries with a new instance and ignores late messages from the previous frame", () => {
+  it("retries with a new frame and ignores a late load of the previous frame", () => {
     vi.useFakeTimers();
     renderWithProviders(surface());
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Charts" }), { button: 0, ctrlKey: false });
@@ -265,31 +255,39 @@ describe("Market chart surface", () => {
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     const current = frame();
     expect(current).not.toBe(old);
-    post(old, "tv-widget-load");
+    fireEvent.load(old);
     expect(screen.getByRole("status")).toHaveTextContent("Loading chart...");
-    post(current, "tv-widget-load");
+    fireEvent.load(current);
     expect(screen.queryByRole("status")).toBeNull();
     expect(events("manager_chart_retried")).toHaveLength(1);
     expect(screen.getByRole("tab", { name: "Charts" })).toHaveAttribute("aria-selected", "true");
   });
 
-  // @rule R8, R9: timeout offers recovery and preserves the draft.
-  it("reports absent provider boot and removes timers/listeners on unmount", async () => {
+  // @rule R10 (POO-2338): the 20 s timeout offers recovery and the timer stops on unmount.
+  it("reports a load timeout and removes the timer on unmount", () => {
     vi.useFakeTimers();
     const view = renderWithProviders(surface());
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Charts" }), { button: 0, ctrlKey: false });
     const iframe = frame();
     act(() => vi.advanceTimersByTime(20_000));
     expect(screen.getByRole("alert")).toHaveTextContent("The chart could not load. Try again.");
-    expect(events("manager_chart_failed")).toHaveLength(1);
+    fireEvent.load(iframe);
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(events("manager_chart_failed")).toEqual([
+      {
+        event: "manager_chart_failed",
+        chart_context: "build",
+        chart_market: "pool",
+        chart_reason: "load_timeout",
+      },
+    ]);
     view.unmount();
-    post(iframe, "tv-widget-no-data");
     act(() => vi.advanceTimersByTime(20_000));
     expect(events("manager_chart_failed")).toHaveLength(1);
     expect(events("manager_chart_closed")).toHaveLength(1);
   });
 
-  // @rule R5, R10: different private origin means a different frame; no private data leaves it.
+  // @rule R7, R9 (POO-2338): a new selection makes a new frame; no private data leaves it.
   it("recreates the frame on selection change and reports bounded events without private identity", async () => {
     const view = renderWithProviders(surface());
     await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
@@ -299,10 +297,10 @@ describe("Market chart surface", () => {
     );
     const current = frame();
     expect(current).not.toBe(old);
-    post(old, "tv-widget-no-data");
     expect(screen.queryByRole("alert")).toBeNull();
     expect(events("manager_chart_viewed")).toHaveLength(2);
     expect(JSON.stringify(window.dataLayer)).not.toContain("0x1234");
+    expect(JSON.stringify(window.dataLayer)).not.toContain(POOL_ID);
     expect(current.src).not.toContain("other-pool");
     view.rerender(surface(selected, false));
     expect(events("manager_chart_closed")).toHaveLength(2);

@@ -253,7 +253,7 @@ export const ANALYTICS_EVENTS = [
   "strategy_manage_viewed",
   // POO-2274: real node inspection only; no monetary settlement or identity data.
   "strategy_block_selected",
-  // POO-2309: read-only external market reference, no financial submission/settlement.
+  // POO-2338: read-only public DEX Screener chart of a pool or asset, no financial submission/settlement.
   "manager_chart_viewed",
   "manager_chart_closed",
   "manager_chart_blocked",
@@ -1017,16 +1017,15 @@ export type AnalyticsManageNodeKind =
   | "bridge";
 
 export interface AnalyticsParams {
-  /** Bounded market chart presentation only. Never fund, pool, mint or wallet identity. */
+  /** Bounded market chart presentation only. Never fund, pool, token, mint or wallet identity. */
   chart_context?: "build" | "manage" | "solana-local";
-  chart_market?: "eth-usdc" | "sol-usdc" | "unavailable";
+  /** POO-2338 R9: the chart kind only. It never holds a pool or token address. */
+  chart_market?: "pool" | "token" | "unavailable";
   chart_reason?:
     | "no_selection"
     | "unconfigured"
     | "unsupported_block"
-    | "lending_reference"
     | "unsupported_pair"
-    | "no_data"
     | "load_timeout";
   /** Navigation type for strategy_block_selected. No wallet/core/position identifiers. */
   node_kind?: AnalyticsManageNodeKind;

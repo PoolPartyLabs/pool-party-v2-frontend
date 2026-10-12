@@ -4,8 +4,11 @@
  * @description Charts unavailable state, with and without a selected block.
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8682-3253
  * @linear https://linear.app/yeildbay/issue/POO-2336
- * @implements-rules-version v1 (POO-2336)
+ * @linear https://linear.app/yeildbay/issue/POO-2338
+ * @implements-rules-version v1 (POO-2336), v1 (POO-2338)
  * @analytics-events manager_chart_viewed, manager_chart_blocked (harness only, no remote widget)
+ *
+ * The stories show only unavailable states. They do not load the DEX Screener frame.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { userEvent, within } from "storybook/test";
@@ -26,8 +29,8 @@ const meta = {
   decorators: [withManagerMessages],
   args: {
     context: "manage",
-    selection: blocked("lending_reference"),
-    selectionLabel: "Aave v3 · USDC",
+    selection: blocked("unsupported_block"),
+    selectionLabel: "Swap · USDC / WETH",
     fillContainer: false,
     children: <div className="p-4 text-sm text-muted-foreground">Strategy flow canvas</div>,
   },
@@ -40,12 +43,17 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** A lending reference selection shows the unavailable state with its label (R2). */
+/** A block with no chart (Swap) shows the unavailable state with its label (POO-2338 R5). */
 export const UnavailableWithSelection: Story = {};
 
 /** An unsupported pair shows the same state (R4). */
 export const UnavailableUnsupportedPair: Story = {
   args: { selection: blocked("unsupported_pair"), selectionLabel: "USDG / WETH" },
+};
+
+/** A mock pool with no real address or PoolId is unconfigured (POO-2338 R5). */
+export const UnavailableUnconfiguredPool: Story = {
+  args: { selection: blocked("unconfigured"), selectionLabel: "Uniswap v4 · WETH / USDC" },
 };
 
 /** No selected block: the state shows no preserved selection box. */

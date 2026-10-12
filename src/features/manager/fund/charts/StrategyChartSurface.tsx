@@ -1,27 +1,28 @@
 /**
  * @id PP-MGR-CMP-103
  * @name StrategyChartSurface
- * @description Isolated market-reference chart with retained strategy canvas and panel state.
+ * @description Isolated DEX Screener chart of the selected pool or asset, with retained strategy canvas and panel state.
  *   An unavailable chart shows one state with the preserved selection and Back (POO-2336).
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-37675
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8682-3253
  * @linear https://linear.app/yeildbay/issue/POO-2309
  * @linear https://linear.app/yeildbay/issue/POO-2336
+ * @linear https://linear.app/yeildbay/issue/POO-2338
  * @i18n-namespace manager.marketChart
- * @implements-rules-version v1 (POO-2309), v1 (POO-2336)
+ * @implements-rules-version v1 (POO-2309), v1 (POO-2336), v1 (POO-2338)
  * @analytics-events manager_chart_viewed, manager_chart_closed, manager_chart_blocked,
  *   manager_chart_failed, manager_chart_retried
  */
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
-import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { cn } from "@/lib/utils/cn";
 import type { ChartSelection } from "./chartContext";
-import { buildChartUrl, type ChartMarket, readChartMessage } from "./chartModel";
+import { buildChartUrl, type ChartMarket, chartAnalyticsMarket, chartPageUrl } from "./chartModel";
 import {
   type ChartFailure,
   type ChartTab,
@@ -40,23 +41,11 @@ export interface StrategyChartSurfaceProps {
   active?: boolean;
 }
 
-/**
- * R1 to R4: one full-panel state for every cause, with the preserved selection and Back only.
- * Provider no data arrives after the panel opens, so that case is announced as an alert.
- */
-function ChartUnavailableState({
-  view,
-  onBack,
-  announce = false,
-}: {
-  view: ChartUnavailableView;
-  onBack(): void;
-  announce?: boolean;
-}) {
+/** R1 to R4: one full-panel state for every cause, with the preserved selection and Back only. */
+function ChartUnavailableState({ view, onBack }: { view: ChartUnavailableView; onBack(): void }) {
   const t = useTranslations("manager.marketChart");
   return (
     <div
-      role={announce ? "alert" : undefined}
       data-chart-unavailable=""
       className="flex min-h-24 flex-1 flex-col items-start gap-4 bg-surface p-5 text-xs text-muted-foreground"
     >
@@ -80,66 +69,54 @@ function ChartUnavailableState({
   );
 }
 
-/** A fresh remote instance owns its listener/timer; no message can write financial state. */
-function TradingViewFrame({
+/**
+ * POO-2338 R10: a fresh DEX Screener frame owns its 20 s timer. The iframe `onLoad` is the only
+ * load signal. The frame sends no message to the app, and the app reads none from it.
+ */
+function ChartFrame({
   market,
-  locale,
   loadError,
   onFailure,
   onRetry,
 }: {
   market: ChartMarket;
-  locale: string;
   loadError: ChartView["loadError"];
   onFailure(reason: ChartFailure): void;
   onRetry(): void;
 }) {
   const t = useTranslations("manager.marketChart");
-  const opaqueId = useId();
-  const instanceId = `pp-chart-${opaqueId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
-  const frame = useRef<HTMLIFrameElement>(null);
-  const [status, setStatus] = useState<"loading" | "booted" | ChartFailure>("loading");
-  const src = useMemo(
-    () => buildChartUrl(market, locale, instanceId),
-    [market, locale, instanceId],
-  );
+  const timer = useRef<number | null>(null);
+  const [status, setStatus] = useState<"loading" | "loaded" | ChartFailure>("loading");
+  const src = useMemo(() => buildChartUrl(market), [market]);
   useEffect(() => {
-    let failed = false;
-    const fail = (reason: ChartFailure) => {
-      if (failed) return;
-      failed = true;
-      window.clearTimeout(timer);
-      setStatus(reason);
-      onFailure(reason);
-    };
-    const timer = window.setTimeout(() => fail("load_timeout"), 20_000);
-    const receive = (event: MessageEvent) => {
-      const message = readChartMessage(event, frame.current?.contentWindow, instanceId);
-      if (message === "no-data") fail("no_data");
-      if (message === "boot" && !failed) {
-        window.clearTimeout(timer);
-        // Provider boot precedes its data load. Never use this to certify candles or execution.
-        setStatus("booted");
-      }
-    };
-    window.addEventListener("message", receive);
+    timer.current = window.setTimeout(() => {
+      timer.current = null;
+      setStatus("load_timeout");
+      onFailure("load_timeout");
+    }, 20_000);
     return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("message", receive);
+      if (timer.current !== null) window.clearTimeout(timer.current);
+      timer.current = null;
     };
-  }, [instanceId, onFailure]);
-  const failed = status === "no_data" || status === "load_timeout";
+  }, [onFailure]);
+  const loaded = () => {
+    // A load after the timeout does not hide the retry action.
+    if (timer.current === null) return;
+    window.clearTimeout(timer.current);
+    timer.current = null;
+    setStatus("loaded");
+  };
+  const failed = status === "load_timeout";
   return (
     <div className="relative min-h-24 min-w-0 flex-1" aria-busy={status === "loading"}>
-      {/* PP-INTEGRATION-POINT: isolated public market reference; no app/wallet state is sent. */}
+      {/* PP-INTEGRATION-POINT: isolated public DEX Screener chart; only the chain slug and the public pool or token address are sent. */}
       <iframe
-        ref={frame}
-        data-tradingview-frame=""
+        data-chart-frame=""
         src={src}
-        title={t("frameTitle", { pair: market.pair })}
-        lang={locale}
+        title={t("frameTitle", { name: market.label || market.venue })}
         referrerPolicy="no-referrer"
         sandbox="allow-scripts allow-same-origin allow-popups"
+        onLoad={loaded}
         aria-hidden={failed || undefined}
         inert={failed || undefined}
         tabIndex={failed ? -1 : undefined}
@@ -178,7 +155,6 @@ export function StrategyChartSurface({
   active = true,
 }: StrategyChartSurfaceProps) {
   const t = useTranslations("manager.marketChart");
-  const locale = useLocale();
   const { track } = useAnalytics();
   const [tab, setTab] = useState<ChartTab>("flow");
   const [visitedIdentity, setVisitedIdentity] = useState<string | null>(null);
@@ -189,8 +165,9 @@ export function StrategyChartSurface({
   const { availability, identity } = selection;
   const market = availability.status === "available" ? availability.market : null;
   const reason = availability.status === "unavailable" ? availability.reason : null;
-  const marketId = market?.id ?? "unavailable";
-  const widgetKey = JSON.stringify([identity, locale, market?.symbol]);
+  // R9: a bounded value, never an address.
+  const marketId = chartAnalyticsMarket(availability);
+  const widgetKey = JSON.stringify([identity, market ? buildChartUrl(market) : null]);
   const chartsVisible = tab === "charts";
   const visited = chartsVisible || visitedIdentity === widgetKey;
   const frameKey = `${widgetKey}:${attempt}`;
@@ -203,7 +180,7 @@ export function StrategyChartSurface({
   useEffect(() => {
     if (active && chartsVisible) setVisitedIdentity(widgetKey);
   }, [active, chartsVisible, widgetKey]);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: a new private identity/locale is a new chart visit even for the same bounded market; neither identity is emitted.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new private identity is a new chart visit even for the same bounded market; the identity is not emitted.
   useEffect(() => {
     if (!active || !chartsVisible) return;
     track("manager_chart_viewed", { chart_context: context, chart_market: marketId });
@@ -216,7 +193,7 @@ export function StrategyChartSurface({
       });
     }
     return () => track("manager_chart_closed", { chart_context: context, chart_market: marketId });
-  }, [active, chartsVisible, context, marketId, reason, identity, locale, track]);
+  }, [active, chartsVisible, context, marketId, reason, identity, track]);
   const onFailure = useCallback(
     (reason: ChartFailure) => {
       setFailure({ frame: frameKey, reason });
@@ -295,17 +272,20 @@ export function StrategyChartSurface({
           {panel.kind === "chart" ? (
             <>
               <header className="scrollbar-dark min-h-0 shrink space-y-1 overflow-y-auto border-b border-border px-3 py-2">
-                <h3 className="font-semibold text-sm text-foreground">{t("referenceTitle")}</h3>
+                <h3 className="font-semibold text-sm text-foreground">
+                  {t(panel.market.kind === "pool" ? "poolTitle" : "assetTitle")}
+                </h3>
                 <p className="text-sm text-foreground">
-                  {panel.market.pair} · {panel.market.venue}
+                  {panel.market.label} · {panel.market.venue}
                 </p>
-                <p className="text-xs text-muted-foreground">{t("referenceDescription")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t(panel.market.kind === "pool" ? "poolDescription" : "assetDescription")}
+                </p>
               </header>
               {visited ? (
-                <TradingViewFrame
+                <ChartFrame
                   key={frameKey}
                   market={panel.market}
-                  locale={locale}
                   loadError={panel.loadError}
                   onFailure={onFailure}
                   onRetry={retry}
@@ -313,7 +293,7 @@ export function StrategyChartSurface({
               ) : null}
               <footer className="shrink-0 border-t border-border px-3 py-2 text-xs text-muted-foreground">
                 <a
-                  href={`https://www.tradingview.com/symbols/${panel.market.symbol.split(":")[1]}/?exchange=BINANCE`}
+                  href={chartPageUrl(panel.market)}
                   target="_blank"
                   rel="noopener noreferrer"
                   referrerPolicy="no-referrer"
@@ -324,7 +304,7 @@ export function StrategyChartSurface({
               </footer>
             </>
           ) : (
-            <ChartUnavailableState view={panel} onBack={back} announce={market !== null} />
+            <ChartUnavailableState view={panel} onBack={back} />
           )}
         </TabsContent>
       </div>
