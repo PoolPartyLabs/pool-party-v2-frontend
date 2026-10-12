@@ -4,7 +4,8 @@
 
 Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
 the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
-local Build/Manage host across phases and applies the route/account/exit guards described below.
+local Build across phases and applies the route/account/exit guards described below.
+POO-2342 R12 removed the Manage host: the builder shows only Configure.
 This wizard change is pre-merge code delivery, without a deployment or native-browser visual
 acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
 Not available; `solanaSpoke` stays off.
@@ -22,8 +23,8 @@ entitlement endpoint is required.
 
 Case-sensitive Base58 token identities and protocol selections guard configured positions and
 reconciled automatic conversion legs; native SOL never satisfies an exact WSOL SPL requirement.
-The mounted local Build/Manage host survives selection, hiding and phase navigation; dirty phase
-exit requires explicit discard. Pending Configure/Manage status reaches the owner even while
+The mounted local Build survives selection, hiding and phase navigation; dirty phase
+exit requires explicit discard. Pending Configure status reaches the owner even while
 Build is hidden. Local owner cleanup covers every phase with truthful draft-dirty or pending status;
 explicit exit suppresses abandonment. The owner stays outside the reused render boundary, which
 emits genuine bounded render errors and retries with applied shared plan/Review fields retained.
@@ -57,9 +58,9 @@ historical fixtures rather than final topology oracles.
 
 ## Kamino independent reads (POO-2291 S2)
 
-Kamino's separate pure read model, `solanaKaminoReadModel.ts` (PP-MGR-LIB-072), validates the selected local/canonical program, market, reserve, position/obligation and mainnet USDC identity before accepting an envelope. Metadata, quantity, USD, APY and each reward stream have independent validation. Malformed fields become unavailable without exposing rejected values or erasing valid siblings. Decimal confirmed-zero requires observed confirmed/finalized provenance; USD is not inferred from a USDC quantity. The pure model is merged in PR #143; the read-only section now mounts in Configure and local Manage without any API/RPC/wallet call. POO-2240/2261/2262 and POO-2290 still own verified market/account reads, custody and execution.
+Kamino's separate pure read model, `solanaKaminoReadModel.ts` (PP-MGR-LIB-072), validates the selected local/canonical program, market, reserve, position/obligation and mainnet USDC identity before accepting an envelope. Metadata, quantity, USD, APY and each reward stream have independent validation. Malformed fields become unavailable without exposing rejected values or erasing valid siblings. Decimal confirmed-zero requires observed confirmed/finalized provenance; USD is not inferred from a USDC quantity. The pure model is merged in PR #143; the read-only section now mounts in Configure without any API/RPC/wallet call. POO-2240/2261/2262 and POO-2290 still own verified market/account reads, custody and execution.
 
-`SolanaKaminoReadSection.tsx` (PP-MGR-CMP-099) receives independently verified metadata, amounts, rates and full-account risk. Configure and local Manage host seams pass null origin/read until POO-2240/2261 supplies program/market/reserve/obligation and fresh metric envelopes. POO-2290 provides independently scoped Current/After account risk; a missing APY or market metric does not erase a compatible obligation read. Physical quantities, independent USD, zero/stale/unknown states and empty rewards remain separate. No selector, backend contract or execution capability is invented. Existing local drafts/Review remain mounted, and no financial completion is emitted.
+`SolanaKaminoReadSection.tsx` (PP-MGR-CMP-099) receives independently verified metadata, amounts, rates and full-account risk. The Configure seam passes null origin/read until POO-2240/2261 supplies program/market/reserve/obligation and fresh metric envelopes. POO-2290 provides independently scoped Current/After account risk; a missing APY or market metric does not erase a compatible obligation read. Physical quantities, independent USD, zero/stale/unknown states and empty rewards remain separate. No selector, backend contract or execution capability is invented. Existing local drafts/Review remain mounted, and no financial completion is emitted.
 
 ## Solana protocol range context (POO-2291 S3/S4)
 
@@ -77,7 +78,6 @@ The shared Configure host supplies null origins, reads, intentions, quotes and c
 | --- | --- | --- |
 | PP-MGR-LIB-071, `solanaManageModel.ts` | Case-sensitive canonical identity and local instance identity are separate. Local configuration, draft/revision/mode, Current, After, selection and journal have independent ownership. Current/After physical token quantities fit u64; absent observations remain absent. After binds to identity, base snapshot, revision, mode and host clock. | Authorized canonical reads, source/freshness evidence, separate simulation and journal reconciliation under POO-2239/2240/2261/2262. The model cannot attest external ownership or submit transactions. |
 | PP-MGR-CMP-097, `SolanaManagePresenter.tsx` | Injected Current, complete source/slot/commitment metadata and independently valid After. Inline exclusive modes and Review expose local intentions. Current range context must match the canonical Current ticks and identity. Confirm is disabled. | Supply verified canonical reads/context, preview and operation journal. No financial value or execution capability is inferred from a drawing or fixture. |
-| PP-MGR-CMP-098, local range/apply seam | Non-null ranges fail closed without verified protocol context. Whole-percent drafts must stay within 100%. Applying one block checks other blocks' applied baselines, not unapplied reductions, and requires `onApplyDrawing(localId, config) === true` before local state/success changes. | Parent drawing owner acknowledges accepted writes. Verified protocol domain/grid context is required before ranges can be applied. This callback confers no signing capability. |
 
 Drawing Apply never writes canonical Current or the operation journal. Rejected acknowledgement retains draft and Review; a synchronized baseline that reaches the draft ends its obsolete mode/review binding and invalidates After without altering Current/journal. Bounded callbacks contain protocol/action only; the config callback is application data, not analytics. The screen emits the consent-aware interaction taxonomy. Real discovery, custody, quotation, authority, transaction details, signing and settlement remain unavailable under POO-2239/2240/2261/2262.
 
@@ -473,8 +473,8 @@ Review (POO-2342 R9) shows the reason `fundBuilder.review.validation.solanaLaunc
 
 Current materialized panel/Review release census: 537 markers across 310 files in src, including tests/stories, derived from this tree. Historical counts above describe earlier releases.
 
-Delivery continuation: this delivery connects the shared wizard route and retained Build/Manage
-host. The activation described as future work in the published foundation above is included here.
+Delivery continuation: this delivery connects the shared wizard route and retained Build.
+The activation described as future work in the published foundation above is included here.
 Applied plan/Review survive retry; unapplied inner-panel fields can be lost after a render exception,
 while the last pending metadata continues guarding leave. No deployment, native-browser acceptance
 or live Solana capability is asserted.

@@ -470,7 +470,7 @@ The local editor adds a separate custody control using a generic icon while pres
 
 ### Solana local Manage foundation evidence, POO-2291 S6
 
-The reviewed foundation contains PP-MGR-LIB-071 (`solanaManageModel.ts`), PP-MGR-CMP-097 (`SolanaManagePresenter.tsx`) (PP-MGR-CMP-098, `SolanaLocalManageHost.tsx`, was removed by POO-2342 rules v2), plus tests/stories and 60 localManage keys in each of the 11 configured locales. It builds on main `526ab318`, PR #139. A filtered census of that base plus only these foundation files gives 700 registry rows and 527 integration markers across 303 files; the base census is 697 rows and 524 markers across 301 files. The Screen/Canvas integration adds two screen seams, reaching 529 markers across 304 files. It adds no new artifact ID.
+The reviewed foundation contains PP-MGR-LIB-071 (`solanaManageModel.ts`), PP-MGR-CMP-097 (`SolanaManagePresenter.tsx`), and PP-MGR-CMP-098 (`SolanaLocalManageHost.tsx`, removed by POO-2342 rules v2), plus tests/stories and 60 localManage keys in each of the 11 configured locales. It builds on main `526ab318`, PR #139. A filtered census of that base plus only these foundation files gives 700 registry rows and 527 integration markers across 303 files; the base census is 697 rows and 524 markers across 301 files. The Screen/Canvas integration adds two screen seams, reaching 529 markers across 304 files. It adds no new artifact ID.
 
 Local instance identity, canonical position identity, applied drawing config, draft/revision/mode, Current, After, selection and journal remain separate. Same-pool instances keep separate drafts and inline Review through selection/hiding. Canonical quantities are exact u64 observations; missing does not become zero. Current source identity and range context must match the canonical snapshot/ticks. After requires identity, base snapshot, draft revision, mode and explicit validity clock. Unknown clocks and rejected/mismatched reads do not produce After. Confirm is always unavailable.
 
@@ -503,7 +503,8 @@ Sixty-nine model/presenter/Configure/local-Manage tests passed on the combined i
 
 Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
 the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
-local Build/Manage host across phases and applies the route/account/exit guards described below.
+local Build across phases and applies the route/account/exit guards described below.
+POO-2342 R12 removed the Manage host: the builder shows only Configure.
 This wizard change is pre-merge code delivery, without a deployment or native-browser visual
 acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
 Not available; `solanaSpoke` stays off.

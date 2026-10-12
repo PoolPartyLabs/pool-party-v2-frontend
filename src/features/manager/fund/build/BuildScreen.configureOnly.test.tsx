@@ -92,7 +92,7 @@ it("[R12] shows no Manage control and no Manage panel for a V2 draft with Solana
   expect(screen.getAllByRole("slider").length).toBeGreaterThan(0);
   // No toggle: neither the Manage button nor a pressed-state Configure button.
   expect(screen.queryByRole("button", { name: /^Manage/ })).toBeNull();
-  expect(screen.queryByRole("button", { name: "Configure block" })).toBeNull();
+  expect(screen.queryByRole("button", { name: /^(Configure|Manage)( block)?$/ })).toBeNull();
   // No Manage panel and no Manage host.
   expect(document.querySelector("[data-solana-manage-host]")).toBeNull();
   expect(screen.queryByRole("button", { name: "Review changes" })).toBeNull();

@@ -1,8 +1,9 @@
 # Local Solana binding for the shared V2 wizard
 
-Delivery boundary (POO-2342 rules v1): the Solana presenters, models and the Build/Manage host
+Delivery boundary (POO-2342 rules v1): the Solana presenters and models
 here serve the one V2 builder. Solana is a network of the mandate, not a mode. The builder keeps
-the retained local Build/Manage host across phases. This change is pre-merge code delivery, without
+the retained local Build across phases. Rules v2 (R12) remove the Manage host: the builder shows
+only Configure, and the Manage presenter and model are not mounted. This change is pre-merge code delivery, without
 a deployment or native-browser visual acceptance claim. Live Solana data, quotes, wallet
 operations and public launch remain
 Not available; `solanaSpoke` stays off.
@@ -125,7 +126,7 @@ The presenter exposes Move range/Apply now or Create new position/New deposits o
 
 `onApplyDrawing(localId, config): boolean` acknowledges one local drawing write. Apply validates whole percentages, aggregate drafts and the selected draft plus other blocks' applied baselines. Unapplied reductions in other drafts cannot fund that write. Only `true` releases the draft and reports local success; `false` preserves draft/Review and reports a bounded blocked intent. A non-null range is blocked without verified protocol context. Local Apply never writes canonical Current or the journal. Bounded intent callbacks contain only protocol and `edit/choose/review/apply/discard/rebase/blocked`; the config callback is application data and never analytics payload.
 
-The foundation is merged in PRs #140/#141 and adds 60 `manager.solanaPreview.localManage` keys to each of the 11 configured locales. Screen now offers Configure/Manage without remounting the local host. Configure's unapplied edits require confirmation before mode changes; Manage drafts/Review survive selection, close and mode changes. All actual fixed/automatic/position nodes share the canvas geometry identity and inspectors. Fixed Hub overlay, decorative locks, explicit owner/network context and Back/Escape focus restoration use existing pieces. Configure retains its original position-only activation.
+The foundation is merged in PRs #140/#141 and adds 60 `manager.solanaPreview.localManage` keys to each of the 11 configured locales. Screen offers Configure only during fund creation (POO-2342 R12 removed the Manage toggle and host). Configure's unapplied edits require confirmation before the panel closes. All actual fixed/automatic/position nodes share the canvas geometry identity and inspectors. Fixed Hub overlay, decorative locks, explicit owner/network context and Back/Escape focus restoration use existing pieces. Configure retains its original position-only activation.
 
 The drawing owner validates and acknowledges one instance write against applied baselines. Screen tracks bounded local mode/node/edit/review/apply intent through the existing consent-aware hook; rejected writes never emit applied success. Nothing signs, broadcasts or fills a financial read. The census is 700 registry rows and 529 markers in 304 files.
 
@@ -136,7 +137,7 @@ The isolated panels tree passed 18 presenter and 13 host tests, scoped TypeScrip
 
 `SolanaKaminoReadSection` (PP-MGR-CMP-099) preserves Program/Market/Reserve before Configure allocation, then Supply APY, available liquidity and deposit capacity. Manage shows position/obligation, Supplied, principal/interest/rewards, APY, Available to withdraw and independent full-account Current/After risk before local settings. Unknown rewards remain unavailable; a declared empty reward array is omitted. Exact quantity and independently sourced USD remain separate, with source/asOf/slot/commitment evidence when supplied. Risk binds to the validated canonical origin and the shared account-risk validator, so missing market metrics cannot erase a compatible risk read.
 
-Production Configure and local Manage pass null origins/reads. There is no reserve selector, rate, amount, No debt claim or transaction inferred from the drawing. Supply/Withdraw/Claim and confirmation remain unavailable. Existing per-instance drafts, inline Review and hidden-pane retention remain unchanged; the Kamino-specific regression covers two independent drafts across selection/hiding. The section has no financial event or service call; the existing Screen/host owns bounded view/edit/blocked/error intents.
+Production Configure passes null origins/reads. There is no reserve selector, rate, amount, No debt claim or transaction inferred from the drawing. Supply/Withdraw/Claim and confirmation remain unavailable. Existing per-instance drafts, inline Review and hidden-pane retention remain unchanged; the Kamino-specific regression covers two independent drafts across selection/hiding. The section has no financial event or service call; the existing Screen/host owns bounded view/edit/blocked/error intents.
 
 The combined isolated tree passed 69 model/presenter/Configure/local-Manage tests, scoped TypeScript, changed-file Biome and all 11 locales. Two missing-Manage regressions reproduced failures on the preceding main before mounting. Independent GPT-6.1-sol review found no remaining blocker. Authored unavailable/narrow stories are not rendered browser acceptance. Live metrics, authority, risk projections and execution remain POO-2239/2240/2261/2262 and POO-2290; Murilo performs browser acceptance.
 
