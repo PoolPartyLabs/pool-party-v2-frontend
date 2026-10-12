@@ -341,7 +341,7 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
 
 **Step rules, one paragraph each, rule numbers from the handoff.**
 
-- **Shell (R1 to R14).** Page header "Create new strategy" with a "Save & exit" text button and no
+- **Shell (R1 to R14).** Page header "Create new strategy" with a "Save and exit" text button (POO-2333 R10 spells it in full) and no
   "Back to console" (R1); the three-phase stepper Mandate/Build/Review, a reached phase clickable
   (R2); the sub-step header collapsed by default, one line "MANDATE · STEP n OF 5" plus the title
   plus "Next: `<step>`", hover peeks it open, a click pins it (R3); step titles of reached steps are
@@ -748,6 +748,26 @@ click calls `startFundLaunch` once; an existing checkpoint offers Resume without
 the journal. Fallback Review remains available. Borrow, unsupported catalog data and
 nonexecutable continuations fail closed. All new copy is present in 11 locales.
 
+
+### Mandate networks, protocols, pools and Save and exit Figma parity (POO-2333, rules v1)
+
+The pure decisions are in `steps/mandateStepView.ts` (`PP-MGR-LIB-081`) and in `lockedProtocols`
+(`PP-MGR-LIB-019`). These rules replace the older layout rules above where they disagree.
+
+- Networks: a caption under "Other networks" tells the cost of each network (R1). A spoke that the
+  config does not enable is not shown. Solana shows only in its preview mode (R2).
+- Protocols: "Protocols to operate" comes first. "Swap and bridge" sits below the divider,
+  preselected, collapsed to "{names} · selected for you", and opens on Show to checkbox rows (R3).
+  The "Required" group is removed. The last swap cannot be cleared. In real mode, the last bridge
+  cannot be cleared while the mandate has a spoke. In mock mode, both stay locked (R4). The network
+  column is "Available on", with a footnote (R5). The two Uniswap v3 rows are "Uniswap v3 · Swap"
+  and "Uniswap v3 · Liquidity" (R6). A protocol that the config does not enable is not shown, so
+  Uniswap v3 positions, GMX and Pendle are hidden, not Coming soon (R7).
+- Pools: a result card reads "{fee} fee tier · chosen by {pct}% of LPs". With no share, it reads
+  only the fee tier (R8). Real mode has no share source yet (`PP-INTEGRATION-POINT` in
+  `mandatePoolSource.ts`). A "Your pools" row shows protocol, network icon, then fee tier (R9).
+- Save and exit is spelled in full, also in the empty Drafts text (R10). Every new string is in
+  11 locales (R11). TokensStep and LimitsStep do not change (R14).
 
 ### Mandate Protocols Figma correction (POO-2167, rules v4)
 

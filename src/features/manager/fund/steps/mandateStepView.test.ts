@@ -208,7 +208,7 @@ describe("locales (POO-2333)", () => {
       const text = t(key, values);
       expect(text).not.toBe(`manager.${key}`);
       expect(text).not.toMatch(/[{}]/);
-      expect(text).not.toContain("—");
+      expect(text).not.toContain("\u2014");
       if (key === "fundBuilder.pools.tierShare") expect(text).toContain("31");
     }
   });

@@ -529,3 +529,13 @@ download permission; the provider's drawing toolbar remains enabled.
 Current chart-delivery census: 2,306 files under `src/`, with 539 markers across 312 files,
 including tests, stories and source documentation. Registry totals are 712 rows and 707 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
+
+## Mandate Figma parity, October 12, 2026 (POO-2333 v1)
+
+| Marker | File | Status today | Expected real call / remaining gap |
+| --- | --- | --- | --- |
+| LP share per fee tier ("chosen by {pct}% of LPs", R8) | `src/features/manager/fund/mandatePoolSource.ts` (`searchMandatePools`) | Mock mode computes the share from the fixture TVL of the fee tiers of a pair (`tierShare`). Real mode has no API field for it, so the share is null and the Pools step shows only the fee tier. | CoinGecko pool data per fee tier, or a backend field that carries the LP share of each fee tier. |
+
+Current Mandate parity census: 2,308 files under `src/`, with 540 markers across 312 files,
+including tests, stories and source documentation. Registry totals are 713 rows and 708 unique
+IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.

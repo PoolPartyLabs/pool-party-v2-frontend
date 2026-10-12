@@ -2,9 +2,11 @@
  * @id PP-MGR-CMP-036
  * @name ProtocolsStep.stories
  * @implements-rules-version v4 (POO-2142 rules v2, POO-2143 rules v2, POO-2167 rules v4)
+ * @implements-rules-version v1 (POO-2333 Figma parity: R3 to R7)
  *
- * Storybook coverage for Mandate step 2 (POO-2123 [R19] to [R22]; rules v4, POO-2167: GMX and Pendle Coming soon;
- * Aave v3 and Uniswap v4 to operate, Uniswap v3 positions "Coming soon").
+ * Storybook coverage for Mandate step 2 (POO-2123 [R19] to [R22]; POO-2333 v1: Protocols to
+ * operate first, Aave v3 and Uniswap v4; Swap and bridge below the divider, collapsed; the
+ * protocols that the config does not enable are hidden).
  *
  * The story that earns its place is `HubAndSpoke` against `HubOnly`: the "On" dots change with the
  * networks of step 1, which is the whole point of that column and the thing a static mock-up cannot
@@ -76,7 +78,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Mandate step 2. The swap adapter and the bridge are locked above a divider; everything below is the choice. The On column shows only the networks of step 1 where a protocol actually runs, and a protocol that runs on none of them is disabled with Coming soon.",
+          "Mandate step 2. Protocols to operate come first. Swap and bridge sits below the divider, preselected and collapsed; Show opens its checkbox rows, and the last swap and bridge stay locked. The Available on column shows only the networks of step 1 where a protocol runs.",
       },
     },
   },

@@ -105,7 +105,7 @@ Central registry of every Pool Party visual + code artifact ID. Source of truth 
 - Convention: 1 logical artifact = 1 ID. Mobile + Desktop of the same screen share the ID (responsive, one `page.tsx`). States share the parent ID.
 - **Design** = state of the Figma design. **Impl** = state of the code (all Backlog until built). **Linear** = the issue, when one exists.
 
-Totals: 712 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
+Totals: 713 artifacts, counted as rows in the tables below rather than maintained by hand (`tests/hackathonDocs.test.ts` asserts the two agree, after this header spent months drifting: it read 251 against 405 real rows at the start of epic POO-1022). IDs never recycled; removed ones become `Removed` with history.
 
 **Known repeated IDs, all pre-dating epic POO-1022 and none of them fixed by it.** Five IDs appear on two rows each. They are not one problem, they are three, and the distinction decides what a fix would even be:
 
@@ -1193,3 +1193,15 @@ Current chart-delivery census: 712 registry rows and 707 unique IDs, 2,306 files
 with 539 markers across 312 files. The five disclosed historical duplicate IDs remain unchanged.
 These figures include tests, stories and source documentation. The earlier materialized-tree
 census describes its named historical release and remains unchanged.
+
+## Mandate Figma parity, October 12, 2026 (POO-2333 v1)
+
+| ID | Name | Type | Design | Status | Linear | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| `PP-MGR-LIB-081` | mandateStepView, the pure layout decisions of the Networks, Protocols and Pools steps: visible spokes, the Protocols to operate and Swap and bridge groups, the protocols selected for you and the pool row order | Lib | n/a (code) | Implemented Mandate parity view model | [POO-2333](https://linear.app/yeildbay/issue/POO-2333) | `src/features/manager/fund/steps/mandateStepView.ts` @rules-v1 |
+
+Existing PP-MGR-LIB-019 (`withProtocols`, `lockedProtocols`), PP-MGR-CMP-035 (NetworksStep),
+PP-MGR-CMP-036 (ProtocolsStep) and PP-MGR-CMP-038 (PoolsStep) keep their IDs and add POO-2333 v1.
+
+Current Mandate parity census: 713 registry rows and 708 unique IDs, 2,308 files under `src/`,
+with 540 markers across 312 files. The five disclosed historical duplicate IDs remain unchanged.
