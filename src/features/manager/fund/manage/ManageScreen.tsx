@@ -245,6 +245,18 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
         <div className="min-w-0">
           <StrategyChartSurface
             selection={manageChartSelection(inspection?.position ?? null)}
+            selectionLabel={
+              inspection?.position
+                ? [
+                    inspection.position.protocol,
+                    inspection.position.tokens.map((token) => token.symbol).join(" / "),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
+                : inspection && inspection.kind !== "position"
+                  ? t(manageInspectionLabelKey[inspection.kind])
+                  : null
+            }
             context="manage"
           >
             <ManageCanvas model={model} selectedId={selection} onSelect={selectNode} />

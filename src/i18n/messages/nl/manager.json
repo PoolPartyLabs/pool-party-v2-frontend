@@ -1753,15 +1753,12 @@
     "referenceDescription": "Marktgegevens van een beurs voor analyse. De geselecteerde pool kan een andere prijs hebben.",
     "frameTitle": "Marktreferentiegrafiek voor {pair}",
     "loading": "Grafiek laden...",
-    "noData": "Deze marktreferentie is niet beschikbaar op TradingView.",
     "loadError": "De grafiek kon niet worden geladen. Probeer het opnieuw.",
     "retry": "Opnieuw proberen",
     "attribution": "Grafiek van TradingView",
-    "notAvailable": "Niet beschikbaar",
-    "noSelection": "Selecteer een geconfigureerde pool of een handmatige swap om de marktreferentie te bekijken.",
-    "unconfigured": "Kies de pool of beide swaptokens voordat je de grafiek opent.",
-    "unsupportedBlock": "Dit blok heeft geen ondersteunde marktreferentie.",
-    "lendingReference": "Een marktprijsgrafiek toont geen lending-APY of accountrisico.",
-    "unsupportedPair": "Voor deze tokens is geen grafiekreferentie beschikbaar."
+    "unavailableTitle": "Grafieken zijn niet beschikbaar.",
+    "unavailableBody": "Er is geen prijsgeschiedenis beschikbaar voor deze selectie.",
+    "selectionPreserved": "De selectie blijft behouden.",
+    "back": "Terug naar strategieverloop"
   }
 }

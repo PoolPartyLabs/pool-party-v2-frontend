@@ -504,6 +504,15 @@ export function BuildScreen({
         canvas={
           <StrategyChartSurface
             selection={chartSelection}
+            selectionLabel={
+              !target
+                ? null
+                : target.kind === "spoke"
+                  ? controller.networkName(target.network)
+                  : target.kind === "swap"
+                    ? controller.describeFlow(target.blockId).text
+                    : controller.describeBlock(target.blockId).title
+            }
             context={local ? "solana-local" : "build"}
             fillContainer
             active={active}

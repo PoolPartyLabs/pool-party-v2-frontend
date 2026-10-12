@@ -2,10 +2,13 @@
  * @id PP-MGR-CMP-103
  * @name StrategyChartSurface
  * @description Isolated market-reference chart with retained strategy canvas and panel state.
+ *   An unavailable chart shows one state with the preserved selection and Back (POO-2336).
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8678-37675
+ * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8682-3253
  * @linear https://linear.app/yeildbay/issue/POO-2309
+ * @linear https://linear.app/yeildbay/issue/POO-2336
  * @i18n-namespace manager.marketChart
- * @implements-rules-version v1 (POO-2309)
+ * @implements-rules-version v1 (POO-2309), v1 (POO-2336)
  * @analytics-events manager_chart_viewed, manager_chart_closed, manager_chart_blocked,
  *   manager_chart_failed, manager_chart_retried
  */
@@ -19,28 +22,86 @@ import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { cn } from "@/lib/utils/cn";
 import type { ChartSelection } from "./chartContext";
 import { buildChartUrl, type ChartMarket, readChartMessage } from "./chartModel";
+import {
+  type ChartTab,
+  type ChartUnavailableView,
+  chartBackTransition,
+  chartBlockedParams,
+  chartFailureView,
+  chartUnavailableView,
+} from "./chartUnavailable";
 
 export interface StrategyChartSurfaceProps {
   selection: ChartSelection;
   context: "build" | "manage" | "solana-local";
   children: ReactNode;
+  /** Display name of the selected block. Shown in the unavailable state, never sent anywhere. */
+  selectionLabel?: string | null;
   fillContainer?: boolean;
   active?: boolean;
 }
 
 type ChartFailure = "no_data" | "load_timeout";
 
+/** R1 to R4: one unavailable state for every cause, with the preserved selection and Back. */
+function ChartUnavailableState({
+  view,
+  onBack,
+  onRetry,
+  overlay = false,
+}: {
+  view: ChartUnavailableView;
+  onBack(): void;
+  onRetry?(): void;
+  overlay?: boolean;
+}) {
+  const t = useTranslations("manager.marketChart");
+  return (
+    <div
+      role={overlay ? "alert" : undefined}
+      data-chart-unavailable=""
+      className={cn(
+        "flex min-h-24 flex-1 flex-col items-start gap-4 bg-surface p-5 text-xs text-muted-foreground",
+        overlay && "absolute inset-0",
+      )}
+    >
+      <p>{t(view.titleKey)}</p>
+      <p>{t(view.bodyKey)}</p>
+      {view.selection ? (
+        <div className="flex flex-col gap-1 rounded-xl bg-surface-raised px-3 py-2">
+          <p className="font-semibold text-foreground text-sm">{view.selection.label}</p>
+          <p>{t(view.selection.noteKey)}</p>
+        </div>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="secondary" size="md" className="max-w-full sm:w-60" onClick={onBack}>
+          {t(view.backKey)}
+        </Button>
+        {view.retry && onRetry ? (
+          <Button variant="ghost" size="md" onClick={onRetry}>
+            {t("retry")}
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 /** A fresh remote instance owns its listener/timer; no message can write financial state. */
 function TradingViewFrame({
   market,
   locale,
+  selectionLabel,
   onFailure,
   onRetry,
+  onBack,
 }: {
   market: ChartMarket;
   locale: string;
+  selectionLabel: string | null | undefined;
   onFailure(reason: ChartFailure): void;
   onRetry(): void;
+  onBack(): void;
 }) {
   const t = useTranslations("manager.marketChart");
   const opaqueId = useId();
@@ -77,6 +138,7 @@ function TradingViewFrame({
     };
   }, [instanceId, onFailure]);
   const failed = status === "no_data" || status === "load_timeout";
+  const failure = failed ? chartFailureView(status, selectionLabel) : null;
   return (
     <div className="relative min-h-24 min-w-0 flex-1" aria-busy={status === "loading"}>
       {/* PP-INTEGRATION-POINT: isolated public market reference; no app/wallet state is sent. */}
@@ -101,14 +163,17 @@ function TradingViewFrame({
           {t("loading")}
         </p>
       ) : null}
-      {failed ? (
+      {failure?.kind === "unavailable" ? (
+        <ChartUnavailableState view={failure} onBack={onBack} onRetry={onRetry} overlay />
+      ) : null}
+      {failure?.kind === "loadError" ? (
         <div
           role="alert"
           className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-surface p-4 text-center text-sm text-foreground"
         >
-          <p>{t(status === "no_data" ? "noData" : "loadError")}</p>
+          <p>{t(failure.messageKey)}</p>
           <Button variant="secondary" size="sm" onClick={onRetry}>
-            {t("retry")}
+            {t(failure.retryKey)}
           </Button>
         </div>
       ) : null}
@@ -121,13 +186,14 @@ export function StrategyChartSurface({
   selection,
   context,
   children,
+  selectionLabel = null,
   fillContainer = false,
   active = true,
 }: StrategyChartSurfaceProps) {
   const t = useTranslations("manager.marketChart");
   const locale = useLocale();
   const { track } = useAnalytics();
-  const [tab, setTab] = useState("flow");
+  const [tab, setTab] = useState<ChartTab>("flow");
   const [visitedIdentity, setVisitedIdentity] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const { availability, identity } = selection;
@@ -145,11 +211,7 @@ export function StrategyChartSurface({
     if (!active || !chartsVisible) return;
     track("manager_chart_viewed", { chart_context: context, chart_market: marketId });
     if (reason) {
-      track("manager_chart_blocked", {
-        chart_context: context,
-        chart_market: marketId,
-        chart_reason: reason,
-      });
+      track("manager_chart_blocked", chartBlockedParams(context, marketId, reason));
     }
     return () => track("manager_chart_closed", { chart_context: context, chart_market: marketId });
   }, [active, chartsVisible, context, marketId, reason, identity, locale, track]);
@@ -167,18 +229,13 @@ export function StrategyChartSurface({
     track("manager_chart_retried", { chart_context: context, chart_market: marketId });
     setAttempt((value) => value + 1);
   };
-  const blockedCopy = {
-    no_selection: t("noSelection"),
-    unconfigured: t("unconfigured"),
-    unsupported_block: t("unsupportedBlock"),
-    lending_reference: t("lendingReference"),
-    unsupported_pair: t("unsupportedPair"),
-  };
+  // R3: Back changes the tab only. The parent keeps the selected block and its draft.
+  const back = () => setTab(chartBackTransition({ tab, identity }).tab);
   return (
     <Tabs
       data-strategy-chart-surface=""
       value={tab}
-      onValueChange={setTab}
+      onValueChange={(value) => setTab(value === "charts" ? "charts" : "flow")}
       activationMode="manual"
       onKeyDown={(event) => {
         // Chart controls must not reach the parent Build remove/deselect shortcuts.
@@ -235,8 +292,10 @@ export function StrategyChartSurface({
                   key={`${widgetKey}:${attempt}`}
                   market={market}
                   locale={locale}
+                  selectionLabel={selectionLabel}
                   onFailure={onFailure}
                   onRetry={retry}
+                  onBack={back}
                 />
               ) : null}
               <footer className="shrink-0 border-t border-border px-3 py-2 text-xs text-muted-foreground">
@@ -252,10 +311,10 @@ export function StrategyChartSurface({
               </footer>
             </>
           ) : (
-            <div className="flex min-h-24 flex-1 flex-col items-center justify-center gap-2 p-4 text-center text-sm">
-              <p className="font-semibold text-foreground">{t("notAvailable")}</p>
-              <p className="text-muted-foreground">{blockedCopy[reason ?? "no_selection"]}</p>
-            </div>
+            <ChartUnavailableState
+              view={chartUnavailableView(reason ?? "no_selection", selectionLabel)}
+              onBack={back}
+            />
           )}
         </TabsContent>
       </div>

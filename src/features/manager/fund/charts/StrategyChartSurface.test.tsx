@@ -176,9 +176,9 @@ describe("Market chart surface", () => {
       }),
     );
     await userEvent.click(screen.getByRole("tab", { name: "Charts" }));
-    expect(screen.getByText("Not available")).toBeInTheDocument();
+    expect(screen.getByText("Charts are unavailable.")).toBeInTheDocument();
     expect(
-      screen.getByText("A market price chart does not show lending APY or account risk."),
+      screen.getByText("Price history is unavailable for this selection."),
     ).toBeInTheDocument();
     expect(document.querySelector("iframe")).toBeNull();
     expect(events("manager_chart_blocked")).toEqual([
@@ -206,9 +206,7 @@ describe("Market chart surface", () => {
     expect(screen.queryByText("Loading chart...")).toBeNull();
     expect(events("manager_chart_failed")).toHaveLength(0);
     post(iframe, "tv-widget-no-data");
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "This market reference is unavailable from TradingView.",
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent("Charts are unavailable.");
     post(iframe, "tv-widget-load");
     expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(events("manager_chart_failed")).toEqual([
