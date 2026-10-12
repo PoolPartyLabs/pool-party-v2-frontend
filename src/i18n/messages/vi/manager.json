@@ -1316,6 +1316,8 @@
     "strategyBlocks": "Các khối chiến lược",
     "selectionHelp": "Chọn một khối trên canvas hoặc từ danh sách này.",
     "viewMandate": "Xem ủy nhiệm đầu tư",
+    "explorer": "Trình khám phá",
+    "strategyAddressUnavailable": "Địa chỉ chiến lược không khả dụng.",
     "viewInvestor": "Xem với vai trò nhà đầu tư",
     "noSelection": "Chọn một khối để xem số dư và quản lý vị thế.",
     "emptyPositions": "Chiến lược này chưa có vị thế nào.",
@@ -1356,6 +1358,7 @@
     "retry": "Thử lại",
     "moveRange": "Chuyển khoảng giá",
     "reviewMove": "Xem lại thay đổi khoảng giá",
+    "reviewMoveNow": "Xem lại việc dời phạm vi · Áp dụng ngay",
     "confirmMove": "Xác nhận và chuyển khoảng giá",
     "backActions": "Quay lại thao tác",
     "backSettings": "Quay lại cài đặt",
@@ -1458,6 +1461,19 @@
       "debt": "Khoản nợ",
       "fullAccount": "Rủi ro áp dụng cho toàn bộ tài khoản, gồm tất cả collateral và khoản nợ.",
       "tokenMetadata": "Siêu dữ liệu token"
+    },
+    "spine": {
+      "routeEntry": "Bối cảnh tuyến · Đầu vào",
+      "routeExit": "Bối cảnh tuyến · Đầu ra",
+      "routeScope": "Phạm vi tuyến · {pct}",
+      "strategyShare": "Trên giá trị chiến lược · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "Đã yêu cầu {amount}",
+      "reserved": "Đã dự trữ {pct}",
+      "bridgeEntry": "Cầu nối vào",
+      "bridgeReturn": "Cầu nối về",
+      "swapInput": "Đầu vào swap",
+      "swapFees": "Swap phí"
     }
   },
   "overviewV2": {

@@ -1316,6 +1316,8 @@
     "strategyBlocks": "Strategy blocks",
     "selectionHelp": "Select a block on the canvas or from this list.",
     "viewMandate": "View mandate",
+    "explorer": "Explorer",
+    "strategyAddressUnavailable": "Strategy address is unavailable.",
     "viewInvestor": "View as investor",
     "noSelection": "Select a block to view its balances and manage the position.",
     "emptyPositions": "This strategy has no positions yet.",
@@ -1356,6 +1358,7 @@
     "retry": "Try again",
     "moveRange": "Move range",
     "reviewMove": "Review move range",
+    "reviewMoveNow": "Review move range · Apply now",
     "confirmMove": "Confirm & move range",
     "backActions": "Back to actions",
     "backSettings": "Back to settings",
@@ -1458,6 +1461,19 @@
       "debt": "Debt",
       "fullAccount": "Risk applies to the full account, including all collateral and debt.",
       "tokenMetadata": "Token metadata"
+    },
+    "spine": {
+      "routeEntry": "Route context · Entry",
+      "routeExit": "Route context · Exit",
+      "routeScope": "Route scope · {pct}",
+      "strategyShare": "Of strategy value · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "{amount} requested",
+      "reserved": "{pct} reserved",
+      "bridgeEntry": "Bridge entry",
+      "bridgeReturn": "Bridge return",
+      "swapInput": "Swap input",
+      "swapFees": "Swap fees"
     }
   },
   "overviewV2": {

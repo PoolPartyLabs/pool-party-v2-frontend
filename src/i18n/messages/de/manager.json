@@ -1316,6 +1316,8 @@
     "strategyBlocks": "Strategieblöcke",
     "selectionHelp": "Wähle einen Block auf dem Canvas oder in dieser Liste.",
     "viewMandate": "Mandat anzeigen",
+    "explorer": "Explorer",
+    "strategyAddressUnavailable": "Die Strategieadresse ist nicht verfügbar.",
     "viewInvestor": "Als Anleger ansehen",
     "noSelection": "Wählen Sie einen Block aus, um seine Guthaben anzuzeigen und die Position zu verwalten.",
     "emptyPositions": "Diese Strategie hat noch keine Positionen.",
@@ -1356,6 +1358,7 @@
     "retry": "Erneut versuchen",
     "moveRange": "Spanne verschieben",
     "reviewMove": "Spannenänderung prüfen",
+    "reviewMoveNow": "Spannenänderung prüfen · Jetzt anwenden",
     "confirmMove": "Bestätigen und Spanne verschieben",
     "backActions": "Zurück zu den Aktionen",
     "backSettings": "Zurück zu den Einstellungen",
@@ -1458,6 +1461,19 @@
       "debt": "Schulden",
       "fullAccount": "Das Risiko gilt für das gesamte Konto einschließlich aller Sicherheiten und Schulden.",
       "tokenMetadata": "Token-Metadaten"
+    },
+    "spine": {
+      "routeEntry": "Routenkontext · Eingang",
+      "routeExit": "Routenkontext · Ausgang",
+      "routeScope": "Routenumfang · {pct}",
+      "strategyShare": "Vom Strategiewert · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "{amount} angefordert",
+      "reserved": "{pct} reserviert",
+      "bridgeEntry": "Bridge-Eingang",
+      "bridgeReturn": "Bridge-Rückweg",
+      "swapInput": "Swap-Eingang",
+      "swapFees": "Gebühren-Swap"
     }
   },
   "overviewV2": {

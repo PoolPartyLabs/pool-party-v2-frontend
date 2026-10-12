@@ -1316,6 +1316,8 @@
     "strategyBlocks": "戦略のブロック",
     "selectionHelp": "キャンバスまたはこの一覧からブロックを選択してください。",
     "viewMandate": "運用方針を表示",
+    "explorer": "エクスプローラー",
+    "strategyAddressUnavailable": "戦略アドレスを取得できません。",
     "viewInvestor": "投資家として表示",
     "noSelection": "ブロックを選択して残高を確認し、ポジションを管理できます。",
     "emptyPositions": "この戦略にはまだポジションがありません。",
@@ -1356,6 +1358,7 @@
     "retry": "再試行",
     "moveRange": "範囲を移動",
     "reviewMove": "範囲の変更を確認",
+    "reviewMoveNow": "範囲の変更を確認 · 今すぐ適用",
     "confirmMove": "確認して範囲を移動",
     "backActions": "操作に戻る",
     "backSettings": "設定に戻る",
@@ -1458,6 +1461,19 @@
       "debt": "債務",
       "fullAccount": "リスクはすべてのCollateralと債務を含むアカウント全体に適用されます。",
       "tokenMetadata": "トークンのメタデータ"
+    },
+    "spine": {
+      "routeEntry": "ルートの文脈 · 入口",
+      "routeExit": "ルートの文脈 · 出口",
+      "routeScope": "ルートの範囲 · {pct}",
+      "strategyShare": "戦略価値に占める割合 · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "{amount} 請求済み",
+      "reserved": "{pct} 確保済み",
+      "bridgeEntry": "ブリッジ入口",
+      "bridgeReturn": "ブリッジ帰路",
+      "swapInput": "スワップ入力",
+      "swapFees": "手数料スワップ"
     }
   },
   "overviewV2": {

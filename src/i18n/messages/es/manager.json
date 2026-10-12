@@ -1316,6 +1316,8 @@
     "strategyBlocks": "Bloques de la estrategia",
     "selectionHelp": "Selecciona un bloque en el canvas o en esta lista.",
     "viewMandate": "Ver mandato",
+    "explorer": "Explorador",
+    "strategyAddressUnavailable": "La dirección de la estrategia no está disponible.",
     "viewInvestor": "Ver como inversionista",
     "noSelection": "Seleccione un bloque para ver sus saldos y gestionar la posición.",
     "emptyPositions": "Esta estrategia aún no tiene posiciones.",
@@ -1356,6 +1358,7 @@
     "retry": "Intentar de nuevo",
     "moveRange": "Mover rango",
     "reviewMove": "Revisar cambio de rango",
+    "reviewMoveNow": "Revisar cambio de rango · Aplicar ahora",
     "confirmMove": "Confirmar y mover rango",
     "backActions": "Volver a las acciones",
     "backSettings": "Volver a la configuración",
@@ -1458,6 +1461,19 @@
       "debt": "Deuda",
       "fullAccount": "El riesgo se aplica a toda la cuenta, incluyendo todo el collateral y todas las deudas.",
       "tokenMetadata": "Metadatos del token"
+    },
+    "spine": {
+      "routeEntry": "Contexto de ruta · Entrada",
+      "routeExit": "Contexto de ruta · Salida",
+      "routeScope": "Alcance de ruta · {pct}",
+      "strategyShare": "Del valor de la estrategia · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "{amount} solicitado",
+      "reserved": "{pct} reservado",
+      "bridgeEntry": "Entrada del puente",
+      "bridgeReturn": "Retorno del puente",
+      "swapInput": "Entrada del swap",
+      "swapFees": "Swap de comisiones"
     }
   },
   "overviewV2": {

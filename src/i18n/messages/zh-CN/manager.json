@@ -1316,6 +1316,8 @@
     "strategyBlocks": "策略区块",
     "selectionHelp": "在画布或此列表中选择一个区块。",
     "viewMandate": "查看投资授权",
+    "explorer": "浏览器",
+    "strategyAddressUnavailable": "策略地址不可用。",
     "viewInvestor": "以投资者身份查看",
     "noSelection": "选择一个区块，查看余额并管理仓位。",
     "emptyPositions": "此策略尚无仓位。",
@@ -1356,6 +1358,7 @@
     "retry": "重试",
     "moveRange": "调整区间",
     "reviewMove": "检查区间调整",
+    "reviewMoveNow": "查看区间调整 · 立即应用",
     "confirmMove": "确认并调整区间",
     "backActions": "返回操作选择",
     "backSettings": "返回设置",
@@ -1458,6 +1461,19 @@
       "debt": "债务",
       "fullAccount": "风险适用于整个账户，包括所有 Collateral 和债务。",
       "tokenMetadata": "代币元数据"
+    },
+    "spine": {
+      "routeEntry": "路由上下文 · 入口",
+      "routeExit": "路由上下文 · 出口",
+      "routeScope": "路由范围 · {pct}",
+      "strategyShare": "占策略价值 · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "已申请 {amount}",
+      "reserved": "已预留 {pct}",
+      "bridgeEntry": "跨链桥入口",
+      "bridgeReturn": "跨链桥返回",
+      "swapInput": "兑换输入",
+      "swapFees": "手续费兑换"
     }
   },
   "overviewV2": {

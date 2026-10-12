@@ -1316,6 +1316,8 @@
     "strategyBlocks": "Strategieblokken",
     "selectionHelp": "Selecteer een blok op het canvas of in deze lijst.",
     "viewMandate": "Mandaat bekijken",
+    "explorer": "Explorer",
+    "strategyAddressUnavailable": "Het strategieadres is niet beschikbaar.",
     "viewInvestor": "Als belegger bekijken",
     "noSelection": "Selecteer een blok om de saldi te bekijken en de positie te beheren.",
     "emptyPositions": "Deze strategie heeft nog geen posities.",
@@ -1356,6 +1358,7 @@
     "retry": "Opnieuw proberen",
     "moveRange": "Bereik verplaatsen",
     "reviewMove": "Bereikwijziging controleren",
+    "reviewMoveNow": "Bereikwijziging controleren · Nu toepassen",
     "confirmMove": "Bevestigen en bereik verplaatsen",
     "backActions": "Terug naar acties",
     "backSettings": "Terug naar instellingen",
@@ -1458,6 +1461,19 @@
       "debt": "Schuld",
       "fullAccount": "Het risico geldt voor het hele account, inclusief alle collateral en schulden.",
       "tokenMetadata": "Tokenmetadata"
+    },
+    "spine": {
+      "routeEntry": "Routecontext · Ingang",
+      "routeExit": "Routecontext · Uitgang",
+      "routeScope": "Routebereik · {pct}",
+      "strategyShare": "Van de strategiewaarde · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "{amount} aangevraagd",
+      "reserved": "{pct} gereserveerd",
+      "bridgeEntry": "Bridge-ingang",
+      "bridgeReturn": "Bridge-terugweg",
+      "swapInput": "Swap-invoer",
+      "swapFees": "Kostenswap"
     }
   },
   "overviewV2": {
