@@ -28,6 +28,7 @@ import {
   isBlocked,
   isBroadMandate,
   isStepReachable,
+  lockedProtocols,
   MANDATE_STEP_ORDER,
   MAX_TOKEN_SLOTS,
   type MandateDraft,
@@ -1346,4 +1347,24 @@ it.each([
   expect(withProtocols(current, ["aave-v3", "gmx", "pendle"] as ProtocolId[]).protocols).toEqual(
     dataMode === "real" ? ["uniswap-v3-swap", "aave-v3"] : ["uniswap-v3-swap", "across", "aave-v3"],
   );
+});
+
+// ---------------------------------------------------------------------------
+// POO-2333: the swap and bridge minimums
+// ---------------------------------------------------------------------------
+
+describe("protocol minimums (POO-2333)", () => {
+  it("locks the last swap always, and the last bridge while the mandate has a spoke", () => {
+    // @rule R4 (POO-2333): the manager cannot clear the last required protocol.
+    const real = { ...empty(), dataMode: "real" as const };
+    expect([...lockedProtocols(real)]).toEqual(["uniswap-v3-swap"]);
+    const realSpoke = withNetworks(real, ["robinhood"], catalog);
+    expect([...lockedProtocols(realSpoke)]).toEqual(["uniswap-v3-swap", "across"]);
+    // Clearing a locked protocol is a no-op: the reducer puts it back.
+    expect(withProtocols(realSpoke, []).protocols).toEqual(["uniswap-v3-swap", "across"]);
+    expect(withProtocols(real, []).protocols).toEqual(["uniswap-v3-swap"]);
+    // A mock draft keeps both on the hub too (the Solana preview runtime relies on it).
+    expect([...lockedProtocols(empty())]).toEqual(["uniswap-v3-swap", "across"]);
+    expect(withProtocols(empty(), []).protocols).toEqual(["uniswap-v3-swap", "across"]);
+  });
 });

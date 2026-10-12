@@ -4,6 +4,7 @@
  * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
  *   POO-2167 rules v4, POO-2151 rules v1, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2333 R4: the last swap and the last bridge are locked)
  * @analytics-events none, a pure domain module. The builder shell (PP-MGR-SCR-002) owns every
  *   mandate event, and the steps raise a {@link StepBlock} that the shell turns into
  *   `builder_mandate_blocked`. Nothing here touches the dataLayer.
@@ -134,6 +135,20 @@ export const HUB_NETWORK: NetworkId = "arbitrum";
 
 /** Every strategy needs a way to swap and a way to move money between its networks (R19). */
 export const REQUIRED_PROTOCOLS: readonly ProtocolId[] = ["uniswap-v3-swap", "across"];
+
+/**
+ * POO-2333 R4: the selected protocols the manager cannot clear, the same set `withProtocols`
+ * always keeps. That is the swap always, and the bridge while it can move money: a real draft keeps
+ * Across only with Robinhood Chain, its one network that is not the hub. A mock draft keeps both,
+ * as it always did, because the Solana preview runtime relies on that invariant.
+ */
+export function lockedProtocols(draft: MandateDraft): Set<ProtocolId> {
+  return new Set<ProtocolId>(
+    draft.dataMode === "real" && !draft.networks.includes("robinhood")
+      ? ["uniswap-v3-swap"]
+      : REQUIRED_PROTOCOLS,
+  );
+}
 
 /**
  * The symbols the hub price source can price (R28), lowercased.
@@ -846,13 +861,7 @@ export function withProtocols(draft: MandateDraft, protocols: ProtocolId[]): Man
   const known = new Set<string>(
     PROTOCOL_ORDER.filter((id) => draft.runtime === "solana-local" || !localProtocols.includes(id)),
   );
-  const wanted = new Set<ProtocolId>(
-    draft.dataMode === "real"
-      ? draft.networks.includes("robinhood")
-        ? REQUIRED_PROTOCOLS
-        : ["uniswap-v3-swap"]
-      : REQUIRED_PROTOCOLS,
-  );
+  const wanted = lockedProtocols(draft);
   for (const id of protocols) {
     if (
       known.has(id) &&
