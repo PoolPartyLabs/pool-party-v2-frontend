@@ -32,7 +32,8 @@ shows ("Become a manager" vs "Manager"), via `isManager` (mocked by the Dev-menu
 
 Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
 the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
-local Build/Manage host across phases and applies the route/account/exit guards described below.
+local Build across phases and applies the route/account/exit guards described below.
+POO-2342 R12 removed the Manage host: the builder shows only Configure.
 This wizard change is pre-merge code delivery, without a deployment or native-browser visual
 acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
 Not available; `solanaSpoke` stays off.
@@ -43,7 +44,7 @@ a permission nor a new contract family. The default public V2 wizard keeps its e
 draft persistence, launch recovery and selected contract-family semantics.
 
 This delivery connects the hidden-mode binding to the same Mandate → Build → Review shell, palette, cards and inline
-Configure/Manage panel to a local session. It mounts no separate editor page or Add toolbar.
+Configure panel to a local session. It mounts no separate editor page or Add toolbar.
 Local `save()` acknowledges memory only; no browser/backend persistence or new API cohort exists.
 The local owner covers abandonment in every phase using draft-dirty or pending-edit state and
 suppresses it on explicit exit. Its reused render boundary and fallback guard preserve applied

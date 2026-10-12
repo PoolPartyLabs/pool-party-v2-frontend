@@ -6,6 +6,7 @@
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8679-546
  * @implements-rules-version v1 (POO-2291)
  * @analytics-events none, pure local state; the preview host owns intent/navigation events.
+ * Not mounted until a Solana fund can launch (reference for a future Solana Manage screen).
  */
 import { z } from "zod";
 import { type PreviewEdit, parseAllocation } from "./previewModel";

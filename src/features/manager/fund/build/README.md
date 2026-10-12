@@ -10,16 +10,14 @@ record against Figma are in `src/features/manager/README.md`, section "Build can
 
 Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
 the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
-local Build/Manage host across phases and applies the route/account/exit guards described below.
+local Build across phases and applies the route/account/exit guards described below.
+POO-2342 R12 removed the Manage host: the builder shows only Configure.
 This wizard change is pre-merge code delivery, without a deployment or native-browser visual
 acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
 Not available; `solanaSpoke` stays off.
 
-POO-2342 rules v1: Solana is a network of the one V2 builder, not a mode. `BuildScreen` keeps its existing palette, templates, cards and Configure panel. Local
-Manage is an inline panel mode backed by the retained `SolanaLocalManageHost`, not another
-canvas. After first Build entry, the shell hides the mounted Build on Mandate/Review;
+POO-2342 rules v1: Solana is a network of the one V2 builder, not a mode. `BuildScreen` keeps its existing palette, templates, cards and Configure panel. Rules v2 (R12): during fund creation the builder shows only Configure, on all networks. It has no Configure and Manage toggle and no Manage panel. Manage appears only after launch. After first Build entry, the shell hides the mounted Build on Mandate/Review;
 selection checkpoints, leave guards, dialogs and reveal effects run only while it is active.
-Pending Configure/Manage status is also reported while hidden to the local session owner.
 
 The local adapter writes the shared plan reducers against the current mandate. Case-sensitive
 USDC/WSOL mint identities and protocol selection remain required for the configured position
@@ -313,12 +311,12 @@ Complete IDs survive graph reading order, grouped surfaces and duplicate occurre
 
 The shared BlockPanel registry now contains Kamino, Raydium, Orca and Holding bodies. These reuse Allocation, PanelSelect, Apply/Discard, removal confirmation and the delivered protocol presenters. LP/Holding controls use the same V2 selector; Jupiter uses exact Base58 IDs and native/WSOL protocol logos. Local EVM choices have unavailable bodies and do not mount live EVM providers. Zero LP allocation still defers range.
 
-A pure Build/Manage adapter validates the whole candidate against the current mandate, preserves exact instance identity and only lets the first position edit a chain allocation. Independent hidden drafts and Review remain in the mounted local Manage host; an Apply acknowledgement precedes clearing dirty state. The local draft hook supplies session memory only.
+POO-2342 R12 removed the pure Build/Manage adapter (`solanaBuildManageBinding`) and the mounted local Manage host. Configure writes the shared plan reducers directly. The local draft hook supplies session memory only.
 
 Review reuses the standard layout and cards. A plan with Solana content cannot launch, and Review names Solana as the reason (POO-2342 R9). EVM defaults and investor provisioning are unchanged. Storybook covers the shared local bodies and Review. Shared-wizard activation and its retained Build host follow separately.
 
-Delivery continuation: this delivery connects the shared wizard route and retained Build/Manage
-host. The activation described as future work in the published foundation above is included here.
+Delivery continuation: this delivery connects the shared wizard route and retained Build.
+The activation described as future work in the published foundation above is included here.
 Applied plan/Review survive retry; unapplied inner-panel fields can be lost after a render exception,
 while the last pending metadata continues guarding leave. No deployment, native-browser acceptance
 or live Solana capability is asserted.

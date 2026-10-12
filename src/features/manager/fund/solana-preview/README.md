@@ -1,8 +1,9 @@
 # Local Solana binding for the shared V2 wizard
 
-Delivery boundary (POO-2342 rules v1): the Solana presenters, models and the Build/Manage host
+Delivery boundary (POO-2342 rules v1): the Solana presenters and models
 here serve the one V2 builder. Solana is a network of the mandate, not a mode. The builder keeps
-the retained local Build/Manage host across phases. This change is pre-merge code delivery, without
+the retained local Build across phases. Rules v2 (R12) remove the Manage host: the builder shows
+only Configure, and the Manage presenter and model are not mounted. This change is pre-merge code delivery, without
 a deployment or native-browser visual acceptance claim. Live Solana data, quotes, wallet
 operations and public launch remain
 Not available; `solanaSpoke` stays off.
@@ -29,14 +30,10 @@ conversions require the exact current mandate tokens and Jupiter selection. The 
 gray principal/return routes and a separate green LP-fee connection; Kamino/Holding do not acquire
 an LP collector. A label or semantic port never attests a pool, account or transaction capability.
 
-Build offers Configure and Manage inside one shared panel. Configure retains its pending-Apply
-guard. The mounted Manage host keeps independent local instance drafts, modes and inline Review
-across selection, close, panel mode and hidden Build phases. Dirty phase leave requires explicit
-discard. A chain's first position owns editable allocation; downstream positions share it read-only.
-`solanaBuildManageBinding` (`PP-MGR-LIB-076`) maps stable shared block IDs, retains all configured
-local positions and acknowledges one Apply only after validating the resulting plan against the
-current exact-mint/protocol mandate, conversion dependencies and allocation budgets. A rejected
-acknowledgement preserves draft/Review. Non-null ranges are blocked without verified context.
+Build shows only Configure during fund creation (POO-2342 rules v2). A chain's first position owns
+editable allocation; downstream positions share it read-only. Non-null ranges are blocked without
+verified context. The Manage presenter and model below are not mounted until a Solana fund can
+launch. They are a reference for a future Solana Manage screen.
 
 Review shows the standard cards. Logo upload, canonical origins/pools/reserves, physical balances,
 prices, APY, custody, range context, liquidity quotes, source clock, authority, signing and launch
@@ -122,15 +119,14 @@ Independent review caught a future transaction timestamp and included-input cost
 | --- | --- | --- |
 | PP-MGR-LIB-071, `solanaManageModel.ts` | Independent local instance/configuration/draft, canonical Current, bound After and operation journal | Reviewed pure state/projection; no external read or transaction execution |
 | PP-MGR-CMP-097, `SolanaManagePresenter.tsx` | Complete Current/source values, draft settings, inline exclusive modes and Review, independently valid After and read-only journal | Controlled injected presenter, Confirm disabled |
-| PP-MGR-CMP-098, `SolanaLocalManageHost.tsx` | Mounted per-instance retention, baseline synchronization, local budget and acknowledged drawing Apply | Integrated in Screen/Canvas; canonical reads/context/clock unavailable |
 
 Canonical identity and local instance ID are distinct, so two instances of the same pool retain separate drafts, modes and review steps. Selecting or hiding preserves them. Drawing synchronization adds/removes only the corresponding owner; changed baselines preserve another dirty draft, while a baseline that reaches its draft clears the obsolete mode/review binding and invalidates After. Clean synchronized config and draft are separate copies. Canonical Current and journal are preserved. Physical quantities in Current/After fit u64, retain exact raw strings and do not pass through JavaScript floating-point amounts. A valid After requires the same canonical identity, base snapshot, revision, mode and explicit clock; no implicit clock establishes validity.
 
-The presenter exposes Move range/Apply now or Create new position/New deposits only as exclusive local modes, with inline Review and unavailable transaction details. Verified protocol range context must match canonical Current ticks, rather than the edited draft. Sources, timestamps, slots, commitment and fixture provenance remain visible. `SolanaLocalManageHost` creates drawing-only instances and supplies unavailable Current/After plus null range context/clock. It keeps each presenter mounted while hidden; closing only calls the parent visibility callback.
+The presenter exposes Move range/Apply now or Create new position/New deposits only as exclusive local modes, with inline Review and unavailable transaction details. Verified protocol range context must match canonical Current ticks, rather than the edited draft. Sources, timestamps, slots, commitment and fixture provenance remain visible.
 
 `onApplyDrawing(localId, config): boolean` acknowledges one local drawing write. Apply validates whole percentages, aggregate drafts and the selected draft plus other blocks' applied baselines. Unapplied reductions in other drafts cannot fund that write. Only `true` releases the draft and reports local success; `false` preserves draft/Review and reports a bounded blocked intent. A non-null range is blocked without verified protocol context. Local Apply never writes canonical Current or the journal. Bounded intent callbacks contain only protocol and `edit/choose/review/apply/discard/rebase/blocked`; the config callback is application data and never analytics payload.
 
-The foundation is merged in PRs #140/#141 and adds 60 `manager.solanaPreview.localManage` keys to each of the 11 configured locales. Screen now offers Configure/Manage without remounting the local host. Configure's unapplied edits require confirmation before mode changes; Manage drafts/Review survive selection, close and mode changes. All actual fixed/automatic/position nodes share the canvas geometry identity and inspectors. Fixed Hub overlay, decorative locks, explicit owner/network context and Back/Escape focus restoration use existing pieces. Configure retains its original position-only activation.
+The foundation is merged in PRs #140/#141 and adds 60 `manager.solanaPreview.localManage` keys to each of the 11 configured locales. Screen offers Configure only during fund creation (POO-2342 R12 removed the Manage toggle and host). Configure's unapplied edits require confirmation before the panel closes. All actual fixed/automatic/position nodes share the canvas geometry identity and inspectors. Fixed Hub overlay, decorative locks, explicit owner/network context and Back/Escape focus restoration use existing pieces. Configure retains its original position-only activation.
 
 The drawing owner validates and acknowledges one instance write against applied baselines. Screen tracks bounded local mode/node/edit/review/apply intent through the existing consent-aware hook; rejected writes never emit applied success. Nothing signs, broadcasts or fills a financial read. The census is 700 registry rows and 529 markers in 304 files.
 
@@ -141,7 +137,7 @@ The isolated panels tree passed 18 presenter and 13 host tests, scoped TypeScrip
 
 `SolanaKaminoReadSection` (PP-MGR-CMP-099) preserves Program/Market/Reserve before Configure allocation, then Supply APY, available liquidity and deposit capacity. Manage shows position/obligation, Supplied, principal/interest/rewards, APY, Available to withdraw and independent full-account Current/After risk before local settings. Unknown rewards remain unavailable; a declared empty reward array is omitted. Exact quantity and independently sourced USD remain separate, with source/asOf/slot/commitment evidence when supplied. Risk binds to the validated canonical origin and the shared account-risk validator, so missing market metrics cannot erase a compatible risk read.
 
-Production Configure and local Manage pass null origins/reads. There is no reserve selector, rate, amount, No debt claim or transaction inferred from the drawing. Supply/Withdraw/Claim and confirmation remain unavailable. Existing per-instance drafts, inline Review and hidden-pane retention remain unchanged; the Kamino-specific regression covers two independent drafts across selection/hiding. The section has no financial event or service call; the existing Screen/host owns bounded view/edit/blocked/error intents.
+Production Configure passes null origins/reads. There is no reserve selector, rate, amount, No debt claim or transaction inferred from the drawing. Supply/Withdraw/Claim and confirmation remain unavailable. Existing per-instance drafts, inline Review and hidden-pane retention remain unchanged; the Kamino-specific regression covers two independent drafts across selection/hiding. The section has no financial event or service call; the existing Screen/host owns bounded view/edit/blocked/error intents.
 
 The combined isolated tree passed 69 model/presenter/Configure/local-Manage tests, scoped TypeScript, changed-file Biome and all 11 locales. Two missing-Manage regressions reproduced failures on the preceding main before mounting. Independent GPT-6.1-sol review found no remaining blocker. Authored unavailable/narrow stories are not rendered browser acceptance. Live metrics, authority, risk projections and execution remain POO-2239/2240/2261/2262 and POO-2290; Murilo performs browser acceptance.
 
@@ -168,7 +164,7 @@ Focused tests cover allocation validation and aggregate bounds, edit/application
 
 ## Shared V2 panel/Review foundation (POO-2301 v1, October 9, 2026)
 
-Murilo's October 8 correction supersedes the standalone preview described above. SolanaBuilderPanelBodies plugs the delivered protocol presenters into the same V2 Configure shell, using shared selectors and exact mint identity. solanaBuildManageBinding validates the current whole plan before local Apply. POO-2342 then merges this binding into the one V2 builder: the standalone preview, `LocalSolanaReview` and `useSolanaBuilderDraft` are removed.
+Murilo's October 8 correction supersedes the standalone preview described above. SolanaBuilderPanelBodies plugs the delivered protocol presenters into the same V2 Configure shell, using shared selectors and exact mint identity. POO-2342 then merges Solana into the one V2 builder: the standalone preview, `LocalSolanaReview` and `useSolanaBuilderDraft` are removed. Rules v2 also remove `SolanaLocalManageHost` and `solanaBuildManageBinding`, because the builder shows only Configure.
 
 The legacy independent preview is removed, not retained as a harness. Live data, wallet balances, quotes, upload and launch remain unavailable; this slice does not change the Solana mainnet gate. Default EVM selector/card behavior remains intact.
 

@@ -920,22 +920,42 @@ function dropSolanaProtocols(draft: MandateDraft): void {
  * POO-2342 R7: the draft as the V2 API sees it. Solana is not an API network, so its network, its
  * tokens, its protocols and their caps are left out. The API reads (`toV2MandateSelection`, the
  * real-mode checks and the pool search) take this view and never name Solana.
+ *
+ * Each list has its own helper below. A component that needs one list can memoize that helper on
+ * that list alone, and `withoutSolana` calls the same helpers, so the two views cannot differ.
  */
-export function withoutSolana<T extends Omit<MandateDraft, "plan">>(draft: T): T {
+export function withoutSolanaNetworks(networks: NetworkId[]): NetworkId[] {
+  return networks.filter((network) => network !== SOLANA_NETWORK);
+}
+
+export function withoutSolanaProtocols(protocols: ProtocolId[]): ProtocolId[] {
   const solanaProtocols = new Set<string>(SOLANA_PROTOCOL_IDS);
+  return protocols.filter((id) => !solanaProtocols.has(id));
+}
+
+export function withoutSolanaTokens(tokens: MandateTokenRef[]): MandateTokenRef[] {
+  return tokens.filter((token) => token.network !== SOLANA_NETWORK);
+}
+
+export function withoutSolanaPools(pools: MandatePoolRef[]): MandatePoolRef[] {
+  return pools.filter((pool) => pool.network !== SOLANA_NETWORK);
+}
+
+export function withoutSolanaPositionProtocols(
+  byChain: NonNullable<MandateDraft["positionProtocolsByChain"]>,
+): NonNullable<MandateDraft["positionProtocolsByChain"]> {
+  return retainKeys(byChain, (key) => key !== SOLANA_NETWORK);
+}
+
+export function withoutSolana<T extends Omit<MandateDraft, "plan">>(draft: T): T {
   return {
     ...draft,
-    networks: draft.networks.filter((network) => network !== SOLANA_NETWORK),
-    protocols: draft.protocols.filter((id) => !solanaProtocols.has(id)),
-    tokens: draft.tokens.filter((token) => token.network !== SOLANA_NETWORK),
-    pools: draft.pools.filter((pool) => pool.network !== SOLANA_NETWORK),
+    networks: withoutSolanaNetworks(draft.networks),
+    protocols: withoutSolanaProtocols(draft.protocols),
+    tokens: withoutSolanaTokens(draft.tokens),
+    pools: withoutSolanaPools(draft.pools),
     ...(draft.positionProtocolsByChain
-      ? {
-          positionProtocolsByChain: retainKeys(
-            draft.positionProtocolsByChain,
-            (key) => key !== SOLANA_NETWORK,
-          ),
-        }
+      ? { positionProtocolsByChain: withoutSolanaPositionProtocols(draft.positionProtocolsByChain) }
       : {}),
   };
 }

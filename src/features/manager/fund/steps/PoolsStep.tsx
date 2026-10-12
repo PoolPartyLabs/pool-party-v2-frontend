@@ -122,7 +122,11 @@ import {
   slotCeiling,
   slotsUsed,
   tokenKey,
-  withoutSolana,
+  withoutSolanaNetworks,
+  withoutSolanaPools,
+  withoutSolanaPositionProtocols,
+  withoutSolanaProtocols,
+  withoutSolanaTokens,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
 import { poolFeeLabel, poolMeta } from "./mandateStepView";
@@ -325,11 +329,40 @@ export interface PoolsStepProps extends MandateStepProps {
  */
 export function PoolsStep(props: PoolsStepProps) {
   const t = useTranslations("manager");
-  const apiDraft = useMemo(() => withoutSolana(props.draft), [props.draft]);
+  const { draft } = props;
+  // Each Solana-free list keeps its identity until its own source list changes. An Add that pulls
+  // no token in changes only `pools`. The reads key on `tokens` and `protocols`. A new array there
+  // would run the universe read again for a mandate that did not move.
+  const networks = useMemo(() => withoutSolanaNetworks(draft.networks), [draft.networks]);
+  const protocols = useMemo(() => withoutSolanaProtocols(draft.protocols), [draft.protocols]);
+  const tokens = useMemo(() => withoutSolanaTokens(draft.tokens), [draft.tokens]);
+  const pools = useMemo(() => withoutSolanaPools(draft.pools), [draft.pools]);
+  const positionProtocolsByChain = useMemo(
+    () =>
+      draft.positionProtocolsByChain
+        ? withoutSolanaPositionProtocols(draft.positionProtocolsByChain)
+        : undefined,
+    [draft.positionProtocolsByChain],
+  );
+  const apiDraft = useMemo(
+    () => ({
+      ...draft,
+      networks,
+      protocols,
+      tokens,
+      pools,
+      // The key stays absent when the draft has none, as it does in `withoutSolana`.
+      ...(positionProtocolsByChain ? { positionProtocolsByChain } : {}),
+    }),
+    [draft, networks, protocols, tokens, pools, positionProtocolsByChain],
+  );
   const hasUniswapDex = apiDraft.protocols.some((id) =>
     (DEX_PROTOCOL_IDS as readonly string[]).includes(id),
   );
-  if (!hasUniswapDex)
+  // Raydium or Orca can be the only DEX. Then this step shows the "Not available" layout (R8).
+  // With no DEX protocol at all, the connected step runs and renders nothing (R29).
+  const solanaOnlyDex = !hasUniswapDex && hasDexProtocol(draft);
+  if (solanaOnlyDex)
     return (
       <section data-mandate-step="pools" className="flex flex-col gap-6 pb-24">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
