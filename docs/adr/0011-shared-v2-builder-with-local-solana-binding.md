@@ -1,6 +1,6 @@
 # 0011. Shared V2 builder with a local Solana binding
 
-- Status: Accepted
+- Status: Partly superseded by POO-2342: Solana is a network of the one V2 builder, with no gesture, flag or hidden mode. The decisions below on the local binding stay as history.
 - Date: 2026-10-08
 - Linear: [POO-2301](https://linear.app/yeildbay/issue/POO-2301), rules v1
 - Supersedes: [ADR 0009](0009-local-solana-visual-preview.md) for presentation and local drawing state
