@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name toLayoutInput
- * @implements-rules-version v1 (POO-2153 rules v1)
+ * @implements-rules-version v1 (POO-2153 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, a pure mapping: nothing here is rendered or tracked.
  *
@@ -53,17 +53,11 @@ function toLayoutChain(chain: Chain): LayoutChain {
 }
 
 /** The layout input of a plan: hub chains and spokes left to right, steps top to bottom. */
-export function toLayoutInput(
-  plan: BuildPlan,
-  options: { runtime?: "solana-local" } = {},
-): LayoutInput {
+export function toLayoutInput(plan: BuildPlan): LayoutInput {
   return {
     hubNetwork: HUB_NETWORK,
     hub: { chains: plan.hub.chains.map(toLayoutChain) },
     spokes: plan.spokes.map((spoke) => ({
-      ...(options.runtime === "solana-local" && spoke.network === "solana"
-        ? { context: "solana-local" as const }
-        : {}),
       network: spoke.network,
       sharePct: spoke.sharePct,
       chains: spoke.chains.map(toLayoutChain),

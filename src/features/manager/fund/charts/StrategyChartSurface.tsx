@@ -9,7 +9,7 @@
  * @linear https://linear.app/yeildbay/issue/POO-2336
  * @linear https://linear.app/yeildbay/issue/POO-2338
  * @i18n-namespace manager.marketChart
- * @implements-rules-version v1 (POO-2309), v1 (POO-2336), v1 (POO-2338)
+ * @implements-rules-version v1 (POO-2309), v1 (POO-2336), v1 (POO-2338) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events manager_chart_viewed, manager_chart_closed, manager_chart_blocked,
  *   manager_chart_failed, manager_chart_retried
  */
@@ -33,7 +33,7 @@ import {
 
 export interface StrategyChartSurfaceProps {
   selection: ChartSelection;
-  context: "build" | "manage" | "solana-local";
+  context: "build" | "manage";
   children: ReactNode;
   /** Display name of the selected block. Shown in the unavailable state, never sent anywhere. */
   selectionLabel?: string | null;

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-021
  * @name planRules
- * @implements-rules-version v1 (POO-2151 rules v1)
+ * @implements-rules-version v1 (POO-2151 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2334 rules v1: a Borrow never borrows its own collateral)
  * @analytics-events none, a pure domain module.
@@ -162,7 +162,6 @@ export function kindAvailability(
   ctx: Pick<PlanContext, "draft" | "catalog">,
 ): KindAvailability {
   if (isSolanaKind(kind)) {
-    if (ctx.draft.runtime !== "solana-local") return "not_in_mandate";
     if (network !== "solana" || !ctx.draft.networks.includes("solana")) return "not_on_network";
     if (kind === "solanaHolding") return "enabled";
   }

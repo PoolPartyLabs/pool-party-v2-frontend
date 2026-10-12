@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-021
  * @name planReducers
- * @implements-rules-version v1 (POO-2151 rules v1; POO-2210 rules v1)
+ * @implements-rules-version v1 (POO-2151 rules v1; POO-2210 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2334 rules v1: a Borrow never borrows its own collateral)
  * @analytics-events none, a pure domain module. A refusal returns `{ blocked }` and the Build
@@ -307,7 +307,6 @@ export function insertAt(
     choice.family === "flow" &&
     choice.kind === "swap" &&
     found.network === "solana" &&
-    ctx.draft.runtime === "solana-local" &&
     !ctx.draft.protocols.includes("jupiter")
   )
     return blocked("not_in_mandate", slot.blockId);
@@ -394,9 +393,8 @@ export function setBlockConfig(
   let stored: PositionConfig | null = null;
   if (config !== null) {
     if (!isConfigFor(block.kind, config)) return blocked("unknown_target", blockId);
-    if (configShapeOfKind(block.kind) === "solana-local") {
-      if (ctx.draft.runtime !== "solana-local" || found.network !== "solana")
-        return blocked("not_in_mandate", blockId);
+    if (configShapeOfKind(block.kind) === "solana") {
+      if (found.network !== "solana") return blocked("not_in_mandate", blockId);
       stored = { ...config };
     } else if (configShapeOfKind(block.kind) === "pool") {
       const poolConfig = config as PoolBlockConfig;
@@ -434,7 +432,7 @@ export function setBlockConfig(
     candidate = withSteps(candidate, located.chain.id, cleared);
   }
   candidate = reconcileAutoBlocks(candidate, ctx);
-  if (stored !== null && configShapeOfKind(block.kind) === "solana-local") {
+  if (stored !== null && configShapeOfKind(block.kind) === "solana") {
     const selected = findBlock(candidate, blockId);
     const dependencies = new Set([blockId]);
     const previous = selected?.chain.steps[(selected?.index ?? 0) - 1];

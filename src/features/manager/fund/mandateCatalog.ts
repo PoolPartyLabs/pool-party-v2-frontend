@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-018
  * @name mandateCatalog
- * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2,
+ * @implements-rules-version v4 (POO-2121 rules v1, POO-2142 rules v2, POO-2143 rules v2, + POO-2342 rules v1 (one V2 builder, Solana is a network)
  *   POO-2167 rules v4)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a data catalog. The builder shell (PP-MGR-SCR-002) owns every mandate
@@ -92,7 +92,6 @@ export interface MandateCatalogToken {
 
 /** The whole catalog. It reads no feature flag (rules v2, POO-2142). */
 export interface MandateCatalog {
-  runtime?: "solana-local";
   validateDraft?: (draft: import("./mandateDraft").MandateDraft) => boolean;
   dataMode?: "real";
   loading?: boolean;

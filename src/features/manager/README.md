@@ -6,26 +6,23 @@ public manager profile, and the strategy **manage detail** (`PP-MGR-SCR-004`) wi
 (`src/lib/services` → `managerService`, `positionService`); mock-by-default with real seams marked
 `PP-INTEGRATION-POINT`.
 
-## Shared V2 wizard and hidden local Solana, October 8, 2026
+## One V2 builder with Solana, Arbitrum and Robinhood (POO-2342 rules v1)
 
 Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
 the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
-local Build/Manage host across phases and applies the route/account/exit guards described below.
+local Build across phases and applies the route/account/exit guards described below.
+POO-2342 R12 removed the Manage host: the builder shows only Configure.
 This wizard change is pre-merge code delivery, without a deployment or native-browser visual
 acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
 Not available; `solanaSpoke` stays off.
 
-POO-2301 rules v1 supersedes the separate POO-2281 preview entry with the existing
-`FundStrategyBuilderScreen` (`PP-MGR-SCR-002`) and its Mandate → Build → Review navigation.
-The default public V2 binding keeps its catalog, browser-local drafts and EVM launch recovery.
-The hidden `solana-local` binding uses the same step bodies, palette, cards and inline panel.
+POO-2342 rules v1: V2 is one builder. `FundStrategyBuilderScreen` (`PP-MGR-SCR-002`) shows Solana,
+Arbitrum and Robinhood in Networks, with the same step bodies, palette, cards and inline panel.
 It adds no separate editor page, canvas or Add toolbar.
 
-Under the existing `fundContracts` gate on `/manager/new`, three presses of the selected V2
-segment within one second reveal V2 Solana. This route/account-scoped in-memory preference is
-not an entitlement or contract family. Standard V2 selection, phase and unsaved draft are
-checkpointed while this local session is open; stale exit callbacks cannot close a successor
-route/account session. Route, account or family disposal clears the local session.
+Under the existing `fundContracts` gate on `/manager/new`, a click on V2 shows Solana, Arbitrum
+and Robinhood in Networks. The V2 label is always "V2". Solana is not an entitlement, a contract
+family or a mode. The API reads send no Solana network, token or protocol.
 
 `solanaBuilderRuntime` (`PP-MGR-LIB-075`) supplies local Kamino, Jupiter, Raydium and Orca
 choices plus a separate Holding block. Known mainnet USDC and WSOL mint metadata is eligible
@@ -35,27 +32,17 @@ PR #151 adds 236 × 62 USDC Idle and 144 × 96 native SOL cash with a 32 px late
 vertical center. Cash is handleless decoration with unavailable quantity/USD readings; standard
 Build remains without cash. The standard EVM catalog and launch payloads receive no local Solana identity.
 
-Build keeps Configure and local Manage in the same panel. The mounted per-instance Manage
-host preserves drafts and inline Review through selection and hiding; the local Build remains
-mounted after first entry while another wizard phase is visible. Configure protects pending
-Apply before opening Manage. Phase exit with dirty Manage settings requires explicit discard.
-Allocation belongs to the chain and is editable only on its first position; downstream inspectors
-share the applied allocation. `solanaBuildManageBinding` (`PP-MGR-LIB-076`) acknowledges Apply
-only after the whole resulting shared plan validates against the current mandate and budgets.
+Build shows only Configure during fund creation, on every network. The builder has no Manage
+toggle and no Manage panel (POO-2342 rules v2). The local Build remains mounted after first entry
+while another wizard phase is visible. Allocation belongs to the chain and is editable only on its
+first position; downstream inspectors share the applied allocation. The Solana Manage presenter
+and model stay in the tree as a reference for a future Solana Manage screen. Nothing mounts them
+until a Solana fund can launch.
 
-`useSolanaBuilderDraft` (`PP-MGR-HOK-024`) acknowledges save in memory without browser/backend
-persistence. `LocalSolanaReview` (`PP-MGR-CMP-102`) reuses the Review cards and columns with local
-identity/fee/seed intentions. Upload, balances, authoritative fees, seed quote, canonical reads,
-range context, clock, signing and launch remain unavailable. Local Apply never emits financial
-completion. POO-2239/2240/2261/2262 remain the real wiring boundary; `solanaSpoke` stays off.
-
-The local session owner stays outside the reused render boundary. Genuine render failures emit
-bounded `solana_preview_error` and expose the existing translated retry. Retry preserves applied
-shared plan and Review fields; unapplied inner panel edits may be lost when the shell unmounts.
-The owner retains the last pending-edit status and its unsaved-changes guard during fallback.
-Owner disposal reports local abandonment in every phase, including Review, using draft dirty or
-pending edits. Explicit exit suppresses it and disarms the guard. Standard EVM events and recovery
-retain their existing behavior. The focused shell/boundary regression suites passed 57 tests.
+A Solana draft saves to local storage like any V2 draft. Review shows the standard cards and a reason
+that names Solana, because a plan with Solana content cannot launch. Upload, balances, authoritative
+fees, seed quote, canonical reads, range context, clock and signing remain unavailable.
+POO-2239/2240/2261/2262 remain the real wiring boundary; `solanaSpoke` stays off.
 
 POO-2302 rules v1 first introduces the React Flow projection/engine (`PP-MGR-LIB-074`,
 `PP-MGR-CMP-100`) without changing production consumers. Infrastructure was published in PR #146
@@ -93,7 +80,7 @@ applies to new deposits only. There is no "When to apply" selector. The Overview
 (`PP-MGR-SCR-001`) uses `overviewStrategyRow` (`PP-MGR-LIB-058`) for the avatar, the status pill
 and the network names. On a read error, the AUM card shows the retry and the table shows
 "Your strategy list is unavailable."
-No new feature flag is added. The 3-click Solana gate is unchanged.
+No new feature flag is added. The 3-click Solana gate is removed (POO-2342): a click on V2 shows Solana in Networks.
 
 ## i18n namespace
 
@@ -783,7 +770,7 @@ The pure decisions are in `steps/mandateStepView.ts` (`PP-MGR-LIB-081`) and in `
 (`PP-MGR-LIB-019`). These rules replace the older layout rules above where they disagree.
 
 - Networks: a caption under "Other networks" tells the cost of each network (R1). A spoke that the
-  config does not enable is not shown. Solana shows only in its preview mode (R2).
+  config does not enable is not shown. Solana, Arbitrum and Robinhood show in the V2 Networks list (R2, POO-2342).
 - Protocols: "Protocols to operate" comes first. "Swap and bridge" sits below the divider,
   preselected, collapsed to "{names} · selected for you", and opens on Show to checkbox rows (R3).
   The "Required" group is removed. The last swap cannot be cleared. In both modes, the last bridge
@@ -931,9 +918,9 @@ corridors. Browser layout acceptance remains with Murilo.
 ## Local Solana strategy preview
 
 [POO-2281](https://linear.app/yeildbay/issue/POO-2281), rules v2, adds an isolated local editor on
-`/manager/new` under the existing `fundContracts` release gate. Select V2, then press the selected
-V2 button three times within one second to reveal V2 Solana. The hidden mode is a UI preference;
-all accounts using this route can reveal it. It has no separate API or wallet allowlist.
+`/manager/new` under the existing `fundContracts` release gate. Since POO-2342 the editor is the
+one V2 builder: Select V2 and add the Solana network. There is no gesture or hidden mode, and no
+separate API or wallet allowlist.
 
 The editor adds Kamino Lend, Jupiter Swap, Raydium CLMM and Orca Whirlpools blocks with official
 logos, local pair/allocation choices and guarded Apply/discard/removal. Preview configuration lives

@@ -4,30 +4,27 @@
 
 Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
 the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
-local Build/Manage host across phases and applies the route/account/exit guards described below.
+local Build across phases and applies the route/account/exit guards described below.
+POO-2342 R12 removed the Manage host: the builder shows only Configure.
 This wizard change is pre-merge code delivery, without a deployment or native-browser visual
 acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
 Not available; `solanaSpoke` stays off.
 
-This delivery binds `BuilderRouteSwitch` to `FundStrategyBuilderScreen` (`PP-MGR-SCR-002`) for both the standard
-V2 and hidden `solana-local` bindings. Mandate → Build → Review, palette, cards and panels are
-shared. The separate `SolanaStrategyPreviewScreen` (`PP-MGR-SCR-009`) is retained only as a
-historical test/story harness. The route/account-scoped `solanaPreviewStore` (`PP-CORE-LIB-125`)
-shares visual mode, not persistence or transaction authority. No new entitlement endpoint is
-required. POO-2282's earlier grant proposal remains canceled.
+POO-2342 rules v1: `BuilderRouteSwitch` mounts one `FundStrategyBuilderScreen` (`PP-MGR-SCR-002`)
+for V2. Solana is a network of the mandate, next to Arbitrum and Robinhood. There is no gesture,
+flag, hidden mode or preview store. A plan with a Solana block or spoke cannot launch, and Review
+names Solana as the reason. The API reads send no Solana network, token or protocol. No new
+entitlement endpoint is required.
 
 | Artifact / seam | Current contract | Remaining real integration |
 | --- | --- | --- |
 | PP-MGR-LIB-075, `solanaBuilderRuntime.ts` | Extends the local mandate catalog with Solana and four protocol choices. Exact mainnet USDC/WSOL metadata is unpriced and `visualEligible`; native SOL is not WSOL. PR #151 supplies explicit local Idle/cash presentation without financial balance data; standard Build has no cash. | POO-2239/2240 own real token/market discovery and canonical identities. A known mint or drawing descriptor supplies no price feed, balance, pool or allowlist attestation. |
-| PP-MGR-HOK-024, `useSolanaBuilderDraft.ts` | Fresh local mandate/plan/review state; shared `save()` acknowledges an in-memory snapshot. No localStorage, API, upload, wallet or launch binding is mounted. | Persistence and real capabilities require separately authorized contracts. Standard V2 keeps its existing browser-local draft/launch recovery. |
-| PP-MGR-LIB-076, `solanaBuildManageBinding.ts`, consumed by PP-MGR-SCR-002 `BuildScreen` | Stable shared block IDs, all configured local positions, first-position chain allocation ownership, whole-plan Apply validation against current exact-mint/protocol selections and budgets. Manage Current/After/context/clock remain unavailable. | POO-2239/2240/2261/2262 supply verified origins/reads/context/clock, quotes, authority and execution. Apply changes only the shared local plan and never canonical Current or journal. |
 | PP-MGR-CMP-101, `SolanaBuilderPanelBodies.tsx` | Same V2 PanelSelect for pair/Holding choices, exact Base58 Jupiter Token in/out, known local logos and null independent market/range/read context. Configure writes only pending descriptor intent until Apply validates the current mandate. | POO-2240/2261/2262 own canonical markets, independent sources, ranges, quotes and execution. A selected label or known mint grants none of these. |
-| PP-MGR-CMP-102, `review/LocalSolanaReview.tsx` | Existing Review cards/columns edit local identity, fee and seed intentions. Upload, balance, authoritative fee configuration, seed preview and Launch are unavailable. | Real upload, fees, seed quotes and launch remain POO-2239/2240/2261/2262. No preview default is an authoritative amount, fee or quote. |
 
 Case-sensitive Base58 token identities and protocol selections guard configured positions and
 reconciled automatic conversion legs; native SOL never satisfies an exact WSOL SPL requirement.
-The mounted local Build/Manage host survives selection, hiding and phase navigation; dirty phase
-exit requires explicit discard. Pending Configure/Manage status reaches the owner even while
+The mounted local Build survives selection, hiding and phase navigation; dirty phase
+exit requires explicit discard. Pending Configure status reaches the owner even while
 Build is hidden. Local owner cleanup covers every phase with truthful draft-dirty or pending status;
 explicit exit suppresses abandonment. The owner stays outside the reused render boundary, which
 emits genuine bounded render errors and retries with applied shared plan/Review fields retained.
@@ -61,9 +58,9 @@ historical fixtures rather than final topology oracles.
 
 ## Kamino independent reads (POO-2291 S2)
 
-Kamino's separate pure read model, `solanaKaminoReadModel.ts` (PP-MGR-LIB-072), validates the selected local/canonical program, market, reserve, position/obligation and mainnet USDC identity before accepting an envelope. Metadata, quantity, USD, APY and each reward stream have independent validation. Malformed fields become unavailable without exposing rejected values or erasing valid siblings. Decimal confirmed-zero requires observed confirmed/finalized provenance; USD is not inferred from a USDC quantity. The pure model is merged in PR #143; the read-only section now mounts in Configure and local Manage without any API/RPC/wallet call. POO-2240/2261/2262 and POO-2290 still own verified market/account reads, custody and execution.
+Kamino's separate pure read model, `solanaKaminoReadModel.ts` (PP-MGR-LIB-072), validates the selected local/canonical program, market, reserve, position/obligation and mainnet USDC identity before accepting an envelope. Metadata, quantity, USD, APY and each reward stream have independent validation. Malformed fields become unavailable without exposing rejected values or erasing valid siblings. Decimal confirmed-zero requires observed confirmed/finalized provenance; USD is not inferred from a USDC quantity. The pure model is merged in PR #143; the read-only section now mounts in Configure without any API/RPC/wallet call. POO-2240/2261/2262 and POO-2290 still own verified market/account reads, custody and execution.
 
-`SolanaKaminoReadSection.tsx` (PP-MGR-CMP-099) receives independently verified metadata, amounts, rates and full-account risk. Configure and local Manage host seams pass null origin/read until POO-2240/2261 supplies program/market/reserve/obligation and fresh metric envelopes. POO-2290 provides independently scoped Current/After account risk; a missing APY or market metric does not erase a compatible obligation read. Physical quantities, independent USD, zero/stale/unknown states and empty rewards remain separate. No selector, backend contract or execution capability is invented. Existing local drafts/Review remain mounted, and no financial completion is emitted.
+`SolanaKaminoReadSection.tsx` (PP-MGR-CMP-099) receives independently verified metadata, amounts, rates and full-account risk. The Configure seam passes null origin/read until POO-2240/2261 supplies program/market/reserve/obligation and fresh metric envelopes. POO-2290 provides independently scoped Current/After account risk; a missing APY or market metric does not erase a compatible obligation read. Physical quantities, independent USD, zero/stale/unknown states and empty rewards remain separate. No selector, backend contract or execution capability is invented. Existing local drafts/Review remain mounted, and no financial completion is emitted.
 
 ## Solana protocol range context (POO-2291 S3/S4)
 
@@ -81,12 +78,10 @@ The shared Configure host supplies null origins, reads, intentions, quotes and c
 | --- | --- | --- |
 | PP-MGR-LIB-071, `solanaManageModel.ts` | Case-sensitive canonical identity and local instance identity are separate. Local configuration, draft/revision/mode, Current, After, selection and journal have independent ownership. Current/After physical token quantities fit u64; absent observations remain absent. After binds to identity, base snapshot, revision, mode and host clock. | Authorized canonical reads, source/freshness evidence, separate simulation and journal reconciliation under POO-2239/2240/2261/2262. The model cannot attest external ownership or submit transactions. |
 | PP-MGR-CMP-097, `SolanaManagePresenter.tsx` | Injected Current, complete source/slot/commitment metadata and independently valid After. Inline exclusive modes and Review expose local intentions. Current range context must match the canonical Current ticks and identity. Confirm is disabled. | Supply verified canonical reads/context, preview and operation journal. No financial value or execution capability is inferred from a drawing or fixture. |
-| PP-MGR-CMP-098, `SolanaLocalManageHost.tsx`, host read/context seam | The mounted host keeps each presenter through selection/hiding and synchronizes drawing baselines without resetting another draft. It supplies unavailable Current/After and null context/clock. | Screen/Canvas consumes the host without selection/mode remount keys. Separately verified canonical reads/context/clock remain POO-2239/2240/2261/2262. |
-| PP-MGR-CMP-098, local range/apply seam | Non-null ranges fail closed without verified protocol context. Whole-percent drafts must stay within 100%. Applying one block checks other blocks' applied baselines, not unapplied reductions, and requires `onApplyDrawing(localId, config) === true` before local state/success changes. | Parent drawing owner acknowledges accepted writes. Verified protocol domain/grid context is required before ranges can be applied. This callback confers no signing capability. |
 
 Drawing Apply never writes canonical Current or the operation journal. Rejected acknowledgement retains draft and Review; a synchronized baseline that reaches the draft ends its obsolete mode/review binding and invalidates After without altering Current/journal. Bounded callbacks contain protocol/action only; the config callback is application data, not analytics. The screen emits the consent-aware interaction taxonomy. Real discovery, custody, quotation, authority, transaction details, signing and settlement remain unavailable under POO-2239/2240/2261/2262.
 
-The original POO-2291 S6 `SolanaStrategyPreviewScreen.tsx` integration remains a historical harness. The current shared `BuildScreen.tsx` guards Configure before entering Manage and retains the mounted host through selection/hiding. `solanaBuildManageBinding.ts` revalidates the current mandate and whole resulting plan before acknowledgement; phase leave with dirty Manage edits requires explicit discard. Fixed-node inspectors retain owner/network context without invented financial values. Neither integration grants wallet, RPC or API execution.
+`BuildScreen.tsx` shows only Configure during fund creation, on every network (POO-2342 rules v2). Manage appears only after launch. Fixed-node inspectors retain owner/network context without invented financial values. This integration grants no wallet, RPC or API execution.
 
 ## Launch report countdown (POO-2233, rules v1)
 
@@ -446,10 +441,10 @@ PP-MGR-CMP-086 Aave and PP-MGR-CMP-089 Kamino pass null account identity and una
 
 ## Local Solana visual editor (POO-2281, rules v2)
 
-The route-scoped store in `src/lib/experiments/solanaPreviewStore.ts` (PP-CORE-LIB-125) shares only
-visual mode. The editor in `src/features/manager/fund/solana-preview/` has no API/RPC/wallet/launch
-imports. No new entitlement endpoint is required. POO-2282 and the earlier unmounted grant modules
-were canceled/removed before release when Murilo simplified the scope.
+The Solana presenters in `src/features/manager/fund/solana-preview/` have no API/RPC/wallet/launch
+imports. The route-scoped preview store and the three-press gesture were removed in POO-2342.
+No new entitlement endpoint is required. POO-2282 and the earlier unmounted grant modules were
+canceled/removed before release when Murilo simplified the scope.
 
 Future real wiring remains POO-2239/2240 (tokens/markets), POO-2262 (binding/quotes/launch) and POO-2261
 (relays/reports). Local token/pair/percentage choices are not financial or transaction inputs. Missing
@@ -466,22 +461,20 @@ The ordinary mandate/catalog excludes local protocols. Reducers validate selecte
 
 ## Local Solana Idle and operating cash, October 9, 2026 (POO-2301 v1)
 
-Only toLayoutInput(plan, { runtime: 'solana-local' }) opts the Solana spoke into Idle and native operating cash. Standard Build graphs do not gain cash. SOL cash is a144x96 decoration, separate from the236x62 semantic USDC Idle node; no financial handle/edge, balance, mint or USD amount is fabricated. Both monetary readings stay Not available. POO-2239/2240/2261/2262 retain canonical account, token-program, native balance and independent USD/freshness contracts.
+Only a plan with a Solana spoke gets Idle and native operating cash from toLayoutInput (POO-2342 R5: the network decides, not a runtime flag). Graphs without a Solana spoke do not gain cash. SOL cash is a144x96 decoration, separate from the236x62 semantic USDC Idle node; no financial handle/edge, balance, mint or USD amount is fabricated. Both monetary readings stay Not available. POO-2239/2240/2261/2262 retain canonical account, token-program, native balance and independent USD/freshness contracts.
 
 
 ## Shared local Solana panels and Review, October 9, 2026 (POO-2301 v1)
 
 `SolanaBuilderPanelBodies.tsx` (PP-MGR-CMP-101) reuses the shared Configure shell, PanelSelect, Allocation and the delivered range/Holding/Kamino presenters. Descriptor choices are local intentions, with no pool, reserve, range, balance or APY source. Positive LP allocation displays unavailable range inspection; zero allocation defers it. Jupiter uses exact case-sensitive Base58 option identity and the existing token-logo presentation. Standard EVM bodies and selector defaults are preserved.
 
-`solanaBuildManageBinding.ts` (PP-MGR-LIB-076) maps applied local instances and validates the entire candidate plan against the current mandate before an acknowledged local Apply. Only the chain's first position owns its allocation. Hidden drafts cannot finance another write. `useSolanaBuilderDraft.ts` (PP-MGR-HOK-024) stores acknowledged state in component memory only; it imports the EVM hook contract as a type and performs no API, wallet or browser-storage operation.
-
-`LocalSolanaReview.tsx` (PP-MGR-CMP-102) reuses the V2 layout/cards with local numerical intentions. It never mounts the EVM launch driver, balance reads, upload/file-picker or signing actions. Unavailable upload, Max and Launch remain focusable blocked intents and emit solana_preview_blocked. EVM helper text and financial promises are retained only in the standard presentation. POO-2239/2240/2261/2262 retain canonical reads, prices/quotes, custody, authority, settlement and recovery. Route activation follows separately.
+Review (POO-2342 R9) shows the reason `fundBuilder.review.validation.solanaLaunchUnavailable` for any plan with a Solana block or spoke, and the plan cannot launch. `deriveLaunchSteps` keeps `UNSUPPORTED_POSITION` for the Solana kinds. POO-2239/2240/2261/2262 retain canonical reads, prices/quotes, custody, authority, settlement and recovery.
 
 
 Current materialized panel/Review release census: 537 markers across 310 files in src, including tests/stories, derived from this tree. Historical counts above describe earlier releases.
 
-Delivery continuation: this delivery connects the shared wizard route and retained Build/Manage
-host. The activation described as future work in the published foundation above is included here.
+Delivery continuation: this delivery connects the shared wizard route and retained Build.
+The activation described as future work in the published foundation above is included here.
 Applied plan/Review survive retry; unapplied inner-panel fields can be lost after a render exception,
 while the last pending metadata continues guarding leave. No deployment, native-browser acceptance
 or live Solana capability is asserted.
@@ -593,6 +586,6 @@ POO-2338 replaces the TradingView and Binance market reference. The Charts tab s
 
 **Terms.** The embed is a third-party surface that we do not control. See CR-MGR-POO2338 for the terms risk.
 
-Current chart-delivery census (POO-2338): 2,320 files under `src/`, with 552 markers across 317 files,
-including tests, stories and source documentation. Registry totals are 719 rows and 714 unique
+Current census (POO-2342): 2,297 files under `src/`, with 542 markers across 313 files,
+including tests, stories and source documentation. Registry totals are 720 rows and 715 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.

@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-021
  * @name planInvariants
- * @implements-rules-version v1 (POO-2151 rules v1)
+ * @implements-rules-version v1 (POO-2151 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @analytics-events none, a pure domain module.
  *
@@ -116,7 +116,6 @@ function configInMandate(
   if (config === null) return true;
   if (isSolanaKind(block.kind))
     return (
-      draft.runtime === "solana-local" &&
       network === "solana" &&
       isConfigFor(block.kind, config) &&
       selectedSolanaMints(draft, isLiquidityKind(block.kind) || config.pair === "SOL / USDC")
@@ -276,12 +275,7 @@ export function validatePlan(
     }
     // INV2
     for (const [index, step] of chain.steps.entries()) {
-      if (
-        ctx.draft.runtime === "solana-local" &&
-        network === "solana" &&
-        step.family === "flow" &&
-        step.kind === "swap"
-      ) {
+      if (network === "solana" && step.family === "flow" && step.kind === "swap") {
         const code =
           step.auto || step.config
             ? localConversionViolation(ctx.draft, step.config)
@@ -292,7 +286,6 @@ export function validatePlan(
       }
       const before = chain.steps[index - 1];
       if (
-        ctx.draft.runtime === "solana-local" &&
         network === "solana" &&
         step.family === "flow" &&
         step.kind === "collectFees" &&

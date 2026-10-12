@@ -3,6 +3,7 @@
  * @name SolanaManagePresenter tests
  * @implements-rules-version v1
  * @analytics-events none, injected presenter behavior tests
+ * Not mounted until a Solana fund can launch (reference for a future Solana Manage screen).
  */
 import { useReducer } from "react";
 import { expect, it, vi } from "vitest";

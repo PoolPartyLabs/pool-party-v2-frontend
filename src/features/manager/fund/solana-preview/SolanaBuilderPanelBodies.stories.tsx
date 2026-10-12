@@ -1,24 +1,20 @@
 /**
  * @id PP-MGR-CMP-101
  * @name SolanaBuilderPanelBodies.stories
- * @implements-rules-version v1 (POO-2301)
+ * @implements-rules-version v1 (POO-2301) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, isolated local panel states.
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { withManagerMessages } from "../build/canvas/canvasStorySupport";
 import { PanelHarness } from "../build/panel/panelTestKit";
 import type { BlockKind, BuildPlan } from "../build/plan/buildPlan";
-import { addToken, withNetworks, withProtocols } from "../mandateDraft";
+import { addToken, createEmptyDraft, withNetworks, withProtocols } from "../mandateDraft";
 import { LOCAL_PANEL_BODIES } from "./SolanaBuilderPanelBodies";
-import {
-  buildSolanaBuilderCatalog,
-  createSolanaBuilderDraft,
-  SOLANA_LOCAL_CONFIGS,
-} from "./solanaBuilderRuntime";
+import { buildSolanaBuilderCatalog, SOLANA_LOCAL_CONFIGS } from "./solanaBuilderRuntime";
 
 const catalog = buildSolanaBuilderCatalog();
 const networks = withNetworks(
-  createSolanaBuilderDraft("2026-10-08T00:00:00Z", "local-panel-story"),
+  createEmptyDraft("2026-10-08T00:00:00Z", "local-panel-story"),
   ["solana"],
   catalog,
 );

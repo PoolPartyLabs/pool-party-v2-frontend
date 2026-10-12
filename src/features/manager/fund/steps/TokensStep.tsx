@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-CMP-037
  * @name TokensStep
- * @implements-rules-version v1
+ * @implements-rules-version v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2332 rules v1: Token access mode and the 100-slot basket)
  * @analytics-events none, the shell emits `builder_mandate_token_mode_changed` for the Token access control
@@ -87,6 +87,7 @@ import {
   slotsView,
   tokensViewState,
 } from "../mandateTokenAccess";
+import { showsSolanaMarketNote } from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -529,7 +530,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
           /* The catalog (R25, R26) */
           <div className="flex min-w-0 flex-1 flex-col gap-3">
             <MandateCatalogStatus catalog={catalog} draft={draft} />
-            {draft.runtime === "solana-local" ? (
+            {showsSolanaMarketNote(visible, network) ? (
               <p role="status" className="text-xs text-muted-foreground">
                 {t("solanaPreview.marketUnavailable")}
               </p>

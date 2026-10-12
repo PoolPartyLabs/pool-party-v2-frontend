@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name graphTypes
- * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2288 rules v1
+ * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1); POO-2213 rules v1; POO-2235 rules v1; POO-2288 rules v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime; POO-2302 measured engine)
  * @analytics-events none, type declarations and one pure key function: nothing here is rendered.
  *
@@ -63,8 +63,6 @@ export interface LayoutChain {
 }
 
 export interface LayoutSpoke {
-  /** Opt-in presentation context, never stored or executable plan data. */
-  context?: "solana-local";
   network: string;
   sharePct: number;
   /** Left to right. */

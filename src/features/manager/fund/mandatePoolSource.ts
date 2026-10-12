@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-020
  * @name mandatePoolSource
- * @implements-rules-version v1 (POO-2133 frontend slice A; mock POO-2125 rules v1)
+ * @implements-rules-version v1 (POO-2133 frontend slice A; mock POO-2125 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, a data adapter. The Pools step (PP-MGR-CMP-038) emits its own view and
  *   blocked-intent events through the shell's `onBlocked` prop; nothing here touches the dataLayer.
  *
@@ -291,6 +291,8 @@ export function mapV2Pool(pool: CatalogPool): MandatePoolRef {
  * tier rows of a pair in the order a manager reads them.
  */
 export async function searchMandatePools(input: PoolSearchInput): Promise<MandatePoolRef[]> {
+  // POO-2342 R7: Solana has no pool search yet, and no read may name it.
+  if (input.network === "solana") return [];
   const found = isMockMode ? await searchMock(input) : await searchReal(input);
 
   const ordered = [...found].sort((a, b) => (b.tvlUsd ?? 0) - (a.tvlUsd ?? 0));
@@ -344,6 +346,8 @@ export async function findMandatePoolByAddress(
   protocols: DexProtocolId[],
 ): Promise<MandatePoolLocation> {
   const wanted = address.toLowerCase();
+  // POO-2342 R7: Solana has no pool lookup yet, and no read may name it.
+  if (network === "solana") return { pool: null, foundOn: null };
 
   if (isMockMode) {
     await simulateDelay(MOCK_LATENCY_MS[0], MOCK_LATENCY_MS[1]);
