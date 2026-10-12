@@ -1275,5 +1275,5 @@ Raydium block panel and the chart reuse their own IDs. The two PP-INTEGRATION-PO
 DEX Screener reads are in `raydiumPoolsRead.ts` and `raydiumPoolsAction.ts`. POO-2344 moves the
 reads into the Pool Party API.
 
-Raydium pool census (POO-2343): 721 registry rows and 716 unique IDs, 2,316 files under `src/`,
-with 551 markers across 317 files. The five disclosed historical duplicate IDs remain unchanged.
+Raydium pool census (POO-2343): 721 registry rows and 716 unique IDs, 2,309 files under `src/`,
+with 545 markers across 315 files. The five disclosed historical duplicate IDs remain unchanged.
