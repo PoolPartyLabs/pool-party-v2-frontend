@@ -1,5 +1,7 @@
-/** @id PP-MGR-LIB-058 @name overviewModel @implements-rules-version v1 (POO-2245) */
+/** @id PP-MGR-LIB-058 @name overviewModel @implements-rules-version v1 (POO-2245) @implements-rules-version v1 (POO-2335) */
 import type { FundListEntry } from "@/features/funds/fundListModel";
+import { apiNetworkForChain, chainDisplayName } from "@/lib/chains/config";
+import { initialsFor } from "@/lib/utils/initials";
 import type { LaunchJourney } from "../launch/contracts";
 import { launchStatus } from "../launch/journey";
 import type { MandateDraft } from "../mandateDraft";
@@ -57,5 +59,43 @@ export function overviewModel(
     setup: items,
     firstUse: false,
     localUnavailable: setup.draftStatus !== "available" || setup.journeyStatus !== "available",
+  };
+}
+
+export type OverviewStatusTone = "success" | "warning" | "muted";
+export interface OverviewStrategyRow {
+  name: string;
+  initials: string;
+  logoUrl: string | null;
+  status: {
+    key: "stateOpen" | "stateClosing" | "stateClosed" | "notAvailable";
+    tone: OverviewStatusTone;
+  };
+  networks: Array<{ chainId: string; slug: string | null; name: string }>;
+}
+/** R9 (POO-2335): the strategy row parts of Figma 8427:2829. Network names come from chain config. */
+export function overviewStrategyRow(fund: FundListEntry): OverviewStrategyRow {
+  const name = fund.profile?.name?.trim() || `PP-${fund.creationNumber}`;
+  const status: OverviewStrategyRow["status"] =
+    fund.state === "Open"
+      ? { key: "stateOpen", tone: "success" }
+      : fund.state === "Closing"
+        ? { key: "stateClosing", tone: "warning" }
+        : fund.state === "Closed"
+          ? { key: "stateClosed", tone: "muted" }
+          : { key: "notAvailable", tone: "muted" };
+  return {
+    name,
+    initials: initialsFor(name),
+    logoUrl: fund.profile?.imageUrl || fund.profile?.image || null,
+    status,
+    networks: fund.chains.map((chain) => {
+      const id = Number(chain.chainId);
+      return {
+        chainId: chain.chainId,
+        slug: apiNetworkForChain(id) ?? null,
+        name: chainDisplayName(id) ?? chain.chainId,
+      };
+    }),
   };
 }

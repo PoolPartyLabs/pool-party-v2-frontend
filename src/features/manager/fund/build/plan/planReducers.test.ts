@@ -5,7 +5,9 @@
  * @analytics-events none, a pure domain module; refusals are reported by the Build screen (S7).
  *
  * Covers I1, I2, I4, I6, I7, C3, C4, C8, C12, C13, C14, C18, C22, HU2, HU5, INV1, INV3 to INV6,
- * A6 and the purity rule (no mutation, no clock, no randomness, a refusal changes nothing).
+ * A6 and the purity rule (no mutation, no clock, no randomness, a refusal changes nothing). POO-2334
+ * R2 adds three tests: a Borrow never borrows the asset of the Supply directly above it, and the
+ * Borrow is cleared before the Swap · auto blocks are reconciled. R11 tags the Supply removal test.
  *
  * The Aave v3 Borrow status is SET here (enabled by default, coming soon where a test says so)
  * instead of read from the table, so coordinator default D29 can flip without a test rewrite.
@@ -392,7 +394,7 @@ describe("removeBlock (I6, INV4, INV6, C18)", () => {
   });
 
   it("takes a Supply's Swap · auto and the Borrow under it", () => {
-    // @rule I6
+    // @rule I6, R11
     const before = supplyBorrowPlan();
     hubChain(before)?.steps.push(
       { id: "mine", family: "flow", kind: "swap", auto: false },
@@ -534,6 +536,94 @@ describe("setBlockConfig (HU2, C13)", () => {
     expect(labels(hubChain(usdc))).toEqual(["aaveSupply"]);
     const emptied = ok(setBlockConfig(weth, ctx, id, null));
     expect(labels(hubChain(emptied))).toEqual(["aaveSupply:empty"]);
+  });
+});
+
+describe("setBlockConfig keeps a Borrow off its own collateral (POO-2334 R2)", () => {
+  it("refuses a Borrow of the Supply's asset, and clears a Borrow when its Supply takes that asset", () => {
+    // @rule R2
+    const plan = supplyBorrowPlan();
+    expect(
+      reason(
+        setBlockConfig(plan, ctx, "hub-aave-borrow", { assetKey: TEST_ASSET_KEYS.wethArbitrum }),
+      ),
+    ).toBe("unknown_target");
+    const changed = ok(
+      setBlockConfig(plan, ctx, "hub-aave-supply", { assetKey: TEST_ASSET_KEYS.usdcArbitrum }),
+    );
+    const steps = hubChain(changed)?.steps ?? [];
+    expect(steps.find((step) => step.id === "hub-aave-supply")).toMatchObject({
+      config: { assetKey: TEST_ASSET_KEYS.usdcArbitrum },
+    });
+    expect(steps.find((step) => step.id === "hub-aave-borrow")).toMatchObject({ config: null });
+    const kept = ok(
+      setBlockConfig(plan, ctx, "hub-aave-borrow", {
+        assetKey: TEST_ASSET_KEYS.usdcArbitrum,
+        borrowPct: 40,
+      }),
+    );
+    expect(hubChain(kept)?.steps.at(-1)).toMatchObject({
+      config: { assetKey: TEST_ASSET_KEYS.usdcArbitrum, borrowPct: 40 },
+    });
+  });
+
+  /** A one-chain hub plan from raw steps. */
+  function chainOf(...steps: Step[]): BuildPlan {
+    return { ...emptyPlan(), hub: { chains: [{ id: "c", sharePct: 0, steps }] } };
+  }
+  const supplyStep = (id: string, assetKey: string): Step => ({
+    id,
+    family: "position",
+    kind: "aaveSupply",
+    config: { assetKey },
+  });
+  const borrowStep = (id: string, assetKey: string): Step => ({
+    id,
+    family: "position",
+    kind: "aaveBorrow",
+    config: { assetKey },
+  });
+
+  it("clears the Borrow first, so no Swap · auto stays for a token that no longer arrives", () => {
+    // @rule R2
+    const plan = reconcileAutoBlocks(
+      chainOf(
+        supplyStep("s1", TEST_ASSET_KEYS.wethArbitrum),
+        borrowStep("b", TEST_ASSET_KEYS.usdcArbitrum),
+        supplyStep("s2", TEST_ASSET_KEYS.wethArbitrum),
+      ),
+      ctx,
+    );
+    expect(labels(hubChain(plan))).toEqual([
+      "swap:auto",
+      "aaveSupply",
+      "aaveBorrow",
+      "swap:auto",
+      "aaveSupply",
+    ]);
+    const changed = ok(setBlockConfig(plan, ctx, "s1", { assetKey: TEST_ASSET_KEYS.usdcArbitrum }));
+    expect(labels(hubChain(changed))).toEqual(["aaveSupply", "aaveBorrow:empty", "aaveSupply"]);
+  });
+
+  it("refuses a Borrow only when it takes its own collateral, not for another Borrow of the chain", () => {
+    // @rule R2
+    const plan = chainOf(
+      supplyStep("s1", TEST_ASSET_KEYS.wethArbitrum),
+      borrowStep("b1", TEST_ASSET_KEYS.usdcArbitrum),
+      supplyStep("s2", TEST_ASSET_KEYS.wethArbitrum),
+      borrowStep("b2", TEST_ASSET_KEYS.wethArbitrum),
+    );
+    const changed = ok(
+      setBlockConfig(plan, ctx, "b1", { assetKey: TEST_ASSET_KEYS.usdcArbitrum, borrowPct: 40 }),
+    );
+    const steps = hubChain(changed)?.steps ?? [];
+    expect(steps.find((step) => step.id === "b1")).toMatchObject({
+      config: { assetKey: TEST_ASSET_KEYS.usdcArbitrum, borrowPct: 40 },
+    });
+    expect(steps.find((step) => step.id === "b2")).toMatchObject({ config: null });
+    expect(
+      reason(setBlockConfig(plan, ctx, "b2", { assetKey: TEST_ASSET_KEYS.wethArbitrum })),
+    ).toBe("unknown_target");
   });
 });
 

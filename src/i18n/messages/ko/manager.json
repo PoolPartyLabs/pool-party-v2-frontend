@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "기타 네트워크"
+      "others": "기타 네트워크",
+      "othersCaption": "추가하는 네트워크마다 브리지와 출시 시 서명 1회가 더 필요합니다."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "필수",
-      "requiredSubtitle": "모든 전략에는 토큰을 교환하고 네트워크 간에 자금을 이동할 방법이 필요합니다.",
       "operate": "운용에 사용할 프로토콜",
-      "on": "지원",
-      "onFootnote": "'지원'은 각 프로토콜을 사용할 수 있는 1단계의 네트워크를 보여줍니다."
+      "on": "지원 네트워크",
+      "onFootnote": "'지원 네트워크'는 1단계에서 선택한 네트워크 중 각 프로토콜이 지원하는 네트워크를 보여줍니다.",
+      "swapBridge": "스왑 및 브리지",
+      "swapBridgeCollapsed": "{names} · 자동 선택됨",
+      "swapBridgeOpen": "자동으로 선택되었습니다. 스왑을 하나 이상 유지하고, 네트워크를 추가하면 브리지도 하나 이상 유지하세요.",
+      "swapBridgeOpenHub": "자동으로 선택되었습니다. 스왑을 하나 이상 유지하세요.",
+      "show": "보기",
+      "hide": "숨기기",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · 스왑",
+        "uniswapV3Liquidity": "Uniswap v3 · 유동성"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -834,7 +843,34 @@
       "depositToken": "입금 토큰",
       "slotsCaption": "토큰은 실행되는 각 네트워크에서 슬롯을 하나씩 사용합니다. 운용 방침에는 {max}개의 슬롯이 있습니다.",
       "noPrice": "아직 가격 피드가 없습니다",
-      "empty": "검색 결과에 해당하는 토큰이 없습니다."
+      "empty": "검색 결과에 해당하는 토큰이 없습니다.",
+      "access": {
+        "label": "토큰 접근",
+        "selected": "선택한 토큰",
+        "all": "모든 토큰",
+        "hint": "모든 토큰을 선택하면 전략이 네트워크와 프로토콜의 모든 토큰을 거래할 수 있습니다. 나중에 출시되는 토큰도 포함됩니다."
+      },
+      "allInfo": {
+        "title": "전략이 모든 토큰을 거래할 수 있습니다",
+        "body": "네트워크와 프로토콜의 모든 토큰이 포함되며, 게시 후 출시되는 토큰도 포함됩니다. 토큰을 하나씩 고르지 않아도 됩니다. 모든 토큰은 hub에서 가격이 책정됩니다."
+      },
+      "yoursAll": "내 토큰 · 전체",
+      "everyOther": "그 외 모든 토큰",
+      "everyOtherCaption": "출시되면 추가됩니다",
+      "requiredBy": "{network}에서 필요로 함",
+      "slotsAllLabel": "네트워크 슬롯",
+      "slotsNoLimit": "한도 없음",
+      "slotsAllCaption": "{max}개 슬롯 한도는 선택한 토큰에만 적용됩니다.",
+      "noFreeSlots": "남은 슬롯 없음",
+      "slotsFull": "슬롯 {max}개를 모두 사용했습니다. 다른 토큰을 추가하려면 토큰을 하나 제거하세요.",
+      "andMoreTokens": "외 {count, plural, other {#개 토큰}}",
+      "loading": "토큰 불러오는 중",
+      "loadError": {
+        "title": "토큰을 불러오지 못했습니다",
+        "heading": "토큰 목록을 불러오지 못했습니다",
+        "body": "연결을 확인하고 다시 시도하세요. 목록의 토큰은 저장된 상태로 유지됩니다."
+      },
+      "retry": "다시 시도"
     },
     "pools": {
       "search": "토큰, 페어 또는 풀 주소",
@@ -844,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, other {보유한 토큰을 하나 이상 포함하는 풀이 #개}} 있습니다",
       "yours": "보유 풀 · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "{pct}% 선택됨",
+      "feeTier": "{fee} 수수료 티어",
+      "tierShare": "{fee} 수수료 티어 · LP의 {pct}%가 선택",
       "addsToken": "{symbol}을 토큰에 추가",
       "hasHook": "훅이 있습니다",
       "fixed": "풀은 출시 시점에 고정됩니다. 이후에는 추가할 수 없습니다.",
@@ -861,11 +897,11 @@
     },
     "limits": {
       "perNetwork": "네트워크별",
-      "perNetworkCaption": "네트워크별 최대 자본 비율 · 5% 단위",
+      "perNetworkCaption": "네트워크별 예치금의 최대 비율 · 5% 단위",
       "perProtocol": "프로토콜별",
-      "perProtocolCaption": "프로토콜별 최대 자본 비율 · 5% 단위",
+      "perProtocolCaption": "프로토콜별 예치금의 최대 비율 · 5% 단위",
       "perToken": "토큰별",
-      "perTokenCaption": "각 토큰에 보유되는 최대 자본 비율 · 5% 단위",
+      "perTokenCaption": "각 토큰에 보유되는 예치금의 최대 비율 · 5% 단위",
       "tokenOnNetwork": "{network}의 {symbol}",
       "hubRow": "한도 없음 · hub는 다른 곳으로 보내지 않은 자금을 보유합니다",
       "hubCaption": "Hub",
@@ -881,14 +917,31 @@
         "perps": "무기한"
       },
       "positiveTokenRequired": "USDC 외에 최소 한 개의 토큰 한도를 0%보다 높게 설정하거나 한도 없음을 선택하세요.",
-      "addPositiveToken": "Tokens에서 다른 토큰을 추가한 다음 한도를 0%보다 높게 설정하거나 한도 없음을 선택하세요. USDC는 이미 포함되어 있습니다."
+      "addPositiveToken": "Tokens에서 다른 토큰을 추가한 다음 한도를 0%보다 높게 설정하거나 한도 없음을 선택하세요. USDC는 이미 포함되어 있습니다.",
+      "perTokenAllCaption": "모든 토큰의 기본 한도 · 5% 단위",
+      "allTokensRow": {
+        "title": "모든 토큰",
+        "caption": "목록의 모든 토큰에 하나의 한도를 설정합니다"
+      },
+      "mixed": "혼합",
+      "everyTokenRow": {
+        "title": "모든 토큰",
+        "caption": "USDC를 제외하고 토큰별로 각각 적용"
+      },
+      "allWarning": {
+        "title": "어떤 토큰도 전략에 들어올 수 있습니다",
+        "body": "유동성이 낮거나 가격 이력이 없는 토큰도 포함됩니다. 기본 한도는 각 토큰에 개별로 적용됩니다. 예치자는 전략 카드와 페이지에서 이 태그를 볼 수 있습니다.",
+        "tag": "모든 토큰"
+      },
+      "capZeroReason": "토큰 한도를 0%보다 크게 설정하세요",
+      "capZero": "토큰 한도를 0%보다 크게 설정하거나 한도 없음을 선택해 계속하세요."
     },
     "draft": {
       "title": "초안 이름 지정",
       "body": "지금까지 선택한 모든 내용이 저장됩니다. 이름은 전략 목록에서 이 초안을 찾는 데 사용됩니다. 나중에 '검토'에서 변경할 수 있습니다.",
       "nameLabel": "초안 이름",
       "namePlaceholder": "Arbitrum의 ETH와 BTC",
-      "helper": "10~50자, 전략 이름과 동일한 규칙이 적용됩니다.",
+      "helper": "10~50자.",
       "counter": "{count} / {max}",
       "progress": "지금까지 저장됨: 네트워크 {networks}개, 프로토콜 {protocols}개, 토큰 {tokens}개 · 운용 방침, {n}/{count} 단계",
       "keepEditing": "계속 편집",
@@ -932,7 +985,41 @@
         "frozen": "동결된 리저브",
         "paused": "일시 중지된 리저브",
         "supplyCapReached": "Supply 한도 도달",
-        "unavailable": "사용 불가"
+        "unavailable": "사용 불가",
+        "collateralNote": "아래 Borrow 블록의 담보입니다. 자산이나 배분을 바꾸면 빌릴 수 있는 금액이 바뀝니다."
+      },
+      "borrowPanel": {
+        "heading": "빌릴 수 있는 자산",
+        "filter": "토큰 또는 주소로 필터링",
+        "caption": "위 Supply를 담보로 {network}의 Aave v3가 빌려주는 운용 지침의 토큰입니다.",
+        "needAsset": "다른 자산이 필요한가요?",
+        "noMatch": "운용 지침에 {typed}와 일치하는 자산이 없습니다",
+        "noMatchCaption": "토큰은 운용 지침의 3단계에서 선택합니다. 편집하는 동안 구성이 저장됩니다.",
+        "empty": "{network}에서 빌릴 수 있는 운용 지침의 자산이 없습니다",
+        "collateral": "담보",
+        "collateralHelp": "위 Supply 블록의 자산입니다. Aave v3는 이를 담보로 빌려줍니다. 해당 블록에서 변경하세요.",
+        "supplyAbove": "위 Supply 블록",
+        "collateralValue": "담보 가치",
+        "needSupply": "먼저 위 Supply 블록을 설정하세요.",
+        "asset": "자산",
+        "help": "{network}의 Aave v3가 빌려주는 운용 지침의 토큰입니다.",
+        "apy": "대출 APY",
+        "amount": "대출 금액",
+        "amountHelp": "빌리는 담보 가치의 비율입니다. 비율이 높을수록 건전성 지수가 낮아집니다.",
+        "amountCaption": "위에 예치한 {symbol} 가치의 비율입니다. Aave 한도 {limit}%.",
+        "atLimit": "최대치에 도달했습니다. Aave v3는 {symbol} 가치의 최대 {limit}%까지 빌려줍니다.",
+        "amountValue": "대출 금액",
+        "healthFactor": "건전성 지수",
+        "noDebt": "부채 없음",
+        "liquidationPrice": "청산 가격",
+        "liquidationSentence": "{symbol}은 현재 {price}입니다. 약 {drop}% 하락하면 청산됩니다.",
+        "unavailable": "사용 불가",
+        "blocked": {
+          "needSupply": "먼저 위 Supply 블록을 설정하세요.",
+          "unavailable": "Aave v3가 빌려주는 자산을 선택하세요.",
+          "needAmount": "0%보다 큰 대출 금액을 설정하세요.",
+          "overLimit": "대출 금액이 Aave 한도를 넘습니다."
+        }
       }
     },
     "canvas": {
@@ -1316,6 +1403,8 @@
     "strategyBlocks": "전략 블록",
     "selectionHelp": "캔버스 또는 이 목록에서 블록을 선택하세요.",
     "viewMandate": "운용 지침 보기",
+    "explorer": "익스플로러",
+    "strategyAddressUnavailable": "전략 주소를 사용할 수 없습니다.",
     "viewInvestor": "투자자 화면 보기",
     "noSelection": "블록을 선택해 잔액을 확인하고 포지션을 관리하세요.",
     "emptyPositions": "이 전략에는 아직 포지션이 없어요.",
@@ -1458,6 +1547,19 @@
       "debt": "부채",
       "fullAccount": "위험은 모든 Collateral과 부채를 포함한 계정 전체에 적용됩니다.",
       "tokenMetadata": "토큰 메타데이터"
+    },
+    "spine": {
+      "routeEntry": "경로 맥락 · 진입",
+      "routeExit": "경로 맥락 · 출구",
+      "routeScope": "경로 범위 · {pct}",
+      "strategyShare": "전략 가치 대비 · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "{amount} 요청됨",
+      "reserved": "{pct} 예약됨",
+      "bridgeEntry": "브리지 진입",
+      "bridgeReturn": "브리지 복귀",
+      "swapInput": "스왑 입력",
+      "swapFees": "수수료 스왑"
     }
   },
   "overviewV2": {
@@ -1493,6 +1595,7 @@
     "loadFailed": "전략을 불러오지 못했습니다",
     "retryDescription": "AUM과 전략 목록을 업데이트하려면 다시 시도하세요.",
     "retry": "다시 시도",
+    "strategyListUnavailable": "전략 목록을 사용할 수 없습니다.",
     "setupPreserved": "저장된 설정은 위에서 계속 확인할 수 있습니다.",
     "localUnavailable": "저장된 설정 일부를 읽지 못했습니다. 데이터는 보존되었습니다.",
     "historyUnavailable": "AUM 기록을 이용할 수 없습니다.",

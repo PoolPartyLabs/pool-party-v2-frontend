@@ -106,7 +106,7 @@ describe("MandateSummaryCard", () => {
   });
 
   // @rule B1
-  it("lists the required protocols first and marks them as always included", () => {
+  it("lists the locked protocols first and marks only them as always included", () => {
     const draft = withProtocols(base(), [...REQUIRED_PROTOCOLS, "aave-v3"]);
 
     renderCard(draft);
@@ -115,10 +115,8 @@ describe("MandateSummaryCard", () => {
     expect(protocols).toHaveTextContent("Uniswap v3");
     expect(protocols).toHaveTextContent("Across");
     expect(protocols).toHaveTextContent("Aave v3");
-    // The two required ones carry the Lock, so the row says which protocols the manager chose.
-    expect(screen.getAllByTestId("mandate-summary-protocol-locked")).toHaveLength(
-      REQUIRED_PROTOCOLS.length,
-    );
+    // POO-2333 R4: a hub-only mandate can clear Across, so only the swap carries the Lock.
+    expect(screen.getAllByTestId("mandate-summary-protocol-locked")).toHaveLength(1);
   });
 
   // @rule B1
@@ -221,13 +219,27 @@ describe("MandateSummaryCard", () => {
   });
 
   // @rule B1
-  it("shows an unanswered cap as Not set rather than as zero", () => {
-    const draft = withNetworks(base(), ["arbitrum", "robinhood"], catalog);
+  it("shows an unanswered cap as Not set rather than as zero in real data mode", () => {
+    const draft = {
+      ...withNetworks(base(), ["arbitrum", "robinhood"], catalog),
+      dataMode: "real" as const,
+    };
 
     renderCard(draft);
 
     expect(screen.getByTestId("mandate-summary-limits")).toHaveTextContent(
       "Robinhood Chain · Not set",
+    );
+  });
+
+  // @rule R8
+  it("shows the start value of an unanswered network cap, as the Limits screen does", () => {
+    const draft = withNetworks(base(), ["arbitrum", "robinhood"], catalog);
+
+    renderCard(draft);
+
+    expect(screen.getByTestId("mandate-summary-limits")).toHaveTextContent(
+      "Robinhood Chain · No cap",
     );
   });
 

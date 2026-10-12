@@ -305,6 +305,9 @@ export const ANALYTICS_EVENTS = [
   "builder_mandate_step_viewed",
   "builder_mandate_step_submitted",
   "builder_mandate_blocked",
+  // POO-2332: the manager switched the Token access control between Selected and All tokens. One
+  // event per switch, so the share of strategies that trade any token is a plain count.
+  "builder_mandate_token_mode_changed",
   "builder_mandate_completed",
   "builder_mandate_abandoned",
   "builder_draft_saved",
@@ -538,7 +541,7 @@ export type AnalyticsMandateStep = (typeof ANALYTICS_MANDATE_STEPS)[number];
  * carry reasons that cannot occur in it. {@link AnalyticsParams.block_reason} accepts both, so one
  * GA4 dimension still answers "why did the product say no" across the whole app.
  *
- * Five values where the mandate domain defines seven, because two were not distinct from reasons
+ * Seven values where the mandate domain defines nine, because two were not distinct from reasons
  * that already exist and inventing a synonym would split one question into two half-populated
  * series: `name_length` IS `name_invalid` (whose own doc reads "missing or fails its length rule"),
  * and `not_priced` IS `price_unknown`. The fold is explicit and total in
@@ -562,6 +565,12 @@ export const ANALYTICS_MANDATE_BLOCK_REASONS = [
    * and this count is what says whether Limits asks for more decisions than it is worth.
    */
   "cap_missing",
+  /**
+   * A token cap is on and at 0% (POO-2332 R12, R13). The cap lets no capital into that token, so the
+   * strategy would hold nothing in it. The manager clears it by raising the cap or ticking No cap.
+   * Sent when a press on Next finds the 0% cap, in Selected mode and in All tokens mode.
+   */
+  "cap_zero",
   /** USDC needs another selected token with a positive effective allowance (POO-2197). */
   "token_allowance_required",
   /**
@@ -590,6 +599,14 @@ export const ANALYTICS_MANDATE_BLOCK_REASONS = [
    * is what does not exist yet.
    */
   "coming_soon",
+  /**
+   * The manager tried to clear a protocol that the mandate cannot lose (POO-2333 R4): the last
+   * swap, or the bridge of a mandate with a network that is not the hub.
+   *
+   * Not `nothing_selected`: the step has a selection, and the manager tried to remove a part of it.
+   * This count tells if managers try to run a strategy without the swap or the bridge.
+   */
+  "required_protocol",
 ] as const;
 
 export type AnalyticsMandateBlockReason = (typeof ANALYTICS_MANDATE_BLOCK_REASONS)[number];
@@ -1239,6 +1256,11 @@ export interface AnalyticsParams {
   protocols_count?: number;
   tokens_count?: number;
   pools_count?: number;
+  /**
+   * On `builder_mandate_token_mode_changed` (POO-2332 R15): the mode the manager switched TO. A closed
+   * pair, declared here for the same reason as {@link step}: this leaf never imports a feature module.
+   */
+  token_mode?: "selected" | "all";
   /**
    * On `builder_mandate_abandoned`: whether the mandate the manager walked away from had reached
    * storage with nothing left unsaved (POO-2122; sharpened by POO-2157, review F3 of PR #41).

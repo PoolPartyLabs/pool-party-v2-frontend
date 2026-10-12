@@ -2,7 +2,7 @@
  * @id PP-MGR-LIB-026
  * @name blockConfig
  * @implements-rules-version v1 (POO-2184 rules v1); POO-2237 rules v1
- * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2301 shared local runtime extension); POO-2334 rules v1
  * @analytics-events none, a pure domain module: it types and checks a block's configuration and
  *   emits nothing.
  *
@@ -17,6 +17,8 @@
  *   ({@link fullRangeTicks}); `fullRange` and `displayInverted` are booleans; `slippagePct` runs
  *   from 0.1 to 5 (the launch signs `maxLossBps` = slippagePct x 100, 10 to 500).
  * - Aave Supply: `assetKey` (`network:address`), plus `slippagePct` only when a swap is needed.
+ * - Aave Borrow: `assetKey`, plus `borrowPct` (POO-2334 R3), a % of the collateral value from 0 to
+ *   100. The panel holds it under the market's max LTV; a Supply never carries it.
  * - The launch side refuses ticks off the catalog `tickSpacing` (`validateTickAlignment`).
  *
  * Two levels of "not right", on purpose:
@@ -91,6 +93,11 @@ export function isManualSwapConfig(value: unknown): value is ManualSwapConfig {
   );
 }
 
+/** POO-2334 R3: a Borrow amount, a % of the collateral value from 0 to 100 (the panel caps at LTV). */
+function isBorrowPct(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100;
+}
+
 function isBoolean(value: unknown): value is boolean {
   return typeof value === "boolean";
 }
@@ -156,7 +163,11 @@ export function isConfigFor(kind: string, config: unknown): boolean {
       Object.keys(config).every((key) => key === "catalogId" || key === "pair")
     );
   }
-  return shape === "pool" ? poolFieldsValid(config) : optional(config.slippagePct, isSlippage);
+  if (shape === "pool") return poolFieldsValid(config);
+  return (
+    optional(config.slippagePct, isSlippage) &&
+    (kind === "aaveBorrow" ? optional(config.borrowPct, isBorrowPct) : !("borrowPct" in config))
+  );
 }
 
 /**

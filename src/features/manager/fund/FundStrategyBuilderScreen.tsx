@@ -3,9 +3,10 @@
  * @name FundStrategyBuilderScreen
  * @implements-rules-version v3 (POO-2122 rules v1, POO-2167 rules v3, POO-2157 rules v1, POO-2195 rules v1, POO-2197 rules v2)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2332 token access: cap_zero on Next, the token mode event)
  * @analytics-events builder_mandate_started, builder_mandate_step_viewed,
- *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_completed,
- *   builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
+ *   builder_mandate_step_submitted, builder_mandate_blocked, builder_mandate_token_mode_changed,
+ *   builder_mandate_completed, builder_mandate_abandoned, builder_draft_saved, builder_mandate_error,
  *   builder_build_abandoned, builder_build_error, builder_build_submitted, builder_build_completed,
  *   builder_review_error (the Build canvas and ReviewPhase own their view/interaction events),
  *   solana_preview_viewed, solana_preview_started, solana_preview_interacted,
@@ -13,7 +14,7 @@
  *
  * The fund-contracts strategy builder: the shell the five Mandate steps live in (POO-2122, epic
  * POO-2119). Page header, the three-phase stepper, the collapsible sub-step header, the step body,
- * the sticky action bar, Save & exit, the unsaved guard, deep links and the funnel.
+ * the sticky action bar, Save and exit, the unsaved guard, deep links and the funnel.
  *
  * The step BODIES are separate slices and arrive as placeholders. Everything below is what does not
  * belong to any one of them: where the manager is, how they move, and what is recorded when they do.
@@ -83,22 +84,22 @@
  * ## The Build phase (POO-2157, handoff v1.2 of the Build canvas)
  *
  * The canvas replaced the Build landing (D24) and takes the full content width (D23). The header,
- * Save & exit and the stepper stay here, unchanged, with Build current (AN1). Four things are the
+ * Save and exit and the stepper stay here, unchanged, with Build current (AN1). Four things are the
  * shell's because only the shell sees them:
  *
  * 1. **Every way out passes the canvas's selection guard (HU3).** The panel of the next batch will
  *    refuse to lose unapplied changes; Back: Mandate and the Edit mandate links are the canvas's
- *    own, while Save & exit and the stepper's Mandate pill are here, so they ask the guard through
+ *    own, while Save and exit and the stepper's Mandate pill are here, so they ask the guard through
  *    the `leaveGuardRef` the canvas fills while it is mounted.
  * 2. **Every save writes the phase the manager is in (`lastPhase`, D16):** `build` in Build,
  *    `mandate` in the Mandate phase, including after Back: Mandate and after an Edit mandate link.
- *    Without it, Back then Save & exit would leave `build` behind and the Console Open would land
+ *    Without it, Back then Save and exit would leave `build` behind and the Console Open would land
  *    on Build instead of on the step the manager left. The completing save of the mandate writes
  *    `build`: it is the write that opens Build, so a manager who leaves right after it is resumed
  *    where they were.
  * 3. **An Edit mandate link opens Mandate step 1 or 2** with the plan in the draft; walking forward
  *    through Next: Build strategy returns to Build with the plan intact (C6, A4).
- * 4. **The end of a Build session is reported as Build's:** leaving without a Save & exit is
+ * 4. **The end of a Build session is reported as Build's:** leaving without a Save and exit is
  *    `builder_build_abandoned` (whether unsaved plan edits were left behind, and how many blocks),
  *    and a save that fails from Build is `builder_build_error`. A Build session is never also counted
  *    as a Mandate abandonment: the mandate it plans over is already closed.
@@ -108,7 +109,7 @@
  * Next: Review first passes the Build selection guard and readiness check, then saves the plan
  * with `lastPhase: "review"` before opening ReviewPhase. The stored phase and `?phase=review`
  * resume a completed mandate directly in Review; an incomplete mandate still resumes Mandate.
- * Save & exit preserves `review`, while Back: Build restores `build` and can reveal the selected
+ * Save and exit preserves `review`, while Back: Build restores `build` and can reveal the selected
  * readiness blocker without changing the canvas selection. ReviewPhase owns the review fields,
  * launch gates and the existing launch journey; this shell owns phase persistence and navigation.
  */
@@ -159,6 +160,7 @@ import {
   validateStep,
   visibleSteps,
 } from "./mandateDraft";
+import { tokenModeEvent } from "./mandateTokenAccess";
 import { LocalSolanaReview } from "./review/LocalSolanaReview";
 import { ReviewPhase } from "./review/ReviewPhase";
 import { SolanaPreviewRenderBoundary } from "./solana-preview/SolanaPreviewErrorBoundary";
@@ -198,12 +200,14 @@ export const MANDATE_BLOCK_REASON_EVENT: Record<
 > = {
   nothing_selected: "nothing_selected",
   cap_missing: "cap_missing",
+  cap_zero: "cap_zero",
   token_allowance_required: "token_allowance_required",
   no_slots: "no_slots",
   has_hook: "has_hook",
   coming_soon: "coming_soon",
   not_priced: "price_unknown",
   name_length: "name_invalid",
+  required_protocol: "required_protocol",
 };
 
 /** The counts every funnel event carries, so a drop-off can be read against what was chosen. */
@@ -488,7 +492,7 @@ function FundBuilderShell({
   const activeBlock = shellBlock ?? lastBlock ?? revisedLimitsBlock;
 
   // R9 / handoff: the browser warns before losing a mandate, from the first selection onward.
-  // `exiting` disarms it on the way out, so Save & exit does not prompt about work it just saved.
+  // `exiting` disarms it on the way out, so Save and exit does not prompt about work it just saved.
   useUnsavedChanges(isDirty && !exiting && !localExitAccepted);
 
   // Refs for the values the unmount handler reads. A closure would report where the manager was
@@ -501,11 +505,11 @@ function FundBuilderShell({
   routerRef.current = router;
   const pathnameRef = useRef(pathname);
   pathnameRef.current = pathname;
-  /** Set by a completion or a Save & exit: the session was answered, not abandoned. */
+  /** Set by a completion or a Save and exit: the session was answered, not abandoned. */
   const concludedRef = useRef(false);
   /** Guards the funnel arithmetic: one completion per session, however the session got there. */
   const completedRef = useRef(false);
-  /** Set by Save & exit only: a Build session that ended there was parked, not abandoned. */
+  /** Set by Save and exit only: a Build session that ended there was parked, not abandoned. */
   const exitedRef = useRef(false);
   // The unmount handler and the save failure report by phase, and the Build abandonment says
   // whether unsaved plan edits were left behind: both read the value of the LAST render.
@@ -516,7 +520,7 @@ function FundBuilderShell({
 
   /**
    * [HU3] The Build canvas's leave check, filled by `BuildScreen` while it is mounted. The shell's
-   * own ways out of Build (Save & exit, the stepper's Mandate pill) pass through it; in the Mandate
+   * own ways out of Build (Save and exit, the stepper's Mandate pill) pass through it; in the Mandate
    * phase there is no canvas and they proceed at once.
    */
   const buildLeaveRef = useRef<LeaveGuard | null>(null);
@@ -568,10 +572,13 @@ function FundBuilderShell({
   const update = useCallback(
     (fn: (current: MandateDraft) => MandateDraft | { blocked: StepBlock }) => {
       let settled = false;
+      // A holder object, so TypeScript does not narrow the closure write to `null`.
+      const outcome: { modeChange: ReturnType<typeof tokenModeEvent> } = { modeChange: null };
       applyReducer((current) => {
         const result = fn(current);
         if (isBlocked(result)) return result;
         settled = true;
+        outcome.modeChange = tokenModeEvent(current, result);
         if (current.completedAt === null) return result;
         return selectionFingerprint(result) === selectionFingerprint(current)
           ? result
@@ -579,8 +586,11 @@ function FundBuilderShell({
       });
       // `applyReducer` runs the reducer synchronously, so this reads THIS call's outcome.
       if (settled) setShellBlock(null);
+      // POO-2332 R15: one event per switch of the Token access control.
+      if (outcome.modeChange)
+        track("builder_mandate_token_mode_changed", { step: "tokens", ...outcome.modeChange });
     },
-    [applyReducer],
+    [applyReducer, track],
   );
 
   /**
@@ -736,7 +746,7 @@ function FundBuilderShell({
       // Local session abandonment belongs to the owner outside its retry boundary.
       if (draftRef.current.runtime === "solana-local") return;
       // A session that ends on the Build canvas is Build's to report (POO-2157): the mandate under
-      // it already closed. Only a Save & exit parks it; everything else is an abandonment, and what
+      // it already closed. Only a Save and exit parks it; everything else is an abandonment, and what
       // it lost is a plan edit made since the last save.
       if (phaseRef.current === "review") return;
       if (phaseRef.current === "build") {
@@ -943,7 +953,7 @@ function FundBuilderShell({
    * The dialog's save. Wrapped so the shell reports the failure the dialog only renders.
    *
    * The MODE decides whether this write completes the mandate. The same dialog asks for the same
-   * name on a Save & exit from step 2 and on the last Next, and only the second one is a completion;
+   * name on a Save and exit from step 2 and on the last Next, and only the second one is a completion;
    * a Keep editing in between must leave the mandate open, which is why nothing stamps it earlier.
    */
   const handleDialogSave = useCallback(
@@ -1008,6 +1018,9 @@ function FundBuilderShell({
 
   const Body = STEP_BODIES[step];
   const counts = selectionCounts(draft);
+  // POO-2332 R12: an enabled 0% token cap leaves Next looking off. The press still lands (R13).
+  const capZeroPending =
+    step === "limits" && validateStep(draft, "limits", catalog)?.reason === "cap_zero";
 
   return (
     <section
@@ -1128,6 +1141,7 @@ function FundBuilderShell({
           <BuilderActionBar
             previous={previousStep(draft, step)}
             next={nextStep(draft, step)}
+            nextBlockedReason={capZeroPending ? "cap_zero" : null}
             onBack={handleBack}
             onNext={() => {
               void handleNext();

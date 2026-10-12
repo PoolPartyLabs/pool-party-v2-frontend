@@ -86,7 +86,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "The shell the five Mandate steps live in: page header, three-phase stepper, collapsible sub-step header, step body, sticky action bar, Save & exit and the unsaved guard. The current step is the draft's own lastStep, so a deep link and a reload land on the same screen.",
+          "The shell the five Mandate steps live in: page header, three-phase stepper, collapsible sub-step header, step body, sticky action bar, Save and exit and the unsaved guard. The current step is the draft's own lastStep, so a deep link and a reload land on the same screen.",
       },
     },
   },

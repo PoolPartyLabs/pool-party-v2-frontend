@@ -3,13 +3,14 @@
  * @name ManageScreen
  * @implements-rules-version v2 (POO-2274); v1 (POO-2226)
  * @implements-rules-version v1 (POO-2309 market-reference chart)
+ * @implements-rules-version v1 (POO-2335 spine card copy, Explorer and View mandate)
  * @analytics-events strategy_manage_viewed, strategy_block_selected
  *
  * Controlled V2 shell. The authorized route loader supplies reads, and each identity keeps a
  * mounted inline panel so changing selection cannot silently lose its draft.
  */
 "use client";
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useBuildShellLayout } from "@/components/layout/BuildShellLayout";
 import { Button } from "@/components/ui/Button";
@@ -18,17 +19,22 @@ import { useAnalytics } from "@/lib/analytics/useAnalytics";
 import { useTrackView } from "@/lib/analytics/useTrackView";
 import type { FundBalances, FundView } from "@/lib/api/v2/fundSchemas";
 import { cn } from "@/lib/utils/cn";
-import { BlockMark } from "../build/blocks/BlockMark";
 import { manageChartSelection } from "../charts/chartContext";
 import { StrategyChartSurface } from "../charts/StrategyChartSurface";
 import { ManageCanvas } from "./ManageCanvas";
-import { type ManagePosition, manageProtocolMark, normalizeManageModel } from "./manageModel";
+import { type ManagePosition, normalizeManageModel } from "./manageModel";
 import {
   deriveManageInspection,
   type ManageInspectableNode,
   manageInspectionLabelKey,
   resolveManageInspection,
 } from "./manageSelection";
+import {
+  MANAGE_PERCENT_FORMAT,
+  type ManageSpineCopy,
+  manageSpineCard,
+  manageStrategyLinks,
+} from "./manageSpineCopy";
 
 export interface ManageScreenProps {
   fund: FundView;
@@ -44,6 +50,14 @@ export interface ManageScreenProps {
 export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenProps) {
   useBuildShellLayout(true);
   const t = useTranslations("manager.manageV2");
+  const root = useTranslations("manager");
+  const fmt = useFormatter();
+  const spineCopy: ManageSpineCopy = {
+    t: (key, values) => root(key, values),
+    percent: (value) => fmt.number(value / 100, MANAGE_PERCENT_FORMAT),
+    usd: (value) => fmt.number(value, { style: "currency", currency: "USD" }),
+    amount: (decimal) => fmt.number(Number(decimal), { maximumFractionDigits: 4 }),
+  };
   // The chart unavailable state names the position as its canvas row title does (ManageCanvas).
   const positionRowTitle = (position: ManagePosition) => {
     const tokens = position.tokens.map((token) => token.symbol).join(" / ");
@@ -53,6 +67,7 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
   };
   const model = useMemo(() => normalizeManageModel(fund, balances), [fund, balances]);
   const snapshot = useMemo(() => deriveManageInspection(model), [model]);
+  const links = manageStrategyLinks(model.core, model.hubChainId);
   const { track } = useAnalytics();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mandateOpen, setMandateOpen] = useState(false);
@@ -183,12 +198,8 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
                 </h3>
                 {network.nodes.map((node) => {
                   const position = node.kind === "position" ? node.position : null;
-                  const tokens = position?.tokens.map((token) => token.symbol).join(" / ");
-                  const label =
-                    position?.protocol ??
-                    (node.kind !== "position"
-                      ? t(manageInspectionLabelKey[node.kind])
-                      : t("notAvailable"));
+                  // R1 to R4 and R8: the spine card copy comes from the read model.
+                  const card = manageSpineCard(node, model, spineCopy);
                   return (
                     <button
                       key={node.id}
@@ -198,28 +209,29 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
                       aria-pressed={selection === node.selectionId}
                       onClick={(event) => selectNode(node.selectionId, event.detail === 0)}
                       className={cn(
-                        "flex min-h-16 items-center gap-3 rounded-xl border bg-surface px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                        "flex min-h-16 flex-col justify-center gap-0.5 rounded-xl border bg-surface px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                         selection === node.selectionId ? "border-primary" : "border-border",
                       )}
                     >
-                      {position ? (
-                        <BlockMark
-                          logo="protocol"
-                          markId={manageProtocolMark(position.source.adapterKind)}
-                          name={position.protocol}
-                          size={24}
-                        />
-                      ) : null}
-                      <span className="min-w-0">
-                        <span className="block truncate font-medium text-foreground text-sm">
-                          {label}
-                        </span>
-                        <span className="block truncate text-muted-foreground text-xs">
-                          {tokens}
-                          {position && position.kind !== "unsupported"
-                            ? ` · ${position.kind === "supply" ? t("supplyType") : t("liquidityType")}`
-                            : ""}
-                        </span>
+                      <span className="block truncate font-medium text-foreground text-sm">
+                        {card.title}
+                      </span>
+                      <span className="flex min-w-0 items-start gap-1.5 text-muted-foreground text-xs">
+                        {card.range ? (
+                          <span
+                            aria-hidden="true"
+                            data-manage-list-range={card.range.tone}
+                            className={cn(
+                              "mt-1.5 size-1.5 shrink-0 rounded-full",
+                              card.range.tone === "success"
+                                ? "bg-success"
+                                : card.range.tone === "destructive"
+                                  ? "bg-destructive"
+                                  : "bg-muted-foreground",
+                            )}
+                          />
+                        ) : null}
+                        <span className="line-clamp-2 min-w-0">{card.subtitle}</span>
                       </span>
                     </button>
                   );
@@ -232,8 +244,35 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
               </p>
             ) : null}
           </div>
-          <p className="text-muted-foreground text-xs">{t("selectionHelp")}</p>
-          <Button variant="ghost" size="md" onClick={() => setMandateOpen((open) => !open)}>
+          {/* R5: Explorer link to the strategy address, or Not available with the reason. */}
+          <div data-manage-explorer={links.explorer.status} className="flex flex-col gap-1 text-xs">
+            <p className="text-muted-foreground">
+              {t("explorer")} ·{" "}
+              {links.explorer.status === "available" ? (
+                <a
+                  href={links.explorer.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-mono text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  {links.explorer.label}
+                </a>
+              ) : (
+                t("notAvailable")
+              )}
+            </p>
+            {links.explorer.status === "unavailable" ? (
+              <p className="text-muted-foreground">{t("strategyAddressUnavailable")}</p>
+            ) : null}
+          </div>
+          {/* R6: View mandate always shows below the Explorer block. */}
+          <Button
+            variant="ghost"
+            size="md"
+            aria-expanded={mandateOpen}
+            onClick={() => setMandateOpen((open) => !open)}
+            className="self-start px-0 text-primary hover:bg-transparent hover:text-primary"
+          >
             {t("viewMandate")}
           </Button>
           {mandateOpen ? (

@@ -13,7 +13,7 @@
  * needs to judge actually come from.
  *
  * The three states to look at are empty, one and many. Empty is the one most likely to be wrong in
- * practice: the card must say why it is empty, because a manager who used Save & exit and then sees
+ * practice: the card must say why it is empty, because a manager who used Save and exit and then sees
  * a bare heading has no way to tell the drafts from a failure to load them.
  */
 import type { Decorator, Meta, StoryObj } from "@storybook/nextjs-vite";

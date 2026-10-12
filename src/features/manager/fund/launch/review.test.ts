@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildMandateCatalog } from "../mandateCatalog";
-import { createEmptyDraft, tokenKey, validateStep } from "../mandateDraft";
+import { createEmptyDraft, effectiveCap, tokenKey, validateStep } from "../mandateDraft";
 import {
   hasLaunchTokenAllowance,
   previewSeed,
@@ -43,6 +43,25 @@ describe("fund Review [R1, R2]", () => {
     expect(hasLaunchTokenAllowance(draft)).toBe(allowed);
     expect(validateStep(draft, "limits", buildMandateCatalog()) === null).toBe(allowed);
     expect(hasLaunchTokenAllowance({ ...draft, tokens: [{ ...token, locked: true }] })).toBe(false);
+  });
+  // @rule R8
+  it("reads a missing cap through the same start value as the Limits screen", () => {
+    const token = {
+      network: "arbitrum" as const,
+      address: `0x${"12".repeat(20)}`,
+      symbol: "WETH",
+      name: "Wrapped Ether",
+      logoUrl: null,
+      locked: false,
+    };
+    const draft = { ...createEmptyDraft("2026-10-04", "limits"), tokens: [token] };
+    for (const mode of [undefined, "real" as const]) {
+      const current = { ...draft, ...(mode ? { dataMode: mode } : {}) };
+      const cap = effectiveCap(current, "tokens", tokenKey(token));
+      expect(hasLaunchTokenAllowance(current)).toBe(cap?.noCap === true || (cap?.pct ?? 0) > 0);
+    }
+    expect(effectiveCap(draft, "tokens", tokenKey(token))).toEqual({ noCap: false, pct: 0 });
+    expect(effectiveCap({ ...draft, dataMode: "real" }, "tokens", tokenKey(token))).toBeUndefined();
   });
   it("trims identity and validates the manager's first deposit", () => {
     expect(validateReview(review, BigInt("100000000")).name).toBe("Aave income fund");

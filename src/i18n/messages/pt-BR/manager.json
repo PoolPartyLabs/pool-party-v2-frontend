@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Outras redes"
+      "others": "Outras redes",
+      "othersCaption": "Cada rede que você adicionar precisa de uma ponte e de mais uma assinatura no lançamento."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Obrigatório",
-      "requiredSubtitle": "Toda estratégia precisa de uma forma de trocar tokens e de mover dinheiro entre suas redes.",
       "operate": "Protocolos para operar",
-      "on": "Em",
-      "onFootnote": "\"Em\" mostra as redes da etapa 1 em que cada protocolo está disponível."
+      "on": "Disponível em",
+      "onFootnote": "\"Disponível em\" mostra quais das suas redes do passo 1 cada protocolo suporta.",
+      "swapBridge": "Swap e ponte",
+      "swapBridgeCollapsed": "{names} · selecionados para você",
+      "swapBridgeOpen": "Selecionados para você. Mantenha pelo menos um swap, e uma ponte quando adicionar uma rede.",
+      "swapBridgeOpenHub": "Selecionados para você. Mantenha pelo menos um swap.",
+      "show": "Mostrar",
+      "hide": "Ocultar",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Swap",
+        "uniswapV3Liquidity": "Uniswap v3 · Liquidez"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -834,7 +843,34 @@
       "depositToken": "Token de depósito",
       "slotsCaption": "Um token ocupa um slot em cada rede em que roda. O mandato tem {max} slots.",
       "noPrice": "Ainda sem feed de preço",
-      "empty": "Nenhum token corresponde à sua busca."
+      "empty": "Nenhum token corresponde à sua busca.",
+      "access": {
+        "label": "Acesso a tokens",
+        "selected": "Tokens selecionados",
+        "all": "Todos os tokens",
+        "hint": "Todos os tokens permite que a estratégia negocie qualquer token das suas redes e protocolos, inclusive tokens lançados depois."
+      },
+      "allInfo": {
+        "title": "A estratégia pode negociar qualquer token",
+        "body": "Isso cobre todos os tokens das suas redes e protocolos, inclusive os lançados depois da publicação. Você não escolhe os tokens um a um. Todo token é precificado no hub."
+      },
+      "yoursAll": "Seus tokens · Todos",
+      "everyOther": "Todos os outros tokens",
+      "everyOtherCaption": "Adicionado quando for lançado",
+      "requiredBy": "Exigido por {network}",
+      "slotsAllLabel": "Slots de rede",
+      "slotsNoLimit": "Sem limite",
+      "slotsAllCaption": "O teto de {max} slots vale apenas para tokens selecionados.",
+      "noFreeSlots": "Sem slots livres",
+      "slotsFull": "Todos os {max} slots estão em uso. Remova um token para adicionar outro.",
+      "andMoreTokens": "e {count, plural, one {mais # token} other {mais # tokens}}",
+      "loading": "Carregando tokens",
+      "loadError": {
+        "title": "Os tokens não carregaram",
+        "heading": "Não foi possível carregar a lista de tokens",
+        "body": "Verifique sua conexão e tente novamente. Os tokens da sua lista continuam salvos."
+      },
+      "retry": "Tentar novamente"
     },
     "pools": {
       "search": "Token, par ou endereço da pool",
@@ -844,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, one {# pool} other {# pools}} com pelo menos um dos seus tokens",
       "yours": "Suas pools · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "{pct}% selecionado",
+      "feeTier": "Faixa de taxa de {fee}",
+      "tierShare": "Faixa de taxa de {fee} · escolhida por {pct}% dos LPs",
       "addsToken": "adiciona {symbol} aos seus tokens",
       "hasHook": "tem um hook",
       "fixed": "As pools são fixadas no lançamento. Você não pode adicionar uma depois.",
@@ -861,11 +897,11 @@
     },
     "limits": {
       "perNetwork": "Por rede",
-      "perNetworkCaption": "Participação máxima do capital em cada rede · incrementos de 5%",
+      "perNetworkCaption": "Participação máxima dos depósitos em cada rede · incrementos de 5%",
       "perProtocol": "Por protocolo",
-      "perProtocolCaption": "Participação máxima do capital em cada protocolo · incrementos de 5%",
+      "perProtocolCaption": "Participação máxima dos depósitos em cada protocolo · incrementos de 5%",
       "perToken": "Por token",
-      "perTokenCaption": "Participação máxima do capital mantida em cada token · incrementos de 5%",
+      "perTokenCaption": "Participação máxima dos depósitos mantida em cada token · incrementos de 5%",
       "tokenOnNetwork": "{symbol} na rede {network}",
       "hubRow": "Sem limite · o hub mantém o que não é enviado a outro lugar",
       "hubCaption": "Hub",
@@ -881,14 +917,31 @@
         "perps": "Perpétuos"
       },
       "positiveTokenRequired": "Permita pelo menos um token além de USDC acima de 0% ou selecione Sem limite.",
-      "addPositiveToken": "Adicione outro token em Tokens e defina seu limite acima de 0% ou selecione Sem limite. USDC já está incluído."
+      "addPositiveToken": "Adicione outro token em Tokens e defina seu limite acima de 0% ou selecione Sem limite. USDC já está incluído.",
+      "perTokenAllCaption": "Teto padrão para cada token · passos de 5%",
+      "allTokensRow": {
+        "title": "Todos os tokens",
+        "caption": "Define um teto para todos os tokens da lista"
+      },
+      "mixed": "Misto",
+      "everyTokenRow": {
+        "title": "Cada token",
+        "caption": "Cada token por conta própria, exceto USDC"
+      },
+      "allWarning": {
+        "title": "Qualquer token pode entrar na estratégia",
+        "body": "Isso inclui tokens com pouca liquidez ou sem histórico de preço. O teto padrão vale para cada token por conta própria. Os depositantes veem esta etiqueta no card e na página da estratégia:",
+        "tag": "Todos os tokens"
+      },
+      "capZeroReason": "Defina o teto de tokens acima de 0%",
+      "capZero": "Defina o teto de tokens acima de 0% ou selecione Sem limite para continuar."
     },
     "draft": {
       "title": "Dê um nome ao seu rascunho",
       "body": "Tudo o que você escolheu até agora é mantido. O nome é como você vai encontrar este rascunho nas suas estratégias; você pode alterá-lo depois, na Revisão.",
       "nameLabel": "Nome do rascunho",
       "namePlaceholder": "ETH e BTC na Arbitrum",
-      "helper": "De 10 a 50 caracteres, a mesma regra do nome da estratégia.",
+      "helper": "De 10 a 50 caracteres.",
       "counter": "{count} / {max}",
       "progress": "Salvo até agora: {networks} redes, {protocols} protocolos, {tokens} tokens · Mandato, etapa {n} de {count}",
       "keepEditing": "Continuar editando",
@@ -932,7 +985,41 @@
         "frozen": "Reserva congelada",
         "paused": "Reserva pausada",
         "supplyCapReached": "Limite de Supply atingido",
-        "unavailable": "Indisponível"
+        "unavailable": "Indisponível",
+        "collateralNote": "Garantia do bloco Borrow abaixo. Mudar o ativo ou a alocação muda o que pode ser tomado emprestado."
+      },
+      "borrowPanel": {
+        "heading": "Ativos que você pode tomar emprestado",
+        "filter": "Filtrar por token ou endereço",
+        "caption": "Tokens do seu mandato que a Aave v3 empresta em {network}, contra o Supply acima.",
+        "needAsset": "Precisa de outro ativo?",
+        "noMatch": "Nenhum ativo do seu mandato corresponde a {typed}",
+        "noMatchCaption": "Os tokens são escolhidos no mandato, na etapa 3. Sua configuração permanece salva enquanto você edita.",
+        "empty": "Nenhum ativo do seu mandato pode ser tomado emprestado em {network}",
+        "collateral": "Garantia",
+        "collateralHelp": "O ativo do bloco Supply acima. A Aave v3 empresta contra ele. Altere-o naquele bloco.",
+        "supplyAbove": "Bloco Supply acima",
+        "collateralValue": "Valor da garantia",
+        "needSupply": "Configure primeiro o bloco Supply acima.",
+        "asset": "Ativo",
+        "help": "Tokens do seu mandato que a Aave v3 empresta em {network}.",
+        "apy": "APY de empréstimo",
+        "amount": "Valor do empréstimo",
+        "amountHelp": "A parte do valor da garantia que você toma emprestado. Uma parte maior reduz o fator de saúde.",
+        "amountCaption": "Parte do valor do {symbol} depositado acima. Limite da Aave {limit}%.",
+        "atLimit": "Máximo atingido. A Aave v3 empresta até {limit}% do valor de {symbol}.",
+        "amountValue": "Você toma emprestado",
+        "healthFactor": "Fator de saúde",
+        "noDebt": "Sem dívida",
+        "liquidationPrice": "Preço de liquidação",
+        "liquidationSentence": "{symbol} está em {price} agora. Liquidação se cair cerca de {drop}%.",
+        "unavailable": "Indisponível",
+        "blocked": {
+          "needSupply": "Configure primeiro o bloco Supply acima.",
+          "unavailable": "Escolha um ativo que a Aave v3 empresta.",
+          "needAmount": "Defina um valor de empréstimo acima de 0%.",
+          "overLimit": "O valor do empréstimo passa do limite da Aave."
+        }
       }
     },
     "canvas": {
@@ -1316,6 +1403,8 @@
     "strategyBlocks": "Blocos da estratégia",
     "selectionHelp": "Selecione um bloco no canvas ou nesta lista.",
     "viewMandate": "Ver mandato",
+    "explorer": "Explorer",
+    "strategyAddressUnavailable": "O endereço da estratégia não está disponível.",
     "viewInvestor": "Ver como investidor",
     "noSelection": "Selecione um bloco para ver os saldos e gerenciar a posição.",
     "emptyPositions": "Esta estratégia ainda não tem posições.",
@@ -1458,6 +1547,19 @@
       "debt": "Dívida",
       "fullAccount": "O risco se aplica à conta inteira, incluindo todo o collateral e todas as dívidas.",
       "tokenMetadata": "Metadados do token"
+    },
+    "spine": {
+      "routeEntry": "Contexto da rota · Entrada",
+      "routeExit": "Contexto da rota · Saída",
+      "routeScope": "Escopo da rota · {pct}",
+      "strategyShare": "Do valor da estratégia · {pct}",
+      "healthFactor": "HF {value}",
+      "requested": "{amount} solicitado",
+      "reserved": "{pct} reservado",
+      "bridgeEntry": "Entrada da ponte",
+      "bridgeReturn": "Retorno da ponte",
+      "swapInput": "Entrada do swap",
+      "swapFees": "Swap de taxas"
     }
   },
   "overviewV2": {
@@ -1493,6 +1595,7 @@
     "loadFailed": "Não foi possível carregar suas estratégias",
     "retryDescription": "Tente novamente para atualizar seu AUM e sua lista de estratégias.",
     "retry": "Tentar novamente",
+    "strategyListUnavailable": "Sua lista de estratégias não está disponível.",
     "setupPreserved": "Sua configuração salva continua disponível acima.",
     "localUnavailable": "Não foi possível ler parte da configuração salva. Seus dados foram preservados.",
     "historyUnavailable": "O histórico de AUM não está disponível.",

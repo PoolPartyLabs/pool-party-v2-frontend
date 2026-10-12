@@ -58,7 +58,7 @@ legacy graphs and contract fixtures do not certify live financial reachability o
 The real-engine `BuildScreen` regression suite passed 65 tests; this is focused component evidence,
 not full-suite, build or native-browser acceptance.
 
-Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+Accepted Header and Save and exit paths acknowledge local disposal only after route/account host and
 intent generation validate the user's consent. Stale acceptance cannot close a successor session.
 Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
 last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.
@@ -149,6 +149,42 @@ validators still reject unsupported continuations and duplicate reserve opens.
 The shell owns all configuration/Apply/Discard/blocked-intent analytics. Seven stories and the
 component regression suite cover picking, configured and pending allocation, loading, failure,
 empty mandate and unavailable reserve. `CR-MGR-024` tracks the displayed APY snapshot claim.
+
+## Aave Borrow panel and Supply parity (POO-2334, rules v1)
+
+`panel/BorrowBlockPanel.tsx` (`PP-MGR-CMP-105`) registers `aaveBorrow` in `PANEL_BODIES`. It
+follows Figma `8189:2337`. The collateral is the configured Supply directly above the Borrow. The
+panel shows it read-only, with the token, the amount and the USD value. The Asset select lists the
+mandate tokens of the network without the collateral, each with its borrow APY. A token that the
+market does not lend is disabled with a reason. The slider goes from 0 to the max LTV in the
+Allocation slider's steps, and shows the amount in the token and in USD. The panel reads the
+stored share within the max LTV (`readBorrowPct`), and `Use` writes the default share within it.
+Each change of the Asset or the slider writes the share that the panel reads (`borrowConfigWith`).
+So the slider, the risk rows, Apply and the stored config use the same value.
+
+A Borrow never borrows its own collateral (`borrowsOfOwnCollateral` in `plan/planRules.ts`). The
+plan refuses a Borrow config with the asset of the Supply above it. When the Supply changes to
+the asset of the Borrow under it, the plan clears that Borrow's config.
+
+The health factor is 1.5 or more (success), 1.1 to under 1.5 (warning) or under 1.1
+(destructive). The panel also shows the liquidation price and the % drop to it.
+`panel/lendingPanelMath.ts` (`PP-MGR-LIB-080`) holds these formulas. They estimate one collateral
+and one debt from market figures, because a Build block has no account read yet.
+
+The market figures and the fund capital come from `src/mocks/data/borrowMarketFixtures.ts`
+(`PP-MGR-MCK-006`, `PP-INTEGRATION-POINT`). In real mode the panel shows "Unavailable" and
+Apply stays blocked. Apply also needs a Supply above, a lendable asset and a share over 0.
+
+The Supply panel now reads its APY with `supplyApyValue`. When a Borrow is directly under it, it
+shows a collateral note with a link icon in the asset group, before the Target allocation (Figma
+`8194:2380`). The Figma puts a swap note above it. The Supply panel has no swap note, because its
+only route arrives as USDC with no automatic swap. Both panels show the Lending risk block
+(`PP-MGR-CMP-094`) as unavailable.
+
+The Uniswap panel always shows Max slippage, also for a USDC input. A v4 pool needs both of its
+tokens, so the plan always puts a Swap · auto before a pool (`needsAutoSwap`, C13), and the swap
+of about half the USDC needs a slippage limit. The rule "only when the input is not USDC" does
+not apply to a pool, so the panel has no change.
 
 ## Panel actions and navigation (POO-2202, rules v1)
 
