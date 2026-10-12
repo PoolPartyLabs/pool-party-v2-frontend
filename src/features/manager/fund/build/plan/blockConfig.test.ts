@@ -139,6 +139,17 @@ describe("isConfigFor: the shape and ranges of a stored config (K1, K2)", () => 
     }
   });
 
+  it("[K2] refuses a Borrow amount out of 0 to 100 percent, or on a non-Borrow (POO-2334)", () => {
+    // @rule K2
+    for (const borrowPct of [0, 5, 40, 80, 100]) {
+      expect(isConfigFor("aaveBorrow", { assetKey: "a", borrowPct })).toBe(true);
+    }
+    for (const borrowPct of [-5, 100.5, Number.NaN, "40"]) {
+      expect(isConfigFor("aaveBorrow", { assetKey: "a", borrowPct })).toBe(false);
+    }
+    expect(isConfigFor("aaveSupply", { assetKey: "a", borrowPct: 40 })).toBe(false);
+  });
+
   it("[K1] keeps fields it does not know, as S1 did for the panel batch", () => {
     // @rule K1
     expect(isConfigFor("uniswapV4Pool", { ...COMPLETE, note: "kept" })).toBe(true);

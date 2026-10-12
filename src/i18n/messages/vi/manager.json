@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Các mạng khác"
+      "others": "Các mạng khác",
+      "othersCaption": "Mỗi mạng bạn thêm cần một cầu nối và thêm một chữ ký khi khởi chạy."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Bắt buộc",
-      "requiredSubtitle": "Mọi chiến lược đều cần một cách để đổi token và chuyển tiền giữa các mạng của nó.",
       "operate": "Giao thức để vận hành",
-      "on": "Trên",
-      "onFootnote": "\"Trên\" hiển thị các mạng từ bước 1 nơi mỗi giao thức khả dụng."
+      "on": "Có trên",
+      "onFootnote": "\"Có trên\" cho biết mỗi giao thức hỗ trợ những mạng nào trong số các mạng bạn chọn ở bước 1.",
+      "swapBridge": "Hoán đổi và cầu nối",
+      "swapBridgeCollapsed": "{names} · đã chọn sẵn cho bạn",
+      "swapBridgeOpen": "Đã chọn sẵn cho bạn. Giữ ít nhất một giao thức hoán đổi, và một cầu nối khi bạn thêm mạng.",
+      "swapBridgeOpenHub": "Đã chọn sẵn cho bạn. Giữ ít nhất một giao thức hoán đổi.",
+      "show": "Hiện",
+      "hide": "Ẩn",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Hoán đổi",
+        "uniswapV3Liquidity": "Uniswap v3 · Thanh khoản"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -834,7 +843,34 @@
       "depositToken": "Token nạp tiền",
       "slotsCaption": "Mỗi token chiếm một slot trên mỗi mạng mà nó hoạt động. Nhiệm vụ này có {max} slot.",
       "noPrice": "Chưa có nguồn giá",
-      "empty": "Không có token nào khớp với tìm kiếm của bạn."
+      "empty": "Không có token nào khớp với tìm kiếm của bạn.",
+      "access": {
+        "label": "Quyền truy cập token",
+        "selected": "Token đã chọn",
+        "all": "Tất cả token",
+        "hint": "Tất cả token cho phép chiến lược giao dịch mọi token trên các mạng và giao thức của bạn, kể cả token ra mắt sau."
+      },
+      "allInfo": {
+        "title": "Chiến lược có thể giao dịch mọi token",
+        "body": "Mục này bao gồm mọi token trên các mạng và giao thức của bạn, kể cả token ra mắt sau khi bạn xuất bản. Bạn không cần chọn từng token. Mọi token đều được định giá trên hub."
+      },
+      "yoursAll": "Token của bạn · Tất cả",
+      "everyOther": "Mọi token khác",
+      "everyOtherCaption": "Được thêm khi token ra mắt",
+      "requiredBy": "Được {network} yêu cầu",
+      "slotsAllLabel": "Slot mạng",
+      "slotsNoLimit": "Không giới hạn",
+      "slotsAllCaption": "Mức tối đa {max} slot chỉ áp dụng cho token đã chọn.",
+      "noFreeSlots": "Hết slot trống",
+      "slotsFull": "Đã dùng hết {max} slot. Hãy xóa một token để thêm token khác.",
+      "andMoreTokens": "và {count, plural, other {# token nữa}}",
+      "loading": "Đang tải token",
+      "loadError": {
+        "title": "Không tải được token",
+        "heading": "Chúng tôi không thể tải danh sách token",
+        "body": "Hãy kiểm tra kết nối và thử lại. Các token trong danh sách của bạn vẫn được lưu."
+      },
+      "retry": "Thử lại"
     },
     "pools": {
       "search": "Token, cặp hoặc địa chỉ pool",
@@ -844,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, other {# pool}} có chứa ít nhất một token của bạn",
       "yours": "Pool của bạn · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "Đã chọn {pct}%",
+      "feeTier": "Bậc phí {fee}",
+      "tierShare": "Bậc phí {fee} · được {pct}% LP chọn",
       "addsToken": "thêm {symbol} vào token của bạn",
       "hasHook": "có hook",
       "fixed": "Pool được cố định khi ra mắt. Bạn không thể thêm pool sau đó.",
@@ -861,11 +897,11 @@
     },
     "limits": {
       "perNetwork": "Theo mạng",
-      "perNetworkCaption": "Tỷ lệ vốn tối đa trên mỗi mạng · mức tăng 5%",
+      "perNetworkCaption": "Tỷ lệ tiền gửi tối đa trên mỗi mạng · mức tăng 5%",
       "perProtocol": "Theo giao thức",
-      "perProtocolCaption": "Tỷ lệ vốn tối đa trong mỗi giao thức · mức tăng 5%",
+      "perProtocolCaption": "Tỷ lệ tiền gửi tối đa trong mỗi giao thức · mức tăng 5%",
       "perToken": "Theo token",
-      "perTokenCaption": "Tỷ lệ vốn tối đa được giữ trong mỗi token · mức tăng 5%",
+      "perTokenCaption": "Tỷ lệ tiền gửi tối đa được giữ trong mỗi token · mức tăng 5%",
       "tokenOnNetwork": "{symbol} trên {network}",
       "hubRow": "Không giới hạn · hub giữ phần không được gửi đến nơi khác",
       "hubCaption": "Hub",
@@ -881,14 +917,31 @@
         "perps": "Vĩnh cửu"
       },
       "positiveTokenRequired": "Cho phép ít nhất một token ngoài USDC có giới hạn trên 0% hoặc chọn Không giới hạn.",
-      "addPositiveToken": "Thêm một token khác trong Tokens, rồi đặt giới hạn trên 0% hoặc chọn Không giới hạn. USDC đã được bao gồm."
+      "addPositiveToken": "Thêm một token khác trong Tokens, rồi đặt giới hạn trên 0% hoặc chọn Không giới hạn. USDC đã được bao gồm.",
+      "perTokenAllCaption": "Mức tối đa mặc định cho mỗi token · bước 5%",
+      "allTokensRow": {
+        "title": "Tất cả token",
+        "caption": "Đặt một mức tối đa cho mọi token trong danh sách"
+      },
+      "mixed": "Hỗn hợp",
+      "everyTokenRow": {
+        "title": "Mỗi token",
+        "caption": "Từng token riêng lẻ, trừ USDC"
+      },
+      "allWarning": {
+        "title": "Mọi token đều có thể vào chiến lược",
+        "body": "Mục này gồm cả token có thanh khoản thấp hoặc chưa có lịch sử giá. Mức tối đa mặc định áp dụng cho từng token riêng lẻ. Người gửi tiền thấy nhãn này trên thẻ và trang của chiến lược:",
+        "tag": "Tất cả token"
+      },
+      "capZeroReason": "Đặt mức tối đa của token trên 0%",
+      "capZero": "Đặt mức tối đa của token trên 0% hoặc chọn Không giới hạn để tiếp tục."
     },
     "draft": {
       "title": "Đặt tên cho bản nháp của bạn",
       "body": "Mọi lựa chọn của bạn từ trước đến nay đều được giữ lại. Tên này giúp bạn tìm lại bản nháp này trong các chiến lược của mình; bạn có thể đổi tên sau ở phần Xem lại.",
       "nameLabel": "Tên bản nháp",
       "namePlaceholder": "ETH và BTC trên Arbitrum",
-      "helper": "Từ 10 đến 50 ký tự, cùng quy tắc với tên chiến lược.",
+      "helper": "Từ 10 đến 50 ký tự.",
       "counter": "{count} / {max}",
       "progress": "Đã lưu đến hiện tại: {networks} mạng, {protocols} giao thức, {tokens} token · Nhiệm vụ, bước {n}/{count}",
       "keepEditing": "Tiếp tục chỉnh sửa",
@@ -932,7 +985,41 @@
         "frozen": "Dự trữ bị đóng băng",
         "paused": "Dự trữ tạm dừng",
         "supplyCapReached": "Đã đạt giới hạn Supply",
-        "unavailable": "Không khả dụng"
+        "unavailable": "Không khả dụng",
+        "collateralNote": "Tài sản thế chấp của khối Borrow bên dưới. Thay đổi tài sản hoặc phân bổ sẽ thay đổi số tiền có thể vay."
+      },
+      "borrowPanel": {
+        "heading": "Tài sản bạn có thể vay",
+        "filter": "Lọc theo token hoặc địa chỉ",
+        "caption": "Các token trong ủy nhiệm mà Aave v3 cho vay trên {network}, dựa trên Supply ở trên.",
+        "needAsset": "Cần tài sản khác?",
+        "noMatch": "Không có tài sản nào trong ủy nhiệm khớp với {typed}",
+        "noMatchCaption": "Token được chọn ở bước 3 của ủy nhiệm. Cấu hình vẫn được lưu trong khi chỉnh sửa.",
+        "empty": "Không có tài sản nào trong ủy nhiệm có thể vay trên {network}",
+        "collateral": "Tài sản thế chấp",
+        "collateralHelp": "Tài sản của khối Supply ở trên. Aave v3 cho vay dựa trên tài sản này. Hãy thay đổi nó trong khối đó.",
+        "supplyAbove": "Khối Supply ở trên",
+        "collateralValue": "Giá trị thế chấp",
+        "needSupply": "Hãy cấu hình khối Supply ở trên trước.",
+        "asset": "Tài sản",
+        "help": "Các token trong ủy nhiệm mà Aave v3 cho vay trên {network}.",
+        "apy": "APY vay",
+        "amount": "Số tiền vay",
+        "amountHelp": "Phần giá trị thế chấp mà bạn vay. Phần càng cao thì hệ số sức khỏe càng thấp.",
+        "amountCaption": "Phần giá trị của {symbol} đã gửi ở trên. Giới hạn Aave {limit}%.",
+        "atLimit": "Đã đạt tối đa. Aave v3 cho vay tối đa {limit}% giá trị của {symbol}.",
+        "amountValue": "Bạn vay",
+        "healthFactor": "Hệ số sức khỏe",
+        "noDebt": "Không có nợ",
+        "liquidationPrice": "Giá thanh lý",
+        "liquidationSentence": "{symbol} hiện ở mức {price}. Thanh lý nếu giảm khoảng {drop}%.",
+        "unavailable": "Không khả dụng",
+        "blocked": {
+          "needSupply": "Hãy cấu hình khối Supply ở trên trước.",
+          "unavailable": "Hãy chọn tài sản mà Aave v3 cho vay.",
+          "needAmount": "Hãy đặt số tiền vay lớn hơn 0%.",
+          "overLimit": "Số tiền vay vượt quá giới hạn của Aave."
+        }
       }
     },
     "canvas": {

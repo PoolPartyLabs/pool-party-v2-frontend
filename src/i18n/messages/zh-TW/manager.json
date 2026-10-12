@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "其他網路"
+      "others": "其他網路",
+      "othersCaption": "每新增一個網路，都需要一個跨鏈橋，並在啟動時多簽署一次。"
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "必要",
-      "requiredSubtitle": "每個策略都需要一種在代幣之間兌換、並在其網路之間轉移資金的方式。",
       "operate": "用於運作的協議",
       "on": "可用於",
-      "onFootnote": "「可用於」顯示第 1 步中每個協議可用的網路。"
+      "onFootnote": "「可用於」顯示每個協議支援您在第 1 步中選擇的哪些網路。",
+      "swapBridge": "兌換與跨鏈橋",
+      "swapBridgeCollapsed": "{names} · 已為您選擇",
+      "swapBridgeOpen": "已為您選擇。請至少保留一個兌換協議；新增網路時，還需保留一個跨鏈橋。",
+      "swapBridgeOpenHub": "已為您選擇。請至少保留一個兌換協議。",
+      "show": "顯示",
+      "hide": "隱藏",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · 兌換",
+        "uniswapV3Liquidity": "Uniswap v3 · 流動性"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -834,7 +843,34 @@
       "depositToken": "存款代幣",
       "slotsCaption": "每個代幣會在其運作的每個網路上佔用一個名額。該授權範圍共有 {max} 個名額。",
       "noPrice": "暫無價格資料來源",
-      "empty": "沒有符合您搜尋的代幣。"
+      "empty": "沒有符合您搜尋的代幣。",
+      "access": {
+        "label": "代幣存取範圍",
+        "selected": "所選代幣",
+        "all": "所有代幣",
+        "hint": "選擇「所有代幣」後，策略可以交易您的網路與協議上的任何代幣，包括之後上線的代幣。"
+      },
+      "allInfo": {
+        "title": "策略可以交易任何代幣",
+        "body": "這涵蓋您的網路與協議上的每個代幣，包括發布後上線的代幣。您不需要逐一選擇代幣。每個代幣都以 hub 定價。"
+      },
+      "yoursAll": "您的代幣 · 全部",
+      "everyOther": "其他所有代幣",
+      "everyOtherCaption": "上線時自動加入",
+      "requiredBy": "{network} 所需",
+      "slotsAllLabel": "網路名額",
+      "slotsNoLimit": "無上限",
+      "slotsAllCaption": "{max} 個名額的上限僅適用於所選代幣。",
+      "noFreeSlots": "沒有空閒名額",
+      "slotsFull": "{max} 個名額已全部用完。移除一個代幣後才能加入其他代幣。",
+      "andMoreTokens": "另有 {count, plural, other {# 個代幣}}",
+      "loading": "正在載入代幣",
+      "loadError": {
+        "title": "代幣未能載入",
+        "heading": "無法載入代幣清單",
+        "body": "請檢查網路連線後再試一次。您清單中的代幣仍已儲存。"
+      },
+      "retry": "再試一次"
     },
     "pools": {
       "search": "代幣、交易對或資金池地址",
@@ -844,8 +880,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, other {包含您至少一個代幣的資金池有 # 個}}",
       "yours": "您的資金池 · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "已選 {pct}%",
+      "feeTier": "{fee} 費率級距",
+      "tierShare": "{fee} 費率級距 · {pct}% 的 LP 選擇",
       "addsToken": "將 {symbol} 新增到您的代幣",
       "hasHook": "帶有 hook",
       "fixed": "資金池在啟動時即固定，之後無法再新增。",
@@ -861,11 +897,11 @@
     },
     "limits": {
       "perNetwork": "按網路",
-      "perNetworkCaption": "每個網路的最大資金佔比 · 以 5% 為單位",
+      "perNetworkCaption": "每個網路的存款最大佔比 · 以 5% 為單位",
       "perProtocol": "按協議",
-      "perProtocolCaption": "每個協議的最大資金佔比 · 以 5% 為單位",
+      "perProtocolCaption": "每個協議的存款最大佔比 · 以 5% 為單位",
       "perToken": "按代幣",
-      "perTokenCaption": "每個代幣持有的最大資金佔比 · 以 5% 為單位",
+      "perTokenCaption": "每個代幣持有的存款最大佔比 · 以 5% 為單位",
       "tokenOnNetwork": "{network} 上的 {symbol}",
       "hubRow": "無上限 · hub 持有未發送至其他地方的資金",
       "hubCaption": "Hub",
@@ -881,14 +917,31 @@
         "perps": "永續"
       },
       "positiveTokenRequired": "請將至少一種 USDC 以外的代幣上限設為高於 0%，或選擇無上限。",
-      "addPositiveToken": "請在 Tokens 中新增另一種代幣，然後將其上限設為高於 0%，或選擇無上限。USDC 已包含在內。"
+      "addPositiveToken": "請在 Tokens 中新增另一種代幣，然後將其上限設為高於 0%，或選擇無上限。USDC 已包含在內。",
+      "perTokenAllCaption": "每個代幣的預設上限 · 以 5% 為單位",
+      "allTokensRow": {
+        "title": "所有代幣",
+        "caption": "為清單中的每個代幣設定同一個上限"
+      },
+      "mixed": "混合",
+      "everyTokenRow": {
+        "title": "每個代幣",
+        "caption": "每個代幣單獨計算，USDC 除外"
+      },
+      "allWarning": {
+        "title": "任何代幣都可能進入該策略",
+        "body": "這包括流動性較低或沒有價格歷史的代幣。預設上限分別適用於每個代幣。存款人會在策略卡片與頁面上看到此標籤：",
+        "tag": "所有代幣"
+      },
+      "capZeroReason": "請將代幣上限設為高於 0%",
+      "capZero": "請將代幣上限設為高於 0%，或選擇「無上限」以繼續。"
     },
     "draft": {
       "title": "為您的草稿命名",
       "body": "到目前為止您所做的所有選擇都會保留。此名稱用於在您的策略清單中找到該草稿，之後您可以在「審核」中修改。",
       "nameLabel": "草稿名稱",
       "namePlaceholder": "Arbitrum 上的 ETH 和 BTC",
-      "helper": "10 到 50 個字元，與策略名稱的規則相同。",
+      "helper": "10 到 50 個字元。",
       "counter": "{count} / {max}",
       "progress": "目前已儲存：{networks} 個網路、{protocols} 個協議、{tokens} 個代幣 · 授權範圍，第 {n}/{count} 步",
       "keepEditing": "繼續編輯",
@@ -932,7 +985,41 @@
         "frozen": "儲備已凍結",
         "paused": "儲備已暫停",
         "supplyCapReached": "已達 Supply 上限",
-        "unavailable": "無法使用"
+        "unavailable": "無法使用",
+        "collateralNote": "下方 Borrow 區塊的擔保品。變更資產或分配會改變可借入的金額。"
+      },
+      "borrowPanel": {
+        "heading": "可借入的資產",
+        "filter": "依代幣或地址篩選",
+        "caption": "{network} 上的 Aave v3 以上方 Supply 為擔保可借出的授權範圍內代幣。",
+        "needAsset": "需要其他資產？",
+        "noMatch": "授權範圍內沒有與 {typed} 相符的資產",
+        "noMatchCaption": "在授權範圍的第3步選擇代幣。編輯時會保留已儲存的設定。",
+        "empty": "授權範圍內沒有可在 {network} 上借入的資產",
+        "collateral": "擔保品",
+        "collateralHelp": "上方 Supply 區塊的資產。Aave v3 以其為擔保放貸。請在該區塊中變更。",
+        "supplyAbove": "上方 Supply 區塊",
+        "collateralValue": "擔保品價值",
+        "needSupply": "請先設定上方的 Supply 區塊。",
+        "asset": "資產",
+        "help": "{network} 上的 Aave v3 可借出的授權範圍內代幣。",
+        "apy": "借款 APY",
+        "amount": "借款金額",
+        "amountHelp": "借入的擔保品價值比例。比例越高，健康因子越低。",
+        "amountCaption": "佔上方存入的 {symbol} 價值的比例。Aave 上限 {limit}%。",
+        "atLimit": "已達上限。Aave v3 最多借出 {symbol} 價值的 {limit}%。",
+        "amountValue": "借入金額",
+        "healthFactor": "健康因子",
+        "noDebt": "無債務",
+        "liquidationPrice": "清算價格",
+        "liquidationSentence": "{symbol} 目前價格為 {price}。下跌約 {drop}% 時將被清算。",
+        "unavailable": "無法使用",
+        "blocked": {
+          "needSupply": "請先設定上方的 Supply 區塊。",
+          "unavailable": "請選擇 Aave v3 可借出的資產。",
+          "needAmount": "請設定大於 0% 的借款金額。",
+          "overLimit": "借款金額超過 Aave 上限。"
+        }
       }
     },
     "canvas": {

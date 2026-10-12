@@ -3,6 +3,7 @@
  * @name planRules
  * @implements-rules-version v1 (POO-2151 rules v1)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2334 rules v1: a Borrow never borrows its own collateral)
  * @analytics-events none, a pure domain module.
  *
  * The rules of the canvas that are not reducers: which kinds a row may hold (C22, INV2), where the
@@ -54,6 +55,24 @@ export interface PortStepShape {
 }
 
 export type KindAvailability = "enabled" | "coming_soon" | "not_in_mandate" | "not_on_network";
+
+/**
+ * POO-2334 R2: the ids of the Borrows in a chain that borrow the asset of the Supply directly above
+ * them (C14 puts nothing between the two). A loan of its own collateral is not a Borrow the panel
+ * offers, so the reducer refuses one and clears one that a Supply change made.
+ */
+export function borrowsOfOwnCollateral(steps: readonly Step[]): string[] {
+  return steps.flatMap((step, index) => {
+    const above = steps[index - 1];
+    if (step.family !== "position" || step.kind !== "aaveBorrow" || step.config === null) return [];
+    if (above?.family !== "position" || above.kind !== "aaveSupply" || above.config === null)
+      return [];
+    if (!("assetKey" in step.config) || !("assetKey" in above.config)) return [];
+    return step.config.assetKey.toLowerCase() === above.config.assetKey.toLowerCase()
+      ? [step.id]
+      : [];
+  });
+}
 
 /** Whether a kind is one of the two pool kinds. */
 export function isPoolKind(kind: string): kind is PoolBlockKind {

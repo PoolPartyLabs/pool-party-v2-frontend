@@ -38,7 +38,7 @@ loses the session rather than persisting it. Standard EVM instrumentation/recove
 [feature reference](../src/features/manager/fund/solana-preview/README.md) and
 [ADR 0009](adr/0009-local-solana-visual-preview.md).
 
-Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+Accepted Header and Save and exit paths acknowledge local disposal only after route/account host and
 intent generation validate the user's consent. Stale acceptance cannot close a successor session.
 Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
 last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.
@@ -243,6 +243,7 @@ At that foundation delivery the canvas rows carried no marker in code except pla
 | Block to on-chain builder: Aave v3 Borrow (`aaveBorrow`; no contract support) | `src/features/manager/fund/build/plan/buildPlan.ts` (`BLOCK_KIND_STATUS`) | A Borrow can be drawn under a configured Supply and saved; the launch adapter refuses it (`UNSUPPORTED_POSITION`, fail closed). Murilo decided on 2026-10-04 that Borrow becomes coming soon, like Pendle and GMX, and that the insert port under a Supply goes away; the code still offers Borrow and the port, and a later slice (PA0) makes the change | none: the fund contracts are supply only (the Aave adapter never borrows, the API has no borrow action and no read for borrow APY, loan to value, health factor or liquidation price), so a plan with a Borrow can never become operations (block sheet POO-2165; compliance `CR-MGR-016`) |
 | Mandate pool catalog, Uniswap v4 | `src/features/manager/fund/mandatePoolSource.ts`, `steps/PoolsStep.tsx` | Resolved in POO-2133; existing mock fixtures remain local. Uniswap v3 positions stay unavailable since rules v3 (POO-2167), so no reducer accepts a Uniswap v3 pool in either mode | Real v4 catalog list/pair filters and bytes32 PoolId lookup on chains 42161/4663. Full PoolKey retained; hooked/native/ineligible rows refused. Null TVL/APR/tier share are not invented. Legacy `/dex-pools` remains exclusively in V1. |
 | Spoke cap unit (Limits step) | `src/features/manager/fund/steps/LimitsStep.tsx`, `v2Mandate.ts` | Frontend percentage intent resolved in POO-2133; on-chain percentage enforcement remains POO-2169 | Build-create selection stores `spokeCapPercent`, 0..100 in 5-point steps or null. Current API provisions maximum on-chain cap, not percentage enforcement. Protocol/token sliders remain optional client-only allocation aids. Fund limits read from detail Mandate/profile, not an invented limits route. |
+| Mandate token slot ceiling (Tokens step) | `src/features/manager/fund/mandateDraft.ts` (`BASKET_TOKEN_SLOTS`, `MAX_TOKEN_SLOTS`, `slotCeiling`) | The mock builder holds 100 token slots (POO-2332 rules v1). Real data mode keeps the contract limit of 16 slots. All tokens mode has no slot limit and stores no list limit | the fund contracts must raise the slot limit from 16 to 100, then real data mode can read `BASKET_TOKEN_SLOTS`. Marked `PP-INTEGRATION-POINT` in code |
 | Contract-family marker (V1 / V2 preference) | `src/lib/hooks/useContractFamily.ts` (`PP-CORE-HOK-038`) | A client-only UI preference, `localStorage` key `pp.contractFamily`, default `"v1"`; decides which builder `/manager/new` renders and nothing about what the user may do | a per-strategy marker from the backend once funds exist (POO-2116 slice 5); today the family is read nowhere but this hook and the toggle/route switch that consume it. Wiring issue: POO-2134 |
 
 ## Universal Funding rail (Uniswap Trading API)
@@ -526,9 +527,37 @@ On short screens the reference header can scroll while the chart and attribution
 Screenshot export is disabled (`save_image:false`) because the isolated frame does not receive
 download permission; the provider's drawing toolbar remains enabled.
 
-Current chart-delivery census: 2,306 files under `src/`, with 539 markers across 312 files,
+Chart-delivery census: 2,306 files under `src/`, with 539 markers across 312 files,
 including tests, stories and source documentation. Registry totals are 712 rows and 707 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
+
+Current mandate token access census (POO-2332): the 2 new markers are in
+`src/features/manager/fund/mandateDraft.ts`.
+
+## Mandate Figma parity, October 12, 2026 (POO-2333 v1)
+
+| Marker | File | Status today | Expected real call / remaining gap |
+| --- | --- | --- | --- |
+| LP share per fee tier ("chosen by {pct}% of LPs", R8) | `src/features/manager/fund/mandatePoolSource.ts` (`searchMandatePools`) | Mock mode computes the share from the fixture TVL of the fee tiers of a pair (`tierShare`). Real mode has no API field for it, so the share is null and the Pools step shows only the fee tier. | CoinGecko pool data per fee tier, or a backend field that carries the LP share of each fee tier. |
+
+Mandate parity census: 2,310 files under `src/`, with 542 markers across 312 files,
+including tests, stories and source documentation. Registry totals are 714 rows and 709 unique
+IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
+
+## Build Borrow panel market data (POO-2334)
+
+`src/features/manager/fund/build/panel/BorrowBlockPanel.tsx` (PP-MGR-CMP-105) reads the Aave v3
+borrow market and the fund capital from `src/mocks/data/borrowMarketFixtures.ts` (PP-MGR-MCK-006)
+in mock mode only. The v2 catalog serves no borrow APY, max LTV, liquidation threshold or oracle
+price yet, and the Build plan holds shares, not amounts. In real mode the panel reads no figure and
+shows "Unavailable", and Apply stays held. Replace the fixture with the catalog's Aave v3 reserve
+data and the fund's real capital when the API serves them. The health factor and the liquidation
+price are single-collateral, single-debt estimates (PP-MGR-LIB-080); the account read stays with
+the Lending risk block (PP-MGR-CMP-094). A Borrow has no contract base, so launch is not wired.
+
+Borrow-panel census: 2,315 files under `src/`, with 548 markers across 316 files,
+including tests, stories and source documentation. Registry totals are 717 rows and 712 unique
+IDs. Prior censuses describe their named releases.
 
 ## Manage spine copy (POO-2335 v1)
 
@@ -539,6 +568,6 @@ IDs. The five historical duplicates are unchanged; prior censuses describe their
 - No read gives the Bridge return scope yet, so that card shows "Route scope · Not available".
 - The Explorer link uses the deployed strategy address from the fund read. An empty or invalid address shows "Explorer · Not available" and "Strategy address is unavailable."
 
-Current Manage parity census: 2,308 files under `src/`, with 543 markers across 313 files,
-including tests, stories and source documentation. Registry totals are 713 rows and 708 unique
+Current Manage parity census: 2,317 files under `src/`, with 552 markers across 317 files,
+including tests, stories and source documentation. Registry totals are 718 rows and 713 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.

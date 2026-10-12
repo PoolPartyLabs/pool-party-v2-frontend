@@ -294,6 +294,9 @@ export async function searchMandatePools(input: PoolSearchInput): Promise<Mandat
   const found = isMockMode ? await searchMock(input) : await searchReal(input);
 
   const ordered = [...found].sort((a, b) => (b.tvlUsd ?? 0) - (a.tvlUsd ?? 0));
+  // PP-INTEGRATION-POINT: POO-2333 R8 "chosen by {pct}% of LPs". In real mode no API field carries
+  // the LP share of a fee tier yet, so the share is null and the Pools step shows only the fee tier.
+  // The planned source is CoinGecko pool data per fee tier (see docs/INTEGRATION_POINTS.md).
   const shares = isMockMode ? tierShare(ordered) : new Map<string, number | null>();
   // A new object per row: the fixtures are module-level constants and must not be written through.
   return ordered.map((pool) => ({ ...pool, tierSharePct: shares.get(pool.id) ?? null }));

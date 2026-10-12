@@ -70,7 +70,7 @@ See the [Build reference](fund/build/README.md), [local binding reference](fund/
 [ADR 0009](../../../docs/adr/0009-local-solana-visual-preview.md). The dated POO-2281/2291
 sections below retain delivery history; their standalone preview is a historical harness.
 
-Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+Accepted Header and Save and exit paths acknowledge local disposal only after route/account host and
 intent generation validate the user's consent. Stale acceptance cannot close a successor session.
 Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
 last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.
@@ -306,7 +306,7 @@ With `NEXT_PUBLIC_MOCK_MODE=false`, the existing V2 toggle and `fundContracts` f
 `src/lib/api/v2/` validates the `{ data }` envelope, v2 protocol header and recursively tagged response records.
 Typed server actions return sanitized errors and catalog data; no upstream secret enters the browser.
 
-- Networks: Arbitrum required, Robinhood optional. Uniswap v3 swaps are locked; Across appears only with Robinhood.
+- Networks: Arbitrum required, Robinhood optional. Uniswap v3 swaps are locked; Across is locked only with Robinhood.
 - Positions: optional Uniswap v4 per selected chain and optional Arbitrum Aave v3 supply. V3 positions show Coming soon.
 - Tokens: per-chain catalog metadata, logos and `hubPriced`; USDC/USDG bases locked; at most 16 unique chain-address entries.
 - Pools: real v4 token/pair filters and bytes32 PoolId lookup; full PoolKey retained. Adding a pool adds both currencies atomically.
@@ -359,16 +359,16 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
 
 **Step rules, one paragraph each, rule numbers from the handoff.**
 
-- **Shell (R1 to R14).** Page header "Create new strategy" with a "Save & exit" text button and no
+- **Shell (R1 to R14).** Page header "Create new strategy" with a "Save and exit" text button (POO-2333 R10 spells it in full) and no
   "Back to console" (R1); the three-phase stepper Mandate/Build/Review, a reached phase clickable
   (R2); the sub-step header collapsed by default, one line "MANDATE · STEP n OF 5" plus the title
   plus "Next: `<step>`", hover peeks it open, a click pins it (R3); step titles of reached steps are
   links, the current one is not, unreached ones are disabled (R4); a sticky Back/Next action bar,
   Next on step 5 reads "Next: Build strategy" (R5), and Next is NEVER disabled, a block shows an
-  inline reason and scrolls to the row instead (R6); Save & exit opens the naming dialog only on the
+  inline reason and scrolls to the row instead (R6); Save and exit opens the naming dialog only on the
   first save, after that it saves silently with a toast (R7); the draft name is 10 to 50 characters,
   the same rule the create-pool API applies to the strategy name (R8); every selection survives Back,
-  Next and Save & exit (R9); every network logo carries a tooltip and a `title` with its name (R10);
+  Next and Save and exit (R9); every network logo carries a tooltip and a `title` with its name (R10);
   every pool address on the Pools step copies the real address on click (R11); a selected row uses
   the raised-surface treatment with the primary colour on the checkbox, never a row fill (R12); the
   Broad mandate flag raises only when every token AND every pool are selected, never from networks or
@@ -397,8 +397,9 @@ persistence the Mandate phase has, since it writes nothing on chain; `PP-MGR-STO
   left, "Your tokens" on the right (R23); the deposit token is a locked, one-row-per-network entry
   that cannot be removed (R24); the catalog lists only tokens available on the chosen networks and
   protocols (R25); a search field, a network filter and "Add all N" narrow or bulk-add the catalog
-  (R26); the mandate holds at most 16 token slots, one per network a token runs on, exceeding it
-  disables Add with "No slots left" (R27); only priced tokens (`PRICED_SYMBOLS`) are offered by
+  (R26); the mandate holds at most 100 token slots, one per network a token runs on (16 in real data
+  mode, where the contracts set the limit), and a full basket shows "No free slots" on each card and
+  turns "Add all" off (R27, POO-2332 rules v1); only priced tokens (`PRICED_SYMBOLS`) are offered by
   default, an unpriced one is reachable by search, disabled, "No price feed yet" (R28).
 - **Pools (R29 to R38).** The step is skipped entirely with no DEX protocol chosen, and the header
   then reads "OF 4" (R29); search matches V1's own pattern, including pasting a pool address (R30);
@@ -439,7 +440,7 @@ its investor-facing placement: the name is a proposal and the placement is not b
 as "strategy" throughout, matching the V1 builder's vocabulary, unresolved. **8.** The Uniswap v4
 pool catalog has a real source since POO-2133: server actions read the backend's v4 catalog on Arbitrum and
 Robinhood Chain (see "Real catalog wiring" above and `docs/INTEGRATION_POINTS.md`, "Fund contracts builder");
-mock mode keeps its fixtures. **9.** "N% selected" on a pool card mirrors V1 exactly: the pool's share of the pair's TVL across the fetched fee tiers, computed client-side (`tierShare` in `mandatePoolSource.ts`); no API field carries a manager share today, so the handoff's "share of V1 managers who chose that tier" has no source and the V1 computation wins. **10.** "Next: Build strategy" on step 5 marks the mandate complete, persists the draft, and lands on the Build canvas (`BuildScreen`, POO-2157, which replaced the Build landing that printed the mandate back); Back: Mandate returns to Limits. **11.** The feature flag is `fundContracts` (`NEXT_PUBLIC_FEATURE_FUND_CONTRACTS`), off by default, `next` stage; the header toggle renders only while it is on and the V2 builder only while the toggle says V2; `v2.dev.pool-party.xyz` needs the variable baked before the image build. **12.** Deep links are query params on the existing route, `/manager/new?draft=<id>&step=<key>` (plus `&phase=build` once the mandate completed), no new route folder. Decisions 1 to 12 are recorded in the "Plan" section of the POO-2119 Linear issue; Murilo can overturn any of them.
+mock mode keeps its fixtures. **9.** The share on a pool card ("chosen by N% of LPs" since POO-2333 R8; V1 says "N% selected") mirrors V1 exactly: the pool's share of the pair's TVL across the fetched fee tiers, computed client-side (`tierShare` in `mandatePoolSource.ts`); no API field carries a manager share today, so the handoff's "share of V1 managers who chose that tier" has no source and the V1 computation wins. **10.** "Next: Build strategy" on step 5 marks the mandate complete, persists the draft, and lands on the Build canvas (`BuildScreen`, POO-2157, which replaced the Build landing that printed the mandate back); Back: Mandate returns to Limits. **11.** The feature flag is `fundContracts` (`NEXT_PUBLIC_FEATURE_FUND_CONTRACTS`), off by default, `next` stage; the header toggle renders only while it is on and the V2 builder only while the toggle says V2; `v2.dev.pool-party.xyz` needs the variable baked before the image build. **12.** Deep links are query params on the existing route, `/manager/new?draft=<id>&step=<key>` (plus `&phase=build` once the mandate completed), no new route folder. Decisions 1 to 12 are recorded in the "Plan" section of the POO-2119 Linear issue; Murilo can overturn any of them.
 
 **Open integrations and scope.** Build, its configuration panels and Review are implemented below.
 The launch journey behind Review (POO-2177) is described in `src/features/manager/fund/launch/README.md`.
@@ -463,8 +464,8 @@ the drafts pair `builder_draft_opened` and `builder_draft_deleted`, and the Buil
 POO-2187), `builder_build_blocked`, `builder_build_abandoned` and `builder_build_error`, declared in
 `docs/ANALYTICS_EVENTS.md`), and the configuration panel's of POO-2187 (`builder_block_configured`,
 `builder_block_applied`, `builder_block_discarded`, `builder_block_leave_blocked`, `builder_block_limit_hit`);
-`builder_build_landing_viewed` and `builder_block_restored` are retired. `builder_mandate_blocked`'s five NEW reasons are `nothing_selected`,
-`cap_missing`, `no_slots`, `has_hook` and `coming_soon`; `price_unknown` (an unpriced token) and
+`builder_build_landing_viewed` and `builder_block_restored` are retired. `builder_mandate_token_mode_changed` (POO-2332, with `token_mode`) fires when the Token access control switches. `builder_mandate_blocked`'s NEW reasons are `nothing_selected`,
+`cap_missing`, `token_allowance_required`, `cap_zero` (POO-2332), `no_slots`, `has_hook`, `coming_soon` and `required_protocol` (POO-2333 R4); `price_unknown` (an unpriced token) and
 `name_invalid` (the draft name) REUSE the existing POO-1172 reason series rather than mint
 per-builder duplicates. A draft-save failure reports `builder_mandate_error { error_code:
 "DRAFT_SAVE_FAILED", error_origin: "app" }`; the same event also carries the Pools step's catalog
@@ -728,6 +729,15 @@ entries do not count as another token. Mock missing-cap priority remains network
 real mode retains its spoke-cap and catalog checks before this new allowance check. The shell emits
 `builder_mandate_blocked` with `token_allowance_required` and shows translated guidance.
 
+**Token access mode and caps (POO-2332, rules v1).** The Tokens step has a "Token access" control:
+"Selected tokens" (default) or "All tokens". The draft keeps the mode (`tokenMode`) and the cap for
+every token (`allTokensCap`). A mode change keeps the token list. All tokens mode has no slot limit.
+The basket holds 100 slots (`BASKET_TOKEN_SLOTS`; `slotCeiling` returns 16 in real data mode). The view
+models live in `fund/mandateTokenAccess.ts` (`PP-MGR-LIB-079`). On Limits, a token starts at 0% with No
+cap off, and a network or protocol starts with No cap on (`effectiveCap`). An enabled 0% cap
+(`cap_zero`) makes Next `aria-disabled`; a press scrolls to the control, blinks it two times and
+sends `builder_mandate_blocked` with `cap_zero`. Real data mode keeps its earlier behavior.
+
 A completed draft that no longer meets Limits opens Mandate rather than Build/Review. This is a
 display guard, with no mount-time draft or checkpoint rewrite. Wallet-scoped existing launch journeys
 keep their original recovery path, including when the wallet arrives after draft hydration. While
@@ -756,7 +766,7 @@ figures are absent. The RB2 assembly owns persistence, launch gating and analyti
 
 A guarded, ready Build saves the applied plan and `lastPhase: review`, then opens Review.
 `ReviewPhase` (PP-MGR-CMP-077) binds the RB1 cards to `useV2ReviewDraft`; Back, mandate edits,
-Save & exit and reload preserve its stored fields. Mock mode renders a reason without
+Save and exit and reload preserve its stored fields. Mock mode renders a reason without
 mounting real wallet hooks. Investor, mandate/Build and launch previews (CMP-078..080)
 derive from current valid fields, saved selections, applied positions and `getLaunchSteps`.
 Signature counts say up to and distinguish transactions from profile messages.
@@ -766,6 +776,29 @@ click calls `startFundLaunch` once; an existing checkpoint offers Resume without
 the journal. Fallback Review remains available. Borrow, unsupported catalog data and
 nonexecutable continuations fail closed. All new copy is present in 11 locales.
 
+
+### Mandate networks, protocols, pools and Save and exit Figma parity (POO-2333, rules v1)
+
+The pure decisions are in `steps/mandateStepView.ts` (`PP-MGR-LIB-081`) and in `lockedProtocols`
+(`PP-MGR-LIB-019`). These rules replace the older layout rules above where they disagree.
+
+- Networks: a caption under "Other networks" tells the cost of each network (R1). A spoke that the
+  config does not enable is not shown. Solana shows only in its preview mode (R2).
+- Protocols: "Protocols to operate" comes first. "Swap and bridge" sits below the divider,
+  preselected, collapsed to "{names} · selected for you", and opens on Show to checkbox rows (R3).
+  The "Required" group is removed. The last swap cannot be cleared. In both modes, the last bridge
+  cannot be cleared while the mandate has a spoke. A locked row is `aria-disabled`. Its click is a
+  blocked intent with the reason `required_protocol`, and the step shows no notice for it (R4). The
+  summary card shows a lock only on the protocols that `lockedProtocols` returns. The Swap and
+  bridge rows have no network column. The network column of the other rows is "Available on",
+  with a footnote (R5). The Uniswap v3 rows are "Uniswap v3 · Swap" and "Uniswap v3 · Liquidity"
+  (R6). A protocol that the config does not enable is not shown, so
+  Uniswap v3 positions, GMX and Pendle are hidden, not Coming soon (R7).
+- Pools: a result card reads "{fee} fee tier · chosen by {pct}% of LPs". With no share, it reads
+  only the fee tier (R8). Real mode has no share source yet (see the integration point in
+  `mandatePoolSource.ts`). A "Your pools" row shows protocol, network icon, then fee tier (R9).
+- Save and exit is spelled in full, also in the empty Drafts text (R10). Every new string is in
+  11 locales (R11). TokensStep and LimitsStep do not change (R14).
 
 ### Mandate Protocols Figma correction (POO-2167, rules v4)
 

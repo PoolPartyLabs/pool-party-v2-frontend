@@ -22,7 +22,7 @@
  * - [AN4, D19] Next: Review's ordered refusals and their notices, never disabled;
  * - [HU3] every way out of the step asks the selection guard;
  * - [C6, A4] the Edit mandate links and the walk back to Build;
- * - [A8, D16] the plan survives Back, Save & exit and a reopen from the Console;
+ * - [A8, D16] the plan survives Back, Save and exit and a reopen from the Console;
  * - [I8, I9] the canvas opens at fit and reveals the new block after a change;
  * - [ST11], the leave guard, the unreadable plan (D18), and the five event classes (AE1 to AE6).
  */
@@ -430,7 +430,7 @@ describe("BuildScreen: the canvas replaces the Build landing (G2, AN1, D23, AE1)
     await openBuild();
 
     expect(screen.getByRole("heading", { name: "Create new strategy" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save & exit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save and exit" })).toBeInTheDocument();
     // The V1 stepper, unchanged: only an EARLIER phase is a control, so Mandate is a button and
     // Review is not.
     expect(screen.getByRole("button", { name: "Mandate" })).toBeInTheDocument();
@@ -919,10 +919,10 @@ describe("BuildScreen: every way out asks the selection guard (HU3)", () => {
     expect(screen.getByRole("heading", { name: "Build your strategy" })).toBeInTheDocument();
   });
 
-  it("[HU3] Save & exit", async () => {
+  it("[HU3] Save and exit", async () => {
     // @rule HU3
     const guard = await guarded();
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     expect(guard.onRefused).toHaveBeenCalledTimes(1);
     expect(nav.push).not.toHaveBeenCalled();
     expect(emitted("builder_draft_saved")).toHaveLength(0);
@@ -1027,8 +1027,8 @@ const EXITS: Array<[string, () => Promise<unknown>, () => Promise<unknown>]> = [
       ).toBeInTheDocument(),
   ],
   [
-    "Save & exit",
-    async () => userEvent.click(screen.getByRole("button", { name: "Save & exit" })),
+    "Save and exit",
+    async () => userEvent.click(screen.getByRole("button", { name: "Save and exit" })),
     async () => waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager")),
   ],
   [
@@ -1076,12 +1076,12 @@ describe("BuildScreen: the configuration panel (POO-2187, P3 to P10)", () => {
     ]);
   });
 
-  it("[L10, P6] a refused Save & exit, then Apply changes, saves the applied plan once", async () => {
+  it("[L10, P6] a refused Save and exit, then Apply changes, saves the applied plan once", async () => {
     // @rule P6
     seedBuild(hubMandate("d-p6-save"), twoPoolPlan());
     await openBuild();
     await dirtyFirstCard();
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     expect(nav.push).not.toHaveBeenCalled();
     await userEvent.click(within(panelRegion()).getByRole("button", { name: "Apply changes" }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
@@ -1259,7 +1259,7 @@ describe("BuildScreen: Edit mandate and the way back (C6, A4)", () => {
     await userEvent.click(await screen.findByRole("menuitem", { name: "Edit mandate · Networks" }));
 
     expect(await screen.findByText("MANDATE · STEP 1 OF 5")).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
     expect(getDraft("d-edit-networks")?.plan).toEqual(poolPlan());
     // Saved from the Mandate phase, so it resumes there (D16).
@@ -1278,13 +1278,13 @@ describe("BuildScreen: the plan survives (A8, D16)", () => {
     return new URLSearchParams(href.split("?")[1] ?? "");
   }
 
-  it("[A8, D16] Build, Save & exit, then the Console Open lands on Build with the plan", async () => {
+  it("[A8, D16] Build, Save and exit, then the Console Open lands on Build with the plan", async () => {
     // @rule A8
     // @rule D16
     seedBuild(hubMandate("d-round-build"));
     const first = await openBuild();
     await addPoolFromMenu();
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
     first.unmount();
 
@@ -1300,14 +1300,14 @@ describe("BuildScreen: the plan survives (A8, D16)", () => {
     expect(card(/^Uniswap v4 · no pool yet/)).toBeInTheDocument();
   });
 
-  it("[A8, D16] Build, Back, Save & exit, then the Console Open lands on the Mandate step", async () => {
+  it("[A8, D16] Build, Back, Save and exit, then the Console Open lands on the Mandate step", async () => {
     // @rule A8
     // @rule D16
     seedBuild(hubMandate("d-round-back"), poolPlan());
     const first = await openBuild();
     await userEvent.click(screen.getByRole("button", { name: "Back: Mandate" }));
     await screen.findByText("MANDATE · STEP 5 OF 5");
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
     first.unmount();
 
@@ -1386,12 +1386,12 @@ describe("BuildScreen: leaving (leave guard, AE abandonment and error)", () => {
     expect(emitted("builder_build_abandoned")).toHaveLength(0);
   });
 
-  it("[AE] Save & exit from Build is not an abandonment", async () => {
+  it("[AE] Save and exit from Build is not an abandonment", async () => {
     // @rule AE1
     seedBuild(hubMandate("d-leave-saved"));
     const rendered = await openBuild();
     await addPoolFromMenu();
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
 
     rendered.unmount();
@@ -1413,7 +1413,7 @@ describe("BuildScreen: leaving (leave guard, AE abandonment and error)", () => {
       clear: () => {},
     });
 
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
 
     await waitFor(() =>
       expect(emitted("builder_build_error")).toEqual([
@@ -1456,7 +1456,7 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
       ]),
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
 
     const raw = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");
@@ -1464,7 +1464,7 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
   });
 
   /**
-   * Review F1 of PR #41: add a block, remove it, Save & exit used to write an EMPTY version 1 plan
+   * Review F1 of PR #41: add a block, remove it, Save and exit used to write an EMPTY version 1 plan
    * over the one this build could not read, with no notice on screen and no leave prompt. An empty
    * plan is not a plan the manager made, so the stored one has to survive it.
    */
@@ -1497,7 +1497,7 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
       "This draft holds a plan this version of the app cannot open.",
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
 
     const raw = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");
@@ -1511,7 +1511,7 @@ describe("BuildScreen: loading and an unreadable plan (ST11, D18)", () => {
     await openBuild();
 
     await addPoolFromMenu();
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
 
     const raw = JSON.parse(window.localStorage.getItem(MANDATE_DRAFTS_KEY) ?? "{}");

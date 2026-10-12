@@ -16,7 +16,7 @@
  *   calls that guard's `onRefused` (its notice) and returns false. Selecting the id already selected
  *   asks nobody.
  * - `guardLeave(proceed)` asks every guard about leaving (`allowChange(null)`) and runs `proceed`
- *   only when all allow. Every way out of the Build step goes through it (S7 wires Back, Save & exit
+ *   only when all allow. Every way out of the Build step goes through it (S7 wires Back, Save and exit
  *   and the stepper; the controller wires the Edit mandate links).
  * - [P6, finding 10] A refusal hands the refusing guard the change it stopped, as
  *   `{ resume() }`: for `select(next)` it is `select(next)` again, which asks the guards again; for

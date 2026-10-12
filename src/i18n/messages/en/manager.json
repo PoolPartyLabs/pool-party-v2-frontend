@@ -734,7 +734,7 @@
       "poolId": "Paste a bytes32 PoolId"
     },
     "header": {
-      "saveExit": "Save & exit"
+      "saveExit": "Save and exit"
     },
     "subStep": {
       "overline": "MANDATE · STEP {n} OF {count}",
@@ -793,7 +793,8 @@
     },
     "networks": {
       "hub": "Hub",
-      "others": "Other networks"
+      "others": "Other networks",
+      "othersCaption": "Each network that you add needs a bridge and one more signature at launch."
     },
     "networkNames": {
       "arbitrum": "Arbitrum",
@@ -803,11 +804,19 @@
       "unichain": "Unichain"
     },
     "protocols": {
-      "required": "Required",
-      "requiredSubtitle": "Every strategy needs a way to swap tokens and to move money between its networks.",
       "operate": "Protocols to operate",
-      "on": "On",
-      "onFootnote": "\"On\" shows the networks from step 1 where each protocol is available."
+      "on": "Available on",
+      "onFootnote": "\"Available on\" shows which of your networks from step 1 each protocol supports.",
+      "swapBridge": "Swap and bridge",
+      "swapBridgeCollapsed": "{names} · selected for you",
+      "swapBridgeOpen": "Selected for you. Keep at least one swap, and one bridge when you add a network.",
+      "swapBridgeOpenHub": "Selected for you. Keep at least one swap.",
+      "show": "Show",
+      "hide": "Hide",
+      "rowNames": {
+        "uniswapV3Swap": "Uniswap v3 · Swap",
+        "uniswapV3Liquidity": "Uniswap v3 · Liquidity"
+      }
     },
     "protocolNames": {
       "uniswapV3Swap": "Uniswap v3",
@@ -834,7 +843,34 @@
       "depositToken": "Deposit token",
       "slotsCaption": "A token takes one slot on each network it runs on. The mandate holds {max} slots.",
       "noPrice": "No price feed yet",
-      "empty": "No tokens match your search."
+      "empty": "No tokens match your search.",
+      "access": {
+        "label": "Token access",
+        "selected": "Selected tokens",
+        "all": "All tokens",
+        "hint": "All tokens lets the strategy trade any token on your networks and protocols, also tokens that launch later."
+      },
+      "allInfo": {
+        "title": "The strategy can trade any token",
+        "body": "This covers every token on your networks and protocols, also tokens that launch after you publish. You do not choose tokens one by one. Every token is priced on the hub."
+      },
+      "yoursAll": "Your tokens · All",
+      "everyOther": "Every other token",
+      "everyOtherCaption": "Added when it launches",
+      "requiredBy": "Required by {network}",
+      "slotsAllLabel": "Network slots",
+      "slotsNoLimit": "No limit",
+      "slotsAllCaption": "The {max}-slot cap applies only to selected tokens.",
+      "noFreeSlots": "No free slots",
+      "slotsFull": "All {max} slots are used. Remove a token to add another.",
+      "andMoreTokens": "and {count, plural, one {# more token} other {# more tokens}}",
+      "loading": "Loading tokens",
+      "loadError": {
+        "title": "Tokens did not load",
+        "heading": "We could not load the token list",
+        "body": "Check your connection and try again. The tokens in your list stay saved."
+      },
+      "retry": "Try again"
     },
     "pools": {
       "search": "Token, pair or pool address",
@@ -845,7 +881,7 @@
       "results": "{count, plural, one {# pool} other {# pools}} with at least one of your tokens",
       "yours": "Your pools · {count}",
       "feeTier": "{fee} fee tier",
-      "tierShare": "{pct}% selected",
+      "tierShare": "{fee} fee tier · chosen by {pct}% of LPs",
       "addsToken": "adds {symbol} to your tokens",
       "hasHook": "has a hook",
       "fixed": "Pools are fixed at launch. You cannot add one later.",
@@ -861,11 +897,11 @@
     },
     "limits": {
       "perNetwork": "Per network",
-      "perNetworkCaption": "Max share of capital on each network · 5% steps",
+      "perNetworkCaption": "Max share of deposits on each network · 5% steps",
       "perProtocol": "Per protocol",
-      "perProtocolCaption": "Max share of capital in each protocol · 5% steps",
+      "perProtocolCaption": "Max share of deposits in each protocol · 5% steps",
       "perToken": "Per token",
-      "perTokenCaption": "Max share of capital held in each token · 5% steps",
+      "perTokenCaption": "Max share of deposits held in each token · 5% steps",
       "tokenOnNetwork": "{symbol} on {network}",
       "hubRow": "No cap · the hub holds what is not sent elsewhere",
       "hubCaption": "Hub",
@@ -881,14 +917,31 @@
         "perps": "Perpetuals"
       },
       "positiveTokenRequired": "Allow at least one token besides USDC above 0% or select No cap.",
-      "addPositiveToken": "Add another token in Tokens, then set its limit above 0% or select No cap. USDC is already included."
+      "addPositiveToken": "Add another token in Tokens, then set its limit above 0% or select No cap. USDC is already included.",
+      "perTokenAllCaption": "Default cap for every token · 5% steps",
+      "allTokensRow": {
+        "title": "All tokens",
+        "caption": "Sets one cap for every token in the list"
+      },
+      "mixed": "Mixed",
+      "everyTokenRow": {
+        "title": "Every token",
+        "caption": "Each token on its own, except USDC"
+      },
+      "allWarning": {
+        "title": "Any token can enter the strategy",
+        "body": "This includes tokens with low liquidity or no price history. The default cap applies to each token on its own. Depositors see this tag on the strategy card and page:",
+        "tag": "All tokens"
+      },
+      "capZeroReason": "Set the token cap above 0%",
+      "capZero": "Set the token cap above 0% or select No cap to continue."
     },
     "draft": {
       "title": "Name your draft",
       "body": "Everything you chose so far is kept. The name is how you will find this draft in your strategies; you can change it later on Review.",
       "nameLabel": "Draft name",
       "namePlaceholder": "ETH and BTC on Arbitrum",
-      "helper": "10 to 50 characters, same rule as the strategy name.",
+      "helper": "10 to 50 characters.",
       "counter": "{count} / {max}",
       "progress": "Saved so far: {networks} networks, {protocols} protocols, {tokens} tokens · Mandate, step {n} of {count}",
       "keepEditing": "Keep editing",
@@ -905,7 +958,7 @@
       "delete": "Delete",
       "deleteTitle": "Delete this draft?",
       "deleteBody": "{name} and everything you chose in it will be removed. This cannot be undone.",
-      "empty": "No drafts yet. Start a strategy and use Save & exit to keep one.",
+      "empty": "No drafts yet. Start a strategy and use Save and exit to keep one.",
       "deleteFailed": "Couldn't delete the draft. Try again.",
       "unnamed": "Unnamed draft"
     },
@@ -932,7 +985,41 @@
         "frozen": "Reserve frozen",
         "paused": "Reserve paused",
         "supplyCapReached": "Supply cap reached",
-        "unavailable": "Unavailable"
+        "unavailable": "Unavailable",
+        "collateralNote": "Collateral of the Borrow block below. Changing the asset or the allocation changes what can be borrowed."
+      },
+      "borrowPanel": {
+        "heading": "Assets you can borrow",
+        "filter": "Filter by token or address",
+        "caption": "Tokens of your mandate that Aave v3 lends on {network}, against the Supply above.",
+        "needAsset": "Need another asset?",
+        "noMatch": "No asset in your mandate matches {typed}",
+        "noMatchCaption": "Tokens are chosen in the mandate, step 3. Your build stays saved while you edit it.",
+        "empty": "No asset in your mandate can be borrowed on {network}",
+        "collateral": "Collateral",
+        "collateralHelp": "The asset of the Supply block above. Aave v3 lends against it. Change it in that block.",
+        "supplyAbove": "Supply block above",
+        "collateralValue": "Collateral value",
+        "needSupply": "Configure the Supply block above first.",
+        "asset": "Asset",
+        "help": "Tokens of your mandate that Aave v3 lends on {network}.",
+        "apy": "Borrow APY",
+        "amount": "Borrow amount",
+        "amountHelp": "The share of the collateral value that you borrow. A higher share lowers the health factor.",
+        "amountCaption": "Share of the value of the {symbol} supplied above. Aave limit {limit}%.",
+        "atLimit": "Maximum reached. Aave v3 lends up to {limit}% of the value of {symbol}.",
+        "amountValue": "You borrow",
+        "healthFactor": "Health factor",
+        "noDebt": "No debt",
+        "liquidationPrice": "Liquidation price",
+        "liquidationSentence": "{symbol} is at {price} now. Liquidation if it falls about {drop}%.",
+        "unavailable": "Unavailable",
+        "blocked": {
+          "needSupply": "Configure the Supply block above first.",
+          "unavailable": "Choose an asset that Aave v3 lends.",
+          "needAmount": "Set a borrow amount over 0%.",
+          "overLimit": "The borrow amount is over the Aave limit."
+        }
       }
     },
     "canvas": {

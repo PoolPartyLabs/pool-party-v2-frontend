@@ -82,6 +82,8 @@ export interface AaveBlockConfig {
   assetKey: string;
   /** Only when the app swaps into the asset first (C13): that swap's max slippage, 0.1 to 5. */
   slippagePct?: number;
+  /** Borrow only (POO-2334 R3): the borrowed value as a % of the collateral value, 0 to max LTV. */
+  borrowPct?: number;
 }
 
 /** Local descriptor choice, never a canonical pool/program/market address. */
