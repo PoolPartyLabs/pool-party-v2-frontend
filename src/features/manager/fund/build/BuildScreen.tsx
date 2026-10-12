@@ -398,6 +398,14 @@ export function BuildScreen({
   // [I9] After a change, reveal the new or newly selected block with the minimum pan. The first
   // layout is not a change: the viewport opens at fit on its own.
   const selectedId = selection.selectedId;
+  // One display name per block: the removal dialog and the chart unavailable state use it.
+  const blockLabel = useCallback(
+    (blockId: string) =>
+      findBlock(plan, blockId)?.block.family === "flow"
+        ? controller.describeFlow(blockId).text
+        : controller.describeBlock(blockId).title,
+    [controller, plan],
+  );
   const removal = useMemo(() => {
     const network = controller.removeSpokeConfirm;
     if (network)
@@ -418,16 +426,13 @@ export function BuildScreen({
     if (!found || !description) return null;
     return removalText({
       description,
-      blockTitle:
-        found.block.family === "flow"
-          ? controller.describeFlow(blockId).text
-          : controller.describeBlock(blockId).title,
+      blockTitle: blockLabel(blockId),
       stepTitle: (step) => controller.describeBlock(step.id).title,
       copy: panelCopy.confirm,
       listNames: ctx.copy.listNames,
       locale,
     });
-  }, [controller, panelCopy, plan, draft, catalog, locale]);
+  }, [controller, panelCopy, plan, draft, catalog, locale, blockLabel]);
   const shown = useRef<{ layout: GraphLayout; selectedId: string | null } | null>(null);
   useEffect(() => {
     if (!active) return;
@@ -509,9 +514,7 @@ export function BuildScreen({
                 ? null
                 : target.kind === "spoke"
                   ? controller.networkName(target.network)
-                  : target.kind === "swap"
-                    ? controller.describeFlow(target.blockId).text
-                    : controller.describeBlock(target.blockId).title
+                  : blockLabel(target.blockId)
             }
             context={local ? "solana-local" : "build"}
             fillContainer

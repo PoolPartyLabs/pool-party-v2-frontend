@@ -40,7 +40,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Lending reference, as in the Figma reference node 8685:31487. */
+/** A lending reference selection shows the unavailable state with its label (R2). */
 export const UnavailableWithSelection: Story = {};
 
 /** An unsupported pair shows the same state (R4). */

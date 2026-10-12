@@ -1757,7 +1757,7 @@
     "retry": "Réessayer",
     "attribution": "Graphique par TradingView",
     "unavailableTitle": "Les graphiques ne sont pas disponibles.",
-    "unavailableBody": "L'historique des prix n'est pas disponible pour cette sélection.",
+    "unavailableBody": "L’historique des prix n'est pas disponible pour cette sélection.",
     "selectionPreserved": "La sélection est conservée.",
     "back": "Retour au flux de la stratégie"
   }

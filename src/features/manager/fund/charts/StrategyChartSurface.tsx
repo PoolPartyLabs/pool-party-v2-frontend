@@ -23,12 +23,11 @@ import { cn } from "@/lib/utils/cn";
 import type { ChartSelection } from "./chartContext";
 import { buildChartUrl, type ChartMarket, readChartMessage } from "./chartModel";
 import {
+  type ChartFailure,
   type ChartTab,
   type ChartUnavailableView,
-  chartBackTransition,
-  chartBlockedParams,
-  chartFailureView,
-  chartUnavailableView,
+  type ChartView,
+  chartPanelState,
 } from "./chartUnavailable";
 
 export interface StrategyChartSurfaceProps {
@@ -41,48 +40,42 @@ export interface StrategyChartSurfaceProps {
   active?: boolean;
 }
 
-type ChartFailure = "no_data" | "load_timeout";
-
-/** R1 to R4: one unavailable state for every cause, with the preserved selection and Back. */
+/**
+ * R1 to R4: one full-panel state for every cause, with the preserved selection and Back only.
+ * Provider no data arrives after the panel opens, so that case is announced as an alert.
+ */
 function ChartUnavailableState({
   view,
   onBack,
-  onRetry,
-  overlay = false,
+  announce = false,
 }: {
   view: ChartUnavailableView;
   onBack(): void;
-  onRetry?(): void;
-  overlay?: boolean;
+  announce?: boolean;
 }) {
   const t = useTranslations("manager.marketChart");
   return (
     <div
-      role={overlay ? "alert" : undefined}
+      role={announce ? "alert" : undefined}
       data-chart-unavailable=""
-      className={cn(
-        "flex min-h-24 flex-1 flex-col items-start gap-4 bg-surface p-5 text-xs text-muted-foreground",
-        overlay && "absolute inset-0",
-      )}
+      className="flex min-h-24 flex-1 flex-col items-start gap-4 bg-surface p-5 text-xs text-muted-foreground"
     >
       <p>{t(view.titleKey)}</p>
       <p>{t(view.bodyKey)}</p>
       {view.selection ? (
-        <div className="flex flex-col gap-1 rounded-xl bg-surface-raised px-3 py-2">
+        <div className="flex flex-col gap-1 rounded-md bg-surface-raised px-3 py-2">
           <p className="font-semibold text-foreground text-sm">{view.selection.label}</p>
           <p>{t(view.selection.noteKey)}</p>
         </div>
       ) : null}
-      <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" size="md" className="max-w-full sm:w-60" onClick={onBack}>
-          {t(view.backKey)}
-        </Button>
-        {view.retry && onRetry ? (
-          <Button variant="ghost" size="md" onClick={onRetry}>
-            {t("retry")}
-          </Button>
-        ) : null}
-      </div>
+      <Button
+        variant="secondary"
+        size="md"
+        className="max-w-full font-semibold sm:w-60"
+        onClick={onBack}
+      >
+        {t(view.backKey)}
+      </Button>
     </div>
   );
 }
@@ -91,17 +84,15 @@ function ChartUnavailableState({
 function TradingViewFrame({
   market,
   locale,
-  selectionLabel,
+  loadError,
   onFailure,
   onRetry,
-  onBack,
 }: {
   market: ChartMarket;
   locale: string;
-  selectionLabel: string | null | undefined;
+  loadError: ChartView["loadError"];
   onFailure(reason: ChartFailure): void;
   onRetry(): void;
-  onBack(): void;
 }) {
   const t = useTranslations("manager.marketChart");
   const opaqueId = useId();
@@ -138,7 +129,6 @@ function TradingViewFrame({
     };
   }, [instanceId, onFailure]);
   const failed = status === "no_data" || status === "load_timeout";
-  const failure = failed ? chartFailureView(status, selectionLabel) : null;
   return (
     <div className="relative min-h-24 min-w-0 flex-1" aria-busy={status === "loading"}>
       {/* PP-INTEGRATION-POINT: isolated public market reference; no app/wallet state is sent. */}
@@ -163,17 +153,14 @@ function TradingViewFrame({
           {t("loading")}
         </p>
       ) : null}
-      {failure?.kind === "unavailable" ? (
-        <ChartUnavailableState view={failure} onBack={onBack} onRetry={onRetry} overlay />
-      ) : null}
-      {failure?.kind === "loadError" ? (
+      {loadError ? (
         <div
           role="alert"
           className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-surface p-4 text-center text-sm text-foreground"
         >
-          <p>{t(failure.messageKey)}</p>
+          <p>{t(loadError.messageKey)}</p>
           <Button variant="secondary" size="sm" onClick={onRetry}>
-            {t(failure.retryKey)}
+            {t(loadError.retryKey)}
           </Button>
         </div>
       ) : null}
@@ -196,6 +183,9 @@ export function StrategyChartSurface({
   const [tab, setTab] = useState<ChartTab>("flow");
   const [visitedIdentity, setVisitedIdentity] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [failure, setFailure] = useState<{ frame: string; reason: ChartFailure } | null>(null);
+  const flowTrigger = useRef<HTMLButtonElement>(null);
+  const [focusFlow, setFocusFlow] = useState(0);
   const { availability, identity } = selection;
   const market = availability.status === "available" ? availability.market : null;
   const reason = availability.status === "unavailable" ? availability.reason : null;
@@ -203,6 +193,13 @@ export function StrategyChartSurface({
   const widgetKey = JSON.stringify([identity, locale, market?.symbol]);
   const chartsVisible = tab === "charts";
   const visited = chartsVisible || visitedIdentity === widgetKey;
+  const frameKey = `${widgetKey}:${attempt}`;
+  // R4, R5: a provider failure belongs to one frame instance; a new key starts with none.
+  const panel = chartPanelState(
+    availability,
+    failure?.frame === frameKey ? failure.reason : null,
+    selectionLabel,
+  );
   useEffect(() => {
     if (active && chartsVisible) setVisitedIdentity(widgetKey);
   }, [active, chartsVisible, widgetKey]);
@@ -211,26 +208,39 @@ export function StrategyChartSurface({
     if (!active || !chartsVisible) return;
     track("manager_chart_viewed", { chart_context: context, chart_market: marketId });
     if (reason) {
-      track("manager_chart_blocked", chartBlockedParams(context, marketId, reason));
+      // R6: the blocked event keeps its reason values.
+      track("manager_chart_blocked", {
+        chart_context: context,
+        chart_market: marketId,
+        chart_reason: reason,
+      });
     }
     return () => track("manager_chart_closed", { chart_context: context, chart_market: marketId });
   }, [active, chartsVisible, context, marketId, reason, identity, locale, track]);
   const onFailure = useCallback(
-    (failure: ChartFailure) => {
+    (reason: ChartFailure) => {
+      setFailure({ frame: frameKey, reason });
       track("manager_chart_failed", {
         chart_context: context,
         chart_market: marketId,
-        chart_reason: failure,
+        chart_reason: reason,
       });
     },
-    [track, context, marketId],
+    [track, context, marketId, frameKey],
   );
   const retry = () => {
     track("manager_chart_retried", { chart_context: context, chart_market: marketId });
     setAttempt((value) => value + 1);
   };
   // R3: Back changes the tab only. The parent keeps the selected block and its draft.
-  const back = () => setTab(chartBackTransition({ tab, identity }).tab);
+  const back = () => {
+    setTab("flow");
+    setFocusFlow((request) => request + 1);
+  };
+  // R3: after the flow panel is visible again, focus goes to its tab, as Manage Back does.
+  useEffect(() => {
+    if (focusFlow > 0) flowTrigger.current?.focus();
+  }, [focusFlow]);
   return (
     <Tabs
       data-strategy-chart-surface=""
@@ -252,7 +262,9 @@ export function StrategyChartSurface({
         aria-label={t("tabsLabel")}
         className="max-w-full shrink-0 self-start overflow-x-auto"
       >
-        <TabsTrigger value="flow">{t("flow")}</TabsTrigger>
+        <TabsTrigger ref={flowTrigger} value="flow">
+          {t("flow")}
+        </TabsTrigger>
         <TabsTrigger value="charts">{t("charts")}</TabsTrigger>
       </TabsList>
       <div className="relative min-h-0 min-w-0 flex-1">
@@ -274,33 +286,34 @@ export function StrategyChartSurface({
           inert={!chartsVisible || undefined}
           tabIndex={chartsVisible ? 0 : -1}
           className={cn(
-            "absolute inset-0 flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-surface",
+            "absolute inset-0 flex h-full min-h-0 min-w-0 flex-col overflow-hidden border border-border bg-surface",
+            // Figma 8682-3253: the unavailable panel uses the 16px radius token.
+            panel.kind === "unavailable" ? "rounded-lg" : "rounded-xl",
             !chartsVisible && "invisible pointer-events-none",
           )}
         >
-          {market ? (
+          {panel.kind === "chart" ? (
             <>
               <header className="scrollbar-dark min-h-0 shrink space-y-1 overflow-y-auto border-b border-border px-3 py-2">
                 <h3 className="font-semibold text-sm text-foreground">{t("referenceTitle")}</h3>
                 <p className="text-sm text-foreground">
-                  {market.pair} · {market.venue}
+                  {panel.market.pair} · {panel.market.venue}
                 </p>
                 <p className="text-xs text-muted-foreground">{t("referenceDescription")}</p>
               </header>
               {visited ? (
                 <TradingViewFrame
-                  key={`${widgetKey}:${attempt}`}
-                  market={market}
+                  key={frameKey}
+                  market={panel.market}
                   locale={locale}
-                  selectionLabel={selectionLabel}
+                  loadError={panel.loadError}
                   onFailure={onFailure}
                   onRetry={retry}
-                  onBack={back}
                 />
               ) : null}
               <footer className="shrink-0 border-t border-border px-3 py-2 text-xs text-muted-foreground">
                 <a
-                  href={`https://www.tradingview.com/symbols/${market.symbol.split(":")[1]}/?exchange=BINANCE`}
+                  href={`https://www.tradingview.com/symbols/${panel.market.symbol.split(":")[1]}/?exchange=BINANCE`}
                   target="_blank"
                   rel="noopener noreferrer"
                   referrerPolicy="no-referrer"
@@ -311,10 +324,7 @@ export function StrategyChartSurface({
               </footer>
             </>
           ) : (
-            <ChartUnavailableState
-              view={chartUnavailableView(reason ?? "no_selection", selectionLabel)}
-              onBack={back}
-            />
+            <ChartUnavailableState view={panel} onBack={back} announce={market !== null} />
           )}
         </TabsContent>
       </div>

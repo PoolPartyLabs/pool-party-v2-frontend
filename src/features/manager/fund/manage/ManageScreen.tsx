@@ -44,6 +44,13 @@ export interface ManageScreenProps {
 export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenProps) {
   useBuildShellLayout(true);
   const t = useTranslations("manager.manageV2");
+  // The chart unavailable state names the position as its canvas row title does (ManageCanvas).
+  const positionRowTitle = (position: ManagePosition) => {
+    const tokens = position.tokens.map((token) => token.symbol).join(" / ");
+    return position.kind === "supply"
+      ? t("supplyToken", { token: tokens })
+      : tokens || position.protocol;
+  };
   const model = useMemo(() => normalizeManageModel(fund, balances), [fund, balances]);
   const snapshot = useMemo(() => deriveManageInspection(model), [model]);
   const { track } = useAnalytics();
@@ -247,12 +254,7 @@ export function ManageScreen({ fund, balances, panel, inspector }: ManageScreenP
             selection={manageChartSelection(inspection?.position ?? null)}
             selectionLabel={
               inspection?.position
-                ? [
-                    inspection.position.protocol,
-                    inspection.position.tokens.map((token) => token.symbol).join(" / "),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")
+                ? positionRowTitle(inspection.position)
                 : inspection && inspection.kind !== "position"
                   ? t(manageInspectionLabelKey[inspection.kind])
                   : null
