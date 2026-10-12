@@ -145,6 +145,7 @@ export function chartPageUrl(market: ChartMarket): string {
 }
 
 /** The iframe URL (R4). Only the chain slug and the public address change (R7). */
+// PP-INTEGRATION-POINT: public DEX Screener embed; no Pool Party price feed, position or wallet data is sent.
 export function buildChartUrl(market: ChartMarket): string {
   return `${chartPageUrl(market)}?${new URLSearchParams(CHART_EMBED_PARAMS).toString()}`;
 }

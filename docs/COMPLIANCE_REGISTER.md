@@ -419,6 +419,8 @@ BLOCKING before live data, public launch or financial operations: verify canonic
 
 ## CR-MGR-POO2309, October 9, 2026, external market chart
 
+Superseded by CR-MGR-POO2338. The app no longer loads the TradingView widget or Binance reference data. This entry is history.
+
 Owner: Murilo / Codex coordinator. Scope: owner-authorized free Advanced Chart market-reference widget in gated V2 Build/Manage and local Solana; no trade execution, asset custody or own price feed.
 
 **Answered for this slice:** the native TradingView branding and visible attribution are retained. Pair and Binance venue identify exchange reference data; the selected pool may have a different price. Exact contract/mint lookup does not claim pool OHLCV, liquidity/range/AUM or lending risk. Missing embed data/pairs are unavailable. No current financial or launch blocker is closed by this widget.
@@ -426,3 +428,15 @@ Owner: Murilo / Codex coordinator. Scope: owner-authorized free Advanced Chart m
 **External disclosure:** the vendor's widget FAQ describes IP, page/symbol/widget metadata collection and states no cookies. The implementation uses no-referrer and sends only public market configuration plus an opaque embed ID, with no app URL/fund/pool/wallet identity, and executes code in the vendor origin rather than the wallet page. Vendor-controlled behavior inside that origin is not independently certified. No user-provided address/query is passed or tracked. The lazy frame opens only after chart intent.
 
 **Remaining OPEN before expanding this claim:** own-feed or financial overlays and modified branding/data entitlement require separate source/license/disclosure review under POO-2279. Widget availability is not proven merely because the same symbol exists on the TradingView site. Current approved references keep graceful no-data and retry; Murilo owns browser acceptance. Existing CR-MGR-POO2270 and financial launch disclosures remain applicable.
+
+## CR-MGR-POO2338, October 12, 2026, DEX Screener pool and asset chart
+
+Owner: Murilo / coordinator. Scope: the Charts tab in gated V2 Build and Manage and local Solana shows the public DEX Screener embed of the exact pool or asset of the selected block. This entry replaces the TradingView reference of CR-MGR-POO2309. There is no trade execution, no asset custody and no Pool Party price feed.
+
+**Answered for this slice:** the chart shows DEX Screener data for one Uniswap v3 pool, one Uniswap v4 pool (by PoolId) or one token. The header names the pool or the asset and states that the data is for analysis only. The footer says "Chart by DEX Screener" in 11 locales and links to the public DEX Screener page. A token chart shows the top pair that DEX Screener selects for the token; that pair can differ from the pool that the fund uses. The chart is not an execution quote, a position value, a range or a lending risk value. A block with no exact pool or asset shows the unavailable state. No financial or launch blocker is closed by this chart.
+
+**External disclosure:** the frame URL holds only the chain slug and the public pool or token address, plus fixed display parameters. It holds no app URL, fund, user, wallet or draft data. The frame uses no-referrer and a sandbox, and its code runs in the DEX Screener origin, not in the wallet page. The parent reads no message from the frame. DEX Screener can collect the viewer IP and its own telemetry inside the frame; we do not control or certify that behavior. The frame opens only after chart intent.
+
+**Terms risk, OPEN:** we have not reviewed the DEX Screener terms of use for embedding in a commercial product, for branding rules or for data entitlement. The embed parameters are observed behavior, not a published contract, and DEX Screener can change or block them. Before public launch, Murilo or legal must read the current terms and record the result here. If the terms do not permit this use, remove the frame and its frame-src entry.
+
+**Remaining OPEN before expanding this claim:** own-feed or financial overlays and OHLCV stay under POO-2279 and need a separate source, license and disclosure review. The iframe load event does not prove that candles loaded; Murilo owns browser acceptance. Existing CR-MGR-POO2270 and financial launch disclosures remain applicable.
