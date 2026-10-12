@@ -27,7 +27,7 @@ import {
   raydiumBlockPools,
   raydiumPoolInMandate,
 } from "./raydiumBlockPool";
-import { buildSolanaBuilderCatalog } from "./solanaBuilderRuntime";
+import { buildSolanaBuilderCatalog, SOLANA_LOCAL_CONFIGS } from "./solanaBuilderRuntime";
 import { USDC_MINT, WSOL_MINT } from "./solanaSchemas";
 
 const catalog = () => buildSolanaBuilderCatalog();
@@ -124,6 +124,18 @@ describe("R7: the pool of the Raydium block", () => {
     expect(raydiumBlockPools(solanaDraft())).toEqual([
       { poolAddress: DEFAULT_RAYDIUM_POOL_ADDRESS, pair: "SOL / USDC" },
     ]);
+  });
+
+  // @rule R7
+  it("[R7] seeds a new Raydium block with the default pool, a valid config for the plan", () => {
+    const seed = SOLANA_LOCAL_CONFIGS.solanaRaydiumPool;
+    expect(seed).toEqual({
+      catalogId: "solana:mainnet-beta:raydium-clmm",
+      pair: "SOL / USDC",
+      poolAddress: DEFAULT_RAYDIUM_POOL_ADDRESS,
+    });
+    const draft = withPools(refOf(POOL_A, WSOL_MINT, USDC_MINT));
+    expect(violations(draft, seed)).not.toContain("config_not_in_mandate");
   });
 
   // @rule R7

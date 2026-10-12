@@ -11,8 +11,9 @@
 import { describe, expect, it } from "vitest";
 import type { PanelDraftTarget } from "../build/panel/usePanelDraft";
 import { makeTestDraft } from "../build/plan/planTestKit";
+import { raydiumPoolsFromPairs } from "../raydiumPools";
 import { SOLANA_LOCAL_CONFIGS } from "../solana-preview/solanaBuilderRuntime";
-import { USDC_MINT } from "../solana-preview/solanaSchemas";
+import { USDC_MINT, WSOL_MINT } from "../solana-preview/solanaSchemas";
 import { buildChartSelection } from "./chartContext";
 import { buildChartUrl, CHART_EMBED_PARAMS, resolvePoolChart } from "./chartModel";
 
@@ -80,18 +81,13 @@ describe("R8: the Raydium pool chart", () => {
   });
 
   // @rule R8
-  it("[R8] keeps Orca unsupported, a Raydium block with no pool unsupported, and Kamino on USDC", () => {
+  it("[R8] keeps Orca unsupported and Kamino on USDC", () => {
     const draft = makeTestDraft();
     const orca = { ...raydiumConfig, catalogId: "solana:mainnet-beta:orca-whirlpools" };
     expect(buildChartSelection(draft, target("solanaOrcaPool"), orca).availability).toEqual({
       status: "unavailable",
       reason: "unsupported_pair",
     });
-    const { poolAddress: _omitted, ...withoutPool } = raydiumConfig;
-    expect(
-      buildChartSelection(draft, target("solanaRaydiumPool"), withoutPool).availability,
-    ).toEqual({ status: "unavailable", reason: "unsupported_pair" });
-
     const kamino = buildChartSelection(
       draft,
       target("solanaKaminoSupply"),
@@ -99,6 +95,31 @@ describe("R8: the Raydium pool chart", () => {
     );
     expect(kamino.availability.status === "available" && kamino.availability.market.address).toBe(
       USDC_MINT,
+    );
+  });
+
+  // @rule R7
+  it("[R7] charts the default pool for a Raydium block with no pool, and the mandate pool when there is one", () => {
+    const { poolAddress: _omitted, ...withoutPool } = raydiumConfig;
+    const none = buildChartSelection(makeTestDraft(), target("solanaRaydiumPool"), withoutPool);
+    expect(none.availability.status === "available" && none.availability.market.address).toBe(POOL);
+
+    const OTHER = "7qbRF6YsyGuLUVs6Y1q64bdVrfe4ZcUUz1JRdoVNUJnm";
+    const [ref] = raydiumPoolsFromPairs([
+      {
+        dexId: "raydium",
+        pairAddress: OTHER,
+        labels: ["CLMM"],
+        baseToken: { address: WSOL_MINT, symbol: "SOL" },
+        quoteToken: { address: USDC_MINT, symbol: "USDC" },
+        liquidity: { usd: 10 },
+      },
+    ]);
+    if (!ref) throw new Error("fixture pair was not a Raydium CLMM pool");
+    const draft = { ...makeTestDraft(), pools: [ref] };
+    const picked = buildChartSelection(draft, target("solanaRaydiumPool"), withoutPool);
+    expect(picked.availability.status === "available" && picked.availability.market.address).toBe(
+      OTHER,
     );
   });
 });

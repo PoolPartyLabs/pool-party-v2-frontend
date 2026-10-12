@@ -2,17 +2,25 @@
  * @id PP-MGR-LIB-075
  * @name solanaBuilderRuntime
  * @implements-rules-version v1 (POO-2301)
+ * @implements-rules-version v1 (POO-2343 R7: the Raydium seed carries the default pool)
  * @analytics-events none, pure local descriptor and draft binding.
  */
 
 import type { BlockKind, SolanaLocalBlockConfig } from "../build/plan/buildPlan";
 import { buildMandateCatalog, type MandateCatalog } from "../mandateCatalog";
 import type { ProtocolId } from "../mandateDraft";
+import { DEFAULT_RAYDIUM_POOL_ADDRESS } from "./raydiumBlockPool";
 import { USDC_MINT, WSOL_MINT } from "./solanaSchemas";
 
 export const SOLANA_LOCAL_CONFIGS: Partial<Record<BlockKind, SolanaLocalBlockConfig>> = {
   solanaOrcaPool: { catalogId: "solana:mainnet-beta:orca-whirlpools", pair: "SOL / USDC" },
-  solanaRaydiumPool: { catalogId: "solana:mainnet-beta:raydium-clmm", pair: "SOL / USDC" },
+  // POO-2343 R7: a new Raydium block starts on the default SOL/USDC pool. The picker gives the pools
+  // of the mandate; this seed is the answer when the mandate has none.
+  solanaRaydiumPool: {
+    catalogId: "solana:mainnet-beta:raydium-clmm",
+    pair: "SOL / USDC",
+    poolAddress: DEFAULT_RAYDIUM_POOL_ADDRESS,
+  },
   solanaKaminoSupply: { catalogId: "solana:mainnet-beta:kamino-supply", pair: "USDC / SOL" },
   solanaHolding: { catalogId: "solana:mainnet-beta:holding", pair: "USDC / SOL" },
 };

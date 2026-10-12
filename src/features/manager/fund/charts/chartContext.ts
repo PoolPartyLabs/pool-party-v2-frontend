@@ -9,7 +9,7 @@
  *
  * Build and Manage map the selection to the same chartModel resolvers (R6). A Uniswap block gives
  * its exact pool (R2). A lending block gives the token of its asset (R3). Other blocks and mock
- * pools stay unavailable (R5). A Raydium block with a pool address gives that pool (R8 of POO-2343).
+ * pools stay unavailable (R5). A Raydium block gives its pool (R8 of POO-2343), or with no pool address the first Raydium pool of the mandate or the default pool (R7).
  */
 import { apiNetworkForChain } from "@/lib/chains/config";
 import type { PanelDraftTarget } from "../build/panel/usePanelDraft";
@@ -22,6 +22,7 @@ import {
   normalizeTokenIdentity,
   tokenKey,
 } from "../mandateDraft";
+import { defaultRaydiumBlockConfig } from "../solana-preview/raydiumBlockPool";
 import { SOLANA_LOCAL_CONFIGS } from "../solana-preview/solanaBuilderRuntime";
 import { USDC_MINT } from "../solana-preview/solanaSchemas";
 import {
@@ -141,19 +142,25 @@ export function buildChartSelection(
     const details = configIdentity(config);
     const catalogId = config && "catalogId" in config ? config.catalogId : null;
     // R8 (POO-2343): a Raydium block with a pool address shows that pool on DEX Screener.
-    const poolAddress = config && "poolAddress" in config ? config.poolAddress : undefined;
-    if (target.kind === "solanaRaydiumPool" && target.network === "solana" && poolAddress) {
-      return selected(
-        details,
-        resolvePoolChart({
-          network: "solana",
-          protocol: "raydium",
-          poolAddress,
-          label: config && "pair" in config ? config.pair : "",
-        }),
-      );
+    const stored = config && "poolAddress" in config ? config.poolAddress : undefined;
+    if (target.kind === "solanaRaydiumPool" && target.network === "solana" && catalogId) {
+      // R7: a Raydium block that has no pool address yet charts the first pool of the mandate, or
+      // the default pool, the same one the block panel offers first.
+      const first = defaultRaydiumBlockConfig(draft);
+      const poolAddress = stored ?? first.poolAddress;
+      if (poolAddress) {
+        return selected(
+          details,
+          resolvePoolChart({
+            network: "solana",
+            protocol: "raydium",
+            poolAddress,
+            label: stored ? (config && "pair" in config ? config.pair : "") : first.pair,
+          }),
+        );
+      }
     }
-    // Orca has no pool chart, and a Raydium block with no pool address has no exact pool.
+    // Orca has no pool chart.
     return selected(details, unavailable(catalogId ? "unsupported_pair" : "unconfigured"));
   }
   return selected(configIdentity(config), unavailable("unsupported_block"));
