@@ -288,7 +288,7 @@ With `NEXT_PUBLIC_MOCK_MODE=false`, the existing V2 toggle and `fundContracts` f
 `src/lib/api/v2/` validates the `{ data }` envelope, v2 protocol header and recursively tagged response records.
 Typed server actions return sanitized errors and catalog data; no upstream secret enters the browser.
 
-- Networks: Arbitrum required, Robinhood optional. Uniswap v3 swaps are locked; Across appears only with Robinhood.
+- Networks: Arbitrum required, Robinhood optional. Uniswap v3 swaps are locked; Across is locked only with Robinhood.
 - Positions: optional Uniswap v4 per selected chain and optional Arbitrum Aave v3 supply. V3 positions show Coming soon.
 - Tokens: per-chain catalog metadata, logos and `hubPriced`; USDC/USDG bases locked; at most 16 unique chain-address entries.
 - Pools: real v4 token/pair filters and bytes32 PoolId lookup; full PoolKey retained. Adding a pool adds both currencies atomically.
@@ -758,13 +758,14 @@ The pure decisions are in `steps/mandateStepView.ts` (`PP-MGR-LIB-081`) and in `
   config does not enable is not shown. Solana shows only in its preview mode (R2).
 - Protocols: "Protocols to operate" comes first. "Swap and bridge" sits below the divider,
   preselected, collapsed to "{names} · selected for you", and opens on Show to checkbox rows (R3).
-  The "Required" group is removed. The last swap cannot be cleared. In real mode, the last bridge
-  cannot be cleared while the mandate has a spoke. In mock mode, both stay locked (R4). The network
-  column is "Available on", with a footnote (R5). The two Uniswap v3 rows are "Uniswap v3 · Swap"
-  and "Uniswap v3 · Liquidity" (R6). A protocol that the config does not enable is not shown, so
+  The "Required" group is removed. The last swap cannot be cleared. In both modes, the last bridge
+  cannot be cleared while the mandate has a spoke. A locked row is `aria-disabled`, and its click
+  is a blocked intent with its own notice (R4). The Swap and bridge rows have no network column.
+  The network column of the other rows is "Available on", with a footnote (R5). The swap row is
+  "Uniswap v3 · Swap" (R6). A protocol that the config does not enable is not shown, so
   Uniswap v3 positions, GMX and Pendle are hidden, not Coming soon (R7).
 - Pools: a result card reads "{fee} fee tier · chosen by {pct}% of LPs". With no share, it reads
-  only the fee tier (R8). Real mode has no share source yet (`PP-INTEGRATION-POINT` in
+  only the fee tier (R8). Real mode has no share source yet (see the integration point in
   `mandatePoolSource.ts`). A "Your pools" row shows protocol, network icon, then fee tier (R9).
 - Save and exit is spelled in full, also in the empty Drafts text (R10). Every new string is in
   11 locales (R11). TokensStep and LimitsStep do not change (R14).
