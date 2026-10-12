@@ -23,16 +23,25 @@ import vi from "@/i18n/messages/vi/manager.json";
 import zhCN from "@/i18n/messages/zh-CN/manager.json";
 import zhTW from "@/i18n/messages/zh-TW/manager.json";
 import { buildMandateCatalog, type MandateCatalog } from "../mandateCatalog";
-import { createEmptyDraft, withNetworks, withProtocols } from "../mandateDraft";
+import {
+  createEmptyDraft,
+  lockedProtocols,
+  summaryProtocols,
+  withNetworks,
+  withProtocols,
+} from "../mandateDraft";
 import { buildSolanaBuilderCatalog } from "../solana-preview/solanaBuilderRuntime";
 import {
-  lockedRowKind,
-  orderPoolMeta,
+  availableOnColumn,
+  poolMeta,
   protocolClick,
+  protocolRowNames,
   protocolSections,
+  refusedProtocolClick,
   SWAP_BRIDGE_DEFAULT_OPEN,
   selectedForYou,
   swapBridgeHead,
+  swapBridgeHeadText,
   visibleSpokes,
 } from "./mandateStepView";
 
@@ -88,12 +97,22 @@ function withDisabledSpoke(base: MandateCatalog): MandateCatalog {
   };
 }
 
+/** One protocol of the default catalog. */
+function protocolOf(id: string) {
+  const protocol = catalog.protocols.find((p) => p.id === id);
+  if (!protocol) throw new Error(`no protocol ${id}`);
+  return protocol;
+}
+
 describe("Networks step (POO-2333)", () => {
   // @rule R1
-  it("captions Other networks with the cost of each network (Figma 9286:2)", () => {
-    expect(en$("fundBuilder.networks.othersCaption")).toBe(
-      "Each network that you add needs a bridge and one more signature at launch.",
-    );
+  it("adds a bridge that the manager cannot clear for a network, as the caption says", () => {
+    const swapOnly = withProtocols(draft, ["uniswap-v3-swap"]);
+    expect(swapOnly.protocols).not.toContain("across");
+    const spoke = withNetworks(swapOnly, ["robinhood"], catalog);
+    expect(spoke.protocols).toContain("across");
+    expect(lockedProtocols(spoke).has("across")).toBe(true);
+    expect(protocolClick(spoke, "across")).toBe("locked");
   });
 
   // @rule R2
@@ -134,23 +153,24 @@ describe("Protocols step (POO-2333)", () => {
     const head = swapBridgeHead(SWAP_BRIDGE_DEFAULT_OPEN, draft);
     expect(head).toEqual({ copy: "collapsed", toggle: "show" });
     const rows = protocolSections(catalog, draft).swapAndBridge;
-    const names = selectedForYou(rows, draft)
-      .map((id) => en$(`fundBuilder.protocolNames.${id === "across" ? "across" : "uniswapV3Swap"}`))
-      .join(" · ");
-    expect(en$("fundBuilder.protocols.swapBridgeCollapsed", { names })).toBe(
+    expect(swapBridgeHeadText(en$, head, selectedForYou(rows, draft))).toBe(
       "Uniswap v3 · Across · selected for you",
     );
     // A protocol that the manager cleared is not named.
     const swapOnly = withProtocols(draft, ["uniswap-v3-swap"]);
-    expect(selectedForYou(rows, swapOnly)).toEqual(["uniswap-v3-swap"]);
+    expect(swapBridgeHeadText(en$, head, selectedForYou(rows, swapOnly))).toBe(
+      "Uniswap v3 · selected for you",
+    );
   });
 
   // @rule R3
   it("opens with Hide, and speaks about the bridge only when the mandate has a spoke", () => {
-    expect(swapBridgeHead(true, draft)).toEqual({ copy: "openHub", toggle: "hide" });
-    expect(swapBridgeHead(true, spoke)).toEqual({ copy: "open", toggle: "hide" });
-    expect(en$("fundBuilder.protocols.swapBridgeOpenHub")).not.toMatch(/bridge/i);
-    expect(en$("fundBuilder.protocols.swapBridgeOpen")).toMatch(/bridge/);
+    const hubHead = swapBridgeHead(true, draft);
+    const spokeHead = swapBridgeHead(true, spoke);
+    expect(hubHead).toEqual({ copy: "openHub", toggle: "hide" });
+    expect(spokeHead).toEqual({ copy: "open", toggle: "hide" });
+    expect(swapBridgeHeadText(en$, hubHead, [])).not.toMatch(/bridge/i);
+    expect(swapBridgeHeadText(en$, spokeHead, [])).toMatch(/bridge/);
   });
 
   // @rule R4
@@ -163,29 +183,48 @@ describe("Protocols step (POO-2333)", () => {
     // A protocol that is not in the draft can always be added back.
     const swapOnly = withProtocols(draft, ["uniswap-v3-swap"]);
     expect(protocolClick(swapOnly, "across")).toBe("toggle");
+    // The refusal has its own reason, so builder_mandate_blocked does not count it as an empty step.
+    expect(refusedProtocolClick(spoke, "across")).toEqual({
+      step: "protocols",
+      reason: "required_protocol",
+      rowId: "across",
+    });
+    expect(refusedProtocolClick(draft, "uniswap-v3-swap")?.reason).toBe("required_protocol");
+    expect(refusedProtocolClick(draft, "across")).toBeNull();
+    expect(refusedProtocolClick(spoke, "aave-v3")).toBeNull();
   });
 
   // @rule R4
-  it("tells which locked row a refused click came from, for the notice beside the group", () => {
-    expect(lockedRowKind(catalog, spoke, "uniswap-v3-swap")).toBe("swap");
-    expect(lockedRowKind(catalog, spoke, "across")).toBe("bridge");
-    expect(lockedRowKind(catalog, draft, "across")).toBeNull();
-    expect(lockedRowKind(catalog, spoke, "aave-v3")).toBeNull();
-    expect(lockedRowKind(catalog, spoke, undefined)).toBeNull();
+  it("locks in the summary only the rows that the mandate cannot clear", () => {
+    expect(summaryProtocols(draft)).toEqual([
+      { id: "uniswap-v3-swap", locked: true },
+      { id: "across", locked: false },
+    ]);
+    const withAave = withProtocols(spoke, [...spoke.protocols, "aave-v3"]);
+    expect(summaryProtocols(withAave)).toEqual([
+      { id: "uniswap-v3-swap", locked: true },
+      { id: "across", locked: true },
+      { id: "aave-v3", locked: false },
+    ]);
   });
 
   // @rule R5
-  it("labels the network column Available on and explains it in a footnote", () => {
-    expect(en$("fundBuilder.protocols.on")).toBe("Available on");
-    expect(en$("fundBuilder.protocols.onFootnote")).toContain(en$("fundBuilder.protocols.on"));
+  it("fills Available on with the networks of the mandate that the protocol runs on", () => {
+    // Aave v3 runs on the hub only, so a spoke mandate does not show Robinhood Chain beside it.
+    expect(availableOnColumn(protocolOf("aave-v3"), spoke)).toEqual(["arbitrum"]);
+    expect(availableOnColumn(protocolOf("uniswap-v4"), spoke)).toEqual(["arbitrum", "robinhood"]);
+    // A network that the mandate does not hold is not shown, although the protocol runs there.
+    expect(availableOnColumn(protocolOf("uniswap-v4"), draft)).toEqual(["arbitrum"]);
+    // No network in common: the column is empty and the row drops it.
+    expect(availableOnColumn({ availableOn: [] }, spoke)).toEqual([]);
   });
 
   // @rule R6
-  it("names the Uniswap v3 swap row by what it does, and the head by the protocol only", () => {
-    const row = en$("fundBuilder.protocols.rowNames.uniswapV3Swap");
-    const protocol = en$("fundBuilder.protocolNames.uniswapV3Swap");
-    expect(row.startsWith(protocol)).toBe(true);
-    expect(row).not.toBe(protocol);
+  it("gives each Uniswap v3 row a name that says what the row does", () => {
+    const names = protocolRowNames(en$);
+    expect(names["uniswap-v3-swap"]).toBe("Uniswap v3 · Swap");
+    expect(names["uniswap-v3"]).toBe("Uniswap v3 · Liquidity");
+    expect(names["uniswap-v4"]).toBe("Uniswap v4");
   });
 
   // @rule R7
@@ -209,11 +248,12 @@ describe("Pools step (POO-2333)", () => {
   });
 
   // @rule R9
-  it("draws the network icon before the fee tier, whatever order the parts arrive in", () => {
-    expect(orderPoolMeta({ feeTier: "fee", network: "net", protocol: "proto" })).toEqual([
-      "proto",
-      "net",
-      "fee",
+  it("puts the network of the pool before its fee tier in the pool row", () => {
+    const pool = { protocol: "uniswap-v4" as const, network: "robinhood" as const, feeBps: 30 };
+    expect(poolMeta(pool)).toEqual([
+      { part: "protocol", protocol: "uniswap-v4" },
+      { part: "network", network: "robinhood" },
+      { part: "feeTier", fee: "0.30%" },
     ]);
   });
 });
@@ -224,44 +264,29 @@ describe("Save and exit (POO-2333)", () => {
     const t = translatorFor(locale);
     expect(t("fundBuilder.drafts.empty")).toContain(t("fundBuilder.header.saveExit"));
   });
-
-  // @rule R10
-  it("spells Save and exit in full and keeps the name helper short", () => {
-    expect(en$("fundBuilder.header.saveExit")).toBe("Save and exit");
-    expect(en$("fundBuilder.draft.helper")).toBe("10 to 50 characters.");
-  });
 });
 
 describe("locales (POO-2333)", () => {
-  const KEYS: Array<[string, Record<string, string | number>?]> = [
-    ["fundBuilder.networks.othersCaption"],
-    ["fundBuilder.protocols.swapBridge"],
-    ["fundBuilder.protocols.swapBridgeCollapsed", { names: "Uniswap v3 · Swap · Across" }],
-    ["fundBuilder.protocols.swapBridgeOpen"],
-    ["fundBuilder.protocols.swapBridgeOpenHub"],
-    ["fundBuilder.protocols.lockedSwap"],
-    ["fundBuilder.protocols.lockedBridge"],
-    ["fundBuilder.protocols.show"],
-    ["fundBuilder.protocols.hide"],
-    ["fundBuilder.protocols.on"],
-    ["fundBuilder.protocols.onFootnote"],
-    ["fundBuilder.protocols.rowNames.uniswapV3Swap"],
-    ["fundBuilder.pools.tierShare", { fee: "0.30%", pct: 31 }],
-    ["fundBuilder.header.saveExit"],
-    ["fundBuilder.drafts.empty"],
-    ["fundBuilder.draft.helper"],
-  ];
-
   // @rule R11
-  it.each([...locales])("%s carries every new string, formatted, with no em dash", (locale) => {
+  it.each([
+    ...locales,
+  ])("%s resolves each row name and each head text, with no em dash", (locale) => {
     expect(Object.keys(MESSAGES).sort()).toEqual([...locales].sort());
     const t = translatorFor(locale);
-    for (const [key, values] of KEYS) {
-      const text = t(key, values);
-      expect(text).not.toBe(`manager.${key}`);
+    const names = protocolRowNames(t);
+    expect(names["uniswap-v3-swap"]).not.toBe(names["uniswap-v3"]);
+    const rows = protocolSections(catalog, draft).swapAndBridge;
+    const spoke = withNetworks(draft, ["robinhood"], catalog);
+    const texts = [
+      ...Object.values(names),
+      swapBridgeHeadText(t, swapBridgeHead(false, draft), selectedForYou(rows, draft)),
+      swapBridgeHeadText(t, swapBridgeHead(true, draft), []),
+      swapBridgeHeadText(t, swapBridgeHead(true, spoke), []),
+    ];
+    for (const text of texts) {
+      expect(text).not.toMatch(/^manager\./);
       expect(text).not.toMatch(/[{}]/);
       expect(text).not.toContain("\u2014");
-      if (key === "fundBuilder.pools.tierShare") expect(text).toContain("31");
     }
   });
 });

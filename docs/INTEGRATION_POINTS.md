@@ -38,7 +38,7 @@ loses the session rather than persisting it. Standard EVM instrumentation/recove
 [feature reference](../src/features/manager/fund/solana-preview/README.md) and
 [ADR 0009](adr/0009-local-solana-visual-preview.md).
 
-Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+Accepted Header and Save and exit paths acknowledge local disposal only after route/account host and
 intent generation validate the user's consent. Stale acceptance cannot close a successor session.
 Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
 last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.

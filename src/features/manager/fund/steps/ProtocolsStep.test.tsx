@@ -161,7 +161,7 @@ describe("ProtocolsStep", () => {
 
     expect(onBlocked).toHaveBeenCalledWith({
       step: "protocols",
-      reason: "nothing_selected",
+      reason: "required_protocol",
       rowId: "uniswap-v3-swap",
     });
     expect(update).not.toHaveBeenCalled();
@@ -180,7 +180,7 @@ describe("ProtocolsStep", () => {
   });
 
   // @rule R4 (POO-2333)
-  it("locks the bridge of a mandate with a spoke and says so beside the group", async () => {
+  it("locks the bridge of a mandate with a spoke, and the open head says why", async () => {
     const user = userEvent.setup();
     const draft = draftWith(["robinhood"], []);
     const onBlocked = vi.fn();
@@ -205,7 +205,7 @@ describe("ProtocolsStep", () => {
     await user.click(across);
     expect(onBlocked).toHaveBeenCalledWith({
       step: "protocols",
-      reason: "nothing_selected",
+      reason: "required_protocol",
       rowId: "across",
     });
 
@@ -214,13 +214,12 @@ describe("ProtocolsStep", () => {
         draft={draft}
         catalog={catalog}
         update={vi.fn()}
-        block={{ step: "protocols", reason: "nothing_selected", rowId: "across" }}
+        block={{ step: "protocols", reason: "required_protocol", rowId: "across" }}
         onBlocked={onBlocked}
       />,
     );
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Keep one bridge while the strategy uses more than one network.",
-    );
+    // The open head already states the minimums, so the refusal adds no second notice.
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByText("Pick at least one to continue.")).not.toBeInTheDocument();
   });
 

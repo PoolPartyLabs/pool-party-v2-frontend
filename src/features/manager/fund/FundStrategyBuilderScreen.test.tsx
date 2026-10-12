@@ -7,7 +7,7 @@
  *   emitter, so a screen cannot count as instrumented by being tested
  *
  * The shell's own behaviour, with the five step bodies as the placeholders they still are:
- * navigation (R6, R9), the skipped Pools step (R29), deep links, Save & exit (R7), completion on
+ * navigation (R6, R9), the skipped Pools step (R29), deep links, Save and exit (R7), completion on
  * settlement rather than on a click (R6), and the funnel, including the two events that only exist
  * because something did NOT happen (blocked and abandoned). The position protocol in these fixtures
  * is Uniswap v4, the one the buildathon scope offers (R20 v3, POO-2167). Since POO-2157 the Build
@@ -172,7 +172,7 @@ describe("shared local Solana binding", () => {
       <FundStrategyBuilderScreen runtime="solana-local" onExitPreview={exit} />,
     );
     try {
-      await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+      await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
       await waitFor(() => expect(exit).toHaveBeenCalledOnce());
       await userEvent.type(screen.getByLabelText("Strategy name"), " after cancelled exit");
       localRecovery.failReview = true;
@@ -328,7 +328,7 @@ describe("shared local Solana binding", () => {
     expect(
       await screen.findByRole("heading", { name: "Create new strategy", level: 1 }),
     ).toBeVisible();
-    expect(screen.getByRole("button", { name: "Save & exit" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Save and exit" })).toBeVisible();
     expect(screen.getByRole("status")).toHaveTextContent(
       "Changes are discarded when you leave. Live market data and execution are not available.",
     );
@@ -382,7 +382,7 @@ describe("shared local Solana binding", () => {
       <FundStrategyBuilderScreen runtime="solana-local" onExitPreview={exit} />,
     );
     expect(screen.getByRole("status")).toHaveTextContent("Changes are discarded when you leave.");
-    await user.click(screen.getByRole("button", { name: "Save & exit" }));
+    await user.click(screen.getByRole("button", { name: "Save and exit" }));
     await user.type(screen.getByRole("textbox", { name: "Draft name" }), "Local drawing");
     await user.click(screen.getByRole("button", { name: "Save and exit" }));
     await waitFor(() => expect(exit).toHaveBeenCalledOnce());
@@ -609,13 +609,13 @@ afterEach(async () => {
 
 describe("FundStrategyBuilderScreen", () => {
   // @rule R1
-  it("[R1] the header carries Save & exit and no way back to the console", async () => {
+  it("[R1] the header carries Save and exit and no way back to the console", async () => {
     renderWithProviders(<FundStrategyBuilderScreen />);
 
     expect(
       await screen.findByRole("heading", { name: "Create new strategy", level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save & exit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save and exit" })).toBeInTheDocument();
     expect(screen.queryByText("Back to console")).not.toBeInTheDocument();
   });
 
@@ -765,7 +765,7 @@ describe("FundStrategyBuilderScreen", () => {
    *
    * The stamp used to go on before the dialog opened, so a manager who backed out of naming the
    * draft was left holding a mandate marked finished: no `builder_mandate_completed` ever fired for
-   * it, yet the next Save & exit wrote `completedAt` to storage and a `?phase=build` link then opened
+   * it, yet the next Save and exit wrote `completedAt` to storage and a `?phase=build` link then opened
    * a Build landing for a mandate nobody completed. The completion is a WRITE, so it is stamped by
    * the write that settles it and by nothing else.
    */
@@ -780,8 +780,8 @@ describe("FundStrategyBuilderScreen", () => {
     await screen.findByRole("heading", { name: "Name your draft" });
     await userEvent.click(screen.getByRole("button", { name: "Keep editing" }));
 
-    // The save that follows is an ordinary Save & exit, and it must write an OPEN mandate.
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    // The save that follows is an ordinary Save and exit, and it must write an OPEN mandate.
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await userEvent.type(screen.getByLabelText("Draft name"), "ETH and BTC on Arbitrum");
     await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
 
@@ -857,11 +857,11 @@ describe("FundStrategyBuilderScreen", () => {
   });
 
   // @rule R7
-  it("[R7] Save & exit on an unnamed draft asks for a name, then saves, toasts and leaves", async () => {
+  it("[R7] Save and exit on an unnamed draft asks for a name, then saves, toasts and leaves", async () => {
     renderWithProviders(<FundStrategyBuilderScreen />);
     await screen.findByText("MANDATE · STEP 1 OF 4");
 
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await userEvent.type(screen.getByLabelText("Draft name"), "ETH and BTC on Arbitrum");
     await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
 
@@ -871,13 +871,13 @@ describe("FundStrategyBuilderScreen", () => {
   });
 
   // @rule R7
-  it("[R7] Save & exit on a named draft saves silently", async () => {
+  it("[R7] Save and exit on a named draft saves silently", async () => {
     nav.params = new URLSearchParams("draft=d-named&step=networks");
     seed("d-named", { name: "ETH and BTC on Arbitrum" });
     renderWithProviders(<FundStrategyBuilderScreen />);
     await screen.findByText("MANDATE · STEP 1 OF 4");
 
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
 
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
     expect(screen.queryByRole("heading", { name: "Name your draft" })).not.toBeInTheDocument();
@@ -900,7 +900,7 @@ describe("FundStrategyBuilderScreen", () => {
       clear: () => {},
     });
 
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
 
     await waitFor(() =>
       expect(emitted("builder_mandate_error")).toEqual([
@@ -1048,7 +1048,7 @@ describe("FundStrategyBuilderScreen", () => {
     const view = renderWithProviders(<FundStrategyBuilderScreen />);
     await screen.findByText("MANDATE · STEP 1 OF 4");
 
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await waitFor(() => expect(nav.push).toHaveBeenCalled());
     view.unmount();
 
@@ -1060,7 +1060,7 @@ describe("FundStrategyBuilderScreen", () => {
     renderWithProviders(<FundStrategyBuilderScreen />);
     await screen.findByText("MANDATE · STEP 1 OF 4");
 
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
     await userEvent.type(screen.getByLabelText("Draft name"), "ETH and BTC on Arbitrum");
     await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
 
@@ -1322,7 +1322,7 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
   });
 
   // @rule B2
-  it("Save & exit still works from the Build canvas", async () => {
+  it("Save and exit still works from the Build canvas", async () => {
     nav.params = new URLSearchParams("draft=d-exit&step=limits&phase=build");
     seed("d-exit", {
       name: "ETH and BTC on Arbitrum",
@@ -1333,7 +1333,7 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
     renderWithProviders(<FundStrategyBuilderScreen />);
     await screen.findByRole("button", { name: "Back: Mandate" });
 
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
 
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
   });
@@ -1389,7 +1389,7 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
 
     // A cap moved: what the manager completed is not what the draft now holds.
     await userEvent.click(screen.getByRole("checkbox", { name: "No cap for Robinhood Chain" }));
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
 
     await waitFor(() => expect(getDraft("d-reopen")?.completedAt).toBeNull());
 
@@ -1422,8 +1422,8 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
     // [B6] Through a WRITE, because navigation writes nothing. Reading storage straight after the
     // two clicks read back what `seed` had put there, so the assertion held whatever the shell did
     // to the working draft in memory: it would have passed on a shell that cleared the stamp on
-    // every Back. Save & exit is the first thing that persists what navigation left behind.
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    // every Back. Save and exit is the first thing that persists what navigation left behind.
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
 
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
     expect(getDraft("d-nav-only")?.completedAt).toBe("2026-10-02T00:00:00.000Z");
@@ -1452,13 +1452,13 @@ describe("FundStrategyBuilderScreen, the Build phase", () => {
   });
 
   // @rule D16 (POO-2157)
-  it("[D16] a Save & exit from the Mandate phase records the Mandate", async () => {
+  it("[D16] a Save and exit from the Mandate phase records the Mandate", async () => {
     nav.params = new URLSearchParams("draft=d-mandate-phase&step=networks");
     seed("d-mandate-phase", { name: "ETH and BTC on Arbitrum" });
     renderWithProviders(<FundStrategyBuilderScreen />);
     await screen.findByText("MANDATE · STEP 1 OF 4");
 
-    await userEvent.click(screen.getByRole("button", { name: "Save & exit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save and exit" }));
 
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith("/manager"));
     expect(getDraft("d-mandate-phase")?.lastPhase).toBe("mandate");

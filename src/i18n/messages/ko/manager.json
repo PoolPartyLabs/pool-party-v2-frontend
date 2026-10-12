@@ -811,12 +811,11 @@
       "swapBridgeCollapsed": "{names} · 자동 선택됨",
       "swapBridgeOpen": "자동으로 선택되었습니다. 스왑을 하나 이상 유지하고, 네트워크를 추가하면 브리지도 하나 이상 유지하세요.",
       "swapBridgeOpenHub": "자동으로 선택되었습니다. 스왑을 하나 이상 유지하세요.",
-      "lockedSwap": "스왑을 하나 이상 유지하세요. 스왑할 수 없는 전략은 실행할 수 없습니다.",
-      "lockedBridge": "전략이 둘 이상의 네트워크를 사용하는 동안 브리지를 하나 유지하세요.",
       "show": "보기",
       "hide": "숨기기",
       "rowNames": {
-        "uniswapV3Swap": "Uniswap v3 · 스왑"
+        "uniswapV3Swap": "Uniswap v3 · 스왑",
+        "uniswapV3Liquidity": "Uniswap v3 · 유동성"
       }
     },
     "protocolNames": {
@@ -854,8 +853,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, other {보유한 토큰을 하나 이상 포함하는 풀이 #개}} 있습니다",
       "yours": "보유 풀 · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "{fee} fee tier · LP의 {pct}%가 선택",
+      "feeTier": "{fee} 수수료 티어",
+      "tierShare": "{fee} 수수료 티어 · LP의 {pct}%가 선택",
       "addsToken": "{symbol}을 토큰에 추가",
       "hasHook": "훅이 있습니다",
       "fixed": "풀은 출시 시점에 고정됩니다. 이후에는 추가할 수 없습니다.",

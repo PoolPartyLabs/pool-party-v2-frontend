@@ -191,7 +191,7 @@ export async function prepareV2Launch(
     return { draft, name };
   }
   await page.getByRole("button", { name: "Back to Build", exact: true }).click();
-  await page.getByRole("button", { name: "Save & exit", exact: true }).click();
+  await page.getByRole("button", { name: "Save and exit", exact: true }).click();
   await expect(page).toHaveURL(/\/manager(?:\?|$)/);
   await page.goto("/en/manager");
   await page.getByRole("link", { name: "Review & launch drafts (v2)", exact: true }).click();

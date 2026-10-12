@@ -811,12 +811,11 @@
       "swapBridgeCollapsed": "{names} · 選択済み",
       "swapBridgeOpen": "自動で選択済みです。スワップを1つ以上、ネットワークを追加する場合はブリッジも1つ以上残してください。",
       "swapBridgeOpenHub": "自動で選択済みです。スワップを1つ以上残してください。",
-      "lockedSwap": "スワップを1つ以上残してください。スワップできない戦略は実行できません。",
-      "lockedBridge": "戦略が複数のネットワークを使う間は、ブリッジを1つ残してください。",
       "show": "表示",
       "hide": "非表示",
       "rowNames": {
-        "uniswapV3Swap": "Uniswap v3 · スワップ"
+        "uniswapV3Swap": "Uniswap v3 · スワップ",
+        "uniswapV3Liquidity": "Uniswap v3 · 流動性"
       }
     },
     "protocolNames": {
@@ -854,8 +853,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, other {保有トークンを1つ以上含むプールが#件}}あります",
       "yours": "保有プール · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "{fee} fee tier · LPの{pct}%が選択",
+      "feeTier": "{fee} の手数料ティア",
+      "tierShare": "{fee} の手数料ティア · LPの{pct}%が選択",
       "addsToken": "{symbol} をトークンに追加",
       "hasHook": "フックがあります",
       "fixed": "プールはローンチ時に確定します。後から追加することはできません。",

@@ -811,12 +811,11 @@
       "swapBridgeCollapsed": "{names} · 已为您选择",
       "swapBridgeOpen": "已为您选择。请至少保留一个兑换协议；添加网络时，还需保留一个跨链桥。",
       "swapBridgeOpenHub": "已为您选择。请至少保留一个兑换协议。",
-      "lockedSwap": "请至少保留一个兑换协议。无法兑换的策略无法运行。",
-      "lockedBridge": "策略使用多个网络时，请保留一个跨链桥。",
       "show": "显示",
       "hide": "隐藏",
       "rowNames": {
-        "uniswapV3Swap": "Uniswap v3 · 兑换"
+        "uniswapV3Swap": "Uniswap v3 · 兑换",
+        "uniswapV3Liquidity": "Uniswap v3 · 流动性"
       }
     },
     "protocolNames": {
@@ -854,8 +853,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, other {包含您至少一个代币的资金池有 # 个}}",
       "yours": "您的资金池 · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "{fee} fee tier · {pct}% 的 LP 选择",
+      "feeTier": "{fee} 费率档位",
+      "tierShare": "{fee} 费率档位 · {pct}% 的 LP 选择",
       "addsToken": "将 {symbol} 添加到您的代币",
       "hasHook": "带有 hook",
       "fixed": "资金池在启动时即被固定，之后无法再添加。",

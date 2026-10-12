@@ -77,6 +77,7 @@ export function NetworksStep({ draft, catalog, update, block }: MandateStepProps
         has_hook: null,
         not_priced: null,
         name_length: null,
+        required_protocol: null,
       }[ownBlock.reason] ?? null)
     : null;
 

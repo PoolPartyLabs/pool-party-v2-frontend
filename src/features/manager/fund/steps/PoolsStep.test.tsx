@@ -988,7 +988,7 @@ describe("PoolsStep", () => {
     expect(card.getByText("WETH/ARB")).toBeInTheDocument();
     expect(card.getByText("Uniswap v4")).toBeInTheDocument();
     expect(card.getByText(/0\.30%/)).toBeInTheDocument();
-    expect(card.getByText(/31% selected/)).toBeInTheDocument();
+    expect(card.getByText("0.30% fee tier · chosen by 31% of LPs")).toBeInTheDocument();
     // The pool would pull a token into the mandate, and says so before it is added (R32).
     expect(card.getByText(/adds ARB to your tokens/)).toBeInTheDocument();
     expect(card.getByText("$145M")).toBeInTheDocument();

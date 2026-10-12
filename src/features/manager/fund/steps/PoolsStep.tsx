@@ -124,7 +124,7 @@ import {
   tokenKey,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
-import { orderPoolMeta } from "./mandateStepView";
+import { poolFeeLabel, poolMeta } from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -221,11 +221,6 @@ function universeSignatureOf(
   tokens: readonly MandateTokenRef[],
 ): string {
   return [networks.join(","), protocols.join(","), tokens.map(tokenKey).join(",")].join("|");
-}
-
-/** `0.30%`, the fee tier the way V1 prints it. */
-function feeLabel(bps: number): string {
-  return `${(bps / 100).toFixed(2)}%`;
 }
 
 /** `WETH/USDC`, in the order the API returned the sides. Never inverted: there is no range here. */
@@ -844,6 +839,7 @@ function ConnectedPoolsStep({
         cap_missing: null,
         token_allowance_required: null,
         name_length: null,
+        required_protocol: null,
       }[ownBlock.reason] ?? null)
     : null;
 
@@ -1187,9 +1183,9 @@ function ConnectedPoolsStep({
                 nothing, so the line shows only the fee tier. "0%" would read as a measured share of
                 nothing, which is a figure we never had (POO-1469). */}
             {pool.tierSharePct === null
-              ? t("fundBuilder.pools.feeTier", { fee: feeLabel(pool.feeBps) })
+              ? t("fundBuilder.pools.feeTier", { fee: poolFeeLabel(pool.feeBps) })
               : t("fundBuilder.pools.tierShare", {
-                  fee: feeLabel(pool.feeBps),
+                  fee: poolFeeLabel(pool.feeBps),
                   pct: pool.tierSharePct,
                 })}
             {adds.map((symbol) => (
@@ -1273,22 +1269,22 @@ function ConnectedPoolsStep({
           <span className="truncate font-medium text-foreground text-sm">{pairLabel(pool)}</span>
           <span className="flex min-w-0 items-center gap-2">
             {/* POO-2333 R9: protocol, network icon, then fee tier. */}
-            {orderPoolMeta({
-              protocol: <Fragment key="protocol">{protocolBadge(pool.protocol)}</Fragment>,
-              network: (
+            {poolMeta(pool).map((meta) =>
+              meta.part === "protocol" ? (
+                <Fragment key="protocol">{protocolBadge(meta.protocol)}</Fragment>
+              ) : meta.part === "network" ? (
                 <NetworkLogoWithName
                   key="network"
-                  network={pool.network}
+                  network={meta.network}
                   catalog={catalog}
                   size={14}
                 />
-              ),
-              feeTier: (
+              ) : (
                 <span key="feeTier" className="truncate text-muted-foreground text-xs">
-                  {t("fundBuilder.pools.feeTier", { fee: feeLabel(pool.feeBps) })}
+                  {t("fundBuilder.pools.feeTier", { fee: meta.fee })}
                 </span>
               ),
-            })}
+            )}
           </span>
         </span>
         <button

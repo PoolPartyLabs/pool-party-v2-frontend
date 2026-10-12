@@ -14,7 +14,7 @@
  *
  * The Build phase of the fund strategy builder (slice S7, POO-2157, epic POO-2144; handoff v1.2):
  * the canvas that replaced the Build landing. The shell (`FundStrategyBuilderScreen`) keeps the page
- * header, Save & exit and the phase stepper; everything under them in the Build phase is here.
+ * header, Save and exit and the phase stepper; everything under them in the Build phase is here.
  *
  * It owns no domain logic of its own. It JOINS the dormant slices: the plan (S1, `useBuildPlan`),
  * the step scaffold and viewport (S2), the layout (S3, through `useDraftGraphLayout`), the graph
@@ -31,21 +31,21 @@
  *   for: any edit takes it away, because a notice that outlives its cause teaches people to ignore
  *   notices.
  * - [HU3] **Every way out passes `selection.guardLeave`**: Back: Mandate here, both Edit mandate
- *   links in the controller, and the shell's own Save & exit and stepper through `leaveGuardRef`.
+ *   links in the controller, and the shell's own Save and exit and stepper through `leaveGuardRef`.
  * - [I8, I9] The viewport opens at fit (S2 does it on the first graph size); after a change the new
  *   or newly selected block is revealed by the minimum pan (`revealTarget`), never re-fitted.
  * - [D18] A draft whose stored plan this build cannot read says so, with the empty canvas under
  *   it, until a save replaces that plan. It is replaced only by a plan the manager made here, and
  *   an EMPTY plan is not one: a write that leaves the plan empty again on such a draft stores no
  *   plan, so the store keeps the unreadable one, nothing is left to save and the leave prompt stays
- *   down (review F1 of PR #41: add a block, remove it, Save & exit used to erase it).
+ *   down (review F1 of PR #41: add a block, remove it, Save and exit used to erase it).
  * - [AE1 to AE6] The view, the first block (`started`), the canvas events of the controller and the
  *   refusals, all through `useAnalytics().track()` / `useTrackView`, mapped by `buildAnalytics.ts`.
  *   The abandonment and the save error are the shell's: it is what knows how the session ended.
  * - [POO-2187] The CONFIGURATION PANEL (`BlockPanel`, PP-MGR-CMP-061) replaces the canvas batch's
  *   stub in the right column. Its draft (`usePanelDraft`, PP-MGR-HOK-014) registers the selection
  *   guard, so with changes not applied every exit above (another block, the background, the Edit
- *   mandate links, Back, Next, Save & exit, the stepper) keeps the selection and shows the notice;
+ *   mandate links, Back, Next, Save and exit, the stepper) keeps the selection and shows the notice;
  *   Apply changes or Discard changes then completes the exit (P6). Remove block and the Delete key
  *   open the removal modal (P10, DP11; POO-2210); there is no Undo toast. An Edit mandate link names the
  *   selected block, and `initialSelectedId` brings it back selected (finding 19). The panel's events
@@ -152,7 +152,7 @@ export interface BuildScreenProps {
   onSelectionChange?(selectedId: string | null): void;
   /**
    * Receives the selection guard's leave check while Build is mounted, so the shell's own ways out
-   * (Save & exit, the stepper's Mandate pill) pass it too (HU3). Cleared on unmount.
+   * (Save and exit, the stepper's Mandate pill) pass it too (HU3). Cleared on unmount.
    */
   leaveGuardRef?: MutableRefObject<LeaveGuard | null>;
   /** Opens Review after readiness and the selected-panel leave guard pass. */

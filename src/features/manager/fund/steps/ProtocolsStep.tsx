@@ -14,10 +14,12 @@
  * preselected, collapsed to "{names} · selected for you", and open on Show to checkbox rows. A
  * strategy that cannot swap, or that cannot move money between its own networks, cannot run, so
  * the last swap, and the bridge of a mandate with a spoke, are locked (POO-2333 R4,
- * `lockedProtocols`). A locked row is an `aria-disabled` checkbox: its click goes to `onBlocked`,
- * and a notice beside the group says why. The groups, the head copy, the click guard and the
+ * `lockedProtocols`). A locked row is an `aria-disabled` checkbox: its click goes to `onBlocked`
+ * with the reason `required_protocol`, and the step shows no notice for it, because the open head
+ * already states the minimums. The groups, the head text, the click guard, the row names and the
  * hidden rows come from `mandateStepView` (PP-MGR-LIB-081). A protocol that the config does not
- * enable is not drawn (POO-2333 R7). The swap row is "Uniswap v3 · Swap" (POO-2333 R6).
+ * enable is not drawn (POO-2333 R7). The Uniswap v3 rows are "Uniswap v3 · Swap" and
+ * "Uniswap v3 · Liquidity" (POO-2333 R6).
  *
  * The "Available on" column (R20, renamed by POO-2333 R5) shows `availableOn ∩ draft.networks`,
  * never `availableOn` alone. The difference matters: Aave v3 runs on the hub only, so a Robinhood
@@ -48,18 +50,20 @@ import { ProtocolMark } from "../components/ProtocolMark";
 import type { MandateProtocol } from "../mandateCatalog";
 import {
   type MandateDraft,
-  type NetworkId,
   type ProtocolId,
   UNAVAILABLE_PROTOCOLS,
   withProtocols,
 } from "../mandateDraft";
 import {
-  lockedRowKind,
+  availableOnColumn,
   protocolClick,
+  protocolRowNames,
   protocolSections,
+  refusedProtocolClick,
   SWAP_BRIDGE_DEFAULT_OPEN,
   selectedForYou,
   swapBridgeHead,
+  swapBridgeHeadText,
 } from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
@@ -73,22 +77,8 @@ const SWAP_BRIDGE_REGION = "mandate-swap-bridge-rows";
 export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: MandateStepProps) {
   const t = useTranslations("manager");
 
-  // Literal keys, indexed by id: `MandateProtocol.name` holds a translation KEY, and `t(p.name)`
-  // would be a dynamic key the i18n usage scan cannot see.
-  const names: Record<ProtocolId, string> = {
-    // POO-2333 R6: Uniswap v3 has two rows, so each name says what the row does.
-    "uniswap-v3-swap": t("fundBuilder.protocols.rowNames.uniswapV3Swap"),
-    across: t("fundBuilder.protocolNames.across"),
-    "aave-v3": t("fundBuilder.protocolNames.aaveV3"),
-    "uniswap-v3": t("fundBuilder.protocolNames.uniswapV3"),
-    "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
-    gmx: t("fundBuilder.protocolNames.gmx"),
-    pendle: t("fundBuilder.protocolNames.pendle"),
-    kamino: t("solanaPreview.protocols.kamino"),
-    jupiter: t("solanaPreview.protocols.jupiter"),
-    raydium: t("solanaPreview.protocols.raydium"),
-    orca: t("solanaPreview.protocols.orca"),
-  };
+  // POO-2333 R6: Uniswap v3 has two rows, so each name says what the row does.
+  const names = protocolRowNames(t);
   const captions: Record<MandateProtocol["kind"], string> = {
     swap: t("fundBuilder.protocolCaptions.swap"),
     bridge: t("fundBuilder.protocolCaptions.bridge"),
@@ -104,22 +94,16 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
   const [swapBridgeOpen, setSwapBridgeOpen] = useState(SWAP_BRIDGE_DEFAULT_OPEN);
   const head = swapBridgeHead(swapBridgeOpen, draft);
 
-  /** The networks of step 1 this protocol runs on, in the mandate's own order. */
-  const networksFor = (protocol: MandateProtocol): NetworkId[] =>
-    draft.networks.filter((network) => protocol.availableOn.includes(network));
-
   /** Operable, on chain, and reachable from at least one network this mandate holds. */
   const canSelect = (protocol: MandateProtocol) =>
     protocol.available &&
     !UNAVAILABLE_PROTOCOLS.includes(protocol.id) &&
-    networksFor(protocol).length > 0;
+    availableOnColumn(protocol, draft).length > 0;
   const selectable = operable.filter(canSelect);
   const allSelected =
     selectable.length > 0 && selectable.every((protocol) => chosen.has(protocol.id));
 
   const ownBlock = block?.step === STEP ? block : null;
-  // POO-2333 R4: a refused click on a locked row gets its own notice beside Swap and bridge.
-  const lockedKind = lockedRowKind(catalog, draft, ownBlock?.rowId ?? undefined);
 
   /**
    * The inline notice for a refusal pointed at this step, or null when the row already said it.
@@ -128,26 +112,22 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
    * raises, the row that raised it already carries a "Coming soon" pill, and "Pick at least one to
    * continue." answered a click on GMX by asking for the thing the manager had just tried. The
    * blocked-intent event still leaves through `onBlocked`, which is the half the roadmap reads.
+   * `required_protocol` renders nothing too: the locked row is an `aria-disabled` checkbox, and the
+   * open Swap and bridge head already says which rows the strategy keeps (POO-2333 R3, R4).
    */
-  const notice =
-    ownBlock && !lockedKind
-      ? ({
-          nothing_selected: t("fundBuilder.common.nothingSelected"),
-          coming_soon: null,
-          cap_missing: null,
-          token_allowance_required: null,
-          no_slots: null,
-          has_hook: null,
-          not_priced: null,
-          name_length: null,
-        }[ownBlock.reason] ?? null)
-      : null;
-  const lockedNotice =
-    lockedKind === "swap"
-      ? t("fundBuilder.protocols.lockedSwap")
-      : lockedKind === "bridge"
-        ? t("fundBuilder.protocols.lockedBridge")
-        : null;
+  const notice = ownBlock
+    ? ({
+        nothing_selected: t("fundBuilder.common.nothingSelected"),
+        coming_soon: null,
+        cap_missing: null,
+        token_allowance_required: null,
+        no_slots: null,
+        has_hook: null,
+        not_priced: null,
+        name_length: null,
+        required_protocol: null,
+      }[ownBlock.reason] ?? null)
+    : null;
 
   // Scroll the offending row into view when the shell points a block at this step.
   useEffect(() => {
@@ -189,8 +169,9 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
   /** Add or remove one protocol. The reducer keeps required rows and clears dependent pools. */
   function toggle(id: ProtocolId) {
     // POO-2333 R4: the last swap, and the bridge of a mandate with a spoke, cannot be cleared.
-    if (protocolClick(draft, id) === "locked") {
-      onBlocked({ step: STEP, reason: "nothing_selected", rowId: id });
+    const refusal = refusedProtocolClick(draft, id);
+    if (refusal) {
+      onBlocked(refusal);
       return;
     }
     update((current) => {
@@ -217,7 +198,7 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
   /** One operable row: the choice, its caption, and where it runs. */
   function operableRow(protocol: MandateProtocol) {
     const name = names[protocol.id];
-    const networks = networksFor(protocol);
+    const networks = availableOnColumn(protocol, draft);
     const disabled = !canSelect(protocol);
     return (
       <MandateRow
@@ -265,20 +246,8 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
     );
   }
 
-  // POO-2333 R3: the collapsed head names each protocol once, without the row's role suffix
-  // (Figma 8010:1638 reads "Uniswap v3 · Across · selected for you").
-  const headNames: Partial<Record<ProtocolId, string>> = {
-    "uniswap-v3-swap": t("fundBuilder.protocolNames.uniswapV3Swap"),
-    across: t("fundBuilder.protocolNames.across"),
-  };
-  const selectedNames = selectedForYou(swapAndBridge, draft)
-    .map((id) => headNames[id] ?? names[id])
-    .join(" · ");
-  const headCopy = {
-    collapsed: t("fundBuilder.protocols.swapBridgeCollapsed", { names: selectedNames }),
-    open: t("fundBuilder.protocols.swapBridgeOpen"),
-    openHub: t("fundBuilder.protocols.swapBridgeOpenHub"),
-  }[head.copy];
+  // POO-2333 R3: the head text, which names each selected protocol once while the group is closed.
+  const headCopy = swapBridgeHeadText(t, head, selectedForYou(swapAndBridge, draft));
 
   return (
     <section data-mandate-step={STEP} className="flex flex-col gap-6">
@@ -350,7 +319,6 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
                 />
               </button>
             </div>
-            {lockedNotice ? <Notice text={lockedNotice} /> : null}
             {/* Always in the tree, so `aria-controls` always points at an element. */}
             <div id={SWAP_BRIDGE_REGION} hidden={!swapBridgeOpen} className="flex flex-col gap-2">
               {swapAndBridge.map(swapBridgeRow)}

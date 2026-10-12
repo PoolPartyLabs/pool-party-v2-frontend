@@ -811,12 +811,11 @@
       "swapBridgeCollapsed": "{names} · đã chọn sẵn cho bạn",
       "swapBridgeOpen": "Đã chọn sẵn cho bạn. Giữ ít nhất một giao thức hoán đổi, và một cầu nối khi bạn thêm mạng.",
       "swapBridgeOpenHub": "Đã chọn sẵn cho bạn. Giữ ít nhất một giao thức hoán đổi.",
-      "lockedSwap": "Giữ ít nhất một giao thức hoán đổi. Chiến lược không thể hoán đổi thì không thể chạy.",
-      "lockedBridge": "Giữ một cầu nối khi chiến lược dùng nhiều hơn một mạng.",
       "show": "Hiện",
       "hide": "Ẩn",
       "rowNames": {
-        "uniswapV3Swap": "Uniswap v3 · Hoán đổi"
+        "uniswapV3Swap": "Uniswap v3 · Hoán đổi",
+        "uniswapV3Liquidity": "Uniswap v3 · Thanh khoản"
       }
     },
     "protocolNames": {
@@ -854,8 +853,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, other {# pool}} có chứa ít nhất một token của bạn",
       "yours": "Pool của bạn · {count}",
-      "feeTier": "{fee} fee tier",
-      "tierShare": "{fee} fee tier · được {pct}% LP chọn",
+      "feeTier": "Bậc phí {fee}",
+      "tierShare": "Bậc phí {fee} · được {pct}% LP chọn",
       "addsToken": "thêm {symbol} vào token của bạn",
       "hasHook": "có hook",
       "fixed": "Pool được cố định khi ra mắt. Bạn không thể thêm pool sau đó.",

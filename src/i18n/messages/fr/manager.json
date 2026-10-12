@@ -811,12 +811,11 @@
       "swapBridgeCollapsed": "{names} · sélectionnés pour vous",
       "swapBridgeOpen": "Sélectionnés pour vous. Gardez au moins un échange, et un pont quand vous ajoutez un réseau.",
       "swapBridgeOpenHub": "Sélectionnés pour vous. Gardez au moins un échange.",
-      "lockedSwap": "Gardez au moins un échange. Une stratégie qui ne peut pas échanger ne peut pas fonctionner.",
-      "lockedBridge": "Gardez un pont tant que la stratégie utilise plus d'un réseau.",
       "show": "Afficher",
       "hide": "Masquer",
       "rowNames": {
-        "uniswapV3Swap": "Uniswap v3 · Échange"
+        "uniswapV3Swap": "Uniswap v3 · Échange",
+        "uniswapV3Liquidity": "Uniswap v3 · Liquidité"
       }
     },
     "protocolNames": {
@@ -854,8 +853,8 @@
       "tabProtocol": "{protocol} · {count}",
       "results": "{count, plural, one {# pool} other {# pools}} avec au moins un de vos jetons",
       "yours": "Vos pools · {count}",
-      "feeTier": "Fee tier de {fee}",
-      "tierShare": "Fee tier de {fee} · choisi par {pct} % des LP",
+      "feeTier": "Palier de frais de {fee}",
+      "tierShare": "Palier de frais de {fee} · choisi par {pct} % des LP",
       "addsToken": "ajoute {symbol} à vos jetons",
       "hasHook": "a un hook",
       "fixed": "Les pools sont fixés au lancement. Vous ne pourrez pas en ajouter un plus tard.",

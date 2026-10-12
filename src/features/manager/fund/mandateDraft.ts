@@ -151,6 +151,21 @@ export function lockedProtocols(draft: MandateDraft): Set<ProtocolId> {
 }
 
 /**
+ * POO-2333 R4: the protocols of the draft for a read-only summary, the locked ones first. Each
+ * entry says if the protocol is locked, so a hub-only mandate shows no lock on the bridge.
+ */
+export function summaryProtocols(draft: MandateDraft): Array<{ id: ProtocolId; locked: boolean }> {
+  const chosen = new Set(draft.protocols);
+  const locked = lockedProtocols(draft);
+  const first = PROTOCOL_ORDER.filter((id) => chosen.has(id) && locked.has(id));
+  const rest = PROTOCOL_ORDER.filter((id) => chosen.has(id) && !locked.has(id));
+  return [
+    ...first.map((id) => ({ id, locked: true })),
+    ...rest.map((id) => ({ id, locked: false })),
+  ];
+}
+
+/**
  * The symbols the hub price source can price (R28), lowercased.
  *
  * PP-NOTE: assumption (coordinator default, handoff open point 2). The contracts require every
@@ -313,7 +328,9 @@ export type MandateBlockReason =
   | "has_hook"
   | "not_priced"
   | "coming_soon"
-  | "name_length";
+  | "name_length"
+  /** POO-2333 R4: a click tried to clear the last swap, or the bridge of a mandate with a spoke. */
+  | "required_protocol";
 
 /**
  * A refusal a step renders inline. `rowId` is the `data-mandate-row` of the first offending row, so

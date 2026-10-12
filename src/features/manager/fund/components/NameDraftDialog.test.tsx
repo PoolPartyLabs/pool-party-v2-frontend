@@ -80,7 +80,7 @@ describe("NameDraftDialog", () => {
   it("[R8] the helper turns destructive while the name is out of range, before any click", async () => {
     setup();
 
-    const helper = screen.getByText("10 to 50 characters, same rule as the strategy name.");
+    const helper = screen.getByText("10 to 50 characters.");
     expect(helper.className).not.toContain("text-destructive");
 
     await userEvent.type(screen.getByLabelText("Draft name"), "short");

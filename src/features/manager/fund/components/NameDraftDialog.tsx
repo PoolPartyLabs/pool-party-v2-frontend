@@ -54,7 +54,7 @@ export interface NameDraftDialogProps {
   /**
    * What the save is FOR.
    *
-   * `exit` is Save & exit: the manager is leaving, and the primary says so. `complete` is the last
+   * `exit` is Save and exit: the manager is leaving, and the primary says so. `complete` is the last
    * step's Next reaching a draft that was never named: the same question, but the answer continues
    * into Build rather than ending the session. One dialog, because the question is identical and a
    * second component would drift from this one on the next copy change.
@@ -74,7 +74,7 @@ export interface NameDraftDialogProps {
   onClose: () => void;
 }
 
-/** Name-your-draft modal for the first Save & exit (and the first completion). */
+/** Name-your-draft modal for the first Save and exit (and the first completion). */
 export function NameDraftDialog({
   open,
   mode,

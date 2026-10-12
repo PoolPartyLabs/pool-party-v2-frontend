@@ -58,7 +58,7 @@ legacy graphs and contract fixtures do not certify live financial reachability o
 The real-engine `BuildScreen` regression suite passed 65 tests; this is focused component evidence,
 not full-suite, build or native-browser acceptance.
 
-Accepted Header and Save & exit paths acknowledge local disposal only after route/account host and
+Accepted Header and Save and exit paths acknowledge local disposal only after route/account host and
 intent generation validate the user's consent. Stale acceptance cannot close a successor session.
 Route/account changes remain abandonment/reset, rather than accepted local exit. The owner retains
 last pending metadata during fallback; retry restores applied draft/Review, not unapplied inner fields.
