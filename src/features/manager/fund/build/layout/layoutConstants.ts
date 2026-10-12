@@ -42,10 +42,14 @@ export const LAYOUT = Object.freeze({
   RETURN_BRIDGE_GAP: 72,
   /** POO-2345 R5: the free space kept between the blocks above a channel and its top lane. */
   LANE_MARGIN: 6,
-  /** POO-2345 R5: the least distance between two lanes, so that thick lines never nearly touch. */
+  /**
+   * POO-2345 R5: the usual pitch between two lanes. The pitch at run time is the least of this
+   * number and the pitch that fits the band (see laneYs). LANE_PITCH_MIN is the floor that the
+   * tests check.
+   */
   LANE_PITCH: 6,
   /**
-   * POO-2345 R5: the least pitch that is ever allowed. A highlighted line is 2 px wide, and 2 px
+   * POO-2345 R5: the floor that the layout tests check for the pitch. A highlighted line is 2 px wide, and 2 px
    * of clear space stays between two lines. No constant holds the highlighted width, so this
    * number is set here.
    */

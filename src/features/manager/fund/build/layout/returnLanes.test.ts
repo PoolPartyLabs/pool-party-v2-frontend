@@ -278,6 +278,43 @@ describe("planReturnLines", () => {
     for (const line of lines.values()) expect(line.bottomLane ?? top).toBeGreaterThanOrEqual(top);
   });
 
+  // @rule R5
+  it("[R5] gives 12 chains in one channel 12 distinct lanes, and lets the pitch fall under the floor", () => {
+    const many = Array.from({ length: 12 }, (_, index) => ({
+      chainId: `c${index}`,
+      laneX: 20 + index * 30,
+      fees: [],
+    }));
+    const lines = planReturnLines(many, geometry(500, 600));
+    const ys = [...lines.values()].map((line) => line.bottomLane ?? Number.NaN);
+    expect(new Set(ys).size).toBe(12);
+    const top = geometry(500, 600).outputTop - LAYOUT.RETURN_BAND_INCOME + LAYOUT.LANE_MARGIN;
+    for (const y of ys) expect(y).toBeGreaterThanOrEqual(top);
+    const sorted = [...ys].sort((a, b) => a - b);
+    const gaps = sorted.slice(1).map((y, index) => y - (sorted[index] ?? 0));
+    // The band stays at its Figma height and the nodes do not move. A channel with this many
+    // lanes has a usable height of 42 px for 11 gaps, so the pitch is 3.5 px. This is under
+    // LANE_PITCH_MIN, and it is allowed here. The lanes stay apart.
+    expect(Math.min(...gaps)).toBe(3.5);
+    expect(Math.min(...gaps)).toBeLessThan(LAYOUT.LANE_PITCH_MIN);
+  });
+
+  // @rule R7
+  it("[R7] does not join two lines of different classes on one lane, though they share a target x", () => {
+    expect(
+      orderLanes([
+        { from: 0, to: 100, rank: 0, cls: "principal" },
+        { from: 200, to: 100, rank: 1, cls: "income" },
+      ]),
+    ).toEqual([0, 1]);
+    expect(
+      orderLanes([
+        { from: 0, to: 100, rank: 0, cls: "principal" },
+        { from: 200, to: 100, rank: 1, cls: "principal" },
+      ]),
+    ).toEqual([0, 0]);
+  });
+
   it("gives a line with no Bridge no port", () => {
     const lines = planReturnLines([{ chainId: "h", laneX: 5, fees: [] }], geometry(40, 400));
     expect(lines.get("principal:h")?.bridgeId).toBeUndefined();

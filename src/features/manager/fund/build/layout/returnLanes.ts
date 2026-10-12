@@ -26,6 +26,8 @@ export interface LaneLine {
   from: number;
   to: number;
   rank: number;
+  /** The class of the line. Only two lines of one class can share a lane (rule R7). */
+  cls?: "principal" | "income";
 }
 
 /**
@@ -55,12 +57,18 @@ export function offsetAt(rectX: number, width: number, x: number): number {
 }
 
 /**
- * True when two lines can use one lane: they end at the same x and come from opposite sides of it.
- * Their horizontals then meet at that x and do not overlap, and their last verticals are one trunk.
+ * True when two lines can use one lane: they are of one class, they end at the same x and they
+ * come from opposite sides of it. Their horizontals then meet at that x and do not overlap, and
+ * their last verticals are one trunk. A principal line and an income line end at two ports, so
+ * the class check keeps them apart if the two ports ever share an x.
  */
 function sharesTrunk(a: LaneLine | undefined, b: LaneLine | undefined): boolean {
   return (
-    a !== undefined && b !== undefined && a.to === b.to && (a.from - a.to) * (b.from - b.to) < 0
+    a !== undefined &&
+    b !== undefined &&
+    a.cls === b.cls &&
+    a.to === b.to &&
+    (a.from - a.to) * (b.from - b.to) < 0
   );
 }
 
@@ -153,8 +161,10 @@ export function laneCount(lanes: readonly number[]): number {
  * keep a LINK between them when the band allows it and get closer when it does not. A pitch is a
  * multiple of half a pixel, so two lanes never share a y, and no lane is above `bandTop`.
  * This function does not grow the band. The nodes stay at the Figma positions, so a band that
- * is too short gives a pitch under LANE_PITCH. The layout tests check that it stays at or above
- * LANE_PITCH_MIN.
+ * is too short gives a pitch under LANE_PITCH. The pitch can also fall under LANE_PITCH_MIN when
+ * one channel has many lanes (12 lanes in 42 px give 3.5 px). The lanes stay apart, but they are
+ * closer than the floor. The layout tests check the floor for each fixture, and a synthetic test
+ * records the case with 12 lanes.
  */
 export function laneYs(count: number, lowest: number, bandTop: number): number[] {
   const fit = count > 1 ? Math.floor(((lowest - bandTop) / (count - 1)) * 2) / 2 : 0;
@@ -313,7 +323,11 @@ function assignLanes(
     bandTop: number,
   ): Map<string, number> => {
     const lanes = orderLanes(
-      keys.map((key) => ({ ...ends(lines.get(key) as ReturnLine), rank: rankOf(key) })),
+      keys.map((key) => ({
+        ...ends(lines.get(key) as ReturnLine),
+        rank: rankOf(key),
+        cls: lines.get(key)?.cls,
+      })),
     );
     const ys = laneYs(laneCount(lanes), lowest, bandTop);
     return new Map(

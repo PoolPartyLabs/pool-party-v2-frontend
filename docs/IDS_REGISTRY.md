@@ -1270,14 +1270,15 @@ unchanged.
 | --- | --- | --- | --- | --- | --- | --- |
 | `PP-MGR-LIB-096` | layoutMetrics, a pure measure of the lines of a `GraphLayout`: crossings, overlaps, bends, the most bends of one leg and the least gap between parallel lines | Lib | n/a (code) | Implemented measure (POO-2345) | [POO-2345](https://linear.app/yeildbay/issue/POO-2345) | `src/features/manager/fund/build/layout/layoutMetrics.ts` @rules-v2 (POO-2345); prior rules v1 |
 
-PP-MGR-LIB-023 and PP-MGR-MCK-004 keep their numbers. The metric reads only `layout.edges`. The test
-in `layoutMetrics.test.ts` records the numbers of every layout fixture. Rules v2 adds the forced
-cross: an income line and a principal line that R2 makes cross.
+PP-MGR-LIB-023 and PP-MGR-MCK-004 keep their numbers. The metric reads `layout.edges` and
+`layout.bridges`. The test in `layoutMetrics.test.ts` records the numbers of every layout fixture.
+Rules v2 adds the forced cross: an income line and a principal line that R2 makes cross.
 
 PP-MGR-LIB-023 gains `returnLanes.ts` (rules R3 to R7 of POO-2345 v2). The input ports of a return
 Bridge follow the order of the lines. The output ports group by class. Each line gets its own lane,
 except that two lines to one target from opposite sides can share a lane (R7). The lane pitch is
-6 px (`LANE_PITCH`) where the band holds it. A line goes straight when its ports share a column.
-Lines of one class to one target join in one trunk.
+6 px (`LANE_PITCH`) where the band holds it. The pitch at run time is the least of `LANE_PITCH`
+and the pitch that fits the band. The R5 test checks the floor `LANE_PITCH_MIN` (4 px). A line goes
+straight when its ports share a column. Lines of one class to one target join in one trunk.
 
 The layout still keeps every node box, share label and graph size.

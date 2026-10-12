@@ -304,7 +304,9 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
   });
 
   // @rule C10 @rule L5
-  it.each(WITH_CHAINS)("[L5] runs the principal lines under the deepest content (%s)", (_n, f) => {
+  it.each(
+    WITH_CHAINS,
+  )("[L5] runs the principal lines under the deepest content (%s)", (fixtureName, f) => {
     const layout = layoutGraph(f.input, EN);
     const lasts = chainsOf(f.input).map(({ chain }) =>
       bottom(blockRect(layout, chain.steps[chain.steps.length - 1]?.id ?? "")),
@@ -341,7 +343,7 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
       runs: lanes.length,
       heights: new Set(lanes).size,
       straight: straight.length,
-    }).toEqual(L5_LANES[_n]);
+    }).toEqual(L5_LANES[fixtureName]);
     for (const y of lanes) {
       expect(y).toBeGreaterThanOrEqual(deepest + LAYOUT.LANE_MARGIN);
       expect(y).toBeLessThanOrEqual(outputY - LAYOUT.LINK + LAYOUT.LINE_W / 2);
