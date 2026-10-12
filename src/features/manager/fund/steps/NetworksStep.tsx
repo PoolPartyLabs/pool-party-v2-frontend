@@ -9,14 +9,14 @@
  * strategy may ever operate on.
  *
  * Two groups, because they answer different questions. The hub (R15) is not a choice: deposits and
- * withdrawals happen there, it can never leave the mandate, and so it renders locked with no control
- * at all rather than as a ticked checkbox nobody is allowed to untick. The spokes (R16) are the
- * actual decision, in a two-column grid with a "Select all" at the group head.
+ * withdrawals happen there, it can never leave the mandate, and so it renders locked with no
+ * control at all rather than as a ticked checkbox nobody is allowed to untick. The spokes (R16)
+ * are the actual decision, in a two-column grid with a "Select all" at the group head.
  *
  * Availability is the catalog's (`PP-MGR-LIB-018`), never a branch here. POO-2333 R2 hides a spoke
  * that the config does not enable (`visibleSpokes`, PP-MGR-LIB-081), so Solana shows only in its
- * preview mode. This replaces the "Coming soon" spoke row of R17: the disabled branch in
- * `spokeRow` stays only as a guard and is not reached. POO-2333 R1 adds a caption under "Other networks": each network that the manager
+ * preview mode. This replaces the "Coming soon" spoke row of R17: every spoke row that renders is
+ * selectable. POO-2333 R1 adds a caption under "Other networks": each network that the manager
  * adds needs a bridge and one more signature at launch.
  *
  * Every write goes through `withNetworks`, which keeps the hub, drops the tokens, pools and caps of
@@ -27,13 +27,13 @@
  * Nothing here blocks Next (`validateStep("networks")` is always null: the hub alone is a valid
  * mandate), so the inline notice below is reachable only if the shell ever points a block at this
  * step. It is rendered anyway, because the step-props contract says a step renders its own block,
- * and the reason is MAPPED rather than assumed: a `coming_soon` refusal gets no notice at all, since
- * the row that raised it already says "Coming soon" and the event is what the refusal is for.
+ * and the reason is MAPPED rather than assumed: only `nothing_selected` has a notice here.
  */
 "use client";
 
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
+import { cn } from "@/lib/utils/cn";
 import { MandateCatalogStatus } from "../components/MandateCatalogStatus";
 import { MandateCheckbox, MandateRow } from "../components/MandateRow";
 import { NetworkLogoWithName, useNetworkNames } from "../components/NetworkDots";
@@ -46,31 +46,26 @@ import type { MandateStepProps } from "./stepProps";
 const STEP = "networks" as const;
 
 /** Mandate step 1: the hub, locked, and the spokes this strategy may also operate on. */
-export function NetworksStep({ draft, catalog, update, block, onBlocked }: MandateStepProps) {
+export function NetworksStep({ draft, catalog, update, block }: MandateStepProps) {
   const t = useTranslations("manager");
   const names = useNetworkNames();
 
   const hub = catalog.networks.find((network) => network.isHub);
   // POO-2333 R2: a spoke that the config does not enable is not drawn.
   const spokes = visibleSpokes(catalog);
-  const availableSpokes = spokes.filter((network) => network.available);
   const selected = new Set<NetworkId>(draft.networks);
-  // An empty set is not "all selected": with every spoke disabled, a ticked Select all would claim
-  // a selection nobody made, so the control is not offered at all (see the guard below).
-  const allSelected =
-    availableSpokes.length > 0 && availableSpokes.every((network) => selected.has(network.id));
+  // An empty set is not "all selected": with no spoke, a ticked Select all would claim a selection
+  // nobody made, so the control is not offered at all (see the guard below).
+  const allSelected = spokes.length > 0 && spokes.every((network) => selected.has(network.id));
 
   const ownBlock = block?.step === STEP ? block : null;
 
   /**
-   * The inline notice for a refusal pointed at this step, or null when the row already said it.
+   * The inline notice for a refusal pointed at this step, or null.
    *
-   * `coming_soon` renders NOTHING on purpose. It is the only refusal this step can raise on its own,
-   * it comes from a row that already carries a "Coming soon" pill, and answering it with "Pick at
-   * least one to continue." told the manager to do the thing they had just tried, about a row that is
-   * not the problem. The blocked-intent event still fires through `onBlocked`, which is the half that
-   * has to survive (CLAUDE.md premise 11). `nothing_selected` stays mapped because the shell can
-   * still point one here, and a notice is the only thing that would explain it.
+   * This step raises no refusal on its own: every spoke row that renders is selectable (POO-2333
+   * R2). `nothing_selected` stays mapped because the shell can still point one here, and a notice
+   * is the only thing that would explain it. The other reasons belong to other steps.
    */
   const notice = ownBlock
     ? ({
@@ -105,14 +100,13 @@ export function NetworksStep({ draft, catalog, update, block, onBlocked }: Manda
 
   /** R16: every available spoke, or none of them. No warning either way (R13). */
   function toggleAll() {
-    const ids = allSelected ? [] : availableSpokes.map((network) => network.id);
+    const ids = allSelected ? [] : spokes.map((network) => network.id);
     update((current) => withNetworks(current, ids, catalog));
   }
 
-  /** One spoke row: selectable, or listed with "Coming soon" and reporting the refusal. */
+  /** One spoke row. `visibleSpokes` gives only available spokes, so every row is selectable. */
   function spokeRow(network: MandateNetwork) {
     const name = names[network.id];
-    const disabled = !network.available;
     return (
       <MandateRow
         key={network.id}
@@ -120,14 +114,8 @@ export function NetworksStep({ draft, catalog, update, block, onBlocked }: Manda
         ariaLabel={name}
         title={name}
         selected={selected.has(network.id)}
-        disabled={disabled}
-        statusLabel={disabled ? t("fundBuilder.common.comingSoon") : undefined}
         logo={<NetworkLogoWithName network={network.id} catalog={catalog} size={20} />}
-        onToggle={() =>
-          disabled
-            ? onBlocked({ step: STEP, reason: "coming_soon", rowId: network.id })
-            : toggle(network.id)
-        }
+        onToggle={() => toggle(network.id)}
       />
     );
   }
@@ -156,15 +144,21 @@ export function NetworksStep({ draft, catalog, update, block, onBlocked }: Manda
           <h3 className="font-medium text-foreground text-sm">
             {t("fundBuilder.networks.others")}
           </h3>
-          {availableSpokes.length > 0 ? (
-            // biome-ignore lint/a11y/useSemanticElements: the same control the rows use (a button with role="checkbox"), so the group head and its rows read and behave identically; a bare <input> would break that pairing for no gain.
+          {spokes.length > 0 ? (
+            // The same control as the rows (a button with role="checkbox"), so the group head and
+            // its rows read and behave the same. A bare <input> would break that pair.
+            // biome-ignore lint/a11y/useSemanticElements: matches the row checkbox control.
             <button
               type="button"
               role="checkbox"
               aria-checked={allSelected}
               aria-label={t("fundBuilder.common.selectAll")}
               onClick={toggleAll}
-              className="flex shrink-0 items-center gap-2 rounded-md text-muted-foreground text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className={cn(
+                "flex shrink-0 items-center gap-2 rounded-md text-muted-foreground text-sm",
+                "transition-colors hover:text-foreground",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              )}
             >
               <MandateCheckbox selected={allSelected} />
               {t("fundBuilder.common.selectAll")}
@@ -175,7 +169,10 @@ export function NetworksStep({ draft, catalog, update, block, onBlocked }: Manda
         {notice ? (
           <p
             role="alert"
-            className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive text-sm"
+            className={cn(
+              "rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2",
+              "text-destructive text-sm",
+            )}
           >
             {notice}
           </p>
