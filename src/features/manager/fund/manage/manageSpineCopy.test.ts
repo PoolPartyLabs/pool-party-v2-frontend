@@ -169,7 +169,7 @@ describe("Manage action timing", () => {
     expect(manageActionTiming("move")).toEqual({
       applies: "now",
       timingKey: "applyNow",
-      submitKey: "reviewMoveNow",
+      submitKey: "reviewMove",
       selector: false,
     });
     expect(manageActionTiming("future")).toEqual({
@@ -178,7 +178,8 @@ describe("Manage action timing", () => {
       submitKey: "saveFuture",
       selector: false,
     });
-    expect(lookup(en, "manageV2.reviewMoveNow")).toBe("Review move range · Apply now");
+    expect(lookup(en, "manageV2.applyNow")).toBe("Apply now");
+    expect(lookup(en, "manageV2.newDeposits")).toBe("New deposits only");
     expect(lookup(en, "manageV2.saveFuture")).toBe("Save for new deposits");
   });
 });

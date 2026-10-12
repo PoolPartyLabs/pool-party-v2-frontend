@@ -45,7 +45,6 @@ export const MANAGE_SPINE_KEYS = [
   "manageV2.spine.swapFees",
   "manageV2.explorer",
   "manageV2.strategyAddressUnavailable",
-  "manageV2.reviewMoveNow",
 ] as const;
 
 const SEPARATOR = " · ";
@@ -247,11 +246,11 @@ export function manageStrategyLinks(
 export function manageActionTiming(action: "move" | "future"): {
   applies: "now" | "newDeposits";
   timingKey: "applyNow" | "newDeposits";
-  submitKey: "reviewMoveNow" | "saveFuture";
+  submitKey: "reviewMove" | "saveFuture";
   selector: false;
 } {
   return action === "move"
-    ? { applies: "now", timingKey: "applyNow", submitKey: "reviewMoveNow", selector: false }
+    ? { applies: "now", timingKey: "applyNow", submitKey: "reviewMove", selector: false }
     : {
         applies: "newDeposits",
         timingKey: "newDeposits",

@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-086
  * @name ManageBlockPanel
  * @implements-rules-version v2 (POO-2246; extends POO-2227), v2 (POO-2274), v1 (POO-2284), v1 (POO-2290)
+ * @implements-rules-version v1 (POO-2335, fixed action timing with no selector)
  * @analytics-events strategy_move_range_started, tx_flow_abandoned, app_cta_blocked, app_error_shown
  * Inline V2 states of PP-MGR-CMP-001/002; no wallet call is exposed without a verified preview.
  */
@@ -32,6 +33,7 @@ import {
 import type { ManagePosition } from "./manageModel";
 import { managePositionIdentity } from "./manageModel";
 import { type ManageInspectableNode, manageInspectionLabelKey } from "./manageSelection";
+import { manageActionTiming } from "./manageSpineCopy";
 import { MANAGE_READ_TIMEOUT_MS, useManagePosition } from "./useManagePosition";
 
 export function ManageBlockPanel({
@@ -406,6 +408,9 @@ function RangeSettings({
 }) {
   const t = useTranslations("manager.manageV2");
   const field = useTranslations("manager.fundBuilder.canvas.panel");
+  // R7 (POO-2335): Move range applies now. Create new position applies to new deposits.
+  const moveTiming = manageActionTiming("move");
+  const futureTiming = manageActionTiming("future");
   const fmt = useFormatter();
   const { track } = useAnalytics();
   const [draft, dispatch] = useReducer(manageDraftReducer, undefined, () =>
@@ -648,8 +653,11 @@ function RangeSettings({
             disabled={!valid || stage === "building"}
             onClick={() => void build()}
           >
-            {t(stage === "building" ? "preparing" : "reviewMove")}
+            {t(stage === "building" ? "preparing" : moveTiming.submitKey)}
           </Button>
+          <p className="-mt-2 text-center text-muted-foreground text-xs">
+            {t(moveTiming.timingKey)}
+          </p>
           <Button
             variant="secondary"
             className="min-h-11 w-full"
@@ -666,14 +674,14 @@ function RangeSettings({
           <p className="text-muted-foreground text-xs">{t("selectedOperation")}</p>
           <div className="rounded-xl border border-border p-3">
             <h3 className="font-medium text-sm">{t("createPosition")}</h3>
-            <p className="mt-1 text-muted-foreground text-xs">{t("newDeposits")}</p>
+            <p className="mt-1 text-muted-foreground text-xs">{t(futureTiming.timingKey)}</p>
           </div>
           <p className="text-muted-foreground text-xs">{t("saveSettings")}</p>
           <p role="status" className="text-muted-foreground text-xs">
             {t("notAvailable")}
           </p>
           <Button disabled className="min-h-11 w-full">
-            {t("saveFuture")}
+            {t(futureTiming.submitKey)}
           </Button>
           <Button
             variant="secondary"
@@ -698,7 +706,9 @@ function RangeSettings({
                 >
                   {t("moveRange")}
                 </Button>
-                <p className="mt-2 text-center text-muted-foreground text-xs">{t("applyNow")}</p>
+                <p className="mt-2 text-center text-muted-foreground text-xs">
+                  {t(moveTiming.timingKey)}
+                </p>
               </div>
               <div>
                 <Button
@@ -709,7 +719,9 @@ function RangeSettings({
                 >
                   {t("createPosition")}
                 </Button>
-                <p className="mt-2 text-center text-muted-foreground text-xs">{t("newDeposits")}</p>
+                <p className="mt-2 text-center text-muted-foreground text-xs">
+                  {t(futureTiming.timingKey)}
+                </p>
               </div>
             </>
           ) : null}
