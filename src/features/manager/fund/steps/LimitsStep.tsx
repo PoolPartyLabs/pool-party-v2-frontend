@@ -79,7 +79,12 @@ import {
   tokenKey,
   tokenModeOf,
 } from "../mandateDraft";
-import { allTokensSummary, blinkSchedule, setAllTokenCaps } from "../mandateTokenAccess";
+import {
+  allTokensRowWarns,
+  allTokensSummary,
+  blinkSchedule,
+  setAllTokenCaps,
+} from "../mandateTokenAccess";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -231,7 +236,17 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
         : ownBlock.rowId;
     if (!target) return;
     document.querySelector(`[data-mandate-row="${target}"]`)?.scrollIntoView({ block: "center" });
-    const timers = blinkSchedule(BLINK_TIMES, BLINK_PERIOD_MS).map((phase) =>
+    // Reduced motion: the ring stays lit, with no blink. The focus move below carries the rest.
+    const reducedMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Move focus to the control, so a keyboard or screen reader user lands where the notice points.
+    document
+      .querySelector<HTMLElement>(
+        `[data-mandate-row="${target}"] input[type="range"], [data-mandate-row="${target}"] button[role="checkbox"]`,
+      )
+      ?.focus({ preventScroll: true });
+    const timers = blinkSchedule(BLINK_TIMES, BLINK_PERIOD_MS, reducedMotion).map((phase) =>
       window.setTimeout(() => setBlinking(phase.on ? target : null), phase.at),
     );
     return () => {
@@ -268,6 +283,7 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
     legacyScope,
     mixed = false,
     watchZero = false,
+    zeroInside = false,
   }: {
     id: string;
     name: string;
@@ -286,10 +302,12 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
     mixed?: boolean;
     /** R12: this row is a token cap, so an enabled 0% takes the warning border and value. */
     watchZero?: boolean;
+    /** R12: a "Mixed" row warns when one token it stands for is at an enabled 0%. */
+    zeroInside?: boolean;
   }) {
     const noCap = cap?.noCap ?? false;
     const pct = cap?.pct ?? 0;
-    const warn = watchZero && !mixed && isCapZero(cap);
+    const warn = watchZero && (mixed ? zeroInside : isCapZero(cap));
     // Unset reads "Not set", never "0%": see the file header. The slider's `aria-valuetext` says the
     // same thing the sighted row says, so the two never disagree.
     const valueText = mixed ? mixedLabel : cap ? `${pct}%` : unsetLabel;
@@ -430,6 +448,7 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
       write: (current, next) => setAllTokenCaps(current, catalog, next),
       mixed: summary.kind === "mixed",
       watchZero: true,
+      zeroInside: allTokensRowWarns(draft, catalog),
     });
   }
 

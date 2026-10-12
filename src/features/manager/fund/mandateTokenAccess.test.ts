@@ -41,6 +41,7 @@ import {
 } from "./mandateDraft";
 import { deleteDraft, getDraft, upsertDraft } from "./mandateDraftStore";
 import {
+  allTokensRowWarns,
   allTokensSummary,
   blinkSchedule,
   capSteps,
@@ -459,6 +460,31 @@ describe("R13 a press on Next blinks the control twice and sends cap_zero", () =
     expect(phases[0]).toEqual({ at: 0, on: true });
     expect(phases[phases.length - 1]?.on).toBe(false);
     expect(phases.map((p) => p.at)).toEqual([0, 250, 500, 750]);
+  });
+
+  it("holds the ring for the same time, without a blink, for reduced motion", () => {
+    // @rule R13
+    expect(blinkSchedule(2, 250, true)).toEqual([
+      { at: 0, on: true },
+      { at: 1000, on: false },
+    ]);
+  });
+
+  it("warns on the All tokens row when one token in a mixed list is at 0%", () => {
+    // @rule R12
+    let draft = withTwoTokens();
+    const [first, second] = tokenRows(draft);
+    if (!first || !second) throw new Error("fixture");
+    draft = setCap(draft, "tokens", tokenKey(first), { noCap: false, pct: 35 });
+    draft = setCap(draft, "tokens", tokenKey(second), { noCap: false, pct: 0 });
+    expect(allTokensSummary(draft, catalog).kind).toBe("mixed");
+    expect(allTokensRowWarns(draft, catalog)).toBe(true);
+    // The same test blocks Next, so the warning and the blink name the same row.
+    const result = validateStep(draft, "limits", catalog);
+    expect(result?.reason).toBe("cap_zero");
+    draft = setCap(draft, "tokens", tokenKey(second), { noCap: false, pct: 5 });
+    expect(allTokensRowWarns(draft, catalog)).toBe(false);
+    expect(validateStep(draft, "limits", catalog)).toBeNull();
   });
 
   it("knows cap_zero as an analytics block reason", () => {

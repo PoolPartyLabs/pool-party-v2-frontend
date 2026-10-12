@@ -18,6 +18,7 @@ import {
   capRows,
   effectiveCap,
   HUB_NETWORK,
+  isCapZero,
   MAX_TOKEN_SLOTS,
   type MandateCap,
   type MandateDraft,
@@ -165,14 +166,36 @@ export function capSteps(): number[] {
 /**
  * R13: when the blocked control is lit and when it is dark. Two blinks are two "on" phases, each
  * `periodMs` long, with a dark phase of the same length after it. The control ends dark.
+ * With `reducedMotion` there is no blink: the control stays lit for the same total time, then goes dark.
  */
-export function blinkSchedule(times: number, periodMs: number): { at: number; on: boolean }[] {
+export function blinkSchedule(
+  times: number,
+  periodMs: number,
+  reducedMotion = false,
+): { at: number; on: boolean }[] {
+  if (reducedMotion) {
+    return [
+      { at: 0, on: true },
+      { at: 2 * times * periodMs, on: false },
+    ];
+  }
   const phases: { at: number; on: boolean }[] = [];
   for (let i = 0; i < times; i += 1) {
     phases.push({ at: 2 * i * periodMs, on: true });
     phases.push({ at: (2 * i + 1) * periodMs, on: false });
   }
   return phases;
+}
+
+/**
+ * R12, R13: the "All tokens" row warns when the row it stands for has an enabled 0% cap: its own
+ * uniform cap, or one token inside a "Mixed" list. This is the same test `validateStep` uses for
+ * `cap_zero`, so the warning border and the blink always land on the same row.
+ */
+export function allTokensRowWarns(draft: MandateDraft, catalog: MandateCatalog): boolean {
+  return capRows(draft, catalog).tokens.some((row) =>
+    isCapZero(effectiveCap(draft, "tokens", tokenKey(row))),
+  );
 }
 
 /**

@@ -27,6 +27,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useId } from "react";
 import { Button } from "@/components/ui/Button";
 import type { MandateStepKey } from "../mandateDraft";
 import { useMandateStepTitles } from "./mandateStepTitles";
@@ -56,6 +57,7 @@ export function BuilderActionBar({
 }: BuilderActionBarProps) {
   const t = useTranslations("manager");
   const titles = useMandateStepTitles();
+  const reasonId = useId();
 
   return (
     <div
@@ -77,6 +79,7 @@ export function BuilderActionBar({
         blocked={nextBlockedReason !== null}
         onBlockedClick={onNext}
         data-next-blocked={nextBlockedReason ?? undefined}
+        aria-describedby={nextBlockedReason ? reasonId : undefined}
       >
         {nextBlockedReason === "cap_zero"
           ? t("fundBuilder.limits.capZeroReason")
@@ -84,6 +87,12 @@ export function BuilderActionBar({
             ? t("fundBuilder.subStep.next", { step: titles[next] })
             : t("fundBuilder.subStep.nextBuild")}
       </Button>
+      {/* The reason in full, for the button's accessible description (R12). */}
+      {nextBlockedReason === "cap_zero" ? (
+        <span id={reasonId} className="sr-only">
+          {t("fundBuilder.limits.capZero")}
+        </span>
+      ) : null}
     </div>
   );
 }
