@@ -110,6 +110,31 @@ body {
 }
 
 /*
+ * POO-2332 R13: the Limits step blinks a row with an enabled 0% cap. One cycle is one blink; the
+ * step sets the duration and the count inline. With reduced motion the ring shows and does not blink.
+ */
+@keyframes cap-zero-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-cap-zero-blink {
+  animation-name: cap-zero-blink;
+  animation-timing-function: ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-cap-zero-blink {
+    animation: none;
+  }
+}
+
+/*
  * Dark, thin scrollbar for scrollable fields on the dark-only theme (e.g. the manager-profile
  * description textarea, whose default UA scrollbar renders white). Opt-in via the `scrollbar-dark`
  * class so there is no global blast radius. Covers Firefox (scrollbar-*) and WebKit.

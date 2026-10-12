@@ -29,6 +29,11 @@ export interface MandateStepProps {
   /** Report a blocked intent raised inside the step (a disabled row clicked, an add refused). */
   onBlocked: (block: StepBlock) => void;
   /**
+   * POO-2332 R13: goes up by one each time the shell reports a refusal. The Limits step reads it, so
+   * a second press on Next with the same block scrolls and blinks the row again.
+   */
+  blockSeq?: number;
+  /**
    * POO-2332 R15: report a token access mode change that the step already wrote through `update`.
    * Only the Tokens step calls it. The shell sends `builder_mandate_token_mode_changed`.
    */

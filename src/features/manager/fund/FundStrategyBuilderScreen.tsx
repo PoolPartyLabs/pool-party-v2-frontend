@@ -497,6 +497,9 @@ function FundBuilderShell({
   useBuildShellLayout(phase === "build");
   const [dialog, setDialog] = useState<"exit" | "complete" | null>(null);
   const [shellBlock, setShellBlock] = useState<StepBlock | null>(null);
+  // POO-2332 R13: counts each reported refusal, so a second press on Next with the same block
+  // scrolls and blinks the row again.
+  const [blockSeq, setBlockSeq] = useState(0);
   const [exiting, setExiting] = useState(false);
 
   // The block the step body renders: the shell's own (a refused Next) takes precedence over the
@@ -623,6 +626,7 @@ function FundBuilderShell({
   const reportBlocked = useCallback(
     (block: StepBlock) => {
       setShellBlock(block);
+      setBlockSeq((seq) => seq + 1);
       track("builder_mandate_blocked", {
         step: block.step,
         block_reason: MANDATE_BLOCK_REASON_EVENT[block.reason],
@@ -1145,6 +1149,7 @@ function FundBuilderShell({
               catalog={catalog}
               update={update}
               block={activeBlock}
+              blockSeq={blockSeq}
               onBlocked={reportBlocked}
               onTokenModeChange={reportTokenModeChange}
             />

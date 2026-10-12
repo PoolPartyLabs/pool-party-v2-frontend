@@ -149,7 +149,7 @@ function GroupHead({ title, caption }: { title: string; caption: string }) {
 }
 
 /** Mandate step 5: the per network, per protocol and per token caps. */
-export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) {
+export function LimitsStep({ draft, catalog, update, block, blockSeq = 0 }: MandateStepProps) {
   const t = useTranslations("manager");
   const networkNames = useNetworkNames();
 
@@ -203,26 +203,31 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
       focusNoCapRow.current = null;
     }
   }, [draft]);
-  const [highlighted, setHighlighted] = useState<{ rowId: string; blink: boolean } | null>(null);
+  const [highlighted, setHighlighted] = useState<{
+    rowId: string;
+    blink: boolean;
+    seq: number;
+  } | null>(null);
 
   // R6: find the row the shell is pointing at, then ring it for a moment. Both halves are needed:
   // the scroll answers "where", the ring answers "which one", and a long list gives neither for free.
   // POO-2332 R13: a `cap_zero` block blinks the row `CAP_ZERO_BLINKS` times in the warning color.
-  // The effect keys on the row and the reason, not on the block object: the shell can rebuild the
-  // block on each draft change, and a slider move must not scroll the page.
+  // The effect keys on the row, the reason and `blockSeq`, not on the block object: the shell can
+  // rebuild the block on each draft change, and a slider move must not scroll the page. `blockSeq`
+  // goes up on each refused Next, so a second press with the same block scrolls and blinks again.
   const blockedRowId = ownBlock?.rowId;
   const blink = ownBlock?.reason === "cap_zero";
   useEffect(() => {
     const rowId = blockedRowId;
     if (!rowId) return;
     document.querySelector(`[data-mandate-row="${rowId}"]`)?.scrollIntoView({ block: "center" });
-    setHighlighted({ rowId, blink });
+    setHighlighted({ rowId, blink, seq: blockSeq });
     const timer = window.setTimeout(
       () => setHighlighted(null),
       blink ? BLINK_MS * CAP_ZERO_BLINKS : HIGHLIGHT_MS,
     );
     return () => window.clearTimeout(timer);
-  }, [blockedRowId, blink]);
+  }, [blockedRowId, blink, blockSeq]);
 
   /** The cap stored for a row, or undefined while the row is still unset. */
   function capFor(scope: CapScope, id: string): MandateCap | undefined {
@@ -320,17 +325,25 @@ export function LimitsStep({ draft, catalog, update, block }: MandateStepProps) 
         data-mandate-row={id}
         data-cap-zero={zero || undefined}
         className={cn(
-          "flex min-h-14 items-center gap-4 rounded-xl border bg-surface px-4 py-3 transition-shadow",
+          "relative flex min-h-14 items-center gap-4 rounded-xl border bg-surface px-4 py-3 transition-shadow",
           zero ? "border-warning" : "border-border",
           lit && !lit.blink && "ring-2 ring-destructive/60",
-          lit?.blink && "ring-2 ring-warning",
         )}
-        style={
-          lit?.blink
-            ? { animation: `pulse ${BLINK_MS}ms ease-in-out ${CAP_ZERO_BLINKS}` }
-            : undefined
-        }
       >
+        {lit?.blink ? (
+          // R13: the blink ring. The key is the press count, so each refused Next mounts a new ring
+          // and the animation starts again. `animate-cap-zero-blink` (globals.css) stops the blink
+          // for reduced motion and keeps the ring.
+          <span
+            key={lit.seq}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 animate-cap-zero-blink rounded-xl ring-2 ring-warning"
+            style={{
+              animationDuration: `${BLINK_MS}ms`,
+              animationIterationCount: CAP_ZERO_BLINKS,
+            }}
+          />
+        ) : null}
         {logo}
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="flex min-w-0 items-center gap-2">
