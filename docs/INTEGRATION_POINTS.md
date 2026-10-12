@@ -1,5 +1,15 @@
 # Integration Points
 
+## Mandate token slots and All tokens mode, October 12, 2026 (POO-2332 rules v1)
+
+- `MAX_MANDATE_SLOTS` (`src/features/manager/fund/mandateDraft.ts`, `PP-MGR-LIB-019`) is 100, the
+  product target. The fund contracts hold 16 token entries today (`MAX_TOKEN_SLOTS`), so
+  `maxTokenSlots` returns 16 in real data mode. When the contracts hold 100, real mode uses the
+  same ceiling and the real-mode branch goes. The seam is marked `PP-INTEGRATION-POINT`.
+- The All tokens mode (`tokenMode: "all"`) and the "Every token" default cap (`caps.everyToken`)
+  are mock-mode draft state. No contract field holds them yet. Real data mode keeps Selected and
+  shows no Token access control.
+
 ## Shared V2 local Solana binding, October 8, 2026 (POO-2301 rules v1)
 
 Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects

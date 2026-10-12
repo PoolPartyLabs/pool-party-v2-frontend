@@ -448,7 +448,10 @@ POO-2187), `builder_build_blocked`, `builder_build_abandoned` and `builder_build
 `builder_build_landing_viewed` and `builder_block_restored` are retired. `builder_mandate_blocked`'s five NEW reasons are `nothing_selected`,
 `cap_missing`, `no_slots`, `has_hook` and `coming_soon`; `price_unknown` (an unpriced token) and
 `name_invalid` (the draft name) REUSE the existing POO-1172 reason series rather than mint
-per-builder duplicates. A draft-save failure reports `builder_mandate_error { error_code:
+per-builder duplicates. POO-2332 adds the reason `cap_zero` (Next pressed on Limits with an enabled
+0% cap) and the event `builder_mandate_token_mode_changed { token_mode }` (the Tokens step's Token
+access control, Selected or All). Mock mode has 100 token slots; real data mode keeps 16 (see
+`docs/INTEGRATION_POINTS.md`). The read models live in `fund/mandateTokenMode.ts` (`PP-MGR-LIB-079`). A draft-save failure reports `builder_mandate_error { error_code:
 "DRAFT_SAVE_FAILED", error_origin: "app" }`; the same event also carries the Pools step's catalog
 read failing, `POOLS_FETCH_FAILED` / `upstream` when the list on screen is the one that failed and
 `POOLS_UNIVERSE_FETCH_FAILED` / `upstream` when it was the universe measured beside a search (nothing

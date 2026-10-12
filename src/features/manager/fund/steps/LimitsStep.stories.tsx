@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-039
  * @name LimitsStep.stories
  * @implements-rules-version v2 (POO-2142 rules v2, POO-2197 rules v2)
+ * @implements-rules-version v1 (POO-2332 rules v1)
  *
  * Storybook coverage for Mandate step 5 (POO-2126 [R6] / [R39] to [R43]).
  *
@@ -10,6 +11,11 @@
  * whether Next moves (`validateStep("limits")` refuses the first row with no record). `Blocked` is
  * the second: the notice alone does not say WHICH of twelve rows is missing, so the ring is the
  * message.
+ *
+ * POO-2332: mock mode has no "Not set" state. `Unset` now shows the start values (R8): networks and
+ * protocols with No cap on, tokens at 0% in the warning state. `Figma` shows "Mixed" on the "All
+ * tokens" row (R9). `CapZeroHeld` is the `cap_zero` blink (R13), and `AllTokensMode` is the "Every
+ * token" row with the warning box and the tag (R10).
  *
  * The drafts are seeded DIRECTLY rather than through `withNetworks` / `withProtocols`, because the
  * Limits step has to render a row for whatever the draft carries. The Figma frame also shows Base;
@@ -151,7 +157,7 @@ export const Figma: Story = {
   render: () => <Harness catalog={catalog} initial={selections(FIGMA_CAPS)} />,
 };
 
-/** Nothing answered: every row reads "Not set" with its slider at rest, and Next would refuse. */
+/** Nothing answered: the start values (POO-2332 R8). Each token row is at 0% and holds Next. */
 export const Unset: Story = {
   render: () => <Harness catalog={catalog} initial={selections(UNSET_CAPS)} />,
 };
@@ -196,6 +202,30 @@ export const AnotherTokenRequired: Story = {
       catalog={catalog}
       initial={createEmptyDraft("2026-10-03", "story")}
       block={{ step: "limits", reason: "token_allowance_required", rowId: null }}
+    />
+  ),
+};
+
+/** POO-2332 R12/R13: WETH at 0%. Next was pressed: the row scrolls into view and blinks 2 times. */
+export const CapZeroHeld: Story = {
+  render: () => (
+    <Harness
+      catalog={catalog}
+      initial={selections({
+        ...FIGMA_CAPS,
+        tokens: { ...FIGMA_CAPS.tokens, [tokenKey(WETH)]: { noCap: false, pct: 0 } },
+      })}
+      block={{ step: "limits", reason: "cap_zero", rowId: tokenKey(WETH) }}
+    />
+  ),
+};
+
+/** POO-2332 R10: All tokens mode. One "Every token" row at 0%, the warning box and the tag. */
+export const AllTokensMode: Story = {
+  render: () => (
+    <Harness
+      catalog={catalog}
+      initial={{ ...selections({ ...FIGMA_CAPS, tokens: {} }), tokenMode: "all" }}
     />
   ),
 };

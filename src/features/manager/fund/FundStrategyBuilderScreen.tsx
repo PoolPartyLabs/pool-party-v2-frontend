@@ -460,7 +460,15 @@ function FundBuilderShell({
   const position = stepIndex(draft, step);
   // POO-2332 R12: an enabled 0% cap holds Next with a reason. The press still reaches `handleNext`.
   const hold = nextHold(draft, catalog, step);
-  const holdLabel = hold ? t(`fundBuilder.limits.nextHold.${hold}`) : null;
+  // POO-2332 R12: literal keys, so the i18n usage scan can see each one.
+  const holdLabel =
+    hold === "network"
+      ? t("fundBuilder.limits.nextHold.network")
+      : hold === "protocol"
+        ? t("fundBuilder.limits.nextHold.protocol")
+        : hold === "token"
+          ? t("fundBuilder.limits.nextHold.token")
+          : null;
 
   /**
    * The phase the manager NAVIGATED to, or null while nobody has moved between phases yet.

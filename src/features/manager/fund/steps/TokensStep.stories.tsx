@@ -2,6 +2,7 @@
  * @id PP-MGR-CMP-037
  * @name TokensStep.stories
  * @implements-rules-version v2 (POO-2142 rules v2)
+ * @implements-rules-version v1 (POO-2332 rules v1)
  *
  * Storybook coverage for Mandate step 3 (POO-2124 [R23] to [R28]).
  *
@@ -14,6 +15,9 @@
  * Every story is live: the harness holds the draft, runs the real reducers, and surfaces a refusal
  * as the inline notice, so adding, removing, searching and "Add all" all behave as they will in the
  * builder rather than as a frozen snapshot.
+ *
+ * POO-2332: mock mode has 100 slots, so the slot stories sit at 99 and 100 of 100. `AllTokens`,
+ * `Loading` and `LoadError` show the Token access mode and the catalog states (R1 to R7).
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useState } from "react";
@@ -51,7 +55,7 @@ function withToken(draft: MandateDraft, symbol: string): MandateDraft {
  * Obvious placeholders, so a draft can sit at an exact slot count.
  *
  * The static token lists carry 7 priced tokens on the hub and 1 on the spoke, which is not enough
- * entries to reach 15 of 16 with real data. These rows stand in for the longer mandate a real price
+ * entries to reach 99 of 100 with real data. These rows stand in for the longer mandate a real price
  * registry will allow, and they are named so nobody mistakes them for tokens the product ships.
  */
 function standIns(count: number): MandateTokenRef[] {
@@ -106,7 +110,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "Mandate step 3. The catalog on the left lists only the tokens the hub can price, with the rest reachable through the search; the card on the right is the mandate itself, with the deposit token locked and the slot counter under it. A token costs one slot on each network it runs on, so the Add of a token that would pass sixteen is disabled and reports the refusal instead of swallowing it.",
+          "Mandate step 3. The catalog on the left lists only the tokens the hub can price, with the rest reachable through the search; the card on the right is the mandate itself, with the deposit token locked and the slot counter under it. A token costs one slot on each network it runs on, so the Add of a token that would pass the slot ceiling (100 in mock mode, 16 in real data mode) is disabled and reports the refusal instead of swallowing it.",
       },
     },
   },
@@ -129,22 +133,25 @@ export const HubAndSpoke: Story = {
   },
 };
 
-/** 15 of 16 slots: ARB costs one and is still addable, ETH costs two and is not. */
+/** 99 of 100 slots: ARB costs one and is still addable, ETH costs two and is not. */
 export const SlotsNearlyFull: Story = {
   render: () => {
     const base = draftOn(["robinhood"]);
     return (
-      <Harness catalog={catalog} initial={{ ...base, tokens: [...base.tokens, ...standIns(13)] }} />
+      <Harness catalog={catalog} initial={{ ...base, tokens: [...base.tokens, ...standIns(97)] }} />
     );
   },
 };
 
-/** 16 of 16: every Add is disabled, and every click on one still reports the refusal. */
+/**
+ * 100 of 100 (POO-2332 R7): the count is in the warning color, each card says "No free slots", "Add
+ * all" is off, and every click on an Add still reports the `no_slots` refusal.
+ */
 export const SlotsFull: Story = {
   render: () => {
     const base = draftOn(["robinhood"]);
     return (
-      <Harness catalog={catalog} initial={{ ...base, tokens: [...base.tokens, ...standIns(14)] }} />
+      <Harness catalog={catalog} initial={{ ...base, tokens: [...base.tokens, ...standIns(98)] }} />
     );
   },
 };
@@ -158,4 +165,27 @@ export const NothingLeftToAdd: Story = {
     );
     return <Harness catalog={catalog} initial={base} />;
   },
+};
+
+/** POO-2332 R4: All tokens mode. The info card, "Your tokens · All" and "No limit". */
+export const AllTokens: Story = {
+  render: () => {
+    const base = withToken(draftOn(["robinhood"]), "ETH");
+    return <Harness catalog={catalog} initial={{ ...base, tokenMode: "all" }} />;
+  },
+};
+
+/** POO-2332 R6: the catalog is loading. Skeletons and "Loading tokens"; search stays on. */
+export const Loading: Story = {
+  render: () => <Harness catalog={{ ...catalog, loading: true }} initial={draftOn()} />,
+};
+
+/** POO-2332 R6: the catalog failed. The error box and "Try again"; the list stays saved. */
+export const LoadError: Story = {
+  render: () => (
+    <Harness
+      catalog={{ ...catalog, error: true, retry: () => {} }}
+      initial={withToken(draftOn(), "ETH")}
+    />
+  ),
 };
