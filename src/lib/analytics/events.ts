@@ -309,6 +309,9 @@ export const ANALYTICS_EVENTS = [
   "builder_mandate_abandoned",
   "builder_draft_saved",
   "builder_mandate_error",
+  // POO-2332: the manager changed the Tokens step "Token access" control. `token_mode` tells which
+  // mode they picked. The count says how many managers want every token and not a short list.
+  "builder_mandate_token_mode_changed",
   "builder_review_view",
   "builder_review_field_changed",
   "builder_review_abandoned",
@@ -562,10 +565,16 @@ export const ANALYTICS_MANDATE_BLOCK_REASONS = [
    * and this count is what says whether Limits asks for more decisions than it is worth.
    */
   "cap_missing",
+  /**
+   * The Limits step was left with an enabled cap at 0% (POO-2332 R13). In mock data mode every row
+   * has a start value, so a token cap that the manager did not raise reads 0%. A 0% cap lets no
+   * capital in, so Next stays held until the manager raises it or selects No cap.
+   */
+  "cap_zero",
   /** USDC needs another selected token with a positive effective allowance (POO-2197). */
   "token_allowance_required",
   /**
-   * A token could not be added because the mandate's 16 network slots are full (R27).
+   * A token could not be added because the mandate's network slots are full (R27; POO-2332 R7).
    *
    * A CONTRACT ceiling rather than a product choice, which is what gives the number an audience: it
    * says how often the limit the fund contracts impose is the thing standing between a manager and
@@ -1240,6 +1249,11 @@ export interface AnalyticsParams {
   protocols_count?: number;
   tokens_count?: number;
   pools_count?: number;
+  /**
+   * On `builder_mandate_token_mode_changed`: the token access mode the manager picked (POO-2332).
+   * "selected" is a short list of tokens. "all" lets every token in.
+   */
+  token_mode?: "selected" | "all";
   /**
    * On `builder_mandate_abandoned`: whether the mandate the manager walked away from had reached
    * storage with nothing left unsaved (POO-2122; sharpened by POO-2157, review F3 of PR #41).

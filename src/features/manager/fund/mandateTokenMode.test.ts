@@ -325,7 +325,7 @@ describe("quality (POO-2332)", () => {
             messages.fundBuilder,
           );
         expect(typeof value, `${locale} fundBuilder.${key}`).toBe("string");
-        expect(value as string, `${locale} fundBuilder.${key}`).not.toContain("—");
+        expect(value as string, `${locale} fundBuilder.${key}`).not.toContain("\u2014");
       }
     }
   });
