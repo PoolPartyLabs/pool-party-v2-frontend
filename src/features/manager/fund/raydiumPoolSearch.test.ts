@@ -208,7 +208,7 @@ describe("R10: the Solana search sends the pool search events of today", () => {
   it("[R10] fails with a coded error that holds no address, and the step reports a known code", async () => {
     vi.mocked(getRaydiumPoolsAction).mockResolvedValue({
       ok: false,
-      error: { code: "bad_shape" },
+      error: { code: "invalid_response" },
     });
 
     const error = await searchMandatePools({
