@@ -86,11 +86,18 @@ export function applyLocalManageConfig(
     return refuse();
   const first = found.chain.steps.find((step) => step.family === "position");
   if (first?.id !== blockId && share !== found.chain.sharePct * 100) return refuse();
+  // POO-2343 R7: a Raydium pool address belongs to one pair, so a pair change drops it.
+  const { poolAddress } = found.block.config;
+  const keepPool = poolAddress !== undefined && found.block.config.pair === config.pair;
   const next = applyBlockConfig(
     plan,
     ctx,
     blockId,
-    { catalogId: found.block.config.catalogId, pair: config.pair },
+    {
+      catalogId: found.block.config.catalogId,
+      pair: config.pair,
+      ...(keepPool ? { poolAddress } : {}),
+    },
     first?.id === blockId ? share / 100 : undefined,
   );
   if (isPlanBlocked(next)) return next;
