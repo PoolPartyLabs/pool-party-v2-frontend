@@ -156,8 +156,14 @@ empty mandate and unavailable reserve. `CR-MGR-024` tracks the displayed APY sna
 follows Figma `8189:2337`. The collateral is the configured Supply directly above the Borrow. The
 panel shows it read-only, with the token, the amount and the USD value. The Asset select lists the
 mandate tokens of the network without the collateral, each with its borrow APY. A token that the
-market does not lend is disabled with a reason. The slider goes from 0 to the max LTV in steps of
-5, and shows the amount in the token and in USD.
+market does not lend is disabled with a reason. The slider goes from 0 to the max LTV in the
+Allocation slider's steps, and shows the amount in the token and in USD. The panel reads the
+stored share within the max LTV (`readBorrowPct`), and `Use` writes the default share within it.
+So the slider, the risk rows and Apply always use the same value.
+
+A Borrow never borrows its own collateral (`borrowsOfOwnCollateral` in `plan/planRules.ts`). The
+plan refuses a Borrow config with the asset of the Supply above it. When the Supply changes to
+the asset of the Borrow under it, the plan clears that Borrow's config.
 
 The health factor is 1.5 or more (success), 1.1 to under 1.5 (warning) or under 1.1
 (destructive). The panel also shows the liquidation price and the % drop to it.
@@ -169,8 +175,15 @@ The market figures and the fund capital come from `src/mocks/data/borrowMarketFi
 Apply stays blocked. Apply also needs a Supply above, a lendable asset and a share over 0.
 
 The Supply panel now reads its APY with `supplyApyValue`. When a Borrow is directly under it, it
-shows a collateral note. Both panels show the Lending risk block (`PP-MGR-CMP-094`) as
-unavailable. The Uniswap panel already shows Max slippage, so it has no change.
+shows a collateral note with a link icon in the asset group, before the Target allocation (Figma
+`8194:2380`). The Figma puts a swap note above it. The Supply panel has no swap note, because its
+only route arrives as USDC with no automatic swap. Both panels show the Lending risk block
+(`PP-MGR-CMP-094`) as unavailable.
+
+The Uniswap panel always shows Max slippage, also for a USDC input. A v4 pool needs both of its
+tokens, so the plan always puts a Swap · auto before a pool (`needsAutoSwap`, C13), and the swap
+of about half the USDC needs a slippage limit. The rule "only when the input is not USDC" does
+not apply to a pool, so the panel has no change.
 
 ## Panel actions and navigation (POO-2202, rules v1)
 

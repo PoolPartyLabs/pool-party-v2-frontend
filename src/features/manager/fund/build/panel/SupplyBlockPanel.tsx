@@ -2,7 +2,7 @@
  * @id PP-MGR-CMP-072
  * @name SupplyBlockPanel
  * @implements-rules-version v1 (POO-2194)
- * @implements-rules-version v1 (POO-2334 rules v1): R10 Supply APY, R12 collateral note and the
+ * @implements-rules-version v1 (POO-2334 rules v1): R10 Supply APY and collateral note (8194:2380), and the
  *   Lending risk block of frame 8189:2337
  * @analytics-events none, the panel shell emits configuration, Apply, Discard and blocked intent
  *
@@ -13,12 +13,15 @@
  * PP-INTEGRATION-POINT: usePanelReserves selects the shell's GET /api/v2/catalog/aave-v3/reserves
  * data, intersected with the mandate. Loading, error and unusable reserves hold both Use and Apply.
  *
- * POO-2334: when a Borrow sits directly under this Supply, a note under the Allocation says that the
- * asset is that Borrow's collateral (R12). The Lending risk block (PP-MGR-CMP-094) closes the body,
+ * POO-2334: when a Borrow sits directly under this Supply, a note with a link icon in the asset group,
+ * before the Target allocation, says that the asset is that Borrow's collateral (R10, Figma
+ * 8194:2380). The Figma puts a swap note above it; this body has none, because its only route
+ * arrives as USDC with no automatic swap. The Lending risk block (PP-MGR-CMP-094) closes the body,
  * as in the Figma; no account exists while the fund is built, so it reads "Not available".
  */
 "use client";
 
+import { Link as LinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useId } from "react";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -146,13 +149,17 @@ export function SupplyBlockPanel({
             </button>
           </div>
         ) : null}
+        {hasBorrowBelow(context.plan, context.blockId) ? (
+          <p
+            className="flex items-start gap-1.5 text-muted-foreground text-xs"
+            data-supply-collateral-note=""
+          >
+            <LinkIcon aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+            <span>{t("collateralNote")}</span>
+          </p>
+        ) : null}
       </div>
       {allocation}
-      {hasBorrowBelow(context.plan, context.blockId) ? (
-        <p className="text-muted-foreground text-xs" data-supply-collateral-note="">
-          {t("collateralNote")}
-        </p>
-      ) : null}
       <ManageLendingRiskSection
         origin={{ identity: null, preview: null }}
         current={RISK_UNAVAILABLE}
