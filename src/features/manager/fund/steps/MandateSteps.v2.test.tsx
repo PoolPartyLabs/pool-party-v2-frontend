@@ -141,7 +141,7 @@ describe("real Mandate step contract", () => {
     const { container } = renderWithProviders(<Harness step="tokens" source={source} />);
     expect(container.querySelector('img[src="https://example.test/weth.png"]')).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add all 1" })).toBeInTheDocument();
-    expect(screen.getByText("1 of 100")).toBeInTheDocument();
+    expect(screen.getByText("1 of 16")).toBeInTheDocument();
   });
   // @rule R2
   it("Tokens distinguishes failed catalog from empty and exposes retry", async () => {

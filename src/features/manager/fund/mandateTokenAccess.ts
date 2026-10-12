@@ -66,12 +66,20 @@ export type TokensViewState =
   /** Real data mode keeps its own status panel (R14). */
   | { kind: "real" };
 
+/**
+ * The one answer to "is this draft in real data mode". The slot ceiling ({@link slotCeiling}) and the
+ * view state below both read the draft, so they cannot disagree with each other (R2, R14).
+ */
+export function isRealData(draft: Pick<MandateDraft, "dataMode">): boolean {
+  return draft.dataMode === "real";
+}
+
 export function tokensViewState(input: {
   loading: boolean;
   error: boolean;
-  dataMode: "real" | undefined;
+  draft: Pick<MandateDraft, "dataMode">;
 }): TokensViewState {
-  if (input.dataMode === "real") return { kind: "real" };
+  if (isRealData(input.draft)) return { kind: "real" };
   if (input.error)
     return {
       kind: "error",

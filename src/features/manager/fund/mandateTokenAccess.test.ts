@@ -45,6 +45,7 @@ import {
   blinkSchedule,
   capSteps,
   collapseRows,
+  isRealData,
   lockedRowCaption,
   setAllTokenCaps,
   slotsView,
@@ -213,7 +214,7 @@ describe("R5 a mode change keeps the list", () => {
 describe("R6 loading and error", () => {
   it("keeps search and filters on while loading and shows skeletons", () => {
     // @rule R6
-    expect(tokensViewState({ loading: true, error: false, dataMode: undefined })).toEqual({
+    expect(tokensViewState({ loading: true, error: false, draft: empty() })).toEqual({
       kind: "loading",
       showSkeletons: true,
       searchEnabled: true,
@@ -224,7 +225,7 @@ describe("R6 loading and error", () => {
   it("shows the error box with a retry, and keeps the saved list", () => {
     // @rule R6
     const draft = withTwoTokens();
-    const view = tokensViewState({ loading: false, error: true, dataMode: undefined });
+    const view = tokensViewState({ loading: false, error: true, draft: empty() });
     expect(view).toMatchObject({ kind: "error", canRetry: true, searchEnabled: true });
     // The reducer never touches the list on its own: the list is still the same draft.
     expect(draft.tokens).toHaveLength(3);
@@ -232,10 +233,20 @@ describe("R6 loading and error", () => {
 
   it("is ready when nothing is wrong, and leaves real data to the real status panel", () => {
     // @rule R6
-    expect(tokensViewState({ loading: false, error: false, dataMode: undefined }).kind).toBe(
-      "ready",
-    );
-    expect(tokensViewState({ loading: true, error: false, dataMode: "real" }).kind).toBe("real");
+    expect(tokensViewState({ loading: false, error: false, draft: empty() }).kind).toBe("ready");
+    const real: MandateDraft = { ...empty(), dataMode: "real" };
+    expect(tokensViewState({ loading: true, error: false, draft: real }).kind).toBe("real");
+  });
+});
+
+describe("R14 one source for real data mode", () => {
+  it("gives 16 slots and the real status panel together, or 100 slots and neither", () => {
+    // @rule R14
+    for (const draft of [empty(), { ...empty(), dataMode: "real" as const }]) {
+      const real = isRealData(draft);
+      expect(tokensViewState({ loading: false, error: false, draft }).kind === "real").toBe(real);
+      expect(slotsView(draft).ceiling).toBe(real ? MAX_TOKEN_SLOTS : BASKET_TOKEN_SLOTS);
+    }
   });
 });
 
@@ -298,7 +309,7 @@ describe("R8 start values", () => {
   });
 
   it("keeps real data mode without start values", () => {
-    // @rule R8 @rule R14
+    // @rule R14
     const real: MandateDraft = { ...empty(), dataMode: "real" };
     expect(effectiveCap(real, "tokens", "arbitrum:0xabc")).toBeUndefined();
     expect(effectiveCap(real, "networks", "robinhood")).toBeUndefined();

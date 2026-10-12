@@ -79,7 +79,13 @@ import {
   tokenKey,
   tokenModeOf,
 } from "../mandateDraft";
-import { collapseRows, lockedRowCaption, slotsView, tokensViewState } from "../mandateTokenAccess";
+import {
+  collapseRows,
+  isRealData,
+  lockedRowCaption,
+  slotsView,
+  tokensViewState,
+} from "../mandateTokenAccess";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
@@ -254,11 +260,11 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   const slots = slotsView(draft);
   const { used } = slots;
   const mode = tokenModeOf(draft);
-  const allMode = catalog.dataMode !== "real" && mode === "all";
+  const allMode = !isRealData(draft) && mode === "all";
   const viewState = tokensViewState({
     loading: catalog.loading === true,
     error: catalog.error === true,
-    dataMode: catalog.dataMode,
+    draft,
   });
   const [showAllRows, setShowAllRows] = useState(false);
 
@@ -497,7 +503,7 @@ export function TokensStep({ draft, catalog, update, block, onBlocked }: Mandate
   return (
     <section data-mandate-step={STEP} className="flex flex-col gap-6">
       {/* R1: not in real data mode, which has no All tokens mode (R14). */}
-      {catalog.dataMode === "real" ? null : accessControl()}
+      {isRealData(draft) ? null : accessControl()}
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-6">
         {/* R4: All tokens mode has no catalog to browse, only the explanation. */}
         {allMode ? (

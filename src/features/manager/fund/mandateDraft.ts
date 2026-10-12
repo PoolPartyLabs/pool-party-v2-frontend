@@ -598,6 +598,7 @@ export function setTokenMode(draft: MandateDraft, mode: TokenMode): MandateDraft
  * contracts hold {@link BASKET_TOKEN_SLOTS}. The mock builder uses the basket of 100.
  */
 export function slotCeiling(draft: Pick<MandateDraft, "dataMode">): number {
+  // The same field `isRealData` reads in mandateTokenAccess.ts, so the ceiling and the view agree.
   return draft.dataMode === "real" ? MAX_TOKEN_SLOTS : BASKET_TOKEN_SLOTS;
 }
 
