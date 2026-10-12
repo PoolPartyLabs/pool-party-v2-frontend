@@ -610,6 +610,59 @@ describe("LimitsStep", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  // @rule R13
+  it("scrolls to, focuses and blinks the All tokens row on cap_zero in Selected mode", () => {
+    vi.useFakeTimers();
+    const draft = figmaDraft({
+      caps: {
+        ...figmaDraft().caps,
+        tokens: {
+          [tokenKey(WETH)]: { noCap: false, pct: 0 },
+          [tokenKey(WBTC)]: { noCap: true, pct: 0 },
+        },
+      },
+    });
+    const block = validateStep(draft, "limits", catalog);
+    expect(block).toEqual({ step: "limits", reason: "cap_zero", rowId: tokenKey(WETH) });
+    const scroll = vi.mocked(Element.prototype.scrollIntoView);
+    scroll.mockClear();
+
+    renderStep(draft, block);
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    const target = row(ALL_TOKENS_ROW_ID);
+    expect(target).toHaveAttribute("data-mandate-row", "all-tokens");
+    expect(scroll).toHaveBeenCalledWith({ block: "center" });
+    expect(scroll.mock.contexts).toContain(target);
+    expect(target.contains(document.activeElement)).toBe(true);
+    expect(target.className).toContain("ring-warning");
+    expect(row(tokenKey(WETH)).className).not.toContain("ring-warning");
+  });
+
+  // @rule R13
+  it("scrolls to, focuses and blinks the Every token row on cap_zero in All mode", () => {
+    vi.useFakeTimers();
+    const draft = figmaDraft({ tokenMode: "all", allTokensCap: { noCap: false, pct: 0 } });
+    const block = validateStep(draft, "limits", catalog);
+    expect(block).toEqual({ step: "limits", reason: "cap_zero", rowId: EVERY_TOKEN_ROW_ID });
+    const scroll = vi.mocked(Element.prototype.scrollIntoView);
+    scroll.mockClear();
+
+    renderStep(draft, block);
+    act(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    const target = row(EVERY_TOKEN_ROW_ID);
+    expect(target).toHaveAttribute("data-mandate-row", "every-token");
+    expect(scroll).toHaveBeenCalledWith({ block: "center" });
+    expect(scroll.mock.contexts).toContain(target);
+    expect(target.contains(document.activeElement)).toBe(true);
+    expect(target.className).toContain("ring-warning");
+  });
+
   // @rule R41
   it("never presents a cap as an on-chain guarantee", () => {
     renderStep();

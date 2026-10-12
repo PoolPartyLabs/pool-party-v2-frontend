@@ -349,6 +349,8 @@ describe("shared local Solana binding", () => {
     await user.click(screen.getByRole("button", { name: "Next: Limits" }));
     // POO-2332 R8: networks and protocols start with No cap on. A token starts at 0% with No cap
     // off, so Next stays held until the token cap is set (R12).
+    expect(screen.getByRole("checkbox", { name: "No cap for Solana" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "No cap for Orca Whirlpools" })).toBeChecked();
     expect(screen.getByRole("button", { name: "Set the token cap above 0%" })).toHaveAttribute(
       "aria-disabled",
       "true",
