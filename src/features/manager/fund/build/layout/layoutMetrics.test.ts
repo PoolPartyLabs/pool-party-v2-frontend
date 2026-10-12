@@ -310,12 +310,14 @@ describe("measureLayout: input checks", () => {
 
 /**
  * @rule R8
- * The numbers of every layout fixture. They are the BASELINE on the base branch (POO-2342, head
- * d69cd06): the routing has not changed yet. A later commit replaces them with the final numbers.
+ * The numbers of every layout fixture. BASELINE is the routing of the base branch (POO-2342, head
+ * d69cd06). FINAL is the routing of POO-2345 v2. FORCED is the least number of crossings that R2
+ * forces: an income line and a principal line that start in one order and end in the opposite one.
  */
 const FIXTURES = { ...BUILD_CANVAS_FIXTURES, solanaTwoChainReturn } as const;
+type Name = keyof typeof FIXTURES;
 
-const BASELINE: Record<keyof typeof FIXTURES, LayoutMetrics> = {
+const BASELINE: Record<Name, LayoutMetrics> = {
   canvasA: { crossings: 29, overlaps: 22, totalBends: 54, maxBendsPerLeg: 3 },
   canvasB: { crossings: 0, overlaps: 3, totalBends: 16, maxBendsPerLeg: 3 },
   canvasC: { crossings: 2, overlaps: 1, totalBends: 8, maxBendsPerLeg: 3 },
@@ -328,18 +330,57 @@ const BASELINE: Record<keyof typeof FIXTURES, LayoutMetrics> = {
   solanaTwoChainReturn: { crossings: 5, overlaps: 1, totalBends: 19, maxBendsPerLeg: 3 },
 };
 
+const FORCED: Record<Name, number> = {
+  canvasA: 19,
+  canvasB: 0,
+  canvasC: 2,
+  canvasD: 0,
+  workedExample2: 3,
+  buildState3: 0,
+  buildState5: 1,
+  newSpokeNoChain: 0,
+  hubEmptyWithSpoke: 0,
+  solanaTwoChainReturn: 3,
+};
+
+const FINAL: Record<Name, LayoutMetrics> = {
+  canvasA: { crossings: 19, overlaps: 0, totalBends: 48, maxBendsPerLeg: 3 },
+  canvasB: { crossings: 0, overlaps: 0, totalBends: 10, maxBendsPerLeg: 3 },
+  canvasC: { crossings: 2, overlaps: 0, totalBends: 8, maxBendsPerLeg: 3 },
+  canvasD: { crossings: 0, overlaps: 0, totalBends: 0, maxBendsPerLeg: 0 },
+  workedExample2: { crossings: 3, overlaps: 0, totalBends: 15, maxBendsPerLeg: 3 },
+  buildState3: { crossings: 0, overlaps: 0, totalBends: 3, maxBendsPerLeg: 3 },
+  buildState5: { crossings: 1, overlaps: 0, totalBends: 5, maxBendsPerLeg: 3 },
+  newSpokeNoChain: { crossings: 0, overlaps: 0, totalBends: 3, maxBendsPerLeg: 3 },
+  hubEmptyWithSpoke: { crossings: 0, overlaps: 0, totalBends: 1, maxBendsPerLeg: 1 },
+  solanaTwoChainReturn: { crossings: 3, overlaps: 0, totalBends: 15, maxBendsPerLeg: 3 },
+};
+
 describe("R8: the numbers of each layout fixture", () => {
-  // Interim form while rules R3 to R7 land one by one: crossings and bends are no worse than the
-  // baseline and no line overlaps another (R5). The last commit adds the final numbers.
   for (const [name, fixture] of Object.entries(FIXTURES)) {
-    it(`${name} is no worse than its baseline`, () => {
+    const key = name as Name;
+    describe(name, () => {
       const layout = layoutGraph(fixture.input, EN);
-      const base = BASELINE[name as keyof typeof FIXTURES];
       const now = measureLayout(layout);
-      expect(now.overlaps).toBe(0);
-      expect(now.crossings).toBeLessThanOrEqual(base.crossings);
-      expect(now.totalBends).toBeLessThanOrEqual(base.totalBends);
-      expect(now.maxBendsPerLeg).toBeLessThanOrEqual(base.maxBendsPerLeg);
+
+      it("has no overlap", () => {
+        expect(now.overlaps).toBe(0);
+        expect(findConflicts(layout).overlaps).toEqual([]);
+      });
+
+      it("keeps only the crossings that R2 forces, and as few as the minimum", () => {
+        expect(classifyCrossings(layout).unforced).toEqual([]);
+        expect(now.crossings).toBe(FORCED[key]);
+      });
+
+      it("has no more bends than the baseline, and at most 3 in a visible leg", () => {
+        expect(now.totalBends).toBeLessThanOrEqual(BASELINE[key].totalBends);
+        expect(now.maxBendsPerLeg).toBeLessThanOrEqual(3);
+      });
+
+      it("records the numbers", () => {
+        expect(now).toEqual(FINAL[key]);
+      });
     });
   }
 });
