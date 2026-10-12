@@ -44,6 +44,19 @@ describe("fund Review [R1, R2]", () => {
     expect(validateStep(draft, "limits", buildMandateCatalog()) === null).toBe(allowed);
     expect(hasLaunchTokenAllowance({ ...draft, tokens: [{ ...token, locked: true }] })).toBe(false);
   });
+  it("reads the All-mode Every token cap as the token allowance", () => {
+    // @rule R10
+    const all = { ...createEmptyDraft("2026-10-04", "limits"), tokenMode: "all" as const };
+    const withCap = (cap: { pct: number; noCap: boolean }) => ({
+      ...all,
+      caps: { ...all.caps, everyToken: cap },
+    });
+    expect(hasLaunchTokenAllowance(withCap({ pct: 10, noCap: false }))).toBe(true);
+    expect(hasLaunchTokenAllowance(withCap({ pct: 0, noCap: true }))).toBe(true);
+    expect(hasLaunchTokenAllowance(withCap({ pct: 0, noCap: false }))).toBe(false);
+    expect(hasLaunchTokenAllowance(all)).toBe(false);
+  });
+
   it("trims identity and validates the manager's first deposit", () => {
     expect(validateReview(review, BigInt("100000000")).name).toBe("Aave income fund");
   });

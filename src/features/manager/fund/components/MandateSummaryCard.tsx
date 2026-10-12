@@ -47,6 +47,8 @@ import { formatCount } from "@/lib/utils/format";
 import type { MandateCatalog } from "../mandateCatalog";
 import {
   capRows,
+  EVERY_TOKEN_ROW_ID,
+  effectiveCap,
   hasDexProtocol,
   type MandateCap,
   type MandateDraft,
@@ -55,6 +57,7 @@ import {
   type ProtocolId,
   REQUIRED_PROTOCOLS,
   tokenKey,
+  tokenModeOf,
 } from "../mandateDraft";
 import { NetworkDots, NetworkLogoWithName, useNetworkNames } from "./NetworkDots";
 
@@ -176,7 +179,7 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
    * inside its own strings (`fundBuilder.drafts.row`, `fundBuilder.limits.hubRow`), not copy.
    * An unanswered cap reads "Not set" and never "0%": zero is a cap that forbids the position.
    */
-  function capText(name: string, cap: MandateCap | undefined): string {
+  function capText(name: string, cap: MandateCap | null | undefined): string {
     if (!cap) return `${name} · ${unsetLabel}`;
     return `${name} · ${cap.noCap ? noCapLabel : `${cap.pct}%`}`;
   }
@@ -186,8 +189,17 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
   const protocols = orderedProtocols(draft);
   const showPools = hasDexProtocol(draft) && draft.pools.length > 0;
   const hiddenPools = Math.max(0, draft.pools.length - POOLS_SHOWN);
-  const hasCapRows =
-    rows.networks.length > 0 || rows.protocols.length > 0 || rows.tokens.length > 0;
+  // POO-2332 R10: All mode has one "Every token" cap in place of the per-token caps.
+  const allTokens = tokenModeOf(draft) === "all";
+  const tokenCaps = allTokens
+    ? [
+        capText(
+          t("fundBuilder.limits.everyToken"),
+          effectiveCap(draft, "everyToken", EVERY_TOKEN_ROW_ID),
+        ),
+      ]
+    : rows.tokens.map((token) => capText(token.symbol, draft.caps.tokens[tokenKey(token)]));
+  const hasCapRows = rows.networks.length > 0 || rows.protocols.length > 0 || tokenCaps.length > 0;
 
   /** One sub-group of the Limits row, or nothing when the group has no rows at all (R43). */
   function capGroup(label: string, entries: string[]): ReactNode {
@@ -300,12 +312,7 @@ export function MandateSummaryCard({ draft, catalog, broad }: MandateSummaryCard
                   capText(protocolNames[protocol], draft.caps.protocols[protocol]),
                 ),
               )}
-              {capGroup(
-                t("fundBuilder.limits.perToken"),
-                rows.tokens.map((token) =>
-                  capText(token.symbol, draft.caps.tokens[tokenKey(token)]),
-                ),
-              )}
+              {capGroup(t("fundBuilder.limits.perToken"), tokenCaps)}
             </span>
           ) : (
             <span className="text-muted-foreground text-xs">{t("fundBuilder.limits.noRows")}</span>

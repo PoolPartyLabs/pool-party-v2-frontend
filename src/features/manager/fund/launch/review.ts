@@ -5,9 +5,19 @@
  * Review validation and integer seed accounting.
  */
 import { z } from "zod";
-import { type MandateDraft, tokenKey } from "../mandateDraft";
+import { type MandateDraft, tokenKey, tokenModeOf } from "../mandateDraft";
 
-export function hasLaunchTokenAllowance(draft: Pick<MandateDraft, "tokens" | "caps">): boolean {
+/**
+ * Whether the mandate allows a token besides the locked ones. POO-2332 R10: in All mode the one
+ * "Every token" cap is the allowance, so the per-token caps are not read.
+ */
+export function hasLaunchTokenAllowance(
+  draft: Pick<MandateDraft, "tokens" | "caps" | "dataMode" | "tokenMode">,
+): boolean {
+  if (tokenModeOf(draft) === "all") {
+    const cap = draft.caps.everyToken;
+    return cap?.noCap === true || (cap?.pct ?? 0) > 0;
+  }
   return draft.tokens.some((token) => {
     const cap = draft.caps.tokens[tokenKey(token)];
     return !token.locked && (cap?.noCap === true || (cap?.pct ?? 0) > 0);
