@@ -4,12 +4,12 @@
  * @description Exact selected-block pool or asset identity for the DEX Screener chart, without money fields.
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8674-15508
  * @linear https://linear.app/yeildbay/issue/POO-2338
- * @implements-rules-version v1 (POO-2338)
+ * @implements-rules-version v1 (POO-2338); POO-2343 rules v1 (R8 Raydium pool chart)
  * @analytics-events none, private pure selection context; chart hosts own bounded events.
  *
  * Build and Manage map the selection to the same chartModel resolvers (R6). A Uniswap block gives
  * its exact pool (R2). A lending block gives the token of its asset (R3). Other blocks and mock
- * pools stay unavailable (R5).
+ * pools stay unavailable (R5). A Raydium block with a pool address gives that pool (R8 of POO-2343).
  */
 import { apiNetworkForChain } from "@/lib/chains/config";
 import type { PanelDraftTarget } from "../build/panel/usePanelDraft";
@@ -47,7 +47,11 @@ const unavailable = (reason: ChartBlockReason): ChartAvailability => ({
 function configIdentity(config: PanelConfig | null): unknown[] {
   if (!config) return [null];
   if ("assetKey" in config) return [config.assetKey];
-  if ("catalogId" in config) return [config.catalogId, config.pair];
+  if ("catalogId" in config) {
+    return "poolAddress" in config
+      ? [config.catalogId, config.pair, config.poolAddress]
+      : [config.catalogId, config.pair];
+  }
   return [];
 }
 
@@ -61,7 +65,10 @@ function pairLabel(symbols: readonly string[]): string {
  * (`mapDexPool`, then `mapUniswapPoolToMandatePool`). A mock row has a slug key and a fake address,
  * and must not open a chart of an unrelated address.
  */
-function chartPoolAddress(pool: MandatePoolRef, protocol: ChartPoolProtocol): string | null {
+function chartPoolAddress(
+  pool: MandatePoolRef,
+  protocol: "uniswap-v3" | "uniswap-v4",
+): string | null {
   if (protocol === "uniswap-v4") return pool.poolId ?? null;
   return poolRefKey(pool).toLowerCase() === pool.address.toLowerCase() ? pool.address : null;
 }
@@ -83,8 +90,7 @@ export function buildChartSelection(
     if (!poolId) return selected([null], unavailable("unconfigured"));
     const pool = findMandatePool(draft.pools, target.network, poolId);
     if (!pool) return selected([poolId.toLowerCase()], unavailable("unconfigured"));
-    const protocol: ChartPoolProtocol =
-      target.kind === "uniswapV4Pool" ? "uniswap-v4" : "uniswap-v3";
+    const protocol = target.kind === "uniswapV4Pool" ? "uniswap-v4" : "uniswap-v3";
     const address = chartPoolAddress(pool, protocol);
     const details = [poolId.toLowerCase(), pool.protocol, address?.toLowerCase() ?? null];
     if (pool.network === "solana" || pool.protocol !== protocol) {
@@ -134,7 +140,20 @@ export function buildChartSelection(
   if (target.kind === "solanaOrcaPool" || target.kind === "solanaRaydiumPool") {
     const details = configIdentity(config);
     const catalogId = config && "catalogId" in config ? config.catalogId : null;
-    // The app has no canonical Orca or Raydium pool address, so there is no exact pool chart.
+    // R8 (POO-2343): a Raydium block with a pool address shows that pool on DEX Screener.
+    const poolAddress = config && "poolAddress" in config ? config.poolAddress : undefined;
+    if (target.kind === "solanaRaydiumPool" && target.network === "solana" && poolAddress) {
+      return selected(
+        details,
+        resolvePoolChart({
+          network: "solana",
+          protocol: "raydium",
+          poolAddress,
+          label: config && "pair" in config ? config.pair : "",
+        }),
+      );
+    }
+    // Orca has no pool chart, and a Raydium block with no pool address has no exact pool.
     return selected(details, unavailable(catalogId ? "unsupported_pair" : "unconfigured"));
   }
   return selected(configIdentity(config), unavailable("unsupported_block"));
