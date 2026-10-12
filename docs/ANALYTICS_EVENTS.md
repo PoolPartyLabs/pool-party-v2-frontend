@@ -126,6 +126,7 @@ in this phase signs a transaction**, which is what decides the shape of the funn
 settlement is the draft reaching storage, so `builder_mandate_completed` waits for the write and not
 for the last Next.
 
+The table below has nine events (POO-2332 added `builder_mandate_token_mode_changed`, the ninth).
 Two of the nine exist because something did NOT happen, and they are the ones that make the rest
 readable. `builder_mandate_blocked` is the only trace a refusal leaves at all: Next stays enabled
 when the product says no (R6, design rule P36), so without it a manager stopped by the Pools step
