@@ -954,17 +954,8 @@ describe("PoolsStep", () => {
   it("adds every result in order and stops at the first refusal", async () => {
     searchAnswers([pool({ id: "first" }), pool({ id: "second" })]);
     const user = userEvent.setup();
-    // Sixteen slots used, so the first pool's two tokens cannot enter and `addPool` refuses.
-    const full = draftOn();
-    const fillers: MandateTokenRef[] = Array.from({ length: 15 }, (_, index) => ({
-      address: `0x${index.toString(16).padStart(40, "f")}`,
-      symbol: `FILL${index}`,
-      name: `Filler ${index}`,
-      network: "arbitrum",
-      logoUrl: null,
-      locked: false,
-    }));
-    const { onBlocked, update } = renderStep({ ...full, tokens: [...full.tokens, ...fillers] });
+    // Every slot used (POO-2332 R2: 100), so the first pool's tokens cannot enter and `addPool` refuses.
+    const { onBlocked, update } = renderStep(fullSlots());
 
     await user.click(await screen.findByRole("button", { name: "Add all 2" }));
 
