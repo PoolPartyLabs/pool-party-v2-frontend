@@ -4,7 +4,7 @@
  * @implements-rules-version v1 + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
  * @implements-rules-version v1 (POO-2333 Figma parity: R8, R9)
- * @implements-rules-version v1 (POO-2343 R4: Raydium CLMM pools from DEX Screener)
+ * @implements-rules-version v1 (POO-2343 R4: Raydium CLMM pools from DEX Screener; R5: one failed network keeps the other networks' pools)
  * @analytics-events none, the shell emits
  *
  * POO-2125 [R11] / [R13] / [R29] to [R38], epic POO-2119. Mandate step 4: the pools this strategy
@@ -134,6 +134,7 @@ import {
   tokenKey,
 } from "../mandateDraft";
 import { findMandatePoolByAddress, searchMandatePools } from "../mandatePoolSource";
+import { type SettledPoolSearches, settlePoolSearches } from "../poolSearchSettle";
 import { poolFeeLabel, poolMeta } from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
@@ -202,6 +203,11 @@ interface Resolution {
    * list a failure leaves behind. See {@link universeSignatureOf}.
    */
   signature: string | null;
+  /**
+   * Networks whose read failed while others answered (R5). Their pools are missing from the list, so
+   * the step shows an error with Retry above it. Absent or empty when every read worked.
+   */
+  failedNetworks?: NetworkId[];
 }
 
 /** A measured universe, and the mandate it was measured over. Never one without the other. */
@@ -530,23 +536,20 @@ export function PoolsStep({
    * the search read below so that a token entering the mandate re-asks THIS question and leaves the
    * manager's own search alone.
    */
-  const measureUniverse = useCallback(async (): Promise<MandatePoolRef[]> => {
-    const answers = await Promise.all(
-      mandateTokens.map((token) =>
-        searchMandatePools({
-          network: token.network,
-          tokenAddress: token.address,
-          secondTokenAddress: undefined,
-          protocols,
-        }),
-      ),
+  const measureUniverse = useCallback(async (): Promise<SettledPoolSearches> => {
+    // R5: one failed network keeps the pools of the others; see `settlePoolSearches`.
+    return settlePoolSearches(
+      mandateTokens.map((token) => ({
+        network: token.network,
+        run: () =>
+          searchMandatePools({
+            network: token.network,
+            tokenAddress: token.address,
+            secondTokenAddress: undefined,
+            protocols,
+          }),
+      })),
     );
-    // Deduped by pool id: a pool holding two mandate tokens comes back from both searches.
-    const byId = new Map<string, MandatePoolRef>();
-    for (const found of answers) {
-      for (const pool of found) if (!byId.has(pool.id)) byId.set(pool.id, pool);
-    }
-    return [...byId.values()];
   }, [mandateTokens, protocols]);
 
   /**
@@ -579,22 +582,21 @@ export function PoolsStep({
     // The universe is not asked here; the measurement below owns it in every view.
     if (query.kind !== "token") return { pools: [], foundOn: null, signature: null };
 
-    const answers = await Promise.all(
-      fetchNetworks.map((id) =>
-        searchMandatePools({
-          network: id,
-          tokenAddress: query.address,
-          secondTokenAddress: query.second,
-          protocols,
-        }),
-      ),
+    // R5: one failed network keeps the pools of the others; see `settlePoolSearches`. A pair search
+    // run once per side of the pair returns the same rows twice, and the helper dedupes them by id.
+    const { pools, failedNetworks } = await settlePoolSearches(
+      fetchNetworks.map((id) => ({
+        network: id,
+        run: () =>
+          searchMandatePools({
+            network: id,
+            tokenAddress: query.address,
+            secondTokenAddress: query.second,
+            protocols,
+          }),
+      })),
     );
-    // Deduped by pool id: a pair search run once per side of the pair returns the same rows twice.
-    const byId = new Map<string, MandatePoolRef>();
-    for (const found of answers) {
-      for (const pool of found) if (!byId.has(pool.id)) byId.set(pool.id, pool);
-    }
-    return { pools: [...byId.values()], foundOn: null, signature: null };
+    return { pools, foundOn: null, signature: null, failedNetworks };
   }, [query, fetchNetworks, protocols, pasteNetworks]);
 
   const dex = hasDexProtocol(draft);
@@ -616,6 +618,9 @@ export function PoolsStep({
         if (ticket !== seq.current) return;
         setResolution(next);
         setVisibleCount(PAGE_SIZE);
+        // R5: some networks answered and some failed. The pools stay; the shell hears of the failure
+        // once, like any other failed read.
+        if (next.failedNetworks?.length) onErrorRef.current?.({ code: "POOLS_FETCH_FAILED" });
       })
       .catch(() => {
         if (ticket !== seq.current) return;
@@ -680,11 +685,25 @@ export function PoolsStep({
       return claim !== null && claim.measureTicket === measureTicket ? claim.listTicket : null;
     };
     measureUniverse()
-      .then((pools) => {
+      .then(({ pools, failedNetworks }) => {
         if (measureTicket !== measureSeq.current) return;
-        setUniverse({ pools, signature });
         const ticket = listTicket();
-        if (ticket !== null && ticket === seq.current) {
+        const serves = ticket !== null && ticket === seq.current;
+        if (failedNetworks.length > 0) {
+          // R5: a partial read is not the universe. Publishing it would hand R13 a denominator that
+          // misses the failed network, so no count is written and the flag stays down. The list
+          // still shows what arrived, with an error and Retry for the failed part.
+          onErrorRef.current?.({
+            code: serves ? "POOLS_FETCH_FAILED" : "POOLS_UNIVERSE_FETCH_FAILED",
+          });
+          if (serves) {
+            setResolution({ pools, foundOn: null, signature: null, failedNetworks });
+            setVisibleCount(PAGE_SIZE);
+          }
+          return;
+        }
+        setUniverse({ pools, signature });
+        if (serves) {
           setResolution({ pools, foundOn: null, signature });
           setVisibleCount(PAGE_SIZE);
         }
@@ -881,7 +900,13 @@ export function PoolsStep({
   const addableFound = resolution.pools.filter((pool) => canEverAdd(draft, pool, catalog)).length;
   const addableLeft = available.filter((pool) => canEverAdd(draft, pool, catalog)).length;
   const allSelected =
-    !loading && !failed && onScreenIsCurrent && addableFound > 0 && addableLeft === 0;
+    // R5: with a network missing, "everything is chosen" would be a claim about pools never read.
+    !loading &&
+    !failed &&
+    !resolution.failedNetworks?.length &&
+    onScreenIsCurrent &&
+    addableFound > 0 &&
+    addableLeft === 0;
   const broad = isBroadMandate(draft, catalog, universeCount ?? 0);
 
   const used = slotsUsed(draft);
@@ -1296,9 +1321,25 @@ export function PoolsStep({
         />
       );
     }
-    if (filtered.length === 0) return <EmptyState title={t("fundBuilder.pools.empty")} />;
+    const partialError = resolution.failedNetworks?.length ? (
+      // R5: the pools of the failed network are missing. Retry asks for the whole read again.
+      <ErrorState
+        title={t("fundBuilder.pools.error")}
+        onRetry={() => setRetryNonce((value) => value + 1)}
+        retryLabel={t("fundBuilder.pools.retry")}
+      />
+    ) : null;
+    if (filtered.length === 0) {
+      return (
+        <div className="flex flex-col gap-2">
+          {partialError}
+          <EmptyState title={t("fundBuilder.pools.empty")} />
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col gap-2">
+        {partialError}
         {visible.map(resultCard)}
         {remaining > 0 ? (
           <button
