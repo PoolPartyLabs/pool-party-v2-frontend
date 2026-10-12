@@ -52,7 +52,8 @@ const copy: ManageSpineCopy = {
   percent: (value) => new Intl.NumberFormat("en-US", MANAGE_PERCENT_FORMAT).format(value / 100),
   usd: (value) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value),
-  amount: (value) => new Intl.NumberFormat("en-US", { maximumFractionDigits: 4 }).format(value),
+  amount: (value) =>
+    new Intl.NumberFormat("en-US", { maximumFractionDigits: 4 }).format(Number(value)),
 };
 const model = normalizeManageModel(mockFund);
 const nodes = deriveManageInspection(model).nodes;
