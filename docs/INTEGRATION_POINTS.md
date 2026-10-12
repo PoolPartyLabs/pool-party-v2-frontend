@@ -529,3 +529,11 @@ download permission; the provider's drawing toolbar remains enabled.
 Current chart-delivery census: 2,306 files under `src/`, with 539 markers across 312 files,
 including tests, stories and source documentation. Registry totals are 712 rows and 707 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
+
+## Manage spine copy (POO-2335 v1)
+
+`manageSpineCopy.ts` adds 2 markers. The Aave health factor read is not served yet, so the Supply card shows "HF Not available". The Explorer link uses the deployed strategy address from the fund read. An empty or invalid address shows "Explorer · Not available" and "Strategy address is unavailable."
+
+Current Manage parity census: 2,308 files under `src/`, with 541 markers across 313 files,
+including tests, stories and source documentation. Registry totals are 713 rows and 708 unique
+IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.

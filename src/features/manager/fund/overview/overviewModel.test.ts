@@ -74,7 +74,9 @@ describe("Overview strategy row POO-2335", () => {
       tone: "warning",
     });
     expect(overviewStrategyRow({ ...mockFund, state: "Closed" }).status.tone).toBe("muted");
-    expect(overviewStrategyRow({ ...mockFund, state: "Unknown" }).status).toEqual({
+    expect(
+      overviewStrategyRow({ ...mockFund, state: "Unknown" } as unknown as typeof mockFund).status,
+    ).toEqual({
       key: "notAvailable",
       tone: "muted",
     });
