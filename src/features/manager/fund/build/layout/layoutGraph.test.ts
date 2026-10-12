@@ -311,7 +311,14 @@ describe("[C10] every chain returns; [C11] the return levels", () => {
         .filter((node) => node.direction === "outbound")
         .map((node) => bottom(node.rect)),
     );
-    expect(horizontalRuns(layout, "principal", deepest + LAYOUT.LINK).length).toBeGreaterThan(0);
+    // POO-2345 R4 and R6: a return line that leaves its Bridge in the column of Idle output goes
+    // straight down, so it has no run. Every other line still runs at this level.
+    const straight = (layout.connections ?? []).filter(
+      (edge) => edge.kind === "principal" && edge.points.every((p) => p.x === edge.points[0]?.x),
+    );
+    expect(
+      horizontalRuns(layout, "principal", deepest + LAYOUT.LINK).length + straight.length,
+    ).toBeGreaterThan(0);
   });
 
   // @rule C11, POO-2213 override: the converter bypass needs separate return levels.

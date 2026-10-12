@@ -51,6 +51,20 @@ function entering(layout: GraphLayout, bridge: BridgeNode): { edge: EdgeNode; x:
     .map((edge) => ({ edge, x: lastPoint(edge).x }));
 }
 
+/** The lines that start on the bottom edge of a Bridge, with the x of the port they leave. */
+function leaving(layout: GraphLayout, bridge: BridgeNode): { edge: EdgeNode; x: number }[] {
+  const bottom = bridge.rect.y + bridge.rect.h;
+  return (layout.connections ?? [])
+    .filter((edge) => edge.kind === "principal" || edge.kind === "income")
+    .filter((edge) => {
+      const start = edge.points[0] as Point;
+      return (
+        start.y === bottom && start.x >= bridge.rect.x && start.x <= bridge.rect.x + bridge.rect.w
+      );
+    })
+    .map((edge) => ({ edge, x: (edge.points[0] as Point).x }));
+}
+
 /** The chain id of a visible return line: `principal:chain:<id>` or `income:converted:<feeId>`. */
 function chainOf(input: LayoutInput, edgeId: string): string {
   const feeId = edgeId.startsWith("income:converted:")
@@ -97,5 +111,55 @@ describe("R3: the input ports of a return Bridge follow the lines", () => {
       }
     }
     expect(pairs).toBeGreaterThan(0);
+  });
+});
+
+describe("R4: the output ports of a return Bridge are grouped by class", () => {
+  // @rule R4
+  it("[R4] puts the principal ports left of the income ports", () => {
+    let bridges = 0;
+    for (const [name, , layout] of CASES) {
+      for (const bridge of outboundBridges(layout)) {
+        bridges += 1;
+        const row = leaving(layout, bridge).sort((a, b) => a.x - b.x);
+        const kinds = row.map((entry) => entry.edge.kind);
+        const firstIncome = kinds.indexOf("income");
+        expect(kinds.slice(firstIncome < 0 ? kinds.length : firstIncome), name).not.toContain(
+          "principal",
+        );
+        expect(new Set(row.map((entry) => entry.x)).size, name).toBe(row.length);
+      }
+    }
+    expect(bridges).toBeGreaterThan(0);
+  });
+
+  // @rule R4
+  it("[R4] sends the principal ports to Idle output and the income ports to Income", () => {
+    let lines = 0;
+    for (const [name, , layout] of CASES) {
+      const output = layout.spine.find((node) => node.role === "idleOutput");
+      const income = layout.spine.find((node) => node.role === "income");
+      for (const bridge of outboundBridges(layout)) {
+        for (const { edge } of leaving(layout, bridge)) {
+          lines += 1;
+          const target = edge.kind === "principal" ? output : income;
+          expect(lastPoint(edge).x, `${name} ${edge.id}`).toBe(
+            (target?.rect.x ?? Number.NaN) + (target?.rect.w ?? 0) / 2,
+          );
+        }
+      }
+    }
+    expect(lines).toBeGreaterThan(0);
+  });
+
+  // @rule R4
+  it("[R4] keeps the transfer inside a Bridge out of the visible lines", () => {
+    for (const [name, , layout] of CASES) {
+      const ids = [...(layout.connections ?? []), ...layout.edges].map((edge) => edge.id);
+      expect(
+        ids.filter((id) => id.startsWith("bridge-transfer:")),
+        name,
+      ).toEqual([]);
+    }
   });
 });

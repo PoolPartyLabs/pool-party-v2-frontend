@@ -154,6 +154,9 @@ export interface ReturnLine {
  *
  * - R3: on the top of a Bridge the ports follow the x where their lines start. Of two lines that
  *   start at one x, the income line goes left.
+ * - R4: on the bottom of a Bridge the ports are grouped by class. The principal ports are on the
+ *   left and the income ports on the right. Inside a class the order stays the one of the top.
+ *   Each port stays near the x of its target, so a line goes straight when the Bridge allows it.
  */
 export function planReturnLines(
   chains: readonly ReturnChainInput[],
@@ -213,8 +216,21 @@ export function planReturnLines(
       const offset = offsetAt(rect.x, rect.w, xs[index] ?? lo);
       entry.line.topOffset = offset;
       entry.line.topX = rect.x + rect.w * offset;
+    }
+    const out = [...row].sort(
+      (a, b) =>
+        Number(a.line.cls === "income") - Number(b.line.cls === "income") ||
+        a.line.topX - b.line.topX,
+    );
+    const outXs = placePorts(
+      out.map((entry) => entry.line.target),
+      lo,
+      hi,
+    );
+    for (const [index, entry] of out.entries()) {
+      const offset = offsetAt(rect.x, rect.w, outXs[index] ?? lo);
       entry.line.bottomOffset = offset;
-      entry.line.bottomX = entry.line.topX;
+      entry.line.bottomX = rect.x + rect.w * offset;
     }
   }
   return lines;
