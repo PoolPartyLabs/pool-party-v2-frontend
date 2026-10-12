@@ -559,7 +559,13 @@ describe("catalog", () => {
     expect(flags.robinhoodChain).toBe(false);
     const { result } = renderHook(() => useMandateDraft());
     await waitFor(() => expect(result.current.hydrated).toBe(true));
-    expect(result.current.catalog.networks.map((n) => n.id)).toEqual(["arbitrum", "robinhood"]);
+    // @rule R4 (POO-2342): the V2 catalog is the API catalog plus the Solana entries, so Solana
+    // follows Arbitrum and Robinhood in the list. Robinhood stays open, which is what this case proves.
+    expect(result.current.catalog.networks.map((n) => n.id)).toEqual([
+      "arbitrum",
+      "robinhood",
+      "solana",
+    ]);
     await waitFor(() => expect(result.current.hydrated).toBe(true));
     expect(result.current.catalog.networks.find((n) => n.id === "robinhood")?.available).toBe(true);
 
