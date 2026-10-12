@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name Build V2 return topology regressions
- * @implements-rules-version v2 (POO-2273)
+ * @implements-rules-version v2 (POO-2345); v2 (POO-2273)
  * @analytics-events none, pure graph verification
  */
 import { describe, expect, it } from "vitest";
@@ -165,10 +165,12 @@ describe("Build V2 financial returns (POO-2273 v2)", () => {
     const next = layout(changed);
     const model = semantic(graph);
     const after = semantic(next);
+    // POO-2345 R6: a line goes straight only when its ports share a column. A new chain can move
+    // the spoke, so the number of legs of a line can change. Its id and its first segment stay.
     const owned = (value: typeof model) =>
       value.connections
         .filter((entry) => entry.originId === "rh-a-pool")
-        .map((entry) => [entry.id, entry.segmentIds]);
+        .map((entry) => [entry.id, entry.segmentIds[0]]);
     expect(owned(after)).toEqual(owned(model));
     for (const [id, output] of [
       ["principal:chain:rh-a", "idleOutput"],

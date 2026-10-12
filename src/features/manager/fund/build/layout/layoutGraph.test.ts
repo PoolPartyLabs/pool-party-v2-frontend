@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph rule tests
- * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
+ * @implements-rules-version v2 (POO-2345); v2 (POO-2273); v1 (POO-2153 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, a pure geometry module: nothing here is rendered or tracked.
  *
  * One test (or one table) per rule of the layout, tagged with its handoff id. The exact coordinates

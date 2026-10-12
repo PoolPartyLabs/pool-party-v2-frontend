@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-023
  * @name layoutGraph oracle tests
- * @implements-rules-version v2 (POO-2273); v1 (POO-2153 rules v1)
+ * @implements-rules-version v2 (POO-2345); v2 (POO-2273); v1 (POO-2153 rules v1)
  * @analytics-events none, a pure geometry module: nothing here is rendered or tracked.
  *
  * Fixed node positions, insertion ports, labels and chips retain the October 3 Figma oracles.
