@@ -888,9 +888,9 @@
     },
     "limits": {
       "perNetwork": "Por red",
-      "perNetworkCaption": "Porcentaje máximo de capital en cada red · incrementos de 5%",
+      "perNetworkCaption": "Porcentaje máximo de depósitos en cada red · incrementos de 5%",
       "perProtocol": "Por protocolo",
-      "perProtocolCaption": "Porcentaje máximo de capital en cada protocolo · incrementos de 5%",
+      "perProtocolCaption": "Porcentaje máximo de depósitos en cada protocolo · incrementos de 5%",
       "perToken": "Por token",
       "perTokenCaption": "Porcentaje máximo de depósitos mantenido en cada token · incrementos de 5%",
       "tokenOnNetwork": "{symbol} en {network}",

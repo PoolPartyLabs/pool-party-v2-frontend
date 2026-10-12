@@ -888,9 +888,9 @@
     },
     "limits": {
       "perNetwork": "네트워크별",
-      "perNetworkCaption": "네트워크별 최대 자본 비율 · 5% 단위",
+      "perNetworkCaption": "네트워크별 예치금의 최대 비율 · 5% 단위",
       "perProtocol": "프로토콜별",
-      "perProtocolCaption": "프로토콜별 최대 자본 비율 · 5% 단위",
+      "perProtocolCaption": "프로토콜별 예치금의 최대 비율 · 5% 단위",
       "perToken": "토큰별",
       "perTokenCaption": "각 토큰에 보유되는 예치금의 최대 비율 · 5% 단위",
       "tokenOnNetwork": "{network}의 {symbol}",

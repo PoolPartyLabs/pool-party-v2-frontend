@@ -888,9 +888,9 @@
     },
     "limits": {
       "perNetwork": "按網路",
-      "perNetworkCaption": "每個網路的最大資金佔比 · 以 5% 為單位",
+      "perNetworkCaption": "每個網路的存款最大佔比 · 以 5% 為單位",
       "perProtocol": "按協議",
-      "perProtocolCaption": "每個協議的最大資金佔比 · 以 5% 為單位",
+      "perProtocolCaption": "每個協議的存款最大佔比 · 以 5% 為單位",
       "perToken": "按代幣",
       "perTokenCaption": "每個代幣持有的存款最大佔比 · 以 5% 為單位",
       "tokenOnNetwork": "{network} 上的 {symbol}",

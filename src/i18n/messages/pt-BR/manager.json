@@ -888,9 +888,9 @@
     },
     "limits": {
       "perNetwork": "Por rede",
-      "perNetworkCaption": "Participação máxima do capital em cada rede · incrementos de 5%",
+      "perNetworkCaption": "Participação máxima dos depósitos em cada rede · incrementos de 5%",
       "perProtocol": "Por protocolo",
-      "perProtocolCaption": "Participação máxima do capital em cada protocolo · incrementos de 5%",
+      "perProtocolCaption": "Participação máxima dos depósitos em cada protocolo · incrementos de 5%",
       "perToken": "Por token",
       "perTokenCaption": "Participação máxima dos depósitos mantida em cada token · incrementos de 5%",
       "tokenOnNetwork": "{symbol} na rede {network}",

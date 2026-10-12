@@ -888,9 +888,9 @@
     },
     "limits": {
       "perNetwork": "Par réseau",
-      "perNetworkCaption": "Part maximale du capital par réseau · par paliers de 5 %",
+      "perNetworkCaption": "Part maximale des dépôts par réseau · par paliers de 5 %",
       "perProtocol": "Par protocole",
-      "perProtocolCaption": "Part maximale du capital par protocole · par paliers de 5 %",
+      "perProtocolCaption": "Part maximale des dépôts par protocole · par paliers de 5 %",
       "perToken": "Par jeton",
       "perTokenCaption": "Part maximale des dépôts détenue dans chaque jeton · par paliers de 5 %",
       "tokenOnNetwork": "{symbol} sur {network}",

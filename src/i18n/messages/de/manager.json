@@ -888,9 +888,9 @@
     },
     "limits": {
       "perNetwork": "Pro Netzwerk",
-      "perNetworkCaption": "Maximaler Kapitalanteil pro Netzwerk · in 5-%-Schritten",
+      "perNetworkCaption": "Maximaler Anteil der Einlagen pro Netzwerk · in 5-%-Schritten",
       "perProtocol": "Pro Protokoll",
-      "perProtocolCaption": "Maximaler Kapitalanteil pro Protokoll · in 5-%-Schritten",
+      "perProtocolCaption": "Maximaler Anteil der Einlagen pro Protokoll · in 5-%-Schritten",
       "perToken": "Pro Token",
       "perTokenCaption": "Maximaler Anteil der Einlagen, der in jedem Token gehalten wird · in 5-%-Schritten",
       "tokenOnNetwork": "{symbol} auf {network}",

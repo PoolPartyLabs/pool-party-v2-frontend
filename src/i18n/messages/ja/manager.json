@@ -888,9 +888,9 @@
     },
     "limits": {
       "perNetwork": "ネットワーク別",
-      "perNetworkCaption": "各ネットワークにおける資本の最大割合 · 5%刻み",
+      "perNetworkCaption": "各ネットワークにおける預入額の最大割合 · 5%刻み",
       "perProtocol": "プロトコル別",
-      "perProtocolCaption": "各プロトコルにおける資本の最大割合 · 5%刻み",
+      "perProtocolCaption": "各プロトコルにおける預入額の最大割合 · 5%刻み",
       "perToken": "トークン別",
       "perTokenCaption": "各トークンに保持される預入額の最大割合 · 5%刻み",
       "tokenOnNetwork": "{network} の {symbol}",

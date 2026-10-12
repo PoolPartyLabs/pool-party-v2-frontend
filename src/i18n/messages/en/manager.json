@@ -888,9 +888,9 @@
     },
     "limits": {
       "perNetwork": "Per network",
-      "perNetworkCaption": "Max share of capital on each network · 5% steps",
+      "perNetworkCaption": "Max share of deposits on each network · 5% steps",
       "perProtocol": "Per protocol",
-      "perProtocolCaption": "Max share of capital in each protocol · 5% steps",
+      "perProtocolCaption": "Max share of deposits in each protocol · 5% steps",
       "perToken": "Per token",
       "perTokenCaption": "Max share of deposits held in each token · 5% steps",
       "tokenOnNetwork": "{symbol} on {network}",

@@ -888,9 +888,9 @@
     },
     "limits": {
       "perNetwork": "Theo mạng",
-      "perNetworkCaption": "Tỷ lệ vốn tối đa trên mỗi mạng · mức tăng 5%",
+      "perNetworkCaption": "Tỷ lệ tiền gửi tối đa trên mỗi mạng · mức tăng 5%",
       "perProtocol": "Theo giao thức",
-      "perProtocolCaption": "Tỷ lệ vốn tối đa trong mỗi giao thức · mức tăng 5%",
+      "perProtocolCaption": "Tỷ lệ tiền gửi tối đa trong mỗi giao thức · mức tăng 5%",
       "perToken": "Theo token",
       "perTokenCaption": "Tỷ lệ tiền gửi tối đa được giữ trong mỗi token · mức tăng 5%",
       "tokenOnNetwork": "{symbol} trên {network}",

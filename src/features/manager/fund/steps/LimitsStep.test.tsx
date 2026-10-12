@@ -190,10 +190,12 @@ describe("LimitsStep", () => {
     renderStep();
 
     expect(screen.getByText("Per network")).toBeInTheDocument();
-    expect(screen.getByText("Max share of capital on each network · 5% steps")).toBeInTheDocument();
+    expect(
+      screen.getByText("Max share of deposits on each network · 5% steps"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Per protocol")).toBeInTheDocument();
     expect(
-      screen.getByText("Max share of capital in each protocol · 5% steps"),
+      screen.getByText("Max share of deposits in each protocol · 5% steps"),
     ).toBeInTheDocument();
     expect(screen.getByText("Per token")).toBeInTheDocument();
     expect(
