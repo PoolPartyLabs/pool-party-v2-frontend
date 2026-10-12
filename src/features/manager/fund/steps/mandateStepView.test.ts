@@ -56,9 +56,9 @@ function translatorFor(locale: string) {
   if (!messages) throw new Error(`no messages for ${locale}`);
   const translator = createTranslator({
     locale,
-    messages: { manager: messages } as never,
+    messages: { manager: messages },
     namespace: "manager",
-  });
+  } as unknown as Parameters<typeof createTranslator>[0]);
   return (key: string, values?: Record<string, string | number>) =>
     (translator as unknown as (k: string, v?: Record<string, string | number>) => string)(
       key,

@@ -119,7 +119,7 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
 
   const ownBlock = block?.step === STEP ? block : null;
   // POO-2333 R4: a refused click on a locked row gets its own notice beside Swap and bridge.
-  const lockedKind = lockedRowKind(catalog, draft, ownBlock?.rowId);
+  const lockedKind = lockedRowKind(catalog, draft, ownBlock?.rowId ?? undefined);
 
   /**
    * The inline notice for a refusal pointed at this step, or null when the row already said it.
