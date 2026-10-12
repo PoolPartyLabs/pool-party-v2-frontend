@@ -12,8 +12,8 @@ Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This deliv
 the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
 local Build/Manage host across phases and applies the route/account/exit guards described below.
 This wizard change is pre-merge code delivery, without a deployment or native-browser visual
-acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
-Not available; `solanaSpoke` stays off.
+acceptance claim. Solana quotes, wallet operations and public launch remain Not available.
+Solana pool and chart data come from DEX Screener (POO-2343, see below); `solanaSpoke` stays off.
 
 POO-2342 rules v1: V2 is one builder. `FundStrategyBuilderScreen` (`PP-MGR-SCR-002`) shows Solana,
 Arbitrum and Robinhood in Networks, with the same step bodies, palette, cards and inline panel.
@@ -925,7 +925,7 @@ separate API or wallet allowlist.
 The editor adds Kamino Lend, Jupiter Swap, Raydium CLMM and Orca Whirlpools blocks with official
 logos, local pair/allocation choices and guarded Apply/discard/removal. Preview configuration lives
 only in component memory. EVM family storage and saved drafts retain their existing semantics.
-Market data and execution say Not available. No wallet, RPC, builder or launch operation is imported.
+Execution says Not available. A Raydium block reads its pool and chart from DEX Screener (POO-2343); other market data says Not available. No wallet, RPC, builder or launch operation is imported.
 
 See the [delivery plan](../../../docs/solana-preview-preparation-plan-2026-10-07.md),
 [feature reference](fund/solana-preview/README.md) and [ADR 0009](../../../docs/adr/0009-local-solana-visual-preview.md).
@@ -971,10 +971,35 @@ The Charts tab shows the DEX Screener embed of the exact pool or asset of the se
 
 - `chartModel.ts` (PP-MGR-LIB-077) builds `https://dexscreener.com/{chain}/{address}?embed=1&theme=dark&trades=0&chartLeftToolbar=1&chartTheme=dark&chartStyle=1&chartType=usd&interval=60`. The chain is arbitrum, base, polygon, robinhood or solana. EVM addresses are lowercase.
 - `chartContext.ts` (PP-MGR-LIB-078) gives Build and Manage the same URL for the same pool or asset. A Uniswap v3 block uses the pool address. A Uniswap v4 block uses the bare PoolId. Aave Supply, Aave Borrow and a Manage supply position use the token address; the native token uses the wrapped native address. Kamino Supply uses the USDC mint.
-- A mock pool with no real address or PoolId is `unconfigured`. Swap, Holding, Pendle, GMX and the flow blocks are `unsupported_block`. Another network, and Solana Orca and Raydium, are `unsupported_pair`.
+- A mock pool with no real address or PoolId is `unconfigured`. Swap, Holding, Pendle, GMX and the flow blocks are `unsupported_block`. Another network and Solana Orca are `unsupported_pair`. A Solana Raydium block with a pool address shows its pool (POO-2343).
 - The header says "Pool chart" or "Asset chart", then the pair or asset and the venue. The footer says "Chart by DEX Screener" and opens the public DEX Screener page.
 - The iframe `onLoad` stops the 20 s timeout. The surface reads no message from the frame. `onLoad` also fires for an error page, so it does not prove that candles loaded.
 - `chart_market` is `pool`, `token` or `unavailable`. No event holds an address.
 - Build and Manage share `StrategyChartSurface.tsx` (PP-MGR-CMP-103). Charts changes the visible tab only. The canvas stays mounted, and each Configure or Manage draft stays in its parent. Chart controls contain Delete, Backspace and Escape, so they cannot remove the selected Build block.
 
 See [integration contract](../../../docs/INTEGRATION_POINTS.md), [security](../../../docs/10_SECURITY.md) and CR-MGR-POO2338.
+
+## Raydium CLMM pools from DEX Screener (POO-2343 rules v1)
+
+The Pools step searches Solana pools in the same step as the Arbitrum and Robinhood pools. The
+"Not available" state for Solana is gone. Orca has no pool search. Id `PP-MGR-CMP-107`.
+
+- `raydiumPoolsAction.ts` is a server action. It calls `raydiumPoolsRead.ts`, which reads
+  `GET https://api.dexscreener.com/token-pairs/v1/solana/{mint}` with a 10 s timeout. The browser does
+  not call DEX Screener, so the CSP `connect-src` does not change. Both files carry a
+  `PP-INTEGRATION-POINT` marker. POO-2344 moves the reads into the Pool Party API.
+- `raydiumPools.ts` is pure logic. It keeps the pairs with `dexId` "raydium" and the label "CLMM",
+  removes duplicate pair addresses, sorts by `liquidity.usd` from high to low, and maps each pair to a
+  `MandatePoolRef` (network "solana", protocol "raydium"). Liquidity and 24 h volume come from DEX
+  Screener. Fee tier and APR stay empty (`feeBps` and `feeTier` are `null`), so the step shows its
+  empty-value display. No value is made up.
+- A failed read, a timeout or a bad shape shows the Pools step error state with Retry. The EVM search
+  is a separate read.
+- A selected Raydium pool saves in the draft like an EVM pool and reads back after a reload.
+- `solana-preview/raydiumBlockPool.ts` gives the Raydium block its pool from the Raydium pools of the
+  mandate. The block config keeps `poolAddress` and the pair label. With no Raydium pool the block uses
+  SOL/USDC `3ucNos4NbumPLZNWztqGHNFFgkHeRMBQAVemeeomsUxv`.
+- The Charts tab shows the DEX Screener embed with chain `solana` for a Raydium block with a
+  `poolAddress`. The venue label is "Raydium CLMM". The panel text names DEX Screener as the source in
+  11 locales (`solanaPreview.raydiumSource`).
+- The Solana search sends the pool search events of today. No event has a mint or a pool address.
