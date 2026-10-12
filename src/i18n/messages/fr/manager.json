@@ -892,7 +892,7 @@
       "perProtocol": "Par protocole",
       "perProtocolCaption": "Part maximale du capital par protocole · par paliers de 5 %",
       "perToken": "Par jeton",
-      "perTokenCaption": "Part maximale du capital détenue dans chaque jeton · par paliers de 5 %",
+      "perTokenCaption": "Part maximale des dépôts détenue dans chaque jeton · par paliers de 5 %",
       "tokenOnNetwork": "{symbol} sur {network}",
       "hubRow": "Aucun plafond · le hub conserve ce qui n'est pas envoyé ailleurs",
       "hubCaption": "Hub",

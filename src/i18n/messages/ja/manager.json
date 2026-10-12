@@ -892,7 +892,7 @@
       "perProtocol": "プロトコル別",
       "perProtocolCaption": "各プロトコルにおける資本の最大割合 · 5%刻み",
       "perToken": "トークン別",
-      "perTokenCaption": "各トークンに保持される資本の最大割合 · 5%刻み",
+      "perTokenCaption": "各トークンに保持される預入額の最大割合 · 5%刻み",
       "tokenOnNetwork": "{network} の {symbol}",
       "hubRow": "上限なし · hub は他に送られなかった分を保持します",
       "hubCaption": "Hub",

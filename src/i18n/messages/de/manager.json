@@ -892,7 +892,7 @@
       "perProtocol": "Pro Protokoll",
       "perProtocolCaption": "Maximaler Kapitalanteil pro Protokoll · in 5-%-Schritten",
       "perToken": "Pro Token",
-      "perTokenCaption": "Maximaler Kapitalanteil, der in jedem Token gehalten wird · in 5-%-Schritten",
+      "perTokenCaption": "Maximaler Anteil der Einlagen, der in jedem Token gehalten wird · in 5-%-Schritten",
       "tokenOnNetwork": "{symbol} auf {network}",
       "hubRow": "Kein Limit · der Hub hält, was nicht anderswohin gesendet wird",
       "hubCaption": "Hub",

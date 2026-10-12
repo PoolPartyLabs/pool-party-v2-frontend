@@ -892,7 +892,7 @@
       "perProtocol": "프로토콜별",
       "perProtocolCaption": "프로토콜별 최대 자본 비율 · 5% 단위",
       "perToken": "토큰별",
-      "perTokenCaption": "각 토큰에 보유되는 최대 자본 비율 · 5% 단위",
+      "perTokenCaption": "각 토큰에 보유되는 예치금의 최대 비율 · 5% 단위",
       "tokenOnNetwork": "{network}의 {symbol}",
       "hubRow": "한도 없음 · hub는 다른 곳으로 보내지 않은 자금을 보유합니다",
       "hubCaption": "Hub",

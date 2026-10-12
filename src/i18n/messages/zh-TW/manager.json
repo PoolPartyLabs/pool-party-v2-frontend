@@ -892,7 +892,7 @@
       "perProtocol": "按協議",
       "perProtocolCaption": "每個協議的最大資金佔比 · 以 5% 為單位",
       "perToken": "按代幣",
-      "perTokenCaption": "每個代幣持有的最大資金佔比 · 以 5% 為單位",
+      "perTokenCaption": "每個代幣持有的存款最大佔比 · 以 5% 為單位",
       "tokenOnNetwork": "{network} 上的 {symbol}",
       "hubRow": "無上限 · hub 持有未發送至其他地方的資金",
       "hubCaption": "Hub",

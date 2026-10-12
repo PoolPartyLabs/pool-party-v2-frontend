@@ -892,7 +892,7 @@
       "perProtocol": "Por protocolo",
       "perProtocolCaption": "Participação máxima do capital em cada protocolo · incrementos de 5%",
       "perToken": "Por token",
-      "perTokenCaption": "Participação máxima do capital mantida em cada token · incrementos de 5%",
+      "perTokenCaption": "Participação máxima dos depósitos mantida em cada token · incrementos de 5%",
       "tokenOnNetwork": "{symbol} na rede {network}",
       "hubRow": "Sem limite · o hub mantém o que não é enviado a outro lugar",
       "hubCaption": "Hub",

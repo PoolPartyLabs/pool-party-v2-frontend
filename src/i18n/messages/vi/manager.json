@@ -892,7 +892,7 @@
       "perProtocol": "Theo giao thức",
       "perProtocolCaption": "Tỷ lệ vốn tối đa trong mỗi giao thức · mức tăng 5%",
       "perToken": "Theo token",
-      "perTokenCaption": "Tỷ lệ vốn tối đa được giữ trong mỗi token · mức tăng 5%",
+      "perTokenCaption": "Tỷ lệ tiền gửi tối đa được giữ trong mỗi token · mức tăng 5%",
       "tokenOnNetwork": "{symbol} trên {network}",
       "hubRow": "Không giới hạn · hub giữ phần không được gửi đến nơi khác",
       "hubCaption": "Hub",

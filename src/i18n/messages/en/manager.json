@@ -892,7 +892,7 @@
       "perProtocol": "Per protocol",
       "perProtocolCaption": "Max share of capital in each protocol · 5% steps",
       "perToken": "Per token",
-      "perTokenCaption": "Max share of capital held in each token · 5% steps",
+      "perTokenCaption": "Max share of deposits held in each token · 5% steps",
       "tokenOnNetwork": "{symbol} on {network}",
       "hubRow": "No cap · the hub holds what is not sent elsewhere",
       "hubCaption": "Hub",

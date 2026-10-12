@@ -892,7 +892,7 @@
       "perProtocol": "Por protocolo",
       "perProtocolCaption": "Porcentaje máximo de capital en cada protocolo · incrementos de 5%",
       "perToken": "Por token",
-      "perTokenCaption": "Porcentaje máximo de capital mantenido en cada token · incrementos de 5%",
+      "perTokenCaption": "Porcentaje máximo de depósitos mantenido en cada token · incrementos de 5%",
       "tokenOnNetwork": "{symbol} en {network}",
       "hubRow": "Sin límite · el hub mantiene lo que no se envía a otro lugar",
       "hubCaption": "Hub",

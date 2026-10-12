@@ -892,7 +892,7 @@
       "perProtocol": "Per protocol",
       "perProtocolCaption": "Maximaal kapitaalaandeel per protocol · in stappen van 5%",
       "perToken": "Per token",
-      "perTokenCaption": "Maximaal kapitaalaandeel aangehouden in elk token · in stappen van 5%",
+      "perTokenCaption": "Maximaal aandeel van de stortingen aangehouden in elk token · in stappen van 5%",
       "tokenOnNetwork": "{symbol} op {network}",
       "hubRow": "Geen limiet · de hub houdt aan wat niet ergens anders naartoe wordt gestuurd",
       "hubCaption": "Hub",

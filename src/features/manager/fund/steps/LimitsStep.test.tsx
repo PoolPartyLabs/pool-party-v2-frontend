@@ -183,7 +183,7 @@ describe("LimitsStep", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Per token")).toBeInTheDocument();
     expect(
-      screen.getByText("Max share of capital held in each token · 5% steps"),
+      screen.getByText("Max share of deposits held in each token · 5% steps"),
     ).toBeInTheDocument();
   });
 

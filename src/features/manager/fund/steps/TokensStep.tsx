@@ -91,10 +91,16 @@ import type { MandateStepProps } from "./stepProps";
 /** This step's key, spelled once. */
 const STEP = "tokens" as const;
 
-/** R7: how many "Your tokens" rows show before "and N more tokens" takes over. */
-const MANDATE_ROWS_SHOWN = 8;
+/**
+ * R7: how many "Your tokens" rows show before "and N more tokens" takes over. Figma 9295:1116 (Full
+ * basket, 38 tokens) draws 4 rows (USDC, USDG, WETH, WBTC) and then the "more" line.
+ */
+const MANDATE_ROWS_SHOWN = 4;
 
-/** R6: how many skeleton cards stand in for the grid while the catalog loads. */
+/**
+ * R6: how many skeleton cards stand in for the grid while the catalog loads. Figma 9295:374
+ * (Loading) draws 6 result cards in 2 columns, the same count as the loaded grid in 9295:3.
+ */
 const SKELETON_CARDS = 6;
 
 /** The one network-filter value that is not a network. */
