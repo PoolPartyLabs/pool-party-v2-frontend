@@ -10,7 +10,8 @@ public manager profile, and the strategy **manage detail** (`PP-MGR-SCR-004`) wi
 
 Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
 the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
-local Build/Manage host across phases and applies the route/account/exit guards described below.
+local Build across phases and applies the route/account/exit guards described below.
+POO-2342 R12 removed the Manage host: the builder shows only Configure.
 This wizard change is pre-merge code delivery, without a deployment or native-browser visual
 acceptance claim. Solana quotes, wallet operations and public launch remain Not available.
 Solana pool and chart data come from DEX Screener (POO-2343, see below); `solanaSpoke` stays off.
@@ -31,13 +32,12 @@ PR #151 adds 236 × 62 USDC Idle and 144 × 96 native SOL cash with a 32 px late
 vertical center. Cash is handleless decoration with unavailable quantity/USD readings; standard
 Build remains without cash. The standard EVM catalog and launch payloads receive no local Solana identity.
 
-Build keeps Configure and local Manage in the same panel. The mounted per-instance Manage
-host preserves drafts and inline Review through selection and hiding; the local Build remains
-mounted after first entry while another wizard phase is visible. Configure protects pending
-Apply before opening Manage. Phase exit with dirty Manage settings requires explicit discard.
-Allocation belongs to the chain and is editable only on its first position; downstream inspectors
-share the applied allocation. `solanaBuildManageBinding` (`PP-MGR-LIB-076`) acknowledges Apply
-only after the whole resulting shared plan validates against the current mandate and budgets.
+Build shows only Configure during fund creation, on every network. The builder has no Manage
+toggle and no Manage panel (POO-2342 rules v2). The local Build remains mounted after first entry
+while another wizard phase is visible. Allocation belongs to the chain and is editable only on its
+first position; downstream inspectors share the applied allocation. The Solana Manage presenter
+and model stay in the tree as a reference for a future Solana Manage screen. Nothing mounts them
+until a Solana fund can launch.
 
 A Solana draft saves to local storage like any V2 draft. Review shows the standard cards and a reason
 that names Solana, because a plan with Solana content cannot launch. Upload, balances, authoritative
@@ -80,7 +80,7 @@ applies to new deposits only. There is no "When to apply" selector. The Overview
 (`PP-MGR-SCR-001`) uses `overviewStrategyRow` (`PP-MGR-LIB-058`) for the avatar, the status pill
 and the network names. On a read error, the AUM card shows the retry and the table shows
 "Your strategy list is unavailable."
-No new feature flag is added. The 3-click Solana gate is unchanged.
+No new feature flag is added. The 3-click Solana gate is removed (POO-2342): a click on V2 shows Solana in Networks.
 
 ## i18n namespace
 
@@ -770,7 +770,7 @@ The pure decisions are in `steps/mandateStepView.ts` (`PP-MGR-LIB-081`) and in `
 (`PP-MGR-LIB-019`). These rules replace the older layout rules above where they disagree.
 
 - Networks: a caption under "Other networks" tells the cost of each network (R1). A spoke that the
-  config does not enable is not shown. Solana shows only in its preview mode (R2).
+  config does not enable is not shown. Solana, Arbitrum and Robinhood show in the V2 Networks list (R2, POO-2342).
 - Protocols: "Protocols to operate" comes first. "Swap and bridge" sits below the divider,
   preselected, collapsed to "{names} · selected for you", and opens on Show to checkbox rows (R3).
   The "Required" group is removed. The last swap cannot be cleared. In both modes, the last bridge

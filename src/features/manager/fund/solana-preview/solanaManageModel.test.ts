@@ -2,6 +2,7 @@
  * @id PP-MGR-LIB-071
  * @name solanaManageModel tests
  * @implements-rules-version v1 (POO-2291)
+ * Not mounted until a Solana fund can launch (reference for a future Solana Manage screen).
  */
 import { describe, expect, it } from "vitest";
 import {

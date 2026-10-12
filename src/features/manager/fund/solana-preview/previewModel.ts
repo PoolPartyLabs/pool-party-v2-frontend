@@ -3,6 +3,7 @@
  * @name solanaPreviewModel
  * @implements-rules-version v2 (POO-2281); v1 (POO-2291 catalog consumption)
  * @analytics-events none, pure local drawing state; the preview screen owns events.
+ * Not mounted until a Solana fund can launch (reference for a future Solana Manage screen).
  */
 import { SOLANA_LOCAL_PROTOCOLS, type SolanaLocalProtocol } from "./solanaCatalog";
 

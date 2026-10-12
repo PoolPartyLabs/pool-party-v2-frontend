@@ -44,7 +44,8 @@ standalone presentation and component-only drawing implementation are superseded
 
 Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
 the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
-local Build/Manage host across phases and applies the route/account/exit guards described below.
+local Build across phases and applies the route/account/exit guards described below.
+POO-2342 R12 removed the Manage host: the builder shows only Configure.
 This wizard change is pre-merge code delivery, without a deployment or native-browser visual
 acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
 Not available; `solanaSpoke` stays off.
@@ -55,7 +56,7 @@ dormant Solana domain. PR #151 added explicit local 236 × 62 USDC Idle and 144 
 with a 32 px lateral gap and shared center. Cash is handleless decoration with unavailable quantity
 and independent USD valuation. Standard Build remains without cash.
 
-The shared V2 palette and Configure/Manage controls remain the only editor presentation; no
+The shared V2 palette and Configure controls remain the only editor presentation; no
 separate Add toolbar returns. Exact Base58 selects preserve mint identity. Local Review keeps
 editable numerical intentions, with no seed quote, EVM economics, signing or public launch promise.
 Unavailable upload, Max and Launch emit bounded blocked intent without side effects.

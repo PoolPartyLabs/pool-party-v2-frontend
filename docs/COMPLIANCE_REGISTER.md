@@ -4,7 +4,8 @@
 
 Delivery boundary: PRs #146/#148/#149/#150/#151/#152/#153 are merged. This delivery connects
 the shared panel/Review foundation to the existing Mandate → Build → Review route, retains the
-local Build/Manage host across phases and applies the route/account/exit guards described below.
+local Build across phases and applies the route/account/exit guards described below.
+POO-2342 R12 removed the Manage host: the builder shows only Configure.
 This wizard change is pre-merge code delivery, without a deployment or native-browser visual
 acceptance claim. Live Solana data, quotes, wallet operations and public launch remain
 Not available; `solanaSpoke` stays off.
@@ -51,7 +52,7 @@ Local Apply means an acknowledged drawing configuration change. It validates who
 
 Status: BLOCKING before real data or operation enablement under POO-2239/2240/2261/2262. Verify canonical programs/pools/accounts/mints and token programs/extensions, account/position authority, declared observation source and confirmed freshness, independent valuation, protocol grid/context, simulation identity/revision/expiry and operation-specific quote/fees/transaction disclosures. Verify broadcast/settlement/recovery and journal provenance before exposing signing. Existing venue, custody, quote-cost, wrap/unwrap and jurisdiction gates remain in force; this local answer clears none of them.
 
-The foundation exports bounded protocol/action callbacks without amounts, addresses or IDs. Screen/Canvas now mounts that host and records only consent-aware bounded inspection/intention events. The drawing owner acknowledges accepted writes after applied-budget validation; Configure and Manage remain local modes. Fixed/automatic inspection shows owner/network context and cannot authorize execution. No submitted/financial-completed event is emitted. Test/Storybook injected snapshots remain fixtures.
+The foundation exports bounded protocol/action callbacks without amounts, addresses or IDs. Screen/Canvas records only consent-aware bounded inspection/intention events. The drawing owner acknowledges accepted writes after applied-budget validation; Configure remains a local mode (POO-2342 R12 removed the Manage mode from the builder). Fixed/automatic inspection shows owner/network context and cannot authorize execution. No submitted/financial-completed event is emitted. Test/Storybook injected snapshots remain fixtures.
 
 Validation: model/panels merged in PRs #140/#141; the isolated integration tree passes 49 drawing/Screen/Canvas tests and 42 existing access/toggle/documentation checks. Scoped TypeScript, changed-file Biome and all 11 locales pass. Two drawing acknowledgment/independence regressions reproduced RED before GREEN. Earlier panel checks cover 31 tests, TypeScript, Biome, locales and documentation guards. No browser, full-suite, deployment or live-operation acceptance is asserted. Owner: Murilo / Codex coordinator.
 
@@ -387,7 +388,7 @@ Scope: PR #152 delivered the panels and Review foundation. This delivery connect
 wizard route, retention and exit contracts. These answers cover local presentation intent; they
 do not certify deployment, native-browser acceptance or a real financial capability.
 
-ANSWERED for the shared local presentation only. Configure and Manage use the existing V2 controls;
+ANSWERED for the shared local presentation only. Configure uses the existing V2 controls;
 Base58 selectors distinguish exact case-sensitive mint identities. The local Review keeps editable
 fee percentages, minimum and seed as intentions while signing, initial share price, 72-hour exit,
 post-launch changes, public investment access, fee payout timing and future balance availability

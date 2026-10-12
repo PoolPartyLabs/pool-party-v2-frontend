@@ -40,6 +40,7 @@ import {
   refusedProtocolClick,
   SWAP_BRIDGE_DEFAULT_OPEN,
   selectedForYou,
+  showsSolanaMarketNote,
   swapBridgeHead,
   swapBridgeHeadText,
   visibleSpokes,
@@ -116,13 +117,38 @@ describe("Networks step (POO-2333)", () => {
   });
 
   // @rule R2
-  it("shows only the spokes the config enables, and keeps Solana to its preview mode", () => {
+  it("shows only the spokes the config enables, and lists Solana once the V2 catalog has the Solana entries", () => {
     expect(visibleSpokes(catalog).map((n) => n.id)).toEqual(["robinhood"]);
     expect(visibleSpokes(withDisabledSpoke(catalog)).map((n) => n.id)).toEqual(["robinhood"]);
     expect(visibleSpokes(buildSolanaBuilderCatalog()).map((n) => n.id)).toEqual([
       "robinhood",
       "solana",
     ]);
+  });
+});
+
+describe("Tokens step Solana market note (POO-2342)", () => {
+  // @rule R8
+  it("shows the note only when a Solana token is on screen and the filter allows it", () => {
+    const solanaGroup = { networks: ["solana"] as const };
+    const arbitrumGroup = { networks: ["arbitrum"] as const };
+    expect(showsSolanaMarketNote([solanaGroup], "all")).toBe(true);
+    expect(showsSolanaMarketNote([arbitrumGroup, solanaGroup], "solana")).toBe(true);
+  });
+
+  // @rule R8
+  it("hides the note for a draft with Arbitrum or Robinhood tokens and no Solana token", () => {
+    const arbitrumGroup = { networks: ["arbitrum"] as const };
+    const robinhoodGroup = { networks: ["robinhood"] as const };
+    expect(showsSolanaMarketNote([arbitrumGroup, robinhoodGroup], "all")).toBe(false);
+    expect(showsSolanaMarketNote([], "all")).toBe(false);
+  });
+
+  // @rule R8
+  it("hides the note when the network filter shows another network", () => {
+    const groups = [{ networks: ["arbitrum", "solana"] as const }];
+    expect(showsSolanaMarketNote(groups, "arbitrum")).toBe(false);
+    expect(showsSolanaMarketNote(groups, "robinhood")).toBe(false);
   });
 });
 

@@ -14,9 +14,9 @@
  * are the actual decision, in a two-column grid with a "Select all" at the group head.
  *
  * Availability is the catalog's (`PP-MGR-LIB-018`), never a branch here. POO-2333 R2 hides a spoke
- * that the config does not enable (`visibleSpokes`, PP-MGR-LIB-081), so Solana shows only in its
- * preview mode. This replaces the "Coming soon" spoke row of R17: every spoke row that renders is
- * selectable. POO-2333 R1 adds a caption under "Other networks": each network that the manager
+ * that the config does not enable (`visibleSpokes`, PP-MGR-LIB-081). POO-2342 adds Solana to the V2
+ * catalog, so Solana shows next to Arbitrum and Robinhood. This replaces the "Coming soon" spoke
+ * row of R17: every spoke row that renders is selectable. POO-2333 R1 adds a caption under "Other networks": each network that the manager
  * adds needs a bridge and one more signature at launch.
  *
  * Every write goes through `withNetworks`, which keeps the hub, drops the tokens, pools and caps of
