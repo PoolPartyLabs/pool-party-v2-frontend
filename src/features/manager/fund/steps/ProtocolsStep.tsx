@@ -6,33 +6,34 @@
  * @implements-rules-version v1 (POO-2333 Figma parity: R3, R4, R5, R6, R7)
  * @analytics-events none, the shell emits
  *
- * POO-2123 [R12] / [R19] / [R20] / [R21] / [R22], epic POO-2119. Mandate step 2: the protocols this
- * strategy may ever use.
+ * POO-2123 [R12] / [R19] / [R20] / [R21] / [R22], epic POO-2119. Mandate step 2: the protocols
+ * this strategy may ever use.
  *
  * Two groups again. POO-2333 puts the real choice first: "Protocols to operate" sits above the
  * divider. The swap adapter and the bridge (R19) sit below it as "Swap and bridge" (POO-2333 R3):
  * preselected, collapsed to "{names} · selected for you", and open on Show to checkbox rows. A
  * strategy that cannot swap, or that cannot move money between its own networks, cannot run, so
- * the last swap and the last bridge of a mandate with a spoke are locked (POO-2333 R4,
- * `lockedProtocols`): a click on them does nothing. The groups and the hidden rows come from
- * `mandateStepView` (PP-MGR-LIB-081): a protocol that the config does not enable is not drawn
- * (POO-2333 R7), and the two Uniswap v3 rows carry the names "Uniswap v3 · Swap" and "Uniswap v3 ·
- * Liquidity" (POO-2333 R6).
+ * the last swap, and the bridge of a mandate with a spoke, are locked (POO-2333 R4,
+ * `lockedProtocols`). A locked row is an `aria-disabled` checkbox: its click goes to `onBlocked`,
+ * and a notice beside the group says why. The groups, the head copy, the click guard and the
+ * hidden rows come from `mandateStepView` (PP-MGR-LIB-081). A protocol that the config does not
+ * enable is not drawn (POO-2333 R7). The swap row is "Uniswap v3 · Swap" (POO-2333 R6).
  *
- * The "Available on" column (R20, renamed by POO-2333 R5) shows `availableOn ∩ draft.networks`, never `availableOn` alone. The
- * difference matters: Aave v3 runs on the hub only, so a Robinhood dot beside it would promise a
- * deployment that does not exist, and the manager would discover it on step 4 with no pools. When
- * that intersection is empty the column is dropped entirely rather than drawn as a bare label, and
- * the row goes disabled (R21). The designed rows own real per-network selection; no duplicate
- * selectors or APY paragraphs render.
+ * The "Available on" column (R20, renamed by POO-2333 R5) shows `availableOn ∩ draft.networks`,
+ * never `availableOn` alone. The difference matters: Aave v3 runs on the hub only, so a Robinhood
+ * dot beside it would promise a deployment that does not exist, and the manager would discover it
+ * on step 4 with no pools. When that intersection is empty the column is dropped entirely rather
+ * than drawn as a bare label, and the row goes disabled (R21). The Swap and bridge rows have no
+ * such column (Figma 9286:2).
  *
  * A disabled row still takes its click and reports it through `onBlocked`, exactly as on step 1:
  * "which protocol did managers keep trying to add" is the one question this screen can answer for
  * the roadmap, and a row that swallows the click answers nothing (CLAUDE.md premise 11).
  *
- * R22: Across is today's bridge, not necessarily tomorrow's, so its name appears in its own row and
- * nowhere else. The bridge caption speaks about moving money between networks, never about "via
- * Across", and `ProtocolsStep.test.tsx` asserts that negatively so the phrase cannot creep back.
+ * R22: Across is today's bridge, not necessarily tomorrow's, so its name appears only in its own
+ * row and in the collapsed Swap and bridge head, which names the selected protocols (POO-2333 R3).
+ * The bridge caption speaks about moving money between networks, never about "via Across", and
+ * `ProtocolsStep.test.tsx` asserts that negatively so the phrase cannot creep back.
  */
 "use client";
 
@@ -46,18 +47,27 @@ import { NetworkDots } from "../components/NetworkDots";
 import { ProtocolMark } from "../components/ProtocolMark";
 import type { MandateProtocol } from "../mandateCatalog";
 import {
-  lockedProtocols,
   type MandateDraft,
   type NetworkId,
   type ProtocolId,
   UNAVAILABLE_PROTOCOLS,
   withProtocols,
 } from "../mandateDraft";
-import { protocolSections, selectedForYou } from "./mandateStepView";
+import {
+  lockedRowKind,
+  protocolClick,
+  protocolSections,
+  SWAP_BRIDGE_DEFAULT_OPEN,
+  selectedForYou,
+  swapBridgeHead,
+} from "./mandateStepView";
 import type { MandateStepProps } from "./stepProps";
 
 /** This step's key, spelled once. */
 const STEP = "protocols" as const;
+
+/** The id of the Swap and bridge rows region, which the Show and Hide toggle controls. */
+const SWAP_BRIDGE_REGION = "mandate-swap-bridge-rows";
 
 /** Mandate step 2: the protocols this strategy may use, then the swap and the bridge. */
 export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: MandateStepProps) {
@@ -70,7 +80,7 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
     "uniswap-v3-swap": t("fundBuilder.protocols.rowNames.uniswapV3Swap"),
     across: t("fundBuilder.protocolNames.across"),
     "aave-v3": t("fundBuilder.protocolNames.aaveV3"),
-    "uniswap-v3": t("fundBuilder.protocols.rowNames.uniswapV3"),
+    "uniswap-v3": t("fundBuilder.protocolNames.uniswapV3"),
     "uniswap-v4": t("fundBuilder.protocolNames.uniswapV4"),
     gmx: t("fundBuilder.protocolNames.gmx"),
     pendle: t("fundBuilder.protocolNames.pendle"),
@@ -91,9 +101,8 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
   // POO-2333 R3/R7: the two groups, without the protocols that the config does not enable.
   const { operate: operable, swapAndBridge } = protocolSections(catalog, draft);
   const chosen = new Set<ProtocolId>(draft.protocols);
-  const locked = lockedProtocols(draft);
-  // POO-2333 R3: Swap and bridge starts collapsed.
-  const [swapBridgeOpen, setSwapBridgeOpen] = useState(false);
+  const [swapBridgeOpen, setSwapBridgeOpen] = useState(SWAP_BRIDGE_DEFAULT_OPEN);
+  const head = swapBridgeHead(swapBridgeOpen, draft);
 
   /** The networks of step 1 this protocol runs on, in the mandate's own order. */
   const networksFor = (protocol: MandateProtocol): NetworkId[] =>
@@ -109,6 +118,8 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
     selectable.length > 0 && selectable.every((protocol) => chosen.has(protocol.id));
 
   const ownBlock = block?.step === STEP ? block : null;
+  // POO-2333 R4: a refused click on a locked row gets its own notice beside Swap and bridge.
+  const lockedKind = lockedRowKind(catalog, draft, ownBlock?.rowId);
 
   /**
    * The inline notice for a refusal pointed at this step, or null when the row already said it.
@@ -118,18 +129,25 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
    * continue." answered a click on GMX by asking for the thing the manager had just tried. The
    * blocked-intent event still leaves through `onBlocked`, which is the half the roadmap reads.
    */
-  const notice = ownBlock
-    ? ({
-        nothing_selected: t("fundBuilder.common.nothingSelected"),
-        coming_soon: null,
-        cap_missing: null,
-        token_allowance_required: null,
-        no_slots: null,
-        has_hook: null,
-        not_priced: null,
-        name_length: null,
-      }[ownBlock.reason] ?? null)
-    : null;
+  const notice =
+    ownBlock && !lockedKind
+      ? ({
+          nothing_selected: t("fundBuilder.common.nothingSelected"),
+          coming_soon: null,
+          cap_missing: null,
+          token_allowance_required: null,
+          no_slots: null,
+          has_hook: null,
+          not_priced: null,
+          name_length: null,
+        }[ownBlock.reason] ?? null)
+      : null;
+  const lockedNotice =
+    lockedKind === "swap"
+      ? t("fundBuilder.protocols.lockedSwap")
+      : lockedKind === "bridge"
+        ? t("fundBuilder.protocols.lockedBridge")
+        : null;
 
   // Scroll the offending row into view when the shell points a block at this step.
   useEffect(() => {
@@ -170,8 +188,11 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
 
   /** Add or remove one protocol. The reducer keeps required rows and clears dependent pools. */
   function toggle(id: ProtocolId) {
-    // POO-2333 R4: the last swap, and the last bridge of a mandate with a spoke, cannot be cleared.
-    if (locked.has(id) && chosen.has(id)) return;
+    // POO-2333 R4: the last swap, and the bridge of a mandate with a spoke, cannot be cleared.
+    if (protocolClick(draft, id) === "locked") {
+      onBlocked({ step: STEP, reason: "nothing_selected", rowId: id });
+      return;
+    }
     update((current) => {
       const next = current.protocols.includes(id)
         ? current.protocols.filter((protocol) => protocol !== id)
@@ -226,10 +247,9 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
     );
   }
 
-  /** POO-2333 R3: one Swap and bridge row, a checkbox that a locked protocol ignores. */
+  /** POO-2333 R3/R4: one Swap and bridge row. A locked row is an `aria-disabled` checkbox. */
   function swapBridgeRow(protocol: MandateProtocol) {
     const name = names[protocol.id];
-    const networks = networksFor(protocol);
     return (
       <MandateRow
         key={protocol.id}
@@ -238,105 +258,121 @@ export function ProtocolsStep({ draft, catalog, update, block, onBlocked }: Mand
         title={name}
         caption={captions[protocol.kind]}
         selected={chosen.has(protocol.id)}
+        disabled={protocolClick(draft, protocol.id) === "locked"}
         logo={<ProtocolMark id={protocol.id} name={name} />}
-        trailing={
-          networks.length > 0 ? (
-            <span className="flex shrink-0 flex-col items-end gap-1">
-              <span className="text-muted-foreground text-xs">{t("fundBuilder.protocols.on")}</span>
-              <NetworkDots networks={networks} catalog={catalog} />
-            </span>
-          ) : undefined
-        }
         onToggle={() => toggle(protocol.id)}
       />
     );
   }
 
+  // POO-2333 R3: the collapsed head names each protocol once, without the row's role suffix
+  // (Figma 8010:1638 reads "Uniswap v3 · Across · selected for you").
+  const headNames: Partial<Record<ProtocolId, string>> = {
+    "uniswap-v3-swap": t("fundBuilder.protocolNames.uniswapV3Swap"),
+    across: t("fundBuilder.protocolNames.across"),
+  };
   const selectedNames = selectedForYou(swapAndBridge, draft)
-    .map((id) => names[id])
+    .map((id) => headNames[id] ?? names[id])
     .join(" · ");
+  const headCopy = {
+    collapsed: t("fundBuilder.protocols.swapBridgeCollapsed", { names: selectedNames }),
+    open: t("fundBuilder.protocols.swapBridgeOpen"),
+    openHub: t("fundBuilder.protocols.swapBridgeOpenHub"),
+  }[head.copy];
 
   return (
     <section data-mandate-step={STEP} className="flex flex-col gap-6">
       <MandateCatalogStatus catalog={catalog} draft={draft} />
-      {/* Protocols to operate (R20) */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-4">
-          <h3 className="font-medium text-foreground text-sm">
-            {t("fundBuilder.protocols.operate")}
-          </h3>
-          {selectable.length > 0 ? (
-            // biome-ignore lint/a11y/useSemanticElements: the same control the rows use (a button with role="checkbox"), so the group head and its rows read and behave identically.
-            <button
-              type="button"
-              role="checkbox"
-              aria-checked={allSelected}
-              aria-label={t("fundBuilder.common.selectAll")}
-              onClick={toggleAll}
-              className={cn(
-                "flex shrink-0 items-center gap-2 rounded-md text-muted-foreground text-sm transition-colors",
-                "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              )}
-            >
-              <MandateCheckbox selected={allSelected} />
-              {t("fundBuilder.common.selectAll")}
-            </button>
-          ) : null}
+      {/* Figma 8010:1634: the two groups and the divider, 16 px apart. */}
+      <div className="flex flex-col gap-4">
+        {/* Protocols to operate (R20) */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="font-medium text-foreground text-sm">
+              {t("fundBuilder.protocols.operate")}
+            </h3>
+            {selectable.length > 0 ? (
+              // biome-ignore lint/a11y/useSemanticElements: the same control the rows use (a button with role="checkbox"), so the group head and its rows read and behave identically.
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={allSelected}
+                aria-label={t("fundBuilder.common.selectAll")}
+                onClick={toggleAll}
+                className={cn(
+                  "flex shrink-0 items-center gap-2 rounded-md text-muted-foreground text-sm",
+                  "transition-colors hover:text-foreground focus-visible:outline-none",
+                  "focus-visible:ring-2 focus-visible:ring-ring",
+                )}
+              >
+                <MandateCheckbox selected={allSelected} />
+                {t("fundBuilder.common.selectAll")}
+              </button>
+            ) : null}
+          </div>
+
+          {notice ? <Notice text={notice} /> : null}
+
+          {[
+            ...operable.filter(canSelect),
+            ...operable.filter((protocol) => !canSelect(protocol)),
+          ].map(operableRow)}
+
+          {/* POO-2333 R5 */}
+          <p className="text-muted-foreground text-xs">{t("fundBuilder.protocols.onFootnote")}</p>
         </div>
 
-        {notice ? (
-          <p
-            role="alert"
-            className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-destructive text-sm"
-          >
-            {notice}
-          </p>
-        ) : null}
-
-        {[
-          ...operable.filter(canSelect),
-          ...operable.filter((protocol) => !canSelect(protocol)),
-        ].map(operableRow)}
-
-        {/* POO-2333 R5 */}
-        <p className="text-muted-foreground text-xs">{t("fundBuilder.protocols.onFootnote")}</p>
-      </div>
-
-      {/* Swap and bridge (R19, POO-2333 R3/R4), below the divider */}
-      {swapAndBridge.length > 0 ? (
-        <div className="flex flex-col gap-2 border-border border-t pt-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex min-w-0 flex-col gap-1">
-              <h3 className="font-medium text-foreground text-sm">
+        {/* Swap and bridge (R19, POO-2333 R3/R4), below the divider (Figma 8010:1635) */}
+        {swapAndBridge.length > 0 ? (
+          <div className="flex flex-col gap-2 border-border border-t pt-4">
+            <div className="flex items-center gap-2">
+              <h3 className="shrink-0 font-medium text-foreground text-sm">
                 {t("fundBuilder.protocols.swapBridge")}
               </h3>
-              <p className="text-muted-foreground text-sm">
-                {swapBridgeOpen
-                  ? t("fundBuilder.protocols.swapBridgeOpen")
-                  : t("fundBuilder.protocols.swapBridgeCollapsed", { names: selectedNames })}
-              </p>
+              <p className="min-w-0 flex-1 text-muted-foreground text-xs">{headCopy}</p>
+              <button
+                type="button"
+                aria-expanded={swapBridgeOpen}
+                aria-controls={SWAP_BRIDGE_REGION}
+                onClick={() => setSwapBridgeOpen((open) => !open)}
+                className={cn(
+                  "flex shrink-0 items-center gap-1 rounded-md text-muted-foreground text-sm",
+                  "transition-colors hover:text-foreground focus-visible:outline-none",
+                  "focus-visible:ring-2 focus-visible:ring-ring",
+                )}
+              >
+                {head.toggle === "hide"
+                  ? t("fundBuilder.protocols.hide")
+                  : t("fundBuilder.protocols.show")}
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn("size-3.5 transition-transform", swapBridgeOpen && "rotate-180")}
+                />
+              </button>
             </div>
-            <button
-              type="button"
-              aria-expanded={swapBridgeOpen}
-              aria-controls="mandate-swap-bridge-rows"
-              onClick={() => setSwapBridgeOpen((open) => !open)}
-              className="flex shrink-0 items-center gap-1 rounded-md text-muted-foreground text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {swapBridgeOpen ? t("fundBuilder.protocols.hide") : t("fundBuilder.protocols.show")}
-              <ChevronDown
-                aria-hidden="true"
-                className={cn("size-4 transition-transform", swapBridgeOpen && "rotate-180")}
-              />
-            </button>
-          </div>
-          {swapBridgeOpen ? (
-            <div id="mandate-swap-bridge-rows" className="flex flex-col gap-2">
+            {lockedNotice ? <Notice text={lockedNotice} /> : null}
+            {/* Always in the tree, so `aria-controls` always points at an element. */}
+            <div id={SWAP_BRIDGE_REGION} hidden={!swapBridgeOpen} className="flex flex-col gap-2">
               {swapAndBridge.map(swapBridgeRow)}
             </div>
-          ) : null}
-        </div>
-      ) : null}
+          </div>
+        ) : null}
+      </div>
     </section>
+  );
+}
+
+/** A refusal pointed at this step, in the destructive tone. */
+function Notice({ text }: { text: string }) {
+  return (
+    <p
+      role="alert"
+      className={cn(
+        "rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2",
+        "text-destructive text-sm",
+      )}
+    >
+      {text}
+    </p>
   );
 }
