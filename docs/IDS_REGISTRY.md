@@ -1190,7 +1190,7 @@ Existing PP-MGR-CMP-084 and PP-MGR-LIB-048 now accept both saved Mandate drafts 
 
 Existing Build/Manage artifacts retain their IDs. ETH/USDC and SOL/USDC are Binance references, resolved by approved token identity. Pool prices, valuation, LP-range overlays, lending metrics and Activity are excluded. Browser acceptance remains with Murilo.
 
-Current chart-delivery census: 712 registry rows and 707 unique IDs, 2,306 files under `src/`,
+Chart-delivery census: 712 registry rows and 707 unique IDs, 2,306 files under `src/`,
 with 539 markers across 312 files. The five disclosed historical duplicate IDs remain unchanged.
 These figures include tests, stories and source documentation. The earlier materialized-tree
 census describes its named historical release and remains unchanged.

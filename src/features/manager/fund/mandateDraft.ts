@@ -341,6 +341,8 @@ export type MandateBlockReason =
  * - networks: the {@link NetworkId}
  * - protocols: the {@link ProtocolId}
  * - tokens: {@link tokenKey} of the catalog entry the step handed to {@link addToken}
+ * - limits, Selected mode: the "All tokens" row is {@link ALL_TOKENS_ROW_ID} (`all-tokens`)
+ * - limits, All mode: the "Every token" row is {@link EVERY_TOKEN_ROW_ID} (`every-token`)
  * - pools: the pool's `id`
  */
 export interface StepBlock {
