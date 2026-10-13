@@ -4,7 +4,7 @@
  * @description Exact selected-block pool or asset identity for the DEX Screener chart, without money fields.
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8674-15508
  * @linear https://linear.app/yeildbay/issue/POO-2338
- * @implements-rules-version v1 (POO-2338); POO-2343 rules v1 (R8 Raydium pool chart)
+ * @implements-rules-version v1 (POO-2338); POO-2343 rules v1 (R8 Raydium pool chart); POO-2351 rules v1 (R5 Kamino token chart)
  * @analytics-events none, private pure selection context; chart hosts own bounded events.
  *
  * Build and Manage map the selection to the same chartModel resolvers (R6). A Uniswap block gives
@@ -22,9 +22,10 @@ import {
   normalizeTokenIdentity,
   tokenKey,
 } from "../mandateDraft";
+import { kaminoTokenOf } from "../solana-preview/kaminoToken";
 import { defaultRaydiumBlockConfig } from "../solana-preview/raydiumBlockPool";
 import { SOLANA_LOCAL_CONFIGS } from "../solana-preview/solanaBuilderRuntime";
-import { USDC_MINT } from "../solana-preview/solanaSchemas";
+import { USDC_MINT, WSOL_MINT } from "../solana-preview/solanaSchemas";
 import {
   type ChartAvailability,
   type ChartBlockReason,
@@ -131,11 +132,16 @@ export function buildChartSelection(
     ) {
       return selected(details, unavailable("unsupported_pair"));
     }
-    // The Kamino block supplies USDC, so its chart is the USDC mint. "USDC" is a proper name, not
-    // copy.
+    // POO-2351 R5: the chart is the chart of the token of the block: the USDC mint, or the SOL
+    // (WSOL) mint when the block holds SOL. "USDC" and "SOL" are proper names, not copy.
+    const sol = config && "pair" in config && kaminoTokenOf(config) === "SOL";
     return selected(
       details,
-      resolveTokenChart({ network: "solana", address: USDC_MINT, label: "USDC" }),
+      resolveTokenChart(
+        sol
+          ? { network: "solana", address: WSOL_MINT, label: "SOL" }
+          : { network: "solana", address: USDC_MINT, label: "USDC" },
+      ),
     );
   }
   if (target.kind === "solanaOrcaPool" || target.kind === "solanaRaydiumPool") {

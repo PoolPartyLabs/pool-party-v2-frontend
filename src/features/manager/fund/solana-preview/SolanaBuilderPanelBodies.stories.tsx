@@ -3,13 +3,17 @@
  * @name SolanaBuilderPanelBodies.stories
  * @implements-rules-version v1 (POO-2301) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, isolated local panel states.
+ *
+ * POO-2351 rules v1: R3 (Raydium pick rows), R4/R6 (Kamino token), R2 (empty Uniswap v4 with Solana).
  */
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { withManagerMessages } from "../build/canvas/canvasStorySupport";
+import { PANEL_BODIES } from "../build/panel/panelBodies";
 import { PanelHarness } from "../build/panel/panelTestKit";
 import type { BlockKind, BuildPlan } from "../build/plan/buildPlan";
 import { addToken, createEmptyDraft, withNetworks, withProtocols } from "../mandateDraft";
-import { LOCAL_PANEL_BODIES } from "./SolanaBuilderPanelBodies";
+import { kaminoConfigFor } from "./kaminoToken";
+import { SOLANA_PANEL_BODIES } from "./SolanaBuilderPanelBodies";
 import { buildSolanaBuilderCatalog, SOLANA_LOCAL_CONFIGS } from "./solanaBuilderRuntime";
 
 const catalog = buildSolanaBuilderCatalog();
@@ -78,7 +82,7 @@ const meta = {
     catalog,
     plan: localPlan("solanaOrcaPool"),
     selectedId: "local-position",
-    bodies: LOCAL_PANEL_BODIES,
+    bodies: SOLANA_PANEL_BODIES,
   },
 } satisfies Meta<typeof PanelHarness>;
 export default meta;
@@ -91,3 +95,40 @@ export const Holding: Story = { args: { plan: localPlan("solanaHolding") } };
 export const DescriptorChoice: Story = { args: { plan: localPlan("solanaOrcaPool", false) } };
 export const ChangesNotApplied: Story = { args: { scenario: { share: 15 } } };
 export const RemoveConfirmation: Story = { args: { removeConfirmOpen: true } };
+
+/** R4: the Kamino block that holds SOL. The token select reads SOL. */
+export const KaminoSol: Story = {
+  args: {
+    plan: (() => {
+      const plan = localPlan("solanaKaminoSupply");
+      const step = plan.spokes[0]?.chains[0]?.steps.find((entry) => entry.family === "position");
+      if (step && step.family === "position") step.config = kaminoConfigFor("SOL");
+      return plan;
+    })(),
+  },
+};
+/** R3: an empty Raydium block shows the pool rows with two logos and the short address. */
+export const RaydiumPick: Story = { args: { plan: localPlan("solanaRaydiumPool", false) } };
+/** R4/R6: an empty Kamino block shows one row for each token, with no "Not available". */
+export const KaminoPick: Story = { args: { plan: localPlan("solanaKaminoSupply", false) } };
+/** R2: Uniswap v4 with no mandate pool on its network. The empty state links to the Pools step. */
+export const UniswapV4EmptyWithSolana: Story = {
+  args: {
+    bodies: PANEL_BODIES,
+    plan: {
+      version: 1,
+      hub: {
+        chains: [
+          {
+            id: "evm",
+            sharePct: 0,
+            steps: [
+              { id: "local-position", family: "position", kind: "uniswapV4Pool", config: null },
+            ],
+          },
+        ],
+      },
+      spokes: [],
+    },
+  },
+};

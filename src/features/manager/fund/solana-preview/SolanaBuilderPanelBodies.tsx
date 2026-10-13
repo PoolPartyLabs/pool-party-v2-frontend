@@ -7,6 +7,11 @@
  * POO-2343 R7: the Raydium block chooses one of the Raydium pools of the mandate, or the default
  * SOL/USDC pool when the mandate has none (`raydiumBlockPool.ts`). The config keeps `poolAddress`
  * and the pair label. R9: for Raydium, the panel names DEX Screener as the source of the pool data.
+ *
+ * POO-2351 R1: the EVM kinds no longer have an "unavailable" body here; the shared bodies serve them.
+ * R3: a Raydium row shows the two pair logos, the pair as title and the short address as subtitle.
+ * R4/R6: the Kamino panel has a token select (USDC, plus SOL when the mandate has it) and never
+ * shows "Not available".
  */
 "use client";
 import { useTranslations } from "next-intl";
@@ -17,17 +22,25 @@ import type {
   PanelBodyDefinition,
   PanelFieldsProps,
 } from "../build/panel/panelBodies";
-import type { PositionConfig, SolanaLocalBlockConfig } from "../build/plan/buildPlan";
-import { raydiumBlockConfig, raydiumBlockPools } from "./raydiumBlockPool";
+import type { SolanaLocalBlockConfig } from "../build/plan/buildPlan";
+import {
+  type KaminoToken,
+  kaminoConfigFor,
+  kaminoTokenLogo,
+  kaminoTokenOf,
+  kaminoTokenOptions,
+} from "./kaminoToken";
+import {
+  raydiumBlockConfig,
+  raydiumBlockPools,
+  raydiumPairLogos,
+  raydiumPickRow,
+  shortPoolAddress,
+} from "./raydiumBlockPool";
 import { SolanaHoldingPresenter } from "./SolanaHoldingPresenter";
 import { SolanaKaminoReadSection } from "./SolanaKaminoReadSection";
 import { SolanaRangePresenter } from "./SolanaRangePresenter";
 import { SOLANA_LOCAL_CONFIGS } from "./solanaBuilderRuntime";
-
-/** The first and last four characters of an address, to tell two pools of one pair apart. */
-function shortAddress(address: string): string {
-  return address.length > 10 ? `${address.slice(0, 4)}...${address.slice(-4)}` : address;
-}
 
 function Fields({
   context,
@@ -46,8 +59,6 @@ function Fields({
     logoUrl: "/protocols/solana-preview/solana.svg",
   };
   const stableLogo = { symbol: "USDC", network: "solana" };
-  const pairLogos = (pair: SolanaLocalBlockConfig["pair"]) =>
-    pair === "SOL / USDC" ? [nativeLogo, stableLogo] : [stableLogo, nativeLogo];
   // R7: the pools of the mandate, plus the pool the block holds now when the mandate dropped it.
   const raydiumPools = raydium ? raydiumBlockPools(context.draft) : [];
   if (
@@ -59,8 +70,8 @@ function Fields({
   const selectOptions = raydium
     ? raydiumPools.map((pool) => ({
         id: pool.poolAddress,
-        label: `${pool.pair} ${shortAddress(pool.poolAddress)}`,
-        logos: pairLogos(pool.pair),
+        label: `${pool.pair} ${shortPoolAddress(pool.poolAddress)}`,
+        logos: raydiumPairLogos(pool.pair),
       }))
     : [
         {
@@ -74,17 +85,43 @@ function Fields({
           logos: holding ? [stableLogo] : [stableLogo, nativeLogo],
         },
       ];
+  // R4: USDC always, SOL when the mandate has it, and the token the block holds now.
+  const kaminoToken = kaminoTokenOf(config);
+  const kaminoTokens: KaminoToken[] = kaminoTokenOptions(context.draft);
+  if (!kaminoTokens.includes(kaminoToken)) kaminoTokens.push(kaminoToken);
+  const kaminoSelectOptions = kaminoTokens.map((token) => ({
+    id: token,
+    label: token,
+    logos: [kaminoTokenLogo(token)],
+  }));
   // PP-INTEGRATION-POINT: POO-2261/2262 own independent Solana market/reserve/balance reads;
   // descriptor intent grants no canonical origin, range, balance, quote or execution authority.
   return (
     <div className="space-y-4">
       {context.kind === "solanaKaminoSupply" ? (
-        <SolanaKaminoReadSection
-          mode="configure"
-          origin={null}
-          read={null}
-          allocation={allocation}
-        />
+        <>
+          <div className="flex flex-col gap-2">
+            <span id={labelId} className="text-foreground text-sm">
+              {t("solanaPreview.holding.token")}
+            </span>
+            <PanelSelect
+              labelId={labelId}
+              options={kaminoSelectOptions}
+              value={kaminoToken}
+              idComparison="exact"
+              onChange={(id) => {
+                if (id === "USDC" || id === "SOL") onConfigChange(kaminoConfigFor(id));
+              }}
+            />
+          </div>
+          <SolanaKaminoReadSection
+            mode="configure"
+            origin={null}
+            read={null}
+            allocation={allocation}
+            token={kaminoToken}
+          />
+        </>
       ) : (
         <>
           {allocation}
@@ -158,37 +195,52 @@ const body: PanelBodyDefinition<SolanaLocalBlockConfig> = {
     };
     const name = names[context.kind as keyof typeof names] ?? t("solanaPreview.marketUnavailable");
     // R7: one row for each Raydium pool of the mandate, or the default pool. R9: DEX Screener is the source.
+    // R3: the row shows the pair logos and the short address. R4/R6: one row for each Kamino token.
+    const kamino = context.kind === "solanaKaminoSupply";
     const rows = raydium
-      ? raydiumBlockPools(context.draft).map((pool) => ({
-          id: pool.poolAddress,
-          title: `${pool.pair} ${shortAddress(pool.poolAddress)}`,
-          subtitle: t("solanaPreview.raydiumSource"),
-          logos: [],
-          searchText: `${name} ${pool.pair} ${pool.poolAddress}`,
-          config: raydiumBlockConfig(pool),
-        }))
-      : [
-          {
-            id: config?.catalogId ?? context.kind,
-            title: name,
-            subtitle: t("solanaPreview.marketUnavailable"),
-            logos: [],
-            searchText: name,
-            config,
-          },
-        ];
+      ? raydiumBlockPools(context.draft).map((pool) => raydiumPickRow(pool, name))
+      : kamino
+        ? kaminoTokenOptions(context.draft).map((token) => ({
+            id: token,
+            title: token,
+            subtitle: name,
+            logos: [kaminoTokenLogo(token)],
+            searchText: `${name} ${token}`,
+            config: kaminoConfigFor(token),
+          }))
+        : [
+            {
+              id: config?.catalogId ?? context.kind,
+              title: name,
+              subtitle: t("solanaPreview.marketUnavailable"),
+              logos: [],
+              searchText: name,
+              config,
+            },
+          ];
+    const caption = t(
+      raydium
+        ? "solanaPreview.raydiumSource"
+        : kamino
+          ? "solanaPreview.drawingChoice"
+          : "solanaPreview.marketUnavailable",
+    );
     return {
       heading: name,
       count: rows.length,
-      filterPlaceholder: t("solanaPreview.pair"),
+      filterPlaceholder: kamino
+        ? t("fundBuilder.build.supplyPanel.filter")
+        : t("solanaPreview.pair"),
       rows,
-      caption: t(raydium ? "solanaPreview.raydiumSource" : "solanaPreview.marketUnavailable"),
+      caption,
       link: { prompt: "", label: t("fundBuilder.canvas.menu.link.protocols"), step: "protocols" },
-      noMatch: {
-        title: () => t("solanaPreview.marketUnavailable"),
-        caption: t("solanaPreview.marketUnavailable"),
-      },
-      emptyTitle: t("solanaPreview.marketUnavailable"),
+      noMatch: kamino
+        ? {
+            title: (typed) => t("fundBuilder.build.supplyPanel.noMatch", { typed }),
+            caption: t("fundBuilder.build.supplyPanel.noMatchCaption"),
+          }
+        : { title: () => t("solanaPreview.marketUnavailable"), caption },
+      emptyTitle: kamino ? name : t("solanaPreview.marketUnavailable"),
     };
   },
   Fields,
@@ -198,45 +250,4 @@ export const SOLANA_PANEL_BODIES: PanelBodies = {
   solanaRaydiumPool: body,
   solanaKaminoSupply: body,
   solanaHolding: body,
-};
-
-/** The shared EVM palette remains visible, but local mode never mounts a live EVM provider. */
-function unavailableBody<C extends PositionConfig>(): PanelBodyDefinition<C> {
-  return {
-    usePick() {
-      const t = useTranslations("manager");
-      const unavailable = t("solanaPreview.marketUnavailable");
-      return {
-        heading: unavailable,
-        count: 0,
-        filterPlaceholder: unavailable,
-        rows: [],
-        caption: unavailable,
-        link: {
-          prompt: "",
-          label: t("fundBuilder.canvas.menu.link.protocols"),
-          step: "protocols",
-        },
-        noMatch: { title: () => unavailable, caption: unavailable },
-        emptyTitle: unavailable,
-      };
-    },
-    Fields: function UnavailableFields() {
-      const t = useTranslations("manager");
-      return (
-        <p role="status" className="text-sm text-muted-foreground">
-          {t("solanaPreview.marketUnavailable")}
-        </p>
-      );
-    },
-  };
-}
-export const LOCAL_PANEL_BODIES: PanelBodies = {
-  ...SOLANA_PANEL_BODIES,
-  uniswapV4Pool: unavailableBody(),
-  uniswapV3Pool: unavailableBody(),
-  aaveSupply: unavailableBody(),
-  aaveBorrow: unavailableBody(),
-  pendle: unavailableBody(),
-  gmxPerp: unavailableBody(),
 };

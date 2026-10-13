@@ -21,7 +21,7 @@ import { type ManagePosition, normalizeManageModel } from "../manage/manageModel
 import type { MandateDraft, MandatePoolRef } from "../mandateDraft";
 import { mapUniswapPoolToMandatePool } from "../mandatePoolSource";
 import { SOLANA_LOCAL_CONFIGS } from "../solana-preview/solanaBuilderRuntime";
-import { USDC_MINT } from "../solana-preview/solanaSchemas";
+import { USDC_MINT, WSOL_MINT } from "../solana-preview/solanaSchemas";
 import { buildChartSelection, type ChartSelection, manageChartSelection } from "./chartContext";
 import { buildChartUrl } from "./chartModel";
 
@@ -271,6 +271,20 @@ describe("Build chart context", () => {
         catalogId: "other",
       }).availability,
     ).toEqual(unavailable("unsupported_pair"));
+  });
+
+  // @rule R5
+  it("opens the SOL (WSOL) mint chart for a Kamino block that holds SOL (POO-2351 R5)", () => {
+    const config = required(SOLANA_LOCAL_CONFIGS.solanaKaminoSupply);
+    const sol = { ...config, pair: "SOL / USDC" as const, token: "SOL" as const };
+    expect(
+      urlOf(buildChartSelection(makeTestDraft(), target("solanaKaminoSupply", "solana"), sol)),
+    ).toBe(`https://dexscreener.com/solana/${WSOL_MINT}?${QUERY}`);
+    // An older block with no token reads its pair: "SOL / USDC" is SOL, "USDC / SOL" is USDC.
+    const older = { catalogId: config.catalogId, pair: "SOL / USDC" as const };
+    expect(
+      urlOf(buildChartSelection(makeTestDraft(), target("solanaKaminoSupply", "solana"), older)),
+    ).toBe(`https://dexscreener.com/solana/${WSOL_MINT}?${QUERY}`);
   });
 
   // @rule R5

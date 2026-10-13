@@ -19,7 +19,8 @@
  *   and the link row: radius 12, `surface-raised`, padding 16, gap 8: the title (a pasted address is
  *   shortened in the middle), the caption, and the outline pill that goes to the Mandate step.
  * - A mandate with nothing for this block on its network shows the same box with its own title
- *   (proposal of the handoff), and no filter.
+ *   (proposal of the handoff), and no filter. POO-2351 R2: the box may have its own caption
+ *   (`emptyCaption`), for example "Add one in the Pools step", and the link row goes to that step.
  * - [P13] While the caller's live read loads, skeleton rows; a failed read shows the inline retry.
  * - Decision A3: pool rows carry no metric stack (no TVL and no APR); a row without `metric` simply
  *   has none.
@@ -89,6 +90,8 @@ export interface PanelPickListProps {
   noMatch: { title(typed: string): string; caption: string };
   /** The box's title when the mandate holds nothing for this block on this network. */
   emptyTitle: string;
+  /** POO-2351 R2: the caption of the empty box. It wins over `noMatch.caption` in the empty case. */
+  emptyCaption?: string;
   /** The filter's first text (stories: the no-match state). */
   defaultFilter?: string;
   /** P13: the caller's live read. `loading` draws skeleton rows, `error` the inline retry. */
@@ -141,6 +144,7 @@ export function PanelPickList({
   link,
   noMatch,
   emptyTitle,
+  emptyCaption,
   defaultFilter = "",
   status = "ready",
   error,
@@ -173,7 +177,7 @@ export function PanelPickList({
       )}
 
       {empty ? (
-        <MandateBox title={emptyTitle} caption={noMatch.caption} link={link} />
+        <MandateBox title={emptyTitle} caption={emptyCaption ?? noMatch.caption} link={link} />
       ) : noMatchShown ? (
         <MandateBox
           title={noMatch.title(formatIdentityLabel(filter.trim()))}

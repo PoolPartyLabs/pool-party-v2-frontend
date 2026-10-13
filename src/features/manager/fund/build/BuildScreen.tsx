@@ -4,6 +4,7 @@
  * @implements-rules-version v1 (POO-2157 rules v1; the configuration panel of POO-2187 rules v1; POO-2210 rules v1); POO-2237 rules v1
  * @implements-rules-version v1 (POO-2342 rules v1: one builder; Solana is a network, not a mode)
  * @implements-rules-version v1 (POO-2309 market-reference chart)
+ * @implements-rules-version v1 (POO-2351 R1: the EVM panels keep their own bodies when the mandate has Solana)
  * @analytics-events builder_build_viewed, builder_build_started, builder_block_added,
  *   builder_network_added, builder_network_removed, builder_flow_block_inserted,
  *   builder_block_removed (with cascade_count), builder_block_configured, builder_block_applied,
@@ -72,7 +73,6 @@ import { buildChartSelection } from "../charts/chartContext";
 import { StrategyChartSurface } from "../charts/StrategyChartSurface";
 import type { MandateCatalog } from "../mandateCatalog";
 import { isBlocked, type MandateDraft } from "../mandateDraft";
-import { LOCAL_PANEL_BODIES } from "../solana-preview/SolanaBuilderPanelBodies";
 import type { UseMandateDraftResult } from "../useMandateDraft";
 import { BuildPalette } from "./blocks/BuildPalette";
 import { CanvasMenu } from "./blocks/CanvasMenu";
@@ -520,7 +520,6 @@ export function BuildScreen({
               />
             ) : (
               <BlockPanel
-                bodies={local ? LOCAL_PANEL_BODIES : undefined}
                 ctx={controller.context}
                 selectedId={selectedId}
                 menuSentence={controller.menuSentence}

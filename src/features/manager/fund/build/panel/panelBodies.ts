@@ -98,6 +98,8 @@ export interface PanelPickModel<C> {
   noMatch: { title(typed: string): string; caption: string };
   /** The mandate holds nothing for this block here: "No pool of your mandate is on <Network>". */
   emptyTitle: string;
+  /** POO-2351 R2: the caption of the empty box, when it differs from the no match caption. */
+  emptyCaption?: string;
   /** P13: the body's live read. */
   status?: "ready" | "loading" | "error";
   onRetry?(): void;

@@ -3,7 +3,7 @@
  * @name raydiumBlockPool
  * @description The pool of a Raydium block, taken from the Raydium pools of the mandate.
  * @linear https://linear.app/yeildbay/issue/POO-2343
- * @implements-rules-version v1 (POO-2343)
+ * @implements-rules-version v1 (POO-2343); POO-2351 rules v1 (R3 the row of a pool in the block panel)
  * @analytics-events none, pure helpers.
  *
  * R7. A Raydium block keeps `poolAddress` and the pair label in its config. The pool comes from the
@@ -13,6 +13,9 @@
  *
  * The pair label is one of the two labels that the Solana block config allows. A mandate pool with
  * any other pair is not a choice for the block.
+ *
+ * POO-2351 R3: a pool row in the block panel shows the two pair logos, the pair as title and the short
+ * pool address as subtitle ({@link raydiumPickRow}). The subtitle never repeats the list caption.
  *
  * When the pool of a block leaves the mandate, {@link rederivedRaydiumConfig} gives the config the
  * block takes again. The plan reducers apply it on every plan edit.
@@ -58,6 +61,22 @@ export function raydiumBlockPools(draft: Pick<MandateDraft, "pools">): RaydiumBl
     : [{ poolAddress: DEFAULT_RAYDIUM_POOL_ADDRESS, pair: "SOL / USDC" }];
 }
 
+/** The first and last four characters of an address, to tell two pools of one pair apart. */
+export function shortPoolAddress(address: string): string {
+  return address.length > 10 ? `${address.slice(0, 4)}...${address.slice(-4)}` : address;
+}
+
+/** The logos of a pair, in the order of the label. The token logo function of the code draws them. */
+export function raydiumPairLogos(pair: SolanaLocalBlockConfig["pair"]) {
+  const native = {
+    symbol: "SOL",
+    network: "solana",
+    logoUrl: "/protocols/solana-preview/solana.svg",
+  };
+  const stable = { symbol: "USDC", network: "solana" };
+  return pair === "SOL / USDC" ? [native, stable] : [stable, native];
+}
+
 /** The block config for one pool. */
 export function raydiumBlockConfig(pool: RaydiumBlockPool): SolanaLocalBlockConfig {
   return { catalogId: RAYDIUM_CATALOG_ID, pair: pool.pair, poolAddress: pool.poolAddress };
@@ -96,4 +115,16 @@ export function rederivedRaydiumConfig(
   const poolAddress = (config as { poolAddress?: unknown }).poolAddress;
   if (typeof poolAddress !== "string" || raydiumPoolInMandate(draft, poolAddress)) return null;
   return defaultRaydiumBlockConfig(draft);
+}
+
+/** R3: the pick row of one pool: pair logos, the pair as title and the short address as subtitle. */
+export function raydiumPickRow(pool: RaydiumBlockPool, protocolName: string) {
+  return {
+    id: pool.poolAddress,
+    title: pool.pair,
+    subtitle: shortPoolAddress(pool.poolAddress),
+    logos: raydiumPairLogos(pool.pair),
+    searchText: `${protocolName} ${pool.pair} ${pool.poolAddress}`,
+    config: raydiumBlockConfig(pool),
+  };
 }

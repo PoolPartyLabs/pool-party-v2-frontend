@@ -466,7 +466,7 @@ Only a plan with a Solana spoke gets Idle and native operating cash from toLayou
 
 ## Shared local Solana panels and Review, October 9, 2026 (POO-2301 v1)
 
-`SolanaBuilderPanelBodies.tsx` (PP-MGR-CMP-101) reuses the shared Configure shell, PanelSelect, Allocation and the delivered range/Holding/Kamino presenters. Descriptor choices are local intentions, with no pool, reserve, range, balance or APY source. Positive LP allocation displays unavailable range inspection; zero allocation defers it. Jupiter uses exact case-sensitive Base58 option identity and the existing token-logo presentation. Standard EVM bodies and selector defaults are preserved.
+`SolanaBuilderPanelBodies.tsx` (PP-MGR-CMP-101) reuses the shared Configure shell, PanelSelect, Allocation and the delivered range/Holding/Kamino presenters. Descriptor choices are local intentions, with no pool, reserve, range, balance or APY source. Positive LP allocation displays unavailable range inspection; zero allocation defers it. Jupiter uses exact case-sensitive Base58 option identity and the existing token-logo presentation. Standard EVM bodies and selector defaults are preserved. POO-2351: the EVM bodies work the same with Solana in the mandate, and the Raydium row and the Kamino token select (USDC, plus SOL when the mandate has SOL or WSOL) are local drawing choices. They add no mock, no endpoint and no integration point.
 
 Review (POO-2342 R9) shows the reason `fundBuilder.review.validation.solanaLaunchUnavailable` for any plan with a Solana block or spoke, and the plan cannot launch. `deriveLaunchSteps` keeps `UNSUPPORTED_POSITION` for the Solana kinds. POO-2239/2240/2261/2262 retain canonical reads, prices/quotes, custody, authority, settlement and recovery.
 
@@ -579,7 +579,7 @@ POO-2338 replaces the TradingView and Binance market reference. The Charts tab s
 **Identity.** `chartContext.ts` (PP-MGR-LIB-078) maps Build and Manage to the same resolvers, so the same pool or asset gives the same URL.
 
 - A Uniswap v3 block uses the pool contract address. A Uniswap v4 block uses the bare PoolId (bytes32). Build reads the pool with `findMandatePool`. Manage reads `position.poolId` and `chainId`.
-- Aave Supply and Aave Borrow use the token of `assetKey`. A Manage supply position uses its token. The native token uses the wrapped native address. Kamino Supply uses the USDC mint.
+- Aave Supply and Aave Borrow use the token of `assetKey`. A Manage supply position uses its token. The native token uses the wrapped native address. Kamino Supply uses the mint of its token: USDC, or WSOL when the block holds SOL (POO-2351 R5).
 - A mock pool with no real address or PoolId is `unconfigured`. Swap, Holding, Pendle, GMX and flow blocks are `unsupported_block`. Another network and Solana Orca are `unsupported_pair`. A Solana Raydium block with a pool address shows its pool (POO-2343).
 
 **Data sent.** The frame URL holds only the chain slug and the public pool or token address. It holds no wallet, fund, user or draft data. The parent reads no message from the frame. Analytics send only `pool`, `token` or `unavailable` as `chart_market`. DEX Screener controls its own telemetry inside the frame.
