@@ -26,7 +26,9 @@ import {
   defaultRaydiumBlockConfig,
   raydiumBlockConfig,
   raydiumBlockPools,
+  raydiumPickRow,
   raydiumPoolInMandate,
+  shortPoolAddress,
 } from "./raydiumBlockPool";
 import { buildSolanaBuilderCatalog, SOLANA_LOCAL_CONFIGS } from "./solanaBuilderRuntime";
 import { USDC_MINT, WSOL_MINT } from "./solanaSchemas";
@@ -222,5 +224,31 @@ describe("R7: the pool of the Raydium block", () => {
     const keptConfig = config(POOL_B);
     const kept = planWith(keptConfig);
     expect(poolOf(reconcileAutoBlocks(kept, { draft: both, newId }))).toBe(keptConfig);
+  });
+});
+
+describe("POO-2351 R3: the row of a Raydium pool in the block panel", () => {
+  // @rule R3
+  it("[R3] shows the first 4 and the last 4 characters of the pool address", () => {
+    expect(shortPoolAddress(POOL_A)).toBe(`${POOL_A.slice(0, 4)}...${POOL_A.slice(-4)}`);
+    expect(shortPoolAddress("short")).toBe("short");
+  });
+
+  // @rule R3
+  it("[R3] gives the row the two pair logos, the pair as title and the short address as subtitle", () => {
+    const row = raydiumPickRow({ poolAddress: POOL_A, pair: "SOL / USDC" }, "Raydium");
+    expect(row.logos.map((logo) => logo.symbol)).toEqual(["SOL", "USDC"]);
+    expect(row.title).toBe("SOL / USDC");
+    expect(row.subtitle).toBe(shortPoolAddress(POOL_A));
+    expect(row.config).toEqual(raydiumBlockConfig({ poolAddress: POOL_A, pair: "SOL / USDC" }));
+    const inverse = raydiumPickRow({ poolAddress: POOL_B, pair: "USDC / SOL" }, "Raydium");
+    expect(inverse.logos.map((logo) => logo.symbol)).toEqual(["USDC", "SOL"]);
+  });
+
+  // @rule R3
+  it("[R3] keeps the full address searchable and does not repeat the list caption", () => {
+    const row = raydiumPickRow({ poolAddress: POOL_A, pair: "SOL / USDC" }, "Raydium");
+    expect(row.searchText).toContain(POOL_A);
+    expect(row.subtitle).not.toMatch(/DEX Screener/i);
   });
 });

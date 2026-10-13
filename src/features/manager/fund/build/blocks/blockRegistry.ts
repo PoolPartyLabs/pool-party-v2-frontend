@@ -3,6 +3,7 @@
  * @name blockRegistry
  * @implements-rules-version v1 (POO-2155 rules v1) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @implements-rules-version v1 (POO-2301 shared local runtime extension)
+ * @implements-rules-version v1 (POO-2351 R5: the Kamino card shows its token, not the pair)
  * @analytics-events none, a pure module. What the canvas does with a block is reported by
  *   `useBuildCanvas` through `onEvent`, and the Build screen (PP-MGR-SCR-002, S7) maps it to events.
  *
@@ -36,6 +37,7 @@ import {
   normalizeTokenIdentity,
   tokenKey,
 } from "../../mandateDraft";
+import { kaminoTokenOf } from "../../solana-preview/kaminoToken";
 import type { BlockContent, BlockIcon, FlowContent } from "../pieces/pieceTypes";
 import { findMandatePool } from "../plan/blockConfig";
 import {
@@ -166,11 +168,19 @@ function titleAndCaption(
 ): { title: string; caption: string } {
   const { copy, draft } = ctx;
   const protocol = copy.protocolName(block.kind);
-  if (isSolanaKind(block.kind))
+  if (isSolanaKind(block.kind)) {
+    const config = block.config && "pair" in block.config ? block.config : null;
+    // POO-2351 R5: the Kamino card shows the token it supplies, not the pair.
     return {
       title: protocol,
-      caption: block.config && "pair" in block.config ? block.config.pair : copy.card.pickAsset,
+      caption:
+        config === null
+          ? copy.card.pickAsset
+          : block.kind === "solanaKaminoSupply"
+            ? kaminoTokenOf(config)
+            : config.pair,
     };
+  }
   if (isPoolKind(block.kind)) {
     const config = block.config as { poolId: string } | null;
     // The bare PoolId of a real-mode row (or a mock row's id), inside the block's network.

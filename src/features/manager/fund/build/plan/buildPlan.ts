@@ -88,12 +88,14 @@ export interface AaveBlockConfig {
 
 /**
  * Local descriptor choice. `poolAddress` is only for the Raydium block (POO-2343 R7): the DEX
- * Screener pair address of a Raydium pool of the mandate, or the default SOL/USDC pool.
+ * Screener pair address of a Raydium pool of the mandate, or the default SOL/USDC pool. `token` is
+ * only for the Kamino block (POO-2351 R5): the token it supplies. An older block has no `token`.
  */
 export interface SolanaLocalBlockConfig {
   catalogId: string;
   pair: "SOL / USDC" | "USDC / SOL";
   poolAddress?: string;
+  token?: "USDC" | "SOL";
 }
 
 /** Which configuration each kind carries. Pendle and GMX are not drawn yet, so they carry none. */

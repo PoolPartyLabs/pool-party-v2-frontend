@@ -9,7 +9,14 @@
  * palette sections (AN8, D25). Every test names its rule with `// @rule`.
  */
 import { describe, expect, it } from "vitest";
-import type { MandateDraft } from "../../mandateDraft";
+import {
+  createEmptyDraft,
+  type MandateDraft,
+  withNetworks,
+  withProtocols,
+} from "../../mandateDraft";
+import { buildSolanaBuilderCatalog } from "../../solana-preview/solanaBuilderRuntime";
+import { USDC_MINT, WSOL_MINT } from "../../solana-preview/solanaSchemas";
 import {
   BLOCK_KIND_STATUS,
   type BlockKind,
@@ -459,5 +466,61 @@ describe("describePanelHead", () => {
     // @rule I5
     expect(describePanelHead("hub-pool-swap", makeDescribeContext(hubPoolPlan()))).toBeNull();
     expect(describePanelHead("nope", makeDescribeContext(hubPoolPlan()))).toBeNull();
+  });
+});
+
+describe("POO-2351 R5: the Kamino card shows the token", () => {
+  const catalog = buildSolanaBuilderCatalog();
+  const draft = (): MandateDraft => {
+    const base = withNetworks(
+      createEmptyDraft("2026-10-13T00:00:00.000Z", "r5"),
+      ["solana"],
+      catalog,
+    );
+    const token = (symbol: string, address: string) => ({
+      address,
+      symbol,
+      name: symbol,
+      network: "solana" as const,
+      logoUrl: null,
+    });
+    return {
+      ...withProtocols(base, [...base.protocols, "kamino"]),
+      tokens: [token("USDC", USDC_MINT), token("WSOL", WSOL_MINT)],
+    };
+  };
+  const planWith = (config: unknown): BuildPlan => ({
+    version: 1,
+    hub: { chains: [] },
+    spokes: [
+      {
+        network: "solana",
+        sharePct: 100,
+        chains: [
+          {
+            id: "c",
+            sharePct: 100,
+            steps: [
+              { id: "k", family: "position", kind: "solanaKaminoSupply", config: config as never },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+  const caption = (config: unknown) =>
+    describeBlock("k", makeDescribeContext(planWith(config), draft(), catalog)).caption;
+  const id = "solana:mainnet-beta:kamino-supply";
+
+  // @rule R5
+  it("[R5] reads a saved pair as its first token", () => {
+    expect(caption({ catalogId: id, pair: "USDC / SOL" })).toBe("USDC");
+    expect(caption({ catalogId: id, pair: "SOL / USDC" })).toBe("SOL");
+  });
+
+  // @rule R5
+  it("[R5] shows the saved token", () => {
+    expect(caption({ catalogId: id, pair: "SOL / USDC", token: "SOL" })).toBe("SOL");
+    expect(caption({ catalogId: id, pair: "USDC / SOL", token: "USDC" })).toBe("USDC");
   });
 });

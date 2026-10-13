@@ -164,12 +164,20 @@ export function isConfigFor(kind: string, config: unknown): boolean {
       solanaHolding: "solana:mainnet-beta:holding",
     };
     // POO-2343 R7: only the Raydium block keeps a pool address, and it is a Solana address.
+    // POO-2351 R5: only the Kamino block keeps a token, USDC or SOL.
     const allowed =
-      kind === "solanaRaydiumPool" ? ["catalogId", "pair", "poolAddress"] : ["catalogId", "pair"];
+      kind === "solanaRaydiumPool"
+        ? ["catalogId", "pair", "poolAddress"]
+        : kind === "solanaKaminoSupply"
+          ? ["catalogId", "pair", "token"]
+          : ["catalogId", "pair"];
     return (
       config.catalogId === ids[kind] &&
       (config.pair === "SOL / USDC" || config.pair === "USDC / SOL") &&
       optional(config.poolAddress, isSolanaAddress) &&
+      optional(config.token, (token) => token === "USDC" || token === "SOL") &&
+      // The token and the pair say the same thing, so the readers of `pair` stay right.
+      (config.token === undefined || (config.token === "SOL") === (config.pair === "SOL / USDC")) &&
       Object.keys(config).every((key) => allowed.includes(key))
     );
   }
