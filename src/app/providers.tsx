@@ -113,10 +113,13 @@ export function Providers({ children }: { children: ReactNode }) {
           theme: "dark",
           landingHeader: "Welcome to Pool Party",
           loginMessage: "Connect your wallet to get started",
+          // F3 (POO-2262): Privy lists injected Solana wallets (Phantom) only through
+          // `detected_solana_wallets`; the deprecated `detected_wallets` is ignored for Solana.
           walletList: [
             "metamask",
             "rabby_wallet",
             "detected_ethereum_wallets",
+            ...(solanaEnabled ? (["phantom", "detected_solana_wallets"] as const) : []),
             "detected_wallets",
             "wallet_connect",
             "coinbase_wallet",

@@ -1,6 +1,7 @@
 import type { PrivyClientConfig } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 import { createSolanaRpc, createSolanaRpcSubscriptions } from "@solana/kit";
+import { solanaRpcUrl } from "./rpcEndpoint";
 
 export const SOLANA_CHAIN = "solana:mainnet" as const;
 
@@ -14,7 +15,8 @@ export function solanaPrivyConfig(enabled: boolean): Pick<PrivyClientConfig, "so
     solana: {
       rpcs: {
         [SOLANA_CHAIN]: {
-          rpc: createSolanaRpc("https://api.mainnet-beta.solana.com"),
+          rpc: createSolanaRpc(solanaRpcUrl()),
+          // Unused by this app (it signs, then sends through the proxy); Privy requires the field.
           rpcSubscriptions: createSolanaRpcSubscriptions("wss://api.mainnet-beta.solana.com"),
         },
       },

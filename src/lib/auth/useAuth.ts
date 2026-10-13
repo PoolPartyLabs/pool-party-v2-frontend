@@ -138,7 +138,10 @@ function usePrivyAuth(): AuthState {
       // Scope Privy's modal to the requested method (POO-200).
       // "google" → only Google OAuth; "wallet" → only wallet connectors.
       const loginMethods = method ? [method] : undefined;
-      privyLogin(loginMethods ? { loginMethods } : undefined);
+      // Sign-in is SIWE, EVM only: never offer a Solana wallet as the login account, even when the
+      // Solana spoke flag makes Privy load Solana connectors (sweep F12, POO-2262). The Manager's
+      // Solana key is connected separately, on the launch page.
+      privyLogin({ ...(loginMethods ? { loginMethods } : {}), walletChainType: "ethereum-only" });
     },
     [privyLogin],
   );

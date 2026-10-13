@@ -42,7 +42,10 @@ it("exposes the Solana signer without changing the connected EVM account", () =>
   const { result } = renderHook(() => useManagerSolanaWallet(), { wrapper });
   expect(result.current.address).toBe(state.wallets[0]?.address);
   result.current.connect();
-  expect(state.connect).toHaveBeenCalledWith({ walletChainType: "solana-only" });
+  expect(state.connect).toHaveBeenCalledWith({
+    walletChainType: "solana-only",
+    walletList: ["phantom", "detected_solana_wallets", "wallet_connect"],
+  });
   expect(state.evmWallet.address).toBe("0x1111111111111111111111111111111111111111");
 });
 it("requires the exact bound key on resume", async () => {

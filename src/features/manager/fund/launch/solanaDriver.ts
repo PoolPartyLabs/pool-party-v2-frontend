@@ -14,6 +14,8 @@ import {
   validateSolanaApiQuote,
 } from "@/lib/solana/swap";
 import {
+  SOLANA_MAINNET_GENESIS_HASH,
+  type SolanaBuiltTransaction,
   type SolanaLifetime,
   type SolanaTransactionRpc,
   sendSolanaTransaction,
@@ -41,7 +43,10 @@ export interface SolanaLaunchBackend {
     bootstrapDigest?: string;
   } | null>;
   referencePrice?(poolId: string): Promise<SolanaOracleReference>;
-  /** TODO(interface): authenticated API builders must pin programs, accounts and Fund amounts. */
+  /**
+   * Authenticated API builders pin programs, accounts and Fund amounts. SVM steps return the
+   * unsigned bytes WITH the lifetime the API chose (API contract §3.1: the API owns the blockhash).
+   */
   build(
     step: SolanaLaunchStep,
     journal: LaunchJournal,
@@ -179,7 +184,7 @@ export function createChainLaunchDriver(input: {
       return sendSolanaTransaction({
         walletAddress: input.solanaAddress,
         rpc: input.rpc,
-        build: async (lifetime) => {
+        build: async (): Promise<SolanaBuiltTransaction> => {
           let quote: SolanaApiSignedQuote | undefined;
           let request: SolanaSwapQuoteRequest | undefined;
           if (step.kind === "swap-to-ratio" || step.kind === "raydium-open") {
@@ -220,9 +225,16 @@ export function createChainLaunchDriver(input: {
                 throw new Error("SOLANA_API_QUOTE_SIGNATURE_INVALID");
             }
           }
-          const bytes = await input.backend.build(step, journal, lifetime, quote);
+          const built = await input.backend.build(step, journal, undefined, quote);
           if (quote && request) validateSolanaApiQuote(quote, request);
-          if (!(bytes instanceof Uint8Array)) throw new Error("UNSAFE_SOLANA_TRANSACTION");
+          const bytes = (built as Partial<SolanaBuiltTransaction> | null)?.bytes;
+          const lifetime = (built as Partial<SolanaBuiltTransaction> | null)?.lifetime;
+          if (
+            !(bytes instanceof Uint8Array) ||
+            typeof lifetime?.blockhash !== "string" ||
+            typeof lifetime.lastValidBlockHeight !== "bigint"
+          )
+            throw new Error("UNSAFE_SOLANA_TRANSACTION");
           if (["stage-solana-config", "seal-solana-config", "init-solana"].includes(step.kind)) {
             const binding = (journal.frozen as { solanaBinding?: ManagerSolanaBinding })
               .solanaBinding;
@@ -240,7 +252,7 @@ export function createChainLaunchDriver(input: {
             !(await input.backend.validateTransactionIntent(bytes, step, journal))
           )
             throw new Error("UNSAFE_SOLANA_TRANSACTION");
-          return bytes;
+          return { bytes, lifetime };
         },
         sign: input.signTransaction,
         persist: onSubmitted,
@@ -249,7 +261,7 @@ export function createChainLaunchDriver(input: {
     async receipt(chain, hash) {
       if (chain !== "solana:mainnet") return input.evm.receipt(chain, hash);
       requireEnabled();
-      if ((await input.rpc.genesisHash()) !== "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp")
+      if ((await input.rpc.genesisHash()) !== SOLANA_MAINNET_GENESIS_HASH)
         throw new Error("SOLANA_CLUSTER_MISMATCH");
       return { status: await input.rpc.status(hash) };
     },

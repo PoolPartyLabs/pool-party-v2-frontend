@@ -18,7 +18,10 @@ import {
 const flags = vi.hoisted(() => ({ enabled: true }));
 const transport = vi.hoisted(() => ({ send: vi.fn() }));
 vi.mock("@/lib/features", () => ({ isFeatureEnabled: () => flags.enabled }));
-vi.mock("@/lib/solana/transaction", () => ({ sendSolanaTransaction: transport.send }));
+vi.mock("@/lib/solana/transaction", () => ({
+  SOLANA_MAINNET_GENESIS_HASH: "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d",
+  sendSolanaTransaction: transport.send,
+}));
 const arrival: SolanaLaunchStep = {
   id: "solana:arrival",
   kind: "solana-arrival",
@@ -37,7 +40,10 @@ function setup() {
   };
   const backend: SolanaLaunchBackend = {
     validateTransactionIntent: vi.fn(async () => true),
-    build: vi.fn(async () => new Uint8Array()),
+    build: vi.fn(async () => ({
+      bytes: new Uint8Array(),
+      lifetime: { blockhash: "fresh", lastValidBlockHeight: BigInt(10) },
+    })),
     credited: vi.fn(async () => ({ credited: false })),
     reportReady: vi.fn(async () => false),
     attestation: vi.fn(async () => ({ message: "0x01", attestation: "0x02" })),
@@ -45,8 +51,8 @@ function setup() {
     complete: vi.fn(async () => {}),
   };
   const rpc = {
-    genesisHash: vi.fn(async () => "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"),
-    latestBlockhash: vi.fn(),
+    genesisHash: vi.fn(async () => "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d"),
+    blockHeight: vi.fn(async () => BigInt(1)),
     send: vi.fn(),
     status: vi.fn(async () => "unknown" as const),
   };
@@ -64,7 +70,7 @@ beforeEach(() => {
   flags.enabled = true;
   transport.send.mockReset();
   transport.send.mockImplementation(async (input) => {
-    await input.build({ blockhash: "fresh", lastValidBlockHeight: BigInt(10) });
+    await input.build();
     return "signature";
   });
 });
@@ -298,12 +304,7 @@ it("fetches and verifies the API quote immediately before building the unsigned 
   expect(backend.quoteSwap).not.toHaveBeenCalled();
   await driver.send(step, {}, vi.fn());
   expect(backend.verifySwapQuote).toHaveBeenCalledBefore(vi.mocked(backend.build));
-  expect(backend.build).toHaveBeenCalledWith(
-    step,
-    journal,
-    { blockhash: "fresh", lastValidBlockHeight: BigInt(10) },
-    quote,
-  );
+  expect(backend.build).toHaveBeenCalledWith(step, journal, undefined, quote);
 });
 it.each([
   "missing",
@@ -341,12 +342,7 @@ it("builds the frozen LP-open selection without requesting a swap quote", async 
   backend.verifySwapQuote = undefined;
   await driver.build(step, journal);
   await driver.send(step, {}, vi.fn());
-  expect(backend.build).toHaveBeenCalledWith(
-    step,
-    journal,
-    { blockhash: "fresh", lastValidBlockHeight: BigInt(10) },
-    undefined,
-  );
+  expect(backend.build).toHaveBeenCalledWith(step, journal, undefined, undefined);
 });
 
 it("prevents mutation of the verified quote during transaction building", async () => {

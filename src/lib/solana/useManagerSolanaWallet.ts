@@ -6,12 +6,19 @@ import { address, createSolanaRpc } from "@solana/kit";
 import { useQuery } from "@tanstack/react-query";
 import { useFeatureFlags } from "@/lib/features/useFeatureFlags";
 import { SOLANA_CHAIN } from "./config";
+import { solanaRpcUrl } from "./rpcEndpoint";
 
 export async function readManagerSolanaBalance(walletAddress: string): Promise<bigint> {
-  const result = await createSolanaRpc("https://api.mainnet-beta.solana.com")
+  const result = await createSolanaRpc(solanaRpcUrl())
     .getBalance(address(walletAddress), { commitment: "finalized" })
     .send();
   return result.value;
+}
+
+function isWalletRejection(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return code === 4001 || /reject|denied|cancel|declin|closed/i.test(message);
 }
 
 /** DEC-190: use only the bound key on resume; never silently switch to another wallet. */
@@ -49,17 +56,22 @@ export function useManagerSolanaWallet(boundAddress?: string) {
     refreshBalance: balance.refetch,
     connect: () => {
       if (!enabled) throw new Error("SOLANA_DISABLED");
-      connectWallet({ walletChainType: "solana-only" });
+      connectWallet({
+        walletChainType: "solana-only",
+        walletList: ["phantom", "detected_solana_wallets", "wallet_connect"],
+      });
     },
     signMessage: async (message: Uint8Array) =>
       (await signMessage({ wallet: requireWallet(), message })).signature,
-    signTransaction: async (transaction: Uint8Array) =>
-      (
-        await signTransaction({
-          wallet: requireWallet(),
-          transaction,
-          chain: SOLANA_CHAIN,
-        })
-      ).signedTransaction,
+    signTransaction: async (transaction: Uint8Array) => {
+      const target = requireWallet();
+      try {
+        return (await signTransaction({ wallet: target, transaction, chain: SOLANA_CHAIN }))
+          .signedTransaction;
+      } catch (error) {
+        // F5: a refused prompt is provably unsent; name it so the journey can offer a retry.
+        throw new Error(isWalletRejection(error) ? "USER_REJECTED" : "SOLANA_SIGN_FAILED");
+      }
+    },
   };
 }

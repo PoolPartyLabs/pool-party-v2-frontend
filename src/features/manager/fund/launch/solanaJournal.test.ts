@@ -196,8 +196,8 @@ it.each([
   };
   const sign = vi.fn();
   const rpc = {
-    genesisHash: vi.fn(async () => "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"),
-    latestBlockhash: vi.fn(),
+    genesisHash: vi.fn(async () => "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d"),
+    blockHeight: vi.fn(async () => BigInt(1)),
     send: vi.fn(),
     status: vi.fn(async () => "unknown" as const),
   };

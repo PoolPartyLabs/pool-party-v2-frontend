@@ -390,7 +390,8 @@ export async function runLaunch(
         continue;
       }
       if (
-        ["discover", "report", "arrival"].includes(step.kind) &&
+        // F7 (2026-10-09 sweep): a throttled credit poll is a wait, not a failure.
+        ["discover", "report", "arrival", "solana-arrival"].includes(step.kind) &&
         error instanceof Error &&
         ["V2_DEFERRED", "V2_RATE_LIMITED"].includes(error.message)
       ) {
@@ -404,7 +405,13 @@ export async function runLaunch(
         error instanceof Error && /^[A-Z][A-Z0-9_]*$/.test(error.message)
           ? error.message
           : "LAUNCH_STEP_FAILED";
-      if (!checkpoint.txHash && ["USER_REJECTED", "LAUNCH_CANCELLED"].includes(checkpoint.error))
+      // F5 (2026-10-09 sweep): a Solana signature is persisted BEFORE its broadcast, so an SVM
+      // failure without a persisted signature provably sent nothing and may be rebuilt.
+      if (
+        !checkpoint.txHash &&
+        (["USER_REJECTED", "LAUNCH_CANCELLED"].includes(checkpoint.error) ||
+          (step.chainKind === "svm" && checkpoint.error !== "SUBMISSION_RECONCILIATION_REQUIRED"))
+      )
         checkpoint.submissionAttempted = false;
       persist();
       if (step.kind !== "report" && !readOnly) return journal;
