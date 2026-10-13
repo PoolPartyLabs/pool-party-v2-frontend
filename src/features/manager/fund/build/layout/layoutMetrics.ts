@@ -1,7 +1,7 @@
 /**
  * @id PP-MGR-LIB-096
  * @name layoutMetrics
- * @implements-rules-version v2 (POO-2345)
+ * @implements-rules-version v2 (POO-2345), rules v1 (POO-2348)
  * @analytics-events none, a pure measuring module: nothing here is rendered or tracked.
  *
  * Counts how well the lines of a {@link GraphLayout} are routed. It reads `layout.edges` and
@@ -24,6 +24,13 @@
  *   near miss between a horizontal and a vertical), and it does not measure two collinear
  *   segments that end one after the other with a space between them.
  *
+ * - A GROUP INTRUSION (rules v1, R3) is a segment that enters the box of a spoke group that is not
+ *   its source or its target. The metric finds the owner network of a segment from its edge id and
+ *   the blocks of the layout. A segment enters a box when it runs through the open inside of the
+ *   box, with a length above 0. A segment that only touches the border is not inside. An edge
+ *   with no owner network (a merge, an output, a spine edge) is not in any box, so each box is
+ *   foreign to it. A hub chain has the hub as its owner, and the hub has no box.
+ *
  * - A FORCED CROSSING (rules v2, R2 and R8) is a crossing of an income line and a principal line
  *   whose full paths start in one order and end in the opposite order. The principal leaves the
  *   last position on the side. The income leaves the fee swap at the centre. They end at Idle
@@ -45,6 +52,8 @@ export interface LayoutMetrics {
   maxBendsPerLeg: number;
   /** The least distance between parallel segments of different lines, or Infinity if none. */
   minGap: number;
+  /** The segments that enter the box of a group that is not their source or target (R3). */
+  groupIntrusions: number;
 }
 
 /** A segment with its line, in a shape that is easy to compare. */
@@ -215,7 +224,47 @@ export function findConflicts(layout: GraphLayout): { crossings: Pair[]; overlap
   return { crossings, overlaps };
 }
 
-/** Crossings, overlaps, bends and the least parallel gap of a layout. */
+const CHAIN_OWNED = /^(?:principal:(?:chain|returned|conversion)|stub:chain):(.+)$/;
+const BLOCK_OWNED = /^(?:income:(?:block|converted|returned)|link):(.+)$/;
+const NETWORK_OWNED = /^(?:stub:spoke|bus:spoke|idle:spoke|template:addProtocol|bridge):(.+)$/;
+
+/** The network that owns an edge (its source group), or null when no spoke group owns it. */
+function ownerNetwork(layout: GraphLayout, id: string): string | null {
+  const base = lineOf(id).line;
+  const chain = CHAIN_OWNED.exec(base)?.[1];
+  if (chain !== undefined)
+    return layout.blocks.find((b) => b.chainId === chain || b.id === chain)?.network ?? null;
+  const block = BLOCK_OWNED.exec(base)?.[1];
+  if (block !== undefined)
+    return layout.blocks.find((b) => b.id === block || b.chainId === block)?.network ?? null;
+  return NETWORK_OWNED.exec(base)?.[1] ?? null;
+}
+
+/** True when a segment runs through the open inside of a box, over a length above 0. */
+function entersBox(s: Segment, box: Rect): boolean {
+  const left = box.x + EPSILON;
+  const right = box.x + box.w - EPSILON;
+  const top = box.y + EPSILON;
+  const bottom = box.y + box.h - EPSILON;
+  const [from, to] = span(s);
+  const at = fixed(s);
+  return s.horizontal
+    ? at > top && at < bottom && Math.min(to, right) - Math.max(from, left) > EPSILON
+    : at > left && at < right && Math.min(to, bottom) - Math.max(from, top) > EPSILON;
+}
+
+/** The ids of the segments that enter a group box that is not their source or target (R3). */
+export function findGroupIntrusions(layout: GraphLayout): string[] {
+  const found: string[] = [];
+  for (const s of segmentsOf(layout)) {
+    const owner = ownerNetwork(layout, s.edge.id);
+    if (layout.groups.some((g) => g.network !== owner && entersBox(s, g.rect)))
+      found.push(s.edge.id);
+  }
+  return found;
+}
+
+/** Crossings, overlaps, bends, the least parallel gap and the group intrusions of a layout. */
 export function measureLayout(layout: GraphLayout): LayoutMetrics {
   const segments = segmentsOf(layout);
   const found = conflicts(segments);
@@ -226,6 +275,7 @@ export function measureLayout(layout: GraphLayout): LayoutMetrics {
     totalBends: bends.reduce((sum, n) => sum + n, 0),
     maxBendsPerLeg: bends.reduce((max, n) => Math.max(max, n), 0),
     minGap: found.minGap,
+    groupIntrusions: findGroupIntrusions(layout).length,
   };
 }
 
