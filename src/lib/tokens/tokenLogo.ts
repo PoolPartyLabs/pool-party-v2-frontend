@@ -13,6 +13,8 @@
  * PP-INTEGRATION-POINT (POO-482 R5): once the backend adds the token ADDRESS to those payloads,
  * resolution upgrades to the exact `findToken(network, address)` lookup and this symbol map becomes
  * the fallback.
+ *
+ * POO-2347 [R2]: SOL and WSOL resolve to the Solana logo of the Solana preview.
  */
 import { tokensForNetwork } from "./tokenList";
 
@@ -34,6 +36,9 @@ const MAJOR_TOKEN_LOGOS: Record<string, string> = {
   WPOL: "/tokens/wpol.png",
   POL: "/tokens/wpol.png",
   MATIC: "/tokens/wpol.png",
+  // POO-2347 [R2]: SOL and WSOL show the Solana logo of the Solana preview.
+  SOL: "/protocols/solana-preview/solana.svg",
+  WSOL: "/protocols/solana-preview/solana.svg",
 };
 
 /**

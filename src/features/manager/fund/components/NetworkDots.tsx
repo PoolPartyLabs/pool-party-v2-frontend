@@ -26,6 +26,7 @@
  * Brand colours come from the catalog (`PP-MGR-LIB-018`), never from a local map: a network with no
  * committed mark under `public/networks` (Unichain, commented out of the buildathon scope by POO-2142)
  * falls back to a monogram, and the monogram must be the brand's colour, which only the catalog knows.
+ * Solana uses `NetworkLogo` like every other network (POO-2347).
  */
 "use client";
 
@@ -93,24 +94,13 @@ export function NetworkLogoWithName({
             title={name}
             className={cn("inline-flex shrink-0 rounded-full", className)}
           >
-            {network === "solana" ? (
-              // biome-ignore lint/performance/noImgElement: committed third-party protocol mark.
-              <img
-                src="/protocols/solana-preview/solana.svg"
-                alt=""
-                width={size}
-                height={size}
-                className="pointer-events-none rounded-full"
-              />
-            ) : (
-              <NetworkLogo
-                network={network}
-                name={name}
-                size={size}
-                fallbackColor={brandColor}
-                className="pointer-events-none"
-              />
-            )}
+            <NetworkLogo
+              network={network}
+              name={name}
+              size={size}
+              fallbackColor={brandColor}
+              className="pointer-events-none"
+            />
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>

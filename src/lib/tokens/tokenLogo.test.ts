@@ -6,6 +6,8 @@
  * POO-482 R1: committed majors resolve by symbol (case-insensitive, no network needed); the
  * network token list is the fallback on an exact-symbol match; anything else is undefined so the
  * caller's initial-chip fallback renders.
+ *
+ * POO-2347 (rules v1): SOL and WSOL resolve to the Solana logo (R2); the other logos stay (R4).
  */
 import { describe, expect, it, vi } from "vitest";
 import { resolveTokenLogo } from "./tokenLogo";
@@ -31,6 +33,23 @@ vi.mock("./tokenList", () => ({
       : [],
   ),
 }));
+
+describe("resolveTokenLogo (POO-2347)", () => {
+  // @rule R2
+  it("resolves SOL and WSOL to the Solana logo, case-insensitive", () => {
+    expect(resolveTokenLogo("SOL")).toBe("/protocols/solana-preview/solana.svg");
+    expect(resolveTokenLogo("wsol")).toBe("/protocols/solana-preview/solana.svg");
+  });
+
+  // @rule R4
+  it("keeps the logos of the other tokens", () => {
+    expect(resolveTokenLogo("ETH")).toBe("/tokens/eth.png");
+    expect(resolveTokenLogo("USDC")).toBe("/tokens/usdc.png");
+    expect(resolveTokenLogo("POL")).toBe("/tokens/wpol.png");
+    expect(resolveTokenLogo("XYZ", "base")).toBe("https://cdn.example/xyz.png");
+    expect(resolveTokenLogo("UNKNOWN")).toBeUndefined();
+  });
+});
 
 describe("resolveTokenLogo (POO-482 R1)", () => {
   it("resolves the committed majors by symbol, case-insensitive, without a network", () => {
