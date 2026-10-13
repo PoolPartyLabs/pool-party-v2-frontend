@@ -322,6 +322,7 @@ function PickBody({
       }}
       noMatch={model.noMatch}
       emptyTitle={model.emptyTitle}
+      emptyCaption={model.emptyCaption}
       status={model.status}
       error={
         model.onRetry

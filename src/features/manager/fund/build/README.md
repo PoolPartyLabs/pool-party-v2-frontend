@@ -321,7 +321,7 @@ Complete IDs survive graph reading order, grouped surfaces and duplicate occurre
 
 ## Shared local Solana panel and Review foundation (POO-2301 v1, October 9, 2026)
 
-The shared BlockPanel registry now contains Kamino, Raydium, Orca and Holding bodies. These reuse Allocation, PanelSelect, Apply/Discard, removal confirmation and the delivered protocol presenters. LP/Holding controls use the same V2 selector; Jupiter uses exact Base58 IDs and native/WSOL protocol logos. Local EVM choices have unavailable bodies and do not mount live EVM providers. Zero LP allocation still defers range.
+The shared BlockPanel registry now contains Kamino, Raydium, Orca and Holding bodies. These reuse Allocation, PanelSelect, Apply/Discard, removal confirmation and the delivered protocol presenters. LP/Holding controls use the same V2 selector; Jupiter uses exact Base58 IDs and native/WSOL protocol logos. POO-2351 R1: the EVM bodies (Aave Supply, Aave Borrow, Uniswap v4, v3, Pendle, GMX) work the same with Solana in the mandate, and never show "Not available". P1 is unchanged: only mandate tokens and pools on the network of the block. Zero LP allocation still defers range.
 
 POO-2342 R12 removed the pure Build/Manage adapter (`solanaBuildManageBinding`) and the mounted local Manage host. Configure writes the shared plan reducers directly. The local draft hook supplies session memory only.
 
@@ -332,3 +332,9 @@ The activation described as future work in the published foundation above is inc
 Applied plan/Review survive retry; unapplied inner-panel fields can be lost after a render exception,
 while the last pending metadata continues guarding leave. No deployment, native-browser acceptance
 or live Solana capability is asserted.
+
+## Solana panels, POO-2351 rules v1
+
+- R1: `BuildScreen.tsx` passes no `bodies` prop, so the Build panels use the shared `PANEL_BODIES`. `LOCAL_PANEL_BODIES` and `unavailableBody` are removed.
+- R2: a Uniswap v4 panel with no mandate pool on its network shows an empty state. `poolPickStatus` (`panelCatalogView.ts`) makes an empty list "ready", and `emptyCaption` (`PanelPickModel`, `PanelPickList`) says why. The link goes to the Pools step. The v4 option stays in the menu.
+- R5: the Kamino card shows its token (`kaminoTokenOf`). The pair "USDC / SOL" reads as USDC and "SOL / USDC" reads as SOL. The Kamino chart is the chart of the token.

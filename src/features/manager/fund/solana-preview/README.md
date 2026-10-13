@@ -170,3 +170,10 @@ The legacy independent preview is removed, not retained as a harness. Live data,
 
 POO-2342 delivery continuation: Solana drafts use the one V2 builder and its browser-local drafts. No deployment, native-browser acceptance
 or live Solana capability is asserted.
+
+## Raydium rows and Kamino token, POO-2351 rules v1
+
+- R3: a Raydium pool row shows the two pair logos (`raydiumPairLogos`). The title is the pair. The subtitle is the short pool address, the first 4 and the last 4 characters (`shortPoolAddress`). It does not repeat the list caption. `raydiumPickRow` builds the row.
+- R4: the Kamino Lend panel has a token select. It offers USDC always, and SOL when the mandate has SOL or WSOL on Solana (`kaminoTokenOptions`, `kaminoToken.ts`, PP-MGR-LIB-098). The panel never shows "Not available".
+- R5: the Kamino block keeps `token` in its config. `kaminoConfigFor` writes `pair` in step with `token`. A block with no `token` reads its pair: "USDC / SOL" is USDC, "SOL / USDC" is SOL.
+- The SOL and WSOL logos and the Solana network logo stay with POO-2347. The code uses the token logo function it has today.

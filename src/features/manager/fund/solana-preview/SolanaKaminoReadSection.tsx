@@ -5,6 +5,7 @@
  * @figma https://www.figma.com/design/jjOf5DL9uVEB7WBR9nGb4A?node-id=8677-271
  * @i18n-namespace manager.solanaPreview, manager.manageV2.lendingRisk
  * @analytics-events none, read-only injected section; parent owns view/edit/blocked/error intents
+ * POO-2351 R4: the optional `token` prop names the token of the title (SOL or USDC). Without it the title reads USDC.
  * PP-INTEGRATION-POINT: POO-2240/2261 provide independent verified metadata, amounts, rates and full-account risk; no catalog or fixture supplies production reads.
  */
 "use client";
@@ -35,6 +36,8 @@ export interface SolanaKaminoReadSectionProps {
   allocation?: ReactNode;
   /** Separate full-account Current/After risk; absence remains unavailable. */
   risk?: Pick<ManageLendingRiskSectionProps, "origin" | "current" | "after">;
+  /** POO-2351 R4: the token of the block. The title reads "Supply {token}". Default USDC. */
+  token?: string;
   /** Host layout override. */
   className?: string;
 }
@@ -127,6 +130,7 @@ export function SolanaKaminoReadSection({
   read,
   allocation,
   risk,
+  token,
   className,
 }: SolanaKaminoReadSectionProps) {
   const t = useTranslations("manager.solanaPreview"),
@@ -161,7 +165,7 @@ export function SolanaKaminoReadSection({
       className={cn("min-w-0 space-y-4", className)}
     >
       <h3 id={titleId} className="font-medium text-sm">
-        {t("supplyUsdc")}
+        {token && token !== "USDC" ? t("supplyToken", { token }) : t("supplyUsdc")}
       </h3>
       <dl className="grid min-w-0 gap-3">
         <Row label={h("program")}>

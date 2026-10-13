@@ -12,6 +12,10 @@
  *   [R3] eligibility and active liquidity are re-checked; TVL and APR are never exposed
  *   [R4] the mandate's Uniswap v4 pools of one network become list rows, with no fetch
  *   [R7] reserves join the draft tokens of the network, and an unusable one is listed with a reason
+ *
+ * Rules under test (POO-2351 rules v1):
+ *   [R1] a Solana pool in the mandate does not change the pools of an EVM network (P1)
+ *   [R2] a network with no mandate pool is "ready" and empty, never "loading"
  */
 import { describe, expect, it } from "vitest";
 import type { CatalogPool, CatalogReserve } from "@/lib/api/v2/schemas";
@@ -27,6 +31,7 @@ import {
   type PanelPoolView,
   PRICE_CROSS_CHECK_TOLERANCE,
   panelPoolsFor,
+  poolPickStatus,
   priceFromSqrtPriceX96,
   reserveUsability,
   selectPanelReserves,
@@ -644,5 +649,44 @@ describe("selectPanelReserves [R7]", () => {
     selectPanelReserves(reserves, tokens, 42161);
     expect(reserves).toEqual(before);
     expect(tokens).toEqual(tokensBefore);
+  });
+});
+
+describe("POO-2351 pool pick list with Solana in the mandate", () => {
+  const arbitrum = fundPoolFixtures().uniswapV4.filter((pool) => pool.network === "arbitrum");
+  const solana = {
+    ...structuredClone(arbitrum[0]),
+    id: "solana-raydium-pool",
+    network: "solana",
+    protocol: "raydium",
+  } as unknown as MandatePoolRef;
+
+  // @rule R1
+  it("lists only the Uniswap v4 pools of the network of the block, not the Solana pool (P1)", () => {
+    const rows = panelPoolsFor({ pools: [...arbitrum, solana] }, 42161);
+    const without = panelPoolsFor({ pools: arbitrum }, 42161);
+    expect(without.length).toBeGreaterThan(0);
+    expect(rows).toEqual(without);
+    expect(rows.some((row) => row.rowId === solana.id)).toBe(false);
+  });
+
+  // @rule R2
+  it("gives a network with no mandate pool an empty list, and a Solana pool does not fill it", () => {
+    expect(panelPoolsFor({ pools: [solana] }, 42161)).toEqual([]);
+    expect(panelPoolsFor({ pools: [solana] }, 4663)).toEqual([]);
+  });
+
+  // @rule R2
+  it("reports an empty list as ready, so the empty state shows and not the loading skeleton", () => {
+    expect(poolPickStatus(0, "loading")).toBe("ready");
+    expect(poolPickStatus(0, "error")).toBe("ready");
+    expect(poolPickStatus(0, "ready")).toBe("ready");
+  });
+
+  // @rule R2
+  it("keeps the live status of a list that has rows", () => {
+    expect(poolPickStatus(2, "loading")).toBe("loading");
+    expect(poolPickStatus(2, "error")).toBe("error");
+    expect(poolPickStatus(2, "ready")).toBe("ready");
   });
 });

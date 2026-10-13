@@ -4,6 +4,8 @@
  * @implements-rules-version v1 (POO-2189); POO-2204 rules v1
  * @analytics-events none (the panel shell emits)
  * The Uniswap v4 body: mandate pool defaults from a mount read, and a live-gated draft range.
+ * POO-2351 R2: with no mandate pool on the network (for example a Solana-only mandate), the pick list
+ * is "ready" and empty: it says why and links to the Pools step. The v4 option stays in the menu.
  */
 "use client";
 import { useTranslations } from "next-intl";
@@ -34,6 +36,7 @@ import type {
 import {
   type PanelPoolView,
   panelPoolsFor,
+  poolPickStatus,
   toLivePoolGrid,
   toPanelPoolView,
 } from "./panelCatalogView";
@@ -174,7 +177,8 @@ function usePoolPick(context: PanelBodyContext): PanelPickModel<PoolBlockConfig>
     link: { prompt: t("pool.needAnother"), label: t("link.pools"), step: "pools" },
     noMatch: { title: (typed) => t("pool.noMatch", { typed }), caption: t("pool.noMatchCaption") },
     emptyTitle: t("pool.empty", { network: context.networkName }),
-    status: data.status,
+    emptyCaption: t("pool.emptyCaption", { network: context.networkName }),
+    status: poolPickStatus(data.rows.length, data.status),
     onRetry: data.retry,
   };
 }

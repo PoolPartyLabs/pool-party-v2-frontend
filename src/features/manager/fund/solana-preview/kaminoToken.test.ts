@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-LIB-097
+ * @id PP-MGR-LIB-098
  * @name kaminoToken tests
  * @implements-rules-version v1 (POO-2351)
  * @analytics-events none, pure helpers.
@@ -18,6 +18,7 @@ import {
 import {
   KAMINO_CATALOG_ID,
   kaminoConfigFor,
+  kaminoTokenLogo,
   kaminoTokenOf,
   kaminoTokenOptions,
 } from "./kaminoToken";
@@ -97,5 +98,14 @@ describe("POO-2351 R6: the Kamino panel is never unavailable", () => {
     const [first] = kaminoTokenOptions(draftWith());
     expect(first).toBe("USDC");
     expect(kaminoConfigFor(first ?? "USDC").catalogId).toBe(KAMINO_CATALOG_ID);
+  });
+});
+
+describe("POO-2351 R4: the logo of a token option", () => {
+  // @rule R4
+  it("[R4] draws SOL with the Solana mark and USDC with the token logo function", () => {
+    expect(kaminoTokenLogo("SOL")).toMatchObject({ symbol: "SOL", network: "solana" });
+    expect(kaminoTokenLogo("SOL").logoUrl).toBeTruthy();
+    expect(kaminoTokenLogo("USDC")).toEqual({ symbol: "USDC", network: "solana" });
   });
 });

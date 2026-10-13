@@ -1,5 +1,5 @@
 /**
- * @id PP-MGR-LIB-097
+ * @id PP-MGR-LIB-098
  * @name kaminoToken
  * @description The token of a Kamino Lend block: the options of the panel and the token that the block keeps.
  * @linear https://linear.app/yeildbay/issue/POO-2351
@@ -49,4 +49,11 @@ export function kaminoConfigFor(token: KaminoToken): SolanaLocalBlockConfig {
     pair: token === "SOL" ? "SOL / USDC" : "USDC / SOL",
     token,
   };
+}
+
+/** The logo of one token. SOL has the Solana mark; USDC uses the token logo function of the code. */
+export function kaminoTokenLogo(token: KaminoToken) {
+  return token === "SOL"
+    ? { symbol: "SOL", network: "solana", logoUrl: "/protocols/solana-preview/solana.svg" }
+    : { symbol: "USDC", network: "solana" };
 }

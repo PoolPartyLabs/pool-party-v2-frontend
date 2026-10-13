@@ -12,6 +12,7 @@
  *   and the catalog), never from a v3 fee tier (handoff v1.2, "Range bounds").
  * - {@link panelPoolsFor}: the panel's pool LIST, which needs no fetch at all: the mandate's own
  *   Uniswap v4 pools of one network.
+ * - {@link poolPickStatus}: POO-2351 R2, a network with no mandate pool is "ready" and empty, never "loading".
  * - {@link selectPanelReserves}: the Aave Supply panel's asset list, the catalog's reserves joined to
  *   the mandate's tokens, an unusable reserve listed with its reason instead of dropped (P1, P13).
  *
@@ -415,4 +416,15 @@ export function selectPanelReserves(
     });
   }
   return rows;
+}
+
+/**
+ * POO-2351 R2: the status of the pool pick list. A network with no mandate pool has nothing to read:
+ * the list is "ready" and empty, so the panel shows the empty state and not the loading skeleton.
+ */
+export function poolPickStatus(
+  rowCount: number,
+  status: "ready" | "loading" | "error",
+): "ready" | "loading" | "error" {
+  return rowCount === 0 ? "ready" : status;
 }

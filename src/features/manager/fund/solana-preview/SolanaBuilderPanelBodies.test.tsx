@@ -3,6 +3,9 @@
  * @name Shared local configuration panel regression tests
  * @implements-rules-version v1 (POO-2301) + POO-2342 rules v1 (one V2 builder, Solana is a network)
  * @analytics-events none, assertions over panel outcomes.
+ *
+ * POO-2351 rules v1: R1 (the EVM bodies work with Solana in the mandate), R2 (empty Uniswap v4 state),
+ * R4/R6 (the Kamino token select, no "Not available").
  */
 
 import type { UserEvent } from "@testing-library/user-event";
@@ -14,11 +17,12 @@ import {
 } from "../../../../../tests/utils/renderWithProviders";
 import { useBlockCopy } from "../build/blocks/blockCopy";
 import { AuxiliaryBlockPanel } from "../build/panel/AuxiliaryBlockPanel";
+import { PANEL_BODIES } from "../build/panel/panelBodies";
 import { PanelHarness } from "../build/panel/panelTestKit";
 import type { UsePanelDraftResult } from "../build/panel/usePanelDraft";
 import type { BuildPlan, ManualSwapConfig } from "../build/plan/buildPlan";
 import { addToken, createEmptyDraft, tokenKey, withNetworks, withProtocols } from "../mandateDraft";
-import { LOCAL_PANEL_BODIES } from "./SolanaBuilderPanelBodies";
+import { SOLANA_PANEL_BODIES } from "./SolanaBuilderPanelBodies";
 import { buildSolanaBuilderCatalog, SOLANA_LOCAL_CONFIGS } from "./solanaBuilderRuntime";
 
 const catalog = buildSolanaBuilderCatalog();
@@ -172,7 +176,7 @@ it("refuses Holding WSOL outside the mandate while preserving the applied plan a
       plan={stablePlan}
       catalog={catalog}
       selectedId="holding"
-      bodies={LOCAL_PANEL_BODIES}
+      bodies={SOLANA_PANEL_BODIES}
       onEvent={onEvent}
     >
       {({ plan: current }) => <output data-testid="current-plan">{JSON.stringify(current)}</output>}
@@ -200,7 +204,7 @@ it("refuses an LP orientation Apply after Jupiter leaves, without reporting succ
       plan={plan}
       catalog={catalog}
       selectedId="lp"
-      bodies={LOCAL_PANEL_BODIES}
+      bodies={SOLANA_PANEL_BODIES}
       onEvent={onEvent}
     >
       {({ plan: current }) => <output data-testid="current-plan">{JSON.stringify(current)}</output>}
@@ -226,7 +230,7 @@ it("uses the shared panel for local LP Apply and Discard without a fabricated po
       plan={plan}
       catalog={catalog}
       selectedId="lp"
-      bodies={LOCAL_PANEL_BODIES}
+      bodies={SOLANA_PANEL_BODIES}
       onEvent={onEvent}
     >
       {({ plan: current }) => {
@@ -256,8 +260,8 @@ it("uses the shared panel for local LP Apply and Discard without a fabricated po
   expect(screen.getAllByText("Not available").length).toBeGreaterThan(0);
 });
 
-// @rule R2/R5: EVM bodies do not mount their live read providers in the local runtime.
-it("keeps an EVM card in the shared local panel with an unavailable source", () => {
+// @rule R1: with Solana in the mandate, an EVM Build panel is the real panel and is never "Not available".
+it("mounts the real Aave Supply panel when the mandate has Solana", () => {
   const local: BuildPlan = {
     version: 1,
     hub: {
@@ -277,11 +281,70 @@ it("keeps an EVM card in the shared local panel with an unavailable source", () 
       plan={local}
       catalog={catalog}
       selectedId="supply"
-      bodies={LOCAL_PANEL_BODIES}
+      bodies={PANEL_BODIES}
     />,
   );
-  expect(screen.getAllByText("Not available").length).toBeGreaterThan(0);
-  expect(screen.queryByRole("button", { name: "Use" })).toBeNull();
+  expect(screen.queryByText("Not available")).toBeNull();
+});
+
+// @rule R2: Uniswap v4 with no mandate pool on its network shows the empty state with the Pools link.
+it("shows an empty state with a link to the Pools step for Uniswap v4 with no pool on the network", () => {
+  const local: BuildPlan = {
+    version: 1,
+    hub: {
+      chains: [
+        {
+          id: "evm",
+          sharePct: 0,
+          steps: [{ id: "pool", family: "position", kind: "uniswapV4Pool", config: null }],
+        },
+      ],
+    },
+    spokes: [],
+  };
+  renderWithProviders(
+    <PanelHarness
+      draft={draft}
+      plan={local}
+      catalog={catalog}
+      selectedId="pool"
+      bodies={PANEL_BODIES}
+    />,
+  );
+  expect(screen.queryByText("Not available")).toBeNull();
+  expect(screen.getByRole("button", { name: /Pools/ })).toBeVisible();
+});
+
+// @rule R4/R6: the Kamino panel has a token select (USDC always) and never shows "Not available".
+it("shows a token select in the Kamino Lend panel without Not available", () => {
+  const kamino: BuildPlan = {
+    ...plan,
+    spokes: plan.spokes.map((spoke) => ({
+      ...spoke,
+      chains: spoke.chains.map((chain) => ({
+        ...chain,
+        steps: [
+          {
+            id: "kamino",
+            family: "position" as const,
+            kind: "solanaKaminoSupply" as const,
+            config: SOLANA_LOCAL_CONFIGS.solanaKaminoSupply ?? null,
+          },
+        ],
+      })),
+    })),
+  };
+  renderWithProviders(
+    <PanelHarness
+      draft={draft}
+      plan={kamino}
+      catalog={catalog}
+      selectedId="kamino"
+      bodies={SOLANA_PANEL_BODIES}
+    />,
+  );
+  expect(screen.getByRole("button", { name: "Token" })).toHaveTextContent("USDC");
+  expect(screen.queryByText("Not available")).toBeNull();
 });
 
 // @rule POO-2301 R5 / POO-2187 P13: zero allocation defers range, positive allocation needs verified context.
@@ -300,7 +363,7 @@ it("defers the local LP range until a positive draft allocation", async () => {
       plan={zeroPlan}
       catalog={catalog}
       selectedId="lp"
-      bodies={LOCAL_PANEL_BODIES}
+      bodies={SOLANA_PANEL_BODIES}
     />,
   );
   expect(document.querySelector("[data-solana-range]")).toBeNull();
