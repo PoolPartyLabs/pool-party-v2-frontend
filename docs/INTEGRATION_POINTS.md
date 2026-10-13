@@ -618,6 +618,6 @@ IDs. The five historical duplicates are unchanged; prior censuses describe their
 | v6 Fund creation, Solana builders, transits and reports | `src/lib/api/v2/solanaFetch.ts` | Real: dev API `/api/v2/funds/...` (creation-options, build-creation, discover, Fund detail, solana/bootstrap, solana/build/*, build send-to-solana, solana/transits/*, solana/venues, spokes/1/balances, solana/raydium/:pool, solana/signed-quote, solana/reports/fresh) with `PP_API_URL` + `PP_API_KEY`, server-only, behind `solanaSpoke` | None for the demo lifecycle; collect, close, withdraw and send-home are not wired in the UI |
 | Solana JSON-RPC proxy | `src/app/api/solana-rpc/route.ts` | Real: `SOLANA_RPC_URL` (server env), SIWE session, method allow-list; falls back to the public RPC | Provider budget and rate limits are an operations decision |
 
-Current census (POO-2262): 2,379 files under `src/`, with 547 markers across 317 files,
+Current census (POO-2262): 2,380 files under `src/`, with 547 markers across 317 files,
 including tests, stories and source documentation. Registry totals are 733 rows and 728 unique
 IDs. The five historical duplicates are unchanged; prior censuses describe their named releases.
