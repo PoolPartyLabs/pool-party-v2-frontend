@@ -307,7 +307,7 @@ Focused renderer and real-engine BuildScreen tests preserve gesture, fit, select
 
 ## Return band and group boxes (POO-2348, rules v1)
 
-The return lines start below the box of each spoke group. The outbound return Bridge is inside the group box, so the box bottom is the lowest point of the group. The top of the lane band is the lowest box bottom plus `LAYOUT.LANE_MARGIN`. The Idle output is one band below the same box bottom. A return line does not enter the box of a group that is not its source or target. Because of this, a canvas with a spoke is `GROUP_PAD` (16 px) taller than before.
+The return lines start below the box of each spoke group. The outbound return Bridge is inside the group box, so the box bottom is the lowest point of the group. The top of the lane band is the lowest box bottom plus `LAYOUT.LANE_MARGIN`. The Idle output is one band below the same box bottom. A return line does not enter the box of a group that is not its source or target. Because of this, a canvas where a spoke box is the lowest element is `GROUP_PAD` (16 px) taller than before. This is true for the reference canvases A and B, worked example 2, the new spoke with no chain and the hub with no chain beside a spoke. Other canvases do not change.
 
 `layoutMetrics.ts` counts the group intrusions. An intrusion is a line segment that runs inside the box of a group that is not the source or the target of its line. The owner of a line comes from its id. Each fixture has 0 intrusions, and a test checks this. The fixture `solanaBuildProblem` has an Arbitrum hub with a chain, and a Solana spoke with a Raydium chain, a Kamino chain and a return Bridge.
 
@@ -326,7 +326,7 @@ POO-2348 v1: the Build canvas does not use this context. `layoutGraph` adds it o
 
 Explicit local runtime mapping adds a236x62 USDC Idle surface after each Solana inbound Bridge and a144x96 native SOL cash decoration to its right, separated by32px and vertically centered. The layout expands hull/bounds for cash without moving the financial axis and places branch buses below both surfaces. Idle owns declared Bridge-to-Idle-to-branch handles; cash owns none. Amount and independent USD readings remain Not available, never zero. Standard EVM layouts and the shared palette/viewport are unchanged.
 
-Complete IDs survive graph reading order, grouped surfaces and duplicate occurrences. Removing the spoke clears its local context. The LocalSolanaIdleAndOperatingCash story uses the same BuildGraph / React Flow engine with descriptor intent only. The shared route activation follows separately.
+Complete IDs survive graph reading order, grouped surfaces and duplicate occurrences. Removing the spoke clears its local context. The LocalSolanaIdleAndOperatingCash story uses the same BuildGraph / React Flow engine with descriptor intent only. It lays out the plan with `spokeContext: true`, because the Build canvas itself leaves that option off. The shared route activation follows separately.
 
 
 ## Shared local Solana panel and Review foundation (POO-2301 v1, October 9, 2026)

@@ -25,11 +25,13 @@
  *   segments that end one after the other with a space between them.
  *
  * - A GROUP INTRUSION (rules v1, R3) is a segment that enters the box of a spoke group that is not
- *   its source or its target. The metric finds the owner network of a segment from its edge id and
- *   the blocks of the layout. A segment enters a box when it runs through the open inside of the
+ *   its source or its target. The metric finds the owner of a segment from its edge id and the
+ *   blocks of the layout: the owner is the group whose box holds the source block. A line that
+ *   starts at a Bridge, a bus or a template has only a network in its id, so the owner is the
+ *   group boxes of that network. A segment enters a box when it runs through the open inside of the
  *   box, with a length above 0. A segment that only touches the border is not inside. An edge
- *   with no owner network (a merge, an output, a spine edge) is not in any box, so each box is
- *   foreign to it. A hub chain has the hub as its owner, and the hub has no box.
+ *   with no owner (a merge, an output, a spine edge) is foreign to each box. A hub chain has the
+ *   hub as its owner, and the hub has no box, also when a spoke has the same network.
  *
  * - A FORCED CROSSING (rules v2, R2 and R8) is a crossing of an income line and a principal line
  *   whose full paths start in one order and end in the opposite order. The principal leaves the
@@ -41,7 +43,7 @@
  * Same input, same output: no DOM, no React, no clock, no randomness.
  */
 
-import type { EdgeKind, EdgeNode, GraphLayout, Point, Rect } from "./graphTypes";
+import type { EdgeKind, EdgeNode, GraphLayout, GroupNode, Point, Rect } from "./graphTypes";
 
 export interface LayoutMetrics {
   crossings: number;
@@ -228,16 +230,41 @@ const CHAIN_OWNED = /^(?:principal:(?:chain|returned|conversion)|stub:chain):(.+
 const BLOCK_OWNED = /^(?:income:(?:block|converted|returned)|link):(.+)$/;
 const NETWORK_OWNED = /^(?:stub:spoke|bus:spoke|idle:spoke|template:addProtocol|bridge):(.+)$/;
 
-/** The network that owns an edge (its source group), or null when no spoke group owns it. */
-function ownerNetwork(layout: GraphLayout, id: string): string | null {
+/** What owns an edge: one group (found by the box that holds its block), a network, or nothing. */
+type Owner = { group: GroupNode | null } | { network: string } | null;
+
+function holds(box: Rect, inner: Rect): boolean {
+  const x = inner.x + inner.w / 2;
+  const y = inner.y + inner.h / 2;
+  return x > box.x && x < box.x + box.w && y > box.y && y < box.y + box.h;
+}
+
+/**
+ * The owner of an edge. A line that starts at a block belongs to the group whose box holds that
+ * block, so two spokes of one network, or a hub and a spoke of one network, stay apart. A hub block
+ * is in no box, so no group owns it. A line that starts at a Bridge, a bus or a template has only
+ * the network in its id. This is the limit of the metric: with two spokes of one network, the
+ * lines of those edges belong to both boxes.
+ */
+function ownerOf(layout: GraphLayout, id: string): Owner {
   const base = lineOf(id).line;
   const chain = CHAIN_OWNED.exec(base)?.[1];
-  if (chain !== undefined)
-    return layout.blocks.find((b) => b.chainId === chain || b.id === chain)?.network ?? null;
   const block = BLOCK_OWNED.exec(base)?.[1];
-  if (block !== undefined)
-    return layout.blocks.find((b) => b.id === block || b.chainId === block)?.network ?? null;
-  return NETWORK_OWNED.exec(base)?.[1] ?? null;
+  const key = chain ?? block;
+  if (key !== undefined) {
+    const found = layout.blocks.find((b) =>
+      chain !== undefined ? b.chainId === key || b.id === key : b.id === key || b.chainId === key,
+    );
+    if (!found) return { group: null };
+    return { group: layout.groups.find((g) => holds(g.rect, found.rect)) ?? null };
+  }
+  const network = NETWORK_OWNED.exec(base)?.[1];
+  return network === undefined ? null : { network };
+}
+
+function isOwnBox(owner: Owner, box: GroupNode): boolean {
+  if (owner === null) return false;
+  return "group" in owner ? owner.group === box : owner.network === box.network;
 }
 
 /** True when a segment runs through the open inside of a box, over a length above 0. */
@@ -257,8 +284,8 @@ function entersBox(s: Segment, box: Rect): boolean {
 export function findGroupIntrusions(layout: GraphLayout): string[] {
   const found: string[] = [];
   for (const s of segmentsOf(layout)) {
-    const owner = ownerNetwork(layout, s.edge.id);
-    if (layout.groups.some((g) => g.network !== owner && entersBox(s, g.rect)))
+    const owner = ownerOf(layout, s.edge.id);
+    if (layout.groups.some((g) => !isOwnBox(owner, g) && entersBox(s, g.rect)))
       found.push(s.edge.id);
   }
   return found;

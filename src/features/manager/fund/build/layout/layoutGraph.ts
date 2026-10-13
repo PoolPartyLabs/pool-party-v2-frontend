@@ -292,8 +292,6 @@ interface PlacedSpoke {
   group: GroupNode;
   axisX: number;
   satelliteWidth: number;
-  /** The lowest content inside the box, its circle included (not the border). */
-  lowest: number;
 }
 
 /** A spoke's group: its chains, its circle, its Bridge, its inner bus and its label (C3, C20). */
@@ -425,7 +423,6 @@ function placeSpoke(
   return {
     chains,
     group,
-    lowest: contentBottom,
     axisX: centre,
     satelliteWidth: right - financialRight,
   };

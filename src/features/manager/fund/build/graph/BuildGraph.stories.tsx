@@ -110,7 +110,7 @@ function localSolanaArgs(): BuildGraphProps {
   const copy = makeBlockCopy(translator as unknown as ManagerTranslate, "en");
   const context = { plan, draft, copy, violations: validatePlan(plan, { draft, catalog }) };
   return {
-    layout: layoutGraph(toLayoutInput(plan), { startHereWidth: 0 }),
+    layout: layoutGraph(toLayoutInput(plan), { startHereWidth: 0, spokeContext: true }),
     describeBlock: (id) => describeBlock(id, context),
     describeFlow: (id) => describeFlow(id, context),
     networkName: copy.networkName,

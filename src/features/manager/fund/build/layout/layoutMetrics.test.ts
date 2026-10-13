@@ -639,6 +639,43 @@ describe("findGroupIntrusions (POO-2348)", () => {
     expect(findGroupIntrusions(layout)).toEqual([]);
   });
 
+  const blockAt = (id: string, network: string, x: number, y: number) => ({
+    id,
+    chainId: id,
+    network,
+    family: "position" as const,
+    kind: "pool",
+    auto: false,
+    rect: { x, y, w: 40, h: 20 },
+  });
+
+  // @rule R3
+  it("finds the owner by the box that holds the block, so a hub of the same network is foreign", () => {
+    const layout: GraphLayout = {
+      ...withGroups([
+        edge("principal:chain:hub", "principal", [50, 150], [250, 150]),
+        edge("principal:chain:own", "principal", [120, 200], [250, 200]),
+      ]),
+      blocks: [blockAt("hub", "solana", 0, 0), blockAt("own", "solana", 150, 120)],
+    };
+    expect(findGroupIntrusions(layout)).toEqual(["principal:chain:hub"]);
+  });
+
+  // @rule R3
+  it("keeps two spokes of one network apart when a block sits in the box of the other", () => {
+    const layout: GraphLayout = {
+      ...withGroups([edge("principal:chain:b", "principal", [420, 150], [480, 150])]),
+      groups: [group("solana", 100, 100, 200, 200), group("solana", 400, 100, 200, 200)],
+      blocks: [blockAt("b", "solana", 420, 120)],
+    };
+    expect(findGroupIntrusions(layout)).toEqual([]);
+    const crossing: GraphLayout = {
+      ...layout,
+      edges: [edge("principal:chain:b", "principal", [150, 150], [480, 150])],
+    };
+    expect(findGroupIntrusions(crossing)).toEqual(["principal:chain:b"]);
+  });
+
   // @rule R3
   it("counts a segment with no owner that runs inside a box, once per segment", () => {
     const layout = withGroups([edge("a", "income", [50, 150], [250, 150])]);

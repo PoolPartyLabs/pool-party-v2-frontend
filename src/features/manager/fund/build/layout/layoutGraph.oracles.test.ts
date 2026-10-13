@@ -7,9 +7,9 @@
  * Fixed node positions, insertion ports, labels and chips retain the October 3 Figma oracles.
  * POO-2273 v2 replaces historical return-edge snapshots with explicit origin/endpoints and
  * shared return Bridge hull checks. The October 7 handoff takes precedence for these returns.
- * POO-2348 R2 starts the return lines below the box of each spoke group. A reference canvas with a
- * spoke is 16 px (GROUP_PAD) higher than before, and the numbers below that are marked R2 moved by
- * the same 16 px. A canvas with no spoke does not change.
+ * POO-2348 R2 starts the return lines below the box of each spoke group. A canvas where a spoke box
+ * is the lowest element (canvas A and B, worked example 2) is 16 px (GROUP_PAD) higher than before,
+ * and the numbers below that are marked R2 moved by the same 16 px. The other canvases do not change.
  */
 
 import { describe, expect, it } from "vitest";
